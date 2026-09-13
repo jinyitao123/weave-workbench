@@ -41,6 +41,6 @@ worktrees/
 .typert-*/
 
 # Independent product data and local operator configuration.
-data/
+/data/
 .env.*
 !.env.example
