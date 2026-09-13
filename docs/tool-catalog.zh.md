@@ -7,9 +7,9 @@
 
 已发布插件向 `ctx.tools` 提供的所有面向模型的工具：模型通过系统提示词组装获得的 `name`、`description` 和 JSON Schema `parameters`。本目录是[子系统页面](subsystems/core.zh.md)（类型及每页生成的 `cordis-surface` 接线区域）的补充；本页列出的是向 agent（智能体）提供的*工具*。
 
-英文源文件由系统**生成**，并通过 `pnpm run verify-tool-catalog`（`doc-sync`（文档同步门禁）的一部分）验证新鲜度；本中文文件作为经评审对侧通过双语配对维护。与 Cordis 目录（纯源码 AST 处理）不同，英文生成器会在真实上下文中**启动**每个工具插件并读取 `ctx.tools.schemas()`，因为工具 schema 无法通过静态分析完全确定，例如运行时展开的枚举、拼接的描述、由配置决定的名称以及使用原始 JSON Schema 的 MCP 工具。完整性守卫会 glob 匹配 `packages/*/tool-*`；如果生成器的启动 manifest（元数据清单）遗漏任何包，检查就会失败，因此新工具不会在无人察觉的情况下缺少文档。参见[工具 schema 目录 Agent Note](../.agents/notes/implemented/process/2026-07-02-tool-schema-catalog.zh.md)。
+英文源文件由系统**生成**，并通过 `pnpm run verify-tool-catalog`（`doc-sync`（文档同步门禁）的一部分）验证新鲜度；本中文文件作为经评审对侧通过双语配对维护。与 Cordis 目录（纯源码 AST 处理）不同，英文生成器会在真实上下文中**启动**每个工具插件并读取 `ctx.tools.schemas()`，因为工具 schema 无法通过静态分析完全确定，例如运行时展开的枚举、拼接的描述、由配置决定的名称以及使用原始 JSON Schema 的 MCP 工具。完整性守卫会 glob 匹配 `packages/*/tool-*`；如果生成器的启动 manifest（元数据清单）遗漏任何包，检查就会失败，因此新的 `tool-*` 包不会在无人察觉的情况下缺少文档。其他产品包在启动 manifest 中显式列出。参见[工具 schema 目录 Agent Note](../.agents/notes/implemented/process/2026-07-02-tool-schema-catalog.zh.md)。
 
-范围：`packages/*/tool-*` 下已发布的产品工具，每个工具均使用其**默认**配置启动；但如果某个 Config 字段是**必填项**且没有默认值，生成器就必须作出选择，对应包的说明会记录本页展示的是哪个分支。注册的工具**名称**可以是加载时配置，例如 `tool-subagent` 的 `toolName`，因此部署可能以不同名称或额外名称提供某个包；如果存在随产品发布的别名，对应包的说明会予以记录。`examples/` 中的演示工具（例如 `echo`）不在范围内，这与 Cordis 目录仅涵盖包的范围一致。
+范围：`packages/*/tool-*` 下及显式列出的产品包中已发布的产品工具，每个工具均使用其**默认**配置启动；但如果某个 Config 字段是**必填项**且没有默认值，生成器就必须作出选择，对应包的说明会记录本页展示的是哪个分支。注册的工具**名称**可以是加载时配置，例如 `tool-subagent` 的 `toolName`，因此部署可能以不同名称或额外名称提供某个包；如果存在随产品发布的别名，对应包的说明会予以记录。`examples/` 中的演示工具（例如 `echo`）不在范围内，这与 Cordis 目录仅涵盖包的范围一致。
 
 <a id="tool-package-map"></a>
 
@@ -30,13 +30,10 @@
 | `@deepseek-ai/dsh-tool-str-replace-editor` | `str_replace_editor` | `ctx.tools`、`ctx.fs` | `tool/call`、`fs/observed after view presence/absence, edit absence, or successful mutation`、`tool/result` | - | 基于文件系统 seam 的独立查看／创建／唯一字面量替换／按行插入工具；可与任何 shell 或终端接口组合。 |
 | `@deepseek-ai/dsh-tool-fs` | `edit`、`read`、`read_image`、`write` | `ctx.tools`、`ctx.fs`、`ctx.systemPrompt`、`ctx.attachments (image-tool registration)`、`ctx.llm + an image-capable route (image-tool execution)` | `tool/call`、`fs/write-intent or fs/edit-intent for mutations`、`fs/observed after read presence/absence or successful file operation`、`durable attachment (read_image)`、`tool/result` | - | 先读后写／编辑策略由 `@deepseek-ai/dsh-fs-observation-policy` 添加；它是一个 `fs/*` 事件门禁插件，不会改变 schema。加载这些工具的部署按预期也应加载该插件。没有 `ctx.attachments` 时图片工具不会注册；其 schema 与路由无关，执行时除非确切路由的模型声明图片输入，否则拒绝。 |
 | `@deepseek-ai/dsh-tool-fs-search` | `glob`、`grep` | `ctx.tools`、`ctx.subprocess`、`ctx.systemPrompt` | `tool/call`、`tool/result` | - | glob 和 grep 是无条件可用的发现工具，通过 ctx.subprocess spawn 随包提供的 ripgrep 二进制文件（`@vscode/ripgrep`），并作为普通前台调用运行，绝不作为后台任务；无需在宿主机安装 `rg`，也不经过 shell 层。本目录使用 `sampleOverCapGlobResults: true`；部署必须显式选择该行为。结果超过上限时，会通过可选的 ctx.spillStore 后端保存完整的格式化列表；在共置部署中，如果后端公开本地路径，返回的定位信息可供后续读取／搜索。 |
-| `@deepseek-ai/dsh-tool-terminal` | `terminal_close`、`terminal_list`、`terminal_open`、`terminal_read`、`terminal_send`、`terminal_signal` | `ctx.tools`、`ctx.terminals`、`ctx.systemPrompt`、`ctx.jobs at call time for run_in_background` | `tool/call`、`tool/result` | - | 这 6 个终端工具需要选择启用，用于补充一次性 bash／文件系统工具。`terminal_send(run_in_background: true)` 会注册到 `ctx.jobs`；schema 不包含 TUI、具名按键序列、BEL、调整尺寸、自动启动和跨 agent 共享。 |
 | `@deepseek-ai/dsh-tool-goal` | `create_goal`、`get_goal`、`update_goal` | `ctx.tools`、`ctx.agents`、`ctx.goals`、`ctx.systemPrompt`、`a calling Agent in an authorized open turn` | `tool/call`、`goal/change for mutations`、`tool/result` | - | create、edit、pause 和 resume 要求直接来自人类的根权限；complete 和 blocked 也接受确切的当前 Goal Round。blocked 的默认下限是 3 个获准的 Round。 |
 | `@deepseek-ai/dsh-schedule` | `schedule_create`、`schedule_delete`、`schedule_list` | `ctx.tools`、`ctx.sessions`、Session 持久化、未来创建的 live 根 Agent | `tool/call`、`schedule/change create or delete`、`tool/result` | - | 仅在选择启用的 Schedule 插件加载后创建的 live 根 Agent scope 内注册。版本 1 接受 after_seconds、显式绝对 at 和有界固定速率 every_seconds，并披露 session-local 交付；管理读取与变更必须通过共享的 Session 持久化 barrier。 |
-| `@deepseek-ai/dsh-tool-lsp` | `lsp` | `ctx.tools`、`ctx.lsp`、`ctx.systemPrompt` | `tool/call`、`tool/result` | - | lsp 工具将提供方选择和语言服务器子进程置于 ctx.lsp 之后，因此其模型可见 schema 在更换提供方时保持稳定。运行时要求已注册提供方，例如 `@deepseek-ai/dsh-lsp-stdio`；如果没有提供方，查询会返回结构化 `LSP_UNAVAILABLE` 错误，而不会改变 schema。 |
 | `@deepseek-ai/dsh-tool-ralph` | `ralph` | `ctx.tools`、`ctx.workflowEngine`、`ctx.subagents`、`ctx.systemPrompt`、`a calling Agent (exec.agent parents every fresh round)` | `tool/call`、`tool/result`、`workflow and child session events during execution` | - | 固定的前台工作流会在每个 Round 启动一个全新的结构化子级；模型只能选择不可变目标和可选的 Round 上限。 |
 | `@deepseek-ai/dsh-tool-skill` | `skill` | `ctx.tools`、`ctx.agents`、`ctx.skills` | `tool/call`、`tool/result`、`user/message replacement catalogs via agent.inject()` | - | - |
-| `@deepseek-ai/dsh-tool-session-query` | `session_event_read`、`session_event_search`、`session_event_trace`、`session_search`、`session_trace` | `ctx.tools`、`ctx.systemPrompt`、`ctx.sessionQuery`、`a calling Agent for workspace authority` | `tool/call`、`tool/result` | - | 这 5 个只读工具会隐藏提供方游标，并根据不可变的调用 agent 会话为每个结果授权。该包需要选择启用；需要强制截止时间或限制行内输出的组合还会挂载通用超时或 spill 策略。 |
 | `@deepseek-ai/dsh-tool-subagent` | `list_subagent_models`、`subagent` | `ctx.tools`、`ctx.subagents`、`ctx.systemPrompt`、`用于模型发现和所选路由校验的 ctx.llm` | `tool/call`、`tool/result`、`child session events through the chosen provider` | `subagent`、`subagent_fork` | 注册的委派工具名称取决于加载时 `toolName` 配置（默认为 `subagent`）；上述默认 schema 关闭模型选择，而发现 schema 则展示为已启用 Session 中可用的固定配套工具。Web preset 会在每个新顶层 Session 创建时读取插件页偏好，并为其子 Session 保留该决定；`subagent_fork` 始终使用固定路由。每个实例通过 `modelSelectionSettings`、`backgroundMode` 与 `enableRunInBackground` 独立控制是否读取模型选择设置及其后台行为。 |
 | `@deepseek-ai/dsh-tool-subagent-control` | `interrupt_agent`、`list_agents`、`send_message` | `ctx.tools`、`ctx.subagents`、`ctx.agents and ctx.sessionProjections (list_agents only)` | `tool/call`、`tool/result`、`child session events through ctx.subagents` | - | 这些是控制可继续后台 subagent 的全局命名工具：绑定提供方的 `tool-subagent` 实例注册不同的委派工具；本包注册一次 `send_message` 和 `interrupt_agent`，另由 `list_agents` 通过单独加载的 `/list-agents` 插件提供，其目录行使用 sessionProjections 和实时 Agent 注册表。 |
 | `@deepseek-ai/dsh-tool-subagent-report` | `report` | `ctx.subagents`、`ctx.systemPrompt`、`a live continuable in-process child Agent` | `tool/call`、`tool/result`、`a user-role message in the direct parent session` | - | 按可继续的进程内子级注册，而非全局注册，因此该 schema 仅在这种子级内部可见，并且不受其全局 `toolFilter` 影响。同一份贡献还会安装子级作用域的 `tool:report` 系统提示词 section，本目录不渲染该 section。面向父级的 `send_message` 工具单独安装。 |
@@ -45,6 +42,7 @@
 | `@deepseek-ai/dsh-tool-todo` | `todo_write` | `ctx.tools`、`owning Agent session` | `tool/call`、`todo/write`、`tool/result` | - | todo_write 是会话所有的状态；UI 将最新的 todo/write 事件渲染为检查清单。`allowParallelInProgress` 是没有默认值的必填项，因此本目录明确选择 `true`，对应描述允许同时存在多个 `in_progress` 项。选择 `false` 的部署会获得同一工具，但描述会要求只能有 1 个活动任务。 |
 | `@deepseek-ai/dsh-tool-workflow` | `workflow` | `ctx.tools`、`ctx.workflowEngine`、`ctx.systemPrompt`、`a calling Agent (exec.agent parents the script children)` | `tool/call`、`tool/result` | - | - |
 | `@deepseek-ai/dsh-tool-web` | `web_fetch`、`web_search` | `ctx.tools`、`ctx.web`、`ctx.systemPrompt` | `tool/call`、`tool/result` | - | web_search 和 web_fetch 将提供方选择置于 ctx.web 之后，使模型可见 schema 在更换后端时保持稳定。 |
+| `@deepseek-ai/dsh-workbench-app` | `weave_dispatch` | `ctx.tools`、`ctx.sessions`、`Session persistence`、`authenticated Weave API at execution time` | `tool/call`、`weave/dispatch-input`、`Weave workflow run after admission`、`tool/result` | - | Workbench 在其 Host 配置了 Weave API 凭据时注册 weave_dispatch。Host 冻结用户原始输入，并在传输前持久化请求；重试保留相同的输入修订版本和请求身份。 |
 
 <a id="deepseek-aidsh-tool-ask-user"></a>
 
@@ -844,171 +842,6 @@ pwsh 工具是 Windows 组合中 bash 执行器 seam 的 PowerShell 方言消费
 
 glob 和 grep 是无条件可用的发现工具，通过 ctx.subprocess spawn 随包提供的 ripgrep 二进制文件（`@vscode/ripgrep`），并作为普通前台调用运行，绝不作为后台任务；无需在宿主机安装 `rg`，也不经过 shell 层。本目录使用 `sampleOverCapGlobResults: true`；部署必须显式选择该行为。结果超过上限时，会通过可选的 ctx.spillStore 后端保存完整的格式化列表；在共置部署中，如果后端公开本地路径，返回的定位信息可供后续读取／搜索。
 
-<a id="deepseek-aidsh-tool-terminal"></a>
-
-## `@deepseek-ai/dsh-tool-terminal`
-
-### `terminal_close`
-
-关闭一个持久终端，并等待其捕获且所有的进程树完全退出。
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "sessionId": {
-      "type": "string",
-      "description": "Terminal session id."
-    }
-  },
-  "required": [
-    "sessionId"
-  ]
-}
-```
-
-来源：[`packages/terminal/tool-terminal/src/index.ts`](../packages/terminal/tool-terminal/src/index.ts)
-
-### `terminal_list`
-
-列出当前 agent 所有的持久终端会话。
-
-```json
-{
-  "type": "object",
-  "properties": {}
-}
-```
-
-来源：[`packages/terminal/tool-terminal/src/index.ts`](../packages/terminal/tool-terminal/src/index.ts)
-
-### `terminal_open`
-
-通过已注册的后端类型创建按所有者隔离的持久终端会话。需要在多次工具调用之间保留 shell 或 REPL 状态时，请使用此工具。
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "type": {
-      "type": "string",
-      "description": "Registered terminal backend type, usually \"shell\"."
-    },
-    "name": {
-      "type": "string",
-      "description": "Optional owner-local display name such as \"main\" or \"gdb\"."
-    },
-    "cwd": {
-      "type": "string",
-      "description": "Initial working directory. Defaults to the deployment workspace root."
-    }
-  },
-  "required": [
-    "type"
-  ]
-}
-```
-
-来源：[`packages/terminal/tool-terminal/src/index.ts`](../packages/terminal/tool-terminal/src/index.ts)
-
-### `terminal_read`
-
-从持久终端读取一页有界的保留输出，不发送输入。
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "sessionId": {
-      "type": "string",
-      "description": "Terminal session id."
-    },
-    "offset": {
-      "type": "number",
-      "description": "Newest-relative line offset (default 0)."
-    },
-    "count": {
-      "type": "number",
-      "description": "Requested line count (default 500; backend caps apply)."
-    }
-  },
-  "required": [
-    "sessionId"
-  ]
-}
-```
-
-来源：[`packages/terminal/tool-terminal/src/index.ts`](../packages/terminal/tool-terminal/src/index.ts)
-
-### `terminal_send`
-
-向持久终端发送文本。默认会提交 Enter，并等待提示符、stdin 等待、输出静默、超时或会话退出。后台模式会返回供 job_output／job_kill 使用的 job id。
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "sessionId": {
-      "type": "string",
-      "description": "Terminal session id returned by terminal_open or terminal_list."
-    },
-    "text": {
-      "type": "string",
-      "description": "UTF-8 text to write to the terminal."
-    },
-    "submit": {
-      "type": "boolean",
-      "description": "Submit Enter after text (default true). Set false for control characters or incomplete REPL input."
-    },
-    "run_in_background": {
-      "type": "boolean",
-      "description": "Return a job id immediately; collect with job_output or stop with job_kill."
-    }
-  },
-  "required": [
-    "sessionId",
-    "text"
-  ]
-}
-```
-
-来源：[`packages/terminal/tool-terminal/src/index.ts`](../packages/terminal/tool-terminal/src/index.ts)
-
-### `terminal_signal`
-
-向持久终端当前的前台进程组发送允许的信号。
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "sessionId": {
-      "type": "string",
-      "description": "Terminal session id."
-    },
-    "signal": {
-      "type": "string",
-      "description": "Signal to deliver. Shell-targeted SIGKILL is rejected; use terminal_close.",
-      "enum": [
-        "SIGINT",
-        "SIGTERM",
-        "SIGKILL",
-        "SIGTSTP",
-        "SIGHUP"
-      ]
-    }
-  },
-  "required": [
-    "sessionId",
-    "signal"
-  ]
-}
-```
-
-来源：[`packages/terminal/tool-terminal/src/index.ts`](../packages/terminal/tool-terminal/src/index.ts)
-
-这 6 个终端工具需要选择启用，用于补充一次性 bash／文件系统工具。`terminal_send(run_in_background: true)` 会注册到 `ctx.jobs`；schema 不包含 TUI、具名按键序列、BEL、调整尺寸、自动启动和跨 agent 共享。
-
 <a id="deepseek-aidsh-tool-goal"></a>
 
 ## `@deepseek-ai/dsh-tool-goal`
@@ -1200,54 +1033,6 @@ create、edit、pause 和 resume 要求直接来自人类的根权限；complete
 
 仅在选择启用的 Schedule 插件加载后创建的 live 根 Agent scope 内注册。版本 1 接受 after_seconds、显式绝对 at 和有界固定速率 every_seconds，并披露 session-local 交付；管理读取与变更必须通过共享的 Session 持久化 barrier。
 
-<a id="deepseek-aidsh-tool-lsp"></a>
-
-## `@deepseek-ai/dsh-tool-lsp`
-
-### `lsp`
-
-查询语言服务器，以精确导航代码。operation 可取 goToDefinition、findReferences、goToImplementation 或 hover。line 和 character 是从 1 开始的 UTF-16 光标坐标。findReferences 包含声明。
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "operation": {
-      "type": "string",
-      "description": "goToDefinition, findReferences, goToImplementation, or hover.",
-      "enum": [
-        "goToDefinition",
-        "findReferences",
-        "goToImplementation",
-        "hover"
-      ]
-    },
-    "file_path": {
-      "type": "string",
-      "description": "The source file to query, relative to the workspace or absolute."
-    },
-    "line": {
-      "type": "number",
-      "description": "One-based line of the cursor."
-    },
-    "character": {
-      "type": "number",
-      "description": "One-based UTF-16 column of the cursor."
-    }
-  },
-  "required": [
-    "operation",
-    "file_path",
-    "line",
-    "character"
-  ]
-}
-```
-
-来源：[`packages/lsp/tool-lsp/src/index.ts`](../packages/lsp/tool-lsp/src/index.ts)
-
-lsp 工具将提供方选择和语言服务器子进程置于 ctx.lsp 之后，因此其模型可见 schema 在更换提供方时保持稳定。运行时要求已注册提供方，例如 `@deepseek-ai/dsh-lsp-stdio`；如果没有提供方，查询会返回结构化 `LSP_UNAVAILABLE` 错误，而不会改变 schema。
-
 <a id="deepseek-aidsh-tool-ralph"></a>
 
 ## `@deepseek-ai/dsh-tool-ralph`
@@ -1303,241 +1088,6 @@ lsp 工具将提供方选择和语言服务器子进程置于 ctx.lsp 之后，�
 ```
 
 来源：[`packages/skill/tool-skill/src/index.ts`](../packages/skill/tool-skill/src/index.ts)
-
-<a id="deepseek-aidsh-tool-session-query"></a>
-
-## `@deepseek-ai/dsh-tool-session-query`
-
-### `session_event_read`
-
-从一个已获授权的会话中读取一个完整且未删节的事件，以及可选的相邻原始事件概述。
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "session_id": {
-      "type": "string",
-      "description": "Target session id. Omit for the current session."
-    },
-    "seq": {
-      "type": "integer",
-      "description": "Target event sequence number."
-    },
-    "before": {
-      "type": "integer",
-      "description": "Number of preceding raw events to summarize. Omit for none."
-    },
-    "after": {
-      "type": "integer",
-      "description": "Number of following raw events to summarize. Omit for none."
-    }
-  },
-  "required": [
-    "seq"
-  ]
-}
-```
-
-来源：[`packages/session-query/tool-session-query/src/index.ts`](../packages/session-query/tool-session-query/src/index.ts)
-
-### `session_event_search`
-
-在一个已获授权的会话中搜索先前事件；如果搜索当前会话，则排除执行此次调用的步骤。
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "session_id": {
-      "type": "string",
-      "description": "Target session id. Omit for the current session."
-    },
-    "query": {
-      "type": "string",
-      "description": "Literal full-text query over the target session."
-    },
-    "seq_from": {
-      "type": "integer",
-      "description": "Inclusive event sequence lower bound."
-    },
-    "seq_to": {
-      "type": "integer",
-      "description": "Inclusive event sequence upper bound."
-    },
-    "time_from": {
-      "type": "string",
-      "description": "Inclusive timezone-qualified ISO 8601 event-time lower bound."
-    },
-    "time_to": {
-      "type": "string",
-      "description": "Inclusive timezone-qualified ISO 8601 event-time upper bound."
-    },
-    "event_types": {
-      "type": "array",
-      "description": "Event types to include.",
-      "items": {
-        "type": "string"
-      }
-    },
-    "surfaces": {
-      "type": "array",
-      "description": "Event surfaces to include.",
-      "items": {
-        "type": "string",
-        "enum": [
-          "current",
-          "shadowed",
-          "log-only"
-        ]
-      }
-    }
-  },
-  "required": [
-    "query"
-  ]
-}
-```
-
-来源：[`packages/session-query/tool-session-query/src/index.ts`](../packages/session-query/tool-session-query/src/index.ts)
-
-### `session_event_trace`
-
-读取已获授权会话中某个事件的所有直接替换关系，以及该事件与其引用的来源事件之间的关系。
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "session_id": {
-      "type": "string",
-      "description": "Target session id. Omit for the current session."
-    },
-    "seq": {
-      "type": "integer",
-      "description": "Target event sequence number."
-    }
-  },
-  "required": [
-    "seq"
-  ]
-}
-```
-
-来源：[`packages/session-query/tool-session-query/src/index.ts`](../packages/session-query/tool-session-query/src/index.ts)
-
-### `session_search`
-
-搜索调用方工作区中的先前会话，并从每个会话返回匹配度最高的事件。
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "query": {
-      "type": "string",
-      "description": "Literal full-text query over prior session history."
-    },
-    "session_ids": {
-      "type": "array",
-      "description": "Optional session ids to include.",
-      "items": {
-        "type": "string"
-      }
-    },
-    "created_at_from": {
-      "type": "string",
-      "description": "Inclusive timezone-qualified ISO 8601 creation-time lower bound."
-    },
-    "created_at_to": {
-      "type": "string",
-      "description": "Inclusive timezone-qualified ISO 8601 creation-time upper bound."
-    },
-    "parent_session_ids": {
-      "type": "array",
-      "description": "Optional direct parent session ids.",
-      "items": {
-        "type": "string"
-      }
-    },
-    "include_root_sessions": {
-      "type": "boolean",
-      "description": "Include sessions with no parent in the parent filter."
-    },
-    "availability": {
-      "type": "array",
-      "description": "Require at least one selected source availability.",
-      "items": {
-        "type": "string",
-        "enum": [
-          "live",
-          "persisted"
-        ]
-      }
-    },
-    "event_seq_from": {
-      "type": "integer",
-      "description": "Inclusive event sequence lower bound."
-    },
-    "event_seq_to": {
-      "type": "integer",
-      "description": "Inclusive event sequence upper bound."
-    },
-    "event_time_from": {
-      "type": "string",
-      "description": "Inclusive timezone-qualified ISO 8601 event-time lower bound."
-    },
-    "event_time_to": {
-      "type": "string",
-      "description": "Inclusive timezone-qualified ISO 8601 event-time upper bound."
-    },
-    "event_types": {
-      "type": "array",
-      "description": "Event types to include.",
-      "items": {
-        "type": "string"
-      }
-    },
-    "event_surfaces": {
-      "type": "array",
-      "description": "Event surfaces to include.",
-      "items": {
-        "type": "string",
-        "enum": [
-          "current",
-          "shadowed",
-          "log-only"
-        ]
-      }
-    }
-  },
-  "required": [
-    "query"
-  ]
-}
-```
-
-来源：[`packages/session-query/tool-session-query/src/index.ts`](../packages/session-query/tool-session-query/src/index.ts)
-
-### `session_trace`
-
-读取围绕一个会话的已授权会话谱系，包括完整可见的祖先和后代关系。
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "session_id": {
-      "type": "string",
-      "description": "Target session id. Omit for the current session."
-    }
-  }
-}
-```
-
-来源：[`packages/session-query/tool-session-query/src/index.ts`](../packages/session-query/tool-session-query/src/index.ts)
-
-这 5 个只读工具会隐藏提供方游标，并根据不可变的调用 agent 会话为每个结果授权。该包需要选择启用；需要强制截止时间或限制行内输出的组合还会挂载通用超时或 spill 策略。
 
 <a id="deepseek-aidsh-tool-subagent"></a>
 
@@ -2285,3 +1835,42 @@ todo_write 是会话所有的状态；UI 将最新的 todo/write 事件渲染为
 来源：[`packages/web/tool-web/src/index.ts`](../packages/web/tool-web/src/index.ts)
 
 web_search 和 web_fetch 将提供方选择置于 ctx.web 之后，使模型可见 schema 在更换后端时保持稳定。
+
+<a id="deepseek-aidsh-workbench-app"></a>
+
+## `@deepseek-ai/dsh-workbench-app`
+
+### `weave_dispatch`
+
+将当前用户任务派发给约定的 Weave 团队及已发布工作流。`team_id` 可以使用界面显示的准确团队名、机器名或稳定 ID；Workbench 只在活跃团队中解析名称，并拒绝有歧义的结果。仅在用户已授权团队、任务范围和预期输出时使用；已有明确授权即可。系统自动附加用户原始输入，不允许用改写的任务替换。不要用于进度询问、恢复或重跑已有任务。重复提交同一尚未确定结果的请求是安全的。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "team_id": {
+      "type": "string",
+      "description": "The agreed active team by visible name, machine name, or stable ID."
+    },
+    "workflow_id": {
+      "type": "string",
+      "description": "The agreed published workflow; omit to use the team default."
+    },
+    "workflow_version": {
+      "type": "integer",
+      "description": "The agreed published version, when explicitly pinned."
+    },
+    "project_id": {
+      "type": "string",
+      "description": "The current Weave project, when one is selected."
+    }
+  },
+  "required": [
+    "team_id"
+  ]
+}
+```
+
+来源：[`packages/bundle/workbench-app/src/dispatch-input.ts`](../packages/bundle/workbench-app/src/dispatch-input.ts)
+
+Workbench 在其 Host 配置了 Weave API 凭据时注册 weave_dispatch。Host 冻结用户原始输入，并在传输前持久化请求；重试保留相同的输入修订版本和请求身份。

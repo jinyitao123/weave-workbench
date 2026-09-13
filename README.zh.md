@@ -1,84 +1,40 @@
-# DeepSeek Harness
+# Weave Workbench
 
-[English](README.md) | 中文
+[English](README.md) | 简体中文
 
-DeepSeek Harness（`dsh`）是由 [DeepSeek AI](https://deepseek.com) 开发的开源 agent harness（智能体框架）。
+Workbench 是使用智能体团队完成工作的产品工作台。本仓同时维护浏览器界面和承载账号、对话、任务投影与工具桥接的 TypeScript Host。团队构建、执行调度和最终交付事实由外部 Weave 平台负责。
 
-它构建于**一切皆插件**的架构之上，由 [Cordis](https://github.com/cordiverse/cordis) 驱动，其设计参见论文 [_A Programming Paradigm for Spatiotemporal Composability_](https://arxiv.org/abs/2608.25512)。
+## 安装与运行
 
-文档：[https://deepseek-harness.github.io/deepseek-harness/](https://deepseek-harness.github.io/deepseek-harness/)
-
-## 开发者预览
-
-DeepSeek Harness 处于 _开发者预览_ 阶段，正在快速迭代。**未来将出现破坏兼容性的变更。**
-
-运行本项目前，请阅读[安全说明](SAFETY.zh.md)。
-
-<a id="run"></a>
-
-## 运行
-
-### 通过 `npm` 运行
-
-安装 `Node.js`，然后运行：
+需要 Node.js `^22.19.0 || >=24.0.0` 和锁定版本 `pnpm@11.7.0`。所有源码依赖均在本仓，无需相邻的 Weave 源码目录、Go 环境或父仓 Makefile。
 
 ```sh
-npx @deepseek-ai/dsh web
+pnpm install --frozen-lockfile
+pnpm run build:workbench
+pnpm workbench --host 127.0.0.1 --port 3080 --no-open
 ```
 
-该命令默认会在 `http://127.0.0.1:3080` 启动 Web UI，本机启动时还会用默认浏览器打开页面。通过 SSH 启动时只打印宿主机 URL，因为本地转发地址由 SSH 客户端或编辑器持有。传入 `--no-open` 可仅运行服务器而不打开浏览器。详见 [Web UI 指南](docs/user/guide/index.zh.md)。
+管理员启动 Host 时提供 `WEAVE_API_URL`、受信任的 `WEAVE_COMMAND` 和 Host 服务凭据 `WEAVE_API_KEY`。MCP 命令是单独交付、与平台版本匹配的 `weave mcp serve` 可执行程序；`WEAVE_COMMAND` 可以是 PATH 中的命令或明确路径。macOS 快捷启动还支持现有钥匙串服务。产品账号在浏览器登录，用户令牌不进入浏览器存储，也不能由请求正文声明身份。
 
-<a id="run-from-source"></a>
+普通成员无需选择目录即可新建个人任务，Host 按账号分配工作目录。管理员管理共享项目和 Host 设置。尚未连接平台或未配置前台模型时，页面保留明确的配置缺口，不会声称已经执行团队工作。用户退出或 Host 重启后，需要重新验证账号。
 
-### 从源码运行
+运行状态、用户资料、缓存与凭据放在部署数据目录，不提交到源码仓。`deploy/compose.yaml` 提供仅部署 Workbench 的容器示例，平台、数据库与执行 Runtime 独立部署。容器通过只读挂载获得匹配的 Linux MCP 可执行程序，不从父仓或平台镜像复制程序。
 
-如需从仓库源码运行：
+## 开发与验证
 
 ```sh
-git clone https://github.com/deepseek-ai/deepseek-harness.git
-cd deepseek-harness
-pnpm install
-pnpm run build
-pnpm dsh web
+pnpm run check:workbench
 ```
 
-`pnpm run build` 会准备仓库产物。`pnpm dsh web` 会直接使用这些已构建产物，不会重新构建。
+该入口完成 Host 与 Client 类型构建、浏览器产物构建、运行依赖检查、界面依赖及文案检查、产品组合启动、账号与会话隔离相关 Host 测试、完整 GUI 回归。它不需要真实模型凭据。业务交付验收仍须通过真实浏览器、真实用户身份与模型完成，不能用自动化测试或健康响应替代。
 
-## 社区与支持
+`pnpm run build` 默认构建 Workbench。保留的通用运行包、类型命名和测试资料属于实现与历史来源，不新增独立 DSH 产品入口或发布渠道。工作台对平台的集成约定见 [Weave 集成边界](docs/weave-integration.md)。仓库工作规则见 [AGENTS.md](AGENTS.md)。
 
-- 通过 [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions) 提交反馈或 bug 报告。
-- 为你的插件仓库添加 [`dsh-plugin`](https://github.com/topics/dsh-plugin) 话题，便于被发现。
-- 欢迎加入 DeepSeek Harness 企微群：扫码添加企微小助手并填写入群问卷，完成后小助手会邀请你入群。
+## 源码与发布
 
-<table>
-  <thead>
-    <tr>
-      <th align="center">企微小助手</th>
-      <th align="center">入群问卷</th>
-      <th align="center">微信公众号</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center"><img src="https://cdn.deepseek.com/harness/readme/community-wecom-assistant.png" alt="DeepSeek Harness 企微小助手二维码" width="180" height="180"></td>
-      <td align="center"><a href="https://trtgsjkv6r.feishu.cn/share/base/form/shrcnIt5twSVdLGD52KJBckGCgg"><img src="https://cdn.deepseek.com/harness/readme/community-wecom-survey.png" alt="DeepSeek Harness 入群问卷二维码" width="180" height="180"></a></td>
-      <td align="center"><img src="https://cdn.deepseek.com/harness/readme/community-wechat-official-account.png" alt="DeepSeek Harness 团队微信公众号二维码" width="180" height="180"></td>
-    </tr>
-  </tbody>
-</table>
+- `apps/`：浏览器应用、受支持的启动器与桌面预览。
+- `packages/`：完整的交互 Host、账号与会话服务、工具桥和界面。
+- `vendor/`、`native/`、`patches/`：构建所需的框架源码、本地隔离实现与依赖补丁。
+- `scripts/`、`snapshots/`：构建、检查、契约与回归资料。
 
-## 参与贡献
-
-参见 [CONTRIBUTING.md](CONTRIBUTING.zh.md)。
-
-## 开发
-
-请先阅读[开发指南](docs/development.zh.md)与[架构文档](docs/architecture.zh.md)。
-
-面向 agent：请遵循 [AGENTS.md](AGENTS.md)。
-
-## 许可证
-
-[MIT](LICENSE)
-
-第三方依赖及其许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+本次迁移保留既有私有仓库历史，并以普通提交引入新的源码树；来源见 [迁移记录](MIGRATION.md)。发布使用本仓版本和提交生成 Workbench 产物，兼容的 Weave MCP/API 基线单独记录。保留 [MIT 许可证](LICENSE) 与 [第三方声明](THIRD_PARTY_NOTICES.md)。

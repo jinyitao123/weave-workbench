@@ -3,7 +3,7 @@ import { Modal } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
-import type { ProjectActivityKey } from './project-activity-locales.ts'
+import { zh, type ProjectActivityKey } from './project-activity-locales.ts'
 import { latestProjectMessage, projectActivityModel } from './project-activity.ts'
 import { workTaskFactsStale, workTaskHasFinalDeliverable } from './work-task-model.ts'
 import type { WorkTaskMemberStatus, WorkTaskProjection } from './work-task-model.ts'
@@ -17,11 +17,14 @@ type ProjectActivityProps = PropsRuntime<'sidebar.workspaces.projectActivity'>
   & PropsLocale<'projectActivity'> & InjectFace<ProjectActivityInjected>
 
 const MEMBER_STATUS: Record<WorkTaskMemberStatus, ProjectActivityKey> = {
+  waiting: 'waiting',
   pending: 'memberPending', running: 'memberRunning', 'partially-completed': 'memberPartial',
   completed: 'memberCompleted', failed: 'memberFailed', stopped: 'memberStopped', 'not-recorded': 'memberUnknown',
 }
 
 function statusKey(task: WorkTaskProjection): ProjectActivityKey {
+  const key = `task.state.${task.displayState ?? ''}`
+  if (Object.hasOwn(zh, key)) return key as ProjectActivityKey
   if (task.actionError === 'stop_unconfirmed') return 'stopUnconfirmed'
   if (task.status === 'completed' && !workTaskHasFinalDeliverable(task)) return 'missingOutput'
   return task.status === 'failed' ? 'failedStatus' : task.status

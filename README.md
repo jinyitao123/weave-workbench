@@ -1,63 +1,40 @@
-# DeepSeek Harness
+# Weave Workbench
 
-English | [中文](README.zh.md)
+English | [简体中文](README.zh.md)
 
-DeepSeek Harness (`dsh`) is an open-source agent harness developed by [DeepSeek AI](https://deepseek.com).
+Workbench is the product workspace for completing work with agent teams. This repository owns both the browser UI and the TypeScript Host for accounts, conversations, task projections and the product tool bridge. The external Weave platform owns team construction, execution scheduling and final delivery facts.
 
-It is built on an **everything-is-a-plugin** architecture and powered by [Cordis](https://github.com/cordiverse/cordis), whose design is described in [_A Programming Paradigm for Spatiotemporal Composability_](https://arxiv.org/abs/2608.25512).
+## Install and run
 
-Documentation: [https://deepseek-harness.github.io/deepseek-harness/](https://deepseek-harness.github.io/deepseek-harness/)
-
-## Developer preview
-
-DeepSeek Harness is in _developer preview_ and iterating rapidly. **THERE WILL BE COMPATIBILITY-BREAKING CHANGES.**
-
-Review the [safety notice](SAFETY.md) before running the project.
-
-## Run
-
-### Run from `npm`
-
-Install `Node.js`, then run:
+Use Node.js `^22.19.0 || >=24.0.0` and the pinned `pnpm@11.7.0`. All source dependencies are inside this repository. No adjacent Weave checkout, Go installation or parent Makefile is required.
 
 ```sh
-npx @deepseek-ai/dsh web
+pnpm install --frozen-lockfile
+pnpm run build:workbench
+pnpm workbench --host 127.0.0.1 --port 3080 --no-open
 ```
 
-The command starts the Web UI at `http://127.0.0.1:3080` by default and opens it in the default browser for a local launch. An SSH launch only prints the host URL because the SSH client or editor owns the local forwarded address. Pass `--no-open` to run the server without opening a browser. See [Web UI guide](docs/user/guide/index.md).
+Operators supply `WEAVE_API_URL`, a trusted `WEAVE_COMMAND`, and the Host service credential `WEAVE_API_KEY`. The MCP command is a separately delivered, platform-compatible `weave mcp serve` executable; select it through PATH or an explicit executable path. The macOS launcher also supports the existing Keychain service. Users sign in through the browser. User bearer tokens never enter browser storage, and request bodies cannot declare identity.
 
-### Run from source
+Members create personal tasks without selecting a directory; the Host assigns their account a private work directory. Administrators manage shared projects and Host settings. A disconnected platform or missing foreground model remains an explicit setup gap. Logging out or restarting the Host invalidates in-memory user authorization.
 
-To run from a repository checkout:
+Keep runtime data, credentials and caches outside source control. `deploy/compose.yaml` is a Workbench-only container example; the platform, database and execution Runtime are deployed separately. Mount a compatible Linux MCP executable read-only. The image does not copy programs from a parent checkout or platform image.
+
+## Develop and verify
 
 ```sh
-git clone https://github.com/deepseek-ai/deepseek-harness.git
-cd deepseek-harness
-pnpm install
-pnpm run build
-pnpm dsh web
+pnpm run check:workbench
 ```
 
-`pnpm run build` prepares the repository artifacts. `pnpm dsh web` uses those built artifacts without rebuilding.
+This gate builds Host and Client types, bundles browser artifacts, checks runtime closure and UI dependencies/copy, and runs the shipped product profile, account/session isolation Host tests and the complete GUI suite. It needs no real model credential. Business delivery acceptance still requires real browser use, identities and models; tests or health responses are not business acceptance.
 
-## Community and support
+`pnpm run build` defaults to Workbench. Retained general runtime packages, compatibility names and historical test material do not establish a separate DSH product or release channel. See the [Weave integration boundary](docs/weave-integration.md) and repository [agent guide](AGENTS.md).
 
-- Submit feedback or bug reports through [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions).
-- Add the [`dsh-plugin`](https://github.com/topics/dsh-plugin) topic to your plugin repository for discoverability.
-- Join <a href="https://discord.gg/Ycq5dCaS4">DeepSeek Harness Discord community</a>.
+## Source and release
 
-## Contributing
+- `apps/`: browser application, supported launcher and desktop preview.
+- `packages/`: complete interaction Host, account/session services, tools and UI.
+- `vendor/`, `native/`, `patches/`: framework source, native isolation and dependency patches required by builds.
+- `scripts/`, `snapshots/`: build gates, contracts and regression material.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Development
-
-Start with the [development guide](docs/development.md) and [architecture documentation](docs/architecture.md).
-
-For agents, follow [AGENTS.md](AGENTS.md).
-
-## License
-
-[MIT](LICENSE)
-
-Third-party dependencies and their licenses are disclosed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+The migration preserves this private repository's existing Git history and imports the new tree through a normal commit. [MIGRATION.md](MIGRATION.md) records its exact source. Workbench artifacts use this repository's version and commit; the compatible Weave MCP/API baseline is recorded separately. The [MIT license](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md) are retained.

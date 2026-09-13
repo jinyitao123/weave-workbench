@@ -1,0 +1,27 @@
+services:
+  workbench:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        DSH_CLIENT_COMMIT_HASH: ${WORKBENCH_BUILD_COMMIT:?set the Workbench source commit}
+        DSH_CLIENT_VERSION: ${WORKBENCH_VERSION:?set the Workbench version}
+    environment:
+      DSH_HOME: /data/dsh
+      WEAVE_API_URL: ${WEAVE_API_URL:?set the version-compatible Weave API URL}
+      WEAVE_API_KEY: ${WEAVE_API_KEY:?set the Host service credential}
+      WEAVE_COMMAND: /opt/weave/weave
+    volumes:
+      - ${WORKBENCH_DATA_PATH:-../data/workbench}:/data/dsh
+      - ${WEAVE_MCP_BINARY:?set a compatible Linux MCP executable path}:/opt/weave/weave:ro
+    command: ["--host", "127.0.0.1", "--port", "3080", "--trusted-host", "${WORKBENCH_PUBLIC_AUTHORITY:-127.0.0.1:3080}", "--no-open"]
+    ports:
+      - ${WORKBENCH_BIND_ADDRESS:-127.0.0.1}:${WORKBENCH_PORT:-3080}:3081
+    restart: unless-stopped
+  gateway:
+    image: nginx:alpine
+    network_mode: service:workbench
+    volumes:
+      - ./workbench.nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on: [workbench]
+    restart: unless-stopped

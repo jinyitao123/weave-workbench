@@ -4,6 +4,8 @@ import { SlotRegistry } from '@deepseek-ai/dsh-client-ui-renderer/client'
 import { apply, inject } from '../src/client/index.ts'
 import { DeliverableRow } from '../src/client/DeliverableRow.tsx'
 import { RuntimeSettingsSection } from '../src/client/RuntimeCenter.tsx'
+import { ApplicationSettingsSection } from '../src/client/ApplicationCenter.tsx'
+import { CapabilityOperationsSettingsSection } from '../src/client/CapabilityOperationsCenter.tsx'
 import { TeamListRow } from '../src/client/TeamListRow.tsx'
 import { WorkTaskConversationCard, WorkTaskHeader, WorkTaskPanel } from '../src/client/WorkTaskPanel.tsx'
 import type { InputTriggerSource } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
@@ -23,6 +25,7 @@ describe('ui-weave browser plugin', () => {
         'sidebar.workspaces.projectActivity': { kind: 'single', scope: 'root' },
         'sidebar.footer.action': { kind: 'list', scope: 'root' },
         'settings.section': { kind: 'list', scope: 'root' },
+        'shell.overlay': { kind: 'list', scope: 'root' },
         'conversation.chat.commandview': { kind: 'keyed', scope: 'session' },
       },
     } as never, () => null)
@@ -60,7 +63,7 @@ describe('ui-weave browser plugin', () => {
       selectTeam(teamId: string, teamName: string): Promise<void>
     })('session-1')
     await teamInjected.selectTeam('team-1', '日冕推演团队')
-    expect(send).toHaveBeenCalledWith(expect.stringContaining('team-1'))
+    expect(send).toHaveBeenCalledWith(expect.stringContaining('team-1'), 'ui-control')
     expect(entries[1]?.options).toMatchObject({ key: 'mcp__weave__deliverable_get' })
     expect(entries[1]?.locale).toBe('weave')
     expect(entries[1]?.component).toBe(DeliverableRow)
@@ -74,9 +77,14 @@ describe('ui-weave browser plugin', () => {
     expect(slots.entries('conversation.input.dock')[0]?.component).toBe(WorkTaskConversationCard)
     expect(slots.entries('sidebar.footer.action')).toHaveLength(0)
     const settings = slots.entries('settings.section')
-    expect(settings).toHaveLength(1)
+    expect(settings).toHaveLength(3)
     expect(settings[0]?.options).toMatchObject({ id: 'weave-runtimes', order: -20 })
     expect(settings[0]?.component).toBe(RuntimeSettingsSection)
+    expect(settings[1]?.options).toMatchObject({ id: 'weave-capability-operations', order: -10 })
+    expect(settings[1]?.component).toBe(CapabilityOperationsSettingsSection)
+    expect(settings[2]?.options).toMatchObject({ id: 'weave-capability-apps', order: -5 })
+    expect(settings[2]?.component).toBe(ApplicationSettingsSection)
+    expect(slots.entries('shell.overlay')).toHaveLength(0)
     const commands = slots.entries('conversation.chat.commandview')
     expect(commands).toHaveLength(6)
     expect(commands.map(entry => entry.options.key)).toEqual([
@@ -93,6 +101,10 @@ describe('ui-weave browser plugin', () => {
       rerun(runId: string, brief: string): Promise<string | null>
       retryStage(runId: string, nodeId: string): Promise<string | null>
       beginMemberAdjustment(member: WorkTaskMemberReference): Promise<void>
+      selectTeam(teamId: string, teamName: string): Promise<void>
+      requestDelivery(): Promise<void>
+      assessOutcome(runId: string, deliveryRevisionId: string, outcome: 'adopted' | 'needs-revision', note: string): Promise<string | null>
+      recheckDelivery(runId: string, deliveryRevisionId: string, contractDigest: string): Promise<string | null>
     })('session-1', { selectTab, showOutput })
     await expect(injected.stopRun('run-1')).resolves.toBeNull()
     await expect(injected.rerun('run-1', 'revised brief')).resolves.toBeNull()
@@ -129,6 +141,18 @@ describe('ui-weave browser plugin', () => {
       { sessionId: 'session-1', action: 'rerun', runId: 'run-1', brief: 'revised brief' },
       { sessionId: 'session-1', action: 'stage-retry', runId: 'run-1', nodeId: 'physics' },
     ])
+    await expect(injected.assessOutcome('run-1', 'revision-shown', 'adopted', '可用')).resolves.toBeNull()
+    expect(JSON.parse(fetcher.mock.calls.at(-1)?.[1]?.body as string)).toEqual({
+      sessionId: 'session-1', action: 'assess', runId: 'run-1', deliveryRevisionId: 'revision-shown', outcome: 'adopted', note: '可用',
+    })
+    await expect(injected.recheckDelivery('run-1', 'revision-shown', 'contract-shown')).resolves.toBeNull()
+    expect(JSON.parse(fetcher.mock.calls.at(-1)?.[1]?.body as string)).toEqual({
+      sessionId: 'session-1', action: 'recheck', runId: 'run-1', deliveryRevisionId: 'revision-shown', contractDigest: 'contract-shown',
+    })
+    await injected.selectTeam('team-2', '复核团队')
+    expect(send).toHaveBeenLastCalledWith(expect.stringContaining('team-2'), 'ui-control')
+    await injected.requestDelivery()
+    expect(send).toHaveBeenLastCalledWith(expect.stringContaining('不要重跑这次任务'), 'ui-control')
     expect(dictionaries).toHaveLength(2)
     const project = slots.entries('sidebar.workspaces.projectActivity')
     expect(project).toHaveLength(1)

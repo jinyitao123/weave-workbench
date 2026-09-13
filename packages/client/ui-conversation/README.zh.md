@@ -11,6 +11,8 @@ kind: "package-reference"
 
 `ui-conversation` 拥有与 target 无关的 Conversation 组装和共享浏览器 shell。它消费 Session Controller 的 `SessionEventLikeEntry` feed，通过 `ctx.uiConversation` 暴露不依赖 React 的 registry 与逐 Session binding，并通过 `ctx.uiSession` 提供 `useConversation`、`useInput` 和 `inputActions` 标准 props。它还拥有按会话的持久化图片 URL 缓存：`ctx.uiConversation.imageUrl(sessionId, attachment)` 为每个附件解析一个经会话授权的浏览器 URL，并随 Session binding 释放而撤销，因此所有 Conversation target 共享一次 `session.attachment` 读取。Chat 等具体 target 位于独立 package，由各自 package 注册 Definition、snapshot builder、View 和 renderer。
 
+没有 Host 管理权限的成员可直接从空白页新建个人任务，无需选择共享项目；已有个人会话未归入 Workspace 时仍可输入。管理员保留共享项目选择器。创建命令由产品提供，Host 负责归属校验。
+
 ## 目录
 
 - [Conversation 组装](#conversation-assembly)
@@ -33,6 +35,10 @@ target package 通过 declaration merge 扩展 snapshot 与 Location data map，
 
 <a id="shell-and-standard-props"></a>
 ## Shell 与标准 props
+
+浏览器与桌面共用中性欢迎画布和紧凑的输入框轮廓。
+
+Workbench 在同一行头部呈现会话标题与任务导航操作。当前标题截断时，悬停可查看完整文字。输入框上方的任务区随会话内容正常滚动，只有输入区保持吸附。
 
 Workbench 以本地化业务标签呈现标准只读和项目文件写入模式。标签不改变权限值、命令派发或完全访问确认机制。权限命令被拒绝或中断时，保留已记录模式并明确提示操作失败。
 
@@ -94,7 +100,6 @@ try {
 
 selector 必须是 owner currency 的纯函数。非 null 返回值作为 `matched` 传给组件；`PropsRuntime<'conversation.composer'>` 提供标准 Session 与 global props。Chain 顺序仍按 `priority` 升序，再按注册顺序；首个返回非 null 的 selector 获选。Shell 会在 takeover 下保持默认 composer 挂载。Request 状态、listener、response encoding 和任何 request-specific child slot 都属于业务 package，不进入 `SessionSnapshot`，也不由 core package 声明。
 
-在 Workbench 中，任务标题与会话记录位于顶栏第一行，实时任务操作位于第二行，展开工作现场时标题仍保持可见。
 
 <a id="model-experience"></a>
 

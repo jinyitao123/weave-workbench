@@ -12,7 +12,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
-import { useSyncExternalStore } from 'react'
+import { useLayoutEffect, useSyncExternalStore } from 'react'
 import { AppFrame } from '@deepseek-ai/dsh-client-ui-layout/src/client/AppFrame.tsx'
 import type { AppFrameProps } from '@deepseek-ai/dsh-client-ui-layout/src/client/AppFrame.tsx'
 import { SIDEBAR_COLLAPSED } from '@deepseek-ai/dsh-client-ui-layout/src/client/columns.ts'
@@ -54,12 +54,18 @@ function hookOf<T>(inst: { subscribe: (fn: () => void) => () => void; getSnapsho
   return function useSelector<S>(sel: (s: T) => S): S { return sel(useSyncExternalStore(inst.subscribe, inst.getSnapshot)) }
 }
 
-function mountFrame() {
+function AccessStub({ onAccessChange, allowed }: { onAccessChange: (identity: string | null) => void; allowed: boolean }) {
+  useLayoutEffect(() => { onAccessChange(allowed ? 'test-user' : null) }, [onAccessChange, allowed])
+  return null
+}
+
+function mountFrame(allowAccess = true) {
   window.innerWidth = frameWidth // first-render viewport source before the observer fires
   const instance = createLayoutStore().create()
   const slotCalls: { key: string; props: unknown }[] = []
   const renderSlot = ((key: string, owner: object) => {
     slotCalls.push({ key, props: owner })
+    if (key === 'shell.access') return <AccessStub {...owner as { onAccessChange: (identity: string | null) => void }} allowed={allowAccess} />
     if (key === 'sidebar') return <div data-testid="sidebar-content" />
     if (key === 'conversation') return <div data-testid="center-content" />
     if (key === 'details') return <div data-testid="details-content" />
@@ -178,11 +184,11 @@ describe('AppFrame', () => {
     const { frame, instance, getByRole, getByTestId } = mountFrame()
     const conversation = getByTestId('center-content')
     act(() => { instance.actions.openDetails() })
-    fireEvent.keyDown(getByRole('separator', { name: 'layout.resizeDetails' }), { key: 'ArrowLeft' })
-    expect(tracks(frame)).toEqual([280, 624])
-    expect(instance.store.getSnapshot().detailsWidth).toBe(624)
+    fireEvent.keyDown(getByRole('separator', { name: 'layout.resizeDetails' }), { key: 'ArrowRight' })
+    expect(tracks(frame)).toEqual([280, 556])
+    expect(instance.store.getSnapshot().detailsWidth).toBe(556)
     const separator = getByRole('separator', { name: 'layout.resizeDetails' })
-    expect(separator.getAttribute('aria-valuenow')).toBe('624')
+    expect(separator.getAttribute('aria-valuenow')).toBe('556')
     expect(separator.getAttribute('aria-valuemin')).toBe('0')
     expect(separator.getAttribute('aria-valuemax')).toBe('1280')
     expect(frame.dataset.dragging).toBeUndefined()
@@ -207,11 +213,11 @@ describe('AppFrame', () => {
     const { frame, instance, getByTestId, rerenderFrame } = mountFrame()
     const conversation = getByTestId('center-content')
     act(() => { instance.actions.openDetails() })
-    expect(tracks(frame)).toEqual([280, 600])
+    expect(tracks(frame)).toEqual([280, 580])
     expect(frame.dataset.detailsFocus).toBeUndefined()
     frameWidth = 1000
     act(() => { fireResize?.(); vi.advanceTimersByTime(20) })
-    expect(tracks(frame)).toEqual([56, 566])
+    expect(tracks(frame)).toEqual([56, 524])
     expect(frame.dataset.sidebarCollapsed).toBe('true')
     frameWidth = 700
     act(() => { fireResize?.(); vi.advanceTimersByTime(20) })
@@ -524,5 +530,17 @@ describe('AppFrame — unmount with an in-flight resize frame', () => {
     frameWidth = 1250
     act(() => { fireResize?.(); fireResize?.(); vi.advanceTimersByTime(20) })
     expect(tracks(frame)).toEqual([280, 330])
+  })
+})
+
+
+describe('Workbench account access', () => {
+  it('does not mount or render business slots before access is granted', () => {
+    vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'workbench')
+    const ui = mountFrame(false)
+    expect(ui.queryByTestId('sidebar-content')).toBeNull()
+    expect(ui.queryByTestId('center-content')).toBeNull()
+    expect(ui.queryByTestId('details-content')).toBeNull()
+    expect(ui.slotCalls.map(call => call.key)).toEqual(['shell.access'])
   })
 })

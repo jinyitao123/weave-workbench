@@ -1,20 +1,20 @@
 // @vitest-environment jsdom
 
 import { useSyncExternalStore } from 'react'
-import { cleanup, fireEvent, render, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
 import type { ChatConversationViewNode } from '@deepseek-ai/dsh-client-ui-chat/client'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
 import { WorkTaskConversationCard, WorkTaskHeader, WorkTaskPanel } from '../src/client/WorkTaskPanel.tsx'
-import { workTaskModel, type WorkTaskProjection } from '../src/client/work-task-model.ts'
+import { workTaskModel, type WorkTaskDelivery, type WorkTaskProjection } from '../src/client/work-task-model.ts'
 import { createWorkTaskViewStore } from '../src/client/view-store.ts'
 import { zh } from '../src/client/locales.ts'
 
 const t = makeTranslate(zh, commonZh)
 let viewStore = createWorkTaskViewStore().create('test')
 beforeEach(() => { Element.prototype.scrollIntoView = vi.fn(); localStorage.clear(); viewStore = createWorkTaskViewStore().create('test') })
-afterEach(cleanup)
+afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
 function task(overrides: Partial<WorkTaskProjection> = {}): WorkTaskProjection {
   return {
@@ -53,6 +53,319 @@ function recordedTool(name: string, value: unknown, seq: number): ChatConversati
 }
 
 describe('Workbench recovery and delivery facts', () => {
+  const output = { id: 'final', title: '最终报告.md', kind: 'summary' as const, contentType: 'text/markdown', content: 'PASS，全部要求均已满足。', preview: '', truncated: false, createdAt: '' }
+  const delivery: WorkTaskDelivery = { revisionId: 'revision-1', contractDigest: 'contract-1', verificationId: 'verification-1', verificationStatus: 'passed', reason: '',
+    checks: [{ checkId: 'required-file', status: 'passed', reason: 'Recorded file content matches.' }], checkCounts: { passed: 1 }, available: true, evidenceCompleteness: 'complete' }
+
+  it.each([
+    ['pending', '等待核验'], ['passed', '核验通过'], ['failed', '核验未通过'], ['unknown', '尚无法确认'],
+  ] as const)('keeps successful execution and user adoption separate from %s verification', (verificationStatus, label) => {
+    const projection = task({ status: 'completed', waitKind: '', members: [], deliverables: [output], delivery: { ...delivery, verificationStatus,
+      checks: [{ checkId: 'required-file', status: verificationStatus, reason: 'Recorded file content matches.' }] }, outcome: 'adopted', outcomeRevisionId: delivery.revisionId, outcomeNote: '我已核对用途' })
+    const view = render(<WorkTaskPanel {...props(projection)} />)
+    const states = within(view.getByRole('region', { name: '执行、交付核验与用户评价' }))
+    expect(states.getByText('已完成')).toBeTruthy()
+    expect(states.getByText('可以采用')).toBeTruthy()
+    expect(states.getByText(label, { selector: 'dd' })).toBeTruthy()
+    fireEvent.click(states.getByText('查看核验记录 · 1 项检查'))
+    expect(states.getAllByText(label)).toHaveLength(2)
+    expect(states.getByText('Recorded file content matches.')).toBeTruthy()
+    expect(states.getByText('交付版本 revision-1')).toBeTruthy()
+    expect(states.getByText('已记录的评价意见：我已核对用途')).toBeTruthy()
+  })
+
+  it('explains a mechanical mismatch using the published requirement and actual values', () => {
+    const projection = task({ status: 'completed', waitKind: '', members: [], delivery: { ...delivery, verificationStatus: 'failed',
+      checks: [{ checkId: 'internal-total-rule', title: '总额应等于原始明细合计', status: 'failed', reason: 'deterministic_mismatch', actual: '294', expected: '295' }] } })
+    const view = render(<WorkTaskPanel {...props(projection)} />)
+    const states = within(view.getByRole('region', { name: '执行、交付核验与用户评价' }))
+    fireEvent.click(states.getByText('查看核验记录 · 1 项检查'))
+    expect(states.getByText('总额应等于原始明细合计')).toBeTruthy()
+    expect(states.getByText('最终成果与已约定的要求不一致。')).toBeTruthy()
+    expect(states.getByText('实际结果：294')).toBeTruthy()
+    expect(states.getByText('要求结果：295')).toBeTruthy()
+    expect(states.queryByText('internal-total-rule')).toBeNull()
+    expect(states.queryByText('deterministic_mismatch')).toBeNull()
+  })
+
+  it('keeps PASS prose readable while legacy assessment remains unavailable', async () => {
+    viewStore.actions.selectTab('run-1', 'outputs')
+    const assessOutcome = vi.fn()
+    const view = render(<WorkTaskPanel {...props(task({ status: 'completed', waitKind: '', members: [], deliverables: [output], outcome: 'adopted' }))} assessOutcome={assessOutcome} />)
+    const states = view.getByRole('region', { name: '执行、交付核验与用户评价' })
+    expect(states.textContent).toMatchInlineSnapshot('"执行状态已完成交付核验尚无法确认用户评价尚未评价成果可以打开不代表交付已通过核验。核验依据已记录的检查，正文中的 PASS 等结论不作为核验依据。尚未取得交付核验记录，无法确认是否满足交付要求。查看核验记录 · 0 项检查核验证据尚未完整取得。尚未记录可供查看的检查。"')
+    expect(within(states).getByText('尚未评价')).toBeTruthy()
+    fireEvent.click(within(view.getByRole('tabpanel', { name: '成果' })).getByText('最终报告.md'))
+    expect(await view.findByText('PASS，全部要求均已满足。')).toBeTruthy()
+    fireEvent.click(view.getByText('这份交付可以采用吗'))
+    expect(view.getByText('这份成果没有可识别的交付版本，暂不能记录评价。已有内容仍可阅读。')).toBeTruthy()
+    const adopt = view.getByRole('button', { name: '可以采用' }) as HTMLButtonElement
+    expect(adopt.disabled).toBe(true)
+    fireEvent.click(adopt)
+    expect(assessOutcome).not.toHaveBeenCalled()
+  })
+
+  it('submits the displayed revision and keeps a later revision free of the prior assessment', async () => {
+    viewStore.actions.selectTab('run-1', 'outputs')
+    let resolveAssessment!: (error: string | null) => void
+    const assessOutcome = vi.fn(() => new Promise<string | null>((resolve) => { resolveAssessment = resolve }))
+    const initial = task({ status: 'completed', waitKind: '', members: [], deliverables: [output], delivery })
+    const view = render(<WorkTaskPanel {...props(initial)} assessOutcome={assessOutcome} />)
+    fireEvent.click(view.getByText('这份交付可以采用吗'))
+    fireEvent.change(view.getByRole('textbox'), { target: { value: ' 此版本可用 ' } })
+    fireEvent.click(view.getByRole('button', { name: '可以采用' }))
+    expect(assessOutcome).toHaveBeenCalledWith('run-1', 'revision-1', 'adopted', '此版本可用')
+    view.rerender(<WorkTaskPanel {...props({ ...initial, delivery: { ...delivery, revisionId: 'revision-2' } })} assessOutcome={assessOutcome} />)
+    await act(async () => { resolveAssessment('交付版本已经变化，请刷新后重试。') })
+    expect(within(view.getByRole('tabpanel', { name: '成果' })).getByRole('alert').textContent).toBe('交付版本已经变化，请刷新后重试。')
+    expect((view.getByRole('textbox') as HTMLTextAreaElement).value).toBe('')
+    expect(assessOutcome).toHaveBeenCalledTimes(1)
+    expect(within(view.getByRole('region', { name: '执行、交付核验与用户评价' })).getByText('尚未评价')).toBeTruthy()
+  })
+
+  it('shows a same-revision reassessment without converting user judgment into verification', () => {
+    const projection = task({ status: 'completed', waitKind: '', members: [], deliverables: [output], delivery, outcome: 'adopted', outcomeRevisionId: delivery.revisionId })
+    const view = render(<WorkTaskConversationCard {...props(projection) as unknown as Parameters<typeof WorkTaskConversationCard>[0]} />)
+    view.rerender(<WorkTaskConversationCard {...props({ ...projection, delivery: { ...delivery, verificationId: 'verification-2', verificationStatus: 'failed' } }) as unknown as Parameters<typeof WorkTaskConversationCard>[0]} />)
+    const states = view.getByRole('region', { name: '执行、交付核验与用户评价' })
+    expect(states.textContent).toMatchInlineSnapshot('"执行状态已完成交付核验核验未通过用户评价可以采用"')
+    view.rerender(<WorkTaskConversationCard {...props({ ...projection, delivery: { ...delivery, revisionId: 'revision-2' } }) as unknown as Parameters<typeof WorkTaskConversationCard>[0]} />)
+    expect(within(view.getByRole('region', { name: '执行、交付核验与用户评价' })).getByText('尚未评价')).toBeTruthy()
+  })
+
+  it.each([null, '交付版本已经变化，请刷新后重试。'])('rechecks the displayed revision without rerunning members: %s', async (error) => {
+    let resolveRecheck!: (result: string | null) => void
+    const recheckDelivery = vi.fn(() => new Promise<string | null>((resolve) => { resolveRecheck = resolve }))
+    const rerun = vi.fn()
+    const projection = task({ status: 'completed', waitKind: '', members: [], deliverables: [output], delivery: { ...delivery, verificationStatus: 'unknown' } })
+    const view = render(<WorkTaskPanel {...props(projection)} rerun={rerun} recheckDelivery={recheckDelivery} />)
+    fireEvent.click(view.getByText('查看核验记录 · 1 项检查'))
+    expect(view.getByText('只对已保存成果重新执行已登记的检查，不重跑成员。尚未支持的检查不会因此自动补齐。')).toBeTruthy()
+    fireEvent.click(view.getByRole('button', { name: '重新核验' }))
+    expect(recheckDelivery).toHaveBeenCalledWith('run-1', 'revision-1', 'contract-1')
+    expect((view.getByRole('button', { name: '正在核验' }) as HTMLButtonElement).disabled).toBe(true)
+    view.rerender(<WorkTaskPanel {...props({ ...projection, delivery: { ...projection.delivery!, revisionId: 'revision-2', contractDigest: 'contract-2' } })} rerun={rerun} recheckDelivery={recheckDelivery} />)
+    await act(async () => { resolveRecheck(error) })
+    expect(recheckDelivery).toHaveBeenCalledTimes(1)
+    expect(rerun).not.toHaveBeenCalled()
+    const states = within(view.getByRole('region', { name: '执行、交付核验与用户评价' }))
+    expect(states.getByText('尚无法确认', { selector: 'dd' })).toBeTruthy()
+    if (error !== null) expect(states.getByRole('alert').textContent).toBe(error)
+    else expect(states.queryByRole('alert')).toBeNull()
+  })
+
+  it.each([undefined, { ...delivery, revisionId: '' }, { ...delivery, contractDigest: '' }, { ...delivery, available: false }])('disables rechecking when saved evidence is unavailable', (savedDelivery) => {
+    const recheckDelivery = vi.fn()
+    const view = render(<WorkTaskPanel {...props(task({ status: 'completed', waitKind: '', members: [], deliverables: [output], delivery: savedDelivery }))} recheckDelivery={recheckDelivery} />)
+    fireEvent.click(view.getByText(/查看核验记录/u))
+    expect(view.getByText('缺少交付版本或对应要求，暂不能重新核验。')).toBeTruthy()
+    const button = view.getByRole('button', { name: '重新核验' }) as HTMLButtonElement
+    expect(button.disabled).toBe(true)
+    fireEvent.click(button)
+    expect(recheckDelivery).not.toHaveBeenCalled()
+  })
+
+  it('indexes completed outputs, recorded input references, and members without mixing stage files into the overview', () => {
+    const member = task().members[0]!
+    const input = { name: '任务材料', path: '/inputs/brief.md', source: 'file', nodeId: '', expectedType: 'text', summary: '' }
+    const projection = task({ status: 'completed', waitKind: '', brief: '核实三条路线', members: [{ ...member, status: 'completed', stages: [{ ...member.stages[0]!, inputs: [input, input] }] }],
+      deliverables: [
+        { id: 'final', title: '报告.md', kind: 'final', contentType: 'text/markdown', content: '正文', preview: '', truncated: false, createdAt: '' },
+        { id: 'stage', title: '草稿.md', kind: 'stage', contentType: 'text/markdown', content: '草稿', preview: '', truncated: false, createdAt: '' },
+        { id: 'code', title: '辅助.py', kind: 'final', contentType: 'text/plain', content: '', preview: '', truncated: false, createdAt: '' },
+        { id: 'web', title: '应用.html', kind: 'final', contentType: 'text/html', content: '', preview: '', truncated: false, createdAt: '' },
+        { id: 'drawing', title: '示意.svg', kind: 'final', contentType: 'image/svg+xml', content: '', preview: '', truncated: false, createdAt: '' },
+      ] })
+    const view = render(<WorkTaskPanel {...props(projection)} />)
+    const overview = within(view.getByRole('tabpanel', { name: '总览' }))
+    expect(overview.queryByText('草稿.md')).toBeNull()
+    expect(overview.getAllByRole('button').slice(0, 3).map(button => button.textContent)).toEqual(['应用.html', '示意.svg', '报告.md'])
+    expect(overview.getByText('输入引用 · 1')).toBeTruthy()
+    expect(overview.getAllByText('/inputs/brief.md')).toHaveLength(1)
+    expect(overview.getAllByRole('heading').map(heading => heading.textContent)).toMatchInlineSnapshot(`
+      [
+        "输出内容",
+        "团队成员",
+        "来源",
+      ]
+    `)
+    act(() => { viewStore.actions.rememberReading('scene:run-1:progress:', { top: 900, follow: false, lastEvent: '' }) })
+    fireEvent.click(overview.getByRole('button', { name: '1 / 1 位已完成' }))
+    expect(viewStore.getSnapshot().reading['scene:run-1:progress:']?.top).toBe(0)
+    expect(view.getByRole('tab', { name: '进展' }).getAttribute('aria-selected')).toBe('true')
+    expect(view.getByRole('button', { name: '查看 复核员 的工作' })).toBeTruthy()
+    fireEvent.click(view.getByRole('tab', { name: '总览' }))
+    fireEvent.click(overview.getByRole('button', { name: '报告.md' }))
+    expect(viewStore.getSnapshot().outputSelection['run-1']?.id).toBe('final')
+    expect(view.getByRole('tab', { name: '成果' }).getAttribute('aria-selected')).toBe('true')
+  })
+
+  it('finds stage files by name and clears a conflicting filter when an exact output link arrives', async () => {
+    const deliverables = Array.from({ length: 6 }, (_, index) => ({ id: `file-${index}`, title: `File-${index}.md`, kind: index < 2 ? 'final' as const : 'stage' as const,
+      contentType: 'text/markdown', content: `Body ${index}`, preview: '', truncated: false, createdAt: '' }))
+    viewStore.actions.selectTab('run-1', 'outputs')
+    const view = render(<WorkTaskPanel {...props(task({ status: 'completed', waitKind: '', deliverables }))} />)
+    const outputs = within(view.getByRole('tabpanel', { name: '成果' }))
+    const search = outputs.getByRole('searchbox', { name: '查找文件名称' })
+    fireEvent.change(search, { target: { value: 'file-5' } })
+    expect(outputs.getByText('File-5.md')).toBeTruthy()
+    expect(outputs.queryByText('File-0.md')).toBeNull()
+    fireEvent.change(search, { target: { value: 'absent' } })
+    expect(outputs.getByRole('status').textContent).toBe('没有匹配的文件，试试其他名称。')
+    act(() => { viewStore.actions.showOutput('run-1', 'file-4') })
+    await waitFor(() => { expect((search as HTMLInputElement).value).toBe('') })
+    await waitFor(() => { expect(document.activeElement?.textContent).toContain('File-4.md') })
+    expect(outputs.getByText('File-4.md').closest('details')?.open).toBe(true)
+  })
+
+  it('keeps tab focus, selected member, preview zoom, and outer reading position across tab changes', async () => {
+    const image = { id: 'drawing', title: '流程.svg', kind: 'final' as const, contentType: 'image/svg+xml', content: '<svg/>', preview: '', truncated: false, createdAt: '' }
+    const view = render(<div style={{ overflowY: 'auto', height: 500 }}><WorkTaskPanel {...props(task({ deliverables: [image] }))} /></div>)
+    const scroller = view.container.firstElementChild as HTMLElement
+    fireEvent.click(view.getByRole('button', { name: '查看 复核员 的工作' }))
+    const progress = view.getByRole('tab', { name: '进展' })
+    const outputs = view.getByRole('tab', { name: '成果' })
+    scroller.scrollTop = 345
+    progress.focus()
+    fireEvent.keyDown(progress, { key: 'ArrowRight' })
+    expect(document.activeElement).toBe(outputs)
+    expect(scroller.scrollTop).toBe(0)
+    fireEvent.click(within(view.getByRole('tabpanel', { name: '成果' })).getByText('流程.svg'))
+    const imageElement = await view.findByRole('img', { name: '流程.svg' })
+    fireEvent.load(imageElement)
+    fireEvent.click(view.getByRole('button', { name: '放大图纸' }))
+    expect(view.getByText('125%')).toBeTruthy()
+    const disclosure = imageElement.closest('details')!
+    fireEvent.click(disclosure.querySelector('summary')!)
+    await waitFor(() => { expect(disclosure.open).toBe(false) })
+    fireEvent.click(disclosure.querySelector('summary')!)
+    await waitFor(() => { expect(disclosure.open).toBe(true) })
+    expect(view.getByRole('img', { name: '流程.svg' })).toBe(imageElement)
+    expect(view.getByText('125%')).toBeTruthy()
+    outputs.focus()
+    fireEvent.keyDown(outputs, { key: 'ArrowLeft' })
+    expect(document.activeElement).toBe(progress)
+    expect(scroller.scrollTop).toBe(345)
+    expect(view.getByRole('heading', { name: '复核员' })).toBeTruthy()
+    fireEvent.keyDown(progress, { key: 'ArrowRight' })
+    expect(view.getByText('125%')).toBeTruthy()
+  })
+
+  it('consumes an output deep link once so returning to Outputs keeps tab focus', async () => {
+    const output = { id: 'final', title: '最终稿', kind: 'final' as const, contentType: 'text/plain', content: '正文', preview: '', truncated: false, createdAt: '' }
+    viewStore.actions.showOutput('run-1', 'final')
+    const view = render(<WorkTaskPanel {...props(task({ deliverables: [output] }))} />)
+    await waitFor(() => { expect(document.activeElement?.tagName).toBe('SUMMARY') })
+    const progress = view.getByRole('tab', { name: '进展' })
+    const outputs = view.getByRole('tab', { name: '成果' })
+    fireEvent.click(progress)
+    progress.focus()
+    fireEvent.keyDown(progress, { key: 'ArrowRight' })
+    expect(document.activeElement).toBe(outputs)
+  })
+
+  it('retains the scene position when navigation arrives from the conversation receipt', () => {
+    const view = render(<div style={{ overflowY: 'auto', height: 500 }}><WorkTaskPanel {...props(task())} /></div>)
+    fireEvent.click(view.getByRole('button', { name: '查看 复核员 的工作' }))
+    const scroller = view.container.firstElementChild as HTMLElement
+    scroller.scrollTop = 480
+    fireEvent.scroll(scroller)
+    // Shared actions also serve the separately mounted conversation receipt.
+    act(() => { viewStore.actions.selectTab('run-1', 'outputs') })
+    act(() => { viewStore.actions.selectTab('run-1', 'progress') })
+    view.rerender(<div style={{ overflowY: 'auto', height: 500 }}><WorkTaskPanel {...props(task())} /></div>)
+    expect(scroller.scrollTop).toBe(480)
+  })
+
+  it('reads the known final-review response without hiding its exact original contents', async () => {
+    const body = '{"decision":"approve","comments":"保留两项待确认信息。"}'
+    const review = { id: 'review', title: '终审记录', kind: 'summary' as const, contentType: 'application/json', content: body, preview: '', truncated: false, createdAt: '' }
+    const view = render(<WorkTaskPanel {...props(task({ status: 'completed', deliverables: [review] }))} />)
+    fireEvent.click(view.getByRole('button', { name: '终审记录' }))
+    expect(await view.findByText('终审通过')).toBeTruthy()
+    expect(view.getByText('保留两项待确认信息。')).toBeTruthy()
+    const original = view.getByText('查看原始记录').closest('details')!
+    expect(original.open).toBe(false)
+    fireEvent.click(view.getByText('查看原始记录'))
+    expect(view.getByText(body)).toBeTruthy()
+    view.rerender(<WorkTaskPanel {...props(task({ status: 'completed', deliverables: [{ ...review, content: '{"decision":"approve","comments":"保留","additional":"不可丢失"}' }] }))} />)
+    expect(view.queryByText('终审通过')).toBeNull()
+    expect(view.getByText(/additional/u)).toBeTruthy()
+  })
+
+  it('waits for restored scene content to fit without saving a clamped browser offset', () => {
+    let notifyResize: () => void = () => {}
+    const disconnect = vi.fn()
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(callback: () => void) { notifyResize = callback }
+      observe = vi.fn()
+      disconnect = disconnect
+    })
+    viewStore.actions.rememberReading('scene:run-1:progress:', { top: 600, follow: false, lastEvent: '' })
+    const view = render(<div style={{ overflowY: 'auto' }} />)
+    const scroller = view.container.firstElementChild as HTMLElement
+    let available = 100
+    let top = 0
+    Object.defineProperty(scroller, 'scrollTop', { configurable: true, get: () => top, set: (value: number) => { top = Math.min(value, available) } })
+    view.rerender(<div style={{ overflowY: 'auto' }}><WorkTaskPanel {...props(task())} /></div>)
+    expect(scroller.scrollTop).toBe(100)
+    fireEvent.scroll(scroller)
+    expect(viewStore.getSnapshot().reading['scene:run-1:progress:']?.top).toBe(600)
+    available = 900
+    act(() => { notifyResize() })
+    expect(scroller.scrollTop).toBe(600)
+    expect(disconnect).toHaveBeenCalled()
+    view.unmount()
+    expect(disconnect).toHaveBeenCalledTimes(2)
+  })
+
+  it.each([
+    ['outputsMissing', '执行已结束，最终成果待核实'],
+    ['runtimeStop', '运行中断，等待原节点确认停止'],
+    ['retryable', '阶段中断，可重试'],
+  ] as const)('uses the shared %s display state in the header, conversation receipt, and progress panel', (displayState, label) => {
+    const projection = task({ displayState, status: 'running', waitKind: '', members: [] })
+    const header = render(<WorkTaskHeader {...props(projection)} />)
+    expect(header.getByText(label)).toBeTruthy()
+    header.unmount()
+    const card = render(<WorkTaskConversationCard {...props(projection) as unknown as Parameters<typeof WorkTaskConversationCard>[0]} />)
+    expect(card.getByText(label)).toBeTruthy()
+    card.unmount()
+    const panel = render(<WorkTaskPanel {...props(projection)} />)
+    expect(panel.getByText(label)).toBeTruthy()
+  })
+
+  it('keeps the reader on progress when completion and a final output arrive', () => {
+    const projection = task({ status: 'running', waitKind: '', members: [] })
+    const panel = render(<WorkTaskPanel {...props(projection)} />)
+    expect(panel.getByRole('tab', { name: '进展' }).getAttribute('aria-selected')).toBe('true')
+    panel.rerender(<WorkTaskPanel {...props(task({ ...projection, status: 'completed', deliverableCount: 1,
+      deliverables: [{ id: 'final-1', title: '核验报告', kind: 'final', contentType: 'text/plain',
+        content: '已核验', preview: '', truncated: false, createdAt: '' }] }))} />)
+    expect(panel.getByRole('tab', { name: '进展' }).getAttribute('aria-selected')).toBe('true')
+    fireEvent.click(panel.getByRole('tab', { name: /成果/u }))
+    expect(within(panel.getByRole('tabpanel', { name: '成果' })).getByText('核验报告')).toBeTruthy()
+  })
+
+  it.each([
+    ['building', 'buildBuilding', '正在创建团队'],
+    ['unknown', 'buildUnknown', '创建结果待核实'],
+    ['failed', 'buildFailed', '团队创建失败'],
+  ] as const)('shows a %s creation without invented execution progress', (state, displayState, label) => {
+    const projection = task({ runId: '', clientRequestId: '', status: 'preparing', displayState, members: [],
+      completedStages: 0, totalStages: 0, preparation: { callId: 'create-1', buildId: 'build-1', state, error: '',
+        steps: [{ id: 'check', label: '检查成员职责', status: 'running', attempt: 2 }] } })
+    const panel = render(<WorkTaskPanel {...props(projection)} />)
+    expect(panel.getByRole('heading', { name: label })).toBeTruthy()
+    expect(panel.getByText('检查成员职责')).toBeTruthy()
+    expect(panel.getByText(/第 2 次尝试/u)).toBeTruthy()
+    expect(panel.queryByRole('tab')).toBeNull()
+    expect(panel.queryByRole('progressbar')).toBeNull()
+    expect(panel.container.textContent).not.toMatch(/0\s*[/／]\s*0/u)
+    expect(panel.container.textContent).not.toContain('build-1')
+    if (state === 'unknown') expect(panel.getByText('尚未确认是否创建成功。请先核实原请求的结果，避免重复创建团队。')).toBeTruthy()
+  })
+
   it.each(['fanout', 'runtime'] as const)('explains a %s interruption until the runtime acknowledges stopping, then offers retry', async (waitKind) => {
     const member = task().members[0]!
     const pending = task({ waitKind, members: [{ ...member, stages: [{ ...member.stages[0]!, retryable: false,
@@ -66,10 +379,10 @@ describe('Workbench recovery and delivery facts', () => {
     const card = render(<WorkTaskConversationCard
       {...props(pending) as unknown as Parameters<typeof WorkTaskConversationCard>[0]} retryStage={retryStage} />)
     expect(card.getByText('等待运行节点确认停止')).toBeTruthy()
-    expect(card.getByText('复核员 · 复核')).toBeTruthy()
+    expect(card.queryByText('复核员 · 复核')).toBeNull()
     expect(card.getByText(help)).toBeTruthy()
     expect(card.container.querySelector('[data-executing]')).toBeNull()
-    expect(card.container.querySelector('[data-weave-task-receipt]')?.textContent).toMatchInlineSnapshot('"等待运行节点确认停止复核员 · 复核请先恢复运行节点的连接，等待原执行确认停止；确认后会显示重试入口，已完成的工作会保留。查看进展与成果"')
+    expect(card.container.querySelector('[data-weave-task-receipt]')?.textContent).toMatchInlineSnapshot('"等待运行节点确认停止执行状态等待中交付核验尚无法确认用户评价尚未评价请先恢复运行节点的连接，等待原执行确认停止；确认后会显示重试入口，已完成的工作会保留。查看进展与成果"')
     expect(card.queryByRole('button', { name: /重试/u })).toBeNull()
     expect(card.queryByText(/当前状态不支持单独恢复/u)).toBeNull()
     card.rerender(<WorkTaskConversationCard
@@ -164,7 +477,7 @@ describe('Workbench recovery and delivery facts', () => {
     expect(view.getByText('the referenced result file was not saved as a deliverable')).toBeTruthy()
     view.unmount()
     const card = render(<WorkTaskConversationCard {...props(projection) as unknown as Parameters<typeof WorkTaskConversationCard>[0]} />)
-    expect(card.container.querySelector('[data-weave-task-receipt]')?.textContent).toMatchInlineSnapshot('"运行失败复核员 · 复核本阶段提到的结果文件尚未被保存为可领取的成果。查看具体原因the referenced result file was not saved as a deliverable查看进展与成果"')
+    expect(card.container.querySelector('[data-weave-task-receipt]')?.textContent).toMatchInlineSnapshot('"运行失败执行状态运行失败交付核验尚无法确认用户评价尚未评价复核员 · 复核本阶段提到的结果文件尚未被保存为可领取的成果。查看具体原因the referenced result file was not saved as a deliverable查看进展与成果"')
     expect(card.queryByText('正在匹配合适团队')).toBeNull()
   })
 
@@ -205,7 +518,7 @@ describe('Workbench recovery and delivery facts', () => {
     expect(view.getByText('已完成研究记录')).toBeTruthy()
     expect(view.queryByText(/份最终产物已就绪/u)).toBeNull()
     expect(view.container.querySelector('[data-weave-work-task] > header p')?.textContent).toMatchInlineSnapshot(
-      '"执行已结束，但尚未取得最终成果。阶段记录可供查看，不能作为已交付的最终结果。"',
+      '"成果可以打开不代表交付已通过核验。核验依据已记录的检查，正文中的 PASS 等结论不作为核验依据。"',
     )
     view.unmount()
     const header = render(<WorkTaskHeader {...props(projection)} />)
@@ -226,10 +539,10 @@ describe('Workbench recovery and delivery facts', () => {
     const projection = task(recorded)
     const view = render(<WorkTaskPanel {...props(projection)} />)
     expect(view.queryByText('执行已结束，最终成果待核实')).toBeNull()
-    expect(view.getByText('已完成')).toBeTruthy()
+    expect(view.getByText('已完成', { selector: 'strong' })).toBeTruthy()
     expect(view.queryByText(/文件包尚未同步/u)).toBeNull()
     expect(view.getByText('最终交付结论已就绪').textContent).toMatchInlineSnapshot('"最终交付结论已就绪"')
-    fireEvent.click(view.getByText('汇总交付 · 最终成果'))
+    fireEvent.click(view.getByRole('button', { name: '汇总交付 · 最终成果' }))
     expect(await view.findByText('验收结论已生成。')).toBeTruthy()
     view.unmount()
     const header = render(<WorkTaskHeader {...props(projection)} />)
@@ -253,7 +566,7 @@ describe('Workbench recovery and delivery facts', () => {
     const selected = view.getByRole('tab', { selected: true })
     expect(selected.textContent).toBe(status === 'running' ? '进展' : '成果')
     fireEvent.keyDown(selected, { key: 'ArrowRight' })
-    expect(view.getByRole('tab', { selected: true }).textContent).toBe(status === 'running' ? '成果' : '进展')
+    expect(view.getByRole('tab', { selected: true }).textContent).toBe(status === 'running' ? '成果' : '总览')
     expect(document.activeElement).toBe(view.getByRole('tab', { selected: true }))
   })
 
@@ -266,7 +579,7 @@ describe('Workbench recovery and delivery facts', () => {
     fireEvent.click(view.getByRole('tab', { name: '进展' }))
     fireEvent.click(view.getByRole('button', { name: '查看 成员 23 的工作' }))
     expect(document.activeElement).toBe(view.getByRole('button', { name: '返回团队总览' }))
-    expect(view.getByText('成员执行记录')).toBeTruthy()
+    expect(view.getByRole('region', { name: '执行记录' })).toBeTruthy()
     expect(view.queryByText(/安全点/u)).toBeNull()
     expect(view.queryByRole('button', { name: '向此成员纠偏' })).toBeNull()
     fireEvent.keyDown(document.activeElement!, { key: 'Escape' })
@@ -300,7 +613,7 @@ describe('Workbench recovery and delivery facts', () => {
     view.rerender(<WorkTaskPanel {...props({ ...original, corrections: [{ ...correction, status: 'applied' }] })}
       requestCorrection={requestCorrection} confirmCorrection={confirmCorrection} />)
     expect(view.getByText('调整已生效')).toBeTruthy()
-    expect(view.getByText('成员执行记录')).toBeTruthy()
+    expect(view.getByRole('region', { name: '执行记录' })).toBeTruthy()
   })
 
   it('renders a member output as a document and links the complete bound download', async () => {
@@ -311,9 +624,9 @@ describe('Workbench recovery and delivery facts', () => {
     const view = render(<WorkTaskPanel {...props(projection)} />)
     fireEvent.click(view.getByRole('tab', { name: '进展' }))
     fireEvent.click(view.getByRole('button', { name: '查看 复核员 的工作' }))
-    fireEvent.click(view.getByText('复核报告.md'))
+    fireEvent.click(within(view.getByRole('tabpanel', { name: '进展' })).getByText('复核报告.md'))
     expect(await view.findByRole('heading', { name: '复核结论' })).toBeTruthy()
-    expect(view.getByText('证据已齐备。')).toBeTruthy()
+    expect(within(view.getByRole('tabpanel', { name: '进展' })).getByText('证据已齐备。')).toBeTruthy()
     expect(view.getByRole('link', { name: '下载文件' }).getAttribute('href')).toBe('/api/weave.deliverable?sessionId=session&runId=run-1&id=output-1&mode=download')
   })
 
@@ -321,11 +634,11 @@ describe('Workbench recovery and delivery facts', () => {
     const image = { id: 'image', title: '说明图.svg', kind: 'final' as const, contentType: 'image/svg+xml', content: '<svg/>', preview: '', truncated: false, createdAt: '' }
     const html = { ...image, id: 'page', title: '报告.html', contentType: 'text/html', content: '<h1>报告</h1><script>alert(1)</script>' }
     const view = render(<WorkTaskPanel {...props(task({ status: 'completed', members: [], deliverables: [image, html] }))} />)
-    fireEvent.click(view.getByText('说明图.svg'))
+    fireEvent.click(view.getByRole('button', { name: '说明图.svg' }))
     expect((await view.findByRole('img', { name: '说明图.svg' })).getAttribute('src')).toContain('id=image&mode=preview')
-    fireEvent.click(view.getByText('报告.html'))
-    await waitFor(() => { expect(view.getByTitle('报告.html').getAttribute('sandbox')).toBe('') })
-    expect(view.getByTitle('报告.html').getAttribute('srcdoc')).toContain("default-src 'none'")
+    fireEvent.click(within(view.getByRole('tabpanel', { name: '成果' })).getByText('报告.html'))
+    await waitFor(() => { expect(view.container.querySelector('iframe[title="报告.html"]')!.getAttribute('sandbox')).toBe('') })
+    expect(view.container.querySelector('iframe[title="报告.html"]')!.getAttribute('srcdoc')).toContain("default-src 'none'")
     expect(within(view.getByRole('region', { name: '交付物' })).getAllByRole('link').every(link => link.getAttribute('href')?.startsWith('/api/weave.deliverable?'))).toBe(true)
   })
 
@@ -341,7 +654,25 @@ describe('Workbench recovery and delivery facts', () => {
     expect(header.getByText('停止状态未能确认')).toBeTruthy()
   })
 
-  it('keeps one conversation card per run across refresh and retains accepted-action receipts', async () => {
+  it('shows a budget pause and requires an explicit new cumulative limit before continuing', async () => {
+    const projection = task()
+    const stage = { ...projection.members[0]!.stages[0]!, memberRunId: 'member-1', status: 'waiting' as const, failureClass: '' as const, failureReason: '', budgetPause: { reason: 'total_limit', roundsUsed: 2, authorizedTotalRounds: 2 } }
+    const paused = task({ members: [{ ...projection.members[0]!, status: 'waiting', stages: [stage] }] })
+    const retryStage = vi.fn().mockResolvedValue(null)
+    const view = render(<WorkTaskPanel {...props(paused)} retryStage={retryStage} />)
+    expect(view.getAllByText('执行已暂停，工作已保留').length).toBeGreaterThan(0)
+    expect(view.queryByText('执行环境中断')).toBeNull()
+    expect(view.getByText(/已用 2 轮，累计上限 2 轮/)).toBeTruthy()
+    fireEvent.click(view.getByRole('button', { name: '继续成员任务' }))
+    fireEvent.click(view.getByRole('button', { name: '确认重试' }))
+    await waitFor(() => { expect(view.getByText('请输入高于当前累计上限的整数。')).toBeTruthy() })
+    expect(retryStage).not.toHaveBeenCalled()
+    fireEvent.change(view.getByLabelText('新的累计轮次上限'), { target: { value: '3' } })
+    fireEvent.click(view.getByRole('button', { name: '确认重试' }))
+    await waitFor(() => { expect(retryStage).toHaveBeenCalledWith('run-1', 'review', 3) })
+  })
+
+  it('keeps one conversation card per run and leaves durable receipts in the work scene', async () => {
     const retryStage = vi.fn(() => Promise.resolve(null))
     const projection = task()
     const cardProps = props(projection) as unknown as Parameters<typeof WorkTaskConversationCard>[0]
@@ -356,8 +687,22 @@ describe('Workbench recovery and delivery facts', () => {
     view.rerender(<WorkTaskConversationCard {...props(resumed) as unknown as Parameters<typeof WorkTaskConversationCard>[0]}
       retryStage={retryStage} />)
     expect(view.container.querySelectorAll('[data-weave-task-card="run-1"]')).toHaveLength(1)
-    expect(view.getAllByText('只重试这个阶段 · 请求已接收')).toHaveLength(1)
+    expect(view.queryByText('操作回执')).toBeNull()
     expect(view.queryByRole('button', { name: '从当前阶段重试' })).toBeNull()
+    view.unmount()
+    const scene = render(<WorkTaskPanel {...props(resumed)} />)
+    expect(scene.getAllByText('只重试这个阶段 · 请求已接收')).toHaveLength(1)
+    expect(scene.getByText('操作回执').closest('details')?.open).toBe(false)
+  })
+
+  it('makes the header a named work-scene entry without repeating the long team name', () => {
+    const openDetails = vi.fn()
+    const view = render(<WorkTaskHeader {...props(task({ status: 'stopped', teamName: '本地知识库体验验收与恢复协作团队' }))} openDetails={openDetails} />)
+    expect(view.getByText('工作现场')).toBeTruthy()
+    expect(view.getByText('已停止')).toBeTruthy()
+    expect(view.queryByText('本地知识库体验验收与恢复协作团队')).toBeNull()
+    fireEvent.click(view.getByRole('button', { name: '打开工作现场' }))
+    expect(openDetails).toHaveBeenCalledOnce()
   })
 
   it.each(['completed', 'stopped', 'failed'] as const)('keeps a %s conversation receipt compact even when a member is selected in the scene', (status) => {
@@ -369,7 +714,7 @@ describe('Workbench recovery and delivery facts', () => {
     expect(view.container.querySelector('[data-weave-task-receipt]')).not.toBeNull()
     expect(view.container.querySelector('[data-weave-work-task]')).toBeNull()
     expect(view.queryByRole('tab')).toBeNull()
-    expect(view.queryByText('成员执行记录')).toBeNull()
+    expect(view.queryByRole('region', { name: '执行记录' })).toBeNull()
     expect(view.queryByText('阶段正文')).toBeNull()
     expect(view.queryByText('其他操作')).toBeNull()
     expect(view.queryByRole('progressbar')).toBeNull()
@@ -450,13 +795,68 @@ describe('Workbench recovery and delivery facts', () => {
     fireEvent.click(view.getByRole('button', { name: '查看 复核员 的工作' }))
     fireEvent.click(view.getByRole('tab', { name: '成果' }))
     fireEvent.click(view.getByRole('tab', { name: '进展' }))
-    expect(view.getByText('成员执行记录')).toBeTruthy()
+    expect(view.getByRole('region', { name: '执行记录' })).toBeTruthy()
     viewStore.actions.showOutput('run-1', 'final-1')
     await waitFor(() => { expect(view.getByRole('tab', { name: '成果' }).getAttribute('aria-selected')).toBe('true') })
     const artifact = view.container.querySelector('[data-deliverable-id="final-1"]') as HTMLDetailsElement
     expect(artifact.open).toBe(true)
     expect(view.getByRole('heading', { name: '最终报告' })).toBeTruthy()
     expect(document.activeElement).toBe(artifact.querySelector('summary'))
+  })
+
+  it('uses readable member labels consistently without changing identity or named members', async () => {
+    const base = task().members[0]!
+    const leadId = '550e8400-e29b-41d4-a716-446655440000'
+    const workerId = '8d253618-c675-4d71-b9e5-2e441d1c9b29'
+    const members = [
+      { ...base, agentId: leadId, name: leadId, role: 'lead' as const },
+      { ...base, agentId: workerId, name: '9A3DE5C7-6012-4F64-B17A-3F7E5C881245' },
+      { ...base, agentId: 'empty-name', name: '' },
+      { ...base, agentId: 'internal-review-agent', name: 'internal-review-agent' },
+      { ...base, agentId: 'named-agent', name: '陈颖' },
+    ]
+    const beginMemberAdjustment = vi.fn(() => Promise.resolve())
+    const requestCorrection = vi.fn(async () => null)
+    const view = render(<WorkTaskPanel {...props(task({ status: 'running', waitKind: '', members }))}
+      beginMemberAdjustment={beginMemberAdjustment} requestCorrection={requestCorrection} />)
+    for (const name of ['团队负责人', '成员 2', '成员 3', '成员 4', '陈颖']) {
+      expect(view.getByRole('button', { name: `查看 ${name} 的工作` })).toBeTruthy()
+    }
+    expect(view.queryByRole('button', { name: /550e8400|9A3DE5C7|internal-review-agent/u })).toBeNull()
+    expect(view.getByText(workerId).closest('details')?.open).toBe(false)
+
+    fireEvent.click(view.getByRole('button', { name: '纠偏团队' }))
+    expect(view.getByRole('option', { name: '成员 2' }).getAttribute('value')).toBe(workerId)
+    fireEvent.click(view.getByRole('button', { name: '查看 成员 2 的工作' }))
+    expect(view.getByRole('heading', { name: '成员 2' })).toBeTruthy()
+    fireEvent.click(view.getByRole('button', { name: '关注此成员' }))
+    fireEvent.click(view.getByRole('button', { name: '提出调整' }))
+    await waitFor(() => {
+      expect(beginMemberAdjustment).toHaveBeenCalledWith(expect.objectContaining({ memberId: workerId, memberName: '成员 2' }))
+    })
+    expect(requestCorrection).not.toHaveBeenCalled()
+    expect(members[1]?.name).toBe('9A3DE5C7-6012-4F64-B17A-3F7E5C881245')
+    fireEvent.click(view.getByRole('button', { name: '返回团队总览' }))
+    expect(within(view.getByRole('navigation', { name: '关注中的成员' })).getByRole('button', { name: /成员 2/u })).toBeTruthy()
+  })
+
+  it('keeps real duplicate names distinguishable and names an anonymous interrupted owner', () => {
+    const base = task().members[0]!
+    const members = [
+      { ...base, agentId: 'first-reviewer', name: '复核员' },
+      { ...base, agentId: 'second-reviewer', name: '复核员', stages: [] },
+      { ...base, agentId: 'anonymous-lead-1', name: '', role: 'lead' as const, stages: [] },
+      { ...base, agentId: 'anonymous-lead-2', name: '', role: 'lead' as const, stages: [] },
+    ]
+    const view = render(<WorkTaskPanel {...props(task({ members }))} />)
+    for (const name of ['复核员（1）', '复核员（2）', '团队负责人（3）', '团队负责人（4）']) {
+      expect(view.getByRole('button', { name: `查看 ${name} 的工作` })).toBeTruthy()
+    }
+    view.rerender(<WorkTaskPanel {...props(task({ members: [{ ...base,
+      agentId: '9a3de5c7-6012-4f64-b17a-3f7e5c881245', name: '9a3de5c7-6012-4f64-b17a-3f7e5c881245',
+    }] }))} />)
+    expect(view.getByText('由 成员 1 执行')).toBeTruthy()
+    expect(view.getByRole('button', { name: /成员 1 · 复核\s*由 成员 1 执行/u })).toBeTruthy()
   })
 
   it('proposes a member adjustment through the injected main input without submitting one', async () => {

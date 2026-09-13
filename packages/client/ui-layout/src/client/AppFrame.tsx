@@ -23,7 +23,7 @@ import css from './AppFrame.module.css'
 /** Full composed props: runtime share + child-slot render share + store share. */
 export type AppFrameProps =
   & PropsRuntime<'root'>
-  & PropsRenderSlots<'sidebar' | 'conversation' | 'details' | 'shell.overlay'>
+  & PropsRenderSlots<'sidebar' | 'conversation' | 'details' | 'shell.overlay' | 'shell.access'>
   & PropsStore<ReturnType<typeof createLayoutStore>>
   & PropsLocale<'common'>
 
@@ -122,8 +122,18 @@ function DragHandle(props: {
   )
 }
 
+/** Workbench withholds the whole business tree until its account entry grants access. */
+export function AppFrame(props: AppFrameProps) {
+  const [identity, setIdentity] = useState<string | null>(null)
+  if (process.env.DSH_CLIENT_BUILD_PROFILE !== 'workbench') return <AppFrameBody {...props} />
+  return <>
+    {props.renderSlot('shell.access', { onAccessChange: setIdentity })}
+    {identity !== null && <AppFrameBody key={identity} {...props} />}
+  </>
+}
+
 /** The three-column frame (see module doc). */
-export function AppFrame({
+function AppFrameBody({
   useStore,
   useSessions,
   actions,
@@ -222,6 +232,7 @@ export function AppFrame({
     <div
       ref={frameRef}
       className={css.frame}
+      data-workbench={workbench || undefined}
       style={{ gridTemplateColumns: `${cols.sidebar}px minmax(0, 1fr) ${cols.details}px` }}
       data-sidebar-collapsed={sidebarCollapsed || undefined}
       data-details-collapsed={!detailsOpen || undefined}

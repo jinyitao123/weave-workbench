@@ -16,6 +16,11 @@ import { DeliverableRow } from './DeliverableRow.tsx'
 import { ProjectActivity } from './ProjectActivity.tsx'
 import { NS as projectNS, zh as projectZh, en as projectEn, type ProjectActivityKey } from './project-activity-locales.ts'
 import { RuntimeSettingsSection } from './RuntimeCenter.tsx'
+import { personalSessionStarter } from './personal-session.ts'
+import { AccountAccess, AccountButton } from './AccountAccess.tsx'
+import { AccountController, type AccountInjected } from './account-controller.ts'
+import { ApplicationSettingsSection } from './ApplicationCenter.tsx'
+import { CapabilityOperationsSettingsSection } from './CapabilityOperationsCenter.tsx'
 import { TeamListRow } from './TeamListRow.tsx'
 import { WorkTaskCommandRow } from './WorkTaskCommandRow.tsx'
 import { WorkTaskConversationCard, WorkTaskHeader, WorkTaskPanel } from './WorkTaskPanel.tsx'
@@ -30,8 +35,28 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 
 export const inject = ['slots', 'locale', 'layout', 'sessions', 'inputTriggers']
 
-export function apply(ctx: ClientContext): void {
+/** Browser account refresh policy. */
+export interface Config { accountCheckIntervalMs?: number }
+
+export function apply(ctx: ClientContext, config: Config = {}): void {
   const t = ctx.locale.bind(NS)
+  if (process.env.DSH_CLIENT_BUILD_PROFILE === 'workbench') {
+    const account = new AccountController(window.fetch.bind(window), () => { window.location.reload() })
+    ctx.effect(() => account.install(window, config.accountCheckIntervalMs ?? 30_000), 'ui-weave: account access')
+    ctx.slots.provideRoot({
+      hooks: { hostManagement: account.hostManagement },
+      props: { startPersonalSession: personalSessionStarter(account, ctx.sessions) },
+    })
+    const accountProps = (): AccountInjected => ({
+      hooks: { account }, login: account.login, logout: account.logout, retry: account.retry,
+    })
+    ctx.slots.inject('shell.access', () => ctx.slots.register({
+      name: 'shell.access', locale: NS, inject: accountProps,
+    }, AccountAccess))
+    ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
+      name: 'sidebar.footer.action', id: 'weave-account', order: -10, locale: NS, inject: accountProps,
+    }, AccountButton))
+  }
   const taskView = createWorkTaskViewStore()
   let activeScene: { sessionId: SessionId; activate: () => void } | undefined
   let pendingTaskView: { sessionId: SessionId; runId: string; deliverableId: string } | undefined
@@ -90,16 +115,16 @@ export function apply(ctx: ClientContext): void {
       returnToConversation: () => { ctx.layout.closeDetails() },
       requestDelivery: async () => {
         const scoped = ctx.sessions.scope(sessionId)
-        const conversation = scoped?.get('conversation') as { send(text: string): Promise<void> } | undefined
+        const conversation = scoped?.get('conversation')
         if (conversation === undefined) throw new Error('The current conversation is unavailable.')
-        await conversation.send('请核对当前任务已有的阶段产物与最终交付，说明还缺什么、能否基于已完成内容补齐。不要重跑这次任务。')
+        await conversation.send('请核对当前任务已有的阶段产物与最终交付，说明还缺什么、能否基于已完成内容补齐。不要重跑这次任务。', 'ui-control')
         ctx.layout.closeDetails()
       },
       selectTeam: async (teamId: string, teamName: string) => {
         const scoped = ctx.sessions.scope(sessionId)
-        const conversation = scoped?.get('conversation') as { send(text: string): Promise<void> } | undefined
+        const conversation = scoped?.get('conversation')
         if (conversation === undefined) throw new Error('The current conversation is unavailable.')
-        await conversation.send(`我选择团队 ${JSON.stringify(teamName)}（team_id: ${JSON.stringify(teamId)}）。请根据当前诉求整理完整任务简报和预期交付物，先让我确认，不要立即派发。`)
+        await conversation.send(`我选择团队 ${JSON.stringify(teamName)}（team_id: ${JSON.stringify(teamId)}）。请根据当前诉求整理完整任务简报和预期交付物，先让我确认，不要立即派发。`, 'ui-control')
       },
       stopRun: async (runId: string) => {
         return await taskAction(sessionId, { action: 'stop', runId })
@@ -107,8 +132,8 @@ export function apply(ctx: ClientContext): void {
       rerun: async (runId: string, brief: string) => {
         return await taskAction(sessionId, { action: 'rerun', runId, brief })
       },
-      retryStage: async (runId: string, nodeId: string) => {
-        return await taskAction(sessionId, { action: 'stage-retry', runId, nodeId })
+      retryStage: async (runId: string, nodeId: string, authorizedTotalRounds?: number) => {
+        return await taskAction(sessionId, { action: 'stage-retry', runId, nodeId, authorizedTotalRounds })
       },
       requestCorrection: async (runId: string, targetKind: 'team' | 'member', targetMemberId: string, instruction: string) => {
         return await taskAction(sessionId, { action: 'correction-request', runId, targetKind, targetMemberId, instruction })
@@ -117,8 +142,11 @@ export function apply(ctx: ClientContext): void {
         return await taskAction(sessionId, { action: 'correction-confirm', runId, correctionId, disposition })
       },
       completeHumanTask: async (runId: string, interactionId: string, payload: unknown) => taskAction(sessionId, { action: 'human-complete', runId, interactionId, payload }),
-      assessOutcome: async (runId: string, outcome: 'adopted' | 'needs-revision', note: string) => {
-        return await taskAction(sessionId, { action: 'assess', runId, outcome, note })
+      assessOutcome: async (runId: string, deliveryRevisionId: string, outcome: 'adopted' | 'needs-revision', note: string) => {
+        return await taskAction(sessionId, { action: 'assess', runId, deliveryRevisionId, outcome, note })
+      },
+      recheckDelivery: async (runId: string, deliveryRevisionId: string, contractDigest: string) => {
+        return await taskAction(sessionId, { action: 'recheck', runId, deliveryRevisionId, contractDigest })
       },
     })
   }
@@ -140,9 +168,9 @@ export function apply(ctx: ClientContext): void {
         inject: sessionId => ({
           selectTeam: async (teamId: string, teamName: string) => {
             const scoped = ctx.sessions.scope(sessionId)
-            const conversation = scoped?.get('conversation') as { send(text: string): Promise<void> } | undefined
+            const conversation = scoped?.get('conversation')
             if (conversation === undefined) throw new Error('The current conversation is unavailable.')
-            await conversation.send(`我选择团队 ${JSON.stringify(teamName)}（team_id: ${JSON.stringify(teamId)}）。请根据当前诉求整理完整任务简报和预期交付物，先让我确认，不要立即派发。`)
+            await conversation.send(`我选择团队 ${JSON.stringify(teamName)}（team_id: ${JSON.stringify(teamId)}）。请根据当前诉求整理完整任务简报和预期交付物，先让我确认，不要立即派发。`, 'ui-control')
           },
         }),
       },
@@ -180,4 +208,10 @@ export function apply(ctx: ClientContext): void {
   ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section', id: 'weave-runtimes', order: -20, label: () => t('runtimeCenter.title'), locale: NS,
   }, RuntimeSettingsSection))
+  ctx.slots.inject('settings.section', () => ctx.slots.register({
+    name: 'settings.section', id: 'weave-capability-operations', order: -10, label: () => t('capabilityOps.title'), locale: NS,
+  }, CapabilityOperationsSettingsSection))
+  ctx.slots.inject('settings.section', () => ctx.slots.register({
+    name: 'settings.section', id: 'weave-capability-apps', order: -5, label: () => t('app.title'), locale: NS,
+  }, ApplicationSettingsSection))
 }

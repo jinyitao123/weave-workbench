@@ -39,3 +39,8 @@ apps/web/dist/
 worktrees/
 .agents/worktrees/
 .typert-*/
+
+# Independent product data and local operator configuration.
+data/
+.env.*
+!.env.example

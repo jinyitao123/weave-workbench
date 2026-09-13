@@ -52,8 +52,12 @@ describe('Weave runtime center', () => {
   })
 
   it('creates a node and presents its one-time token only after creation', async () => {
+    const writeText = vi.fn<(value: string) => Promise<void>>(() => Promise.resolve())
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
     const fetcher = vi.fn<typeof fetch>(async (_input, init) => {
-      if (init?.method === 'POST') return Response.json({ id: 'runtime-2', name: '办公室 Mac', token: 'rtk_once_only' }, { status: 201 })
+      if (init?.method === 'POST') return Response.json({
+        id: 'runtime-2', name: '办公室 Mac', token: 'rtk_once_only', serverUrl: 'https://weave.example.com',
+      }, { status: 201 })
       return runtimeResponse()
     })
     vi.stubGlobal('fetch', fetcher)
@@ -64,7 +68,11 @@ describe('Weave runtime center', () => {
     fireEvent.click(view.getByRole('button', { name: '创建并获取令牌' }))
 
     expect(await view.findByText('rtk_once_only')).toBeTruthy()
-    await waitFor(() => { expect(fetcher).toHaveBeenCalledTimes(3) })
+    expect(view.container.textContent).toContain("weave runtime --server 'https://weave.example.com' --runtime-token 'rtk_once_only'")
+    expect(view.container.textContent).not.toContain('<WEAVE')
+    fireEvent.click(view.getByRole('button', { name: '复制连接命令' }))
+    await waitFor(() => { expect(writeText).toHaveBeenCalledWith("weave runtime --server 'https://weave.example.com' --runtime-token 'rtk_once_only'") })
+    await waitFor(() => { expect(fetcher.mock.calls.filter(([input]) => input === '/api/weave.runtimes')).toHaveLength(3) })
     const createInit = fetcher.mock.calls.find(([, init]) => init?.method === 'POST')?.[1]
     expect(typeof createInit?.body === 'string' ? JSON.parse(createInit.body) : null)
       .toEqual({ action: 'create', name: '办公室 Mac' })
@@ -108,7 +116,7 @@ describe('Weave work scene presentation', () => {
     expect(view.container.textContent).toContain('Daily Codex Runtime')
     expect(view.container.textContent).not.toContain('text/html')
     expect(view.container.textContent).not.toContain('exec_command')
-    expect(view.container.textContent).not.toContain('/private/source.json')
+    expect(view.getByText('/private/source.json').closest('details')?.open).toBe(false)
     expect(view.container.textContent).not.toContain('npm test')
     const diagnostics = Array.from(view.container.querySelectorAll('details')).find(item => item.querySelector('summary')?.textContent === '运行识别信息')
     expect(diagnostics?.open).toBe(false)
@@ -118,11 +126,11 @@ describe('Weave work scene presentation', () => {
     fireEvent.click(view.getByRole('tab', { name: '进展' }))
     fireEvent.click(view.getByRole('button', { name: '查看 汇总员 的工作' }))
     expect(view.getByRole('button', { name: '返回团队总览' })).toBeTruthy()
-    expect(view.container.textContent).toContain('成员执行记录')
+    expect(view.getByRole('region', { name: '执行记录' })).toBeTruthy()
     expect(view.container.textContent).toContain('npm test')
     expect(view.container.textContent).toContain('PASS')
     expect(view.container.textContent).not.toContain('exec_command')
-    expect(view.container.textContent).not.toContain('/private/source.json')
+    expect(view.getByText('/private/source.json').closest('details')?.open).toBe(false)
 
     fireEvent.click(view.getByRole('button', { name: '返回团队总览' }))
     expect(view.container.textContent).toContain('团队成员')

@@ -11,6 +11,8 @@ English | [中文](README.zh.md)
 
 `ui-conversation` owns target-neutral Conversation assembly and the shared browser shell. It consumes Session Controller `SessionEventLikeEntry` feeds, exposes React-free registries and per-Session bindings through `ctx.uiConversation`, and contributes the `useConversation`, `useInput`, and `inputActions` standard props through `ctx.uiSession`. It also owns the per-session durable image URL cache: `ctx.uiConversation.imageUrl(sessionId, attachment)` resolves one session-authorized browser URL per attachment and revokes it with the Session binding, so every Conversation target shares one `session.attachment` read. Concrete targets such as Chat are separate packages that register their own Definitions, snapshot builders, Views, and renderers.
 
+Members without Host management access can start a personal task from the empty hero without selecting a shared project. Their existing personal Session remains writable with no Workspace assignment. Shared project selectors remain available to administrators; the product supplies the creation command and the Host enforces ownership.
+
 ## Table of Contents
 
 - [Conversation assembly](#conversation-assembly)
@@ -33,6 +35,10 @@ Target packages declaration-merge their snapshot and Location data maps, then re
 
 <a id="shell-and-standard-props"></a>
 ## Shell and standard props
+
+The shared browser and desktop view uses a neutral welcome canvas and a compact composer outline.
+
+Workbench keeps the Session title and task-navigation actions on one header row. A truncated current title exposes its full text on hover. The task dock above the input remains in the conversation scroll flow; the composer alone stays sticky.
 
 Workbench presents the standard read-only and workspace-write modes with localized task-facing labels. The labels do not alter the permission values, command dispatch, or full-access confirmation. A rejected or interrupted permission command keeps the recorded mode and shows an explicit failure message.
 
@@ -94,7 +100,6 @@ try {
 
 The selector must be a pure function of the owner currency. Its non-null return is delivered to the component as `matched`; `PropsRuntime<'conversation.composer'>` supplies the standard Session and global props. Chain order remains ascending `priority`, then registration order, and the first non-null selector wins. The shell keeps the default composer mounted beneath a takeover. Request state, listeners, response encoding, and any request-specific child slots belong to the business package; they are not carried by `SessionSnapshot` or declared by this core package.
 
-In Workbench, the task title and Session history occupy the first header row; live task actions sit below them so that opening the scene cannot squeeze the title out of view.
 
 <a id="model-experience"></a>
 

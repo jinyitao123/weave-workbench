@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { SessionEvent } from '@deepseek-ai/dsh-session'
-import { applyWorkTaskProjection, workbenchTeamRoutingSection, workTaskProjectionDefinition } from '../src/index.ts'
+import { snapshotJsonValue } from '@deepseek-ai/dsh-session'
+import { applyWorkTaskProjection, workbenchCapabilityAuthoringSection, workbenchTeamRoutingSection, workTaskProjectionDefinition } from '../src/index.ts'
 
 const event = (type: string, data: unknown, seq = 0, time = 100): SessionEvent => ({
   type, data, seq, time,
@@ -10,18 +11,163 @@ const call = (id: string, name: string, args: unknown, seq: number): SessionEven
   turn: 1, step: 1, callId: id, name, arguments: JSON.stringify(args),
 }, seq, 100 + seq)
 
-const result = (id: string, value: unknown, seq: number): SessionEvent => event('tool/result', {
+const result = (id: string, value: unknown, seq: number, isError = false): SessionEvent => event('tool/result', {
   turn: 1,
   step: 1,
   message: {
     id: `message-${id}`,
     role: 'user',
     source: { kind: 'tool', callId: id },
-    content: [{ type: 'tool-result', toolCallId: id, content: [{ type: 'text', text: JSON.stringify(value) }] }],
+    content: [{ type: 'tool-result', toolCallId: id, isError, content: [{ type: 'text', text: JSON.stringify(value) }] }],
   },
 }, seq, 100 + seq)
 
 describe('Workbench work-task projection', () => {
+
+  it('persists mixed legacy and durable member progress through the lossless session boundary', () => {
+    let state = workTaskProjectionDefinition.init()
+    for (const item of [
+      call('dispatch', 'mcp__weave__team_dispatch', { team_id: 'team-1' }, 0),
+      result('dispatch', { run_id: 'run-1', status: 'running' }, 1),
+      call('activity', 'mcp__weave__team_run_activity', { run_id: 'run-1' }, 2),
+      result('activity', { run_id: 'run-1', status: 'running', members: [
+        { agent_id: 'lead', name: 'lead', status: 'completed', stages: [{ node_id: 'brief', status: 'completed' }] },
+        { agent_id: 'worker', name: 'worker', status: 'running', stages: [{ node_id: 'compute', status: 'running',
+          member_run_id: 'member-1', checkpoint_saved_at: '2026-09-07T09:17:16Z' }] },
+      ] }, 3),
+    ]) state = applyWorkTaskProjection(state, item)
+    expect(state.task?.members[0]?.stages[0]).not.toHaveProperty('memberRunId')
+    expect(state.task?.members[1]?.stages[0]).toMatchObject({ memberRunId: 'member-1', checkpointSavedAt: '2026-09-07T09:17:16Z' })
+    expect(snapshotJsonValue(state.task)).toEqual(state.task)
+    expect(applyWorkTaskProjection(state, event('weave/work-task', snapshotJsonValue(state.task), 4)).task).toEqual(state.task)
+  })
+
+  it('correlates runless dispatch-status replies with the exact current request', () => {
+    let state = workTaskProjectionDefinition.init()
+    for (const item of [
+      call('old', 'mcp__weave__team_dispatch', { team_id: 'team-1' }, 0),
+      result('old', { run_id: 'run-old', client_request_id: 'request-old', status: 'running' }, 1),
+      call('old-status', 'mcp__weave__dispatch_status', { client_request_id: 'request-old' }, 2),
+      call('current', 'mcp__weave__team_dispatch', { team_id: 'team-1' }, 3),
+      result('current', { run_id: 'run-current', client_request_id: 'request-current', status: 'completed' }, 4),
+    ]) state = applyWorkTaskProjection(state, item)
+    const current = state.task
+    state = applyWorkTaskProjection(state, result('old-status', { status: 'failed' }, 5))
+    expect(state.task).toEqual(current)
+    state = applyWorkTaskProjection(state, call('current-status', 'mcp__weave__dispatch_status', { client_request_id: 'request-current' }, 6))
+    state = applyWorkTaskProjection(state, result('current-status', { status: 'completed', workflow_progress: { completed_stages: 3, total_stages: 3 } }, 7))
+    expect(state.task).toMatchObject({ runId: 'run-current', clientRequestId: 'request-current', status: 'completed', completedStages: 3, totalStages: 3 })
+  })
+
+  it.each(['passed', 'failed'])('keeps a %s build stable against older, equal, or undated progress and accepts a newer source update', (runStatus) => {
+    let state = workTaskProjectionDefinition.init()
+    for (const item of [
+      call('create', 'mcp__weave__team_create', { definition: { display_name: '核验团队' } }, 0),
+      result('create', { build_id: 'build-current', status: 'building' }, 1),
+      call('terminal', 'mcp__weave__build_status', { build_id: 'build-current' }, 2),
+      result('terminal', { build_run_id: 'build-current', run_status: runStatus, updated_at: new Date(20).toISOString(),
+        steps: [{ operation_id: 'review', display_label: '检查职责', status: 'succeeded', attempt: 1 }] }, 3),
+    ]) state = applyWorkTaskProjection(state, item)
+    const terminal = state.task
+    expect(terminal?.preparation?.state).toBe(runStatus === 'passed' ? 'ready' : 'failed')
+    expect(terminal?.observedAt).toBe(103)
+    let seq = 4
+    for (const updatedAt of [new Date(10).toISOString(), new Date(20).toISOString(), undefined]) {
+      state = applyWorkTaskProjection(state, call(`late-${seq}`, 'mcp__weave__build_status', { build_id: 'build-current' }, seq))
+      state = applyWorkTaskProjection(state, result(`late-${seq}`, { build_run_id: 'build-current', run_status: 'executing',
+        ...(updatedAt === undefined ? {} : { updated_at: updatedAt }), steps: [] }, seq + 1))
+      expect(state.task).toEqual(terminal)
+      seq += 2
+    }
+    state = applyWorkTaskProjection(state, call('resumed-build', 'mcp__weave__build_status', { build_id: 'build-current' }, seq))
+    state = applyWorkTaskProjection(state, result('resumed-build', { build_run_id: 'build-current', run_status: 'executing',
+      updated_at: new Date(30).toISOString(), steps: [{ operation_id: 'review', display_label: '检查职责', status: 'running', attempt: 2 }] }, seq + 1))
+    expect(state.task).toMatchObject({ status: 'preparing', preparation: { state: 'building',
+      steps: [{ id: 'review', label: '检查职责', status: 'running', attempt: 2 }] } })
+    expect(state.task?.observedAt).toBe(100 + seq + 1)
+  })
+
+  it.each(['completed', 'failed', 'stopped'])('keeps new creation failure visible after a %s run while retaining the old attempt', (status) => {
+    let state = workTaskProjectionDefinition.init()
+    for (const item of [
+      call('old', 'mcp__weave__team_dispatch', { team_id: 'team-old', task: '旧任务' }, 0),
+      result('old', { run_id: 'run-old', client_request_id: 'request-old', status }, 1),
+    ]) state = applyWorkTaskProjection(state, item)
+    const attempts = state.task?.attempts
+    state = applyWorkTaskProjection(state, call('create-new', 'mcp__weave__team_create', {
+      definition: { display_name: '新的核验团队', purpose: '新的核验目标' },
+    }, 2))
+    expect(state.task).toMatchObject({ runId: '', clientRequestId: '', teamName: '新的核验团队', brief: '新的核验目标',
+      preparation: { callId: 'create-new', state: 'submitting' } })
+    expect(state.task?.attempts).toEqual(attempts)
+    state = applyWorkTaskProjection(state, result('create-new', { error: 'template_build_failed' }, 3, true))
+    expect(state.task).toMatchObject({ runId: '', status: 'failed', preparation: { callId: 'create-new', state: 'failed' } })
+    expect(state.task?.attempts).toEqual(attempts)
+    expect(workTaskProjectionDefinition.wire.view(state)?.displayState).toBe('buildFailed')
+  })
+
+  it.each([
+    ['template_build_failed', 'failed', 'buildFailed'],
+    ['http_502', 'unknown', 'buildUnknown'],
+  ])('retains %s creation evidence when available teams are refreshed', (error, preparationState, displayState) => {
+    let state = workTaskProjectionDefinition.init()
+    for (const item of [
+      call('create', 'mcp__weave__team_create', { definition: { display_name: '材料核验团队', purpose: '核验用户材料' } }, 0),
+      result('create', { code: error }, 1, true),
+      call('list', 'mcp__weave__team_list', {}, 2),
+      result('list', { teams: [{ id: 'unrelated-team', name: '其他团队' }] }, 3),
+    ]) state = applyWorkTaskProjection(state, item)
+    expect(state.task).toMatchObject({ runId: '', teamName: '材料核验团队', brief: '核验用户材料',
+      status: preparationState === 'failed' ? 'failed' : 'preparing',
+      preparation: { callId: 'create', state: preparationState, error } })
+    expect(workTaskProjectionDefinition.wire.view(state)?.displayState).toBe(displayState)
+  })
+
+  it('records real creation steps only for the current build in both request and response', () => {
+    let state = workTaskProjectionDefinition.init()
+    for (const item of [
+      call('create', 'mcp__weave__team_create', { definition: { display_name: '材料核验团队' } }, 0),
+      result('create', { build_id: 'build-current', status: 'building' }, 1),
+      call('other', 'mcp__weave__build_status', { build_id: 'build-old' }, 2),
+      result('other', { build_id: 'build-current', run_status: 'failed' }, 3),
+      call('mismatched', 'mcp__weave__build_status', { build_id: 'build-current' }, 4),
+      result('mismatched', { build_id: 'build-old', run_status: 'failed' }, 5),
+    ]) state = applyWorkTaskProjection(state, item)
+    expect(state.task?.preparation).toMatchObject({ buildId: 'build-current', state: 'building' })
+    state = applyWorkTaskProjection(state, call('current', 'mcp__weave__build_status', { build_id: 'build-current' }, 6))
+    state = applyWorkTaskProjection(state, result('current', { build_run_id: 'build-current', run_status: 'passed',
+      final_ref: { team_id: 'team-ready' }, steps: [
+        { operation_id: 'evaluation-2', display_label: '检查成员职责', status: 'succeeded', attempt: 2 },
+      ] }, 7))
+    expect(state.task).toMatchObject({ teamId: 'team-ready', runId: '', preparation: { state: 'ready',
+      steps: [{ id: 'evaluation-2', label: '检查成员职责', status: 'succeeded', attempt: 2 }] } })
+    expect(workTaskProjectionDefinition.wire.view(state)?.displayState).toBe('buildReady')
+  })
+
+  it('rejects old run responses and older observations after final execution evidence', () => {
+    let state = workTaskProjectionDefinition.init()
+    for (const item of [
+      call('first', 'mcp__weave__team_dispatch', { team_id: 'team-1' }, 0),
+      result('first', { run_id: 'run-old', status: 'running' }, 1),
+      call('old-poll', 'mcp__weave__team_run_activity', { run_id: 'run-old' }, 2),
+      call('second', 'mcp__weave__team_dispatch', { team_id: 'team-1' }, 3),
+      result('second', { run_id: 'run-current', status: 'running' }, 4),
+      call('completed', 'mcp__weave__team_run_activity', { run_id: 'run-current' }, 5),
+      result('completed', { run_id: 'run-current', status: 'completed' }, 6),
+    ]) state = applyWorkTaskProjection(state, item)
+    const completed = state.task
+    state = applyWorkTaskProjection(state, call('late-running', 'mcp__weave__team_run_activity', { run_id: 'run-current' }, 7))
+    state = applyWorkTaskProjection(state, result('late-running', { run_id: 'run-current', status: 'running' }, 8))
+    expect(state.task).toEqual(completed)
+    state = applyWorkTaskProjection(state, result('old-poll', { run_id: 'run-old', status: 'failed' }, 7))
+    expect(state.task).toEqual(completed)
+    state = applyWorkTaskProjection(state, event('weave/work-task', { ...completed, status: 'running', observedAt: 1 }, 8))
+    expect(state.task).toEqual(completed)
+    state = applyWorkTaskProjection(state, event('weave/work-task', { ...completed, runId: 'run-old', status: 'failed', observedAt: 999 }, 9))
+    expect(state.task).toEqual(completed)
+    expect(workTaskProjectionDefinition.wire.view(state)?.displayState).toBe('outputsMissing')
+  })
+
   it('recovers the dispatched team from the recorded team-status response after YAML creation', () => {
     let state = workTaskProjectionDefinition.init()
     for (const item of [
@@ -54,6 +200,16 @@ describe('Workbench work-task projection', () => {
     expect(workbenchTeamRoutingSection.text).toContain('do not repeat team matching or dispatch a new task')
     expect(workbenchTeamRoutingSection.text).toContain('never describe an accepted request as an applied change')
     expect(workbenchTeamRoutingSection.text).toMatchSnapshot()
+  })
+
+  it('keeps capability authoring in the conversation and freezes confirmed revisions', () => {
+    expect(workbenchCapabilityAuthoringSection.name).toBe('workbench:capability-authoring')
+    expect(workbenchCapabilityAuthoringSection.text).toContain('Call capability_list first')
+    expect(workbenchCapabilityAuthoringSection.text).toContain('capability_plan to create a reviewable draft')
+    expect(workbenchCapabilityAuthoringSection.text).toContain('capability_publish only after the user explicitly confirms')
+    expect(workbenchCapabilityAuthoringSection.text).toContain('Published revisions are immutable')
+    expect(workbenchCapabilityAuthoringSection.text).toContain('Do not send the user to a manual capability editor')
+    expect(workbenchCapabilityAuthoringSection.text).toContain('exact-version grants remain separate administration actions')
   })
 
   it.each(['timer', 'fanout', 'human', 'correction', 'runtime'])('retains the exact %s wait and clears it when work resumes', (waitKind) => {
@@ -180,7 +336,7 @@ describe('Workbench work-task projection', () => {
     expect(state.task?.runtimes).toEqual([{ name: 'lead', detail: 'openai · gpt-5.6-luna', status: 'running' }])
   })
 
-  it('shows a parked server run as waiting instead of inheriting a prior terminal state', () => {
+  it('accepts a newer authoritative parked observation after a prior terminal state', () => {
     let state = workTaskProjectionDefinition.init()
     state = applyWorkTaskProjection(state, event('weave/work-task', {
       clientRequestId: 'request-1', runId: 'run-1', teamId: 'team-1', teamName: 'Team', workflowName: 'baseline',
@@ -190,7 +346,7 @@ describe('Workbench work-task projection', () => {
     }))
     state = applyWorkTaskProjection(state, call('status', 'mcp__weave__team_run_activity', { run_id: 'run-1' }, 1))
     state = applyWorkTaskProjection(state, result('status', {
-      run_id: 'run-1', status: 'parked', wait_kind: 'fanout', completed_stages: 3,
+      run_id: 'run-1', status: 'parked', observed_at: new Date(200).toISOString(), wait_kind: 'fanout', completed_stages: 3,
       stages: [
         { name: '任务定义', status: 'completed' },
         { name: '物理复核', status: 'completed' },
@@ -307,6 +463,36 @@ describe('Workbench work-task projection', () => {
       instruction: '重查证据边界', status: 'ready', safeNodeId: 'deliver', restartNodeId: 'review',
       affectedNodeIds: ['review', 'deliver'], preservedNodeIds: ['research'], requestedAt: '2026-08-30T10:00:00Z',
     })
+  })
+
+  it('corrects a cached final label from run activity when the file count stays unchanged', () => {
+    let state = workTaskProjectionDefinition.init()
+    for (const item of [
+      call('dispatch', 'mcp__weave__team_dispatch', { team_id: 'team-1' }, 0),
+      result('dispatch', { run_id: 'run-1', status: 'running' }, 1),
+    ]) state = applyWorkTaskProjection(state, item)
+    state = applyWorkTaskProjection(state, event('weave/work-task', {
+      ...state.task, deliverableCount: 1,
+      deliverables: [{ id: 'lead-file', title: 'baseline.yaml', kind: 'final', contentType: 'application/yaml', preview: 'version: 1', content: 'version: 1', truncated: false, createdAt: '' }],
+    }, 2))
+    state = applyWorkTaskProjection(state, call('status', 'mcp__weave__team_run_activity', { run_id: 'run-1' }, 3))
+    state = applyWorkTaskProjection(state, result('status', { run_id: 'run-1', status: 'running', deliverables: [{ id: 'lead-file', kind: 'stage' }] }, 4))
+    expect(state.task?.deliverableCount).toBe(1)
+    expect(state.task?.deliverables[0]).toMatchObject({ id: 'lead-file', kind: 'stage', content: 'version: 1' })
+    expect(workTaskProjectionDefinition.wire.view(state)?.deliverables).toMatchInlineSnapshot(`
+      [
+        {
+          "content": "version: 1",
+          "contentType": "application/yaml",
+          "createdAt": "",
+          "id": "lead-file",
+          "kind": "stage",
+          "preview": "version: 1",
+          "title": "baseline.yaml",
+          "truncated": false,
+        },
+      ]
+    `)
   })
 
   it.each(['final', 'summary'] as const)('retains a host %s output after the conversation turn ends', (kind) => {

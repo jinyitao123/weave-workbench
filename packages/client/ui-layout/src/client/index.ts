@@ -12,6 +12,7 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
+import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
 import type { PanelActions } from './service.ts'
 import { AppFrame } from './AppFrame.tsx'
 import { createLayoutStore } from './stores.ts'
@@ -34,7 +35,15 @@ declare module '@deepseek-ai/cordis' {
 }
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
+  interface GlobalStandardProps {
+    /** Optional product access projection; Workbench defaults to no Host management. */
+    useHostManagement?: SnapshotSelectorHook<boolean>
+    /** Create a personal task without choosing a shared Host directory. */
+    startPersonalSession?: () => Promise<void>
+  }
   interface SlotMap {
+    /** Account entry can grant or withdraw access before business views mount. */
+    'shell.access': { kind: 'single'; scope: 'root'; owner: ShellAccessOwnerProps }
     // The 'root' entry itself is the runtime's built-in slot (declared
     // there); these four are the frame's children, declared by the same
     // register() call that contributes AppFrame. Session owners never pass
@@ -107,6 +116,12 @@ export interface ConvOwnerProps {}
 /** Details owner share: empty — sessionId arrives as a framework-standard prop. */
 export interface DetailsOwnerProps {}
 
+/** The account entry reports access; the layout retains ownership of its views. */
+export interface ShellAccessOwnerProps {
+  /** Null withholds all business views, including during account changes. */
+  onAccessChange: (identity: string | null) => void
+}
+
 /** Required services (cordis fiber inject — the loader passes all module exports as an object plugin). */
 export const inject = ['slots', 'theme', 'locale']
 
@@ -124,6 +139,7 @@ export function apply(ctx: ClientContext): void {
       name: 'root',
       locale: 'common',
       children: {
+        'shell.access': { kind: 'single', scope: 'root' },
         'sidebar': { kind: 'single', scope: 'root' },
         'conversation': { kind: 'single', scope: 'session-maybe' },
         'details': { kind: 'single', scope: 'session' },
