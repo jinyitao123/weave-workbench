@@ -137,7 +137,7 @@
     "desktop:build": "node apps/desktop/scripts/build.mjs",
     "desktop:dev": "pnpm run desktop:build && electron apps/desktop/dist",
     "desktop:package": "pnpm run desktop:build && node apps/desktop/scripts/package.mjs",
-    "desktop:test": "pnpm run desktop:build && node apps/desktop/scripts/smoke.mjs",
+    "desktop:test": "pnpm run desktop:build && node apps/desktop/scripts/smoke.mjs && node apps/desktop/scripts/product-smoke.mjs",
     "check:workbench": "tsx scripts/check-workbench.ts"
   },
   "devDependencies": {

@@ -1,24 +1,29 @@
-/** Native preview shell; the locally packaged Workbench receives no Node or IPC capabilities. */
+/** Native Workbench product shell; fixture preview is an explicit test-only mode. */
 import { app, BrowserWindow, dialog, ipcMain, Menu, protocol, screen, session, shell, WebContentsView,
   type IpcMainInvokeEvent, type Session, type DownloadItem } from 'electron'
 import { readFile } from 'node:fs/promises'
-import { basename, join } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 import { createHash, randomUUID } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { ConnectionSelection, serviceInstanceId, serviceOrigin, type ConnectionScope, type ServiceIdentity } from './connection-selection.js'
 import { FilePreferences } from './preferences.js'
 import { startPreviewServices, type PreviewServices } from './preview-services.js'
 import type { ShellCommand, ShellState } from './shell-protocol.js'
+import { startProductHost, type ProductHost } from './host-supervisor.js'
 
 const shellOrigin = 'weave-shell://app'
+const fixtureMode = process.argv.includes('--fixture-preview')
+const productName = fixtureMode ? 'Weave Workbench Preview' : 'Weave Workbench'
 const root = fileURLToPath(new URL('.', import.meta.url))
 const dataArgument = process.argv.find(value => value.startsWith('--desktop-data='))
-app.setName('Weave Workbench Preview')
-app.setPath('userData', dataArgument?.slice('--desktop-data='.length) || join(app.getPath('appData'), 'Weave Workbench Preview'))
+app.setName(productName)
+app.setPath('userData', dataArgument?.slice('--desktop-data='.length) || join(app.getPath('appData'), productName))
 protocol.registerSchemesAsPrivileged(['weave-shell', 'weave-app'].map(scheme => ({ scheme, privileges: { standard: true, secure: true, supportFetchAPI: true } })))
 
 let window: BrowserWindow | null = null
 let fixtures: PreviewServices | null = null
+let productHost: ProductHost | null = null
+let productOrigin: string | null = null
 let selection: ConnectionSelection | null = null
 let view: WebContentsView | null = null
 let activeScope: ConnectionScope | null = null
@@ -226,7 +231,12 @@ function parseCommand(value: unknown): ShellCommand {
 async function localResource(request: Request): Promise<Response> {
   const url = new URL(request.url)
   const relative = decodeURIComponent(url.pathname).slice(1)
-  if (url.host !== 'workbench' || !relative || relative.split('/').some(part => part === '..' || part === '.') || relative.includes('\\') || request.method !== 'GET') return new Response('Not found', { status: 404 })
+  if (url.host !== 'workbench' || !relative || relative.split('/').some(part => part === '..' || part === '.') || relative.includes('\\')) return new Response('Not found', { status: 404 })
+  if (relative === 'api/weave.account' && request.method === 'GET') {
+    return Response.json({ authenticated: true, user: { id: 'desktop-fixture-user', workspace_id: 'desktop-fixture',
+      username: 'fixture', display_name: 'Fixture User', role: 'admin' } }, { headers: { 'Cache-Control': 'no-store' } })
+  }
+  if (request.method !== 'GET') return new Response('Not found', { status: 404 })
   const suffix = relative.split('.').pop() ?? ''
   const mime: Record<string, string> = { html: 'text/html', js: 'text/javascript', css: 'text/css', json: 'application/json', svg: 'image/svg+xml', png: 'image/png', woff2: 'font/woff2', webmanifest: 'application/manifest+json' }
   if (!mime[suffix]) return new Response('Not found', { status: 404 })
@@ -237,10 +247,24 @@ async function localResource(request: Request): Promise<Response> {
 }
 
 function nativeClick(selector: string): void {
-  if (!view || !activeScope || !isCurrent(activeScope)) return
+  const contents = fixtureMode
+    ? view && activeScope && isCurrent(activeScope) ? view.webContents : null
+    : window?.webContents
+  if (!contents || contents.isDestroyed()) return
   // Selectors are constants from the application menu, never renderer input.
-  void view.webContents.executeJavaScript(`document.querySelector(${JSON.stringify(selector)})?.click()`)
+  void contents.executeJavaScript(`document.querySelector(${JSON.stringify(selector)})?.click()`)
 }
+
+function productMenu(): Menu {
+  return Menu.buildFromTemplate([
+    { label: 'Workbench', submenu: [{ role: 'reload' }, { type: 'separator' }, { role: 'quit' }] },
+    { label: '文件', submenu: [{ label: '新建会话', accelerator: 'CmdOrCtrl+N', click: () => { nativeClick('[data-native-new-session]') } }, { role: 'close' }] },
+    { role: 'editMenu' },
+    { label: '视图', submenu: [{ label: '切换侧栏', accelerator: 'CmdOrCtrl+B', click: () => { nativeClick('[data-native-toggle-sidebar]') } }, { role: 'togglefullscreen' }, { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' }] },
+    { role: 'windowMenu' },
+  ])
+}
+
 
 function savedWindowBounds(): Partial<Electron.Rectangle> {
   try {
@@ -259,7 +283,7 @@ function savedWindowBounds(): Partial<Electron.Rectangle> {
   } catch { return {} }
 }
 
-async function start(): Promise<void> {
+async function startFixture(): Promise<void> {
   await app.whenReady()
   protocol.handle('weave-shell', async (request) => {
     const url = new URL(request.url)
@@ -318,6 +342,50 @@ async function start(): Promise<void> {
   if (selection && !state.fatal) void connect(selection.selected.origin)
 }
 
+
+async function loadProductPage(target: string): Promise<void> {
+  if (!window) throw new Error('Workbench window is unavailable')
+  const deadline = Date.now() + 15_000
+  while (true) {
+    try { await window.loadURL(target); return }
+    catch (error) {
+      const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : ''
+      if (!['ERR_CONNECTION_RESET', 'ERR_CONNECTION_REFUSED'].includes(code) || Date.now() >= deadline) throw error
+      await new Promise(resolve => setTimeout(resolve, 150))
+    }
+  }
+}
+
+async function startProduct(): Promise<void> {
+  await app.whenReady()
+  window = new BrowserWindow({ width: 1160, height: 800, ...savedWindowBounds(), minWidth: 800, minHeight: 600,
+    title: 'Weave Workbench', backgroundColor: '#ffffff', show: false,
+    titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 16, y: 13 },
+    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, webSecurity: true,
+      allowRunningInsecureContent: false, navigateOnDragDrop: false } })
+  window.webContents.session.setPermissionRequestHandler((_wc, _permission, callback) => { callback(false) })
+  window.webContents.session.setPermissionCheckHandler(() => false)
+  window.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://')) void shell.openExternal(url)
+    return { action: 'deny' }
+  })
+  window.webContents.on('will-navigate', (event, url) => {
+    if (productOrigin === null || !sameOrigin(url, productOrigin)) event.preventDefault()
+  })
+  window.on('close', () => {
+    try { new FilePreferences(join(app.getPath('userData'), 'window.json')).write(JSON.stringify(window?.getNormalBounds())) }
+    catch (error) { console.error('Window preference could not be saved', error) }
+  })
+  window.on('closed', () => { window = null; app.quit() })
+  Menu.setApplicationMenu(productMenu())
+  const workspaceRoot = resolve(root, '../../..')
+  productHost = await startProductHost({ electronExecutable: process.execPath, workspaceRoot,
+    dataDirectory: join(app.getPath('userData'), 'host'), environment: process.env })
+  productOrigin = new URL(productHost.url).origin
+  await loadProductPage(productHost.url)
+  window.show()
+}
+
 if (!app.requestSingleInstanceLock()) app.quit()
 else {
   app.on('second-instance', () => { window?.show(); window?.focus() })
@@ -329,11 +397,11 @@ else {
     selection?.close()
     retireView()
     for (const candidate of candidateSessions) retireSession(candidate)
-    void Promise.all([fixtures?.close(), ...disposal]).catch((error: unknown) => { console.error('Desktop shutdown failed', error) }).finally(() => { app.quit() })
+    void Promise.all([fixtures?.close(), productHost?.close(), ...disposal]).catch((error: unknown) => { console.error('Desktop shutdown failed', error) }).finally(() => { app.quit() })
   })
-  void start().catch((error: unknown) => {
+  void (fixtureMode ? startFixture() : startProduct()).catch((error: unknown) => {
     console.error('Desktop startup failed', error)
-    dialog.showErrorBox('Workbench Preview', String(error))
+    dialog.showErrorBox(productName, String(error))
     app.quit()
   })
 }

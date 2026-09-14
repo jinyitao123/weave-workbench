@@ -16,6 +16,6 @@ for (const [name, format, platform] of [['main', 'esm', 'node'], ['preload', 'cj
 }
 await cp(join(directory, 'static'), outDir, { recursive: true })
 await packageFrontend(fileURLToPath(new URL('../../..', import.meta.url)), join(outDir, 'workbench'))
-await writeFile(join(outDir, 'package.json'), `${JSON.stringify({ name: 'weave-workbench-preview',
-  productName: 'Weave Workbench Preview', version: '0.1.0', private: true, type: 'module', main: 'main.js',
-  description: 'Isolated native Workbench connection preview', author: 'Weave', license: 'MIT' }, null, 2)}\n`)
+await writeFile(join(outDir, 'package.json'), `${JSON.stringify({ name: 'weave-workbench',
+  productName: 'Weave Workbench', version: '0.1.0', private: true, type: 'module', main: 'main.js',
+  description: 'Weave Workbench desktop application', author: 'Weave', license: 'MIT' }, null, 2)}\n`)

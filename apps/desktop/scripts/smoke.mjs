@@ -24,7 +24,7 @@ let lastBounds
 
 async function start() {
   application = await electron.launch({ executablePath: packaged || executablePath,
-    args: [...(packaged ? [] : [entry]), `--desktop-data=${data}`], env: environment, timeout: 30000 })
+    args: [...(packaged ? [] : [entry]), '--fixture-preview', `--desktop-data=${data}`], env: environment, timeout: 30000 })
   launched.push(application.process().pid)
   application.on('window', window => window.on('pageerror', error => errors.push(String(error))))
   page = await application.firstWindow()
