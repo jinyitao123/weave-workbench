@@ -132,6 +132,19 @@ describe('gate graph validation', () => {
     })
   })
 
+  it('serializes official snapshot artifacts before the final Workbench build', () => {
+    const subject = withPnpmEntrypoint(() => gatesForMode('check-all'))
+    const byId = new Map(subject.map(gate => [gate.id, gate]))
+
+    expect(byId.get('snapshot-build')).toMatchObject({
+      displayCommand: 'pnpm run build:official',
+    })
+    expect(byId.get('snapshot')?.needs).toEqual(['snapshot-build'])
+    expect(byId.get('expected-output')?.needs).toEqual(['snapshot-build'])
+    expect(byId.get('build')?.needs).toEqual(['snapshot', 'expected-output'])
+    expect(byId.get('build:web')?.needs).toEqual(['build'])
+  })
+
   it.each(['ci-primary', 'ci-static', 'check-all'] as const)(
     'keeps the DSH package license policy in %s',
     (mode) => {

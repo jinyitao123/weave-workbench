@@ -15,6 +15,9 @@ const WEBWORKER_PHYSICAL_SESSION_FIXTURE_ROOT =
 const PYTHON_RUNTIME_PHYSICAL_SESSION_FIXTURE_ROOT =
   'scripts/snapshots/python-sdk-single-exe/'
 
+const WORKBENCH_PHYSICAL_SESSION_FIXTURE_ROOT =
+  'packages/bundle/workbench-app/tests/fixtures/'
+
 /** One repository session fixture and its canonical projected representation. */
 export interface SessionFixtureLayout {
   /** Repository-relative path with `/` separators. */
@@ -32,6 +35,7 @@ export interface SessionFixtureLayout {
  * @returns True for physical WebWorker and installed-runtime session logs.
  */
 export function isPhysicalSessionFixture(path: string): boolean {
+  if (path.startsWith(WORKBENCH_PHYSICAL_SESSION_FIXTURE_ROOT)) return path.endsWith('/session.jsonl')
   if (path.startsWith(WEBWORKER_PHYSICAL_SESSION_FIXTURE_ROOT)) {
     return path.endsWith('/session.jsonl')
   }

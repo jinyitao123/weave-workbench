@@ -145,6 +145,10 @@ class Hmr extends Service {
       depth,
       ignored: undefined,
       ignoreInitial: false,
+      // Native watchers can miss a file created immediately after a previously
+      // absent parent. Poll only this recovery shape unless the caller made an
+      // explicit watcher choice.
+      usePolling: this.config.usePolling ?? depth > 0,
     })
     const registration = { watcher }
     this.configs.set(watchFilename, registration)

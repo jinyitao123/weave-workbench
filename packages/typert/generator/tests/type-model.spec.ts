@@ -1,5 +1,6 @@
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { tmpdir } from 'node:os'
 import { pathToFileURL } from 'node:url'
 import ts from 'typescript'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -739,7 +740,7 @@ describe('WorkspaceAnalyzer', { timeout: 60_000 }, () => {
       options: aggregateConfig.options,
     })
     expect(diagnosticProgram.getSourceFiles().map(source => normalizedPath(source.fileName)))
-      .toContain(normalizedPath(join(externalRoot, 'index.d.ts')))
+      .toContainEqual(expect.stringMatching(/\/node_modules\/unscoped-global\/index\.d\.ts$/u))
 
     const targets = new WorkspaceAnalyzer({ root }).analyze().faces
       .flatMap(face => face.graph.nodes)
@@ -1217,9 +1218,13 @@ function canonicalType(text: string): string {
 }
 
 function copyFixture(prefix: string): string {
-  const root = mkdtempSync(join(import.meta.dirname, `.${prefix}`))
+  const root = mkdtempSync(join(tmpdir(), `dsh-typert-${prefix}`))
   temporaryRoots.push(root)
   cpSync(fixtureRoot, root, { recursive: true })
+  const dependencies = join(root, 'node_modules')
+  mkdirSync(join(dependencies, '@types'), { recursive: true })
+  cpSync(realpathSync(resolve(import.meta.dirname, '../node_modules/zod')), join(dependencies, 'zod'), { recursive: true })
+  cpSync(realpathSync(resolve(import.meta.dirname, '../../../../node_modules/@types/node')), join(dependencies, '@types/node'), { recursive: true })
   return root
 }
 

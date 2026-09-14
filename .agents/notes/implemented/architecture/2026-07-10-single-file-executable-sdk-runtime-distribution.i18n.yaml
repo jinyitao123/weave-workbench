@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-07-10-single-file-executable-sdk-runtime-distribution.md
-2026-07-10-single-file-executable-sdk-runtime-distribution.md: 767e673857443d6fdf46a07ea74399acd23038a2
-2026-07-10-single-file-executable-sdk-runtime-distribution.zh.md: 8c425b3b91d5f389dcb7ab7cf9a7e3f93dba8406
+2026-07-10-single-file-executable-sdk-runtime-distribution.md: de09a58fd22267be4a27d8898beb1f36de511134
+2026-07-10-single-file-executable-sdk-runtime-distribution.zh.md: c1fb7de5582a52e0523786944568cf8174ace56b

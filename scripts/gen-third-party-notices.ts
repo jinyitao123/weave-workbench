@@ -90,15 +90,7 @@ const PYTHON_METADATA: Record<string, { license: string; repo: string; role: str
 type PythonMetadata = typeof PYTHON_METADATA
 
 /** Tools fetched by scripts at build time, keyed by the pin the script owns. */
-const BUILD_TIME_TOOLS = [
-  {
-    name: '@yao-pkg/pkg',
-    license: 'MIT',
-    repo: 'https://github.com/yao-pkg/pkg',
-    role: 'invoked by `scripts/build-exe-for-python-sdk.ts` to assemble the single-file SDK runtime executable',
-    pinSource: 'scripts/build-exe-for-python-sdk.ts',
-  },
-]
+const BUILD_TIME_TOOLS: readonly { name: string; license: string; repo: string; role: string; pinSource: string }[] = []
 
 /** The `package.json` fields this generator reads. */
 export interface Manifest {
