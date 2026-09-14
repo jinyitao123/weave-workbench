@@ -62,7 +62,7 @@ node apps/desktop/scripts/web-smoke.mjs
 <a id="further-exploration"></a>
 ## 进一步阅读
 
-[选择策略归属](../../.agents/notes/implemented/architecture/2026-09-08-desktop-connection-selection.zh.md)说明可复用策略。[原生资源归属](../../.agents/notes/implemented/architecture/2026-09-08-native-workbench-preview.zh.md)记录应用边界。[集成边界](../../docs/weave-integration.md)记录对外部 Weave 平台的依赖。
+[选择策略归属](../../.agents/notes/implemented/architecture/2026-09-08-desktop-connection-selection.zh.md)说明可复用策略。[原生资源归属](../../.agents/notes/implemented/architecture/2026-09-08-native-workbench-preview.zh.md)记录应用边界。[集成边界](../../docs/weave-integration.zh.md)记录对外部 Weave 平台的依赖。
 
 <a id="model-experience"></a>
 ## 模型体验

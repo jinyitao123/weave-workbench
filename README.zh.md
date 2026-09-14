@@ -1,6 +1,6 @@
 # Weave Workbench
 
-[English](README.md) | 简体中文
+[English](README.md) | 中文
 
 Workbench 是使用智能体团队完成工作的产品工作台。本仓同时维护浏览器界面和承载账号、对话、任务投影与工具桥接的 TypeScript Host。团队构建、执行调度和最终交付事实由外部 Weave 平台负责。
 
@@ -28,7 +28,7 @@ pnpm run check:workbench
 
 该入口完成 Host 与 Client 类型构建、浏览器产物构建、运行依赖检查、界面依赖及文案检查、产品组合启动、账号与会话隔离相关 Host 测试、完整 GUI 回归。它不需要真实模型凭据。业务交付验收仍须通过真实浏览器、真实用户身份与模型完成，不能用自动化测试或健康响应替代。
 
-`pnpm run build` 默认构建 Workbench。保留的通用运行包、类型命名和测试资料属于实现与历史来源，不新增独立 DSH 产品入口或发布渠道。工作台对平台的集成约定见 [Weave 集成边界](docs/weave-integration.md)。仓库工作规则见 [AGENTS.md](AGENTS.md)。
+`pnpm run build` 默认构建 Workbench。保留的通用运行包、类型命名和测试资料属于实现与历史来源，不新增独立 DSH 产品入口或发布渠道。工作台对平台的集成约定见 [Weave 集成边界](docs/weave-integration.zh.md)。仓库工作规则见 [AGENTS.md](AGENTS.md)。
 
 ## 源码与发布
 

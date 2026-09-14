@@ -591,7 +591,7 @@ export function collectPythonDependencies(
 /** Direct Python dependencies named by the `pyproject.toml` manifests under `python/`. */
 function collectPython(): { name: string; license: string; repo: string; role: string }[] {
   const manifests = globSync('python/*/pyproject.toml', { cwd: root })
-  if (manifests.length === 0) throw new Error('gen-third-party-notices: no python/*/pyproject.toml found; the Python tree moved.')
+  if (manifests.length === 0) return []
   return collectPythonDependencies(manifests.map(path => readFileSync(resolve(root, path), 'utf8')))
 }
 

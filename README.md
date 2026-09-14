@@ -1,6 +1,6 @@
 # Weave Workbench
 
-English | [简体中文](README.zh.md)
+English | [中文](README.zh.md)
 
 Workbench is the product workspace for completing work with agent teams. This repository owns both the browser UI and the TypeScript Host for accounts, conversations, task projections and the product tool bridge. The external Weave platform owns team construction, execution scheduling and final delivery facts.
 

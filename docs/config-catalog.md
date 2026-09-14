@@ -1379,7 +1379,7 @@ export interface ReconnectConfig {
 }
 ```
 
-Source: [`packages/mcp/mcp-client/src/index.ts:98`](../packages/mcp/mcp-client/src/index.ts)
+Source: [`packages/mcp/mcp-client/src/index.ts:99`](../packages/mcp/mcp-client/src/index.ts)
 
 <a id="deepseek-aidsh-message-feedback"></a>
 
@@ -2917,11 +2917,13 @@ Source: [`packages/webhook/webhook-github/src/index.ts:17`](../packages/webhook/
 
 ## `@deepseek-ai/dsh-workbench-app`
 
-Requires: `sessions` · `sessionProjections` · `sessionController` · `commands` · `systemPrompt` · `connection` · `tools`
+Requires: `agents` · `sessions` · `sessionProjections` · `sessionController` · `commands` · `systemPrompt` · `connection` · `tools`
 
 ```ts config-catalog
 /** Host-only WorkTask synchronization settings. */
 export interface Config {
+  /** Operator-owned root for personal Host working directories. */
+  userDataRoot?: string
   /** Weave HTTP API origin; defaults to `WEAVE_API_URL` and then the local development endpoint. */
   readonly apiUrl?: string
   /** Business API credential; defaults to host-only `WEAVE_API_KEY`. */
@@ -2933,7 +2935,7 @@ export interface Config {
 }
 ```
 
-Source: [`packages/bundle/workbench-app/src/index.ts:1043`](../packages/bundle/workbench-app/src/index.ts)
+Source: [`packages/bundle/workbench-app/src/index.ts:1060`](../packages/bundle/workbench-app/src/index.ts)
 
 <a id="deepseek-aidsh-workflow-worker-thread"></a>
 

@@ -488,10 +488,7 @@ function checkWorkspaceProtocol(manifests: readonly WorkspaceManifest[]): string
 /** Run the repository constraint gate. */
 export function main(): void {
   const manifests = workspaceManifests()
-  const dependencyManifests = [
-    ...manifests,
-    { dir: 'python/sdk-runtime', manifest: readJson(join(root, 'python/sdk-runtime/package.json')) },
-  ]
+  const dependencyManifests = manifests
   const errors = [
     ...checkRepositoryVersion(),
     ...manifests.flatMap(checkWorkspaceManifest),

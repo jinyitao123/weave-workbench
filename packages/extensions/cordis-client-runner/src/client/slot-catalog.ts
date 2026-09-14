@@ -92,6 +92,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -111,7 +113,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     replaceRisk: 'shadows-shipped-ui',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'conversation\', () => ctx.slots.register(\n      { name: \'conversation\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-layout/src/client/index.ts:65',
+    source: 'packages/client/ui-layout/src/client/index.ts:74',
   },
   {
     key: 'conversation.approval.detail',
@@ -126,6 +128,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -183,6 +187,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -230,6 +236,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -278,6 +286,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -339,6 +349,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -386,6 +398,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -426,6 +440,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -482,6 +498,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -516,6 +534,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -552,6 +572,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -588,6 +610,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -616,6 +640,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -647,6 +673,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -675,6 +703,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -707,6 +737,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -763,6 +795,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -824,6 +858,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -858,6 +894,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -911,6 +949,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -948,6 +988,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1006,6 +1048,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1044,6 +1088,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1078,6 +1124,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1112,6 +1160,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1167,6 +1217,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1207,6 +1259,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1262,6 +1316,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1302,6 +1358,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1359,6 +1417,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1396,6 +1456,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1417,7 +1479,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     replaceRisk: 'shadows-shipped-ui',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'details\', () => ctx.slots.register(\n      { name: \'details\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-layout/src/client/index.ts:75',
+    source: 'packages/client/ui-layout/src/client/index.ts:84',
   },
   {
     key: 'root',
@@ -1432,6 +1494,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1479,6 +1543,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1507,6 +1573,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1554,6 +1622,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1588,6 +1658,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1635,6 +1707,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1670,6 +1744,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1715,6 +1791,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1751,6 +1829,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1801,6 +1881,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1849,6 +1931,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1863,6 +1947,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
       'client-ui-settings-models ModelsSection id \'models\'',
       'client-ui-settings-plugins PluginsSettingsSection id \'plugins\'',
       'client-ui-weave RuntimeSettingsSection id \'weave-runtimes\'',
+      'client-ui-weave CapabilityOperationsSettingsSection id \'weave-capability-operations\'',
+      'client-ui-weave ApplicationSettingsSection id \'weave-capability-apps\'',
     ],
     replaceRisk: 'none',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'settings.section\', () => ctx.slots.register(\n      { name: \'settings.section\', id: \'my-entry\', order: 100, label: \'My entry\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
@@ -1881,6 +1967,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1895,6 +1983,36 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     replaceRisk: 'shadows-shipped-ui',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'settings.trigger\', () => ctx.slots.register(\n      { name: \'settings.trigger\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
     source: 'packages/client/ui-settings/src/client/contract/slots.ts:24',
+  },
+  {
+    key: 'shell.access',
+    kind: 'single',
+    scope: 'root',
+    summary: 'Account entry can grant or withdraw access before business views mount.',
+    doc: 'Account entry can grant or withdraw access before business views mount.',
+    registerOptions: [],
+    ownerProps: [
+      '/** The account entry reports access; the layout retains ownership of its views. */\nexport interface ShellAccessOwnerProps {\n  /** Null withholds all business views, including during account changes. */\n  onAccessChange: (identity: string | null) => void\n}',
+    ],
+    ownerPropsReferences: [],
+    standardProps: [
+      'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
+      'useSessions: UseSessions',
+      'useSessionPendingInteraction: UseSessionPendingInteraction',
+      'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+    ],
+    keyDomain: '',
+    hookContext: '',
+    slotInject: '',
+    declaredBy: 'an entry in \'root\' (client-ui-layout), so it exists while that entry is mounted',
+    occupants: [
+      'client-ui-weave AccountAccess',
+    ],
+    replaceRisk: 'shadows-shipped-ui',
+    example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'shell.access\', () => ctx.slots.register(\n      { name: \'shell.access\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
+    source: 'packages/client/ui-layout/src/client/index.ts:46',
   },
   {
     key: 'shell.overlay',
@@ -1926,6 +2044,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1937,7 +2057,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     occupants: [],
     replaceRisk: 'none',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'shell.overlay\', () => ctx.slots.register(\n      { name: \'shell.overlay\', id: \'my-entry\', order: 100, label: \'My entry\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-layout/src/client/index.ts:86',
+    source: 'packages/client/ui-layout/src/client/index.ts:95',
   },
   {
     key: 'sidebar',
@@ -1952,6 +2072,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -1965,7 +2087,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     replaceRisk: 'shadows-shipped-ui',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'sidebar\', () => ctx.slots.register(\n      { name: \'sidebar\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-layout/src/client/index.ts:52',
+    source: 'packages/client/ui-layout/src/client/index.ts:61',
   },
   {
     key: 'sidebar.brand.mark',
@@ -1980,6 +2102,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -2009,6 +2133,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -2057,6 +2183,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -2066,6 +2194,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     slotInject: '',
     declaredBy: 'an entry in \'sidebar\' (client-ui-sidebar), so it exists while that entry is mounted',
     occupants: [
+      'client-ui-weave AccountButton id \'weave-account\'',
       'client-ui-cordis CordisPanel id \'cordis-panel\'',
     ],
     replaceRisk: 'none',
@@ -2085,6 +2214,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -2113,6 +2244,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -2141,6 +2274,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -2172,6 +2307,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -2207,6 +2344,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ownerPropsReferences: [],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
@@ -2270,6 +2409,8 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
+      'useHostManagement?: SnapshotSelectorHook<boolean>',
+      'startPersonalSession?: () => Promise<void>',
       'useSessions: UseSessions',
       'useSessionPendingInteraction: UseSessionPendingInteraction',
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',

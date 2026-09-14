@@ -1,5 +1,7 @@
 # Weave integration boundary
 
+English | [中文](weave-integration.zh.md)
+
 Workbench owns the browser and TypeScript interaction Host. It communicates with an external Weave platform through `/v1` HTTP APIs and an operator-installed `weave mcp serve` command. No Go source, platform database, task queue or parent checkout is required to install, build or test Workbench.
 
 ## Compatibility baseline

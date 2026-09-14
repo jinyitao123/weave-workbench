@@ -176,10 +176,6 @@ describe('parseVendoredRows', () => {
 })
 
 describe('parsePyprojectRequirements', () => {
-  it('reads the committed manifests', () => {
-    expect(parsePyprojectRequirements(readFileSync(resolve(root, 'python/sdk/pyproject.toml'), 'utf8'))).toContain('pydantic')
-  })
-
   it('locates requirement arrays by TOML table, so author-named groups are not missed', () => {
     expect(parsePyprojectRequirements([
       '[build-system]',

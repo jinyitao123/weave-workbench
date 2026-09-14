@@ -1,5 +1,7 @@
 # Conversation-first capability authoring in Workbench
 
+English | [中文](2026-09-13-capability-development.zh.md)
+
 Reusable capability creation follows the established team interaction model. The agent lists published capabilities first, reuses one when it fits, and otherwise sends the business request to Weave to generate and save a draft. The conversation presents purpose, responsibilities, flow, inputs and outputs for review. It does not expose a JSON editor, schemas, role identifiers or execution internals.
 
 Draft creation requires a caller-supplied idempotency key. Retrying an unresolved request reuses that key and therefore the same draft identity. Publication is a separate tool call that requires the user to have confirmed the exact proposal and publication. A published revision is immutable; later changes create a new draft revision.

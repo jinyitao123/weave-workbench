@@ -18,7 +18,7 @@ The DSH launch-token exchange remains the browser authentication mechanism. The 
 
 The [Docker context exclusions](../../../../.dockerignore) omit `.env*` files at every directory depth. The image copies the build workspace into its runtime stage, so local environment files must be excluded before Docker receives the context; deployment credentials enter only through runtime configuration.
 
-The [image build](../../../../../Dockerfile.workbench) keeps APT downloads and indexes, npm tool downloads, and the pnpm store in BuildKit caches. Interrupted downloads can resume without copying package caches into the runtime image; the frozen dependency lockfile and source build remain required.
+The [image build](../../../../Dockerfile) keeps APT downloads and indexes, npm tool downloads, and the pnpm store in BuildKit caches. Interrupted downloads can resume without copying package caches into the runtime image; the frozen dependency lockfile and source build remain required.
 
 ## Alternatives considered
 

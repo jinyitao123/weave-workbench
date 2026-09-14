@@ -25,6 +25,8 @@ interface UserMessage extends Message {
  * store the canonical log verbatim.
  */
 interface SessionEventMap {
+  /** Host-authenticated actor, written before admitting user activity. */
+  'session/actor': { readonly userId: string; readonly workspaceId: string }
   /**
    * Opens turn `turn` before the loop claims queued input or runs pre-step.
    * Rejection, empty input, cancellation, or failure may close it with no
@@ -603,6 +605,20 @@ Host service backing the generated `ctx.remote.session` namespace.
 
 ```ts cordis-catalog
 /**
+ * Let the product choose a trusted personal or explicitly shared working directory.
+ * @param policy - Request transformer that selects the product-owned working directory.
+ * @returns Disposer that removes this exact policy.
+ */
+setSessionCreationPolicy(policy: (request: SessionCreateRequest) => Promise<SessionCreateRequest>): () => void
+
+/**
+ * Install the product's request-bound Session visibility policy.
+ * @param policy - Factory capturing the authenticated request identity.
+ * @returns Disposer that removes this exact policy.
+ */
+setSessionVisibility(policy: () => (id: SessionId) => Promise<boolean>): () => void
+
+/**
  * Resolve or resume one ordinary Session for another Host API domain.
  * @param sessionId - Session identity whose Agent owns the operation.
  * @returns the live Agent or the stable Session-domain failure.
@@ -631,14 +647,14 @@ inspect( sessionId: SessionId, signal?: AbortSignal, ): Promise<{ meta: SessionH
  * @param signal - cancellation for list and search reads.
  * @returns authorized bounded Session search results.
  */
-@Remote('search') search(request: SessionSearchRequest, signal: AbortSignal): Promise<SessionSearchValue>
+@Remote('search') async search(request: SessionSearchRequest, signal: AbortSignal): Promise<SessionSearchValue>
 
 /**
  * Create or idempotently adopt one ordinary Session.
  * @param request - requested identity, location, and Agent preset.
  * @returns the Session identity and resolved preset when configured.
  */
-@Remote('create') create(request: SessionCreateRequest): Promise<SessionCreateValue>
+@Remote('create') async create(request: SessionCreateRequest): Promise<SessionCreateValue>
 
 /**
  * Select one Session-local model after explicitly resuming the Session.

@@ -81,23 +81,19 @@ None.
 <a id="model-experience"></a>
 ## Model Experience
 
-### Workbench team-routing persona
+### Workbench collaboration persona
 
 #### What the model sees
 
-The profile registers the rule as a dedicated Workbench prompt section and fixes the foreground agent to the standard full-capability preset, so a session mode cannot shadow it. The foreground agent must list and match Weave teams for substantive business work, using tools such as `mcp__weave__team_list`, then confirm the selected team, task scope, and expected deliverables before calling `weave_dispatch` for the published workflow without a task-body argument. Existing explicit confirmation is sufficient; internal construction and evaluation add no user approval step. After dispatch it may make at most one status call to confirm the handoff, then it returns the selected team and a short human-facing state. It must not include internal identifiers, raw workflow versions, orchestration phases, or backend enums unless the user explicitly requests technical details. It must not create a DSH goal, poll the Weave run in the foreground, or save a duplicate deliverable. Workbench owns background status projection; the model checks for an exact-run final deliverable when the run is terminal or the user later requests it. If only stage records exist, it reports that final output remains unconfirmed. When a final deliverable exists, it reads it and answers with a short user-facing completion summary: what finished, the main findings or decisions, the files the user can open, and any action still needed. Internal run IDs, deliverable IDs, runtime IDs, host paths, hashes, validation command names, and engine details stay out of the main answer unless the user asks for technical details. With no match it must say so and collaborate on a team definition. It may use free collaboration only after an explicit user request, and it must report an unavailable Weave connection honestly.
-
-### Workbench capability-authoring persona
-
-The same conversation first calls `mcp__weave__capability_list` and reuses a suitable published capability when possible. Otherwise it calls `mcp__weave__capability_plan` with a stable idempotency key to create or revise one draft, summarizes purpose, responsibilities, flow, inputs and outputs in business language, and waits for confirmation. It calls `mcp__weave__capability_publish` only after the user confirms the proposal and publication. Published revisions remain immutable. Raw definitions, schemas and internal execution details stay out of the user-facing flow.
+The foreground agent uses Workbench's stable product instructions and the connected Weave tool roster. For substantive work it selects a published team through `mcp__weave__team_list`, confirms scope and deliverables, calls `weave_dispatch` once, and leaves durable observation to Workbench. For reusable capability work it lists published capabilities first, then creates a reviewable draft only when no existing capability fits. Publication requires the user's explicit confirmation. User-facing replies describe the business result and files without exposing internal identifiers, engine state, or orchestration phases.
 
 #### Token effect
 
-One stable product persona, the Host-owned dispatch schema, and the tool schemas published by the Weave MCP server when connected.
+One stable product persona, the Host-owned dispatch schema, and the tool schemas published by the connected Weave MCP server.
 
 #### KV Cache effect
 
-Stable while the Workbench persona and connected Weave tool roster remain unchanged. Connecting, disconnecting, or changing the MCP tool set changes the request prefix.
+Stable while the Workbench persona and connected Weave tool roster remain unchanged. Connecting, disconnecting, or changing the tool set changes the request prefix.
 
 ## Known Limitations and Deferred Work
 

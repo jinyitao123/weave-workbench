@@ -191,18 +191,25 @@ Host service backing the generated `ctx.remote.workspace` namespace.
 
 ```ts cordis-catalog
 /**
+ * Install the product's request-bound Session visibility policy.
+ * @param policy - captures the current caller and returns a live visibility check.
+ * @returns disposer that withdraws this policy if it is still installed.
+ */
+setSessionVisibility(policy: () => SessionVisibility): () => void
+
+/**
  * Create or idempotently resolve one Workspace over an existing directory.
  * @param request - directory path to register.
  * @returns the Workspace and whether this call created it.
  */
-@Remote('create') create(request: WorkspaceCreateRequest): Promise<WorkspaceCreateValue>
+@Remote('create') async create(request: WorkspaceCreateRequest): Promise<WorkspaceCreateValue>
 
 /**
  * Rename one Workspace to a unique non-blank title.
  * @param request - Workspace identity and proposed title.
  * @returns the updated Workspace projection.
  */
-@Remote('rename') rename(request: WorkspaceRenameRequest): Promise<WorkspaceValue>
+@Remote('rename') async rename(request: WorkspaceRenameRequest): Promise<WorkspaceValue>
 
 /**
  * Remove one Workspace registration while retaining files and Sessions.
@@ -223,14 +230,14 @@ Host service backing the generated `ctx.remote.workspace` namespace.
  * @param request - Workspace, Session, and optional anchor identities.
  * @returns the updated Workspace projection.
  */
-@Remote('insertSessionBefore') insertSessionBefore(request: WorkspaceInsertSessionBeforeRequest): Promise<WorkspaceValue>
+@Remote('insertSessionBefore') async insertSessionBefore(request: WorkspaceInsertSessionBeforeRequest): Promise<WorkspaceValue>
 
 /**
  * Hide one known Session from Workspace grouping surfaces.
  * @param request - Session identity to archive.
  * @returns the complete resulting archive set.
  */
-@Remote('archiveSession') archiveSession(request: WorkspaceArchiveSessionRequest): Promise<WorkspaceArchiveValue>
+@Remote('archiveSession') async archiveSession(request: WorkspaceArchiveSessionRequest): Promise<WorkspaceArchiveValue>
 
 /**
  * Stream a complete Workspace baseline followed by ordered increments.
