@@ -24,7 +24,7 @@ import { ApplicationSettingsSection } from './ApplicationCenter.tsx'
 import { CapabilityOperationsSettingsSection } from './CapabilityOperationsCenter.tsx'
 import { TeamListRow } from './TeamListRow.tsx'
 import { WorkTaskCommandRow } from './WorkTaskCommandRow.tsx'
-import { WorkTaskConversationCard, WorkTaskHeader, WorkTaskPanel } from './WorkTaskPanel.tsx'
+import { WorkTaskHeader, WorkTaskLiveCard, WorkTaskPanel } from './WorkTaskPanel.tsx'
 import { en, NS, zh, type WeaveKey } from './locales.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
@@ -204,7 +204,7 @@ export function apply(ctx: ClientContext, config: Config = {}): void {
   }, WorkTaskPanel))
   ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
     name: 'conversation.input.dock', id: 'weave-task-action', order: -30, locale: NS, inject: taskInjected, store: taskView,
-  }, WorkTaskConversationCard))
+  }, WorkTaskLiveCard))
   ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section', id: 'weave-runtimes', order: -20, label: () => t('runtimeCenter.title'), locale: NS,
   }, RuntimeSettingsSection))

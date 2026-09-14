@@ -7,7 +7,7 @@ import { RuntimeSettingsSection } from '../src/client/RuntimeCenter.tsx'
 import { ApplicationSettingsSection } from '../src/client/ApplicationCenter.tsx'
 import { CapabilityOperationsSettingsSection } from '../src/client/CapabilityOperationsCenter.tsx'
 import { TeamListRow } from '../src/client/TeamListRow.tsx'
-import { WorkTaskConversationCard, WorkTaskHeader, WorkTaskPanel } from '../src/client/WorkTaskPanel.tsx'
+import { WorkTaskHeader, WorkTaskLiveCard, WorkTaskPanel } from '../src/client/WorkTaskPanel.tsx'
 import type { InputTriggerSource } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
 import type { WorkTaskMemberReference } from '../src/client/member-reference.ts'
 import { WorkTaskCommandRow } from '../src/client/WorkTaskCommandRow.tsx'
@@ -74,7 +74,7 @@ describe('ui-weave browser plugin', () => {
     const summary = slots.entries('conversation.details.summary')
     expect(summary).toHaveLength(1)
     expect(summary[0]?.component).toBe(WorkTaskPanel)
-    expect(slots.entries('conversation.input.dock')[0]?.component).toBe(WorkTaskConversationCard)
+    expect(slots.entries('conversation.input.dock')[0]?.component).toBe(WorkTaskLiveCard)
     expect(slots.entries('sidebar.footer.action')).toHaveLength(0)
     const settings = slots.entries('settings.section')
     expect(settings).toHaveLength(3)

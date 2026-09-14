@@ -454,6 +454,15 @@ export function WorkTaskConversationCard(props: PropsRuntime<'conversation.input
   </section>
 }
 
+/** Live and actionable task state kept next to the composer while work is active. */
+export function WorkTaskLiveCard(props: Parameters<typeof WorkTaskConversationCard>[0]) {
+  const conversation = props.useChat(snapshot => workTaskModel(snapshot.nodes.values()))
+  const model = projectedWorkTask(conversation, props.useProjection('workTask'))
+  const terminal = model.status === 'completed' || model.status === 'failed' || model.status === 'stopped'
+  if (terminal) return null
+  return <div data-weave-task-live=""><WorkTaskConversationCard {...props} /></div>
+}
+
 /** Compact live status beside the Session title. */
 export function WorkTaskHeader({ useChat, useProjection, openDetails, t }: HeaderProps) {
   const conversationModel = useChat(snapshot => workTaskModel(snapshot.nodes.values()))
