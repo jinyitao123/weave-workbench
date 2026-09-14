@@ -89,7 +89,7 @@ describe('Typert-backed Cordis catalog', () => {
     const byKey = new Map(projection().model.services.map(service => [service.key, service]))
     // An interface-typed key is described by its Service Definition: that is where
     // the contract and, by repository convention, the member JSDoc live.
-    expect(byKey.get('lsp')?.type).toBe('LspService')
+    expect(byKey.get('sessionController')?.type).toBe('SessionController')
     // Two packages describe `ctx.typert` — a merge-extensible interface in
     // type-meta and the implementing class in registry. The class wins: it is the
     // object a caller meets and it carries the documentation.

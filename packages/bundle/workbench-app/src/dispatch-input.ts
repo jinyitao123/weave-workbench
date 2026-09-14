@@ -246,7 +246,14 @@ export interface DispatchInputConnection {
 
 /** Transport result with an explicit distinction between rejection and unknown admission. */
 export class DispatchResponseError extends Error {
-  constructor(readonly code: string, readonly rejected: boolean) { super(code) }
+  readonly code: string
+  readonly rejected: boolean
+
+  constructor(code: string, rejected: boolean) {
+    super(code)
+    this.code = code
+    this.rejected = rejected
+  }
 }
 
 /** Host-only entry for revised briefs already recorded by a user action. */

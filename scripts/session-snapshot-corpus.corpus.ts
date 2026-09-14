@@ -17,12 +17,11 @@ import {
 
 const repoRoot = resolve(import.meta.dirname, '..')
 const corpusRoot = join(repoRoot, 'snapshots')
-const profiles = ['acp', 'sdk', 'session', 'web'] as const
+const profiles = ['acp', 'session', 'web'] as const
 const snapshotAdapters = [
   'apps/web/tests/message-feedback-protocol.snapshot.ts',
   'apps/web/tests/minimal-preset.snapshot.ts',
   'snapshots/acp/acp.snapshot.ts',
-  'snapshots/sdk/sdk.snapshot.ts',
   'snapshots/session/headless.snapshot.ts',
 ] as const
 
@@ -86,8 +85,9 @@ async function snapshotNamedTests(): Promise<string[]> {
       }
     }
   }
-  for (const root of ['apps', 'native', 'packages', 'python', 'scripts', 'snapshots', 'website']) {
-    await visit(join(repoRoot, root), root)
+  for (const root of ['apps', 'native', 'packages', 'scripts', 'snapshots']) {
+    const directory = join(repoRoot, root)
+    if (existsSync(directory)) await visit(directory, root)
   }
   return files.sort()
 }

@@ -11,11 +11,11 @@
     "sandbox-exec",
     "tar",
     "taskkill",
-    "where.exe"
+    "where.exe",
+    "security"
   ],
   "ignoreWorkspaces": [
-    "vendor/*",
-    "python/sdk-runtime"
+    "vendor/*"
   ],
   "ignoreDependencies": [
     "@yarnpkg/cli-dist",
@@ -706,16 +706,6 @@
         "tests/**/*.ts"
       ]
     },
-    "packages/test-support/loader-smoke": {
-      "entry": [
-        "tests/**/*.spec.ts",
-        "tests/fixtures/*.ts"
-      ],
-      "project": [
-        "src/**/*.ts",
-        "tests/**/*.ts"
-      ]
-    },
     "packages/experimental/agent-team-profile": {
       "ignoreDependencies": [
         "@deepseek-ai/dsh-experimental-agent-team",
@@ -761,6 +751,19 @@
     "packages/bundle/web-app": {
       "ignoreDependencies": [
         "@deepseek-ai/.+"
+      ]
+    },
+    "packages/bundle/workbench-app": {
+      "entry": [
+        "tests/fixtures/dispatch-input/headless-plugin.ts"
+      ],
+      "project": [
+        "src/**/*.ts",
+        "tests/**/*.ts"
+      ],
+      "ignoreDependencies": [
+        "@deepseek-ai/dsh-client-ui-brand-workbench",
+        "@deepseek-ai/dsh-client-ui-weave"
       ]
     }
   }
