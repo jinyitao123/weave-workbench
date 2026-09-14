@@ -51,14 +51,15 @@ function waitForExit(child: ChildProcess, milliseconds: number): Promise<boolean
  */
 export async function startProductHost(options: {
   readonly electronExecutable: string
-  readonly workspaceRoot: string
+  readonly runtimeRoot: string
+  readonly sourceMode: boolean
   readonly dataDirectory: string
   readonly environment: NodeJS.ProcessEnv
   readonly timeoutMs?: number
 }): Promise<ProductHost> {
   await mkdir(options.dataDirectory, { recursive: true })
-  const root = resolve(options.workspaceRoot)
-  const entry = join(root, 'apps/cli/src/bin.ts')
+  const root = resolve(options.runtimeRoot)
+  const entry = options.sourceMode ? join(root, 'apps/cli/src/bin.ts') : join(root, 'lib/bin.js')
   const inherited = validateWeaveCommand(workbenchEnvironment(options.environment), root)
   const environment: NodeJS.ProcessEnv = {
     ...inherited,
@@ -66,7 +67,7 @@ export async function startProductHost(options: {
     DSH_HOME: options.dataDirectory,
   }
   const child = spawn(options.electronExecutable, [
-    '--expose-internals', '--import', 'tsx/esm', entry,
+    '--expose-internals', ...(options.sourceMode ? ['--import', 'tsx/esm'] : []), entry,
     '--profile', 'workbench', '--no-open', '--host', '127.0.0.1', '--port', '0',
   ], { cwd: root, env: environment, stdio: ['ignore', 'pipe', 'pipe'] })
 

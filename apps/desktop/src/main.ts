@@ -13,6 +13,7 @@ import { startProductHost, type ProductHost } from './host-supervisor.js'
 
 const shellOrigin = 'weave-shell://app'
 const fixtureMode = process.argv.includes('--fixture-preview')
+const smokeMode = process.argv.includes('--desktop-smoke')
 const productName = fixtureMode ? 'Weave Workbench Preview' : 'Weave Workbench'
 const root = fileURLToPath(new URL('.', import.meta.url))
 const dataArgument = process.argv.find(value => value.startsWith('--desktop-data='))
@@ -80,7 +81,7 @@ function sameOrigin(url: string, origin: string): boolean {
 }
 
 async function offerExternal(url: string, scope: ConnectionScope): Promise<void> {
-  if (!window || !isCurrent(scope)) return
+  if (smokeMode || !window || !isCurrent(scope)) return
   let parsed: URL
   try { parsed = new URL(url) } catch { return }
   if (parsed.protocol !== 'https:' || parsed.username || parsed.password) {
@@ -358,6 +359,7 @@ async function loadProductPage(target: string): Promise<void> {
 
 async function startProduct(): Promise<void> {
   await app.whenReady()
+  if (smokeMode && process.platform === 'darwin') app.dock?.hide()
   window = new BrowserWindow({ width: 1160, height: 800, ...savedWindowBounds(), minWidth: 800, minHeight: 600,
     title: 'Weave Workbench', backgroundColor: '#ffffff', show: false,
     titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 16, y: 13 },
@@ -366,7 +368,7 @@ async function startProduct(): Promise<void> {
   window.webContents.session.setPermissionRequestHandler((_wc, _permission, callback) => { callback(false) })
   window.webContents.session.setPermissionCheckHandler(() => false)
   window.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https://')) void shell.openExternal(url)
+    if (!smokeMode && url.startsWith('https://')) void shell.openExternal(url)
     return { action: 'deny' }
   })
   window.webContents.on('will-navigate', (event, url) => {
@@ -378,12 +380,12 @@ async function startProduct(): Promise<void> {
   })
   window.on('closed', () => { window = null; app.quit() })
   Menu.setApplicationMenu(productMenu())
-  const workspaceRoot = resolve(root, '../../..')
-  productHost = await startProductHost({ electronExecutable: process.execPath, workspaceRoot,
+  const runtimeRoot = app.isPackaged ? join(process.resourcesPath, 'desktop-host-runtime') : resolve(root, '../../..')
+  productHost = await startProductHost({ electronExecutable: process.execPath, runtimeRoot, sourceMode: !app.isPackaged,
     dataDirectory: join(app.getPath('userData'), 'host'), environment: process.env })
   productOrigin = new URL(productHost.url).origin
   await loadProductPage(productHost.url)
-  window.show()
+  if (!smokeMode) window.show()
 }
 
 if (!app.requestSingleInstanceLock()) app.quit()
@@ -401,7 +403,7 @@ else {
   })
   void (fixtureMode ? startFixture() : startProduct()).catch((error: unknown) => {
     console.error('Desktop startup failed', error)
-    dialog.showErrorBox(productName, String(error))
+    if (!smokeMode) dialog.showErrorBox(productName, String(error))
     app.quit()
   })
 }
