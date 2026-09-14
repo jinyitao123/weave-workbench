@@ -29,7 +29,15 @@ jobs:
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
       - name: Install native build dependencies
-        run: sudo apt-get update && sudo apt-get install -y musl-tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools bubblewrap
+      - name: Verify native isolation launcher
+        working-directory: native/landlock-run
+        run: |
+          pnpm build:ts
+          pnpm build:native
+          node ./test/entry.test.js
+      - name: Install browser runtime
+        run: pnpm exec playwright install --with-deps chromium
       - name: Verify release source
         run: pnpm run check:all
 
