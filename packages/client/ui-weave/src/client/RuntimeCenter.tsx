@@ -136,11 +136,10 @@ function timeLabel(value: string, t: Props['t']): string {
   if (value === '' || Number.isNaN(date.getTime())) return t('runtimeCenter.neverConnected')
   const elapsed = Math.max(0, Date.now() - date.getTime())
   const minutes = Math.floor(elapsed / 60_000)
-  if (minutes < 1) return t('runtimeCenter.justNow')
-  if (minutes < 60) return t('runtimeCenter.minutesAgo', { count: minutes })
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return t('runtimeCenter.hoursAgo', { count: hours })
-  return t('runtimeCenter.daysAgo', { count: Math.floor(hours / 24) })
+  if (hours >= 24) return t('runtimeCenter.daysAgo', { count: Math.floor(hours / 24) })
+  if (minutes >= 60) return t('runtimeCenter.hoursAgo', { count: hours })
+  return minutes === 0 ? t('runtimeCenter.justNow') : t('runtimeCenter.minutesAgo', { count: minutes })
 }
 
 async function responseError(response: Response, t: Props['t'], fallback: string): Promise<string> {

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { IconDownloadOutline16, IconSparkle16, StateDot, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ToolCallViewProps } from '@deepseek-ai/dsh-client-ui-tool/client'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
+import { toolResultText } from './tool-result.ts'
 import css from './DeliverableRow.module.css'
 
 type DeliverableProps = ToolCallViewProps & PropsLocale<'weave'>
@@ -30,13 +31,6 @@ function visiblePreview(content: string): Pick<Deliverable, 'preview' | 'preview
     preview: content.slice(0, PREVIEW_CHARACTER_LIMIT),
     previewTruncated: content.length > PREVIEW_CHARACTER_LIMIT,
   }
-}
-
-function resultText(block: ToolCallViewProps['block']): string | null {
-  if (!('kind' in block)) return null
-  const parts = block.content.map(item => item.type === 'text' ? item.text : JSON.stringify(item, null, 2))
-  if (parts.length === 0 && block.error !== undefined) parts.push(`${block.error.name}: ${block.error.code}`)
-  return parts.join('\n') || null
 }
 
 function stringField(record: Record<string, unknown>, key: string): string {
@@ -81,7 +75,7 @@ function markdownTitle(content: string): string {
 
 export function deliverableModel(block: ToolCallViewProps['block']): DeliverableModel {
   if (!('kind' in block)) return { state: 'running', deliverable: null, detail: null }
-  const detail = resultText(block)
+  const detail = toolResultText(block)
   if (block.error?.code === 'interrupted') return { state: 'stopped', deliverable: null, detail }
   if (block.isError) return { state: 'error', deliverable: null, detail }
   if (detail === null) return { state: 'invalid', deliverable: null, detail: null }

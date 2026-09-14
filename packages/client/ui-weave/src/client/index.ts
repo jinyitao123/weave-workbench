@@ -66,6 +66,11 @@ export function apply(ctx: ClientContext, config: Config = {}): void {
     ctx.sessions.open(sessionId)
     if (alreadyCurrent && activeScene?.sessionId === sessionId) activeScene.activate()
   }
+  const selectTeamForSession = async (sessionId: SessionId, teamId: string, teamName: string): Promise<void> => {
+    const conversation = ctx.sessions.scope(sessionId)?.get('conversation')
+    if (conversation === undefined) throw new Error('The current conversation is unavailable.')
+    await conversation.send(`我选择团队 ${JSON.stringify(teamName)}（team_id: ${JSON.stringify(teamId)}）。请根据当前诉求整理完整任务简报和预期交付物，先让我确认，不要立即派发。`, 'ui-control')
+  }
   const inputTriggers = ctx.get('inputTriggers') as InputTriggerServiceContract
   ctx.effect(() => inputTriggers.registerSource(memberReferenceSource(t('task.member.referenceIntent'))), 'ui-weave: member reference serialization')
   const taskAction = async (sessionId: string, body: object): Promise<string | null> => {
@@ -120,12 +125,7 @@ export function apply(ctx: ClientContext, config: Config = {}): void {
         await conversation.send('请核对当前任务已有的阶段产物与最终交付，说明还缺什么、能否基于已完成内容补齐。不要重跑这次任务。', 'ui-control')
         ctx.layout.closeDetails()
       },
-      selectTeam: async (teamId: string, teamName: string) => {
-        const scoped = ctx.sessions.scope(sessionId)
-        const conversation = scoped?.get('conversation')
-        if (conversation === undefined) throw new Error('The current conversation is unavailable.')
-        await conversation.send(`我选择团队 ${JSON.stringify(teamName)}（team_id: ${JSON.stringify(teamId)}）。请根据当前诉求整理完整任务简报和预期交付物，先让我确认，不要立即派发。`, 'ui-control')
-      },
+      selectTeam: (teamId: string, teamName: string) => selectTeamForSession(sessionId, teamId, teamName),
       stopRun: async (runId: string) => {
         return await taskAction(sessionId, { action: 'stop', runId })
       },
@@ -166,12 +166,7 @@ export function apply(ctx: ClientContext, config: Config = {}): void {
       {
         name: 'tool.call.toolview', key: 'mcp__weave__team_list', locale: NS,
         inject: sessionId => ({
-          selectTeam: async (teamId: string, teamName: string) => {
-            const scoped = ctx.sessions.scope(sessionId)
-            const conversation = scoped?.get('conversation')
-            if (conversation === undefined) throw new Error('The current conversation is unavailable.')
-            await conversation.send(`我选择团队 ${JSON.stringify(teamName)}（team_id: ${JSON.stringify(teamId)}）。请根据当前诉求整理完整任务简报和预期交付物，先让我确认，不要立即派发。`, 'ui-control')
-          },
+          selectTeam: (teamId: string, teamName: string) => selectTeamForSession(sessionId, teamId, teamName),
         }),
       },
       TeamListRow,

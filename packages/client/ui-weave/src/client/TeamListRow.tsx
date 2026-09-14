@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from 'react'
 import { IconSparkle16, StateDot } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ToolCallViewProps } from '@deepseek-ai/dsh-client-ui-tool/client'
 import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
+import { toolResultText } from './tool-result.ts'
 import css from './TeamListRow.module.css'
 
 interface TeamListInjected {
@@ -26,13 +27,6 @@ interface TeamListModel {
   readonly state: TeamListState
   readonly teams: readonly TeamCandidate[]
   readonly detail: string | null
-}
-
-function resultText(block: ToolCallViewProps['block']): string | null {
-  if (!('kind' in block)) return null
-  const parts = block.content.map(item => item.type === 'text' ? item.text : JSON.stringify(item, null, 2))
-  if (parts.length === 0 && block.error !== undefined) parts.push(`${block.error.name}: ${block.error.code}`)
-  return parts.join('\n') || null
 }
 
 function stringField(record: Record<string, unknown>, key: string): string {
@@ -63,7 +57,7 @@ function candidate(value: unknown): TeamCandidate | null {
 
 export function teamListModel(block: ToolCallViewProps['block']): TeamListModel {
   if (!('kind' in block)) return { state: 'running', teams: [], detail: null }
-  const detail = resultText(block)
+  const detail = toolResultText(block)
   if (block.error?.code === 'interrupted') return { state: 'stopped', teams: [], detail }
   if (block.isError) return { state: 'error', teams: [], detail }
   if (detail === null) return { state: 'invalid', teams: [], detail: null }

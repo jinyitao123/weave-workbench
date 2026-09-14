@@ -246,7 +246,9 @@ export interface DispatchInputConnection {
 
 /** Transport result with an explicit distinction between rejection and unknown admission. */
 export class DispatchResponseError extends Error {
+  /** Stable transport or admission error code. */
   readonly code: string
+  /** Whether the remote endpoint explicitly rejected the request. */
   readonly rejected: boolean
 
   constructor(code: string, rejected: boolean) {

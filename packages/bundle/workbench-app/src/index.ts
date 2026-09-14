@@ -37,32 +37,32 @@ export type { WeaveRuntimeEngineView, WeaveRuntimeList, WeaveRuntimeView } from 
 export type WorkTaskStatus = 'preparing' | 'queued' | 'running' | 'waiting' | 'stopping' | 'completed' | 'failed' | 'stopped'
 
 /** Saved Weave checks for one immutable delivery revision. */
-export interface WorkTaskDelivery {
+export type WorkTaskDelivery = Readonly<{
   readonly revisionId: string
   readonly contractDigest: string
   readonly verificationId: string
   readonly verificationStatus: 'pending' | 'passed' | 'failed' | 'unknown'
   readonly reason: string
-  readonly checks: { readonly checkId: string; readonly status: 'pending' | 'passed' | 'failed' | 'unknown'; readonly reason: string }[]
+  readonly checks: Array<Pick<WorkTaskDelivery, never> & { checkId: string; status: WorkTaskDelivery['verificationStatus']; reason: string }>
   readonly checkCounts: Readonly<Record<string, number>>
   readonly available: boolean
   readonly evidenceCompleteness: 'complete' | 'unavailable'
   readonly inputRevisionKind?: '' | 'initial' | 'revision' | undefined
   readonly parentRunId?: string | undefined
   readonly parentMaterialCount?: number | undefined
-}
+}>
 
 /** Last user-authored assessment, retained when delivery evidence cannot be read. */
-export interface WorkTaskAssessment {
+export type WorkTaskAssessment = Readonly<{
   readonly runId: string
   readonly revisionId: string
   readonly outcome: 'adopted' | 'needs-revision'
   readonly note: string
   readonly assessedAt: number
-}
+}>
 
 /** Durable product view of one Weave dispatch owned by a Workbench session. */
-export interface WorkTaskProjection {
+export type WorkTaskProjection = Readonly<{
   /** Preparation remains visible until dispatch; a transport error does not prove creation failed. */
   readonly preparation?: { readonly callId: string; readonly buildId: string; readonly updatedAt?: number | undefined; readonly state: 'submitting' | 'building' | 'ready' | 'failed' | 'unknown'; readonly error: string; readonly steps?: { readonly id: string; readonly label: string; readonly status: string; readonly attempt: number }[] | undefined } | undefined
   /** Host-derived meaning shared by every task surface. */
@@ -91,25 +91,25 @@ export interface WorkTaskProjection {
   readonly pendingAction: WorkTaskPendingAction | null
   readonly actionError: string
   readonly actionHistory: WorkTaskActionReceipt[]
-  readonly completeness: Readonly<Record<string, 'complete' | 'partial' | 'unavailable'>>
+  readonly observedAt: number
   readonly startedAt: string
-  readonly finishedAt: string
+  readonly completeness: Readonly<Record<string, 'complete' | 'partial' | 'unavailable'>>
   readonly tokensIn: number
+  readonly finishedAt: string
   readonly tokensOut: number
-  readonly costUSD: number
   readonly outcome: 'unrated' | 'adopted' | 'needs-revision'
-  readonly outcomeNote: string
+  readonly costUSD: number
   /** Absent in historical session records that predate delivery verification. */
   readonly delivery?: WorkTaskDelivery | undefined
-  readonly outcomeRevisionId?: string | undefined
-  readonly outcomeAssessedAt?: number | undefined
+  readonly outcomeNote: string
   readonly latestAssessment?: WorkTaskAssessment | undefined
-  readonly observedAt: number
+  readonly outcomeAssessedAt?: number | undefined
   readonly updatedAt: number
-}
+  readonly outcomeRevisionId?: string | undefined
+}>
 
 /** One immutable Weave run link retained under the supervising Session. */
-export interface WorkTaskAttempt {
+export type WorkTaskAttempt = Readonly<{
   readonly clientRequestId: string
   readonly runId: string
   readonly brief: string
@@ -122,27 +122,27 @@ export interface WorkTaskAttempt {
   readonly createdAt: number
   /** Last change to the retained attempt fields; observation-only refreshes preserve it. */
   readonly updatedAt: number
-}
+}>
 
 /** A response from Weave to a durably recorded user action; acceptance does not imply execution completion. */
-export interface WorkTaskActionReceipt {
+export type WorkTaskActionReceipt = Readonly<{
   readonly id: string
   readonly action: WorkTaskPendingAction
   readonly outcome: 'accepted' | 'rejected'
   readonly resolvedAt: number
-}
+}>
 
 /** One exact human wait and the response shape declared by the workflow. */
-export interface WorkTaskHumanTask {
+export type WorkTaskHumanTask = Readonly<{
   readonly interactionId: string
   readonly nodeId: string
   readonly title: string
   readonly instructions: string
   readonly resumeSchema: Readonly<Record<string, unknown>>
-}
+}>
 
 /** The sole unresolved local network action, persisted before it is sent. */
-export interface WorkTaskPendingAction {
+export type WorkTaskPendingAction = Readonly<{
   readonly kind: 'stop' | 'rerun' | 'stage-retry' | 'correction-request' | 'correction-confirm' | 'human-complete'
   readonly targetRunId: string
   readonly idempotencyKey: string
@@ -150,38 +150,38 @@ export interface WorkTaskPendingAction {
   readonly brief: string
   readonly requestedAt: number
   readonly targetKind: 'team' | 'member' | ''
-  readonly targetMemberId: string
   readonly correctionId: string
-  readonly disposition: 'apply' | 'discard' | ''
+  readonly targetMemberId: string
   readonly instruction: string
-  readonly nodeId: string
+  readonly disposition: 'apply' | 'discard' | ''
   readonly authorizedTotalRounds?: number | undefined
-  readonly humanPayload?: unknown
+  readonly nodeId: string
   readonly humanInteractionId?: string | undefined
-}
+  readonly humanPayload?: unknown
+}>
 
 /** One runtime assignment reported by Weave for the task. */
-export interface WorkTaskRuntime {
+export type WorkTaskRuntime = Readonly<{
   readonly name: string
   readonly detail: string
   readonly status: WorkTaskStatus
-}
+}>
 
 /** User-facing lifecycle state for one workflow member or stage. */
 export type WorkTaskMemberStatus = 'waiting' | 'pending' | 'running' | 'partially-completed' | 'completed' | 'failed' | 'stopped' | 'not-recorded'
 
 /** One declared input observed for a member stage. */
-export interface WorkTaskMemberInput {
+export type WorkTaskMemberInput = Readonly<{
   readonly name: string
   readonly expectedType: string
   readonly source: string
   readonly nodeId: string
   readonly path: string
   readonly summary: string
-}
+}>
 
 /** One workflow stage assigned to a member, including observed tools and outputs. */
-export interface WorkTaskMemberStage {
+export type WorkTaskMemberStage = Readonly<{
   readonly budgetPause?: { readonly reason: string; readonly roundsUsed: number; readonly authorizedTotalRounds: number } | undefined
   readonly memberRunId?: string | undefined
   readonly checkpointSavedAt?: string | undefined
@@ -202,20 +202,20 @@ export interface WorkTaskMemberStage {
   readonly publicUpdatesState: 'live' | 'complete' | 'partial' | 'unavailable'
   readonly publicUpdatesTruncated: boolean
   readonly publicUpdates: WorkTaskPublicUpdate[]
-}
+}>
 
 /** One public runtime message; never private reasoning or final delivery evidence. */
-export interface WorkTaskPublicUpdate {
+export type WorkTaskPublicUpdate = Readonly<{
   readonly eventId: string
   readonly taskId: string
   readonly seq: number
   readonly text: string
   readonly occurredAt: string
   readonly truncated: boolean
-}
+}>
 
 /** One bounded tool call observation recorded by Weave. */
-export interface WorkTaskMemberTool {
+export type WorkTaskMemberTool = Readonly<{
   readonly callId: string
   readonly taskId: string
   readonly name: string
@@ -224,10 +224,10 @@ export interface WorkTaskMemberTool {
   readonly completedAt: string
   readonly input: string
   readonly output: string
-}
+}>
 
 /** One durable correction request and its computed restart impact. */
-export interface WorkTaskCorrection {
+export type WorkTaskCorrection = Readonly<{
   readonly correctionId: string
   readonly targetKind: 'team' | 'member'
   readonly targetMemberId: string
@@ -238,10 +238,10 @@ export interface WorkTaskCorrection {
   readonly affectedNodeIds: string[]
   readonly preservedNodeIds: string[]
   readonly requestedAt: string
-}
+}>
 
 /** One frozen team member and their observed execution stages. */
-export interface WorkTaskMember {
+export type WorkTaskMember = Readonly<{
   readonly agentId: string
   readonly name: string
   readonly duty: string
@@ -250,10 +250,10 @@ export interface WorkTaskMember {
   readonly runtime: string
   readonly updateMode: 'live' | 'on_completion'
   readonly stages: WorkTaskMemberStage[]
-}
+}>
 
 /** One exact-run output available from the Workbench task surface. */
-export interface WorkTaskDeliverable {
+export type WorkTaskDeliverable = Readonly<{
   readonly id: string
   readonly title: string
   readonly kind: 'final' | 'summary' | 'stage'
@@ -262,7 +262,7 @@ export interface WorkTaskDeliverable {
   readonly content: string
   readonly truncated: boolean
   readonly createdAt: string
-}
+}>
 
 interface PendingCall { readonly name: string; readonly args: unknown }
 interface WorkTaskState {
@@ -438,19 +438,18 @@ function parsed(value: string): unknown {
   try { return JSON.parse(value) as unknown } catch { return value }
 }
 
-function deepValue(value: unknown, keys: ReadonlySet<string>, depth = 0): unknown {
-  if (depth > 5) return undefined
-  const item = object(value)
-  if (item !== undefined) {
-    for (const [key, candidate] of Object.entries(item)) if (keys.has(key)) return candidate
-    for (const candidate of Object.values(item)) {
-      const found = deepValue(candidate, keys, depth + 1)
-      if (found !== undefined) return found
-    }
-  } else if (Array.isArray(value)) {
-    for (const candidate of value) {
-      const found = deepValue(candidate, keys, depth + 1)
-      if (found !== undefined) return found
+function deepValue(value: unknown, keys: ReadonlySet<string>): unknown {
+  const queue: Array<{ value: unknown; depth: number }> = [{ value, depth: 0 }]
+  while (queue.length > 0) {
+    const current = queue.shift()
+    if (current === undefined || current.depth > 5) continue
+    const item = object(current.value)
+    if (item !== undefined) {
+      const match = Object.keys(item).find(key => keys.has(key))
+      if (match !== undefined) return item[match]
+      queue.push(...Object.values(item).map(child => ({ value: child, depth: current.depth + 1 })))
+    } else if (Array.isArray(current.value)) {
+      queue.push(...current.value.map(child => ({ value: child, depth: current.depth + 1 })))
     }
   }
   return undefined
@@ -463,48 +462,43 @@ function text(value: unknown, keys: readonly string[]): string {
 
 function preferredText(value: unknown, keys: readonly string[]): string {
   const item = object(value)
-  if (item !== undefined) {
-    for (const key of keys) {
-      const candidate = item[key]
-      if (typeof candidate === 'string' && candidate.trim() !== '') return candidate.trim()
-    }
-  }
-  return text(value, keys)
+  const direct = keys.map(key => item?.[key]).find(candidate => typeof candidate === 'string' && candidate.trim() !== '')
+  return typeof direct === 'string' ? direct.trim() : text(value, keys)
 }
 
 function ownText(value: unknown, keys: readonly string[]): string {
   const item = object(value)
-  for (const key of keys) {
-    const candidate = item?.[key]
-    if (typeof candidate === 'string' && candidate.trim() !== '') return candidate.trim()
-  }
-  return ''
+  const direct = keys.map(key => item?.[key]).find(candidate => typeof candidate === 'string' && candidate.trim() !== '')
+  return typeof direct === 'string' ? direct.trim() : ''
+}
+
+function numericValue(value: unknown, keys: readonly string[], integer: boolean): number | undefined {
+  const found = deepValue(value, new Set(keys))
+  const number = typeof found === 'number' ? found
+    : typeof found === 'string' && /^\d+(?:\.\d+)?$/.test(found) ? Number(found) : Number.NaN
+  if (!Number.isFinite(number)) return undefined
+  return Math.max(0, integer ? Math.floor(number) : number)
 }
 
 function count(value: unknown, keys: readonly string[]): number {
-  const found = deepValue(value, new Set(keys))
-  if (typeof found === 'number' && Number.isFinite(found)) return Math.max(0, Math.floor(found))
-  if (typeof found === 'string' && /^\d+$/.test(found)) return Number(found)
-  return 0
+  return numericValue(value, keys, true) ?? 0
 }
 
 function finiteNumber(value: unknown, keys: readonly string[]): number | undefined {
-  const found = deepValue(value, new Set(keys))
-  if (typeof found === 'number' && Number.isFinite(found)) return Math.max(0, found)
-  if (typeof found === 'string' && /^\d+(?:\.\d+)?$/.test(found)) return Number(found)
-  return undefined
+  return numericValue(value, keys, false)
+}
+
+const STATUS_ALIASES: Readonly<Record<string, WorkTaskStatus>> = {
+  completed: 'completed', complete: 'completed', succeeded: 'completed', success: 'completed', done: 'completed',
+  cancelled: 'stopped', canceled: 'stopped', stopped: 'stopped', failed: 'failed', error: 'failed', abandoned: 'failed',
+  cancel_requested: 'stopping', parked: 'waiting', waiting: 'waiting', yielded: 'waiting', waiting_for_human: 'waiting',
+  needs_input: 'waiting', blocked: 'waiting', paused: 'waiting', queued: 'queued', pending: 'queued', admitting: 'queued',
+  running: 'running', active: 'running', in_progress: 'running', working: 'running',
 }
 
 function status(value: unknown): WorkTaskStatus {
-  const raw = text(value, ['status', 'state', 'run_status']).toLowerCase().replaceAll('-', '_')
-  if (['completed', 'complete', 'succeeded', 'success', 'done'].includes(raw)) return 'completed'
-  if (['cancelled', 'canceled', 'stopped'].includes(raw)) return 'stopped'
-  if (['failed', 'error', 'abandoned'].includes(raw)) return 'failed'
-  if (raw === 'cancel_requested') return 'stopping'
-  if (['parked', 'waiting', 'yielded', 'waiting_for_human', 'needs_input', 'blocked', 'paused'].includes(raw)) return 'waiting'
-  if (['queued', 'pending', 'admitting'].includes(raw)) return 'queued'
-  if (['running', 'active', 'in_progress', 'working'].includes(raw)) return 'running'
-  return 'preparing'
+  const key = text(value, ['status', 'state', 'run_status']).toLowerCase().replaceAll('-', '_')
+  return STATUS_ALIASES[key] ?? 'preparing'
 }
 
 function terminalStatus(value: WorkTaskStatus): boolean {
@@ -575,44 +569,45 @@ function memberStatus(value: unknown): WorkTaskMemberStatus {
 }
 
 function memberInputs(value: unknown): WorkTaskMemberInput[] {
-  if (!Array.isArray(value)) return []
-  return value.flatMap((candidate): WorkTaskMemberInput[] => {
+  const result: WorkTaskMemberInput[] = []
+  if (!Array.isArray(value)) return result
+  for (const candidate of value) {
     const item = object(candidate)
-    if (item === undefined) return []
     const name = text(item, ['name'])
-    if (name === '') return []
-    return [{
-      name, expectedType: text(item, ['expected_type', 'expectedType']),
+    if (item === undefined || name === '') continue
+    result.push({ name, expectedType: text(item, ['expected_type', 'expectedType']),
       source: text(item, ['source']), nodeId: text(item, ['node_id', 'nodeId']),
-      path: text(item, ['path']), summary: text(item, ['summary']),
-    }]
-  })
+      path: text(item, ['path']), summary: text(item, ['summary']) })
+  }
+  return result
 }
 
 function publicUpdates(value: unknown): WorkTaskPublicUpdate[] {
-  if (!Array.isArray(value)) return []
-  const updates = new Map<string, WorkTaskPublicUpdate>()
+  const updates: WorkTaskPublicUpdate[] = []
+  const positions = new Map<string, number>()
+  if (!Array.isArray(value)) return updates
   for (const candidate of value) {
     const item = object(candidate)
     if (item === undefined || (item.kind !== 'text' && item.kind !== 'attempt')) continue
-    const taskId = text(item, ['task_id'])
-    const eventId = text(item, ['event_id'])
-    const seq = count(item, ['seq'])
-    if (taskId === '' || eventId === '' || (!Number.isSafeInteger(seq) || seq <= 0) || typeof item.text !== 'string') continue
-    updates.set(item.kind === 'attempt' ? eventId : `${taskId}:${seq}`, { eventId, taskId, seq, text: item.text,
-      occurredAt: text(item, ['occurred_at']), truncated: item.truncated === true })
+    const taskId = text(item, ['task_id']); const eventId = text(item, ['event_id']); const seq = count(item, ['seq'])
+    if (taskId === '' || eventId === '' || seq <= 0 || !Number.isSafeInteger(seq) || typeof item.text !== 'string') continue
+    const entry = { eventId, taskId, seq, text: item.text, occurredAt: text(item, ['occurred_at']), truncated: item.truncated === true }
+    const key = item.kind === 'attempt' ? eventId : `${taskId}:${seq}`
+    const prior = positions.get(key)
+    if (prior === undefined) { positions.set(key, updates.length); updates.push(entry) } else updates[prior] = entry
   }
-  return [...updates.values()]
+  return updates
 }
 
 function memberBudgetPause(value: unknown): { budgetPause?: { reason: string; roundsUsed: number; authorizedTotalRounds: number } } {
-  const item = value as Record<string, unknown> | null
-  if (typeof item !== 'object' || item === null) return {}
-  const used = item.rounds_used ?? item.roundsUsed
-  const ceiling = item.authorized_total_rounds ?? item.authorizedTotalRounds
-  if (typeof item.reason !== 'string' || typeof used !== 'number' || typeof ceiling !== 'number'
-   || !Number.isSafeInteger(used) || !Number.isSafeInteger(ceiling) || used < 0 || ceiling < used) return {}
-  return { budgetPause: { reason: item.reason, roundsUsed: used, authorizedTotalRounds: ceiling } }
+  const item = object(value)
+  const reason = item?.reason
+  const roundsUsed = item?.rounds_used ?? item?.roundsUsed
+  const authorizedTotalRounds = item?.authorized_total_rounds ?? item?.authorizedTotalRounds
+  const valid = typeof reason === 'string' && typeof roundsUsed === 'number' && typeof authorizedTotalRounds === 'number'
+    && Number.isSafeInteger(roundsUsed) && Number.isSafeInteger(authorizedTotalRounds)
+    && roundsUsed >= 0 && authorizedTotalRounds >= roundsUsed
+  return valid ? { budgetPause: { reason, roundsUsed, authorizedTotalRounds } } : {}
 }
 
 function memberStages(value: unknown): WorkTaskMemberStage[] {
@@ -1661,9 +1656,9 @@ export function apply(ctx: Context, config: Config = {}): void {
         targetKind: '', targetMemberId: '', correctionId: '', disposition: '', instruction: '', nodeId: '',
       }
       agent.session.append('weave/work-task-action', { pendingAction })
-      await ctx.sessions.flush(agent.session)
       schedule(agent.session, 0)
-      return { kind: 'success', text: 'Revised Weave run request recorded.' }
+      await ctx.sessions.flush(agent.session)
+      return { text: 'Revised Weave run request recorded.', kind: 'success' }
     },
   }), 'workbench: revised run command')
   ctx.effect(() => ctx.commands.register({
