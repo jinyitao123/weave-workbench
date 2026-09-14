@@ -5,6 +5,7 @@ const action = z.discriminatedUnion('action', [
   z.object({ action: z.literal('quota'), max_steps_per_invocation: z.number().int().min(1).max(1000), max_active_invocations: z.number().int().min(1).max(1000) }).strict(),
   z.object({ action: z.literal('cancel'), invocation_id: id }).strict(),
   z.object({ action: z.literal('resume'), invocation_id: id, step_id: id, approved: z.boolean() }).strict(),
+  z.object({ action: z.literal('tool-reconcile'), invocation_id: id, call_id: z.string().min(1).max(512), disposition: z.enum(['confirm_not_executed', 'confirm_executed_without_result']) }).strict(),
 ])
 
 type JsonObject = Record<string, unknown>
@@ -49,7 +50,10 @@ export async function handleCapabilityOperationsRequest(
       const url = new URL(request.url)
       const invocationId = url.searchParams.get('invocation_id')?.trim() ?? ''
       if (invocationId !== '') {
-        const detail = await call(`/v1/invocations/${encodeURIComponent(invocationId)}/events`)
+        const [detail, operations] = await Promise.all([
+          call(`/v1/invocations/${encodeURIComponent(invocationId)}/events`),
+          call(`/v1/invocations/${encodeURIComponent(invocationId)}/tool-operations`),
+        ])
         const value = await detail.json() as unknown
         if (url.searchParams.get('download') === '1' && detail.ok) {
           const text = documentText(value)
@@ -60,7 +64,11 @@ export async function handleCapabilityOperationsRequest(
             'Content-Disposition': `attachment; filename="capability-${encodeURIComponent(invocationId)}.md"`,
           } })
         }
-        return Response.json(value, { status: detail.status, headers: { 'Cache-Control': 'no-store' } })
+        const operationValue = await operations.json() as JsonObject
+        return Response.json({ ...(object(value) ?? {}), tool_operations: operationValue.operations ?? [] }, {
+          status: detail.ok && operations.ok ? 200 : Math.max(detail.status, operations.status),
+          headers: { 'Cache-Control': 'no-store' },
+        })
       }
       const [history, quota] = await Promise.all([call('/v1/capability-invocations'), call('/v1/capability-quotas')])
       const historyValue = await history.json() as JsonObject
@@ -81,6 +89,10 @@ export async function handleCapabilityOperationsRequest(
       response = await call('/v1/capability-quotas', { method: 'PUT', body: JSON.stringify(input) })
     } else if (input.action === 'cancel') {
       response = await call(`/v1/invocations/${encodeURIComponent(input.invocation_id)}/cancel`, { method: 'POST', body: '{}' })
+    } else if (input.action === 'tool-reconcile') {
+      response = await call(`/v1/invocations/${encodeURIComponent(input.invocation_id)}/tool-operations`, {
+        method: 'POST', body: JSON.stringify({ action: input.disposition, call_id: input.call_id }),
+      })
     } else {
       response = await call(`/v1/invocations/${encodeURIComponent(input.invocation_id)}/resume`, {
         method: 'POST', body: JSON.stringify({ step_id: input.step_id, response: { approved: input.approved } }),

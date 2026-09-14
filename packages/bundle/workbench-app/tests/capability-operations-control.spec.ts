@@ -27,6 +27,17 @@ describe('capability operations proxy', () => {
     }))
   })
 
+  it('proxies a product-level decision for an uncertain tool operation', async () => {
+    const fetcher = vi.fn<typeof fetch>(async () => Response.json({ invocation: { status: 'queued' } }, { status: 202 }))
+    const response = await handleCapabilityOperationsRequest('http://weave', 'host', new Request('http://host/api/weave.capability-operations', {
+      method: 'POST', body: JSON.stringify({ action: 'tool-reconcile', invocation_id: 'run-1', call_id: 'task/1/step/write', disposition: 'confirm_not_executed' }),
+    }), fetcher)
+    expect(response.status).toBe(202)
+    expect(fetcher).toHaveBeenCalledWith('http://weave/v1/invocations/run-1/tool-operations', expect.objectContaining({
+      method: 'POST', body: JSON.stringify({ action: 'confirm_not_executed', call_id: 'task/1/step/write' }),
+    }))
+  })
+
   it('downloads the final business document', async () => {
     const fetcher = vi.fn<typeof fetch>(async () => Response.json({ invocation: { result: { document_markdown: '# 完成文档' } } }))
     const response = await handleCapabilityOperationsRequest('http://weave', 'host', new Request('http://host/api/weave.capability-operations?invocation_id=run-1&download=1'), fetcher)

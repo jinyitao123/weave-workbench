@@ -83,6 +83,7 @@ export function CapabilityOperationsSettingsSection({ t }: Props) {
   const statusLabel = (status: unknown) => t(`capabilityOps.status.${String(status)}` as 'capabilityOps.status.running')
   const events = objects(detail.events)
   const human = object(detail.human_task)
+  const toolOperations = objects(detail.tool_operations)
 
   return <section className={css.center}>
     <h3>{t('capabilityOps.title')}</h3>
@@ -111,6 +112,11 @@ export function CapabilityOperationsSettingsSection({ t }: Props) {
               <button disabled={busy} onClick={() => void mutate({ action: 'resume', invocation_id: invocationId, step_id: human.step_id, approved: false })}>{t('capabilityOps.reject')}</button>
             </div>}
             <small>{t('capabilityOps.progress', { count: events.length })}</small>
+            {toolOperations.filter(operation => operation.status === 'unknown').map(operation => <div className={css.actions} key={String(operation.call_id)}>
+              <strong>{t('capabilityOps.toolUnknown', { tool: String(operation.tool_name || '') })}</strong>
+              <button disabled={busy} onClick={() => void mutate({ action: 'tool-reconcile', invocation_id: invocationId, call_id: operation.call_id, disposition: 'confirm_not_executed' })}>{t('capabilityOps.toolRetry')}</button>
+              <button disabled={busy} onClick={() => void mutate({ action: 'tool-reconcile', invocation_id: invocationId, call_id: operation.call_id, disposition: 'confirm_executed_without_result' })}>{t('capabilityOps.toolClose')}</button>
+            </div>)}
             {run.status === 'completed' && <a href={`/api/weave.capability-operations?invocation_id=${encodeURIComponent(invocationId)}&download=1`}>{t('capabilityOps.download')}</a>}
           </div>}
         </div>
