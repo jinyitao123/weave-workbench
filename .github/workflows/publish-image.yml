@@ -16,6 +16,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -36,9 +37,12 @@ jobs:
           pnpm build:ts
           pnpm build:native
           node ./test/entry.test.js
+          ./packages/linux-x64/bin/landlock-run --probe | grep -Fx 'landlock: fully enforced'
       - name: Install browser runtime
         run: pnpm exec playwright install --with-deps chromium
       - name: Verify release source
+        env:
+          DSH_GATE_CONCURRENCY: '1'
         run: pnpm run check:all
 
   publish:
@@ -76,6 +80,10 @@ jobs:
           build-args: |
             DSH_CLIENT_COMMIT_HASH=${{ github.sha }}
             DSH_CLIENT_VERSION=${{ steps.release.outputs.version }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.release.outputs.version }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/weave-workbench:${{ github.ref_name }}
             ghcr.io/${{ github.repository_owner }}/weave-workbench:${{ steps.release.outputs.version }}
