@@ -78,7 +78,7 @@ describe('Workbench account access', () => {
     expect(view.getByRole('heading', { name: '登录 Workbench' })).toBeTruthy()
     expect(view.getByLabelText('账号').getAttribute('type')).not.toBe('email')
     expect(view.getByLabelText('密码').getAttribute('type')).toBe('password')
-    expect(view.getByText('工作区选项').closest('details')?.open).toBe(false)
+    expect(view.queryByText('工作区选项')).toBeNull()
     expect(view.queryByTestId('tasks')).toBeNull()
   })
 
@@ -138,16 +138,15 @@ describe('Workbench account access', () => {
     expect(view.queryByText('小林的任务')).toBeNull()
   })
 
-  it('submits an optional workspace only when selected', async () => {
+  it('lets the connected service resolve the account workspace', async () => {
     const server = host()
     const controller = server.controller()
     const view = render(<Fixture controller={controller} />)
     await act(() => controller.refresh())
     fill(view, 'alice')
-    fireEvent.change(view.getByLabelText('工作区（可选）'), { target: { value: ' design ' } })
     fireEvent.click(view.getByRole('button', { name: '登录' }))
     await waitFor(() => { expect(server.reload).toHaveBeenCalledOnce() })
-    expect(JSON.parse(String(server.request.mock.calls[1]?.[1]?.body))).toEqual({ action: 'login', username: 'alice', password: 'test-password', tenant: 'design' })
+    expect(JSON.parse(String(server.request.mock.calls[1]?.[1]?.body))).toEqual({ action: 'login', username: 'alice', password: 'test-password' })
   })
 
   it('hides the old view immediately on a business 401 and ignores late successful reads', async () => {

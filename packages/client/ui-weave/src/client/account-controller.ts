@@ -21,7 +21,7 @@ export interface AccountView {
 }
 
 /** Login input exists only during the submitted request. */
-export interface AccountLogin { username: string; password: string; tenant?: string }
+export interface AccountLogin { username: string; password: string }
 
 /** The renderer turns this projection into useAccount; components receive only commands. */
 export interface AccountInjected {
@@ -137,8 +137,7 @@ export class AccountController implements HostObservable<AccountView> {
       const response = await this.request('/api/weave.account', {
         method: 'POST', credentials: 'same-origin', cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'login', username: input.username.trim(), password: input.password,
-          ...(input.tenant?.trim() ? { tenant: input.tenant.trim() } : {}) }),
+        body: JSON.stringify({ action: 'login', username: input.username.trim(), password: input.password }),
       })
       if (this.closed || revision !== this.revision) return
       if (!response.ok) {

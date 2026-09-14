@@ -15,7 +15,6 @@ export function AccountAccess({ useAccount, login, retry, onAccessChange, t }: G
   const view = useAccount(value => value)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [tenant, setTenant] = useState('')
   const user = view.status === 'authenticated' ? view.user : null
   const identity = user === null ? null : JSON.stringify([user.workspace_id, user.id])
   useLayoutEffect(() => {
@@ -29,7 +28,7 @@ export function AccountAccess({ useAccount, login, retry, onAccessChange, t }: G
   const submit = (event: FormEvent): void => {
     event.preventDefault()
     if (username.trim() === '' || password === '' || view.status === 'signing-in') return
-    const input = { username, password, ...(tenant.trim() === '' ? {} : { tenant }) }
+    const input = { username, password }
     setPassword('')
     void login(input)
   }
@@ -56,14 +55,6 @@ export function AccountAccess({ useAccount, login, retry, onAccessChange, t }: G
               disabled={view.status === 'signing-in'} placeholder={t('account.password.placeholder')}
               onChange={event => { setPassword(event.target.value) }} />
           </label>
-          <details className={css.workspace}>
-            <summary>{t('account.workspace.options')}</summary>
-            <label>{t('account.workspace')}
-              <input name="tenant" autoComplete="off" value={tenant} disabled={view.status === 'signing-in'}
-                placeholder={t('account.workspace.placeholder')} onChange={event => { setTenant(event.target.value) }} />
-            </label>
-            <small>{t('account.workspace.help')}</small>
-          </details>
           <button className={css.primary} type="submit" disabled={view.status === 'signing-in' || username.trim() === '' || password === ''}>
             {t(view.status === 'signing-in' ? 'account.signingIn' : 'account.login')}
           </button>

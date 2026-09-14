@@ -9,10 +9,6 @@
 .form input { box-sizing: border-box; width: 100%; min-height: 44px; padding: 11px 12px; border: 1px solid var(--dsw-alias-border-l3); border-radius: 8px; outline: none; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-primary); font: inherit; font-size: 14px; }
 .form input:focus-visible { border-color: var(--dsw-alias-brand-primary); outline: 2px solid var(--dsw-alias-border-l2); outline-offset: 2px; }
 .form input::placeholder { color: var(--dsw-alias-label-tertiary); font-weight: 400; }
-.workspace { color: var(--dsw-alias-label-secondary); font-size: 12px; }
-.workspace summary { cursor: pointer; width: fit-content; }
-.workspace label { margin-top: 14px; }
-.workspace small { color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 1.5; font-weight: 400; }
 .primary { width: 100%; min-height: 44px; padding: 10px 16px; border: 1px solid var(--dsw-alias-brand-primary); border-radius: 8px; background: var(--dsw-alias-brand-primary); color: var(--dsw-alias-label-primary-inverted); font: inherit; font-size: 14px; font-weight: 550; cursor: pointer; }
 .primary:disabled { opacity: .5; cursor: default; }
 .error { margin: 0 0 20px; padding: 11px 12px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 8px; color: var(--dsw-alias-state-error-primary); font-size: 13px; line-height: 1.6; }
