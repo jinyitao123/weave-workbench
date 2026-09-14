@@ -28,6 +28,12 @@ import type { JsonSchemaNode, JsonValue } from '@deepseek-ai/dsh-tools'
 /** Host-owned metadata is separate from the model's tool arguments. */
 export type McpCallMetadata = (server: string, execution: ToolExecution) => Promise<Record<string, unknown> | undefined>
 const callMetadata = new WeakMap<object, McpCallMetadata>()
+/**
+ * Attach Host metadata to MCP calls without exposing it as model arguments.
+ * @param ctx - context whose root owns the metadata provider.
+ * @param provider - request-time metadata provider.
+ * @returns disposer removing this exact provider.
+ */
 export function setMcpCallMetadata(ctx: Context, provider: McpCallMetadata): () => void {
   callMetadata.set(ctx.root, provider)
   return () => { if (callMetadata.get(ctx.root) === provider) callMetadata.delete(ctx.root) }

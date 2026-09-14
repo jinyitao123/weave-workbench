@@ -189,7 +189,12 @@ export class AccountController implements HostObservable<AccountView> {
     return this.refresh()
   }
 
-  /** Watch only same-origin business API calls; account form failures retain their local error. */
+  /**
+   * Watch only same-origin business API calls; account form failures retain their local error.
+   * @param browser - browser window whose requests and focus events are observed.
+   * @param intervalMs - account refresh interval.
+   * @returns disposer restoring the original browser integration.
+   */
   install(browser: Window, intervalMs: number): () => void {
     let channel: BroadcastChannel | null = null
     try { if (typeof BroadcastChannel !== 'undefined') channel = new BroadcastChannel('weave-account') }

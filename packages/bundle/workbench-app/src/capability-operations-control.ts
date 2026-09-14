@@ -22,7 +22,14 @@ function documentText(value: unknown): string {
   return result === undefined ? '' : `${JSON.stringify(result, null, 2)}\n`
 }
 
-/** Proxy capability operations through the trusted Workbench Host. */
+/**
+ * Proxy capability operations through the trusted Workbench Host.
+ * @param apiUrl - Weave platform API base URL.
+ * @param apiKey - Host service credential.
+ * @param request - Authenticated browser request.
+ * @param fetcher - platform transport used by the Host.
+ * @returns browser response containing the platform result.
+ */
 export async function handleCapabilityOperationsRequest(
   apiUrl: string,
   apiKey: string,

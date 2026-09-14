@@ -41,6 +41,7 @@ export class RemoteStreamMuxServer {
    * @param req - authenticated HTTP upgrade request.
    * @param socket - carrier socket transferred to the WebSocket server.
    * @param head - bytes already read after the HTTP upgrade headers.
+   * @param open - optional request-scoped stream dispatcher.
    */
   handleUpgrade(req: IncomingMessage, socket: Duplex, head: Buffer, open: RemoteStreamOpener = this.open): void {
     this.server.handleUpgrade(req, socket, head, (websocket) => {

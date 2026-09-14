@@ -149,6 +149,7 @@ export interface ConnectionFetchRoute {
 /** Host registry for exact Fetch routes that cannot use JSON Remote invocation. */
 export type ConnectionRequestMiddleware = (request: Request, next: (request: Request) => Promise<Response>) => Promise<Response>
 
+/** Authenticated Fetch routes and stream filtering owned by the Host connection. */
 export interface HostConnectionFetch {
   /** Apply a product authentication/authorization boundary to every Host API channel. */
   use(middleware: ConnectionRequestMiddleware): () => Promise<void>

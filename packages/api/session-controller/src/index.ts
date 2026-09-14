@@ -107,14 +107,22 @@ export class SessionController extends TypertRemoteService {
   private readonly openPath: (path: string, signal: AbortSignal) => Promise<void>
   private readonly canOpenPath: () => boolean
   private sessionCreationPolicy: ((request: SessionCreateRequest) => Promise<SessionCreateRequest>) | undefined
-  /** Let the product choose a trusted personal or explicitly shared working directory. */
+  /**
+   * Let the product choose a trusted personal or explicitly shared working directory.
+   * @param policy - Request transformer that selects the product-owned working directory.
+   * @returns Disposer that removes this exact policy.
+   */
   setSessionCreationPolicy(policy: (request: SessionCreateRequest) => Promise<SessionCreateRequest>): () => void {
     this.sessionCreationPolicy = policy
     return () => { if (this.sessionCreationPolicy === policy) this.sessionCreationPolicy = undefined }
   }
 
   private sessionVisibility: (() => (id: SessionId) => Promise<boolean>) | undefined
-  /** Install the product's request-bound Session visibility policy. */
+  /**
+   * Install the product's request-bound Session visibility policy.
+   * @param policy - Factory capturing the authenticated request identity.
+   * @returns Disposer that removes this exact policy.
+   */
   setSessionVisibility(policy: () => (id: SessionId) => Promise<boolean>): () => void {
     this.sessionVisibility = policy
     return () => { if (this.sessionVisibility === policy) this.sessionVisibility = undefined }

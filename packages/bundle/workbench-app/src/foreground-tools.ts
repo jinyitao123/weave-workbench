@@ -7,7 +7,11 @@ function allowed(name: string): boolean {
   return name === 'weave_dispatch' || name === 'ask_user_question' || name.startsWith('mcp__weave__')
 }
 
-/** Reuse the tool registry's scope mask and final guard; neither starts another loop. */
+/**
+ * Reuse the tool registry's scope mask and final guard; neither starts another loop.
+ * @param ctx - Workbench Host context owning the tool registry.
+ * @param activeSession - authenticated-session ownership test.
+ */
 export function installForegroundTools(ctx: Context, activeSession: (id: string) => boolean): void {
   const scoped = new Map<Agent, { names: string; dispose: () => void }>()
   let updating = false

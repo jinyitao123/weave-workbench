@@ -2,9 +2,12 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { createHash, randomBytes } from 'node:crypto'
 
+/** Authenticated platform identity projected into the Workbench Host. */
 export interface WorkbenchUser { readonly id: string; readonly workspace_id: string; readonly username: string; readonly display_name: string; readonly role: string }
 interface Account { readonly id: string; readonly token: string; readonly user: WorkbenchUser; readonly expiresAt: number; readonly clients: Map<string, Set<string>> }
+/** Durable platform owner of one Session. */
 export interface SessionOwner { readonly userId: string; readonly workspaceId: string }
+/** Session ownership lookup used by the account boundary. */
 export interface AccountSessions {
   owner(id: string): Promise<SessionOwner | undefined>
   exists(id: string): Promise<boolean>
@@ -33,9 +36,21 @@ export class WorkbenchAccounts {
     const value = request.headers.get('cookie')?.split(';').map(part => part.trim()).find(part => part.startsWith(name + '='))?.slice(name.length + 1)
     return this.active(value)
   }
+  /** Return the request identity.
+   * @returns user bound to the current request, when authenticated.
+   */
   currentUser(): WorkbenchUser | undefined { return this.active(this.scope.getStore()?.id)?.user }
+  /** Return the request owner.
+   * @returns platform owner bound to the current request, when authenticated.
+   */
   currentOwner(): SessionOwner | undefined { const user = this.currentUser(); return user === undefined ? undefined : { userId: user.id, workspaceId: user.workspace_id } }
+  /** Bind a newly created Session.
+   * @param id - newly created Session identifier to bind to the current account.
+   */
   bindNewSession(id: string): void { const current = this.scope.getStore(); if (this.active(current?.id) === undefined) throw new Error('login_required'); this.sessionGrants.set(id, current!.id) }
+  /** Capture Session visibility for this request.
+   * @returns Session visibility predicate bound to the current account.
+   */
   visibility(): (id: string) => Promise<boolean> {
     const current = this.scope.getStore()
     return async id => {
@@ -45,24 +60,47 @@ export class WorkbenchAccounts {
       this.sessionGrants.set(id, current!.id); return true
     }
   }
+  /** Inherit access for a child Session.
+   * @param id - child Session identifier.
+   * @param parentId - already granted parent Session identifier.
+   */
   inheritSession(id: string, parentId: string): void { const grant = this.sessionGrants.get(parentId); if (this.active(grant) !== undefined) this.sessionGrants.set(id, grant!) }
+  /** Test Session ownership.
+   * @param id - Session identifier to test.
+   * @returns whether the current account owns the Session.
+   */
   async visible(id: string): Promise<boolean> { return this.visibility()(id) }
+  /** Require Session authority.
+   * @param id - Session identifier to authorize.
+   * @param allowNew - permit an identifier that does not yet exist.
+   */
   async authorizeSession(id: string, allowNew = false): Promise<void> {
     if (await this.visible(id)) return
     if (allowNew && !(await this.sessions.exists(id))) return
     throw new Error('session_not_found')
   }
+  /** Build identity headers for one Session.
+   * @param id - granted Session identifier.
+   * @returns platform identity headers for its account.
+   */
   sessionHeaders(id: string): Headers {
     const account = this.active(this.sessionGrants.get(id))
     if (account === undefined) throw new Error('login_required')
     return this.headers(account)
   }
+  /** Build current identity headers.
+   * @returns platform identity headers for the current request.
+   */
   currentHeaders(): Headers {
     const account = this.active(this.scope.getStore()?.id)
     if (account === undefined) throw new Error('login_required')
     return this.headers(account)
   }
   private headers(account: Account): Headers { return new Headers({ Authorization: `Bearer ${this.apiKey}`, 'X-Weave-User-Authorization': `Bearer ${account.token}` }) }
+  /** Bind browser identity to platform calls.
+   * @param request - authenticated browser request.
+   * @returns Fetch implementation carrying its platform identity.
+   */
   requestFetch(request: Request): typeof fetch {
     return async (input, init = {}) => {
       const account = this.fromRequest(request)
@@ -72,6 +110,11 @@ export class WorkbenchAccounts {
       return this.fetcher(input, { ...init, headers })
     }
   }
+  /** Filter a stream frame by ownership.
+   * @param request - authenticated stream request.
+   * @param value - outbound stream frame.
+   * @returns whether the frame may leave the Host.
+   */
   async streamVisible(request: Request, value: unknown): Promise<boolean> {
     const frame = object(value)
     const account = this.active(this.scope.getStore()?.id)
@@ -101,6 +144,10 @@ export class WorkbenchAccounts {
     }
     return true
   }
+  /** Serve the account endpoint.
+   * @param request - account endpoint request.
+   * @returns account view or mutation response.
+   */
   async handle(request: Request): Promise<Response> {
     const current = this.fromRequest(request)
     const view = (account: Account | undefined, headers?: HeadersInit): Response => Response.json(account === undefined ? { authenticated: false } : { authenticated: true, user: account.user }, { headers: { 'Cache-Control': 'no-store', ...Object.fromEntries(new Headers(headers)) } })
@@ -132,6 +179,11 @@ export class WorkbenchAccounts {
       return view(account, { 'Set-Cookie': this.cookie(request, account.id, Math.floor((expiresAt - Date.now()) / 1000)) })
     } catch { return response(502, 'weave_unreachable') }
   }
+  /** Guard a Workbench API request.
+   * @param request - Workbench API request.
+   * @param next - authenticated downstream handler.
+   * @returns authorized downstream response or access rejection.
+   */
   async guard(request: Request, next: (request: Request) => Promise<Response>): Promise<Response> {
     if (new URL(request.url).pathname === '/api/weave.account') return next(request)
     const account = this.fromRequest(request)
