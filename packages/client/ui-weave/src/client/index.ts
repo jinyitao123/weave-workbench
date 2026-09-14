@@ -18,6 +18,7 @@ import { NS as projectNS, zh as projectZh, en as projectEn, type ProjectActivity
 import { RuntimeSettingsSection } from './RuntimeCenter.tsx'
 import { personalSessionStarter } from './personal-session.ts'
 import { AccountAccess, AccountButton } from './AccountAccess.tsx'
+import { AccountSettingsSection } from './AccountSettings.tsx'
 import { AccountController, type AccountInjected } from './account-controller.ts'
 import { ApplicationSettingsSection } from './ApplicationCenter.tsx'
 import { CapabilityOperationsSettingsSection } from './CapabilityOperationsCenter.tsx'
@@ -56,6 +57,10 @@ export function apply(ctx: ClientContext, config: Config = {}): void {
     ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
       name: 'sidebar.footer.action', id: 'weave-account', order: -10, locale: NS, inject: accountProps,
     }, AccountButton))
+    ctx.slots.inject('settings.section', () => ctx.slots.register({
+      name: 'settings.section', id: 'weave-account', order: -30, label: () => t('account.settingsTitle'), locale: NS,
+      inject: accountProps,
+    }, AccountSettingsSection))
   }
   const taskView = createWorkTaskViewStore()
   let activeScene: { sessionId: SessionId; activate: () => void } | undefined

@@ -35,3 +35,22 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
 @media (max-width: 480px) { .page { align-items: start; padding-top: 64px; } .wordmark { margin-bottom: 36px; } }
+
+.settingsPage { display: grid; gap: 22px; max-width: 720px; }
+.settingsPage h2 { margin: 0 0 6px; font-size: 22px; line-height: 1.35; }
+.settingsDescription { margin: 0; color: var(--dsw-alias-label-secondary); font-size: 13px; line-height: 1.65; }
+.settingsCard { overflow: hidden; border: 1px solid var(--dsw-alias-border-l2); border-radius: 12px; background: var(--dsw-alias-bg-base); }
+.settingsIdentity { display: flex; align-items: center; gap: 12px; padding: 18px; border-bottom: 1px solid var(--dsw-alias-border-l2); }
+.settingsIdentity > div { display: grid; gap: 3px; min-width: 0; }
+.settingsIdentity strong, .settingsIdentity span { overflow-wrap: anywhere; }
+.settingsIdentity > div > span { color: var(--dsw-alias-label-secondary); font-size: 12px; }
+.settingsAvatar { display: grid; place-items: center; flex: 0 0 auto; width: 40px; height: 40px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 50%; font-size: 16px; font-weight: 650; }
+.settingsFacts { margin: 0; padding: 0 18px; }
+.settingsFacts > div { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(0, 2fr); gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--dsw-alias-border-l2); }
+.settingsFacts dt { color: var(--dsw-alias-label-secondary); font-size: 13px; }
+.settingsFacts dd { margin: 0; text-align: right; overflow-wrap: anywhere; font-size: 13px; }
+.settingsActions { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px; }
+.settingsActions > div { display: grid; gap: 4px; }
+.settingsActions p { margin: 0; color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 1.55; }
+.settingsActions .logout { flex: 0 0 auto; }
+@media (max-width: 560px) { .settingsActions { align-items: stretch; flex-direction: column; } .settingsFacts > div { grid-template-columns: 1fr; gap: 5px; } .settingsFacts dd { text-align: left; } }

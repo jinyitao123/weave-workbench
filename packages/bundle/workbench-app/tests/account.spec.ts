@@ -78,6 +78,23 @@ describe('Workbench platform accounts', () => {
     }
   })
 
+  it('uses the browser authority consistently across HTTP bridge and WebSocket stream requests', async () => {
+    const f = fixture()
+    const authority = '127.0.0.1:3080'
+    const loginRequest = new Request('http://dsh.internal/api/weave.account', {
+      method: 'POST',
+      headers: { Host: authority, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'login', username: 'alice', password: 'password' }),
+    })
+    const login = await f.accounts.handle(loginRequest)
+    expect(login.status).toBe(200)
+    const cookie = login.headers.get('set-cookie')!.split(';')[0]!
+    const streamRequest = new Request(`http://${authority}/api/$events`, {
+      method: 'POST', headers: { Host: authority, cookie, 'Content-Type': 'application/json' }, body: '{}',
+    })
+    expect((await f.accounts.guard(streamRequest, async () => Response.json({ ok: true }))).status).toBe(200)
+  })
+
   it('accepts a human response only from the account and stream that received the question', async () => {
     const f = fixture(); const alice = await f.login('alice'), bob = await f.login('bob')
     f.owners.set('alice-session', { userId: 'alice', workspaceId: 'shared' })

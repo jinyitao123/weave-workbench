@@ -23,7 +23,10 @@ export class WorkbenchAccounts {
   private readonly sessionGrants = new Map<string, string>()
   private readonly streamClients = new WeakMap<Request, string>()
   constructor(private readonly apiUrl: string, private readonly apiKey: string, private readonly sessions: AccountSessions, private readonly fetcher: typeof fetch = fetch) {}
-  private cookieName(request: Request): string { return 'weave-user-' + createHash('sha256').update(new URL(request.url).host).digest('hex').slice(0, 16) }
+  private cookieName(request: Request): string {
+    const authority = request.headers.get('host')?.trim() || new URL(request.url).host
+    return 'weave-user-' + createHash('sha256').update(authority).digest('hex').slice(0, 16)
+  }
   private cookie(request: Request, value: string, age: number): string { return `${this.cookieName(request)}=${value}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${age}${new URL(request.url).protocol === 'https:' ? '; Secure' : ''}` }
   private active(id: string | undefined): Account | undefined {
     if (id === undefined) return undefined
