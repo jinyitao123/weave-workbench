@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 2,
+  "pageId": "page_sales_order_create",
+  "archetype": "task_execution",
+  "status": "review_required",
+  "observedAt": "2026-09-20",
+  "environment": {
+    "forgeUrl": "http://localhost:3000/_console/apps/forge/page/page_sales_order_create",
+    "risemapUrl": "https://risemap.cn/sales/orders/new",
+    "viewport": { "width": 1440, "height": 900, "scale": 1, "devicePixelRatio": 1 },
+    "forgeScrollWidth": 1440,
+    "risemapScrollWidth": 1440,
+    "material": "审计走查-销售订单-20260920"
+  },
+  "checks": {
+    "replication": {
+      "status": "partial",
+      "notes": "两侧当前页面均已登录并读取 DOM/AX；Forge 已补齐公司账户、协同销售、整单建议供应商及应用到明细、19 列物料明细、附件拖拽区、附加费用、物料主数据、组合物料、付款方式按钮组和批量选择操作。RISEMAP 仍多出从特价及付款条件配置选择器，当前不得判定复刻完成。",
+      "evidence": ["内置浏览器 AX：Forge tab 38、RISEMAP tab 37"]
+    },
+    "visual": {
+      "status": "pending",
+      "notes": "已在 1440×900、760×900、390×844、DPR 1 下检查 Forge，并在 1440×900 下读取 RISEMAP 当前页；390 像素首次发现物料标题被工具栏挤成竖排，修正为上下排列后复测。Forge 已用统一线性 SVG 替换返回、来源、工具栏、批量动作、费用、附件及底栏动作中的字符/纯文字入口。PNG 落盘、业务裁剪框、各状态截图、边界框 JSON 和 pixelmatch 量化尚未完成。",
+      "geometry": {
+        "forge": [
+          { "title": "订单来源", "x": 74, "y": 147, "w": 1180, "h": 160.3984375 },
+          { "title": "订单基本信息", "x": 74, "y": 319.3984375, "w": 1180, "h": 648.5 },
+          { "title": "销售人员", "x": 74, "y": 979.8984375, "w": 1180, "h": 175.5 },
+          { "title": "物料明细 · 1 项", "x": 74, "y": 1167.3984375, "w": 1180, "h": 278 },
+          { "title": "付款与结算", "x": 74, "y": 1457.3984375, "w": 1180, "h": 217.5 },
+          { "title": "整单建议供应商", "x": 74, "y": 1686.8984375, "w": 1180, "h": 143.5 },
+          { "title": "附件（选填）", "x": 74, "y": 1842.3984375, "w": 1180, "h": 103 }
+        ],
+        "risemap": [{ "title": "新建销售订单", "x": 299.5, "y": 203.75, "w": 126, "h": 31.5 }]
+      },
+      "evidence": []
+    },
+    "interaction": {
+      "status": "partial",
+      "notes": "已实际验证物料主数据弹窗和选料、组合物料弹窗和导入、整单建议供应商选择及应用到全部明细行、19 列真实物料行、空态添加第一行、全选/取消选择、付款方式选中切换、拖拽区呈现、提交确认与必填阻断；并在有数据状态发现并修复型号/库存列错位。尚待图标按钮完整 hover/pressed/focus/loading/失败恢复状态、从报价单、附加费用、真实附件和完整提交链双侧验证。",
+      "evidence": ["内置浏览器 AX：Forge tab 38，RISEMAP tab 37；物料、组合、供应商、选择联动、付款切换和必填错误回读"]
+    },
+    "business": {
+      "status": "pending",
+      "notes": "尚未使用同一完整材料完成两侧正常提交、关键异常、关联单据、API 断言和 SQLite 停服重启回读。",
+      "evidence": []
+    }
+  },
+  "review": {
+    "implementer": "Codex 当前实施会话",
+    "reviewer": "",
+    "reviewedAt": "",
+    "status": "pending",
+    "evidence": []
+  },
+  "limitations": [
+    "本记录是当前轮部分证明，不构成 accepted。",
+    "未落盘 PNG 或 pixelmatch 结果不得写成视觉通过。",
+    "图标按钮状态矩阵和极限宽度压力检查未完成，不得把图标已出现写成图标按钮验收通过。",
+    "未实现的 RISEMAP 控件保持为明确缺口，不使用占位按钮冒充完成。"
+  ]
+}

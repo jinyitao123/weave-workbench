@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "auditedAt": "2026-09-20",
+  "scope": "docs/references/risemap-capture/live 下路径或文件名包含 sales、service、customer、goodwill、warranty 的 .png 历史销售证据",
+  "method": "find + file 文件签名检查，并使用 PNG 解码器抽查合同与订单成对证据",
+  "summary": {
+    "candidateFiles": 294,
+    "actualPngFiles": 0,
+    "jpegFilesWithPngExtension": 294,
+    "acceptedPixelEvidence": 0
+  },
+  "contractOrderPairs": [
+    {
+      "risemap": "docs/references/risemap-capture/live/20260913-sales/risemap-sales-contracts.png",
+      "risemapActualFormat": "JPEG",
+      "risemapSize": "906x776",
+      "forge": "docs/references/risemap-capture/live/20260913-sales/forge-sales-contract-workspace.png",
+      "forgeActualFormat": "JPEG",
+      "forgeSize": "1280x720",
+      "result": "invalid_for_pixel_gate"
+    },
+    {
+      "risemap": "docs/references/risemap-capture/live/20260913-sales/risemap-sales-orders.png",
+      "risemapActualFormat": "JPEG",
+      "risemapSize": "906x776",
+      "forge": "docs/references/risemap-capture/live/20260913-sales/forge-sales-order-workspace.png",
+      "forgeActualFormat": "JPEG",
+      "forgeSize": "1280x720",
+      "result": "invalid_for_pixel_gate"
+    },
+    {
+      "risemap": "docs/references/risemap-capture/live/20260913-sales-current-db/risemap-sales-orders-current.png",
+      "risemapActualFormat": "JPEG",
+      "risemapSize": "819x776",
+      "forge": "docs/references/risemap-capture/live/20260913-sales-current-db/forge-sales-order-workspace-restart-readback.png",
+      "forgeActualFormat": "JPEG",
+      "forgeSize": "1280x720",
+      "result": "invalid_for_pixel_gate"
+    }
+  ],
+  "decision": "历史图片继续作为页面内容和操作事实的辅助材料，但不得填入 schemaVersion 2 accepted 记录的 risemap、forge 或 diff PNG。必须在 RISEMAP 恢复后用相同视口、100% 缩放和同等业务数据重新采集真实 PNG。",
+  "limitations": [
+    "本审计没有否定历史图片对字段、列、文案和操作过程的辅助价值。",
+    "本审计没有生成新的双侧实时证据，也不改变任何销售页面的 review_required 状态。"
+  ]
+}

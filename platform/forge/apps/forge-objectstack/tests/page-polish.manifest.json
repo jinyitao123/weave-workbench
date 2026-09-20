@@ -853,5 +853,315 @@
       "reference": "project-timesheet-cost.page.ts",
       "designStatus": "review_required"
     }
+  ],
+  "sales": [
+    {
+      "file": "sales-contract-workspace.page.ts",
+      "pages": [
+        "page_sales_contract_workspace"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/contracts/sales/page_sales_contract_workspace.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_contract_workspace.json"
+    },
+    {
+      "file": "sales-order-workspace.page.ts",
+      "pages": [
+        "page_sales_order_workspace"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/contracts/sales/page_sales_order_workspace.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_order_workspace.json"
+    },
+    {
+      "file": "sales-additional-fee.page.ts",
+      "pages": [
+        "page_sales_additional_fee"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-additional-fee-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_additional_fee.json"
+    },
+    {
+      "file": "finance-management.page.ts",
+      "pages": [
+        "page_sales_collection_flow"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-collection-flow-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_collection_flow.json"
+    },
+    {
+      "file": "finance-management.page.ts",
+      "pages": [
+        "page_sales_invoice_request"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-collection-flow-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_invoice_request.json"
+    },
+    {
+      "file": "sales-direct-outbounds.page.ts",
+      "pages": [
+        "page_sales_shipment_workspace"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-shipment-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_shipment_workspace.json"
+    },
+    {
+      "file": "sales-return-workspace.page.ts",
+      "pages": [
+        "page_sales_return_workspace"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-return-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_return_workspace.json"
+    },
+    {
+      "file": "sales-management-pages.page.ts",
+      "pages": [
+        "page_sales_performance_bank"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-management-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_performance_bank.json"
+    },
+    {
+      "file": "sales-management-pages.page.ts",
+      "pages": [
+        "page_sales_pricing"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-management-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_pricing.json"
+    },
+    {
+      "file": "sales-management-pages.page.ts",
+      "pages": [
+        "page_goodwill_orders"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-management-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_goodwill_orders.json"
+    },
+    {
+      "file": "sales-management-pages.page.ts",
+      "pages": [
+        "page_sales_teams"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-management-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_teams.json"
+    },
+    {
+      "file": "sales-management-pages.page.ts",
+      "pages": [
+        "page_sales_targets"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-management-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_targets.json"
+    },
+    {
+      "file": "sales-customers.page.ts",
+      "pages": [
+        "page_sales_customers"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-crm-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_customers.json"
+    },
+    {
+      "file": "sales-contacts.page.ts",
+      "pages": [
+        "page_sales_contacts"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-crm-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_contacts.json"
+    },
+    {
+      "file": "sales-crm-service-pages.page.ts",
+      "pages": [
+        "page_sales_quotations"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-crm-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_quotations.json"
+    },
+    {
+      "file": "sales-crm-service-pages.page.ts",
+      "pages": [
+        "page_customer_material_map"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-crm-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_customer_material_map.json"
+    },
+    {
+      "file": "sales-crm-service-pages.page.ts",
+      "pages": [
+        "page_sales_opportunities"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-crm-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_opportunities.json"
+    },
+    {
+      "file": "sales-crm-service-pages.page.ts",
+      "pages": [
+        "page_sales_leads"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-crm-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_leads.json"
+    },
+    {
+      "file": "sales-crm-service-pages.page.ts",
+      "pages": [
+        "page_sales_follow_ups"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-crm-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_follow_ups.json"
+    },
+    {
+      "file": "sales-crm-service-pages.page.ts",
+      "pages": [
+        "page_customer_pool"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-crm-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_customer_pool.json"
+    },
+    {
+      "file": "sales-crm-service-pages.page.ts",
+      "pages": [
+        "page_service_orders"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-service-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_service_orders.json"
+    },
+    {
+      "file": "sales-crm-service-pages.page.ts",
+      "pages": [
+        "page_service_quotations"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-service-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_service_quotations.json"
+    },
+    {
+      "file": "sales-crm-service-pages.page.ts",
+      "pages": [
+        "page_service_settlements"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-service-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_service_settlements.json"
+    },
+    {
+      "file": "sales-crm-service-pages.page.ts",
+      "pages": [
+        "page_service_workspace"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-service-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_service_workspace.json"
+    },
+    {
+      "file": "sales-crm-service-pages.page.ts",
+      "pages": [
+        "page_service_dispatch"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-service-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_service_dispatch.json"
+    },
+    {
+      "file": "sales-crm-service-pages.page.ts",
+      "pages": [
+        "page_service_analysis"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-service-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_service_analysis.json"
+    },
+    {
+      "file": "sales-crm-service-pages.page.ts",
+      "pages": [
+        "page_warranty_management"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-service-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_warranty_management.json"
+    },
+    {
+      "file": "sales-crm-service-pages.page.ts",
+      "pages": [
+        "page_service_config"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-service-page-contract-20260913.md",
+      "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_service_config.json"
+    }
   ]
 }

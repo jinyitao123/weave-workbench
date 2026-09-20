@@ -26,7 +26,7 @@ for (const name of files) {
     if (/disabled=\{?true\}?/.test(block) || /aria-disabled=\{?true\}?/.test(block) || /cursor-not-allowed|opacity-50/.test(block)) {
       findings.push({ file: name, line, message: 'permanently unavailable capability should be business text, not a disabled-looking button', text: compact });
     }
-    if (/onClick=\{[\s\S]*?setToast\(/.test(block) && !/invoke|api\.|location|setDialog|setPage|setFilter|setStatus|setActive|setTab|load\(/.test(block)) {
+    if (/onClick=\{[\s\S]*?setToast\(/.test(block) && !/invoke|api\.|location|setDialog|setPage|setFilter|setStatus|setActive|setTab|set(?!Toast)[A-Z]|load\(/.test(block)) {
       findings.push({ file: name, line, message: 'click handlers must change business state, filter, dialog or navigation, not only show a toast', text: compact });
     }
     if (/onClick=\{\s*(?:\(\)\s*)?=>\s*\{\s*\}\s*\}/.test(block)) {

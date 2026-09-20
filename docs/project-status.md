@@ -10,7 +10,7 @@
 
 - 桌面工作空间、材料/成果目录、自选文件夹与双服务健康展示已有实现；历史验证见[桌面壳层验收](acceptance/2026-09-20-desktop-workspace-shell.md)。本轮未重跑桌面全量测试。
 - `contracts/v1` 已改为 Forge 账号、Weave 自动绑定与任务委托边界；旧的 OAuth 与五项能力投影已从当前方案撤回。
-- Forge 当前主线 `cfe4d442` 已同步进总仓；其中已有大量业务页面与动作进展，但统一登录、自动绑定、真实团队执行和跨员工业务闭环仍须按本方案重新验收。
+- Forge 当前主线 `6ab5e79a` 已同步进总仓并部署到联调服务器；本批包含销售与行政页面休整、页面门禁和脱敏证据，114 个清单条目仍保持 `review_required`。统一登录、真实团队执行和跨员工业务闭环仍须按本方案重新验收。
 - 前一会话曾进行远端 Weave 部署和数据库字段修复；本轮仅检查本地仓库，线上版本、运行时及修复生效情况待复核。环境记录见[联调环境](environments/development.md)。
 
 ## 工作队列
@@ -41,11 +41,11 @@ Weave 的回流结果为：
 
 独立 Weave 工作树 `/Users/jinyitao/Developer/weave-next-workflow-health-fix` 保存提交 `a80b466b`，尚未推送；原 `/Users/jinyitao/Developer/weave-next` 的其他未提交工作未被改动。
 
-独立 Weave 工作树 `/Users/jinyitao/Developer/weave-next-product-access` 的 [weave-next PR #5](https://github.com/jinyitao123/weave-next/pull/5) 已更新为 Forge 账号自动绑定和 Weave 原生三类角色，当前提交 `b9db21a2`。Cerbos、五项权限投影和固定开发者名单已移除，角色更新只接受 `member / developer / admin`。Compose 与 Workbench CI 通过；Go 全量 CI 两次停在主线已有的 `TestAccessChangeRosterScopesKindsAndRejectsInvalidMutationBeforeFencingRealPG` 冲突，当前改动的定向测试通过。
+独立 Weave 工作树 `/Users/jinyitao/Developer/weave-next-product-access` 的 [weave-next PR #5](https://github.com/jinyitao123/weave-next/pull/5) 已更新为 Forge 账号自动绑定和 Weave 原生三类角色，当前提交 `cb453045`。Cerbos、五项权限投影和固定开发者名单已移除，角色更新只接受 `member / developer / admin`；首次建绑、重复登录、角色保留和停用拒绝已通过真实 PostgreSQL 定向验证。跨系统真实账号登录仍待部署组合验证。
 
 独立 Workbench 工作树 `/Users/jinyitao/Developer/weave-workbench-product-access-upstream` 的 [weave-workbench PR #1](https://github.com/jinyitao123/weave-workbench/pull/1) 已更新为一次 Forge 登录与 Weave 会话交换，提交 `a4623cf0`。界面只呈现 Weave 角色，开发者不自动获得 Host 运维权限。
 
-独立 Forge 工作树 `/Users/jinyitao/Developer/inoForge-workbench-oauth` 已用提交 `bea0706` 撤回 OAuth 试验，inoForge PR #1 已关闭。总仓 `platform/forge` 已恢复并锁定 inoForge 主线提交 `cfe4d442`；inoForge 主工作树仍有 86 项未提交页面与验收材料，未经过页面证据门禁，不直接复制进总仓。
+独立 Forge 工作树 `/Users/jinyitao/Developer/inoForge-workbench-oauth` 已用提交 `bea0706` 撤回 OAuth 试验，inoForge PR #1 已关闭。Forge 页面任务已将五个并行页面工作树确认合入 `main`，并以提交 `6ab5e79a` 收口销售与行政页面休整；总仓 `platform/forge` 已同步该确定提交。联调服务器运行同一提交，健康检查通过并留有发布前数据库与环境配置备份；启动日志仍有数据库结构漂移告警，未执行带破坏性的自动迁移。
 
 ObjectStack HTTP OAuth 草稿 PR #19342 不再属于 MVP1 依赖。是否关闭外部草稿 PR 由对应上游仓库单独处理；当前总仓已移除补丁和相关配置。
 
