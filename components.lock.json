@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "components": {
+    "desktop": {
+      "source": "https://github.com/am-will/gooey-pi.git",
+      "revision": "459c9965690468c69d7434f82acf4b5eeee8e4bf",
+      "importPath": "desktop"
+    },
+    "weave": {
+      "source": "https://github.com/jinyitao123/weave-next.git",
+      "revision": "3bbed28037b4ff789025dc9b2e7e28d9c0a5be6d",
+      "importPath": "platform/weave"
+    },
+    "forge": {
+      "source": "https://github.com/jinyitao123/inoForge.git",
+      "revision": "d1cde9b44b6e0f5089cf63f2508c5408714afaba",
+      "importPath": "platform/forge"
+    }
+  }
+}
