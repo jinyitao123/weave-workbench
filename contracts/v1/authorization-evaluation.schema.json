@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/authorization-evaluation.schema.json",
+  "title": "Authorization Evaluation",
+  "description": "One auditable product authorization decision using subject, action, resource, and context. It does not replace Forge business authorization.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "evaluationId", "subject", "action", "resource", "context", "decision", "reason", "source", "evaluatedAt", "correlationId"],
+  "properties": {
+    "version": { "const": "1" },
+    "evaluationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "organizationId": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "action": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "attributes": { "type": "object", "maxProperties": 32, "additionalProperties": { "type": ["string", "number", "boolean", "null"] } }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "taskId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "environment": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "mode": { "enum": ["work", "simulate", "sandbox", "release"] }
+      }
+    },
+    "decision": { "enum": ["allow", "deny", "unavailable"] },
+    "reason": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["weave", "cerbos", "openfga", "other"] },
+        "policyVersion": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "evaluatedAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "minLength": 1, "maxLength": 128 }
+  }
+}
