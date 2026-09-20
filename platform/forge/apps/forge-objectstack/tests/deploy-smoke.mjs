@@ -32,6 +32,7 @@ assert.ok(BASE, 'FORGE_URL is required, e.g. FORGE_URL=http://127.0.0.1:8080');
 const EMAIL = process.env.FORGE_SMOKE_EMAIL || '';
 const PASSWORD = process.env.FORGE_SMOKE_PASSWORD || '';
 const EXPECTED_ASSET = process.env.FORGE_EXPECTED_CONSOLE_ASSET || '';
+const EXPECT_BROWSER_OAUTH = process.env.FORGE_EXPECT_BROWSER_OAUTH === '1';
 const DEEP_LINK_PATH = process.env.FORGE_SMOKE_DEEP_LINK
   || '/_console/apps/forge/page/page_purchase_request_pool';
 const DEEP_LINK_TEXT = process.env.FORGE_SMOKE_DEEP_LINK_TEXT || '采购申请';
@@ -56,6 +57,20 @@ const health = await request('/api/v1/health');
 assert.equal(health.status, 200, `health returned ${health.status}`);
 assert.equal(health.json?.success, true, 'health payload is not ok');
 pass('runtime health is 200');
+
+// Workbench never embeds the password form. It discovers the stock ObjectStack
+// OAuth endpoints, dynamically registers a public client, and uses PKCE.
+if (EXPECT_BROWSER_OAUTH) {
+  const discovery = await request('/.well-known/oauth-authorization-server');
+  assert.equal(discovery.status, 200, `OAuth discovery returned ${discovery.status}: ${discovery.text.slice(0, 160)}`);
+  for (const field of ['authorization_endpoint', 'token_endpoint', 'registration_endpoint']) {
+    const endpoint = new URL(discovery.json?.[field] || 'about:blank');
+    assert.equal(endpoint.origin, new URL(BASE).origin, `${field} must stay on the Forge origin`);
+  }
+  pass('Workbench browser OAuth discovery is complete');
+} else {
+  skip('Workbench browser OAuth discovery', 'FORGE_EXPECT_BROWSER_OAUTH is not 1');
+}
 
 // 2. The Console we expect is the Console being served. Without this, a rebuilt
 //    image silently reverts to its bundled SPA and every path-mapping fix is gone.
