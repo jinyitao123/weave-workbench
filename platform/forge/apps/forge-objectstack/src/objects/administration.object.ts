@@ -343,12 +343,17 @@ export const WorkReport = ObjectSchema.create({
     period_start: Field.date({ label: '汇报周期起始', ...required }), period_end: Field.date({ label: '汇报周期结束', ...required }),
     work_content: Field.textarea({ label: '工作内容', ...required }), completion: Field.number({ label: '完成度', min: 0, max: 100, scale: 0, defaultValue: 0 }),
     summary: Field.textarea({ label: '工作总结', ...required }), next_plan: Field.textarea({ label: '下期计划' }), risks: Field.textarea({ label: '问题与风险' }),
+    work_items_json: Field.textarea({ label: '结构化工作内容' }), related_rule: Field.text({ label: '关联规则', maxLength: 200 }),
+    project_progress: Field.textarea({ label: '项目进度说明' }), kpi_completion: Field.textarea({ label: 'KPI 完成情况' }),
+    opportunity_followup: Field.textarea({ label: '商机跟进' }), customer_visits: Field.textarea({ label: '客户拜访' }),
+    technical_issues: Field.textarea({ label: '技术问题' }), personnel_updates: Field.textarea({ label: '人员动态' }), tomorrow_plan: Field.textarea({ label: '次日计划' }),
+    attachment_ids: Field.file({ label: '附件', multiple: true }),
     self_score: Field.number({ label: '自评得分', min: 0, max: 100, scale: 0 }), submitted_at: Field.datetime({ label: '提交时间' }), reviewer_name: Field.text({ label: '审阅人', maxLength: 100 }), review_note: Field.textarea({ label: '审阅意见' }),
   },
   searchableFields: ['title','code','owner_name','work_content','summary','next_plan','risks'],
   listViews: { all: { label: '全部', type: 'grid', columns: ['code','title','owner_name','report_type','period_start','period_end','status','submitted_at','self_score'] } },
   indexes: [{ fields: ['code'], unique: 'organization' }, { fields: ['status','period_end'] }, { fields: ['owner_name','period_start'] }],
-  enable: { apiEnabled: true, searchable: true, trackHistory: true, feeds: false, activities: true },
+  enable: { apiEnabled: true, searchable: true, trackHistory: true, files: true, feeds: false, activities: true },
 });
 
 export const DocumentEntry = ObjectSchema.create({
@@ -359,11 +364,13 @@ export const DocumentEntry = ObjectSchema.create({
     parent_id: Field.lookup('forge_document_entry', { label: '上级目录' }), description: Field.textarea({ label: '描述' }),
     access: Field.select([option('company','全员可见'), option('restricted','限制访问')], { label: '访问权限', defaultValue: 'company', ...required }),
     owner_name: Field.text({ label: '负责人', maxLength: 100, ...required }), favorite: Field.boolean({ label: '收藏', defaultValue: false }),
-    updated_at: Field.datetime({ label: '更新时间', ...required }), file_name: Field.text({ label: '文件名', maxLength: 255 }), file_size: Field.number({ label: '文件大小', min: 0, scale: 0 }),
+    updated_at: Field.datetime({ label: '更新时间', ...required }), last_accessed_at: Field.datetime({ label: '最近使用时间' }),
+    file_id: Field.file({ label: '文件' }), file_name: Field.text({ label: '文件名', maxLength: 255 }),
+    file_size: Field.number({ label: '文件大小', min: 0, scale: 0 }), mime_type: Field.text({ label: '文件类型', maxLength: 160 }),
   }, searchableFields: ['title','code','description','file_name','owner_name'],
   listViews: { all: { label: '全部', type: 'grid', columns: ['entry_type','code','title','access','owner_name','updated_at','favorite'] } },
   indexes: [{ fields: ['code'], unique: 'organization' }, { fields: ['entry_type','parent_id'] }, { fields: ['favorite','updated_at'] }],
-  enable: { apiEnabled: true, searchable: true, trackHistory: true, feeds: false, activities: true },
+  enable: { apiEnabled: true, searchable: true, trackHistory: true, files: true, feeds: false, activities: true },
 });
 
 export const RulePolicy = ObjectSchema.create({
@@ -415,18 +422,36 @@ export const MeetingMinute = ObjectSchema.create({
     code: Field.text({ label: '会议编号', maxLength: 80, ...required }),
     meeting_type: Field.text({ label: '会议类型', maxLength: 100 }),
     meeting_at: Field.datetime({ label: '日期/时间', ...required }),
+    meeting_on: Field.date({ label: '会议日期', required: true }),
+    start_time: Field.text({ label: '开始时间', maxLength: 5, required: true }),
+    end_time: Field.text({ label: '结束时间', maxLength: 5, required: true }),
+    location: Field.text({ label: '会议地点', maxLength: 200 }),
     host_name: Field.text({ label: '主持人', maxLength: 100 }),
+    attendee_names: Field.textarea({ label: '参会人员' }),
+    external_attendees: Field.textarea({ label: '外部参会人员' }),
     attendee_count: Field.number({ label: '参会人数', min: 0, scale: 0, defaultValue: 0 }),
     todo_count: Field.number({ label: '待办', min: 0, scale: 0, defaultValue: 0 }),
     status: Field.select([option('draft','草稿'), option('confirmed','已确认'), option('archived','已归档')], { label: '状态', defaultValue: 'draft', ...required }),
+    summary: Field.textarea({ label: '会议摘要', required: true }),
+    content: Field.textarea({ label: '详细内容' }),
     decisions: Field.textarea({ label: '会议决议' }),
     todos: Field.textarea({ label: '待办事项' }),
+    todo_items_json: Field.textarea({ label: '结构化待办' }),
+    sync_todos: Field.boolean({ label: '同步创建到待办管理', defaultValue: true }),
+    ai_template: Field.text({ label: '会议纪要模板', maxLength: 160 }),
+    recording_file_id: Field.text({ label: '录音文件标识', maxLength: 255 }),
+    recording_file_name: Field.text({ label: '录音文件名', maxLength: 255 }),
+    transcription_status: Field.select([option('none','无录音'), option('ready','待转写'), option('processing','转写中'), option('completed','已转写'), option('failed','转写失败')], { label: '转写状态', defaultValue: 'none' }),
+    recipient_names: Field.textarea({ label: '发送给' }),
+    cc_names: Field.textarea({ label: '抄送' }),
+    delivery_status: Field.select([option('not_sent','未发送'), option('pending','待投递'), option('sent','已发送'), option('failed','发送失败')], { label: '发送状态', defaultValue: 'not_sent' }),
+    attachment_ids: Field.file({ label: '会议附件', multiple: true }),
     remarks: Field.textarea({ label: '备注' }),
   },
-  searchableFields: ['title','code','meeting_type','host_name','decisions','todos'],
+  searchableFields: ['title','code','meeting_type','host_name','location','summary','content','decisions','todos','attendee_names'],
   listViews: { all: { label: '全部', type: 'grid', columns: ['code','title','meeting_type','meeting_at','host_name','attendee_count','todo_count','status'] } },
   indexes: [{ fields: ['code'], unique: 'organization' }, { fields: ['meeting_at','status'] }, { fields: ['host_name','meeting_at'] }],
-  enable: { apiEnabled: true, searchable: true, trackHistory: true, feeds: false, activities: true },
+  enable: { apiEnabled: true, searchable: true, trackHistory: true, files: true, feeds: false, activities: true },
 });
 
 export const SealApplication = ObjectSchema.create({
@@ -437,37 +462,54 @@ export const SealApplication = ObjectSchema.create({
     company_name: Field.text({ label: '公司抬头', maxLength: 200 }),
     applicant_name: Field.text({ label: '申请人', maxLength: 100, ...required }),
     seal_type: Field.text({ label: '印章类型', maxLength: 100, ...required }),
+    urgency: Field.select([option('normal','普通'), option('urgent','紧急'), option('critical','特急')], { label: '紧急程度', defaultValue: 'normal', required: true }),
+    contract_type: Field.select([option('none','不关联合同'), option('sales','销售合同'), option('purchase','采购合同'), option('other','其他合同')], { label: '合同类型', defaultValue: 'none', required: true }),
+    contract_reference: Field.text({ label: '关联合同', maxLength: 200 }),
+    file_type: Field.select([option('contract','合同'), option('agreement','协议'), option('certificate','证明'), option('authorization','授权书'), option('other','其他')], { label: '文件类型', required: true }),
+    copy_count: Field.number({ label: '盖章份数', min: 1, scale: 0, defaultValue: 1, required: true }),
     reason: Field.textarea({ label: '用章事由', ...required }),
     status: Field.select([option('draft','草稿'), option('pending','待审批'), option('approved','已通过'), option('rejected','已驳回'), option('completed','已盖章')], { label: '状态', defaultValue: 'draft', ...required }),
     applied_on: Field.date({ label: '申请日期', ...required }),
     external_use: Field.boolean({ label: '是否外带', defaultValue: false }),
+    return_on: Field.date({ label: '预计归还日期' }),
+    attachment_ids: Field.file({ label: '用章文件', multiple: true }),
     remarks: Field.textarea({ label: '备注' }),
   },
-  searchableFields: ['title','code','company_name','applicant_name','seal_type','reason'],
+  searchableFields: ['title','code','company_name','applicant_name','seal_type','contract_reference','reason'],
   listViews: { all: { label: '全部', type: 'grid', columns: ['code','company_name','applicant_name','seal_type','title','reason','status','applied_on'] } },
   indexes: [{ fields: ['code'], unique: 'organization' }, { fields: ['status','applied_on'] }, { fields: ['applicant_name','applied_on'] }],
-  enable: { apiEnabled: true, searchable: true, trackHistory: true, feeds: false, activities: true },
+  enable: { apiEnabled: true, searchable: true, trackHistory: true, files: true, feeds: false, activities: true },
 });
 
 export const FixedAsset = ObjectSchema.create({
   name: 'forge_fixed_asset', label: '固定资产', pluralLabel: '固定资产', icon: 'box', sharingModel: 'private', nameField: 'title',
   fields: {
     title: Field.text({ label: '资产名称', maxLength: 200, ...required }), code: Field.text({ label: '资产编号', maxLength: 80, ...required }),
-    category: Field.text({ label: '资产分类', maxLength: 100, ...required }), owner_name: Field.text({ label: '责任人', maxLength: 100 }), department: Field.text({ label: '部门', maxLength: 120 }),
-    purchase_on: Field.date({ label: '购入日期' }), original_value: Field.currency({ label: '资产原值', precision: 18, scale: 2, min: 0 }), accumulated_depreciation: Field.currency({ label: '累计折旧', precision: 18, scale: 2, min: 0 }),
+    category: Field.text({ label: '资产分类', maxLength: 100, ...required }),
+    brand: Field.text({ label: '品牌', maxLength: 120 }), model: Field.text({ label: '规格型号', maxLength: 160 }),
+    owner_name: Field.text({ label: '责任人', maxLength: 100, ...required }), department: Field.text({ label: '使用部门', maxLength: 120, ...required }),
+    purchase_on: Field.date({ label: '购入日期', ...required }), original_value: Field.currency({ label: '资产原值', precision: 18, scale: 2, min: 0, ...required }), accumulated_depreciation: Field.currency({ label: '已折旧金额', precision: 18, scale: 2, min: 0, defaultValue: 0, ...required }),
+    depreciation_method: Field.select([option('straight_line','直线法')], { label: '折旧方法', defaultValue: 'straight_line', ...required }),
+    useful_life_years: Field.number({ label: '使用年限（年）', min: 1, scale: 0, defaultValue: 5, ...required }),
+    residual_rate: Field.number({ label: '残值率（%）', min: 0, max: 100, scale: 2, defaultValue: 5, ...required }),
     residual_value: Field.currency({ label: '预计残值', precision: 18, scale: 2, min: 0 }), net_value: Field.currency({ label: '资产净值', precision: 18, scale: 2, min: 0 }), monthly_depreciation: Field.currency({ label: '月折旧额', precision: 18, scale: 2, min: 0 }),
+    supplier_name: Field.text({ label: '供应商', maxLength: 200 }), location: Field.text({ label: '存放地点', maxLength: 200 }), invoice_number: Field.text({ label: '发票号', maxLength: 120 }),
+    asset_image_ids: Field.file({ label: '资产图片', multiple: true }),
+    last_depreciated_month: Field.text({ label: '最近计提月份', maxLength: 7 }),
     status: Field.select([option('in_use','在用'), option('idle','闲置'), option('repair','维修中'), option('scrapped','已报废')], { label: '状态', defaultValue: 'in_use', ...required }), remarks: Field.textarea({ label: '备注' }),
   },
-  searchableFields: ['title','code','category','owner_name','department'], listViews: { all: { label: '全部', type: 'grid', columns: ['code','title','category','original_value','accumulated_depreciation','residual_value','net_value','monthly_depreciation','owner_name','department','status','purchase_on'] } },
-  indexes: [{ fields: ['code'], unique: 'organization' }, { fields: ['status','department'] }, { fields: ['category','purchase_on'] }], enable: { apiEnabled: true, searchable: true, trackHistory: true, feeds: false, activities: true },
+  searchableFields: ['title','code','category','brand','model','owner_name','department','supplier_name','location','invoice_number'], listViews: { all: { label: '全部', type: 'grid', columns: ['code','title','category','original_value','accumulated_depreciation','residual_value','net_value','monthly_depreciation','owner_name','department','status','purchase_on'] } },
+  indexes: [{ fields: ['code'], unique: 'organization' }, { fields: ['status','department'] }, { fields: ['category','purchase_on'] }], enable: { apiEnabled: true, searchable: true, trackHistory: true, files: true, feeds: false, activities: true },
 });
 
 export const QualificationRecord = ObjectSchema.create({
   name: 'forge_qualification_record', label: '资质与申报', pluralLabel: '资质与申报', icon: 'award', sharingModel: 'private', nameField: 'title',
   fields: {
     title: Field.text({ label: '资质名称', maxLength: 200, ...required }), code: Field.text({ label: '证书编号', maxLength: 100, ...required }),
-    category: Field.text({ label: '资质类别', maxLength: 120, ...required }), issuing_authority: Field.text({ label: '发证机构', maxLength: 160 }),
-    owner_name: Field.text({ label: '责任人', maxLength: 100 }), valid_from: Field.date({ label: '有效期起' }), valid_to: Field.date({ label: '有效期止' }),
+    category: Field.text({ label: '资质类别', maxLength: 120, ...required }), issuing_authority: Field.text({ label: '发证机构', maxLength: 160, ...required }),
+    owner_name: Field.text({ label: '责任人', maxLength: 100 }), valid_from: Field.date({ label: '有效期起', ...required }), valid_to: Field.date({ label: '有效期止', ...required }),
+    annual_review_on: Field.date({ label: '年审日期' }), recheck_on: Field.date({ label: '复审日期' }),
+    declaration_id: Field.lookup('forge_qualification_declaration', { label: '关联申报' }), related_materials: Field.textarea({ label: '关联材料' }), attachment_ids: Field.file({ label: '附件', multiple: true }), attachment_note: Field.textarea({ label: '附件说明' }),
     status: Field.select([option('valid','有效'), option('expiring','即将到期'), option('expired','已到期'), option('draft','草稿')], { label: '状态', defaultValue: 'valid', ...required }),
     declaration_status: Field.select([option('none','未申报'), option('preparing','准备中'), option('submitted','已申报'), option('approved','已通过'), option('rejected','已驳回')], { label: '政策申报状态', defaultValue: 'none', ...required }),
     material_note: Field.textarea({ label: '材料说明' }), remarks: Field.textarea({ label: '备注' }),
@@ -475,6 +517,37 @@ export const QualificationRecord = ObjectSchema.create({
   searchableFields: ['title','code','category','issuing_authority','owner_name','material_note'],
   listViews: { all: { label: '全部', type: 'grid', columns: ['title','category','code','issuing_authority','valid_to','owner_name','status','declaration_status'] } },
   indexes: [{ fields: ['code'], unique: 'organization' }, { fields: ['status','valid_to'] }, { fields: ['category','declaration_status'] }],
+  enable: { apiEnabled: true, searchable: true, trackHistory: true, files: true, feeds: false, activities: true },
+});
+
+export const QualificationDeclaration = ObjectSchema.create({
+  name: 'forge_qualification_declaration', label: '政策申报', pluralLabel: '政策申报', icon: 'file-check', sharingModel: 'private', nameField: 'title',
+  fields: {
+    title: Field.text({ label: '申报名称', maxLength: 220, ...required }), code: Field.text({ label: '申报编号', maxLength: 80, ...required }),
+    category: Field.text({ label: '申报类别', maxLength: 120, ...required }), authority: Field.text({ label: '主管部门', maxLength: 180, ...required }),
+    deadline_on: Field.date({ label: '截止日期', ...required }), start_on: Field.date({ label: '启动日期' }), owner_name: Field.text({ label: '责任人', maxLength: 100 }),
+    expected_amount: Field.currency({ label: '预期补贴金额', precision: 18, scale: 2, min: 0 }), material_count: Field.number({ label: '关联材料数', min: 0, scale: 0, defaultValue: 0 }),
+    stage: Field.select([option('pending_evaluation','待评估'), option('preparing','准备中'), option('materials','材料准备'), option('submitted','已提交'), option('review','审核中'), option('approved','已通过'), option('rejected','已驳回')], { label: '当前阶段', defaultValue: 'pending_evaluation', ...required }),
+    remarks: Field.textarea({ label: '备注' }),
+  },
+  searchableFields: ['title','code','category','authority','owner_name'],
+  listViews: { all: { label: '全部', type: 'grid', columns: ['title','category','authority','deadline_on','owner_name','expected_amount','material_count','stage'] } },
+  indexes: [{ fields: ['code'], unique: 'organization' }, { fields: ['stage','deadline_on'] }, { fields: ['category','deadline_on'] }],
+  enable: { apiEnabled: true, searchable: true, trackHistory: true, feeds: false, activities: true },
+});
+
+export const QualificationMaterial = ObjectSchema.create({
+  name: 'forge_qualification_material', label: '资质材料', pluralLabel: '资质材料', icon: 'folder', sharingModel: 'private', nameField: 'title',
+  fields: {
+    title: Field.text({ label: '名称', maxLength: 220, ...required }), code: Field.text({ label: '材料编号', maxLength: 80, ...required }),
+    entry_type: Field.select([option('folder','文件夹'), option('file','文件')], { label: '类型', defaultValue: 'folder', ...required }),
+    parent_code: Field.text({ label: '上级文件夹编号', maxLength: 80 }), category: Field.text({ label: '材料分类', maxLength: 120 }),
+    file_name: Field.text({ label: '文件名', maxLength: 255 }), file_url: Field.url({ label: '文件地址' }), owner_name: Field.text({ label: '负责人', maxLength: 100 }),
+    updated_on: Field.date({ label: '更新日期' }), remarks: Field.textarea({ label: '备注' }),
+  },
+  searchableFields: ['title','code','category','file_name','owner_name'],
+  listViews: { all: { label: '全部', type: 'grid', columns: ['title','entry_type','category','file_name','owner_name','updated_on'] } },
+  indexes: [{ fields: ['code'], unique: 'organization' }, { fields: ['entry_type','parent_code'] }],
   enable: { apiEnabled: true, searchable: true, trackHistory: true, feeds: false, activities: true },
 });
 
@@ -485,9 +558,47 @@ export const MaterialPickupRequest = ObjectSchema.create({
     category: Field.text({ label: '物品分类', maxLength: 120 }), owner_name: Field.text({ label: '申请人', maxLength: 100, ...required }),
     department: Field.text({ label: '申请部门', maxLength: 120 }), request_on: Field.date({ label: '申请日期', ...required }),
     quantity: Field.number({ label: '数量', min: 0, scale: 2, ...required }), status: Field.select([option('draft','草稿'), option('pending','待审批'), option('approved','待领取'), option('picked','已领取'), option('rejected','已驳回')], { label: '状态', defaultValue: 'draft', ...required }),
-    purpose: Field.textarea({ label: '领用事由' }), remarks: Field.textarea({ label: '备注' }),
+    purpose: Field.textarea({ label: '领用事由', ...required }), remarks: Field.textarea({ label: '备注' }),
   }, searchableFields: ['title','code','category','owner_name','department','purpose'],
   listViews: { all: { label: '全部', type: 'grid', columns: ['code','title','category','owner_name','department','request_on','quantity','status'] } },
   indexes: [{ fields: ['code'], unique: 'organization' }, { fields: ['status','request_on'] }, { fields: ['owner_name','request_on'] }],
   enable: { apiEnabled: true, searchable: true, trackHistory: true, feeds: false, activities: true },
+});
+
+export const AdministrationSupply = ObjectSchema.create({
+  name: 'forge_administration_supply', label: '行政物品', pluralLabel: '行政物品', icon: 'package-open', sharingModel: 'public_read', nameField: 'title',
+  fields: {
+    title: Field.text({ label: '物品名称', maxLength: 200, ...required }), code: Field.text({ label: '物品编号', maxLength: 80, ...required }),
+    category: Field.text({ label: '类别', maxLength: 120 }), specification: Field.text({ label: '规格型号', maxLength: 160 }), unit: Field.text({ label: '单位', maxLength: 40, defaultValue: '个', ...required }),
+    current_stock: Field.number({ label: '当前库存', min: 0, scale: 2, defaultValue: 0, ...required }), safety_stock: Field.number({ label: '安全库存', min: 0, scale: 2, defaultValue: 5, ...required }),
+    reference_price: Field.currency({ label: '参考单价', precision: 18, scale: 2, min: 0, defaultValue: 0 }), supplier_name: Field.text({ label: '供应商', maxLength: 180 }),
+    purchase_channel: Field.text({ label: '购买渠道', maxLength: 120 }), bin_code: Field.text({ label: '库位编号', maxLength: 80 }), last_inbound_on: Field.date({ label: '最近入库' }),
+    status: Field.select([option('active','启用'), option('inactive','停用')], { label: '状态', defaultValue: 'active', ...required }), remarks: Field.textarea({ label: '备注' }),
+  },
+  searchableFields: ['title','code','category','specification','supplier_name','purchase_channel','bin_code'],
+  listViews: { all: { label: '全部', type: 'grid', columns: ['title','category','specification','unit','current_stock','safety_stock','reference_price','supplier_name','purchase_channel','bin_code','last_inbound_on'] } },
+  indexes: [{ fields: ['code'], unique: 'organization' }, { fields: ['category','status'] }, { fields: ['current_stock','safety_stock'] }],
+  enable: { apiEnabled: true, searchable: true, trackHistory: true, feeds: false, activities: true },
+});
+
+export const MaterialPickupLine = ObjectSchema.create({
+  name: 'forge_material_pickup_line', label: '物料领取明细', pluralLabel: '物料领取明细', icon: 'list', sharingModel: 'private', nameField: 'title',
+  fields: {
+    title: Field.text({ label: '物品名称', maxLength: 200, ...required }), request_id: Field.lookup('forge_material_pickup_request', { label: '领取申请', ...required }),
+    supply_id: Field.lookup('forge_administration_supply', { label: '物品', ...required }), quantity: Field.number({ label: '数量', min: 0.01, scale: 2, ...required }), unit: Field.text({ label: '单位', maxLength: 40, ...required }),
+  },
+  searchableFields: ['title','unit'], listViews: { all: { label: '全部', type: 'grid', columns: ['request_id','title','quantity','unit'] } },
+  indexes: [{ fields: ['request_id'] }, { fields: ['supply_id'] }], enable: { apiEnabled: true, searchable: true, trackHistory: true, feeds: false, activities: true },
+});
+
+export const AdministrationSupplyInbound = ObjectSchema.create({
+  name: 'forge_administration_supply_inbound', label: '行政物品入库', pluralLabel: '行政物品入库', icon: 'package-plus', sharingModel: 'private', nameField: 'code',
+  fields: {
+    code: Field.text({ label: '入库编号', maxLength: 80, ...required }), supply_id: Field.lookup('forge_administration_supply', { label: '物品', ...required }),
+    quantity: Field.number({ label: '数量', min: 0.01, scale: 2, ...required }), unit_price: Field.currency({ label: '单价', precision: 18, scale: 2, min: 0 }),
+    supplier_name: Field.text({ label: '供应商', maxLength: 180 }), purchase_channel: Field.text({ label: '购买渠道', maxLength: 120 }), inbound_on: Field.date({ label: '入库日期', ...required }),
+    owner_name: Field.text({ label: '经办人', maxLength: 100 }), remarks: Field.textarea({ label: '备注' }),
+  },
+  searchableFields: ['code','supplier_name','purchase_channel','owner_name'], listViews: { all: { label: '全部', type: 'grid', columns: ['code','supply_id','quantity','unit_price','supplier_name','purchase_channel','inbound_on','owner_name'] } },
+  indexes: [{ fields: ['code'], unique: 'organization' }, { fields: ['supply_id','inbound_on'] }], enable: { apiEnabled: true, searchable: true, trackHistory: true, feeds: false, activities: true },
 });

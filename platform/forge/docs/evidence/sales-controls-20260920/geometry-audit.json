@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-09-20",
+  "scope": "销售业务、CRM客户管理、服务管理当前 28 个 Forge 导航入口",
+  "environment": "http://localhost:3000",
+  "browser": "Codex 内置浏览器",
+  "viewports": [
+    { "width": 1280, "height": 900, "scale": 1 },
+    { "width": 760, "height": 900, "scale": 1 }
+  ],
+  "checks": [
+    "页面根容器横向溢出",
+    "业务内容区可见按钮、输入框、文本域和组合框矩形相交",
+    "按钮文字裁切",
+    "非业务宽表滚动容器内的控件越界",
+    "小于 27x24 像素的业务点击目标"
+  ],
+  "pages": [
+    "page_sales_contract_workspace",
+    "page_sales_order_workspace",
+    "page_sales_additional_fee",
+    "page_sales_collection_flow",
+    "page_sales_shipment_workspace",
+    "page_sales_return_workspace",
+    "page_sales_performance_bank",
+    "page_sales_pricing",
+    "page_goodwill_orders",
+    "page_sales_teams",
+    "page_sales_targets",
+    "page_sales_invoice_request",
+    "page_sales_customers",
+    "page_sales_contacts",
+    "page_sales_quotations",
+    "page_customer_material_map",
+    "page_sales_opportunities",
+    "page_sales_leads",
+    "page_sales_follow_ups",
+    "page_customer_pool",
+    "page_service_orders",
+    "page_service_quotations",
+    "page_service_settlements",
+    "page_service_workspace",
+    "page_service_dispatch",
+    "page_service_analysis",
+    "page_warranty_management",
+    "page_service_config"
+  ],
+  "beforeFix": {
+    "affectedPages": [
+      "page_sales_quotations",
+      "page_customer_material_map",
+      "page_sales_opportunities",
+      "page_sales_follow_ups",
+      "page_customer_pool",
+      "page_service_quotations",
+      "page_service_settlements",
+      "page_service_workspace"
+    ],
+    "finding": "760x900 下 Console 的在 Studio 中编辑悬浮按钮与页面刷新按钮发生 32 平方像素相交；同组页面请求未使用 ObjectStack adapter，页面显示 UNAUTHENTICATED。"
+  },
+  "afterFix": {
+    "desktop": { "pagesChecked": 28, "rootOverflow": 0, "controlCollisions": 0, "clippedLabels": 0, "outOfViewportControls": 0, "undersizedTargets": 0 },
+    "narrow": { "pagesChecked": 28, "rootOverflow": 0, "controlCollisions": 0, "clippedLabels": 0, "outOfViewportControls": 0, "undersizedTargets": 0 },
+    "dataReadback": "逐页重新加载销售报价、客户物料对照、商机、线索、跟进、公海、服务工单、服务报价、服务结算、接单中心、派工中心、服务分析、质保管理、服务配置共 14 页，均无错误提示、无 UNAUTHENTICATED 且已退出加载态；销售报价页回读 3 条真实报价记录。"
+  },
+  "acceptanceStatus": "partial_proof",
+  "limitations": [
+    "本记录只证明 Forge 当前首屏控件几何和授权数据加载，不替代 RISEMAP 同视口源图、像素差异、弹窗全过程或同材料业务验收。",
+    "RISEMAP 联系人页面当前新标签页为空白，原客户页仍被未保存内容确认阻断。"
+  ]
+}
