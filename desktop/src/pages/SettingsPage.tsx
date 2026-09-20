@@ -1,4 +1,4 @@
-import { ArrowLeft, AudioLines, Bot, Boxes, Building2, ChevronRight, Info, LockKeyhole, PawPrint, Settings2, Sun, Terminal } from 'lucide-react'
+import { ArrowLeft, AudioLines, Bot, Boxes, ChevronRight, Info, LockKeyhole, PawPrint, Settings2, Sun, Terminal } from 'lucide-react'
 import { useEffect, useState, type ComponentType } from 'react'
 import { errorMessage } from '@/lib/errors'
 import { useI18n, type MessageKey } from '@/lib/i18n'
@@ -11,7 +11,6 @@ import { AppearanceSettings } from './settings/AppearanceSettings'
 import { BrowserSettings } from './settings/BrowserSettings'
 import type { SettingsSection, SettingsUpdate } from './settings/contracts'
 import { GeneralSettings } from './settings/GeneralSettings'
-import { EnterpriseSettings } from './settings/EnterpriseSettings'
 import { PrivacySettings } from './settings/PrivacySettings'
 import { PetsSettings } from './settings/PetsSettings'
 import { ProvidersSettings } from './settings/ProviderSettings'
@@ -20,7 +19,6 @@ import { VoiceSettings } from './settings/VoiceSettings'
 
 const sections: Array<{ id: SettingsSection; label: MessageKey; icon: ComponentType<{ size?: number }> }> = [
   { id: 'general', label: 'settings.general', icon: Settings2 },
-  { id: 'enterprise', label: 'settings.enterprise', icon: Building2 },
   { id: 'appearance', label: 'settings.appearance', icon: Sun },
   { id: 'agent', label: 'settings.harness', icon: Bot },
   { id: 'providers', label: 'settings.providers', icon: Boxes },
@@ -38,7 +36,6 @@ interface SettingsPageProps {
   providerCatalog: PrimeModelCatalog | null
   voice: PrimeWorkApi['voice'] | null
   pets: PrimeWorkApi['pets'] | null
-  enterprise?: PrimeWorkApi['enterprise'] | null
   onUpdate: SettingsUpdate
   onClose(): void
   onResetBrowser(): Promise<void> | void
@@ -57,7 +54,7 @@ interface SettingsPageProps {
   initialSectionRequestId?: number
 }
 
-export function SettingsPage({ settings, meta, providerCatalog, voice, pets, enterprise = null, onClose, onUpdate, onResetBrowser, onOpenDocs, onRefreshProviders, onRefreshHarnesses, onSaveProviderApiKey, onLogoutProvider, onSetProviderEnabled, onSetAllProvidersEnabled, onSetAllProvidersDisabled, onSetModelEnabled, onStartProviderOAuth, initialSection = 'general', initialSectionRequestId = 0 }: SettingsPageProps) {
+export function SettingsPage({ settings, meta, providerCatalog, voice, pets, onClose, onUpdate, onResetBrowser, onOpenDocs, onRefreshProviders, onRefreshHarnesses, onSaveProviderApiKey, onLogoutProvider, onSetProviderEnabled, onSetAllProvidersEnabled, onSetAllProvidersDisabled, onSetModelEnabled, onStartProviderOAuth, initialSection = 'general', initialSectionRequestId = 0 }: SettingsPageProps) {
   const [section, setSection] = useState<SettingsSection>(initialSection)
   const [confirmReset, setConfirmReset] = useState(false)
   const [resetting, setResetting] = useState(false)
@@ -83,7 +80,6 @@ export function SettingsPage({ settings, meta, providerCatalog, voice, pets, ent
   const content = (() => {
     switch (section) {
       case 'general': return <GeneralSettings settings={settings} onUpdate={onUpdate} platform={platform} />
-      case 'enterprise': return <EnterpriseSettings enterprise={enterprise} />
       case 'appearance': return <AppearanceSettings settings={settings} onUpdate={onUpdate} />
       case 'agent': return <AgentSettings settings={settings} meta={meta} onUpdate={onUpdate} onRefreshHarnesses={onRefreshHarnesses} />
       case 'providers': return <ProvidersSettings harness={settings.activeHarness} catalog={providerCatalog} onRefresh={onRefreshProviders} onSaveApiKey={onSaveProviderApiKey} onLogout={onLogoutProvider} onSetEnabled={onSetProviderEnabled} onSetAllEnabled={onSetAllProvidersEnabled} onSetAllDisabled={onSetAllProvidersDisabled} onSetModelEnabled={onSetModelEnabled} onStartOAuth={onStartProviderOAuth} onOpenDocs={onOpenDocs} />

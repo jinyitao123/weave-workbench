@@ -37,53 +37,6 @@ export interface AppMeta {
   harnesses: Record<HarnessId, HarnessStatus>
 }
 
-export interface EnterpriseEnvironmentStatus {
-  id: string
-  name: string
-  url: string
-  available: boolean
-  secure: boolean
-  version?: string
-  checkedAt: string
-  message?: string
-}
-
-export const PRODUCT_CAPABILITY_IDS = ['team.read', 'run.read', 'debug.simulate', 'debug.sandbox_write', 'release.publish'] as const
-export type ProductCapabilityId = (typeof PRODUCT_CAPABILITY_IDS)[number]
-export type ProductCapabilityDecisionValue = 'allow' | 'deny' | 'unavailable'
-
-export interface ProductCapabilityDecision {
-  id: ProductCapabilityId
-  decision: ProductCapabilityDecisionValue
-  reason: string
-  decisionId?: string
-}
-
-export interface ProductAccessState {
-  version: '1'
-  status: 'ready' | 'unavailable'
-  subject: { id: string; organizationId?: string }
-  organization?: { id: string; name: string }
-  source: { kind: 'weave' | 'cerbos' | 'openfga' | 'other'; policyVersion?: string }
-  evaluatedAt: string
-  capabilities: ProductCapabilityDecision[]
-  message?: string
-}
-
-export interface EnterpriseAccountState {
-  version: '1'
-  status: 'signed-out' | 'signed-in' | 'blocked' | 'unavailable'
-  environment: { origin: string; secure: boolean }
-  storage: 'encrypted' | 'session-only'
-  identitySource?: { kind: 'forge-oauth' | 'oidc' | 'other'; issuer?: string }
-  user?: { id: string; name: string; email: string }
-  organization?: { id: string; name: string }
-  /** Diagnostic identity claims only. Product and business authorization must not be inferred from these values. */
-  roles?: string[]
-  access?: ProductAccessState
-  message?: string
-}
-
 export type ApplicationMenuName = 'file' | 'edit' | 'view' | 'window' | 'help'
 
 export type AppUpdatePhase = 'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'not-available' | 'error' | 'unsupported'
@@ -805,12 +758,6 @@ export interface PrimeWorkApi {
     check(): Promise<AppUpdateState>
     downloadAndInstall(): Promise<boolean>
     onChanged(callback: (state: AppUpdateState) => void): () => void
-  }
-  enterprise: {
-    getStatus(): Promise<EnterpriseEnvironmentStatus[]>
-    getAccount(): Promise<EnterpriseAccountState>
-    signIn(): Promise<EnterpriseAccountState>
-    signOut(): Promise<EnterpriseAccountState>
   }
   projects: {
     list(harness?: HarnessId): Promise<ProjectRecord[]>

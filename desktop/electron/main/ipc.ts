@@ -16,7 +16,6 @@ import type { SessionService } from './sessions'
 import type { TerminalService } from './terminal'
 import type { VoiceService } from './voice'
 import type { UpdateService } from './updates'
-import type { EnterpriseService } from './enterprise'
 import type { AgentBrowserService } from './browser/agent-service'
 import { requireExistingPath, requireRecord, requireString, requireWebUrl } from './validation'
 
@@ -35,7 +34,6 @@ interface Services {
   providers: PrimeProviderService
   settings: SettingsService
   updates: UpdateService
-  enterprise: EnterpriseService
   cuaDriver: CuaDriverService
   heartbeats: HeartbeatService
   schedules: AutomationService
@@ -234,10 +232,6 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   handle('updates:get-state', () => services.updates.getState())
   handle('updates:check', () => services.updates.check())
   handle('updates:download-and-install', () => services.updates.downloadAndInstall())
-  handle('enterprise:get-status', () => services.enterprise.getStatus())
-  handle('enterprise:get-account', () => services.enterprise.getAccount())
-  handle('enterprise:sign-in', () => services.enterprise.signIn())
-  handle('enterprise:sign-out', () => services.enterprise.signOut())
 
   handle('projects:list', (_event, harness) => projectsFor(requireHarness(harness)).list())
   handle('projects:list-files', (_event, root, harness) => projectsFor(requireHarness(harness)).listFiles(root))
