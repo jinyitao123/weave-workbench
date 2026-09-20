@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Workbench starts with account sign-in before mounting business views. The sidebar shows the current account and sign-out. Account names and an optional workspace are the only identity inputs alongside the password; passwords are cleared on submission and are never written to browser storage. The Host retains authentication credentials behind an HttpOnly cookie. Sign-in and sign-out rebuild the browser runtime, while a business request reporting expired access immediately hides the old work view and discards delayed responses. Account changes are also checked on focus, periodically, and across supported browser tabs.
+Workbench starts with account sign-in before mounting business views. The sidebar shows the current account and sign-out. Account names and an optional workspace are the only identity inputs alongside the password; passwords are cleared on submission and are never written to browser storage. When Forge identity is configured, the same form signs in to Forge and establishes the delegated Weave session. The Host retains authentication credentials behind an HttpOnly cookie. Sign-in and sign-out rebuild the browser runtime, while a business request reporting expired access immediately hides the old work view and discards delayed responses. Account changes are also checked on focus, periodically, and across supported browser tabs.
 
 The Calling applications settings section creates stable application identities, grants specific published versions and issues scoped access keys. Keys can overlap during rotation; revoking the old key does not change the application's invocation identity. Newly issued application keys are shown once and can be hidden, while the Workbench Host credential remains private.
 
@@ -17,7 +17,7 @@ Reusable capability authoring remains in the main conversation through Weave too
 
 `dsh-client-ui-weave` turns durable Weave MCP call results into a visible work task and places runtime-node management in the same Workbench surface. Users can follow the selected team, progress, member activity, runtime placement, human decisions, and exact-run deliverables without reading internal identifiers or tool vocabulary.
 
-The current account role controls Host management entrances. Members create personal tasks without choosing a directory, see a flat personal task list, and can archive their own tasks. Administrators retain shared project and Host settings controls. Personal creation sends no path or workspace override, deduplicates pending clicks, and discards navigation after account expiry; the Host remains the authorization and directory authority.
+The account page shows the five product decisions returned by Weave: team visibility, run visibility, non-writing simulation, sandbox writing, and publication. Members create personal tasks without choosing a directory, see a flat personal task list, and can archive their own tasks. Administrators and users allowed to simulate as developers retain Host settings controls. Personal creation sends no path or workspace override, deduplicates pending clicks, and discards navigation after account expiry; the Host and Weave remain the enforcement boundary.
 
 ## Table of Contents
 

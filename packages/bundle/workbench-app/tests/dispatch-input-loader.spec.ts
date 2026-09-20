@@ -67,7 +67,7 @@ class DispatchAdapter extends LlmAdapter {
 }
 
 /** A YAML-mounted owner composition; it creates no Agent until the public Host command does. */
-async function loaded(workbench = false) {
+async function loaded(workbench = false, workbenchConfig: Record<string, unknown> = {}) {
   const root = await mkdtemp(join(tmpdir(), 'weave-dispatch-loader-'))
   roots.push(root)
   const adapter = new DispatchAdapter()
@@ -120,7 +120,10 @@ async function loaded(workbench = false) {
     } })
     modules.set('@deepseek-ai/dsh-workbench-app', WorkbenchApp)
     configs['@deepseek-ai/dsh-credentials-local'] = { path: join(root, 'credentials.yaml'), watch: false }
-    configs['@deepseek-ai/dsh-workbench-app'] = { apiUrl: 'http://weave.fixture', apiKey: 'fixture-only', pollIntervalMs: 500, userDataRoot: root }
+    configs['@deepseek-ai/dsh-workbench-app'] = {
+      apiUrl: 'http://weave.fixture', apiKey: 'fixture-only', pollIntervalMs: 500, userDataRoot: root,
+      ...workbenchConfig,
+    }
   }
   const configPath = join(root, 'cordis.yml')
   await writeFile(configPath, [...modules.keys()].map(name =>
@@ -171,6 +174,46 @@ afterEach(async () => {
 })
 
 describe('dispatch input through real Loader, Host prompts, and JSONL replay', () => {
+  it('mounts one-step Forge sign-in and Weave capabilities through the real Host composition', async () => {
+    const claims = Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url')
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (input, init) => {
+      const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
+      if (url.origin === 'http://forge.fixture') {
+        const payload: unknown = JSON.parse(typeof init?.body === 'string' ? init.body : '')
+        expect(payload).toEqual({ email: 'developer@example.test', password: 'fixture-password' })
+        return Response.json({ token: 'forge-token', user: { id: 'forge-user', email: 'developer@example.test', name: '开发者' } })
+      }
+      if (url.pathname === '/v1/auth/external/exchange') {
+        expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer forge-token')
+        return Response.json({
+          token: `weave.${claims}.signed`, subject: { id: 'delegated-user' }, organization: { id: 'workspace-1' },
+        })
+      }
+      if (url.pathname === '/v1/authorization/capabilities') return Response.json({
+        status: 'ready', source: { kind: 'cerbos' }, capabilities: [
+          { id: 'team.read', decision: 'allow', reason: 'policy' },
+          { id: 'debug.simulate', decision: 'allow', reason: 'policy' },
+          { id: 'release.publish', decision: 'deny', reason: 'policy' },
+        ],
+      })
+      if (url.pathname === '/v1/auth/me') return Response.json({ ok: true })
+      return Response.json({}, { status: 404 })
+    }))
+    const { ctx } = await loaded(true, { identityUrl: 'http://forge.fixture' })
+    const connection = ctx.get('connection') as HostConnectionService
+    const route = connection.createSharedFetchHandler('/api')
+    const result = await route.fetch(new Request('http://host/api/weave.account', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'login', username: 'developer@example.test', password: 'fixture-password' }),
+    }))
+    expect(result.status).toBe(200)
+    const view: unknown = await result.json()
+    expect(view).toEqual({ authenticated: true, user: expect.objectContaining({
+      id: 'delegated-user', workspace_id: 'workspace-1', role: 'developer',
+      access: expect.objectContaining({ status: 'ready', source: 'cerbos' }),
+    }) })
+  })
+
   it('keeps two authenticated users isolated across real Host sessions, streams, replay and background polling', async () => {
     const delegated: { path: string; actor: string | null }[] = []
     vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (input, init) => {

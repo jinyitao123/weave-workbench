@@ -26,6 +26,54 @@ function fixture() {
 }
 
 describe('Workbench platform accounts', () => {
+  it('uses one Forge password login to establish Forge identity and Weave product access', async () => {
+    const claims = Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 600 })).toString('base64url')
+    const fetcher = vi.fn<typeof fetch>(async (input, init) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+      if (url === 'http://forge/api/v1/auth/sign-in/email') {
+        expect(init?.headers).toEqual(expect.objectContaining({ Origin: 'http://forge' }))
+        const payload: unknown = JSON.parse(typeof init?.body === 'string' ? init.body : '')
+        expect(payload).toEqual({ email: 'developer@example.test', password: 'password' })
+        return Response.json({ token: 'forge-identity-token', user: { id: 'forge-user', email: 'developer@example.test', name: '开发者' } })
+      }
+      if (url.endsWith('/v1/auth/external/exchange')) {
+        expect(init?.headers).toEqual(expect.objectContaining({ Authorization: 'Bearer forge-identity-token' }))
+        return Response.json({ token: `weave.${claims}.signed`, subject: { id: 'ext-user' }, organization: { id: 'workspace-1' } })
+      }
+      if (url.endsWith('/v1/authorization/capabilities')) return Response.json({ status: 'ready', source: { kind: 'cerbos' }, capabilities: [
+        { id: 'team.read', decision: 'allow', reason: 'policy' }, { id: 'debug.simulate', decision: 'allow', reason: 'policy' },
+        { id: 'release.publish', decision: 'deny', reason: 'policy' },
+      ] })
+      if (url.endsWith('/v1/auth/me')) return Response.json({ ok: true })
+      return Response.json({}, { status: 404 })
+    })
+    const sessions = { owner: async () => undefined, exists: async () => false }
+    const accounts = new WorkbenchAccounts('http://weave', 'HOST_SECRET', sessions, fetcher, 'http://forge')
+    const request = new Request('http://host/api/weave.account', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'login', username: 'developer@example.test', password: 'password' }) })
+    const result = await accounts.handle(request)
+    expect(result.status).toBe(200)
+    const body = await result.text()
+    expect(body).not.toContain('forge-identity-token')
+    expect(body).not.toContain('weave.')
+    const view = JSON.parse(body) as {
+      authenticated: boolean
+      user: { id: string; workspace_id: string; role: string; access: { status: string; source: string; capabilities: unknown[] } }
+    }
+    expect(view).toMatchObject({
+      authenticated: true,
+      user: {
+        id: 'ext-user', workspace_id: 'workspace-1', role: 'developer',
+        access: { status: 'ready', source: 'cerbos' },
+      },
+    })
+    expect(view.user.access.capabilities).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'debug.simulate', decision: 'allow' }),
+    ]))
+    const cookie = result.headers.get('set-cookie')!.split(';')[0]!
+    const settings = new Request('http://host/api/settings/describe', { method: 'POST', headers: { cookie, 'Content-Type': 'application/json' }, body: '{}' })
+    expect((await accounts.guard(settings, async () => Response.json({ ok: true }))).status).toBe(200)
+  })
+
   it('isolates two users sessions, delegated requests, and background work', async () => {
     const f = fixture(); const alice = await f.login('alice'); const bob = await f.login('bob')
     await Promise.all([['alice', alice], ['bob', bob]].map(async ([name, cookie]) => {

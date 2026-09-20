@@ -45,6 +45,13 @@
 .settingsFacts > div { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(0, 2fr); gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--dsw-alias-border-l2); }
 .settingsFacts dt { color: var(--dsw-alias-label-secondary); font-size: 13px; }
 .settingsFacts dd { margin: 0; text-align: right; overflow-wrap: anywhere; font-size: 13px; }
+.accessSection { display: grid; gap: 12px; padding: 18px; border-bottom: 1px solid var(--dsw-alias-border-l2); }
+.accessSection > div { display: flex; justify-content: space-between; gap: 16px; }
+.accessSection > div > span { color: var(--dsw-alias-label-secondary); font-size: 12px; }
+.accessSection ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.accessSection li { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--dsw-alias-label-secondary); font-size: 13px; }
+.accessSection li strong { color: var(--dsw-alias-label-tertiary); font-size: 12px; }
+.accessSection li strong[data-decision="allow"] { color: var(--dsw-alias-state-success-primary); }
 .settingsActions { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px; }
 .settingsActions > div { display: grid; gap: 4px; }
 .settingsActions p { margin: 0; color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 1.55; }

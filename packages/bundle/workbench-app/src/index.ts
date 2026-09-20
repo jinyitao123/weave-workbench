@@ -1059,6 +1059,8 @@ export interface Config {
   readonly apiUrl?: string
   /** Business API credential; defaults to host-only `WEAVE_API_KEY`. */
   readonly apiKey?: string
+  /** Forge identity origin used for one-step enterprise login; defaults to `WORKBENCH_FORGE_URL`. */
+  readonly identityUrl?: string
   /** Public or otherwise externally routable Weave URL advertised to new runtime nodes; defaults to `WEAVE_RUNTIME_SERVER_URL`. */
   readonly runtimeServerUrl?: string
   /** Delay between non-terminal status reads in milliseconds. */
@@ -1104,6 +1106,7 @@ export function apply(ctx: Context, config: Config = {}): void {
   ctx.sessionController.registerHistoryProjection({ key: 'workTask', eventTypes: ['weave/work-task'] })
   const apiUrl = (config.apiUrl ?? process.env.WEAVE_API_URL ?? 'http://127.0.0.1:18080').replace(/\/$/, '')
   const apiKey = (config.apiKey ?? process.env.WEAVE_API_KEY ?? '').trim()
+  const identityUrl = (config.identityUrl ?? process.env.WORKBENCH_FORGE_URL ?? '').replace(/\/$/u, '')
   const ownerOf = async (id: string): Promise<SessionOwner | undefined> => {
     try { return (await ctx.sessionController.inspect(SessionId(id))).events.find(event => event.type === 'session/actor')?.data as SessionOwner | undefined } catch { return undefined }
   }
@@ -1111,7 +1114,7 @@ export function apply(ctx: Context, config: Config = {}): void {
   const accounts = new WorkbenchAccounts(apiUrl, apiKey, {
     owner: ownerOf,
     exists: async id => { try { await ctx.sessionController.inspect(SessionId(id)); return true } catch { return false } },
-  })
+  }, fetch, identityUrl)
   installForegroundTools(ctx, id => { try { accounts.sessionHeaders(id); return true } catch { return false } })
   ctx.effect(() => ctx.sessionController.setSessionVisibility(() => accounts.visibility()), 'workbench account session visibility')
   ctx.effect(() => ctx.sessionController.setSessionCreationPolicy(async request => {

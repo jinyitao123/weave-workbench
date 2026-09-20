@@ -6,6 +6,7 @@ import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
 import { personalSessionStarter } from '../src/client/personal-session.ts'
 import { AccountAccess, AccountButton } from '../src/client/AccountAccess.tsx'
+import { AccountSettingsSection } from '../src/client/AccountSettings.tsx'
 import { AccountController, type AccountUser, type AccountProps } from '../src/client/account-controller.ts'
 import { zh } from '../src/client/locales.ts'
 
@@ -66,6 +67,30 @@ function defer<T>() {
 }
 
 describe('Workbench account access', () => {
+  it('shows server-issued product capability decisions in account settings', async () => {
+    const user: AccountUser = {
+      ...alice,
+      role: 'developer',
+      access: {
+        status: 'ready',
+        source: 'cerbos',
+        capabilities: [
+          { id: 'team.read', decision: 'allow', reason: 'policy' },
+          { id: 'debug.simulate', decision: 'allow', reason: 'policy' },
+          { id: 'release.publish', decision: 'deny', reason: 'policy' },
+        ],
+      },
+    }
+    const server = host(user)
+    const controller = server.controller()
+    await act(() => controller.refresh())
+    const props = { ...inputs(controller), t } as Parameters<typeof AccountSettingsSection>[0]
+    const view = render(<AccountSettingsSection {...props} />)
+    expect(view.getByText('权限已同步')).toBeTruthy()
+    expect(view.getByText('调试模拟').parentElement?.textContent).toContain('可使用')
+    expect(view.getByText('发布版本').parentElement?.textContent).toContain('不可使用')
+  })
+
   it('withholds business views while loading and offers a simple account form', async () => {
     const response = defer<Response>()
     const request = vi.fn(() => response.promise)

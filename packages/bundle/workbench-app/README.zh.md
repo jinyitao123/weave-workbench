@@ -25,11 +25,11 @@ kind: "package-bundle"
 <a id="use-this-package"></a>
 ## 使用本包
 
-运行 `dsh --profile workbench`，或使用仓库快捷命令 `pnpm workbench`。快捷命令优先使用显式 `WEAVE_API_KEY`，随后检查 macOS 钥匙串服务 `weave-workbench-api-key`；其他平台使用显式环境值。随附 profile 依次叠加 `dsh-base`、`dsh-web-app` 和本组合包。存在 key 时，本组合包通过 stdio 启动 `weave mcp serve`，并把工具发布到 `mcp__weave__*` 命名空间。本地 Workbench 默认把 `WEAVE_API_URL` 设为 `http://127.0.0.1:18080`，`WEAVE_COMMAND` 可以选择另一个受信任的本地二进制。用户使用平台账号登录。普通成员无需选择 Host 目录即可开始个人会话，Host 会创建按用户分区的工作目录；管理员通过管理界面维护明确选择的共享项目目录。Workbench 不继承 DSH 原生 DeepSeek 适配器与官方默认模型；新会话开始运行前，模型页面中必须已经保存一个提供方和模型。
+运行 `dsh --profile workbench`，或使用仓库快捷命令 `pnpm workbench`。快捷命令优先使用显式 `WEAVE_API_KEY`，随后检查 macOS 钥匙串服务 `weave-workbench-api-key`；其他平台使用显式环境值。随附 profile 依次叠加 `dsh-base`、`dsh-web-app` 和本组合包。存在 key 时，本组合包通过 stdio 启动 `weave mcp serve`，并把工具发布到 `mcp__weave__*` 命名空间。本地 Workbench 默认把 `WEAVE_API_URL` 设为 `http://127.0.0.1:18080`，`WEAVE_COMMAND` 可以选择另一个受信任的本地二进制。配置 `WORKBENCH_FORGE_URL` 后启用产品统一登录：Host 只向 Forge 提交一次密码，用返回的身份换取 Weave 会话，并读取用户当前产品能力。普通成员无需选择 Host 目录即可开始个人会话，Host 会创建按用户分区的工作目录；管理员和已授权开发者可进入 Host 设置，共享项目目录仍需显式管理。Workbench 不继承 DSH 原生 DeepSeek 适配器与官方默认模型；新会话开始运行前，模型页面中必须已经保存一个提供方和模型。
 
 缺少 `WEAVE_API_KEY` 时，MCP 配置项会被禁用，浏览器显示账号连接边界。管理员恢复平台连接前，业务请求和前台执行保持不可用。
 
-浏览器只接收不透明的 HttpOnly 会话 Cookie，平台令牌仅保存在 Host 内存中。每个 Session 持久保存发起用户及其工作区。直接请求、后台观察和每次 MCP 调用都携带该会话当前有效的用户授权；退出、过期和 Host 重启会使内存授权失效。列表、历史、事件、人工答复及归档回执遵循同一所有权校验。连接层在业务 RPC 和事件流启动前等待账号确认。
+浏览器只接收不透明的 HttpOnly 会话 Cookie，平台令牌仅保存在 Host 内存中。统一登录时，浏览器不会拿到 Forge 或 Weave 令牌，Host 在 Forge 请求完成后也不保留密码。每个 Session 持久保存发起用户及其工作区。直接请求、后台观察和每次 MCP 调用都携带该会话当前有效的用户授权；退出、过期和 Host 重启会使内存授权失效。列表、历史、事件、人工答复及归档回执遵循同一所有权校验。连接层在业务 RPC 和事件流启动前等待账号确认。
 
 前台 Agent 只开放 Weave 产品工具和用户提问。作用域限制及最终执行校验拒绝终端、任意文件、环境读取、代码传输和其他 MCP 工具，后来注册的工具也受约束。研究及代码执行由带用户身份的执行 Runtime 承担。这是产品与凭据边界；目录按用户分区不代表操作系统沙箱。
 
@@ -68,6 +68,8 @@ Workbench 客户端保留 DSH 的会话、可选项目工作区、提供方中�
 ## 凭据边界
 
 `WEAVE_API_KEY` 只从受信任的宿主进程传给本地 MCP 子进程和已认证的 Weave 请求。它不会写入客户端产物，也不会加入模型上下文。运行节点列表只返回展示、健康、容量与调度事实；变更响应只会在新建节点时返回一次运行令牌。`WEAVE_RUNTIME_SERVER_URL` 不含凭据，只在该一次性令牌响应中作为连接地址返回。`WEAVE_SECRET_KEY` 与 `WEAVE_SECRET_KEY_FILE` 只属于 Weave 服务端，用于加密存储凭据；本组合包永远不读取或转发这两个值。
+
+配置 `WORKBENCH_FORGE_URL` 时，桌面 Host 将每个已登录 Forge 身份委托给 Weave，每次调用保留个人归属与工作区范围；未配置时继续支持原有 Weave 直接登录。Host 级 `WEAVE_API_KEY` 只标识受信任的 Workbench 服务，不能替代登录用户的授权。
 
 <a id="dev-note"></a>
 ## 开发备注
