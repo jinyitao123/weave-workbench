@@ -7,8 +7,7 @@
 第一批契约包括：
 
 - `enterprise-session`：桌面可见的登录身份、身份来源、组织环境和安全存储状态。
-- `product-capabilities`：员工或开发者当前可使用的五项产品能力及判断原因。
-- `authorization-evaluation`：主体、动作、资源和上下文对应的一次权限判断记录。
+- `account-binding`：Forge 登录主体与 Weave 用户、组织和产品角色之间的稳定绑定。
 - `task-delegation`：一次任务获准使用的动作、资源、有效期和撤销状态。
 - `identity`：工作请求中的设备会话和 Weave 短期任务委托。
 - `work-request`：桌面递交的目标、材料、范围和期望交付。

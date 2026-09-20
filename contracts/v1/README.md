@@ -8,14 +8,14 @@
 
 ## 企业身份会话
 
-`enterprise-session.schema.json` 是桌面可见的账号投影，不包含密码、Cookie 或 Bearer Token。`product-capabilities.schema.json` 描述产品能力，`authorization-evaluation.schema.json` 描述一次服务端判断，`task-delegation.schema.json` 描述任务范围内的短期授权。
+`enterprise-session.schema.json` 是桌面可见的账号投影，`account-binding.schema.json` 描述 Forge 账号到 Weave 用户的稳定绑定；两者都不包含密码、Cookie 或 Bearer Token。`task-delegation.schema.json` 描述任务范围内的短期授权。
 
-- 调用者：桌面主进程调用配置的身份适配器与 Weave 接入权限接口；渲染进程只读取账号、组织和能力投影。
-- 身份来源：身份适配器验证用户并映射组织环境；当前可以接 Forge，后续可以接客户 OIDC/SSO。桌面不创建第二套账号。
-- 单次登录：身份适配器在服务端验证外部会话，并以受信任的身份来源、主体标识和组织标识建立绑定，再签发 Weave 可识别的产品会话。桌面不按邮箱合并账号，也不要求用户重复登录 Weave。
-- 登录方式：桌面使用系统浏览器打开 Forge 统一登录页，并通过 OAuth 授权码、PKCE 和本机回环回调完成登录；账号身份从标准 UserInfo 端点读取，桌面不采集密码、验证码或单点登录凭据。
-- 产品能力：Weave 接入与权限模块返回 `team.read`、`run.read`、`debug.simulate`、`debug.sandbox_write` 和 `release.publish` 的判断与原因。桌面只展示该结果；缺失或不可用必须按未授权处理。
-- 资源权限：Workbench 和 Weave 使用服务端返回的能力与任务委托；Forge 对每次业务动作继续执行自身权限判断。任一层拒绝都不能产生业务写入。
+- 调用者：Workbench Host 调用 Forge 登录和 Weave 绑定接口；界面只读取账号、组织和 Weave 角色投影。
+- 身份来源：Forge 注册并验证账号，Weave 以 `issuer + subject + organization` 建立本地绑定。桌面不创建第二套账号。
+- 单次登录：Workbench Host 把一次性账号密码请求发给 Forge，随后把 Forge 会话交给 Weave 验证并换取产品会话。渲染进程不保存密码，Weave 不接收或保存密码。
+- 自动绑定：首次登录创建默认 `member` 用户；重复登录返回同一 Weave 用户且不覆盖管理员设置的角色；不同组织或身份来源不能按邮箱合并。
+- 产品权限：Weave 直接用自身 `member / developer / admin` 控制团队使用、配置、调试、发布与平台管理。MVP1 不维护第二份能力投影，也不依赖外部权限引擎。
+- 业务权限：Forge 对每次业务动作继续执行自身权限判断。Weave 角色不能扩大 Forge 数据和流程权限。
 - 保存方式：设备会话令牌只允许由系统安全存储加密落盘。安全存储不可用时只保留到本次进程结束。
 - 传输：Workbench 按部署配置连接 HTTP 或 HTTPS，账号投影中的 `environment.secure` 明确标识当前连接方式；客户内网可直接使用 HTTP。
 - Weave 委托：身份提供方的长期会话令牌不得进入团队执行。由 Weave 接入与权限模块签发短期、限定动作、资源、任务和有效期的委托。

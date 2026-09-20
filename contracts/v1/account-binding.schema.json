@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/account-binding.schema.json",
+  "title": "Forge to Weave Account Binding",
+  "description": "The stable, auditable mapping created when a Forge account first enters Weave. It never contains a password or bearer token.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "issuer", "subject", "organizationId", "weaveUserId", "role", "status", "createdAt", "lastLoginAt"],
+  "properties": {
+    "version": { "const": "1" },
+    "issuer": { "type": "string", "format": "uri", "maxLength": 2048 },
+    "subject": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "organizationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "weaveUserId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "role": { "enum": ["member", "developer", "admin"] },
+    "status": { "enum": ["active", "disabled"] },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "lastLoginAt": { "type": "string", "format": "date-time" }
+  }
+}
