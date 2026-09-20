@@ -20,7 +20,7 @@
 | ENG-01 | 架构和接手规范 / 总仓 | 完成 | 本地文档、入口检查、4 项工具回归通过；见[本轮证据](acceptance/2026-09-20-engineering-baseline.md)，远端共享另见 ENG-02 |
 | PLAN-01 | MVP1 验收目标和落地步骤 / 总仓 | 完成 | 已保存[验收方案](plans/mvp1.md)和[执行顺序](plans/mvp1-delivery.md)；仅方案归档，不代表功能实现 |
 | SYNC-01 | Weave 健康观察修复回流 / weave-next → 总仓 | 完成 | 独立 Weave 提交 `a80b466b` 通过包测试、真实 PostgreSQL 回归与依赖守卫；总仓锁定并提交为 `507e6245`，组件检查一致 |
-| ENG-02 | 总仓远端与共享基线 / 总仓 | 待开始 | 本轮核对尚无远端；确定并配置远端，先整理原有未提交成果的归属，再提交共享；推送与 CI 成功另留证据 |
+| ENG-02 | 总仓远端与共享基线 / 总仓 | 进行中 | `codex/product-shell` 已推送到 `jinyitao123/weave-workbench`；桌面产品壳仍有未提交成果，需按归属拆分后再形成完整共享基线 |
 | ENV-01 | Forge 账号接入 / Forge、Workbench | 已实现组件切片 | Workbench PR #1 已改为一次 Forge 账号密码登录并换取 Weave 会话；仍需在部署环境验证真实 Forge 会话接口 |
 | ACCESS-01 | Weave 自动绑定与三类角色 / Weave、Workbench | 已实现组件切片 | Weave PR #5 已实现 `issuer + subject + organization` 持久绑定、首次创建 `member`、重复登录保留现有角色，并移除外部权限引擎；仍缺真实 PostgreSQL 与三角色端到端验收 |
 | OBS-01 | 团队配置与执行可见 / 总仓、Weave | 待开始 | 在 ENV-01 基础上接入团队详情、关系图和真实运行记录；开发者能从任务追到版本、节点和失败原因 |
@@ -41,7 +41,7 @@ Weave 的回流结果为：
 
 独立 Weave 工作树 `/Users/jinyitao/Developer/weave-next-workflow-health-fix` 保存提交 `a80b466b`，尚未推送；原 `/Users/jinyitao/Developer/weave-next` 的其他未提交工作未被改动。
 
-独立 Weave 工作树 `/Users/jinyitao/Developer/weave-next-product-access` 的 [weave-next PR #5](https://github.com/jinyitao123/weave-next/pull/5) 已更新为 Forge 账号自动绑定和 Weave 原生三类角色，当前提交 `b9db21a2`。Cerbos、五项权限投影和固定开发者名单已移除，角色更新只接受 `member / developer / admin`。
+独立 Weave 工作树 `/Users/jinyitao/Developer/weave-next-product-access` 的 [weave-next PR #5](https://github.com/jinyitao123/weave-next/pull/5) 已更新为 Forge 账号自动绑定和 Weave 原生三类角色，当前提交 `b9db21a2`。Cerbos、五项权限投影和固定开发者名单已移除，角色更新只接受 `member / developer / admin`。Compose 与 Workbench CI 通过；Go 全量 CI 两次停在主线已有的 `TestAccessChangeRosterScopesKindsAndRejectsInvalidMutationBeforeFencingRealPG` 冲突，当前改动的定向测试通过。
 
 独立 Workbench 工作树 `/Users/jinyitao/Developer/weave-workbench-product-access-upstream` 的 [weave-workbench PR #1](https://github.com/jinyitao123/weave-workbench/pull/1) 已更新为一次 Forge 登录与 Weave 会话交换，提交 `a4623cf0`。界面只呈现 Weave 角色，开发者不自动获得 Host 运维权限。
 
