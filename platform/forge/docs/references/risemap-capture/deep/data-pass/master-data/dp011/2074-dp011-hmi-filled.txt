@@ -1,0 +1,212 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/products".
+1 AXWebArea RiseMap, URL: risemap.cn/base/products
+	2 container 新增物料
+		3 heading 新增物料, Value: 3, ID: :r23g:
+			4 text 新增物料
+		5 button 全屏
+			6 image
+		7 button 关闭
+			8 image
+		9 container
+			10 button 基本信息 11/20
+				11 text 基本信息
+				12 image
+				13 text 11
+				14 text /
+				15 text 20
+			16 text * 物料名称 :
+			17 text field (settable) 7英寸触摸屏
+			18 text 物料编码 :
+			19 text field (settable) RM-HMI-700
+			20 text * 物料型号 :
+			21 text field (settable) KTP700 Basic PN
+			22 text 物料条码 :
+			23 text field (settable)
+			24 text * 物料分类 :
+			25 button 控制柜交付物
+				26 text 控制柜交付物
+				27 container
+					28 button
+						29 image
+					30 image
+			31 button 新增分类
+				32 image
+			33 text 品牌 :
+			34 button 请选择品牌
+				35 text 请选择品牌
+			36 button 新增品牌
+				37 image
+			38 text 采购分类 :
+			39 button 请选择采购分类
+				40 text 请选择采购分类
+			41 text * 单位 :
+			42 button 件
+				43 text 件
+				44 container
+					45 button
+						46 image
+					47 image
+			48 button 新增单位
+				49 image
+			50 button 多单位
+				51 image
+				52 text 多单位
+			53 text 物料属性 :
+			54 radio button 原材料, Value: 1
+			55 radio button 半成品, Value: 0
+			56 radio button 成品, Value: 0
+			57 radio button 贸易商品, Value: 0
+			58 radio button 消耗品, Value: 0
+			59 radio button 服务, Value: 0
+			60 radio button 备件, Value: 0
+			61 radio button 包装材料, Value: 0
+			62 text 来源类型 :
+			63 radio button 采购, Value: 1
+			64 radio button 自制, Value: 0
+			65 radio button 外协, Value: 0
+			66 radio button 虚拟, Value: 0
+			67 text 状态 :
+			68 button 启用
+				69 text 启用
+				70 container
+					71 button
+						72 image
+					73 image
+			74 text 默认供应商 :
+			75 button 搜索供应商名称...
+				76 text 搜索供应商名称...
+			77 text 税收分类编码 :
+			78 text field (settable)
+			79 text 默认仓库 :
+			80 button 贯联验证原料仓
+				81 text 贯联验证原料仓
+				82 container
+					83 button
+						84 image
+					85 image
+			86 text 默认库位 :
+			87 button 请选择库位
+				88 text 请选择库位
+			89 text 所属部门 :
+			90 button 请选择所属部门
+				91 text 请选择所属部门
+			92 text 负责人 :
+			93 button 金 金一涛 (默认部门)
+				94 text 金
+				95 text 金一涛
+				96 text (
+				97 text 默认部门
+				98 text )
+				99 container
+					100 button
+						101 image
+					102 image
+			103 text 损耗率 :
+			104 text field (settable) 0
+			105 text 启用BOM :
+			106 switch Value: 0, ID: :r248:
+			107 text 图片 :
+			108 button 添加图片
+				109 image
+				110 text 添加图片
+			111 button 云相册
+				112 image
+				113 text 云相册
+			114 text 第一张图片将作为物料主图显示在列表和详情页 文档 :
+			115 button 点击或拖拽文件到此处上传 支持pdf、docx、xlsx、txt格式，单个文件不超过10M
+				116 image
+				117 text 点击或拖拽文件到此处上传
+				118 text 支持pdf、docx、xlsx、txt格式，单个文件不超过10M
+			119 button 规格与价格 1/1
+				120 text 规格与价格
+				121 image
+				122 text 1
+				123 text /
+				124 text 1
+			125 text 规格配置 : 规格名称 规格值
+			126 text field (settable) 默认
+			127 container 默认规格
+				128 text field (settable) Description: 默认的规格值, Value: 默认规格
+			129 text field (settable)
+			130 button 添加规格项
+				131 image
+				132 text 添加规格项
+			133 text 共  1  个 SKU
+			134 button 批量设置含税售价
+				135 image
+				136 text 批量设置含税售价
+			137 button 批量设置含税成本价
+				138 image
+				139 text 批量设置含税成本价
+			140 table
+				141 row
+					142 cell
+						143 text SKU编码
+					144 cell
+						145 text SKU条码
+					146 cell
+						147 text 规格
+					148 cell
+						149 text 含税售价
+					150 cell
+						151 text 含税成本价
+					152 cell
+						153 text 启用
+				154 row
+					155 cell
+						156 text field (settable)
+					157 cell
+						158 text field (settable)
+					159 cell
+						160 text 默认规格
+					161 cell
+						162 text field (settable) 3840
+					163 cell
+						164 text field (settable) 3200
+					165 cell
+						166 container
+							167 checkbox (disabled, settable, integer) 1
+							168 image
+			169 button 批次与追溯管理 2/4
+				170 text 批次与追溯管理
+				171 image
+				172 text 2
+				173 text /
+				174 text 4
+			175 switch Value: 1, ID: :r24d:
+			176 text 已启用批次管理 原材料和关键物料建议启用，入库时自动分配批次码
+			177 switch Value: 0, ID: :r24e:
+			178 text 已禁用追溯管理 成品和关键半成品建议启用，出库时自动生成追溯码 保质期(天) :
+			179 text field (settable)
+			180 text 批次编码规则 :
+			181 button 自动生成 (BYYYYMMDD-NN)
+				182 text 自动生成 (BYYYYMMDD-NN)
+				183 container
+					184 button
+						185 image
+					186 image
+			187 button 自定义信息 2/4
+				188 text 自定义信息
+				189 image
+				190 text 2
+				191 text /
+				192 text 4
+			193 text 标签 : 外购物料
+			194 button
+				195 image
+			196 text field (settable)
+			197 text 备注 :
+			198 text entry area (settable) 标准测试数据集 OEM-RM-20260909-A 外购物料
+			199 text 创建时间 : 只读
+			200 container
+				201 button
+					202 image
+			203 text 更新时间 : 只读
+			204 container
+				205 button
+					206 image
+		207 button 保存
+		208 button 保存并复制
+		209 button 关闭
+
+The focused UI element is 196 text field (settable)

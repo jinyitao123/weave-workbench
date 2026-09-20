@@ -1,0 +1,32 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/inventory".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/inventory
+	2 container 新增仓库类型
+		3 heading 新增仓库类型, Value: 3
+			4 text 新增仓库类型
+		5 button 关闭
+			6 image
+		7 container
+			8 text 类型名称  *
+			9 text field (settable)
+			30 text 类型名称不能为空 描述
+			11 text field (settable)
+			12 text 标识颜色
+			13 button
+			14 button
+			15 button
+			16 button
+			17 button
+			18 button
+			19 button
+			20 button
+			21 button
+			22 button
+			23 button
+			24 button
+			25 text 预览
+			26 image
+			27 text 类型名称
+		28 button 取消
+		29 button 添加
+
+The focused UI element is 29 button 添加

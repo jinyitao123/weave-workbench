@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-20",
+  "environment": {
+    "forgeUrl": "http://localhost:4450",
+    "database": "temporary isolated SQLite; exact path intentionally omitted",
+    "viewport": {
+      "desktop": "default in-app browser viewport",
+      "narrow": "390x844"
+    }
+  },
+  "risemap": {
+    "accountContext": "金一涛 / 南京汇川技术研发中心有限公司",
+    "pages": [
+      "/subcontract/orders",
+      "/subcontract/orders/new",
+      "/subcontract/issues",
+      "/subcontract/receives",
+      "/subcontract/returns",
+      "/subcontract/reconciliation",
+      "/subcontract/suppliers",
+      "/inventory/subcontract-stock",
+      "/subcontract/traces",
+      "/subcontract/reports/undelivered",
+      "/subcontract/reports/receipts",
+      "/subcontract/reports/reconciliation-statement"
+    ],
+    "observed": [
+      "实时核对订单、发料、回厂、退料、对账、供应商、库存、追溯和三张报表的标题、说明、指标、动作、筛选、列、空态与分页。",
+      "委外对账按供应商、订单和回厂批次组织待对账池，对账单报表只承担查询、审计和导出。",
+      "委外库存口径为累计已发减倒冲耗用减累计退料；批次追溯同时提供材料到成品和成品到材料两个方向。"
+    ],
+    "boundary": "当前 RISEMAP 租户的委外列表和报表没有可办理业务数据。本轮未执行资金、应付、库存或历史单据变更，因此同材料双侧业务结果仍待可办理材料复核。"
+  },
+  "forge": {
+    "pages": [
+      "page_subcontract_workspace",
+      "page_subcontract_issue_workspace",
+      "page_subcontract_receipt_workspace",
+      "page_subcontract_return_workspace",
+      "page_subcontract_reconciliation",
+      "page_subcontract_suppliers",
+      "page_subcontract_stock",
+      "page_subcontract_trace",
+      "page_subcontract_undelivered",
+      "page_subcontract_inbound_report",
+      "page_subcontract_reconciliation_report",
+      "page_production_data_tasks"
+    ],
+    "interactions": [
+      "委外订单供应商筛选可选中当前供应商并出现重置入口。",
+      "委外订单、发料、回厂导出均显示完成反馈；订单与发料导出写入持久化导出任务，任务页可回读来源、记录数、状态和下载入口。",
+      "委外对账可在待对账池和对账单之间切换，并回读已生成应付及原订单、回厂批次来源。",
+      "材料批次 SC-BATCH-001 正向追溯到成品批次 SC-FG-BATCH-001；同一成品批次反向追溯到原材料批次，两个方向各返回一条关系。",
+      "390x844 下委外发料和委外对账单报表保持单列指标、可达主动作和卡片内表格滚动，页面本身没有横向溢出。"
+    ],
+    "business": {
+      "orderToPayable": "订单、发料、供应商签收、回厂、正式入库、不良处置、对账和应付生成通过同一 SQLite 连续办理。",
+      "return": "退料草稿不改变库存，确认只生成待入库，仓库入库后扣减在外库存并生成唯一退料流水。",
+      "blocking": "重复占用已对账回厂明细返回业务阻断，阻断前后对账、明细、日志、应付和订单状态完全一致。",
+      "restartReadback": "完整停服并从同一 SQLite 重启后，订单、回厂、入库、不良处置、对账、应付、退料、库存余额和流水均按原 ID 回读。"
+    }
+  },
+  "engineering": {
+    "passed": [
+      "pnpm typecheck",
+      "pnpm validate",
+      "pnpm build",
+      "pnpm acceptance:page-visible-language",
+      "pnpm acceptance:subcontract-one-db-chain",
+      "pnpm acceptance:subcontract-return",
+      "pnpm acceptance:subcontract-reconciliation-blocks",
+      "pnpm acceptance:subcontract-one-db-restart",
+      "pnpm acceptance:subcontract-return-restart"
+    ],
+    "knownUnrelatedFailure": "pnpm acceptance:page-control-usability reports 21 existing violations on non-production pages; no subcontract page is listed."
+  },
+  "status": "implemented_and_current_round_verified",
+  "acceptanceBoundary": "实现、Forge 页面交互、API、异常阻断和同库重启回读已完成。RISEMAP 当前无同材料办理结果且尚无独立复核，因此页面清单继续保持 review_required。"
+}

@@ -1,0 +1,124 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 项目
+- button "收起侧边栏":
+- navigation:
+  - button "项目管理":
+    - generic: 项目管理
+  - button "项目中心":
+    - generic: 项目中心
+  - button "项目分析中心":
+    - generic: 项目分析中心
+  - button "任务管理" [active]:
+    - generic: 任务管理
+  - button "工时管理":
+    - generic: 工时管理
+  - button "项目配置中心":
+    - generic: 项目配置中心
+- generic: 免费试用中，还剩 14 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目" [pressed]:
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "项目管理配置":
+  - generic: 项目管理配置
+- button "图纸配置":
+  - generic: 图纸配置
+- button "生产管理配置":
+  - generic: 生产管理配置
+- button "委外配置":
+  - generic: 委外配置
+- button "单据打印":
+  - generic: 单据打印
+- button "插件中心":
+  - generic: 插件中心
+- button "服务订阅管理":
+  - generic: 服务订阅管理
+- button "推广奖励":
+  - generic: 推广奖励
+- button "字段管理":
+  - generic: 字段管理
+- button "引导中心":
+  - generic: 引导中心
+- button "待办管理":
+  - generic: 待办管理
+- button "项目中心":
+  - generic: 项目中心
+- button "项目分析中心":
+  - generic: 项目分析中心
+- button "任务管理":
+  - generic: 任务管理
+- main:
+  - generic: 项目管理
+  - generic: 任务管理
+  - heading "任务管理" [level=1]
+  - button "导出":
+    - text: 导出
+  - button "导出任务":
+    - text: 导出任务
+  - button "新建任务":
+    - text: 新建任务
+  - button "全部": 全部
+  - button "待处理"
+  - button "进行中"
+  - button "已完成"
+  - button "已逾期"
+  - button "列表":
+    - text: 列表
+  - button "按人员":
+    - text: 按人员
+  - button "甘特图":
+    - text: 甘特图
+  - textbox "搜索任务/人员/项目..."
+  - button "项目":
+    - generic: 项目
+  - button "人员":
+    - generic: 人员
+  - button "优先级":
+    - generic: 优先级
+  - paragraph: 暂无任务
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"

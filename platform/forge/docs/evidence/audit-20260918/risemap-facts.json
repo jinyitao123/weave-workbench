@@ -1,0 +1,2208 @@
+{
+ "到货通知": {
+  "chip": false,
+  "cols": [
+   "选择到货通知",
+   "到货通知",
+   "供应商 / 物料",
+   "预计到货",
+   "目标仓库",
+   "来源采购订单",
+   "到货进度",
+   "采购员",
+   "操作"
+  ],
+  "h": "到货通知",
+  "hero": "@keyframes ar-truck-drive { 0% { transform: translateX(-200px); } 100% { transform: translateX(0); } } @keyframes ar-wheel { from ",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "通知单号 / 采购订单 / 供应商 / 物料",
+   "开始日期",
+   "结束日期"
+  ],
+  "rowActs": [
+   "ANO-2026-0002",
+   "查看到货通知 ANO-2026-0002[icon]"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "合并到货登记"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "到货登记": {
+  "chip": false,
+  "cols": [
+   "",
+   "到货单号",
+   "类型",
+   "到货日期",
+   "仓库",
+   "对方",
+   "关联单号",
+   "物料种类数量",
+   "含税金额",
+   "状态",
+   "操作"
+  ],
+  "h": "到货登记",
+  "hero": "@keyframes ar-truck-drive { 0% { transform: translateX(-200px); } 100% { transform: translateX(0); } } @keyframes ar-wheel { from ",
+  "kpis": 0,
+  "next": true,
+  "phs": [
+   "搜索到货单号/供应商/客户/退货单号..."
+  ],
+  "rowActs": [
+   "[icon]"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "采购订单采购管理 · 采购订单"
+   },
+   {
+    "icon": false,
+    "t": "到货通知到货检验 · 到货通知"
+   },
+   {
+    "icon": false,
+    "t": "到货登记当前到货检验 · 到货登记"
+   },
+   {
+    "icon": false,
+    "t": "待检验库存下一步到货检验 · 待检验库存"
+   },
+   {
+    "icon": false,
+    "t": "检验单到货检验 · 检验单"
+   },
+   {
+    "icon": false,
+    "t": "采购入库入库管理 · 采购入库"
+   },
+   {
+    "icon": false,
+    "t": "下一步操作待检验库存"
+   },
+   {
+    "icon": false,
+    "t": "订单明细"
+   },
+   {
+    "icon": false,
+    "t": "物料明细"
+   },
+   {
+    "icon": false,
+    "t": "新建到货登记"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": false,
+    "t": "导入/导出任务"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "待检验库存": {
+  "chip": false,
+  "cols": [
+   "",
+   "待检单号",
+   "物料编码",
+   "物料名称",
+   "规格型号",
+   "到货数量",
+   "单位",
+   "批次号",
+   "供应商/客户",
+   "采购合同",
+   "到货日期",
+   "状态",
+   "关联检验单",
+   "检验结果",
+   "操作"
+  ],
+  "h": "待检验库存",
+  "hero": "@keyframes ip-magnify { 0%,100% { transform: translate(0,0); } 25% { transform: translate(8px,-4px); } 50% { transform: translate(",
+  "kpis": 0,
+  "next": true,
+  "phs": [
+   "搜索待检单号、物料编码、物料名称、供应商、批次号..."
+  ],
+  "rowActs": [
+   "IQC-2026-0001",
+   "查看详情[icon]"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "采购订单采购管理 · 采购订单"
+   },
+   {
+    "icon": false,
+    "t": "到货通知到货检验 · 到货通知"
+   },
+   {
+    "icon": false,
+    "t": "到货登记到货检验 · 到货登记"
+   },
+   {
+    "icon": false,
+    "t": "待检验库存当前到货检验 · 待检验库存"
+   },
+   {
+    "icon": false,
+    "t": "检验单下一步到货检验 · 检验单"
+   },
+   {
+    "icon": false,
+    "t": "采购入库入库管理 · 采购入库"
+   },
+   {
+    "icon": false,
+    "t": "下一步操作检验单"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": false,
+    "t": "导入/导出任务"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "检验单": {
+  "chip": false,
+  "cols": [
+   "",
+   "检验单号",
+   "到货单号",
+   "物料名称",
+   "供应商/客户",
+   "方式",
+   "总数量",
+   "合格数量",
+   "不合格数量",
+   "结果",
+   "状态",
+   "检验员",
+   "到货日期",
+   "操作"
+  ],
+  "h": "检验单",
+  "hero": "@keyframes ip-magnify { 0%,100% { transform: translate(0,0); } 25% { transform: translate(8px,-4px); } 50% { transform: translate(",
+  "kpis": 0,
+  "next": true,
+  "phs": [
+   "搜索检验单号/物料名...",
+   "开始日期",
+   "结束日期"
+  ],
+  "rowActs": [
+   "[icon]"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "采购订单采购管理 · 采购订单"
+   },
+   {
+    "icon": false,
+    "t": "到货通知到货检验 · 到货通知"
+   },
+   {
+    "icon": false,
+    "t": "到货登记到货检验 · 到货登记"
+   },
+   {
+    "icon": false,
+    "t": "待检验库存到货检验 · 待检验库存"
+   },
+   {
+    "icon": false,
+    "t": "检验单当前到货检验 · 检验单"
+   },
+   {
+    "icon": false,
+    "t": "采购入库下一步入库管理 · 采购入库"
+   },
+   {
+    "icon": false,
+    "t": "下一步操作采购入库"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": false,
+    "t": "导入/导出任务"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "检验规则": {
+  "chip": false,
+  "cols": [
+   "",
+   "项目编码",
+   "项目名称",
+   "项目分类",
+   "判定类型",
+   "适用检验类型",
+   "单位",
+   "是否必检",
+   "影响整批结论",
+   "是否启用",
+   "更新时间",
+   "操作"
+  ],
+  "h": "检验规则",
+  "hero": "@keyframes rl-gavel { 0%,100% { transform: rotate(-25deg); } 50% { transform: rotate(25deg); } } @keyframes rl-line { 0%,100% { st",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索项目名称/编码..."
+  ],
+  "rowActs": [
+   "查看[icon]",
+   "编辑[icon]",
+   "复制[icon]",
+   "停用[icon]",
+   "删除[icon]"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "检验项目库"
+   },
+   {
+    "icon": false,
+    "t": "检验方案"
+   },
+   {
+    "icon": false,
+    "t": "新建检验项目"
+   },
+   {
+    "icon": false,
+    "t": "批量启用"
+   },
+   {
+    "icon": false,
+    "t": "批量停用"
+   },
+   {
+    "icon": false,
+    "t": "导入"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "物料管理": {
+  "chip": false,
+  "cols": [
+   "",
+   "物料编码",
+   "类型",
+   "物料属性",
+   "物料条码",
+   "物料型号",
+   "物料名称",
+   "品牌",
+   "单位",
+   "含税销售价",
+   "不含税销售价",
+   "含税成本价",
+   "不含税成本价",
+   "物料分类",
+   "采购分类",
+   "来源类型",
+   "负责人",
+   "创建时间",
+   "物料状态",
+   "操作"
+  ],
+  "h": "物料管理",
+  "hero": "@keyframes pd-grid-glow { 0%,100% { fill-opacity: 0.55; } 50% { fill-opacity: 0.95; } } @keyframes pd-tag-swing { 0%,100% { transf",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索物料名称、物料编码、物料条码、物料型号..."
+  ],
+  "rowActs": [
+   "编辑",
+   "停用",
+   "别名",
+   "删除"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "物料列表"
+   },
+   {
+    "icon": false,
+    "t": "商品图片"
+   },
+   {
+    "icon": false,
+    "t": "新建物料"
+   },
+   {
+    "icon": false,
+    "t": "导入/导出"
+   },
+   {
+    "icon": false,
+    "t": "打印条码"
+   },
+   {
+    "icon": false,
+    "t": "批量操作"
+   },
+   {
+    "icon": false,
+    "t": "回收站"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   },
+   {
+    "icon": false,
+    "t": "品牌"
+   }
+  ]
+ },
+ "物料组合": {
+  "chip": false,
+  "cols": [
+   "",
+   "",
+   "编号",
+   "组合名称",
+   "物料种类",
+   "含税销售价",
+   "不含税销售价",
+   "状态",
+   "引用次数",
+   "创建人",
+   "创建日期",
+   "操作"
+  ],
+  "h": "物料组合",
+  "hero": "@keyframes pb-link-flow { 0% { stroke-dashoffset: 60; } 100% { stroke-dashoffset: 0; } } @keyframes pb-piece-bob { 0%,100% { trans",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索组合名称或编号..."
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "新建物料组合"
+   },
+   {
+    "icon": false,
+    "t": "批量"
+   },
+   {
+    "icon": false,
+    "t": "导入/导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "BOM管理": {
+  "chip": false,
+  "cols": [
+   "",
+   "BOM编号",
+   "BOM名称",
+   "产品/设备",
+   "BOM类型",
+   "当前版本",
+   "状态",
+   "适用项目",
+   "物料数",
+   "成本",
+   "更新时间",
+   "创建人",
+   "操作"
+  ],
+  "h": "BOM管理",
+  "hero": "@keyframes bom-line-flow { 0% { stroke-dashoffset: 60; } 100% { stroke-dashoffset: 0; } } @keyframes bom-node-pulse { 0%,100% { tr",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索编号/名称/产品..."
+  ],
+  "rowActs": [
+   "[icon]",
+   "查看[icon]",
+   "复制[icon]",
+   "失效[icon]"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "全部 1"
+   },
+   {
+    "icon": false,
+    "t": "草稿 0"
+   },
+   {
+    "icon": false,
+    "t": "待评审 0"
+   },
+   {
+    "icon": false,
+    "t": "已生效 1"
+   },
+   {
+    "icon": false,
+    "t": "已失效 0"
+   },
+   {
+    "icon": false,
+    "t": "已归档 0"
+   },
+   {
+    "icon": false,
+    "t": "标准"
+   },
+   {
+    "icon": false,
+    "t": "项目"
+   },
+   {
+    "icon": false,
+    "t": "导入/导出"
+   },
+   {
+    "icon": false,
+    "t": "BOM对比"
+   },
+   {
+    "icon": false,
+    "t": "新建BOM"
+   }
+  ]
+ },
+ "综合物料搜索": {
+  "chip": false,
+  "cols": [],
+  "h": "综合物料搜索",
+  "hero": "@keyframes ms-mag-orbit { 0%,100% { transform: translate(0,0); } 25% { transform: translate(8px,-4px); } 50% { transform: translat",
+  "kpis": 0,
+  "next": false,
+  "phs": [],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": []
+ },
+ "供应商管理": {
+  "chip": false,
+  "cols": [
+   "",
+   "",
+   "供应商名称",
+   "供应商编号",
+   "供应商级别",
+   "供应商类型",
+   "联系人",
+   "联系电话",
+   "邮箱",
+   "统一社会信用代码",
+   "组织机构代码",
+   "注册资本（万元）",
+   "成立时间",
+   "法人名称",
+   "省份",
+   "市",
+   "经营状态",
+   "联系人职位",
+   "地址",
+   "备注",
+   "供应商分类",
+   "负责人",
+   "付款条件",
+   "账期",
+   "审批状态",
+   "业务状态",
+   "创建时间",
+   "更新时间",
+   "操作"
+  ],
+  "h": "供应商管理",
+  "hero": "@keyframes sp-line { 0% { stroke-dashoffset: 80; } 100% { stroke-dashoffset: 0; } } @keyframes sp-node-pulse { 0%,100% { transform",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索供应商名称/联系人/联系电话/邮箱/负责人..."
+  ],
+  "rowActs": [
+   "[icon]",
+   "查看[icon]",
+   "编辑[icon]",
+   "删除[icon]"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "供应商列表"
+   },
+   {
+    "icon": false,
+    "t": "资质管理"
+   },
+   {
+    "icon": false,
+    "t": "新增供应商"
+   },
+   {
+    "icon": false,
+    "t": "导入/导出"
+   },
+   {
+    "icon": false,
+    "t": "批量"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "产品实例追溯": {
+  "chip": false,
+  "cols": [
+   "追溯码",
+   "编码",
+   "物料名称",
+   "型号",
+   "规格",
+   "SKU编码",
+   "SKU条码",
+   "物料条码",
+   "外部SN",
+   "来源类型",
+   "状态",
+   "客户名称",
+   "发货日期"
+  ],
+  "h": "产品实例追溯",
+  "hero": "@keyframes bc-beam { 0%,100% { transform: translateY(-50px); } 50% { transform: translateY(50px); } } @keyframes bc-pulse { 0%,100",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索追溯码、外部SN、物料编码、SKU编码、SKU条码、物料条码..."
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "物料编码"
+   },
+   {
+    "icon": false,
+    "t": "批次码"
+   },
+   {
+    "icon": false,
+    "t": "产品实例"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "仓库管理": {
+  "chip": false,
+  "cols": [],
+  "h": "仓库管理",
+  "hero": "@keyframes wh-shelf-glow { 0%,100% { fill-opacity: 0.55; } 50% { fill-opacity: 0.95; } } @keyframes wh-pulse { 0%,100% { opacity: ",
+  "kpis": 0,
+  "next": false,
+  "phs": [],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": []
+ },
+ "采购发票": {
+  "chip": false,
+  "cols": [
+   "发票号 / 类型",
+   "开票日期",
+   "供应商",
+   "价税合计",
+   "税率",
+   "分摊订单",
+   "状态",
+   "抵扣状态",
+   "登记时间",
+   "登记人",
+   "操作"
+  ],
+  "h": "采购发票",
+  "hero": "采购管理采购发票采购发票进项发票（收票登记）全记录，票可分摊至采购订单，登记后自动联动应付",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索发票号 / 供应商 / 订单号"
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "全部"
+   },
+   {
+    "icon": false,
+    "t": "正常"
+   },
+   {
+    "icon": false,
+    "t": "已作废"
+   },
+   {
+    "icon": false,
+    "t": "已红冲"
+   },
+   {
+    "icon": false,
+    "t": "邮件收票"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "采购申请": {
+  "chip": false,
+  "cols": [
+   "",
+   "申请编号",
+   "申请标题",
+   "优先级",
+   "关联项目",
+   "关联客户",
+   "负责人",
+   "物料数",
+   "总数量",
+   "预估含税金额",
+   "币种",
+   "期望到货日期",
+   "建议供应商",
+   "采购原因",
+   "备注",
+   "状态",
+   "申请日期",
+   "操作"
+  ],
+  "h": "采购申请",
+  "hero": "@keyframes pr-stack-rise { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } } @keyframes pr-bar-grow { 0",
+  "kpis": 0,
+  "next": true,
+  "phs": [
+   "搜索申请编号、标题...",
+   "开始日期",
+   "结束日期"
+  ],
+  "rowActs": [
+   "查看详情[icon]",
+   "关闭[icon]"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "采购申请当前采购管理 · 采购申请"
+   },
+   {
+    "icon": false,
+    "t": "采购待办池下一步采购管理 · 采购待办池"
+   },
+   {
+    "icon": false,
+    "t": "询价管理采购管理 · 询价管理"
+   },
+   {
+    "icon": false,
+    "t": "采购订单采购管理 · 采购订单"
+   },
+   {
+    "icon": false,
+    "t": "下一步操作采购待办池"
+   },
+   {
+    "icon": false,
+    "t": "申请列表"
+   },
+   {
+    "icon": false,
+    "t": "物料明细"
+   },
+   {
+    "icon": false,
+    "t": "新建申请"
+   },
+   {
+    "icon": false,
+    "t": "导入/导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "采购待办池": {
+  "chip": false,
+  "cols": [
+   "",
+   "池编号",
+   "来源单号",
+   "行号",
+   "申请人",
+   "申请部门",
+   "项目/工单",
+   "编码",
+   "物料名称",
+   "型号",
+   "规格",
+   "单位",
+   "申请数量",
+   "已锁定",
+   "已下单",
+   "剩余可下单",
+   "建议供应商",
+   "采购分类",
+   "需求日期",
+   "申请时间",
+   "优先级",
+   "状态",
+   "负责人",
+   "备注",
+   "操作"
+  ],
+  "h": "采购待办池",
+  "hero": "@keyframes po-bar-grow { 0% { transform: scaleY(0.55); } 50% { transform: scaleY(1); } 100% { transform: scaleY(0.55); } } @keyfra",
+  "kpis": 0,
+  "next": true,
+  "phs": [
+   "单号 / 物料编码 / 名称 / 型号 / 品牌",
+   "开始日期",
+   "结束日期"
+  ],
+  "rowActs": [
+   "指定供应商[icon]",
+   "[icon]"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "采购申请采购管理 · 采购申请"
+   },
+   {
+    "icon": false,
+    "t": "采购待办池当前采购管理 · 采购待办池"
+   },
+   {
+    "icon": false,
+    "t": "询价管理下一步采购管理 · 询价管理"
+   },
+   {
+    "icon": false,
+    "t": "采购订单采购管理 · 采购订单"
+   },
+   {
+    "icon": false,
+    "t": "下一步操作询价管理"
+   },
+   {
+    "icon": false,
+    "t": "待办列表"
+   },
+   {
+    "icon": false,
+    "t": "分组视图"
+   },
+   {
+    "icon": false,
+    "t": "批量创建订单"
+   },
+   {
+    "icon": false,
+    "t": "批量生成询价单"
+   },
+   {
+    "icon": false,
+    "t": "智能拆分"
+   },
+   {
+    "icon": false,
+    "t": "批量指定供应商"
+   },
+   {
+    "icon": false,
+    "t": "批量暂缓"
+   },
+   {
+    "icon": false,
+    "t": "批量关闭"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": false,
+    "t": "导入/导出任务"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "询价管理": {
+  "chip": false,
+  "cols": [
+   "",
+   "询价单号",
+   "标题",
+   "来源",
+   "负责采购",
+   "供应商报价",
+   "物料数",
+   "状态",
+   "截止日期",
+   "操作"
+  ],
+  "h": "询价管理",
+  "hero": "@keyframes rfq-bar-grow { 0%,100% { transform: scaleY(0.85); } 50% { transform: scaleY(1); } } @keyframes rfq-best-pulse { 0%,100%",
+  "kpis": 0,
+  "next": true,
+  "phs": [
+   "搜索询价单号/标题/项目..."
+  ],
+  "rowActs": [
+   "查看详情[icon]",
+   "关注[icon]",
+   "供应商报价链接[icon]",
+   "新窗口打开[icon]",
+   "删除[icon]"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "采购申请采购管理 · 采购申请"
+   },
+   {
+    "icon": false,
+    "t": "采购待办池采购管理 · 采购待办池"
+   },
+   {
+    "icon": false,
+    "t": "询价管理当前采购管理 · 询价管理"
+   },
+   {
+    "icon": false,
+    "t": "采购订单下一步采购管理 · 采购订单"
+   },
+   {
+    "icon": false,
+    "t": "下一步操作采购订单"
+   },
+   {
+    "icon": false,
+    "t": "新建询价单"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": false,
+    "t": "导入/导出任务"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "采购订单": {
+  "chip": false,
+  "cols": [
+   "",
+   "",
+   "订单号",
+   "供应商",
+   "供应商单号",
+   "关联内容",
+   "期望到货日期",
+   "仓库",
+   "付款条件",
+   "币种",
+   "付款方式",
+   "结算日期",
+   "备注说明",
+   "应付产生方式",
+   "采购员",
+   "订单金额",
+   "已申请金额",
+   "开票进度",
+   "入库进度",
+   "付款进度",
+   "退货",
+   "状态",
+   "采购原因",
+   "下单日期",
+   "创建时间",
+   "更新时间",
+   "操作"
+  ],
+  "h": "采购订单",
+  "hero": "@keyframes po-bar-grow { 0% { transform: scaleY(0.55); } 50% { transform: scaleY(1); } 100% { transform: scaleY(0.55); } } @keyfra",
+  "kpis": 0,
+  "next": true,
+  "phs": [
+   "搜索订单号..."
+  ],
+  "rowActs": [
+   "关注[icon]",
+   "查看详情[icon]",
+   "复制开单[icon]"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "采购订单当前采购管理 · 采购订单"
+   },
+   {
+    "icon": false,
+    "t": "到货通知下一步到货检验 · 到货通知"
+   },
+   {
+    "icon": false,
+    "t": "到货登记到货检验 · 到货登记"
+   },
+   {
+    "icon": false,
+    "t": "待检验库存到货检验 · 待检验库存"
+   },
+   {
+    "icon": false,
+    "t": "检验单到货检验 · 检验单"
+   },
+   {
+    "icon": false,
+    "t": "采购入库入库管理 · 采购入库"
+   },
+   {
+    "icon": false,
+    "t": "下一步操作到货通知"
+   },
+   {
+    "icon": false,
+    "t": "订单列表"
+   },
+   {
+    "icon": false,
+    "t": "订单明细0"
+   },
+   {
+    "icon": false,
+    "t": "新建采购单"
+   },
+   {
+    "icon": false,
+    "t": "导入/导出"
+   },
+   {
+    "icon": false,
+    "t": "付款申请"
+   },
+   {
+    "icon": false,
+    "t": "收票登记"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   },
+   {
+    "icon": false,
+    "t": "存为方案"
+   },
+   {
+    "icon": false,
+    "t": "筛选供应商..."
+   },
+   {
+    "icon": false,
+    "t": "开票"
+   },
+   {
+    "icon": false,
+    "t": "入库"
+   },
+   {
+    "icon": false,
+    "t": "付款"
+   }
+  ]
+ },
+ "采购退换货": {
+  "chip": false,
+  "cols": [
+   "",
+   "退货单号",
+   "关联订单",
+   "供应商",
+   "处理方式",
+   "换货进度",
+   "预计补货日期",
+   "退货原因",
+   "物料数",
+   "退款 / 参考货值",
+   "状态",
+   "退货日期",
+   "操作"
+  ],
+  "h": "采购退换货",
+  "hero": "@keyframes ret-line-flow { 0% { stroke-dashoffset: 600; } 100% { stroke-dashoffset: 0; } } @keyframes ret-area-shimmer { 0%,100% {",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索退货单号、订单、供应商..."
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "新建退换货"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": false,
+    "t": "导入/导出任务"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   },
+   {
+    "icon": false,
+    "t": "全部"
+   },
+   {
+    "icon": false,
+    "t": "退货退款"
+   },
+   {
+    "icon": false,
+    "t": "换货补货"
+   }
+  ]
+ },
+ "供应商价格本": {
+  "chip": false,
+  "cols": [],
+  "h": "供应商价格本",
+  "hero": "@keyframes pb-bar-grow { 0%,100% { transform: scaleY(0.85); } 50% { transform: scaleY(1); } } @keyframes pb-step-rise { 0%,100% { ",
+  "kpis": 0,
+  "next": false,
+  "phs": [],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": []
+ },
+ "全部入库单": {
+  "chip": false,
+  "cols": [
+   "",
+   "入库单号",
+   "类型",
+   "来源",
+   "入库类型",
+   "批次号",
+   "供应商/客户",
+   "仓库",
+   "入库日期",
+   "含税金额",
+   "状态",
+   "创建人",
+   "操作"
+  ],
+  "h": "全部入库单",
+  "hero": "@keyframes ar-truck-drive { 0% { transform: translateX(-200px); } 100% { transform: translateX(0); } } @keyframes ar-wheel { from ",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索入库单号/批次号..."
+  ],
+  "rowActs": [
+   "查看详情[icon]"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "新建入库单"
+   },
+   {
+    "icon": false,
+    "t": "打印条码"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "采购入库": {
+  "chip": true,
+  "cols": [
+   "",
+   "入库单号",
+   "类型",
+   "来源",
+   "入库类型",
+   "批次号",
+   "供应商/客户",
+   "仓库",
+   "入库日期",
+   "含税金额",
+   "状态",
+   "创建人",
+   "操作"
+  ],
+  "h": "采购入库",
+  "hero": "@keyframes ar-truck-drive { 0% { transform: translateX(-200px); } 100% { transform: translateX(0); } } @keyframes ar-wheel { from ",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索入库单号/批次号..."
+  ],
+  "rowActs": [
+   "查看详情[icon]"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "采购订单采购管理 · 采购订单"
+   },
+   {
+    "icon": false,
+    "t": "到货通知到货检验 · 到货通知"
+   },
+   {
+    "icon": false,
+    "t": "到货登记到货检验 · 到货登记"
+   },
+   {
+    "icon": false,
+    "t": "待检验库存到货检验 · 待检验库存"
+   },
+   {
+    "icon": false,
+    "t": "检验单到货检验 · 检验单"
+   },
+   {
+    "icon": false,
+    "t": "采购入库当前入库管理 · 采购入库"
+   },
+   {
+    "icon": false,
+    "t": "当前环节采购入库"
+   },
+   {
+    "icon": false,
+    "t": "新建入库单"
+   },
+   {
+    "icon": false,
+    "t": "打印条码"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "生产入库": {
+  "chip": true,
+  "cols": [
+   "",
+   "入库单号",
+   "类型",
+   "来源",
+   "入库类型",
+   "批次号",
+   "供应商/客户",
+   "仓库",
+   "入库日期",
+   "含税金额",
+   "状态",
+   "创建人",
+   "操作"
+  ],
+  "h": "生产入库",
+  "hero": "@keyframes ar-truck-drive { 0% { transform: translateX(-200px); } 100% { transform: translateX(0); } } @keyframes ar-wheel { from ",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索入库单号/批次号..."
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "组装单组装业务管理 · 组装单"
+   },
+   {
+    "icon": false,
+    "t": "缺料待办组装业务管理 · 缺料待办"
+   },
+   {
+    "icon": false,
+    "t": "领料单组装业务管理 · 领料单"
+   },
+   {
+    "icon": false,
+    "t": "生产出库出库管理 · 生产出库"
+   },
+   {
+    "icon": false,
+    "t": "生产入库当前入库管理 · 生产入库"
+   },
+   {
+    "icon": false,
+    "t": "当前环节生产入库"
+   },
+   {
+    "icon": false,
+    "t": "打印条码"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "其他入库": {
+  "chip": false,
+  "cols": [
+   "",
+   "入库单号",
+   "类型",
+   "来源",
+   "入库类型",
+   "批次号",
+   "供应商/客户",
+   "仓库",
+   "入库日期",
+   "含税金额",
+   "状态",
+   "创建人",
+   "操作"
+  ],
+  "h": "其他入库",
+  "hero": "@keyframes ar-truck-drive { 0% { transform: translateX(-200px); } 100% { transform: translateX(0); } } @keyframes ar-wheel { from ",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索入库单号/批次号..."
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "新建其他入库"
+   },
+   {
+    "icon": false,
+    "t": "打印条码"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "期初入库": {
+  "chip": false,
+  "cols": [
+   "",
+   "入库单号",
+   "类型",
+   "来源",
+   "入库类型",
+   "批次号",
+   "供应商/客户",
+   "仓库",
+   "入库日期",
+   "含税金额",
+   "状态",
+   "创建人",
+   "操作"
+  ],
+  "h": "期初入库",
+  "hero": "@keyframes ar-truck-drive { 0% { transform: translateX(-200px); } 100% { transform: translateX(0); } } @keyframes ar-wheel { from ",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索入库单号/批次号..."
+  ],
+  "rowActs": [
+   "查看详情[icon]",
+   "删除[icon]"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "打印条码"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "入库明细": {
+  "chip": false,
+  "cols": [
+   "",
+   "序号",
+   "单据日期",
+   "入库单号",
+   "业务类型",
+   "仓库",
+   "供应商/对方",
+   "制单人",
+   "编码",
+   "物料名称",
+   "规格",
+   "型号",
+   "单位",
+   "数量",
+   "含税单价",
+   "不含税单价",
+   "税率",
+   "含税金额",
+   "库位",
+   "批次编码",
+   "状态"
+  ],
+  "h": "入库明细",
+  "hero": "@keyframes ar-truck-drive { 0% { transform: translateX(-200px); } 100% { transform: translateX(0); } } @keyframes ar-wheel { from ",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "入库单号关键字...",
+   "物料编码/名称/规格",
+   "开始日期",
+   "结束日期"
+  ],
+  "rowActs": [
+   "IN-2026-0003"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "库存总览": {
+  "chip": false,
+  "cols": [],
+  "h": "库存总览",
+  "hero": "@keyframes wh-box-glow { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } } @keyframes wh-truck { 0% { transform: translateX(0); } 1",
+  "kpis": 0,
+  "next": false,
+  "phs": [],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": []
+ },
+ "不合格处理": {
+  "chip": false,
+  "cols": [
+   "",
+   "NCR 单号",
+   "业务来源 / 来源",
+   "物料",
+   "供应商",
+   "不合格数量",
+   "缺陷等级",
+   "处置方案",
+   "审批 / 执行状态",
+   "关联入库单",
+   "操作"
+  ],
+  "h": "不合格处理",
+  "hero": "@keyframes ip-magnify { 0%,100% { transform: translate(0,0); } 25% { transform: translate(8px,-4px); } 50% { transform: translate(",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索 NCR 单号 / 物料..."
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "处置执行中心": {
+  "chip": false,
+  "cols": [
+   "执行单号",
+   "处置类型",
+   "来源业务",
+   "物料",
+   "执行数量",
+   "当前阶段",
+   "更新时间",
+   "操作"
+  ],
+  "h": "处置执行中心",
+  "hero": "@keyframes ip-magnify { 0%,100% { transform: translate(0,0); } 25% { transform: translate(8px,-4px); } 50% { transform: translate(",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索执行单号 / NCR / 来源单号 / 物料"
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "全部(0)"
+   },
+   {
+    "icon": false,
+    "t": "待执行(0)"
+   },
+   {
+    "icon": false,
+    "t": "执行中(0)"
+   },
+   {
+    "icon": false,
+    "t": "已完成(0)"
+   },
+   {
+    "icon": false,
+    "t": "执行异常(0)"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "库存流水": {
+  "chip": false,
+  "cols": [
+   "",
+   "流水号",
+   "类型",
+   "业务类型",
+   "日期",
+   "仓库",
+   "库位",
+   "物料名称",
+   "型号",
+   "SKU编码",
+   "规格",
+   "批次",
+   "SN码",
+   "外部SN",
+   "操作人",
+   "数量",
+   "库存余量",
+   "关联单号",
+   "对方"
+  ],
+  "h": "库存流水",
+  "hero": "@keyframes fl-stream-in { 0% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -36; } } @keyframes fl-stream-out { 0% { stroke-d",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索物料名称/编码/型号...",
+   "事务号/流水号",
+   "批次/SN 码",
+   "开始日期"
+  ],
+  "rowActs": [
+   "IN-2026-0003"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "库存流水"
+   },
+   {
+    "icon": false,
+    "t": "报表"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "库存锁定": {
+  "chip": false,
+  "cols": [
+   "",
+   "锁定单号",
+   "物料名称",
+   "型号",
+   "规格 / SKU",
+   "批次号",
+   "业务来源",
+   "来源单号",
+   "锁定数量",
+   "已释放",
+   "状态",
+   "业务状态",
+   "锁定日期",
+   "到期释放时间",
+   "剩余倒计时",
+   "操作"
+  ],
+  "h": "库存锁定",
+  "hero": "@keyframes wh-box-glow { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } } @keyframes wh-truck { 0% { transform: translateX(0); } 1",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索物料、锁定单号或来源单号..."
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "业务锁库"
+   },
+   {
+    "icon": false,
+    "t": "手动锁库"
+   },
+   {
+    "icon": false,
+    "t": "物料锁定概况"
+   },
+   {
+    "icon": false,
+    "t": "锁库操作日志"
+   },
+   {
+    "icon": false,
+    "t": "新增业务锁库"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "库存盘点": {
+  "chip": false,
+  "cols": [
+   "",
+   "盘点编号",
+   "盘点名称",
+   "盘点仓库",
+   "盘点类型",
+   "计划日期",
+   "实际日期",
+   "盘点进度",
+   "差异项",
+   "盘差",
+   "状态",
+   "锁账",
+   "操作人",
+   "创建时间",
+   "操作"
+  ],
+  "h": "库存盘点",
+  "hero": "@keyframes ck-tick { 0%,100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.15); opacity: 1; } } @keyframes ck-p",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索盘点单号/名称/仓库..."
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "新建盘点"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "调拨与借出": {
+  "chip": false,
+  "cols": [
+   "",
+   "单号",
+   "业务类型",
+   "发出方",
+   "",
+   "接收方",
+   "原因",
+   "物料数量",
+   "金额",
+   "状态",
+   "关联",
+   "日期/申请人",
+   "操作"
+  ],
+  "h": "调拨与借出",
+  "hero": "@keyframes tf-truck { 0% { transform: translateX(0); } 100% { transform: translateX(620px); } } @keyframes tf-arrow { 0%,100% { st",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索单号/仓库/单位..."
+  ],
+  "rowActs": [],
+  "tabs": [
+   "调拨单列表",
+   "调拨明细列表"
+  ],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "调拨单列表"
+   },
+   {
+    "icon": false,
+    "t": "调拨明细列表"
+   },
+   {
+    "icon": false,
+    "t": "新建单据"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "库存预警": {
+  "chip": false,
+  "cols": [],
+  "h": "库存预警",
+  "hero": "@keyframes al-bell { 0%,100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } } @keyframes al-pulse { 0%,100% { tran",
+  "kpis": 0,
+  "next": false,
+  "phs": [],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": []
+ },
+ "报损单": {
+  "chip": false,
+  "cols": [
+   "报损单号",
+   "所在仓库",
+   "报损类型",
+   "报损物料",
+   "报损金额",
+   "经手人",
+   "状态",
+   "创建日期",
+   "操作"
+  ],
+  "h": "报损单",
+  "hero": "@keyframes dm-shake { 0%,100% { transform: translate(0,0); } 25% { transform: translate(-2px,1px); } 75% { transform: translate(2p",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索报损单号..."
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "新建报损"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "SN码管理": {
+  "chip": false,
+  "cols": [
+   "#",
+   "供应商序列号",
+   "产品名称",
+   "入库单号",
+   "批次号",
+   "供应商",
+   "出库状态",
+   "出库单号"
+  ],
+  "h": "SN码管理",
+  "hero": "@keyframes sn-scan-line { 0%,100% { transform: translateY(-30px); opacity: 0.85; } 50% { transform: translateY(30px); opacity: 1; ",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索SN码、产品、单号..."
+  ],
+  "rowActs": [
+   "IN-2026-0001"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "SN码记录1"
+   },
+   {
+    "icon": false,
+    "t": "SN码验证"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "出库单列表": {
+  "chip": false,
+  "cols": [
+   "",
+   "出库单号",
+   "关联单号",
+   "销售单号",
+   "客户单号",
+   "往来单位",
+   "物料明细",
+   "仓库",
+   "出库日期",
+   "状态",
+   "物流信息",
+   "收入确认",
+   "操作员",
+   "操作"
+  ],
+  "h": "出库单列表",
+  "hero": "@keyframes ob-conv-move { 0% { transform: translateX(0); } 100% { transform: translateX(-30px); } } @keyframes ob-pkg-slide { 0% {",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索出库单号、客户、发货单号..."
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "打印条码"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "生产出库": {
+  "chip": false,
+  "cols": [
+   "",
+   "出库单号",
+   "关联单号",
+   "销售单号",
+   "客户单号",
+   "往来单位",
+   "物料明细",
+   "仓库",
+   "出库日期",
+   "状态",
+   "物流信息",
+   "收入确认",
+   "操作员",
+   "操作"
+  ],
+  "h": "生产出库",
+  "hero": "@keyframes ob-conv-move { 0% { transform: translateX(0); } 100% { transform: translateX(-30px); } } @keyframes ob-pkg-slide { 0% {",
+  "kpis": 0,
+  "next": true,
+  "phs": [
+   "搜索出库单号、客户、发货单号..."
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "组装单组装业务管理 · 组装单"
+   },
+   {
+    "icon": false,
+    "t": "缺料待办组装业务管理 · 缺料待办"
+   },
+   {
+    "icon": false,
+    "t": "领料单组装业务管理 · 领料单"
+   },
+   {
+    "icon": false,
+    "t": "生产出库当前出库管理 · 生产出库"
+   },
+   {
+    "icon": false,
+    "t": "生产入库下一步入库管理 · 生产入库"
+   },
+   {
+    "icon": false,
+    "t": "下一步操作生产入库"
+   },
+   {
+    "icon": false,
+    "t": "打印条码"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   },
+   {
+    "icon": false,
+    "t": "出库类型"
+   }
+  ]
+ },
+ "其他出库": {
+  "chip": false,
+  "cols": [
+   "",
+   "出库单号",
+   "出库类型",
+   "物料明细",
+   "出库日期",
+   "状态",
+   "出库原因",
+   "创建人",
+   "操作"
+  ],
+  "h": "其他出库",
+  "hero": "@keyframes ob-conv-move { 0% { transform: translateX(0); } 100% { transform: translateX(-30px); } } @keyframes ob-pkg-slide { 0% {",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索出库单号、出库原因..."
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "新建其他出库"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "销售直接出库": {
+  "chip": false,
+  "cols": [
+   "",
+   "直接出库单号",
+   "客户单号",
+   "客户",
+   "出库进度",
+   "状态",
+   "创建时间",
+   "操作"
+  ],
+  "h": "销售直接出库",
+  "hero": "@keyframes ob-conv-move { 0% { transform: translateX(0); } 100% { transform: translateX(-30px); } } @keyframes ob-pkg-slide { 0% {",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索直接出库单号、订单号、客户单号、客户..."
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "待出库发货单": {
+  "chip": false,
+  "cols": [
+   "",
+   "发货单号",
+   "客户单号",
+   "客户",
+   "收货人",
+   "收货地址",
+   "含税金额",
+   "出库进度",
+   "状态",
+   "日期",
+   "操作"
+  ],
+  "h": "待出库发货单",
+  "hero": "@keyframes ob-conv-move { 0% { transform: translateX(0); } 100% { transform: translateX(-30px); } } @keyframes ob-pkg-slide { 0% {",
+  "kpis": 0,
+  "next": true,
+  "phs": [
+   "搜索发货单号、客户..."
+  ],
+  "rowActs": [
+   "查看详情[icon]",
+   "去发货"
+  ],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "销售订单销售业务 · 销售订单"
+   },
+   {
+    "icon": false,
+    "t": "销售发货单销售业务 · 销售发货单"
+   },
+   {
+    "icon": false,
+    "t": "待出库发货单当前出库管理 · 待出库发货单"
+   },
+   {
+    "icon": false,
+    "t": "出库单列表下一步出库管理 · 出库单列表"
+   },
+   {
+    "icon": false,
+    "t": "下一步操作出库单列表"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "采购退换货出库": {
+  "chip": false,
+  "cols": [
+   "退货单号",
+   "供应商",
+   "退货地址",
+   "退货金额",
+   "出库进度",
+   "状态",
+   "日期",
+   "操作"
+  ],
+  "h": "采购退换货出库",
+  "hero": "@keyframes ob-conv-move { 0% { transform: translateX(0); } 100% { transform: translateX(-30px); } } @keyframes ob-pkg-slide { 0% {",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索退货单号、采购单号、供应商..."
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ },
+ "出库明细": {
+  "chip": false,
+  "cols": [
+   "",
+   "序号",
+   "出库日期",
+   "出库单号",
+   "发货单号",
+   "业务类型",
+   "仓库",
+   "客户",
+   "制单人",
+   "物料编码",
+   "物料名称",
+   "型号",
+   "规格",
+   "单位",
+   "数量",
+   "含税单价",
+   "不含税单价",
+   "税率",
+   "含税金额",
+   "库位",
+   "物流单号",
+   "状态"
+  ],
+  "h": "出库明细",
+  "hero": "@keyframes ob-conv-move { 0% { transform: translateX(0); } 100% { transform: translateX(-30px); } } @keyframes ob-pkg-slide { 0% {",
+  "kpis": 0,
+  "next": false,
+  "phs": [
+   "搜索出库单号...",
+   "物料名称/编码/型号...",
+   "客户名称...",
+   "物流单号..."
+  ],
+  "rowActs": [],
+  "tabs": [],
+  "toolbar": [
+   {
+    "icon": false,
+    "t": "打印条码"
+   },
+   {
+    "icon": false,
+    "t": "导出"
+   },
+   {
+    "icon": true,
+    "t": "刷新"
+   }
+  ]
+ }
+}

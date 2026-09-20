@@ -1,0 +1,108 @@
+Browser tab: 54, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_subcontract_stock".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_subcontract_stock
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 委外库存
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_subcontract_stock
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 委外库存, Value: 1
+				44 text 委外库存
+			45 text 按供应商、订单和物料查询委外厂在途库存
+			46 heading 委外厂库存, Value: 1
+				47 text 委外厂库存
+			48 text 按 委外订单 + 物料 维度查询发到外协厂的在途库存 在途供应商 1 持有我方物料的外协厂 在途物料种类 1 SKU 数 在途总数量 30.06 已发 − 已耗 − 已退 在外金额 ¥ 375.75 余量 × 材料单价 最长账龄 0  天 从首次发料起算
+			49 checkbox 超 30 天 SKU 0 点击仅看超期, Value: 0
+				50 text 超 30 天 SKU
+				51 text 0
+				52 text 点击仅看超期
+			53 tab group 库存视角
+				54 checkbox 供应商视角, Value: 1
+				55 checkbox 物料视角, Value: 0
+			56 button 去发料
+			57 button 导出
+			58 text 账龄
+			59 checkbox 全部, Value: 1
+			60 checkbox 0-7 天, Value: 0
+			61 checkbox 8-30 天, Value: 0
+			62 checkbox 31-60 天, Value: 0
+			63 checkbox >60 天, Value: 0
+			64 text field (settable) 搜索委外订单 / 物料 / 规格 / 供应商
+			65 pop up button (collapsed) Description: 供应商, Secondary Actions: Expand
+			66 table
+				67 row
+					68 cell
+						69 text 供应商
+					70 cell
+						71 text 订单数
+					72 cell
+						73 text 物料种类
+					74 cell
+						75 text 累计已发
+					76 cell
+						77 text 倒冲耗用
+					78 cell
+						79 text 累计退料
+					80 cell
+						81 text 在外余量
+					82 cell
+						83 text 在外金额
+					84 cell
+						85 text 操作
+				86 row
+					87 cell
+						88 text 锐联钣金委外厂
+					89 cell
+						90 text 7
+					91 cell
+						92 text 1
+					93 cell
+						94 text 34
+					95 cell
+						96 text 1.94
+					97 cell
+						98 text 2
+					99 cell
+						100 text 30.06
+					101 cell
+						102 text ¥ 375.75
+					103 cell
+						104 button 查看明细
+			105 text 共  1  条记录 · 每页 20 条 · 1 / 1 在外余量 = 累计已发 − 倒冲消耗 − 累计已退料。回厂入库时按 BOM 标准用量自动倒冲核销，委外订单完工后余量趋近 0。
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_subcontract_stock

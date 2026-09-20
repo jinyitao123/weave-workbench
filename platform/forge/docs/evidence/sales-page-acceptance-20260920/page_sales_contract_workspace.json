@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 2,
+  "pageId": "page_sales_contract_workspace",
+  "archetype": "task_workspace",
+  "status": "review_required",
+  "observedAt": "2026-09-20",
+  "environment": {
+    "forgeUrl": "http://localhost:3000",
+    "database": "apps/forge-objectstack/.objectstack/data/objectstack.db",
+    "materials": "RISEMAP SC-AUDIT-RM-20260920-001 / Forge SC-AUDIT-20260920-001，共用客户、来源报价、SKU、数量、价格、折扣、付款条件和总额"
+  },
+  "checks": {
+    "replication": {
+      "status": "pass",
+      "notes": "内置浏览器实时打开 RISEMAP 列表与新建页及 Forge 列表与新建页；双侧用同一客户、报价、SKU、数量、价格、折扣和付款条件保存 243200 元草稿并回读。",
+      "evidence": ["docs/contracts/sales/page_sales_contract_workspace.md"]
+    },
+    "visual": {
+      "status": "pending",
+      "notes": "双侧 760x900 实时截图并排目视核对；Forge 另完成 1280x900 与 760x900 几何复扫，控件无相交。尚无可提交的 RISEMAP 同视口 PNG 与实算差图。",
+      "evidence": [
+        "docs/evidence/sales-controls-20260920/geometry-audit.json"
+      ]
+    },
+    "interaction": {
+      "status": "pass",
+      "notes": "已实测搜索、状态筛选、导入导出菜单、自定义导出、创建表单、报价导入、粘贴导入、物料组合导入、预览、保存、两步提交与错误反馈。",
+      "evidence": ["docs/contracts/sales/page_sales_contract_workspace.md"]
+    },
+    "business": {
+      "status": "pending",
+      "notes": "双侧同材料保存草稿并回读；Forge 提交因来源报价状态为 draft 被正确阻断，错误为来源报价需为已接受状态；同一 SQLite 完整停服重启后合同与 1 条明细仍可回读。特价/询价无源数据，独立复核未执行。",
+      "evidence": ["docs/contracts/sales/page_sales_contract_workspace.md"]
+    }
+  },
+  "requirements": [],
+  "review": {
+    "implementer": "Codex 当前实施会话",
+    "reviewer": "",
+    "reviewedAt": "",
+    "status": "pending",
+    "evidence": []
+  },
+  "limitations": [
+    "实现已完成并可合入；由于像素差图、特价/询价同材料和独立复核缺失，仍不构成 accepted。",
+    "RISEMAP 审计草稿 SC-AUDIT-RM-20260920-001 保留可追溯标识，未提交审批。"
+  ]
+}

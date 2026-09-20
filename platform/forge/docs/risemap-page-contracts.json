@@ -1,0 +1,7011 @@
+[
+  {
+    "featureId": "RM-001",
+    "category": "工作台",
+    "group": "工作台",
+    "name": "工作台",
+    "url": "https://risemap.cn/",
+    "evidence": "446-rm-001-loaded",
+    "headings": [
+      "欢迎回来，金一涛！",
+      "员工服务",
+      "快捷操作",
+      "企业文化合影",
+      "2026 春季全员合影",
+      "技术部黑客马拉松",
+      "Q1 业务里程碑庆功",
+      "企业通知",
+      "待我审批",
+      "我的待办"
+    ],
+    "buttons": [
+      "换一张",
+      "上传",
+      "管理",
+      "进入引导中心",
+      "自定义工作台",
+      "编辑",
+      "添加服务",
+      "添加操作",
+      "暂停",
+      "查看全部"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-002",
+    "category": "工作台",
+    "group": "工作台",
+    "name": "AI 广场",
+    "url": "https://risemap.cn/ai",
+    "evidence": "093-rm-002-loaded",
+    "headings": [
+      "让 AI 成为你的最佳工作伙伴",
+      "精选推荐",
+      "数据迁移助手",
+      "业务配置助手",
+      "采购与库存",
+      "采购助手",
+      "库存预测助手",
+      "智能补货助手",
+      "成本分析助手",
+      "客户与销售",
+      "客户画像助手",
+      "销售跟进助手",
+      "商机评分助手",
+      "报价助手",
+      "供应商与寻源",
+      "供应商评估助手",
+      "智能寻源助手",
+      "合同审核助手",
+      "供应商风险预警",
+      "系统工具",
+      "财务月结助手"
+    ],
+    "buttons": [
+      "探索全部助手",
+      "使用指南",
+      "全部场景",
+      "采购与库存",
+      "客户与销售",
+      "供应商与寻源",
+      "系统工具",
+      "立即体验"
+    ],
+    "textboxes": [
+      "搜索 AI 助手..."
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-003",
+    "category": "工作台",
+    "group": "工作台",
+    "name": "引导中心",
+    "url": "https://risemap.cn/onboarding",
+    "evidence": "133-rm-003-loaded",
+    "headings": [
+      "系统初始化引导",
+      "公司主体与组织架构",
+      "完善公司主体信息",
+      "建立部门组织架构",
+      "录入员工花名册",
+      "用户与权限",
+      "审阅 / 创建角色权限",
+      "邀请 / 创建用户账号",
+      "配置数据权限范围",
+      "业务基础数据",
+      "维护计量单位",
+      "建立产品分类体系",
+      "维护仓库类型",
+      "建立仓库档案",
+      "导入商品 / 物料档案",
+      "建立供应商档案",
+      "建立客户档案",
+      "期初数据建账",
+      "设定系统启用日（建账基准日）",
+      "录入期初库存",
+      "录入期初应收账款",
+      "录入期初应付账款",
+      "录入期初银行 / 现金余额",
+      "录入期初固定资产",
+      "流程与模板",
+      "设置单据编码规则",
+      "配置审批流",
+      "通知 / 消息渠道",
+      "试跑与上线",
+      "试跑销售流程",
+      "试跑采购流程",
+      "关闭引导，正式上线"
+    ],
+    "buttons": [
+      "标记完成",
+      "去配置",
+      "跳过"
+    ],
+    "textboxes": [
+      "搜索步骤标题或说明…"
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-004",
+    "category": "工作台",
+    "group": "工作台",
+    "name": "待办管理",
+    "url": "https://risemap.cn/todos",
+    "evidence": "135-rm-004-loaded",
+    "headings": [
+      "待办管理",
+      "全部任务"
+    ],
+    "buttons": [
+      "列表",
+      "任务",
+      "我关注的",
+      "动态",
+      "全部任务",
+      "我创建的",
+      "我分配的",
+      "已完成",
+      "超期记录 0",
+      "新建待办",
+      "排序",
+      "1"
+    ],
+    "textboxes": [
+      "搜索待办内容、负责人…"
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-005",
+    "category": "供应链",
+    "group": "到货检验",
+    "name": "到货通知",
+    "url": "https://risemap.cn/inventory/arrival-notices",
+    "evidence": "147-rm-005-loaded",
+    "headings": [
+      "到货通知"
+    ],
+    "buttons": [
+      "合并到货登记",
+      "刷新",
+      "筛选目标仓库",
+      "状态",
+      "是否逾期",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索到货通知",
+      "开始日期",
+      "结束日期"
+    ],
+    "columnHeaders": [
+      "选择到货通知",
+      "到货通知",
+      "供应商 / 物料",
+      "预计到货",
+      "目标仓库",
+      "来源采购订单",
+      "到货进度",
+      "采购员",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-006",
+    "category": "供应链",
+    "group": "到货检验",
+    "name": "到货登记",
+    "url": "https://risemap.cn/inventory/arrival",
+    "evidence": "149-rm-006-loaded",
+    "headings": [
+      "到货登记"
+    ],
+    "buttons": [
+      "下一步操作 待检验库存",
+      "订单明细",
+      "物料明细",
+      "新建到货登记",
+      "导出",
+      "导入/导出任务",
+      "刷新",
+      "状态",
+      "类型",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索到货单号/供应商/客户/退货单号..."
+    ],
+    "columnHeaders": [
+      "到货单号",
+      "类型",
+      "到货日期",
+      "仓库",
+      "对方",
+      "关联单号",
+      "物料种类数量",
+      "含税金额",
+      "状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-007",
+    "category": "供应链",
+    "group": "到货检验",
+    "name": "待检验库存",
+    "url": "https://risemap.cn/inventory/pending-inspection",
+    "evidence": "151-rm-007-loaded",
+    "headings": [
+      "待检验库存"
+    ],
+    "buttons": [
+      "下一步操作 检验单",
+      "导出",
+      "导入/导出任务",
+      "刷新",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索待检单号、物料编码、物料名称、供应商、批次号..."
+    ],
+    "columnHeaders": [
+      "待检单号",
+      "物料编码",
+      "物料名称",
+      "规格型号",
+      "到货数量",
+      "单位",
+      "批次号",
+      "供应商/客户",
+      "采购合同",
+      "到货日期",
+      "状态",
+      "关联检验单",
+      "检验结果",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-008",
+    "category": "供应链",
+    "group": "到货检验",
+    "name": "检验单",
+    "url": "https://risemap.cn/inventory/inspection",
+    "evidence": "153-rm-008-loaded",
+    "headings": [
+      "检验单"
+    ],
+    "buttons": [
+      "下一步操作 采购入库",
+      "导出",
+      "导入/导出任务",
+      "刷新",
+      "状态",
+      "结果",
+      "方式",
+      "供应商",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索检验单号/物料名...",
+      "开始日期",
+      "结束日期"
+    ],
+    "columnHeaders": [
+      "检验单号",
+      "到货单号",
+      "物料名称",
+      "供应商/客户",
+      "方式",
+      "总数量",
+      "合格数量",
+      "不合格数量",
+      "结果",
+      "状态",
+      "检验员",
+      "到货日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-009",
+    "category": "供应链",
+    "group": "到货检验",
+    "name": "检验规则",
+    "url": "https://risemap.cn/inventory/inspection-rules",
+    "evidence": "155-rm-009-loaded",
+    "headings": [
+      "检验规则"
+    ],
+    "buttons": [
+      "检验项目库",
+      "检验方案",
+      "新建检验项目",
+      "批量启用",
+      "批量停用",
+      "导入",
+      "导出",
+      "刷新",
+      "分类",
+      "判定类型",
+      "检验类型",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索项目名称/编码..."
+    ],
+    "columnHeaders": [
+      "项目编码",
+      "项目名称",
+      "项目分类",
+      "判定类型",
+      "适用检验类型",
+      "单位",
+      "是否必检",
+      "影响整批结论",
+      "是否启用",
+      "更新时间",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-010",
+    "category": "供应链",
+    "group": "基础资料",
+    "name": "物料管理",
+    "url": "https://risemap.cn/base/products",
+    "evidence": "157-rm-010-loaded",
+    "headings": [
+      "物料管理"
+    ],
+    "buttons": [
+      "物料列表",
+      "商品图片",
+      "新建物料",
+      "导入/导出",
+      "打印条码",
+      "批量操作",
+      "回收站",
+      "刷新",
+      "全部分类",
+      "品牌",
+      "类型",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索物料名称、物料编码、物料条码、物料型号..."
+    ],
+    "columnHeaders": [
+      "物料编码",
+      "类型",
+      "物料属性",
+      "物料条码",
+      "物料型号",
+      "物料名称",
+      "品牌",
+      "单位",
+      "含税销售价",
+      "不含税销售价",
+      "含税成本价",
+      "不含税成本价",
+      "物料分类",
+      "采购分类",
+      "来源类型",
+      "负责人",
+      "创建时间",
+      "物料状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-011",
+    "category": "供应链",
+    "group": "基础资料",
+    "name": "物料组合",
+    "url": "https://risemap.cn/base/product-bundles",
+    "evidence": "159-rm-011-loaded",
+    "headings": [
+      "物料组合"
+    ],
+    "buttons": [
+      "新建物料组合",
+      "批量",
+      "导入/导出任务",
+      "导出",
+      "刷新",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索组合名称或编号..."
+    ],
+    "columnHeaders": [
+      "编号",
+      "组合名称",
+      "物料种类",
+      "含税销售价",
+      "不含税销售价",
+      "状态",
+      "引用次数",
+      "创建人",
+      "创建日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-012",
+    "category": "供应链",
+    "group": "基础资料",
+    "name": "BOM管理",
+    "url": "https://risemap.cn/base/bom",
+    "evidence": "161-rm-012-loaded",
+    "headings": [
+      "BOM管理"
+    ],
+    "buttons": [
+      "全部 0",
+      "草稿 0",
+      "待评审 0",
+      "已生效 0",
+      "已失效 0",
+      "已归档 0",
+      "全部类型",
+      "标准",
+      "项目",
+      "导入/导出",
+      "BOM对比",
+      "新建BOM"
+    ],
+    "textboxes": [
+      "搜索编号/名称/产品..."
+    ],
+    "columnHeaders": [
+      "BOM编号",
+      "BOM名称",
+      "产品/设备",
+      "BOM类型",
+      "当前版本",
+      "状态",
+      "适用项目",
+      "物料数",
+      "成本",
+      "更新时间",
+      "创建人",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-013",
+    "category": "供应链",
+    "group": "基础资料",
+    "name": "综合物料搜索",
+    "url": "https://risemap.cn/base/material-search",
+    "evidence": "163-rm-013-loaded",
+    "headings": [
+      "综合物料搜索"
+    ],
+    "buttons": [],
+    "textboxes": [
+      "搜索编码、名称、型号、品牌、供应商、物料组合、SN码、批次号..."
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-014",
+    "category": "供应链",
+    "group": "基础资料",
+    "name": "供应商管理",
+    "url": "https://risemap.cn/base/suppliers",
+    "evidence": "165-rm-014-loaded",
+    "headings": [
+      "供应商管理"
+    ],
+    "buttons": [
+      "供应商列表",
+      "资质管理",
+      "新增供应商",
+      "导入/导出",
+      "批量",
+      "刷新",
+      "范围",
+      "分类",
+      "等级",
+      "负责人",
+      "审批状态",
+      "业务状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索供应商名称/联系人/联系电话/邮箱/负责人..."
+    ],
+    "columnHeaders": [
+      "供应商名称",
+      "供应商编号",
+      "供应商级别",
+      "供应商类型",
+      "联系人",
+      "联系电话",
+      "邮箱",
+      "统一社会信用代码",
+      "组织机构代码",
+      "注册资本（万元）",
+      "成立时间",
+      "法人名称",
+      "省份",
+      "市",
+      "经营状态",
+      "联系人职位",
+      "地址",
+      "备注",
+      "供应商分类",
+      "负责人",
+      "付款条件",
+      "账期",
+      "审批状态",
+      "业务状态",
+      "创建时间",
+      "更新时间",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-015",
+    "category": "供应链",
+    "group": "基础资料",
+    "name": "产品实例追溯",
+    "url": "https://risemap.cn/base/barcode-center",
+    "evidence": "167-rm-015-loaded",
+    "headings": [
+      "产品实例追溯"
+    ],
+    "buttons": [
+      "物料编码",
+      "批次码",
+      "产品实例",
+      "质保管理",
+      "刷新",
+      "状态",
+      "来源",
+      "质保",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索追溯码、外部SN、物料编码、SKU编码、SKU条码、物料条码..."
+    ],
+    "columnHeaders": [
+      "追溯码",
+      "编码",
+      "物料名称",
+      "型号",
+      "规格",
+      "SKU编码",
+      "SKU条码",
+      "物料条码",
+      "外部SN",
+      "来源类型",
+      "状态",
+      "质保状态",
+      "客户名称",
+      "发货日期"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-016",
+    "category": "供应链",
+    "group": "基础资料",
+    "name": "仓库管理",
+    "url": "https://risemap.cn/base/warehouses",
+    "evidence": "169-rm-016-loaded",
+    "headings": [
+      "仓库管理",
+      "仓库列表"
+    ],
+    "buttons": [
+      "新增仓库",
+      "全部"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-017",
+    "category": "供应链",
+    "group": "采购管理",
+    "name": "采购发票",
+    "url": "https://risemap.cn/purchase/invoices",
+    "evidence": "171-rm-017-loaded",
+    "headings": [
+      "采购发票"
+    ],
+    "buttons": [
+      "全部",
+      "正常",
+      "已作废",
+      "已红冲",
+      "邮件收票",
+      "导出",
+      "刷新",
+      "抵扣状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索采购发票"
+    ],
+    "columnHeaders": [
+      "发票号 / 类型",
+      "开票日期",
+      "供应商",
+      "价税合计",
+      "税率",
+      "分摊订单",
+      "状态",
+      "抵扣状态",
+      "登记时间",
+      "登记人",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-018",
+    "category": "供应链",
+    "group": "采购管理",
+    "name": "采购申请",
+    "url": "https://risemap.cn/purchase/requests",
+    "evidence": "173-rm-018-loaded",
+    "headings": [
+      "采购申请"
+    ],
+    "buttons": [
+      "下一步操作 采购待办池",
+      "申请列表",
+      "物料明细",
+      "新建申请",
+      "导入/导出",
+      "刷新",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索申请编号、标题...",
+      "开始日期",
+      "结束日期"
+    ],
+    "columnHeaders": [
+      "申请编号",
+      "申请标题",
+      "优先级",
+      "关联项目",
+      "关联客户",
+      "负责人",
+      "物料数",
+      "总数量",
+      "预估含税金额",
+      "币种",
+      "期望到货日期",
+      "建议供应商",
+      "采购原因",
+      "备注",
+      "状态",
+      "申请日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-019",
+    "category": "供应链",
+    "group": "采购管理",
+    "name": "采购待办池",
+    "url": "https://risemap.cn/purchase/pending-pool",
+    "evidence": "175-rm-019-loaded",
+    "headings": [
+      "采购待办池",
+      "使用提示"
+    ],
+    "buttons": [
+      "下一步操作 询价管理",
+      "待办列表",
+      "分组视图",
+      "批量创建订单",
+      "批量生成询价单",
+      "智能拆分",
+      "批量指定供应商",
+      "批量暂缓",
+      "批量关闭",
+      "导出",
+      "导入/导出任务",
+      "刷新",
+      "状态",
+      "优先级",
+      "部门",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "单号 / 物料编码 / 名称 / 型号 / 品牌",
+      "开始日期",
+      "结束日期"
+    ],
+    "columnHeaders": [
+      "池编号",
+      "来源单号",
+      "行号",
+      "申请人",
+      "申请部门",
+      "项目/工单",
+      "编码",
+      "物料名称",
+      "型号",
+      "规格",
+      "单位",
+      "申请数量",
+      "已锁定",
+      "已下单",
+      "剩余可下单",
+      "建议供应商",
+      "采购分类",
+      "需求日期",
+      "申请时间",
+      "优先级",
+      "状态",
+      "负责人",
+      "备注",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-020",
+    "category": "供应链",
+    "group": "采购管理",
+    "name": "询价管理",
+    "url": "https://risemap.cn/purchase/rfq",
+    "evidence": "177-rm-020-loaded",
+    "headings": [
+      "询价管理"
+    ],
+    "buttons": [
+      "下一步操作 采购订单",
+      "新建询价单",
+      "导出",
+      "导入/导出任务",
+      "刷新",
+      "范围",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索询价单号/标题/项目..."
+    ],
+    "columnHeaders": [
+      "询价单号",
+      "标题",
+      "来源",
+      "负责采购",
+      "供应商报价",
+      "物料数",
+      "状态",
+      "截止日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-021",
+    "category": "供应链",
+    "group": "采购管理",
+    "name": "采购订单",
+    "url": "https://risemap.cn/purchase/orders",
+    "evidence": "179-rm-021-loaded",
+    "headings": [
+      "采购订单"
+    ],
+    "buttons": [
+      "下一步操作 到货通知",
+      "订单列表",
+      "订单明细 0",
+      "新建采购单",
+      "导入/导出",
+      "付款申请",
+      "收票登记",
+      "刷新",
+      "范围",
+      "状态",
+      "筛选供应商...",
+      "开票",
+      "入库",
+      "付款",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索订单号..."
+    ],
+    "columnHeaders": [
+      "订单号",
+      "供应商",
+      "供应商单号",
+      "关联内容",
+      "期望到货日期",
+      "仓库",
+      "付款条件",
+      "币种",
+      "付款方式",
+      "结算日期",
+      "备注说明",
+      "应付产生方式",
+      "采购员",
+      "订单金额",
+      "已申请金额",
+      "开票进度",
+      "入库进度",
+      "付款进度",
+      "退货",
+      "状态",
+      "采购原因",
+      "下单日期",
+      "创建时间",
+      "更新时间",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-022",
+    "category": "供应链",
+    "group": "采购管理",
+    "name": "采购退换货",
+    "url": "https://risemap.cn/purchase/returns",
+    "evidence": "181-rm-022-loaded",
+    "headings": [
+      "采购退换货"
+    ],
+    "buttons": [
+      "新建退换货",
+      "导出",
+      "导入/导出任务",
+      "刷新",
+      "全部",
+      "退货退款",
+      "换货补货",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索退货单号、订单、供应商..."
+    ],
+    "columnHeaders": [
+      "退货单号",
+      "关联订单",
+      "供应商",
+      "处理方式",
+      "换货进度",
+      "预计补货日期",
+      "退货原因",
+      "物料数",
+      "退款 / 参考货值",
+      "状态",
+      "退货日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-023",
+    "category": "供应链",
+    "group": "采购管理",
+    "name": "供应商价格本",
+    "url": "https://risemap.cn/purchase/pricebook",
+    "evidence": "182-rm-023-recovered-loaded",
+    "headings": [
+      "供应商价格本"
+    ],
+    "buttons": [
+      "全部",
+      "草稿",
+      "生效中",
+      "已过期",
+      "已废弃",
+      "导出",
+      "导入/导出任务",
+      "新建价格本"
+    ],
+    "textboxes": [
+      "搜索价格本名称、供应商..."
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-024",
+    "category": "供应链",
+    "group": "入库管理",
+    "name": "全部入库单",
+    "url": "https://risemap.cn/inventory/inbound",
+    "evidence": "184-rm-024-loaded",
+    "headings": [
+      "全部入库单"
+    ],
+    "buttons": [
+      "新建期初入库",
+      "打印条码",
+      "导出",
+      "刷新",
+      "状态",
+      "类型",
+      "来源",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索入库单号/批次号..."
+    ],
+    "columnHeaders": [
+      "入库单号",
+      "类型",
+      "来源",
+      "入库类型",
+      "批次号",
+      "供应商/客户",
+      "仓库",
+      "入库日期",
+      "含税金额",
+      "状态",
+      "创建人",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-025",
+    "category": "供应链",
+    "group": "入库管理",
+    "name": "采购入库",
+    "url": "https://risemap.cn/inventory/inbound/purchase",
+    "evidence": "186-rm-025-loaded",
+    "headings": [
+      "采购入库"
+    ],
+    "buttons": [
+      "当前环节 采购入库",
+      "新建采购入库",
+      "打印条码",
+      "导出",
+      "刷新",
+      "状态",
+      "来源",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索入库单号/批次号..."
+    ],
+    "columnHeaders": [
+      "入库单号",
+      "类型",
+      "来源",
+      "入库类型",
+      "批次号",
+      "供应商/客户",
+      "仓库",
+      "入库日期",
+      "含税金额",
+      "状态",
+      "创建人",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-026",
+    "category": "供应链",
+    "group": "入库管理",
+    "name": "生产入库",
+    "url": "https://risemap.cn/inventory/inbound/production",
+    "evidence": "188-rm-026-loaded",
+    "headings": [
+      "生产入库"
+    ],
+    "buttons": [
+      "当前环节 生产入库",
+      "打印条码",
+      "导出",
+      "刷新",
+      "状态",
+      "来源",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索入库单号/批次号..."
+    ],
+    "columnHeaders": [
+      "入库单号",
+      "类型",
+      "来源",
+      "入库类型",
+      "批次号",
+      "供应商/客户",
+      "仓库",
+      "入库日期",
+      "含税金额",
+      "状态",
+      "创建人",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-027",
+    "category": "供应链",
+    "group": "入库管理",
+    "name": "其他入库",
+    "url": "https://risemap.cn/inventory/inbound/other",
+    "evidence": "190-rm-027-loaded",
+    "headings": [
+      "其他入库"
+    ],
+    "buttons": [
+      "新建其他入库",
+      "打印条码",
+      "导出",
+      "刷新",
+      "状态",
+      "来源",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索入库单号/批次号..."
+    ],
+    "columnHeaders": [
+      "入库单号",
+      "类型",
+      "来源",
+      "入库类型",
+      "批次号",
+      "供应商/客户",
+      "仓库",
+      "入库日期",
+      "含税金额",
+      "状态",
+      "创建人",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-028",
+    "category": "供应链",
+    "group": "入库管理",
+    "name": "期初入库",
+    "url": "https://risemap.cn/inventory/inbound/opening",
+    "evidence": "192-rm-028-loaded",
+    "headings": [
+      "期初入库"
+    ],
+    "buttons": [
+      "跳过期初入库",
+      "新建期初入库",
+      "打印条码",
+      "导出",
+      "刷新",
+      "状态",
+      "来源",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索入库单号/批次号..."
+    ],
+    "columnHeaders": [
+      "入库单号",
+      "类型",
+      "来源",
+      "入库类型",
+      "批次号",
+      "供应商/客户",
+      "仓库",
+      "入库日期",
+      "含税金额",
+      "状态",
+      "创建人",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-029",
+    "category": "供应链",
+    "group": "入库管理",
+    "name": "入库明细",
+    "url": "https://risemap.cn/inventory/inbound/details",
+    "evidence": "194-rm-029-loaded",
+    "headings": [
+      "入库明细"
+    ],
+    "buttons": [
+      "刷新",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "入库单号关键字...",
+      "物料编码/名称/规格",
+      "开始日期",
+      "结束日期"
+    ],
+    "columnHeaders": [
+      "序号",
+      "单据日期",
+      "入库单号",
+      "业务类型",
+      "仓库",
+      "供应商/对方",
+      "制单人",
+      "编码",
+      "物料名称",
+      "型号",
+      "单位",
+      "数量",
+      "含税单价",
+      "不含税单价",
+      "税率",
+      "含税金额",
+      "库位",
+      "批次编码",
+      "状态"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-030",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "库存总览",
+    "url": "https://risemap.cn/inventory/overview",
+    "evidence": "196-rm-030-loaded",
+    "headings": [
+      "库存总览",
+      "各仓库含税成本总价",
+      "分类库存数量",
+      "库存动态"
+    ],
+    "buttons": [
+      "总览",
+      "物料库存",
+      "在途库存",
+      "分类汇总",
+      "仓库视图",
+      "调拨管理",
+      "报损管理"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-031",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "不合格处理",
+    "url": "https://risemap.cn/inventory/ncr",
+    "evidence": "198-rm-031-loaded",
+    "headings": [
+      "不合格处理"
+    ],
+    "buttons": [
+      "导出",
+      "刷新",
+      "状态",
+      "处置",
+      "缺陷",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索 NCR 单号 / 物料..."
+    ],
+    "columnHeaders": [
+      "NCR 单号",
+      "来源单据",
+      "物料",
+      "供应商",
+      "不合格数量",
+      "缺陷等级",
+      "处置",
+      "状态",
+      "关联入库单",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-032",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "库存流水",
+    "url": "https://risemap.cn/inventory/flow",
+    "evidence": "200-rm-032-loaded",
+    "headings": [
+      "库存流水"
+    ],
+    "buttons": [
+      "库存流水",
+      "报表",
+      "导出",
+      "刷新",
+      "类型",
+      "仓库",
+      "流水号",
+      "日期",
+      "数量",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索物料名称/编码/型号...",
+      "事务号/流水号",
+      "批次/SN 码",
+      "开始日期",
+      "结束日期"
+    ],
+    "columnHeaders": [
+      "流水号",
+      "类型",
+      "业务类型",
+      "日期",
+      "仓库",
+      "库位",
+      "物料名称",
+      "型号",
+      "SKU编码",
+      "规格",
+      "批次",
+      "SN码",
+      "外部SN",
+      "操作人",
+      "数量",
+      "关联单号",
+      "对方"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-033",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "库存锁定",
+    "url": "https://risemap.cn/inventory/lock",
+    "evidence": "202-rm-033-loaded",
+    "headings": [
+      "库存锁定"
+    ],
+    "buttons": [
+      "业务锁库",
+      "手动锁库",
+      "物料锁定概况",
+      "锁库操作日志",
+      "新增业务锁库",
+      "导出",
+      "刷新",
+      "业务类型",
+      "状态",
+      "全部仓库",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索物料、锁定单号或来源单号..."
+    ],
+    "columnHeaders": [
+      "锁定单号",
+      "物料名称",
+      "型号",
+      "规格 / SKU",
+      "批次号",
+      "业务来源",
+      "来源单号",
+      "锁定数量",
+      "已释放",
+      "状态",
+      "业务状态",
+      "锁定日期",
+      "到期释放时间",
+      "剩余倒计时",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-034",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "库存盘点",
+    "url": "https://risemap.cn/inventory/check",
+    "evidence": "204-rm-034-loaded",
+    "headings": [
+      "库存盘点"
+    ],
+    "buttons": [
+      "新建盘点",
+      "导出",
+      "刷新",
+      "状态",
+      "类型",
+      "仓库",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索盘点单号/名称/仓库..."
+    ],
+    "columnHeaders": [
+      "盘点编号",
+      "盘点名称",
+      "盘点仓库",
+      "盘点类型",
+      "计划日期",
+      "实际日期",
+      "盘点进度",
+      "差异项",
+      "盘差",
+      "状态",
+      "锁账",
+      "操作人",
+      "创建时间",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-035",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "调拨与借出",
+    "url": "https://risemap.cn/inventory/transfer",
+    "evidence": "206-rm-035-loaded",
+    "headings": [
+      "调拨与借出"
+    ],
+    "buttons": [
+      "新建单据",
+      "导出",
+      "刷新",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索单号/仓库/单位..."
+    ],
+    "columnHeaders": [
+      "单号",
+      "业务类型",
+      "发出方",
+      "接收方",
+      "原因",
+      "物料数量",
+      "金额",
+      "状态",
+      "关联",
+      "日期/申请人",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-036",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "库存预警",
+    "url": "https://risemap.cn/inventory/alerts",
+    "evidence": "208-rm-036-loaded",
+    "headings": [
+      "库存预警"
+    ],
+    "buttons": [
+      "刷新",
+      "物料预警配置",
+      "预警设置",
+      "库存预警 暂无预警",
+      "交期预警 暂无预警",
+      "全部",
+      "低库存",
+      "超储预警",
+      "呆滞库存"
+    ],
+    "textboxes": [
+      "搜索物料名称、编号..."
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-037",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "报损单",
+    "url": "https://risemap.cn/inventory/damage",
+    "evidence": "210-rm-037-loaded",
+    "headings": [
+      "报损单"
+    ],
+    "buttons": [
+      "新建报损",
+      "导出",
+      "刷新",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索报损单号..."
+    ],
+    "columnHeaders": [
+      "报损单号",
+      "所在仓库",
+      "报损类型",
+      "报损物料",
+      "报损金额",
+      "经手人",
+      "状态",
+      "创建日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-038",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "SN码管理",
+    "url": "https://risemap.cn/inventory/sn-verify",
+    "evidence": "212-rm-038-loaded",
+    "headings": [
+      "SN码管理"
+    ],
+    "buttons": [
+      "SN码记录 0",
+      "SN码验证",
+      "刷新",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索SN码、产品、单号..."
+    ],
+    "columnHeaders": [
+      "#",
+      "供应商序列号",
+      "产品名称",
+      "入库单号",
+      "批次号",
+      "供应商",
+      "出库状态",
+      "出库单号"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-039",
+    "category": "供应链",
+    "group": "出库管理",
+    "name": "出库单列表",
+    "url": "https://risemap.cn/inventory/outbound",
+    "evidence": "214-rm-039-loaded",
+    "headings": [
+      "出库单列表"
+    ],
+    "buttons": [
+      "导出",
+      "刷新",
+      "业务类型",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索出库单号、客户、发货单号..."
+    ],
+    "columnHeaders": [
+      "出库单号",
+      "关联单号",
+      "销售单号",
+      "客户单号",
+      "往来单位",
+      "物料明细",
+      "仓库",
+      "出库日期",
+      "状态",
+      "物流信息",
+      "收入确认",
+      "操作员",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-040",
+    "category": "供应链",
+    "group": "出库管理",
+    "name": "生产出库",
+    "url": "https://risemap.cn/inventory/outbound/production",
+    "evidence": "216-rm-040-loaded",
+    "headings": [
+      "生产出库"
+    ],
+    "buttons": [
+      "下一步操作 生产入库",
+      "导出",
+      "刷新",
+      "出库类型",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索出库单号、客户、发货单号..."
+    ],
+    "columnHeaders": [
+      "出库单号",
+      "关联单号",
+      "销售单号",
+      "客户单号",
+      "往来单位",
+      "物料明细",
+      "仓库",
+      "出库日期",
+      "状态",
+      "物流信息",
+      "收入确认",
+      "操作员",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-041",
+    "category": "供应链",
+    "group": "出库管理",
+    "name": "其他出库",
+    "url": "https://risemap.cn/inventory/outbound/other",
+    "evidence": "218-rm-041-loaded",
+    "headings": [
+      "其他出库"
+    ],
+    "buttons": [
+      "新建其他出库",
+      "刷新",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索出库单号、出库原因..."
+    ],
+    "columnHeaders": [
+      "出库单号",
+      "出库类型",
+      "物料明细",
+      "出库日期",
+      "状态",
+      "出库原因",
+      "创建人",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-042",
+    "category": "供应链",
+    "group": "出库管理",
+    "name": "销售直接出库",
+    "url": "https://risemap.cn/inventory/outbound/sales-direct",
+    "evidence": "220-rm-042-loaded",
+    "headings": [
+      "销售直接出库"
+    ],
+    "buttons": [
+      "刷新",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索直接出库单号、订单号、客户单号、客户..."
+    ],
+    "columnHeaders": [
+      "直接出库单号",
+      "客户单号",
+      "客户",
+      "出库进度",
+      "状态",
+      "创建时间",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-043",
+    "category": "供应链",
+    "group": "出库管理",
+    "name": "待出库发货单",
+    "url": "https://risemap.cn/inventory/outbound/shipments",
+    "evidence": "222-rm-043-loaded",
+    "headings": [
+      "待出库发货单"
+    ],
+    "buttons": [
+      "下一步操作 出库单列表",
+      "刷新",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索发货单号、客户..."
+    ],
+    "columnHeaders": [
+      "发货单号",
+      "客户单号",
+      "客户",
+      "收货人",
+      "收货地址",
+      "含税金额",
+      "出库进度",
+      "状态",
+      "日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-044",
+    "category": "供应链",
+    "group": "出库管理",
+    "name": "采购退换货出库",
+    "url": "https://risemap.cn/inventory/outbound/purchase-returns",
+    "evidence": "224-rm-044-loaded",
+    "headings": [
+      "采购退换货出库"
+    ],
+    "buttons": [
+      "刷新",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索退货单号、采购单号、供应商..."
+    ],
+    "columnHeaders": [
+      "退货单号",
+      "供应商",
+      "退货地址",
+      "退货金额",
+      "出库进度",
+      "状态",
+      "日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-045",
+    "category": "供应链",
+    "group": "出库管理",
+    "name": "出库明细",
+    "url": "https://risemap.cn/inventory/outbound/details",
+    "evidence": "226-rm-045-loaded",
+    "headings": [
+      "出库明细"
+    ],
+    "buttons": [
+      "刷新",
+      "业务类型",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索出库单号...",
+      "物料名称/编码...",
+      "客户名称...",
+      "物流单号...",
+      "开始日期",
+      "结束日期"
+    ],
+    "columnHeaders": [
+      "序号",
+      "出库日期",
+      "出库单号",
+      "发货单号",
+      "业务类型",
+      "仓库",
+      "客户",
+      "制单人",
+      "物料编码",
+      "物料名称",
+      "型号",
+      "规格",
+      "单位",
+      "数量",
+      "含税单价",
+      "不含税单价",
+      "税率",
+      "含税金额",
+      "库位",
+      "物流单号",
+      "状态"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-046",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "框架销售合同",
+    "url": "https://risemap.cn/sales/contracts",
+    "evidence": "228-rm-046-loaded",
+    "headings": [
+      "框架销售合同"
+    ],
+    "buttons": [
+      "新建合同",
+      "导入/导出",
+      "刷新",
+      "范围",
+      "状态",
+      "订单状态",
+      "开票",
+      "发货",
+      "收款",
+      "负责人",
+      "客户联系人",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索合同编号、客户单号、合同名称、客户、项目名称..."
+    ],
+    "columnHeaders": [
+      "合同编号",
+      "客户单号",
+      "合同名称",
+      "合同类型",
+      "客户名称",
+      "关联项目",
+      "来源",
+      "合同总额",
+      "开票",
+      "已发货",
+      "已回款",
+      "状态",
+      "订单状态",
+      "下单笔数",
+      "已下单金额",
+      "红绿灯",
+      "签订日期",
+      "备注",
+      "创建时间",
+      "更新时间",
+      "开单人",
+      "负责人",
+      "联系人",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-047",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "销售订单",
+    "url": "https://risemap.cn/sales/orders",
+    "evidence": "230-rm-047-loaded",
+    "headings": [
+      "销售订单"
+    ],
+    "buttons": [
+      "下一步操作 销售发货单",
+      "订单列表",
+      "订单明细 0",
+      "新建销售订单",
+      "导入/导出",
+      "合并开票",
+      "刷新",
+      "范围",
+      "状态",
+      "开票",
+      "收款",
+      "发货建单",
+      "发货",
+      "负责人",
+      "客户联系人",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索订单编号/客户单号/订单名称/关联合同/客户..."
+    ],
+    "columnHeaders": [
+      "订单编号",
+      "客户单号",
+      "订单名称",
+      "关联合同",
+      "客户名称",
+      "联系电话",
+      "收货地址",
+      "所属项目",
+      "特价申请",
+      "业务状态",
+      "使用授信",
+      "付款条件",
+      "备注",
+      "订单金额",
+      "开票",
+      "发货",
+      "收款",
+      "订单状态",
+      "计划交货日期",
+      "负责人",
+      "联系人",
+      "开单人",
+      "创建时间",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-048",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "收款流水",
+    "url": "https://risemap.cn/sales/collection-flow",
+    "evidence": "232-rm-048-loaded",
+    "headings": [
+      "收款流水"
+    ],
+    "buttons": [
+      "全部 (0)",
+      "待分配 (0)",
+      "部分分配 (0)",
+      "已分配 (0)",
+      "刷新",
+      "全部客户"
+    ],
+    "textboxes": [
+      "搜索流水号或订单",
+      "按对方名称筛选",
+      "开始日期",
+      "结束日期"
+    ],
+    "columnHeaders": [
+      "流水号",
+      "往来单位/客户",
+      "收款日期",
+      "方式",
+      "收款账户",
+      "收款金额",
+      "已分配 / 未分配",
+      "状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-049",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "销售发货单",
+    "url": "https://risemap.cn/sales/outbound",
+    "evidence": "234-rm-049-loaded",
+    "headings": [
+      "销售发货单"
+    ],
+    "buttons": [
+      "下一步操作 待出库发货单",
+      "新建发货单",
+      "导出",
+      "导出任务",
+      "刷新",
+      "状态",
+      "范围",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索发货单号、关联订单、客户单号..."
+    ],
+    "columnHeaders": [
+      "发货单号",
+      "关联订单",
+      "客户单号",
+      "客户名称",
+      "收货人",
+      "状态",
+      "出库进度",
+      "含税金额",
+      "出库单",
+      "出库日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-050",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "销售退货",
+    "url": "https://risemap.cn/sales/returns",
+    "evidence": "236-rm-050-loaded",
+    "headings": [
+      "销售退货"
+    ],
+    "buttons": [
+      "新建退货",
+      "导出",
+      "导出任务",
+      "刷新",
+      "范围",
+      "状态",
+      "处理方式",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索退货单号..."
+    ],
+    "columnHeaders": [
+      "退货单号",
+      "关联订单",
+      "客户",
+      "退货原因",
+      "处理方式",
+      "退货金额",
+      "状态",
+      "附件",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-051",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "业绩银行",
+    "url": "https://risemap.cn/sales/performance-bank",
+    "evidence": "238-rm-051-loaded",
+    "headings": [
+      "业绩银行"
+    ],
+    "buttons": [
+      "所有",
+      "我负责的",
+      "下属负责的",
+      "我关注的",
+      "我的业绩银行",
+      "业绩流水",
+      "Rebook 记录",
+      "销售业绩确认",
+      "业绩分析",
+      "选择业绩人",
+      "全部",
+      "本年",
+      "Q1",
+      "Q2",
+      "Q3",
+      "Q4",
+      "本月"
+    ],
+    "textboxes": [],
+    "columnHeaders": [
+      "方向",
+      "销售订单号",
+      "客户",
+      "销售订单额",
+      "毛利率",
+      "业绩金额",
+      "计收比例",
+      "时间",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-052",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "价格策略",
+    "url": "https://risemap.cn/sales/pricing",
+    "evidence": "240-rm-052-loaded",
+    "headings": [
+      "价格策略"
+    ],
+    "buttons": [
+      "物料定价",
+      "价格组管理",
+      "框架协议价",
+      "特价审批",
+      "价格调整记录",
+      "价格历史",
+      "选中当前分组物料",
+      "批量调价",
+      "批量配置价格关系",
+      "分配价格组",
+      "批量导入",
+      "导入/导出任务",
+      "导出",
+      "刷新",
+      "全部部门",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索物料编码、物料名称、规格型号..."
+    ],
+    "columnHeaders": [
+      "物料编码",
+      "物料名称",
+      "规格型号",
+      "单位",
+      "部门",
+      "分类",
+      "价格组",
+      "成本价",
+      "最低售价",
+      "建议售价",
+      "目录价",
+      "状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-053",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "Goodwill订单",
+    "url": "https://risemap.cn/sales/goodwill",
+    "evidence": "242-rm-053-loaded",
+    "headings": [
+      "Goodwill订单"
+    ],
+    "buttons": [
+      "新建 Goodwill 订单",
+      "刷新",
+      "类型",
+      "状态",
+      "导出",
+      "导出任务",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索单号、客户、申请原因、创建人..."
+    ],
+    "columnHeaders": [
+      "Goodwill单号",
+      "客户名称",
+      "赠送类型",
+      "申请原因",
+      "物品种类/总数",
+      "状态",
+      "负责人",
+      "创建日期",
+      "创建人",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-054",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "销售团队",
+    "url": "https://risemap.cn/sales/organization",
+    "evidence": "244-rm-054-loaded",
+    "headings": [
+      "销售组织管理"
+    ],
+    "buttons": [
+      "新建团队"
+    ],
+    "textboxes": [
+      "搜索团队..."
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-055",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "销售目标",
+    "url": "https://risemap.cn/sales/target",
+    "evidence": "246-rm-055-loaded",
+    "headings": [
+      "销售目标管理"
+    ],
+    "buttons": [
+      "新建目标",
+      "个人目标",
+      "团队目标",
+      "2026年"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-056",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "销售发票",
+    "url": "https://risemap.cn/sales/invoices",
+    "evidence": "248-rm-056-loaded",
+    "headings": [
+      "销售发票"
+    ],
+    "buttons": [
+      "全部0",
+      "待审批0",
+      "已审批0",
+      "已开票0",
+      "已驳回0",
+      "已撤回0",
+      "导出",
+      "导出任务",
+      "刷新",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索申请号 / 客户 / 订单号..."
+    ],
+    "columnHeaders": [
+      "申请号",
+      "客户 / 销售方",
+      "模式",
+      "合并订单",
+      "价税合计",
+      "状态",
+      "申请时间",
+      "申请人",
+      "关联发票",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-057",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "客户管理",
+    "url": "https://risemap.cn/base/customers",
+    "evidence": "250-rm-057-loaded",
+    "headings": [
+      "客户管理"
+    ],
+    "buttons": [
+      "新增客户",
+      "导入/导出",
+      "批量操作",
+      "扫描名片",
+      "刷新",
+      "分类",
+      "主负责人",
+      "协同销售",
+      "客户类型",
+      "标签",
+      "状态",
+      "级别",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索客户名称..."
+    ],
+    "columnHeaders": [
+      "客户名称",
+      "主负责人",
+      "主要联系人电话",
+      "协同销售",
+      "信用额度",
+      "账期天数",
+      "红绿灯",
+      "最近跟进时间",
+      "拜访计划日期",
+      "最近交易时间",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-058",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "联系人管理",
+    "url": "https://risemap.cn/base/contacts",
+    "evidence": "252-rm-058-loaded",
+    "headings": [
+      "联系人管理"
+    ],
+    "buttons": [
+      "新增联系人",
+      "导入/导出",
+      "全部维护人",
+      "刷新联系人数据",
+      "切换为紧凑行高"
+    ],
+    "textboxes": [
+      "搜索姓名、公司、电话、邮箱",
+      "按职务筛选联系人"
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-059",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "销售报价",
+    "url": "https://risemap.cn/sales/quotations",
+    "evidence": "254-rm-059-loaded",
+    "headings": [
+      "销售报价"
+    ],
+    "buttons": [
+      "新建报价",
+      "导入/导出",
+      "刷新",
+      "范围",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索报价单号、客户..."
+    ],
+    "columnHeaders": [
+      "报价单号",
+      "客户名称",
+      "关联商机",
+      "开单人",
+      "负责人",
+      "物料数量",
+      "报价金额",
+      "整体折扣",
+      "状态",
+      "有效期至",
+      "创建日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-060",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "客户物料对照",
+    "url": "https://risemap.cn/base/customer-materials",
+    "evidence": "256-rm-060-loaded",
+    "headings": [
+      "客户物料对照"
+    ],
+    "buttons": [
+      "新增对照",
+      "导入/导出",
+      "刷新",
+      "按客户筛选"
+    ],
+    "textboxes": [
+      "搜索我方/客户的编码或名称..."
+    ],
+    "columnHeaders": [
+      "客户名称",
+      "我方物料编码",
+      "我方物料名称",
+      "客户物料编码",
+      "客户物料名称",
+      "备注",
+      "最近维护",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-061",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "商机管理",
+    "url": "https://risemap.cn/sales/opportunities",
+    "evidence": "258-rm-061-loaded",
+    "headings": [
+      "商机管理"
+    ],
+    "buttons": [
+      "新建商机",
+      "导入/导出",
+      "刷新",
+      "范围",
+      "阶段",
+      "来源",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索商机名称、客户..."
+    ],
+    "columnHeaders": [
+      "商机名称",
+      "客户名称",
+      "联系人姓名",
+      "职务",
+      "联系电话",
+      "邮箱",
+      "商机阶段",
+      "来源",
+      "商机描述",
+      "竞争对手",
+      "红绿灯",
+      "优先级",
+      "商机金额",
+      "成功率",
+      "预计成交日期",
+      "负责人",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-062",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "线索管理",
+    "url": "https://risemap.cn/sales/leads",
+    "evidence": "260-rm-062-loaded",
+    "headings": [
+      "线索管理"
+    ],
+    "buttons": [
+      "我的线索",
+      "我的团队",
+      "全部线索",
+      "线索公海",
+      "全部状态",
+      "全部来源",
+      "新建线索",
+      "导入/导出"
+    ],
+    "textboxes": [
+      "搜索公司名称、联系人、线索号..."
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-063",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "跟进记录",
+    "url": "https://risemap.cn/sales/follow-ups",
+    "evidence": "262-rm-063-loaded",
+    "headings": [
+      "跟进记录"
+    ],
+    "buttons": [
+      "范围",
+      "客户负责人",
+      "跟进状态",
+      "高级筛选",
+      "导出",
+      "新增跟进",
+      "全部",
+      "电话沟通",
+      "微信沟通",
+      "邮件往来",
+      "上门拜访",
+      "客户来访",
+      "线上会议",
+      "产品演示",
+      "方案讲解",
+      "商务谈判",
+      "其他",
+      "最新优先",
+      "+ 添加第一条跟进"
+    ],
+    "textboxes": [
+      "搜索客户、内容、商机..."
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-064",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "公海客户",
+    "url": "https://risemap.cn/sales/public-sea",
+    "evidence": "264-rm-064-loaded",
+    "headings": [
+      "公海客户"
+    ],
+    "buttons": [
+      "新建公海客户",
+      "批量操作",
+      "导入",
+      "导出",
+      "导入/导出任务",
+      "刷新",
+      "行业",
+      "来源",
+      "级别",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索客户名称..."
+    ],
+    "columnHeaders": [
+      "客户名称",
+      "行业",
+      "客户级别",
+      "联系人",
+      "所在城市",
+      "来源",
+      "预估价值",
+      "释放天数",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-065",
+    "category": "生产",
+    "group": "组装业务管理",
+    "name": "组装单",
+    "url": "https://risemap.cn/production/assembly",
+    "evidence": "266-rm-065-loaded",
+    "headings": [
+      "组装单"
+    ],
+    "buttons": [
+      "全部(0)",
+      "草稿",
+      "审批中",
+      "待领料",
+      "组装中",
+      "已完工",
+      "已驳回",
+      "已取消",
+      "新建组装单",
+      "导出",
+      "导入/导出任务",
+      "刷新",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索单号/成品/BOM/来源订单..."
+    ],
+    "columnHeaders": [
+      "组装单号",
+      "成品",
+      "BOM",
+      "计划数量",
+      "合格数量",
+      "不合格数量",
+      "物料种数",
+      "物料成本",
+      "来源订单",
+      "创建日期",
+      "创建人",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-066",
+    "category": "生产",
+    "group": "组装业务管理",
+    "name": "缺料待办",
+    "url": "https://risemap.cn/production/shortages",
+    "evidence": "268-rm-066-loaded",
+    "headings": [
+      "缺料待办"
+    ],
+    "buttons": [],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-067",
+    "category": "生产",
+    "group": "组装业务管理",
+    "name": "领料单",
+    "url": "https://risemap.cn/production/requisitions",
+    "evidence": "270-rm-067-loaded",
+    "headings": [
+      "领料单"
+    ],
+    "buttons": [
+      "全部(0)",
+      "审批中",
+      "已确认",
+      "已驳回",
+      "已作废",
+      "新建领料单",
+      "导出",
+      "导入/导出任务",
+      "刷新",
+      "全部类型",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索领料单号/成品/来源单..."
+    ],
+    "columnHeaders": [
+      "领料单号",
+      "类型",
+      "成品",
+      "来源单",
+      "物料种类",
+      "数量",
+      "金额",
+      "经手人",
+      "日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-068",
+    "category": "生产",
+    "group": "组装业务管理",
+    "name": "补料单",
+    "url": "https://risemap.cn/production/material-supplies",
+    "evidence": "272-rm-068-loaded",
+    "headings": [
+      "补料单"
+    ],
+    "buttons": [
+      "全部(0)",
+      "审批中(0)",
+      "已确认(0)",
+      "已驳回(0)",
+      "已作废(0)",
+      "新建补料单",
+      "导出",
+      "导入/导出任务",
+      "刷新",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索补料单号/成品/组装单..."
+    ],
+    "columnHeaders": [
+      "补料单号",
+      "成品",
+      "来源单",
+      "物料种数",
+      "数量",
+      "金额",
+      "经手人",
+      "日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-069",
+    "category": "生产",
+    "group": "组装业务管理",
+    "name": "退料单",
+    "url": "https://risemap.cn/production/material-returns",
+    "evidence": "274-rm-069-loaded",
+    "headings": [
+      "退料单"
+    ],
+    "buttons": [
+      "全部(0)",
+      "审批中(0)",
+      "已确认(0)",
+      "已驳回(0)",
+      "已作废(0)",
+      "新建退料单",
+      "导出",
+      "导入/导出任务",
+      "刷新",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索退料单号/成品/组装单..."
+    ],
+    "columnHeaders": [
+      "退料单号",
+      "成品",
+      "来源单",
+      "仓库",
+      "物料种数",
+      "数量",
+      "金额",
+      "经手人",
+      "日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-070",
+    "category": "生产",
+    "group": "组装业务管理",
+    "name": "拆解单",
+    "url": "https://risemap.cn/production/disassembly",
+    "evidence": "276-rm-070-loaded",
+    "headings": [
+      "拆解单"
+    ],
+    "buttons": [
+      "全部(0)",
+      "草稿",
+      "审批中",
+      "待领料",
+      "拆解中",
+      "已完工",
+      "已入库",
+      "已驳回",
+      "新建拆解单",
+      "导出",
+      "导入/导出任务",
+      "刷新",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索拆解单号/成品/BOM..."
+    ],
+    "columnHeaders": [
+      "拆解单号",
+      "成品",
+      "BOM",
+      "数量",
+      "原因",
+      "回收价值",
+      "报废",
+      "经手人",
+      "日期"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-071",
+    "category": "生产",
+    "group": "组装业务管理",
+    "name": "换件单",
+    "url": "https://risemap.cn/production/rework",
+    "evidence": "278-rm-071-loaded",
+    "headings": [
+      "换件单"
+    ],
+    "buttons": [
+      "全部(0)",
+      "草稿",
+      "审批中",
+      "待领料",
+      "换件中",
+      "已完工",
+      "已入库",
+      "已驳回",
+      "新建换件单",
+      "导出",
+      "导入/导出任务",
+      "刷新",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索换件单号/成品/物料编码..."
+    ],
+    "columnHeaders": [
+      "换件单号",
+      "成品",
+      "换件内容",
+      "改制数量",
+      "原因",
+      "新件成本",
+      "回收价值",
+      "成本变化",
+      "经手人",
+      "日期"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-072",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "进入图纸管理上手指南",
+    "url": "https://risemap.cn/drawing/guide",
+    "evidence": "280-rm-072-loaded",
+    "headings": [
+      "图纸管理上手指南",
+      "完整业务流程",
+      "先理解一张图纸的完整生命周期",
+      "操作步骤"
+    ],
+    "buttons": [
+      "切换到设计 / 工艺",
+      "切换到审核 / 会审",
+      "切换到文控管理员",
+      "切换到使用部门",
+      "01 图号建档 建立唯一档案",
+      "02 版本提交 上传图纸文件",
+      "03 会审审批 整改并通过",
+      "04 图纸发布 形成有效版本",
+      "05 变更执行 评估影响范围",
+      "06 发放追溯 回执与作废",
+      "快速开始 1",
+      "图号与版本 2",
+      "会审与整改 1",
+      "发布管理 0",
+      "变更管理 1",
+      "发放与回执 0",
+      "关联与客户图纸 2",
+      "常见问题 0",
+      "标记已掌握",
+      "打开图纸总览"
+    ],
+    "textboxes": [
+      "搜索图纸指南"
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-073",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "图纸总览",
+    "url": "https://risemap.cn/drawing/overview",
+    "evidence": "282-rm-073-loaded",
+    "headings": [
+      "图纸总览"
+    ],
+    "buttons": [
+      "搜索",
+      "新建图号",
+      "图纸总数 0",
+      "已发布图纸 0",
+      "待审核图纸 0",
+      "待会审评审 0",
+      "待发布图纸 0",
+      "变更中图纸 0",
+      "本月新增/变更 0",
+      "上传图纸版本",
+      "发起图纸评审",
+      "发起图纸变更",
+      "查看待我审核",
+      "查看待发布图纸",
+      "查看版本风险",
+      "查看全部"
+    ],
+    "textboxes": [
+      "搜索图纸"
+    ],
+    "columnHeaders": [
+      "图号",
+      "图纸名称",
+      "风险类型",
+      "当前版本",
+      "关联业务",
+      "提醒时间",
+      "操作"
+    ],
+    "links": [
+      "图纸管理"
+    ],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-074",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "图号档案",
+    "url": "https://risemap.cn/drawing/archives",
+    "evidence": "284-rm-074-loaded",
+    "headings": [
+      "图号档案"
+    ],
+    "buttons": [
+      "新建图号",
+      "批量导入",
+      "导出",
+      "任务列表",
+      "刷新",
+      "新建文件夹",
+      "收起",
+      "全部图纸 0"
+    ],
+    "textboxes": [
+      "搜索文件夹..."
+    ],
+    "columnHeaders": [],
+    "links": [
+      "图纸管理"
+    ],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-075",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "图纸评审",
+    "url": "https://risemap.cn/drawing/reviews",
+    "evidence": "286-rm-075-loaded",
+    "headings": [
+      "图纸评审"
+    ],
+    "buttons": [
+      "全部 (0)",
+      "草稿",
+      "待会审",
+      "会审中",
+      "整改中",
+      "待审批",
+      "审批中",
+      "审批通过",
+      "审批驳回",
+      "审批否决",
+      "评审已完成",
+      "已反审核",
+      "已作废",
+      "新建评审",
+      "导出",
+      "刷新",
+      "专业类别",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索评审编号、图号、图纸名称..."
+    ],
+    "columnHeaders": [
+      "评审编号",
+      "图号",
+      "图纸名称",
+      "版本",
+      "专业",
+      "状态",
+      "问题数",
+      "发起人",
+      "截止日期",
+      "操作"
+    ],
+    "links": [
+      "图纸管理"
+    ],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-076",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "图纸发布",
+    "url": "https://risemap.cn/drawing/releases",
+    "evidence": "288-rm-076-loaded",
+    "headings": [
+      "图纸发布"
+    ],
+    "buttons": [
+      "全部",
+      "待发布",
+      "检查中",
+      "检查通过",
+      "检查未通过",
+      "待审批",
+      "审批通过",
+      "已退回",
+      "发布执行中",
+      "已发布",
+      "已撤销",
+      "发布失败",
+      "已取消",
+      "查看已发布记录",
+      "导出",
+      "刷新",
+      "审核状态",
+      "重大变更",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "发布单号 / 图号 / 图纸名称"
+    ],
+    "columnHeaders": [
+      "图号",
+      "图纸名称",
+      "待发布版本",
+      "当前生效版本",
+      "审核状态",
+      "发布状态",
+      "是否重大变更",
+      "审核通过时间",
+      "建议生效日期",
+      "影响对象数",
+      "操作"
+    ],
+    "links": [
+      "图纸管理"
+    ],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-077",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "图纸变更",
+    "url": "https://risemap.cn/drawing/changes",
+    "evidence": "290-rm-077-loaded",
+    "headings": [
+      "图纸变更"
+    ],
+    "buttons": [
+      "发起变更",
+      "导出",
+      "刷新",
+      "状态",
+      "变更类型",
+      "变更等级",
+      "更多筛选",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "变更单号 / 图号 / 图纸名称"
+    ],
+    "columnHeaders": [
+      "变更单号",
+      "图号",
+      "图纸名称",
+      "原版本",
+      "新版本",
+      "变更类型",
+      "变更等级",
+      "是否紧急",
+      "状态",
+      "申请人",
+      "申请时间",
+      "审批时间",
+      "操作"
+    ],
+    "links": [
+      "图纸管理"
+    ],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-078",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "图纸发放记录",
+    "url": "https://risemap.cn/drawing/distribution",
+    "evidence": "292-rm-078-loaded",
+    "headings": [
+      "图纸发放记录"
+    ],
+    "buttons": [
+      "新建发放单",
+      "导出",
+      "刷新",
+      "状态",
+      "确认状态",
+      "接收类型",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "发放单号 / 图号 / 图纸名称"
+    ],
+    "columnHeaders": [
+      "发放单号",
+      "图号",
+      "图纸名称",
+      "发放版本",
+      "接收对象",
+      "接收类型",
+      "发放方式",
+      "发放状态",
+      "确认状态",
+      "回执状态",
+      "发放人",
+      "发放时间",
+      "风险",
+      "操作"
+    ],
+    "links": [
+      "图纸管理"
+    ],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-079",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "图纸关联查询",
+    "url": "https://risemap.cn/drawing/association",
+    "evidence": "294-rm-079-loaded",
+    "headings": [
+      "图纸关联查询",
+      "查到图号后可查看的关联内容",
+      "最近查询记录"
+    ],
+    "buttons": [
+      "展开高级筛选",
+      "重置",
+      "查询"
+    ],
+    "textboxes": [
+      "图号",
+      "图纸名称",
+      "当前版本",
+      "关联物料"
+    ],
+    "columnHeaders": [
+      "图号",
+      "图纸名称",
+      "查询时间",
+      "操作"
+    ],
+    "links": [
+      "图纸管理"
+    ],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-080",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "客户图纸",
+    "url": "https://risemap.cn/drawing/customer",
+    "evidence": "296-rm-080-loaded",
+    "headings": [
+      "客户图纸管理"
+    ],
+    "buttons": [
+      "接收客户图纸",
+      "刷新",
+      "客户名称",
+      "密级",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "客户图号 / 图纸名称"
+    ],
+    "columnHeaders": [
+      "客户图号",
+      "图纸名称",
+      "客户名称",
+      "密级",
+      "使用范围",
+      "版本",
+      "状态",
+      "接收日期",
+      "操作"
+    ],
+    "links": [
+      "图纸管理"
+    ],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-081",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "进入委外管理上手指南",
+    "url": "https://risemap.cn/subcontract/guide",
+    "evidence": "298-rm-081-loaded",
+    "headings": [
+      "委外管理上手指南",
+      "完整业务流程",
+      "准备可用的委外供应商",
+      "操作步骤"
+    ],
+    "buttons": [
+      "切换到委外业务员",
+      "切换到仓库人员",
+      "切换到质检 / 收货",
+      "切换到财务人员",
+      "01 准备供应商 档案与加工能力",
+      "02 创建委外订单 提交并完成审核",
+      "03 委外发料 甲供料订单",
+      "04 回厂验收 良品与不良品",
+      "05 异常处理 退料与赔偿",
+      "06 对账结算 生成应付",
+      "快速开始 2",
+      "订单管理 2",
+      "发料管理 1",
+      "回厂与质检 1",
+      "退料与赔偿 2",
+      "对账结算 1",
+      "库存与报表 2",
+      "常见问题 2",
+      "标记已掌握",
+      "准备可用的委外供应商",
+      "先判断订单属于哪种供料方式",
+      "打开委外供应商"
+    ],
+    "textboxes": [
+      "搜索委外指南"
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-082",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外看板",
+    "url": "https://risemap.cn/subcontract",
+    "evidence": "300-rm-082-loaded",
+    "headings": [
+      "委外业务全景"
+    ],
+    "buttons": [
+      "新建委外订单",
+      "进行中订单 0 审批后到对账前",
+      "待发料订单 0 甲供料 · 剩余可发",
+      "待回厂订单 0 供应商在加工中",
+      "待对账订单 0 已完工 · 尚未对账",
+      "逾期订单 0 超过期望交期",
+      "全部",
+      "委外订单",
+      "委外发料",
+      "委外回厂",
+      "委外对账",
+      "委外供应商"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-083",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外订单",
+    "url": "https://risemap.cn/subcontract/orders",
+    "evidence": "302-rm-083-loaded",
+    "headings": [
+      "委外订单"
+    ],
+    "buttons": [
+      "进行中订单 0 单 审核后到对账前",
+      "待审核 0 单 等待审核处理",
+      "逾期未完工 0 单 已超过计划交期",
+      "待对账金额 ¥0 订单金额减已对账金额",
+      "新建委外订单",
+      "导出",
+      "导入",
+      "导入导出任务",
+      "刷新",
+      "范围",
+      "状态",
+      "筛选供应商...",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索订单号 / 供应商 / 加工件名称"
+    ],
+    "columnHeaders": [
+      "订单号",
+      "供应商",
+      "关联",
+      "付款条件",
+      "加工费",
+      "发料进度",
+      "回厂进度",
+      "对账进度",
+      "交期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-084",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外发料",
+    "url": "https://risemap.cn/subcontract/issues",
+    "evidence": "304-rm-084-loaded",
+    "headings": [
+      "委外发料"
+    ],
+    "buttons": [
+      "全部发料单 0 单 已发出/已签收 0 单",
+      "待审核 0 单 等待仓库主管审核",
+      "待发料 0 单 审核通过等待执行",
+      "待签收 0 单 已发出待供应商确认",
+      "新建发料单",
+      "导出",
+      "导出记录",
+      "刷新",
+      "状态",
+      "筛选供应商...",
+      "发料类型",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索发料单号 / 委外订单号 / 供应商 / 物料"
+    ],
+    "columnHeaders": [
+      "发料单号",
+      "供应商",
+      "关联委外订单",
+      "交接时间",
+      "经办人",
+      "物料概况",
+      "发料数量",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-085",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外回厂",
+    "url": "https://risemap.cn/subcontract/receives",
+    "evidence": "306-rm-085-loaded",
+    "headings": [
+      "委外回厂"
+    ],
+    "buttons": [
+      "回厂记录总数 0 单 不含已作废记录",
+      "待入库 0 单 入库单等待仓库执行",
+      "已入库 0 单 关联入库单已完成",
+      "导出",
+      "导出记录",
+      "刷新",
+      "状态",
+      "筛选供应商...",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索回厂记录号 / 委外订单号 / 入库单号 / 供应商 / 加工件"
+    ],
+    "columnHeaders": [
+      "回厂记录号",
+      "供应商",
+      "关联委外订单",
+      "回厂日期",
+      "质检员",
+      "加工件概况",
+      "验收结果",
+      "关联入库单",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-086",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外退料",
+    "url": "https://risemap.cn/subcontract/returns",
+    "evidence": "308-rm-086-loaded",
+    "headings": [
+      "委外退料"
+    ],
+    "buttons": [
+      "有效退料单 0 单 不含已作废单据",
+      "待入库 0 单 已生成入库单，等待仓库入库",
+      "已入库 0 单 退回物料已完成入库",
+      "新建退料单",
+      "导出",
+      "导出记录",
+      "刷新",
+      "状态",
+      "筛选供应商...",
+      "退料原因",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索退料单号 / 委外订单号 / 供应商 / 物料"
+    ],
+    "columnHeaders": [
+      "退料单号",
+      "供应商",
+      "关联委外订单",
+      "退料日期",
+      "物料概况",
+      "退料结果",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-087",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外对账",
+    "url": "https://risemap.cn/subcontract/reconciliation",
+    "evidence": "310-rm-087-loaded",
+    "headings": [
+      "委外对账"
+    ],
+    "buttons": [
+      "待对账池 0",
+      "对账单 0",
+      "供应商 (0)",
+      "委外订单 (0)",
+      "回厂批次 (0)",
+      "刷新",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索供应商"
+    ],
+    "columnHeaders": [
+      "供应商",
+      "订单数",
+      "涉及委外订单",
+      "回厂单数",
+      "待对账金额",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-088",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外供应商",
+    "url": "https://risemap.cn/subcontract/suppliers",
+    "evidence": "312-rm-088-loaded",
+    "headings": [
+      "委外供应商"
+    ],
+    "buttons": [
+      "全部工艺能力"
+    ],
+    "textboxes": [
+      "搜索供应商名称 / 编号"
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-089",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外库存",
+    "url": "https://risemap.cn/inventory/subcontract-stock",
+    "evidence": "314-rm-089-loaded",
+    "headings": [
+      "委外厂库存"
+    ],
+    "buttons": [
+      "库存管理",
+      "去发料",
+      "超 30 天 SKU 0 点击仅看超期",
+      "全部",
+      "导出"
+    ],
+    "textboxes": [
+      "搜索委外订单 / 物料 / 规格 / 供应商"
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-090",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "批次追溯",
+    "url": "https://risemap.cn/subcontract/traces",
+    "evidence": "316-rm-090-loaded",
+    "headings": [
+      "委外批次追溯"
+    ],
+    "buttons": [
+      "正向追溯 召回用 材料批次 → 用了它的成品",
+      "反向追溯 成品批号 → 它用了哪些材料",
+      "追溯",
+      "导出"
+    ],
+    "textboxes": [
+      "输入材料批次号"
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-091",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外未交",
+    "url": "https://risemap.cn/subcontract/reports/undelivered",
+    "evidence": "318-rm-091-loaded",
+    "headings": [
+      "委外未交明细表"
+    ],
+    "buttons": [
+      "超期行数 / 最长 0 / 0天 点击仅看超期",
+      "导出",
+      "刷新",
+      "超期",
+      "筛选供应商...",
+      "工艺",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索订单号 / 物料 / 规格 / 供应商"
+    ],
+    "columnHeaders": [
+      "委外订单 / 供应商",
+      "加工件",
+      "规格",
+      "工艺",
+      "订单量",
+      "已回(良/不良)",
+      "未交",
+      "未交金额",
+      "期望交期",
+      "超期",
+      "订单状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-092",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外进货",
+    "url": "https://risemap.cn/subcontract/reports/receipts",
+    "evidence": "320-rm-092-loaded",
+    "headings": [
+      "委外进货明细表"
+    ],
+    "buttons": [
+      "导出",
+      "刷新",
+      "筛选供应商...",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索回厂单号 / 订单号 / 物料编码 / 物料名称",
+      "开始日期",
+      "结束日期"
+    ],
+    "columnHeaders": [
+      "回厂日期",
+      "回厂单号",
+      "委外订单",
+      "供应商",
+      "物料编码",
+      "物料名称",
+      "规格",
+      "单位",
+      "回厂量",
+      "良品",
+      "不良",
+      "良率",
+      "单价",
+      "金额",
+      "入库仓",
+      "批次号",
+      "检验员",
+      "状态"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-093",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外对账单",
+    "url": "https://risemap.cn/subcontract/reports/reconciliation-statement",
+    "evidence": "322-rm-093-loaded",
+    "headings": [
+      "委外对账单(报表)"
+    ],
+    "buttons": [
+      "导出",
+      "刷新",
+      "状态",
+      "筛选供应商...",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索对账单号 / 应付单号 / 关联订单号",
+      "开始日期",
+      "结束日期"
+    ],
+    "columnHeaders": [
+      "对账单号",
+      "供应商",
+      "账期",
+      "行数",
+      "加工费",
+      "补料",
+      "扣款",
+      "应付",
+      "关联应付",
+      "状态"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-094",
+    "category": "项目",
+    "group": "项目管理",
+    "name": "项目中心",
+    "url": "https://risemap.cn/project/list",
+    "evidence": "137-rm-094-loaded",
+    "headings": [
+      "项目中心"
+    ],
+    "buttons": [
+      "表格",
+      "甘特图",
+      "项目分析中心",
+      "新建项目",
+      "全部",
+      "待执行",
+      "进行中",
+      "已暂停",
+      "已完工",
+      "已结算",
+      "已终止",
+      "已归档",
+      "导入/导出",
+      "按状态",
+      "按负责人",
+      "按进度",
+      "按客户",
+      "刷新",
+      "范围",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索项目 / 客户..."
+    ],
+    "columnHeaders": [
+      "项目名称",
+      "客户名称",
+      "项目经理",
+      "项目周期",
+      "项目进度",
+      "预计营收",
+      "预算金额",
+      "合同金额",
+      "总成本",
+      "毛利率",
+      "回款率",
+      "创建时间",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-095",
+    "category": "项目",
+    "group": "项目管理",
+    "name": "项目分析中心",
+    "url": "https://risemap.cn/project/analytics",
+    "evidence": "139-rm-095-loaded",
+    "headings": [
+      "项目分析中心",
+      "项目营收与成本对比",
+      "成本构成",
+      "费用流向图",
+      "利润率排名"
+    ],
+    "buttons": [
+      "全部项目",
+      "单个项目"
+    ],
+    "textboxes": [
+      "请选择日期"
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-096",
+    "category": "项目",
+    "group": "项目管理",
+    "name": "任务管理",
+    "url": "https://risemap.cn/project/tasks",
+    "evidence": "141-rm-096-loaded",
+    "headings": [
+      "任务管理"
+    ],
+    "buttons": [
+      "导出",
+      "导出任务",
+      "新建任务",
+      "全部",
+      "待处理",
+      "进行中",
+      "已完成",
+      "已逾期",
+      "列表",
+      "按人员",
+      "甘特图",
+      "项目",
+      "人员",
+      "优先级",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索任务/人员/项目..."
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-097",
+    "category": "项目",
+    "group": "项目管理",
+    "name": "工时管理",
+    "url": "https://risemap.cn/project/timesheet",
+    "evidence": "143-rm-097-loaded",
+    "headings": [
+      "工时管理",
+      "工时分布（含闲置）"
+    ],
+    "buttons": [
+      "导出",
+      "导出任务",
+      "填报工时",
+      "本周",
+      "工时记录 0",
+      "闲置工时统计 0",
+      "全部项目",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "请选择日期",
+      "搜索..."
+    ],
+    "columnHeaders": [
+      "工时单号",
+      "日期",
+      "人员",
+      "关联项目",
+      "工作内容",
+      "工时",
+      "类型",
+      "费率",
+      "工时成本",
+      "状态"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-098",
+    "category": "项目",
+    "group": "项目管理",
+    "name": "项目配置中心",
+    "url": "https://risemap.cn/project/settings",
+    "evidence": "145-rm-098-loaded",
+    "headings": [
+      "项目配置中心"
+    ],
+    "buttons": [
+      "计划模板",
+      "交付包模板",
+      "工时成本配置",
+      "新建模板",
+      "全部分类"
+    ],
+    "textboxes": [
+      "搜索模板名称、描述"
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-099",
+    "category": "行政",
+    "group": "审批中心",
+    "name": "我的审批",
+    "url": "https://risemap.cn/workflow/approval-center",
+    "evidence": "324-rm-099-loaded",
+    "headings": [
+      "我的审批"
+    ],
+    "buttons": [
+      "待我审批",
+      "我已审批",
+      "全部",
+      "待处理",
+      "已超时",
+      "有催办",
+      "刷新",
+      "全部时间",
+      "重置",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索任务名称 / 流程标题",
+      "搜索发起人"
+    ],
+    "columnHeaders": [
+      "任务编号",
+      "任务名称",
+      "流程名称",
+      "流程标题",
+      "发起人",
+      "创建时间",
+      "到期时间",
+      "催办",
+      "状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-100",
+    "category": "行政",
+    "group": "审批中心",
+    "name": "抄送我的",
+    "url": "https://risemap.cn/workflow/cc-to-me",
+    "evidence": "326-rm-100-loaded",
+    "headings": [
+      "抄送我的"
+    ],
+    "buttons": [
+      "全部",
+      "未读",
+      "已读",
+      "全部标记已读",
+      "刷新",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索流程标题 / 编号",
+      "搜索发起人"
+    ],
+    "columnHeaders": [
+      "阅读状态",
+      "抄送编号",
+      "流程名称 / 标题",
+      "发起人",
+      "抄送时间",
+      "当前进度",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-101",
+    "category": "行政",
+    "group": "审批中心",
+    "name": "我发起的",
+    "url": "https://risemap.cn/workflow/my-instances",
+    "evidence": "328-rm-101-loaded",
+    "headings": [
+      "我发起的"
+    ],
+    "buttons": [
+      "全部 0",
+      "草稿 0",
+      "进行中 0",
+      "已通过 0",
+      "已驳回 0",
+      "已反审核 0",
+      "已取消 0",
+      "已暂停 0",
+      "刷新",
+      "审批类型",
+      "全部优先级",
+      "重置",
+      "发起审批",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索审批编号/标题",
+      "请选择日期"
+    ],
+    "columnHeaders": [
+      "审批编号",
+      "审批标题",
+      "审批类型",
+      "优先级",
+      "状态",
+      "当前节点",
+      "发起时间",
+      "结束时间",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-102",
+    "category": "行政",
+    "group": "审批中心",
+    "name": "行政申请",
+    "url": "https://risemap.cn/workflow/admin-applications",
+    "evidence": "330-rm-102-loaded",
+    "headings": [
+      "行政申请",
+      "考勤假期",
+      "行政事务",
+      "用车资质"
+    ],
+    "buttons": [
+      "加班申请 登记加班时间与补偿方式",
+      "请假申请 年假、事假、病假等假期",
+      "出差申请 填写行程与出差计划",
+      "补签申请 补录异常考勤打卡",
+      "报销申请 提交员工费用报销",
+      "用章申请 公章、合同章等用印",
+      "礼品申请 客户礼赠与内部礼品领用",
+      "物料领取 办公及行政物料领用",
+      "公司用车 申请公司车辆与行程",
+      "私车公用 登记私车公用与预计里程",
+      "资质续期 证照续期、变更与复审"
+    ],
+    "textboxes": [
+      "搜索申请事项或流程名称"
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-103",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "公司通知",
+    "url": "https://risemap.cn/ops/notices",
+    "evidence": "332-rm-103-loaded",
+    "headings": [
+      "公司通知"
+    ],
+    "buttons": [
+      "发布通知",
+      "导出",
+      "刷新",
+      "类别",
+      "范围",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索主题/发布人/部门..."
+    ],
+    "columnHeaders": [
+      "编号",
+      "主题",
+      "状态",
+      "类别 / 优先级",
+      "接收范围",
+      "发布部门 / 发布人",
+      "操作人",
+      "发布时间",
+      "阅读情况",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-104",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "用章管理",
+    "url": "https://risemap.cn/ops/seals",
+    "evidence": "334-rm-104-loaded",
+    "headings": [
+      "用章管理"
+    ],
+    "buttons": [
+      "用章申请 (0)",
+      "待盖章任务",
+      "印章台账 (0)",
+      "用章统计",
+      "新建用章申请",
+      "导出",
+      "刷新",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索申请人/文件/印章类型..."
+    ],
+    "columnHeaders": [
+      "申请编号",
+      "公司抬头",
+      "申请人",
+      "印章类型",
+      "文件名称",
+      "用章事由",
+      "状态",
+      "申请日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-105",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "会议纪要",
+    "url": "https://risemap.cn/ops/meetings",
+    "evidence": "336-rm-105-loaded",
+    "headings": [
+      "会议纪要"
+    ],
+    "buttons": [
+      "新建会议纪要",
+      "导出",
+      "刷新",
+      "类型",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索会议..."
+    ],
+    "columnHeaders": [
+      "会议主题",
+      "日期/时间",
+      "主持人",
+      "参会人数",
+      "待办",
+      "状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-106",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "工作汇报",
+    "url": "https://risemap.cn/ops/reports",
+    "evidence": "338-rm-106-loaded",
+    "headings": [
+      "工作汇报"
+    ],
+    "buttons": [
+      "工作汇报",
+      "汇报规则",
+      "新建汇报",
+      "导出",
+      "刷新",
+      "类型",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索汇报..."
+    ],
+    "columnHeaders": [
+      "汇报标题",
+      "提交人",
+      "汇报类型",
+      "汇报周期",
+      "状态",
+      "提交时间",
+      "审批评分",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-107",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "文档中心",
+    "url": "https://risemap.cn/ops/docs",
+    "evidence": "340-rm-107-loaded",
+    "headings": [
+      "文档中心"
+    ],
+    "buttons": [
+      "新建文件夹",
+      "上传文件夹",
+      "上传文件",
+      "收藏",
+      "按日期"
+    ],
+    "textboxes": [
+      "搜索文件名..."
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-108",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "固定资产",
+    "url": "https://risemap.cn/ops/assets",
+    "evidence": "342-rm-108-loaded",
+    "headings": [
+      "固定资产"
+    ],
+    "buttons": [
+      "新增资产",
+      "批量导入",
+      "导出",
+      "执行月度折旧",
+      "刷新",
+      "状态",
+      "全部分类",
+      "全部部门",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索编号、名称、品牌..."
+    ],
+    "columnHeaders": [
+      "资产编号",
+      "资产名称",
+      "资产分类",
+      "资产原值",
+      "累计折旧",
+      "预计残值(¥)",
+      "资产净值",
+      "月折旧额",
+      "责任人",
+      "部门",
+      "状态",
+      "购入日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-109",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "资质与申报",
+    "url": "https://risemap.cn/ops/certificates",
+    "evidence": "344-rm-109-loaded",
+    "headings": [
+      "资质与申报"
+    ],
+    "buttons": [
+      "资质台账",
+      "到期提醒",
+      "政策申报",
+      "材料库",
+      "新增资质",
+      "导出",
+      "刷新",
+      "类别",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索资质名称、证书编号..."
+    ],
+    "columnHeaders": [
+      "资质名称",
+      "资质类别",
+      "证书编号",
+      "发证机构",
+      "有效期",
+      "责任人",
+      "状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-110",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "物料领取",
+    "url": "https://risemap.cn/ops/materials",
+    "evidence": "346-rm-110-loaded",
+    "headings": [
+      "物料领取"
+    ],
+    "buttons": [
+      "提交申请",
+      "领取申请",
+      "物品库",
+      "领取记录",
+      "全部状态"
+    ],
+    "textboxes": [
+      "搜索申请单号、申请人、物品..."
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-111",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "设备维护",
+    "url": "https://risemap.cn/ops/equipment-maintenance",
+    "evidence": "348-rm-111-loaded",
+    "headings": [
+      "设备维护保养"
+    ],
+    "buttons": [
+      "设备台账",
+      "工单管理",
+      "维保规则",
+      "提醒中心 0",
+      "费用统计",
+      "新增设备",
+      "导入",
+      "模板",
+      "导出",
+      "刷新",
+      "状态",
+      "分类",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索设备名称、编号、位置..."
+    ],
+    "columnHeaders": [
+      "设备编号",
+      "设备名称",
+      "型号",
+      "制造商",
+      "分类",
+      "安装位置",
+      "状态",
+      "负责人",
+      "上次保养",
+      "下次保养",
+      "资产原值",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-112",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "礼品管理",
+    "url": "https://risemap.cn/ops/gift/apply",
+    "evidence": "350-rm-112-loaded",
+    "headings": [
+      "礼品管理"
+    ],
+    "buttons": [
+      "礼品申请 0",
+      "礼品清单 0",
+      "礼品库管理 0",
+      "礼品库流水 0",
+      "新建申请",
+      "导出",
+      "刷新",
+      "类型",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索编号/标题/申请人..."
+    ],
+    "columnHeaders": [
+      "编号",
+      "申请标题",
+      "类别",
+      "申请人",
+      "赠送对象",
+      "金额",
+      "申请日期",
+      "状态",
+      "审批进度",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-113",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "借出管理",
+    "url": "https://risemap.cn/ops/lending",
+    "evidence": "352-rm-113-loaded",
+    "headings": [
+      "借出管理"
+    ],
+    "buttons": [
+      "全部0",
+      "草稿0",
+      "待审批0",
+      "借用中0",
+      "逾期未还0",
+      "已归还0",
+      "已驳回0",
+      "导出",
+      "新建借用单",
+      "刷新",
+      "方向",
+      "对象",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索单号 / 物品 / 对象..."
+    ],
+    "columnHeaders": [
+      "单号 / 方向",
+      "物品明细",
+      "借用对象",
+      "原因",
+      "借用 / 预计归还",
+      "实际归还",
+      "经办人",
+      "状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-114",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "车辆管理",
+    "url": "https://risemap.cn/ops/vehicles",
+    "evidence": "354-rm-114-loaded",
+    "headings": [
+      "车辆管理"
+    ],
+    "buttons": [
+      "公司用车(0)",
+      "私车公用(0)",
+      "用车日历",
+      "车辆台账(0)",
+      "用车统计",
+      "公司用车申请",
+      "刷新",
+      "全部公司",
+      "全部状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索申请编号、申请人、用途/路线、车牌号..."
+    ],
+    "columnHeaders": [
+      "申请编号",
+      "申请人",
+      "用途/路线",
+      "用车时间",
+      "里程/人数",
+      "派车",
+      "状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-115",
+    "category": "行政",
+    "group": "人力资源",
+    "name": "人事工作台",
+    "url": "https://risemap.cn/hr/workbench",
+    "evidence": "356-rm-115-loaded",
+    "headings": [
+      "人事工作台",
+      "人员与成本趋势",
+      "招聘动态分析",
+      "薪资情况总结",
+      "入离职动态",
+      "部门人员分布",
+      "月度入离职统计",
+      "快捷入口"
+    ],
+    "buttons": [
+      "员工档案",
+      "招聘管理",
+      "查看全部",
+      "详情",
+      "薪酬福利",
+      "考勤统计",
+      "请假管理",
+      "入职离职"
+    ],
+    "textboxes": [],
+    "columnHeaders": [
+      "岗位",
+      "状态",
+      "部门",
+      "人数",
+      "月薪资总额",
+      "人均月薪",
+      "占比"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-116",
+    "category": "行政",
+    "group": "人力资源",
+    "name": "员工档案",
+    "url": "https://risemap.cn/hr/employees",
+    "evidence": "358-rm-116-loaded",
+    "headings": [
+      "员工档案"
+    ],
+    "buttons": [
+      "新增员工",
+      "批量删除",
+      "导出",
+      "批量导入",
+      "刷新",
+      "状态",
+      "部门",
+      "学历",
+      "岗位",
+      "职级",
+      "用工类型",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索姓名/工号/部门/岗位...",
+      "工作地点",
+      "开始日期",
+      "结束日期"
+    ],
+    "columnHeaders": [
+      "工号",
+      "姓名",
+      "部门",
+      "岗位",
+      "职级",
+      "用工类型",
+      "员工状态",
+      "入职日期",
+      "合同到期日",
+      "护照号码",
+      "系统用户",
+      "手机",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-117",
+    "category": "行政",
+    "group": "人力资源",
+    "name": "招聘管理",
+    "url": "https://risemap.cn/hr/recruitment",
+    "evidence": "360-rm-117-loaded",
+    "headings": [
+      "招聘管理"
+    ],
+    "buttons": [
+      "岗位说明",
+      "招聘岗位",
+      "招聘管理",
+      "新增岗位",
+      "导出",
+      "刷新",
+      "部门",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索岗位名称..."
+    ],
+    "columnHeaders": [
+      "岗位名称",
+      "部门",
+      "职级",
+      "编制/在岗",
+      "薪资范围",
+      "汇报对象",
+      "状态",
+      "更新日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-118",
+    "category": "行政",
+    "group": "人力资源",
+    "name": "入职离职",
+    "url": "https://risemap.cn/hr/onboarding",
+    "evidence": "362-rm-118-loaded",
+    "headings": [
+      "入职离职"
+    ],
+    "buttons": [
+      "新增记录",
+      "导出",
+      "刷新",
+      "类型",
+      "部门",
+      "岗位",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索员工姓名..."
+    ],
+    "columnHeaders": [
+      "记录编号",
+      "员工姓名",
+      "类型",
+      "部门",
+      "岗位",
+      "日期",
+      "状态",
+      "经办人",
+      "进度",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-119",
+    "category": "行政",
+    "group": "人力资源",
+    "name": "薪酬福利",
+    "url": "https://risemap.cn/hr/compensation",
+    "evidence": "364-rm-119-loaded",
+    "headings": [
+      "薪酬福利"
+    ],
+    "buttons": [
+      "隐藏金额",
+      "薪酬概览",
+      "工资条",
+      "福利明细"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-120",
+    "category": "行政",
+    "group": "人力资源",
+    "name": "规章制度",
+    "url": "https://risemap.cn/hr/policies",
+    "evidence": "366-rm-120-loaded",
+    "headings": [
+      "规章制度"
+    ],
+    "buttons": [
+      "类别管理",
+      "导出汇编",
+      "新增制度",
+      "全部 (0)",
+      "全部状态",
+      "全部创建人",
+      "批量"
+    ],
+    "textboxes": [
+      "搜索制度名称、摘要、编号..."
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-121",
+    "category": "行政",
+    "group": "人力资源",
+    "name": "通讯录",
+    "url": "https://risemap.cn/hr/contacts",
+    "evidence": "368-rm-121-loaded",
+    "headings": [
+      "通讯录"
+    ],
+    "buttons": [
+      "导出Excel",
+      "全部展开",
+      "收起",
+      "全部状态",
+      "排序"
+    ],
+    "textboxes": [
+      "搜索姓名、岗位、部门..."
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-122",
+    "category": "行政",
+    "group": "考勤假期",
+    "name": "加班申请",
+    "url": "https://risemap.cn/hr/overtime",
+    "evidence": "370-rm-122-loaded",
+    "headings": [
+      "加班申请"
+    ],
+    "buttons": [
+      "新增加班",
+      "导出",
+      "刷新",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索单号/申请人/事由",
+      "请选择日期"
+    ],
+    "columnHeaders": [
+      "单号",
+      "申请人",
+      "部门",
+      "加班日期",
+      "时段",
+      "时长",
+      "补偿方式",
+      "状态",
+      "加班事由",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-123",
+    "category": "行政",
+    "group": "考勤假期",
+    "name": "请假管理",
+    "url": "https://risemap.cn/hr/leave",
+    "evidence": "372-rm-123-loaded",
+    "headings": [
+      "请假管理"
+    ],
+    "buttons": [
+      "假期列表",
+      "审批管理",
+      "调休补假",
+      "假期配置",
+      "向左滑动",
+      "向右滑动",
+      "新建请假",
+      "导出",
+      "刷新",
+      "类型",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索单号/事由..."
+    ],
+    "columnHeaders": [
+      "单号",
+      "申请人",
+      "部门",
+      "假别",
+      "开始时间",
+      "结束时间",
+      "请假时长",
+      "请假事由",
+      "当前状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-124",
+    "category": "行政",
+    "group": "考勤假期",
+    "name": "出差申请",
+    "url": "https://risemap.cn/hr/business-trip",
+    "evidence": "374-rm-124-loaded",
+    "headings": [
+      "出差申请"
+    ],
+    "buttons": [
+      "新建出差申请",
+      "导出",
+      "刷新",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索单号/目的地/事由...",
+      "开始日期",
+      "结束日期"
+    ],
+    "columnHeaders": [
+      "单号",
+      "申请人",
+      "部门",
+      "目的地",
+      "交通方式",
+      "出差事由",
+      "出发日期",
+      "返回日期",
+      "出差天数",
+      "预计费用",
+      "状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-125",
+    "category": "行政",
+    "group": "考勤假期",
+    "name": "考勤管理",
+    "url": "https://risemap.cn/hr/attendance",
+    "evidence": "376-rm-125-loaded",
+    "headings": [
+      "考勤管理"
+    ],
+    "buttons": [
+      "每日考勤",
+      "个人考勤",
+      "补签申请",
+      "考勤规则",
+      "考勤组",
+      "导出",
+      "刷新",
+      "部门",
+      "人员",
+      "状态",
+      "来源",
+      "重置",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索姓名/工号/部门",
+      "开始日期",
+      "结束日期"
+    ],
+    "columnHeaders": [
+      "日期",
+      "姓名",
+      "部门",
+      "规定上班",
+      "规定下班",
+      "实际签到",
+      "实际签退",
+      "工作时长",
+      "状态",
+      "迟到(分)",
+      "早退(分)",
+      "来源",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-126",
+    "category": "行政",
+    "group": "考勤假期",
+    "name": "考勤统计",
+    "url": "https://risemap.cn/hr/stats-dashboard",
+    "evidence": "378-rm-126-loaded",
+    "headings": [
+      "考勤统计",
+      "每日考勤趋势",
+      "考勤状态分布",
+      "部门出勤率排名",
+      "迟到时长分布",
+      "部门考勤雷达图"
+    ],
+    "buttons": [
+      "考勤分析",
+      "请假出差",
+      "在岗情况",
+      "查看考勤详情",
+      "本月",
+      "刷新"
+    ],
+    "textboxes": [
+      "请选择日期"
+    ],
+    "columnHeaders": [
+      "部门",
+      "正常",
+      "迟到",
+      "早退",
+      "旷工",
+      "出勤率",
+      "平均工时"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-127",
+    "category": "行政",
+    "group": "流程中心",
+    "name": "审批记录",
+    "url": "https://risemap.cn/workflow/records",
+    "evidence": "380-rm-127-loaded",
+    "headings": [
+      "审批记录"
+    ],
+    "buttons": [
+      "全部 0",
+      "审批中 0",
+      "已通过 0",
+      "未通过 0",
+      "已结束 0",
+      "刷新",
+      "全部流程类型",
+      "全部发起部门",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索标题、流程编号或发起人",
+      "开始日期",
+      "结束日期"
+    ],
+    "columnHeaders": [
+      "流程编号",
+      "流程标题",
+      "流程类型",
+      "发起人 / 部门",
+      "状态",
+      "当前节点 / 节点人",
+      "发起时间",
+      "结束时间",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-128",
+    "category": "行政",
+    "group": "流程中心",
+    "name": "发起流程",
+    "url": "https://risemap.cn/workflow/start",
+    "evidence": "382-rm-128-loaded",
+    "headings": [
+      "发起流程"
+    ],
+    "buttons": [
+      "创建流程",
+      "刷新",
+      "全部分类",
+      "重置",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "流程编码",
+      "流程名称"
+    ],
+    "columnHeaders": [
+      "流程编码",
+      "流程名称",
+      "流程分类",
+      "流程描述",
+      "版本号",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-129",
+    "category": "行政",
+    "group": "流程中心",
+    "name": "流程定义",
+    "url": "https://risemap.cn/workflow/definition",
+    "evidence": "384-rm-129-loaded",
+    "headings": [
+      "流程定义"
+    ],
+    "buttons": [
+      "创建流程",
+      "刷新",
+      "全部分类",
+      "全部状态",
+      "全部类型",
+      "重置",
+      "查看",
+      "编辑",
+      "上一页",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "8",
+      "下一页"
+    ],
+    "textboxes": [
+      "流程编码",
+      "流程名称"
+    ],
+    "columnHeaders": [
+      "流程编码",
+      "流程名称",
+      "流程分类",
+      "版本号",
+      "流程类型",
+      "启用状态",
+      "创建时间",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-130",
+    "category": "行政",
+    "group": "流程中心",
+    "name": "流程分类",
+    "url": "https://risemap.cn/workflow/category",
+    "evidence": "386-rm-130-loaded",
+    "headings": [
+      "流程分类"
+    ],
+    "buttons": [
+      "新增分类",
+      "刷新",
+      "全部状态",
+      "重置",
+      "编辑",
+      "删除"
+    ],
+    "textboxes": [
+      "搜索编码 / 名称"
+    ],
+    "columnHeaders": [
+      "分类编码",
+      "分类名称",
+      "关联流程",
+      "状态",
+      "更新时间",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-131",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "资金账户",
+    "url": "https://risemap.cn/finance/bank-accounts",
+    "evidence": "388-rm-131-loaded",
+    "headings": [
+      "资金账户"
+    ],
+    "buttons": [
+      "新增账户",
+      "全部类型",
+      "全部状态",
+      "卡片视图",
+      "表格视图"
+    ],
+    "textboxes": [
+      "搜索账户名称、账号、持有人..."
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-132",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "资金流水",
+    "url": "https://risemap.cn/finance/bank-flow",
+    "evidence": "390-rm-132-loaded",
+    "headings": [
+      "资金流水"
+    ],
+    "buttons": [
+      "全部",
+      "待分配",
+      "部分分配",
+      "已分配",
+      "待审核",
+      "修改类型",
+      "批量审核",
+      "导出",
+      "刷新",
+      "资金账户",
+      "收支方向",
+      "流水类型",
+      "时间范围",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索资金流水"
+    ],
+    "columnHeaders": [
+      "流水号",
+      "日期",
+      "资金账户",
+      "对方单位",
+      "收支",
+      "类型",
+      "金额",
+      "已分配金额",
+      "待分配金额",
+      "关联单号",
+      "状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-133",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "应收应付",
+    "url": "https://risemap.cn/finance/accounts",
+    "evidence": "392-rm-133-loaded",
+    "headings": [
+      "应收应付"
+    ],
+    "buttons": [
+      "应收账款",
+      "应付账款",
+      "往来对冲",
+      "期初应收建账",
+      "期初应付建账",
+      "导出",
+      "刷新",
+      "账龄状态",
+      "来源",
+      "发票状态",
+      "业务员",
+      "到期提醒",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索应收号/销售订单/客户...",
+      "开始日期",
+      "结束日期",
+      "最小",
+      "最大"
+    ],
+    "columnHeaders": [
+      "应收编号",
+      "来源",
+      "客户/业务员",
+      "订单/项目",
+      "应收总额",
+      "已收/冲抵",
+      "未收余额",
+      "到期日",
+      "状态",
+      "发票",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-134",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "收款管理",
+    "url": "https://risemap.cn/finance/payment-collections",
+    "evidence": "394-rm-134-loaded",
+    "headings": [
+      "收款管理"
+    ],
+    "buttons": [
+      "预收款管理"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-135",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "付款管理",
+    "url": "https://risemap.cn/finance/payment-writeoffs",
+    "evidence": "396-rm-135-loaded",
+    "headings": [
+      "付款管理"
+    ],
+    "buttons": [
+      "费用中心 · 付款申请",
+      "付款任务",
+      "预付款管理",
+      "批量登记付款",
+      "导出",
+      "刷新",
+      "状态",
+      "来源",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索应付单号/供应商/PO..."
+    ],
+    "columnHeaders": [
+      "付款任务编号",
+      "来源",
+      "来源单据号",
+      "供应商/往来单位",
+      "申请付款金额",
+      "应付款金额",
+      "付款审批状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-136",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "退款申请",
+    "url": "https://risemap.cn/finance/refunds",
+    "evidence": "398-rm-136-loaded",
+    "headings": [
+      "退款申请"
+    ],
+    "buttons": [
+      "客户退款0",
+      "供应商退款0",
+      "导出",
+      "刷新",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索单号/合同/客户..."
+    ],
+    "columnHeaders": [
+      "申请单号",
+      "关联合同",
+      "客户",
+      "币种",
+      "实退金额",
+      "退款方式",
+      "单据状态",
+      "财务审批",
+      "付款状态",
+      "核销状态",
+      "申请日期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-137",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "授信额度管理",
+    "url": "https://risemap.cn/finance/credit-management",
+    "evidence": "400-rm-137-loaded",
+    "headings": [
+      "授信额度管理"
+    ],
+    "buttons": [
+      "授信客户 0",
+      "待审批授信",
+      "导出",
+      "刷新",
+      "状态",
+      "冻结状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索客户名称、编号、负责人..."
+    ],
+    "columnHeaders": [
+      "客户名称",
+      "类型",
+      "授信额度",
+      "已用额度",
+      "可用额度",
+      "使用率",
+      "超期金额",
+      "超期笔数",
+      "状态",
+      "冻结状态",
+      "负责人",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-138",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "借款贷款管理",
+    "url": "https://risemap.cn/finance/loans",
+    "evidence": "402-rm-138-loaded",
+    "headings": [
+      "借款贷款管理"
+    ],
+    "buttons": [
+      "员工借款 0",
+      "银行贷款",
+      "申请借款",
+      "导出",
+      "刷新",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索借款单号、申请人、用途..."
+    ],
+    "columnHeaders": [
+      "借款单号",
+      "用途",
+      "申请人",
+      "提交日期",
+      "关联项目",
+      "借款金额",
+      "未核销余额",
+      "审批进度",
+      "状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-139",
+    "category": "财务",
+    "group": "业务确认",
+    "name": "销售收入确认",
+    "url": "https://risemap.cn/finance/revenue-recognition",
+    "evidence": "404-rm-139-loaded",
+    "headings": [
+      "销售收入确认"
+    ],
+    "buttons": [
+      "刷新",
+      "状态",
+      "客户",
+      "项目",
+      "确认方式",
+      "制单人",
+      "导出",
+      "批量审核",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索确认单号/订单/客户...",
+      "开始日期",
+      "结束日期"
+    ],
+    "columnHeaders": [
+      "确认单号",
+      "来源订单",
+      "客户名称",
+      "确认方式",
+      "净确认金额",
+      "累计 / 订单",
+      "剩余待确认",
+      "确认日期",
+      "财务期间",
+      "开票状态",
+      "状态",
+      "创建人 / 时间",
+      "审核人 / 时间",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-140",
+    "category": "财务",
+    "group": "业务确认",
+    "name": "成本中心",
+    "url": "https://risemap.cn/finance/cost-center",
+    "evidence": "406-rm-140-loaded",
+    "headings": [
+      "成本中心"
+    ],
+    "buttons": [
+      "成本归集",
+      "归集结果看板",
+      "待归集成本 0",
+      "销售成本结转 0",
+      "成本确认记录 0",
+      "待归集 0",
+      "暂挂 0",
+      "导出",
+      "刷新",
+      "来源",
+      "状态"
+    ],
+    "textboxes": [
+      "搜索编号、名称、客户..."
+    ],
+    "columnHeaders": [
+      "成本编号",
+      "来源类型",
+      "成本类型",
+      "成本名称",
+      "客户",
+      "合同/项目",
+      "发生日期",
+      "总金额",
+      "已归集金额",
+      "剩余金额",
+      "状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-141",
+    "category": "财务",
+    "group": "业务确认",
+    "name": "费用中心",
+    "url": "https://risemap.cn/finance/expense-center",
+    "evidence": "408-rm-141-loaded",
+    "headings": [
+      "费用中心"
+    ],
+    "buttons": [
+      "全部",
+      "按月",
+      "按季",
+      "自定义范围",
+      "企业支出 0",
+      "费用统计",
+      "新建付款申请",
+      "导出",
+      "刷新",
+      "类别",
+      "状态",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索付款申请..."
+    ],
+    "columnHeaders": [
+      "申请单号",
+      "申请日期",
+      "类别",
+      "费用归属",
+      "收款方",
+      "付款事由",
+      "金额",
+      "申请人",
+      "紧急",
+      "状态"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-142",
+    "category": "财务",
+    "group": "业务确认",
+    "name": "报销管理",
+    "url": "https://risemap.cn/finance/reimbursement",
+    "evidence": "410-rm-142-loaded",
+    "headings": [
+      "报销管理"
+    ],
+    "buttons": [
+      "全部",
+      "26/05",
+      "26/06",
+      "26/07",
+      "26/08",
+      "26/09",
+      "自定义",
+      "新建报销",
+      "合同成本",
+      "项目成本",
+      "订单成本",
+      "期间费用",
+      "本人报销",
+      "代人报销",
+      "待提交",
+      "待审核",
+      "审核中",
+      "已通过",
+      "已驳回",
+      "已打款",
+      "已作废",
+      "导出",
+      "刷新",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索..."
+    ],
+    "columnHeaders": [
+      "单号",
+      "费用名称",
+      "费用归属",
+      "报销类型",
+      "申请人",
+      "报销人",
+      "提交日期",
+      "关联对象",
+      "供应商",
+      "单据金额",
+      "状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-143",
+    "category": "财务",
+    "group": "业务确认",
+    "name": "对账单",
+    "url": "https://risemap.cn/finance/reconciliations",
+    "evidence": "412-rm-143-loaded",
+    "headings": [
+      "对账单",
+      "对账中心",
+      "客户对账单",
+      "供应商对账单",
+      "最近对账单"
+    ],
+    "buttons": [],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-144",
+    "category": "财务",
+    "group": "发票管理",
+    "name": "发票总览",
+    "url": "https://risemap.cn/finance/invoices/overview",
+    "evidence": "414-rm-144-loaded",
+    "headings": [
+      "发票总览",
+      "全盘指标概览",
+      "月度发票趋势",
+      "税额构成分析",
+      "销项发票台账",
+      "进项发票与抵扣",
+      "未开票与开票任务"
+    ],
+    "buttons": [
+      "查看销项发票",
+      "管理进项发票",
+      "查看开票任务"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-145",
+    "category": "财务",
+    "group": "发票管理",
+    "name": "销项发票",
+    "url": "https://risemap.cn/finance/invoices/sales",
+    "evidence": "416-rm-145-loaded",
+    "headings": [
+      "销项发票"
+    ],
+    "buttons": [
+      "导出",
+      "全部0",
+      "正常0",
+      "已作废0",
+      "已红冲0"
+    ],
+    "textboxes": [
+      "搜索销项发票"
+    ],
+    "columnHeaders": [
+      "发票号码",
+      "日期",
+      "客户",
+      "邮件",
+      "含税金额",
+      "税率",
+      "税额",
+      "不含税",
+      "关联单据",
+      "项目",
+      "备注",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-146",
+    "category": "财务",
+    "group": "发票管理",
+    "name": "进项发票",
+    "url": "https://risemap.cn/finance/invoices/purchase",
+    "evidence": "418-rm-146-loaded",
+    "headings": [
+      "进项发票"
+    ],
+    "buttons": [
+      "邮件收票",
+      "导出",
+      "全部0",
+      "正常0",
+      "已作废0",
+      "已红冲0",
+      "类型",
+      "抵扣状态"
+    ],
+    "textboxes": [
+      "搜索进项发票"
+    ],
+    "columnHeaders": [
+      "选择全部可批量抵扣的发票",
+      "发票号码",
+      "日期",
+      "供应商",
+      "含税金额",
+      "税率",
+      "税额",
+      "不含税",
+      "关联单据",
+      "项目",
+      "备注",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-147",
+    "category": "财务",
+    "group": "发票管理",
+    "name": "开票任务",
+    "url": "https://risemap.cn/finance/invoices/tasks",
+    "evidence": "420-rm-147-loaded",
+    "headings": [
+      "开票任务"
+    ],
+    "buttons": [
+      "刷新列表"
+    ],
+    "textboxes": [],
+    "columnHeaders": [
+      "申请编号",
+      "合同/订单",
+      "客户",
+      "申请金额",
+      "发票类型",
+      "税率",
+      "申请人",
+      "申请时间",
+      "状态",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-148",
+    "category": "财务",
+    "group": "发票管理",
+    "name": "调整记录",
+    "url": "https://risemap.cn/finance/invoices/adjustments",
+    "evidence": "422-rm-148-loaded",
+    "headings": [
+      "调整记录"
+    ],
+    "buttons": [],
+    "textboxes": [
+      "发票号码",
+      "客户名称",
+      "操作人检索"
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-149",
+    "category": "报表",
+    "group": "报表",
+    "name": "销售统计",
+    "url": "https://risemap.cn/reports/sales",
+    "evidence": "424-rm-149-loaded",
+    "headings": [
+      "销售统计",
+      "销售与回款趋势",
+      "订单状态占比",
+      "销售转化漏斗",
+      "销售员业绩排名",
+      "客户销售额排行",
+      "商品销量排行"
+    ],
+    "buttons": [
+      "导出报表",
+      "销售订单",
+      "销售合同",
+      "线索统计",
+      "商机统计",
+      "跟进记录",
+      "报价统计",
+      "客户统计",
+      "毛利分析",
+      "刷新",
+      "查看销售额计算说明",
+      "查看订单数计算说明",
+      "查看回款额计算说明",
+      "查看未发货计算说明"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-150",
+    "category": "报表",
+    "group": "报表",
+    "name": "采购统计",
+    "url": "https://risemap.cn/reports/purchase",
+    "evidence": "426-rm-150-loaded",
+    "headings": [
+      "采购统计",
+      "采购与付款趋势",
+      "入库状态占比",
+      "采购执行漏斗",
+      "供应商交付与质量表现",
+      "供应商采购额排行",
+      "物料采购金额排行"
+    ],
+    "buttons": [
+      "导出报表",
+      "采购统计",
+      "采购申请",
+      "询价统计",
+      "供应商统计",
+      "刷新",
+      "查看采购额计算说明",
+      "查看采购订单计算说明",
+      "查看已入库计算说明",
+      "查看待付款计算说明"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-151",
+    "category": "报表",
+    "group": "报表",
+    "name": "库存统计",
+    "url": "https://risemap.cn/reports/inventory",
+    "evidence": "428-rm-151-loaded",
+    "headings": [
+      "库存统计",
+      "库存金额趋势",
+      "库存数量趋势",
+      "库存库龄与健康度",
+      "出库商品排行",
+      "呆滞库存排行",
+      "库存分类占比"
+    ],
+    "buttons": [
+      "导出报表",
+      "库存统计",
+      "仓库统计",
+      "到货统计",
+      "检验统计",
+      "刷新",
+      "查看库存金额计算说明",
+      "查看库存SKU计算说明",
+      "查看低库存计算说明",
+      "查看周转率计算说明"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-152",
+    "category": "报表",
+    "group": "报表",
+    "name": "项目统计",
+    "url": "https://risemap.cn/reports/project",
+    "evidence": "430-rm-152-loaded",
+    "headings": [
+      "项目统计",
+      "项目营收与利润趋势",
+      "项目成本构成",
+      "项目状态分析",
+      "项目进度排行",
+      "项目利润率排行",
+      "项目营收贡献排行"
+    ],
+    "buttons": [
+      "导出报表",
+      "项目统计",
+      "任务统计",
+      "人员统计",
+      "刷新",
+      "查看项目总数计算说明",
+      "查看项目总营收计算说明",
+      "查看项目总利润计算说明",
+      "查看已回款计算说明"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-153",
+    "category": "报表",
+    "group": "报表",
+    "name": "组装统计",
+    "url": "https://risemap.cn/reports/assembly",
+    "evidence": "432-rm-153-loaded",
+    "headings": [
+      "组装统计",
+      "组装单新增与完成趋势",
+      "组装单状态分布",
+      "组装执行转化",
+      "负责人完成数量排行",
+      "成品组装数量排行",
+      "车间组装效率对比"
+    ],
+    "buttons": [
+      "导出报表",
+      "组装单统计",
+      "领料单统计",
+      "补料单统计",
+      "退料单统计",
+      "拆解单统计",
+      "换件单统计",
+      "刷新",
+      "查看组装单数计算说明",
+      "查看已完成计算说明",
+      "查看组装数量计算说明",
+      "查看待处理计算说明"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-154",
+    "category": "报表",
+    "group": "财务统计",
+    "name": "财务总览",
+    "url": "https://risemap.cn/finance/statistics/overview",
+    "evidence": "434-rm-154-loaded",
+    "headings": [
+      "财务总览",
+      "当前经营余额",
+      "业务金额总览",
+      "业务金额对比",
+      "业务执行进度",
+      "经营表现",
+      "签约与回款趋势",
+      "经营判断",
+      "资金结构",
+      "经营余额趋势",
+      "应收账龄分布",
+      "待处理事项"
+    ],
+    "buttons": [
+      "导出PDF",
+      "导出Excel",
+      "经营总览",
+      "资产负债",
+      "利润总览",
+      "本季度",
+      "查看当前应收余额计算说明",
+      "查看当前应付余额计算说明",
+      "查看当前库存余额计算说明",
+      "查看净资金占用计算说明",
+      "查看销售订单计算说明",
+      "查看销售合同计算说明",
+      "查看销售回款计算说明",
+      "查看采购订单计算说明",
+      "查看采购实付计算说明",
+      "查看本季度签约额计算说明",
+      "查看本季度已回款计算说明",
+      "查看可用资金计算说明",
+      "查看回款率计算说明",
+      "逾期客户 0",
+      "即将到期应付 0",
+      "高库存物料 0",
+      "大额预付未结 0",
+      "当前降序，点击切换升序",
+      "点击排序",
+      "查看应收明细"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-155",
+    "category": "报表",
+    "group": "财务统计",
+    "name": "损益分析",
+    "url": "https://risemap.cn/finance/statistics/profit",
+    "evidence": "436-rm-155-loaded",
+    "headings": [
+      "损益分析",
+      "月度营收趋势",
+      "收入构成",
+      "项目收入明细 (0)"
+    ],
+    "buttons": [
+      "导出PDF",
+      "导出Excel",
+      "收入分析",
+      "成本费用",
+      "项目盈利",
+      "合同签约",
+      "人力资源支出",
+      "本季度",
+      "查看本季度营收计算说明",
+      "查看累计季度营收计算说明",
+      "查看合同总额计算说明",
+      "查看待收款计算说明"
+    ],
+    "textboxes": [],
+    "columnHeaders": [
+      "项目名称",
+      "合同金额",
+      "已确认收入",
+      "待收款",
+      "进度"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-156",
+    "category": "报表",
+    "group": "财务统计",
+    "name": "资金分析",
+    "url": "https://risemap.cn/finance/statistics/capital",
+    "evidence": "438-rm-156-loaded",
+    "headings": [
+      "资金分析",
+      "现金流入/流出趋势",
+      "现金流构成"
+    ],
+    "buttons": [
+      "导出PDF",
+      "导出Excel",
+      "现金流",
+      "资金预测",
+      "账户余额",
+      "本季度",
+      "查看期末现金余额计算说明",
+      "查看本季度流入计算说明",
+      "查看本季度流出计算说明",
+      "查看净现金流计算说明"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-157",
+    "category": "报表",
+    "group": "财务统计",
+    "name": "往来账款",
+    "url": "https://risemap.cn/finance/statistics/current-account",
+    "evidence": "440-rm-157-loaded",
+    "headings": [
+      "往来账款",
+      "应收账龄结构",
+      "逾期客户明细",
+      "账龄区间明细"
+    ],
+    "buttons": [
+      "导出PDF",
+      "导出Excel",
+      "应收分析",
+      "应付分析",
+      "本季度",
+      "查看应收余额计算说明",
+      "查看逾期金额计算说明",
+      "查看回款率计算说明",
+      "查看最长逾期计算说明",
+      "查看全部应收"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-158",
+    "category": "报表",
+    "group": "财务统计",
+    "name": "税务库存",
+    "url": "https://risemap.cn/finance/statistics/budget-tax",
+    "evidence": "442-rm-158-loaded",
+    "headings": [
+      "税务库存",
+      "进销项发票趋势",
+      "进销项税额结构"
+    ],
+    "buttons": [
+      "导出PDF",
+      "导出Excel",
+      "发票分析",
+      "库存资金",
+      "本季度",
+      "查看销项发票计算说明",
+      "查看进项发票计算说明",
+      "查看应纳税额计算说明",
+      "查看当前未开票余额（存量）计算说明",
+      "发票总览"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-159",
+    "category": "报表",
+    "group": "财务统计",
+    "name": "风险监控",
+    "url": "https://risemap.cn/finance/statistics/risk",
+    "evidence": "444-rm-159-loaded",
+    "headings": [
+      "风险监控"
+    ],
+    "buttons": [
+      "导出PDF",
+      "导出Excel",
+      "财务预警",
+      "集中度分析",
+      "数据对账",
+      "本季度",
+      "查看逾期应收计算说明",
+      "查看近期应付计算说明",
+      "查看库存风险计算说明",
+      "查看预付未结计算说明",
+      "当前降序，点击切换升序",
+      "点击排序"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-160",
+    "category": "系统",
+    "group": "系统设置",
+    "name": "基础配置",
+    "url": "https://risemap.cn/settings",
+    "evidence": "448-rm-160-loaded",
+    "headings": [
+      "系统设置",
+      "企业基本信息"
+    ],
+    "buttons": [
+      "收起设置导航",
+      "企业信息 管理企业基本信息、Logo等",
+      "编码管理 业务编号生成与校验规则",
+      "通知设置 配置系统通知和提醒规则",
+      "邮件配置 配置 SMTP 服务器，可选，不配置则使用官方邮件服务",
+      "收件邮箱 配置进项发票收件邮箱和可见范围",
+      "数据管理 数据备份、导入导出设置",
+      "外观定制 自定义系统主题和界面",
+      "功能模块 启用/隐藏侧边栏模块菜单",
+      "热键管理 自定义全局快捷键，提升操作效率",
+      "编辑信息"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-161",
+    "category": "系统",
+    "group": "系统设置",
+    "name": "用户与角色",
+    "url": "https://risemap.cn/settings/accounts",
+    "evidence": "088-rm-161-loaded",
+    "headings": [
+      "账号管理"
+    ],
+    "buttons": [
+      "账号列表",
+      "角色权限",
+      "用户视图",
+      "数据权限",
+      "新建账号",
+      "刷新",
+      "角色",
+      "状态",
+      "编辑",
+      "禁用",
+      "数据继承",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索用户、手机号、邮箱..."
+    ],
+    "columnHeaders": [
+      "用户",
+      "手机号",
+      "部门",
+      "邮箱",
+      "角色",
+      "状态",
+      "最近登录",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-162",
+    "category": "系统",
+    "group": "系统设置",
+    "name": "部门管理",
+    "url": "https://risemap.cn/settings/departments",
+    "evidence": "090-rm-162-loaded",
+    "headings": [
+      "部门管理"
+    ],
+    "buttons": [
+      "新建部门",
+      "全部展开",
+      "全部折叠",
+      "拖拽排序",
+      "默认部门 DEFAULT",
+      "添加子部门",
+      "编辑",
+      "删除"
+    ],
+    "textboxes": [
+      "搜索部门名称、编码、负责人..."
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-163",
+    "category": "系统",
+    "group": "系统设置",
+    "name": "用户会话",
+    "url": "https://risemap.cn/settings/sessions",
+    "evidence": "095-rm-163-loaded",
+    "headings": [
+      "用户会话管理"
+    ],
+    "buttons": [
+      "刷新",
+      "踢出",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索用户..."
+    ],
+    "columnHeaders": [
+      "用户",
+      "部门",
+      "角色",
+      "IP",
+      "位置",
+      "浏览器",
+      "登录时间",
+      "认证过期",
+      "操作"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-164",
+    "category": "系统",
+    "group": "系统设置",
+    "name": "审计日志",
+    "url": "https://risemap.cn/settings/audit-log",
+    "evidence": "097-rm-164-loaded",
+    "headings": [
+      "审计日志"
+    ],
+    "buttons": [
+      "查询",
+      "重置",
+      "刷新",
+      "上一页",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "21",
+      "下一页"
+    ],
+    "textboxes": [
+      "用户名称",
+      "部门名称",
+      "角色名称",
+      "请选择日期",
+      "请选择时间"
+    ],
+    "columnHeaders": [
+      "模块名称",
+      "业务类型",
+      "业务编码",
+      "操作类型",
+      "操作描述",
+      "操作人名称",
+      "是否成功",
+      "操作时间"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-165",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "商品管理",
+    "url": "https://risemap.cn/settings/business/product",
+    "evidence": "099-rm-165-loaded",
+    "headings": [
+      "业务设置 - 物料管理"
+    ],
+    "buttons": [
+      "商品管理",
+      "财务配置",
+      "行政管理",
+      "客户管理",
+      "采购销售",
+      "库存管理",
+      "其他配置",
+      "人事配置",
+      "项目管理",
+      "图纸配置",
+      "生产配置",
+      "委外配置",
+      "单据打印",
+      "AI 助手",
+      "物料管理",
+      "物料分组",
+      "计量单位",
+      "物料属性",
+      "来源类型",
+      "品牌管理",
+      "条码打印",
+      "供应商管理",
+      "供应商分类",
+      "供应商级别",
+      "批量导入",
+      "导入/导出任务",
+      "导出",
+      "新增一级分组",
+      "+ 创建第一个分组"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-166",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "财务配置",
+    "url": "https://risemap.cn/settings/business/finance",
+    "evidence": "101-rm-166-loaded",
+    "headings": [
+      "业务设置 - 财务配置",
+      "付款方式"
+    ],
+    "buttons": [
+      "商品管理",
+      "财务配置",
+      "行政管理",
+      "客户管理",
+      "采购销售",
+      "库存管理",
+      "其他配置",
+      "人事配置",
+      "项目管理",
+      "图纸配置",
+      "生产配置",
+      "委外配置",
+      "单据打印",
+      "AI 助手",
+      "付款方式",
+      "费用类别",
+      "新增",
+      "点击禁用"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-167",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "行政管理",
+    "url": "https://risemap.cn/settings/business/office",
+    "evidence": "103-rm-167-loaded",
+    "headings": [
+      "业务设置 - 行政管理"
+    ],
+    "buttons": [
+      "商品管理",
+      "财务配置",
+      "行政管理",
+      "客户管理",
+      "采购销售",
+      "库存管理",
+      "其他配置",
+      "人事配置",
+      "项目管理",
+      "图纸配置",
+      "生产配置",
+      "委外配置",
+      "单据打印",
+      "AI 助手",
+      "资产分类",
+      "物料类别",
+      "购买渠道",
+      "福利分类",
+      "会议类型",
+      "资质类别",
+      "申报类别",
+      "申报阶段",
+      "借用原因",
+      "新增分类"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-168",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "客户管理",
+    "url": "https://risemap.cn/settings/business/customer",
+    "evidence": "105-rm-168-loaded",
+    "headings": [
+      "业务设置 - 客户管理"
+    ],
+    "buttons": [
+      "商品管理",
+      "财务配置",
+      "行政管理",
+      "客户管理",
+      "采购销售",
+      "库存管理",
+      "其他配置",
+      "人事配置",
+      "项目管理",
+      "图纸配置",
+      "生产配置",
+      "委外配置",
+      "单据打印",
+      "AI 助手",
+      "客户分类",
+      "客户标签",
+      "客户级别",
+      "决策权重",
+      "行业配置",
+      "跟进方式",
+      "红绿灯规则",
+      "拜访目的",
+      "招投标管理",
+      "投标方式",
+      "模板分类",
+      "标签管理",
+      "新增分类"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-169",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "采购销售",
+    "url": "https://risemap.cn/settings/business/sales",
+    "evidence": "107-rm-169-loaded",
+    "headings": [
+      "业务设置 - 采购销售"
+    ],
+    "buttons": [
+      "商品管理",
+      "财务配置",
+      "行政管理",
+      "客户管理",
+      "采购销售",
+      "库存管理",
+      "其他配置",
+      "人事配置",
+      "项目管理",
+      "图纸配置",
+      "生产配置",
+      "委外配置",
+      "单据打印",
+      "AI 助手",
+      "采购付款条件",
+      "销售付款条件",
+      "协同销售职责",
+      "抬头管理",
+      "报价类型",
+      "报价条款",
+      "合同类型",
+      "合同条款模板",
+      "验收方式",
+      "验收节点模板",
+      "应付节点模板",
+      "采购分类",
+      "退货原因",
+      "线索商机",
+      "线索来源",
+      "线索状态",
+      "商机阶段",
+      "商机来源",
+      "Goodwill 订单",
+      "赠送类型",
+      "业绩配置",
+      "分配原因",
+      "添加采购付款条件"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-170",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "库存管理",
+    "url": "https://risemap.cn/settings/business/inventory",
+    "evidence": "109-rm-170-loaded",
+    "headings": [
+      "业务设置 - 库存管理"
+    ],
+    "buttons": [
+      "商品管理",
+      "财务配置",
+      "行政管理",
+      "客户管理",
+      "采购销售",
+      "库存管理",
+      "其他配置",
+      "人事配置",
+      "项目管理",
+      "图纸配置",
+      "生产配置",
+      "委外配置",
+      "单据打印",
+      "AI 助手",
+      "仓库类型",
+      "报损类型",
+      "其他出库类型",
+      "其他入库类型",
+      "锁库原因",
+      "释放原因",
+      "检验项目分类",
+      "快递公司",
+      "物流公司",
+      "添加类型"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-171",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "其他配置",
+    "url": "https://risemap.cn/settings/business/other",
+    "evidence": "111-rm-171-loaded",
+    "headings": [
+      "业务设置 - 其他配置"
+    ],
+    "buttons": [
+      "商品管理",
+      "财务配置",
+      "行政管理",
+      "客户管理",
+      "采购销售",
+      "库存管理",
+      "其他配置",
+      "人事配置",
+      "项目管理",
+      "图纸配置",
+      "生产配置",
+      "委外配置",
+      "单据打印",
+      "AI 助手",
+      "会议室配置",
+      "印章类型",
+      "文件类型",
+      "设备分类配置",
+      "维护类型配置",
+      "维修类型配置",
+      "工单费用分类",
+      "维护项目配件配置",
+      "单据命名规则",
+      "新增会议室",
+      "全部状态",
+      "刷新",
+      "+ 新增第一个会议室"
+    ],
+    "textboxes": [
+      "搜索会议室名称/位置/备注"
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-172",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "人事配置",
+    "url": "https://risemap.cn/settings/business/hr",
+    "evidence": "113-rm-172-loaded",
+    "headings": [
+      "业务设置 - 人事配置"
+    ],
+    "buttons": [
+      "商品管理",
+      "财务配置",
+      "行政管理",
+      "客户管理",
+      "采购销售",
+      "库存管理",
+      "其他配置",
+      "人事配置",
+      "项目管理",
+      "图纸配置",
+      "生产配置",
+      "委外配置",
+      "单据打印",
+      "AI 助手",
+      "岗位管理",
+      "职级管理",
+      "假期类型",
+      "请假配置",
+      "交通方式",
+      "补签类型",
+      "班次类型",
+      "假日类型",
+      "工资项配置",
+      "招聘渠道",
+      "手册分类",
+      "制度分类",
+      "新增"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-173",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "项目管理",
+    "url": "https://risemap.cn/settings/business/project",
+    "evidence": "115-rm-173-loaded",
+    "headings": [
+      "业务设置 - 项目管理"
+    ],
+    "buttons": [
+      "商品管理",
+      "财务配置",
+      "行政管理",
+      "客户管理",
+      "采购销售",
+      "库存管理",
+      "其他配置",
+      "人事配置",
+      "项目管理",
+      "图纸配置",
+      "生产配置",
+      "委外配置",
+      "单据打印",
+      "AI 助手",
+      "项目类型",
+      "项目角色",
+      "任务类型",
+      "闲置类别",
+      "工时类型",
+      "日志类型",
+      "日志标签",
+      "计划模板分类",
+      "新增类型"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-174",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "图纸配置",
+    "url": "https://risemap.cn/settings/business/drawing",
+    "evidence": "117-rm-174-loaded",
+    "headings": [
+      "业务设置 - 图纸配置"
+    ],
+    "buttons": [
+      "商品管理",
+      "财务配置",
+      "行政管理",
+      "客户管理",
+      "采购销售",
+      "库存管理",
+      "其他配置",
+      "人事配置",
+      "项目管理",
+      "图纸配置",
+      "生产配置",
+      "委外配置",
+      "单据打印",
+      "AI 助手",
+      "图纸类型",
+      "图纸分类",
+      "变更类型",
+      "变更等级",
+      "版本类型",
+      "评审分类",
+      "参与人角色",
+      "问题分类",
+      "问题严重度",
+      "添加图纸类型",
+      "点击禁用"
+    ],
+    "textboxes": [],
+    "columnHeaders": [
+      "名称",
+      "排序",
+      "备注",
+      "状态"
+    ],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-175",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "生产配置",
+    "url": "https://risemap.cn/settings/business/production",
+    "evidence": "119-rm-175-loaded",
+    "headings": [
+      "业务设置 - 生产管理配置"
+    ],
+    "buttons": [
+      "商品管理",
+      "财务配置",
+      "行政管理",
+      "客户管理",
+      "采购销售",
+      "库存管理",
+      "其他配置",
+      "人事配置",
+      "项目管理",
+      "图纸配置",
+      "生产配置",
+      "委外配置",
+      "单据打印",
+      "AI 助手",
+      "拆解原因",
+      "改制原因",
+      "添加拆解原因"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-176",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "委外配置",
+    "url": "https://risemap.cn/settings/business/subcontract",
+    "evidence": "121-rm-176-loaded",
+    "headings": [
+      "业务设置 - 委外配置"
+    ],
+    "buttons": [
+      "商品管理",
+      "财务配置",
+      "行政管理",
+      "客户管理",
+      "采购销售",
+      "库存管理",
+      "其他配置",
+      "人事配置",
+      "项目管理",
+      "图纸配置",
+      "生产配置",
+      "委外配置",
+      "单据打印",
+      "AI 助手",
+      "委外字典",
+      "加工类型",
+      "退料原因",
+      "委外规则",
+      "预警阈值",
+      "业务策略",
+      "添加加工类型"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-177",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "单据打印",
+    "url": "https://risemap.cn/settings/business/print",
+    "evidence": "123-rm-177-loaded",
+    "headings": [
+      "单据打印模版"
+    ],
+    "buttons": [
+      "新建模版",
+      "商品管理",
+      "财务配置",
+      "行政管理",
+      "客户管理",
+      "采购销售",
+      "库存管理",
+      "其他配置",
+      "人事配置",
+      "项目管理",
+      "图纸配置",
+      "生产配置",
+      "委外配置",
+      "单据打印",
+      "模版管理",
+      "印章 / 签名",
+      "页眉页脚库",
+      "打印参数"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-178",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "插件中心",
+    "url": "https://risemap.cn/settings/plugins",
+    "evidence": "125-rm-178-loaded",
+    "headings": [
+      "插件中心",
+      "企业微信",
+      "钉钉",
+      "飞书"
+    ],
+    "buttons": [
+      "企业微信 暂无描述 未启用",
+      "钉钉 图标 钉钉 钉钉开放平台集成，支持考勤、消息通知、群机器人等能力 未启用",
+      "飞书 图标 飞书 飞书开放平台集成，支持考勤、消息通知、群机器人等能力 未启用"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-179",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "服务订阅",
+    "url": "https://risemap.cn/service-subscription",
+    "evidence": "127-rm-179-loaded",
+    "headings": [
+      "服务订阅",
+      "企业服务，一站式掌握",
+      "资源使用（8 项）",
+      "资源加购",
+      "团队成员"
+    ],
+    "buttons": [
+      "我的服务",
+      "服务商城",
+      "订阅计划",
+      "我的订单",
+      "打开选购清单",
+      "用户席位 0 人 / 5 人 剩余 5 人 0%",
+      "基础存储 0 GB / 1 GB 剩余 1 GB 0%",
+      "物流轨迹查询 0 次 / 10 次 剩余 10 次 0%",
+      "企业工商查询 0 次 / 10 次 剩余 10 次 0%",
+      "名片扫描 OCR 0 张 / 10 张 剩余 10 张 0%",
+      "发票识别 0 次 / 10 次 剩余 10 次 0%",
+      "语音文件识别 0 小时 / 1 小时 剩余 1 小时 0%",
+      "企业信息搜索 0 次 / 10 次 剩余 10 次 0%",
+      "上一页",
+      "1",
+      "下一页"
+    ],
+    "textboxes": [
+      "搜索成员姓名、手机号或邮箱"
+    ],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-180",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "推广奖励",
+    "url": "https://risemap.cn/referral",
+    "evidence": "129-rm-180-loaded",
+    "headings": [
+      "推广奖励",
+      "推广奖励规则",
+      "分享推荐链接",
+      "好友注册并付费",
+      "获得 15% 佣金",
+      "最近佣金"
+    ],
+    "buttons": [
+      "复制链接",
+      "预览推荐页",
+      "我要推广",
+      "复制推荐链接"
+    ],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  },
+  {
+    "featureId": "RM-181",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "字段管理",
+    "url": "https://risemap.cn/settings/fields",
+    "evidence": "131-rm-181-loaded",
+    "headings": [
+      "自定义字段设置",
+      "业务模块"
+    ],
+    "buttons": [],
+    "textboxes": [],
+    "columnHeaders": [],
+    "links": [],
+    "scope": "loaded initial page only; dialogs, forms, tabs and workflows remain separate coverage"
+  }
+]

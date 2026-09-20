@@ -1,0 +1,418 @@
+Browser tab: 46, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_warranty_management".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_warranty_management
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 质保管理
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_warranty_management
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 质保管理, Value: 1
+				44 text 质保管理
+			45 text 质保卡台账、到期预警、激活与延保，以及质保规则配置 27 服务管理  /  质保管理
+			46 button 服务工单
+			47 button 刷新
+			48 text 质保卡台账、到期预警、激活与延保，以及质保规则配置
+			49 heading 质保管理, Value: 1
+				50 text 质保管理
+			51 text 生效中 20 在保的质保卡 待激活 0 激活式起算，客户还没激活 宽限期 0 已过保但仍在宽限天数内 已过保 0 含宽限期已用尽
+			52 container 当前视图说明
+				53 text 概览
+				54 text 质保卡 质保规则
+			55 text field (settable) 搜索质保卡、客户或产品
+			56 button 清空筛选
+			57 table
+				58 row
+					59 cell
+						60 text 质保卡号
+					61 cell
+						62 text 客户
+					63 cell
+						64 text 产品/SN
+					65 cell
+						66 text 判定粒度
+					67 cell
+						68 text 开始日期
+					69 cell
+						70 text 到期日期
+					71 cell
+						72 text 状态
+					73 cell
+						74 text 责任方
+				75 row
+					76 cell
+						77 text WC-20260913165059
+					78 cell
+						79 text 苏州澄岳自动化装备有限公司
+					80 cell
+						81 text 800型柔性线控制柜
+					82 cell
+						83 text 整机/整单服务
+					84 cell
+						85 text 2026-09-10
+					86 cell
+						87 text 2027-09-10
+					88 cell
+						89 text 生效中
+					90 cell
+						91 text 供应商
+				92 row
+					93 cell
+						94 text WC-20260913161537
+					95 cell
+						96 text 苏州澄岳自动化装备有限公司
+					97 cell
+						98 text 800型柔性线控制柜
+					99 cell
+						100 text 整机/整单服务
+					101 cell
+						102 text 2026-09-10
+					103 cell
+						104 text 2027-09-10
+					105 cell
+						106 text 生效中
+					107 cell
+						108 text 供应商
+				109 row
+					110 cell
+						111 text WC-20260913163915
+					112 cell
+						113 text 苏州澄岳自动化装备有限公司
+					114 cell
+						115 text 800型柔性线控制柜
+					116 cell
+						117 text 整机/整单服务
+					118 cell
+						119 text 2026-09-10
+					120 cell
+						121 text 2027-09-10
+					122 cell
+						123 text 生效中
+					124 cell
+						125 text 供应商
+				126 row
+					127 cell
+						128 text WC-20260913174556
+					129 cell
+						130 text 苏州澄岳自动化装备有限公司
+					131 cell
+						132 text 800型柔性线控制柜
+					133 cell
+						134 text 整机/整单服务
+					135 cell
+						136 text 2026-09-10
+					137 cell
+						138 text 2027-09-10
+					139 cell
+						140 text 生效中
+					141 cell
+						142 text 供应商
+				143 row
+					144 cell
+						145 text WC-20260913174641
+					146 cell
+						147 text 苏州澄岳自动化装备有限公司
+					148 cell
+						149 text 800型柔性线控制柜
+					150 cell
+						151 text 整机/整单服务
+					152 cell
+						153 text 2026-09-10
+					154 cell
+						155 text 2027-09-10
+					156 cell
+						157 text 生效中
+					158 cell
+						159 text 供应商
+				160 row
+					161 cell
+						162 text WC-20260913163638
+					163 cell
+						164 text 苏州澄岳自动化装备有限公司
+					165 cell
+						166 text 800型柔性线控制柜
+					167 cell
+						168 text 整机/整单服务
+					169 cell
+						170 text 2026-09-10
+					171 cell
+						172 text 2027-09-10
+					173 cell
+						174 text 生效中
+					175 cell
+						176 text 供应商
+				177 row
+					178 cell
+						179 text WC-20260913160232
+					180 cell
+						181 text 苏州澄岳自动化装备有限公司
+					182 cell
+						183 text 800型柔性线控制柜
+					184 cell
+						185 text 整机/整单服务
+					186 cell
+						187 text 2026-09-10
+					188 cell
+						189 text 2027-09-10
+					190 cell
+						191 text 生效中
+					192 cell
+						193 text 供应商
+				194 row
+					195 cell
+						196 text WC-20260913175318
+					197 cell
+						198 text 苏州澄岳自动化装备有限公司
+					199 cell
+						200 text 800型柔性线控制柜
+					201 cell
+						202 text 整机/整单服务
+					203 cell
+						204 text 2026-09-10
+					205 cell
+						206 text 2027-09-10
+					207 cell
+						208 text 生效中
+					209 cell
+						210 text 供应商
+				211 row
+					212 cell
+						213 text WC-20260913173702
+					214 cell
+						215 text 苏州澄岳自动化装备有限公司
+					216 cell
+						217 text 800型柔性线控制柜
+					218 cell
+						219 text 整机/整单服务
+					220 cell
+						221 text 2026-09-10
+					222 cell
+						223 text 2027-09-10
+					224 cell
+						225 text 生效中
+					226 cell
+						227 text 供应商
+				228 row
+					229 cell
+						230 text WC-20260913152607
+					231 cell
+						232 text 苏州澄岳自动化装备有限公司
+					233 cell
+						234 text 800型柔性线控制柜
+					235 cell
+						236 text 整机/整单服务
+					237 cell
+						238 text 2026-09-10
+					239 cell
+						240 text 2027-09-10
+					241 cell
+						242 text 生效中
+					243 cell
+						244 text 供应商
+				245 row
+					246 cell
+						247 text WC-20260913160145
+					248 cell
+						249 text 苏州澄岳自动化装备有限公司
+					250 cell
+						251 text 800型柔性线控制柜
+					252 cell
+						253 text 整机/整单服务
+					254 cell
+						255 text 2026-09-10
+					256 cell
+						257 text 2027-09-10
+					258 cell
+						259 text 生效中
+					260 cell
+						261 text 供应商
+				262 row
+					263 cell
+						264 text WC-20260913165008
+					265 cell
+						266 text 苏州澄岳自动化装备有限公司
+					267 cell
+						268 text 800型柔性线控制柜
+					269 cell
+						270 text 整机/整单服务
+					271 cell
+						272 text 2026-09-10
+					273 cell
+						274 text 2027-09-10
+					275 cell
+						276 text 生效中
+					277 cell
+						278 text 供应商
+				279 row
+					280 cell
+						281 text WC-20260913170619
+					282 cell
+						283 text 苏州澄岳自动化装备有限公司
+					284 cell
+						285 text 800型柔性线控制柜
+					286 cell
+						287 text 整机/整单服务
+					288 cell
+						289 text 2026-09-10
+					290 cell
+						291 text 2027-09-10
+					292 cell
+						293 text 生效中
+					294 cell
+						295 text 供应商
+				296 row
+					297 cell
+						298 text WC-20260913172011
+					299 cell
+						300 text 苏州澄岳自动化装备有限公司
+					301 cell
+						302 text 800型柔性线控制柜
+					303 cell
+						304 text 整机/整单服务
+					305 cell
+						306 text 2026-09-10
+					307 cell
+						308 text 2027-09-10
+					309 cell
+						310 text 生效中
+					311 cell
+						312 text 供应商
+				313 row
+					314 cell
+						315 text WC-20260913165210
+					316 cell
+						317 text 苏州澄岳自动化装备有限公司
+					318 cell
+						319 text 800型柔性线控制柜
+					320 cell
+						321 text 整机/整单服务
+					322 cell
+						323 text 2026-09-10
+					324 cell
+						325 text 2027-09-10
+					326 cell
+						327 text 生效中
+					328 cell
+						329 text 供应商
+				330 row
+					331 cell
+						332 text WC-20260913175458
+					333 cell
+						334 text 苏州澄岳自动化装备有限公司
+					335 cell
+						336 text 800型柔性线控制柜
+					337 cell
+						338 text 整机/整单服务
+					339 cell
+						340 text 2026-09-10
+					341 cell
+						342 text 2027-09-10
+					343 cell
+						344 text 生效中
+					345 cell
+						346 text 供应商
+				347 row
+					348 cell
+						349 text WC-20260913180156
+					350 cell
+						351 text 苏州澄岳自动化装备有限公司
+					352 cell
+						353 text 800型柔性线控制柜
+					354 cell
+						355 text 整机/整单服务
+					356 cell
+						357 text 2026-09-10
+					358 cell
+						359 text 2027-09-10
+					360 cell
+						361 text 生效中
+					362 cell
+						363 text 供应商
+				364 row
+					365 cell
+						366 text WC-20260913160448
+					367 cell
+						368 text 苏州澄岳自动化装备有限公司
+					369 cell
+						370 text 800型柔性线控制柜
+					371 cell
+						372 text 整机/整单服务
+					373 cell
+						374 text 2026-09-10
+					375 cell
+						376 text 2027-09-10
+					377 cell
+						378 text 生效中
+					379 cell
+						380 text 供应商
+				381 row
+					382 cell
+						383 text WC-20260913163950
+					384 cell
+						385 text 苏州澄岳自动化装备有限公司
+					386 cell
+						387 text 800型柔性线控制柜
+					388 cell
+						389 text 整机/整单服务
+					390 cell
+						391 text 2026-09-10
+					392 cell
+						393 text 2027-09-10
+					394 cell
+						395 text 生效中
+					396 cell
+						397 text 供应商
+				398 row
+					399 cell
+						400 text WC-20260913155754
+					401 cell
+						402 text 苏州澄岳自动化装备有限公司
+					403 cell
+						404 text 800型柔性线控制柜
+					405 cell
+						406 text 整机/整单服务
+					407 cell
+						408 text 2026-09-10
+					409 cell
+						410 text 2027-09-10
+					411 cell
+						412 text 生效中
+					413 cell
+						414 text 供应商
+			415 text 共  20  条记录 每页 20 条 · 1 / 1
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_warranty_management

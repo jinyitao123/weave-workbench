@@ -1,0 +1,276 @@
+Browser tab: 32, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_sales_shipment_workspace".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_shipment_workspace
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 销售发货单
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_sales_shipment_workspace
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 销售发货单, Value: 1
+				44 text 销售发货单
+			45 text 发货出库登记、物流跟踪、签收回执与开票联动 03 销售业务 / 销售发货单
+			46 button 下一步操作　待出库发货单 ›
+			47 button 新建发货单
+			48 button 打开对象记录
+			49 button 刷新
+			50 text 发货出库登记、物流跟踪、签收回执与开票联动
+			51 heading 销售发货单, Value: 1
+				52 text 销售发货单
+			53 text 发货单 7 待出库 0 已出库数量 6.4 含税金额 ¥ 530,000.00
+			54 text field (settable) 搜索发货单
+			55 pop up button (collapsed) Description: 状态, Secondary Actions: Expand
+			56 button 范围
+			57 button 清空筛选
+			58 table
+				59 row
+					60 cell
+						61 text 发货单号
+					62 cell
+						63 text 关联订单
+					64 cell
+						65 text 客户单号
+					66 cell
+						67 text 客户名称
+					68 cell
+						69 text 收货人
+					70 cell
+						71 text 状态
+					72 cell
+						73 text 出库进度
+					74 cell
+						75 text 含税金额
+					76 cell
+						77 text 出库单
+					78 cell
+						79 text 出库日期
+					80 cell
+						81 text 负责人
+					82 cell
+						83 text 操作
+				247 row
+					248 cell
+						249 button DN-FORGE-20260913173455
+						250 text SO-WF-20260909-001 发货 DN-FORGE-20260913173455
+					251 cell
+						252 text SO-WF-20260909-001
+					253 cell
+						254 text —
+					255 cell
+						256 text 苏州澄岳自动化装备有限公司
+					257 cell
+						258 text 周启明
+					259 cell
+						260 text 已出库
+					261 cell
+						262 container
+							263 text 2  /  2  台
+					264 cell
+						265 text ¥ 256,000.00
+					266 cell
+						267 text OUT-FORGE-20260913173516
+					268 cell
+						269 text 2026-09-13
+					270 cell
+						271 text Dev Admin
+					272 cell
+						274 button 查看
+				84 row
+					85 cell
+						86 button SHP-CPR-BROWSER-20260913170228
+						87 text SO-CPR-BROWSER-20260913170228 发货 SHP-CPR-BROWSER-20260913170228
+					88 cell
+						89 text SO-CPR-BROWSER-20260913170228
+					90 cell
+						91 text —
+					92 cell
+						93 text 苏州澄岳自动化装备有限公司
+					94 cell
+						95 text 测试收货人
+					96 cell
+						97 text 已出库
+					98 cell
+						99 container
+							100 text 0.6  /  0.6  台
+					101 cell
+						102 text ¥ 3,000.00
+					103 cell
+						104 text OUT-CPR-BROWSER-20260913170228
+					105 cell
+						106 text 2026-09-10
+					107 cell
+						108 text Dev Admin
+					109 cell
+						110 button 查看
+				111 row
+					112 cell
+						113 button SHP-CPR-API-20260913170228
+						114 text SO-CPR-API-20260913170228 发货 SHP-CPR-API-20260913170228
+					115 cell
+						116 text SO-CPR-API-20260913170228
+					117 cell
+						118 text —
+					119 cell
+						120 text 苏州澄岳自动化装备有限公司
+					121 cell
+						122 text 测试收货人
+					123 cell
+						124 text 已出库
+					125 cell
+						126 container
+							127 text 0.6  /  0.6  台
+					128 cell
+						129 text ¥ 6,000.00
+					130 cell
+						131 text OUT-CPR-API-20260913170228
+					132 cell
+						133 text 2026-09-10
+					134 cell
+						135 text Dev Admin
+					136 cell
+						137 button 查看
+				138 row
+					139 cell
+						140 button SHP-CPR-BROWSER-20260910
+						141 text SO-CPR-BROWSER-20260910 发货 SHP-CPR-BROWSER-20260910
+					142 cell
+						143 text SO-CPR-BROWSER-20260910
+					144 cell
+						145 text —
+					146 cell
+						147 text 苏州澄岳自动化装备有限公司
+					148 cell
+						149 text 测试收货人
+					150 cell
+						151 text 已出库
+					152 cell
+						153 container
+							154 text 0.6  /  0.6  台
+					155 cell
+						156 text ¥ 3,000.00
+					157 cell
+						158 text OUT-CPR-BROWSER-20260910
+					159 cell
+						160 text 2026-09-10
+					161 cell
+						162 text Dev Admin
+					163 cell
+						164 button 查看
+				165 row
+					166 cell
+						167 button SHP-CPR-API-20260910
+						168 text SO-CPR-API-20260910 发货 SHP-CPR-API-20260910
+					169 cell
+						170 text SO-CPR-API-20260910
+					171 cell
+						172 text —
+					173 cell
+						174 text 苏州澄岳自动化装备有限公司
+					175 cell
+						176 text 测试收货人
+					177 cell
+						178 text 已出库
+					179 cell
+						180 container
+							181 text 0.6  /  0.6  台
+					182 cell
+						183 text ¥ 6,000.00
+					184 cell
+						185 text OUT-CPR-API-20260910
+					186 cell
+						187 text 2026-09-10
+					188 cell
+						189 text Dev Admin
+					190 cell
+						191 button 查看
+				192 row
+					193 cell
+						194 button SPLIT-DN-2
+						195 text SO-CONVERT-20260909-001 发货 SPLIT-DN-2
+					196 cell
+						197 text SO-CONVERT-20260909-001
+					198 cell
+						199 text —
+					200 cell
+						201 text 苏州澄岳自动化装备有限公司
+					202 cell
+						203 text 周启明
+					204 cell
+						205 text 已出库
+					206 cell
+						207 container
+							208 text 1  /  1  台
+					209 cell
+						210 text ¥ 128,000.00
+					211 cell
+						212 text SPLIT-OUT-2
+					213 cell
+						214 text 2026-09-09
+					215 cell
+						216 text Dev Admin
+					217 cell
+						218 button 查看
+				219 row
+					220 cell
+						221 button DN-CONVERT-20260909-001
+						222 text SO-CONVERT-20260909-001 发货 DN-CONVERT-20260909-001
+					223 cell
+						224 text SO-CONVERT-20260909-001
+					225 cell
+						226 text —
+					227 cell
+						228 text 苏州澄岳自动化装备有限公司
+					229 cell
+						230 text 周启明
+					231 cell
+						232 text 已出库
+					233 cell
+						234 container
+							235 text 1  /  1  台
+					236 cell
+						237 text ¥ 128,000.00
+					238 cell
+						239 text OUT-CONVERT-20260909-001
+					240 cell
+						241 text 2026-09-09
+					242 cell
+						243 text Dev Admin
+					244 cell
+						245 button 查看
+			246 text 共  7  条记录 每页 10 条 · 1 / 1
+
+The focused UI element is 49 button 刷新

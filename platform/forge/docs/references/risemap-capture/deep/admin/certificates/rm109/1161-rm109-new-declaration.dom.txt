@@ -1,0 +1,244 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 抄送我的
+- button:
+  - generic: 我发起的
+- button:
+  - generic: 行政申请
+- button:
+  - generic: 公司通知
+- button:
+  - generic: 发布通知
+- button:
+  - generic: 用章管理
+- button:
+  - generic: 会议纪要
+- button:
+  - generic: 新建会议纪要
+- button:
+  - generic: AI 模板管理
+- button:
+  - generic: 工作汇报
+- button:
+  - generic: 新建工作汇报
+- button:
+  - generic: 文档中心
+- button:
+  - generic: 固定资产
+- button:
+  - generic: 资质与申报
+- main:
+  - generic: 行政管理
+  - generic: 资质与申报
+  - heading [level=1]: 资质与申报
+  - paragraph: 企业证书资质台账、到期提醒、政策申报跟踪与材料统一管理
+  - button:
+    - text: 资质台账
+  - button:
+    - text: 到期提醒
+  - button:
+    - text: 政策申报
+  - button:
+    - text: 材料库
+  - button [active]:
+    - text: 新增申报
+  - textbox:
+    - /placeholder: 搜索申报名称、主管部门...
+  - button:
+    - text: 列表
+  - button:
+    - text: 看板
+  - button:
+    - text: 甘特图
+  - button:
+    - text: 导出
+  - button:
+  - button:
+  - button:
+  - button:
+    - text: 阶段
+  - button:
+    - text: 类别
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader
+        - columnheader:
+          - generic: 申报项目
+        - columnheader:
+          - generic: 申报类别
+        - columnheader:
+          - generic: 主管部门
+        - columnheader:
+          - generic: 截止日期
+        - columnheader:
+          - generic: 责任人
+        - columnheader:
+          - generic: 预期金额
+        - columnheader:
+          - generic: 关联材料
+        - columnheader:
+          - generic: 当前阶段
+    - rowgroup:
+      - row:
+        - cell:
+          - generic: 暂无数据
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button [disabled]:
+  - button: "1"
+  - button [disabled]:
+- button:
+- region "Notifications alt+T"
+- dialog "新增申报项目":
+  - heading "新增申报项目" [level=2]:
+    - text: 新增申报项目
+  - paragraph: 新增政策申报项目表单
+  - generic: "*"
+  - generic: 申报名称
+  - textbox "如：2026年高新技术企业复审"
+  - generic: "*"
+  - generic: 申报类别
+  - button "请选择":
+    - generic: 请选择
+  - generic: "*"
+  - generic: 主管部门
+  - textbox "如：上海市科委"
+  - generic: "*"
+  - generic: 截止日期
+  - textbox "请选择截止日期"
+  - button:
+  - generic: 启动日期
+  - textbox "请选择启动日期"
+  - button:
+  - generic: 责任人
+  - button "选择责任人":
+    - generic: 选择责任人
+  - generic: 预期补贴金额
+  - spinbutton
+  - generic: 备注
+  - textbox "其他需要记录的信息..."
+  - button "取消"
+  - button "保存"
+  - button "Close":
+    - generic: Close

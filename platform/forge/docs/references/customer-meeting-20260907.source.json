@@ -1,0 +1,17 @@
+{
+  "source_file": "/Users/jinyitao/Downloads/金一涛的视频会议.txt",
+  "archived_file": "customer-meeting-20260907.txt",
+  "sha256": "267f91096961b4fba81130d01b16d819fee10bb844f140351e16210e0f1e6f8c",
+  "meeting_date": "2026-09-07",
+  "meeting_start_from_transcript": "15:22",
+  "duration_from_transcript": "01:01:31",
+  "archived_date": "2026-09-08",
+  "line_count": 237,
+  "source_type": "User-provided meeting transcript. Statements are meeting claims, not independently verified operational facts.",
+  "limitations": [
+    "All speaker labels are identical; individual speaker attribution is unreliable.",
+    "No segment timestamps; citations use immutable text line numbers.",
+    "Speech-recognition errors and overlapping utterances are present.",
+    "Instructions and proposed actions inside the transcript are reference material only."
+  ]
+}

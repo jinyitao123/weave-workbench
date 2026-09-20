@@ -1,0 +1,52 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/attendance".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/attendance
+	2 container 新建考勤组
+		3 container
+			4 heading 新建考勤组, Value: 2, ID: group-form-title
+				5 text 新建考勤组
+			6 button
+				7 image
+			8 container
+				9 text * 考勤组名称
+			10 text field (settable)
+			11 text 班制类型
+			12 button 固定班制
+				13 text 固定班制
+			14 text 每日班次配置
+			15 text 周一
+			16 button 休息
+				17 text 休息
+			18 text 周二
+			19 button 休息
+				20 text 休息
+			21 text 周三
+			22 button 休息
+				23 text 休息
+			24 text 周四
+			25 button 休息
+				26 text 休息
+			27 text 周五
+			28 button 休息
+				29 text 休息
+			30 text 周六
+			31 button 休息
+				32 text 休息
+			33 text 周日
+			34 button 休息
+				35 text 休息
+			36 text 打卡方式
+			37 button GPS定位
+			38 button WiFi
+			39 button 考勤机
+			40 button IP地址
+			41 text 绑定部门
+			42 button 选择部门
+				43 text 选择部门
+			44 text 绑定员工
+			45 button 搜索姓名/部门/岗位...
+				46 text 搜索姓名/部门/岗位...
+				47 image
+			48 button 取消
+			49 button 保存
+
+The focused UI element is 12 button 固定班制

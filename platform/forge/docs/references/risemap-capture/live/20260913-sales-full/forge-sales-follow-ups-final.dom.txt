@@ -1,0 +1,116 @@
+- region "通知 alt+T"
+- banner:
+  - link "ObjectOS":
+    - /url: /_console/apps/forge
+  - generic "本平台处于预览版，功能可能调整。": 预览版
+  - generic: /
+  - button "Forge":
+    - generic: Forge
+  - generic: /
+  - link "页面":
+    - /url: /_console/apps/forge
+  - generic: /
+  - generic: 跟进记录
+  - button "搜索…":
+    - generic: 搜索…
+    - generic: ⌘
+    - text: K
+  - button "打开消息中心":
+  - link "在 Studio 中设计":
+    - /url: /_console/studio/forge/interfaces?surface=page:page_sales_follow_ups
+  - button "帮助与文档":
+  - button "DA":
+    - generic: DA
+- text: 区域
+- list:
+  - button "工作台":
+    - generic: 工作台
+  - button "供应链":
+    - generic: 供应链
+  - button "销售":
+    - generic: 销售
+  - button "生产":
+    - generic: 生产
+  - button "项目":
+    - generic: 项目
+  - button "行政":
+    - generic: 行政
+  - button "财务":
+    - generic: 财务
+  - button "报表":
+    - generic: 报表
+  - button "系统":
+    - generic: 系统
+- button "工作台" [expanded]:
+  - text: 工作台
+- list:
+  - link "工作台":
+    - /url: /_console/apps/forge/page/page_workbench
+    - generic: 工作台
+  - link "待办管理":
+    - /url: /_console/apps/forge/page/page_workbench
+    - generic: 待办管理
+  - link "AI 广场":
+    - /url: /_console/apps/forge/page/page_workspace_recovery_status
+    - generic: AI 广场
+  - link "引导中心":
+    - /url: /_console/apps/forge/page/page_workspace_recovery_status
+    - generic: 引导中心
+- text: 最近使用
+- button "切换侧边栏":
+  - generic: 切换侧边栏
+- main:
+  - main:
+    - button "在 Studio 中编辑":
+    - heading "跟进记录" [level=1]
+    - paragraph: 记录和管理所有客户及商机的跟进活动
+    - generic: "19"
+    - strong: CRM客户管理 / 跟进记录
+    - button "新增跟进" [disabled]
+    - button "刷新"
+    - generic: 记录和管理所有客户及商机的跟进活动
+    - heading "跟进记录" [level=1]
+    - generic: 总跟进记录
+    - generic: "0"
+    - generic: 本周跟进
+    - generic: "0"
+    - generic: 待跟进
+    - generic: "0"
+    - generic: 已过期
+    - generic: "0"
+    - button "全部"
+    - button "电话沟通"
+    - button "微信沟通"
+    - button "邮件往来"
+    - button "上门拜访"
+    - button "客户来访"
+    - button "线上会议"
+    - button "产品演示"
+    - button "方案讲解"
+    - button "商务谈判"
+    - button "其他"
+    - textbox "搜索客户、内容、商机..."
+    - button "范围"
+    - button "客户负责人"
+    - button "跟进状态"
+    - button "高级筛选"
+    - button "清空筛选"
+    - table:
+      - rowgroup:
+        - row "客户 商机 跟进类型 跟进内容 跟进时间 下次计划 状态 负责人 操作":
+          - columnheader "客户"
+          - columnheader "商机"
+          - columnheader "跟进类型"
+          - columnheader "跟进内容"
+          - columnheader "跟进时间"
+          - columnheader "下次计划"
+          - columnheader "状态"
+          - columnheader "负责人"
+          - columnheader "操作"
+      - rowgroup:
+        - row "◇ 暂无跟进记录 新增或导入业务记录后，可在这里按当前筛选条件查看和跟踪。":
+          - cell "◇ 暂无跟进记录 新增或导入业务记录后，可在这里按当前筛选条件查看和跟踪。":
+            - generic: ◇
+            - strong: 暂无跟进记录
+            - generic: 新增或导入业务记录后，可在这里按当前筛选条件查看和跟踪。
+    - generic: 共 0 条记录 每页 20 条 · 1 / 1

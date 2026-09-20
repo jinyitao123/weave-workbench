@@ -1,0 +1,222 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/equipment-maintenance".
+1 AXWebArea RiseMap, URL: risemap.cn/ops/equipment-maintenance
+	2 container
+		3 container root
+			218 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			219 text 行政
+			220 button 收起侧边栏
+				221 image
+			222 container
+				223 button 审批中心
+					224 image
+					225 text 审批中心
+					226 image
+				227 button 我的审批
+				228 button 抄送我的
+				229 button 我发起的
+				230 button 行政申请
+				231 button 行政管理
+					232 image
+					233 text 行政管理
+					234 image
+				235 button 公司通知
+				236 button 用章管理
+				237 button 会议纪要
+				238 button 工作汇报
+				239 button 文档中心
+				240 button 固定资产
+				241 button 资质与申报
+				242 button 物料领取
+				243 button 设备维护
+				244 button 礼品管理
+				245 button 借出管理
+				246 button 车辆管理
+				247 button 人力资源
+					248 image
+					249 text 人力资源
+					250 image
+				251 button 人事工作台
+				252 button 员工档案
+				253 button 招聘管理
+				254 button 入职离职
+				255 button 薪酬福利
+				256 button 规章制度
+				257 button 通讯录
+				258 button 考勤假期
+					259 image
+					260 text 考勤假期
+					261 image
+				262 button 加班申请
+				263 button 请假管理
+				264 button 出差申请
+				265 button 考勤管理
+				266 button 考勤统计
+				267 button 流程中心
+					268 image
+					269 text 流程中心
+					270 image
+				271 button 审批记录
+				272 button 发起流程
+				273 button 流程定义
+				274 button 流程分类
+			275 image
+			276 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			277 button 查看方案
+				278 image
+				279 text 查看方案
+			280 button
+				281 image
+			282 container
+				283 container 业务分类
+					284 checkbox 工作台, Value: 0
+					285 checkbox 供应链, Value: 0
+					286 checkbox 销售, Value: 0
+					287 checkbox 生产, Value: 0
+					288 checkbox 项目, Value: 0
+					289 checkbox 行政, Value: 1
+					290 checkbox 财务, Value: 0
+					291 checkbox 报表, Value: 0
+					292 checkbox 系统, Value: 0
+				293 button Description: 展开搜索, Help: 搜索
+					294 image
+				295 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					296 image
+					297 text 2
+				298 button Description: 打开推广奖励, Help: 推广
+				299 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				300 link Description: 打开工单, Value: community.risemap.cn/support
+				301 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					302 image
+					303 text 立即订阅
+				304 button 金
+					305 text 金
+					306 image
+			307 container
+				308 button 工作台
+					309 image
+					310 text 工作台
+				311 button 行政申请
+					312 text 行政申请
+				313 button 公司通知
+					314 text 公司通知
+				315 button 发布通知
+					316 text 发布通知
+				317 button 用章管理
+					318 text 用章管理
+				319 button 会议纪要
+					320 text 会议纪要
+				321 button 新建会议纪要
+					322 text 新建会议纪要
+				323 button AI 模板管理
+					324 text AI 模板管理
+				325 button 工作汇报
+					326 text 工作汇报
+				327 button 新建工作汇报
+					328 text 新建工作汇报
+				329 button 文档中心
+					330 text 文档中心
+				331 button 固定资产
+					332 text 固定资产
+				333 button 资质与申报
+					334 text 资质与申报
+				335 button 物料领取
+					336 text 物料领取
+				337 button 设备维护
+					338 text 设备维护
+			339 container
+				340 heading 设备维护保养, Value: 1
+					341 text 设备维护保养
+				342 text 设备台账管理、维护/维修工单与提醒
+				343 button 设备台账
+					344 image
+					345 text 设备台账
+				346 button 工单管理
+					347 image
+					348 text 工单管理
+				349 button 维保规则
+					350 image
+					351 text 维保规则
+				352 button 提醒中心 0
+					353 image
+					354 text 提醒中心
+					355 text 0
+				356 button 费用统计
+					357 image
+					358 text 费用统计
+				359 button 新增维护
+					360 image
+					361 text 新增维护
+				362 button 新增维修
+					363 image
+					364 text 新增维修
+				365 button 导出
+					366 image
+					367 text 导出
+					368 image
+				369 button 刷新
+					370 image
+				371 button
+					372 image
+				373 button
+					374 image
+				375 image
+				376 text field (settable)
+				377 button 工单分类
+					378 text 工单分类
+					379 image
+				380 button 状态
+					381 text 状态
+					382 image
+				383 table
+					384 row
+						385 cell
+							386 checkbox (settable, integer) 0
+						387 cell
+							388 text 工单编号
+						389 cell
+							390 text 工单分类
+						391 cell
+							392 text 工单类型
+						393 cell
+							394 text 设备名称
+						395 cell
+							396 text 设备编号
+						397 cell
+							398 text 状态
+						399 cell
+							400 text 优先级
+						401 cell
+							402 text 计划日期
+						403 cell
+							404 text 实际开始
+						405 cell
+							406 text 实际完成
+						407 cell
+							408 text 执行人
+						409 cell
+							410 text 工时
+						411 cell
+							412 text 费用
+						413 cell
+							414 text 操作
+					415 row
+						416 cell
+							417 image
+							418 text 暂无工单
+				419 text 共  0 条记录 每页
+				420 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					421 text 20
+				422 text 条
+				423 button (disabled) 上一页
+					424 image
+				425 button 1
+				426 button (disabled) 下一页
+					427 image
+			428 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			217 container Notifications alt+T
+		429 container
+			430 text 全部
+			431 image
+			432 text 已计划 进行中 已完成 已逾期 已归档
+
+The focused UI element is 380 button 状态

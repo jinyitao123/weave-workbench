@@ -1,0 +1,16 @@
+# Dependencies and generated build output
+**/node_modules/
+**/dist/
+**/.objectstack/
+**/*.log
+**/.DS_Store
+**/.env
+**/.env.*
+
+# Local editor/OS state
+.idea/
+.vscode/
+.DS_Store
+**/node_modules.*/
+**/__pycache__/
+*.pyc

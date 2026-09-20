@@ -1,0 +1,251 @@
+- generic: 项目
+- button:
+- navigation:
+  - button:
+    - generic: 项目管理
+  - button:
+    - generic: 项目中心
+  - button:
+    - generic: 项目分析中心
+  - button:
+    - generic: 任务管理
+  - button:
+    - generic: 工时管理
+  - button:
+    - generic: 项目配置中心
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button [pressed]:
+      - text: 项目
+    - button:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 新建委外订单
+- button:
+  - generic: 委外发料
+- button:
+  - generic: 新建发料单
+- button:
+  - generic: 委外回厂
+- button:
+  - generic: 委外退料
+- button:
+  - generic: 新建退料单
+- button:
+  - generic: 委外对账
+- button:
+  - generic: 委外供应商
+- button:
+  - generic: 委外库存
+- button:
+  - generic: 批次追溯
+- button:
+  - generic: 委外未交
+- button:
+  - generic: 委外进货
+- button:
+  - generic: 委外对账单
+- button:
+  - generic: 项目中心
+- main:
+  - generic: 项目管理
+  - generic: 项目中心
+  - heading [level=1]: 项目中心
+  - button:
+    - text: 表格
+  - button:
+    - text: 甘特图
+  - button:
+    - text: 项目分析中心
+  - button:
+    - text: 新建项目
+  - button: 全部
+  - button: 待执行
+  - button: 进行中
+  - button: 已暂停
+  - button: 已完工
+  - button: 已结算
+  - button: 已终止
+  - button: 已归档
+  - button:
+    - text: 导入/导出
+  - generic: 分组
+  - button: 按状态
+  - button: 按负责人
+  - button: 按进度
+  - button: 按客户
+  - button:
+  - button:
+  - button:
+  - button:
+    - text: 范围
+  - textbox:
+    - /placeholder: 搜索项目 / 客户...
+  - text: 按创建时间降序
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader
+        - columnheader:
+          - generic: 项目名称
+        - columnheader:
+          - generic: 客户名称
+        - columnheader:
+          - generic: 项目经理
+        - columnheader:
+          - generic: 项目周期
+        - columnheader:
+          - generic: 项目进度
+        - columnheader:
+          - generic: 预计营收
+        - columnheader:
+          - generic: 预算金额
+        - columnheader:
+          - generic: 合同金额
+        - columnheader:
+          - generic: 总成本
+        - columnheader:
+          - generic: 毛利率
+        - columnheader:
+          - generic: 回款率
+        - columnheader:
+          - generic: 创建时间
+        - columnheader:
+          - generic: 操作
+    - rowgroup:
+      - row:
+        - cell:
+          - generic: 暂无匹配的项目
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button [disabled]:
+  - button: "1"
+  - button [disabled]:
+- button:
+- region "Notifications alt+T"
+- generic: 2025-10
+- dialog "新建项目":
+  - heading "新建项目" [level=2]
+  - paragraph: 填写项目信息并关联客户、商机、合同，配置团队成员
+  - paragraph: 基本信息
+  - generic: 项目编号（选填）
+  - textbox "项目编号（选填）":
+    - /placeholder: 留空则根据编码规则自动生成
+  - text: 项目名称
+  - generic: "*"
+  - textbox "请输入项目名称，如：华能DCS改造项目二期"
+  - text: 项目类型
+  - generic: "*"
+  - button "请选择项目类型":
+    - generic: 请选择项目类型
+  - button "新增项目类型" [active]:
+  - generic: 优先级
+  - radiogroup:
+    - radio "高"
+    - radio "中" [checked]
+    - radio "低"
+  - text: 计划开始日期
+  - generic: "*"
+  - textbox "选择开始日期"
+  - button:
+  - text: 计划结束日期
+  - generic: "*"
+  - textbox "选择结束日期"
+  - button:
+  - text: 预计营收 (人民币)
+  - textbox "0.00"
+  - text: 预算金额 (人民币)
+  - textbox "0.00"
+  - generic: 项目描述
+  - textbox "简要描述项目内容、范围和目标..."
+  - paragraph: 关联客户
+  - generic: "*"
+  - button "搜索客户名称...":
+    - generic: 搜索客户名称...
+  - paragraph: 关联商机
+  - generic: （可选，支持多选）
+  - paragraph: 请先选择关联客户，系统将自动筛选该客户下的商机
+  - paragraph: 关联合同
+  - generic: （可选，支持多选）
+  - paragraph: 请先选择关联客户，系统将自动筛选该客户下的合同
+  - paragraph: 关联订单
+  - generic: （可选，支持多选；项目总金额按已选订单汇总）
+  - paragraph: 请先选择关联客户，系统将自动筛选该客户下的订单
+  - generic: 项目附件
+  - generic: （选填）
+  - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件":
+    - generic: 点击或拖拽文件到此处上传
+    - generic: 支持 Ctrl+V 粘贴截图
+    - generic: 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+  - paragraph: 团队成员
+  - generic: "*"
+  - button "添加成员":
+    - generic: 添加成员
+  - paragraph: 暂未添加团队成员
+  - paragraph: 点击右上角「添加成员」按钮选择项目成员
+  - button "取消"
+  - button "创建项目"
+  - button "Close":
+    - generic: Close
+- dialog "新增项目类型":
+  - heading "新增项目类型" [level=3]
+  - button "关闭":
+  - text: 类型名称
+  - generic: "*"
+  - textbox "请输入项目类型"
+  - text: 类型编码
+  - generic: "*"
+  - textbox "如：DELIVERY、OPS"
+  - generic: 标识颜色
+  - button
+  - button
+  - button
+  - button
+  - button
+  - button
+  - button
+  - button
+  - button
+  - button
+  - button
+  - button
+  - button "取消"
+  - button "添加"

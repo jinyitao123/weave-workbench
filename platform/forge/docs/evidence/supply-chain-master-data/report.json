@@ -1,0 +1,129 @@
+{
+ "verifiedAt": "2026-09-17T12:46:27.727Z",
+ "results": [
+  {
+   "id": "page_material_combinations",
+   "label": "物料组合",
+   "hero": true,
+   "heroTitle": "物料组合",
+   "crumbs": [
+    "供应链",
+    "基础资料",
+    "物料组合"
+   ],
+   "tabs": [],
+   "actions": [
+    "新建物料组合",
+    "批量启用",
+    "批量停用",
+    "导入/导出",
+    "导出",
+    "刷新"
+   ],
+   "headers": [
+    "编号",
+    "组合名称",
+    "物料种类",
+    "含税销售价",
+    "不含税销售价",
+    "状态",
+    "引用次数",
+    "创建人",
+    "创建日期",
+    "操作"
+   ],
+   "rows": 1,
+   "empty": "◇",
+   "colOk": true
+  },
+  {
+   "id": "page_bom_workspace",
+   "label": "BOM管理",
+   "hero": true,
+   "heroTitle": "BOM管理",
+   "crumbs": [
+    "供应链",
+    "基础资料",
+    "BOM管理"
+   ],
+   "tabs": [
+    "全部(2)",
+    "草稿(0)",
+    "待评审(0)",
+    "已生效(2)",
+    "已失效(0)",
+    "已归档(0)"
+   ],
+   "actions": [
+    "刷新"
+   ],
+   "headers": [
+    "BOM编号",
+    "BOM名称",
+    "产品/设备",
+    "BOM类型",
+    "当前版本",
+    "状态",
+    "适用项目",
+    "物料数",
+    "成本",
+    "更新时间",
+    "创建人",
+    "操作"
+   ],
+   "rows": 2,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_material_search",
+   "label": "综合物料搜索",
+   "hero": true,
+   "heroTitle": "综合物料搜索",
+   "crumbs": [
+    "供应链",
+    "基础资料",
+    "综合物料搜索"
+   ],
+   "tabs": [
+    "单件查询",
+    "批量清单分析"
+   ],
+   "actions": [],
+   "headers": [],
+   "rows": 0,
+   "empty": "◇",
+   "colOk": true
+  },
+  {
+   "id": "page_product_trace",
+   "label": "产品实例追溯",
+   "hero": true,
+   "heroTitle": "产品实例追溯",
+   "crumbs": [
+    "供应链",
+    "基础资料",
+    "产品实例追溯"
+   ],
+   "tabs": [
+    "物料编码",
+    "批次码",
+    "产品实例"
+   ],
+   "actions": [],
+   "headers": [
+    "物料编码",
+    "物料名称",
+    "型号",
+    "分类",
+    "品牌",
+    "条码",
+    "状态",
+    "操作"
+   ],
+   "rows": 8,
+   "empty": "",
+   "colOk": false
+  }
+ ]
+}

@@ -1,0 +1,222 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/performance-bank".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/performance-bank
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 销售业务
+					10 image
+					11 text 销售业务
+					12 image
+				13 button 框架销售合同
+				14 button 销售订单
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+			36 image
+			37 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			38 button 查看方案
+				39 image
+				189 text 查看方案
+			40 button
+				41 image
+			42 container
+				43 container 业务分类
+					44 checkbox 工作台, Value: 0
+					45 checkbox 供应链, Value: 0
+					46 checkbox 销售, Value: 1
+					47 checkbox 生产, Value: 0
+					48 checkbox 项目, Value: 0
+					49 checkbox 行政, Value: 0
+					50 checkbox 财务, Value: 0
+					51 checkbox 报表, Value: 0
+					52 checkbox 系统, Value: 0
+				53 button Description: 展开搜索, Help: 搜索
+					54 image
+				55 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					56 image
+					57 text 2
+				58 button Description: 打开推广奖励, Help: 推广
+				59 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				60 link Description: 打开工单, Value: community.risemap.cn/support
+				61 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					62 image
+					63 text 立即订阅
+				64 button 金
+					65 text 金
+					66 image
+			67 container
+				68 button 工作台
+					69 image
+					70 text 工作台
+				71 button 销售直接出库
+					72 text 销售直接出库
+				73 button 待出库发货单
+					74 text 待出库发货单
+				75 button 采购退换货出库
+					76 text 采购退换货出库
+				77 button 出库明细
+					78 text 出库明细
+				79 button 框架销售合同
+					80 text 框架销售合同
+				81 button 新建合同
+					82 text 新建合同
+				83 button 销售订单
+					84 text 销售订单
+				85 button 新建销售订单
+					86 text 新建销售订单
+				87 button 收款流水
+					88 text 收款流水
+				89 button 销售发货单
+					90 text 销售发货单
+				91 button 新建发货单
+					92 text 新建发货单
+				93 button 销售退货
+					94 text 销售退货
+				95 button 新建销售退货
+					96 text 新建销售退货
+				97 button 业绩银行
+					98 text 业绩银行
+			99 container
+				100 container
+					101 text 销售业务
+					102 image
+					103 text 业绩银行
+					104 image
+					105 heading 业绩银行, Value: 1
+						106 text 业绩银行
+					107 text 按已完成销售订单统计业绩，统一沉淀确认、Rebook 与分析结果
+				108 button 所有
+					109 image
+					110 text 所有
+				111 button 我负责的
+					112 image
+					113 text 我负责的
+				114 button 下属负责的
+					115 image
+					116 text 下属负责的
+				117 button 我关注的
+					118 image
+					119 text 我关注的
+				120 text 累计确认业绩 ¥0.00 累计毛利 ¥0.00 业绩笔数 0 待审批 0
+				121 button 我的业绩银行
+					122 image
+					123 text 我的业绩银行
+				124 button 业绩流水
+					125 image
+					126 text 业绩流水
+				127 button Rebook 记录
+					128 image
+					129 text Rebook 记录
+				130 button 销售业绩确认
+					131 image
+					132 text 销售业绩确认
+				133 button 业绩分析
+					134 image
+					135 text 业绩分析
+				136 button 选择业绩人
+					137 text 选择业绩人
+				138 image
+				139 button 全部
+				140 button 本年
+				141 button Q1
+				142 button Q2
+				143 button Q3
+				144 button Q4
+				145 button 本月
+				146 text 金 金一涛  的业绩银行 默认部门
+				147 image
+				148 text 业绩净额 ¥ 0.00 共  0  条流水
+				149 image
+				150 text 原始确认 ¥ 0.00 0  条
+				151 image
+				152 text 业绩分入 +¥ 0.00 0  条
+				153 image
+				154 text 业绩分出 -¥ 0.00 0  条
+				155 image
+				156 text 月度业绩趋势 ( 2026 )
+				157 image
+					190 text 1月
+					191 text 2月
+					192 text 3月
+					193 text 4月
+					194 text 5月
+					195 text 6月
+					196 text 7月
+					197 text 8月
+					198 text 9月
+					199 text 10月
+					200 text 11月
+					201 text 12月
+					202 text 0万
+					203 text 0万
+					204 text 0万
+					205 text 0万
+					206 text 0万
+				207 content list
+					208 container
+						209 image
+						210 text 原始确认
+					211 container
+						212 image
+						213 text 业绩分入
+					214 container
+						215 image
+						216 text 业绩分出
+					217 container
+						218 image
+						219 text 净业绩
+				158 image
+				159 text 业绩明细 ( 0  条)
+				160 table
+					161 row
+						162 cell
+							163 text 方向
+						164 cell
+							165 text 销售订单号
+						166 cell
+							167 text 客户
+						168 cell
+							169 text 销售订单额
+						170 cell
+							171 text 毛利率
+						172 cell
+							173 text 业绩金额
+						174 cell
+							175 text 计收比例
+						176 cell
+							177 text 时间
+						178 cell
+							179 text 操作
+				180 image
+				181 text 当前筛选条件下暂无业绩记录 共  0 条记录 每页
+				182 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					183 text 10
+				184 text 条
+				185 button
+					186 image
+			187 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			188 container Notifications alt+T
+
+The focused UI element is 114 button 下属负责的

@@ -1,0 +1,681 @@
+{
+  "checked_date": "2026-09-08",
+  "scope": "Public repository tree inventory and selected source downloads. Not a full audit. Downloads do not imply every file was reviewed line by line. No application or repository tests were run. Branch commits are not proven identical to npm release 17.3.0.",
+  "repositories": [
+    {
+      "repo": "objectstack-ai/hotclm",
+      "sha": "c1ae9acd6d7b64ddf260e268f8975c019f528c3d",
+      "tree_url": "https://github.com/objectstack-ai/hotclm/tree/c1ae9acd6d7b64ddf260e268f8975c019f528c3d",
+      "selected_files": [
+        {
+          "path": "DESIGN.md",
+          "sha256": "1e19fa1a85c346ec66293951e576d58d44f27a05d6320c821942aae6cb172171",
+          "url": "https://github.com/objectstack-ai/hotclm/blob/c1ae9acd6d7b64ddf260e268f8975c019f528c3d/DESIGN.md"
+        },
+        {
+          "path": "LICENSE",
+          "sha256": "3d1d5153fae0251cb050e7347f43077367156f820fd9d60184788afd6a91e642",
+          "url": "https://github.com/objectstack-ai/hotclm/blob/c1ae9acd6d7b64ddf260e268f8975c019f528c3d/LICENSE"
+        },
+        {
+          "path": "README.md",
+          "sha256": "0ce1303f7d6eaa68b804594439e96a479393c1f83e65368fcd4ffe00e1c3906a",
+          "url": "https://github.com/objectstack-ai/hotclm/blob/c1ae9acd6d7b64ddf260e268f8975c019f528c3d/README.md"
+        },
+        {
+          "path": "objectstack.config.ts",
+          "sha256": "090caf34543ea68631390c82bff7c76fca0fd4fcb6069369f310771d24a2ecff",
+          "url": "https://github.com/objectstack-ai/hotclm/blob/c1ae9acd6d7b64ddf260e268f8975c019f528c3d/objectstack.config.ts"
+        },
+        {
+          "path": "objectstack.manifest.json",
+          "sha256": "519e8771f5e4ee3296cb4c8ec352f7c6ec058e528ac9052b52aff2c9f694e017",
+          "url": "https://github.com/objectstack-ai/hotclm/blob/c1ae9acd6d7b64ddf260e268f8975c019f528c3d/objectstack.manifest.json"
+        },
+        {
+          "path": "package.json",
+          "sha256": "b97cca2b93201d9e3ee2a7d7b01381959e3549db3778bb0220fcd315617bdfb4",
+          "url": "https://github.com/objectstack-ai/hotclm/blob/c1ae9acd6d7b64ddf260e268f8975c019f528c3d/package.json"
+        },
+        {
+          "path": "src/actions/contract-lifecycle.actions.ts",
+          "sha256": "b252c74c55e7e4b1a0449fdbdfd585217f2b554a62794c956995e5f2c4a33e10",
+          "url": "https://github.com/objectstack-ai/hotclm/blob/c1ae9acd6d7b64ddf260e268f8975c019f528c3d/src/actions/contract-lifecycle.actions.ts"
+        },
+        {
+          "path": "src/actions/contract.actions.ts",
+          "sha256": "8249cb2261b6a390dcdf3f267d8b086bdc194ba0cb2dbb6406e640bac40829cb",
+          "url": "https://github.com/objectstack-ai/hotclm/blob/c1ae9acd6d7b64ddf260e268f8975c019f528c3d/src/actions/contract.actions.ts"
+        },
+        {
+          "path": "src/actions/index.ts",
+          "sha256": "f6092bdb14dc366cb8a280762b1f498a1a51ee9cd8998c19523febf2fd5b8ded",
+          "url": "https://github.com/objectstack-ai/hotclm/blob/c1ae9acd6d7b64ddf260e268f8975c019f528c3d/src/actions/index.ts"
+        },
+        {
+          "path": "src/flows/contract-approval.flow.ts",
+          "sha256": "f541475b9cc916e716e7630e9a04ff3dcbba74fcfc2cd9e37419a46223703f90",
+          "url": "https://github.com/objectstack-ai/hotclm/blob/c1ae9acd6d7b64ddf260e268f8975c019f528c3d/src/flows/contract-approval.flow.ts"
+        },
+        {
+          "path": "src/flows/contract-intake.flow.ts",
+          "sha256": "bb71c28102d66707a499f4d7cf91d25738a9efd0b6542ede96e03b2cb7bc164c",
+          "url": "https://github.com/objectstack-ai/hotclm/blob/c1ae9acd6d7b64ddf260e268f8975c019f528c3d/src/flows/contract-intake.flow.ts"
+        },
+        {
+          "path": "src/flows/index.ts",
+          "sha256": "84ab00c53ba3c781ba760f17bd930a1d48a5b8373774418f00907c8f5763ea32",
+          "url": "https://github.com/objectstack-ai/hotclm/blob/c1ae9acd6d7b64ddf260e268f8975c019f528c3d/src/flows/index.ts"
+        },
+        {
+          "path": "src/flows/signature-record.flow.ts",
+          "sha256": "d1c30ef757dff5b94feb23b601899cd6ac5768eac94b7758fd58627b01a9f8af",
+          "url": "https://github.com/objectstack-ai/hotclm/blob/c1ae9acd6d7b64ddf260e268f8975c019f528c3d/src/flows/signature-record.flow.ts"
+        },
+        {
+          "path": "src/objects/contract.object.ts",
+          "sha256": "3d94af9730566dd6ab54419bf19b57521c9b97f67ddb03e3ea37fbdacb7dd9dd",
+          "url": "https://github.com/objectstack-ai/hotclm/blob/c1ae9acd6d7b64ddf260e268f8975c019f528c3d/src/objects/contract.object.ts"
+        }
+      ]
+    },
+    {
+      "repo": "objectstack-ai/hotcrm",
+      "sha": "5b2ecdd24dc1417400e6b35004e607fbaef8ab72",
+      "tree_url": "https://github.com/objectstack-ai/hotcrm/tree/5b2ecdd24dc1417400e6b35004e607fbaef8ab72",
+      "selected_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/LICENSE"
+        },
+        {
+          "path": "README.md",
+          "sha256": "6c1019ff86f6c98843d97281d6f80459ee30069b4e1ed7d7fcbf7385dbb0f7df",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/README.md"
+        },
+        {
+          "path": "objectstack.config.ts",
+          "sha256": "b8cae3ff75c0444c7c4df8ba6efd7de468fc27b3b68ea5d455a44e731078e380",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/objectstack.config.ts"
+        },
+        {
+          "path": "objectstack.manifest.json",
+          "sha256": "6736b76f1bb4d5ac4d6b2a8c3b53c423db66aa6f593abf051b8ebbf37da3979d",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/objectstack.manifest.json"
+        },
+        {
+          "path": "package.json",
+          "sha256": "2a4c902fc6a012673b3aaa307d20847a5a6fc195828b01d524527852e22798a0",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/package.json"
+        },
+        {
+          "path": "src/flows/billing-handoff.flow.ts",
+          "sha256": "3eec15abb596fb57918b803d19ff1eca9d97a197fc92c7bdfd053322480565a9",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/src/flows/billing-handoff.flow.ts"
+        },
+        {
+          "path": "src/flows/contract-expiration.flow.ts",
+          "sha256": "97912229b84dcff3205e8f33bd8720cd9358fc66e226d591454fa68dd18e65c4",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/src/flows/contract-expiration.flow.ts"
+        },
+        {
+          "path": "src/flows/contract-renewal.flow.ts",
+          "sha256": "b7a88b124ec43a30c2090fb535f518e1816ae5fb59c05a29a4a8533a6e335453",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/src/flows/contract-renewal.flow.ts"
+        },
+        {
+          "path": "src/flows/opportunity-won-alert.flow.ts",
+          "sha256": "a2d708368a1a677b491a5426e4e6b7bb0fda23473adee4cdadea3daa6bdb7621",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/src/flows/opportunity-won-alert.flow.ts"
+        },
+        {
+          "path": "src/flows/quote-expiration.flow.ts",
+          "sha256": "5302c2977a75ab5beb86233a533c42236d72cc4e3404e3abe606acd731bb714f",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/src/flows/quote-expiration.flow.ts"
+        },
+        {
+          "path": "src/flows/quote-generation.flow.ts",
+          "sha256": "4c09f981eaa2bc8e0625bb45d6d162383150949783c96a1f89054ce87e6f5470",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/src/flows/quote-generation.flow.ts"
+        },
+        {
+          "path": "src/objects/contract.hook.ts",
+          "sha256": "1b164d9d9e1acad723091aeb29a3fd1df1b2096dbc7b4e2e16eaac806aa48fd9",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/src/objects/contract.hook.ts"
+        },
+        {
+          "path": "src/objects/contract.object.ts",
+          "sha256": "077318cca1b1802a6a92e895afdf284e2eaef7912a536baf7b865d3ac19024b4",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/src/objects/contract.object.ts"
+        },
+        {
+          "path": "src/objects/quote.hook.ts",
+          "sha256": "729f03648e40642929f98a6ba53b03e12108af692047f342ce33e9963c77e5a4",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/src/objects/quote.hook.ts"
+        },
+        {
+          "path": "src/objects/quote.object.ts",
+          "sha256": "be09f0b9f4d65cbb6093126e9051626a7bb6d8aee8d6c3e8ceacbf1ad33f9025",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/src/objects/quote.object.ts"
+        },
+        {
+          "path": "src/objects/quote_line_item.hook.ts",
+          "sha256": "5658810ea53a1d58b4b32f62a6942a7a823a358e7d7c3a95fe593d4885b26483",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/src/objects/quote_line_item.hook.ts"
+        },
+        {
+          "path": "src/objects/quote_line_item.object.ts",
+          "sha256": "fd021939edd412fd8af5713b5389b718ab54dcbb2f8de982c294b0afc8ab4a91",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/src/objects/quote_line_item.object.ts"
+        },
+        {
+          "path": "src/objects/task.object.ts",
+          "sha256": "c43c28a7725231ea06608920b460730f6cfb2d8ea172382612f1357ab3fc3c62",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/src/objects/task.object.ts"
+        },
+        {
+          "path": "src/views/contract.view.ts",
+          "sha256": "02701648dcd390b1635c8ac5bd1f7ff8cdf6a81a5d39a0f44b69445fc61818f8",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/src/views/contract.view.ts"
+        },
+        {
+          "path": "src/views/quote.view.ts",
+          "sha256": "f4b8067f7a851a05cc548797e5306a30631e1b23e026fda487a35d1ea60348b0",
+          "url": "https://github.com/objectstack-ai/hotcrm/blob/5b2ecdd24dc1417400e6b35004e607fbaef8ab72/src/views/quote.view.ts"
+        }
+      ]
+    },
+    {
+      "repo": "objectstack-ai/marketplace",
+      "sha": "4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28",
+      "tree_url": "https://github.com/objectstack-ai/marketplace/tree/4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28",
+      "selected_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
+          "url": "https://github.com/objectstack-ai/marketplace/blob/4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28/LICENSE"
+        },
+        {
+          "path": "README.md",
+          "sha256": "7d28c22059ac66a20675f0494f941ed99b68e15e14a5002f2969df63e33b68d4",
+          "url": "https://github.com/objectstack-ai/marketplace/blob/4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28/README.md"
+        },
+        {
+          "path": "apps/marketplace/next.config.ts",
+          "sha256": "614bce25b089c3f19b1e17a6346c74b858034040154c6621e7d35303004767cc",
+          "url": "https://github.com/objectstack-ai/marketplace/blob/4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28/apps/marketplace/next.config.ts"
+        },
+        {
+          "path": "apps/marketplace/package-lock.json",
+          "sha256": "5e0f5a8554e005585495df9ad27e1d950e62de56bdf391159446c97cdbd803db",
+          "url": "https://github.com/objectstack-ai/marketplace/blob/4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28/apps/marketplace/package-lock.json"
+        },
+        {
+          "path": "apps/marketplace/package.json",
+          "sha256": "25adf7d58a76b36d6a342b0afffc19c9888fb224c35bc8da42d243f1b99be79a",
+          "url": "https://github.com/objectstack-ai/marketplace/blob/4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28/apps/marketplace/package.json"
+        },
+        {
+          "path": "apps/marketplace/src/app/layout.tsx",
+          "sha256": "da5d6234b28787f2edf81fba20d65b7b511a1806154a21f33248056cd30c365b",
+          "url": "https://github.com/objectstack-ai/marketplace/blob/4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28/apps/marketplace/src/app/layout.tsx"
+        },
+        {
+          "path": "apps/marketplace/src/app/page.tsx",
+          "sha256": "904ad0b10f10370291ee9198cf1ac29977a96d6fc17b8ef903dee1674bb6fad5",
+          "url": "https://github.com/objectstack-ai/marketplace/blob/4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28/apps/marketplace/src/app/page.tsx"
+        },
+        {
+          "path": "apps/marketplace/src/app/pkg/[packageId]/page.tsx",
+          "sha256": "d8e734e077e0e49e2d0c96d65e6b4adb330e20044df4426a9f0aabbded4bdffb",
+          "url": "https://github.com/objectstack-ai/marketplace/blob/4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28/apps/marketplace/src/app/pkg/[packageId]/page.tsx"
+        },
+        {
+          "path": "apps/marketplace/src/app/search/page.tsx",
+          "sha256": "6cb05b9e2c50357976dfb2396750482bccf5bad791a11b8caf63e308ab84d8da",
+          "url": "https://github.com/objectstack-ai/marketplace/blob/4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28/apps/marketplace/src/app/search/page.tsx"
+        },
+        {
+          "path": "apps/marketplace/src/components/marketplace/category-pill.tsx",
+          "sha256": "0debbd38938f374512b474ad6330308325a79f091210d1a7ab76dac6c8569d96",
+          "url": "https://github.com/objectstack-ai/marketplace/blob/4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28/apps/marketplace/src/components/marketplace/category-pill.tsx"
+        },
+        {
+          "path": "apps/marketplace/src/components/marketplace/install-button.tsx",
+          "sha256": "705bf94189a424912543ea837476ab95a40ac52415e20bf0f0b1948066bcc11f",
+          "url": "https://github.com/objectstack-ai/marketplace/blob/4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28/apps/marketplace/src/components/marketplace/install-button.tsx"
+        },
+        {
+          "path": "apps/marketplace/src/components/marketplace/plugin-card.tsx",
+          "sha256": "ede0997af5843fb987a95593983322d8131dddd028a9f9a8bc2ae169022f9550",
+          "url": "https://github.com/objectstack-ai/marketplace/blob/4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28/apps/marketplace/src/components/marketplace/plugin-card.tsx"
+        },
+        {
+          "path": "apps/marketplace/src/lib/mock-registry.ts",
+          "sha256": "7c8a6a751e458526abfc6f907dd97189197c4b62c943e7d2fd0475a72cbbca97",
+          "url": "https://github.com/objectstack-ai/marketplace/blob/4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28/apps/marketplace/src/lib/mock-registry.ts"
+        },
+        {
+          "path": "apps/marketplace/tsconfig.json",
+          "sha256": "5c51df4c59f4510d8c7dadf07a5c32132228826a3b331da5e286207b4df7ef9c",
+          "url": "https://github.com/objectstack-ai/marketplace/blob/4e6b30cbb2a260d75081f42fe40ae4ddf1bbfa28/apps/marketplace/tsconfig.json"
+        }
+      ]
+    },
+    {
+      "repo": "objectstack-ai/objectstack",
+      "sha": "094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7",
+      "tree_url": "https://github.com/objectstack-ai/objectstack/tree/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7",
+      "selected_files": [
+        {
+          "path": "package.json",
+          "sha256": "be0bdf05e0fe9cfae4b15b362e67ddeccf8d2c3e34476f0f9de1f4191735b080",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/package.json"
+        },
+        {
+          "path": "packages/cli/src/commands/compile.ts",
+          "sha256": "8797bff6004d227d4777bdcebc13f46d4466ff5a66f61572ac7337cf540a04fb",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/cli/src/commands/compile.ts"
+        },
+        {
+          "path": "packages/cli/src/commands/migrate/apply.ts",
+          "sha256": "b7301cdd8b5a00c1242ebfa6744f1d77ee4a29373547273801c55fbb4f804cda",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/cli/src/commands/migrate/apply.ts"
+        },
+        {
+          "path": "packages/cli/src/commands/migrate/plan.ts",
+          "sha256": "5c7feae0abcb197039a73800668cc9dc7532f4c6a8a16be64eca8b1efff1b3ad",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/cli/src/commands/migrate/plan.ts"
+        },
+        {
+          "path": "packages/cli/src/commands/serve.ts",
+          "sha256": "79df6cd49645d1f6d216fcdc1f9e722aa6214f43e6b0f0d2681cdc27e712207e",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/cli/src/commands/serve.ts"
+        },
+        {
+          "path": "packages/drivers/driver-sql/src/sql-driver.ts",
+          "sha256": "26b5e0ba4b75b2922a36911119ac319340c0213a2b2dbc33392010fb6f63e93d",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/drivers/driver-sql/src/sql-driver.ts"
+        },
+        {
+          "path": "packages/mcp/src/mcp-http-tools.ts",
+          "sha256": "ba0561c1a3043db0ebcdb07651d8e1d72e9e2a8a5c78c8862ebae40d9daa7ec9",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/mcp/src/mcp-http-tools.ts"
+        },
+        {
+          "path": "packages/mcp/src/plugin.ts",
+          "sha256": "996033366803b355e4fa6c98aea53fd86f4df4b71abab1743551f4bb789bd9cb",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/mcp/src/plugin.ts"
+        },
+        {
+          "path": "packages/objectql/src/action-governance.ts",
+          "sha256": "ce5a5e8e6b26e34c82e59adef99ef9727dccc716e9ad30dac33d348134527fbd",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/objectql/src/action-governance.ts"
+        },
+        {
+          "path": "packages/objectql/src/engine.ts",
+          "sha256": "d7ed3c3fb05c8749c60679d6b99b45a7a2199b74230f2b528c02a7087309fed3",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/objectql/src/engine.ts"
+        },
+        {
+          "path": "packages/objectql/src/lifecycle/lifecycle-service.ts",
+          "sha256": "d39a72b2c1112f4c9aae0eef36fa8767c9ca6d9c8a7492ac6b96cf03fc3d9b14",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/objectql/src/lifecycle/lifecycle-service.ts"
+        },
+        {
+          "path": "packages/objectql/src/master-detail.ts",
+          "sha256": "5e4205add0e85fbf3c0af7b0031aa221934f0eb85a0a2ad68be36a8d0a04e810",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/objectql/src/master-detail.ts"
+        },
+        {
+          "path": "packages/plugins/plugin-approvals/src/approval-node.ts",
+          "sha256": "225fa3d76fdf7094fac4c7c54e6deac50d237b7a6ef43bd5569c2f21ef24a223",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/plugins/plugin-approvals/src/approval-node.ts"
+        },
+        {
+          "path": "packages/plugins/plugin-approvals/src/approval-service.ts",
+          "sha256": "cc1838ec07d0746e2673f8b6bc7e17f6a7369ebcd062b06a09b58103be672710",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/plugins/plugin-approvals/src/approval-service.ts"
+        },
+        {
+          "path": "packages/plugins/plugin-approvals/src/lifecycle-hooks.ts",
+          "sha256": "1c871e5449266be6065a907ea14190bce3da766ff4d5fb91d191ae8c52c41f30",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/plugins/plugin-approvals/src/lifecycle-hooks.ts"
+        },
+        {
+          "path": "packages/plugins/plugin-security/src/deployment-org-scoping-entitlement.ts",
+          "sha256": "b92b11ca8a7a88095af19e85f8d41e4f9602686021d169e7dbc01c3c8233e265",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/plugins/plugin-security/src/deployment-org-scoping-entitlement.ts"
+        },
+        {
+          "path": "packages/plugins/plugin-security/src/security-plugin.ts",
+          "sha256": "2bd227b814db2103d787677ab92bfc5e4a99e0cddc8e9ac267e328528f0b6ff2",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/plugins/plugin-security/src/security-plugin.ts"
+        },
+        {
+          "path": "packages/plugins/plugin-security/src/tenant-layer.ts",
+          "sha256": "2ce7238ad91f2ab0c2e4d47b52c866a04125b2a12b7cbf716f96171eefc9ced6",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/plugins/plugin-security/src/tenant-layer.ts"
+        },
+        {
+          "path": "packages/services/service-automation/src/engine.ts",
+          "sha256": "feaca541717fdd606f0113fc3b4275d406440ed41ad9820ba62c342b06eb5ec2",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/services/service-automation/src/engine.ts"
+        },
+        {
+          "path": "packages/services/service-automation/src/flow-dispatch-store.ts",
+          "sha256": "014518d8e24fc9cc52e474e79f99848eeb890d7ada1a303e475c822d5376d1b8",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/services/service-automation/src/flow-dispatch-store.ts"
+        },
+        {
+          "path": "packages/services/service-automation/src/suspended-run-store.ts",
+          "sha256": "df648c61aa63a3ba84c3f7a10b7c78c8e78a740aea27f734037e9431ea33b22b",
+          "url": "https://github.com/objectstack-ai/objectstack/blob/094b8fd9cca1757ebc4826ba111ae9e63c8ef8e7/packages/services/service-automation/src/suspended-run-store.ts"
+        }
+      ]
+    },
+    {
+      "repo": "steedos/contract",
+      "sha": "06fad7ce6ae28b41bb6f70bfcbcabddef87a2dfb",
+      "tree_url": "https://github.com/steedos/contract/tree/06fad7ce6ae28b41bb6f70bfcbcabddef87a2dfb",
+      "selected_files": [
+        {
+          "path": "README.md",
+          "sha256": "ec58a4c972d5d745e7e5e5be7d54c681ccb9f2d92782e80f25cdcd6fc8c1b292",
+          "url": "https://github.com/steedos/contract/blob/06fad7ce6ae28b41bb6f70bfcbcabddef87a2dfb/README.md"
+        },
+        {
+          "path": "package.json",
+          "sha256": "aa04bd9b1e7ba05f714e41a51834ff46f6304dfba2cae8c86c4d69061db6b645",
+          "url": "https://github.com/steedos/contract/blob/06fad7ce6ae28b41bb6f70bfcbcabddef87a2dfb/package.json"
+        },
+        {
+          "path": "steedos-packages/contract/LICENSE.md",
+          "sha256": "20841a603dabeae253d5f7e45cc1d9a1642c2823cb357c15cc1c0907d34c7cc9",
+          "url": "https://github.com/steedos/contract/blob/06fad7ce6ae28b41bb6f70bfcbcabddef87a2dfb/steedos-packages/contract/LICENSE.md"
+        },
+        {
+          "path": "steedos-packages/contract/main/default/objects/contracts/fields/project.field.yml",
+          "sha256": "540772bde8991a2d73e4a43fcc5b0a07def3ace5c061c9281980da0d3ce43855",
+          "url": "https://github.com/steedos/contract/blob/06fad7ce6ae28b41bb6f70bfcbcabddef87a2dfb/steedos-packages/contract/main/default/objects/contracts/fields/project.field.yml"
+        },
+        {
+          "path": "steedos-packages/contract/main/default/objects/project/fields/status.field.yml",
+          "sha256": "83d8ae6ed948bf1041ff5a105923af37747b381c2edbab6bbdd3d41b1ac1e6fd",
+          "url": "https://github.com/steedos/contract/blob/06fad7ce6ae28b41bb6f70bfcbcabddef87a2dfb/steedos-packages/contract/main/default/objects/project/fields/status.field.yml"
+        },
+        {
+          "path": "steedos-packages/contract/main/default/objects/project/project.object.yml",
+          "sha256": "1f7bebf41f6bdc786310802478ded17f7c4f3299a6256987a57dfa82d32f4004",
+          "url": "https://github.com/steedos/contract/blob/06fad7ce6ae28b41bb6f70bfcbcabddef87a2dfb/steedos-packages/contract/main/default/objects/project/project.object.yml"
+        },
+        {
+          "path": "steedos-packages/contract/package.json",
+          "sha256": "dca54d63809ed0502f1f1cd4876537c879ce2de929bc9bbe623cb18ef1b58609",
+          "url": "https://github.com/steedos/contract/blob/06fad7ce6ae28b41bb6f70bfcbcabddef87a2dfb/steedos-packages/contract/package.json"
+        }
+      ]
+    },
+    {
+      "repo": "steedos/project-management-app",
+      "sha": "fdc4dbc0ccaf0d6e273c65188df413de3da89db2",
+      "tree_url": "https://github.com/steedos/project-management-app/tree/fdc4dbc0ccaf0d6e273c65188df413de3da89db2",
+      "selected_files": [
+        {
+          "path": "README.md",
+          "sha256": "7f17b43007b860a20e6ee53ab89f507ff0d52074ea777dd7a4b1eb75ee626ab8",
+          "url": "https://github.com/steedos/project-management-app/blob/fdc4dbc0ccaf0d6e273c65188df413de3da89db2/README.md"
+        },
+        {
+          "path": "package.json",
+          "sha256": "e1ec14091f8a9e6ae68625de1b015a4a3808ca347d42d4f5864f9130a97453d3",
+          "url": "https://github.com/steedos/project-management-app/blob/fdc4dbc0ccaf0d6e273c65188df413de3da89db2/package.json"
+        }
+      ]
+    },
+    {
+      "repo": "steedos/steedos-app-sales",
+      "sha": "31bfdaf06e6ffed55ad9450cef5715a343438fb2",
+      "tree_url": "https://github.com/steedos/steedos-app-sales/tree/31bfdaf06e6ffed55ad9450cef5715a343438fb2",
+      "selected_files": [
+        {
+          "path": "README.md",
+          "sha256": "949316eea37c2610563173a1981f42e701ddb252723c0b9dd8a9f8bccb0ce373",
+          "url": "https://github.com/steedos/steedos-app-sales/blob/31bfdaf06e6ffed55ad9450cef5715a343438fb2/README.md"
+        },
+        {
+          "path": "package.json",
+          "sha256": "3a76c9e0c19a9b15927e9918901eecbe912f07743d62d9d9d96c7daaf148bd01",
+          "url": "https://github.com/steedos/steedos-app-sales/blob/31bfdaf06e6ffed55ad9450cef5715a343438fb2/package.json"
+        }
+      ]
+    },
+    {
+      "repo": "steedos/steedos-platform",
+      "sha": "761e37c974d9bedf7f99d27d1b967eef0f53ff97",
+      "tree_url": "https://github.com/steedos/steedos-platform/tree/761e37c974d9bedf7f99d27d1b967eef0f53ff97",
+      "selected_files": [
+        {
+          "path": "README.md",
+          "sha256": "85ae047315856304ee0e23aee0a1b167dddc46a64381e98df40d9df8aafa35b7",
+          "url": "https://github.com/steedos/steedos-platform/blob/761e37c974d9bedf7f99d27d1b967eef0f53ff97/README.md"
+        },
+        {
+          "path": "package.json",
+          "sha256": "7d6e04bb5d484d699b212297d109bc118f4f5a245e4867d04409578904c07a91",
+          "url": "https://github.com/steedos/steedos-platform/blob/761e37c974d9bedf7f99d27d1b967eef0f53ff97/package.json"
+        }
+      ]
+    },
+    {
+      "repo": "steedos-labs/project",
+      "sha": "cd765e166121f68d6b722de1fae3ca8ed4b404c2",
+      "tree_url": "https://github.com/steedos-labs/project/tree/cd765e166121f68d6b722de1fae3ca8ed4b404c2",
+      "selected_files": [
+        {
+          "path": "README.md",
+          "sha256": "88e37b2a31c89e73d6a8839212111af90e8597ef326cd7156a3fb0fac9ce357e",
+          "url": "https://github.com/steedos-labs/project/blob/cd765e166121f68d6b722de1fae3ca8ed4b404c2/README.md"
+        },
+        {
+          "path": "package.json",
+          "sha256": "105e1c44459b27c980f49db71e1c5af4aa616b7ff7d358f816eed776cc9cd9ff",
+          "url": "https://github.com/steedos-labs/project/blob/cd765e166121f68d6b722de1fae3ca8ed4b404c2/package.json"
+        },
+        {
+          "path": "steedos-packages/master/package.json",
+          "sha256": "6a88ab6b027c6bde7bbb1f6c83a9e90ffbb01859aeafed78a02865cb89669884",
+          "url": "https://github.com/steedos-labs/project/blob/cd765e166121f68d6b722de1fae3ca8ed4b404c2/steedos-packages/master/package.json"
+        },
+        {
+          "path": "steedos-packages/project/LICENSE.md",
+          "sha256": "20841a603dabeae253d5f7e45cc1d9a1642c2823cb357c15cc1c0907d34c7cc9",
+          "url": "https://github.com/steedos-labs/project/blob/cd765e166121f68d6b722de1fae3ca8ed4b404c2/steedos-packages/project/LICENSE.md"
+        },
+        {
+          "path": "steedos-packages/project/LICENSE.txt",
+          "sha256": "e7ad158462479ecc9feaddc7750caff56b21ec6c35eeaf7aad8a0b2169fe9d0b",
+          "url": "https://github.com/steedos-labs/project/blob/cd765e166121f68d6b722de1fae3ca8ed4b404c2/steedos-packages/project/LICENSE.txt"
+        },
+        {
+          "path": "steedos-packages/project/main/default/objects/project/fields/status.field.yml",
+          "sha256": "80716e6facd5a622d249c9b002550dc1c32a92aec25fae45040ee3579809ab91",
+          "url": "https://github.com/steedos-labs/project/blob/cd765e166121f68d6b722de1fae3ca8ed4b404c2/steedos-packages/project/main/default/objects/project/fields/status.field.yml"
+        },
+        {
+          "path": "steedos-packages/project/main/default/objects/project/project.object.yml",
+          "sha256": "bb501f7c917580680cc4e9ef11a59dfe9bbf5e161d1ca08e91a868794c5ade02",
+          "url": "https://github.com/steedos-labs/project/blob/cd765e166121f68d6b722de1fae3ca8ed4b404c2/steedos-packages/project/main/default/objects/project/project.object.yml"
+        },
+        {
+          "path": "steedos-packages/project/main/default/objects/project_milestone/project_milestone.object.yml",
+          "sha256": "3f84b559a7425772eec9508fdd3a4087d76dc9d6cbb0aa139e1feee5466dcccb",
+          "url": "https://github.com/steedos-labs/project/blob/cd765e166121f68d6b722de1fae3ca8ed4b404c2/steedos-packages/project/main/default/objects/project_milestone/project_milestone.object.yml"
+        },
+        {
+          "path": "steedos-packages/project/package.json",
+          "sha256": "3ac5c69b2b2921559836688a9d546337fcd496af07bf03ada234331e0f957a6f",
+          "url": "https://github.com/steedos-labs/project/blob/cd765e166121f68d6b722de1fae3ca8ed4b404c2/steedos-packages/project/package.json"
+        }
+      ]
+    },
+    {
+      "repo": "objectstack-ai/templates",
+      "sha": "960f24db4fa4f3551d7089cfc1f03938eccae75e",
+      "tree_url": "https://github.com/objectstack-ai/templates/tree/960f24db4fa4f3551d7089cfc1f03938eccae75e",
+      "selected_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "5a86c79cccbb9a6c36a4c8a366c1c6a63c9263e63f78e1a7fc4a4babdf27b692",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/LICENSE"
+        },
+        {
+          "path": "README.md",
+          "sha256": "91767004266b9a8618296613576e385dc8bef128b9efbd9ba100388427016cd3",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/README.md"
+        },
+        {
+          "path": "package.json",
+          "sha256": "f0e65a34690884c5a82edf62b4d5a86b653ca6cceef2e8e65ab636d02d5537f1",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/package.json"
+        },
+        {
+          "path": "packages/all/README.md",
+          "sha256": "71f1aec51142ce79317c1230b517c43335e7fe42eaf01eeda4930a39eec057d9",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/all/README.md"
+        },
+        {
+          "path": "packages/all/package.json",
+          "sha256": "28b494eafd7a4eb19608db5659dcf05c72b8c11fe30f6aadbee84aa47e407310",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/all/package.json"
+        },
+        {
+          "path": "packages/all/scripts/compile-marketplace.mjs",
+          "sha256": "7cecffd83ccec5045e19f1fe4572d485bf4de5ee17b5219c3b7b2562e546504f",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/all/scripts/compile-marketplace.mjs"
+        },
+        {
+          "path": "packages/procurement/CHARTER.md",
+          "sha256": "0a4ebc304084381e1972184bf359ce3896ffa49e1d8e9c19795433650285f80e",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/procurement/CHARTER.md"
+        },
+        {
+          "path": "packages/procurement/README.md",
+          "sha256": "806a868d0ff6efeda7911135e188d363d0f46c14a560e13a58734960c7fd6958",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/procurement/README.md"
+        },
+        {
+          "path": "packages/procurement/objectstack.config.ts",
+          "sha256": "a9a68334d74fadf5ed09a258a39b5c674051dc8dfc3bd59627e98f42f5d43b35",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/procurement/objectstack.config.ts"
+        },
+        {
+          "path": "packages/procurement/package.json",
+          "sha256": "771b967080a3c8a66e76d1e4a4e3204b6a6a0164bea6a2cab456817fdda80e7f",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/procurement/package.json"
+        },
+        {
+          "path": "packages/procurement/src/flows/po_overdue.flow.ts",
+          "sha256": "60db6ff46480a6876c6c4d7a31ecb9e4e21929bce79059c7a3bbadb47152a320",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/procurement/src/flows/po_overdue.flow.ts"
+        },
+        {
+          "path": "packages/procurement/src/flows/pr_approval_required.flow.ts",
+          "sha256": "3e172125a3e2fe6efe4d93912d15eeb7a991943ea409b11d9aea03d92aee3950",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/procurement/src/flows/pr_approval_required.flow.ts"
+        },
+        {
+          "path": "packages/procurement/src/flows/pr_to_po_convert.flow.ts",
+          "sha256": "63eaa9f3b94e3a876f35de48445d095da0c39118b7504f5bf6d91d5252772d68",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/procurement/src/flows/pr_to_po_convert.flow.ts"
+        },
+        {
+          "path": "packages/procurement/src/objects/procurement_order.object.ts",
+          "sha256": "be8d000c8c59ec04527f5fa1edcad95e7da627908fd0f8330f0984c3bb0eb47d",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/procurement/src/objects/procurement_order.object.ts"
+        },
+        {
+          "path": "packages/procurement/src/objects/procurement_receipt.object.ts",
+          "sha256": "1732ad6b65eb686d8b4b282ff9f0b10d53f834c139282c37cbda1f1d15456915",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/procurement/src/objects/procurement_receipt.object.ts"
+        },
+        {
+          "path": "packages/procurement/src/objects/procurement_request.object.ts",
+          "sha256": "f50e4f6352f74308f939aa742379a5c87768e078766d44a635d489b921b1e4e2",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/procurement/src/objects/procurement_request.object.ts"
+        },
+        {
+          "path": "packages/procurement/src/objects/procurement_vendor.object.ts",
+          "sha256": "abc1b6c3a67643478716fd0d70da222f210ad03b1f62f29548760f8d87770fcd",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/procurement/src/objects/procurement_vendor.object.ts"
+        },
+        {
+          "path": "packages/project/CHARTER.md",
+          "sha256": "5706e7360dbc20f805ce3d9dffe5b2b490e347f804c56fa29784c9e5710e47d7",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/project/CHARTER.md"
+        },
+        {
+          "path": "packages/project/README.md",
+          "sha256": "2ac37f6916c45e6a9097c2e6924708a8cad20f5af698e90c7b76a3611686ce67",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/project/README.md"
+        },
+        {
+          "path": "packages/project/objectstack.config.ts",
+          "sha256": "5c376106f0451a7d2e3bea90c1e9eddc3c1d5c9eacc67faf989b94e26a366ecd",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/project/objectstack.config.ts"
+        },
+        {
+          "path": "packages/project/package.json",
+          "sha256": "ccc04824335de86de73aef566d81ea313bd43f85d142b4880c2dacfa75dde26a",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/project/package.json"
+        },
+        {
+          "path": "packages/project/src/flows/daily_ai_risk_assessment.flow.ts",
+          "sha256": "be7c52cc1138302ad376073b673c52b6527995c822b61d88ba1d1672f616caf2",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/project/src/flows/daily_ai_risk_assessment.flow.ts"
+        },
+        {
+          "path": "packages/project/src/flows/milestone_deadline_warning.flow.ts",
+          "sha256": "7ccd17681db86ba989b32b066e519a3935c7b3a7633aee7b7e546fbcd009e7ca",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/project/src/flows/milestone_deadline_warning.flow.ts"
+        },
+        {
+          "path": "packages/project/src/flows/resource_conflict_detection.flow.ts",
+          "sha256": "f7232d412e9679cada5c0a473681dbb4b3985b29c27842f7abe2b8a79026c508",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/project/src/flows/resource_conflict_detection.flow.ts"
+        },
+        {
+          "path": "packages/project/src/objects/pm_issue.object.ts",
+          "sha256": "ad821175e48c922476f4ebeda6a4200a1b6d7af78a5c7047a5527918e2afd594",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/project/src/objects/pm_issue.object.ts"
+        },
+        {
+          "path": "packages/project/src/objects/pm_milestone.object.ts",
+          "sha256": "9677a780d970ee7363ad2d12d94c4a01c85ca98112ddf702b605e35f15409f83",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/project/src/objects/pm_milestone.object.ts"
+        },
+        {
+          "path": "packages/project/src/objects/pm_project.object.ts",
+          "sha256": "f749ad1ebf96ef82b96a9247533d5afc886534d3a3beea0bd9b681f918aad7f1",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/project/src/objects/pm_project.object.ts"
+        },
+        {
+          "path": "packages/project/src/objects/pm_resource.object.ts",
+          "sha256": "99acd009938b5932e594721964df2f6ed9f4cb5d3d04a2abd1aabf170b91b3a4",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/project/src/objects/pm_resource.object.ts"
+        },
+        {
+          "path": "packages/project/src/objects/pm_risk.object.ts",
+          "sha256": "62dd779b443aeafec8783e3e24de6d4e1bd64a06bb637a3b4a8ea5f5feba35f8",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/project/src/objects/pm_risk.object.ts"
+        },
+        {
+          "path": "packages/project/src/objects/pm_timesheet.object.ts",
+          "sha256": "9c2f78555664b6f8a7d7e4e7ce8f7d6046676e900139fe0ae94d19f9a1c55a34",
+          "url": "https://github.com/objectstack-ai/templates/blob/960f24db4fa4f3551d7089cfc1f03938eccae75e/packages/project/src/objects/pm_timesheet.object.ts"
+        }
+      ]
+    }
+  ]
+}

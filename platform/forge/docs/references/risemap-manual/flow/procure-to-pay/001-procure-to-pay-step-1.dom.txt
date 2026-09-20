@@ -1,0 +1,179 @@
+- banner:
+  - navigation:
+    - link "RiseMap 社区":
+      - /url: /
+      - generic: RiseMap
+      - generic: 社区
+    - link "业务流程":
+      - /url: /flow
+    - link "教程":
+      - /url: /tutorials
+    - link "智能问答":
+      - /url: /ask
+    - link "文档":
+      - /url: /docs
+    - link "更新日志":
+      - /url: /changelog
+    - link "排期计划":
+      - /url: /roadmap
+    - link "提交工单":
+      - /url: /support
+    - link "实施服务":
+      - /url: /services
+      - text: 🚀实施服务
+    - link "定制软件":
+      - /url: /custom
+      - text: 🧩定制软件
+    - link "搜索":
+      - /url: /search
+    - button "切换语言": EN
+    - button "切换到深色模式":
+- main:
+  - generic: 需求部门
+  - generic: 采购部
+  - generic: 供应商
+  - generic: 仓库
+  - generic: 财务部
+  - button "📝 1 采购申请 采购申请单 PR":
+    - generic: 📝
+    - generic: "1"
+    - generic: 采购申请
+    - generic: 采购申请单 PR
+  - button "📦 2 采购订单 采购订单 PO":
+    - generic: 📦
+    - generic: "2"
+    - generic: 采购订单
+    - generic: 采购订单 PO
+  - button "💳 3 付款 付款单 / 预付款":
+    - generic: 💳
+    - generic: "3"
+    - generic: 付款
+    - generic: 付款单 / 预付款
+  - button "🧾 4 发票 采购发票":
+    - generic: 🧾
+    - generic: "4"
+    - generic: 发票
+    - generic: 采购发票
+  - button "🏬 5 入库 入库单 GR":
+    - generic: 🏬
+    - generic: "5"
+    - generic: 入库
+    - generic: 入库单 GR
+  - button "📒 6 应付产生 应付单 AP":
+    - generic: 📒
+    - generic: "6"
+    - generic: 应付产生
+    - generic: 应付单 AP
+  - button "✅ 7 付款核销 核销记录":
+    - generic: ✅
+    - generic: "7"
+    - generic: 付款核销
+    - generic: 核销记录
+  - complementary:
+    - generic: 流程目录
+    - button "收起目录": ⟨
+    - generic: ▾
+    - text: 采购与供应链
+    - button "🛒 采购到付款":
+      - generic: 🛒
+      - generic: 采购到付款
+    - button "🛒 采购订单执行流程":
+      - generic: 🛒
+      - generic: 采购订单执行流程
+    - generic: ▾
+    - text: 销售与收款
+    - button "💰 销售到收款 示例":
+      - generic: 💰
+      - generic: 销售到收款
+      - generic: 示例
+    - button "💰 销售业财闭环":
+      - generic: 💰
+      - generic: 销售业财闭环
+    - button "📄 销售合同与销售订单":
+      - generic: 📄
+      - generic: 销售合同与销售订单
+    - button "🏷️ 价格策略与销售定价机制":
+      - generic: 🏷️
+      - generic: 价格策略与销售定价机制
+    - generic: ▾
+    - text: 财务与费用
+    - button "🧾 费用报销 示例":
+      - generic: 🧾
+      - generic: 费用报销
+      - generic: 示例
+    - generic: ▾
+    - text: 项目与交付
+    - button "🏗️ 项目创建与管理":
+      - generic: 🏗️
+      - generic: 项目创建与管理
+    - button "⏱️ 工时成本配置与核算":
+      - generic: ⏱️
+      - generic: 工时成本配置与核算
+    - generic: ▾
+    - text: 仓储与质量
+    - button "🔖 供应商 SN 码管理":
+      - generic: 🔖
+      - generic: 供应商 SN 码管理
+    - generic: ▾
+    - text: 财务与核算
+    - button "📈 销售合同收入确认方式":
+      - generic: 📈
+      - generic: 销售合同收入确认方式
+    - button "📥 应收款来源全景":
+      - generic: 📥
+      - generic: 应收款来源全景
+    - button "📤 应付款来源全景":
+      - generic: 📤
+      - generic: 应付款来源全景
+    - generic: 从采购申请到付款核销，跨需求、采购、供应商、仓库、财务五个部门。
+  - complementary:
+    - generic: 环节详情
+    - button "收起详情": ⟩
+    - generic: 📝
+    - generic: 步骤 1 / 7
+    - generic: 需求部门
+    - heading "采购申请" [level=3]
+    - paragraph: 需求部门发起采购需求，填写物料、数量、预算与期望到货时间，提交多级审批。
+    - generic: 参与角色
+    - generic: 申请人 · 部门主管
+    - generic: 对应单据
+    - generic: 采购申请单 PR
+    - generic: 关键校验
+    - generic: 预算管控 · 审批流
+  - button "缩小": −
+  - generic: 75%
+  - button "放大": ＋
+  - button "适应"
+  - button "▶ 自动演示"
+  - generic: 滚轮缩放 · 拖动平移 · 点击步骤看详情
+- contentinfo:
+  - generic: RiseMap 社区
+  - paragraph: 教程、文档、更新日志与产品排期，集中、清晰、随时可查。
+  - generic: 内容
+  - list:
+    - link "业务流程":
+      - /url: /flow
+    - link "产品教程":
+      - /url: /tutorials
+    - link "使用文档":
+      - /url: /docs
+    - link "更新日志":
+      - /url: /changelog
+    - link "排期计划":
+      - /url: /roadmap
+  - generic: 参与
+  - list:
+    - link "提交工单":
+      - /url: /support
+    - link "查询工单进度":
+      - /url: /support/track
+    - link "全站搜索":
+      - /url: /search
+  - generic: 管理
+  - list:
+    - link "管理后台":
+      - /url: /admin
+  - generic: © 2026 RiseMap. 由管理后台统一发布内容。
+- button "智能客服":
+  - text: 智能客服
+- alert

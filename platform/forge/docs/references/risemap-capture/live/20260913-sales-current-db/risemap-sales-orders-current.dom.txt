@@ -1,0 +1,325 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/sales/orders".
+0 AXWebArea RiseMap, URL: risemap.cn/sales/orders
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 销售
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 销售业务
+					9 image
+					10 text 销售业务
+					11 image
+				12 button 框架销售合同
+				13 button 销售订单
+				14 button 附加费用
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+				36 button 服务管理
+					37 image
+					38 text 服务管理
+					39 image
+				40 button 服务工单
+				41 button 服务报价单
+				42 button 服务结算单
+				43 button 接单中心
+				44 button 派工中心
+				45 button 服务分析
+				46 button 质保管理
+				47 button 服务配置
+			48 image
+			49 text 免费试用中，还剩 9 天 — 试用期间享全部功能
+			50 button 查看方案
+				51 image
+				52 text 查看方案
+			53 button
+				54 image
+			55 container
+				56 container 业务分类
+					57 container
+						58 checkbox 工作台, Value: 0
+						59 checkbox 供应链, Value: 0
+						60 checkbox 销售, Value: 1
+						61 checkbox 生产, Value: 0
+						62 checkbox 项目, Value: 0
+						63 checkbox 行政, Value: 0
+						64 checkbox 财务, Value: 0
+						65 checkbox 报表, Value: 0
+						66 checkbox 系统, Value: 0
+				67 button Description: 展开搜索, Help: 搜索
+					68 image
+				69 button (collapsed) Description: 通知，18 条未读, Secondary Actions: Expand
+					70 image
+					71 text 18
+				72 button Description: 打开推广奖励, Help: 推广
+				73 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				74 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				75 button 立即订阅, Help: 试用还剩 9 天 · 立即订阅享专属优惠
+					76 image
+					77 text 立即订阅
+				78 button 金
+					79 text 金
+					80 image
+			81 container
+				82 button 工作台
+					83 image
+					84 text 工作台
+				89 button 接单中心
+					90 text 接单中心
+				91 button 派工中心
+					92 text 派工中心
+				93 button 服务分析
+					94 text 服务分析
+				95 button 质保管理
+					96 text 质保管理
+				97 button 服务配置
+					98 text 服务配置
+				99 button 新建服务工单
+					100 text 新建服务工单
+				101 button 服务工单详情
+					102 text 服务工单详情
+				103 button 销售团队
+					104 text 销售团队
+				105 button 销售目标
+					106 text 销售目标
+				107 button 工作台
+					108 text 工作台
+				109 button Goodwill订单
+					110 text Goodwill订单
+				111 button Goodwill订单详情
+					112 text Goodwill订单详情
+				203 button 框架销售合同
+					204 text 框架销售合同
+				205 button 销售订单
+					206 text 销售订单
+			207 container
+				208 container
+					209 text 销售业务
+					210 image
+					211 text 销售订单
+					212 image
+					213 heading 销售订单, Value: 1
+						214 text 销售订单
+					215 text 客户订单录入、确认、备货发货、收款进度全流程管控
+					216 button 下一步操作 销售发货单, Help: 前往销售业务 · 销售发货单
+						217 text 下一步操作
+						218 text 销售发货单
+						219 image
+				220 button 订单列表
+					221 image
+					222 text 订单列表
+				223 button 订单明细 1
+					224 image
+					225 text 订单明细
+					226 text 1
+				227 button 新建销售订单
+					228 image
+					229 text 新建销售订单
+				230 button 导入/导出
+					231 image
+					232 text 导入/导出
+					233 image
+				234 button 合并开票
+					235 image
+					236 text 合并开票
+				237 button
+					238 image
+				239 button 刷新
+					240 image
+				241 button
+					242 image
+				243 button
+					244 image
+				245 container 我的筛选方案
+					246 text 我的筛选方案 暂无方案
+					247 button 存为方案
+						248 image
+						249 text 存为方案
+				250 image
+				251 text field (settable)
+				252 button 范围
+					253 image
+					254 text 范围
+					255 image
+				256 button 状态
+					257 text 状态
+					258 image
+				259 button 开票
+					260 image
+					261 text 开票
+					262 image
+				263 button 收款
+					264 image
+					265 text 收款
+					266 image
+				267 button 发货建单
+					268 image
+					269 text 发货建单
+					270 image
+				271 button 发货
+					272 image
+					273 text 发货
+					274 image
+				275 button 负责人
+					276 text 负责人
+				277 button 客户联系人
+					278 text 客户联系人
+				279 text 合计金额 ¥243,200.00 本页金额 ¥ 243,200.00
+				280 container 点击清除排序
+					281 image
+					282 text 按 创建时间 降序
+					283 image
+				284 table
+					285 row
+						286 cell
+							287 checkbox (settable, integer) 0
+						288 cell
+							289 text 订单编号
+							290 image
+						291 cell
+							292 text 客户单号
+						293 cell
+							294 text 订单名称
+						295 cell
+							296 text 关联合同
+						297 cell
+							298 text 客户名称
+						299 cell
+							300 text 联系电话
+						301 cell
+							302 text 收货地址
+						303 cell
+							304 text 所属项目
+						305 cell
+							306 text 特价申请
+						307 cell
+							308 text 业务状态
+							309 image
+						310 cell
+							311 text 使用授信
+						312 cell
+							313 text 付款条件
+						314 cell
+							315 text 备注
+						316 cell
+							317 text 订单金额
+							318 image
+						319 cell
+							320 image
+							321 text 开票
+						322 cell
+							323 image
+							324 text 发货
+						325 cell
+							326 image
+							327 text 收款
+						328 cell
+							329 text 订单状态
+							330 image
+						331 cell
+							332 text 计划交货日期
+							333 image
+						334 cell
+							335 text 负责人
+						336 cell
+							337 text 联系人
+						338 cell
+							339 text 开单人
+						340 cell
+							341 text 创建时间
+							342 image
+						343 cell
+							344 text 操作
+					345 row
+						346 cell
+							347 checkbox (settable, integer) 0
+						348 cell
+							349 text SO-2026-0001 执行中
+							350 text 部分建单
+							351 text 未发货
+							352 text 未开票 未收款
+						353 cell
+							354 text -
+						355 cell
+							356 text 苏州澄岳自动化装备有限公司 - OEM设备销售订单
+						357 cell
+							358 container
+								359 image
+								360 text SC-OEM-20260909-001
+						361 cell
+							362 text 苏州澄岳自动化装备有限公司
+						363 cell
+							364 text 13800002609
+						365 cell
+							366 text 苏州市工业园区澄岳路9号
+						367 cell
+							368 text 800型柔性线控制柜交付项目
+						369 cell
+							370 text -
+						371 cell
+							372 text 执行中
+						373 cell
+							374 text 否
+						375 cell
+							376 text 合同签订后30天内付款
+						377 cell
+							378 text 标准测试数据集 OEM-RM-20260909-A；来源合同 SC-OEM-20260909-001。
+						379 cell
+							380 container
+								381 text ¥ 243,200.00
+						382 cell
+							383 text 0 %
+						384 cell
+							385 text 0 %
+						386 cell
+							387 text 0 %
+						388 cell
+							389 text 执行中
+						390 cell
+							391 text 2026-10-09
+						392 cell
+							393 container
+								394 text 金 金一涛
+						395 cell
+							396 text 周启明
+						397 cell
+							398 container
+								399 text 金 金一涛
+						400 cell
+							401 text 2026-09-09 10:40:29
+						402 cell
+							403 button 复制开单
+								404 image
+				405 text 共  1 条记录 每页
+				406 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					407 text 20
+				408 text 条
+				409 button (disabled) 上一页
+					410 image
+				411 button 1
+				412 button (disabled) 下一页
+					413 image
+			201 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			202 container Notifications alt+T
+
+The focused UI element is 13 button 销售订单

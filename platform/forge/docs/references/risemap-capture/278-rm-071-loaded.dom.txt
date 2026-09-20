@@ -1,0 +1,212 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 生产
+- button "收起侧边栏":
+- navigation:
+  - button "组装业务管理":
+    - generic: 组装业务管理
+  - button "组装单":
+    - generic: 组装单
+  - button "缺料待办":
+    - generic: 缺料待办
+  - button "领料单":
+    - generic: 领料单
+  - button "补料单":
+    - generic: 补料单
+  - button "退料单":
+    - generic: 退料单
+  - button "拆解单":
+    - generic: 拆解单
+  - button "换件单" [active]:
+    - generic: 换件单
+  - button "图纸管理":
+    - generic: 图纸管理
+  - button "进入图纸管理上手指南":
+  - button "图纸总览":
+    - generic: 图纸总览
+  - button "图号档案":
+    - generic: 图号档案
+  - button "图纸评审":
+    - generic: 图纸评审
+  - button "图纸发布":
+    - generic: 图纸发布
+  - button "图纸变更":
+    - generic: 图纸变更
+  - button "图纸发放记录":
+    - generic: 图纸发放记录
+  - button "图纸关联查询":
+    - generic: 图纸关联查询
+  - button "客户图纸":
+    - generic: 客户图纸
+  - button "委外管理":
+    - generic: 委外管理
+  - button "进入委外管理上手指南":
+  - button "委外看板":
+    - generic: 委外看板
+  - button "委外订单":
+    - generic: 委外订单
+  - button "委外发料":
+    - generic: 委外发料
+  - button "委外回厂":
+    - generic: 委外回厂
+  - button "委外退料":
+    - generic: 委外退料
+  - button "委外对账":
+    - generic: 委外对账
+  - button "委外供应商":
+    - generic: 委外供应商
+  - button "委外库存":
+    - generic: 委外库存
+  - button "批次追溯":
+    - generic: 批次追溯
+  - button "委外未交":
+    - generic: 委外未交
+  - button "委外进货":
+    - generic: 委外进货
+  - button "委外对账单":
+    - generic: 委外对账单
+- generic: 免费试用中，还剩 14 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产" [pressed]:
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "联系人管理":
+  - generic: 联系人管理
+- button "销售报价":
+  - generic: 销售报价
+- button "客户物料对照":
+  - generic: 客户物料对照
+- button "商机管理":
+  - generic: 商机管理
+- button "线索管理":
+  - generic: 线索管理
+- button "跟进记录":
+  - generic: 跟进记录
+- button "公海客户":
+  - generic: 公海客户
+- button "组装单":
+  - generic: 组装单
+- button "缺料待办":
+  - generic: 缺料待办
+- button "领料单":
+  - generic: 领料单
+- button "补料单":
+  - generic: 补料单
+- button "退料单":
+  - generic: 退料单
+- button "拆解单":
+  - generic: 拆解单
+- button "换件单":
+  - generic: 换件单
+- main:
+  - generic: 组装业务管理
+  - generic: 换件单
+  - heading "换件单" [level=1]
+  - paragraph: 成品不离库，仅更换内部零部件，支持审批、领新件和旧件回收
+  - paragraph: 换件单总数
+  - paragraph: "0"
+  - paragraph: 累计换件处数
+  - paragraph: "0"
+  - paragraph: 新件领用成本
+  - paragraph: ￥0
+  - paragraph: 旧件回收价值
+  - paragraph: ￥0
+  - button "全部(0)":
+    - text: 全部
+    - generic: (0)
+  - button "草稿":
+    - generic: 草稿
+  - button "审批中":
+    - generic: 审批中
+  - button "待领料":
+    - generic: 待领料
+  - button "换件中":
+    - generic: 换件中
+  - button "已完工":
+    - generic: 已完工
+  - button "已入库":
+    - generic: 已入库
+  - button "已驳回":
+    - generic: 已驳回
+  - button "新建换件单":
+    - text: 新建换件单
+  - button "导出":
+    - text: 导出
+  - button "导入/导出任务"
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "搜索换件单号/成品/物料编码..."
+  - table:
+    - rowgroup:
+      - row "换件单号 成品 换件内容 改制数量 原因 新件成本 回收价值 成本变化 经手人 日期":
+        - columnheader "换件单号":
+          - generic: 换件单号
+        - columnheader "成品":
+          - generic: 成品
+        - columnheader "换件内容":
+          - generic: 换件内容
+        - columnheader "改制数量":
+          - generic: 改制数量
+        - columnheader "原因":
+          - generic: 原因
+        - columnheader "新件成本":
+          - generic: 新件成本
+        - columnheader "回收价值":
+          - generic: 回收价值
+        - columnheader "成本变化":
+          - generic: 成本变化
+        - columnheader "经手人":
+          - generic: 经手人
+        - columnheader "日期":
+          - generic: 日期
+    - rowgroup:
+      - row "暂无换件单":
+        - cell "暂无换件单":
+          - generic: 暂无换件单
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 0万

@@ -1,0 +1,203 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/bank-accounts".
+1 AXWebArea RiseMap, URL: risemap.cn/finance/bank-accounts
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 财务
+			6 button 收起侧边栏
+				7 image
+			8 container
+				181 button 资金管理
+					182 image
+					183 text 资金管理
+					184 image
+				185 button 资金账户
+				186 button 资金流水
+				187 button 应收应付
+				188 button 收款管理
+				189 button 付款管理
+				190 button 退款申请
+				191 button 授信额度管理
+				192 button 借款贷款管理
+				193 button 业务确认
+					194 image
+					195 text 业务确认
+					196 image
+				197 button 销售收入确认
+				198 button 成本中心
+				199 button 费用中心
+				200 button 报销管理
+				201 button 对账单
+					202 image
+					203 text 对账单
+				204 button 发票管理
+					205 image
+					206 text 发票管理
+					207 image
+				208 button 发票总览
+				209 button 销项发票
+				210 button 进项发票
+				211 button 开票任务
+				212 button 调整记录
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 1
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				99 button 通讯录
+					100 text 通讯录
+				101 button 加班申请
+					102 text 加班申请
+				103 button 请假管理
+					104 text 请假管理
+				105 button 出差申请
+					106 text 出差申请
+				107 button 新建出差申请
+					108 text 新建出差申请
+				109 button 考勤管理
+					110 text 考勤管理
+				111 button 考勤统计
+					112 text 考勤统计
+				113 button 审批记录
+					114 text 审批记录
+				115 button 发起流程
+					116 text 发起流程
+				117 button 流程设计器
+					118 text 流程设计器
+				119 button 流程定义
+					120 text 流程定义
+				121 button 编辑流程
+					122 text 编辑流程
+				123 button 流程分类
+					124 text 流程分类
+				213 button 资金账户
+					214 text 资金账户
+			215 container
+				216 container
+					217 text 资金管理
+					218 image
+					219 text 资金账户
+					220 image
+					221 heading 资金账户, Value: 1
+						222 text 资金账户
+					223 text 统一维护银行账户与资金流向，掌控资金全局
+				224 heading 资金账户, Value: 1
+					225 text 资金账户
+				226 text 管理银行、微信、支付宝、现金等全部资金账户
+				227 button 新增账户
+					228 image
+					229 text 新增账户
+				230 text 账户总余额 (CNY)
+				231 image
+				232 text ¥0.00 活跃账户
+				233 image
+				234 text 0 /  0 账户数量
+				235 image
+				236 text 0 余额趋势
+				237 image
+				238 image
+				239 image
+				240 text field (settable)
+				241 button 全部类型
+					242 text 全部类型
+				243 button 全部状态
+					244 text 全部状态
+				245 button 卡片视图
+					246 image
+				247 button 表格视图
+					248 image
+				249 image
+				250 text 暂无匹配的账户 尝试调整筛选条件或添加新账户
+				251 container
+					252 heading 新增账户, Value: 2
+						253 text 新增账户
+					254 button
+						255 image
+					256 text 账户类型
+					257 button 银行账户
+						258 image
+						259 text 银行账户
+					260 button 微信
+						261 image
+						262 text 微信
+					263 button 支付宝
+						264 image
+						265 text 支付宝
+					266 button 现金账户
+						267 image
+						268 text 现金账户
+					269 button 其他
+						270 image
+						271 text 其他
+					277 container
+						278 text * 账户名称
+					279 text field (settable)
+					323 text 账户名称不能为空
+					317 text 持有/管理人
+					318 text field (settable)
+					319 container
+						320 text * 币种
+					321 button 人民币 (CNY)
+						322 text 人民币 (CNY)
+					292 container
+						293 text * 期初余额
+					294 text field (settable)
+					324 text 期初余额不能为空
+					296 container
+						297 text * 期初时间
+					298 container
+						299 text field (settable)
+						300 button
+							301 image
+					325 text 期初时间不能为空
+					307 container
+						308 checkbox (settable, integer) Description: 允许打印 勾选后，该账户可在销售合同和销售订单中作为公司账户选择, Value: 0
+						309 text 允许打印 勾选后，该账户可在销售合同和销售订单中作为公司账户选择
+					310 text 可见范围
+					311 button 仅创建人+管理员可见
+						312 text 仅创建人+管理员可见
+					313 text 备注
+					314 text entry area (settable)
+					315 button 取消
+					316 button 创建账户
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+				326 content list
+					327 container
+						328 button Close toast
+							329 image
+						330 image
+						331 text 提交失败，请检查必填项，必填项已在表单中标红。
+
+The focused UI element is 316 button 创建账户

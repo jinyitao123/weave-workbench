@@ -1,0 +1,240 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/recruitment".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/recruitment
+	2 container
+		3 container root
+			244 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			245 text 行政
+			246 button 收起侧边栏
+				247 image
+			248 container
+				249 button 审批中心
+					250 image
+					251 text 审批中心
+					252 image
+				253 button 我的审批
+				254 button 抄送我的
+				255 button 我发起的
+				256 button 行政申请
+				257 button 行政管理
+					258 image
+					259 text 行政管理
+					260 image
+				261 button 公司通知
+				262 button 用章管理
+				263 button 会议纪要
+				264 button 工作汇报
+				265 button 文档中心
+				266 button 固定资产
+				267 button 资质与申报
+				268 button 物料领取
+				269 button 设备维护
+				270 button 礼品管理
+				271 button 借出管理
+				272 button 车辆管理
+				273 button 人力资源
+					274 image
+					275 text 人力资源
+					276 image
+				277 button 人事工作台
+				278 button 员工档案
+				279 button 招聘管理
+				280 button 入职离职
+				281 button 薪酬福利
+				282 button 规章制度
+				283 button 通讯录
+				284 button 考勤假期
+					285 image
+					286 text 考勤假期
+					287 image
+				288 button 加班申请
+				289 button 请假管理
+				290 button 出差申请
+				291 button 考勤管理
+				292 button 考勤统计
+				293 button 流程中心
+					294 image
+					295 text 流程中心
+					296 image
+				297 button 审批记录
+				298 button 发起流程
+				299 button 流程定义
+				300 button 流程分类
+			301 image
+			302 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			303 button 查看方案
+				304 image
+				305 text 查看方案
+			306 button
+				307 image
+			308 container
+				309 container 业务分类
+					310 checkbox 工作台, Value: 0
+					311 checkbox 供应链, Value: 0
+					312 checkbox 销售, Value: 0
+					313 checkbox 生产, Value: 0
+					314 checkbox 项目, Value: 0
+					315 checkbox 行政, Value: 1
+					316 checkbox 财务, Value: 0
+					317 checkbox 报表, Value: 0
+					318 checkbox 系统, Value: 0
+				319 button Description: 展开搜索, Help: 搜索
+					320 image
+				321 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					322 image
+					323 text 2
+				324 button Description: 打开推广奖励, Help: 推广
+				325 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				326 link Description: 打开工单, Value: community.risemap.cn/support
+				327 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					328 image
+					329 text 立即订阅
+				330 button 金
+					331 text 金
+					332 image
+			333 container
+				334 button 工作台
+					335 image
+					336 text 工作台
+				337 button 文档中心
+					338 text 文档中心
+				339 button 固定资产
+					340 text 固定资产
+				341 button 资质与申报
+					342 text 资质与申报
+				343 button 物料领取
+					344 text 物料领取
+				345 button 设备维护
+					346 text 设备维护
+				347 button 礼品管理
+					348 text 礼品管理
+				349 button 借出管理
+					350 text 借出管理
+				351 button 车辆管理
+					352 text 车辆管理
+				353 button 新建公司用车申请
+					354 text 新建公司用车申请
+				355 button 新建私车公用申请
+					356 text 新建私车公用申请
+				357 button 新增车辆
+					358 text 新增车辆
+				359 button 人事工作台
+					360 text 人事工作台
+				361 button 员工档案
+					362 text 员工档案
+				363 button 招聘管理
+					364 text 招聘管理
+			365 container
+				366 container
+					367 text 人力资源
+					368 image
+					369 text 招聘管理
+					370 image
+					371 heading 招聘管理, Value: 1
+						372 text 招聘管理
+					373 text 岗位发布、候选人漏斗、面试评估、Offer 管理
+				374 button 岗位说明
+					375 image
+					376 text 岗位说明
+				377 button 招聘岗位
+					378 image
+					379 text 招聘岗位
+				380 button 招聘管理
+					381 image
+					382 text 招聘管理
+				383 image
+				384 text field (settable)
+				385 radio button 看板, Value: 0, ID: :rpc:-kanban
+					386 image
+					387 text 看板
+				388 radio button 列表, Value: 1, ID: :rpc:-list
+					389 image
+					390 text 列表
+				391 button 导出
+					392 image
+					393 text 导出
+					394 image
+				395 button 录入简历
+					396 image
+					397 text 录入简历
+				398 button 刷新
+					399 image
+				400 button
+					401 image
+				402 button
+					403 image
+				404 table
+					405 row
+						406 cell
+							407 checkbox (settable, integer) 0
+						408 cell
+							409 text 候选人
+						410 cell
+							411 text 应聘岗位
+						412 cell
+							413 text 学历/经验
+						414 cell
+							415 text 来源渠道
+						416 cell
+							417 text 阶段
+						418 cell
+							419 text 评分
+						420 cell
+							421 text 投递日期
+						422 cell
+							423 text 操作
+					424 row
+						425 cell
+							426 checkbox (settable, integer) 0
+						427 cell
+							428 text 探 探索候选人
+							429 text -
+						430 cell
+							431 container
+								432 text 本科  /  0 年
+						433 cell
+							434 text BOSS直聘
+						435 cell
+							436 text 简历筛选
+						437 cell
+							438 text -
+						439 cell
+							440 text 2026-09-09
+						441 cell
+							442 button 查看
+								443 image
+								444 text 查看
+				445 text 共  1 条记录 每页
+				446 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					447 text 10
+				448 text 条
+				449 button (disabled) 上一页
+					450 image
+				451 button 1
+				452 button (disabled) 下一页
+					453 image
+				454 container
+					455 text 探 探索候选人 简历筛选
+					456 container
+						457 text 应聘  ·
+					458 button
+						459 image
+					460 text 学历 本科 · 专业 经验 应届 现单位 应届毕业生 手机 13900000000 邮箱 来源 BOSS直聘 投递日期 2026-09-09 评分 待评 推进负责人 未分配
+					461 heading 面试记录, Value: 4
+						462 text 面试记录
+					463 text 暂无面试记录
+					464 button 推进至下一阶段
+						465 image
+						466 text 推进至下一阶段
+					467 button 添加面试记录
+						468 image
+						469 text 添加面试记录
+					470 button 淘汰
+						471 image
+						472 text 淘汰
+					473 button 在新页面打开详情
+						474 image
+						475 text 在新页面打开详情
+			476 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			243 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/hr/recruitment

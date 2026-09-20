@@ -1,0 +1,88 @@
+Browser tab: 13, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_sales_teams".
+0 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_teams
+	1 container root
+		2 container 通知 alt+T
+		3 container
+			4 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			5 container 本平台处于预览版，功能可能调整。
+				6 text 预览版
+			7 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			8 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			9 text 销售团队
+			10 button 搜索…
+				11 text 搜索…
+				12 text ⌘
+				13 text K
+			14 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			15 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_sales_teams
+			16 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			17 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		18 container
+			19 container
+				20 text 区域
+				21 content list
+					22 button 工作台
+					23 button 供应链
+					24 button 销售
+					25 button 生产
+					26 button 项目
+					27 button 行政
+					28 button 财务
+					29 button 报表
+					30 button 系统
+			31 container
+				32 button (expanded) 工作台, Secondary Actions: Collapse
+				33 content list
+					34 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					35 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					37 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			38 text 最近使用
+			39 button 切换侧边栏
+		40 container
+			41 button 在 Studio 中编辑
+			42 heading 销售团队, Value: 1
+				43 text 销售团队
+			44 text 管理销售团队结构、成员分配和团队负责人 11 销售管理 / 销售组织管理
+			45 button 新建团队
+			46 button 刷新
+			47 text 管理销售团队结构、成员分配和团队负责人
+			48 heading 销售组织管理, Value: 1
+				49 text 销售组织管理
+			50 text field (settable) 搜索团队
+			51 button 清空筛选
+			52 table
+				53 row
+					54 cell
+						55 text 团队名称
+					56 cell
+						57 text 负责人
+					58 cell
+						59 text 成员
+					60 cell
+						61 text 创建
+					62 cell
+						63 text 状态
+					64 cell
+						65 text 说明
+					66 cell
+						67 text 操作
+				68 row
+					69 cell
+						70 button RISEMAP 对照销售团队 20260913
+						71 text TEAM-RM-20260913
+					72 cell
+						73 text Dev Admin
+					74 cell
+						75 text 1  人
+					76 cell
+						77 text 2026-09-13
+					78 cell
+						79 text 启用
+					80 cell
+						81 text 用于 Forge 销售管理复刻的同材料销售团队
+					82 cell
+						83 button (disabled) 编辑
+			84 text 共  1  条记录 每页 10 条 · 1 / 1
+
+The focused UI element is 0 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_teams

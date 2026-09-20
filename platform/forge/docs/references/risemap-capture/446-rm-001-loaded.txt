@@ -1,0 +1,216 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/".
+0 AXWebArea RiseMap, URL: risemap.cn/
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 工作台
+			5 button 收起侧边栏
+				6 image
+			7 container
+				947 button 工作台
+					948 image
+					949 text 工作台
+				950 button AI 广场
+					951 image
+					952 text AI 广场
+				953 button 引导中心
+					954 image
+					955 text 引导中心
+				956 button 待办管理
+					957 image
+					958 text 待办管理
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 1
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				855 button 进项发票
+					856 text 进项发票
+				857 button 开票任务
+					858 text 开票任务
+				859 button 调整记录
+					860 text 调整记录
+				925 button 销售统计
+					926 text 销售统计
+				927 button 采购统计
+					928 text 采购统计
+				929 button 库存统计
+					930 text 库存统计
+				931 button 项目统计
+					932 text 项目统计
+				933 button 组装统计
+					934 text 组装统计
+				935 button 财务总览
+					936 text 财务总览
+				937 button 损益分析
+					938 text 损益分析
+				939 button 资金分析
+					940 text 资金分析
+				941 button 往来账款
+					942 text 往来账款
+				943 button 税务库存
+					944 text 税务库存
+				945 button 风险监控
+					946 text 风险监控
+			959 container
+				960 image 登顶 · 把目标踩在脚下
+				961 container
+					962 heading 欢迎回来，金一涛！, Value: 1
+						963 text 欢迎回来， 金一涛 ！
+					964 text 今天是  2026年9月8日星期二 ，祝您工作愉快。 「 登顶 · 把目标踩在脚下 」
+				965 container
+					966 button 换一张, Help: 更换背景图
+						967 image
+						968 text 换一张
+					969 button 上传, Help: 上传自定义背景图
+						970 image
+						971 text 上传
+					972 button 管理, Help: 管理背景图
+				973 image
+				974 text 完成系统初始化 · 当前阶段：公司主体与组织架构 必填  0  /  13 总进度  0  /  25 首次启用系统需依次完成 7 个阶段的初始化设置，点击右侧按钮进入引导中心。
+				975 image
+				976 text 阶段  1  ·  公司主体与组织架构 0 / 3
+				977 image
+				978 text 阶段  2  ·  用户与权限 0 / 3
+				979 image
+				980 text 阶段  3  ·  业务基础数据 0 / 7
+				981 image
+				982 text 阶段  4  ·  期初数据建账 0 / 6
+				983 button 进入引导中心
+					984 text 进入引导中心
+					985 image
+				986 button 自定义工作台
+					987 image
+					988 text 自定义工作台
+				989 image
+				990 heading 员工服务, Value: 3
+					991 text 员工服务
+				992 text 全员通用 · 可自定义
+				993 button 编辑
+				994 button 添加服务
+					995 image
+					996 text 添加服务
+				997 text 报销申请
+				998 text 出差申请
+				999 text 加班申请
+				1000 text 请假申请
+				1001 text 我的薪资
+				1002 text 我的待办
+				1003 text 考勤打卡
+				1004 image
+				1005 text 添加
+				1006 image
+				1007 heading 快捷操作, Value: 3
+					1008 text 快捷操作
+				1009 text 按岗位推荐 · 可自定义
+				1010 button 编辑
+				1011 button 添加操作
+					1012 image
+					1013 text 添加操作
+				1014 image
+				1015 text 新建采购订单
+				1016 image
+				1017 text 新建销售订单
+				1018 container 建客户档案
+					1019 image
+					1020 text 新增客户
+				1021 image
+				1022 text 新建项目
+				1023 image
+				1024 text 新建报销单
+				1025 image
+				1026 text 新建会议纪要
+				1027 image
+				1028 text 添加
+				1029 image
+				1030 heading 企业文化合影, Value: 3
+					1031 text 企业文化合影
+				1032 text 1 / 3
+				1033 button 暂停
+					1034 image
+					1035 text 暂停
+				1036 button 上传
+					1037 image
+					1038 text 上传
+				1039 button 管理
+				1040 container
+					1041 image 2026 春季全员合影
+					1042 container
+						1043 heading 2026 春季全员合影, Value: 4
+							1044 text 2026 春季全员合影
+						1045 text 莫干山团建 · 全员到齐 · 春暖花开的一天。
+					1046 image 技术部黑客马拉松
+					1047 container
+						1048 heading 技术部黑客马拉松, Value: 4
+							1049 text 技术部黑客马拉松
+						1050 text 48 小时 · 6 个原型 · 一群相信代码可以改变工作方式的人。
+					1051 image Q1 业务里程碑庆功
+					1052 container
+						1053 heading Q1 业务里程碑庆功, Value: 4
+							1054 text Q1 业务里程碑庆功
+						1055 text 感谢每一位伙伴的全力以赴，一起把不可能变成已交付。
+					1056 button
+						1057 image
+					1058 button
+						1059 image
+					1060 button
+					1061 button
+					1062 button
+				1063 image
+				1064 heading 企业通知, Value: 3
+					1065 text 企业通知
+				1066 button 查看全部
+					1067 text 查看全部
+					1068 image
+				1069 text 暂无通知
+				1070 image
+				1071 heading 待我审批, Value: 3
+					1072 text 待我审批
+				1073 text 0 项待办
+				1074 button 查看全部
+					1075 text 查看全部
+					1076 image
+				1077 text 暂无待审批事项
+				1078 image
+				1079 heading 我的待办, Value: 3
+					1080 text 我的待办
+				1081 text 0 项待办
+				1082 button 查看全部
+					1083 text 查看全部
+					1084 image
+				1085 text 暂无待办事项
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 947 button 工作台

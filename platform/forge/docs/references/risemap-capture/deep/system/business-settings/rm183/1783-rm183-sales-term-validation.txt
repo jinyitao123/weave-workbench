@@ -1,0 +1,49 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/sales".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/sales
+	2 container 新增销售付款条件 配置与客户约定的付款条件和到期规则
+		3 container :r149:
+			4 heading 新增销售付款条件, Value: 3
+				5 text 新增销售付款条件
+			6 text 配置与客户约定的付款条件和到期规则
+		7 button 关闭
+			8 image
+		9 container
+			10 text 名称  *
+			11 text field (settable)
+			12 text 0 /50 名称不能为空
+			13 switch Description: 启用到期计算, Value: 1, ID: :r14b:
+			14 text 启用到期计算 生成应收、应付到期日，并按提前提醒天数发送到期提醒
+			15 image
+			16 text 到期计算规则 用于生成应收、应付到期日及提前提醒时间 起算事件 *
+			17 button 起算事件
+				18 text 货物交付
+			19 text 计算方式 *
+			20 button 计算方式
+				21 text 起算月月末后 N 天
+			22 text 账期天数 *
+			23 button
+				24 image
+			25 text field (settable)
+			26 text 天
+			27 button
+				28 image
+			47 text 账期天数不能为空 提前提醒
+			30 button
+				31 image
+			32 text field (settable)
+			33 text 天
+			34 button
+				35 image
+			36 text 规则试算日期 货物交付 · 起算月月末后 0 天
+			37 container
+				38 text field (settable) 2026年9月9日
+				39 button
+					40 image
+				41 button
+					42 image
+			43 text 填写完整规则后可试算到期日 备注
+			44 text entry area (settable)
+		45 button 取消
+		46 button 创建
+
+The focused UI element is 46 button 创建

@@ -1,0 +1,212 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 设备维护
+- button:
+  - generic: 礼品管理
+- button:
+  - generic: 借出管理
+- button:
+  - generic: 车辆管理
+- button:
+  - generic: 新建公司用车申请
+- button:
+  - generic: 新建私车公用申请
+- button:
+  - generic: 新增车辆
+- button:
+  - generic: 人事工作台
+- button:
+  - generic: 员工档案
+- button:
+  - generic: 招聘管理
+- button:
+  - generic: 候选人详情
+- button:
+  - generic: 入职离职
+- button:
+  - generic: 薪酬福利
+- button:
+  - generic: 福利发放
+- main:
+  - generic: 人力资源
+  - generic: 薪酬福利
+  - heading [level=1]: 薪酬福利
+  - paragraph: 节日福利、生日礼物、员工关怀礼品发放与领取记录
+  - generic: 累计发放价值
+  - paragraph: ¥0.00
+  - paragraph: 0 次发放
+  - generic: 累计发放数量
+  - paragraph: "0"
+  - paragraph: 兑换码+实物
+  - generic: 兑换码剩余
+  - paragraph: "0"
+  - paragraph: 0 个活跃码池
+  - generic: 实物库存剩余
+  - paragraph: "0"
+  - paragraph: 0 种在库
+  - button:
+    - text: 发放记录
+  - button:
+    - text: 兑换码库
+    - generic: "0"
+  - button:
+    - text: 实物库
+    - generic: "0"
+  - button:
+    - text: 新建码池
+  - textbox:
+    - /placeholder: 搜索兑换码库...
+- button:
+- region "Notifications alt+T"
+- dialog "新建兑换码池":
+  - heading "新建兑换码池" [level=2]:
+    - text: 新建兑换码池
+  - paragraph: 新建兑换码池表单
+  - generic: "*"
+  - generic: 码池名称
+  - textbox "如：京东E卡100元" [active]
+  - paragraph: 请输入码池名称
+  - generic: 兑换码类型
+  - button "购物卡":
+    - generic "购物卡"
+  - generic: "*"
+  - generic: 单张面值(¥)
+  - spinbutton
+  - paragraph: 请输入单张面值
+  - generic: "*"
+  - generic: 兑换码总数
+  - spinbutton
+  - paragraph: 请输入兑换码总数
+  - generic: "*"
+  - generic: 有效期至
+  - textbox "请选择日期"
+  - button:
+  - paragraph: 请选择有效期
+  - paragraph: 请选择有效期
+  - generic: 供应商/来源
+  - textbox "如：京东集团"
+  - generic: 兑换码列表 (每行一个)
+  - textbox "JD-2026-XXXX-0001 JD-2026-XXXX-0002 ...":
+    - /placeholder: "JD-2026-XXXX-0001\nJD-2026-XXXX-0002\n..."
+  - paragraph: 支持直接粘贴批量兑换码，或后续通过导入 Excel 补充
+  - generic: 描述
+  - textbox "描述兑换码的使用规则..."
+  - button "取消"
+  - button "创建码池"
+  - button "Close":
+    - generic: Close

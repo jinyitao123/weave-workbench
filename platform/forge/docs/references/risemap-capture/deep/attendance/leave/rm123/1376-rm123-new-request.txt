@@ -1,0 +1,38 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/leave".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/leave
+	2 container
+		3 container Notifications alt+T
+		4 container 新建请假申请, ID: radix-:rh:
+			5 image
+			6 heading 新建请假申请, Value: 2, ID: radix-:ri:
+				7 text 新建请假申请
+			8 container
+				9 text 假别  * 暂无可用假期类型，请联系管理员配置 开始时间  *
+				10 container
+					11 text field (settable)
+					12 button
+						13 image
+				14 text 结束时间  *
+				15 container
+					16 text field (settable)
+					17 button
+						18 image
+				19 text 扣减明细 请先选择假期类型与时间，将自动试算扣减明细 * 请假事由
+				20 text entry area (settable)
+				21 text 附件
+				22 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+					23 image
+					24 text 点击或拖拽文件到此处上传
+					25 text 支持 Ctrl+V 粘贴截图
+					26 text 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+				27 image
+				28 text 请假申请提交后将发送至直属上级审批，审批通过后生效。
+			29 button 取消
+			30 button 提交申请
+				31 image
+				32 text 提交申请
+			33 button Close
+				34 image
+				35 text Close
+
+The focused UI element is 11 text field (settable)

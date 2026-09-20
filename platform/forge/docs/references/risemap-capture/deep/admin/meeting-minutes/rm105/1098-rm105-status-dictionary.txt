@@ -1,0 +1,196 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/meetings".
+0 AXWebArea RiseMap, URL: risemap.cn/ops/meetings
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 行政
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 审批中心
+					9 image
+					10 text 审批中心
+					11 image
+				12 button 我的审批
+				13 button 抄送我的
+				14 button 我发起的
+				15 button 行政申请
+				16 button 行政管理
+					17 image
+					18 text 行政管理
+					19 image
+				20 button 公司通知
+				21 button 用章管理
+				22 button 会议纪要
+				23 button 工作汇报
+				24 button 文档中心
+				25 button 固定资产
+				26 button 资质与申报
+				27 button 物料领取
+				28 button 设备维护
+				29 button 礼品管理
+				30 button 借出管理
+				31 button 车辆管理
+				32 button 人力资源
+					33 image
+					34 text 人力资源
+					35 image
+				36 button 人事工作台
+				37 button 员工档案
+				38 button 招聘管理
+				39 button 入职离职
+				40 button 薪酬福利
+				41 button 规章制度
+				42 button 通讯录
+				43 button 考勤假期
+					44 image
+					45 text 考勤假期
+					46 image
+				47 button 加班申请
+				48 button 请假管理
+				49 button 出差申请
+				50 button 考勤管理
+				51 button 考勤统计
+				52 button 流程中心
+					53 image
+					54 text 流程中心
+					55 image
+				56 button 审批记录
+				57 button 发起流程
+				58 button 流程定义
+				59 button 流程分类
+			60 image
+			61 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			62 button 查看方案
+				63 image
+				64 text 查看方案
+			65 button
+				66 image
+			67 container
+				68 container 业务分类
+					69 checkbox 工作台, Value: 0
+					70 checkbox 供应链, Value: 0
+					71 checkbox 销售, Value: 0
+					72 checkbox 生产, Value: 0
+					73 checkbox 项目, Value: 0
+					74 checkbox 行政, Value: 1
+					75 checkbox 财务, Value: 0
+					76 checkbox 报表, Value: 0
+					77 checkbox 系统, Value: 0
+				78 button Description: 展开搜索, Help: 搜索
+					79 image
+				80 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					81 image
+					82 text 2
+				83 button Description: 打开推广奖励, Help: 推广
+				84 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				85 link Description: 打开工单, Value: community.risemap.cn/support
+				86 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					87 image
+					88 text 立即订阅
+				89 button 金
+					90 text 金
+					91 image
+			92 container
+				93 button 工作台
+					94 image
+					95 text 工作台
+				98 button 项目分析中心
+					99 text 项目分析中心
+				100 button 任务管理
+					101 text 任务管理
+				102 button 工时管理
+					103 text 工时管理
+				104 button 快捷工时填报
+					105 text 快捷工时填报
+				106 button 项目配置中心
+					107 text 项目配置中心
+				108 button 新建计划模板
+					109 text 新建计划模板
+				110 button 我的审批
+					111 text 我的审批
+				112 button 抄送我的
+					113 text 抄送我的
+				114 button 我发起的
+					115 text 我发起的
+				116 button 行政申请
+					117 text 行政申请
+				118 button 公司通知
+					119 text 公司通知
+				120 button 发布通知
+					121 text 发布通知
+				122 button 用章管理
+					123 text 用章管理
+				155 button 会议纪要
+					156 text 会议纪要
+			157 container
+				158 container
+					159 text 行政管理
+					160 image
+					161 text 会议纪要
+					162 image
+					163 heading 会议纪要, Value: 1
+						164 text 会议纪要
+					165 text 会议记录归档、决议追踪、待办事项指派与执行情况复盘
+				166 button 新建会议纪要
+					167 image
+					168 text 新建会议纪要
+				169 button 导出
+					170 image
+					171 text 导出
+					172 image
+				173 button 刷新
+					174 image
+				175 button
+					176 image
+				177 button
+					178 image
+				179 image
+				180 text field (settable)
+				181 button 类型
+					182 text 类型
+					183 image
+				184 button 状态
+					185 text 状态
+					186 image
+				187 table
+					188 row
+						189 cell
+							190 checkbox (settable, integer) 0
+						191 cell
+							192 text 会议主题
+						193 cell
+							194 text 日期/时间
+						195 cell
+							196 text 主持人
+						197 cell
+							198 text 参会人数
+						199 cell
+							200 text 待办
+						201 cell
+							202 text 状态
+						203 cell
+							204 text 操作
+					205 row
+						206 cell
+							207 image
+							208 text 暂无会议记录
+				209 text 共  0 条记录 每页
+				210 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					211 text 20
+				212 text 条
+				213 button (disabled) 上一页
+					214 image
+				215 button 1
+				216 button (disabled) 下一页
+					217 image
+			153 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			154 container Notifications alt+T
+		218 container
+			219 text 全部
+			220 image
+			221 text 草稿
+			222 text 已发送
+			223 text 已归档
+
+The focused UI element is 184 button 状态

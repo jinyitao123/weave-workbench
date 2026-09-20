@@ -1,0 +1,413 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings?tab=numbering".
+1 AXWebArea RiseMap, URL: risemap.cn/settings?tab=numbering
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 系统
+			6 button 收起侧边栏
+				7 image
+			8 container
+				404 button 系统设置
+					405 image
+					406 text 系统设置
+					407 image
+				408 button 基础配置
+				409 button 用户与角色
+				410 button 部门管理
+				411 button 用户会话
+				412 button 审计日志
+				413 button 业务设置
+					414 image
+					415 text 业务设置
+					416 image
+				417 button 商品管理
+				418 button 财务配置
+				419 button 行政管理
+				420 button 客户管理
+				421 button 采购销售
+				422 button 库存管理
+				423 button 其他配置
+				424 button 人事配置
+				425 button 项目管理
+				426 button 图纸配置
+				427 button 生产配置
+				428 button 委外配置
+				429 button 单据打印
+				430 button 插件中心
+					431 image
+					432 text 插件中心
+				433 button 服务订阅
+					434 image
+					435 text 服务订阅
+				436 button 推广奖励
+					437 image
+					438 text 推广奖励
+				439 button 字段管理
+					440 image
+					441 text 字段管理
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 1
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				261 button 开票任务
+					262 text 开票任务
+				263 button 调整记录
+					264 text 调整记录
+				329 button 销售统计
+					330 text 销售统计
+				331 button 采购统计
+					332 text 采购统计
+				333 button 库存统计
+					334 text 库存统计
+				335 button 项目统计
+					336 text 项目统计
+				337 button 组装统计
+					338 text 组装统计
+				339 button 财务总览
+					340 text 财务总览
+				341 button 损益分析
+					342 text 损益分析
+				343 button 资金分析
+					344 text 资金分析
+				345 button 往来账款
+					346 text 往来账款
+				347 button 税务库存
+					348 text 税务库存
+				349 button 风险监控
+					350 text 风险监控
+				442 button 基础配置
+					443 text 基础配置
+			444 container
+				445 text 系统设置
+				446 heading 系统设置, Value: 1
+					447 text 系统设置
+				448 button (expanded) Description: 收起设置导航, Secondary Actions: Collapse
+					449 image
+				450 button 企业信息 管理企业基本信息、Logo等
+					451 image
+					452 text 企业信息
+					453 text 管理企业基本信息、Logo等
+				454 button 编码管理 业务编号生成与校验规则
+					455 image
+					456 text 编码管理
+					457 text 业务编号生成与校验规则
+				458 button 通知设置 配置系统通知和提醒规则
+					459 image
+					460 text 通知设置
+					461 text 配置系统通知和提醒规则
+				462 button 邮件配置 配置 SMTP 服务器，可选，不配置则使用官方邮件服务
+					463 image
+					464 text 邮件配置
+					465 text 配置 SMTP 服务器，可选，不配置则使用官方邮件服务
+				466 button 收件邮箱 配置进项发票收件邮箱和可见范围
+					467 image
+					468 text 收件邮箱
+					469 text 配置进项发票收件邮箱和可见范围
+				470 button 数据管理 数据备份、导入导出设置
+					471 image
+					472 text 数据管理
+					473 text 数据备份、导入导出设置
+				474 button 外观定制 自定义系统主题和界面
+					475 image
+					476 text 外观定制
+					477 text 自定义系统主题和界面
+				478 button 功能模块 启用/隐藏侧边栏模块菜单
+					479 image
+					480 text 功能模块
+					481 text 启用/隐藏侧边栏模块菜单
+				482 button 热键管理 自定义全局快捷键，提升操作效率
+					483 image
+					484 text 热键管理
+					485 text 自定义全局快捷键，提升操作效率
+				486 image
+				487 heading 编码管理, Value: 3
+					488 text 编码管理
+				489 text 统一维护业务编号规则；未配置有效规则时，业务继续使用系统默认生成逻辑 60  项编码
+				490 button 一键恢复默认
+					491 image
+					492 text 一键恢复默认
+				493 button 新增编码
+					494 image
+					495 text 新增编码
+				496 image
+				497 text 同一单号可按业务类型配置不同规则。新增或编辑时，可通过下拉框选择固定文字、日期、物料一至五级分类码和流水号并调整顺序。物料不存在的分类级别按空值生成；修改只影响新编号，不修改历史数据。
+				498 image
+				499 text field (settable)
+				500 button 全部模块
+					501 text 全部模块
+				502 table
+					503 row
+						504 cell
+							505 text 业务模块
+						506 cell
+							507 text 单号
+						508 cell
+							509 text 业务类型
+						510 cell
+							511 text 编号组成 / 示例
+						512 cell
+							513 text 重置周期
+						514 cell
+							515 text 跳码数量
+						516 cell
+							517 text 操作
+					742 row
+						743 cell
+							744 text 财务管理
+						745 cell
+							746 text 退款申请单号
+							747 text 默认系统编码
+						748 cell
+							749 text 通用类型
+						750 cell
+							751 text REF-{YYYY}-{SEQ:4}
+							752 container
+								753 text 示例： REF-2026-0001
+						754 cell
+							755 text 每年
+						756 cell
+							757 text 0
+						758 cell
+							759 button 编辑
+								760 image
+							761 button 复制为新规则
+								762 image
+					763 row
+						764 cell
+							765 text 财务管理
+						766 cell
+							767 text 费用报销单号
+							768 text 默认系统编码
+						769 cell
+							770 text 通用类型
+						771 cell
+							772 text EXP-{YYYY}-{SEQ:5}
+							773 container
+								774 text 示例： EXP-2026-00001
+						775 cell
+							776 text 每年
+						777 cell
+							778 text 0
+						779 cell
+							780 button 编辑
+								781 image
+							782 button 复制为新规则
+								783 image
+					784 row
+						785 cell
+							786 text 财务管理
+						787 cell
+							788 text 企业支出申请单号
+							789 text 默认系统编码
+						790 cell
+							791 text 通用类型
+						792 cell
+							793 text EPR-{YYYY}{MM}{DD}-{SEQ:4}
+							794 container
+								795 text 示例： EPR-20260909-0001
+						796 cell
+							797 text 每日
+						798 cell
+							799 text 0
+						800 cell
+							801 button 编辑
+								802 image
+							803 button 复制为新规则
+								804 image
+					805 row
+						806 cell
+							807 text 财务管理
+						808 cell
+							809 text 成本编号
+							810 text 默认系统编码
+						811 cell
+							812 text 通用类型
+						813 cell
+							814 text CP-{YYYY}{MM}{DD}-{SEQ:4}
+							815 container
+								816 text 示例： CP-20260909-0001
+						817 cell
+							818 text 每日
+						819 cell
+							820 text 0
+						821 cell
+							822 button 编辑
+								823 image
+							824 button 复制为新规则
+								825 image
+					826 row
+						827 cell
+							828 text 财务管理
+						829 cell
+							830 text 收入确认单号
+							831 text 默认系统编码
+						832 cell
+							833 text 通用类型
+						834 cell
+							835 text RR-{YYYY}{MM}{DD}-{SEQ:4}
+							836 container
+								837 text 示例： RR-20260909-0001
+						838 cell
+							839 text 每日
+						840 cell
+							841 text 0
+						842 cell
+							843 button 编辑
+								844 image
+							845 button 复制为新规则
+								846 image
+					847 row
+						848 cell
+							849 text 财务管理
+						850 cell
+							851 text 借款单号
+							852 text 默认系统编码
+						853 cell
+							854 text 通用类型
+						855 cell
+							856 text BOR-{YYYY}-{SEQ:4}
+							857 container
+								858 text 示例： BOR-2026-0001
+						859 cell
+							860 text 每年
+						861 cell
+							862 text 0
+						863 cell
+							864 button 编辑
+								865 image
+							866 button 复制为新规则
+								867 image
+					868 row
+						869 cell
+							870 text 财务管理
+						871 cell
+							872 text 贷款编号
+							873 text 默认系统编码
+						874 cell
+							875 text 通用类型
+						876 cell
+							877 text BL-{YYYY}-{SEQ:4}
+							878 container
+								879 text 示例： BL-2026-0001
+						880 cell
+							881 text 每年
+						882 cell
+							883 text 0
+						884 cell
+							885 button 编辑
+								886 image
+							887 button 复制为新规则
+								888 image
+					889 row
+						890 cell
+							891 text 财务管理
+						892 cell
+							893 text 对账单号
+							894 text 默认系统编码
+						895 cell
+							896 text 通用类型
+						897 cell
+							898 text REC-{YYYY}-{SEQ:4}
+							899 container
+								900 text 示例： REC-2026-0001
+						901 cell
+							902 text 每年
+						903 cell
+							904 text 0
+						905 cell
+							906 button 编辑
+								907 image
+							908 button 复制为新规则
+								909 image
+					910 row
+						911 cell
+							912 text 图纸管理
+						913 cell
+							914 text 图纸编号
+							915 text 默认系统编码
+						916 cell
+							917 text 通用类型
+						918 cell
+							919 text DRW-{YYYY}-{SEQ:4}
+							920 container
+								921 text 示例： DRW-2026-0001
+						922 cell
+							923 text 每年
+						924 cell
+							925 text 0
+						926 cell
+							927 button 编辑
+								928 image
+							929 button 复制为新规则
+								930 image
+					931 row
+						932 cell
+							933 text 人力资源
+						934 cell
+							935 text 员工工号
+							936 text 默认系统编码
+						937 cell
+							938 text 正式员工
+						939 cell
+							940 text EMP-{SEQ:5}
+							941 container
+								942 text 示例： EMP-00001
+						943 cell
+							944 text 不重置
+						945 cell
+							946 text 0
+						947 cell
+							948 button 编辑
+								949 image
+							950 button 复制为新规则
+								951 image
+				728 text 共  60 条记录 每页
+				729 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					730 text 10
+				731 text 条
+				732 button 上一页
+					733 image
+				734 button 1
+				735 button 2
+				736 button 3
+				737 button 4
+				738 button 5
+				739 button 6
+				740 button 下一页
+					741 image
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+
+The focused UI element is 738 button 5

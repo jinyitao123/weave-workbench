@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_purchase_todo_pool",
+  "archetype": "task_workspace",
+  "reviewedRevision": "27d559ebfc61703275c372271825a30e44d348c3",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/purchase-todo-pool.page.ts": "ce6d049336ba0f4f2f8b23906d629877d2ad1369a06522d72c1d3d358e0c883c",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "8830c910309c7d731c9289965590eb5572e550be39ea70c4b3c69c3baf78a036",
+    "apps/forge-objectstack/src/pages/project-task-workspace.page.ts": "ed4b4682fd3857b17bdee044b6e7e717253aa96f4d965aac8d27faa716711c11",
+    "apps/forge-objectstack/src/objects/procurement.object.ts": "08b1491cb1096b6e5de8eae392f5759c574520d5693572080afc7229e8ff0f9b",
+    "docs/forge-page-polish-baseline.md": "87391dcd1a7e8feefa96b358d42815d22e0eedebf578d0ff0e470550b0d45eb4"
+  },
+  "environment": {
+    "forgeUrl": "http://localhost:4495",
+    "database": "file:.objectstack/supply-procurement-batch1.sqlite",
+    "materials": "POOL-PR-SUPPLY-POOL-REJECT-1789545351941-001"
+  },
+  "checks": {
+    "replication": {
+      "status": "blocked",
+      "notes": "已实时核对 RISEMAP 当前空态、列与批量动作；缺少同材料待办。",
+      "evidence": [
+        "docs/forge-purchase-todo-pool-page-contract-20260915.md"
+      ]
+    },
+    "visual": {
+      "status": "pending",
+      "notes": "桌面有数据态已回看，窄屏与独立复核待执行。",
+      "evidence": []
+    },
+    "interaction": {
+      "status": "pass",
+      "notes": "待办选择后可生成询价，来源数量与状态可回读。 该结论采集于合并前版本，合并后未重新核对。",
+      "evidence": [
+        "docs/forge-purchase-todo-pool-page-contract-20260915.md"
+      ]
+    },
+    "business": {
+      "status": "pass",
+      "notes": "审批生成待办，待办生成询价，重复和无明细异常均有阻断。 该结论采集于合并前版本，合并后未重新核对。",
+      "evidence": [
+        "apps/forge-objectstack/tests/purchase-todo-pool.integration.mjs"
+      ]
+    }
+  },
+  "visualEvidence": {
+    "desktop": {
+      "width": 1440,
+      "height": 900,
+      "evidence": []
+    },
+    "narrow": {
+      "width": 390,
+      "height": 844,
+      "evidence": []
+    },
+    "reference": [],
+    "populated": [],
+    "empty": [],
+    "form": [],
+    "error": []
+  },
+  "requirements": [
+    {
+      "id": "REQ-POOL-001",
+      "status": "pass",
+      "steps": "审批采购申请并查询待办",
+      "expected": "精确生成一条待办",
+      "observed": "数量、来源和状态符合预期",
+      "evidence": [
+        "apps/forge-objectstack/tests/purchase-todo-pool.integration.mjs"
+      ]
+    },
+    {
+      "id": "REQ-POOL-002",
+      "status": "pass",
+      "steps": "选择剩余数量并生成询价",
+      "expected": "询价关联待办且防止重复占用",
+      "observed": "询价来源与待办状态已持久化",
+      "evidence": [
+        "docs/forge-purchase-todo-pool-page-contract-20260915.md"
+      ]
+    }
+  ],
+  "review": {
+    "implementer": "Codex /root",
+    "reviewer": "",
+    "reviewedAt": "2026-09-16",
+    "status": "pending",
+    "evidence": []
+  },
+  "mergeNote": "主线合并记录：2026-09-17 合并 codex/supply-procurement-batch1、codex/production-placeholders-batch1 与 codex/finance-sales-cycle 时，下列受验文件内容与 reviewedRevision 不再一致，本记录的结论只对当时版本有效，需在合并后版本上重新核对：apps/forge-objectstack/src/pages/purchase-todo-pool.page.ts、apps/forge-objectstack/src/pages/product-ui.ts。"
+}

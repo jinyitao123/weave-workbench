@@ -1,0 +1,141 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/project/settings".
+0 AXWebArea RiseMap, URL: risemap.cn/project/settings
+	1 container
+		2 container root
+			201 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			202 text 项目
+			203 button 收起侧边栏
+				204 image
+			205 container
+				206 button 项目管理
+					207 image
+					208 text 项目管理
+					209 image
+				210 button 项目中心
+				211 button 项目分析中心
+				212 button 任务管理
+				213 button 工时管理
+				214 button 项目配置中心
+			215 image
+			216 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			217 button 查看方案
+				218 image
+				219 text 查看方案
+			220 button
+				221 image
+			222 container
+				223 container 业务分类
+					224 checkbox 工作台, Value: 0
+					225 checkbox 供应链, Value: 0
+					226 checkbox 销售, Value: 0
+					227 checkbox 生产, Value: 0
+					228 checkbox 项目, Value: 1
+					229 checkbox 行政, Value: 0
+					230 checkbox 财务, Value: 0
+					231 checkbox 报表, Value: 0
+					232 checkbox 系统, Value: 0
+				233 button Description: 展开搜索, Help: 搜索
+					234 image
+				235 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					236 image
+					237 text 2
+				238 button Description: 打开推广奖励, Help: 推广
+				239 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				240 link Description: 打开工单, Value: community.risemap.cn/support
+				241 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					242 image
+					243 text 立即订阅
+				244 button 金
+					245 text 金
+					246 image
+			247 container
+				248 button 工作台
+					249 image
+					250 text 工作台
+				255 button 新建退料单
+					256 text 新建退料单
+				257 button 委外对账
+					258 text 委外对账
+				259 button 委外供应商
+					260 text 委外供应商
+				261 button 委外库存
+					262 text 委外库存
+				263 button 批次追溯
+					264 text 批次追溯
+				265 button 委外未交
+					266 text 委外未交
+				267 button 委外进货
+					268 text 委外进货
+				269 button 委外对账单
+					270 text 委外对账单
+				271 button 项目中心
+					272 text 项目中心
+				273 button 项目分析中心
+					274 text 项目分析中心
+				275 button 任务管理
+					276 text 任务管理
+				277 button 工时管理
+					278 text 工时管理
+				388 button 快捷工时填报
+					389 text 快捷工时填报
+				390 button 项目配置中心
+					391 text 项目配置中心
+			392 container
+				393 text 项目管理
+				394 image
+				395 text 项目配置中心
+				396 heading 项目配置中心, Value: 2
+					397 image
+					398 text 项目配置中心
+				399 text 统一管理项目相关配置：计划模板、工时成本等
+				400 image
+				401 text 计划模板总数
+				402 text 0
+				403 image
+				404 text 系统模板
+				405 text 0
+				406 image
+				407 text 自定义模板
+				408 text 0
+				409 image
+				410 text 项目复制模板
+				411 text 0
+				412 image
+				413 text 工时成本配置
+				414 text —
+				415 button 计划模板
+					416 image
+					417 text 计划模板
+				418 button 交付包模板
+					419 image
+					420 text 交付包模板
+				421 button 工时成本配置
+					422 image
+					423 text 工时成本配置
+				424 image
+				425 text 管理项目计划模板，新项目一键套用标准结构 创建、编辑、复用项目计划模板，新项目可一键套用标准结构
+				426 button 新建模板
+					427 image
+					428 text 新建模板
+				429 image
+				430 text 全部模板 0
+				431 image
+				432 text 系统模板 0
+				433 image
+				434 text 自定义模板 0
+				435 image
+				436 text 项目复制 0
+				437 radio button 全部, Value: 1, ID: :r1ii:-全部
+				438 radio button 系统, Value: 0, ID: :r1ii:-系统
+				439 radio button 自定义, Value: 0, ID: :r1ii:-自定义
+				440 radio button 项目复制, Value: 0, ID: :r1ii:-项目复制
+				441 button 全部分类
+					442 text 全部分类
+				443 image
+				444 text field (settable)
+				445 image
+				446 text 暂无模板 点击「新建模板」开始创建。
+			387 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+
+The focused UI element is 214 button 项目配置中心

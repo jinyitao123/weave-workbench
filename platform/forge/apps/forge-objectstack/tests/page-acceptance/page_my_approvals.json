@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_my_approvals",
+  "archetype": "task_workspace",
+  "reviewedRevision": "27d559ebfc61703275c372271825a30e44d348c3",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/approval-center.page.ts": "7e6273a0444f9551cbfb1a5df2a7a373171a9888ebfccac76eceebd07f355e45",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "8830c910309c7d731c9289965590eb5572e550be39ea70c4b3c69c3baf78a036",
+    "apps/forge-objectstack/src/pages/project-task-workspace.page.ts": "ed4b4682fd3857b17bdee044b6e7e717253aa96f4d965aac8d27faa716711c11",
+    "apps/forge-objectstack/src/actions/procurement.action.ts": "829804443cc5e6a77ec21c541ad5bf8c50220974c99bd1191c9119e0add5b54d",
+    "apps/forge-objectstack/src/objects/administration.object.ts": "a647151257ff8027185ef5b01ddaef43f355c3dc55ffc0c72b9891e689943be1",
+    "docs/forge-page-polish-baseline.md": "87391dcd1a7e8feefa96b358d42815d22e0eedebf578d0ff0e470550b0d45eb4"
+  },
+  "environment": {
+    "forgeUrl": "http://localhost:4495",
+    "database": "file:.objectstack/supply-procurement-batch1.sqlite",
+    "materials": "PR-SUPPLY-POOL-REJECT-1789545351941"
+  },
+  "checks": {
+    "replication": {
+      "status": "blocked",
+      "notes": "已实时核对 RISEMAP 我的审批结构；采购申请同材料审批仍缺 RISEMAP 可办理记录。",
+      "evidence": [
+        "docs/forge-procurement-approval-page-contract-20260916.md"
+      ]
+    },
+    "visual": {
+      "status": "pending",
+      "notes": "本轮完成桌面结构回看，窄屏与独立视觉复核待执行。",
+      "evidence": []
+    },
+    "interaction": {
+      "status": "pass",
+      "notes": "空意见阻断、通过反馈、来源单据跳转已在内置浏览器操作。 该结论采集于合并前版本，合并后未重新核对。",
+      "evidence": [
+        "docs/forge-procurement-approval-page-contract-20260916.md"
+      ]
+    },
+    "business": {
+      "status": "pass",
+      "notes": "采购审批通过和驳回分别驱动正确业务状态，重复任务被阻断。 该结论采集于合并前版本，合并后未重新核对。",
+      "evidence": [
+        "apps/forge-objectstack/tests/purchase-todo-pool.integration.mjs"
+      ]
+    }
+  },
+  "visualEvidence": {
+    "desktop": {
+      "width": 1440,
+      "height": 900,
+      "evidence": []
+    },
+    "narrow": {
+      "width": 390,
+      "height": 844,
+      "evidence": []
+    },
+    "reference": [],
+    "populated": [],
+    "empty": [],
+    "form": [],
+    "error": []
+  },
+  "requirements": [
+    {
+      "id": "REQ-AP-001",
+      "status": "pass",
+      "steps": "打开采购审批并留空意见提交",
+      "expected": "阻断并要求意见",
+      "observed": "页面显示明确阻断",
+      "evidence": [
+        "docs/forge-procurement-approval-page-contract-20260916.md"
+      ]
+    },
+    {
+      "id": "REQ-AP-002",
+      "status": "pass",
+      "steps": "填写意见并通过",
+      "expected": "申请通过并生成一条采购待办",
+      "observed": "页面与 API 回读一致",
+      "evidence": [
+        "apps/forge-objectstack/tests/purchase-todo-pool.integration.mjs"
+      ]
+    }
+  ],
+  "review": {
+    "implementer": "Codex /root",
+    "reviewer": "",
+    "reviewedAt": "2026-09-16",
+    "status": "pending",
+    "evidence": []
+  },
+  "mergeNote": "主线合并记录：2026-09-17 合并 codex/supply-procurement-batch1、codex/production-placeholders-batch1 与 codex/finance-sales-cycle 时，下列受验文件内容与 reviewedRevision 不再一致，本记录的结论只对当时版本有效，需在合并后版本上重新核对：apps/forge-objectstack/src/pages/product-ui.ts。"
+}

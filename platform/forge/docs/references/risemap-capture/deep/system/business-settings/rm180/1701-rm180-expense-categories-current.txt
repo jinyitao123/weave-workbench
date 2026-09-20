@@ -1,0 +1,1053 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/finance".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/finance
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 系统
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 系统设置
+					10 image
+					11 text 系统设置
+					12 image
+				13 button 基础配置
+				14 button 用户与角色
+				15 button 部门管理
+				16 button 用户会话
+				17 button 审计日志
+				18 button 业务设置
+					19 image
+					20 text 业务设置
+					21 image
+				22 button 商品管理
+				23 button 财务配置
+				24 button 行政管理
+				25 button 客户管理
+				26 button 采购销售
+				27 button 库存管理
+				28 button 其他配置
+				29 button 人事配置
+				30 button 项目管理
+				31 button 图纸配置
+				32 button 生产配置
+				33 button 委外配置
+				34 button 单据打印
+				35 button 插件中心
+					36 image
+					37 text 插件中心
+				38 button 服务订阅
+					39 image
+					40 text 服务订阅
+				41 button 推广奖励
+					42 image
+					43 text 推广奖励
+				44 button 字段管理
+					45 image
+					46 text 字段管理
+			47 image
+			48 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			49 button 查看方案
+				50 image
+				51 text 查看方案
+			52 button
+				53 image
+			54 container
+				55 container 业务分类
+					56 checkbox 工作台, Value: 0
+					57 checkbox 供应链, Value: 0
+					58 checkbox 销售, Value: 0
+					59 checkbox 生产, Value: 0
+					60 checkbox 项目, Value: 0
+					61 checkbox 行政, Value: 0
+					62 checkbox 财务, Value: 0
+					63 checkbox 报表, Value: 0
+					64 checkbox 系统, Value: 1
+				65 button Description: 展开搜索, Help: 搜索
+					66 image
+				67 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					68 image
+					69 text 2
+				70 button Description: 打开推广奖励, Help: 推广
+				71 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				72 link Description: 打开工单, Value: community.risemap.cn/support
+				73 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					74 image
+					75 text 立即订阅
+				76 button 金
+					77 text 金
+					78 image
+			79 container
+				80 button 工作台
+					81 image
+					82 text 工作台
+				83 button 组装统计
+					84 text 组装统计
+				85 button 财务总览
+					86 text 财务总览
+				87 button 损益分析
+					88 text 损益分析
+				89 button 资金分析
+					90 text 资金分析
+				91 button 往来账款
+					92 text 往来账款
+				93 button 税务库存
+					94 text 税务库存
+				95 button 风险监控
+					96 text 风险监控
+				97 button 基础配置
+					98 text 基础配置
+				99 button 账户管理
+					100 text 账户管理
+				101 button 部门管理
+					102 text 部门管理
+				103 button 用户会话
+					104 text 用户会话
+				105 button 审计日志
+					106 text 审计日志
+				107 button 商品管理配置
+					108 text 商品管理配置
+				109 button 财务配置
+					110 text 财务配置
+			111 container
+				112 text 业务设置
+				113 image
+				114 text 财务配置
+				115 heading 业务设置 - 财务配置, Value: 1
+					116 text 业务设置 -  财务配置
+				117 button 商品管理
+				118 button 财务配置
+				119 button 行政管理
+				120 button 客户管理
+				121 button 采购销售
+				122 button 库存管理
+				123 button 其他配置
+				124 button 人事配置
+				125 button 项目管理
+				126 button 图纸配置
+				127 button 生产配置
+				128 button 委外配置
+				129 button 单据打印
+				130 text 管理商品分组、计量单位、结算方式、仓库等业务基础数据配置
+				131 button AI 助手
+					132 image
+					133 text AI 助手
+				134 button 财务配置
+					135 image
+					136 text 财务配置
+					137 image
+				138 button 付款方式
+					139 image
+					140 text 付款方式
+				141 button 费用类别
+					142 image
+					143 text 费用类别
+				222 container (showing 0-500 of 717 items)
+					223 text 费用类别管理 管理财务费用的分类体系（支持多级分类）
+					224 button 新增类别
+						225 image
+						226 text 新增类别
+					227 button
+						228 image
+					229 text 销售费用
+					230 button 点击停用
+					231 button 子级
+						232 image
+						233 text 子级
+					234 button
+						235 image
+					236 button
+						237 image
+					238 button
+						239 image
+					240 text 客户开发费用
+					241 button 点击停用
+					242 button 子级
+						243 image
+						244 text 子级
+					245 button
+						246 image
+					247 button
+						248 image
+					249 text 客户拜访费
+					250 button 点击停用
+					251 button 子级
+						252 image
+						253 text 子级
+					254 button
+						255 image
+					256 button
+						257 image
+					258 text 客户招待费
+					259 button 点击停用
+					260 button 子级
+						261 image
+						262 text 子级
+					263 button
+						264 image
+					265 button
+						266 image
+					267 text 客户礼品费
+					268 button 点击停用
+					269 button 子级
+						270 image
+						271 text 子级
+					272 button
+						273 image
+					274 button
+						275 image
+					276 button
+						277 image
+					278 text 市场推广费用
+					279 button 点击停用
+					280 button 子级
+						281 image
+						282 text 子级
+					283 button
+						284 image
+					285 button
+						286 image
+					287 text 广告推广费
+					288 button 点击停用
+					289 button 子级
+						290 image
+						291 text 子级
+					292 button
+						293 image
+					294 button
+						295 image
+					296 text 展会活动费
+					297 button 点击停用
+					298 button 子级
+						299 image
+						300 text 子级
+					301 button
+						302 image
+					303 button
+						304 image
+					305 text 宣传物料费
+					306 button 点击停用
+					307 button 子级
+						308 image
+						309 text 子级
+					310 button
+						311 image
+					312 button
+						313 image
+					314 button
+						315 image
+					316 text 销售支持费用
+					317 button 点击停用
+					318 button 子级
+						319 image
+						320 text 子级
+					321 button
+						322 image
+					323 button
+						324 image
+					325 text 样品费
+					326 button 点击停用
+					327 button 子级
+						328 image
+						329 text 子级
+					330 button
+						331 image
+					332 button
+						333 image
+					334 text 售前支持费
+					335 button 点击停用
+					336 button 子级
+						337 image
+						338 text 子级
+					339 button
+						340 image
+					341 button
+						342 image
+					343 text 销售佣金
+					344 button 点击停用
+					345 button 子级
+						346 image
+						347 text 子级
+					348 button
+						349 image
+					350 button
+						351 image
+					352 button
+						353 image
+					354 text 项目费用
+					355 button 点击停用
+					356 button 子级
+						357 image
+						358 text 子级
+					359 button
+						360 image
+					361 button
+						362 image
+					363 button
+						364 image
+					365 text 项目差旅费用
+					366 button 点击停用
+					367 button 子级
+						368 image
+						369 text 子级
+					370 button
+						371 image
+					372 button
+						373 image
+					374 text 项目交通费
+					375 button 点击停用
+					376 button 子级
+						377 image
+						378 text 子级
+					379 button
+						380 image
+					381 button
+						382 image
+					383 text 项目住宿费
+					384 button 点击停用
+					385 button 子级
+						386 image
+						387 text 子级
+					388 button
+						389 image
+					390 button
+						391 image
+					392 text 项目餐饮补贴
+					393 button 点击停用
+					394 button 子级
+						395 image
+						396 text 子级
+					397 button
+						398 image
+					399 button
+						400 image
+					401 button
+						402 image
+					403 text 项目实施费用
+					404 button 点击停用
+					405 button 子级
+						406 image
+						407 text 子级
+					408 button
+						409 image
+					410 button
+						411 image
+					412 text 安装调试费
+					413 button 点击停用
+					414 button 子级
+						415 image
+						416 text 子级
+					417 button
+						418 image
+					419 button
+						420 image
+					421 text 现场施工费
+					422 button 点击停用
+					423 button 子级
+						424 image
+						425 text 子级
+					426 button
+						427 image
+					428 button
+						429 image
+					430 text 临时用工费
+					431 button 点击停用
+					432 button 子级
+						433 image
+						434 text 子级
+					435 button
+						436 image
+					437 button
+						438 image
+					439 button
+						440 image
+					441 text 项目材料费用
+					442 button 点击停用
+					443 button 子级
+						444 image
+						445 text 子级
+					446 button
+						447 image
+					448 button
+						449 image
+					450 text 项目辅材费
+					451 button 点击停用
+					452 button 子级
+						453 image
+						454 text 子级
+					455 button
+						456 image
+					457 button
+						458 image
+					459 text 项目耗材费
+					460 button 点击停用
+					461 button 子级
+						462 image
+						463 text 子级
+					464 button
+						465 image
+					466 button
+						467 image
+					468 text 项目补料费
+					469 button 点击停用
+					470 button 子级
+						471 image
+						472 text 子级
+					473 button
+						474 image
+					475 button
+						476 image
+					477 button
+						478 image
+					479 text 项目外协费用
+					480 button 点击停用
+					481 button 子级
+						482 image
+						483 text 子级
+					484 button
+						485 image
+					486 button
+						487 image
+					488 text 外协加工费
+					489 button 点击停用
+					490 button 子级
+						491 image
+						492 text 子级
+					493 button
+						494 image
+					495 button
+						496 image
+					497 text 外包服务费
+					498 button 点击停用
+					499 button 子级
+						500 image
+						501 text 子级
+					502 button
+						503 image
+					504 button
+						505 image
+					506 text 外部技术支持费
+					507 button 点击停用
+					508 button 子级
+						509 image
+						510 text 子级
+					511 button
+						512 image
+					513 button
+						514 image
+					515 button
+						516 image
+					517 text 采购费用
+					518 button 点击停用
+					519 button 子级
+						520 image
+						521 text 子级
+					522 button
+						523 image
+					524 button
+						525 image
+					526 button
+						527 image
+					528 text 采购业务费用
+					529 button 点击停用
+					530 button 子级
+						531 image
+						532 text 子级
+					533 button
+						534 image
+					535 button
+						536 image
+					537 text 供应商拜访费
+					538 button 点击停用
+					539 button 子级
+						540 image
+						541 text 子级
+					542 button
+						543 image
+					544 button
+						545 image
+					546 text 供应商招待费
+					547 button 点击停用
+					548 button 子级
+						549 image
+						550 text 子级
+					551 button
+						552 image
+					553 button
+						554 image
+					555 text 供应商考察费
+					556 button 点击停用
+					557 button 子级
+						558 image
+						559 text 子级
+					560 button
+						561 image
+					562 button
+						563 image
+					564 button
+						565 image
+					566 text 采购物流费用
+					567 button 点击停用
+					568 button 子级
+						569 image
+						570 text 子级
+					571 button
+						572 image
+					573 button
+						574 image
+					575 text 采购运输费
+					576 button 点击停用
+					577 button 子级
+						578 image
+						579 text 子级
+					580 button
+						581 image
+					582 button
+						583 image
+					584 text 装卸搬运费
+					585 button 点击停用
+					586 button 子级
+						587 image
+						588 text 子级
+					589 button
+						590 image
+					591 button
+						592 image
+					593 text 包装费
+					594 button 点击停用
+					595 button 子级
+						596 image
+						597 text 子级
+					598 button
+						599 image
+					600 button
+						601 image
+					602 button
+						603 image
+					604 text 质量处理费用
+					605 button 点击停用
+					606 button 子级
+						607 image
+						608 text 子级
+					609 button
+						610 image
+					611 button
+						612 image
+					613 text 来料检测费
+					614 button 点击停用
+					615 button 子级
+						616 image
+						617 text 子级
+					618 button
+						619 image
+					620 button
+						621 image
+					622 text 返修处理费
+					623 button 点击停用
+					624 button 子级
+						625 image
+						626 text 子级
+					627 button
+						628 image
+					629 button
+						630 image
+					631 text 退货运输费
+					632 button 点击停用
+					633 button 子级
+						634 image
+						635 text 子级
+					636 button
+						637 image
+					638 button
+						639 image
+					640 button
+						641 image
+					642 text 研发费用
+					643 button 点击停用
+					644 button 子级
+						645 image
+						646 text 子级
+					647 button
+						648 image
+					649 button
+						650 image
+					651 button
+						652 image
+					653 text 研发材料费用
+					654 button 点击停用
+					655 button 子级
+						656 image
+						657 text 子级
+					658 button
+						659 image
+					660 button
+						661 image
+					662 text 研发材料费
+					663 button 点击停用
+					664 button 子级
+						665 image
+						666 text 子级
+					667 button
+						668 image
+					669 button
+						670 image
+					671 text 研发打样费
+					672 button 点击停用
+					673 button 子级
+						674 image
+						675 text 子级
+					676 button
+						677 image
+					678 button
+						679 image
+					680 text 研发测试件费用
+					681 button 点击停用
+					682 button 子级
+						683 image
+						684 text 子级
+					685 button
+						686 image
+					687 button
+						688 image
+					689 button
+						690 image
+					691 text 研发测试费用
+					692 button 点击停用
+					693 button 子级
+						694 image
+						695 text 子级
+					696 button
+						697 image
+					698 button
+						699 image
+					700 text 测试检测费
+					701 button 点击停用
+					702 button 子级
+						703 image
+						704 text 子级
+					705 button
+						706 image
+					707 button
+						708 image
+					709 text 认证校准费
+					710 button 点击停用
+					711 button 子级
+						712 image
+						713 text 子级
+					714 button
+						715 image
+					716 button
+						717 image
+					718 text 实验费用
+					719 button 点击停用
+					720 button 子级
+						721 image
+						722 text 子级
+					723 button
+						724 image
+					725 button
+						726 image
+					727 button
+						728 image
+					729 text 研发服务费用
+					730 button 点击停用
+					731 button 子级
+						732 image
+						733 text 子级
+					734 button
+						735 image
+					736 button
+						737 image
+					738 text 技术咨询费
+					739 button 点击停用
+					740 button 子级
+						741 image
+						742 text 子级
+					743 button
+						744 image
+					745 button
+						746 image
+					747 text 外包开发费
+					748 button 点击停用
+					749 button 子级
+						750 image
+						751 text 子级
+					752 button
+						753 image
+					754 button
+						755 image
+					756 text 知识产权费
+					757 button 点击停用
+					758 button 子级
+						759 image
+						760 text 子级
+					761 button
+						762 image
+					763 button
+						764 image
+					765 button
+						766 image
+					767 text 行政办公费用
+					768 button 点击停用
+					769 button 子级
+						770 image
+						771 text 子级
+					772 button
+						773 image
+					774 button
+						775 image
+					776 button
+						777 image
+					778 text 办公用品费用
+					779 button 点击停用
+					780 button 子级
+						781 image
+						782 text 子级
+					783 button
+						784 image
+					785 button
+						786 image
+					787 text 办公用品费
+					788 button 点击停用
+					789 button 子级
+						790 image
+						791 text 子级
+					792 button
+						793 image
+					794 button
+						795 image
+					796 text 办公耗材费
+					797 button 点击停用
+					798 button 子级
+						799 image
+						800 text 子级
+					801 button
+						802 image
+					803 button
+						804 image
+					805 text 办公设备费
+					806 button 点击停用
+					807 button 子级
+						808 image
+						809 text 子级
+					810 button
+						811 image
+					812 button
+						813 image
+					814 button
+						815 image
+					816 text 办公场地费用
+					817 button 点击停用
+					818 button 子级
+						819 image
+						820 text 子级
+					821 button
+						822 image
+					823 button
+						824 image
+					825 text 房租物业费
+					826 button 点击停用
+					827 button 子级
+						828 image
+						829 text 子级
+					830 button
+						831 image
+					832 button
+						833 image
+					834 text 水电费
+					835 button 点击停用
+					836 button 子级
+						837 image
+						838 text 子级
+					839 button
+						840 image
+					841 button
+						842 image
+					843 text 装修维修费
+					844 button 点击停用
+					845 button 子级
+						846 image
+						847 text 子级
+					848 button
+						849 image
+					850 button
+						851 image
+					852 button
+						853 image
+					854 text 日常行政费用
+					855 button 点击停用
+					856 button 子级
+						857 image
+						858 text 子级
+					859 button
+						860 image
+					861 button
+						862 image
+					863 text 快递费
+					864 button 点击停用
+					865 button 子级
+						866 image
+						867 text 子级
+					868 button
+						869 image
+					870 button
+						871 image
+					872 text 印刷费
+					873 button 点击停用
+					874 button 子级
+						875 image
+						876 text 子级
+					877 button
+						878 image
+					879 button
+						880 image
+					881 text 会议费
+					882 button 点击停用
+					883 button 子级
+						884 image
+						885 text 子级
+					886 button
+						887 image
+					888 button
+						889 image
+					890 button
+						891 image
+					892 text 人事费用
+					893 button 点击停用
+					894 button 子级
+						895 image
+						896 text 子级
+					897 button
+						898 image
+					899 button
+						900 image
+					901 button
+						902 image
+					903 text 招聘费用
+					904 button 点击停用
+					905 button 子级
+						906 image
+						907 text 子级
+					908 button
+						909 image
+					910 button
+						911 image
+					912 text 招聘平台费
+					913 button 点击停用
+					914 button 子级
+						915 image
+						916 text 子级
+					917 button
+						918 image
+					919 button
+						920 image
+					921 text 猎头费
+					922 button 点击停用
+					923 button 子级
+						924 image
+						925 text 子级
+					926 button
+						927 image
+					928 button
+						929 image
+					930 text 面试费用
+					931 button 点击停用
+					932 button 子级
+						933 image
+						934 text 子级
+					935 button
+						936 image
+					937 button
+						938 image
+					939 button
+						940 image
+					941 text 培训费用
+					942 button 点击停用
+					943 button 子级
+						944 image
+						945 text 子级
+					946 button
+						947 image
+					948 button
+						949 image
+					950 text 内部培训费
+					951 button 点击停用
+					952 button 子级
+						953 image
+						954 text 子级
+					955 button
+						956 image
+					957 button
+						958 image
+					959 text 外部培训费
+					960 button 点击停用
+					961 button 子级
+						962 image
+						963 text 子级
+					964 button
+						965 image
+					966 button
+						967 image
+					968 text 课程费用
+					969 button 点击停用
+					970 button 子级
+						971 image
+						972 text 子级
+					973 button
+						974 image
+					975 button
+						976 image
+					977 button
+						978 image
+					979 text 员工福利费用
+					980 button 点击停用
+					981 button 子级
+						982 image
+						983 text 子级
+					984 button
+						985 image
+					986 button
+						987 image
+					988 text 节日福利费
+					989 button 点击停用
+					990 button 子级
+						991 image
+						992 text 子级
+					993 button
+						994 image
+					995 button
+						996 image
+					997 text 团建费
+					998 button 点击停用
+					999 button 子级
+						1000 image
+						1001 text 子级
+					1002 button
+						1003 image
+					1004 button
+						1005 image
+					1006 text 员工关怀费
+					1007 button 点击停用
+					1008 button 子级
+						1009 image
+						1010 text 子级
+					1011 button
+						1012 image
+					1013 button
+						1014 image
+					1015 button
+						1016 image
+					1017 text 财务法务费用
+					1018 button 点击停用
+					1019 button 子级
+						1020 image
+						1021 text 子级
+					1022 button
+						1023 image
+					1024 button
+						1025 image
+					1026 button
+						1027 image
+					1028 text 财务服务费用
+					1029 button 点击停用
+					1030 button 子级
+						1031 image
+						1032 text 子级
+					1033 button
+						1034 image
+					1035 button
+						1036 image
+					1037 text 代理记账费
+					1038 button 点击停用
+					1039 button 子级
+						1040 image
+						1041 text 子级
+					1042 button
+						1043 image
+					1044 button
+						1045 image
+					1046 text 税务服务费
+					1047 button 点击停用
+					1048 button 子级
+						1049 image
+						1050 text 子级
+					1051 button
+						1052 image
+					1053 button
+						1054 image
+					1055 text 审计评估费
+					1056 button 点击停用
+					1057 button 子级
+						1058 image
+						1059 text 子级
+					1060 button
+						1061 image
+					1062 button
+						1063 image
+					1064 button
+						1065 image
+					1066 text 银行金融费用
+					1067 button 点击停用
+					1068 button 子级
+						1069 image
+						1070 text 子级
+					1071 button
+						1072 image
+					1073 button
+						1074 image
+					1075 text 银行手续费
+					1076 button 点击停用
+					1077 button 子级
+						1078 image
+						1079 text 子级
+					1080 button
+						1081 image
+					1082 button
+						1083 image
+					1084 text 承兑手续费
+					1085 button 点击停用
+					1086 button 子级
+						1087 image
+						1088 text 子级
+					1089 button
+						1090 image
+					1091 button
+						1092 image
+					1093 text 融资服务费
+					1094 button 点击停用
+					1095 button 子级
+						1096 image
+						1097 text 子级
+					1098 button
+						1099 image
+					1100 button
+						1101 image
+					1102 button
+						1103 image
+					1104 text 法务合规费用
+					1105 button 点击停用
+					1106 button 子级
+						1107 image
+						1108 text 子级
+					1109 button
+						1110 image
+					1111 button
+						1112 image
+					1113 text 律师费
+					1114 button 点击停用
+					1115 button 子级
+						1116 image
+						1117 text 子级
+					1118 button
+						1119 image
+					1120 button
+						1121 image
+					1122 text 合同审查费
+					1123 button 点击停用
+					1124 button 子级
+						1125 image
+						1126 text 子级
+			220 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			221 container Notifications alt+T
+
+The focused UI element is 141 button 费用类别

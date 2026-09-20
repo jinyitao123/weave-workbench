@@ -1,0 +1,244 @@
+Browser tab: 61, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_purchase_inbound_workspace".
+0 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_purchase_inbound_workspace
+	1 container root
+		2 container 通知 alt+T
+		3 container
+			4 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			5 container 本平台处于预览版，功能可能调整。
+				6 text 预览版
+			7 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			8 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			9 text 采购入库
+			10 button 搜索…
+				11 text 搜索…
+				12 text ⌘
+				13 text K
+			14 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			15 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_purchase_inbound_workspace
+			16 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			17 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		18 container
+			19 container
+				20 text 区域
+				21 content list
+					22 button 工作台
+					23 button 供应链
+					24 button 销售
+					25 button 生产
+					26 button 项目
+					27 button 行政
+					28 button 财务
+					29 button 报表
+					30 button 系统
+			31 container
+				32 button (expanded) 工作台, Secondary Actions: Collapse
+				33 content list
+					34 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					35 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					37 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			38 text 最近使用
+			39 button 切换侧边栏
+		40 container
+			41 button 在 Studio 中编辑
+			42 heading 采购入库, Value: 1
+				43 text 采购入库
+			44 text 承接逐物料检验合格数量的采购入库审批与库存落账 库存管理 / 入库管理 / 采购入库
+			45 heading 采购入库, Value: 1
+				46 text 采购入库
+			47 text 检验合格物料的入库审批与库存落账
+			48 button 检验单
+			49 button 刷新
+			50 table
+				51 row
+					52 cell
+						53 text 入库单号
+					54 cell
+						55 text 来源
+					56 cell
+						57 text 供应商
+					58 cell
+						59 text 物料种类
+					60 cell
+						61 text 入库数量
+					62 cell
+						63 text 含税金额
+					64 cell
+						65 text 日期
+					66 cell
+						67 text 状态
+					68 cell
+						69 text 操作
+				70 row
+					71 cell
+						72 text PIN-2026-0001
+					73 cell
+						74 text 采购订单
+					75 cell
+						76 text 南京锐联电气技术有限公司
+					77 cell
+						78 text 1
+					79 cell
+						80 text 1
+					81 cell
+						82 text ¥6,800.00
+					83 cell
+						84 text 2026-09-09
+					85 cell
+						86 text 已入库
+					87 cell
+						88 button 查看
+				89 row
+					90 cell
+						91 text PIN-2026-0005
+					92 cell
+						93 text 采购订单
+					94 cell
+						95 text 南京锐联电气技术有限公司
+					96 cell
+						97 text 1
+					98 cell
+						99 text 1
+					100 cell
+						101 text ¥6,800.00
+					102 cell
+						103 text 2026-09-09
+					104 cell
+						105 text 已入库
+					106 cell
+						107 button 查看
+				108 row
+					109 cell
+						110 text PIN-2026-0003
+					111 cell
+						112 text 采购订单
+					113 cell
+						114 text 南京锐联电气技术有限公司
+					115 cell
+						116 text 1
+					117 cell
+						118 text 1
+					119 cell
+						120 text ¥6,800.00
+					121 cell
+						122 text 2026-09-09
+					123 cell
+						124 text 已入库
+					125 cell
+						126 button 查看
+				127 row
+					128 cell
+						129 text PIN-2026-0004
+					130 cell
+						131 text 采购订单
+					132 cell
+						133 text 南京锐联电气技术有限公司
+					134 cell
+						135 text 1
+					136 cell
+						137 text 1
+					138 cell
+						139 text ¥6,800.00
+					140 cell
+						141 text 2026-09-09
+					142 cell
+						143 text 已入库
+					144 cell
+						145 button 查看
+				146 row
+					147 cell
+						148 text PIN-2026-0008
+					149 cell
+						150 text 采购订单
+					151 cell
+						152 text 南京锐联电气技术有限公司
+					153 cell
+						154 text 1
+					155 cell
+						156 text 1
+					157 cell
+						158 text ¥6,800.00
+					159 cell
+						160 text 2026-09-09
+					161 cell
+						162 text 已入库
+					163 cell
+						164 button 查看
+				165 row
+					166 cell
+						167 text PIN-REP-CUR-20260913210508
+					168 cell
+						169 text 采购订单
+					170 cell
+						171 text 南京锐联电气技术有限公司
+					172 cell
+						173 text 1
+					174 cell
+						175 text 0.1
+					176 cell
+						177 text ¥14.67
+					178 cell
+						179 text 2026-09-14
+					180 cell
+						181 text 已入库
+					182 cell
+						183 button 查看
+				184 row
+					185 cell
+						186 text PIN-2026-0002
+					187 cell
+						188 text 采购订单
+					189 cell
+						190 text 南京锐联电气技术有限公司
+					191 cell
+						192 text 1
+					193 cell
+						194 text 1
+					195 cell
+						196 text ¥6,800.00
+					197 cell
+						198 text 2026-09-09
+					199 cell
+						200 text 已入库
+					201 cell
+						202 button 查看
+				203 row
+					204 cell
+						205 text PIN-2026-0006
+					206 cell
+						207 text 采购订单
+					208 cell
+						209 text 南京锐联电气技术有限公司
+					210 cell
+						211 text 1
+					212 cell
+						213 text 1
+					214 cell
+						215 text ¥6,800.00
+					216 cell
+						217 text 2026-09-09
+					218 cell
+						219 text 已入库
+					220 cell
+						221 button 查看
+				222 row
+					223 cell
+						224 text PIN-REP-CUR-20260913205628
+					225 cell
+						226 text 采购订单
+					227 cell
+						228 text 南京锐联电气技术有限公司
+					229 cell
+						230 text 1
+					231 cell
+						232 text 0.1
+					233 cell
+						234 text ¥14.01
+					235 cell
+						236 text 2026-09-14
+					237 cell
+						238 text 已入库
+					239 cell
+						240 button 查看
+
+The focused UI element is 0 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_purchase_inbound_workspace

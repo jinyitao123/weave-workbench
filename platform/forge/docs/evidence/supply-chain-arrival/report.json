@@ -1,0 +1,159 @@
+{
+ "verifiedAt": "2026-09-17T13:33:14.829Z",
+ "results": [
+  {
+   "id": "page_purchase_arrival_notice",
+   "label": "到货通知",
+   "hero": true,
+   "heroTitle": "到货通知",
+   "crumbs": [
+    "供应链",
+    "到货检验"
+   ],
+   "tabs": [],
+   "actions": [
+    "刷新",
+    "登记所选到货"
+   ],
+   "headers": [
+    "选择到货通知",
+    "到货通知",
+    "供应商 / 物料",
+    "预计到货",
+    "目标仓库",
+    "来源采购订单",
+    "到货进度",
+    "采购员",
+    "操作"
+   ],
+   "rows": 16,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_purchase_arrival_workspace",
+   "label": "到货登记",
+   "hero": true,
+   "heroTitle": "到货登记",
+   "crumbs": [
+    "供应链",
+    "到货检验"
+   ],
+   "tabs": [],
+   "actions": [
+    "导出",
+    "导入/导出任务",
+    "刷新",
+    "新建到货登记"
+   ],
+   "headers": [
+    "到货单号",
+    "类型",
+    "到货日期",
+    "仓库",
+    "对方",
+    "关联单号",
+    "物料种类数量",
+    "含税金额",
+    "状态",
+    "操作"
+   ],
+   "rows": 11,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_pending_inspection_workspace",
+   "label": "待检验库存",
+   "hero": true,
+   "heroTitle": "待检验库存",
+   "crumbs": [
+    "供应链",
+    "到货检验"
+   ],
+   "tabs": [],
+   "actions": [
+    "下一步：检验单"
+   ],
+   "headers": [
+    "待检单号",
+    "物料编码",
+    "物料名称",
+    "规格型号",
+    "到货数量",
+    "单位",
+    "批次号",
+    "供应商/客户",
+    "采购合同",
+    "到货日期",
+    "状态",
+    "关联检验单",
+    "检验结果",
+    "操作"
+   ],
+   "rows": 11,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_purchase_inspection_workspace",
+   "label": "检验单",
+   "hero": true,
+   "heroTitle": "检验单",
+   "crumbs": [
+    "供应链",
+    "到货检验"
+   ],
+   "tabs": [],
+   "actions": [
+    "下一步：采购入库"
+   ],
+   "headers": [
+    "检验单号",
+    "到货单号",
+    "物料名称",
+    "供应商/客户",
+    "方式",
+    "总数量",
+    "合格数量",
+    "不合格数量",
+    "结果",
+    "状态",
+    "检验员",
+    "到货日期",
+    "操作"
+   ],
+   "rows": 11,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_inspection_rules",
+   "label": "检验规则",
+   "hero": true,
+   "heroTitle": "检验规则",
+   "crumbs": [
+    "供应链",
+    "到货检验"
+   ],
+   "tabs": [],
+   "actions": [],
+   "headers": [
+    "项目编码",
+    "项目名称",
+    "项目分类",
+    "判定类型",
+    "适用检验类型",
+    "单位",
+    "是否必检",
+    "影响整批结论",
+    "是否启用",
+    "更新时间",
+    "操作"
+   ],
+   "rows": 1,
+   "empty": "◇",
+   "colOk": true
+  }
+ ]
+}

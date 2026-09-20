@@ -1,0 +1,227 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/invoices/purchase".
+1 AXWebArea RiseMap, URL: risemap.cn/finance/invoices/purchase
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 财务
+			6 button 收起侧边栏
+				7 image
+			8 container
+				181 button 资金管理
+					182 image
+					183 text 资金管理
+					184 image
+				185 button 资金账户
+				186 button 资金流水
+				187 button 应收应付
+				188 button 收款管理
+				189 button 付款管理
+				190 button 退款申请
+				191 button 授信额度管理
+				192 button 借款贷款管理
+				193 button 业务确认
+					194 image
+					195 text 业务确认
+					196 image
+				197 button 销售收入确认
+				198 button 成本中心
+				199 button 费用中心
+				200 button 报销管理
+				201 button 对账单
+					202 image
+					203 text 对账单
+				204 button 发票管理
+					205 image
+					206 text 发票管理
+					207 image
+				208 button 发票总览
+				209 button 销项发票
+				210 button 进项发票
+				211 button 开票任务
+				212 button 调整记录
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 1
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				233 button 新建借款
+					234 text 新建借款
+				235 button 新建贷款
+					236 text 新建贷款
+				237 button 销售收入确认
+					238 text 销售收入确认
+				239 button 成本中心
+					240 text 成本中心
+				241 button 报销管理
+					242 text 报销管理
+				243 button 新建报销
+					244 text 新建报销
+				245 button 对账单
+					246 text 对账单
+				247 button 客户对账单
+					248 text 客户对账单
+				249 button 新建客户对账
+					250 text 新建客户对账
+				251 button 供应商对账单
+					252 text 供应商对账单
+				253 button 新建供应商对账
+					254 text 新建供应商对账
+				255 button 发票总览
+					256 text 发票总览
+				257 button 销项发票
+					258 text 销项发票
+				259 button 进项发票
+					260 text 进项发票
+			261 container
+				262 container
+					263 text 发票管理
+					264 image
+					265 text 进项发票
+					266 image
+					267 heading 进项发票, Value: 1
+						268 text 进项发票
+					269 text 管理供应商来票、税务校验与认证抵扣
+				270 radio button 本月, Value: 0, ID: :rg7:-本月
+				271 radio button 本季, Value: 0, ID: :rg7:-本季
+				272 radio button 半年, Value: 0, ID: :rg7:-半年
+				273 radio button 全年, Value: 1, ID: :rg7:-全年
+				274 button 邮件收票
+					275 image
+					276 text 邮件收票
+				277 button 导出
+					278 image
+					279 text 导出
+					280 image
+				281 text 进项发票总额
+				282 text 0.00
+				283 text 0张
+				284 text 不含税金额
+				285 text 0.00
+				286 text 占比 0.0%
+				287 text 税额合计
+				288 text 0.00
+				289 text 平均税率 0.0%
+				290 text 专票占比
+				291 text 0%
+				292 text 专票0张 · 普票0张
+				293 container 进项发票状态筛选
+					294 checkbox 全部0, Value: 1
+					295 checkbox 正常0, Value: 0
+					296 checkbox 已作废0, Value: 0
+					297 checkbox 已红冲0, Value: 0
+				298 text 搜索进项发票
+				299 image
+				300 text field (settable) 搜索进项发票, ID: finance-purchase-invoice-search
+				301 button 类型
+					302 text 类型
+				303 button 抵扣状态
+					304 text 抵扣状态
+				305 table
+					306 row
+						307 cell
+							308 container
+								309 checkbox (disabled, settable, integer) Description: 选择全部可批量抵扣的发票, Value: 0
+								310 text 选择全部可批量抵扣的发票
+						311 cell
+							312 text 发票号码
+						313 cell
+							314 text 日期
+						315 cell
+							316 text 供应商
+						317 cell
+							318 text 含税金额
+						319 cell
+							320 text 税率
+						321 cell
+							322 text 税额
+						323 cell
+							324 text 不含税
+						325 cell
+							326 text 关联单据
+						327 cell
+							328 text 项目
+						329 cell
+							330 text 备注
+						331 cell
+							332 text 操作
+					333 row
+						334 cell
+							335 text 暂无匹配的进项发票
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+		336 container
+			337 heading 邮件收票中心, Value: 2
+				338 text 邮件收票中心
+			339 button 关闭
+				340 image
+			341 heading 收票邮箱, Value: 3
+				342 text 收票邮箱
+			343 button 前往邮箱设置
+				344 image
+				345 text 前往邮箱设置
+			346 container
+				347 text 0  个邮箱
+			348 button 全部邮箱 汇总查看 0
+				349 text 全部邮箱
+				350 text 汇总查看
+				351 text 0
+			352 container
+				353 text 邮箱由系统设置统一维护
+				354 text 管理员与财务角色可查看全部邮箱
+			355 heading 全部邮箱, Value: 3
+				356 text 全部邮箱
+			357 container
+				358 text 当前有  0  封待处理， 0  封需人工补充信息
+			359 button 同步邮件
+				360 image
+			361 button 一键匹配全部
+				362 image
+				363 text 一键匹配全部
+			364 radio button 全部 0, Value: 0, ID: :rgi:-ALL
+			365 radio button 待处理 0, Value: 1, ID: :rgi:-PENDING
+			366 radio button 识别失败 0, Value: 0, ID: :rgi:-RECOGNITION_FAILED
+			367 radio button 匹配异常 0, Value: 0, ID: :rgi:-MATCH_EXCEPTION
+			368 radio button 已处理 0, Value: 0, ID: :rgi:-COMPLETED
+			369 image
+			370 text field (settable)
+			371 button 收件时间：近 30 天
+				372 text 收件时间：近 30 天
+			373 button 重置
+			374 container
+				375 text 发件人 / 邮件主题 收件时间 附件 / 发票 处理状态 问题与解决建议 操作
+			376 image
+			377 text 当前条件下没有邮件，请调整筛选条件 共 0 封邮件
+			378 text 1  /  1
+
+The focused UI element is 274 button 邮件收票

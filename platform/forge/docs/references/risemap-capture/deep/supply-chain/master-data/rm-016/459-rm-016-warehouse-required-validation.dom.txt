@@ -1,0 +1,243 @@
+- generic: 供应链
+- button:
+- navigation:
+  - button:
+    - generic: 到货检验
+  - button:
+    - generic: 到货通知
+  - button:
+    - generic: 到货登记
+  - button:
+    - generic: 待检验库存
+  - button:
+    - generic: 检验单
+  - button:
+    - generic: 检验规则
+  - button:
+    - generic: 基础资料
+  - button:
+    - generic: 物料管理
+  - button:
+    - generic: 物料组合
+  - button:
+    - generic: BOM管理
+  - button:
+    - generic: 综合物料搜索
+  - button:
+    - generic: 供应商管理
+  - button:
+    - generic: 产品实例追溯
+  - button:
+    - generic: 仓库管理
+  - button:
+    - generic: 采购管理
+  - button:
+    - generic: 采购发票
+  - button:
+    - generic: 采购申请
+  - button:
+    - generic: 采购待办池
+  - button:
+    - generic: 询价管理
+  - button:
+    - generic: 采购订单
+  - button:
+    - generic: 采购退换货
+  - button:
+    - generic: 供应商价格本
+  - button:
+    - generic: 入库管理
+  - button:
+    - generic: 全部入库单
+  - button:
+    - generic: 采购入库
+  - button:
+    - generic: 生产入库
+  - button:
+    - generic: 其他入库
+  - button:
+    - generic: 期初入库
+  - button:
+    - generic: 入库明细
+  - button:
+    - generic: 库存管理
+  - button:
+    - generic: 库存总览
+  - button:
+    - generic: 不合格处理
+  - button:
+    - generic: 库存流水
+  - button:
+    - generic: 库存锁定
+  - button:
+    - generic: 库存盘点
+  - button:
+    - generic: 调拨与借出
+  - button:
+    - generic: 库存预警
+  - button:
+    - generic: 报损单
+  - button:
+    - generic: SN码管理
+  - button:
+    - generic: 出库管理
+  - button:
+    - generic: 出库单列表
+  - button:
+    - generic: 生产出库
+  - button:
+    - generic: 其他出库
+  - button:
+    - generic: 销售直接出库
+  - button:
+    - generic: 待出库发货单
+  - button:
+    - generic: 采购退换货出库
+  - button:
+    - generic: 出库明细
+- generic: 免费试用中，还剩 14 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button [pressed]:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 调整记录
+- button:
+  - generic: 销售统计
+- button:
+  - generic: 采购统计
+- button:
+  - generic: 库存统计
+- button:
+  - generic: 项目统计
+- button:
+  - generic: 组装统计
+- button:
+  - generic: 财务总览
+- button:
+  - generic: 损益分析
+- button:
+  - generic: 资金分析
+- button:
+  - generic: 往来账款
+- button:
+  - generic: 税务库存
+- button:
+  - generic: 风险监控
+- button:
+  - generic: 基础配置
+- button:
+  - generic: 仓库管理
+- main:
+  - generic: 基础资料
+  - generic: 仓库管理
+  - heading [level=1]: 仓库管理
+  - paragraph: 管理主仓 / 项目仓 / 备品仓，掌握库存、采购、销售全景
+  - generic: 总仓库数
+  - paragraph: "0"
+  - generic: 总库存 SKU
+  - paragraph: "0"
+  - generic: 库存总量
+  - paragraph: "0"
+  - generic: 总采购金额
+  - paragraph: ¥0.00
+  - paragraph: 累计采购入库
+  - generic: 预估销售总额
+  - paragraph: ¥0.00
+  - paragraph: 库存总量趋势
+  - paragraph: 近 12 个月 · 单位：件
+  - paragraph: 0 件
+  - paragraph:
+    - text: +0 件
+  - generic: · 0件
+  - paragraph: 总采购金额趋势
+  - paragraph: 近 12 个月 · 单位：万元
+  - paragraph: ¥0万
+  - paragraph:
+    - text: 0.0 万
+  - generic: · 0万
+  - heading [level=3]: 仓库列表
+  - generic: 0 个
+  - radiogroup:
+    - radio [checked]:
+      - generic: 卡片
+    - radio:
+      - generic: 表格
+  - button:
+    - text: 新增仓库
+  - button [pressed]: 全部
+  - paragraph: 暂无仓库数据，点击右上角「新增仓库」创建
+- button:
+- region "Notifications alt+T"
+- dialog "新增仓库":
+  - heading "新增仓库" [level=2]
+  - paragraph: 填写仓库信息
+  - generic: 仓库编码
+  - textbox "请输入仓库编码"
+  - generic: "*"
+  - generic: 仓库名称
+  - textbox "请输入仓库名称"
+  - paragraph: 请输入仓库名称
+  - generic: "*"
+  - generic: 仓库类型
+  - button "请选择仓库类型":
+    - generic: 请选择仓库类型
+  - button "新增仓库类型":
+  - paragraph: 请选择仓库类型
+  - generic: "*"
+  - generic: 负责人
+  - button "请选择负责人":
+    - generic: 请选择负责人
+  - paragraph: 请选择负责人
+  - generic: "*"
+  - generic: 联系电话
+  - textbox "联系电话"
+  - paragraph: 请输入联系电话
+  - generic: "*"
+  - generic: 面积（㎡）
+  - textbox "仓库面积"
+  - paragraph: 请输入仓库面积
+  - generic: "*"
+  - generic: 仓库地址
+  - textbox "仓库详细地址"
+  - paragraph: 请输入仓库地址
+  - generic: 备注
+  - textbox "备注信息"
+  - button "取消"
+  - button "确认创建" [active]
+  - button "Close":
+    - generic: Close

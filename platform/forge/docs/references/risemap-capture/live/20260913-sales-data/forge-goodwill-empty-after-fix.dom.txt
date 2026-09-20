@@ -1,0 +1,84 @@
+Browser tab: 10, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_goodwill_orders".
+0 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_goodwill_orders
+	1 container root
+		2 container 通知 alt+T
+		3 container
+			4 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			5 container 本平台处于预览版，功能可能调整。
+				6 text 预览版
+			7 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			8 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			9 text Goodwill订单
+			10 button 搜索…
+				11 text 搜索…
+				12 text ⌘
+				13 text K
+			14 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			15 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_goodwill_orders
+			16 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			17 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		18 container
+			19 container
+				20 text 区域
+				21 content list
+					22 button 工作台
+					23 button 供应链
+					24 button 销售
+					25 button 生产
+					26 button 项目
+					27 button 行政
+					28 button 财务
+					29 button 报表
+					30 button 系统
+			31 container
+				32 button (expanded) 工作台, Secondary Actions: Collapse
+				33 content list
+					34 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					35 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					37 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			38 text 最近使用
+			39 button 切换侧边栏
+		40 container
+			41 button 在 Studio 中编辑
+			42 heading Goodwill订单, Value: 1
+				43 text Goodwill订单
+			44 text 客情维护、补偿赠送等无偿订单的审批与发货跟踪 10 销售业务 / Goodwill订单
+			45 button 新建 Goodwill 订单
+			46 button 刷新
+			47 text 客情维护、补偿赠送等无偿订单的审批与发货跟踪
+			48 heading Goodwill订单, Value: 1
+				49 text Goodwill订单
+			50 text field (settable) 搜索 Goodwill 订单
+			51 button 清空筛选
+			52 table
+				53 row
+					54 cell
+						55 text Goodwill单号
+					56 cell
+						57 text 客户名称
+					58 cell
+						59 text 赠送类型
+					60 cell
+						61 text 申请原因
+					62 cell
+						63 text 物品种类/总数
+					64 cell
+						65 text 状态
+					66 cell
+						67 text 负责人
+					68 cell
+						69 text 创建日期
+					70 cell
+						71 text 创建人
+					72 cell
+						73 text 操作
+				74 row
+					75 cell
+						76 text ◇
+						77 text 暂无匹配的 Goodwill 订单
+						78 text 免费发放备件、资料或样品时，在这里记录客户、类型、原因、物品、负责人和审批状态。
+						79 button 新建 Goodwill 订单
+			80 text 共  0  条记录 每页 10 条 · 1 / 1
+
+The focused UI element is 0 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_goodwill_orders

@@ -1,0 +1,238 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 生产
+- button "收起侧边栏":
+- navigation:
+  - button "组装业务管理":
+    - generic: 组装业务管理
+  - button "组装单":
+    - generic: 组装单
+  - button "缺料待办":
+    - generic: 缺料待办
+  - button "领料单":
+    - generic: 领料单
+  - button "补料单":
+    - generic: 补料单
+  - button "退料单":
+    - generic: 退料单
+  - button "拆解单":
+    - generic: 拆解单
+  - button "换件单":
+    - generic: 换件单
+  - button "图纸管理":
+    - generic: 图纸管理
+  - button "进入图纸管理上手指南":
+  - button "图纸总览":
+    - generic: 图纸总览
+  - button "图号档案":
+    - generic: 图号档案
+  - button "图纸评审":
+    - generic: 图纸评审
+  - button "图纸发布":
+    - generic: 图纸发布
+  - button "图纸变更":
+    - generic: 图纸变更
+  - button "图纸发放记录":
+    - generic: 图纸发放记录
+  - button "图纸关联查询":
+    - generic: 图纸关联查询
+  - button "客户图纸":
+    - generic: 客户图纸
+  - button "委外管理":
+    - generic: 委外管理
+  - button "进入委外管理上手指南":
+  - button "委外看板":
+    - generic: 委外看板
+  - button "委外订单":
+    - generic: 委外订单
+  - button "委外发料":
+    - generic: 委外发料
+  - button "委外回厂":
+    - generic: 委外回厂
+  - button "委外退料":
+    - generic: 委外退料
+  - button "委外对账":
+    - generic: 委外对账
+  - button "委外供应商":
+    - generic: 委外供应商
+  - button "委外库存":
+    - generic: 委外库存
+  - button "批次追溯":
+    - generic: 批次追溯
+  - button "委外未交":
+    - generic: 委外未交
+  - button "委外进货":
+    - generic: 委外进货
+  - button "委外对账单":
+    - generic: 委外对账单
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产" [pressed]:
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "组装单":
+  - generic: 组装单
+- button "新建组装单":
+  - generic: 新建组装单
+- button "缺料待办":
+  - generic: 缺料待办
+- button "领料单":
+  - generic: 领料单
+- button "新建领料单":
+  - generic: 新建领料单
+- button "补料单":
+  - generic: 补料单
+- button "新建补料单":
+  - generic: 新建补料单
+- button "退料单":
+  - generic: 退料单
+- button "新建退料单":
+  - generic: 新建退料单
+- button "拆解单":
+  - generic: 拆解单
+- button "新建拆解单":
+  - generic: 新建拆解单
+- button "换件单":
+  - generic: 换件单
+- button "新建换件单":
+  - generic: 新建换件单
+- button "图纸管理上手指南":
+  - generic: 图纸管理上手指南
+- main:
+  - heading "图纸管理上手指南" [level=1]
+  - paragraph: 按角色完成建档、会审、发布、变更和受控发放，快速找到当前任务的处理入口。
+  - complementary:
+    - generic: 选择角色视角
+    - group "选择指南角色":
+      - button "切换到设计 / 工艺":
+      - button "切换到审核 / 会审":
+      - button "切换到文控管理员":
+      - button "切换到使用部门" [active] [pressed]:
+    - generic: 使用部门
+    - generic "接收图纸、确认回执与执行变更"
+    - generic: 学习进度
+    - strong: 0 / 4
+    - progressbar "使用部门学习进度"
+  - heading "完整业务流程" [level=2]
+  - generic: 当前角色需要关注 2 个阶段
+  - button "01 图号建档 建立唯一档案":
+    - generic: "01"
+    - generic: 图号建档
+    - generic: 建立唯一档案
+  - button "02 版本提交 上传图纸文件" [disabled]:
+    - generic: "02"
+    - generic: 版本提交
+    - generic: 上传图纸文件
+  - button "03 会审审批 整改并通过" [disabled]:
+    - generic: "03"
+    - generic: 会审审批
+    - generic: 整改并通过
+  - button "04 图纸发布 形成有效版本" [disabled]:
+    - generic: "04"
+    - generic: 图纸发布
+    - generic: 形成有效版本
+  - button "05 变更执行 评估影响范围" [disabled]:
+    - generic: "05"
+    - generic: 变更执行
+    - generic: 评估影响范围
+  - button "06 发放追溯 回执与作废":
+    - generic: "06"
+    - generic: 发放追溯
+    - generic: 回执与作废
+  - complementary:
+    - generic: 指南目录
+    - button "快速开始 1":
+      - generic: 快速开始
+      - generic: "1"
+    - button "图号与版本 0" [disabled]:
+      - generic: 图号与版本
+      - generic: "0"
+    - button "会审与整改 0" [disabled]:
+      - generic: 会审与整改
+      - generic: "0"
+    - button "发布管理 0" [disabled]:
+      - generic: 发布管理
+      - generic: "0"
+    - button "变更管理 0" [disabled]:
+      - generic: 变更管理
+      - generic: "0"
+    - button "发放与回执 2":
+      - generic: 发放与回执
+      - generic: "2"
+    - button "关联与客户图纸 0" [disabled]:
+      - generic: 关联与客户图纸
+      - generic: "0"
+    - button "常见问题 1":
+      - generic: 常见问题
+      - generic: "1"
+    - textbox "搜索图纸指南":
+      - /placeholder: 搜索问题或操作
+  - main:
+    - generic: 阶段 01 · 快速开始
+    - heading "先理解一张图纸的完整生命周期" [level=2]
+    - paragraph: 图号是长期档案，版本是可迭代内容；只有发布后的版本才可作为受控使用依据。
+    - text: 1 分钟
+    - button "标记已掌握":
+      - text: 标记已掌握
+    - generic: 适用场景
+    - paragraph: 首次使用图纸管理，或需要判断当前图纸下一步应进入哪个业务环节。
+    - generic: 开始前确认
+    - paragraph: 已明确图纸所属产品或物料；已了解本企业的会审和发放责任人
+    - heading "操作步骤" [level=3]
+    - text: 负责人：全体图纸业务人员
+    - generic: "01"
+    - generic: 先建图号档案
+    - paragraph: 每张图纸先建立唯一图号，后续版本、会审、发布和变更都归集在该档案下。
+    - generic: 基础
+    - generic: "02"
+    - generic: 提交版本并完成会审
+    - paragraph: 上传新版本后发起会审；存在问题时先整改，再重新提交审核。
+    - generic: 主流程
+    - generic: "03"
+    - generic: 发布并受控发放
+    - paragraph: 会审通过后由文控发布，使用部门按发放任务接收并确认回执。
+    - text: 页面字段以实际业务页面为准
+    - button "打开图纸总览":
+      - text: 打开图纸总览
+  - complementary:
+    - generic: 完成标志
+    - paragraph: 已能区分图号、版本、会审、发布、变更和发放六个环节。
+    - generic: 常见阻塞与处理
+    - text: 不清楚应该从哪里开始
+    - paragraph: 新图纸先进入图号档案；已有图号的新内容从版本提交开始。
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2025-10

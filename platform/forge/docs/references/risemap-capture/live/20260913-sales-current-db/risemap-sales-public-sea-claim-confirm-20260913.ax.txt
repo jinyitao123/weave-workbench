@@ -1,0 +1,215 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/sales/public-sea".
+0 AXWebArea RiseMap, URL: risemap.cn/sales/public-sea
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 销售
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 销售业务
+					9 image
+					10 text 销售业务
+					11 image
+				12 button 框架销售合同
+				13 button 销售订单
+				14 button 附加费用
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+				36 button 服务管理
+					37 image
+					38 text 服务管理
+					39 image
+				40 button 服务工单
+				41 button 服务报价单
+				42 button 服务结算单
+				43 button 接单中心
+				44 button 派工中心
+				45 button 服务分析
+				46 button 质保管理
+				47 button 服务配置
+			48 image
+			49 text 免费试用中，还剩 9 天 — 试用期间享全部功能
+			50 button 查看方案
+				51 image
+				52 text 查看方案
+			53 button
+				54 image
+			55 container
+				56 container 业务分类
+					57 container
+						58 checkbox 工作台, Value: 0
+						59 checkbox 供应链, Value: 0
+						60 checkbox 销售, Value: 1
+						61 checkbox 生产, Value: 0
+						62 checkbox 项目, Value: 0
+						63 checkbox 行政, Value: 0
+						64 checkbox 财务, Value: 0
+						65 checkbox 报表, Value: 0
+						66 checkbox 系统, Value: 0
+				67 button Description: 展开搜索, Help: 搜索
+					68 image
+				69 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+					70 image
+					71 text 20
+				72 button Description: 打开推广奖励, Help: 推广
+				73 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				74 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				75 button 立即订阅, Help: 试用还剩 9 天 · 立即订阅享专属优惠
+					76 image
+					77 text 立即订阅
+				78 button 金
+					79 text 金
+					80 image
+			81 container
+				82 button 工作台
+					83 image
+					84 text 工作台
+				85 button Goodwill订单详情
+					86 text Goodwill订单详情
+				87 button 工作台
+					88 text 工作台
+				89 button 服务工单
+					90 text 服务工单
+				91 button 服务报价单
+					92 text 服务报价单
+				93 button 服务结算单
+					94 text 服务结算单
+				95 button 质保管理
+					96 text 质保管理
+				97 button 线索管理
+					98 text 线索管理
+				99 button 商机管理
+					100 text 商机管理
+				101 button 跟进记录
+					102 text 跟进记录
+				103 button 公海客户
+					104 text 公海客户
+			105 container
+				106 container
+					107 text CRM客户管理
+					108 image
+					109 text 公海客户
+					110 image
+					111 heading 公海客户, Value: 1
+						112 text 公海客户
+					113 text 未分配或已释放的客户资源池，销售人员可自行领取
+				114 button 新建公海客户
+					115 image
+					116 text 新建公海客户
+				117 button 批量操作
+					118 image
+					119 text 批量操作
+					120 image
+				121 button 导入
+					122 image
+					123 text 导入
+				124 button 导出
+					125 image
+					126 text 导出
+					127 image
+				128 button 导入/导出任务
+					129 image
+					130 text 导入/导出任务
+				131 button 刷新
+					132 image
+				133 button
+					134 image
+				135 button
+					136 image
+				137 image
+				138 text field (settable)
+				139 button 行业
+					140 text 行业
+					141 image
+				142 button 来源
+					143 text 来源
+					144 image
+				145 button 级别
+					146 text 级别
+					147 image
+				148 table
+					149 row
+						150 cell
+							151 checkbox (settable, integer) 0
+						152 cell
+							153 text 客户名称
+						154 cell
+							155 text 行业
+						156 cell
+							157 text 客户级别
+						158 cell
+							159 text 联系人
+						160 cell
+							161 text 所在城市
+						162 cell
+							163 text 来源
+						164 cell
+							165 text 预估价值
+						166 cell
+							167 text 释放天数
+						168 cell
+							169 text 操作
+					170 row
+						171 cell
+							172 checkbox (settable, integer) 0
+						173 cell
+							174 text 无锡云起智能装备有限公司
+						175 cell
+							176 text -
+						177 cell
+							178 text -
+						179 cell
+							180 text 许明远
+						181 cell
+							182 text 无锡
+						183 cell
+							184 text 新建
+						185 cell
+							186 text ¥0
+						187 cell
+							188 container
+								189 text 0 天
+						190 cell
+							191 button 领取
+				192 text 共  1 条记录 每页
+				193 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					194 text 20
+				195 text 条
+				196 button (disabled) 上一页
+					197 image
+				198 button 1
+				199 button (disabled) 下一页
+					200 image
+				203 container
+					204 image
+					205 heading 确认领取客户, Value: 3
+						206 text 确认领取客户
+					207 text 确定要领取客户 
+					208 text 无锡云起智能装备有限公司
+					209 text  吗？ 行业 - 联系人 许明远 预估价值 ¥0
+					210 button 取消
+					211 button 确认领取
+			201 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			202 container Notifications alt+T
+
+The focused UI element is 191 button 领取

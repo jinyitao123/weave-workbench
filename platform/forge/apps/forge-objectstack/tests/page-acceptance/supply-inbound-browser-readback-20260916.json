@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-16",
+  "environment": {
+    "forgeUrl": "http://localhost:4495",
+    "database": "file:.objectstack/supply-procurement-batch1.sqlite"
+  },
+  "risemap": {
+    "pages": [
+      "https://risemap.cn/inventory/inbound/new",
+      "https://risemap.cn/inventory/inbound/other",
+      "https://risemap.cn/inventory/inbound",
+      "https://risemap.cn/inventory/inbound/details"
+    ],
+    "observed": "已实时核对其他入库表单、列表、全部入库单和入库明细的标题、动作、筛选、列与当前数据态。",
+    "unresolved": [
+      "其他入库列表当前为空，无法用同一材料办理提交、审批和入库。",
+      "异步 Excel 导入任务、附件上传及已入库删除的实际契约尚未执行取证。"
+    ]
+  },
+  "forge": {
+    "pages": [
+      "page_other_inbounds",
+      "page_all_inbounds",
+      "page_inbound_lines"
+    ],
+    "record": {
+      "id": "WaosncsfjcBksc8t",
+      "code": "OIN-2026-49774085",
+      "status": "stocked",
+      "customer": "苏州澄岳自动化装备有限公司",
+      "arrivalReason": "项目样机返仓补料",
+      "warehouse": "贯联验证原料仓",
+      "sourceCode": "DEMO-OTHER-IN-20260916",
+      "quantity": 3,
+      "unitPrice": 2800,
+      "amount": 8400,
+      "batch": "BROWSER-20260916",
+      "location": "A-02"
+    },
+    "interactions": [
+      "新建表单填写客户、到货原因、来源、物料、批次和库位。",
+      "标准确认弹窗完成提交、审批和执行入库，并在详情回读状态。",
+      "其他入库列表勾选单条后打印按钮显示 1 条且预览仅包含所选记录。",
+      "全部入库单回读采购与其他入库，并由来源详情入口追溯。",
+      "入库明细勾选后导出按钮显示 1 条，往来单位和逐行金额正确。"
+    ],
+    "restartReadback": {
+      "lineId": "VxXbkgyiLhAWafHJ",
+      "ledgerId": "hYDPkAmBEiDZu5yY",
+      "balanceId": "qLmAAxpt5daKMEsW",
+      "result": "完整停服并使用同一 SQLite 重启后，API 与内置浏览器均回读相同单据、明细、库存流水和余额。"
+    },
+    "responsive": {
+      "desktop": "三页数据态与主动作已检查。",
+      "narrow": "390x844 下三页 document.scrollWidth 均为 390；表格在卡片内部滚动，页面无横向溢出。"
+    }
+  }
+}

@@ -1,0 +1,193 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/project/list".
+0 AXWebArea RiseMap, URL: risemap.cn/project/list
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 项目
+			5 button 收起侧边栏
+				6 image
+			322 container
+				323 button 项目管理
+					324 image
+					325 text 项目管理
+					326 image
+				327 button 项目中心
+				328 button 项目分析中心
+				329 button 任务管理
+				330 button 工时管理
+				331 button 项目配置中心
+			46 image
+			47 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			48 button 查看方案
+				49 image
+				50 text 查看方案
+			51 button
+				52 image
+			53 container
+				54 container 业务分类
+					55 checkbox 工作台, Value: 0
+					56 checkbox 供应链, Value: 0
+					57 checkbox 销售, Value: 0
+					58 checkbox 生产, Value: 0
+					59 checkbox 项目, Value: 1
+					60 checkbox 行政, Value: 0
+					61 checkbox 财务, Value: 0
+					62 checkbox 报表, Value: 0
+					63 checkbox 系统, Value: 0
+				64 button Description: 展开搜索, Help: 搜索
+					65 image
+				66 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					67 image
+					68 text 2
+				69 button Description: 打开推广奖励, Help: 推广
+				70 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				71 link Description: 打开工单, Value: community.risemap.cn/support
+				72 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					73 image
+					74 text 立即订阅
+				75 button 金
+					76 text 金
+					77 image
+			78 container
+				79 button 工作台
+					80 image
+					81 text 工作台
+				143 button 其他配置
+					144 text 其他配置
+				145 button 人事配置
+					146 text 人事配置
+				147 button 项目管理配置
+					148 text 项目管理配置
+				149 button 图纸配置
+					150 text 图纸配置
+				151 button 生产管理配置
+					152 text 生产管理配置
+				153 button 委外配置
+					154 text 委外配置
+				155 button 单据打印
+					156 text 单据打印
+				157 button 插件中心
+					158 text 插件中心
+				159 button 服务订阅管理
+					160 text 服务订阅管理
+				161 button 推广奖励
+					162 text 推广奖励
+				163 button 字段管理
+					164 text 字段管理
+				234 button 引导中心
+					235 text 引导中心
+				236 button 待办管理
+					237 text 待办管理
+				332 button 项目中心
+					333 text 项目中心
+			334 container
+				335 text 项目管理
+				336 image
+				337 text 项目中心
+				338 heading 项目中心, Value: 1
+					339 text 项目中心
+				340 button 表格
+					341 image
+					342 text 表格
+				343 button 甘特图
+					344 image
+					345 text 甘特图
+				346 button 项目分析中心
+					347 image
+					348 text 项目分析中心
+				349 button 新建项目
+					350 image
+					351 text 新建项目
+				352 button 全部
+					353 text 全部
+				354 button 待执行
+				355 button 进行中
+				356 button 已暂停
+				357 button 已完工
+				358 button 已结算
+				359 button 已终止
+				360 button 已归档
+				361 button 导入/导出
+					362 image
+					363 text 导入/导出
+					364 image
+				365 text 分组
+				366 button 按状态
+				367 button 按负责人
+				368 button 按进度
+				369 button 按客户
+				370 button 刷新
+					371 image
+				372 button
+					373 image
+				374 button
+					375 image
+				376 button 范围
+					377 image
+					378 text 范围
+					379 image
+				380 image
+				381 text field (settable)
+				382 container 点击清除排序
+					383 image
+					384 text 按 创建时间 降序
+					385 image
+				386 table
+					387 row
+						388 cell
+							389 checkbox (settable, integer) 0
+						390 cell
+							391 text 项目名称
+							392 image
+						393 cell
+							394 text 客户名称
+							395 image
+						396 cell
+							397 text 项目经理
+							398 image
+						399 cell
+							400 text 项目周期
+							401 image
+						402 cell
+							403 text 项目进度
+							404 image
+						405 cell
+							406 text 预计营收
+							407 image
+						408 cell
+							409 text 预算金额
+							410 image
+						411 cell
+							412 text 合同金额
+							413 image
+						414 cell
+							415 text 总成本
+							416 image
+						417 cell
+							418 text 毛利率
+							419 image
+						420 cell
+							421 text 回款率
+							422 image
+						423 cell
+							424 text 创建时间
+							425 image
+						426 cell
+							427 text 操作
+					437 row
+						438 cell
+							439 image
+							440 text 暂无匹配的项目
+				428 text 共  0 条记录 每页
+				429 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					430 text 10
+				431 text 条
+				432 button (disabled) 上一页
+					433 image
+				434 button 1
+				435 button (disabled) 下一页
+					436 image
+			125 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			126 container Notifications alt+T
+
+The focused UI element is 327 button 项目中心

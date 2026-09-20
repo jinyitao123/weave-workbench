@@ -1,0 +1,7 @@
+- region "通知 alt+T"
+- heading "ObjectOS" [level=1]
+- paragraph: Initializing application…
+- generic: Connecting to data source
+- generic: Loading configuration
+- generic: Preparing workspace
+- paragraph: Setting up a new environment can take a few moments.

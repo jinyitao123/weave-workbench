@@ -1,0 +1,291 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/lending".
+1 AXWebArea RiseMap, URL: risemap.cn/ops/lending
+	2 container
+		3 container root
+			222 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			223 text 行政
+			224 button 收起侧边栏
+				225 image
+			226 container
+				227 button 审批中心
+					228 image
+					229 text 审批中心
+					230 image
+				231 button 我的审批
+				232 button 抄送我的
+				233 button 我发起的
+				234 button 行政申请
+				235 button 行政管理
+					236 image
+					237 text 行政管理
+					238 image
+				239 button 公司通知
+				240 button 用章管理
+				241 button 会议纪要
+				242 button 工作汇报
+				243 button 文档中心
+				244 button 固定资产
+				245 button 资质与申报
+				246 button 物料领取
+				247 button 设备维护
+				248 button 礼品管理
+				249 button 借出管理
+				250 button 车辆管理
+				251 button 人力资源
+					252 image
+					253 text 人力资源
+					254 image
+				255 button 人事工作台
+				256 button 员工档案
+				257 button 招聘管理
+				258 button 入职离职
+				259 button 薪酬福利
+				260 button 规章制度
+				261 button 通讯录
+				262 button 考勤假期
+					263 image
+					264 text 考勤假期
+					265 image
+				266 button 加班申请
+				267 button 请假管理
+				268 button 出差申请
+				269 button 考勤管理
+				270 button 考勤统计
+				271 button 流程中心
+					272 image
+					273 text 流程中心
+					274 image
+				275 button 审批记录
+				276 button 发起流程
+				277 button 流程定义
+				278 button 流程分类
+			279 image
+			280 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			281 button 查看方案
+				282 image
+				283 text 查看方案
+			284 button
+				285 image
+			286 container
+				287 container 业务分类
+					288 checkbox 工作台, Value: 0
+					289 checkbox 供应链, Value: 0
+					290 checkbox 销售, Value: 0
+					291 checkbox 生产, Value: 0
+					292 checkbox 项目, Value: 0
+					293 checkbox 行政, Value: 1
+					294 checkbox 财务, Value: 0
+					295 checkbox 报表, Value: 0
+					296 checkbox 系统, Value: 0
+				297 button Description: 展开搜索, Help: 搜索
+					298 image
+				299 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					300 image
+					301 text 2
+				302 button Description: 打开推广奖励, Help: 推广
+				303 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				304 link Description: 打开工单, Value: community.risemap.cn/support
+				305 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					306 image
+					307 text 立即订阅
+				308 button 金
+					309 text 金
+					310 image
+			311 container
+				312 button 工作台
+					313 image
+					314 text 工作台
+				317 button 发布通知
+					318 text 发布通知
+				319 button 用章管理
+					320 text 用章管理
+				321 button 会议纪要
+					322 text 会议纪要
+				323 button 新建会议纪要
+					324 text 新建会议纪要
+				325 button AI 模板管理
+					326 text AI 模板管理
+				327 button 工作汇报
+					328 text 工作汇报
+				329 button 新建工作汇报
+					330 text 新建工作汇报
+				331 button 文档中心
+					332 text 文档中心
+				333 button 固定资产
+					334 text 固定资产
+				335 button 资质与申报
+					336 text 资质与申报
+				337 button 物料领取
+					338 text 物料领取
+				339 button 设备维护
+					340 text 设备维护
+				341 button 礼品管理
+					342 text 礼品管理
+				428 button 借出管理
+					429 text 借出管理
+			430 container
+				431 container
+					432 text 行政管理
+					433 image
+					434 text 借出管理
+					435 image
+					436 heading 借出管理, Value: 1
+						437 text 借出管理
+					438 text 物品借出与外部借入（客户 / 内部员工 / 供应商 / 其他单位）的登记、审批、归还核销
+				439 button 全部0
+					440 text 全部
+					441 text 0
+				442 button 草稿0
+					443 text 草稿
+					444 text 0
+				445 button 待审批0
+					446 text 待审批
+					447 text 0
+				448 button 借用中0
+					449 text 借用中
+					450 text 0
+				451 button 逾期未还0
+					452 text 逾期未还
+					453 text 0
+				454 button 已归还0
+					455 text 已归还
+					456 text 0
+				457 button 已驳回0
+					458 text 已驳回
+					459 text 0
+				460 button 导出
+					461 image
+					462 text 导出
+				463 button 新建借用单
+					464 image
+					465 text 新建借用单
+				466 button 刷新
+					467 image
+				468 button
+					469 image
+				470 button
+					471 image
+				472 image
+				473 text field (settable)
+				474 button 方向
+					475 text 方向
+					476 image
+				477 button 对象
+					478 text 对象
+					479 image
+				480 table
+					481 row
+						482 cell
+							483 text 单号 / 方向
+						484 cell
+							485 text 物品明细
+						486 cell
+							487 text 借用对象
+						488 cell
+							489 text 原因
+						490 cell
+							491 text 借用 / 预计归还
+						492 cell
+							493 text 实际归还
+						494 cell
+							495 text 经办人
+						496 cell
+							497 text 状态
+						498 cell
+							499 text 操作
+					500 row
+						501 cell
+							502 image
+							503 text 暂无借用记录
+				504 text 共  0 条记录 ·  当前页借出  0  · 借入  0 每页
+				505 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					506 text 10
+				507 text 条
+				508 button (disabled) 上一页
+					509 image
+				510 button 1
+				511 button (disabled) 下一页
+					512 image
+				513 image
+				514 text 借用规则 · 借入：来源不限供应商，客户设备送检、合作方调借、员工个人物品均可登记；无需走采购流程，入借测台账（只记数量、不计成本、不产生应付），可转借 · 借出与借入：对象类型统一为客户、内部员工、供应商和其他单位；借给同事不产生往来挂账，物品挂个人名下，逾期提醒到人 · 归还核销：借出物品归还后核销借出单；借测物品归还供应商后核销借入单；借出原因选项可在 系统 → 业务设置 维护
+				515 image
+				516 heading 新建借用单, Value: 3
+					517 text 新建借用单
+				518 button
+					519 image
+				520 container
+					521 text 业务方向  *
+					522 button 借出 借给客户、员工、供应商或其他单位
+						523 image
+						524 text 借出
+						525 text 借给客户、员工、供应商或其他单位
+					526 button 借入 从供应商 / 客户 / 合作方等借入
+						527 image
+						528 text 借入
+						529 text 从供应商 / 客户 / 合作方等借入
+					530 text 借入来源 *
+					531 button 客户
+						532 image
+						533 text 客户
+					534 button 内部员工
+						535 image
+						536 text 内部员工
+					537 button 供应商
+						538 image
+						539 text 供应商
+					540 button 其他单位
+						541 image
+						542 text 其他单位
+					593 pop up button (collapsed, settable) Value: 选择已有单位, Secondary Actions: Expand
+						594 menu
+							595 (selected) 选择已有单位
+					596 text field (settable)
+					597 text field (settable)
+					598 text 不在主数据内的外部单位可直接录入；频繁往来的单位建议维护到基础资料 物品明细  *
+					546 image
+					547 text field (settable)
+					548 stepper (settable, integer) 1
+					549 pop up button (collapsed, settable) Value: 台, Secondary Actions: Expand
+						550 menu
+							551 (selected) 台
+							552 套
+							553 个
+							554 件
+							555 卷
+					556 button 添加物品
+						557 image
+						558 text 添加物品
+					559 text 借用原因  * 选项可在 系统 → 业务设置 中维护
+					587 button 供应商借测
+					588 button 样机评估
+					589 button 客户设备检测维修
+					590 button 合作方调借
+					591 button 员工个人物品借入
+					592 button 项目临时补台
+					564 text field (settable)
+					565 container
+						566 text 借入日期  *
+					567 container
+						568 text field (settable) 2026年9月9日
+						569 button
+							570 image
+						571 button
+							572 image
+					573 container
+						574 text 预计归还日期  *
+					575 container
+						576 text field (settable) 2026年10月9日
+						577 button
+							578 image
+						579 button
+							580 image
+					581 text 备注
+					582 text entry area (settable)
+				583 text 提交后进入审批流，审批通过后借用生效
+				584 button 取消
+				585 button (disabled) 保存草稿
+				586 button (disabled) 提交审批
+			427 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			221 container Notifications alt+T
+
+The focused UI element is 540 button 其他单位

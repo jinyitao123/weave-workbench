@@ -1,0 +1,26 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/".
+0 AXWebArea RiseMap, URL: risemap.cn/
+	1 container
+		2 container Notifications alt+T
+		3 container RiseMap 专家实施服务, ID: radix-:r6:
+			4 heading RiseMap 专家实施服务, Value: 2, ID: radix-:r7:
+				5 text RiseMap 专家实施服务
+			6 text 了解 RiseMap 官方提供的流程梳理、数据迁移、全员培训与专属顾问服务。
+			7 button Description: 关闭实施服务推荐, Help: 关闭
+				8 image
+			9 container
+				10 text RiseMap 官方实施服务
+				11 heading 专家实施服务, Value: 2
+					12 text 专家实施服务
+				13 text 1v1 定制方案 数据无损迁移
+			14 link Description: 流程梳理与建模 深度调研企业业务场景，梳理权责架构与审批主线。, Value: community.risemap.cn/services
+			15 link Description: 数据迁移与初始化 历史客户、库存与财务数据标准化清洗与导入。, Value: community.risemap.cn/services
+			16 link Description: 全员培训上线护航 按岗位实操教学，根据业务场景定制培训内容。, Value: community.risemap.cn/services
+			17 link Description: 专属顾问运维保障 专属服务群与高优先通道，快速响应二次需求。, Value: community.risemap.cn/services
+			18 link Description: 了解服务内容, Value: community.risemap.cn/services
+			19 container
+				20 checkbox (settable, integer) Description: 7天内不再弹出, Value: 1, ID: :r5:
+				21 text 7天内不再弹出
+			22 pop up button (collapsed) 永久关闭, Help: 永久关闭实施服务推荐, Secondary Actions: Expand
+
+The focused UI element is 7 button Description: 关闭实施服务推荐, Help: 关闭

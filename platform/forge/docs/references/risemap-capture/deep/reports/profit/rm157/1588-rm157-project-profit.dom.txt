@@ -1,0 +1,161 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 报表
+- button "收起侧边栏":
+- navigation:
+  - button "销售统计":
+    - generic: 销售统计
+  - button "采购统计":
+    - generic: 采购统计
+  - button "库存统计":
+    - generic: 库存统计
+  - button "项目统计":
+    - generic: 项目统计
+  - button "组装统计":
+    - generic: 组装统计
+  - button "财务统计":
+    - generic: 财务统计
+  - button "财务总览":
+    - generic: 财务总览
+  - button "损益分析":
+    - generic: 损益分析
+  - button "资金分析":
+    - generic: 资金分析
+  - button "往来账款":
+    - generic: 往来账款
+  - button "税务库存":
+    - generic: 税务库存
+  - button "风险监控":
+    - generic: 风险监控
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表" [pressed]:
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "供应商对账单":
+  - generic: 供应商对账单
+- button "新建供应商对账":
+  - generic: 新建供应商对账
+- button "发票总览":
+  - generic: 发票总览
+- button "销项发票":
+  - generic: 销项发票
+- button "进项发票":
+  - generic: 进项发票
+- button "开票任务":
+  - generic: 开票任务
+- button "调整记录":
+  - generic: 调整记录
+- button "销售统计":
+  - generic: 销售统计
+- button "采购统计":
+  - generic: 采购统计
+- button "库存统计":
+  - generic: 库存统计
+- button "项目统计":
+  - generic: 项目统计
+- button "组装统计":
+  - generic: 组装统计
+- button "财务总览":
+  - generic: 财务总览
+- button "损益分析":
+  - generic: 损益分析
+- main:
+  - main:
+    - generic: 报表 / 财务统计 / 损益分析
+    - heading "损益分析" [level=1]
+    - paragraph: 收入、成本、项目、合同和人力支出的经营损益分析
+    - button "导出PDF":
+      - text: 导出PDF
+    - button "导出Excel":
+      - text: 导出Excel
+    - navigation "财务统计类型":
+      - button "收入分析": 收入分析
+      - button "成本费用": 成本费用
+      - button "项目盈利" [active]: 项目盈利
+      - button "合同签约": 合同签约
+      - button "人力资源支出": 人力资源支出
+    - region "报表筛选":
+      - generic: 筛选条件
+      - button "本季度":
+        - text: 本季度
+    - generic: 财务数据按业务单据实时汇总
+    - generic: 统计周期 2026-07-01 ~ 2026-09-09
+    - generic: 在建项目
+    - button "查看在建项目计算说明":
+    - paragraph: "0"
+    - generic: 个活跃项目
+    - generic: 项目总毛利
+    - button "查看项目总毛利计算说明":
+    - paragraph: ¥0.00
+    - generic: 平均毛利率
+    - button "查看平均毛利率计算说明":
+    - paragraph: 0.0%
+    - generic: 亏损项目
+    - button "查看亏损项目计算说明":
+    - paragraph: "0"
+    - generic: 需关注
+    - heading "项目盈利对比" [level=3]
+    - list:
+      - generic: 收入
+      - generic: 成本
+    - heading "项目财务明细" [level=3]
+    - table:
+      - rowgroup:
+        - row "项目 合同额 收入 成本 毛利 毛利率 应收 进度":
+          - columnheader "项目"
+          - columnheader "合同额"
+          - columnheader "收入"
+          - columnheader "成本"
+          - columnheader "毛利"
+          - columnheader "毛利率"
+          - columnheader "应收"
+          - columnheader "进度"
+      - rowgroup
+      - rowgroup:
+        - row "合计 ¥0.00 ¥0.00 ¥0.00 ¥0.00 0.0% ¥0.00":
+          - cell "合计"
+          - cell "¥0.00"
+          - cell "¥0.00"
+          - cell "¥0.00"
+          - cell "¥0.00"
+          - cell "0.0%":
+            - generic: 0.0%
+          - cell "¥0.00"
+          - cell
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 7月

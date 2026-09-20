@@ -1,0 +1,217 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/reports/sales".
+1 AXWebArea RiseMap, URL: risemap.cn/reports/sales
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 报表
+			6 button 收起侧边栏
+				7 image
+			8 container
+				304 button 销售统计
+					305 image
+					306 text 销售统计
+				307 button 采购统计
+					308 image
+					309 text 采购统计
+				310 button 库存统计
+					311 image
+					312 text 库存统计
+				313 button 项目统计
+					314 image
+					315 text 项目统计
+				316 button 组装统计
+					317 image
+					318 text 组装统计
+				319 button 财务统计
+					320 image
+					321 text 财务统计
+					322 image
+				323 button 财务总览
+				324 button 损益分析
+				325 button 资金分析
+				326 button 往来账款
+				327 button 税务库存
+				328 button 风险监控
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 1
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				239 button 成本中心
+					240 text 成本中心
+				241 button 报销管理
+					242 text 报销管理
+				243 button 新建报销
+					244 text 新建报销
+				245 button 对账单
+					246 text 对账单
+				247 button 客户对账单
+					248 text 客户对账单
+				249 button 新建客户对账
+					250 text 新建客户对账
+				251 button 供应商对账单
+					252 text 供应商对账单
+				253 button 新建供应商对账
+					254 text 新建供应商对账
+				255 button 发票总览
+					256 text 发票总览
+				257 button 销项发票
+					258 text 销项发票
+				259 button 进项发票
+					260 text 进项发票
+				261 button 开票任务
+					262 text 开票任务
+				263 button 调整记录
+					264 text 调整记录
+				329 button 销售统计
+					330 text 销售统计
+			331 container
+				332 image
+				333 text 报表中心
+				334 heading 销售统计, Value: 1
+					335 text 销售统计
+				336 text 客户跟进频次、沟通方式、响应结果、执行时效与销售行为质量分析。
+				337 button 导出报表
+					338 image
+					339 text 导出报表
+				340 container 销售报表维度
+					341 button 销售订单
+					342 button 销售合同
+					343 button 线索统计
+					344 button 商机统计
+					345 button 跟进记录
+					346 button 报价统计
+					347 button 客户统计
+					348 button 毛利分析
+				349 image
+				350 text 筛选条件
+				351 container
+					352 image
+					353 text field (settable)
+				354 pop up button (collapsed, settable) Value: 全部记录, Secondary Actions: Expand
+					355 menu
+						356 (selected) 全部记录
+						357 我负责的
+				358 pop up button (collapsed, settable) Value: 本月, Secondary Actions: Expand
+					359 menu
+						360 (selected) 本月
+						361 本季度
+						362 本年度
+				363 button 刷新
+					364 image
+					365 text 刷新
+				366 image
+				537 text 更新时间： 2026/9/9 06:49:11 ，当前展示  跟进记录  统计数据。 统计周期 2026-09-01 至 2026-09-30
+				538 container
+					539 image
+					540 text 跟进记录
+					541 pop up button (collapsed) Description: 查看跟进记录计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						542 image
+					543 image
+					544 text 0条 本月新增 0 条
+				545 container
+					546 image
+					547 text 已跟进客户
+					548 pop up button (collapsed) Description: 查看已跟进客户计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						549 image
+					550 image
+					551 text 0家 客户覆盖率 --
+				552 container
+					553 image
+					554 text 有效跟进
+					555 pop up button (collapsed) Description: 查看有效跟进计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						556 image
+					557 image
+					558 text 0条 有效率 --
+				559 container
+					560 image
+					561 text 平均跟进间隔
+					562 pop up button (collapsed) Description: 查看平均跟进间隔计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						563 image
+					564 image
+					565 text --天 --
+				396 container
+					397 heading 跟进次数与有效跟进趋势, Value: 2
+						398 text 跟进次数与有效跟进趋势
+					399 text 跟进次数 有效跟进
+					400 image
+						566 text 2026-09-01
+						567 text 2026-09-05
+						568 text 2026-09-09
+						569 text 2026-09-13
+						570 text 2026-09-17
+						571 text 2026-09-21
+						572 text 2026-09-25
+						573 text 2026-09-30
+				409 container
+					410 heading 跟进方式分布, Value: 2
+						411 text 跟进方式分布
+					412 image
+				525 container
+					526 heading 跟进转化漏斗, Value: 2
+						527 text 跟进转化漏斗
+					528 text 5 个阶段 1 已触达 基准 0% 0 2 有效沟通 阶段转化 0% 0% 0 3 明确需求 阶段转化 0% 0% 0 4 预约行动 阶段转化 0% 0% 0 5 形成商机 阶段转化 0% 0% 0
+				461 container
+					462 heading 跟进执行健康度, Value: 2
+						463 text 跟进执行健康度
+					529 text 综合评估 有效跟进率 0/0 有效跟进 -- 客户覆盖率 0/0 客户 -- 按计划跟进 0/0 及时跟进 -- 待跟进活动 已安排下次跟进 0项 超期未跟进 15天未跟进 0家
+				469 container
+					470 heading 重点客户跟进次数排行, Value: 2
+						471 text 重点客户跟进次数排行
+					530 text TOP 5
+				421 container
+					422 heading 跟进结果分布, Value: 2
+						423 text 跟进结果分布
+					531 text 全量排行
+					574 container 明确意向0，持续跟进0，待反馈0，无效沟通0，暂不考虑0
+				532 container
+					533 heading 销售员跟进执行排行, Value: 2
+						534 text 销售员跟进执行排行
+					535 text TOP 5
+				485 container
+					486 heading 客户跟进间隔分布, Value: 2
+						487 text 客户跟进间隔分布
+					536 text TOP 5
+					575 image
+					576 text 1天内 --
+					577 image
+					578 text 2-3天 --
+					579 image
+					580 text 4-7天 --
+					581 text 4 8-14天 --
+					582 text 5 超过14天 --
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+
+The focused UI element is 345 button 跟进记录

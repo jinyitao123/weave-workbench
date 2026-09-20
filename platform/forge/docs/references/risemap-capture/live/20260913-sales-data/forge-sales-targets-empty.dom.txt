@@ -1,0 +1,44 @@
+- region "通知 alt+T"
+- banner:
+  - button "切换侧边栏":
+    - generic: 切换侧边栏
+  - generic: 销售目标
+  - button "搜索…":
+  - button "打开消息中心":
+  - link "在 Studio 中设计":
+    - /url: /_console/studio/forge/interfaces?surface=page:page_sales_targets
+  - button "DA":
+    - generic: DA
+- main:
+  - main:
+    - button "在 Studio 中编辑":
+    - heading "销售目标" [level=1]
+    - paragraph: 设置和调整销售目标，实时计算完成进度与动态调整建议
+    - generic: "12"
+    - strong: 销售管理 / 销售目标管理
+    - button "新建目标"
+    - button "刷新"
+    - generic: 设置和调整销售目标，实时计算完成进度与动态调整建议
+    - heading "销售目标管理" [level=1]
+    - button "个人目标"
+    - button "团队目标"
+    - button "2026年"
+    - table:
+      - rowgroup:
+        - row "目标对象 年度 合同额目标 回款目标 完成进度 状态 备注 操作":
+          - columnheader "目标对象"
+          - columnheader "年度"
+          - columnheader "合同额目标"
+          - columnheader "回款目标"
+          - columnheader "完成进度"
+          - columnheader "状态"
+          - columnheader "备注"
+          - columnheader "操作"
+      - rowgroup:
+        - row "◇ 暂无数据 按人员或团队建立年度合同额和回款目标后会在这里展示。 新建目标":
+          - cell "◇ 暂无数据 按人员或团队建立年度合同额和回款目标后会在这里展示。 新建目标":
+            - generic: ◇
+            - strong: 暂无数据
+            - generic: 按人员或团队建立年度合同额和回款目标后会在这里展示。
+            - button "新建目标"
+    - generic: 共 0 条记录 每页 10 条 · 1 / 1

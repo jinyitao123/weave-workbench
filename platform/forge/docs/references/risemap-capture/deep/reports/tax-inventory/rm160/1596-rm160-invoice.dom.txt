@@ -1,0 +1,142 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 报表
+- button "收起侧边栏":
+- navigation:
+  - button "销售统计":
+    - generic: 销售统计
+  - button "采购统计":
+    - generic: 采购统计
+  - button "库存统计":
+    - generic: 库存统计
+  - button "项目统计":
+    - generic: 项目统计
+  - button "组装统计":
+    - generic: 组装统计
+  - button "财务统计":
+    - generic: 财务统计
+  - button "财务总览":
+    - generic: 财务总览
+  - button "损益分析":
+    - generic: 损益分析
+  - button "资金分析":
+    - generic: 资金分析
+  - button "往来账款":
+    - generic: 往来账款
+  - button "税务库存" [active]:
+    - generic: 税务库存
+  - button "风险监控":
+    - generic: 风险监控
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表" [pressed]:
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "销项发票":
+  - generic: 销项发票
+- button "进项发票":
+  - generic: 进项发票
+- button "开票任务":
+  - generic: 开票任务
+- button "调整记录":
+  - generic: 调整记录
+- button "销售统计":
+  - generic: 销售统计
+- button "采购统计":
+  - generic: 采购统计
+- button "库存统计":
+  - generic: 库存统计
+- button "项目统计":
+  - generic: 项目统计
+- button "组装统计":
+  - generic: 组装统计
+- button "财务总览":
+  - generic: 财务总览
+- button "损益分析":
+  - generic: 损益分析
+- button "资金分析":
+  - generic: 资金分析
+- button "往来账款":
+  - generic: 往来账款
+- button "税务库存":
+  - generic: 税务库存
+- main:
+  - main:
+    - generic: 报表 / 财务统计 / 税务库存
+    - heading "税务库存" [level=1]
+    - paragraph: 发票税务和库存资金分析
+    - button "导出PDF":
+      - text: 导出PDF
+    - button "导出Excel":
+      - text: 导出Excel
+    - navigation "财务统计类型":
+      - button "发票分析": 发票分析
+      - button "库存资金": 库存资金
+    - region "报表筛选":
+      - generic: 筛选条件
+      - button "本季度":
+        - text: 本季度
+    - generic: 财务数据按业务单据实时汇总
+    - generic: 统计周期 2026-07-01 ~ 2026-09-09
+    - generic: 销项发票
+    - button "查看销项发票计算说明":
+    - paragraph: ¥0.00
+    - generic: 0 张 · 税额 ¥0.00
+    - generic: 进项发票
+    - button "查看进项发票计算说明":
+    - paragraph: ¥0.00
+    - generic: 0 张 · 税额 ¥0.00
+    - generic: 应纳税额
+    - button "查看应纳税额计算说明":
+    - paragraph: ¥0.00
+    - generic: 税负率 0.00%
+    - generic: 当前未开票余额（存量）
+    - button "查看当前未开票余额（存量）计算说明":
+    - paragraph: ¥0.00
+    - generic: 当前未收票采购（存量） ¥0.00
+    - heading "进销项发票趋势" [level=3]
+    - button "发票总览"
+    - list:
+      - generic: 销项金额
+      - generic: 进项金额
+      - generic: 开票净额
+    - heading "进销项税额结构" [level=3]
+    - list:
+      - generic: 销项税额
+      - generic: 进项税额
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 当前

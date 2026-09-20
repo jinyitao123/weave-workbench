@@ -1,0 +1,67 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/certificates".
+1 AXWebArea RiseMap, URL: risemap.cn/ops/certificates
+	2 container 新增资质证书
+		3 container :r49:
+			4 image
+			5 text 新增资质证书
+		6 button 关闭
+			7 image
+		8 container
+			9 container
+				10 text * 资质名称
+			11 text field (settable)
+			12 text 请填写资质名称
+			13 container
+				14 text * 资质类别
+			15 button 请选择
+				16 text 请选择
+			17 text 请选择资质类别
+			18 container
+				19 text * 证书编号
+			20 text field (settable)
+			21 text 请填写证书编号
+			22 container
+				23 text * 发证机构
+			24 text field (settable)
+			25 text 请填写发证机构
+			26 container
+				27 text * 证书有效期
+			28 container
+				29 button
+					30 image
+				31 text field (settable)
+				32 text ~
+				33 text field (settable)
+			34 text 请选择证书有效期
+			35 text 年审日期
+			36 container
+				37 text field (settable)
+				38 button
+					39 image
+			40 text 复审日期
+			41 container
+				42 text field (settable)
+				43 button
+					44 image
+			45 text 责任人
+			46 button 选择责任人
+				47 text 选择责任人
+			48 text 关联申报
+			49 button 选择关联申报
+				50 text 选择关联申报
+			51 text 关联材料
+			52 container
+				53 text 选择关联材料
+				54 image
+			55 text 附件
+			56 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+				57 image
+				58 text 点击或拖拽文件到此处上传
+				59 text 支持 Ctrl+V 粘贴截图
+				60 text 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+			61 text 备注
+			62 text entry area (settable)
+			63 button 取消
+			64 button 保存
+
+The focused UI element is 64 button 保存

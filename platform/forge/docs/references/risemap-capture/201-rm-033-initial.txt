@@ -1,0 +1,242 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/inventory/lock".
+0 AXWebArea RiseMap, URL: risemap.cn/inventory/lock
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 供应链
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 到货检验
+					9 image
+					10 text 到货检验
+					11 image
+				12 button 到货通知
+				13 button 到货登记
+				14 button 待检验库存
+				15 button 检验单
+				16 button 检验规则
+				17 button 基础资料
+					18 image
+					19 text 基础资料
+					20 image
+				21 button 物料管理
+				22 button 物料组合
+				23 button BOM管理
+				24 button 综合物料搜索
+				25 button 供应商管理
+				26 button 产品实例追溯
+				27 button 仓库管理
+				28 button 采购管理
+					29 image
+					30 text 采购管理
+					31 image
+				32 button 采购发票
+				33 button 采购申请
+				34 button 采购待办池
+				35 button 询价管理
+				36 button 采购订单
+				37 button 采购退换货
+				38 button 供应商价格本
+				39 button 入库管理
+					40 image
+					41 text 入库管理
+					42 image
+				43 button 全部入库单
+				44 button 采购入库
+				45 button 生产入库
+				46 button 其他入库
+				47 button 期初入库
+				48 button 入库明细
+				49 button 库存管理
+					50 image
+					51 text 库存管理
+					52 image
+				53 button 库存总览
+				54 button 不合格处理
+				55 button 库存流水
+				56 button 库存锁定
+				57 button 库存盘点
+				58 button 调拨与借出
+				59 button 库存预警
+				60 button 报损单
+				61 button SN码管理
+				62 button 出库管理
+					63 image
+					64 text 出库管理
+					65 image
+				66 button 出库单列表
+				67 button 生产出库
+				68 button 其他出库
+				69 button 销售直接出库
+				70 button 待出库发货单
+				71 button 采购退换货出库
+				72 button 出库明细
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 1
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				129 button 询价管理
+					130 text 询价管理
+				131 button 采购订单
+					132 text 采购订单
+				133 button 采购退货
+					134 text 采购退货
+				135 button 供应商价格本
+					136 text 供应商价格本
+				166 button 全部入库单
+					167 text 全部入库单
+				168 button 采购入库
+					169 text 采购入库
+				170 button 生产入库
+					171 text 生产入库
+				172 button 其他入库
+					173 text 其他入库
+				174 button 期初入库
+					175 text 期初入库
+				176 button 入库明细
+					177 text 入库明细
+				178 button 库存总览
+					179 text 库存总览
+				180 button 不合格处理
+					181 text 不合格处理
+				182 button 库存流水
+					183 text 库存流水
+				184 button 库存锁定
+					185 text 库存锁定
+			186 container
+				187 container
+					188 text 库存管理
+					189 image
+					190 text 库存锁定
+					191 image
+					192 heading 库存锁定, Value: 1
+						193 text 库存锁定
+					194 text 业务占用、人工预留与释放记录统一管理
+				195 image
+				196 text 剩余锁定数量 0
+				197 image
+				198 text 活跃锁定明细 0
+				199 image
+				200 text 涉及物料 0
+				201 image
+				202 text 高锁定率物料 0
+				203 button 业务锁库
+					204 image
+					205 text 业务锁库
+				206 button 手动锁库
+					207 image
+					208 text 手动锁库
+				209 button 物料锁定概况
+					210 image
+					211 text 物料锁定概况
+				212 button 锁库操作日志
+					213 image
+					214 text 锁库操作日志
+				215 button 新增业务锁库
+					216 image
+					217 text 新增业务锁库
+				218 button 导出
+					219 image
+					220 text 导出
+					221 image
+				222 button 刷新
+					223 image
+				224 button
+					225 image
+				226 button
+					227 image
+				228 image
+				229 text field (settable)
+				230 button 业务类型
+					231 text 业务类型
+					232 image
+				233 button 状态
+					234 text 状态
+					235 image
+				236 button 全部仓库
+					237 text 全部仓库
+				238 text 共 0 条
+				239 table
+					240 row
+						241 cell
+							242 checkbox (settable, integer) 0
+						243 cell
+							244 text 锁定单号
+						245 cell
+							246 text 物料名称
+						247 cell
+							248 text 型号
+						249 cell
+							250 text 规格 / SKU
+						251 cell
+							252 text 批次号
+						253 cell
+							254 text 业务来源
+						255 cell
+							256 text 来源单号
+						257 cell
+							258 text 锁定数量
+						259 cell
+							260 text 已释放
+						261 cell
+							262 text 状态
+						263 cell
+							264 text 业务状态
+						265 cell
+							266 text 锁定日期
+						267 cell
+							268 text 到期释放时间
+						269 cell
+							270 text 剩余倒计时
+						271 cell
+							272 text 操作
+					273 row
+						274 cell
+							275 image
+							276 text 暂无匹配的锁定记录
+				277 text 共  0 条记录 每页
+				278 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					279 text 20
+				280 text 条
+				281 button (disabled) 上一页
+					282 image
+				283 button 1
+				284 button (disabled) 下一页
+					285 image
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 56 button 库存锁定

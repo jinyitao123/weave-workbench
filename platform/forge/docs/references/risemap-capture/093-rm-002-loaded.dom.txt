@@ -1,0 +1,144 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 工作台
+- button "收起侧边栏":
+- navigation:
+  - button "工作台":
+    - generic: 工作台
+  - button "AI 广场" [active]:
+    - generic: AI 广场
+  - button "引导中心":
+    - generic: 引导中心
+  - button "待办管理":
+    - generic: 待办管理
+- generic: 免费试用中，还剩 14 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台" [pressed]:
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "基础配置":
+  - generic: 基础配置
+- button "账户管理":
+  - generic: 账户管理
+- button "部门管理":
+  - generic: 部门管理
+- button "AI 广场":
+  - generic: AI 广场
+- main:
+  - heading "让 AI 成为你的最佳工作伙伴" [level=2]
+  - paragraph: 覆盖数据导入、业务配置、库存预测、客户跟进等核心场景，减少重复操作
+  - button "探索全部助手"
+  - button "使用指南"
+  - generic: AI
+  - button "全部场景"
+  - button "采购与库存"
+  - button "客户与销售"
+  - button "供应商与寻源"
+  - button "系统工具"
+  - textbox "搜索 AI 助手..."
+  - heading "精选推荐" [level=3]
+  - generic: 已上线能力优先展示，帮助用户快速进入高频场景
+  - heading "数据迁移助手" [level=4]
+  - generic: ERP
+  - generic: 已上线
+  - paragraph: 从其他系统快速导入物料、客户、供应商数据，AI 自动匹配字段并校验异常。
+  - generic: 字段识别
+  - generic: 模板匹配
+  - generic: 数据校验
+  - button "立即体验"
+  - heading "业务配置助手" [level=4]
+  - generic: 系统
+  - generic: 已上线
+  - paragraph: 通过自然语言完成业务配置、角色权限管理，支持 AI 推荐和 Excel 导入。
+  - generic: 业务配置
+  - generic: 角色权限
+  - generic: AI推荐
+  - button "立即体验"
+  - heading "采购与库存" [level=3]
+  - generic: 智能采购计划、库存优化与供应链协同
+  - heading "采购助手" [level=4]
+  - generic: ERP
+  - paragraph: 智能生成采购计划，供应商比价与采购订单建议
+  - heading "库存预测助手" [level=4]
+  - generic: ERP
+  - paragraph: 基于历史数据预测库存需求，优化库存结构
+  - heading "智能补货助手" [level=4]
+  - generic: ERP
+  - paragraph: 根据安全库存和销售预测，智能推荐补货方案
+  - heading "成本分析助手" [level=4]
+  - generic: ERP
+  - paragraph: 多维度分析采购成本，发现降本机会
+  - heading "客户与销售" [level=3]
+  - generic: 客户洞察、销售赋能与业绩增长
+  - heading "客户画像助手" [level=4]
+  - generic: CRM
+  - paragraph: 360° 客户画像，挖掘客户价值与需求偏好
+  - heading "销售跟进助手" [level=4]
+  - generic: CRM
+  - paragraph: 智能生成跟进建议与话术，提升转化率
+  - heading "商机评分助手" [level=4]
+  - generic: CRM
+  - paragraph: AI 评分潜在商机，优先跟进高价值机会
+  - heading "报价助手" [level=4]
+  - generic: CRM
+  - paragraph: 快速生成专业报价单，提升报价效率
+  - heading "供应商与寻源" [level=3]
+  - generic: 供应商管理、智能寻源与合同管理
+  - heading "供应商评估助手" [level=4]
+  - generic: SRM
+  - paragraph: 多维度评估供应商绩效，提供优化建议
+  - heading "智能寻源助手" [level=4]
+  - generic: SRM
+  - paragraph: 基于需求智能推荐供应商，生成寻源方案
+  - heading "合同审核助手" [level=4]
+  - generic: SRM
+  - paragraph: AI 审核合同条款，识别风险与合规问题
+  - heading "供应商风险预警" [level=4]
+  - generic: SRM
+  - paragraph: 实时监控供应商风险，提前预警潜在问题
+  - heading "系统工具" [level=3]
+  - generic: 业务配置、数据治理与通用效率工具
+  - heading "数据迁移助手" [level=4]
+  - generic: ERP
+  - paragraph: 从其他系统快速导入物料、客户、供应商数据
+  - heading "业务配置助手" [level=4]
+  - generic: 系统
+  - paragraph: 通过对话完成编码规则、物料分类、计量单位等配置
+  - heading "财务月结助手" [level=4]
+  - generic: 财务
+  - paragraph: 智能核对凭证、识别异常分录，生成月结清单
+- button "打开 AI 助手":
+- region "Notifications alt+T"

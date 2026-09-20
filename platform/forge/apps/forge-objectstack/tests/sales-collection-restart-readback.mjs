@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import { readFile, writeFile } from 'node:fs/promises';
+import { connect } from '../scripts/api-client.mjs';
+
+const reportPath='.objectstack/acceptance/otc-collection-settlement-report.json',report=JSON.parse(await readFile(reportPath,'utf8'));assert.equal(report.passed,true);const api=await connect(process.env.FORGE_URL||'http://localhost:4359');
+async function read(object,id){const response=await api.request(`/data/${object}/${id}`);assert.equal(response.status,200,object+'/'+id);return response.value.record;}
+const invoice=await read('forge_sales_invoice',report.ids.invoice),ar=await read('forge_accounts_receivable',report.ids.receivable),order=await read('forge_sales_order',report.ids.order),project=await read('forge_project',report.ids.project),account=await read('forge_fund_account',report.ids.account),settlement=await read('forge_project_settlement',report.ids.settlement);
+assert.deepEqual({invoice:invoice.status,ar:ar.status,outstanding:ar.outstanding_amount,orderCollected:order.collected_amount,project:project.status,projectInvoice:project.invoice_amount,projectCollected:project.collected_amount,account:account.current_balance,settlement:settlement.status},{invoice:'settled',ar:'settled',outstanding:0,orderCollected:243200,project:'settled',projectInvoice:243200,projectCollected:243200,account:244200,settlement:'settled'});
+for(const key of ['firstReceipt','secondReceipt'])assert.equal((await read('forge_cash_receipt',report.ids[key])).status,'allocated');for(const key of ['firstAllocation','secondAllocation'])assert.equal((await read('forge_collection_allocation',report.ids[key])).status,'approved');assert.equal((await read('forge_collection_allocation',report.ids.cancelledAllocation)).status,'cancelled');
+report.restartVerification={passed:true,at:new Date().toISOString(),database:process.env.FORGE_DB};await writeFile(reportPath,JSON.stringify(report,null,2));console.log('PASS OTC collection, write-off and project settlement survived full restart');

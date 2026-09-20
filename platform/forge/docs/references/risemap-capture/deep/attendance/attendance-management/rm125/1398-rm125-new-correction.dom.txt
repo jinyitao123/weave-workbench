@@ -1,0 +1,310 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 员工档案
+- button:
+  - generic: 招聘管理
+- button:
+  - generic: 候选人详情
+- button:
+  - generic: 入职离职
+- button:
+  - generic: 薪酬福利
+- button:
+  - generic: 福利发放
+- button:
+  - generic: 规章制度
+- button:
+  - generic: 人事配置
+- button:
+  - generic: 通讯录
+- button:
+  - generic: 加班申请
+- button:
+  - generic: 请假管理
+- button:
+  - generic: 出差申请
+- button:
+  - generic: 新建出差申请
+- button:
+  - generic: 考勤管理
+- main:
+  - generic: 考勤假期
+  - generic: 考勤管理
+  - heading [level=1]: 考勤管理
+  - paragraph: 查看每日打卡记录、筛选异常考勤、提交补签纠正申请
+  - button:
+    - text: 每日考勤
+  - button:
+    - text: 个人考勤
+  - button:
+    - text: 补签申请
+  - button:
+    - text: 考勤规则
+  - button:
+    - text: 考勤组
+  - paragraph:
+    - text: 补签申请已接入流程中心，审批通过后自动更正考勤记录
+  - button:
+    - text: 前往流程中心
+  - button:
+    - text: 新建补签
+  - button:
+    - text: 导出
+  - button:
+  - button:
+  - button:
+  - textbox:
+    - /placeholder: 搜索申请人/部门/日期
+  - button:
+    - text: 状态
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader
+        - columnheader:
+          - generic: 申请编号
+        - columnheader:
+          - generic: 申请人
+        - columnheader:
+          - generic: 部门
+        - columnheader:
+          - generic: 考勤日期
+        - columnheader:
+          - generic: 补签类型
+        - columnheader:
+          - generic: 原签到
+        - columnheader:
+          - generic: 原签退
+        - columnheader:
+          - generic: 更正签到
+        - columnheader:
+          - generic: 更正签退
+        - columnheader:
+          - generic: 状态
+        - columnheader:
+          - generic: 提交时间
+        - columnheader:
+          - generic: 操作
+    - rowgroup:
+      - row:
+        - cell:
+          - generic: 暂无补签申请
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button [disabled]:
+  - button: "1"
+  - button [disabled]:
+- button:
+- region "Notifications alt+T"
+- dialog "提交补签申请":
+  - heading "提交补签申请" [level=2]:
+    - text: 提交补签申请
+  - generic: "*"
+  - generic: 考勤日期
+  - textbox "请选择考勤日期" [active]
+  - button:
+  - generic: "*"
+  - generic: 补签类型
+  - radiogroup:
+    - radio "上班补签" [checked]
+    - radio "下班补签"
+    - radio "上下班补签"
+    - radio "外勤补签"
+    - radio "出差补签"
+    - radio "加班补签"
+    - radio "夜班/跨天补签"
+    - radio "排班异常补签"
+    - radio "系统/设备异常补签"
+    - radio "管理员修正补签"
+  - generic: 更正签到时间
+  - textbox "请选择签到时间": 08:30
+  - button:
+  - button:
+  - generic: 更正签退时间
+  - textbox "请选择签退时间" [disabled]: 17:30
+  - button:
+  - generic: "*"
+  - generic: 补签原因
+  - textbox "请详细说明补签原因，如：手机故障、考勤机异常、忘记打卡等..."
+  - paragraph:
+    - text: 提交后将发送至人事部门审批，请确保补签信息真实准确。虚假补签将按公司规章制度处理。
+  - button "取消"
+  - button "保存草稿"
+  - button "提交申请":
+    - text: 提交申请
+  - button "Close":
+    - generic: Close
+- button:
+- button: 2026年 九月
+- button:
+- generic: 日
+- generic: 一
+- generic: 二
+- generic: 三
+- generic: 四
+- generic: 五
+- generic: 六
+- button: "30"
+- button: "31"
+- button: "1"
+- button: "2"
+- button: "3"
+- button: "4"
+- button: "5"
+- button: "6"
+- button: "7"
+- button: "8"
+- button: "9"
+- button: "10"
+- button: "11"
+- button: "12"
+- button: "13"
+- button: "14"
+- button: "15"
+- button: "16"
+- button: "17"
+- button: "18"
+- button: "19"
+- button: "20"
+- button: "21"
+- button: "22"
+- button: "23"
+- button: "24"
+- button: "25"
+- button: "26"
+- button: "27"
+- button: "28"
+- button: "29"
+- button: "30"
+- button: "1"
+- button: "2"
+- button: "3"
+- button: "4"
+- button: "5"
+- button: "6"
+- button: "7"
+- button: "8"
+- button: "9"
+- button: "10"
+- button: 今天
+- button: 清除

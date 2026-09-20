@@ -1,0 +1,509 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/audit-log".
+0 AXWebArea RiseMap, URL: risemap.cn/settings/audit-log
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 系统
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 系统设置
+					9 image
+					10 text 系统设置
+					11 image
+				12 button 基础配置
+				13 button 用户与角色
+				14 button 部门管理
+				15 button 用户会话
+				16 button 审计日志
+				17 button 业务设置
+					18 image
+					19 text 业务设置
+					20 image
+				21 button 商品管理
+				22 button 财务配置
+				23 button 行政管理
+				24 button 客户管理
+				25 button 采购销售
+				26 button 库存管理
+				27 button 其他配置
+				28 button 人事配置
+				29 button 项目管理
+				30 button 图纸配置
+				31 button 生产配置
+				32 button 委外配置
+				33 button 单据打印
+				34 button 插件中心
+					35 image
+					36 text 插件中心
+				37 button 服务订阅
+					38 image
+					39 text 服务订阅
+				40 button 推广奖励
+					41 image
+					42 text 推广奖励
+				43 button 字段管理
+					44 image
+					45 text 字段管理
+			46 image
+			47 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			48 button 查看方案
+				49 image
+				50 text 查看方案
+			51 button
+				52 image
+			53 container
+				54 container 业务分类
+					55 checkbox 工作台, Value: 0
+					56 checkbox 供应链, Value: 0
+					57 checkbox 销售, Value: 0
+					58 checkbox 生产, Value: 0
+					59 checkbox 项目, Value: 0
+					60 checkbox 行政, Value: 0
+					61 checkbox 财务, Value: 0
+					62 checkbox 报表, Value: 0
+					63 checkbox 系统, Value: 1
+				64 button Description: 展开搜索, Help: 搜索
+					65 image
+				66 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					67 image
+					68 text 2
+				69 button Description: 打开推广奖励, Help: 推广
+				70 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				71 link Description: 打开工单, Value: community.risemap.cn/support
+				72 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					73 image
+					74 text 立即订阅
+				75 button 金
+					76 text 金
+					77 image
+			78 container
+				79 button 工作台
+					80 image
+					81 text 工作台
+				82 button 基础配置
+					83 text 基础配置
+				84 button 账户管理
+					85 text 账户管理
+				86 button 部门管理
+					87 text 部门管理
+				127 button 用户会话
+					128 text 用户会话
+				129 button 审计日志
+					130 text 审计日志
+			131 container
+				132 text 系统设置
+				133 image
+				134 text 审计日志
+				135 heading 审计日志, Value: 1
+					136 text 审计日志
+				137 text 查看系统操作记录和审计信息
+				138 button 查询
+					139 image
+					140 text 查询
+				141 button 重置
+				142 button 刷新
+					143 image
+				144 button
+					145 image
+				146 button
+					147 image
+				148 text 用户
+				149 text field (settable)
+				150 text 部门
+				151 text field (settable)
+				152 text 角色
+				153 text field (settable)
+				154 text 时间
+				155 container
+					156 text field (settable)
+					157 button
+						158 image
+				159 container
+					160 button
+						161 image
+				162 text ~
+				163 container
+					164 text field (settable)
+					165 button
+						166 image
+				167 container
+					168 button
+						169 image
+				170 table
+					171 row
+						172 cell
+							173 text 模块名称
+						174 cell
+							175 text 业务类型
+						176 cell
+							177 text 业务编码
+						178 cell
+							179 text 操作类型
+						180 cell
+							181 text 操作描述
+						182 cell
+							183 text 操作人名称
+						184 cell
+							185 text 是否成功
+						186 cell
+							187 text 操作时间
+					188 row
+						189 cell
+							190 text 管理后台服务
+						191 cell
+							192 text 项目角色配置
+						193 cell
+							194 text -
+						195 cell
+							196 text 新增
+						197 cell
+							198 text 创建项目角色
+						199 cell
+							200 text 金一涛
+						201 cell
+							202 text 成功
+						203 cell
+							204 text 2026-09-08 22:27:56
+					205 row
+						206 cell
+							207 text 管理后台服务
+						208 cell
+							209 text 闲置类别配置
+						210 cell
+							211 text -
+						212 cell
+							213 text 新增
+						214 cell
+							215 text 创建闲置类别
+						216 cell
+							217 text 金一涛
+						218 cell
+							219 text 成功
+						220 cell
+							221 text 2026-09-08 22:27:56
+					222 row
+						223 cell
+							224 text 管理后台服务
+						225 cell
+							226 text 闲置类别配置
+						227 cell
+							228 text -
+						229 cell
+							230 text 新增
+						231 cell
+							232 text 创建闲置类别
+						233 cell
+							234 text 金一涛
+						235 cell
+							236 text 成功
+						237 cell
+							238 text 2026-09-08 22:27:56
+					239 row
+						240 cell
+							241 text 管理后台服务
+						242 cell
+							243 text 闲置类别配置
+						244 cell
+							245 text -
+						246 cell
+							247 text 新增
+						248 cell
+							249 text 创建闲置类别
+						250 cell
+							251 text 金一涛
+						252 cell
+							253 text 成功
+						254 cell
+							255 text 2026-09-08 22:27:56
+					256 row
+						257 cell
+							258 text 管理后台服务
+						259 cell
+							260 text 工时类型配置
+						261 cell
+							262 text -
+						263 cell
+							264 text 新增
+						265 cell
+							266 text 创建工时类型
+						267 cell
+							268 text 金一涛
+						269 cell
+							270 text 成功
+						271 cell
+							272 text 2026-09-08 22:27:56
+					273 row
+						274 cell
+							275 text 管理后台服务
+						276 cell
+							277 text 图纸配置
+						278 cell
+							279 text -
+						280 cell
+							281 text 修改
+						282 cell
+							283 text 保存图纸配置
+						284 cell
+							285 text 金一涛
+						286 cell
+							287 text 成功
+						288 cell
+							289 text 2026-09-08 22:27:56
+					290 row
+						291 cell
+							292 text 管理后台服务
+						293 cell
+							294 text 项目日志分类
+						295 cell
+							296 text -
+						297 cell
+							298 text 新增
+						299 cell
+							300 text 创建项目日志分类
+						301 cell
+							302 text 金一涛
+						303 cell
+							304 text 成功
+						305 cell
+							306 text 2026-09-08 22:27:56
+					307 row
+						308 cell
+							309 text 管理后台服务
+						310 cell
+							311 text 图纸配置
+						312 cell
+							313 text -
+						314 cell
+							315 text 修改
+						316 cell
+							317 text 保存图纸配置
+						318 cell
+							319 text 金一涛
+						320 cell
+							321 text 成功
+						322 cell
+							323 text 2026-09-08 22:27:56
+					324 row
+						325 cell
+							326 text 管理后台服务
+						327 cell
+							328 text 图纸配置
+						329 cell
+							330 text -
+						331 cell
+							332 text 修改
+						333 cell
+							334 text 保存图纸配置
+						335 cell
+							336 text 金一涛
+						337 cell
+							338 text 成功
+						339 cell
+							340 text 2026-09-08 22:27:56
+					341 row
+						342 cell
+							343 text 管理后台服务
+						344 cell
+							345 text 闲置类别配置
+						346 cell
+							347 text -
+						348 cell
+							349 text 新增
+						350 cell
+							351 text 创建闲置类别
+						352 cell
+							353 text 金一涛
+						354 cell
+							355 text 成功
+						356 cell
+							357 text 2026-09-08 22:27:56
+					358 row
+						359 cell
+							360 text 管理后台服务
+						361 cell
+							362 text 图纸配置
+						363 cell
+							364 text -
+						365 cell
+							366 text 修改
+						367 cell
+							368 text 保存图纸配置
+						369 cell
+							370 text 金一涛
+						371 cell
+							372 text 成功
+						373 cell
+							374 text 2026-09-08 22:27:56
+					375 row
+						376 cell
+							377 text 管理后台服务
+						378 cell
+							379 text 项目角色配置
+						380 cell
+							381 text -
+						382 cell
+							383 text 新增
+						384 cell
+							385 text 创建项目角色
+						386 cell
+							387 text 金一涛
+						388 cell
+							389 text 成功
+						390 cell
+							391 text 2026-09-08 22:27:56
+					392 row
+						393 cell
+							394 text 管理后台服务
+						395 cell
+							396 text 项目角色配置
+						397 cell
+							398 text -
+						399 cell
+							400 text 新增
+						401 cell
+							402 text 创建项目角色
+						403 cell
+							404 text 金一涛
+						405 cell
+							406 text 成功
+						407 cell
+							408 text 2026-09-08 22:27:56
+					409 row
+						410 cell
+							411 text 管理后台服务
+						412 cell
+							413 text 图纸配置
+						414 cell
+							415 text -
+						416 cell
+							417 text 修改
+						418 cell
+							419 text 保存图纸配置
+						420 cell
+							421 text 金一涛
+						422 cell
+							423 text 成功
+						424 cell
+							425 text 2026-09-08 22:27:56
+					426 row
+						427 cell
+							428 text 管理后台服务
+						429 cell
+							430 text 图纸配置
+						431 cell
+							432 text -
+						433 cell
+							434 text 修改
+						435 cell
+							436 text 保存图纸配置
+						437 cell
+							438 text 金一涛
+						439 cell
+							440 text 成功
+						441 cell
+							442 text 2026-09-08 22:27:56
+					443 row
+						444 cell
+							445 text 管理后台服务
+						446 cell
+							447 text 项目角色配置
+						448 cell
+							449 text -
+						450 cell
+							451 text 新增
+						452 cell
+							453 text 创建项目角色
+						454 cell
+							455 text 金一涛
+						456 cell
+							457 text 成功
+						458 cell
+							459 text 2026-09-08 22:27:56
+					460 row
+						461 cell
+							462 text 管理后台服务
+						463 cell
+							464 text 图纸配置
+						465 cell
+							466 text -
+						467 cell
+							468 text 修改
+						469 cell
+							470 text 保存图纸配置
+						471 cell
+							472 text 金一涛
+						473 cell
+							474 text 成功
+						475 cell
+							476 text 2026-09-08 22:27:56
+					477 row
+						478 cell
+							479 text 管理后台服务
+						480 cell
+							481 text 图纸配置
+						482 cell
+							483 text -
+						484 cell
+							485 text 修改
+						486 cell
+							487 text 保存图纸配置
+						488 cell
+							489 text 金一涛
+						490 cell
+							491 text 成功
+						492 cell
+							493 text 2026-09-08 22:27:56
+					494 row
+						495 cell
+							496 text 管理后台服务
+						497 cell
+							498 text 图纸配置
+						499 cell
+							500 text -
+						501 cell
+							502 text 修改
+						503 cell
+							504 text 保存图纸配置
+						505 cell
+							506 text 金一涛
+						507 cell
+							508 text 成功
+						509 cell
+							510 text 2026-09-08 22:27:56
+					511 row
+						512 cell
+							513 text 管理后台服务
+						514 cell
+							515 text 图纸配置
+						516 cell
+							517 text -
+						518 cell
+							519 text 修改
+						520 cell
+							521 text 保存图纸配置
+						522 cell
+							523 text 金一涛
+						524 cell
+							525 text 成功
+						526 cell
+							527 text 2026-09-08 22:27:56
+				528 text 共  413 条记录 每页
+				529 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					530 text 20
+				531 text 条
+				532 button (disabled) 上一页
+					533 image
+				534 button 1
+				535 button 2
+				536 button 3
+				537 button 4
+				538 button 5
+				539 text ...
+				540 button 21
+				541 button 下一页
+					542 image
+			125 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			126 container Notifications alt+T
+
+The focused UI element is 16 button 审计日志

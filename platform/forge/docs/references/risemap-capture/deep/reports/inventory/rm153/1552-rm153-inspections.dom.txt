@@ -1,0 +1,187 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 报表
+- button "收起侧边栏":
+- navigation:
+  - button "销售统计":
+    - generic: 销售统计
+  - button "采购统计":
+    - generic: 采购统计
+  - button "库存统计":
+    - generic: 库存统计
+  - button "项目统计":
+    - generic: 项目统计
+  - button "组装统计":
+    - generic: 组装统计
+  - button "财务统计":
+    - generic: 财务统计
+  - button "财务总览":
+    - generic: 财务总览
+  - button "损益分析":
+    - generic: 损益分析
+  - button "资金分析":
+    - generic: 资金分析
+  - button "往来账款":
+    - generic: 往来账款
+  - button "税务库存":
+    - generic: 税务库存
+  - button "风险监控":
+    - generic: 风险监控
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表" [pressed]:
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "新建报销":
+  - generic: 新建报销
+- button "对账单":
+  - generic: 对账单
+- button "客户对账单":
+  - generic: 客户对账单
+- button "新建客户对账":
+  - generic: 新建客户对账
+- button "供应商对账单":
+  - generic: 供应商对账单
+- button "新建供应商对账":
+  - generic: 新建供应商对账
+- button "发票总览":
+  - generic: 发票总览
+- button "销项发票":
+  - generic: 销项发票
+- button "进项发票":
+  - generic: 进项发票
+- button "开票任务":
+  - generic: 开票任务
+- button "调整记录":
+  - generic: 调整记录
+- button "销售统计":
+  - generic: 销售统计
+- button "采购统计":
+  - generic: 采购统计
+- button "库存统计":
+  - generic: 库存统计
+- main:
+  - main:
+    - paragraph: 报表中心
+    - heading "库存统计" [level=1]
+    - paragraph: 到货检验规模、质量结果、不良原因、检验效率与供应商质量分析。
+    - button "导出报表":
+      - text: 导出报表
+    - navigation "库存报表维度":
+      - button "库存统计"
+      - button "仓库统计"
+      - button "到货统计"
+      - button "检验统计" [active]: 检验统计
+    - text: 筛选条件
+    - textbox:
+      - /placeholder: 搜索检验单号、供应商、商品或检验员
+    - combobox:
+      - option "全部仓库" [selected]
+      - option "主仓"
+    - combobox:
+      - option "本月" [selected]
+      - option "本季度"
+      - option "本年度"
+    - button "刷新":
+      - text: 刷新
+    - text: "更新时间: 2026/9/9 06:50:24 当前展示检验统计统计数据。"
+    - generic: 统计周期 2026-09-01 至 2026-09-30
+    - generic: 检验批次
+    - button "查看检验批次计算说明":
+    - generic: 0批
+    - generic: 本月 0 批
+    - generic: 检验数量
+    - button "查看检验数量计算说明":
+    - generic: 0件
+    - generic: 已完成 0 件
+    - generic: 到货合格率
+    - button "查看到货合格率计算说明":
+    - generic: "--"
+    - generic: 较上月 --
+    - generic: 待检验批次
+    - button "查看待检验批次计算说明":
+    - generic: 0批
+    - generic: 其中超 3 天未检 0 批
+    - heading "检验批次与不合格数量趋势" [level=2]
+    - generic: 检验批次
+    - generic: 不合格数量
+    - heading "检验结果分布" [level=2]
+    - heading "到货检验流转漏斗" [level=2]
+    - generic: 5 个阶段
+    - generic: "1"
+    - generic: 提交检验
+    - generic: 基准
+    - generic: "0"
+    - generic: "2"
+    - generic: 已分配
+    - generic: 阶段转化 null
+    - generic: "0"
+    - generic: "3"
+    - generic: 已检验
+    - generic: 阶段转化 null
+    - generic: "0"
+    - generic: "4"
+    - generic: 已判定
+    - generic: 阶段转化 null
+    - generic: "0"
+    - generic: "5"
+    - generic: 已放行
+    - generic: 阶段转化 null
+    - generic: "0"
+    - heading "到货检验质量健康度" [level=2]
+    - generic: 健康度 0分
+    - generic: 到货合格率
+    - generic: 检验合格数量 0 件
+    - generic: 检验及时率
+    - generic: 24 小时内完成判定
+    - generic: 一次通过率
+    - generic: 无返工直接通过
+    - generic: 待检验批次
+    - generic: 待检验批次
+    - generic: 0批
+    - generic: 不合格批次
+    - generic: 涉及不合格品 0 件
+    - generic: 0批
+    - heading "供应商到货合格率" [level=2]
+    - generic: TOP 5
+    - heading "不合格原因分布" [level=2]
+    - generic: 数量排行
+    - heading "检验员完成批次排行" [level=2]
+    - generic: TOP 5
+    - heading "检验完成时效" [level=2]
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2026-04

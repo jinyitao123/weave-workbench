@@ -1,0 +1,20 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/product".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/product
+	2 container 添加物料属性
+		3 heading 添加物料属性, Value: 3
+			4 text 添加物料属性
+		5 button 关闭
+			6 image
+		7 container
+			8 text 名称  *
+			9 text field (settable)
+			10 text 编码  *
+			11 text field (settable)
+			12 text 排序
+			13 text field (settable)
+			14 checkbox (settable, integer) Description: 设为默认项, Value: 0
+			15 text 设为默认项
+		16 button 取消
+		17 button 添加
+
+The focused UI element is 9 text field (settable)

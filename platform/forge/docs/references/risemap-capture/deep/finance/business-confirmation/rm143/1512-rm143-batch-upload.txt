@@ -1,0 +1,246 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/reimbursement/new?type=reimbursement".
+1 AXWebArea RiseMap, URL: risemap.cn/finance/reimbursement/new?type=reimbursement
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 财务
+			6 button 收起侧边栏
+				7 image
+			8 container
+				181 button 资金管理
+					182 image
+					183 text 资金管理
+					184 image
+				185 button 资金账户
+				186 button 资金流水
+				187 button 应收应付
+				188 button 收款管理
+				189 button 付款管理
+				190 button 退款申请
+				191 button 授信额度管理
+				192 button 借款贷款管理
+				193 button 业务确认
+					194 image
+					195 text 业务确认
+					196 image
+				197 button 销售收入确认
+				198 button 成本中心
+				199 button 费用中心
+				200 button 报销管理
+				201 button 对账单
+					202 image
+					203 text 对账单
+				204 button 发票管理
+					205 image
+					206 text 发票管理
+					207 image
+				208 button 发票总览
+				209 button 销项发票
+				210 button 进项发票
+				211 button 开票任务
+				212 button 调整记录
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 1
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				217 button 应收应付
+					218 text 应收应付
+				219 button 收款管理
+					220 text 收款管理
+				221 button 付款管理
+					222 text 付款管理
+				223 button 费用中心
+					224 text 费用中心
+				225 button 新建付款申请
+					226 text 新建付款申请
+				227 button 退款申请
+					228 text 退款申请
+				229 button 授信额度管理
+					230 text 授信额度管理
+				231 button 借款管理
+					232 text 借款管理
+				233 button 新建借款
+					234 text 新建借款
+				235 button 新建贷款
+					236 text 新建贷款
+				237 button 销售收入确认
+					238 text 销售收入确认
+				239 button 成本中心
+					240 text 成本中心
+				241 button 报销管理
+					242 text 报销管理
+				243 button 新建报销
+					244 text 新建报销
+			245 container
+				246 text 业务确认
+				247 image
+				248 text 报销管理
+				249 image
+				250 text 提交费用报销
+				251 button Description: 返回报销管理, Help: 返回
+					252 image
+				253 heading 提交费用报销, Value: 1
+					254 text 提交费用报销
+				255 text 填写费用明细，提交审批流程
+				256 button 取消
+				257 button 使用模板
+					258 image
+					259 text 使用模板
+				260 button 批量上传
+					261 image
+					262 text 批量上传
+				263 button 保存草稿
+					264 image
+					265 text 保存草稿
+				266 button 提交审批
+					267 image
+					268 text 提交审批
+				269 container
+					270 image
+					271 heading 基本信息, Value: 2
+						272 text 基本信息
+					273 text 填写报销归属、报销人与费用归集信息 * 费用标题
+					274 text field (settable)
+					275 text * 报销人
+					276 button (disabled) 金 金一涛 (默认部门)
+						361 text 金 金一涛 ( 默认部门 )
+					278 switch Description: 代他人报销, Value: 0, ID: :re0:
+					279 text 代他人报销 * 成本归属
+					280 button 项目成本
+						281 text 项目成本
+					282 text * 关联 项目 (至少选择一个，可选多个，选择后可配置费用分摊)
+					283 button 选择关联项目
+						284 text 选择关联项目...
+				285 container
+					286 image
+					287 heading 付款与核销信息, Value: 2
+						288 text 付款与核销信息
+					289 text 填写付款安排、借款核销及补充说明 供应商
+					290 button 搜索并选择供应商...
+						291 text 搜索并选择供应商...
+					292 text 期望付款时间
+					293 container
+						294 text field (settable)
+						295 button
+							296 image
+					297 text 关联借款单
+					298 button 选择要核销的借款单...
+						299 text 选择要核销的借款单...
+					300 text 备注说明
+					301 text entry area (settable)
+				302 container
+					303 image
+					304 heading 费用明细 *, Value: 2
+						305 text 费用明细  *
+					306 text 逐项填写费用，并将对应票据附在费用项下
+					307 button 添加费用项
+						308 image
+						309 text 添加费用项
+					310 button 智能识别发票，自动生成费用明细 AI 上传发票图片或PDF，AI 自动识别票面信息并为每张发票生成一行费用 剩余 10 / 10 次 立即识别
+						311 image
+						312 text 智能识别发票，自动生成费用明细
+						313 text AI
+						314 text 上传发票图片或PDF，AI 自动识别票面信息并为每张发票生成一行费用
+						315 text 剩余 
+						316 text 10
+						317 text  / 
+						318 text 10
+						319 text  次
+						320 text 立即识别
+						321 image
+					322 text 费用类别 金额(¥) 说明  * 日期
+					323 button 销售费用
+						324 text 销售费用
+					325 text field (settable)
+					326 text field (settable)
+					327 container
+						328 text field (settable) 2026年9月8日
+						329 button
+							330 image
+						331 button
+							332 image
+					333 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持图片 / PDF / Word / Excel，可上传多个文件
+						334 image
+						335 text 点击或拖拽文件到此处上传
+						336 text 支持 Ctrl+V 粘贴截图
+						337 text 支持图片 / PDF / Word / Excel，可上传多个文件
+					338 text 共  1  项 合计： ¥ 0
+				339 container
+					340 image
+					341 heading 收款方式, Value: 2
+						342 text 收款方式
+					343 text 选择或新增收款账户，审批通过后报销款支付至此 非必填
+					344 button 新增收款方式
+						345 image
+						346 text 新增收款方式
+					347 text 未选择收款账户，不影响保存或提交审批。
+				348 container
+					349 heading 审批流程, Value: 3
+						350 image
+						351 text 审批流程
+					352 container
+						353 image
+						354 text 开始
+					355 container
+						356 image
+						357 text 审批 SINGLE 系统管理员
+					358 container
+						359 image
+						360 text 结束
+				362 container
+					363 image
+					364 heading 批量导入费用明细, Value: 3
+						365 text 批量导入费用明细
+					366 button
+						367 image
+					368 text Excel 文件格式要求
+					369 text 表头列（第一行）：
+					370 text 费用类别* | 说明 | 金额* | 日期
+					371 container
+						372 text 可用费用类别： 销售费用、客户开发费用、客户拜访费、客户招待费、客户礼品费、市场推广费用、广告推广费、展会活动费、宣传物料费、销售支持费用、样品费、售前支持费、销售佣金、项目费用、项目差旅费用、项目交通费、项目住宿费、项目餐饮补贴、项目实施费用、安装调试费、现场施工费、临时用工费、项目材料费用、项目辅材费、项目耗材费、项目补料费、项目外协费用、外协加工费、外包服务费、外部技术支持费、采购费用、采购业务费用、供应商拜访费、供应商招待费、供应商考察费、采购物流费用、采购运输费、装卸搬运费、包装费、质量处理费用、来料检测费、返修处理费、退货运输费、研发费用、研发材料费用、研发材料费、研发打样费、研发测试件费用、研发测试费用、测试检测费、认证校准费、实验费用、研发服务费用、技术咨询费、外包开发费、知识产权费、行政办公费用、办公用品费用、办公用品费、办公耗材费、办公设备费、办公场地费用、房租物业费、水电费、装修维修费、日常行政费用、快递费、印刷费、会议费、人事费用、招聘费用、招聘平台费、猎头费、面试费用、培训费用、内部培训费、外部培训费、课程费用、员工福利费用、节日福利费、团建费、员工关怀费、财务法务费用、财务服务费用、代理记账费、税务服务费、审计评估费、银行金融费用、银行手续费、承兑手续费、融资服务费、法务合规费用、律师费、合同审查费、诉讼仲裁费、IT/软件费用、软件系统费用、SaaS软件费、办公软件费、设计开发软件费、AI工具费用、AI会员订阅费、AI接口调用费、AI插件工具费、云服务费用、服务器费用、存储费用、短信/邮件服务费、交通车辆费用、市内交通费用、打车费、公共交通费、停车费、差旅交通费用、高铁/火车费、机票费、长途交通费、车辆使用费用、油费/充电费、过路过桥费、车辆维修保养费、其他费用、其他业务费用、其他销售费用、其他项目费用、其他采购费用、其他管理费用、其他行政费用、其他人事费用、其他财务费用、待确认费用、待财务确认费用、待部门确认费用、未分类费用
+					373 button 下载 Excel 导入模板
+						374 image
+						375 text 下载 Excel 导入模板
+					376 container
+						377 image
+						378 text 点击或拖拽上传 Excel 文件 支持 .xlsx / .xls 格式
+					379 button 取消
+					380 button (disabled) 导入
+						381 image
+						382 text 导入
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+
+The focused UI element is 260 button 批量上传

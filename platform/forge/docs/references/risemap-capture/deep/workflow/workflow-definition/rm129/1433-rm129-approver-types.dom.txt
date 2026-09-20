@@ -1,0 +1,220 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 薪酬福利
+- button:
+  - generic: 福利发放
+- button:
+  - generic: 规章制度
+- button:
+  - generic: 人事配置
+- button:
+  - generic: 通讯录
+- button:
+  - generic: 加班申请
+- button:
+  - generic: 请假管理
+- button:
+  - generic: 出差申请
+- button:
+  - generic: 新建出差申请
+- button:
+  - generic: 考勤管理
+- button:
+  - generic: 考勤统计
+- button:
+  - generic: 审批记录
+- button:
+  - generic: 发起流程
+- button:
+  - generic: 流程设计器
+- main:
+  - generic: 工作流
+  - generic: 流程设计器
+  - button:
+  - textbox:
+    - /placeholder: 请输入流程名称
+  - text: 新建流程
+  - radiogroup:
+    - radio:
+      - generic: 基本信息
+    - radio:
+      - generic: 表单配置
+    - radio [checked]:
+      - generic: 流程设计
+    - radio:
+      - generic: 催办设置
+  - button:
+    - text: 保存
+  - button:
+    - text: 发布
+  - generic: 开始
+  - paragraph: 开始
+  - button:
+  - generic: 审批
+  - button:
+  - paragraph: 审批节点
+  - generic: 单人 · 未指定审批人
+  - button:
+  - generic: 结束
+  - paragraph: 结束
+  - button:
+  - button:
+    - generic: 100%
+  - button:
+  - button:
+  - heading [level=3]: 节点配置
+  - generic: 审批节点
+  - button:
+  - button:
+    - generic: 基本信息
+  - generic: 节点名称
+  - textbox: 审批节点
+  - button:
+    - generic: 审批人配置
+  - generic: 审批方式
+  - button: 单人
+  - button: 会签
+  - button: 或签
+  - button: 依次
+  - generic: 审批人类型
+  - combobox [expanded]:
+    - generic: 指定用户
+  - button:
+    - generic: 请选择审批用户
+  - generic: 允许发起人自审
+  - button
+  - button:
+    - generic: 超时设置
+  - button:
+    - generic: 字段权限
+  - button:
+    - generic: 前置条件
+  - button: 保存配置
+- button:
+- region "Notifications alt+T"
+- listbox:
+  - option "指定用户" [active] [selected]:
+    - generic: 指定用户
+  - option "指定角色":
+    - generic: 指定角色
+  - option "指定部门":
+    - generic: 指定部门
+  - option "直属上级":
+    - generic: 直属上级
+  - option "部门负责人":
+    - generic: 部门负责人

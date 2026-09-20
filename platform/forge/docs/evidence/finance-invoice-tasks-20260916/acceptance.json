@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_invoice_tasks",
+  "archetype": "task_workspace",
+  "reviewedRevision": "ddae0bb68f4fb70399034f2aea1ef6d17a318c2e",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/finance-management.page.ts": "3322ae04dce2f137f8ffb71c8baf43814cc13f8b5592ab1803e3558040afb3cd",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "8830c910309c7d731c9289965590eb5572e550be39ea70c4b3c69c3baf78a036",
+    "apps/forge-objectstack/src/pages/project-task-workspace.page.ts": "ed4b4682fd3857b17bdee044b6e7e717253aa96f4d965aac8d27faa716711c11",
+    "docs/forge-page-polish-baseline.md": "87391dcd1a7e8feefa96b358d42815d22e0eedebf578d0ff0e470550b0d45eb4",
+    "apps/forge-objectstack/src/actions/finance-workflow.action.ts": "fc8507687ed365aa64fe5522a5d0b0a2f9785c7258f9c8732d516feb957ef62f",
+    "apps/forge-objectstack/src/objects/finance.object.ts": "bde56a88a22566da2502b92e9c8ea3bce36fb9d18f107d6245983253c9f9b4c0"
+  },
+  "environment": {
+    "forgeUrl": "http://localhost:4441",
+    "database": "apps/forge-objectstack/.objectstack/finance-sales-cycle.sqlite",
+    "materials": "Five independent shipped sales orders and invoice requests created by tests/invoice-task-workspace.integration.mjs"
+  },
+  "checks": {
+    "replication": {
+      "status": "blocked",
+      "notes": "RISEMAP current page is empty; header, periods, metrics, statuses, columns and empty state are observed, while row actions and same-material outcomes remain unavailable.",
+      "evidence": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md"]
+    },
+    "visual": {
+      "status": "pending",
+      "notes": "Populated desktop plus 390x844 narrow first screen, status filtering, search, empty result, reset and issuance dialog were checked in the built-in browser. Independent visual review remains pending.",
+      "evidence": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md"]
+    },
+    "interaction": {
+      "status": "blocked",
+      "notes": "Forge approval, rejection, issuance, search, reset and required-field blocking passed. RISEMAP row-level behavior remains unavailable with the current empty account.",
+      "evidence": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md", "apps/forge-objectstack/tests/invoice-task-workspace.integration.mjs"]
+    },
+    "business": {
+      "status": "blocked",
+      "notes": "Forge invoice and receivable creation plus same-SQLite restart readback passed. RISEMAP same-material business outcome remains unavailable.",
+      "evidence": ["apps/forge-objectstack/tests/invoice-task-workspace.integration.mjs", "apps/forge-objectstack/tests/invoice-task-restart-readback.mjs"]
+    }
+  },
+  "visualEvidence": {
+    "desktop": { "width": 1280, "height": 720, "evidence": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md"] },
+    "narrow": { "width": 390, "height": 844, "evidence": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md"] },
+    "reference": ["docs/forge-finance-sales-cycle-page-delivery-20260916.md"],
+    "populated": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md"],
+    "empty": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md"],
+    "form": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md"],
+    "error": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md"]
+  },
+  "requirements": [
+    { "id": "INV-TASK-001", "status": "pass", "steps": "Open both current pages.", "expected": "Matching title and responsibility.", "observed": "Title and responsibility match.", "evidence": ["docs/forge-finance-sales-cycle-page-delivery-20260916.md"] },
+    { "id": "INV-TASK-002", "status": "pending", "steps": "Switch the four periods.", "expected": "Metrics and rows follow the selected period.", "observed": "Tabs work; all current material falls in the same period, so cross-period differentiation remains pending.", "evidence": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md"] },
+    { "id": "INV-TASK-003", "status": "pass", "steps": "Approve and issue records while reading metrics.", "expected": "Only approved records contribute to pending count and amount.", "observed": "1/26000, then 2/38000, then 1/12000 matched persisted records.", "evidence": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md"] },
+    { "id": "INV-TASK-004", "status": "pass", "steps": "Switch status tabs before and after actions.", "expected": "Rows filter while period metrics remain stable.", "observed": "Pending, approved and all tabs returned the expected rows.", "evidence": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md"] },
+    { "id": "INV-TASK-005", "status": "pass", "steps": "Search PENDING-APPROVE and reset.", "expected": "One matching row, then the full list.", "observed": "One row, then five rows.", "evidence": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md"] },
+    { "id": "INV-TASK-006", "status": "pass", "steps": "Inspect populated columns.", "expected": "Ten columns use actual related and audit fields.", "observed": "Order, customer, tax, applicant and submitted time resolved correctly.", "evidence": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md"] },
+    { "id": "INV-TASK-007", "status": "pending", "steps": "Operate every Forge status and compare RISEMAP.", "expected": "Actions follow status and both products have understood outcomes.", "observed": "Forge passed; RISEMAP row behavior remains unavailable.", "evidence": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md"] },
+    { "id": "INV-TASK-008", "status": "pass", "steps": "Submit missing inputs and wrong-state actions.", "expected": "Clear blocking with no unintended transition.", "observed": "Page and API blockers passed.", "evidence": ["apps/forge-objectstack/tests/invoice-task-workspace.integration.mjs"] },
+    { "id": "INV-TASK-009", "status": "pass", "steps": "Check desktop and 390x844 built-in-browser views, including status tabs, search, empty result, reset and issuance dialog.", "expected": "Usable first screen without page-level horizontal overflow; wide table scrolls only inside its card.", "observed": "Desktop and narrow views passed. Period scope, metrics, filters and dialog remained usable without overlap; the wide table stayed inside its scroll container.", "evidence": ["docs/evidence/finance-invoice-tasks-20260916/acceptance.md"] },
+    { "id": "INV-TASK-010", "status": "pass", "steps": "Issue from the page, read invoice and receivable, restart, and read again.", "expected": "Linked issued invoice and unpaid receivable survive restart.", "observed": "Invoice and receivable remained linked at 26000 after restart.", "evidence": ["apps/forge-objectstack/tests/invoice-task-restart-readback.mjs"] }
+  ],
+  "review": {
+    "implementer": "current finance task",
+    "reviewer": "",
+    "reviewedAt": "",
+    "status": "pending",
+    "evidence": []
+  }
+}

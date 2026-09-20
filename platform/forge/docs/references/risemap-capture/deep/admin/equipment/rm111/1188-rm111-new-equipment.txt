@@ -1,0 +1,270 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/equipment-maintenance".
+1 AXWebArea RiseMap, URL: risemap.cn/ops/equipment-maintenance
+	2 container
+		3 container root
+			218 container
+				219 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+				220 text 行政
+				221 button 收起侧边栏
+					222 image
+				223 container
+					224 button 审批中心
+						225 image
+						226 text 审批中心
+						227 image
+					228 button 我的审批
+					229 button 抄送我的
+					230 button 我发起的
+					231 button 行政申请
+				232 container
+					233 button 行政管理
+						234 image
+						235 text 行政管理
+						236 image
+					237 button 公司通知
+					238 button 用章管理
+					239 button 会议纪要
+					240 button 工作汇报
+					241 button 文档中心
+					242 button 固定资产
+					243 button 资质与申报
+					244 button 物料领取
+					245 button 设备维护
+					246 button 礼品管理
+					247 button 借出管理
+					248 button 车辆管理
+				249 container
+					250 button 人力资源
+						251 image
+						252 text 人力资源
+						253 image
+					254 button 人事工作台
+					255 button 员工档案
+					256 button 招聘管理
+					257 button 入职离职
+					258 button 薪酬福利
+					259 button 规章制度
+					260 button 通讯录
+				261 container
+					262 button 考勤假期
+						263 image
+						264 text 考勤假期
+						265 image
+					266 button 加班申请
+					267 button 请假管理
+					268 button 出差申请
+					269 button 考勤管理
+					270 button 考勤统计
+				271 container
+					272 button 流程中心
+						273 image
+						274 text 流程中心
+						275 image
+					276 button 审批记录
+					277 button 发起流程
+					278 button 流程定义
+					279 button 流程分类
+				280 image
+				281 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+				282 button 查看方案
+					283 image
+					284 text 查看方案
+				285 button
+					286 image
+				287 container 业务分类
+					288 checkbox 工作台, Value: 0
+					289 checkbox 供应链, Value: 0
+					290 checkbox 销售, Value: 0
+					291 checkbox 生产, Value: 0
+					292 checkbox 项目, Value: 0
+					293 checkbox 行政, Value: 1
+					294 checkbox 财务, Value: 0
+					295 checkbox 报表, Value: 0
+					296 checkbox 系统, Value: 0
+				297 button Description: 展开搜索, Help: 搜索
+					298 image
+				299 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					300 image
+					301 text 2
+				302 button Description: 打开推广奖励, Help: 推广
+				303 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				304 link Description: 打开工单, Value: community.risemap.cn/support
+				305 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					306 image
+					307 text 立即订阅
+				308 button 金
+					309 text 金
+					310 image
+				311 button 工作台
+					312 image
+					313 text 工作台
+				314 button 行政申请
+					315 text 行政申请
+				316 button 公司通知
+					317 text 公司通知
+				318 button 发布通知
+					319 text 发布通知
+				320 button 用章管理
+					321 text 用章管理
+				322 button 会议纪要
+					323 text 会议纪要
+				324 button 新建会议纪要
+					325 text 新建会议纪要
+				326 button AI 模板管理
+					327 text AI 模板管理
+				328 button 工作汇报
+					329 text 工作汇报
+				330 button 新建工作汇报
+					331 text 新建工作汇报
+				332 button 文档中心
+					333 text 文档中心
+				334 button 固定资产
+					335 text 固定资产
+				336 button 资质与申报
+					337 text 资质与申报
+				338 button 物料领取
+					339 text 物料领取
+				340 button 设备维护
+					341 text 设备维护
+				342 container
+					343 heading 设备维护保养, Value: 1
+						344 text 设备维护保养
+					345 text 设备台账管理、维护/维修工单与提醒
+					346 button 设备台账
+						347 image
+						348 text 设备台账
+					349 button 工单管理
+						350 image
+						351 text 工单管理
+					352 button 维保规则
+						353 image
+						354 text 维保规则
+					355 button 提醒中心 0
+						356 image
+						357 text 提醒中心
+						358 text 0
+					359 button 费用统计
+						360 image
+						361 text 费用统计
+					362 button 新增设备
+						363 image
+						364 text 新增设备
+					365 button 导入
+						366 image
+						367 text 导入
+					368 button 模板
+						369 image
+						370 text 模板
+					371 button 导出
+						372 image
+						373 text 导出
+						374 image
+					375 button 刷新
+						376 image
+					377 button
+						378 image
+					379 button
+						380 image
+					381 image
+					382 text field (settable)
+					383 button 状态
+						384 text 状态
+						385 image
+					386 button 分类
+						387 text 分类
+						388 image
+					389 table
+						390 row
+							391 cell
+								392 checkbox (settable, integer) 0
+							393 cell
+								394 text 设备编号
+							395 cell
+								396 text 设备名称
+							397 cell
+								398 text 型号
+							399 cell
+								400 text 制造商
+							401 cell
+								402 text 分类
+							403 cell
+								404 text 安装位置
+							405 cell
+								406 text 状态
+							407 cell
+								408 text 负责人
+							409 cell
+								410 text 上次保养
+							411 cell
+								412 text 下次保养
+							413 cell
+								414 text 资产原值
+							415 cell
+								416 text 操作
+						417 row
+							418 cell
+								419 image
+								420 text 暂无匹配设备
+					421 text 共  0 条记录 每页
+					422 combo box (collapsed) Value: 20, Secondary Actions: Expand
+						423 text 20
+					424 text 条
+					425 button (disabled) 上一页
+						426 image
+					427 button 1
+					428 button (disabled) 下一页
+						429 image
+				430 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			217 container Notifications alt+T
+		431 container 新增设备, ID: radix-:r9q:
+			432 heading 新增设备, Value: 2, ID: radix-:r9r:
+				433 text 新增设备
+			434 container
+				435 text 设备编号
+				436 text field (settable)
+				437 container
+					438 text * 设备名称
+				439 text field (settable)
+				440 text 型号
+				441 text field (settable)
+				442 text 制造商
+				443 text field (settable)
+				444 container
+					445 text * 设备分类
+				446 button 请选择分类
+					447 text 请选择分类
+				448 text 状态
+				449 button 闲置
+					450 text 闲置
+				451 text 安装位置
+				452 text field (settable)
+				453 text 所属部门
+				454 button 请选择部门
+					455 text 请选择部门
+				456 container
+					457 text * 负责人
+				458 button 请选择负责人
+					459 text 请选择负责人
+				460 text 序列号
+				461 text field (settable)
+				462 text 资产原值 (¥)
+				463 text field (settable) 0
+				464 text 购置日期
+				465 container
+					466 text field (settable) 2026年9月9日
+					467 button
+						468 image
+					469 button
+						470 image
+				471 text 质保到期
+				472 container
+					473 text field (settable)
+					474 button
+						475 image
+				476 button 取消
+				477 button 添加设备
+			478 button Close
+				479 image
+				480 text Close
+
+The focused UI element is 436 text field (settable)

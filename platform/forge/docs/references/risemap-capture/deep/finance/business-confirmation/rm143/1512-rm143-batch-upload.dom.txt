@@ -1,0 +1,220 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 财务
+- button "收起侧边栏":
+- navigation:
+  - button "资金管理":
+    - generic: 资金管理
+  - button "资金账户":
+    - generic: 资金账户
+  - button "资金流水":
+    - generic: 资金流水
+  - button "应收应付":
+    - generic: 应收应付
+  - button "收款管理":
+    - generic: 收款管理
+  - button "付款管理":
+    - generic: 付款管理
+  - button "退款申请":
+    - generic: 退款申请
+  - button "授信额度管理":
+    - generic: 授信额度管理
+  - button "借款贷款管理":
+    - generic: 借款贷款管理
+  - button "业务确认":
+    - generic: 业务确认
+  - button "销售收入确认":
+    - generic: 销售收入确认
+  - button "成本中心":
+    - generic: 成本中心
+  - button "费用中心":
+    - generic: 费用中心
+  - button "报销管理":
+    - generic: 报销管理
+  - button "对账单":
+    - generic: 对账单
+  - button "发票管理":
+    - generic: 发票管理
+  - button "发票总览":
+    - generic: 发票总览
+  - button "销项发票":
+    - generic: 销项发票
+  - button "进项发票":
+    - generic: 进项发票
+  - button "开票任务":
+    - generic: 开票任务
+  - button "调整记录":
+    - generic: 调整记录
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务" [pressed]:
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "应收应付":
+  - generic: 应收应付
+- button "收款管理":
+  - generic: 收款管理
+- button "付款管理":
+  - generic: 付款管理
+- button "费用中心":
+  - generic: 费用中心
+- button "新建付款申请":
+  - generic: 新建付款申请
+- button "退款申请":
+  - generic: 退款申请
+- button "授信额度管理":
+  - generic: 授信额度管理
+- button "借款管理":
+  - generic: 借款管理
+- button "新建借款":
+  - generic: 新建借款
+- button "新建贷款":
+  - generic: 新建贷款
+- button "销售收入确认":
+  - generic: 销售收入确认
+- button "成本中心":
+  - generic: 成本中心
+- button "报销管理":
+  - generic: 报销管理
+- button "新建报销":
+  - generic: 新建报销
+- main:
+  - generic: 业务确认
+  - generic: 报销管理
+  - generic: 提交费用报销
+  - button "返回报销管理":
+  - heading "提交费用报销" [level=1]
+  - paragraph: 填写费用明细，提交审批流程
+  - button "取消"
+  - button "使用模板":
+    - text: 使用模板
+  - button "批量上传" [active]:
+    - text: 批量上传
+  - button "保存草稿":
+    - text: 保存草稿
+  - button "提交审批":
+    - text: 提交审批
+  - heading "基本信息" [level=2]
+  - paragraph: 填写报销归属、报销人与费用归集信息
+  - generic: "*"
+  - generic: 费用标题
+  - textbox "如：华能项目现场差旅报销"
+  - generic: "*"
+  - generic: 报销人
+  - button "金 金一涛 (默认部门)" [disabled]:
+    - generic: 金
+    - generic: 金一涛
+    - generic: (默认部门)
+  - switch "代他人报销"
+  - generic: 代他人报销
+  - generic: "*"
+  - generic: 成本归属
+  - button "项目成本":
+    - generic "项目成本"
+  - generic: "*"
+  - generic: 关联项目
+  - generic: (至少选择一个，可选多个，选择后可配置费用分摊)
+  - button "选择关联项目":
+    - generic: 选择关联项目...
+  - heading "付款与核销信息" [level=2]
+  - paragraph: 填写付款安排、借款核销及补充说明
+  - generic: 供应商
+  - button "搜索并选择供应商...":
+    - generic: 搜索并选择供应商...
+  - generic: 期望付款时间
+  - textbox "请选择日期"
+  - button:
+  - generic: 关联借款单
+  - button "选择要核销的借款单...":
+    - generic: 选择要核销的借款单...
+  - generic: 备注说明
+  - textbox "补充说明费用用途、出差事由等..."
+  - heading "费用明细 *" [level=2]
+  - paragraph: 逐项填写费用，并将对应票据附在费用项下
+  - button "添加费用项":
+    - text: 添加费用项
+  - button "智能识别发票，自动生成费用明细 AI 上传发票图片或PDF，AI 自动识别票面信息并为每张发票生成一行费用 剩余 10 / 10 次 立即识别":
+    - generic: 智能识别发票，自动生成费用明细
+    - generic: AI
+    - paragraph: 上传发票图片或PDF，AI 自动识别票面信息并为每张发票生成一行费用
+    - generic: 剩余 10 / 10 次
+    - text: 立即识别
+  - generic: 费用类别
+  - generic: 金额(¥)
+  - generic: 说明 *
+  - generic: 日期
+  - button "销售费用":
+    - generic "销售费用"
+  - textbox "0.00"
+  - textbox "费用说明..."
+  - textbox "请选择日期": 2026年9月8日
+  - button:
+  - button:
+  - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持图片 / PDF / Word / Excel，可上传多个文件":
+    - generic: 点击或拖拽文件到此处上传
+    - generic: 支持 Ctrl+V 粘贴截图
+    - generic: 支持图片 / PDF / Word / Excel，可上传多个文件
+  - generic: 共 1 项
+  - text: 合计：
+  - generic: ¥0
+  - heading "收款方式" [level=2]
+  - paragraph: 选择或新增收款账户，审批通过后报销款支付至此
+  - generic: 非必填
+  - button "新增收款方式":
+    - text: 新增收款方式
+  - paragraph: 未选择收款账户，不影响保存或提交审批。
+  - heading "审批流程" [level=3]:
+    - text: 审批流程
+  - paragraph: 开始
+  - paragraph: 审批
+  - generic: SINGLE
+  - paragraph: 系统管理员
+  - paragraph: 结束
+  - heading "批量导入费用明细" [level=3]
+  - button:
+  - paragraph: Excel 文件格式要求
+  - paragraph: 表头列（第一行）：
+  - code: 费用类别* | 说明 | 金额* | 日期
+  - paragraph: 可用费用类别：销售费用、客户开发费用、客户拜访费、客户招待费、客户礼品费、市场推广费用、广告推广费、展会活动费、宣传物料费、销售支持费用、样品费、售前支持费、销售佣金、项目费用、项目差旅费用、项目交通费、项目住宿费、项目餐饮补贴、项目实施费用、安装调试费、现场施工费、临时用工费、项目材料费用、项目辅材费、项目耗材费、项目补料费、项目外协费用、外协加工费、外包服务费、外部技术支持费、采购费用、采购业务费用、供应商拜访费、供应商招待费、供应商考察费、采购物流费用、采购运输费、装卸搬运费、包装费、质量处理费用、来料检测费、返修处理费、退货运输费、研发费用、研发材料费用、研发材料费、研发打样费、研发测试件费用、研发测试费用、测试检测费、认证校准费、实验费用、研发服务费用、技术咨询费、外包开发费、知识产权费、行政办公费用、办公用品费用、办公用品费、办公耗材费、办公设备费、办公场地费用、房租物业费、水电费、装修维修费、日常行政费用、快递费、印刷费、会议费、人事费用、招聘费用、招聘平台费、猎头费、面试费用、培训费用、内部培训费、外部培训费、课程费用、员工福利费用、节日福利费、团建费、员工关怀费、财务法务费用、财务服务费用、代理记账费、税务服务费、审计评估费、银行金融费用、银行手续费、承兑手续费、融资服务费、法务合规费用、律师费、合同审查费、诉讼仲裁费、IT/软件费用、软件系统费用、SaaS软件费、办公软件费、设计开发软件费、AI工具费用、AI会员订阅费、AI接口调用费、AI插件工具费、云服务费用、服务器费用、存储费用、短信/邮件服务费、交通车辆费用、市内交通费用、打车费、公共交通费、停车费、差旅交通费用、高铁/火车费、机票费、长途交通费、车辆使用费用、油费/充电费、过路过桥费、车辆维修保养费、其他费用、其他业务费用、其他销售费用、其他项目费用、其他采购费用、其他管理费用、其他行政费用、其他人事费用、其他财务费用、待确认费用、待财务确认费用、待部门确认费用、未分类费用
+  - button "下载 Excel 导入模板":
+    - text: 下载 Excel 导入模板
+  - paragraph: 点击或拖拽上传 Excel 文件
+  - paragraph: 支持 .xlsx / .xls 格式
+  - button "取消"
+  - button "导入" [disabled]:
+    - text: 导入
+- button "打开 AI 助手":
+- region "Notifications alt+T"

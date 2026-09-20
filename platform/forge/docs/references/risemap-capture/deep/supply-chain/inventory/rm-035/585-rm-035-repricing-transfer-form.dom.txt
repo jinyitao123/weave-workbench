@@ -1,0 +1,321 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 供应链
+- button "收起侧边栏":
+- navigation:
+  - button "到货检验":
+    - generic: 到货检验
+  - button "到货通知":
+    - generic: 到货通知
+  - button "到货登记":
+    - generic: 到货登记
+  - button "待检验库存":
+    - generic: 待检验库存
+  - button "检验单":
+    - generic: 检验单
+  - button "检验规则":
+    - generic: 检验规则
+  - button "基础资料":
+    - generic: 基础资料
+  - button "物料管理":
+    - generic: 物料管理
+  - button "物料组合":
+    - generic: 物料组合
+  - button "BOM管理":
+    - generic: BOM管理
+  - button "综合物料搜索":
+    - generic: 综合物料搜索
+  - button "供应商管理":
+    - generic: 供应商管理
+  - button "产品实例追溯":
+    - generic: 产品实例追溯
+  - button "仓库管理":
+    - generic: 仓库管理
+  - button "采购管理":
+    - generic: 采购管理
+  - button "采购发票":
+    - generic: 采购发票
+  - button "采购申请":
+    - generic: 采购申请
+  - button "采购待办池":
+    - generic: 采购待办池
+  - button "询价管理":
+    - generic: 询价管理
+  - button "采购订单":
+    - generic: 采购订单
+  - button "采购退换货":
+    - generic: 采购退换货
+  - button "供应商价格本":
+    - generic: 供应商价格本
+  - button "入库管理":
+    - generic: 入库管理
+  - button "全部入库单":
+    - generic: 全部入库单
+  - button "采购入库":
+    - generic: 采购入库
+  - button "生产入库":
+    - generic: 生产入库
+  - button "其他入库":
+    - generic: 其他入库
+  - button "期初入库":
+    - generic: 期初入库
+  - button "入库明细":
+    - generic: 入库明细
+  - button "库存管理":
+    - generic: 库存管理
+  - button "库存总览":
+    - generic: 库存总览
+  - button "不合格处理":
+    - generic: 不合格处理
+  - button "库存流水":
+    - generic: 库存流水
+  - button "库存锁定":
+    - generic: 库存锁定
+  - button "库存盘点":
+    - generic: 库存盘点
+  - button "调拨与借出":
+    - generic: 调拨与借出
+  - button "库存预警":
+    - generic: 库存预警
+  - button "报损单":
+    - generic: 报损单
+  - button "SN码管理":
+    - generic: SN码管理
+  - button "出库管理":
+    - generic: 出库管理
+  - button "出库单列表":
+    - generic: 出库单列表
+  - button "生产出库":
+    - generic: 生产出库
+  - button "其他出库":
+    - generic: 其他出库
+  - button "销售直接出库":
+    - generic: 销售直接出库
+  - button "待出库发货单":
+    - generic: 待出库发货单
+  - button "采购退换货出库":
+    - generic: 采购退换货出库
+  - button "出库明细":
+    - generic: 出库明细
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链" [pressed]:
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "采购入库":
+  - generic: 采购入库
+- button "新建入库单":
+  - generic: 新建入库单
+- button "生产入库":
+  - generic: 生产入库
+- button "其他入库":
+  - generic: 其他入库
+- button "期初入库":
+  - generic: 期初入库
+- button "入库明细":
+  - generic: 入库明细
+- button "库存总览":
+  - generic: 库存总览
+- button "不合格处理":
+  - generic: 不合格处理
+- button "库存流水":
+  - generic: 库存流水
+- button "库存锁定":
+  - generic: 库存锁定
+- button "库存盘点":
+  - generic: 库存盘点
+- button "新建盘点":
+  - generic: 新建盘点
+- button "调拨与借出":
+  - generic: 调拨与借出
+- button "新建调拨":
+  - generic: 新建调拨
+- main:
+  - generic: 库存管理
+  - generic: 库存调拨与借出
+  - generic: 新建单据
+  - button:
+  - heading "新建调拨/借出单" [level=1]
+  - button "取消"
+  - button "保存草稿":
+    - text: 保存草稿
+  - button "提交审核":
+    - text: 提交审核
+  - generic: "1"
+  - heading "业务类型" [level=3]
+  - generic: 单据编号
+  - textbox "留空则按编码规则生成"
+  - button "普通调拨 跨仓调拨或库内移位":
+    - generic: 普通调拨
+    - generic: 跨仓调拨或库内移位
+  - button "借出管理 借出/归还业务单位":
+    - generic: 借出管理
+    - generic: 借出/归还业务单位
+  - button "变价调拨 调拨并调整价格" [active]:
+    - generic: 变价调拨
+    - generic: 调拨并调整价格
+  - generic: "2"
+  - heading "调出仓库 → 调入仓库" [level=3]
+  - text: 发货仓库
+  - generic: "*"
+  - button "请选择发货仓库":
+    - generic: 请选择发货仓库
+  - text: 调入仓库
+  - generic: "*"
+  - button "请选择调入仓库":
+    - generic: 请选择调入仓库
+  - generic: 调拨原因 *
+  - button "项目需求"
+  - button "库存调配"
+  - button "项目补货"
+  - button "项目剩余退回"
+  - button "紧急调拨"
+  - textbox "或输入其他原因..."
+  - generic: "3"
+  - heading "物料明细" [level=3]
+  - generic: 调价比例
+  - textbox "0"
+  - generic: "%"
+  - button "应用"
+  - button "选择物料":
+    - text: 选择物料
+  - table:
+    - rowgroup:
+      - row "# 调整#列宽 物料名称 调整物料名称列宽 型号 调整型号列宽 规格 调整规格列宽 单位 调整单位列宽 库存 调整库存列宽 数量 * 调整数量列宽 含税单价 调整含税单价列宽 不含税单价 调整不含税单价列宽 调后价 调整调后价列宽 税率 调整税率列宽 含税金额 调整含税金额列宽 批次/SN 调整批次/SN列宽 调出库位 调整调出库位列宽 调入库位 调整调入库位列宽 操作":
+        - columnheader "# 调整#列宽":
+          - generic: "#"
+          - button "调整#列宽"
+        - columnheader "物料名称 调整物料名称列宽":
+          - generic: 物料名称
+          - button "调整物料名称列宽"
+        - columnheader "型号 调整型号列宽":
+          - generic: 型号
+          - button "调整型号列宽"
+        - columnheader "规格 调整规格列宽":
+          - generic: 规格
+          - button "调整规格列宽"
+        - columnheader "单位 调整单位列宽":
+          - generic: 单位
+          - button "调整单位列宽"
+        - columnheader "库存 调整库存列宽":
+          - generic: 库存
+          - button "调整库存列宽"
+        - columnheader "数量 * 调整数量列宽":
+          - generic: 数量 *
+          - button "调整数量列宽"
+        - columnheader "含税单价 调整含税单价列宽":
+          - generic: 含税单价
+          - button "调整含税单价列宽"
+        - columnheader "不含税单价 调整不含税单价列宽":
+          - generic: 不含税单价
+          - button "调整不含税单价列宽"
+        - columnheader "调后价 调整调后价列宽":
+          - generic: 调后价
+          - button "调整调后价列宽"
+        - columnheader "税率 调整税率列宽":
+          - generic: 税率
+          - button "调整税率列宽"
+        - columnheader "含税金额 调整含税金额列宽":
+          - generic: 含税金额
+          - button "调整含税金额列宽"
+        - columnheader "批次/SN 调整批次/SN列宽":
+          - generic: 批次/SN
+          - button "调整批次/SN列宽"
+        - columnheader "调出库位 调整调出库位列宽":
+          - generic: 调出库位
+          - button "调整调出库位列宽"
+        - columnheader "调入库位 调整调入库位列宽":
+          - generic: 调入库位
+          - button "调整调入库位列宽"
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "1 选择物料 - - 台 - 1 - ¥0.0000 - - - 请先选物料 请先选仓库":
+        - cell "1"
+        - cell "选择物料":
+          - button "选择物料":
+            - text: 选择物料
+        - cell "-":
+          - generic: "-"
+        - cell "-":
+          - generic: "-"
+        - cell "台"
+        - cell "-"
+        - cell "1":
+          - textbox: "1"
+        - cell "-"
+        - cell "¥0.0000"
+        - cell:
+          - textbox
+        - cell "-"
+        - cell "-"
+        - cell "-"
+        - cell "请先选物料"
+        - cell "请先选仓库":
+          - button "请先选仓库" [disabled]:
+            - generic: 请先选仓库
+        - cell:
+          - button "删除":
+  - button "添加空行":
+    - text: 添加空行
+  - button "从物料库添加":
+    - text: 从物料库添加
+  - generic: 合计
+  - generic: ¥0.00
+  - paragraph: 0 种 · 0
+  - generic: "4"
+  - heading "备注说明" [level=3]
+  - generic: (选填)
+  - textbox "输入备注说明..."
+  - heading "单据预览" [level=4]
+  - paragraph: 单号
+  - paragraph: 待提交生成
+  - paragraph: 业务类型
+  - generic: 变价调拨
+  - paragraph: 发出方
+  - paragraph: "-"
+  - paragraph: 接收仓库
+  - paragraph: "-"
+  - paragraph: 物料价值
+  - paragraph: ¥0.00
+  - paragraph: 0 种 · 0
+  - paragraph: 操作提示
+  - list:
+    - listitem: • 调拨数量不可超过发出仓库库存
+    - listitem: • 提交后需审核通过才可执行
+    - listitem: • 变价调拨需标注调价后单价
+- button "打开 AI 助手":
+- region "Notifications alt+T"

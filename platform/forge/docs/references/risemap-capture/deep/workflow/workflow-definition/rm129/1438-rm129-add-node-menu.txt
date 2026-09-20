@@ -1,0 +1,354 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/workflow/designer".
+1 AXWebArea RiseMap, URL: risemap.cn/workflow/designer
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 行政
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 审批中心
+					10 image
+					11 text 审批中心
+					12 image
+				13 button 我的审批
+				14 button 抄送我的
+				15 button 我发起的
+				16 button 行政申请
+				17 button 行政管理
+					18 image
+					19 text 行政管理
+					20 image
+				21 button 公司通知
+				22 button 用章管理
+				23 button 会议纪要
+				24 button 工作汇报
+				25 button 文档中心
+				26 button 固定资产
+				27 button 资质与申报
+				28 button 物料领取
+				29 button 设备维护
+				30 button 礼品管理
+				31 button 借出管理
+				32 button 车辆管理
+				33 button 人力资源
+					34 image
+					35 text 人力资源
+					36 image
+				37 button 人事工作台
+				38 button 员工档案
+				39 button 招聘管理
+				40 button 入职离职
+				41 button 薪酬福利
+				42 button 规章制度
+				43 button 通讯录
+				44 button 考勤假期
+					45 image
+					46 text 考勤假期
+					47 image
+				48 button 加班申请
+				49 button 请假管理
+				50 button 出差申请
+				51 button 考勤管理
+				52 button 考勤统计
+				53 button 流程中心
+					54 image
+					55 text 流程中心
+					56 image
+				57 button 审批记录
+				58 button 发起流程
+				59 button 流程定义
+				60 button 流程分类
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 1
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				97 button 薪酬福利
+					98 text 薪酬福利
+				99 button 福利发放
+					100 text 福利发放
+				101 button 规章制度
+					102 text 规章制度
+				103 button 人事配置
+					104 text 人事配置
+				105 button 通讯录
+					106 text 通讯录
+				107 button 加班申请
+					108 text 加班申请
+				109 button 请假管理
+					110 text 请假管理
+				111 button 出差申请
+					112 text 出差申请
+				113 button 新建出差申请
+					114 text 新建出差申请
+				115 button 考勤管理
+					116 text 考勤管理
+				117 button 考勤统计
+					118 text 考勤统计
+				119 button 审批记录
+					120 text 审批记录
+				121 button 发起流程
+					122 text 发起流程
+				123 button 流程设计器
+					124 text 流程设计器
+			125 container
+				126 text 工作流
+				127 image
+				128 text 流程设计器
+				129 button 返回
+					130 image
+				131 text field (settable)
+				132 text 新建流程
+				133 radio button 基本信息, Value: 0, ID: :ri:-info
+					134 image
+					135 text 基本信息
+				136 radio button 表单配置, Value: 0, ID: :ri:-form
+					137 image
+					138 text 表单配置
+				139 radio button 流程设计, Value: 1, ID: :ri:-flow
+					140 image
+					141 text 流程设计
+				142 radio button 催办设置, Value: 0, ID: :ri:-urge
+					143 image
+					144 text 催办设置
+				145 button 保存
+					146 image
+					147 text 保存
+				148 button 发布
+					149 image
+					150 text 发布
+				151 container
+					152 image
+					153 text 开始
+					154 text 开始
+					155 button
+						156 image
+					157 image
+					158 text 审批
+					159 button 删除
+						160 image
+					161 text 审批节点
+					162 image
+					163 text 单人 ·  未指定审批人
+					164 button
+						165 image
+					166 image
+					167 text 结束
+					168 text 结束
+				169 container
+					170 button 缩小
+						171 image
+					172 button 100%, Help: 重置缩放
+						173 text 100
+						174 text %
+					175 button 放大
+						176 image
+					177 button 适应画布
+						178 image
+				179 container
+					180 image
+					181 heading 节点配置, Value: 3
+						182 text 节点配置
+					183 text 审批 节点
+					184 button
+						185 image
+					186 button 基本信息
+						187 image
+						188 text 基本信息
+						189 image
+					190 text 节点名称
+					191 text field (settable) 审批节点
+					192 button 审批人配置
+						193 image
+						194 text 审批人配置
+						195 image
+					196 text 审批方式
+					197 button 单人
+					198 button 会签
+					199 button 或签
+					200 button 依次
+					201 text 审批人类型
+					202 combo box (collapsed) Value: 指定用户, Secondary Actions: Expand
+						203 text 指定用户
+					204 button 请选择审批用户
+						205 text 请选择审批用户
+					206 text 允许发起人自审
+					207 button
+					208 button 超时设置
+						209 image
+						210 text 超时设置
+						211 image
+					212 text 超时时间
+					213 text field (settable) 0
+					214 text 小时
+					226 text 设为 0 表示不限制处理时间
+					215 button 字段权限
+						216 image
+						217 text 字段权限
+						227 image
+					228 table
+						229 row
+							230 cell
+								231 text 字段
+							232 cell
+								233 text 可见
+							234 cell
+								235 text 可编辑
+							236 cell
+								237 text 必填
+						238 row
+							239 cell
+								240 text 新多行文本
+							241 cell
+								242 container
+									243 checkbox (settable, integer) 1
+									244 image
+							245 cell
+								246 checkbox (settable, integer) 0
+							247 cell
+								248 checkbox (disabled, settable, integer) 0
+						249 row
+							250 cell
+								251 text 新金额
+							252 cell
+								253 container
+									254 checkbox (settable, integer) 1
+									255 image
+							256 cell
+								257 checkbox (settable, integer) 0
+							258 cell
+								259 checkbox (disabled, settable, integer) 0
+						260 row
+							261 cell
+								262 text 新单选
+							263 cell
+								264 container
+									265 checkbox (settable, integer) 1
+									266 image
+							267 cell
+								268 checkbox (settable, integer) 0
+							269 cell
+								270 checkbox (disabled, settable, integer) 0
+						271 row
+							272 cell
+								273 text 新日期
+							274 cell
+								275 container
+									276 checkbox (settable, integer) 1
+									277 image
+							278 cell
+								279 checkbox (settable, integer) 0
+							280 cell
+								281 checkbox (disabled, settable, integer) 0
+						282 row
+							283 cell
+								284 text 新单行文本
+							285 cell
+								286 container
+									287 checkbox (settable, integer) 1
+									288 image
+							289 cell
+								290 checkbox (settable, integer) 0
+							291 cell
+								292 checkbox (disabled, settable, integer) 0
+						293 row
+							294 cell
+								295 text 新下拉选择
+							296 cell
+								297 container
+									298 checkbox (settable, integer) 1
+									299 image
+							300 cell
+								301 checkbox (settable, integer) 0
+							302 cell
+								303 checkbox (disabled, settable, integer) 0
+						304 row
+							305 cell
+								306 text 新附件上传
+							307 cell
+								308 container
+									309 checkbox (settable, integer) 1
+									310 image
+							311 cell
+								312 checkbox (settable, integer) 0
+							313 cell
+								314 checkbox (disabled, settable, integer) 0
+						315 row
+							316 cell
+								317 text 新多选
+							318 cell
+								319 container
+									320 checkbox (settable, integer) 1
+									321 image
+							322 cell
+								323 checkbox (settable, integer) 0
+							324 cell
+								325 checkbox (disabled, settable, integer) 0
+					326 text 控制表单字段在该审批节点的可见性和编辑权限
+					219 button 前置条件
+						220 image
+						221 text 前置条件
+						327 image
+					328 text 需要附件
+					329 button
+					330 text 字段条件
+					331 button 添加
+						332 image
+						333 text 添加
+					339 pop up button (collapsed, settable) Value: 选择字段, Secondary Actions: Expand
+						340 menu
+							341 (selected) 选择字段
+							342 新多行文本
+							343 新金额
+							344 新单选
+							345 新日期
+							346 新单行文本
+							347 新下拉选择
+							348 新附件上传
+							349 新多选
+					350 pop up button (disabled, collapsed, settable) Value: 必填, Secondary Actions: Expand
+						351 menu
+							352 (disabled) 必填
+					353 button
+						354 image
+					335 text 运算符支持规则
+					336 text 附件、文件、明细表等复杂字段仅支持必填
+					337 text 人员、部门、关联和枚举字段使用选择器
+					338 text 数字、金额、日期和日期时间支持大小比较
+					223 button 保存配置
+			224 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			225 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/workflow/designer

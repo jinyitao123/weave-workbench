@@ -1,0 +1,78 @@
+Browser tab: 43, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_service_workspace".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_service_workspace
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 接单中心
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_service_workspace
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 接单中心, Value: 1
+				44 text 接单中心
+			45 text 今日行程、我的工单、业绩、备件与报价单 24 服务管理  /  接单中心
+			46 button 刷新
+			47 text 今日行程、我的工单、业绩、备件与报价单
+			48 heading 接单中心, Value: 1
+				49 text 接单中心
+			101 text 服务工单已完工 今日计划上门 0 当前接单中心可办工单 待接单 1 等你接的派工 进行中 0 服务中 / 待协同 / 已挂起 今日已完工 20 当天完成工单
+			51 text field (settable) Description: 搜索我的工单, Value: WO-DISPATCH-20260913175841
+			52 text 今日 我的工单 业绩 我的备件 我的报价单 我的结算单
+			53 button 清空筛选
+			54 table
+				55 row
+					56 cell
+						57 text 工单
+					58 cell
+						59 text 客户
+					60 cell
+						61 text 服务对象
+					62 cell
+						63 text 预约时间
+					64 cell
+						65 text 状态
+					66 cell
+						67 text 下一步
+					68 cell
+						69 text 操作
+				102 row
+					103 cell
+						104 text ◇
+						105 text 今天没有已排期的上门
+						106 text 新增或导入业务记录后，可在这里按当前筛选条件查看和跟踪。
+			100 text 共  0  条记录 每页 20 条 · 1 / 1
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_service_workspace

@@ -1,0 +1,175 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/docs".
+1 AXWebArea RiseMap, URL: risemap.cn/ops/docs
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 行政
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 审批中心
+					10 image
+					11 text 审批中心
+					12 image
+				13 button 我的审批
+				14 button 抄送我的
+				15 button 我发起的
+				16 button 行政申请
+				17 button 行政管理
+					18 image
+					19 text 行政管理
+					20 image
+				21 button 公司通知
+				22 button 用章管理
+				23 button 会议纪要
+				24 button 工作汇报
+				25 button 文档中心
+				26 button 固定资产
+				27 button 资质与申报
+				28 button 物料领取
+				29 button 设备维护
+				30 button 礼品管理
+				31 button 借出管理
+				32 button 车辆管理
+				33 button 人力资源
+					34 image
+					35 text 人力资源
+					36 image
+				37 button 人事工作台
+				38 button 员工档案
+				39 button 招聘管理
+				40 button 入职离职
+				41 button 薪酬福利
+				42 button 规章制度
+				43 button 通讯录
+				44 button 考勤假期
+					45 image
+					46 text 考勤假期
+					47 image
+				48 button 加班申请
+				49 button 请假管理
+				50 button 出差申请
+				51 button 考勤管理
+				52 button 考勤统计
+				53 button 流程中心
+					54 image
+					55 text 流程中心
+					56 image
+				57 button 审批记录
+				58 button 发起流程
+				59 button 流程定义
+				60 button 流程分类
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 1
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				97 button 新建计划模板
+					98 text 新建计划模板
+				99 button 我的审批
+					100 text 我的审批
+				101 button 抄送我的
+					102 text 抄送我的
+				103 button 我发起的
+					104 text 我发起的
+				105 button 行政申请
+					106 text 行政申请
+				107 button 公司通知
+					108 text 公司通知
+				109 button 发布通知
+					110 text 发布通知
+				111 button 用章管理
+					112 text 用章管理
+				113 button 会议纪要
+					114 text 会议纪要
+				115 button 新建会议纪要
+					116 text 新建会议纪要
+				117 button AI 模板管理
+					118 text AI 模板管理
+				119 button 工作汇报
+					120 text 工作汇报
+				121 button 新建工作汇报
+					122 text 新建工作汇报
+				123 button 文档中心
+					124 text 文档中心
+			125 container
+				126 container
+					127 text 行政管理
+					128 image
+					129 text 文档中心
+					130 image
+					131 heading 文档中心, Value: 1
+						132 text 文档中心
+					133 text 公司文档归档、版本管控、权限分配与跨业务模块文件引用
+				134 button 新建文件夹
+					135 image
+					136 text 新建文件夹
+				137 button 上传文件夹
+					138 image
+					139 text 上传文件夹
+				140 button 上传文件
+					141 image
+					142 text 上传文件
+				143 text 文件夹
+				144 image
+				145 text 全部文件夹
+				146 image
+				147 text 最近使用
+				148 image
+				149 text field (settable)
+				150 button 收藏
+					151 image
+					152 text 收藏
+				153 button 按日期
+					154 text 按日期
+				155 button
+					156 image
+				157 radio button Value: 1, ID: :r1c:-list
+					158 image
+				159 radio button Value: 0, ID: :r1c:-grid
+					160 image
+				161 text 文件夹
+				162 image
+				163 text 暂无文件夹，点击「新建文件夹」创建 文件列表  ( 0 )
+				164 image
+				165 text 暂无文件
+			166 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			167 container Notifications alt+T
+		168 container
+			169 text 按日期
+			170 image
+			171 text 按名称
+			172 text 按大小
+
+The focused UI element is 153 button 按日期

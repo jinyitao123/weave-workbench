@@ -1,0 +1,211 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 生产
+- button "收起侧边栏":
+- navigation:
+  - button "组装业务管理":
+    - generic: 组装业务管理
+  - button "组装单":
+    - generic: 组装单
+  - button "缺料待办":
+    - generic: 缺料待办
+  - button "领料单":
+    - generic: 领料单
+  - button "补料单":
+    - generic: 补料单
+  - button "退料单":
+    - generic: 退料单
+  - button "拆解单":
+    - generic: 拆解单
+  - button "换件单":
+    - generic: 换件单
+  - button "图纸管理":
+    - generic: 图纸管理
+  - button "进入图纸管理上手指南":
+  - button "图纸总览":
+    - generic: 图纸总览
+  - button "图号档案":
+    - generic: 图号档案
+  - button "图纸评审":
+    - generic: 图纸评审
+  - button "图纸发布":
+    - generic: 图纸发布
+  - button "图纸变更":
+    - generic: 图纸变更
+  - button "图纸发放记录":
+    - generic: 图纸发放记录
+  - button "图纸关联查询":
+    - generic: 图纸关联查询
+  - button "客户图纸":
+    - generic: 客户图纸
+  - button "委外管理":
+    - generic: 委外管理
+  - button "进入委外管理上手指南":
+  - button "委外看板":
+    - generic: 委外看板
+  - button "委外订单":
+    - generic: 委外订单
+  - button "委外发料":
+    - generic: 委外发料
+  - button "委外回厂":
+    - generic: 委外回厂
+  - button "委外退料":
+    - generic: 委外退料
+  - button "委外对账":
+    - generic: 委外对账
+  - button "委外供应商":
+    - generic: 委外供应商
+  - button "委外库存":
+    - generic: 委外库存
+  - button "批次追溯":
+    - generic: 批次追溯
+  - button "委外未交":
+    - generic: 委外未交
+  - button "委外进货":
+    - generic: 委外进货
+  - button "委外对账单":
+    - generic: 委外对账单
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产" [pressed]:
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "新建拆解单":
+  - generic: 新建拆解单
+- button "换件单":
+  - generic: 换件单
+- button "新建换件单":
+  - generic: 新建换件单
+- button "图纸管理上手指南":
+  - generic: 图纸管理上手指南
+- button "图纸总览":
+  - generic: 图纸总览
+- button "新建图号档案":
+  - generic: 新建图号档案
+- button "图号档案":
+  - generic: 图号档案
+- button "图纸评审":
+  - generic: 图纸评审
+- button "新建评审":
+  - generic: 新建评审
+- button "图纸发布":
+  - generic: 图纸发布
+- button "已发布记录":
+  - generic: 已发布记录
+- button "图纸变更":
+  - generic: 图纸变更
+- button "新建变更":
+  - generic: 新建变更
+- button "图纸发放记录":
+  - generic: 图纸发放记录
+- main:
+  - generic "图纸发放记录":
+    - navigation "图纸发放记录面包屑":
+      - list:
+        - link "图纸管理":
+          - /url: /drawing/overview
+        - generic: 图纸发放记录
+    - heading "图纸发放记录" [level=1]
+    - paragraph: 统一管理图纸发放、接收确认、回执追踪和历史记录
+  - button "新建发放单":
+    - text: 新建发放单
+  - button "导出":
+    - text: 导出
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "发放单号 / 图号 / 图纸名称"
+  - button "状态":
+    - text: 状态
+  - button "确认状态":
+    - text: 确认状态
+  - button "接收类型" [active]:
+    - text: 接收类型
+  - table:
+    - rowgroup:
+      - row "发放单号 图号 图纸名称 发放版本 接收对象 接收类型 发放方式 发放状态 确认状态 回执状态 发放人 发放时间 风险 操作":
+        - columnheader:
+          - checkbox
+        - columnheader "发放单号":
+          - generic: 发放单号
+        - columnheader "图号":
+          - generic: 图号
+        - columnheader "图纸名称":
+          - generic: 图纸名称
+        - columnheader "发放版本":
+          - generic: 发放版本
+        - columnheader "接收对象":
+          - generic: 接收对象
+        - columnheader "接收类型":
+          - generic: 接收类型
+        - columnheader "发放方式":
+          - generic: 发放方式
+        - columnheader "发放状态":
+          - generic: 发放状态
+        - columnheader "确认状态":
+          - generic: 确认状态
+        - columnheader "回执状态":
+          - generic: 回执状态
+        - columnheader "发放人":
+          - generic: 发放人
+        - columnheader "发放时间":
+          - generic: 发放时间
+        - columnheader "风险":
+          - generic: 风险
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "暂无图纸发放记录":
+        - cell "暂无图纸发放记录":
+          - generic: 暂无图纸发放记录
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2025-10
+- generic: 全部
+- generic: 内部部门
+- generic: 内部人员
+- generic: 供应商
+- generic: 客户

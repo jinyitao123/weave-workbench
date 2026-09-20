@@ -1,0 +1,203 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/reports/project".
+1 AXWebArea RiseMap, URL: risemap.cn/reports/project
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 报表
+			6 button 收起侧边栏
+				7 image
+			8 container
+				304 button 销售统计
+					305 image
+					306 text 销售统计
+				307 button 采购统计
+					308 image
+					309 text 采购统计
+				310 button 库存统计
+					311 image
+					312 text 库存统计
+				313 button 项目统计
+					314 image
+					315 text 项目统计
+				316 button 组装统计
+					317 image
+					318 text 组装统计
+				319 button 财务统计
+					320 image
+					321 text 财务统计
+					322 image
+				323 button 财务总览
+				324 button 损益分析
+				325 button 资金分析
+				326 button 往来账款
+				327 button 税务库存
+				328 button 风险监控
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 1
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				245 button 对账单
+					246 text 对账单
+				247 button 客户对账单
+					248 text 客户对账单
+				249 button 新建客户对账
+					250 text 新建客户对账
+				251 button 供应商对账单
+					252 text 供应商对账单
+				253 button 新建供应商对账
+					254 text 新建供应商对账
+				255 button 发票总览
+					256 text 发票总览
+				257 button 销项发票
+					258 text 销项发票
+				259 button 进项发票
+					260 text 进项发票
+				261 button 开票任务
+					262 text 开票任务
+				263 button 调整记录
+					264 text 调整记录
+				329 button 销售统计
+					330 text 销售统计
+				331 button 采购统计
+					332 text 采购统计
+				333 button 库存统计
+					334 text 库存统计
+				335 button 项目统计
+					336 text 项目统计
+			337 container
+				338 image
+				339 text 报表中心
+				340 heading 项目统计, Value: 1
+					341 text 项目统计
+				342 text 项目人员投入、任务交付、工时负荷、协作覆盖与执行质量分析。
+				343 button 导出报表
+					344 image
+					345 text 导出报表
+				346 container 项目报表维度
+					347 button 项目统计
+					349 button 任务统计
+					350 button 人员统计
+						433 text 人员统计
+				351 image
+				352 text 筛选条件
+				353 container
+					354 image
+					355 text field (settable)
+				356 pop up button (collapsed, settable) Value: 全部项目, Secondary Actions: Expand
+					357 menu
+						358 (selected) 全部项目
+						359 我负责的
+				360 pop up button (collapsed, settable) Value: 本月, Secondary Actions: Expand
+					361 menu
+						362 (selected) 本月
+						363 本季度
+						364 本年度
+				365 button 刷新
+					366 image
+					367 text 刷新
+				368 image
+				369 text 更新时间 :  2026/9/9 06:50:52 当前展示 人员统计 统计数据。 统计周期 2026-09-01 至 2026-09-30
+				434 container
+					435 image
+					436 text 参与人员
+					437 pop up button (collapsed) Description: 查看参与人员计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						438 image
+					439 image
+					440 text 0人 覆盖 0 个项目
+				441 container
+					442 image
+					443 text 人均参与项目
+					444 pop up button (collapsed) Description: 查看人均参与项目计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						445 image
+					446 image
+					447 text --
+				448 container
+					449 image
+					450 text 人均完成任务
+					451 pop up button (collapsed) Description: 查看人均完成任务计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						452 image
+					453 image
+					454 text -- 任务完成率 --
+				455 container
+					456 image
+					457 text 人均投入工时
+					458 pop up button (collapsed) Description: 查看人均投入工时计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						459 image
+					460 image
+					461 text -- 按审批工时
+				398 container
+					399 heading 人员投入与任务完成趋势, Value: 2
+						400 text 人员投入与任务完成趋势
+					401 text 投入人数 完成任务
+					402 image
+						462 text 2026-04
+						463 text 2026-05
+						464 text 2026-06
+						465 text 2026-07
+						466 text 2026-08
+						467 text 2026-09
+				409 container
+					410 heading 人员角色分布, Value: 2
+						411 text 人员角色分布
+					412 image
+						413 text 人员角色
+				414 container
+					415 heading 人员项目效能健康度, Value: 2
+						416 text 人员项目效能健康度
+					417 text -- 任务完成率 人均完成 0 项 -- 逾期任务人员 当前存在至少一项逾期任务 0人
+				421 container
+					422 heading 人员任务完成率排行, Value: 2
+						423 text 人员任务完成率排行
+					424 text TOP 5
+				425 container
+					426 heading 人员项目工时排行, Value: 2
+						427 text 人员项目工时排行
+					428 text TOP 5
+				429 container
+					430 heading 部门项目工时投入, Value: 2
+						431 text 部门项目工时投入
+					432 text 全量排行
+				468 container
+					469 heading 人员项目参与度排行, Value: 2
+						470 text 人员项目参与度排行
+					471 text TOP 5
+				472 container
+					473 heading 人员逾期任务排行, Value: 2
+						474 text 人员逾期任务排行
+					475 text TOP 5
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+
+The focused UI element is 350 button 人员统计

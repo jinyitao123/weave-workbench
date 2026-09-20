@@ -1,0 +1,194 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/inventory/outbound/sales-direct".
+1 AXWebArea RiseMap, URL: risemap.cn/inventory/outbound/sales-direct
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 到货检验
+					10 image
+					11 text 到货检验
+					12 image
+				13 button 到货通知
+				14 button 到货登记
+				15 button 待检验库存
+				16 button 检验单
+				17 button 检验规则
+				18 button 基础资料
+					19 image
+					20 text 基础资料
+					21 image
+				22 button 物料管理
+				23 button 物料组合
+				24 button BOM管理
+				25 button 综合物料搜索
+				26 button 供应商管理
+				27 button 产品实例追溯
+				28 button 仓库管理
+				29 button 采购管理
+					30 image
+					31 text 采购管理
+					32 image
+				33 button 采购发票
+				34 button 采购申请
+				35 button 采购待办池
+				36 button 询价管理
+				37 button 采购订单
+				38 button 采购退换货
+				39 button 供应商价格本
+				40 button 入库管理
+					41 image
+					42 text 入库管理
+					43 image
+				44 button 全部入库单
+				45 button 采购入库
+				46 button 生产入库
+				47 button 其他入库
+				48 button 期初入库
+				49 button 入库明细
+				50 button 库存管理
+					51 image
+					52 text 库存管理
+					53 image
+				54 button 库存总览
+				55 button 不合格处理
+				56 button 库存流水
+				57 button 库存锁定
+				58 button 库存盘点
+				59 button 调拨与借出
+				60 button 库存预警
+				61 button 报损单
+				62 button SN码管理
+				63 button 出库管理
+					64 image
+					65 text 出库管理
+					66 image
+				67 button 出库单列表
+				68 button 生产出库
+				69 button 其他出库
+				70 button 销售直接出库
+				71 button 待出库发货单
+				72 button 采购退换货出库
+				73 button 出库明细
+			74 image
+			75 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			76 button 查看方案
+				77 image
+				191 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 1
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				109 button 库存盘点
+					110 text 库存盘点
+				111 button 新建盘点
+					112 text 新建盘点
+				113 button 调拨与借出
+					114 text 调拨与借出
+				115 button 新建调拨
+					116 text 新建调拨
+				117 button 库存预警
+					118 text 库存预警
+				119 button 预警配置中心
+					120 text 预警配置中心
+				121 button 报损单
+					122 text 报损单
+				123 button 新建报损
+					124 text 新建报损
+				125 button SN管理
+					126 text SN管理
+				127 button 出库单列表
+					128 text 出库单列表
+				129 button 生产出库
+					130 text 生产出库
+				131 button 其他出库
+					132 text 其他出库
+				133 button 新建出库单
+					134 text 新建出库单
+				135 button 销售直接出库
+					136 text 销售直接出库
+			137 container
+				138 container
+					139 text 出库管理
+					140 image
+					141 text 销售直接出库
+					142 image
+					143 heading 销售直接出库, Value: 1
+						144 text 销售直接出库
+					145 text 管理所有出库单和待出库发货单
+				146 button 刷新
+					147 image
+				148 button
+					149 image
+				150 button
+					151 image
+				152 image
+				153 text field (settable)
+				154 button 状态
+					155 image
+					156 text 状态
+					157 image
+				158 table
+					159 row
+						160 cell
+							161 checkbox (settable, integer) 0
+						162 cell
+							163 text 直接出库单号
+						164 cell
+							165 text 客户单号
+						166 cell
+							167 text 客户
+						168 cell
+							169 text 出库进度
+						170 cell
+							171 text 状态
+						172 cell
+							173 text 创建时间
+						174 cell
+							175 text 操作
+					176 row
+						177 cell
+							178 image
+							179 text 暂无销售直接出库单
+				180 text 共  0 条记录 每页
+				181 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					182 text 20
+				183 text 条
+				184 button (disabled) 上一页
+					185 image
+				186 button 1
+				187 button (disabled) 下一页
+					188 image
+			189 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			190 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/inventory/outbound/sales-direct

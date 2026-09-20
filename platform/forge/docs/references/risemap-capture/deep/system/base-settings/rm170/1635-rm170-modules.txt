@@ -1,0 +1,402 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings?tab=modules".
+1 AXWebArea RiseMap, URL: risemap.cn/settings?tab=modules
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 系统
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 系统设置
+					10 image
+					11 text 系统设置
+					12 image
+				13 button 基础配置
+				14 button 用户与角色
+				15 button 部门管理
+				16 button 用户会话
+				17 button 审计日志
+				18 button 业务设置
+					19 image
+					20 text 业务设置
+					21 image
+				22 button 商品管理
+				23 button 财务配置
+				24 button 行政管理
+				25 button 客户管理
+				26 button 采购销售
+				27 button 库存管理
+				28 button 其他配置
+				29 button 人事配置
+				30 button 项目管理
+				31 button 图纸配置
+				32 button 生产配置
+				33 button 委外配置
+				34 button 单据打印
+				35 button 插件中心
+					36 image
+					37 text 插件中心
+				38 button 服务订阅
+					39 image
+					40 text 服务订阅
+				41 button 推广奖励
+					42 image
+					43 text 推广奖励
+				44 button 字段管理
+					45 image
+					46 text 字段管理
+			47 image
+			48 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			49 button 查看方案
+				50 image
+				51 text 查看方案
+			52 button
+				53 image
+			54 container
+				55 container 业务分类
+					56 checkbox 工作台, Value: 0
+					57 checkbox 供应链, Value: 0
+					58 checkbox 销售, Value: 0
+					59 checkbox 生产, Value: 0
+					60 checkbox 项目, Value: 0
+					61 checkbox 行政, Value: 0
+					62 checkbox 财务, Value: 0
+					63 checkbox 报表, Value: 0
+					64 checkbox 系统, Value: 1
+				65 button Description: 展开搜索, Help: 搜索
+					66 image
+				67 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					68 image
+					69 text 2
+				70 button Description: 打开推广奖励, Help: 推广
+				71 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				72 link Description: 打开工单, Value: community.risemap.cn/support
+				73 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					74 image
+					75 text 立即订阅
+				76 button 金
+					77 text 金
+					78 image
+			79 container
+				80 button 工作台
+					81 image
+					82 text 工作台
+				83 button 开票任务
+					84 text 开票任务
+				85 button 调整记录
+					86 text 调整记录
+				87 button 销售统计
+					88 text 销售统计
+				89 button 采购统计
+					90 text 采购统计
+				91 button 库存统计
+					92 text 库存统计
+				93 button 项目统计
+					94 text 项目统计
+				95 button 组装统计
+					96 text 组装统计
+				97 button 财务总览
+					98 text 财务总览
+				99 button 损益分析
+					100 text 损益分析
+				101 button 资金分析
+					102 text 资金分析
+				103 button 往来账款
+					104 text 往来账款
+				105 button 税务库存
+					106 text 税务库存
+				107 button 风险监控
+					108 text 风险监控
+				109 button 基础配置
+					110 text 基础配置
+			111 container
+				112 text 系统设置
+				113 heading 系统设置, Value: 1
+					114 text 系统设置
+				115 button (expanded) Description: 收起设置导航, Secondary Actions: Collapse
+					116 image
+				117 button 企业信息 管理企业基本信息、Logo等
+					118 image
+					119 text 企业信息
+					120 text 管理企业基本信息、Logo等
+				121 button 编码管理 业务编号生成与校验规则
+					122 image
+					123 text 编码管理
+					124 text 业务编号生成与校验规则
+				125 button 通知设置 配置系统通知和提醒规则
+					126 image
+					127 text 通知设置
+					128 text 配置系统通知和提醒规则
+				129 button 邮件配置 配置 SMTP 服务器，可选，不配置则使用官方邮件服务
+					130 image
+					131 text 邮件配置
+					132 text 配置 SMTP 服务器，可选，不配置则使用官方邮件服务
+				133 button 收件邮箱 配置进项发票收件邮箱和可见范围
+					134 image
+					135 text 收件邮箱
+					136 text 配置进项发票收件邮箱和可见范围
+				137 button 数据管理 数据备份、导入导出设置
+					138 image
+					139 text 数据管理
+					140 text 数据备份、导入导出设置
+				141 button 外观定制 自定义系统主题和界面
+					142 image
+					143 text 外观定制
+					144 text 自定义系统主题和界面
+				145 button 功能模块 启用/隐藏侧边栏模块菜单
+					146 image
+					147 text 功能模块
+					148 text 启用/隐藏侧边栏模块菜单
+				149 button 热键管理 自定义全局快捷键，提升操作效率
+					150 image
+					151 text 热键管理
+					152 text 自定义全局快捷键，提升操作效率
+				217 heading 功能模块开关, Value: 3
+					218 text 功能模块开关
+				219 text 控制侧边栏显示的模块菜单，支持按一级模块或二级菜单精细化配置。鼠标悬停菜单名称可自定义重命名。当前已启用
+				220 text 204
+				221 text / 204  个模块。
+				222 button 全部启用
+				223 button 仅保留核心
+				224 image
+				225 text 工作台和系统分组标记为「核心」，无法隐藏和重命名，确保系统基本功能可用。点击展开箭头可对其他分组的二级菜单逐项控制。鼠标悬停菜单名称后点击编辑图标可自定义名称。隐藏模块不会删除数据，重新启用后数据仍然保留。
+				226 heading 工作台, Value: 4
+					227 text 工作台
+				228 text 4 / 4  已启用
+				229 text 工作台 核心 工作台首页、仪表盘
+				230 button
+					231 image
+				232 text AI 广场
+				233 button 自定义名称
+					234 image
+				235 text AI 能力与智能应用入口
+				236 button
+					237 image
+				238 text 引导中心
+				239 button 自定义名称
+					240 image
+				241 text 系统初始化与使用引导
+				242 button
+					243 image
+				244 text 待办管理
+				245 button 自定义名称
+					246 image
+				247 text 待办事项管理
+				248 heading 供应链, Value: 4
+					249 text 供应链
+				250 text 6 / 6  已启用
+				251 button
+					252 image
+				253 button
+					254 image
+				255 text 基础资料
+				256 button 自定义名称
+					257 image
+				258 text 7 / 7  子菜单
+				259 button
+					260 image
+				261 button
+					262 image
+				263 text 采购管理
+				264 button 自定义名称
+					265 image
+				266 text 7 / 7  子菜单 采购管理模块
+				267 button
+					268 image
+				269 button
+					270 image
+				271 text 到货检验
+				272 button 自定义名称
+					273 image
+				274 text 5 / 5  子菜单
+				275 button
+					276 image
+				277 button
+					278 image
+				279 text 入库管理
+				280 button 自定义名称
+					281 image
+				282 text 6 / 6  子菜单
+				283 button
+					284 image
+				285 button
+					286 image
+				287 text 出库管理
+				288 button 自定义名称
+					289 image
+				290 text 7 / 7  子菜单
+				291 button
+					292 image
+				293 button
+					294 image
+				295 text 库存管理
+				296 button 自定义名称
+					297 image
+				298 text 9 / 9  子菜单 库存管理模块
+				299 heading 销售, Value: 4
+					300 text 销售
+				301 text 2 / 2  已启用
+				302 button
+					303 image
+				304 button
+					305 image
+				306 text 销售业务
+				307 button 自定义名称
+					308 image
+				309 text 12 / 12  子菜单 销售业务模块
+				310 button
+					311 image
+				312 button
+					313 image
+				314 text CRM客户管理
+				315 button 自定义名称
+					316 image
+				317 text 8 / 8  子菜单 客户经营模块
+				318 heading 生产, Value: 4
+					319 text 生产
+				320 text 3 / 3  已启用
+				321 button
+					322 image
+				323 button
+					324 image
+				325 text 组装业务管理
+				326 button 自定义名称
+					327 image
+				328 text 7 / 7  子菜单 生产管理模块
+				329 button
+					330 image
+				331 button
+					332 image
+				333 text 委外管理
+				334 button 自定义名称
+					335 image
+				336 text 12 / 12  子菜单
+				337 button
+					338 image
+				339 button
+					340 image
+				341 text 图纸管理
+				342 button 自定义名称
+					343 image
+				344 text 8 / 8  子菜单 图纸管理模块
+				345 heading 项目, Value: 4
+					346 text 项目
+				347 text 2 / 2  已启用
+				348 button
+					349 image
+				350 button
+					351 image
+				352 text 项目管理
+				353 button 自定义名称
+					354 image
+				355 text 5 / 5  子菜单 项目管理模块
+				356 button
+					357 image
+				358 text 待办管理
+				359 button 自定义名称
+					360 image
+				361 text 待办事项管理
+				362 heading 行政, Value: 4
+					363 text 行政
+				364 text 4 / 4  已启用
+				365 button
+					366 image
+				367 button
+					368 image
+				369 text 人力资源
+				370 button 自定义名称
+					371 image
+				372 text 7 / 7  子菜单 人力资源管理模块
+				373 button
+					374 image
+				375 button
+					376 image
+				377 text 考勤假期
+				378 button 自定义名称
+					379 image
+				380 text 5 / 5  子菜单
+				381 button
+					382 image
+				383 button
+					384 image
+				385 text 行政管理
+				386 button 自定义名称
+					387 image
+				388 text 13 / 13  子菜单 行政管理模块
+				389 button
+					390 image
+				391 text 流程中心 核心 4 / 4  子菜单 待办、已办、流程定义、流程分类
+				392 heading 财务, Value: 4
+					393 text 财务
+				394 text 4 / 4  已启用
+				395 button
+					396 image
+				397 button
+					398 image
+				399 text 资金管理
+				400 button 自定义名称
+					401 image
+				402 text 9 / 9  子菜单 资金账户、资金流水及收付款管理
+				403 button
+					404 image
+				405 button
+					406 image
+				407 text 业务确认
+				408 button 自定义名称
+					409 image
+				410 text 4 / 4  子菜单 销售收入、成本及费用确认
+				411 button
+					412 image
+				413 text 对账单
+				414 button 自定义名称
+					415 image
+				416 text 客户及供应商对账管理
+				417 button
+					418 image
+				419 button
+					420 image
+				421 text 发票管理
+				422 button 自定义名称
+					423 image
+				424 text 5 / 5  子菜单 销售及采购发票分析
+				425 heading 报表, Value: 4
+					426 text 报表
+				427 text 6 / 6  已启用
+				428 text 销售统计 核心
+				429 text 采购统计 核心
+				430 text 库存统计 核心
+				431 text 项目统计 核心
+				432 text 组装统计 核心
+				433 button
+					434 image
+				435 button
+					436 image
+				437 text 财务报表
+				438 button 自定义名称
+					439 image
+				440 text 6 / 6  子菜单 财务经营分析报表
+				441 heading 系统, Value: 4
+					442 text 系统
+				443 text 6 / 6  已启用
+				444 button
+					445 image
+				446 text 系统设置 核心 5 / 5  子菜单 基础配置、用户角色、部门、服务管理
+				447 button
+					448 image
+				449 text 业务设置 核心 13 / 13  子菜单 商品、客户、采购销售、库存管理
+				450 button
+					451 image
+				452 text 插件中心
+				453 button 自定义名称
+					454 image
+				455 text 服务订阅 核心 服务订阅管理
+				456 text 推广奖励 核心 推广与奖励活动
+				457 button
+					458 image
+				459 text 字段管理
+				460 button 自定义名称
+					461 image
+			215 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			216 container Notifications alt+T
+
+The focused UI element is 145 button 功能模块 启用/隐藏侧边栏模块菜单

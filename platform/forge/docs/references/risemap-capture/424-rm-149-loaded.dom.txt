@@ -1,0 +1,181 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 报表
+- button "收起侧边栏":
+- navigation:
+  - button "销售统计" [active]:
+    - generic: 销售统计
+  - button "采购统计":
+    - generic: 采购统计
+  - button "库存统计":
+    - generic: 库存统计
+  - button "项目统计":
+    - generic: 项目统计
+  - button "组装统计":
+    - generic: 组装统计
+  - button "财务统计":
+    - generic: 财务统计
+  - button "财务总览":
+    - generic: 财务总览
+  - button "损益分析":
+    - generic: 损益分析
+  - button "资金分析":
+    - generic: 资金分析
+  - button "往来账款":
+    - generic: 往来账款
+  - button "税务库存":
+    - generic: 税务库存
+  - button "风险监控":
+    - generic: 风险监控
+- generic: 免费试用中，还剩 14 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表" [pressed]:
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "退款申请":
+  - generic: 退款申请
+- button "授信额度管理":
+  - generic: 授信额度管理
+- button "借款管理":
+  - generic: 借款管理
+- button "销售收入确认":
+  - generic: 销售收入确认
+- button "成本中心":
+  - generic: 成本中心
+- button "费用中心":
+  - generic: 费用中心
+- button "报销管理":
+  - generic: 报销管理
+- button "对账单":
+  - generic: 对账单
+- button "发票总览":
+  - generic: 发票总览
+- button "销项发票":
+  - generic: 销项发票
+- button "进项发票":
+  - generic: 进项发票
+- button "开票任务":
+  - generic: 开票任务
+- button "调整记录":
+  - generic: 调整记录
+- button "销售统计":
+  - generic: 销售统计
+- main:
+  - main:
+    - paragraph: 报表中心
+    - heading "销售统计" [level=1]
+    - paragraph: 销售订单、发货、开票、回款与客户贡献分析。
+    - button "导出报表":
+      - text: 导出报表
+    - navigation "销售报表维度":
+      - button "销售订单": 销售订单
+      - button "销售合同"
+      - button "线索统计"
+      - button "商机统计"
+      - button "跟进记录"
+      - button "报价统计"
+      - button "客户统计"
+      - button "毛利分析"
+    - text: 筛选条件
+    - textbox:
+      - /placeholder: 搜索订单号、客户、销售员
+    - combobox:
+      - option "全部组织" [selected]
+      - option "我负责的"
+    - combobox:
+      - option "本月" [selected]
+      - option "本季度"
+      - option "本年度"
+    - button "刷新":
+      - text: 刷新
+    - text: 更新时间：2026/9/8 23:02:24，当前展示 销售订单 统计数据。
+    - generic: 统计周期 2026-09-01 至 2026-09-30
+    - generic: 销售额
+    - button "查看销售额计算说明":
+    - generic: "0.00"
+    - generic: 较上月 --
+    - generic: 订单数
+    - button "查看订单数计算说明":
+    - generic: 0单
+    - generic: 本期 0 单
+    - generic: 回款额
+    - button "查看回款额计算说明":
+    - generic: "0.00"
+    - generic: 回款率 --
+    - generic: 未发货
+    - button "查看未发货计算说明":
+    - generic: 0单
+    - generic: 待履约金额 0.00
+    - heading "销售与回款趋势" [level=2]
+    - generic: 销售额
+    - generic: 回款额
+    - heading "订单状态占比" [level=2]
+    - heading "销售转化漏斗" [level=2]
+    - generic: 5 个阶段
+    - generic: "1"
+    - generic: 商机
+    - generic: 基准
+    - generic: 0%
+    - generic: "0"
+    - generic: "2"
+    - generic: 报价
+    - generic: 阶段转化 0%
+    - generic: 0%
+    - generic: "0"
+    - generic: "3"
+    - generic: 下单
+    - generic: 阶段转化 0%
+    - generic: 0%
+    - generic: "0"
+    - generic: "4"
+    - generic: 发货
+    - generic: 阶段转化 0%
+    - generic: 0%
+    - generic: "0"
+    - generic: "5"
+    - generic: 回款
+    - generic: 阶段转化 0%
+    - generic: 0%
+    - generic: "0"
+    - heading "销售员业绩排名" [level=2]
+    - generic: TOP 5
+    - heading "客户销售额排行" [level=2]
+    - generic: 全量排行
+    - heading "商品销量排行" [level=2]
+    - generic: TOP 5
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2026-09-02

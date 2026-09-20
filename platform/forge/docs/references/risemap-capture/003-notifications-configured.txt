@@ -1,0 +1,46 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/tenant-init".
+0 AXWebArea RiseMap, URL: risemap.cn/tenant-init
+	1 container root
+		2 container
+			3 image
+			4 heading 系统配置, Value: 1
+				5 text 系统配置
+			6 text 完成以下步骤，让系统更好地为您服务
+			7 image
+			8 text 完成必须项后可跳过
+		9 text 必须完成的步骤：4 / 6 4  /  8
+		39 image
+		10 heading 初始化审批流程, Value: 3
+			11 text 初始化审批流程
+		12 text 必须 已完成
+		40 image
+		18 heading 系统流程表单初始化, Value: 3
+			19 text 系统流程表单初始化
+		20 text 必须 已完成
+		41 image
+		21 heading 自定义字段初始化, Value: 3
+			22 text 自定义字段初始化
+		23 text 必须 已完成
+		42 image
+		24 heading 表单模块配置, Value: 3
+			25 text 表单模块配置
+		26 text 必须 已完成 5
+		27 heading 初始化通知配置, Value: 3
+			28 text 初始化通知配置
+		29 text 必须
+		43 text 创建通知渠道配置和32条通知事件规则，默认开启站内信
+		44 button (disabled) 一键配置
+			48 image
+			46 text 一键配置
+		47 text 6
+		30 heading 初始化财务配置, Value: 3
+			31 text 初始化财务配置
+		32 text 必须 以下为可选步骤 7
+		33 heading 选择预设角色, Value: 3
+			34 text 选择预设角色
+		35 text 8
+		36 heading 预设业务设置, Value: 3
+			37 text 预设业务设置
+		38 container Notifications alt+T
+
+The focused UI element is 0 AXWebArea RiseMap, URL: risemap.cn/tenant-init

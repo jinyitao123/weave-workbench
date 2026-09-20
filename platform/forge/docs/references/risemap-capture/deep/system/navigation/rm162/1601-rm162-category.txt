@@ -1,0 +1,168 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/statistics/risk?section=reconciliation".
+1 AXWebArea RiseMap, URL: risemap.cn/finance/statistics/risk?section=reconciliation
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 系统
+			6 button 收起侧边栏
+				7 image
+			8 container
+				404 button 系统设置
+					405 image
+					406 text 系统设置
+					407 image
+				408 button 基础配置
+				409 button 用户与角色
+				410 button 部门管理
+				411 button 用户会话
+				412 button 审计日志
+				413 button 业务设置
+					414 image
+					415 text 业务设置
+					416 image
+				417 button 商品管理
+				418 button 财务配置
+				419 button 行政管理
+				420 button 客户管理
+				421 button 采购销售
+				422 button 库存管理
+				423 button 其他配置
+				424 button 人事配置
+				425 button 项目管理
+				426 button 图纸配置
+				427 button 生产配置
+				428 button 委外配置
+				429 button 单据打印
+				430 button 插件中心
+					431 image
+					432 text 插件中心
+				433 button 服务订阅
+					434 image
+					435 text 服务订阅
+				436 button 推广奖励
+					437 image
+					438 text 推广奖励
+				439 button 字段管理
+					440 image
+					441 text 字段管理
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 1
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				259 button 进项发票
+					260 text 进项发票
+				261 button 开票任务
+					262 text 开票任务
+				263 button 调整记录
+					264 text 调整记录
+				329 button 销售统计
+					330 text 销售统计
+				331 button 采购统计
+					332 text 采购统计
+				333 button 库存统计
+					334 text 库存统计
+				335 button 项目统计
+					336 text 项目统计
+				337 button 组装统计
+					338 text 组装统计
+				339 button 财务总览
+					340 text 财务总览
+				341 button 损益分析
+					342 text 损益分析
+				343 button 资金分析
+					344 text 资金分析
+				345 button 往来账款
+					346 text 往来账款
+				347 button 税务库存
+					348 text 税务库存
+				349 button 风险监控
+					350 text 风险监控
+			351 container
+				352 image
+				353 container
+					354 text 报表 / 财务统计 /  风险监控
+				355 heading 风险监控, Value: 1
+					356 text 风险监控
+				357 text 财务预警、往来集中度和数据对账
+				358 button 导出PDF
+					359 image
+					360 text 导出PDF
+				361 button 导出Excel
+					362 image
+					363 text 导出Excel
+					364 image
+				365 container 财务统计类型
+					366 button 财务预警
+					367 button 集中度分析
+					368 button 数据对账
+				369 container 报表筛选
+					370 image
+					371 text 筛选条件
+					372 button 本季度
+						373 image
+						374 text 本季度
+						375 image
+				376 image
+				377 text 财务数据按业务单据实时汇总 统计周期  2026-07-01 ~ 2026-09-09
+				378 image
+				379 text 应收账面余额
+				380 pop up button (collapsed) Description: 查看应收账面余额计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					381 image
+				382 text ¥0.00
+				383 image
+				384 text 应付账面余额
+				385 pop up button (collapsed) Description: 查看应付账面余额计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					386 image
+				387 text ¥0.00
+				388 image
+				389 text 对账差异
+				390 pop up button (collapsed) Description: 查看对账差异计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					391 image
+				392 text ¥0.00
+				393 text 待核实差异总额
+				394 button 客户对账 核对客户应收、收款、核销和对账单确认结果
+					395 image
+					396 heading 客户对账, Value: 2
+						397 text 客户对账
+					398 text 核对客户应收、收款、核销和对账单确认结果
+				399 button 供应商对账 核对供应商应付、付款、核销和对账单确认结果
+					400 image
+					401 heading 供应商对账, Value: 2
+						402 text 供应商对账
+					403 text 核对供应商应付、付款、核销和对账单确认结果
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+
+The focused UI element is 78 checkbox 系统, Value: 1

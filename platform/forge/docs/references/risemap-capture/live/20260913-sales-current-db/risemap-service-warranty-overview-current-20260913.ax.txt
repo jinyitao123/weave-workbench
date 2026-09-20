@@ -1,0 +1,158 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/after-sales/warranty".
+1 AXWebArea RiseMap, URL: risemap.cn/after-sales/warranty
+	2 container root
+		3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+		4 text 销售
+		5 button 收起侧边栏
+			6 image
+		7 container
+			64 button 销售业务
+				65 image
+				66 text 销售业务
+				67 image
+			68 button 框架销售合同
+			69 button 销售订单
+			70 button 附加费用
+			71 button 收款流水
+			72 button 销售发货单
+			73 button 销售退货
+			74 button 业绩银行
+			75 button 价格策略
+			76 button Goodwill订单
+			77 button 销售团队
+			78 button 销售目标
+			79 button 销售发票
+			80 button CRM客户管理
+				81 image
+				82 text CRM客户管理
+				83 image
+			84 button 客户管理
+			85 button 联系人管理
+			86 button 销售报价
+			87 button 客户物料对照
+			88 button 商机管理
+			89 button 线索管理
+			90 button 跟进记录
+			91 button 公海客户
+			92 button 服务管理
+				93 image
+				94 text 服务管理
+				95 image
+			96 button 服务工单
+			97 button 服务报价单
+			98 button 服务结算单
+			99 button 接单中心
+			100 button 派工中心
+			101 button 服务分析
+			102 button 质保管理
+			103 button 服务配置
+		104 image
+		105 text 免费试用中，还剩 9 天 — 试用期间享全部功能
+		106 button 查看方案
+			107 image
+			108 text 查看方案
+		109 button
+			110 image
+		16 container
+			111 container 业务分类
+				112 container
+					113 checkbox 工作台, Value: 0
+					114 checkbox 供应链, Value: 0
+					115 checkbox 销售, Value: 1
+					116 checkbox 生产, Value: 0
+					117 checkbox 项目, Value: 0
+					118 checkbox 行政, Value: 0
+					119 checkbox 财务, Value: 0
+					120 checkbox 报表, Value: 0
+					121 checkbox 系统, Value: 0
+			27 button Description: 展开搜索, Help: 搜索
+				28 image
+			29 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+				30 image
+				122 text 20
+			31 button Description: 打开推广奖励, Help: 推广
+			32 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+			33 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+			123 button 立即订阅, Help: 试用还剩 9 天 · 立即订阅享专属优惠
+				124 image
+				125 text 立即订阅
+			34 button 金
+				126 text 金
+				35 image
+		36 container
+			37 button 工作台
+				38 image
+				127 text 工作台
+			39 button Goodwill订单详情
+				128 text Goodwill订单详情
+			40 button 工作台
+				129 text 工作台
+			41 button 服务工单
+				130 text 服务工单
+			42 button 服务报价单
+				131 text 服务报价单
+			43 button 服务结算单
+				132 text 服务结算单
+			44 button 质保管理
+				133 text 质保管理
+			45 button 线索管理
+				134 text 线索管理
+			46 button 商机管理
+				135 text 商机管理
+			47 button 跟进记录
+				136 text 跟进记录
+			48 button 公海客户
+				137 text 公海客户
+			49 button 客户管理
+				138 text 客户管理
+			50 button 工作台
+				139 text 工作台
+			51 button 服务工单详情
+				140 text 服务工单详情
+		52 container
+			53 container
+				141 text 服务管理
+				54 image
+				142 text 质保管理
+				55 image
+				56 heading 质保管理, Value: 1
+					143 text 质保管理
+				144 text 质保卡台账、到期预警、激活与延保，以及质保规则配置
+				57 button 服务工单
+			58 button 概览
+				145 text 概览
+			59 button 质保卡
+			60 button 质保规则
+			146 button 生效中 0 在保的质保卡
+				147 text 生效中
+				148 text 0
+				149 text 在保的质保卡
+			150 button 待激活 0 激活式起算，客户还没激活
+				151 text 待激活
+				152 text 0
+				153 text 激活式起算，客户还没激活
+			154 button 宽限期 0 已过保但仍在宽限天数内
+				155 text 宽限期
+				156 text 0
+				157 text 已过保但仍在宽限天数内
+			158 button 已过保 0 含宽限期已用尽
+				159 text 已过保
+				160 text 0
+				161 text 含宽限期已用尽
+			162 button 已终止 0 人工终止的质保
+				163 text 已终止
+				164 text 0
+				165 text 人工终止的质保
+			166 text 30 天内到期 0 60 天内到期 0 90 天内到期 0 按来源 暂无数据 按判定粒度 暂无数据 按责任方 暂无数据
+			167 image
+			168 text 最快到期的质保卡
+			169 image
+			170 text 暂无即将到期的质保卡
+			171 image
+			172 text 高频返修产品
+			173 image
+			174 text 暂无返修集中的产品
+		62 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+		63 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/after-sales/warranty

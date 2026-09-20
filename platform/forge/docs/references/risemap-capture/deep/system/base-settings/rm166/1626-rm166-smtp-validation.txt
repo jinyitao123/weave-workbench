@@ -1,0 +1,211 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings?tab=mail".
+1 AXWebArea RiseMap, URL: risemap.cn/settings?tab=mail
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 系统
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 系统设置
+					10 image
+					11 text 系统设置
+					12 image
+				13 button 基础配置
+				14 button 用户与角色
+				15 button 部门管理
+				16 button 用户会话
+				17 button 审计日志
+				18 button 业务设置
+					19 image
+					20 text 业务设置
+					21 image
+				22 button 商品管理
+				23 button 财务配置
+				24 button 行政管理
+				25 button 客户管理
+				26 button 采购销售
+				27 button 库存管理
+				28 button 其他配置
+				29 button 人事配置
+				30 button 项目管理
+				31 button 图纸配置
+				32 button 生产配置
+				33 button 委外配置
+				34 button 单据打印
+				35 button 插件中心
+					36 image
+					37 text 插件中心
+				38 button 服务订阅
+					39 image
+					40 text 服务订阅
+				41 button 推广奖励
+					42 image
+					43 text 推广奖励
+				44 button 字段管理
+					45 image
+					46 text 字段管理
+			47 image
+			48 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			49 button 查看方案
+				50 image
+				51 text 查看方案
+			52 button
+				53 image
+			54 container
+				55 container 业务分类
+					56 checkbox 工作台, Value: 0
+					57 checkbox 供应链, Value: 0
+					58 checkbox 销售, Value: 0
+					59 checkbox 生产, Value: 0
+					60 checkbox 项目, Value: 0
+					61 checkbox 行政, Value: 0
+					62 checkbox 财务, Value: 0
+					63 checkbox 报表, Value: 0
+					64 checkbox 系统, Value: 1
+				65 button Description: 展开搜索, Help: 搜索
+					66 image
+				67 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					68 image
+					69 text 2
+				70 button Description: 打开推广奖励, Help: 推广
+				71 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				72 link Description: 打开工单, Value: community.risemap.cn/support
+				73 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					74 image
+					75 text 立即订阅
+				76 button 金
+					77 text 金
+					78 image
+			79 container
+				80 button 工作台
+					81 image
+					82 text 工作台
+				83 button 开票任务
+					84 text 开票任务
+				85 button 调整记录
+					86 text 调整记录
+				87 button 销售统计
+					88 text 销售统计
+				89 button 采购统计
+					90 text 采购统计
+				91 button 库存统计
+					92 text 库存统计
+				93 button 项目统计
+					94 text 项目统计
+				95 button 组装统计
+					96 text 组装统计
+				97 button 财务总览
+					98 text 财务总览
+				99 button 损益分析
+					100 text 损益分析
+				101 button 资金分析
+					102 text 资金分析
+				103 button 往来账款
+					104 text 往来账款
+				105 button 税务库存
+					106 text 税务库存
+				107 button 风险监控
+					108 text 风险监控
+				109 button 基础配置
+					110 text 基础配置
+			111 container
+				112 text 系统设置
+				113 heading 系统设置, Value: 1
+					114 text 系统设置
+				115 button (expanded) Description: 收起设置导航, Secondary Actions: Collapse
+					116 image
+				117 button 企业信息 管理企业基本信息、Logo等
+					118 image
+					119 text 企业信息
+					120 text 管理企业基本信息、Logo等
+				121 button 编码管理 业务编号生成与校验规则
+					122 image
+					123 text 编码管理
+					124 text 业务编号生成与校验规则
+				125 button 通知设置 配置系统通知和提醒规则
+					126 image
+					127 text 通知设置
+					128 text 配置系统通知和提醒规则
+				129 button 邮件配置 配置 SMTP 服务器，可选，不配置则使用官方邮件服务
+					130 image
+					131 text 邮件配置
+					132 text 配置 SMTP 服务器，可选，不配置则使用官方邮件服务
+				133 button 收件邮箱 配置进项发票收件邮箱和可见范围
+					134 image
+					135 text 收件邮箱
+					136 text 配置进项发票收件邮箱和可见范围
+				137 button 数据管理 数据备份、导入导出设置
+					138 image
+					139 text 数据管理
+					140 text 数据备份、导入导出设置
+				141 button 外观定制 自定义系统主题和界面
+					142 image
+					143 text 外观定制
+					144 text 自定义系统主题和界面
+				145 button 功能模块 启用/隐藏侧边栏模块菜单
+					146 image
+					147 text 功能模块
+					148 text 启用/隐藏侧边栏模块菜单
+				149 button 热键管理 自定义全局快捷键，提升操作效率
+					150 image
+					151 text 热键管理
+					152 text 自定义全局快捷键，提升操作效率
+				268 heading 邮件配置, Value: 3
+					269 text 邮件配置
+				270 text 配置企业自有 SMTP 服务器，用于发送系统通知邮件
+				271 image
+				272 text 非必填：不配置将使用官方邮件服务 若您不配置企业自有 SMTP 服务器，系统将默认使用官方邮件服务发送通知邮件。 若您希望使用企业域名邮箱发送邮件或自定义发件人身份，请在下方填写配置并保存。 建议保存前先使用「测试配置」功能验证 SMTP 信息是否有效。
+				273 heading 基础信息, Value: 4
+					274 text 基础信息
+				275 text * 配置名称
+				276 text field (settable)
+				277 text 发件人名称
+				278 text field (settable)
+				279 text 备注
+				280 text field (settable)
+				281 heading SMTP 服务器, Value: 4
+					282 text SMTP 服务器
+				283 text * 服务器地址
+				284 text field (settable)
+				285 text * 端口
+				286 text field (settable) 465
+				287 text * 邮箱账号
+				288 text field (settable)
+				289 text * 邮箱密码 / 授权码
+				290 text field (settable)
+				291 button
+					292 image
+				293 text SSL 端口（可选）
+				294 text field (settable)
+				295 text * 发件邮箱
+				296 text field (settable)
+				297 heading 安全选项, Value: 4
+					298 text 安全选项
+				299 text 启用 SSL 推荐 SMTP 465 端口时开启
+				300 switch Value: 1, ID: :rt3:
+				301 text 启用 STARTTLS 使用 587 端口时通常需要开启
+				302 switch Value: 0, ID: :rt4:
+				303 text 需要身份认证 绝大多数 SMTP 服务商需要开启
+				304 switch Value: 1, ID: :rt5:
+				305 image
+				306 heading 测试配置是否有效, Value: 4
+					307 text 测试配置是否有效
+				308 text 系统将使用上方填写的配置发送一封测试邮件到下方邮箱，不会保存任何数据
+				309 text field (settable)
+				310 button 发送测试邮件
+					311 image
+					312 text 发送测试邮件
+				313 button 保存配置
+					314 image
+					315 text 保存配置
+			266 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			267 container Notifications alt+T
+				316 content list
+					317 container
+						318 button Close toast
+							319 image
+						320 image
+						321 text 请填写配置名称
+
+The focused UI element is 313 button 保存配置

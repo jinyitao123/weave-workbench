@@ -1,0 +1,203 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/seals".
+0 AXWebArea RiseMap, URL: risemap.cn/ops/seals
+	1 container
+		2 container root
+			201 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			202 text 行政
+			203 button 收起侧边栏
+				204 image
+			205 container
+				206 button 审批中心
+					207 image
+					208 text 审批中心
+					209 image
+				210 button 我的审批
+				211 button 抄送我的
+				212 button 我发起的
+				213 button 行政申请
+				214 button 行政管理
+					215 image
+					216 text 行政管理
+					217 image
+				218 button 公司通知
+				219 button 用章管理
+				220 button 会议纪要
+				221 button 工作汇报
+				222 button 文档中心
+				223 button 固定资产
+				224 button 资质与申报
+				225 button 物料领取
+				226 button 设备维护
+				227 button 礼品管理
+				228 button 借出管理
+				229 button 车辆管理
+				230 button 人力资源
+					231 image
+					232 text 人力资源
+					233 image
+				234 button 人事工作台
+				235 button 员工档案
+				236 button 招聘管理
+				237 button 入职离职
+				238 button 薪酬福利
+				239 button 规章制度
+				240 button 通讯录
+				241 button 考勤假期
+					242 image
+					243 text 考勤假期
+					244 image
+				245 button 加班申请
+				246 button 请假管理
+				247 button 出差申请
+				248 button 考勤管理
+				249 button 考勤统计
+				250 button 流程中心
+					251 image
+					252 text 流程中心
+					253 image
+				254 button 审批记录
+				255 button 发起流程
+				256 button 流程定义
+				257 button 流程分类
+			258 image
+			259 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			260 button 查看方案
+				261 image
+				262 text 查看方案
+			263 button
+				264 image
+			265 container
+				266 container 业务分类
+					267 checkbox 工作台, Value: 0
+					268 checkbox 供应链, Value: 0
+					269 checkbox 销售, Value: 0
+					270 checkbox 生产, Value: 0
+					271 checkbox 项目, Value: 0
+					272 checkbox 行政, Value: 1
+					273 checkbox 财务, Value: 0
+					274 checkbox 报表, Value: 0
+					275 checkbox 系统, Value: 0
+				276 button Description: 展开搜索, Help: 搜索
+					277 image
+				278 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					279 image
+					280 text 2
+				281 button Description: 打开推广奖励, Help: 推广
+				282 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				283 link Description: 打开工单, Value: community.risemap.cn/support
+				284 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					285 image
+					286 text 立即订阅
+				287 button 金
+					288 text 金
+					289 image
+			290 container
+				291 button 工作台
+					292 image
+					293 text 工作台
+				298 button 项目中心
+					299 text 项目中心
+				300 button 项目分析中心
+					301 text 项目分析中心
+				302 button 任务管理
+					303 text 任务管理
+				304 button 工时管理
+					305 text 工时管理
+				306 button 快捷工时填报
+					307 text 快捷工时填报
+				308 button 项目配置中心
+					309 text 项目配置中心
+				310 button 新建计划模板
+					311 text 新建计划模板
+				312 button 我的审批
+					313 text 我的审批
+				314 button 抄送我的
+					315 text 抄送我的
+				316 button 我发起的
+					317 text 我发起的
+				318 button 行政申请
+					319 text 行政申请
+				320 button 公司通知
+					321 text 公司通知
+				393 button 发布通知
+					394 text 发布通知
+				395 button 用章管理
+					396 text 用章管理
+			397 container
+				398 container
+					399 text 行政管理
+					400 image
+					401 text 用章管理
+					402 image
+					403 heading 用章管理, Value: 1
+						404 text 用章管理
+					405 text 印章登记、申请审批、外带跟踪与风险监控，确保用印合规
+				406 button 用章申请 (0)
+					407 text 用章申请
+					408 text (
+					409 text 0
+					410 text )
+				411 button 待盖章任务
+				412 button 印章台账 (0)
+					413 text 印章台账
+					414 text (
+					415 text 0
+					416 text )
+				417 button 用章统计
+				418 button 新建用章申请
+					419 image
+					420 text 新建用章申请
+				421 button 导出
+					422 image
+					423 text 导出
+					424 image
+				425 button 刷新
+					426 image
+				427 button
+					428 image
+				429 button
+					430 image
+				431 image
+				432 text field (settable)
+				433 button 状态
+					434 text 状态
+					435 image
+				436 table
+					437 row
+						438 cell
+							439 checkbox (settable, integer) 0
+						440 cell
+							441 text 申请编号
+						442 cell
+							443 text 公司抬头
+						444 cell
+							445 text 申请人
+						446 cell
+							447 text 印章类型
+						448 cell
+							449 text 文件名称
+						450 cell
+							451 text 用章事由
+						452 cell
+							453 text 状态
+						454 cell
+							455 text 申请日期
+						456 cell
+							457 text 操作
+					467 row
+						468 cell
+							469 image
+							470 text 暂无申请记录
+				458 text 共  0 条记录 每页
+				459 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					460 text 20
+				461 text 条
+				462 button (disabled) 上一页
+					463 image
+				464 button 1
+				465 button (disabled) 下一页
+					466 image
+			392 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+
+The focused UI element is 219 button 用章管理

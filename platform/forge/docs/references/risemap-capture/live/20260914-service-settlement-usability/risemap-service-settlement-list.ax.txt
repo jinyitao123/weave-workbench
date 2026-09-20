@@ -1,0 +1,134 @@
+Browser tab: 38, Title: "RiseMap", URL: "https://risemap.cn/after-sales/settlements".
+0 AXWebArea RiseMap, URL: risemap.cn/after-sales/settlements
+	1 container root
+		2 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+		3 text 销售
+		4 button 收起侧边栏
+			5 image
+		6 container
+			63 button 销售业务
+				64 image
+				65 text 销售业务
+				66 image
+			67 button 框架销售合同
+			68 button 销售订单
+			69 button 附加费用
+			70 button 收款流水
+			71 button 销售发货单
+			72 button 销售退货
+			73 button 业绩银行
+			74 button 价格策略
+			75 button Goodwill订单
+			76 button 销售团队
+			77 button 销售目标
+			78 button 销售发票
+			79 button CRM客户管理
+				80 image
+				81 text CRM客户管理
+				82 image
+			83 button 客户管理
+			84 button 联系人管理
+			85 button 销售报价
+			86 button 客户物料对照
+			87 button 商机管理
+			88 button 线索管理
+			89 button 跟进记录
+			90 button 公海客户
+			91 button 服务管理
+				92 image
+				93 text 服务管理
+				94 image
+			95 button 服务工单
+			96 button 服务报价单
+			97 button 服务结算单
+			98 button 接单中心
+			99 button 派工中心
+			100 button 服务分析
+			101 button 质保管理
+			102 button 服务配置
+		140 image
+		141 text 免费试用中，还剩 8 天 — 试用期间享全部功能
+		142 button 查看方案
+			143 image
+			144 text 查看方案
+		145 button
+			146 image
+		15 container
+			103 container 业务分类
+				104 container
+					105 checkbox 工作台, Value: 0
+					106 checkbox 供应链, Value: 0
+					107 checkbox 销售, Value: 1
+					108 checkbox 生产, Value: 0
+					109 checkbox 项目, Value: 0
+					110 checkbox 行政, Value: 0
+					111 checkbox 财务, Value: 0
+					112 checkbox 报表, Value: 0
+					113 checkbox 系统, Value: 0
+			25 button Description: 展开搜索, Help: 搜索
+				26 image
+			27 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+				28 image
+				114 text 20
+			29 button Description: 打开推广奖励, Help: 推广
+			30 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+			31 link Description: 打开工单, Value: community.risemap.cn/support
+			115 button 立即订阅, Help: 试用还剩 8 天 · 立即订阅享专属优惠
+				116 image
+				147 text 立即订阅
+			32 button 金
+				117 text 金
+				33 image
+		34 container
+			35 button 工作台
+				36 image
+				118 text 工作台
+			37 button 工作台
+				119 text 工作台
+			38 button 工作台
+				120 text 工作台
+			39 button 工作台
+				121 text 工作台
+			40 button 组装单
+				122 text 组装单
+			41 button 工作台
+				123 text 工作台
+			42 button 项目详情
+				124 text 项目详情
+			43 button 销售发货单
+				125 text 销售发货单
+			44 button 新建发货单
+				126 text 新建发货单
+			45 button 工作台
+				127 text 工作台
+			46 button 服务工单
+				128 text 服务工单
+			47 button 新建服务工单
+				129 text 新建服务工单
+			48 button 服务报价单
+				130 text 服务报价单
+			49 button 新建服务报价单
+				131 text 新建服务报价单
+			50 button 服务结算单
+				132 text 服务结算单
+		51 container
+			52 container
+				133 text 服务管理
+				53 image
+				134 text 结算单
+				54 image
+				55 heading 服务结算单, Value: 1
+					135 text 服务结算单
+				136 text 集中管理服务费用核算、审批、客户确认与财务应收衔接
+				56 button 从完工工单新建
+					57 image
+					137 text 从完工工单新建
+			58 image
+			59 text field (settable)
+			60 button 全部状态
+				138 text 全部状态
+			139 text 暂无符合条件的结算单
+		61 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+		62 container Notifications alt+T
+
+The focused UI element is 0 AXWebArea RiseMap, URL: risemap.cn/after-sales/settlements

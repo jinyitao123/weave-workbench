@@ -1,0 +1,227 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 供应链
+- button "收起侧边栏":
+- navigation:
+  - button "到货检验":
+    - generic: 到货检验
+  - button "到货通知":
+    - generic: 到货通知
+  - button "到货登记":
+    - generic: 到货登记
+  - button "待检验库存":
+    - generic: 待检验库存
+  - button "检验单":
+    - generic: 检验单
+  - button "检验规则":
+    - generic: 检验规则
+  - button "基础资料":
+    - generic: 基础资料
+  - button "物料管理":
+    - generic: 物料管理
+  - button "物料组合":
+    - generic: 物料组合
+  - button "BOM管理":
+    - generic: BOM管理
+  - button "综合物料搜索":
+    - generic: 综合物料搜索
+  - button "供应商管理":
+    - generic: 供应商管理
+  - button "产品实例追溯":
+    - generic: 产品实例追溯
+  - button "仓库管理":
+    - generic: 仓库管理
+  - button "采购管理":
+    - generic: 采购管理
+  - button "采购发票":
+    - generic: 采购发票
+  - button "采购申请":
+    - generic: 采购申请
+  - button "采购待办池":
+    - generic: 采购待办池
+  - button "询价管理":
+    - generic: 询价管理
+  - button "采购订单":
+    - generic: 采购订单
+  - button "采购退换货":
+    - generic: 采购退换货
+  - button "供应商价格本":
+    - generic: 供应商价格本
+  - button "入库管理":
+    - generic: 入库管理
+  - button "全部入库单":
+    - generic: 全部入库单
+  - button "采购入库":
+    - generic: 采购入库
+  - button "生产入库":
+    - generic: 生产入库
+  - button "其他入库":
+    - generic: 其他入库
+  - button "期初入库":
+    - generic: 期初入库
+  - button "入库明细":
+    - generic: 入库明细
+  - button "库存管理":
+    - generic: 库存管理
+  - button "库存总览":
+    - generic: 库存总览
+  - button "不合格处理":
+    - generic: 不合格处理
+  - button "库存流水":
+    - generic: 库存流水
+  - button "库存锁定":
+    - generic: 库存锁定
+  - button "库存盘点":
+    - generic: 库存盘点
+  - button "调拨与借出":
+    - generic: 调拨与借出
+  - button "库存预警":
+    - generic: 库存预警
+  - button "报损单":
+    - generic: 报损单
+  - button "SN码管理":
+    - generic: SN码管理
+  - button "出库管理":
+    - generic: 出库管理
+  - button "出库单列表":
+    - generic: 出库单列表
+  - button "生产出库":
+    - generic: 生产出库
+  - button "其他出库":
+    - generic: 其他出库
+  - button "销售直接出库":
+    - generic: 销售直接出库
+  - button "待出库发货单":
+    - generic: 待出库发货单
+  - button "采购退换货出库":
+    - generic: 采购退换货出库
+  - button "出库明细":
+    - generic: 出库明细
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链" [pressed]:
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "新建采购订单":
+  - generic: 新建采购订单
+- button "申请付款":
+  - generic: 申请付款
+- button "采购发票":
+  - generic: 采购发票
+- button "采购退货":
+  - generic: 采购退货
+- button "新建采购退货":
+  - generic: 新建采购退货
+- button "供应商价格本":
+  - generic: 供应商价格本
+- button "到货通知":
+  - generic: 到货通知
+- button "到货登记":
+  - generic: 到货登记
+- button "新建到货登记":
+  - generic: 新建到货登记
+- button "待检验库存":
+  - generic: 待检验库存
+- button "检验单":
+  - generic: 检验单
+- button "检验规则":
+  - generic: 检验规则
+- button "新增检验项":
+  - generic: 新增检验项
+- button "新增检验方案":
+  - generic: 新增检验方案
+- main:
+  - generic: 库存管理
+  - generic: 检验规则
+  - generic: 新建检验方案
+  - button:
+  - heading "新建检验方案" [level=1]
+  - button "取消"
+  - button "保存并启用":
+    - text: 保存并启用
+  - button "保存":
+    - text: 保存
+  - button "方案基本信息":
+    - heading "方案基本信息" [level=3]
+  - generic: 方案名称*
+  - textbox "请输入方案名称"
+  - generic: 检验类型*
+  - button "来料检验"
+  - button "外协检验"
+  - button "成品检验"
+  - generic: 默认检验方式*
+  - button "全检"
+  - button "抽检"
+  - button "免检"
+  - generic: 启用状态
+  - switch "启用" [checked]
+  - generic: 启用
+  - generic: 备注
+  - textbox "描述此方案的用途和适用场景"
+  - button "适用范围":
+    - heading "适用范围" [level=3]
+  - generic: 适用范围决定系统自动匹配检验方案的规则。当来料到货时，系统将根据物料分类、供应商等条件自动带出匹配的检验方案。
+  - generic: 适用方式*
+  - button "指定物料"
+  - button "物料分类"
+  - button "指定供应商"
+  - generic: 物料分类选择
+  - button "请选择物料分类...":
+    - generic: 请选择物料分类...
+  - button "抽检规则":
+    - heading "抽检规则" [level=3]
+  - generic: 抽样方式
+  - button "固定数量"
+  - button "固定比例"
+  - button "手工输入" [active]
+  - generic: 抽检不通过处理方式
+  - button "转全检"
+  - button "直接拒收"
+  - button "发起让步接收审批"
+  - button "手工判定"
+  - checkbox "允许部分合格处理"
+  - generic: 允许部分合格处理
+  - checkbox "允许按剩余数量继续全检" [checked]
+  - generic: 允许按剩余数量继续全检
+  - button "检验项目清单* 0":
+    - heading "检验项目清单*" [level=3]
+    - generic: "0"
+  - paragraph: 从检验项目库中添加项目，可对本方案内的项目做局部覆盖配置（覆盖后显示蓝色标记）
+  - button "从项目库添加":
+    - text: 从项目库添加
+  - paragraph: 暂无检验项目，请从项目库添加
+- button "打开 AI 助手":
+- region "Notifications alt+T"

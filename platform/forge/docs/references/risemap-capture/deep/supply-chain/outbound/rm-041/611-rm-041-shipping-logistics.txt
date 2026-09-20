@@ -1,0 +1,257 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/inventory/outbound/new?category=other".
+1 AXWebArea RiseMap, URL: risemap.cn/inventory/outbound/new?category=other
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 到货检验
+					10 image
+					11 text 到货检验
+					12 image
+				13 button 到货通知
+				14 button 到货登记
+				15 button 待检验库存
+				16 button 检验单
+				17 button 检验规则
+				18 button 基础资料
+					19 image
+					20 text 基础资料
+					21 image
+				22 button 物料管理
+				23 button 物料组合
+				24 button BOM管理
+				25 button 综合物料搜索
+				26 button 供应商管理
+				27 button 产品实例追溯
+				28 button 仓库管理
+				29 button 采购管理
+					30 image
+					31 text 采购管理
+					32 image
+				33 button 采购发票
+				34 button 采购申请
+				35 button 采购待办池
+				36 button 询价管理
+				37 button 采购订单
+				38 button 采购退换货
+				39 button 供应商价格本
+				40 button 入库管理
+					41 image
+					42 text 入库管理
+					43 image
+				44 button 全部入库单
+				45 button 采购入库
+				46 button 生产入库
+				47 button 其他入库
+				48 button 期初入库
+				49 button 入库明细
+				50 button 库存管理
+					51 image
+					52 text 库存管理
+					53 image
+				54 button 库存总览
+				55 button 不合格处理
+				56 button 库存流水
+				57 button 库存锁定
+				58 button 库存盘点
+				59 button 调拨与借出
+				60 button 库存预警
+				61 button 报损单
+				62 button SN码管理
+				63 button 出库管理
+					64 image
+					65 text 出库管理
+					66 image
+				67 button 出库单列表
+				68 button 生产出库
+				69 button 其他出库
+				70 button 销售直接出库
+				71 button 待出库发货单
+				72 button 采购退换货出库
+				73 button 出库明细
+			74 image
+			75 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			76 button 查看方案
+				77 image
+				196 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 1
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				111 button 库存锁定
+					112 text 库存锁定
+				113 button 库存盘点
+					114 text 库存盘点
+				115 button 新建盘点
+					116 text 新建盘点
+				117 button 调拨与借出
+					118 text 调拨与借出
+				119 button 新建调拨
+					120 text 新建调拨
+				121 button 库存预警
+					122 text 库存预警
+				123 button 预警配置中心
+					124 text 预警配置中心
+				125 button 报损单
+					126 text 报损单
+				127 button 新建报损
+					128 text 新建报损
+				129 button SN管理
+					130 text SN管理
+				131 button 出库单列表
+					132 text 出库单列表
+				133 button 生产出库
+					134 text 生产出库
+				135 button 其他出库
+					136 text 其他出库
+				197 button 新建出库单
+					198 text 新建出库单
+			199 container
+				200 text 库存管理
+				201 image
+				202 text 出库管理
+				203 image
+				204 text 新建其他出库单
+				205 button
+					206 image
+				207 heading 新建其他出库单, Value: 1
+					208 text 新建其他出库单
+				209 text 出库单号：提交后由系统自动生成
+				210 button 取消
+				211 button 保存草稿
+					212 image
+					213 text 保存草稿
+				214 button 提交审批
+					215 image
+					216 text 提交审批
+				217 image
+				218 text 草稿
+				219 image
+				220 text 待审批
+				221 image
+				222 text 已审批
+				223 image
+				224 text 已出库
+				225 heading 出库汇总, Value: 4
+					226 text 出库汇总
+				227 text 出库类型 — 物料种类 0 出库总数量 0 出库总金额 ¥0
+				228 image
+				229 heading 基本信息, Value: 3
+					230 text 基本信息
+				231 container
+					232 text 出库类型  *
+				233 text 暂无启用的出库类型，请至「设置 → 业务配置 → 其他出库类型」中添加并启用。
+				234 container
+					235 text 出库日期  *
+				236 container
+					237 text field (settable) 2026年9月8日
+					238 button
+						239 image
+					240 button
+						241 image
+				242 text 往来单位（可选）
+				243 button 客户
+					244 text 客户
+				245 button 搜索客户名称...
+					246 text 搜索客户名称...
+				247 text 出库原因说明
+				248 text entry area (settable)
+				249 heading 物料明细, Value: 3
+					250 text 物料明细
+				251 text 0 种
+				252 button 下载模板
+					253 image
+					254 text 下载模板
+				255 button Excel 导入
+					256 image
+					257 text Excel 导入
+				258 button 导入任务
+				259 button 添加物料
+					260 image
+					261 text 添加物料
+				262 image
+				263 text 暂无出库物料，可通过"Excel 导入"或"添加物料"录入
+				264 heading 选择发货方式, Value: 3
+					265 text 选择发货方式
+				266 button 快递 快递公司+单号
+					267 image
+					268 text 快递
+					269 text 快递公司+单号
+				270 button 物流 大件/整车
+					271 image
+					272 text 物流
+					273 text 大件/整车
+				274 button 客户自取 客户上门提货
+					275 image
+					276 text 客户自取
+					277 text 客户上门提货
+				278 button 送货 本公司送货
+					279 image
+					280 text 送货
+					281 text 本公司送货
+				282 button 其他 软件/授权等
+					283 image
+					284 text 其他
+					285 text 软件/授权等
+				286 heading 物流信息与收件人, Value: 3
+					304 text 物流信息与收件人
+				305 container
+					306 text 物流公司  *
+				307 button 新增物流公司
+					308 image
+				309 button 搜索并选择物流公司
+					310 text 搜索并选择物流公司
+				311 container
+					312 text 物流单号  *
+				313 text field (settable)
+				314 container
+					315 text 物流联系人  *
+				316 text field (settable)
+				317 text 联系电话
+				318 text field (settable)
+				319 text 收货地址
+				320 text field (settable)
+				294 heading 备注, Value: 3
+					295 text 备注
+				296 text entry area (settable)
+				297 image
+				298 text 附件 （选填）
+				299 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+					300 image
+					301 text 点击或拖拽文件到此处上传
+					302 text 支持 Ctrl+V 粘贴截图
+					303 text 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+			194 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			195 container Notifications alt+T
+
+The focused UI element is 270 button 物流 大件/整车

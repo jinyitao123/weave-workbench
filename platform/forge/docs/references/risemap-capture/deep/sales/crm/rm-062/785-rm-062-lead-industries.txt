@@ -1,0 +1,226 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/leads".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/leads
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 销售业务
+					10 image
+					11 text 销售业务
+					12 image
+				13 button 框架销售合同
+				14 button 销售订单
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+			36 image
+			37 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			38 button 查看方案
+				39 image
+				40 text 查看方案
+			41 button
+				42 image
+			43 container
+				44 container 业务分类
+					45 checkbox 工作台, Value: 0
+					46 checkbox 供应链, Value: 0
+					47 checkbox 销售, Value: 1
+					48 checkbox 生产, Value: 0
+					49 checkbox 项目, Value: 0
+					50 checkbox 行政, Value: 0
+					51 checkbox 财务, Value: 0
+					52 checkbox 报表, Value: 0
+					53 checkbox 系统, Value: 0
+				54 button Description: 展开搜索, Help: 搜索
+					55 image
+				56 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					57 image
+					58 text 2
+				59 button Description: 打开推广奖励, Help: 推广
+				60 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				61 link Description: 打开工单, Value: community.risemap.cn/support
+				62 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					63 image
+					64 text 立即订阅
+				65 button 金
+					66 text 金
+					67 image
+			68 container
+				69 button 工作台
+					70 image
+					71 text 工作台
+				76 button 新增特价
+					77 text 新增特价
+				78 button Goodwill订单
+					79 text Goodwill订单
+				80 button Goodwill订单详情
+					81 text Goodwill订单详情
+				82 button 销售团队
+					83 text 销售团队
+				84 button 销售目标
+					85 text 销售目标
+				86 button 销售发票
+					87 text 销售发票
+				88 button 客户管理
+					89 text 客户管理
+				90 button 名片扫描
+					91 text 名片扫描
+				92 button 联系人管理
+					93 text 联系人管理
+				94 button 销售报价
+					95 text 销售报价
+				96 button 新建销售报价
+					97 text 新建销售报价
+				98 button 客户物料对照
+					99 text 客户物料对照
+				157 button 商机管理
+					158 text 商机管理
+				159 button 线索管理
+					160 text 线索管理
+			161 container
+				162 container
+					163 text CRM客户管理
+					164 image
+					165 text 线索管理
+					166 image
+					167 heading 线索管理, Value: 1
+						168 text 线索管理
+					169 text 潜在客户线索捕获、培育与转化为商机
+				170 image
+				171 text 全部线索 0
+				172 image
+				173 text 新线索 0
+				174 image
+				175 text 已转化 0
+				176 image
+				177 text 公海线索 0
+				178 button 我的线索
+					179 image
+					180 text 我的线索
+				181 button 我的团队
+					182 image
+					183 text 我的团队
+				184 button 全部线索
+					185 image
+					186 text 全部线索
+				187 button 线索公海
+					188 image
+					189 text 线索公海
+				190 image
+				191 text field (settable)
+				192 button 全部状态
+					193 text 全部状态
+				194 button 全部来源
+					195 text 全部来源
+				196 button 新建线索
+					197 image
+					198 text 新建线索
+				199 button 导入/导出
+					200 image
+					201 text 导入/导出
+					202 image
+				203 image
+				204 text 暂无匹配线索 试试调整筛选条件或添加新线索 共  0 条线索 每页
+				205 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					206 text 20
+				207 text 条
+				208 button
+					209 image
+				210 container
+					211 image
+					212 heading 新建销售线索, Value: 3
+						213 text 新建销售线索
+					214 button
+						215 image
+					216 button 线索基本信息 1/10
+						217 text 线索基本信息
+						218 image
+						219 text 1
+						220 text /
+						221 text 10
+					222 container
+						223 text * 公司名称
+					224 text field (settable)
+					225 container
+						226 text * 来源
+					227 button 官网注册
+						228 text 官网注册
+					229 text 联系人
+					230 text field (settable)
+					231 text 职位
+					232 text field (settable)
+					233 text 手机号
+					234 text field (settable)
+					235 text 邮箱
+					236 text field (settable)
+					237 text 行业
+					238 button 请选择行业
+						239 text 请选择行业
+					240 text 地区
+					241 text field (settable)
+					242 text 预估金额
+					243 text field (settable)
+					244 text 线索描述
+					245 text entry area (settable)
+					246 container lead-ownership-label
+						247 text 线索归属
+						248 container 必填
+							249 text *
+					250 线索归属 必填
+						251 container
+							252 radio button (settable, integer) Description: 归属我自己, Value: 1
+							253 text 归属我自己
+						254 container
+							255 radio button (settable, integer) Description: 分配给销售, Value: 0
+							256 text 分配给销售
+						257 container
+							258 radio button (settable, integer) Description: 录入线索公海, Value: 0
+							259 text 录入线索公海
+					260 button 取消
+					261 button 创建
+						262 image
+						263 text 创建
+			155 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			156 container Notifications alt+T
+		264 container
+			265 image
+			266 text field (settable)
+			267 text 电子半导体
+			268 text 机械制造
+			269 text 建筑工程
+			270 text 纺织服装
+			271 text 轻工日化
+			272 text IT/互联网
+			273 text 金融服务
+			274 text 医疗健康
+			275 text 教育培训
+			276 text 汽车制造
+			277 text 食品饮料
+			278 text 化工材料
+			279 text 能源电力
+			280 text 物流运输
+			281 text 农业农牧
+			282 text 其他
+
+The focused UI element is 266 text field (settable)

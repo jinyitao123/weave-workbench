@@ -1,0 +1,280 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/hr?item=policyCategory".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/hr?item=policyCategory
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 系统
+			6 button 收起侧边栏
+				7 image
+			8 container
+				168 button 系统设置
+					169 image
+					170 text 系统设置
+					171 image
+				172 button 基础配置
+				173 button 用户与角色
+				174 button 部门管理
+				175 button 用户会话
+				176 button 审计日志
+				177 button 业务设置
+					178 image
+					179 text 业务设置
+					180 image
+				181 button 商品管理
+				182 button 财务配置
+				183 button 行政管理
+				184 button 客户管理
+				185 button 采购销售
+				186 button 库存管理
+				187 button 其他配置
+				188 button 人事配置
+				189 button 项目管理
+				190 button 图纸配置
+				191 button 生产配置
+				192 button 委外配置
+				193 button 单据打印
+				194 button 插件中心
+					195 image
+					196 text 插件中心
+				197 button 服务订阅
+					198 image
+					199 text 服务订阅
+				200 button 推广奖励
+					201 image
+					202 text 推广奖励
+				203 button 字段管理
+					204 image
+					205 text 字段管理
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 1
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				99 button 借出管理
+					100 text 借出管理
+				101 button 车辆管理
+					102 text 车辆管理
+				103 button 新建公司用车申请
+					104 text 新建公司用车申请
+				105 button 新建私车公用申请
+					106 text 新建私车公用申请
+				107 button 新增车辆
+					108 text 新增车辆
+				109 button 人事工作台
+					110 text 人事工作台
+				111 button 员工档案
+					112 text 员工档案
+				113 button 招聘管理
+					114 text 招聘管理
+				115 button 候选人详情
+					116 text 候选人详情
+				117 button 入职离职
+					118 text 入职离职
+				119 button 薪酬福利
+					120 text 薪酬福利
+				121 button 福利发放
+					122 text 福利发放
+				123 button 规章制度
+					124 text 规章制度
+				206 button 人事配置
+					207 text 人事配置
+			208 container
+				209 text 业务设置
+				210 image
+				211 text 人事配置
+				212 heading 业务设置 - 人事配置, Value: 1
+					213 text 业务设置 -  人事配置
+				214 button 商品管理
+				215 button 财务配置
+				216 button 行政管理
+				217 button 客户管理
+				218 button 采购销售
+				219 button 库存管理
+				220 button 其他配置
+				221 button 人事配置
+				222 button 项目管理
+				223 button 图纸配置
+				224 button 生产配置
+				225 button 委外配置
+				226 button 单据打印
+				227 text 管理商品分组、计量单位、结算方式、仓库等业务基础数据配置
+				228 button AI 助手
+					229 image
+					230 text AI 助手
+				231 button 人事配置
+					232 image
+					233 text 人事配置
+					234 image
+				235 button 岗位管理
+					236 image
+					237 text 岗位管理
+				238 button 职级管理
+					239 image
+					240 text 职级管理
+				241 button 假期类型
+					242 image
+					243 text 假期类型
+				244 button 请假配置
+					245 image
+					246 text 请假配置
+				247 button 交通方式
+					248 image
+					249 text 交通方式
+				250 button 补签类型
+					251 image
+					252 text 补签类型
+				253 button 班次类型
+					254 image
+					255 text 班次类型
+				256 button 假日类型
+					257 image
+					258 text 假日类型
+				259 button 工资项配置
+					260 image
+					261 text 工资项配置
+				262 button 招聘渠道
+					263 image
+					264 text 招聘渠道
+				265 button 手册分类
+					266 image
+					267 text 手册分类
+				268 button 制度分类
+					269 image
+					270 text 制度分类
+				271 heading 制度分类, Value: 3
+					272 text 制度分类
+				273 text 管理规章制度分类，配置图标和颜色
+				274 button 新增分类
+					275 image
+					276 text 新增分类
+				277 image
+				278 image
+				279 text 信息安全
+				280 button 启用中
+				281 button
+					282 image
+				283 button
+					284 image
+				285 image
+				286 image
+				287 text 保密制度
+				288 button 启用中
+				289 button
+					290 image
+				291 button
+					292 image
+				293 image
+				294 image
+				295 text 知识产权
+				296 button 启用中
+				297 button
+					298 image
+				299 button
+					300 image
+				301 image
+				302 image
+				303 text 财务制度
+				304 button 启用中
+				305 button
+					306 image
+				307 button
+					308 image
+				309 image
+				310 image
+				311 text 人事制度
+				312 button 启用中
+				313 button
+					314 image
+				315 button
+					316 image
+				317 image
+				318 image
+				319 text 商务合规
+				320 button 启用中
+				321 button
+					322 image
+				323 button
+					324 image
+				325 image
+				326 image
+				327 text 行政管理
+				328 button 启用中
+				329 button
+					330 image
+				331 button
+					332 image
+				333 image
+				334 image
+				335 text 销售管理
+				336 button 启用中
+				337 button
+					338 image
+				339 button
+					340 image
+				341 image
+				342 image
+				343 text 采购管理
+				344 button 启用中
+				345 button
+					346 image
+				347 button
+					348 image
+				349 image
+				350 image
+				351 text 安全管理
+				352 button 启用中
+				353 button
+					354 image
+				355 button
+					356 image
+				357 image
+				358 image
+				359 text 质量管理
+				360 button 启用中
+				361 button
+					362 image
+				363 button
+					364 image
+				365 image
+				366 image
+				367 text 技术研发
+				368 button 启用中
+				369 button
+					370 image
+				371 button
+					372 image
+			166 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			167 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/settings/business/hr?item=policyCategory

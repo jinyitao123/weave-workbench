@@ -1,0 +1,353 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/statistics/overview".
+1 AXWebArea RiseMap, URL: risemap.cn/finance/statistics/overview
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 报表
+			6 button 收起侧边栏
+				7 image
+			8 container
+				304 button 销售统计
+					305 image
+					306 text 销售统计
+				307 button 采购统计
+					308 image
+					309 text 采购统计
+				310 button 库存统计
+					311 image
+					312 text 库存统计
+				313 button 项目统计
+					314 image
+					315 text 项目统计
+				316 button 组装统计
+					317 image
+					318 text 组装统计
+				319 button 财务统计
+					320 image
+					321 text 财务统计
+					322 image
+				323 button 财务总览
+				324 button 损益分析
+				325 button 资金分析
+				326 button 往来账款
+				327 button 税务库存
+				328 button 风险监控
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 1
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				249 button 新建客户对账
+					250 text 新建客户对账
+				251 button 供应商对账单
+					252 text 供应商对账单
+				253 button 新建供应商对账
+					254 text 新建供应商对账
+				255 button 发票总览
+					256 text 发票总览
+				257 button 销项发票
+					258 text 销项发票
+				259 button 进项发票
+					260 text 进项发票
+				261 button 开票任务
+					262 text 开票任务
+				263 button 调整记录
+					264 text 调整记录
+				329 button 销售统计
+					330 text 销售统计
+				331 button 采购统计
+					332 text 采购统计
+				333 button 库存统计
+					334 text 库存统计
+				335 button 项目统计
+					336 text 项目统计
+				337 button 组装统计
+					338 text 组装统计
+				339 button 财务总览
+					340 text 财务总览
+			341 container
+				342 image
+				343 container
+					344 text 报表 / 财务统计 /  财务总览
+				345 heading 财务总览, Value: 1
+					346 text 财务总览
+				347 text 经营成果、资产结构和综合利润概览
+				348 button 导出PDF
+					349 image
+					350 text 导出PDF
+				351 button 导出Excel
+					352 image
+					353 text 导出Excel
+					354 image
+				355 container 财务统计类型
+					356 button 经营总览
+					357 button 资产负债
+					358 button 利润总览
+				359 container 报表筛选
+					360 image
+					361 text 筛选条件
+					362 button 本季度
+						363 image
+						364 text 本季度
+						365 image
+				366 image
+				367 text 财务数据按业务单据实时汇总 统计周期  2026-07-01 ~ 2026-09-09
+				368 heading 当前经营余额, Value: 2
+					369 text 当前经营余额
+				370 text 收付款核销和库存过账后的实时剩余金额
+				371 text 统计截止： 2026-09-09 最近更新： 2026-09-09
+				372 container
+					373 image
+					374 text 当前应收余额
+					375 pop up button (collapsed) Description: 查看当前应收余额计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						376 image
+					377 text ¥0.00 逾期 ¥0.00 · 0 笔
+				378 container
+					379 image
+					380 text 当前应付余额
+					381 pop up button (collapsed) Description: 查看当前应付余额计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						382 image
+					383 text ¥0.00 未来 30 天到期 ¥0.00
+				384 container
+					385 image
+					386 text 当前库存余额
+					387 pop up button (collapsed) Description: 查看当前库存余额计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						388 image
+					389 text ¥0.00 按有效库存数量 × 不含税成本均价
+				390 container
+					391 image
+					392 text 净资金占用
+					393 pop up button (collapsed) Description: 查看净资金占用计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						394 image
+					395 text ¥0.00 当前应收 + 当前库存 - 当前应付
+				396 heading 业务金额总览, Value: 2
+					397 text 业务金额总览
+				398 text 按统计周期汇总有效业务单据，已取消和已作废单据不计入
+				399 text 点击问号查看指标口径
+				400 image
+				401 text 销售订单
+				402 pop up button (collapsed) Description: 查看销售订单计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					403 image
+				404 text ¥0.00
+				405 text 0 单 + 0.0 %
+				406 image
+				407 text 销售合同
+				408 pop up button (expanded) Description: 查看销售合同计算说明, Help: 查看计算说明, Secondary Actions: Collapse
+					409 image
+				410 text ¥0.00
+				411 text 0 份 + 0.0 %
+				412 image
+				413 text 销售回款
+				414 pop up button (collapsed) Description: 查看销售回款计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					415 image
+				416 text ¥0.00
+				417 text 0 单 + 0.0 %
+				418 image
+				419 text 采购订单
+				420 pop up button (collapsed) Description: 查看采购订单计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					421 image
+				422 text ¥0.00
+				423 text 0 单 + 0.0 %
+				424 image
+				425 text 采购实付
+				426 pop up button (collapsed) Description: 查看采购实付计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					427 image
+				428 text ¥0.00
+				429 text 0 单 + 0.0 %
+				430 image
+				431 heading 业务金额对比, Value: 3
+					432 text 业务金额对比
+				433 container 业务金额对比：销售订单¥0.00，销售合同¥0.00，销售回款¥0.00，采购订单¥0.00，采购实付¥0.00
+				434 container
+					435 image
+					436 heading 业务执行进度, Value: 3
+						437 text 业务执行进度
+					438 text 销售订单转合同 0.0 %
+					439 progress indicator Description: 完成进度 0.0%, Value: 0
+					440 text 销售合同回款 0.0 %
+					441 progress indicator Description: 完成进度 0.0%, Value: 0
+					442 text 采购订单实付 0.0 %
+					443 progress indicator Description: 完成进度 0.0%, Value: 0
+					444 text 进度按当前周期金额计算；付款金额可能包含以前期间已签采购合同。
+				445 heading 经营表现, Value: 2
+					446 text 经营表现
+				447 text 关注签约、回款和可用资金的期间表现
+				448 container
+					449 image
+					450 text 本季度签约额
+					451 pop up button (collapsed) Description: 查看本季度签约额计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						452 image
+					453 text ¥0.00 较上期 +0.0%
+				454 container
+					455 image
+					456 text 本季度已回款
+					457 pop up button (collapsed) Description: 查看本季度已回款计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						458 image
+					459 text ¥0.00 较上期 +0.0%
+				460 container
+					461 image
+					462 text 可用资金
+					463 pop up button (collapsed) Description: 查看可用资金计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						464 image
+					465 text ¥0.00 预计可支撑 0 个月
+				466 container
+					467 image
+					468 text 回款率
+					469 pop up button (collapsed) Description: 查看回款率计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						470 image
+					471 text 0%
+				472 image
+				473 heading 签约与回款趋势, Value: 3
+					474 text 签约与回款趋势
+				475 container
+					476 image
+						477 text 2026-07
+						478 text 2026-08
+						479 text 2026-09
+						480 text 0
+						481 text 1
+						482 text 2
+						483 text 3
+						484 text 4
+					485 content list
+						486 container
+							487 image
+							488 text 签约额
+						489 container
+							490 image
+							491 text 回款额
+				492 container
+					493 image
+					494 heading 经营判断, Value: 3
+						495 text 经营判断
+					496 text 本季度签约有所下降(0.0%) 回款率0% 资金主要压在应收(¥0.00)与库存(¥0.00) 本季度 净现金流 ¥0.00 客户预收 ¥0.00 采购预付 ¥0.00 库存周转 暂无数据
+				497 heading 资金结构, Value: 2
+					498 text 资金结构
+				499 text 查看余额变化和应收账龄分布
+				500 image
+				501 heading 经营余额趋势, Value: 3
+					502 text 经营余额趋势
+				503 container
+					504 image
+						505 text 7月
+						506 text 8月
+						507 text 9月
+						508 text 0
+						509 text 1
+						510 text 2
+						511 text 3
+						512 text 4
+					513 content list
+						514 container
+							515 image
+							516 text 应收余额
+						517 container
+							518 image
+							519 text 应付余额
+						520 container
+							521 image
+							522 text 库存余额
+				523 image
+				524 heading 应收账龄分布, Value: 3
+					525 text 应收账龄分布
+				526 container
+					527 image
+					528 text 应收余额
+					529 text ¥0.00
+				530 text 未到期
+				531 container
+					532 text 0.0 %
+				533 text 1-30天
+				534 container
+					535 text 0.0 %
+				536 text 31-60天
+				537 container
+					538 text 0.0 %
+				539 text 61-90天
+				540 container
+					541 text 0.0 %
+				542 text 90天以上
+				543 container
+					544 text 0.0 %
+				545 text 共  0  笔 逾期  ¥0.00
+				546 heading 待处理事项, Value: 2
+					547 text 待处理事项
+				548 text 按风险类型集中查看需要跟进的业务记录
+				549 text 数据按当前余额口径汇总
+				550 button 逾期客户 0
+					551 text 逾期客户
+					552 text 0
+				553 button 即将到期应付 0
+					554 text 即将到期应付
+					555 text 0
+				556 button 高库存物料 0
+					557 text 高库存物料
+					558 text 0
+				559 button 大额预付未结 0
+					560 text 大额预付未结
+					561 text 0
+				562 text 业务对象 涉及金额
+				563 button 当前降序，点击切换升序
+					564 image
+				565 text 账期 / 状态
+				566 button 点击排序
+					567 image
+				568 text 当前分类暂无待处理事项
+				569 button 查看应收明细
+					570 text 查看应收明细
+					571 image
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+		572 container radix-:rk4:
+			573 image
+			574 text 销售合同
+			575 text 指标口径说明
+			576 definition list
+				577 container 指标说明
+					578 text 指标说明
+				579 text 统计周期内已生效销售合同的签约金额合计。
+				580 container 计算方式
+					581 text 计算方式
+				582 text 把所有已生效销售合同的金额相加
+				583 container 统计范围
+					584 text 统计范围
+				585 text 当前页面筛选条件及统计周期
+				586 container 排除规则
+					587 text 排除规则
+				588 text 草稿、审批中、已取消、已作废合同
+				589 container 数据单位
+					590 text 数据单位
+				591 text 人民币元（含税）
+
+The focused UI element is 572 container radix-:rk4:

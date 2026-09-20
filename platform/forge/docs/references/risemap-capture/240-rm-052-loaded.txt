@@ -1,0 +1,212 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/pricing".
+0 AXWebArea RiseMap, URL: risemap.cn/sales/pricing
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 销售
+			5 button 收起侧边栏
+				6 image
+			7 container
+				307 button 销售业务
+					308 image
+					309 text 销售业务
+					310 image
+				311 button 框架销售合同
+				312 button 销售订单
+				313 button 收款流水
+				314 button 销售发货单
+				315 button 销售退货
+				316 button 业绩银行
+				317 button 价格策略
+				318 button Goodwill订单
+				319 button 销售团队
+				320 button 销售目标
+				321 button 销售发票
+				322 button CRM客户管理
+					323 image
+					324 text CRM客户管理
+					325 image
+				326 button 客户管理
+				327 button 联系人管理
+				328 button 销售报价
+				329 button 客户物料对照
+				330 button 商机管理
+				331 button 线索管理
+				332 button 跟进记录
+				333 button 公海客户
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 1
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				196 button 出库单列表
+					197 text 出库单列表
+				198 button 生产出库
+					199 text 生产出库
+				200 button 其他出库
+					201 text 其他出库
+				202 button 销售直接出库
+					203 text 销售直接出库
+				204 button 待出库发货单
+					205 text 待出库发货单
+				206 button 采购退换货出库
+					207 text 采购退换货出库
+				208 button 出库明细
+					209 text 出库明细
+				334 button 框架销售合同
+					335 text 框架销售合同
+				336 button 销售订单
+					337 text 销售订单
+				338 button 收款流水
+					339 text 收款流水
+				340 button 销售发货单
+					341 text 销售发货单
+				342 button 销售退货
+					343 text 销售退货
+				344 button 业绩银行
+					345 text 业绩银行
+				346 button 价格策略
+					347 text 价格策略
+			348 container
+				349 container
+					350 text 销售业务
+					351 image
+					352 text 价格策略
+					353 image
+					354 heading 价格策略, Value: 1
+						355 text 价格策略
+					356 text 统一管理商品定价、折扣策略、框架协议及特价审批
+				357 button 物料定价
+					358 image
+					359 text 物料定价
+				360 button 价格组管理
+					361 image
+					362 text 价格组管理
+				363 button 框架协议价
+					364 image
+					365 text 框架协议价
+				366 button 特价审批
+					367 image
+					368 text 特价审批
+				369 button 价格调整记录
+					370 image
+					371 text 价格调整记录
+				372 button 价格历史
+					373 image
+					374 text 价格历史
+				375 image
+				376 text 物料分组
+				377 image
+				378 text 全部物料 0 暂无分类数据
+				379 button 选中当前分组物料
+					380 image
+					381 text 选中当前分组物料
+				382 button 批量调价
+					383 image
+					384 text 批量调价
+				385 button 批量配置价格关系
+					386 image
+					387 text 批量配置价格关系
+				388 button 分配价格组
+					389 image
+					390 text 分配价格组
+				391 button 批量导入
+					392 image
+					393 text 批量导入
+				394 button 导入/导出任务
+					395 image
+					396 text 导入/导出任务
+				397 button 导出
+					398 image
+					399 text 导出
+					400 image
+				401 button 刷新
+					402 image
+				403 button
+					404 image
+				405 button
+					406 image
+				407 image
+				408 text field (settable)
+				409 button 全部部门
+					410 text 全部部门
+				411 table
+					412 row
+						413 cell
+							414 checkbox (settable, integer) 0
+						415 cell
+							416 text 物料编码
+						417 cell
+							418 text 物料名称
+						419 cell
+							420 text 规格型号
+						421 cell
+							422 text 单位
+						423 cell
+							424 text 部门
+						425 cell
+							426 text 分类
+						427 cell
+							428 text 价格组
+						429 cell
+							430 text 成本价
+						431 cell
+							432 text 最低售价
+						433 cell
+							434 text 建议售价
+						435 cell
+							436 text 目录价
+						437 cell
+							438 text 状态
+						439 cell
+							440 text 操作
+					441 row
+						442 cell
+							443 image
+							444 text 暂无匹配的物料数据
+				445 text 共 
+				446 text 0
+				447 text 条记录 每页
+				448 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					449 text 20
+				450 text 条
+				451 button (disabled) 上一页
+					452 image
+				453 button 1
+				454 button (disabled) 下一页
+					455 image
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 317 button 价格策略

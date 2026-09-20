@@ -1,0 +1,5 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/sales/goodwill-orders".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/goodwill-orders
+	2 text 正在检查系统状态
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/sales/goodwill-orders

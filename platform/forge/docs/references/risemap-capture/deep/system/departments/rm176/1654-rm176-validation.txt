@@ -1,0 +1,183 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/departments".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/departments
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 系统
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 系统设置
+					10 image
+					11 text 系统设置
+					12 image
+				13 button 基础配置
+				14 button 用户与角色
+				15 button 部门管理
+				16 button 用户会话
+				17 button 审计日志
+				18 button 业务设置
+					19 image
+					20 text 业务设置
+					21 image
+				22 button 商品管理
+				23 button 财务配置
+				24 button 行政管理
+				25 button 客户管理
+				26 button 采购销售
+				27 button 库存管理
+				28 button 其他配置
+				29 button 人事配置
+				30 button 项目管理
+				31 button 图纸配置
+				32 button 生产配置
+				33 button 委外配置
+				34 button 单据打印
+				35 button 插件中心
+					36 image
+					37 text 插件中心
+				38 button 服务订阅
+					39 image
+					40 text 服务订阅
+				41 button 推广奖励
+					42 image
+					43 text 推广奖励
+				44 button 字段管理
+					45 image
+					46 text 字段管理
+			47 image
+			48 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			49 button 查看方案
+				50 image
+				51 text 查看方案
+			52 button
+				53 image
+			54 container
+				55 container 业务分类
+					56 checkbox 工作台, Value: 0
+					57 checkbox 供应链, Value: 0
+					58 checkbox 销售, Value: 0
+					59 checkbox 生产, Value: 0
+					60 checkbox 项目, Value: 0
+					61 checkbox 行政, Value: 0
+					62 checkbox 财务, Value: 0
+					63 checkbox 报表, Value: 0
+					64 checkbox 系统, Value: 1
+				65 button Description: 展开搜索, Help: 搜索
+					66 image
+				67 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					68 image
+					69 text 2
+				70 button Description: 打开推广奖励, Help: 推广
+				71 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				72 link Description: 打开工单, Value: community.risemap.cn/support
+				73 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					74 image
+					75 text 立即订阅
+				76 button 金
+					77 text 金
+					78 image
+			79 container
+				80 button 工作台
+					81 image
+					82 text 工作台
+				85 button 销售统计
+					86 text 销售统计
+				87 button 采购统计
+					88 text 采购统计
+				89 button 库存统计
+					90 text 库存统计
+				91 button 项目统计
+					92 text 项目统计
+				93 button 组装统计
+					94 text 组装统计
+				95 button 财务总览
+					96 text 财务总览
+				97 button 损益分析
+					98 text 损益分析
+				99 button 资金分析
+					100 text 资金分析
+				101 button 往来账款
+					102 text 往来账款
+				103 button 税务库存
+					104 text 税务库存
+				105 button 风险监控
+					106 text 风险监控
+				107 button 基础配置
+					108 text 基础配置
+				109 button 账户管理
+					110 text 账户管理
+				209 button 部门管理
+					210 text 部门管理
+			211 container
+				212 text 系统设置
+				213 image
+				214 text 部门管理
+				215 heading 部门管理, Value: 1
+					216 text 部门管理
+				217 button 新建部门
+					218 image
+					219 text 新建部门
+				220 image
+				221 text 一级部门 1
+				222 image
+				223 text 全部部门 1
+				224 image
+				225 text 总人数 1
+				226 image
+				227 text 筹建中 0
+				228 image
+				229 text field (settable)
+				230 button 全部展开
+				231 button 全部折叠
+				232 text 部门名称 负责人 人数 状态 操作
+				233 button 拖拽排序
+					234 image
+				235 button 默认部门 DEFAULT
+					236 image
+					237 text 默认部门
+					238 text DEFAULT
+				239 text 待 待定
+				240 image
+				241 text 1 人 正常
+				242 button 添加子部门
+					243 image
+				244 button 编辑
+					245 image
+				246 button 删除
+					247 image
+				248 container
+					249 heading 新建部门, Value: 2
+						250 image
+						251 text 新建部门
+					252 button
+						253 image
+					254 text * 部门名称
+					255 text field (settable)
+					273 text 部门名称不能为空 * 部门编码
+					257 text field (settable)
+					274 text 部门编码不能为空 * 状态
+					259 button 正常
+						260 text 正常
+					261 text 上级部门
+					262 button 无（一级部门）
+						263 text 无（一级部门）
+					264 text 部门负责人
+					265 button 请选择负责人
+						266 text 请选择负责人
+					267 text 部门职责
+					268 text entry area (settable)
+					269 button 取消
+					270 button 创建部门
+						271 image
+						272 text 创建部门
+			207 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			208 container Notifications alt+T
+				275 content list
+					276 container
+						277 button Close toast
+							278 image
+						279 image
+						280 text 提交失败，请检查必填项，必填项已在表单中标红。
+
+The focused UI element is 270 button 创建部门

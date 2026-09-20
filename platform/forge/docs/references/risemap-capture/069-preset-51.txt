@@ -1,0 +1,292 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/tenant-init".
+0 AXWebArea RiseMap, URL: risemap.cn/tenant-init
+	1 container root
+		2 container
+			3 image
+			4 heading 系统配置, Value: 1
+				5 text 系统配置
+			6 text 完成以下步骤，让系统更好地为您服务
+			44 button 跳过剩余，进入系统
+				45 image
+				46 text 跳过剩余，进入系统
+		9 text 必须项已全部完成 7  /  8
+		39 image
+		10 heading 初始化审批流程, Value: 3
+			11 text 初始化审批流程
+		12 text 必须 已完成
+		40 image
+		18 heading 系统流程表单初始化, Value: 3
+			19 text 系统流程表单初始化
+		20 text 必须 已完成
+		41 image
+		21 heading 自定义字段初始化, Value: 3
+			22 text 自定义字段初始化
+		23 text 必须 已完成
+		42 image
+		24 heading 表单模块配置, Value: 3
+			25 text 表单模块配置
+		26 text 必须 已完成
+		43 image
+		27 heading 初始化通知配置, Value: 3
+			28 text 初始化通知配置
+		29 text 必须 已完成
+		47 image
+		30 heading 初始化财务配置, Value: 3
+			31 text 初始化财务配置
+		32 text 必须 已完成 以下为可选步骤，可跳过
+		48 image
+		33 heading 选择预设角色, Value: 3
+			34 text 选择预设角色
+		49 text 已完成 8
+		36 heading 预设业务设置, Value: 3
+			37 text 预设业务设置
+		50 container
+			51 image
+			52 text 行政办公 9 / 9  项
+			53 image
+			54 text 资产分类 固定资产分类体系配置 9  项
+			55 button
+				296 image
+			57 image
+			58 text 办公物料类别 物料库存分类配置 10  项
+			59 button
+				297 image
+			61 image
+			62 text 购买渠道 物料采购渠道配置 10  项
+			63 button
+				298 image
+			65 image
+			66 text 福利分类 员工福利分类管理（两层结构） 13  项
+			67 button
+				299 image
+			69 image
+			70 text 会议类型 会议纪要类型分类配置 10  项
+			71 button
+				300 image
+			73 image
+			74 text 申报类别 政策申报类别配置（两组） 12  项
+			75 button
+				301 image
+			77 image
+			78 text 申报阶段 政策申报流程阶段配置 10  项
+			79 button
+				302 image
+			81 image
+			82 text 印章类型 印章台账使用的印章类型配置 9  项
+			83 button
+				303 image
+			85 image
+			86 text 用印文件类型 用章申请文件类型配置 12  项
+			87 button
+				304 image
+			89 image
+			90 text 设备维护 4 / 4  项
+			91 image
+			92 text 设备分类 设备台账分类字典配置 10  项
+			93 button
+				305 image
+			95 image
+			96 text 维护类型 维护工单保养类型配置 6  项
+			97 button
+				306 image
+			99 image
+			100 text 维修类型 维修工单类型配置 6  项
+			101 button
+				307 image
+			103 image
+			104 text 工单费用分类 工单费用账单分类配置 8  项
+			105 button
+				308 image
+			107 image
+			108 text 人力资源 6 / 6  项
+			109 image
+			110 text 考勤补签类型 考勤补签申请类型配置 10  项
+			111 button
+				309 image
+			113 image
+			114 text 排班类型 考勤班次配置 8  项
+			115 button
+				310 image
+			117 image
+			118 text 假日类型 考勤假日配置 6  项
+			119 button
+				311 image
+			121 image
+			122 text 招聘渠道 招聘来源渠道配置 13  项
+			123 button
+				312 image
+			125 image
+			126 text 手册分类 员工手册文章分类配置 11  项
+			127 button
+				313 image
+			129 image
+			130 text 制度分类 规章制度分类配置 12  项
+			131 button
+				314 image
+			133 image
+			134 text 物料管理 5 / 5  项
+			135 image
+			136 text 计量单位 采购/销售计量单位配置 22  项
+			137 button
+				315 image
+			139 image
+			140 text 供应商分类 供应商业务分类配置 10  项
+			141 button
+				316 image
+			143 image
+			144 text 供应商级别 供应商评级分类配置 6  项
+			145 button
+				317 image
+			147 image
+			148 text 检验项目分类 质量检验项目分类配置 9  项
+			149 button
+				318 image
+			151 image
+			152 text 采购付款条件 与供应商约定的付款方式 9  项
+			153 button
+				319 image
+			155 image
+			156 text 客户管理 6 / 6  项
+			157 image
+			158 text 决策权重 联系人采购决策链角色和影响力配置 6  项
+			159 button
+				320 image
+			161 image
+			162 text 行业配置 客户所属行业配置 16  项
+			163 button
+				321 image
+			165 image
+			166 text 跟进方式 客户/商机跟进方式配置 10  项
+			167 button
+				322 image
+			169 image
+			170 text 拜访目的 客户拜访计划目的配置 11  项
+			171 button
+				323 image
+			173 image
+			174 text 投标方式 招投标形式配置 8  项
+			175 button
+				324 image
+			177 image
+			178 text 验收方式 收入确认场景的验收方式字典 9  项
+			179 button
+				325 image
+			181 image
+			182 text 销售订单 6 / 6  项
+			183 image
+			184 text 退货原因 退货原因字典配置 10  项
+			185 button
+				326 image
+			187 image
+			188 text 线索来源 线索获取渠道配置 13  项
+			189 button
+				327 image
+			191 image
+			192 text 线索状态 线索流转状态配置 7  项
+			193 button
+				328 image
+			195 image
+			196 text 商机阶段 商机销售漏斗阶段与赢率配置 7  项
+			197 button
+				329 image
+			199 image
+			200 text 商机来源 商机获取来源分类配置 7  项
+			201 button
+				330 image
+			203 image
+			204 text 赠送类型 Goodwill订单赠送维度分类配置 7  项
+			205 button
+				331 image
+			207 image
+			208 text 仓储库存 5 / 5  项
+			209 image
+			210 text 仓库类型 仓库分类配置 10  项
+			211 button
+				332 image
+			213 image
+			214 text 报损类型 库存报损分类配置 10  项
+			215 button
+				333 image
+			217 image
+			218 text 锁库原因 库存锁定原因字典配置 9  项
+			219 button
+				334 image
+			221 image
+			222 text 释放原因 库存释放原因字典配置 8  项
+			223 button
+				335 image
+			225 image
+			226 text 到货原因 其他到货原因配置 8  项
+			227 button
+				336 image
+			229 image
+			230 text 项目管理 5 / 5  项
+			231 image
+			232 text 项目角色 项目成员角色配置 13  项
+			233 button
+				337 image
+			235 image
+			236 text 任务类型 项目任务类型配置 11  项
+			237 button
+				338 image
+			239 image
+			240 text 闲置类别 非生产/非项目工时分类配置 10  项
+			241 button
+				339 image
+			243 image
+			244 text 工时类型 工时分类配置 8  项
+			245 button
+				340 image
+			247 image
+			248 text 日志分类 项目日志分类配置 10  项
+			249 button
+				341 image
+			251 image
+			252 text 图纸研发 8 / 8  项
+			253 image
+			254 text 图纸类型 图纸业务类型配置 12  项
+			255 button
+				342 image
+			257 image
+			258 text 图纸分类 图纸归档分类配置（按专业） 10  项
+			259 button
+				343 image
+			261 image
+			262 text 变更类型 图纸变更单类型配置 8  项
+			263 button
+				344 image
+			265 image
+			266 text 变更原因 图纸变更登记原因配置 8  项
+			267 button
+				345 image
+			269 image
+			270 text 版本类型 图纸版本类型配置 8  项
+			271 button
+				346 image
+			347 text 初版(V0.1) 内部评审版(VR1) 客户评审版(A1) 正式版(V1.0) 修订版(V1.x) 终版/归档 临时版 试制版
+			273 image
+			274 text 评审分类 图纸评审分类配置 10  项
+			275 button
+				276 image
+			277 image
+			278 text 问题分类 评审问题分类配置 10  项
+			279 button
+				280 image
+			281 image
+			282 text 问题严重度 评审问题严重度配置 4  项
+			283 button
+				284 image
+			285 image
+			286 text 财务管理 1 / 1  项
+			287 image
+			288 text 付款方式 财务付款方式配置 8  项
+			289 button
+				290 image
+		291 text 已选  55 / 55  个配置
+		292 button 应用选中的配置
+		293 button 跳过
+			294 image
+			295 text 跳过
+		38 container Notifications alt+T
+
+The focused UI element is 271 button

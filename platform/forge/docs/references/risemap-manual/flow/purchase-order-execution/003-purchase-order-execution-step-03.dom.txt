@@ -1,0 +1,234 @@
+- banner:
+  - navigation:
+    - link "RiseMap 社区":
+      - /url: /
+      - generic: RiseMap
+      - generic: 社区
+    - link "业务流程":
+      - /url: /flow
+    - link "教程":
+      - /url: /tutorials
+    - link "智能问答":
+      - /url: /ask
+    - link "文档":
+      - /url: /docs
+    - link "更新日志":
+      - /url: /changelog
+    - link "排期计划":
+      - /url: /roadmap
+    - link "提交工单":
+      - /url: /support
+    - link "实施服务":
+      - /url: /services
+      - text: 🚀实施服务
+    - link "定制软件":
+      - /url: /custom
+      - text: 🧩定制软件
+    - link "搜索":
+      - /url: /search
+    - button "切换语言": EN
+    - button "切换到深色模式":
+- main:
+  - generic: 申请部门
+  - generic: 采购部门
+  - generic: 供应商
+  - generic: 仓储 / 收货
+  - generic: 质检
+  - button "📝 1 采购申请 采购申请单 PR":
+    - generic: 📝
+    - generic: "1"
+    - generic: 采购申请
+    - generic: 采购申请单 PR
+  - button "➕ 2 添加物料明细":
+    - generic: ➕
+    - generic: "2"
+    - generic: 添加物料明细
+  - button "⚖️ 3 采购申请审批":
+    - generic: ⚖️
+    - generic: "3"
+    - generic: 采购申请审批
+  - button "🗂️ 4 采购代办池 代办池":
+    - generic: 🗂️
+    - generic: "4"
+    - generic: 采购代办池
+    - generic: 代办池
+  - button "🔗 5 供应商分组分配":
+    - generic: 🔗
+    - generic: "5"
+    - generic: 供应商分组分配
+  - button "📋 6 采购订单 采购订单 PO":
+    - generic: 📋
+    - generic: "6"
+    - generic: 采购订单
+    - generic: 采购订单 PO
+  - button "⚖️ 7 订单审批":
+    - generic: ⚖️
+    - generic: "7"
+    - generic: 订单审批
+  - button "💳 8 发起付款":
+    - generic: 💳
+    - generic: "8"
+    - generic: 发起付款
+  - button "🚚 9 供应商发货" [active]:
+    - generic: 🚚
+    - generic: "9"
+    - generic: 供应商发货
+  - button "📥 10 到货登记 到货登记单":
+    - generic: 📥
+    - generic: "10"
+    - generic: 到货登记
+    - generic: 到货登记单
+  - button "🔀 11 是否需要检验":
+    - generic: 🔀
+    - generic: "11"
+    - generic: 是否需要检验
+  - button "✅ 12 免检入库":
+    - generic: ✅
+    - generic: "12"
+    - generic: 免检入库
+  - button "🧪 13 待检验库存 待检库存":
+    - generic: 🧪
+    - generic: "13"
+    - generic: 待检验库存
+    - generic: 待检库存
+  - button "📑 14 检验单 检验单":
+    - generic: 📑
+    - generic: "14"
+    - generic: 检验单
+    - generic: 检验单
+  - button "🔬 15 质检结果":
+    - generic: 🔬
+    - generic: "15"
+    - generic: 质检结果
+  - button "✅ 16 检验合格入库":
+    - generic: ✅
+    - generic: "16"
+    - generic: 检验合格入库
+  - button "⚠️ 17 不合格处理":
+    - generic: ⚠️
+    - generic: "17"
+    - generic: 不合格处理
+  - button "⛔ 18 拒收退回":
+    - generic: ⛔
+    - generic: "18"
+    - generic: 拒收退回
+  - button "⚖️ 19 让步审批":
+    - generic: ⚖️
+    - generic: "19"
+    - generic: 让步审批
+  - button "📦 20 让步入库":
+    - generic: 📦
+    - generic: "20"
+    - generic: 让步入库
+  - button "🏁 21 入库完成":
+    - generic: 🏁
+    - generic: "21"
+    - generic: 入库完成
+  - complementary:
+    - generic: 流程目录
+    - button "收起目录": ⟨
+    - generic: ▾
+    - text: 采购与供应链
+    - button "🛒 采购到付款":
+      - generic: 🛒
+      - generic: 采购到付款
+    - button "🛒 采购订单执行流程":
+      - generic: 🛒
+      - generic: 采购订单执行流程
+    - generic: ▾
+    - text: 销售与收款
+    - button "💰 销售到收款 示例":
+      - generic: 💰
+      - generic: 销售到收款
+      - generic: 示例
+    - button "💰 销售业财闭环":
+      - generic: 💰
+      - generic: 销售业财闭环
+    - button "📄 销售合同与销售订单":
+      - generic: 📄
+      - generic: 销售合同与销售订单
+    - button "🏷️ 价格策略与销售定价机制":
+      - generic: 🏷️
+      - generic: 价格策略与销售定价机制
+    - generic: ▾
+    - text: 财务与费用
+    - button "🧾 费用报销 示例":
+      - generic: 🧾
+      - generic: 费用报销
+      - generic: 示例
+    - generic: ▾
+    - text: 项目与交付
+    - button "🏗️ 项目创建与管理":
+      - generic: 🏗️
+      - generic: 项目创建与管理
+    - button "⏱️ 工时成本配置与核算":
+      - generic: ⏱️
+      - generic: 工时成本配置与核算
+    - generic: ▾
+    - text: 仓储与质量
+    - button "🔖 供应商 SN 码管理":
+      - generic: 🔖
+      - generic: 供应商 SN 码管理
+    - generic: ▾
+    - text: 财务与核算
+    - button "📈 销售合同收入确认方式":
+      - generic: 📈
+      - generic: 销售合同收入确认方式
+    - button "📥 应收款来源全景":
+      - generic: 📥
+      - generic: 应收款来源全景
+    - button "📤 应付款来源全景":
+      - generic: 📤
+      - generic: 应付款来源全景
+    - generic: 采购申请审批 → 代办池汇总分配 → 下单审批 / 付款 → 到货 → 免检 / 质检分流 → 合格 / 让步 / 拒收三路裁决入库。
+  - complementary:
+    - generic: 环节详情
+    - button "收起详情": ⟩
+    - generic: 🚚
+    - generic: 步骤 9 / 21
+    - generic: 供应商
+    - heading "供应商发货" [level=3]
+    - paragraph: 供应商备货发运，回传物流单号与到达日。
+    - generic: 参与角色
+    - generic: 供应商
+    - generic: 对应单据
+    - generic: —
+    - generic: 关键校验
+    - generic: 物流单号
+  - button "缩小": −
+  - generic: 80%
+  - button "放大": ＋
+  - button "适应"
+  - button "▶ 自动演示"
+  - generic: 滚轮缩放 · 拖动平移 · 点击步骤看详情
+- contentinfo:
+  - generic: RiseMap 社区
+  - paragraph: 教程、文档、更新日志与产品排期，集中、清晰、随时可查。
+  - generic: 内容
+  - list:
+    - link "业务流程":
+      - /url: /flow
+    - link "产品教程":
+      - /url: /tutorials
+    - link "使用文档":
+      - /url: /docs
+    - link "更新日志":
+      - /url: /changelog
+    - link "排期计划":
+      - /url: /roadmap
+  - generic: 参与
+  - list:
+    - link "提交工单":
+      - /url: /support
+    - link "查询工单进度":
+      - /url: /support/track
+    - link "全站搜索":
+      - /url: /search
+  - generic: 管理
+  - list:
+    - link "管理后台":
+      - /url: /admin
+  - generic: © 2026 RiseMap. 由管理后台统一发布内容。
+- button "智能客服":
+  - text: 智能客服
+- alert

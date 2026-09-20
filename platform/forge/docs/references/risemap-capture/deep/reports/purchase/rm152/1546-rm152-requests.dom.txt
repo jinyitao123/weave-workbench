@@ -1,0 +1,208 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 报表
+- button "收起侧边栏":
+- navigation:
+  - button "销售统计":
+    - generic: 销售统计
+  - button "采购统计":
+    - generic: 采购统计
+  - button "库存统计":
+    - generic: 库存统计
+  - button "项目统计":
+    - generic: 项目统计
+  - button "组装统计":
+    - generic: 组装统计
+  - button "财务统计":
+    - generic: 财务统计
+  - button "财务总览":
+    - generic: 财务总览
+  - button "损益分析":
+    - generic: 损益分析
+  - button "资金分析":
+    - generic: 资金分析
+  - button "往来账款":
+    - generic: 往来账款
+  - button "税务库存":
+    - generic: 税务库存
+  - button "风险监控":
+    - generic: 风险监控
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表" [pressed]:
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "报销管理":
+  - generic: 报销管理
+- button "新建报销":
+  - generic: 新建报销
+- button "对账单":
+  - generic: 对账单
+- button "客户对账单":
+  - generic: 客户对账单
+- button "新建客户对账":
+  - generic: 新建客户对账
+- button "供应商对账单":
+  - generic: 供应商对账单
+- button "新建供应商对账":
+  - generic: 新建供应商对账
+- button "发票总览":
+  - generic: 发票总览
+- button "销项发票":
+  - generic: 销项发票
+- button "进项发票":
+  - generic: 进项发票
+- button "开票任务":
+  - generic: 开票任务
+- button "调整记录":
+  - generic: 调整记录
+- button "销售统计":
+  - generic: 销售统计
+- button "采购统计":
+  - generic: 采购统计
+- main:
+  - main:
+    - paragraph: 报表中心
+    - heading "采购统计" [level=1]
+    - paragraph: 采购申请规模、审批进度、需求来源、品类结构与转单效率分析。
+    - button "导出报表":
+      - text: 导出报表
+    - navigation "采购报表维度":
+      - button "采购统计"
+      - button "采购申请" [active]: 采购申请
+      - button "询价统计"
+      - button "供应商统计"
+    - text: 筛选条件
+    - textbox:
+      - /placeholder: 搜索申请单号、申请部门、申请人或采购员
+    - combobox:
+      - option "全部组织" [selected]
+      - option "我负责的"
+    - combobox:
+      - option "本月" [selected]
+      - option "本季度"
+      - option "本年度"
+    - button "刷新":
+      - text: 刷新
+    - text: 更新时间：2026/9/9 06:50:00 当前展示采购申请统计数据。
+    - generic: 统计周期 2026-09-01 至 2026-09-30
+    - generic: 采购申请
+    - button "查看采购申请计算说明":
+    - generic: 0单
+    - generic: 本月 0 单
+    - generic: 申请总金额
+    - button "查看申请总金额计算说明":
+    - generic: "0.00"
+    - generic: 较上月 --
+    - generic: 审批通过率
+    - button "查看审批通过率计算说明":
+    - generic: "--"
+    - generic: 已通过 0 单
+    - generic: 已转采购订单
+    - button "查看已转采购订单计算说明":
+    - generic: 0单
+    - generic: 转单率 --
+    - heading "采购申请数量与金额趋势" [level=2]
+    - generic: 申请数量
+    - generic: 申请金额
+    - heading "采购申请状态分布" [level=2]
+    - heading "采购申请流转漏斗" [level=2]
+    - generic: 4 个阶段
+    - generic: "1"
+    - generic: 已提交
+    - generic: 基准
+    - generic: 100%
+    - generic: "0"
+    - generic: "2"
+    - generic: 审批受理
+    - generic: 阶段转化 0%
+    - generic: 0%
+    - generic: "0"
+    - generic: "3"
+    - generic: 审批通过
+    - generic: 阶段转化 0%
+    - generic: 0%
+    - generic: "0"
+    - generic: "4"
+    - generic: 已转订单
+    - generic: 阶段转化 0%
+    - generic: 0%
+    - generic: "0"
+    - heading "采购申请执行健康度" [level=2]
+    - generic: 本月评估
+    - generic: 审批通过率
+    - generic: 通过数 / 已完成审批数
+    - generic: "--"
+    - generic: 平均审批时长
+    - generic: 从提交到审批完成的平均耗时
+    - generic: 0h
+    - generic: 采购转单率
+    - generic: 已转采购 / 审批通过数
+    - generic: "--"
+    - generic: 待审批申请
+    - generic: 当前处于审批中的申请
+    - generic: 0单
+    - generic: 超期未转单
+    - generic: 审批通过超 7 天仍未转单
+    - generic: 0单
+    - heading "申请人采购金额排行" [level=2]
+    - generic: TOP 5
+    - heading "采购品类申请金额" [level=2]
+    - generic: 全量排行
+    - heading "申请部门金额排行" [level=2]
+    - generic: TOP 5
+    - heading "采购申请审批时效" [level=2]
+    - generic: TOP 5
+    - generic: 4小时内
+    - generic: "--"
+    - emphasis
+    - generic: 4-8小时
+    - generic: "--"
+    - emphasis
+    - generic: 8-24小时
+    - generic: "--"
+    - emphasis
+    - generic: "4"
+    - generic: 1-3天
+    - generic: "--"
+    - emphasis
+    - generic: "5"
+    - generic: 超过3天
+    - generic: "--"
+    - emphasis
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2026-09-04

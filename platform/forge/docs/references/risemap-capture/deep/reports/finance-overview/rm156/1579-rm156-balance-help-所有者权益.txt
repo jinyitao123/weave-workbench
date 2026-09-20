@@ -1,0 +1,276 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/statistics/overview?section=balance".
+1 AXWebArea RiseMap, URL: risemap.cn/finance/statistics/overview?section=balance
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 报表
+			6 button 收起侧边栏
+				7 image
+			8 container
+				304 button 销售统计
+					305 image
+					306 text 销售统计
+				307 button 采购统计
+					308 image
+					309 text 采购统计
+				310 button 库存统计
+					311 image
+					312 text 库存统计
+				313 button 项目统计
+					314 image
+					315 text 项目统计
+				316 button 组装统计
+					317 image
+					318 text 组装统计
+				319 button 财务统计
+					320 image
+					321 text 财务统计
+					322 image
+				323 button 财务总览
+				324 button 损益分析
+				325 button 资金分析
+				326 button 往来账款
+				327 button 税务库存
+				328 button 风险监控
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 1
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				249 button 新建客户对账
+					250 text 新建客户对账
+				251 button 供应商对账单
+					252 text 供应商对账单
+				253 button 新建供应商对账
+					254 text 新建供应商对账
+				255 button 发票总览
+					256 text 发票总览
+				257 button 销项发票
+					258 text 销项发票
+				259 button 进项发票
+					260 text 进项发票
+				261 button 开票任务
+					262 text 开票任务
+				263 button 调整记录
+					264 text 调整记录
+				329 button 销售统计
+					330 text 销售统计
+				331 button 采购统计
+					332 text 采购统计
+				333 button 库存统计
+					334 text 库存统计
+				335 button 项目统计
+					336 text 项目统计
+				337 button 组装统计
+					338 text 组装统计
+				339 button 财务总览
+					340 text 财务总览
+			341 container
+				342 image
+				343 container
+					344 text 报表 / 财务统计 /  财务总览
+				345 heading 财务总览, Value: 1
+					346 text 财务总览
+				347 text 经营成果、资产结构和综合利润概览
+				348 button 导出PDF
+					349 image
+					350 text 导出PDF
+				351 button 导出Excel
+					352 image
+					353 text 导出Excel
+					354 image
+				355 container 财务统计类型
+					356 button 经营总览
+					357 button 资产负债
+					358 button 利润总览
+				359 container 报表筛选
+					360 image
+					361 text 筛选条件
+					362 button 本季度
+						363 image
+						364 text 本季度
+						365 image
+				366 image
+				367 text 财务数据按业务单据实时汇总 统计周期  2026-07-01 ~ 2026-09-09
+				368 image
+				369 text 资产合计
+				370 pop up button (collapsed) Description: 查看资产合计计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					371 image
+				372 text ¥0.00
+				373 text 流动资产占比 0.0%
+				374 image
+				375 text 负债合计
+				376 pop up button (collapsed) Description: 查看负债合计计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					377 image
+				378 text ¥0.00
+				379 text 应付账款 ¥0.00
+				380 image
+				381 text 所有者权益
+				382 pop up button (expanded) Description: 查看所有者权益计算说明, Help: 查看计算说明, Secondary Actions: Collapse
+					383 image
+				384 text ¥0.00
+				385 text 资产净额 ¥0.00
+				386 image
+				387 text 资产负债率
+				388 pop up button (collapsed) Description: 查看资产负债率计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					389 image
+				390 text 0.0%
+				391 text 负债结构处于可控区间
+				392 image
+				393 heading 资产结构, Value: 3
+					394 text 资产结构
+				395 text 截止  2026-09-09
+				396 text 货币资金
+				397 text ¥0.00
+				398 text 0.0 % 应收账款
+				399 text ¥0.00
+				400 text 0.0 % 存货
+				401 text ¥0.00
+				402 text 0.0 % 固定资产净值
+				403 text ¥0.00
+				404 text 0.0 %
+				405 image
+				406 heading 财务结构判断, Value: 3
+					407 text 财务结构判断
+				408 text 流动资产占比
+				409 container
+					410 text 0.0 %
+				411 progress indicator Description: 完成进度 0.0%, Value: 0
+				412 text 流动性偏低
+				413 text 应收占资产比
+				414 container
+					415 text 0.0 %
+				416 progress indicator Description: 完成进度 0.0%, Value: 0
+				417 text 关注回款效率
+				418 text 固定资产占比
+				419 container
+					420 text 0.0 %
+				421 progress indicator Description: 完成进度 0.0%, Value: 0
+				422 text 关注折旧与产能利用
+				423 text 负债占资产比
+				424 container
+					425 text 0.0 %
+				426 progress indicator Description: 完成进度 0.0%, Value: 0
+				427 text 负债水平可控
+				428 image
+				429 heading 资产负债明细, Value: 3
+					430 text 资产负债明细
+				431 table
+					432 row
+						433 cell
+							434 text 项目
+						435 cell
+							436 text 金额
+						437 cell
+							438 text 占总资产
+						439 cell
+							440 text 口径说明
+					441 row
+						442 cell
+							443 text 货币资金
+						444 cell
+							445 text ¥0.00
+						446 cell
+							447 text 0.0 %
+						448 cell
+							449 text 资金账户当前余额
+					450 row
+						451 cell
+							452 text 应收账款
+						453 cell
+							454 text ¥0.00
+						455 cell
+							456 text 0.0 %
+						457 cell
+							458 text 未核销应收余额
+					459 row
+						460 cell
+							461 text 存货
+						462 cell
+							463 text ¥0.00
+						464 cell
+							465 text 0.0 %
+						466 cell
+							467 text 有效库存成本
+					468 row
+						469 cell
+							470 text 固定资产净值
+						471 cell
+							472 text ¥0.00
+						473 cell
+							474 text 0.0 %
+						475 cell
+							476 text 原值减累计折旧
+					477 row
+						478 cell
+							479 text 应付账款
+						480 cell
+							481 text ¥0.00
+						482 cell
+							483 text 0.0 %
+						484 cell
+							485 text 未核销应付余额
+					486 row
+						487 cell
+							488 text 预收款项
+						489 cell
+							490 text ¥0.00
+						491 cell
+							492 text 0.0 %
+						493 cell
+							494 text 客户预收未结余额
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+		495 container radix-:rke:
+			496 image
+			497 text 所有者权益
+			498 text 指标口径说明
+			499 definition list
+				500 container 指标说明
+					501 text 指标说明
+				502 text 用于说明“所有者权益”在当前报表中的业务结果。
+				503 container 计算方式
+					504 text 计算方式
+				505 text 按当前页面筛选条件，对符合指标定义的有效业务记录汇总计算
+				506 container 统计范围
+					507 text 统计范围
+				508 text 当前页面筛选条件及统计周期
+				509 container 排除规则
+					510 text 排除规则
+				511 text 未生效、已取消、已作废记录
+				512 container 数据单位
+					513 text 数据单位
+				514 text 按指标展示单位
+
+The focused UI element is 495 container radix-:rke:

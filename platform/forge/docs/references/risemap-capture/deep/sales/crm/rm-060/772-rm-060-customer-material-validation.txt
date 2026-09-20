@@ -1,0 +1,26 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/customer-materials".
+1 AXWebArea RiseMap, URL: risemap.cn/base/customer-materials
+	2 container 新增物料对照
+		3 heading 新增物料对照, Value: 3, ID: :rck:
+			4 text 新增物料对照
+		5 button 关闭
+			6 image
+		7 container
+			8 text * 客户
+		9 button 搜索并选择客户
+			10 text 搜索并选择客户
+		11 container
+			12 text * 我方物料
+		13 button 从商品库选择物料
+			14 text 从商品库选择物料
+		15 text 客户物料编码
+		16 text field (settable)
+		17 text 客户物料名称
+		18 text field (settable)
+		19 text 客户物料编码、名称至少填写一项
+		20 text 备注
+		21 text field (settable)
+		22 button 取消
+		23 button 确认新增
+
+The focused UI element is 23 button 确认新增

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_purchase_inbound_workspace",
+  "archetype": "task_workspace",
+  "reviewedRevision": "8f4a80bd2951311e9c1390c8fe35daed550f6747",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/purchase-inbound-workspace.page.ts": "ca2adfc2aaa408e9be6f8244cdf32a9caa09accf5f7591395957cbefcba41755",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "3d6e283d1c59fc11809c1aa6a66f62195bcfee413f522eae831a8370ae9116e1",
+    "apps/forge-objectstack/src/actions/procurement.action.ts": "829804443cc5e6a77ec21c541ad5bf8c50220974c99bd1191c9119e0add5b54d",
+    "apps/forge-objectstack/src/objects/procurement.object.ts": "08b1491cb1096b6e5de8eae392f5759c574520d5693572080afc7229e8ff0f9b"
+  },
+  "environment": { "forgeUrl": "http://localhost:4495", "database": "file:.objectstack/supply-procurement-batch1.sqlite", "materials": "PIN-2026-0001" },
+  "checks": {
+    "replication": { "status": "blocked", "notes": "RISEMAP 当前租户为空，同材料审批与落账待复核。", "evidence": ["docs/forge-purchase-inbound-page-contract-20260916.md"] },
+    "visual": { "status": "pending", "notes": "桌面表单、详情和 390x844 列表首屏已检查；缺少落盘截图并待独立复核。", "evidence": [] },
+    "interaction": { "status": "pass", "notes": "提交、审批、执行入库均使用标准确认弹窗并回读状态。", "evidence": ["docs/forge-purchase-inbound-page-contract-20260916.md"] },
+    "business": { "status": "pass", "notes": "PIN-2026-0001 已入库，数量 1、金额 6500，库存余额与流水已写入。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/supply-receipt-browser-readback-20260916.json"] }
+  },
+  "visualEvidence": { "desktop": { "width": 1440, "height": 900, "evidence": [] }, "narrow": { "width": 390, "height": 844, "evidence": [] }, "reference": [], "populated": [], "empty": [], "form": [], "error": [] },
+  "requirements": [{ "id": "REQ-IN-001", "status": "pass", "steps": "提交审批、填写意见、审批通过、执行入库", "expected": "状态已入库并增加正式库存", "observed": "页面已入库，审批意见和明细状态一致", "evidence": ["docs/forge-purchase-inbound-page-contract-20260916.md"] }],
+  "review": { "implementer": "Codex /root", "reviewer": "", "reviewedAt": "2026-09-16", "status": "pending", "evidence": [] }
+}

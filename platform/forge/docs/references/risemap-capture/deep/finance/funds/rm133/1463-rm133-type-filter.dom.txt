@@ -1,0 +1,215 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 财务
+- button "收起侧边栏":
+- navigation:
+  - button "资金管理":
+    - generic: 资金管理
+  - button "资金账户":
+    - generic: 资金账户
+  - button "资金流水":
+    - generic: 资金流水
+  - button "应收应付":
+    - generic: 应收应付
+  - button "收款管理":
+    - generic: 收款管理
+  - button "付款管理":
+    - generic: 付款管理
+  - button "退款申请":
+    - generic: 退款申请
+  - button "授信额度管理":
+    - generic: 授信额度管理
+  - button "借款贷款管理":
+    - generic: 借款贷款管理
+  - button "业务确认":
+    - generic: 业务确认
+  - button "销售收入确认":
+    - generic: 销售收入确认
+  - button "成本中心":
+    - generic: 成本中心
+  - button "费用中心":
+    - generic: 费用中心
+  - button "报销管理":
+    - generic: 报销管理
+  - button "对账单":
+    - generic: 对账单
+  - button "发票管理":
+    - generic: 发票管理
+  - button "发票总览":
+    - generic: 发票总览
+  - button "销项发票":
+    - generic: 销项发票
+  - button "进项发票":
+    - generic: 进项发票
+  - button "开票任务":
+    - generic: 开票任务
+  - button "调整记录":
+    - generic: 调整记录
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务" [pressed]:
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "加班申请":
+  - generic: 加班申请
+- button "请假管理":
+  - generic: 请假管理
+- button "出差申请":
+  - generic: 出差申请
+- button "新建出差申请":
+  - generic: 新建出差申请
+- button "考勤管理":
+  - generic: 考勤管理
+- button "考勤统计":
+  - generic: 考勤统计
+- button "审批记录":
+  - generic: 审批记录
+- button "发起流程":
+  - generic: 发起流程
+- button "流程设计器":
+  - generic: 流程设计器
+- button "流程定义":
+  - generic: 流程定义
+- button "编辑流程":
+  - generic: 编辑流程
+- button "流程分类":
+  - generic: 流程分类
+- button "资金账户":
+  - generic: 资金账户
+- button "资金流水":
+  - generic: 资金流水
+- main:
+  - generic: 资金管理
+  - generic: 资金流水
+  - heading "资金流水" [level=1]
+  - paragraph: 全量收支资金流水明细 · 关联订单分配审核 · 审核通过后计入订单已回款/已付款
+  - paragraph:
+    - text: 流水总额
+  - paragraph: ¥0.00
+  - paragraph: 0 笔
+  - paragraph:
+    - text: 已分配金额
+  - paragraph: ¥0.00
+  - paragraph: 已审核核销
+  - paragraph:
+    - text: 待分配金额
+  - paragraph: ¥0.00
+  - paragraph: 未分配到订单
+  - paragraph:
+    - text: 待审核金额
+  - paragraph: ¥0.00
+  - paragraph: 0 笔流水待审核
+  - button "全部": 全部
+  - button "待分配"
+  - button "部分分配"
+  - button "已分配"
+  - button "待审核"
+  - button "修改类型" [disabled]:
+    - text: 修改类型
+  - button "批量审核" [disabled]:
+    - text: 批量审核
+  - button "导出":
+    - text: 导出
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "搜索资金流水":
+    - /placeholder: 搜索流水号、对方、订单...
+  - button "资金账户":
+    - generic: 全部资金账户
+  - button "收支方向":
+    - generic: 全部收支
+  - button "流水类型" [active]:
+    - generic: 全部类型
+  - button "时间范围":
+    - generic "全部时间"
+  - table:
+    - rowgroup:
+      - row "流水号 日期 资金账户 对方单位 收支 类型 金额 已分配金额 待分配金额 关联单号 状态 操作":
+        - columnheader:
+          - checkbox
+        - columnheader "流水号":
+          - generic: 流水号
+        - columnheader "日期":
+          - generic: 日期
+        - columnheader "资金账户":
+          - generic: 资金账户
+        - columnheader "对方单位":
+          - generic: 对方单位
+        - columnheader "收支":
+          - generic: 收支
+        - columnheader "类型":
+          - generic: 类型
+        - columnheader "金额":
+          - generic: 金额
+        - columnheader "已分配金额":
+          - generic: 已分配金额
+        - columnheader "待分配金额":
+          - generic: 待分配金额
+        - columnheader "关联单号":
+          - generic: 关联单号
+        - columnheader "状态":
+          - generic: 状态
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "暂无匹配的资金流水":
+        - cell "暂无匹配的资金流水":
+          - generic: 暂无匹配的资金流水
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - text: ·
+  - text: 收入合计
+  - generic: ¥0.00
+  - text: 支出合计
+  - generic: ¥0.00
+  - text: 已分配合计
+  - generic: ¥0.00
+  - text: 待分配合计
+  - generic: ¥0.00
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 采购
+- generic: 销售
+- generic: 其他

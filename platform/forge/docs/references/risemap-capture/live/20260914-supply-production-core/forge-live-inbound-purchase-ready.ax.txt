@@ -1,0 +1,352 @@
+Browser tab: 56, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_purchase_inbound_workspace".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_purchase_inbound_workspace
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 button 切换侧边栏
+			9 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			10 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			11 text 采购入库 已连接
+			12 button 搜索…
+			13 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			14 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_purchase_inbound_workspace
+			15 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			16 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		17 container
+			18 container
+				19 text 区域
+				20 content list
+					21 button 工作台
+					22 button 供应链
+					23 button 销售
+					24 button 生产
+					25 button 项目
+					26 button 行政
+					27 button 财务
+					28 button 报表
+					29 button 系统
+			30 container
+				31 button (expanded) 工作台, Secondary Actions: Collapse
+				32 content list
+					33 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					34 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					35 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					36 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			37 text 最近使用
+			38 button 切换侧边栏
+		39 container
+			40 button 在 Studio 中编辑
+			41 heading 采购入库, Value: 1
+				42 text 采购入库
+			43 text 承接逐物料检验合格数量的采购入库审批与库存落账 库存管理 / 入库管理 / 采购入库
+			44 heading 采购入库, Value: 1
+				45 text 采购入库
+			46 text 检验合格物料的入库审批与库存落账
+			47 button 检验单
+			48 button 刷新
+			49 table
+				50 row
+					51 cell
+						52 text 入库单号
+					53 cell
+						54 text 类型
+					55 cell
+						56 text 来源
+					57 cell
+						58 text 入库类型
+					59 cell
+						60 text 批次号
+					61 cell
+						62 text 供应商/客户
+					63 cell
+						64 text 仓库
+					65 cell
+						66 text 入库日期
+					67 cell
+						68 text 含税金额
+					69 cell
+						70 text 状态
+					71 cell
+						72 text 创建人
+					73 cell
+						74 text 操作
+				75 row
+					76 cell
+						77 text PIN-2026-0001
+					78 cell
+						79 text 采购入库
+					80 cell
+						81 text 采购订单
+					82 cell
+						83 text 采购入库
+					84 cell
+						85 text BATCH-RM-20260909-001
+					86 cell
+						87 text 南京锐联电气技术有限公司
+					88 cell
+						89 text 贯联验证原料仓
+					90 cell
+						91 text 2026-09-09
+					92 cell
+						93 text ¥6,800.00
+					94 cell
+						95 text 已入库
+					96 cell
+						97 text Dev Admin
+					98 cell
+						99 button 查看
+				100 row
+					101 cell
+						102 text PIN-2026-0010
+					103 cell
+						104 text 采购入库
+					105 cell
+						106 text 采购订单
+					107 cell
+						108 text 采购入库
+					109 cell
+						110 text BATCH-RM-20260909-001
+					111 cell
+						112 text 南京锐联电气技术有限公司
+					113 cell
+						114 text 贯联验证原料仓
+					115 cell
+						116 text 2026-09-09
+					117 cell
+						118 text ¥6,800.00
+					119 cell
+						120 text 已入库
+					121 cell
+						122 text Dev Admin
+					123 cell
+						124 button 查看
+				125 row
+					126 cell
+						127 text PIN-2026-0005
+					128 cell
+						129 text 采购入库
+					130 cell
+						131 text 采购订单
+					132 cell
+						133 text 采购入库
+					134 cell
+						135 text BATCH-RM-20260909-001
+					136 cell
+						137 text 南京锐联电气技术有限公司
+					138 cell
+						139 text 贯联验证原料仓
+					140 cell
+						141 text 2026-09-09
+					142 cell
+						143 text ¥6,800.00
+					144 cell
+						145 text 已入库
+					146 cell
+						147 text Dev Admin
+					148 cell
+						149 button 查看
+				150 row
+					151 cell
+						152 text PIN-REP-CUR-20260913232727
+					153 cell
+						154 text 采购入库
+					155 cell
+						156 text 采购换货补货
+					157 cell
+						158 text 采购入库
+					159 cell
+						160 text REP-CUR-BATCH
+					161 cell
+						162 text 南京锐联电气技术有限公司
+					163 cell
+						164 text 贯联验证原料仓
+					165 cell
+						166 text 2026-09-14
+					167 cell
+						168 text ¥15.34
+					169 cell
+						170 text 已入库
+					171 cell
+						172 text Dev Admin
+					173 cell
+						174 button 查看
+				175 row
+					176 cell
+						177 text PIN-2026-0003
+					178 cell
+						179 text 采购入库
+					180 cell
+						181 text 采购订单
+					182 cell
+						183 text 采购入库
+					184 cell
+						185 text BATCH-RM-20260909-001
+					186 cell
+						187 text 南京锐联电气技术有限公司
+					188 cell
+						189 text 贯联验证原料仓
+					190 cell
+						191 text 2026-09-09
+					192 cell
+						193 text ¥6,800.00
+					194 cell
+						195 text 已入库
+					196 cell
+						197 text Dev Admin
+					198 cell
+						199 button 查看
+				200 row
+					201 cell
+						202 text PIN-2026-0004
+					203 cell
+						204 text 采购入库
+					205 cell
+						206 text 采购订单
+					207 cell
+						208 text 采购入库
+					209 cell
+						210 text BATCH-RM-20260909-001
+					211 cell
+						212 text 南京锐联电气技术有限公司
+					213 cell
+						214 text 贯联验证原料仓
+					215 cell
+						216 text 2026-09-09
+					217 cell
+						218 text ¥6,800.00
+					219 cell
+						220 text 已入库
+					221 cell
+						222 text Dev Admin
+					223 cell
+						224 button 查看
+				225 row
+					226 cell
+						227 text PIN-2026-0008
+					228 cell
+						229 text 采购入库
+					230 cell
+						231 text 采购订单
+					232 cell
+						233 text 采购入库
+					234 cell
+						235 text BATCH-RM-20260909-001
+					236 cell
+						237 text 南京锐联电气技术有限公司
+					238 cell
+						239 text 贯联验证原料仓
+					240 cell
+						241 text 2026-09-09
+					242 cell
+						243 text ¥6,800.00
+					244 cell
+						245 text 已入库
+					246 cell
+						247 text Dev Admin
+					248 cell
+						249 button 查看
+				250 row
+					251 cell
+						252 text PIN-REP-CUR-20260913210508
+					253 cell
+						254 text 采购入库
+					255 cell
+						256 text 采购换货补货
+					257 cell
+						258 text 采购入库
+					259 cell
+						260 text REP-CUR-BATCH
+					261 cell
+						262 text 南京锐联电气技术有限公司
+					263 cell
+						264 text 贯联验证原料仓
+					265 cell
+						266 text 2026-09-14
+					267 cell
+						268 text ¥14.67
+					269 cell
+						270 text 已入库
+					271 cell
+						272 text Dev Admin
+					273 cell
+						274 button 查看
+				275 row
+					276 cell
+						277 text PIN-2026-0002
+					278 cell
+						279 text 采购入库
+					280 cell
+						281 text 采购订单
+					282 cell
+						283 text 采购入库
+					284 cell
+						285 text BATCH-RM-20260909-001
+					286 cell
+						287 text 南京锐联电气技术有限公司
+					288 cell
+						289 text 贯联验证原料仓
+					290 cell
+						291 text 2026-09-09
+					292 cell
+						293 text ¥6,800.00
+					294 cell
+						295 text 已入库
+					296 cell
+						297 text Dev Admin
+					298 cell
+						299 button 查看
+				300 row
+					301 cell
+						302 text PIN-2026-0006
+					303 cell
+						304 text 采购入库
+					305 cell
+						306 text 采购订单
+					307 cell
+						308 text 采购入库
+					309 cell
+						310 text BATCH-RM-20260909-001
+					311 cell
+						312 text 南京锐联电气技术有限公司
+					313 cell
+						314 text 贯联验证原料仓
+					315 cell
+						316 text 2026-09-09
+					317 cell
+						318 text ¥6,800.00
+					319 cell
+						320 text 已入库
+					321 cell
+						322 text Dev Admin
+					323 cell
+						324 button 查看
+				325 row
+					326 cell
+						327 text PIN-REP-CUR-20260913205628
+					328 cell
+						329 text 采购入库
+					330 cell
+						331 text 采购换货补货
+					332 cell
+						333 text 采购入库
+					334 cell
+						335 text REP-CUR-BATCH
+					336 cell
+						337 text 南京锐联电气技术有限公司
+					338 cell
+						339 text 贯联验证原料仓
+					340 cell
+						341 text 2026-09-14
+					342 cell
+						343 text ¥14.01
+					344 cell
+						345 text 已入库
+					346 cell
+						347 text Dev Admin
+					348 cell
+						349 button 查看
+
+The focused UI element is 8 button 切换侧边栏

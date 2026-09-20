@@ -1,0 +1,283 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/subcontract/receives".
+0 AXWebArea RiseMap, URL: risemap.cn/subcontract/receives
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 生产
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 组装业务管理
+					9 image
+					10 text 组装业务管理
+					11 image
+				12 button 组装单
+				13 button 缺料待办
+				14 button 领料单
+				15 button 补料单
+				16 button 退料单
+				17 button 拆解单
+				18 button 换件单
+				19 container
+					20 button 图纸管理
+						21 image
+						22 text 图纸管理
+						23 image
+					24 button 进入图纸管理上手指南
+						25 image
+				26 button 图纸总览
+				27 button 图号档案
+				28 button 图纸评审
+				29 button 图纸发布
+				30 button 图纸变更
+				31 button 图纸发放记录
+				32 button 图纸关联查询
+				33 button 客户图纸
+				34 container
+					35 button 委外管理
+						36 image
+						37 text 委外管理
+						38 image
+					39 button 进入委外管理上手指南
+						40 image
+				41 button 委外看板
+				42 button 委外订单
+				43 button 委外发料
+				44 button 委外回厂
+				45 button 委外退料
+				46 button 委外对账
+				47 button 委外供应商
+				48 button 委外库存
+				49 button 批次追溯
+				50 button 委外未交
+				51 button 委外进货
+				52 button 委外对账单
+			53 image
+			54 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			55 button 查看方案
+				56 image
+				57 text 查看方案
+			58 button
+				59 image
+			60 container
+				61 container 业务分类
+					62 checkbox 工作台, Value: 0
+					63 checkbox 供应链, Value: 0
+					64 checkbox 销售, Value: 0
+					65 checkbox 生产, Value: 1
+					66 checkbox 项目, Value: 0
+					67 checkbox 行政, Value: 0
+					68 checkbox 财务, Value: 0
+					69 checkbox 报表, Value: 0
+					70 checkbox 系统, Value: 0
+				71 button Description: 展开搜索, Help: 搜索
+					72 image
+				73 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					74 image
+					75 text 2
+				76 button Description: 打开推广奖励, Help: 推广
+				77 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				78 link Description: 打开工单, Value: community.risemap.cn/support
+				79 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					80 image
+					81 text 立即订阅
+				82 button 金
+					83 text 金
+					84 image
+			85 container
+				86 button 工作台
+					87 image
+					88 text 工作台
+				207 button 图纸变更
+					208 text 图纸变更
+				209 button 新建变更
+					210 text 新建变更
+				211 button 图纸发放记录
+					212 text 图纸发放记录
+				213 button 新建发放
+					214 text 新建发放
+				215 button 图纸关联查询
+					216 text 图纸关联查询
+				217 button 客户图纸
+					218 text 客户图纸
+				219 button 新建客户图纸
+					220 text 新建客户图纸
+				221 button 委外管理上手指南
+					222 text 委外管理上手指南
+				223 button 委外看板
+					224 text 委外看板
+				225 button 委外订单
+					226 text 委外订单
+				227 button 新建委外订单
+					228 text 新建委外订单
+				229 button 委外发料
+					230 text 委外发料
+				231 button 新建发料单
+					232 text 新建发料单
+				233 button 委外回厂
+					234 text 委外回厂
+			235 container
+				236 container
+					237 text 委外管理  › 委外回厂
+					238 image
+					239 heading 委外回厂, Value: 1
+						240 text 委外回厂
+					241 text 集中查询回厂验收结果、关联入库单与对账依据
+				242 checkbox 回厂记录总数 0 单 不含已作废记录, Help: 筛选回厂记录总数, Value: 1
+					243 image
+					244 text 回厂记录总数
+					245 text 0
+					246 text 单
+					247 text 不含已作废记录
+				248 checkbox 待入库 0 单 入库单等待仓库执行, Help: 筛选待入库, Value: 0
+					249 image
+					250 text 待入库
+					251 text 0
+					252 text 单
+					253 text 入库单等待仓库执行
+				254 checkbox 已入库 0 单 关联入库单已完成, Help: 筛选已入库, Value: 0
+					255 image
+					256 text 已入库
+					257 text 0
+					258 text 单
+					259 text 关联入库单已完成
+				260 button 导出
+					261 image
+					262 text 导出
+				263 button 导出记录
+					264 image
+					265 text 导出记录
+				266 button
+					267 image
+				268 button 刷新
+					269 image
+				270 button
+					271 image
+				272 button
+					273 image
+				274 image
+				275 text field (settable)
+				276 button 状态
+					277 text 状态
+					278 image
+				279 button 筛选供应商...
+					280 text 筛选供应商...
+				281 table
+					282 row
+						283 cell
+							284 text 回厂记录号
+						285 cell
+							286 text 供应商
+						287 cell
+							288 text 关联委外订单
+						289 cell
+							290 text 回厂日期
+						291 cell
+							292 text 质检员
+						293 cell
+							294 text 加工件概况
+						295 cell
+							296 text 验收结果
+						297 cell
+							298 text 关联入库单
+						299 cell
+							300 text 操作
+					301 row
+						302 cell
+							303 image
+							304 text 暂无符合条件的回厂记录
+				305 text 共  0 条记录 ·  0  种加工件明细 · 回厂  0  · 良品  0  · 不良  0 每页
+				306 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					307 text 20
+				308 text 条
+				309 button (disabled) 上一页
+					310 image
+				311 button 1
+				312 button (disabled) 下一页
+					313 image
+				314 container
+					315 heading 自定义导出委外回厂单, Value: 3
+						316 text 自定义导出委外回厂单
+					317 text 导出当前页 0 条  · 已配置  10  列
+					318 button
+						319 image
+					320 text 导出范围
+					321 radio button (settable, integer) Description: 当前页（0 条）, Value: 1
+					322 text 当前页（ 0  条）
+					323 radio button (settable, integer) Description: 全部筛选结果, Value: 0
+					324 text 全部筛选结果
+					325 table
+						326 container
+							327 row
+								328 cell
+									329 text #
+								330 cell
+									331 button 第 1 列导出字段
+										332 text 回厂单号
+								333 cell
+									334 button 第 2 列导出字段
+										335 text 状态
+								336 cell
+									337 button 第 3 列导出字段
+										338 text 委外订单号
+								339 cell
+									340 button 第 4 列导出字段
+										341 text 供应商
+								342 cell
+									343 button 第 5 列导出字段
+										344 text 回厂日期
+								345 cell
+									346 button 第 6 列导出字段
+										347 text 检验员
+								348 cell
+									349 button 第 7 列导出字段
+										350 text 本次回厂总量
+								351 cell
+									352 button 第 8 列导出字段
+										353 text 良品总数
+								354 cell
+									355 button 第 9 列导出字段
+										356 text 不良品总数
+								357 cell
+									358 button 第 10 列导出字段
+										359 text 入库单号
+								360 cell
+									361 button 添加列
+										362 image
+										363 text 添加列
+							364 row
+								365 cell
+									366 text 回厂单号
+								367 cell
+									368 text 状态
+								369 cell
+									370 text 委外订单号
+								371 cell
+									372 text 供应商
+								373 cell
+									374 text 回厂日期
+								375 cell
+									376 text 检验员
+								377 cell
+									378 text 本次回厂总量
+								379 cell
+									380 text 良品总数
+								381 cell
+									382 text 不良品总数
+								383 cell
+									384 text 入库单号
+						385 row
+							386 cell
+								387 text 暂无数据
+					388 button 保存当前映射为模板
+						389 image
+						390 text 保存当前映射为模板
+					391 text 保存后下次导出自动加载映射
+					392 button 取消
+					393 button 提交导出任务（10 列）
+						394 image
+						395 text 提交导出任务（10 列）
+			199 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+
+The focused UI element is 260 button 导出

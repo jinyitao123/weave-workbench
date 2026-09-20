@@ -1,0 +1,203 @@
+- generic: 销售
+- button:
+- navigation:
+  - button:
+    - generic: 销售业务
+  - button:
+    - generic: 框架销售合同
+  - button:
+    - generic: 销售订单
+  - button:
+    - generic: 收款流水
+  - button:
+    - generic: 销售发货单
+  - button:
+    - generic: 销售退货
+  - button:
+    - generic: 业绩银行
+  - button:
+    - generic: 价格策略
+  - button:
+    - generic: Goodwill订单
+  - button:
+    - generic: 销售团队
+  - button:
+    - generic: 销售目标
+  - button:
+    - generic: 销售发票
+  - button:
+    - generic: CRM客户管理
+  - button:
+    - generic: 客户管理
+  - button:
+    - generic: 联系人管理
+  - button:
+    - generic: 销售报价
+  - button:
+    - generic: 客户物料对照
+  - button:
+    - generic: 商机管理
+  - button:
+    - generic: 线索管理
+  - button:
+    - generic: 跟进记录
+  - button:
+    - generic: 公海客户
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button [pressed]:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: Goodwill订单详情
+- button:
+  - generic: 销售团队
+- button:
+  - generic: 销售目标
+- button:
+  - generic: 销售发票
+- button:
+  - generic: 客户管理
+- button:
+  - generic: 名片扫描
+- button:
+  - generic: 联系人管理
+- button:
+  - generic: 销售报价
+- button:
+  - generic: 新建销售报价
+- button:
+  - generic: 客户物料对照
+- button:
+  - generic: 商机管理
+- button:
+  - generic: 线索管理
+- button:
+  - generic: 跟进记录
+- button:
+  - generic: 公海客户
+- main:
+  - generic: CRM客户管理
+  - generic: 公海客户
+  - heading [level=1]: 公海客户
+  - paragraph: 未分配或已释放的客户资源池，销售人员可自行领取
+  - button:
+    - text: 新建公海客户
+  - button:
+    - text: 批量操作
+  - button:
+    - text: 导入
+  - button:
+    - text: 导出
+  - button:
+    - text: 导入/导出任务
+  - button:
+  - button:
+  - button:
+  - textbox:
+    - /placeholder: 搜索客户名称...
+  - button:
+    - text: 行业
+  - button:
+    - text: 来源
+  - button:
+    - text: 级别
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader
+        - columnheader:
+          - generic: 客户名称
+        - columnheader:
+          - generic: 行业
+        - columnheader:
+          - generic: 客户级别
+        - columnheader:
+          - generic: 联系人
+        - columnheader:
+          - generic: 所在城市
+        - columnheader:
+          - generic: 来源
+        - columnheader:
+          - generic: 预估价值
+        - columnheader:
+          - generic: 释放天数
+        - columnheader:
+          - generic: 操作
+    - rowgroup:
+      - row:
+        - cell:
+          - generic: 公海暂无客户
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button [disabled]:
+  - button: "1"
+  - button [disabled]:
+- button:
+- region "Notifications alt+T"
+- generic: 2025-10
+- dialog "新建公海客户":
+  - heading "新建公海客户" [level=2]
+  - generic: 客户名称 *
+  - textbox "请输入客户公司全称"
+  - paragraph: 客户名称不能为空
+  - generic: 行业
+  - button "请选择行业":
+    - generic: 请选择行业
+  - generic: 客户级别
+  - button "请选择级别":
+    - generic: 请选择级别
+  - generic: 联系人 *
+  - textbox "联系人姓名"
+  - paragraph: 联系人不能为空
+  - generic: 联系电话
+  - textbox "电话号码"
+  - generic: 邮箱
+  - textbox "邮箱地址"
+  - generic: 所在城市
+  - textbox "城市"
+  - generic: 标签 (逗号分隔)
+  - textbox "如：核电, DCS, 仪控"
+  - button "取消"
+  - button "创建" [active]
+  - button "Close":
+    - generic: Close

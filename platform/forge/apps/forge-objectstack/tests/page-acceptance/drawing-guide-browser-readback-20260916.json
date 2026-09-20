@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-16",
+  "risemap": {
+    "url": "https://risemap.cn/drawing/guide",
+    "observed": [
+      "标题为图纸管理上手指南，说明按角色完成建档、会审、发布、变更和受控发放",
+      "四个角色为设计/工艺、审核/会审、文控管理员和使用部门",
+      "六阶段为图号建档、版本提交、会审审批、图纸发布、变更执行和发放追溯",
+      "文章包含阶段、分类、标题、摘要、时长、适用场景、开始前确认、操作步骤、完成标志和常见阻塞",
+      "存在标记已掌握和打开图纸总览两个真实动作"
+    ],
+    "unresolved": [
+      "学习状态是否跨设备同步",
+      "角色选项是否与账号权限联动"
+    ]
+  },
+  "forge": {
+    "url": "http://localhost:4496/_console/apps/forge/page/page_drawing_guide",
+    "database": "file:.objectstack/production-placeholders-batch1.sqlite",
+    "observed": [
+      "共享 ForgePageHeader 正确显示图徽标、生产/图纸管理层级、标题和总览主动作",
+      "审核/会审角色显示 5 个关注阶段，非本角色阶段呈说明状态而非可点击按钮",
+      "图纸发布阶段打开发布受控有效版本指南及对应前置条件、步骤和阻断说明",
+      "关联与客户图纸目录搜索客户后仅保留匹配指南",
+      "标记已掌握后审核/会审进度由 0/8 变为 1/8，刷新和同端口同 SQLite 服务重启后仍为 1/8",
+      "取消已掌握后进度恢复为 0/8",
+      "打开图纸总览进入 page_drawing_workspace，并显示图纸总览职责页",
+      "390x844 视口 innerWidth、document.scrollWidth 和 body.scrollWidth 均为 390",
+      "浏览器控制台无 error 或 warn",
+      "补充修正后核对：目录固定保留八类，数量为 0 的分类按 RISEMAP 呈说明状态（设计/工艺可点击 5 项、共 8 项）",
+      "补充修正后核对：搜索跨当前角色全部指南并命中正文，与 RISEMAP 同一口径"
+    ]
+  },
+  "boundary": {
+    "learningState": "当前浏览器 localStorage 偏好，不是服务器业务状态",
+    "databaseReadback": "页面本身不写业务对象；同 SQLite 重启只证明页面和本地学习偏好可回读，不替代图纸单据验收",
+    "visualStatus": "review_required，缺独立视觉复核和保存截图",
+    "pendingAfterFix": [
+      "搜索口径与目录修正后的桌面 / 窄屏截图",
+      "修正后控制台扫描"
+    ]
+  }
+}

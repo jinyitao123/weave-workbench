@@ -1,0 +1,227 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/workflow/my-instances".
+0 AXWebArea RiseMap, URL: risemap.cn/workflow/my-instances
+	1 container
+		2 container root
+			201 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			202 text 行政
+			203 button 收起侧边栏
+				204 image
+			431 container
+				432 button 审批中心
+					433 image
+					434 text 审批中心
+					435 image
+				436 button 我的审批
+				437 button 抄送我的
+				438 button 我发起的
+				439 button 行政申请
+				440 button 行政管理
+					441 image
+					442 text 行政管理
+					443 image
+				444 button 公司通知
+				445 button 用章管理
+				446 button 会议纪要
+				447 button 工作汇报
+				448 button 文档中心
+				449 button 固定资产
+				450 button 资质与申报
+				451 button 物料领取
+				452 button 设备维护
+				453 button 礼品管理
+				454 button 借出管理
+				455 button 车辆管理
+				456 button 人力资源
+					457 image
+					458 text 人力资源
+					459 image
+				460 button 人事工作台
+				461 button 员工档案
+				462 button 招聘管理
+				463 button 入职离职
+				464 button 薪酬福利
+				465 button 规章制度
+				466 button 通讯录
+				467 button 考勤假期
+					468 image
+					469 text 考勤假期
+					470 image
+				471 button 加班申请
+				472 button 请假管理
+				473 button 出差申请
+				474 button 考勤管理
+				475 button 考勤统计
+				476 button 流程中心
+					477 image
+					478 text 流程中心
+					479 image
+				480 button 审批记录
+				481 button 发起流程
+				482 button 流程定义
+				483 button 流程分类
+			215 image
+			216 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			217 button 查看方案
+				218 image
+				219 text 查看方案
+			220 button
+				221 image
+			222 container
+				223 container 业务分类
+					224 checkbox 工作台, Value: 0
+					225 checkbox 供应链, Value: 0
+					226 checkbox 销售, Value: 0
+					227 checkbox 生产, Value: 0
+					228 checkbox 项目, Value: 0
+					229 checkbox 行政, Value: 1
+					230 checkbox 财务, Value: 0
+					231 checkbox 报表, Value: 0
+					232 checkbox 系统, Value: 0
+				233 button Description: 展开搜索, Help: 搜索
+					234 image
+				235 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					236 image
+					237 text 2
+				238 button Description: 打开推广奖励, Help: 推广
+				239 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				240 link Description: 打开工单, Value: community.risemap.cn/support
+				241 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					242 image
+					243 text 立即订阅
+				244 button 金
+					245 text 金
+					246 image
+			247 container
+				248 button 工作台
+					249 image
+					250 text 工作台
+				257 button 批次追溯
+					258 text 批次追溯
+				259 button 委外未交
+					260 text 委外未交
+				261 button 委外进货
+					262 text 委外进货
+				263 button 委外对账单
+					264 text 委外对账单
+				265 button 项目中心
+					266 text 项目中心
+				267 button 项目分析中心
+					268 text 项目分析中心
+				269 button 任务管理
+					270 text 任务管理
+				271 button 工时管理
+					272 text 工时管理
+				273 button 快捷工时填报
+					274 text 快捷工时填报
+				275 button 项目配置中心
+					276 text 项目配置中心
+				277 button 新建计划模板
+					278 text 新建计划模板
+				484 button 我的审批
+					485 text 我的审批
+				486 button 抄送我的
+					487 text 抄送我的
+				488 button 我发起的
+					489 text 我发起的
+			490 container
+				491 container
+					492 text 审批中心
+					493 image
+					494 text 我发起的
+					495 image
+					496 heading 我发起的, Value: 1
+						497 text 我发起的
+					498 text 跟踪我发起审批的进度、节点与最终结果
+				499 container 状态筛选
+					500 button 全部 0
+						501 text 全部
+						502 text 0
+					503 button 草稿 0
+						504 text 草稿
+						505 text 0
+					506 button 进行中 0
+						507 text 进行中
+						508 text 0
+					509 button 已通过 0
+						510 text 已通过
+						511 text 0
+					512 button 已驳回 0
+						513 text 已驳回
+						514 text 0
+					515 button 已反审核 0
+						516 text 已反审核
+						517 text 0
+					518 button 已取消 0
+						519 text 已取消
+						520 text 0
+					521 button 已暂停 0
+						522 text 已暂停
+						523 text 0
+				524 button 刷新
+					525 image
+				526 button
+					527 image
+				528 button
+					529 image
+				530 image
+				531 text field (settable)
+				532 button 审批类型
+					533 text 审批类型
+				534 button 全部优先级
+					535 text 全部优先级
+				536 container
+					537 text field (settable)
+					538 button
+						539 image
+				540 text 至
+				541 container
+					542 text field (settable)
+					543 button
+						544 image
+				545 button 重置
+				546 button 发起审批
+					547 image
+					548 text 发起审批
+				549 table
+					550 row
+						551 cell
+							552 text 审批编号
+						553 cell
+							554 text 审批标题
+						555 cell
+							556 text 审批类型
+						557 cell
+							558 text 优先级
+						559 cell
+							560 text 状态
+						561 cell
+							562 text 当前节点
+						563 cell
+							564 text 发起时间
+						565 cell
+							566 text 结束时间
+						567 cell
+							568 text 操作
+					569 row
+						570 cell
+							571 image
+							572 text 暂无审批记录
+				573 text 共  0 条记录 每页
+				574 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					575 text 10
+				576 text 条
+				577 button (disabled) 上一页
+					578 image
+				579 button 1
+				580 button (disabled) 下一页
+					581 image
+			367 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+		582 container
+			583 text 全部优先级
+			584 image
+			585 text 普通
+			586 text 重要
+			587 text 紧急
+
+The focused UI element is 534 button 全部优先级

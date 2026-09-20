@@ -1,0 +1,265 @@
+- generic: 销售
+- button:
+- navigation:
+  - button:
+    - generic: 销售业务
+  - button:
+    - generic: 框架销售合同
+  - button:
+    - generic: 销售订单
+  - button:
+    - generic: 收款流水
+  - button:
+    - generic: 销售发货单
+  - button:
+    - generic: 销售退货
+  - button:
+    - generic: 业绩银行
+  - button:
+    - generic: 价格策略
+  - button:
+    - generic: Goodwill订单
+  - button:
+    - generic: 销售团队
+  - button:
+    - generic: 销售目标
+  - button:
+    - generic: 销售发票
+  - button:
+    - generic: CRM客户管理
+  - button:
+    - generic: 客户管理
+  - button:
+    - generic: 联系人管理
+  - button:
+    - generic: 销售报价
+  - button:
+    - generic: 客户物料对照
+  - button:
+    - generic: 商机管理
+  - button:
+    - generic: 线索管理
+  - button:
+    - generic: 跟进记录
+  - button:
+    - generic: 公海客户
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button [pressed]:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: Goodwill订单
+- button:
+  - generic: Goodwill订单详情
+- button:
+  - generic: 销售团队
+- button:
+  - generic: 销售目标
+- button:
+  - generic: 销售发票
+- button:
+  - generic: 客户管理
+- button:
+  - generic: 名片扫描
+- button:
+  - generic: 联系人管理
+- button:
+  - generic: 销售报价
+- button:
+  - generic: 新建销售报价
+- button:
+  - generic: 客户物料对照
+- button:
+  - generic: 商机管理
+- button:
+  - generic: 线索管理
+- button:
+  - generic: 跟进记录
+- main:
+  - generic: CRM客户管理
+  - generic: 跟进记录
+  - heading [level=1]: 跟进记录
+  - paragraph: 记录和管理所有客户及商机的跟进活动
+  - paragraph:
+    - text: 总跟进记录
+  - paragraph: "0"
+  - paragraph:
+    - text: 本周跟进
+  - paragraph: "0"
+  - paragraph:
+    - text: 待跟进
+  - paragraph: "0"
+  - paragraph:
+    - text: 已过期
+  - paragraph: "0"
+  - paragraph:
+    - text: 覆盖客户
+  - paragraph: "0"
+  - textbox:
+    - /placeholder: 搜索客户、内容、商机...
+  - button:
+    - text: 范围
+  - button:
+    - generic: 客户负责人
+  - button:
+    - text: 跟进状态
+  - button:
+    - text: 高级筛选
+  - button:
+    - text: 导出
+  - button:
+    - text: 新增跟进
+  - generic: "类型:"
+  - button: 全部
+  - button: 电话沟通
+  - button: 微信沟通
+  - button: 邮件往来
+  - button: 上门拜访
+  - button: 客户来访
+  - button: 线上会议
+  - button: 产品演示
+  - button: 方案讲解
+  - button: 商务谈判
+  - button: 其他
+  - button:
+    - text: 最新优先
+  - radiogroup:
+    - radio:
+      - text: 列表
+    - radio [checked]:
+      - text: 日历
+  - button:
+  - generic: 2026年9月
+  - button:
+  - generic: "人员筛选:"
+  - button:
+    - generic: 全部人员
+  - generic: 一
+  - generic: 二
+  - generic: 三
+  - generic: 四
+  - generic: 五
+  - generic: 六
+  - generic: 日
+  - generic: "1"
+  - generic: "2"
+  - generic: "3"
+  - generic: "4"
+  - generic: "5"
+  - generic: "6"
+  - generic: "7"
+  - generic: "8"
+  - generic: "9"
+  - generic: "10"
+  - generic: "11"
+  - generic: "12"
+  - generic: "13"
+  - generic: "14"
+  - generic: "15"
+  - generic: "16"
+  - generic: "17"
+  - generic: "18"
+  - generic: "19"
+  - generic: "20"
+  - generic: "21"
+  - generic: "22"
+  - generic: "23"
+  - generic: "24"
+  - generic: "25"
+  - generic: "26"
+  - generic: "27"
+  - generic: "28"
+  - generic: "29"
+  - generic: "30"
+  - generic: 频次：
+  - generic: 0次
+  - generic: 1次
+  - generic: 2次
+  - generic: 3-4次
+  - generic: 5次+
+  - generic: 本月合计 0 次跟进
+  - paragraph: 本月统计
+  - paragraph: "0"
+  - paragraph: 次跟进
+  - paragraph: 按类型
+- button:
+- region "Notifications alt+T"
+- generic: 2025-10
+- dialog "新增跟进记录":
+  - heading "新增跟进记录" [level=2]
+  - paragraph: 新增跟进记录表单
+  - button "基本信息 0/4" [active]:
+    - generic: 基本信息
+    - generic: 0/4
+  - generic: "*"
+  - generic: 客户
+  - button "搜索并选择客户":
+    - generic: 搜索并选择客户
+  - generic: 联系人
+  - button "请先选择客户" [disabled]:
+    - generic: 请先选择客户
+  - generic: "02"
+  - generic: 引用拜访计划
+  - generic: 选择客户后可引用拜访计划
+  - generic: 关联商机
+  - button "请先选择客户" [disabled]:
+    - generic: 请先选择客户
+  - generic: "*"
+  - generic: 跟进方式
+  - button "请选择跟进方式":
+    - generic: 请选择跟进方式
+  - button "跟进详情 0/2":
+    - generic: 跟进详情
+    - generic: 0/2
+  - generic: "*"
+  - generic: 跟进内容
+  - textbox "请输入跟进内容"
+  - generic: 跟进结果
+  - textbox "请输入跟进结果"
+  - button "下次跟进计划 0/2":
+    - generic: 下次跟进计划
+    - generic: 0/2
+  - generic: 下次跟进日期
+  - textbox "请选择日期和时间"
+  - button:
+  - generic: 下次跟进行动
+  - textbox "请输入下次跟进行动"
+  - button "取消"
+  - button "创建"
+  - button "Close":
+    - generic: Close

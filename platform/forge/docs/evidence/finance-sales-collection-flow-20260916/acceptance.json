@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_sales_collection_flow",
+  "archetype": "task_workspace",
+  "reviewedRevision": "fbfc2e5c0518f1ef4cacc5b8ca0f449746df6480",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/sales-collection-flow.page.ts": "af0e9086d48b43bed56f1b599c88306833836b84e6264a39e6ef16ffecde633d",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "8830c910309c7d731c9289965590eb5572e550be39ea70c4b3c69c3baf78a036",
+    "apps/forge-objectstack/src/actions/finance.action.ts": "83cf7aa5362aed7431d7cd415cc329463e9bf226d25f75331bd7bd5e42a33108",
+    "apps/forge-objectstack/src/objects/finance.object.ts": "bde56a88a22566da2502b92e9c8ea3bce36fb9d18f107d6245983253c9f9b4c0",
+    "docs/forge-page-polish-baseline.md": "87391dcd1a7e8feefa96b358d42815d22e0eedebf578d0ff0e470550b0d45eb4"
+  },
+  "environment": {
+    "forgeUrl": "http://localhost:4441",
+    "database": "apps/forge-objectstack/.objectstack/finance-sales-cycle.sqlite",
+    "materials": "A 26000 CNY receipt from the receivables page, its receivable, invoice, sales order and fund account"
+  },
+  "checks": {
+    "replication": {
+      "status": "blocked",
+      "notes": "RISEMAP current collection-flow page is empty; title, metrics, statuses, filters, columns and empty state are observed, while row actions and same-material outcomes remain unavailable.",
+      "evidence": ["docs/evidence/finance-sales-collection-flow-20260916/acceptance.md"]
+    },
+    "visual": {
+      "status": "pending",
+      "notes": "Populated desktop and 390x844 narrow views, filtered empty state, allocation form and confirmation dialogs were checked in the built-in browser. Independent visual review remains pending.",
+      "evidence": ["docs/evidence/finance-sales-collection-flow-20260916/acceptance.md"]
+    },
+    "interaction": {
+      "status": "blocked",
+      "notes": "Forge required and over-amount blocking, allocation, cancellation, approval and reversal ordering passed. RISEMAP row-level behavior remains unavailable.",
+      "evidence": ["docs/evidence/finance-sales-collection-flow-20260916/acceptance.md", "apps/forge-objectstack/tests/sales-collection-flow-page-readback.mjs"]
+    },
+    "business": {
+      "status": "blocked",
+      "notes": "Forge receipt, allocation, receivable, invoice, order and fund-account readback passed before and after same-SQLite restart. RISEMAP same-material business outcome remains unavailable.",
+      "evidence": ["apps/forge-objectstack/tests/sales-collection-flow-page-readback.mjs"]
+    }
+  },
+  "visualEvidence": {
+    "desktop": { "width": 1280, "height": 720, "evidence": ["docs/evidence/finance-sales-collection-flow-20260916/acceptance.md"] },
+    "narrow": { "width": 390, "height": 844, "evidence": ["docs/evidence/finance-sales-collection-flow-20260916/acceptance.md"] },
+    "reference": ["docs/forge-finance-sales-cycle-page-delivery-20260916.md"],
+    "populated": ["docs/evidence/finance-sales-collection-flow-20260916/acceptance.md"],
+    "empty": ["docs/evidence/finance-sales-collection-flow-20260916/acceptance.md"],
+    "form": ["docs/evidence/finance-sales-collection-flow-20260916/acceptance.md"],
+    "error": ["docs/evidence/finance-sales-collection-flow-20260916/acceptance.md"]
+  },
+  "requirements": [
+    { "id": "SCF-001", "status": "pass", "steps": "Open both current pages and compare title, description, metrics, statuses and columns.", "expected": "Matching responsibility and ledger content.", "observed": "Authentication was fixed and the Forge page now shows real records with the observed structure; pending review is an explicit Forge execution extension.", "evidence": ["docs/forge-finance-sales-cycle-page-delivery-20260916.md"] },
+    { "id": "SCF-002", "status": "pass", "steps": "Search, switch status, expand advanced filters and reset.", "expected": "Filters have clear list scope while summary remains global.", "observed": "Status, filtered empty state, advanced-filter toggle and reset passed without changing global metrics.", "evidence": ["docs/evidence/finance-sales-collection-flow-20260916/acceptance.md"] },
+    { "id": "SCF-003", "status": "pending", "steps": "Submit an incomplete allocation, an over-amount allocation and a valid allocation.", "expected": "Invalid actions are blocked and a valid action creates a pending allocation.", "observed": "Forge paths passed; RISEMAP row behavior remains unavailable.", "evidence": ["docs/evidence/finance-sales-collection-flow-20260916/acceptance.md", "apps/forge-objectstack/tests/sales-collection-flow-page-readback.mjs"] },
+    { "id": "SCF-004", "status": "pending", "steps": "Cancel one allocation, allocate again and approve.", "expected": "Cancellation releases the receipt balance; approval settles the receivable and invoice and updates the order.", "observed": "Forge cancellation and final approval passed; RISEMAP same-material behavior remains unavailable.", "evidence": ["docs/evidence/finance-sales-collection-flow-20260916/acceptance.md", "apps/forge-objectstack/tests/sales-collection-flow-page-readback.mjs"] },
+    { "id": "SCF-005", "status": "pending", "steps": "Attempt invalid receipt reversal, reverse an approved allocation and restore the final settlement.", "expected": "Invalid order is blocked and reversal restores every rollup with an audit record.", "observed": "Forge blocking, reversal log, restored balances and final re-approval passed; allocation-detail visual review remains pending.", "evidence": ["docs/evidence/finance-sales-collection-flow-20260916/acceptance.md", "apps/forge-objectstack/tests/sales-collection-flow-page-readback.mjs"] },
+    { "id": "SCF-006", "status": "pass", "steps": "Check desktop and 390x844 views with data, filtered empty state, allocation form and confirmation.", "expected": "Usable first screen without page-level overflow; wide table scrolls inside its card.", "observed": "Desktop and narrow views passed, including stacked advanced dates and complete dialogs.", "evidence": ["docs/evidence/finance-sales-collection-flow-20260916/acceptance.md"] },
+    { "id": "SCF-007", "status": "pending", "steps": "Read receipt, allocations, receivable, invoice, order and account, restart the same SQLite and read again.", "expected": "Source, amount, statuses and balances remain consistent.", "observed": "Forge readback passed before and after restart; RISEMAP same-material outcome remains unavailable.", "evidence": ["apps/forge-objectstack/tests/sales-collection-flow-page-readback.mjs"] }
+  ],
+  "review": {
+    "implementer": "current finance task",
+    "reviewer": "",
+    "reviewedAt": "",
+    "status": "pending",
+    "evidence": []
+  }
+}

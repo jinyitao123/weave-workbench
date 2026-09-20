@@ -1,0 +1,224 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/drawing/guide".
+0 AXWebArea RiseMap, URL: risemap.cn/drawing/guide
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 生产
+			5 button 收起侧边栏
+				6 image
+			7 container
+				450 button 组装业务管理
+					451 image
+					452 text 组装业务管理
+					453 image
+				454 button 组装单
+				455 button 缺料待办
+				456 button 领料单
+				457 button 补料单
+				458 button 退料单
+				459 button 拆解单
+				460 button 换件单
+				461 container
+					462 button 图纸管理
+						463 image
+						464 text 图纸管理
+						465 image
+					466 button 进入图纸管理上手指南
+						467 image
+				468 button 图纸总览
+				469 button 图号档案
+				470 button 图纸评审
+				471 button 图纸发布
+				472 button 图纸变更
+				473 button 图纸发放记录
+				474 button 图纸关联查询
+				475 button 客户图纸
+				476 container
+					477 button 委外管理
+						478 image
+						479 text 委外管理
+						480 image
+					481 button 进入委外管理上手指南
+						482 image
+				483 button 委外看板
+				484 button 委外订单
+				485 button 委外发料
+				486 button 委外回厂
+				487 button 委外退料
+				488 button 委外对账
+				489 button 委外供应商
+				490 button 委外库存
+				491 button 批次追溯
+				492 button 委外未交
+				493 button 委外进货
+				494 button 委外对账单
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 1
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				360 button 销售报价
+					361 text 销售报价
+				362 button 客户物料对照
+					363 text 客户物料对照
+				364 button 商机管理
+					365 text 商机管理
+				366 button 线索管理
+					367 text 线索管理
+				368 button 跟进记录
+					369 text 跟进记录
+				370 button 公海客户
+					371 text 公海客户
+				495 button 组装单
+					496 text 组装单
+				497 button 缺料待办
+					498 text 缺料待办
+				499 button 领料单
+					500 text 领料单
+				501 button 补料单
+					502 text 补料单
+				503 button 退料单
+					504 text 退料单
+				505 button 拆解单
+					506 text 拆解单
+				507 button 换件单
+					508 text 换件单
+				509 button 图纸管理上手指南
+					510 text 图纸管理上手指南
+			511 container
+				512 heading 图纸管理上手指南, Value: 1
+					513 text 图纸管理上手指南
+				514 text 按角色完成建档、会审、发布、变更和受控发放，快速找到当前任务的处理入口。
+				515 container
+					516 text 选择角色视角
+					517 container 选择指南角色
+						518 checkbox Description: 切换到设计 / 工艺, Help: 设计 / 工艺, Value: 1
+							519 image
+						520 checkbox Description: 切换到审核 / 会审, Help: 审核 / 会审, Value: 0
+						521 checkbox Description: 切换到文控管理员, Help: 文控管理员, Value: 0
+						522 checkbox Description: 切换到使用部门, Help: 使用部门, Value: 0
+					523 text 设计 / 工艺 图号建档、版本提交与变更发起 学习进度 0  /  7
+					524 progress indicator Description: 设计 / 工艺学习进度, Value: 0
+				525 heading 完整业务流程, Value: 2
+					526 text 完整业务流程
+				527 text 当前角色需要关注  4  个阶段
+				528 container
+					529 button 01 图号建档 建立唯一档案
+						530 text 01
+						531 text 图号建档
+						532 text 建立唯一档案
+					533 button 02 版本提交 上传图纸文件
+						534 text 02
+						535 text 版本提交
+						536 text 上传图纸文件
+					537 button 03 会审审批 整改并通过
+						538 text 03
+						539 text 会审审批
+						540 text 整改并通过
+					541 button (disabled) 04 图纸发布 形成有效版本
+						542 text 04 图纸发布 形成有效版本
+					543 button 05 变更执行 评估影响范围
+						544 text 05
+						545 text 变更执行
+						546 text 评估影响范围
+					547 button (disabled) 06 发放追溯 回执与作废
+						548 text 06 发放追溯 回执与作废
+				549 text 指南目录
+				550 button 快速开始 1
+					551 text 快速开始
+					552 text 1
+				553 button 图号与版本 2
+					554 text 图号与版本
+					555 text 2
+				556 button 会审与整改 1
+					557 text 会审与整改
+					558 text 1
+				559 button (disabled) 发布管理 0
+					560 text 发布管理 0
+				561 button 变更管理 1
+					562 text 变更管理
+					563 text 1
+				564 button (disabled) 发放与回执 0
+					565 text 发放与回执 0
+				566 button 关联与客户图纸 2
+					567 text 关联与客户图纸
+					568 text 2
+				569 button (disabled) 常见问题 0
+					570 text 常见问题 0
+				571 container
+					572 image
+					573 text field (settable) 搜索图纸指南
+				574 container
+					575 text 阶段  01  · 快速开始
+				576 heading 先理解一张图纸的完整生命周期, Value: 2
+					577 text 先理解一张图纸的完整生命周期
+				578 text 图号是长期档案，版本是可迭代内容；只有发布后的版本才可作为受控使用依据。
+				579 image
+				580 text 1 分钟
+				581 button 标记已掌握
+					582 image
+					583 text 标记已掌握
+				584 text 适用场景
+				585 text 首次使用图纸管理，或需要判断当前图纸下一步应进入哪个业务环节。
+				586 text 开始前确认
+				587 text 已明确图纸所属产品或物料；已了解本企业的会审和发放责任人
+				588 heading 操作步骤, Value: 3
+					589 text 操作步骤
+				590 image
+				591 text 负责人： 全体图纸业务人员 01
+				592 text 先建图号档案
+				593 text 每张图纸先建立唯一图号，后续版本、会审、发布和变更都归集在该档案下。
+				594 text 基础 02
+				595 text 提交版本并完成会审
+				596 text 上传新版本后发起会审；存在问题时先整改，再重新提交审核。
+				597 text 主流程 03
+				598 text 发布并受控发放
+				599 text 会审通过后由文控发布，使用部门按发放任务接收并确认回执。
+				600 image
+				601 text 页面字段以实际业务页面为准
+				602 button 打开图纸总览
+					603 image
+					604 text 打开图纸总览
+				605 container
+					606 text 完成标志
+					607 image
+					608 text 已能区分图号、版本、会审、发布、变更和发放六个环节。
+				609 container
+					610 text 常见阻塞与处理
+					611 image
+					612 text 不清楚应该从哪里开始 新图纸先进入图号档案；已有图号的新内容从版本提交开始。
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 466 button 进入图纸管理上手指南

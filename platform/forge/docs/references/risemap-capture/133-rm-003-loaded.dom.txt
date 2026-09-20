@@ -1,0 +1,410 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 工作台
+- button "收起侧边栏":
+- navigation:
+  - button "工作台":
+    - generic: 工作台
+  - button "AI 广场":
+    - generic: AI 广场
+  - button "引导中心" [active]:
+    - generic: 引导中心
+  - button "待办管理":
+    - generic: 待办管理
+- generic: 免费试用中，还剩 14 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台" [pressed]:
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "销售配置":
+  - generic: 销售配置
+- button "库存配置":
+  - generic: 库存配置
+- button "其他配置":
+  - generic: 其他配置
+- button "人事配置":
+  - generic: 人事配置
+- button "项目管理配置":
+  - generic: 项目管理配置
+- button "图纸配置":
+  - generic: 图纸配置
+- button "生产管理配置":
+  - generic: 生产管理配置
+- button "委外配置":
+  - generic: 委外配置
+- button "单据打印":
+  - generic: 单据打印
+- button "插件中心":
+  - generic: 插件中心
+- button "服务订阅管理":
+  - generic: 服务订阅管理
+- button "推广奖励":
+  - generic: 推广奖励
+- button "字段管理":
+  - generic: 字段管理
+- button "引导中心":
+  - generic: 引导中心
+- main:
+  - generic: 工作台
+  - generic: 系统初始化
+  - heading "系统初始化引导" [level=1]
+  - paragraph: 首次启用系统建议按 6 个阶段、25 个步骤依次完成。每完成一项可点"标记完成"。
+  - generic: 总进度
+  - generic: 0 / 25
+  - generic: 必填进度
+  - generic: 0 / 13
+  - generic: 预计剩余时间
+  - generic: 10 小时
+  - generic: 当前阶段
+  - generic: 阶段 1
+  - generic: 公司主体与组织架构
+  - textbox "搜索步骤标题或说明…"
+  - radiogroup:
+    - radio "全部" [checked]:
+      - generic: 全部
+    - radio "必填":
+      - generic: 必填
+    - radio "未完成":
+      - generic: 未完成
+    - radio "已完成":
+      - generic: 已完成
+  - button:
+  - generic: 阶段 1
+  - heading "公司主体与组织架构" [level=3]
+  - generic: 0 / 3
+  - paragraph: 设定各模块建账日，建立法律主体、部门组织和员工花名册
+  - button "标记完成":
+  - heading "完善公司主体信息" [level=4]
+  - generic: 必填
+  - paragraph: 维护企业名称、统一社会信用代码、对公账户、Logo 等基础信息，作为后续单据抬头与开票主体。
+  - text: 管理员 · 财务
+  - text: 约 5 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "建立部门组织架构" [level=4]
+  - generic: 必填
+  - paragraph: 搭建一级 / 二级部门树。审批流、数据权限、考勤分组都依赖部门结构。
+  - text: 管理员 · 人事
+  - text: 约 10 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "录入员工花名册" [level=4]
+  - generic: 推荐
+  - paragraph: 导入或新增在职员工档案。后续可关联到用户账号、考勤、工时与销售业绩。
+  - text: 人事
+  - text: 约 20 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button:
+  - generic: 阶段 2
+  - heading "用户与权限" [level=3]
+  - generic: 0 / 3
+  - paragraph: 创建账号、配置角色与数据权限范围
+  - button "标记完成":
+  - heading "审阅 / 创建角色权限" [level=4]
+  - generic: 必填
+  - paragraph: 系统预置 6 个角色（管理员、销售经理、财务、项目经理、仓管、普通员工）。如有特殊岗位可自建并勾选模块权限。
+  - text: 管理员
+  - text: 约 10 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "邀请 / 创建用户账号" [level=4]
+  - generic: 必填
+  - paragraph: 为每位员工创建登录账号并分配角色。建议至少创建 1 名财务、1 名仓管，避免单管理员瓶颈。
+  - text: 管理员
+  - text: 约 15 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "配置数据权限范围" [level=4]
+  - generic: 推荐
+  - paragraph: 为角色限定可见的产品分类、品牌、仓库范围（看 / 编辑 / 管理）。多事业部 / 多仓必做。
+  - text: 管理员
+  - text: 约 10 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button:
+  - generic: 阶段 3
+  - heading "业务基础数据" [level=3]
+  - generic: 0 / 7
+  - paragraph: 单位、品类、仓库、商品、客户、供应商
+  - button "标记完成":
+  - heading "维护计量单位" [level=4]
+  - generic: 必填
+  - paragraph: 台 / 套 / 个 / 米 / kg / 箱 等。商品档案与单据数量都会引用。
+  - text: 仓管 · 管理员
+  - text: 约 5 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "建立产品分类体系" [level=4]
+  - generic: 必填
+  - paragraph: 最多 5 级商品分类。会影响数据权限范围、报表汇总维度与编码规则。
+  - text: 产品 · 管理员
+  - text: 约 15 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "维护仓库类型" [level=4]
+  - generic: 推荐
+  - paragraph: 自有 / 自建 / 临时 / 项目仓 / 客户寄售 等分类，便于库存报表分维度统计。
+  - text: 仓管
+  - text: 约 3 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "建立仓库档案" [level=4]
+  - generic: 必填
+  - paragraph: 至少 1 个主仓。多仓 / 多地点企业建议把项目仓、备品备件仓也建好。
+  - text: 仓管
+  - text: 约 10 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "导入商品 / 物料档案" [level=4]
+  - generic: 必填
+  - paragraph: 支持 Excel 批量导入。包含规格、单位、品牌、默认价等。期初库存与销售订单都依赖该档案。
+  - text: 产品 · 销售
+  - text: 约 60 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "建立供应商档案" [level=4]
+  - generic: 必填
+  - paragraph: 至少 1 家可用供应商。后续询价、采购订单、应付账款都需要。
+  - text: 采购
+  - text: 约 30 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "建立客户档案" [level=4]
+  - generic: 必填
+  - paragraph: 包含联系人、收发货地址、信用额度、税务信息。可批量导入。
+  - text: 销售
+  - text: 约 30 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button:
+  - generic: 阶段 4
+  - heading "期初数据建账" [level=3]
+  - generic: 0 / 6
+  - paragraph: 期初库存、应收应付、银行余额、固定资产
+  - button "标记完成":
+  - heading "设定系统启用日（建账基准日）" [level=4]
+  - generic: 必填
+  - paragraph: 确定系统正式记账的起算日。之后录入的期初库存、应收应付、银行余额都以这一天为快照基准；早于该日的业务单据将被限制录入。建议先与财务对齐再保存。
+  - text: 财务 · 管理员
+  - text: 约 5 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "录入期初库存" [level=4]
+  - generic: 必填
+  - paragraph: 在「入库管理」中选择「期初入库」单据类型，按仓库逐项录入或 Excel 模板批量导入。截止日 = T-1。
+  - text: 仓管 · 财务
+  - text: 约 120 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "录入期初应收账款" [level=4]
+  - generic: 推荐
+  - paragraph: 把启用日之前未收回的客户欠款录入系统。如确认无未结款，也请显式标记为「已确认」。
+  - text: 财务
+  - text: 约 30 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "录入期初应付账款" [level=4]
+  - generic: 推荐
+  - paragraph: 把启用日之前未支付的供应商账款录入系统。
+  - text: 财务
+  - text: 约 30 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "录入期初银行 / 现金余额" [level=4]
+  - generic: 必填
+  - paragraph: 维护各资金账户的启用日余额，作为后续银行流水起点。
+  - text: 财务 · 出纳
+  - text: 约 15 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "录入期初固定资产" [level=4]
+  - generic: 推荐
+  - paragraph: 登记办公设备、车辆、生产设备等固定资产清单，含原值、累计折旧、使用部门。
+  - text: 财务 · 行政
+  - text: 约 30 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button:
+  - generic: 阶段 5
+  - heading "流程与模板" [level=3]
+  - generic: 0 / 3
+  - paragraph: 编码规则、审批流、打印与通知模板
+  - button "标记完成":
+  - heading "设置单据编码规则" [level=4]
+  - generic: 推荐
+  - paragraph: 为合同、订单、入库单、出库单等设置自定义编码（如 PO-20260101-001）。
+  - text: 管理员
+  - text: 约 15 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "配置审批流" [level=4]
+  - generic: 推荐
+  - paragraph: 请假、报销、采购、合同等关键单据的审批节点与抄送规则。
+  - text: 管理员
+  - text: 约 30 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "通知 / 消息渠道" [level=4]
+  - generic: 推荐
+  - paragraph: 开通邮件、短信、企业微信中至少 1 个推送渠道，用于审批、预警、待办提醒。
+  - text: 管理员
+  - text: 约 10 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button:
+  - generic: 阶段 6
+  - heading "试跑与上线" [level=3]
+  - generic: 0 / 3
+  - paragraph: 走通核心业务流程并正式上线
+  - button "标记完成":
+  - heading "试跑销售流程" [level=4]
+  - generic: 推荐
+  - paragraph: 录入 1 张测试销售合同 → 出库 → 开票 → 收款，确认全链路打通。验证后可作废测试单据。
+  - text: 销售 · 财务
+  - text: 约 30 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "试跑采购流程" [level=4]
+  - generic: 推荐
+  - paragraph: 录入 1 张测试采购订单 → 入库 → 发票登记 → 付款，确认全链路打通。
+  - text: 采购 · 财务
+  - text: 约 30 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+  - button "标记完成":
+  - heading "关闭引导，正式上线" [level=4]
+  - generic: 推荐
+  - paragraph: 确认所有必填项完成后，关闭工作台横幅提示，正式开始日常业务录入。
+  - text: 管理员
+  - text: 约 1 分钟
+  - button "去配置":
+    - text: 去配置
+  - button "跳过"
+  - button "标记完成":
+    - text: 标记完成
+- button "打开 AI 助手":
+- region "Notifications alt+T"

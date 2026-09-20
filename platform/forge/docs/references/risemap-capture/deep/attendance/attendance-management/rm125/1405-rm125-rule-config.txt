@@ -1,0 +1,220 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/attendance".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/attendance
+	2 container root
+		3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+		4 text 行政
+		5 button 收起侧边栏
+			6 image
+		7 container
+			8 button 审批中心
+				9 image
+				10 text 审批中心
+				11 image
+			12 button 我的审批
+			13 button 抄送我的
+			14 button 我发起的
+			15 button 行政申请
+			16 button 行政管理
+				17 image
+				18 text 行政管理
+				19 image
+			20 button 公司通知
+			21 button 用章管理
+			22 button 会议纪要
+			23 button 工作汇报
+			24 button 文档中心
+			25 button 固定资产
+			26 button 资质与申报
+			27 button 物料领取
+			28 button 设备维护
+			29 button 礼品管理
+			30 button 借出管理
+			31 button 车辆管理
+			32 button 人力资源
+				33 image
+				34 text 人力资源
+				35 image
+			36 button 人事工作台
+			37 button 员工档案
+			38 button 招聘管理
+			39 button 入职离职
+			40 button 薪酬福利
+			41 button 规章制度
+			42 button 通讯录
+			43 button 考勤假期
+				44 image
+				45 text 考勤假期
+				46 image
+			47 button 加班申请
+			48 button 请假管理
+			49 button 出差申请
+			50 button 考勤管理
+			51 button 考勤统计
+			52 button 流程中心
+				53 image
+				54 text 流程中心
+				55 image
+			56 button 审批记录
+			57 button 发起流程
+			58 button 流程定义
+			59 button 流程分类
+		60 image
+		61 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+		62 button 查看方案
+			63 image
+			64 text 查看方案
+		65 button
+			66 image
+		67 container
+			68 container 业务分类
+				69 checkbox 工作台, Value: 0
+				70 checkbox 供应链, Value: 0
+				71 checkbox 销售, Value: 0
+				72 checkbox 生产, Value: 0
+				73 checkbox 项目, Value: 0
+				74 checkbox 行政, Value: 1
+				75 checkbox 财务, Value: 0
+				76 checkbox 报表, Value: 0
+				77 checkbox 系统, Value: 0
+			78 button Description: 展开搜索, Help: 搜索
+				79 image
+			80 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+				81 image
+				82 text 2
+			83 button Description: 打开推广奖励, Help: 推广
+			84 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+			85 link Description: 打开工单, Value: community.risemap.cn/support
+			86 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+				87 image
+				88 text 立即订阅
+			89 button 金
+				90 text 金
+				91 image
+		92 container
+			93 button 工作台
+				94 image
+				95 text 工作台
+			96 button 员工档案
+				97 text 员工档案
+			98 button 招聘管理
+				99 text 招聘管理
+			100 button 候选人详情
+				101 text 候选人详情
+			102 button 入职离职
+				103 text 入职离职
+			104 button 薪酬福利
+				105 text 薪酬福利
+			106 button 福利发放
+				107 text 福利发放
+			108 button 规章制度
+				109 text 规章制度
+			110 button 人事配置
+				111 text 人事配置
+			112 button 通讯录
+				113 text 通讯录
+			114 button 加班申请
+				115 text 加班申请
+			116 button 请假管理
+				117 text 请假管理
+			118 button 出差申请
+				119 text 出差申请
+			120 button 新建出差申请
+				121 text 新建出差申请
+			122 button 考勤管理
+				123 text 考勤管理
+		124 container
+			125 container
+				126 text 考勤假期
+				127 image
+				128 text 考勤管理
+				129 image
+				130 heading 考勤管理, Value: 1
+					131 text 考勤管理
+				132 text 查看每日打卡记录、筛选异常考勤、提交补签纠正申请
+			133 button 每日考勤
+				134 image
+				135 text 每日考勤
+			136 button 个人考勤
+				137 image
+				138 text 个人考勤
+			139 button 补签申请
+				140 image
+				141 text 补签申请
+			142 button 考勤规则
+				143 image
+				144 text 考勤规则
+			145 button 考勤组
+				146 image
+				147 text 考勤组
+			148 text 人事管理
+			149 image
+			150 text 考勤规则配置
+			151 radio button 班次设置, Value: 0, ID: :r1p:-schedules
+				152 image
+				153 text 班次设置
+			154 radio button 考勤规则, Value: 1, ID: :r1p:-rules
+				155 image
+				156 text 考勤规则
+			157 radio button 假日管理, Value: 0, ID: :r1p:-holidays
+				158 image
+				159 text 假日管理
+			160 text 配置迟到宽限、早退宽限、旷工判定等考勤规则
+			161 heading 时间阈值设置, Value: 4
+				162 image
+				163 text 时间阈值设置
+			164 text 迟到宽限时间(分钟)
+			165 text 超过上班时间多少分钟内不算迟到
+			166 container
+				167 text field (settable) 10
+				168 text 分钟
+			169 text 早退宽限时间(分钟)
+			170 text 提前下班多少分钟内不算早退
+			171 container
+				172 text field (settable) 5
+				173 text 分钟
+			174 text 旷工判定阈值(分钟)
+			175 text 迟到超过此时长直接判定为旷工
+			176 container
+				177 text field (settable) 120
+				178 text 分钟
+			179 text 严重迟到阈值(分钟)
+			180 text 迟到超过此时长标记为严重迟到
+			181 container
+				182 text field (settable) 30
+				183 text 分钟
+			184 text 月度迟到上限(次)
+			185 text 超过此次数将触发警告
+			186 container
+				187 text field (settable) 3
+				188 text 次
+			189 text 加班起算时间(分钟)
+			190 text 下班后至少工作多少分钟才计入加班
+			191 container
+				192 text field (settable) 30
+				193 text 分钟
+			194 heading 高级设置, Value: 4
+				195 image
+				196 text 高级设置
+			197 text 自动扣除午休时间
+			198 text 工时计算时自动减去午休时段
+			199 switch Value: 1, ID: :r26:
+			200 text 周末打卡计入加班
+			201 text 周六周日的打卡记录自动记为加班
+			202 switch Value: 1, ID: :r27:
+			203 text 要求打卡定位
+			204 text 打卡时需要在指定范围内
+			205 switch Value: 0, ID: :r28:
+			206 text 要求连接公司 WiFi
+			207 text 打卡时需要接入指定网络
+			208 switch Value: 0, ID: :r29:
+			209 text 要求拍照打卡
+			210 text 打卡时要求上传现场照片
+			211 switch Value: 0, ID: :r2a:
+			212 button 恢复当前配置
+			213 button 保存规则
+				214 image
+				215 text 保存规则
+		216 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+		217 container Notifications alt+T
+
+The focused UI element is 154 radio button 考勤规则, Value: 1, ID: :r1p:-rules

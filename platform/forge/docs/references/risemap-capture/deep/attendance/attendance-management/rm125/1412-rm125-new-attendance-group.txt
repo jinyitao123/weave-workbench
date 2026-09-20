@@ -1,0 +1,241 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/attendance".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/attendance
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 行政
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 审批中心
+					10 image
+					11 text 审批中心
+					12 image
+				13 button 我的审批
+				14 button 抄送我的
+				15 button 我发起的
+				16 button 行政申请
+				17 button 行政管理
+					18 image
+					19 text 行政管理
+					20 image
+				21 button 公司通知
+				22 button 用章管理
+				23 button 会议纪要
+				24 button 工作汇报
+				25 button 文档中心
+				26 button 固定资产
+				27 button 资质与申报
+				28 button 物料领取
+				29 button 设备维护
+				30 button 礼品管理
+				31 button 借出管理
+				32 button 车辆管理
+				33 button 人力资源
+					34 image
+					35 text 人力资源
+					36 image
+				37 button 人事工作台
+				38 button 员工档案
+				39 button 招聘管理
+				40 button 入职离职
+				41 button 薪酬福利
+				42 button 规章制度
+				43 button 通讯录
+				44 button 考勤假期
+					45 image
+					46 text 考勤假期
+					47 image
+				48 button 加班申请
+				49 button 请假管理
+				50 button 出差申请
+				51 button 考勤管理
+				52 button 考勤统计
+				53 button 流程中心
+					54 image
+					55 text 流程中心
+					56 image
+				57 button 审批记录
+				58 button 发起流程
+				59 button 流程定义
+				60 button 流程分类
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 1
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				97 button 员工档案
+					98 text 员工档案
+				99 button 招聘管理
+					100 text 招聘管理
+				101 button 候选人详情
+					102 text 候选人详情
+				103 button 入职离职
+					104 text 入职离职
+				105 button 薪酬福利
+					106 text 薪酬福利
+				107 button 福利发放
+					108 text 福利发放
+				109 button 规章制度
+					110 text 规章制度
+				111 button 人事配置
+					112 text 人事配置
+				113 button 通讯录
+					114 text 通讯录
+				115 button 加班申请
+					116 text 加班申请
+				117 button 请假管理
+					118 text 请假管理
+				119 button 出差申请
+					120 text 出差申请
+				121 button 新建出差申请
+					122 text 新建出差申请
+				123 button 考勤管理
+					124 text 考勤管理
+			125 container
+				126 container
+					127 text 考勤假期
+					128 image
+					129 text 考勤管理
+					130 image
+					131 heading 考勤管理, Value: 1
+						132 text 考勤管理
+					133 text 查看每日打卡记录、筛选异常考勤、提交补签纠正申请
+				134 button 每日考勤
+					135 image
+					136 text 每日考勤
+				137 button 个人考勤
+					138 image
+					139 text 个人考勤
+				140 button 补签申请
+					141 image
+					142 text 补签申请
+				143 button 考勤规则
+					144 image
+					145 text 考勤规则
+				146 button 考勤组
+					147 image
+					148 text 考勤组
+				205 heading 考勤组管理, Value: 2
+					206 text 考勤组管理
+				207 button 新建考勤组
+					208 image
+					209 text 新建考勤组
+				210 button 刷新
+					211 image
+				212 button
+					213 image
+				214 button
+					215 image
+				216 image
+				217 text field (settable)
+				218 table
+					219 row
+						220 cell
+							221 text 考勤组名称
+						222 cell
+							223 text 班制类型
+						224 cell
+							225 text 打卡方式
+						226 cell
+							227 text 成员数
+						228 cell
+							229 text 状态
+						230 cell
+							231 text 操作
+					232 row
+						233 cell
+							234 image
+							235 text 暂无考勤组
+				236 text 共  0 条记录 每页
+				237 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					238 text 10
+				239 text 条
+				240 button (disabled) 上一页
+					241 image
+				242 button 1
+				243 button (disabled) 下一页
+					244 image
+				245 container 新建考勤组
+					246 container
+						247 heading 新建考勤组, Value: 2, ID: group-form-title
+							248 text 新建考勤组
+						249 button
+							250 image
+						251 container
+							252 text * 考勤组名称
+						253 text field (settable)
+						254 text 班制类型
+						255 button 固定班制
+							256 text 固定班制
+						257 text 每日班次配置
+						258 text 周一
+						259 button 休息
+							260 text 休息
+						261 text 周二
+						262 button 休息
+							263 text 休息
+						264 text 周三
+						265 button 休息
+							266 text 休息
+						267 text 周四
+						268 button 休息
+							269 text 休息
+						270 text 周五
+						271 button 休息
+							272 text 休息
+						273 text 周六
+						274 button 休息
+							275 text 休息
+						276 text 周日
+						277 button 休息
+							278 text 休息
+						279 text 打卡方式
+						280 button GPS定位
+						281 button WiFi
+						282 button 考勤机
+						283 button IP地址
+						284 text 绑定部门
+						285 button 选择部门
+							286 text 选择部门
+						287 text 绑定员工
+						288 button 搜索姓名/部门/岗位...
+							289 text 搜索姓名/部门/岗位...
+							290 image
+						291 button 取消
+						292 button 保存
+			203 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			204 container Notifications alt+T
+
+The focused UI element is 207 button 新建考勤组

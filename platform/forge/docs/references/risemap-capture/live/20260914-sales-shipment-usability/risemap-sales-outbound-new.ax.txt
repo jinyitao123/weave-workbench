@@ -1,0 +1,201 @@
+Browser tab: 31, Title: "RiseMap", URL: "https://risemap.cn/sales/outbound/new".
+0 AXWebArea RiseMap, URL: risemap.cn/sales/outbound/new
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 销售
+			5 button 收起侧边栏
+				6 image
+			7 container
+				86 button 销售业务
+					87 image
+					88 text 销售业务
+					89 image
+				90 button 框架销售合同
+				91 button 销售订单
+				92 button 附加费用
+				93 button 收款流水
+				94 button 销售发货单
+				95 button 销售退货
+				96 button 业绩银行
+				97 button 价格策略
+				98 button Goodwill订单
+				99 button 销售团队
+				100 button 销售目标
+				101 button 销售发票
+				102 button CRM客户管理
+					103 image
+					104 text CRM客户管理
+					105 image
+				106 button 客户管理
+				107 button 联系人管理
+				108 button 销售报价
+				109 button 客户物料对照
+				110 button 商机管理
+				111 button 线索管理
+				112 button 跟进记录
+				113 button 公海客户
+				114 button 服务管理
+					115 image
+					116 text 服务管理
+					117 image
+				118 button 服务工单
+				119 button 服务报价单
+				120 button 服务结算单
+				121 button 接单中心
+				122 button 派工中心
+				123 button 服务分析
+				124 button 质保管理
+				125 button 服务配置
+			126 image
+			127 text 免费试用中，还剩 8 天 — 试用期间享全部功能
+			128 button 查看方案
+				129 image
+				130 text 查看方案
+			131 button
+				132 image
+			16 container
+				133 container 业务分类
+					134 container
+						135 checkbox 工作台, Value: 0
+						136 checkbox 供应链, Value: 0
+						137 checkbox 销售, Value: 1
+						138 checkbox 生产, Value: 0
+						139 checkbox 项目, Value: 0
+						140 checkbox 行政, Value: 0
+						141 checkbox 财务, Value: 0
+						142 checkbox 报表, Value: 0
+						143 checkbox 系统, Value: 0
+				26 button Description: 展开搜索, Help: 搜索
+					27 image
+				28 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+					29 image
+					144 text 20
+				30 button Description: 打开推广奖励, Help: 推广
+				31 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				32 link Description: 打开工单, Value: community.risemap.cn/support
+				145 button 立即订阅, Help: 试用还剩 8 天 · 立即订阅享专属优惠
+					146 image
+					147 text 立即订阅
+				33 button 金
+					148 text 金
+					34 image
+			35 container
+				36 button 工作台
+					37 image
+					149 text 工作台
+				39 button 服务工单详情
+					151 text 服务工单详情
+				40 button 委外订单
+					152 text 委外订单
+				41 button 委外发料
+					153 text 委外发料
+				42 button 委外回厂
+					154 text 委外回厂
+				43 button 不合格处理
+					155 text 不合格处理
+				44 button 采购订单
+					156 text 采购订单
+				45 button 工作台
+					157 text 工作台
+				46 button 工作台
+					158 text 工作台
+				47 button 工作台
+					159 text 工作台
+				48 button 组装单
+					160 text 组装单
+				49 button 工作台
+					161 text 工作台
+				50 button 项目详情
+					162 text 项目详情
+				51 button 销售发货单
+					163 text 销售发货单
+				164 button 新建发货单
+					165 text 新建发货单
+			166 container
+				167 text 销售管理
+				168 image
+				169 text 销售发货单
+				170 image
+				171 text 新建发货单
+				172 button
+					173 image
+				174 heading 新建发货单, Value: 1
+					175 text 新建发货单
+				176 button 取消
+				177 button 确认创建
+					178 image
+					179 text 确认创建
+				180 text 1
+				181 heading 基本信息, Value: 3
+					182 text 基本信息
+				183 text 发货单号
+				184 text field (settable)
+				185 container
+					186 text * 客户
+				187 button 搜索客户名称...
+					188 text 搜索客户名称...
+				189 text 发货日期
+				190 container
+					191 text field (settable) 2026年9月14日
+					192 button
+						193 image
+					194 button
+						195 image
+				196 container
+					197 text * 关联销售订单
+				198 text （可勾选多个订单合并发货）
+				199 image
+				200 text 请先选择客户，然后从该客户的销售订单列表中勾选
+				201 text 收货信息
+				202 text 收货人
+				203 text field (settable)
+				204 text 联系电话
+				205 text field (settable)
+				206 text 收货地址
+				207 text field (settable)
+				208 text 2
+				209 heading 商品明细, Value: 3
+					210 text 商品明细
+				211 image
+				212 text 请先选择客户和至少 1 个销售订单，物料明细将自动带出并按物料合并展示
+				213 text 3
+				214 heading 备注, Value: 3
+					215 text 备注
+				216 text (选填)
+				217 text entry area (settable)
+				218 text 4
+				219 heading 附件, Value: 3
+					220 text 附件
+				221 text (选填)
+				222 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 上传发货清单、装箱单等文件，支持 PDF、Word、Excel、图片、压缩包等格式
+					223 image
+					224 text 点击或拖拽文件到此处上传
+					225 text 支持 Ctrl+V 粘贴截图
+					226 text 上传发货清单、装箱单等文件，支持 PDF、Word、Excel、图片、压缩包等格式
+				227 image
+				228 text 操作提示
+				229 content list
+					230 text • 选择客户后从下方列表勾选 1 个或多个销售订单合并发货
+					231 text • 商品明细按订单分组展示，可独立填写每个订单的本次发货数量
+					232 text • 本次发货数量不可超过该订单明细的未发货数量
+					233 text • 支持部分发货，一个订单可多次发货
+					234 text • 后续创建出库单时可选择本发货单中的部分商品分批出库
+				235 heading 收货信息, Value: 4
+					236 text 收货信息
+				237 image
+				238 text 出库日期
+				239 text 2026-09-14
+				240 image
+				241 text 收件人
+				242 text 未填写
+				243 image
+				244 text 联系电话
+				245 text 未填写
+				246 image
+				247 text 收货地址
+				248 text 未填写
+			84 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			85 container Notifications alt+T
+
+The focused UI element is 0 AXWebArea RiseMap, URL: risemap.cn/sales/outbound/new

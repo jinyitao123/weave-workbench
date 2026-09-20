@@ -1,0 +1,90 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/inventory/inbound/purchase".
+1 AXWebArea RiseMap, URL: risemap.cn/inventory/inbound/purchase
+	2 container
+		3 container root
+			4 image 南京汇川技术研发中心有限公司
+			5 text 工作台
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button
+					10 image
+				11 button
+					12 image
+				13 button
+					14 image
+				15 button
+					16 image
+			17 container
+				18 container
+					19 checkbox 1
+					20 checkbox 0
+					21 checkbox 0
+					22 checkbox 0
+					23 checkbox 0
+					24 checkbox 0
+					25 checkbox 0
+					26 checkbox 0
+					27 checkbox 0
+				28 button
+					29 image
+				30 button (collapsed) Secondary Actions: Expand
+					31 image
+				32 button
+				33 link community.risemap.cn/
+				34 link community.risemap.cn/support
+				35 button
+					36 image
+			37 container
+				38 button
+					39 image
+				40 button
+				41 button
+				42 button
+				43 button
+				44 button
+				45 button
+				46 button
+				47 button
+				48 button
+				49 button
+				50 button
+				51 button
+				52 button
+				53 button
+			54 container
+				55 container
+					56 image
+					57 image
+					58 heading 1
+					59 button
+						60 image
+				61 button
+					62 image
+				63 button
+					64 image
+				65 button
+					66 image
+					67 image
+				68 button
+					69 image
+				70 button
+					71 image
+				72 button
+					73 image
+				74 image
+				75 text field (settable)
+				76 button
+					77 image
+				78 button
+					79 image
+				80 table
+					81 row
+						82 cell
+							83 checkbox 0
+				84 combo box (collapsed) Secondary Actions: Expand
+				85 button
+			86 button
+			87 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/inventory/inbound/purchase

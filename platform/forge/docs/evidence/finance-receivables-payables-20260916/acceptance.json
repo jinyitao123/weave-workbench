@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_receivables_payables",
+  "archetype": "task_workspace",
+  "reviewedRevision": "5b2922b3ee11dda5b4368ba6c00c37a8140d832e",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/finance-management.page.ts": "42ff5d9d3ae52d8b88b8692a559c350943c35d577cf70645f3a10e3dba3b5c69",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "8830c910309c7d731c9289965590eb5572e550be39ea70c4b3c69c3baf78a036",
+    "apps/forge-objectstack/src/actions/finance-workflow.action.ts": "fc8507687ed365aa64fe5522a5d0b0a2f9785c7258f9c8732d516feb957ef62f",
+    "apps/forge-objectstack/src/objects/finance.object.ts": "bde56a88a22566da2502b92e9c8ea3bce36fb9d18f107d6245983253c9f9b4c0",
+    "docs/forge-page-polish-baseline.md": "87391dcd1a7e8feefa96b358d42815d22e0eedebf578d0ff0e470550b0d45eb4"
+  },
+  "environment": {
+    "forgeUrl": "http://localhost:4441",
+    "database": "apps/forge-objectstack/.objectstack/finance-sales-cycle.sqlite",
+    "materials": "Two receivables from the sales-invoice flow, one active fund account and one receipt registered through the page"
+  },
+  "checks": {
+    "replication": {
+      "status": "blocked",
+      "notes": "RISEMAP receivable and payable views are empty; title, navigation, view modes, filters, columns and empty states are observed, while row behavior and same-material outcomes remain unavailable.",
+      "evidence": ["docs/evidence/finance-receivables-payables-20260916/acceptance.md"]
+    },
+    "visual": {
+      "status": "pending",
+      "notes": "Populated desktop and 390x844 narrow views, payable empty state, advanced filters and receipt dialog were checked in the built-in browser. Independent visual review remains pending.",
+      "evidence": ["docs/evidence/finance-receivables-payables-20260916/acceptance.md"]
+    },
+    "interaction": {
+      "status": "blocked",
+      "notes": "Forge direction and grouping switches, semantic search, reset, required-field blocking, over-amount blocking and receipt registration passed. RISEMAP row-level behavior remains unavailable.",
+      "evidence": ["docs/evidence/finance-receivables-payables-20260916/acceptance.md", "apps/forge-objectstack/tests/receivables-payables-readback.mjs"]
+    },
+    "business": {
+      "status": "blocked",
+      "notes": "Forge receivable, unallocated receipt, fund-account balance and order linkage passed before and after same-SQLite restart. Allocation/writeoff and RISEMAP same-material outcomes remain pending.",
+      "evidence": ["apps/forge-objectstack/tests/receivables-payables-readback.mjs"]
+    }
+  },
+  "visualEvidence": {
+    "desktop": { "width": 1280, "height": 720, "evidence": ["docs/evidence/finance-receivables-payables-20260916/acceptance.md"] },
+    "narrow": { "width": 390, "height": 844, "evidence": ["docs/evidence/finance-receivables-payables-20260916/acceptance.md"] },
+    "reference": ["docs/forge-finance-sales-cycle-page-delivery-20260916.md"],
+    "populated": ["docs/evidence/finance-receivables-payables-20260916/acceptance.md"],
+    "empty": ["docs/evidence/finance-receivables-payables-20260916/acceptance.md"],
+    "form": ["docs/evidence/finance-receivables-payables-20260916/acceptance.md"],
+    "error": ["docs/evidence/finance-receivables-payables-20260916/acceptance.md"]
+  },
+  "requirements": [
+    { "id": "ARAP-001", "status": "pass", "steps": "Open both current pages and inspect the title, description, five entries and direction switch.", "expected": "Matching responsibility and reachable finance entries.", "observed": "Title, responsibility, five entries and both directions match the observed page structure; target pages remain individually reviewed later.", "evidence": ["docs/forge-finance-sales-cycle-page-delivery-20260916.md"] },
+    { "id": "ARAP-002", "status": "pass", "steps": "Switch directions and order view, search by related customer, expand advanced filters and reset.", "expected": "Controls have clear scope, related names are searchable and reset restores defaults.", "observed": "Direction, real-order grouping, related-name search, advanced-filter toggle and reset passed.", "evidence": ["docs/evidence/finance-receivables-payables-20260916/acceptance.md"] },
+    { "id": "ARAP-003", "status": "pending", "steps": "Inspect both directions with populated business records.", "expected": "Business source, order/project, responsible/contact and amounts resolve from real links.", "observed": "Populated receivables passed; current payables are empty and require material for full verification.", "evidence": ["docs/evidence/finance-receivables-payables-20260916/acceptance.md"] },
+    { "id": "ARAP-004", "status": "pending", "steps": "Switch every available grouped view and compare record counts and totals.", "expected": "Grouping keys and totals use actual party, order and project links.", "observed": "Receivable order grouping passed with two actual orders; other grouped views lack matching populated material.", "evidence": ["docs/evidence/finance-receivables-payables-20260916/acceptance.md"] },
+    { "id": "ARAP-005", "status": "pending", "steps": "Submit an empty receipt, an over-amount receipt and a valid receipt.", "expected": "Invalid actions are blocked and a valid action creates an unallocated receipt without prematurely settling the receivable.", "observed": "Forge paths passed; RISEMAP row behavior remains unavailable.", "evidence": ["docs/evidence/finance-receivables-payables-20260916/acceptance.md", "apps/forge-objectstack/tests/receivables-payables-readback.mjs"] },
+    { "id": "ARAP-006", "status": "pass", "steps": "Check desktop and 390x844 views with data, payable empty state, advanced filters and receipt dialog.", "expected": "Usable first screen without page-level overflow; wide table scrolls inside its card.", "observed": "Desktop and narrow checks passed, including stacked dates and full dialog controls.", "evidence": ["docs/evidence/finance-receivables-payables-20260916/acceptance.md"] },
+    { "id": "ARAP-007", "status": "pending", "steps": "Read receivable, receipt, fund account and order links, restart the same SQLite and read again.", "expected": "Source, amount, status and linkages remain consistent through allocation and writeoff.", "observed": "Pre-allocation Forge state passed before and after restart; allocation/writeoff and RISEMAP same-material result remain pending.", "evidence": ["apps/forge-objectstack/tests/receivables-payables-readback.mjs"] }
+  ],
+  "review": {
+    "implementer": "current finance task",
+    "reviewer": "",
+    "reviewedAt": "",
+    "status": "pending",
+    "evidence": []
+  }
+}

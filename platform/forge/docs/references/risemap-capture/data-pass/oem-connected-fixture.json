@@ -1,0 +1,67 @@
+{
+  "fixtureId": "OEM-RM-20260909-A",
+  "datasetVersion": "v0.1-research-draft",
+  "futureRefresh": "实际业务调研完成后新增版本并保留差异说明",
+  "purpose": "RISEMAP 第二遍带数据全链路复刻取证",
+  "dataClass": "synthetic-realistic",
+  "tenant": "南京汇川技术研发中心有限公司",
+  "scenario": {
+    "deliveryMode": "一次制造",
+    "deliveryCategory": "一次柜机",
+    "businessSubtype": "小非标柜机产品交付",
+    "projectCode": "RM-OEM-202609-001",
+    "projectName": "苏州澄岳柔性装配线控制柜交付"
+  },
+  "customer": {
+    "name": "苏州澄岳自动化装备有限公司",
+    "shortName": "澄岳自动化",
+    "contact": "周启明",
+    "mobile": "13800002609",
+    "email": "zhou.qiming@example.com"
+  },
+  "supplier": {
+    "name": "南京锐联电气技术有限公司",
+    "shortName": "锐联电气",
+    "contact": "沈妍",
+    "mobile": "13900002609",
+    "email": "shen.yan@example.com"
+  },
+  "warehouse": {
+    "code": "WH-RM-01",
+    "name": "贯联验证原料仓"
+  },
+  "materials": [
+    {"code": "FG-RM-CAB-800", "name": "800型柔性线控制柜", "type": "产成品", "unit": "台", "qty": 2, "saleUnitPrice": 128000},
+    {"code": "RM-PLC-1215C", "name": "PLC CPU 1215C", "type": "外购物料", "unit": "件", "bomQty": 1, "purchaseUnitPrice": 6800},
+    {"code": "RM-HMI-700", "name": "7英寸触摸屏", "type": "外购物料", "unit": "件", "bomQty": 1, "purchaseUnitPrice": 3200},
+    {"code": "RM-PSU-24V10A", "name": "24V 10A开关电源", "type": "外购物料", "unit": "件", "bomQty": 1, "purchaseUnitPrice": 860},
+    {"code": "RM-CAB-800", "name": "800型柜体", "type": "外购物料", "unit": "台", "bomQty": 1, "purchaseUnitPrice": 4600}
+  ],
+  "commercial": {
+    "quotationCode": "QT-RM-202609-001",
+    "salesOrderCode": "SO-RM-202609-001",
+    "quantity": 2,
+    "taxRatePercent": 13,
+    "totalTaxInclusive": 256000,
+    "requestedDeliveryDate": "2026-10-16",
+    "paymentMilestones": [
+      {"name": "合同预付款", "percent": 30, "amount": 76800},
+      {"name": "发货款", "percent": 40, "amount": 102400},
+      {"name": "验收尾款", "percent": 30, "amount": 76800}
+    ]
+  },
+  "execution": {
+    "purchaseOrderCode": "PO-RM-202609-001",
+    "productionOrderCode": "MO-RM-202609-001",
+    "inspectionCode": "QC-RM-202609-001",
+    "shipmentCode": "DN-RM-202609-001",
+    "invoiceCode": "INV-RM-202609-001",
+    "collectionCode": "RCPT-RM-202609-001"
+  },
+  "rules": [
+    "所有记录均通过当前租户页面创建",
+    "每个下游单据必须复用上游记录或明确填写同一业务编号",
+    "每次保存后核对列表、详情、状态和下游可选项",
+    "页面不支持关联时如实记录断点，不伪造闭环"
+  ]
+}

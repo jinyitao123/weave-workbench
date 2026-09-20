@@ -1,0 +1,217 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/reports/sales".
+1 AXWebArea RiseMap, URL: risemap.cn/reports/sales
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 报表
+			6 button 收起侧边栏
+				7 image
+			8 container
+				304 button 销售统计
+					305 image
+					306 text 销售统计
+				307 button 采购统计
+					308 image
+					309 text 采购统计
+				310 button 库存统计
+					311 image
+					312 text 库存统计
+				313 button 项目统计
+					314 image
+					315 text 项目统计
+				316 button 组装统计
+					317 image
+					318 text 组装统计
+				319 button 财务统计
+					320 image
+					321 text 财务统计
+					322 image
+				323 button 财务总览
+				324 button 损益分析
+				325 button 资金分析
+				326 button 往来账款
+				327 button 税务库存
+				328 button 风险监控
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 1
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				239 button 成本中心
+					240 text 成本中心
+				241 button 报销管理
+					242 text 报销管理
+				243 button 新建报销
+					244 text 新建报销
+				245 button 对账单
+					246 text 对账单
+				247 button 客户对账单
+					248 text 客户对账单
+				249 button 新建客户对账
+					250 text 新建客户对账
+				251 button 供应商对账单
+					252 text 供应商对账单
+				253 button 新建供应商对账
+					254 text 新建供应商对账
+				255 button 发票总览
+					256 text 发票总览
+				257 button 销项发票
+					258 text 销项发票
+				259 button 进项发票
+					260 text 进项发票
+				261 button 开票任务
+					262 text 开票任务
+				263 button 调整记录
+					264 text 调整记录
+				329 button 销售统计
+					330 text 销售统计
+			331 container
+				332 image
+				333 text 报表中心
+				334 heading 销售统计, Value: 1
+					335 text 销售统计
+				336 text 销售收入、成本、毛利额与毛利率的多维盈利能力分析。
+				337 button 导出报表
+					338 image
+					339 text 导出报表
+				340 container 销售报表维度
+					341 button 销售订单
+					342 button 销售合同
+					343 button 线索统计
+					344 button 商机统计
+					345 button 跟进记录
+					346 button 报价统计
+					347 button 客户统计
+					348 button 毛利分析
+				349 image
+				350 text 筛选条件
+				351 container
+					352 image
+					353 text field (settable)
+				354 pop up button (collapsed, settable) Value: 全部维度, Secondary Actions: Expand
+					355 menu
+						356 (selected) 全部维度
+						357 我负责的
+				358 pop up button (collapsed, settable) Value: 本月, Secondary Actions: Expand
+					359 menu
+						360 (selected) 本月
+						361 本季度
+						362 本年度
+				363 button 刷新
+					364 image
+					365 text 刷新
+				366 image
+				511 text 更新时间： 2026/9/9 06:49:13 ，当前展示  毛利分析  统计数据。 统计周期 2026-09-01 至 2026-09-30
+				512 container
+					513 image
+					514 text 销售收入
+					515 pop up button (collapsed) Description: 查看销售收入计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						516 image
+					517 image
+					518 text 0.00 较上月 --
+				519 container
+					520 image
+					521 text 销售成本
+					522 pop up button (collapsed) Description: 查看销售成本计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						523 image
+					524 image
+					525 text 0.00 成本占比 --（仅计已维护成本价明细的收入）
+				526 container
+					527 image
+					528 text 销售毛利
+					529 pop up button (expanded) Description: 查看销售毛利计算说明, Help: 查看计算说明, Secondary Actions: Collapse
+						530 image
+					531 image
+					532 text 0.00 较上月 --（仅计已维护成本价明细）
+				533 container
+					534 image
+					535 text 综合毛利率
+					536 pop up button (collapsed) Description: 查看综合毛利率计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						537 image
+					538 image
+					539 text -- 高于目标 --
+				396 container
+					397 heading 销售收入与毛利趋势, Value: 2
+						398 text 销售收入与毛利趋势
+					399 text 销售收入 销售毛利 销售成本
+					400 image
+						540 text 2026-09-01
+						541 text 2026-09-05
+						542 text 2026-09-09
+						543 text 2026-09-13
+						544 text 2026-09-17
+						545 text 2026-09-21
+						546 text 2026-09-25
+						547 text 2026-09-30
+				409 container
+					410 heading 品类毛利贡献占比, Value: 2
+						411 text 品类毛利贡献占比
+					412 image
+				461 container
+					462 heading 毛利健康度分析, Value: 2
+						463 text 毛利健康度分析
+					501 text 综合毛利率、成本、服务贡献与风险评估 综合分析 综合毛利率 销售毛利 / 销售收入 -- 销售成本率 销售成本 / 已计成本收入（仅计已维护成本价明细） -- 服务毛利贡献 设计与服务类毛利占比 -- 低毛利订单 毛利率低于目标30% 0单 负毛利风险 销售毛利小于0 0单
+				502 container
+					503 heading 商品毛利贡献排行, Value: 2
+						504 text 商品毛利贡献排行
+					505 text 按当前统计周期降序排列 TOP 5
+				421 container
+					422 heading 客户毛利贡献排行, Value: 2
+						423 text 客户毛利贡献排行
+					506 text 核心对象贡献度对比 全量排行
+				507 container
+					508 heading 销售员毛利率排行, Value: 2
+						509 text 销售员毛利率排行
+					510 text 按当前统计周期降序排列 TOP 5
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+		548 container radix-:rhl:
+			549 image
+			550 text 销售毛利
+			551 text 指标口径说明
+			552 definition list
+				553 container 指标说明
+					554 text 指标说明
+				555 text 已确认销售收入扣除对应销售成本后的收益。
+				556 container 计算方式
+					557 text 计算方式
+				558 text 销售收入 - 对应销售成本
+				559 container 统计范围
+					560 text 统计范围
+				561 text 当前页面筛选条件及统计周期
+				562 container 数据单位
+					563 text 数据单位
+				564 text 人民币元
+
+The focused UI element is 548 container radix-:rhl:

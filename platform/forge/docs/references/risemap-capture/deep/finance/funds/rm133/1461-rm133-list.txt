@@ -1,0 +1,199 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/bank-flow".
+1 AXWebArea RiseMap, URL: risemap.cn/finance/bank-flow
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 财务
+			6 button 收起侧边栏
+				7 image
+			8 container
+				181 button 资金管理
+					182 image
+					183 text 资金管理
+					184 image
+				185 button 资金账户
+				186 button 资金流水
+				187 button 应收应付
+				188 button 收款管理
+				189 button 付款管理
+				190 button 退款申请
+				191 button 授信额度管理
+				192 button 借款贷款管理
+				193 button 业务确认
+					194 image
+					195 text 业务确认
+					196 image
+				197 button 销售收入确认
+				198 button 成本中心
+				199 button 费用中心
+				200 button 报销管理
+				201 button 对账单
+					202 image
+					203 text 对账单
+				204 button 发票管理
+					205 image
+					206 text 发票管理
+					207 image
+				208 button 发票总览
+				209 button 销项发票
+				210 button 进项发票
+				211 button 开票任务
+				212 button 调整记录
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 1
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				101 button 加班申请
+					102 text 加班申请
+				103 button 请假管理
+					104 text 请假管理
+				105 button 出差申请
+					106 text 出差申请
+				107 button 新建出差申请
+					108 text 新建出差申请
+				109 button 考勤管理
+					110 text 考勤管理
+				111 button 考勤统计
+					112 text 考勤统计
+				113 button 审批记录
+					114 text 审批记录
+				115 button 发起流程
+					116 text 发起流程
+				117 button 流程设计器
+					118 text 流程设计器
+				119 button 流程定义
+					120 text 流程定义
+				121 button 编辑流程
+					122 text 编辑流程
+				123 button 流程分类
+					124 text 流程分类
+				213 button 资金账户
+					214 text 资金账户
+				215 button 资金流水
+					216 text 资金流水
+			217 container
+				218 container
+					219 text 资金管理
+					220 image
+					221 text 资金流水
+					222 image
+					223 heading 资金流水, Value: 1
+						224 text 资金流水
+					225 text 全量收支资金流水明细 · 关联订单分配审核 · 审核通过后计入订单已回款/已付款
+				226 image
+				227 text 流水总额 ¥0.00 0 笔
+				228 image
+				229 text 已分配金额 ¥0.00 已审核核销
+				230 image
+				231 text 待分配金额 ¥0.00 未分配到订单
+				232 image
+				233 text 待审核金额 ¥0.00 0 笔流水待审核
+				234 button 全部
+					235 text 全部
+				236 button 待分配
+				237 button 部分分配
+				238 button 已分配
+				239 button 待审核
+				240 button (disabled) 修改类型, Help: 请先勾选流水
+					241 image
+					242 text 修改类型
+				243 button (disabled) 批量审核, Help: 审核当前筛选范围内全部待审核分配
+					244 image
+					245 text 批量审核
+				246 button 导出
+					247 image
+					248 text 导出
+					249 image
+				250 button 刷新
+					251 image
+				252 button
+					253 image
+				254 button
+					255 image
+				256 image
+				257 text field (settable) 搜索资金流水
+				258 button 资金账户
+					259 text 全部资金账户
+				260 button 收支方向
+					261 text 全部收支
+				262 button 流水类型
+					263 text 全部类型
+				264 button 时间范围
+					265 text 全部时间
+				266 table
+					267 row
+						268 cell
+							269 checkbox (settable, integer) 0
+						270 cell
+							271 text 流水号
+						272 cell
+							273 text 日期
+						274 cell
+							275 text 资金账户
+						276 cell
+							277 text 对方单位
+						278 cell
+							279 text 收支
+						280 cell
+							281 text 类型
+						282 cell
+							283 text 金额
+						284 cell
+							285 text 已分配金额
+						286 cell
+							287 text 待分配金额
+						288 cell
+							289 text 关联单号
+						290 cell
+							291 text 状态
+						292 cell
+							293 text 操作
+					294 row
+						295 cell
+							296 image
+							297 text 暂无匹配的资金流水
+				298 text 共  0 条记录 ·  收入合计  ¥ 0.00 支出合计  ¥ 0.00 已分配合计  ¥ 0.00 待分配合计 ¥ 0.00 每页
+				299 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					300 text 20
+				301 text 条
+				302 button (disabled) 上一页
+					303 image
+				304 button 1
+				305 button (disabled) 下一页
+					306 image
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+
+The focused UI element is 186 button 资金流水

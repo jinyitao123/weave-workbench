@@ -1,0 +1,158 @@
+Browser tab: 52, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_subcontract_return_workspace".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_subcontract_return_workspace
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 委外退料
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_subcontract_return_workspace
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 委外退料, Value: 1
+				44 text 委外退料
+			45 text 委外退料草稿、确认与待入库办理
+			46 heading 委外退料, Value: 1
+				47 text 委外退料
+			48 text 集中管理委外余料、工程变更及错发物料的退回和入库记录
+			49 button 新建退料单
+			50 button 导出
+			51 button 导出记录
+			52 checkbox 有效退料单 2 单 草稿、待入库和已入库, Value: 1
+				53 text 有效退料单
+				54 container
+					55 text 2  单
+				56 text 草稿、待入库和已入库
+			57 checkbox 待入库 1 单 仓库下一步确认, Value: 0
+				58 text 待入库
+				59 container
+					60 text 1  单
+				61 text 仓库下一步确认
+			62 checkbox 已入库 0 单 库存余额已回写, Value: 0
+				63 text 已入库
+				64 container
+					65 text 0  单
+				66 text 库存余额已回写
+			67 text 状态
+			134 pop up button (collapsed) Description: 状态, Secondary Actions: Expand
+			69 text 供应商
+			70 pop up button (collapsed) Description: 供应商, Secondary Actions: Expand
+			71 text 退料原因
+			72 pop up button (collapsed) Description: 退料原因, Secondary Actions: Expand
+			73 text 搜索退料单号 / 委外订单 / 供应商
+			74 text field (settable) 搜索退料单号 / 委外订单 / 供应商
+			75 table
+				76 row
+					77 cell
+						78 text 退料单号
+					79 cell
+						80 text 供应商
+					81 cell
+						82 text 关联委外订单
+					83 cell
+						84 text 退料日期
+					85 cell
+						86 text 物料概况
+					87 cell
+						88 text 退料原因
+					89 cell
+						90 text 退料结果
+					91 cell
+						92 text 操作
+				135 row
+					136 cell
+						137 text RET-MULTI-OTHER-003
+						138 text 草稿
+					139 cell
+						140 text 锐联钣金委外厂
+					141 cell
+						142 text SC-ORDER-003
+					143 cell
+						144 text 2026-09-12
+					145 cell
+						146 text SC-RM-001
+						147 container
+							148 text 共  1 张
+					149 cell
+						150 text 工程变更
+					151 cell
+						152 text 草稿
+					153 cell
+						154 button 确认退料
+				113 row
+					114 cell
+						115 text RET-MULTI-CURRENT-001
+						116 text 待入库
+					117 cell
+						118 text 锐联钣金委外厂
+					119 cell
+						120 text SC-ORDER-001
+					121 cell
+						122 text 2026-09-12
+					123 cell
+						124 text SC-RM-001
+						125 container
+							126 text 共  0.05 张
+					127 cell
+						128 text 余料退回
+					129 cell
+						130 text RIN-RET-MULTI-CURRENT-001 ·  待入库
+					131 cell
+						132 button 确认入库
+			133 text 退料单确认只生成待入库单；完成入库后才从在外余额扣减，并生成退料入库流水。
+			155 container 导出记录
+				156 text 导出记录
+				157 text 记录本页最近导出的退料清单
+				158 button 关闭
+				159 table
+					160 row
+						161 cell
+							162 text 导出时间
+						163 cell
+							164 text 文件名
+						165 cell
+							166 text 记录数
+					167 row
+						168 cell
+							169 text 2026/9/14 03:06:09
+						170 cell
+							171 text 委外退料-2026-09-14.csv
+						172 cell
+							173 text 2
+				174 button 取消
+				175 button 知道了
+			176 text 已导出 2 条退料记录
+
+The focused UI element is 51 button 导出记录

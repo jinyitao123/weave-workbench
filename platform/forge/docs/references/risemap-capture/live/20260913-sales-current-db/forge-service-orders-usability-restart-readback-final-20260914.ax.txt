@@ -1,0 +1,263 @@
+Browser tab: 29, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_service_orders".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_service_orders
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 服务工单
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_service_orders
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 服务工单, Value: 1
+				44 text 服务工单
+			45 text 统一管理客户报修、安装调试、巡检保养、备件更换和有偿服务 21 服务管理 / 服务工单
+			46 button 服务配置
+			47 button 派工中心
+			48 button 新建服务工单
+			49 button 刷新
+			50 text 统一管理客户报修、安装调试、巡检保养、备件更换和有偿服务
+			51 heading 服务工单, Value: 1
+				52 text 服务工单
+			53 text 工单总数 5 待分派 0 待接单 0 服务中 1
+			54 button 工单列表
+			55 button 服务中
+			56 button 已完工
+			57 text field (settable) 搜索服务工单
+			58 pop up button (collapsed) Description: 全部类型, Secondary Actions: Expand
+			59 pop up button (collapsed) Description: 全部状态, Secondary Actions: Expand
+			60 button 清空筛选
+			61 table
+				62 row
+					63 cell
+						64 text 工单信息
+					65 cell
+						66 text 客户信息
+					67 cell
+						68 text 服务属性
+					69 cell
+						70 text 质保 / 报价
+					71 cell
+						72 text 状态
+					73 cell
+						74 text 工程师
+					75 cell
+						76 text 时效信息
+					77 cell
+						78 text 操作
+				79 row
+					80 cell
+						81 button WO-FLOW-20260913155753
+						82 text 800型柔性线控制柜现场调试支持
+						83 text PLC 通讯参数复核
+					84 cell
+						85 text 苏州澄岳自动化装备有限公司
+						86 container
+							87 text 周启明  ·  13800002609
+						88 container
+							89 text SO-CONVERT-20260909-001  ·  —
+					90 cell
+						91 text 现场调试支持
+						92 container
+							93 text 上门服务  ·  中
+						94 text 苏州澄岳自动化装备有限公司现场
+					95 cell
+						96 text 在保
+						97 container
+							98 text 2026-09-10  至  2027-09-10
+						99 text 已生成服务报价
+					100 cell
+						101 container
+							102 text 已完工
+						103 container
+							104 text 下一步： 财务收款 / 服务复盘
+					105 cell
+						106 text 售后工程师-苏州现场支持
+						107 text 派给苏州现场支持工程师处理
+					108 cell
+						109 text 2026-09-15
+						110 container
+							111 text SLA  —
+					112 cell
+						113 container
+							114 text 已生成报价 已生成结算 已生成质保
+				115 row
+					116 cell
+						117 button WO-FLOW-20260913155720
+						118 text 800型柔性线控制柜现场调试支持
+						119 text PLC 通讯参数复核
+					120 cell
+						121 text 苏州澄岳自动化装备有限公司
+						122 container
+							123 text 周启明  ·  13800002609
+						124 container
+							125 text SO-CONVERT-20260909-001  ·  —
+					126 cell
+						127 text 现场调试支持
+						128 container
+							129 text 上门服务  ·  中
+						130 text 苏州澄岳自动化装备有限公司现场
+					131 cell
+						132 text 在保
+						133 container
+							134 text 2026-09-10  至  2027-09-10
+						135 text 已生成服务报价
+					136 cell
+						137 container
+							138 text 已完工
+						139 container
+							140 text 下一步： 客户确认服务报价
+					141 cell
+						142 text 售后工程师-苏州现场支持
+						143 text 派给苏州现场支持工程师处理
+					144 cell
+						145 text 2026-09-15
+						146 container
+							147 text SLA  —
+					148 cell
+						149 container
+							150 text 已生成报价 已生成结算 已生成质保
+				151 row
+					152 cell
+						153 button WO-FLOW-20260913155707
+						154 text 800型柔性线控制柜现场调试支持
+						155 text PLC 通讯参数复核
+					156 cell
+						157 text 苏州澄岳自动化装备有限公司
+						158 container
+							159 text 周启明  ·  13800002609
+						160 container
+							161 text SO-CONVERT-20260909-001  ·  —
+					162 cell
+						163 text 现场调试支持
+						164 container
+							165 text 上门服务  ·  中
+						166 text 苏州澄岳自动化装备有限公司现场
+					167 cell
+						168 text 在保
+						169 container
+							170 text 2026-09-10  至  2027-09-10
+						171 text 按服务结果报价
+					172 cell
+						173 container
+							174 text 服务中
+						175 container
+							176 text 下一步： 处理记录 / 到场签到 / 提交服务结果
+					177 cell
+						178 text 售后工程师-苏州现场支持
+						179 text 派给苏州现场支持工程师处理
+					180 cell
+						181 text 2026-09-15
+						182 container
+							183 text SLA  —
+					184 cell
+						185 container
+							186 button 提交服务结果
+							187 text 处理记录与预约客户按 RISEMAP 已留入口，待继续复核
+				188 row
+					189 cell
+						190 button WO-FLOW-20260913160231
+						191 text 800型柔性线控制柜现场调试支持
+						192 text PLC 通讯参数复核
+					193 cell
+						194 text 苏州澄岳自动化装备有限公司
+						195 container
+							196 text 周启明  ·  13800002609
+						197 container
+							198 text SO-CONVERT-20260909-001  ·  —
+					199 cell
+						200 text 现场调试支持
+						201 container
+							202 text 上门服务  ·  中
+						203 text 苏州澄岳自动化装备有限公司现场
+					204 cell
+						205 text 在保
+						206 container
+							207 text 2026-09-10  至  2027-09-10
+						208 text 已生成服务报价
+					209 cell
+						210 container
+							211 text 已完工
+						212 container
+							213 text 下一步： 财务收款 / 服务复盘
+					214 cell
+						215 text 售后工程师-苏州现场支持
+						216 text 派给苏州现场支持工程师处理
+					217 cell
+						218 text 2026-09-15
+						219 container
+							220 text SLA  —
+					221 cell
+						222 container
+							223 text 已生成报价 已生成结算 已生成质保
+				224 row
+					225 cell
+						226 button WO-FLOW-20260913152606
+						227 text 800型柔性线控制柜现场调试支持
+						228 text PLC 通讯参数复核
+					229 cell
+						230 text 苏州澄岳自动化装备有限公司
+						231 container
+							232 text 周启明  ·  13800002609
+						233 container
+							234 text SO-CONVERT-20260909-001  ·  —
+					235 cell
+						236 text 现场调试支持
+						237 container
+							238 text 上门服务  ·  中
+						239 text 苏州澄岳自动化装备有限公司现场
+					240 cell
+						241 text 在保
+						242 container
+							243 text 2026-09-10  至  2027-09-10
+						244 text 已生成服务报价
+					245 cell
+						246 container
+							247 text 已完工
+						248 container
+							249 text 下一步： 财务收款 / 服务复盘
+					250 cell
+						251 text 售后工程师-苏州现场支持
+						252 text 派给苏州现场支持工程师处理
+					253 cell
+						254 text 2026-09-15
+						255 container
+							256 text SLA  —
+					257 cell
+						258 container
+							259 text 已生成报价 已生成结算 已生成质保
+			260 text 共  5  条记录 每页 20 条 · 1 / 1
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_service_orders

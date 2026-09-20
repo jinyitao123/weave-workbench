@@ -1,0 +1,354 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/drawing".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/drawing
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 系统
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 系统设置
+					10 image
+					11 text 系统设置
+					12 image
+				13 button 基础配置
+				14 button 用户与角色
+				15 button 部门管理
+				16 button 用户会话
+				17 button 审计日志
+				18 button 业务设置
+					19 image
+					20 text 业务设置
+					21 image
+				22 button 商品管理
+				23 button 财务配置
+				24 button 行政管理
+				25 button 客户管理
+				26 button 采购销售
+				27 button 库存管理
+				28 button 其他配置
+				29 button 人事配置
+				30 button 项目管理
+				31 button 图纸配置
+				32 button 生产配置
+				33 button 委外配置
+				34 button 单据打印
+				35 button 插件中心
+					36 image
+					37 text 插件中心
+				38 button 服务订阅
+					39 image
+					40 text 服务订阅
+				41 button 推广奖励
+					42 image
+					43 text 推广奖励
+				44 button 字段管理
+					45 image
+					46 text 字段管理
+			47 image
+			48 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			49 button 查看方案
+				50 image
+				51 text 查看方案
+			52 button
+				53 image
+			54 container
+				55 container 业务分类
+					56 checkbox 工作台, Value: 0
+					57 checkbox 供应链, Value: 0
+					58 checkbox 销售, Value: 0
+					59 checkbox 生产, Value: 0
+					60 checkbox 项目, Value: 0
+					61 checkbox 行政, Value: 0
+					62 checkbox 财务, Value: 0
+					63 checkbox 报表, Value: 0
+					64 checkbox 系统, Value: 1
+				65 button Description: 展开搜索, Help: 搜索
+					66 image
+				67 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					68 image
+					69 text 2
+				70 button Description: 打开推广奖励, Help: 推广
+				71 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				72 link Description: 打开工单, Value: community.risemap.cn/support
+				73 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					74 image
+					75 text 立即订阅
+				76 button 金
+					77 text 金
+					78 image
+			79 container
+				80 button 工作台
+					81 image
+					82 text 工作台
+				85 button 账户管理
+					86 text 账户管理
+				87 button 部门管理
+					88 text 部门管理
+				89 button 用户会话
+					90 text 用户会话
+				91 button 审计日志
+					92 text 审计日志
+				93 button 商品管理配置
+					94 text 商品管理配置
+				95 button 财务配置
+					96 text 财务配置
+				97 button 行政配置
+					98 text 行政配置
+				99 button 客户管理配置
+					100 text 客户管理配置
+				101 button 销售配置
+					102 text 销售配置
+				103 button 库存配置
+					104 text 库存配置
+				105 button 其他配置
+					106 text 其他配置
+				107 button 人事配置
+					108 text 人事配置
+				109 button 项目管理配置
+					110 text 项目管理配置
+				176 button 图纸配置
+					177 text 图纸配置
+			178 container
+				179 text 业务设置
+				180 image
+				181 text 图纸配置
+				182 heading 业务设置 - 图纸配置, Value: 1
+					183 text 业务设置 -  图纸配置
+				184 button 商品管理
+				185 button 财务配置
+				186 button 行政管理
+				187 button 客户管理
+				188 button 采购销售
+				189 button 库存管理
+				190 button 其他配置
+				191 button 人事配置
+				192 button 项目管理
+				193 button 图纸配置
+				194 button 生产配置
+				195 button 委外配置
+				196 button 单据打印
+				197 text 管理商品分组、计量单位、结算方式、仓库等业务基础数据配置
+				198 button AI 助手
+					199 image
+					200 text AI 助手
+				201 button 图纸配置
+					202 image
+					203 text 图纸配置
+					204 image
+				205 button 图纸类型
+					206 image
+					207 text 图纸类型
+				208 button 图纸分类
+					209 image
+					210 text 图纸分类
+				211 button 变更类型
+					212 image
+					213 text 变更类型
+				214 button 变更等级
+					215 image
+					216 text 变更等级
+				217 button 版本类型
+					218 image
+					219 text 版本类型
+				220 button 评审分类
+					221 image
+					222 text 评审分类
+				223 button 参与人角色
+					224 image
+					225 text 参与人角色
+				226 button 问题分类
+					227 image
+					228 text 问题分类
+				229 button 问题严重度
+					230 image
+					231 text 问题严重度
+				232 container
+					233 text 图纸类型 管理
+				234 text 配置图纸业务类型，用于档案分类下拉
+				235 button 添加图纸类型
+					236 image
+					237 text 添加
+					238 text 图纸类型
+				239 table
+					240 row
+						241 cell
+							242 text 名称
+						243 cell
+							244 text 排序
+						245 cell
+							246 text 备注
+						247 cell
+							248 text 状态
+					249 row
+						250 cell
+							251 text 装配图
+						252 cell
+							253 text 0
+						254 cell
+							255 text --
+						256 cell
+							257 button 点击禁用
+						258 cell
+							259 button
+								260 image
+							261 button
+								262 image
+					263 row
+						264 cell
+							265 text 零件图
+						266 cell
+							267 text 1
+						268 cell
+							269 text --
+						270 cell
+							271 button 点击禁用
+						272 cell
+							273 button
+								274 image
+							275 button
+								276 image
+					277 row
+						278 cell
+							279 text 电气图
+						280 cell
+							281 text 2
+						282 cell
+							283 text --
+						284 cell
+							285 button 点击禁用
+						286 cell
+							287 button
+								288 image
+							289 button
+								290 image
+					291 row
+						292 cell
+							293 text 原理图
+						294 cell
+							295 text 3
+						296 cell
+							297 text --
+						298 cell
+							299 button 点击禁用
+						300 cell
+							301 button
+								302 image
+							303 button
+								304 image
+					305 row
+						306 cell
+							307 text 布置图
+						308 cell
+							309 text 4
+						310 cell
+							311 text --
+						312 cell
+							313 button 点击禁用
+						314 cell
+							315 button
+								316 image
+							317 button
+								318 image
+					319 row
+						320 cell
+							321 text 安装图
+						322 cell
+							323 text 5
+						324 cell
+							325 text --
+						326 cell
+							327 button 点击禁用
+						328 cell
+							329 button
+								330 image
+							331 button
+								332 image
+					333 row
+						334 cell
+							335 text 施工图
+						336 cell
+							337 text 6
+						338 cell
+							339 text --
+						340 cell
+							341 button 点击禁用
+						342 cell
+							343 button
+								344 image
+							345 button
+								346 image
+					347 row
+						348 cell
+							349 text P&ID图
+						350 cell
+							351 text 7
+						352 cell
+							353 text --
+						354 cell
+							355 button 点击禁用
+						356 cell
+							357 button
+								358 image
+							359 button
+								360 image
+					361 row
+						362 cell
+							363 text 控制图
+						364 cell
+							365 text 8
+						366 cell
+							367 text --
+						368 cell
+							369 button 点击禁用
+						370 cell
+							371 button
+								372 image
+							373 button
+								374 image
+					375 row
+						376 cell
+							377 text 网络拓扑图
+						378 cell
+							379 text 9
+						380 cell
+							381 text --
+						382 cell
+							383 button 点击禁用
+						384 cell
+							385 button
+								386 image
+							387 button
+								388 image
+					389 row
+						390 cell
+							391 text 流程图
+						392 cell
+							393 text 10
+						394 cell
+							395 text --
+						396 cell
+							397 button 点击禁用
+						398 cell
+							399 button
+								400 image
+							401 button
+								402 image
+					403 row
+						404 cell
+							405 text 说明书
+						406 cell
+							407 text 11
+						408 cell
+							409 text --
+						410 cell
+							411 button 点击禁用
+						412 cell
+							413 button
+								414 image
+							415 button
+								416 image
+			174 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			175 container Notifications alt+T
+
+The focused UI element is 31 button 图纸配置

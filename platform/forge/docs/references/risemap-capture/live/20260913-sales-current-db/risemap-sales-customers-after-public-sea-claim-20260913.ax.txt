@@ -1,0 +1,352 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/base/customers".
+0 AXWebArea RiseMap, URL: risemap.cn/base/customers
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 销售
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 销售业务
+					9 image
+					10 text 销售业务
+					11 image
+				12 button 框架销售合同
+				13 button 销售订单
+				14 button 附加费用
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+				36 button 服务管理
+					37 image
+					38 text 服务管理
+					39 image
+				40 button 服务工单
+				41 button 服务报价单
+				42 button 服务结算单
+				43 button 接单中心
+				44 button 派工中心
+				45 button 服务分析
+				46 button 质保管理
+				47 button 服务配置
+			48 image
+			49 text 免费试用中，还剩 9 天 — 试用期间享全部功能
+			50 button 查看方案
+				51 image
+				52 text 查看方案
+			53 button
+				54 image
+			55 container
+				56 container 业务分类
+					57 container
+						58 checkbox 工作台, Value: 0
+						59 checkbox 供应链, Value: 0
+						60 checkbox 销售, Value: 1
+						61 checkbox 生产, Value: 0
+						62 checkbox 项目, Value: 0
+						63 checkbox 行政, Value: 0
+						64 checkbox 财务, Value: 0
+						65 checkbox 报表, Value: 0
+						66 checkbox 系统, Value: 0
+				67 button Description: 展开搜索, Help: 搜索
+					68 image
+				69 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+					70 image
+					71 text 20
+				72 button Description: 打开推广奖励, Help: 推广
+				73 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				74 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				75 button 立即订阅, Help: 试用还剩 9 天 · 立即订阅享专属优惠
+					76 image
+					77 text 立即订阅
+				78 button 金
+					79 text 金
+					80 image
+			81 container
+				82 button 工作台
+					83 image
+					84 text 工作台
+				85 button Goodwill订单详情
+					86 text Goodwill订单详情
+				87 button 工作台
+					88 text 工作台
+				89 button 服务工单
+					90 text 服务工单
+				91 button 服务报价单
+					92 text 服务报价单
+				93 button 服务结算单
+					94 text 服务结算单
+				95 button 质保管理
+					96 text 质保管理
+				97 button 线索管理
+					98 text 线索管理
+				99 button 商机管理
+					100 text 商机管理
+				101 button 跟进记录
+					102 text 跟进记录
+				103 button 公海客户
+					104 text 公海客户
+				203 button 客户管理
+					204 text 客户管理
+			205 container
+				206 text CRM客户管理
+				207 image
+				208 text 客户管理
+				209 heading 客户管理, Value: 1
+					210 text 客户管理
+				211 tab group 客户负责人范围
+					212 tab (selected, settable, boolean) 全部, Value: 1
+					213 tab (selectable, settable, boolean) 我负责的, Value: 0
+					214 tab (selectable, settable, boolean) 我参与的, Value: 0
+					215 tab (selectable, settable, boolean) 下属负责的, Value: 0
+					216 tab (selectable, settable, boolean) 下属参与的, Value: 0
+				217 button 新增客户
+					218 image
+					219 text 新增客户
+				220 button 导入/导出
+					221 image
+					222 text 导入/导出
+					223 image
+				224 button 批量操作
+					225 image
+					226 text 批量操作
+					227 image
+				228 button 扫描名片
+					229 image
+					230 text 扫描名片
+				231 button
+					232 image
+				233 button 刷新
+					234 image
+				235 button
+					236 image
+				237 button
+					238 image
+				239 image
+				240 text field (settable)
+				241 button 分类
+					242 text 分类
+					243 image
+				244 button 主负责人
+					245 text 主负责人
+					246 image
+				247 button 协同销售
+					248 text 协同销售
+					249 image
+				250 button 客户类型
+					251 text 客户类型
+					252 image
+				253 button 标签
+					254 text 标签
+					255 image
+				256 button 状态
+					257 text 状态
+					258 image
+				259 button 级别
+					260 text 级别
+					261 image
+				262 container 点击清除排序
+					263 image
+					264 text 按 创建时间 降序
+					265 image
+				266 table
+					267 row
+						268 cell
+							269 checkbox (settable, integer) 0
+						270 cell
+							271 text 客户名称
+							272 image
+						273 cell
+							274 text 主负责人
+						275 cell
+							276 text 主要联系人电话
+						277 cell
+							278 text 协同销售
+						279 cell
+							280 text 信用额度
+						281 cell
+							282 text 账期天数
+						283 cell
+							284 text 红绿灯
+						289 cell
+							290 text 最近跟进时间
+							291 image
+						292 cell
+							293 text 拜访计划日期
+							294 image
+						295 cell
+							296 text 最近交易时间
+							297 image
+						298 cell
+							299 text 操作
+					309 row
+						310 cell
+							311 checkbox (settable, integer) 0
+						312 cell
+							313 button 关注
+								314 image
+							315 text 无锡云起智能装备有限公司
+							316 text 公司
+						317 cell
+							318 container
+								319 text 金 金一涛
+						320 cell
+							321 image
+							322 text 13900002610
+						323 cell
+							324 text -
+						325 cell
+							326 text ¥0
+						327 cell
+							328 text 30天
+						329 cell
+							330 button
+						331 cell
+							332 text -
+						333 cell
+							334 text -
+						335 cell
+							336 text -
+						337 cell
+							338 button 查看
+								339 image
+								340 text 查看
+							341 button 跟进
+								342 image
+								343 text 跟进
+							344 button 编辑
+								345 image
+								346 text 编辑
+							347 button 禁用
+								348 image
+								349 text 禁用
+							350 button 释放, Help: 释放到公海
+								351 image
+								352 text 释放
+							353 button 删除
+								354 image
+								355 text 删除
+					356 row
+						357 cell
+							358 checkbox (settable, integer) 0
+						359 cell
+							360 button 关注
+								361 image
+							362 text 苏州澄岳自动化装备有限公司
+							363 text 公司
+						364 cell
+							365 container
+								366 text 金 金一涛
+						367 cell
+							368 text -
+						369 cell
+							370 text -
+						371 cell
+							372 text -
+						373 cell
+							374 text -
+						375 cell
+							376 button
+						377 cell
+							378 text 2026-09-13 23:36:46
+						379 cell
+							380 text -
+						381 cell
+							382 text -
+						383 cell
+							384 button 查看
+								385 image
+								386 text 查看
+							387 button 跟进
+								388 image
+								389 text 跟进
+							390 button 编辑
+								391 image
+								392 text 编辑
+							393 button 禁用
+								394 image
+								395 text 禁用
+							396 button 释放, Help: 释放到公海
+								397 image
+								398 text 释放
+							399 button 删除
+								400 image
+								401 text 删除
+					402 row
+						403 cell
+							404 checkbox (settable, integer) 0
+						405 cell
+							406 button 关注
+								407 image
+							408 text 苏州澄岳自动化装备有限公司
+							409 text 公司 OEM设备客户 重点客户
+						410 cell
+							411 container
+								412 text 金 金一涛
+						413 cell
+							414 image
+							415 text 13800002609
+						416 cell
+							417 text -
+						418 cell
+							419 text ¥0
+						420 cell
+							421 text 30天
+						422 cell
+							423 button
+						424 cell
+							425 text -
+						426 cell
+							427 text -
+						428 cell
+							429 text 2026-09-09 10:41:15
+						430 cell
+							431 button 查看
+								432 image
+								433 text 查看
+							434 button 跟进
+								435 image
+								436 text 跟进
+							437 button 编辑
+								438 image
+								439 text 编辑
+							440 button 禁用
+								441 image
+								442 text 禁用
+							443 button 释放, Help: 释放到公海
+								444 image
+								445 text 释放
+							446 button 删除
+								447 image
+								448 text 删除
+				300 text 共  3 条记录 每页
+				301 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					302 text 20
+				303 text 条
+				304 button (disabled) 上一页
+					305 image
+				306 button 1
+				307 button (disabled) 下一页
+					308 image
+			201 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			202 container Notifications alt+T
+
+The focused UI element is 28 button 客户管理

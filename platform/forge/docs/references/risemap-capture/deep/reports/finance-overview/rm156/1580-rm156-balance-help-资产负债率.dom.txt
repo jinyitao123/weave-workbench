@@ -1,0 +1,216 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 报表
+- button "收起侧边栏":
+- navigation:
+  - button "销售统计":
+    - generic: 销售统计
+  - button "采购统计":
+    - generic: 采购统计
+  - button "库存统计":
+    - generic: 库存统计
+  - button "项目统计":
+    - generic: 项目统计
+  - button "组装统计":
+    - generic: 组装统计
+  - button "财务统计":
+    - generic: 财务统计
+  - button "财务总览":
+    - generic: 财务总览
+  - button "损益分析":
+    - generic: 损益分析
+  - button "资金分析":
+    - generic: 资金分析
+  - button "往来账款":
+    - generic: 往来账款
+  - button "税务库存":
+    - generic: 税务库存
+  - button "风险监控":
+    - generic: 风险监控
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表" [pressed]:
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "新建客户对账":
+  - generic: 新建客户对账
+- button "供应商对账单":
+  - generic: 供应商对账单
+- button "新建供应商对账":
+  - generic: 新建供应商对账
+- button "发票总览":
+  - generic: 发票总览
+- button "销项发票":
+  - generic: 销项发票
+- button "进项发票":
+  - generic: 进项发票
+- button "开票任务":
+  - generic: 开票任务
+- button "调整记录":
+  - generic: 调整记录
+- button "销售统计":
+  - generic: 销售统计
+- button "采购统计":
+  - generic: 采购统计
+- button "库存统计":
+  - generic: 库存统计
+- button "项目统计":
+  - generic: 项目统计
+- button "组装统计":
+  - generic: 组装统计
+- button "财务总览":
+  - generic: 财务总览
+- main:
+  - main:
+    - generic: 报表 / 财务统计 / 财务总览
+    - heading "财务总览" [level=1]
+    - paragraph: 经营成果、资产结构和综合利润概览
+    - button "导出PDF":
+      - text: 导出PDF
+    - button "导出Excel":
+      - text: 导出Excel
+    - navigation "财务统计类型":
+      - button "经营总览": 经营总览
+      - button "资产负债": 资产负债
+      - button "利润总览": 利润总览
+    - region "报表筛选":
+      - generic: 筛选条件
+      - button "本季度":
+        - text: 本季度
+    - generic: 财务数据按业务单据实时汇总
+    - generic: 统计周期 2026-07-01 ~ 2026-09-09
+    - generic: 资产合计
+    - button "查看资产合计计算说明":
+    - paragraph: ¥0.00
+    - generic: 流动资产占比 0.0%
+    - generic: 负债合计
+    - button "查看负债合计计算说明":
+    - paragraph: ¥0.00
+    - generic: 应付账款 ¥0.00
+    - generic: 所有者权益
+    - button "查看所有者权益计算说明":
+    - paragraph: ¥0.00
+    - generic: 资产净额 ¥0.00
+    - generic: 资产负债率
+    - button "查看资产负债率计算说明" [expanded]:
+    - paragraph: 0.0%
+    - generic: 负债结构处于可控区间
+    - heading "资产结构" [level=3]
+    - generic: 截止 2026-09-09
+    - generic: 货币资金
+    - strong: ¥0.00
+    - generic: 0.0%
+    - generic: 应收账款
+    - strong: ¥0.00
+    - generic: 0.0%
+    - generic: 存货
+    - strong: ¥0.00
+    - generic: 0.0%
+    - generic: 固定资产净值
+    - strong: ¥0.00
+    - generic: 0.0%
+    - heading "财务结构判断" [level=3]
+    - generic: 流动资产占比
+    - strong: 0.0%
+    - progressbar "完成进度 0.0%": 0.0%
+    - paragraph: 流动性偏低
+    - generic: 应收占资产比
+    - strong: 0.0%
+    - progressbar "完成进度 0.0%": 0.0%
+    - paragraph: 关注回款效率
+    - generic: 固定资产占比
+    - strong: 0.0%
+    - progressbar "完成进度 0.0%": 0.0%
+    - paragraph: 关注折旧与产能利用
+    - generic: 负债占资产比
+    - strong: 0.0%
+    - progressbar "完成进度 0.0%": 0.0%
+    - paragraph: 负债水平可控
+    - heading "资产负债明细" [level=3]
+    - table:
+      - rowgroup:
+        - row "项目 金额 占总资产 口径说明":
+          - columnheader "项目"
+          - columnheader "金额"
+          - columnheader "占总资产"
+          - columnheader "口径说明"
+      - rowgroup:
+        - row "货币资金 ¥0.00 0.0% 资金账户当前余额":
+          - cell "货币资金"
+          - cell "¥0.00"
+          - cell "0.0%"
+          - cell "资金账户当前余额"
+        - row "应收账款 ¥0.00 0.0% 未核销应收余额":
+          - cell "应收账款"
+          - cell "¥0.00"
+          - cell "0.0%"
+          - cell "未核销应收余额"
+        - row "存货 ¥0.00 0.0% 有效库存成本":
+          - cell "存货"
+          - cell "¥0.00"
+          - cell "0.0%"
+          - cell "有效库存成本"
+        - row "固定资产净值 ¥0.00 0.0% 原值减累计折旧":
+          - cell "固定资产净值"
+          - cell "¥0.00"
+          - cell "0.0%"
+          - cell "原值减累计折旧"
+        - row "应付账款 ¥0.00 0.0% 未核销应付余额":
+          - cell "应付账款"
+          - cell "¥0.00"
+          - cell "0.0%"
+          - cell "未核销应付余额"
+        - row "预收款项 ¥0.00 0.0% 客户预收未结余额":
+          - cell "预收款项"
+          - cell "¥0.00"
+          - cell "0.0%"
+          - cell "客户预收未结余额"
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 7月
+- dialog [active]:
+  - paragraph: 资产负债率
+  - paragraph: 指标口径说明
+  - term: 指标说明
+  - definition: 用于反映“资产负债率”对应业务结果的相对水平。
+  - term: 计算方式
+  - definition: 符合条件的业务结果除以对应统计基数，再乘以百分之百
+  - term: 统计范围
+  - definition: 当前页面筛选条件及统计周期
+  - term: 排除规则
+  - definition: 统计基数为零时按百分之零展示
+  - term: 数据单位
+  - definition: "%"

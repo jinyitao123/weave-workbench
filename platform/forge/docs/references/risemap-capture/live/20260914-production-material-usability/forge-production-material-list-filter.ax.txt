@@ -1,0 +1,289 @@
+Browser tab: 51, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_production_material_workspace".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_production_material_workspace
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 领料单
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_production_material_workspace
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 领料单, Value: 1
+				44 text 领料单
+			45 text 生产领料单审批与库存过账
+			46 heading 领料单, Value: 1
+				47 text 领料单
+			48 text 组装领料、补料、退料的出入库单据，关联来源单与库存流水
+			49 button 从组装单生成
+			50 text 导入/导出通过生产数据任务处理
+			51 button 刷新
+			52 button 领料单 10
+				53 text 领料单
+				54 text 10
+			55 button 审批中 4
+				56 text 审批中
+				57 text 4
+			58 button 已确认 10
+				59 text 已确认
+				60 text 10
+			61 text 净领用金额 ¥167,700.00
+			62 tab group 单据状态筛选
+				63 button 全部(14)
+					64 text 全部(
+					65 text 14
+					66 text )
+				67 button 审批中
+				68 button 已确认
+				69 button 已驳回
+				70 button 已作废
+			71 text field (settable) 搜索生产物料单
+			72 pop up button (collapsed) Description: 单据类型, Secondary Actions: Expand
+			73 button 清空筛选
+			74 text 物料种类  40  · 物料数量  95
+			75 table
+				76 row
+					77 cell
+						78 text 单据编号
+					79 cell
+						80 text 类型
+					81 cell
+						82 text 来源组装单
+					83 cell
+						84 text 物料种数
+					85 cell
+						86 text 数量
+					87 cell
+						88 text 金额
+					89 cell
+						90 text 经手日期
+					91 cell
+						92 text 状态
+					93 cell
+						94 text 操作
+				114 row
+					115 cell
+						116 text MAT-2026-0014
+					117 cell
+						118 text 领料单
+					119 cell
+						120 text ASM-2026-0022
+					121 cell
+						122 text 4
+					123 cell
+						124 text 10
+					125 cell
+						126 text ¥32,640.00
+					127 cell
+						128 text 2026-09-10
+					129 cell
+						130 text 已确认
+					131 cell
+						132 button 查看
+				133 row
+					134 cell
+						135 text MAT-2026-0009
+					136 cell
+						137 text 领料单
+					138 cell
+						139 text ASM-2026-0016
+					140 cell
+						141 text 4
+					142 cell
+						143 text 10
+					144 cell
+						145 text ¥32,640.00
+					146 cell
+						147 text 2026-09-10
+					148 cell
+						149 text 已确认
+					150 cell
+						151 button 查看
+				152 row
+					153 cell
+						154 text MAT-2026-0004
+					155 cell
+						156 text 领料单
+					157 cell
+						158 text ASM-2026-0007
+					159 cell
+						160 text 4
+					161 cell
+						162 text 10
+					163 cell
+						164 text ¥1,000.00
+					165 cell
+						166 text 2026-09-10
+					167 cell
+						168 text 已确认
+					169 cell
+						170 button 查看
+				171 row
+					172 cell
+						173 text MAT-2026-0006
+					174 cell
+						175 text 领料单
+					176 cell
+						177 text ASM-2026-0011
+					178 cell
+						179 text 4
+					180 cell
+						181 text 5
+					182 cell
+						183 text ¥500.00
+					184 cell
+						185 text 2026-09-14
+					186 cell
+						187 text 已确认
+					188 cell
+						189 button 查看
+				190 row
+					191 cell
+						192 text MAT-2026-0005
+					193 cell
+						194 text 领料单
+					195 cell
+						196 text ASM-2026-0009
+					197 cell
+						198 text 4
+					199 cell
+						200 text 10
+					201 cell
+						202 text ¥1,000.00
+					203 cell
+						204 text 2026-09-10
+					205 cell
+						206 text 已确认
+					207 cell
+						208 button 查看
+				209 row
+					210 cell
+						211 text MAT-2026-0012
+					212 cell
+						213 text 领料单
+					214 cell
+						215 text ASM-2026-0018
+					216 cell
+						217 text 4
+					218 cell
+						219 text 10
+					220 cell
+						221 text ¥32,640.00
+					222 cell
+						223 text 2026-09-10
+					224 cell
+						225 text 已确认
+					226 cell
+						227 button 查看
+				247 row
+					248 cell
+						249 text MAT-2026-0008
+					250 cell
+						251 text 领料单
+					252 cell
+						253 text ASM-2026-0014
+					254 cell
+						255 text 4
+					256 cell
+						257 text 10
+					258 cell
+						259 text ¥32,640.00
+					260 cell
+						261 text 2026-09-10
+					262 cell
+						263 text 已确认
+					264 cell
+						265 button 查看
+				266 row
+					267 cell
+						268 text MAT-2026-0003
+					269 cell
+						270 text 领料单
+					271 cell
+						272 text ASM-2026-0005
+					273 cell
+						274 text 4
+					275 cell
+						276 text 10
+					277 cell
+						278 text ¥1,000.00
+					279 cell
+						280 text 2026-09-10
+					281 cell
+						282 text 已确认
+					283 cell
+						284 button 查看
+				304 row
+					305 cell
+						306 text MAT-2026-0007
+					307 cell
+						308 text 领料单
+					309 cell
+						310 text ASM-2026-0012
+					311 cell
+						312 text 4
+					313 cell
+						314 text 10
+					315 cell
+						316 text ¥1,000.00
+					317 cell
+						318 text 2026-09-10
+					319 cell
+						320 text 已确认
+					321 cell
+						322 button 查看
+				323 row
+					324 cell
+						325 text MAT-2026-0013
+					326 cell
+						327 text 领料单
+					328 cell
+						329 text ASM-2026-0020
+					330 cell
+						331 text 4
+					332 cell
+						333 text 10
+					334 cell
+						335 text ¥32,640.00
+					336 cell
+						337 text 2026-09-10
+					338 cell
+						339 text 已确认
+					340 cell
+						341 button 查看
+			361 container
+				362 text 共  10  条记录 · 每页 20 条 · 1 / 1
+
+The focused UI element is 68 button 已确认

@@ -1,0 +1,195 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同":
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理" [active]:
+    - generic: 客户管理
+  - button "联系人管理":
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "销售发货单":
+  - generic: 销售发货单
+- button "新建发货单":
+  - generic: 新建发货单
+- button "销售退货":
+  - generic: 销售退货
+- button "新建销售退货":
+  - generic: 新建销售退货
+- button "业绩银行":
+  - generic: 业绩银行
+- button "价格策略":
+  - generic: 价格策略
+- button "新增框架协议":
+  - generic: 新增框架协议
+- button "新增特价":
+  - generic: 新增特价
+- button "Goodwill订单":
+  - generic: Goodwill订单
+- button "Goodwill订单详情":
+  - generic: Goodwill订单详情
+- button "销售团队":
+  - generic: 销售团队
+- button "销售目标":
+  - generic: 销售目标
+- button "销售发票":
+  - generic: 销售发票
+- button "客户管理":
+  - generic: 客户管理
+- main:
+  - generic: CRM客户管理
+  - generic: 客户管理
+  - heading "客户管理" [level=1]
+  - tablist "客户负责人范围":
+    - tab "全部" [selected]
+    - tab "我负责的"
+    - tab "我参与的"
+    - tab "下属负责的"
+    - tab "下属参与的"
+  - button "新增客户":
+    - text: 新增客户
+  - button "导入/导出":
+    - text: 导入/导出
+  - button "批量操作":
+    - text: 批量操作
+  - button "扫描名片":
+    - text: 扫描名片
+  - button:
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "搜索客户名称..."
+  - button "分类":
+    - text: 分类
+  - button "主负责人":
+    - text: 主负责人
+  - button "协同销售":
+    - text: 协同销售
+  - button "客户类型":
+    - text: 客户类型
+  - button "标签":
+    - text: 标签
+  - button "状态":
+    - text: 状态
+  - button "级别":
+    - text: 级别
+  - generic "点击清除排序":
+    - text: 按创建时间降序
+  - table:
+    - rowgroup:
+      - row "客户名称 主负责人 主要联系人电话 协同销售 信用额度 账期天数 红绿灯 最近跟进时间 拜访计划日期 最近交易时间 操作":
+        - columnheader:
+          - checkbox
+        - columnheader "客户名称":
+          - generic: 客户名称
+        - columnheader "主负责人":
+          - generic: 主负责人
+        - columnheader "主要联系人电话":
+          - generic: 主要联系人电话
+        - columnheader "协同销售":
+          - generic: 协同销售
+        - columnheader "信用额度":
+          - generic: 信用额度
+        - columnheader "账期天数":
+          - generic: 账期天数
+        - columnheader "红绿灯":
+          - generic: 红绿灯
+        - columnheader "最近跟进时间":
+          - generic: 最近跟进时间
+        - columnheader "拜访计划日期":
+          - generic: 拜访计划日期
+        - columnheader "最近交易时间":
+          - generic: 最近交易时间
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "暂无数据":
+        - cell "暂无数据":
+          - generic: 暂无数据
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"

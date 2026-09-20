@@ -1,0 +1,212 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 项目
+- button "收起侧边栏":
+- navigation:
+  - button "项目管理":
+    - generic: 项目管理
+  - button "项目中心":
+    - generic: 项目中心
+  - button "项目分析中心":
+    - generic: 项目分析中心
+  - button "任务管理":
+    - generic: 任务管理
+  - button "工时管理":
+    - generic: 工时管理
+  - button "项目配置中心":
+    - generic: 项目配置中心
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目" [pressed]:
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "委外退料":
+  - generic: 委外退料
+- button "新建退料单":
+  - generic: 新建退料单
+- button "委外对账":
+  - generic: 委外对账
+- button "委外供应商":
+  - generic: 委外供应商
+- button "委外库存":
+  - generic: 委外库存
+- button "批次追溯":
+  - generic: 批次追溯
+- button "委外未交":
+  - generic: 委外未交
+- button "委外进货":
+  - generic: 委外进货
+- button "委外对账单":
+  - generic: 委外对账单
+- button "项目中心":
+  - generic: 项目中心
+- button "项目分析中心":
+  - generic: 项目分析中心
+- button "任务管理":
+  - generic: 任务管理
+- button "工时管理":
+  - generic: 工时管理
+- button "快捷工时填报":
+  - generic: 快捷工时填报
+- main:
+  - generic: 项目管理
+  - generic: 快捷工时填报
+  - button "返回工时管理":
+    - text: 返回工时管理
+  - heading "快捷工时填报" [level=1]
+  - generic: 多项目 · 批量
+  - paragraph: 一次填报多条记录，支持 项目工时、非项目工时（会议/培训/公司活动）、闲置工时（等待排期/设备等待等），避免多次录入。
+  - button "清空"
+  - button "提交 2 条 · 合计 8h":
+    - text: 提交 2 条 · 合计 8h
+  - generic: 批量设置日期
+  - textbox "请选择日期": 2026年9月9日
+  - button:
+  - button:
+  - button "应用到全部":
+    - text: 应用到全部
+  - text: 快捷模板
+  - button "单项目 · 8h":
+    - text: 单项目 · 8h
+  - button "双项目各 4h":
+    - text: 双项目各 4h
+  - button "项目6h + 会议2h" [active]:
+    - text: 项目6h + 会议2h
+  - button "全天培训 · 8h":
+    - text: 全天培训 · 8h
+  - button "项目6h + 闲置2h":
+    - text: 项目6h + 闲置2h
+  - button "均分到 8h":
+    - text: 均分到 8h
+  - table:
+    - rowgroup:
+      - row "# 日期 工时分类 项目 / 非项目 / 闲置类别 工作内容 * 工时类型 工时(h) 备注 操作":
+        - columnheader "#"
+        - columnheader "日期"
+        - columnheader "工时分类"
+        - columnheader "项目 / 非项目 / 闲置类别"
+        - columnheader "工作内容 *"
+        - columnheader "工时类型"
+        - columnheader "工时(h)"
+        - columnheader "备注"
+        - columnheader "操作"
+    - rowgroup:
+      - row "1 2026年9月9日 选择项目 选择 6":
+        - cell "1"
+        - cell "2026年9月9日":
+          - textbox "请选择日期": 2026年9月9日
+          - button:
+          - button:
+        - cell:
+          - radiogroup:
+            - radio "项目" [checked]:
+              - text: 项目
+            - radio "非项":
+              - text: 非项
+            - radio "闲置":
+              - text: 闲置
+        - cell "选择项目":
+          - button "选择项目":
+            - generic: 选择项目
+        - cell:
+          - textbox "如：PLC程序编写与调试"
+        - cell "选择":
+          - button "选择":
+            - generic: 选择
+        - cell "6":
+          - textbox "0": "6"
+        - cell:
+          - textbox "选填"
+        - cell:
+          - button "复制此行":
+          - button "删除此行":
+      - row "2 2026年9月9日 选择类型 部门例会 — 2":
+        - cell "2"
+        - cell "2026年9月9日":
+          - textbox "请选择日期": 2026年9月9日
+          - button:
+          - button:
+        - cell:
+          - radiogroup:
+            - radio "项目":
+              - text: 项目
+            - radio "非项" [checked]:
+              - text: 非项
+            - radio "闲置":
+              - text: 闲置
+        - cell "选择类型":
+          - button "选择类型":
+            - generic: 选择类型
+        - cell "部门例会":
+          - textbox "如：季度复盘会议": 部门例会
+        - cell "—"
+        - cell "2":
+          - textbox "0": "2"
+        - cell:
+          - textbox "选填"
+        - cell:
+          - button "复制此行":
+          - button "删除此行":
+  - button "添加项目工时":
+    - text: 添加项目工时
+  - button "添加非项目工时":
+    - text: 添加非项目工时
+  - button "添加闲置工时":
+    - text: 添加闲置工时
+  - generic: 共 2 条
+  - text: 合计工时
+  - paragraph: 8h
+  - text: 项目工时
+  - paragraph: 6h
+  - paragraph: 1 条记录
+  - text: 非项目工时
+  - paragraph: 2h
+  - paragraph: 1 条记录
+  - text: 闲置工时
+  - paragraph: 0h
+  - paragraph: 0 条记录
+  - text: 覆盖日期
+  - paragraph: 1天
+  - paragraph: 09-09 8h
+  - generic: 小贴士：使用「快捷模板」可一键生成常见组合；「均分到 8h」会按当前行数自动平均分配；提交后将统一进入工时审核流程。
+  - text: 填报人：当前登录用户
+  - button "保存草稿":
+    - text: 保存草稿
+  - button "批量提交 2 条 · 8h":
+    - text: 批量提交 2 条 · 8h
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 周日

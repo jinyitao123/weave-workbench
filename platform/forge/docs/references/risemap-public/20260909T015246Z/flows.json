@@ -1,0 +1,6128 @@
+{
+  "sourceUrl": "https://community.risemap.cn/_next/static/chunks/app/(site)/flow/page-83c31d456b09f583.js",
+  "evidenceClass": "published-guide-not-runtime-proof",
+  "flows": [
+    {
+      "id": "p2p",
+      "name": {
+        "zh": "采购到付款",
+        "en": "Procure to Pay"
+      },
+      "group": {
+        "zh": "采购与供应链",
+        "en": "Procurement & Supply Chain"
+      },
+      "icon": "🛒",
+      "summary": {
+        "zh": "从采购申请到付款核销，跨需求、采购、供应商、仓库、财务五个部门。",
+        "en": "From purchase requisition to payment clearing, across five departments: requester, procurement, supplier, warehouse, and finance."
+      },
+      "lanes": [
+        {
+          "name": {
+            "zh": "需求部门",
+            "en": "Requesting Dept"
+          },
+          "color": "#0066cc"
+        },
+        {
+          "name": {
+            "zh": "采购部",
+            "en": "Procurement"
+          },
+          "color": "#5e5ce6"
+        },
+        {
+          "name": {
+            "zh": "供应商",
+            "en": "Supplier"
+          },
+          "color": "#ff9500"
+        },
+        {
+          "name": {
+            "zh": "仓库",
+            "en": "Warehouse"
+          },
+          "color": "#34c759"
+        },
+        {
+          "name": {
+            "zh": "财务部",
+            "en": "Finance"
+          },
+          "color": "#af52de"
+        }
+      ],
+      "steps": [
+        {
+          "key": "pr",
+          "lane": 0,
+          "emoji": "📝",
+          "title": {
+            "zh": "采购申请",
+            "en": "Purchase Requisition"
+          },
+          "doc": {
+            "zh": "采购申请单 PR",
+            "en": "Purchase Requisition (PR)"
+          },
+          "desc": {
+            "zh": "需求部门发起采购需求，填写物料、数量、预算与期望到货时间，提交多级审批。",
+            "en": "The requesting department raises a purchase need — material, quantity, budget, and expected delivery — and submits it for multi-level approval."
+          },
+          "role": {
+            "zh": "申请人 · 部门主管",
+            "en": "Requester · Dept head"
+          },
+          "check": {
+            "zh": "预算管控 · 审批流",
+            "en": "Budget control · Approval flow"
+          }
+        },
+        {
+          "key": "po",
+          "lane": 1,
+          "emoji": "📦",
+          "title": {
+            "zh": "采购订单",
+            "en": "Purchase Order"
+          },
+          "doc": {
+            "zh": "采购订单 PO",
+            "en": "Purchase Order (PO)"
+          },
+          "desc": {
+            "zh": "采购员依据已批准的申请向供应商下单，锁定价格、交期与合同条款。",
+            "en": "The buyer places an order with the supplier based on the approved requisition, locking in price, lead time, and contract terms."
+          },
+          "role": {
+            "zh": "采购员",
+            "en": "Buyer"
+          },
+          "check": {
+            "zh": "供应商资质 · 价格/合同",
+            "en": "Supplier qualification · Price/Contract"
+          }
+        },
+        {
+          "key": "pay",
+          "lane": 4,
+          "emoji": "💳",
+          "title": {
+            "zh": "付款",
+            "en": "Payment"
+          },
+          "doc": {
+            "zh": "付款单 / 预付款",
+            "en": "Payment voucher / Prepayment"
+          },
+          "desc": {
+            "zh": "按合同约定支付预付款或定金（也可后付）。出纳发起付款并经财务审批。",
+            "en": "Pay the deposit or advance per the contract (post-payment is also possible). The cashier initiates payment with finance approval."
+          },
+          "role": {
+            "zh": "出纳 · 财务审批",
+            "en": "Cashier · Finance approval"
+          },
+          "check": {
+            "zh": "付款审批 · 银行回单",
+            "en": "Payment approval · Bank receipt"
+          }
+        },
+        {
+          "key": "inv",
+          "lane": 2,
+          "emoji": "🧾",
+          "title": {
+            "zh": "发票",
+            "en": "Invoice"
+          },
+          "doc": {
+            "zh": "采购发票",
+            "en": "Purchase Invoice"
+          },
+          "desc": {
+            "zh": "供应商开具发票，财务做发票校验：与采购订单、入库单进行三单匹配。",
+            "en": "The supplier issues an invoice; finance verifies it via three-way matching against the PO and goods receipt."
+          },
+          "role": {
+            "zh": "供应商 · 应付会计",
+            "en": "Supplier · AP accountant"
+          },
+          "check": {
+            "zh": "三单匹配 · 税额/查验",
+            "en": "Three-way match · Tax/Verification"
+          }
+        },
+        {
+          "key": "gr",
+          "lane": 3,
+          "emoji": "🏬",
+          "title": {
+            "zh": "入库",
+            "en": "Goods Receipt"
+          },
+          "doc": {
+            "zh": "入库单 GR",
+            "en": "Goods Receipt (GR)"
+          },
+          "desc": {
+            "zh": "货物到场，仓库按订单验收并登记实收数量，质检合格后正式入库。",
+            "en": "Goods arrive; the warehouse inspects against the order, records the actual quantity, and stocks them after passing QC."
+          },
+          "role": {
+            "zh": "仓管 · 质检",
+            "en": "Warehouse · QC"
+          },
+          "check": {
+            "zh": "数量/质量验收",
+            "en": "Quantity/Quality inspection"
+          }
+        },
+        {
+          "key": "ap",
+          "lane": 4,
+          "emoji": "📒",
+          "title": {
+            "zh": "应付产生",
+            "en": "Payable Created"
+          },
+          "doc": {
+            "zh": "应付单 AP",
+            "en": "Payable (AP)"
+          },
+          "desc": {
+            "zh": "三单匹配通过后，系统自动生成应付账款，记入供应商往来与账期。",
+            "en": "Once three-way matching passes, the system auto-creates the payable and posts it to the supplier ledger and aging."
+          },
+          "role": {
+            "zh": "应付会计",
+            "en": "AP accountant"
+          },
+          "check": {
+            "zh": "金额=入库×单价 · 账期",
+            "en": "Amount = Receipt × Unit price · Terms"
+          }
+        },
+        {
+          "key": "wo",
+          "lane": 4,
+          "emoji": "✅",
+          "title": {
+            "zh": "付款核销",
+            "en": "Payment Clearing"
+          },
+          "doc": {
+            "zh": "核销记录",
+            "en": "Clearing record"
+          },
+          "desc": {
+            "zh": "实际付款与应付账款逐笔核销，预付款冲抵，结清供应商往来余额。",
+            "en": "Actual payments are cleared against payables one by one, prepayments offset, settling the supplier balance."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "应付余额归零 · 对账",
+            "en": "Payable balance to zero · Reconciliation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "o2c",
+      "name": {
+        "zh": "销售到收款",
+        "en": "Order to Cash"
+      },
+      "group": {
+        "zh": "销售与收款",
+        "en": "Sales & Collections"
+      },
+      "icon": "💰",
+      "summary": {
+        "zh": "从客户下单到收款核销（示例流程，可替换为你们的真实流程）。",
+        "en": "From customer order to payment clearing (example flow — replace with your real process)."
+      },
+      "example": true,
+      "lanes": [
+        {
+          "name": {
+            "zh": "客户",
+            "en": "Customer"
+          },
+          "color": "#ff2d55"
+        },
+        {
+          "name": {
+            "zh": "销售部",
+            "en": "Sales"
+          },
+          "color": "#0066cc"
+        },
+        {
+          "name": {
+            "zh": "仓库",
+            "en": "Warehouse"
+          },
+          "color": "#34c759"
+        },
+        {
+          "name": {
+            "zh": "财务部",
+            "en": "Finance"
+          },
+          "color": "#af52de"
+        }
+      ],
+      "steps": [
+        {
+          "key": "po",
+          "lane": 0,
+          "emoji": "🛒",
+          "title": {
+            "zh": "客户下单",
+            "en": "Customer Order"
+          },
+          "doc": {
+            "zh": "销售订单",
+            "en": "Sales Order"
+          },
+          "desc": {
+            "zh": "客户提交采购需求或下达订单。",
+            "en": "The customer submits a purchase request or places an order."
+          },
+          "role": {
+            "zh": "客户",
+            "en": "Customer"
+          },
+          "check": {
+            "zh": "信用额度",
+            "en": "Credit limit"
+          }
+        },
+        {
+          "key": "so",
+          "lane": 1,
+          "emoji": "📋",
+          "title": {
+            "zh": "销售订单",
+            "en": "Sales Order"
+          },
+          "doc": {
+            "zh": "销售订单 SO",
+            "en": "Sales Order (SO)"
+          },
+          "desc": {
+            "zh": "销售确认订单，安排排产/备货。",
+            "en": "Sales confirms the order and arranges production/stock."
+          },
+          "role": {
+            "zh": "销售员",
+            "en": "Salesperson"
+          },
+          "check": {
+            "zh": "价格/库存",
+            "en": "Price/Stock"
+          }
+        },
+        {
+          "key": "ship",
+          "lane": 2,
+          "emoji": "🚚",
+          "title": {
+            "zh": "发货出库",
+            "en": "Ship & Issue"
+          },
+          "doc": {
+            "zh": "出库单",
+            "en": "Delivery note"
+          },
+          "desc": {
+            "zh": "仓库按订单拣货、发货并出库。",
+            "en": "The warehouse picks, ships, and issues per the order."
+          },
+          "role": {
+            "zh": "仓管",
+            "en": "Warehouse"
+          },
+          "check": {
+            "zh": "数量/物流",
+            "en": "Quantity/Logistics"
+          }
+        },
+        {
+          "key": "inv",
+          "lane": 3,
+          "emoji": "🧾",
+          "title": {
+            "zh": "开票",
+            "en": "Invoicing"
+          },
+          "doc": {
+            "zh": "销售发票",
+            "en": "Sales Invoice"
+          },
+          "desc": {
+            "zh": "财务向客户开具发票。",
+            "en": "Finance issues an invoice to the customer."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "税额/对账",
+            "en": "Tax/Reconciliation"
+          }
+        },
+        {
+          "key": "rcv",
+          "lane": 3,
+          "emoji": "💰",
+          "title": {
+            "zh": "收款",
+            "en": "Collection"
+          },
+          "doc": {
+            "zh": "收款单",
+            "en": "Receipt voucher"
+          },
+          "desc": {
+            "zh": "收到客户回款。",
+            "en": "Payment is received from the customer."
+          },
+          "role": {
+            "zh": "出纳",
+            "en": "Cashier"
+          },
+          "check": {
+            "zh": "银行到账",
+            "en": "Bank credited"
+          }
+        },
+        {
+          "key": "wo",
+          "lane": 3,
+          "emoji": "✅",
+          "title": {
+            "zh": "收款核销",
+            "en": "Receipt Clearing"
+          },
+          "doc": {
+            "zh": "核销记录",
+            "en": "Clearing record"
+          },
+          "desc": {
+            "zh": "收款与应收逐笔核销。",
+            "en": "Receipts are cleared against receivables one by one."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "应收归零",
+            "en": "Receivable to zero"
+          }
+        }
+      ]
+    },
+    {
+      "id": "expense",
+      "name": {
+        "zh": "费用报销",
+        "en": "Expense Reimbursement"
+      },
+      "group": {
+        "zh": "财务与费用",
+        "en": "Finance & Expenses"
+      },
+      "icon": "🧾",
+      "summary": {
+        "zh": "员工报销从提交到付款归档（示例流程，可替换）。",
+        "en": "Employee reimbursement from submission to payment and archiving (example flow, replaceable)."
+      },
+      "example": true,
+      "lanes": [
+        {
+          "name": {
+            "zh": "员工",
+            "en": "Employee"
+          },
+          "color": "#0066cc"
+        },
+        {
+          "name": {
+            "zh": "主管",
+            "en": "Manager"
+          },
+          "color": "#ff9500"
+        },
+        {
+          "name": {
+            "zh": "财务部",
+            "en": "Finance"
+          },
+          "color": "#af52de"
+        }
+      ],
+      "steps": [
+        {
+          "key": "submit",
+          "lane": 0,
+          "emoji": "🧾",
+          "title": {
+            "zh": "提交报销",
+            "en": "Submit Claim"
+          },
+          "doc": {
+            "zh": "报销单",
+            "en": "Expense claim"
+          },
+          "desc": {
+            "zh": "员工上传票据、填写明细并提交。",
+            "en": "The employee uploads receipts, fills in details, and submits."
+          },
+          "role": {
+            "zh": "员工",
+            "en": "Employee"
+          },
+          "check": {
+            "zh": "票据合规",
+            "en": "Receipt compliance"
+          }
+        },
+        {
+          "key": "approve",
+          "lane": 1,
+          "emoji": "👍",
+          "title": {
+            "zh": "主管审批",
+            "en": "Manager Approval"
+          },
+          "doc": {
+            "zh": "审批记录",
+            "en": "Approval record"
+          },
+          "desc": {
+            "zh": "直属主管审核金额与事由。",
+            "en": "The direct manager reviews the amount and reason."
+          },
+          "role": {
+            "zh": "部门主管",
+            "en": "Dept head"
+          },
+          "check": {
+            "zh": "预算/合理性",
+            "en": "Budget/Reasonableness"
+          }
+        },
+        {
+          "key": "review",
+          "lane": 2,
+          "emoji": "🔍",
+          "title": {
+            "zh": "财务复核",
+            "en": "Finance Review"
+          },
+          "doc": {
+            "zh": "复核记录",
+            "en": "Review record"
+          },
+          "desc": {
+            "zh": "财务复核票据真伪与科目。",
+            "en": "Finance verifies receipt authenticity and accounts."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "发票查验/科目",
+            "en": "Invoice check/Accounts"
+          }
+        },
+        {
+          "key": "pay",
+          "lane": 2,
+          "emoji": "💳",
+          "title": {
+            "zh": "付款",
+            "en": "Payment"
+          },
+          "doc": {
+            "zh": "付款单",
+            "en": "Payment voucher"
+          },
+          "desc": {
+            "zh": "财务向员工付款。",
+            "en": "Finance pays the employee."
+          },
+          "role": {
+            "zh": "出纳",
+            "en": "Cashier"
+          },
+          "check": {
+            "zh": "付款审批",
+            "en": "Payment approval"
+          }
+        },
+        {
+          "key": "archive",
+          "lane": 2,
+          "emoji": "🗂️",
+          "title": {
+            "zh": "归档",
+            "en": "Archiving"
+          },
+          "doc": {
+            "zh": "凭证",
+            "en": "Voucher"
+          },
+          "desc": {
+            "zh": "生成会计凭证并归档。",
+            "en": "Generate the accounting voucher and archive it."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "凭证完整",
+            "en": "Voucher completeness"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sales-finance-loop",
+      "name": {
+        "zh": "销售业财闭环",
+        "en": "Sales Business-Finance Loop"
+      },
+      "group": {
+        "zh": "销售与收款",
+        "en": "Sales & Collections"
+      },
+      "icon": "💰",
+      "summary": {
+        "zh": "客户询价 → 订单审批 → 出库发运签收 → 开票挂应收 → 回款核销 → 成本结转与毛利分析，端到端业财闭环。",
+        "en": "Inquiry → order approval → ship & sign-off → invoice & post receivable → collection & clearing → cost carry-forward and margin analysis: an end-to-end business-finance loop."
+      },
+      "lanes": [
+        {
+          "name": {
+            "zh": "客户",
+            "en": "Customer"
+          },
+          "color": "#ff2d55"
+        },
+        {
+          "name": {
+            "zh": "销售部门",
+            "en": "Sales"
+          },
+          "color": "#0066cc"
+        },
+        {
+          "name": {
+            "zh": "仓储 / 物流",
+            "en": "Warehouse / Logistics"
+          },
+          "color": "#34c759"
+        },
+        {
+          "name": {
+            "zh": "财务 / 出纳",
+            "en": "Finance / Cashier"
+          },
+          "color": "#af52de"
+        },
+        {
+          "name": {
+            "zh": "应收 / 总账",
+            "en": "AR / GL"
+          },
+          "color": "#ff9500"
+        }
+      ],
+      "steps": [
+        {
+          "key": "n1",
+          "lane": 0,
+          "emoji": "💬",
+          "title": {
+            "zh": "客户产生需求",
+            "en": "Customer Demand"
+          },
+          "desc": {
+            "zh": "客户通过询盘或老客户回购，触发新一轮销售。",
+            "en": "A customer inquiry or repeat purchase triggers a new sales cycle."
+          },
+          "role": {
+            "zh": "客户",
+            "en": "Customer"
+          },
+          "check": {
+            "zh": "需求来源",
+            "en": "Demand source"
+          }
+        },
+        {
+          "key": "n2",
+          "lane": 1,
+          "emoji": "📝",
+          "title": {
+            "zh": "销售报价",
+            "en": "Sales Quote"
+          },
+          "doc": {
+            "zh": "报价单",
+            "en": "Quotation"
+          },
+          "desc": {
+            "zh": "销售员按报价模板与价格策略生成正式报价单。",
+            "en": "The salesperson generates a formal quote using the template and pricing strategy."
+          },
+          "role": {
+            "zh": "销售员",
+            "en": "Salesperson"
+          },
+          "check": {
+            "zh": "税率 / 有效期 / 付款条件",
+            "en": "Tax / Validity / Terms"
+          }
+        },
+        {
+          "key": "n3",
+          "lane": 0,
+          "emoji": "✍️",
+          "title": {
+            "zh": "客户书面确认",
+            "en": "Written Confirmation"
+          },
+          "doc": {
+            "zh": "客户 PO",
+            "en": "Customer PO"
+          },
+          "desc": {
+            "zh": "客户回签报价单或发来 PO，构成订单依据。",
+            "en": "The customer signs back the quote or sends a PO as the order basis."
+          },
+          "role": {
+            "zh": "客户",
+            "en": "Customer"
+          },
+          "check": {
+            "zh": "书面凭据",
+            "en": "Written proof"
+          }
+        },
+        {
+          "key": "n4",
+          "lane": 1,
+          "emoji": "📋",
+          "title": {
+            "zh": "销售订单",
+            "en": "Sales Order"
+          },
+          "doc": {
+            "zh": "销售订单 SO",
+            "en": "Sales Order (SO)"
+          },
+          "desc": {
+            "zh": "录入订单，自动校验信用、库存、最低售价。",
+            "en": "Enter the order; the system auto-checks credit, stock, and floor price."
+          },
+          "role": {
+            "zh": "销售员",
+            "en": "Salesperson"
+          },
+          "check": {
+            "zh": "信用 / 库存 / 最低价",
+            "en": "Credit / Stock / Floor price"
+          }
+        },
+        {
+          "key": "n5",
+          "lane": 1,
+          "emoji": "⚖️",
+          "title": {
+            "zh": "审批",
+            "en": "Approval"
+          },
+          "doc": {
+            "zh": "审批记录",
+            "en": "Approval record"
+          },
+          "desc": {
+            "zh": "按金额、折扣、信用占用走多级审批。",
+            "en": "Multi-level approval based on amount, discount, and credit usage."
+          },
+          "role": {
+            "zh": "销售主管",
+            "en": "Sales manager"
+          },
+          "check": {
+            "zh": "审批流 / 黑名单 / 价格区间",
+            "en": "Flow / Blacklist / Price band"
+          }
+        },
+        {
+          "key": "n6",
+          "lane": 1,
+          "emoji": "⛔",
+          "title": {
+            "zh": "驳回 / 终止",
+            "en": "Reject / Terminate"
+          },
+          "desc": {
+            "zh": "审批未通过，退回销售员修改或终止业务。",
+            "en": "If rejected, return to the salesperson for revision or terminate."
+          },
+          "role": {
+            "zh": "销售主管",
+            "en": "Sales manager"
+          },
+          "check": {
+            "zh": "异常退回",
+            "en": "Exception return"
+          }
+        },
+        {
+          "key": "n7",
+          "lane": 3,
+          "emoji": "🔒",
+          "title": {
+            "zh": "信用占用",
+            "en": "Credit Hold"
+          },
+          "desc": {
+            "zh": "审批通过同时冻结客户信用额度（备查簿）。",
+            "en": "On approval, freeze the customer's credit line (memo ledger)."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "占用应收信用 · 非账务",
+            "en": "Holds AR credit · Non-accounting"
+          }
+        },
+        {
+          "key": "n8",
+          "lane": 1,
+          "emoji": "✅",
+          "title": {
+            "zh": "已确认订单",
+            "en": "Confirmed Order"
+          },
+          "desc": {
+            "zh": "订单状态变更为「已确认」，可出库可承诺。",
+            "en": "Order status becomes \"Confirmed\" — shippable and committable."
+          },
+          "role": {
+            "zh": "销售员",
+            "en": "Salesperson"
+          },
+          "check": {
+            "zh": "可出库",
+            "en": "Shippable"
+          }
+        },
+        {
+          "key": "n9",
+          "lane": 2,
+          "emoji": "📦",
+          "title": {
+            "zh": "备货 / 拣货",
+            "en": "Stock / Pick"
+          },
+          "desc": {
+            "zh": "WMS 生成拣货任务，PDA 扫码绑定批次 / SN。",
+            "en": "WMS creates picking tasks; PDA scans bind batch/SN."
+          },
+          "role": {
+            "zh": "仓管",
+            "en": "Warehouse"
+          },
+          "check": {
+            "zh": "批次先入先出",
+            "en": "Batch FIFO"
+          }
+        },
+        {
+          "key": "n10",
+          "lane": 2,
+          "emoji": "🔍",
+          "title": {
+            "zh": "复核",
+            "en": "Recheck"
+          },
+          "desc": {
+            "zh": "复核员二次扫描，确认数量与批次正确。",
+            "en": "A checker rescans to confirm quantity and batch."
+          },
+          "role": {
+            "zh": "复核员",
+            "en": "Checker"
+          },
+          "check": {
+            "zh": "数量 / 批次",
+            "en": "Quantity / Batch"
+          }
+        },
+        {
+          "key": "n11",
+          "lane": 2,
+          "emoji": "🏬",
+          "title": {
+            "zh": "销售出库单",
+            "en": "Sales Delivery Note"
+          },
+          "doc": {
+            "zh": "出库单",
+            "en": "Delivery note"
+          },
+          "desc": {
+            "zh": "过账即扣减库存、按 WAC/FIFO 计算出库成本。",
+            "en": "Posting deducts stock and computes COGS by WAC/FIFO."
+          },
+          "role": {
+            "zh": "仓管",
+            "en": "Warehouse"
+          },
+          "check": {
+            "zh": "借发出商品 / 贷库存商品",
+            "en": "Dr goods shipped / Cr inventory"
+          }
+        },
+        {
+          "key": "n12",
+          "lane": 2,
+          "emoji": "🚚",
+          "title": {
+            "zh": "物流发运",
+            "en": "Logistics Dispatch"
+          },
+          "desc": {
+            "zh": "对接 TMS / 三方物流，记录承运商与运单号。",
+            "en": "Integrate TMS / 3PL; record carrier and waybill number."
+          },
+          "role": {
+            "zh": "物流",
+            "en": "Logistics"
+          },
+          "check": {
+            "zh": "承运 / 运单",
+            "en": "Carrier / Waybill"
+          }
+        },
+        {
+          "key": "n13",
+          "lane": 0,
+          "emoji": "📥",
+          "title": {
+            "zh": "客户签收",
+            "en": "Customer Sign-off"
+          },
+          "desc": {
+            "zh": "客户验收无误，状态由在途变为已签收。",
+            "en": "The customer accepts; status moves from in-transit to received."
+          },
+          "role": {
+            "zh": "客户",
+            "en": "Customer"
+          },
+          "check": {
+            "zh": "签收触发开票",
+            "en": "Sign-off triggers invoicing"
+          }
+        },
+        {
+          "key": "n14",
+          "lane": 1,
+          "emoji": "🧾",
+          "title": {
+            "zh": "销售发票",
+            "en": "Sales Invoice"
+          },
+          "doc": {
+            "zh": "销售发票",
+            "en": "Sales Invoice"
+          },
+          "desc": {
+            "zh": "财务开具增值税发票，金额与订单一致。",
+            "en": "Finance issues a VAT invoice matching the order amount."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "借应收 / 贷收入 + 税金",
+            "en": "Dr AR / Cr revenue + tax"
+          }
+        },
+        {
+          "key": "n15",
+          "lane": 4,
+          "emoji": "📒",
+          "title": {
+            "zh": "应收账款挂账",
+            "en": "AR Posted"
+          },
+          "doc": {
+            "zh": "应收台账",
+            "en": "AR ledger"
+          },
+          "desc": {
+            "zh": "总账新增应收余额，进入账龄统计。",
+            "en": "GL adds the AR balance and starts aging."
+          },
+          "role": {
+            "zh": "应收会计",
+            "en": "AR accountant"
+          },
+          "check": {
+            "zh": "应收（资产）↑",
+            "en": "AR (asset) ↑"
+          }
+        },
+        {
+          "key": "n16",
+          "lane": 0,
+          "emoji": "💰",
+          "title": {
+            "zh": "客户付款",
+            "en": "Customer Payment"
+          },
+          "desc": {
+            "zh": "客户按账期付款，可部分 / 合并 / 跨发票。",
+            "en": "The customer pays per terms — partial / merged / cross-invoice."
+          },
+          "role": {
+            "zh": "客户",
+            "en": "Customer"
+          },
+          "check": {
+            "zh": "账期",
+            "en": "Terms"
+          }
+        },
+        {
+          "key": "n17",
+          "lane": 3,
+          "emoji": "🏦",
+          "title": {
+            "zh": "银行流水",
+            "en": "Bank Statement"
+          },
+          "desc": {
+            "zh": "银企直连或回单导入，自动识别去重。",
+            "en": "Bank link or receipt import with auto de-duplication."
+          },
+          "role": {
+            "zh": "出纳",
+            "en": "Cashier"
+          },
+          "check": {
+            "zh": "客户 / 币种 / 去重",
+            "en": "Customer / Currency / De-dup"
+          }
+        },
+        {
+          "key": "n18",
+          "lane": 3,
+          "emoji": "💳",
+          "title": {
+            "zh": "收款单（认款）",
+            "en": "Receipt (Matching)"
+          },
+          "doc": {
+            "zh": "收款单",
+            "en": "Receipt voucher"
+          },
+          "desc": {
+            "zh": "出纳登记收款单，已指定挂应收 / 未指定挂预收。",
+            "en": "The cashier records the receipt; assigned → AR, unassigned → advance."
+          },
+          "role": {
+            "zh": "出纳",
+            "en": "Cashier"
+          },
+          "check": {
+            "zh": "借银行 / 贷应收或预收",
+            "en": "Dr bank / Cr AR or advance"
+          }
+        },
+        {
+          "key": "n19",
+          "lane": 4,
+          "emoji": "🔗",
+          "title": {
+            "zh": "应收核销",
+            "en": "AR Clearing"
+          },
+          "desc": {
+            "zh": "支持 1:1 / 1:N / N:N 核销，尾差入折扣 / 汇兑。",
+            "en": "Supports 1:1 / 1:N / N:N clearing; residuals to discount / FX."
+          },
+          "role": {
+            "zh": "应收会计",
+            "en": "AR accountant"
+          },
+          "check": {
+            "zh": "应收余额减少",
+            "en": "AR balance down"
+          }
+        },
+        {
+          "key": "n20",
+          "lane": 4,
+          "emoji": "🔁",
+          "title": {
+            "zh": "销售成本结转",
+            "en": "COGS Carry-forward"
+          },
+          "desc": {
+            "zh": "月末批量：发出商品 → 主营业务成本。",
+            "en": "Month-end batch: goods shipped → cost of sales."
+          },
+          "role": {
+            "zh": "总账会计",
+            "en": "GL accountant"
+          },
+          "check": {
+            "zh": "借成本 / 贷发出商品",
+            "en": "Dr COGS / Cr goods shipped"
+          }
+        },
+        {
+          "key": "n21",
+          "lane": 4,
+          "emoji": "📊",
+          "title": {
+            "zh": "毛利分析",
+            "en": "Margin Analysis"
+          },
+          "desc": {
+            "zh": "按客户 / 产品 / 销售员 / 区域多维分析毛利。",
+            "en": "Analyze margin by customer / product / rep / region."
+          },
+          "role": {
+            "zh": "经营分析",
+            "en": "Business analysis"
+          },
+          "check": {
+            "zh": "收入成本配比",
+            "en": "Revenue-cost matching"
+          }
+        },
+        {
+          "key": "n22",
+          "lane": 4,
+          "emoji": "🏁",
+          "title": {
+            "zh": "本笔业务闭环",
+            "en": "Deal Closed"
+          },
+          "desc": {
+            "zh": "收入、成本、回款全部确认，本笔闭环。",
+            "en": "Revenue, cost, and collection all confirmed — the deal closes."
+          },
+          "role": {
+            "zh": "总账",
+            "en": "GL"
+          },
+          "check": {
+            "zh": "闭环",
+            "en": "Closed loop"
+          }
+        }
+      ]
+    },
+    {
+      "id": "contract-order",
+      "name": {
+        "zh": "销售合同与销售订单",
+        "en": "Sales Contract & Sales Order"
+      },
+      "group": {
+        "zh": "销售与收款",
+        "en": "Sales & Collections"
+      },
+      "icon": "📄",
+      "summary": {
+        "zh": "合同作约束、订单唯一执行；含路径 A（关联合同）/ 路径 B（直接下单）、三种收入确认方式与回款核销分支。",
+        "en": "Contracts set the constraints; orders are the sole execution. Includes Path A (linked contract) / Path B (direct order), three revenue-recognition methods, and collection-clearing branches."
+      },
+      "lanes": [
+        {
+          "name": {
+            "zh": "销售部门",
+            "en": "Sales"
+          },
+          "color": "#0066cc"
+        },
+        {
+          "name": {
+            "zh": "仓储 / 物流",
+            "en": "Warehouse / Logistics"
+          },
+          "color": "#34c759"
+        },
+        {
+          "name": {
+            "zh": "财务 / 出纳",
+            "en": "Finance / Cashier"
+          },
+          "color": "#af52de"
+        },
+        {
+          "name": {
+            "zh": "应收 / 总账",
+            "en": "AR / GL"
+          },
+          "color": "#ff9500"
+        }
+      ],
+      "steps": [
+        {
+          "key": "n1",
+          "lane": 0,
+          "emoji": "📄",
+          "title": {
+            "zh": "销售合同",
+            "en": "Sales Contract"
+          },
+          "doc": {
+            "zh": "销售合同",
+            "en": "Sales Contract"
+          },
+          "desc": {
+            "zh": "框架协议：约定价、上限量、有效期，不直接执行。",
+            "en": "A framework: agreed price, max quantity, validity — not directly executed."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "1 合同 → N 订单 · 单价 ≤ 合同价",
+            "en": "1 contract → N orders · price ≤ contract"
+          }
+        },
+        {
+          "key": "n2",
+          "lane": 0,
+          "emoji": "➕",
+          "title": {
+            "zh": "直接创建订单",
+            "en": "Create Order Directly"
+          },
+          "desc": {
+            "zh": "无合同场景直接选客户物料建单（路径 B）。",
+            "en": "With no contract, build an order straight from customer + items (Path B)."
+          },
+          "role": {
+            "zh": "销售员",
+            "en": "Salesperson"
+          },
+          "check": {
+            "zh": "一次性 / 散客",
+            "en": "One-off / Walk-in"
+          }
+        },
+        {
+          "key": "n3",
+          "lane": 0,
+          "emoji": "📋",
+          "title": {
+            "zh": "销售订单",
+            "en": "Sales Order"
+          },
+          "doc": {
+            "zh": "销售订单 SO",
+            "en": "Sales Order (SO)"
+          },
+          "desc": {
+            "zh": "系统内唯一执行单据，两路来源汇入。",
+            "en": "The sole execution document; both paths feed into it."
+          },
+          "role": {
+            "zh": "销售员",
+            "en": "Salesperson"
+          },
+          "check": {
+            "zh": "来源 / 收入确认方式",
+            "en": "Source / Revenue method"
+          }
+        },
+        {
+          "key": "n4",
+          "lane": 0,
+          "emoji": "🔀",
+          "title": {
+            "zh": "收入确认方式",
+            "en": "Revenue Method"
+          },
+          "desc": {
+            "zh": "必配：按发货 / 按验收 / 按节点。",
+            "en": "Mandatory: by shipment / by acceptance / by milestone."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "影响收入触发时点",
+            "en": "Sets revenue trigger"
+          }
+        },
+        {
+          "key": "n5",
+          "lane": 0,
+          "emoji": "⚖️",
+          "title": {
+            "zh": "订单审批",
+            "en": "Order Approval"
+          },
+          "desc": {
+            "zh": "按金额、折扣、信用走多级审批。",
+            "en": "Multi-level approval by amount, discount, and credit."
+          },
+          "role": {
+            "zh": "销售主管",
+            "en": "Sales manager"
+          },
+          "check": {
+            "zh": "审批流 / 信用 / 价格区间",
+            "en": "Flow / Credit / Price band"
+          }
+        },
+        {
+          "key": "n6",
+          "lane": 2,
+          "emoji": "🔒",
+          "title": {
+            "zh": "信用占用",
+            "en": "Credit Hold"
+          },
+          "desc": {
+            "zh": "审批通过同步冻结客户信用额度。",
+            "en": "On approval, freeze the customer's credit line."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "备查簿 · 非账务",
+            "en": "Memo ledger · Non-accounting"
+          }
+        },
+        {
+          "key": "n7",
+          "lane": 0,
+          "emoji": "✅",
+          "title": {
+            "zh": "已确认订单",
+            "en": "Confirmed Order"
+          },
+          "desc": {
+            "zh": "状态变已确认，可对仓库下达发货指令。",
+            "en": "Status becomes confirmed; shipping can be ordered to the warehouse."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "可发货",
+            "en": "Shippable"
+          }
+        },
+        {
+          "key": "n8",
+          "lane": 0,
+          "emoji": "📦",
+          "title": {
+            "zh": "发货单",
+            "en": "Delivery Order"
+          },
+          "doc": {
+            "zh": "发货单",
+            "en": "Delivery order"
+          },
+          "desc": {
+            "zh": "由订单生成发货单，通知仓库可发货。",
+            "en": "Generated from the order to tell the warehouse to ship."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "关联订单 / 计划日期",
+            "en": "Linked order / Planned date"
+          }
+        },
+        {
+          "key": "n9",
+          "lane": 1,
+          "emoji": "🏬",
+          "title": {
+            "zh": "仓库发货",
+            "en": "Warehouse Ships"
+          },
+          "desc": {
+            "zh": "核查库存，分批或一次性发货，绑批次 / SN。",
+            "en": "Check stock; ship in batches or at once, binding batch/SN."
+          },
+          "role": {
+            "zh": "仓管",
+            "en": "Warehouse"
+          },
+          "check": {
+            "zh": "批次先入先出",
+            "en": "Batch FIFO"
+          }
+        },
+        {
+          "key": "n10",
+          "lane": 1,
+          "emoji": "🚚",
+          "title": {
+            "zh": "出库记录",
+            "en": "Issue Record"
+          },
+          "doc": {
+            "zh": "出库单",
+            "en": "Delivery note"
+          },
+          "desc": {
+            "zh": "过账扣库存、按 WAC/FIFO 计成本。",
+            "en": "Posting deducts stock and computes cost by WAC/FIFO."
+          },
+          "role": {
+            "zh": "仓管",
+            "en": "Warehouse"
+          },
+          "check": {
+            "zh": "借发出商品 / 贷库存",
+            "en": "Dr goods shipped / Cr inventory"
+          }
+        },
+        {
+          "key": "n11",
+          "lane": 1,
+          "emoji": "📉",
+          "title": {
+            "zh": "库存扣减",
+            "en": "Stock Deduction"
+          },
+          "doc": {
+            "zh": "库存台账",
+            "en": "Stock ledger"
+          },
+          "desc": {
+            "zh": "出库后库存数量与价值双向变更。",
+            "en": "After issue, both stock quantity and value change."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "数量 × 价值",
+            "en": "Quantity × Value"
+          }
+        },
+        {
+          "key": "n12",
+          "lane": 2,
+          "emoji": "🧾",
+          "title": {
+            "zh": "销售收入确认",
+            "en": "Revenue Recognition"
+          },
+          "desc": {
+            "zh": "按订单收入确认方式触发记账。",
+            "en": "Booking is triggered per the order's revenue method."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "借应收 / 贷收入 + 税金",
+            "en": "Dr AR / Cr revenue + tax"
+          }
+        },
+        {
+          "key": "n13",
+          "lane": 3,
+          "emoji": "📒",
+          "title": {
+            "zh": "应收账款",
+            "en": "Accounts Receivable"
+          },
+          "doc": {
+            "zh": "应收台账",
+            "en": "AR ledger"
+          },
+          "desc": {
+            "zh": "总账新增应收余额，进入账龄统计。",
+            "en": "GL adds the AR balance and starts aging."
+          },
+          "role": {
+            "zh": "应收会计",
+            "en": "AR accountant"
+          },
+          "check": {
+            "zh": "应收（资产）↑",
+            "en": "AR (asset) ↑"
+          }
+        },
+        {
+          "key": "n14",
+          "lane": 3,
+          "emoji": "🔁",
+          "title": {
+            "zh": "销售成本结转",
+            "en": "COGS Carry-forward"
+          },
+          "desc": {
+            "zh": "发出商品 → 主营业务成本，收入成本配比。",
+            "en": "Goods shipped → cost of sales, matching revenue."
+          },
+          "role": {
+            "zh": "总账",
+            "en": "GL"
+          },
+          "check": {
+            "zh": "借成本 / 贷发出商品",
+            "en": "Dr COGS / Cr goods shipped"
+          }
+        },
+        {
+          "key": "n15",
+          "lane": 0,
+          "emoji": "📝",
+          "title": {
+            "zh": "回款登记",
+            "en": "Collection Entry"
+          },
+          "desc": {
+            "zh": "销售登记客户回款流水，提交财务核对。",
+            "en": "Sales records the customer payment and submits to finance."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "关联订单 / 银行流水号",
+            "en": "Linked order / Bank ref"
+          }
+        },
+        {
+          "key": "n16",
+          "lane": 2,
+          "emoji": "💳",
+          "title": {
+            "zh": "财务回款确认",
+            "en": "Finance Confirms Receipt"
+          },
+          "doc": {
+            "zh": "收款单",
+            "en": "Receipt voucher"
+          },
+          "desc": {
+            "zh": "核对银行回单，判断核销路径。",
+            "en": "Verify the bank receipt and decide the clearing path."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "已发货标识",
+            "en": "Shipped flag"
+          }
+        },
+        {
+          "key": "n17",
+          "lane": 3,
+          "emoji": "✅",
+          "title": {
+            "zh": "冲抵应收",
+            "en": "Offset AR"
+          },
+          "desc": {
+            "zh": "已发货 → 冲抵应收，余额减少（多对多核销）。",
+            "en": "If shipped → offset AR, balance down (N:N clearing)."
+          },
+          "role": {
+            "zh": "应收会计",
+            "en": "AR accountant"
+          },
+          "check": {
+            "zh": "借预收 / 贷应收",
+            "en": "Dr advance / Cr AR"
+          }
+        },
+        {
+          "key": "n18",
+          "lane": 2,
+          "emoji": "📥",
+          "title": {
+            "zh": "形成预收款",
+            "en": "Advance Created"
+          },
+          "doc": {
+            "zh": "预收台账",
+            "en": "Advance ledger"
+          },
+          "desc": {
+            "zh": "未发货 → 形成预收款（负债），待履约核销。",
+            "en": "If not shipped → an advance (liability), cleared on fulfillment."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "预收（负债）↑",
+            "en": "Advance (liability) ↑"
+          }
+        },
+        {
+          "key": "n19",
+          "lane": 3,
+          "emoji": "🏁",
+          "title": {
+            "zh": "本笔业务闭环",
+            "en": "Deal Closed"
+          },
+          "desc": {
+            "zh": "应收收齐、收入成本确认，订单关闭。",
+            "en": "AR collected, revenue and cost confirmed, order closed."
+          },
+          "role": {
+            "zh": "总账",
+            "en": "GL"
+          },
+          "check": {
+            "zh": "闭环",
+            "en": "Closed loop"
+          }
+        }
+      ]
+    },
+    {
+      "id": "purchase-exec",
+      "name": {
+        "zh": "采购订单执行流程",
+        "en": "Purchase Order Execution"
+      },
+      "group": {
+        "zh": "采购与供应链",
+        "en": "Procurement & Supply Chain"
+      },
+      "icon": "🛒",
+      "summary": {
+        "zh": "采购申请审批 → 代办池汇总分配 → 下单审批 / 付款 → 到货 → 免检 / 质检分流 → 合格 / 让步 / 拒收三路裁决入库。",
+        "en": "Requisition approval → to-do pool aggregation → order approval / payment → arrival → exemption / inspection split → pass / concession / reject three-way receipt."
+      },
+      "lanes": [
+        {
+          "name": {
+            "zh": "申请部门",
+            "en": "Requesting Dept"
+          },
+          "color": "#ff2d55"
+        },
+        {
+          "name": {
+            "zh": "采购部门",
+            "en": "Procurement"
+          },
+          "color": "#0066cc"
+        },
+        {
+          "name": {
+            "zh": "供应商",
+            "en": "Supplier"
+          },
+          "color": "#ff9500"
+        },
+        {
+          "name": {
+            "zh": "仓储 / 收货",
+            "en": "Warehouse / Receiving"
+          },
+          "color": "#34c759"
+        },
+        {
+          "name": {
+            "zh": "质检",
+            "en": "QC"
+          },
+          "color": "#af52de"
+        }
+      ],
+      "steps": [
+        {
+          "key": "n1",
+          "lane": 0,
+          "emoji": "📝",
+          "title": {
+            "zh": "采购申请",
+            "en": "Purchase Requisition"
+          },
+          "doc": {
+            "zh": "采购申请单 PR",
+            "en": "Purchase Requisition (PR)"
+          },
+          "desc": {
+            "zh": "新建采购，填标题 / 优先级 / 关联项目 / 建议供应商。",
+            "en": "Create a requisition: title / priority / linked project / suggested supplier."
+          },
+          "role": {
+            "zh": "申请人",
+            "en": "Requester"
+          },
+          "check": {
+            "zh": "关联项目 / 客户 / 合同",
+            "en": "Link project / customer / contract"
+          }
+        },
+        {
+          "key": "n2",
+          "lane": 0,
+          "emoji": "➕",
+          "title": {
+            "zh": "添加物料明细",
+            "en": "Add Line Items"
+          },
+          "desc": {
+            "zh": "单个手动添加，或从已签销售订单获取。",
+            "en": "Add items manually or pull from signed sales orders."
+          },
+          "role": {
+            "zh": "申请人",
+            "en": "Requester"
+          },
+          "check": {
+            "zh": "单个 / 从订单获取",
+            "en": "Single / From order"
+          }
+        },
+        {
+          "key": "n3",
+          "lane": 0,
+          "emoji": "⚖️",
+          "title": {
+            "zh": "采购申请审批",
+            "en": "Requisition Approval"
+          },
+          "desc": {
+            "zh": "按金额、关联项目、申请部门走多级审批。",
+            "en": "Multi-level approval by amount, project, and requesting dept."
+          },
+          "role": {
+            "zh": "部门主管",
+            "en": "Dept head"
+          },
+          "check": {
+            "zh": "通过 → 入代办池",
+            "en": "Approved → to-do pool"
+          }
+        },
+        {
+          "key": "n4",
+          "lane": 1,
+          "emoji": "🗂️",
+          "title": {
+            "zh": "采购代办池",
+            "en": "Procurement To-do Pool"
+          },
+          "doc": {
+            "zh": "代办池",
+            "en": "To-do pool"
+          },
+          "desc": {
+            "zh": "集中处理已审批物料行，可分组筛选。",
+            "en": "Centrally handle approved item lines with grouping and filters."
+          },
+          "role": {
+            "zh": "采购员",
+            "en": "Buyer"
+          },
+          "check": {
+            "zh": "批量处理 / 智能分配",
+            "en": "Batch / Smart allocation"
+          }
+        },
+        {
+          "key": "n5",
+          "lane": 1,
+          "emoji": "🔗",
+          "title": {
+            "zh": "供应商分组分配",
+            "en": "Group by Supplier"
+          },
+          "desc": {
+            "zh": "同供应商一键下单，或多供应商合并下单。",
+            "en": "One-click order per supplier, or merge across suppliers."
+          },
+          "role": {
+            "zh": "采购员",
+            "en": "Buyer"
+          },
+          "check": {
+            "zh": "一键 / 合并下单",
+            "en": "One-click / Merged"
+          }
+        },
+        {
+          "key": "n6",
+          "lane": 1,
+          "emoji": "📋",
+          "title": {
+            "zh": "采购订单",
+            "en": "Purchase Order"
+          },
+          "doc": {
+            "zh": "采购订单 PO",
+            "en": "Purchase Order (PO)"
+          },
+          "desc": {
+            "zh": "由代办池分配生成，可一对多供应商。",
+            "en": "Generated from the pool; can be one-to-many across suppliers."
+          },
+          "role": {
+            "zh": "采购员",
+            "en": "Buyer"
+          },
+          "check": {
+            "zh": "关联申请单",
+            "en": "Linked requisition"
+          }
+        },
+        {
+          "key": "n7",
+          "lane": 1,
+          "emoji": "⚖️",
+          "title": {
+            "zh": "订单审批",
+            "en": "Order Approval"
+          },
+          "desc": {
+            "zh": "按金额、供应商等级触发多级审批。",
+            "en": "Multi-level approval by amount and supplier tier."
+          },
+          "role": {
+            "zh": "采购主管",
+            "en": "Procurement manager"
+          },
+          "check": {
+            "zh": "通过 → 下达供应商",
+            "en": "Approved → send to supplier"
+          }
+        },
+        {
+          "key": "n8",
+          "lane": 1,
+          "emoji": "💳",
+          "title": {
+            "zh": "发起付款",
+            "en": "Initiate Payment"
+          },
+          "desc": {
+            "zh": "到货前预付，或到货后 / 分期支付货款。",
+            "en": "Prepay before arrival, or pay after / in installments."
+          },
+          "role": {
+            "zh": "采购",
+            "en": "Procurement"
+          },
+          "check": {
+            "zh": "借预付 / 应付 · 贷银行",
+            "en": "Dr prepay / AP · Cr bank"
+          }
+        },
+        {
+          "key": "n9",
+          "lane": 2,
+          "emoji": "🚚",
+          "title": {
+            "zh": "供应商发货",
+            "en": "Supplier Ships"
+          },
+          "desc": {
+            "zh": "供应商备货发运，回传物流单号与到达日。",
+            "en": "The supplier ships and returns waybill number and ETA."
+          },
+          "role": {
+            "zh": "供应商",
+            "en": "Supplier"
+          },
+          "check": {
+            "zh": "物流单号",
+            "en": "Waybill number"
+          }
+        },
+        {
+          "key": "n10",
+          "lane": 3,
+          "emoji": "📥",
+          "title": {
+            "zh": "到货登记",
+            "en": "Arrival Logging"
+          },
+          "doc": {
+            "zh": "到货登记单",
+            "en": "Arrival note"
+          },
+          "desc": {
+            "zh": "录入到货数量 / 批次 / 物流，按免检属性分流。",
+            "en": "Log arrival quantity / batch / logistics; route by exemption attribute."
+          },
+          "role": {
+            "zh": "收货员",
+            "en": "Receiver"
+          },
+          "check": {
+            "zh": "免检 / 送检属性",
+            "en": "Exempt / Inspect attribute"
+          }
+        },
+        {
+          "key": "n11",
+          "lane": 3,
+          "emoji": "🔀",
+          "title": {
+            "zh": "是否需要检验",
+            "en": "Inspection Needed?"
+          },
+          "desc": {
+            "zh": "按物料档案「是否免检」自动判断。",
+            "en": "Auto-decided by the item's \"inspection-exempt\" flag."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "免检直入 / 需检待检",
+            "en": "Exempt → in / Inspect → pending"
+          }
+        },
+        {
+          "key": "n12",
+          "lane": 3,
+          "emoji": "✅",
+          "title": {
+            "zh": "免检入库",
+            "en": "Exempt Receipt"
+          },
+          "desc": {
+            "zh": "免检物料跳过质检，直接生成入库单。",
+            "en": "Exempt items skip QC and go straight to a receipt note."
+          },
+          "role": {
+            "zh": "仓管",
+            "en": "Warehouse"
+          },
+          "check": {
+            "zh": "库存 ↑",
+            "en": "Stock ↑"
+          }
+        },
+        {
+          "key": "n13",
+          "lane": 4,
+          "emoji": "🧪",
+          "title": {
+            "zh": "待检验库存",
+            "en": "Pending-QC Stock"
+          },
+          "doc": {
+            "zh": "待检库存",
+            "en": "Pending stock"
+          },
+          "desc": {
+            "zh": "需检物料进独立库位，不可销售 / 领用。",
+            "en": "Items needing QC enter a separate location, not sellable/issuable."
+          },
+          "role": {
+            "zh": "质检",
+            "en": "QC"
+          },
+          "check": {
+            "zh": "隔离库位",
+            "en": "Quarantine location"
+          }
+        },
+        {
+          "key": "n14",
+          "lane": 4,
+          "emoji": "📑",
+          "title": {
+            "zh": "检验单",
+            "en": "Inspection Sheet"
+          },
+          "doc": {
+            "zh": "检验单",
+            "en": "Inspection sheet"
+          },
+          "desc": {
+            "zh": "系统按待检库存自动生成并分配质检员。",
+            "en": "Auto-generated from pending stock and assigned to an inspector."
+          },
+          "role": {
+            "zh": "质检",
+            "en": "QC"
+          },
+          "check": {
+            "zh": "批次 / 质检员",
+            "en": "Batch / Inspector"
+          }
+        },
+        {
+          "key": "n15",
+          "lane": 4,
+          "emoji": "🔬",
+          "title": {
+            "zh": "质检结果",
+            "en": "Inspection Result"
+          },
+          "desc": {
+            "zh": "质检员逐行判定合格 / 不合格。",
+            "en": "The inspector marks each line pass / fail."
+          },
+          "role": {
+            "zh": "质检员",
+            "en": "Inspector"
+          },
+          "check": {
+            "zh": "合格 / 不合格",
+            "en": "Pass / Fail"
+          }
+        },
+        {
+          "key": "n16",
+          "lane": 3,
+          "emoji": "✅",
+          "title": {
+            "zh": "检验合格入库",
+            "en": "Passed → Receipt"
+          },
+          "desc": {
+            "zh": "合格物料转入正式库存，可销售 / 领用。",
+            "en": "Passed items move to formal stock — sellable/issuable."
+          },
+          "role": {
+            "zh": "仓管",
+            "en": "Warehouse"
+          },
+          "check": {
+            "zh": "待检 → 正式",
+            "en": "Pending → Formal"
+          }
+        },
+        {
+          "key": "n17",
+          "lane": 4,
+          "emoji": "⚠️",
+          "title": {
+            "zh": "不合格处理",
+            "en": "Handle Failures"
+          },
+          "desc": {
+            "zh": "选择退回供应商，或让步接受。",
+            "en": "Choose to return to the supplier or accept by concession."
+          },
+          "role": {
+            "zh": "质检",
+            "en": "QC"
+          },
+          "check": {
+            "zh": "拒收 / 让步",
+            "en": "Reject / Concession"
+          }
+        },
+        {
+          "key": "n18",
+          "lane": 2,
+          "emoji": "⛔",
+          "title": {
+            "zh": "拒收退回",
+            "en": "Reject & Return"
+          },
+          "desc": {
+            "zh": "直接拒收退还供应商，不入库，流程终止。",
+            "en": "Reject and return to the supplier; no receipt; flow ends."
+          },
+          "role": {
+            "zh": "供应商",
+            "en": "Supplier"
+          },
+          "check": {
+            "zh": "异常终止",
+            "en": "Exception end"
+          }
+        },
+        {
+          "key": "n19",
+          "lane": 1,
+          "emoji": "⚖️",
+          "title": {
+            "zh": "让步审批",
+            "en": "Concession Approval"
+          },
+          "desc": {
+            "zh": "采购 / 质量主管审批（可能价格折让）。",
+            "en": "Procurement / QA manager approves (possibly with a price discount)."
+          },
+          "role": {
+            "zh": "采购 / 质量主管",
+            "en": "Procurement / QA manager"
+          },
+          "check": {
+            "zh": "通过 → 让步入库",
+            "en": "Approved → concession receipt"
+          }
+        },
+        {
+          "key": "n20",
+          "lane": 3,
+          "emoji": "📦",
+          "title": {
+            "zh": "让步入库",
+            "en": "Concession Receipt"
+          },
+          "desc": {
+            "zh": "以让步接受方式入库，标记让步批次。",
+            "en": "Receive by concession and flag the concession batch."
+          },
+          "role": {
+            "zh": "仓管",
+            "en": "Warehouse"
+          },
+          "check": {
+            "zh": "让步批次",
+            "en": "Concession batch"
+          }
+        },
+        {
+          "key": "n21",
+          "lane": 3,
+          "emoji": "🏁",
+          "title": {
+            "zh": "入库完成",
+            "en": "Receipt Complete"
+          },
+          "desc": {
+            "zh": "免检 / 合格 / 让步三路汇合，进入可用库存。",
+            "en": "Exempt / passed / concession paths merge into available stock."
+          },
+          "role": {
+            "zh": "仓管",
+            "en": "Warehouse"
+          },
+          "check": {
+            "zh": "三路汇合",
+            "en": "Three paths merge"
+          }
+        }
+      ]
+    },
+    {
+      "id": "project-mgmt",
+      "name": {
+        "zh": "项目创建与管理",
+        "en": "Project Creation & Management"
+      },
+      "group": {
+        "zh": "项目与交付",
+        "en": "Projects & Delivery"
+      },
+      "icon": "🏗️",
+      "summary": {
+        "zh": "新建项目选客户 → 关联合同 / 直接关联订单归集并汇总金额 → 配团队立项 → 存续期动态追加 → 进入计划编排启动执行。",
+        "en": "New project picks a customer → link contracts / orders and aggregate amounts → assign team and launch → add more during the project → enter planning and start execution."
+      },
+      "lanes": [
+        {
+          "name": {
+            "zh": "项目经理",
+            "en": "Project Manager"
+          },
+          "color": "#0066cc"
+        },
+        {
+          "name": {
+            "zh": "客户与合同",
+            "en": "Customer & Contract"
+          },
+          "color": "#ff2d55"
+        },
+        {
+          "name": {
+            "zh": "销售订单",
+            "en": "Sales Order"
+          },
+          "color": "#34c759"
+        },
+        {
+          "name": {
+            "zh": "项目团队",
+            "en": "Project Team"
+          },
+          "color": "#af52de"
+        },
+        {
+          "name": {
+            "zh": "项目计划",
+            "en": "Project Plan"
+          },
+          "color": "#ff9500"
+        }
+      ],
+      "steps": [
+        {
+          "key": "n1",
+          "lane": 0,
+          "emoji": "🚀",
+          "title": {
+            "zh": "开始",
+            "en": "Start"
+          },
+          "desc": {
+            "zh": "项目经理在项目管理模块发起新建项目。",
+            "en": "The PM starts a new project in the project module."
+          },
+          "role": {
+            "zh": "项目经理",
+            "en": "Project manager"
+          },
+          "check": {
+            "zh": "立项触发",
+            "en": "Kickoff trigger"
+          }
+        },
+        {
+          "key": "n2",
+          "lane": 0,
+          "emoji": "🏗️",
+          "title": {
+            "zh": "新建项目",
+            "en": "New Project"
+          },
+          "desc": {
+            "zh": "进入新建页面，准备录入信息与团队。",
+            "en": "Open the new-project page to enter info and the team."
+          },
+          "role": {
+            "zh": "项目经理",
+            "en": "Project manager"
+          },
+          "check": {
+            "zh": "一客户多项目",
+            "en": "One customer, many projects"
+          }
+        },
+        {
+          "key": "n3",
+          "lane": 0,
+          "emoji": "📄",
+          "title": {
+            "zh": "项目基础信息",
+            "en": "Basic Info"
+          },
+          "doc": {
+            "zh": "项目档案",
+            "en": "Project profile"
+          },
+          "desc": {
+            "zh": "录入名称 / 编号 / 类型 / 计划起止 / 业务线。",
+            "en": "Enter name / code / type / planned dates / business line."
+          },
+          "role": {
+            "zh": "项目经理",
+            "en": "Project manager"
+          },
+          "check": {
+            "zh": "核心字段",
+            "en": "Core fields"
+          }
+        },
+        {
+          "key": "n4",
+          "lane": 1,
+          "emoji": "👤",
+          "title": {
+            "zh": "选择关联客户",
+            "en": "Select Customer"
+          },
+          "desc": {
+            "zh": "从客户主数据选对应客户，作过滤依据。",
+            "en": "Pick the customer from master data as the filter basis."
+          },
+          "role": {
+            "zh": "项目经理",
+            "en": "Project manager"
+          },
+          "check": {
+            "zh": "客户必填",
+            "en": "Customer required"
+          }
+        },
+        {
+          "key": "n5",
+          "lane": 1,
+          "emoji": "🔀",
+          "title": {
+            "zh": "关联方式",
+            "en": "Link Method"
+          },
+          "desc": {
+            "zh": "关联销售合同（A）或直接关联订单（B）。",
+            "en": "Link a sales contract (A) or orders directly (B)."
+          },
+          "role": {
+            "zh": "项目经理",
+            "en": "Project manager"
+          },
+          "check": {
+            "zh": "A 自动归集 / B 手动勾选",
+            "en": "A auto-collect / B manual pick"
+          }
+        },
+        {
+          "key": "n6",
+          "lane": 1,
+          "emoji": "📑",
+          "title": {
+            "zh": "选择销售合同",
+            "en": "Select Contract"
+          },
+          "doc": {
+            "zh": "销售合同",
+            "en": "Sales Contract"
+          },
+          "desc": {
+            "zh": "路径 A：勾选客户名下已签合同（多选）。",
+            "en": "Path A: select the customer's signed contracts (multi-select)."
+          },
+          "role": {
+            "zh": "项目经理",
+            "en": "Project manager"
+          },
+          "check": {
+            "zh": "合同绑定关系",
+            "en": "Contract binding"
+          }
+        },
+        {
+          "key": "n7",
+          "lane": 2,
+          "emoji": "🔗",
+          "title": {
+            "zh": "自动关联合同订单",
+            "en": "Auto-link Orders"
+          },
+          "doc": {
+            "zh": "订单池",
+            "en": "Order pool"
+          },
+          "desc": {
+            "zh": "按合同自动归集全部订单，新增持续追加。",
+            "en": "Auto-collect all orders by contract; new ones keep appending."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "1 合同 → N 订单",
+            "en": "1 contract → N orders"
+          }
+        },
+        {
+          "key": "n8",
+          "lane": 2,
+          "emoji": "✅",
+          "title": {
+            "zh": "手动选择销售订单",
+            "en": "Manually Select Orders"
+          },
+          "desc": {
+            "zh": "路径 B：从已确认订单逐项勾选关联。",
+            "en": "Path B: pick from confirmed orders one by one."
+          },
+          "role": {
+            "zh": "项目经理",
+            "en": "Project manager"
+          },
+          "check": {
+            "zh": "无合同 / 散客",
+            "en": "No contract / Walk-in"
+          }
+        },
+        {
+          "key": "n9",
+          "lane": 2,
+          "emoji": "🧮",
+          "title": {
+            "zh": "项目金额自动汇总",
+            "en": "Auto-sum Amount"
+          },
+          "doc": {
+            "zh": "项目金额",
+            "en": "Project amount"
+          },
+          "desc": {
+            "zh": "项目金额 = 关联订单金额合计，实时刷新。",
+            "en": "Project amount = sum of linked orders, refreshed live."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "Σ 订单金额",
+            "en": "Σ order amounts"
+          }
+        },
+        {
+          "key": "n10",
+          "lane": 3,
+          "emoji": "👥",
+          "title": {
+            "zh": "指定项目团队成员",
+            "en": "Assign Team"
+          },
+          "desc": {
+            "zh": "指定 1 负责人 + N 成员，按角色授权。",
+            "en": "Assign 1 owner + N members with role-based access."
+          },
+          "role": {
+            "zh": "项目经理",
+            "en": "Project manager"
+          },
+          "check": {
+            "zh": "1 负责人 + N 成员",
+            "en": "1 owner + N members"
+          }
+        },
+        {
+          "key": "n11",
+          "lane": 0,
+          "emoji": "🎯",
+          "title": {
+            "zh": "项目创建完成",
+            "en": "Project Created"
+          },
+          "doc": {
+            "zh": "项目档案",
+            "en": "Project profile"
+          },
+          "desc": {
+            "zh": "项目建立，状态进行中，可动态扩展。",
+            "en": "Project is created, status in-progress, expandable."
+          },
+          "role": {
+            "zh": "项目经理",
+            "en": "Project manager"
+          },
+          "check": {
+            "zh": "状态 / 金额 / 清单",
+            "en": "Status / Amount / List"
+          }
+        },
+        {
+          "key": "n12",
+          "lane": 1,
+          "emoji": "🔁",
+          "title": {
+            "zh": "是否新增销售合同",
+            "en": "New Contract?"
+          },
+          "desc": {
+            "zh": "存续期监听客户是否新签合同。",
+            "en": "During the project, watch for new customer contracts."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "可循环追加",
+            "en": "Repeatable append"
+          }
+        },
+        {
+          "key": "n13",
+          "lane": 1,
+          "emoji": "➕",
+          "title": {
+            "zh": "追加销售合同",
+            "en": "Append Contract"
+          },
+          "desc": {
+            "zh": "勾选新签合同追加，原有关系不变。",
+            "en": "Append a newly signed contract; existing links stay."
+          },
+          "role": {
+            "zh": "项目经理",
+            "en": "Project manager"
+          },
+          "check": {
+            "zh": "无需重建项",
+            "en": "No rebuild needed"
+          }
+        },
+        {
+          "key": "n14",
+          "lane": 2,
+          "emoji": "🔗",
+          "title": {
+            "zh": "自动同步销售订单",
+            "en": "Auto-sync Orders"
+          },
+          "doc": {
+            "zh": "订单池",
+            "en": "Order pool"
+          },
+          "desc": {
+            "zh": "新合同订单自动并入项目订单池。",
+            "en": "Orders from the new contract auto-merge into the pool."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "自动并入",
+            "en": "Auto-merge"
+          }
+        },
+        {
+          "key": "n15",
+          "lane": 2,
+          "emoji": "🧮",
+          "title": {
+            "zh": "更新项目金额",
+            "en": "Update Amount"
+          },
+          "doc": {
+            "zh": "项目金额",
+            "en": "Project amount"
+          },
+          "desc": {
+            "zh": "按新订单合并刷新，变更轨迹可查。",
+            "en": "Refresh by merging new orders; changes are auditable."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "旧 + 新合计",
+            "en": "Old + new total"
+          }
+        },
+        {
+          "key": "n16",
+          "lane": 4,
+          "emoji": "🗓️",
+          "title": {
+            "zh": "进入项目计划管理",
+            "en": "Project Planning"
+          },
+          "desc": {
+            "zh": "构建项目执行的时间轴 / 阶段 / 任务体系。",
+            "en": "Build the timeline / stages / task structure for execution."
+          },
+          "role": {
+            "zh": "项目经理",
+            "en": "Project manager"
+          },
+          "check": {
+            "zh": "计划编排",
+            "en": "Plan orchestration"
+          }
+        },
+        {
+          "key": "n17",
+          "lane": 4,
+          "emoji": "🔀",
+          "title": {
+            "zh": "计划生成方式",
+            "en": "Plan Method"
+          },
+          "desc": {
+            "zh": "套用模板批量生成，或手动新建。",
+            "en": "Generate from a template in bulk, or build manually."
+          },
+          "role": {
+            "zh": "项目经理",
+            "en": "Project manager"
+          },
+          "check": {
+            "zh": "模板 / 手动",
+            "en": "Template / Manual"
+          }
+        },
+        {
+          "key": "n18",
+          "lane": 4,
+          "emoji": "📋",
+          "title": {
+            "zh": "套用模板生成",
+            "en": "Generate from Template"
+          },
+          "doc": {
+            "zh": "计划模板",
+            "en": "Plan template"
+          },
+          "desc": {
+            "zh": "选模板一键批量生成阶段 / 里程碑 / 任务。",
+            "en": "Pick a template to bulk-create stages / milestones / tasks."
+          },
+          "role": {
+            "zh": "项目经理",
+            "en": "Project manager"
+          },
+          "check": {
+            "zh": "生成后可微调",
+            "en": "Tunable after generation"
+          }
+        },
+        {
+          "key": "n19",
+          "lane": 3,
+          "emoji": "🧩",
+          "title": {
+            "zh": "新建阶段 / 里程碑 / 任务",
+            "en": "New Stage / Milestone / Task"
+          },
+          "desc": {
+            "zh": "逐项创建并配依赖 / 负责人 / 起止时间。",
+            "en": "Create each and set dependencies / owner / dates."
+          },
+          "role": {
+            "zh": "项目团队",
+            "en": "Project team"
+          },
+          "check": {
+            "zh": "依赖关系",
+            "en": "Dependencies"
+          }
+        },
+        {
+          "key": "n20",
+          "lane": 4,
+          "emoji": "🏁",
+          "title": {
+            "zh": "进入项目执行阶段",
+            "en": "Enter Execution"
+          },
+          "desc": {
+            "zh": "计划编排完成，进入正式执行。",
+            "en": "Planning done; enter formal execution."
+          },
+          "role": {
+            "zh": "项目经理",
+            "en": "Project manager"
+          },
+          "check": {
+            "zh": "工时 / 进度 / 回款",
+            "en": "Hours / Progress / Collection"
+          }
+        }
+      ]
+    },
+    {
+      "id": "labor-cost",
+      "name": {
+        "zh": "工时成本配置与核算",
+        "en": "Labor Cost Setup & Accounting"
+      },
+      "group": {
+        "zh": "项目与交付",
+        "en": "Projects & Delivery"
+      },
+      "icon": "⏱️",
+      "summary": {
+        "zh": "配置时薪（固定费率 / 工资折算）→ 员工填报工时 → 系统校验核算 → 按项目 / 订单归集 → 多维统计分析。",
+        "en": "Set hourly rates (fixed / salary-derived) → employees log hours → system validates and computes → allocate by project / order → multi-dimensional analysis."
+      },
+      "lanes": [
+        {
+          "name": {
+            "zh": "项目管理员",
+            "en": "Project Admin"
+          },
+          "color": "#5e5ce6"
+        },
+        {
+          "name": {
+            "zh": "HR / 财务",
+            "en": "HR / Finance"
+          },
+          "color": "#ff9500"
+        },
+        {
+          "name": {
+            "zh": "员工",
+            "en": "Employee"
+          },
+          "color": "#0066cc"
+        },
+        {
+          "name": {
+            "zh": "系统计算",
+            "en": "System Compute"
+          },
+          "color": "#34c759"
+        },
+        {
+          "name": {
+            "zh": "业务单据",
+            "en": "Business Docs"
+          },
+          "color": "#ff2d55"
+        }
+      ],
+      "steps": [
+        {
+          "key": "n1",
+          "lane": 0,
+          "emoji": "🚀",
+          "title": {
+            "zh": "开始",
+            "en": "Start"
+          },
+          "desc": {
+            "zh": "项目管理员发起员工工时成本配置流程。",
+            "en": "The project admin starts the labor-cost setup."
+          },
+          "role": {
+            "zh": "项目管理员",
+            "en": "Project admin"
+          },
+          "check": {
+            "zh": "规则基础",
+            "en": "Rule basis"
+          }
+        },
+        {
+          "key": "n2",
+          "lane": 0,
+          "emoji": "📂",
+          "title": {
+            "zh": "进入项目管理模块",
+            "en": "Open Project Module"
+          },
+          "desc": {
+            "zh": "工作台左侧导航选「项目管理」。",
+            "en": "Pick \"Project Management\" in the left nav."
+          },
+          "role": {
+            "zh": "项目管理员",
+            "en": "Project admin"
+          },
+          "check": {
+            "zh": "入口",
+            "en": "Entry"
+          }
+        },
+        {
+          "key": "n3",
+          "lane": 0,
+          "emoji": "⚙️",
+          "title": {
+            "zh": "打开项目配置中心",
+            "en": "Open Config Center"
+          },
+          "desc": {
+            "zh": "顶部菜单进入配置中心维护规则字典。",
+            "en": "Open the config center from the top menu to maintain rules."
+          },
+          "role": {
+            "zh": "项目管理员",
+            "en": "Project admin"
+          },
+          "check": {
+            "zh": "基础规则",
+            "en": "Base rules"
+          }
+        },
+        {
+          "key": "n4",
+          "lane": 0,
+          "emoji": "💲",
+          "title": {
+            "zh": "员工工时成本配置",
+            "en": "Labor Cost Setup"
+          },
+          "desc": {
+            "zh": "进入时薪规则维护页面。",
+            "en": "Open the hourly-rate rules page."
+          },
+          "role": {
+            "zh": "项目管理员",
+            "en": "Project admin"
+          },
+          "check": {
+            "zh": "计算方式 / 适用范围",
+            "en": "Method / Scope"
+          }
+        },
+        {
+          "key": "n5",
+          "lane": 0,
+          "emoji": "🔀",
+          "title": {
+            "zh": "选择计算方式",
+            "en": "Choose Method"
+          },
+          "desc": {
+            "zh": "固定费率或工资折算，可差异化启用。",
+            "en": "Fixed rate or salary-derived; can apply selectively."
+          },
+          "role": {
+            "zh": "项目管理员",
+            "en": "Project admin"
+          },
+          "check": {
+            "zh": "固定费率 / 工资折算",
+            "en": "Fixed / Salary-derived"
+          }
+        },
+        {
+          "key": "n6",
+          "lane": 0,
+          "emoji": "📌",
+          "title": {
+            "zh": "固定费率模式",
+            "en": "Fixed-rate Mode"
+          },
+          "desc": {
+            "zh": "按岗位 / 职级设统一时薪，易审计。",
+            "en": "Set a uniform rate by role / grade; easy to audit."
+          },
+          "role": {
+            "zh": "项目管理员",
+            "en": "Project admin"
+          },
+          "check": {
+            "zh": "岗位标准化",
+            "en": "Role standardization"
+          }
+        },
+        {
+          "key": "n7",
+          "lane": 0,
+          "emoji": "📑",
+          "title": {
+            "zh": "按岗位 / 职级配置时薪",
+            "en": "Rate by Role / Grade"
+          },
+          "doc": {
+            "zh": "时薪表",
+            "en": "Rate table"
+          },
+          "desc": {
+            "zh": "为不同岗位 / 职级配统一时薪标准。",
+            "en": "Set a uniform rate standard per role / grade."
+          },
+          "role": {
+            "zh": "项目管理员",
+            "en": "Project admin"
+          },
+          "check": {
+            "zh": "岗位 or 职级为主",
+            "en": "By role or grade"
+          }
+        },
+        {
+          "key": "n8",
+          "lane": 1,
+          "emoji": "🧮",
+          "title": {
+            "zh": "工资折算模式",
+            "en": "Salary-derived Mode"
+          },
+          "desc": {
+            "zh": "基于历史工资折算时薪，更贴近实际。",
+            "en": "Derive the rate from historical salary — closer to actual."
+          },
+          "role": {
+            "zh": "HR / 财务",
+            "en": "HR / Finance"
+          },
+          "check": {
+            "zh": "按个人核算",
+            "en": "Per-person"
+          }
+        },
+        {
+          "key": "n9",
+          "lane": 1,
+          "emoji": "🗄️",
+          "title": {
+            "zh": "获取历史工资数据",
+            "en": "Get Salary Data"
+          },
+          "doc": {
+            "zh": "工资数据",
+            "en": "Salary data"
+          },
+          "desc": {
+            "zh": "从 HR 模块同步工资记录与标准工时。",
+            "en": "Sync salary records and standard hours from HR."
+          },
+          "role": {
+            "zh": "HR / 财务",
+            "en": "HR / Finance"
+          },
+          "check": {
+            "zh": "工资 / 周期 / 标准工时",
+            "en": "Salary / Period / Std hours"
+          }
+        },
+        {
+          "key": "n10",
+          "lane": 3,
+          "emoji": "🧮",
+          "title": {
+            "zh": "计算基础时薪",
+            "en": "Compute Base Rate"
+          },
+          "desc": {
+            "zh": "系统按工资 ÷ 标准工时折算基础时薪。",
+            "en": "System derives base rate = salary ÷ standard hours."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "基础时薪 = 工资 ÷ 标准工时",
+            "en": "Base = salary ÷ std hours"
+          }
+        },
+        {
+          "key": "n11",
+          "lane": 1,
+          "emoji": "🔀",
+          "title": {
+            "zh": "是否叠加管理成本",
+            "en": "Add Overhead?"
+          },
+          "desc": {
+            "zh": "是否叠加管理费 / 社保等间接成本。",
+            "en": "Whether to add overhead / benefits and other indirect cost."
+          },
+          "role": {
+            "zh": "HR / 财务",
+            "en": "HR / Finance"
+          },
+          "check": {
+            "zh": "是 → 设比例 / 否 → 直接用",
+            "en": "Yes → set rate / No → use as is"
+          }
+        },
+        {
+          "key": "n12",
+          "lane": 1,
+          "emoji": "📊",
+          "title": {
+            "zh": "设置管理成本比例",
+            "en": "Set Overhead Rate"
+          },
+          "desc": {
+            "zh": "按公司口径设统一叠加比例，可差异化。",
+            "en": "Set a company-wide overhead rate; can differentiate."
+          },
+          "role": {
+            "zh": "HR / 财务",
+            "en": "HR / Finance"
+          },
+          "check": {
+            "zh": "叠加比例 / 适用范围",
+            "en": "Rate / Scope"
+          }
+        },
+        {
+          "key": "n13",
+          "lane": 3,
+          "emoji": "🧮",
+          "title": {
+            "zh": "计算最终时薪",
+            "en": "Compute Final Rate"
+          },
+          "desc": {
+            "zh": "基础时薪 ×（1 + 管理成本比例）。",
+            "en": "Base rate × (1 + overhead rate)."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "最终时薪公式",
+            "en": "Final-rate formula"
+          }
+        },
+        {
+          "key": "n14",
+          "lane": 1,
+          "emoji": "💾",
+          "title": {
+            "zh": "保存时薪配置",
+            "en": "Save Rate Config"
+          },
+          "doc": {
+            "zh": "规则库",
+            "en": "Rule library"
+          },
+          "desc": {
+            "zh": "写入工时成本规则库供核算引擎调用。",
+            "en": "Save to the rule library for the costing engine."
+          },
+          "role": {
+            "zh": "HR / 财务",
+            "en": "HR / Finance"
+          },
+          "check": {
+            "zh": "规则编号 / 生效日期",
+            "en": "Rule ID / Effective date"
+          }
+        },
+        {
+          "key": "n15",
+          "lane": 2,
+          "emoji": "⏱️",
+          "title": {
+            "zh": "员工每日填报工时",
+            "en": "Daily Time Logging"
+          },
+          "desc": {
+            "zh": "按当日进度逐项录入，建议日清日结。",
+            "en": "Log each item daily; clear-as-you-go is recommended."
+          },
+          "role": {
+            "zh": "员工",
+            "en": "Employee"
+          },
+          "check": {
+            "zh": "日清日结",
+            "en": "Daily clearing"
+          }
+        },
+        {
+          "key": "n16",
+          "lane": 2,
+          "emoji": "📝",
+          "title": {
+            "zh": "工时记录",
+            "en": "Timesheet"
+          },
+          "doc": {
+            "zh": "工时记录单",
+            "en": "Timesheet"
+          },
+          "desc": {
+            "zh": "核算源头单据，关联项目 / 订单 / 合同。",
+            "en": "The source document, linked to project / order / contract."
+          },
+          "role": {
+            "zh": "员工",
+            "en": "Employee"
+          },
+          "check": {
+            "zh": "未填不计成本",
+            "en": "No log, no cost"
+          }
+        },
+        {
+          "key": "n17",
+          "lane": 3,
+          "emoji": "❓",
+          "title": {
+            "zh": "存在时薪配置？",
+            "en": "Rate Config Exists?"
+          },
+          "desc": {
+            "zh": "提交时校验员工是否有生效时薪配置。",
+            "en": "On submit, check the employee has an active rate config."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "员工 + 日期 + 部门 / 项目",
+            "en": "Employee + Date + Dept / Project"
+          }
+        },
+        {
+          "key": "n18",
+          "lane": 1,
+          "emoji": "⛔",
+          "title": {
+            "zh": "提示先完成配置",
+            "en": "Prompt to Configure"
+          },
+          "desc": {
+            "zh": "无配置 → 提示先维护规则，本笔暂不计成本。",
+            "en": "No config → prompt to set rules; this entry isn't costed yet."
+          },
+          "role": {
+            "zh": "HR / 财务",
+            "en": "HR / Finance"
+          },
+          "check": {
+            "zh": "异常中止",
+            "en": "Exception halt"
+          }
+        },
+        {
+          "key": "n19",
+          "lane": 3,
+          "emoji": "🧮",
+          "title": {
+            "zh": "自动核算工时成本",
+            "en": "Auto-compute Cost"
+          },
+          "desc": {
+            "zh": "通过校验 → 按时薪 × 工时自动核算。",
+            "en": "On pass → auto-compute as rate × hours."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "工时成本 = 时薪 × 工时",
+            "en": "Cost = rate × hours"
+          }
+        },
+        {
+          "key": "n20",
+          "lane": 3,
+          "emoji": "🔀",
+          "title": {
+            "zh": "关联业务单据类型",
+            "en": "Link Doc Type"
+          },
+          "desc": {
+            "zh": "按关联字段决定成本归集去向。",
+            "en": "The link field decides where the cost is allocated."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "项目 / 订单合同",
+            "en": "Project / Order-contract"
+          }
+        },
+        {
+          "key": "n21",
+          "lane": 4,
+          "emoji": "🏗️",
+          "title": {
+            "zh": "归集到项目成本",
+            "en": "Allocate to Project"
+          },
+          "desc": {
+            "zh": "计入对应项目人工成本累计。",
+            "en": "Add to the project's accumulated labor cost."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "项目成本",
+            "en": "Project cost"
+          }
+        },
+        {
+          "key": "n22",
+          "lane": 4,
+          "emoji": "📋",
+          "title": {
+            "zh": "归集到订单 / 合同",
+            "en": "Allocate to Order / Contract"
+          },
+          "desc": {
+            "zh": "计入订单 / 合同人工成本，支撑毛利。",
+            "en": "Add to order / contract labor cost to support margin."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "订单 / 合同成本",
+            "en": "Order / Contract cost"
+          }
+        },
+        {
+          "key": "n23",
+          "lane": 4,
+          "emoji": "📊",
+          "title": {
+            "zh": "项目维度展示",
+            "en": "Project View"
+          },
+          "doc": {
+            "zh": "项目分析",
+            "en": "Project analysis"
+          },
+          "desc": {
+            "zh": "项目详情展示总人工成本，可下钻。",
+            "en": "Project details show total labor cost, drillable."
+          },
+          "role": {
+            "zh": "经营分析",
+            "en": "Business analysis"
+          },
+          "check": {
+            "zh": "总成本 / 人均",
+            "en": "Total / Per-capita"
+          }
+        },
+        {
+          "key": "n24",
+          "lane": 4,
+          "emoji": "📈",
+          "title": {
+            "zh": "订单 / 合同维度展示",
+            "en": "Order / Contract View"
+          },
+          "doc": {
+            "zh": "成本明细",
+            "en": "Cost detail"
+          },
+          "desc": {
+            "zh": "订单 / 合同详情展示成本明细与毛利。",
+            "en": "Order / contract details show cost breakdown and margin."
+          },
+          "role": {
+            "zh": "经营分析",
+            "en": "Business analysis"
+          },
+          "check": {
+            "zh": "毛利率 / 成本占比",
+            "en": "Margin % / Cost share"
+          }
+        },
+        {
+          "key": "n25",
+          "lane": 4,
+          "emoji": "🧊",
+          "title": {
+            "zh": "统计分析",
+            "en": "Statistics"
+          },
+          "doc": {
+            "zh": "经营报表",
+            "en": "Business report"
+          },
+          "desc": {
+            "zh": "项目 × 员工 × 时间多维交叉统计。",
+            "en": "Cross-stats by project × employee × time."
+          },
+          "role": {
+            "zh": "经营分析",
+            "en": "Business analysis"
+          },
+          "check": {
+            "zh": "多维报表",
+            "en": "Multi-dim report"
+          }
+        },
+        {
+          "key": "n26",
+          "lane": 4,
+          "emoji": "🏁",
+          "title": {
+            "zh": "结束",
+            "en": "End"
+          },
+          "desc": {
+            "zh": "配置 → 填报 → 校验 → 核算 → 归集 → 展示闭环。",
+            "en": "Config → log → validate → compute → allocate → display, a closed loop."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "可追溯",
+            "en": "Traceable"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sn-trace",
+      "name": {
+        "zh": "供应商 SN 码管理",
+        "en": "Supplier SN Code Management"
+      },
+      "group": {
+        "zh": "仓储与质量",
+        "en": "Warehouse & Quality"
+      },
+      "icon": "🔖",
+      "summary": {
+        "zh": "到货扫码录入 SN（唯一性校验）→ 写入中央库「在库」→ 出库扫码绑客户改「已售」→ 售后按 SN 联表判定，防窜货。",
+        "en": "Scan-in SN at arrival (uniqueness check) → write \"in stock\" to the central registry → scan-out binds customer and sets \"sold\" → after-sales decides by SN lookup, preventing diversion."
+      },
+      "lanes": [
+        {
+          "name": {
+            "zh": "采购",
+            "en": "Procurement"
+          },
+          "color": "#0066cc"
+        },
+        {
+          "name": {
+            "zh": "仓储 / 收货",
+            "en": "Warehouse / Receiving"
+          },
+          "color": "#34c759"
+        },
+        {
+          "name": {
+            "zh": "SN 码管理",
+            "en": "SN Registry"
+          },
+          "color": "#30b0c7"
+        },
+        {
+          "name": {
+            "zh": "销售出库",
+            "en": "Sales Issue"
+          },
+          "color": "#ff9500"
+        },
+        {
+          "name": {
+            "zh": "售后服务",
+            "en": "After-sales"
+          },
+          "color": "#ff2d55"
+        }
+      ],
+      "steps": [
+        {
+          "key": "n1",
+          "lane": 0,
+          "emoji": "🚀",
+          "title": {
+            "zh": "开始（采购需求）",
+            "en": "Start (Purchase Need)"
+          },
+          "desc": {
+            "zh": "经销 / 代理模式启动采购，SN 唯一标识全生命周期。",
+            "en": "Distributor/agent model starts procurement; SN uniquely tracks the lifecycle."
+          },
+          "role": {
+            "zh": "采购",
+            "en": "Procurement"
+          },
+          "check": {
+            "zh": "防窜货目标",
+            "en": "Anti-diversion goal"
+          }
+        },
+        {
+          "key": "n2",
+          "lane": 0,
+          "emoji": "📋",
+          "title": {
+            "zh": "创建采购订单",
+            "en": "Create PO"
+          },
+          "doc": {
+            "zh": "采购订单 PO",
+            "en": "Purchase Order (PO)"
+          },
+          "desc": {
+            "zh": "指定供应商 / 物料 / 数量，供应商字段为溯源根。",
+            "en": "Specify supplier / item / quantity; supplier is the trace root."
+          },
+          "role": {
+            "zh": "采购",
+            "en": "Procurement"
+          },
+          "check": {
+            "zh": "已认证本渠道供应商",
+            "en": "Authorized channel supplier"
+          }
+        },
+        {
+          "key": "n3",
+          "lane": 0,
+          "emoji": "🏷️",
+          "title": {
+            "zh": "供应商发货（含 SN 标签）",
+            "en": "Supplier Ships (with SN)"
+          },
+          "desc": {
+            "zh": "出厂前贴附唯一 SN 标签（条码 / 二维码）。",
+            "en": "Affix a unique SN label (barcode / QR) before shipping."
+          },
+          "role": {
+            "zh": "供应商",
+            "en": "Supplier"
+          },
+          "check": {
+            "zh": "一物一码",
+            "en": "One item, one code"
+          }
+        },
+        {
+          "key": "n4",
+          "lane": 1,
+          "emoji": "📥",
+          "title": {
+            "zh": "到货入库登记",
+            "en": "Arrival & Receipt"
+          },
+          "doc": {
+            "zh": "入库单",
+            "en": "Receipt note"
+          },
+          "desc": {
+            "zh": "新建入库单，关联采购订单与供应商。",
+            "en": "Create a receipt note linked to the PO and supplier."
+          },
+          "role": {
+            "zh": "收货员",
+            "en": "Receiver"
+          },
+          "check": {
+            "zh": "关联订单 / 供应商",
+            "en": "Link order / supplier"
+          }
+        },
+        {
+          "key": "n5",
+          "lane": 1,
+          "emoji": "✅",
+          "title": {
+            "zh": "选择入库物料",
+            "en": "Select Items"
+          },
+          "desc": {
+            "zh": "逐行选本次到货物料，确认型号数量。",
+            "en": "Select arrived items line by line; confirm model and quantity."
+          },
+          "role": {
+            "zh": "收货员",
+            "en": "Receiver"
+          },
+          "check": {
+            "zh": "型号 / 数量",
+            "en": "Model / Quantity"
+          }
+        },
+        {
+          "key": "n6",
+          "lane": 1,
+          "emoji": "📲",
+          "title": {
+            "zh": "⭐ 扫码录入 SN 码",
+            "en": "⭐ Scan-in SN"
+          },
+          "desc": {
+            "zh": "扫码枪逐条录入 SN，多扫 / 漏扫 / 重复均拦截。",
+            "en": "Scan each SN; over-scan / miss / duplicate are all blocked."
+          },
+          "role": {
+            "zh": "收货员",
+            "en": "Receiver"
+          },
+          "check": {
+            "zh": "一物一码 · 源头关卡",
+            "en": "One item, one code · Source gate"
+          }
+        },
+        {
+          "key": "n7",
+          "lane": 1,
+          "emoji": "🔎",
+          "title": {
+            "zh": "SN 唯一性校验",
+            "en": "SN Uniqueness Check"
+          },
+          "desc": {
+            "zh": "查重：是否已存在于 SN 码管理模块。",
+            "en": "De-dup check against the SN registry."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "已存在拒收 / 不存在入库",
+            "en": "Exists → reject / New → accept"
+          }
+        },
+        {
+          "key": "n8",
+          "lane": 1,
+          "emoji": "⛔",
+          "title": {
+            "zh": "重复 / 异常 → 重新扫描",
+            "en": "Dup / Error → Rescan"
+          },
+          "desc": {
+            "zh": "SN 重复或不可识别 → 回退重扫，避免污染。",
+            "en": "Duplicate or unreadable SN → roll back and rescan to avoid pollution."
+          },
+          "role": {
+            "zh": "收货员",
+            "en": "Receiver"
+          },
+          "check": {
+            "zh": "异常暂停",
+            "en": "Exception pause"
+          }
+        },
+        {
+          "key": "n9",
+          "lane": 2,
+          "emoji": "🆕",
+          "title": {
+            "zh": "自动生成 SN 记录",
+            "en": "Auto-create SN Record"
+          },
+          "doc": {
+            "zh": "SN 记录",
+            "en": "SN record"
+          },
+          "desc": {
+            "zh": "校验通过 → 为每个 SN 创建记录，状态在库。",
+            "en": "On pass → create a record per SN with status \"in stock\"."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "SN / 物料 / 供应商 / 时间",
+            "en": "SN / Item / Supplier / Time"
+          }
+        },
+        {
+          "key": "n10",
+          "lane": 2,
+          "emoji": "🗄️",
+          "title": {
+            "zh": "SN 码管理模块",
+            "en": "SN Management Module"
+          },
+          "doc": {
+            "zh": "SN 中央库",
+            "en": "SN central registry"
+          },
+          "desc": {
+            "zh": "全生命周期中央库，售后追溯唯一权威源。",
+            "en": "The lifecycle central registry — the sole authority for after-sales tracing."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "物料 / 供应商 / 时间 / 客户 / 状态",
+            "en": "Item / Supplier / Time / Customer / Status"
+          }
+        },
+        {
+          "key": "n11",
+          "lane": 3,
+          "emoji": "🧾",
+          "title": {
+            "zh": "创建销售出库单",
+            "en": "Create Issue Note"
+          },
+          "desc": {
+            "zh": "订单确认后建出库单，关联客户与订单。",
+            "en": "After order confirmation, create an issue note linked to customer and order."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "关联订单 / 客户",
+            "en": "Link order / customer"
+          }
+        },
+        {
+          "key": "n12",
+          "lane": 3,
+          "emoji": "📲",
+          "title": {
+            "zh": "⭐ 扫描 SN 码出库",
+            "en": "⭐ Scan-out SN"
+          },
+          "desc": {
+            "zh": "出库扫码，校验在库且属本订单物料。",
+            "en": "Scan at issue; verify in stock and belongs to this order."
+          },
+          "role": {
+            "zh": "销售 / 仓管",
+            "en": "Sales / Warehouse"
+          },
+          "check": {
+            "zh": "出库即扫码",
+            "en": "Scan on issue"
+          }
+        },
+        {
+          "key": "n13",
+          "lane": 3,
+          "emoji": "🔗",
+          "title": {
+            "zh": "绑定客户 + 出库时间",
+            "en": "Bind Customer + Time"
+          },
+          "desc": {
+            "zh": "自动绑定客户与出库时间，写回 SN 库。",
+            "en": "Auto-bind customer and issue time; write back to the registry."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "商品 → 客户唯一映射",
+            "en": "Item → customer unique map"
+          }
+        },
+        {
+          "key": "n14",
+          "lane": 2,
+          "emoji": "🔁",
+          "title": {
+            "zh": "SN 状态：在库 → 已售",
+            "en": "SN: In Stock → Sold"
+          },
+          "doc": {
+            "zh": "SN 中央库",
+            "en": "SN central registry"
+          },
+          "desc": {
+            "zh": "状态切换已售，附客户与出库单引用。",
+            "en": "Switch status to sold with customer and issue-note refs."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "售后追溯依据",
+            "en": "After-sales basis"
+          }
+        },
+        {
+          "key": "n15",
+          "lane": 3,
+          "emoji": "🚚",
+          "title": {
+            "zh": "发货签收",
+            "en": "Ship & Sign-off"
+          },
+          "desc": {
+            "zh": "发运至客户，进入售后保障期。",
+            "en": "Ship to the customer; the warranty period begins."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "信息归档",
+            "en": "Info archived"
+          }
+        },
+        {
+          "key": "n16",
+          "lane": 4,
+          "emoji": "📨",
+          "title": {
+            "zh": "客户提交售后申请",
+            "en": "Customer After-sales Request"
+          },
+          "desc": {
+            "zh": "客户凭 SN 码发起售后请求。",
+            "en": "The customer raises an after-sales request with the SN."
+          },
+          "role": {
+            "zh": "客户",
+            "en": "Customer"
+          },
+          "check": {
+            "zh": "SN 为身份凭证",
+            "en": "SN as the credential"
+          }
+        },
+        {
+          "key": "n17",
+          "lane": 4,
+          "emoji": "🔐",
+          "title": {
+            "zh": "⭐ SN 验证模块录入",
+            "en": "⭐ SN Verification"
+          },
+          "desc": {
+            "zh": "售后输入 / 扫描 SN，触发联表查询。",
+            "en": "After-sales enters/scans the SN, triggering a lookup."
+          },
+          "role": {
+            "zh": "售后人员",
+            "en": "After-sales staff"
+          },
+          "check": {
+            "zh": "售后第一关",
+            "en": "First after-sales gate"
+          }
+        },
+        {
+          "key": "n18",
+          "lane": 4,
+          "emoji": "🧠",
+          "title": {
+            "zh": "系统自动判断",
+            "en": "System Decides"
+          },
+          "desc": {
+            "zh": "按存在性 / 来源 / 时间轴 / 客户综合判断。",
+            "en": "Decide by existence / source / timeline / customer."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "五维校验",
+            "en": "Five-factor check"
+          }
+        },
+        {
+          "key": "n19",
+          "lane": 4,
+          "emoji": "🏁",
+          "title": {
+            "zh": "✅ 本渠道 → 允许售后",
+            "en": "✅ Own Channel → Allow"
+          },
+          "desc": {
+            "zh": "本渠道 → 允许维修 / 换货 / 退货，显示完整信息。",
+            "en": "Own channel → allow repair / exchange / return, with full info."
+          },
+          "role": {
+            "zh": "售后",
+            "en": "After-sales"
+          },
+          "check": {
+            "zh": "责任归属",
+            "en": "Accountability"
+          }
+        },
+        {
+          "key": "n20",
+          "lane": 3,
+          "emoji": "🚫",
+          "title": {
+            "zh": "❌ 非本渠道 → 拒绝",
+            "en": "❌ Other Channel → Deny"
+          },
+          "desc": {
+            "zh": "不存在 / 非本渠道 → 拒绝或特殊审批，写日志。",
+            "en": "Unknown / other channel → deny or special approval, logged."
+          },
+          "role": {
+            "zh": "售后",
+            "en": "After-sales"
+          },
+          "check": {
+            "zh": "防窜货稽核",
+            "en": "Anti-diversion audit"
+          }
+        }
+      ]
+    },
+    {
+      "id": "revenue-recognition",
+      "name": {
+        "zh": "销售合同收入确认方式",
+        "en": "Revenue Recognition Methods"
+      },
+      "group": {
+        "zh": "财务与核算",
+        "en": "Finance & Accounting"
+      },
+      "icon": "📈",
+      "summary": {
+        "zh": "下单时四选一：按出库 / 按验收节点 / 按发票 / 周期性；四路统一汇入收入确认 → 应收生成 → 成本结转。",
+        "en": "Pick one at order time: by issue / by acceptance milestone / by invoice / periodic; all four converge to revenue recognition → AR creation → cost carry-forward."
+      },
+      "lanes": [
+        {
+          "name": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "color": "#0066cc"
+        },
+        {
+          "name": {
+            "zh": "仓库",
+            "en": "Warehouse"
+          },
+          "color": "#34c759"
+        },
+        {
+          "name": {
+            "zh": "系统（自动触发）",
+            "en": "System (Auto)"
+          },
+          "color": "#30b0c7"
+        },
+        {
+          "name": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "color": "#af52de"
+        },
+        {
+          "name": {
+            "zh": "应收 / 总账",
+            "en": "AR / GL"
+          },
+          "color": "#ff9500"
+        }
+      ],
+      "steps": [
+        {
+          "key": "n1",
+          "lane": 0,
+          "emoji": "🚀",
+          "title": {
+            "zh": "开始",
+            "en": "Start"
+          },
+          "desc": {
+            "zh": "下单环节预选收入确认方式，驱动整条链路。",
+            "en": "Pre-select the revenue method at ordering; it drives the whole chain."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "起点",
+            "en": "Start point"
+          }
+        },
+        {
+          "key": "n2",
+          "lane": 0,
+          "emoji": "📋",
+          "title": {
+            "zh": "销售下单",
+            "en": "Place Order"
+          },
+          "doc": {
+            "zh": "销售订单 SO",
+            "en": "Sales Order (SO)"
+          },
+          "desc": {
+            "zh": "录入客户 / 物料 / 金额 / 交期，必填收入确认方式。",
+            "en": "Enter customer / item / amount / date; revenue method is required."
+          },
+          "role": {
+            "zh": "销售员",
+            "en": "Salesperson"
+          },
+          "check": {
+            "zh": "收入确认方式字段",
+            "en": "Revenue-method field"
+          }
+        },
+        {
+          "key": "n3",
+          "lane": 0,
+          "emoji": "🔀",
+          "title": {
+            "zh": "选择收入确认方式",
+            "en": "Choose Method"
+          },
+          "desc": {
+            "zh": "四选一：按出库 / 验收节点 / 发票 / 周期性。",
+            "en": "Pick one: by issue / acceptance / invoice / periodic."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "一旦选定不可变更",
+            "en": "Locked once chosen"
+          }
+        },
+        {
+          "key": "n4",
+          "lane": 1,
+          "emoji": "📦",
+          "title": {
+            "zh": "① 仓库执行出库",
+            "en": "① Warehouse Issues"
+          },
+          "desc": {
+            "zh": "贸易型：备货拣货扫码绑批次，准备出库。",
+            "en": "Trading: stock, pick, scan-bind batch, ready to issue."
+          },
+          "role": {
+            "zh": "仓管",
+            "en": "Warehouse"
+          },
+          "check": {
+            "zh": "货到即确认收入",
+            "en": "Recognize on delivery"
+          }
+        },
+        {
+          "key": "n5",
+          "lane": 1,
+          "emoji": "🚚",
+          "title": {
+            "zh": "出库单",
+            "en": "Issue Note"
+          },
+          "doc": {
+            "zh": "出库单",
+            "en": "Delivery note"
+          },
+          "desc": {
+            "zh": "过账即扣库存、按 WAC 计成本，联动收入。",
+            "en": "Posting deducts stock, costs by WAC, and links revenue."
+          },
+          "role": {
+            "zh": "仓管",
+            "en": "Warehouse"
+          },
+          "check": {
+            "zh": "借发出商品 / 贷库存",
+            "en": "Dr goods shipped / Cr inventory"
+          }
+        },
+        {
+          "key": "n6",
+          "lane": 2,
+          "emoji": "⚡",
+          "title": {
+            "zh": "出库自动触发收入",
+            "en": "Issue Auto-triggers Revenue"
+          },
+          "desc": {
+            "zh": "出库单过账即自动生成收入确认单。",
+            "en": "Posting the issue note auto-creates a revenue-recognition doc."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "出库触发（自动）",
+            "en": "Issue trigger (auto)"
+          }
+        },
+        {
+          "key": "n7",
+          "lane": 3,
+          "emoji": "📑",
+          "title": {
+            "zh": "收入确认单",
+            "en": "Revenue Recognition Doc"
+          },
+          "doc": {
+            "zh": "收入确认单",
+            "en": "Revenue doc"
+          },
+          "desc": {
+            "zh": "按出库金额自动生成，待财务审核。",
+            "en": "Auto-generated by issue amount, pending finance review."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "关联出库单 / 税额",
+            "en": "Link issue note / Tax"
+          }
+        },
+        {
+          "key": "n8",
+          "lane": 3,
+          "emoji": "⚖️",
+          "title": {
+            "zh": "财务审核",
+            "en": "Finance Review"
+          },
+          "desc": {
+            "zh": "核对金额 / 税率 / 客户 / 出库批次。",
+            "en": "Verify amount / tax / customer / issue batch."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "通过 → 入账 / 驳回",
+            "en": "Pass → post / Reject"
+          }
+        },
+        {
+          "key": "n9",
+          "lane": 3,
+          "emoji": "✅",
+          "title": {
+            "zh": "审核通过 → 收入确认",
+            "en": "Approved → Recognize"
+          },
+          "desc": {
+            "zh": "正式确认收入，成本同步自动结转。",
+            "en": "Formally recognize revenue; cost carries forward in sync."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "模式① 实时结转",
+            "en": "Mode ① real-time carry"
+          }
+        },
+        {
+          "key": "n10",
+          "lane": 0,
+          "emoji": "📐",
+          "title": {
+            "zh": "② 配置验收节点 + 比例",
+            "en": "② Set Milestones + %"
+          },
+          "doc": {
+            "zh": "验收阶段配置",
+            "en": "Acceptance config"
+          },
+          "desc": {
+            "zh": "项目型：配多个验收阶段，比例合计 100%。",
+            "en": "Project: set multiple acceptance stages summing to 100%."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "30% + 40% + 30%",
+            "en": "30% + 40% + 30%"
+          }
+        },
+        {
+          "key": "n11",
+          "lane": 0,
+          "emoji": "📍",
+          "title": {
+            "zh": "到达验收阶段",
+            "en": "Reach Milestone"
+          },
+          "desc": {
+            "zh": "项目执行至预设验收节点。",
+            "en": "The project reaches a preset acceptance milestone."
+          },
+          "role": {
+            "zh": "项目经理",
+            "en": "Project manager"
+          },
+          "check": {
+            "zh": "节点触发",
+            "en": "Milestone trigger"
+          }
+        },
+        {
+          "key": "n12",
+          "lane": 0,
+          "emoji": "📝",
+          "title": {
+            "zh": "销售发起验收申请",
+            "en": "Raise Acceptance Request"
+          },
+          "desc": {
+            "zh": "针对当前节点发起验收申请。",
+            "en": "Raise an acceptance request for the current milestone."
+          },
+          "role": {
+            "zh": "销售员",
+            "en": "Salesperson"
+          },
+          "check": {
+            "zh": "等待确认 / 审核",
+            "en": "Await confirm / review"
+          }
+        },
+        {
+          "key": "n13",
+          "lane": 0,
+          "emoji": "📎",
+          "title": {
+            "zh": "提交验收材料",
+            "en": "Submit Evidence"
+          },
+          "doc": {
+            "zh": "验收材料",
+            "en": "Acceptance evidence"
+          },
+          "desc": {
+            "zh": "上传客户签字验收单 / 交付清单 / 确认邮件。",
+            "en": "Upload signed acceptance / delivery list / confirmation email."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "客户签字件",
+            "en": "Signed by customer"
+          }
+        },
+        {
+          "key": "n14",
+          "lane": 3,
+          "emoji": "⚖️",
+          "title": {
+            "zh": "财务审核（材料）",
+            "en": "Finance Review (Evidence)"
+          },
+          "desc": {
+            "zh": "核对材料完整真实，比对节点比例。",
+            "en": "Verify evidence is complete and matches the milestone %."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "通过 → 按比例确认",
+            "en": "Pass → recognize by %"
+          }
+        },
+        {
+          "key": "n15",
+          "lane": 3,
+          "emoji": "📊",
+          "title": {
+            "zh": "按节点比例确认收入",
+            "en": "Recognize by Milestone %"
+          },
+          "desc": {
+            "zh": "按当前节点比例确认对应金额收入。",
+            "en": "Recognize revenue for the current milestone percentage."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "本期收入 = 总额 × 比例",
+            "en": "Revenue = total × %"
+          }
+        },
+        {
+          "key": "n16",
+          "lane": 0,
+          "emoji": "🧾",
+          "title": {
+            "zh": "③ 销售发起开票申请",
+            "en": "③ Raise Invoice Request"
+          },
+          "desc": {
+            "zh": "财务主导：按客户需求发起开票申请。",
+            "en": "Finance-led: raise an invoice request per customer need."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "进开票队列",
+            "en": "Into invoice queue"
+          }
+        },
+        {
+          "key": "n17",
+          "lane": 3,
+          "emoji": "🖨️",
+          "title": {
+            "zh": "财务开具发票",
+            "en": "Finance Issues Invoice"
+          },
+          "desc": {
+            "zh": "开具增值税专 / 普票，金额税率以订单为准。",
+            "en": "Issue a VAT special/general invoice per the order."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "与订单一致",
+            "en": "Matches order"
+          }
+        },
+        {
+          "key": "n18",
+          "lane": 3,
+          "emoji": "📋",
+          "title": {
+            "zh": "发票登记",
+            "en": "Invoice Registration"
+          },
+          "doc": {
+            "zh": "发票",
+            "en": "Invoice"
+          },
+          "desc": {
+            "zh": "登记已开发票，关联订单与申请单。",
+            "en": "Register the issued invoice, linked to order and request."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "唯一收入触发点",
+            "en": "Sole revenue trigger"
+          }
+        },
+        {
+          "key": "n19",
+          "lane": 2,
+          "emoji": "⚡",
+          "title": {
+            "zh": "登记自动触发收入",
+            "en": "Registration Triggers Revenue"
+          },
+          "desc": {
+            "zh": "发票登记成功即自动生成收入确认记录。",
+            "en": "Successful registration auto-creates a revenue record."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "发票登记触发",
+            "en": "Registration trigger"
+          }
+        },
+        {
+          "key": "n20",
+          "lane": 3,
+          "emoji": "✅",
+          "title": {
+            "zh": "自动生成收入确认",
+            "en": "Auto-create Recognition"
+          },
+          "desc": {
+            "zh": "按发票金额生成收入确认，一一对应。",
+            "en": "Create recognition by invoice amount, one-to-one."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "收入 = 发票不含税额",
+            "en": "Revenue = invoice ex-tax"
+          }
+        },
+        {
+          "key": "n21",
+          "lane": 0,
+          "emoji": "🗓️",
+          "title": {
+            "zh": "④ 设置周期参数",
+            "en": "④ Set Period Params"
+          },
+          "doc": {
+            "zh": "周期参数",
+            "en": "Period params"
+          },
+          "desc": {
+            "zh": "订阅 / 服务：配起止时间与确认周期。",
+            "en": "Subscription/service: set start-end and the recognition cycle."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "月 / 季 / 年",
+            "en": "Month / Quarter / Year"
+          }
+        },
+        {
+          "key": "n22",
+          "lane": 2,
+          "emoji": "📅",
+          "title": {
+            "zh": "自动生成确认计划",
+            "en": "Auto-create Schedule"
+          },
+          "desc": {
+            "zh": "按周期拆解成每期确认计划记录。",
+            "en": "Split by cycle into per-period recognition records."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "每期金额 = 总额 ÷ 期数",
+            "en": "Per-period = total ÷ periods"
+          }
+        },
+        {
+          "key": "n23",
+          "lane": 2,
+          "emoji": "⏰",
+          "title": {
+            "zh": "到期自动触发",
+            "en": "Auto-trigger on Due"
+          },
+          "desc": {
+            "zh": "周期到期系统取当期计划触发收入。",
+            "en": "On due, the system takes the period plan and triggers revenue."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "按时间触发",
+            "en": "Time trigger"
+          }
+        },
+        {
+          "key": "n24",
+          "lane": 3,
+          "emoji": "⚖️",
+          "title": {
+            "zh": "财务审核（可选）",
+            "en": "Finance Review (Optional)"
+          },
+          "desc": {
+            "zh": "可选人工审核：启用人工审 / 不启用直确认。",
+            "en": "Optional manual review: enable review / or recognize directly."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "启用 / 不启用",
+            "en": "Enabled / Disabled"
+          }
+        },
+        {
+          "key": "n25",
+          "lane": 3,
+          "emoji": "📊",
+          "title": {
+            "zh": "按周期确认本期收入",
+            "en": "Recognize Period Revenue"
+          },
+          "desc": {
+            "zh": "本期收入入账，计划状态改已确认。",
+            "en": "Post the period's revenue; the plan status becomes recognized."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "本期收入 = 计划金额",
+            "en": "Revenue = planned amount"
+          }
+        },
+        {
+          "key": "n26",
+          "lane": 4,
+          "emoji": "🧾",
+          "title": {
+            "zh": "收入确认",
+            "en": "Revenue Recognition"
+          },
+          "desc": {
+            "zh": "四模式结果统一汇总入账。",
+            "en": "Results from all four modes converge for booking."
+          },
+          "role": {
+            "zh": "总账",
+            "en": "GL"
+          },
+          "check": {
+            "zh": "借应收 / 贷收入 + 税金",
+            "en": "Dr AR / Cr revenue + tax"
+          }
+        },
+        {
+          "key": "n27",
+          "lane": 4,
+          "emoji": "📒",
+          "title": {
+            "zh": "应收款生成",
+            "en": "AR Created"
+          },
+          "doc": {
+            "zh": "应收台账",
+            "en": "AR ledger"
+          },
+          "desc": {
+            "zh": "总账新增应收余额，进入账龄统计。",
+            "en": "GL adds the AR balance and starts aging."
+          },
+          "role": {
+            "zh": "应收会计",
+            "en": "AR accountant"
+          },
+          "check": {
+            "zh": "应收（资产）↑",
+            "en": "AR (asset) ↑"
+          }
+        },
+        {
+          "key": "n28",
+          "lane": 4,
+          "emoji": "🔁",
+          "title": {
+            "zh": "销售成本结转",
+            "en": "COGS Carry-forward"
+          },
+          "desc": {
+            "zh": "模式① 实时结转，其余月末批量结转。",
+            "en": "Mode ① carries in real time; others batch at month-end."
+          },
+          "role": {
+            "zh": "总账",
+            "en": "GL"
+          },
+          "check": {
+            "zh": "借成本 / 贷库存（WAC）",
+            "en": "Dr COGS / Cr inventory (WAC)"
+          }
+        },
+        {
+          "key": "n29",
+          "lane": 4,
+          "emoji": "🏁",
+          "title": {
+            "zh": "本期收入确认闭环",
+            "en": "Recognition Closed"
+          },
+          "desc": {
+            "zh": "收入 + 应收 + 成本结转完成，进入回款链。",
+            "en": "Revenue + AR + cost carry done; enters the collection chain."
+          },
+          "role": {
+            "zh": "总账",
+            "en": "GL"
+          },
+          "check": {
+            "zh": "闭环",
+            "en": "Closed loop"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pricing",
+      "name": {
+        "zh": "价格策略与销售定价机制",
+        "en": "Pricing Strategy & Sales Pricing"
+      },
+      "group": {
+        "zh": "销售与收款",
+        "en": "Sales & Collections"
+      },
+      "icon": "🏷️",
+      "summary": {
+        "zh": "四个价格源（基础价 / 价格组 / 协议价 / 特价），下单触发匹配引擎按「特价 > 协议价 > 价格组价 > 基础价」命中即停。",
+        "en": "Four price sources (base / price group / agreement / special); ordering triggers the engine to match by \"special > agreement > group > base\", stopping at the first hit."
+      },
+      "lanes": [
+        {
+          "name": {
+            "zh": "商品基础价",
+            "en": "Item Base Price"
+          },
+          "color": "#0066cc"
+        },
+        {
+          "name": {
+            "zh": "价格组管理",
+            "en": "Price Group"
+          },
+          "color": "#34c759"
+        },
+        {
+          "name": {
+            "zh": "客户协议价",
+            "en": "Customer Agreement"
+          },
+          "color": "#af52de"
+        },
+        {
+          "name": {
+            "zh": "特价审批",
+            "en": "Special-price Approval"
+          },
+          "color": "#ff2d55"
+        },
+        {
+          "name": {
+            "zh": "销售订单",
+            "en": "Sales Order"
+          },
+          "color": "#ff9500"
+        }
+      ],
+      "steps": [
+        {
+          "key": "n1",
+          "lane": 0,
+          "emoji": "🗃️",
+          "title": {
+            "zh": "商品主数据",
+            "en": "Item Master"
+          },
+          "doc": {
+            "zh": "商品主数据",
+            "en": "Item master"
+          },
+          "desc": {
+            "zh": "价格体系根基，每个 SKU 关联价格属性。",
+            "en": "The pricing foundation; each SKU carries price attributes."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "编码 / 类别 / 价格组",
+            "en": "Code / Category / Price group"
+          }
+        },
+        {
+          "key": "n2",
+          "lane": 0,
+          "emoji": "💵",
+          "title": {
+            "zh": "商品 4 价体系",
+            "en": "Four-price System"
+          },
+          "doc": {
+            "zh": "价格属性",
+            "en": "Price attributes"
+          },
+          "desc": {
+            "zh": "成本价 / 最低价 / 建议价 / 目录价。",
+            "en": "Cost / floor / suggested / list price."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "成本为基础来源",
+            "en": "Cost is the base"
+          }
+        },
+        {
+          "key": "n3",
+          "lane": 0,
+          "emoji": "🪜",
+          "title": {
+            "zh": "阶梯计算规则",
+            "en": "Tier Rules"
+          },
+          "doc": {
+            "zh": "阶梯规则",
+            "en": "Tier rules"
+          },
+          "desc": {
+            "zh": "由成本层层推导：Cost → Min → Sug → List。",
+            "en": "Derive step by step: Cost → Min → Sug → List."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "+X% / +Y% / +Z%",
+            "en": "+X% / +Y% / +Z%"
+          }
+        },
+        {
+          "key": "n4",
+          "lane": 1,
+          "emoji": "➕",
+          "title": {
+            "zh": "创建价格组",
+            "en": "Create Price Group"
+          },
+          "desc": {
+            "zh": "定义一组物料的统一价格策略。",
+            "en": "Define a uniform pricing policy for a group of items."
+          },
+          "role": {
+            "zh": "价格管理员",
+            "en": "Price admin"
+          },
+          "check": {
+            "zh": "批量定价容器",
+            "en": "Batch-pricing container"
+          }
+        },
+        {
+          "key": "n5",
+          "lane": 1,
+          "emoji": "📥",
+          "title": {
+            "zh": "加入物料",
+            "en": "Add Items"
+          },
+          "desc": {
+            "zh": "按产品类型批量或手动选 SKU 加入。",
+            "en": "Add SKUs in bulk by type or manually."
+          },
+          "role": {
+            "zh": "价格管理员",
+            "en": "Price admin"
+          },
+          "check": {
+            "zh": "类型 / 手动",
+            "en": "By type / Manual"
+          }
+        },
+        {
+          "key": "n6",
+          "lane": 1,
+          "emoji": "⚙️",
+          "title": {
+            "zh": "配置价格策略",
+            "en": "Configure Policy"
+          },
+          "desc": {
+            "zh": "应用阶梯规则或固定折扣 / 加价比例。",
+            "en": "Apply tier rules or a fixed discount / markup rate."
+          },
+          "role": {
+            "zh": "价格管理员",
+            "en": "Price admin"
+          },
+          "check": {
+            "zh": "统一规则",
+            "en": "Uniform rule"
+          }
+        },
+        {
+          "key": "n7",
+          "lane": 1,
+          "emoji": "🔧",
+          "title": {
+            "zh": "批量调价",
+            "en": "Bulk Re-price"
+          },
+          "desc": {
+            "zh": "按类型 / 价格组 / 单物料批量加价降价。",
+            "en": "Mark up/down in bulk by type / group / single item."
+          },
+          "role": {
+            "zh": "价格管理员",
+            "en": "Price admin"
+          },
+          "check": {
+            "zh": "百分比 / 金额",
+            "en": "Percent / Amount"
+          }
+        },
+        {
+          "key": "n8",
+          "lane": 1,
+          "emoji": "✅",
+          "title": {
+            "zh": "价格组规则生效",
+            "en": "Group Rule Active"
+          },
+          "doc": {
+            "zh": "价格组规则",
+            "en": "Group rule"
+          },
+          "desc": {
+            "zh": "保存即生效，组内物料按规则计价。",
+            "en": "Active on save; group items price by the rule."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "生效日期",
+            "en": "Effective date"
+          }
+        },
+        {
+          "key": "n9",
+          "lane": 2,
+          "emoji": "🤝",
+          "title": {
+            "zh": "新建框架协议价",
+            "en": "New Agreement Price"
+          },
+          "desc": {
+            "zh": "对特定客户开放专属价格入口。",
+            "en": "Open a dedicated price entry for a specific customer."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "客户级策略",
+            "en": "Customer-level policy"
+          }
+        },
+        {
+          "key": "n10",
+          "lane": 2,
+          "emoji": "👤",
+          "title": {
+            "zh": "选择客户",
+            "en": "Select Customer"
+          },
+          "desc": {
+            "zh": "选协议适用客户，可多份协议。",
+            "en": "Pick the customer for the agreement; multiple are allowed."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "物料 / 时间区分",
+            "en": "By item / time"
+          }
+        },
+        {
+          "key": "n11",
+          "lane": 2,
+          "emoji": "🎯",
+          "title": {
+            "zh": "选适用物料 / 价格组",
+            "en": "Select Items / Group"
+          },
+          "desc": {
+            "zh": "指定具体物料或整个价格组。",
+            "en": "Specify items or an entire price group."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "命中条件",
+            "en": "Match condition"
+          }
+        },
+        {
+          "key": "n12",
+          "lane": 2,
+          "emoji": "🏷️",
+          "title": {
+            "zh": "配置折扣 / 固定价",
+            "en": "Set Discount / Fixed"
+          },
+          "desc": {
+            "zh": "按基础价 X% 折扣，或绝对固定单价。",
+            "en": "X% off the base price, or an absolute fixed price."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "规则类型",
+            "en": "Rule type"
+          }
+        },
+        {
+          "key": "n13",
+          "lane": 2,
+          "emoji": "⚖️",
+          "title": {
+            "zh": "协议审批",
+            "en": "Agreement Approval"
+          },
+          "desc": {
+            "zh": "按金额 / 折扣幅度走多级审批。",
+            "en": "Multi-level approval by amount / discount depth."
+          },
+          "role": {
+            "zh": "销售主管",
+            "en": "Sales manager"
+          },
+          "check": {
+            "zh": "折扣 / 金额 / 客户等级",
+            "en": "Discount / Amount / Tier"
+          }
+        },
+        {
+          "key": "n14",
+          "lane": 2,
+          "emoji": "✅",
+          "title": {
+            "zh": "协议价生效",
+            "en": "Agreement Active"
+          },
+          "doc": {
+            "zh": "协议价",
+            "en": "Agreement price"
+          },
+          "desc": {
+            "zh": "通过后生效，下单自动匹配覆盖默认价。",
+            "en": "Active on approval; auto-matches at ordering over the default."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "适用范围 / 生效区间",
+            "en": "Scope / Effective range"
+          }
+        },
+        {
+          "key": "n15",
+          "lane": 3,
+          "emoji": "📝",
+          "title": {
+            "zh": "销售发起特价申请",
+            "en": "Raise Special-price Request"
+          },
+          "desc": {
+            "zh": "针对单笔订单的特殊定价需求。",
+            "en": "A special-pricing need for a single order."
+          },
+          "role": {
+            "zh": "销售员",
+            "en": "Salesperson"
+          },
+          "check": {
+            "zh": "单据级",
+            "en": "Document-level"
+          }
+        },
+        {
+          "key": "n16",
+          "lane": 3,
+          "emoji": "📑",
+          "title": {
+            "zh": "特价审批申请单",
+            "en": "Special-price Form"
+          },
+          "doc": {
+            "zh": "特价申请单",
+            "en": "Special-price request"
+          },
+          "desc": {
+            "zh": "填客户 / 商品 / 特殊价 / 数量 + 理由。",
+            "en": "Fill customer / item / special price / quantity + reason."
+          },
+          "role": {
+            "zh": "销售员",
+            "en": "Salesperson"
+          },
+          "check": {
+            "zh": "申请理由 / 背景",
+            "en": "Reason / Context"
+          }
+        },
+        {
+          "key": "n17",
+          "lane": 3,
+          "emoji": "⚖️",
+          "title": {
+            "zh": "特价审批",
+            "en": "Special-price Approval"
+          },
+          "desc": {
+            "zh": "按特价幅度走多级审批，可能联签。",
+            "en": "Multi-level approval by discount depth, possibly co-signed."
+          },
+          "role": {
+            "zh": "销售总监 / 财务",
+            "en": "Sales director / Finance"
+          },
+          "check": {
+            "zh": "通过 → 生成特价单",
+            "en": "Pass → create special-price doc"
+          }
+        },
+        {
+          "key": "n18",
+          "lane": 3,
+          "emoji": "⭐",
+          "title": {
+            "zh": "特价单生效（最高优先级）",
+            "en": "Special Price Active (Top Priority)"
+          },
+          "doc": {
+            "zh": "特价单",
+            "en": "Special-price doc"
+          },
+          "desc": {
+            "zh": "仅对客户 + 商品 + 数量生效，优先级最高。",
+            "en": "Applies only to customer + item + quantity; highest priority."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "价格 + 数量锁定",
+            "en": "Price + quantity locked"
+          }
+        },
+        {
+          "key": "n19",
+          "lane": 4,
+          "emoji": "🧾",
+          "title": {
+            "zh": "创建销售订单",
+            "en": "Create Sales Order"
+          },
+          "desc": {
+            "zh": "新建订单录入客户与商品，触发匹配引擎。",
+            "en": "Create an order with customer and items; trigger the engine."
+          },
+          "role": {
+            "zh": "销售员",
+            "en": "Salesperson"
+          },
+          "check": {
+            "zh": "自动匹配",
+            "en": "Auto-match"
+          }
+        },
+        {
+          "key": "n20",
+          "lane": 4,
+          "emoji": "🧩",
+          "title": {
+            "zh": "价格匹配引擎",
+            "en": "Price Match Engine"
+          },
+          "desc": {
+            "zh": "按 4 级优先级查询价格源。",
+            "en": "Query price sources by 4 priority levels."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "命中即停",
+            "en": "Stop at first hit"
+          }
+        },
+        {
+          "key": "n21",
+          "lane": 4,
+          "emoji": "❓",
+          "title": {
+            "zh": "1. 是否存在特价?",
+            "en": "1. Special price?"
+          },
+          "desc": {
+            "zh": "查客户 + 商品 + 数量有效特价单（优先级 1）。",
+            "en": "Check a valid special-price doc for customer + item + qty (P1)."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "客户 + 商品 + 数量",
+            "en": "Customer + Item + Qty"
+          }
+        },
+        {
+          "key": "n22",
+          "lane": 4,
+          "emoji": "❓",
+          "title": {
+            "zh": "2. 是否存在协议价?",
+            "en": "2. Agreement price?"
+          },
+          "desc": {
+            "zh": "查客户在商品 / 价格组的协议价（优先级 2）。",
+            "en": "Check the customer's agreement on item / group (P2)."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "协议命中",
+            "en": "Agreement hit"
+          }
+        },
+        {
+          "key": "n23",
+          "lane": 4,
+          "emoji": "❓",
+          "title": {
+            "zh": "3. 是否存在价格组价?",
+            "en": "3. Group price?"
+          },
+          "desc": {
+            "zh": "查商品所在价格组策略价（优先级 3）。",
+            "en": "Check the policy price of the item's group (P3)."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "价格组命中",
+            "en": "Group hit"
+          }
+        },
+        {
+          "key": "n24",
+          "lane": 3,
+          "emoji": "⭐",
+          "title": {
+            "zh": "✅ 应用特价",
+            "en": "✅ Apply Special"
+          },
+          "desc": {
+            "zh": "强制用特价单价格与数量，不可修改。",
+            "en": "Force the special-price doc's price and quantity, locked."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "绑定特价单号",
+            "en": "Bind special-price no."
+          }
+        },
+        {
+          "key": "n25",
+          "lane": 2,
+          "emoji": "🤝",
+          "title": {
+            "zh": "✅ 应用协议价",
+            "en": "✅ Apply Agreement"
+          },
+          "desc": {
+            "zh": "应用协议价覆盖默认，记协议号。",
+            "en": "Apply the agreement price over default; record the no."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "协议号引用",
+            "en": "Agreement-no. ref"
+          }
+        },
+        {
+          "key": "n26",
+          "lane": 1,
+          "emoji": "🏷️",
+          "title": {
+            "zh": "✅ 应用价格组价",
+            "en": "✅ Apply Group Price"
+          },
+          "desc": {
+            "zh": "应用价格组策略价，按规则动态计算。",
+            "en": "Apply the group's policy price, computed dynamically."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "折扣 / 阶梯 / 加价",
+            "en": "Discount / Tier / Markup"
+          }
+        },
+        {
+          "key": "n27",
+          "lane": 0,
+          "emoji": "💵",
+          "title": {
+            "zh": "✅ 应用基础价（默认）",
+            "en": "✅ Apply Base (Default)"
+          },
+          "desc": {
+            "zh": "兜底退回基础价，通常默认目录价。",
+            "en": "Fall back to the base price, usually the list price."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "未命中兜底",
+            "en": "No-hit fallback"
+          }
+        },
+        {
+          "key": "n28",
+          "lane": 4,
+          "emoji": "🏁",
+          "title": {
+            "zh": "订单定价完成",
+            "en": "Pricing Complete"
+          },
+          "desc": {
+            "zh": "匹配完成进入审批 / 出库，全程可追溯。",
+            "en": "Matching done; proceed to approval / issue, fully traceable."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "来源 + 规则可审计",
+            "en": "Source + rule auditable"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar-sources",
+      "name": {
+        "zh": "应收款来源全景",
+        "en": "Accounts Receivable Sources"
+      },
+      "group": {
+        "zh": "财务与核算",
+        "en": "Finance & Accounting"
+      },
+      "icon": "📥",
+      "summary": {
+        "zh": "应收四源（出库 / 阶段验收 / 周期 / 发票触发）各按不同时点生成单据，统一汇入收入确认 → 应收挂账 → 收款核销。",
+        "en": "Four AR sources (issue / staged acceptance / periodic / invoice) create docs at different times, converging to revenue recognition → AR posting → receipt clearing."
+      },
+      "lanes": [
+        {
+          "name": {
+            "zh": "业务发起方",
+            "en": "Business Initiator"
+          },
+          "color": "#ff2d55"
+        },
+        {
+          "name": {
+            "zh": "业务单据",
+            "en": "Business Docs"
+          },
+          "color": "#0066cc"
+        },
+        {
+          "name": {
+            "zh": "财务确认",
+            "en": "Finance Confirms"
+          },
+          "color": "#af52de"
+        },
+        {
+          "name": {
+            "zh": "应收 / 总账",
+            "en": "AR / GL"
+          },
+          "color": "#ff9500"
+        },
+        {
+          "name": {
+            "zh": "收款 + 核销",
+            "en": "Receipt + Clearing"
+          },
+          "color": "#34c759"
+        }
+      ],
+      "steps": [
+        {
+          "key": "n1",
+          "lane": 0,
+          "emoji": "📌",
+          "title": {
+            "zh": "应收款 · 四类业务源头",
+            "en": "AR · Four Sources"
+          },
+          "desc": {
+            "zh": "4 类场景生成应收，触发时点各不同。",
+            "en": "Four scenarios create AR at different trigger times."
+          },
+          "role": {
+            "zh": "业务",
+            "en": "Business"
+          },
+          "check": {
+            "zh": "出库 / 验收 / 周期 / 发票",
+            "en": "Issue / Acceptance / Periodic / Invoice"
+          }
+        },
+        {
+          "key": "n2",
+          "lane": 0,
+          "emoji": "📦",
+          "title": {
+            "zh": "销售出库",
+            "en": "Sales Issue"
+          },
+          "desc": {
+            "zh": "贸易型：发货过账即触发收入与应收。",
+            "en": "Trading: posting the shipment triggers revenue and AR."
+          },
+          "role": {
+            "zh": "业务",
+            "en": "Business"
+          },
+          "check": {
+            "zh": "货到即收",
+            "en": "Recognize on delivery"
+          }
+        },
+        {
+          "key": "n3",
+          "lane": 0,
+          "emoji": "📐",
+          "title": {
+            "zh": "阶段验收",
+            "en": "Staged Acceptance"
+          },
+          "desc": {
+            "zh": "项目型：阶段签字验收按比例确认。",
+            "en": "Project: recognize by % on signed staged acceptance."
+          },
+          "role": {
+            "zh": "业务",
+            "en": "Business"
+          },
+          "check": {
+            "zh": "节点比例累计 100%",
+            "en": "Stages sum to 100%"
+          }
+        },
+        {
+          "key": "n4",
+          "lane": 0,
+          "emoji": "🗓️",
+          "title": {
+            "zh": "周期验收",
+            "en": "Periodic Acceptance"
+          },
+          "desc": {
+            "zh": "订阅型：按周期到期自动触发。",
+            "en": "Subscription: auto-trigger on each period due."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "SaaS / 维保 / 租赁",
+            "en": "SaaS / Warranty / Lease"
+          }
+        },
+        {
+          "key": "n5",
+          "lane": 0,
+          "emoji": "🧾",
+          "title": {
+            "zh": "发票触发（财务主导）",
+            "en": "Invoice Trigger (Finance-led)"
+          },
+          "desc": {
+            "zh": "开票登记即触发，不依赖出库 / 验收。",
+            "en": "Invoice registration triggers it, independent of issue/acceptance."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "发票即触发点",
+            "en": "Invoice is the trigger"
+          }
+        },
+        {
+          "key": "n6",
+          "lane": 1,
+          "emoji": "🚚",
+          "title": {
+            "zh": "销售出库单",
+            "en": "Sales Issue Note"
+          },
+          "doc": {
+            "zh": "出库单",
+            "en": "Delivery note"
+          },
+          "desc": {
+            "zh": "过账生成出库单，按 WAC 计成本。",
+            "en": "Posting creates the issue note, cost by WAC."
+          },
+          "role": {
+            "zh": "仓管",
+            "en": "Warehouse"
+          },
+          "check": {
+            "zh": "借发出商品 / 贷库存",
+            "en": "Dr goods shipped / Cr inventory"
+          }
+        },
+        {
+          "key": "n7",
+          "lane": 1,
+          "emoji": "📎",
+          "title": {
+            "zh": "阶段验收单",
+            "en": "Acceptance Note"
+          },
+          "doc": {
+            "zh": "验收单",
+            "en": "Acceptance note"
+          },
+          "desc": {
+            "zh": "上传客户签字材料，按本节点比例触发。",
+            "en": "Upload signed evidence; trigger by this stage's %."
+          },
+          "role": {
+            "zh": "销售",
+            "en": "Sales"
+          },
+          "check": {
+            "zh": "节点比例 / 签字件",
+            "en": "Stage % / Signed doc"
+          }
+        },
+        {
+          "key": "n8",
+          "lane": 1,
+          "emoji": "📅",
+          "title": {
+            "zh": "周期确认计划",
+            "en": "Periodic Schedule"
+          },
+          "doc": {
+            "zh": "确认计划",
+            "en": "Recognition schedule"
+          },
+          "desc": {
+            "zh": "系统按周期参数拆解 N 期确认计划。",
+            "en": "System splits into N periodic recognition plans."
+          },
+          "role": {
+            "zh": "系统",
+            "en": "System"
+          },
+          "check": {
+            "zh": "每期到期自动",
+            "en": "Auto on each due"
+          }
+        },
+        {
+          "key": "n9",
+          "lane": 1,
+          "emoji": "📋",
+          "title": {
+            "zh": "销售发票登记",
+            "en": "Sales Invoice Registration"
+          },
+          "doc": {
+            "zh": "销售发票",
+            "en": "Sales Invoice"
+          },
+          "desc": {
+            "zh": "开增值税发票并登记，唯一收入触发点。",
+            "en": "Issue and register a VAT invoice; the sole revenue trigger."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "借应收 / 贷收入 + 税",
+            "en": "Dr AR / Cr revenue + tax"
+          }
+        },
+        {
+          "key": "n10",
+          "lane": 2,
+          "emoji": "✅",
+          "title": {
+            "zh": "收入确认",
+            "en": "Revenue Recognition"
+          },
+          "desc": {
+            "zh": "四类触发统一记账，均生成应收。",
+            "en": "All four triggers book uniformly and create AR."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "借应收 / 贷收入 + 税金",
+            "en": "Dr AR / Cr revenue + tax"
+          }
+        },
+        {
+          "key": "n11",
+          "lane": 3,
+          "emoji": "📒",
+          "title": {
+            "zh": "应收账款挂账",
+            "en": "AR Posted"
+          },
+          "doc": {
+            "zh": "应收台账",
+            "en": "AR ledger"
+          },
+          "desc": {
+            "zh": "应收余额增加，进入账龄与催收。",
+            "en": "AR balance increases; enters aging and collection."
+          },
+          "role": {
+            "zh": "应收会计",
+            "en": "AR accountant"
+          },
+          "check": {
+            "zh": "应收（资产）↑",
+            "en": "AR (asset) ↑"
+          }
+        },
+        {
+          "key": "n12",
+          "lane": 4,
+          "emoji": "💰",
+          "title": {
+            "zh": "客户付款",
+            "en": "Customer Payment"
+          },
+          "desc": {
+            "zh": "按账期付款，可跨发票 / 部分 / 合并。",
+            "en": "Pay per terms — cross-invoice / partial / merged."
+          },
+          "role": {
+            "zh": "客户",
+            "en": "Customer"
+          },
+          "check": {
+            "zh": "账期",
+            "en": "Terms"
+          }
+        },
+        {
+          "key": "n13",
+          "lane": 4,
+          "emoji": "🏦",
+          "title": {
+            "zh": "银行收款流水",
+            "en": "Bank Receipt Statement"
+          },
+          "desc": {
+            "zh": "银企直连 / 回单导入，自动识别去重。",
+            "en": "Bank link / receipt import with auto de-dup."
+          },
+          "role": {
+            "zh": "出纳",
+            "en": "Cashier"
+          },
+          "check": {
+            "zh": "客户 / 币种 / 去重",
+            "en": "Customer / Currency / De-dup"
+          }
+        },
+        {
+          "key": "n14",
+          "lane": 4,
+          "emoji": "💳",
+          "title": {
+            "zh": "收款单（认款）",
+            "en": "Receipt (Matching)"
+          },
+          "doc": {
+            "zh": "收款单",
+            "en": "Receipt voucher"
+          },
+          "desc": {
+            "zh": "出纳登记收款单，指定挂应收 / 未指定挂预收。",
+            "en": "Cashier records the receipt; assigned → AR, unassigned → advance."
+          },
+          "role": {
+            "zh": "出纳",
+            "en": "Cashier"
+          },
+          "check": {
+            "zh": "借银行 / 贷应收或预收",
+            "en": "Dr bank / Cr AR or advance"
+          }
+        },
+        {
+          "key": "n15",
+          "lane": 4,
+          "emoji": "🔗",
+          "title": {
+            "zh": "应收核销",
+            "en": "AR Clearing"
+          },
+          "desc": {
+            "zh": "1:1 / 1:N / N:N 核销，尾差入折扣 / 汇兑。",
+            "en": "1:1 / 1:N / N:N clearing; residuals to discount / FX."
+          },
+          "role": {
+            "zh": "应收会计",
+            "en": "AR accountant"
+          },
+          "check": {
+            "zh": "借预收 / 贷应收",
+            "en": "Dr advance / Cr AR"
+          }
+        },
+        {
+          "key": "n16",
+          "lane": 4,
+          "emoji": "🏁",
+          "title": {
+            "zh": "应收业务闭环",
+            "en": "AR Closed"
+          },
+          "desc": {
+            "zh": "挂账 → 付款 → 认款 → 核销全链路完成。",
+            "en": "Posting → payment → matching → clearing, complete."
+          },
+          "role": {
+            "zh": "总账",
+            "en": "GL"
+          },
+          "check": {
+            "zh": "闭环",
+            "en": "Closed loop"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ap-sources",
+      "name": {
+        "zh": "应付款来源全景",
+        "en": "Accounts Payable Sources"
+      },
+      "group": {
+        "zh": "财务与核算",
+        "en": "Finance & Accounting"
+      },
+      "icon": "📤",
+      "summary": {
+        "zh": "应付四入口（PO / 报销 / 发票触发 / 付款申请）汇入财务审核分流，按员工 / 外部科目路由后付款核销；辨析报销 vs 付款申请。",
+        "en": "Four AP entries (PO / reimbursement / invoice / payment request) flow into finance review and routing, paid and cleared by employee/external accounts; distinguishes reimbursement vs payment request."
+      },
+      "lanes": [
+        {
+          "name": {
+            "zh": "业务发起方",
+            "en": "Business Initiator"
+          },
+          "color": "#ff2d55"
+        },
+        {
+          "name": {
+            "zh": "业务单据",
+            "en": "Business Docs"
+          },
+          "color": "#0066cc"
+        },
+        {
+          "name": {
+            "zh": "财务确认",
+            "en": "Finance Confirms"
+          },
+          "color": "#af52de"
+        },
+        {
+          "name": {
+            "zh": "应付 / 总账",
+            "en": "AP / GL"
+          },
+          "color": "#ff9500"
+        },
+        {
+          "name": {
+            "zh": "付款 + 核销",
+            "en": "Payment + Clearing"
+          },
+          "color": "#34c759"
+        }
+      ],
+      "steps": [
+        {
+          "key": "n1",
+          "lane": 0,
+          "emoji": "📌",
+          "title": {
+            "zh": "应付款 · 四类业务源头",
+            "en": "AP · Four Sources"
+          },
+          "desc": {
+            "zh": "4 类场景触发应付，对象与触发点不同。",
+            "en": "Four scenarios create AP with different payees and triggers."
+          },
+          "role": {
+            "zh": "业务",
+            "en": "Business"
+          },
+          "check": {
+            "zh": "PO / 报销 / 发票 / 付款申请",
+            "en": "PO / Reimburse / Invoice / Pay request"
+          }
+        },
+        {
+          "key": "n2",
+          "lane": 0,
+          "emoji": "🛒",
+          "title": {
+            "zh": "采购订单产生",
+            "en": "From PO"
+          },
+          "desc": {
+            "zh": "有合同有 PO，到货形成应付货款。",
+            "en": "With contract and PO, arrival forms a goods payable."
+          },
+          "role": {
+            "zh": "采购",
+            "en": "Procurement"
+          },
+          "check": {
+            "zh": "有 PO · 对供应商",
+            "en": "Has PO · To supplier"
+          }
+        },
+        {
+          "key": "n3",
+          "lane": 0,
+          "emoji": "🧾",
+          "title": {
+            "zh": "费用报销（员工已垫付）",
+            "en": "Reimbursement (Employee Paid)"
+          },
+          "desc": {
+            "zh": "员工先垫付再报销，公司还员工。",
+            "en": "Employee pays first, then reimburses; the company repays them."
+          },
+          "role": {
+            "zh": "员工",
+            "en": "Employee"
+          },
+          "check": {
+            "zh": "应付对象 = 员工",
+            "en": "Payee = employee"
+          }
+        },
+        {
+          "key": "n4",
+          "lane": 0,
+          "emoji": "📨",
+          "title": {
+            "zh": "发票触发（供应商开票）",
+            "en": "Invoice Trigger (Supplier)"
+          },
+          "desc": {
+            "zh": "无 PO，收到供应商发票即挂应付。",
+            "en": "No PO; a supplier invoice posts AP on receipt."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "发票登记即触发",
+            "en": "Registration triggers"
+          }
+        },
+        {
+          "key": "n5",
+          "lane": 0,
+          "emoji": "💸",
+          "title": {
+            "zh": "付款申请（公司直付）",
+            "en": "Payment Request (Direct)"
+          },
+          "desc": {
+            "zh": "公司直接对外付款，员工不出钱。",
+            "en": "The company pays externally; employees pay nothing."
+          },
+          "role": {
+            "zh": "部门 / HR",
+            "en": "Dept / HR"
+          },
+          "check": {
+            "zh": "应付对象 = 外部",
+            "en": "Payee = external"
+          }
+        },
+        {
+          "key": "n6",
+          "lane": 0,
+          "emoji": "🏢",
+          "title": {
+            "zh": "① 房租 / 水电 / 物业",
+            "en": "① Rent / Utilities / Property"
+          },
+          "doc": {
+            "zh": "账单 / 合同",
+            "en": "Bill / Contract"
+          },
+          "desc": {
+            "zh": "周期经营成本，凭账单 / 合同直付。",
+            "en": "Recurring operating cost, paid directly by bill / contract."
+          },
+          "role": {
+            "zh": "行政",
+            "en": "Admin"
+          },
+          "check": {
+            "zh": "借管理费用 / 贷应付",
+            "en": "Dr admin expense / Cr AP"
+          }
+        },
+        {
+          "key": "n7",
+          "lane": 0,
+          "emoji": "🧰",
+          "title": {
+            "zh": "② 临时零星采购",
+            "en": "② Ad-hoc Purchase"
+          },
+          "doc": {
+            "zh": "收据 / 发票",
+            "en": "Receipt / Invoice"
+          },
+          "desc": {
+            "zh": "未达起 PO 门槛的小额采购，直付供应商。",
+            "en": "Small purchases below the PO threshold, paid to supplier directly."
+          },
+          "role": {
+            "zh": "申请部门",
+            "en": "Requesting dept"
+          },
+          "check": {
+            "zh": "借管理费用 / 贷应付",
+            "en": "Dr admin expense / Cr AP"
+          }
+        },
+        {
+          "key": "n8",
+          "lane": 0,
+          "emoji": "👥",
+          "title": {
+            "zh": "③ 工资 / 社保 / 公积金",
+            "en": "③ Payroll / Benefits"
+          },
+          "doc": {
+            "zh": "工资单 / 缴费表",
+            "en": "Payslip / Contribution"
+          },
+          "desc": {
+            "zh": "对公强制支付，HR 提交财务统一发放。",
+            "en": "Mandatory corporate payments; HR submits, finance disburses."
+          },
+          "role": {
+            "zh": "HR",
+            "en": "HR"
+          },
+          "check": {
+            "zh": "借应付职工薪酬 / 贷银行",
+            "en": "Dr payroll payable / Cr bank"
+          }
+        },
+        {
+          "key": "n9",
+          "lane": 0,
+          "emoji": "🏛️",
+          "title": {
+            "zh": "④ 税款 / 银行手续费",
+            "en": "④ Taxes / Bank Fees"
+          },
+          "doc": {
+            "zh": "纳税申报 / 扣款单",
+            "en": "Tax filing / Debit note"
+          },
+          "desc": {
+            "zh": "对公强制缴纳，财务发起付款申请。",
+            "en": "Mandatory corporate payments; finance raises a payment request."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "借应交税费 / 财务费用",
+            "en": "Dr tax payable / finance expense"
+          }
+        },
+        {
+          "key": "n10",
+          "lane": 1,
+          "emoji": "📦",
+          "title": {
+            "zh": "采购入库单 + 发票",
+            "en": "Receipt Note + Invoice"
+          },
+          "doc": {
+            "zh": "PO 发票",
+            "en": "PO Invoice"
+          },
+          "desc": {
+            "zh": "供应商发货入库收票，三单匹配确认应付。",
+            "en": "Supplier ships, receipt and invoice arrive; three-way match confirms AP."
+          },
+          "role": {
+            "zh": "应付会计",
+            "en": "AP accountant"
+          },
+          "check": {
+            "zh": "三单匹配",
+            "en": "Three-way match"
+          }
+        },
+        {
+          "key": "n11",
+          "lane": 1,
+          "emoji": "🧾",
+          "title": {
+            "zh": "员工报销单",
+            "en": "Expense Claim"
+          },
+          "doc": {
+            "zh": "报销单",
+            "en": "Expense claim"
+          },
+          "desc": {
+            "zh": "粘贴票据分类填报，主管 → 财务多级审批。",
+            "en": "Attach receipts, categorize, then manager → finance approval."
+          },
+          "role": {
+            "zh": "员工",
+            "en": "Employee"
+          },
+          "check": {
+            "zh": "借费用 / 贷其他应付-员工",
+            "en": "Dr expense / Cr other payable-employee"
+          }
+        },
+        {
+          "key": "n12",
+          "lane": 1,
+          "emoji": "📑",
+          "title": {
+            "zh": "供应商发票登记",
+            "en": "Supplier Invoice Registration"
+          },
+          "doc": {
+            "zh": "供应商发票",
+            "en": "Supplier Invoice"
+          },
+          "desc": {
+            "zh": "录入发票号 / 税率 / 金额，关联合同服务。",
+            "en": "Enter invoice no. / tax / amount, linked to contract/service."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "借费用 / 贷应付账款",
+            "en": "Dr expense / Cr AP"
+          }
+        },
+        {
+          "key": "n13",
+          "lane": 1,
+          "emoji": "📋",
+          "title": {
+            "zh": "付款申请单",
+            "en": "Payment Request"
+          },
+          "doc": {
+            "zh": "付款申请单",
+            "en": "Payment request"
+          },
+          "desc": {
+            "zh": "填收款单位 / 金额 / 用途，附凭证待审付款。",
+            "en": "Fill payee / amount / purpose with proof, pending approval."
+          },
+          "role": {
+            "zh": "申请人",
+            "en": "Requester"
+          },
+          "check": {
+            "zh": "借费用 / 贷应付",
+            "en": "Dr expense / Cr AP"
+          }
+        },
+        {
+          "key": "n14",
+          "lane": 2,
+          "emoji": "⚖️",
+          "title": {
+            "zh": "财务审核 + 科目分流",
+            "en": "Review + Account Routing"
+          },
+          "desc": {
+            "zh": "核对单据凭证金额，按类型分流应付科目。",
+            "en": "Verify docs and amount; route AP accounts by type."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "报销 → 员工 / 其余 → 外部",
+            "en": "Reimburse → employee / Else → external"
+          }
+        },
+        {
+          "key": "n15",
+          "lane": 2,
+          "emoji": "🔑",
+          "title": {
+            "zh": "报销 vs 付款申请 区别",
+            "en": "Reimbursement vs Payment Request"
+          },
+          "doc": {
+            "zh": "辨析路由",
+            "en": "Routing rule"
+          },
+          "desc": {
+            "zh": "严格区分：报销还员工 / 付款申请直付外部。",
+            "en": "Strictly separate: reimbursement repays employees / payment request pays external."
+          },
+          "role": {
+            "zh": "财务",
+            "en": "Finance"
+          },
+          "check": {
+            "zh": "避免挂账错位",
+            "en": "Avoid mis-posting"
+          }
+        },
+        {
+          "key": "n16",
+          "lane": 3,
+          "emoji": "👤",
+          "title": {
+            "zh": "应付职工 / 其他应付-员工",
+            "en": "Payroll / Other Payable-Employee"
+          },
+          "doc": {
+            "zh": "应付台账",
+            "en": "AP ledger"
+          },
+          "desc": {
+            "zh": "应付对象 = 员工，仅报销走此科目。",
+            "en": "Payee = employee; only reimbursement uses this account."
+          },
+          "role": {
+            "zh": "应付会计",
+            "en": "AP accountant"
+          },
+          "check": {
+            "zh": "身份 + 银行卡核对",
+            "en": "Identity + bank card check"
+          }
+        },
+        {
+          "key": "n17",
+          "lane": 3,
+          "emoji": "🏦",
+          "title": {
+            "zh": "应付账款 / 其他应付款",
+            "en": "AP / Other Payable"
+          },
+          "doc": {
+            "zh": "应付台账",
+            "en": "AP ledger"
+          },
+          "desc": {
+            "zh": "应付对象 = 外部，PO / 发票 / 付款申请走此科目。",
+            "en": "Payee = external; PO / invoice / payment request use this account."
+          },
+          "role": {
+            "zh": "应付会计",
+            "en": "AP accountant"
+          },
+          "check": {
+            "zh": "收款方信息核验",
+            "en": "Verify payee info"
+          }
+        },
+        {
+          "key": "n18",
+          "lane": 4,
+          "emoji": "⚖️",
+          "title": {
+            "zh": "付款审批",
+            "en": "Payment Approval"
+          },
+          "desc": {
+            "zh": "按金额 / 对象 / 用途走多级审批。",
+            "en": "Multi-level approval by amount / payee / purpose."
+          },
+          "role": {
+            "zh": "财务 / 总经理",
+            "en": "Finance / GM"
+          },
+          "check": {
+            "zh": "金额 / 用途 / 紧急度",
+            "en": "Amount / Purpose / Urgency"
+          }
+        },
+        {
+          "key": "n19",
+          "lane": 4,
+          "emoji": "💳",
+          "title": {
+            "zh": "出纳付款执行",
+            "en": "Cashier Pays"
+          },
+          "desc": {
+            "zh": "银企直连 / 网银 / 现金付款，分员工卡 / 对公。",
+            "en": "Pay via bank link / online banking / cash, to employee card / corporate."
+          },
+          "role": {
+            "zh": "出纳",
+            "en": "Cashier"
+          },
+          "check": {
+            "zh": "员工卡 / 对公账户",
+            "en": "Employee card / Corporate account"
+          }
+        },
+        {
+          "key": "n20",
+          "lane": 4,
+          "emoji": "🧾",
+          "title": {
+            "zh": "付款单",
+            "en": "Payment Voucher"
+          },
+          "doc": {
+            "zh": "付款单",
+            "en": "Payment voucher"
+          },
+          "desc": {
+            "zh": "生成付款单，记时间 / 金额 / 收款方 / 关联单据。",
+            "en": "Create the voucher with time / amount / payee / linked docs."
+          },
+          "role": {
+            "zh": "出纳",
+            "en": "Cashier"
+          },
+          "check": {
+            "zh": "关联应付",
+            "en": "Link AP"
+          }
+        },
+        {
+          "key": "n21",
+          "lane": 4,
+          "emoji": "🔗",
+          "title": {
+            "zh": "应付核销",
+            "en": "AP Clearing"
+          },
+          "desc": {
+            "zh": "付款单与应付单据核销，余额减少。",
+            "en": "Clear the voucher against payables; balance decreases."
+          },
+          "role": {
+            "zh": "应付会计",
+            "en": "AP accountant"
+          },
+          "check": {
+            "zh": "账龄更新",
+            "en": "Aging updated"
+          }
+        },
+        {
+          "key": "n22",
+          "lane": 4,
+          "emoji": "🏁",
+          "title": {
+            "zh": "应付业务闭环",
+            "en": "AP Closed"
+          },
+          "desc": {
+            "zh": "挂账 → 审批 → 付款 → 核销全链路完成。",
+            "en": "Posting → approval → payment → clearing, complete."
+          },
+          "role": {
+            "zh": "总账",
+            "en": "GL"
+          },
+          "check": {
+            "zh": "闭环",
+            "en": "Closed loop"
+          }
+        }
+      ]
+    }
+  ]
+}

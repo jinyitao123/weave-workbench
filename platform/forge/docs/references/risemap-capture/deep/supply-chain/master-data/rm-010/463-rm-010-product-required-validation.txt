@@ -1,0 +1,179 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/products".
+1 AXWebArea RiseMap, URL: risemap.cn/base/products
+	2 container 新增物料
+		3 heading 新增物料, Value: 3, ID: :r16:
+			4 text 新增物料
+		5 button 全屏
+			6 image
+		7 button 关闭
+			8 image
+		9 container
+			10 button 基本信息 4/20
+				11 text 基本信息
+				12 image
+				13 text 4
+				14 text /
+				15 text 20
+			16 text * 物料名称 :
+			17 text field (settable)
+			18 text 物料名称不能为空 物料编码 :
+			19 text field (settable)
+			20 text * 物料型号 :
+			21 text field (settable)
+			22 text 物料型号不能为空 物料条码 :
+			23 text field (settable)
+			24 text * 物料分类 :
+			25 button 请选择物料分类
+				26 text 请选择物料分类
+			27 button 新增分类
+				28 image
+			29 text 物料分类不能为空 品牌 :
+			30 button 请选择品牌
+				31 text 请选择品牌
+			32 button 新增品牌
+				33 image
+			34 text 采购分类 :
+			35 button 请选择采购分类
+				36 text 请选择采购分类
+			37 text * 单位 :
+			38 button 请选择单位
+				39 text 请选择单位
+			40 button 新增单位
+				41 image
+			42 text 单位不能为空 物料属性 :
+			43 radio button 原材料, Value: 1
+			44 radio button 半成品, Value: 0
+			45 radio button 成品, Value: 0
+			46 radio button 贸易商品, Value: 0
+			47 radio button 消耗品, Value: 0
+			48 radio button 服务, Value: 0
+			49 radio button 备件, Value: 0
+			50 radio button 包装材料, Value: 0
+			51 text 来源类型 :
+			52 radio button 采购, Value: 1
+			53 radio button 自制, Value: 0
+			54 radio button 外协, Value: 0
+			55 radio button 虚拟, Value: 0
+			56 text 状态 :
+			57 button 启用
+				58 text 启用
+				59 container
+					60 button
+						61 image
+					62 image
+			63 text 默认供应商 :
+			64 button 搜索供应商名称...
+				65 text 搜索供应商名称...
+			66 text 税收分类编码 :
+			67 text field (settable)
+			68 text 默认仓库 :
+			69 button 请选择默认仓库
+				70 text 请选择默认仓库
+			71 text 默认库位 :
+			72 button (disabled) 请先选择仓库后再选择库位
+				73 text 请先选择仓库后再选择库位
+			74 text 所属部门 :
+			75 button 请选择所属部门
+				76 text 请选择所属部门
+			77 text 负责人 :
+			78 button 请选择负责人
+				79 text 请选择负责人
+			80 text 损耗率 :
+			81 text field (settable) 0
+			82 text 启用BOM :
+			83 switch Value: 0, ID: :r1u:
+			84 text 图片 :
+			85 button 添加图片
+				86 image
+				87 text 添加图片
+			88 button 云相册
+				89 image
+				90 text 云相册
+			91 text 第一张图片将作为物料主图显示在列表和详情页 文档 :
+			92 button 点击或拖拽文件到此处上传 支持pdf、docx、xlsx、txt格式，单个文件不超过10M
+				93 image
+				94 text 点击或拖拽文件到此处上传
+				95 text 支持pdf、docx、xlsx、txt格式，单个文件不超过10M
+			96 button 规格与价格 1/1
+				97 text 规格与价格
+				98 image
+				99 text 1
+				100 text /
+				101 text 1
+			102 text 规格配置 : 规格名称 规格值
+			103 text field (settable) 默认
+			104 container 默认规格
+				105 text field (settable) Description: 默认的规格值, Value: 默认规格
+			106 text field (settable)
+			107 button 添加规格项
+				108 image
+				109 text 添加规格项
+			110 text 共  1  个 SKU
+			111 button 批量设置含税售价
+				112 image
+				113 text 批量设置含税售价
+			114 button 批量设置含税成本价
+				115 image
+				116 text 批量设置含税成本价
+			117 table
+				118 row
+					119 cell
+						120 text SKU编码
+					121 cell
+						122 text SKU条码
+					123 cell
+						124 text 规格
+					125 cell
+						126 text 含税售价
+					127 cell
+						128 text 含税成本价
+					129 cell
+						130 text 启用
+				131 row
+					132 cell
+						133 text field (settable)
+					134 cell
+						135 text field (settable)
+					136 cell
+						137 text 默认规格
+					138 cell
+						139 text field (settable)
+					140 cell
+						141 text field (settable)
+					142 cell
+						143 container
+							144 checkbox (disabled, settable, integer) 1
+							145 image
+			146 button 批次与追溯管理 0/2
+				147 text 批次与追溯管理
+				148 image
+				149 text 0
+				150 text /
+				151 text 2
+			152 switch Value: 0, ID: :r23:
+			153 text 已禁用批次管理 原材料和关键物料建议启用，入库时自动分配批次码
+			154 switch Value: 0, ID: :r24:
+			155 text 已禁用追溯管理 成品和关键半成品建议启用，出库时自动生成追溯码
+			156 button 自定义信息 0/4
+				157 text 自定义信息
+				158 image
+				159 text 0
+				160 text /
+				161 text 4
+			162 text 标签 :
+			163 text field (settable)
+			164 text 备注 :
+			165 text entry area (settable)
+			166 text 创建时间 : 只读
+			167 container
+				168 button
+					169 image
+			170 text 更新时间 : 只读
+			171 container
+				172 button
+					173 image
+		174 button 保存
+		175 button 保存并复制
+		176 button 关闭
+
+The focused UI element is 174 button 保存

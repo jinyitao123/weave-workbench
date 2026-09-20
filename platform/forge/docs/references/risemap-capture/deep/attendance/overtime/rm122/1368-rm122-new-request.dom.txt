@@ -1,0 +1,338 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 新建公司用车申请
+- button:
+  - generic: 新建私车公用申请
+- button:
+  - generic: 新增车辆
+- button:
+  - generic: 人事工作台
+- button:
+  - generic: 员工档案
+- button:
+  - generic: 招聘管理
+- button:
+  - generic: 候选人详情
+- button:
+  - generic: 入职离职
+- button:
+  - generic: 薪酬福利
+- button:
+  - generic: 福利发放
+- button:
+  - generic: 规章制度
+- button:
+  - generic: 人事配置
+- button:
+  - generic: 通讯录
+- button:
+  - generic: 加班申请
+- main:
+  - generic: 考勤假期
+  - generic: 加班申请
+  - heading [level=1]: 加班申请
+  - paragraph: 提交加班申请、查看加班记录
+  - button:
+    - text: 新增加班
+  - button:
+    - text: 导出
+  - button:
+  - button:
+  - button:
+  - textbox:
+    - /placeholder: 搜索单号/申请人/事由
+  - textbox:
+    - /placeholder: 请选择日期
+  - button:
+  - generic: 至
+  - textbox:
+    - /placeholder: 请选择日期
+  - button:
+  - button:
+    - text: 状态
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader
+        - columnheader:
+          - generic: 单号
+        - columnheader:
+          - generic: 申请人
+        - columnheader:
+          - generic: 部门
+        - columnheader:
+          - generic: 加班日期
+        - columnheader:
+          - generic: 时段
+        - columnheader:
+          - generic: 时长
+        - columnheader:
+          - generic: 补偿方式
+        - columnheader:
+          - generic: 状态
+        - columnheader:
+          - generic: 加班事由
+        - columnheader:
+          - generic: 操作
+    - rowgroup:
+      - row:
+        - cell:
+          - generic: 暂无加班记录
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button [disabled]:
+  - button: "1"
+  - button [disabled]:
+- button:
+- region "Notifications alt+T"
+- dialog "新增加班申请":
+  - heading "新增加班申请" [level=2]
+  - paragraph: 新增加班申请表单
+  - paragraph: 基本信息
+  - generic: "*"
+  - generic: 开始时间
+  - textbox "请选择开始时间" [active]
+  - button:
+  - generic: "*"
+  - generic: 结束时间
+  - textbox "请选择结束时间"
+  - button:
+  - paragraph: 加班事由
+  - generic: "*"
+  - generic: 加班事由
+  - textbox "请输入加班事由"
+  - paragraph: 补偿方式
+  - generic: "*"
+  - generic: 补偿方式
+  - radiogroup:
+    - radio "调休" [checked]:
+      - text: 调休
+    - radio "加班费":
+      - text: 加班费
+  - paragraph: 关联信息
+  - generic: 关联客户
+  - button "选择关联客户":
+    - generic: 选择关联客户
+  - generic: 关联项目
+  - button "选择关联项目":
+    - generic: 选择关联项目
+  - generic: 关联合同
+  - button "搜索销售合同编号或标题":
+    - generic: 搜索销售合同编号或标题
+  - paragraph: 数据来源：销售业务模块合同列表
+  - button "取消"
+  - button "提交申请"
+  - button "Close":
+    - generic: Close
+- button:
+- button: 2026年 九月
+- button:
+- generic: 日
+- generic: 一
+- generic: 二
+- generic: 三
+- generic: 四
+- generic: 五
+- generic: 六
+- button: "30"
+- button: "31"
+- button: "1"
+- button: "2"
+- button: "3"
+- button: "4"
+- button: "5"
+- button: "6"
+- button: "7"
+- button: "8"
+- button: "9"
+- button: "10"
+- button: "11"
+- button: "12"
+- button: "13"
+- button: "14"
+- button: "15"
+- button: "16"
+- button: "17"
+- button: "18"
+- button: "19"
+- button: "20"
+- button: "21"
+- button: "22"
+- button: "23"
+- button: "24"
+- button: "25"
+- button: "26"
+- button: "27"
+- button: "28"
+- button: "29"
+- button: "30"
+- button: "1"
+- button: "2"
+- button: "3"
+- button: "4"
+- button: "5"
+- button: "6"
+- button: "7"
+- button: "8"
+- button: "9"
+- button: "10"
+- generic: 时
+- generic: 分
+- button: "00"
+- button: "01"
+- button: "02"
+- button: "03"
+- button: "04"
+- button: "05"
+- button: "06"
+- button: "07"
+- button: "08"
+- button: "09"
+- button: "10"
+- button: "11"
+- button: "12"
+- button: "13"
+- button: "14"
+- button: "15"
+- button: "16"
+- button: "17"
+- button: "18"
+- button: "19"
+- button: "20"
+- button: "21"
+- button: "22"
+- button: "23"
+- button: "00"
+- button: "05"
+- button: "10"
+- button: "15"
+- button: "20"
+- button: "25"
+- button: "30"
+- button: "35"
+- button: "40"
+- button: "45"
+- button: "50"
+- button: "55"
+- button: 此刻
+- button: 清除

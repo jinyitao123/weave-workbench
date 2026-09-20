@@ -1,0 +1,178 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/statistics/budget-tax".
+1 AXWebArea RiseMap, URL: risemap.cn/finance/statistics/budget-tax
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 报表
+			6 button 收起侧边栏
+				7 image
+			8 container
+				304 button 销售统计
+					305 image
+					306 text 销售统计
+				307 button 采购统计
+					308 image
+					309 text 采购统计
+				310 button 库存统计
+					311 image
+					312 text 库存统计
+				313 button 项目统计
+					314 image
+					315 text 项目统计
+				316 button 组装统计
+					317 image
+					318 text 组装统计
+				319 button 财务统计
+					320 image
+					321 text 财务统计
+					322 image
+				323 button 财务总览
+				324 button 损益分析
+				325 button 资金分析
+				326 button 往来账款
+				327 button 税务库存
+				328 button 风险监控
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 1
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				257 button 销项发票
+					258 text 销项发票
+				259 button 进项发票
+					260 text 进项发票
+				261 button 开票任务
+					262 text 开票任务
+				263 button 调整记录
+					264 text 调整记录
+				329 button 销售统计
+					330 text 销售统计
+				331 button 采购统计
+					332 text 采购统计
+				333 button 库存统计
+					334 text 库存统计
+				335 button 项目统计
+					336 text 项目统计
+				337 button 组装统计
+					338 text 组装统计
+				339 button 财务总览
+					340 text 财务总览
+				341 button 损益分析
+					342 text 损益分析
+				343 button 资金分析
+					344 text 资金分析
+				345 button 往来账款
+					346 text 往来账款
+				347 button 税务库存
+					348 text 税务库存
+			349 container
+				350 image
+				351 container
+					352 text 报表 / 财务统计 /  税务库存
+				353 heading 税务库存, Value: 1
+					354 text 税务库存
+				355 text 发票税务和库存资金分析
+				356 button 导出PDF
+					357 image
+					358 text 导出PDF
+				359 button 导出Excel
+					360 image
+					361 text 导出Excel
+					362 image
+				363 container 财务统计类型
+					364 button 发票分析
+					365 button 库存资金
+				366 container 报表筛选
+					367 image
+					368 text 筛选条件
+					369 button 本季度
+						370 image
+						371 text 本季度
+						372 image
+				373 image
+				374 text 财务数据按业务单据实时汇总 统计周期  2026-07-01 ~ 2026-09-09
+				375 image
+				376 text 销项发票
+				377 pop up button (collapsed) Description: 查看销项发票计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					378 image
+				379 text ¥0.00
+				380 text 0 张 · 税额 ¥0.00
+				381 image
+				382 text 进项发票
+				383 pop up button (collapsed) Description: 查看进项发票计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					384 image
+				385 text ¥0.00
+				386 text 0 张 · 税额 ¥0.00
+				387 image
+				388 text 应纳税额
+				389 pop up button (collapsed) Description: 查看应纳税额计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					390 image
+				391 text ¥0.00
+				392 text 税负率 0.00%
+				393 image
+				394 text 当前未开票余额（存量）
+				395 pop up button (collapsed) Description: 查看当前未开票余额（存量）计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					396 image
+				397 text ¥0.00
+				398 text 当前未收票采购（存量） ¥0.00
+				399 image
+				400 heading 进销项发票趋势, Value: 3
+					401 text 进销项发票趋势
+				402 button 发票总览
+				403 image
+				404 content list
+					405 container
+						406 image
+						407 text 销项金额
+					408 container
+						409 image
+						410 text 进项金额
+					411 container
+						412 image
+						413 text 开票净额
+				414 image
+				415 heading 进销项税额结构, Value: 3
+					416 text 进销项税额结构
+				417 image
+				418 content list
+					419 container
+						420 image
+						421 text 销项税额
+					422 container
+						423 image
+						424 text 进项税额
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+
+The focused UI element is 327 button 税务库存

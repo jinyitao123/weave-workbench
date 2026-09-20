@@ -1,0 +1,213 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/accounts".
+0 AXWebArea RiseMap, URL: risemap.cn/finance/accounts
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 财务
+			5 button 收起侧边栏
+				6 image
+			7 container
+				793 button 资金管理
+					794 image
+					795 text 资金管理
+					796 image
+				797 button 资金账户
+				798 button 资金流水
+				799 button 应收应付
+				800 button 收款管理
+				801 button 付款管理
+				802 button 退款申请
+				803 button 授信额度管理
+				804 button 借款贷款管理
+				805 button 业务确认
+					806 image
+					807 text 业务确认
+					808 image
+				809 button 销售收入确认
+				810 button 成本中心
+				811 button 费用中心
+				812 button 报销管理
+				813 button 对账单
+					814 image
+					815 text 对账单
+				816 button 发票管理
+					817 image
+					818 text 发票管理
+					819 image
+				820 button 发票总览
+				821 button 销项发票
+				822 button 进项发票
+				823 button 开票任务
+				824 button 调整记录
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 1
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				717 button 规章制度
+					718 text 规章制度
+				719 button 通讯录
+					720 text 通讯录
+				721 button 加班申请
+					722 text 加班申请
+				723 button 请假管理
+					724 text 请假管理
+				725 button 出差申请
+					726 text 出差申请
+				727 button 考勤管理
+					728 text 考勤管理
+				729 button 考勤统计
+					730 text 考勤统计
+				731 button 审批记录
+					732 text 审批记录
+				733 button 发起流程
+					734 text 发起流程
+				735 button 流程定义
+					736 text 流程定义
+				737 button 流程分类
+					738 text 流程分类
+				825 button 资金账户
+					826 text 资金账户
+				827 button 资金流水
+					828 text 资金流水
+				829 button 应收应付
+					830 text 应收应付
+			831 container
+				832 container
+					833 text 资金管理
+					834 image
+					835 text 应收应付
+					836 image
+					837 heading 应收应付, Value: 1
+						838 text 应收应付
+					839 text 统一查看应收应付账款、管理期初建账、跟踪资金双向流动
+				840 button 应收账款
+					841 image
+					842 text 应收账款
+				843 button 应付账款
+					844 image
+					845 text 应付账款
+				846 button 往来对冲
+					847 image
+					848 text 往来对冲
+				849 button 期初应收建账
+					850 image
+					851 text 期初应收建账
+				852 button 期初应付建账
+					853 image
+					854 text 期初应付建账
+				855 button 导出
+					856 image
+					857 text 导出
+					858 image
+				859 button 刷新
+					860 image
+				861 button
+					862 image
+				863 button
+					864 image
+				865 image
+				866 text field (settable)
+				867 button 账龄状态
+					868 text 账龄状态
+				869 radio button 列表, Value: 1, ID: :r1tm:-flat
+					870 image
+					871 text 列表
+				872 radio button 按客户, Value: 0, ID: :r1tm:-byCustomer
+					873 image
+					874 text 按客户
+				875 radio button 按订单, Value: 0, ID: :r1tm:-byOrder
+					876 image
+					877 text 按订单
+				878 button 来源
+					879 text 来源
+				880 container
+					881 button
+						882 image
+					883 text field (settable)
+					884 text ~
+					885 text field (settable)
+				886 text 未收余额 :
+				887 text field (settable)
+				888 text ~
+				889 text field (settable)
+				890 button 发票状态
+					891 text 发票状态
+				892 button 业务员
+					893 text 业务员
+				894 button 到期提醒
+					895 text 到期提醒
+				896 table
+					897 row
+						898 cell
+							899 checkbox (settable, integer) 0
+						900 cell
+							901 text 应收编号
+						902 cell
+							903 text 来源
+						904 cell
+							905 text 客户/业务员
+						906 cell
+							907 text 订单/项目
+						908 cell
+							909 text 应收总额
+						910 cell
+							911 text 已收/冲抵
+						912 cell
+							913 text 未收余额
+						914 cell
+							915 text 到期日
+						916 cell
+							917 text 状态
+						918 cell
+							919 text 发票
+						920 cell
+							921 text 操作
+					922 row
+						923 cell
+							924 image
+							925 text 暂无应收账款
+				926 text 共  0 条 ·  未收合计:  ¥0.00 每页
+				927 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					928 text 10
+				929 text 条
+				930 button (disabled) 上一页
+					931 image
+				932 button 1
+				933 button (disabled) 下一页
+					934 image
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 799 button 应收应付

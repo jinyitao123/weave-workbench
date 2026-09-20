@@ -1,0 +1,266 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 供应链
+- button "收起侧边栏":
+- navigation:
+  - button "到货检验":
+    - generic: 到货检验
+  - button "到货通知":
+    - generic: 到货通知
+  - button "到货登记":
+    - generic: 到货登记
+  - button "待检验库存":
+    - generic: 待检验库存
+  - button "检验单":
+    - generic: 检验单
+  - button "检验规则":
+    - generic: 检验规则
+  - button "基础资料":
+    - generic: 基础资料
+  - button "物料管理":
+    - generic: 物料管理
+  - button "物料组合":
+    - generic: 物料组合
+  - button "BOM管理":
+    - generic: BOM管理
+  - button "综合物料搜索":
+    - generic: 综合物料搜索
+  - button "供应商管理":
+    - generic: 供应商管理
+  - button "产品实例追溯":
+    - generic: 产品实例追溯
+  - button "仓库管理":
+    - generic: 仓库管理
+  - button "采购管理":
+    - generic: 采购管理
+  - button "采购发票":
+    - generic: 采购发票
+  - button "采购申请":
+    - generic: 采购申请
+  - button "采购待办池":
+    - generic: 采购待办池
+  - button "询价管理":
+    - generic: 询价管理
+  - button "采购订单":
+    - generic: 采购订单
+  - button "采购退换货":
+    - generic: 采购退换货
+  - button "供应商价格本":
+    - generic: 供应商价格本
+  - button "入库管理":
+    - generic: 入库管理
+  - button "全部入库单":
+    - generic: 全部入库单
+  - button "采购入库":
+    - generic: 采购入库
+  - button "生产入库":
+    - generic: 生产入库
+  - button "其他入库":
+    - generic: 其他入库
+  - button "期初入库":
+    - generic: 期初入库
+  - button "入库明细":
+    - generic: 入库明细
+  - button "库存管理":
+    - generic: 库存管理
+  - button "库存总览":
+    - generic: 库存总览
+  - button "不合格处理":
+    - generic: 不合格处理
+  - button "库存流水":
+    - generic: 库存流水
+  - button "库存锁定":
+    - generic: 库存锁定
+  - button "库存盘点":
+    - generic: 库存盘点
+  - button "调拨与借出":
+    - generic: 调拨与借出
+  - button "库存预警":
+    - generic: 库存预警
+  - button "报损单":
+    - generic: 报损单
+  - button "SN码管理":
+    - generic: SN码管理
+  - button "出库管理":
+    - generic: 出库管理
+  - button "出库单列表":
+    - generic: 出库单列表
+  - button "生产出库":
+    - generic: 生产出库
+  - button "其他出库":
+    - generic: 其他出库
+  - button "销售直接出库":
+    - generic: 销售直接出库
+  - button "待出库发货单":
+    - generic: 待出库发货单
+  - button "采购退换货出库":
+    - generic: 采购退换货出库
+  - button "出库明细":
+    - generic: 出库明细
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链" [pressed]:
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "生产入库":
+  - generic: 生产入库
+- button "其他入库":
+  - generic: 其他入库
+- button "期初入库":
+  - generic: 期初入库
+- button "入库明细":
+  - generic: 入库明细
+- button "库存总览":
+  - generic: 库存总览
+- button "不合格处理":
+  - generic: 不合格处理
+- button "库存流水":
+  - generic: 库存流水
+- button "库存锁定":
+  - generic: 库存锁定
+- button "库存盘点":
+  - generic: 库存盘点
+- button "新建盘点":
+  - generic: 新建盘点
+- button "调拨与借出":
+  - generic: 调拨与借出
+- button "新建调拨":
+  - generic: 新建调拨
+- button "库存预警":
+  - generic: 库存预警
+- button "预警配置中心":
+  - generic: 预警配置中心
+- main:
+  - generic: 库存管理
+  - generic: 库存预警
+  - heading "库存预警" [level=1]
+  - paragraph: 按商品订货号维度管理每个商品的库存预警规则
+  - button "返回预警中心":
+    - text: 返回预警中心
+  - paragraph: 已配置规则
+  - paragraph: "0"
+  - paragraph: 已启用
+  - paragraph: "0"
+  - paragraph: 低库存预警
+  - paragraph: "0"
+  - paragraph: 超储预警
+  - paragraph: "0"
+  - button "新建规则":
+    - text: 新建规则
+  - button "导出":
+    - text: 导出
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "搜索物料名称、订货号..."
+  - button "分类":
+    - text: 分类
+  - button "模式":
+    - text: 模式
+  - table:
+    - rowgroup:
+      - row "物料信息 管理模式 最低库存 安全库存 最高库存 当前库存 状态 启用 操作":
+        - columnheader "物料信息":
+          - generic: 物料信息
+        - columnheader "管理模式":
+          - generic: 管理模式
+        - columnheader "最低库存":
+          - generic: 最低库存
+        - columnheader "安全库存":
+          - generic: 安全库存
+        - columnheader "最高库存":
+          - generic: 最高库存
+        - columnheader "当前库存":
+          - generic: 当前库存
+        - columnheader "状态":
+          - generic: 状态
+        - columnheader "启用":
+          - generic: 启用
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "暂无匹配的库存规则":
+        - cell "暂无匹配的库存规则":
+          - generic: 暂无匹配的库存规则
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T":
+  - list:
+    - button "Close toast":
+    - generic: 请选择物料
+- dialog "新建库存规则":
+  - heading "新建库存规则" [level=3]
+  - button "关闭":
+  - generic: 选择物料 *
+  - button "搜索物料名称或编号...":
+    - generic: 搜索物料名称或编号...
+  - generic: 库存管理模式
+  - button "统一库存管理 所有仓库共用一套库存阈值":
+    - paragraph: 统一库存管理
+    - paragraph: 所有仓库共用一套库存阈值
+  - button "分仓库存管理 每个仓库独立设置库存阈值":
+    - paragraph: 分仓库存管理
+    - paragraph: 每个仓库独立设置库存阈值
+  - paragraph: 全局默认阈值（分仓参考值）
+  - generic: 最低库存
+  - textbox: "0"
+  - paragraph: 低于此值触发紧急预警
+  - generic: 安全库存
+  - textbox: "0"
+  - paragraph: 低于此值触发补货提醒
+  - generic: 最高库存
+  - textbox: "0"
+  - paragraph: 超过此值触发超储预警
+  - generic: 分仓库存配置
+  - button "添加仓库":
+    - text: 添加仓库
+  - paragraph: 暂未配置仓库规则，点击"添加仓库"开始
+  - generic: 备注
+  - textbox "可选备注信息"
+  - paragraph: 启用规则
+  - paragraph: 启用后系统将自动监控此物料库存并触发预警
+  - switch [checked]
+  - button "取消"
+  - button "创建" [active]

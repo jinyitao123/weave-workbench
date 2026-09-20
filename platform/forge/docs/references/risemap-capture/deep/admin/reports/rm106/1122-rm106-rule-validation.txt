@@ -1,0 +1,64 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/reports".
+1 AXWebArea RiseMap, URL: risemap.cn/ops/reports
+	2 container 新建汇报规则
+		3 heading 新建汇报规则, Value: 3, ID: :rg:
+			4 text 新建汇报规则
+		5 button 关闭
+			6 image
+		7 container
+			8 text * 规则名称
+			9 text field (settable)
+			10 text 请输入规则名称 汇报类型
+			11 button 周报
+				12 text 周报
+			13 text 提交频率
+			14 button 每周
+				15 text 每周
+			16 text 规则描述
+			17 text entry area (settable)
+			18 text 截止时间配置 每周
+			19 button 请选择
+				20 text 请选择
+			21 container
+				22 text field (settable)
+				23 button
+					24 image
+			25 text 前提交
+			26 text field (settable)
+			27 text 提交人范围类型
+			28 button 按人员
+				29 text 按人员
+			30 text 选择提交人
+			31 button 请选择提交人
+				32 text 请选择提交人
+			33 text 汇报区块
+			34 checkbox (settable, integer) Description: 工作内容, Value: 1
+			35 image
+			36 text 工作内容
+			37 checkbox (settable, integer) Description: 本周总结, Value: 1
+			38 image
+			39 text 本周总结
+			40 checkbox (settable, integer) Description: 下周计划, Value: 0
+			41 text 下周计划
+			42 checkbox (settable, integer) Description: 项目进度, Value: 0
+			43 text 项目进度
+			44 checkbox (settable, integer) Description: 问题与风险, Value: 0
+			45 text 问题与风险
+			46 checkbox (settable, integer) Description: 客户拜访, Value: 0
+			47 text 客户拜访
+			48 checkbox (settable, integer) Description: 商机跟进, Value: 0
+			49 text 商机跟进
+			50 checkbox (settable, integer) Description: KPI完成情况, Value: 0
+			51 text KPI完成情况
+			52 checkbox (settable, integer) Description: 自评分, Value: 0
+			53 text 自评分
+			54 checkbox (settable, integer) Description: 技术难题, Value: 0
+			55 text 技术难题
+			56 checkbox (settable, integer) Description: 人员动态, Value: 0
+			57 text 人员动态
+			58 checkbox (settable, integer) Description: 次日计划, Value: 0
+			59 text 次日计划
+		60 button 取消
+		61 button 保存
+
+The focused UI element is 9 text field (settable)

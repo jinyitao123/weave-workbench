@@ -1,0 +1,303 @@
+{
+ "verifiedAt": "2026-09-17T13:40:51.586Z",
+ "results": [
+  {
+   "id": "page_inventory_overview",
+   "label": "库存总览",
+   "hero": true,
+   "heroTitle": "库存总览",
+   "crumbs": [
+    "供应链",
+    "库存总览"
+   ],
+   "tabs": [],
+   "actions": [
+    "刷新"
+   ],
+   "headers": [],
+   "rows": 0,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_inventory_ncr",
+   "label": "不合格处理",
+   "hero": true,
+   "heroTitle": "不合格处理",
+   "crumbs": [
+    "供应链",
+    "不合格处理"
+   ],
+   "tabs": [],
+   "actions": [
+    "导出",
+    "刷新"
+   ],
+   "headers": [
+    "NCR 单号",
+    "来源单据",
+    "物料",
+    "供应商",
+    "不合格数量",
+    "缺陷等级",
+    "处置",
+    "状态",
+    "关联入库单",
+    "操作"
+   ],
+   "rows": 21,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_inventory_disposal_center",
+   "label": "处置执行中心",
+   "hero": true,
+   "heroTitle": "处置执行中心",
+   "crumbs": [
+    "供应链",
+    "处置执行中心"
+   ],
+   "tabs": [],
+   "actions": [],
+   "headers": [
+    "执行单号",
+    "处置类型",
+    "来源业务",
+    "物料",
+    "执行数量",
+    "当前阶段",
+    "更新时间",
+    "操作"
+   ],
+   "rows": 21,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_inventory_ledger",
+   "label": "库存流水",
+   "hero": true,
+   "heroTitle": "库存流水",
+   "crumbs": [
+    "供应链",
+    "库存流水"
+   ],
+   "tabs": [],
+   "actions": [],
+   "headers": [
+    "流水号",
+    "类型",
+    "业务类型",
+    "日期",
+    "仓库",
+    "库位",
+    "物料名称",
+    "型号",
+    "SKU编码",
+    "规格",
+    "批次",
+    "SN码",
+    "外部SN",
+    "操作人",
+    "数量",
+    "关联单号",
+    "对方"
+   ],
+   "rows": 20,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_inventory_locks",
+   "label": "库存锁定",
+   "hero": true,
+   "heroTitle": "库存锁定",
+   "crumbs": [
+    "供应链",
+    "库存管理",
+    "库存锁定"
+   ],
+   "tabs": [],
+   "actions": [
+    "刷新",
+    "新增业务锁库"
+   ],
+   "headers": [
+    "锁定单号",
+    "物料名称",
+    "型号",
+    "规格 / SKU",
+    "批次号",
+    "业务来源",
+    "来源单号",
+    "锁定数量",
+    "已释放",
+    "状态",
+    "业务状态",
+    "锁定日期",
+    "到期释放时间",
+    "剩余倒计时",
+    "操作"
+   ],
+   "rows": 2,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_inventory_count",
+   "label": "库存盘点",
+   "hero": true,
+   "heroTitle": "库存盘点",
+   "crumbs": [
+    "供应链",
+    "库存盘点"
+   ],
+   "tabs": [],
+   "actions": [
+    "新建盘点",
+    "导出",
+    "刷新"
+   ],
+   "headers": [
+    "盘点编号",
+    "盘点名称",
+    "盘点仓库",
+    "盘点类型",
+    "计划日期",
+    "实际日期",
+    "盘点进度",
+    "差异项",
+    "盘差",
+    "状态",
+    "锁账",
+    "操作人",
+    "创建时间",
+    "操作"
+   ],
+   "rows": 1,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_inventory_transfer",
+   "label": "调拨与借出",
+   "hero": true,
+   "heroTitle": "调拨与借出",
+   "crumbs": [
+    "供应链",
+    "调拨与借出"
+   ],
+   "tabs": [],
+   "actions": [
+    "新建单据",
+    "导出",
+    "刷新"
+   ],
+   "headers": [
+    "单号",
+    "业务类型",
+    "发出方",
+    "接收方",
+    "原因",
+    "物料数量",
+    "金额",
+    "状态",
+    "关联",
+    "日期/申请人",
+    "操作"
+   ],
+   "rows": 2,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_inventory_alerts",
+   "label": "库存预警",
+   "hero": true,
+   "heroTitle": "库存预警",
+   "crumbs": [
+    "供应链",
+    "库存管理",
+    "库存预警"
+   ],
+   "tabs": [
+    "全部",
+    "低库存",
+    "超储预警",
+    "呆滞库存"
+   ],
+   "actions": [
+    "刷新",
+    "物料预警配置",
+    "预警设置"
+   ],
+   "headers": [
+    "预警类型",
+    "物料",
+    "仓库",
+    "当前库存",
+    "可用库存",
+    "阈值",
+    "最近变动",
+    "等级",
+    "操作"
+   ],
+   "rows": 1,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_inventory_loss",
+   "label": "报损单",
+   "hero": true,
+   "heroTitle": "报损单",
+   "crumbs": [
+    "供应链",
+    "库存管理",
+    "报损单"
+   ],
+   "tabs": [],
+   "actions": [],
+   "headers": [
+    "报损单号",
+    "所在仓库",
+    "报损类型",
+    "报损物料",
+    "报损金额",
+    "经手人",
+    "状态",
+    "创建日期",
+    "操作"
+   ],
+   "rows": 1,
+   "empty": "◇",
+   "colOk": true
+  },
+  {
+   "id": "page_inventory_sn",
+   "label": "SN码管理",
+   "hero": true,
+   "heroTitle": "SN码管理",
+   "crumbs": [
+    "供应链"
+   ],
+   "tabs": [],
+   "actions": [],
+   "headers": [
+    "#",
+    "供应商序列号",
+    "产品名称",
+    "入库单号",
+    "批次号",
+    "供应商",
+    "出库状态",
+    "出库单号",
+    "操作"
+   ],
+   "rows": 1,
+   "empty": "",
+   "colOk": true
+  }
+ ]
+}

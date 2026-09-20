@@ -1,0 +1,106 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/contacts".
+1 AXWebArea RiseMap, URL: risemap.cn/base/contacts
+	2 container 新增联系人 客户关系档案 · CRM
+		3 container :r8c:
+			4 image
+			5 text 新增联系人 客户关系档案 · CRM
+		6 button 关闭
+			7 image
+		8 container
+			9 text 新
+			10 heading 新联系人, Value: 4
+				11 text 新联系人
+			12 text 待填写职位
+			13 text 在职
+			14 heading 客户关系, Value: 5
+				15 text 客户关系
+			16 image
+			17 text 所属客户 待选择
+			18 image
+			19 text 决策权重 价格
+			20 image
+			21 text 维护人 待选择
+			22 image
+			23 text 任职资料
+			24 image
+			25 text 联系方式
+			26 image
+			27 text 补充说明
+			28 heading 01 任职资料, Value: 4
+				29 text 01 任职资料
+			30 text *  必填
+			31 container
+				32 text * 姓名
+			33 text field (settable)
+			34 text 性别
+			35 button 性别
+				36 text 请选择性别
+			37 container
+				38 text * 所属客户
+			39 button 请选择客户
+				40 text 请选择客户
+			41 text 部门
+			42 text field (settable)
+			43 text 职位
+			44 text field (settable)
+			45 text 决策权重
+			46 button 决策权重
+				47 text 价格
+				48 container
+					49 button
+						50 image
+					51 image
+			52 text 维护人
+			53 button 维护人
+				54 text 请选择维护人
+			55 text 任职状态
+			56 button 任职状态
+				57 text 在职
+			58 container
+				59 checkbox (settable, integer) Description: 设为该客户的主要联系人, Value: 0
+				60 text 设为该客户的主要联系人
+			61 heading 02 联系方式, Value: 4
+				62 text 02 联系方式
+			63 text 星标表示主要联系方式 类型 标签 联系方式
+			64 image
+			65 button 联系方式类型
+				66 text 手机
+			67 text field (settable) Description: 联系方式标签, Value: 工作手机
+			68 text field (settable) 联系方式内容
+			69 button 设为主要联系方式
+				70 image
+			71 button 删除联系方式
+				72 image
+			73 image
+			74 button 联系方式类型
+				75 text 座机
+			76 text field (settable) Description: 联系方式标签, Value: 办公座机
+			77 text field (settable) 联系方式内容
+			78 button 设为主要联系方式
+				79 image
+			80 button 删除联系方式
+				81 image
+			82 image
+			83 button 联系方式类型
+				84 text 邮箱
+			85 text field (settable) Description: 联系方式标签, Value: 工作邮箱
+			86 text field (settable) 联系方式内容
+			87 button 设为主要联系方式
+				88 image
+			89 button 删除联系方式
+				90 image
+			91 text 联系方式类型
+			92 button 新增联系方式类型
+				93 text 手机
+			94 button 添加联系方式
+				95 image
+				96 text 添加联系方式
+			97 heading 03 补充说明, Value: 4
+				98 text 03 补充说明
+			99 text 备注
+			100 text entry area (settable)
+		101 text 资料尚未保存
+		102 button 取消
+		103 button 保存联系人
+
+The focused UI element is 103 button 保存联系人

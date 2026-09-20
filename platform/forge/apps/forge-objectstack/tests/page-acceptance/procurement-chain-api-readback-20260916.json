@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-16",
+  "endpoint": "http://localhost:4496",
+  "database": "file:.objectstack/production-placeholders-batch1.sqlite",
+  "supervisedBy": "内置浏览器控制通道本轮不可用，未执行页面办理；本文件只覆盖 API 与持久化证据",
+  "scripts": [
+    {
+      "script": "tests/purchase-request-entry-modes.integration.mjs",
+      "result": "passed",
+      "observed": "手工明细与快速粘贴明细同时写入同一采购申请，审批后生成待办项；缺明细的申请在审批前被阻断"
+    },
+    {
+      "script": "tests/purchase-todo-pool.integration.mjs",
+      "result": "3/3 PASS",
+      "observed": "已审批申请物料生成一条持久待办；重复审批不产生第二条；无明细申请在审批前被阻断"
+    },
+    {
+      "script": "tests/purchase-inquiry.integration.mjs",
+      "result": "4/4 PASS",
+      "observed": "询价单携带物料与两家供应商邀请，发布后录入两条行级报价，选中报价按行转为采购订单草稿"
+    },
+    {
+      "script": "tests/procurement-chain.integration.mjs",
+      "result": "7/7 PASS",
+      "observed": "订单草稿、供应商审批前置、提交汇总、审批生成订单级到货通知、重复审批不重复生成、无明细不可提交、匿名读写被拒"
+    },
+    {
+      "script": "tests/purchase-request-entry-modes-restart-readback.mjs",
+      "result": "passed",
+      "observed": "同一 SQLite 停服重建后重启，申请、两条明细与两条待办的 ID 全部回读一致"
+    },
+    {
+      "script": "tests/purchase-inquiry-restart-readback.mjs",
+      "result": "PASS",
+      "observed": "重启后询价、报价、选中供应商与生成的采购订单全部保留"
+    },
+    {
+      "script": "tests/procurement-restart-readback.mjs",
+      "result": "PASS",
+      "observed": "重启后采购订单、明细与订单级到货通知保留"
+    }
+  ],
+  "seededReferenceData": "procurement-chain.integration.mjs 调用 scripts/seed-reference-data.mjs 注入 docs/standard-test-data/risemap-oem-v0.1-observed-master-data.json 的标准参考数据后才运行",
+  "stillPending": [
+    "同一组材料在 RISEMAP 与 Forge 双侧的页面办理对照",
+    "Forge 采购申请 / 采购待办池 / 询价管理三页的控件实操、桌面与窄屏截图、控制台扫描",
+    "采购申请与采购待办池的视觉精修验收（designStatus 保持 review_required）"
+  ]
+}

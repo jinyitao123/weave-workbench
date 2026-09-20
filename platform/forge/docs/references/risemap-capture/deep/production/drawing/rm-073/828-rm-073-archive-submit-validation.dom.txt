@@ -1,0 +1,287 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 生产
+- button "收起侧边栏":
+- navigation:
+  - button "组装业务管理":
+    - generic: 组装业务管理
+  - button "组装单":
+    - generic: 组装单
+  - button "缺料待办":
+    - generic: 缺料待办
+  - button "领料单":
+    - generic: 领料单
+  - button "补料单":
+    - generic: 补料单
+  - button "退料单":
+    - generic: 退料单
+  - button "拆解单":
+    - generic: 拆解单
+  - button "换件单":
+    - generic: 换件单
+  - button "图纸管理":
+    - generic: 图纸管理
+  - button "进入图纸管理上手指南":
+  - button "图纸总览":
+    - generic: 图纸总览
+  - button "图号档案":
+    - generic: 图号档案
+  - button "图纸评审":
+    - generic: 图纸评审
+  - button "图纸发布":
+    - generic: 图纸发布
+  - button "图纸变更":
+    - generic: 图纸变更
+  - button "图纸发放记录":
+    - generic: 图纸发放记录
+  - button "图纸关联查询":
+    - generic: 图纸关联查询
+  - button "客户图纸":
+    - generic: 客户图纸
+  - button "委外管理":
+    - generic: 委外管理
+  - button "进入委外管理上手指南":
+  - button "委外看板":
+    - generic: 委外看板
+  - button "委外订单":
+    - generic: 委外订单
+  - button "委外发料":
+    - generic: 委外发料
+  - button "委外回厂":
+    - generic: 委外回厂
+  - button "委外退料":
+    - generic: 委外退料
+  - button "委外对账":
+    - generic: 委外对账
+  - button "委外供应商":
+    - generic: 委外供应商
+  - button "委外库存":
+    - generic: 委外库存
+  - button "批次追溯":
+    - generic: 批次追溯
+  - button "委外未交":
+    - generic: 委外未交
+  - button "委外进货":
+    - generic: 委外进货
+  - button "委外对账单":
+    - generic: 委外对账单
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产" [pressed]:
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "缺料待办":
+  - generic: 缺料待办
+- button "领料单":
+  - generic: 领料单
+- button "新建领料单":
+  - generic: 新建领料单
+- button "补料单":
+  - generic: 补料单
+- button "新建补料单":
+  - generic: 新建补料单
+- button "退料单":
+  - generic: 退料单
+- button "新建退料单":
+  - generic: 新建退料单
+- button "拆解单":
+  - generic: 拆解单
+- button "新建拆解单":
+  - generic: 新建拆解单
+- button "换件单":
+  - generic: 换件单
+- button "新建换件单":
+  - generic: 新建换件单
+- button "图纸管理上手指南":
+  - generic: 图纸管理上手指南
+- button "图纸总览":
+  - generic: 图纸总览
+- button "新建图号档案":
+  - generic: 新建图号档案
+- main:
+  - generic: 图纸管理
+  - generic: 图号档案
+  - generic: 新建图号档案
+  - button:
+  - heading "新建图号" [level=1]
+  - paragraph: 创建新的图纸主档案，后续可上传版本、发布、变更
+  - button "取消"
+  - button "保存草稿":
+    - text: 保存草稿
+  - button "保存并提交" [active]:
+    - text: 保存并提交
+  - button "基础信息 0/7":
+    - generic: 基础信息
+    - generic: 0/7
+  - generic: 图号
+  - textbox "请输入图号"
+  - generic: "*"
+  - generic: 图纸名称
+  - textbox "请输入图纸名称"
+  - paragraph: 图纸名称不能为空
+  - generic: 简称
+  - textbox "请输入简称"
+  - generic: "*"
+  - generic: 图纸类型
+  - button "请选择图纸类型":
+    - generic: 请选择图纸类型
+  - paragraph: 图纸类型不能为空
+  - generic: 所属分类
+  - button "请选择所属分类":
+    - generic: 请选择所属分类
+  - generic: 所属部门
+  - button "选择所属部门":
+    - generic: 选择所属部门
+  - generic: 所属文件夹
+  - button "请选择所属文件夹（不选则不归档）":
+    - generic: 请选择所属文件夹（不选则不归档）
+  - generic: 备注
+  - textbox "请输入备注"
+  - button "技术属性 4/13":
+    - generic: 技术属性
+    - generic: 4/13
+  - generic: 材质
+  - textbox "请输入材质"
+  - generic: 规格
+  - textbox "请输入规格"
+  - generic: 型号
+  - textbox "请输入型号"
+  - generic: 重量
+  - textbox "请输入重量"
+  - generic: 表面处理
+  - textbox "请输入表面处理"
+  - generic: 热处理
+  - textbox "请输入热处理"
+  - generic: 技术要求摘要
+  - textbox "请输入技术要求摘要"
+  - generic: 检验要求摘要
+  - textbox "请输入检验要求摘要"
+  - generic: 关键特性
+  - textbox "请输入关键特性"
+  - generic: 是否关键件
+  - switch
+  - generic: 是否按图采购
+  - switch
+  - generic: 是否版本强控制
+  - switch
+  - generic: 是否允许旧版本替代
+  - switch
+  - button "受控信息 2/2":
+    - generic: 受控信息
+    - generic: 2/2
+  - paragraph: 受控图纸需登记受控编号及份数，发放后通过受控发放清单追踪每份副本（ISO 9001）
+  - generic: "*"
+  - generic: 受控标识
+  - button "非受控":
+    - generic "非受控"
+    - button:
+  - generic: 保密等级
+  - button "普通":
+    - generic "普通"
+    - button:
+  - button "业务关联属性 4/6":
+    - generic: 业务关联属性
+    - generic: 4/6
+  - paragraph: 关联物料和项目后，可在汇总视图中按物料或项目维度统一查看所有相关图纸
+  - generic: 关联物料
+  - button "点击选择关联物料...":
+    - generic: 点击选择关联物料...
+  - generic: 关联项目
+  - generic: 点击选择关联项目...
+  - generic: 默认供应商
+  - button "搜索供应商名称...":
+    - generic: 搜索供应商名称...
+  - generic: 是否需来料质检
+  - switch
+  - generic: 是否需首件确认
+  - switch
+  - generic: 是否可外协
+  - switch
+  - generic: 是否启用批次追溯
+  - switch
+  - button "其他信息 0/6":
+    - generic: 其他信息
+    - generic: 0/6
+  - generic: 档案状态
+  - generic: 只读
+  - button "请选择档案状态" [disabled]:
+    - generic: 请选择档案状态
+  - generic: 当前版本号
+  - generic: 只读
+  - textbox "请输入当前版本号" [disabled]
+  - generic: 当前版本发布时间
+  - generic: 只读
+  - textbox "请选择当前版本发布时间" [disabled]
+  - button:
+  - generic: 创建人
+  - generic: 只读
+  - textbox "请输入创建人" [disabled]
+  - generic: 创建时间
+  - generic: 只读
+  - textbox "请选择创建时间" [disabled]
+  - button:
+  - generic: 更新时间
+  - generic: 只读
+  - textbox "请选择更新时间" [disabled]
+  - button:
+  - generic: 文件区
+  - generic: 主图纸文件 *
+  - generic: 点击或拖拽上传
+  - generic: 支持 CAD 图纸、3D 模型、PDF 与文档等格式
+  - generic: PDF文件
+  - generic: 点击或拖拽上传
+  - generic: 支持 CAD 图纸、3D 模型、PDF 与文档等格式
+  - generic: CAD文件
+  - generic: 点击或拖拽上传
+  - generic: 支持 CAD 图纸、3D 模型、PDF 与文档等格式
+  - generic: 3D模型文件
+  - generic: 点击或拖拽上传
+  - generic: 支持 CAD 图纸、3D 模型、PDF 与文档等格式
+  - generic: 工艺文件
+  - generic: 点击或拖拽上传
+  - generic: 支持 CAD 图纸、3D 模型、PDF 与文档等格式
+  - generic: 检验文件
+  - generic: 点击或拖拽上传
+  - generic: 支持 CAD 图纸、3D 模型、PDF 与文档等格式
+  - generic: 其他附件
+  - generic: 点击或拖拽上传
+  - generic: 支持 CAD 图纸、3D 模型、PDF 与文档等格式
+- button "打开 AI 助手":
+- region "Notifications alt+T":
+  - list:
+    - button "Close toast":
+    - generic: 提交失败，请检查必填项，必填项已在表单中标红。
+- generic: 2025-10

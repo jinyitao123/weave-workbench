@@ -1,0 +1,187 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/inventory/damage/new".
+1 AXWebArea RiseMap, URL: risemap.cn/inventory/damage/new
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 到货检验
+					10 image
+					11 text 到货检验
+					12 image
+				13 button 到货通知
+				14 button 到货登记
+				15 button 待检验库存
+				16 button 检验单
+				17 button 检验规则
+				18 button 基础资料
+					19 image
+					20 text 基础资料
+					21 image
+				22 button 物料管理
+				23 button 物料组合
+				24 button BOM管理
+				25 button 综合物料搜索
+				26 button 供应商管理
+				27 button 产品实例追溯
+				28 button 仓库管理
+				29 button 采购管理
+					30 image
+					31 text 采购管理
+					32 image
+				33 button 采购发票
+				34 button 采购申请
+				35 button 采购待办池
+				36 button 询价管理
+				37 button 采购订单
+				38 button 采购退换货
+				39 button 供应商价格本
+				40 button 入库管理
+					41 image
+					42 text 入库管理
+					43 image
+				44 button 全部入库单
+				45 button 采购入库
+				46 button 生产入库
+				47 button 其他入库
+				48 button 期初入库
+				49 button 入库明细
+				50 button 库存管理
+					51 image
+					52 text 库存管理
+					53 image
+				54 button 库存总览
+				55 button 不合格处理
+				56 button 库存流水
+				57 button 库存锁定
+				58 button 库存盘点
+				59 button 调拨与借出
+				60 button 库存预警
+				61 button 报损单
+				62 button SN码管理
+				63 button 出库管理
+					64 image
+					65 text 出库管理
+					66 image
+				67 button 出库单列表
+				68 button 生产出库
+				69 button 其他出库
+				70 button 销售直接出库
+				71 button 待出库发货单
+				72 button 采购退换货出库
+				73 button 出库明细
+			74 image
+			75 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			76 button 查看方案
+				77 image
+				78 text 查看方案
+			79 button
+				80 image
+			81 container
+				82 container 业务分类
+					83 checkbox 工作台, Value: 0
+					84 checkbox 供应链, Value: 1
+					85 checkbox 销售, Value: 0
+					86 checkbox 生产, Value: 0
+					87 checkbox 项目, Value: 0
+					88 checkbox 行政, Value: 0
+					89 checkbox 财务, Value: 0
+					90 checkbox 报表, Value: 0
+					91 checkbox 系统, Value: 0
+				92 button Description: 展开搜索, Help: 搜索
+					93 image
+				94 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					95 image
+					96 text 2
+				97 button Description: 打开推广奖励, Help: 推广
+				98 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				99 link Description: 打开工单, Value: community.risemap.cn/support
+				100 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					101 image
+					102 text 立即订阅
+				103 button 金
+					104 text 金
+					105 image
+			106 container
+				107 button 工作台
+					108 image
+					109 text 工作台
+				112 button 期初入库
+					113 text 期初入库
+				114 button 入库明细
+					115 text 入库明细
+				116 button 库存总览
+					117 text 库存总览
+				118 button 不合格处理
+					119 text 不合格处理
+				120 button 库存流水
+					121 text 库存流水
+				122 button 库存锁定
+					123 text 库存锁定
+				124 button 库存盘点
+					125 text 库存盘点
+				126 button 新建盘点
+					127 text 新建盘点
+				128 button 调拨与借出
+					129 text 调拨与借出
+				130 button 新建调拨
+					131 text 新建调拨
+				132 button 库存预警
+					133 text 库存预警
+				134 button 预警配置中心
+					135 text 预警配置中心
+				136 button 报损单
+					137 text 报损单
+				201 button 新建报损
+					202 text 新建报损
+			203 container
+				204 text 库存管理
+				205 image
+				206 text 报损单
+				207 image
+				208 text 新建报损
+				209 button
+					210 image
+				211 heading 新建报损单, Value: 1
+					212 text 新建报损单
+				213 button 取消
+				214 button 保存草稿
+					215 image
+					216 text 保存草稿
+				217 button 提交审核
+					218 image
+					219 text 提交审核
+				220 heading 基本信息, Value: 3
+					221 text 基本信息
+				222 container
+					223 text 仓库  *
+				224 button 请选择
+					225 text 请选择
+				226 container
+					227 text 报损类型  *
+				228 button 快捷新增报损类型
+					229 image
+				230 heading 物料明细, Value: 3
+					231 text 物料明细
+				232 text 0  项
+				233 button 添加物料
+					234 image
+					235 text 添加物料
+				236 image
+				237 text 暂无报损物料
+				238 text 点击"添加物料"选择需要报损的物料
+				239 heading 报损汇总, Value: 4
+					240 text 报损汇总
+				241 text 报损类型 - 报损仓库 - 物料种类 0 报损总量 0 报损金额 ¥ 0
+				242 heading 备注说明, Value: 4
+					243 text 备注说明
+				244 text entry area (settable)
+				245 image
+				246 text 报损提示
+				247 text 报损单提交后需审核确认，审核通过后将自动扣减库存。请确保报损信息准确。
+			199 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/inventory/damage/new

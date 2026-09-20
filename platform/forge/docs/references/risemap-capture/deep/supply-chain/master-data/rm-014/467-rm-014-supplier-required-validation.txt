@@ -1,0 +1,141 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/suppliers".
+1 AXWebArea RiseMap, URL: risemap.cn/base/suppliers
+	2 container 新增供应商
+		3 heading 新增供应商, Value: 3, ID: :rp:
+			4 text 新增供应商
+		5 button 全屏
+			6 image
+		7 button 关闭
+			8 image
+		9 container
+			10 button 基本信息
+				11 text 基本信息
+			12 button 审批流程
+			13 button 企业信息 0/9
+				14 text 企业信息
+				15 image
+				16 text 0
+				17 text /
+				18 text 9
+			19 text * 供应商名称 :
+			20 container
+				21 text field (settable)
+				22 image
+			23 text 供应商名称不能为空 统一社会信用代码 :
+			24 text field (settable)
+			25 text 组织机构代码 :
+			26 text field (settable)
+			27 text 注册资本（万元） :
+			28 text field (settable)
+			29 text 成立时间 :
+			30 container
+				31 text field (settable)
+				32 button
+					33 image
+			34 text 法人名称 :
+			35 text field (settable)
+			36 text 省份 :
+			37 button 请选择省份
+				38 text 请选择省份
+			39 text 市 :
+			40 button (disabled) 请先选择省份
+				41 text 请先选择省份
+			42 text 经营状态 :
+			43 text field (settable)
+			44 button 分类与负责人 0/4
+				45 text 分类与负责人
+				46 image
+				47 text 0
+				48 text /
+				49 text 4
+			50 text * 供应商分类 :
+			51 button 请选择分类
+				52 text 请选择分类
+			53 button 新增供应商分类
+				54 image
+			55 text 供应商分类不能为空 * 负责人 :
+			56 button 请选择负责人
+				57 text 请选择负责人
+			58 text 负责人不能为空 * 供应商级别 :
+			59 button 请选择供应商级别
+				60 text 请选择供应商级别
+			61 button 新增供应商级别
+				62 image
+			63 text 供应商级别不能为空 付款条件 :
+			64 button 请选择付款条件
+				65 text 请选择付款条件
+			66 button 联系与结算 0/11
+				67 text 联系与结算
+				68 image
+				69 text 0
+				70 text /
+				71 text 11
+			72 text * 联系人 :
+			73 text field (settable)
+			74 text 联系人不能为空 * 联系电话 :
+			75 text field (settable)
+			76 text 联系电话不能为空 第二电话 :
+			77 text field (settable)
+			78 text 邮箱 :
+			79 text field (settable)
+			80 text 联系人部门 :
+			81 text field (settable)
+			82 text 联系人职位 :
+			83 text field (settable)
+			84 text 联系人性别 :
+			85 button 请选择联系人性别
+				86 text 请选择联系人性别
+			87 text 联系人任职状态 :
+			88 button 请选择联系人任职状态
+				89 text 请选择联系人任职状态
+			90 text 账期（天） :
+			91 text field (settable)
+			92 text 天 供应商类型 :
+			93 button 请选择供应商类型
+				94 text 请选择供应商类型
+			95 text 银行账户信息 :
+			96 table
+				97 row
+					98 cell
+						99 text #
+					100 cell
+						101 text 开户行
+					102 cell
+						103 text 支行名称
+					104 cell
+						105 text 行号
+					106 cell
+						107 text 户名
+					108 cell
+						109 text 银行账号
+				110 row
+					111 cell
+						112 text 暂无数据 ，请点击下方按钮添加行
+			113 button 添加行
+				114 image
+				115 text 添加行
+			116 button 其他信息 0/3
+				117 text 其他信息
+				118 image
+				119 text 0
+				120 text /
+				121 text 3
+			122 text 地址 :
+			123 text field (settable)
+			124 text 备注 :
+			125 text entry area (settable)
+			126 text 附件/资质文件 :
+			127 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持上传营业执照、资质证书等文件
+				128 image
+				129 text 点击或拖拽文件到此处上传
+				130 text 支持 Ctrl+V 粘贴截图
+				131 text 支持上传营业执照、资质证书等文件
+		132 button 取消
+		133 button 保存草稿
+			134 image
+			135 text 保存草稿
+		136 button 提交审核
+			137 image
+			138 text 提交审核
+
+The focused UI element is 136 button 提交审核

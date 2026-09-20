@@ -1,0 +1,5 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/sales/orders".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/orders
+	2 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/sales/orders

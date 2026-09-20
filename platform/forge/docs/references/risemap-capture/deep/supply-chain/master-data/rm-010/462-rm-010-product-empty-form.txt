@@ -1,0 +1,430 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/products".
+1 AXWebArea RiseMap, URL: risemap.cn/base/products
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 到货检验
+					10 image
+					11 text 到货检验
+					12 image
+				13 button 到货通知
+				14 button 到货登记
+				15 button 待检验库存
+				16 button 检验单
+				17 button 检验规则
+				18 button 基础资料
+					19 image
+					20 text 基础资料
+					21 image
+				22 button 物料管理
+				23 button 物料组合
+				24 button BOM管理
+				25 button 综合物料搜索
+				26 button 供应商管理
+				27 button 产品实例追溯
+				28 button 仓库管理
+				29 button 采购管理
+					30 image
+					31 text 采购管理
+					32 image
+				33 button 采购发票
+				34 button 采购申请
+				35 button 采购待办池
+				36 button 询价管理
+				37 button 采购订单
+				38 button 采购退换货
+				39 button 供应商价格本
+				40 button 入库管理
+					41 image
+					42 text 入库管理
+					43 image
+				44 button 全部入库单
+				45 button 采购入库
+				46 button 生产入库
+				47 button 其他入库
+				48 button 期初入库
+				49 button 入库明细
+				50 button 库存管理
+					51 image
+					52 text 库存管理
+					53 image
+				54 button 库存总览
+				55 button 不合格处理
+				56 button 库存流水
+				57 button 库存锁定
+				58 button 库存盘点
+				59 button 调拨与借出
+				60 button 库存预警
+				61 button 报损单
+				62 button SN码管理
+				63 button 出库管理
+					64 image
+					65 text 出库管理
+					66 image
+				67 button 出库单列表
+				68 button 生产出库
+				69 button 其他出库
+				70 button 销售直接出库
+				71 button 待出库发货单
+				72 button 采购退换货出库
+				73 button 出库明细
+			74 image
+			75 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			76 button 查看方案
+				77 image
+				78 text 查看方案
+			79 button
+				80 image
+			81 container
+				82 container 业务分类
+					83 checkbox 工作台, Value: 0
+					84 checkbox 供应链, Value: 1
+					85 checkbox 销售, Value: 0
+					86 checkbox 生产, Value: 0
+					87 checkbox 项目, Value: 0
+					88 checkbox 行政, Value: 0
+					89 checkbox 财务, Value: 0
+					90 checkbox 报表, Value: 0
+					91 checkbox 系统, Value: 0
+				92 button Description: 展开搜索, Help: 搜索
+					93 image
+				94 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					95 image
+					96 text 2
+				97 button Description: 打开推广奖励, Help: 推广
+				98 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				99 link Description: 打开工单, Value: community.risemap.cn/support
+				100 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					101 image
+					102 text 立即订阅
+				103 button 金
+					104 text 金
+					105 image
+			106 container
+				107 button 工作台
+					108 image
+					109 text 工作台
+				110 button 销售统计
+					111 text 销售统计
+				112 button 采购统计
+					113 text 采购统计
+				114 button 库存统计
+					115 text 库存统计
+				116 button 项目统计
+					117 text 项目统计
+				118 button 组装统计
+					119 text 组装统计
+				120 button 财务总览
+					121 text 财务总览
+				122 button 损益分析
+					123 text 损益分析
+				124 button 资金分析
+					125 text 资金分析
+				126 button 往来账款
+					127 text 往来账款
+				128 button 税务库存
+					129 text 税务库存
+				130 button 风险监控
+					131 text 风险监控
+				132 button 基础配置
+					133 text 基础配置
+				134 button 仓库管理
+					135 text 仓库管理
+				136 button 物料管理
+					137 text 物料管理
+			138 container
+				139 container
+					140 text 基础资料
+					141 image
+					142 text 物料管理
+					143 image
+					144 heading 物料管理, Value: 1
+						145 text 物料管理
+					146 text 维护 SKU 主数据、品牌型号与多规格变体，沉淀商品资产
+				147 button 物料列表
+					148 image
+					149 text 物料列表
+				150 button 商品图片
+					151 image
+					152 text 商品图片
+				153 button 新建物料
+					154 image
+					155 text 新建物料
+				156 button 导入/导出
+					157 image
+					158 text 导入/导出
+					159 image
+				160 button 打印条码, Help: 打印物料条码/二维码标签
+					161 image
+					162 text 打印条码
+				163 button (disabled) 批量操作
+					164 text 批量操作
+					165 image
+				166 button 回收站
+					167 image
+					168 text 回收站
+				169 button
+					170 image
+				171 button 刷新
+					172 image
+				173 button
+					174 image
+				175 button
+					176 image
+				177 image
+				178 text field (settable)
+				179 button 全部分类
+					180 text 全部分类
+				181 button 品牌
+					182 text 品牌
+				183 button 类型
+					184 text 类型
+					185 image
+				186 button 状态
+					187 text 状态
+					188 image
+				189 table
+					190 row
+						191 cell
+							192 checkbox (settable, integer) 0
+						193 cell
+							194 text 物料编码
+							195 image
+						196 cell
+							197 text 类型
+						198 cell
+							199 text 物料属性
+						200 cell
+							201 text 物料条码
+							202 image
+						203 cell
+							204 text 物料型号
+							205 image
+						206 cell
+							207 text 物料名称
+						208 cell
+							209 text 品牌
+							210 image
+						211 cell
+							212 text 单位
+						213 cell
+							214 text 含税销售价
+						215 cell
+							216 text 不含税销售价
+							217 image
+						218 cell
+							219 text 含税成本价
+						220 cell
+							221 text 不含税成本价
+						222 cell
+							223 text 物料分类
+						224 cell
+							225 text 采购分类
+						226 cell
+							227 text 来源类型
+						228 cell
+							229 text 负责人
+						230 cell
+							231 text 创建时间
+							232 image
+						233 cell
+							234 text 物料状态
+							235 image
+						236 cell
+							237 text 操作
+					238 row
+						239 cell
+							240 image
+							241 text 暂无物料数据
+				242 text 共  0 条记录 每页
+				243 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					244 text 20
+				245 text 条
+				246 button (disabled) 上一页
+					247 image
+				248 button 1
+				249 button (disabled) 下一页
+					250 image
+			251 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			252 container Notifications alt+T
+		253 container 新增物料
+			254 heading 新增物料, Value: 3, ID: :r16:
+				255 text 新增物料
+			256 button 全屏
+				257 image
+			258 button 关闭
+				259 image
+			260 container
+				261 button 基本信息 4/20
+					262 text 基本信息
+					263 image
+					264 text 4
+					265 text /
+					266 text 20
+				267 text * 物料名称 :
+				268 text field (settable)
+				269 text 物料编码 :
+				270 text field (settable)
+				271 text * 物料型号 :
+				272 text field (settable)
+				273 text 物料条码 :
+				274 text field (settable)
+				275 text * 物料分类 :
+				276 button 请选择物料分类
+					277 text 请选择物料分类
+				278 button 新增分类
+					279 image
+				280 text 品牌 :
+				281 button 请选择品牌
+					282 text 请选择品牌
+				283 button 新增品牌
+					284 image
+				285 text 采购分类 :
+				286 button 请选择采购分类
+					287 text 请选择采购分类
+				288 text * 单位 :
+				289 button 请选择单位
+					290 text 请选择单位
+				291 button 新增单位
+					292 image
+				293 text 物料属性 :
+				294 radio button 原材料, Value: 1
+				295 radio button 半成品, Value: 0
+				296 radio button 成品, Value: 0
+				297 radio button 贸易商品, Value: 0
+				298 radio button 消耗品, Value: 0
+				299 radio button 服务, Value: 0
+				300 radio button 备件, Value: 0
+				301 radio button 包装材料, Value: 0
+				302 text 来源类型 :
+				303 radio button 采购, Value: 1
+				304 radio button 自制, Value: 0
+				305 radio button 外协, Value: 0
+				306 radio button 虚拟, Value: 0
+				307 text 状态 :
+				308 button 启用
+					309 text 启用
+					310 container
+						311 button
+							312 image
+						313 image
+				314 text 默认供应商 :
+				315 button 搜索供应商名称...
+					316 text 搜索供应商名称...
+				317 text 税收分类编码 :
+				318 text field (settable)
+				319 text 默认仓库 :
+				320 button 请选择默认仓库
+					321 text 请选择默认仓库
+				322 text 默认库位 :
+				323 button (disabled) 请先选择仓库后再选择库位
+					324 text 请先选择仓库后再选择库位
+				325 text 所属部门 :
+				326 button 请选择所属部门
+					327 text 请选择所属部门
+				328 text 负责人 :
+				329 button 请选择负责人
+					330 text 请选择负责人
+				331 text 损耗率 :
+				332 text field (settable) 0
+				333 text 启用BOM :
+				334 switch Value: 0, ID: :r1u:
+				335 text 图片 :
+				336 button 添加图片
+					337 image
+					338 text 添加图片
+				339 button 云相册
+					340 image
+					341 text 云相册
+				342 text 第一张图片将作为物料主图显示在列表和详情页 文档 :
+				343 button 点击或拖拽文件到此处上传 支持pdf、docx、xlsx、txt格式，单个文件不超过10M
+					344 image
+					345 text 点击或拖拽文件到此处上传
+					346 text 支持pdf、docx、xlsx、txt格式，单个文件不超过10M
+				347 button 规格与价格 1/1
+					348 text 规格与价格
+					349 image
+					350 text 1
+					351 text /
+					352 text 1
+				353 text 规格配置 : 规格名称 规格值
+				354 text field (settable) 默认
+				355 container 默认规格
+					356 text field (settable) Description: 默认的规格值, Value: 默认规格
+				357 text field (settable)
+				358 button 添加规格项
+					359 image
+					360 text 添加规格项
+				361 text 共  1  个 SKU
+				362 button 批量设置含税售价
+					363 image
+					364 text 批量设置含税售价
+				365 button 批量设置含税成本价
+					366 image
+					367 text 批量设置含税成本价
+				368 table
+					369 row
+						370 cell
+							371 text SKU编码
+						372 cell
+							373 text SKU条码
+						374 cell
+							375 text 规格
+						376 cell
+							377 text 含税售价
+						378 cell
+							379 text 含税成本价
+						380 cell
+							381 text 启用
+					382 row
+						383 cell
+							384 text field (settable)
+						385 cell
+							386 text field (settable)
+						387 cell
+							388 text 默认规格
+						389 cell
+							390 text field (settable)
+						391 cell
+							392 text field (settable)
+						393 cell
+							394 container
+								395 checkbox (disabled, settable, integer) 1
+								396 image
+				397 button 批次与追溯管理 0/2
+					398 text 批次与追溯管理
+					399 image
+					400 text 0
+					401 text /
+					402 text 2
+				403 switch Value: 0, ID: :r23:
+				404 text 已禁用批次管理 原材料和关键物料建议启用，入库时自动分配批次码
+				405 switch Value: 0, ID: :r24:
+				406 text 已禁用追溯管理 成品和关键半成品建议启用，出库时自动生成追溯码
+				407 button 自定义信息 0/4
+					408 text 自定义信息
+					409 image
+					410 text 0
+					411 text /
+					412 text 4
+				413 text 标签 :
+				414 text field (settable)
+				415 text 备注 :
+				416 text entry area (settable)
+				417 text 创建时间 : 只读
+				418 container
+					419 button
+						420 image
+				421 text 更新时间 : 只读
+				422 container
+					423 button
+						424 image
+			425 button 保存
+			426 button 保存并复制
+			427 button 关闭
+
+The focused UI element is 153 button 新建物料

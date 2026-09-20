@@ -1,0 +1,285 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同":
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "联系人管理":
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "预警配置中心":
+  - generic: 预警配置中心
+- button "报损单":
+  - generic: 报损单
+- button "新建报损":
+  - generic: 新建报损
+- button "SN管理":
+  - generic: SN管理
+- button "出库单列表":
+  - generic: 出库单列表
+- button "生产出库":
+  - generic: 生产出库
+- button "其他出库":
+  - generic: 其他出库
+- button "新建出库单":
+  - generic: 新建出库单
+- button "销售直接出库":
+  - generic: 销售直接出库
+- button "待出库发货单":
+  - generic: 待出库发货单
+- button "采购退换货出库":
+  - generic: 采购退换货出库
+- button "出库明细":
+  - generic: 出库明细
+- button "框架销售合同":
+  - generic: 框架销售合同
+- button "新建合同":
+  - generic: 新建合同
+- main:
+  - generic: 销售管理
+  - generic: 框架销售合同
+  - generic: 新建合同
+  - button:
+  - generic: 草稿
+  - heading "新建框架销售合同" [level=1]
+  - button "客户信息":
+    - heading "客户信息" [level=3]:
+      - text: 客户信息
+  - generic: 客户 *
+  - button "搜索客户名称...":
+    - generic: 搜索客户名称...
+  - generic: 联系人 / 联系电话
+  - generic: 请先选择客户
+  - generic: 收货信息
+  - button "请先选择客户" [disabled]:
+    - generic: 请先选择客户
+  - button "新增收货地址" [disabled]:
+  - generic: 合同备注
+  - textbox "请输入合同备注"
+  - generic: 销售人员
+  - generic: · 负责人承担合同业绩，协同销售参与合同协作
+  - generic: 负责人 *
+  - button "金一涛（当前操作人）" [disabled]:
+    - generic "金一涛（当前操作人）"
+  - paragraph: 默认当前操作人，也可从客户主负责人或协同销售中选择。
+  - generic: 协同销售
+  - generic: 已选 0 人
+  - button "请先选择客户" [disabled]:
+    - generic: 请先选择客户
+  - paragraph: 默认带出客户档案中的协同销售，可按本合同增减。
+  - button "合同基本信息":
+    - heading "合同基本信息" [level=3]:
+      - text: 合同基本信息
+  - button "合同基本信息 1/6":
+    - generic: 合同基本信息
+    - generic: 1/6
+  - generic: "*"
+  - generic: 合同标题
+  - textbox "请输入合同标题"
+  - generic: 公司账户
+  - button "搜索允许打印的公司账户...":
+    - generic: 搜索允许打印的公司账户...
+  - generic: "*"
+  - generic: 合同类型
+  - button "请选择合同类型" [active]:
+    - generic: 请选择合同类型
+  - button "新增合同类型":
+  - generic: 合同编号
+  - textbox "留空则按编码规则自动生成"
+  - generic: 客户单号
+  - textbox "请输入客户单号"
+  - generic: "*"
+  - generic: 签订日期
+  - textbox "请选择日期": 2026年9月8日
+  - button:
+  - button:
+  - generic: 关联项目
+  - generic: 请先选择客户
+  - button "物料明细 0 项":
+    - heading "物料明细 0 项" [level=3]:
+      - text: 物料明细
+      - generic: 0 项
+  - button "列设置":
+    - text: 列设置
+  - button "添加行":
+    - text: 添加行
+  - button "报价单导入":
+    - text: 报价单导入
+  - button "特价单导入":
+    - text: 特价单导入
+  - button "询价导入":
+    - text: 询价导入
+  - button "粘贴":
+    - text: 粘贴
+  - button "Excel":
+    - text: Excel
+  - button "从物料库选择":
+    - text: 从物料库选择
+  - button "组合物料":
+    - text: 组合物料
+  - button:
+  - paragraph: 暂未添加物料
+  - paragraph: 点击上方「添加行」后在单元格中弹窗选择物料/规格，或从报价单 / 粘贴 / Excel 批量引入
+  - button "添加第一行":
+    - text: 添加第一行
+  - button "从物料库选择"
+  - generic: "|"
+  - button "粘贴导入"
+  - generic: "|"
+  - button "Excel导入"
+  - generic: "|"
+  - button "从组合物料添加"
+  - button "订货约束与授权":
+    - heading "订货约束与授权" [level=3]:
+      - text: 订货约束与授权
+  - checkbox
+  - generic: 限制合同总下单金额
+  - paragraph: 启用后，基于本合同生成的销售订单累计含税金额不得超过该上限
+  - checkbox
+  - generic: 分/子公司或关联公司受用
+  - paragraph: 启用后可添加分公司、子公司或关联公司，并授权其引用本合同下单
+  - checkbox
+  - generic: 容许添加协议外物料下单
+  - paragraph: 启用后，基于本合同的订单可添加约定清单之外的物料，此类订单须进入审批流程
+  - checkbox
+  - generic: 框架和额度内下单需要审批
+  - paragraph: 额度/数量/清单范围内的订单可直接下单；超限或协议外物料才触发审批
+  - button "附加费用":
+    - heading "附加费用" [level=3]:
+      - text: 附加费用
+  - button "添加附加费用":
+    - text: 添加附加费用
+  - button:
+  - paragraph: 暂无附加费用
+  - button "+ 添加附加费用"
+  - button "收入确认规则":
+    - heading "收入确认规则" [level=3]:
+      - text: 收入确认规则
+  - generic: 基于本合同生成的销售订单将默认继承此处的收入确认方式，订单创建/编辑时也可根据实际情况单独调整。
+  - generic: 触发方式
+  - button "按发货出库":
+    - generic "按发货出库"
+  - paragraph: 发货出库后自动确认收入
+  - button "合同条款":
+    - heading "合同条款" [level=3]:
+      - text: 合同条款
+  - button "套用模版":
+    - text: 套用模版
+  - button:
+  - generic: 合同开始日期
+  - textbox "请选择日期": 2026年9月8日
+  - button:
+  - button:
+  - generic: 合同结束日期
+  - textbox "请选择日期": 2027年9月8日
+  - button:
+  - button:
+  - generic: 付款条件
+  - button "请选择付款条件":
+    - generic: 请选择付款条件
+  - generic: 交货周期（天）
+  - spinbutton: "21"
+  - generic: 质保期（月）
+  - spinbutton: "12"
+  - generic: 条款内容
+  - textbox "请输入合同条款内容，或点击「套用模版」快速填充..."
+  - heading "附件" [level=3]
+  - paragraph: 上传合同附件、附加协议、商务事故附件等
+  - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 PDF / Word / Excel / 图片等，单个文件不超过 500MB":
+    - generic: 点击或拖拽文件到此处上传
+    - generic: 支持 Ctrl+V 粘贴截图
+    - generic: PDF / Word / Excel / 图片等，单个文件不超过 500MB
+  - paragraph: 物料折后金额
+  - generic: ¥0.00
+  - generic: （已优惠 ¥0.00）
+  - paragraph: 附加费用含税
+  - generic: ¥0.00
+  - paragraph: 税额
+  - generic: ¥0.00
+  - paragraph: 合同金额
+  - generic: ¥0.00
+  - button "预览":
+    - text: 预览
+  - button "保存":
+    - text: 保存
+  - button "提交":
+    - text: 提交
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 暂无数据

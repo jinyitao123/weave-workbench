@@ -1,0 +1,232 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/sales/goodwill/2099141151628992514".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/goodwill/2099141151628992514
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 销售业务
+					10 image
+					11 text 销售业务
+					12 image
+				13 button 框架销售合同
+				14 button 销售订单
+				15 button 附加费用
+				16 button 收款流水
+				17 button 销售发货单
+				18 button 销售退货
+				19 button 业绩银行
+				20 button 价格策略
+				21 button Goodwill订单
+				22 button 销售团队
+				23 button 销售目标
+				24 button 销售发票
+				25 button CRM客户管理
+					26 image
+					27 text CRM客户管理
+					28 image
+				29 button 客户管理
+				30 button 联系人管理
+				31 button 销售报价
+				32 button 客户物料对照
+				33 button 商机管理
+				34 button 线索管理
+				35 button 跟进记录
+				36 button 公海客户
+				37 button 服务管理
+					38 image
+					39 text 服务管理
+					40 image
+				41 button 服务工单
+				42 button 服务报价单
+				43 button 服务结算单
+				44 button 接单中心
+				45 button 派工中心
+				46 button 服务分析
+				47 button 质保管理
+				48 button 服务配置
+			49 image
+			50 text 免费试用中，还剩 9 天 — 试用期间享全部功能
+			51 button 查看方案
+				52 image
+				53 text 查看方案
+			54 button
+				55 image
+			56 container
+				57 container 业务分类
+					58 container
+						59 checkbox 工作台, Value: 0
+						60 checkbox 供应链, Value: 0
+						61 checkbox 销售, Value: 1
+						62 checkbox 生产, Value: 0
+						63 checkbox 项目, Value: 0
+						64 checkbox 行政, Value: 0
+						65 checkbox 财务, Value: 0
+						66 checkbox 报表, Value: 0
+						67 checkbox 系统, Value: 0
+				68 button Description: 展开搜索, Help: 搜索
+					69 image
+				70 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+					71 image
+					72 text 20
+				73 button Description: 打开推广奖励, Help: 推广
+				74 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				75 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				76 button 立即订阅, Help: 试用还剩 9 天 · 立即订阅享专属优惠
+					77 image
+					78 text 立即订阅
+				79 button 金
+					80 text 金
+					81 image
+			82 container
+				83 button 工作台
+					84 image
+					85 text 工作台
+				86 button 销售目标
+					87 text 销售目标
+				88 button 工作台
+					89 text 工作台
+				90 button Goodwill订单
+					91 text Goodwill订单
+				92 button Goodwill订单详情
+					93 text Goodwill订单详情
+				94 button 框架销售合同
+					95 text 框架销售合同
+				96 button 销售订单
+					97 text 销售订单
+				98 button 销售发货单
+					99 text 销售发货单
+				100 button 销售发票
+					101 text 销售发票
+				102 button 收款流水
+					103 text 收款流水
+				104 button 业绩银行
+					105 text 业绩银行
+				106 button 销售报价
+					107 text 销售报价
+				108 button 服务工单
+					109 text 服务工单
+				110 button 服务报价单
+					111 text 服务报价单
+				112 button 服务结算单
+					113 text 服务结算单
+			114 container
+				115 text 销售管理
+				116 image
+				117 text Goodwill订单
+				118 image
+				119 text GW-2026-0001
+				120 button
+					121 image
+				122 image
+				123 text GW-2026-0001
+				124 image
+				125 text 已审批
+				126 image
+				127 text RISEMAP 对照赠送类型 20260913
+				128 heading 苏州澄岳自动化装备有限公司 - Goodwill 订单, Value: 1
+					129 text 苏州澄岳自动化装备有限公司  - Goodwill 订单
+				130 button 创建发货
+					131 image
+					132 text 创建发货
+				133 button 反审核
+					134 image
+					135 text 反审核
+				136 button 一键反审核
+					137 image
+					138 text 一键反审核
+				139 button 打印
+					140 image
+					141 text 打印
+				142 image
+				143 text 草稿
+				144 image
+				145 text 待审批
+				146 image
+				147 text 已审批 4 发货中 5 已完成
+				148 button 基本信息
+					149 text 基本信息
+				150 button 物品清单 1
+					151 text 物品清单
+					152 text 1
+				153 button 发货记录
+				154 button 审批记录 1
+					155 text 审批记录
+					156 text 1
+				157 button 操作记录 3
+					158 text 操作记录
+					159 text 3
+				160 heading 订单信息, Value: 3
+					161 text 订单信息
+				162 text 客户名称
+				163 text 苏州澄岳自动化装备有限公司
+				164 text 联系人
+				165 text 周启明 / —
+				166 text 负责人
+				167 text 金一涛
+				168 text 赠送类型
+				169 text RISEMAP 对照赠送类型 20260913
+				170 text 创建人
+				171 text 金一涛
+				172 text 创建日期
+				173 text 2026-09-13 22:20:25
+				174 text 审批人
+				175 text 金一涛
+				176 text 审批日期
+				177 text 2026-09-13 23:06
+				178 text 关联合同
+				179 text —
+				180 text 关联项目
+				181 text —
+				182 image
+				183 text 收货地址
+				184 text —
+				185 heading 申请原因, Value: 3
+					186 text 申请原因
+				187 text 800型柔性线控制柜交付后客户培训资料与调试样件赠送，用于 Forge 同材料复刻验收。
+				188 text 备注
+				189 text RISEMAP 对照 Goodwill 订单 20260913
+				190 text 1
+				191 text 物品种类
+				192 text 2
+				193 text 物品总数
+				194 text 0
+				195 text 发货单数
+				196 text 0
+				197 text 已发数量
+				198 container
+					199 image
+					200 heading 创建发货单, Value: 3
+						201 text 创建发货单
+					202 button
+						203 image
+					204 text GW-2026-0001 苏州澄岳自动化装备有限公司 - RISEMAP 对照赠送类型 20260913 发货物品: 800型柔性线控制柜 x2 物流公司
+					205 button 物流公司
+						206 text 请选择
+					207 text 运单号
+					208 text field (settable) 运单号, ID: goodwill-tracking-no
+					209 text 当面交付时可不填写物流信息。 收货地址
+					210 button 从地址簿选择
+						211 image
+						212 text 从地址簿选择
+					213 text field (settable)
+					214 text 收件人
+					215 text field (settable)
+					216 text 联系电话
+					217 text field (settable)
+					218 button 取消
+					219 button 确认发货
+				220 button Description: 拖动快捷操作面板；按方向键调整，回车复位, Help: 按住拖动；双击复位
+					221 image
+				222 button 创建发货
+					223 image
+				224 button 反审核
+					225 image
+				226 button 打印
+					227 image
+			228 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			229 container Notifications alt+T
+
+The focused UI element is 130 button 创建发货

@@ -1,0 +1,1113 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/quotations/new".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/quotations/new
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 销售业务
+					10 image
+					11 text 销售业务
+					12 image
+				13 button 框架销售合同
+				14 button 销售订单
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+			36 image
+			37 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			38 button 查看方案
+				39 image
+				40 text 查看方案
+			41 button
+				42 image
+			43 container
+				44 container 业务分类
+					45 checkbox 工作台, Value: 0
+					46 checkbox 供应链, Value: 0
+					47 checkbox 销售, Value: 1
+					48 checkbox 生产, Value: 0
+					49 checkbox 项目, Value: 0
+					50 checkbox 行政, Value: 0
+					51 checkbox 财务, Value: 0
+					52 checkbox 报表, Value: 0
+					53 checkbox 系统, Value: 0
+				54 button Description: 展开搜索, Help: 搜索
+					55 image
+				56 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					57 image
+					58 text 2
+				59 button Description: 打开推广奖励, Help: 推广
+				60 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				61 link Description: 打开工单, Value: community.risemap.cn/support
+				62 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					63 image
+					64 text 立即订阅
+				65 button 金
+					66 text 金
+					67 image
+			68 container
+				69 button 工作台
+					70 image
+					71 text 工作台
+				72 button 业绩银行
+					73 text 业绩银行
+				74 button 价格策略
+					75 text 价格策略
+				76 button 新增框架协议
+					77 text 新增框架协议
+				78 button 新增特价
+					79 text 新增特价
+				80 button Goodwill订单
+					81 text Goodwill订单
+				82 button Goodwill订单详情
+					83 text Goodwill订单详情
+				84 button 销售团队
+					85 text 销售团队
+				86 button 销售目标
+					87 text 销售目标
+				88 button 销售发票
+					89 text 销售发票
+				90 button 客户管理
+					91 text 客户管理
+				92 button 名片扫描
+					93 text 名片扫描
+				94 button 联系人管理
+					95 text 联系人管理
+				96 button 销售报价
+					97 text 销售报价
+				98 button 新建销售报价
+					99 text 新建销售报价
+			100 container
+				101 text 销售管理
+				102 image
+				103 text 销售报价
+				104 image
+				105 text 新建报价
+				106 button
+					107 image
+				108 heading 新建报价单, Value: 1
+					109 text 新建报价单
+				110 button 管理员视角, Help: 当前角色：管理员（可查看成本价和利润）
+					111 image
+					112 text 管理员视角
+				113 button 取消
+				114 button 预览报价单
+					115 image
+					116 text 预览报价单
+				117 button 保存草稿
+					118 image
+					119 text 保存草稿
+				120 button 提交审核
+					121 image
+					122 text 提交审核
+				123 button 报价基本信息 2/8
+					124 text 报价基本信息
+					125 image
+					126 text 2
+					127 text /
+					128 text 8
+				129 text 报价单号
+				130 text field (settable)
+				131 container
+					132 text * 客户
+				133 button 搜索客户名称...
+					134 text 搜索客户名称...
+				135 container
+					136 text * 负责人
+				137 button (disabled) 金一涛（当前开单人）
+					138 text 金一涛（当前开单人）
+				139 text 默认当前开单人，也可从客户主负责人或协同销售中选择。
+				140 text 联系人
+				141 text 请先选择客户
+				142 text 关联商机
+				143 button (disabled) 请先选择客户
+					144 text 请先选择客户
+				145 container
+					146 text * 报价类型
+				147 button 新增报价类型
+					148 image
+				149 container
+					150 text * 报价主体
+				151 button 请选择
+					152 text 请选择
+				153 button 新增公司抬头
+					154 image
+				155 text 有效期
+				156 stepper (settable, integer) 30
+				157 text 天 至  2026-10-08
+				158 button 商务条款 1/4
+					159 text 商务条款
+					160 image
+					161 text 1
+					162 text /
+					163 text 4
+				164 text 销售付款条件
+				165 button 请选择销售付款条件
+					166 text 请选择销售付款条件
+				167 text 付款方式
+				168 button 请选择付款方式
+					169 text 请选择付款方式
+				170 text 交货期
+				171 stepper (settable, integer) 30
+				172 text 工作日
+				173 text 自合同签订之日起计算
+				174 text 报价说明
+				175 text entry area (settable)
+				176 button + 含税含运
+					177 text + 
+					178 text 含税含运
+				179 button + 不含安装调试
+					180 text + 
+					181 text 不含安装调试
+				182 button + FOB上海
+					183 text + 
+					184 text FOB上海
+				185 button + 质保1年
+					186 text + 
+					187 text 质保1年
+				188 button + 含技术培训
+					189 text + 
+					190 text 含技术培训
+				191 button + 7×24小时技术支持
+					192 text + 
+					193 text 7×24小时技术支持
+				194 container
+					195 heading 报价明细, Value: 3
+						196 text 报价明细
+					197 container 物料字段显示模式
+						198 button 常用字段
+						199 button 全部字段
+					200 button 添加物料
+						201 image
+						202 text 添加物料
+					203 button 新建分组
+						204 image
+						205 text 新建分组
+					206 button 平铺显示
+						207 image
+						208 text 平铺显示
+					209 button 物料组合
+						210 image
+						211 text 物料组合
+					212 button 新增临时物料
+						213 image
+						214 text 新增临时物料
+					215 button 批量导入物料
+						216 image
+						217 text 批量导入物料
+					218 button 供应商价本
+						219 image
+						220 text 供应商价本
+					221 image
+					222 text 已选  0  项
+					223 button (disabled) 批量数量
+						224 image
+						225 text 批量数量
+					226 button (disabled) 批量调价
+						227 image
+						228 text 批量调价
+					229 button (disabled) 批量调税率
+						230 image
+						231 text 批量调税率
+					232 button (disabled) 统一折扣
+						233 image
+						234 text 统一折扣
+					235 button (disabled) 批量删除
+						236 image
+						237 text 批量删除
+					238 button (disabled) 取消选择
+						239 image
+						240 text 取消选择
+					241 image
+					242 text 暂无物料明细
+					243 text 从物料库选择后，可直接维护数量、含税单价、税率和折扣
+					244 button 添加物料
+						245 image
+						246 text 添加物料
+					247 button 添加空行
+						248 image
+						249 text 添加空行
+					250 text 未税 ¥ 0.00 税额 ¥ 0.00 物料含税 ¥ 0.00 报价总额 ¥ 0.00
+				251 heading 服务费用明细, Value: 3
+					252 text 服务费用明细
+				253 button 添加服务费
+					254 image
+					255 text 添加服务费
+				256 image
+				257 text 暂无服务费项目
+				258 text 可添加技术服务费、安装调试费、运输费、项目管理费等
+				259 container
+					260 button (expanded) 报价条款 0 条 随报价单输出的商务约定, Secondary Actions: Collapse
+						261 text 报价条款
+						262 text 0
+						263 text  条
+						264 text 随报价单输出的商务约定
+						265 image
+					266 text 维护随报价单输出的商务条款
+					267 button 选择预设
+						268 image
+						269 text 选择预设
+					270 button 自定义
+						271 image
+						272 text 自定义
+					273 text 暂未添加报价条款
+					274 text 可从预设条款中选择，或新增自定义条款
+				275 container
+					276 heading 报价汇总, Value: 3
+						277 text 报价汇总
+					278 text 实时 客户 暂未选择客户 未选择报价类型 · 0 项物料 · 0 项服务 报价总额（含税） ¥ 0.00 物料金额 ¥ 0.00 服务费用 ¥ 0.00 折后未税 ¥ 0.00 税额 ¥ 0.00 总成本 ¥ 0.00 毛利 ¥ 0.00 毛利率 0.0 % 有效期 30  天 有效至 2026-10-08 付款方式 未设置 交货期 30
+					279 button (expanded) 价格预警设置 任何偏差, Secondary Actions: Collapse
+						280 image
+						281 text 价格预警设置
+						282 text 任何偏差
+						283 image
+					284 text 偏差阈值
+					285 text 仅当本次报价与历史成交/报价偏差超过此百分比时触发预警
+					286 slider (settable, integer) 0
+					287 text field (settable) 0
+					288 text %
+					289 button 任何偏差
+					290 button ≥3%
+					291 button ≥5%
+					292 button ≥10%
+					293 image
+					294 text 附件资料 0
+					295 button 云文档
+						296 image
+						297 text 云文档
+					298 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、DWG、压缩包等格式，单个文件不超过 500 MB
+						299 image
+						300 text 点击或拖拽文件到此处上传
+						301 text 支持 Ctrl+V 粘贴截图
+						302 text 支持 PDF、Word、Excel、图片、DWG、压缩包等格式，单个文件不超过 500 MB
+				305 container
+					306 button 关闭物料导入弹窗
+					307 container 批量导入报价物料
+						308 container
+							309 image
+							310 heading 批量导入报价物料, Value: 2, ID: material-import-title
+								311 text 批量导入报价物料
+							312 text 销售报价物料导入示例.xlsx
+							313 button 关闭
+								314 image
+						315 container 导入步骤
+							316 content list
+								317 container
+									326 image
+									327 text 上传文件
+								319 container
+									328 image
+									329 text 字段识别
+								321 container
+									322 text 3 校验与修正
+								323 container
+									324 text 4 导入结果
+						325 container
+							330 image
+							331 text 16 数据总数
+							332 image
+							333 text 0 可直接导入
+							334 image
+							335 text 0 待确认 / 可修复
+							336 image
+							337 text 16 阻断异常
+							338 button 全部 16
+							339 button 异常 16
+							340 button 可导入 0
+							341 button 已跳过 0
+							342 text 搜索物料
+							343 image
+							344 text field (settable) 搜索物料
+							345 button 重新上传
+								346 image
+								347 text 重新上传
+							348 button 重新校验
+								349 image
+								350 text 重新校验
+							351 button 导出异常
+								352 image
+								353 text 导出异常
+								354 image
+							355 image
+							356 text 发现  11  条系统中不存在的物料， 可批量建为临时档案或统一跳过。
+							357 button 批量跳过
+								358 image
+								359 text 批量跳过
+							360 table
+								361 row
+									362 cell
+										363 text 行号
+									364 cell
+										365 text 物料编码
+									366 cell
+										367 text 物料名称 *
+									368 cell
+										369 text 规格 *
+									370 cell
+										371 text 型号 *
+									372 cell
+										373 text 分类 *
+									374 cell
+										375 text 单位 *
+									376 cell
+										377 text 数量 *
+									378 cell
+										379 text 含税单价 *
+									380 cell
+										381 text 不含税单价
+									382 cell
+										383 text 税率
+									384 cell
+										385 text 折扣%
+									386 cell
+										387 text 备注
+									388 cell
+										389 text 异常说明
+									390 cell
+										391 text 操作
+								392 row
+									393 cell
+										394 text 2
+									395 cell
+										396 text field (settable) Description: 2行物料编码, Value: MAT-001
+									397 cell
+										398 text field (settable) Description: 2行物料名称, Value: PLC 控制器
+									399 cell
+										400 text field (settable) Description: 2行规格, Value: 24DI/16DO
+									401 cell
+										402 text field (settable) Description: 2行型号, Value: PLC-1200
+									403 cell
+										404 text field (settable) Description: 2行分类, Value: 控制器
+									405 cell
+										406 text field (settable) Description: 2行单位, Value: 台
+									407 cell
+										408 stepper (settable, integer) Description: 2行数量, Value: 2
+									409 cell
+										410 stepper (settable, integer) Description: 2行含税单价, Value: 3800
+									411 cell
+										412 stepper (settable, float) Description: 2行不含税单价, Value: 3362.831787109375, Details: 3362.8319
+									413 cell
+										414 pop up button (collapsed, settable) Description: 2行税率, Value: 13%, Secondary Actions: Expand
+											415 menu
+												416 使用物料默认税率
+												417 (selected) 13%
+												418 9%
+												419 6%
+												420 3%
+												421 1%
+												422 0%
+									423 cell
+										424 stepper (settable) 2行折扣%
+									425 cell
+										426 text field (settable) 2行备注
+									427 cell
+										428 image
+										429 text 物料不存在，必须创建临时物料或跳过
+										430 image
+										431 text 分类名称未匹配到启用分类，请修正后重新匹配
+									432 cell
+										433 button 修正后重新匹配
+										434 button 跳过此行
+											435 image
+											436 text 跳过此行
+								437 row
+									438 cell
+										439 text 3
+									440 cell
+										441 text field (settable) 3行物料编码
+									442 cell
+										443 text field (settable) Description: 3行物料名称, Value: 工业交换机
+									444 cell
+										445 text field (settable) Description: 3行规格, Value: 8口千兆
+									446 cell
+										447 text field (settable) Description: 3行型号, Value: SW-8G
+									448 cell
+										449 text field (settable) Description: 3行分类, Value: 网络设备
+									450 cell
+										451 text field (settable) Description: 3行单位, Value: 台
+									452 cell
+										453 stepper (settable, integer) Description: 3行数量, Value: 5
+									454 cell
+										455 stepper (settable, integer) Description: 3行含税单价, Value: 980
+									456 cell
+										457 stepper (settable, float) Description: 3行不含税单价, Value: 867.256591796875, Details: 867.2566
+									458 cell
+										459 pop up button (collapsed, settable) Description: 3行税率, Value: 13%, Secondary Actions: Expand
+											460 menu
+												461 使用物料默认税率
+												462 (selected) 13%
+												463 9%
+												464 6%
+												465 3%
+												466 1%
+												467 0%
+									468 cell
+										469 stepper (settable) 3行折扣%
+									470 cell
+										471 text field (settable) 3行备注
+									472 cell
+										473 image
+										474 text 物料不存在，必须创建临时物料或跳过
+										475 image
+										476 text 分类名称未匹配到启用分类，请修正后重新匹配
+									477 cell
+										478 button 修正后重新匹配
+										479 button 跳过此行
+											480 image
+											481 text 跳过此行
+								482 row
+									483 cell
+										484 text 4
+									485 cell
+										486 text field (settable) 4行物料编码
+									487 cell
+										488 text field (settable) Description: 4行物料名称, Value: 温度传感器
+									489 cell
+										490 text field (settable) Description: 4行规格, Value: PT100
+									491 cell
+										492 text field (settable) Description: 4行型号, Value: TS-100
+									493 cell
+										494 text field (settable) Description: 4行分类, Value: 传感器
+									495 cell
+										496 text field (settable) Description: 4行单位, Value: 只
+									497 cell
+										498 stepper (settable, integer) Description: 4行数量, Value: 10
+									499 cell
+										500 stepper (settable, integer) Description: 4行含税单价, Value: 180
+									501 cell
+										502 stepper (settable, float) Description: 4行不含税单价, Value: 159.29200744628906, Details: 159.292
+									503 cell
+										504 pop up button (collapsed, settable) Description: 4行税率, Value: 13%, Secondary Actions: Expand
+											505 menu
+												506 使用物料默认税率
+												507 (selected) 13%
+												508 9%
+												509 6%
+												510 3%
+												511 1%
+												512 0%
+									513 cell
+										514 stepper (settable) 4行折扣%
+									515 cell
+										516 text field (settable) 4行备注
+									517 cell
+										518 image
+										519 text 物料不存在，必须创建临时物料或跳过
+										520 image
+										521 text 分类名称未匹配到启用分类，请修正后重新匹配
+									522 cell
+										523 button 修正后重新匹配
+										524 button 跳过此行
+											525 image
+											526 text 跳过此行
+								527 row
+									528 cell
+										529 text 5
+									530 cell
+										531 text field (settable) 5行物料编码
+									532 cell
+										533 text field (settable) Description: 5行物料名称, Value: 温度传感器
+									534 cell
+										535 text field (settable) Description: 5行规格, Value: PT100
+									536 cell
+										537 text field (settable) Description: 5行型号, Value: TS-100
+									538 cell
+										539 text field (settable) Description: 5行分类, Value: 传感器
+									540 cell
+										541 text field (settable) Description: 5行单位, Value: 只
+									542 cell
+										543 stepper (settable, integer) Description: 5行数量, Value: 6
+									544 cell
+										545 stepper (settable, integer) Description: 5行含税单价, Value: 180
+									546 cell
+										547 stepper (settable, float) Description: 5行不含税单价, Value: 159.29200744628906, Details: 159.292
+									548 cell
+										549 pop up button (collapsed, settable) Description: 5行税率, Value: 13%, Secondary Actions: Expand
+											550 menu
+												551 使用物料默认税率
+												552 (selected) 13%
+												553 9%
+												554 6%
+												555 3%
+												556 1%
+												557 0%
+									558 cell
+										559 stepper (settable) 5行折扣%
+									560 cell
+										561 text field (settable) 5行备注
+									562 cell
+										563 image
+										564 text 物料不存在，必须创建临时物料或跳过
+										565 image
+										566 text 分类名称未匹配到启用分类，请修正后重新匹配
+									567 cell
+										568 button 修正后重新匹配
+										569 button 跳过此行
+											570 image
+											571 text 跳过此行
+								572 row
+									573 cell
+										574 text 6
+									575 cell
+										576 text field (settable) 6行物料编码
+									577 cell
+										578 text field (settable) 6行物料名称
+									579 cell
+										580 text field (settable) Description: 6行规格, Value: 缺少名称
+									581 cell
+										582 text field (settable) Description: 6行型号, Value: MISS-NAME
+									583 cell
+										584 text field (settable) Description: 6行分类, Value: 备件
+									585 cell
+										586 text field (settable) Description: 6行单位, Value: 个
+									587 cell
+										588 stepper (settable, integer) Description: 6行数量, Value: 1
+									589 cell
+										590 stepper (settable, integer) Description: 6行含税单价, Value: 100
+									591 cell
+										592 stepper (settable, float) Description: 6行不含税单价, Value: 88.49559783935547, Details: 88.4956
+									593 cell
+										594 pop up button (collapsed, settable) Description: 6行税率, Value: 13%, Secondary Actions: Expand
+											595 menu
+												596 使用物料默认税率
+												597 (selected) 13%
+												598 9%
+												599 6%
+												600 3%
+												601 1%
+												602 0%
+									603 cell
+										604 stepper (settable) 6行折扣%
+									605 cell
+										606 text field (settable) 6行备注
+									607 cell
+										608 image
+										609 text 缺少必填字段：物料编码或物料名称
+										610 image
+										611 text 缺少必填字段：物料名称
+									612 cell
+										613 button 修正后重新匹配
+										614 button 跳过此行
+											615 image
+											616 text 跳过此行
+								617 row
+									618 cell
+										619 text 7
+									620 cell
+										621 text field (settable) 7行物料编码
+									622 cell
+										623 text field (settable) Description: 7行物料名称, Value: 缺少型号示例
+									624 cell
+										625 text field (settable) Description: 7行规格, Value: 标准
+									626 cell
+										627 text field (settable) 7行型号
+									628 cell
+										629 text field (settable) Description: 7行分类, Value: 备件
+									630 cell
+										631 text field (settable) Description: 7行单位, Value: 个
+									632 cell
+										633 stepper (settable, integer) Description: 7行数量, Value: 1
+									634 cell
+										635 stepper (settable, integer) Description: 7行含税单价, Value: 100
+									636 cell
+										637 stepper (settable, float) Description: 7行不含税单价, Value: 88.49559783935547, Details: 88.4956
+									638 cell
+										639 pop up button (collapsed, settable) Description: 7行税率, Value: 13%, Secondary Actions: Expand
+											640 menu
+												641 使用物料默认税率
+												642 (selected) 13%
+												643 9%
+												644 6%
+												645 3%
+												646 1%
+												647 0%
+									648 cell
+										649 stepper (settable) 7行折扣%
+									650 cell
+										651 text field (settable) 7行备注
+									652 cell
+										653 image
+										654 text 物料不存在，必须创建临时物料或跳过
+										655 image
+										656 text 分类名称未匹配到启用分类，请修正后重新匹配
+									657 cell
+										658 button 修正后重新匹配
+										659 button 跳过此行
+											660 image
+											661 text 跳过此行
+								662 row
+									663 cell
+										664 text 8
+									665 cell
+										666 text field (settable) 8行物料编码
+									667 cell
+										668 text field (settable) Description: 8行物料名称, Value: 缺少分类示例
+									669 cell
+										670 text field (settable) Description: 8行规格, Value: 标准
+									671 cell
+										672 text field (settable) Description: 8行型号, Value: MISS-CATEGORY
+									673 cell
+										674 text field (settable) 8行分类
+									675 cell
+										676 text field (settable) Description: 8行单位, Value: 个
+									677 cell
+										678 stepper (settable, integer) Description: 8行数量, Value: 1
+									679 cell
+										680 stepper (settable, integer) Description: 8行含税单价, Value: 100
+									681 cell
+										682 stepper (settable, float) Description: 8行不含税单价, Value: 88.49559783935547, Details: 88.4956
+									683 cell
+										684 pop up button (collapsed, settable) Description: 8行税率, Value: 13%, Secondary Actions: Expand
+											685 menu
+												686 使用物料默认税率
+												687 (selected) 13%
+												688 9%
+												689 6%
+												690 3%
+												691 1%
+												692 0%
+									693 cell
+										694 stepper (settable) 8行折扣%
+									695 cell
+										696 text field (settable) 8行备注
+									697 cell
+										698 image
+										699 text 物料不存在，必须创建临时物料或跳过
+										700 image
+										701 text 分类名称未匹配到启用分类，请修正后重新匹配
+									702 cell
+										703 button 修正后重新匹配
+										704 button 跳过此行
+											705 image
+											706 text 跳过此行
+								707 row
+									708 cell
+										709 text 9
+									710 cell
+										711 text field (settable) 9行物料编码
+									712 cell
+										713 text field (settable) Description: 9行物料名称, Value: 缺少单位示例
+									714 cell
+										715 text field (settable) Description: 9行规格, Value: 标准
+									716 cell
+										717 text field (settable) Description: 9行型号, Value: MISS-UNIT
+									718 cell
+										719 text field (settable) Description: 9行分类, Value: 备件
+									720 cell
+										721 text field (settable) 9行单位
+									722 cell
+										723 stepper (settable, integer) Description: 9行数量, Value: 1
+									724 cell
+										725 stepper (settable, integer) Description: 9行含税单价, Value: 100
+									726 cell
+										727 stepper (settable, float) Description: 9行不含税单价, Value: 88.49559783935547, Details: 88.4956
+									728 cell
+										729 pop up button (collapsed, settable) Description: 9行税率, Value: 13%, Secondary Actions: Expand
+											730 menu
+												731 使用物料默认税率
+												732 (selected) 13%
+												733 9%
+												734 6%
+												735 3%
+												736 1%
+												737 0%
+									738 cell
+										739 stepper (settable) 9行折扣%
+									740 cell
+										741 text field (settable) 9行备注
+									742 cell
+										743 image
+										744 text 物料不存在，必须创建临时物料或跳过
+										745 image
+										746 text 分类名称未匹配到启用分类，请修正后重新匹配
+									747 cell
+										748 button 修正后重新匹配
+										749 button 跳过此行
+											750 image
+											751 text 跳过此行
+								752 row
+									753 cell
+										754 text 10
+									755 cell
+										756 text field (settable) 10行物料编码
+									757 cell
+										758 text field (settable) Description: 10行物料名称, Value: 数量为零示例
+									759 cell
+										760 text field (settable) Description: 10行规格, Value: 标准
+									761 cell
+										762 text field (settable) Description: 10行型号, Value: QTY-ZERO
+									763 cell
+										764 text field (settable) Description: 10行分类, Value: 备件
+									765 cell
+										766 text field (settable) Description: 10行单位, Value: 个
+									767 cell
+										768 stepper (settable, integer) Description: 10行数量, Value: 0
+									769 cell
+										770 stepper (settable, integer) Description: 10行含税单价, Value: 100
+									771 cell
+										772 stepper (settable, float) Description: 10行不含税单价, Value: 88.49559783935547, Details: 88.4956
+									773 cell
+										774 pop up button (collapsed, settable) Description: 10行税率, Value: 13%, Secondary Actions: Expand
+											775 menu
+												776 使用物料默认税率
+												777 (selected) 13%
+												778 9%
+												779 6%
+												780 3%
+												781 1%
+												782 0%
+									783 cell
+										784 stepper (settable) 10行折扣%
+									785 cell
+										786 text field (settable) 10行备注
+									787 cell
+										788 image
+										789 text 数量必须大于 0
+									790 cell
+										791 button 修正后重新匹配
+										792 button 跳过此行
+											793 image
+											794 text 跳过此行
+								795 row
+									796 cell
+										797 text 11
+									798 cell
+										799 text field (settable) 11行物料编码
+									800 cell
+										801 text field (settable) Description: 11行物料名称, Value: 数量为负示例
+									802 cell
+										803 text field (settable) Description: 11行规格, Value: 标准
+									804 cell
+										805 text field (settable) Description: 11行型号, Value: QTY-NEG
+									806 cell
+										807 text field (settable) Description: 11行分类, Value: 备件
+									808 cell
+										809 text field (settable) Description: 11行单位, Value: 个
+									810 cell
+										811 stepper (settable, integer) Description: 11行数量, Value: -2
+									812 cell
+										813 stepper (settable, integer) Description: 11行含税单价, Value: 100
+									814 cell
+										815 stepper (settable, float) Description: 11行不含税单价, Value: 88.49559783935547, Details: 88.4956
+									816 cell
+										817 pop up button (collapsed, settable) Description: 11行税率, Value: 13%, Secondary Actions: Expand
+											818 menu
+												819 使用物料默认税率
+												820 (selected) 13%
+												821 9%
+												822 6%
+												823 3%
+												824 1%
+												825 0%
+									826 cell
+										827 stepper (settable) 11行折扣%
+									828 cell
+										829 text field (settable) 11行备注
+									830 cell
+										831 image
+										832 text 数量必须大于 0
+									833 cell
+										834 button 修正后重新匹配
+										835 button 跳过此行
+											836 image
+											837 text 跳过此行
+								838 row
+									839 cell
+										840 text 12
+									841 cell
+										842 text field (settable) 12行物料编码
+									843 cell
+										844 text field (settable) Description: 12行物料名称, Value: 价格非法示例
+									845 cell
+										846 text field (settable) Description: 12行规格, Value: 标准
+									847 cell
+										848 text field (settable) Description: 12行型号, Value: PRICE-NEG
+									849 cell
+										850 text field (settable) Description: 12行分类, Value: 备件
+									851 cell
+										852 text field (settable) Description: 12行单位, Value: 个
+									853 cell
+										854 stepper (settable, integer) Description: 12行数量, Value: 1
+									855 cell
+										856 stepper (settable, integer) Description: 12行含税单价, Value: -1
+									857 cell
+										858 stepper (settable, float) Description: 12行不含税单价, Value: -0.8849999904632568, Details: -0.885
+									859 cell
+										860 pop up button (collapsed, settable) Description: 12行税率, Value: 13%, Secondary Actions: Expand
+											861 menu
+												862 使用物料默认税率
+												863 (selected) 13%
+												864 9%
+												865 6%
+												866 3%
+												867 1%
+												868 0%
+									869 cell
+										870 stepper (settable) 12行折扣%
+									871 cell
+										872 text field (settable) 12行备注
+									873 cell
+										874 image
+										875 text 单价不能小于 0
+										876 image
+										877 text 含税单价不能小于 0
+									878 cell
+										879 button 修正后重新匹配
+										880 button 跳过此行
+											881 image
+											882 text 跳过此行
+								883 row
+									884 cell
+										885 text 13
+									886 cell
+										887 text field (settable) 13行物料编码
+									888 cell
+										889 text field (settable) Description: 13行物料名称, Value: 税率非法示例
+									890 cell
+										891 text field (settable) Description: 13行规格, Value: 标准
+									892 cell
+										893 text field (settable) Description: 13行型号, Value: TAX-INVALID
+									894 cell
+										895 text field (settable) Description: 13行分类, Value: 备件
+									896 cell
+										897 text field (settable) Description: 13行单位, Value: 个
+									898 cell
+										899 stepper (settable, integer) Description: 13行数量, Value: 1
+									900 cell
+										901 stepper (settable, integer) Description: 13行含税单价, Value: 100
+									902 cell
+										903 stepper (settable, float) Description: 13行不含税单价, Value: 95.23809814453124, Details: 95.2381
+									904 cell
+										905 pop up button (collapsed, settable) Description: 13行税率, Value: 5%（不支持）, Secondary Actions: Expand
+											906 menu
+												907 使用物料默认税率
+												908 (selected) 5%（不支持）
+												909 13%
+												910 9%
+												911 6%
+												912 3%
+												913 1%
+												914 0%
+									915 cell
+										916 stepper (settable) 13行折扣%
+									917 cell
+										918 text field (settable) 13行备注
+									919 cell
+										920 image
+										921 text 税率仅支持 13%、9%、6%、3%、1% 或 0%
+									922 cell
+										923 button 修正后重新匹配
+										924 button 跳过此行
+											925 image
+											926 text 跳过此行
+								927 row
+									928 cell
+										929 text 14
+									930 cell
+										931 text field (settable) 14行物料编码
+									932 cell
+										933 text field (settable) Description: 14行物料名称, Value: 单位不一致示例
+									934 cell
+										935 text field (settable) Description: 14行规格, Value: 标准
+									936 cell
+										937 text field (settable) Description: 14行型号, Value: UNIT-MISMATCH
+									938 cell
+										939 text field (settable) Description: 14行分类, Value: 备件
+									940 cell
+										941 text field (settable) Description: 14行单位, Value: 箱
+									942 cell
+										943 stepper (settable, integer) Description: 14行数量, Value: 1
+									944 cell
+										945 stepper (settable, integer) Description: 14行含税单价, Value: 100
+									946 cell
+										947 stepper (settable, float) Description: 14行不含税单价, Value: 88.49559783935547, Details: 88.4956
+									948 cell
+										949 pop up button (collapsed, settable) Description: 14行税率, Value: 13%, Secondary Actions: Expand
+											950 menu
+												951 使用物料默认税率
+												952 (selected) 13%
+												953 9%
+												954 6%
+												955 3%
+												956 1%
+												957 0%
+									958 cell
+										959 stepper (settable) 14行折扣%
+									960 cell
+										961 text field (settable) 14行备注
+									962 cell
+										963 image
+										964 text 物料不存在，必须创建临时物料或跳过
+										965 image
+										966 text 分类名称未匹配到启用分类，请修正后重新匹配
+									967 cell
+										968 button 修正后重新匹配
+										969 button 跳过此行
+											970 image
+											971 text 跳过此行
+								972 row
+									973 cell
+										974 text 15
+									975 cell
+										976 text field (settable) 15行物料编码
+									977 cell
+										978 text field (settable) Description: 15行物料名称, Value: 系统不存在物料
+									979 cell
+										980 text field (settable) Description: 15行规格, Value: 新规格
+									981 cell
+										982 text field (settable) Description: 15行型号, Value: NEW-MATERIAL
+									983 cell
+										984 text field (settable) Description: 15行分类, Value: 备件
+									985 cell
+										986 text field (settable) Description: 15行单位, Value: 个
+									987 cell
+										988 stepper (settable, integer) Description: 15行数量, Value: 3
+									989 cell
+										990 stepper (settable, integer) Description: 15行含税单价, Value: 260
+									991 cell
+										992 stepper (settable, float) Description: 15行不含税单价, Value: 230.0885009765625, Details: 230.0885
+									993 cell
+										994 pop up button (collapsed, settable) Description: 15行税率, Value: 13%, Secondary Actions: Expand
+											995 menu
+												996 使用物料默认税率
+												997 (selected) 13%
+												998 9%
+												999 6%
+												1000 3%
+												1001 1%
+												1002 0%
+									1003 cell
+										1004 stepper (settable) 15行折扣%
+									1005 cell
+										1006 text field (settable) 15行备注
+									1007 cell
+										1008 image
+										1009 text 物料不存在，必须创建临时物料或跳过
+										1010 image
+										1011 text 分类名称未匹配到启用分类，请修正后重新匹配
+									1012 cell
+										1013 button 修正后重新匹配
+										1014 button 跳过此行
+											1015 image
+											1016 text 跳过此行
+								1017 row
+									1018 cell
+										1019 text 16
+									1020 cell
+										1021 text field (settable) Description: 16行物料编码, Value: DISABLED-001
+									1022 cell
+										1023 text field (settable) Description: 16行物料名称, Value: 停用物料示例
+									1024 cell
+										1025 text field (settable) Description: 16行规格, Value: 标准
+									1026 cell
+										1027 text field (settable) Description: 16行型号, Value: DISABLED
+									1028 cell
+										1029 text field (settable) Description: 16行分类, Value: 备件
+									1030 cell
+										1031 text field (settable) Description: 16行单位, Value: 个
+									1032 cell
+										1033 stepper (settable, integer) Description: 16行数量, Value: 1
+									1034 cell
+										1035 stepper (settable, integer) Description: 16行含税单价, Value: 100
+									1036 cell
+										1037 stepper (settable, float) Description: 16行不含税单价, Value: 88.49559783935547, Details: 88.4956
+									1038 cell
+										1039 pop up button (collapsed, settable) Description: 16行税率, Value: 13%, Secondary Actions: Expand
+											1040 menu
+												1041 使用物料默认税率
+												1042 (selected) 13%
+												1043 9%
+												1044 6%
+												1045 3%
+												1046 1%
+												1047 0%
+									1048 cell
+										1049 stepper (settable) 16行折扣%
+									1050 cell
+										1051 text field (settable) 16行备注
+									1052 cell
+										1053 image
+										1054 text 物料不存在，必须创建临时物料或跳过
+										1055 image
+										1056 text 分类名称未匹配到启用分类，请修正后重新匹配
+									1057 cell
+										1058 button 修正后重新匹配
+										1059 button 跳过此行
+											1060 image
+											1061 text 跳过此行
+								1062 row
+									1063 cell
+										1064 text 17
+									1065 cell
+										1066 text field (settable) 17行物料编码
+									1067 cell
+										1068 text field (settable) Description: 17行物料名称, Value: 模糊匹配示例物料
+									1069 cell
+										1070 text field (settable) Description: 17行规格, Value: 相近规格
+									1071 cell
+										1072 text field (settable) Description: 17行型号, Value: FUZZY-01
+									1073 cell
+										1074 text field (settable) Description: 17行分类, Value: 备件
+									1075 cell
+										1076 text field (settable) Description: 17行单位, Value: 个
+									1077 cell
+										1078 stepper (settable, integer) Description: 17行数量, Value: 1
+									1079 cell
+										1080 stepper (settable, integer) Description: 17行含税单价, Value: 100
+									1081 cell
+										1082 stepper (settable, float) Description: 17行不含税单价, Value: 88.49559783935547, Details: 88.4956
+									1083 cell
+										1084 pop up button (collapsed, settable) Description: 17行税率, Value: 13%, Secondary Actions: Expand
+											1085 menu
+												1086 使用物料默认税率
+												1087 (selected) 13%
+												1088 9%
+												1089 6%
+												1090 3%
+												1091 1%
+												1092 0%
+									1093 cell
+										1094 stepper (settable) 17行折扣%
+									1095 cell
+										1096 text field (settable) 17行备注
+									1097 cell
+										1098 image
+										1099 text 物料不存在，必须创建临时物料或跳过
+										1100 image
+										1101 text 分类名称未匹配到启用分类，请修正后重新匹配
+									1102 cell
+										1103 button 修正后重新匹配
+										1104 button 跳过此行
+											1105 image
+											1106 text 跳过此行
+							1107 image
+							1108 text 可导入  0  行； 16  行阻断异常需修正或跳过
+							1109 button 取消
+							1110 button (disabled) 仅导入正确数据（0）
+								1111 image
+								1112 text 仅导入正确数据（0）
+			303 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			304 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/sales/quotations/new

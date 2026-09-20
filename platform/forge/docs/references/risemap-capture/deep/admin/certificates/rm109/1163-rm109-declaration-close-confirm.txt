@@ -1,0 +1,265 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/certificates".
+1 AXWebArea RiseMap, URL: risemap.cn/ops/certificates
+	2 container
+		3 container root
+			202 container
+				203 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+				204 text 行政
+				205 button 收起侧边栏
+					206 image
+				207 container
+					208 button 审批中心
+						209 image
+						210 text 审批中心
+						211 image
+					212 button 我的审批
+					213 button 抄送我的
+					214 button 我发起的
+					215 button 行政申请
+				216 container
+					217 button 行政管理
+						218 image
+						219 text 行政管理
+						220 image
+					221 button 公司通知
+					222 button 用章管理
+					223 button 会议纪要
+					224 button 工作汇报
+					225 button 文档中心
+					226 button 固定资产
+					227 button 资质与申报
+					228 button 物料领取
+					229 button 设备维护
+					230 button 礼品管理
+					231 button 借出管理
+					232 button 车辆管理
+				233 container
+					234 button 人力资源
+						235 image
+						236 text 人力资源
+						237 image
+					238 button 人事工作台
+					239 button 员工档案
+					240 button 招聘管理
+					241 button 入职离职
+					242 button 薪酬福利
+					243 button 规章制度
+					244 button 通讯录
+				245 container
+					246 button 考勤假期
+						247 image
+						248 text 考勤假期
+						249 image
+					250 button 加班申请
+					251 button 请假管理
+					252 button 出差申请
+					253 button 考勤管理
+					254 button 考勤统计
+				255 container
+					256 button 流程中心
+						257 image
+						258 text 流程中心
+						259 image
+					260 button 审批记录
+					261 button 发起流程
+					262 button 流程定义
+					263 button 流程分类
+				264 image
+				265 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+				266 button 查看方案
+					267 image
+					268 text 查看方案
+				269 button
+					270 image
+				271 container 业务分类
+					272 checkbox 工作台, Value: 0
+					273 checkbox 供应链, Value: 0
+					274 checkbox 销售, Value: 0
+					275 checkbox 生产, Value: 0
+					276 checkbox 项目, Value: 0
+					277 checkbox 行政, Value: 1
+					278 checkbox 财务, Value: 0
+					279 checkbox 报表, Value: 0
+					280 checkbox 系统, Value: 0
+				281 button Description: 展开搜索, Help: 搜索
+					282 image
+				283 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					284 image
+					285 text 2
+				286 button Description: 打开推广奖励, Help: 推广
+				287 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				288 link Description: 打开工单, Value: community.risemap.cn/support
+				289 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					290 image
+					291 text 立即订阅
+				292 button 金
+					293 text 金
+					294 image
+				295 button 工作台
+					296 image
+					297 text 工作台
+				298 button 抄送我的
+					299 text 抄送我的
+				300 button 我发起的
+					301 text 我发起的
+				302 button 行政申请
+					303 text 行政申请
+				304 button 公司通知
+					305 text 公司通知
+				306 button 发布通知
+					307 text 发布通知
+				308 button 用章管理
+					309 text 用章管理
+				310 button 会议纪要
+					311 text 会议纪要
+				312 button 新建会议纪要
+					313 text 新建会议纪要
+				314 button AI 模板管理
+					315 text AI 模板管理
+				316 button 工作汇报
+					317 text 工作汇报
+				318 button 新建工作汇报
+					319 text 新建工作汇报
+				320 button 文档中心
+					321 text 文档中心
+				322 button 固定资产
+					323 text 固定资产
+				324 button 资质与申报
+					325 text 资质与申报
+				326 container
+					327 container
+						328 text 行政管理
+						329 image
+						330 text 资质与申报
+						331 image
+						332 heading 资质与申报, Value: 1
+							333 text 资质与申报
+						334 text 企业证书资质台账、到期提醒、政策申报跟踪与材料统一管理
+					335 button 资质台账
+						336 image
+						337 text 资质台账
+					338 button 到期提醒
+						339 image
+						340 text 到期提醒
+					341 button 政策申报
+						342 image
+						343 text 政策申报
+					344 button 材料库
+						345 image
+						346 text 材料库
+					347 button 新增申报
+						348 image
+						349 text 新增申报
+					350 image
+					351 text field (settable)
+					352 button 列表
+						353 image
+						354 text 列表
+					355 button 看板
+						356 image
+						357 text 看板
+					358 button 甘特图
+						359 image
+						360 text 甘特图
+					361 button 导出
+						362 image
+						363 text 导出
+						364 image
+					365 button 刷新
+						366 image
+					367 button
+						368 image
+					369 button
+						370 image
+					371 button 阶段
+						372 text 阶段
+						373 image
+					374 button 类别
+						375 text 类别
+						376 image
+					377 table
+						378 row
+							379 cell
+								380 checkbox (settable, integer) 0
+							381 cell
+								382 text 申报项目
+							383 cell
+								384 text 申报类别
+							385 cell
+								386 text 主管部门
+							387 cell
+								388 text 截止日期
+							389 cell
+								390 text 责任人
+							391 cell
+								392 text 预期金额
+							393 cell
+								394 text 关联材料
+							395 cell
+								396 text 当前阶段
+						397 row
+							398 cell
+								399 image
+								400 text 暂无数据
+					401 text 共  0 条记录 每页
+					402 combo box (collapsed) Value: 10, Secondary Actions: Expand
+						403 text 10
+					404 text 条
+					405 button (disabled) 上一页
+						406 image
+					407 button 1
+					408 button (disabled) 下一页
+						409 image
+				410 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			201 container Notifications alt+T
+		411 container 新增申报项目, ID: radix-:r4b:
+			412 heading 新增申报项目, Value: 2, ID: radix-:r4c:
+				413 image
+				414 text 新增申报项目
+			415 text 新增政策申报项目表单
+			416 container
+				417 container
+					418 text * 申报名称
+				419 text field (settable)
+				456 text 请填写申报名称
+				420 container
+					421 text * 申报类别
+				422 button 请选择
+					423 text 请选择
+				457 text 请选择申报类别
+				424 container
+					425 text * 主管部门
+				426 text field (settable)
+				458 text 请填写主管部门
+				427 container
+					428 text * 截止日期
+				429 container
+					430 text field (settable)
+					431 button
+						432 image
+				459 text 请选择截止日期
+				433 text 启动日期
+				434 container
+					435 text field (settable)
+					436 button
+						437 image
+				438 text 责任人
+				439 button 选择责任人
+					440 text 选择责任人
+				441 text 预期补贴金额
+				442 stepper (settable)
+				443 text 备注
+				444 text entry area (settable)
+				445 button 取消
+				446 button 保存
+			447 button Close
+				448 image
+				449 text Close
+		460 container 确认关闭
+			461 heading 确认关闭, Value: 3, ID: :r4e:
+				462 text 确认关闭
+			463 text 你有未保存的内容，确定要关闭吗？
+			464 button 取消
+			465 button 确认关闭
+
+The focused UI element is 445 button 取消

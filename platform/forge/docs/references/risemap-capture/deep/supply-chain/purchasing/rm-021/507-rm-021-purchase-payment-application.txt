@@ -1,0 +1,187 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/purchase/payment-flow/apply".
+1 AXWebArea RiseMap, URL: risemap.cn/purchase/payment-flow/apply
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 到货检验
+					10 image
+					11 text 到货检验
+					12 image
+				13 button 到货通知
+				14 button 到货登记
+				15 button 待检验库存
+				16 button 检验单
+				17 button 检验规则
+				18 button 基础资料
+					19 image
+					20 text 基础资料
+					21 image
+				22 button 物料管理
+				23 button 物料组合
+				24 button BOM管理
+				25 button 综合物料搜索
+				26 button 供应商管理
+				27 button 产品实例追溯
+				28 button 仓库管理
+				29 button 采购管理
+					30 image
+					31 text 采购管理
+					32 image
+				33 button 采购发票
+				34 button 采购申请
+				35 button 采购待办池
+				36 button 询价管理
+				37 button 采购订单
+				38 button 采购退换货
+				39 button 供应商价格本
+				40 button 入库管理
+					41 image
+					42 text 入库管理
+					43 image
+				44 button 全部入库单
+				45 button 采购入库
+				46 button 生产入库
+				47 button 其他入库
+				48 button 期初入库
+				49 button 入库明细
+				50 button 库存管理
+					51 image
+					52 text 库存管理
+					53 image
+				54 button 库存总览
+				55 button 不合格处理
+				56 button 库存流水
+				57 button 库存锁定
+				58 button 库存盘点
+				59 button 调拨与借出
+				60 button 库存预警
+				61 button 报损单
+				62 button SN码管理
+				63 button 出库管理
+					64 image
+					65 text 出库管理
+					66 image
+				67 button 出库单列表
+				68 button 生产出库
+				69 button 其他出库
+				70 button 销售直接出库
+				71 button 待出库发货单
+				72 button 采购退换货出库
+				73 button 出库明细
+			74 image
+			75 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			76 button 查看方案
+				77 image
+				78 text 查看方案
+			79 button
+				80 image
+			81 container
+				82 container 业务分类
+					83 checkbox 工作台, Value: 0
+					84 checkbox 供应链, Value: 1
+					85 checkbox 销售, Value: 0
+					86 checkbox 生产, Value: 0
+					87 checkbox 项目, Value: 0
+					88 checkbox 行政, Value: 0
+					89 checkbox 财务, Value: 0
+					90 checkbox 报表, Value: 0
+					91 checkbox 系统, Value: 0
+				92 button Description: 展开搜索, Help: 搜索
+					93 image
+				94 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					95 image
+					96 text 2
+				97 button Description: 打开推广奖励, Help: 推广
+				98 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				99 link Description: 打开工单, Value: community.risemap.cn/support
+				100 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					101 image
+					102 text 立即订阅
+				103 button 金
+					104 text 金
+					105 image
+			106 container
+				107 button 工作台
+					108 image
+					109 text 工作台
+				114 button 供应商管理
+					115 text 供应商管理
+				116 button 物料组合
+					117 text 物料组合
+				118 button 新建物料组合
+					119 text 新建物料组合
+				120 button BOM管理
+					121 text BOM管理
+				122 button 新建BOM
+					123 text 新建BOM
+				124 button 综合物料搜索
+					125 text 综合物料搜索
+				126 button 产品实例追溯
+					127 text 产品实例追溯
+				128 button 采购申请
+					129 text 采购申请
+				130 button 新建采购申请
+					131 text 新建采购申请
+				132 button 采购待办池
+					133 text 采购待办池
+				134 button 询价管理
+					135 text 询价管理
+				136 button 采购订单
+					137 text 采购订单
+				278 button 新建采购订单
+					279 text 新建采购订单
+				280 button 申请付款
+					281 text 申请付款
+			282 container
+				283 button 采购订单
+				284 image
+				285 text 申请付款
+				286 button 返回采购订单
+					287 image
+				288 image
+				289 heading 申请付款, Value: 1
+					290 text 申请付款
+				291 text 选择供应商 → 直接在订单上填写付款金额 → 提交付款申请（推送财务审批） 本次申请 ¥ 0.00
+				292 button 取消
+				293 button (disabled) 提交付款申请
+					294 image
+					295 text 提交付款申请
+				296 text 1 选择供应商
+				297 button 搜索供应商名称...
+					298 text 搜索供应商名称...
+				299 text 2 填写要付款的订单金额 请先选择供应商 3 付款信息 付款方式
+				300 pop up button (collapsed, settable) 付款方式, Value: 不指定, Secondary Actions: Expand
+					301 menu
+						302 (selected) 不指定
+						303 银行转账
+						304 支付宝
+						305 微信支付
+						306 现金
+						307 支票
+						308 其他
+						309 电汇
+						310 承兑汇票
+						311 在线支付
+						312 信用证
+				313 text 供应商收款账户
+				314 pop up button (disabled, collapsed, settable) 供应商收款账户, Value: 不指定, Secondary Actions: Expand
+					315 menu
+						316 (disabled) 不指定
+				317 text 计划付款日
+				318 date field (settable) 计划付款日
+					319 container
+						320 stepper
+						321 stepper
+						322 stepper
+					323 pop up button 显示日期选择器
+				324 text 备注
+				325 text field (settable) 备注
+				326 text 提交后进入财务付款审批流程；实际付款账户、付款/核销由财务处理。
+			276 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			277 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/purchase/payment-flow/apply

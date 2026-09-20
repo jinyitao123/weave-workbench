@@ -1,0 +1,215 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同" [active]:
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "联系人管理":
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+- generic: 免费试用中，还剩 14 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "库存锁定":
+  - generic: 库存锁定
+- button "库存盘点":
+  - generic: 库存盘点
+- button "调拨与借出":
+  - generic: 调拨与借出
+- button "库存预警":
+  - generic: 库存预警
+- button "报损单":
+  - generic: 报损单
+- button "SN管理":
+  - generic: SN管理
+- button "出库单列表":
+  - generic: 出库单列表
+- button "生产出库":
+  - generic: 生产出库
+- button "其他出库":
+  - generic: 其他出库
+- button "销售直接出库":
+  - generic: 销售直接出库
+- button "待出库发货单":
+  - generic: 待出库发货单
+- button "采购退换货出库":
+  - generic: 采购退换货出库
+- button "出库明细":
+  - generic: 出库明细
+- button "框架销售合同":
+  - generic: 框架销售合同
+- main:
+  - generic: 销售业务
+  - generic: 框架销售合同
+  - heading "框架销售合同" [level=1]
+  - paragraph: 客户合同签订、条款管理、收款跟进与执行情况追踪
+  - button "新建合同":
+    - text: 新建合同
+  - button "导入/导出":
+    - text: 导入/导出
+  - button:
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "搜索合同编号、客户单号、合同名称、客户、项目名称..."
+  - button "范围":
+    - text: 范围
+  - button "状态":
+    - text: 状态
+  - button "订单状态":
+    - text: 订单状态
+  - button "开票":
+    - text: 开票
+  - button "发货":
+    - text: 发货
+  - button "收款":
+    - text: 收款
+  - button "负责人":
+    - generic: 负责人
+  - button "客户联系人":
+    - generic: 客户联系人
+  - generic "点击清除排序":
+    - text: 按创建时间降序
+  - table:
+    - rowgroup:
+      - row "合同编号 客户单号 合同名称 合同类型 客户名称 关联项目 来源 合同总额 开票 已发货 已回款 状态 订单状态 下单笔数 已下单金额 红绿灯 签订日期 备注 创建时间 更新时间 开单人 负责人 联系人 操作":
+        - columnheader:
+          - checkbox
+        - columnheader "合同编号":
+          - generic: 合同编号
+        - columnheader "客户单号":
+          - generic: 客户单号
+        - columnheader "合同名称":
+          - generic: 合同名称
+        - columnheader "合同类型":
+          - generic: 合同类型
+        - columnheader "客户名称":
+          - generic: 客户名称
+        - columnheader "关联项目":
+          - generic: 关联项目
+        - columnheader "来源":
+          - generic: 来源
+        - columnheader "合同总额":
+          - generic: 合同总额
+        - columnheader "开票":
+          - text: 开票
+        - columnheader "已发货":
+          - text: 已发货
+        - columnheader "已回款":
+          - text: 已回款
+        - columnheader "状态":
+          - generic: 状态
+        - columnheader "订单状态":
+          - generic: 订单状态
+        - columnheader "下单笔数":
+          - generic: 下单笔数
+        - columnheader "已下单金额":
+          - generic: 已下单金额
+        - columnheader "红绿灯":
+          - generic: 红绿灯
+        - columnheader "签订日期":
+          - generic: 签订日期
+        - columnheader "备注":
+          - generic: 备注
+        - columnheader "创建时间":
+          - generic: 创建时间
+        - columnheader "更新时间":
+          - generic: 更新时间
+        - columnheader "开单人":
+          - generic: 开单人
+        - columnheader "负责人":
+          - generic: 负责人
+        - columnheader "联系人":
+          - generic: 联系人
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "暂无匹配的合同":
+        - cell "暂无匹配的合同":
+          - generic: 暂无匹配的合同
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 周一

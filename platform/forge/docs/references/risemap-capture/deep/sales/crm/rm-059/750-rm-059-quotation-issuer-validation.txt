@@ -1,0 +1,24 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/quotations/new".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/quotations/new
+	2 container 新增公司抬头
+		3 heading 新增公司抬头, Value: 3
+			4 text 新增公司抬头
+		5 button 关闭
+			6 image
+		7 container
+			8 text 公司全称 *
+			9 text field (settable)
+			10 text 公司全称不能为空 统一社会信用代码 *
+			11 text field (settable)
+			12 text 统一社会信用代码不能为空 简称
+			13 text field (settable)
+			14 text 地址
+			15 text field (settable)
+			16 text 电话
+			17 text field (settable)
+			18 text 邮箱
+			19 text field (settable)
+		20 button 取消
+		21 button 添加
+
+The focused UI element is 21 button 添加

@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import { readFile, writeFile } from 'node:fs/promises';
+import { connect } from '../scripts/api-client.mjs';
+const path = '.objectstack/acceptance/drawing-multi-distribution-report.json';
+const report = JSON.parse(await readFile(path, 'utf8'));
+const api = await connect(process.env.FORGE_URL || 'http://localhost:4382');
+async function read(object, id) { const response = await api.request(`/data/${object}/${id}`); assert.equal(response.status, 200, object); return response.value.record; }
+async function find(object, where) { const query = new URLSearchParams({ $filter: JSON.stringify(where), $top: '200' }); const response = await api.request(`/data/${object}?${query}`); assert.equal(response.status, 200, object); return (response.value.records || []).filter((row) => Object.entries(where).every(([key, value]) => row[key] === value)); }
+const [allRequired, anyRequired, allRecipients, anyRecipients] = await Promise.all([read('forge_drawing_distribution', report.ids.allRequiredDistribution), read('forge_drawing_distribution', report.ids.anyRequiredDistribution), find('forge_drawing_distribution_recipient', { distribution_id: report.ids.allRequiredDistribution }), find('forge_drawing_distribution_recipient', { distribution_id: report.ids.anyRequiredDistribution })]);
+assert.deepEqual({ allRequired: [allRequired.status, allRequired.confirmation_status, allRequired.confirmed_count, allRequired.confirmation_required_count, allRequired.confirmation_satisfied, allRequired.receipt_status, allRequired.receipt_count], anyRequired: [anyRequired.status, anyRequired.confirmation_status, anyRequired.confirmed_count, anyRequired.confirmation_required_count, anyRequired.confirmation_satisfied, anyRequired.receipt_status], allRecipientStates: allRecipients.map((row) => [row.name, row.confirmation_status, row.receipt_status]).sort(), anyRecipientStates: anyRecipients.map((row) => [row.name, row.confirmation_status]).sort() }, { allRequired: ['sent', 'confirmed', 2, 2, true, 'received', 2], anyRequired: ['sent', 'partial', 1, 1, true, 'not_required'], allRecipientStates: [['装配生产部', 'confirmed', 'received'], ['质量工程师张敏', 'confirmed', 'received']].sort(), anyRecipientStates: [['电气设计王蕾', 'pending'], ['项目经理李明', 'confirmed']].sort() });
+report.restartVerification = { status: 'passed', verifiedAt: new Date().toISOString(), database: process.env.FORGE_DB || report.database, assertion: '同一 SQLite 停服重启后保留两种确认门槛、四个接收对象、部分与全部确认、逐项回执和父子聚合状态' };
+await writeFile(path, `${JSON.stringify(report, null, 2)}\n`);
+console.log('PASS multi-recipient confirmation and receipt state survived full restart');

@@ -1,0 +1,148 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/project/plan-templates/create".
+0 AXWebArea RiseMap, URL: risemap.cn/project/plan-templates/create
+	1 container
+		2 container root
+			201 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			202 text 项目
+			203 button 收起侧边栏
+				204 image
+			205 container
+				206 button 项目管理
+					207 image
+					208 text 项目管理
+					209 image
+				210 button 项目中心
+				211 button 项目分析中心
+				212 button 任务管理
+				213 button 工时管理
+				214 button 项目配置中心
+			215 image
+			216 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			217 button 查看方案
+				218 image
+				219 text 查看方案
+			220 button
+				221 image
+			222 container
+				223 container 业务分类
+					224 checkbox 工作台, Value: 0
+					225 checkbox 供应链, Value: 0
+					226 checkbox 销售, Value: 0
+					227 checkbox 生产, Value: 0
+					228 checkbox 项目, Value: 1
+					229 checkbox 行政, Value: 0
+					230 checkbox 财务, Value: 0
+					231 checkbox 报表, Value: 0
+					232 checkbox 系统, Value: 0
+				233 button Description: 展开搜索, Help: 搜索
+					234 image
+				235 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					236 image
+					237 text 2
+				238 button Description: 打开推广奖励, Help: 推广
+				239 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				240 link Description: 打开工单, Value: community.risemap.cn/support
+				241 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					242 image
+					243 text 立即订阅
+				244 button 金
+					245 text 金
+					246 image
+			247 container
+				248 button 工作台
+					249 image
+					250 text 工作台
+				257 button 委外对账
+					258 text 委外对账
+				259 button 委外供应商
+					260 text 委外供应商
+				261 button 委外库存
+					262 text 委外库存
+				263 button 批次追溯
+					264 text 批次追溯
+				265 button 委外未交
+					266 text 委外未交
+				267 button 委外进货
+					268 text 委外进货
+				269 button 委外对账单
+					270 text 委外对账单
+				271 button 项目中心
+					272 text 项目中心
+				273 button 项目分析中心
+					274 text 项目分析中心
+				275 button 任务管理
+					276 text 任务管理
+				277 button 工时管理
+					278 text 工时管理
+				388 button 快捷工时填报
+					389 text 快捷工时填报
+				390 button 项目配置中心
+					391 text 项目配置中心
+				392 button 新建计划模板
+					393 text 新建计划模板
+			394 container
+				395 text 项目管理
+				396 image
+				397 text 计划模板管理
+				398 image
+				399 text 新建模板
+				400 heading 新建计划模板, Value: 2
+					401 text 新建计划模板
+				402 button 取消
+				403 button 创建模板
+				404 text 模板名称  *
+				405 text field (settable)
+				406 text 分类  *
+				407 button 默认分类（默认）
+					408 text 默认分类（默认）
+				409 text 在「业务设置 → 项目管理 → 计划模板分类」中管理可选项 描述
+				410 text entry area (settable)
+				411 text 初始内容
+				412 radio button 空白模板（手动添加）, Value: 1
+				413 radio button 从已有项目复制, Value: 0
+				414 container
+					415 checkbox (settable, integer) Description: 标记为系统模板 （仅系统管理员可见此选项；勾选后该模板对租户内所有用户可见，且仅管理员可维护）, Value: 0
+					416 text 标记为系统模板  （仅系统管理员可见此选项；勾选后该模板对租户内所有用户可见，且仅管理员可维护）
+				417 text 阶段与任务（ 3 ）
+				418 button 阶段
+					419 image
+					420 text 阶段
+				421 button 里程碑
+					422 image
+					423 text 里程碑
+				424 button 任务
+					425 image
+					426 text 任务
+				427 text 类型 名称 所属节点 工期(天) 权重(%)
+				428 button 阶段
+					429 text 阶段
+				430 text field (settable) 新阶段
+				431 button —
+					432 text —
+				433 text field (settable) 5
+				434 text field (settable) 20
+				435 button
+					436 image
+				438 button 里程碑
+					439 text 里程碑
+				440 text field (settable) 新里程碑
+				441 button —
+					442 text —
+				443 text field (disabled) 0
+				444 text field (settable) 20
+				445 button
+					446 image
+				447 button 任务
+					448 text 任务
+				449 text field (settable) 新任务
+				450 button —
+					451 text —
+				452 text field (settable) 5
+				453 text field (settable) 20
+				454 button
+					455 image
+				437 text 保存后可在「套用模板」对话框和计划模板管理页面中选用
+			387 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+
+The focused UI element is 424 button 任务

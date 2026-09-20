@@ -1,0 +1,198 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/reports/project".
+0 AXWebArea RiseMap, URL: risemap.cn/reports/project
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 报表
+			5 button 收起侧边栏
+				6 image
+			7 container
+				900 button 销售统计
+					901 image
+					902 text 销售统计
+				903 button 采购统计
+					904 image
+					905 text 采购统计
+				906 button 库存统计
+					907 image
+					908 text 库存统计
+				909 button 项目统计
+					910 image
+					911 text 项目统计
+				912 button 组装统计
+					913 image
+					914 text 组装统计
+				915 button 财务统计
+					916 image
+					917 text 财务统计
+					918 image
+				919 button 财务总览
+				920 button 损益分析
+				921 button 资金分析
+				922 button 往来账款
+				923 button 税务库存
+				924 button 风险监控
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 1
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				841 button 销售收入确认
+					842 text 销售收入确认
+				843 button 成本中心
+					844 text 成本中心
+				845 button 费用中心
+					846 text 费用中心
+				847 button 报销管理
+					848 text 报销管理
+				849 button 对账单
+					850 text 对账单
+				851 button 发票总览
+					852 text 发票总览
+				853 button 销项发票
+					854 text 销项发票
+				855 button 进项发票
+					856 text 进项发票
+				857 button 开票任务
+					858 text 开票任务
+				859 button 调整记录
+					860 text 调整记录
+				925 button 销售统计
+					926 text 销售统计
+				927 button 采购统计
+					928 text 采购统计
+				929 button 库存统计
+					930 text 库存统计
+				931 button 项目统计
+					932 text 项目统计
+			933 container
+				934 image
+				935 text 报表中心
+				936 heading 项目统计, Value: 1
+					937 text 项目统计
+				938 text 项目规模、营收成本、利润、进度、回款与风险的组合分析。
+				939 button 导出报表
+					940 image
+					941 text 导出报表
+				942 container 项目报表维度
+					943 button 项目统计
+						944 text 项目统计
+					945 button 任务统计
+					946 button 人员统计
+				947 image
+				948 text 筛选条件
+				949 container
+					950 image
+					951 text field (settable)
+				952 pop up button (collapsed, settable) Value: 全部项目, Secondary Actions: Expand
+					953 menu
+						954 (selected) 全部项目
+						955 我负责的
+				956 pop up button (collapsed, settable) Value: 本月, Secondary Actions: Expand
+					957 menu
+						958 (selected) 本月
+						959 本季度
+						960 本年度
+				961 button 刷新
+					962 image
+					963 text 刷新
+				964 image
+				965 text 更新时间 :  2026/9/8 23:02:32 当前展示 项目统计 统计数据。 统计周期 2026-09-01 至 2026-09-30
+				966 container
+					967 image
+					968 text 项目总数
+					969 pop up button (collapsed) Description: 查看项目总数计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						970 image
+					971 image
+					972 text 0个 进行中 0 个
+				973 container
+					974 image
+					975 text 项目总营收
+					976 pop up button (collapsed) Description: 查看项目总营收计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						977 image
+					978 image
+					979 text -- 当期活跃项目口径
+				980 container
+					981 image
+					982 text 项目总利润
+					983 pop up button (collapsed) Description: 查看项目总利润计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						984 image
+					985 image
+					986 text -- 平均利润率 --（活跃项目口径）
+				987 container
+					988 image
+					989 text 已回款
+					990 pop up button (collapsed) Description: 查看已回款计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						991 image
+					992 image
+					993 text -- 整体回款率 --（活跃项目口径）
+				994 container
+					995 heading 项目营收与利润趋势, Value: 2
+						996 text 项目营收与利润趋势
+					997 text 项目营收 项目利润
+					998 image
+						999 text 2026-04
+						1000 text 2026-05
+						1001 text 2026-06
+						1002 text 2026-07
+						1003 text 2026-08
+						1004 text 2026-09
+				1005 container
+					1006 heading 项目成本构成, Value: 2
+						1007 text 项目成本构成
+					1008 image
+						1009 text 成本构成
+				1010 container
+					1011 heading 项目状态分析, Value: 2
+						1012 text 项目状态分析
+					1013 text 共 0 个项目
+					1014 container
+						1015 text 0 % 项目状态
+					1016 text 待执行 0 个项目 0.0% 进行中 0 个项目 0.0% 已暂停 0 个项目 0.0% 已完工 0 个项目 0.0% 已关闭 0 个项目 0.0%
+				1017 container
+					1018 heading 项目进度排行, Value: 2
+						1019 text 项目进度排行
+					1020 text TOP 5
+				1021 container
+					1022 heading 项目利润率排行, Value: 2
+						1023 text 项目利润率排行
+					1024 text TOP 5
+				1025 container
+					1026 heading 项目营收贡献排行, Value: 2
+						1027 text 项目营收贡献排行
+					1028 text 全量排行
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 909 button 项目统计

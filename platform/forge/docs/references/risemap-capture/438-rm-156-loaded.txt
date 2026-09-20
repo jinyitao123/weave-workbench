@@ -1,0 +1,175 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/statistics/capital".
+0 AXWebArea RiseMap, URL: risemap.cn/finance/statistics/capital
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 报表
+			5 button 收起侧边栏
+				6 image
+			7 container
+				900 button 销售统计
+					901 image
+					902 text 销售统计
+				903 button 采购统计
+					904 image
+					905 text 采购统计
+				906 button 库存统计
+					907 image
+					908 text 库存统计
+				909 button 项目统计
+					910 image
+					911 text 项目统计
+				912 button 组装统计
+					913 image
+					914 text 组装统计
+				915 button 财务统计
+					916 image
+					917 text 财务统计
+					918 image
+				919 button 财务总览
+				920 button 损益分析
+				921 button 资金分析
+				922 button 往来账款
+				923 button 税务库存
+				924 button 风险监控
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 1
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				849 button 对账单
+					850 text 对账单
+				851 button 发票总览
+					852 text 发票总览
+				853 button 销项发票
+					854 text 销项发票
+				855 button 进项发票
+					856 text 进项发票
+				857 button 开票任务
+					858 text 开票任务
+				859 button 调整记录
+					860 text 调整记录
+				925 button 销售统计
+					926 text 销售统计
+				927 button 采购统计
+					928 text 采购统计
+				929 button 库存统计
+					930 text 库存统计
+				931 button 项目统计
+					932 text 项目统计
+				933 button 组装统计
+					934 text 组装统计
+				935 button 财务总览
+					936 text 财务总览
+				937 button 损益分析
+					938 text 损益分析
+				939 button 资金分析
+					940 text 资金分析
+			941 container
+				942 image
+				943 container
+					944 text 报表 / 财务统计 /  资金分析
+				945 heading 资金分析, Value: 1
+					946 text 资金分析
+				947 text 现金流、资金预测和账户余额分析
+				948 button 导出PDF
+					949 image
+					950 text 导出PDF
+				951 button 导出Excel
+					952 image
+					953 text 导出Excel
+					954 image
+				955 container 财务统计类型
+					956 button 现金流
+					957 button 资金预测
+					958 button 账户余额
+				959 container 报表筛选
+					960 image
+					961 text 筛选条件
+					962 button 本季度
+						963 image
+						964 text 本季度
+						965 image
+				966 image
+				967 text 财务数据按业务单据实时汇总 统计周期  2026-07-01 ~ 2026-09-08
+				968 image
+				969 text 期末现金余额
+				970 pop up button (collapsed) Description: 查看期末现金余额计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					971 image
+				972 text ¥0.00
+				973 image
+				974 text 本季度流入
+				975 pop up button (collapsed) Description: 查看本季度流入计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					976 image
+				977 text ¥0.00
+				978 image
+				979 text 本季度流出
+				980 pop up button (collapsed) Description: 查看本季度流出计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					981 image
+				982 text ¥0.00
+				983 image
+				984 text 净现金流
+				985 pop up button (collapsed) Description: 查看净现金流计算说明, Help: 查看计算说明, Secondary Actions: Expand
+					986 image
+				987 text ¥0.00
+				988 image
+				989 heading 现金流入/流出趋势, Value: 3
+					990 text 现金流入/流出趋势
+				991 image
+					992 text 7月
+					993 text 8月
+					994 text 9月
+					995 text 0
+					996 text 1
+					997 text 2
+					998 text 3
+					999 text 4
+				1000 content list
+					1001 container
+						1002 image
+						1003 text 流入
+					1004 container
+						1005 image
+						1006 text 流出
+					1007 container
+						1008 image
+						1009 text 净额
+				1010 image
+				1011 heading 现金流构成, Value: 3
+					1012 text 现金流构成
+				1013 text 经营活动现金流 客户回款 + ¥0.00 供应商付款 ¥0.00 员工薪酬 ¥0.00 税费支出 ¥0.00 日常经营支出 ¥0.00 客户退款 + ¥0.00 经营净现金流 + ¥0.00 投资/融资活动 设备购置 ¥0.00 借款/融资流入 + ¥0.00 银行利息收入 + ¥0.00 投资/融资净现金流 + ¥0.00
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 921 button 资金分析

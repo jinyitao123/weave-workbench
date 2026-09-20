@@ -1,0 +1,256 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/purchase/invoices".
+1 AXWebArea RiseMap, URL: risemap.cn/purchase/invoices
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 到货检验
+					10 image
+					11 text 到货检验
+					12 image
+				13 button 到货通知
+				14 button 到货登记
+				15 button 待检验库存
+				16 button 检验单
+				17 button 检验规则
+				18 button 基础资料
+					19 image
+					20 text 基础资料
+					21 image
+				22 button 物料管理
+				23 button 物料组合
+				24 button BOM管理
+				25 button 综合物料搜索
+				26 button 供应商管理
+				27 button 产品实例追溯
+				28 button 仓库管理
+				29 button 采购管理
+					30 image
+					31 text 采购管理
+					32 image
+				33 button 采购发票
+				34 button 采购申请
+				35 button 采购待办池
+				36 button 询价管理
+				37 button 采购订单
+				38 button 采购退换货
+				39 button 供应商价格本
+				40 button 入库管理
+					41 image
+					42 text 入库管理
+					43 image
+				44 button 全部入库单
+				45 button 采购入库
+				46 button 生产入库
+				47 button 其他入库
+				48 button 期初入库
+				49 button 入库明细
+				50 button 库存管理
+					51 image
+					52 text 库存管理
+					53 image
+				54 button 库存总览
+				55 button 不合格处理
+				56 button 库存流水
+				57 button 库存锁定
+				58 button 库存盘点
+				59 button 调拨与借出
+				60 button 库存预警
+				61 button 报损单
+				62 button SN码管理
+				63 button 出库管理
+					64 image
+					65 text 出库管理
+					66 image
+				67 button 出库单列表
+				68 button 生产出库
+				69 button 其他出库
+				70 button 销售直接出库
+				71 button 待出库发货单
+				72 button 采购退换货出库
+				73 button 出库明细
+			74 image
+			75 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			76 button 查看方案
+				77 image
+				78 text 查看方案
+			79 button
+				80 image
+			81 container
+				82 container 业务分类
+					83 checkbox 工作台, Value: 0
+					84 checkbox 供应链, Value: 1
+					85 checkbox 销售, Value: 0
+					86 checkbox 生产, Value: 0
+					87 checkbox 项目, Value: 0
+					88 checkbox 行政, Value: 0
+					89 checkbox 财务, Value: 0
+					90 checkbox 报表, Value: 0
+					91 checkbox 系统, Value: 0
+				92 button Description: 展开搜索, Help: 搜索
+					93 image
+				94 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					95 image
+					96 text 2
+				97 button Description: 打开推广奖励, Help: 推广
+				98 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				99 link Description: 打开工单, Value: community.risemap.cn/support
+				100 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					101 image
+					102 text 立即订阅
+				103 button 金
+					104 text 金
+					105 image
+			106 container
+				107 button 工作台
+					108 image
+					109 text 工作台
+				116 button 物料组合
+					117 text 物料组合
+				118 button 新建物料组合
+					119 text 新建物料组合
+				120 button BOM管理
+					121 text BOM管理
+				122 button 新建BOM
+					123 text 新建BOM
+				124 button 综合物料搜索
+					125 text 综合物料搜索
+				126 button 产品实例追溯
+					127 text 产品实例追溯
+				128 button 采购申请
+					129 text 采购申请
+				130 button 新建采购申请
+					131 text 新建采购申请
+				132 button 采购待办池
+					133 text 采购待办池
+				134 button 询价管理
+					135 text 询价管理
+				136 button 采购订单
+					137 text 采购订单
+				278 button 新建采购订单
+					279 text 新建采购订单
+				280 button 申请付款
+					281 text 申请付款
+				282 button 采购发票
+					283 text 采购发票
+			284 container
+				285 container
+					286 text 采购管理
+					287 image
+					288 text 采购发票
+					289 image
+					290 heading 采购发票, Value: 1
+						291 text 采购发票
+					292 text 进项发票（收票登记）全记录，票可分摊至采购订单，登记后自动联动应付
+				293 button 全部
+					294 text 全部
+				295 button 正常
+				296 button 已作废
+				297 button 已红冲
+				298 button 邮件收票
+					299 image
+					300 text 邮件收票
+				301 button 导出
+					302 image
+					303 text 导出
+				304 button 刷新
+					305 image
+				306 button
+					307 image
+				308 button
+					309 image
+				310 container 采购发票筛选
+					311 text 搜索采购发票
+					312 image
+					313 text field (settable) 搜索采购发票, ID: purchase-invoice-search
+					314 container 抵扣状态筛选
+						315 button 抵扣状态
+							316 text 抵扣状态
+							317 image
+				318 table
+					319 row
+						320 cell
+							321 text 发票号 / 类型
+						322 cell
+							323 text 开票日期
+						324 cell
+							325 text 供应商
+						326 cell
+							327 text 价税合计
+						328 cell
+							329 text 税率
+						330 cell
+							331 text 分摊订单
+						332 cell
+							333 text 状态
+						334 cell
+							335 text 抵扣状态
+						336 cell
+							337 text 登记时间
+						338 cell
+							339 text 登记人
+						340 cell
+							341 text 操作
+					342 row
+						343 cell
+							344 image
+							345 text 暂无匹配的采购发票
+				346 text 共  0 条记录 每页
+				347 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					348 text 20
+				349 text 条
+				350 button (disabled) 上一页
+					351 image
+				352 button 1
+				353 button (disabled) 下一页
+					354 image
+			276 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			277 container Notifications alt+T
+		355 container
+			356 heading 邮件收票中心, Value: 2
+				357 text 邮件收票中心
+			358 button 关闭
+				359 image
+			360 heading 收票邮箱, Value: 3
+				361 text 收票邮箱
+			362 button 前往邮箱设置
+				363 image
+				364 text 前往邮箱设置
+			365 container
+				366 text 0  个邮箱
+			367 button 全部邮箱 汇总查看 0
+				368 text 全部邮箱
+				369 text 汇总查看
+				370 text 0
+			371 container
+				372 text 邮箱由系统设置统一维护
+				373 text 管理员与财务角色可查看全部邮箱
+			374 heading 全部邮箱, Value: 3
+				375 text 全部邮箱
+			376 container
+				377 text 当前有  0  封待处理， 0  封需人工补充信息
+			378 button 同步邮件
+				379 image
+			380 button 一键匹配全部
+				381 image
+				382 text 一键匹配全部
+			383 radio button 全部 0, Value: 0, ID: :r24:-ALL
+			384 radio button 待处理 0, Value: 1, ID: :r24:-PENDING
+			385 radio button 识别失败 0, Value: 0, ID: :r24:-RECOGNITION_FAILED
+			386 radio button 匹配异常 0, Value: 0, ID: :r24:-MATCH_EXCEPTION
+			387 radio button 已处理 0, Value: 0, ID: :r24:-COMPLETED
+			388 image
+			389 text field (settable)
+			390 button 收件时间：近 30 天
+				391 text 收件时间：近 30 天
+			392 button 重置
+			393 container
+				394 text 发件人 / 邮件主题 收件时间 附件 / 发票 处理状态 问题与解决建议 操作
+			395 image
+			396 text 当前条件下没有邮件，请调整筛选条件 共 0 封邮件
+			397 text 1  /  1
+
+The focused UI element is 298 button 邮件收票

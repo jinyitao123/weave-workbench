@@ -1,0 +1,60 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/overtime".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/overtime
+	2 container
+		3 container Notifications alt+T
+		4 container 新增加班申请, ID: radix-:rr:
+			5 heading 新增加班申请, Value: 2, ID: radix-:rs:
+				6 text 新增加班申请
+			7 text 新增加班申请表单
+			8 container
+				9 text 基本信息
+				10 container
+					11 text * 开始时间
+				12 container
+					13 text field (settable)
+					14 button
+						15 image
+				16 container
+					17 text * 结束时间
+				18 container
+					19 text field (settable)
+					20 button
+						21 image
+				22 text 加班事由
+				23 container
+					24 text * 加班事由
+				25 text entry area (settable)
+				26 text 补偿方式
+				27 container
+					28 text * 补偿方式
+				29 radio button 调休, Value: 1
+					30 image
+					31 text 调休
+				32 radio button 加班费, Value: 0
+					33 image
+					34 text 加班费
+				35 text 关联信息
+				36 text 关联客户
+				37 button 选择关联客户
+					38 text 选择关联客户
+				39 text 关联项目
+				40 button 选择关联项目
+					41 text 选择关联项目
+				42 text 关联合同
+				43 button 搜索销售合同编号或标题
+					44 text 搜索销售合同编号或标题
+				45 text 数据来源：销售业务模块合同列表
+				46 button 取消
+				47 button 提交申请
+			48 button Close
+				49 image
+				50 text Close
+		51 container 确认关闭
+			52 container 确认关闭
+				53 heading 确认关闭, Value: 3, ID: :ru:
+					54 text 确认关闭
+				55 text 你有未保存的内容，确定要关闭吗？
+				56 button 取消
+				57 button 确认关闭
+
+The focused UI element is 51 container 确认关闭

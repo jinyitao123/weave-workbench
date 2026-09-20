@@ -1,0 +1,204 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/project/settings?tab=timesheet-cost".
+0 AXWebArea RiseMap, URL: risemap.cn/project/settings?tab=timesheet-cost
+	1 container
+		2 container root
+			201 container
+				202 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+				203 text 项目
+				204 button 收起侧边栏
+					205 image
+				206 container
+					207 button 项目管理
+						208 image
+						209 text 项目管理
+						210 image
+					211 button 项目中心
+					212 button 项目分析中心
+					213 button 任务管理
+					214 button 工时管理
+					215 button 项目配置中心
+				216 image
+				217 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+				218 button 查看方案
+					219 image
+					220 text 查看方案
+				221 button
+					222 image
+				223 container 业务分类
+					224 checkbox 工作台, Value: 0
+					225 checkbox 供应链, Value: 0
+					226 checkbox 销售, Value: 0
+					227 checkbox 生产, Value: 0
+					228 checkbox 项目, Value: 1
+					229 checkbox 行政, Value: 0
+					230 checkbox 财务, Value: 0
+					231 checkbox 报表, Value: 0
+					232 checkbox 系统, Value: 0
+				233 button Description: 展开搜索, Help: 搜索
+					234 image
+				235 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					236 image
+					237 text 2
+				238 button Description: 打开推广奖励, Help: 推广
+				239 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				240 link Description: 打开工单, Value: community.risemap.cn/support
+				241 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					242 image
+					243 text 立即订阅
+				244 button 金
+					245 text 金
+					246 image
+				247 button 工作台
+					248 image
+					249 text 工作台
+				250 button 委外对账
+					251 text 委外对账
+				252 button 委外供应商
+					253 text 委外供应商
+				254 button 委外库存
+					255 text 委外库存
+				256 button 批次追溯
+					257 text 批次追溯
+				258 button 委外未交
+					259 text 委外未交
+				260 button 委外进货
+					261 text 委外进货
+				262 button 委外对账单
+					263 text 委外对账单
+				264 button 项目中心
+					265 text 项目中心
+				266 button 项目分析中心
+					267 text 项目分析中心
+				268 button 任务管理
+					269 text 任务管理
+				270 button 工时管理
+					271 text 工时管理
+				272 button 快捷工时填报
+					273 text 快捷工时填报
+				274 button 项目配置中心
+					275 text 项目配置中心
+				276 button 新建计划模板
+					277 text 新建计划模板
+				278 container
+					279 text 项目管理
+					280 image
+					281 text 项目配置中心
+					282 heading 项目配置中心, Value: 2
+						283 image
+						284 text 项目配置中心
+					285 text 统一管理项目相关配置：计划模板、工时成本等
+					286 image
+					287 text 计划模板总数
+					288 text 0
+					289 image
+					290 text 系统模板
+					291 text 0
+					292 image
+					293 text 自定义模板
+					294 text 0
+					295 image
+					296 text 项目复制模板
+					297 text 0
+					298 image
+					299 text 工时成本配置
+					300 text —
+					301 button 计划模板
+						302 image
+						303 text 计划模板
+					304 button 交付包模板
+						305 image
+						306 text 交付包模板
+					307 button 工时成本配置
+						308 image
+						309 text 工时成本配置
+					310 image
+					311 text 配置不同角色的工时费率、项目特殊费率及全局规则
+					312 button 新增角色
+						313 image
+						314 text 新增角色
+					315 image
+					316 text 角色类型 0
+					317 image
+					318 text 费率范围 ¥ 0 ~ 0 元/小时
+					319 image
+					320 text 项目特殊费率 0 涉及  0  个项目
+					321 image
+					322 text 加班倍率 x 1.5 统一标准
+					323 button 员工工时成本 0
+						324 image
+						325 text 员工工时成本
+						326 text 0
+					327 button 角色费率 0
+						328 image
+						329 text 角色费率
+						330 text 0
+					331 button 项目费率覆盖 0
+						332 image
+						333 text 项目费率覆盖
+						334 text 0
+					335 button 全局设置
+						336 image
+						337 text 全局设置
+					338 button 刷新
+						339 image
+					340 button
+						341 image
+					342 button
+						343 image
+					344 table
+						345 row
+							346 cell
+								347 text 角色名称
+							348 cell
+								349 text 职级代码
+							350 cell
+								351 text 正常费率(¥/h)
+							352 cell
+								353 text 加班倍率
+							354 cell
+								355 text 加班费率(¥/h)
+							356 cell
+								357 text 出差费率(¥/h)
+							358 cell
+								359 text 月工时上限
+							360 cell
+								361 text 角色描述
+							362 cell
+								363 text 操作
+						364 row
+							365 cell
+								366 image
+								367 text 暂无角色费率
+					368 image
+					369 text 加班费率 = 正常费率 × 加班倍率。出差费率为独立设置，含差旅补贴。月工时上限用于成本预算控制。
+				370 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+		371 list radix-:r1jm:
+			372 项目经理
+				373 text 项目经理
+			374 硬件工程师
+				375 text 硬件工程师
+			376 技术负责人
+				377 text 技术负责人
+			378 软件工程师
+				379 text 软件工程师
+			380 质量工程师
+				381 text 质量工程师
+			382 客户对接人
+				383 text 客户对接人
+			384 测试工程师
+				385 text 测试工程师
+			386 产品经理
+				387 text 产品经理
+			388 实习生
+				389 text 实习生
+			390 UI设计师
+				391 text UI设计师
+			392 文档管理
+				393 text 文档管理
+			394 采购协调
+				395 text 采购协调
+			396 外部顾问
+				397 text 外部顾问
+
+The focused UI element is 372 项目经理

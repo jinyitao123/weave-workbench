@@ -1,0 +1,66 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/after-sales/quotations".
+1 AXWebArea RiseMap, URL: risemap.cn/after-sales/quotations
+	2 container root
+		3 image 南京汇川技术研发中心有限公司
+		4 text 工作台
+		5 button 收起侧边栏
+			6 image
+		7 container
+			8 button
+				9 image
+			10 button
+				11 image
+			12 button
+				13 image
+			14 button
+				15 image
+		16 container
+			17 container
+				18 checkbox 1
+				19 checkbox 0
+				20 checkbox 0
+				21 checkbox 0
+				22 checkbox 0
+				23 checkbox 0
+				24 checkbox 0
+				25 checkbox 0
+				26 checkbox 0
+			27 button
+				28 image
+			29 button (collapsed) Secondary Actions: Expand
+				30 image
+			31 button
+			32 link community.risemap.cn/
+			33 link community.risemap.cn/support
+			34 button
+				35 image
+		36 container
+			37 button
+				38 image
+			39 button
+			40 button
+			41 button
+			42 button
+			43 button
+			44 button
+			45 button
+			46 button
+			47 button
+			48 button
+			49 button
+			50 button
+			51 button
+		52 container
+			53 container
+				54 image
+				55 image
+				56 heading 1
+				57 button
+					58 image
+			59 image
+			60 text field (settable)
+			61 button
+		62 button
+		63 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/after-sales/quotations

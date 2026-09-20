@@ -1,0 +1,433 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同":
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "附加费用":
+    - generic: 附加费用
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "联系人管理":
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+  - button "服务管理":
+    - generic: 服务管理
+  - button "服务工单":
+    - generic: 服务工单
+  - button "服务报价单":
+    - generic: 服务报价单
+  - button "服务结算单":
+    - generic: 服务结算单
+  - button "接单中心":
+    - generic: 接单中心
+  - button "派工中心":
+    - generic: 派工中心
+  - button "服务分析":
+    - generic: 服务分析
+  - button "质保管理":
+    - generic: 质保管理
+  - button "服务配置":
+    - generic: 服务配置
+- generic: 免费试用中，还剩 9 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，18 条未读":
+    - generic: "18"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "客户物料对照":
+  - generic: 客户物料对照
+- button "商机管理":
+  - generic: 商机管理
+- button "线索管理":
+  - generic: 线索管理
+- button "跟进记录":
+  - generic: 跟进记录
+- button "公海客户":
+  - generic: 公海客户
+- button "服务工单":
+  - generic: 服务工单
+- button "服务报价单":
+  - generic: 服务报价单
+- button "服务结算单":
+  - generic: 服务结算单
+- button "接单中心":
+  - generic: 接单中心
+- button "派工中心":
+  - generic: 派工中心
+- button "服务分析":
+  - generic: 服务分析
+- button "质保管理":
+  - generic: 质保管理
+- button "服务配置":
+  - generic: 服务配置
+- button "新建服务工单":
+  - generic: 新建服务工单
+- main:
+  - generic: 服务管理
+  - generic: 新建工单
+  - heading "新建服务工单" [level=1]
+  - paragraph: 一页填写：选客户 / 订单 → 自动带出产品与质保 → 描述问题 → 提交
+  - button "返回列表":
+    - text: 返回列表
+  - generic: "1"
+  - generic: 服务需求
+  - generic: "*"
+  - generic: 工单类型 *
+  - button "RISEMAP 对照服务类型 20260913":
+    - generic "RISEMAP 对照服务类型 20260913"
+    - button:
+  - generic: 服务方式
+  - button "上门服务":
+    - generic "上门服务"
+  - generic: 紧急程度
+  - button "中":
+    - generic "中"
+  - generic: "2"
+  - generic: 客户与产品
+  - generic: "*"
+  - generic: 客户 *
+  - button "苏州澄岳自动化装备有限公司 周启明":
+    - generic: 苏州澄岳自动化装备有限公司
+    - generic: 周启明
+    - button:
+  - generic: 联系人
+  - button "周启明":
+    - generic: 周启明
+  - button "清除已选联系人":
+  - generic: 联系电话 *
+  - textbox "选择联系人后自动带出": "13800002609"
+  - generic: 关联销售订单 *
+  - generic: 自动带出产品、质保与金额
+  - generic: SO-2026-0001 · ¥243,200
+  - button:
+  - generic: 服务地址
+  - textbox "选择客户或销售订单后自动带出": 苏州澄岳自动化装备有限公司现场
+  - generic: 物料明细
+  - generic: 共 1 条 · 请勾选本次服务涉及的物料（可不选 → 整单服务）
+  - button "全选"
+  - checkbox "800型柔性线控制柜 默认规格 2 台"
+  - generic "800型柔性线控制柜"
+  - generic "默认规格"
+  - generic: 2 台
+  - text: 共
+  - strong: "1"
+  - text: 条物料
+  - generic: · 第 1 - 1 条
+  - generic: 每页
+  - combobox:
+    - generic: "5"
+  - generic: 条
+  - button [disabled]:
+  - button "1"
+  - button [disabled]:
+  - text: 未勾选具体物料 → 本工单将按「整单服务」处理（合同级/订单级质保卡仍会生效）
+  - generic: "3"
+  - generic: 质保信息（根据客户 / 订单 / 产品 自动判定）
+  - text: 销售订单时间线
+  - generic: SO-2026-0001
+  - text: 订单签约
+  - generic: 2026-09-09 10:40:29
+  - text: 计划发货
+  - generic: 2026-10-09 00:00:00
+  - text: 实际发货
+  - generic: —
+  - text: 客户签收
+  - generic: —
+  - text: 订单状态
+  - generic: 执行中
+  - generic: 关联合同 2097514550139924482
+  - generic: 需人工判断
+  - generic: 请人工核对销售订单 / 合同质保条款
+  - text: 未匹配到该订单的质保卡：销售订单已接入后端，而质保卡与产品实例目前仍是本地演示数据（按演示订单号建立）。 质保档案接入后端后此处会自动恢复，当前可手动填写下方质保字段。
+  - text: 未匹配到质保卡。请人工核对销售订单 / 合同质保条款，或在下方手动填写质保信息。
+  - generic: 质保状态
+  - button "需人工判断":
+    - generic "需人工判断"
+  - generic: 质保起始
+  - textbox "请选择日期": 2026年9月10日
+  - button:
+  - button:
+  - generic: 质保截止
+  - textbox "请选择日期": 2027年9月10日
+  - button:
+  - button:
+  - generic: 剩余天数
+  - generic: 362 天
+  - button "恢复自动匹配（基于主卡）":
+    - text: 恢复自动匹配（基于主卡）
+  - generic: "4"
+  - generic: 费用与报价
+  - generic: "*"
+  - generic: 服务责任 *
+  - button "免费服务 质保或合同权益覆盖":
+    - generic: 免费服务
+    - generic: 质保或合同权益覆盖
+  - button "需要报价 先报价，客户接受后再派工":
+    - generic: 需要报价
+    - generic: 先报价，客户接受后再派工
+  - button "待人工判定 范围或责任暂未确认":
+    - generic: 待人工判定
+    - generic: 范围或责任暂未确认
+  - generic: 报价处理
+  - generic: 待人工判定
+  - paragraph: 服务范围或责任尚未确认，保存后进入人工判定，不会自动生成正式报价。
+  - generic: "5"
+  - generic: 问题 / 服务内容
+  - generic: "*"
+  - generic: 工单标题
+  - textbox "一句话概括问题，例如「触摸屏黑屏，现场停线」": RISEMAP 对照服务工单 20260913
+  - generic: 问题描述 / 服务内容 *
+  - textbox "详细描述客户报修的问题或本次需要提供的服务内容": 800型柔性线控制柜交付后例行调试支持，用于 Forge 同材料复刻验收。
+  - generic: 故障现象
+  - textbox "如：开机无反应 / 通讯中断": PLC 通讯参数复核
+  - generic: 影响范围
+  - textbox "如：现场停线 / 单工位故障": 单工位调试支持
+  - generic: 客户期望时间
+  - textbox "请选择日期" [active]: 2026-09-15
+  - button:
+  - paragraph: 报价清单小计
+  - paragraph: ¥0.00
+  - paragraph: 报价折扣
+  - paragraph: ¥0.00
+  - paragraph: 合同 / 质保覆盖
+  - paragraph: ¥0.00
+  - paragraph: 客户预计应付
+  - paragraph: 待判定
+  - button "取消":
+    - text: 取消
+  - button "保存草稿":
+    - text: 保存草稿
+  - button "提交工单":
+    - text: 提交工单
+- button "打开 AI 助手"
+- region "Notifications alt+T"
+- button:
+- button "2026年 九月"
+- button:
+- generic: 日
+- generic: 一
+- generic: 二
+- generic: 三
+- generic: 四
+- generic: 五
+- generic: 六
+- button "30"
+- button "31"
+- button "1"
+- button "2"
+- button "3"
+- button "4"
+- button "5"
+- button "6"
+- button "7"
+- button "8"
+- button "9"
+- button "10"
+- button "11"
+- button "12"
+- button "13"
+- button "14"
+- button "15"
+- button "16"
+- button "17"
+- button "18"
+- button "19"
+- button "20"
+- button "21"
+- button "22"
+- button "23"
+- button "24"
+- button "25"
+- button "26"
+- button "27"
+- button "28"
+- button "29"
+- button "30"
+- button "1"
+- button "2"
+- button "3"
+- button "4"
+- button "5"
+- button "6"
+- button "7"
+- button "8"
+- button "9"
+- button "10"
+- button "今天"
+- button "清除"
+- button:
+- button "2027年 九月"
+- button:
+- generic: 日
+- generic: 一
+- generic: 二
+- generic: 三
+- generic: 四
+- generic: 五
+- generic: 六
+- button "29"
+- button "30"
+- button "31"
+- button "1"
+- button "2"
+- button "3"
+- button "4"
+- button "5"
+- button "6"
+- button "7"
+- button "8"
+- button "9"
+- button "10"
+- button "11"
+- button "12"
+- button "13"
+- button "14"
+- button "15"
+- button "16"
+- button "17"
+- button "18"
+- button "19"
+- button "20"
+- button "21"
+- button "22"
+- button "23"
+- button "24"
+- button "25"
+- button "26"
+- button "27"
+- button "28"
+- button "29"
+- button "30"
+- button "1"
+- button "2"
+- button "3"
+- button "4"
+- button "5"
+- button "6"
+- button "7"
+- button "8"
+- button "9"
+- button "今天"
+- button "清除"
+- button:
+- button "2026年 九月"
+- button:
+- generic: 日
+- generic: 一
+- generic: 二
+- generic: 三
+- generic: 四
+- generic: 五
+- generic: 六
+- button "30"
+- button "31"
+- button "1"
+- button "2"
+- button "3"
+- button "4"
+- button "5"
+- button "6"
+- button "7"
+- button "8"
+- button "9"
+- button "10"
+- button "11"
+- button "12"
+- button "13"
+- button "14"
+- button "15"
+- button "16"
+- button "17"
+- button "18"
+- button "19"
+- button "20"
+- button "21"
+- button "22"
+- button "23"
+- button "24"
+- button "25"
+- button "26"
+- button "27"
+- button "28"
+- button "29"
+- button "30"
+- button "1"
+- button "2"
+- button "3"
+- button "4"
+- button "5"
+- button "6"
+- button "7"
+- button "8"
+- button "9"
+- button "10"
+- button "今天"
+- button "清除"

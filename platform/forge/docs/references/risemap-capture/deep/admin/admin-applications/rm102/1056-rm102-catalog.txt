@@ -1,0 +1,210 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/workflow/admin-applications".
+0 AXWebArea RiseMap, URL: risemap.cn/workflow/admin-applications
+	1 container
+		2 container root
+			201 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			202 text 行政
+			203 button 收起侧边栏
+				204 image
+			431 container
+				432 button 审批中心
+					433 image
+					434 text 审批中心
+					435 image
+				436 button 我的审批
+				437 button 抄送我的
+				438 button 我发起的
+				439 button 行政申请
+				440 button 行政管理
+					441 image
+					442 text 行政管理
+					443 image
+				444 button 公司通知
+				445 button 用章管理
+				446 button 会议纪要
+				447 button 工作汇报
+				448 button 文档中心
+				449 button 固定资产
+				450 button 资质与申报
+				451 button 物料领取
+				452 button 设备维护
+				453 button 礼品管理
+				454 button 借出管理
+				455 button 车辆管理
+				456 button 人力资源
+					457 image
+					458 text 人力资源
+					459 image
+				460 button 人事工作台
+				461 button 员工档案
+				462 button 招聘管理
+				463 button 入职离职
+				464 button 薪酬福利
+				465 button 规章制度
+				466 button 通讯录
+				467 button 考勤假期
+					468 image
+					469 text 考勤假期
+					470 image
+				471 button 加班申请
+				472 button 请假管理
+				473 button 出差申请
+				474 button 考勤管理
+				475 button 考勤统计
+				476 button 流程中心
+					477 image
+					478 text 流程中心
+					479 image
+				480 button 审批记录
+				481 button 发起流程
+				482 button 流程定义
+				483 button 流程分类
+			215 image
+			216 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			217 button 查看方案
+				218 image
+				219 text 查看方案
+			220 button
+				221 image
+			222 container
+				223 container 业务分类
+					224 checkbox 工作台, Value: 0
+					225 checkbox 供应链, Value: 0
+					226 checkbox 销售, Value: 0
+					227 checkbox 生产, Value: 0
+					228 checkbox 项目, Value: 0
+					229 checkbox 行政, Value: 1
+					230 checkbox 财务, Value: 0
+					231 checkbox 报表, Value: 0
+					232 checkbox 系统, Value: 0
+				233 button Description: 展开搜索, Help: 搜索
+					234 image
+				235 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					236 image
+					237 text 2
+				238 button Description: 打开推广奖励, Help: 推广
+				239 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				240 link Description: 打开工单, Value: community.risemap.cn/support
+				241 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					242 image
+					243 text 立即订阅
+				244 button 金
+					245 text 金
+					246 image
+			247 container
+				248 button 工作台
+					249 image
+					250 text 工作台
+				259 button 委外未交
+					260 text 委外未交
+				261 button 委外进货
+					262 text 委外进货
+				263 button 委外对账单
+					264 text 委外对账单
+				265 button 项目中心
+					266 text 项目中心
+				267 button 项目分析中心
+					268 text 项目分析中心
+				269 button 任务管理
+					270 text 任务管理
+				271 button 工时管理
+					272 text 工时管理
+				273 button 快捷工时填报
+					274 text 快捷工时填报
+				275 button 项目配置中心
+					276 text 项目配置中心
+				277 button 新建计划模板
+					278 text 新建计划模板
+				484 button 我的审批
+					485 text 我的审批
+				486 button 抄送我的
+					487 text 抄送我的
+				488 button 我发起的
+					489 text 我发起的
+				490 button 行政申请
+					491 text 行政申请
+			492 container
+				493 container
+					494 text 审批中心
+					495 image
+					496 text 行政申请
+					497 image
+					498 heading 行政申请, Value: 1
+						499 text 行政申请
+					500 text 选择需要办理的事项，填写申请后进入对应审批流程
+				501 image
+				502 text field (settable)
+				503 tab group 申请分类
+					504 tab (selected, settable, boolean) 全部申请 11, Value: 1
+					505 tab (selectable, settable, boolean) 考勤假期 5, Value: 0
+					506 tab (selectable, settable, boolean) 行政事务 3, Value: 0
+					507 tab (selectable, settable, boolean) 用车资质 3, Value: 0
+					508 tab (selectable, settable, boolean) 其他申请 0, Value: 0
+				509 heading 考勤假期, Value: 2
+					510 text 考勤假期
+				511 text 5  项可申请事项
+				512 button 加班申请 登记加班时间与补偿方式
+					513 image
+					514 text 加班申请
+					515 text 登记加班时间与补偿方式
+					516 image
+				517 button 请假申请 年假、事假、病假等假期
+					518 image
+					519 text 请假申请
+					520 text 年假、事假、病假等假期
+					521 image
+				522 button 出差申请 填写行程与出差计划
+					523 image
+					524 text 出差申请
+					525 text 填写行程与出差计划
+					526 image
+				527 button 补签申请 补录异常考勤打卡
+					528 image
+					529 text 补签申请
+					530 text 补录异常考勤打卡
+					531 image
+				532 button 报销申请 提交员工费用报销
+					533 image
+					534 text 报销申请
+					535 text 提交员工费用报销
+					536 image
+				537 heading 行政事务, Value: 2
+					538 text 行政事务
+				539 text 3  项可申请事项
+				540 button 用章申请 公章、合同章等用印
+					541 image
+					542 text 用章申请
+					543 text 公章、合同章等用印
+					544 image
+				545 button 礼品申请 客户礼赠与内部礼品领用
+					546 image
+					547 text 礼品申请
+					548 text 客户礼赠与内部礼品领用
+					549 image
+				550 button 物料领取 办公及行政物料领用
+					551 image
+					552 text 物料领取
+					553 text 办公及行政物料领用
+					554 image
+				555 heading 用车资质, Value: 2
+					556 text 用车资质
+				557 text 3  项可申请事项
+				558 button 公司用车 申请公司车辆与行程
+					559 image
+					560 text 公司用车
+					561 text 申请公司车辆与行程
+					562 image
+				563 button 私车公用 登记私车公用与预计里程
+					564 image
+					565 text 私车公用
+					566 text 登记私车公用与预计里程
+					567 image
+				568 button 资质续期 证照续期、变更与复审
+					569 image
+					570 text 资质续期
+					571 text 证照续期、变更与复审
+					572 image
+			367 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+
+The focused UI element is 0 AXWebArea RiseMap, URL: risemap.cn/workflow/admin-applications

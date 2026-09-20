@@ -1,0 +1,114 @@
+Browser tab: 4, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_sales_shipment_workspace".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_shipment_workspace
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 销售发货单 已连接
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_sales_shipment_workspace
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 销售发货单, Value: 1
+				44 text 销售发货单
+			45 text 发货出库登记、物流跟踪、签收回执与开票联动 03 销售业务 / 销售发货单
+			46 button 下一步操作　待出库发货单 ›
+			47 button 新建发货单
+			48 button 打开对象记录
+			49 button 刷新
+			61 text 发货出库登记、物流跟踪、签收回执与开票联动
+			50 heading 销售发货单, Value: 1
+				62 text 销售发货单
+			63 text 发货单 1 待出库 0 已出库数量 1 含税金额 ¥ 128,000.00
+			51 text field (settable) 搜索发货单
+			52 pop up button (collapsed) Description: 状态, Secondary Actions: Expand
+			53 button 范围
+			54 button 清空筛选
+			55 table
+				64 row
+					65 cell
+						66 text 发货单号
+					67 cell
+						68 text 关联订单
+					69 cell
+						70 text 客户单号
+					71 cell
+						72 text 客户名称
+					73 cell
+						74 text 收货人
+					75 cell
+						76 text 状态
+					77 cell
+						78 text 出库进度
+					79 cell
+						80 text 含税金额
+					81 cell
+						82 text 出库单
+					83 cell
+						84 text 出库日期
+					85 cell
+						86 text 负责人
+					87 cell
+						88 text 操作
+				56 row
+					57 cell
+						58 button DN-CONVERT-20260909-001
+						89 text SO-CONVERT-20260909-001 发货 DN-CONVERT-20260909-001
+					90 cell
+						91 text SO-CONVERT-20260909-001
+					92 cell
+						93 text —
+					94 cell
+						95 text 苏州澄岳自动化装备有限公司
+					96 cell
+						97 text 周启明
+					98 cell
+						99 text 已出库
+					100 cell
+						101 container
+							102 text 1  /  1  台
+					103 cell
+						104 text ¥ 128,000.00
+					105 cell
+						106 text OUT-CONVERT-20260909-001
+					107 cell
+						108 text 2026-09-09
+					109 cell
+						110 text Dev Admin
+					59 cell
+						60 button 查看
+			111 text 共  1  条记录 每页 10 条 · 1 / 1
+
+The focused UI element is 9 link Description: 页面, URL: localhost:4321/_console/apps/forge

@@ -1,0 +1,255 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/warehouses".
+1 AXWebArea RiseMap, URL: risemap.cn/base/warehouses
+	2 container
+		3 container root
+			180 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			181 text 供应链
+			182 button 收起侧边栏
+				183 image
+			184 container
+				185 button 到货检验
+					186 image
+					187 text 到货检验
+					188 image
+				189 button 到货通知
+				190 button 到货登记
+				191 button 待检验库存
+				192 button 检验单
+				193 button 检验规则
+				194 button 基础资料
+					195 image
+					196 text 基础资料
+					197 image
+				198 button 物料管理
+				199 button 物料组合
+				200 button BOM管理
+				201 button 综合物料搜索
+				202 button 供应商管理
+				203 button 产品实例追溯
+				204 button 仓库管理
+				205 button 采购管理
+					206 image
+					207 text 采购管理
+					208 image
+				209 button 采购发票
+				210 button 采购申请
+				211 button 采购待办池
+				212 button 询价管理
+				213 button 采购订单
+				214 button 采购退换货
+				215 button 供应商价格本
+				216 button 入库管理
+					217 image
+					218 text 入库管理
+					219 image
+				220 button 全部入库单
+				221 button 采购入库
+				222 button 生产入库
+				223 button 其他入库
+				224 button 期初入库
+				225 button 入库明细
+				226 button 库存管理
+					227 image
+					228 text 库存管理
+					229 image
+				230 button 库存总览
+				231 button 不合格处理
+				232 button 库存流水
+				233 button 库存锁定
+				234 button 库存盘点
+				235 button 调拨与借出
+				236 button 库存预警
+				237 button 报损单
+				238 button SN码管理
+				239 button 出库管理
+					240 image
+					241 text 出库管理
+					242 image
+				243 button 出库单列表
+				244 button 生产出库
+				245 button 其他出库
+				246 button 销售直接出库
+				247 button 待出库发货单
+				248 button 采购退换货出库
+				249 button 出库明细
+			250 image
+			251 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			252 button 查看方案
+				253 image
+				254 text 查看方案
+			255 button
+				256 image
+			257 container
+				258 container 业务分类
+					259 checkbox 工作台, Value: 0
+					260 checkbox 供应链, Value: 1
+					261 checkbox 销售, Value: 0
+					262 checkbox 生产, Value: 0
+					263 checkbox 项目, Value: 0
+					264 checkbox 行政, Value: 0
+					265 checkbox 财务, Value: 0
+					266 checkbox 报表, Value: 0
+					267 checkbox 系统, Value: 0
+				268 button Description: 展开搜索, Help: 搜索
+					269 image
+				270 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					271 image
+					272 text 2
+				273 button Description: 打开推广奖励, Help: 推广
+				274 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				275 link Description: 打开工单, Value: community.risemap.cn/support
+				276 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					277 image
+					278 text 立即订阅
+				279 button 金
+					280 text 金
+					281 image
+			282 container
+				283 button 工作台
+					284 image
+					285 text 工作台
+				286 button 商品管理配置
+					287 text 商品管理配置
+				288 button 财务配置
+					289 text 财务配置
+				290 button 行政配置
+					291 text 行政配置
+				292 button 客户管理配置
+					293 text 客户管理配置
+				294 button 销售配置
+					295 text 销售配置
+				296 button 库存配置
+					297 text 库存配置
+				298 button 其他配置
+					299 text 其他配置
+				300 button 人事配置
+					301 text 人事配置
+				302 button 项目管理配置
+					303 text 项目管理配置
+				304 button 图纸配置
+					305 text 图纸配置
+				306 button 生产管理配置
+					307 text 生产管理配置
+				308 button 委外配置
+					309 text 委外配置
+				310 button 引导中心
+					311 text 引导中心
+				312 button 仓库管理
+					313 text 仓库管理
+			314 container
+				315 container
+					316 text 基础资料
+					317 image
+					318 text 仓库管理
+					319 image
+					320 heading 仓库管理, Value: 1
+						321 text 仓库管理
+					322 text 管理主仓 / 项目仓 / 备品仓，掌握库存、采购、销售全景
+				323 image
+				324 text 总仓库数 1 原料仓 1
+				325 image
+				326 text 总库存 SKU 0
+				327 image
+				328 text 库存总量 0
+				329 image
+				330 text 总采购金额 ¥0.00 累计采购入库
+				331 image
+				332 text 预估销售总额 ¥0.00 库存总量趋势 近 12 个月 · 单位：件 0 件
+				333 image
+				334 text +0 件
+				335 image
+				336 container
+					337 text 10  ·  0 件
+				338 container
+					339 text 11  ·  0 件
+				340 container
+					341 text 12  ·  0 件
+				342 container
+					343 text 01  ·  0 件
+				344 container
+					345 text 02  ·  0 件
+				346 container
+					347 text 03  ·  0 件
+				348 container
+					349 text 04  ·  0 件
+				350 container
+					351 text 05  ·  0 件
+				352 container
+					353 text 06  ·  0 件
+				354 container
+					355 text 07  ·  0 件
+				356 container
+					357 text 08  ·  0 件
+				358 container
+					359 text 09  ·  0 件
+				360 text 10 12 02 04 06 08 总采购金额趋势 近 12 个月 · 单位：万元 ¥0万
+				361 image
+				362 text 0.0 万
+				363 image
+				364 container
+					365 text 10  ·  0 万
+				366 container
+					367 text 11  ·  0 万
+				368 container
+					369 text 12  ·  0 万
+				370 container
+					371 text 01  ·  0 万
+				372 container
+					373 text 02  ·  0 万
+				374 container
+					375 text 03  ·  0 万
+				376 container
+					377 text 04  ·  0 万
+				378 container
+					379 text 05  ·  0 万
+				380 container
+					381 text 06  ·  0 万
+				382 container
+					383 text 07  ·  0 万
+				384 container
+					385 text 08  ·  0 万
+				386 container
+					387 text 09  ·  0 万
+				388 text 10 12 02 04 06 08
+				389 heading 仓库列表, Value: 3
+					390 text 仓库列表
+				391 text 1  个
+				392 仓库展示方式
+					393 radio button 卡片, Value: 1, ID: :r1q8:-card
+						394 image
+						395 text 卡片
+					396 radio button 表格, Value: 0, ID: :r1q8:-table
+						397 image
+						398 text 表格
+				399 button 新增仓库
+					400 image
+					401 text 新增仓库
+				402 container 仓库类型筛选
+					403 checkbox 全部, Value: 1
+					404 checkbox 原料仓, Value: 0
+				405 image
+				406 heading 贯联验证原料仓, Value: 3
+					407 text 贯联验证原料仓
+				408 text WH-RM-01 原料仓
+				409 button
+					410 image
+				411 button
+					412 image
+				413 image
+				414 text 南京市江宁区贯联验证路1号
+				415 text SKU数量
+				416 text 0
+				417 text 库存总量
+				418 text 0
+				419 text 库存金额
+				420 text ¥0.00
+				421 image
+				422 text 采购总额
+				423 text ¥0.00
+				424 image
+				425 text 预估销售额
+				426 text ¥0.00
+			427 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			179 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/base/warehouses

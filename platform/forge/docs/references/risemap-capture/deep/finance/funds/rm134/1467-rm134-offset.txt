@@ -1,0 +1,226 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/accounts?tab=ar-ap-offset".
+1 AXWebArea RiseMap, URL: risemap.cn/finance/accounts?tab=ar-ap-offset
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 财务
+			6 button 收起侧边栏
+				7 image
+			8 container
+				181 button 资金管理
+					182 image
+					183 text 资金管理
+					184 image
+				185 button 资金账户
+				186 button 资金流水
+				187 button 应收应付
+				188 button 收款管理
+				189 button 付款管理
+				190 button 退款申请
+				191 button 授信额度管理
+				192 button 借款贷款管理
+				193 button 业务确认
+					194 image
+					195 text 业务确认
+					196 image
+				197 button 销售收入确认
+				198 button 成本中心
+				199 button 费用中心
+				200 button 报销管理
+				201 button 对账单
+					202 image
+					203 text 对账单
+				204 button 发票管理
+					205 image
+					206 text 发票管理
+					207 image
+				208 button 发票总览
+				209 button 销项发票
+				210 button 进项发票
+				211 button 开票任务
+				212 button 调整记录
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 1
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				103 button 请假管理
+					104 text 请假管理
+				105 button 出差申请
+					106 text 出差申请
+				107 button 新建出差申请
+					108 text 新建出差申请
+				109 button 考勤管理
+					110 text 考勤管理
+				111 button 考勤统计
+					112 text 考勤统计
+				113 button 审批记录
+					114 text 审批记录
+				115 button 发起流程
+					116 text 发起流程
+				117 button 流程设计器
+					118 text 流程设计器
+				119 button 流程定义
+					120 text 流程定义
+				121 button 编辑流程
+					122 text 编辑流程
+				123 button 流程分类
+					124 text 流程分类
+				213 button 资金账户
+					214 text 资金账户
+				215 button 资金流水
+					216 text 资金流水
+				217 button 应收应付
+					218 text 应收应付
+			219 container
+				220 container
+					221 text 资金管理
+					222 image
+					223 text 应收应付
+					224 image
+					225 heading 应收应付, Value: 1
+						226 text 应收应付
+					227 text 统一查看应收应付账款、管理期初建账、跟踪资金双向流动
+				228 button 应收账款
+					229 image
+					230 text 应收账款
+				231 button 应付账款
+					232 image
+					233 text 应付账款
+				234 button 往来对冲
+					235 image
+					236 text 往来对冲
+				237 button 期初应收建账
+					238 image
+					239 text 期初应收建账
+				240 button 期初应付建账
+					241 image
+					242 text 期初应付建账
+				243 heading 往来对冲单, Value: 2
+					244 text 往来对冲单
+				245 text 同一往来单位的应收、应付余额相互核销,不产生资金流水
+				246 button 导出
+					247 image
+					248 text 导出
+					249 image
+				250 button 新建对冲单
+					251 image
+					252 text 新建对冲单
+				253 image
+				254 text 累计有效对冲 ¥0 0 笔已完成对冲
+				255 image
+				256 text 待审批金额 ¥0 0 笔等待财务审批
+				257 image
+				258 text 应收核销金额 ¥0 贷记应收账款
+				259 image
+				260 text 应付核销金额 ¥0 借记应付账款
+				261 button 刷新
+					262 image
+				263 button
+					264 image
+				265 button
+					266 image
+				267 button 全部 (0)
+					268 text 全部 (
+					269 text 0
+					270 text )
+				271 button 草稿 (0)
+					272 text 草稿
+					273 text  (
+					274 text 0
+					275 text )
+				276 button 待审批 (0)
+					277 text 待审批
+					278 text  (
+					279 text 0
+					280 text )
+				281 button 已对冲 (0)
+					282 text 已对冲
+					283 text  (
+					284 text 0
+					285 text )
+				286 button 已驳回 (0)
+					287 text 已驳回
+					288 text  (
+					289 text 0
+					290 text )
+				291 button 已反对冲 (0)
+					292 text 已反对冲
+					293 text  (
+					294 text 0
+					295 text )
+				296 container
+					297 button
+						298 image
+					299 text field (settable)
+					300 text ~
+					301 text field (settable)
+				302 text field (settable)
+				303 table
+					304 row
+						305 cell
+							306 text 对冲单号
+						307 cell
+							308 text 往来单位
+						309 cell
+							310 text 应收核销
+						311 cell
+							312 text 应付核销
+						313 cell
+							314 text 对冲金额
+						315 cell
+							316 text 对冲日期
+						317 cell
+							318 text 申请信息
+						319 cell
+							320 text 状态
+						321 cell
+							322 text 操作
+					323 row
+						324 cell
+							325 image
+							326 text 暂无符合条件的对冲单
+				327 text 共  0 共 0 条 ·  本页对冲金额合计： ¥ 0 每页
+				328 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					329 text 20
+				330 text 条
+				331 button (disabled) 上一页
+					332 image
+				333 button 1
+				334 button (disabled) 下一页
+					335 image
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+
+The focused UI element is 234 button 往来对冲

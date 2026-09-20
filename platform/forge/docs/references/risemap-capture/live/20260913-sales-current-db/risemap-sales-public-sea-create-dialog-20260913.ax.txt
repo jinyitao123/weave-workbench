@@ -1,0 +1,35 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/sales/public-sea".
+0 AXWebArea RiseMap, URL: risemap.cn/sales/public-sea
+	1 container
+		2 container Notifications alt+T
+		3 container 新建公海客户, ID: radix-:r3g:
+			4 heading 新建公海客户, Value: 2, ID: radix-:r3h:
+				5 text 新建公海客户
+			6 container
+				7 text 客户名称  *
+			8 text field (settable) 无锡云起智能装备有限公司
+			9 text 行业
+			10 button 请选择行业
+				11 text 请选择行业
+			12 text 客户级别
+			13 button 请选择级别
+				14 text 请选择级别
+			15 container
+				16 text 联系人  *
+			17 text field (settable) 许明远
+			18 text 联系电话
+			19 text field (settable) 13900002610
+			20 text 邮箱
+			21 text field (settable)
+			22 text 所在城市
+			23 text field (settable) 无锡
+			24 container
+				25 text 标签  (逗号分隔)
+			26 text field (settable) 柔性线,潜在扩容,公海
+			27 button 取消
+			28 button 创建
+			29 button Close
+				30 image
+				31 text Close
+
+The focused UI element is 26 text field (settable) 柔性线,潜在扩容,公海

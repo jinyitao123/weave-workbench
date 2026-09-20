@@ -1,0 +1,305 @@
+Browser tab: 56, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_purchase_arrival_workspace".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_purchase_arrival_workspace
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 button 切换侧边栏
+			9 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			10 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			11 text 到货登记 已连接
+			12 button 搜索…
+			13 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			14 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_purchase_arrival_workspace
+			15 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			16 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		17 container
+			18 container
+				19 text 区域
+				20 content list
+					21 button 工作台
+					22 button 供应链
+					23 button 销售
+					24 button 生产
+					25 button 项目
+					26 button 行政
+					27 button 财务
+					28 button 报表
+					29 button 系统
+			30 container
+				31 button (expanded) 工作台, Secondary Actions: Collapse
+				32 content list
+					33 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					34 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					35 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					36 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			37 text 最近使用
+			38 button 切换侧边栏
+		39 container
+			40 button 在 Studio 中编辑
+			41 heading 到货登记, Value: 1
+				42 text 到货登记
+			43 text 采购订单级多物料到货登记与待检流转
+			44 heading 到货登记, Value: 1
+				45 text 到货登记
+			46 text 采购到货记录与待检流转
+			47 button 新建到货登记
+			48 button 待检验库存
+			49 button 刷新
+			50 table
+				51 row
+					52 cell
+						53 text 到货单号
+					54 cell
+						55 text 类型
+					56 cell
+						57 text 到货日期
+					58 cell
+						59 text 仓库
+					60 cell
+						61 text 对方
+					62 cell
+						63 text 关联单号
+					64 cell
+						65 text 物料种类数量
+					66 cell
+						67 text 含税金额
+					68 cell
+						69 text 状态
+					70 cell
+						71 text 操作
+				72 row
+					73 cell
+						74 text ARR-2026-0004
+					75 cell
+						76 text 采购到货
+					77 cell
+						78 text 2026-09-09
+					79 cell
+						80 text 贯联验证原料仓
+					81 cell
+						82 text 南京锐联电气技术有限公司
+					83 cell
+						84 text PO-RM-20260913201047-001
+					85 cell
+						86 text 1  种 /  2
+					87 cell
+						88 text ¥13,600.00
+					89 cell
+						90 text 已入库
+					91 cell
+						92 button 查看
+				93 row
+					94 cell
+						95 text ARR-2026-0008
+					96 cell
+						97 text 采购到货
+					98 cell
+						99 text 2026-09-09
+					100 cell
+						101 text 贯联验证原料仓
+					102 cell
+						103 text 南京锐联电气技术有限公司
+					104 cell
+						105 text PO-RM-20260913210506-001
+					106 cell
+						107 text 1  种 /  2
+					108 cell
+						109 text ¥13,600.00
+					110 cell
+						111 text 已入库
+					112 cell
+						113 button 查看
+				114 row
+					115 cell
+						116 text ARR-REP-CUR-20260913232727
+					117 cell
+						118 text 供应商补货
+					119 cell
+						120 text 2026-09-14
+					121 cell
+						122 text 贯联验证原料仓
+					123 cell
+						124 text 南京锐联电气技术有限公司
+					125 cell
+						126 text PO-RM-20260913232725-001
+					127 cell
+						128 text 1  种 /  0.1
+					129 cell
+						130 text ¥680.00
+					131 cell
+						132 text 已入库
+					133 cell
+						134 button 查看
+				135 row
+					136 cell
+						137 text ARR-REP-CUR-20260913210508
+					138 cell
+						139 text 供应商补货
+					140 cell
+						141 text 2026-09-14
+					142 cell
+						143 text 贯联验证原料仓
+					144 cell
+						145 text 南京锐联电气技术有限公司
+					146 cell
+						147 text PO-RM-20260913210506-001
+					148 cell
+						149 text 1  种 /  0.1
+					150 cell
+						151 text ¥680.00
+					152 cell
+						153 text 已入库
+					154 cell
+						155 button 查看
+				156 row
+					157 cell
+						158 text ARR-REP-CUR-20260913205628
+					159 cell
+						160 text 供应商补货
+					161 cell
+						162 text 2026-09-14
+					163 cell
+						164 text 贯联验证原料仓
+					165 cell
+						166 text 南京锐联电气技术有限公司
+					167 cell
+						168 text PO-RM-20260913205402-001
+					169 cell
+						170 text 1  种 /  0.1
+					171 cell
+						172 text ¥680.00
+					173 cell
+						174 text 已入库
+					175 cell
+						176 button 查看
+				177 row
+					178 cell
+						179 text ARR-2026-0006
+					180 cell
+						181 text 采购到货
+					182 cell
+						183 text 2026-09-09
+					184 cell
+						185 text 贯联验证原料仓
+					186 cell
+						187 text 南京锐联电气技术有限公司
+					188 cell
+						189 text PO-RM-20260913205402-001
+					190 cell
+						191 text 1  种 /  2
+					192 cell
+						193 text ¥13,600.00
+					194 cell
+						195 text 已入库
+					196 cell
+						197 button 查看
+				198 row
+					199 cell
+						200 text ARR-2026-0002
+					201 cell
+						202 text 采购到货
+					203 cell
+						204 text 2026-09-09
+					205 cell
+						206 text 贯联验证原料仓
+					207 cell
+						208 text 南京锐联电气技术有限公司
+					209 cell
+						210 text PO-RM-20260913172146-001
+					211 cell
+						212 text 1  种 /  2
+					213 cell
+						214 text ¥13,600.00
+					215 cell
+						216 text 已入库
+					217 cell
+						218 button 查看
+				219 row
+					220 cell
+						221 text ARR-2026-0010
+					222 cell
+						223 text 采购到货
+					224 cell
+						225 text 2026-09-09
+					226 cell
+						227 text 贯联验证原料仓
+					228 cell
+						229 text 南京锐联电气技术有限公司
+					230 cell
+						231 text PO-RM-20260913232725-001
+					232 cell
+						233 text 1  种 /  2
+					234 cell
+						235 text ¥13,600.00
+					236 cell
+						237 text 已入库
+					238 cell
+						239 button 查看
+				240 row
+					241 cell
+						242 text ARR-2026-0005
+					243 cell
+						244 text 采购到货
+					245 cell
+						246 text 2026-09-09
+					247 cell
+						248 text 贯联验证原料仓
+					249 cell
+						250 text 南京锐联电气技术有限公司
+					251 cell
+						252 text PO-RM-20260913201117-001
+					253 cell
+						254 text 1  种 /  2
+					255 cell
+						256 text ¥13,600.00
+					257 cell
+						258 text 已入库
+					259 cell
+						260 button 查看
+				261 row
+					262 cell
+						263 text ARR-2026-0001
+					264 cell
+						265 text 采购到货
+					266 cell
+						267 text 2026-09-09
+					268 cell
+						269 text 贯联验证原料仓
+					270 cell
+						271 text 南京锐联电气技术有限公司
+					272 cell
+						273 text PO-RM-202609-001
+					274 cell
+						275 text 1  种 /  2
+					276 cell
+						277 text ¥13,600.00
+					278 cell
+						279 text 已入库
+					280 cell
+						281 button 查看
+				282 row
+					283 cell
+						284 text ARR-2026-0003
+					285 cell
+						286 text 采购到货
+					287 cell
+						288 text 2026-09-09
+					289 cell
+						290 text 贯联验证原料仓
+					291 cell
+						292 text 南京锐联电气技术有限公司
+					293 cell
+						294 text PO-RM-20260913200932-001
+					295 cell
+						296 text 1  种 /  2
+					297 cell
+						298 text ¥13,600.00
+					299 cell
+						300 text 已入库
+					301 cell
+						302 button 查看
+
+The focused UI element is 8 button 切换侧边栏

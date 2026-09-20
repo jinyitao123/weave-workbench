@@ -1,0 +1,49 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/sales".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/sales
+	2 container 新增应付节点模板
+		3 heading 新增应付节点模板, Value: 3
+			4 text 新增应付节点模板
+		5 button 关闭
+			6 image
+		7 container
+			8 text 模板名称  *
+			9 text field (settable)
+			46 text 模板名称不能为空 备注
+			11 text field (settable)
+			12 text 应付节点  *
+			13 button 添加节点
+				14 image
+				15 text 添加节点
+			47 text 应付节点不能为空
+			16 table
+				17 row
+					18 cell
+						19 text #
+					20 cell
+						21 text 节点名称 *
+					22 cell
+						23 text 描述
+				24 row
+					25 cell
+						26 text 1
+					27 cell
+						28 text field (settable)
+					29 cell
+						30 text field (settable)
+					33 cell
+						34 button 删除节点
+							35 image
+				36 row
+					37 cell
+						38 text 2
+					39 cell
+						40 text field (settable)
+					41 cell
+						42 text field (settable)
+					43 cell
+						44 button 删除节点
+							45 image
+		31 button 取消
+		32 button 保存
+
+The focused UI element is 32 button 保存

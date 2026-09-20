@@ -1,0 +1,135 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/project/tasks".
+0 AXWebArea RiseMap, URL: risemap.cn/project/tasks
+	1 container
+		2 container root
+			201 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			202 text 项目
+			203 button 收起侧边栏
+				204 image
+			205 container
+				206 button 项目管理
+					207 image
+					208 text 项目管理
+					209 image
+				210 button 项目中心
+				211 button 项目分析中心
+				212 button 任务管理
+				213 button 工时管理
+				214 button 项目配置中心
+			215 image
+			216 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			217 button 查看方案
+				218 image
+				219 text 查看方案
+			220 button
+				221 image
+			222 container
+				223 container 业务分类
+					224 checkbox 工作台, Value: 0
+					225 checkbox 供应链, Value: 0
+					226 checkbox 销售, Value: 0
+					227 checkbox 生产, Value: 0
+					228 checkbox 项目, Value: 1
+					229 checkbox 行政, Value: 0
+					230 checkbox 财务, Value: 0
+					231 checkbox 报表, Value: 0
+					232 checkbox 系统, Value: 0
+				233 button Description: 展开搜索, Help: 搜索
+					234 image
+				235 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					236 image
+					237 text 2
+				238 button Description: 打开推广奖励, Help: 推广
+				239 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				240 link Description: 打开工单, Value: community.risemap.cn/support
+				241 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					242 image
+					243 text 立即订阅
+				244 button 金
+					245 text 金
+					246 image
+			247 container
+				248 button 工作台
+					249 image
+					250 text 工作台
+				255 button 新建发料单
+					256 text 新建发料单
+				257 button 委外回厂
+					258 text 委外回厂
+				259 button 委外退料
+					260 text 委外退料
+				261 button 新建退料单
+					262 text 新建退料单
+				263 button 委外对账
+					264 text 委外对账
+				265 button 委外供应商
+					266 text 委外供应商
+				267 button 委外库存
+					268 text 委外库存
+				269 button 批次追溯
+					270 text 批次追溯
+				271 button 委外未交
+					272 text 委外未交
+				273 button 委外进货
+					274 text 委外进货
+				275 button 委外对账单
+					276 text 委外对账单
+				277 button 项目中心
+					278 text 项目中心
+				387 button 项目分析中心
+					388 text 项目分析中心
+				389 button 任务管理
+					390 text 任务管理
+			391 container
+				392 text 项目管理
+				393 image
+				394 text 任务管理
+				395 heading 任务管理, Value: 1
+					396 text 任务管理
+				397 button 导出
+					398 image
+					399 text 导出
+					400 image
+				401 button 导出任务
+					402 image
+					403 text 导出任务
+				404 button 新建任务
+					405 image
+					406 text 新建任务
+				407 button 全部
+					408 text 全部
+				409 button 待处理
+				410 button 进行中
+				411 button 已完成
+				412 button 已逾期
+				413 button 列表
+					414 image
+					415 text 列表
+				416 button 按人员
+					417 image
+					418 text 按人员
+				419 button 甘特图
+					420 image
+					421 text 甘特图
+				422 image
+				423 text field (settable)
+				424 button 项目
+					425 text 项目
+				426 button 人员
+					427 text 人员
+				428 button 优先级
+					429 text 优先级
+				430 image
+				431 text 暂无任务 共  0 条记录 每页
+				432 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					433 text 10
+				434 text 条
+				435 button (disabled) 上一页
+					436 image
+				437 button 1
+				438 button (disabled) 下一页
+					439 image
+			386 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+
+The focused UI element is 212 button 任务管理

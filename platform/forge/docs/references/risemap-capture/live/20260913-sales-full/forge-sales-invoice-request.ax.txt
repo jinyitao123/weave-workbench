@@ -1,0 +1,104 @@
+Browser tab: 4, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_sales_invoice_request".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_invoice_request
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 销售发票
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_sales_invoice_request
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 销售发票, Value: 1
+				44 text 销售发票
+			45 text 销售开票申请跟踪与正式发票回写 06 销售业务 / 销售发票
+			46 button 去销售订单发起
+			47 button 正式发票登记
+			48 button 刷新
+			49 text 开票申请的发起记录与流转状态跟踪；正式发票由财务在「发票管理」登记回写
+			50 heading 销售发票, Value: 1
+				51 text 销售发票
+			52 button 全部0
+				53 text 全部
+				54 text 0
+			55 button 待审批0
+				56 text 待审批
+				57 text 0
+			58 button 已审批0
+				59 text 已审批
+				60 text 0
+			61 button 已开票0
+				62 text 已开票
+				63 text 0
+			64 button 已驳回0
+				65 text 已驳回
+				66 text 0
+			67 button 已撤回0
+				68 text 已撤回
+				69 text 0
+			70 text field (settable) 搜索申请号
+			71 button (disabled) 导出
+			72 button (disabled) 导出任务
+			73 button 清空筛选
+			74 table
+				75 row
+					76 cell
+						77 text 申请号
+					78 cell
+						79 text 客户 / 销售方
+					80 cell
+						81 text 模式
+					82 cell
+						83 text 合并订单
+					84 cell
+						85 text 价税合计
+					86 cell
+						87 text 状态
+					88 cell
+						89 text 申请时间
+					90 cell
+						91 text 申请人
+					92 cell
+						93 text 关联发票
+					94 cell
+						95 text 操作
+				96 row
+					97 cell
+						98 text ◇
+						99 text 暂无开票申请记录，可在销售订单发起开票
+						100 text 销售订单完成发货或达到开票条件后，可在订单侧发起开票；财务登记正式发票后回写这里。
+			101 text 共  0  条记录 每页 20 条 · 1 / 1 共 0 笔申请 · 价税合计 ¥ 0.00
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_invoice_request

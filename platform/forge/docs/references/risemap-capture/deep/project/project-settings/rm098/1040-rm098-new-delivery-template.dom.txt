@@ -1,0 +1,128 @@
+- generic: 项目
+- button:
+- navigation:
+  - button:
+    - generic: 项目管理
+  - button:
+    - generic: 项目中心
+  - button:
+    - generic: 项目分析中心
+  - button:
+    - generic: 任务管理
+  - button:
+    - generic: 工时管理
+  - button:
+    - generic: 项目配置中心
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button [pressed]:
+      - text: 项目
+    - button:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 委外对账
+- button:
+  - generic: 委外供应商
+- button:
+  - generic: 委外库存
+- button:
+  - generic: 批次追溯
+- button:
+  - generic: 委外未交
+- button:
+  - generic: 委外进货
+- button:
+  - generic: 委外对账单
+- button:
+  - generic: 项目中心
+- button:
+  - generic: 项目分析中心
+- button:
+  - generic: 任务管理
+- button:
+  - generic: 工时管理
+- button:
+  - generic: 快捷工时填报
+- button:
+  - generic: 项目配置中心
+- button:
+  - generic: 新建计划模板
+- main:
+  - generic: 项目管理
+  - generic: 项目配置中心
+  - heading [level=2]:
+    - text: 项目配置中心
+  - paragraph: 统一管理项目相关配置：计划模板、工时成本等
+  - generic: 计划模板总数
+  - generic: "0"
+  - generic: 系统模板
+  - generic: "0"
+  - generic: 自定义模板
+  - generic: "0"
+  - generic: 项目复制模板
+  - generic: "0"
+  - generic: 工时成本配置
+  - generic: —
+  - button:
+    - text: 计划模板
+  - button:
+    - text: 交付包模板
+  - button:
+    - text: 工时成本配置
+  - generic: 管理交付包模板，定义文件夹结构，项目交付包可套用模板快速初始化
+  - generic: 共
+  - generic: "0"
+  - generic: 个模板
+  - textbox:
+    - /placeholder: 搜索模板名称、描述
+  - button:
+    - text: 新建模板
+  - generic: 暂无模板
+  - generic: 点击「新建模板」开始创建。
+- button:
+- region "Notifications alt+T"
+- generic: 周日
+- dialog "新建交付包模板":
+  - heading "新建交付包模板" [level=2]:
+    - text: 新建交付包模板
+  - generic: 模板名称 *
+  - textbox "例如：DCS项目标准交付" [active]
+  - generic: 描述
+  - textbox "模板用途说明..."
+  - button "取消"
+  - button "创建" [disabled]
+  - button "Close":
+    - generic: Close

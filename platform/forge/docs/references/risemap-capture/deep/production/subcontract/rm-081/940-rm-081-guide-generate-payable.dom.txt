@@ -1,0 +1,239 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 生产
+- button "收起侧边栏":
+- navigation:
+  - button "组装业务管理":
+    - generic: 组装业务管理
+  - button "组装单":
+    - generic: 组装单
+  - button "缺料待办":
+    - generic: 缺料待办
+  - button "领料单":
+    - generic: 领料单
+  - button "补料单":
+    - generic: 补料单
+  - button "退料单":
+    - generic: 退料单
+  - button "拆解单":
+    - generic: 拆解单
+  - button "换件单":
+    - generic: 换件单
+  - button "图纸管理":
+    - generic: 图纸管理
+  - button "进入图纸管理上手指南":
+  - button "图纸总览":
+    - generic: 图纸总览
+  - button "图号档案":
+    - generic: 图号档案
+  - button "图纸评审":
+    - generic: 图纸评审
+  - button "图纸发布":
+    - generic: 图纸发布
+  - button "图纸变更":
+    - generic: 图纸变更
+  - button "图纸发放记录":
+    - generic: 图纸发放记录
+  - button "图纸关联查询":
+    - generic: 图纸关联查询
+  - button "客户图纸":
+    - generic: 客户图纸
+  - button "委外管理":
+    - generic: 委外管理
+  - button "进入委外管理上手指南":
+  - button "委外看板":
+    - generic: 委外看板
+  - button "委外订单":
+    - generic: 委外订单
+  - button "委外发料":
+    - generic: 委外发料
+  - button "委外回厂":
+    - generic: 委外回厂
+  - button "委外退料":
+    - generic: 委外退料
+  - button "委外对账":
+    - generic: 委外对账
+  - button "委外供应商":
+    - generic: 委外供应商
+  - button "委外库存":
+    - generic: 委外库存
+  - button "批次追溯":
+    - generic: 批次追溯
+  - button "委外未交":
+    - generic: 委外未交
+  - button "委外进货":
+    - generic: 委外进货
+  - button "委外对账单":
+    - generic: 委外对账单
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产" [pressed]:
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "新建图号档案":
+  - generic: 新建图号档案
+- button "图号档案":
+  - generic: 图号档案
+- button "图纸评审":
+  - generic: 图纸评审
+- button "新建评审":
+  - generic: 新建评审
+- button "图纸发布":
+  - generic: 图纸发布
+- button "已发布记录":
+  - generic: 已发布记录
+- button "图纸变更":
+  - generic: 图纸变更
+- button "新建变更":
+  - generic: 新建变更
+- button "图纸发放记录":
+  - generic: 图纸发放记录
+- button "新建发放":
+  - generic: 新建发放
+- button "图纸关联查询":
+  - generic: 图纸关联查询
+- button "客户图纸":
+  - generic: 客户图纸
+- button "新建客户图纸":
+  - generic: 新建客户图纸
+- button "委外管理上手指南":
+  - generic: 委外管理上手指南
+- main:
+  - heading "委外管理上手指南" [level=1]
+  - paragraph: 按实际业务任务快速完成订单、发料、回厂和对账，不需要先读完整说明书。
+  - complementary:
+    - generic: 选择角色视角
+    - group "选择指南角色":
+      - button "切换到委外业务员":
+      - button "切换到仓库人员":
+      - button "切换到质检 / 收货":
+      - button "切换到财务人员" [pressed]:
+    - generic: 财务人员
+    - generic "赔偿抵扣、对账和应付衔接"
+    - generic: 学习进度
+    - strong: 0 / 6
+    - progressbar "财务人员学习进度"
+  - heading "完整业务流程" [level=2]
+  - generic: 当前角色需要关注 3 个阶段
+  - button "01 准备供应商 档案与加工能力" [disabled]:
+    - generic: "01"
+    - generic: 准备供应商
+    - generic: 档案与加工能力
+  - button "02 创建委外订单 提交并完成审核":
+    - generic: "02"
+    - generic: 创建委外订单
+    - generic: 提交并完成审核
+  - button "03 委外发料 甲供料订单" [disabled]:
+    - generic: "03"
+    - generic: 委外发料
+    - generic: 甲供料订单
+  - button "04 回厂验收 良品与不良品" [disabled]:
+    - generic: "04"
+    - generic: 回厂验收
+    - generic: 良品与不良品
+  - button "05 异常处理 退料与赔偿":
+    - generic: "05"
+    - generic: 异常处理
+    - generic: 退料与赔偿
+  - button "06 对账结算 生成应付":
+    - generic: "06"
+    - generic: 对账结算
+    - generic: 生成应付
+  - complementary:
+    - generic: 指南目录
+    - button "快速开始 1":
+      - generic: 快速开始
+      - generic: "1"
+    - button "订单管理 0" [disabled]:
+      - generic: 订单管理
+      - generic: "0"
+    - button "发料管理 0" [disabled]:
+      - generic: 发料管理
+      - generic: "0"
+    - button "回厂与质检 0" [disabled]:
+      - generic: 回厂与质检
+      - generic: "0"
+    - button "退料与赔偿 1":
+      - generic: 退料与赔偿
+      - generic: "1"
+    - button "对账结算 2":
+      - generic: 对账结算
+      - generic: "2"
+    - button "库存与报表 1":
+      - generic: 库存与报表
+      - generic: "1"
+    - button "常见问题 1":
+      - generic: 常见问题
+      - generic: "1"
+    - textbox "搜索委外指南":
+      - /placeholder: 搜索问题或操作
+  - main:
+    - generic: 阶段 06 · 对账结算
+    - heading "从委外对账生成应付" [level=2]
+    - paragraph: 将已审核的委外对账结果同步到财务应付，保持业务和财务来源一致。
+    - text: 2 分钟
+    - button "标记已掌握":
+      - text: 标记已掌握
+    - button "生成并审核委外对账"
+    - button "从委外对账生成应付" [active]
+    - generic: 适用场景
+    - paragraph: 委外对账已审核，需要进入后续付款管理。
+    - generic: 开始前确认
+    - paragraph: 对账单已审核；供应商和应付金额完整
+    - heading "操作步骤" [level=3]
+    - text: 负责人：财务人员
+    - generic: "01"
+    - generic: 打开已审核对账单
+    - paragraph: 再次核对供应商、来源单据和净应付金额。
+    - generic: "02"
+    - generic: 生成应付
+    - paragraph: 执行生成应付；同一对账单重复执行时返回原应付记录。
+    - generic: 财务联动
+    - generic: "03"
+    - generic: 进入付款流程
+    - paragraph: 在应付或付款管理中继续处理付款申请和核销。
+    - text: 页面字段以实际业务页面为准
+    - button "处理委外对账":
+      - text: 处理委外对账
+  - complementary:
+    - generic: 完成标志
+    - paragraph: 对账单状态显示已生成应付，并可追溯到财务应付记录。
+    - generic: 常见阻塞与处理
+    - text: 生成应付失败
+    - paragraph: 检查对账单、供应商和应付金额是否完整，再确认当前账号权限。
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2025-10

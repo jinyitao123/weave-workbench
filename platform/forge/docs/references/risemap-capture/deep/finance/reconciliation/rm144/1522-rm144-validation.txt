@@ -1,0 +1,232 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/reconciliations/new/customer".
+1 AXWebArea RiseMap, URL: risemap.cn/finance/reconciliations/new/customer
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 财务
+			6 button 收起侧边栏
+				7 image
+			8 container
+				181 button 资金管理
+					182 image
+					183 text 资金管理
+					184 image
+				185 button 资金账户
+				186 button 资金流水
+				187 button 应收应付
+				188 button 收款管理
+				189 button 付款管理
+				190 button 退款申请
+				191 button 授信额度管理
+				192 button 借款贷款管理
+				193 button 业务确认
+					194 image
+					195 text 业务确认
+					196 image
+				197 button 销售收入确认
+				198 button 成本中心
+				199 button 费用中心
+				200 button 报销管理
+				201 button 对账单
+					202 image
+					203 text 对账单
+				204 button 发票管理
+					205 image
+					206 text 发票管理
+					207 image
+				208 button 发票总览
+				209 button 销项发票
+				210 button 进项发票
+				211 button 开票任务
+				212 button 调整记录
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 1
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				223 button 费用中心
+					224 text 费用中心
+				225 button 新建付款申请
+					226 text 新建付款申请
+				227 button 退款申请
+					228 text 退款申请
+				229 button 授信额度管理
+					230 text 授信额度管理
+				231 button 借款管理
+					232 text 借款管理
+				233 button 新建借款
+					234 text 新建借款
+				235 button 新建贷款
+					236 text 新建贷款
+				237 button 销售收入确认
+					238 text 销售收入确认
+				239 button 成本中心
+					240 text 成本中心
+				241 button 报销管理
+					242 text 报销管理
+				243 button 新建报销
+					244 text 新建报销
+				245 button 对账单
+					246 text 对账单
+				247 button 客户对账单
+					248 text 客户对账单
+				249 button 新建客户对账
+					250 text 新建客户对账
+			251 container
+				252 text 财务管理
+				253 image
+				254 text 对账中心
+				255 image
+				256 text 客户对账单
+				257 image
+				258 text 生成对账单
+				259 button
+					260 image
+				261 image
+				262 heading 生成客户对账单, Value: 1
+					263 text 生成客户对账单
+				264 text 1
+				265 heading 对账维度, Value: 3
+					266 text 对账维度
+				267 button 按客户 汇总该客户/供应商在期间内所有往来明细
+					268 image
+					269 text 按客户
+					270 image
+					271 text 汇总该客户/供应商在期间内所有往来明细
+				272 button 按合同 按指定合同筛选相关往来交易
+					273 image
+					274 text 按合同
+					275 text 按指定合同筛选相关往来交易
+				276 button 按订单 按指定订单筛选相关往来交易
+					277 image
+					278 text 按订单
+					279 text 按指定订单筛选相关往来交易
+				280 button 按发货 按发货单或入库单筛选交易
+					281 image
+					282 text 按发货
+					283 text 按发货单或入库单筛选交易
+				284 button 按发票 按发票维度核对收发货与开票匹配
+					285 image
+					286 text 按发票
+					287 text 按发票维度核对收发货与开票匹配
+				288 button 按余额汇总 汇总截止某日的往来余额
+					289 image
+					290 text 按余额汇总
+					291 text 汇总截止某日的往来余额
+				292 text 2
+				293 heading 对账信息, Value: 3
+					294 text 对账信息
+				295 text * 选择客户
+				296 button 搜索客户名称...
+					297 text 搜索客户名称...
+				298 text 3
+				299 heading 时间范围, Value: 3
+					300 image
+					301 text 时间范围
+				302 button 本月 当前月份数据
+					303 text 本月
+					304 text 当前月份数据
+				305 button 上月 上个月份数据
+					306 text 上月
+					307 text 上个月份数据
+				308 button 自定义 自定义起止日期
+					309 text 自定义
+					310 text 自定义起止日期
+				311 button 截止某日 截止到指定日期
+					312 text 截止某日
+					313 text 截止到指定日期
+				314 text 开始日期
+				315 container
+					316 text field (settable) 2026年9月1日
+					317 button
+						318 image
+					319 button
+						320 image
+				321 text 结束日期
+				322 container
+					323 text field (settable) 2026年9月30日
+					324 button
+						325 image
+					326 button
+						327 image
+				328 text 4
+				329 heading 对账依据, Value: 3
+					330 text 对账依据
+				331 button 按发货/收货对账 适合业务部门、仓库、采购核实数量金额
+					332 text 按发货/收货对账
+					333 image
+					334 text 适合业务部门、仓库、采购核实数量金额
+				335 button 按开票对账 适合财务核应收应付、税票
+					336 text 按开票对账
+					337 text 适合财务核应收应付、税票
+				338 button 按往来余额对账 适合月底财务确认往来余额
+					339 text 按往来余额对账
+					340 text 适合月底财务确认往来余额
+				341 button 按合同执行对账 适合项目型业务、老板看整体执行
+					342 text 按合同执行对账
+					343 text 适合项目型业务、老板看整体执行
+				344 button 5 数据口径 （高级选项）
+					345 text 5
+					346 heading 数据口径, Value: 3
+						347 image
+						348 text 数据口径
+					349 text （高级选项）
+					354 image
+				355 text 仅已审核 只包含已审核通过的单据
+				356 switch Value: 1, ID: :rf7:
+				357 text 仅已生效 只包含已生效的单据
+				358 switch Value: 0, ID: :rf8:
+				359 text 包含红字/退货 是否包含退货和红字发票
+				360 switch Value: 1, ID: :rf9:
+				361 text 包含未开票业务 是否包含尚未开票的业务
+				362 switch Value: 0, ID: :rfa:
+				363 text 包含预收/预付 是否包含预收款或预付款
+				364 switch Value: 0, ID: :rfb:
+				365 text 按含税金额展示 金额是否包含税金
+				366 switch Value: 1, ID: :rfc:
+				367 text 显示明细行 是否在对账单中显示明细行
+				368 switch Value: 1, ID: :rfd:
+				351 button 生成预览
+					352 image
+					353 text 生成预览
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+				369 content list
+					370 container
+						371 button Close toast
+							372 image
+						373 image
+						374 text 请选择客户
+
+The focused UI element is 351 button 生成预览

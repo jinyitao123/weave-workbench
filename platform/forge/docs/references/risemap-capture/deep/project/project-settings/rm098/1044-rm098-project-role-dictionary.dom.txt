@@ -1,0 +1,214 @@
+- generic: 项目
+- button:
+- navigation:
+  - button:
+    - generic: 项目管理
+  - button:
+    - generic: 项目中心
+  - button:
+    - generic: 项目分析中心
+  - button:
+    - generic: 任务管理
+  - button:
+    - generic: 工时管理
+  - button:
+    - generic: 项目配置中心
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button [pressed]:
+      - text: 项目
+    - button:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 委外对账
+- button:
+  - generic: 委外供应商
+- button:
+  - generic: 委外库存
+- button:
+  - generic: 批次追溯
+- button:
+  - generic: 委外未交
+- button:
+  - generic: 委外进货
+- button:
+  - generic: 委外对账单
+- button:
+  - generic: 项目中心
+- button:
+  - generic: 项目分析中心
+- button:
+  - generic: 任务管理
+- button:
+  - generic: 工时管理
+- button:
+  - generic: 快捷工时填报
+- button:
+  - generic: 项目配置中心
+- button:
+  - generic: 新建计划模板
+- main:
+  - generic: 项目管理
+  - generic: 项目配置中心
+  - heading [level=2]:
+    - text: 项目配置中心
+  - paragraph: 统一管理项目相关配置：计划模板、工时成本等
+  - generic: 计划模板总数
+  - generic: "0"
+  - generic: 系统模板
+  - generic: "0"
+  - generic: 自定义模板
+  - generic: "0"
+  - generic: 项目复制模板
+  - generic: "0"
+  - generic: 工时成本配置
+  - generic: —
+  - button:
+    - text: 计划模板
+  - button:
+    - text: 交付包模板
+  - button:
+    - text: 工时成本配置
+  - generic: 配置不同角色的工时费率、项目特殊费率及全局规则
+  - button:
+    - text: 新增角色
+  - paragraph: 角色类型
+  - paragraph: "0"
+  - paragraph: 费率范围
+  - paragraph: ¥0~0
+  - paragraph: 元/小时
+  - paragraph: 项目特殊费率
+  - paragraph: "0"
+  - paragraph: 涉及 0 个项目
+  - paragraph: 加班倍率
+  - paragraph: x1.5
+  - paragraph: 统一标准
+  - button:
+    - text: 员工工时成本
+    - generic: "0"
+  - button:
+    - text: 角色费率
+    - generic: "0"
+  - button:
+    - text: 项目费率覆盖
+    - generic: "0"
+  - button:
+    - text: 全局设置
+  - button:
+  - button:
+  - button:
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader:
+          - generic: 角色名称
+        - columnheader:
+          - generic: 职级代码
+        - columnheader:
+          - generic: 正常费率(¥/h)
+        - columnheader:
+          - generic: 加班倍率
+        - columnheader:
+          - generic: 加班费率(¥/h)
+        - columnheader:
+          - generic: 出差费率(¥/h)
+        - columnheader:
+          - generic: 月工时上限
+        - columnheader:
+          - generic: 角色描述
+        - columnheader:
+          - generic: 操作
+    - rowgroup:
+      - row:
+        - cell:
+          - generic: 暂无角色费率
+  - generic: 加班费率 = 正常费率 × 加班倍率。出差费率为独立设置，含差旅补贴。月工时上限用于成本预算控制。
+- button:
+- region "Notifications alt+T"
+- generic: 周日
+- dialog:
+  - heading [level=2]:
+    - text: 新增角色费率
+  - paragraph: 角色费率配置表单
+  - paragraph: 基本信息
+  - generic: 角色名称 *
+  - combobox [expanded]:
+    - generic: 请选择项目角色
+  - generic: 职级代码 *
+  - textbox:
+    - /placeholder: 如：E5
+  - paragraph: 费率信息
+  - generic: 正常费率(¥/h)
+  - textbox: "200"
+  - generic: 加班倍率
+  - textbox: "1.5"
+  - generic: 出差费率(¥/h)
+  - textbox: "250"
+  - paragraph: 其他信息
+  - generic: 角色描述
+  - textbox:
+    - /placeholder: 角色职责说明...
+  - button: 取消
+  - button: 保存
+  - button:
+    - generic: Close
+- listbox:
+  - option "项目经理" [active]:
+    - generic: 项目经理
+  - option "硬件工程师":
+    - generic: 硬件工程师
+  - option "技术负责人":
+    - generic: 技术负责人
+  - option "软件工程师":
+    - generic: 软件工程师
+  - option "质量工程师":
+    - generic: 质量工程师
+  - option "客户对接人":
+    - generic: 客户对接人
+  - option "测试工程师":
+    - generic: 测试工程师
+  - option "产品经理":
+    - generic: 产品经理
+  - option "实习生":
+    - generic: 实习生
+  - option "UI设计师":
+    - generic: UI设计师
+  - option "文档管理":
+    - generic: 文档管理
+  - option "采购协调":
+    - generic: 采购协调
+  - option "外部顾问":
+    - generic: 外部顾问

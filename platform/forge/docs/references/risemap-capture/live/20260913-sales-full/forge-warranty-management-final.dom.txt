@@ -1,0 +1,108 @@
+- region "通知 alt+T"
+- banner:
+  - link "ObjectOS":
+    - /url: /_console/apps/forge
+  - generic "本平台处于预览版，功能可能调整。": 预览版
+  - generic: /
+  - button "Forge":
+    - generic: Forge
+  - generic: /
+  - link "页面":
+    - /url: /_console/apps/forge
+  - generic: /
+  - generic: 质保管理
+  - button "搜索…":
+    - generic: 搜索…
+    - generic: ⌘
+    - text: K
+  - button "打开消息中心":
+  - link "在 Studio 中设计":
+    - /url: /_console/studio/forge/interfaces?surface=page:page_warranty_management
+  - button "帮助与文档":
+  - button "DA":
+    - generic: DA
+- text: 区域
+- list:
+  - button "工作台":
+    - generic: 工作台
+  - button "供应链":
+    - generic: 供应链
+  - button "销售":
+    - generic: 销售
+  - button "生产":
+    - generic: 生产
+  - button "项目":
+    - generic: 项目
+  - button "行政":
+    - generic: 行政
+  - button "财务":
+    - generic: 财务
+  - button "报表":
+    - generic: 报表
+  - button "系统":
+    - generic: 系统
+- button "工作台" [expanded]:
+  - text: 工作台
+- list:
+  - link "工作台":
+    - /url: /_console/apps/forge/page/page_workbench
+    - generic: 工作台
+  - link "待办管理":
+    - /url: /_console/apps/forge/page/page_workbench
+    - generic: 待办管理
+  - link "AI 广场":
+    - /url: /_console/apps/forge/page/page_workspace_recovery_status
+    - generic: AI 广场
+  - link "引导中心":
+    - /url: /_console/apps/forge/page/page_workspace_recovery_status
+    - generic: 引导中心
+- text: 最近使用
+- button "切换侧边栏":
+  - generic: 切换侧边栏
+- main:
+  - main:
+    - button "在 Studio 中编辑":
+    - heading "质保管理" [level=1]
+    - paragraph: 质保卡台账、到期预警、激活与延保，以及质保规则配置
+    - generic: "27"
+    - strong: 服务管理 / 质保管理
+    - button "服务工单"
+    - button "刷新"
+    - generic: 质保卡台账、到期预警、激活与延保，以及质保规则配置
+    - heading "质保管理" [level=1]
+    - generic: 生效中
+    - generic: "0"
+    - generic: 在保的质保卡
+    - generic: 待激活
+    - generic: "0"
+    - generic: 激活式起算，客户还没激活
+    - generic: 宽限期
+    - generic: "0"
+    - generic: 已过保但仍在宽限天数内
+    - generic: 已过保
+    - generic: "0"
+    - generic: 含宽限期已用尽
+    - button "概览"
+    - button "质保卡"
+    - button "质保规则"
+    - textbox "搜索质保卡、客户或产品"
+    - button "清空筛选"
+    - table:
+      - rowgroup:
+        - row "质保卡号 客户 产品/SN 判定粒度 开始日期 到期日期 状态 责任方 操作":
+          - columnheader "质保卡号"
+          - columnheader "客户"
+          - columnheader "产品/SN"
+          - columnheader "判定粒度"
+          - columnheader "开始日期"
+          - columnheader "到期日期"
+          - columnheader "状态"
+          - columnheader "责任方"
+          - columnheader "操作"
+      - rowgroup:
+        - row "◇ 暂无即将到期的质保卡 新增或导入业务记录后，可在这里按当前筛选条件查看和跟踪。":
+          - cell "◇ 暂无即将到期的质保卡 新增或导入业务记录后，可在这里按当前筛选条件查看和跟踪。":
+            - generic: ◇
+            - strong: 暂无即将到期的质保卡
+            - generic: 新增或导入业务记录后，可在这里按当前筛选条件查看和跟踪。
+    - generic: 共 0 条记录 每页 20 条 · 1 / 1

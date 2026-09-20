@@ -1,0 +1,185 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同":
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "联系人管理":
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "SN管理":
+  - generic: SN管理
+- button "出库单列表":
+  - generic: 出库单列表
+- button "生产出库":
+  - generic: 生产出库
+- button "其他出库":
+  - generic: 其他出库
+- button "新建出库单":
+  - generic: 新建出库单
+- button "销售直接出库":
+  - generic: 销售直接出库
+- button "待出库发货单":
+  - generic: 待出库发货单
+- button "采购退换货出库":
+  - generic: 采购退换货出库
+- button "出库明细":
+  - generic: 出库明细
+- button "框架销售合同":
+  - generic: 框架销售合同
+- button "新建合同":
+  - generic: 新建合同
+- button "销售订单":
+  - generic: 销售订单
+- button "新建销售订单":
+  - generic: 新建销售订单
+- button "收款流水":
+  - generic: 收款流水
+- main:
+  - generic: 销售业务
+  - generic: 收款流水
+  - heading "收款流水" [level=1]
+  - paragraph: 展示收款资金流水 · 手动分配到销售订单 · 核销前可解绑 · 分配后刷新订单回款进度
+  - paragraph: 收款流水总额
+  - paragraph: ¥0.00
+  - paragraph: 0 笔流水
+  - paragraph: 已分配金额
+  - paragraph: ¥0.00
+  - paragraph: 已关联到订单
+  - paragraph: 未分配金额
+  - paragraph: ¥0.00
+  - paragraph: 待分配到订单
+  - paragraph: 待分配
+  - paragraph: "0"
+  - paragraph: 部分分配 + 待分配笔数
+  - button "全部 (0)":
+    - text: 全部
+    - generic: (0)
+  - button "待分配 (0)" [active]:
+    - text: 待分配
+    - generic: (0)
+  - button "部分分配 (0)":
+    - text: 部分分配
+    - generic: (0)
+  - button "已分配 (0)":
+    - text: 已分配
+    - generic: (0)
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "搜索流水号或订单":
+    - /placeholder: 搜索流水号、订单...
+  - textbox "按对方名称筛选":
+    - /placeholder: 对方名称
+  - generic: ¥
+  - spinbutton "按金额筛选"
+  - button "全部客户":
+    - generic: 全部客户
+  - button:
+  - textbox "开始日期"
+  - generic: ~
+  - textbox "结束日期"
+  - table:
+    - rowgroup:
+      - row "流水号 往来单位/客户 收款日期 方式 收款账户 收款金额 已分配 / 未分配 状态 操作":
+        - columnheader
+        - columnheader "流水号":
+          - generic: 流水号
+        - columnheader "往来单位/客户":
+          - generic: 往来单位/客户
+        - columnheader "收款日期":
+          - generic: 收款日期
+        - columnheader "方式":
+          - generic: 方式
+        - columnheader "收款账户":
+          - generic: 收款账户
+        - columnheader "收款金额":
+          - generic: 收款金额
+        - columnheader "已分配 / 未分配":
+          - generic: 已分配 / 未分配
+        - columnheader "状态":
+          - generic: 状态
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "暂无收款流水":
+        - cell "暂无收款流水":
+          - generic: 暂无收款流水
+- button "打开 AI 助手":
+- region "Notifications alt+T"

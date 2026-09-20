@@ -1,0 +1,325 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/workflow/admin-applications".
+0 AXWebArea RiseMap, URL: risemap.cn/workflow/admin-applications
+	1 container
+		2 container root
+			201 container
+				202 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+				203 text 行政
+				204 button 收起侧边栏
+					205 image
+				206 container
+					207 button 审批中心
+						208 image
+						209 text 审批中心
+						210 image
+					211 button 我的审批
+					212 button 抄送我的
+					213 button 我发起的
+					214 button 行政申请
+				215 container
+					216 button 行政管理
+						217 image
+						218 text 行政管理
+						219 image
+					220 button 公司通知
+					221 button 用章管理
+					222 button 会议纪要
+					223 button 工作汇报
+					224 button 文档中心
+					225 button 固定资产
+					226 button 资质与申报
+					227 button 物料领取
+					228 button 设备维护
+					229 button 礼品管理
+					230 button 借出管理
+					231 button 车辆管理
+				232 container
+					233 button 人力资源
+						234 image
+						235 text 人力资源
+						236 image
+					237 button 人事工作台
+					238 button 员工档案
+					239 button 招聘管理
+					240 button 入职离职
+					241 button 薪酬福利
+					242 button 规章制度
+					243 button 通讯录
+				244 container
+					245 button 考勤假期
+						246 image
+						247 text 考勤假期
+						248 image
+					249 button 加班申请
+					250 button 请假管理
+					251 button 出差申请
+					252 button 考勤管理
+					253 button 考勤统计
+				254 container
+					255 button 流程中心
+						256 image
+						257 text 流程中心
+						258 image
+					259 button 审批记录
+					260 button 发起流程
+					261 button 流程定义
+					262 button 流程分类
+				263 image
+				264 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+				265 button 查看方案
+					266 image
+					267 text 查看方案
+				268 button
+					269 image
+				270 container 业务分类
+					271 checkbox 工作台, Value: 0
+					272 checkbox 供应链, Value: 0
+					273 checkbox 销售, Value: 0
+					274 checkbox 生产, Value: 0
+					275 checkbox 项目, Value: 0
+					276 checkbox 行政, Value: 1
+					277 checkbox 财务, Value: 0
+					278 checkbox 报表, Value: 0
+					279 checkbox 系统, Value: 0
+				280 button Description: 展开搜索, Help: 搜索
+					281 image
+				282 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					283 image
+					284 text 2
+				285 button Description: 打开推广奖励, Help: 推广
+				286 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				287 link Description: 打开工单, Value: community.risemap.cn/support
+				288 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					289 image
+					290 text 立即订阅
+				291 button 金
+					292 text 金
+					293 image
+				294 button 工作台
+					295 image
+					296 text 工作台
+				297 button 委外未交
+					298 text 委外未交
+				299 button 委外进货
+					300 text 委外进货
+				301 button 委外对账单
+					302 text 委外对账单
+				303 button 项目中心
+					304 text 项目中心
+				305 button 项目分析中心
+					306 text 项目分析中心
+				307 button 任务管理
+					308 text 任务管理
+				309 button 工时管理
+					310 text 工时管理
+				311 button 快捷工时填报
+					312 text 快捷工时填报
+				313 button 项目配置中心
+					314 text 项目配置中心
+				315 button 新建计划模板
+					316 text 新建计划模板
+				317 button 我的审批
+					318 text 我的审批
+				319 button 抄送我的
+					320 text 抄送我的
+				321 button 我发起的
+					322 text 我发起的
+				323 button 行政申请
+					324 text 行政申请
+				325 container
+					326 container
+						327 text 审批中心
+						328 image
+						329 text 行政申请
+						330 image
+						331 heading 行政申请, Value: 1
+							332 text 行政申请
+						333 text 选择需要办理的事项，填写申请后进入对应审批流程
+					334 image
+					335 text field (settable)
+					336 tab group 申请分类
+						337 tab (selected, settable, boolean) 全部申请 11, Value: 1
+						338 tab (selectable, settable, boolean) 考勤假期 5, Value: 0
+						339 tab (selectable, settable, boolean) 行政事务 3, Value: 0
+						340 tab (selectable, settable, boolean) 用车资质 3, Value: 0
+						341 tab (selectable, settable, boolean) 其他申请 0, Value: 0
+					342 heading 考勤假期, Value: 2
+						343 text 考勤假期
+					344 text 5  项可申请事项
+					345 button 加班申请 登记加班时间与补偿方式
+						346 image
+						347 text 加班申请
+						348 text 登记加班时间与补偿方式
+						349 image
+					350 button 请假申请 年假、事假、病假等假期
+						351 image
+						352 text 请假申请
+						353 text 年假、事假、病假等假期
+						354 image
+					355 button 出差申请 填写行程与出差计划
+						356 image
+						357 text 出差申请
+						358 text 填写行程与出差计划
+						359 image
+					360 button 补签申请 补录异常考勤打卡
+						361 image
+						362 text 补签申请
+						363 text 补录异常考勤打卡
+						364 image
+					365 button 报销申请 提交员工费用报销
+						366 image
+						367 text 报销申请
+						368 text 提交员工费用报销
+						369 image
+					370 heading 行政事务, Value: 2
+						371 text 行政事务
+					372 text 3  项可申请事项
+					373 button 用章申请 公章、合同章等用印
+						374 image
+						375 text 用章申请
+						376 text 公章、合同章等用印
+						377 image
+					378 button 礼品申请 客户礼赠与内部礼品领用
+						379 image
+						380 text 礼品申请
+						381 text 客户礼赠与内部礼品领用
+						382 image
+					383 button 物料领取 办公及行政物料领用
+						384 image
+						385 text 物料领取
+						386 text 办公及行政物料领用
+						387 image
+					388 heading 用车资质, Value: 2
+						389 text 用车资质
+					390 text 3  项可申请事项
+					391 button 公司用车 申请公司车辆与行程
+						392 image
+						393 text 公司用车
+						394 text 申请公司车辆与行程
+						395 image
+					396 button 私车公用 登记私车公用与预计里程
+						397 image
+						398 text 私车公用
+						399 text 登记私车公用与预计里程
+						400 image
+					401 button 资质续期 证照续期、变更与复审
+						402 image
+						403 text 资质续期
+						404 text 证照续期、变更与复审
+						405 image
+				406 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+		407 container 出差申请, ID: radix-:r1nt:
+			408 image
+			409 heading 出差申请, Value: 2, ID: radix-:r1nu:
+				410 text 出差申请
+			411 text 填写行程与出差计划
+			412 container
+				413 heading 基本信息, Value: 2
+					414 image
+					415 text 基本信息
+				416 text 出差事由  *
+				417 text entry area (settable)
+				418 text 常用模板：
+				419 button 拜访客户对接需求
+				420 button 技术方案评审
+				421 button 客户项目交付验收
+				422 button 参加行业展会
+				423 button 供应商考察
+				424 text 关联客户  （选填，可关联多个客户）
+				425 button 搜索并选择客户...
+					426 text 搜索并选择客户...
+				427 text 出发日期  *
+				428 container
+					429 text field (settable)
+					430 button
+						431 image
+				432 text 返回日期  *
+				433 container
+					434 text field (settable)
+					435 button
+						436 image
+				437 text 交通方式
+				438 button 飞机
+					439 image
+					440 text 飞机
+				441 button 高铁
+					442 image
+					443 text 高铁
+				444 button 火车
+					445 image
+					446 text 火车
+				447 button 自驾
+					448 image
+					449 text 自驾
+				450 button 大巴
+					451 image
+					452 text 大巴
+				453 button 其他
+					454 image
+					455 text 其他
+				456 text 同行人员  （选填，可多选）
+				457 button 请选择同行人员
+					458 text 请选择同行人员
+				459 text 备注
+				460 text entry area (settable)
+				461 heading 费用预估, Value: 2
+					462 image
+					463 text 费用预估
+				464 button 添加费用项
+					465 image
+					466 text 添加费用项
+				467 text 费用类别 说明 金额 (元)
+				468 button 交通费
+					469 text 交通费
+				470 text field (settable)
+				471 stepper (settable, integer) 0
+				472 button
+					473 image
+				474 button 住宿费
+					475 text 住宿费
+				476 text field (settable)
+				477 stepper (settable, integer) 0
+				478 button
+					479 image
+				480 button 餐饮费
+					481 text 餐饮费
+				482 text field (settable)
+				483 stepper (settable, integer) 0
+				484 button
+					485 image
+				486 button 市内交通
+					487 text 市内交通
+				488 text field (settable)
+				489 stepper (settable, integer) 0
+				490 button
+					491 image
+				492 button 其他费用
+					493 text 其他费用
+				494 text field (settable)
+				495 stepper (settable, integer) 0
+				496 button
+					497 image
+				498 text 合计预估: ¥  0
+				499 heading 行程安排 *, Value: 2
+					500 image
+					501 text 行程安排 *
+				502 button 添加行程
+					503 image
+					504 text 添加行程
+				505 image
+				506 text 暂无行程安排，点击"添加行程"录入出发/到达时间与起点/终点
+				507 image
+				508 text 出差申请提交后将发送至直属上级审批。出差完成后请及时提交差旅报销。
+				509 button 取消
+				510 button 保存草稿
+					511 image
+					512 text 保存草稿
+				513 button 提交申请
+					514 image
+					515 text 提交申请
+			516 button Close
+				517 image
+				518 text Close
+
+The focused UI element is 516 button Close

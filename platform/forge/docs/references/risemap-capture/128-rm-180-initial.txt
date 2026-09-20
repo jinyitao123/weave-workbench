@@ -1,0 +1,166 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/referral".
+0 AXWebArea RiseMap, URL: risemap.cn/referral
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 系统
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 系统设置
+					9 image
+					10 text 系统设置
+					11 image
+				12 button 基础配置
+				13 button 用户与角色
+				14 button 部门管理
+				15 button 用户会话
+				16 button 审计日志
+				17 button 业务设置
+					18 image
+					19 text 业务设置
+					20 image
+				21 button 商品管理
+				22 button 财务配置
+				23 button 行政管理
+				24 button 客户管理
+				25 button 采购销售
+				26 button 库存管理
+				27 button 其他配置
+				28 button 人事配置
+				29 button 项目管理
+				30 button 图纸配置
+				31 button 生产配置
+				32 button 委外配置
+				33 button 单据打印
+				34 button 插件中心
+					35 image
+					36 text 插件中心
+				37 button 服务订阅
+					38 image
+					39 text 服务订阅
+				40 button 推广奖励
+					41 image
+					42 text 推广奖励
+				43 button 字段管理
+					44 image
+					45 text 字段管理
+			46 image
+			47 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			48 button 查看方案
+				49 image
+				50 text 查看方案
+			51 button
+				52 image
+			53 container
+				54 container 业务分类
+					55 checkbox 工作台, Value: 0
+					56 checkbox 供应链, Value: 0
+					57 checkbox 销售, Value: 0
+					58 checkbox 生产, Value: 0
+					59 checkbox 项目, Value: 0
+					60 checkbox 行政, Value: 0
+					61 checkbox 财务, Value: 0
+					62 checkbox 报表, Value: 0
+					63 checkbox 系统, Value: 1
+				64 button Description: 展开搜索, Help: 搜索
+					65 image
+				66 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					67 image
+					68 text 2
+				69 button Description: 打开推广奖励, Help: 推广
+				70 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				71 link Description: 打开工单, Value: community.risemap.cn/support
+				72 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					73 image
+					74 text 立即订阅
+				75 button 金
+					76 text 金
+					77 image
+			78 container
+				79 button 工作台
+					80 image
+					81 text 工作台
+				135 button 行政配置
+					136 text 行政配置
+				137 button 客户管理配置
+					138 text 客户管理配置
+				139 button 销售配置
+					140 text 销售配置
+				141 button 库存配置
+					142 text 库存配置
+				143 button 其他配置
+					144 text 其他配置
+				145 button 人事配置
+					146 text 人事配置
+				147 button 项目管理配置
+					148 text 项目管理配置
+				149 button 图纸配置
+					150 text 图纸配置
+				151 button 生产管理配置
+					152 text 生产管理配置
+				153 button 委外配置
+					154 text 委外配置
+				155 button 单据打印
+					156 text 单据打印
+				157 button 插件中心
+					158 text 插件中心
+				159 button 服务订阅管理
+					160 text 服务订阅管理
+				161 button 推广奖励
+					162 text 推广奖励
+			163 container
+				164 heading 推广奖励, Value: 1
+					165 image
+					166 text 推广奖励
+				167 text 推荐好友使用 RiseMap 并完成付费，即可获得  15 % 佣金
+				168 container
+					169 image
+					170 text 我的专属推荐链接
+					171 image
+					172 text https://risemap.cn/referral/
+					173 button 复制链接
+						174 image
+						175 text 复制链接
+					176 button 预览推荐页
+						177 image
+					178 text 将此链接分享给您的朋友或客户，他们通过此链接注册并付费后，您即可获得  15 % 佣金
+				179 image
+				180 text 0 链接点击 注册转化率 0%
+				181 image
+				182 text 0 推荐注册 付费转化率 0%
+				183 image
+				184 text 0 付费客户 订单额 ¥0
+				185 image
+				186 text ¥0 累计佣金 可提现 ¥0
+				187 heading 推广奖励规则, Value: 3
+					188 image
+					189 text 推广奖励规则
+				190 image
+				191 heading 分享推荐链接, Value: 4
+					192 text 分享推荐链接
+				193 text 将您的专属推荐链接发送给朋友或企业客户
+				194 image
+				195 image
+				196 heading 好友注册并付费, Value: 4
+					197 text 好友注册并付费
+				198 text 被推荐用户通过链接注册 RiseMap 并完成付费
+				199 image
+				200 image
+				201 heading 获得 15% 佣金, Value: 4
+					202 text 获得  15 % 佣金
+				203 text 按付费金额的  15 % 计算佣金，确认后即可提现 % 统一佣金比例： 15 % 被推荐用户每笔付费订单均按  15 % 计算佣金，无上限、无期限，长期有效
+				204 heading 最近佣金, Value: 3
+					205 text 最近佣金
+				206 text 本月 ¥ 0 暂无佣金记录
+				207 button 我要推广
+					208 image
+					209 text 我要推广
+					210 image
+				211 button 复制推荐链接
+					212 image
+					213 text 复制推荐链接
+			125 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			126 container Notifications alt+T
+
+The focused UI element is 40 button 推广奖励

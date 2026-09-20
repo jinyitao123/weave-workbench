@@ -1,0 +1,261 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/accounts?tab=ap-opening".
+1 AXWebArea RiseMap, URL: risemap.cn/finance/accounts?tab=ap-opening
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 财务
+			6 button 收起侧边栏
+				7 image
+			8 container
+				181 button 资金管理
+					182 image
+					183 text 资金管理
+					184 image
+				185 button 资金账户
+				186 button 资金流水
+				187 button 应收应付
+				188 button 收款管理
+				189 button 付款管理
+				190 button 退款申请
+				191 button 授信额度管理
+				192 button 借款贷款管理
+				193 button 业务确认
+					194 image
+					195 text 业务确认
+					196 image
+				197 button 销售收入确认
+				198 button 成本中心
+				199 button 费用中心
+				200 button 报销管理
+				201 button 对账单
+					202 image
+					203 text 对账单
+				204 button 发票管理
+					205 image
+					206 text 发票管理
+					207 image
+				208 button 发票总览
+				209 button 销项发票
+				210 button 进项发票
+				211 button 开票任务
+				212 button 调整记录
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 1
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				103 button 请假管理
+					104 text 请假管理
+				105 button 出差申请
+					106 text 出差申请
+				107 button 新建出差申请
+					108 text 新建出差申请
+				109 button 考勤管理
+					110 text 考勤管理
+				111 button 考勤统计
+					112 text 考勤统计
+				113 button 审批记录
+					114 text 审批记录
+				115 button 发起流程
+					116 text 发起流程
+				117 button 流程设计器
+					118 text 流程设计器
+				119 button 流程定义
+					120 text 流程定义
+				121 button 编辑流程
+					122 text 编辑流程
+				123 button 流程分类
+					124 text 流程分类
+				213 button 资金账户
+					214 text 资金账户
+				215 button 资金流水
+					216 text 资金流水
+				217 button 应收应付
+					218 text 应收应付
+			219 container
+				220 container
+					221 text 资金管理
+					222 image
+					223 text 应收应付
+					224 image
+					225 heading 应收应付, Value: 1
+						226 text 应收应付
+					227 text 统一查看应收应付账款、管理期初建账、跟踪资金双向流动
+				228 button 应收账款
+					229 image
+					230 text 应收账款
+				231 button 应付账款
+					232 image
+					233 text 应付账款
+				234 button 往来对冲
+					235 image
+					236 text 往来对冲
+				237 button 期初应收建账
+					238 image
+					239 text 期初应收建账
+				240 button 期初应付建账
+					241 image
+					242 text 期初应付建账
+				243 image
+				244 text 什么是期初应付建账？ 在系统正式启用日（ 2026年1月1日 ）之前签订、截至建账日（T-1： 2025年12月31日 ） 仍有合同款未付 的业务， 录入应付金额与已付金额（系统自动算出未结清） 即可。系统会按供应商汇总，作为对账单"期初应付余额"和账龄分析的起点。
+				245 content list
+					246 container
+						247 text · 单据日期固定为  2025年12月31日 ，但 原合同到期日 需如实填写以正确计算账龄
+					248 text · 未结清 = 应付 − 已付，为合同尚未付出的金额（含未到期部分）
+					249 text · 期初记录不生成采购入库 / 成本归集凭证，开票状态仅作标记，供财务核对底稿
+					250 text · 期初应付不需走付款申请流程，建账后可直接登记付款；完成建账后入口保留，可继续删除录错明细、管理开票状态
+					251 container
+						252 text · 如确认无历史未付款，请显式点击「 无期初应付 · 跳过 」以推进引导
+				253 image
+				254 text 已录入笔数 0 0 条已入库
+				255 image
+				256 text 期初应付总额 ¥0.00 涉及 0 个供应商
+				257 image
+				258 text 其中已付总额 ¥0.00 全部已付
+				259 image
+				260 text 其中未结清已逾期 ¥0.00 暂无逾期 期初应付明细
+				261 button 导入
+					262 image
+					263 text 导入
+					264 image
+				265 button 无期初应付 · 跳过
+				266 button 完成建账
+					267 image
+					268 text 完成建账
+				269 search text field (settable) 搜索期初应付号或供应商
+				270 container 结清状态筛选
+					271 button 结清状态
+						272 text 结清状态
+				273 container 原到期日筛选
+					274 container
+						275 button
+							276 image
+						277 text field (settable)
+						278 text ~
+						279 text field (settable)
+				280 container 期初应付金额
+					281 text 期初应付金额 :
+					282 text field (settable) 期初应付金额下限
+					283 text ~
+					284 text field (settable) 期初应付金额上限
+				285 text 共  0  条
+				286 table
+					287 row
+						288 cell
+							289 checkbox (disabled, settable, integer) Description: 全选, Value: 0
+						290 cell
+							291 text 来源
+						292 cell
+							293 text 供应商
+						294 cell
+							295 text 关联合同号
+						296 cell
+							297 text 应付金额
+						298 cell
+							299 text 已付金额
+						300 cell
+							301 text 未结清
+						302 cell
+							303 text 原到期日 / 账龄
+						304 cell
+							305 text 开票状态
+						306 cell
+							307 text 备注
+						308 cell
+							309 text 操作
+					310 row
+						311 cell
+							312 image
+							313 text 暂无期初应付
+							314 text 在下方草稿区填写后点击保存，或使用 Excel 模板批量导入
+				315 image
+				316 text 新增期初应付 填写后点击「保存」提交到后端
+				317 button 增加一行
+					318 image
+					319 text 增加一行
+				320 button (disabled) 保存
+					321 image
+					322 text 保存
+				323 table
+					324 row
+						325 cell
+							326 text 供应商名称 *
+						327 cell
+							328 text 关联合同号(选填)
+						329 cell
+							330 text 期初应付金额(元) *
+						331 cell
+							332 text 已付金额(元)
+						333 cell
+							334 text 未结清(元)
+						335 cell
+							336 text 原到期日 *
+						337 cell
+							338 text 是否开票
+						339 cell
+							340 text 备注
+						341 cell
+							342 text 操作
+					343 row
+						344 cell
+							345 button 选择供应商
+								346 text 选择供应商
+						347 cell
+							348 button 选填
+								349 text 选填
+						350 cell
+							351 stepper (settable)
+						352 cell
+							353 stepper (settable)
+						354 cell
+							355 text 0
+						356 cell
+							357 container
+								358 text field (settable)
+								359 button
+									360 image
+						361 cell
+							362 pop up button (collapsed, settable) Value: 未开票, Secondary Actions: Expand
+								363 menu
+									364 (selected) 未开票
+									365 已开票
+						366 cell
+							367 text field (settable)
+						368 cell
+							369 button 删除草稿行
+								370 image
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+
+The focused UI element is 240 button 期初应付建账

@@ -1,0 +1,18 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/drawing".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/drawing
+	2 container 添加问题分类
+		3 heading 添加问题分类, Value: 3
+			4 text 添加问题分类
+		5 button 关闭
+			6 image
+		7 container
+			8 text 配置名称  *
+			9 text field (settable)
+			10 text 配置名称不能为空 排序
+			11 text field (settable)
+			12 text 备注
+			13 text field (settable)
+		14 button 取消
+		15 button 添加
+
+The focused UI element is 15 button 添加

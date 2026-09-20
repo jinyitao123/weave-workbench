@@ -1,0 +1,262 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 行政
+- button "收起侧边栏":
+- navigation:
+  - button "审批中心":
+    - generic: 审批中心
+  - button "我的审批":
+    - generic: 我的审批
+  - button "抄送我的":
+    - generic: 抄送我的
+  - button "我发起的":
+    - generic: 我发起的
+  - button "行政申请":
+    - generic: 行政申请
+  - button "行政管理":
+    - generic: 行政管理
+  - button "公司通知":
+    - generic: 公司通知
+  - button "用章管理":
+    - generic: 用章管理
+  - button "会议纪要":
+    - generic: 会议纪要
+  - button "工作汇报":
+    - generic: 工作汇报
+  - button "文档中心":
+    - generic: 文档中心
+  - button "固定资产":
+    - generic: 固定资产
+  - button "资质与申报":
+    - generic: 资质与申报
+  - button "物料领取":
+    - generic: 物料领取
+  - button "设备维护":
+    - generic: 设备维护
+  - button "礼品管理":
+    - generic: 礼品管理
+  - button "借出管理":
+    - generic: 借出管理
+  - button "车辆管理":
+    - generic: 车辆管理
+  - button "人力资源":
+    - generic: 人力资源
+  - button "人事工作台":
+    - generic: 人事工作台
+  - button "员工档案":
+    - generic: 员工档案
+  - button "招聘管理":
+    - generic: 招聘管理
+  - button "入职离职":
+    - generic: 入职离职
+  - button "薪酬福利":
+    - generic: 薪酬福利
+  - button "规章制度":
+    - generic: 规章制度
+  - button "通讯录":
+    - generic: 通讯录
+  - button "考勤假期":
+    - generic: 考勤假期
+  - button "加班申请":
+    - generic: 加班申请
+  - button "请假管理":
+    - generic: 请假管理
+  - button "出差申请":
+    - generic: 出差申请
+  - button "考勤管理":
+    - generic: 考勤管理
+  - button "考勤统计":
+    - generic: 考勤统计
+  - button "流程中心":
+    - generic: 流程中心
+  - button "审批记录":
+    - generic: 审批记录
+  - button "发起流程":
+    - generic: 发起流程
+  - button "流程定义":
+    - generic: 流程定义
+  - button "流程分类":
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政" [pressed]:
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "文档中心":
+  - generic: 文档中心
+- button "固定资产":
+  - generic: 固定资产
+- button "资质与申报":
+  - generic: 资质与申报
+- button "物料领取":
+  - generic: 物料领取
+- button "设备维护":
+  - generic: 设备维护
+- button "礼品管理":
+  - generic: 礼品管理
+- button "借出管理":
+  - generic: 借出管理
+- button "车辆管理":
+  - generic: 车辆管理
+- button "新建公司用车申请":
+  - generic: 新建公司用车申请
+- button "新建私车公用申请":
+  - generic: 新建私车公用申请
+- button "新增车辆":
+  - generic: 新增车辆
+- button "人事工作台":
+  - generic: 人事工作台
+- button "员工档案":
+  - generic: 员工档案
+- button "招聘管理":
+  - generic: 招聘管理
+- main:
+  - generic: 人力资源
+  - generic: 招聘管理
+  - heading "招聘管理" [level=1]
+  - paragraph: 岗位发布、候选人漏斗、面试评估、Offer 管理
+  - button "岗位说明":
+    - text: 岗位说明
+  - button "招聘岗位":
+    - text: 招聘岗位
+  - button "招聘管理":
+    - text: 招聘管理
+  - textbox "搜索候选人/岗位..."
+  - radiogroup:
+    - radio "看板":
+      - generic: 看板
+    - radio "列表" [checked]:
+      - generic: 列表
+  - button "导出":
+    - text: 导出
+  - button "录入简历":
+    - text: 录入简历
+  - button "刷新":
+  - button:
+  - button:
+  - table:
+    - rowgroup:
+      - row "候选人 应聘岗位 学历/经验 来源渠道 阶段 评分 投递日期 操作":
+        - columnheader:
+          - checkbox
+        - columnheader "候选人":
+          - generic: 候选人
+        - columnheader "应聘岗位":
+          - generic: 应聘岗位
+        - columnheader "学历/经验":
+          - generic: 学历/经验
+        - columnheader "来源渠道":
+          - generic: 来源渠道
+        - columnheader "阶段":
+          - generic: 阶段
+        - columnheader "评分":
+          - generic: 评分
+        - columnheader "投递日期":
+          - generic: 投递日期
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "探 探索候选人 - 本科 / 0年 BOSS直聘 简历筛选 - 2026-09-09 查看":
+        - cell:
+          - checkbox
+        - cell "探 探索候选人 -":
+          - generic: 探
+          - generic: 探索候选人
+          - paragraph: "-"
+        - cell:
+          - paragraph
+          - paragraph
+        - cell "本科 / 0年":
+          - generic: 本科 / 0年
+        - cell "BOSS直聘":
+          - generic: BOSS直聘
+        - cell "简历筛选":
+          - generic: 简历筛选
+        - cell "-":
+          - generic: "-"
+        - cell "2026-09-09":
+          - generic: 2026-09-09
+        - cell "查看":
+          - button "查看":
+            - text: 查看
+  - text: 共
+  - strong: "1"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+  - generic: 探
+  - generic: 探索候选人
+  - generic: 简历筛选
+  - paragraph: 应聘 ·
+  - button:
+  - paragraph: 学历
+  - paragraph: 本科 ·
+  - paragraph: 专业
+  - paragraph
+  - paragraph: 经验
+  - paragraph: 应届
+  - paragraph: 现单位
+  - paragraph: 应届毕业生
+  - paragraph: 手机
+  - paragraph: "13900000000"
+  - paragraph: 邮箱
+  - paragraph
+  - paragraph: 来源
+  - paragraph: BOSS直聘
+  - paragraph: 投递日期
+  - paragraph: 2026-09-09
+  - paragraph: 评分
+  - paragraph: 待评
+  - paragraph: 推进负责人
+  - paragraph: 未分配
+  - heading "面试记录" [level=4]
+  - paragraph: 暂无面试记录
+  - button "推进至下一阶段":
+    - text: 推进至下一阶段
+  - button "添加面试记录":
+    - text: 添加面试记录
+  - button "淘汰":
+    - text: 淘汰
+  - button "在新页面打开详情":
+    - text: 在新页面打开详情
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 5K以下

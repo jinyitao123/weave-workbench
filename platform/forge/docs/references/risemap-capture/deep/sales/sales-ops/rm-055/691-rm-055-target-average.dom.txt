@@ -1,0 +1,204 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同":
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "联系人管理":
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "新建销售订单":
+  - generic: 新建销售订单
+- button "收款流水":
+  - generic: 收款流水
+- button "销售发货单":
+  - generic: 销售发货单
+- button "新建发货单":
+  - generic: 新建发货单
+- button "销售退货":
+  - generic: 销售退货
+- button "新建销售退货":
+  - generic: 新建销售退货
+- button "业绩银行":
+  - generic: 业绩银行
+- button "价格策略":
+  - generic: 价格策略
+- button "新增框架协议":
+  - generic: 新增框架协议
+- button "新增特价":
+  - generic: 新增特价
+- button "Goodwill订单":
+  - generic: Goodwill订单
+- button "Goodwill订单详情":
+  - generic: Goodwill订单详情
+- button "销售团队":
+  - generic: 销售团队
+- button "销售目标":
+  - generic: 销售目标
+- main:
+  - generic: 销售管理
+  - generic: 销售目标管理
+  - heading "销售目标管理" [level=1]
+  - paragraph: 设置和调整销售目标，实时计算完成进度与动态调整建议
+  - button "新建目标":
+    - text: 新建目标
+  - button "个人目标":
+    - text: 个人目标
+  - button "团队目标":
+    - text: 团队目标
+  - button "2026年":
+    - generic "2026年"
+  - paragraph: 暂无数据
+  - heading "新建销售目标" [level=3]
+  - paragraph: 2026年度销售目标设定
+  - button:
+  - generic: 基本信息
+  - generic: 目标类型 *
+  - radiogroup:
+    - radio "个人目标" [checked]:
+      - generic: 个人目标
+    - radio "团队目标":
+      - generic: 团队目标
+  - generic: 选择人员 *
+  - button "请选择":
+    - generic: 请选择
+  - generic: 年度目标金额
+  - paragraph: 合同额目标 *
+  - paragraph: Contract Target
+  - generic: ¥
+  - spinbutton: "120000"
+  - paragraph: 月均 ¥10,000.00
+  - paragraph: 回款目标 *
+  - paragraph: Payment Target
+  - generic: ¥
+  - spinbutton: "60000"
+  - paragraph: 月均 ¥5,000.00
+  - paragraph: "回款/合同额比: 50%"
+  - generic: 月度目标分配
+  - button "平均分配" [active]:
+    - text: 平均分配
+  - button "合同额目标":
+    - text: 合同额目标
+  - button "回款目标":
+    - text: 回款目标
+  - generic: 1月
+  - generic: ¥
+  - textbox: "10000"
+  - generic: 2月
+  - generic: ¥
+  - textbox: "10000"
+  - generic: 3月
+  - generic: ¥
+  - textbox: "10000"
+  - generic: 4月
+  - generic: ¥
+  - textbox: "10000"
+  - generic: 5月
+  - generic: ¥
+  - textbox: "10000"
+  - generic: 6月
+  - generic: ¥
+  - textbox: "10000"
+  - generic: 7月
+  - generic: ¥
+  - textbox: "10000"
+  - generic: 8月
+  - generic: ¥
+  - textbox: "10000"
+  - generic: 9月
+  - generic: ¥
+  - textbox: "10000"
+  - generic: 10月
+  - generic: ¥
+  - textbox: "10000"
+  - generic: 11月
+  - generic: ¥
+  - textbox: "10000"
+  - generic: 12月
+  - generic: ¥
+  - textbox: "10000"
+  - generic: 合同额目标 月度合计
+  - generic: ¥120,000.00 / ¥120,000.00
+  - generic: 备注
+  - textbox "可填写目标制定说明、考核标准等..."
+  - generic: 合同额 ¥120,000.00 · 回款 ¥60,000.00
+  - button "取消"
+  - button "创建目标"
+- button "打开 AI 助手":
+- region "Notifications alt+T"

@@ -1,0 +1,196 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 报表
+- button "收起侧边栏":
+- navigation:
+  - button "销售统计":
+    - generic: 销售统计
+  - button "采购统计":
+    - generic: 采购统计
+  - button "库存统计":
+    - generic: 库存统计
+  - button "项目统计":
+    - generic: 项目统计
+  - button "组装统计":
+    - generic: 组装统计
+  - button "财务统计":
+    - generic: 财务统计
+  - button "财务总览":
+    - generic: 财务总览
+  - button "损益分析":
+    - generic: 损益分析
+  - button "资金分析":
+    - generic: 资金分析
+  - button "往来账款":
+    - generic: 往来账款
+  - button "税务库存":
+    - generic: 税务库存
+  - button "风险监控":
+    - generic: 风险监控
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表" [pressed]:
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "报销管理":
+  - generic: 报销管理
+- button "新建报销":
+  - generic: 新建报销
+- button "对账单":
+  - generic: 对账单
+- button "客户对账单":
+  - generic: 客户对账单
+- button "新建客户对账":
+  - generic: 新建客户对账
+- button "供应商对账单":
+  - generic: 供应商对账单
+- button "新建供应商对账":
+  - generic: 新建供应商对账
+- button "发票总览":
+  - generic: 发票总览
+- button "销项发票":
+  - generic: 销项发票
+- button "进项发票":
+  - generic: 进项发票
+- button "开票任务":
+  - generic: 开票任务
+- button "调整记录":
+  - generic: 调整记录
+- button "销售统计":
+  - generic: 销售统计
+- button "采购统计":
+  - generic: 采购统计
+- main:
+  - main:
+    - paragraph: 报表中心
+    - heading "采购统计" [level=1]
+    - paragraph: 询价规模、供应商响应、报价竞争度、定标结果与采购节约分析。
+    - button "导出报表":
+      - text: 导出报表
+    - navigation "采购报表维度":
+      - button "采购统计"
+      - button "采购申请"
+      - button "询价统计" [active]: 询价统计
+      - button "供应商统计"
+    - text: 筛选条件
+    - textbox:
+      - /placeholder: 搜索询价单号、商品、供应商或采购员
+    - combobox:
+      - option "全部组织" [selected]
+      - option "我负责的"
+    - combobox:
+      - option "本月" [selected]
+      - option "本季度"
+      - option "本年度"
+    - button "刷新":
+      - text: 刷新
+    - text: 更新时间：2026/9/9 06:50:01 当前展示询价统计统计数据。
+    - generic: 统计周期 2026-09-01 至 2026-09-30
+    - generic: 询价单数
+    - button "查看询价单数计算说明":
+    - generic: 0单
+    - generic: 本月 0 单
+    - generic: 参与供应商
+    - button "查看参与供应商计算说明":
+    - generic: 0家
+    - generic: 活跃响应 0 家
+    - generic: 平均响应率
+    - button "查看平均响应率计算说明":
+    - generic: "--"
+    - generic: 较上月 --
+    - generic: 报价价差空间
+    - button "查看报价价差空间计算说明":
+    - generic: "0.00"
+    - generic: 平均价差率 --
+    - heading "询价发布与供应商响应趋势" [level=2]
+    - generic: 发布询价
+    - generic: 有效报价
+    - heading "询价状态分布" [level=2]
+    - heading "采购询价转化漏斗" [level=2]
+    - generic: 5 个阶段
+    - generic: "1"
+    - generic: 已创建
+    - generic: 基准
+    - generic: 100%
+    - generic: "0"
+    - generic: "2"
+    - generic: 已发布
+    - generic: 阶段转化 0%
+    - generic: 0%
+    - generic: "0"
+    - generic: "3"
+    - generic: 收到报价
+    - generic: 阶段转化 0%
+    - generic: 0%
+    - generic: "0"
+    - generic: "4"
+    - generic: 已定标
+    - generic: 阶段转化 0%
+    - generic: 0%
+    - generic: "0"
+    - generic: "5"
+    - generic: 已转采购
+    - generic: 阶段转化 0%
+    - generic: 0%
+    - generic: "0"
+    - heading "采购询价健康度" [level=2]
+    - generic: 本月评估
+    - generic: 供应商响应率
+    - generic: 平均每单受邀供应商的报价比例
+    - generic: "--"
+    - generic: 按时报价率
+    - generic: 在截止日前提交报价
+    - generic: "--"
+    - generic: 询价转单率
+    - generic: 已转采购/总询价
+    - generic: "--"
+    - generic: 待定标询价
+    - generic: 收到报价但未定标
+    - generic: 0单
+    - generic: 单一报价
+    - generic: 仅一家供应商报价
+    - generic: 0单
+    - heading "供应商报价响应排行" [level=2]
+    - generic: TOP 5
+    - heading "询价品类金额分布" [level=2]
+    - generic: 全量排行
+    - heading "采购员报价价差空间" [level=2]
+    - generic: TOP 5
+    - heading "供应商报价价格优势" [level=2]
+    - generic: TOP 5
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2026-09-04

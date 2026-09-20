@@ -1,0 +1,241 @@
+Browser tab: 56, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_purchase_return".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_purchase_return
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 button 切换侧边栏
+			9 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			10 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			11 text 采购退换货
+			12 button 搜索…
+			13 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			14 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_purchase_return
+			15 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			16 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		17 container
+			18 container
+				19 text 区域
+				20 content list
+					21 button 工作台
+					22 button 供应链
+					23 button 销售
+					24 button 生产
+					25 button 项目
+					26 button 行政
+					27 button 财务
+					28 button 报表
+					29 button 系统
+			30 container
+				31 button (expanded) 工作台, Secondary Actions: Collapse
+				32 content list
+					33 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					34 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					35 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					36 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			37 text 最近使用
+			38 button 切换侧边栏
+		39 container
+			40 button 在 Studio 中编辑
+			41 heading 采购退换货, Value: 1
+				42 text 采购退换货
+			43 text 采购退货退款与等量换货补货全流程 采购管理 / 采购退换货
+			44 heading 采购退换货, Value: 1
+				45 text 采购退换货
+			46 text 退货退款与等量换货补货 退货退款进入财务审批和供应商退款。换货补货不进入财务，原订单同一 SKU 等量退回后，由供应商补货、检验并恢复库存。
+			47 button 退货退款
+			48 button 换货补货
+			49 heading 新建退货退款, Value: 2
+				50 text 新建 退货退款
+			51 text 退换货单号 *
+			52 text field (settable) 采购退换货单号
+			53 text 采购订单 / 物料 *
+			54 pop up button (collapsed) Description: 采购退换货物料, Secondary Actions: Expand
+			55 text 退回数量 *
+			56 text field (settable) 采购退换货数量
+			57 text 退货日期 *
+			58 pop up button (collapsed) Description: 采购退换货日期, Secondary Actions: Expand
+			59 text 原因 *
+			60 text field (settable) 采购退换货原因
+			61 text 退货地址
+			62 text field (settable) 采购退换货地址
+			63 text 联系人
+			64 text field (settable) 采购退换货联系人
+			65 button (disabled) 保存草稿
+			66 heading 办理参数, Value: 2
+				67 text 办理参数
+			68 text 财务审批意见
+			69 text field (settable) 采购退货审批意见
+			70 text 仓库确认意见 *
+			71 text field (settable) 采购退换货仓库意见
+			72 text 出库意见 *
+			73 text field (settable) 采购退换货出库意见
+			74 text 退款收款账户 *
+			75 pop up button (collapsed) Description: 采购退货退款账户, Secondary Actions: Expand
+			76 text 退款流水号 *
+			77 text field (settable) 采购退货退款流水号
+			78 text 实退金额 *
+			79 text field (settable) 采购退货实退金额
+			80 text 银行流水号 *
+			81 text field (settable) 采购退货银行流水号
+			82 heading 退换货处理, Value: 2
+				83 text 退换货处理
+			84 table
+				85 row
+					86 cell
+						87 text 单号
+					88 cell
+						89 text 关联订单
+					90 cell
+						91 text 供应商
+					92 cell
+						93 text 处理方式
+					94 cell
+						95 text 数量
+					96 cell
+						97 text 参考货值
+					98 cell
+						99 text 状态
+					100 cell
+						101 text 仓库
+					102 cell
+						103 text 出库
+					104 cell
+						105 text 退款 / 换货进度
+					106 cell
+						107 text 预计补货
+					108 cell
+						109 text 操作
+				110 row
+					111 cell
+						112 text PR-CUR-20260913205628
+					113 cell
+						114 text PO-RM-20260913205402-001
+					115 cell
+						116 text 南京锐联电气技术有限公司
+					117 cell
+						118 text 退货退款
+					119 cell
+						120 text 0.1
+					121 cell
+						122 text ¥680.00
+					123 cell
+						124 text 已完成
+					125 cell
+						126 text 已确认
+					127 cell
+						128 text 已出库
+					129 cell
+						130 text 已收款
+					131 cell
+						132 text —
+				133 row
+					134 cell
+						135 text REP-CUR-20260913205628
+					136 cell
+						137 text PO-RM-20260913205402-001
+					138 cell
+						139 text 南京锐联电气技术有限公司
+					140 cell
+						141 text 换货补货
+					142 cell
+						143 text 0.1
+					144 cell
+						145 text ¥680.00
+					146 cell
+						147 text 已完成
+					148 cell
+						149 text 已确认
+					150 cell
+						151 text 已出库
+					152 cell
+						153 text 补货已入库
+					154 cell
+						155 text 2026-09-25
+				156 row
+					157 cell
+						158 text PR-UI-CONFIRM-20260913205643
+					159 cell
+						160 text PO-RM-20260913205402-001
+					161 cell
+						162 text 南京锐联电气技术有限公司
+					163 cell
+						164 text 退货退款
+					165 cell
+						166 text 0.05
+					167 cell
+						168 text ¥340.00
+					169 cell
+						170 text 草稿
+					171 cell
+						172 text 待处理
+					173 cell
+						174 text 待处理
+					175 cell
+						176 text 待处理
+					177 cell
+						178 text —
+					179 cell
+						180 button 提交退货申请
+				181 row
+					182 cell
+						183 text REP-OVER
+					184 cell
+						185 text PO-RM-202609-001
+					186 cell
+						187 text 南京锐联电气技术有限公司
+					188 cell
+						189 text 换货补货
+					190 cell
+						191 text 0.41
+					192 cell
+						193 text ¥2,788.00
+					194 cell
+						195 text 草稿
+					196 cell
+						197 text 待处理
+					198 cell
+						199 text 待处理
+					200 cell
+						201 text 待退回
+					202 cell
+						203 text 2026-09-25
+					204 cell
+						205 button 提交换货申请
+				206 row
+					207 cell
+						208 text REP-API-20260910-001
+					209 cell
+						210 text PO-RM-202609-001
+					211 cell
+						212 text 南京锐联电气技术有限公司
+					213 cell
+						214 text 换货补货
+					215 cell
+						216 text 0.2
+					217 cell
+						218 text ¥1,360.00
+					219 cell
+						220 text 草稿
+					221 cell
+						222 text 待处理
+					223 cell
+						224 text 待处理
+					225 cell
+						226 text 待退回
+					227 cell
+						228 text 2026-09-25
+					229 cell
+						230 button 提交换货申请
+			231 container 确认提交退货申请
+				232 text 确认提交退货申请
+				233 text PR-UI-CONFIRM-20260913205643
+				234 button 关闭
+				235 text 确认后将保存当前退换货单据或推进下一办理状态。
+				236 text 请确认关联订单、供应商、物料数量、仓库和金额无误。
+				237 button 取消
+				238 button 确认提交
+
+The focused UI element is 180 button 提交退货申请

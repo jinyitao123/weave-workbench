@@ -1,0 +1,326 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/gift/apply".
+1 AXWebArea RiseMap, URL: risemap.cn/ops/gift/apply
+	2 container
+		3 container root
+			203 container
+				204 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+				205 text 行政
+				206 button 收起侧边栏
+					207 image
+				208 container
+					209 button 审批中心
+						210 image
+						211 text 审批中心
+						212 image
+					213 button 我的审批
+					214 button 抄送我的
+					215 button 我发起的
+					216 button 行政申请
+				217 container
+					218 button 行政管理
+						219 image
+						220 text 行政管理
+						221 image
+					222 button 公司通知
+					223 button 用章管理
+					224 button 会议纪要
+					225 button 工作汇报
+					226 button 文档中心
+					227 button 固定资产
+					228 button 资质与申报
+					229 button 物料领取
+					230 button 设备维护
+					231 button 礼品管理
+					232 button 借出管理
+					233 button 车辆管理
+				234 container
+					235 button 人力资源
+						236 image
+						237 text 人力资源
+						238 image
+					239 button 人事工作台
+					240 button 员工档案
+					241 button 招聘管理
+					242 button 入职离职
+					243 button 薪酬福利
+					244 button 规章制度
+					245 button 通讯录
+				246 container
+					247 button 考勤假期
+						248 image
+						249 text 考勤假期
+						250 image
+					251 button 加班申请
+					252 button 请假管理
+					253 button 出差申请
+					254 button 考勤管理
+					255 button 考勤统计
+				256 container
+					257 button 流程中心
+						258 image
+						259 text 流程中心
+						260 image
+					261 button 审批记录
+					262 button 发起流程
+					263 button 流程定义
+					264 button 流程分类
+				265 image
+				266 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+				267 button 查看方案
+					268 image
+					269 text 查看方案
+				270 button
+					271 image
+				272 container 业务分类
+					273 checkbox 工作台, Value: 0
+					274 checkbox 供应链, Value: 0
+					275 checkbox 销售, Value: 0
+					276 checkbox 生产, Value: 0
+					277 checkbox 项目, Value: 0
+					278 checkbox 行政, Value: 1
+					279 checkbox 财务, Value: 0
+					280 checkbox 报表, Value: 0
+					281 checkbox 系统, Value: 0
+				282 button Description: 展开搜索, Help: 搜索
+					283 image
+				284 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					285 image
+					286 text 2
+				287 button Description: 打开推广奖励, Help: 推广
+				288 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				289 link Description: 打开工单, Value: community.risemap.cn/support
+				290 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					291 image
+					292 text 立即订阅
+				293 button 金
+					294 text 金
+					295 image
+				296 button 工作台
+					297 image
+					298 text 工作台
+				299 button 公司通知
+					300 text 公司通知
+				301 button 发布通知
+					302 text 发布通知
+				303 button 用章管理
+					304 text 用章管理
+				305 button 会议纪要
+					306 text 会议纪要
+				307 button 新建会议纪要
+					308 text 新建会议纪要
+				309 button AI 模板管理
+					310 text AI 模板管理
+				311 button 工作汇报
+					312 text 工作汇报
+				313 button 新建工作汇报
+					314 text 新建工作汇报
+				315 button 文档中心
+					316 text 文档中心
+				317 button 固定资产
+					318 text 固定资产
+				319 button 资质与申报
+					320 text 资质与申报
+				321 button 物料领取
+					322 text 物料领取
+				323 button 设备维护
+					324 text 设备维护
+				325 button 礼品管理
+					326 text 礼品管理
+				327 container
+					328 container
+						329 text 行政管理
+						330 image
+						331 text 礼品管理
+						332 image
+						333 heading 礼品管理, Value: 1
+							334 text 礼品管理
+						335 text 员工礼品申请、审批、库存与发放，覆盖商务赠礼与节日福利
+					336 button 礼品申请 0
+						337 image
+						338 text 礼品申请
+						339 text 0
+					340 button 礼品清单 0
+						341 image
+						342 text 礼品清单
+						343 text 0
+					344 button 礼品库管理 0
+						345 image
+						346 text 礼品库管理
+						347 text 0
+					348 button 礼品库流水 0
+						349 image
+						350 text 礼品库流水
+						351 text 0
+					352 image
+					353 text 申请总额 ¥ 0.00 共  0  笔
+					354 image
+					355 text 待处理审批 0 需及时审核
+					356 image
+					357 text 已批准金额 ¥ 0.00 含已发放
+					358 image
+					359 text 已发放 0 已完成发放
+					360 button 新建申请
+						361 image
+						362 text 新建申请
+					363 button 导出
+						364 image
+						365 text 导出
+						366 image
+					367 button 刷新
+						368 image
+					369 button
+						370 image
+					371 button
+						372 image
+					373 image
+					374 text field (settable)
+					375 button 类型
+						376 text 类型
+						377 image
+					378 button 状态
+						379 image
+						380 text 状态
+						381 image
+					382 table
+						383 row
+							384 cell
+								385 checkbox (settable, integer) 0
+							386 cell
+								387 text 编号
+							388 cell
+								389 text 申请标题
+							390 cell
+								391 text 类别
+							392 cell
+								393 text 申请人
+							394 cell
+								395 text 赠送对象
+							396 cell
+								397 text 金额
+							398 cell
+								399 text 申请日期
+							400 cell
+								401 text 状态
+							402 cell
+								403 text 审批进度
+							404 cell
+								405 text 操作
+						406 row
+							407 cell
+								408 image
+								409 text 暂无数据
+					410 text 共  0 条记录 每页
+					411 combo box (collapsed) Value: 10, Secondary Actions: Expand
+						412 text 10
+					413 text 条
+					414 button (disabled) 上一页
+						415 image
+					416 button 1
+					417 button (disabled) 下一页
+						418 image
+				419 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			202 container Notifications alt+T
+		420 container 新建礼品申请, ID: radix-:rdv:
+			421 heading 新建礼品申请, Value: 2, ID: radix-:re0:
+				422 text 新建礼品申请
+			423 text 礼品申请表单 - 请如实填写礼品申请信息
+			424 container
+				425 image
+				426 heading 礼品合规管理 — 请务必仔细阅读, Value: 3
+					427 text 礼品合规管理 — 请务必仔细阅读
+				428 text 所有礼品赠送行为必须遵守公司合规制度及国家法律法规
+				429 image
+				430 text 基本信息
+				431 container
+					432 text 礼品类别 *
+				433 button 实物礼品
+					434 image
+					435 text 实物礼品
+				436 button 兑换券码
+					437 image
+					438 text 兑换券码
+				439 button 充值卡
+					440 image
+					441 text 充值卡
+				442 button 现金红包
+					443 image
+					444 text 现金红包
+				445 button 报销额度
+					446 image
+					447 text 报销额度
+				448 button 生日福利
+					449 image
+					450 text 生日福利
+				451 button 节日福利(春节/端午/中秋)
+					452 image
+					453 text 节日福利(春节/端午/中秋)
+				454 button 司庆福利
+					455 image
+					456 text 司庆福利
+				457 button 入职周年
+					458 image
+					459 text 入职周年
+				460 button 婚育福利
+					461 image
+					462 text 婚育福利
+				463 button 高温/防寒福利
+					464 image
+					465 text 高温/防寒福利
+				466 button 体检福利
+					467 image
+					468 text 体检福利
+				469 button 团建福利
+					470 image
+					471 text 团建福利
+				472 button 新增福利分类
+					473 image
+				474 container
+					475 text 申请标题 *
+				476 text field (settable) 申请标题 *, ID: :re5:-form-item
+				477 container
+					478 text 赠送对象类型 *
+				479 button 客户
+					480 text 客户
+				481 container
+					482 text 赠送对象 *
+				483 text field (settable) 赠送对象 *, ID: :re9:-form-item
+				484 text 期望发放日期
+				485 container
+					486 text field (settable)
+					487 button
+						488 image
+				489 text 申请事由
+				490 container
+					491 text 申请事由 *
+				492 text entry area (settable) 申请事由 *, ID: :red:-form-item
+				493 text 礼品清单
+				494 container
+					495 text 礼品清单 *
+				496 button 添加礼品
+					497 image
+					498 text 添加礼品
+				499 text 名称 规格 数量 单价(¥) 库存
+				500 button 请选择礼品
+					501 text 请选择礼品
+				502 text field
+				503 stepper (settable, integer) 1
+				504 stepper (settable)
+				505 text - 共  1  项 合计： ¥ 0
+				506 text 备注
+				507 text field (settable) 备注, ID: :reg:-form-item
+				508 container
+					509 checkbox (settable, integer) Description: 本人已阅读并理解公司礼品合规管理制度，承诺本次礼品申请用途真实、合规，人均赠送金额不超过200元人民币。 如有违反，愿意承担相应的纪律处分和法律责任。, Value: 0
+					510 text 本人已阅读并理解公司礼品合规管理制度，承诺本次礼品申请用途真实、合规，人均赠送金额不超过200元人民币。 如有违反，愿意承担相应的纪律处分和法律责任。
+			511 text 合计：
+			512 text ¥
+			513 text 0
+			514 text 共 
+			515 text 1
+			516 text  项
+			517 button 取消
+			518 button 提交审批
+			519 button Close
+				520 image
+				521 text Close
+
+The focused UI element is 479 button 客户

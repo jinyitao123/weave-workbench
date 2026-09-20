@@ -1,0 +1,96 @@
+Browser tab: 12, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_sales_targets".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_targets
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 销售目标
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_sales_targets
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 销售目标, Value: 1
+				44 text 销售目标
+			45 text 设置和调整销售目标，实时计算完成进度与动态调整建议 12 销售管理 / 销售目标管理
+			46 button 新建目标
+			47 button 刷新
+			48 text 设置和调整销售目标，实时计算完成进度与动态调整建议
+			49 heading 销售目标管理, Value: 1
+				50 text 销售目标管理
+			51 button 个人目标
+			52 button 团队目标
+			53 button 2026年
+				54 text 2026
+				55 text 年
+			56 table
+				57 row
+					58 cell
+						59 text 目标对象
+					60 cell
+						61 text 年度
+					62 cell
+						63 text 合同额目标
+					64 cell
+						65 text 回款目标
+					66 cell
+						67 text 完成进度
+					68 cell
+						69 text 状态
+					70 cell
+						71 text 备注
+					72 cell
+						73 text 操作
+				74 row
+					75 cell
+						76 text Dev Admin
+						77 text 个人目标
+					78 cell
+						79 text 2026  年度
+					80 cell
+						81 text ¥ 1,000,000.00
+					82 cell
+						83 text ¥ 800,000.00
+					84 cell
+						85 container
+							86 text 0 % · 剩余目标  ¥ 1,000,000.00
+					87 cell
+						88 text 草稿
+					89 cell
+						90 text 用于 Forge 销售管理复刻的同材料年度目标；月度合同额平均分配：83333/83333/83333/83333/83333/83333/83333/83333/83333/83333/83333/83337；月度回款平均分配：66666/66666/66666/66666/66666/66666/66666/66666/66666/66666/66666/66674
+					91 cell
+						92 button (disabled) 调整
+			93 text 共  1  条记录 每页 10 条 · 1 / 1
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_targets

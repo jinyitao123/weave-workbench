@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_pending_inspection_workspace",
+  "archetype": "task_workspace",
+  "reviewedRevision": "8f4a80bd2951311e9c1390c8fe35daed550f6747",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/purchase-inspection-workspace.page.ts": "0d280e10658cd4463b2ca32a264f09783f2b43a47f179a8b29c6ea43410902d4",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "3d6e283d1c59fc11809c1aa6a66f62195bcfee413f522eae831a8370ae9116e1",
+    "apps/forge-objectstack/src/actions/procurement.action.ts": "829804443cc5e6a77ec21c541ad5bf8c50220974c99bd1191c9119e0add5b54d"
+  },
+  "environment": { "forgeUrl": "http://localhost:4495", "database": "file:.objectstack/supply-procurement-batch1.sqlite", "materials": "PIN-2026-0001" },
+  "checks": {
+    "replication": { "status": "blocked", "notes": "RISEMAP 当前租户为空，同材料检验生成待复核。", "evidence": ["docs/forge-pending-inspection-page-contract-20260916.md"] },
+    "visual": { "status": "pending", "notes": "有数据桌面态与 390x844 首屏无外溢；缺少落盘截图并待独立复核。", "evidence": [] },
+    "interaction": { "status": "pass", "notes": "检验方式、确认生成和关联检验单跳转已操作。", "evidence": ["docs/forge-pending-inspection-page-contract-20260916.md"] },
+    "business": { "status": "pass", "notes": "PIN-2026-0001 生成 IQC-2026-0001。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/supply-receipt-browser-readback-20260916.json"] }
+  },
+  "visualEvidence": { "desktop": { "width": 1440, "height": 900, "evidence": [] }, "narrow": { "width": 390, "height": 844, "evidence": [] }, "reference": [], "populated": [], "empty": [], "form": [], "error": [] },
+  "requirements": [{ "id": "REQ-PIN-001", "status": "pass", "steps": "选择全检并确认生成", "expected": "一条待检记录生成一张检验单", "observed": "IQC-2026-0001 已打开且来源一致", "evidence": ["docs/forge-pending-inspection-page-contract-20260916.md"] }],
+  "review": { "implementer": "Codex /root", "reviewer": "", "reviewedAt": "2026-09-16", "status": "pending", "evidence": [] }
+}

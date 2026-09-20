@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_inbound_lines",
+  "archetype": "analysis",
+  "checks": {
+    "replication": { "status": "blocked", "notes": "RISEMAP 当前只有期初入库明细，五类来源同材料对照待复核。", "evidence": ["docs/forge-inbound-lines-page-contract-20260916.md"] },
+    "visual": { "status": "pending", "notes": "桌面和 390×844 首屏已检查且无页面横向溢出；截图与独立复核待完成。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/supply-inbound-browser-readback-20260916.json"] },
+    "interaction": { "status": "pass", "notes": "筛选区、逐行/当前页勾选、导出范围提示和来源跳转均已在内置浏览器检查。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/supply-inbound-browser-readback-20260916.json"] },
+    "business": { "status": "pass", "notes": "其他入库明细回读客户、数量 3、单价 2800、金额 8400、库位 A-02、批次和已入库状态。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/supply-inbound-browser-readback-20260916.json"] }
+  }
+}

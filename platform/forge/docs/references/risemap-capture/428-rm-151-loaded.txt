@@ -1,0 +1,203 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/reports/inventory".
+0 AXWebArea RiseMap, URL: risemap.cn/reports/inventory
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 报表
+			5 button 收起侧边栏
+				6 image
+			7 container
+				900 button 销售统计
+					901 image
+					902 text 销售统计
+				903 button 采购统计
+					904 image
+					905 text 采购统计
+				906 button 库存统计
+					907 image
+					908 text 库存统计
+				909 button 项目统计
+					910 image
+					911 text 项目统计
+				912 button 组装统计
+					913 image
+					914 text 组装统计
+				915 button 财务统计
+					916 image
+					917 text 财务统计
+					918 image
+				919 button 财务总览
+				920 button 损益分析
+				921 button 资金分析
+				922 button 往来账款
+				923 button 税务库存
+				924 button 风险监控
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 1
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				839 button 借款管理
+					840 text 借款管理
+				841 button 销售收入确认
+					842 text 销售收入确认
+				843 button 成本中心
+					844 text 成本中心
+				845 button 费用中心
+					846 text 费用中心
+				847 button 报销管理
+					848 text 报销管理
+				849 button 对账单
+					850 text 对账单
+				851 button 发票总览
+					852 text 发票总览
+				853 button 销项发票
+					854 text 销项发票
+				855 button 进项发票
+					856 text 进项发票
+				857 button 开票任务
+					858 text 开票任务
+				859 button 调整记录
+					860 text 调整记录
+				925 button 销售统计
+					926 text 销售统计
+				927 button 采购统计
+					928 text 采购统计
+				929 button 库存统计
+					930 text 库存统计
+			931 container
+				932 image
+				933 text 报表中心
+				934 heading 库存统计, Value: 1
+					935 text 库存统计
+				936 text 库存金额、库存周转、呆滞物料与安全库存预警分析。
+				937 button 导出报表
+					938 image
+					939 text 导出报表
+				940 container 库存报表维度
+					941 button 库存统计
+						942 text 库存统计
+					943 button 仓库统计
+					944 button 到货统计
+					945 button 检验统计
+				946 image
+				947 text 筛选条件
+				948 container
+					949 image
+					950 text field (settable)
+				951 pop up button (collapsed, settable) Value: 全部仓库, Secondary Actions: Expand
+					952 menu
+						953 (selected) 全部仓库
+						954 主仓
+				955 pop up button (collapsed, settable) Value: 本月, Secondary Actions: Expand
+					956 menu
+						957 (selected) 本月
+						958 本季度
+						959 本年度
+				960 button 刷新
+					961 image
+					962 text 刷新
+				963 image
+				964 text 更新时间 :  2026/9/8 23:02:28 当前展示 库存统计 统计数据。 统计周期 2026-09-01 至 2026-09-30
+				965 container
+					966 image
+					967 text 库存金额
+					968 pop up button (collapsed) Description: 查看库存金额计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						969 image
+					970 image
+					971 text 0.00 较上月 --
+				972 container
+					973 image
+					974 text 库存SKU
+					975 pop up button (collapsed) Description: 查看库存SKU计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						976 image
+					977 image
+					978 text 0个 本月新增 0 个
+				979 container
+					980 image
+					981 text 低库存
+					982 pop up button (collapsed) Description: 查看低库存计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						983 image
+					984 image
+					985 text 0项 未配置库存预警规则
+				986 container
+					987 image
+					988 text 周转率
+					989 pop up button (collapsed) Description: 查看周转率计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						990 image
+					991 image
+					992 text 0次 期间出库成本 ÷ 期末库存
+				993 container
+					994 heading 库存金额趋势, Value: 2
+						995 text 库存金额趋势
+					996 text 库存金额
+					997 image
+						998 text 2026-04
+						999 text 2026-05
+						1000 text 2026-06
+						1001 text 2026-07
+						1002 text 2026-08
+						1003 text 2026-09
+				1004 container
+					1005 heading 库存数量趋势, Value: 2
+						1006 text 库存数量趋势
+					1007 text 库存数量
+					1008 image
+						1009 text 2026-04
+						1010 text 2026-05
+						1011 text 2026-06
+						1012 text 2026-07
+						1013 text 2026-08
+						1014 text 2026-09
+				1015 container
+					1016 heading 库存库龄与健康度, Value: 2
+						1017 text 库存库龄与健康度
+					1018 text 健康度 0分 0-30天 0 健康 31-90天 0 正常 91-180天 0 关注 181-365天 0 预警 365天以上 0 呆滞
+				1019 container
+					1020 heading 出库商品排行, Value: 2
+						1021 text 出库商品排行
+					1022 text TOP 5
+				1023 container
+					1024 heading 呆滞库存排行, Value: 2
+						1025 text 呆滞库存排行
+					1026 text TOP 5
+				1027 container
+					1028 heading 库存分类占比, Value: 2
+						1029 text 库存分类占比
+					1030 image
+						1031 text 分类占比
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 906 button 库存统计

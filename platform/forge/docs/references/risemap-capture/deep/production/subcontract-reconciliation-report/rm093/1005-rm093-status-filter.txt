@@ -1,0 +1,207 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/subcontract/reports/reconciliation-statement".
+0 AXWebArea RiseMap, URL: risemap.cn/subcontract/reports/reconciliation-statement
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 生产
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 组装业务管理
+					9 image
+					10 text 组装业务管理
+					11 image
+				12 button 组装单
+				13 button 缺料待办
+				14 button 领料单
+				15 button 补料单
+				16 button 退料单
+				17 button 拆解单
+				18 button 换件单
+				19 container
+					20 button 图纸管理
+						21 image
+						22 text 图纸管理
+						23 image
+					24 button 进入图纸管理上手指南
+						25 image
+				26 button 图纸总览
+				27 button 图号档案
+				28 button 图纸评审
+				29 button 图纸发布
+				30 button 图纸变更
+				31 button 图纸发放记录
+				32 button 图纸关联查询
+				33 button 客户图纸
+				34 container
+					35 button 委外管理
+						36 image
+						37 text 委外管理
+						38 image
+					39 button 进入委外管理上手指南
+						40 image
+				41 button 委外看板
+				42 button 委外订单
+				43 button 委外发料
+				44 button 委外回厂
+				45 button 委外退料
+				46 button 委外对账
+				47 button 委外供应商
+				48 button 委外库存
+				49 button 批次追溯
+				50 button 委外未交
+				51 button 委外进货
+				52 button 委外对账单
+			53 image
+			54 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			55 button 查看方案
+				56 image
+				57 text 查看方案
+			58 button
+				59 image
+			60 container
+				61 container 业务分类
+					62 checkbox 工作台, Value: 0
+					63 checkbox 供应链, Value: 0
+					64 checkbox 销售, Value: 0
+					65 checkbox 生产, Value: 1
+					66 checkbox 项目, Value: 0
+					67 checkbox 行政, Value: 0
+					68 checkbox 财务, Value: 0
+					69 checkbox 报表, Value: 0
+					70 checkbox 系统, Value: 0
+				71 button Description: 展开搜索, Help: 搜索
+					72 image
+				73 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					74 image
+					75 text 2
+				76 button Description: 打开推广奖励, Help: 推广
+				77 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				78 link Description: 打开工单, Value: community.risemap.cn/support
+				79 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					80 image
+					81 text 立即订阅
+				82 button 金
+					83 text 金
+					84 image
+			85 container
+				86 button 工作台
+					87 image
+					88 text 工作台
+				225 button 委外订单
+					226 text 委外订单
+				227 button 新建委外订单
+					228 text 新建委外订单
+				229 button 委外发料
+					230 text 委外发料
+				231 button 新建发料单
+					232 text 新建发料单
+				233 button 委外回厂
+					234 text 委外回厂
+				235 button 委外退料
+					236 text 委外退料
+				237 button 新建退料单
+					238 text 新建退料单
+				239 button 委外对账
+					240 text 委外对账
+				241 button 委外供应商
+					242 text 委外供应商
+				243 button 委外库存
+					244 text 委外库存
+				245 button 批次追溯
+					246 text 批次追溯
+				247 button 委外未交
+					248 text 委外未交
+				249 button 委外进货
+					250 text 委外进货
+				251 button 委外对账单
+					252 text 委外对账单
+			253 container
+				254 container
+					255 text 委外管理  › 委外报表  › 委外对账单
+				256 image
+				257 heading 委外对账单(报表), Value: 1
+					258 text 委外对账单(报表)
+				259 text 对账数据查询视图 — 支持按对账单汇总或按费用明细行查询，可按条件筛选导出
+				260 text 对账单数 0 筛选范围内，不含已作废 应付总额 ¥0 加工费 + 补料 − 扣款 加工费 ¥0 费用构成主体 扣款 ¥0 损耗赔偿 + 退款 已确认金额 ¥0 已确认及之后状态
+				261 radio button 按对账单汇总, Value: 0, ID: :r1be:-summary
+				262 radio button 按行明细, Value: 1, ID: :r1be:-lines
+				263 button 导出
+					264 image
+					265 text 导出
+				266 button 刷新
+					267 image
+				268 button
+					269 image
+				270 button
+					271 image
+				272 image
+				273 text field (settable)
+				274 button 状态
+					275 text 状态
+					276 image
+				323 button 费用类型
+					324 text 费用类型
+					325 image
+				277 button 筛选供应商...
+					278 text 筛选供应商...
+				279 text 账期:
+				280 container
+					281 button
+						282 image
+					283 text field (settable)
+					284 text ~
+					285 text field (settable)
+				286 table
+					287 row
+						326 cell
+							327 text 对账单号
+						328 cell
+							329 text 对账单状态
+						290 cell
+							291 text 供应商
+						292 cell
+							293 text 账期
+						330 cell
+							331 text 行号
+						332 cell
+							333 text 费用类型
+						334 cell
+							335 text 关联订单号
+						336 cell
+							337 text 关联回厂单号
+						338 cell
+							339 text 费用说明
+						340 cell
+							341 text 数量
+						342 cell
+							343 text 单价
+						344 cell
+							345 text 金额
+						304 cell
+							305 text 关联应付单号
+					346 row
+						347 cell
+							348 image
+							349 text 无符合条件的对账明细行
+				312 text 共  0 条记录 每页
+				313 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					314 text 20
+				315 text 条
+				316 button (disabled) 上一页
+					317 image
+				318 button 1
+				319 button (disabled) 下一页
+					320 image
+				321 image
+				322 text 应付金额 = 加工费 + 补料 − 扣款。本报表用于查询/审计/导出,新建和确认请到「委外管理 → 委外对账」。 已作废对账单的费用行不计入本视角。
+			199 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+		350 container
+			351 text 全部
+			352 image
+			353 text 待确认
+			354 text 已确认
+			355 text 已生成应付
+
+The focused UI element is 274 button 状态

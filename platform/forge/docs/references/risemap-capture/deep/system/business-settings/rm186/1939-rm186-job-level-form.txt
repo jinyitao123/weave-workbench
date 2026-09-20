@@ -1,0 +1,14 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/hr".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/hr
+	2 container 新增
+		3 heading 新增, Value: 3
+			4 text 新增
+		5 button 关闭
+			6 image
+		7 container
+			8 text 名称  *
+			9 text field (settable)
+		10 button 取消
+		11 button 保存
+
+The focused UI element is 9 text field (settable)

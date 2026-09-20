@@ -1,0 +1,225 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/reimbursement/new?type=reimbursement".
+1 AXWebArea RiseMap, URL: risemap.cn/finance/reimbursement/new?type=reimbursement
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 财务
+			6 button 收起侧边栏
+				7 image
+			8 container
+				181 button 资金管理
+					182 image
+					183 text 资金管理
+					184 image
+				185 button 资金账户
+				186 button 资金流水
+				187 button 应收应付
+				188 button 收款管理
+				189 button 付款管理
+				190 button 退款申请
+				191 button 授信额度管理
+				192 button 借款贷款管理
+				193 button 业务确认
+					194 image
+					195 text 业务确认
+					196 image
+				197 button 销售收入确认
+				198 button 成本中心
+				199 button 费用中心
+				200 button 报销管理
+				201 button 对账单
+					202 image
+					203 text 对账单
+				204 button 发票管理
+					205 image
+					206 text 发票管理
+					207 image
+				208 button 发票总览
+				209 button 销项发票
+				210 button 进项发票
+				211 button 开票任务
+				212 button 调整记录
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 1
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				217 button 应收应付
+					218 text 应收应付
+				219 button 收款管理
+					220 text 收款管理
+				221 button 付款管理
+					222 text 付款管理
+				223 button 费用中心
+					224 text 费用中心
+				225 button 新建付款申请
+					226 text 新建付款申请
+				227 button 退款申请
+					228 text 退款申请
+				229 button 授信额度管理
+					230 text 授信额度管理
+				231 button 借款管理
+					232 text 借款管理
+				233 button 新建借款
+					234 text 新建借款
+				235 button 新建贷款
+					236 text 新建贷款
+				237 button 销售收入确认
+					238 text 销售收入确认
+				239 button 成本中心
+					240 text 成本中心
+				241 button 报销管理
+					242 text 报销管理
+				243 button 新建报销
+					244 text 新建报销
+			245 container
+				246 text 业务确认
+				247 image
+				248 text 报销管理
+				249 image
+				250 text 提交费用报销
+				251 button Description: 返回报销管理, Help: 返回
+					252 image
+				253 heading 提交费用报销, Value: 1
+					254 text 提交费用报销
+				255 text 填写费用明细，提交审批流程
+				256 button 取消
+				257 button 使用模板
+					258 image
+					259 text 使用模板
+				260 button 批量上传
+					261 image
+					262 text 批量上传
+				263 button 保存草稿
+					264 image
+					265 text 保存草稿
+				266 button 提交审批
+					267 image
+					268 text 提交审批
+				269 container
+					270 image
+					271 heading 基本信息, Value: 2
+						272 text 基本信息
+					273 text 填写报销归属、报销人与费用归集信息 * 费用标题
+					274 text field (settable)
+					275 text * 报销人
+					276 button (disabled) 金 金一涛 (默认部门)
+						277 text 金 金一涛 ( 默认部门 )
+					278 switch Description: 代他人报销, Value: 0, ID: :re0:
+					279 text 代他人报销 * 成本归属
+					280 button 项目成本
+						281 text 项目成本
+					282 text * 关联 项目 (至少选择一个，可选多个，选择后可配置费用分摊)
+					283 button 选择关联项目
+						284 text 选择关联项目...
+				285 container
+					286 image
+					287 heading 付款与核销信息, Value: 2
+						288 text 付款与核销信息
+					289 text 填写付款安排、借款核销及补充说明 供应商
+					290 button 搜索并选择供应商...
+						291 text 搜索并选择供应商...
+					292 text 期望付款时间
+					293 container
+						294 text field (settable)
+						295 button
+							296 image
+					297 text 关联借款单
+					298 button 选择要核销的借款单...
+						299 text 选择要核销的借款单...
+					300 text 备注说明
+					301 text entry area (settable)
+				302 container
+					303 image
+					304 heading 费用明细 *, Value: 2
+						305 text 费用明细  *
+					306 text 逐项填写费用，并将对应票据附在费用项下
+					307 button 添加费用项
+						308 image
+						309 text 添加费用项
+					310 button 智能识别发票，自动生成费用明细 AI 上传发票图片或PDF，AI 自动识别票面信息并为每张发票生成一行费用 剩余 10 / 10 次 立即识别
+						311 image
+						312 text 智能识别发票，自动生成费用明细
+						313 text AI
+						314 text 上传发票图片或PDF，AI 自动识别票面信息并为每张发票生成一行费用
+						315 text 剩余 
+						316 text 10
+						317 text  / 
+						318 text 10
+						319 text  次
+						320 text 立即识别
+						321 image
+					322 text 费用类别 金额(¥) 说明  * 日期
+					323 button 销售费用
+						324 text 销售费用
+					325 text field (settable)
+					326 text field (settable)
+					327 container
+						328 text field (settable) 2026年9月8日
+						329 button
+							330 image
+						331 button
+							332 image
+					333 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持图片 / PDF / Word / Excel，可上传多个文件
+						334 image
+						335 text 点击或拖拽文件到此处上传
+						336 text 支持 Ctrl+V 粘贴截图
+						337 text 支持图片 / PDF / Word / Excel，可上传多个文件
+					338 text 共  1  项 合计： ¥ 0
+				339 container
+					340 image
+					341 heading 收款方式, Value: 2
+						342 text 收款方式
+					343 text 选择或新增收款账户，审批通过后报销款支付至此 非必填
+					344 button 新增收款方式
+						345 image
+						346 text 新增收款方式
+					347 text 未选择收款账户，不影响保存或提交审批。
+				348 container
+					349 heading 审批流程, Value: 3
+						350 image
+						351 text 审批流程
+					352 container
+						353 image
+						354 text 开始
+					355 container
+						356 image
+						357 text 审批 SINGLE 系统管理员
+					358 container
+						359 image
+						360 text 结束
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/finance/reimbursement/new?type=reimbursement

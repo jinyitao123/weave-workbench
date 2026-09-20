@@ -1,0 +1,191 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/sales/follow-ups".
+0 AXWebArea RiseMap, URL: risemap.cn/sales/follow-ups
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 销售
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 销售业务
+					9 image
+					10 text 销售业务
+					11 image
+				12 button 框架销售合同
+				13 button 销售订单
+				14 button 附加费用
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+				36 button 服务管理
+					37 image
+					38 text 服务管理
+					39 image
+				40 button 服务工单
+				41 button 服务报价单
+				42 button 服务结算单
+				43 button 接单中心
+				44 button 派工中心
+				45 button 服务分析
+				46 button 质保管理
+				47 button 服务配置
+			48 image
+			49 text 免费试用中，还剩 9 天 — 试用期间享全部功能
+			50 button 查看方案
+				51 image
+				52 text 查看方案
+			53 button
+				54 image
+			55 container
+				56 container 业务分类
+					57 container
+						58 checkbox 工作台, Value: 0
+						59 checkbox 供应链, Value: 0
+						60 checkbox 销售, Value: 1
+						61 checkbox 生产, Value: 0
+						62 checkbox 项目, Value: 0
+						63 checkbox 行政, Value: 0
+						64 checkbox 财务, Value: 0
+						65 checkbox 报表, Value: 0
+						66 checkbox 系统, Value: 0
+				67 button Description: 展开搜索, Help: 搜索
+					68 image
+				69 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+					70 image
+					71 text 20
+				72 button Description: 打开推广奖励, Help: 推广
+				73 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				74 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				75 button 立即订阅, Help: 试用还剩 9 天 · 立即订阅享专属优惠
+					76 image
+					77 text 立即订阅
+				78 button 金
+					79 text 金
+					80 image
+			81 container
+				82 button 工作台
+					83 image
+					84 text 工作台
+				85 button Goodwill订单详情
+					86 text Goodwill订单详情
+				87 button 工作台
+					88 text 工作台
+				89 button 服务工单
+					90 text 服务工单
+				91 button 服务报价单
+					92 text 服务报价单
+				93 button 服务结算单
+					94 text 服务结算单
+				95 button 质保管理
+					96 text 质保管理
+				97 button 线索管理
+					98 text 线索管理
+				99 button 商机管理
+					100 text 商机管理
+				101 button 跟进记录
+					102 text 跟进记录
+				103 button 公海客户
+					104 text 公海客户
+			105 container
+				106 container
+					107 text CRM客户管理
+					108 image
+					109 text 跟进记录
+					110 image
+					111 heading 跟进记录, Value: 1
+						112 text 跟进记录
+					113 text 记录和管理所有客户及商机的跟进活动
+				114 image
+				115 text 总跟进记录 1
+				116 image
+				117 text 本周跟进 1
+				118 image
+				119 text 待跟进 1
+				120 image
+				121 text 已过期 0
+				122 image
+				123 text 覆盖客户 1
+				124 image
+				125 text field (settable)
+				126 button 范围
+					127 image
+					128 text 范围
+					129 image
+				130 button 客户负责人
+					131 text 客户负责人
+				132 button 跟进状态
+					133 image
+					134 text 跟进状态
+					135 image
+				136 button 高级筛选
+					137 image
+					138 text 高级筛选
+				139 button 导出
+					140 image
+					141 text 导出
+					142 image
+				143 button 新增跟进
+					144 image
+					145 text 新增跟进
+				146 image
+				147 text 类型:
+				148 button 全部
+				149 button 电话沟通
+				150 button 微信沟通
+				151 button 邮件往来
+				152 button 上门拜访
+				153 button 客户来访
+				154 button 线上会议
+				155 button 产品演示
+				156 button 方案讲解
+				157 button 商务谈判
+				158 button 其他
+				159 button 最新优先
+					160 image
+					161 text 最新优先
+				162 视图切换
+					163 radio button 列表, Value: 1
+						164 image
+						165 text 列表
+					166 radio button 日历, Value: 0
+						167 image
+						168 text 日历
+				169 image
+				170 text 2026-09-13 1  条记录
+				171 image
+				172 text 上门拜访
+				173 image
+				174 text 苏州澄岳自动化装备有限公司 ·
+				175 image
+				176 button 关注该跟进
+					177 image
+				178 text 金一涛
+				179 button
+					180 image
+				181 button
+					182 image
+				183 text 拜访客户现场，确认柔性线控制柜扩容需求，客户关注交付周期、报价明细和现场调试支持。 跟进结果 客户确认需求有效，下一步提交配置方案和报价测算。
+				184 image
+				185 text 下次跟进: 准备扩容方案、报价清单和交付计划，约客户复盘。
+			186 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			187 container Notifications alt+T
+
+The focused UI element is 0 AXWebArea RiseMap, URL: risemap.cn/sales/follow-ups

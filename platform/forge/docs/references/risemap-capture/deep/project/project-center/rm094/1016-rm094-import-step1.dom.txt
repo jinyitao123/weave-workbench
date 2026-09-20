@@ -1,0 +1,180 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 项目
+- button "收起侧边栏":
+- navigation:
+  - button "项目管理":
+    - generic: 项目管理
+  - button "项目中心":
+    - generic: 项目中心
+  - button "项目分析中心":
+    - generic: 项目分析中心
+  - button "任务管理":
+    - generic: 任务管理
+  - button "工时管理":
+    - generic: 工时管理
+  - button "项目配置中心":
+    - generic: 项目配置中心
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目" [pressed]:
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "新建委外订单":
+  - generic: 新建委外订单
+- button "委外发料":
+  - generic: 委外发料
+- button "新建发料单":
+  - generic: 新建发料单
+- button "委外回厂":
+  - generic: 委外回厂
+- button "委外退料":
+  - generic: 委外退料
+- button "新建退料单":
+  - generic: 新建退料单
+- button "委外对账":
+  - generic: 委外对账
+- button "委外供应商":
+  - generic: 委外供应商
+- button "委外库存":
+  - generic: 委外库存
+- button "批次追溯":
+  - generic: 批次追溯
+- button "委外未交":
+  - generic: 委外未交
+- button "委外进货":
+  - generic: 委外进货
+- button "委外对账单":
+  - generic: 委外对账单
+- button "项目中心":
+  - generic: 项目中心
+- main:
+  - generic: 项目管理
+  - generic: 项目中心
+  - heading "项目中心" [level=1]
+  - button "表格":
+    - text: 表格
+  - button "甘特图":
+    - text: 甘特图
+  - button "项目分析中心":
+    - text: 项目分析中心
+  - button "新建项目":
+    - text: 新建项目
+  - button "全部": 全部
+  - button "待执行"
+  - button "进行中"
+  - button "已暂停"
+  - button "已完工"
+  - button "已结算"
+  - button "已终止"
+  - button "已归档"
+  - button "导入/导出":
+    - text: 导入/导出
+  - generic: 分组
+  - button "按状态"
+  - button "按负责人"
+  - button "按进度"
+  - button "按客户"
+  - button "刷新":
+  - button:
+  - button:
+  - button "范围":
+    - text: 范围
+  - textbox "搜索项目 / 客户..."
+  - generic "点击清除排序":
+    - text: 按创建时间降序
+  - table:
+    - rowgroup:
+      - row "项目名称 客户名称 项目经理 项目周期 项目进度 预计营收 预算金额 合同金额 总成本 毛利率 回款率 创建时间 操作":
+        - columnheader:
+          - checkbox
+        - columnheader "项目名称":
+          - generic: 项目名称
+        - columnheader "客户名称":
+          - generic: 客户名称
+        - columnheader "项目经理":
+          - generic: 项目经理
+        - columnheader "项目周期":
+          - generic: 项目周期
+        - columnheader "项目进度":
+          - generic: 项目进度
+        - columnheader "预计营收":
+          - generic: 预计营收
+        - columnheader "预算金额":
+          - generic: 预算金额
+        - columnheader "合同金额":
+          - generic: 合同金额
+        - columnheader "总成本":
+          - generic: 总成本
+        - columnheader "毛利率":
+          - generic: 毛利率
+        - columnheader "回款率":
+          - generic: 回款率
+        - columnheader "创建时间":
+          - generic: 创建时间
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "暂无匹配的项目":
+        - cell "暂无匹配的项目":
+          - generic: 暂无匹配的项目
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+  - heading "导入项目" [level=2]
+  - generic: Step 1 / 3
+  - button:
+  - paragraph: 导入流程
+  - list:
+    - listitem: 上传 Excel 文件（.xlsx）
+    - listitem: 在预览表中为每列指定对应字段
+    - listitem: 设置数据起始行（默认跳过第 1 行表头）
+    - listitem: 点击"开始导入"，系统校验并写入数据
+  - paragraph: 拖拽文件到此处，或点击选择文件
+  - paragraph: 支持 .xlsx 格式
+  - button "下载模板":
+    - text: 下载模板
+  - button "取消"
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2025-10

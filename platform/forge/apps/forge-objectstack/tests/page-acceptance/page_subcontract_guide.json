@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_subcontract_guide",
+  "archetype": "configuration",
+  "checks": {
+    "replication": { "status": "blocked", "notes": "已实时核对四角色、六阶段、八类目录、角色文章数及代表文章；RISEMAP 学习状态跨设备和权限联动仍待复核。", "evidence": ["docs/forge-subcontract-guide-page-contract-20260916.md"] },
+    "visual": { "status": "pending", "notes": "最终构建待补桌面 / 390x844 窄屏对照截图与独立视觉复核。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/subcontract-guide-browser-readback-20260916.json"] },
+    "interaction": { "status": "pending", "notes": "四角色、六阶段、八类目录、跨目录搜索与四个新建深链已在内置浏览器核对；看板按钮点击、窄屏与控制台扫描在最终构建上待复核。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/subcontract-guide-browser-readback-20260916.json"] },
+    "business": { "status": "pending", "notes": "指南职责为说明与真实导航，跨目录搜索与新建深链经浏览器验证；委外订单提交因本环境缺少委外主数据待复核。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/subcontract-guide-browser-readback-20260916.json"] }
+  }
+}

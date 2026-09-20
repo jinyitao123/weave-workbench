@@ -1,0 +1,28 @@
+
+      销售销售业务框架销售合同销售订单附加费用收款流水销售发货单销售退货业绩银行价格策略Goodwill订单销售团队销售目标销售发票CRM客户管理客户管理联系人管理销售报价客户物料对照商机管理线索管理跟进记录公海客户服务管理服务工单服务报价单服务结算单接单中心派工中心服务分析质保管理服务配置免费试用中，还剩 9 天 — 试用期间享全部功能查看方案工作台供应链销售生产项目行政财务报表系统20工单立即订阅
+              @keyframes subscribe-shine {
+                0% { background-position: 200% 0; }
+                60%, 100% { background-position: -100% 0; }
+              }
+              @keyframes subscribe-pulse {
+                0% { box-shadow: 0 0 0 0 rgba(255, 86, 48, 0.55); }
+                70% { box-shadow: 0 0 0 8px rgba(255, 86, 48, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(255, 86, 48, 0); }
+              }
+            金工作台销售目标工作台Goodwill订单Goodwill订单详情框架销售合同销售订单销售发货单销售发票收款流水业绩银行销售报价服务工单服务报价单服务结算单销售管理Goodwill订单GW-2026-0001GW-2026-0001 发货中RISEMAP 对照赠送类型 20260913苏州澄岳自动化装备有限公司 - Goodwill 订单确认完成反审核一键反审核打印草稿待审批已审批发货中5已完成基本信息物品清单1发货记录1审批记录1操作记录4DN-2026-0002待发货—配送信息无物流信息收件人周启明 13800002609收货地址苏州市工业园区澄岳路9号发货物品800型柔性线控制柜 x2
+            .fbw-collapse {
+              transform: translateX(calc(100% - 36px));
+              transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.3s ease, opacity 0.3s ease;
+              border-top-right-radius: 0;
+              border-bottom-right-radius: 0;
+              opacity: 0.75;
+            }
+            .fbw-collapse:hover {
+              transform: translateX(0);
+              border-radius: 9999px;
+              opacity: 1;
+            }
+          反馈发货已记录
+    
+  
+  

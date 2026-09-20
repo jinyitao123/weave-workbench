@@ -1,0 +1,240 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 文档中心
+- button:
+  - generic: 固定资产
+- button:
+  - generic: 资质与申报
+- button:
+  - generic: 物料领取
+- button:
+  - generic: 设备维护
+- button:
+  - generic: 礼品管理
+- button:
+  - generic: 借出管理
+- button:
+  - generic: 车辆管理
+- button:
+  - generic: 新建公司用车申请
+- button:
+  - generic: 新建私车公用申请
+- button:
+  - generic: 新增车辆
+- button:
+  - generic: 人事工作台
+- button:
+  - generic: 员工档案
+- button:
+  - generic: 招聘管理
+- main:
+  - generic: 人力资源
+  - generic: 招聘管理
+  - heading [level=1]: 招聘管理
+  - paragraph: 岗位发布、候选人漏斗、面试评估、Offer 管理
+  - button:
+    - text: 岗位说明
+  - button:
+    - text: 招聘岗位
+  - button:
+    - text: 招聘管理
+  - button:
+    - text: 发布岗位
+  - button:
+    - text: 导出
+  - button:
+  - button:
+  - button:
+  - radiogroup:
+    - radio [checked]:
+      - generic: 全部(0)
+    - radio:
+      - generic: 招聘中(0)
+    - radio:
+      - generic: 已暂停(0)
+    - radio:
+      - generic: 已完成(0)
+  - textbox:
+    - /placeholder: 搜索岗位...
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader
+        - columnheader:
+          - generic: 岗位名称
+        - columnheader:
+          - generic: 部门
+        - columnheader:
+          - generic: 职级
+        - columnheader:
+          - generic: 招聘人数
+        - columnheader:
+          - generic: 简历数
+        - columnheader:
+          - generic: 紧急程度
+        - columnheader:
+          - generic: 状态
+        - columnheader:
+          - generic: 期望入职时间
+        - columnheader:
+          - generic: 截止日期
+        - columnheader:
+          - generic: 操作
+    - rowgroup:
+      - row:
+        - cell:
+          - generic: 暂无招聘岗位数据
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button [disabled]:
+  - button: "1"
+  - button [disabled]:
+- button:
+- region "Notifications alt+T"
+- generic: 5K以下
+- dialog "发布招聘岗位":
+  - heading "发布招聘岗位" [level=2]
+  - paragraph: 选择岗位并设置招聘信息
+  - paragraph: 招聘信息
+  - generic: "*"
+  - generic: 选择岗位
+  - button "请选择岗位" [active]:
+    - generic: 请选择岗位
+  - generic: "*"
+  - generic: 部门
+  - button "请选择部门":
+    - generic: 请选择部门
+  - generic: "*"
+  - generic: 招聘数量
+  - textbox: "1"
+  - generic: 期望入职时间
+  - textbox "请选择日期"
+  - button:
+  - generic: 截止日期
+  - textbox "请选择日期"
+  - button:
+  - button "取消"
+  - button "发布":
+    - text: 发布
+  - button "Close":
+    - generic: Close

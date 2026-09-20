@@ -1,0 +1,37 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/sales".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/sales
+	2 container 新增采购分类 配置采购分组及对应负责人
+		3 container :r15s:
+			4 heading 新增采购分类, Value: 3
+				5 text 新增采购分类
+			6 text 配置采购分组及对应负责人
+		7 button 关闭
+			8 image
+		9 container
+			10 text 分类名称  *
+			11 text field (settable)
+			12 text 分类说明
+			13 text field (settable)
+			14 text 采购负责人
+			15 button 请选择采购负责人
+				16 text 请选择采购负责人
+			17 text 该负责人将自动关联此分类下的采购流程 标识颜色
+			18 button
+			19 button
+			20 button
+			21 button
+			22 button
+			23 button
+			24 button
+			25 button
+			26 button
+			27 button
+			28 button
+			29 button
+			30 text 预览
+			31 image
+			32 text 分类名称
+		33 button 取消
+		34 button 创建
+
+The focused UI element is 11 text field (settable)

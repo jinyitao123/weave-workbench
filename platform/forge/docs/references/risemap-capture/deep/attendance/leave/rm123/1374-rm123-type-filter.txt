@@ -1,0 +1,218 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/leave".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/leave
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 行政
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 审批中心
+					10 image
+					11 text 审批中心
+					12 image
+				13 button 我的审批
+				14 button 抄送我的
+				15 button 我发起的
+				16 button 行政申请
+				17 button 行政管理
+					18 image
+					19 text 行政管理
+					20 image
+				21 button 公司通知
+				22 button 用章管理
+				23 button 会议纪要
+				24 button 工作汇报
+				25 button 文档中心
+				26 button 固定资产
+				27 button 资质与申报
+				28 button 物料领取
+				29 button 设备维护
+				30 button 礼品管理
+				31 button 借出管理
+				32 button 车辆管理
+				33 button 人力资源
+					34 image
+					35 text 人力资源
+					36 image
+				37 button 人事工作台
+				38 button 员工档案
+				39 button 招聘管理
+				40 button 入职离职
+				41 button 薪酬福利
+				42 button 规章制度
+				43 button 通讯录
+				44 button 考勤假期
+					45 image
+					46 text 考勤假期
+					47 image
+				48 button 加班申请
+				49 button 请假管理
+				50 button 出差申请
+				51 button 考勤管理
+				52 button 考勤统计
+				53 button 流程中心
+					54 image
+					55 text 流程中心
+					56 image
+				57 button 审批记录
+				58 button 发起流程
+				59 button 流程定义
+				60 button 流程分类
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 1
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				97 button 新建私车公用申请
+					98 text 新建私车公用申请
+				99 button 新增车辆
+					100 text 新增车辆
+				101 button 人事工作台
+					102 text 人事工作台
+				103 button 员工档案
+					104 text 员工档案
+				105 button 招聘管理
+					106 text 招聘管理
+				107 button 候选人详情
+					108 text 候选人详情
+				109 button 入职离职
+					110 text 入职离职
+				111 button 薪酬福利
+					112 text 薪酬福利
+				113 button 福利发放
+					114 text 福利发放
+				115 button 规章制度
+					116 text 规章制度
+				117 button 人事配置
+					118 text 人事配置
+				119 button 通讯录
+					120 text 通讯录
+				121 button 加班申请
+					122 text 加班申请
+				123 button 请假管理
+					124 text 请假管理
+			125 container
+				126 container
+					127 text 考勤假期
+					128 image
+					129 text 请假管理
+					130 image
+					131 heading 请假管理, Value: 1
+						132 text 请假管理
+					133 text 管理您的假期余额、提交请假申请、审批团队成员请假
+				134 button 假期列表
+					135 image
+					136 text 假期列表
+				137 button 审批管理
+					138 image
+					139 text 审批管理
+				140 button 调休补假
+					141 image
+					142 text 调休补假
+				143 button 假期配置
+					144 image
+					145 text 假期配置
+				146 text 假期额度看板 左右滑动查看不同假别的可用额度与审批占用情况
+				147 button 向左滑动
+					148 image
+				149 button 向右滑动
+					150 image
+				151 button 新建请假
+					152 image
+					153 text 新建请假
+				154 button 导出
+					155 image
+					156 text 导出
+					157 image
+				158 button 刷新
+					159 image
+				160 button
+					161 image
+				162 button
+					163 image
+				164 image
+				165 text field (settable)
+				166 button 类型
+					167 image
+					168 text 类型
+					169 image
+				170 button 状态
+					171 image
+					172 text 状态
+					173 image
+				174 table
+					175 row
+						176 cell
+							177 checkbox (settable, integer) 0
+						178 cell
+							179 text 单号
+						180 cell
+							181 text 申请人
+						182 cell
+							183 text 部门
+						184 cell
+							185 text 假别
+						186 cell
+							187 text 开始时间
+						188 cell
+							189 text 结束时间
+						190 cell
+							191 text 请假时长
+						192 cell
+							193 text 请假事由
+						194 cell
+							195 text 当前状态
+						196 cell
+							197 text 操作
+					198 row
+						199 cell
+							200 image
+							201 text 暂无请假记录
+				202 text 共  0 条记录 每页
+				203 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					204 text 20
+				205 text 条
+				206 button (disabled) 上一页
+					207 image
+				208 button 1
+				209 button (disabled) 下一页
+					210 image
+			211 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			212 container Notifications alt+T
+		213 container
+			214 text 全部
+			215 image
+
+The focused UI element is 166 button 类型

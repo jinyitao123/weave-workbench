@@ -1,0 +1,107 @@
+Browser tab: 3, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/forge_sales_shipment".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/forge_sales_shipment
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 pop up button (collapsed) 销售发货单, ID: radix-_r_e_, Secondary Actions: Expand
+			10 button 搜索…
+				11 text 搜索…
+				12 text ⌘
+				13 text K
+			14 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			15 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/data?surface=object:forge_sales_shipment
+			16 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_h_, Secondary Actions: Expand
+			17 pop up button (collapsed) DA, ID: radix-_r_j_, Secondary Actions: Expand
+		18 container
+			19 container
+				20 text 区域
+				21 content list
+					22 button 工作台
+					23 button 供应链
+					24 button 销售
+					25 button 生产
+					26 button 项目
+					27 button 行政
+					28 button 财务
+					29 button 报表
+					30 button 系统
+			31 container
+				32 button (expanded) 工作台, Secondary Actions: Collapse
+				33 content list
+					34 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					35 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					37 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			38 text 最近使用
+			39 button 切换侧边栏
+		40 container
+			41 heading 销售发货单, Value: 1
+				42 text 销售发货单
+			43 checkbox Description: 添加到收藏, Value: 0
+			44 button 新建
+			45 button 导入, Help: 从 CSV 文件导入
+			46 tab (selected, settable, boolean) 全部 全部 的视图操作, Description: 全部 的视图操作, Value: 1
+全部
+			47 button
+			48 container
+				49 button 行内编辑, Help: 行内编辑记录(点击单元格进行编辑)
+				50 pop up button (collapsed) 筛选, Secondary Actions: Expand
+				51 pop up button (collapsed) 分组, Secondary Actions: Expand
+				52 pop up button (collapsed) 排序, Secondary Actions: Expand
+				53 button Description: 密度: 紧凑, Help: 密度: 紧凑（点击切换）
+				54 button 刷新
+				55 pop up button (collapsed) Description: 搜索, Secondary Actions: Expand
+				56 table
+					57 row
+						58 cell
+							59 checkbox 0
+						60 cell
+							61 text #
+						62 cell
+							63 text 发货单号
+						64 cell
+							65 text 发货单名称
+						66 cell
+							67 text 客户
+						68 cell
+							69 text 发货日期
+						70 cell
+							71 text 发货数量
+						72 cell
+							73 text 已出库数量
+						74 cell
+							75 text 发货含税金额
+						76 cell
+							77 text 发货单状态
+						78 cell
+							79 text 操作
+					80 row
+						81 cell
+							82 checkbox 0
+						83 cell
+							84 text 1
+						85 cell
+							86 link Description: DN-CONVERT-20260909-001, Value: localhost:4321/_console/apps/forge/forge_sales_shipment/record/lZESzjTBEKJzolvZ
+						87 cell
+							88 text SO-CONVERT-20260909-001 发货 DN-CONVERT-20260909-001
+						89 cell
+							90 text 苏州澄岳自动化装备有限公司
+						91 cell
+							92 text 4天前
+						93 cell
+							94 text 1.0000
+						95 cell
+							96 text 1.0000
+						97 cell
+							98 text 128,000
+						99 cell
+							100 text 已出库
+						101 cell
+							102 pop up button (collapsed) 更多操作, ID: radix-_r_2k_, Secondary Actions: Expand
+				103 text 1 条记录
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/forge_sales_shipment

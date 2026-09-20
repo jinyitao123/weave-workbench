@@ -1,0 +1,184 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同":
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "联系人管理":
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "生产出库":
+  - generic: 生产出库
+- button "其他出库":
+  - generic: 其他出库
+- button "新建出库单":
+  - generic: 新建出库单
+- button "销售直接出库":
+  - generic: 销售直接出库
+- button "待出库发货单":
+  - generic: 待出库发货单
+- button "采购退换货出库":
+  - generic: 采购退换货出库
+- button "出库明细":
+  - generic: 出库明细
+- button "框架销售合同":
+  - generic: 框架销售合同
+- button "新建合同":
+  - generic: 新建合同
+- button "销售订单":
+  - generic: 销售订单
+- button "新建销售订单":
+  - generic: 新建销售订单
+- button "收款流水":
+  - generic: 收款流水
+- button "销售发货单":
+  - generic: 销售发货单
+- button "新建发货单":
+  - generic: 新建发货单
+- main:
+  - generic: 销售管理
+  - generic: 销售发货单
+  - generic: 新建发货单
+  - button:
+  - heading "新建发货单" [level=1]
+  - button "取消"
+  - button "确认创建" [active]:
+    - text: 确认创建
+  - generic: "1"
+  - heading "基本信息" [level=3]
+  - generic: 发货单号
+  - textbox "留空则按编码规则自动生成"
+  - generic: "*"
+  - generic: 客户
+  - button "搜索客户名称...":
+    - generic: 搜索客户名称...
+  - paragraph: 客户不能为空
+  - generic: 出库日期
+  - textbox "请选择日期": 2026年9月9日
+  - button:
+  - button:
+  - generic: "*"
+  - generic: 销售订单
+  - generic: （可勾选多个订单合并发货）
+  - textbox "请先选择客户" [disabled]
+  - generic: 请先选择客户，然后从该客户的销售订单列表中勾选
+  - paragraph: 销售订单不能为空
+  - generic: 收货信息
+  - generic: 收件人
+  - textbox "收件人姓名"
+  - generic: 联系电话
+  - textbox "收件人联系电话"
+  - generic: 收货地址
+  - textbox "收件人收货地址"
+  - generic: "2"
+  - heading "商品明细" [level=3]
+  - generic: 请至少填写一项本次发货数量
+  - paragraph: 请先选择客户和至少 1 个销售订单，物料明细将自动带出并按物料合并展示
+  - generic: "3"
+  - heading "备注信息" [level=3]
+  - generic: (选填)
+  - textbox "输入出库备注，如特殊包装要求、物流注意事项等..."
+  - generic: "4"
+  - heading "附件" [level=3]
+  - generic: (选填)
+  - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 上传发货清单、装箱单等文件，支持 PDF、Word、Excel、图片、压缩包等格式":
+    - generic: 点击或拖拽文件到此处上传
+    - generic: 支持 Ctrl+V 粘贴截图
+    - generic: 上传发货清单、装箱单等文件，支持 PDF、Word、Excel、图片、压缩包等格式
+  - paragraph: 操作提示
+  - list:
+    - listitem: • 选择客户后从下方列表勾选 1 个或多个销售订单合并发货
+    - listitem: • 商品明细按订单分组展示，可独立填写每个订单的本次发货数量
+    - listitem: • 本次发货数量不可超过该订单明细的未发货数量
+    - listitem: • 支持部分发货，一个订单可多次发货
+    - listitem: • 后续创建出库单时可选择本发货单中的部分商品分批出库
+  - heading "收货信息" [level=4]
+  - paragraph: 出库日期
+  - paragraph: 2026-09-09
+  - paragraph: 收件人
+  - paragraph: 未填写
+  - paragraph: 联系电话
+  - paragraph: 未填写
+  - paragraph: 收货地址
+  - paragraph: 未填写
+- button "打开 AI 助手":
+- region "Notifications alt+T":
+  - list:
+    - button "Close toast":
+    - generic: 提交失败，请检查必填项，必填项已在表单中标红。

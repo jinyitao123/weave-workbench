@@ -1,0 +1,58 @@
+- region "通知 alt+T"
+- banner:
+  - button "切换侧边栏":
+    - generic: 切换侧边栏
+  - generic: 服务配置
+  - button "搜索…":
+  - button "打开消息中心":
+  - link "在 Studio 中设计":
+    - /url: /_console/studio/forge/interfaces?surface=page:page_service_config
+  - button "DA":
+    - generic: DA
+- main:
+  - main:
+    - button "在 Studio 中编辑":
+    - heading "服务配置" [level=1]
+    - paragraph: 工单类型、状态、质保、SLA、费用目录、付款模板与服务人员统一配置
+    - generic: "28"
+    - strong: 服务管理 / 服务配置
+    - button "新增类型" [disabled]
+    - button "刷新"
+    - generic: 工单类型、状态、质保、SLA、费用目录、付款模板与服务人员统一配置
+    - heading "服务配置" [level=1]
+    - button "工单类型"
+    - button "状态与紧急度"
+    - button "质保规则"
+    - button "SLA 规则"
+    - button "费用类型"
+    - button "付款模板"
+    - button "服务人员"
+    - button "报价设置"
+    - button "客户门户"
+    - textbox "搜索服务配置"
+    - button "清空筛选"
+    - table:
+      - rowgroup:
+        - row "配置项 分类 编码 状态 说明 操作":
+          - columnheader "配置项"
+          - columnheader "分类"
+          - columnheader "编码"
+          - columnheader "状态"
+          - columnheader "说明"
+          - columnheader "操作"
+      - rowgroup:
+        - row "RISEMAP 对照服务类型 20260913 工单类型 RMTESTSERVICE0913 启用 用于 Forge 销售服务管理复刻的同材料对照数据 —":
+          - cell "RISEMAP 对照服务类型 20260913"
+          - cell "工单类型"
+          - cell "RMTESTSERVICE0913"
+          - cell "启用"
+          - cell "用于 Forge 销售服务管理复刻的同材料对照数据"
+          - cell "—"
+        - row "RISEMAP 对照服务工程师 20260913 服务人员 RMTESTENGINEER0913 启用 电话 13800000913；团队 售后对照组；区域 苏州 / 远程；技能 PLC、调试；状态 在岗 —":
+          - cell "RISEMAP 对照服务工程师 20260913"
+          - cell "服务人员"
+          - cell "RMTESTENGINEER0913"
+          - cell "启用"
+          - cell "电话 13800000913；团队 售后对照组；区域 苏州 / 远程；技能 PLC、调试；状态 在岗"
+          - cell "—"
+    - generic: 共 2 条记录 每页 20 条 · 1 / 1

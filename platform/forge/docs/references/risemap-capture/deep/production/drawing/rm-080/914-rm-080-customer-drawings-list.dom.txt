@@ -1,0 +1,192 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 生产
+- button "收起侧边栏":
+- navigation:
+  - button "组装业务管理":
+    - generic: 组装业务管理
+  - button "组装单":
+    - generic: 组装单
+  - button "缺料待办":
+    - generic: 缺料待办
+  - button "领料单":
+    - generic: 领料单
+  - button "补料单":
+    - generic: 补料单
+  - button "退料单":
+    - generic: 退料单
+  - button "拆解单":
+    - generic: 拆解单
+  - button "换件单":
+    - generic: 换件单
+  - button "图纸管理":
+    - generic: 图纸管理
+  - button "进入图纸管理上手指南":
+  - button "图纸总览":
+    - generic: 图纸总览
+  - button "图号档案":
+    - generic: 图号档案
+  - button "图纸评审":
+    - generic: 图纸评审
+  - button "图纸发布":
+    - generic: 图纸发布
+  - button "图纸变更":
+    - generic: 图纸变更
+  - button "图纸发放记录":
+    - generic: 图纸发放记录
+  - button "图纸关联查询":
+    - generic: 图纸关联查询
+  - button "客户图纸" [active]:
+    - generic: 客户图纸
+  - button "委外管理":
+    - generic: 委外管理
+  - button "进入委外管理上手指南":
+  - button "委外看板":
+    - generic: 委外看板
+  - button "委外订单":
+    - generic: 委外订单
+  - button "委外发料":
+    - generic: 委外发料
+  - button "委外回厂":
+    - generic: 委外回厂
+  - button "委外退料":
+    - generic: 委外退料
+  - button "委外对账":
+    - generic: 委外对账
+  - button "委外供应商":
+    - generic: 委外供应商
+  - button "委外库存":
+    - generic: 委外库存
+  - button "批次追溯":
+    - generic: 批次追溯
+  - button "委外未交":
+    - generic: 委外未交
+  - button "委外进货":
+    - generic: 委外进货
+  - button "委外对账单":
+    - generic: 委外对账单
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产" [pressed]:
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "图纸管理上手指南":
+  - generic: 图纸管理上手指南
+- button "图纸总览":
+  - generic: 图纸总览
+- button "新建图号档案":
+  - generic: 新建图号档案
+- button "图号档案":
+  - generic: 图号档案
+- button "图纸评审":
+  - generic: 图纸评审
+- button "新建评审":
+  - generic: 新建评审
+- button "图纸发布":
+  - generic: 图纸发布
+- button "已发布记录":
+  - generic: 已发布记录
+- button "图纸变更":
+  - generic: 图纸变更
+- button "新建变更":
+  - generic: 新建变更
+- button "图纸发放记录":
+  - generic: 图纸发放记录
+- button "新建发放":
+  - generic: 新建发放
+- button "图纸关联查询":
+  - generic: 图纸关联查询
+- button "客户图纸":
+  - generic: 客户图纸
+- main:
+  - generic "客户图纸管理":
+    - navigation "客户图纸管理面包屑":
+      - list:
+        - link "图纸管理":
+          - /url: /drawing/overview
+        - generic: 客户图纸管理
+    - heading "客户图纸管理" [level=1]
+    - paragraph: 管理客户提供的图纸接收、评审、采纳及归档全流程
+  - button "接收客户图纸":
+    - text: 接收客户图纸
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "客户图号 / 图纸名称"
+  - button "客户名称":
+    - text: 客户名称
+  - button "密级":
+    - text: 密级
+  - button "状态":
+    - text: 状态
+  - table:
+    - rowgroup:
+      - row "客户图号 图纸名称 客户名称 密级 使用范围 版本 状态 接收日期 操作":
+        - columnheader "客户图号":
+          - generic: 客户图号
+        - columnheader "图纸名称":
+          - generic: 图纸名称
+        - columnheader "客户名称":
+          - generic: 客户名称
+        - columnheader "密级":
+          - generic: 密级
+        - columnheader "使用范围":
+          - generic: 使用范围
+        - columnheader "版本":
+          - generic: 版本
+        - columnheader "状态":
+          - generic: 状态
+        - columnheader "接收日期":
+          - generic: 接收日期
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "暂无客户图纸记录":
+        - cell "暂无客户图纸记录":
+          - generic: 暂无客户图纸记录
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2025-10

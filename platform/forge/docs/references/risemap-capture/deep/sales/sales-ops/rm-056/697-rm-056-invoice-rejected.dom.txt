@@ -1,0 +1,179 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同":
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "联系人管理":
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "收款流水":
+  - generic: 收款流水
+- button "销售发货单":
+  - generic: 销售发货单
+- button "新建发货单":
+  - generic: 新建发货单
+- button "销售退货":
+  - generic: 销售退货
+- button "新建销售退货":
+  - generic: 新建销售退货
+- button "业绩银行":
+  - generic: 业绩银行
+- button "价格策略":
+  - generic: 价格策略
+- button "新增框架协议":
+  - generic: 新增框架协议
+- button "新增特价":
+  - generic: 新增特价
+- button "Goodwill订单":
+  - generic: Goodwill订单
+- button "Goodwill订单详情":
+  - generic: Goodwill订单详情
+- button "销售团队":
+  - generic: 销售团队
+- button "销售目标":
+  - generic: 销售目标
+- button "销售发票":
+  - generic: 销售发票
+- main:
+  - generic: 销售业务
+  - generic: 销售发票
+  - heading "销售发票" [level=1]
+  - paragraph: 开票申请的发起记录与流转状态跟踪；正式发票由财务在「发票管理」登记回写
+  - button "全部0"
+  - button "待审批0"
+  - button "已审批0"
+  - button "已开票0"
+  - button "已驳回0" [active]
+  - button "已撤回0"
+  - button "导出":
+    - text: 导出
+  - button "导出任务":
+    - text: 导出任务
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "搜索申请号 / 客户 / 订单号..."
+  - table:
+    - rowgroup:
+      - row "申请号 客户 / 销售方 模式 合并订单 价税合计 状态 申请时间 申请人 关联发票 操作":
+        - columnheader:
+          - checkbox
+        - columnheader "申请号":
+          - generic: 申请号
+        - columnheader "客户 / 销售方":
+          - generic: 客户 / 销售方
+        - columnheader "模式":
+          - generic: 模式
+        - columnheader "合并订单":
+          - generic: 合并订单
+        - columnheader "价税合计":
+          - generic: 价税合计
+        - columnheader "状态":
+          - generic: 状态
+        - columnheader "申请时间":
+          - generic: 申请时间
+        - columnheader "申请人":
+          - generic: 申请人
+        - columnheader "关联发票":
+          - generic: 关联发票
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "暂无开票申请记录，可在销售订单发起开票":
+        - cell "暂无开票申请记录，可在销售订单发起开票":
+          - generic: 暂无开票申请记录，可在销售订单发起开票
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+  - text: 共
+  - generic: "0"
+  - text: 笔申请
+  - generic: ·
+  - text: 价税合计
+  - generic: ¥0.00
+- button "打开 AI 助手":
+- region "Notifications alt+T"

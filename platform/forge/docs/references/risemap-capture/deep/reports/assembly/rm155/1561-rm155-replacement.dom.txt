@@ -1,0 +1,171 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 报表
+- button "收起侧边栏":
+- navigation:
+  - button "销售统计":
+    - generic: 销售统计
+  - button "采购统计":
+    - generic: 采购统计
+  - button "库存统计":
+    - generic: 库存统计
+  - button "项目统计":
+    - generic: 项目统计
+  - button "组装统计":
+    - generic: 组装统计
+  - button "财务统计":
+    - generic: 财务统计
+  - button "财务总览":
+    - generic: 财务总览
+  - button "损益分析":
+    - generic: 损益分析
+  - button "资金分析":
+    - generic: 资金分析
+  - button "往来账款":
+    - generic: 往来账款
+  - button "税务库存":
+    - generic: 税务库存
+  - button "风险监控":
+    - generic: 风险监控
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表" [pressed]:
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "客户对账单":
+  - generic: 客户对账单
+- button "新建客户对账":
+  - generic: 新建客户对账
+- button "供应商对账单":
+  - generic: 供应商对账单
+- button "新建供应商对账":
+  - generic: 新建供应商对账
+- button "发票总览":
+  - generic: 发票总览
+- button "销项发票":
+  - generic: 销项发票
+- button "进项发票":
+  - generic: 进项发票
+- button "开票任务":
+  - generic: 开票任务
+- button "调整记录":
+  - generic: 调整记录
+- button "销售统计":
+  - generic: 销售统计
+- button "采购统计":
+  - generic: 采购统计
+- button "库存统计":
+  - generic: 库存统计
+- button "项目统计":
+  - generic: 项目统计
+- button "组装统计":
+  - generic: 组装统计
+- main:
+  - main:
+    - paragraph: 报表中心
+    - heading "组装统计" [level=1]
+    - paragraph: 换件规模、换件原因、处理时效与物料更换分析。
+    - button "导出报表":
+      - text: 导出报表
+    - navigation "组装报表维度":
+      - button "组装单统计"
+      - button "领料单统计"
+      - button "补料单统计"
+      - button "退料单统计"
+      - button "拆解单统计"
+      - button "换件单统计" [active]: 换件单统计
+    - text: 筛选条件
+    - textbox:
+      - /placeholder: 搜索换件单号、物料、负责人
+    - combobox "选择车间":
+      - option "全部车间" [selected]
+      - option "装配一车间"
+    - combobox "选择统计周期":
+      - option "本月" [selected]
+      - option "本季度"
+      - option "本年度"
+    - button "刷新":
+      - text: 刷新
+    - text: "更新时间: 2026/9/9 06:51:16 当前展示换件单统计统计数据。"
+    - generic: 统计周期 2026-09-01 至 2026-09-30
+    - generic: 换件单数
+    - button "查看换件单数计算说明":
+    - generic: 0单
+    - generic: 本月新增 0 单
+    - generic: 已完成
+    - button "查看已完成计算说明":
+    - generic: 0单
+    - generic: 更换物料
+    - button "查看更换物料计算说明":
+    - generic: 0件
+    - generic: 平均时效
+    - button "查看平均时效计算说明":
+    - heading "换件申请与完成趋势" [level=2]
+    - generic: 换件申请
+    - generic: 换件完成
+    - heading "换件原因分布" [level=2]
+    - heading "换件处理转化" [level=2]
+    - paragraph: 从上游到结果的阶段转化
+    - generic: 5 个阶段
+    - generic: "1"
+    - generic: 已下达
+    - generic: 基准
+    - generic: "0"
+    - generic: "2"
+    - generic: 已领料
+    - generic: 阶段转化
+    - generic: "0"
+    - generic: "3"
+    - generic: 换件中
+    - generic: 阶段转化
+    - generic: "0"
+    - generic: "4"
+    - generic: 已完工
+    - generic: 阶段转化
+    - generic: "0"
+    - generic: "5"
+    - generic: 已入库
+    - generic: 阶段转化
+    - generic: "0"
+    - heading "负责人完成数量排行" [level=2]
+    - generic: TOP 5
+    - heading "更换物料数量排行" [level=2]
+    - generic: TOP 5
+    - heading "换件处理时效对比" [level=2]
+    - generic: 全量排行
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2026-04

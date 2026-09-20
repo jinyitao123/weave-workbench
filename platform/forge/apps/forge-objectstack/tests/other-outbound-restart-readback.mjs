@@ -1,0 +1,6 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { connect } from '../scripts/api-client.mjs';
+const endpoint=process.env.FORGE_URL||'http://localhost:4386',report=JSON.parse(await readFile('.objectstack/acceptance/other-outbound-report.json','utf8')),api=await connect(endpoint);
+async function one(object,id){const r=await api.request(`/data/${object}/${id}`);assert.equal(r.status,200);return r.value.record}async function find(object,where){const q=new URLSearchParams({$filter:JSON.stringify(where),$top:'500'}),r=await api.request(`/data/${object}?${q}`);assert.equal(r.status,200);return(r.value.records||[]).filter(row=>Object.entries(where).every(([k,v])=>row[k]===v))}
+const outbound=await one('forge_other_outbound',report.outbound.id);assert.equal(outbound.status,'outbounded');assert.equal(Number(outbound.line_count),2);assert.equal(Number(outbound.total_quantity),0.3);assert.equal((await find('forge_other_outbound_line',{outbound_id:outbound.id})).length,2);const ledgers=await find('forge_inventory_ledger',{source_id:outbound.id});assert.equal(ledgers.length,2);assert.ok(ledgers.every(x=>x.movement_type==='other_outbound'));assert.equal((await one('forge_other_outbound',report.blocked.id)).status,'cancelled');console.log('PASS other outbound restart readback');

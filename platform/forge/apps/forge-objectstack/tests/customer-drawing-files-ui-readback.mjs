@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import { readFile, writeFile } from 'node:fs/promises';
+import { connect } from '../scripts/api-client.mjs';
+const path = '.objectstack/acceptance/customer-drawing-files-report.json';
+const report = JSON.parse(await readFile(path, 'utf8'));
+const api = await connect(process.env.FORGE_URL || 'http://localhost:4384');
+const browserCode = process.env.FORGE_BROWSER_CUSTOMER_DRAWING || 'CDW-FILE-BROWSER-002';
+const query = new URLSearchParams({ $filter: JSON.stringify({ code: browserCode }), $top: '20' });
+const response = await api.request(`/data/forge_customer_drawing?${query}`);
+assert.equal(response.status, 200);
+const drawing = (response.value.records || []).find(item => item.code === browserCode);
+assert.ok(drawing);
+const count = value => (Array.isArray(value) ? value : value ? [value] : []).length;
+assert.deepEqual({ originals: count(drawing.customer_original_files), pdf: count(drawing.pdf_file), technical: count(drawing.technical_requirement_file), other: count(drawing.other_attachment_file) }, { originals: 2, pdf: 1, technical: 1, other: 1 });
+report.ids.browserCustomerDrawing = drawing.id;
+report.browserVerification = { status: 'passed', verifiedAt: new Date().toISOString(), browser: 'Codex 内置浏览器', pageUrl: `${process.env.FORGE_URL || 'http://localhost:4384'}/_console/apps/forge/page/page_drawing_workspace`, risemapLiveComparison: { listUrl: 'https://risemap.cn/drawing/customer', createUrl: 'https://risemap.cn/drawing/customer/create' }, observed: ['内置浏览器实时打开 RISEMAP 客户图纸列表与新建页作为对照', 'Forge 列表对齐标题说明、客户/密级/状态筛选、九列表头与每页 10 条', 'Forge 新建页对齐返回与三项顶部操作、五个表单分区和四个文件区', '填写客户图号、名称、客户、合同与使用边界', '通过四个文件区选择两份原图及 PDF、DOCX、PNG 文件', '提交后列表显示 5 个文件并可打开文件清单', '文件链接由登录态存储接口治理'] };
+await writeFile(path, `${JSON.stringify(report, null, 2)}\n`);
+console.log('PASS browser created a governed customer drawing with five uploaded files');

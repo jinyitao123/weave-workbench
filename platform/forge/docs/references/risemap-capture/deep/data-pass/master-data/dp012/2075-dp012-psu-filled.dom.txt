@@ -1,0 +1,595 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 供应链
+- button "收起侧边栏":
+- navigation:
+  - button "到货检验":
+    - generic: 到货检验
+  - button "到货通知":
+    - generic: 到货通知
+  - button "到货登记":
+    - generic: 到货登记
+  - button "待检验库存":
+    - generic: 待检验库存
+  - button "检验单":
+    - generic: 检验单
+  - button "检验规则":
+    - generic: 检验规则
+  - button "基础资料 1 待办":
+    - generic: 基础资料
+    - generic "1 待办": "1"
+  - button "物料管理":
+    - generic: 物料管理
+  - button "物料组合":
+    - generic: 物料组合
+  - button "BOM管理":
+    - generic: BOM管理
+  - button "综合物料搜索":
+    - generic: 综合物料搜索
+  - button "供应商管理 1 待办":
+    - generic: 供应商管理
+    - generic "1 待办": "1"
+  - button "产品实例追溯":
+    - generic: 产品实例追溯
+  - button "仓库管理":
+    - generic: 仓库管理
+  - button "采购管理":
+    - generic: 采购管理
+  - button "采购发票":
+    - generic: 采购发票
+  - button "采购申请":
+    - generic: 采购申请
+  - button "采购待办池":
+    - generic: 采购待办池
+  - button "询价管理":
+    - generic: 询价管理
+  - button "采购订单":
+    - generic: 采购订单
+  - button "采购退换货":
+    - generic: 采购退换货
+  - button "供应商价格本":
+    - generic: 供应商价格本
+  - button "入库管理":
+    - generic: 入库管理
+  - button "全部入库单":
+    - generic: 全部入库单
+  - button "采购入库":
+    - generic: 采购入库
+  - button "生产入库":
+    - generic: 生产入库
+  - button "其他入库":
+    - generic: 其他入库
+  - button "期初入库":
+    - generic: 期初入库
+  - button "入库明细":
+    - generic: 入库明细
+  - button "库存管理":
+    - generic: 库存管理
+  - button "库存总览":
+    - generic: 库存总览
+  - button "不合格处理":
+    - generic: 不合格处理
+  - button "库存流水":
+    - generic: 库存流水
+  - button "库存锁定":
+    - generic: 库存锁定
+  - button "库存盘点":
+    - generic: 库存盘点
+  - button "调拨与借出":
+    - generic: 调拨与借出
+  - button "库存预警":
+    - generic: 库存预警
+  - button "报损单":
+    - generic: 报损单
+  - button "SN码管理":
+    - generic: SN码管理
+  - button "出库管理":
+    - generic: 出库管理
+  - button "出库单列表":
+    - generic: 出库单列表
+  - button "生产出库":
+    - generic: 生产出库
+  - button "其他出库":
+    - generic: 其他出库
+  - button "销售直接出库":
+    - generic: 销售直接出库
+  - button "待出库发货单":
+    - generic: 待出库发货单
+  - button "采购退换货出库":
+    - generic: 采购退换货出库
+  - button "出库明细":
+    - generic: 出库明细
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链" [pressed]:
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，3 条未读":
+    - generic: "3"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "客户管理配置":
+  - generic: 客户管理配置
+- button "销售配置":
+  - generic: 销售配置
+- button "库存配置":
+  - generic: 库存配置
+- button "其他配置":
+  - generic: 其他配置
+- button "人事配置":
+  - generic: 人事配置
+- button "项目管理配置":
+  - generic: 项目管理配置
+- button "图纸配置":
+  - generic: 图纸配置
+- button "生产管理配置":
+  - generic: 生产管理配置
+- button "委外配置":
+  - generic: 委外配置
+- button "引导中心":
+  - generic: 引导中心
+- button "仓库管理":
+  - generic: 仓库管理
+- button "供应商管理":
+  - generic: 供应商管理
+- button "客户管理":
+  - generic: 客户管理
+- button "物料管理":
+  - generic: 物料管理
+- main:
+  - generic: 基础资料
+  - generic: 物料管理
+  - heading "物料管理" [level=1]
+  - paragraph: 维护 SKU 主数据、品牌型号与多规格变体，沉淀商品资产
+  - button "物料列表":
+    - text: 物料列表
+  - button "商品图片":
+    - text: 商品图片
+  - button "新建物料":
+    - text: 新建物料
+  - button "导入/导出":
+    - text: 导入/导出
+  - button "打印条码":
+    - text: 打印条码
+  - button "批量操作" [disabled]:
+    - text: 批量操作
+  - button "回收站":
+    - text: 回收站
+  - button:
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "搜索物料名称、物料编码、物料条码、物料型号..."
+  - button "全部分类":
+    - generic: 全部分类
+  - button "品牌":
+    - generic: 品牌
+  - button "类型":
+    - text: 类型
+  - button "状态":
+    - text: 状态
+  - table:
+    - rowgroup:
+      - row "物料编码 类型 物料属性 物料条码 物料型号 物料名称 品牌 单位 含税销售价 不含税销售价 含税成本价 不含税成本价 物料分类 采购分类 来源类型 负责人 创建时间 物料状态 操作":
+        - columnheader:
+          - checkbox
+        - columnheader "物料编码":
+          - generic: 物料编码
+        - columnheader "类型":
+          - generic: 类型
+        - columnheader "物料属性":
+          - generic: 物料属性
+        - columnheader "物料条码":
+          - generic: 物料条码
+        - columnheader "物料型号":
+          - generic: 物料型号
+        - columnheader "物料名称":
+          - generic: 物料名称
+        - columnheader "品牌":
+          - generic: 品牌
+        - columnheader "单位":
+          - generic: 单位
+        - columnheader "含税销售价":
+          - generic: 含税销售价
+        - columnheader "不含税销售价":
+          - generic: 不含税销售价
+        - columnheader "含税成本价":
+          - generic: 含税成本价
+        - columnheader "不含税成本价":
+          - generic: 不含税成本价
+        - columnheader "物料分类":
+          - generic: 物料分类
+        - columnheader "采购分类":
+          - generic: 采购分类
+        - columnheader "来源类型":
+          - generic: 来源类型
+        - columnheader "负责人":
+          - generic: 负责人
+        - columnheader "创建时间":
+          - generic: 创建时间
+        - columnheader "物料状态":
+          - generic: 物料状态
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "RM-HMI-700 正式 原材料 RM-HMI-700 KTP700 Basic PN 7英寸触摸屏 - 件 ¥3,840.0000 ¥3,398.2301 ¥3,200.0000 ¥2,831.8584 控制柜交付物 - 采购 金 金一涛 2026-09-09 启用 编辑 | 停用 | 别名 | 删除":
+        - cell:
+          - checkbox
+        - cell "RM-HMI-700":
+          - generic: RM-HMI-700
+        - cell "正式":
+          - generic: 正式
+        - cell "原材料":
+          - generic: 原材料
+        - cell "RM-HMI-700":
+          - generic: RM-HMI-700
+        - cell "KTP700 Basic PN":
+          - generic "KTP700 Basic PN"
+        - cell "7英寸触摸屏":
+          - generic: 7英寸触摸屏
+        - cell "-":
+          - generic: "-"
+        - cell "件":
+          - generic: 件
+        - cell "¥3,840.0000":
+          - generic: ¥3,840.0000
+        - cell "¥3,398.2301":
+          - generic: ¥3,398.2301
+        - cell "¥3,200.0000":
+          - generic: ¥3,200.0000
+        - cell "¥2,831.8584":
+          - generic: ¥2,831.8584
+        - cell "控制柜交付物":
+          - text: 控制柜交付物
+        - cell "-":
+          - generic: "-"
+        - cell "采购":
+          - generic: 采购
+        - cell "金 金一涛":
+          - generic: 金
+          - generic: 金一涛
+        - cell "2026-09-09":
+          - generic: 2026-09-09
+        - cell "启用":
+          - generic: 启用
+        - cell "编辑 | 停用 | 别名 | 删除":
+          - button "编辑"
+          - generic: "|"
+          - button "停用"
+          - generic: "|"
+          - button "别名"
+          - generic: "|"
+          - button "删除"
+      - row "RM-PLC-1215C 正式 原材料 RM-PLC-1215C CPU 1215C DC/DC/DC PLC CPU 1215C - 件 ¥8,160.0000 ¥7,221.2389 ¥6,800.0000 ¥6,017.6991 控制柜交付物 - 采购 金 金一涛 2026-09-09 启用 编辑 | 停用 | 别名 | 删除":
+        - cell:
+          - checkbox
+        - cell "RM-PLC-1215C":
+          - generic: RM-PLC-1215C
+        - cell "正式":
+          - generic: 正式
+        - cell "原材料":
+          - generic: 原材料
+        - cell "RM-PLC-1215C":
+          - generic: RM-PLC-1215C
+        - cell "CPU 1215C DC/DC/DC":
+          - generic "CPU 1215C DC/DC/DC"
+        - cell "PLC CPU 1215C":
+          - generic: PLC CPU 1215C
+        - cell "-":
+          - generic: "-"
+        - cell "件":
+          - generic: 件
+        - cell "¥8,160.0000":
+          - generic: ¥8,160.0000
+        - cell "¥7,221.2389":
+          - generic: ¥7,221.2389
+        - cell "¥6,800.0000":
+          - generic: ¥6,800.0000
+        - cell "¥6,017.6991":
+          - generic: ¥6,017.6991
+        - cell "控制柜交付物":
+          - text: 控制柜交付物
+        - cell "-":
+          - generic: "-"
+        - cell "采购":
+          - generic: 采购
+        - cell "金 金一涛":
+          - generic: 金
+          - generic: 金一涛
+        - cell "2026-09-09":
+          - generic: 2026-09-09
+        - cell "启用":
+          - generic: 启用
+        - cell "编辑 | 停用 | 别名 | 删除":
+          - button "编辑"
+          - generic: "|"
+          - button "停用"
+          - generic: "|"
+          - button "别名"
+          - generic: "|"
+          - button "删除"
+      - row "FG-RM-CAB-800 正式 成品 FG-RM-CAB-800 RM-CAB-800-V1 800型柔性线控制柜 - 台 ¥128,000.0000 ¥113,274.3363 ¥54,000.0000 ¥47,787.6106 控制柜交付物 - 自制 金 金一涛 2026-09-09 启用 编辑 | 停用 | 别名 | 删除":
+        - cell:
+          - checkbox
+        - cell "FG-RM-CAB-800":
+          - generic: FG-RM-CAB-800
+        - cell "正式":
+          - generic: 正式
+        - cell "成品":
+          - generic: 成品
+        - cell "FG-RM-CAB-800":
+          - generic: FG-RM-CAB-800
+        - cell "RM-CAB-800-V1":
+          - generic "RM-CAB-800-V1"
+        - cell "800型柔性线控制柜":
+          - generic: 800型柔性线控制柜
+        - cell "-":
+          - generic: "-"
+        - cell "台":
+          - generic: 台
+        - cell "¥128,000.0000":
+          - generic: ¥128,000.0000
+        - cell "¥113,274.3363":
+          - generic: ¥113,274.3363
+        - cell "¥54,000.0000":
+          - generic: ¥54,000.0000
+        - cell "¥47,787.6106":
+          - generic: ¥47,787.6106
+        - cell "控制柜交付物":
+          - text: 控制柜交付物
+        - cell "-":
+          - generic: "-"
+        - cell "自制":
+          - generic: 自制
+        - cell "金 金一涛":
+          - generic: 金
+          - generic: 金一涛
+        - cell "2026-09-09":
+          - generic: 2026-09-09
+        - cell "启用":
+          - generic: 启用
+        - cell "编辑 | 停用 | 别名 | 删除":
+          - button "编辑"
+          - generic: "|"
+          - button "停用"
+          - generic: "|"
+          - button "别名"
+          - generic: "|"
+          - button "删除"
+  - text: 共
+  - strong: "3"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 当前
+- dialog "新增物料":
+  - heading "新增物料" [level=3]
+  - button "全屏":
+  - button "关闭":
+  - button "基本信息 10/20":
+    - generic: 基本信息
+    - generic: 10/20
+  - generic: "*"
+  - generic: 物料名称
+  - generic: ":"
+  - textbox "请输入物料名称": 24V 10A开关电源
+  - generic: 物料编码
+  - generic: ":"
+  - textbox "留空则由系统按编码规则自动生成": RM-PSU-24V10A
+  - generic: "*"
+  - generic: 物料型号
+  - generic: ":"
+  - textbox "请输入物料型号": DRP-240-24
+  - generic: 物料条码
+  - generic: ":"
+  - textbox "请输入物料条码"
+  - generic: "*"
+  - generic: 物料分类
+  - generic: ":"
+  - button "控制柜交付物":
+    - generic: 控制柜交付物
+    - button:
+  - button "新增分类":
+  - generic: 品牌
+  - generic: ":"
+  - button "请选择品牌":
+    - generic: 请选择品牌
+  - button "新增品牌":
+  - generic: 采购分类
+  - generic: ":"
+  - button "请选择采购分类":
+    - generic: 请选择采购分类
+  - generic: "*"
+  - generic: 单位
+  - generic: ":"
+  - button "件":
+    - generic "件"
+    - button:
+  - button "新增单位":
+  - button "多单位":
+    - text: 多单位
+  - generic: 物料属性
+  - generic: ":"
+  - radiogroup:
+    - radio "原材料" [checked]
+    - radio "半成品"
+    - radio "成品"
+    - radio "贸易商品"
+    - radio "消耗品"
+    - radio "服务"
+    - radio "备件"
+    - radio "包装材料"
+  - generic: 来源类型
+  - generic: ":"
+  - radiogroup:
+    - radio "采购" [checked]
+    - radio "自制"
+    - radio "外协"
+    - radio "虚拟"
+  - generic: 状态
+  - generic: ":"
+  - button "启用":
+    - generic "启用"
+    - button:
+  - generic: 默认供应商
+  - generic: ":"
+  - button "搜索供应商名称...":
+    - generic: 搜索供应商名称...
+  - generic: 税收分类编码
+  - generic: ":"
+  - textbox "请输入税收分类编码"
+  - generic: 默认仓库
+  - generic: ":"
+  - button "贯联验证原料仓":
+    - generic "贯联验证原料仓"
+    - button:
+  - generic: 默认库位
+  - generic: ":"
+  - button "请选择库位":
+    - generic: 请选择库位
+  - generic: 所属部门
+  - generic: ":"
+  - button "请选择所属部门":
+    - generic: 请选择所属部门
+  - generic: 负责人
+  - generic: ":"
+  - button "请选择负责人":
+    - generic: 请选择负责人
+  - generic: 损耗率
+  - generic: ":"
+  - textbox "请输入小数比例，如 0.05 表示 5%": "0"
+  - generic: 启用BOM
+  - generic: ":"
+  - switch
+  - generic: 图片
+  - generic: ":"
+  - button "添加图片":
+    - generic: 添加图片
+  - button "云相册":
+    - generic: 云相册
+  - paragraph: 第一张图片将作为物料主图显示在列表和详情页
+  - generic: 文档
+  - generic: ":"
+  - button "点击或拖拽文件到此处上传 支持pdf、docx、xlsx、txt格式，单个文件不超过10M":
+    - generic: 点击或拖拽文件到此处上传
+    - generic: 支持pdf、docx、xlsx、txt格式，单个文件不超过10M
+  - button "规格与价格 1/1":
+    - generic: 规格与价格
+    - generic: 1/1
+  - generic: 规格配置
+  - generic: ":"
+  - generic: 规格名称
+  - generic: 规格值
+  - textbox "规格项 1": 默认
+  - generic "默认规格":
+    - textbox "默认的规格值": 默认规格
+    - button [disabled]:
+  - textbox "输入后回车"
+  - button [disabled]:
+  - button "添加规格项":
+    - text: 添加规格项
+  - generic: 共 1 个 SKU
+  - button "批量设置含税售价":
+    - text: 批量设置含税售价
+  - button "批量设置含税成本价":
+    - text: 批量设置含税成本价
+  - table:
+    - rowgroup:
+      - row "SKU编码 SKU条码 规格 含税售价 含税成本价 启用":
+        - columnheader "SKU编码"
+        - columnheader "SKU条码"
+        - columnheader "规格"
+        - columnheader "含税售价"
+        - columnheader "含税成本价"
+        - columnheader "启用"
+    - rowgroup:
+      - row "默认规格 1032 860":
+        - cell:
+          - textbox "不填按物料编码-0001生成"
+        - cell:
+          - textbox "不填默认等于SKU编码"
+        - cell "默认规格":
+          - generic: 默认规格
+        - cell "1032":
+          - textbox: "1032"
+        - cell "860":
+          - textbox: "860"
+        - cell:
+          - checkbox [checked] [disabled]
+  - button "批次与追溯管理 2/4":
+    - generic: 批次与追溯管理
+    - generic: 2/4
+  - switch [checked]
+  - generic: 已启用批次管理
+  - generic: 原材料和关键物料建议启用，入库时自动分配批次码
+  - switch
+  - generic: 已禁用追溯管理
+  - generic: 成品和关键半成品建议启用，出库时自动生成追溯码
+  - generic: 保质期(天)
+  - generic: ":"
+  - textbox "请输入保质期(天)"
+  - generic: 批次编码规则
+  - generic: ":"
+  - button "自动生成 (BYYYYMMDD-NN)":
+    - generic "自动生成 (BYYYYMMDD-NN)"
+    - button:
+  - button "自定义信息 2/4":
+    - generic: 自定义信息
+    - generic: 2/4
+  - generic: 标签
+  - generic: ":"
+  - text: 外购物料
+  - button:
+  - textbox [active]
+  - generic: 备注
+  - generic: ":"
+  - textbox "请输入备注": 标准测试数据集 OEM-RM-20260909-A 外购物料
+  - generic: 创建时间
+  - generic: ":"
+  - generic: 只读
+  - textbox "请选择创建时间" [disabled]
+  - button:
+  - generic: 更新时间
+  - generic: ":"
+  - generic: 只读
+  - textbox "请选择更新时间" [disabled]
+  - button:
+  - button "保存"
+  - button "保存并复制"
+  - button "关闭"

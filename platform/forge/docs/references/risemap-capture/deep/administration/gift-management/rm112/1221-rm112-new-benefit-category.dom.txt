@@ -1,0 +1,321 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 公司通知
+- button:
+  - generic: 发布通知
+- button:
+  - generic: 用章管理
+- button:
+  - generic: 会议纪要
+- button:
+  - generic: 新建会议纪要
+- button:
+  - generic: AI 模板管理
+- button:
+  - generic: 工作汇报
+- button:
+  - generic: 新建工作汇报
+- button:
+  - generic: 文档中心
+- button:
+  - generic: 固定资产
+- button:
+  - generic: 资质与申报
+- button:
+  - generic: 物料领取
+- button:
+  - generic: 设备维护
+- button:
+  - generic: 礼品管理
+- main:
+  - generic: 行政管理
+  - generic: 礼品管理
+  - heading [level=1]: 礼品管理
+  - paragraph: 员工礼品申请、审批、库存与发放，覆盖商务赠礼与节日福利
+  - button:
+    - text: 礼品申请
+    - generic: "0"
+  - button:
+    - text: 礼品清单
+    - generic: "0"
+  - button:
+    - text: 礼品库管理
+    - generic: "0"
+  - button:
+    - text: 礼品库流水
+    - generic: "0"
+  - paragraph: 申请总额
+  - paragraph: ¥0.00
+  - paragraph: 共 0 笔
+  - paragraph: 待处理审批
+  - paragraph: "0"
+  - paragraph: 需及时审核
+  - paragraph: 已批准金额
+  - paragraph: ¥0.00
+  - paragraph: 含已发放
+  - paragraph: 已发放
+  - paragraph: "0"
+  - paragraph: 已完成发放
+  - button:
+    - text: 新建申请
+  - button:
+    - text: 导出
+  - button:
+  - button:
+  - button:
+  - textbox:
+    - /placeholder: 搜索编号/标题/申请人...
+  - button:
+    - text: 类型
+  - button:
+    - text: 状态
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader
+        - columnheader:
+          - generic: 编号
+        - columnheader:
+          - generic: 申请标题
+        - columnheader:
+          - generic: 类别
+        - columnheader:
+          - generic: 申请人
+        - columnheader:
+          - generic: 赠送对象
+        - columnheader:
+          - generic: 金额
+        - columnheader:
+          - generic: 申请日期
+        - columnheader:
+          - generic: 状态
+        - columnheader:
+          - generic: 审批进度
+        - columnheader:
+          - generic: 操作
+    - rowgroup:
+      - row:
+        - cell:
+          - generic: 暂无数据
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button [disabled]:
+  - button: "1"
+  - button [disabled]:
+- button:
+- region "Notifications alt+T"
+- generic: "0"
+- dialog "新建礼品申请":
+  - heading "新建礼品申请" [level=2]
+  - paragraph: 礼品申请表单 - 请如实填写礼品申请信息
+  - heading "礼品合规管理 — 请务必仔细阅读" [level=3]
+  - paragraph: 所有礼品赠送行为必须遵守公司合规制度及国家法律法规
+  - paragraph: 基本信息
+  - text: 礼品类别
+  - generic: "*"
+  - button "实物礼品":
+    - text: 实物礼品
+  - button "兑换券码":
+    - text: 兑换券码
+  - button "充值卡":
+    - text: 充值卡
+  - button "现金红包":
+    - text: 现金红包
+  - button "报销额度":
+    - text: 报销额度
+  - button "生日福利":
+    - text: 生日福利
+  - button "节日福利(春节/端午/中秋)":
+    - text: 节日福利(春节/端午/中秋)
+  - button "司庆福利":
+    - text: 司庆福利
+  - button "入职周年":
+    - text: 入职周年
+  - button "婚育福利":
+    - text: 婚育福利
+  - button "高温/防寒福利":
+    - text: 高温/防寒福利
+  - button "体检福利":
+    - text: 体检福利
+  - button "团建福利":
+    - text: 团建福利
+  - button "新增福利分类" [active]:
+  - text: 申请标题
+  - generic: "*"
+  - textbox "申请标题 *":
+    - /placeholder: 如：华能项目客户拜访礼品
+  - text: 赠送对象类型
+  - generic: "*"
+  - button "客户":
+    - generic "客户"
+  - text: 赠送对象
+  - generic: "*"
+  - textbox "赠送对象 *":
+    - /placeholder: 姓名/单位
+  - generic: 期望发放日期
+  - textbox "请选择日期"
+  - button:
+  - paragraph: 申请事由
+  - text: 申请事由
+  - generic: "*"
+  - textbox "申请事由 *":
+    - /placeholder: 说明礼品用途、赠送背景、业务必要性...
+  - paragraph: 礼品清单
+  - text: 礼品清单
+  - generic: "*"
+  - button "添加礼品":
+    - text: 添加礼品
+  - generic: 名称
+  - generic: 规格
+  - generic: 数量
+  - generic: 单价(¥)
+  - generic: 库存
+  - button "请选择礼品":
+    - generic: 请选择礼品
+  - textbox "规格"
+  - spinbutton: "1"
+  - spinbutton
+  - generic: "-"
+  - generic: 共 1 项
+  - text: 合计：
+  - generic: ¥0
+  - generic: 备注
+  - textbox "备注":
+    - /placeholder: 补充说明...
+  - checkbox "本人已阅读并理解公司礼品合规管理制度，承诺本次礼品申请用途真实、合规，人均赠送金额不超过200元人民币。 如有违反，愿意承担相应的纪律处分和法律责任。"
+  - generic: 本人已阅读并理解公司礼品合规管理制度，承诺本次礼品申请用途真实、合规，人均赠送金额不超过200元人民币。 如有违反，愿意承担相应的纪律处分和法律责任。
+  - text: 合计：
+  - generic: ¥0
+  - generic: 共 1 项
+  - button "取消"
+  - button "提交审批"
+  - button "Close":
+    - generic: Close
+- dialog "新增福利分类":
+  - heading "新增福利分类" [level=3]
+  - button "关闭":
+  - text: 分类名称
+  - generic: "*"
+  - textbox "请输入福利分类"
+  - button "取消"
+  - button "添加"

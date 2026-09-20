@@ -1,0 +1,994 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同":
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "联系人管理":
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "业绩银行":
+  - generic: 业绩银行
+- button "价格策略":
+  - generic: 价格策略
+- button "新增框架协议":
+  - generic: 新增框架协议
+- button "新增特价":
+  - generic: 新增特价
+- button "Goodwill订单":
+  - generic: Goodwill订单
+- button "Goodwill订单详情":
+  - generic: Goodwill订单详情
+- button "销售团队":
+  - generic: 销售团队
+- button "销售目标":
+  - generic: 销售目标
+- button "销售发票":
+  - generic: 销售发票
+- button "客户管理":
+  - generic: 客户管理
+- button "名片扫描":
+  - generic: 名片扫描
+- button "联系人管理":
+  - generic: 联系人管理
+- button "销售报价":
+  - generic: 销售报价
+- button "新建销售报价":
+  - generic: 新建销售报价
+- main:
+  - generic: 销售管理
+  - generic: 销售报价
+  - generic: 新建报价
+  - button:
+  - heading "新建报价单" [level=1]
+  - button "管理员视角":
+    - text: 管理员视角
+  - button "取消"
+  - button "预览报价单":
+    - text: 预览报价单
+  - button "保存草稿":
+    - text: 保存草稿
+  - button "提交审核":
+    - text: 提交审核
+  - button "报价基本信息 2/8":
+    - generic: 报价基本信息
+    - generic: 2/8
+  - generic: 报价单号
+  - textbox "留空则按编码规则自动生成"
+  - generic: "*"
+  - generic: 客户
+  - button "搜索客户名称...":
+    - generic: 搜索客户名称...
+  - generic: "*"
+  - generic: 负责人
+  - button "金一涛（当前开单人）" [disabled]:
+    - generic "金一涛（当前开单人）"
+  - paragraph: 默认当前开单人，也可从客户主负责人或协同销售中选择。
+  - generic: 联系人
+  - generic: 请先选择客户
+  - generic: 关联商机
+  - button "请先选择客户" [disabled]:
+    - generic: 请先选择客户
+  - generic: "*"
+  - generic: 报价类型
+  - button "新增报价类型":
+  - generic: "*"
+  - generic: 报价主体
+  - button "请选择":
+    - generic: 请选择
+  - button "新增公司抬头":
+  - generic: 有效期
+  - spinbutton: "30"
+  - generic: 天
+  - generic: 至 2026-10-08
+  - button "商务条款 1/4":
+    - generic: 商务条款
+    - generic: 1/4
+  - generic: 销售付款条件
+  - button "请选择销售付款条件":
+    - generic: 请选择销售付款条件
+  - generic: 付款方式
+  - button "请选择付款方式":
+    - generic: 请选择付款方式
+  - generic: 交货期
+  - spinbutton: "30"
+  - generic: 工作日
+  - paragraph: 自合同签订之日起计算
+  - generic: 报价说明
+  - textbox "输入报价说明、特殊条款、技术要求等补充信息..."
+  - button "+ 含税含运"
+  - button "+ 不含安装调试"
+  - button "+ FOB上海"
+  - button "+ 质保1年"
+  - button "+ 含技术培训"
+  - button "+ 7×24小时技术支持"
+  - heading "报价明细" [level=3]
+  - generic "物料字段显示模式":
+    - button "常用字段"
+    - button "全部字段"
+  - button "添加物料":
+    - text: 添加物料
+  - button "新建分组":
+    - text: 新建分组
+  - button "平铺显示":
+    - text: 平铺显示
+  - button "物料组合":
+    - text: 物料组合
+  - button "新增临时物料":
+    - text: 新增临时物料
+  - button "批量导入物料":
+    - text: 批量导入物料
+  - button "供应商价本":
+    - text: 供应商价本
+  - generic: 已选 0 项
+  - button "批量数量" [disabled]:
+    - text: 批量数量
+  - button "批量调价" [disabled]:
+    - text: 批量调价
+  - button "批量调税率" [disabled]:
+    - text: 批量调税率
+  - button "统一折扣" [disabled]:
+    - text: 统一折扣
+  - button "批量删除" [disabled]:
+    - text: 批量删除
+  - button "取消选择" [disabled]:
+    - text: 取消选择
+  - paragraph: 暂无物料明细
+  - paragraph: 从物料库选择后，可直接维护数量、含税单价、税率和折扣
+  - button "添加物料":
+    - text: 添加物料
+  - button "添加空行":
+    - text: 添加空行
+  - generic: 未税
+  - generic: ¥0.00
+  - generic: 税额
+  - generic: ¥0.00
+  - generic: 物料含税
+  - generic: ¥0.00
+  - generic: 报价总额
+  - generic: ¥0.00
+  - heading "服务费用明细" [level=3]
+  - button "添加服务费":
+    - text: 添加服务费
+  - paragraph: 暂无服务费项目
+  - paragraph: 可添加技术服务费、安装调试费、运输费、项目管理费等
+  - button "报价条款 0 条 随报价单输出的商务约定" [expanded]:
+    - generic: 报价条款
+    - generic: 0 条
+    - generic: 随报价单输出的商务约定
+  - paragraph: 维护随报价单输出的商务条款
+  - button "选择预设":
+    - text: 选择预设
+  - button "自定义":
+    - text: 自定义
+  - text: 暂未添加报价条款
+  - text: 可从预设条款中选择，或新增自定义条款
+  - complementary:
+    - heading "报价汇总" [level=3]
+    - generic: 实时
+    - generic: 客户
+    - paragraph: 暂未选择客户
+    - paragraph: 未选择报价类型 · 0 项物料 · 0 项服务
+    - paragraph: 报价总额（含税）
+    - paragraph: ¥0.00
+    - generic: 物料金额
+    - generic: ¥0.00
+    - generic: 服务费用
+    - generic: ¥0.00
+    - generic: 折后未税
+    - generic: ¥0.00
+    - generic: 税额
+    - generic: ¥0.00
+    - paragraph: 总成本
+    - paragraph: ¥0.00
+    - paragraph: 毛利
+    - paragraph: ¥0.00
+    - paragraph: 毛利率
+    - paragraph: 0.0%
+    - paragraph: 有效期
+    - paragraph: 30 天
+    - paragraph: 有效至
+    - paragraph: 2026-10-08
+    - paragraph: 付款方式
+    - paragraph: 未设置
+    - paragraph: 交货期
+    - paragraph: "30"
+    - button "价格预警设置 任何偏差" [expanded]:
+      - text: 价格预警设置
+      - generic: 任何偏差
+    - generic: 偏差阈值
+    - paragraph: 仅当本次报价与历史成交/报价偏差超过此百分比时触发预警
+    - slider: "0"
+    - textbox: "0"
+    - generic: "%"
+    - button "任何偏差"
+    - button "≥3%"
+    - button "≥5%"
+    - button "≥10%"
+    - text: 附件资料
+    - generic: "0"
+    - button "云文档":
+      - text: 云文档
+    - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、DWG、压缩包等格式，单个文件不超过 500 MB":
+      - generic: 点击或拖拽文件到此处上传
+      - generic: 支持 Ctrl+V 粘贴截图
+      - generic: 支持 PDF、Word、Excel、图片、DWG、压缩包等格式，单个文件不超过 500 MB
+  - button "关闭物料导入弹窗"
+  - dialog "批量导入报价物料":
+    - heading "批量导入报价物料" [level=2]
+    - paragraph: 销售报价物料导入示例.xlsx
+    - button "关闭":
+    - navigation "导入步骤":
+      - list:
+        - text: 上传文件
+        - text: 字段识别
+        - generic: "3"
+        - text: 校验与修正
+        - generic: "4"
+        - text: 导入结果
+    - main:
+      - strong: "16"
+      - text: 数据总数
+      - strong: "0"
+      - text: 可直接导入
+      - strong: "0"
+      - text: 待确认 / 可修复
+      - strong: "16"
+      - text: 阻断异常
+      - button "全部 16"
+      - button "异常 16"
+      - button "可导入 0"
+      - button "已跳过 0"
+      - generic: 搜索物料
+      - textbox "搜索物料":
+        - /placeholder: 搜索行号、物料或异常
+      - button "重新上传":
+        - text: 重新上传
+      - button "重新校验":
+        - text: 重新校验
+      - button "导出异常":
+        - text: 导出异常
+      - generic: 发现 11 条系统中不存在的物料，可批量建为临时档案或统一跳过。
+      - button "批量跳过":
+        - text: 批量跳过
+      - table:
+        - rowgroup:
+          - row "行号 物料编码 物料名称* 规格* 型号* 分类* 单位* 数量* 含税单价* 不含税单价 税率 折扣% 备注 异常说明 操作":
+            - columnheader "行号"
+            - columnheader "物料编码"
+            - columnheader "物料名称*"
+            - columnheader "规格*"
+            - columnheader "型号*"
+            - columnheader "分类*"
+            - columnheader "单位*"
+            - columnheader "数量*"
+            - columnheader "含税单价*"
+            - columnheader "不含税单价"
+            - columnheader "税率"
+            - columnheader "折扣%"
+            - columnheader "备注"
+            - columnheader "异常说明"
+            - columnheader "操作"
+        - rowgroup:
+          - row "2 MAT-001 PLC 控制器 24DI/16DO PLC-1200 控制器 台 2 3800 3362.8319 13% 物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配 修正后重新匹配 跳过此行":
+            - cell "2"
+            - cell "MAT-001":
+              - textbox "2行物料编码": MAT-001
+            - cell "PLC 控制器":
+              - textbox "2行物料名称": PLC 控制器
+            - cell "24DI/16DO":
+              - textbox "2行规格": 24DI/16DO
+            - cell "PLC-1200":
+              - textbox "2行型号": PLC-1200
+            - cell "控制器":
+              - textbox "2行分类": 控制器
+            - cell "台":
+              - textbox "2行单位": 台
+            - cell "2":
+              - spinbutton "2行数量": "2"
+            - cell "3800":
+              - spinbutton "2行含税单价": "3800"
+            - cell "3362.8319":
+              - spinbutton "2行不含税单价": "3362.8319"
+            - cell "13%":
+              - combobox "2行税率":
+                - option "使用物料默认税率"
+                - option "13%" [selected]
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "2行折扣%"
+            - cell:
+              - textbox "2行备注"
+            - cell "物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配":
+              - text: 物料不存在，必须创建临时物料或跳过
+              - text: 分类名称未匹配到启用分类，请修正后重新匹配
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+          - row "3 工业交换机 8口千兆 SW-8G 网络设备 台 5 980 867.2566 13% 物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配 修正后重新匹配 跳过此行":
+            - cell "3"
+            - cell:
+              - textbox "3行物料编码"
+            - cell "工业交换机":
+              - textbox "3行物料名称": 工业交换机
+            - cell "8口千兆":
+              - textbox "3行规格": 8口千兆
+            - cell "SW-8G":
+              - textbox "3行型号": SW-8G
+            - cell "网络设备":
+              - textbox "3行分类": 网络设备
+            - cell "台":
+              - textbox "3行单位": 台
+            - cell "5":
+              - spinbutton "3行数量": "5"
+            - cell "980":
+              - spinbutton "3行含税单价": "980"
+            - cell "867.2566":
+              - spinbutton "3行不含税单价": "867.2566"
+            - cell "13%":
+              - combobox "3行税率":
+                - option "使用物料默认税率"
+                - option "13%" [selected]
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "3行折扣%"
+            - cell:
+              - textbox "3行备注"
+            - cell "物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配":
+              - text: 物料不存在，必须创建临时物料或跳过
+              - text: 分类名称未匹配到启用分类，请修正后重新匹配
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+          - row "4 温度传感器 PT100 TS-100 传感器 只 10 180 159.292 13% 物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配 修正后重新匹配 跳过此行":
+            - cell "4"
+            - cell:
+              - textbox "4行物料编码"
+            - cell "温度传感器":
+              - textbox "4行物料名称": 温度传感器
+            - cell "PT100":
+              - textbox "4行规格": PT100
+            - cell "TS-100":
+              - textbox "4行型号": TS-100
+            - cell "传感器":
+              - textbox "4行分类": 传感器
+            - cell "只":
+              - textbox "4行单位": 只
+            - cell "10":
+              - spinbutton "4行数量": "10"
+            - cell "180":
+              - spinbutton "4行含税单价": "180"
+            - cell "159.292":
+              - spinbutton "4行不含税单价": "159.292"
+            - cell "13%":
+              - combobox "4行税率":
+                - option "使用物料默认税率"
+                - option "13%" [selected]
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "4行折扣%"
+            - cell:
+              - textbox "4行备注"
+            - cell "物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配":
+              - text: 物料不存在，必须创建临时物料或跳过
+              - text: 分类名称未匹配到启用分类，请修正后重新匹配
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+          - row "5 温度传感器 PT100 TS-100 传感器 只 6 180 159.292 13% 物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配 修正后重新匹配 跳过此行":
+            - cell "5"
+            - cell:
+              - textbox "5行物料编码"
+            - cell "温度传感器":
+              - textbox "5行物料名称": 温度传感器
+            - cell "PT100":
+              - textbox "5行规格": PT100
+            - cell "TS-100":
+              - textbox "5行型号": TS-100
+            - cell "传感器":
+              - textbox "5行分类": 传感器
+            - cell "只":
+              - textbox "5行单位": 只
+            - cell "6":
+              - spinbutton "5行数量": "6"
+            - cell "180":
+              - spinbutton "5行含税单价": "180"
+            - cell "159.292":
+              - spinbutton "5行不含税单价": "159.292"
+            - cell "13%":
+              - combobox "5行税率":
+                - option "使用物料默认税率"
+                - option "13%" [selected]
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "5行折扣%"
+            - cell:
+              - textbox "5行备注"
+            - cell "物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配":
+              - text: 物料不存在，必须创建临时物料或跳过
+              - text: 分类名称未匹配到启用分类，请修正后重新匹配
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+          - row "6 缺少名称 MISS-NAME 备件 个 1 100 88.4956 13% 缺少必填字段：物料编码或物料名称 缺少必填字段：物料名称 修正后重新匹配 跳过此行":
+            - cell "6"
+            - cell:
+              - textbox "6行物料编码"
+            - cell:
+              - textbox "6行物料名称"
+            - cell "缺少名称":
+              - textbox "6行规格": 缺少名称
+            - cell "MISS-NAME":
+              - textbox "6行型号": MISS-NAME
+            - cell "备件":
+              - textbox "6行分类": 备件
+            - cell "个":
+              - textbox "6行单位": 个
+            - cell "1":
+              - spinbutton "6行数量": "1"
+            - cell "100":
+              - spinbutton "6行含税单价": "100"
+            - cell "88.4956":
+              - spinbutton "6行不含税单价": "88.4956"
+            - cell "13%":
+              - combobox "6行税率":
+                - option "使用物料默认税率"
+                - option "13%" [selected]
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "6行折扣%"
+            - cell:
+              - textbox "6行备注"
+            - cell "缺少必填字段：物料编码或物料名称 缺少必填字段：物料名称":
+              - text: 缺少必填字段：物料编码或物料名称
+              - text: 缺少必填字段：物料名称
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+          - row "7 缺少型号示例 标准 备件 个 1 100 88.4956 13% 物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配 修正后重新匹配 跳过此行":
+            - cell "7"
+            - cell:
+              - textbox "7行物料编码"
+            - cell "缺少型号示例":
+              - textbox "7行物料名称": 缺少型号示例
+            - cell "标准":
+              - textbox "7行规格": 标准
+            - cell:
+              - textbox "7行型号"
+            - cell "备件":
+              - textbox "7行分类": 备件
+            - cell "个":
+              - textbox "7行单位": 个
+            - cell "1":
+              - spinbutton "7行数量": "1"
+            - cell "100":
+              - spinbutton "7行含税单价": "100"
+            - cell "88.4956":
+              - spinbutton "7行不含税单价": "88.4956"
+            - cell "13%":
+              - combobox "7行税率":
+                - option "使用物料默认税率"
+                - option "13%" [selected]
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "7行折扣%"
+            - cell:
+              - textbox "7行备注"
+            - cell "物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配":
+              - text: 物料不存在，必须创建临时物料或跳过
+              - text: 分类名称未匹配到启用分类，请修正后重新匹配
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+          - row "8 缺少分类示例 标准 MISS-CATEGORY 个 1 100 88.4956 13% 物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配 修正后重新匹配 跳过此行":
+            - cell "8"
+            - cell:
+              - textbox "8行物料编码"
+            - cell "缺少分类示例":
+              - textbox "8行物料名称": 缺少分类示例
+            - cell "标准":
+              - textbox "8行规格": 标准
+            - cell "MISS-CATEGORY":
+              - textbox "8行型号": MISS-CATEGORY
+            - cell:
+              - textbox "8行分类"
+            - cell "个":
+              - textbox "8行单位": 个
+            - cell "1":
+              - spinbutton "8行数量": "1"
+            - cell "100":
+              - spinbutton "8行含税单价": "100"
+            - cell "88.4956":
+              - spinbutton "8行不含税单价": "88.4956"
+            - cell "13%":
+              - combobox "8行税率":
+                - option "使用物料默认税率"
+                - option "13%" [selected]
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "8行折扣%"
+            - cell:
+              - textbox "8行备注"
+            - cell "物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配":
+              - text: 物料不存在，必须创建临时物料或跳过
+              - text: 分类名称未匹配到启用分类，请修正后重新匹配
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+          - row "9 缺少单位示例 标准 MISS-UNIT 备件 1 100 88.4956 13% 物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配 修正后重新匹配 跳过此行":
+            - cell "9"
+            - cell:
+              - textbox "9行物料编码"
+            - cell "缺少单位示例":
+              - textbox "9行物料名称": 缺少单位示例
+            - cell "标准":
+              - textbox "9行规格": 标准
+            - cell "MISS-UNIT":
+              - textbox "9行型号": MISS-UNIT
+            - cell "备件":
+              - textbox "9行分类": 备件
+            - cell:
+              - textbox "9行单位"
+            - cell "1":
+              - spinbutton "9行数量": "1"
+            - cell "100":
+              - spinbutton "9行含税单价": "100"
+            - cell "88.4956":
+              - spinbutton "9行不含税单价": "88.4956"
+            - cell "13%":
+              - combobox "9行税率":
+                - option "使用物料默认税率"
+                - option "13%" [selected]
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "9行折扣%"
+            - cell:
+              - textbox "9行备注"
+            - cell "物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配":
+              - text: 物料不存在，必须创建临时物料或跳过
+              - text: 分类名称未匹配到启用分类，请修正后重新匹配
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+          - row "10 数量为零示例 标准 QTY-ZERO 备件 个 0 100 88.4956 13% 数量必须大于 0 修正后重新匹配 跳过此行":
+            - cell "10"
+            - cell:
+              - textbox "10行物料编码"
+            - cell "数量为零示例":
+              - textbox "10行物料名称": 数量为零示例
+            - cell "标准":
+              - textbox "10行规格": 标准
+            - cell "QTY-ZERO":
+              - textbox "10行型号": QTY-ZERO
+            - cell "备件":
+              - textbox "10行分类": 备件
+            - cell "个":
+              - textbox "10行单位": 个
+            - cell "0":
+              - spinbutton "10行数量": "0"
+            - cell "100":
+              - spinbutton "10行含税单价": "100"
+            - cell "88.4956":
+              - spinbutton "10行不含税单价": "88.4956"
+            - cell "13%":
+              - combobox "10行税率":
+                - option "使用物料默认税率"
+                - option "13%" [selected]
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "10行折扣%"
+            - cell:
+              - textbox "10行备注"
+            - cell "数量必须大于 0":
+              - text: 数量必须大于 0
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+          - row "11 数量为负示例 标准 QTY-NEG 备件 个 -2 100 88.4956 13% 数量必须大于 0 修正后重新匹配 跳过此行":
+            - cell "11"
+            - cell:
+              - textbox "11行物料编码"
+            - cell "数量为负示例":
+              - textbox "11行物料名称": 数量为负示例
+            - cell "标准":
+              - textbox "11行规格": 标准
+            - cell "QTY-NEG":
+              - textbox "11行型号": QTY-NEG
+            - cell "备件":
+              - textbox "11行分类": 备件
+            - cell "个":
+              - textbox "11行单位": 个
+            - cell "-2":
+              - spinbutton "11行数量": "-2"
+            - cell "100":
+              - spinbutton "11行含税单价": "100"
+            - cell "88.4956":
+              - spinbutton "11行不含税单价": "88.4956"
+            - cell "13%":
+              - combobox "11行税率":
+                - option "使用物料默认税率"
+                - option "13%" [selected]
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "11行折扣%"
+            - cell:
+              - textbox "11行备注"
+            - cell "数量必须大于 0":
+              - text: 数量必须大于 0
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+          - row "12 价格非法示例 标准 PRICE-NEG 备件 个 1 -1 -0.885 13% 单价不能小于 0 含税单价不能小于 0 修正后重新匹配 跳过此行":
+            - cell "12"
+            - cell:
+              - textbox "12行物料编码"
+            - cell "价格非法示例":
+              - textbox "12行物料名称": 价格非法示例
+            - cell "标准":
+              - textbox "12行规格": 标准
+            - cell "PRICE-NEG":
+              - textbox "12行型号": PRICE-NEG
+            - cell "备件":
+              - textbox "12行分类": 备件
+            - cell "个":
+              - textbox "12行单位": 个
+            - cell "1":
+              - spinbutton "12行数量": "1"
+            - cell "-1":
+              - spinbutton "12行含税单价": "-1"
+            - cell "-0.885":
+              - spinbutton "12行不含税单价": "-0.885"
+            - cell "13%":
+              - combobox "12行税率":
+                - option "使用物料默认税率"
+                - option "13%" [selected]
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "12行折扣%"
+            - cell:
+              - textbox "12行备注"
+            - cell "单价不能小于 0 含税单价不能小于 0":
+              - text: 单价不能小于 0
+              - text: 含税单价不能小于 0
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+          - row "13 税率非法示例 标准 TAX-INVALID 备件 个 1 100 95.2381 5%（不支持） 税率仅支持 13%、9%、6%、3%、1% 或 0% 修正后重新匹配 跳过此行":
+            - cell "13"
+            - cell:
+              - textbox "13行物料编码"
+            - cell "税率非法示例":
+              - textbox "13行物料名称": 税率非法示例
+            - cell "标准":
+              - textbox "13行规格": 标准
+            - cell "TAX-INVALID":
+              - textbox "13行型号": TAX-INVALID
+            - cell "备件":
+              - textbox "13行分类": 备件
+            - cell "个":
+              - textbox "13行单位": 个
+            - cell "1":
+              - spinbutton "13行数量": "1"
+            - cell "100":
+              - spinbutton "13行含税单价": "100"
+            - cell "95.2381":
+              - spinbutton "13行不含税单价": "95.2381"
+            - cell "5%（不支持）":
+              - combobox "13行税率":
+                - option "使用物料默认税率"
+                - option "5%（不支持）" [selected]
+                - option "13%"
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "13行折扣%"
+            - cell:
+              - textbox "13行备注"
+            - cell "税率仅支持 13%、9%、6%、3%、1% 或 0%":
+              - text: 税率仅支持 13%、9%、6%、3%、1% 或 0%
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+          - row "14 单位不一致示例 标准 UNIT-MISMATCH 备件 箱 1 100 88.4956 13% 物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配 修正后重新匹配 跳过此行":
+            - cell "14"
+            - cell:
+              - textbox "14行物料编码"
+            - cell "单位不一致示例":
+              - textbox "14行物料名称": 单位不一致示例
+            - cell "标准":
+              - textbox "14行规格": 标准
+            - cell "UNIT-MISMATCH":
+              - textbox "14行型号": UNIT-MISMATCH
+            - cell "备件":
+              - textbox "14行分类": 备件
+            - cell "箱":
+              - textbox "14行单位": 箱
+            - cell "1":
+              - spinbutton "14行数量": "1"
+            - cell "100":
+              - spinbutton "14行含税单价": "100"
+            - cell "88.4956":
+              - spinbutton "14行不含税单价": "88.4956"
+            - cell "13%":
+              - combobox "14行税率":
+                - option "使用物料默认税率"
+                - option "13%" [selected]
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "14行折扣%"
+            - cell:
+              - textbox "14行备注"
+            - cell "物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配":
+              - text: 物料不存在，必须创建临时物料或跳过
+              - text: 分类名称未匹配到启用分类，请修正后重新匹配
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+          - row "15 系统不存在物料 新规格 NEW-MATERIAL 备件 个 3 260 230.0885 13% 物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配 修正后重新匹配 跳过此行":
+            - cell "15"
+            - cell:
+              - textbox "15行物料编码"
+            - cell "系统不存在物料":
+              - textbox "15行物料名称": 系统不存在物料
+            - cell "新规格":
+              - textbox "15行规格": 新规格
+            - cell "NEW-MATERIAL":
+              - textbox "15行型号": NEW-MATERIAL
+            - cell "备件":
+              - textbox "15行分类": 备件
+            - cell "个":
+              - textbox "15行单位": 个
+            - cell "3":
+              - spinbutton "15行数量": "3"
+            - cell "260":
+              - spinbutton "15行含税单价": "260"
+            - cell "230.0885":
+              - spinbutton "15行不含税单价": "230.0885"
+            - cell "13%":
+              - combobox "15行税率":
+                - option "使用物料默认税率"
+                - option "13%" [selected]
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "15行折扣%"
+            - cell:
+              - textbox "15行备注"
+            - cell "物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配":
+              - text: 物料不存在，必须创建临时物料或跳过
+              - text: 分类名称未匹配到启用分类，请修正后重新匹配
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+          - row "16 DISABLED-001 停用物料示例 标准 DISABLED 备件 个 1 100 88.4956 13% 物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配 修正后重新匹配 跳过此行":
+            - cell "16"
+            - cell "DISABLED-001":
+              - textbox "16行物料编码": DISABLED-001
+            - cell "停用物料示例":
+              - textbox "16行物料名称": 停用物料示例
+            - cell "标准":
+              - textbox "16行规格": 标准
+            - cell "DISABLED":
+              - textbox "16行型号": DISABLED
+            - cell "备件":
+              - textbox "16行分类": 备件
+            - cell "个":
+              - textbox "16行单位": 个
+            - cell "1":
+              - spinbutton "16行数量": "1"
+            - cell "100":
+              - spinbutton "16行含税单价": "100"
+            - cell "88.4956":
+              - spinbutton "16行不含税单价": "88.4956"
+            - cell "13%":
+              - combobox "16行税率":
+                - option "使用物料默认税率"
+                - option "13%" [selected]
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "16行折扣%"
+            - cell:
+              - textbox "16行备注"
+            - cell "物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配":
+              - text: 物料不存在，必须创建临时物料或跳过
+              - text: 分类名称未匹配到启用分类，请修正后重新匹配
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+          - row "17 模糊匹配示例物料 相近规格 FUZZY-01 备件 个 1 100 88.4956 13% 物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配 修正后重新匹配 跳过此行":
+            - cell "17"
+            - cell:
+              - textbox "17行物料编码"
+            - cell "模糊匹配示例物料":
+              - textbox "17行物料名称": 模糊匹配示例物料
+            - cell "相近规格":
+              - textbox "17行规格": 相近规格
+            - cell "FUZZY-01":
+              - textbox "17行型号": FUZZY-01
+            - cell "备件":
+              - textbox "17行分类": 备件
+            - cell "个":
+              - textbox "17行单位": 个
+            - cell "1":
+              - spinbutton "17行数量": "1"
+            - cell "100":
+              - spinbutton "17行含税单价": "100"
+            - cell "88.4956":
+              - spinbutton "17行不含税单价": "88.4956"
+            - cell "13%":
+              - combobox "17行税率":
+                - option "使用物料默认税率"
+                - option "13%" [selected]
+                - option "9%"
+                - option "6%"
+                - option "3%"
+                - option "1%"
+                - option "0%"
+            - cell:
+              - spinbutton "17行折扣%"
+            - cell:
+              - textbox "17行备注"
+            - cell "物料不存在，必须创建临时物料或跳过 分类名称未匹配到启用分类，请修正后重新匹配":
+              - text: 物料不存在，必须创建临时物料或跳过
+              - text: 分类名称未匹配到启用分类，请修正后重新匹配
+            - cell "修正后重新匹配 跳过此行":
+              - button "修正后重新匹配"
+              - button "跳过此行":
+                - text: 跳过此行
+      - text: 可导入 0 行；
+      - generic: 16 行阻断异常需修正或跳过
+      - button "取消"
+      - button "仅导入正确数据（0）" [disabled]:
+        - text: 仅导入正确数据（0）
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2025-10

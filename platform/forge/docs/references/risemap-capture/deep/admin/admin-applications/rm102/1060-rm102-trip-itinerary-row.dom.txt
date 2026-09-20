@@ -1,0 +1,313 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 委外未交
+- button:
+  - generic: 委外进货
+- button:
+  - generic: 委外对账单
+- button:
+  - generic: 项目中心
+- button:
+  - generic: 项目分析中心
+- button:
+  - generic: 任务管理
+- button:
+  - generic: 工时管理
+- button:
+  - generic: 快捷工时填报
+- button:
+  - generic: 项目配置中心
+- button:
+  - generic: 新建计划模板
+- button:
+  - generic: 我的审批
+- button:
+  - generic: 抄送我的
+- button:
+  - generic: 我发起的
+- button:
+  - generic: 行政申请
+- main:
+  - generic: 审批中心
+  - generic: 行政申请
+  - heading [level=1]: 行政申请
+  - paragraph: 选择需要办理的事项，填写申请后进入对应审批流程
+  - textbox:
+    - /placeholder: 搜索申请事项或流程名称
+  - tablist:
+    - tab [selected]:
+      - text: 全部申请
+      - generic: "11"
+    - tab:
+      - text: 考勤假期
+      - generic: "5"
+    - tab:
+      - text: 行政事务
+      - generic: "3"
+    - tab:
+      - text: 用车资质
+      - generic: "3"
+    - tab:
+      - text: 其他申请
+      - generic: "0"
+  - heading [level=2]: 考勤假期
+  - generic: 5 项可申请事项
+  - button:
+    - strong: 加班申请
+    - generic: 登记加班时间与补偿方式
+  - button:
+    - strong: 请假申请
+    - generic: 年假、事假、病假等假期
+  - button:
+    - strong: 出差申请
+    - generic: 填写行程与出差计划
+  - button:
+    - strong: 补签申请
+    - generic: 补录异常考勤打卡
+  - button:
+    - strong: 报销申请
+    - generic: 提交员工费用报销
+  - heading [level=2]: 行政事务
+  - generic: 3 项可申请事项
+  - button:
+    - strong: 用章申请
+    - generic: 公章、合同章等用印
+  - button:
+    - strong: 礼品申请
+    - generic: 客户礼赠与内部礼品领用
+  - button:
+    - strong: 物料领取
+    - generic: 办公及行政物料领用
+  - heading [level=2]: 用车资质
+  - generic: 3 项可申请事项
+  - button:
+    - strong: 公司用车
+    - generic: 申请公司车辆与行程
+  - button:
+    - strong: 私车公用
+    - generic: 登记私车公用与预计里程
+  - button:
+    - strong: 资质续期
+    - generic: 证照续期、变更与复审
+- button:
+- region "Notifications alt+T"
+- generic: 周日
+- dialog "出差申请":
+  - heading "出差申请" [level=2]
+  - paragraph: 填写行程与出差计划
+  - heading "基本信息" [level=2]:
+    - text: 基本信息
+  - generic: 出差事由 *
+  - textbox "请详细描述出差目的，如：拜访 XX 客户对接 XX 项目需求…"
+  - generic: 常用模板：
+  - button "拜访客户对接需求"
+  - button "技术方案评审"
+  - button "客户项目交付验收"
+  - button "参加行业展会"
+  - button "供应商考察"
+  - generic: 关联客户 （选填，可关联多个客户）
+  - button "搜索并选择客户...":
+    - generic: 搜索并选择客户...
+  - generic: 出发日期 *
+  - textbox "请选择出发日期"
+  - button:
+  - generic: 返回日期 *
+  - textbox "请选择返回日期"
+  - button:
+  - generic: 交通方式
+  - button "飞机":
+    - text: 飞机
+  - button "高铁":
+    - text: 高铁
+  - button "火车":
+    - text: 火车
+  - button "自驾":
+    - text: 自驾
+  - button "大巴":
+    - text: 大巴
+  - button "其他":
+    - text: 其他
+  - generic: 同行人员 （选填，可多选）
+  - button "请选择同行人员":
+    - generic: 请选择同行人员
+  - generic: 备注
+  - textbox "其他需要说明的事项..."
+  - heading "费用预估" [level=2]:
+    - text: 费用预估
+  - button "添加费用项":
+    - text: 添加费用项
+  - generic: 费用类别
+  - generic: 说明
+  - generic: 金额 (元)
+  - button "交通费":
+    - generic "交通费"
+  - textbox "往返交通费"
+  - spinbutton: "0"
+  - button:
+  - button "住宿费":
+    - generic "住宿费"
+  - textbox "酒店住宿"
+  - spinbutton: "0"
+  - button:
+  - button "餐饮费":
+    - generic "餐饮费"
+  - textbox "工作餐或招待餐"
+  - spinbutton: "0"
+  - button:
+  - button "市内交通":
+    - generic "市内交通"
+  - textbox "出租车/地铁"
+  - spinbutton: "0"
+  - button:
+  - button "其他费用":
+    - generic "其他费用"
+  - textbox "其他杂项支出"
+  - spinbutton: "0"
+  - button:
+  - generic: "合计预估:"
+  - generic: ¥ 0
+  - heading "行程安排 *" [level=2]:
+    - text: 行程安排
+    - generic: "*"
+  - button "添加行程" [active]:
+    - text: 添加行程
+  - generic: "1"
+  - generic: 出发
+  - textbox "日期"
+  - button:
+  - textbox "时间"
+  - button:
+  - textbox "起点城市"
+  - button:
+  - generic: 到达
+  - textbox "日期"
+  - button:
+  - textbox "时间"
+  - button:
+  - textbox "终点城市"
+  - button:
+  - button:
+  - paragraph:
+    - text: 出差申请提交后将发送至直属上级审批。出差完成后请及时提交差旅报销。
+  - button "取消"
+  - button "保存草稿":
+    - text: 保存草稿
+  - button "提交申请":
+    - text: 提交申请
+  - button "Close":
+    - generic: Close

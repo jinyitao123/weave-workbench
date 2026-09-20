@@ -1,0 +1,149 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 报表
+- button "收起侧边栏":
+- navigation:
+  - button "销售统计":
+    - generic: 销售统计
+  - button "采购统计":
+    - generic: 采购统计
+  - button "库存统计":
+    - generic: 库存统计
+  - button "项目统计":
+    - generic: 项目统计
+  - button "组装统计":
+    - generic: 组装统计
+  - button "财务统计":
+    - generic: 财务统计
+  - button "财务总览":
+    - generic: 财务总览
+  - button "损益分析":
+    - generic: 损益分析
+  - button "资金分析":
+    - generic: 资金分析
+  - button "往来账款":
+    - generic: 往来账款
+  - button "税务库存":
+    - generic: 税务库存
+  - button "风险监控":
+    - generic: 风险监控
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表" [pressed]:
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "新建客户对账":
+  - generic: 新建客户对账
+- button "供应商对账单":
+  - generic: 供应商对账单
+- button "新建供应商对账":
+  - generic: 新建供应商对账
+- button "发票总览":
+  - generic: 发票总览
+- button "销项发票":
+  - generic: 销项发票
+- button "进项发票":
+  - generic: 进项发票
+- button "开票任务":
+  - generic: 开票任务
+- button "调整记录":
+  - generic: 调整记录
+- button "销售统计":
+  - generic: 销售统计
+- button "采购统计":
+  - generic: 采购统计
+- button "库存统计":
+  - generic: 库存统计
+- button "项目统计":
+  - generic: 项目统计
+- button "组装统计":
+  - generic: 组装统计
+- button "财务总览":
+  - generic: 财务总览
+- main:
+  - main:
+    - generic: 报表 / 财务统计 / 财务总览
+    - heading "财务总览" [level=1]
+    - paragraph: 经营成果、资产结构和综合利润概览
+    - button "导出PDF":
+      - text: 导出PDF
+    - button "导出Excel":
+      - text: 导出Excel
+    - navigation "财务统计类型":
+      - button "经营总览": 经营总览
+      - button "资产负债": 资产负债
+      - button "利润总览": 利润总览
+    - region "报表筛选":
+      - generic: 筛选条件
+      - button "本季度":
+        - text: 本季度
+    - generic: 财务数据按业务单据实时汇总
+    - generic: 统计周期 2026-07-01 ~ 2026-09-09
+    - generic: 本季度收入
+    - button "查看本季度收入计算说明":
+    - paragraph: ¥0.00
+    - generic: 较上期 +0%
+    - generic: 本季度成本
+    - button "查看本季度成本计算说明":
+    - paragraph: ¥0.00
+    - generic: 较上期 +0%
+    - generic: 毛利润
+    - button "查看毛利润计算说明" [expanded]:
+    - paragraph: ¥0.00
+    - generic: 毛利率 0.0%
+    - generic: 期间费用
+    - button "查看期间费用计算说明":
+    - paragraph: ¥0.00
+    - generic: 按费用分类汇总
+    - heading "收入、成本与利润趋势" [level=3]
+    - list:
+      - generic: 收入
+      - generic: 成本
+      - generic: 利润
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 7月
+- dialog [active]:
+  - paragraph: 毛利润
+  - paragraph: 指标口径说明
+  - term: 指标说明
+  - definition: 统计周期收入扣除直接成本后的利润。
+  - term: 计算方式
+  - definition: 营业收入 - 直接业务成本
+  - term: 统计范围
+  - definition: 当前页面筛选条件及统计周期
+  - term: 数据单位
+  - definition: 人民币元

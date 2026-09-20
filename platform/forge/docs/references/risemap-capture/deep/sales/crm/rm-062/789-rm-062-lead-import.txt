@@ -1,0 +1,182 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/leads".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/leads
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 销售业务
+					10 image
+					11 text 销售业务
+					12 image
+				13 button 框架销售合同
+				14 button 销售订单
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+			36 image
+			37 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			38 button 查看方案
+				39 image
+				40 text 查看方案
+			41 button
+				42 image
+			43 container
+				44 container 业务分类
+					45 checkbox 工作台, Value: 0
+					46 checkbox 供应链, Value: 0
+					47 checkbox 销售, Value: 1
+					48 checkbox 生产, Value: 0
+					49 checkbox 项目, Value: 0
+					50 checkbox 行政, Value: 0
+					51 checkbox 财务, Value: 0
+					52 checkbox 报表, Value: 0
+					53 checkbox 系统, Value: 0
+				54 button Description: 展开搜索, Help: 搜索
+					55 image
+				56 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					57 image
+					58 text 2
+				59 button Description: 打开推广奖励, Help: 推广
+				60 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				61 link Description: 打开工单, Value: community.risemap.cn/support
+				62 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					63 image
+					64 text 立即订阅
+				65 button 金
+					66 text 金
+					67 image
+			68 container
+				69 button 工作台
+					70 image
+					71 text 工作台
+				72 button 新增特价
+					73 text 新增特价
+				74 button Goodwill订单
+					75 text Goodwill订单
+				76 button Goodwill订单详情
+					77 text Goodwill订单详情
+				78 button 销售团队
+					79 text 销售团队
+				80 button 销售目标
+					81 text 销售目标
+				82 button 销售发票
+					83 text 销售发票
+				84 button 客户管理
+					85 text 客户管理
+				86 button 名片扫描
+					87 text 名片扫描
+				88 button 联系人管理
+					89 text 联系人管理
+				90 button 销售报价
+					91 text 销售报价
+				92 button 新建销售报价
+					93 text 新建销售报价
+				94 button 客户物料对照
+					95 text 客户物料对照
+				96 button 商机管理
+					97 text 商机管理
+				98 button 线索管理
+					99 text 线索管理
+			100 container
+				101 container
+					102 text CRM客户管理
+					103 image
+					104 text 线索管理
+					105 image
+					106 heading 线索管理, Value: 1
+						107 text 线索管理
+					108 text 潜在客户线索捕获、培育与转化为商机
+				109 image
+				110 text 全部线索 0
+				111 image
+				112 text 新线索 0
+				113 image
+				114 text 已转化 0
+				115 image
+				116 text 公海线索 0
+				117 button 我的线索
+					118 image
+					119 text 我的线索
+				120 button 我的团队
+					121 image
+					122 text 我的团队
+				123 button 全部线索
+					124 image
+					125 text 全部线索
+				126 button 线索公海
+					127 image
+					128 text 线索公海
+				129 image
+				130 text field (settable)
+				131 button 全部状态
+					132 text 全部状态
+				133 button 全部来源
+					134 text 全部来源
+				135 button 新建线索
+					136 image
+					137 text 新建线索
+				138 button 导入/导出
+					139 image
+					140 text 导入/导出
+					141 image
+				142 image
+				143 text 暂无匹配线索 试试调整筛选条件或添加新线索 共  0 条线索 每页
+				144 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					145 text 20
+				146 text 条
+				147 button
+					148 image
+				151 container
+					152 heading 批量导入销售线索, Value: 2
+						153 text 批量导入销售线索
+					154 text Step  1  / 3 支持 .xlsx / .xls 格式；负责人留空时默认导入线索公海
+					155 button
+						156 image
+					157 text 导入流程
+					158 content list
+						159 container
+							160 AXListMarker 1. 
+							161 text 上传 Excel 文件（ .xlsx / .xls ）
+						162 container
+							163 AXListMarker 2. 
+							164 text 在预览表中为每列指定对应字段
+						165 container
+							166 AXListMarker 3. 
+							167 text 设置数据起始行（默认跳过第 1 行表头）
+						168 container
+							169 AXListMarker 4. 
+							170 text 点击"开始导入"，系统校验并写入数据
+					171 image
+					172 container
+						173 text 拖拽文件到此处，或 点击选择文件
+					174 container
+						175 text 支持  .xlsx / .xls  格式
+					176 button 下载模板
+						177 image
+						178 text 下载模板
+					179 button 取消
+			149 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			150 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/sales/leads

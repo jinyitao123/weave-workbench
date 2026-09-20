@@ -1,0 +1,530 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/products".
+1 AXWebArea RiseMap, URL: risemap.cn/base/products
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 到货检验
+					10 image
+					11 text 到货检验
+					12 image
+				13 button 到货通知
+				14 button 到货登记
+				15 button 待检验库存
+				16 button 检验单
+				17 button 检验规则
+				18 button 基础资料 1 待办
+					19 image
+					20 text 基础资料
+					21 container 1 待办
+						22 text 1
+					23 image
+				24 button 物料管理
+				25 button 物料组合
+				26 button BOM管理
+				27 button 综合物料搜索
+				28 button 供应商管理 1 待办
+					29 text 供应商管理
+					30 container 1 待办
+						31 text 1
+				32 button 产品实例追溯
+				33 button 仓库管理
+				34 button 采购管理
+					35 image
+					36 text 采购管理
+					37 image
+				38 button 采购发票
+				39 button 采购申请
+				40 button 采购待办池
+				41 button 询价管理
+				42 button 采购订单
+				43 button 采购退换货
+				44 button 供应商价格本
+				45 button 入库管理
+					46 image
+					47 text 入库管理
+					48 image
+				49 button 全部入库单
+				50 button 采购入库
+				51 button 生产入库
+				52 button 其他入库
+				53 button 期初入库
+				54 button 入库明细
+				55 button 库存管理
+					56 image
+					57 text 库存管理
+					58 image
+				59 button 库存总览
+				60 button 不合格处理
+				61 button 库存流水
+				62 button 库存锁定
+				63 button 库存盘点
+				64 button 调拨与借出
+				65 button 库存预警
+				66 button 报损单
+				67 button SN码管理
+				68 button 出库管理
+					69 image
+					70 text 出库管理
+					71 image
+				72 button 出库单列表
+				73 button 生产出库
+				74 button 其他出库
+				75 button 销售直接出库
+				76 button 待出库发货单
+				77 button 采购退换货出库
+				78 button 出库明细
+			79 image
+			80 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			81 button 查看方案
+				82 image
+				83 text 查看方案
+			84 button
+				85 image
+			86 container
+				87 container 业务分类
+					88 checkbox 工作台, Value: 0
+					89 checkbox 供应链, Value: 1
+					90 checkbox 销售, Value: 0
+					91 checkbox 生产, Value: 0
+					92 checkbox 项目, Value: 0
+					93 checkbox 行政, Value: 0
+					94 checkbox 财务, Value: 0
+					95 checkbox 报表, Value: 0
+					96 checkbox 系统, Value: 0
+				97 button Description: 展开搜索, Help: 搜索
+					98 image
+				99 button (collapsed) Description: 通知，3 条未读, Secondary Actions: Expand
+					100 image
+					101 text 3
+				102 button Description: 打开推广奖励, Help: 推广
+				103 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				104 link Description: 打开工单, Value: community.risemap.cn/support
+				105 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					106 image
+					107 text 立即订阅
+				108 button 金
+					109 text 金
+					110 image
+			111 container
+				112 button 工作台
+					113 image
+					114 text 工作台
+				115 button 客户管理配置
+					116 text 客户管理配置
+				117 button 销售配置
+					118 text 销售配置
+				119 button 库存配置
+					120 text 库存配置
+				121 button 其他配置
+					122 text 其他配置
+				123 button 人事配置
+					124 text 人事配置
+				125 button 项目管理配置
+					126 text 项目管理配置
+				127 button 图纸配置
+					128 text 图纸配置
+				129 button 生产管理配置
+					130 text 生产管理配置
+				131 button 委外配置
+					132 text 委外配置
+				133 button 引导中心
+					134 text 引导中心
+				135 button 仓库管理
+					136 text 仓库管理
+				137 button 供应商管理
+					138 text 供应商管理
+				139 button 客户管理
+					140 text 客户管理
+				141 button 物料管理
+					142 text 物料管理
+			143 container
+				144 container
+					145 text 基础资料
+					146 image
+					147 text 物料管理
+					148 image
+					149 heading 物料管理, Value: 1
+						150 text 物料管理
+					151 text 维护 SKU 主数据、品牌型号与多规格变体，沉淀商品资产
+				152 button 物料列表
+					153 image
+					154 text 物料列表
+				155 button 商品图片
+					156 image
+					157 text 商品图片
+				158 button 新建物料
+					159 image
+					160 text 新建物料
+				161 button 导入/导出
+					162 image
+					163 text 导入/导出
+					164 image
+				165 button 打印条码, Help: 打印物料条码/二维码标签
+					166 image
+					167 text 打印条码
+				168 button (disabled) 批量操作
+					169 text 批量操作
+					170 image
+				171 button 回收站
+					172 image
+					173 text 回收站
+				174 button
+					175 image
+				176 button 刷新
+					177 image
+				178 button
+					179 image
+				180 button
+					181 image
+				182 image
+				183 text field (settable)
+				184 button 全部分类
+					185 text 全部分类
+				186 button 品牌
+					187 text 品牌
+				188 button 类型
+					189 text 类型
+					190 image
+				191 button 状态
+					192 text 状态
+					193 image
+				194 table
+					195 row
+						196 cell
+							197 checkbox (settable, integer) 0
+						198 cell
+							199 text 物料编码
+							200 image
+						201 cell
+							202 text 类型
+						203 cell
+							204 text 物料属性
+						205 cell
+							206 text 物料条码
+							207 image
+						208 cell
+							209 text 物料型号
+							210 image
+						211 cell
+							212 text 物料名称
+						213 cell
+							214 text 品牌
+							215 image
+						216 cell
+							217 text 单位
+						218 cell
+							219 text 含税销售价
+						220 cell
+							221 text 不含税销售价
+							222 image
+						223 cell
+							224 text 含税成本价
+						225 cell
+							226 text 不含税成本价
+						227 cell
+							228 text 物料分类
+						229 cell
+							230 text 采购分类
+						231 cell
+							232 text 来源类型
+						233 cell
+							234 text 负责人
+						235 cell
+							236 text 创建时间
+							237 image
+						238 cell
+							239 text 物料状态
+							240 image
+						241 cell
+							242 text 操作
+					243 row
+						244 cell
+							245 checkbox (settable, integer) 0
+						246 cell
+							247 text RM-CAB-800
+						248 cell
+							249 text 正式
+						250 cell
+							251 text 原材料
+						252 cell
+							253 text RM-CAB-800
+						254 cell
+							255 image
+							256 text 800×600×2000mm
+						257 cell
+							258 text 800型柜体
+						259 cell
+							260 text -
+						261 cell
+							262 text 台
+						263 cell
+							264 container
+								265 text ¥ 5,520.0000
+						266 cell
+							267 container
+								268 text ¥ 4,884.9558
+						269 cell
+							270 container
+								271 text ¥ 4,600.0000
+						272 cell
+							273 container
+								274 text ¥ 4,070.7965
+						275 cell
+							276 container
+								277 image
+								278 text 控制柜交付物
+						279 cell
+							280 text -
+						281 cell
+							282 text 采购
+						283 cell
+							284 container
+								285 text 金 金一涛
+						286 cell
+							287 text 2026-09-09
+						288 cell
+							289 text 启用
+						290 cell
+							291 button 编辑
+							292 text |
+							293 button 停用
+							294 text |
+							295 button 别名
+							296 text |
+							297 button 删除
+					298 row
+						299 cell
+							300 checkbox (settable, integer) 0
+						301 cell
+							302 text RM-PSU-24V10A
+						303 cell
+							304 text 正式
+						305 cell
+							306 text 原材料
+						307 cell
+							308 text RM-PSU-24V10A
+						309 cell
+							310 image
+							311 text DRP-240-24
+						312 cell
+							313 text 24V 10A开关电源
+						314 cell
+							315 text -
+						316 cell
+							317 text 件
+						318 cell
+							319 container
+								320 text ¥ 1,032.0000
+						321 cell
+							322 container
+								323 text ¥ 913.2743
+						324 cell
+							325 container
+								326 text ¥ 860.0000
+						327 cell
+							328 container
+								329 text ¥ 761.0619
+						330 cell
+							331 container
+								332 image
+								333 text 控制柜交付物
+						334 cell
+							335 text -
+						336 cell
+							337 text 采购
+						338 cell
+							339 text -
+						340 cell
+							341 text 2026-09-09
+						342 cell
+							343 text 启用
+						344 cell
+							345 button 编辑
+							346 text |
+							347 button 停用
+							348 text |
+							349 button 别名
+							350 text |
+							351 button 删除
+					352 row
+						353 cell
+							354 checkbox (settable, integer) 0
+						355 cell
+							356 text RM-HMI-700
+						357 cell
+							358 text 正式
+						359 cell
+							360 text 原材料
+						361 cell
+							362 text RM-HMI-700
+						363 cell
+							364 image
+							365 text KTP700 Basic PN
+						366 cell
+							367 text 7英寸触摸屏
+						368 cell
+							369 text -
+						370 cell
+							371 text 件
+						372 cell
+							373 container
+								374 text ¥ 3,840.0000
+						375 cell
+							376 container
+								377 text ¥ 3,398.2301
+						378 cell
+							379 container
+								380 text ¥ 3,200.0000
+						381 cell
+							382 container
+								383 text ¥ 2,831.8584
+						384 cell
+							385 container
+								386 image
+								387 text 控制柜交付物
+						388 cell
+							389 text -
+						390 cell
+							391 text 采购
+						392 cell
+							393 container
+								394 text 金 金一涛
+						395 cell
+							396 text 2026-09-09
+						397 cell
+							398 text 启用
+						399 cell
+							400 button 编辑
+							401 text |
+							402 button 停用
+							403 text |
+							404 button 别名
+							405 text |
+							406 button 删除
+					407 row
+						408 cell
+							409 checkbox (settable, integer) 0
+						410 cell
+							411 text RM-PLC-1215C
+						412 cell
+							413 text 正式
+						414 cell
+							415 text 原材料
+						416 cell
+							417 text RM-PLC-1215C
+						418 cell
+							419 image
+							420 text CPU 1215C DC/DC/DC
+						421 cell
+							422 text PLC CPU 1215C
+						423 cell
+							424 text -
+						425 cell
+							426 text 件
+						427 cell
+							428 container
+								429 text ¥ 8,160.0000
+						430 cell
+							431 container
+								432 text ¥ 7,221.2389
+						433 cell
+							434 container
+								435 text ¥ 6,800.0000
+						436 cell
+							437 container
+								438 text ¥ 6,017.6991
+						439 cell
+							440 container
+								441 image
+								442 text 控制柜交付物
+						443 cell
+							444 text -
+						445 cell
+							446 text 采购
+						447 cell
+							448 container
+								449 text 金 金一涛
+						450 cell
+							451 text 2026-09-09
+						452 cell
+							453 text 启用
+						454 cell
+							455 button 编辑
+							456 text |
+							457 button 停用
+							458 text |
+							459 button 别名
+							460 text |
+							461 button 删除
+					462 row
+						463 cell
+							464 checkbox (settable, integer) 0
+						465 cell
+							466 text FG-RM-CAB-800
+						467 cell
+							468 text 正式
+						469 cell
+							470 text 成品
+						471 cell
+							472 text FG-RM-CAB-800
+						473 cell
+							474 image
+							475 text RM-CAB-800-V1
+						476 cell
+							477 text 800型柔性线控制柜
+						478 cell
+							479 text -
+						480 cell
+							481 text 台
+						482 cell
+							483 container
+								484 text ¥ 128,000.0000
+						485 cell
+							486 container
+								487 text ¥ 113,274.3363
+						488 cell
+							489 container
+								490 text ¥ 54,000.0000
+						491 cell
+							492 container
+								493 text ¥ 47,787.6106
+						494 cell
+							495 container
+								496 image
+								497 text 控制柜交付物
+						498 cell
+							499 text -
+						500 cell
+							501 text 自制
+						502 cell
+							503 container
+								504 text 金 金一涛
+						505 cell
+							506 text 2026-09-09
+						507 cell
+							508 text 启用
+						509 cell
+							510 button 编辑
+							511 text |
+							512 button 停用
+							513 text |
+							514 button 别名
+							515 text |
+							516 button 删除
+				517 text 共  5 条记录 每页
+				518 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					519 text 20
+				520 text 条
+				521 button (disabled) 上一页
+					522 image
+				523 button 1
+				524 button (disabled) 下一页
+					525 image
+			526 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			527 container Notifications alt+T
+
+The focused UI element is 158 button 新建物料
