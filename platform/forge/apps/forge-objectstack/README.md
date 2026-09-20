@@ -18,6 +18,12 @@ pnpm dev
 
 `pnpm dev` 是 package.json 定义的开发入口，不代表已有环境已启动、已登录或数据已准备。登录使用当前测试环境配置，本文件不维护账号密码。验收脚本须显式设置指向本任务环境的 `FORGE_URL`，不得借用主线环境证明分支通过。
 
+### Workbench 浏览器登录
+
+桌面客户端使用 ObjectStack 原生 OAuth Provider 登录。部署时启用 `OS_OIDC_PROVIDER_ENABLED=true` 与 `OS_OIDC_DCR_ENABLED=true`；`docker-compose.yml` 已给出默认值。Workbench 作为公开客户端动态注册，使用授权码、PKCE 和本机回环回调，不携带客户端密钥，也不采集用户密码。
+
+远程环境的 `OS_BASE_URL` 必须是实际 HTTPS 公网地址，`OS_TRUSTED_ORIGINS` 同步包含该地址。HTTP 仅用于 `localhost` 或 `127.0.0.1` 本地开发。部署后用 `FORGE_EXPECT_BROWSER_OAUTH=1 pnpm acceptance:deploy-smoke` 检查发现文档和三个 OAuth 端点是否完整。
+
 ## 代码入口
 
 | 路径 | 职责 |

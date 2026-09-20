@@ -19,6 +19,11 @@ services:
       OS_SECRET_KEY: ${OS_SECRET_KEY}
       OS_BASE_URL: ${OS_BASE_URL:-http://localhost:8080}
       OS_TRUSTED_ORIGINS: ${OS_TRUSTED_ORIGINS:-http://localhost:8080}
+      # Weave Workbench signs in through ObjectStack's standard browser OAuth
+      # flow. PKCE public clients are registered dynamically; no desktop client
+      # secret is shipped or stored.
+      OS_OIDC_PROVIDER_ENABLED: ${OS_OIDC_PROVIDER_ENABLED:-true}
+      OS_OIDC_DCR_ENABLED: ${OS_OIDC_DCR_ENABLED:-true}
     depends_on:
       db:
         condition: service_healthy
