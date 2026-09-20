@@ -10,7 +10,7 @@
 
 - 桌面工作空间、材料/成果目录、自选文件夹与双服务健康展示已有实现；历史验证见[桌面壳层验收](acceptance/2026-09-20-desktop-workspace-shell.md)。本轮未重跑桌面全量测试。
 - `contracts/v1` 已改为 Forge 账号、Weave 自动绑定与任务委托边界；旧的 OAuth 与五项能力投影已从当前方案撤回。
-- Forge 当前主线 `6ab5e79a` 已同步进总仓并部署到联调服务器；本批包含销售与行政页面休整、页面门禁和脱敏证据，114 个清单条目仍保持 `review_required`。统一登录、真实团队执行和跨员工业务闭环仍须按本方案重新验收。
+- Forge 当前主线 `6e25449b` 已同步进总仓并部署到联调服务器；本批包含销售与行政页面休整、页面门禁、脱敏证据和生产字段约束对齐，114 个清单条目仍保持 `review_required`。销售订单新建、设备维护和资质申报已完成登录态线上可见性检查；统一登录、真实团队执行和跨员工业务闭环仍须按本方案重新验收。
 - 前一会话曾进行远端 Weave 部署和数据库字段修复；本轮仅检查本地仓库，线上版本、运行时及修复生效情况待复核。环境记录见[联调环境](environments/development.md)。
 
 ## 工作队列
@@ -45,7 +45,7 @@ Weave 的回流结果为：
 
 独立 Workbench 工作树 `/Users/jinyitao/Developer/weave-workbench-product-access-upstream` 的 [weave-workbench PR #1](https://github.com/jinyitao123/weave-workbench/pull/1) 已更新为一次 Forge 登录与 Weave 会话交换，提交 `a4623cf0`。界面只呈现 Weave 角色，开发者不自动获得 Host 运维权限。
 
-独立 Forge 工作树 `/Users/jinyitao/Developer/inoForge-workbench-oauth` 已用提交 `bea0706` 撤回 OAuth 试验，inoForge PR #1 已关闭。Forge 页面任务已将五个并行页面工作树确认合入 `main`，并以提交 `6ab5e79a` 收口销售与行政页面休整；总仓 `platform/forge` 已同步该确定提交。联调服务器运行同一提交，健康检查通过并留有发布前数据库与环境配置备份；启动日志仍有数据库结构漂移告警，未执行带破坏性的自动迁移。
+独立 Forge 工作树 `/Users/jinyitao/Developer/inoForge-workbench-oauth` 已用提交 `bea0706` 撤回 OAuth 试验，inoForge PR #1 已关闭。Forge 页面任务已将五个并行页面工作树确认合入 `main`，并以提交 `6e25449b` 收口销售与行政页面休整及字段约束修复；总仓 `platform/forge` 已同步该确定提交。联调服务器运行同一提交，健康检查通过并留有发布前数据库与环境配置备份；应用业务对象的结构漂移告警已清除，ObjectStack 17.4.0 自带的 `sys_view_definition` 索引迁移仍有一项平台级告警。
 
 ObjectStack HTTP OAuth 草稿 PR #19342 不再属于 MVP1 依赖。是否关闭外部草稿 PR 由对应上游仓库单独处理；当前总仓已移除补丁和相关配置。
 
