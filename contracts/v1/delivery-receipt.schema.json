@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/delivery-receipt.schema.json",
+  "title": "Workbench Delivery Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "receiptId", "workId", "status", "completedAt", "businessResults", "usage", "verification"],
+  "properties": {
+    "version": { "const": "1" },
+    "receiptId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "workId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "status": { "enum": ["completed", "failed", "cancelled", "unknown"] },
+    "completedAt": { "type": "string", "format": "date-time" },
+    "businessResults": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["system", "objectType", "objectId", "state"],
+        "properties": {
+          "system": { "const": "forge" },
+          "objectType": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "objectId": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "state": { "type": "string", "minLength": 1, "maxLength": 160 }
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inputTokens", "outputTokens"],
+      "properties": {
+        "inputTokens": { "type": "integer", "minimum": 0 },
+        "outputTokens": { "type": "integer", "minimum": 0 },
+        "currencyCost": { "type": "number", "minimum": 0 },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["pending", "passed", "failed"] },
+        "verifiedBy": { "type": "string", "maxLength": 128 },
+        "verifiedAt": { "type": "string", "format": "date-time" },
+        "evidenceReferences": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 2048 } }
+      }
+    }
+  }
+}

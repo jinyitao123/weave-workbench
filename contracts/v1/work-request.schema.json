@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/work-request.schema.json",
+  "title": "Workbench Work Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "workId", "submittedAt", "identity", "goal", "materials", "allowedScopes"],
+  "properties": {
+    "version": { "const": "1" },
+    "workId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "submittedAt": { "type": "string", "format": "date-time" },
+    "identity": { "$ref": "#/$defs/identity" },
+    "goal": { "type": "string", "minLength": 1, "maxLength": 20000 },
+    "materials": {
+      "type": "array",
+      "maxItems": 100,
+      "items": { "$ref": "#/$defs/material" }
+    },
+    "allowedScopes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 160 }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tokenLimit": { "type": "integer", "minimum": 1 },
+        "currencyLimit": { "type": "number", "exclusiveMinimum": 0 },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
+      }
+    }
+  },
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject", "organizationId", "deviceSessionId", "delegationId", "audience", "expiresAt"],
+      "properties": {
+        "subject": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "organizationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "deviceSessionId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "delegationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "audience": { "const": "weave" },
+        "expiresAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "material": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["materialId", "name", "mediaType", "size", "sha256", "reference"],
+      "properties": {
+        "materialId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "mediaType": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "size": { "type": "integer", "minimum": 0 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "reference": { "type": "string", "minLength": 1, "maxLength": 2048 }
+      }
+    }
+  }
+}
+
