@@ -364,7 +364,7 @@ export const DocumentEntry = ObjectSchema.create({
     parent_id: Field.lookup('forge_document_entry', { label: '上级目录' }), description: Field.textarea({ label: '描述' }),
     access: Field.select([option('company','全员可见'), option('restricted','限制访问')], { label: '访问权限', defaultValue: 'company', ...required }),
     owner_name: Field.text({ label: '负责人', maxLength: 100, ...required }), favorite: Field.boolean({ label: '收藏', defaultValue: false }),
-    updated_at: Field.datetime({ label: '更新时间', ...required }), last_accessed_at: Field.datetime({ label: '最近使用时间' }),
+    last_accessed_at: Field.datetime({ label: '最近使用时间' }),
     file_id: Field.file({ label: '文件' }), file_name: Field.text({ label: '文件名', maxLength: 255 }),
     file_size: Field.number({ label: '文件大小', min: 0, scale: 0 }), mime_type: Field.text({ label: '文件类型', maxLength: 160 }),
   }, searchableFields: ['title','code','description','file_name','owner_name'],
