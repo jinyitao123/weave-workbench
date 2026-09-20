@@ -10,8 +10,6 @@
 
 `enterprise-session.schema.json` 是桌面可见的账号投影，不包含密码、Cookie 或 Bearer Token。`product-capabilities.schema.json` 描述产品能力，`authorization-evaluation.schema.json` 描述一次服务端判断，`task-delegation.schema.json` 描述任务范围内的短期授权。
 
-`external-session-exchange.schema.json` 定义 Forge OAuth 身份到 Weave 短期产品会话的交换结果。短期令牌只保留在桌面主进程，用于访问 Weave，不进入页面状态。
-
 - 调用者：桌面主进程调用配置的身份适配器与 Weave 接入权限接口；渲染进程只读取账号、组织和能力投影。
 - 身份来源：身份适配器验证用户并映射组织环境；当前可以接 Forge，后续可以接客户 OIDC/SSO。桌面不创建第二套账号。
 - 单次登录：身份适配器在服务端验证外部会话，并以受信任的身份来源、主体标识和组织标识建立绑定，再签发 Weave 可识别的产品会话。桌面不按邮箱合并账号，也不要求用户重复登录 Weave。
