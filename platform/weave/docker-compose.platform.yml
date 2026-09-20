@@ -1,0 +1,185 @@
+# Weave platform deployment — server + optional remote runtime.
+# The root Dockerfile bundles the CLI engines (opencode/codex/claude), so the
+# same image serves both roles: default entrypoint = server, `runtime ...` = remote runtime.
+#
+# First boot: `docker compose -f docker-compose.platform.yml up -d`
+# Then register a runtime through Workbench, put its
+# WEAVE_RUNTIME_TOKEN, and start the runtime:
+#   WEAVE_RUNTIME_TOKEN=rtk_xxx docker compose -f docker-compose.platform.yml --profile runtime up -d
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: weave
+      POSTGRES_USER: weave
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-weave}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U weave -d weave"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  weave:
+    build:
+      context: .
+      args:
+        BUILD_COMMIT: ${BUILD_COMMIT:-unknown}
+        WEAVE_VERSION: ${WEAVE_VERSION:-0.1.0-dev}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
+        GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
+        OPENCODE_VERSION: ${OPENCODE_VERSION:-1.18.11}
+        CODEX_VERSION: ${CODEX_VERSION:-0.146.0}
+        CLAUDE_CODE_VERSION: ${CLAUDE_CODE_VERSION:-2.1.220}
+        HTTP_PROXY: ${DOCKER_BUILD_HTTP_PROXY:-}
+        HTTPS_PROXY: ${DOCKER_BUILD_HTTPS_PROXY:-}
+        ALL_PROXY: ${DOCKER_BUILD_ALL_PROXY:-}
+        NO_PROXY: ${DOCKER_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        http_proxy: ${DOCKER_BUILD_HTTP_PROXY:-}
+        https_proxy: ${DOCKER_BUILD_HTTPS_PROXY:-}
+        all_proxy: ${DOCKER_BUILD_ALL_PROXY:-}
+        no_proxy: ${DOCKER_BUILD_NO_PROXY:-localhost,127.0.0.1}
+    image: ${WEAVE_PLATFORM_IMAGE:-weave-platform}
+    ports:
+      - ${WEAVE_API_BIND_ADDRESS:-127.0.0.1}:${WEAVE_API_PORT:-8080}:8080
+    environment:
+      DATABASE_URL: postgres://weave:${POSTGRES_PASSWORD:-weave}@db:5432/weave?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      # Credential-vault key (64 hex chars = 32 bytes). REQUIRED for workspace LLM providers.
+      WEAVE_SECRET_KEY: ${WEAVE_SECRET_KEY:?set WEAVE_SECRET_KEY (openssl rand -hex 32)}
+      WEAVE_ADMIN_USER: ${WEAVE_ADMIN_USER:-admin}
+      WEAVE_ADMIN_PASS: ${WEAVE_ADMIN_PASS:?set WEAVE_ADMIN_PASS}
+      # Engine credentials are injected at runtime — never baked into the image.
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      WEAVE_LOOM_MODEL: ${WEAVE_LOOM_MODEL:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODELS: ${OPENAI_MODELS:-gpt-5.2,gpt-5.3-codex,gpt-5.4,gpt-5.4-mini,gpt-5.5,gpt-5.6,gpt-5.6-luna,gpt-5.6-sol,gpt-5.6-terra}
+      HTTP_PROXY: ${CONTAINER_HTTP_PROXY:-}
+      HTTPS_PROXY: ${CONTAINER_HTTPS_PROXY:-}
+      ALL_PROXY: ${CONTAINER_ALL_PROXY:-}
+      NO_PROXY: ${CONTAINER_NO_PROXY:-localhost,127.0.0.1,db,weave,workbench}
+      http_proxy: ${CONTAINER_HTTP_PROXY:-}
+      https_proxy: ${CONTAINER_HTTPS_PROXY:-}
+      all_proxy: ${CONTAINER_ALL_PROXY:-}
+      no_proxy: ${CONTAINER_NO_PROXY:-localhost,127.0.0.1,db,weave,workbench}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/v1/ready').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  # Remote runtime — opt-in (needs a runtime token from Workbench
+  # first). Talks to the server over HTTP only; no DB access. In production this
+  # typically runs on a DIFFERENT machine via `weave runtime --server https://…`;
+  # this service is the single-host / staging shape of the same thing.
+  runtime:
+    image: ${WEAVE_PLATFORM_IMAGE:-weave-platform}
+    profiles: ["runtime"]
+    # The CLI validates this when the runtime starts. Requiring it during
+    # interpolation also blocks first boot with the runtime profile disabled.
+    environment:
+      WEAVE_RUNTIME_TOKEN: ${WEAVE_RUNTIME_TOKEN:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      HTTP_PROXY: ${CONTAINER_HTTP_PROXY:-}
+      HTTPS_PROXY: ${CONTAINER_HTTPS_PROXY:-}
+      ALL_PROXY: ${CONTAINER_ALL_PROXY:-}
+      NO_PROXY: ${CONTAINER_NO_PROXY:-localhost,127.0.0.1,db,weave,workbench}
+      http_proxy: ${CONTAINER_HTTP_PROXY:-}
+      https_proxy: ${CONTAINER_HTTPS_PROXY:-}
+      all_proxy: ${CONTAINER_ALL_PROXY:-}
+      no_proxy: ${CONTAINER_NO_PROXY:-localhost,127.0.0.1,db,weave,workbench}
+    command:
+      [
+        "runtime",
+        "--server", "http://weave:8080",
+        "--concurrency", "${WEAVE_RUNTIME_CONCURRENCY:-2}",
+        "--workspaces-root", "/data/runtime-workspaces",
+      ]
+    volumes:
+      - runtime_data:/data/runtime-workspaces
+    depends_on:
+      weave:
+        condition: service_healthy
+    restart: unless-stopped
+
+  workbench:
+    build:
+      context: .
+      dockerfile: Dockerfile.workbench
+      additional_contexts:
+        weave-runtime: service:weave
+      args:
+        WEAVE_IMAGE: weave-runtime
+        DSH_CLIENT_COMMIT_HASH: ${WORKBENCH_BUILD_COMMIT:-0000000}
+        DSH_CLIENT_VERSION: ${WEAVE_VERSION:-0.1.0-dev}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
+        DEBIAN_MIRROR: ${DEBIAN_MIRROR:-http://deb.debian.org}
+        HTTP_PROXY: ${DOCKER_BUILD_HTTP_PROXY:-}
+        HTTPS_PROXY: ${DOCKER_BUILD_HTTPS_PROXY:-}
+        ALL_PROXY: ${DOCKER_BUILD_ALL_PROXY:-}
+        NO_PROXY: ${DOCKER_BUILD_NO_PROXY:-localhost,127.0.0.1}
+        http_proxy: ${DOCKER_BUILD_HTTP_PROXY:-}
+        https_proxy: ${DOCKER_BUILD_HTTPS_PROXY:-}
+        all_proxy: ${DOCKER_BUILD_ALL_PROXY:-}
+        no_proxy: ${DOCKER_BUILD_NO_PROXY:-localhost,127.0.0.1}
+    image: ${WEAVE_WORKBENCH_IMAGE:-weave-workbench}
+    environment:
+      DSH_HOME: /data/dsh
+      WEAVE_API_URL: http://weave:8080
+      WEAVE_API_KEY: ${WEAVE_API_KEY:-}
+      WEAVE_RUNTIME_SERVER_URL: ${WEAVE_RUNTIME_SERVER_URL:-}
+      HTTP_PROXY: ${CONTAINER_HTTP_PROXY:-}
+      HTTPS_PROXY: ${CONTAINER_HTTPS_PROXY:-}
+      ALL_PROXY: ${CONTAINER_ALL_PROXY:-}
+      NO_PROXY: ${CONTAINER_NO_PROXY:-localhost,127.0.0.1,db,weave,workbench}
+      http_proxy: ${CONTAINER_HTTP_PROXY:-}
+      https_proxy: ${CONTAINER_HTTPS_PROXY:-}
+      all_proxy: ${CONTAINER_ALL_PROXY:-}
+      no_proxy: ${CONTAINER_NO_PROXY:-localhost,127.0.0.1,db,weave,workbench}
+    command:
+      - --host
+      - 127.0.0.1
+      - --port
+      - "3080"
+      - --trusted-host
+      - ${WORKBENCH_PUBLIC_AUTHORITY:-127.0.0.1:3080}
+      - --no-open
+    volumes:
+      - ${WORKBENCH_DATA_PATH:-./data/workbench}:/data/dsh
+      - ${WORKBENCH_WORKSPACE_PATH:-./data/workspaces}:/workspace
+    working_dir: /workspace
+    depends_on:
+      weave:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3080/').then(r=>process.exit(r.status===401||r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+    ports:
+      - ${WORKBENCH_BIND_ADDRESS:-127.0.0.1}:${WORKBENCH_PORT:-3080}:3081
+
+  workbench-gateway:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      workbench:
+        condition: service_healthy
+    network_mode: service:workbench
+    volumes:
+      - ./workbench/deploy/workbench.nginx.conf:/etc/nginx/nginx.conf:ro
+
+volumes:
+  pgdata:
+  runtime_data:

@@ -1,0 +1,12 @@
+.git
+.env*
+.claude
+.worktrees
+.superpowers
+.weave-demo
+
+
+**/node_modules
+**/._*
+*.log
+loom-linux
