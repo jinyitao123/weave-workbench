@@ -26,7 +26,7 @@ function fixture() {
 }
 
 describe('Workbench platform accounts', () => {
-  it('uses one Forge password login to establish Forge identity and Weave product access', async () => {
+  it('uses one Forge password login to establish a bound Weave account', async () => {
     const claims = Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 600 })).toString('base64url')
     const fetcher = vi.fn<typeof fetch>(async (input, init) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
@@ -38,12 +38,8 @@ describe('Workbench platform accounts', () => {
       }
       if (url.endsWith('/v1/auth/external/exchange')) {
         expect(init?.headers).toEqual(expect.objectContaining({ Authorization: 'Bearer forge-identity-token' }))
-        return Response.json({ token: `weave.${claims}.signed`, subject: { id: 'ext-user' }, organization: { id: 'workspace-1' } })
+        return Response.json({ token: `weave.${claims}.signed`, subject: { id: 'ext-user', role: 'developer' }, organization: { id: 'workspace-1' } })
       }
-      if (url.endsWith('/v1/authorization/capabilities')) return Response.json({ status: 'ready', source: { kind: 'cerbos' }, capabilities: [
-        { id: 'team.read', decision: 'allow', reason: 'policy' }, { id: 'debug.simulate', decision: 'allow', reason: 'policy' },
-        { id: 'release.publish', decision: 'deny', reason: 'policy' },
-      ] })
       if (url.endsWith('/v1/auth/me')) return Response.json({ ok: true })
       return Response.json({}, { status: 404 })
     })
@@ -57,21 +53,17 @@ describe('Workbench platform accounts', () => {
     expect(body).not.toContain('weave.')
     const view = JSON.parse(body) as {
       authenticated: boolean
-      user: { id: string; workspace_id: string; role: string; access: { status: string; source: string; capabilities: unknown[] } }
+      user: { id: string; workspace_id: string; role: string }
     }
     expect(view).toMatchObject({
       authenticated: true,
       user: {
         id: 'ext-user', workspace_id: 'workspace-1', role: 'developer',
-        access: { status: 'ready', source: 'cerbos' },
       },
     })
-    expect(view.user.access.capabilities).toEqual(expect.arrayContaining([
-      expect.objectContaining({ id: 'debug.simulate', decision: 'allow' }),
-    ]))
     const cookie = result.headers.get('set-cookie')!.split(';')[0]!
     const settings = new Request('http://host/api/settings/describe', { method: 'POST', headers: { cookie, 'Content-Type': 'application/json' }, body: '{}' })
-    expect((await accounts.guard(settings, async () => Response.json({ ok: true }))).status).toBe(200)
+    expect((await accounts.guard(settings, async () => Response.json({ ok: true }))).status).toBe(403)
   })
 
   it('isolates two users sessions, delegated requests, and background work', async () => {

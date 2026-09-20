@@ -92,7 +92,7 @@ export function AccountButton({ useAccount, logout, wide, t }: ButtonProps) {
         </div>
         <strong>{name}</strong>
         <span className={css.username}>{user.username}</span>
-        <span className={css.role}>{t(user.role === 'admin' ? 'account.role.admin' : 'account.role.user')}</span>
+        <span className={css.role}>{t(user.role === 'admin' ? 'account.role.admin' : user.role === 'developer' ? 'account.role.developer' : 'account.role.user')}</span>
         <p>{t('account.logoutHelp')}</p>
         <button type="button" className={css.logout} onClick={() => { setOpen(false); void logout() }}>{t('account.logout')}</button>
       </section>

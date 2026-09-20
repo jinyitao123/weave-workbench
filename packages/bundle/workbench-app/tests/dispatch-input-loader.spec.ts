@@ -174,7 +174,7 @@ afterEach(async () => {
 })
 
 describe('dispatch input through real Loader, Host prompts, and JSONL replay', () => {
-  it('mounts one-step Forge sign-in and Weave capabilities through the real Host composition', async () => {
+  it('mounts one-step Forge sign-in and Weave account binding through the real Host composition', async () => {
     const claims = Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url')
     vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (input, init) => {
       const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
@@ -186,16 +186,9 @@ describe('dispatch input through real Loader, Host prompts, and JSONL replay', (
       if (url.pathname === '/v1/auth/external/exchange') {
         expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer forge-token')
         return Response.json({
-          token: `weave.${claims}.signed`, subject: { id: 'delegated-user' }, organization: { id: 'workspace-1' },
+          token: `weave.${claims}.signed`, subject: { id: 'delegated-user', role: 'developer' }, organization: { id: 'workspace-1' },
         })
       }
-      if (url.pathname === '/v1/authorization/capabilities') return Response.json({
-        status: 'ready', source: { kind: 'cerbos' }, capabilities: [
-          { id: 'team.read', decision: 'allow', reason: 'policy' },
-          { id: 'debug.simulate', decision: 'allow', reason: 'policy' },
-          { id: 'release.publish', decision: 'deny', reason: 'policy' },
-        ],
-      })
       if (url.pathname === '/v1/auth/me') return Response.json({ ok: true })
       return Response.json({}, { status: 404 })
     }))
@@ -210,7 +203,6 @@ describe('dispatch input through real Loader, Host prompts, and JSONL replay', (
     const view: unknown = await result.json()
     expect(view).toEqual({ authenticated: true, user: expect.objectContaining({
       id: 'delegated-user', workspace_id: 'workspace-1', role: 'developer',
-      access: expect.objectContaining({ status: 'ready', source: 'cerbos' }),
     }) })
   })
 

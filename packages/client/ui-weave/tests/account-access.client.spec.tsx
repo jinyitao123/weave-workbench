@@ -67,28 +67,14 @@ function defer<T>() {
 }
 
 describe('Workbench account access', () => {
-  it('shows server-issued product capability decisions in account settings', async () => {
-    const user: AccountUser = {
-      ...alice,
-      role: 'developer',
-      access: {
-        status: 'ready',
-        source: 'cerbos',
-        capabilities: [
-          { id: 'team.read', decision: 'allow', reason: 'policy' },
-          { id: 'debug.simulate', decision: 'allow', reason: 'policy' },
-          { id: 'release.publish', decision: 'deny', reason: 'policy' },
-        ],
-      },
-    }
+  it('shows the Weave role returned for the bound account', async () => {
+    const user: AccountUser = { ...alice, role: 'developer' }
     const server = host(user)
     const controller = server.controller()
     await act(() => controller.refresh())
     const props = { ...inputs(controller), t } as Parameters<typeof AccountSettingsSection>[0]
     const view = render(<AccountSettingsSection {...props} />)
-    expect(view.getByText('权限已同步')).toBeTruthy()
-    expect(view.getByText('调试模拟').parentElement?.textContent).toContain('可使用')
-    expect(view.getByText('发布版本').parentElement?.textContent).toContain('不可使用')
+    expect(view.getByText('开发者')).toBeTruthy()
   })
 
   it('withholds business views while loading and offers a simple account form', async () => {

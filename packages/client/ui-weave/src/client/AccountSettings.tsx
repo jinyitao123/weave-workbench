@@ -13,11 +13,6 @@ export function AccountSettingsSection({ useAccount, logout, t }: Props) {
     <p className={css.settingsDescription}>{t('account.loading')}</p>
   </section>
   const name = user.display_name || user.username
-  const capabilityLabels: Record<string, string> = {
-    'team.read': t('account.capability.teamRead'), 'run.read': t('account.capability.runRead'),
-    'debug.simulate': t('account.capability.debug'), 'debug.sandbox_write': t('account.capability.sandboxWrite'),
-    'release.publish': t('account.capability.publish'),
-  }
   return <section className={css.settingsPage}>
     <header>
       <h2>{t('account.settingsTitle')}</h2>
@@ -32,13 +27,6 @@ export function AccountSettingsSection({ useAccount, logout, t }: Props) {
         <div><dt>{t('account.workspaceLabel')}</dt><dd>{user.workspace_id === 'default' ? t('account.workspaceDefault') : user.workspace_id}</dd></div>
         <div><dt>{t('account.roleLabel')}</dt><dd>{t(user.role === 'admin' ? 'account.role.admin' : user.role === 'developer' ? 'account.role.developer' : 'account.role.user')}</dd></div>
       </dl>
-      <div className={css.accessSection}>
-        <div><strong>{t('account.accessTitle')}</strong><span>{user.access?.status === 'ready' ? t('account.accessReady') : t('account.accessUnavailable')}</span></div>
-        <ul>{Object.entries(capabilityLabels).map(([id, label]) => {
-          const item = user.access?.capabilities.find(capability => capability.id === id)
-          return <li key={id}><span>{label}</span><strong data-decision={item?.decision ?? 'unavailable'}>{t(item?.decision === 'allow' ? 'account.accessAllow' : item?.decision === 'deny' ? 'account.accessDeny' : 'account.accessUnknown')}</strong></li>
-        })}</ul>
-      </div>
       <div className={css.settingsActions}>
         <div><strong>{t('account.logout')}</strong><p>{t('account.logoutHelp')}</p></div>
         <button type="button" className={css.logout} onClick={() => { void logout() }}>{t('account.logout')}</button>

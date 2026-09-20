@@ -3,23 +3,12 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import { createHash, randomBytes } from 'node:crypto'
 
 /** Authenticated platform identity projected into the Workbench Host. */
-export interface ProductCapability {
-  readonly id: string
-  readonly decision: 'allow' | 'deny' | 'unavailable'
-  readonly reason: string
-}
-export interface ProductAccess {
-  readonly status: 'ready' | 'unavailable'
-  readonly source: 'cerbos' | 'weave'
-  readonly capabilities: readonly ProductCapability[]
-}
 export interface WorkbenchUser {
   readonly id: string
   readonly workspace_id: string
   readonly username: string
   readonly display_name: string
   readonly role: string
-  readonly access?: ProductAccess
 }
 interface Account {
   readonly id: string
@@ -39,7 +28,7 @@ function object(value: unknown): Record<string, unknown> | undefined { return ty
 function response(status: number, code: string): Response { return Response.json({ code }, { status, headers: { 'Cache-Control': 'no-store' } }) }
 function same(owner: SessionOwner, user: WorkbenchUser): boolean { return owner.userId === user.id && owner.workspaceId === user.workspace_id }
 function managesHost(user: WorkbenchUser): boolean {
-  return user.role === 'admin' || user.role === 'developer'
+  return user.role === 'admin'
 }
 
 /** JWTs live only in this Host process. Logout/restart destroys their authority. */
@@ -174,26 +163,8 @@ export class WorkbenchAccounts {
     const organization = object(session?.organization)
     if (typeof session?.token !== 'string'
       || typeof subject?.id !== 'string'
+      || typeof subject.role !== 'string'
       || typeof organization?.id !== 'string') return response(502, 'weave_unreachable')
-    const capabilitiesResponse = await this.fetcher(`${this.apiUrl}/v1/authorization/capabilities`, {
-      headers: { Accept: 'application/json', Authorization: `Bearer ${session.token}` },
-      signal: AbortSignal.timeout(15_000),
-      redirect: 'error',
-    })
-    const projection = capabilitiesResponse.ok ? object(await capabilitiesResponse.json()) : undefined
-    if (!capabilitiesResponse.ok) await capabilitiesResponse.body?.cancel()
-    const capabilities: ProductCapability[] = []
-    for (const candidate of Array.isArray(projection?.capabilities) ? projection.capabilities : []) {
-      const item = object(candidate)
-      if (typeof item?.id === 'string'
-        && (item.decision === 'allow' || item.decision === 'deny' || item.decision === 'unavailable')
-        && typeof item.reason === 'string') capabilities.push({ id: item.id, decision: item.decision, reason: item.reason })
-    }
-    const developer = capabilities.some(item => item.id === 'debug.simulate' && item.decision === 'allow')
-    const access: ProductAccess = {
-      status: projection?.status === 'ready' ? 'ready' : 'unavailable',
-      source: object(projection?.source)?.kind === 'cerbos' ? 'cerbos' : 'weave', capabilities,
-    }
     let expiresAt = Date.now() + 8 * 60 * 60 * 1000
     try {
       const encodedClaims = session.token.split('.')[1] ?? ''
@@ -210,8 +181,7 @@ export class WorkbenchAccounts {
         workspace_id: organization.id,
         username: typeof identityUser.email === 'string' ? identityUser.email : email,
         display_name: typeof identityUser.name === 'string' ? identityUser.name : email,
-        role: developer ? 'developer' : 'user',
-        access,
+        role: subject.role,
       },
     }
   }

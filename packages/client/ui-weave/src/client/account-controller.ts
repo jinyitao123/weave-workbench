@@ -8,11 +8,6 @@ export interface AccountUser {
   username: string
   display_name: string
   role: string
-  access?: {
-    status: 'ready' | 'unavailable'
-    source: 'cerbos' | 'weave'
-    capabilities: readonly { id: string; decision: 'allow' | 'deny' | 'unavailable'; reason: string }[]
-  }
 }
 
 /** Product error categories; raw transport messages are never rendered. */
@@ -44,21 +39,9 @@ function userFrom(value: unknown): AccountUser | null {
   const user = value as Record<string, unknown>
   if (typeof user.id !== 'string' || user.id === '' || typeof user.workspace_id !== 'string' || user.workspace_id === ''
     || typeof user.username !== 'string' || user.username === '' || typeof user.display_name !== 'string' || typeof user.role !== 'string') return null
-  const accessValue = typeof user.access === 'object' && user.access !== null ? user.access as Record<string, unknown> : undefined
-  const capabilities: NonNullable<AccountUser['access']>['capabilities'] = Array.isArray(accessValue?.capabilities) ? accessValue.capabilities.flatMap((candidate) => {
-    if (typeof candidate !== 'object' || candidate === null) return []
-    const item = candidate as Record<string, unknown>
-    return typeof item.id === 'string'
-      && (item.decision === 'allow' || item.decision === 'deny' || item.decision === 'unavailable')
-      && typeof item.reason === 'string'
-      ? [{ id: item.id, decision: item.decision, reason: item.reason }] : []
-  }) : []
-  const access: AccountUser['access'] = (accessValue?.status === 'ready' || accessValue?.status === 'unavailable')
-    && (accessValue.source === 'cerbos' || accessValue.source === 'weave')
-    ? { status: accessValue.status, source: accessValue.source, capabilities } : undefined
   return {
     id: user.id, workspace_id: user.workspace_id, username: user.username,
-    display_name: user.display_name, role: user.role, ...(access === undefined ? {} : { access }),
+    display_name: user.display_name, role: user.role,
   }
 }
 
@@ -84,7 +67,7 @@ export class AccountController implements HostObservable<AccountView> {
   /** Only a currently authenticated administrator can manage shared Host resources. */
   readonly hostManagement: HostObservable<boolean> = {
     getSnapshot: () => this.view.status === 'authenticated'
-      && (this.view.user?.role === 'admin' || this.view.user?.role === 'developer'),
+      && this.view.user?.role === 'admin',
     subscribe: listener => this.subscribe(listener),
   }
 
