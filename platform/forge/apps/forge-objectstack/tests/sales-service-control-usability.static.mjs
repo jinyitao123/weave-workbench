@@ -9,11 +9,34 @@ const files = (await readdir(pagesDir))
 
 const findings = [];
 
+function openingTags(text, tagName) {
+  const tags = [];
+  const startPattern = new RegExp(`<${tagName}\\b`, 'g');
+  for (const match of text.matchAll(startPattern)) {
+    let quote = '';
+    let braceDepth = 0;
+    let end = match.index + match[0].length;
+    for (; end < text.length; end += 1) {
+      const char = text[end];
+      if (quote) {
+        if (char === quote && text[end - 1] !== '\\') quote = '';
+        continue;
+      }
+      if (char === '"' || char === "'") { quote = char; continue; }
+      if (char === '{') { braceDepth += 1; continue; }
+      if (char === '}') { braceDepth = Math.max(0, braceDepth - 1); continue; }
+      if (char === '>' && braceDepth === 0) break;
+    }
+    tags.push({ index: match.index, tag: text.slice(match.index, end + 1) });
+  }
+  return tags;
+}
+
 for (const name of files) {
   const path = join(pagesDir.pathname, name);
   const text = await readFile(path, 'utf8');
-  for (const match of text.matchAll(/<button\b[^>]*>/g)) {
-    const tag = match[0];
+  for (const match of openingTags(text, 'button')) {
+    const tag = match.tag;
     const hasRealAction = tag.includes('onClick=') || tag.includes('type=');
     if (!hasRealAction) {
       findings.push({ file: name, line: text.slice(0, match.index).split('\n').length, message: 'button has no click or submit behavior', tag });
