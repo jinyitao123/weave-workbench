@@ -32,4 +32,4 @@ Forge 的开发登录身份是 `admin@inoforge.local`。密码、令牌和模型
 - Weave 的目标端口为 8080，管理界面目标端口为 3080。
 - Weave 在本轮盘点时尚未运行，部署完成前桌面端应明确显示“暂不可用”。
 
-以上首轮状态已由 2026-09-20 身份联调刷新：Forge 健康接口返回 ObjectStack `17.4.0`，OAuth 发现、动态注册、浏览器授权、回环回调、令牌交换和 UserInfo 均已通过 HTTP 实测。当前发现文档的 `issuer` 仍写成 HTTPS，组织与角色尚未进入 OAuth 身份投影；Weave 状态仍需另行复核。
+Forge 健康接口在 2026-09-20 返回 ObjectStack `17.4.0`。此前 OAuth 试验结果不再作为当前方案证据；新的验收从 Forge 账号密码登录、Weave 自动绑定与重复登录读回重新开始。Weave 线上状态仍需另行复核。
