@@ -1,0 +1,256 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/bom/new".
+0 AXWebArea RiseMap, URL: risemap.cn/base/bom/new
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 供应链
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 到货检验
+					9 image
+					10 text 到货检验
+					11 image
+				12 button 到货通知
+				13 button 到货登记
+				14 button 待检验库存
+				15 button 检验单
+				16 button 检验规则
+				17 button 基础资料 1 待办
+					18 image
+					19 text 基础资料
+					20 container 1 待办
+						21 text 1
+					22 image
+				23 button 物料管理
+				24 button 物料组合
+				25 button BOM管理
+				26 button 综合物料搜索
+				27 button 供应商管理 1 待办
+					28 text 供应商管理
+					29 container 1 待办
+						30 text 1
+				31 button 产品实例追溯
+				32 button 仓库管理
+				33 button 采购管理
+					34 image
+					35 text 采购管理
+					36 image
+				37 button 采购发票
+				38 button 采购申请
+				39 button 采购待办池
+				40 button 询价管理
+				41 button 采购订单
+				42 button 采购退换货
+				43 button 供应商价格本
+				44 button 入库管理
+					45 image
+					46 text 入库管理
+					47 image
+				48 button 全部入库单
+				49 button 采购入库
+				50 button 生产入库
+				51 button 其他入库
+				52 button 期初入库
+				53 button 入库明细
+				54 button 库存管理
+					55 image
+					56 text 库存管理
+					57 image
+				58 button 库存总览
+				59 button 不合格处理
+				60 button 库存流水
+				61 button 库存锁定
+				62 button 库存盘点
+				63 button 调拨与借出
+				64 button 库存预警
+				65 button 报损单
+				66 button SN码管理
+				67 button 出库管理
+					68 image
+					69 text 出库管理
+					70 image
+				71 button 出库单列表
+				72 button 生产出库
+				73 button 其他出库
+				74 button 销售直接出库
+				75 button 待出库发货单
+				76 button 采购退换货出库
+				77 button 出库明细
+			78 image
+			79 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			80 button 查看方案
+				81 image
+				82 text 查看方案
+			83 button
+				84 image
+			85 container
+				86 container 业务分类
+					87 checkbox 工作台, Value: 0
+					88 checkbox 供应链, Value: 1
+					89 checkbox 销售, Value: 0
+					90 checkbox 生产, Value: 0
+					91 checkbox 项目, Value: 0
+					92 checkbox 行政, Value: 0
+					93 checkbox 财务, Value: 0
+					94 checkbox 报表, Value: 0
+					95 checkbox 系统, Value: 0
+				96 button Description: 展开搜索, Help: 搜索
+					97 image
+				98 button (collapsed) Description: 通知，3 条未读, Secondary Actions: Expand
+					99 image
+					100 text 3
+				101 button Description: 打开推广奖励, Help: 推广
+				102 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				103 link Description: 打开工单, Value: community.risemap.cn/support
+				104 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					105 image
+					106 text 立即订阅
+				107 button 金
+					108 text 金
+					109 image
+			110 container
+				111 button 工作台
+					112 image
+					113 text 工作台
+				114 button 库存配置
+					115 text 库存配置
+				116 button 其他配置
+					117 text 其他配置
+				118 button 人事配置
+					119 text 人事配置
+				120 button 项目管理配置
+					121 text 项目管理配置
+				122 button 图纸配置
+					123 text 图纸配置
+				124 button 生产管理配置
+					125 text 生产管理配置
+				126 button 委外配置
+					127 text 委外配置
+				128 button 引导中心
+					129 text 引导中心
+				130 button 仓库管理
+					131 text 仓库管理
+				132 button 供应商管理
+					133 text 供应商管理
+				134 button 客户管理
+					135 text 客户管理
+				136 button 物料管理
+					137 text 物料管理
+				138 button BOM管理
+					139 text BOM管理
+				140 button 新建BOM
+					141 text 新建BOM
+			142 container
+				143 text 基础资料
+				144 image
+				145 text BOM管理
+				146 image
+				147 text 新建BOM
+				148 button
+					149 image
+				150 heading 800型柔性线控制柜标准BOM, Value: 1
+					151 text 800型柔性线控制柜标准BOM
+				152 text BOM-RM-CAB-800-V1 标准 草稿 V1.0 ·  800型柔性线控制柜
+				153 button 基本信息
+					154 image
+					155 text 基本信息
+				156 button 保存
+					157 image
+					158 text 保存
+				159 button 提交评审
+					160 image
+					161 text 提交评审
+				162 button 基础资料
+					163 image
+					164 text 基础资料
+				165 button BOM结构
+					166 image
+					167 text BOM结构
+				168 button 缺料分析
+					169 image
+					170 text 缺料分析
+				171 button 版本历史
+					172 image
+					173 text 版本历史
+				174 button 应用/引用
+					175 image
+					176 text 应用/引用
+				177 button 审批日志
+					178 image
+					179 text 审批日志
+				180 button 图纸关联
+					181 image
+					182 text 图纸关联
+				183 text BOM编号
+				184 text field (settable) BOM-RM-CAB-800-V1
+				185 text * BOM名称
+				186 text field (settable) 800型柔性线控制柜标准BOM
+				187 text 产品/设备
+				188 text field (settable) 800型柔性线控制柜
+				189 text BOM类型
+				190 button 标准BOM
+					191 text 标准BOM
+				192 text 成品物料
+				193 text field 成品物料
+				194 button 选择
+					195 image
+					196 text 选择
+				197 text 备注
+				198 text field (settable) 标准测试数据集 OEM-RM-20260909-A，单台用量
+				199 container
+					200 heading 选择成品物料, Value: 3
+						201 text 选择成品物料
+					202 text 从物料库搜索选择物料
+					203 button
+						204 image
+					205 image
+					206 text field (settable)
+					207 button RM-CAB-800 采购 控制柜交付物 800型柜体 800×600×2000mm /台
+						208 text RM-CAB-800
+						209 text 采购
+						210 text 控制柜交付物
+						211 text 800型柜体
+						212 text 800×600×2000mm
+						213 text /
+						214 text 台
+					215 button RM-PSU-24V10A 采购 控制柜交付物 24V 10A开关电源 DRP-240-24 /件
+						216 text RM-PSU-24V10A
+						217 text 采购
+						218 text 控制柜交付物
+						219 text 24V 10A开关电源
+						220 text DRP-240-24
+						221 text /
+						222 text 件
+					223 button RM-HMI-700 采购 控制柜交付物 7英寸触摸屏 KTP700 Basic PN /件
+						224 text RM-HMI-700
+						225 text 采购
+						226 text 控制柜交付物
+						227 text 7英寸触摸屏
+						228 text KTP700 Basic PN
+						229 text /
+						230 text 件
+					231 button RM-PLC-1215C 采购 控制柜交付物 PLC CPU 1215C CPU 1215C DC/DC/DC /件
+						232 text RM-PLC-1215C
+						233 text 采购
+						234 text 控制柜交付物
+						235 text PLC CPU 1215C
+						236 text CPU 1215C DC/DC/DC
+						237 text /
+						238 text 件
+					239 button FG-RM-CAB-800 自制 控制柜交付物 800型柔性线控制柜 RM-CAB-800-V1 /台
+						240 text FG-RM-CAB-800
+						241 text 自制
+						242 text 控制柜交付物
+						243 text 800型柔性线控制柜
+						244 text RM-CAB-800-V1
+						245 text /
+						246 text 台
+					247 image
+					248 text 请在左侧选择物料 选中后查看规格列表
+					249 button 取消
+					250 button (disabled) 确认选择
+			251 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			252 container Notifications alt+T
+
+The focused UI element is 0 AXWebArea RiseMap, URL: risemap.cn/base/bom/new

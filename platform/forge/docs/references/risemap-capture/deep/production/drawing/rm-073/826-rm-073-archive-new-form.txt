@@ -1,0 +1,306 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/drawing/archives/new".
+0 AXWebArea RiseMap, URL: risemap.cn/drawing/archives/new
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 生产
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 组装业务管理
+					9 image
+					10 text 组装业务管理
+					11 image
+				12 button 组装单
+				13 button 缺料待办
+				14 button 领料单
+				15 button 补料单
+				16 button 退料单
+				17 button 拆解单
+				18 button 换件单
+				19 container
+					20 button 图纸管理
+						21 image
+						22 text 图纸管理
+						23 image
+					24 button 进入图纸管理上手指南
+						25 image
+				26 button 图纸总览
+				27 button 图号档案
+				28 button 图纸评审
+				29 button 图纸发布
+				30 button 图纸变更
+				31 button 图纸发放记录
+				32 button 图纸关联查询
+				33 button 客户图纸
+				34 container
+					35 button 委外管理
+						36 image
+						37 text 委外管理
+						38 image
+					39 button 进入委外管理上手指南
+						40 image
+				41 button 委外看板
+				42 button 委外订单
+				43 button 委外发料
+				44 button 委外回厂
+				45 button 委外退料
+				46 button 委外对账
+				47 button 委外供应商
+				48 button 委外库存
+				49 button 批次追溯
+				50 button 委外未交
+				51 button 委外进货
+				52 button 委外对账单
+			53 image
+			54 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			55 button 查看方案
+				56 image
+				57 text 查看方案
+			58 button
+				59 image
+			60 container
+				61 container 业务分类
+					62 checkbox 工作台, Value: 0
+					63 checkbox 供应链, Value: 0
+					64 checkbox 销售, Value: 0
+					65 checkbox 生产, Value: 1
+					66 checkbox 项目, Value: 0
+					67 checkbox 行政, Value: 0
+					68 checkbox 财务, Value: 0
+					69 checkbox 报表, Value: 0
+					70 checkbox 系统, Value: 0
+				71 button Description: 展开搜索, Help: 搜索
+					72 image
+				73 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					74 image
+					75 text 2
+				76 button Description: 打开推广奖励, Help: 推广
+				77 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				78 link Description: 打开工单, Value: community.risemap.cn/support
+				79 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					80 image
+					81 text 立即订阅
+				82 button 金
+					83 text 金
+					84 image
+			85 container
+				86 button 工作台
+					87 image
+					88 text 工作台
+				89 button 缺料待办
+					90 text 缺料待办
+				91 button 领料单
+					92 text 领料单
+				93 button 新建领料单
+					94 text 新建领料单
+				95 button 补料单
+					96 text 补料单
+				97 button 新建补料单
+					98 text 新建补料单
+				99 button 退料单
+					100 text 退料单
+				101 button 新建退料单
+					102 text 新建退料单
+				103 button 拆解单
+					104 text 拆解单
+				105 button 新建拆解单
+					106 text 新建拆解单
+				107 button 换件单
+					108 text 换件单
+				109 button 新建换件单
+					110 text 新建换件单
+				111 button 图纸管理上手指南
+					112 text 图纸管理上手指南
+				113 button 图纸总览
+					114 text 图纸总览
+				115 button 新建图号档案
+					116 text 新建图号档案
+			117 container
+				118 text 图纸管理
+				119 image
+				120 text 图号档案
+				121 image
+				122 text 新建图号档案
+				123 button
+					124 image
+				125 heading 新建图号, Value: 1
+					126 text 新建图号
+				127 text 创建新的图纸主档案，后续可上传版本、发布、变更
+				128 button 取消
+				129 button 保存草稿
+					130 image
+					131 text 保存草稿
+				132 button 保存并提交
+					133 image
+					134 text 保存并提交
+				135 button 基础信息 0/7
+					136 text 基础信息
+					137 image
+					138 text 0
+					139 text /
+					140 text 7
+				141 text 图号
+				142 text field (settable)
+				143 container
+					144 text * 图纸名称
+				145 text field (settable)
+				146 text 简称
+				147 text field (settable)
+				148 container
+					149 text * 图纸类型
+				150 button 请选择图纸类型
+					151 text 请选择图纸类型
+				152 text 所属分类
+				153 button 请选择所属分类
+					154 text 请选择所属分类
+				155 text 所属部门
+				156 button 选择所属部门
+					157 text 选择所属部门
+				158 text 所属文件夹
+				159 button 请选择所属文件夹（不选则不归档）
+					160 text 请选择所属文件夹（不选则不归档）
+				161 text 备注
+				162 text entry area (settable)
+				163 button 技术属性 4/13
+					164 text 技术属性
+					165 image
+					166 text 4
+					167 text /
+					168 text 13
+				169 text 材质
+				170 text field (settable)
+				171 text 规格
+				172 text field (settable)
+				173 text 型号
+				174 text field (settable)
+				175 text 重量
+				176 text field (settable)
+				177 text 表面处理
+				178 text field (settable)
+				179 text 热处理
+				180 text field (settable)
+				181 text 技术要求摘要
+				182 text entry area (settable)
+				183 text 检验要求摘要
+				184 text entry area (settable)
+				185 text 关键特性
+				186 text entry area (settable)
+				187 text 是否关键件
+				188 switch Value: 0, ID: :rm2:
+				189 text 是否按图采购
+				190 switch Value: 0, ID: :rm3:
+				191 text 是否版本强控制
+				192 switch Value: 0, ID: :rm4:
+				193 text 是否允许旧版本替代
+				194 switch Value: 0, ID: :rm5:
+				195 button 受控信息 2/2
+					196 text 受控信息
+					197 image
+					198 text 2
+					199 text /
+					200 text 2
+				201 text 受控图纸需登记受控编号及份数，发放后通过受控发放清单追踪每份副本（ISO 9001）
+				202 container
+					203 text * 受控标识
+				204 button 非受控
+					205 text 非受控
+					206 container
+						207 button
+							208 image
+						209 image
+				210 text 保密等级
+				211 button 普通
+					212 text 普通
+					213 container
+						214 button
+							215 image
+						216 image
+				217 button 业务关联属性 4/6
+					218 text 业务关联属性
+					219 image
+					220 text 4
+					221 text /
+					222 text 6
+				223 text 关联物料和项目后，可在汇总视图中按物料或项目维度统一查看所有相关图纸
+				224 text 关联物料
+				225 button 点击选择关联物料...
+					226 text 点击选择关联物料...
+					227 image
+				228 text 关联项目
+				229 container
+					230 text 点击选择关联项目...
+					231 image
+				232 text 默认供应商
+				233 button 搜索供应商名称...
+					234 text 搜索供应商名称...
+				235 text 是否需来料质检
+				236 switch Value: 0, ID: :rmc:
+				237 text 是否需首件确认
+				238 switch Value: 0, ID: :rmd:
+				239 text 是否可外协
+				240 switch Value: 0, ID: :rme:
+				241 text 是否启用批次追溯
+				242 switch Value: 0, ID: :rmf:
+				243 button 其他信息 0/6
+					244 text 其他信息
+					245 image
+					246 text 0
+					247 text /
+					248 text 6
+				249 container
+					250 text 档案状态 只读
+				251 button (disabled) 请选择档案状态
+					252 text 请选择档案状态
+					253 image
+				254 container
+					255 text 当前版本号 只读
+				256 container
+					257 text 当前版本发布时间 只读
+				258 container
+					259 button
+						260 image
+				261 container
+					262 text 创建人 只读
+				263 container
+					264 text 创建时间 只读
+				265 container
+					266 button
+						267 image
+				268 container
+					269 text 更新时间 只读
+				270 container
+					271 button
+						272 image
+				273 text 文件区 主图纸文件  *
+				274 container
+					275 image
+					276 text 点击或拖拽上传 支持 CAD 图纸、3D 模型、PDF 与文档等格式
+				277 text PDF文件
+				278 container
+					279 image
+					280 text 点击或拖拽上传 支持 CAD 图纸、3D 模型、PDF 与文档等格式
+				281 text CAD文件
+				282 container
+					283 image
+					284 text 点击或拖拽上传 支持 CAD 图纸、3D 模型、PDF 与文档等格式
+				285 text 3D模型文件
+				286 container
+					287 image
+					288 text 点击或拖拽上传 支持 CAD 图纸、3D 模型、PDF 与文档等格式
+				289 text 工艺文件
+				290 container
+					291 image
+					292 text 点击或拖拽上传 支持 CAD 图纸、3D 模型、PDF 与文档等格式
+				293 text 检验文件
+				294 container
+					295 image
+					296 text 点击或拖拽上传 支持 CAD 图纸、3D 模型、PDF 与文档等格式
+				297 text 其他附件
+				298 container
+					299 image
+					300 text 点击或拖拽上传 支持 CAD 图纸、3D 模型、PDF 与文档等格式
+			301 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			302 container Notifications alt+T
+
+The focused UI element is 0 AXWebArea RiseMap, URL: risemap.cn/drawing/archives/new

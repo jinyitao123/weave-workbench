@@ -1,0 +1,238 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/quotations".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/quotations
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 销售业务
+					10 image
+					11 text 销售业务
+					12 image
+				13 button 框架销售合同
+				14 button 销售订单
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+			36 image
+			37 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			38 button 查看方案
+				39 image
+				40 text 查看方案
+			41 button
+				42 image
+			43 container
+				44 container 业务分类
+					45 checkbox 工作台, Value: 0
+					46 checkbox 供应链, Value: 0
+					47 checkbox 销售, Value: 1
+					48 checkbox 生产, Value: 0
+					49 checkbox 项目, Value: 0
+					50 checkbox 行政, Value: 0
+					51 checkbox 财务, Value: 0
+					52 checkbox 报表, Value: 0
+					53 checkbox 系统, Value: 0
+				54 button Description: 展开搜索, Help: 搜索
+					55 image
+				56 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					57 image
+					58 text 2
+				59 button Description: 打开推广奖励, Help: 推广
+				60 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				61 link Description: 打开工单, Value: community.risemap.cn/support
+				62 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					63 image
+					64 text 立即订阅
+				65 button 金
+					66 text 金
+					67 image
+			68 container
+				69 button 工作台
+					70 image
+					71 text 工作台
+				74 button 新建销售退货
+					75 text 新建销售退货
+				76 button 业绩银行
+					77 text 业绩银行
+				78 button 价格策略
+					79 text 价格策略
+				80 button 新增框架协议
+					81 text 新增框架协议
+				82 button 新增特价
+					83 text 新增特价
+				84 button Goodwill订单
+					85 text Goodwill订单
+				86 button Goodwill订单详情
+					87 text Goodwill订单详情
+				88 button 销售团队
+					89 text 销售团队
+				90 button 销售目标
+					91 text 销售目标
+				92 button 销售发票
+					93 text 销售发票
+				94 button 客户管理
+					95 text 客户管理
+				96 button 名片扫描
+					97 text 名片扫描
+				98 button 联系人管理
+					99 text 联系人管理
+				144 button 销售报价
+					145 text 销售报价
+			146 container
+				147 container
+					148 text CRM客户管理
+					149 image
+					150 text 销售报价
+					151 image
+					152 heading 销售报价, Value: 1
+						153 text 销售报价
+					154 text 报价单创建、审批与转订单全流程管理
+				155 radio button 报价列表, Value: 0, ID: :r95:-list
+					156 image
+					157 text 报价列表
+				158 radio button 报价分析, Value: 1, ID: :r95:-analytics
+					159 image
+					160 text 报价分析
+				161 image
+				162 text 数据时间范围
+				163 radio button 近3月, Value: 0, ID: :r9n:-3m
+				164 radio button 近6月, Value: 1, ID: :r9n:-6m
+				165 radio button 近12月, Value: 0, ID: :r9n:-12m
+				166 radio button 自定义, Value: 0, ID: :r9n:-custom
+				167 text 2026-04 ~ 2026-09 · 6个月
+				168 image
+				169 text 报价总单数 0 6个月累计
+				170 image
+				171 text 报价总额 ¥0.00 累计金额
+				172 image
+				173 text 成交单数 0 已接受
+				174 image
+				175 text 成交金额 ¥0.00 已接受金额
+				176 image
+				177 text 整体成交率 0% 已接受/(已接受+已拒绝)
+				178 image
+				179 text 平均单价 - 单均报价金额
+				180 image
+				181 heading 公司报价与成交金额月度趋势, Value: 3
+					182 text 公司报价与成交金额月度趋势
+				183 text 报价总额 成交金额 成交率
+				184 image
+					185 text 2026-04
+					186 text 2026-05
+					187 text 2026-06
+					188 text 2026-07
+					189 text 2026-08
+					190 text 2026-09
+					191 text 0万
+					192 text 1万
+					193 text 2万
+					194 text 3万
+					195 text 4万
+					196 text 0%
+					197 text 25%
+					198 text 50%
+					199 text 75%
+					200 text 100%
+				201 text 报价总额环比: +0% 成交金额环比: +0% 最新月报价: ¥0.00万
+				202 image
+				203 heading 个人报价金额趋势, Value: 3
+					204 text 个人报价金额趋势
+				205 radio button 按人员, Value: 1, ID: :r9o:-person
+					206 image
+					207 text 按人员
+				208 radio button 按团队, Value: 0, ID: :r9o:-team
+					209 image
+					210 text 按团队
+				211 button 全部人员
+					212 image
+					213 text 全部人员
+					214 image
+				215 image
+					216 text 2026-04
+					217 text 2026-05
+					218 text 2026-06
+					219 text 2026-07
+					220 text 2026-08
+					221 text 2026-09
+				222 image
+				223 heading 个人报价与成交对比, Value: 3
+					224 text 个人 报价与成交对比
+				225 radio button 个人, Value: 1, ID: :r9p:-person
+				226 radio button 团队, Value: 0, ID: :r9p:-team
+				227 image
+					228 text 0%
+					229 text 25%
+					230 text 50%
+					231 text 75%
+					232 text 100%
+				233 image
+				234 heading 成交金额分布, Value: 3
+					235 text 成交金额分布
+				236 image
+				237 image
+				238 heading 个人报价明细, Value: 3
+					239 text 个人报价明细
+				240 radio button 个人, Value: 1, ID: :r9q:-person
+				241 radio button 团队, Value: 0, ID: :r9q:-team
+				242 table
+					243 row
+						244 cell
+							245 text 销售人员
+						246 cell
+							247 text 所属团队
+						248 cell
+							249 text 报价单数
+						250 cell
+							251 text 报价总额
+							252 image
+						253 cell
+							254 text 成交单数
+						255 cell
+							256 text 成交金额
+						257 cell
+							258 text 成交率
+						259 cell
+							260 text 平均单价
+						261 cell
+							262 text 待跟进
+					263 row
+						264 cell
+							265 text 合计
+						266 cell
+							267 text 0
+						268 cell
+							269 text ¥0.00
+						270 cell
+							271 text 0
+						272 cell
+							273 text ¥0.00
+						274 cell
+							275 text 0%
+						276 cell
+							277 text -
+						278 cell
+							279 text 0
+			142 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			143 container Notifications alt+T
+
+The focused UI element is 158 radio button 报价分析, Value: 1, ID: :r95:-analytics

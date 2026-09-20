@@ -1,0 +1,357 @@
+- generic: 销售
+- button:
+- navigation:
+  - button:
+    - generic: 销售业务
+  - button:
+    - generic: 框架销售合同
+  - button:
+    - generic: 销售订单
+  - button:
+    - generic: 收款流水
+  - button:
+    - generic: 销售发货单
+  - button:
+    - generic: 销售退货
+  - button:
+    - generic: 业绩银行
+  - button:
+    - generic: 价格策略
+  - button:
+    - generic: Goodwill订单
+  - button:
+    - generic: 销售团队
+  - button:
+    - generic: 销售目标
+  - button:
+    - generic: 销售发票
+  - button:
+    - generic: CRM客户管理
+  - button:
+    - generic: 客户管理
+  - button:
+    - generic: 联系人管理
+  - button:
+    - generic: 销售报价
+  - button:
+    - generic: 客户物料对照
+  - button:
+    - generic: 商机管理
+  - button:
+    - generic: 线索管理
+  - button:
+    - generic: 跟进记录
+  - button:
+    - generic: 公海客户
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button [pressed]:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "3"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 行政配置
+- button:
+  - generic: 客户管理配置
+- button:
+  - generic: 销售配置
+- button:
+  - generic: 库存配置
+- button:
+  - generic: 其他配置
+- button:
+  - generic: 人事配置
+- button:
+  - generic: 项目管理配置
+- button:
+  - generic: 图纸配置
+- button:
+  - generic: 生产管理配置
+- button:
+  - generic: 委外配置
+- button:
+  - generic: 引导中心
+- button:
+  - generic: 仓库管理
+- button:
+  - generic: 供应商管理
+- button:
+  - generic: 客户管理
+- main:
+  - generic: CRM客户管理
+  - generic: 客户管理
+  - heading [level=1]: 客户管理
+  - tablist:
+    - tab [selected]: 全部
+    - tab: 我负责的
+    - tab: 我参与的
+    - tab: 下属负责的
+    - tab: 下属参与的
+  - button:
+    - text: 新增客户
+  - button:
+    - text: 导入/导出
+  - button:
+    - text: 批量操作
+  - button:
+    - text: 扫描名片
+  - button:
+  - button:
+  - button:
+  - button:
+  - textbox:
+    - /placeholder: 搜索客户名称...
+  - button:
+    - text: 分类
+  - button:
+    - text: 主负责人
+  - button:
+    - text: 协同销售
+  - button:
+    - text: 客户类型
+  - button:
+    - text: 标签
+  - button:
+    - text: 状态
+  - button:
+    - text: 级别
+  - text: 按创建时间降序
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader
+        - columnheader:
+          - generic: 客户名称
+        - columnheader:
+          - generic: 主负责人
+        - columnheader:
+          - generic: 主要联系人电话
+        - columnheader:
+          - generic: 协同销售
+        - columnheader:
+          - generic: 信用额度
+        - columnheader:
+          - generic: 账期天数
+        - columnheader:
+          - generic: 红绿灯
+        - columnheader:
+          - generic: 最近跟进时间
+        - columnheader:
+          - generic: 拜访计划日期
+        - columnheader:
+          - generic: 最近交易时间
+        - columnheader:
+          - generic: 操作
+    - rowgroup:
+      - row:
+        - cell:
+          - generic: 暂无数据
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button [disabled]:
+  - button: "1"
+  - button [disabled]:
+- button:
+- region "Notifications alt+T"
+- generic: 当前
+- dialog "新增客户":
+  - heading "新增客户" [level=2]
+  - paragraph: 新增客户信息表单
+  - paragraph: 检索企业
+  - paragraph: 输入企业名称或统一社会信用代码
+  - button "客户类型":
+    - generic: 企业
+  - textbox "请输入企业名称或统一社会信用代码": 苏州澄岳自动化装备有限公司
+  - button "查询企业":
+  - button "工商信息 1/8":
+    - generic: 工商信息
+    - generic: 1/8
+  - generic: "*"
+  - generic: 客户名称
+  - textbox "请输入企业名称": 苏州澄岳自动化装备有限公司
+  - generic: 统一社会信用代码
+  - textbox "18位统一社会信用代码"
+  - generic: 法定代表人
+  - textbox "请输入法定代表人"
+  - generic: 注册资金
+  - textbox "如：1000万人民币"
+  - generic: 成立日期
+  - textbox "请选择日期"
+  - button:
+  - generic: 企业规模
+  - button "请选择企业规模":
+    - generic: 请选择企业规模
+  - generic: 公司网站
+  - textbox "如：www.example.com"
+  - generic: 经营范围
+  - textbox "请输入经营范围"
+  - button "联系人":
+    - generic: 联系人
+  - paragraph: 联系人独立维护，可随客户一次新增多位
+  - button "新增联系人":
+    - text: 新增联系人
+  - generic: "1"
+  - text: 联系人 1
+  - button "主要联系人":
+    - text: 主要联系人
+  - button "删除联系人1" [disabled]:
+  - generic: 姓名 *
+  - textbox "请输入姓名": 周启明
+  - generic: 职位
+  - textbox "请输入职位": 项目采购经理
+  - generic: 性别
+  - button "性别":
+    - generic: 请选择性别
+  - generic: 部门
+  - textbox "请输入部门": 供应链中心
+  - generic: 决策权重
+  - button "请选择决策权重":
+    - generic: 请选择决策权重
+  - generic: 备注
+  - textbox "请输入联系人备注"
+  - paragraph: 联系方式
+  - paragraph: 同一类型可添加多条
+  - button "添加联系方式":
+    - text: 添加联系方式
+  - generic: 类型
+  - generic: 标签
+  - generic: 联系方式
+  - generic: 操作
+  - button "联系方式类型":
+    - generic "手机"
+  - textbox "联系方式标签":
+    - /placeholder: 标签
+    - text: 工作手机
+  - textbox "工作手机联系方式":
+    - /placeholder: 请输入手机号码
+    - text: "13800002609"
+  - button "删除工作手机":
+  - button "联系方式类型":
+    - generic "座机"
+  - textbox "联系方式标签":
+    - /placeholder: 标签
+    - text: 办公座机
+  - textbox "办公座机联系方式":
+    - /placeholder: 请输入座机号码
+  - button "删除办公座机":
+  - button "联系方式类型":
+    - generic "邮箱"
+  - textbox "联系方式标签":
+    - /placeholder: 标签
+    - text: 工作邮箱
+  - textbox "工作邮箱联系方式":
+    - /placeholder: 请输入邮箱地址
+    - text: zhou.qiming@example.com
+  - button "删除工作邮箱":
+  - button "客户资料 4/5":
+    - generic: 客户资料
+    - generic: 4/5
+  - generic: "*"
+  - generic: 客户分类
+  - button "OEM设备客户":
+    - generic "OEM设备客户"
+    - button:
+  - button "新增客户分类":
+  - generic: 客户级别
+  - button "重点客户":
+    - generic "重点客户"
+    - button:
+  - button "新增客户等级":
+  - generic: 行业
+  - button "请选择行业":
+    - generic: 请选择行业
+  - generic: 负责人
+  - button "金 金一涛 (默认部门)":
+    - generic: 金
+    - generic: 金一涛
+    - generic: (默认部门)
+    - button:
+  - generic: 客户描述
+  - textbox "请输入客户描述": 小非标控制柜与柔性装配线集成客户
+  - button "标签与团队":
+    - generic: 标签与团队
+  - generic: 协同销售
+  - button "请搜索团队成员...":
+    - generic: 请搜索团队成员...
+  - button "开票信息 0/6":
+    - generic: 开票信息
+    - generic: 0/6
+  - generic: 发票类型
+  - button "请选择发票类型":
+    - generic: 请选择发票类型
+  - generic: 纳税人识别号
+  - textbox "纳税人识别号"
+  - generic: 开户银行
+  - textbox "请输入开户银行全称"
+  - generic: 银行账号
+  - textbox "请输入银行账号"
+  - generic: 开票地址
+  - textbox "开票地址（通常为注册地址）"
+  - generic: 开票电话
+  - textbox "开票电话"
+  - button "商务条件 0/2":
+    - generic: 商务条件
+    - generic: 0/2
+  - generic: 默认付款条件
+  - button "请选择付款条件":
+    - generic: 请选择付款条件
+  - generic: 收入确认方式
+  - button "请选择收入确认方式":
+    - generic: 请选择收入确认方式
+  - button "商务信息 4/4":
+    - generic: 商务信息
+    - generic: 4/4
+  - generic: 详细地址
+  - textbox "请输入详细地址（自动识别省市区）": 苏州市工业园区澄岳路9号
+  - generic: 省份
+  - button "江苏省":
+    - generic "江苏省"
+    - button:
+  - generic: 城市
+  - button "苏州市":
+    - generic "苏州市"
+    - button:
+  - generic: 备注
+  - textbox "请输入备注信息": 标准测试数据集 OEM-RM-20260909-A
+  - button "取消"
+  - button "创建客户"
+  - button "Close":
+    - generic: Close

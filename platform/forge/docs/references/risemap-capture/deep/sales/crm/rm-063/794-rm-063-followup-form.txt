@@ -1,0 +1,58 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/follow-ups".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/follow-ups
+	2 container
+		3 container root
+			168 container Notifications alt+T
+		169 container 新增跟进记录, ID: radix-:rgb:
+			170 heading 新增跟进记录, Value: 2, ID: radix-:rgc:
+				171 text 新增跟进记录
+			172 text 新增跟进记录表单
+			173 container
+				174 button 基本信息 0/4
+					175 text 基本信息
+					176 image
+					177 text 0
+					178 text /
+					179 text 4
+				180 text * 客户
+				181 button 搜索并选择客户
+					182 text 搜索并选择客户
+				183 text 联系人
+				184 button (disabled) 请先选择客户
+					185 text 请先选择客户
+				186 text 引用拜访计划 选择客户后可引用拜访计划 关联商机
+				187 button (disabled) 请先选择客户
+					188 text 请先选择客户
+				189 text * 跟进方式
+				190 button 请选择跟进方式
+					191 text 请选择跟进方式
+				192 button 跟进详情 0/2
+					193 text 跟进详情
+					194 image
+					195 text 0
+					196 text /
+					197 text 2
+				198 text * 跟进内容
+				199 text entry area (settable)
+				200 text 跟进结果
+				201 text field (settable)
+				202 button 下次跟进计划 0/2
+					203 text 下次跟进计划
+					204 image
+					205 text 0
+					206 text /
+					207 text 2
+				208 text 下次跟进日期
+				209 container
+					210 text field (settable)
+					211 button
+						212 image
+				213 text 下次跟进行动
+				214 text field (settable)
+			215 button 取消
+			216 button 创建
+			217 button Close
+				218 image
+				219 text Close
+
+The focused UI element is 174 button 基本信息 0/4

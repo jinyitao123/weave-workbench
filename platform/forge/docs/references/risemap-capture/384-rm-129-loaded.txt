@@ -1,0 +1,411 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/workflow/definition".
+0 AXWebArea RiseMap, URL: risemap.cn/workflow/definition
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 行政
+			5 button 收起侧边栏
+				6 image
+			7 container
+				623 button 审批中心
+					624 image
+					625 text 审批中心
+					626 image
+				627 button 我的审批
+				628 button 抄送我的
+				629 button 我发起的
+				630 button 行政申请
+				631 button 行政管理
+					632 image
+					633 text 行政管理
+					634 image
+				635 button 公司通知
+				636 button 用章管理
+				637 button 会议纪要
+				638 button 工作汇报
+				639 button 文档中心
+				640 button 固定资产
+				641 button 资质与申报
+				642 button 物料领取
+				643 button 设备维护
+				644 button 礼品管理
+				645 button 借出管理
+				646 button 车辆管理
+				647 button 人力资源
+					648 image
+					649 text 人力资源
+					650 image
+				651 button 人事工作台
+				652 button 员工档案
+				653 button 招聘管理
+				654 button 入职离职
+				655 button 薪酬福利
+				656 button 规章制度
+				657 button 通讯录
+				658 button 考勤假期
+					659 image
+					660 text 考勤假期
+					661 image
+				662 button 加班申请
+				663 button 请假管理
+				664 button 出差申请
+				665 button 考勤管理
+				666 button 考勤统计
+				667 button 流程中心
+					668 image
+					669 text 流程中心
+					670 image
+				671 button 审批记录
+				672 button 发起流程
+				673 button 流程定义
+				674 button 流程分类
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 1
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				709 button 员工档案
+					710 text 员工档案
+				711 button 招聘管理
+					712 text 招聘管理
+				713 button 入职离职
+					714 text 入职离职
+				715 button 薪酬福利
+					716 text 薪酬福利
+				717 button 规章制度
+					718 text 规章制度
+				719 button 通讯录
+					720 text 通讯录
+				721 button 加班申请
+					722 text 加班申请
+				723 button 请假管理
+					724 text 请假管理
+				725 button 出差申请
+					726 text 出差申请
+				727 button 考勤管理
+					728 text 考勤管理
+				729 button 考勤统计
+					730 text 考勤统计
+				731 button 审批记录
+					732 text 审批记录
+				733 button 发起流程
+					734 text 发起流程
+				735 button 流程定义
+					736 text 流程定义
+			737 container
+				738 container
+					739 text 流程中心
+					740 image
+					741 text 流程定义
+					742 image
+					743 heading 流程定义, Value: 1
+						744 text 流程定义
+					745 text 设计与维护流程模板，配置节点、条件与表单
+				746 button 创建流程
+					747 image
+					748 text 创建流程
+				749 button 刷新
+					750 image
+				751 button
+					752 image
+				753 button
+					754 image
+				755 image
+				756 text field (settable)
+				757 image
+				758 text field (settable)
+				759 button 全部分类
+					760 text 全部分类
+				761 button 全部状态
+					762 text 全部状态
+				763 button 全部类型
+					764 text 全部类型
+				765 button 重置
+				766 table
+					767 row
+						768 cell
+							769 text 流程编码
+						770 cell
+							771 text 流程名称
+						772 cell
+							773 text 流程分类
+						774 cell
+							775 text 版本号
+						776 cell
+							777 text 流程类型
+						778 cell
+							779 text 启用状态
+						780 cell
+							781 text 创建时间
+						782 cell
+							783 text 操作
+					784 row
+						785 cell
+							786 text QUOTATION_APPROVAL
+						787 cell
+							788 image
+							789 text 报价审批
+						790 cell
+							791 text 系统流程
+						792 cell
+							793 container
+								794 text v 1
+						795 cell
+							796 text 预置流程
+						797 cell
+							798 switch Description: 禁用, Value: 1, ID: :r1s0:
+						799 cell
+							800 text 2026-09-08
+						801 cell
+							802 button 查看
+								803 image
+							804 button 编辑
+								805 image
+					806 row
+						807 cell
+							808 text BID_PROJECT_APPROVAL
+						809 cell
+							810 image
+							811 text 投标项目审批
+						812 cell
+							813 text 系统流程
+						814 cell
+							815 container
+								816 text v 1
+						817 cell
+							818 text 预置流程
+						819 cell
+							820 switch Description: 禁用, Value: 1, ID: :r1s1:
+						821 cell
+							822 text 2026-09-08
+						823 cell
+							824 button 查看
+								825 image
+							826 button 编辑
+								827 image
+					828 row
+						829 cell
+							830 text CONTRACT_APPROVAL
+						831 cell
+							832 image
+							833 text 销售合同审批
+						834 cell
+							835 text 系统流程
+						836 cell
+							837 container
+								838 text v 1
+						839 cell
+							840 text 预置流程
+						841 cell
+							842 switch Description: 禁用, Value: 1, ID: :r1s2:
+						843 cell
+							844 text 2026-09-08
+						845 cell
+							846 button 查看
+								847 image
+							848 button 编辑
+								849 image
+					850 row
+						851 cell
+							852 text SALES_ORDER_APPROVAL
+						853 cell
+							854 image
+							855 text 销售订单审批
+						856 cell
+							857 text 系统流程
+						858 cell
+							859 container
+								860 text v 1
+						861 cell
+							862 text 预置流程
+						863 cell
+							864 switch Description: 禁用, Value: 1, ID: :r1s3:
+						865 cell
+							866 text 2026-09-08
+						867 cell
+							868 button 查看
+								869 image
+							870 button 编辑
+								871 image
+					872 row
+						873 cell
+							874 text GOODWILL_APPROVAL
+						875 cell
+							876 image
+							877 text Goodwill审批
+						878 cell
+							879 text 系统流程
+						880 cell
+							881 container
+								882 text v 1
+						883 cell
+							884 text 预置流程
+						885 cell
+							886 switch Description: 禁用, Value: 1, ID: :r1s4:
+						887 cell
+							888 text 2026-09-08
+						889 cell
+							890 button 查看
+								891 image
+							892 button 编辑
+								893 image
+					894 row
+						895 cell
+							896 text SALES_TARGET_APPROVAL
+						897 cell
+							898 image
+							899 text 销售目标审批
+						900 cell
+							901 text 系统流程
+						902 cell
+							903 container
+								904 text v 1
+						905 cell
+							906 text 预置流程
+						907 cell
+							908 switch Description: 禁用, Value: 1, ID: :r1s5:
+						909 cell
+							910 text 2026-09-08
+						911 cell
+							912 button 查看
+								913 image
+							914 button 编辑
+								915 image
+					916 row
+						917 cell
+							918 text SALES_PERFORMANCE_ENTRY_APPROVAL
+						919 cell
+							920 image
+							921 text 业绩确认审批
+						922 cell
+							923 text 系统流程
+						924 cell
+							925 container
+								926 text v 1
+						927 cell
+							928 text 预置流程
+						929 cell
+							930 switch Description: 禁用, Value: 1, ID: :r1s6:
+						931 cell
+							932 text 2026-09-08
+						933 cell
+							934 button 查看
+								935 image
+							936 button 编辑
+								937 image
+					938 row
+						939 cell
+							940 text SALES_PERFORMANCE_REBOOK_APPROVAL
+						941 cell
+							942 image
+							943 text 业绩Rebook审批
+						944 cell
+							945 text 系统流程
+						946 cell
+							947 container
+								948 text v 1
+						949 cell
+							950 text 预置流程
+						951 cell
+							952 switch Description: 禁用, Value: 1, ID: :r1s7:
+						953 cell
+							954 text 2026-09-08
+						955 cell
+							956 button 查看
+								957 image
+							958 button 编辑
+								959 image
+					960 row
+						961 cell
+							962 text FRAMEWORK_AGREEMENT_APPROVAL
+						963 cell
+							964 image
+							965 text 框架协议审批
+						966 cell
+							967 text 系统流程
+						968 cell
+							969 container
+								970 text v 1
+						971 cell
+							972 text 预置流程
+						973 cell
+							974 switch Description: 禁用, Value: 1, ID: :r1s8:
+						975 cell
+							976 text 2026-09-08
+						977 cell
+							978 button 查看
+								979 image
+							980 button 编辑
+								981 image
+					982 row
+						983 cell
+							984 text REFUND_APPLICATION_APPROVAL
+						985 cell
+							986 image
+							987 text 退款申请审批
+						988 cell
+							989 text 系统流程
+						990 cell
+							991 container
+								992 text v 1
+						993 cell
+							994 text 预置流程
+						995 cell
+							996 switch Description: 禁用, Value: 1, ID: :r1s9:
+						997 cell
+							998 text 2026-09-08
+						999 cell
+							1000 button 查看
+								1001 image
+							1002 button 编辑
+								1003 image
+				1004 text 共  71 条记录 每页
+				1005 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					1006 text 10
+				1007 text 条
+				1008 button (disabled) 上一页
+					1009 image
+				1010 button 1
+				1011 button 2
+				1012 button 3
+				1013 button 4
+				1014 button 5
+				1015 text ...
+				1016 button 8
+				1017 button 下一页
+					1018 image
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 673 button 流程定义

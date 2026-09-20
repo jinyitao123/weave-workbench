@@ -1,0 +1,114 @@
+- region "通知 alt+T"
+- banner:
+  - link "ObjectOS":
+    - /url: /_console/apps/forge
+  - generic "本平台处于预览版，功能可能调整。": 预览版
+  - generic: /
+  - button "Forge":
+    - generic: Forge
+  - generic: /
+  - link "页面":
+    - /url: /_console/apps/forge
+  - generic: /
+  - generic: 联系人管理
+  - button "搜索…":
+    - generic: 搜索…
+    - generic: ⌘
+    - text: K
+  - button "打开消息中心":
+  - link "在 Studio 中设计":
+    - /url: /_console/studio/forge/interfaces?surface=page:page_sales_contacts
+  - button "帮助与文档":
+  - button "DA":
+    - generic: DA
+- text: 区域
+- list:
+  - button "工作台":
+    - generic: 工作台
+  - button "供应链":
+    - generic: 供应链
+  - button "销售":
+    - generic: 销售
+  - button "生产":
+    - generic: 生产
+  - button "项目":
+    - generic: 项目
+  - button "行政":
+    - generic: 行政
+  - button "财务":
+    - generic: 财务
+  - button "报表":
+    - generic: 报表
+  - button "系统":
+    - generic: 系统
+- button "工作台" [expanded]:
+  - text: 工作台
+- list:
+  - link "工作台":
+    - /url: /_console/apps/forge/page/page_workbench
+    - generic: 工作台
+  - link "待办管理":
+    - /url: /_console/apps/forge/page/page_workbench
+    - generic: 待办管理
+  - link "AI 广场":
+    - /url: /_console/apps/forge/page/page_workspace_recovery_status
+    - generic: AI 广场
+  - link "引导中心":
+    - /url: /_console/apps/forge/page/page_workspace_recovery_status
+    - generic: 引导中心
+- text: 最近使用
+- button "切换侧边栏":
+  - generic: 切换侧边栏
+- main:
+  - main:
+    - button "在 Studio 中编辑":
+    - heading "联系人管理" [level=1]
+    - paragraph: 以人为中心管理客户联系人，持续跟踪任职变化和全部联系方式
+    - generic: "14"
+    - strong: CRM客户管理 / 联系人管理
+    - button "新增联系人" [disabled]
+    - button "刷新"
+    - generic: 以人为中心管理客户联系人，持续跟踪任职变化和全部联系方式
+    - heading "联系人管理" [level=1]
+    - generic: 联系人总数
+    - generic: "1"
+    - generic: 在职
+    - generic: "1"
+    - generic: 不在原公司
+    - generic: "0"
+    - generic: 关键决策人 KP
+    - generic: "0"
+    - button "全部"
+    - button "在职"
+    - button "已跳槽"
+    - button "已离职"
+    - button "已退休"
+    - button "停用"
+    - textbox "搜索姓名、公司、电话、邮箱"
+    - button "按职务筛选联系人"
+    - button "全部维护人"
+    - button "清空筛选"
+    - table:
+      - rowgroup:
+        - row "联系人 性别 职位 / 部门 所属公司 任职状态 决策权重 联系方式 维护人 操作":
+          - columnheader "联系人"
+          - columnheader "性别"
+          - columnheader "职位 / 部门"
+          - columnheader "所属公司"
+          - columnheader "任职状态"
+          - columnheader "决策权重"
+          - columnheader "联系方式"
+          - columnheader "维护人"
+          - columnheader "操作"
+      - rowgroup:
+        - row "周启明 — 项目采购经理 苏州澄岳自动化装备有限公司 — — — — —":
+          - cell "周启明"
+          - cell "—"
+          - cell "项目采购经理"
+          - cell "苏州澄岳自动化装备有限公司"
+          - cell "—"
+          - cell "—"
+          - cell "—"
+          - cell "—"
+          - cell "—"
+    - generic: 共 1 条记录 每页 20 条 · 1 / 1

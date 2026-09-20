@@ -1,0 +1,321 @@
+Browser tab: 22, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_sales_order_workspace".
+0 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_order_workspace
+	1 container root
+		2 container 通知 alt+T
+		3 container
+			4 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			5 container 本平台处于预览版，功能可能调整。
+				6 text 预览版
+			7 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			8 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			9 text 销售订单
+			10 button 搜索…
+				11 text 搜索…
+				12 text ⌘
+				13 text K
+			14 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			15 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_sales_order_workspace
+			16 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			17 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		18 container
+			19 container
+				20 text 区域
+				21 content list
+					22 button 工作台
+					23 button 供应链
+					24 button 销售
+					25 button 生产
+					26 button 项目
+					27 button 行政
+					28 button 财务
+					29 button 报表
+					30 button 系统
+			31 container
+				32 button (expanded) 工作台, Secondary Actions: Collapse
+				33 content list
+					34 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					35 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					37 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			38 text 最近使用
+			39 button 切换侧边栏
+		40 container
+			41 button 在 Studio 中编辑
+			42 heading 销售订单, Value: 1
+				43 text 销售订单
+			44 text 客户订单录入、确认、备货发货、收款进度全流程管控 02 销售业务 / 销售订单
+			45 button 下一步操作　销售发货单 ›
+			46 button 打开对象记录
+			47 button 刷新
+			48 button 新建销售订单
+			49 text 客户订单录入、确认、备货发货、收款进度全流程管控
+			50 heading 销售订单, Value: 1
+				51 text 销售订单
+			52 text 合计金额 ¥ 608,000.00 执行中订单 2 已建发货单 2 订单明细 4
+			53 button 订单列表
+			54 button 订单明细 4
+				55 text 订单明细 
+				56 text 4
+			57 text field (settable) 搜索订单
+			58 pop up button (collapsed) Description: 状态, Secondary Actions: Expand
+			59 button 范围
+			60 button 清空筛选
+			61 text 我的筛选方案：暂无方案　
+			62 button (disabled) 存为方案
+			63 table
+				64 row
+					65 cell
+						66 text 订单编号
+					67 cell
+						68 text 客户单号
+					69 cell
+						70 text 订单名称
+					71 cell
+						72 text 关联合同
+					73 cell
+						74 text 客户名称
+					75 cell
+						76 text 联系电话
+					77 cell
+						78 text 收货地址
+					79 cell
+						80 text 所属项目
+					81 cell
+						82 text 特价申请
+					83 cell
+						84 text 业务状态
+					85 cell
+						86 text 使用授信
+					87 cell
+						88 text 付款条件
+					89 cell
+						90 text 备注
+					91 cell
+						92 text 订单金额
+					93 cell
+						94 text 开票
+					95 cell
+						96 text 发货
+					97 cell
+						98 text 收款
+					99 cell
+						100 text 订单状态
+					101 cell
+						102 text 计划交货日期
+					103 cell
+						104 text 负责人
+					105 cell
+						106 text 联系人
+					107 cell
+						108 text 开单人
+					109 cell
+						110 text 操作
+				111 row
+					112 cell
+						113 button SO-CONVERT-20260909-001
+						114 container
+							115 text 部分建单  ·  部分发货  ·  已开票  ·  已收款
+					116 cell
+						117 text —
+					118 cell
+						119 text 一键转换验收销售订单
+					120 cell
+						121 text SC-CONVERT-20260909-001
+					122 cell
+						123 text 苏州澄岳自动化装备有限公司
+					124 cell
+						125 text —
+					126 cell
+						127 text 苏州市工业园区澄岳路9号
+					128 cell
+						129 text —
+					130 cell
+						131 text —
+					132 cell
+						133 text 已发货
+					134 cell
+						135 text 否
+					136 cell
+						137 text 订单生效后30天内付款
+					138 cell
+						139 text 由合同 SC-CONVERT-20260909-001 转换生成
+					140 cell
+						141 text ¥ 243,200.00
+					142 cell
+						143 container
+							144 text 100 %
+					145 cell
+						146 container
+							147 text 100 %
+					148 cell
+						149 container
+							150 text 100 %
+					151 cell
+						152 text 已发货
+					153 cell
+						154 text 2026-10-09
+					155 cell
+						156 text Dev Admin
+					157 cell
+						158 text 周启明
+					159 cell
+						160 text Dev Admin
+				161 row
+					162 cell
+						163 button SO-WF-20260909-001
+						164 container
+							165 text 未建单  ·  未发货  ·  未开票  ·  未收款
+					166 cell
+						167 text —
+					168 cell
+						169 text 工作流验收销售订单
+					170 cell
+						171 text SC-WF-20260909-001
+					172 cell
+						173 text 苏州澄岳自动化装备有限公司
+					174 cell
+						175 text —
+					176 cell
+						177 text 苏州市工业园区澄岳路9号
+					178 cell
+						179 text —
+					180 cell
+						181 text —
+					182 cell
+						183 text 执行中
+					184 cell
+						185 text 否
+					186 cell
+						187 text 订单生效后30天内付款
+					188 cell
+						189 text —
+					190 cell
+						191 text ¥ 243,200.00
+					192 cell
+						193 container
+							194 text 0 %
+					195 cell
+						196 container
+							197 text 0 %
+					198 cell
+						199 container
+							200 text 0 %
+					201 cell
+						202 text 执行中
+					203 cell
+						204 text 2026-10-09
+					205 cell
+						206 text Dev Admin
+					207 cell
+						208 text 周启明
+					209 cell
+						210 text Dev Admin
+					211 cell
+						212 button 发货建单
+				213 row
+					214 cell
+						215 button SO-WF-OVER-20260909-001
+						216 container
+							217 text 未建单  ·  未发货  ·  未开票  ·  未收款
+					218 cell
+						219 text —
+					220 cell
+						221 text 超限订单
+					222 cell
+						223 text SC-WF-20260909-001
+					224 cell
+						225 text 苏州澄岳自动化装备有限公司
+					226 cell
+						227 text —
+					228 cell
+						229 text 苏州市工业园区澄岳路9号
+					230 cell
+						231 text —
+					232 cell
+						233 text —
+					234 cell
+						235 text 草稿
+					236 cell
+						237 text 否
+					238 cell
+						239 text 订单生效后30天内付款
+					240 cell
+						241 text —
+					242 cell
+						243 text ¥ 0.00
+					244 cell
+						245 container
+							246 text 0 %
+					247 cell
+						248 container
+							249 text 0 %
+					250 cell
+						251 container
+							252 text 0 %
+					253 cell
+						254 text 草稿
+					255 cell
+						256 text 2026-10-09
+					257 cell
+						258 text Dev Admin
+					259 cell
+						260 text 周启明
+					261 cell
+						262 text Dev Admin
+					263 cell
+						264 button 提交审批
+				265 row
+					266 cell
+						267 button SO-OEM-20260912-001
+						268 container
+							269 text 未建单  ·  未发货  ·  未开票  ·  未收款
+					270 cell
+						271 text CY-PO-2026-0912-01
+					272 cell
+						273 text 澄岳自动化控制柜首批订单
+					274 cell
+						275 text CT-OEM-20260909-001
+					276 cell
+						277 text 苏州澄岳自动化装备有限公司
+					278 cell
+						279 text 13800000000
+					280 cell
+						281 text 苏州市工业园区澄岳路9号
+					282 cell
+						283 text —
+					284 cell
+						285 text —
+					286 cell
+						287 text 草稿
+					288 cell
+						289 text 否
+					290 cell
+						291 text 合同签订后30%预付，发货前付清余款
+					292 cell
+						293 text —
+					294 cell
+						295 text ¥ 121,600.00
+					296 cell
+						297 container
+							298 text 0 %
+					299 cell
+						300 container
+							301 text 0 %
+					302 cell
+						303 container
+							304 text 0 %
+					305 cell
+						306 text 草稿
+					307 cell
+						308 text 2026-10-20
+					309 cell
+						310 text Dev Admin
+					311 cell
+						312 text 周启明
+					313 cell
+						314 text Dev Admin
+					315 cell
+						316 button 提交审批
+			317 text 共  4  条记录 · 本页金额  ¥ 608,000.00 每页 20 条 · 1 / 1
+
+The focused UI element is 0 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_order_workspace

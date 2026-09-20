@@ -1,0 +1,323 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/sales".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/sales
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 系统
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 系统设置
+					10 image
+					11 text 系统设置
+					12 image
+				13 button 基础配置
+				14 button 用户与角色
+				15 button 部门管理
+				16 button 用户会话
+				17 button 审计日志
+				18 button 业务设置
+					19 image
+					20 text 业务设置
+					21 image
+				22 button 商品管理
+				23 button 财务配置
+				24 button 行政管理
+				25 button 客户管理
+				26 button 采购销售
+				27 button 库存管理
+				28 button 其他配置
+				29 button 人事配置
+				30 button 项目管理
+				31 button 图纸配置
+				32 button 生产配置
+				33 button 委外配置
+				34 button 单据打印
+				35 button 插件中心
+					36 image
+					37 text 插件中心
+				38 button 服务订阅
+					39 image
+					40 text 服务订阅
+				41 button 推广奖励
+					42 image
+					43 text 推广奖励
+				44 button 字段管理
+					45 image
+					46 text 字段管理
+			47 image
+			48 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			49 button 查看方案
+				50 image
+				51 text 查看方案
+			52 button
+				53 image
+			54 container
+				55 container 业务分类
+					56 checkbox 工作台, Value: 0
+					57 checkbox 供应链, Value: 0
+					58 checkbox 销售, Value: 0
+					59 checkbox 生产, Value: 0
+					60 checkbox 项目, Value: 0
+					61 checkbox 行政, Value: 0
+					62 checkbox 财务, Value: 0
+					63 checkbox 报表, Value: 0
+					64 checkbox 系统, Value: 1
+				65 button Description: 展开搜索, Help: 搜索
+					66 image
+				67 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					68 image
+					69 text 2
+				70 button Description: 打开推广奖励, Help: 推广
+				71 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				72 link Description: 打开工单, Value: community.risemap.cn/support
+				73 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					74 image
+					75 text 立即订阅
+				76 button 金
+					77 text 金
+					78 image
+			79 container
+				80 button 工作台
+					81 image
+					82 text 工作台
+				83 button 资金分析
+					84 text 资金分析
+				85 button 往来账款
+					86 text 往来账款
+				87 button 税务库存
+					88 text 税务库存
+				89 button 风险监控
+					90 text 风险监控
+				91 button 基础配置
+					92 text 基础配置
+				93 button 账户管理
+					94 text 账户管理
+				95 button 部门管理
+					96 text 部门管理
+				97 button 用户会话
+					98 text 用户会话
+				99 button 审计日志
+					100 text 审计日志
+				101 button 商品管理配置
+					102 text 商品管理配置
+				103 button 财务配置
+					104 text 财务配置
+				105 button 行政配置
+					106 text 行政配置
+				107 button 客户管理配置
+					108 text 客户管理配置
+				109 button 销售配置
+					110 text 销售配置
+			111 container
+				112 text 业务设置
+				113 image
+				114 text 销售配置
+				115 heading 业务设置 - 采购销售, Value: 1
+					116 text 业务设置 -  采购销售
+				117 button 商品管理
+				118 button 财务配置
+				119 button 行政管理
+				120 button 客户管理
+				121 button 采购销售
+				122 button 库存管理
+				123 button 其他配置
+				124 button 人事配置
+				125 button 项目管理
+				126 button 图纸配置
+				127 button 生产配置
+				128 button 委外配置
+				129 button 单据打印
+				130 text 管理商品分组、计量单位、结算方式、仓库等业务基础数据配置
+				131 button AI 助手
+					132 image
+					133 text AI 助手
+				134 button 采购销售
+					135 image
+					136 text 采购销售
+					137 image
+				138 button 采购付款条件
+					139 image
+					140 text 采购付款条件
+				141 button 销售付款条件
+					142 image
+					143 text 销售付款条件
+				144 button 协同销售职责
+					145 image
+					146 text 协同销售职责
+				147 button 抬头管理
+					148 image
+					149 text 抬头管理
+				150 button 报价类型
+					151 image
+					152 text 报价类型
+				153 button 报价条款
+					154 image
+					155 text 报价条款
+				156 button 合同类型
+					157 image
+					158 text 合同类型
+				159 button 合同条款模板
+					160 image
+					161 text 合同条款模板
+				162 button 验收方式
+					163 image
+					164 text 验收方式
+				165 button 验收节点模板
+					166 image
+					167 text 验收节点模板
+				168 button 应付节点模板
+					169 image
+					170 text 应付节点模板
+				171 button 采购分类
+					172 image
+					173 text 采购分类
+				174 button 退货原因
+					175 image
+					176 text 退货原因
+				177 button 线索商机
+					178 image
+					179 text 线索商机
+					205 image
+				206 button 线索来源
+					207 image
+					208 text 线索来源
+				209 button 线索状态
+					210 image
+					211 text 线索状态
+				212 button 商机阶段
+					213 image
+					214 text 商机阶段
+				215 button 商机来源
+					216 image
+					217 text 商机来源
+				181 button Goodwill 订单
+					182 image
+					183 text Goodwill 订单
+					184 image
+				185 button 赠送类型
+					186 image
+					187 text 赠送类型
+				188 button 业绩配置
+					189 image
+					190 text 业绩配置
+					191 image
+				192 button 分配原因
+					193 image
+					194 text 分配原因
+				218 text 线索来源管理
+				219 text 管理线索的获取渠道，用于线索跟踪和渠道效果分析
+				220 button 新增来源
+					221 image
+					222 text 新增来源
+				223 container 拖拽排序
+					224 image
+				225 text 1 官网注册
+				226 button 点击禁用
+				227 button
+					228 image
+				229 button
+					230 image
+				231 container 拖拽排序
+					232 image
+				233 text 2 官网咨询
+				234 button 点击禁用
+				235 button
+					236 image
+				237 button
+					238 image
+				239 container 拖拽排序
+					240 image
+				241 text 3 广告投放
+				242 button 点击禁用
+				243 button
+					244 image
+				245 button
+					246 image
+				247 container 拖拽排序
+					248 image
+				249 text 4 SEO/SEM
+				250 button 点击禁用
+				251 button
+					252 image
+				253 button
+					254 image
+				255 container 拖拽排序
+					256 image
+				257 text 5 展会获取
+				258 button 点击禁用
+				259 button
+					260 image
+				261 button
+					262 image
+				263 container 拖拽排序
+					264 image
+				265 text 6 行业活动
+				266 button 点击禁用
+				267 button
+					268 image
+				269 button
+					270 image
+				271 container 拖拽排序
+					272 image
+				273 text 7 客户转介绍
+				274 button 点击禁用
+				275 button
+					276 image
+				277 button
+					278 image
+				279 container 拖拽排序
+					280 image
+				281 text 8 电话开发
+				282 button 点击禁用
+				283 button
+					284 image
+				285 button
+					286 image
+				287 container 拖拽排序
+					288 image
+				289 text 9 陌拜开发
+				290 button 点击禁用
+				291 button
+					292 image
+				293 button
+					294 image
+				295 container 拖拽排序
+					296 image
+				297 text 10 社交媒体
+				298 button 点击禁用
+				299 button
+					300 image
+				301 button
+					302 image
+				303 container 拖拽排序
+					304 image
+				305 text 11 合作伙伴
+				306 button 点击禁用
+				307 button
+					308 image
+				309 button
+					310 image
+				311 container 拖拽排序
+					312 image
+				313 text 12 媒体报道
+				314 button 点击禁用
+				315 button
+					316 image
+				317 button
+					318 image
+				319 container 拖拽排序
+					320 image
+				321 text 13 其他
+				322 button 点击禁用
+				323 button
+					324 image
+				325 button
+					326 image
+				327 image
+				328 text 来源说明
+				329 text 线索来源用于标识线索的获取渠道（如官网咨询、展会、转介绍等），便于分析各渠道的线索转化效果。
+			203 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			204 container Notifications alt+T
+
+The focused UI element is 206 button 线索来源

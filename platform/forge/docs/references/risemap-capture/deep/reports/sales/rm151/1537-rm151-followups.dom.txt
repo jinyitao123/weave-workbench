@@ -1,0 +1,228 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 报表
+- button "收起侧边栏":
+- navigation:
+  - button "销售统计":
+    - generic: 销售统计
+  - button "采购统计":
+    - generic: 采购统计
+  - button "库存统计":
+    - generic: 库存统计
+  - button "项目统计":
+    - generic: 项目统计
+  - button "组装统计":
+    - generic: 组装统计
+  - button "财务统计":
+    - generic: 财务统计
+  - button "财务总览":
+    - generic: 财务总览
+  - button "损益分析":
+    - generic: 损益分析
+  - button "资金分析":
+    - generic: 资金分析
+  - button "往来账款":
+    - generic: 往来账款
+  - button "税务库存":
+    - generic: 税务库存
+  - button "风险监控":
+    - generic: 风险监控
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表" [pressed]:
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "成本中心":
+  - generic: 成本中心
+- button "报销管理":
+  - generic: 报销管理
+- button "新建报销":
+  - generic: 新建报销
+- button "对账单":
+  - generic: 对账单
+- button "客户对账单":
+  - generic: 客户对账单
+- button "新建客户对账":
+  - generic: 新建客户对账
+- button "供应商对账单":
+  - generic: 供应商对账单
+- button "新建供应商对账":
+  - generic: 新建供应商对账
+- button "发票总览":
+  - generic: 发票总览
+- button "销项发票":
+  - generic: 销项发票
+- button "进项发票":
+  - generic: 进项发票
+- button "开票任务":
+  - generic: 开票任务
+- button "调整记录":
+  - generic: 调整记录
+- button "销售统计":
+  - generic: 销售统计
+- main:
+  - main:
+    - paragraph: 报表中心
+    - heading "销售统计" [level=1]
+    - paragraph: 客户跟进频次、沟通方式、响应结果、执行时效与销售行为质量分析。
+    - button "导出报表":
+      - text: 导出报表
+    - navigation "销售报表维度":
+      - button "销售订单"
+      - button "销售合同"
+      - button "线索统计"
+      - button "商机统计"
+      - button "跟进记录" [active]: 跟进记录
+      - button "报价统计"
+      - button "客户统计"
+      - button "毛利分析"
+    - text: 筛选条件
+    - textbox:
+      - /placeholder: 搜索客户、跟进内容、跟进方式或销售员
+    - combobox:
+      - option "全部记录" [selected]
+      - option "我负责的"
+    - combobox:
+      - option "本月" [selected]
+      - option "本季度"
+      - option "本年度"
+    - button "刷新":
+      - text: 刷新
+    - text: 更新时间：2026/9/9 06:49:11，当前展示 跟进记录 统计数据。
+    - generic: 统计周期 2026-09-01 至 2026-09-30
+    - generic: 跟进记录
+    - button "查看跟进记录计算说明":
+    - generic: 0条
+    - generic: 本月新增 0 条
+    - generic: 已跟进客户
+    - button "查看已跟进客户计算说明":
+    - generic: 0家
+    - generic: 客户覆盖率 --
+    - generic: 有效跟进
+    - button "查看有效跟进计算说明":
+    - generic: 0条
+    - generic: 有效率 --
+    - generic: 平均跟进间隔
+    - button "查看平均跟进间隔计算说明":
+    - generic: "--天"
+    - generic: "--"
+    - heading "跟进次数与有效跟进趋势" [level=2]
+    - generic: 跟进次数
+    - generic: 有效跟进
+    - heading "跟进方式分布" [level=2]
+    - heading "跟进转化漏斗" [level=2]
+    - generic: 5 个阶段
+    - generic: "1"
+    - generic: 已触达
+    - generic: 基准
+    - generic: 0%
+    - generic: "0"
+    - generic: "2"
+    - generic: 有效沟通
+    - generic: 阶段转化 0%
+    - generic: 0%
+    - generic: "0"
+    - generic: "3"
+    - generic: 明确需求
+    - generic: 阶段转化 0%
+    - generic: 0%
+    - generic: "0"
+    - generic: "4"
+    - generic: 预约行动
+    - generic: 阶段转化 0%
+    - generic: 0%
+    - generic: "0"
+    - generic: "5"
+    - generic: 形成商机
+    - generic: 阶段转化 0%
+    - generic: 0%
+    - generic: "0"
+    - heading "跟进执行健康度" [level=2]
+    - generic: 综合评估
+    - generic: 有效跟进率
+    - generic: 0/0 有效跟进
+    - generic: "--"
+    - generic: 客户覆盖率
+    - generic: 0/0 客户
+    - generic: "--"
+    - generic: 按计划跟进
+    - generic: 0/0 及时跟进
+    - generic: "--"
+    - generic: 待跟进活动
+    - generic: 已安排下次跟进
+    - generic: 0项
+    - generic: 超期未跟进
+    - generic: 15天未跟进
+    - generic: 0家
+    - heading "重点客户跟进次数排行" [level=2]
+    - generic: TOP 5
+    - heading "跟进结果分布" [level=2]
+    - generic: 全量排行
+    - img "明确意向0，持续跟进0，待反馈0，无效沟通0，暂不考虑0":
+      - generic "明确意向 0":
+        - generic: "0"
+        - generic: 明确意向
+      - generic "持续跟进 0":
+        - generic: "0"
+        - generic: 持续跟进
+      - generic "待反馈 0":
+        - generic: "0"
+        - generic: 待反馈
+      - generic "无效沟通 0":
+        - generic: "0"
+        - generic: 无效沟通
+      - generic "暂不考虑 0":
+        - generic: "0"
+        - generic: 暂不考虑
+    - heading "销售员跟进执行排行" [level=2]
+    - generic: TOP 5
+    - heading "客户跟进间隔分布" [level=2]
+    - generic: TOP 5
+    - generic: 1天内
+    - generic: "--"
+    - generic: 2-3天
+    - generic: "--"
+    - generic: 4-7天
+    - generic: "--"
+    - generic: "4"
+    - generic: 8-14天
+    - generic: "--"
+    - generic: "5"
+    - generic: 超过14天
+    - generic: "--"
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2026-09-04

@@ -1,0 +1,204 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/subcontract/returns".
+1 AXWebArea RiseMap, URL: risemap.cn/subcontract/returns
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 生产
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 组装业务管理
+					10 image
+					11 text 组装业务管理
+					12 image
+				13 button 组装单
+				14 button 缺料待办
+				15 button 领料单
+				16 button 补料单
+				17 button 退料单
+				18 button 拆解单
+				19 button 换件单
+				20 container
+					21 button 图纸管理
+						22 image
+						23 text 图纸管理
+						24 image
+					25 button 进入图纸管理上手指南
+						26 image
+				27 button 图纸总览
+				28 button 图号档案
+				29 button 图纸评审
+				30 button 图纸发布
+				31 button 图纸变更
+				32 button 图纸发放记录
+				33 button 图纸关联查询
+				34 button 客户图纸
+				35 container
+					36 button 委外管理
+						37 image
+						38 text 委外管理
+						39 image
+					40 button 进入委外管理上手指南
+						41 image
+				42 button 委外看板
+				43 button 委外订单
+				44 button 委外发料
+				45 button 委外回厂
+				46 button 委外退料
+				47 button 委外对账
+				48 button 委外供应商
+				49 button 委外库存
+				50 button 批次追溯
+				51 button 委外未交
+				52 button 委外进货
+				53 button 委外对账单
+			54 image
+			55 text 免费试用中，还剩 8 天 — 试用期间享全部功能
+			56 button 查看方案
+				57 image
+				58 text 查看方案
+			59 button
+				60 image
+			61 container
+				62 container 业务分类
+					63 container
+						64 checkbox 工作台, Value: 0
+						65 checkbox 供应链, Value: 0
+						66 checkbox 销售, Value: 0
+						67 checkbox 生产, Value: 1
+						68 checkbox 项目, Value: 0
+						69 checkbox 行政, Value: 0
+						70 checkbox 财务, Value: 0
+						71 checkbox 报表, Value: 0
+						72 checkbox 系统, Value: 0
+				73 button Description: 展开搜索, Help: 搜索
+					74 image
+				75 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+					76 image
+					77 text 20
+				78 button Description: 打开推广奖励, Help: 推广
+				79 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				80 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				81 button 立即订阅, Help: 试用还剩 8 天 · 立即订阅享专属优惠
+					82 image
+					83 text 立即订阅
+				84 button 金
+					85 text 金
+					86 image
+			87 container
+				88 button 工作台
+					89 image
+					90 text 工作台
+				91 button 服务分析
+					92 text 服务分析
+				93 button 服务配置
+					94 text 服务配置
+				95 button 工作台
+					96 text 工作台
+				97 button 组装单
+					98 text 组装单
+				99 button 缺料待办
+					100 text 缺料待办
+				101 button 领料单
+					102 text 领料单
+				103 button 补料单
+					104 text 补料单
+				105 button 退料单
+					106 text 退料单
+				107 button 工作台
+					108 text 工作台
+				109 button 工作台
+					110 text 工作台
+				111 button 拆解单
+					112 text 拆解单
+				113 button 换件单
+					114 text 换件单
+				115 button 图纸总览
+					116 text 图纸总览
+				117 button 委外退料
+					118 text 委外退料
+			119 container
+				120 container
+					121 text 委外管理  › 委外退料
+					122 image
+					123 heading 委外退料, Value: 1
+						124 text 委外退料
+					125 text 集中管理委外余料、工程变更及错发物料的退回和入库记录
+				126 checkbox 有效退料单 0 单 不含已作废单据, Help: 筛选有效退料单, Value: 1
+					127 image
+					128 text 有效退料单
+					129 text 0
+					130 text 单
+					131 text 不含已作废单据
+				132 checkbox 待入库 0 单 已生成入库单，等待仓库入库, Help: 筛选待入库, Value: 0
+					133 image
+					134 text 待入库
+					135 text 0
+					136 text 单
+					137 text 已生成入库单，等待仓库入库
+				138 checkbox 已入库 0 单 退回物料已完成入库, Help: 筛选已入库, Value: 0
+					139 image
+					140 text 已入库
+					141 text 0
+					142 text 单
+					143 text 退回物料已完成入库
+				144 button 新建退料单
+					145 image
+					146 text 新建退料单
+				147 button 导出
+					148 image
+					149 text 导出
+				150 button 导出记录
+					151 image
+					152 text 导出记录
+				153 button
+					154 image
+				155 button 刷新
+					156 image
+				157 button
+					158 image
+				159 button
+					160 image
+				161 image
+				162 text field (settable)
+				163 button 状态
+					164 text 状态
+					165 image
+				166 button 筛选供应商...
+					167 text 筛选供应商...
+				168 button 退料原因
+					169 text 退料原因
+					170 image
+				171 table
+					172 row
+						173 cell
+							174 text 退料单号
+						175 cell
+							176 text 供应商
+						177 cell
+							178 text 关联委外订单
+						179 cell
+							180 text 退料日期
+						181 cell
+							182 text 物料概况
+						183 cell
+							184 text 退料结果
+						185 cell
+							186 text 操作
+					187 row
+						188 cell
+							189 image
+							190 text 暂无符合条件的退料记录
+				191 text 共  0 条记录 ·  0  种物料明细 · 退料  0  · 退料金额 ¥ 0 每页
+				192 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					193 text 20
+				194 text 条
+				195 button (disabled) 上一页
+					196 image
+				197 button 1
+				198 button (disabled) 下一页
+					199 image
+			200 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			201 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/subcontract/returns

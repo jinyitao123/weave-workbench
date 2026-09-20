@@ -1,0 +1,189 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/workflow/cc-to-me".
+0 AXWebArea RiseMap, URL: risemap.cn/workflow/cc-to-me
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 行政
+			5 button 收起侧边栏
+				6 image
+			7 container
+				623 button 审批中心
+					624 image
+					625 text 审批中心
+					626 image
+				627 button 我的审批
+				628 button 抄送我的
+				629 button 我发起的
+				630 button 行政申请
+				631 button 行政管理
+					632 image
+					633 text 行政管理
+					634 image
+				635 button 公司通知
+				636 button 用章管理
+				637 button 会议纪要
+				638 button 工作汇报
+				639 button 文档中心
+				640 button 固定资产
+				641 button 资质与申报
+				642 button 物料领取
+				643 button 设备维护
+				644 button 礼品管理
+				645 button 借出管理
+				646 button 车辆管理
+				647 button 人力资源
+					648 image
+					649 text 人力资源
+					650 image
+				651 button 人事工作台
+				652 button 员工档案
+				653 button 招聘管理
+				654 button 入职离职
+				655 button 薪酬福利
+				656 button 规章制度
+				657 button 通讯录
+				658 button 考勤假期
+					659 image
+					660 text 考勤假期
+					661 image
+				662 button 加班申请
+				663 button 请假管理
+				664 button 出差申请
+				665 button 考勤管理
+				666 button 考勤统计
+				667 button 流程中心
+					668 image
+					669 text 流程中心
+					670 image
+				671 button 审批记录
+				672 button 发起流程
+				673 button 流程定义
+				674 button 流程分类
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 1
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				529 button 委外看板
+					530 text 委外看板
+				531 button 委外订单
+					532 text 委外订单
+				533 button 委外发料
+					534 text 委外发料
+				535 button 委外回厂
+					536 text 委外回厂
+				537 button 委外退料
+					538 text 委外退料
+				539 button 委外对账
+					540 text 委外对账
+				541 button 委外供应商
+					542 text 委外供应商
+				543 button 委外库存
+					544 text 委外库存
+				545 button 批次追溯
+					546 text 批次追溯
+				547 button 委外未交
+					548 text 委外未交
+				549 button 委外进货
+					550 text 委外进货
+				551 button 委外对账单
+					552 text 委外对账单
+				675 button 我的审批
+					676 text 我的审批
+				677 button 抄送我的
+					678 text 抄送我的
+			679 container
+				680 container
+					681 text 审批中心
+					682 image
+					683 text 抄送我的
+					684 image
+					685 heading 抄送我的, Value: 1
+						686 text 抄送我的
+					687 text 集中查看抄送给我的审批事项，及时跟进重要业务进展
+				688 button 全部
+					689 image
+					690 text 全部
+				691 button 未读
+					692 image
+					693 text 未读
+				694 button 已读
+					695 image
+					696 text 已读
+				697 button 全部标记已读
+					698 image
+					699 text 全部标记已读
+				700 button 刷新
+					701 image
+				702 button
+					703 image
+				704 button
+					705 image
+				706 image
+				707 text field (settable)
+				708 image
+				709 text field (settable)
+				710 table
+					711 row
+						712 cell
+							713 text 阅读状态
+						714 cell
+							715 text 抄送编号
+						716 cell
+							717 text 流程名称 / 标题
+						718 cell
+							719 text 发起人
+						720 cell
+							721 text 抄送时间
+						722 cell
+							723 text 当前进度
+						724 cell
+							725 text 操作
+					726 row
+						727 cell
+							728 image
+							729 text 暂无抄送记录
+				730 text 共  0 条记录 每页
+				731 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					732 text 10
+				733 text 条
+				734 button (disabled) 上一页
+					735 image
+				736 button 1
+				737 button (disabled) 下一页
+					738 image
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 628 button 抄送我的

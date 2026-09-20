@@ -1,0 +1,220 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/compensation".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/compensation
+	2 container root
+		3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+		4 text 行政
+		5 button 收起侧边栏
+			6 image
+		7 container
+			8 button 审批中心
+				9 image
+				10 text 审批中心
+				11 image
+			12 button 我的审批
+			13 button 抄送我的
+			14 button 我发起的
+			15 button 行政申请
+			16 button 行政管理
+				17 image
+				18 text 行政管理
+				19 image
+			20 button 公司通知
+			21 button 用章管理
+			22 button 会议纪要
+			23 button 工作汇报
+			24 button 文档中心
+			25 button 固定资产
+			26 button 资质与申报
+			27 button 物料领取
+			28 button 设备维护
+			29 button 礼品管理
+			30 button 借出管理
+			31 button 车辆管理
+			32 button 人力资源
+				33 image
+				34 text 人力资源
+				35 image
+			36 button 人事工作台
+			37 button 员工档案
+			38 button 招聘管理
+			39 button 入职离职
+			40 button 薪酬福利
+			41 button 规章制度
+			42 button 通讯录
+			43 button 考勤假期
+				44 image
+				45 text 考勤假期
+				46 image
+			47 button 加班申请
+			48 button 请假管理
+			49 button 出差申请
+			50 button 考勤管理
+			51 button 考勤统计
+			52 button 流程中心
+				53 image
+				54 text 流程中心
+				55 image
+			56 button 审批记录
+			57 button 发起流程
+			58 button 流程定义
+			59 button 流程分类
+		60 image
+		61 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+		62 button 查看方案
+			63 image
+			64 text 查看方案
+		65 button
+			66 image
+		67 container
+			68 container 业务分类
+				69 checkbox 工作台, Value: 0
+				70 checkbox 供应链, Value: 0
+				71 checkbox 销售, Value: 0
+				72 checkbox 生产, Value: 0
+				73 checkbox 项目, Value: 0
+				74 checkbox 行政, Value: 1
+				75 checkbox 财务, Value: 0
+				76 checkbox 报表, Value: 0
+				77 checkbox 系统, Value: 0
+			78 button Description: 展开搜索, Help: 搜索
+				79 image
+			80 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+				81 image
+				82 text 2
+			83 button Description: 打开推广奖励, Help: 推广
+			84 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+			85 link Description: 打开工单, Value: community.risemap.cn/support
+			86 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+				87 image
+				88 text 立即订阅
+			89 button 金
+				90 text 金
+				91 image
+		92 container
+			93 button 工作台
+				94 image
+				95 text 工作台
+			96 button 物料领取
+				97 text 物料领取
+			98 button 设备维护
+				99 text 设备维护
+			100 button 礼品管理
+				101 text 礼品管理
+			102 button 借出管理
+				103 text 借出管理
+			104 button 车辆管理
+				105 text 车辆管理
+			106 button 新建公司用车申请
+				107 text 新建公司用车申请
+			108 button 新建私车公用申请
+				109 text 新建私车公用申请
+			110 button 新增车辆
+				111 text 新增车辆
+			112 button 人事工作台
+				113 text 人事工作台
+			114 button 员工档案
+				115 text 员工档案
+			116 button 招聘管理
+				117 text 招聘管理
+			118 button 候选人详情
+				119 text 候选人详情
+			120 button 入职离职
+				121 text 入职离职
+			122 button 薪酬福利
+				123 text 薪酬福利
+		124 container
+			125 container
+				126 text 人力资源
+				127 image
+				128 text 薪酬福利
+				129 image
+				130 heading 薪酬福利, Value: 1
+					131 text 薪酬福利
+				132 text 工资条、薪酬结构、社保公积金、年终奖与福利计划
+			136 radio button 我的薪酬, Value: 0, ID: :r4:-employee
+				137 image
+				138 text 我的薪酬
+			139 radio button 管理后台, Value: 1, ID: :r4:-admin
+				140 image
+				141 text 管理后台
+			172 button 薪资分析
+				173 image
+				174 text 薪资分析
+			175 button 发薪管理
+				176 image
+				177 text 发薪管理
+			178 button 上传工资单
+				179 image
+				180 text 上传工资单
+			181 button 调薪管理
+				182 image
+				183 text 调薪管理
+			184 image
+			185 text 本年度调薪 0 人次 2026年度
+			186 image
+			187 text 待审核/审核中 0 项 需要处理
+			188 image
+			189 text 平均调薪幅度 持平 含所有类型
+			190 image
+			191 text 已通知员工 0 人 通知已发布
+			192 button 新建调薪通知
+				193 image
+				194 text 新建调薪通知
+			195 button 导出
+				196 image
+				197 text 导出
+				198 image
+			199 button 刷新
+				200 image
+			201 button
+				202 image
+			203 button
+				204 image
+			205 image
+			206 text field (settable)
+			207 button 状态
+				208 text 状态
+				209 image
+			245 container
+				246 text 选择状态 全部状态
+				247 image
+				248 text 草稿 待审核 审核中 已通过 已驳回 已通知
+			210 button 调薪类型
+				211 text 调薪类型
+				212 image
+			213 table
+				214 row
+					215 cell
+						216 checkbox (settable, integer) 0
+					217 cell
+						218 text 编号
+					219 cell
+						220 text 员工
+					221 cell
+						222 text 部门
+					223 cell
+						224 text 职级
+					225 cell
+						226 text 调薪类型
+					227 cell
+						228 text 调前月薪
+					229 cell
+						230 text 调后月薪
+					231 cell
+						232 text 调薪金额
+					233 cell
+						234 text 调幅
+					235 cell
+						236 text 生效日期
+					237 cell
+						238 text 状态
+					239 cell
+						240 text 操作
+				241 row
+					242 cell
+						243 image
+						244 text 暂无调薪记录
+		170 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+		171 container Notifications alt+T
+
+The focused UI element is 207 button 状态

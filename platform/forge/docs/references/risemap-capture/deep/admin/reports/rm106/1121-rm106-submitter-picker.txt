@@ -1,0 +1,213 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/reports".
+1 AXWebArea RiseMap, URL: risemap.cn/ops/reports
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 行政
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 审批中心
+					10 image
+					11 text 审批中心
+					12 image
+				13 button 我的审批
+				14 button 抄送我的
+				15 button 我发起的
+				16 button 行政申请
+				17 button 行政管理
+					18 image
+					19 text 行政管理
+					20 image
+				21 button 公司通知
+				22 button 用章管理
+				23 button 会议纪要
+				24 button 工作汇报
+				25 button 文档中心
+				26 button 固定资产
+				27 button 资质与申报
+				28 button 物料领取
+				29 button 设备维护
+				30 button 礼品管理
+				31 button 借出管理
+				32 button 车辆管理
+				33 button 人力资源
+					34 image
+					35 text 人力资源
+					36 image
+				37 button 人事工作台
+				38 button 员工档案
+				39 button 招聘管理
+				40 button 入职离职
+				41 button 薪酬福利
+				42 button 规章制度
+				43 button 通讯录
+				44 button 考勤假期
+					45 image
+					46 text 考勤假期
+					47 image
+				48 button 加班申请
+				49 button 请假管理
+				50 button 出差申请
+				51 button 考勤管理
+				52 button 考勤统计
+				53 button 流程中心
+					54 image
+					55 text 流程中心
+					56 image
+				57 button 审批记录
+				58 button 发起流程
+				59 button 流程定义
+				60 button 流程分类
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 1
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				97 button 项目配置中心
+					98 text 项目配置中心
+				99 button 新建计划模板
+					100 text 新建计划模板
+				101 button 我的审批
+					102 text 我的审批
+				103 button 抄送我的
+					104 text 抄送我的
+				105 button 我发起的
+					106 text 我发起的
+				107 button 行政申请
+					108 text 行政申请
+				109 button 公司通知
+					110 text 公司通知
+				111 button 发布通知
+					112 text 发布通知
+				113 button 用章管理
+					114 text 用章管理
+				115 button 会议纪要
+					116 text 会议纪要
+				117 button 新建会议纪要
+					118 text 新建会议纪要
+				119 button AI 模板管理
+					120 text AI 模板管理
+				121 button 工作汇报
+					122 text 工作汇报
+				123 button 新建工作汇报
+					124 text 新建工作汇报
+			125 container
+				126 container
+					127 text 行政管理
+					128 image
+					129 text 工作汇报
+					130 image
+					131 heading 工作汇报, Value: 1
+						132 text 工作汇报
+					133 text 周期性工作汇报提交、审阅评分与组织复盘的统一入口
+				134 button 工作汇报
+				135 button 汇报规则
+					136 text 汇报规则
+				137 button 新建规则
+					138 image
+					139 text 新建规则
+				140 image
+				141 text 暂无汇报规则
+			142 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			143 container Notifications alt+T
+		144 container 新建汇报规则
+			145 heading 新建汇报规则, Value: 3, ID: :rg:
+				146 text 新建汇报规则
+			147 button 关闭
+				148 image
+			149 container
+				150 text * 规则名称
+				151 text field (settable)
+				152 text 汇报类型
+				153 button 周报
+					154 text 周报
+				155 text 提交频率
+				156 button 每周
+					157 text 每周
+				158 text 规则描述
+				159 text entry area (settable)
+				160 text 截止时间配置 每周
+				161 button 请选择
+					162 text 请选择
+				163 container
+					164 text field (settable)
+					165 button
+						166 image
+				167 text 前提交
+				168 text field (settable)
+				169 text 提交人范围类型
+				170 button 按人员
+					171 text 按人员
+				172 text 选择提交人
+				173 button 请选择提交人
+					174 text 请选择提交人
+				175 text 汇报区块
+				176 checkbox (settable, integer) Description: 工作内容, Value: 1
+				177 image
+				178 text 工作内容
+				179 checkbox (settable, integer) Description: 本周总结, Value: 1
+				180 image
+				181 text 本周总结
+				182 checkbox (settable, integer) Description: 下周计划, Value: 0
+				183 text 下周计划
+				184 checkbox (settable, integer) Description: 项目进度, Value: 0
+				185 text 项目进度
+				186 checkbox (settable, integer) Description: 问题与风险, Value: 0
+				187 text 问题与风险
+				188 checkbox (settable, integer) Description: 客户拜访, Value: 0
+				189 text 客户拜访
+				190 checkbox (settable, integer) Description: 商机跟进, Value: 0
+				191 text 商机跟进
+				192 checkbox (settable, integer) Description: KPI完成情况, Value: 0
+				193 text KPI完成情况
+				194 checkbox (settable, integer) Description: 自评分, Value: 0
+				195 text 自评分
+				196 checkbox (settable, integer) Description: 技术难题, Value: 0
+				197 text 技术难题
+				198 checkbox (settable, integer) Description: 人员动态, Value: 0
+				199 text 人员动态
+				200 checkbox (settable, integer) Description: 次日计划, Value: 0
+				201 text 次日计划
+			202 button 取消
+			203 button 保存
+		204 container
+			205 image
+			206 text field (settable)
+			207 text 金
+			208 text 金一涛
+			209 text 默认部门
+			210 text 系统管理员
+
+The focused UI element is 206 text field (settable)

@@ -1,0 +1,552 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/onboarding".
+0 AXWebArea RiseMap, URL: risemap.cn/onboarding
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 工作台
+			5 button 收起侧边栏
+				6 image
+			7 container
+				222 button 工作台
+					223 image
+					224 text 工作台
+				225 button AI 广场
+					226 image
+					227 text AI 广场
+				228 button 引导中心
+					229 image
+					230 text 引导中心
+				231 button 待办管理
+					232 image
+					233 text 待办管理
+			46 image
+			47 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			48 button 查看方案
+				49 image
+				50 text 查看方案
+			51 button
+				52 image
+			53 container
+				54 container 业务分类
+					55 checkbox 工作台, Value: 1
+					56 checkbox 供应链, Value: 0
+					57 checkbox 销售, Value: 0
+					58 checkbox 生产, Value: 0
+					59 checkbox 项目, Value: 0
+					60 checkbox 行政, Value: 0
+					61 checkbox 财务, Value: 0
+					62 checkbox 报表, Value: 0
+					63 checkbox 系统, Value: 0
+				64 button Description: 展开搜索, Help: 搜索
+					65 image
+				66 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					67 image
+					68 text 2
+				69 button Description: 打开推广奖励, Help: 推广
+				70 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				71 link Description: 打开工单, Value: community.risemap.cn/support
+				72 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					73 image
+					74 text 立即订阅
+				75 button 金
+					76 text 金
+					77 image
+			78 container
+				79 button 工作台
+					80 image
+					81 text 工作台
+				139 button 销售配置
+					140 text 销售配置
+				141 button 库存配置
+					142 text 库存配置
+				143 button 其他配置
+					144 text 其他配置
+				145 button 人事配置
+					146 text 人事配置
+				147 button 项目管理配置
+					148 text 项目管理配置
+				149 button 图纸配置
+					150 text 图纸配置
+				151 button 生产管理配置
+					152 text 生产管理配置
+				153 button 委外配置
+					154 text 委外配置
+				155 button 单据打印
+					156 text 单据打印
+				157 button 插件中心
+					158 text 插件中心
+				159 button 服务订阅管理
+					160 text 服务订阅管理
+				161 button 推广奖励
+					162 text 推广奖励
+				163 button 字段管理
+					164 text 字段管理
+				234 button 引导中心
+					235 text 引导中心
+			236 container
+				237 text 工作台
+				238 image
+				239 text 系统初始化
+				240 heading 系统初始化引导, Value: 1
+					241 text 系统初始化引导
+				242 text 首次启用系统建议按  6  个阶段、 25  个步骤依次完成。每完成一项可点"标记完成"。
+				243 image
+				244 text 总进度 0 / 25
+				245 image
+				246 text 必填进度 0 / 13
+				247 image
+				248 text 预计剩余时间 10 小时
+				249 image
+				250 text 当前阶段 阶段 1 公司主体与组织架构
+				251 image
+				252 text field (settable)
+				253 radio button 全部, Value: 1, ID: :r2j:-all
+				254 radio button 必填, Value: 0, ID: :r2j:-required
+				255 radio button 未完成, Value: 0, ID: :r2j:-pending
+				256 radio button 已完成, Value: 0, ID: :r2j:-done
+				257 button
+					258 image
+				259 image
+				260 text 阶段  1
+				261 heading 公司主体与组织架构, Value: 3
+					262 text 公司主体与组织架构
+				263 text 0  /  3 设定各模块建账日，建立法律主体、部门组织和员工花名册
+				264 button 标记完成
+					265 image
+				266 heading 完善公司主体信息, Value: 4
+					267 text 完善公司主体信息
+				268 text 必填 维护企业名称、统一社会信用代码、对公账户、Logo 等基础信息，作为后续单据抬头与开票主体。
+				269 image
+				270 text 管理员 · 财务
+				271 image
+				272 text 约  5  分钟
+				273 button 去配置
+					274 text 去配置
+					275 image
+				276 button 跳过
+				277 button 标记完成
+					278 image
+					279 text 标记完成
+				280 button 标记完成
+					281 image
+				282 heading 建立部门组织架构, Value: 4
+					283 text 建立部门组织架构
+				284 text 必填 搭建一级 / 二级部门树。审批流、数据权限、考勤分组都依赖部门结构。
+				285 image
+				286 text 管理员 · 人事
+				287 image
+				288 text 约  10  分钟
+				289 button 去配置
+					290 text 去配置
+					291 image
+				292 button 跳过
+				293 button 标记完成
+					294 image
+					295 text 标记完成
+				296 button 标记完成
+					297 image
+				298 heading 录入员工花名册, Value: 4
+					299 text 录入员工花名册
+				300 text 推荐 导入或新增在职员工档案。后续可关联到用户账号、考勤、工时与销售业绩。
+				301 image
+				302 text 人事
+				303 image
+				304 text 约  20  分钟
+				305 button 去配置
+					306 text 去配置
+					307 image
+				308 button 跳过
+				309 button 标记完成
+					310 image
+					311 text 标记完成
+				312 button
+					313 image
+				314 image
+				315 text 阶段  2
+				316 heading 用户与权限, Value: 3
+					317 text 用户与权限
+				318 text 0  /  3 创建账号、配置角色与数据权限范围
+				319 button 标记完成
+					320 image
+				321 heading 审阅 / 创建角色权限, Value: 4
+					322 text 审阅 / 创建角色权限
+				323 text 必填 系统预置 6 个角色（管理员、销售经理、财务、项目经理、仓管、普通员工）。如有特殊岗位可自建并勾选模块权限。
+				324 image
+				325 text 管理员
+				326 image
+				327 text 约  10  分钟
+				328 button 去配置
+					329 text 去配置
+					330 image
+				331 button 跳过
+				332 button 标记完成
+					333 image
+					334 text 标记完成
+				335 button 标记完成
+					336 image
+				337 heading 邀请 / 创建用户账号, Value: 4
+					338 text 邀请 / 创建用户账号
+				339 text 必填 为每位员工创建登录账号并分配角色。建议至少创建 1 名财务、1 名仓管，避免单管理员瓶颈。
+				340 image
+				341 text 管理员
+				342 image
+				343 text 约  15  分钟
+				344 button 去配置
+					345 text 去配置
+					346 image
+				347 button 跳过
+				348 button 标记完成
+					349 image
+					350 text 标记完成
+				351 button 标记完成
+					352 image
+				353 heading 配置数据权限范围, Value: 4
+					354 text 配置数据权限范围
+				355 text 推荐 为角色限定可见的产品分类、品牌、仓库范围（看 / 编辑 / 管理）。多事业部 / 多仓必做。
+				356 image
+				357 text 管理员
+				358 image
+				359 text 约  10  分钟
+				360 button 去配置
+					361 text 去配置
+					362 image
+				363 button 跳过
+				364 button 标记完成
+					365 image
+					366 text 标记完成
+				367 button
+					368 image
+				369 image
+				370 text 阶段  3
+				371 heading 业务基础数据, Value: 3
+					372 text 业务基础数据
+				373 text 0  /  7 单位、品类、仓库、商品、客户、供应商
+				374 button 标记完成
+					375 image
+				376 heading 维护计量单位, Value: 4
+					377 text 维护计量单位
+				378 text 必填 台 / 套 / 个 / 米 / kg / 箱 等。商品档案与单据数量都会引用。
+				379 image
+				380 text 仓管 · 管理员
+				381 image
+				382 text 约  5  分钟
+				383 button 去配置
+					384 text 去配置
+					385 image
+				386 button 跳过
+				387 button 标记完成
+					388 image
+					389 text 标记完成
+				390 button 标记完成
+					391 image
+				392 heading 建立产品分类体系, Value: 4
+					393 text 建立产品分类体系
+				394 text 必填 最多 5 级商品分类。会影响数据权限范围、报表汇总维度与编码规则。
+				395 image
+				396 text 产品 · 管理员
+				397 image
+				398 text 约  15  分钟
+				399 button 去配置
+					400 text 去配置
+					401 image
+				402 button 跳过
+				403 button 标记完成
+					404 image
+					405 text 标记完成
+				406 button 标记完成
+					407 image
+				408 heading 维护仓库类型, Value: 4
+					409 text 维护仓库类型
+				410 text 推荐 自有 / 自建 / 临时 / 项目仓 / 客户寄售 等分类，便于库存报表分维度统计。
+				411 image
+				412 text 仓管
+				413 image
+				414 text 约  3  分钟
+				415 button 去配置
+					416 text 去配置
+					417 image
+				418 button 跳过
+				419 button 标记完成
+					420 image
+					421 text 标记完成
+				422 button 标记完成
+					423 image
+				424 heading 建立仓库档案, Value: 4
+					425 text 建立仓库档案
+				426 text 必填 至少 1 个主仓。多仓 / 多地点企业建议把项目仓、备品备件仓也建好。
+				427 image
+				428 text 仓管
+				429 image
+				430 text 约  10  分钟
+				431 button 去配置
+					432 text 去配置
+					433 image
+				434 button 跳过
+				435 button 标记完成
+					436 image
+					437 text 标记完成
+				438 button 标记完成
+					439 image
+				440 heading 导入商品 / 物料档案, Value: 4
+					441 text 导入商品 / 物料档案
+				442 text 必填 支持 Excel 批量导入。包含规格、单位、品牌、默认价等。期初库存与销售订单都依赖该档案。
+				443 image
+				444 text 产品 · 销售
+				445 image
+				446 text 约  60  分钟
+				447 button 去配置
+					448 text 去配置
+					449 image
+				450 button 跳过
+				451 button 标记完成
+					452 image
+					453 text 标记完成
+				454 button 标记完成
+					455 image
+				456 heading 建立供应商档案, Value: 4
+					457 text 建立供应商档案
+				458 text 必填 至少 1 家可用供应商。后续询价、采购订单、应付账款都需要。
+				459 image
+				460 text 采购
+				461 image
+				462 text 约  30  分钟
+				463 button 去配置
+					464 text 去配置
+					465 image
+				466 button 跳过
+				467 button 标记完成
+					468 image
+					469 text 标记完成
+				470 button 标记完成
+					471 image
+				472 heading 建立客户档案, Value: 4
+					473 text 建立客户档案
+				474 text 必填 包含联系人、收发货地址、信用额度、税务信息。可批量导入。
+				475 image
+				476 text 销售
+				477 image
+				478 text 约  30  分钟
+				479 button 去配置
+					480 text 去配置
+					481 image
+				482 button 跳过
+				483 button 标记完成
+					484 image
+					485 text 标记完成
+				486 button
+					487 image
+				488 image
+				489 text 阶段  4
+				490 heading 期初数据建账, Value: 3
+					491 text 期初数据建账
+				492 text 0  /  6 期初库存、应收应付、银行余额、固定资产
+				493 button 标记完成
+					494 image
+				495 heading 设定系统启用日（建账基准日）, Value: 4
+					496 text 设定系统启用日（建账基准日）
+				497 text 必填 确定系统正式记账的起算日。之后录入的期初库存、应收应付、银行余额都以这一天为快照基准；早于该日的业务单据将被限制录入。建议先与财务对齐再保存。
+				498 image
+				499 text 财务 · 管理员
+				500 image
+				501 text 约  5  分钟
+				502 button 去配置
+					503 text 去配置
+					504 image
+				505 button 跳过
+				506 button 标记完成
+					507 image
+					508 text 标记完成
+				509 button 标记完成
+					510 image
+				511 heading 录入期初库存, Value: 4
+					512 text 录入期初库存
+				513 text 必填 在「入库管理」中选择「期初入库」单据类型，按仓库逐项录入或 Excel 模板批量导入。截止日 = T-1。
+				514 image
+				515 text 仓管 · 财务
+				516 image
+				517 text 约  120  分钟
+				518 button 去配置
+					519 text 去配置
+					520 image
+				521 button 跳过
+				522 button 标记完成
+					523 image
+					524 text 标记完成
+				525 button 标记完成
+					526 image
+				527 heading 录入期初应收账款, Value: 4
+					528 text 录入期初应收账款
+				529 text 推荐 把启用日之前未收回的客户欠款录入系统。如确认无未结款，也请显式标记为「已确认」。
+				530 image
+				531 text 财务
+				532 image
+				533 text 约  30  分钟
+				534 button 去配置
+					535 text 去配置
+					536 image
+				537 button 跳过
+				538 button 标记完成
+					539 image
+					540 text 标记完成
+				541 button 标记完成
+					542 image
+				543 heading 录入期初应付账款, Value: 4
+					544 text 录入期初应付账款
+				545 text 推荐 把启用日之前未支付的供应商账款录入系统。
+				546 image
+				547 text 财务
+				548 image
+				549 text 约  30  分钟
+				550 button 去配置
+					551 text 去配置
+					552 image
+				553 button 跳过
+				554 button 标记完成
+					555 image
+					556 text 标记完成
+				557 button 标记完成
+					558 image
+				559 heading 录入期初银行 / 现金余额, Value: 4
+					560 text 录入期初银行 / 现金余额
+				561 text 必填 维护各资金账户的启用日余额，作为后续银行流水起点。
+				562 image
+				563 text 财务 · 出纳
+				564 image
+				565 text 约  15  分钟
+				566 button 去配置
+					567 text 去配置
+					568 image
+				569 button 跳过
+				570 button 标记完成
+					571 image
+					572 text 标记完成
+				573 button 标记完成
+					574 image
+				575 heading 录入期初固定资产, Value: 4
+					576 text 录入期初固定资产
+				577 text 推荐 登记办公设备、车辆、生产设备等固定资产清单，含原值、累计折旧、使用部门。
+				578 image
+				579 text 财务 · 行政
+				580 image
+				581 text 约  30  分钟
+				582 button 去配置
+					583 text 去配置
+					584 image
+				585 button 跳过
+				586 button 标记完成
+					587 image
+					588 text 标记完成
+				589 button
+					590 image
+				591 image
+				592 text 阶段  5
+				593 heading 流程与模板, Value: 3
+					594 text 流程与模板
+				595 text 0  /  3 编码规则、审批流、打印与通知模板
+				596 button 标记完成
+					597 image
+				598 heading 设置单据编码规则, Value: 4
+					599 text 设置单据编码规则
+				600 text 推荐 为合同、订单、入库单、出库单等设置自定义编码（如 PO-20260101-001）。
+				601 image
+				602 text 管理员
+				603 image
+				604 text 约  15  分钟
+				605 button 去配置
+					606 text 去配置
+					607 image
+				608 button 跳过
+				609 button 标记完成
+					610 image
+					611 text 标记完成
+				612 button 标记完成
+					613 image
+				614 heading 配置审批流, Value: 4
+					615 text 配置审批流
+				616 text 推荐 请假、报销、采购、合同等关键单据的审批节点与抄送规则。
+				617 image
+				618 text 管理员
+				619 image
+				620 text 约  30  分钟
+				621 button 去配置
+					622 text 去配置
+					623 image
+				624 button 跳过
+				625 button 标记完成
+					626 image
+					627 text 标记完成
+				628 button 标记完成
+					629 image
+				630 heading 通知 / 消息渠道, Value: 4
+					631 text 通知 / 消息渠道
+				632 text 推荐 开通邮件、短信、企业微信中至少 1 个推送渠道，用于审批、预警、待办提醒。
+				633 image
+				634 text 管理员
+				635 image
+				636 text 约  10  分钟
+				637 button 去配置
+					638 text 去配置
+					639 image
+				640 button 跳过
+				641 button 标记完成
+					642 image
+					643 text 标记完成
+				644 button
+					645 image
+				646 image
+				647 text 阶段  6
+				648 heading 试跑与上线, Value: 3
+					649 text 试跑与上线
+				650 text 0  /  3 走通核心业务流程并正式上线
+				651 button 标记完成
+					652 image
+				653 heading 试跑销售流程, Value: 4
+					654 text 试跑销售流程
+				655 text 推荐 录入 1 张测试销售合同 → 出库 → 开票 → 收款，确认全链路打通。验证后可作废测试单据。
+				656 image
+				657 text 销售 · 财务
+				658 image
+				659 text 约  30  分钟
+				660 button 去配置
+					661 text 去配置
+					662 image
+				663 button 跳过
+				664 button 标记完成
+					665 image
+					666 text 标记完成
+				667 button 标记完成
+					668 image
+				669 heading 试跑采购流程, Value: 4
+					670 text 试跑采购流程
+				671 text 推荐 录入 1 张测试采购订单 → 入库 → 发票登记 → 付款，确认全链路打通。
+				672 image
+				673 text 采购 · 财务
+				674 image
+				675 text 约  30  分钟
+				676 button 去配置
+					677 text 去配置
+					678 image
+				679 button 跳过
+				680 button 标记完成
+					681 image
+					682 text 标记完成
+				683 button 标记完成
+					684 image
+				685 heading 关闭引导，正式上线, Value: 4
+					686 text 关闭引导，正式上线
+				687 text 推荐 确认所有必填项完成后，关闭工作台横幅提示，正式开始日常业务录入。
+				688 image
+				689 text 管理员
+				690 image
+				691 text 约  1  分钟
+				692 button 去配置
+					693 text 去配置
+					694 image
+				695 button 跳过
+				696 button 标记完成
+					697 image
+					698 text 标记完成
+			125 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			126 container Notifications alt+T
+
+The focused UI element is 228 button 引导中心

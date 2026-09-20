@@ -1,0 +1,39 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/suppliers".
+1 AXWebArea RiseMap, URL: risemap.cn/base/suppliers
+	2 container 新增供应商
+		3 heading 新增供应商, Value: 3, ID: :rp:
+			4 text 新增供应商
+		5 button 全屏
+			6 image
+		7 button 关闭
+			8 image
+		139 button 基本信息
+		140 button 审批流程
+			141 text 审批流程
+		142 heading 审批流程, Value: 3
+			143 image
+			144 text 审批流程
+		145 container
+			146 text 开始
+			147 text 审批
+			148 text SINGLE
+			149 text 系统管理员
+			150 text 结束
+		151 image
+		152 text 审批说明
+		153 content list
+			154 container
+				155 image
+				156 text 提交后供应商进入审批流程，审批通过后方可用于采购订单
+			157 container
+				158 image
+				159 text 审批通过前，供应商状态为"待审批"，不可用于采购订单
+		132 button 取消
+		133 button 保存草稿
+			134 image
+			135 text 保存草稿
+		136 button 提交审核
+			137 image
+			138 text 提交审核
+
+The focused UI element is 140 button 审批流程

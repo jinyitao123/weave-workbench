@@ -1,0 +1,84 @@
+Browser tab: 47, Title: "RiseMap", URL: "https://risemap.cn/after-sales/config".
+1 AXWebArea RiseMap, URL: risemap.cn/after-sales/config
+	2 container root
+		3 image 南京汇川技术研发中心有限公司
+		4 text 销售
+		5 button 收起侧边栏
+			6 image
+		7 container
+			8 button
+				9 image
+				10 image
+			11 button
+				12 image
+				13 image
+			14 button
+				15 image
+				16 image
+			17 button
+			18 button
+			19 button
+			20 button
+			21 button
+			22 button
+			23 button
+			24 button
+		25 container
+			26 checkbox 0
+			27 checkbox 0
+			28 checkbox 1
+			29 checkbox 0
+			30 checkbox 0
+			31 checkbox 0
+			32 checkbox 0
+			33 checkbox 0
+			34 checkbox 0
+			35 button
+				36 image
+			37 button (collapsed) Secondary Actions: Expand
+				38 image
+			39 button
+			40 link community.risemap.cn/
+			41 link community.risemap.cn/support
+			42 button
+				43 image
+		44 container
+			45 button
+				46 image
+			47 button
+			48 button
+			49 button
+			50 button
+			51 button
+			52 button
+			53 button
+			54 button
+			55 button
+			56 button
+			57 button
+			58 button
+			59 button
+			60 button
+		61 container
+			62 container
+				63 image
+				64 image
+				65 heading 1
+				66 button
+					67 image
+			68 button
+			69 button
+			70 button
+			71 button
+			72 button
+			73 button
+			74 button
+			75 button
+			76 button
+			77 button
+				78 image
+			79 image
+		80 button
+		81 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/after-sales/config

@@ -1,0 +1,23 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/drawing/archives".
+0 AXWebArea RiseMap, URL: risemap.cn/drawing/archives
+	1 container 高级筛选 设置多个筛选条件精确查找数据
+		2 container :ro5:
+			3 image
+			4 text 高级筛选
+			5 text 设置多个筛选条件精确查找数据
+		6 button 关闭
+			7 image
+		8 image
+		9 text 多个条件之间为"且"（AND）关系，即所有条件同时满足时才显示数据 1
+		29 button 选择字段
+			30 text 选择字段
+		31 button 删除此条件
+			32 image
+		23 button 添加筛选条件
+			24 image
+			25 text 添加筛选条件
+		26 button 清除全部
+		27 button 取消
+		28 button 确定
+
+The focused UI element is 26 button 清除全部

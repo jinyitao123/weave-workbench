@@ -1,0 +1,184 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/pricing".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/pricing
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 销售业务
+					10 image
+					11 text 销售业务
+					12 image
+				13 button 框架销售合同
+				14 button 销售订单
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+			36 image
+			37 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			38 button 查看方案
+				39 image
+				40 text 查看方案
+			41 button
+				42 image
+			43 container
+				44 container 业务分类
+					45 checkbox 工作台, Value: 0
+					46 checkbox 供应链, Value: 0
+					47 checkbox 销售, Value: 1
+					48 checkbox 生产, Value: 0
+					49 checkbox 项目, Value: 0
+					50 checkbox 行政, Value: 0
+					51 checkbox 财务, Value: 0
+					52 checkbox 报表, Value: 0
+					53 checkbox 系统, Value: 0
+				54 button Description: 展开搜索, Help: 搜索
+					55 image
+				56 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					57 image
+					58 text 2
+				59 button Description: 打开推广奖励, Help: 推广
+				60 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				61 link Description: 打开工单, Value: community.risemap.cn/support
+				62 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					63 image
+					64 text 立即订阅
+				65 button 金
+					66 text 金
+					67 image
+			68 container
+				69 button 工作台
+					70 image
+					71 text 工作台
+				72 button 待出库发货单
+					73 text 待出库发货单
+				74 button 采购退换货出库
+					75 text 采购退换货出库
+				76 button 出库明细
+					77 text 出库明细
+				78 button 框架销售合同
+					79 text 框架销售合同
+				80 button 新建合同
+					81 text 新建合同
+				82 button 销售订单
+					83 text 销售订单
+				84 button 新建销售订单
+					85 text 新建销售订单
+				86 button 收款流水
+					87 text 收款流水
+				88 button 销售发货单
+					89 text 销售发货单
+				90 button 新建发货单
+					91 text 新建发货单
+				92 button 销售退货
+					93 text 销售退货
+				94 button 新建销售退货
+					95 text 新建销售退货
+				96 button 业绩银行
+					97 text 业绩银行
+				98 button 价格策略
+					99 text 价格策略
+			100 container
+				101 container
+					102 text 销售业务
+					103 image
+					104 text 价格策略
+					105 image
+					106 heading 价格策略, Value: 1
+						107 text 价格策略
+					108 text 统一管理商品定价、折扣策略、框架协议及特价审批
+				109 button 物料定价
+					110 image
+					111 text 物料定价
+				112 button 价格组管理
+					113 image
+					114 text 价格组管理
+				115 button 框架协议价
+					116 image
+					117 text 框架协议价
+				118 button 特价审批
+					119 image
+					120 text 特价审批
+				121 button 价格调整记录
+					122 image
+					123 text 价格调整记录
+				124 button 价格历史
+					125 image
+					126 text 价格历史
+				210 image
+				211 text field (settable)
+				212 radio button 全部, Value: 1, ID: :rj:-全部
+				213 radio button 生效中, Value: 0, ID: :rj:-生效中
+				214 radio button 已过期, Value: 0, ID: :rj:-已过期
+				215 radio button 待审批, Value: 0, ID: :rj:-待审批
+				216 radio button 已终止, Value: 0, ID: :rj:-已终止
+				217 button 导出
+					218 image
+					219 text 导出
+					220 image
+				221 button 新建框架协议
+					222 image
+					223 text 新建框架协议
+				224 image
+				225 text 协议总数 0
+				226 image
+				227 text 生效中 0
+				228 image
+				229 text 待审批 0
+				230 image
+				231 text 即将到期 0
+				232 table
+					233 row
+						234 cell
+							235 checkbox (settable, integer) 0
+						236 cell
+							237 text 协议编号
+						238 cell
+							239 text 客户名称
+						240 cell
+							241 text 联系人
+						242 cell
+							243 text 生效日期 / 到期日期
+						244 cell
+							245 text 物料数量
+						246 cell
+							247 text 协议总金额
+						248 cell
+							249 text 创建人
+						250 cell
+							251 text 状态
+						252 cell
+							253 text 操作
+					254 row
+						255 cell
+							256 text 暂无匹配的框架协议
+				257 text 共  0 条记录 每页
+				258 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					259 text 20
+				260 text 条
+				261 button
+					262 image
+			208 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			209 container Notifications alt+T
+
+The focused UI element is 115 button 框架协议价

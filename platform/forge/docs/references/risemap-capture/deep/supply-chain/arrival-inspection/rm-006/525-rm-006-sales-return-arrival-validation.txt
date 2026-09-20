@@ -1,0 +1,240 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/inventory/arrival/new".
+1 AXWebArea RiseMap, URL: risemap.cn/inventory/arrival/new
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 到货检验
+					10 image
+					11 text 到货检验
+					12 image
+				13 button 到货通知
+				14 button 到货登记
+				15 button 待检验库存
+				16 button 检验单
+				17 button 检验规则
+				18 button 基础资料
+					19 image
+					20 text 基础资料
+					21 image
+				22 button 物料管理
+				23 button 物料组合
+				24 button BOM管理
+				25 button 综合物料搜索
+				26 button 供应商管理
+				27 button 产品实例追溯
+				28 button 仓库管理
+				29 button 采购管理
+					30 image
+					31 text 采购管理
+					32 image
+				33 button 采购发票
+				34 button 采购申请
+				35 button 采购待办池
+				36 button 询价管理
+				37 button 采购订单
+				38 button 采购退换货
+				39 button 供应商价格本
+				40 button 入库管理
+					41 image
+					42 text 入库管理
+					43 image
+				44 button 全部入库单
+				45 button 采购入库
+				46 button 生产入库
+				47 button 其他入库
+				48 button 期初入库
+				49 button 入库明细
+				50 button 库存管理
+					51 image
+					52 text 库存管理
+					53 image
+				54 button 库存总览
+				55 button 不合格处理
+				56 button 库存流水
+				57 button 库存锁定
+				58 button 库存盘点
+				59 button 调拨与借出
+				60 button 库存预警
+				61 button 报损单
+				62 button SN码管理
+				63 button 出库管理
+					64 image
+					65 text 出库管理
+					66 image
+				67 button 出库单列表
+				68 button 生产出库
+				69 button 其他出库
+				70 button 销售直接出库
+				71 button 待出库发货单
+				72 button 采购退换货出库
+				73 button 出库明细
+			74 image
+			75 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			76 button 查看方案
+				77 image
+				78 text 查看方案
+			79 button
+				80 image
+			81 container
+				82 container 业务分类
+					83 checkbox 工作台, Value: 0
+					84 checkbox 供应链, Value: 1
+					85 checkbox 销售, Value: 0
+					86 checkbox 生产, Value: 0
+					87 checkbox 项目, Value: 0
+					88 checkbox 行政, Value: 0
+					89 checkbox 财务, Value: 0
+					90 checkbox 报表, Value: 0
+					91 checkbox 系统, Value: 0
+				92 button Description: 展开搜索, Help: 搜索
+					93 image
+				94 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					95 image
+					96 text 2
+				97 button Description: 打开推广奖励, Help: 推广
+				98 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				99 link Description: 打开工单, Value: community.risemap.cn/support
+				100 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					101 image
+					102 text 立即订阅
+				103 button 金
+					104 text 金
+					105 image
+			106 container
+				107 button 工作台
+					108 image
+					109 text 工作台
+				128 button 采购申请
+					129 text 采购申请
+				130 button 新建采购申请
+					131 text 新建采购申请
+				132 button 采购待办池
+					133 text 采购待办池
+				134 button 询价管理
+					135 text 询价管理
+				136 button 采购订单
+					137 text 采购订单
+				278 button 新建采购订单
+					279 text 新建采购订单
+				280 button 申请付款
+					281 text 申请付款
+				282 button 采购发票
+					283 text 采购发票
+				284 button 采购退货
+					285 text 采购退货
+				286 button 新建采购退货
+					287 text 新建采购退货
+				288 button 供应商价格本
+					289 text 供应商价格本
+				290 button 到货通知
+					291 text 到货通知
+				292 button 到货登记
+					293 text 到货登记
+				294 button 新建到货登记
+					295 text 新建到货登记
+			296 container
+				297 text 库存管理
+				298 image
+				299 text 到货登记
+				300 image
+				301 text 新建退货到货登记
+				302 button
+					303 image
+				304 heading 新建退货到货登记, Value: 1
+					305 text 新建退货到货登记
+				306 text 到货单号将在保存时自动生成
+				307 button 取消
+				308 button 保存草稿
+					309 image
+					310 text 保存草稿
+				311 button 提交待检
+					312 image
+					313 text 提交待检
+				314 image
+				315 text 到货登记
+				316 image
+				317 text 待检库存
+				318 image
+				319 text 检验单
+				320 image
+				321 text 入库单
+				406 image
+				323 heading 基本信息, Value: 3
+					324 text 基本信息
+				325 container
+					326 text 到货类型  *
+				327 button 采购到货
+					328 image
+					329 text 采购到货
+				330 button 其他到货
+					331 image
+					332 text 其他到货
+				333 button 退货到货
+					334 image
+					335 text 退货到货
+				336 container
+					337 text 到货日期  *
+				338 container
+					339 text field (settable) 2026年9月8日
+					340 button
+						341 image
+					342 button
+						343 image
+				344 text 送货联系人
+				345 text field (settable)
+				346 text 联系电话
+				347 text field (settable)
+				348 text 承运方
+				349 text field (settable)
+				350 text 物流单号
+				351 text field (settable)
+				407 heading 关联销售退货单, Value: 3
+					408 text 关联销售退货单
+				409 container
+					410 text 客户  *
+				411 button 搜索客户名称...
+					412 text 搜索客户名称...
+				419 text 客户不能为空
+				413 container
+					414 text 退货单  *
+				415 button (disabled) 请先选择客户
+					416 text 请先选择客户
+				420 text 退货单不能为空
+				417 image
+				418 text 退货到货请先选择客户，再从该客户待到货的退货单中选取。
+				366 heading 关联单位, Value: 3
+					367 text 关联单位
+				401 container
+					402 image
+					403 text 供应商
+				404 button 搜索供应商名称...
+					405 text 搜索供应商名称...
+				373 heading 到货物料明细, Value: 3
+					374 text 到货物料明细
+				375 text 0  种
+				421 text 请至少添加一行到货物料
+				376 image
+				377 text 请先选择客户和退货单
+				378 heading 备注与附件, Value: 3
+					379 text 备注与附件
+				380 text 备注
+				381 text entry area (settable)
+				382 image
+				383 text 附件 （选填）
+				384 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+					385 image
+					386 text 点击或拖拽文件到此处上传
+					387 text 支持 Ctrl+V 粘贴截图
+					388 text 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+				389 container
+					390 heading 到货登记摘要, Value: 4
+						391 text 到货登记摘要
+					392 text 到货类型 退货到货 到货日期 2026-09-08 物料行数 0 到货数量 0 不含税金额 - 含税金额 - 附件数量 0  个
+			276 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			277 container Notifications alt+T
+
+The focused UI element is 311 button 提交待检

@@ -1,0 +1,208 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/customers".
+1 AXWebArea RiseMap, URL: risemap.cn/base/customers
+	2 container
+		3 container root
+			171 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			172 text 销售
+			173 button 收起侧边栏
+				174 image
+			175 container
+				176 button 销售业务
+					177 image
+					178 text 销售业务
+					179 image
+				180 button 框架销售合同
+				181 button 销售订单
+				182 button 收款流水
+				183 button 销售发货单
+				184 button 销售退货
+				185 button 业绩银行
+				186 button 价格策略
+				187 button Goodwill订单
+				188 button 销售团队
+				189 button 销售目标
+				190 button 销售发票
+				191 button CRM客户管理
+					192 image
+					193 text CRM客户管理
+					366 image
+				367 button 客户管理
+				368 button 联系人管理
+				369 button 销售报价
+				370 button 客户物料对照
+				371 button 商机管理
+				372 button 线索管理
+				373 button 跟进记录
+				374 button 公海客户
+			203 image
+			204 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			205 button 查看方案
+				206 image
+				207 text 查看方案
+			208 button
+				209 image
+			210 container
+				211 container 业务分类
+					212 checkbox 工作台, Value: 0
+					213 checkbox 供应链, Value: 0
+					214 checkbox 销售, Value: 1
+					215 checkbox 生产, Value: 0
+					216 checkbox 项目, Value: 0
+					217 checkbox 行政, Value: 0
+					218 checkbox 财务, Value: 0
+					219 checkbox 报表, Value: 0
+					220 checkbox 系统, Value: 0
+				221 button Description: 展开搜索, Help: 搜索
+					222 image
+				223 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					224 image
+					225 text 2
+				226 button Description: 打开推广奖励, Help: 推广
+				227 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				228 link Description: 打开工单, Value: community.risemap.cn/support
+				229 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					230 image
+					231 text 立即订阅
+				232 button 金
+					233 text 金
+					234 image
+			235 container
+				236 button 工作台
+					237 image
+					238 text 工作台
+				245 button 销售发货单
+					246 text 销售发货单
+				247 button 新建发货单
+					248 text 新建发货单
+				249 button 销售退货
+					250 text 销售退货
+				251 button 新建销售退货
+					252 text 新建销售退货
+				253 button 业绩银行
+					254 text 业绩银行
+				255 button 价格策略
+					256 text 价格策略
+				257 button 新增框架协议
+					258 text 新增框架协议
+				259 button 新增特价
+					260 text 新增特价
+				261 button Goodwill订单
+					262 text Goodwill订单
+				263 button Goodwill订单详情
+					264 text Goodwill订单详情
+				265 button 销售团队
+					266 text 销售团队
+				282 button 销售目标
+					283 text 销售目标
+				284 button 销售发票
+					285 text 销售发票
+				375 button 客户管理
+					376 text 客户管理
+			377 container
+				378 text CRM客户管理
+				379 image
+				380 text 客户管理
+				381 heading 客户管理, Value: 1
+					382 text 客户管理
+				383 tab group 客户负责人范围
+					384 tab (selected, settable, boolean) 全部, Value: 1
+					385 tab (selectable, settable, boolean) 我负责的, Value: 0
+					386 tab (selectable, settable, boolean) 我参与的, Value: 0
+					387 tab (selectable, settable, boolean) 下属负责的, Value: 0
+					388 tab (selectable, settable, boolean) 下属参与的, Value: 0
+				389 button 新增客户
+					390 image
+					391 text 新增客户
+				392 button 导入/导出
+					393 image
+					394 text 导入/导出
+					395 image
+				396 button 批量操作
+					397 image
+					398 text 批量操作
+					399 image
+				400 button 扫描名片
+					401 image
+					402 text 扫描名片
+				403 button
+					404 image
+				405 button 刷新
+					406 image
+				407 button
+					408 image
+				409 button
+					410 image
+				411 image
+				412 text field (settable)
+				413 button 分类
+					414 text 分类
+					415 image
+				416 button 主负责人
+					417 text 主负责人
+					418 image
+				419 button 协同销售
+					420 text 协同销售
+					421 image
+				422 button 客户类型
+					423 text 客户类型
+					424 image
+				425 button 标签
+					426 text 标签
+					427 image
+				428 button 状态
+					429 text 状态
+					430 image
+				431 button 级别
+					432 text 级别
+					433 image
+				434 container 点击清除排序
+					435 image
+					436 text 按 创建时间 降序
+					437 image
+				438 table
+					439 row
+						440 cell
+							441 checkbox (settable, integer) 0
+						442 cell
+							443 text 客户名称
+							444 image
+						445 cell
+							446 text 主负责人
+						447 cell
+							448 text 主要联系人电话
+						449 cell
+							450 text 协同销售
+						451 cell
+							452 text 信用额度
+						453 cell
+							454 text 账期天数
+						455 cell
+							456 text 红绿灯
+						457 cell
+							458 text 最近跟进时间
+							459 image
+						460 cell
+							461 text 拜访计划日期
+							462 image
+						463 cell
+							464 text 最近交易时间
+							465 image
+						466 cell
+							467 text 操作
+					468 row
+						469 cell
+							470 image
+							471 text 暂无数据
+				472 text 共  0 条记录 每页
+				473 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					474 text 20
+				475 text 条
+				476 button (disabled) 上一页
+					477 image
+				478 button 1
+				479 button (disabled) 下一页
+					480 image
+			281 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			170 container Notifications alt+T
+
+The focused UI element is 367 button 客户管理

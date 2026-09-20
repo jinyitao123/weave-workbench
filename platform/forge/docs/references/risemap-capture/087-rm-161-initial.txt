@@ -1,0 +1,141 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings".
+0 AXWebArea RiseMap, URL: risemap.cn/settings/accounts
+	1 container root
+		2 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+		3 text 系统
+		4 button 收起侧边栏
+			5 image
+		183 container
+			184 button 系统设置
+				185 image
+				186 text 系统设置
+				187 image
+			188 button 基础配置
+			189 button 用户与角色
+			190 button 部门管理
+			191 button 用户会话
+			192 button 审计日志
+			193 button 业务设置
+				194 image
+				195 text 业务设置
+				196 image
+			197 button 商品管理
+			198 button 财务配置
+			199 button 行政管理
+			200 button 客户管理
+			201 button 采购销售
+			202 button 库存管理
+			203 button 其他配置
+			204 button 人事配置
+			205 button 项目管理
+			206 button 图纸配置
+			207 button 生产配置
+			208 button 委外配置
+			209 button 单据打印
+			210 button 插件中心
+				211 image
+				212 text 插件中心
+			213 button 服务订阅
+				214 image
+				215 text 服务订阅
+			216 button 推广奖励
+				217 image
+				218 text 推广奖励
+			219 button 字段管理
+				220 image
+				221 text 字段管理
+		19 image
+		20 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+		21 button 查看方案
+			22 image
+			23 text 查看方案
+		24 button
+			25 image
+		26 container
+			27 container 业务分类
+				28 checkbox 工作台, Value: 0
+				29 checkbox 供应链, Value: 0
+				30 checkbox 销售, Value: 0
+				31 checkbox 生产, Value: 0
+				32 checkbox 项目, Value: 0
+				33 checkbox 行政, Value: 0
+				34 checkbox 财务, Value: 0
+				35 checkbox 报表, Value: 0
+				36 checkbox 系统, Value: 1
+			37 button Description: 展开搜索, Help: 搜索
+				38 image
+			39 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+				40 image
+				41 text 2
+			42 button Description: 打开推广奖励, Help: 推广
+			43 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+			44 link Description: 打开工单, Value: community.risemap.cn/support
+			45 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+				46 image
+				47 text 立即订阅
+			48 button 金
+				49 text 金
+				50 image
+		222 container
+			223 button 工作台
+				224 image
+				225 text 工作台
+			226 button 基础配置
+				227 text 基础配置
+		228 container
+			229 text 系统设置
+			230 heading 系统设置, Value: 1
+				231 text 系统设置
+			232 button (expanded) Description: 收起设置导航, Secondary Actions: Collapse
+				233 image
+			234 button 企业信息 管理企业基本信息、Logo等
+				235 image
+				236 text 企业信息
+				237 text 管理企业基本信息、Logo等
+			238 button 编码管理 业务编号生成与校验规则
+				239 image
+				240 text 编码管理
+				241 text 业务编号生成与校验规则
+			242 button 通知设置 配置系统通知和提醒规则
+				243 image
+				244 text 通知设置
+				245 text 配置系统通知和提醒规则
+			246 button 邮件配置 配置 SMTP 服务器，可选，不配置则使用官方邮件服务
+				247 image
+				248 text 邮件配置
+				249 text 配置 SMTP 服务器，可选，不配置则使用官方邮件服务
+			250 button 收件邮箱 配置进项发票收件邮箱和可见范围
+				251 image
+				252 text 收件邮箱
+				253 text 配置进项发票收件邮箱和可见范围
+			254 button 数据管理 数据备份、导入导出设置
+				255 image
+				256 text 数据管理
+				257 text 数据备份、导入导出设置
+			258 button 外观定制 自定义系统主题和界面
+				259 image
+				260 text 外观定制
+				261 text 自定义系统主题和界面
+			262 button 功能模块 启用/隐藏侧边栏模块菜单
+				263 image
+				264 text 功能模块
+				265 text 启用/隐藏侧边栏模块菜单
+			266 button 热键管理 自定义全局快捷键，提升操作效率
+				267 image
+				268 text 热键管理
+				269 text 自定义全局快捷键，提升操作效率
+			270 heading 企业基本信息, Value: 3
+				271 text 企业基本信息
+			272 text 管理公司名称、联系方式、Logo等基础资料
+			273 button 编辑信息
+				274 image
+				275 text 编辑信息
+			276 text 企业 Logo 支持  PNG / JPG / SVG ，建议透明背景 横版 Logo 3:1 ~ 4:1
+			277 image
+			278 text 用于侧边栏展开、登录页、顶栏移动端 推荐尺寸 480 × 128px（@2x），宽高比建议 3:1 ~ 4:1，透明背景 方形 Logo 1:1
+			279 image
+			280 text 用于侧边栏折叠、浏览器 Favicon、移动端紧凑场景 推荐尺寸 128 × 128px（@2x），宽高比 1:1，透明背景 企业全称 南京汇川技术研发中心有限公司 企业简称 未填写 企业英文名称 未填写 统一社会信用代码 91320115MABQBBGF5G 法定代表人 刘宇川 所在省份 江苏 所在城市 未填写 详细地址 未填写 联系电话 17201776139 联系邮箱 未填写 企业网站 未填写 企业简介 未填写
+		181 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+		182 container Notifications alt+T
+
+The focused UI element is 189 button 用户与角色

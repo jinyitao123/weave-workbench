@@ -1,0 +1,243 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/business-trip/new".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/business-trip/new
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 行政
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 审批中心
+					10 image
+					11 text 审批中心
+					12 image
+				13 button 我的审批
+				14 button 抄送我的
+				15 button 我发起的
+				16 button 行政申请
+				17 button 行政管理
+					18 image
+					19 text 行政管理
+					20 image
+				21 button 公司通知
+				22 button 用章管理
+				23 button 会议纪要
+				24 button 工作汇报
+				25 button 文档中心
+				26 button 固定资产
+				27 button 资质与申报
+				28 button 物料领取
+				29 button 设备维护
+				30 button 礼品管理
+				31 button 借出管理
+				32 button 车辆管理
+				33 button 人力资源
+					34 image
+					35 text 人力资源
+					36 image
+				37 button 人事工作台
+				38 button 员工档案
+				39 button 招聘管理
+				40 button 入职离职
+				41 button 薪酬福利
+				42 button 规章制度
+				43 button 通讯录
+				44 button 考勤假期
+					45 image
+					46 text 考勤假期
+					47 image
+				48 button 加班申请
+				49 button 请假管理
+				50 button 出差申请
+				51 button 考勤管理
+				52 button 考勤统计
+				53 button 流程中心
+					54 image
+					55 text 流程中心
+					56 image
+				57 button 审批记录
+				58 button 发起流程
+				59 button 流程定义
+				60 button 流程分类
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 1
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				99 button 人事工作台
+					100 text 人事工作台
+				101 button 员工档案
+					102 text 员工档案
+				103 button 招聘管理
+					104 text 招聘管理
+				105 button 候选人详情
+					106 text 候选人详情
+				107 button 入职离职
+					108 text 入职离职
+				109 button 薪酬福利
+					110 text 薪酬福利
+				111 button 福利发放
+					112 text 福利发放
+				113 button 规章制度
+					114 text 规章制度
+				115 button 人事配置
+					116 text 人事配置
+				117 button 通讯录
+					118 text 通讯录
+				119 button 加班申请
+					120 text 加班申请
+				121 button 请假管理
+					122 text 请假管理
+				123 button 出差申请
+					124 text 出差申请
+				201 button 新建出差申请
+					202 text 新建出差申请
+			203 container
+				204 button
+					205 image
+				206 button 出差管理
+				207 image
+				208 text 新建出差申请
+				209 heading 基本信息, Value: 2
+					210 image
+					211 text 基本信息
+				212 container
+					213 text 出差事由  *
+				214 text entry area (settable)
+				215 text 常用模板：
+				216 button 拜访客户对接需求
+				217 button 技术方案评审
+				218 button 客户项目交付验收
+				219 button 参加行业展会
+				220 button 供应商考察
+				221 container
+					222 text 关联客户  （选填，可关联多个客户）
+				223 button 搜索并选择客户...
+					224 text 搜索并选择客户...
+				225 container
+					226 text 出发日期  *
+				227 container
+					228 text field (settable)
+					229 button
+						230 image
+				231 container
+					232 text 返回日期  *
+				233 container
+					234 text field (settable)
+					235 button
+						236 image
+				237 text 交通方式
+				238 button 飞机
+					239 image
+					240 text 飞机
+				241 button 高铁
+					242 image
+					243 text 高铁
+				244 button 火车
+					245 image
+					246 text 火车
+				247 button 自驾
+					248 image
+					249 text 自驾
+				250 button 大巴
+					251 image
+					252 text 大巴
+				253 button 其他
+					254 image
+					255 text 其他
+				256 container
+					257 text 同行人员  （选填，可多选）
+				258 button 请选择同行人员
+					259 text 请选择同行人员
+				260 text 备注
+				261 text entry area (settable)
+				262 heading 费用预估, Value: 2
+					263 image
+					264 text 费用预估
+				265 button 添加费用项
+					266 image
+					267 text 添加费用项
+				268 text 费用类别 说明 金额 (元)
+				269 button 交通费
+					270 text 交通费
+				271 text field (settable)
+				272 stepper (settable, integer) 0
+				273 button
+					274 image
+				275 button 住宿费
+					276 text 住宿费
+				277 text field (settable)
+				278 stepper (settable, integer) 0
+				279 button
+					280 image
+				281 button 餐饮费
+					282 text 餐饮费
+				283 text field (settable)
+				284 stepper (settable, integer) 0
+				285 button
+					286 image
+				287 button 市内交通
+					288 text 市内交通
+				289 text field (settable)
+				290 stepper (settable, integer) 0
+				291 button
+					292 image
+				293 button 其他费用
+					294 text 其他费用
+				295 text field (settable)
+				296 stepper (settable, integer) 0
+				297 button
+					298 image
+				299 text 合计预估: ¥  0
+				300 heading 行程安排 *, Value: 2
+					301 image
+					302 text 行程安排 *
+				303 button 添加行程
+					304 image
+					305 text 添加行程
+				306 image
+				307 text 暂无行程安排，点击"添加行程"录入出发/到达时间与起点/终点
+				308 image
+				309 text 出差申请提交后将发送至直属上级审批。出差完成后请及时提交差旅报销。
+				310 button 取消
+				311 button 保存草稿
+					312 image
+					313 text 保存草稿
+				314 button 提交申请
+					315 image
+					316 text 提交申请
+			199 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/hr/business-trip/new

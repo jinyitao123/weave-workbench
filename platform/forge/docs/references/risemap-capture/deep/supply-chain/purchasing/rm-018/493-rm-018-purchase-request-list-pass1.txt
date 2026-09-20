@@ -1,0 +1,247 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/purchase/requests".
+1 AXWebArea RiseMap, URL: risemap.cn/purchase/requests
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 到货检验
+					10 image
+					11 text 到货检验
+					12 image
+				13 button 到货通知
+				14 button 到货登记
+				15 button 待检验库存
+				16 button 检验单
+				17 button 检验规则
+				18 button 基础资料
+					19 image
+					20 text 基础资料
+					21 image
+				22 button 物料管理
+				23 button 物料组合
+				24 button BOM管理
+				25 button 综合物料搜索
+				26 button 供应商管理
+				27 button 产品实例追溯
+				28 button 仓库管理
+				29 button 采购管理
+					30 image
+					31 text 采购管理
+					32 image
+				33 button 采购发票
+				34 button 采购申请
+				35 button 采购待办池
+				36 button 询价管理
+				37 button 采购订单
+				38 button 采购退换货
+				39 button 供应商价格本
+				40 button 入库管理
+					41 image
+					42 text 入库管理
+					43 image
+				44 button 全部入库单
+				45 button 采购入库
+				46 button 生产入库
+				47 button 其他入库
+				48 button 期初入库
+				49 button 入库明细
+				50 button 库存管理
+					51 image
+					52 text 库存管理
+					53 image
+				54 button 库存总览
+				55 button 不合格处理
+				56 button 库存流水
+				57 button 库存锁定
+				58 button 库存盘点
+				59 button 调拨与借出
+				60 button 库存预警
+				61 button 报损单
+				62 button SN码管理
+				63 button 出库管理
+					64 image
+					65 text 出库管理
+					66 image
+				67 button 出库单列表
+				68 button 生产出库
+				69 button 其他出库
+				70 button 销售直接出库
+				71 button 待出库发货单
+				72 button 采购退换货出库
+				73 button 出库明细
+			74 image
+			75 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			76 button 查看方案
+				77 image
+				78 text 查看方案
+			79 button
+				80 image
+			81 container
+				82 container 业务分类
+					83 checkbox 工作台, Value: 0
+					84 checkbox 供应链, Value: 1
+					85 checkbox 销售, Value: 0
+					86 checkbox 生产, Value: 0
+					87 checkbox 项目, Value: 0
+					88 checkbox 行政, Value: 0
+					89 checkbox 财务, Value: 0
+					90 checkbox 报表, Value: 0
+					91 checkbox 系统, Value: 0
+				92 button Description: 展开搜索, Help: 搜索
+					93 image
+				94 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					95 image
+					96 text 2
+				97 button Description: 打开推广奖励, Help: 推广
+				98 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				99 link Description: 打开工单, Value: community.risemap.cn/support
+				100 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					101 image
+					102 text 立即订阅
+				103 button 金
+					104 text 金
+					105 image
+			106 container
+				107 button 工作台
+					108 image
+					109 text 工作台
+				110 button 往来账款
+					111 text 往来账款
+				112 button 税务库存
+					113 text 税务库存
+				114 button 风险监控
+					115 text 风险监控
+				116 button 基础配置
+					117 text 基础配置
+				118 button 仓库管理
+					119 text 仓库管理
+				120 button 物料管理
+					121 text 物料管理
+				122 button 供应商管理
+					123 text 供应商管理
+				124 button 物料组合
+					125 text 物料组合
+				126 button 新建物料组合
+					127 text 新建物料组合
+				128 button BOM管理
+					129 text BOM管理
+				130 button 新建BOM
+					131 text 新建BOM
+				132 button 综合物料搜索
+					133 text 综合物料搜索
+				134 button 产品实例追溯
+					135 text 产品实例追溯
+				136 button 采购申请
+					137 text 采购申请
+			138 container
+				139 container
+					140 text 采购管理
+					141 image
+					142 text 采购申请
+					143 image
+					144 heading 采购申请, Value: 1
+						145 text 采购申请
+					146 text 发起采购申请、审批流转、转询价/订单全流程跟踪
+					147 button 下一步操作 采购待办池, Help: 前往采购管理 · 采购待办池
+						148 text 下一步操作
+						149 text 采购待办池
+						150 image
+				151 button 申请列表
+					152 image
+					153 text 申请列表
+				154 button 物料明细
+					155 image
+					156 text 物料明细
+				157 button 新建申请
+					158 image
+					159 text 新建申请
+				160 button 导入/导出
+					161 image
+					162 text 导入/导出
+					163 image
+				164 button
+					165 image
+				166 button 刷新
+					167 image
+				168 button
+					169 image
+				170 button
+					171 image
+				172 image
+				173 text field (settable)
+				174 button 状态
+					175 image
+					176 text 状态
+					177 image
+				178 container
+					179 button
+						180 image
+					181 text field (settable)
+					182 text ~
+					183 text field (settable)
+				184 table
+					185 row
+						186 cell
+							187 checkbox (settable, integer) 0
+						188 cell
+							189 text 申请编号
+							190 image
+						191 cell
+							192 text 申请标题
+							193 image
+						194 cell
+							195 text 优先级
+							196 image
+						197 cell
+							198 text 关联项目
+						199 cell
+							200 text 关联客户
+						201 cell
+							202 text 负责人
+							203 image
+						204 cell
+							205 text 物料数
+						206 cell
+							207 text 总数量
+						208 cell
+							209 text 预估含税金额
+							210 image
+						211 cell
+							212 text 币种
+						213 cell
+							214 text 期望到货日期
+							215 image
+						216 cell
+							217 text 建议供应商
+						218 cell
+							219 text 采购原因
+						220 cell
+							221 text 备注
+						222 cell
+							223 text 状态
+							224 image
+						225 cell
+							226 text 申请日期
+							227 image
+						228 cell
+							229 text 操作
+					230 row
+						231 cell
+							232 image
+							233 text 暂无采购申请
+				234 text 共  0 条记录 每页
+				235 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					236 text 20
+				237 text 条
+				238 button (disabled) 上一页
+					239 image
+				240 button 1
+				241 button (disabled) 下一页
+					242 image
+			243 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			244 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/purchase/requests

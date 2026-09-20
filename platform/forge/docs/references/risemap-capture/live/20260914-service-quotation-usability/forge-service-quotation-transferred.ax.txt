@@ -1,0 +1,363 @@
+Browser tab: 35, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_service_quotations".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_service_quotations
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 服务报价单
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_service_quotations
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 服务报价单, Value: 1
+				44 text 服务报价单
+			45 text 集中管理服务报价、客户确认和报价转结算 22 服务管理  /  服务报价单 新增报价请在已完工服务工单中生成，列表用于客户确认和转结算
+			46 button 刷新
+			47 text 集中管理服务报价、客户确认和报价转结算
+			48 heading 服务报价单, Value: 1
+				49 text 服务报价单
+			50 text field (settable) 报价单号 / 工单号 / 客户 / 联系人
+			51 text 全部状态
+			52 button 清空筛选
+			53 table
+				54 row
+					55 cell
+						56 text 报价单号
+					57 cell
+						58 text 工单号
+					59 cell
+						60 text 客户
+					61 cell
+						62 text 联系人
+					63 cell
+						64 text 报价金额
+					65 cell
+						66 text 状态
+					67 cell
+						68 text 有效期至
+					69 cell
+						70 text 操作
+				71 row
+					72 cell
+						73 text SQ-20260913160232
+					74 cell
+						75 text WO-FLOW-20260913160231
+					76 cell
+						77 text 苏州澄岳自动化装备有限公司
+					78 cell
+						79 text 周启明
+					80 cell
+						81 text ¥ 6,800.00
+					82 cell
+						83 text 已确认
+					84 cell
+						85 text 2026-09-30
+					86 cell
+						87 button 转结算
+				88 row
+					89 cell
+						90 text SQ-20260913155754
+					91 cell
+						92 text WO-FLOW-20260913155753
+					93 cell
+						94 text 苏州澄岳自动化装备有限公司
+					95 cell
+						96 text 周启明
+					97 cell
+						98 text ¥ 6,800.00
+					99 cell
+						100 text 已确认
+					101 cell
+						102 text 2026-09-30
+					103 cell
+						104 button 转结算
+				105 row
+					106 cell
+						107 text SQ-20260913174536
+					108 cell
+						109 text WO-FORGE-20260914014356
+					110 cell
+						111 text 苏州澄岳自动化装备有限公司
+					112 cell
+						113 text 周启明
+					114 cell
+						115 text ¥ 6,800.00
+					116 cell
+						117 text 已转结算
+					118 cell
+						119 text 2026-09-30
+					120 cell
+						121 text 已转结算
+				122 row
+					123 cell
+						124 text SQ-20260913163950
+					125 cell
+						126 text WO-FLOW-20260913163949
+					127 cell
+						128 text 苏州澄岳自动化装备有限公司
+					129 cell
+						130 text 周启明
+					131 cell
+						132 text ¥ 6,800.00
+					133 cell
+						134 text 已确认
+					135 cell
+						136 text 2026-09-30
+					137 cell
+						138 button 转结算
+				139 row
+					140 cell
+						141 text SQ-20260913173701
+					142 cell
+						143 text WO-FLOW-20260913173701
+					144 cell
+						145 text 苏州澄岳自动化装备有限公司
+					146 cell
+						147 text 周启明
+					148 cell
+						149 text ¥ 6,800.00
+					150 cell
+						151 text 已确认
+					152 cell
+						153 text 2026-09-30
+					154 cell
+						155 button 转结算
+				156 row
+					157 cell
+						158 text SQ-20260913174640
+					159 cell
+						160 text WO-FLOW-20260913174640
+					161 cell
+						162 text 苏州澄岳自动化装备有限公司
+					163 cell
+						164 text 周启明
+					165 cell
+						166 text ¥ 6,800.00
+					167 cell
+						168 text 已确认
+					169 cell
+						170 text 2026-09-30
+					171 cell
+						172 button 转结算
+				173 row
+					174 cell
+						175 text SQ-20260913152606
+					176 cell
+						177 text WO-FLOW-20260913152606
+					178 cell
+						179 text 苏州澄岳自动化装备有限公司
+					180 cell
+						181 text 周启明
+					182 cell
+						183 text ¥ 6,800.00
+					184 cell
+						185 text 已转结算
+					186 cell
+						187 text 2026-09-30
+					188 cell
+						189 text 已转结算
+				190 row
+					191 cell
+						192 text SQ-20260913172010
+					193 cell
+						194 text WO-FLOW-20260913172010
+					195 cell
+						196 text 苏州澄岳自动化装备有限公司
+					197 cell
+						198 text 周启明
+					199 cell
+						200 text ¥ 6,800.00
+					201 cell
+						202 text 已确认
+					203 cell
+						204 text 2026-09-30
+					205 cell
+						206 button 转结算
+				207 row
+					208 cell
+						209 text SQ-20260913160120
+					210 cell
+						211 text WO-FLOW-20260913155720
+					212 cell
+						213 text 苏州澄岳自动化装备有限公司
+					214 cell
+						215 text 周启明
+					216 cell
+						217 text ¥ 6,800.00
+					218 cell
+						219 text 草稿
+					220 cell
+						221 text 2026-09-30
+					222 cell
+						223 button 确认报价
+				224 row
+					225 cell
+						226 text SQ-20260913165058
+					227 cell
+						228 text WO-FLOW-20260913165058
+					229 cell
+						230 text 苏州澄岳自动化装备有限公司
+					231 cell
+						232 text 周启明
+					233 cell
+						234 text ¥ 6,800.00
+					235 cell
+						236 text 已确认
+					237 cell
+						238 text 2026-09-30
+					239 cell
+						240 button 转结算
+				241 row
+					242 cell
+						243 text SQ-20260913165210
+					244 cell
+						245 text WO-FLOW-20260913165210
+					246 cell
+						247 text 苏州澄岳自动化装备有限公司
+					248 cell
+						249 text 周启明
+					250 cell
+						251 text ¥ 6,800.00
+					252 cell
+						253 text 已确认
+					254 cell
+						255 text 2026-09-30
+					256 cell
+						257 button 转结算
+				258 row
+					259 cell
+						260 text SQ-20260913163915
+					261 cell
+						262 text WO-FLOW-20260913163915
+					263 cell
+						264 text 苏州澄岳自动化装备有限公司
+					265 cell
+						266 text 周启明
+					267 cell
+						268 text ¥ 6,800.00
+					269 cell
+						270 text 已确认
+					271 cell
+						272 text 2026-09-30
+					273 cell
+						274 button 转结算
+				275 row
+					276 cell
+						277 text SQ-20260913160448
+					278 cell
+						279 text WO-FLOW-20260913160448
+					280 cell
+						281 text 苏州澄岳自动化装备有限公司
+					282 cell
+						283 text 周启明
+					284 cell
+						285 text ¥ 6,800.00
+					286 cell
+						287 text 已确认
+					288 cell
+						289 text 2026-09-30
+					290 cell
+						291 button 转结算
+				292 row
+					293 cell
+						294 text SQ-20260913170619
+					295 cell
+						296 text WO-FLOW-20260913170619
+					297 cell
+						298 text 苏州澄岳自动化装备有限公司
+					299 cell
+						300 text 周启明
+					301 cell
+						302 text ¥ 6,800.00
+					303 cell
+						304 text 已确认
+					305 cell
+						306 text 2026-09-30
+					307 cell
+						308 button 转结算
+				309 row
+					310 cell
+						311 text SQ-20260913165007
+					312 cell
+						313 text WO-FLOW-20260913165007
+					314 cell
+						315 text 苏州澄岳自动化装备有限公司
+					316 cell
+						317 text 周启明
+					318 cell
+						319 text ¥ 6,800.00
+					320 cell
+						321 text 已确认
+					322 cell
+						323 text 2026-09-30
+					324 cell
+						325 button 转结算
+				326 row
+					327 cell
+						328 text SQ-20260913161537
+					329 cell
+						330 text WO-FLOW-20260913161536
+					331 cell
+						332 text 苏州澄岳自动化装备有限公司
+					333 cell
+						334 text 周启明
+					335 cell
+						336 text ¥ 6,800.00
+					337 cell
+						338 text 已确认
+					339 cell
+						340 text 2026-09-30
+					341 cell
+						342 button 转结算
+				343 row
+					344 cell
+						345 text SQ-20260913163609
+					346 cell
+						347 text WO-FLOW-20260913155707
+					348 cell
+						349 text 苏州澄岳自动化装备有限公司
+					350 cell
+						351 text 周启明
+					352 cell
+						353 text ¥ 6,800.00
+					354 cell
+						355 text 已转结算
+					356 cell
+						357 text 2026-09-30
+					358 cell
+						359 text 已转结算
+			360 text 共  17  条记录 每页 20 条 · 1 / 1
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_service_quotations

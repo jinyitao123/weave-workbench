@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_purchase_arrival_notice",
+  "archetype": "task_workspace",
+  "reviewedRevision": "8f4a80bd2951311e9c1390c8fe35daed550f6747",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/purchase-arrival-notice.page.ts": "8f4346433c47f5b98e97a7b1feabb627040432a9fb4af0a44e3b6685a0a1946a",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "3d6e283d1c59fc11809c1aa6a66f62195bcfee413f522eae831a8370ae9116e1",
+    "apps/forge-objectstack/src/actions/procurement.action.ts": "829804443cc5e6a77ec21c541ad5bf8c50220974c99bd1191c9119e0add5b54d",
+    "docs/forge-page-polish-baseline.md": "87391dcd1a7e8feefa96b358d42815d22e0eedebf578d0ff0e470550b0d45eb4"
+  },
+  "environment": { "forgeUrl": "http://localhost:4495", "database": "file:.objectstack/supply-procurement-batch1.sqlite", "materials": "PO-1789546200198-AN-001" },
+  "checks": {
+    "replication": { "status": "blocked", "notes": "已实时核对 RISEMAP 列表字段和筛选；当前租户为空，多通知合并缺少可办理材料。", "evidence": ["docs/forge-arrival-notice-page-contract-20260916.md"] },
+    "visual": { "status": "pending", "notes": "实现者完成桌面和 390x844 首屏检查，页面无横向外溢；缺少落盘截图并待独立复核。", "evidence": [] },
+    "interaction": { "status": "pass", "notes": "选择单条通知后页头动作启用并进入真实到货登记表单。", "evidence": ["docs/forge-arrival-notice-page-contract-20260916.md"] },
+    "business": { "status": "pass", "notes": "同一通知完成到货、待检、检验和入库来源回溯。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/supply-receipt-browser-readback-20260916.json"] }
+  },
+  "visualEvidence": { "desktop": { "width": 1440, "height": 900, "evidence": [] }, "narrow": { "width": 390, "height": 844, "evidence": [] }, "reference": [], "populated": [], "empty": [], "form": [], "error": [] },
+  "requirements": [{ "id": "REQ-AN-001", "status": "pass", "steps": "选择到货通知并进入登记", "expected": "只对一条已选择通知办理", "observed": "动作启用、来源订单与物料正确带出", "evidence": ["docs/forge-arrival-notice-page-contract-20260916.md"] }],
+  "review": { "implementer": "Codex /root", "reviewer": "", "reviewedAt": "2026-09-16", "status": "pending", "evidence": [] }
+}

@@ -1,0 +1,210 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 生产
+- button "收起侧边栏":
+- navigation:
+  - button "组装业务管理":
+    - generic: 组装业务管理
+  - button "组装单":
+    - generic: 组装单
+  - button "缺料待办":
+    - generic: 缺料待办
+  - button "领料单":
+    - generic: 领料单
+  - button "补料单":
+    - generic: 补料单
+  - button "退料单":
+    - generic: 退料单
+  - button "拆解单":
+    - generic: 拆解单
+  - button "换件单":
+    - generic: 换件单
+  - button "图纸管理":
+    - generic: 图纸管理
+  - button "进入图纸管理上手指南":
+  - button "图纸总览":
+    - generic: 图纸总览
+  - button "图号档案":
+    - generic: 图号档案
+  - button "图纸评审":
+    - generic: 图纸评审
+  - button "图纸发布":
+    - generic: 图纸发布
+  - button "图纸变更":
+    - generic: 图纸变更
+  - button "图纸发放记录":
+    - generic: 图纸发放记录
+  - button "图纸关联查询":
+    - generic: 图纸关联查询
+  - button "客户图纸":
+    - generic: 客户图纸
+  - button "委外管理":
+    - generic: 委外管理
+  - button "进入委外管理上手指南":
+  - button "委外看板":
+    - generic: 委外看板
+  - button "委外订单":
+    - generic: 委外订单
+  - button "委外发料":
+    - generic: 委外发料
+  - button "委外回厂":
+    - generic: 委外回厂
+  - button "委外退料":
+    - generic: 委外退料
+  - button "委外对账":
+    - generic: 委外对账
+  - button "委外供应商":
+    - generic: 委外供应商
+  - button "委外库存":
+    - generic: 委外库存
+  - button "批次追溯":
+    - generic: 批次追溯
+  - button "委外未交":
+    - generic: 委外未交
+  - button "委外进货":
+    - generic: 委外进货
+  - button "委外对账单":
+    - generic: 委外对账单
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产" [pressed]:
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "新建变更":
+  - generic: 新建变更
+- button "图纸发放记录":
+  - generic: 图纸发放记录
+- button "新建发放":
+  - generic: 新建发放
+- button "图纸关联查询":
+  - generic: 图纸关联查询
+- button "客户图纸":
+  - generic: 客户图纸
+- button "新建客户图纸":
+  - generic: 新建客户图纸
+- button "委外管理上手指南":
+  - generic: 委外管理上手指南
+- button "委外看板":
+  - generic: 委外看板
+- button "委外订单":
+  - generic: 委外订单
+- button "新建委外订单":
+  - generic: 新建委外订单
+- button "委外发料":
+  - generic: 委外发料
+- button "新建发料单":
+  - generic: 新建发料单
+- button "委外回厂":
+  - generic: 委外回厂
+- button "委外退料":
+  - generic: 委外退料
+- main:
+  - generic: 委外管理 ›委外退料
+  - heading "委外退料" [level=1]
+  - paragraph: 集中管理委外余料、工程变更及错发物料的退回和入库记录
+  - button "有效退料单 0 单 不含已作废单据" [pressed]:
+    - generic: 有效退料单
+    - generic: "0"
+    - generic: 单
+    - generic: 不含已作废单据
+  - button "待入库 0 单 已生成入库单，等待仓库入库":
+    - generic: 待入库
+    - generic: "0"
+    - generic: 单
+    - generic: 已生成入库单，等待仓库入库
+  - button "已入库 0 单 退回物料已完成入库":
+    - generic: 已入库
+    - generic: "0"
+    - generic: 单
+    - generic: 退回物料已完成入库
+  - button "新建退料单":
+    - text: 新建退料单
+  - button "导出":
+    - text: 导出
+  - button "导出记录":
+    - text: 导出记录
+  - button:
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "搜索退料单号 / 委外订单号 / 供应商 / 物料"
+  - button "状态" [active]:
+    - text: 状态
+  - button "筛选供应商...":
+    - generic: 筛选供应商...
+  - button "退料原因":
+    - text: 退料原因
+  - table:
+    - rowgroup:
+      - row "退料单号 供应商 关联委外订单 退料日期 物料概况 退料结果 操作":
+        - columnheader "退料单号":
+          - generic: 退料单号
+        - columnheader "供应商":
+          - generic: 供应商
+        - columnheader "关联委外订单":
+          - generic: 关联委外订单
+        - columnheader "退料日期":
+          - generic: 退料日期
+        - columnheader "物料概况":
+          - generic: 物料概况
+        - columnheader "退料结果":
+          - generic: 退料结果
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "暂无符合条件的退料记录":
+        - cell "暂无符合条件的退料记录":
+          - generic: 暂无符合条件的退料记录
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - text: ·
+  - generic: 0 种物料明细 · 退料 0 · 退料金额 ¥0
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2025-10
+- generic: 全部
+- generic: 草稿 (0)
+- generic: 待入库 (0)
+- generic: 已入库 (0)
+- generic: 已作废 (0)

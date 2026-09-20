@@ -1,0 +1,86 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/quotations/new".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/quotations/new
+	2 container 添加服务项目
+		3 heading 添加服务项目, Value: 3, ID: :rb2:
+			4 text 添加服务项目
+		5 button 关闭
+			6 image
+		55 container
+			56 text 服务名称  *
+			57 text field (settable)
+			58 text 计费方式  *
+			59 button 固定金额 直接输入费用金额
+				60 image
+				61 text 固定金额
+				62 text 直接输入费用金额
+			63 button 单价×数量 单价乘以数量计算
+				64 image
+				65 text 单价×数量
+				66 text 单价乘以数量计算
+			67 button 按比例 按基数百分比计算
+				68 image
+				69 text 按比例
+				70 text 按基数百分比计算
+			71 text 计费基数  *
+			72 button 物料折前总价 ¥0.00
+				73 text 物料折前总价
+				74 container
+					75 text ¥ 0.00
+			76 button 物料折后总价 ¥0.00
+				77 text 物料折后总价
+				78 container
+					79 text ¥ 0.00
+			80 button 自定义金额 ¥0.00
+				81 text 自定义金额
+				82 container
+					83 text ¥ 0.00
+			84 text 费率 (%)
+			85 text field (settable) 8
+			86 text % 快捷:
+			87 button 3%
+				88 text 3
+				89 text %
+			90 button 5%
+				91 text 5
+				92 text %
+			93 button 8%
+				94 text 8
+				95 text %
+			96 button 10%
+				97 text 10
+				98 text %
+			99 button 12%
+				100 text 12
+				101 text %
+			102 button 15%
+				103 text 15
+				104 text %
+			105 button 20%
+				106 text 20
+				107 text %
+			108 text 折后总价  ¥ 0.00  ×  8 % = 
+			109 container
+				110 text ¥ 0.00
+			111 text 服务费折扣
+			112 text field (settable)
+			113 text %
+			114 button 无
+			115 button 5%
+			116 button 10%
+			117 button 15%
+			118 button 20%
+			119 text 税率
+			120 text field (settable) 13
+			121 text %
+			122 button 免税
+			123 button 1%
+			124 button 3%
+			125 button 6%
+			126 button 9%
+			127 button 13%
+			128 text 费用金额 ¥ 0.00 含税总值  (13%) ¥ 0.00 备注说明
+			129 text field (settable)
+		53 button 取消
+		54 button (disabled) 确认添加
+
+The focused UI element is 67 button 按比例 按基数百分比计算

@@ -1,0 +1,169 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/inventory/subcontract-stock".
+1 AXWebArea RiseMap, URL: risemap.cn/inventory/subcontract-stock
+	2 container root
+		3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+		4 text 生产
+		5 button 收起侧边栏
+			6 image
+		7 container
+			108 button 组装业务管理
+				109 image
+				110 text 组装业务管理
+				111 image
+			112 button 组装单
+			113 button 缺料待办
+			114 button 领料单
+			115 button 补料单
+			116 button 退料单
+			117 button 拆解单
+			118 button 换件单
+			119 container
+				120 button 图纸管理
+					121 image
+					122 text 图纸管理
+					123 image
+				124 button 进入图纸管理上手指南
+					125 image
+			8 container
+				9 button 委外管理
+					10 image
+					126 text 委外管理
+					11 image
+				12 button 进入委外管理上手指南
+					13 image
+			14 button 委外看板
+			15 button 委外订单
+			16 button 委外发料
+			17 button 委外回厂
+			18 button 委外退料
+			19 button 委外对账
+			20 button 委外供应商
+			21 button 委外库存
+			22 button 批次追溯
+			23 button 委外未交
+			24 button 委外进货
+			25 button 委外对账单
+		127 image
+		128 text 免费试用中，还剩 8 天 — 试用期间享全部功能
+		129 button 查看方案
+			130 image
+			131 text 查看方案
+		132 button
+			133 image
+		35 container
+			36 container 业务分类
+				37 container
+					38 checkbox 工作台, Value: 0
+					39 checkbox 供应链, Value: 0
+					40 checkbox 销售, Value: 0
+					41 checkbox 生产, Value: 1
+					42 checkbox 项目, Value: 0
+					43 checkbox 行政, Value: 0
+					44 checkbox 财务, Value: 0
+					45 checkbox 报表, Value: 0
+					46 checkbox 系统, Value: 0
+			47 button Description: 展开搜索, Help: 搜索
+				48 image
+			49 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+				50 image
+				134 text 20
+			51 button Description: 打开推广奖励, Help: 推广
+			52 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+			53 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+			135 button 立即订阅, Help: 试用还剩 8 天 · 立即订阅享专属优惠
+				136 image
+				137 text 立即订阅
+			54 button 金
+				55 text 金
+				56 image
+		57 container
+			58 button 工作台
+				59 image
+				60 text 工作台
+			63 button 缺料待办
+				64 text 缺料待办
+			65 button 领料单
+				66 text 领料单
+			67 button 补料单
+				68 text 补料单
+			69 button 退料单
+				70 text 退料单
+			71 button 工作台
+				72 text 工作台
+			73 button 工作台
+				74 text 工作台
+			75 button 拆解单
+				76 text 拆解单
+			77 button 换件单
+				78 text 换件单
+			79 button 图纸总览
+				80 text 图纸总览
+			81 button 委外退料
+				82 text 委外退料
+			83 button 委外对账
+				84 text 委外对账
+			85 button 委外供应商
+				86 text 委外供应商
+			87 button 工作台
+				88 text 工作台
+			138 button 委外库存
+				139 text 委外库存
+		140 container
+			141 container
+				142 button 库存管理
+				143 text › 委外厂库存
+				144 image
+				145 heading 委外厂库存, Value: 1
+					146 text 委外厂库存
+				147 text 按 委外订单 + 物料 维度查询发到外协厂的在途库存
+			148 text 在途供应商
+			149 image
+			150 text 0
+			151 text 持有我方物料的外协厂
+			152 text 在途物料种类
+			153 image
+			154 text 0
+			155 text SKU 数
+			156 text 在途总数量
+			157 image
+			158 text 0
+			159 text 已发 − 已耗 − 已退
+			160 text 在外金额
+			161 image
+			162 text ¥0
+			163 text 余量 × 材料单价
+			164 text 最长账龄
+			165 image
+			166 text 0 天
+			167 text 从首次发料起算
+			168 checkbox 超 30 天 SKU 0 点击仅看超期, Help: 筛选超 30 天 SKU, Value: 0
+				169 text 超 30 天 SKU
+				170 image
+				171 text 0
+				172 text 点击仅看超期
+			173 button 去发料
+				174 image
+				175 text 去发料
+			176 radio button 供应商视角, Value: 1, ID: :rk:-summary
+			177 radio button 物料视角, Value: 0, ID: :rk:-detail
+			178 text 账龄
+			179 radio button 全部, Value: 1, ID: :rl:-全部
+			180 radio button 0-7 天, Value: 0, ID: :rl:-0-7
+			181 radio button 8-30 天, Value: 0, ID: :rl:-8-30
+			182 radio button 31-60 天, Value: 0, ID: :rl:-31-60
+			183 radio button >60 天, Value: 0, ID: :rl:->60
+			184 image
+			185 text field (settable)
+			186 text 供应商
+			187 button 全部
+				188 text 全部
+			189 button 导出
+				190 image
+				191 text 导出
+			192 text 暂无符合条件的在途库存
+			193 image
+			194 text 在外余量 =  累计已发  −  倒冲消耗  −  累计已退料 。回厂入库时按 BOM 标准用量自动倒冲核销,委外订单完工后余量趋近 0,账面与实物对得上。超出标准用量部分计入 用料差异 ,转补料 / 供应商赔偿。
+		106 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+		107 container Notifications alt+T
+
+The focused UI element is 21 button 委外库存

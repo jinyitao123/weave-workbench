@@ -1,0 +1,203 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/subcontract/reports/undelivered".
+1 AXWebArea RiseMap, URL: risemap.cn/subcontract/reports/undelivered
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 生产
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 组装业务管理
+					10 image
+					11 text 组装业务管理
+					12 image
+				13 button 组装单
+				14 button 缺料待办
+				15 button 领料单
+				16 button 补料单
+				17 button 退料单
+				18 button 拆解单
+				19 button 换件单
+				20 container
+					21 button 图纸管理
+						22 image
+						23 text 图纸管理
+						24 image
+					25 button 进入图纸管理上手指南
+						26 image
+				27 container
+					28 button 委外管理
+						29 image
+						30 text 委外管理
+						31 image
+					32 button 进入委外管理上手指南
+						33 image
+				34 button 委外看板
+				35 button 委外订单
+				36 button 委外发料
+				37 button 委外回厂
+				38 button 委外退料
+				39 button 委外对账
+				40 button 委外供应商
+				41 button 委外库存
+				42 button 批次追溯
+				43 button 委外未交
+				44 button 委外进货
+				45 button 委外对账单
+			46 image
+			47 text 免费试用中，还剩 8 天 — 试用期间享全部功能
+			48 button 查看方案
+				49 image
+				50 text 查看方案
+			51 button
+				52 image
+			53 container
+				54 container 业务分类
+					55 container
+						56 checkbox 工作台, Value: 0
+						57 checkbox 供应链, Value: 0
+						58 checkbox 销售, Value: 0
+						59 checkbox 生产, Value: 1
+						60 checkbox 项目, Value: 0
+						61 checkbox 行政, Value: 0
+						62 checkbox 财务, Value: 0
+						63 checkbox 报表, Value: 0
+						64 checkbox 系统, Value: 0
+				65 button Description: 展开搜索, Help: 搜索
+					66 image
+				67 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+					68 image
+					69 text 20
+				70 button Description: 打开推广奖励, Help: 推广
+				71 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				72 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				73 button 立即订阅, Help: 试用还剩 8 天 · 立即订阅享专属优惠
+					74 image
+					75 text 立即订阅
+				76 button 金
+					77 text 金
+					78 image
+			79 container
+				80 button 工作台
+					81 image
+					82 text 工作台
+				83 button 补料单
+					84 text 补料单
+				85 button 退料单
+					86 text 退料单
+				87 button 工作台
+					88 text 工作台
+				89 button 工作台
+					90 text 工作台
+				91 button 拆解单
+					92 text 拆解单
+				93 button 换件单
+					94 text 换件单
+				95 button 图纸总览
+					96 text 图纸总览
+				97 button 委外退料
+					98 text 委外退料
+				99 button 委外对账
+					100 text 委外对账
+				101 button 委外供应商
+					102 text 委外供应商
+				103 button 工作台
+					104 text 工作台
+				105 button 委外库存
+					106 text 委外库存
+				107 button 批次追溯
+					108 text 批次追溯
+				109 button 委外未交
+					110 text 委外未交
+			111 container
+				112 container
+					113 text 委外管理  › 委外报表  › 委外未交明细表
+				114 image
+				115 heading 委外未交明细表, Value: 1
+					116 text 委外未交明细表
+				117 text 按行展开所有未回完的委外订单 — 锁定卡单、提前预警超期
+				118 text 未交订单数
+				119 image
+				120 text 0
+				121 text 含未交行的订单
+				122 text 未交明细行
+				123 image
+				124 text 0
+				125 text 随当前筛选变化
+				126 text 未交总数量
+				127 image
+				128 text 0
+				129 text 各 SKU 累加
+				130 text 未交金额
+				131 image
+				132 text ¥0
+				133 text 按加工单价估算
+				134 checkbox 超期行数 / 最长 0 / 0天 点击仅看超期, Help: 筛选超期行数 / 最长, Value: 0
+					135 text 超期行数 / 最长
+					136 image
+					137 text 0 / 0天
+					138 text 点击仅看超期
+				139 button 导出
+					140 image
+					141 text 导出
+				142 button 刷新
+					143 image
+				144 button
+					145 image
+				146 button
+					147 image
+				148 image
+				149 text field (settable)
+				150 button 超期
+					151 text 超期
+					152 image
+				153 button 筛选供应商...
+					154 text 筛选供应商...
+				155 button 工艺
+					156 text 工艺
+					157 image
+				158 table
+					159 row
+						160 cell
+							161 text 委外订单 / 供应商
+						162 cell
+							163 text 加工件
+						164 cell
+							165 text 规格
+						166 cell
+							167 text 工艺
+						168 cell
+							169 text 订单量
+						170 cell
+							171 text 已回(良/不良)
+						172 cell
+							173 text 未交
+						174 cell
+							175 text 未交金额
+						176 cell
+							177 text 期望交期
+						178 cell
+							179 text 超期
+						180 cell
+							181 text 订单状态
+						182 cell
+							183 text 操作
+					197 row
+						198 cell
+							199 image
+							200 text 无未交明细
+				184 text 共  0 条记录 每页
+				185 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					186 text 20
+				187 text 条
+				188 button (disabled) 上一页
+					189 image
+				190 button 1
+				191 button (disabled) 下一页
+					192 image
+				193 image
+				194 text 未交量 = 订单量 − 已回良品 − 已回不良。订单为「已完工 / 已对账 / 已作废」时不计入本表。
+			195 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			196 container Notifications alt+T
+
+The focused UI element is 43 button 委外未交

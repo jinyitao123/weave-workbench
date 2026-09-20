@@ -1,0 +1,194 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/project/timesheet".
+0 AXWebArea RiseMap, URL: risemap.cn/project/timesheet
+	1 container
+		2 container root
+			201 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			202 text 项目
+			203 button 收起侧边栏
+				204 image
+			205 container
+				206 button 项目管理
+					207 image
+					208 text 项目管理
+					209 image
+				210 button 项目中心
+				211 button 项目分析中心
+				212 button 任务管理
+				213 button 工时管理
+				214 button 项目配置中心
+			215 image
+			216 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			217 button 查看方案
+				218 image
+				219 text 查看方案
+			220 button
+				221 image
+			222 container
+				223 container 业务分类
+					224 checkbox 工作台, Value: 0
+					225 checkbox 供应链, Value: 0
+					226 checkbox 销售, Value: 0
+					227 checkbox 生产, Value: 0
+					228 checkbox 项目, Value: 1
+					229 checkbox 行政, Value: 0
+					230 checkbox 财务, Value: 0
+					231 checkbox 报表, Value: 0
+					232 checkbox 系统, Value: 0
+				233 button Description: 展开搜索, Help: 搜索
+					234 image
+				235 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					236 image
+					237 text 2
+				238 button Description: 打开推广奖励, Help: 推广
+				239 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				240 link Description: 打开工单, Value: community.risemap.cn/support
+				241 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					242 image
+					243 text 立即订阅
+				244 button 金
+					245 text 金
+					246 image
+			247 container
+				248 button 工作台
+					249 image
+					250 text 工作台
+				251 button 委外回厂
+					252 text 委外回厂
+				253 button 委外退料
+					254 text 委外退料
+				255 button 新建退料单
+					256 text 新建退料单
+				257 button 委外对账
+					258 text 委外对账
+				259 button 委外供应商
+					260 text 委外供应商
+				261 button 委外库存
+					262 text 委外库存
+				263 button 批次追溯
+					264 text 批次追溯
+				265 button 委外未交
+					266 text 委外未交
+				267 button 委外进货
+					268 text 委外进货
+				269 button 委外对账单
+					270 text 委外对账单
+				271 button 项目中心
+					272 text 项目中心
+				273 button 项目分析中心
+					274 text 项目分析中心
+				275 button 任务管理
+					276 text 任务管理
+				277 button 工时管理
+					278 text 工时管理
+			279 container
+				280 text 项目管理
+				281 image
+				282 text 工时管理
+				283 heading 工时管理, Value: 1
+					284 text 工时管理
+				285 button 导出
+					286 image
+					287 text 导出
+					288 image
+				289 button 导出任务
+					290 image
+					291 text 导出任务
+				292 button 填报工时
+					293 image
+					294 text 填报工时
+				295 image
+				296 text 日期范围
+				297 container
+					298 text field (settable) 2026年9月6日
+					299 button
+						300 image
+					301 button
+						302 image
+				303 text 至
+				304 container
+					305 text field (settable) 2026年9月12日
+					306 button
+						307 image
+					308 button
+						309 image
+				310 button 本周
+				311 image
+				312 text 总工时 0 h 日均  0 h
+				313 image
+				314 text 工时成本 ¥ 0.00 平均 ¥ 0 /h
+				315 image
+				316 text 闲置工时 0 h 0  条记录
+				317 image
+				318 text 利用率 0 % 有效工时占比
+				319 image
+				320 text 待审核 0 需及时审批
+				321 heading 工时分布（含闲置）, Value: 3
+					322 text 工时分布（含闲置）
+				323 text 2026-09-06 ~ 2026-09-12
+				324 image
+					325 text 周日
+					326 text 周一
+					327 text 周二
+					328 text 周三
+					329 text 周四
+					330 text 周五
+					331 text 周六
+					332 text 0h
+					333 text 1h
+					334 text 2h
+					335 text 3h
+					336 text 4h
+				337 button 工时记录 0
+					338 image
+					339 text 工时记录
+					340 text 0
+				341 button 闲置工时统计 0
+					342 image
+					343 text 闲置工时统计
+					344 text 0
+				345 radio button 全部, Value: 1, ID: :r1gt:-
+				346 radio button 待审核, Value: 0, ID: :r1gt:-PENDING
+				347 radio button 已通过, Value: 0, ID: :r1gt:-APPROVED
+				348 radio button 已驳回, Value: 0, ID: :r1gt:-REJECTED
+				349 button 全部项目
+					350 text 全部项目
+				351 image
+				352 text field (settable)
+				353 table
+					354 row
+						355 cell
+							356 text 工时单号
+						357 cell
+							358 text 日期
+						359 cell
+							360 text 人员
+						361 cell
+							362 text 关联项目
+						363 cell
+							364 text 工作内容
+						365 cell
+							366 text 工时
+						367 cell
+							368 text 类型
+						369 cell
+							370 text 费率
+						371 cell
+							372 text 工时成本
+						373 cell
+							374 text 状态
+					375 row
+						376 cell
+							377 text 暂无工时记录
+				378 text 共  0 条记录 每页
+				379 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					380 text 10
+				381 text 条
+				382 button (disabled) 上一页
+					383 image
+				384 button 1
+				385 button (disabled) 下一页
+					386 image
+			387 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+
+The focused UI element is 213 button 工时管理

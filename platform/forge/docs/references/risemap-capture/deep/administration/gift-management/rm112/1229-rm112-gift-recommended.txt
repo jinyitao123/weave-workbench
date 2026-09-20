@@ -1,0 +1,188 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/gift/apply".
+1 AXWebArea RiseMap, URL: risemap.cn/ops/gift/apply
+	2 container
+		3 container root
+			222 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			223 text 行政
+			224 button 收起侧边栏
+				225 image
+			226 container
+				227 button 审批中心
+					228 image
+					229 text 审批中心
+					230 image
+				231 button 我的审批
+				232 button 抄送我的
+				233 button 我发起的
+				234 button 行政申请
+				235 button 行政管理
+					236 image
+					237 text 行政管理
+					238 image
+				239 button 公司通知
+				240 button 用章管理
+				241 button 会议纪要
+				242 button 工作汇报
+				243 button 文档中心
+				244 button 固定资产
+				245 button 资质与申报
+				246 button 物料领取
+				247 button 设备维护
+				248 button 礼品管理
+				249 button 借出管理
+				250 button 车辆管理
+				251 button 人力资源
+					252 image
+					253 text 人力资源
+					254 image
+				255 button 人事工作台
+				256 button 员工档案
+				257 button 招聘管理
+				258 button 入职离职
+				259 button 薪酬福利
+				260 button 规章制度
+				261 button 通讯录
+				262 button 考勤假期
+					263 image
+					264 text 考勤假期
+					265 image
+				266 button 加班申请
+				267 button 请假管理
+				268 button 出差申请
+				269 button 考勤管理
+				270 button 考勤统计
+				271 button 流程中心
+					272 image
+					273 text 流程中心
+					274 image
+				275 button 审批记录
+				276 button 发起流程
+				277 button 流程定义
+				278 button 流程分类
+			279 image
+			280 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			281 button 查看方案
+				282 image
+				283 text 查看方案
+			284 button
+				285 image
+			286 container
+				287 container 业务分类
+					288 checkbox 工作台, Value: 0
+					289 checkbox 供应链, Value: 0
+					290 checkbox 销售, Value: 0
+					291 checkbox 生产, Value: 0
+					292 checkbox 项目, Value: 0
+					293 checkbox 行政, Value: 1
+					294 checkbox 财务, Value: 0
+					295 checkbox 报表, Value: 0
+					296 checkbox 系统, Value: 0
+				297 button Description: 展开搜索, Help: 搜索
+					298 image
+				299 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					300 image
+					301 text 2
+				302 button Description: 打开推广奖励, Help: 推广
+				303 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				304 link Description: 打开工单, Value: community.risemap.cn/support
+				305 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					306 image
+					307 text 立即订阅
+				308 button 金
+					309 text 金
+					310 image
+			311 container
+				312 button 工作台
+					313 image
+					314 text 工作台
+				315 button 公司通知
+					316 text 公司通知
+				317 button 发布通知
+					318 text 发布通知
+				319 button 用章管理
+					320 text 用章管理
+				321 button 会议纪要
+					322 text 会议纪要
+				323 button 新建会议纪要
+					324 text 新建会议纪要
+				325 button AI 模板管理
+					326 text AI 模板管理
+				327 button 工作汇报
+					328 text 工作汇报
+				329 button 新建工作汇报
+					330 text 新建工作汇报
+				331 button 文档中心
+					332 text 文档中心
+				333 button 固定资产
+					334 text 固定资产
+				335 button 资质与申报
+					336 text 资质与申报
+				337 button 物料领取
+					338 text 物料领取
+				339 button 设备维护
+					340 text 设备维护
+				341 button 礼品管理
+					342 text 礼品管理
+			343 container
+				344 container
+					345 text 行政管理
+					346 image
+					347 text 礼品管理
+					348 image
+					349 heading 礼品管理, Value: 1
+						350 text 礼品管理
+					351 text 员工礼品申请、审批、库存与发放，覆盖商务赠礼与节日福利
+				352 button 礼品申请 0
+					353 image
+					354 text 礼品申请
+					355 text 0
+				356 button 礼品清单 0
+					357 image
+					358 text 礼品清单
+					359 text 0
+				360 button 礼品库管理 0
+					361 image
+					362 text 礼品库管理
+					363 text 0
+				364 button 礼品库流水 0
+					365 image
+					366 text 礼品库流水
+					367 text 0
+				368 image
+				369 text 礼品种类 0 种
+				370 image
+				371 text 涵盖分类 0 类
+				372 image
+				373 text 平均单价 ¥ 0 分类:
+				374 button 全部
+				375 button 实物礼品
+				376 button 兑换券码
+				377 button 充值卡
+				378 button 现金红包
+				379 button 报销额度
+				380 button 生日福利
+				381 button 节日福利(春节/端午/中秋)
+				382 button 司庆福利
+				383 button 入职周年
+				384 button 婚育福利
+				385 button 高温/防寒福利
+				386 button 体检福利
+				387 button 团建福利
+				388 button 推荐
+					389 image
+					390 text 推荐
+				391 button 默认排序
+					392 text 默认排序
+				393 image
+				394 text field (settable)
+				395 button
+					396 image
+				397 button
+					398 image
+				399 text 共  0  种礼品
+				400 image
+				401 text 未找到匹配的礼品
+			402 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			221 container Notifications alt+T
+
+The focused UI element is 388 button 推荐

@@ -1,0 +1,230 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/materials".
+1 AXWebArea RiseMap, URL: risemap.cn/ops/materials
+	2 container
+		3 container root
+			202 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			203 text 行政
+			204 button 收起侧边栏
+				205 image
+			206 container
+				207 button 审批中心
+					208 image
+					209 text 审批中心
+					210 image
+				211 button 我的审批
+				212 button 抄送我的
+				213 button 我发起的
+				214 button 行政申请
+				215 button 行政管理
+					216 image
+					217 text 行政管理
+					218 image
+				219 button 公司通知
+				220 button 用章管理
+				221 button 会议纪要
+				222 button 工作汇报
+				223 button 文档中心
+				224 button 固定资产
+				225 button 资质与申报
+				226 button 物料领取
+				227 button 设备维护
+				228 button 礼品管理
+				229 button 借出管理
+				230 button 车辆管理
+				231 button 人力资源
+					232 image
+					233 text 人力资源
+					234 image
+				235 button 人事工作台
+				236 button 员工档案
+				237 button 招聘管理
+				238 button 入职离职
+				239 button 薪酬福利
+				240 button 规章制度
+				241 button 通讯录
+				242 button 考勤假期
+					243 image
+					244 text 考勤假期
+					245 image
+				246 button 加班申请
+				247 button 请假管理
+				248 button 出差申请
+				249 button 考勤管理
+				250 button 考勤统计
+				251 button 流程中心
+					252 image
+					253 text 流程中心
+					254 image
+				255 button 审批记录
+				256 button 发起流程
+				257 button 流程定义
+				258 button 流程分类
+			259 image
+			260 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			261 button 查看方案
+				262 image
+				263 text 查看方案
+			264 button
+				265 image
+			266 container
+				267 container 业务分类
+					268 checkbox 工作台, Value: 0
+					269 checkbox 供应链, Value: 0
+					270 checkbox 销售, Value: 0
+					271 checkbox 生产, Value: 0
+					272 checkbox 项目, Value: 0
+					273 checkbox 行政, Value: 1
+					274 checkbox 财务, Value: 0
+					275 checkbox 报表, Value: 0
+					276 checkbox 系统, Value: 0
+				277 button Description: 展开搜索, Help: 搜索
+					278 image
+				279 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					280 image
+					281 text 2
+				282 button Description: 打开推广奖励, Help: 推广
+				283 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				284 link Description: 打开工单, Value: community.risemap.cn/support
+				285 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					286 image
+					287 text 立即订阅
+				288 button 金
+					289 text 金
+					290 image
+			291 container
+				292 button 工作台
+					293 image
+					294 text 工作台
+				295 button 我发起的
+					296 text 我发起的
+				297 button 行政申请
+					298 text 行政申请
+				299 button 公司通知
+					300 text 公司通知
+				301 button 发布通知
+					302 text 发布通知
+				303 button 用章管理
+					304 text 用章管理
+				305 button 会议纪要
+					306 text 会议纪要
+				307 button 新建会议纪要
+					308 text 新建会议纪要
+				309 button AI 模板管理
+					310 text AI 模板管理
+				311 button 工作汇报
+					312 text 工作汇报
+				313 button 新建工作汇报
+					314 text 新建工作汇报
+				315 button 文档中心
+					316 text 文档中心
+				317 button 固定资产
+					318 text 固定资产
+				319 button 资质与申报
+					320 text 资质与申报
+				321 button 物料领取
+					322 text 物料领取
+			323 container
+				324 container
+					325 text 行政管理
+					326 image
+					327 text 物料领取
+					328 image
+					329 heading 物料领取, Value: 1
+						330 text 物料领取
+					331 text 办公物料申请、审批、领取与库存管理
+				332 button 新增物品
+					333 image
+					334 text 新增物品
+				335 button 批量入库
+					336 image
+					337 text 批量入库
+				338 text 待审批 0 待领取 0 物品种类 0 库存预警 0 库存总值 ¥0
+				339 button 领取申请
+					340 image
+					341 text 领取申请
+				342 button 物品库
+					343 image
+					344 text 物品库
+				345 button 领取记录
+					346 image
+					347 text 领取记录
+				348 image
+				349 text field (settable)
+				350 button 全部类别
+					351 text 全部类别
+				352 table
+					353 row
+						354 cell
+							355 text 物品名称
+						356 cell
+							357 text 类别
+						358 cell
+							359 text 规格型号
+						360 cell
+							361 text 单位
+						362 cell
+							363 text 当前库存
+						364 cell
+							365 text 安全库存
+						366 cell
+							367 text 单价
+						368 cell
+							369 text 供应商
+						370 cell
+							371 text 购买渠道
+						372 cell
+							373 text 库位
+						374 cell
+							375 text 最近入库
+						376 cell
+							377 text 操作
+					378 row
+						379 cell
+							380 text 暂无物品数据
+				381 image
+				382 heading 近期入库记录, Value: 3
+					383 text 近期入库记录
+				384 text ( 0  条)
+				385 container
+					386 heading 新增物品, Value: 3
+						387 text 新增物品
+					388 button
+						389 image
+					390 text 物品名称  *
+					391 text field (settable)
+					392 text 类别
+					393 combo box (collapsed) Value: 其他, Secondary Actions: Expand
+						394 text 其他
+					395 button 新增物料分类
+						396 image
+					397 text 单位
+					398 text field (settable) 个
+					399 text 规格型号
+					400 text field (settable)
+					401 text 参考单价 (¥)
+					402 text field (settable) 0
+					403 text 安全库存
+					404 text field (settable) 5
+					405 text 供应商
+					406 text field (settable)
+					407 text 购买渠道
+					408 combo box (collapsed) Value: 其他, Secondary Actions: Expand
+						409 text 其他
+					410 text 库位编号
+					411 text field (settable)
+					412 button 取消
+					413 button 添加
+			414 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			201 container Notifications alt+T
+		415 container 新增物料分类
+			416 heading 新增物料分类, Value: 3
+				417 text 新增物料分类
+			418 button 关闭
+				419 image
+			420 container
+				421 text 分类名称 *
+				422 text field (settable)
+			423 button 取消
+			424 button 添加
+
+The focused UI element is 395 button 新增物料分类

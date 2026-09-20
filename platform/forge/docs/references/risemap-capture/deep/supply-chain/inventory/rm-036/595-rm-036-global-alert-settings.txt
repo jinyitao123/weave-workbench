@@ -1,0 +1,228 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/inventory/alerts".
+1 AXWebArea RiseMap, URL: risemap.cn/inventory/alerts
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 到货检验
+					10 image
+					11 text 到货检验
+					12 image
+				13 button 到货通知
+				14 button 到货登记
+				15 button 待检验库存
+				16 button 检验单
+				17 button 检验规则
+				18 button 基础资料
+					19 image
+					20 text 基础资料
+					21 image
+				22 button 物料管理
+				23 button 物料组合
+				24 button BOM管理
+				25 button 综合物料搜索
+				26 button 供应商管理
+				27 button 产品实例追溯
+				28 button 仓库管理
+				29 button 采购管理
+					30 image
+					31 text 采购管理
+					32 image
+				33 button 采购发票
+				34 button 采购申请
+				35 button 采购待办池
+				36 button 询价管理
+				37 button 采购订单
+				38 button 采购退换货
+				39 button 供应商价格本
+				40 button 入库管理
+					41 image
+					42 text 入库管理
+					43 image
+				44 button 全部入库单
+				45 button 采购入库
+				46 button 生产入库
+				47 button 其他入库
+				48 button 期初入库
+				49 button 入库明细
+				50 button 库存管理
+					51 image
+					52 text 库存管理
+					53 image
+				54 button 库存总览
+				55 button 不合格处理
+				56 button 库存流水
+				57 button 库存锁定
+				58 button 库存盘点
+				59 button 调拨与借出
+				60 button 库存预警
+				61 button 报损单
+				62 button SN码管理
+				63 button 出库管理
+					64 image
+					65 text 出库管理
+					66 image
+				67 button 出库单列表
+				68 button 生产出库
+				69 button 其他出库
+				70 button 销售直接出库
+				71 button 待出库发货单
+				72 button 采购退换货出库
+				73 button 出库明细
+			74 image
+			75 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			76 button 查看方案
+				77 image
+				78 text 查看方案
+			79 button
+				80 image
+			81 container
+				82 container 业务分类
+					83 checkbox 工作台, Value: 0
+					84 checkbox 供应链, Value: 1
+					85 checkbox 销售, Value: 0
+					86 checkbox 生产, Value: 0
+					87 checkbox 项目, Value: 0
+					88 checkbox 行政, Value: 0
+					89 checkbox 财务, Value: 0
+					90 checkbox 报表, Value: 0
+					91 checkbox 系统, Value: 0
+				92 button Description: 展开搜索, Help: 搜索
+					93 image
+				94 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					95 image
+					96 text 2
+				97 button Description: 打开推广奖励, Help: 推广
+				98 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				99 link Description: 打开工单, Value: community.risemap.cn/support
+				100 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					101 image
+					102 text 立即订阅
+				103 button 金
+					104 text 金
+					105 image
+			106 container
+				107 button 工作台
+					108 image
+					109 text 工作台
+				110 button 生产入库
+					111 text 生产入库
+				112 button 其他入库
+					113 text 其他入库
+				114 button 期初入库
+					115 text 期初入库
+				116 button 入库明细
+					117 text 入库明细
+				118 button 库存总览
+					119 text 库存总览
+				120 button 不合格处理
+					121 text 不合格处理
+				122 button 库存流水
+					123 text 库存流水
+				124 button 库存锁定
+					125 text 库存锁定
+				126 button 库存盘点
+					127 text 库存盘点
+				128 button 新建盘点
+					129 text 新建盘点
+				130 button 调拨与借出
+					131 text 调拨与借出
+				132 button 新建调拨
+					133 text 新建调拨
+				134 button 库存预警
+					135 text 库存预警
+				136 button 预警配置中心
+					137 text 预警配置中心
+			207 container
+				208 container
+					209 text 库存管理
+					210 image
+					211 text 库存预警
+					212 image
+					213 heading 库存预警, Value: 1
+						214 text 库存预警
+					215 text 低库存、超期、滞销与异常预警的统一中心
+				216 button 刷新
+					217 image
+					218 text 刷新
+				219 button 物料预警配置
+					220 image
+					221 text 物料预警配置
+				222 button 预警设置
+					223 image
+					224 text 预警设置
+				225 button 库存预警 暂无预警
+					226 image
+					227 text 库存预警
+					228 text 暂无预警
+				229 button 交期预警 暂无预警
+					230 image
+					231 text 交期预警
+					232 text 暂无预警
+				233 image
+				234 text 紧急预警 0
+				235 image
+				236 text 中等预警 0
+				237 image
+				238 text 提醒 0
+				239 image
+				240 text 预警资产额 ¥0.00
+				241 button 全部
+				242 button 低库存
+				243 button 超储预警
+				244 button 呆滞库存
+					245 text 呆滞库存
+				246 image
+				247 text field (settable)
+				248 image
+				249 text 库存状态良好 当前无匹配的库存预警
+			205 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			206 container Notifications alt+T
+		250 container 预警设置
+			251 heading 预警设置, Value: 3, ID: :rin:
+				252 text 预警设置
+			253 button 关闭
+				254 image
+			255 container
+				256 heading 库存预警规则, Value: 4
+					257 text 库存预警规则
+				258 text 低库存预警
+				259 checkbox (settable, integer) 1
+				260 image
+				261 text 当库存数量低于安全库存线时触发预警 预警提前天数:
+				262 text field (settable) 7
+				263 text 天（基于月均消耗计算） 超储预警
+				264 checkbox (settable, integer) 1
+				265 image
+				266 text 当库存数量超过最大库存上限时触发预警 超储阈值:
+				267 text field (settable) 120
+				268 text %（相对最大库存） 呆滞库存预警
+				269 checkbox (settable, integer) 1
+				270 image
+				271 text 物料超过指定天数无出库/销售记录时触发预警 呆滞天数:
+				272 text field (settable) 180
+				273 text 天
+				274 heading 交期预警规则, Value: 4
+					275 text 交期预警规则
+				276 image
+				277 text 采购交期预警
+				278 checkbox (settable, integer) 1
+				279 image
+				280 text 临近预警天数
+				281 text field (settable) 7
+				282 text 天 紧急预警天数
+				283 text field (settable) 2
+				284 text 天
+				285 heading 通知设置, Value: 4
+					286 text 通知设置
+				287 text 通知角色
+				288 button 选择需要接收预警通知的角色
+					289 text 选择需要接收预警通知的角色
+				290 text 选定角色下的所有用户将收到预警通知
+			291 button 取消
+			292 button 保存设置
+
+The focused UI element is 222 button 预警设置

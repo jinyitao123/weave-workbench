@@ -1,0 +1,226 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/".
+0 AXWebArea RiseMap, URL: risemap.cn/
+	1 container root
+		2 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+		3 text 行政
+		4 button 收起侧边栏
+			5 image
+		183 container
+			184 button 审批中心
+				185 image
+				186 text 审批中心
+				187 image
+			188 button 我的审批
+			189 button 抄送我的
+			190 button 我发起的
+			191 button 行政申请
+			192 button 行政管理
+				193 image
+				194 text 行政管理
+				195 image
+			196 button 公司通知
+			197 button 用章管理
+			198 button 会议纪要
+			199 button 工作汇报
+			200 button 文档中心
+			201 button 固定资产
+			202 button 资质与申报
+			203 button 物料领取
+			204 button 设备维护
+			205 button 礼品管理
+			206 button 借出管理
+			207 button 车辆管理
+			208 button 人力资源
+				209 image
+				210 text 人力资源
+				211 image
+			212 button 人事工作台
+			213 button 员工档案
+			214 button 招聘管理
+			215 button 入职离职
+			216 button 薪酬福利
+			217 button 规章制度
+			218 button 通讯录
+			219 button 考勤假期
+				220 image
+				221 text 考勤假期
+				222 image
+			223 button 加班申请
+			224 button 请假管理
+			225 button 出差申请
+			226 button 考勤管理
+			227 button 考勤统计
+			228 button 流程中心
+				229 image
+				230 text 流程中心
+				231 image
+			232 button 审批记录
+			233 button 发起流程
+			234 button 流程定义
+			235 button 流程分类
+		19 image
+		20 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+		21 button 查看方案
+			22 image
+			23 text 查看方案
+		24 button
+			25 image
+		26 container
+			27 container 业务分类
+				28 checkbox 工作台, Value: 0
+				29 checkbox 供应链, Value: 0
+				30 checkbox 销售, Value: 0
+				31 checkbox 生产, Value: 0
+				32 checkbox 项目, Value: 0
+				33 checkbox 行政, Value: 1
+				34 checkbox 财务, Value: 0
+				35 checkbox 报表, Value: 0
+				36 checkbox 系统, Value: 0
+			37 button Description: 展开搜索, Help: 搜索
+				38 image
+			39 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+				40 image
+				41 text 2
+			42 button Description: 打开推广奖励, Help: 推广
+			43 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+			44 link Description: 打开工单, Value: community.risemap.cn/support
+			45 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+				46 image
+				47 text 立即订阅
+			48 button 金
+				49 text 金
+				50 image
+		51 button 工作台
+			52 image
+			53 text 工作台
+		54 container
+			55 image 登顶 · 把目标踩在脚下
+			56 container
+				57 heading 欢迎回来，金一涛！, Value: 1
+					58 text 欢迎回来， 金一涛 ！
+				59 text 今天是  2026年9月8日星期二 ，祝您工作愉快。 「 登顶 · 把目标踩在脚下 」
+			60 container
+				61 button 换一张, Help: 更换背景图
+					62 image
+					63 text 换一张
+				64 button 上传, Help: 上传自定义背景图
+					65 image
+					66 text 上传
+				67 button 管理, Help: 管理背景图
+			68 image
+			69 text 完成系统初始化 · 当前阶段：公司主体与组织架构 必填  0  /  13 总进度  0  /  25 首次启用系统需依次完成 7 个阶段的初始化设置，点击右侧按钮进入引导中心。
+			70 image
+			71 text 阶段  1  ·  公司主体与组织架构 0 / 3
+			72 image
+			73 text 阶段  2  ·  用户与权限 0 / 3
+			74 image
+			75 text 阶段  3  ·  业务基础数据 0 / 7
+			76 image
+			77 text 阶段  4  ·  期初数据建账 0 / 6
+			78 button 进入引导中心
+				79 text 进入引导中心
+				80 image
+			81 button 自定义工作台
+				82 image
+				83 text 自定义工作台
+			84 image
+			85 heading 员工服务, Value: 3
+				86 text 员工服务
+			87 text 全员通用 · 可自定义
+			88 button 编辑
+			89 button 添加服务
+				90 image
+				91 text 添加服务
+			92 text 报销申请
+			93 text 出差申请
+			94 text 加班申请
+			95 text 请假申请
+			96 text 我的薪资
+			97 text 我的待办
+			98 text 考勤打卡
+			99 image
+			100 text 添加
+			101 image
+			102 heading 快捷操作, Value: 3
+				103 text 快捷操作
+			104 text 按岗位推荐 · 可自定义
+			105 button 编辑
+			106 button 添加操作
+				107 image
+				108 text 添加操作
+			109 image
+			110 text 新建采购订单
+			111 image
+			112 text 新建销售订单
+			113 container 建客户档案
+				114 image
+				115 text 新增客户
+			116 image
+			117 text 新建项目
+			118 image
+			119 text 新建报销单
+			120 image
+			121 text 新建会议纪要
+			122 image
+			123 text 添加
+			124 image
+			125 heading 企业文化合影, Value: 3
+				126 text 企业文化合影
+			127 text 1 / 3
+			128 button 暂停
+				129 image
+				130 text 暂停
+			131 button 上传
+				132 image
+				133 text 上传
+			134 button 管理
+			135 container
+				136 image 2026 春季全员合影
+				137 container
+					138 heading 2026 春季全员合影, Value: 4
+						139 text 2026 春季全员合影
+					140 text 莫干山团建 · 全员到齐 · 春暖花开的一天。
+				141 image 技术部黑客马拉松
+				142 container
+					143 heading 技术部黑客马拉松, Value: 4
+						144 text 技术部黑客马拉松
+					145 text 48 小时 · 6 个原型 · 一群相信代码可以改变工作方式的人。
+				146 image Q1 业务里程碑庆功
+				147 container
+					148 heading Q1 业务里程碑庆功, Value: 4
+						149 text Q1 业务里程碑庆功
+					150 text 感谢每一位伙伴的全力以赴，一起把不可能变成已交付。
+				151 button
+					152 image
+				153 button
+					154 image
+				155 button
+				156 button
+				157 button
+			158 image
+			159 heading 企业通知, Value: 3
+				160 text 企业通知
+			161 button 查看全部
+				162 text 查看全部
+				163 image
+			164 text 暂无通知
+			165 image
+			166 heading 待我审批, Value: 3
+				167 text 待我审批
+			168 text 0 项待办
+			169 button 查看全部
+				170 text 查看全部
+				171 image
+			172 text 暂无待审批事项
+			173 image
+			174 heading 我的待办, Value: 3
+				175 text 我的待办
+			176 text 0 项待办
+			177 button 查看全部
+				178 text 查看全部
+				179 image
+			180 text 暂无待办事项
+		181 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+		182 container Notifications alt+T
+
+The focused UI element is 33 checkbox 行政, Value: 1

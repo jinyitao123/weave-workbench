@@ -1,0 +1,201 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/production/requisitions".
+0 AXWebArea RiseMap, URL: risemap.cn/production/requisitions
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 生产
+			5 button 收起侧边栏
+				6 image
+			7 container
+				450 button 组装业务管理
+					451 image
+					452 text 组装业务管理
+					453 image
+				454 button 组装单
+				455 button 缺料待办
+				456 button 领料单
+				457 button 补料单
+				458 button 退料单
+				459 button 拆解单
+				460 button 换件单
+				461 container
+					462 button 图纸管理
+						463 image
+						464 text 图纸管理
+						465 image
+					466 button 进入图纸管理上手指南
+						467 image
+				468 button 图纸总览
+				469 button 图号档案
+				470 button 图纸评审
+				471 button 图纸发布
+				472 button 图纸变更
+				473 button 图纸发放记录
+				474 button 图纸关联查询
+				475 button 客户图纸
+				476 container
+					477 button 委外管理
+						478 image
+						479 text 委外管理
+						480 image
+					481 button 进入委外管理上手指南
+						482 image
+				483 button 委外看板
+				484 button 委外订单
+				485 button 委外发料
+				486 button 委外回厂
+				487 button 委外退料
+				488 button 委外对账
+				489 button 委外供应商
+				490 button 委外库存
+				491 button 批次追溯
+				492 button 委外未交
+				493 button 委外进货
+				494 button 委外对账单
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 1
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				350 button 销售团队
+					351 text 销售团队
+				352 button 销售目标
+					353 text 销售目标
+				354 button 销售发票
+					355 text 销售发票
+				356 button 客户管理
+					357 text 客户管理
+				358 button 联系人管理
+					359 text 联系人管理
+				360 button 销售报价
+					361 text 销售报价
+				362 button 客户物料对照
+					363 text 客户物料对照
+				364 button 商机管理
+					365 text 商机管理
+				366 button 线索管理
+					367 text 线索管理
+				368 button 跟进记录
+					369 text 跟进记录
+				370 button 公海客户
+					371 text 公海客户
+				495 button 组装单
+					496 text 组装单
+				497 button 缺料待办
+					498 text 缺料待办
+				499 button 领料单
+					500 text 领料单
+			501 container
+				502 container
+					503 text 组装业务管理
+					504 image
+					505 text 领料单
+					506 image
+					507 heading 领料单, Value: 1
+						508 text 领料单
+					509 text 组装领料、拆解领料、补料、退料的出入库单据，关联来源单与出入库单据
+				510 image
+				511 text 领料单 0
+				512 image
+				513 text 物料种类 0
+				514 image
+				515 text 物料数量 0
+				516 image
+				517 text 净领用金额 ¥0
+				518 button 全部(0)
+					519 text 全部
+					520 text (
+					521 text 0
+					522 text )
+				523 button 审批中
+				524 button 已确认
+				525 button 已驳回
+				526 button 已作废
+				527 button 新建领料单
+					528 image
+					529 text 新建领料单
+				530 button 导出
+					531 image
+					532 text 导出
+					533 image
+				534 button 导入/导出任务
+				535 button 刷新
+					536 image
+				537 button
+					538 image
+				539 button
+					540 image
+				541 image
+				542 text field (settable)
+				543 button 全部类型
+					544 text 全部类型
+				545 table
+					546 row
+						547 cell
+							548 text 领料单号
+						549 cell
+							550 text 类型
+						551 cell
+							552 text 成品
+						553 cell
+							554 text 来源单
+						555 cell
+							556 text 物料种类
+						557 cell
+							558 text 数量
+						559 cell
+							560 text 金额
+						561 cell
+							562 text 经手人
+						563 cell
+							564 text 日期
+						565 cell
+							566 text 操作
+					567 row
+						568 cell
+							569 image
+							570 text 暂无领料单
+				571 text 共  0 条记录 每页
+				572 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					573 text 20
+				574 text 条
+				575 button (disabled) 上一页
+					576 image
+				577 button 1
+				578 button (disabled) 下一页
+					579 image
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 456 button 领料单

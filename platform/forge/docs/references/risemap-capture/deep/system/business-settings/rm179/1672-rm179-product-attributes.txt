@@ -1,0 +1,334 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/product".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/product
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 系统
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 系统设置
+					10 image
+					11 text 系统设置
+					12 image
+				13 button 基础配置
+				14 button 用户与角色
+				15 button 部门管理
+				16 button 用户会话
+				17 button 审计日志
+				18 button 业务设置
+					19 image
+					20 text 业务设置
+					21 image
+				22 button 商品管理
+				23 button 财务配置
+				24 button 行政管理
+				25 button 客户管理
+				26 button 采购销售
+				27 button 库存管理
+				28 button 其他配置
+				29 button 人事配置
+				30 button 项目管理
+				31 button 图纸配置
+				32 button 生产配置
+				33 button 委外配置
+				34 button 单据打印
+				35 button 插件中心
+					36 image
+					37 text 插件中心
+				38 button 服务订阅
+					39 image
+					40 text 服务订阅
+				41 button 推广奖励
+					42 image
+					43 text 推广奖励
+				44 button 字段管理
+					45 image
+					46 text 字段管理
+			47 image
+			48 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			49 button 查看方案
+				50 image
+				51 text 查看方案
+			52 button
+				53 image
+			54 container
+				55 container 业务分类
+					56 checkbox 工作台, Value: 0
+					57 checkbox 供应链, Value: 0
+					58 checkbox 销售, Value: 0
+					59 checkbox 生产, Value: 0
+					60 checkbox 项目, Value: 0
+					61 checkbox 行政, Value: 0
+					62 checkbox 财务, Value: 0
+					63 checkbox 报表, Value: 0
+					64 checkbox 系统, Value: 1
+				65 button Description: 展开搜索, Help: 搜索
+					66 image
+				67 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					68 image
+					69 text 2
+				70 button Description: 打开推广奖励, Help: 推广
+				71 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				72 link Description: 打开工单, Value: community.risemap.cn/support
+				73 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					74 image
+					75 text 立即订阅
+				76 button 金
+					77 text 金
+					78 image
+			79 container
+				80 button 工作台
+					81 image
+					82 text 工作台
+				83 button 项目统计
+					84 text 项目统计
+				85 button 组装统计
+					86 text 组装统计
+				87 button 财务总览
+					88 text 财务总览
+				89 button 损益分析
+					90 text 损益分析
+				91 button 资金分析
+					92 text 资金分析
+				93 button 往来账款
+					94 text 往来账款
+				95 button 税务库存
+					96 text 税务库存
+				97 button 风险监控
+					98 text 风险监控
+				99 button 基础配置
+					100 text 基础配置
+				101 button 账户管理
+					102 text 账户管理
+				103 button 部门管理
+					104 text 部门管理
+				105 button 用户会话
+					106 text 用户会话
+				107 button 审计日志
+					108 text 审计日志
+				109 button 商品管理配置
+					110 text 商品管理配置
+			111 container
+				112 text 业务设置
+				113 image
+				114 text 物料管理配置
+				115 heading 业务设置 - 物料管理, Value: 1
+					116 text 业务设置 -  物料管理
+				117 button 商品管理
+				118 button 财务配置
+				119 button 行政管理
+				120 button 客户管理
+				121 button 采购销售
+				122 button 库存管理
+				123 button 其他配置
+				124 button 人事配置
+				125 button 项目管理
+				126 button 图纸配置
+				127 button 生产配置
+				128 button 委外配置
+				129 button 单据打印
+				130 text 管理商品分组、计量单位、结算方式、仓库等业务基础数据配置
+				131 button AI 助手
+					132 image
+					133 text AI 助手
+				134 button 物料管理
+					135 image
+					136 text 物料管理
+					137 image
+				138 button 物料分组
+					139 image
+					140 text 物料分组
+				141 button 计量单位
+					142 image
+					143 text 计量单位
+				144 button 物料属性
+					145 image
+					146 text 物料属性
+				147 button 来源类型
+					148 image
+					149 text 来源类型
+				150 button 品牌管理
+					151 image
+					152 text 品牌管理
+				153 button 条码打印
+					154 image
+					155 text 条码打印
+				156 button 供应商管理
+					157 image
+					158 text 供应商管理
+					159 image
+				160 button 供应商分类
+					161 image
+					162 text 供应商分类
+				163 button 供应商级别
+					164 image
+					165 text 供应商级别
+				166 text 物料属性管理
+				167 text 配置物料的属性分类（如原材料、半成品、成品等），新建物料时按启用项选择
+				168 button 添加属性
+					169 image
+					170 text 添加属性
+				171 table
+					172 row
+						173 cell
+							174 text 名称
+						175 cell
+							176 text 编码
+						177 cell
+							178 text 排序
+						179 cell
+							180 text 使用数量
+						181 cell
+							182 text 默认项
+						183 cell
+							184 text 状态
+					185 row
+						186 cell
+							187 text 原材料
+						188 cell
+							189 text RAW_MATERIAL
+						190 cell
+							191 text 1
+						192 cell
+							193 text 0
+						194 cell
+							195 image
+							196 text 默认
+						197 cell
+							198 button (disabled) 默认项不可停用
+						199 cell
+							200 button
+								201 image
+							202 button (disabled) 默认项不可删除
+								203 image
+					204 row
+						205 cell
+							206 text 半成品
+						207 cell
+							208 text SEMI_FINISHED
+						209 cell
+							210 text 2
+						211 cell
+							212 text 0
+						213 cell
+							214 button 设为默认
+						215 cell
+							216 button 点击停用
+						217 cell
+							218 button
+								219 image
+							220 button 删除
+								221 image
+					222 row
+						223 cell
+							224 text 成品
+						225 cell
+							226 text FINISHED
+						227 cell
+							228 text 3
+						229 cell
+							230 text 0
+						231 cell
+							232 button 设为默认
+						233 cell
+							234 button 点击停用
+						235 cell
+							236 button
+								237 image
+							238 button 删除
+								239 image
+					240 row
+						241 cell
+							242 text 贸易商品
+						243 cell
+							244 text TRADE_GOODS
+						245 cell
+							246 text 4
+						247 cell
+							248 text 0
+						249 cell
+							250 button 设为默认
+						251 cell
+							252 button 点击停用
+						253 cell
+							254 button
+								255 image
+							256 button 删除
+								257 image
+					258 row
+						259 cell
+							260 text 消耗品
+						261 cell
+							262 text CONSUMABLE
+						263 cell
+							264 text 5
+						265 cell
+							266 text 0
+						267 cell
+							268 button 设为默认
+						269 cell
+							270 button 点击停用
+						271 cell
+							272 button
+								273 image
+							274 button 删除
+								275 image
+					276 row
+						277 cell
+							278 text 服务
+						279 cell
+							280 text SERVICE
+						281 cell
+							282 text 6
+						283 cell
+							284 text 0
+						285 cell
+							286 button 设为默认
+						287 cell
+							288 button 点击停用
+						289 cell
+							290 button
+								291 image
+							292 button 删除
+								293 image
+					294 row
+						295 cell
+							296 text 备件
+						297 cell
+							298 text SPARE_PART
+						299 cell
+							300 text 7
+						301 cell
+							302 text 0
+						303 cell
+							304 button 设为默认
+						305 cell
+							306 button 点击停用
+						307 cell
+							308 button
+								309 image
+							310 button 删除
+								311 image
+					312 row
+						313 cell
+							314 text 包装材料
+						315 cell
+							316 text PACKAGING
+						317 cell
+							318 text 8
+						319 cell
+							320 text 0
+						321 cell
+							322 button 设为默认
+						323 cell
+							324 button 点击停用
+						325 cell
+							326 button
+								327 image
+							328 button 删除
+								329 image
+			330 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			331 container Notifications alt+T
+
+The focused UI element is 144 button 物料属性

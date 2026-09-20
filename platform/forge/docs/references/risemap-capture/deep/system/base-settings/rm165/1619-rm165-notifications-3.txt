@@ -1,0 +1,326 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings?tab=notification".
+1 AXWebArea RiseMap, URL: risemap.cn/settings?tab=notification
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 系统
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 系统设置
+					10 image
+					11 text 系统设置
+					12 image
+				13 button 基础配置
+				14 button 用户与角色
+				15 button 部门管理
+				16 button 用户会话
+				17 button 审计日志
+				18 button 业务设置
+					19 image
+					20 text 业务设置
+					21 image
+				22 button 商品管理
+				23 button 财务配置
+				24 button 行政管理
+				25 button 客户管理
+				26 button 采购销售
+				27 button 库存管理
+				28 button 其他配置
+				29 button 人事配置
+				30 button 项目管理
+				31 button 图纸配置
+				32 button 生产配置
+				33 button 委外配置
+				34 button 单据打印
+				35 button 插件中心
+					36 image
+					37 text 插件中心
+				38 button 服务订阅
+					39 image
+					40 text 服务订阅
+				41 button 推广奖励
+					42 image
+					43 text 推广奖励
+				44 button 字段管理
+					45 image
+					46 text 字段管理
+			47 image
+			48 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			49 button 查看方案
+				50 image
+				51 text 查看方案
+			52 button
+				53 image
+			54 container
+				55 container 业务分类
+					56 checkbox 工作台, Value: 0
+					57 checkbox 供应链, Value: 0
+					58 checkbox 销售, Value: 0
+					59 checkbox 生产, Value: 0
+					60 checkbox 项目, Value: 0
+					61 checkbox 行政, Value: 0
+					62 checkbox 财务, Value: 0
+					63 checkbox 报表, Value: 0
+					64 checkbox 系统, Value: 1
+				65 button Description: 展开搜索, Help: 搜索
+					66 image
+				67 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					68 image
+					69 text 2
+				70 button Description: 打开推广奖励, Help: 推广
+				71 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				72 link Description: 打开工单, Value: community.risemap.cn/support
+				73 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					74 image
+					75 text 立即订阅
+				76 button 金
+					77 text 金
+					78 image
+			79 container
+				80 button 工作台
+					81 image
+					82 text 工作台
+				83 button 开票任务
+					84 text 开票任务
+				85 button 调整记录
+					86 text 调整记录
+				87 button 销售统计
+					88 text 销售统计
+				89 button 采购统计
+					90 text 采购统计
+				91 button 库存统计
+					92 text 库存统计
+				93 button 项目统计
+					94 text 项目统计
+				95 button 组装统计
+					96 text 组装统计
+				97 button 财务总览
+					98 text 财务总览
+				99 button 损益分析
+					100 text 损益分析
+				101 button 资金分析
+					102 text 资金分析
+				103 button 往来账款
+					104 text 往来账款
+				105 button 税务库存
+					106 text 税务库存
+				107 button 风险监控
+					108 text 风险监控
+				109 button 基础配置
+					110 text 基础配置
+			111 container
+				112 text 系统设置
+				113 heading 系统设置, Value: 1
+					114 text 系统设置
+				115 button (expanded) Description: 收起设置导航, Secondary Actions: Collapse
+					116 image
+				117 button 企业信息 管理企业基本信息、Logo等
+					118 image
+					119 text 企业信息
+					120 text 管理企业基本信息、Logo等
+				121 button 编码管理 业务编号生成与校验规则
+					122 image
+					123 text 编码管理
+					124 text 业务编号生成与校验规则
+				125 button 通知设置 配置系统通知和提醒规则
+					126 image
+					127 text 通知设置
+					128 text 配置系统通知和提醒规则
+				129 button 邮件配置 配置 SMTP 服务器，可选，不配置则使用官方邮件服务
+					130 image
+					131 text 邮件配置
+					132 text 配置 SMTP 服务器，可选，不配置则使用官方邮件服务
+				133 button 收件邮箱 配置进项发票收件邮箱和可见范围
+					134 image
+					135 text 收件邮箱
+					136 text 配置进项发票收件邮箱和可见范围
+				137 button 数据管理 数据备份、导入导出设置
+					138 image
+					139 text 数据管理
+					140 text 数据备份、导入导出设置
+				141 button 外观定制 自定义系统主题和界面
+					142 image
+					143 text 外观定制
+					144 text 自定义系统主题和界面
+				145 button 功能模块 启用/隐藏侧边栏模块菜单
+					146 image
+					147 text 功能模块
+					148 text 启用/隐藏侧边栏模块菜单
+				149 button 热键管理 自定义全局快捷键，提升操作效率
+					150 image
+					151 text 热键管理
+					152 text 自定义全局快捷键，提升操作效率
+				153 heading 通知设置, Value: 3
+					154 text 通知设置
+				155 text 配置通知渠道和各业务模块的通知规则
+				156 heading 通知渠道, Value: 4
+					157 text 通知渠道
+				158 image
+				159 text 站内信
+				160 switch Value: 1, ID: :rou:
+				161 text 系统内部消息推送，登录后可在通知中心查看
+				162 image
+				163 text 邮件
+				164 switch Value: 0, ID: :rov:
+				165 text 通过企业邮箱发送通知邮件
+				166 image
+				167 text 企业微信
+				168 switch Value: 0, ID: :rp0:
+				169 text 通过企业微信应用推送通知（需对接企业微信API）
+				170 image
+				171 text 飞书机器人
+				172 switch Value: 0, ID: :rp1:
+				173 text 通过飞书机器人推送通知（需对接飞书API）
+				174 image
+				175 text 钉钉
+				176 switch Value: 0, ID: :rp2:
+				177 text 通过钉钉工作通知推送消息（需对接钉钉API）
+				178 heading 通知规则, Value: 4
+					179 text 通知规则
+				180 image
+				181 text field (settable) 搜索通知规则
+				182 button 全部模块
+					183 text 全部模块
+				268 table
+					269 row
+						270 cell
+							271 text 模块
+						272 cell
+							273 text 事件
+						274 cell
+							275 button 批量切换站内信
+								276 image
+							277 text 站内信
+						278 cell
+							279 switch Value: 1, ID: :rq3:
+							280 text 启用
+					281 row
+						282 cell
+							283 text 销售管理
+						284 cell
+							285 text 跟进提前提醒
+							286 text 下次跟进时间前1小时提醒客户负责人
+						287 cell
+							288 button
+								289 image
+						290 cell
+							291 switch Value: 1, ID: :rq4:
+					292 row
+						293 cell
+							294 text 销售管理
+						295 cell
+							296 text 跟进提醒
+							297 text 销售客户或商机需要跟进提醒时触发
+						298 cell
+							299 button
+								300 image
+						301 cell
+							302 switch Value: 1, ID: :rq5:
+					303 row
+						304 cell
+							305 text 项目中心
+						306 cell
+							307 text 任务分配通知
+							308 text 项目任务创建并指定负责人后通知负责人时触发
+						309 cell
+							310 button
+								311 image
+						312 cell
+							313 switch Value: 1, ID: :rq6:
+					314 row
+						315 cell
+							316 text 项目中心
+						317 cell
+							318 text 项目负责人变更通知
+							319 text 项目负责人调整后通知新旧负责人和团队成员时触发
+						320 cell
+							321 button
+								322 image
+						323 cell
+							324 switch Value: 1, ID: :rq7:
+					325 row
+						326 cell
+							327 text 项目中心
+						328 cell
+							329 text 项目发起通知
+							330 text 项目创建后通知负责人和团队成员时触发
+						331 cell
+							332 button
+								333 image
+						334 cell
+							335 switch Value: 1, ID: :rq8:
+					336 row
+						337 cell
+							338 text 图纸模块
+						339 cell
+							340 text 客户图纸即将到期
+							341 text 客户图纸有效期临近时触发
+						342 cell
+							343 button
+								344 image
+						345 cell
+							346 switch Value: 1, ID: :rq9:
+					347 row
+						348 cell
+							349 text 图纸模块
+						350 cell
+							351 text 客户图纸作废
+							352 text 客户图纸作废时触发
+						353 cell
+							354 button
+								355 image
+						356 cell
+							357 switch Value: 1, ID: :rqa:
+					358 row
+						359 cell
+							360 text 图纸模块
+						361 cell
+							362 text 客户图纸接收
+							363 text 登记客户来图时触发
+						364 cell
+							365 button
+								366 image
+						367 cell
+							368 switch Value: 1, ID: :rqb:
+					369 row
+						370 cell
+							371 text 图纸模块
+						372 cell
+							373 text 图纸变更收尾
+							374 text 图纸变更单执行完成或关闭时触发
+						375 cell
+							376 button
+								377 image
+						378 cell
+							379 switch Value: 1, ID: :rqc:
+					380 row
+						381 cell
+							382 text 图纸模块
+						383 cell
+							384 text 图纸变更影响已处理
+							385 text 图纸变更影响项处理完成时触发
+						386 cell
+							387 button
+								388 image
+						389 cell
+							390 switch Value: 1, ID: :rqd:
+				391 text 共  77 条记录 每页
+				392 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					393 text 10
+				394 text 条
+				395 button 上一页
+					396 image
+				397 button 1
+				398 button 2
+				399 button 3
+				400 button 4
+				401 button 5
+				402 text ...
+				403 button 8
+				404 button 下一页
+					405 image
+			266 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			267 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/settings?tab=notification

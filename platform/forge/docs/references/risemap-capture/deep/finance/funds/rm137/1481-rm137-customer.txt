@@ -1,0 +1,186 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/refunds".
+1 AXWebArea RiseMap, URL: risemap.cn/finance/refunds
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 财务
+			6 button 收起侧边栏
+				7 image
+			8 container
+				181 button 资金管理
+					182 image
+					183 text 资金管理
+					184 image
+				185 button 资金账户
+				186 button 资金流水
+				187 button 应收应付
+				188 button 收款管理
+				189 button 付款管理
+				190 button 退款申请
+				191 button 授信额度管理
+				192 button 借款贷款管理
+				193 button 业务确认
+					194 image
+					195 text 业务确认
+					196 image
+				197 button 销售收入确认
+				198 button 成本中心
+				199 button 费用中心
+				200 button 报销管理
+				201 button 对账单
+					202 image
+					203 text 对账单
+				204 button 发票管理
+					205 image
+					206 text 发票管理
+					207 image
+				208 button 发票总览
+				209 button 销项发票
+				210 button 进项发票
+				211 button 开票任务
+				212 button 调整记录
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 1
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				113 button 审批记录
+					114 text 审批记录
+				115 button 发起流程
+					116 text 发起流程
+				117 button 流程设计器
+					118 text 流程设计器
+				119 button 流程定义
+					120 text 流程定义
+				121 button 编辑流程
+					122 text 编辑流程
+				123 button 流程分类
+					124 text 流程分类
+				213 button 资金账户
+					214 text 资金账户
+				215 button 资金流水
+					216 text 资金流水
+				217 button 应收应付
+					218 text 应收应付
+				219 button 收款管理
+					220 text 收款管理
+				221 button 付款管理
+					222 text 付款管理
+				223 button 费用中心
+					224 text 费用中心
+				225 button 新建付款申请
+					226 text 新建付款申请
+				227 button 退款申请
+					228 text 退款申请
+			229 container
+				230 container
+					231 text 资金管理
+					232 image
+					233 text 退款申请
+					234 image
+					235 heading 退款申请, Value: 1
+						236 text 退款申请
+					237 text 退款审批流程与退款进度跟踪
+				238 heading 退款申请, Value: 1
+					239 text 退款申请
+				240 button 客户退款0
+					241 image
+					242 text 客户退款
+					243 text 0
+				244 button 供应商退款0
+					245 image
+					246 text 供应商退款
+					247 text 0
+				248 button 导出
+					249 image
+					250 text 导出
+					251 image
+				252 button 刷新
+					253 image
+				254 button
+					255 image
+				256 button
+					257 image
+				258 image
+				259 text field (settable)
+				260 button 状态
+					261 text 状态
+					262 image
+				263 table
+					264 row
+						265 cell
+							266 checkbox (settable, integer) 0
+						267 cell
+							268 text 申请单号
+						269 cell
+							270 text 关联合同
+						271 cell
+							272 text 客户
+						273 cell
+							274 text 币种
+						275 cell
+							276 text 实退金额
+							277 image
+						278 cell
+							279 text 退款方式
+						280 cell
+							281 text 单据状态
+						282 cell
+							283 text 财务审批
+						284 cell
+							285 text 付款状态
+						286 cell
+							287 text 核销状态
+						288 cell
+							289 text 申请日期
+							290 image
+						291 cell
+							292 text 操作
+					293 row
+						294 cell
+							295 image
+							296 text 暂无退款申请记录
+				297 text 共  0 条记录 每页
+				298 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					299 text 20
+				300 text 条
+				301 button (disabled) 上一页
+					302 image
+				303 button 1
+				304 button (disabled) 下一页
+					305 image
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+
+The focused UI element is 190 button 退款申请

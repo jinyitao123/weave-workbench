@@ -1,0 +1,167 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 系统
+- button "收起侧边栏":
+- navigation:
+  - button "系统设置":
+    - generic: 系统设置
+  - button "基础配置":
+    - generic: 基础配置
+  - button "用户与角色":
+    - generic: 用户与角色
+  - button "部门管理":
+    - generic: 部门管理
+  - button "用户会话":
+    - generic: 用户会话
+  - button "审计日志":
+    - generic: 审计日志
+  - button "业务设置":
+    - generic: 业务设置
+  - button "商品管理":
+    - generic: 商品管理
+  - button "财务配置":
+    - generic: 财务配置
+  - button "行政管理":
+    - generic: 行政管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "采购销售":
+    - generic: 采购销售
+  - button "库存管理":
+    - generic: 库存管理
+  - button "其他配置":
+    - generic: 其他配置
+  - button "人事配置":
+    - generic: 人事配置
+  - button "项目管理" [active]:
+    - generic: 项目管理
+  - button "图纸配置":
+    - generic: 图纸配置
+  - button "生产配置":
+    - generic: 生产配置
+  - button "委外配置":
+    - generic: 委外配置
+  - button "单据打印":
+    - generic: 单据打印
+  - button "插件中心":
+    - generic: 插件中心
+  - button "服务订阅":
+    - generic: 服务订阅
+  - button "推广奖励":
+    - generic: 推广奖励
+  - button "字段管理":
+    - generic: 字段管理
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统" [pressed]:
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "基础配置":
+  - generic: 基础配置
+- button "账户管理":
+  - generic: 账户管理
+- button "部门管理":
+  - generic: 部门管理
+- button "用户会话":
+  - generic: 用户会话
+- button "审计日志":
+  - generic: 审计日志
+- button "商品管理配置":
+  - generic: 商品管理配置
+- button "财务配置":
+  - generic: 财务配置
+- button "行政配置":
+  - generic: 行政配置
+- button "客户管理配置":
+  - generic: 客户管理配置
+- button "销售配置":
+  - generic: 销售配置
+- button "库存配置":
+  - generic: 库存配置
+- button "其他配置":
+  - generic: 其他配置
+- button "人事配置":
+  - generic: 人事配置
+- button "项目管理配置":
+  - generic: 项目管理配置
+- main:
+  - generic: 业务设置
+  - generic: 项目管理配置
+  - heading "业务设置 - 项目管理" [level=1]
+  - button "商品管理"
+  - button "财务配置"
+  - button "行政管理"
+  - button "客户管理"
+  - button "采购销售"
+  - button "库存管理"
+  - button "其他配置"
+  - button "人事配置"
+  - button "项目管理"
+  - button "图纸配置"
+  - button "生产配置"
+  - button "委外配置"
+  - button "单据打印"
+  - paragraph: 管理商品分组、计量单位、结算方式、仓库等业务基础数据配置
+  - button "AI 助手":
+    - text: AI 助手
+  - button "项目管理":
+    - generic: 项目管理
+  - button "项目类型":
+    - generic: 项目类型
+  - button "项目角色":
+    - generic: 项目角色
+  - button "任务类型":
+    - generic: 任务类型
+  - button "闲置类别":
+    - generic: 闲置类别
+  - button "工时类型":
+    - generic: 工时类型
+  - button "日志类型":
+    - generic: 日志类型
+  - button "日志标签":
+    - generic: 日志标签
+  - button "计划模板分类":
+    - generic: 计划模板分类
+  - paragraph: 项目类型
+  - paragraph: 管理项目的业务类型与展示颜色，用于立项与列表区分
+  - button "新增类型":
+    - text: 新增类型
+  - paragraph: 暂无项目类型
+  - paragraph: 说明
+  - paragraph: 拖拽条目可调整顺序，松手后自动保存。
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 当前

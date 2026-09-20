@@ -1,0 +1,275 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 生产
+- button "收起侧边栏":
+- navigation:
+  - button "组装业务管理":
+    - generic: 组装业务管理
+  - button "组装单":
+    - generic: 组装单
+  - button "缺料待办":
+    - generic: 缺料待办
+  - button "领料单":
+    - generic: 领料单
+  - button "补料单":
+    - generic: 补料单
+  - button "退料单":
+    - generic: 退料单
+  - button "拆解单":
+    - generic: 拆解单
+  - button "换件单":
+    - generic: 换件单
+  - button "图纸管理":
+    - generic: 图纸管理
+  - button "进入图纸管理上手指南":
+  - button "图纸总览":
+    - generic: 图纸总览
+  - button "图号档案":
+    - generic: 图号档案
+  - button "图纸评审":
+    - generic: 图纸评审
+  - button "图纸发布":
+    - generic: 图纸发布
+  - button "图纸变更":
+    - generic: 图纸变更
+  - button "图纸发放记录":
+    - generic: 图纸发放记录
+  - button "图纸关联查询":
+    - generic: 图纸关联查询
+  - button "客户图纸":
+    - generic: 客户图纸
+  - button "委外管理":
+    - generic: 委外管理
+  - button "进入委外管理上手指南":
+  - button "委外看板":
+    - generic: 委外看板
+  - button "委外订单":
+    - generic: 委外订单
+  - button "委外发料":
+    - generic: 委外发料
+  - button "委外回厂":
+    - generic: 委外回厂
+  - button "委外退料":
+    - generic: 委外退料
+  - button "委外对账":
+    - generic: 委外对账
+  - button "委外供应商":
+    - generic: 委外供应商
+  - button "委外库存":
+    - generic: 委外库存
+  - button "批次追溯":
+    - generic: 批次追溯
+  - button "委外未交":
+    - generic: 委外未交
+  - button "委外进货":
+    - generic: 委外进货
+  - button "委外对账单":
+    - generic: 委外对账单
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产" [pressed]:
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "新建评审":
+  - generic: 新建评审
+- button "图纸发布":
+  - generic: 图纸发布
+- button "已发布记录":
+  - generic: 已发布记录
+- button "图纸变更":
+  - generic: 图纸变更
+- button "新建变更":
+  - generic: 新建变更
+- button "图纸发放记录":
+  - generic: 图纸发放记录
+- button "新建发放":
+  - generic: 新建发放
+- button "图纸关联查询":
+  - generic: 图纸关联查询
+- button "客户图纸":
+  - generic: 客户图纸
+- button "新建客户图纸":
+  - generic: 新建客户图纸
+- button "委外管理上手指南":
+  - generic: 委外管理上手指南
+- button "委外看板":
+  - generic: 委外看板
+- button "委外订单":
+  - generic: 委外订单
+- button "新建委外订单":
+  - generic: 新建委外订单
+- main:
+  - button "委外订单":
+    - text: 委外订单
+  - generic: 新建委外订单
+  - heading "新建委外订单" [level=1]
+  - paragraph: 我方提供原料,供应商加工后回厂
+  - button "保存草稿":
+    - text: 保存草稿
+  - button "提交审核":
+    - text: 提交审核
+  - generic: 基础信息
+  - button "基础信息 3/8":
+    - generic: 基础信息
+    - generic: 3/8
+  - generic: "*"
+  - generic: 委外供应商
+  - button "搜索供应商名称 / 编号 / 联系人":
+    - generic: 搜索供应商名称 / 编号 / 联系人
+  - generic: "*"
+  - generic: 料权方式
+  - radiogroup:
+    - radio "甲供料" [checked]:
+      - generic: 甲供料
+    - radio "包工包料":
+      - generic: 包工包料
+  - generic: "*"
+  - generic: 期望交期
+  - textbox "请选择期望交期"
+  - button:
+  - generic: 项目
+  - generic: 搜索项目名称、编号...
+  - generic: 业务来源
+  - button "手工新建":
+    - generic "手工新建"
+    - button:
+  - generic: 验收方式
+  - button "全检":
+    - generic "全检"
+    - button:
+  - generic: "*"
+  - generic: 付款条件
+  - button "暂无启用的付款条件，请先到采购基础数据维护":
+    - generic: 暂无启用的付款条件，请先到采购基础数据维护
+  - generic: 备注
+  - textbox "请输入备注"
+  - text: 加工件
+  - button "增加加工件":
+    - text: 增加加工件
+  - table:
+    - rowgroup:
+      - row "# 物料编号 * 物料名称 * 规格 加工类型 * 数量 * 单位 单价 * 小计 期望交期 图纸号":
+        - columnheader "#"
+        - columnheader "物料编号 *"
+        - columnheader "物料名称 *"
+        - columnheader "规格"
+        - columnheader "加工类型 *"
+        - columnheader "数量 *"
+        - columnheader "单位"
+        - columnheader "单价 *"
+        - columnheader "小计"
+        - columnheader "期望交期"
+        - columnheader "图纸号"
+        - columnheader
+    - rowgroup:
+      - row "1 选择物料 请先选供应商 1 件 0 ¥0":
+        - cell "1"
+        - cell "选择物料":
+          - button "选择物料":
+            - text: 选择物料
+        - cell:
+          - textbox "物料名称取自物料主数据，如需更换请点左侧「换」重新选料" [disabled]
+        - cell:
+          - textbox "规格取自物料主数据，如需更换请点左侧「换」重新选料" [disabled]
+        - cell "请先选供应商":
+          - button "请先选供应商" [disabled]:
+            - generic: 请先选供应商
+        - cell "1":
+          - spinbutton: "1"
+        - cell "件":
+          - textbox: 件
+        - cell "0":
+          - spinbutton: "0"
+        - cell "¥0"
+        - cell:
+          - textbox "请选择日期"
+          - button:
+        - cell:
+          - textbox "DWG-..."
+        - cell
+    - rowgroup:
+      - row "加工费总额 ¥0":
+        - cell "加工费总额"
+        - cell "¥0"
+        - cell
+  - text: 发料计划
+  - button "按 BOM 展开发料":
+    - text: 按 BOM 展开发料
+  - button "手动增加":
+    - text: 手动增加
+  - table:
+    - rowgroup:
+      - row "# 物料编号 * 物料名称 * 规格 计划发料 * 标准应耗 * 单位 用于加工件":
+        - columnheader "#"
+        - columnheader "物料编号 *"
+        - columnheader "物料名称 *"
+        - columnheader "规格"
+        - columnheader "计划发料 *"
+        - columnheader "标准应耗 *"
+        - columnheader "单位"
+        - columnheader "用于加工件"
+        - columnheader
+    - rowgroup:
+      - row "1 选择物料 0 0 默认同计划发料 件 加工件 1":
+        - cell "1"
+        - cell "选择物料":
+          - button "选择物料":
+            - text: 选择物料
+        - cell:
+          - textbox "物料名称取自物料主数据，如需更换请重新选料" [disabled]
+        - cell:
+          - textbox "规格取自物料主数据，如需更换请重新选料" [disabled]
+        - cell "0":
+          - spinbutton: "0"
+        - cell "0 默认同计划发料":
+          - spinbutton: "0"
+          - generic: 默认同计划发料
+        - cell "件":
+          - textbox: 件
+        - cell "加工件 1":
+          - button "加工件 1":
+            - generic "加工件 1"
+        - cell
+  - generic: 按 BOM 展开:取每个加工件 BOM 中的「采购件」叶子节点,数量 = 单机用量 × 加工件数 × (1 + 损耗率)。 来源仓库将在创建发料单时由系统按可用库存推荐，并可由经办人调整。
+  - button "取消"
+  - button "保存草稿"
+  - button "提交审核":
+    - text: 提交审核
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2025-10
+- textbox "搜索..." [active]
+- generic: 暂无数据

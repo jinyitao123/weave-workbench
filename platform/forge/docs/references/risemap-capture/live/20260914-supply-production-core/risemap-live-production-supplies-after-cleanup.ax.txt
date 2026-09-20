@@ -1,0 +1,215 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/production/material-supplies".
+1 AXWebArea RiseMap, URL: risemap.cn/production/material-supplies
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 生产
+			6 button 收起侧边栏
+				7 image
+			8 container
+				86 button 组装业务管理
+					87 image
+					88 text 组装业务管理
+					89 image
+				90 button 组装单
+				91 button 缺料待办
+				92 button 领料单
+				93 button 补料单
+				94 button 退料单
+				95 button 拆解单
+				96 button 换件单
+				97 container
+					98 button 图纸管理
+						99 image
+						100 text 图纸管理
+						101 image
+					102 button 进入图纸管理上手指南
+						103 image
+				104 button 图纸总览
+				105 button 图号档案
+				106 button 图纸评审
+				107 button 图纸发布
+				108 button 图纸变更
+				109 button 图纸发放记录
+				110 button 图纸关联查询
+				111 button 客户图纸
+				112 container
+					113 button 委外管理
+						114 image
+						115 text 委外管理
+						116 image
+					117 button 进入委外管理上手指南
+						118 image
+				119 button 委外看板
+				120 button 委外订单
+				121 button 委外发料
+				122 button 委外回厂
+				123 button 委外退料
+				124 button 委外对账
+				125 button 委外供应商
+				126 button 委外库存
+				127 button 批次追溯
+				128 button 委外未交
+				129 button 委外进货
+				130 button 委外对账单
+			131 image
+			132 text 免费试用中，还剩 8 天 — 试用期间享全部功能
+			133 button 查看方案
+				134 image
+				135 text 查看方案
+			136 button
+				137 image
+			17 container
+				138 container 业务分类
+					139 container
+						140 checkbox 工作台, Value: 0
+						141 checkbox 供应链, Value: 0
+						142 checkbox 销售, Value: 0
+						143 checkbox 生产, Value: 1
+						144 checkbox 项目, Value: 0
+						145 checkbox 行政, Value: 0
+						146 checkbox 财务, Value: 0
+						147 checkbox 报表, Value: 0
+						148 checkbox 系统, Value: 0
+				28 button Description: 展开搜索, Help: 搜索
+					29 image
+				30 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+					31 image
+					149 text 20
+				32 button Description: 打开推广奖励, Help: 推广
+				33 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				34 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				150 button 立即订阅, Help: 试用还剩 8 天 · 立即订阅享专属优惠
+					151 image
+					152 text 立即订阅
+				35 button 金
+					153 text 金
+					36 image
+			37 container
+				38 button 工作台
+					39 image
+					154 text 工作台
+				40 button 采购订单
+					155 text 采购订单
+				41 button 销售订单
+					156 text 销售订单
+				42 button 组装单
+					157 text 组装单
+				43 button 工作台
+					158 text 工作台
+				44 button 领料单
+					159 text 领料单
+				45 button 补料单
+					160 text 补料单
+				46 button 退料单
+					161 text 退料单
+				47 button 拆解单
+					162 text 拆解单
+				48 button 换件单
+					163 text 换件单
+				49 button 到货登记
+					164 text 到货登记
+				50 button 待检验库存
+					165 text 待检验库存
+				51 button 检验单
+					166 text 检验单
+				52 button 采购入库
+					167 text 采购入库
+				53 button 采购退货
+					168 text 采购退货
+			54 container
+				55 container
+					169 text 组装业务管理
+					56 image
+					170 text 补料单
+					57 image
+					58 heading 补料单, Value: 1
+						171 text 补料单
+					172 text 组装单额外领用物料：现场损耗、报废、漏装等超 BOM 用量补领，出库扣减库存，关联组装单与库存流水
+				59 image
+				173 text 补料单总数 0
+				60 image
+				174 text 补领物料种数 0
+				61 image
+				175 text 补料金额（出库） ¥0
+				62 image
+				176 text 涉及来源单 0
+				63 button 全部(0)
+					177 text 全部
+					178 text (
+					179 text 0
+					180 text )
+				64 button 审批中(0)
+					181 text 审批中
+					182 text (
+					183 text 0
+					184 text )
+				65 button 已确认(0)
+					185 text 已确认
+					186 text (
+					187 text 0
+					188 text )
+				66 button 已驳回(0)
+					189 text 已驳回
+					190 text (
+					191 text 0
+					192 text )
+				67 button 已作废(0)
+					193 text 已作废
+					194 text (
+					195 text 0
+					196 text )
+				68 button 新建补料单
+					69 image
+					197 text 新建
+					198 text 补料单
+				70 button 导出
+					71 image
+					199 text 导出
+					72 image
+				73 button 导入/导出任务
+				74 button 刷新
+					75 image
+				76 button
+					77 image
+				78 button
+					79 image
+				80 image
+				81 text field (settable)
+				200 table
+					201 row
+						202 cell
+							203 text 补料单号
+						204 cell
+							205 text 成品
+						206 cell
+							207 text 来源单
+						208 cell
+							209 text 物料种数
+						210 cell
+							211 text 数量
+						212 cell
+							213 text 金额
+						214 cell
+							215 text 经手人
+						216 cell
+							217 text 日期
+						218 cell
+							219 text 操作
+					220 row
+						221 cell
+							222 image
+							223 text 暂无补料单（点「新建补料单」，或在组装单详情 / 领料单列表补料后生成）
+				224 text 共  0 条记录 每页
+				82 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					225 text 20
+				226 text 条
+				227 button (disabled) 上一页
+					228 image
+				83 button 1
+				229 button (disabled) 下一页
+					230 image
+			84 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			85 container Notifications alt+T
+
+The focused UI element is 144 checkbox 项目, Value: 0

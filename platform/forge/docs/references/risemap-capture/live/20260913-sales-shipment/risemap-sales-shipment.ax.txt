@@ -1,0 +1,203 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/sales/outbound".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/outbound
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 销售业务
+					10 image
+					11 text 销售业务
+					12 image
+				13 button 框架销售合同
+				14 button 销售订单
+				15 button 附加费用
+				16 button 收款流水
+				17 button 销售发货单
+				18 button 销售退货
+				19 button 业绩银行
+				20 button 价格策略
+				21 button Goodwill订单
+				22 button 销售团队
+				23 button 销售目标
+				24 button 销售发票
+				25 button CRM客户管理
+					26 image
+					27 text CRM客户管理
+					28 image
+				29 button 客户管理
+				30 button 联系人管理
+				31 button 销售报价
+				32 button 客户物料对照
+				33 button 商机管理
+				34 button 线索管理
+				35 button 跟进记录
+				36 button 公海客户
+				37 button 服务管理
+					38 image
+					39 text 服务管理
+					40 image
+				41 button 服务工单
+				42 button 服务报价单
+				43 button 服务结算单
+				44 button 接单中心
+				45 button 派工中心
+				46 button 服务分析
+				47 button 质保管理
+				48 button 服务配置
+			49 image
+			50 text 免费试用中，还剩 9 天 — 试用期间享全部功能
+			51 button 查看方案
+				52 image
+				53 text 查看方案
+			54 button
+				55 image
+			56 container
+				57 container 业务分类
+					58 container
+						59 checkbox 工作台, Value: 0
+						60 checkbox 供应链, Value: 0
+						61 checkbox 销售, Value: 1
+						62 checkbox 生产, Value: 0
+						63 checkbox 项目, Value: 0
+						64 checkbox 行政, Value: 0
+						65 checkbox 财务, Value: 0
+						66 checkbox 报表, Value: 0
+						67 checkbox 系统, Value: 0
+				68 button Description: 展开搜索, Help: 搜索
+					69 image
+				70 button (collapsed) Description: 通知，18 条未读, Secondary Actions: Expand
+					71 image
+					72 text 18
+				73 button Description: 打开推广奖励, Help: 推广
+				74 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				75 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				76 button 立即订阅, Help: 试用还剩 9 天 · 立即订阅享专属优惠
+					77 image
+					78 text 立即订阅
+				79 button 金
+					80 text 金
+					81 image
+			82 container
+				83 button 工作台
+					84 image
+					85 text 工作台
+				86 button 项目详情
+					87 text 项目详情
+				88 button 框架销售合同
+					89 text 框架销售合同
+				90 button 销售订单
+					91 text 销售订单
+				92 button 工作台
+					93 text 工作台
+				94 button 销售发货单
+					95 text 销售发货单
+			96 container
+				97 container
+					98 text 销售业务
+					99 image
+					100 text 销售发货单
+					101 image
+					102 heading 销售发货单, Value: 1
+						103 text 销售发货单
+					104 text 发货出库登记、物流跟踪、签收回执与开票联动
+					105 button 下一步操作 待出库发货单, Help: 前往出库管理 · 待出库发货单
+						106 text 下一步操作
+						107 text 待出库发货单
+						108 image
+				109 button 新建发货单
+					110 image
+					111 text 新建发货单
+				112 button 导出
+					113 image
+					114 text 导出
+					115 image
+				116 button 导出任务
+				117 button 刷新
+					118 image
+				119 button
+					120 image
+				121 button
+					122 image
+				123 image
+				124 text field (settable)
+				125 button 状态
+					126 text 状态
+					127 image
+				128 button 范围
+					129 image
+					130 text 范围
+					131 image
+				132 table
+					133 row
+						134 cell
+							135 checkbox (settable, integer) 0
+						136 cell
+							137 text 发货单号
+						138 cell
+							139 text 关联订单
+						140 cell
+							141 text 客户单号
+						142 cell
+							143 text 客户名称
+						144 cell
+							145 text 收货人
+						146 cell
+							147 text 状态
+						148 cell
+							149 text 出库进度
+						150 cell
+							151 text 含税金额
+						152 cell
+							153 text 出库单
+						154 cell
+							155 text 出库日期
+						156 cell
+							157 text 操作
+					158 row
+						159 cell
+							160 checkbox (settable, integer) 0
+						161 cell
+							162 text DN-2026-0001
+						163 cell
+							164 text SO-2026-0001
+						165 cell
+							166 text -
+						167 cell
+							168 image
+							169 text 苏州澄岳自动化装备有限公司
+						170 cell
+							171 image
+							172 text 周启明
+						173 cell
+							174 text 待发货
+						175 cell
+							176 text 0 / 1  台
+						177 cell
+							178 text ¥128,000.00
+						179 cell
+							180 container
+								181 image
+								182 text 0
+						183 cell
+							184 text 2026-09-09 00:00:00
+						185 cell
+							186 button
+								187 image
+							188 button 删除
+								189 image
+				190 text 共  1 条记录 每页
+				191 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					192 text 10
+				193 text 条
+				194 button (disabled) 上一页
+					195 image
+				196 button 1
+				197 button (disabled) 下一页
+					198 image
+			199 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			200 container Notifications alt+T
+
+The focused UI element is 17 button 销售发货单

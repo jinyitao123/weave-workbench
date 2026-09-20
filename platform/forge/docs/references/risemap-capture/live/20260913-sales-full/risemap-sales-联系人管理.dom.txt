@@ -1,0 +1,233 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同":
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "附加费用":
+    - generic: 附加费用
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "联系人管理" [active]:
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+  - button "服务管理":
+    - generic: 服务管理
+  - button "服务工单":
+    - generic: 服务工单
+  - button "服务报价单":
+    - generic: 服务报价单
+  - button "服务结算单":
+    - generic: 服务结算单
+  - button "接单中心":
+    - generic: 接单中心
+  - button "派工中心":
+    - generic: 派工中心
+  - button "服务分析":
+    - generic: 服务分析
+  - button "质保管理":
+    - generic: 质保管理
+  - button "服务配置":
+    - generic: 服务配置
+- generic: 免费试用中，还剩 9 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，18 条未读":
+    - generic: "18"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "销售发票":
+  - generic: 销售发票
+- button "销售退货":
+  - generic: 销售退货
+- button "销售附加费用":
+  - generic: 销售附加费用
+- button "业绩银行":
+  - generic: 业绩银行
+- button "工作台":
+  - generic: 工作台
+- button "工作台":
+  - generic: 工作台
+- button "工作台":
+  - generic: 工作台
+- button "价格策略":
+  - generic: 价格策略
+- button "Goodwill订单":
+  - generic: Goodwill订单
+- button "销售发货单":
+  - generic: 销售发货单
+- button "销售团队":
+  - generic: 销售团队
+- button "销售目标":
+  - generic: 销售目标
+- button "客户管理":
+  - generic: 客户管理
+- button "联系人管理":
+  - generic: 联系人管理
+- main:
+  - generic: CRM客户管理
+  - generic: 联系人管理
+  - heading "联系人管理" [level=1]
+  - paragraph: 以人为中心管理客户联系人，持续跟踪任职变化和全部联系方式
+  - button "新增联系人":
+    - text: 新增联系人
+  - button "导入/导出":
+    - text: 导入/导出
+  - region "联系人统计":
+    - article:
+      - paragraph: 联系人总数
+      - paragraph: "1"
+    - article:
+      - paragraph: 在职
+      - paragraph: "1"
+    - article:
+      - paragraph: 不在原公司
+      - paragraph: "0"
+    - article:
+      - paragraph: 关键决策人 KP
+      - paragraph: "1"
+  - tablist "任职状态筛选":
+    - tab "全部 1" [selected]:
+      - text: 全部
+      - generic: "1"
+    - tab "在职 1":
+      - text: 在职
+      - generic: "1"
+    - tab "已跳槽 0":
+      - text: 已跳槽
+      - generic: "0"
+    - tab "已离职 0":
+      - text: 已离职
+      - generic: "0"
+    - tab "已退休 0":
+      - text: 已退休
+      - generic: "0"
+    - tab "停用 0":
+      - text: 停用
+      - generic: "0"
+  - textbox "搜索姓名、公司、电话、邮箱"
+  - textbox "按职务筛选联系人":
+    - /placeholder: 筛选职务
+  - button "全部维护人":
+    - generic: 全部维护人
+  - button "刷新联系人数据":
+  - button "切换为紧凑行高":
+  - table:
+    - rowgroup:
+      - row "联系人 性别 职位 / 部门 按所属公司排序 任职状态 决策权重 联系方式 维护人 操作":
+        - columnheader "联系人": 联系人
+        - columnheader "性别": 性别
+        - columnheader "职位 / 部门": 职位 / 部门
+        - columnheader "按所属公司排序":
+          - button "按所属公司排序":
+            - text: 所属公司
+        - columnheader "任职状态": 任职状态
+        - columnheader "决策权重": 决策权重
+        - columnheader "联系方式": 联系方式
+        - columnheader "维护人": 维护人
+        - columnheader "操作"
+    - rowgroup:
+      - row "周 关键决策人 周启明 KP - 项目采购经理 供应链中心 苏州澄岳自动化装备有限公司 在职 - 13800002609 zhou.qiming@example.com - 编辑周启明 删除周启明":
+        - cell "周 关键决策人 周启明 KP":
+          - generic: 周
+          - img "关键决策人"
+          - generic "周启明"
+          - generic: KP
+        - cell "-"
+        - cell "项目采购经理 供应链中心":
+          - paragraph: 项目采购经理
+          - paragraph: 供应链中心
+        - cell "苏州澄岳自动化装备有限公司":
+          - button "苏州澄岳自动化装备有限公司":
+            - generic: 苏州澄岳自动化装备有限公司
+        - cell "在职":
+          - generic: 在职
+        - cell "-":
+          - generic: "-"
+        - cell "13800002609 zhou.qiming@example.com":
+          - generic "工作手机：13800002609":
+            - generic: "13800002609"
+          - generic "工作邮箱：zhou.qiming@example.com":
+            - generic: zhou.qiming@example.com
+        - cell "-"
+        - cell "编辑周启明 删除周启明":
+          - button "编辑周启明":
+          - button "删除周启明":
+  - text: 共
+  - strong: "1"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button [disabled]:
+  - button "1"
+  - button [disabled]:
+- button "打开 AI 助手"
+- region "Notifications alt+T"

@@ -1,0 +1,32 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/product".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/product
+	2 container 新增一级分组
+		3 heading 新增一级分组, Value: 3
+			4 text 新增一级分组
+		5 button 关闭
+			6 image
+		7 container
+			8 text 分组名称  *
+			9 text field (settable)
+			10 text 分组名称不能为空 缩写  * (用于编码规则)
+			11 text field (settable)
+			12 text 缩写 (用于编码规则)不能为空 标识颜色
+			13 button
+			14 button
+			15 button
+			16 button
+			17 button
+			18 button
+			19 button
+			20 button
+			21 button
+			22 button
+			23 button
+			24 button
+			25 text 备注
+			26 text entry area (settable)
+			27 text 0 /200 预览 分组名称
+		28 button 取消
+		29 button 保存, Help: 请输入分组名称
+
+The focused UI element is 29 button 保存, Help: 请输入分组名称

@@ -1,0 +1,262 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 公司通知
+- button:
+  - generic: 发布通知
+- button:
+  - generic: 用章管理
+- button:
+  - generic: 会议纪要
+- button:
+  - generic: 新建会议纪要
+- button:
+  - generic: AI 模板管理
+- button:
+  - generic: 工作汇报
+- button:
+  - generic: 新建工作汇报
+- button:
+  - generic: 文档中心
+- button:
+  - generic: 固定资产
+- button:
+  - generic: 资质与申报
+- button:
+  - generic: 物料领取
+- button:
+  - generic: 设备维护
+- button:
+  - generic: 礼品管理
+- main:
+  - generic: 行政管理
+  - generic: 礼品管理
+  - heading [level=1]: 礼品管理
+  - paragraph: 员工礼品申请、审批、库存与发放，覆盖商务赠礼与节日福利
+  - button:
+    - text: 礼品申请
+    - generic: "0"
+  - button:
+    - text: 礼品清单
+    - generic: "0"
+  - button:
+    - text: 礼品库管理
+    - generic: "0"
+  - button:
+    - text: 礼品库流水
+    - generic: "0"
+  - button:
+    - text: 新增礼品
+  - button:
+  - button:
+  - button:
+  - textbox:
+    - /placeholder: 搜索礼品名称/编号...
+  - button:
+    - text: 分类
+  - button:
+    - text: 导出
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader
+        - columnheader:
+          - generic: 编号
+        - columnheader:
+          - generic: 礼品名称
+        - columnheader:
+          - generic: 分类
+        - columnheader:
+          - generic: 规格
+        - columnheader:
+          - generic: 单价
+        - columnheader:
+          - generic: 当前库存
+        - columnheader:
+          - generic: 累计入库
+        - columnheader:
+          - generic: 累计出库
+        - columnheader:
+          - generic: 库存价值
+        - columnheader:
+          - generic: 存放位置
+        - columnheader:
+          - generic: 状态
+        - columnheader:
+          - generic: 操作
+    - rowgroup:
+      - row:
+        - cell:
+          - generic: 暂无礼品数据
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button [disabled]:
+  - button: "1"
+  - button [disabled]:
+- button:
+- region "Notifications alt+T"
+- generic: "0"
+- dialog "新增礼品":
+  - heading "新增礼品" [level=2]
+  - paragraph: 新增礼品到礼品库
+  - paragraph: 基本信息
+  - text: 礼品名称
+  - generic: "*"
+  - textbox "礼品名称 *":
+    - /placeholder: 输入礼品名称
+  - text: 分类
+  - generic: "*"
+  - button "请选择分类":
+    - generic: 请选择分类
+  - button "新增福利分类":
+  - generic: 规格
+  - textbox "规格":
+    - /placeholder: 规格型号
+  - generic: 单位
+  - textbox "单位":
+    - /placeholder: 个/盒/套
+  - generic: 单价(¥)
+  - spinbutton "单价(¥)": "0"
+  - generic: 最低库存预警
+  - spinbutton "最低库存预警": "5"
+  - generic: 存放位置
+  - textbox "存放位置":
+    - /placeholder: "如: A-01-01"
+  - text: 礼品照片
+  - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 最多上传5张，支持 JPG/PNG 格式":
+    - generic: 点击或拖拽文件到此处上传
+    - generic: 支持 Ctrl+V 粘贴截图
+    - generic: 最多上传5张，支持 JPG/PNG 格式
+  - generic: 礼品介绍
+  - textbox "礼品介绍":
+    - /placeholder: 详细描述礼品的特点、适用场景、品牌信息等...
+  - generic: 推荐礼品
+  - switch [checked] [active]
+  - checkbox [checked]
+  - paragraph: 开启后该礼品将在礼品清单中标记为推荐
+  - generic: 备注
+  - textbox "备注":
+    - /placeholder: 补充说明...
+  - button "取消"
+  - button "确认新增"
+  - button "Close":
+    - generic: Close

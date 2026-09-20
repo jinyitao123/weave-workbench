@@ -1,0 +1,78 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings?tab=numbering".
+1 AXWebArea RiseMap, URL: risemap.cn/settings?tab=numbering
+	2 container 新增编码规则
+		3 heading 新增编码规则, Value: 3, ID: :rn4:
+			4 text 新增编码规则
+		5 button 关闭
+			6 image
+		7 container
+			8 text 业务模块
+			9 text field 业务模块, Value: 基础资料
+			10 text 单号
+			11 button 单号
+				12 text 客户编号
+			13 text 业务类型
+			14 button 业务类型 未配置专属类型时继续匹配通用类型，仍未命中则使用原编号逻辑
+				15 text 企业客户
+			16 text 未配置专属类型时继续匹配通用类型，仍未命中则使用原编号逻辑 编号组成
+			17 button 固定文字 / 分隔符
+				18 text 固定文字 / 分隔符
+			19 text field (settable) Description: 第 1 项固定文字, Value: C
+			20 button (disabled) 上移
+				21 image
+			22 button 下移
+				23 image
+			24 button 删除
+				25 image
+			26 button 四位年份（2026）
+				27 text 四位年份（2026）
+			28 text 系统自动生成
+			29 button 上移
+				30 image
+			31 button 下移
+				32 image
+			33 button 删除
+				34 image
+			35 button 月份（07）
+				36 text 月份（07）
+			37 text 系统自动生成
+			38 button 上移
+				39 image
+			40 button 下移
+				41 image
+			42 button 删除
+				43 image
+			44 button 日期（21）
+				45 text 日期（21）
+			46 text 系统自动生成
+			47 button 上移
+				48 image
+			49 button 下移
+				50 image
+			51 button 删除
+				52 image
+			53 button 流水号
+				54 text 流水号
+			55 button 6 位
+				56 text 6 位
+			57 button 上移
+				58 image
+			59 button (disabled) 下移
+				60 image
+			61 button 删除
+				62 image
+			63 image
+			64 button 添加组成项
+				65 text 添加组成项
+			66 text 按从左到右的顺序组成最终编号 流水号重置周期
+			67 button 流水号重置周期
+				68 text 每日
+			69 text 示例编号
+			70 text field 示例编号, Value: C20260909000001
+			71 text 跳码数量
+			72 stepper (settable, integer) 跳码数量 默认0；每个新周期从N+1开始，后续连续递增, Value: 0
+			73 text 默认0；每个新周期从N+1开始，后续连续递增 编号预览 示例编号： C20260909000001 ；当前周期首次流水号为  1
+		74 button 取消
+		75 button 新增规则
+
+The focused UI element is 17 button 固定文字 / 分隔符

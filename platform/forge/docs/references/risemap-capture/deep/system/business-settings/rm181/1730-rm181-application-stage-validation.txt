@@ -1,0 +1,45 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/office".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/office
+	2 container 新增申报阶段
+		3 heading 新增申报阶段, Value: 3
+			4 text 新增申报阶段
+		5 button 关闭
+			6 image
+		7 container
+			8 text 阶段名称  *
+			9 text field (settable)
+			43 text 阶段名称不能为空 文字颜色
+			11 button
+			12 button
+			13 button
+			14 button
+			15 button
+			16 button
+			17 button
+			18 button
+			19 button
+			20 button
+			21 button
+			22 button
+			23 text 背景颜色
+			24 button
+			25 button
+			26 button
+			27 button
+			28 button
+			29 button
+			30 button
+			31 text 排序
+			32 text field (settable) 0
+			33 text 是否终止状态
+			34 button 是 - 流程结束
+				35 text 是 - 流程结束
+			36 text 描述
+			37 text field (settable)
+			38 text 预览效果
+			44 image
+			40 text 阶段名称
+		41 button 取消
+		42 button 保存
+
+The focused UI element is 42 button 保存

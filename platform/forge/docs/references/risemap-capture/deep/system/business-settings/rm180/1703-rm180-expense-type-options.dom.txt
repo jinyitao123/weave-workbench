@@ -1,0 +1,1019 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 系统
+- button "收起侧边栏":
+- navigation:
+  - button "系统设置":
+    - generic: 系统设置
+  - button "基础配置":
+    - generic: 基础配置
+  - button "用户与角色":
+    - generic: 用户与角色
+  - button "部门管理":
+    - generic: 部门管理
+  - button "用户会话":
+    - generic: 用户会话
+  - button "审计日志":
+    - generic: 审计日志
+  - button "业务设置":
+    - generic: 业务设置
+  - button "商品管理":
+    - generic: 商品管理
+  - button "财务配置":
+    - generic: 财务配置
+  - button "行政管理":
+    - generic: 行政管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "采购销售":
+    - generic: 采购销售
+  - button "库存管理":
+    - generic: 库存管理
+  - button "其他配置":
+    - generic: 其他配置
+  - button "人事配置":
+    - generic: 人事配置
+  - button "项目管理":
+    - generic: 项目管理
+  - button "图纸配置":
+    - generic: 图纸配置
+  - button "生产配置":
+    - generic: 生产配置
+  - button "委外配置":
+    - generic: 委外配置
+  - button "单据打印":
+    - generic: 单据打印
+  - button "插件中心":
+    - generic: 插件中心
+  - button "服务订阅":
+    - generic: 服务订阅
+  - button "推广奖励":
+    - generic: 推广奖励
+  - button "字段管理":
+    - generic: 字段管理
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统" [pressed]:
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "组装统计":
+  - generic: 组装统计
+- button "财务总览":
+  - generic: 财务总览
+- button "损益分析":
+  - generic: 损益分析
+- button "资金分析":
+  - generic: 资金分析
+- button "往来账款":
+  - generic: 往来账款
+- button "税务库存":
+  - generic: 税务库存
+- button "风险监控":
+  - generic: 风险监控
+- button "基础配置":
+  - generic: 基础配置
+- button "账户管理":
+  - generic: 账户管理
+- button "部门管理":
+  - generic: 部门管理
+- button "用户会话":
+  - generic: 用户会话
+- button "审计日志":
+  - generic: 审计日志
+- button "商品管理配置":
+  - generic: 商品管理配置
+- button "财务配置":
+  - generic: 财务配置
+- main:
+  - generic: 业务设置
+  - generic: 财务配置
+  - heading "业务设置 - 财务配置" [level=1]
+  - button "商品管理"
+  - button "财务配置"
+  - button "行政管理"
+  - button "客户管理"
+  - button "采购销售"
+  - button "库存管理"
+  - button "其他配置"
+  - button "人事配置"
+  - button "项目管理"
+  - button "图纸配置"
+  - button "生产配置"
+  - button "委外配置"
+  - button "单据打印"
+  - paragraph: 管理商品分组、计量单位、结算方式、仓库等业务基础数据配置
+  - button "AI 助手":
+    - text: AI 助手
+  - button "财务配置":
+    - generic: 财务配置
+  - button "付款方式":
+    - generic: 付款方式
+  - button "费用类别":
+    - generic: 费用类别
+  - paragraph: 费用类别管理
+  - paragraph: 管理财务费用的分类体系（支持多级分类）
+  - button "新增类别":
+    - text: 新增类别
+  - button:
+  - generic: 销售费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 客户开发费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 客户拜访费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 客户招待费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 客户礼品费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 市场推广费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 广告推广费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 展会活动费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 宣传物料费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 销售支持费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 样品费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 售前支持费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 销售佣金
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 项目费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 项目差旅费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 项目交通费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 项目住宿费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 项目餐饮补贴
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 项目实施费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 安装调试费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 现场施工费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 临时用工费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 项目材料费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 项目辅材费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 项目耗材费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 项目补料费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 项目外协费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 外协加工费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 外包服务费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 外部技术支持费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 采购费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 采购业务费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 供应商拜访费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 供应商招待费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 供应商考察费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 采购物流费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 采购运输费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 装卸搬运费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 包装费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 质量处理费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 来料检测费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 返修处理费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 退货运输费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 研发费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 研发材料费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 研发材料费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 研发打样费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 研发测试件费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 研发测试费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 测试检测费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 认证校准费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 实验费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 研发服务费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 技术咨询费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 外包开发费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 知识产权费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 行政办公费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 办公用品费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 办公用品费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 办公耗材费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 办公设备费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 办公场地费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 房租物业费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 水电费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 装修维修费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 日常行政费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 快递费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 印刷费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 会议费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 人事费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 招聘费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 招聘平台费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 猎头费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 面试费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 培训费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 内部培训费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 外部培训费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 课程费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 员工福利费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 节日福利费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 团建费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 员工关怀费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 财务法务费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 财务服务费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 代理记账费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 税务服务费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 审计评估费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 银行金融费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 银行手续费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 承兑手续费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 融资服务费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 法务合规费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 律师费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 合同审查费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 诉讼仲裁费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: IT/软件费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 软件系统费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: SaaS软件费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 办公软件费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 设计开发软件费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: AI工具费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: AI会员订阅费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: AI接口调用费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: AI插件工具费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 云服务费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 服务器费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 存储费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 短信/邮件服务费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 交通车辆费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 市内交通费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 打车费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 公共交通费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 停车费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 差旅交通费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 高铁/火车费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 机票费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 长途交通费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 车辆使用费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 油费/充电费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 过路过桥费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 车辆维修保养费
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 其他费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 其他业务费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 其他销售费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 其他项目费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 其他采购费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 其他管理费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 其他行政费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 其他人事费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 其他财务费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - button:
+  - generic: 待确认费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 待财务确认费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 待部门确认费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - generic: 未分类费用
+  - button "点击停用"
+  - button "子级":
+    - text: 子级
+  - button:
+  - button:
+  - paragraph: 类别说明
+  - paragraph: 费用类别支持多级分类结构，用于报销审批和企业费用归类。每个节点可指定费用适用类型（通用/仅报销/仅企业支出），子级会继承父级的费用类型约束。
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 当前
+- dialog "新增费用类别":
+  - heading "新增费用类别" [level=3]
+  - button "关闭":
+  - text: 类别名称
+  - generic: "*"
+  - textbox "如：差旅费、办公费..."
+  - generic: 父级类别
+  - button "无（作为顶级类别）":
+    - generic "无（作为顶级类别）"
+  - generic: 费用类型
+  - button "通用" [active]:
+    - generic "通用"
+  - generic: 状态
+  - button
+  - generic: 启用
+  - button "取消"
+  - button "保存"
+- generic: 通用
+- generic: 仅报销
+- generic: 仅企业支出

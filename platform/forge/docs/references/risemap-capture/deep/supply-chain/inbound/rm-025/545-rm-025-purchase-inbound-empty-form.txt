@@ -1,0 +1,225 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/inventory/inbound/new?type=1".
+1 AXWebArea RiseMap, URL: risemap.cn/inventory/inbound/new?type=1
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 到货检验
+					10 image
+					11 text 到货检验
+					12 image
+				13 button 到货通知
+				14 button 到货登记
+				15 button 待检验库存
+				16 button 检验单
+				17 button 检验规则
+				18 button 基础资料
+					19 image
+					20 text 基础资料
+					21 image
+				22 button 物料管理
+				23 button 物料组合
+				24 button BOM管理
+				25 button 综合物料搜索
+				26 button 供应商管理
+				27 button 产品实例追溯
+				28 button 仓库管理
+				29 button 采购管理
+					30 image
+					31 text 采购管理
+					32 image
+				33 button 采购发票
+				34 button 采购申请
+				35 button 采购待办池
+				36 button 询价管理
+				37 button 采购订单
+				38 button 采购退换货
+				39 button 供应商价格本
+				40 button 入库管理
+					41 image
+					42 text 入库管理
+					43 image
+				44 button 全部入库单
+				45 button 采购入库
+				46 button 生产入库
+				47 button 其他入库
+				48 button 期初入库
+				49 button 入库明细
+				50 button 库存管理
+					51 image
+					52 text 库存管理
+					53 image
+				54 button 库存总览
+				55 button 不合格处理
+				56 button 库存流水
+				57 button 库存锁定
+				58 button 库存盘点
+				59 button 调拨与借出
+				60 button 库存预警
+				61 button 报损单
+				62 button SN码管理
+				63 button 出库管理
+					64 image
+					65 text 出库管理
+					66 image
+				67 button 出库单列表
+				68 button 生产出库
+				69 button 其他出库
+				70 button 销售直接出库
+				71 button 待出库发货单
+				72 button 采购退换货出库
+				73 button 出库明细
+			74 image
+			75 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			76 button 查看方案
+				77 image
+				78 text 查看方案
+			79 button
+				80 image
+			81 container
+				82 container 业务分类
+					83 checkbox 工作台, Value: 0
+					84 checkbox 供应链, Value: 1
+					85 checkbox 销售, Value: 0
+					86 checkbox 生产, Value: 0
+					87 checkbox 项目, Value: 0
+					88 checkbox 行政, Value: 0
+					89 checkbox 财务, Value: 0
+					90 checkbox 报表, Value: 0
+					91 checkbox 系统, Value: 0
+				92 button Description: 展开搜索, Help: 搜索
+					93 image
+				94 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					95 image
+					96 text 2
+				97 button Description: 打开推广奖励, Help: 推广
+				98 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				99 link Description: 打开工单, Value: community.risemap.cn/support
+				100 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					101 image
+					102 text 立即订阅
+				103 button 金
+					104 text 金
+					105 image
+			106 container
+				107 button 工作台
+					108 image
+					109 text 工作台
+				284 button 采购退货
+					285 text 采购退货
+				286 button 新建采购退货
+					287 text 新建采购退货
+				288 button 供应商价格本
+					289 text 供应商价格本
+				290 button 到货通知
+					291 text 到货通知
+				292 button 到货登记
+					293 text 到货登记
+				294 button 新建到货登记
+					295 text 新建到货登记
+				296 button 待检验库存
+					297 text 待检验库存
+				298 button 检验单
+					299 text 检验单
+				300 button 检验规则
+					301 text 检验规则
+				302 button 新增检验项
+					303 text 新增检验项
+				304 button 新增检验方案
+					305 text 新增检验方案
+				306 button 全部入库单
+					307 text 全部入库单
+				308 button 采购入库
+					309 text 采购入库
+				310 button 新建入库单
+					311 text 新建入库单
+			312 container
+				313 text 库存管理
+				314 image
+				315 text 入库管理
+				316 image
+				317 text 新建入库单
+				318 button
+					319 image
+				320 heading 新建入库单, Value: 1
+					321 text 新建入库单
+				322 text 入库单号将在保存时自动生成,提交审批后进入工作流
+				323 button 取消
+				324 button 保存草稿
+					325 image
+					326 text 保存草稿
+				327 button 提交审批
+					328 image
+					329 text 提交审批
+				330 image
+				331 text 草稿
+				332 image
+				333 text 待审批
+				334 image
+				335 text 已审批
+				336 image
+				337 text 已入库
+				338 heading 入库单摘要, Value: 4
+					339 text 入库单摘要
+				340 text 入库类型 采购入库 入库日期 2026-09-09 物料行数 0 入库数量 0 入库金额 - 附件数量 0  个
+				341 image
+				342 heading 基本信息, Value: 3
+					343 text 基本信息
+				344 container
+					345 text 入库类型  *
+				346 button 采购入库
+					347 image
+					348 text 采购入库
+				349 button 其他入库
+					350 image
+					351 text 其他入库
+				352 button 退货入库
+					353 image
+					354 text 退货入库
+				355 button 期初入库
+					356 image
+					357 text 期初入库
+				358 container
+					359 text 入库日期  *
+				360 container
+					361 text field (settable) 2026年9月9日
+					362 button
+						363 image
+					364 button
+						365 image
+				366 container
+					367 text 供应商  *
+				368 button 搜索供应商名称...
+					369 text 搜索供应商名称...
+				370 heading 关联采购订单, Value: 3
+					371 text 关联采购订单
+				372 container
+					373 image
+					374 text 采购订单 *
+				375 button (disabled) 请先选择供应商
+					376 text 请先选择供应商
+				377 image
+				378 text 采购入库必须先选择供应商，再从该供应商的采购订单中选取（已全部入库的采购单不显示）。
+				379 heading 入库物料明细, Value: 3
+					380 text 入库物料明细
+				381 text 0  种
+				382 image
+				383 text 请先选择供应商和采购订单
+				384 heading 备注与附件, Value: 3
+					385 text 备注与附件
+				386 text 备注
+				387 text entry area (settable)
+				388 image
+				389 text 附件
+				390 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+					391 image
+					392 text 点击或拖拽文件到此处上传
+					393 text 支持 Ctrl+V 粘贴截图
+					394 text 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+			276 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			277 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/inventory/inbound/new?type=1

@@ -1,0 +1,197 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/reports/purchase".
+1 AXWebArea RiseMap, URL: risemap.cn/reports/purchase
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 报表
+			6 button 收起侧边栏
+				7 image
+			8 container
+				304 button 销售统计
+					305 image
+					306 text 销售统计
+				307 button 采购统计
+					308 image
+					309 text 采购统计
+				310 button 库存统计
+					311 image
+					312 text 库存统计
+				313 button 项目统计
+					314 image
+					315 text 项目统计
+				316 button 组装统计
+					317 image
+					318 text 组装统计
+				319 button 财务统计
+					320 image
+					321 text 财务统计
+					322 image
+				323 button 财务总览
+				324 button 损益分析
+				325 button 资金分析
+				326 button 往来账款
+				327 button 税务库存
+				328 button 风险监控
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 1
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				241 button 报销管理
+					242 text 报销管理
+				243 button 新建报销
+					244 text 新建报销
+				245 button 对账单
+					246 text 对账单
+				247 button 客户对账单
+					248 text 客户对账单
+				249 button 新建客户对账
+					250 text 新建客户对账
+				251 button 供应商对账单
+					252 text 供应商对账单
+				253 button 新建供应商对账
+					254 text 新建供应商对账
+				255 button 发票总览
+					256 text 发票总览
+				257 button 销项发票
+					258 text 销项发票
+				259 button 进项发票
+					260 text 进项发票
+				261 button 开票任务
+					262 text 开票任务
+				263 button 调整记录
+					264 text 调整记录
+				329 button 销售统计
+					330 text 销售统计
+				331 button 采购统计
+					332 text 采购统计
+			333 container
+				334 image
+				335 text 报表中心
+				336 heading 采购统计, Value: 1
+					337 text 采购统计
+				338 text 供应商规模、活跃度、采购贡献、交付质量与合作风险分析。
+				339 button 导出报表
+					340 image
+					341 text 导出报表
+				342 container 采购报表维度
+					343 button 采购统计
+					345 button 采购申请
+					346 button 询价统计
+					347 button 供应商统计
+						429 text 供应商统计
+				348 image
+				349 text 筛选条件
+				350 container
+					351 image
+					352 text field (settable)
+				353 pop up button (collapsed, settable) Value: 全部组织, Secondary Actions: Expand
+					354 menu
+						355 (selected) 全部组织
+						356 我负责的
+				357 pop up button (collapsed, settable) Value: 本月, Secondary Actions: Expand
+					358 menu
+						359 (selected) 本月
+						360 本季度
+						361 本年度
+				362 button 刷新
+					363 image
+					364 text 刷新
+				365 image
+				430 text 更新时间 ： 2026/9/9 06:50:01 当前展示 供应商统计 统计数据。 统计周期 2026-09-01 至 2026-09-30
+				431 container
+					432 image
+					433 text 供应商总数
+					434 pop up button (collapsed) Description: 查看供应商总数计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						435 image
+					436 image
+					437 text 0家 较上月 +0家
+				438 container
+					439 image
+					440 text 活跃供应商
+					441 pop up button (collapsed) Description: 查看活跃供应商计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						442 image
+					443 image
+					444 text 0家 活跃率 --
+				445 container
+					446 image
+					447 text 准时交付率
+					448 pop up button (collapsed) Description: 查看准时交付率计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						449 image
+					450 image
+					451 text -- 较上月 --
+				452 container
+					453 image
+					454 text 到货合格率
+					455 pop up button (collapsed) Description: 查看到货合格率计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						456 image
+					457 image
+					458 text -- 质量保持稳定
+				395 container
+					396 heading 供应商活跃与新增趋势, Value: 2
+						397 text 供应商活跃与新增趋势
+					398 text 活跃供应商 新增供应商
+					399 image
+						459 text 2026-09-04
+						460 text 2026-09-08
+						461 text 2026-09-12
+						462 text 2026-09-16
+						463 text 2026-09-20
+						464 text 2026-09-24
+						465 text 2026-09-30
+				408 container
+					409 heading 供应商等级分布, Value: 2
+						410 text 供应商等级分布
+					411 image
+						412 text 供应商等级
+				413 container
+					414 heading 供应商健康度分析, Value: 2
+						415 text 供应商健康度分析
+					416 text 本月评估 准时交付 准时到货的采购订单占比 -- 到货合格 质检合格的到货批次占比 -- 价格稳定 价格波动在合理范围内 -- 采购集中度 TOP5供应商采购额占总采购额比例 -- 风险供应商 已拉黑供应商数量 0家
+				417 container
+					418 heading 供应商采购贡献排行, Value: 2
+						419 text 供应商采购贡献排行
+					420 text TOP 5
+				421 container
+					422 heading 供应商等级排行, Value: 2
+						423 text 供应商等级排行
+					424 text TOP 5
+				425 container
+					426 heading 供应商品类覆盖排行, Value: 2
+						427 text 供应商品类覆盖排行
+					428 text 全量排行
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+
+The focused UI element is 347 button 供应商统计

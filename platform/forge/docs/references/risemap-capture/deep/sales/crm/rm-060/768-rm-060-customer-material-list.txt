@@ -1,0 +1,159 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/customer-materials".
+1 AXWebArea RiseMap, URL: risemap.cn/base/customer-materials
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 销售业务
+					10 image
+					11 text 销售业务
+					12 image
+				13 button 框架销售合同
+				14 button 销售订单
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+			36 image
+			37 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			38 button 查看方案
+				39 image
+				40 text 查看方案
+			41 button
+				42 image
+			43 container
+				44 container 业务分类
+					45 checkbox 工作台, Value: 0
+					46 checkbox 供应链, Value: 0
+					47 checkbox 销售, Value: 1
+					48 checkbox 生产, Value: 0
+					49 checkbox 项目, Value: 0
+					50 checkbox 行政, Value: 0
+					51 checkbox 财务, Value: 0
+					52 checkbox 报表, Value: 0
+					53 checkbox 系统, Value: 0
+				54 button Description: 展开搜索, Help: 搜索
+					55 image
+				56 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					57 image
+					58 text 2
+				59 button Description: 打开推广奖励, Help: 推广
+				60 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				61 link Description: 打开工单, Value: community.risemap.cn/support
+				62 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					63 image
+					64 text 立即订阅
+				65 button 金
+					66 text 金
+					67 image
+			68 container
+				69 button 工作台
+					70 image
+					71 text 工作台
+				74 button 价格策略
+					75 text 价格策略
+				76 button 新增框架协议
+					77 text 新增框架协议
+				78 button 新增特价
+					79 text 新增特价
+				80 button Goodwill订单
+					81 text Goodwill订单
+				82 button Goodwill订单详情
+					83 text Goodwill订单详情
+				84 button 销售团队
+					85 text 销售团队
+				86 button 销售目标
+					87 text 销售目标
+				88 button 销售发票
+					89 text 销售发票
+				90 button 客户管理
+					91 text 客户管理
+				92 button 名片扫描
+					93 text 名片扫描
+				94 button 联系人管理
+					95 text 联系人管理
+				96 button 销售报价
+					97 text 销售报价
+				98 button 新建销售报价
+					99 text 新建销售报价
+				392 button 客户物料对照
+					393 text 客户物料对照
+			394 container
+				395 container
+					396 text CRM客户管理
+					397 image
+					398 text 客户物料对照
+					399 image
+					400 heading 客户物料对照, Value: 1
+						401 text 客户物料对照
+					402 text 统一维护我方物料与客户物料的编码 / 名称对照，支持按客户筛选与模糊搜索
+				403 text 对照条数 0
+				404 image
+				405 text 涉及客户 0
+				406 image
+				407 text 涉及物料 0
+				408 button 新增对照
+					409 image
+					410 text 新增对照
+				411 button 导入/导出
+					412 image
+					413 text 导入/导出
+					414 image
+				415 button 刷新
+					416 image
+				417 button
+					418 image
+				419 button
+					420 image
+				421 image
+				422 text field (settable)
+				423 button 按客户筛选
+					424 text 按客户筛选
+				425 table
+					426 row
+						427 cell
+							428 checkbox (settable, integer) 0
+						429 cell
+							430 text 客户名称
+						431 cell
+							432 text 我方物料编码
+						433 cell
+							434 text 我方物料名称
+						435 cell
+							436 text 客户物料编码
+						437 cell
+							438 text 客户物料名称
+						439 cell
+							440 text 备注
+						441 cell
+							442 text 最近维护
+						443 cell
+							444 text 操作
+					445 row
+						446 cell
+							447 image
+							448 text 暂无物料对照记录
+			390 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			391 container Notifications alt+T
+
+The focused UI element is 31 button 客户物料对照

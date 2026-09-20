@@ -1,0 +1,17 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/tenant-init".
+0 AXWebArea RiseMap, URL: risemap.cn/tenant-init
+	1 container root
+		2 container
+			3 image
+			4 heading 系统配置, Value: 1
+				5 text 系统配置
+			6 text 完成以下步骤，让系统更好地为您服务
+		9 text 必须项已全部完成 8  /  8
+		39 image
+		40 heading 配置完成！, Value: 2
+			41 text 配置完成！
+		42 text 所有步骤已处理完毕，现在可以开始使用系统了
+		43 button 进入系统
+		38 container Notifications alt+T
+
+The focused UI element is 0 AXWebArea RiseMap, URL: risemap.cn/tenant-init

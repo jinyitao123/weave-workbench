@@ -1,0 +1,36 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/public-sea".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/public-sea
+	2 container
+		3 container root
+			168 container Notifications alt+T
+		169 container 新建公海客户, ID: radix-:rhu:
+			170 heading 新建公海客户, Value: 2, ID: radix-:rhv:
+				171 text 新建公海客户
+			172 container
+				173 text 客户名称  *
+			174 text field (settable)
+			175 text 行业
+			176 button 请选择行业
+				177 text 请选择行业
+			178 text 客户级别
+			179 button 请选择级别
+				180 text 请选择级别
+			181 container
+				182 text 联系人  *
+			183 text field (settable)
+			184 text 联系电话
+			185 text field (settable)
+			186 text 邮箱
+			187 text field (settable)
+			188 text 所在城市
+			189 text field (settable)
+			190 container
+				191 text 标签  (逗号分隔)
+			192 text field (settable)
+			193 button 取消
+			194 button 创建
+			195 button Close
+				196 image
+				197 text Close
+
+The focused UI element is 174 text field (settable)

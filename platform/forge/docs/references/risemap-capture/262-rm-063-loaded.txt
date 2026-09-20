@@ -1,0 +1,171 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/follow-ups".
+0 AXWebArea RiseMap, URL: risemap.cn/sales/follow-ups
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 销售
+			5 button 收起侧边栏
+				6 image
+			7 container
+				307 button 销售业务
+					308 image
+					309 text 销售业务
+					310 image
+				311 button 框架销售合同
+				312 button 销售订单
+				313 button 收款流水
+				314 button 销售发货单
+				315 button 销售退货
+				316 button 业绩银行
+				317 button 价格策略
+				318 button Goodwill订单
+				319 button 销售团队
+				320 button 销售目标
+				321 button 销售发票
+				322 button CRM客户管理
+					323 image
+					324 text CRM客户管理
+					325 image
+				326 button 客户管理
+				327 button 联系人管理
+				328 button 销售报价
+				329 button 客户物料对照
+				330 button 商机管理
+				331 button 线索管理
+				332 button 跟进记录
+				333 button 公海客户
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 1
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				342 button 销售退货
+					343 text 销售退货
+				344 button 业绩银行
+					345 text 业绩银行
+				346 button 价格策略
+					347 text 价格策略
+				348 button Goodwill订单
+					349 text Goodwill订单
+				350 button 销售团队
+					351 text 销售团队
+				352 button 销售目标
+					353 text 销售目标
+				354 button 销售发票
+					355 text 销售发票
+				356 button 客户管理
+					357 text 客户管理
+				358 button 联系人管理
+					359 text 联系人管理
+				360 button 销售报价
+					361 text 销售报价
+				362 button 客户物料对照
+					363 text 客户物料对照
+				364 button 商机管理
+					365 text 商机管理
+				366 button 线索管理
+					367 text 线索管理
+				368 button 跟进记录
+					369 text 跟进记录
+			370 container
+				371 container
+					372 text CRM客户管理
+					373 image
+					374 text 跟进记录
+					375 image
+					376 heading 跟进记录, Value: 1
+						377 text 跟进记录
+					378 text 记录和管理所有客户及商机的跟进活动
+				379 image
+				380 text 总跟进记录 0
+				381 image
+				382 text 本周跟进 0
+				383 image
+				384 text 待跟进 0
+				385 image
+				386 text 已过期 0
+				387 image
+				388 text 覆盖客户 0
+				389 image
+				390 text field (settable)
+				391 button 范围
+					392 image
+					393 text 范围
+					394 image
+				395 button 客户负责人
+					396 text 客户负责人
+				397 button 跟进状态
+					398 image
+					399 text 跟进状态
+					400 image
+				401 button 高级筛选
+					402 image
+					403 text 高级筛选
+				404 button 导出
+					405 image
+					406 text 导出
+					407 image
+				408 button 新增跟进
+					409 image
+					410 text 新增跟进
+				411 image
+				412 text 类型:
+				413 button 全部
+				414 button 电话沟通
+				415 button 微信沟通
+				416 button 邮件往来
+				417 button 上门拜访
+				418 button 客户来访
+				419 button 线上会议
+				420 button 产品演示
+				421 button 方案讲解
+				422 button 商务谈判
+				423 button 其他
+				424 button 最新优先
+					425 image
+					426 text 最新优先
+				427 视图切换
+					428 radio button 列表, Value: 1
+						429 image
+						430 text 列表
+					431 radio button 日历, Value: 0
+						432 image
+						433 text 日历
+				434 image
+				435 text 暂无跟进记录
+				436 button + 添加第一条跟进
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 332 button 跟进记录

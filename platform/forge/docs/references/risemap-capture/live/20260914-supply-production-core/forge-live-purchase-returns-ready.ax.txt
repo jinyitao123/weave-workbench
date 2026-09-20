@@ -1,0 +1,328 @@
+Browser tab: 56, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_purchase_return".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_purchase_return
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 button 切换侧边栏
+			9 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			10 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			11 text 采购退换货 已连接
+			12 button 搜索…
+			13 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			14 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_purchase_return
+			15 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			16 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		17 container
+			18 container
+				19 text 区域
+				20 content list
+					21 button 工作台
+					22 button 供应链
+					23 button 销售
+					24 button 生产
+					25 button 项目
+					26 button 行政
+					27 button 财务
+					28 button 报表
+					29 button 系统
+			30 container
+				31 button (expanded) 工作台, Secondary Actions: Collapse
+				32 content list
+					33 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					34 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					35 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					36 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			37 text 最近使用
+			38 button 切换侧边栏
+		39 container
+			40 button 在 Studio 中编辑
+			41 heading 采购退换货, Value: 1
+				42 text 采购退换货
+			43 text 采购退货退款与等量换货补货全流程 采购管理 / 采购退换货
+			44 heading 采购退换货, Value: 1
+				45 text 采购退换货
+			46 text 退货退款与等量换货补货 退货退款进入财务审批和供应商退款。换货补货不进入财务，原订单同一 SKU 等量退回后，由供应商补货、检验并恢复库存。
+			47 button 全部
+			48 button 退货退款
+			49 button 换货补货
+			50 heading 新建退货退款, Value: 2
+				51 text 新建 退货退款
+			52 button 退货退款
+			53 button 换货补货
+			54 text 退换货单号 *
+			55 text field (settable) 采购退换货单号
+			56 text 采购订单 / 物料 *
+			57 pop up button (collapsed) Description: 采购退换货物料, Secondary Actions: Expand
+			58 text 退回数量 *
+			59 text field (settable) 采购退换货数量
+			60 text 退货日期 *
+			61 pop up button (collapsed) Description: 采购退换货日期, Secondary Actions: Expand
+			62 text 原因 *
+			63 text field (settable) 采购退换货原因
+			64 text 退货地址
+			65 text field (settable) 采购退换货地址
+			66 text 联系人
+			67 text field (settable) 采购退换货联系人
+			68 button (disabled) 保存草稿
+			69 heading 办理参数, Value: 2
+				70 text 办理参数
+			71 text 财务审批意见
+			72 text field (settable) 采购退货审批意见
+			73 text 仓库确认意见 *
+			74 text field (settable) 采购退换货仓库意见
+			75 text 出库意见 *
+			76 text field (settable) 采购退换货出库意见
+			77 text 退款收款账户 *
+			78 pop up button (collapsed) Description: 采购退货退款账户, Secondary Actions: Expand
+			79 text 退款流水号 *
+			80 text field (settable) 采购退货退款流水号
+			81 text 实退金额 *
+			82 text field (settable) 采购退货实退金额
+			83 text 银行流水号 *
+			84 text field (settable) 采购退货银行流水号
+			85 heading 退换货处理, Value: 2
+				86 text 退换货处理
+			87 table
+				88 row
+					89 cell
+						90 text 退货单号
+					91 cell
+						92 text 关联订单
+					93 cell
+						94 text 供应商
+					95 cell
+						96 text 处理方式
+					97 cell
+						98 text 换货进度
+					99 cell
+						100 text 预计补货日期
+					101 cell
+						102 text 退货原因
+					103 cell
+						104 text 物料数
+					105 cell
+						106 text 退款 / 参考货值
+					107 cell
+						108 text 状态
+					109 cell
+						110 text 退货日期
+					111 cell
+						112 text 操作
+				113 row
+					114 cell
+						115 text PR-CUR-20260913205628
+					116 cell
+						117 text PO-RM-20260913205402-001
+					118 cell
+						119 text 南京锐联电气技术有限公司
+					120 cell
+						121 text 退货退款
+					122 cell
+						123 text —
+					124 cell
+						125 text —
+					126 cell
+						127 text 当前库来料质量异常，走采购退换货验证
+					128 cell
+						129 text 1
+					130 cell
+						131 text 已收款 · ¥680.00
+					132 cell
+						133 text 已完成
+					134 cell
+						135 text 2026-09-14
+				136 row
+					137 cell
+						138 text PR-CUR-20260913210508
+					139 cell
+						140 text PO-RM-20260913210506-001
+					141 cell
+						142 text 南京锐联电气技术有限公司
+					143 cell
+						144 text 退货退款
+					145 cell
+						146 text —
+					147 cell
+						148 text —
+					149 cell
+						150 text 当前库来料质量异常，走采购退换货验证
+					151 cell
+						152 text 1
+					153 cell
+						154 text 已收款 · ¥680.00
+					155 cell
+						156 text 已完成
+					157 cell
+						158 text 2026-09-14
+				159 row
+					160 cell
+						161 text REP-CUR-20260913205628
+					162 cell
+						163 text PO-RM-20260913205402-001
+					164 cell
+						165 text 南京锐联电气技术有限公司
+					166 cell
+						167 text 换货补货
+					168 cell
+						169 text 补货已入库
+					170 cell
+						171 text 2026-09-25
+					172 cell
+						173 text 当前库来料质量异常，走采购退换货验证
+					174 cell
+						175 text 1
+					176 cell
+						177 text ¥680.00
+					178 cell
+						179 text 已完成
+					180 cell
+						181 text 2026-09-14
+				182 row
+					183 cell
+						184 text PR-UI-CONFIRM-20260913205643
+					185 cell
+						186 text PO-RM-20260913205402-001
+					187 cell
+						188 text 南京锐联电气技术有限公司
+					189 cell
+						190 text 退货退款
+					191 cell
+						192 text —
+					193 cell
+						194 text —
+					195 cell
+						196 text 浏览器确认弹窗验证
+					197 cell
+						198 text 1
+					199 cell
+						200 text 待处理 · ¥340.00
+					201 cell
+						202 text 草稿
+					203 cell
+						204 text 2026-09-14
+					205 cell
+						206 button 提交退货申请
+				207 row
+					208 cell
+						209 text PR-CUR-20260913232727
+					210 cell
+						211 text PO-RM-20260913232725-001
+					212 cell
+						213 text 南京锐联电气技术有限公司
+					214 cell
+						215 text 退货退款
+					216 cell
+						217 text —
+					218 cell
+						219 text —
+					220 cell
+						221 text 当前库来料质量异常，走采购退换货验证
+					222 cell
+						223 text 1
+					224 cell
+						225 text 已收款 · ¥680.00
+					226 cell
+						227 text 已完成
+					228 cell
+						229 text 2026-09-14
+				230 row
+					231 cell
+						232 text REP-CUR-20260913210508
+					233 cell
+						234 text PO-RM-20260913210506-001
+					235 cell
+						236 text 南京锐联电气技术有限公司
+					237 cell
+						238 text 换货补货
+					239 cell
+						240 text 补货已入库
+					241 cell
+						242 text 2026-09-25
+					243 cell
+						244 text 当前库来料质量异常，走采购退换货验证
+					245 cell
+						246 text 1
+					247 cell
+						248 text ¥680.00
+					249 cell
+						250 text 已完成
+					251 cell
+						252 text 2026-09-14
+				253 row
+					254 cell
+						255 text REP-CUR-20260913232727
+					256 cell
+						257 text PO-RM-20260913232725-001
+					258 cell
+						259 text 南京锐联电气技术有限公司
+					260 cell
+						261 text 换货补货
+					262 cell
+						263 text 补货已入库
+					264 cell
+						265 text 2026-09-25
+					266 cell
+						267 text 当前库来料质量异常，走采购退换货验证
+					268 cell
+						269 text 1
+					270 cell
+						271 text ¥680.00
+					272 cell
+						273 text 已完成
+					274 cell
+						275 text 2026-09-14
+				276 row
+					277 cell
+						278 text REP-OVER
+					279 cell
+						280 text PO-RM-202609-001
+					281 cell
+						282 text 南京锐联电气技术有限公司
+					283 cell
+						284 text 换货补货
+					285 cell
+						286 text 待退回
+					287 cell
+						288 text 2026-09-25
+					289 cell
+						290 text 来料规格异常，申请等量换货
+					291 cell
+						292 text 1
+					293 cell
+						294 text ¥2,788.00
+					295 cell
+						296 text 草稿
+					297 cell
+						298 text 2026-09-10
+					299 cell
+						300 button 提交换货申请
+				301 row
+					302 cell
+						303 text REP-API-20260910-001
+					304 cell
+						305 text PO-RM-202609-001
+					306 cell
+						307 text 南京锐联电气技术有限公司
+					308 cell
+						309 text 换货补货
+					310 cell
+						311 text 待退回
+					312 cell
+						313 text 2026-09-25
+					314 cell
+						315 text 来料规格异常，申请等量换货
+					316 cell
+						317 text 1
+					318 cell
+						319 text ¥1,360.00
+					320 cell
+						321 text 草稿
+					322 cell
+						323 text 2026-09-10
+					324 cell
+						325 button 提交换货申请
+
+The focused UI element is 8 button 切换侧边栏

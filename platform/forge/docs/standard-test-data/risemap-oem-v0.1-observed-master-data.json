@@ -1,0 +1,649 @@
+{
+  "fixtureId": "OEM-RM-20260909-A",
+  "snapshotVersion": "v0.1-observed-master-data-20260909",
+  "sourceDraft": "risemap-oem-v0.1-research-draft.json",
+  "dataClass": "synthetic-realistic",
+  "identityMapping": {
+    "operator": "current local test administrator; maps original responsible user without copying identity credentials"
+  },
+  "differencesFromDraft": [
+    {
+      "path": "materials.RM-PSU-24V10A.bomQty",
+      "draft": 1,
+      "observed": 2,
+      "evidence": "2092-dp014-persisted-structure"
+    }
+  ],
+  "limitations": [
+    "Supplier fixture reproduces saved draft; RISEMAP later submitted pending approval. Forge approval action is not yet implemented.",
+    "SKU code follows the observed empty-input generation hint; code readback from SKU detail still requires comparison.",
+    "Material enable-BOM flag and attachment/trace configuration have not yet been re-opened and verified.",
+    "BOM displayed cost 14442.48 is observed; calculation and tax rounding remain to be verified.",
+    "Unfilled corporate, invoice, banking and commercial fields stay empty; enrichment awaits business research."
+  ],
+  "records": [
+    {
+      "key": "unit_tai",
+      "object": "forge_unit",
+      "matchField": "name",
+      "evidence": [
+        "2057-dp003-units-ready"
+      ],
+      "data": {
+        "name": "台",
+        "code": null
+      }
+    },
+    {
+      "key": "unit_jian",
+      "object": "forge_unit",
+      "matchField": "name",
+      "evidence": [
+        "2057-dp003-units-ready"
+      ],
+      "data": {
+        "name": "件",
+        "code": null
+      }
+    },
+    {
+      "key": "material_category",
+      "object": "forge_material_category",
+      "matchField": "name",
+      "evidence": [
+        "2059-dp004-material-group-saved"
+      ],
+      "data": {
+        "name": "控制柜交付物",
+        "code": "CAB"
+      }
+    },
+    {
+      "key": "warehouse_type",
+      "object": "forge_warehouse_type",
+      "matchField": "name",
+      "evidence": [
+        "2061-dp005-warehouse-type-saved"
+      ],
+      "data": {
+        "name": "原料仓",
+        "code": null
+      }
+    },
+    {
+      "key": "supplier_category",
+      "object": "forge_supplier_category",
+      "matchField": "name",
+      "evidence": [
+        "2064-dp007-supplier-filled"
+      ],
+      "data": {
+        "name": "核心电气件供应商",
+        "code": null
+      }
+    },
+    {
+      "key": "supplier_level",
+      "object": "forge_supplier_level",
+      "matchField": "name",
+      "evidence": [
+        "2064-dp007-supplier-filled"
+      ],
+      "data": {
+        "name": "核心级",
+        "code": null
+      }
+    },
+    {
+      "key": "customer_category",
+      "object": "forge_customer_category",
+      "matchField": "name",
+      "evidence": [
+        "2068-dp008-customer-filled-linked"
+      ],
+      "data": {
+        "name": "OEM设备客户",
+        "code": null
+      }
+    },
+    {
+      "key": "customer_level",
+      "object": "forge_customer_level",
+      "matchField": "name",
+      "evidence": [
+        "2068-dp008-customer-filled-linked"
+      ],
+      "data": {
+        "name": "重点客户",
+        "code": null
+      }
+    },
+    {
+      "key": "warehouse",
+      "object": "forge_warehouse",
+      "matchField": "code",
+      "evidence": [
+        "2062-dp006-warehouse-filled",
+        "2063-dp006-warehouse-saved"
+      ],
+      "data": {
+        "code": "WH-RM-01",
+        "name": "贯联验证原料仓",
+        "type_id": {
+          "$ref": "warehouse_type"
+        },
+        "responsible_id": {
+          "$ref": "operator"
+        },
+        "phone": "025-80002609",
+        "area": 180,
+        "address": "南京市江宁区贯联验证路1号",
+        "remarks": "标准测试数据集 OEM-RM-20260909-A"
+      }
+    },
+    {
+      "key": "supplier",
+      "object": "forge_supplier",
+      "matchField": "name",
+      "evidence": [
+        "2064-dp007-supplier-filled",
+        "2065-dp007-supplier-draft-saved"
+      ],
+      "data": {
+        "name": "南京锐联电气技术有限公司",
+        "category_id": {
+          "$ref": "supplier_category"
+        },
+        "level_id": {
+          "$ref": "supplier_level"
+        },
+        "responsible_id": {
+          "$ref": "operator"
+        },
+        "contact_name": "沈妍",
+        "phone": "13900002609",
+        "email": "shen.yan@example.com",
+        "contact_department": "销售部",
+        "contact_title": "客户经理",
+        "payment_days": 30,
+        "address": "南京市江宁区锐联路26号",
+        "remarks": "标准测试数据集 OEM-RM-20260909-A"
+      }
+    },
+    {
+      "key": "customer",
+      "object": "forge_customer",
+      "matchField": "name",
+      "evidence": [
+        "2068-dp008-customer-filled-linked",
+        "2069-dp008-customer-saved"
+      ],
+      "data": {
+        "name": "苏州澄岳自动化装备有限公司",
+        "category_id": {
+          "$ref": "customer_category"
+        },
+        "level_id": {
+          "$ref": "customer_level"
+        },
+        "responsible_id": {
+          "$ref": "operator"
+        },
+        "customer_type": "company",
+        "description": "小非标控制柜与柔性装配线集成客户",
+        "payment_days": 30,
+        "address": "苏州市工业园区澄岳路9号",
+        "province": "江苏省",
+        "city": "苏州市",
+        "remarks": "标准测试数据集 OEM-RM-20260909-A"
+      }
+    },
+    {
+      "key": "contact",
+      "object": "forge_contact",
+      "matchField": "name",
+      "evidence": [
+        "2068-dp008-customer-filled-linked"
+      ],
+      "data": {
+        "name": "周启明",
+        "customer_id": {
+          "$ref": "customer"
+        },
+        "is_primary": true,
+        "job_title": "项目采购经理",
+        "department": "供应链中心"
+      }
+    },
+    {
+      "key": "contact_mobile",
+      "object": "forge_contact_channel",
+      "matchField": "value",
+      "evidence": [
+        "2068-dp008-customer-filled-linked"
+      ],
+      "data": {
+        "name": "工作手机",
+        "contact_id": {
+          "$ref": "contact"
+        },
+        "channel_type": "mobile",
+        "value": "13800002609"
+      }
+    },
+    {
+      "key": "contact_email",
+      "object": "forge_contact_channel",
+      "matchField": "value",
+      "evidence": [
+        "2068-dp008-customer-filled-linked"
+      ],
+      "data": {
+        "name": "工作邮箱",
+        "contact_id": {
+          "$ref": "contact"
+        },
+        "channel_type": "email",
+        "value": "zhou.qiming@example.com"
+      }
+    },
+    {
+      "key": "fg",
+      "object": "forge_material",
+      "matchField": "code",
+      "evidence": [
+        "2071-dp009-finished-good-complete",
+        "2077-dp013-materials-list-five"
+      ],
+      "data": {
+        "name": "800型柔性线控制柜",
+        "code": "FG-RM-CAB-800",
+        "barcode": "FG-RM-CAB-800",
+        "model": "RM-CAB-800-V1",
+        "category_id": {
+          "$ref": "material_category"
+        },
+        "unit_id": {
+          "$ref": "unit_tai"
+        },
+        "property": "finished",
+        "source_type": "manufactured",
+        "warehouse_id": {
+          "$ref": "warehouse"
+        },
+        "responsible_id": {
+          "$ref": "operator"
+        },
+        "loss_rate": 0,
+        "batch_enabled": false,
+        "trace_enabled": true,
+        "remarks": "标准测试数据集 OEM-RM-20260909-A 成品"
+      }
+    },
+    {
+      "key": "fg_sku",
+      "object": "forge_material_sku",
+      "matchField": "code",
+      "evidence": [
+        "2071-dp009-finished-good-complete"
+      ],
+      "data": {
+        "name": "默认规格",
+        "code": "FG-RM-CAB-800-0001",
+        "barcode": "FG-RM-CAB-800-0001",
+        "material_id": {
+          "$ref": "fg"
+        },
+        "sale_price": 128000,
+        "cost_price": 54000,
+        "enabled": true
+      }
+    },
+    {
+      "key": "plc",
+      "object": "forge_material",
+      "matchField": "code",
+      "evidence": [
+        "2073-dp010-plc-filled",
+        "2077-dp013-materials-list-five"
+      ],
+      "data": {
+        "name": "PLC CPU 1215C",
+        "code": "RM-PLC-1215C",
+        "barcode": "RM-PLC-1215C",
+        "model": "CPU 1215C DC/DC/DC",
+        "category_id": {
+          "$ref": "material_category"
+        },
+        "unit_id": {
+          "$ref": "unit_jian"
+        },
+        "property": "raw_material",
+        "source_type": "purchased",
+        "warehouse_id": {
+          "$ref": "warehouse"
+        },
+        "responsible_id": {
+          "$ref": "operator"
+        },
+        "loss_rate": 0,
+        "batch_enabled": true,
+        "trace_enabled": false,
+        "remarks": "标准测试数据集 OEM-RM-20260909-A 关键外购物料"
+      }
+    },
+    {
+      "key": "plc_sku",
+      "object": "forge_material_sku",
+      "matchField": "code",
+      "evidence": [
+        "2073-dp010-plc-filled"
+      ],
+      "data": {
+        "name": "默认规格",
+        "code": "RM-PLC-1215C-0001",
+        "barcode": "RM-PLC-1215C-0001",
+        "material_id": {
+          "$ref": "plc"
+        },
+        "sale_price": 8160,
+        "cost_price": 6800,
+        "enabled": true
+      }
+    },
+    {
+      "key": "hmi",
+      "object": "forge_material",
+      "matchField": "code",
+      "evidence": [
+        "2074-dp011-hmi-filled",
+        "2077-dp013-materials-list-five"
+      ],
+      "data": {
+        "name": "7英寸触摸屏",
+        "code": "RM-HMI-700",
+        "barcode": "RM-HMI-700",
+        "model": "KTP700 Basic PN",
+        "category_id": {
+          "$ref": "material_category"
+        },
+        "unit_id": {
+          "$ref": "unit_jian"
+        },
+        "property": "raw_material",
+        "source_type": "purchased",
+        "warehouse_id": {
+          "$ref": "warehouse"
+        },
+        "responsible_id": {
+          "$ref": "operator"
+        },
+        "loss_rate": 0,
+        "batch_enabled": true,
+        "trace_enabled": false,
+        "remarks": "标准测试数据集 OEM-RM-20260909-A 外购物料"
+      }
+    },
+    {
+      "key": "hmi_sku",
+      "object": "forge_material_sku",
+      "matchField": "code",
+      "evidence": [
+        "2074-dp011-hmi-filled"
+      ],
+      "data": {
+        "name": "默认规格",
+        "code": "RM-HMI-700-0001",
+        "barcode": "RM-HMI-700-0001",
+        "material_id": {
+          "$ref": "hmi"
+        },
+        "sale_price": 3840,
+        "cost_price": 3200,
+        "enabled": true
+      }
+    },
+    {
+      "key": "psu",
+      "object": "forge_material",
+      "matchField": "code",
+      "evidence": [
+        "2075-dp012-psu-filled",
+        "2077-dp013-materials-list-five"
+      ],
+      "data": {
+        "name": "24V 10A开关电源",
+        "code": "RM-PSU-24V10A",
+        "barcode": "RM-PSU-24V10A",
+        "model": "DRP-240-24",
+        "category_id": {
+          "$ref": "material_category"
+        },
+        "unit_id": {
+          "$ref": "unit_jian"
+        },
+        "property": "raw_material",
+        "source_type": "purchased",
+        "warehouse_id": {
+          "$ref": "warehouse"
+        },
+        "responsible_id": null,
+        "loss_rate": 0,
+        "batch_enabled": true,
+        "trace_enabled": false,
+        "remarks": "标准测试数据集 OEM-RM-20260909-A 外购物料"
+      }
+    },
+    {
+      "key": "psu_sku",
+      "object": "forge_material_sku",
+      "matchField": "code",
+      "evidence": [
+        "2075-dp012-psu-filled"
+      ],
+      "data": {
+        "name": "默认规格",
+        "code": "RM-PSU-24V10A-0001",
+        "barcode": "RM-PSU-24V10A-0001",
+        "material_id": {
+          "$ref": "psu"
+        },
+        "sale_price": 1032,
+        "cost_price": 860,
+        "enabled": true
+      }
+    },
+    {
+      "key": "cab",
+      "object": "forge_material",
+      "matchField": "code",
+      "evidence": [
+        "2076-dp013-cabinet-filled",
+        "2077-dp013-materials-list-five"
+      ],
+      "data": {
+        "name": "800型柜体",
+        "code": "RM-CAB-800",
+        "barcode": "RM-CAB-800",
+        "model": "800×600×2000mm",
+        "category_id": {
+          "$ref": "material_category"
+        },
+        "unit_id": {
+          "$ref": "unit_tai"
+        },
+        "property": "raw_material",
+        "source_type": "purchased",
+        "warehouse_id": {
+          "$ref": "warehouse"
+        },
+        "responsible_id": {
+          "$ref": "operator"
+        },
+        "loss_rate": 0,
+        "batch_enabled": true,
+        "trace_enabled": false,
+        "remarks": "标准测试数据集 OEM-RM-20260909-A 外购物料"
+      }
+    },
+    {
+      "key": "cab_sku",
+      "object": "forge_material_sku",
+      "matchField": "code",
+      "evidence": [
+        "2076-dp013-cabinet-filled"
+      ],
+      "data": {
+        "name": "默认规格",
+        "code": "RM-CAB-800-0001",
+        "barcode": "RM-CAB-800-0001",
+        "material_id": {
+          "$ref": "cab"
+        },
+        "sale_price": 5520,
+        "cost_price": 4600,
+        "enabled": true
+      }
+    },
+    {
+      "key": "bom",
+      "object": "forge_bom",
+      "matchField": "code",
+      "evidence": [
+        "2091-dp014-persisted-detail"
+      ],
+      "data": {
+        "name": "800型柔性线控制柜标准BOM",
+        "code": "BOM-RM-CAB-800-V1",
+        "product_name": "800型柔性线控制柜",
+        "material_id": {
+          "$ref": "fg"
+        },
+        "bom_type": "standard",
+        "version": "V1.0",
+        "remarks": "标准测试数据集 OEM-RM-20260909-A，单台用量"
+      }
+    },
+    {
+      "key": "bom_root",
+      "object": "forge_bom_node",
+      "matchField": "name",
+      "evidence": [
+        "2092-dp014-persisted-structure"
+      ],
+      "data": {
+        "name": "800型柔性线控制柜总成",
+        "bom_id": {
+          "$ref": "bom"
+        },
+        "node_type": "root",
+        "quantity": 1,
+        "is_leaf": false
+      }
+    },
+    {
+      "key": "bom_plc",
+      "object": "forge_bom_node",
+      "matchField": "name",
+      "evidence": [
+        "2092-dp014-persisted-structure"
+      ],
+      "data": {
+        "name": "PLC CPU 1215C",
+        "bom_id": {
+          "$ref": "bom"
+        },
+        "parent_id": {
+          "$ref": "bom_root"
+        },
+        "sku_id": {
+          "$ref": "plc_sku"
+        },
+        "node_type": "material",
+        "quantity": 1,
+        "position": "PLC-A1",
+        "is_key_part": true,
+        "is_leaf": true,
+        "sort_order": 1
+      }
+    },
+    {
+      "key": "bom_hmi",
+      "object": "forge_bom_node",
+      "matchField": "name",
+      "evidence": [
+        "2092-dp014-persisted-structure"
+      ],
+      "data": {
+        "name": "7英寸触摸屏",
+        "bom_id": {
+          "$ref": "bom"
+        },
+        "parent_id": {
+          "$ref": "bom_root"
+        },
+        "sku_id": {
+          "$ref": "hmi_sku"
+        },
+        "node_type": "material",
+        "quantity": 1,
+        "position": "HMI-OP1",
+        "is_key_part": true,
+        "is_leaf": true,
+        "sort_order": 2
+      }
+    },
+    {
+      "key": "bom_psu",
+      "object": "forge_bom_node",
+      "matchField": "name",
+      "evidence": [
+        "2092-dp014-persisted-structure"
+      ],
+      "data": {
+        "name": "24V 10A开关电源",
+        "bom_id": {
+          "$ref": "bom"
+        },
+        "parent_id": {
+          "$ref": "bom_root"
+        },
+        "sku_id": {
+          "$ref": "psu_sku"
+        },
+        "node_type": "material",
+        "quantity": 2,
+        "position": "PSU-P1/P2",
+        "is_key_part": true,
+        "is_leaf": true,
+        "sort_order": 3
+      }
+    },
+    {
+      "key": "bom_cab",
+      "object": "forge_bom_node",
+      "matchField": "name",
+      "evidence": [
+        "2092-dp014-persisted-structure"
+      ],
+      "data": {
+        "name": "800型柜体",
+        "bom_id": {
+          "$ref": "bom"
+        },
+        "parent_id": {
+          "$ref": "bom_root"
+        },
+        "sku_id": {
+          "$ref": "cab_sku"
+        },
+        "node_type": "material",
+        "quantity": 1,
+        "position": "CAB-BASE",
+        "is_key_part": false,
+        "is_leaf": true,
+        "sort_order": 4
+      }
+    }
+  ]
+}

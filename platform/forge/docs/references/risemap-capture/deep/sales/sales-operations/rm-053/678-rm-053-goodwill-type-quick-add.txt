@@ -1,0 +1,238 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/goodwill".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/goodwill
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 销售业务
+					10 image
+					11 text 销售业务
+					12 image
+				13 button 框架销售合同
+				14 button 销售订单
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+			36 image
+			37 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			38 button 查看方案
+				39 image
+				40 text 查看方案
+			41 button
+				42 image
+			43 container
+				44 container 业务分类
+					45 checkbox 工作台, Value: 0
+					46 checkbox 供应链, Value: 0
+					47 checkbox 销售, Value: 1
+					48 checkbox 生产, Value: 0
+					49 checkbox 项目, Value: 0
+					50 checkbox 行政, Value: 0
+					51 checkbox 财务, Value: 0
+					52 checkbox 报表, Value: 0
+					53 checkbox 系统, Value: 0
+				54 button Description: 展开搜索, Help: 搜索
+					55 image
+				56 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					57 image
+					58 text 2
+				59 button Description: 打开推广奖励, Help: 推广
+				60 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				61 link Description: 打开工单, Value: community.risemap.cn/support
+				62 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					63 image
+					64 text 立即订阅
+				65 button 金
+					66 text 金
+					67 image
+			68 container
+				69 button 工作台
+					70 image
+					71 text 工作台
+				72 button 新建合同
+					73 text 新建合同
+				74 button 销售订单
+					75 text 销售订单
+				76 button 新建销售订单
+					77 text 新建销售订单
+				78 button 收款流水
+					79 text 收款流水
+				80 button 销售发货单
+					81 text 销售发货单
+				82 button 新建发货单
+					83 text 新建发货单
+				84 button 销售退货
+					85 text 销售退货
+				86 button 新建销售退货
+					87 text 新建销售退货
+				88 button 业绩银行
+					89 text 业绩银行
+				90 button 价格策略
+					91 text 价格策略
+				92 button 新增框架协议
+					93 text 新增框架协议
+				94 button 新增特价
+					95 text 新增特价
+				96 button Goodwill订单
+					97 text Goodwill订单
+				98 button Goodwill订单详情
+					99 text Goodwill订单详情
+			100 container
+				101 container
+					102 text 销售业务
+					103 image
+					104 text Goodwill订单
+					105 image
+					106 heading Goodwill订单, Value: 1
+						107 text Goodwill订单
+					108 text 客情维护、补偿赠送等无偿订单的审批与发货跟踪
+				109 button 新建 Goodwill 订单
+					110 image
+					111 text 新建 Goodwill 订单
+				112 button 刷新
+					113 image
+				114 button
+					115 image
+				116 button
+					117 image
+				118 image
+				119 text field (settable)
+				120 button 类型
+					121 text 类型
+					122 image
+				123 button 状态
+					124 text 状态
+					125 image
+				126 button 导出
+					127 image
+					128 text 导出
+					129 image
+				130 button 导出任务
+				131 table
+					132 row
+						133 cell
+							134 checkbox (settable, integer) 0
+						135 cell
+							136 text Goodwill单号
+						137 cell
+							138 text 客户名称
+						139 cell
+							140 text 赠送类型
+						141 cell
+							142 text 申请原因
+						143 cell
+							144 image
+							145 text 物品种类/总数
+						146 cell
+							147 text 状态
+						148 cell
+							149 text 负责人
+						150 cell
+							151 text 创建日期
+						152 cell
+							153 text 创建人
+						154 cell
+							155 text 操作
+					156 row
+						157 cell
+							158 image
+							159 text 暂无匹配的 Goodwill 订单
+				160 text 共  0 条记录 每页
+				161 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					162 text 10
+				163 text 条
+				164 button (disabled) 上一页
+					165 image
+				166 button 1
+				167 button (disabled) 下一页
+					168 image
+				171 container
+					172 image
+					173 heading 新建 Goodwill 订单, Value: 3
+						174 text 新建 Goodwill 订单
+					175 button
+						176 image
+					177 image
+					178 text Goodwill 订单用于免费发放备件、资料、样品等，不涉及付款流程。提交后需审批方可发货。 客户名称  *
+					179 button 搜索并选择客户
+						180 text 搜索并选择客户
+					181 text 联系人
+					182 text field (settable)
+					183 text 负责人  *
+					184 button (disabled) 请先选择客户
+						185 text 请先选择客户
+					186 text 赠送类型  *
+					187 button 请选择
+						188 text 请选择
+					189 button 新增赠送类型
+						190 image
+					191 text 关联合同
+					192 button 可选
+						193 text 可选
+					194 text 关联项目
+					195 container
+						196 text 请先选择客户
+						197 image
+					198 text 申请原因  *
+					199 text entry area (settable)
+					200 text 物品清单  *
+					201 button 添加物品
+						202 image
+						203 text 添加物品
+					204 text 1
+					205 button 物品名称 *
+						206 text 物品名称 *
+					207 text field (settable)
+					208 stepper (settable, integer) 1
+					209 text — 备注
+					210 text field (settable)
+					211 button 取消
+					212 button 创建订单
+			169 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			170 container Notifications alt+T
+		213 container 新增赠送类型
+			214 heading 新增赠送类型, Value: 3
+				215 text 新增赠送类型
+			216 button 关闭
+				217 image
+			218 container
+				219 text 类型名称 *
+				220 text field (settable)
+				221 text 标识颜色
+				222 button
+				223 button
+				224 button
+				225 button
+				226 button
+				227 button
+				228 button
+				229 button
+				230 button
+				231 button
+				232 button
+				233 button
+			234 button 取消
+			235 button 添加
+
+The focused UI element is 189 button 新增赠送类型

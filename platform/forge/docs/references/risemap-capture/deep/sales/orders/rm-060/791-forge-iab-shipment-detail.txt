@@ -1,0 +1,169 @@
+- region "通知 alt+T"
+- banner:
+  - link "ObjectOS" [active]:
+    - /url: /_console/apps/forge
+  - generic "本平台处于预览版，功能可能调整。": 预览版
+  - button "切换侧边栏":
+    - generic: 切换侧边栏
+  - generic: /
+  - button "Forge":
+    - generic: Forge
+  - button "搜索…":
+  - button "打开消息中心":
+  - link "在 Studio 中设计":
+    - /url: /_console/studio/forge/data
+  - button "帮助与文档":
+  - button "DA":
+    - generic: DA
+- text: 区域
+- list:
+  - button "客户与销售":
+    - generic: 客户与销售
+  - button "采购与供应":
+    - generic: 采购与供应
+  - button "物料与库存":
+    - generic: 物料与库存
+  - button "生产与 BOM":
+    - generic: 生产与 BOM
+- button "销售业务" [expanded]:
+  - text: 销售业务
+- list:
+  - link "销售报价":
+    - /url: /_console/apps/forge/forge_quotation
+    - generic: 销售报价
+  - link "框架销售合同":
+    - /url: /_console/apps/forge/forge_sales_contract
+    - generic: 框架销售合同
+  - link "销售订单":
+    - /url: /_console/apps/forge/forge_sales_order
+    - generic: 销售订单
+  - link "销售发货单":
+    - /url: /_console/apps/forge/forge_sales_shipment
+    - generic: 销售发货单
+- button "客户档案" [expanded]:
+  - text: 客户档案
+- list:
+  - link "客户":
+    - /url: /_console/apps/forge/forge_customer
+    - generic: 客户
+  - link "联系人":
+    - /url: /_console/apps/forge/forge_contact
+    - generic: 联系人
+  - link "联系方式":
+    - /url: /_console/apps/forge/forge_contact_channel
+    - generic: 联系方式
+- button "客户配置" [expanded]:
+  - text: 客户配置
+- list:
+  - link "客户分类":
+    - /url: /_console/apps/forge/forge_customer_category
+    - generic: 客户分类
+  - link "客户级别":
+    - /url: /_console/apps/forge/forge_customer_level
+    - generic: 客户级别
+  - link "报价类型":
+    - /url: /_console/apps/forge/forge_quotation_type
+    - generic: 报价类型
+  - link "报价主体":
+    - /url: /_console/apps/forge/forge_quotation_issuer
+    - generic: 报价主体
+  - link "合同类型":
+    - /url: /_console/apps/forge/forge_contract_type
+    - generic: 合同类型
+- text: 最近使用
+- button "切换侧边栏":
+  - generic: 切换侧边栏
+- main:
+  - main:
+    - text: 下午好
+    - heading "Studio" [level=1]
+    - paragraph: 建模数据、设计体验、编排自动化的控制中心。
+    - link "浏览全部元数据":
+      - /url: /_console/apps/forge/metadata?package=forge
+      - text: 浏览全部元数据
+    - text: 快速查找 ⌘⇧M
+    - generic: "3"
+    - generic: 元数据类型
+    - generic: "3"
+    - generic: 可运行时覆盖
+    - generic: "1"
+    - generic: 软件包
+    - link "3 元数据类型":
+      - /url: /_console/apps/forge/metadata?package=forge
+      - generic: "3"
+      - generic: 元数据类型
+    - link "3 可运行时覆盖":
+      - /url: /_console/apps/forge/metadata?package=forge
+      - generic: "3"
+      - generic: 可运行时覆盖
+    - link "1 软件包":
+      - /url: /_console/apps/forge/component/developer/packages?package=forge
+      - generic: "1"
+      - generic: 软件包
+    - link "一切正常 所有元数据均无校验问题。":
+      - /url: /_console/apps/forge/metadata?package=forge
+      - generic: 一切正常
+      - generic: 所有元数据均无校验问题。
+    - heading "快捷操作" [level=2]:
+      - text: 快捷操作
+    - paragraph: 一键创建新的元数据。
+    - link "新建对象":
+      - /url: /_console/apps/forge/metadata/object/new?package=forge
+      - text: 新建对象
+    - link "新建操作":
+      - /url: /_console/apps/forge/metadata/action/new?package=forge
+      - text: 新建操作
+    - heading "探索" [level=2]:
+      - text: 探索
+    - paragraph: 快速进入平台的各个领域。
+    - generic: 数据
+    - generic: 1 个类型
+    - link "对象 28":
+      - /url: /_console/apps/forge/metadata/object?package=forge
+      - generic: 对象
+      - generic: "28"
+    - generic: 界面
+    - generic: 2 个类型
+    - link "操作 12":
+      - /url: /_console/apps/forge/metadata/action?package=forge
+      - generic: 操作
+      - generic: "12"
+    - link "应用 1":
+      - /url: /_console/apps/forge/metadata/app?package=forge
+      - generic: 应用
+      - generic: "1"
+    - heading "最近访问" [level=2]:
+      - text: 最近访问
+    - list:
+      - link "SO-CONVERT-20260909-001 发货 DN-CONVERT-20260909-001 此刻":
+        - /url: /_console/apps/forge/forge_sales_shipment/record/fMQdRovQSogenVbV
+        - generic: SO-CONVERT-20260909-001 发货 DN-CONVERT-20260909-001
+        - generic: 此刻
+      - link "销售发货单 此刻":
+        - /url: /_console/apps/forge/forge_sales_shipment
+        - generic: 销售发货单
+        - generic: 此刻
+      - link "一键转换验收销售订单 1分钟前":
+        - /url: /_console/apps/forge/forge_sales_order/record/b5iM_l0abRg29mVV
+        - generic: 一键转换验收销售订单
+        - generic: 1分钟前
+      - link "销售订单 1分钟前":
+        - /url: /_console/apps/forge/forge_sales_order
+        - generic: 销售订单
+        - generic: 1分钟前
+      - link "一键转换验收框架合同 35分钟前":
+        - /url: /_console/apps/forge/forge_sales_contract/record/YW-PKoXVy18P4Nsd
+        - generic: 一键转换验收框架合同
+        - generic: 35分钟前
+      - link "框架销售合同 35分钟前":
+        - /url: /_console/apps/forge/forge_sales_contract
+        - generic: 框架销售合同
+        - generic: 35分钟前
+      - link "一键转换验收报价 50分钟前":
+        - /url: /_console/apps/forge/forge_quotation/record/VQwWp038mM2oiKt7
+        - generic: 一键转换验收报价
+        - generic: 50分钟前
+      - link "销售报价 50分钟前":
+        - /url: /_console/apps/forge/forge_quotation
+        - generic: 销售报价
+        - generic: 50分钟前

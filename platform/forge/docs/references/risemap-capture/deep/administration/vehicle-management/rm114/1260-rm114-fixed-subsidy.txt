@@ -1,0 +1,216 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/vehicles/private/new".
+1 AXWebArea RiseMap, URL: risemap.cn/ops/vehicles/private/new
+	2 container
+		3 container root
+			222 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			223 text 行政
+			224 button 收起侧边栏
+				225 image
+			226 container
+				227 button 审批中心
+					228 image
+					229 text 审批中心
+					230 image
+				231 button 我的审批
+				232 button 抄送我的
+				233 button 我发起的
+				234 button 行政申请
+				235 button 行政管理
+					236 image
+					237 text 行政管理
+					238 image
+				239 button 公司通知
+				240 button 用章管理
+				241 button 会议纪要
+				242 button 工作汇报
+				243 button 文档中心
+				244 button 固定资产
+				245 button 资质与申报
+				246 button 物料领取
+				247 button 设备维护
+				248 button 礼品管理
+				249 button 借出管理
+				250 button 车辆管理
+				251 button 人力资源
+					252 image
+					253 text 人力资源
+					254 image
+				255 button 人事工作台
+				256 button 员工档案
+				257 button 招聘管理
+				258 button 入职离职
+				259 button 薪酬福利
+				260 button 规章制度
+				261 button 通讯录
+				262 button 考勤假期
+					263 image
+					264 text 考勤假期
+					265 image
+				266 button 加班申请
+				267 button 请假管理
+				268 button 出差申请
+				269 button 考勤管理
+				270 button 考勤统计
+				271 button 流程中心
+					272 image
+					273 text 流程中心
+					274 image
+				275 button 审批记录
+				276 button 发起流程
+				277 button 流程定义
+				278 button 流程分类
+			279 image
+			280 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			281 button 查看方案
+				282 image
+				283 text 查看方案
+			284 button
+				285 image
+			286 container
+				287 container 业务分类
+					288 checkbox 工作台, Value: 0
+					289 checkbox 供应链, Value: 0
+					290 checkbox 销售, Value: 0
+					291 checkbox 生产, Value: 0
+					292 checkbox 项目, Value: 0
+					293 checkbox 行政, Value: 1
+					294 checkbox 财务, Value: 0
+					295 checkbox 报表, Value: 0
+					296 checkbox 系统, Value: 0
+				297 button Description: 展开搜索, Help: 搜索
+					298 image
+				299 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					300 image
+					301 text 2
+				302 button Description: 打开推广奖励, Help: 推广
+				303 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				304 link Description: 打开工单, Value: community.risemap.cn/support
+				305 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					306 image
+					307 text 立即订阅
+				308 button 金
+					309 text 金
+					310 image
+			311 container
+				312 button 工作台
+					313 image
+					314 text 工作台
+				323 button 新建会议纪要
+					324 text 新建会议纪要
+				325 button AI 模板管理
+					326 text AI 模板管理
+				327 button 工作汇报
+					328 text 工作汇报
+				329 button 新建工作汇报
+					330 text 新建工作汇报
+				331 button 文档中心
+					332 text 文档中心
+				333 button 固定资产
+					334 text 固定资产
+				335 button 资质与申报
+					336 text 资质与申报
+				337 button 物料领取
+					338 text 物料领取
+				339 button 设备维护
+					340 text 设备维护
+				341 button 礼品管理
+					342 text 礼品管理
+				428 button 借出管理
+					429 text 借出管理
+				430 button 车辆管理
+					431 text 车辆管理
+				432 button 新建公司用车申请
+					433 text 新建公司用车申请
+				434 button 新建私车公用申请
+					435 text 新建私车公用申请
+			436 container
+				437 text 车辆管理
+				438 image
+				439 text 新建私车公用申请
+				440 button
+					441 image
+				442 image
+				443 heading 新建私车公用申请, Value: 1
+					444 text 新建私车公用申请
+				445 text 公司抬头  *
+				446 button 请选择公司
+					447 text 请选择公司
+				448 text 紧急程度
+				449 button 普通
+					450 text 普通
+				451 image
+				452 text 私家车信息 车牌号  *
+				453 text field (settable)
+				454 image
+				455 text 台账中的私车均在使用中，请手动输入车辆信息 品牌
+				456 text field (settable)
+				457 text 车型
+				458 text field (settable)
+				459 text 燃料类型  *
+				460 button 汽油
+					461 text 汽油
+				462 text 用车事由  *
+				463 text field (settable)
+				464 text 行程信息  *
+				465 container
+					466 image
+					467 text field (settable)
+					468 button
+						469 image
+				470 container
+					471 image
+					472 text field (settable)
+					473 button
+						474 image
+				475 text 出发时间  *
+				476 container
+					477 text field (settable)
+					478 button
+						479 image
+				480 text 预计返回  *
+				481 container
+					482 text field (settable)
+					483 button
+						484 image
+				485 text 估算里程 (km)  *
+				486 stepper (settable)
+				487 text 乘车人数
+				488 text field (settable) 1
+				489 button
+					490 image
+				491 image
+				492 text 补贴方式 — 单次封顶 ¥ 1500 ，月度封顶 ¥ 3000
+				493 button 里程补贴 按实际行驶里程 × 单价
+					494 text 里程补贴
+					495 text 按实际行驶里程 × 单价
+				496 button 包干补贴 按出差天数 × 包干日薪
+					497 text 包干补贴
+					498 text 按出差天数 × 包干日薪
+				499 button 实报实销 凭油费/过路费发票实报
+					500 text 实报实销
+					501 text 凭油费/过路费发票实报
+				521 text 出差天数
+				522 stepper (settable, integer) 1
+				523 text 包干日薪 (元/天)
+				524 stepper (settable, integer) 80
+				525 text 默认  80  元/天
+				505 image
+				506 text 预估补贴金额 ¥  80.00
+				507 image
+				508 text 1 天 × 80 元/天 = ¥80.00 关联业务
+				509 button 不关联
+					510 text 不关联
+				511 button (disabled) 请先选择业务类型
+					512 text 请先选择业务类型
+				513 text 备注
+				514 text entry area (settable)
+				515 image
+				516 text 私车公用须知 1. 须在公车不足或公车不便时方可申请私车公用； 2. 实报实销请保留油费/过路费/停车费等正规发票，结算时一并提交； 3. 里程补贴按燃料类型默认单价（汽油¥ 1.2 /柴油¥ 1.1 /混动¥ 0.9 /电¥ 0.6  元/km）； 4. 单次封顶 ¥ 1500 ，月度累计封顶 ¥ 3000 ； 5. 需购买驾乘人员意外险方可申请。
+				517 button 取消
+				518 button 提交申请（预估 ¥80.00）
+					519 image
+					520 text 提交申请（预估 ¥80.00）
+			427 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			221 container Notifications alt+T
+
+The focused UI element is 496 button 包干补贴 按出差天数 × 包干日薪

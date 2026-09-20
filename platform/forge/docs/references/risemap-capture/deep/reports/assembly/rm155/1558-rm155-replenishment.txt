@@ -1,0 +1,210 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/reports/assembly".
+1 AXWebArea RiseMap, URL: risemap.cn/reports/assembly
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 报表
+			6 button 收起侧边栏
+				7 image
+			8 container
+				304 button 销售统计
+					305 image
+					306 text 销售统计
+				307 button 采购统计
+					308 image
+					309 text 采购统计
+				310 button 库存统计
+					311 image
+					312 text 库存统计
+				313 button 项目统计
+					314 image
+					315 text 项目统计
+				316 button 组装统计
+					317 image
+					318 text 组装统计
+				319 button 财务统计
+					320 image
+					321 text 财务统计
+					322 image
+				323 button 财务总览
+				324 button 损益分析
+				325 button 资金分析
+				326 button 往来账款
+				327 button 税务库存
+				328 button 风险监控
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 0
+					77 checkbox 报表, Value: 1
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				247 button 客户对账单
+					248 text 客户对账单
+				249 button 新建客户对账
+					250 text 新建客户对账
+				251 button 供应商对账单
+					252 text 供应商对账单
+				253 button 新建供应商对账
+					254 text 新建供应商对账
+				255 button 发票总览
+					256 text 发票总览
+				257 button 销项发票
+					258 text 销项发票
+				259 button 进项发票
+					260 text 进项发票
+				261 button 开票任务
+					262 text 开票任务
+				263 button 调整记录
+					264 text 调整记录
+				329 button 销售统计
+					330 text 销售统计
+				331 button 采购统计
+					332 text 采购统计
+				333 button 库存统计
+					334 text 库存统计
+				335 button 项目统计
+					336 text 项目统计
+				337 button 组装统计
+					338 text 组装统计
+			339 container
+				340 image
+				341 text 报表中心
+				342 heading 组装统计, Value: 1
+					343 text 组装统计
+				344 text 补料发生频次、补料原因、物料结构与补料效率分析。
+				345 button 导出报表
+					346 image
+					347 text 导出报表
+				348 container 组装报表维度
+					349 button 组装单统计
+					351 button 领料单统计
+					352 button 补料单统计
+						435 text 补料单统计
+					353 button 退料单统计
+					354 button 拆解单统计
+					355 button 换件单统计
+				356 image
+				357 text 筛选条件
+				358 container
+					359 image
+					360 text field (settable)
+				361 pop up button (collapsed, settable) Description: 选择车间, Value: 全部车间, Secondary Actions: Expand
+					362 menu
+						363 (selected) 全部车间
+						364 装配一车间
+				365 pop up button (collapsed, settable) Description: 选择统计周期, Value: 本月, Secondary Actions: Expand
+					366 menu
+						367 (selected) 本月
+						368 本季度
+						369 本年度
+				370 button 刷新
+					371 image
+					372 text 刷新
+				373 image
+				436 text 更新时间 :  2026/9/9 06:51:14 当前展示 补料单统计 统计数据。 统计周期 2026-09-01 至 2026-09-30
+				437 container
+					438 image
+					439 text 补料单数
+					440 pop up button (collapsed) Description: 查看补料单数计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						441 image
+					442 image
+					443 text 0单 较上月 +0 单
+				444 container
+					445 image
+					446 text 补料数量
+					447 pop up button (collapsed) Description: 查看补料数量计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						448 image
+					449 image
+					450 text 0件
+				451 container
+					452 image
+					453 text 已完成
+					454 pop up button (collapsed) Description: 查看已完成计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						455 image
+					456 image
+					457 text 0单
+				458 container
+					459 image
+					460 text 异常补料
+					461 pop up button (collapsed) Description: 查看异常补料计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						462 image
+					463 image
+					464 text 0单 需责任确认 0 单
+				403 container
+					404 heading 补料申请与完成趋势, Value: 2
+						405 text 补料申请与完成趋势
+					406 text 补料申请 补料完成
+					407 image
+						465 text 2026-04
+						466 text 2026-05
+						467 text 2026-06
+						468 text 2026-07
+						469 text 2026-08
+						470 text 2026-09
+				414 container
+					415 heading 补料原因分布, Value: 2
+						416 text 补料原因分布
+					417 image
+						471 text 0单
+				419 container
+					420 heading 补料处理转化, Value: 2
+						421 text 补料处理转化
+					422 text 从上游到结果的阶段转化 5 个阶段 1 已下达 基准 0 2 已领料 阶段转化 0 3 组装中 阶段转化 0 4 已完工 阶段转化 0 5 已入库 阶段转化 0
+				423 container
+					424 heading 负责人完成数量排行, Value: 2
+						425 text 负责人完成数量排行
+					426 text TOP 5
+				427 container
+					428 heading 补料物料数量排行, Value: 2
+						429 text 补料物料数量排行
+					430 text TOP 5
+				431 container
+					432 heading 补料原因数量对比, Value: 2
+						433 text 补料原因数量对比
+					434 text 全量排行
+					472 container 工艺损耗 0单
+						473 text 0单
+						474 text 工艺损耗
+					475 container 来料不良 0单
+						476 text 0单
+						477 text 来料不良
+					478 container 操作损坏 0单
+						479 text 0单
+						480 text 操作损坏
+					481 container 设计变更 0单
+						482 text 0单
+						483 text 设计变更
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+
+The focused UI element is 352 button 补料单统计

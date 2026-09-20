@@ -1,0 +1,275 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同":
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "附加费用":
+    - generic: 附加费用
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "联系人管理":
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+  - button "服务管理":
+    - generic: 服务管理
+  - button "服务工单":
+    - generic: 服务工单
+  - button "服务报价单":
+    - generic: 服务报价单
+  - button "服务结算单":
+    - generic: 服务结算单
+  - button "接单中心":
+    - generic: 接单中心
+  - button "派工中心":
+    - generic: 派工中心
+  - button "服务分析":
+    - generic: 服务分析
+  - button "质保管理":
+    - generic: 质保管理
+  - button "服务配置":
+    - generic: 服务配置
+- generic: 免费试用中，还剩 9 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，18 条未读":
+    - generic: "18"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "销售报价":
+  - generic: 销售报价
+- button "客户物料对照":
+  - generic: 客户物料对照
+- button "商机管理":
+  - generic: 商机管理
+- button "线索管理":
+  - generic: 线索管理
+- button "跟进记录":
+  - generic: 跟进记录
+- button "公海客户":
+  - generic: 公海客户
+- button "服务工单":
+  - generic: 服务工单
+- button "服务报价单":
+  - generic: 服务报价单
+- button "服务结算单":
+  - generic: 服务结算单
+- button "接单中心":
+  - generic: 接单中心
+- button "派工中心":
+  - generic: 派工中心
+- button "服务分析":
+  - generic: 服务分析
+- button "质保管理":
+  - generic: 质保管理
+- button "服务配置":
+  - generic: 服务配置
+- main:
+  - generic: 服务管理
+  - generic: 服务配置
+  - heading "服务配置" [level=1]
+  - paragraph: 工单类型、状态、质保、SLA、费用目录、付款模板与服务人员统一配置
+  - button "服务工单":
+    - text: 服务工单
+  - button "工单类型"
+  - button "状态与紧急度"
+  - button "质保规则"
+  - button "SLA 规则"
+  - button "费用类型"
+  - button "付款模板"
+  - button "服务人员": 服务人员
+  - button "报价设置"
+  - button "客户门户"
+  - generic: 独立服务人员名册（内部员工关联档案，外部人员独立维护）
+  - button "新增人员":
+    - text: 新增人员
+  - button "刷新":
+  - button:
+  - button:
+  - table:
+    - rowgroup:
+      - row "姓名 来源 团队 / 区域 技能 员工状态 服务状态 操作":
+        - columnheader "姓名":
+          - generic: 姓名
+        - columnheader "来源":
+          - generic: 来源
+        - columnheader "团队 / 区域":
+          - generic: 团队 / 区域
+        - columnheader "技能":
+          - generic: 技能
+        - columnheader "员工状态":
+          - generic: 员工状态
+        - columnheader "服务状态":
+          - generic: 服务状态
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "RISEMAP 对照服务工程师 20260913 13800000913 外部人员 售后对照组 苏州 / 远程 PLC / 调试 不适用 在岗":
+        - cell "RISEMAP 对照服务工程师 20260913 13800000913":
+          - text: RISEMAP 对照服务工程师 20260913
+          - generic: "13800000913"
+        - cell "外部人员":
+          - generic: 外部人员
+        - cell "售后对照组 苏州 / 远程":
+          - text: 售后对照组
+          - generic: 苏州 / 远程
+        - cell "PLC / 调试":
+          - generic: PLC / 调试
+        - cell "不适用":
+          - generic: 不适用
+        - cell "在岗":
+          - generic: 在岗
+        - cell:
+          - button "编辑":
+          - button "停用":
+  - text: 共
+  - strong: "1"
+  - text: 名服务人员
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+  - generic: 技能标签库
+  - button "新增标签":
+    - text: 新增标签
+  - generic "可编程逻辑控制器程序与硬件": PLC
+  - generic: 内置 · 1 人
+  - button "编辑":
+  - button "停用":
+  - button "内置标签不可删除，如需下线请停用" [disabled]:
+  - generic "人机界面组态与画面": HMI
+  - generic: 内置
+  - button "编辑":
+  - button "停用":
+  - button "内置标签不可删除，如需下线请停用" [disabled]:
+  - generic "触摸屏硬件更换与校准": 触摸屏
+  - generic: 内置
+  - button "编辑":
+  - button "停用":
+  - button "内置标签不可删除，如需下线请停用" [disabled]:
+  - generic "集散控制系统": DCS
+  - generic: 内置
+  - button "编辑":
+  - button "停用":
+  - button "内置标签不可删除，如需下线请停用" [disabled]:
+  - generic "现场总线与工业协议排查": 通讯
+  - generic: 内置
+  - button "编辑":
+  - button "停用":
+  - button "内置标签不可删除，如需下线请停用" [disabled]:
+  - generic "交换机、网线、IP 规划": 网络
+  - generic: 内置
+  - button "编辑":
+  - button "停用":
+  - button "内置标签不可删除，如需下线请停用" [disabled]:
+  - generic "远程桌面、VPN 等非现场支持": 远程
+  - generic: 内置
+  - button "编辑":
+  - button "停用":
+  - button "内置标签不可删除，如需下线请停用" [disabled]:
+  - generic "开关电源、UPS、供电异常": 电源
+  - generic: 内置
+  - button "编辑":
+  - button "停用":
+  - button "内置标签不可删除，如需下线请停用" [disabled]:
+  - generic "接线、端子、强电部分": 电气
+  - generic: 内置
+  - button "编辑":
+  - button "停用":
+  - button "内置标签不可删除，如需下线请停用" [disabled]:
+  - generic "传感器、变送器、量程标定": 仪表
+  - generic: 内置
+  - button "编辑":
+  - button "停用":
+  - button "内置标签不可删除，如需下线请停用" [disabled]:
+  - generic "上位机软件安装与配置": 软件
+  - generic: 内置
+  - button "编辑":
+  - button "停用":
+  - button "内置标签不可删除，如需下线请停用" [disabled]:
+  - generic "现场联调与试运行": 调试
+  - generic: 内置 · 1 人
+  - button "编辑":
+  - button "停用":
+  - button "内置标签不可删除，如需下线请停用" [disabled]:
+  - generic "定期点检与预防性维护": 巡检
+  - generic: 内置
+  - button "编辑":
+  - button "停用":
+  - button "内置标签不可删除，如需下线请停用" [disabled]:
+  - text: 新增人员时按这些标签勾选技能，派工中心按技能筛人。
+  - text: 停用只影响新的勾选，已勾过的人员不受影响；改名会自动同步到所有勾了该标签的人员。
+- button "打开 AI 助手"
+- region "Notifications alt+T":
+  - list:
+    - button "Close toast":
+    - generic: 已新增服务人员

@@ -1,0 +1,461 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/workflow/admin-applications".
+0 AXWebArea RiseMap, URL: risemap.cn/workflow/admin-applications
+	1 container
+		2 container root
+			201 container
+				202 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+				203 text 行政
+				204 button 收起侧边栏
+					205 image
+				206 container
+					207 button 审批中心
+						208 image
+						209 text 审批中心
+						210 image
+					211 button 我的审批
+					212 button 抄送我的
+					213 button 我发起的
+					214 button 行政申请
+				215 container
+					216 button 行政管理
+						217 image
+						218 text 行政管理
+						219 image
+					220 button 公司通知
+					221 button 用章管理
+					222 button 会议纪要
+					223 button 工作汇报
+					224 button 文档中心
+					225 button 固定资产
+					226 button 资质与申报
+					227 button 物料领取
+					228 button 设备维护
+					229 button 礼品管理
+					230 button 借出管理
+					231 button 车辆管理
+				232 container
+					233 button 人力资源
+						234 image
+						235 text 人力资源
+						236 image
+					237 button 人事工作台
+					238 button 员工档案
+					239 button 招聘管理
+					240 button 入职离职
+					241 button 薪酬福利
+					242 button 规章制度
+					243 button 通讯录
+				244 container
+					245 button 考勤假期
+						246 image
+						247 text 考勤假期
+						248 image
+					249 button 加班申请
+					250 button 请假管理
+					251 button 出差申请
+					252 button 考勤管理
+					253 button 考勤统计
+				254 container
+					255 button 流程中心
+						256 image
+						257 text 流程中心
+						258 image
+					259 button 审批记录
+					260 button 发起流程
+					261 button 流程定义
+					262 button 流程分类
+				263 image
+				264 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+				265 button 查看方案
+					266 image
+					267 text 查看方案
+				268 button
+					269 image
+				270 container 业务分类
+					271 checkbox 工作台, Value: 0
+					272 checkbox 供应链, Value: 0
+					273 checkbox 销售, Value: 0
+					274 checkbox 生产, Value: 0
+					275 checkbox 项目, Value: 0
+					276 checkbox 行政, Value: 1
+					277 checkbox 财务, Value: 0
+					278 checkbox 报表, Value: 0
+					279 checkbox 系统, Value: 0
+				280 button Description: 展开搜索, Help: 搜索
+					281 image
+				282 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					283 image
+					284 text 2
+				285 button Description: 打开推广奖励, Help: 推广
+				286 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				287 link Description: 打开工单, Value: community.risemap.cn/support
+				288 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					289 image
+					290 text 立即订阅
+				291 button 金
+					292 text 金
+					293 image
+				294 button 工作台
+					295 image
+					296 text 工作台
+				297 button 委外未交
+					298 text 委外未交
+				299 button 委外进货
+					300 text 委外进货
+				301 button 委外对账单
+					302 text 委外对账单
+				303 button 项目中心
+					304 text 项目中心
+				305 button 项目分析中心
+					306 text 项目分析中心
+				307 button 任务管理
+					308 text 任务管理
+				309 button 工时管理
+					310 text 工时管理
+				311 button 快捷工时填报
+					312 text 快捷工时填报
+				313 button 项目配置中心
+					314 text 项目配置中心
+				315 button 新建计划模板
+					316 text 新建计划模板
+				317 button 我的审批
+					318 text 我的审批
+				319 button 抄送我的
+					320 text 抄送我的
+				321 button 我发起的
+					322 text 我发起的
+				323 button 行政申请
+					324 text 行政申请
+				325 container
+					326 container
+						327 text 审批中心
+						328 image
+						329 text 行政申请
+						330 image
+						331 heading 行政申请, Value: 1
+							332 text 行政申请
+						333 text 选择需要办理的事项，填写申请后进入对应审批流程
+					334 image
+					335 text field (settable)
+					336 tab group 申请分类
+						337 tab (selected, settable, boolean) 全部申请 11, Value: 1
+						338 tab (selectable, settable, boolean) 考勤假期 5, Value: 0
+						339 tab (selectable, settable, boolean) 行政事务 3, Value: 0
+						340 tab (selectable, settable, boolean) 用车资质 3, Value: 0
+						341 tab (selectable, settable, boolean) 其他申请 0, Value: 0
+					342 heading 考勤假期, Value: 2
+						343 text 考勤假期
+					344 text 5  项可申请事项
+					345 button 加班申请 登记加班时间与补偿方式
+						346 image
+						347 text 加班申请
+						348 text 登记加班时间与补偿方式
+						349 image
+					350 button 请假申请 年假、事假、病假等假期
+						351 image
+						352 text 请假申请
+						353 text 年假、事假、病假等假期
+						354 image
+					355 button 出差申请 填写行程与出差计划
+						356 image
+						357 text 出差申请
+						358 text 填写行程与出差计划
+						359 image
+					360 button 补签申请 补录异常考勤打卡
+						361 image
+						362 text 补签申请
+						363 text 补录异常考勤打卡
+						364 image
+					365 button 报销申请 提交员工费用报销
+						366 image
+						367 text 报销申请
+						368 text 提交员工费用报销
+						369 image
+					370 heading 行政事务, Value: 2
+						371 text 行政事务
+					372 text 3  项可申请事项
+					373 button 用章申请 公章、合同章等用印
+						374 image
+						375 text 用章申请
+						376 text 公章、合同章等用印
+						377 image
+					378 button 礼品申请 客户礼赠与内部礼品领用
+						379 image
+						380 text 礼品申请
+						381 text 客户礼赠与内部礼品领用
+						382 image
+					383 button 物料领取 办公及行政物料领用
+						384 image
+						385 text 物料领取
+						386 text 办公及行政物料领用
+						387 image
+					388 heading 用车资质, Value: 2
+						389 text 用车资质
+					390 text 3  项可申请事项
+					391 button 公司用车 申请公司车辆与行程
+						392 image
+						393 text 公司用车
+						394 text 申请公司车辆与行程
+						395 image
+					396 button 私车公用 登记私车公用与预计里程
+						397 image
+						398 text 私车公用
+						399 text 登记私车公用与预计里程
+						400 image
+					401 button 资质续期 证照续期、变更与复审
+						402 image
+						403 text 资质续期
+						404 text 证照续期、变更与复审
+						405 image
+				406 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+		407 container 报销申请, ID: radix-:r1p6:
+			408 image
+			409 heading 报销申请, Value: 2, ID: radix-:r1p7:
+				410 text 报销申请
+			411 text 提交员工费用报销
+			412 container
+				413 image
+				414 heading 基本信息, Value: 2
+					415 text 基本信息
+				416 text 填写报销归属、报销人与费用归集信息
+				417 container
+					418 text * 费用标题
+				419 text field (settable)
+				420 container
+					421 text * 报销人
+				422 button (disabled) 金 金一涛 (默认部门)
+					423 text 金 金一涛 ( 默认部门 )
+				424 switch Description: 代他人报销, Value: 0, ID: :r1pb:
+				425 text 代他人报销
+				426 container
+					427 text * 成本归属
+				428 button 项目成本
+					429 text 项目成本
+				430 container
+					431 text * 关联 项目
+				432 text (至少选择一个，可选多个，选择后可配置费用分摊)
+				433 button 选择关联项目
+					434 text 选择关联项目...
+				435 image
+				436 heading 付款与核销信息, Value: 2
+					437 text 付款与核销信息
+				438 text 填写付款安排、借款核销及补充说明
+				439 text 供应商
+				440 button 搜索并选择供应商...
+					441 text 搜索并选择供应商...
+				442 text 期望付款时间
+				443 container
+					444 text field (settable)
+					445 button
+						446 image
+				447 text 关联借款单
+				448 button 选择要核销的借款单...
+					449 text 选择要核销的借款单...
+				450 text 备注说明
+				451 text entry area (settable)
+				452 image
+				453 heading 费用明细 *, Value: 2
+					454 text 费用明细  *
+				455 text 逐项填写费用，并将对应票据附在费用项下
+				456 button 添加费用项
+					457 image
+					458 text 添加费用项
+				459 button 智能识别发票，自动生成费用明细 AI 上传发票图片或PDF，AI 自动识别票面信息并为每张发票生成一行费用 剩余 10 / 10 次 立即识别
+					460 image
+					461 text 智能识别发票，自动生成费用明细
+					462 text AI
+					463 text 上传发票图片或PDF，AI 自动识别票面信息并为每张发票生成一行费用
+					464 text 剩余 
+					465 text 10
+					466 text  / 
+					467 text 10
+					468 text  次
+					469 text 立即识别
+					470 image
+				471 text 费用类别 金额(¥) 说明  * 日期
+				472 button 销售费用
+					473 text 销售费用
+				474 text field (settable)
+				475 text field (settable)
+				476 container
+					477 text field (settable) 2026年9月8日
+					478 button
+						479 image
+					480 button
+						481 image
+				482 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持图片 / PDF / Word / Excel，可上传多个文件
+					483 image
+					484 text 点击或拖拽文件到此处上传
+					485 text 支持 Ctrl+V 粘贴截图
+					486 text 支持图片 / PDF / Word / Excel，可上传多个文件
+				487 text 共  1  项 合计： ¥ 0
+				488 image
+				489 heading 收款方式, Value: 2
+					490 text 收款方式
+				491 text 选择或新增收款账户，审批通过后报销款支付至此
+				492 text 非必填
+				493 button 新增收款方式
+					494 image
+					495 text 新增收款方式
+				496 text 未选择收款账户，不影响保存或提交审批。
+				497 heading 审批流程, Value: 3
+					498 image
+					499 text 审批流程
+				500 container
+					501 text 开始
+					502 text 审批
+					503 text SINGLE
+					504 text 系统管理员
+					505 text 结束
+				506 button 取消
+				507 button 保存草稿
+					508 image
+					509 text 保存草稿
+				510 button 提交审批
+					511 image
+					512 text 提交审批
+			513 button Close
+				514 image
+				515 text Close
+		516 container
+			517 image
+			518 text field (settable)
+			519 container
+				520 text 销售费用
+				521 image
+			522 text 客户开发费用
+			523 text 客户拜访费
+			524 text 客户招待费
+			525 text 客户礼品费
+			526 text 市场推广费用
+			527 text 广告推广费
+			528 text 展会活动费
+			529 text 宣传物料费
+			530 text 销售支持费用
+			531 text 样品费
+			532 text 售前支持费
+			533 text 销售佣金
+			534 text 项目费用
+			535 text 项目差旅费用
+			536 text 项目交通费
+			537 text 项目住宿费
+			538 text 项目餐饮补贴
+			539 text 项目实施费用
+			540 text 安装调试费
+			541 text 现场施工费
+			542 text 临时用工费
+			543 text 项目材料费用
+			544 text 项目辅材费
+			545 text 项目耗材费
+			546 text 项目补料费
+			547 text 项目外协费用
+			548 text 外协加工费
+			549 text 外包服务费
+			550 text 外部技术支持费
+			551 text 采购费用
+			552 text 采购业务费用
+			553 text 供应商拜访费
+			554 text 供应商招待费
+			555 text 供应商考察费
+			556 text 采购物流费用
+			557 text 采购运输费
+			558 text 装卸搬运费
+			559 text 包装费
+			560 text 质量处理费用
+			561 text 来料检测费
+			562 text 返修处理费
+			563 text 退货运输费
+			564 text 研发费用
+			565 text 研发材料费用
+			566 text 研发材料费
+			567 text 研发打样费
+			568 text 研发测试件费用
+			569 text 研发测试费用
+			570 text 测试检测费
+			571 text 认证校准费
+			572 text 实验费用
+			573 text 研发服务费用
+			574 text 技术咨询费
+			575 text 外包开发费
+			576 text 知识产权费
+			577 text 行政办公费用
+			578 text 办公用品费用
+			579 text 办公用品费
+			580 text 办公耗材费
+			581 text 办公设备费
+			582 text 办公场地费用
+			583 text 房租物业费
+			584 text 水电费
+			585 text 装修维修费
+			586 text 日常行政费用
+			587 text 快递费
+			588 text 印刷费
+			589 text 会议费
+			590 text 人事费用
+			591 text 招聘费用
+			592 text 招聘平台费
+			593 text 猎头费
+			594 text 面试费用
+			595 text 培训费用
+			596 text 内部培训费
+			597 text 外部培训费
+			598 text 课程费用
+			599 text 员工福利费用
+			600 text 节日福利费
+			601 text 团建费
+			602 text 员工关怀费
+			603 text 财务法务费用
+			604 text 财务服务费用
+			605 text 代理记账费
+			606 text 税务服务费
+			607 text 审计评估费
+			608 text 银行金融费用
+			609 text 银行手续费
+			610 text 承兑手续费
+			611 text 融资服务费
+			612 text 法务合规费用
+			613 text 律师费
+			614 text 合同审查费
+			615 text 诉讼仲裁费
+			616 text IT/软件费用
+			617 text 软件系统费用
+			618 text SaaS软件费
+			619 text 办公软件费
+			620 text 设计开发软件费
+			621 text AI工具费用
+			622 text AI会员订阅费
+			623 text AI接口调用费
+			624 text AI插件工具费
+			625 text 云服务费用
+			626 text 服务器费用
+			627 text 存储费用
+			628 text 短信/邮件服务费
+			629 text 交通车辆费用
+			630 text 市内交通费用
+			631 text 打车费
+			632 text 公共交通费
+			633 text 停车费
+			634 text 差旅交通费用
+			635 text 高铁/火车费
+			636 text 机票费
+			637 text 长途交通费
+			638 text 车辆使用费用
+			639 text 油费/充电费
+			640 text 过路过桥费
+			641 text 车辆维修保养费
+			642 text 其他费用
+			643 text 其他业务费用
+			644 text 其他销售费用
+			645 text 其他项目费用
+			646 text 其他采购费用
+			647 text 其他管理费用
+			648 text 其他行政费用
+			649 text 其他人事费用
+			650 text 其他财务费用
+			651 text 待确认费用
+			652 text 待财务确认费用
+			653 text 待部门确认费用
+			654 text 未分类费用
+
+The focused UI element is 518 text field (settable)

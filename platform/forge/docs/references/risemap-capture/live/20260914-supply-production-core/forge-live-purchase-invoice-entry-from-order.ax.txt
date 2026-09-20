@@ -1,0 +1,11 @@
+Browser tab: 56, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_purchase_invoice_entry".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_purchase_invoice_entry
+	2 container root
+		3 container 通知 alt+T
+		4 heading ObjectOS, Value: 1
+			5 text ObjectOS
+		6 text 正在初始化应用程序…
+		7 text 正在连接数据源 正在加载配置 正在准备工作区
+		8 text 初始化新环境可能需要几秒钟。
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_purchase_invoice_entry

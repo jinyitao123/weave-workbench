@@ -1,0 +1,246 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 生产
+- button "收起侧边栏":
+- navigation:
+  - button "组装业务管理":
+    - generic: 组装业务管理
+  - button "组装单":
+    - generic: 组装单
+  - button "缺料待办":
+    - generic: 缺料待办
+  - button "领料单":
+    - generic: 领料单
+  - button "补料单":
+    - generic: 补料单
+  - button "退料单":
+    - generic: 退料单
+  - button "拆解单":
+    - generic: 拆解单
+  - button "换件单":
+    - generic: 换件单
+  - button "图纸管理":
+    - generic: 图纸管理
+  - button "进入图纸管理上手指南":
+  - button "图纸总览":
+    - generic: 图纸总览
+  - button "图号档案":
+    - generic: 图号档案
+  - button "图纸评审":
+    - generic: 图纸评审
+  - button "图纸发布":
+    - generic: 图纸发布
+  - button "图纸变更":
+    - generic: 图纸变更
+  - button "图纸发放记录":
+    - generic: 图纸发放记录
+  - button "图纸关联查询":
+    - generic: 图纸关联查询
+  - button "客户图纸":
+    - generic: 客户图纸
+  - button "委外管理":
+    - generic: 委外管理
+  - button "进入委外管理上手指南":
+  - button "委外看板":
+    - generic: 委外看板
+  - button "委外订单":
+    - generic: 委外订单
+  - button "委外发料":
+    - generic: 委外发料
+  - button "委外回厂":
+    - generic: 委外回厂
+  - button "委外退料":
+    - generic: 委外退料
+  - button "委外对账":
+    - generic: 委外对账
+  - button "委外供应商":
+    - generic: 委外供应商
+  - button "委外库存":
+    - generic: 委外库存
+  - button "批次追溯":
+    - generic: 批次追溯
+  - button "委外未交":
+    - generic: 委外未交
+  - button "委外进货":
+    - generic: 委外进货
+  - button "委外对账单":
+    - generic: 委外对账单
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产" [pressed]:
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "拆解单":
+  - generic: 拆解单
+- button "新建拆解单":
+  - generic: 新建拆解单
+- button "换件单":
+  - generic: 换件单
+- button "新建换件单":
+  - generic: 新建换件单
+- button "图纸管理上手指南":
+  - generic: 图纸管理上手指南
+- button "图纸总览":
+  - generic: 图纸总览
+- button "新建图号档案":
+  - generic: 新建图号档案
+- button "图号档案":
+  - generic: 图号档案
+- button "图纸评审":
+  - generic: 图纸评审
+- button "新建评审":
+  - generic: 新建评审
+- button "图纸发布":
+  - generic: 图纸发布
+- button "已发布记录":
+  - generic: 已发布记录
+- button "图纸变更":
+  - generic: 图纸变更
+- button "新建变更":
+  - generic: 新建变更
+- main:
+  - generic: 图纸管理
+  - generic: 图纸变更
+  - generic: 发起变更
+  - button "返回图纸变更列表":
+  - heading "发起图纸变更" [level=1]
+  - button "保存草稿":
+    - text: 保存草稿
+  - button "提交审批":
+    - text: 提交审批
+  - heading "基础信息" [level=2]
+  - generic: 变更单号
+  - textbox [disabled]: 系统自动生成
+  - generic: "*"
+  - generic: 关联图号
+  - button "搜索并选择图号...":
+    - generic: 搜索并选择图号...
+  - generic: 图纸名称
+  - textbox "自动带出" [disabled]
+  - generic: 原版本
+  - textbox "自动带出" [disabled]
+  - generic: 目标版本
+  - 'textbox "例如: V3"'
+  - generic: "*"
+  - generic: 变更类型
+  - button "请选择变更类型":
+    - generic: 请选择变更类型
+  - generic: "*"
+  - generic: 变更等级
+  - button "请选择变更等级":
+    - generic: 请选择变更等级
+  - checkbox "是否紧急"
+  - generic: 是否紧急
+  - generic: 申请人
+  - textbox [disabled]: 金一涛
+  - generic: 申请部门
+  - textbox [disabled]: 默认部门
+  - generic: 申请日期
+  - textbox [disabled]: 2026-09-09
+  - heading "变更原因" [level=2]
+  - generic: "*"
+  - generic: 问题描述
+  - textbox "请描述发现的问题或变更触发原因"
+  - generic: "*"
+  - generic: 变更原因
+  - textbox "请输入变更原因"
+  - generic: 背景说明
+  - textbox "请输入背景说明（选填）"
+  - checkbox "是否涉及客户要求"
+  - generic: 是否涉及客户要求
+  - checkbox "是否涉及质量问题"
+  - generic: 是否涉及质量问题
+  - checkbox "是否涉及降本"
+  - generic: 是否涉及降本
+  - checkbox "是否涉及工艺优化"
+  - generic: 是否涉及工艺优化
+  - heading "影响分析" [level=2]
+  - checkbox "是否影响功能"
+  - generic: 是否影响功能
+  - checkbox "是否影响互换性"
+  - generic: 是否影响互换性
+  - checkbox "是否影响采购"
+  - generic: 是否影响采购
+  - checkbox "是否影响BOM"
+  - generic: 是否影响BOM
+  - checkbox "是否影响库存"
+  - generic: 是否影响库存
+  - checkbox "是否影响在制业务"
+  - generic: 是否影响在制业务
+  - checkbox "是否影响已交付设备"
+  - generic: 是否影响已交付设备
+  - checkbox "是否影响售后备件"
+  - generic: 是否影响售后备件
+  - checkbox "是否需要切换供应商"
+  - generic: 是否需要切换供应商
+  - generic: "*"
+  - generic: 处理建议
+  - textbox "请输入处理建议"
+  - heading "附件区" [level=2]
+  - generic: 新版图纸文件
+  - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 DWG, PDF, STP 格式":
+    - generic: 点击或拖拽文件到此处上传
+    - generic: 支持 Ctrl+V 粘贴截图
+    - generic: 支持 DWG, PDF, STP 格式
+  - generic: 变更说明文件
+  - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 DOC, PDF, JPG 格式":
+    - generic: 点击或拖拽文件到此处上传
+    - generic: 支持 Ctrl+V 粘贴截图
+    - generic: 支持 DOC, PDF, JPG 格式
+  - generic: 对比说明文件
+  - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 DOC, PDF, JPG 格式":
+    - generic: 点击或拖拽文件到此处上传
+    - generic: 支持 Ctrl+V 粘贴截图
+    - generic: 支持 DOC, PDF, JPG 格式
+  - generic: 其他附件
+  - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持常见文件格式":
+    - generic: 点击或拖拽文件到此处上传
+    - generic: 支持 Ctrl+V 粘贴截图
+    - generic: 支持常见文件格式
+  - heading "关联处理建议" [level=2]
+  - generic: 关联采购单处理建议
+  - textbox "请输入关联采购单处理建议（选填）"
+  - generic: 关联BOM处理建议
+  - textbox "请输入关联BOM处理建议（选填）"
+  - generic: 关联库存处理建议
+  - textbox "请输入关联库存处理建议（选填）"
+  - generic: 关联项目/订单处理建议
+  - textbox "请输入关联项目/订单处理建议（选填）"
+  - generic: 生效建议说明
+  - textbox "请输入生效建议说明（选填）"
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2025-10

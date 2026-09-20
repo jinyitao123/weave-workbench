@@ -1,0 +1,184 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/invoices".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/invoices
+	2 container
+		3 container root
+			171 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			172 text 销售
+			173 button 收起侧边栏
+				174 image
+			175 container
+				176 button 销售业务
+					177 image
+					178 text 销售业务
+					179 image
+				180 button 框架销售合同
+				181 button 销售订单
+				182 button 收款流水
+				183 button 销售发货单
+				184 button 销售退货
+				185 button 业绩银行
+				186 button 价格策略
+				187 button Goodwill订单
+				188 button 销售团队
+				189 button 销售目标
+				190 button 销售发票
+				191 button CRM客户管理
+					192 image
+					193 text CRM客户管理
+					194 image
+				195 button 客户管理
+				196 button 联系人管理
+				197 button 销售报价
+				198 button 客户物料对照
+				199 button 商机管理
+				200 button 线索管理
+				201 button 跟进记录
+				202 button 公海客户
+			203 image
+			204 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			205 button 查看方案
+				206 image
+				207 text 查看方案
+			208 button
+				209 image
+			210 container
+				211 container 业务分类
+					212 checkbox 工作台, Value: 0
+					213 checkbox 供应链, Value: 0
+					214 checkbox 销售, Value: 1
+					215 checkbox 生产, Value: 0
+					216 checkbox 项目, Value: 0
+					217 checkbox 行政, Value: 0
+					218 checkbox 财务, Value: 0
+					219 checkbox 报表, Value: 0
+					220 checkbox 系统, Value: 0
+				221 button Description: 展开搜索, Help: 搜索
+					222 image
+				223 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					224 image
+					225 text 2
+				226 button Description: 打开推广奖励, Help: 推广
+				227 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				228 link Description: 打开工单, Value: community.risemap.cn/support
+				229 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					230 image
+					231 text 立即订阅
+				232 button 金
+					233 text 金
+					234 image
+			235 container
+				236 button 工作台
+					237 image
+					238 text 工作台
+				243 button 收款流水
+					244 text 收款流水
+				245 button 销售发货单
+					246 text 销售发货单
+				247 button 新建发货单
+					248 text 新建发货单
+				249 button 销售退货
+					250 text 销售退货
+				251 button 新建销售退货
+					252 text 新建销售退货
+				253 button 业绩银行
+					254 text 业绩银行
+				255 button 价格策略
+					256 text 价格策略
+				257 button 新增框架协议
+					258 text 新增框架协议
+				259 button 新增特价
+					260 text 新增特价
+				261 button Goodwill订单
+					262 text Goodwill订单
+				263 button Goodwill订单详情
+					264 text Goodwill订单详情
+				265 button 销售团队
+					266 text 销售团队
+				282 button 销售目标
+					283 text 销售目标
+				284 button 销售发票
+					285 text 销售发票
+			286 container
+				287 container
+					288 text 销售业务
+					289 image
+					290 text 销售发票
+					291 image
+					292 heading 销售发票, Value: 1
+						293 text 销售发票
+					294 text 开票申请的发起记录与流转状态跟踪；正式发票由财务在「发票管理」登记回写
+				295 button 全部0
+					296 text 全部
+					297 text 0
+				298 button 待审批0
+					299 text 待审批
+					300 text 0
+				301 button 已审批0
+					302 text 已审批
+					303 text 0
+				304 button 已开票0
+					305 text 已开票
+					306 text 0
+				307 button 已驳回0
+					308 text 已驳回
+					309 text 0
+				310 button 已撤回0
+					311 text 已撤回
+					312 text 0
+				313 button 导出
+					314 image
+					315 text 导出
+					316 image
+				317 button 导出任务
+					318 image
+					319 text 导出任务
+				320 button 刷新
+					321 image
+				322 button
+					323 image
+				324 button
+					325 image
+				326 image
+				327 text field (settable)
+				328 table
+					329 row
+						330 cell
+							331 checkbox (settable, integer) 0
+						332 cell
+							333 text 申请号
+						334 cell
+							335 text 客户 / 销售方
+						336 cell
+							337 text 模式
+						338 cell
+							339 text 合并订单
+						340 cell
+							341 text 价税合计
+						342 cell
+							343 text 状态
+						344 cell
+							345 text 申请时间
+						346 cell
+							347 text 申请人
+						348 cell
+							349 text 关联发票
+						350 cell
+							351 text 操作
+					352 row
+						353 cell
+							354 image
+							355 text 暂无开票申请记录，可在销售订单发起开票
+				356 text 共  0 条记录 每页
+				357 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					358 text 20
+				359 text 条
+				360 button (disabled) 上一页
+					361 image
+				362 button 1
+				363 button (disabled) 下一页
+					364 image
+				365 text 共 0 笔申请 · 价税合计 ¥ 0.00
+			281 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			170 container Notifications alt+T
+
+The focused UI element is 301 button 已审批0

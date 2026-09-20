@@ -1,0 +1,50 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/benefits".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/benefits
+	2 container
+		3 container Notifications alt+T
+		4 container 新建实物福利, ID: radix-:r7:
+			5 heading 新建实物福利, Value: 2, ID: radix-:r8:
+				6 image
+				7 text 新建实物福利
+			8 text 新建实物福利表单
+			9 container
+				10 text * 物品名称
+				11 text field (settable)
+				12 text 分类
+				13 button 实物礼品
+					14 text 实物礼品
+				15 text * 单价(¥)
+				16 stepper (settable)
+				17 text * 库存数量
+				18 stepper (settable)
+				19 text 品牌
+				20 text field (settable)
+				21 text 规格
+				22 text field (settable)
+				23 text 描述
+				24 text entry area (settable)
+				25 button 取消
+				26 button 创建实物
+			27 button Close
+				28 image
+				29 text Close
+		30 container
+			31 image
+			32 text field (settable)
+			33 container
+				34 text 实物礼品
+				35 image
+			36 text 兑换券码
+			37 text 充值卡
+			38 text 现金红包
+			39 text 报销额度
+			40 text 生日福利
+			41 text 节日福利(春节/端午/中秋)
+			42 text 司庆福利
+			43 text 入职周年
+			44 text 婚育福利
+			45 text 高温/防寒福利
+			46 text 体检福利
+			47 text 团建福利
+
+The focused UI element is 32 text field (settable)

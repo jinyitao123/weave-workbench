@@ -1,0 +1,262 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同":
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "联系人管理":
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "销售退货":
+  - generic: 销售退货
+- button "新建销售退货":
+  - generic: 新建销售退货
+- button "业绩银行":
+  - generic: 业绩银行
+- button "价格策略":
+  - generic: 价格策略
+- button "新增框架协议":
+  - generic: 新增框架协议
+- button "新增特价":
+  - generic: 新增特价
+- button "Goodwill订单":
+  - generic: Goodwill订单
+- button "Goodwill订单详情":
+  - generic: Goodwill订单详情
+- button "销售团队":
+  - generic: 销售团队
+- button "销售目标":
+  - generic: 销售目标
+- button "销售发票":
+  - generic: 销售发票
+- button "客户管理":
+  - generic: 客户管理
+- button "名片扫描":
+  - generic: 名片扫描
+- button "联系人管理":
+  - generic: 联系人管理
+- main:
+  - generic: CRM客户管理
+  - generic: 联系人管理
+  - heading "联系人管理" [level=1]
+  - paragraph: 以人为中心管理客户联系人，持续跟踪任职变化和全部联系方式
+  - button "新增联系人" [active]:
+    - text: 新增联系人
+  - button "导入/导出":
+    - text: 导入/导出
+  - region "联系人统计":
+    - article:
+      - paragraph: 联系人总数
+      - paragraph: "0"
+    - article:
+      - paragraph: 在职
+      - paragraph: "0"
+    - article:
+      - paragraph: 不在原公司
+      - paragraph: "0"
+    - article:
+      - paragraph: 关键决策人 KP
+      - paragraph: "0"
+  - tablist "任职状态筛选":
+    - tab "全部 0" [selected]:
+      - text: 全部
+      - generic: "0"
+    - tab "在职 0":
+      - text: 在职
+      - generic: "0"
+    - tab "已跳槽 0":
+      - text: 已跳槽
+      - generic: "0"
+    - tab "已离职 0":
+      - text: 已离职
+      - generic: "0"
+    - tab "已退休 0":
+      - text: 已退休
+      - generic: "0"
+    - tab "停用 0":
+      - text: 停用
+      - generic: "0"
+  - textbox "搜索姓名、公司、电话、邮箱"
+  - textbox "按职务筛选联系人":
+    - /placeholder: 筛选职务
+  - button "全部维护人":
+    - generic: 全部维护人
+  - button "刷新联系人数据":
+  - button "切换为紧凑行高":
+  - paragraph: 暂无匹配联系人
+  - paragraph: 可调整搜索条件或新增联系人
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: "0"
+- dialog "新增联系人 客户关系档案 · CRM":
+  - generic: 新增联系人
+  - generic: 客户关系档案 · CRM
+  - button "关闭":
+  - complementary:
+    - generic: 新
+    - heading "新联系人" [level=4]
+    - paragraph: 待填写职位
+    - generic: 在职
+    - heading "客户关系" [level=5]
+    - generic: 所属客户
+    - generic: 待选择
+    - generic: 决策权重
+    - generic: 价格
+    - generic: 维护人
+    - generic: 待选择
+    - text: 任职资料
+    - text: 联系方式
+    - text: 补充说明
+  - heading "01 任职资料" [level=4]:
+    - generic: "01"
+    - text: 任职资料
+  - generic: "* 必填"
+  - generic: "*"
+  - generic: 姓名
+  - textbox "请输入联系人姓名"
+  - generic: 性别
+  - button "性别":
+    - generic: 请选择性别
+  - generic: "*"
+  - generic: 所属客户
+  - button "请选择客户":
+    - generic: 请选择客户
+  - generic: 部门
+  - textbox "请输入所在部门"
+  - generic: 职位
+  - textbox "请输入职位"
+  - generic: 决策权重
+  - button "决策权重":
+    - generic: 价格
+    - button:
+  - generic: 维护人
+  - button "维护人":
+    - generic: 请选择维护人
+  - generic: 任职状态
+  - button "任职状态":
+    - generic "在职"
+  - checkbox "设为该客户的主要联系人"
+  - generic: 设为该客户的主要联系人
+  - heading "02 联系方式" [level=4]:
+    - generic: "02"
+    - text: 联系方式
+  - generic: 星标表示主要联系方式
+  - generic: 类型
+  - generic: 标签
+  - generic: 联系方式
+  - button "联系方式类型":
+    - generic "手机"
+  - textbox "联系方式标签":
+    - /placeholder: 标签
+    - text: 工作手机
+  - textbox "联系方式内容":
+    - /placeholder: 请输入手机号码
+  - button "设为主要联系方式":
+  - button "删除联系方式":
+  - button "联系方式类型":
+    - generic "座机"
+  - textbox "联系方式标签":
+    - /placeholder: 标签
+    - text: 办公座机
+  - textbox "联系方式内容":
+    - /placeholder: 请输入座机号码
+  - button "设为主要联系方式":
+  - button "删除联系方式":
+  - button "联系方式类型":
+    - generic "邮箱"
+  - textbox "联系方式标签":
+    - /placeholder: 标签
+    - text: 工作邮箱
+  - textbox "联系方式内容":
+    - /placeholder: 请输入邮箱地址
+  - button "设为主要联系方式":
+  - button "删除联系方式":
+  - generic: 联系方式类型
+  - button "新增联系方式类型":
+    - generic "手机"
+  - button "添加联系方式":
+    - text: 添加联系方式
+  - heading "03 补充说明" [level=4]:
+    - generic: "03"
+    - text: 补充说明
+  - generic: 备注
+  - textbox "沟通偏好、适合联系时段或其他关键信息"
+  - generic: 资料尚未保存
+  - button "取消"
+  - button "保存联系人"

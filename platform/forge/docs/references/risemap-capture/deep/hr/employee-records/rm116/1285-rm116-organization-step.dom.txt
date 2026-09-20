@@ -1,0 +1,286 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 新建工作汇报
+- button:
+  - generic: 文档中心
+- button:
+  - generic: 固定资产
+- button:
+  - generic: 资质与申报
+- button:
+  - generic: 物料领取
+- button:
+  - generic: 设备维护
+- button:
+  - generic: 礼品管理
+- button:
+  - generic: 借出管理
+- button:
+  - generic: 车辆管理
+- button:
+  - generic: 新建公司用车申请
+- button:
+  - generic: 新建私车公用申请
+- button:
+  - generic: 新增车辆
+- button:
+  - generic: 人事工作台
+- button:
+  - generic: 员工档案
+- main:
+  - generic: 人力资源
+  - generic: 员工档案
+  - heading [level=1]: 员工档案
+  - paragraph: 员工花名册、组织架构、个人档案与人事变动记录
+  - button:
+    - text: 新增员工
+  - button [disabled]:
+    - text: 批量删除
+  - button:
+    - text: 导出
+  - button:
+    - text: 批量导入
+  - button:
+  - button:
+  - button:
+  - textbox:
+    - /placeholder: 搜索姓名/工号/部门/岗位...
+  - button:
+    - text: 状态
+  - button:
+    - text: 部门
+  - button:
+    - text: 学历
+  - button:
+    - text: 岗位
+  - button:
+    - text: 职级
+  - button:
+    - text: 用工类型
+  - textbox:
+    - /placeholder: 工作地点
+  - button:
+  - generic: 入职日期
+  - button:
+  - textbox:
+    - /placeholder: 开始日期
+  - generic: ~
+  - textbox:
+    - /placeholder: 结束日期
+  - generic: 合同到期
+  - button:
+  - textbox:
+    - /placeholder: 开始日期
+  - generic: ~
+  - textbox:
+    - /placeholder: 结束日期
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader
+        - columnheader:
+          - generic: 工号
+        - columnheader:
+          - generic: 姓名
+        - columnheader:
+          - generic: 部门
+        - columnheader:
+          - generic: 岗位
+        - columnheader:
+          - generic: 职级
+        - columnheader:
+          - generic: 用工类型
+        - columnheader:
+          - generic: 员工状态
+        - columnheader:
+          - generic: 入职日期
+        - columnheader:
+          - generic: 合同到期日
+        - columnheader:
+          - generic: 护照号码
+        - columnheader:
+          - generic: 系统用户
+        - columnheader:
+          - generic: 手机
+        - columnheader:
+          - generic: 操作
+    - rowgroup:
+      - row:
+        - cell:
+          - generic: 暂无员工数据
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button [disabled]:
+  - button: "1"
+  - button [disabled]:
+- button:
+- region "Notifications alt+T"
+- generic: 5K以下
+- dialog "新增员工":
+  - heading "新增员工" [level=2]:
+    - text: 新增员工
+  - generic: 基本信息
+  - generic: "2"
+  - generic: 组织信息
+  - generic: "3"
+  - generic: 附加信息
+  - paragraph: 组织与岗位信息
+  - generic: 用工类型
+  - button "正式":
+    - generic "正式"
+  - generic: "*"
+  - generic: 部门
+  - button "请选择部门":
+    - generic: 请选择部门
+  - button "新增部门":
+  - generic: "*"
+  - generic: 岗位
+  - button "请选择":
+    - generic: 请选择
+  - button "新增岗位":
+  - generic: 职级
+  - button "请选择":
+    - generic: 请选择
+  - button "新增职级":
+  - generic: 汇报对象
+  - button "请选择":
+    - generic: 请选择
+  - generic: 学历
+  - button "本科":
+    - generic "本科"
+  - generic: 入职日期
+  - textbox "请选择日期"
+  - button:
+  - generic: 合同截止
+  - textbox "请选择日期"
+  - button:
+  - generic: 试用期（月）
+  - button "6 个月":
+    - generic "6 个月"
+  - generic: 工作地点
+  - textbox
+  - button "上一步"
+  - button "取消"
+  - button "下一步" [active]
+  - button "Close":
+    - generic: Close

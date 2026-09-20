@@ -1,0 +1,210 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 生产
+- button "收起侧边栏":
+- navigation:
+  - button "组装业务管理":
+    - generic: 组装业务管理
+  - button "组装单":
+    - generic: 组装单
+  - button "缺料待办":
+    - generic: 缺料待办
+  - button "领料单":
+    - generic: 领料单
+  - button "补料单":
+    - generic: 补料单
+  - button "退料单":
+    - generic: 退料单
+  - button "拆解单":
+    - generic: 拆解单
+  - button "换件单":
+    - generic: 换件单
+  - button "图纸管理":
+    - generic: 图纸管理
+  - button "进入图纸管理上手指南":
+  - button "图纸总览":
+    - generic: 图纸总览
+  - button "图号档案":
+    - generic: 图号档案
+  - button "图纸评审":
+    - generic: 图纸评审
+  - button "图纸发布":
+    - generic: 图纸发布
+  - button "图纸变更":
+    - generic: 图纸变更
+  - button "图纸发放记录":
+    - generic: 图纸发放记录
+  - button "图纸关联查询":
+    - generic: 图纸关联查询
+  - button "客户图纸":
+    - generic: 客户图纸
+  - button "委外管理":
+    - generic: 委外管理
+  - button "进入委外管理上手指南":
+  - button "委外看板":
+    - generic: 委外看板
+  - button "委外订单":
+    - generic: 委外订单
+  - button "委外发料":
+    - generic: 委外发料
+  - button "委外回厂":
+    - generic: 委外回厂
+  - button "委外退料":
+    - generic: 委外退料
+  - button "委外对账":
+    - generic: 委外对账
+  - button "委外供应商":
+    - generic: 委外供应商
+  - button "委外库存":
+    - generic: 委外库存
+  - button "批次追溯":
+    - generic: 批次追溯
+  - button "委外未交" [active]:
+    - generic: 委外未交
+  - button "委外进货":
+    - generic: 委外进货
+  - button "委外对账单":
+    - generic: 委外对账单
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产" [pressed]:
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "委外管理上手指南":
+  - generic: 委外管理上手指南
+- button "委外看板":
+  - generic: 委外看板
+- button "委外订单":
+  - generic: 委外订单
+- button "新建委外订单":
+  - generic: 新建委外订单
+- button "委外发料":
+  - generic: 委外发料
+- button "新建发料单":
+  - generic: 新建发料单
+- button "委外回厂":
+  - generic: 委外回厂
+- button "委外退料":
+  - generic: 委外退料
+- button "新建退料单":
+  - generic: 新建退料单
+- button "委外对账":
+  - generic: 委外对账
+- button "委外供应商":
+  - generic: 委外供应商
+- button "委外库存":
+  - generic: 委外库存
+- button "批次追溯":
+  - generic: 批次追溯
+- button "委外未交":
+  - generic: 委外未交
+- main:
+  - generic: 委外管理 ›委外报表 ›委外未交明细表
+  - heading "委外未交明细表" [level=1]
+  - paragraph: 按行展开所有未回完的委外订单 — 锁定卡单、提前预警超期
+  - generic: 未交订单数
+  - generic: "0"
+  - generic: 含未交行的订单
+  - generic: 未交明细行
+  - generic: "0"
+  - generic: 随当前筛选变化
+  - generic: 未交总数量
+  - generic: "0"
+  - generic: 各 SKU 累加
+  - generic: 未交金额
+  - generic: ¥0
+  - generic: 按加工单价估算
+  - button "超期行数 / 最长 0 / 0天 点击仅看超期":
+    - generic: 超期行数 / 最长
+    - generic: 0 / 0天
+    - generic: 点击仅看超期
+  - button "导出":
+    - text: 导出
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "搜索订单号 / 物料 / 规格 / 供应商"
+  - button "超期":
+    - text: 超期
+  - button "筛选供应商...":
+    - generic: 筛选供应商...
+  - button "工艺":
+    - text: 工艺
+  - table:
+    - rowgroup:
+      - row "委外订单 / 供应商 加工件 规格 工艺 订单量 已回(良/不良) 未交 未交金额 期望交期 超期 订单状态 操作":
+        - columnheader "委外订单 / 供应商":
+          - generic: 委外订单 / 供应商
+        - columnheader "加工件":
+          - generic: 加工件
+        - columnheader "规格":
+          - generic: 规格
+        - columnheader "工艺":
+          - generic: 工艺
+        - columnheader "订单量":
+          - generic: 订单量
+        - columnheader "已回(良/不良)":
+          - generic: 已回(良/不良)
+        - columnheader "未交":
+          - generic: 未交
+        - columnheader "未交金额":
+          - generic: 未交金额
+        - columnheader "期望交期":
+          - generic: 期望交期
+        - columnheader "超期":
+          - generic: 超期
+        - columnheader "订单状态":
+          - generic: 订单状态
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "无未交明细":
+        - cell "无未交明细":
+          - generic: 无未交明细
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+  - generic: 未交量 = 订单量 − 已回良品 − 已回不良。订单为「已完工 / 已对账 / 已作废」时不计入本表。
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2025-10

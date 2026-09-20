@@ -1,0 +1,245 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 我发起的
+- button:
+  - generic: 行政申请
+- button:
+  - generic: 公司通知
+- button:
+  - generic: 发布通知
+- button:
+  - generic: 用章管理
+- button:
+  - generic: 会议纪要
+- button:
+  - generic: 新建会议纪要
+- button:
+  - generic: AI 模板管理
+- button:
+  - generic: 工作汇报
+- button:
+  - generic: 新建工作汇报
+- button:
+  - generic: 文档中心
+- button:
+  - generic: 固定资产
+- button:
+  - generic: 资质与申报
+- button:
+  - generic: 物料领取
+- main:
+  - generic: 行政管理
+  - generic: 物料领取
+  - heading [level=1]: 物料领取
+  - paragraph: 办公物料申请、审批、领取与库存管理
+  - button:
+    - text: 新增物品
+  - button:
+    - text: 批量入库
+  - paragraph: 待审批
+  - paragraph: "0"
+  - paragraph: 待领取
+  - paragraph: "0"
+  - paragraph: 物品种类
+  - paragraph: "0"
+  - paragraph: 库存预警
+  - paragraph: "0"
+  - paragraph: 库存总值
+  - paragraph: ¥0
+  - button:
+    - text: 领取申请
+  - button:
+    - text: 物品库
+  - button:
+    - text: 领取记录
+  - textbox:
+    - /placeholder: 搜索物品名称、规格、供应商...
+  - button:
+    - generic: 全部类别
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader: 物品名称
+        - columnheader: 类别
+        - columnheader: 规格型号
+        - columnheader: 单位
+        - columnheader: 当前库存
+        - columnheader: 安全库存
+        - columnheader: 单价
+        - columnheader: 供应商
+        - columnheader: 购买渠道
+        - columnheader: 库位
+        - columnheader: 最近入库
+        - columnheader: 操作
+    - rowgroup:
+      - row:
+        - cell: 暂无物品数据
+  - heading [level=3]: 近期入库记录
+  - generic: (0 条)
+  - heading [level=3]: 新增物品
+  - button:
+  - generic: 物品名称 *
+  - textbox:
+    - /placeholder: 物品名称...
+  - generic: 类别
+  - combobox [expanded]:
+    - generic: 请选择类别
+  - button:
+  - generic: 单位
+  - textbox: 个
+  - generic: 规格型号
+  - textbox:
+    - /placeholder: 型号规格...
+  - generic: 参考单价 (¥)
+  - textbox: "0"
+  - generic: 安全库存
+  - textbox: "5"
+  - generic: 供应商
+  - textbox:
+    - /placeholder: 供应商名称...
+  - generic: 购买渠道
+  - combobox:
+    - generic: 请选择渠道
+  - generic: 库位编号
+  - textbox:
+    - /placeholder: 如 A-01-01
+  - button: 取消
+  - button: 添加
+- button:
+- region "Notifications alt+T"
+- listbox:
+  - option "五金工具" [active]:
+    - generic: 五金工具
+  - option "办公用品":
+    - generic: 办公用品
+  - option "食品饮品":
+    - generic: 食品饮品
+  - option "礼品/福利物料":
+    - generic: 礼品/福利物料
+  - option "清洁用品":
+    - generic: 清洁用品
+  - option "宣传物料":
+    - generic: 宣传物料
+  - option "文具耗材":
+    - generic: 文具耗材
+  - option "电子设备/IT耗材":
+    - generic: 电子设备/IT耗材
+  - option "劳保用品":
+    - generic: 劳保用品
+  - option "其他":
+    - generic: 其他

@@ -1,0 +1,3643 @@
+[
+  {
+    "id": "RM-001",
+    "category": "工作台",
+    "group": "工作台",
+    "name": "工作台",
+    "kind": "entry",
+    "navigationEvidence": "077-home-dashboard",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/",
+    "captures": [
+      {
+        "featureId": "RM-001",
+        "step": "077-home-dashboard",
+        "url": "https://risemap.cn/",
+        "stage": "initial_page"
+      },
+      {
+        "featureId": "RM-001",
+        "initialStep": "445-rm-001-initial",
+        "step": "446-rm-001-loaded",
+        "url": "https://risemap.cn/",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:05:05.504Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-002",
+    "category": "工作台",
+    "group": "工作台",
+    "name": "AI 广场",
+    "kind": "entry",
+    "navigationEvidence": "077-home-dashboard",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/ai",
+    "captures": [
+      {
+        "featureId": "RM-002",
+        "step": "093-rm-002-loaded",
+        "initialStep": "092-rm-002-initial",
+        "url": "https://risemap.cn/ai",
+        "stage": "loaded_page",
+        "load": {
+          "settled": true,
+          "requestsObserved": 0,
+          "failures": 0,
+          "cursor": 110
+        },
+        "capturedAt": "2026-09-08T14:38:04.707Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-003",
+    "category": "工作台",
+    "group": "工作台",
+    "name": "引导中心",
+    "kind": "entry",
+    "navigationEvidence": "077-home-dashboard",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/onboarding",
+    "captures": [
+      {
+        "featureId": "RM-003",
+        "initialStep": "132-rm-003-initial",
+        "step": "133-rm-003-loaded",
+        "url": "https://risemap.cn/onboarding",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:44:12.422Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-004",
+    "category": "工作台",
+    "group": "工作台",
+    "name": "待办管理",
+    "kind": "entry",
+    "navigationEvidence": "077-home-dashboard",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/todos",
+    "captures": [
+      {
+        "featureId": "RM-004",
+        "initialStep": "134-rm-004-initial",
+        "step": "135-rm-004-loaded",
+        "url": "https://risemap.cn/todos",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:44:16.136Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-005",
+    "category": "供应链",
+    "group": "到货检验",
+    "name": "到货通知",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/arrival-notices",
+    "captures": [
+      {
+        "featureId": "RM-005",
+        "initialStep": "146-rm-005-initial",
+        "step": "147-rm-005-loaded",
+        "url": "https://risemap.cn/inventory/arrival-notices",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:46:14.584Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-006",
+    "category": "供应链",
+    "group": "到货检验",
+    "name": "到货登记",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/arrival",
+    "captures": [
+      {
+        "featureId": "RM-006",
+        "initialStep": "148-rm-006-initial",
+        "step": "149-rm-006-loaded",
+        "url": "https://risemap.cn/inventory/arrival",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:46:18.383Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-007",
+    "category": "供应链",
+    "group": "到货检验",
+    "name": "待检验库存",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/pending-inspection",
+    "captures": [
+      {
+        "featureId": "RM-007",
+        "initialStep": "150-rm-007-initial",
+        "step": "151-rm-007-loaded",
+        "url": "https://risemap.cn/inventory/pending-inspection",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:46:22.211Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-008",
+    "category": "供应链",
+    "group": "到货检验",
+    "name": "检验单",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/inspection",
+    "captures": [
+      {
+        "featureId": "RM-008",
+        "initialStep": "152-rm-008-initial",
+        "step": "153-rm-008-loaded",
+        "url": "https://risemap.cn/inventory/inspection",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:46:23.252Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-009",
+    "category": "供应链",
+    "group": "到货检验",
+    "name": "检验规则",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/inspection-rules",
+    "captures": [
+      {
+        "featureId": "RM-009",
+        "initialStep": "154-rm-009-initial",
+        "step": "155-rm-009-loaded",
+        "url": "https://risemap.cn/inventory/inspection-rules",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:46:27.076Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-010",
+    "category": "供应链",
+    "group": "基础资料",
+    "name": "物料管理",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/base/products",
+    "captures": [
+      {
+        "featureId": "RM-010",
+        "initialStep": "156-rm-010-initial",
+        "step": "157-rm-010-loaded",
+        "url": "https://risemap.cn/base/products",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:46:28.053Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-011",
+    "category": "供应链",
+    "group": "基础资料",
+    "name": "物料组合",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/base/product-bundles",
+    "captures": [
+      {
+        "featureId": "RM-011",
+        "initialStep": "158-rm-011-initial",
+        "step": "159-rm-011-loaded",
+        "url": "https://risemap.cn/base/product-bundles",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:46:31.879Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-012",
+    "category": "供应链",
+    "group": "基础资料",
+    "name": "BOM管理",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/base/bom",
+    "captures": [
+      {
+        "featureId": "RM-012",
+        "initialStep": "160-rm-012-initial",
+        "step": "161-rm-012-loaded",
+        "url": "https://risemap.cn/base/bom",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:46:35.682Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-013",
+    "category": "供应链",
+    "group": "基础资料",
+    "name": "综合物料搜索",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/base/material-search",
+    "captures": [
+      {
+        "featureId": "RM-013",
+        "initialStep": "162-rm-013-initial",
+        "step": "163-rm-013-loaded",
+        "url": "https://risemap.cn/base/material-search",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:46:39.274Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-014",
+    "category": "供应链",
+    "group": "基础资料",
+    "name": "供应商管理",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/base/suppliers",
+    "captures": [
+      {
+        "featureId": "RM-014",
+        "initialStep": "164-rm-014-initial",
+        "step": "165-rm-014-loaded",
+        "url": "https://risemap.cn/base/suppliers",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:46:42.966Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-015",
+    "category": "供应链",
+    "group": "基础资料",
+    "name": "产品实例追溯",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/base/barcode-center",
+    "captures": [
+      {
+        "featureId": "RM-015",
+        "initialStep": "166-rm-015-initial",
+        "step": "167-rm-015-loaded",
+        "url": "https://risemap.cn/base/barcode-center",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:47:09.702Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-016",
+    "category": "供应链",
+    "group": "基础资料",
+    "name": "仓库管理",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/base/warehouses",
+    "captures": [
+      {
+        "featureId": "RM-016",
+        "initialStep": "168-rm-016-initial",
+        "step": "169-rm-016-loaded",
+        "url": "https://risemap.cn/base/warehouses",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:47:13.351Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-017",
+    "category": "供应链",
+    "group": "采购管理",
+    "name": "采购发票",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/purchase/invoices",
+    "captures": [
+      {
+        "featureId": "RM-017",
+        "initialStep": "170-rm-017-initial",
+        "step": "171-rm-017-loaded",
+        "url": "https://risemap.cn/purchase/invoices",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:47:16.993Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-018",
+    "category": "供应链",
+    "group": "采购管理",
+    "name": "采购申请",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/purchase/requests",
+    "captures": [
+      {
+        "featureId": "RM-018",
+        "initialStep": "172-rm-018-initial",
+        "step": "173-rm-018-loaded",
+        "url": "https://risemap.cn/purchase/requests",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:47:20.667Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-019",
+    "category": "供应链",
+    "group": "采购管理",
+    "name": "采购待办池",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/purchase/pending-pool",
+    "captures": [
+      {
+        "featureId": "RM-019",
+        "initialStep": "174-rm-019-initial",
+        "step": "175-rm-019-loaded",
+        "url": "https://risemap.cn/purchase/pending-pool",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:47:24.347Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-020",
+    "category": "供应链",
+    "group": "采购管理",
+    "name": "询价管理",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/purchase/rfq",
+    "captures": [
+      {
+        "featureId": "RM-020",
+        "initialStep": "176-rm-020-initial",
+        "step": "177-rm-020-loaded",
+        "url": "https://risemap.cn/purchase/rfq",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:47:28.017Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-021",
+    "category": "供应链",
+    "group": "采购管理",
+    "name": "采购订单",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/purchase/orders",
+    "captures": [
+      {
+        "featureId": "RM-021",
+        "initialStep": "178-rm-021-initial",
+        "step": "179-rm-021-loaded",
+        "url": "https://risemap.cn/purchase/orders",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:47:31.718Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-022",
+    "category": "供应链",
+    "group": "采购管理",
+    "name": "采购退换货",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/purchase/returns",
+    "captures": [
+      {
+        "featureId": "RM-022",
+        "initialStep": "180-rm-022-initial",
+        "step": "181-rm-022-loaded",
+        "url": "https://risemap.cn/purchase/returns",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:47:35.409Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-023",
+    "category": "供应链",
+    "group": "采购管理",
+    "name": "供应商价格本",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/purchase/pricebook",
+    "captures": [
+      {
+        "featureId": "RM-023",
+        "step": "182-rm-023-recovered-loaded",
+        "url": "https://risemap.cn/purchase/pricebook",
+        "stage": "recovered_loaded_page",
+        "evidenceGap": "操作后首屏因批次超时未落盘",
+        "capturedAt": "2026-09-08T14:49:27.866Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-024",
+    "category": "供应链",
+    "group": "入库管理",
+    "name": "全部入库单",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/inbound",
+    "captures": [
+      {
+        "featureId": "RM-024",
+        "initialStep": "183-rm-024-initial",
+        "step": "184-rm-024-loaded",
+        "url": "https://risemap.cn/inventory/inbound",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:49:53.935Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-025",
+    "category": "供应链",
+    "group": "入库管理",
+    "name": "采购入库",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/inbound/purchase",
+    "captures": [
+      {
+        "featureId": "RM-025",
+        "initialStep": "185-rm-025-initial",
+        "step": "186-rm-025-loaded",
+        "url": "https://risemap.cn/inventory/inbound/purchase",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:49:57.616Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-026",
+    "category": "供应链",
+    "group": "入库管理",
+    "name": "生产入库",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/inbound/production",
+    "captures": [
+      {
+        "featureId": "RM-026",
+        "initialStep": "187-rm-026-initial",
+        "step": "188-rm-026-loaded",
+        "url": "https://risemap.cn/inventory/inbound/production",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:50:01.299Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-027",
+    "category": "供应链",
+    "group": "入库管理",
+    "name": "其他入库",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/inbound/other",
+    "captures": [
+      {
+        "featureId": "RM-027",
+        "initialStep": "189-rm-027-initial",
+        "step": "190-rm-027-loaded",
+        "url": "https://risemap.cn/inventory/inbound/other",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:50:04.941Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-028",
+    "category": "供应链",
+    "group": "入库管理",
+    "name": "期初入库",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/inbound/opening",
+    "captures": [
+      {
+        "featureId": "RM-028",
+        "initialStep": "191-rm-028-initial",
+        "step": "192-rm-028-loaded",
+        "url": "https://risemap.cn/inventory/inbound/opening",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:50:08.590Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-029",
+    "category": "供应链",
+    "group": "入库管理",
+    "name": "入库明细",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/inbound/details",
+    "captures": [
+      {
+        "featureId": "RM-029",
+        "initialStep": "193-rm-029-initial",
+        "step": "194-rm-029-loaded",
+        "url": "https://risemap.cn/inventory/inbound/details",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:50:12.229Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-030",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "库存总览",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/overview",
+    "captures": [
+      {
+        "featureId": "RM-030",
+        "initialStep": "195-rm-030-initial",
+        "step": "196-rm-030-loaded",
+        "url": "https://risemap.cn/inventory/overview",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:50:29.234Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-031",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "不合格处理",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/ncr",
+    "captures": [
+      {
+        "featureId": "RM-031",
+        "initialStep": "197-rm-031-initial",
+        "step": "198-rm-031-loaded",
+        "url": "https://risemap.cn/inventory/ncr",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:50:32.889Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-032",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "库存流水",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/flow",
+    "captures": [
+      {
+        "featureId": "RM-032",
+        "initialStep": "199-rm-032-initial",
+        "step": "200-rm-032-loaded",
+        "url": "https://risemap.cn/inventory/flow",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:50:36.556Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-033",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "库存锁定",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/lock",
+    "captures": [
+      {
+        "featureId": "RM-033",
+        "initialStep": "201-rm-033-initial",
+        "step": "202-rm-033-loaded",
+        "url": "https://risemap.cn/inventory/lock",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:50:40.222Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-034",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "库存盘点",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/check",
+    "captures": [
+      {
+        "featureId": "RM-034",
+        "initialStep": "203-rm-034-initial",
+        "step": "204-rm-034-loaded",
+        "url": "https://risemap.cn/inventory/check",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:50:43.869Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-035",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "调拨与借出",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/transfer",
+    "captures": [
+      {
+        "featureId": "RM-035",
+        "initialStep": "205-rm-035-initial",
+        "step": "206-rm-035-loaded",
+        "url": "https://risemap.cn/inventory/transfer",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:50:47.523Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-036",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "库存预警",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/alerts",
+    "captures": [
+      {
+        "featureId": "RM-036",
+        "initialStep": "207-rm-036-initial",
+        "step": "208-rm-036-loaded",
+        "url": "https://risemap.cn/inventory/alerts",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:51:03.042Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-037",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "报损单",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/damage",
+    "captures": [
+      {
+        "featureId": "RM-037",
+        "initialStep": "209-rm-037-initial",
+        "step": "210-rm-037-loaded",
+        "url": "https://risemap.cn/inventory/damage",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:51:06.689Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-038",
+    "category": "供应链",
+    "group": "库存管理",
+    "name": "SN码管理",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/sn-verify",
+    "captures": [
+      {
+        "featureId": "RM-038",
+        "initialStep": "211-rm-038-initial",
+        "step": "212-rm-038-loaded",
+        "url": "https://risemap.cn/inventory/sn-verify",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:51:10.517Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-039",
+    "category": "供应链",
+    "group": "出库管理",
+    "name": "出库单列表",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/outbound",
+    "captures": [
+      {
+        "featureId": "RM-039",
+        "initialStep": "213-rm-039-initial",
+        "step": "214-rm-039-loaded",
+        "url": "https://risemap.cn/inventory/outbound",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:51:14.331Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-040",
+    "category": "供应链",
+    "group": "出库管理",
+    "name": "生产出库",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/outbound/production",
+    "captures": [
+      {
+        "featureId": "RM-040",
+        "initialStep": "215-rm-040-initial",
+        "step": "216-rm-040-loaded",
+        "url": "https://risemap.cn/inventory/outbound/production",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:51:18.149Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-041",
+    "category": "供应链",
+    "group": "出库管理",
+    "name": "其他出库",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/outbound/other",
+    "captures": [
+      {
+        "featureId": "RM-041",
+        "initialStep": "217-rm-041-initial",
+        "step": "218-rm-041-loaded",
+        "url": "https://risemap.cn/inventory/outbound/other",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:51:21.973Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-042",
+    "category": "供应链",
+    "group": "出库管理",
+    "name": "销售直接出库",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/outbound/sales-direct",
+    "captures": [
+      {
+        "featureId": "RM-042",
+        "initialStep": "219-rm-042-initial",
+        "step": "220-rm-042-loaded",
+        "url": "https://risemap.cn/inventory/outbound/sales-direct",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:52:00.327Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-043",
+    "category": "供应链",
+    "group": "出库管理",
+    "name": "待出库发货单",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/outbound/shipments",
+    "captures": [
+      {
+        "featureId": "RM-043",
+        "initialStep": "221-rm-043-initial",
+        "step": "222-rm-043-loaded",
+        "url": "https://risemap.cn/inventory/outbound/shipments",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:52:04.156Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-044",
+    "category": "供应链",
+    "group": "出库管理",
+    "name": "采购退换货出库",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/outbound/purchase-returns",
+    "captures": [
+      {
+        "featureId": "RM-044",
+        "initialStep": "223-rm-044-initial",
+        "step": "224-rm-044-loaded",
+        "url": "https://risemap.cn/inventory/outbound/purchase-returns",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:52:07.950Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-045",
+    "category": "供应链",
+    "group": "出库管理",
+    "name": "出库明细",
+    "kind": "entry",
+    "navigationEvidence": "078-navigation-supply-chain",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/outbound/details",
+    "captures": [
+      {
+        "featureId": "RM-045",
+        "initialStep": "225-rm-045-initial",
+        "step": "226-rm-045-loaded",
+        "url": "https://risemap.cn/inventory/outbound/details",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:52:11.799Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-046",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "框架销售合同",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/contracts",
+    "captures": [
+      {
+        "featureId": "RM-046",
+        "initialStep": "227-rm-046-initial",
+        "step": "228-rm-046-loaded",
+        "url": "https://risemap.cn/sales/contracts",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:52:31.560Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-047",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "销售订单",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/orders",
+    "captures": [
+      {
+        "featureId": "RM-047",
+        "initialStep": "229-rm-047-initial",
+        "step": "230-rm-047-loaded",
+        "url": "https://risemap.cn/sales/orders",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:52:35.357Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-048",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "收款流水",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/collection-flow",
+    "captures": [
+      {
+        "featureId": "RM-048",
+        "initialStep": "231-rm-048-initial",
+        "step": "232-rm-048-loaded",
+        "url": "https://risemap.cn/sales/collection-flow",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:52:39.166Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-049",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "销售发货单",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/outbound",
+    "captures": [
+      {
+        "featureId": "RM-049",
+        "initialStep": "233-rm-049-initial",
+        "step": "234-rm-049-loaded",
+        "url": "https://risemap.cn/sales/outbound",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:52:42.965Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-050",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "销售退货",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/returns",
+    "captures": [
+      {
+        "featureId": "RM-050",
+        "initialStep": "235-rm-050-initial",
+        "step": "236-rm-050-loaded",
+        "url": "https://risemap.cn/sales/returns",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:52:46.773Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-051",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "业绩银行",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/performance-bank",
+    "captures": [
+      {
+        "featureId": "RM-051",
+        "initialStep": "237-rm-051-initial",
+        "step": "238-rm-051-loaded",
+        "url": "https://risemap.cn/sales/performance-bank",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:52:50.624Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-052",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "价格策略",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/pricing",
+    "captures": [
+      {
+        "featureId": "RM-052",
+        "initialStep": "239-rm-052-initial",
+        "step": "240-rm-052-loaded",
+        "url": "https://risemap.cn/sales/pricing",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:53:03.382Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-053",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "Goodwill订单",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/goodwill",
+    "captures": [
+      {
+        "featureId": "RM-053",
+        "initialStep": "241-rm-053-initial",
+        "step": "242-rm-053-loaded",
+        "url": "https://risemap.cn/sales/goodwill",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:53:07.193Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-054",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "销售团队",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/organization",
+    "captures": [
+      {
+        "featureId": "RM-054",
+        "initialStep": "243-rm-054-initial",
+        "step": "244-rm-054-loaded",
+        "url": "https://risemap.cn/sales/organization",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:53:10.957Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-055",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "销售目标",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/target",
+    "captures": [
+      {
+        "featureId": "RM-055",
+        "initialStep": "245-rm-055-initial",
+        "step": "246-rm-055-loaded",
+        "url": "https://risemap.cn/sales/target",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:53:14.550Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-056",
+    "category": "销售",
+    "group": "销售业务",
+    "name": "销售发票",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/invoices",
+    "captures": [
+      {
+        "featureId": "RM-056",
+        "initialStep": "247-rm-056-initial",
+        "step": "248-rm-056-loaded",
+        "url": "https://risemap.cn/sales/invoices",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:53:18.177Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-057",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "客户管理",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/base/customers",
+    "captures": [
+      {
+        "featureId": "RM-057",
+        "initialStep": "249-rm-057-initial",
+        "step": "250-rm-057-loaded",
+        "url": "https://risemap.cn/base/customers",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:53:19.164Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-058",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "联系人管理",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/base/contacts",
+    "captures": [
+      {
+        "featureId": "RM-058",
+        "initialStep": "251-rm-058-initial",
+        "step": "252-rm-058-loaded",
+        "url": "https://risemap.cn/base/contacts",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:53:38.318Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-059",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "销售报价",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/quotations",
+    "captures": [
+      {
+        "featureId": "RM-059",
+        "initialStep": "253-rm-059-initial",
+        "step": "254-rm-059-loaded",
+        "url": "https://risemap.cn/sales/quotations",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:53:42.144Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-060",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "客户物料对照",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/base/customer-materials",
+    "captures": [
+      {
+        "featureId": "RM-060",
+        "initialStep": "255-rm-060-initial",
+        "step": "256-rm-060-loaded",
+        "url": "https://risemap.cn/base/customer-materials",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:53:45.924Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-061",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "商机管理",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/opportunities",
+    "captures": [
+      {
+        "featureId": "RM-061",
+        "initialStep": "257-rm-061-initial",
+        "step": "258-rm-061-loaded",
+        "url": "https://risemap.cn/sales/opportunities",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:53:49.732Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-062",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "线索管理",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/leads",
+    "captures": [
+      {
+        "featureId": "RM-062",
+        "initialStep": "259-rm-062-initial",
+        "step": "260-rm-062-loaded",
+        "url": "https://risemap.cn/sales/leads",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:53:53.513Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-063",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "跟进记录",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/follow-ups",
+    "captures": [
+      {
+        "featureId": "RM-063",
+        "initialStep": "261-rm-063-initial",
+        "step": "262-rm-063-loaded",
+        "url": "https://risemap.cn/sales/follow-ups",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:53:57.272Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-064",
+    "category": "销售",
+    "group": "CRM客户管理",
+    "name": "公海客户",
+    "kind": "entry",
+    "navigationEvidence": "079-navigation-sales",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/sales/public-sea",
+    "captures": [
+      {
+        "featureId": "RM-064",
+        "initialStep": "263-rm-064-initial",
+        "step": "264-rm-064-loaded",
+        "url": "https://risemap.cn/sales/public-sea",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:54:01.038Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-065",
+    "category": "生产",
+    "group": "组装业务管理",
+    "name": "组装单",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/production/assembly",
+    "captures": [
+      {
+        "featureId": "RM-065",
+        "initialStep": "265-rm-065-initial",
+        "step": "266-rm-065-loaded",
+        "url": "https://risemap.cn/production/assembly",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:54:15.731Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-066",
+    "category": "生产",
+    "group": "组装业务管理",
+    "name": "缺料待办",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/production/shortages",
+    "captures": [
+      {
+        "featureId": "RM-066",
+        "initialStep": "267-rm-066-initial",
+        "step": "268-rm-066-loaded",
+        "url": "https://risemap.cn/production/shortages",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:54:19.500Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-067",
+    "category": "生产",
+    "group": "组装业务管理",
+    "name": "领料单",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/production/requisitions",
+    "captures": [
+      {
+        "featureId": "RM-067",
+        "initialStep": "269-rm-067-initial",
+        "step": "270-rm-067-loaded",
+        "url": "https://risemap.cn/production/requisitions",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:54:23.293Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-068",
+    "category": "生产",
+    "group": "组装业务管理",
+    "name": "补料单",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/production/material-supplies",
+    "captures": [
+      {
+        "featureId": "RM-068",
+        "initialStep": "271-rm-068-initial",
+        "step": "272-rm-068-loaded",
+        "url": "https://risemap.cn/production/material-supplies",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:54:27.113Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-069",
+    "category": "生产",
+    "group": "组装业务管理",
+    "name": "退料单",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/production/material-returns",
+    "captures": [
+      {
+        "featureId": "RM-069",
+        "initialStep": "273-rm-069-initial",
+        "step": "274-rm-069-loaded",
+        "url": "https://risemap.cn/production/material-returns",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:54:30.913Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-070",
+    "category": "生产",
+    "group": "组装业务管理",
+    "name": "拆解单",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/production/disassembly",
+    "captures": [
+      {
+        "featureId": "RM-070",
+        "initialStep": "275-rm-070-initial",
+        "step": "276-rm-070-loaded",
+        "url": "https://risemap.cn/production/disassembly",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:54:34.715Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-071",
+    "category": "生产",
+    "group": "组装业务管理",
+    "name": "换件单",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/production/rework",
+    "captures": [
+      {
+        "featureId": "RM-071",
+        "initialStep": "277-rm-071-initial",
+        "step": "278-rm-071-loaded",
+        "url": "https://risemap.cn/production/rework",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:54:45.383Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-072",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "进入图纸管理上手指南",
+    "kind": "guide",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/drawing/guide",
+    "captures": [
+      {
+        "featureId": "RM-072",
+        "initialStep": "279-rm-072-initial",
+        "step": "280-rm-072-loaded",
+        "url": "https://risemap.cn/drawing/guide",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:54:49.227Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-073",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "图纸总览",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/drawing/overview",
+    "captures": [
+      {
+        "featureId": "RM-073",
+        "initialStep": "281-rm-073-initial",
+        "step": "282-rm-073-loaded",
+        "url": "https://risemap.cn/drawing/overview",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:54:53.023Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-074",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "图号档案",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/drawing/archives",
+    "captures": [
+      {
+        "featureId": "RM-074",
+        "initialStep": "283-rm-074-initial",
+        "step": "284-rm-074-loaded",
+        "url": "https://risemap.cn/drawing/archives",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:54:56.627Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-075",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "图纸评审",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/drawing/reviews",
+    "captures": [
+      {
+        "featureId": "RM-075",
+        "initialStep": "285-rm-075-initial",
+        "step": "286-rm-075-loaded",
+        "url": "https://risemap.cn/drawing/reviews",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:55:00.281Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-076",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "图纸发布",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/drawing/releases",
+    "captures": [
+      {
+        "featureId": "RM-076",
+        "initialStep": "287-rm-076-initial",
+        "step": "288-rm-076-loaded",
+        "url": "https://risemap.cn/drawing/releases",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:55:03.921Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-077",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "图纸变更",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/drawing/changes",
+    "captures": [
+      {
+        "featureId": "RM-077",
+        "initialStep": "289-rm-077-initial",
+        "step": "290-rm-077-loaded",
+        "url": "https://risemap.cn/drawing/changes",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:55:27.655Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-078",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "图纸发放记录",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/drawing/distribution",
+    "captures": [
+      {
+        "featureId": "RM-078",
+        "initialStep": "291-rm-078-initial",
+        "step": "292-rm-078-loaded",
+        "url": "https://risemap.cn/drawing/distribution",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:55:31.281Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-079",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "图纸关联查询",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/drawing/association",
+    "captures": [
+      {
+        "featureId": "RM-079",
+        "initialStep": "293-rm-079-initial",
+        "step": "294-rm-079-loaded",
+        "url": "https://risemap.cn/drawing/association",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:55:34.925Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-080",
+    "category": "生产",
+    "group": "图纸管理",
+    "name": "客户图纸",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/drawing/customer",
+    "captures": [
+      {
+        "featureId": "RM-080",
+        "initialStep": "295-rm-080-initial",
+        "step": "296-rm-080-loaded",
+        "url": "https://risemap.cn/drawing/customer",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:55:38.559Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-081",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "进入委外管理上手指南",
+    "kind": "guide",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/subcontract/guide",
+    "captures": [
+      {
+        "featureId": "RM-081",
+        "initialStep": "297-rm-081-initial",
+        "step": "298-rm-081-loaded",
+        "url": "https://risemap.cn/subcontract/guide",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:55:39.578Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-082",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外看板",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/subcontract",
+    "captures": [
+      {
+        "featureId": "RM-082",
+        "initialStep": "299-rm-082-initial",
+        "step": "300-rm-082-loaded",
+        "url": "https://risemap.cn/subcontract",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:55:40.698Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-083",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外订单",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/subcontract/orders",
+    "captures": [
+      {
+        "featureId": "RM-083",
+        "initialStep": "301-rm-083-initial",
+        "step": "302-rm-083-loaded",
+        "url": "https://risemap.cn/subcontract/orders",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:55:54.458Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-084",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外发料",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/subcontract/issues",
+    "captures": [
+      {
+        "featureId": "RM-084",
+        "initialStep": "303-rm-084-initial",
+        "step": "304-rm-084-loaded",
+        "url": "https://risemap.cn/subcontract/issues",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:55:58.079Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-085",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外回厂",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/subcontract/receives",
+    "captures": [
+      {
+        "featureId": "RM-085",
+        "initialStep": "305-rm-085-initial",
+        "step": "306-rm-085-loaded",
+        "url": "https://risemap.cn/subcontract/receives",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:55:59.051Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-086",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外退料",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/subcontract/returns",
+    "captures": [
+      {
+        "featureId": "RM-086",
+        "initialStep": "307-rm-086-initial",
+        "step": "308-rm-086-loaded",
+        "url": "https://risemap.cn/subcontract/returns",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:56:02.826Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-087",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外对账",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/subcontract/reconciliation",
+    "captures": [
+      {
+        "featureId": "RM-087",
+        "initialStep": "309-rm-087-initial",
+        "step": "310-rm-087-loaded",
+        "url": "https://risemap.cn/subcontract/reconciliation",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:56:03.766Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-088",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外供应商",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/subcontract/suppliers",
+    "captures": [
+      {
+        "featureId": "RM-088",
+        "initialStep": "311-rm-088-initial",
+        "step": "312-rm-088-loaded",
+        "url": "https://risemap.cn/subcontract/suppliers",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:56:07.501Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-089",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外库存",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/inventory/subcontract-stock",
+    "captures": [
+      {
+        "featureId": "RM-089",
+        "initialStep": "313-rm-089-initial",
+        "step": "314-rm-089-loaded",
+        "url": "https://risemap.cn/inventory/subcontract-stock",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:56:33.836Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-090",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "批次追溯",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/subcontract/traces",
+    "captures": [
+      {
+        "featureId": "RM-090",
+        "initialStep": "315-rm-090-initial",
+        "step": "316-rm-090-loaded",
+        "url": "https://risemap.cn/subcontract/traces",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:56:37.577Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-091",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外未交",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/subcontract/reports/undelivered",
+    "captures": [
+      {
+        "featureId": "RM-091",
+        "initialStep": "317-rm-091-initial",
+        "step": "318-rm-091-loaded",
+        "url": "https://risemap.cn/subcontract/reports/undelivered",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:56:41.351Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-092",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外进货",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/subcontract/reports/receipts",
+    "captures": [
+      {
+        "featureId": "RM-092",
+        "initialStep": "319-rm-092-initial",
+        "step": "320-rm-092-loaded",
+        "url": "https://risemap.cn/subcontract/reports/receipts",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:56:45.138Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-093",
+    "category": "生产",
+    "group": "委外管理",
+    "name": "委外对账单",
+    "kind": "entry",
+    "navigationEvidence": "080-navigation-production",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/subcontract/reports/reconciliation-statement",
+    "captures": [
+      {
+        "featureId": "RM-093",
+        "initialStep": "321-rm-093-initial",
+        "step": "322-rm-093-loaded",
+        "url": "https://risemap.cn/subcontract/reports/reconciliation-statement",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:56:48.925Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-094",
+    "category": "项目",
+    "group": "项目管理",
+    "name": "项目中心",
+    "kind": "entry",
+    "navigationEvidence": "081-navigation-projects",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/project/list",
+    "captures": [
+      {
+        "featureId": "RM-094",
+        "initialStep": "136-rm-094-initial",
+        "step": "137-rm-094-loaded",
+        "url": "https://risemap.cn/project/list",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:45:44.268Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-095",
+    "category": "项目",
+    "group": "项目管理",
+    "name": "项目分析中心",
+    "kind": "entry",
+    "navigationEvidence": "081-navigation-projects",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/project/analytics",
+    "captures": [
+      {
+        "featureId": "RM-095",
+        "initialStep": "138-rm-095-initial",
+        "step": "139-rm-095-loaded",
+        "url": "https://risemap.cn/project/analytics",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:45:45.031Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-096",
+    "category": "项目",
+    "group": "项目管理",
+    "name": "任务管理",
+    "kind": "entry",
+    "navigationEvidence": "081-navigation-projects",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/project/tasks",
+    "captures": [
+      {
+        "featureId": "RM-096",
+        "initialStep": "140-rm-096-initial",
+        "step": "141-rm-096-loaded",
+        "url": "https://risemap.cn/project/tasks",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:45:48.748Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-097",
+    "category": "项目",
+    "group": "项目管理",
+    "name": "工时管理",
+    "kind": "entry",
+    "navigationEvidence": "081-navigation-projects",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/project/timesheet",
+    "captures": [
+      {
+        "featureId": "RM-097",
+        "initialStep": "142-rm-097-initial",
+        "step": "143-rm-097-loaded",
+        "url": "https://risemap.cn/project/timesheet",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:45:52.513Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-098",
+    "category": "项目",
+    "group": "项目管理",
+    "name": "项目配置中心",
+    "kind": "entry",
+    "navigationEvidence": "081-navigation-projects",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/project/settings",
+    "captures": [
+      {
+        "featureId": "RM-098",
+        "initialStep": "144-rm-098-initial",
+        "step": "145-rm-098-loaded",
+        "url": "https://risemap.cn/project/settings",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:45:56.227Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-099",
+    "category": "行政",
+    "group": "审批中心",
+    "name": "我的审批",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/workflow/approval-center",
+    "captures": [
+      {
+        "featureId": "RM-099",
+        "initialStep": "323-rm-099-initial",
+        "step": "324-rm-099-loaded",
+        "url": "https://risemap.cn/workflow/approval-center",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:57:01.062Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-100",
+    "category": "行政",
+    "group": "审批中心",
+    "name": "抄送我的",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/workflow/cc-to-me",
+    "captures": [
+      {
+        "featureId": "RM-100",
+        "initialStep": "325-rm-100-initial",
+        "step": "326-rm-100-loaded",
+        "url": "https://risemap.cn/workflow/cc-to-me",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:57:04.835Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-101",
+    "category": "行政",
+    "group": "审批中心",
+    "name": "我发起的",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/workflow/my-instances",
+    "captures": [
+      {
+        "featureId": "RM-101",
+        "initialStep": "327-rm-101-initial",
+        "step": "328-rm-101-loaded",
+        "url": "https://risemap.cn/workflow/my-instances",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:57:08.607Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-102",
+    "category": "行政",
+    "group": "审批中心",
+    "name": "行政申请",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/workflow/admin-applications",
+    "captures": [
+      {
+        "featureId": "RM-102",
+        "initialStep": "329-rm-102-initial",
+        "step": "330-rm-102-loaded",
+        "url": "https://risemap.cn/workflow/admin-applications",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:57:12.398Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-103",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "公司通知",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/ops/notices",
+    "captures": [
+      {
+        "featureId": "RM-103",
+        "initialStep": "331-rm-103-initial",
+        "step": "332-rm-103-loaded",
+        "url": "https://risemap.cn/ops/notices",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:57:16.153Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-104",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "用章管理",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/ops/seals",
+    "captures": [
+      {
+        "featureId": "RM-104",
+        "initialStep": "333-rm-104-initial",
+        "step": "334-rm-104-loaded",
+        "url": "https://risemap.cn/ops/seals",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:57:19.957Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-105",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "会议纪要",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/ops/meetings",
+    "captures": [
+      {
+        "featureId": "RM-105",
+        "initialStep": "335-rm-105-initial",
+        "step": "336-rm-105-loaded",
+        "url": "https://risemap.cn/ops/meetings",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:57:32.225Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-106",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "工作汇报",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/ops/reports",
+    "captures": [
+      {
+        "featureId": "RM-106",
+        "initialStep": "337-rm-106-initial",
+        "step": "338-rm-106-loaded",
+        "url": "https://risemap.cn/ops/reports",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:57:35.998Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-107",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "文档中心",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/ops/docs",
+    "captures": [
+      {
+        "featureId": "RM-107",
+        "initialStep": "339-rm-107-initial",
+        "step": "340-rm-107-loaded",
+        "url": "https://risemap.cn/ops/docs",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:57:39.737Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-108",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "固定资产",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/ops/assets",
+    "captures": [
+      {
+        "featureId": "RM-108",
+        "initialStep": "341-rm-108-initial",
+        "step": "342-rm-108-loaded",
+        "url": "https://risemap.cn/ops/assets",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:57:43.397Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-109",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "资质与申报",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/ops/certificates",
+    "captures": [
+      {
+        "featureId": "RM-109",
+        "initialStep": "343-rm-109-initial",
+        "step": "344-rm-109-loaded",
+        "url": "https://risemap.cn/ops/certificates",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:57:47.031Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-110",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "物料领取",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/ops/materials",
+    "captures": [
+      {
+        "featureId": "RM-110",
+        "initialStep": "345-rm-110-initial",
+        "step": "346-rm-110-loaded",
+        "url": "https://risemap.cn/ops/materials",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:57:50.658Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-111",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "设备维护",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/ops/equipment-maintenance",
+    "captures": [
+      {
+        "featureId": "RM-111",
+        "initialStep": "347-rm-111-initial",
+        "step": "348-rm-111-loaded",
+        "url": "https://risemap.cn/ops/equipment-maintenance",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:58:08.027Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-112",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "礼品管理",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/ops/gift/apply",
+    "captures": [
+      {
+        "featureId": "RM-112",
+        "initialStep": "349-rm-112-initial",
+        "step": "350-rm-112-loaded",
+        "url": "https://risemap.cn/ops/gift/apply",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:58:11.669Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-113",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "借出管理",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/ops/lending",
+    "captures": [
+      {
+        "featureId": "RM-113",
+        "initialStep": "351-rm-113-initial",
+        "step": "352-rm-113-loaded",
+        "url": "https://risemap.cn/ops/lending",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:58:15.344Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-114",
+    "category": "行政",
+    "group": "行政管理",
+    "name": "车辆管理",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/ops/vehicles",
+    "captures": [
+      {
+        "featureId": "RM-114",
+        "initialStep": "353-rm-114-initial",
+        "step": "354-rm-114-loaded",
+        "url": "https://risemap.cn/ops/vehicles",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:58:18.985Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-115",
+    "category": "行政",
+    "group": "人力资源",
+    "name": "人事工作台",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/hr/workbench",
+    "captures": [
+      {
+        "featureId": "RM-115",
+        "initialStep": "355-rm-115-initial",
+        "step": "356-rm-115-loaded",
+        "url": "https://risemap.cn/hr/workbench",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:58:22.718Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-116",
+    "category": "行政",
+    "group": "人力资源",
+    "name": "员工档案",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/hr/employees",
+    "captures": [
+      {
+        "featureId": "RM-116",
+        "initialStep": "357-rm-116-initial",
+        "step": "358-rm-116-loaded",
+        "url": "https://risemap.cn/hr/employees",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:58:26.379Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-117",
+    "category": "行政",
+    "group": "人力资源",
+    "name": "招聘管理",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/hr/recruitment",
+    "captures": [
+      {
+        "featureId": "RM-117",
+        "initialStep": "359-rm-117-initial",
+        "step": "360-rm-117-loaded",
+        "url": "https://risemap.cn/hr/recruitment",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:58:41.129Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-118",
+    "category": "行政",
+    "group": "人力资源",
+    "name": "入职离职",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/hr/onboarding",
+    "captures": [
+      {
+        "featureId": "RM-118",
+        "initialStep": "361-rm-118-initial",
+        "step": "362-rm-118-loaded",
+        "url": "https://risemap.cn/hr/onboarding",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:58:44.826Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-119",
+    "category": "行政",
+    "group": "人力资源",
+    "name": "薪酬福利",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/hr/compensation",
+    "captures": [
+      {
+        "featureId": "RM-119",
+        "initialStep": "363-rm-119-initial",
+        "step": "364-rm-119-loaded",
+        "url": "https://risemap.cn/hr/compensation",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:58:48.481Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-120",
+    "category": "行政",
+    "group": "人力资源",
+    "name": "规章制度",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/hr/policies",
+    "captures": [
+      {
+        "featureId": "RM-120",
+        "initialStep": "365-rm-120-initial",
+        "step": "366-rm-120-loaded",
+        "url": "https://risemap.cn/hr/policies",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:58:52.151Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-121",
+    "category": "行政",
+    "group": "人力资源",
+    "name": "通讯录",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/hr/contacts",
+    "captures": [
+      {
+        "featureId": "RM-121",
+        "initialStep": "367-rm-121-initial",
+        "step": "368-rm-121-loaded",
+        "url": "https://risemap.cn/hr/contacts",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:58:55.796Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-122",
+    "category": "行政",
+    "group": "考勤假期",
+    "name": "加班申请",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/hr/overtime",
+    "captures": [
+      {
+        "featureId": "RM-122",
+        "initialStep": "369-rm-122-initial",
+        "step": "370-rm-122-loaded",
+        "url": "https://risemap.cn/hr/overtime",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:58:59.472Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-123",
+    "category": "行政",
+    "group": "考勤假期",
+    "name": "请假管理",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/hr/leave",
+    "captures": [
+      {
+        "featureId": "RM-123",
+        "initialStep": "371-rm-123-initial",
+        "step": "372-rm-123-loaded",
+        "url": "https://risemap.cn/hr/leave",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:59:08.497Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-124",
+    "category": "行政",
+    "group": "考勤假期",
+    "name": "出差申请",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/hr/business-trip",
+    "captures": [
+      {
+        "featureId": "RM-124",
+        "initialStep": "373-rm-124-initial",
+        "step": "374-rm-124-loaded",
+        "url": "https://risemap.cn/hr/business-trip",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:59:12.340Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-125",
+    "category": "行政",
+    "group": "考勤假期",
+    "name": "考勤管理",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/hr/attendance",
+    "captures": [
+      {
+        "featureId": "RM-125",
+        "initialStep": "375-rm-125-initial",
+        "step": "376-rm-125-loaded",
+        "url": "https://risemap.cn/hr/attendance",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:59:16.191Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-126",
+    "category": "行政",
+    "group": "考勤假期",
+    "name": "考勤统计",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/hr/stats-dashboard",
+    "captures": [
+      {
+        "featureId": "RM-126",
+        "initialStep": "377-rm-126-initial",
+        "step": "378-rm-126-loaded",
+        "url": "https://risemap.cn/hr/stats-dashboard",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:59:20.065Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-127",
+    "category": "行政",
+    "group": "流程中心",
+    "name": "审批记录",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/workflow/records",
+    "captures": [
+      {
+        "featureId": "RM-127",
+        "initialStep": "379-rm-127-initial",
+        "step": "380-rm-127-loaded",
+        "url": "https://risemap.cn/workflow/records",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:59:23.915Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-128",
+    "category": "行政",
+    "group": "流程中心",
+    "name": "发起流程",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/workflow/start",
+    "captures": [
+      {
+        "featureId": "RM-128",
+        "initialStep": "381-rm-128-initial",
+        "step": "382-rm-128-loaded",
+        "url": "https://risemap.cn/workflow/start",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:59:27.732Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-129",
+    "category": "行政",
+    "group": "流程中心",
+    "name": "流程定义",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/workflow/definition",
+    "captures": [
+      {
+        "featureId": "RM-129",
+        "initialStep": "383-rm-129-initial",
+        "step": "384-rm-129-loaded",
+        "url": "https://risemap.cn/workflow/definition",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:59:51.589Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-130",
+    "category": "行政",
+    "group": "流程中心",
+    "name": "流程分类",
+    "kind": "entry",
+    "navigationEvidence": "082-navigation-admin",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/workflow/category",
+    "captures": [
+      {
+        "featureId": "RM-130",
+        "initialStep": "385-rm-130-initial",
+        "step": "386-rm-130-loaded",
+        "url": "https://risemap.cn/workflow/category",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:59:55.402Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-131",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "资金账户",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/bank-accounts",
+    "captures": [
+      {
+        "featureId": "RM-131",
+        "initialStep": "387-rm-131-initial",
+        "step": "388-rm-131-loaded",
+        "url": "https://risemap.cn/finance/bank-accounts",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:00:27.999Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-132",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "资金流水",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/bank-flow",
+    "captures": [
+      {
+        "featureId": "RM-132",
+        "initialStep": "389-rm-132-initial",
+        "step": "390-rm-132-loaded",
+        "url": "https://risemap.cn/finance/bank-flow",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:00:31.866Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-133",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "应收应付",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/accounts",
+    "captures": [
+      {
+        "featureId": "RM-133",
+        "initialStep": "391-rm-133-initial",
+        "step": "392-rm-133-loaded",
+        "url": "https://risemap.cn/finance/accounts",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:00:35.705Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-134",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "收款管理",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/payment-collections",
+    "captures": [
+      {
+        "featureId": "RM-134",
+        "initialStep": "393-rm-134-initial",
+        "step": "394-rm-134-loaded",
+        "url": "https://risemap.cn/finance/payment-collections",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:00:39.502Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-135",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "付款管理",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/payment-writeoffs",
+    "captures": [
+      {
+        "featureId": "RM-135",
+        "initialStep": "395-rm-135-initial",
+        "step": "396-rm-135-loaded",
+        "url": "https://risemap.cn/finance/payment-writeoffs",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:00:43.373Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-136",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "退款申请",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/refunds",
+    "captures": [
+      {
+        "featureId": "RM-136",
+        "initialStep": "397-rm-136-initial",
+        "step": "398-rm-136-loaded",
+        "url": "https://risemap.cn/finance/refunds",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:00:47.173Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-137",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "授信额度管理",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/credit-management",
+    "captures": [
+      {
+        "featureId": "RM-137",
+        "initialStep": "399-rm-137-initial",
+        "step": "400-rm-137-loaded",
+        "url": "https://risemap.cn/finance/credit-management",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:01:10.723Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-138",
+    "category": "财务",
+    "group": "资金管理",
+    "name": "借款贷款管理",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/loans",
+    "captures": [
+      {
+        "featureId": "RM-138",
+        "initialStep": "401-rm-138-initial",
+        "step": "402-rm-138-loaded",
+        "url": "https://risemap.cn/finance/loans",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:01:14.533Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-139",
+    "category": "财务",
+    "group": "业务确认",
+    "name": "销售收入确认",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/revenue-recognition",
+    "captures": [
+      {
+        "featureId": "RM-139",
+        "initialStep": "403-rm-139-initial",
+        "step": "404-rm-139-loaded",
+        "url": "https://risemap.cn/finance/revenue-recognition",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:01:18.332Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-140",
+    "category": "财务",
+    "group": "业务确认",
+    "name": "成本中心",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/cost-center",
+    "captures": [
+      {
+        "featureId": "RM-140",
+        "initialStep": "405-rm-140-initial",
+        "step": "406-rm-140-loaded",
+        "url": "https://risemap.cn/finance/cost-center",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:01:21.994Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-141",
+    "category": "财务",
+    "group": "业务确认",
+    "name": "费用中心",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/expense-center",
+    "captures": [
+      {
+        "featureId": "RM-141",
+        "initialStep": "407-rm-141-initial",
+        "step": "408-rm-141-loaded",
+        "url": "https://risemap.cn/finance/expense-center",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:01:25.774Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-142",
+    "category": "财务",
+    "group": "业务确认",
+    "name": "报销管理",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/reimbursement",
+    "captures": [
+      {
+        "featureId": "RM-142",
+        "initialStep": "409-rm-142-initial",
+        "step": "410-rm-142-loaded",
+        "url": "https://risemap.cn/finance/reimbursement",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:01:29.597Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-143",
+    "category": "财务",
+    "group": "业务确认",
+    "name": "对账单",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/reconciliations",
+    "captures": [
+      {
+        "featureId": "RM-143",
+        "initialStep": "411-rm-143-initial",
+        "step": "412-rm-143-loaded",
+        "url": "https://risemap.cn/finance/reconciliations",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:01:46.362Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-144",
+    "category": "财务",
+    "group": "发票管理",
+    "name": "发票总览",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/invoices/overview",
+    "captures": [
+      {
+        "featureId": "RM-144",
+        "initialStep": "413-rm-144-initial",
+        "step": "414-rm-144-loaded",
+        "url": "https://risemap.cn/finance/invoices/overview",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:01:50.187Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-145",
+    "category": "财务",
+    "group": "发票管理",
+    "name": "销项发票",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/invoices/sales",
+    "captures": [
+      {
+        "featureId": "RM-145",
+        "initialStep": "415-rm-145-initial",
+        "step": "416-rm-145-loaded",
+        "url": "https://risemap.cn/finance/invoices/sales",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:01:53.987Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-146",
+    "category": "财务",
+    "group": "发票管理",
+    "name": "进项发票",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/invoices/purchase",
+    "captures": [
+      {
+        "featureId": "RM-146",
+        "initialStep": "417-rm-146-initial",
+        "step": "418-rm-146-loaded",
+        "url": "https://risemap.cn/finance/invoices/purchase",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:01:57.808Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-147",
+    "category": "财务",
+    "group": "发票管理",
+    "name": "开票任务",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/invoices/tasks",
+    "captures": [
+      {
+        "featureId": "RM-147",
+        "initialStep": "419-rm-147-initial",
+        "step": "420-rm-147-loaded",
+        "url": "https://risemap.cn/finance/invoices/tasks",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:02:01.617Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-148",
+    "category": "财务",
+    "group": "发票管理",
+    "name": "调整记录",
+    "kind": "entry",
+    "navigationEvidence": "083-navigation-finance",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/invoices/adjustments",
+    "captures": [
+      {
+        "featureId": "RM-148",
+        "initialStep": "421-rm-148-initial",
+        "step": "422-rm-148-loaded",
+        "url": "https://risemap.cn/finance/invoices/adjustments",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:02:05.396Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-149",
+    "category": "报表",
+    "group": "报表",
+    "name": "销售统计",
+    "kind": "entry",
+    "navigationEvidence": "084-navigation-reports",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/reports/sales",
+    "captures": [
+      {
+        "featureId": "RM-149",
+        "initialStep": "423-rm-149-initial",
+        "step": "424-rm-149-loaded",
+        "url": "https://risemap.cn/reports/sales",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:02:24.454Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-150",
+    "category": "报表",
+    "group": "报表",
+    "name": "采购统计",
+    "kind": "entry",
+    "navigationEvidence": "084-navigation-reports",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/reports/purchase",
+    "captures": [
+      {
+        "featureId": "RM-150",
+        "initialStep": "425-rm-150-initial",
+        "step": "426-rm-150-loaded",
+        "url": "https://risemap.cn/reports/purchase",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:02:28.246Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-151",
+    "category": "报表",
+    "group": "报表",
+    "name": "库存统计",
+    "kind": "entry",
+    "navigationEvidence": "084-navigation-reports",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/reports/inventory",
+    "captures": [
+      {
+        "featureId": "RM-151",
+        "initialStep": "427-rm-151-initial",
+        "step": "428-rm-151-loaded",
+        "url": "https://risemap.cn/reports/inventory",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:02:32.037Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-152",
+    "category": "报表",
+    "group": "报表",
+    "name": "项目统计",
+    "kind": "entry",
+    "navigationEvidence": "084-navigation-reports",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/reports/project",
+    "captures": [
+      {
+        "featureId": "RM-152",
+        "initialStep": "429-rm-152-initial",
+        "step": "430-rm-152-loaded",
+        "url": "https://risemap.cn/reports/project",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:02:35.845Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-153",
+    "category": "报表",
+    "group": "报表",
+    "name": "组装统计",
+    "kind": "entry",
+    "navigationEvidence": "084-navigation-reports",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/reports/assembly",
+    "captures": [
+      {
+        "featureId": "RM-153",
+        "initialStep": "431-rm-153-initial",
+        "step": "432-rm-153-loaded",
+        "url": "https://risemap.cn/reports/assembly",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:02:39.645Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-154",
+    "category": "报表",
+    "group": "财务统计",
+    "name": "财务总览",
+    "kind": "entry",
+    "navigationEvidence": "084-navigation-reports",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/statistics/overview",
+    "captures": [
+      {
+        "featureId": "RM-154",
+        "initialStep": "433-rm-154-initial",
+        "step": "434-rm-154-loaded",
+        "url": "https://risemap.cn/finance/statistics/overview",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:02:43.678Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-155",
+    "category": "报表",
+    "group": "财务统计",
+    "name": "损益分析",
+    "kind": "entry",
+    "navigationEvidence": "084-navigation-reports",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/statistics/profit",
+    "captures": [
+      {
+        "featureId": "RM-155",
+        "initialStep": "435-rm-155-initial",
+        "step": "436-rm-155-loaded",
+        "url": "https://risemap.cn/finance/statistics/profit",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:02:55.620Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-156",
+    "category": "报表",
+    "group": "财务统计",
+    "name": "资金分析",
+    "kind": "entry",
+    "navigationEvidence": "084-navigation-reports",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/statistics/capital",
+    "captures": [
+      {
+        "featureId": "RM-156",
+        "initialStep": "437-rm-156-initial",
+        "step": "438-rm-156-loaded",
+        "url": "https://risemap.cn/finance/statistics/capital",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:02:59.395Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-157",
+    "category": "报表",
+    "group": "财务统计",
+    "name": "往来账款",
+    "kind": "entry",
+    "navigationEvidence": "084-navigation-reports",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/statistics/current-account",
+    "captures": [
+      {
+        "featureId": "RM-157",
+        "initialStep": "439-rm-157-initial",
+        "step": "440-rm-157-loaded",
+        "url": "https://risemap.cn/finance/statistics/current-account",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:03:03.180Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-158",
+    "category": "报表",
+    "group": "财务统计",
+    "name": "税务库存",
+    "kind": "entry",
+    "navigationEvidence": "084-navigation-reports",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/statistics/budget-tax",
+    "captures": [
+      {
+        "featureId": "RM-158",
+        "initialStep": "441-rm-158-initial",
+        "step": "442-rm-158-loaded",
+        "url": "https://risemap.cn/finance/statistics/budget-tax",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:03:06.990Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-159",
+    "category": "报表",
+    "group": "财务统计",
+    "name": "风险监控",
+    "kind": "entry",
+    "navigationEvidence": "084-navigation-reports",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/finance/statistics/risk",
+    "captures": [
+      {
+        "featureId": "RM-159",
+        "initialStep": "443-rm-159-initial",
+        "step": "444-rm-159-loaded",
+        "url": "https://risemap.cn/finance/statistics/risk",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:03:07.986Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-160",
+    "category": "系统",
+    "group": "系统设置",
+    "name": "基础配置",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings",
+    "captures": [
+      {
+        "featureId": "RM-160",
+        "step": "086-system-basic-settings",
+        "url": "https://risemap.cn/settings",
+        "stage": "initial_page"
+      },
+      {
+        "featureId": "RM-160",
+        "initialStep": "447-rm-160-initial",
+        "step": "448-rm-160-loaded",
+        "url": "https://risemap.cn/settings",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T15:05:06.920Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-161",
+    "category": "系统",
+    "group": "系统设置",
+    "name": "用户与角色",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/accounts",
+    "captures": [
+      {
+        "featureId": "RM-161",
+        "step": "087-rm-161-initial",
+        "url": "https://risemap.cn/settings/accounts",
+        "stage": "initial_page",
+        "capturedAt": "2026-09-08T14:34:12.019Z"
+      },
+      {
+        "featureId": "RM-161",
+        "step": "088-rm-161-loaded",
+        "url": "https://risemap.cn/settings/accounts",
+        "stage": "loaded_page"
+      }
+    ]
+  },
+  {
+    "id": "RM-162",
+    "category": "系统",
+    "group": "系统设置",
+    "name": "部门管理",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/departments",
+    "captures": [
+      {
+        "featureId": "RM-162",
+        "step": "090-rm-162-loaded",
+        "url": "https://risemap.cn/settings/departments",
+        "stage": "loaded_page"
+      }
+    ]
+  },
+  {
+    "id": "RM-163",
+    "category": "系统",
+    "group": "系统设置",
+    "name": "用户会话",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/sessions",
+    "captures": [
+      {
+        "featureId": "RM-163",
+        "initialStep": "094-rm-163-initial",
+        "step": "095-rm-163-loaded",
+        "url": "https://risemap.cn/settings/sessions",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:41:02.718Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-164",
+    "category": "系统",
+    "group": "系统设置",
+    "name": "审计日志",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/audit-log",
+    "captures": [
+      {
+        "featureId": "RM-164",
+        "initialStep": "096-rm-164-initial",
+        "step": "097-rm-164-loaded",
+        "url": "https://risemap.cn/settings/audit-log",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:42:02.300Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-165",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "商品管理",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/business/product",
+    "captures": [
+      {
+        "featureId": "RM-165",
+        "initialStep": "098-rm-165-initial",
+        "step": "099-rm-165-loaded",
+        "url": "https://risemap.cn/settings/business/product",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:42:03.096Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-166",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "财务配置",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/business/finance",
+    "captures": [
+      {
+        "featureId": "RM-166",
+        "initialStep": "100-rm-166-initial",
+        "step": "101-rm-166-loaded",
+        "url": "https://risemap.cn/settings/business/finance",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:42:06.804Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-167",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "行政管理",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/business/office",
+    "captures": [
+      {
+        "featureId": "RM-167",
+        "initialStep": "102-rm-167-initial",
+        "step": "103-rm-167-loaded",
+        "url": "https://risemap.cn/settings/business/office",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:42:10.555Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-168",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "客户管理",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/business/customer",
+    "captures": [
+      {
+        "featureId": "RM-168",
+        "initialStep": "104-rm-168-initial",
+        "step": "105-rm-168-loaded",
+        "url": "https://risemap.cn/settings/business/customer",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:42:14.105Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-169",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "采购销售",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/business/sales",
+    "captures": [
+      {
+        "featureId": "RM-169",
+        "initialStep": "106-rm-169-initial",
+        "step": "107-rm-169-loaded",
+        "url": "https://risemap.cn/settings/business/sales",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:42:17.681Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-170",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "库存管理",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/business/inventory",
+    "captures": [
+      {
+        "featureId": "RM-170",
+        "initialStep": "108-rm-170-initial",
+        "step": "109-rm-170-loaded",
+        "url": "https://risemap.cn/settings/business/inventory",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:42:33.464Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-171",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "其他配置",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/business/other",
+    "captures": [
+      {
+        "featureId": "RM-171",
+        "initialStep": "110-rm-171-initial",
+        "step": "111-rm-171-loaded",
+        "url": "https://risemap.cn/settings/business/other",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:42:37.057Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-172",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "人事配置",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/business/hr",
+    "captures": [
+      {
+        "featureId": "RM-172",
+        "initialStep": "112-rm-172-initial",
+        "step": "113-rm-172-loaded",
+        "url": "https://risemap.cn/settings/business/hr",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:42:40.607Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-173",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "项目管理",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/business/project",
+    "captures": [
+      {
+        "featureId": "RM-173",
+        "initialStep": "114-rm-173-initial",
+        "step": "115-rm-173-loaded",
+        "url": "https://risemap.cn/settings/business/project",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:42:44.307Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-174",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "图纸配置",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/business/drawing",
+    "captures": [
+      {
+        "featureId": "RM-174",
+        "initialStep": "116-rm-174-initial",
+        "step": "117-rm-174-loaded",
+        "url": "https://risemap.cn/settings/business/drawing",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:42:48.114Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-175",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "生产配置",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/business/production",
+    "captures": [
+      {
+        "featureId": "RM-175",
+        "initialStep": "118-rm-175-initial",
+        "step": "119-rm-175-loaded",
+        "url": "https://risemap.cn/settings/business/production",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:42:51.841Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-176",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "委外配置",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/business/subcontract",
+    "captures": [
+      {
+        "featureId": "RM-176",
+        "initialStep": "120-rm-176-initial",
+        "step": "121-rm-176-loaded",
+        "url": "https://risemap.cn/settings/business/subcontract",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:42:55.568Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-177",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "单据打印",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/business/print",
+    "captures": [
+      {
+        "featureId": "RM-177",
+        "initialStep": "122-rm-177-initial",
+        "step": "123-rm-177-loaded",
+        "url": "https://risemap.cn/settings/business/print",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:43:05.183Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-178",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "插件中心",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/plugins",
+    "captures": [
+      {
+        "featureId": "RM-178",
+        "initialStep": "124-rm-178-initial",
+        "step": "125-rm-178-loaded",
+        "url": "https://risemap.cn/settings/plugins",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:43:08.865Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-179",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "服务订阅",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/service-subscription",
+    "captures": [
+      {
+        "featureId": "RM-179",
+        "initialStep": "126-rm-179-initial",
+        "step": "127-rm-179-loaded",
+        "url": "https://risemap.cn/service-subscription",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:43:12.644Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-180",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "推广奖励",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/referral",
+    "captures": [
+      {
+        "featureId": "RM-180",
+        "initialStep": "128-rm-180-initial",
+        "step": "129-rm-180-loaded",
+        "url": "https://risemap.cn/referral",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:43:16.380Z"
+      }
+    ]
+  },
+  {
+    "id": "RM-181",
+    "category": "系统",
+    "group": "业务设置",
+    "name": "字段管理",
+    "kind": "entry",
+    "navigationEvidence": "085-navigation-system",
+    "status": "initial_page_captured",
+    "url": "https://risemap.cn/settings/fields",
+    "captures": [
+      {
+        "featureId": "RM-181",
+        "initialStep": "130-rm-181-initial",
+        "step": "131-rm-181-loaded",
+        "url": "https://risemap.cn/settings/fields",
+        "stage": "loaded_page",
+        "capturedAt": "2026-09-08T14:43:20.106Z"
+      }
+    ]
+  }
+]

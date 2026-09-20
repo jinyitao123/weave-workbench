@@ -1,0 +1,148 @@
+Browser tab: 1347074625, Title: "业务流程 · RiseMap 社区", URL: "https://community.risemap.cn/flow".
+1 AXWebArea 业务流程 · RiseMap 社区, URL: community.risemap.cn/flow
+	2 container
+		3 link Description: RiseMap 社区, Value: community.risemap.cn/
+		4 link Description: 业务流程, Value: community.risemap.cn/flow
+		5 link Description: 教程, Value: community.risemap.cn/tutorials
+		6 link Description: 智能问答, Value: community.risemap.cn/ask
+		7 link Description: 文档, Value: community.risemap.cn/docs
+		8 link Description: 更新日志, Value: community.risemap.cn/changelog
+		9 link Description: 排期计划, Value: community.risemap.cn/roadmap
+		10 link Description: 提交工单, Value: community.risemap.cn/support
+		11 link Description: 实施服务, Value: community.risemap.cn/services
+		12 link Description: 定制软件, Value: community.risemap.cn/custom
+		13 link Description: 搜索, Value: community.risemap.cn/search
+		14 button 切换语言
+		15 button 切换到深色模式
+	16 container
+		17 text 需求部门
+		18 text 采购部
+		19 text 供应商
+		20 text 仓库
+		21 text 财务部
+		22 container
+			23 image
+			24 button 📝 1 采购申请 采购申请单 PR
+				25 text 📝
+				26 text 1
+				27 text 采购申请
+				28 text 采购申请单 PR
+			29 button 📦 2 采购订单 采购订单 PO
+				30 text 📦
+				31 text 2
+				32 text 采购订单
+				33 text 采购订单 PO
+			34 button 💳 3 付款 付款单 / 预付款
+				35 text 💳
+				36 text 3
+				37 text 付款
+				38 text 付款单 / 预付款
+			39 button 🧾 4 发票 采购发票
+				40 text 🧾
+				41 text 4
+				42 text 发票
+				43 text 采购发票
+			44 button 🏬 5 入库 入库单 GR
+				45 text 🏬
+				46 text 5
+				47 text 入库
+				48 text 入库单 GR
+			49 button 📒 6 应付产生 应付单 AP
+				50 text 📒
+				51 text 6
+				52 text 应付产生
+				53 text 应付单 AP
+			54 button ✅ 7 付款核销 核销记录
+				55 text ✅
+				56 text 7
+				57 text 付款核销
+				58 text 核销记录
+		59 text 流程目录
+		60 button 收起目录
+		61 container
+			62 text ▾ 采购与供应链
+			63 button 🛒 采购到付款
+				64 text 🛒
+				65 text 采购到付款
+			66 button 🛒 采购订单执行流程
+				67 text 🛒
+				68 text 采购订单执行流程
+			69 text ▾ 销售与收款
+			70 button 💰 销售到收款 示例
+				71 text 💰
+				72 text 销售到收款
+				73 text 示例
+			74 button 💰 销售业财闭环
+				75 text 💰
+				76 text 销售业财闭环
+			77 button 📄 销售合同与销售订单
+				78 text 📄
+				79 text 销售合同与销售订单
+			80 button 🏷️ 价格策略与销售定价机制
+				81 text 🏷️
+				82 text 价格策略与销售定价机制
+			83 text ▾ 财务与费用
+			84 button 🧾 费用报销 示例
+				85 text 🧾
+				86 text 费用报销
+				87 text 示例
+			88 text ▾ 项目与交付
+			89 button 🏗️ 项目创建与管理
+				90 text 🏗️
+				91 text 项目创建与管理
+			92 button ⏱️ 工时成本配置与核算
+				93 text ⏱️
+				94 text 工时成本配置与核算
+			95 text ▾ 仓储与质量
+			96 button 🔖 供应商 SN 码管理
+				97 text 🔖
+				98 text 供应商 SN 码管理
+			99 text ▾ 财务与核算
+			100 button 📈 销售合同收入确认方式
+				101 text 📈
+				102 text 销售合同收入确认方式
+			103 button 📥 应收款来源全景
+				104 text 📥
+				105 text 应收款来源全景
+			106 button 📤 应付款来源全景
+				107 text 📤
+				108 text 应付款来源全景
+		109 text 从采购申请到付款核销，跨需求、采购、供应商、仓库、财务五个部门。
+		110 text 环节详情
+		111 button 收起详情
+		112 text 📝 步骤 1 / 7 需求部门
+		113 heading 采购申请, Value: 3
+			114 text 采购申请
+		115 text 需求部门发起采购需求，填写物料、数量、预算与期望到货时间，提交多级审批。
+		116 text 参与角色
+		117 text 申请人 · 部门主管
+		118 text 对应单据
+		119 text 采购申请单 PR
+		120 text 关键校验
+		121 text 预算管控 · 审批流
+		122 button 缩小
+		123 text 75 %
+		124 button 放大
+		125 button 适应
+		126 button ▶ 自动演示
+		127 text 滚轮缩放 · 拖动平移 · 点击步骤看详情
+	128 container
+		129 text RiseMap 社区 教程、文档、更新日志与产品排期，集中、清晰、随时可查。 内容
+		130 content list
+			131 link Description: 业务流程, Value: community.risemap.cn/flow
+			132 link Description: 产品教程, Value: community.risemap.cn/tutorials
+			133 link Description: 使用文档, Value: community.risemap.cn/docs
+			134 link Description: 更新日志, Value: community.risemap.cn/changelog
+			135 link Description: 排期计划, Value: community.risemap.cn/roadmap
+		136 text 参与
+		137 content list
+			138 link Description: 提交工单, Value: community.risemap.cn/support
+			139 link Description: 查询工单进度, Value: community.risemap.cn/support/track
+			140 link Description: 全站搜索, Value: community.risemap.cn/search
+		141 text 管理
+		142 content list
+			143 link Description: 管理后台, Value: community.risemap.cn/admin
+		144 text ©  2026  RiseMap.  由管理后台统一发布内容。
+	145 button 智能客服
+
+The focused UI element is 1 AXWebArea 业务流程 · RiseMap 社区, URL: community.risemap.cn/flow

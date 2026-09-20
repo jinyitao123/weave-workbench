@@ -1,0 +1,36 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings?tab=data".
+1 AXWebArea RiseMap, URL: risemap.cn/settings?tab=data
+	2 container
+		3 container Notifications alt+T
+		4 container 确认重置业务数据, ID: radix-:rti:
+			5 heading 确认重置业务数据, Value: 2, ID: radix-:rtj:
+				6 text 确认重置业务数据
+			7 container radix-:rtk:
+				8 text 此操作将 物理删除且不可恢复 ，请确认范围后继续。
+			9 text 选择清理范围
+			10 container
+				11 checkbox (disabled, settable, integer) Description: 业务单据数据（必选） 采购、销售、库存、财务、项目、办公记录及流程实例/任务等运行数据, Value: 1
+				12 image
+				13 text 业务单据数据（必选） 采购、销售、库存、财务、项目、办公记录及流程实例/任务等运行数据
+			14 container
+				15 checkbox (settable, integer) Description: 同时清理业务配置数据 租户业务规则、自定义字段、通知规则及客户自定义打印模板等, Value: 0
+				16 text 同时清理业务配置数据 租户业务规则、自定义字段、通知规则及客户自定义打印模板等
+			17 container
+				18 checkbox (settable, integer) Description: 同时清理基础数据 员工、岗位、职级、客户、供应商、商品、仓库、银行账户、资产设备等业务主数据, Value: 0
+				19 text 同时清理基础数据 员工、岗位、职级、客户、供应商、商品、仓库、银行账户、资产设备等业务主数据
+			20 text 固定执行顺序：业务单据 → 业务配置 → 基础数据。失败将被记录，安全条件允许时继续后续范围。
+			21 text 删除预览
+			34 container
+				35 text 预计清除约  73  条数据。
+			24 text 输入租户名称以确认
+			25 text field (settable) 输入租户名称以确认, ID: reset-tenant-name
+			26 text 手机短信验证码
+			27 text field (settable) 手机短信验证码, ID: reset-sms-code
+			28 button 获取验证码
+			29 button 取消
+			30 button 确认重置
+			31 button Close
+				32 image
+				33 text Close
+
+The focused UI element is 15 checkbox (settable, integer) Description: 同时清理业务配置数据 租户业务规则、自定义字段、通知规则及客户自定义打印模板等, Value: 0

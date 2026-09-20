@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_purchase_inspection_workspace",
+  "archetype": "task_workspace",
+  "reviewedRevision": "8f4a80bd2951311e9c1390c8fe35daed550f6747",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/purchase-inspection-workspace.page.ts": "0d280e10658cd4463b2ca32a264f09783f2b43a47f179a8b29c6ea43410902d4",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "3d6e283d1c59fc11809c1aa6a66f62195bcfee413f522eae831a8370ae9116e1",
+    "apps/forge-objectstack/src/actions/procurement.action.ts": "829804443cc5e6a77ec21c541ad5bf8c50220974c99bd1191c9119e0add5b54d"
+  },
+  "environment": { "forgeUrl": "http://localhost:4495", "database": "file:.objectstack/supply-procurement-batch1.sqlite", "materials": "IQC-2026-0001" },
+  "checks": {
+    "replication": { "status": "blocked", "notes": "RISEMAP 当前租户为空，同材料检验结果待复核。", "evidence": ["docs/forge-purchase-inspection-page-contract-20260916.md"] },
+    "visual": { "status": "pending", "notes": "桌面详情和 390x844 列表首屏已检查；缺少落盘截图并待独立复核。", "evidence": [] },
+    "interaction": { "status": "pass", "notes": "检验结论填写、完成反馈和采购入库入口已操作。", "evidence": ["docs/forge-purchase-inspection-page-contract-20260916.md"] },
+    "business": { "status": "pass", "notes": "总数 1、合格 1、不合格 0，结果合格并可进入入库。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/supply-receipt-browser-readback-20260916.json"] }
+  },
+  "visualEvidence": { "desktop": { "width": 1440, "height": 900, "evidence": [] }, "narrow": { "width": 390, "height": 844, "evidence": [] }, "reference": [], "populated": [], "empty": [], "form": [], "error": [] },
+  "requirements": [{ "id": "REQ-IQC-001", "status": "pass", "steps": "填写合格数量与结论并完成检验", "expected": "结果与数量一致并开放入库", "observed": "结果合格，采购入库入口可用", "evidence": ["docs/forge-purchase-inspection-page-contract-20260916.md"] }],
+  "review": { "implementer": "Codex /root", "reviewer": "", "reviewedAt": "2026-09-16", "status": "pending", "evidence": [] }
+}

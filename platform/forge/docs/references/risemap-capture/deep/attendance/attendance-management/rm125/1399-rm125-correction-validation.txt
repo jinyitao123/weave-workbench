@@ -1,0 +1,62 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/attendance".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/attendance
+	2 container
+		3 container Notifications alt+T
+		4 container 提交补签申请, ID: radix-:rm:
+			5 heading 提交补签申请, Value: 2, ID: radix-:rn:
+				6 image
+				7 text 提交补签申请
+			8 container
+				9 container
+					10 text * 考勤日期
+				11 container
+					12 text field (settable)
+					13 button
+						14 image
+				15 container
+					16 text * 补签类型
+				17 radio button 上班补签, Value: 1
+				18 radio button 下班补签, Value: 0
+				19 radio button 上下班补签, Value: 0
+				20 radio button 外勤补签, Value: 0
+				21 radio button 出差补签, Value: 0
+				22 radio button 加班补签, Value: 0
+				23 radio button 夜班/跨天补签, Value: 0
+				24 radio button 排班异常补签, Value: 0
+				25 radio button 系统/设备异常补签, Value: 0
+				26 radio button 管理员修正补签, Value: 0
+				27 text 更正签到时间
+				28 container
+					29 text field (settable) 08:30
+					30 button
+						31 image
+					32 button
+						33 image
+				34 text 更正签退时间
+				35 container
+					36 text field (disabled) 17:30
+					37 button
+						38 image
+				39 container
+					40 text * 补签原因
+				41 text entry area (settable)
+				42 container
+					43 image
+					44 text 提交后将发送至人事部门审批，请确保补签信息真实准确。虚假补签将按公司规章制度处理。
+				45 button 取消
+				46 button 保存草稿
+				47 button 提交申请
+					48 image
+					49 text 提交申请
+			50 button Close
+				51 image
+				52 text Close
+		53 container 确认关闭
+			54 container 确认关闭
+				55 heading 确认关闭, Value: 3, ID: :rp:
+					56 text 确认关闭
+				57 text 你有未保存的内容，确定要关闭吗？
+				58 button 取消
+				59 button 确认关闭
+
+The focused UI element is 53 container 确认关闭

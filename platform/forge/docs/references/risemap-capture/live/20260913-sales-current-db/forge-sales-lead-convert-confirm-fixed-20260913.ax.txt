@@ -1,0 +1,173 @@
+Browser tab: 28, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_sales_leads".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_leads
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 线索管理
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_sales_leads
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 container
+						36 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+						37 button 固定 工作台
+					38 container
+						39 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+						40 button 固定 待办管理
+					41 container
+						42 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+						43 button 固定 AI 广场
+					44 container
+						45 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+						46 button 固定 引导中心
+			47 text 最近使用
+			48 button 切换侧边栏
+		49 container
+			50 button 在 Studio 中编辑
+			51 heading 线索管理, Value: 1
+				52 text 线索管理
+			53 text 潜在客户线索捕获、培育与转化为商机 18 CRM客户管理 / 线索管理
+			54 button (disabled) 新建线索
+			55 button 刷新
+			56 text 潜在客户线索捕获、培育与转化为商机
+			57 heading 线索管理, Value: 1
+				58 text 线索管理
+			59 text 全部线索 3 新线索 1 已转化 2 公海线索 0
+			60 button 我的线索
+			61 button 我的团队
+			62 button 全部线索
+			63 button 线索公海
+			64 text field (settable) 搜索公司名称、联系人、线索号
+			65 button 全部状态
+			66 button 全部来源
+			67 button 清空筛选
+			68 table
+				69 row
+					70 cell
+						71 text 线索号
+					72 cell
+						73 text 公司名称
+					74 cell
+						75 text 联系人
+					76 cell
+						77 text 状态
+					78 cell
+						79 text 来源
+					80 cell
+						81 text 评分
+					82 cell
+						83 text 预估金额
+					84 cell
+						85 text 地区 / 行业
+					86 cell
+						87 text 负责人
+					88 cell
+						89 text 操作
+				90 row
+					91 cell
+						92 text LEAD-UI-20260913154156
+					93 cell
+						94 button 苏州澄岳自动化装备有限公司
+					95 cell
+						96 text 周启明
+						97 text 13800002609
+					98 cell
+						99 text 已转化
+					100 cell
+						101 text 客户现场回访
+					102 cell
+						103 text 40
+					104 cell
+						105 text ¥ 0
+					106 cell
+						107 text —
+					108 cell
+						109 text Dev Admin
+					110 cell
+						111 button (disabled) 编辑
+				112 row
+					113 cell
+						114 text LEAD-FLOW-20260913153034
+					115 cell
+						116 button 苏州澄岳自动化装备有限公司
+					117 cell
+						118 text 周启明
+						119 text 13800002609
+					120 cell
+						121 text 已转化
+					122 cell
+						123 text 客户现场回访
+					124 cell
+						125 text 40
+					126 cell
+						127 text ¥ 0
+					128 cell
+						129 text —
+					130 cell
+						131 text Dev Admin
+					132 cell
+						133 button (disabled) 编辑
+				134 row
+					135 cell
+						136 text LEAD-UI-20260913154204
+					137 cell
+						138 button 苏州澄岳自动化装备有限公司
+					139 cell
+						140 text 周启明
+						141 text 13800002609
+					142 cell
+						143 text 新线索
+					144 cell
+						145 text 客户现场回访
+					146 cell
+						147 text 40
+					148 cell
+						149 text ¥ 0
+					150 cell
+						151 text —
+					152 cell
+						153 text Dev Admin
+					154 cell
+						155 container
+							156 button (disabled) 编辑
+							157 button 转化
+			158 text 共  3  条线索 每页 20 条 · 1 / 1
+			159 container 线索转化商机
+				160 text 线索转化商机
+				161 text 苏州澄岳自动化装备有限公司 · LEAD-UI-20260913154204
+				162 button 关闭
+				175 text 确认后会把线索转入客户档案，并创建销售商机；原线索状态更新为“已转化”。
+				176 text 苏州澄岳自动化装备有限公司
+				177 container
+					178 text 周启明  ·  客户现场回访  ·  ¥ 320,000
+				179 container
+					180 text 预计关闭日期： 2026-10-30
+				173 button 取消
+				174 button 确认转化
+
+The focused UI element is 174 button 确认转化

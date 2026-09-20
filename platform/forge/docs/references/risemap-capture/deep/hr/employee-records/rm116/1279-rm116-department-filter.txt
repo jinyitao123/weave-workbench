@@ -1,0 +1,247 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/employees".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/employees
+	2 container
+		3 container root
+			222 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			223 text 行政
+			224 button 收起侧边栏
+				225 image
+			226 container
+				227 button 审批中心
+					228 image
+					229 text 审批中心
+					230 image
+				231 button 我的审批
+				232 button 抄送我的
+				233 button 我发起的
+				234 button 行政申请
+				235 button 行政管理
+					236 image
+					237 text 行政管理
+					238 image
+				239 button 公司通知
+				240 button 用章管理
+				241 button 会议纪要
+				242 button 工作汇报
+				243 button 文档中心
+				244 button 固定资产
+				245 button 资质与申报
+				246 button 物料领取
+				247 button 设备维护
+				248 button 礼品管理
+				249 button 借出管理
+				250 button 车辆管理
+				251 button 人力资源
+					252 image
+					253 text 人力资源
+					254 image
+				255 button 人事工作台
+				256 button 员工档案
+				257 button 招聘管理
+				258 button 入职离职
+				259 button 薪酬福利
+				260 button 规章制度
+				261 button 通讯录
+				262 button 考勤假期
+					263 image
+					264 text 考勤假期
+					265 image
+				266 button 加班申请
+				267 button 请假管理
+				268 button 出差申请
+				269 button 考勤管理
+				270 button 考勤统计
+				271 button 流程中心
+					272 image
+					273 text 流程中心
+					274 image
+				275 button 审批记录
+				276 button 发起流程
+				277 button 流程定义
+				278 button 流程分类
+			279 image
+			280 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			281 button 查看方案
+				282 image
+				283 text 查看方案
+			284 button
+				285 image
+			286 container
+				287 container 业务分类
+					288 checkbox 工作台, Value: 0
+					289 checkbox 供应链, Value: 0
+					290 checkbox 销售, Value: 0
+					291 checkbox 生产, Value: 0
+					292 checkbox 项目, Value: 0
+					293 checkbox 行政, Value: 1
+					294 checkbox 财务, Value: 0
+					295 checkbox 报表, Value: 0
+					296 checkbox 系统, Value: 0
+				297 button Description: 展开搜索, Help: 搜索
+					298 image
+				299 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					300 image
+					301 text 2
+				302 button Description: 打开推广奖励, Help: 推广
+				303 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				304 link Description: 打开工单, Value: community.risemap.cn/support
+				305 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					306 image
+					307 text 立即订阅
+				308 button 金
+					309 text 金
+					310 image
+			311 container
+				312 button 工作台
+					313 image
+					314 text 工作台
+				329 button 新建工作汇报
+					330 text 新建工作汇报
+				331 button 文档中心
+					332 text 文档中心
+				333 button 固定资产
+					334 text 固定资产
+				335 button 资质与申报
+					336 text 资质与申报
+				337 button 物料领取
+					338 text 物料领取
+				339 button 设备维护
+					340 text 设备维护
+				341 button 礼品管理
+					342 text 礼品管理
+				428 button 借出管理
+					429 text 借出管理
+				430 button 车辆管理
+					431 text 车辆管理
+				432 button 新建公司用车申请
+					433 text 新建公司用车申请
+				434 button 新建私车公用申请
+					435 text 新建私车公用申请
+				436 button 新增车辆
+					437 text 新增车辆
+				438 button 人事工作台
+					439 text 人事工作台
+				440 button 员工档案
+					441 text 员工档案
+			442 container
+				443 container
+					444 text 人力资源
+					445 image
+					446 text 员工档案
+					447 image
+					448 heading 员工档案, Value: 1
+						449 text 员工档案
+					450 text 员工花名册、组织架构、个人档案与人事变动记录
+				451 button 新增员工
+					452 image
+					453 text 新增员工
+				454 button (disabled) 批量删除
+					455 image
+					456 text 批量删除
+				457 button 导出
+					458 image
+					459 text 导出
+					460 image
+				461 button 批量导入
+					462 image
+					463 text 批量导入
+				464 button 刷新
+					465 image
+				466 button
+					467 image
+				468 button
+					469 image
+				470 image
+				471 text field (settable)
+				472 button 状态
+					473 text 状态
+					474 image
+				475 button 部门
+					476 text 部门
+					477 image
+				478 button 学历
+					479 text 学历
+					480 image
+				481 button 岗位
+					482 text 岗位
+					483 image
+				484 button 职级
+					485 text 职级
+					486 image
+				487 button 用工类型
+					488 text 用工类型
+					489 image
+				490 container
+					491 image
+					492 text field (settable)
+					493 button
+						494 image
+				495 text 入职日期
+				496 container
+					497 button
+						498 image
+					499 text field (settable)
+					500 text ~
+					501 text field (settable)
+				502 text 合同到期
+				503 container
+					504 button
+						505 image
+					506 text field (settable)
+					507 text ~
+					508 text field (settable)
+				509 table
+					510 row
+						511 cell
+							512 checkbox (settable, integer) 0
+						513 cell
+							514 text 工号
+							515 image
+						516 cell
+							517 text 姓名
+							518 image
+						519 cell
+							520 text 部门
+						521 cell
+							522 text 岗位
+						523 cell
+							524 text 职级
+						525 cell
+							526 text 用工类型
+						527 cell
+							528 text 员工状态
+						529 cell
+							530 text 入职日期
+							531 image
+						532 cell
+							533 text 合同到期日
+							534 image
+						535 cell
+							536 text 护照号码
+						537 cell
+							538 text 系统用户
+						539 cell
+							540 text 手机
+						541 cell
+							542 text 操作
+					543 row
+						544 cell
+							545 image
+							546 text 暂无员工数据
+				547 text 共  0 条记录 每页
+				548 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					549 text 10
+				550 text 条
+				551 button (disabled) 上一页
+					552 image
+				553 button 1
+				554 button (disabled) 下一页
+					555 image
+			427 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			221 container Notifications alt+T
+		556 container
+			557 text 全部
+			558 image
+			559 text 默认部门
+
+The focused UI element is 475 button 部门

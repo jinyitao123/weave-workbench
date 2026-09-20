@@ -1,0 +1,198 @@
+- generic: 项目
+- button:
+- navigation:
+  - button:
+    - generic: 项目管理
+  - button:
+    - generic: 项目中心
+  - button:
+    - generic: 项目分析中心
+  - button:
+    - generic: 任务管理
+  - button:
+    - generic: 工时管理
+  - button:
+    - generic: 项目配置中心
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button [pressed]:
+      - text: 项目
+    - button:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 新建发料单
+- button:
+  - generic: 委外回厂
+- button:
+  - generic: 委外退料
+- button:
+  - generic: 新建退料单
+- button:
+  - generic: 委外对账
+- button:
+  - generic: 委外供应商
+- button:
+  - generic: 委外库存
+- button:
+  - generic: 批次追溯
+- button:
+  - generic: 委外未交
+- button:
+  - generic: 委外进货
+- button:
+  - generic: 委外对账单
+- button:
+  - generic: 项目中心
+- button:
+  - generic: 项目分析中心
+- button:
+  - generic: 任务管理
+- main:
+  - generic: 项目管理
+  - generic: 任务管理
+  - heading [level=1]: 任务管理
+  - button:
+    - text: 导出
+  - button:
+    - text: 导出任务
+  - button:
+    - text: 新建任务
+  - button: 全部
+  - button: 待处理
+  - button: 进行中
+  - button: 已完成
+  - button: 已逾期
+  - button:
+    - text: 列表
+  - button:
+    - text: 按人员
+  - button:
+    - text: 甘特图
+  - textbox:
+    - /placeholder: 搜索任务/人员/项目...
+  - button:
+    - generic: 项目
+  - button:
+    - generic: 人员
+  - button:
+    - generic: 优先级
+  - paragraph: 暂无任务
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button [disabled]:
+  - button: "1"
+  - button [disabled]:
+- button:
+- region "Notifications alt+T"
+- generic: 2025-10
+- dialog "新建任务":
+  - heading "新建任务" [level=2]:
+    - text: 新建任务
+  - paragraph: 新建任务表单
+  - paragraph: 基本信息
+  - generic: "*"
+  - generic: 所属项目
+  - button "请选择项目":
+    - generic: 请选择项目
+  - generic: "*"
+  - generic: 任务标题
+  - textbox "简明描述任务内容"
+  - generic: 详细描述
+  - textbox "任务的详细说明、要求、参考资料等..."
+  - generic: 任务类型
+  - button "方案设计":
+    - text: 方案设计
+  - button "测试验证":
+    - text: 测试验证
+  - button "文档编写":
+    - text: 文档编写
+  - button "培训交付":
+    - text: 培训交付
+  - button "问题处理":
+    - text: 问题处理
+  - button "沟通协调":
+    - text: 沟通协调
+  - button "评审会议":
+    - text: 评审会议
+  - button "开发实施":
+    - text: 开发实施
+  - button "其他":
+    - text: 其他
+  - button "外部协调":
+    - text: 外部协调
+  - button "需求分析":
+    - text: 需求分析
+  - generic: "*"
+  - generic: 负责人
+  - button "请选择负责人":
+    - generic: 请选择负责人
+  - generic: 优先级
+  - button "中":
+    - generic "中"
+  - generic: 预估工时(h)
+  - textbox: "8"
+  - paragraph: 工时预估
+  - paragraph: 8h
+  - paragraph: 时间安排
+  - generic: 开始日期
+  - textbox "请选择日期": 2026年9月8日
+  - button:
+  - button:
+  - generic: "*"
+  - generic: 截止日期
+  - textbox "请选择日期": 2026年9月15日
+  - button:
+  - button:
+  - text: 工作日
+  - paragraph: 7天
+  - text: 日均工时
+  - paragraph: 1.1h/天
+  - paragraph: 子任务
+  - textbox "添加子任务..."
+  - button "添加"
+  - button "取消"
+  - button "创建任务":
+    - text: 创建任务
+  - button "Close":
+    - generic: Close
+- textbox [active]:
+  - /placeholder: 搜索项目名称...
+- generic: 暂无数据

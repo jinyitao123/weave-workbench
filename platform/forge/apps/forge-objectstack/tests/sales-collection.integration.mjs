@@ -1,0 +1,77 @@
+import assert from 'node:assert/strict';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { connect } from '../scripts/api-client.mjs';
+
+const endpoint=process.env.FORGE_URL||'http://localhost:4359',database=process.env.FORGE_DB||'.objectstack/otc-collection-settlement.sqlite',api=await connect(endpoint),cases=[],ids={operator:api.userId},fullCostSettlement=process.env.FORGE_FULL_COST_SETTLEMENT==='1';
+const round4=value=>Math.round((Number(value)+Number.EPSILON)*10000)/10000;
+async function test(name,run){try{await run();cases.push({name,status:'passed'});console.log('PASS '+name);}catch(error){cases.push({name,status:'failed',error:error.message});console.error('FAIL '+name+': '+error.message);}}
+async function find(object,where={}){const q=new URLSearchParams({$filter:JSON.stringify(where),$top:'200'}),r=await api.request(`/data/${object}?${q}`);assert.equal(r.status,200,object+': '+JSON.stringify(r.value));return (r.value.records||[]).filter(x=>Object.entries(where).every(([k,v])=>x[k]===v));}
+async function read(object,id){const r=await api.request(`/data/${object}/${id}`);assert.equal(r.status,200,object+'/'+id+': '+JSON.stringify(r.value));return r.value.record;}
+async function invoke(object,action,id,params={},authenticated=true){return api.request(`/actions/${object}/${action}/${id}`,'POST',{params},authenticated);}const resultOf=r=>r.value?.result??r.value?.data?.result??r.value?.data??r.value;
+
+const project=(await find('forge_project',{code:'PRJ-2026-001'}))[0];assert.ok(project);assert.equal(project.status,'completed');ids.project=project.id;
+const link=(await find('forge_project_sales_link',{project_id:project.id}))[0];assert.ok(link);ids.link=link.id;ids.order=link.order_id;
+const order=await read('forge_sales_order',ids.order),acceptances=await find('forge_customer_acceptance',{project_id:project.id,status:'accepted'});assert.ok(acceptances.length);assert.equal(Number(order.total_amount),243200);
+
+await test('requires accepted delivery and valid dates before project invoicing',async()=>{
+  const params={order_id:ids.order,code:'INV-OTC-20260910-001',invoice_on:'2026-09-10',due_on:'2026-10-10',remarks:'OTC客户验收开票'};
+  assert.equal((await invoke('forge_project','project_issue_acceptance_invoice',project.id,params,false)).status,401);
+  const invalid=await invoke('forge_project','project_issue_acceptance_invoice',project.id,{...params,due_on:'2026-09-09'});assert.equal(invalid.status,400);assert.match(JSON.stringify(invalid.value),/应收日期不得早于开票日期/);
+});
+
+await test('issues the full acceptance invoice and creates receivable',async()=>{
+  const response=await invoke('forge_project','project_issue_acceptance_invoice',project.id,{order_id:ids.order,code:'INV-OTC-20260910-001',invoice_on:'2026-09-10',due_on:'2026-10-10',remarks:'OTC客户验收开票'});assert.equal(response.status,200,JSON.stringify(response.value));const result=resultOf(response);ids.invoice=result.id;ids.receivable=result.receivable_id;
+  assert.deepEqual({amount:result.total_amount,quantity:result.quantity,projectInvoice:result.project_invoice_amount},{amount:243200,quantity:2,projectInvoice:243200});
+  const invoice=await read('forge_sales_invoice',ids.invoice),receivable=await read('forge_accounts_receivable',ids.receivable),orderAfter=await read('forge_sales_order',ids.order),projectAfter=await read('forge_project',project.id);
+  assert.deepEqual({invoice:invoice.total_amount,invoiceStatus:invoice.status,ar:receivable.original_amount,outstanding:receivable.outstanding_amount,arStatus:receivable.status},{invoice:243200,invoiceStatus:'issued',ar:243200,outstanding:243200,arStatus:'unpaid'});
+  assert.equal(orderAfter.invoiced_amount,243200);assert.equal(projectAfter.invoice_amount,243200);assert.equal((await read('forge_project_sales_link',ids.link)).invoice_amount,243200);
+  const duplicate=await invoke('forge_project','project_issue_acceptance_invoice',project.id,{order_id:ids.order,code:'INV-OTC-20260910-002',invoice_on:'2026-09-10',due_on:'2026-10-10'});assert.equal(duplicate.status,400);assert.match(JSON.stringify(duplicate.value),/没有未开票金额/);
+});
+
+await test('blocks project settlement before the receivable is fully collected',async()=>{
+  const response=await invoke('forge_project','project_settle',project.id,{code:'PST-OTC-20260910',settled_on:'2026-09-10',remarks:'提前结算尝试'});assert.equal(response.status,400);assert.match(JSON.stringify(response.value),/尚未全额回款/);
+});
+
+await test('opens a fund account and records two physical receipts without early writeoff',async()=>{
+  const account=await api.request('/data/forge_fund_account','POST',{name:'汇川 OTC 回款账户',code:'FA-OTC-20260910',account_type:'bank',bank_name:'中国银行',branch_name:'南京支行',account_number:'6222000000000000',bank_account_type:'general',currency:'cny',opening_balance:1000,opening_on:'2026-09-10',allow_print:true,account_manager:'王经理',manager_phone:'025-88886666',visibility_scope:'creator_admin',status:'active',responsible_id:api.userId});assert.equal(account.status,201,JSON.stringify(account.value));ids.account=account.value.id||account.value.record?.id;
+  const first=await invoke('forge_accounts_receivable','receivable_register_collection',ids.receivable,{code:'CR-OTC-20260910-001',account_id:ids.account,received_on:'2026-09-10',payment_method:'bank_transfer',amount:100000,counterpart_reference:'BANK-OTC-001'});assert.equal(first.status,200,JSON.stringify(first.value));ids.firstReceipt=resultOf(first).id;
+  const second=await invoke('forge_accounts_receivable','receivable_register_collection',ids.receivable,{code:'CR-OTC-20260910-002',account_id:ids.account,received_on:'2026-09-10',payment_method:'bank_transfer',amount:143200,counterpart_reference:'BANK-OTC-002'});assert.equal(second.status,200,JSON.stringify(second.value));ids.secondReceipt=resultOf(second).id;
+  assert.equal((await read('forge_accounts_receivable',ids.receivable)).outstanding_amount,243200);assert.equal((await read('forge_fund_account',ids.account)).current_balance,244200);
+});
+
+await test('supports cancelling a pending allocation and restores the receipt balance',async()=>{
+  const allocated=await invoke('forge_cash_receipt','cash_receipt_allocate',ids.firstReceipt,{code:'CA-OTC-20260910-CANCEL',receivable_id:ids.receivable,allocated_on:'2026-09-10',amount:60000});assert.equal(allocated.status,200);ids.cancelledAllocation=resultOf(allocated).id;
+  let receipt=await read('forge_cash_receipt',ids.firstReceipt);assert.deepEqual({allocated:receipt.allocated_amount,unallocated:receipt.unallocated_amount,status:receipt.status},{allocated:60000,unallocated:40000,status:'partially_allocated'});
+  const cancelled=await invoke('forge_collection_allocation','collection_allocation_cancel',ids.cancelledAllocation);assert.equal(cancelled.status,200);receipt=await read('forge_cash_receipt',ids.firstReceipt);assert.deepEqual({allocated:receipt.allocated_amount,unallocated:receipt.unallocated_amount,status:receipt.status},{allocated:0,unallocated:100000,status:'unallocated'});
+});
+
+await test('approves partial then final allocation and rolls collection totals to the project',async()=>{
+  const first=await invoke('forge_cash_receipt','cash_receipt_allocate',ids.firstReceipt,{code:'CA-OTC-20260910-001',receivable_id:ids.receivable,allocated_on:'2026-09-10',amount:100000});assert.equal(first.status,200);ids.firstAllocation=resultOf(first).id;assert.equal((await read('forge_cash_receipt',ids.firstReceipt)).status,'pending_review');
+  assert.equal((await invoke('forge_collection_allocation','collection_allocation_approve',ids.firstAllocation)).status,200);let ar=await read('forge_accounts_receivable',ids.receivable);assert.deepEqual({collected:ar.collected_amount,outstanding:ar.outstanding_amount,status:ar.status},{collected:100000,outstanding:143200,status:'partially_collected'});assert.equal((await read('forge_project',project.id)).collected_amount,100000);
+  const second=await invoke('forge_cash_receipt','cash_receipt_allocate',ids.secondReceipt,{code:'CA-OTC-20260910-002',receivable_id:ids.receivable,allocated_on:'2026-09-10',amount:143200});assert.equal(second.status,200);ids.secondAllocation=resultOf(second).id;assert.equal((await invoke('forge_collection_allocation','collection_allocation_approve',ids.secondAllocation)).status,200);
+  ar=await read('forge_accounts_receivable',ids.receivable);const invoice=await read('forge_sales_invoice',ids.invoice),orderAfter=await read('forge_sales_order',ids.order),projectAfter=await read('forge_project',project.id);
+  assert.deepEqual({arCollected:ar.collected_amount,arOutstanding:ar.outstanding_amount,arStatus:ar.status,invoiceStatus:invoice.status,orderCollected:orderAfter.collected_amount,projectCollected:projectAfter.collected_amount},{arCollected:243200,arOutstanding:0,arStatus:'settled',invoiceStatus:'settled',orderCollected:243200,projectCollected:243200});
+  assert.equal((await read('forge_cash_receipt',ids.firstReceipt)).status,'allocated');assert.equal((await read('forge_cash_receipt',ids.secondReceipt)).status,'allocated');assert.equal((await read('forge_project_sales_link',ids.link)).collected_amount,243200);
+});
+
+if(fullCostSettlement)await test('approves labor and four external cost categories before settlement',async()=>{
+  const timesheet=await invoke('forge_project','project_record_timesheet',project.id,{code:'TS-SETTLE-20260910-001',worker_id:api.userId,work_on:'2026-09-10',work_content:'项目交付支持',time_type:'normal',hours:2,hourly_rate:100,remarks:'全成本结算验收'});assert.equal(timesheet.status,200,JSON.stringify(timesheet.value));ids.timesheet=resultOf(timesheet).id;
+  assert.equal((await invoke('forge_project_timesheet','project_timesheet_submit',ids.timesheet)).status,200);
+  const approvedTime=await invoke('forge_project_timesheet','project_timesheet_approve',ids.timesheet,{review_comment:'交付工时核对通过'});assert.equal(approvedTime.status,200,JSON.stringify(approvedTime.value));ids.laborCost=resultOf(approvedTime).cost_entry_id;
+  const expense=await invoke('forge_project','project_create_expense',project.id,{code:'EXP-SETTLE-20260910-001',name:'项目全成本结算费用',claim_type:'self',beneficiary_id:api.userId,category:'manufacturing',occurred_on:'2026-09-10',amount:400,description:'现场制造设备租赁'});assert.equal(expense.status,200,JSON.stringify(expense.value));ids.expense=resultOf(expense).id;
+  for(const line of [{category:'travel',amount:200,description:'交付差旅'},{category:'subcontract',amount:300,description:'外协调试'},{category:'software',amount:50,description:'调试云服务'}]){const added=await invoke('forge_project_expense','project_expense_add_line',ids.expense,{...line,occurred_on:'2026-09-10'});assert.equal(added.status,200,JSON.stringify(added.value));}
+  assert.equal((await invoke('forge_project_expense','project_expense_submit',ids.expense)).status,200);
+  const approvedExpense=await invoke('forge_project_expense','project_expense_approve',ids.expense,{review_comment:'费用归属和票据核对通过'});assert.equal(approvedExpense.status,200,JSON.stringify(approvedExpense.value));ids.expenseCosts=resultOf(approvedExpense).cost_entry_ids;
+  const costs=await find('forge_project_cost_entry',{project_id:project.id});
+  assert.deepEqual(costs.map(x=>[x.cost_type,x.allocated_amount]).sort((a,b)=>a[0].localeCompare(b[0])),[['labor',200],['manufacturing',400],['other',50],['subcontract',300],['travel',200]]);
+  assert.equal((await read('forge_project',project.id)).total_cost,1150);
+});
+
+await test('settles the project with de-duplicated delivered assembly cost and margin',async()=>{
+  const response=await invoke('forge_project','project_settle',project.id,{code:'PST-OTC-20260910',settled_on:'2026-09-10',remarks:'交付、开票与回款全额完成'});assert.equal(response.status,200,JSON.stringify(response.value));const result=resultOf(response);ids.settlement=result.id;assert.equal(result.status,'settled');assert.equal(result.contract_amount,243200);assert.equal(result.invoiced_amount,243200);assert.equal(result.collected_amount,243200);assert.ok(result.production_cost>0);const expectedExtraCost=fullCostSettlement?1150:0;assert.deepEqual({labor:result.labor_cost,manufacturing:result.manufacturing_cost,travel:result.travel_cost,subcontract:result.subcontract_cost,other:result.other_cost,total:result.total_cost,margin:result.gross_margin},{labor:fullCostSettlement?200:0,manufacturing:fullCostSettlement?400:0,travel:fullCostSettlement?200:0,subcontract:fullCostSettlement?300:0,other:fullCostSettlement?50:0,total:round4(result.production_cost+expectedExtraCost),margin:round4(243200-result.production_cost-expectedExtraCost)});
+  const persisted=await read('forge_project_settlement',ids.settlement);assert.deepEqual({production:persisted.production_cost,labor:persisted.labor_cost,manufacturing:persisted.manufacturing_cost,travel:persisted.travel_cost,subcontract:persisted.subcontract_cost,other:persisted.other_cost,total:persisted.total_cost,margin:persisted.gross_margin},{production:result.production_cost,labor:result.labor_cost,manufacturing:result.manufacturing_cost,travel:result.travel_cost,subcontract:result.subcontract_cost,other:result.other_cost,total:result.total_cost,margin:result.gross_margin});
+  const after=await read('forge_project',project.id);assert.deepEqual({status:after.status,invoice:after.invoice_amount,collected:after.collected_amount,cost:after.total_cost},{status:'settled',invoice:243200,collected:243200,cost:result.total_cost});
+  assert.equal((await invoke('forge_project','project_settle',project.id,{code:'PST-OTC-20260910-DUP',settled_on:'2026-09-10'})).status,400);assert.equal((await invoke('forge_accounts_receivable','receivable_register_collection',ids.receivable,{code:'CR-OTC-OVER',account_id:ids.account,received_on:'2026-09-10',payment_method:'bank_transfer',amount:1})).status,400);
+});
+
+await mkdir('.objectstack/acceptance',{recursive:true});const report={recordedAt:new Date().toISOString(),kind:fullCostSettlement?'forge-project-full-cost-settlement':'forge-otc-collection-settlement-closure',fixture:fullCostSettlement?'OEM-RM-20260909-A-full-cost-settlement-v0.1':'OEM-RM-20260909-A-collection-settlement-v0.1',endpoint,database,sourceDatabaseSnapshot:{from:'otc-integration-acceptance.sqlite',integrityCheck:'ok'},ids,cases,passed:cases.every(x=>x.status==='passed'),result:{invoice:243200,receivable:'settled',receipts:[100000,143200],project:'settled',fundAccountClosingBalance:244200,additionalProjectCost:fullCostSettlement?1150:0},risemapObserved:{collectionFlow:'manual allocation to sales orders, unlink before writeoff, refresh order collection progress',fundFlow:'allocation review before collection counts toward the order',prepayment:'separate customer and order prepayment views'},boundary:fullCostSettlement?'Forge independently proves approved labor, manufacturing, travel, subcontract and other costs are frozen into the final project settlement and gross margin. RISEMAP same-material full-cost settlement remains unverified.':'Forge independently proves accepted-project invoicing, physical receipts, pending allocation, cancellation, approval writeoff and project settlement. RISEMAP same-material successful invoice, receipt allocation and approval remain unverified; project acceptance invoicing is a pending-review implementation.'};await writeFile(`.objectstack/acceptance/${fullCostSettlement?'project-full-cost-settlement-report.json':'otc-collection-settlement-report.json'}`,JSON.stringify(report,null,2));if(!report.passed)process.exitCode=1;

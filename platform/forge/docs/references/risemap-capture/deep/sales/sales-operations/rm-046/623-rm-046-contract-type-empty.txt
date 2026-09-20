@@ -1,0 +1,327 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/contracts/new".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/contracts/new
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 销售业务
+					10 image
+					11 text 销售业务
+					12 image
+				13 button 框架销售合同
+				14 button 销售订单
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+			36 image
+			37 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			38 button 查看方案
+				39 image
+				229 text 查看方案
+			40 button
+				41 image
+			42 container
+				43 container 业务分类
+					44 checkbox 工作台, Value: 0
+					45 checkbox 供应链, Value: 0
+					46 checkbox 销售, Value: 1
+					47 checkbox 生产, Value: 0
+					48 checkbox 项目, Value: 0
+					49 checkbox 行政, Value: 0
+					50 checkbox 财务, Value: 0
+					51 checkbox 报表, Value: 0
+					52 checkbox 系统, Value: 0
+				53 button Description: 展开搜索, Help: 搜索
+					54 image
+				55 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					56 image
+					57 text 2
+				58 button Description: 打开推广奖励, Help: 推广
+				59 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				60 link Description: 打开工单, Value: community.risemap.cn/support
+				61 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					62 image
+					63 text 立即订阅
+				64 button 金
+					65 text 金
+					66 image
+			67 container
+				68 button 工作台
+					69 image
+					70 text 工作台
+				73 button 预警配置中心
+					74 text 预警配置中心
+				75 button 报损单
+					76 text 报损单
+				77 button 新建报损
+					78 text 新建报损
+				79 button SN管理
+					80 text SN管理
+				81 button 出库单列表
+					82 text 出库单列表
+				83 button 生产出库
+					84 text 生产出库
+				85 button 其他出库
+					86 text 其他出库
+				87 button 新建出库单
+					88 text 新建出库单
+				89 button 销售直接出库
+					90 text 销售直接出库
+				91 button 待出库发货单
+					92 text 待出库发货单
+				93 button 采购退换货出库
+					94 text 采购退换货出库
+				95 button 出库明细
+					96 text 出库明细
+				97 button 框架销售合同
+					98 text 框架销售合同
+				230 button 新建合同
+					231 text 新建合同
+			232 container
+				233 text 销售管理
+				234 image
+				235 text 框架销售合同
+				236 image
+				237 text 新建合同
+				238 button
+					239 image
+				240 text 草稿
+				241 heading 新建框架销售合同, Value: 1
+					242 text 新建框架销售合同
+				243 button 客户信息
+					244 heading 客户信息, Value: 3
+						245 image
+						246 text 客户信息
+					247 image
+				248 container
+					249 text 客户  *
+				250 button 搜索客户名称...
+					251 text 搜索客户名称...
+				252 text 联系人 / 联系电话
+				253 text 请先选择客户
+				254 text 收货信息
+				255 button (disabled) 请先选择客户
+					256 text 请先选择客户
+				257 button (disabled) 新增收货地址
+					258 image
+				259 text 合同备注
+				260 text entry area (settable)
+				261 image
+				262 text 销售人员 · 负责人承担合同业绩，协同销售参与合同协作
+				263 container
+					264 text 负责人  *
+				265 button (disabled) 金一涛（当前操作人）
+					266 text 金一涛（当前操作人）
+				267 text 默认当前操作人，也可从客户主负责人或协同销售中选择。
+				268 text 协同销售 已选  0  人
+				269 button (disabled) 请先选择客户
+					270 text 请先选择客户
+				271 text 默认带出客户档案中的协同销售，可按本合同增减。
+				272 button 合同基本信息
+					273 heading 合同基本信息, Value: 3
+						274 image
+						275 text 合同基本信息
+					276 image
+				277 button 合同基本信息 1/6
+					278 text 合同基本信息
+					279 image
+					280 text 1
+					281 text /
+					282 text 6
+				283 container
+					284 text * 合同标题
+				285 text field (settable)
+				286 text 公司账户
+				287 button 搜索允许打印的公司账户...
+					288 text 搜索允许打印的公司账户...
+				289 container
+					290 text * 合同类型
+				291 button 请选择合同类型
+					292 text 请选择合同类型
+				293 button 新增合同类型
+					294 image
+				295 text 合同编号
+				296 text field (settable)
+				297 text 客户单号
+				298 text field (settable)
+				299 container
+					300 text * 签订日期
+				301 container
+					302 text field (settable) 2026年9月8日
+					303 button
+						304 image
+					305 button
+						306 image
+				307 text 关联项目
+				308 container
+					309 text 请先选择客户
+					310 image
+				311 button 物料明细 0 项
+					312 heading 物料明细 0 项, Value: 3
+						313 image
+						314 text 物料明细 0  项
+				315 button 列设置
+					316 image
+					317 text 列设置
+				318 button 添加行
+					319 image
+					320 text 添加行
+				321 button 报价单导入
+					322 image
+					323 text 报价单导入
+				324 button 特价单导入
+					325 image
+					326 text 特价单导入
+				327 button 询价导入
+					328 image
+					329 text 询价导入
+				330 button 粘贴
+					331 image
+					332 text 粘贴
+				333 button Excel
+					334 image
+					335 text Excel
+				336 button 从物料库选择
+					337 image
+					338 text 从物料库选择
+				339 button 组合物料
+					340 image
+					341 text 组合物料
+				342 button
+					343 image
+				344 image
+				345 text 暂未添加物料
+				346 text 点击上方「添加行」后在单元格中弹窗选择物料/规格，或从报价单 / 粘贴 / Excel 批量引入
+				347 button 添加第一行
+					348 image
+					349 text 添加第一行
+				350 button 从物料库选择
+				351 text |
+				352 button 粘贴导入
+				353 text |
+				354 button Excel导入
+				355 text |
+				356 button 从组合物料添加
+				357 button 订货约束与授权
+					358 heading 订货约束与授权, Value: 3
+						359 image
+						360 text 订货约束与授权
+					361 image
+				362 checkbox (settable, integer) 0
+				363 image
+				364 text 限制合同总下单金额
+				365 text 启用后，基于本合同生成的销售订单累计含税金额不得超过该上限
+				366 checkbox (settable, integer) 0
+				367 image
+				368 text 分/子公司或关联公司受用
+				369 text 启用后可添加分公司、子公司或关联公司，并授权其引用本合同下单
+				370 checkbox (settable, integer) 0
+				371 image
+				372 text 容许添加协议外物料下单
+				373 text 启用后，基于本合同的订单可添加约定清单之外的物料，此类订单须进入审批流程
+				374 checkbox (settable, integer) 0
+				375 image
+				376 text 框架和额度内下单需要审批
+				377 text 额度/数量/清单范围内的订单可直接下单；超限或协议外物料才触发审批
+				378 button 附加费用
+					379 heading 附加费用, Value: 3
+						380 image
+						381 text 附加费用
+				382 button 添加附加费用
+					383 image
+					384 text 添加附加费用
+				385 button
+					386 image
+				387 image
+				388 text 暂无附加费用
+				389 button + 添加附加费用
+				390 button 收入确认规则
+					391 heading 收入确认规则, Value: 3
+						392 image
+						393 text 收入确认规则
+					394 image
+				395 image
+				396 text 基于本合同生成的销售订单将默认继承此处的收入确认方式，订单创建/编辑时也可根据实际情况单独调整。
+				397 text 触发方式
+				398 button 按发货出库
+					399 text 按发货出库
+				400 text 发货出库后自动确认收入
+				401 button 合同条款
+					402 heading 合同条款, Value: 3
+						403 image
+						404 text 合同条款
+				405 button 套用模版
+					406 image
+					407 text 套用模版
+				408 button
+					409 image
+				410 text 合同开始日期
+				411 container
+					412 text field (settable) 2026年9月8日
+					413 button
+						414 image
+					415 button
+						416 image
+				417 text 合同结束日期
+				418 container
+					419 text field (settable) 2027年9月8日
+					420 button
+						421 image
+					422 button
+						423 image
+				424 text 付款条件
+				425 button 请选择付款条件
+					426 text 请选择付款条件
+				427 text 交货周期（天）
+				428 stepper (settable, integer) 21
+				429 text 质保期（月）
+				430 stepper (settable, integer) 12
+				431 text 条款内容
+				432 text entry area (settable)
+				433 container
+					434 image
+					435 heading 附件, Value: 3
+						436 text 附件
+					437 image
+				438 text 上传合同附件、附加协议、商务事故附件等
+				439 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 PDF / Word / Excel / 图片等，单个文件不超过 500MB
+					440 image
+					441 text 点击或拖拽文件到此处上传
+					442 text 支持 Ctrl+V 粘贴截图
+					443 text PDF / Word / Excel / 图片等，单个文件不超过 500MB
+				444 text 物料折后金额 ¥ 0.00 （ 已优惠 ¥0.00 ） 附加费用含税 ¥ 0.00 税额 ¥ 0.00 合同金额 ¥ 0.00
+				445 button 预览
+					446 image
+					447 text 预览
+				448 button 保存
+					449 image
+					450 text 保存
+				451 button 提交
+					452 image
+					453 text 提交
+			227 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			228 container Notifications alt+T
+		454 text 暂无数据
+
+The focused UI element is 291 button 请选择合同类型

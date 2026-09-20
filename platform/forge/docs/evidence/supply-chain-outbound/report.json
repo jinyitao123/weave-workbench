@@ -1,0 +1,207 @@
+{
+ "verifiedAt": "2026-09-17T13:20:39.428Z",
+ "results": [
+  {
+   "id": "page_sales_outbound_list",
+   "label": "出库单列表",
+   "hero": true,
+   "heroTitle": "出库单列表",
+   "crumbs": [
+    "供应链",
+    "出库单列表"
+   ],
+   "tabs": [],
+   "actions": [],
+   "headers": [
+    "出库单号",
+    "关联单号",
+    "销售单号",
+    "客户单号",
+    "往来单位",
+    "物料明细",
+    "仓库",
+    "出库日期",
+    "状态",
+    "物流信息",
+    "收入确认",
+    "操作员",
+    "操作"
+   ],
+   "rows": 20,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_production_outbounds",
+   "label": "生产出库",
+   "hero": true,
+   "heroTitle": "生产出库",
+   "crumbs": [
+    "供应链",
+    "生产出库"
+   ],
+   "tabs": [],
+   "actions": [],
+   "headers": [
+    "出库单号",
+    "关联单号",
+    "销售单号",
+    "客户单号",
+    "往来单位",
+    "物料明细",
+    "仓库",
+    "出库日期",
+    "状态",
+    "物流信息",
+    "收入确认",
+    "操作员",
+    "操作"
+   ],
+   "rows": 20,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_other_outbounds",
+   "label": "其他出库",
+   "hero": true,
+   "heroTitle": "其他出库",
+   "crumbs": [
+    "出库管理"
+   ],
+   "tabs": [],
+   "actions": [
+    "新建其他出库",
+    "刷新"
+   ],
+   "headers": [
+    "出库单号",
+    "出库类型",
+    "物料明细",
+    "出库日期",
+    "状态",
+    "出库原因",
+    "创建人",
+    "操作"
+   ],
+   "rows": 1,
+   "empty": "◇",
+   "colOk": true
+  },
+  {
+   "id": "page_sales_direct_outbounds",
+   "label": "销售直接出库",
+   "hero": true,
+   "heroTitle": "销售直接出库",
+   "crumbs": [
+    "供应链",
+    "销售直接出库"
+   ],
+   "tabs": [],
+   "actions": [],
+   "headers": [
+    "直接出库单号",
+    "客户单号",
+    "客户",
+    "出库进度",
+    "状态",
+    "创建时间",
+    "操作"
+   ],
+   "rows": 9,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_pending_outbound_shipments",
+   "label": "待出库发货单",
+   "hero": true,
+   "heroTitle": "待出库发货单",
+   "crumbs": [
+    "管理所有出库单和待出库发货单",
+    "待出库发货单"
+   ],
+   "tabs": [],
+   "actions": [],
+   "headers": [
+    "发货单号",
+    "客户单号",
+    "客户",
+    "收货人",
+    "收货地址",
+    "含税金额",
+    "出库进度",
+    "状态",
+    "日期",
+    "负责人",
+    "操作"
+   ],
+   "rows": 1,
+   "empty": "◇",
+   "colOk": true
+  },
+  {
+   "id": "page_purchase_return_outbounds",
+   "label": "采购退换货出库",
+   "hero": true,
+   "heroTitle": "采购退换货出库",
+   "crumbs": [
+    "供应链",
+    "采购退换货出库"
+   ],
+   "tabs": [],
+   "actions": [],
+   "headers": [
+    "退货单号",
+    "供应商",
+    "退货地址",
+    "退货金额",
+    "出库进度",
+    "状态",
+    "日期",
+    "操作"
+   ],
+   "rows": 9,
+   "empty": "",
+   "colOk": true
+  },
+  {
+   "id": "page_outbound_lines",
+   "label": "出库明细",
+   "hero": true,
+   "heroTitle": "出库明细",
+   "crumbs": [
+    "供应链",
+    "出库明细"
+   ],
+   "tabs": [],
+   "actions": [],
+   "headers": [
+    "序号",
+    "出库日期",
+    "出库单号",
+    "发货单号",
+    "业务类型",
+    "仓库",
+    "客户",
+    "制单人",
+    "物料编码",
+    "物料名称",
+    "型号",
+    "规格",
+    "单位",
+    "数量",
+    "含税单价",
+    "不含税单价",
+    "税率",
+    "含税金额",
+    "库位",
+    "物流单号",
+    "状态"
+   ],
+   "rows": 20,
+   "empty": "",
+   "colOk": true
+  }
+ ]
+}

@@ -1,0 +1,108 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/project/analytics".
+0 AXWebArea RiseMap, URL: risemap.cn/project/analytics
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 项目
+			5 button 收起侧边栏
+				6 image
+			322 container
+				323 button 项目管理
+					324 image
+					325 text 项目管理
+					326 image
+				327 button 项目中心
+				328 button 项目分析中心
+				329 button 任务管理
+				330 button 工时管理
+				331 button 项目配置中心
+			46 image
+			47 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			48 button 查看方案
+				49 image
+				50 text 查看方案
+			51 button
+				52 image
+			53 container
+				54 container 业务分类
+					55 checkbox 工作台, Value: 0
+					56 checkbox 供应链, Value: 0
+					57 checkbox 销售, Value: 0
+					58 checkbox 生产, Value: 0
+					59 checkbox 项目, Value: 1
+					60 checkbox 行政, Value: 0
+					61 checkbox 财务, Value: 0
+					62 checkbox 报表, Value: 0
+					63 checkbox 系统, Value: 0
+				64 button Description: 展开搜索, Help: 搜索
+					65 image
+				66 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					67 image
+					68 text 2
+				69 button Description: 打开推广奖励, Help: 推广
+				70 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				71 link Description: 打开工单, Value: community.risemap.cn/support
+				72 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					73 image
+					74 text 立即订阅
+				75 button 金
+					76 text 金
+					77 image
+			78 container
+				79 button 工作台
+					80 image
+					81 text 工作台
+				145 button 人事配置
+					146 text 人事配置
+				147 button 项目管理配置
+					148 text 项目管理配置
+				149 button 图纸配置
+					150 text 图纸配置
+				151 button 生产管理配置
+					152 text 生产管理配置
+				153 button 委外配置
+					154 text 委外配置
+				155 button 单据打印
+					156 text 单据打印
+				157 button 插件中心
+					158 text 插件中心
+				159 button 服务订阅管理
+					160 text 服务订阅管理
+				161 button 推广奖励
+					162 text 推广奖励
+				163 button 字段管理
+					164 text 字段管理
+				234 button 引导中心
+					235 text 引导中心
+				236 button 待办管理
+					237 text 待办管理
+				332 button 项目中心
+					333 text 项目中心
+				334 button 项目分析中心
+					335 text 项目分析中心
+			336 container
+				337 text 项目管理
+				338 image
+				339 text 项目分析中心
+				340 button
+					341 image
+				342 heading 项目分析中心, Value: 1
+					343 image
+					344 text 项目分析中心
+				345 text 全面分析项目营收、成本、利润及费用流向
+				346 button 全部项目
+				347 button 单个项目
+				348 container
+					349 text field (settable)
+					350 button
+						351 image
+				352 text 至
+				353 container
+					354 text field (settable)
+					355 button
+						356 image
+				357 text 数据加载中...
+			125 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			126 container Notifications alt+T
+
+The focused UI element is 328 button 项目分析中心

@@ -1,0 +1,57 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/quotations/new".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/quotations/new
+	2 container 添加服务项目
+		3 heading 添加服务项目, Value: 3, ID: :rb2:
+			4 text 添加服务项目
+		5 button 关闭
+			6 image
+		7 container
+			8 text 服务名称  *
+		9 text field (settable)
+		10 container
+			11 text 计费方式  *
+		12 button 固定金额 直接输入费用金额
+			13 image
+			14 text 固定金额
+			15 text 直接输入费用金额
+		16 button 单价×数量 单价乘以数量计算
+			17 image
+			18 text 单价×数量
+			19 text 单价乘以数量计算
+		20 button 按比例 按基数百分比计算
+			21 image
+			22 text 按比例
+			23 text 按基数百分比计算
+		24 text 不含税单价 (¥)
+		25 stepper (settable)
+		26 text 数量
+		27 container
+			28 text field (settable) 1
+			29 button
+				30 image
+		31 text 服务费折扣
+		32 container
+			33 text field (settable)
+			34 text %
+		35 button 无
+		36 button 5%
+		37 button 10%
+		38 button 15%
+		39 button 20%
+		40 text 税率
+		41 container
+			42 text field (settable) 13
+			43 text %
+		44 button 免税
+		45 button 1%
+		46 button 3%
+		47 button 6%
+		48 button 9%
+		49 button 13%
+		50 text 费用金额 ¥ 0.00 含税总值  (13%) ¥ 0.00
+		51 text 备注说明
+		52 text field (settable)
+		53 button 取消
+		54 button (disabled) 确认添加
+
+The focused UI element is 16 button 单价×数量 单价乘以数量计算

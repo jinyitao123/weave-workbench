@@ -1,0 +1,282 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/suppliers".
+0 AXWebArea RiseMap, URL: risemap.cn/base/suppliers
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 供应链
+			5 button 收起侧边栏
+				6 image
+			397 container
+				398 button 到货检验
+					399 image
+					400 text 到货检验
+					401 image
+				402 button 到货通知
+				403 button 到货登记
+				404 button 待检验库存
+				405 button 检验单
+				406 button 检验规则
+				407 button 基础资料
+					408 image
+					409 text 基础资料
+					410 image
+				411 button 物料管理
+				412 button 物料组合
+				413 button BOM管理
+				414 button 综合物料搜索
+				415 button 供应商管理
+				416 button 产品实例追溯
+				417 button 仓库管理
+				418 button 采购管理
+					419 image
+					420 text 采购管理
+					421 image
+				422 button 采购发票
+				423 button 采购申请
+				424 button 采购待办池
+				425 button 询价管理
+				426 button 采购订单
+				427 button 采购退换货
+				428 button 供应商价格本
+				429 button 入库管理
+					430 image
+					431 text 入库管理
+					432 image
+				433 button 全部入库单
+				434 button 采购入库
+				435 button 生产入库
+				436 button 其他入库
+				437 button 期初入库
+				438 button 入库明细
+				439 button 库存管理
+					440 image
+					441 text 库存管理
+					442 image
+				443 button 库存总览
+				444 button 不合格处理
+				445 button 库存流水
+				446 button 库存锁定
+				447 button 库存盘点
+				448 button 调拨与借出
+				449 button 库存预警
+				450 button 报损单
+				451 button SN码管理
+				452 button 出库管理
+					453 image
+					454 text 出库管理
+					455 image
+				456 button 出库单列表
+				457 button 生产出库
+				458 button 其他出库
+				459 button 销售直接出库
+				460 button 待出库发货单
+				461 button 采购退换货出库
+				462 button 出库明细
+			46 image
+			47 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			48 button 查看方案
+				49 image
+				50 text 查看方案
+			51 button
+				52 image
+			53 container
+				54 container 业务分类
+					55 checkbox 工作台, Value: 0
+					56 checkbox 供应链, Value: 1
+					57 checkbox 销售, Value: 0
+					58 checkbox 生产, Value: 0
+					59 checkbox 项目, Value: 0
+					60 checkbox 行政, Value: 0
+					61 checkbox 财务, Value: 0
+					62 checkbox 报表, Value: 0
+					63 checkbox 系统, Value: 0
+				64 button Description: 展开搜索, Help: 搜索
+					65 image
+				66 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					67 image
+					68 text 2
+				69 button Description: 打开推广奖励, Help: 推广
+				70 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				71 link Description: 打开工单, Value: community.risemap.cn/support
+				72 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					73 image
+					74 text 立即订阅
+				75 button 金
+					76 text 金
+					77 image
+			78 container
+				79 button 工作台
+					80 image
+					81 text 工作台
+				334 button 项目分析中心
+					335 text 项目分析中心
+				336 button 任务管理
+					337 text 任务管理
+				338 button 工时管理
+					339 text 工时管理
+				340 button 项目配置中心
+					341 text 项目配置中心
+				463 button 到货通知
+					464 text 到货通知
+				465 button 到货登记
+					466 text 到货登记
+				467 button 待检验库存
+					468 text 待检验库存
+				469 button 检验单
+					470 text 检验单
+				471 button 检验规则
+					472 text 检验规则
+				473 button 物料管理
+					474 text 物料管理
+				475 button 物料组合
+					476 text 物料组合
+				477 button BOM管理
+					478 text BOM管理
+				479 button 综合物料搜索
+					480 text 综合物料搜索
+				481 button 供应商管理
+					482 text 供应商管理
+			483 container
+				484 container
+					485 text 基础资料
+					486 image
+					487 text 供应商管理
+					488 image
+					489 heading 供应商管理, Value: 1
+						490 text 供应商管理
+					491 text 供应商档案、资质审核、合作绩效与协同沟通
+				492 button 供应商列表
+					493 image
+					494 text 供应商列表
+				495 button 资质管理
+					496 image
+					497 text 资质管理
+				498 button 新增供应商
+					499 image
+					500 text 新增供应商
+				501 button 导入/导出
+					502 image
+					503 text 导入/导出
+					504 image
+				505 button (disabled) 批量
+					506 image
+					507 text 批量
+					508 image
+				509 button
+					510 image
+				511 button 刷新
+					512 image
+				513 button
+					514 image
+				515 button
+					516 image
+				517 image
+				518 text field (settable)
+				519 button 范围
+					520 image
+					521 text 范围
+					522 image
+				523 button 分类
+					524 text 分类
+					525 image
+				526 button 等级
+					527 image
+					528 text 等级
+					529 image
+				530 button 负责人
+					531 image
+					532 text 负责人
+					533 image
+				534 button 审批状态
+					535 image
+					536 text 审批状态
+					537 image
+				538 button 业务状态
+					539 image
+					540 text 业务状态
+					541 image
+				542 container 点击清除排序
+					543 image
+					544 text 按 创建时间 降序
+					545 image
+				546 table
+					547 row
+						548 cell
+							549 checkbox (settable, integer) 0
+						550 cell
+							551 text 供应商名称
+							552 image
+						553 cell
+							554 text 供应商编号
+							555 image
+						556 cell
+							557 text 供应商级别
+						558 cell
+							559 text 供应商类型
+						560 cell
+							561 text 联系人
+						562 cell
+							563 text 联系电话
+						564 cell
+							565 text 邮箱
+						566 cell
+							567 text 统一社会信用代码
+						568 cell
+							569 text 组织机构代码
+						570 cell
+							571 text 注册资本（万元）
+						572 cell
+							573 text 成立时间
+						574 cell
+							575 text 法人名称
+						576 cell
+							577 text 省份
+						578 cell
+							579 text 市
+						580 cell
+							581 text 经营状态
+						582 cell
+							583 text 联系人职位
+						584 cell
+							585 text 地址
+						586 cell
+							587 text 备注
+						588 cell
+							589 text 供应商分类
+						590 cell
+							591 text 负责人
+						592 cell
+							593 text 付款条件
+						594 cell
+							595 text 账期
+						596 cell
+							597 text 审批状态
+							598 image
+						599 cell
+							600 text 业务状态
+							601 image
+						602 cell
+							603 text 创建时间
+							604 image
+						605 cell
+							606 text 更新时间
+							607 image
+						608 cell
+							609 text 操作
+					610 row
+						611 cell
+							612 image
+							613 text 暂无数据
+				614 text 共  0 条记录 每页
+				615 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					616 text 20
+				617 text 条
+				618 button (disabled) 上一页
+					619 image
+				620 button 1
+				621 button (disabled) 下一页
+					622 image
+			125 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			126 container Notifications alt+T
+
+The focused UI element is 415 button 供应商管理

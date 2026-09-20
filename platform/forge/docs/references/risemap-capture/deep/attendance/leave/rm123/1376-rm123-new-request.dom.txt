@@ -1,0 +1,323 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 新建私车公用申请
+- button:
+  - generic: 新增车辆
+- button:
+  - generic: 人事工作台
+- button:
+  - generic: 员工档案
+- button:
+  - generic: 招聘管理
+- button:
+  - generic: 候选人详情
+- button:
+  - generic: 入职离职
+- button:
+  - generic: 薪酬福利
+- button:
+  - generic: 福利发放
+- button:
+  - generic: 规章制度
+- button:
+  - generic: 人事配置
+- button:
+  - generic: 通讯录
+- button:
+  - generic: 加班申请
+- button:
+  - generic: 请假管理
+- main:
+  - generic: 考勤假期
+  - generic: 请假管理
+  - heading [level=1]: 请假管理
+  - paragraph: 管理您的假期余额、提交请假申请、审批团队成员请假
+  - button:
+    - text: 假期列表
+  - button:
+    - text: 审批管理
+  - button:
+    - text: 调休补假
+  - button:
+    - text: 假期配置
+  - paragraph: 假期额度看板
+  - paragraph: 左右滑动查看不同假别的可用额度与审批占用情况
+  - button:
+  - button:
+  - button:
+    - text: 新建请假
+  - button:
+    - text: 导出
+  - button:
+  - button:
+  - button:
+  - textbox:
+    - /placeholder: 搜索单号/事由...
+  - button:
+    - text: 类型
+  - button:
+    - text: 状态
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader
+        - columnheader:
+          - generic: 单号
+        - columnheader:
+          - generic: 申请人
+        - columnheader:
+          - generic: 部门
+        - columnheader:
+          - generic: 假别
+        - columnheader:
+          - generic: 开始时间
+        - columnheader:
+          - generic: 结束时间
+        - columnheader:
+          - generic: 请假时长
+        - columnheader:
+          - generic: 请假事由
+        - columnheader:
+          - generic: 当前状态
+        - columnheader:
+          - generic: 操作
+    - rowgroup:
+      - row:
+        - cell:
+          - generic: 暂无请假记录
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button [disabled]:
+  - button: "1"
+  - button [disabled]:
+- button:
+- region "Notifications alt+T"
+- dialog "新建请假申请":
+  - heading "新建请假申请" [level=2]
+  - generic: 假别 *
+  - paragraph: 暂无可用假期类型，请联系管理员配置
+  - generic: 开始时间 *
+  - textbox "请选择日期和时间" [active]
+  - button:
+  - generic: 结束时间 *
+  - textbox "请选择日期和时间"
+  - button:
+  - generic: 扣减明细
+  - paragraph: 请先选择假期类型与时间，将自动试算扣减明细
+  - generic: "*"
+  - generic: 请假事由
+  - textbox "请输入请假事由..."
+  - generic: 附件
+  - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件":
+    - generic: 点击或拖拽文件到此处上传
+    - generic: 支持 Ctrl+V 粘贴截图
+    - generic: 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+  - paragraph:
+    - text: 请假申请提交后将发送至直属上级审批，审批通过后生效。
+  - button "取消"
+  - button "提交申请":
+    - text: 提交申请
+  - button "Close":
+    - generic: Close
+- button:
+- button: 2026年 九月
+- button:
+- generic: 日
+- generic: 一
+- generic: 二
+- generic: 三
+- generic: 四
+- generic: 五
+- generic: 六
+- button: "30"
+- button: "31"
+- button: "1"
+- button: "2"
+- button: "3"
+- button: "4"
+- button: "5"
+- button: "6"
+- button: "7"
+- button: "8"
+- button: "9"
+- button: "10"
+- button: "11"
+- button: "12"
+- button: "13"
+- button: "14"
+- button: "15"
+- button: "16"
+- button: "17"
+- button: "18"
+- button: "19"
+- button: "20"
+- button: "21"
+- button: "22"
+- button: "23"
+- button: "24"
+- button: "25"
+- button: "26"
+- button: "27"
+- button: "28"
+- button: "29"
+- button: "30"
+- button: "1"
+- button: "2"
+- button: "3"
+- button: "4"
+- button: "5"
+- button: "6"
+- button: "7"
+- button: "8"
+- button: "9"
+- button: "10"
+- generic: 时
+- generic: 分
+- button: "00"
+- button: "01"
+- button: "02"
+- button: "03"
+- button: "04"
+- button: "05"
+- button: "06"
+- button: "07"
+- button: "08"
+- button: "09"
+- button: "10"
+- button: "11"
+- button: "12"
+- button: "13"
+- button: "14"
+- button: "15"
+- button: "16"
+- button: "17"
+- button: "18"
+- button: "19"
+- button: "20"
+- button: "21"
+- button: "22"
+- button: "23"
+- button: "00"
+- button: "30"
+- button: 此刻
+- button: 清除

@@ -1,0 +1,208 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/certificates".
+1 AXWebArea RiseMap, URL: risemap.cn/ops/certificates
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 行政
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 审批中心
+					10 image
+					11 text 审批中心
+					12 image
+				13 button 我的审批
+				14 button 抄送我的
+				15 button 我发起的
+				16 button 行政申请
+				17 button 行政管理
+					18 image
+					19 text 行政管理
+					20 image
+				21 button 公司通知
+				22 button 用章管理
+				23 button 会议纪要
+				24 button 工作汇报
+				25 button 文档中心
+				26 button 固定资产
+				27 button 资质与申报
+				28 button 物料领取
+				29 button 设备维护
+				30 button 礼品管理
+				31 button 借出管理
+				32 button 车辆管理
+				33 button 人力资源
+					34 image
+					35 text 人力资源
+					36 image
+				37 button 人事工作台
+				38 button 员工档案
+				39 button 招聘管理
+				40 button 入职离职
+				41 button 薪酬福利
+				42 button 规章制度
+				43 button 通讯录
+				44 button 考勤假期
+					45 image
+					46 text 考勤假期
+					47 image
+				48 button 加班申请
+				49 button 请假管理
+				50 button 出差申请
+				51 button 考勤管理
+				52 button 考勤统计
+				53 button 流程中心
+					54 image
+					55 text 流程中心
+					56 image
+				57 button 审批记录
+				58 button 发起流程
+				59 button 流程定义
+				60 button 流程分类
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					332 checkbox 工作台, Value: 0
+					333 checkbox 供应链, Value: 0
+					334 checkbox 销售, Value: 0
+					335 checkbox 生产, Value: 0
+					336 checkbox 项目, Value: 0
+					337 checkbox 行政, Value: 1
+					338 checkbox 财务, Value: 0
+					339 checkbox 报表, Value: 0
+					340 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				101 button 抄送我的
+					102 text 抄送我的
+				103 button 我发起的
+					104 text 我发起的
+				105 button 行政申请
+					106 text 行政申请
+				107 button 公司通知
+					108 text 公司通知
+				109 button 发布通知
+					110 text 发布通知
+				111 button 用章管理
+					112 text 用章管理
+				113 button 会议纪要
+					114 text 会议纪要
+				115 button 新建会议纪要
+					116 text 新建会议纪要
+				117 button AI 模板管理
+					118 text AI 模板管理
+				119 button 工作汇报
+					120 text 工作汇报
+				121 button 新建工作汇报
+					122 text 新建工作汇报
+				123 button 文档中心
+					124 text 文档中心
+				243 button 固定资产
+					244 text 固定资产
+				342 button 资质与申报
+					343 text 资质与申报
+			344 container
+				345 container
+					346 text 行政管理
+					347 image
+					348 text 资质与申报
+					349 image
+					350 heading 资质与申报, Value: 1
+						351 text 资质与申报
+					352 text 企业证书资质台账、到期提醒、政策申报跟踪与材料统一管理
+				353 button 资质台账
+					354 image
+					355 text 资质台账
+				356 button 到期提醒
+					357 image
+					358 text 到期提醒
+				359 button 政策申报
+					360 image
+					361 text 政策申报
+				362 button 材料库
+					363 image
+					364 text 材料库
+				365 button 新增资质
+					366 image
+					367 text 新增资质
+				368 button 导出
+					369 image
+					370 text 导出
+					371 image
+				372 button 刷新
+					373 image
+				374 button
+					375 image
+				376 button
+					377 image
+				378 image
+				379 text field (settable)
+				380 button 类别
+					381 text 类别
+					382 image
+				383 button 状态
+					384 text 状态
+					385 image
+				386 table
+					387 row
+						388 cell
+							389 checkbox (settable, integer) 0
+						390 cell
+							391 text 资质名称
+						392 cell
+							393 text 资质类别
+						394 cell
+							395 text 证书编号
+						396 cell
+							397 text 发证机构
+						398 cell
+							399 text 有效期
+						400 cell
+							401 text 责任人
+						402 cell
+							403 text 状态
+						404 cell
+							405 text 操作
+					406 row
+						407 cell
+							408 image
+							409 text 暂无数据
+				410 text 共  0 条记录 每页
+				411 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					412 text 10
+				413 text 条
+				414 button (disabled) 上一页
+					415 image
+				416 button 1
+				417 button (disabled) 下一页
+					418 image
+			341 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			167 container Notifications alt+T
+		419 container
+			420 text 全部
+			421 image
+			422 text 有效 即将到期 年审中 复审中 已过期 已注销
+
+The focused UI element is 383 button 状态

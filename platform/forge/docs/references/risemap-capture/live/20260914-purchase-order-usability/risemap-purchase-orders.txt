@@ -1,0 +1,237 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/purchase/orders".
+1 AXWebArea RiseMap, URL: risemap.cn/purchase/orders
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button
+					10 image
+					11 image
+				12 button
+					13 image
+					14 image
+				15 button
+				16 button
+				17 button
+				18 button
+				19 button
+				20 button
+				21 button
+				22 button
+				23 button
+					24 image
+					25 image
+				26 button
+					27 image
+					28 image
+				29 button
+					30 image
+					31 image
+				32 button
+					33 image
+					34 image
+			35 container
+				36 container 业务分类
+					37 container
+						38 checkbox 工作台, Value: 0
+						39 checkbox 供应链, Value: 1
+						40 checkbox 销售, Value: 0
+						41 checkbox 生产, Value: 0
+						42 checkbox 项目, Value: 0
+						43 checkbox 行政, Value: 0
+						44 checkbox 财务, Value: 0
+						45 checkbox 报表, Value: 0
+						46 checkbox 系统, Value: 0
+				47 button Description: 展开搜索, Help: 搜索
+					48 image
+				49 button (collapsed) Description: 通知, Secondary Actions: Expand
+					50 image
+				51 button Description: 打开推广奖励, Help: 推广
+				52 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				53 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				54 button 金
+					55 text 金
+					56 image
+			57 container
+				58 button 工作台
+					59 image
+					60 text 工作台
+				61 button 工作台
+					62 text 工作台
+				63 button 拆解单
+					64 text 拆解单
+				65 button 换件单
+					66 text 换件单
+				67 button 图纸总览
+					68 text 图纸总览
+				69 button 委外退料
+					70 text 委外退料
+				71 button 委外对账
+					72 text 委外对账
+				73 button 委外供应商
+					74 text 委外供应商
+				75 button 工作台
+					76 text 工作台
+				77 button 委外库存
+					78 text 委外库存
+				79 button 批次追溯
+					80 text 批次追溯
+				81 button 委外未交
+					82 text 委外未交
+				83 button 委外对账单
+					84 text 委外对账单
+				85 button 委外进货
+					86 text 委外进货
+				87 button 采购订单
+					88 text 采购订单
+			89 container
+				90 container
+					91 text 采购管理
+					92 image
+					93 text 采购订单
+					94 image
+					95 heading 采购订单, Value: 1
+						96 text 采购订单
+					97 text 正式采购订单下达、跟踪到货状态、应付与发票管理
+					98 button 下一步操作 到货通知, Help: 前往到货检验 · 到货通知
+						99 text 下一步操作
+						100 text 到货通知
+						101 image
+				102 button 订单列表
+					103 image
+					104 text 订单列表
+				105 button 订单明细 0
+					106 image
+					107 text 订单明细
+					108 text 0
+				109 button 新建采购单
+					110 image
+					111 text 新建采购单
+				112 button 导入/导出
+					113 image
+					114 text 导入/导出
+					115 image
+				116 button 付款申请
+					117 image
+					118 text 付款申请
+				119 button 收票登记
+					120 image
+					121 text 收票登记
+				122 button
+					123 image
+				124 button 刷新
+					125 image
+				126 button
+					127 image
+				128 button
+					129 image
+				130 container 我的筛选方案
+					131 text 我的筛选方案
+					132 text 正在加载...
+					133 button (disabled) 存为方案
+						134 image
+						135 text 存为方案
+				136 image
+				137 text field (settable)
+				138 button 范围
+					139 text 范围
+					140 image
+				141 button 状态
+					142 image
+					143 text 状态
+					144 image
+				145 button 筛选供应商...
+					146 text 筛选供应商...
+				147 button 开票
+					148 image
+					149 text 开票
+					150 image
+				151 button 入库
+					152 image
+					153 text 入库
+					154 image
+				155 button 付款
+					156 image
+					157 text 付款
+					158 image
+				159 text 合计金额 计算中...
+				160 table
+					161 row
+						162 cell
+							163 checkbox (settable, integer) 0
+						164 cell
+							165 text 订单号
+							166 image
+						167 cell
+							168 text 供应商
+						169 cell
+							170 text 供应商单号
+						171 cell
+							172 text 关联内容
+						173 cell
+							174 text 期望到货日期
+							175 image
+						176 cell
+							177 text 仓库
+						178 cell
+							179 text 付款条件
+						180 cell
+							181 text 币种
+						182 cell
+							183 text 付款方式
+						184 cell
+							185 text 结算日期
+						186 cell
+							187 text 备注说明
+						188 cell
+							189 text 应付产生方式
+						190 cell
+							191 text 采购员
+						192 cell
+							193 text 订单金额
+						194 cell
+							195 text 已申请金额
+						196 cell
+							197 text 开票进度
+						198 cell
+							199 text 入库进度
+						200 cell
+							201 text 付款进度
+						202 cell
+							203 text 退货
+						204 cell
+							205 text 状态
+							206 image
+						207 cell
+							208 text 采购原因
+						209 cell
+							210 text 下单日期
+							211 image
+						212 cell
+							213 text 创建时间
+							214 image
+						215 cell
+							216 text 更新时间
+							217 image
+						218 cell
+							219 text 操作
+					220 row
+						221 cell
+							222 image
+							223 text 暂无匹配的采购订单
+				224 text 共  0 条记录 每页
+				225 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					226 text 20
+				227 text 条
+				228 button (disabled) 上一页
+					229 image
+				230 button 1
+				231 button (disabled) 下一页
+					232 image
+			233 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			234 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/purchase/orders

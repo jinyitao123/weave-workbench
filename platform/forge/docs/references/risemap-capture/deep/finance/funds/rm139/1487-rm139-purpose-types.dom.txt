@@ -1,0 +1,182 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 财务
+- button "收起侧边栏":
+- navigation:
+  - button "资金管理":
+    - generic: 资金管理
+  - button "资金账户":
+    - generic: 资金账户
+  - button "资金流水":
+    - generic: 资金流水
+  - button "应收应付":
+    - generic: 应收应付
+  - button "收款管理":
+    - generic: 收款管理
+  - button "付款管理":
+    - generic: 付款管理
+  - button "退款申请":
+    - generic: 退款申请
+  - button "授信额度管理":
+    - generic: 授信额度管理
+  - button "借款贷款管理":
+    - generic: 借款贷款管理
+  - button "业务确认":
+    - generic: 业务确认
+  - button "销售收入确认":
+    - generic: 销售收入确认
+  - button "成本中心":
+    - generic: 成本中心
+  - button "费用中心":
+    - generic: 费用中心
+  - button "报销管理":
+    - generic: 报销管理
+  - button "对账单":
+    - generic: 对账单
+  - button "发票管理":
+    - generic: 发票管理
+  - button "发票总览":
+    - generic: 发票总览
+  - button "销项发票":
+    - generic: 销项发票
+  - button "进项发票":
+    - generic: 进项发票
+  - button "开票任务":
+    - generic: 开票任务
+  - button "调整记录":
+    - generic: 调整记录
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务" [pressed]:
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "流程定义":
+  - generic: 流程定义
+- button "编辑流程":
+  - generic: 编辑流程
+- button "流程分类":
+  - generic: 流程分类
+- button "资金账户":
+  - generic: 资金账户
+- button "资金流水":
+  - generic: 资金流水
+- button "应收应付":
+  - generic: 应收应付
+- button "收款管理":
+  - generic: 收款管理
+- button "付款管理":
+  - generic: 付款管理
+- button "费用中心":
+  - generic: 费用中心
+- button "新建付款申请":
+  - generic: 新建付款申请
+- button "退款申请":
+  - generic: 退款申请
+- button "授信额度管理":
+  - generic: 授信额度管理
+- button "借款管理":
+  - generic: 借款管理
+- button "新建借款":
+  - generic: 新建借款
+- main:
+  - generic: 财务管理
+  - generic: 借款贷款管理
+  - generic: 申请借款
+  - button:
+  - heading "申请借款/预支" [level=1]
+  - paragraph: 填写借款信息，提交审批流程
+  - button "取消"
+  - button "保存草稿":
+    - text: 保存草稿
+  - button "提交审批":
+    - text: 提交审批
+  - generic: 借款单号
+  - textbox "留空则按编码规则生成"
+  - generic: "*"
+  - generic: 借款标题/用途
+  - textbox "如：华能项目现场差旅预支"
+  - generic: 用途类别
+  - button "请选择":
+    - generic: 请选择
+  - generic: "*"
+  - generic: 借款金额
+  - generic: ¥
+  - textbox "请输入借款金额"
+  - generic: 关联项目
+  - generic "可多选":
+  - button "选择关联项目...":
+    - generic: 选择关联项目...
+  - generic: 预计归还日期
+  - textbox "请选择日期": 2026年10月8日
+  - button:
+  - button:
+  - generic: 备注
+  - textbox "补充说明借款原因..."
+  - generic: 附件上传
+  - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 image/*、pdf、doc、docx、xls、xlsx 格式，可同时上传多个文件":
+    - generic: 点击或拖拽文件到此处上传
+    - generic: 支持 Ctrl+V 粘贴截图
+    - generic: 支持 image/*、pdf、doc、docx、xls、xlsx 格式，可同时上传多个文件
+  - heading "审批流程" [level=3]:
+    - text: 审批流程
+  - paragraph: 开始
+  - paragraph: 审批
+  - generic: SINGLE
+  - paragraph: 系统管理员
+  - paragraph: 结束
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- textbox "搜索..." [active]
+- button:
+- generic: 销售费用
+- button:
+- generic: 项目费用
+- button:
+- generic: 采购费用
+- button:
+- generic: 研发费用
+- button:
+- generic: 行政办公费用
+- button:
+- generic: 人事费用
+- button:
+- generic: 财务法务费用
+- button:
+- generic: IT/软件费用
+- button:
+- generic: 交通车辆费用
+- button:
+- generic: 其他费用

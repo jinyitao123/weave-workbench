@@ -1,0 +1,43 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/sales".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/sales
+	2 container 新增抬头 填写公司主体的开票和签约信息
+		3 container :r14o:
+			4 heading 新增抬头, Value: 3
+				5 text 新增抬头
+			6 text 填写公司主体的开票和签约信息
+		7 button 关闭
+			8 image
+		9 container
+			10 text 公司 Logo 3:1 ~ 4:1
+			11 image
+			12 button
+				13 image
+			14 text 用于侧边栏展开、登录页、顶栏移动端 推荐尺寸 480 × 128px（@2x），宽高比建议 3:1 ~ 4:1，透明背景
+			15 button 上传
+				16 image
+				17 text 上传
+			18 text 公司全称  *
+			19 text field (settable)
+			20 text 简称
+			21 text field (settable)
+			22 text 统一社会信用代码  *
+			23 text field (settable)
+			24 text 注册地址
+			25 text field (settable)
+			26 text 联系电话
+			27 text field (settable)
+			28 text 邮箱
+			29 text field (settable)
+			30 image
+			31 text 银行账户信息 开户银行
+			32 text field (settable)
+			33 text 银行账号
+			34 text field (settable)
+			35 text 设为默认抬头 新建合同时将自动使用此抬头
+			36 switch Value: 0, ID: :r14s:
+			37 text 备注
+			38 text entry area (settable)
+		39 button 取消
+		40 button 创建
+
+The focused UI element is 19 text field (settable)

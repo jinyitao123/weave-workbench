@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_drawing_guide",
+  "archetype": "configuration",
+  "checks": {
+    "replication": { "status": "blocked", "notes": "已实时核对 RISEMAP 四角色、六阶段和当前文章；跨设备学习状态与权限联动待复核。", "evidence": ["docs/forge-drawing-guide-page-contract-20260916.md"] },
+    "visual": { "status": "pending", "notes": "内置浏览器已核对桌面与 390x844 窄屏，未发现横向溢出；仍缺独立复核和保存截图，因此保持 pending。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/drawing-guide-browser-readback-20260916.json"] },
+    "interaction": { "status": "pass", "notes": "已操作角色、阶段、目录、搜索、标记与取消掌握、刷新回读、服务重启回读和图纸总览入口。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/drawing-guide-browser-readback-20260916.json"] },
+    "business": { "status": "pass", "notes": "指南职责范围内的角色分流、本地学习偏好和真实页面导航已通过；图纸单据业务结果仍由目标职责页单独验收。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/drawing-guide-browser-readback-20260916.json"] }
+  }
+}

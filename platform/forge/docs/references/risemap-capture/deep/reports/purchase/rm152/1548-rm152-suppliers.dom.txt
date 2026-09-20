@@ -1,0 +1,167 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 报表
+- button "收起侧边栏":
+- navigation:
+  - button "销售统计":
+    - generic: 销售统计
+  - button "采购统计":
+    - generic: 采购统计
+  - button "库存统计":
+    - generic: 库存统计
+  - button "项目统计":
+    - generic: 项目统计
+  - button "组装统计":
+    - generic: 组装统计
+  - button "财务统计":
+    - generic: 财务统计
+  - button "财务总览":
+    - generic: 财务总览
+  - button "损益分析":
+    - generic: 损益分析
+  - button "资金分析":
+    - generic: 资金分析
+  - button "往来账款":
+    - generic: 往来账款
+  - button "税务库存":
+    - generic: 税务库存
+  - button "风险监控":
+    - generic: 风险监控
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表" [pressed]:
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "报销管理":
+  - generic: 报销管理
+- button "新建报销":
+  - generic: 新建报销
+- button "对账单":
+  - generic: 对账单
+- button "客户对账单":
+  - generic: 客户对账单
+- button "新建客户对账":
+  - generic: 新建客户对账
+- button "供应商对账单":
+  - generic: 供应商对账单
+- button "新建供应商对账":
+  - generic: 新建供应商对账
+- button "发票总览":
+  - generic: 发票总览
+- button "销项发票":
+  - generic: 销项发票
+- button "进项发票":
+  - generic: 进项发票
+- button "开票任务":
+  - generic: 开票任务
+- button "调整记录":
+  - generic: 调整记录
+- button "销售统计":
+  - generic: 销售统计
+- button "采购统计":
+  - generic: 采购统计
+- main:
+  - main:
+    - paragraph: 报表中心
+    - heading "采购统计" [level=1]
+    - paragraph: 供应商规模、活跃度、采购贡献、交付质量与合作风险分析。
+    - button "导出报表":
+      - text: 导出报表
+    - navigation "采购报表维度":
+      - button "采购统计"
+      - button "采购申请"
+      - button "询价统计"
+      - button "供应商统计" [active]: 供应商统计
+    - text: 筛选条件
+    - textbox:
+      - /placeholder: 搜索供应商名称、等级、品类或负责人
+    - combobox:
+      - option "全部组织" [selected]
+      - option "我负责的"
+    - combobox:
+      - option "本月" [selected]
+      - option "本季度"
+      - option "本年度"
+    - button "刷新":
+      - text: 刷新
+    - text: 更新时间：2026/9/9 06:50:01 当前展示供应商统计统计数据。
+    - generic: 统计周期 2026-09-01 至 2026-09-30
+    - generic: 供应商总数
+    - button "查看供应商总数计算说明":
+    - generic: 0家
+    - generic: 较上月 +0家
+    - generic: 活跃供应商
+    - button "查看活跃供应商计算说明":
+    - generic: 0家
+    - generic: 活跃率 --
+    - generic: 准时交付率
+    - button "查看准时交付率计算说明":
+    - generic: "--"
+    - generic: 较上月 --
+    - generic: 到货合格率
+    - button "查看到货合格率计算说明":
+    - generic: "--"
+    - generic: 质量保持稳定
+    - heading "供应商活跃与新增趋势" [level=2]
+    - generic: 活跃供应商
+    - generic: 新增供应商
+    - heading "供应商等级分布" [level=2]
+    - heading "供应商健康度分析" [level=2]
+    - generic: 本月评估
+    - generic: 准时交付
+    - generic: 准时到货的采购订单占比
+    - generic: "--"
+    - generic: 到货合格
+    - generic: 质检合格的到货批次占比
+    - generic: "--"
+    - generic: 价格稳定
+    - generic: 价格波动在合理范围内
+    - generic: "--"
+    - generic: 采购集中度
+    - generic: TOP5供应商采购额占总采购额比例
+    - generic: "--"
+    - generic: 风险供应商
+    - generic: 已拉黑供应商数量
+    - generic: 0家
+    - heading "供应商采购贡献排行" [level=2]
+    - generic: TOP 5
+    - heading "供应商等级排行" [level=2]
+    - generic: TOP 5
+    - heading "供应商品类覆盖排行" [level=2]
+    - generic: 全量排行
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2026-09-12

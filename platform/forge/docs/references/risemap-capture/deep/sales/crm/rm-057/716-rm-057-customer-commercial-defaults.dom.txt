@@ -1,0 +1,386 @@
+- generic: 销售
+- button:
+- navigation:
+  - button:
+    - generic: 销售业务
+  - button:
+    - generic: 框架销售合同
+  - button:
+    - generic: 销售订单
+  - button:
+    - generic: 收款流水
+  - button:
+    - generic: 销售发货单
+  - button:
+    - generic: 销售退货
+  - button:
+    - generic: 业绩银行
+  - button:
+    - generic: 价格策略
+  - button:
+    - generic: Goodwill订单
+  - button:
+    - generic: 销售团队
+  - button:
+    - generic: 销售目标
+  - button:
+    - generic: 销售发票
+  - button:
+    - generic: CRM客户管理
+  - button:
+    - generic: 客户管理
+  - button:
+    - generic: 联系人管理
+  - button:
+    - generic: 销售报价
+  - button:
+    - generic: 客户物料对照
+  - button:
+    - generic: 商机管理
+  - button:
+    - generic: 线索管理
+  - button:
+    - generic: 跟进记录
+  - button:
+    - generic: 公海客户
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button [pressed]:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 新建发货单
+- button:
+  - generic: 销售退货
+- button:
+  - generic: 新建销售退货
+- button:
+  - generic: 业绩银行
+- button:
+  - generic: 价格策略
+- button:
+  - generic: 新增框架协议
+- button:
+  - generic: 新增特价
+- button:
+  - generic: Goodwill订单
+- button:
+  - generic: Goodwill订单详情
+- button:
+  - generic: 销售团队
+- button:
+  - generic: 销售目标
+- button:
+  - generic: 销售发票
+- button:
+  - generic: 客户管理
+- button:
+  - generic: 名片扫描
+- main:
+  - generic: CRM客户管理
+  - generic: 客户管理
+  - heading [level=1]: 客户管理
+  - tablist:
+    - tab [selected]: 全部
+    - tab: 我负责的
+    - tab: 我参与的
+    - tab: 下属负责的
+    - tab: 下属参与的
+  - button:
+    - text: 新增客户
+  - button:
+    - text: 导入/导出
+  - button:
+    - text: 批量操作
+  - button:
+    - text: 扫描名片
+  - button:
+  - button:
+  - button:
+  - button:
+  - textbox:
+    - /placeholder: 搜索客户名称...
+  - button:
+    - text: 分类
+  - button:
+    - text: 主负责人
+  - button:
+    - text: 协同销售
+  - button:
+    - text: 客户类型
+  - button:
+    - text: 标签
+  - button:
+    - text: 状态
+  - button:
+    - text: 级别
+  - text: 按创建时间降序
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader
+        - columnheader:
+          - generic: 客户名称
+        - columnheader:
+          - generic: 主负责人
+        - columnheader:
+          - generic: 主要联系人电话
+        - columnheader:
+          - generic: 协同销售
+        - columnheader:
+          - generic: 信用额度
+        - columnheader:
+          - generic: 账期天数
+        - columnheader:
+          - generic: 红绿灯
+        - columnheader:
+          - generic: 最近跟进时间
+        - columnheader:
+          - generic: 拜访计划日期
+        - columnheader:
+          - generic: 最近交易时间
+        - columnheader:
+          - generic: 操作
+    - rowgroup:
+      - row:
+        - cell:
+          - generic: 暂无数据
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button [disabled]:
+  - button: "1"
+  - button [disabled]:
+- button:
+- region "Notifications alt+T"
+- generic: "0"
+- dialog "新增客户":
+  - heading "新增客户" [level=2]
+  - paragraph: 新增客户信息表单
+  - paragraph: 录入个人客户
+  - paragraph: 输入个人客户姓名
+  - button "客户类型":
+    - generic: 个人
+  - textbox "请输入个人客户姓名"
+  - paragraph: 客户名称不能为空
+  - button "联系人":
+    - generic: 联系人
+  - paragraph: 联系人独立维护，可随客户一次新增多位
+  - button "新增联系人":
+    - text: 新增联系人
+  - generic: "1"
+  - text: 联系人 1
+  - button "主要联系人":
+    - text: 主要联系人
+  - button "删除联系人1":
+  - generic: 姓名
+  - textbox "请输入姓名"
+  - generic: 职位
+  - textbox "请输入职位"
+  - generic: 性别
+  - button "性别":
+    - generic: 请选择性别
+  - generic: 部门
+  - textbox "请输入部门"
+  - generic: 决策权重
+  - button "请选择决策权重":
+    - generic: 请选择决策权重
+  - generic: 备注
+  - textbox "请输入联系人备注"
+  - paragraph: 联系方式
+  - paragraph: 同一类型可添加多条
+  - button "添加联系方式":
+    - text: 添加联系方式
+  - generic: 类型
+  - generic: 标签
+  - generic: 联系方式
+  - generic: 操作
+  - button "联系方式类型":
+    - generic "手机"
+  - textbox "联系方式标签":
+    - /placeholder: 标签
+    - text: 工作手机
+  - textbox "工作手机联系方式":
+    - /placeholder: 请输入手机号码
+  - button "删除工作手机":
+  - button "联系方式类型":
+    - generic "座机"
+  - textbox "联系方式标签":
+    - /placeholder: 标签
+    - text: 办公座机
+  - textbox "办公座机联系方式":
+    - /placeholder: 请输入座机号码
+  - button "删除办公座机":
+  - button "联系方式类型":
+    - generic "邮箱"
+  - textbox "联系方式标签":
+    - /placeholder: 标签
+    - text: 工作邮箱
+  - textbox "工作邮箱联系方式":
+    - /placeholder: 请输入邮箱地址
+  - button "删除工作邮箱":
+  - generic: "2"
+  - text: 联系人 2
+  - button "设联系人2为主要联系人":
+    - text: 主要联系人
+  - button "删除联系人2":
+  - generic: 姓名
+  - textbox "请输入姓名"
+  - generic: 职位
+  - textbox "请输入职位"
+  - generic: 性别
+  - button "性别":
+    - generic: 请选择性别
+  - generic: 部门
+  - textbox "请输入部门"
+  - generic: 决策权重
+  - button "请选择决策权重":
+    - generic: 请选择决策权重
+  - generic: 备注
+  - textbox "请输入联系人备注"
+  - paragraph: 联系方式
+  - paragraph: 同一类型可添加多条
+  - button "添加联系方式":
+    - text: 添加联系方式
+  - generic: 类型
+  - generic: 标签
+  - generic: 联系方式
+  - generic: 操作
+  - button "联系方式类型":
+    - generic "手机"
+  - textbox "联系方式标签":
+    - /placeholder: 标签
+    - text: 工作手机
+  - textbox "工作手机联系方式":
+    - /placeholder: 请输入手机号码
+  - button "删除工作手机":
+  - button "联系方式类型":
+    - generic "座机"
+  - textbox "联系方式标签":
+    - /placeholder: 标签
+    - text: 办公座机
+  - textbox "办公座机联系方式":
+    - /placeholder: 请输入座机号码
+  - button "删除办公座机":
+  - button "联系方式类型":
+    - generic "邮箱"
+  - textbox "联系方式标签":
+    - /placeholder: 标签
+    - text: 工作邮箱
+  - textbox "工作邮箱联系方式":
+    - /placeholder: 请输入邮箱地址
+  - button "删除工作邮箱":
+  - button "客户资料 1/5":
+    - generic: 客户资料
+    - generic: 1/5
+  - generic: "*"
+  - generic: 客户分类
+  - button "请选择分类":
+    - generic: 请选择分类
+  - button "新增客户分类":
+  - paragraph: 客户分类不能为空
+  - generic: 客户级别
+  - button "请选择级别":
+    - generic: 请选择级别
+  - button "新增客户等级":
+  - generic: 行业
+  - button "请选择行业":
+    - generic: 请选择行业
+  - generic: 负责人
+  - button "金 金一涛 (默认部门)":
+    - generic: 金
+    - generic: 金一涛
+    - generic: (默认部门)
+    - button:
+  - generic: 客户描述
+  - textbox "请输入客户描述"
+  - button "标签与团队":
+    - generic: 标签与团队
+  - generic: 协同销售
+  - button "请搜索团队成员...":
+    - generic: 请搜索团队成员...
+  - button "开票信息 0/6":
+    - generic: 开票信息
+    - generic: 0/6
+  - generic: 发票类型
+  - button "请选择发票类型":
+    - generic: 请选择发票类型
+  - generic: 纳税人识别号
+  - textbox "纳税人识别号"
+  - generic: 开户银行
+  - textbox "请输入开户银行全称"
+  - generic: 银行账号
+  - textbox "请输入银行账号"
+  - generic: 开票地址
+  - textbox "开票地址（通常为注册地址）"
+  - generic: 开票电话
+  - textbox "开票电话"
+  - button "商务条件 0/2":
+    - generic: 商务条件
+    - generic: 0/2
+  - generic: 默认付款条件
+  - button "请选择付款条件":
+    - generic: 请选择付款条件
+  - generic: 收入确认方式
+  - button "请选择收入确认方式" [active]:
+    - generic: 请选择收入确认方式
+  - button "商务信息 0/4":
+    - generic: 商务信息
+    - generic: 0/4
+  - generic: 详细地址
+  - textbox "请输入详细地址（自动识别省市区）"
+  - generic: 省份
+  - button "请选择省份":
+    - generic: 请选择省份
+  - generic: 城市
+  - button "请先选择省份" [disabled]:
+    - generic: 请先选择省份
+  - generic: 备注
+  - textbox "请输入备注信息"
+  - button "取消"
+  - button "创建客户"
+  - button "Close":
+    - generic: Close
+- generic: 按发货出库
+- generic: 按开票
+- generic: 按里程碑（服务）
+- generic: 按周期
+- generic: 手动

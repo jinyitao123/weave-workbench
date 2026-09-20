@@ -1,0 +1,9 @@
+import assert from 'node:assert/strict';
+import { readFile, writeFile } from 'node:fs/promises';
+import { connect } from '../scripts/api-client.mjs';
+const report=JSON.parse(await readFile('.objectstack/acceptance/purchase-inquiry-report.json','utf8'));assert.equal(report.passed,true);const api=await connect(),ids=report.ids;
+async function read(object,id){const r=await api.request('/data/'+object+'/'+id);assert.equal(r.status,200,object+' restart read');return r.value.record}
+const inquiry=await read('forge_purchase_inquiry',ids.inquiry),line=await read('forge_purchase_inquiry_line',ids.line),quote=await read('forge_purchase_inquiry_quote',ids.quote2),quoteLine=await read('forge_purchase_inquiry_quote_line',ids.quoteLine2),order=await read('forge_purchase_order',ids.order),orderLine=await read('forge_purchase_order_line',ids.orderLine);
+assert.deepEqual({status:inquiry.status,selected_quote_id:inquiry.selected_quote_id,converted_order_id:inquiry.converted_order_id},{status:'converted',selected_quote_id:ids.quote2,converted_order_id:ids.order});
+assert.deepEqual({inquiry_id:line.inquiry_id,quantity:line.quantity},{inquiry_id:ids.inquiry,quantity:2}); assert.deepEqual({status:quote.status,total_amount:quote.total_amount},{status:'selected',total_amount:13000}); assert.deepEqual({quote_id:quoteLine.quote_id,taxed_subtotal:quoteLine.taxed_subtotal},{quote_id:ids.quote2,taxed_subtotal:13000}); assert.deepEqual({supplier_id:order.supplier_id,total_amount:order.total_amount},{supplier_id:ids.supplier2,total_amount:13000}); assert.deepEqual({order_id:orderLine.order_id,taxed_subtotal:orderLine.taxed_subtotal},{order_id:ids.order,taxed_subtotal:13000});
+await writeFile('.objectstack/acceptance/purchase-inquiry-restart-report.json',JSON.stringify({checkedAt:new Date().toISOString(),passed:true,ids},null,2));console.log('PASS inquiry, quotes, selected supplier and generated purchase order persist after restart');

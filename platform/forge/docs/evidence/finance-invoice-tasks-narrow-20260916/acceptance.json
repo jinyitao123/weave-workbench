@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_invoice_tasks",
+  "archetype": "task_workspace",
+  "reviewedRevision": "aa94298388d2b8c158949cc5e3738b3bfd3d15fe",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/finance-management.page.ts": "c229d5cd7f6d2af142a60d761e4050a899c1ee9ccf2d2677b96f1e7df1a9cea7",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "8830c910309c7d731c9289965590eb5572e550be39ea70c4b3c69c3baf78a036",
+    "apps/forge-objectstack/src/pages/project-timesheet-cost.page.ts": "30a4c571452ed91e0e0580361d6665f12f9c0394a829ea248246dbceceb50b11",
+    "apps/forge-objectstack/src/pages/project-task-workspace.page.ts": "ed4b4682fd3857b17bdee044b6e7e717253aa96f4d965aac8d27faa716711c11",
+    "docs/forge-page-polish-baseline.md": "87391dcd1a7e8feefa96b358d42815d22e0eedebf578d0ff0e470550b0d45eb4"
+  },
+  "environment": {
+    "forgeUrl": "http://localhost:4441",
+    "database": "apps/forge-objectstack/.objectstack/finance-sales-cycle.sqlite",
+    "materials": "5 invoice requests in the local ledger: 1 pending-handling approved request with 12,000.00 CNY open amount, 2 rejected, and the remainder already issued"
+  },
+  "checks": {
+    "replication": {
+      "status": "blocked",
+      "notes": "RISEMAP 开票任务页当前无数据且本轮未重新打开；期间页签、指标名称、状态、表头与空态引用页面合同中的前次实时观察。",
+      "evidence": [
+        "docs/evidence/finance-invoice-tasks-narrow-20260916/acceptance.md"
+      ]
+    },
+    "visual": {
+      "status": "pass",
+      "notes": "桌面 1440×900 与窄屏 390×844 实测：期间区在指标之前，窄屏指标两列 157px 且块高由 271px 降到 178px，列表标题上移 92px，记录数量换行不挤压，无横向溢出。独立视觉复核未发生。",
+      "evidence": [
+        "docs/evidence/finance-invoice-tasks-narrow-20260916/acceptance.md",
+        "docs/evidence/finance-invoice-tasks-narrow-20260916/tasks-desktop-1440x900.png",
+        "docs/evidence/finance-invoice-tasks-narrow-20260916/tasks-narrow-390x844-before.png",
+        "docs/evidence/finance-invoice-tasks-narrow-20260916/tasks-narrow-390x844-after.png"
+      ]
+    },
+    "interaction": {
+      "status": "pass",
+      "notes": "行操作按钮实测不折行；期间页签、状态页签、搜索与列表在窄屏保持可达。完整办理链与 API、重启回读证据见本批开票任务记录。",
+      "evidence": [
+        "docs/evidence/finance-invoice-tasks-narrow-20260916/acceptance.md",
+        "docs/evidence/finance-invoice-tasks-narrow-20260916/tasks-narrow-390x844-after.png"
+      ]
+    },
+    "business": {
+      "status": "blocked",
+      "notes": "本页业务链的 API 与同库停服重启回读证据在 docs/evidence/finance-invoice-tasks-20260916 中；RISEMAP 同材料办理与独立验收未完成。",
+      "evidence": [
+        "docs/evidence/finance-invoice-tasks-20260916/acceptance.md"
+      ]
+    }
+  },
+  "visualEvidence": {
+    "desktop": {
+      "width": 1440,
+      "height": 900,
+      "evidence": [
+        "docs/evidence/finance-invoice-tasks-narrow-20260916/tasks-desktop-1440x900.png"
+      ]
+    },
+    "narrow": {
+      "width": 390,
+      "height": 844,
+      "evidence": [
+        "docs/evidence/finance-invoice-tasks-narrow-20260916/tasks-narrow-390x844-before.png",
+        "docs/evidence/finance-invoice-tasks-narrow-20260916/tasks-narrow-390x844-after.png"
+      ]
+    },
+    "reference": [],
+    "populated": [
+      "docs/evidence/finance-invoice-tasks-narrow-20260916/tasks-desktop-1440x900.png",
+      "docs/evidence/finance-invoice-tasks-narrow-20260916/tasks-narrow-390x844-after.png"
+    ],
+    "empty": [
+      "docs/evidence/finance-invoice-tasks-20260916/acceptance.md"
+    ],
+    "form": [
+      "docs/evidence/finance-invoice-tasks-20260916/acceptance.md"
+    ],
+    "error": [
+      "docs/evidence/finance-invoice-tasks-20260916/acceptance.md"
+    ]
+  },
+  "requirements": [
+    {
+      "id": "INV-TASK-002",
+      "status": "pass",
+      "steps": "在桌面打开页面并比较期间区与指标区的垂直顺序，读取期间起止文案。",
+      "expected": "影响整页统计的期间选择位于指标之前，起止含义明确。",
+      "observed": "期间区顶部 208px、指标区顶部 267px；窄屏文案为“2026-01-01 至 2026-12-31（按申请提交时间）”。",
+      "evidence": ["docs/evidence/finance-invoice-tasks-narrow-20260916/tasks-desktop-1440x900.png"]
+    },
+    {
+      "id": "INV-TASK-009",
+      "status": "pass",
+      "steps": "在 390×844 下检查指标、列表标题、记录数量、页签与行操作是否重叠或溢出。",
+      "expected": "窄屏不重叠、不挤压，主工作区尽早出现。",
+      "observed": "指标两列 157px、块高 178px；列表标题在 530px 处，记录数量换行显示；无横向溢出；行操作不折行。",
+      "evidence": [
+        "docs/evidence/finance-invoice-tasks-narrow-20260916/tasks-narrow-390x844-before.png",
+        "docs/evidence/finance-invoice-tasks-narrow-20260916/tasks-narrow-390x844-after.png"
+      ]
+    },
+    {
+      "id": "INV-TASK-011",
+      "status": "pass",
+      "steps": "用旧规则在当前页内复现窄屏状态，再与修复后同视口同数据比较。",
+      "expected": "修复后指标与列表标题上移，记录数量不再被挤压。",
+      "observed": "修复前指标单列 322px、块高 271px、列表标题 622px；修复后两列 157px、块高 178px、列表标题 530px。",
+      "evidence": [
+        "docs/evidence/finance-invoice-tasks-narrow-20260916/tasks-narrow-390x844-before.png",
+        "docs/evidence/finance-invoice-tasks-narrow-20260916/tasks-narrow-390x844-after.png"
+      ]
+    }
+  ],
+  "review": {
+    "implementer": "codex",
+    "reviewer": "",
+    "reviewedAt": "",
+    "status": "pending",
+    "evidence": []
+  }
+}

@@ -1,0 +1,179 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/outbound".
+0 AXWebArea RiseMap, URL: risemap.cn/sales/outbound
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 销售
+			5 button 收起侧边栏
+				6 image
+			7 container
+				307 button 销售业务
+					308 image
+					309 text 销售业务
+					310 image
+				311 button 框架销售合同
+				312 button 销售订单
+				313 button 收款流水
+				314 button 销售发货单
+				315 button 销售退货
+				316 button 业绩银行
+				317 button 价格策略
+				318 button Goodwill订单
+				319 button 销售团队
+				320 button 销售目标
+				321 button 销售发票
+				322 button CRM客户管理
+					323 image
+					324 text CRM客户管理
+					325 image
+				326 button 客户管理
+				327 button 联系人管理
+				328 button 销售报价
+				329 button 客户物料对照
+				330 button 商机管理
+				331 button 线索管理
+				332 button 跟进记录
+				333 button 公海客户
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 1
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				190 button 库存预警
+					191 text 库存预警
+				192 button 报损单
+					193 text 报损单
+				194 button SN管理
+					195 text SN管理
+				196 button 出库单列表
+					197 text 出库单列表
+				198 button 生产出库
+					199 text 生产出库
+				200 button 其他出库
+					201 text 其他出库
+				202 button 销售直接出库
+					203 text 销售直接出库
+				204 button 待出库发货单
+					205 text 待出库发货单
+				206 button 采购退换货出库
+					207 text 采购退换货出库
+				208 button 出库明细
+					209 text 出库明细
+				334 button 框架销售合同
+					335 text 框架销售合同
+				336 button 销售订单
+					337 text 销售订单
+				338 button 收款流水
+					339 text 收款流水
+				340 button 销售发货单
+					341 text 销售发货单
+			342 container
+				343 container
+					344 text 销售业务
+					345 image
+					346 text 销售发货单
+					347 image
+					348 heading 销售发货单, Value: 1
+						349 text 销售发货单
+					350 text 发货出库登记、物流跟踪、签收回执与开票联动
+					351 button 下一步操作 待出库发货单, Help: 前往出库管理 · 待出库发货单
+						352 text 下一步操作
+						353 text 待出库发货单
+						354 image
+				355 button 新建发货单
+					356 image
+					357 text 新建发货单
+				358 button 导出
+					359 image
+					360 text 导出
+					361 image
+				362 button 导出任务
+				363 button 刷新
+					364 image
+				365 button
+					366 image
+				367 button
+					368 image
+				369 image
+				370 text field (settable)
+				371 button 状态
+					372 text 状态
+					373 image
+				374 button 范围
+					375 image
+					376 text 范围
+					377 image
+				378 table
+					379 row
+						380 cell
+							381 checkbox (settable, integer) 0
+						382 cell
+							383 text 发货单号
+						384 cell
+							385 text 关联订单
+						386 cell
+							387 text 客户单号
+						388 cell
+							389 text 客户名称
+						390 cell
+							391 text 收货人
+						392 cell
+							393 text 状态
+						394 cell
+							395 text 出库进度
+						396 cell
+							397 text 含税金额
+						398 cell
+							399 text 出库单
+						400 cell
+							401 text 出库日期
+						402 cell
+							403 text 操作
+					404 row
+						405 cell
+							406 image
+							407 text 暂无匹配的发货单
+				408 text 共  0 条记录 每页
+				409 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					410 text 10
+				411 text 条
+				412 button (disabled) 上一页
+					413 image
+				414 button 1
+				415 button (disabled) 下一页
+					416 image
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 314 button 销售发货单

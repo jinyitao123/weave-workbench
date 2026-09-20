@@ -1,0 +1,23 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/subcontract".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/subcontract
+	2 container 新增加工类型
+		3 heading 新增加工类型, Value: 3
+			4 text 新增加工类型
+		5 button 关闭
+			6 image
+		7 container
+			8 text 类型编码  *
+			9 text field (settable)
+			10 text 类型名称  *
+			11 text field (settable)
+			12 text 上级类型
+			13 button 无（作为一级类型）
+				14 text 无（作为一级类型）
+			15 text 最多两级，子级不能再有子级 排序
+			16 stepper (settable, integer) 0
+			17 text 备注
+			18 text field (settable)
+		19 button 取消
+		20 button 添加
+
+The focused UI element is 9 text field (settable)

@@ -1,0 +1,54 @@
+- region "通知 alt+T"
+- banner:
+  - button "切换侧边栏":
+    - generic: 切换侧边栏
+  - generic: 销售目标
+  - button "搜索…":
+  - button "打开消息中心":
+  - link "在 Studio 中设计":
+    - /url: /_console/studio/forge/interfaces?surface=page:page_sales_targets
+  - button "DA":
+    - generic: DA
+- main:
+  - main:
+    - button "在 Studio 中编辑":
+    - heading "销售目标" [level=1]
+    - paragraph: 设置和调整销售目标，实时计算完成进度与动态调整建议
+    - generic: "12"
+    - strong: 销售管理 / 销售目标管理
+    - button "新建目标"
+    - button "刷新"
+    - generic: 设置和调整销售目标，实时计算完成进度与动态调整建议
+    - heading "销售目标管理" [level=1]
+    - generic: 销售目标已创建
+    - button "关闭提示": ×
+    - button "个人目标"
+    - button "团队目标"
+    - button "2026年"
+    - table:
+      - rowgroup:
+        - row "目标对象 年度 合同额目标 回款目标 完成进度 状态 备注 操作":
+          - columnheader "目标对象"
+          - columnheader "年度"
+          - columnheader "合同额目标"
+          - columnheader "回款目标"
+          - columnheader "完成进度"
+          - columnheader "状态"
+          - columnheader "备注"
+          - columnheader "操作"
+      - rowgroup:
+        - row "Dev Admin 个人目标 2026 年度 ¥ 1,000,000.00 ¥ 800,000.00 0% · 剩余目标 ¥ 1,000,000.00 执行中 用于 Forge 销售管理复刻的同材料年度目标；月度合同额平均分配：83333/83333/83333/83333/83333/83333/83333/83333/83333/83333/83333/83337；月度回款平均分配：66666/66666/66666/66666/66666/66666/66666/66666/66666/66666/66666/66674 调整":
+          - cell "Dev Admin 个人目标":
+            - text: Dev Admin
+            - generic: 个人目标
+          - cell "2026 年度"
+          - cell "¥ 1,000,000.00"
+          - cell "¥ 800,000.00"
+          - cell "0% · 剩余目标 ¥ 1,000,000.00":
+            - generic: 0% · 剩余目标 ¥ 1,000,000.00
+          - cell "执行中":
+            - generic: 执行中
+          - cell "用于 Forge 销售管理复刻的同材料年度目标；月度合同额平均分配：83333/83333/83333/83333/83333/83333/83333/83333/83333/83333/83333/83337；月度回款平均分配：66666/66666/66666/66666/66666/66666/66666/66666/66666/66666/66666/66674"
+          - cell "调整":
+            - button "调整" [disabled]
+    - generic: 共 1 条记录 每页 10 条 · 1 / 1

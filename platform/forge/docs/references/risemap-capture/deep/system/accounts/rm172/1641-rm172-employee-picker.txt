@@ -1,0 +1,36 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/accounts".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/accounts
+	2 container 新建账号
+		3 container :ru0:
+			4 image
+			5 text 新建账号
+		6 button 关闭
+			7 image
+		8 text 可从通讯录选择员工，自动填充资料并关联工号，避免同名账号混淆
+		9 button 从通讯录选择
+			10 image
+			11 text 从通讯录选择
+		12 container
+			13 text * 姓名
+		14 text field (settable)
+		15 text 邮箱
+		16 text field (settable)
+		17 container
+			18 text * 手机号
+		19 text field (settable)
+		20 text 部门
+		21 button 请选择部门
+			22 text 请选择部门
+		23 text 直属上级
+		24 button 不选则默认使用部门负责人
+			25 text 不选则默认使用部门负责人
+		26 container
+			27 text * 角色
+		28 button 请选择角色
+			29 text 请选择角色
+		30 button 取消
+		31 button 创建
+			32 image
+			33 text 创建
+
+The focused UI element is 9 button 从通讯录选择

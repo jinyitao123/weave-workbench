@@ -1,0 +1,398 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/quotations/new".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/quotations/new
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 销售业务
+					10 image
+					11 text 销售业务
+					12 image
+				13 button 框架销售合同
+				14 button 销售订单
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+			36 image
+			37 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			38 button 查看方案
+				39 image
+				40 text 查看方案
+			41 button
+				42 image
+			43 container
+				44 container 业务分类
+					45 checkbox 工作台, Value: 0
+					46 checkbox 供应链, Value: 0
+					47 checkbox 销售, Value: 1
+					48 checkbox 生产, Value: 0
+					49 checkbox 项目, Value: 0
+					50 checkbox 行政, Value: 0
+					51 checkbox 财务, Value: 0
+					52 checkbox 报表, Value: 0
+					53 checkbox 系统, Value: 0
+				54 button Description: 展开搜索, Help: 搜索
+					55 image
+				56 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					57 image
+					58 text 2
+				59 button Description: 打开推广奖励, Help: 推广
+				60 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				61 link Description: 打开工单, Value: community.risemap.cn/support
+				62 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					63 image
+					64 text 立即订阅
+				65 button 金
+					66 text 金
+					67 image
+			68 container
+				69 button 工作台
+					70 image
+					71 text 工作台
+				72 button 业绩银行
+					73 text 业绩银行
+				74 button 价格策略
+					75 text 价格策略
+				76 button 新增框架协议
+					77 text 新增框架协议
+				78 button 新增特价
+					79 text 新增特价
+				80 button Goodwill订单
+					81 text Goodwill订单
+				82 button Goodwill订单详情
+					83 text Goodwill订单详情
+				84 button 销售团队
+					85 text 销售团队
+				86 button 销售目标
+					87 text 销售目标
+				88 button 销售发票
+					89 text 销售发票
+				90 button 客户管理
+					91 text 客户管理
+				92 button 名片扫描
+					93 text 名片扫描
+				94 button 联系人管理
+					95 text 联系人管理
+				96 button 销售报价
+					97 text 销售报价
+				98 button 新建销售报价
+					99 text 新建销售报价
+			100 container
+				101 text 销售管理
+				102 image
+				103 text 销售报价
+				104 image
+				105 text 新建报价
+				106 button
+					107 image
+				108 heading 新建报价单, Value: 1
+					109 text 新建报价单
+				110 button 管理员视角, Help: 当前角色：管理员（可查看成本价和利润）
+					111 image
+					112 text 管理员视角
+				113 button 取消
+				114 button 预览报价单
+					115 image
+					116 text 预览报价单
+				117 button 保存草稿
+					118 image
+					119 text 保存草稿
+				120 button 提交审核
+					121 image
+					122 text 提交审核
+				123 button 报价基本信息 2/8
+					124 text 报价基本信息
+					125 image
+					126 text 2
+					127 text /
+					128 text 8
+				129 text 报价单号
+				130 text field (settable)
+				131 container
+					132 text * 客户
+				133 button 搜索客户名称...
+					134 text 搜索客户名称...
+				392 text 客户不能为空
+				135 container
+					136 text * 负责人
+				137 button (disabled) 金一涛（当前开单人）
+					138 text 金一涛（当前开单人）
+				139 text 默认当前开单人，也可从客户主负责人或协同销售中选择。
+				140 text 联系人
+				141 text 请先选择客户
+				142 text 关联商机
+				143 button (disabled) 请先选择客户
+					144 text 请先选择客户
+				145 container
+					146 text * 报价类型
+				147 button 新增报价类型
+					148 image
+				393 text 报价类型不能为空
+				149 container
+					150 text * 报价主体
+				151 button 请选择
+					152 text 请选择
+				153 button 新增公司抬头
+					154 image
+				394 text 报价主体不能为空
+				155 text 有效期
+				156 stepper (settable, integer) 30
+				157 text 天 至  2026-10-08
+				158 button 商务条款 1/4
+					159 text 商务条款
+					160 image
+					161 text 1
+					162 text /
+					163 text 4
+				164 text 销售付款条件
+				165 button 请选择销售付款条件
+					166 text 请选择销售付款条件
+				167 text 付款方式
+				168 button 请选择付款方式
+					169 text 请选择付款方式
+				170 text 交货期
+				171 stepper (settable, integer) 30
+				172 text 工作日
+				173 text 自合同签订之日起计算
+				174 text 报价说明
+				175 text entry area (settable)
+				176 button + 含税含运
+					177 text + 
+					178 text 含税含运
+				179 button + 不含安装调试
+					180 text + 
+					181 text 不含安装调试
+				182 button + FOB上海
+					183 text + 
+					184 text FOB上海
+				185 button + 质保1年
+					186 text + 
+					187 text 质保1年
+				188 button + 含技术培训
+					189 text + 
+					190 text 含技术培训
+				191 button + 7×24小时技术支持
+					192 text + 
+					193 text 7×24小时技术支持
+				194 container
+					195 heading 报价明细, Value: 3
+						196 text 报价明细
+					395 text 请至少添加一项物料/服务明细
+					197 container 物料字段显示模式
+						198 button 常用字段
+						199 button 全部字段
+					200 button 添加物料
+						201 image
+						202 text 添加物料
+					203 button 新建分组
+						204 image
+						205 text 新建分组
+					206 button 平铺显示
+						207 image
+						208 text 平铺显示
+					209 button 物料组合
+						210 image
+						211 text 物料组合
+					212 button 新增临时物料
+						213 image
+						214 text 新增临时物料
+					215 button 批量导入物料
+						216 image
+						217 text 批量导入物料
+					218 button 供应商价本
+						219 image
+						220 text 供应商价本
+					221 image
+					222 text 已选  0  项
+					223 button (disabled) 批量数量
+						224 image
+						225 text 批量数量
+					226 button (disabled) 批量调价
+						227 image
+						228 text 批量调价
+					229 button (disabled) 批量调税率
+						230 image
+						231 text 批量调税率
+					232 button (disabled) 统一折扣
+						233 image
+						234 text 统一折扣
+					235 button (disabled) 批量删除
+						236 image
+						237 text 批量删除
+					238 button (disabled) 取消选择
+						239 image
+						240 text 取消选择
+					241 table
+						242 row
+							243 cell
+								244 checkbox (settable, integer) 0
+							245 cell
+								246 text #
+							247 cell
+								248 text 编码
+							249 cell
+								250 text 物料/服务名称 *
+							251 cell
+								252 text 型号 *
+							253 cell
+								254 text 规格 *
+							255 cell
+								256 text 分类 *
+							257 cell
+								258 text 单位 *
+							259 cell
+								260 text 数量 *
+							261 cell
+								262 text 含税单价 *
+							263 cell
+								264 text 不含税单价 *
+							265 cell
+								266 text 税率 *
+							267 cell
+								268 text 折扣%
+							269 cell
+								270 text 折后含税小计
+						271 row
+							272 cell
+								273 text 全部物料 1  项
+								274 button 添加物料
+									275 image
+									276 text 添加物料
+							277 cell
+								278 text ¥ 0.00
+						279 row
+							280 cell
+								281 text 1
+							282 cell
+								283 text —
+							284 cell
+								285 container
+									286 text field (settable)
+									287 button 从物料库选择
+										288 image
+									289 text *
+							290 cell
+								291 container
+									292 text field (settable)
+									293 text *
+							294 cell
+								295 container
+									296 text field (settable)
+									297 text *
+							298 cell
+								299 container
+									300 container
+										301 text 选择分类
+										302 image
+									303 text *
+							304 cell
+								305 container
+									306 button 选择单位
+										307 text 选择单位
+									308 text *
+							309 cell
+								310 container
+									311 button
+										312 image
+									313 text field (settable) 1
+									314 button
+										315 image
+							316 cell
+								317 text field (settable)
+							318 cell
+								319 text field (settable)
+							320 cell
+								321 button 13%
+									322 text 13%
+							323 cell
+								324 text field (settable)
+							325 cell
+								326 text -
+							327 cell
+								328 button 行备注
+									329 image
+								330 button 复制行
+									331 image
+								332 button (disabled) 删除行
+									333 image
+					334 button 添加空行
+						335 image
+						336 text 添加空行
+					337 text 未税 ¥ 0.00 税额 ¥ 0.00 物料含税 ¥ 0.00 报价总额 ¥ 0.00
+				338 heading 服务费用明细, Value: 3
+					339 text 服务费用明细
+				340 button 添加服务费
+					341 image
+					342 text 添加服务费
+				343 image
+				344 text 暂无服务费项目
+				345 text 可添加技术服务费、安装调试费、运输费、项目管理费等
+				346 container
+					347 button (expanded) 报价条款 0 条 随报价单输出的商务约定, Secondary Actions: Collapse
+						348 text 报价条款
+						349 text 0
+						350 text  条
+						351 text 随报价单输出的商务约定
+						352 image
+					353 text 维护随报价单输出的商务条款
+					354 button 选择预设
+						355 image
+						356 text 选择预设
+					357 button 自定义
+						358 image
+						359 text 自定义
+					360 text 暂未添加报价条款
+					361 text 可从预设条款中选择，或新增自定义条款
+				362 container
+					363 heading 报价汇总, Value: 3
+						364 text 报价汇总
+					365 text 实时 客户 暂未选择客户 未选择报价类型 · 0 项物料 · 0 项服务 报价总额（含税） ¥ 0.00 物料金额 ¥ 0.00 服务费用 ¥ 0.00 折后未税 ¥ 0.00 税额 ¥ 0.00 总成本 ¥ 0.00 毛利 ¥ 0.00 毛利率 0.0 % 有效期 30  天 有效至 2026-10-08 付款方式 未设置 交货期 30
+					366 button (expanded) 价格预警设置 任何偏差, Secondary Actions: Collapse
+						367 image
+						368 text 价格预警设置
+						369 text 任何偏差
+						370 image
+					371 text 偏差阈值
+					372 text 仅当本次报价与历史成交/报价偏差超过此百分比时触发预警
+					373 slider (settable, integer) 0
+					374 text field (settable) 0
+					375 text %
+					376 button 任何偏差
+					377 button ≥3%
+					378 button ≥5%
+					379 button ≥10%
+					380 image
+					381 text 附件资料 0
+					382 button 云文档
+						383 image
+						384 text 云文档
+					385 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、DWG、压缩包等格式，单个文件不超过 500 MB
+						386 image
+						387 text 点击或拖拽文件到此处上传
+						388 text 支持 Ctrl+V 粘贴截图
+						389 text 支持 PDF、Word、Excel、图片、DWG、压缩包等格式，单个文件不超过 500 MB
+			390 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			391 container Notifications alt+T
+
+The focused UI element is 117 button 保存草稿

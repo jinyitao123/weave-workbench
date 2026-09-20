@@ -1,0 +1,168 @@
+Browser tab: 40, Title: "RiseMap", URL: "https://risemap.cn/after-sales/my-workspace".
+0 AXWebArea RiseMap, URL: risemap.cn/after-sales/my-workspace
+	1 container root
+		2 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+		3 text 销售
+		4 button 收起侧边栏
+			5 image
+		6 container
+			75 button 销售业务
+				76 image
+				77 text 销售业务
+				78 image
+			79 button 框架销售合同
+			80 button 销售订单
+			81 button 附加费用
+			82 button 收款流水
+			83 button 销售发货单
+			84 button 销售退货
+			85 button 业绩银行
+			86 button 价格策略
+			87 button Goodwill订单
+			88 button 销售团队
+			89 button 销售目标
+			90 button 销售发票
+			91 button CRM客户管理
+				92 image
+				93 text CRM客户管理
+				94 image
+			95 button 客户管理
+			96 button 联系人管理
+			97 button 销售报价
+			98 button 客户物料对照
+			99 button 商机管理
+			100 button 线索管理
+			101 button 跟进记录
+			102 button 公海客户
+			103 button 服务管理
+				104 image
+				105 text 服务管理
+				106 image
+			107 button 服务工单
+			108 button 服务报价单
+			109 button 服务结算单
+			110 button 接单中心
+			111 button 派工中心
+			112 button 服务分析
+			113 button 质保管理
+			114 button 服务配置
+		115 image
+		116 text 免费试用中，还剩 8 天 — 试用期间享全部功能
+		117 button 查看方案
+			118 image
+			152 text 查看方案
+		119 button
+			120 image
+		15 container
+			121 container 业务分类
+				122 container
+					123 checkbox 工作台, Value: 0
+					124 checkbox 供应链, Value: 0
+					125 checkbox 销售, Value: 1
+					126 checkbox 生产, Value: 0
+					127 checkbox 项目, Value: 0
+					128 checkbox 行政, Value: 0
+					129 checkbox 财务, Value: 0
+					130 checkbox 报表, Value: 0
+					131 checkbox 系统, Value: 0
+			25 button Description: 展开搜索, Help: 搜索
+				26 image
+			27 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+				28 image
+				132 text 20
+			29 button Description: 打开推广奖励, Help: 推广
+			30 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+			31 link Description: 打开工单, Value: community.risemap.cn/support
+			133 button 立即订阅, Help: 试用还剩 8 天 · 立即订阅享专属优惠
+				134 image
+				135 text 立即订阅
+			32 button 金
+				136 text 金
+				33 image
+		34 container
+			35 button 工作台
+				36 image
+				137 text 工作台
+			38 button 工作台
+				139 text 工作台
+			39 button 组装单
+				140 text 组装单
+			40 button 工作台
+				141 text 工作台
+			41 button 项目详情
+				142 text 项目详情
+			42 button 销售发货单
+				143 text 销售发货单
+			43 button 新建发货单
+				144 text 新建发货单
+			44 button 工作台
+				145 text 工作台
+			45 button 服务工单
+				146 text 服务工单
+			46 button 新建服务工单
+				147 text 新建服务工单
+			47 button 服务报价单
+				148 text 服务报价单
+			48 button 新建服务报价单
+				149 text 新建服务报价单
+			49 button 服务结算单
+				150 text 服务结算单
+			50 button 派工中心
+				151 text 派工中心
+			153 button 接单中心
+				154 text 接单中心
+		155 container
+			156 container
+				157 text 服务管理
+				158 image
+				159 text 接单中心
+				160 image
+				161 heading 接单中心, Value: 1
+					162 text 接单中心
+				163 text 今日行程、我的工单、业绩、备件与报价单
+			172 text 当前账号还没有关联的服务人员档案 工单与业绩都会是空的。请在「服务配置 → 服务人员」中新建一条档案并关联到你的员工。 如果你本来就不负责现场服务（客服、管理员），忽略这条提示即可。 今日计划上门 0 今日排程的工单数 待接单 0 等你接的派工 进行中 0 服务中 / 待协同 / 已挂起 今日已完工 0 本月完成 0 单 超时工单 0 本月平均响应 0 分
+			165 button 今日
+				166 text 今日
+			167 button 我的工单
+			168 button 业绩
+			169 button 我的备件
+			170 button 我的报价单
+			171 button 我的结算单
+			173 image
+			174 text 今日行程（09-14） 0 按计划上门时间升序，含今天已完工的单
+			175 image
+			176 text 今天没有已排期的上门 可在「我的工单」里给在办的单约上门时间
+			177 image
+			178 text 明日预告（09-15） 0
+			179 image
+			180 text 明天暂无排期
+			181 image
+			182 text 急单聚焦 0 未完结且停机 / 紧急 / 超时
+			183 image
+			184 text 没有停机、紧急或超时的工单
+			185 image
+			186 text 在办未排期 0 已接单、需预约但还没和客户约时间
+			187 image
+			188 text 在办的单都已约好时间
+			189 button 待接单 0 没有待接的派工 查看明细
+				190 text 待接单
+				191 text 0
+				192 text 没有待接的派工
+				193 text 查看明细
+			194 button 我的备件申请 0 无进行中的备件申请 查看明细
+				195 text 我的备件申请
+				196 text 0
+				197 text 无进行中的备件申请
+				198 text 查看明细
+			199 button 我的待处理报价 0 无待处理报价 查看明细
+				200 text 我的待处理报价
+				201 text 0
+				202 text 无待处理报价
+				203 text 查看明细
+			204 text 快捷入口
+			205 button 我的工单
+			206 button 新建服务工单
+		73 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+		74 container Notifications alt+T
+
+The focused UI element is 110 button 接单中心

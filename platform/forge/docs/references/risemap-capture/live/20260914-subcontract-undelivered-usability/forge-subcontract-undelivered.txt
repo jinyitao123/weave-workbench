@@ -1,0 +1,689 @@
+Browser tab: 54, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_subcontract_undelivered".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_subcontract_undelivered
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 委外未交 已连接
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_subcontract_undelivered
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 委外未交, Value: 1
+				44 text 委外未交
+			45 text 委外订单未交明细、超期预警和交期跟踪
+			46 heading 委外未交明细表, Value: 1
+				47 text 委外未交明细表
+			48 text 按行展开所有未回完的委外订单 — 锁定卡单、提前预警超期 未交订单数 23 含未交行的订单 未交明细行 23 随当前筛选变化 未交总数量 156 各 SKU 累加 未交金额 ¥ 4316.00 按加工单价估算
+			49 checkbox 超期行数 / 最长 0 / 0天, Value: 0
+				50 text 超期行数 / 最长 
+				51 text 0
+				52 text  / 
+				53 text 0
+				54 text 天
+			55 button 导出
+			56 button 刷新
+			57 text field (settable) 搜索委外订单 / 加工件 / 供应商
+			58 checkbox 全部, Value: 1
+			59 checkbox 超期, Value: 0
+			60 pop up button (collapsed) Description: 筛选供应商, Secondary Actions: Expand
+			61 pop up button (collapsed) Description: 工艺, Secondary Actions: Expand
+			62 table
+				63 row
+					64 cell
+						65 text 委外订单 / 供应商
+					66 cell
+						67 text 加工件
+					68 cell
+						69 text 规格
+					70 cell
+						71 text 工艺
+					72 cell
+						73 text 订单量
+					74 cell
+						75 text 已回（良/不良）
+					76 cell
+						77 text 未交
+					78 cell
+						79 text 未交金额
+					80 cell
+						81 text 期望交期
+					82 cell
+						83 text 超期
+					84 cell
+						85 text 订单状态
+					86 cell
+						87 text 操作
+				88 row
+					89 cell
+						90 button SC-ORDER-001
+						91 text 锐联钣金委外厂
+					92 cell
+						93 text 电控柜门板
+					94 cell
+						95 text 1200×600×2.0
+					96 cell
+						97 text 钣金折弯、喷涂
+					98 cell
+						99 text 10
+					100 cell
+						101 text 2  /  0
+					102 cell
+						103 text 8
+					104 cell
+						105 text ¥ 284.00
+					106 cell
+						107 text 2026-09-30
+					108 cell
+						109 text —
+					110 cell
+						111 text 进行中
+					112 cell
+						113 button 查看订单
+				114 row
+					115 cell
+						116 button SC-ORDER-20260913171741-002
+						117 text 锐联钣金委外厂
+					118 cell
+						119 text 电控柜门板
+					120 cell
+						121 text 1200×600×2.0
+					122 cell
+						123 text 激光打标
+					124 cell
+						125 text 5
+					126 cell
+						127 text 0  /  0
+					128 cell
+						129 text 5
+					130 cell
+						131 text ¥ 60.00
+					132 cell
+						133 text 2026-10-05
+					134 cell
+						135 text —
+					136 cell
+						137 text 已审核
+					138 cell
+						139 button 查看订单
+				140 row
+					141 cell
+						142 button SC-ORDER-20260913190635-001
+						143 text 锐联钣金委外厂
+					144 cell
+						145 text 电控柜门板
+					146 cell
+						147 text 1200×600×2.0
+					148 cell
+						149 text 钣金折弯、喷涂
+					150 cell
+						151 text 10
+					152 cell
+						153 text 0  /  0
+					154 cell
+						155 text 10
+					156 cell
+						157 text ¥ 355.00
+					158 cell
+						159 text 2026-09-30
+					160 cell
+						161 text —
+					162 cell
+						163 text 进行中
+					164 cell
+						165 button 查看订单
+				166 row
+					167 cell
+						168 button SC-ORDER-20260913172346-002
+						169 text 锐联钣金委外厂
+					170 cell
+						171 text 电控柜门板
+					172 cell
+						173 text 1200×600×2.0
+					174 cell
+						175 text 激光打标
+					176 cell
+						177 text 5
+					178 cell
+						179 text 0  /  0
+					180 cell
+						181 text 5
+					182 cell
+						183 text ¥ 60.00
+					184 cell
+						185 text 2026-10-05
+					186 cell
+						187 text —
+					188 cell
+						189 text 已审核
+					190 cell
+						191 button 查看订单
+				192 row
+					193 cell
+						194 button SC-ORDER-003
+						195 text 锐联钣金委外厂
+					196 cell
+						197 text 电控柜门板
+					198 cell
+						199 text 1200×600×2.0
+					200 cell
+						201 text 钣金折弯、喷涂
+					202 cell
+						203 text 5
+					204 cell
+						205 text 0  /  0
+					206 cell
+						207 text 5
+					208 cell
+						209 text ¥ 177.50
+					210 cell
+						211 text 2026-10-10
+					212 cell
+						213 text —
+					214 cell
+						215 text 进行中
+					216 cell
+						217 button 查看订单
+				218 row
+					219 cell
+						220 button SC-ORDER-20260913190811-002
+						221 text 锐联钣金委外厂
+					222 cell
+						223 text 电控柜门板
+					224 cell
+						225 text 1200×600×2.0
+					226 cell
+						227 text 激光打标
+					228 cell
+						229 text 5
+					230 cell
+						231 text 0  /  0
+					232 cell
+						233 text 5
+					234 cell
+						235 text ¥ 60.00
+					236 cell
+						237 text 2026-10-05
+					238 cell
+						239 text —
+					240 cell
+						241 text 已审核
+					242 cell
+						243 button 查看订单
+				244 row
+					245 cell
+						246 button SC-ORDER-20260913190728-002
+						247 text 锐联钣金委外厂
+					248 cell
+						249 text 电控柜门板
+					250 cell
+						251 text 1200×600×2.0
+					252 cell
+						253 text 激光打标
+					254 cell
+						255 text 5
+					256 cell
+						257 text 0  /  0
+					258 cell
+						259 text 5
+					260 cell
+						261 text ¥ 60.00
+					262 cell
+						263 text 2026-10-05
+					264 cell
+						265 text —
+					266 cell
+						267 text 已审核
+					268 cell
+						269 button 查看订单
+				270 row
+					271 cell
+						272 button SC-ORDER-20260913171342-002
+						273 text 锐联钣金委外厂
+					274 cell
+						275 text 电控柜门板
+					276 cell
+						277 text 1200×600×2.0
+					278 cell
+						279 text 激光打标
+					280 cell
+						281 text 5
+					282 cell
+						283 text 0  /  0
+					284 cell
+						285 text 5
+					286 cell
+						287 text ¥ 60.00
+					288 cell
+						289 text 2026-10-05
+					290 cell
+						291 text —
+					292 cell
+						293 text 已审核
+					294 cell
+						295 button 查看订单
+				296 row
+					297 cell
+						298 button SC-ORDER-20260913172346-001
+						299 text 锐联钣金委外厂
+					300 cell
+						301 text 电控柜门板
+					302 cell
+						303 text 1200×600×2.0
+					304 cell
+						305 text 钣金折弯、喷涂
+					306 cell
+						307 text 10
+					308 cell
+						309 text 2  /  0
+					310 cell
+						311 text 8
+					312 cell
+						313 text ¥ 284.00
+					314 cell
+						315 text 2026-09-30
+					316 cell
+						317 text —
+					318 cell
+						319 text 进行中
+					320 cell
+						321 button 查看订单
+				322 row
+					323 cell
+						324 button SC-ORDER-20260913171455-001
+						325 text 锐联钣金委外厂
+					326 cell
+						327 text 电控柜门板
+					328 cell
+						329 text 1200×600×2.0
+					330 cell
+						331 text 钣金折弯、喷涂
+					332 cell
+						333 text 10
+					334 cell
+						335 text 2  /  1
+					336 cell
+						337 text 7
+					338 cell
+						339 text ¥ 248.50
+					340 cell
+						341 text 2026-09-30
+					342 cell
+						343 text —
+					344 cell
+						345 text 进行中
+					346 cell
+						347 button 查看订单
+				348 row
+					349 cell
+						350 button SC-ORDER-20260913190811-001
+						351 text 锐联钣金委外厂
+					352 cell
+						353 text 电控柜门板
+					354 cell
+						355 text 1200×600×2.0
+					356 cell
+						357 text 钣金折弯、喷涂
+					358 cell
+						359 text 10
+					360 cell
+						361 text 0  /  0
+					362 cell
+						363 text 10
+					364 cell
+						365 text ¥ 355.00
+					366 cell
+						367 text 2026-09-30
+					368 cell
+						369 text —
+					370 cell
+						371 text 进行中
+					372 cell
+						373 button 查看订单
+				374 row
+					375 cell
+						376 button SC-ORDER-20260913190635-002
+						377 text 锐联钣金委外厂
+					378 cell
+						379 text 电控柜门板
+					380 cell
+						381 text 1200×600×2.0
+					382 cell
+						383 text 激光打标
+					384 cell
+						385 text 5
+					386 cell
+						387 text 0  /  0
+					388 cell
+						389 text 5
+					390 cell
+						391 text ¥ 60.00
+					392 cell
+						393 text 2026-10-05
+					394 cell
+						395 text —
+					396 cell
+						397 text 已审核
+					398 cell
+						399 button 查看订单
+				400 row
+					401 cell
+						402 button SC-ORDER-20260913190728-001
+						403 text 锐联钣金委外厂
+					404 cell
+						405 text 电控柜门板
+					406 cell
+						407 text 1200×600×2.0
+					408 cell
+						409 text 钣金折弯、喷涂
+					410 cell
+						411 text 10
+					412 cell
+						413 text 0  /  0
+					414 cell
+						415 text 10
+					416 cell
+						417 text ¥ 355.00
+					418 cell
+						419 text 2026-09-30
+					420 cell
+						421 text —
+					422 cell
+						423 text 进行中
+					424 cell
+						425 button 查看订单
+				426 row
+					427 cell
+						428 button SC-ORDER-002
+						429 text 锐联钣金委外厂
+					430 cell
+						431 text 电控柜门板
+					432 cell
+						433 text 1200×600×2.0
+					434 cell
+						435 text 激光打标
+					436 cell
+						437 text 5
+					438 cell
+						439 text 2  /  1
+					440 cell
+						441 text 2
+					442 cell
+						443 text ¥ 24.00
+					444 cell
+						445 text 2026-10-05
+					446 cell
+						447 text —
+					448 cell
+						449 text 进行中
+					450 cell
+						451 button 查看订单
+				452 row
+					453 cell
+						454 button SC-ORDER-20260913171359-002
+						455 text 锐联钣金委外厂
+					456 cell
+						457 text 电控柜门板
+					458 cell
+						459 text 1200×600×2.0
+					460 cell
+						461 text 激光打标
+					462 cell
+						463 text 5
+					464 cell
+						465 text 0  /  0
+					466 cell
+						467 text 5
+					468 cell
+						469 text ¥ 60.00
+					470 cell
+						471 text 2026-10-05
+					472 cell
+						473 text —
+					474 cell
+						475 text 已审核
+					476 cell
+						477 button 查看订单
+				478 row
+					479 cell
+						480 button SC-ORDER-20260913172030-002
+						481 text 锐联钣金委外厂
+					482 cell
+						483 text 电控柜门板
+					484 cell
+						485 text 1200×600×2.0
+					486 cell
+						487 text 激光打标
+					488 cell
+						489 text 5
+					490 cell
+						491 text 0  /  0
+					492 cell
+						493 text 5
+					494 cell
+						495 text ¥ 60.00
+					496 cell
+						497 text 2026-10-05
+					498 cell
+						499 text —
+					500 cell
+						501 text 已审核
+					502 cell
+						503 button 查看订单
+				504 row
+					505 cell
+						506 button SC-ORDER-20260913171544-001
+						507 text 锐联钣金委外厂
+					508 cell
+						509 text 电控柜门板
+					510 cell
+						511 text 1200×600×2.0
+					512 cell
+						513 text 钣金折弯、喷涂
+					514 cell
+						515 text 10
+					516 cell
+						517 text 0  /  0
+					518 cell
+						519 text 10
+					520 cell
+						521 text ¥ 355.00
+					522 cell
+						523 text 2026-09-30
+					524 cell
+						525 text —
+					526 cell
+						527 text 进行中
+					528 cell
+						529 button 查看订单
+				530 row
+					531 cell
+						532 button SC-ORDER-20260913171741-001
+						533 text 锐联钣金委外厂
+					534 cell
+						535 text 电控柜门板
+					536 cell
+						537 text 1200×600×2.0
+					538 cell
+						539 text 钣金折弯、喷涂
+					540 cell
+						541 text 10
+					542 cell
+						543 text 2  /  0
+					544 cell
+						545 text 8
+					546 cell
+						547 text ¥ 284.00
+					548 cell
+						549 text 2026-09-30
+					550 cell
+						551 text —
+					552 cell
+						553 text 进行中
+					554 cell
+						555 button 查看订单
+				556 row
+					557 cell
+						558 button SC-ORDER-20260913171342-001
+						559 text 锐联钣金委外厂
+					560 cell
+						561 text 电控柜门板
+					562 cell
+						563 text 1200×600×2.0
+					564 cell
+						565 text 钣金折弯、喷涂
+					566 cell
+						567 text 10
+					568 cell
+						569 text 0  /  0
+					570 cell
+						571 text 10
+					572 cell
+						573 text ¥ 355.00
+					574 cell
+						575 text 2026-09-30
+					576 cell
+						577 text —
+					578 cell
+						579 text 已审核
+					580 cell
+						581 button 查看订单
+				582 row
+					583 cell
+						584 button SC-ORDER-20260913171359-001
+						585 text 锐联钣金委外厂
+					586 cell
+						587 text 电控柜门板
+					588 cell
+						589 text 1200×600×2.0
+					590 cell
+						591 text 钣金折弯、喷涂
+					592 cell
+						593 text 10
+					594 cell
+						595 text 0  /  0
+					596 cell
+						597 text 10
+					598 cell
+						599 text ¥ 355.00
+					600 cell
+						601 text 2026-09-30
+					602 cell
+						603 text —
+					604 cell
+						605 text 进行中
+					606 cell
+						607 button 查看订单
+				608 row
+					609 cell
+						610 button SC-ORDER-20260913172030-001
+						611 text 锐联钣金委外厂
+					612 cell
+						613 text 电控柜门板
+					614 cell
+						615 text 1200×600×2.0
+					616 cell
+						617 text 钣金折弯、喷涂
+					618 cell
+						619 text 10
+					620 cell
+						621 text 2  /  0
+					622 cell
+						623 text 8
+					624 cell
+						625 text ¥ 284.00
+					626 cell
+						627 text 2026-09-30
+					628 cell
+						629 text —
+					630 cell
+						631 text 进行中
+					632 cell
+						633 button 查看订单
+				634 row
+					635 cell
+						636 button SC-ORDER-20260913171544-002
+						637 text 锐联钣金委外厂
+					638 cell
+						639 text 电控柜门板
+					640 cell
+						641 text 1200×600×2.0
+					642 cell
+						643 text 激光打标
+					644 cell
+						645 text 5
+					646 cell
+						647 text 0  /  0
+					648 cell
+						649 text 5
+					650 cell
+						651 text ¥ 60.00
+					652 cell
+						653 text 2026-10-05
+					654 cell
+						655 text —
+					656 cell
+						657 text 已审核
+					658 cell
+						659 button 查看订单
+				660 row
+					661 cell
+						662 button SC-ORDER-20260913171455-002
+						663 text 锐联钣金委外厂
+					664 cell
+						665 text 电控柜门板
+					666 cell
+						667 text 1200×600×2.0
+					668 cell
+						669 text 激光打标
+					670 cell
+						671 text 5
+					672 cell
+						673 text 0  /  0
+					674 cell
+						675 text 5
+					676 cell
+						677 text ¥ 60.00
+					678 cell
+						679 text 2026-10-05
+					680 cell
+						681 text —
+					682 cell
+						683 text 已审核
+					684 cell
+						685 button 查看订单
+			686 text 共  23  条记录 未交量 = 订单量 − 已回良品 − 已回不良。已完工、已对账、已取消订单不计入本表。
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_subcontract_undelivered

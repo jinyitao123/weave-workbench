@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_bank_flow",
+  "archetype": "analysis",
+  "reviewedRevision": "a08bc26ad074f0bbc7af2e201e99527f1b80d7a4",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/bank-flow.page.ts": "a9bdd691ad05bbcc0e3f0166bf5230a182a9cdafcdfef37a5200e6cd1f9c693e",
+    "apps/forge-objectstack/src/pages/project-timesheet-cost.page.ts": "30a4c571452ed91e0e0580361d6665f12f9c0394a829ea248246dbceceb50b11",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "40eaaa7f083dddad9cfab05e91519ea87277b4ab2a9fae5c57e17f2221f4ce68",
+    "docs/forge-page-polish-baseline.md": "87391dcd1a7e8feefa96b358d42815d22e0eedebf578d0ff0e470550b0d45eb4"
+  },
+  "environment": {
+    "forgeUrl": "http://localhost:4461",
+    "database": "apps/forge-objectstack/.objectstack/finance-page-polish2.sqlite",
+    "materials": "Empty local finance ledger on the page-polish2 branch, used to measure the narrow-screen layout only"
+  },
+  "checks": {
+    "replication": {
+      "status": "blocked",
+      "notes": "本轮为窄屏布局整改，未重新打开 RISEMAP 实时页面；本页业务结构与文案仍以既有页面合同的观察结论为准。",
+      "evidence": [
+        "docs/evidence/finance-narrow-metrics-20260917/acceptance.md"
+      ]
+    },
+    "visual": {
+      "status": "pass",
+      "notes": "390×844 实测指标区由 322px 单列 / 块高 457 变为 157px 两列 / 块高 190，同一视口前后截图对照，页面无横向溢出；独立视觉复核未发生。",
+      "evidence": [
+        "docs/evidence/finance-narrow-metrics-20260917/bank_flow-narrow-390x844-before.png",
+        "docs/evidence/finance-narrow-metrics-20260917/bank_flow-narrow-390x844-after.png",
+        "docs/evidence/finance-narrow-metrics-20260917/acceptance.md"
+      ]
+    },
+    "interaction": {
+      "status": "pending",
+      "notes": "本轮只调整窄屏指标布局，没有改动按钮、筛选或弹窗行为；该页交互完整性沿用既有业务链记录，尚未在本轮重新操作。",
+      "evidence": [
+        "docs/evidence/finance-narrow-metrics-20260917/acceptance.md"
+      ]
+    },
+    "business": {
+      "status": "pending",
+      "notes": "本轮不涉及业务数据与状态流转，业务正确性沿用既有业务链记录。",
+      "evidence": [
+        "docs/evidence/finance-narrow-metrics-20260917/acceptance.md"
+      ]
+    }
+  },
+  "visualEvidence": {
+    "desktop": {
+      "width": 1440,
+      "height": 900,
+      "evidence": [
+        "docs/evidence/finance-narrow-metrics-20260917/bank_flow-narrow-390x844-after.png"
+      ]
+    },
+    "narrow": {
+      "width": 390,
+      "height": 844,
+      "evidence": [
+        "docs/evidence/finance-narrow-metrics-20260917/bank_flow-narrow-390x844-before.png",
+        "docs/evidence/finance-narrow-metrics-20260917/bank_flow-narrow-390x844-after.png"
+      ]
+    },
+    "reference": [],
+    "populated": [],
+    "empty": [],
+    "form": [],
+    "error": []
+  },
+  "requirements": [
+    {
+      "id": "BANK_FLOW-NARROW-001",
+      "status": "pass",
+      "steps": "在 390×844 打开页面，读取指标容器计算列数与高度，并与整改前截图对照。",
+      "expected": "窄屏指标保持两列紧凑，不逐张堆叠，主工作区尽早上移。",
+      "observed": "整改前 322px 单列 / 块高 457；整改后 157px 两列 / 块高 190；同一视口前后截图，无横向溢出。",
+      "evidence": [
+        "docs/evidence/finance-narrow-metrics-20260917/bank_flow-narrow-390x844-before.png",
+        "docs/evidence/finance-narrow-metrics-20260917/bank_flow-narrow-390x844-after.png"
+      ]
+    }
+  ],
+  "review": {
+    "implementer": "codex",
+    "reviewer": "",
+    "reviewedAt": "",
+    "status": "pending",
+    "evidence": []
+  }
+}

@@ -1,0 +1,145 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同":
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "附加费用":
+    - generic: 附加费用
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "联系人管理":
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+  - button "服务管理":
+    - generic: 服务管理
+  - button "服务工单":
+    - generic: 服务工单
+  - button "服务报价单" [active]:
+    - generic: 服务报价单
+  - button "服务结算单":
+    - generic: 服务结算单
+  - button "接单中心":
+    - generic: 接单中心
+  - button "派工中心":
+    - generic: 派工中心
+  - button "服务分析":
+    - generic: 服务分析
+  - button "质保管理":
+    - generic: 质保管理
+  - button "服务配置":
+    - generic: 服务配置
+- generic: 免费试用中，还剩 9 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，18 条未读":
+    - generic: "18"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "Goodwill订单":
+  - generic: Goodwill订单
+- button "销售发货单":
+  - generic: 销售发货单
+- button "销售团队":
+  - generic: 销售团队
+- button "销售目标":
+  - generic: 销售目标
+- button "客户管理":
+  - generic: 客户管理
+- button "联系人管理":
+  - generic: 联系人管理
+- button "销售报价":
+  - generic: 销售报价
+- button "客户物料对照":
+  - generic: 客户物料对照
+- button "商机管理":
+  - generic: 商机管理
+- button "线索管理":
+  - generic: 线索管理
+- button "跟进记录":
+  - generic: 跟进记录
+- button "公海客户":
+  - generic: 公海客户
+- button "服务工单":
+  - generic: 服务工单
+- button "服务报价单":
+  - generic: 服务报价单
+- main:
+  - generic: 服务管理
+  - generic: 服务报价单
+  - heading "服务报价单" [level=1]
+  - paragraph: 集中管理服务报价、客户确认和报价转结算
+  - button "新增服务报价单":
+    - text: 新增服务报价单
+  - textbox "报价单号 / 工单号 / 客户 / 联系人"
+  - button "全部状态":
+    - generic "全部状态"
+  - generic: 暂无符合条件的报价单
+- button "打开 AI 助手"
+- region "Notifications alt+T"

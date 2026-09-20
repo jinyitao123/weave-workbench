@@ -1,0 +1,210 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/purchase/returns".
+1 AXWebArea RiseMap, URL: risemap.cn/purchase/returns
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				87 button 到货检验
+					88 image
+					89 text 到货检验
+					90 image
+				91 button
+				92 button
+				93 button
+				94 button
+				95 button
+				96 button 基础资料
+					97 image
+					98 text 基础资料
+					99 image
+				100 button
+				101 button
+				102 button
+				103 button
+				104 button
+				105 button
+				106 button
+				107 button 采购管理
+					108 image
+					109 text 采购管理
+					110 image
+				111 button 采购发票
+				112 button 采购申请
+				113 button 采购待办池
+				114 button 询价管理
+				115 button 采购订单
+				116 button 采购退换货
+				117 button 供应商价格本
+				118 button 入库管理
+					119 image
+					120 text 入库管理
+					121 image
+				122 button
+				123 button
+				124 button
+				125 button
+				126 button
+				127 button
+				128 button 库存管理
+					129 image
+					130 text 库存管理
+					131 image
+				132 button
+				133 button
+				134 button
+				135 button
+				136 button
+				137 button
+				138 button
+				139 button
+				140 button
+				141 button
+				142 button 出库管理
+					143 image
+					144 text 出库管理
+					145 image
+				146 button
+				147 button
+				148 button
+				149 button
+				150 button
+				151 button
+				152 button
+			17 container
+				153 container 业务分类
+					154 container
+						155 checkbox 工作台, Value: 0
+						156 checkbox 供应链, Value: 1
+						157 checkbox 销售, Value: 0
+						158 checkbox 生产, Value: 0
+						159 checkbox 项目, Value: 0
+						160 checkbox 行政, Value: 0
+						161 checkbox 财务, Value: 0
+						162 checkbox 报表, Value: 0
+						163 checkbox 系统, Value: 0
+				28 button Description: 展开搜索, Help: 搜索
+					29 image
+				30 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+					31 image
+					164 text 20
+				32 button Description: 打开推广奖励, Help: 推广
+				33 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				34 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				165 button 立即订阅
+					166 image
+				35 button 金
+					167 text 金
+					36 image
+			37 container
+				38 button 工作台
+					39 image
+					168 text 工作台
+				40 button 采购订单
+					169 text 采购订单
+				41 button 销售订单
+					170 text 销售订单
+				42 button 组装单
+					171 text 组装单
+				43 button 工作台
+					172 text 工作台
+				44 button 领料单
+					173 text 领料单
+				45 button 补料单
+					174 text 补料单
+				46 button 退料单
+					175 text 退料单
+				47 button 拆解单
+					176 text 拆解单
+				48 button 换件单
+					177 text 换件单
+				49 button 到货登记
+					178 text 到货登记
+				50 button 待检验库存
+					179 text 待检验库存
+				51 button 检验单
+					180 text 检验单
+				52 button 采购入库
+					181 text 采购入库
+				53 button 采购退货
+					182 text 采购退货
+			54 container
+				55 container
+					183 text 采购管理
+					56 image
+					184 text 采购退换货
+					57 image
+					58 heading 采购退换货, Value: 1
+						185 text 采购退换货
+					186 text 处理质量不符/规格异常的退货流程，跟进供应商退款
+				59 button 新建退换货
+					60 image
+					187 text 新建退换货
+				61 button 导出
+					62 image
+					188 text 导出
+					63 image
+				64 button 导入/导出任务
+				65 button 刷新
+					66 image
+				67 button
+					68 image
+				69 button
+					70 image
+				71 image
+				72 text field (settable)
+				73 button 全部
+				74 button 退货退款
+				75 button 换货补货
+				76 button 状态
+					77 image
+					189 text 状态
+					78 image
+				79 table
+					80 row
+						81 cell
+							82 checkbox (settable, integer) 0
+						190 cell
+							191 text 退货单号
+							192 image
+						193 cell
+							194 text 关联订单
+						195 cell
+							196 text 供应商
+							197 image
+						198 cell
+							199 text 处理方式
+						200 cell
+							201 text 换货进度
+						202 cell
+							203 text 预计补货日期
+						204 cell
+							205 text 退货原因
+						206 cell
+							207 text 物料数
+						208 cell
+							209 text 退款 / 参考货值
+							210 image
+						211 cell
+							212 text 状态
+							213 image
+						214 cell
+							215 text 退货日期
+							216 image
+						217 cell
+							218 text 操作
+				219 text 共  0 条记录 每页
+				83 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					220 text 20
+				221 text 条
+				222 button (disabled) 上一页
+					223 image
+				84 button 1
+				224 button (disabled) 下一页
+					225 image
+			85 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			86 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/purchase/returns

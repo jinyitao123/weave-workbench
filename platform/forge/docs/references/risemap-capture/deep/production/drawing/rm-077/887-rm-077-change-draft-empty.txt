@@ -1,0 +1,263 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/drawing/changes/new".
+0 AXWebArea RiseMap, URL: risemap.cn/drawing/changes/new
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 生产
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 组装业务管理
+					9 image
+					10 text 组装业务管理
+					11 image
+				12 button 组装单
+				13 button 缺料待办
+				14 button 领料单
+				15 button 补料单
+				16 button 退料单
+				17 button 拆解单
+				18 button 换件单
+				19 container
+					20 button 图纸管理
+						21 image
+						22 text 图纸管理
+						23 image
+					24 button 进入图纸管理上手指南
+						25 image
+				26 button 图纸总览
+				27 button 图号档案
+				28 button 图纸评审
+				29 button 图纸发布
+				30 button 图纸变更
+				31 button 图纸发放记录
+				32 button 图纸关联查询
+				33 button 客户图纸
+				34 container
+					35 button 委外管理
+						36 image
+						37 text 委外管理
+						38 image
+					39 button 进入委外管理上手指南
+						40 image
+				41 button 委外看板
+				42 button 委外订单
+				43 button 委外发料
+				44 button 委外回厂
+				45 button 委外退料
+				46 button 委外对账
+				47 button 委外供应商
+				48 button 委外库存
+				49 button 批次追溯
+				50 button 委外未交
+				51 button 委外进货
+				52 button 委外对账单
+			53 image
+			54 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			55 button 查看方案
+				56 image
+				57 text 查看方案
+			58 button
+				59 image
+			60 container
+				61 container 业务分类
+					62 checkbox 工作台, Value: 0
+					63 checkbox 供应链, Value: 0
+					64 checkbox 销售, Value: 0
+					65 checkbox 生产, Value: 1
+					66 checkbox 项目, Value: 0
+					67 checkbox 行政, Value: 0
+					68 checkbox 财务, Value: 0
+					69 checkbox 报表, Value: 0
+					70 checkbox 系统, Value: 0
+				71 button Description: 展开搜索, Help: 搜索
+					72 image
+				73 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					74 image
+					75 text 2
+				76 button Description: 打开推广奖励, Help: 推广
+				77 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				78 link Description: 打开工单, Value: community.risemap.cn/support
+				79 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					80 image
+					81 text 立即订阅
+				82 button 金
+					83 text 金
+					84 image
+			85 container
+				86 button 工作台
+					87 image
+					88 text 工作台
+				99 button 拆解单
+					100 text 拆解单
+				101 button 新建拆解单
+					102 text 新建拆解单
+				103 button 换件单
+					104 text 换件单
+				105 button 新建换件单
+					106 text 新建换件单
+				107 button 图纸管理上手指南
+					108 text 图纸管理上手指南
+				109 button 图纸总览
+					110 text 图纸总览
+				111 button 新建图号档案
+					112 text 新建图号档案
+				113 button 图号档案
+					114 text 图号档案
+				115 button 图纸评审
+					116 text 图纸评审
+				201 button 新建评审
+					202 text 新建评审
+				203 button 图纸发布
+					204 text 图纸发布
+				205 button 已发布记录
+					206 text 已发布记录
+				207 button 图纸变更
+					208 text 图纸变更
+				209 button 新建变更
+					210 text 新建变更
+			211 container
+				212 text 图纸管理
+				213 image
+				214 text 图纸变更
+				215 image
+				216 text 发起变更
+				217 button 返回图纸变更列表
+					218 image
+				219 heading 发起图纸变更, Value: 1
+					220 text 发起图纸变更
+				221 button 保存草稿
+					222 image
+					223 text 保存草稿
+				224 button 提交审批
+					225 image
+					226 text 提交审批
+				227 heading 基础信息, Value: 2
+					228 text 基础信息
+				229 text 变更单号
+				230 text field (disabled) 系统自动生成
+				231 container
+					232 text * 关联图号
+				233 button 搜索并选择图号...
+					234 text 搜索并选择图号...
+				235 text 图纸名称
+				236 text 原版本
+				237 text 目标版本
+				238 text field (settable)
+				239 container
+					240 text * 变更类型
+				241 button 请选择变更类型
+					242 text 请选择变更类型
+				243 container
+					244 text * 变更等级
+				245 button 请选择变更等级
+					246 text 请选择变更等级
+				247 container
+					248 checkbox (settable, integer) Description: 是否紧急, Value: 0
+					249 text 是否紧急
+				250 text 申请人
+				251 text field (disabled) 金一涛
+				252 text 申请部门
+				253 text field (disabled) 默认部门
+				254 text 申请日期
+				255 text field (disabled) 2026-09-09
+				256 heading 变更原因, Value: 2
+					257 text 变更原因
+				258 container
+					259 text * 问题描述
+				260 text entry area (settable)
+				261 container
+					262 text * 变更原因
+				263 text entry area (settable)
+				264 text 背景说明
+				265 text entry area (settable)
+				266 container
+					267 checkbox (settable, integer) Description: 是否涉及客户要求, Value: 0
+					268 text 是否涉及客户要求
+				269 container
+					270 checkbox (settable, integer) Description: 是否涉及质量问题, Value: 0
+					271 text 是否涉及质量问题
+				272 container
+					273 checkbox (settable, integer) Description: 是否涉及降本, Value: 0
+					274 text 是否涉及降本
+				275 container
+					276 checkbox (settable, integer) Description: 是否涉及工艺优化, Value: 0
+					277 text 是否涉及工艺优化
+				278 heading 影响分析, Value: 2
+					279 text 影响分析
+				280 container
+					281 checkbox (settable, integer) Description: 是否影响功能, Value: 0
+					282 text 是否影响功能
+				283 container
+					284 checkbox (settable, integer) Description: 是否影响互换性, Value: 0
+					285 text 是否影响互换性
+				286 container
+					287 checkbox (settable, integer) Description: 是否影响采购, Value: 0
+					288 text 是否影响采购
+				289 container
+					290 checkbox (settable, integer) Description: 是否影响BOM, Value: 0
+					291 text 是否影响BOM
+				292 container
+					293 checkbox (settable, integer) Description: 是否影响库存, Value: 0
+					294 text 是否影响库存
+				295 container
+					296 checkbox (settable, integer) Description: 是否影响在制业务, Value: 0
+					297 text 是否影响在制业务
+				298 container
+					299 checkbox (settable, integer) Description: 是否影响已交付设备, Value: 0
+					300 text 是否影响已交付设备
+				301 container
+					302 checkbox (settable, integer) Description: 是否影响售后备件, Value: 0
+					303 text 是否影响售后备件
+				304 container
+					305 checkbox (settable, integer) Description: 是否需要切换供应商, Value: 0
+					306 text 是否需要切换供应商
+				307 container
+					308 text * 处理建议
+				309 text entry area (settable)
+				310 heading 附件区, Value: 2
+					311 text 附件区
+				312 image
+				313 text 新版图纸文件
+				314 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 DWG, PDF, STP 格式
+					315 image
+					316 text 点击或拖拽文件到此处上传
+					317 text 支持 Ctrl+V 粘贴截图
+					318 text 支持 DWG, PDF, STP 格式
+				319 image
+				320 text 变更说明文件
+				321 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 DOC, PDF, JPG 格式
+					322 image
+					323 text 点击或拖拽文件到此处上传
+					324 text 支持 Ctrl+V 粘贴截图
+					325 text 支持 DOC, PDF, JPG 格式
+				326 image
+				327 text 对比说明文件
+				328 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 DOC, PDF, JPG 格式
+					329 image
+					330 text 点击或拖拽文件到此处上传
+					331 text 支持 Ctrl+V 粘贴截图
+					332 text 支持 DOC, PDF, JPG 格式
+				333 image
+				334 text 其他附件
+				335 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持常见文件格式
+					336 image
+					337 text 点击或拖拽文件到此处上传
+					338 text 支持 Ctrl+V 粘贴截图
+					339 text 支持常见文件格式
+				340 heading 关联处理建议, Value: 2
+					341 text 关联处理建议
+				342 text 关联采购单处理建议
+				343 text entry area (settable)
+				344 text 关联BOM处理建议
+				345 text entry area (settable)
+				346 text 关联库存处理建议
+				347 text entry area (settable)
+				348 text 关联项目/订单处理建议
+				349 text entry area (settable)
+				350 text 生效建议说明
+				351 text entry area (settable)
+			199 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+
+The focused UI element is 0 AXWebArea RiseMap, URL: risemap.cn/drawing/changes/new

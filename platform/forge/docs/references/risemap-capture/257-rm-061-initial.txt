@@ -1,0 +1,195 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/opportunities".
+0 AXWebArea RiseMap, URL: risemap.cn/sales/opportunities
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 销售
+			5 button 收起侧边栏
+				6 image
+			7 container
+				307 button 销售业务
+					308 image
+					309 text 销售业务
+					310 image
+				311 button 框架销售合同
+				312 button 销售订单
+				313 button 收款流水
+				314 button 销售发货单
+				315 button 销售退货
+				316 button 业绩银行
+				317 button 价格策略
+				318 button Goodwill订单
+				319 button 销售团队
+				320 button 销售目标
+				321 button 销售发票
+				322 button CRM客户管理
+					323 image
+					324 text CRM客户管理
+					325 image
+				326 button 客户管理
+				327 button 联系人管理
+				328 button 销售报价
+				329 button 客户物料对照
+				330 button 商机管理
+				331 button 线索管理
+				332 button 跟进记录
+				333 button 公海客户
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 1
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				338 button 收款流水
+					339 text 收款流水
+				340 button 销售发货单
+					341 text 销售发货单
+				342 button 销售退货
+					343 text 销售退货
+				344 button 业绩银行
+					345 text 业绩银行
+				346 button 价格策略
+					347 text 价格策略
+				348 button Goodwill订单
+					349 text Goodwill订单
+				350 button 销售团队
+					351 text 销售团队
+				352 button 销售目标
+					353 text 销售目标
+				354 button 销售发票
+					355 text 销售发票
+				356 button 客户管理
+					357 text 客户管理
+				358 button 联系人管理
+					359 text 联系人管理
+				360 button 销售报价
+					361 text 销售报价
+				362 button 客户物料对照
+					363 text 客户物料对照
+				364 button 商机管理
+					365 text 商机管理
+			366 container
+				367 container
+					368 text CRM客户管理
+					369 image
+					370 text 商机管理
+					371 image
+					372 heading 商机管理, Value: 1
+						373 text 商机管理
+					374 text 跟踪和管理所有销售商机，推进成交转化
+				375 button 新建商机
+					376 image
+					377 text 新建商机
+				378 button 导入/导出
+					379 image
+					380 text 导入/导出
+					381 image
+				382 radio button 列表, Value: 1, ID: :r10m:-list
+				383 radio button 看板, Value: 0, ID: :r10m:-kanban
+				384 button
+					385 image
+				386 button 刷新
+					387 image
+				388 button
+					389 image
+				390 button
+					391 image
+				392 image
+				393 text field (settable)
+				394 button 范围
+					395 image
+					396 text 范围
+					397 image
+				398 button 阶段
+					399 text 阶段
+					400 image
+				401 button 来源
+					402 text 来源
+					403 image
+				404 table
+					405 row
+						406 cell
+							407 checkbox (settable, integer) 0
+						408 cell
+							409 text 商机名称
+						410 cell
+							411 text 客户名称
+						412 cell
+							413 text 联系人姓名
+						414 cell
+							415 text 职务
+						416 cell
+							417 text 联系电话
+						418 cell
+							419 text 邮箱
+						420 cell
+							421 text 商机阶段
+						422 cell
+							423 text 来源
+						424 cell
+							425 text 商机描述
+						426 cell
+							427 text 竞争对手
+						428 cell
+							429 text 红绿灯
+						430 cell
+							431 text 优先级
+						432 cell
+							433 text 商机金额
+							434 image
+						435 cell
+							436 text 成功率
+						437 cell
+							438 text 预计成交日期
+							439 image
+						440 cell
+							441 text 负责人
+						442 cell
+							443 text 操作
+					444 row
+						445 cell
+							446 image
+							447 text 暂无匹配的商机
+				448 text 共  0 条记录 每页
+				449 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					450 text 20
+				451 text 条
+				452 button (disabled) 上一页
+					453 image
+				454 button 1
+				455 button (disabled) 下一页
+					456 image
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 330 button 商机管理

@@ -1,0 +1,125 @@
+- region "通知 alt+T"
+- banner:
+  - link "ObjectOS":
+    - /url: /_console/apps/forge
+  - generic "本平台处于预览版，功能可能调整。": 预览版
+  - button "切换侧边栏":
+    - generic: 切换侧边栏
+  - generic: /
+  - button "Forge":
+    - generic: Forge
+  - generic: /
+  - link "页面":
+    - /url: /_console/apps/forge
+  - generic: /
+  - generic: 服务工单
+  - button "搜索…":
+  - button "打开消息中心":
+  - link "在 Studio 中设计":
+    - /url: /_console/studio/forge/interfaces?surface=page:page_service_orders
+  - button "帮助与文档":
+  - button "DA":
+    - generic: DA
+- text: 区域
+- list:
+  - button "工作台":
+    - generic: 工作台
+  - button "供应链":
+    - generic: 供应链
+  - button "销售":
+    - generic: 销售
+  - button "生产":
+    - generic: 生产
+  - button "项目":
+    - generic: 项目
+  - button "行政":
+    - generic: 行政
+  - button "财务":
+    - generic: 财务
+  - button "报表":
+    - generic: 报表
+  - button "系统":
+    - generic: 系统
+- button "工作台" [expanded]:
+  - text: 工作台
+- list:
+  - link "工作台":
+    - /url: /_console/apps/forge/page/page_workbench
+    - generic: 工作台
+  - link "待办管理":
+    - /url: /_console/apps/forge/page/page_workbench
+    - generic: 待办管理
+  - link "AI 广场":
+    - /url: /_console/apps/forge/page/page_workspace_recovery_status
+    - generic: AI 广场
+  - link "引导中心":
+    - /url: /_console/apps/forge/page/page_workspace_recovery_status
+    - generic: 引导中心
+- text: 最近使用
+- button "切换侧边栏":
+  - generic: 切换侧边栏
+- main:
+  - main:
+    - button "在 Studio 中编辑":
+    - heading "服务工单" [level=1]
+    - paragraph: 统一管理客户报修、安装调试、巡检保养、备件更换和有偿服务
+    - generic: "21"
+    - strong: 服务管理 / 服务工单
+    - button "服务配置"
+    - button "派工中心"
+    - button "新建服务工单" [active]
+    - button "刷新"
+    - generic: 统一管理客户报修、安装调试、巡检保养、备件更换和有偿服务
+    - heading "服务工单" [level=1]
+    - status: 已补入服务类型和服务人员
+    - generic: 工单总数
+    - generic: "0"
+    - generic: 待分派
+    - generic: "0"
+    - generic: 待接单
+    - generic: "0"
+    - generic: 服务中
+    - generic: "0"
+    - button "工单列表"
+    - button "服务中"
+    - button "已完工"
+    - textbox "搜索服务工单":
+      - /placeholder: 工单号 / 客户 / 标题 / 联系人
+    - button "全部类型":
+      - generic: 请选择
+      - generic: ⌄
+    - button "全部状态":
+      - generic: 请选择
+      - generic: ⌄
+    - button "清空筛选"
+    - table:
+      - rowgroup:
+        - row "工单信息 客户信息 服务属性 质保 / 报价 状态 工程师 时效信息 操作":
+          - columnheader "工单信息"
+          - columnheader "客户信息"
+          - columnheader "服务属性"
+          - columnheader "质保 / 报价"
+          - columnheader "状态"
+          - columnheader "工程师"
+          - columnheader "时效信息"
+          - columnheader "操作"
+      - rowgroup:
+        - row "◇ 当前筛选下暂无工单 可新建同材料服务工单，进入受理、派工和接单流程。":
+          - cell "◇ 当前筛选下暂无工单 可新建同材料服务工单，进入受理、派工和接单流程。":
+            - generic: ◇
+            - strong: 当前筛选下暂无工单
+            - generic: 可新建同材料服务工单，进入受理、派工和接单流程。
+    - generic: 共 0 条记录 每页 20 条 · 1 / 1
+    - dialog "新建服务工单":
+      - generic: 新建服务工单
+      - generic: 按 RISEMAP 服务需求、客户与产品、质保、费用与问题内容分组
+      - button "关闭": ×
+      - generic: 请确认提交服务工单。提交后进入“待受理”，后续由服务主管受理并派工。
+      - paragraph:
+        - strong: WO-FORGE-20260913
+        - text: · RISEMAP 对照服务工单 20260913
+      - paragraph: 苏州澄岳自动化装备有限公司 / 周启明 / SO-WF-20260909-001
+      - paragraph: RISEMAP 对照服务类型 20260913 · 上门服务 · 2026-09-15
+      - paragraph: 800型柔性线控制柜交付后例行调试支持，用于 Forge 同材料复刻验收。
+      - button "取消"
+      - button "确认提交"

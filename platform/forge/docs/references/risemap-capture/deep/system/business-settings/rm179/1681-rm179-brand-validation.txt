@@ -1,0 +1,36 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/product".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/product
+	2 container 新增品牌
+		3 heading 新增品牌, Value: 3
+			4 text 新增品牌
+		5 button 关闭
+			6 image
+		7 container
+			8 text 品牌名称  *
+			9 text field (settable)
+			10 text 品牌名称不能为空 国家/地区
+			11 text field (settable)
+			12 text 缩写编码  *
+			13 text field (settable)
+			14 text 缩写编码不能为空 标识颜色
+			15 button
+			16 button
+			17 button
+			18 button
+			19 button
+			20 button
+			21 button
+			22 button
+			23 button
+			24 button
+			25 button
+			26 button
+			27 text 备注
+			28 text entry area (settable)
+			29 text 状态
+			30 button
+			31 text 启用
+		32 button 取消
+		33 button 添加
+
+The focused UI element is 33 button 添加

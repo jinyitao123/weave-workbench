@@ -1,0 +1,17 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/workflow/designer".
+1 AXWebArea RiseMap, URL: risemap.cn/workflow/designer
+	2 container
+		3 container Notifications alt+T
+		4 list radix-:ro:
+			5 (selected) 指定用户
+				6 text 指定用户
+			7 指定角色
+				8 text 指定角色
+			9 指定部门
+				10 text 指定部门
+			11 直属上级
+				12 text 直属上级
+			13 部门负责人
+				14 text 部门负责人
+
+The focused UI element is 5 (selected) 指定用户

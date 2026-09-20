@@ -1,0 +1,184 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/collection-flow".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/collection-flow
+	2 container root
+		3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+		4 text 销售
+		5 button 收起侧边栏
+			6 image
+		7 container
+			8 button 销售业务
+				9 image
+				10 text 销售业务
+				11 image
+			12 button 框架销售合同
+			13 button 销售订单
+			14 button 收款流水
+			15 button 销售发货单
+			16 button 销售退货
+			17 button 业绩银行
+			18 button 价格策略
+			19 button Goodwill订单
+			20 button 销售团队
+			21 button 销售目标
+			22 button 销售发票
+			23 button CRM客户管理
+				24 image
+				25 text CRM客户管理
+				26 image
+			27 button 客户管理
+			28 button 联系人管理
+			29 button 销售报价
+			30 button 客户物料对照
+			31 button 商机管理
+			32 button 线索管理
+			33 button 跟进记录
+			34 button 公海客户
+		35 image
+		36 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+		37 button 查看方案
+			38 image
+			39 text 查看方案
+		40 button
+			41 image
+		42 container
+			43 container 业务分类
+				44 checkbox 工作台, Value: 0
+				45 checkbox 供应链, Value: 0
+				46 checkbox 销售, Value: 1
+				47 checkbox 生产, Value: 0
+				48 checkbox 项目, Value: 0
+				49 checkbox 行政, Value: 0
+				50 checkbox 财务, Value: 0
+				51 checkbox 报表, Value: 0
+				52 checkbox 系统, Value: 0
+			53 button Description: 展开搜索, Help: 搜索
+				54 image
+			55 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+				56 image
+				57 text 2
+			58 button Description: 打开推广奖励, Help: 推广
+			59 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+			60 link Description: 打开工单, Value: community.risemap.cn/support
+			61 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+				62 image
+				63 text 立即订阅
+			64 button 金
+				65 text 金
+				66 image
+		67 container
+			68 button 工作台
+				69 image
+				70 text 工作台
+			71 button SN管理
+				72 text SN管理
+			73 button 出库单列表
+				74 text 出库单列表
+			75 button 生产出库
+				76 text 生产出库
+			77 button 其他出库
+				78 text 其他出库
+			79 button 新建出库单
+				80 text 新建出库单
+			81 button 销售直接出库
+				82 text 销售直接出库
+			83 button 待出库发货单
+				84 text 待出库发货单
+			85 button 采购退换货出库
+				86 text 采购退换货出库
+			87 button 出库明细
+				88 text 出库明细
+			89 button 框架销售合同
+				90 text 框架销售合同
+			91 button 新建合同
+				92 text 新建合同
+			93 button 销售订单
+				94 text 销售订单
+			95 button 新建销售订单
+				96 text 新建销售订单
+			97 button 收款流水
+				98 text 收款流水
+		99 container
+			100 container
+				101 text 销售业务
+				102 image
+				103 text 收款流水
+				104 image
+				105 heading 收款流水, Value: 1
+					106 text 收款流水
+				107 text 展示收款资金流水 · 手动分配到销售订单 · 核销前可解绑 · 分配后刷新订单回款进度
+			108 image
+			109 text 收款流水总额 ¥0.00 0 笔流水
+			110 image
+			111 text 已分配金额 ¥0.00 已关联到订单
+			112 image
+			113 text 未分配金额 ¥0.00 待分配到订单
+			114 image
+			115 text 待分配 0 部分分配 + 待分配笔数
+			116 button 全部 (0)
+				117 text 全部
+				118 text (
+				119 text 0
+				120 text )
+			121 button 待分配 (0)
+				122 text 待分配
+				123 text (
+				124 text 0
+				125 text )
+			126 button 部分分配 (0)
+				127 text 部分分配
+				128 text (
+				129 text 0
+				130 text )
+			131 button 已分配 (0)
+				132 text 已分配
+				133 text (
+				134 text 0
+				135 text )
+			136 button 刷新
+				137 image
+			138 button
+				139 image
+			140 button
+				141 image
+			142 image
+			143 text field (settable) 搜索流水号或订单
+			144 image
+			145 text field (settable) 按对方名称筛选
+			146 text ¥
+			147 stepper (settable) 按金额筛选
+			148 button 全部客户
+				149 text 全部客户
+			150 container
+				151 button
+					152 image
+				153 text field (settable)
+				154 text ~
+				155 text field (settable)
+			156 table
+				157 row
+					158 cell
+						159 text 流水号
+					160 cell
+						161 text 往来单位/客户
+					162 cell
+						163 text 收款日期
+					164 cell
+						165 text 方式
+					166 cell
+						167 text 收款账户
+					168 cell
+						169 text 收款金额
+					170 cell
+						171 text 已分配 / 未分配
+					172 cell
+						173 text 状态
+					174 cell
+						175 text 操作
+				182 row
+					183 cell
+						184 image
+						185 text 暂无收款流水
+		180 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+		181 container Notifications alt+T
+
+The focused UI element is 126 button 部分分配 (0)

@@ -1,0 +1,201 @@
+Browser tab: 39, Title: "RiseMap", URL: "https://risemap.cn/production/disassembly".
+1 AXWebArea RiseMap, URL: risemap.cn/production/disassembly
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 生产
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 组装业务管理
+					10 image
+					11 text 组装业务管理
+					12 image
+				13 button 组装单
+				14 button 缺料待办
+				15 button 领料单
+				16 button 补料单
+				17 button 退料单
+				18 button 拆解单
+				19 button 换件单
+				20 container
+					21 button 图纸管理
+						22 image
+						23 text 图纸管理
+						24 image
+					25 button 进入图纸管理上手指南
+						26 image
+				27 button 图纸总览
+				28 button 图号档案
+				29 button 图纸评审
+				30 button 图纸发布
+				31 button 图纸变更
+				32 button 图纸发放记录
+				33 button 图纸关联查询
+				34 button 客户图纸
+				35 container
+					36 button 委外管理
+						37 image
+						38 text 委外管理
+						39 image
+					40 button 进入委外管理上手指南
+						41 image
+				42 button 委外看板
+				43 button 委外订单
+				44 button 委外发料
+				45 button 委外回厂
+				46 button 委外退料
+				47 button 委外对账
+				48 button 委外供应商
+				49 button 委外库存
+				50 button 批次追溯
+				51 button 委外未交
+				52 button 委外进货
+				53 button 委外对账单
+			54 image
+			55 text 免费试用中，还剩 8 天 — 试用期间享全部功能
+			56 button 查看方案
+				57 image
+				58 text 查看方案
+			59 button
+				60 image
+			61 container
+				62 container 业务分类
+					63 container
+						64 checkbox 工作台, Value: 0
+						65 checkbox 供应链, Value: 0
+						66 checkbox 销售, Value: 0
+						67 checkbox 生产, Value: 1
+						68 checkbox 项目, Value: 0
+						69 checkbox 行政, Value: 0
+						70 checkbox 财务, Value: 0
+						71 checkbox 报表, Value: 0
+						72 checkbox 系统, Value: 0
+				73 button Description: 展开搜索, Help: 搜索
+					74 image
+				75 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+					76 image
+					77 text 20
+				78 button Description: 打开推广奖励, Help: 推广
+				79 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				80 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				81 button 立即订阅, Help: 试用还剩 8 天 · 立即订阅享专属优惠
+					82 image
+					83 text 立即订阅
+				84 button 金
+					85 text 金
+					86 image
+			87 container
+				88 button 工作台
+					89 image
+					90 text 工作台
+				91 button 工作台
+					92 text 工作台
+				93 button 客户图纸
+					94 text 客户图纸
+				95 button 图纸关联查询
+					96 text 图纸关联查询
+				97 button 图纸变更
+					98 text 图纸变更
+				99 button 领料单
+					100 text 领料单
+				101 button 补料单
+					102 text 补料单
+				103 button 新建补料单
+					104 text 新建补料单
+				105 button 退料单
+					106 text 退料单
+				107 button 新建退料单
+					108 text 新建退料单
+				109 button 工作台
+					110 text 工作台
+				111 button 拆解单
+					112 text 拆解单
+				113 button 新建拆解单
+					114 text 新建拆解单
+				115 button 新建换件单
+					116 text 新建换件单
+				117 button 换件单
+					118 text 换件单
+			119 container
+				120 container
+					121 text 组装业务管理
+					122 image
+					123 text 拆解单
+					124 image
+					125 heading 拆解单, Value: 1
+						126 text 拆解单
+					127 text 将成品按 BOM 还原为物料，支持审批、回收入库和报废处理
+				128 image
+				129 text 拆解单总数 0
+				130 image
+				131 text 拆解成品数 0
+				132 image
+				133 text 回收物料价值 ¥0.00
+				134 image
+				135 text 报废/损耗 ¥0.00
+				136 button 全部(0)
+					137 text 全部
+					138 text (
+					139 text 0
+					140 text )
+				141 button 草稿
+				142 button 审批中
+				143 button 待领料
+				144 button 拆解中
+				145 button 已完工
+				146 button 已入库
+				147 button 已驳回
+				148 button 新建拆解单
+					149 image
+					150 text 新建拆解单
+				151 button 导出
+					152 image
+					153 text 导出
+					154 image
+				155 button 导入/导出任务
+				156 button 刷新
+					157 image
+				158 button
+					159 image
+				160 button
+					161 image
+				162 image
+				163 text field (settable)
+				164 table
+					165 row
+						166 cell
+							167 text 拆解单号
+						168 cell
+							169 text 成品
+						170 cell
+							171 text BOM
+						172 cell
+							173 text 数量
+						174 cell
+							175 text 原因
+						176 cell
+							177 text 回收价值
+						178 cell
+							179 text 报废
+						180 cell
+							181 text 经手人
+						182 cell
+							183 text 日期
+					184 row
+						185 cell
+							186 image
+							187 text 暂无拆解单
+				188 text 共  0 条记录 每页
+				189 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					190 text 20
+				191 text 条
+				192 button (disabled) 上一页
+					193 image
+				194 button 1
+				195 button (disabled) 下一页
+					196 image
+			197 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			198 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/production/disassembly

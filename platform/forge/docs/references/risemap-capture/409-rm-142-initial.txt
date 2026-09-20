@@ -1,0 +1,215 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/reimbursement".
+0 AXWebArea RiseMap, URL: risemap.cn/finance/reimbursement
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 财务
+			5 button 收起侧边栏
+				6 image
+			7 container
+				793 button 资金管理
+					794 image
+					795 text 资金管理
+					796 image
+				797 button 资金账户
+				798 button 资金流水
+				799 button 应收应付
+				800 button 收款管理
+				801 button 付款管理
+				802 button 退款申请
+				803 button 授信额度管理
+				804 button 借款贷款管理
+				805 button 业务确认
+					806 image
+					807 text 业务确认
+					808 image
+				809 button 销售收入确认
+				810 button 成本中心
+				811 button 费用中心
+				812 button 报销管理
+				813 button 对账单
+					814 image
+					815 text 对账单
+				816 button 发票管理
+					817 image
+					818 text 发票管理
+					819 image
+				820 button 发票总览
+				821 button 销项发票
+				822 button 进项发票
+				823 button 开票任务
+				824 button 调整记录
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 1
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				735 button 流程定义
+					736 text 流程定义
+				737 button 流程分类
+					738 text 流程分类
+				825 button 资金账户
+					826 text 资金账户
+				827 button 资金流水
+					828 text 资金流水
+				829 button 应收应付
+					830 text 应收应付
+				831 button 收款管理
+					832 text 收款管理
+				833 button 付款管理
+					834 text 付款管理
+				835 button 退款申请
+					836 text 退款申请
+				837 button 授信额度管理
+					838 text 授信额度管理
+				839 button 借款管理
+					840 text 借款管理
+				841 button 销售收入确认
+					842 text 销售收入确认
+				843 button 成本中心
+					844 text 成本中心
+				845 button 费用中心
+					846 text 费用中心
+				847 button 报销管理
+					848 text 报销管理
+			849 container
+				850 container
+					851 text 业务确认
+					852 image
+					853 text 报销管理
+					854 image
+					855 heading 报销管理, Value: 1
+						856 text 报销管理
+					857 text 提交和管理员工费用报销申请，跟踪审批与打款进度
+				858 button 全部
+				859 button 26/05
+				860 button 26/06
+				861 button 26/07
+				862 button 26/08
+				863 button 26/09
+				864 button 自定义
+					865 image
+					866 text 自定义
+					867 image
+				868 image
+				869 text 全部时间 (0 笔)
+				870 image
+				871 text 报销总额 ¥0.00万 共 0 笔
+				872 image
+				873 text 待处理审批 需及时审核
+				874 image
+				875 text 已报销金额 ¥ 0.00 万 员工报销
+				876 image
+				877 text 期间费用 ¥ 0.00 万 不计入项目成本
+				878 image
+				879 text 报销申请 集中查看、审核并跟踪全部报销单 0
+				880 button 新建报销
+					881 image
+					882 text 新建报销
+				883 text 费用归属
+				884 button 全部
+				885 button 合同成本
+				886 button 项目成本
+				887 button 订单成本
+				888 button 期间费用
+				889 text 报销类型
+				890 button 全部
+				891 button 本人报销
+				892 button 代人报销
+				893 button 全部
+					894 text 全部
+				895 button 待提交
+				896 button 待审核
+				897 button 审核中
+				898 button 已通过
+				899 button 已驳回
+				900 button 已打款
+				901 button 已作废
+				902 button 导出
+					903 image
+					904 text 导出
+					905 image
+				906 button 刷新
+					907 image
+				908 button
+					909 image
+				910 button
+					911 image
+				912 image
+				913 text field (settable)
+				914 table
+					915 row
+						916 cell
+							917 checkbox (settable, integer) 0
+						918 cell
+							919 text 单号
+						920 cell
+							921 text 费用名称
+						922 cell
+							923 text 费用归属
+						924 cell
+							925 text 报销类型
+						926 cell
+							927 text 申请人
+						928 cell
+							929 text 报销人
+						930 cell
+							931 text 提交日期
+						932 cell
+							933 text 关联对象
+						934 cell
+							935 text 供应商
+						936 cell
+							937 text 单据金额
+						938 cell
+							939 text 状态
+						940 cell
+							941 text 操作
+					942 row
+						943 cell
+							944 image
+							945 text 暂无费用记录
+				946 text 共  0 条记录 每页
+				947 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					948 text 20
+				949 text 条
+				950 button (disabled) 上一页
+					951 image
+				952 button 1
+				953 button (disabled) 下一页
+					954 image
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 812 button 报销管理

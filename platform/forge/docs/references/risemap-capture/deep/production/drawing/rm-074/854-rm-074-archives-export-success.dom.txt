@@ -1,0 +1,286 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 生产
+- button "收起侧边栏":
+- navigation:
+  - button "组装业务管理":
+    - generic: 组装业务管理
+  - button "组装单":
+    - generic: 组装单
+  - button "缺料待办":
+    - generic: 缺料待办
+  - button "领料单":
+    - generic: 领料单
+  - button "补料单":
+    - generic: 补料单
+  - button "退料单":
+    - generic: 退料单
+  - button "拆解单":
+    - generic: 拆解单
+  - button "换件单":
+    - generic: 换件单
+  - button "图纸管理":
+    - generic: 图纸管理
+  - button "进入图纸管理上手指南":
+  - button "图纸总览":
+    - generic: 图纸总览
+  - button "图号档案":
+    - generic: 图号档案
+  - button "图纸评审":
+    - generic: 图纸评审
+  - button "图纸发布":
+    - generic: 图纸发布
+  - button "图纸变更":
+    - generic: 图纸变更
+  - button "图纸发放记录":
+    - generic: 图纸发放记录
+  - button "图纸关联查询":
+    - generic: 图纸关联查询
+  - button "客户图纸":
+    - generic: 客户图纸
+  - button "委外管理":
+    - generic: 委外管理
+  - button "进入委外管理上手指南":
+  - button "委外看板":
+    - generic: 委外看板
+  - button "委外订单":
+    - generic: 委外订单
+  - button "委外发料":
+    - generic: 委外发料
+  - button "委外回厂":
+    - generic: 委外回厂
+  - button "委外退料":
+    - generic: 委外退料
+  - button "委外对账":
+    - generic: 委外对账
+  - button "委外供应商":
+    - generic: 委外供应商
+  - button "委外库存":
+    - generic: 委外库存
+  - button "批次追溯":
+    - generic: 批次追溯
+  - button "委外未交":
+    - generic: 委外未交
+  - button "委外进货":
+    - generic: 委外进货
+  - button "委外对账单":
+    - generic: 委外对账单
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产" [pressed]:
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "领料单":
+  - generic: 领料单
+- button "新建领料单":
+  - generic: 新建领料单
+- button "补料单":
+  - generic: 补料单
+- button "新建补料单":
+  - generic: 新建补料单
+- button "退料单":
+  - generic: 退料单
+- button "新建退料单":
+  - generic: 新建退料单
+- button "拆解单":
+  - generic: 拆解单
+- button "新建拆解单":
+  - generic: 新建拆解单
+- button "换件单":
+  - generic: 换件单
+- button "新建换件单":
+  - generic: 新建换件单
+- button "图纸管理上手指南":
+  - generic: 图纸管理上手指南
+- button "图纸总览":
+  - generic: 图纸总览
+- button "新建图号档案":
+  - generic: 新建图号档案
+- button "图号档案":
+  - generic: 图号档案
+- main:
+  - generic "图号档案":
+    - navigation "图号档案面包屑":
+      - list:
+        - link "图纸管理":
+          - /url: /drawing/overview
+        - generic: 图号档案
+    - heading "图号档案" [level=1]
+    - paragraph: 统一管理图号档案、图纸版本、文件资源和访问权限
+  - radiogroup:
+    - radio "文件资源树":
+      - generic: 文件资源树
+    - radio "台账模式" [checked]:
+      - generic: 台账模式
+  - paragraph: 图纸总数
+  - paragraph: "0"
+  - paragraph: 已发布
+  - paragraph: "0"
+  - paragraph: 待评审
+  - paragraph: "0"
+  - paragraph: 已评审
+  - paragraph: "0"
+  - paragraph: 变更中
+  - paragraph: "0"
+  - paragraph: 已作废
+  - paragraph: "0"
+  - button "新建图号":
+    - text: 新建图号
+  - button "批量导入":
+    - text: 批量导入
+  - button "导出":
+    - text: 导出
+  - button "任务列表":
+    - text: 任务列表
+  - button:
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "搜索图号、名称..."
+  - button "图纸类型":
+    - generic: 图纸类型
+  - button "图纸状态（全部 0）":
+    - generic: 图纸状态（全部 0）
+  - button "所属分类":
+    - generic: 所属分类
+  - button "受控标识":
+    - generic: 受控标识
+  - generic: 关联项目
+  - button "重置"
+  - button "收起":
+    - text: 收起
+  - generic: 是否关键件
+  - button "全部":
+    - generic: 全部
+  - generic: 是否按图采购
+  - button "全部":
+    - generic: 全部
+  - generic: 是否已关联物料
+  - button "全部":
+    - generic: 全部
+  - generic: 是否已关联BOM
+  - button "全部":
+    - generic: 全部
+  - generic: 创建时间范围
+  - textbox "请选择日期"
+  - button:
+  - generic: 至
+  - textbox "请选择日期"
+  - button:
+  - table:
+    - rowgroup:
+      - row "图号 图纸名称 图纸类型 所属分类 当前生效版本 图纸状态 受控标识 关联物料 是否关键件 是否按图采购 关联BOM数 最近更新时间 操作":
+        - columnheader:
+          - checkbox
+        - columnheader "图号":
+          - generic: 图号
+        - columnheader "图纸名称":
+          - generic: 图纸名称
+        - columnheader "图纸类型":
+          - generic: 图纸类型
+        - columnheader "所属分类":
+          - generic: 所属分类
+        - columnheader "当前生效版本":
+          - generic: 当前生效版本
+        - columnheader "图纸状态":
+          - generic: 图纸状态
+        - columnheader "受控标识":
+          - generic: 受控标识
+        - columnheader "关联物料":
+          - generic: 关联物料
+        - columnheader "是否关键件":
+          - generic: 是否关键件
+        - columnheader "是否按图采购":
+          - generic: 是否按图采购
+        - columnheader "关联BOM数":
+          - generic: 关联BOM数
+        - columnheader "最近更新时间":
+          - generic: 最近更新时间
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "未找到匹配的图号档案，请调整筛选条件重新查询":
+        - cell "未找到匹配的图号档案，请调整筛选条件重新查询":
+          - generic: 未找到匹配的图号档案，请调整筛选条件重新查询
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2025-10
+- dialog "图纸档案导入导出任务":
+  - heading "图纸档案导入导出任务" [level=3]
+  - button "关闭":
+  - table:
+    - rowgroup:
+      - row "任务 来源 状态 进度 结果 失败原因 提交时间 操作":
+        - columnheader "任务"
+        - columnheader "来源"
+        - columnheader "状态"
+        - columnheader "进度"
+        - columnheader "结果"
+        - columnheader "失败原因"
+        - columnheader "提交时间"
+        - columnheader "操作"
+    - rowgroup:
+      - row "导出 图纸档案_20260909023338.xlsx 图纸档案 成功 100% 0 成功 / 0 失败 导出完成 - 2026-09-09 02:33:39 下载":
+        - cell "导出 图纸档案_20260909023338.xlsx":
+          - generic: 导出
+          - generic "图纸档案_20260909023338.xlsx"
+        - cell "图纸档案"
+        - cell "成功":
+          - generic: 成功
+        - cell "100%":
+          - generic: 100%
+        - cell "0 成功 / 0 失败 导出完成":
+          - generic: 0 成功 / 0 失败
+          - generic "导出完成"
+        - cell "-"
+        - cell "2026-09-09 02:33:39"
+        - cell "下载":
+          - button "下载"
+  - generic: 共 1 条任务
+  - button "上一页" [disabled]
+  - generic: 1 / 1
+  - button "下一页" [disabled]
+  - button "刷新"

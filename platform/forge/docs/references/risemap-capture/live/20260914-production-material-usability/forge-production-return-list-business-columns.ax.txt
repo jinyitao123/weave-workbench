@@ -1,0 +1,9 @@
+ObjectOS
+
+Initializing application…
+
+Connecting to data source
+Loading configuration
+Preparing workspace
+
+Setting up a new environment can take a few moments.

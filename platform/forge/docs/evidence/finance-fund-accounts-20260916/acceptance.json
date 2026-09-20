@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_fund_accounts",
+  "archetype": "configuration",
+  "reviewedRevision": "aa94298388d2b8c158949cc5e3738b3bfd3d15fe",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/finance-management.page.ts": "c229d5cd7f6d2af142a60d761e4050a899c1ee9ccf2d2677b96f1e7df1a9cea7",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "8830c910309c7d731c9289965590eb5572e550be39ea70c4b3c69c3baf78a036",
+    "apps/forge-objectstack/src/pages/project-timesheet-cost.page.ts": "30a4c571452ed91e0e0580361d6665f12f9c0394a829ea248246dbceceb50b11",
+    "docs/forge-page-polish-baseline.md": "87391dcd1a7e8feefa96b358d42815d22e0eedebf578d0ff0e470550b0d45eb4",
+    "apps/forge-objectstack/src/objects/finance.object.ts": "bde56a88a22566da2502b92e9c8ea3bce36fb9d18f107d6245983253c9f9b4c0",
+    "apps/forge-objectstack/src/hooks/finance.hook.ts": "a0a2be0eb5623bcabf603f478795969840514841e60126062bdd940a33d3b962",
+    "apps/forge-objectstack/src/actions/finance.action.ts": "83cf7aa5362aed7431d7cd415cc329463e9bf226d25f75331bd7bd5e42a33108"
+  },
+  "environment": {
+    "forgeUrl": "http://localhost:4441",
+    "database": "apps/forge-objectstack/.objectstack/finance-sales-cycle.sqlite",
+    "materials": "Existing account 应收页面验收账户 FA-AR-PAGE-20260916 with current balance 126000.00, plus the browser-created bank account FA-1789552353699 with opening balance 8800.00"
+  },
+  "checks": {
+    "replication": {
+      "status": "blocked",
+      "notes": "RISEMAP 资金账户页当前无账户数据，本轮未重新打开实时页面；标题、说明、四项指标、工具区、卡片/表格视图与新增账户字段清单引用页面合同中的前次实时观察结果，不据此宣称复刻通过。",
+      "evidence": [
+        "docs/evidence/finance-fund-accounts-20260916/acceptance.md"
+      ]
+    },
+    "visual": {
+      "status": "pass",
+      "notes": "桌面卡片与表格视图、有数据与筛选空态在内置浏览器核对；窄屏 390×844 复测改用无头 Chrome CDP 会话（dev 账号登录，内置浏览器通道当轮不可用），实测指标为两列 157px、主工作区标题落在首屏 466px、无横向溢出，新增账户弹窗顶部 12px、底部按钮常驻、正文可滚动。独立视觉复核仍未发生。",
+      "evidence": [
+        "docs/evidence/finance-fund-accounts-20260916/acceptance.md",
+        "docs/evidence/finance-fund-accounts-20260916/desktop-card-view.png",
+        "docs/evidence/finance-fund-accounts-20260916/desktop-table-view.png",
+        "docs/evidence/finance-fund-accounts-20260916/narrow-390x844-before.png",
+        "docs/evidence/finance-fund-accounts-20260916/narrow-390x844-after.png",
+        "docs/evidence/finance-fund-accounts-20260916/narrow-390x844-account-dialog.png"
+      ]
+    },
+    "interaction": {
+      "status": "pass",
+      "notes": "空提交、银行信息缺失、完整创建、搜索、类型筛选、视图切换与重置均实际操作并通过；窄屏弹窗在修复后复测，创建账户按钮可见且点击后仍返回阻断提示。RISEMAP 行级行为在本页不可用（当前无账户数据）。",
+      "evidence": [
+        "docs/evidence/finance-fund-accounts-20260916/acceptance.md",
+        "docs/evidence/finance-fund-accounts-20260916/narrow-390x844-account-dialog.png"
+      ]
+    },
+    "business": {
+      "status": "pending",
+      "notes": "新建账户经 API 回读期初余额与当前余额一致，完整停服后用同一 SQLite 重启回读一致；RISEMAP 同材料办理与独立验收未完成。",
+      "evidence": [
+        "docs/evidence/finance-fund-accounts-20260916/acceptance.md"
+      ]
+    }
+  },
+  "visualEvidence": {
+    "desktop": {
+      "width": 1280,
+      "height": 720,
+      "evidence": [
+        "docs/evidence/finance-fund-accounts-20260916/desktop-card-view.png",
+        "docs/evidence/finance-fund-accounts-20260916/desktop-table-view.png"
+      ]
+    },
+    "narrow": {
+      "width": 390,
+      "height": 844,
+      "evidence": [
+        "docs/evidence/finance-fund-accounts-20260916/narrow-390x844-before.png",
+        "docs/evidence/finance-fund-accounts-20260916/narrow-390x844-after.png"
+      ]
+    },
+    "reference": [],
+    "populated": [
+      "docs/evidence/finance-fund-accounts-20260916/desktop-card-view.png"
+    ],
+    "empty": [
+      "docs/evidence/finance-fund-accounts-20260916/acceptance.md"
+    ],
+    "form": [
+      "docs/evidence/finance-fund-accounts-20260916/narrow-390x844-account-dialog.png"
+    ],
+    "error": [
+      "docs/evidence/finance-fund-accounts-20260916/narrow-390x844-account-dialog.png"
+    ]
+  },
+  "requirements": [
+    {
+      "id": "FUND-001",
+      "status": "pending",
+      "steps": "两侧打开资金账户页，核对标题、说明、四项指标与工具区，并切换卡片/表格视图。",
+      "expected": "职责、指标与工具结构一致。",
+      "observed": "Forge 已核对标题、说明、四项指标与工具区，卡片与表格显示同一结果集；本轮未重新打开 RISEMAP 实时页面，复刻一致性待复核。",
+      "evidence": ["docs/evidence/finance-fund-accounts-20260916/acceptance.md"]
+    },
+    {
+      "id": "FUND-002",
+      "status": "pass",
+      "steps": "打开新增账户弹窗，逐项核对字段、必填标记和默认值。",
+      "expected": "字段与观察到的清单一致，必填与默认值明确。",
+      "observed": "弹窗含账户类型、开户银行、开户支行、银行账户类型、账户名称、账户号码、币种、账户编码、期初余额、期初时间、客户经理、联系电话、允许打印、可见范围、备注；顺序与观察一致，账户编码可留空自动生成，账户类型为非银行时隐藏银行专属字段。",
+      "evidence": ["docs/evidence/finance-fund-accounts-20260916/acceptance.md"]
+    },
+    {
+      "id": "FUND-003",
+      "status": "pass",
+      "steps": "分别提交空表单、只填名称与期初余额、补全银行信息后提交，并回读账户。",
+      "expected": "阻断原因清楚，创建后回读账户、期初余额与当前余额。",
+      "observed": "空提交提示“请填写账户名称、账户类型、有效的期初余额和期初日期”；缺银行信息提示“银行账户必须填写开户银行和账户号码”；补全后创建成功并提示“资金账户已创建”，API 回读期初与当前余额均为 8800.00。",
+      "evidence": ["docs/evidence/finance-fund-accounts-20260916/acceptance.md"]
+    },
+    {
+      "id": "FUND-004",
+      "status": "pass",
+      "steps": "搜索命中与无匹配、切换账户类型筛选、切换卡片/表格视图并重置。",
+      "expected": "卡片与表格使用同一结果集，筛选即时生效且可重置。",
+      "observed": "搜索“验收 B”命中 1 条，搜索“NO-MATCH-XYZ”显示空态与 0 条；账户类型“微信”为 0 条；重置恢复 2 条；卡片与表格均列出两个银行账户。",
+      "evidence": ["docs/evidence/finance-fund-accounts-20260916/acceptance.md"]
+    },
+    {
+      "id": "FUND-005",
+      "status": "pass",
+      "steps": "检查桌面与 390×844 窄屏的有数据、空态与新增弹窗。",
+      "expected": "信息密度适当，弹窗字段完整可达，窄屏尽早出现主工作区。",
+      "observed": "窄屏指标改两列后实测 157px 两列、指标块由 433px 降到 214px、列表标题由 684px 上移到 466px，仍有 2 条真实账户且无横向溢出；新增账户弹窗顶部 12px、高 820px、底部按钮常驻于 832px、正文可滚动，空提交返回阻断提示。桌面卡片、表格与有数据/空态此前已在内置浏览器核对。",
+      "evidence": [
+        "docs/evidence/finance-fund-accounts-20260916/narrow-390x844-before.png",
+        "docs/evidence/finance-fund-accounts-20260916/narrow-390x844-after.png",
+        "docs/evidence/finance-fund-accounts-20260916/narrow-390x844-account-dialog.png"
+      ]
+    },
+    {
+      "id": "FUND-006",
+      "status": "pass",
+      "steps": "创建验收账户后停服，用同一 SQLite 重启并回读账户、余额与既有账户状态。",
+      "expected": "期初与当前余额、状态和来源保持一致。",
+      "observed": "重启后 FA-1789552353699 期初与当前余额均为 8800.00、状态启用；既有账户 FA-AR-PAGE-20260916 当前余额保持 126000.00。",
+      "evidence": ["docs/evidence/finance-fund-accounts-20260916/acceptance.md"]
+    }
+  ],
+  "review": {
+    "implementer": "codex",
+    "reviewer": "",
+    "reviewedAt": "",
+    "status": "pending",
+    "evidence": []
+  }
+}

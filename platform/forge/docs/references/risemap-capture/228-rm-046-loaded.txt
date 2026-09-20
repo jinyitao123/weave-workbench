@@ -1,0 +1,232 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/contracts".
+0 AXWebArea RiseMap, URL: risemap.cn/sales/contracts
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 销售
+			5 button 收起侧边栏
+				6 image
+			7 container
+				307 button 销售业务
+					308 image
+					309 text 销售业务
+					310 image
+				311 button 框架销售合同
+				312 button 销售订单
+				313 button 收款流水
+				314 button 销售发货单
+				315 button 销售退货
+				316 button 业绩银行
+				317 button 价格策略
+				318 button Goodwill订单
+				319 button 销售团队
+				320 button 销售目标
+				321 button 销售发票
+				322 button CRM客户管理
+					323 image
+					324 text CRM客户管理
+					325 image
+				326 button 客户管理
+				327 button 联系人管理
+				328 button 销售报价
+				329 button 客户物料对照
+				330 button 商机管理
+				331 button 线索管理
+				332 button 跟进记录
+				333 button 公海客户
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 1
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				184 button 库存锁定
+					185 text 库存锁定
+				186 button 库存盘点
+					187 text 库存盘点
+				188 button 调拨与借出
+					189 text 调拨与借出
+				190 button 库存预警
+					191 text 库存预警
+				192 button 报损单
+					193 text 报损单
+				194 button SN管理
+					195 text SN管理
+				196 button 出库单列表
+					197 text 出库单列表
+				198 button 生产出库
+					199 text 生产出库
+				200 button 其他出库
+					201 text 其他出库
+				202 button 销售直接出库
+					203 text 销售直接出库
+				204 button 待出库发货单
+					205 text 待出库发货单
+				206 button 采购退换货出库
+					207 text 采购退换货出库
+				208 button 出库明细
+					209 text 出库明细
+				334 button 框架销售合同
+					335 text 框架销售合同
+			336 container
+				337 container
+					338 text 销售业务
+					339 image
+					340 text 框架销售合同
+					341 image
+					342 heading 框架销售合同, Value: 1
+						343 text 框架销售合同
+					344 text 客户合同签订、条款管理、收款跟进与执行情况追踪
+				345 button 新建合同
+					346 image
+					347 text 新建合同
+				348 button 导入/导出
+					349 image
+					350 text 导入/导出
+					351 image
+				352 button
+					353 image
+				354 button 刷新
+					355 image
+				356 button
+					357 image
+				358 button
+					359 image
+				360 image
+				361 text field (settable)
+				362 button 范围
+					363 image
+					364 text 范围
+					365 image
+				366 button 状态
+					367 text 状态
+					368 image
+				369 button 订单状态
+					370 text 订单状态
+					371 image
+				372 button 开票
+					373 text 开票
+					374 image
+				375 button 发货
+					376 text 发货
+					377 image
+				378 button 收款
+					379 text 收款
+					380 image
+				381 button 负责人
+					382 text 负责人
+				383 button 客户联系人
+					384 text 客户联系人
+				385 container 点击清除排序
+					386 image
+					387 text 按 创建时间 降序
+					388 image
+				389 table
+					390 row
+						391 cell
+							392 checkbox (settable, integer) 0
+						393 cell
+							394 text 合同编号
+							395 image
+						396 cell
+							397 text 客户单号
+						398 cell
+							399 text 合同名称
+						400 cell
+							401 text 合同类型
+						402 cell
+							403 text 客户名称
+						404 cell
+							405 text 关联项目
+						406 cell
+							407 text 来源
+						408 cell
+							409 text 合同总额
+							410 image
+						411 cell
+							412 image
+							413 text 开票
+						414 cell
+							415 image
+							416 text 已发货
+						417 cell
+							418 image
+							419 text 已回款
+						420 cell
+							421 text 状态
+							422 image
+						423 cell
+							424 text 订单状态
+							425 image
+						426 cell
+							427 text 下单笔数
+						428 cell
+							429 text 已下单金额
+						430 cell
+							431 text 红绿灯
+						432 cell
+							433 text 签订日期
+							434 image
+						435 cell
+							436 text 备注
+						437 cell
+							438 text 创建时间
+							439 image
+						440 cell
+							441 text 更新时间
+							442 image
+						443 cell
+							444 text 开单人
+						445 cell
+							446 text 负责人
+						447 cell
+							448 text 联系人
+						449 cell
+							450 text 操作
+					460 row
+						461 cell
+							462 image
+							463 text 暂无匹配的合同
+				451 text 共  0 条记录 每页
+				452 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					453 text 20
+				454 text 条
+				455 button (disabled) 上一页
+					456 image
+				457 button 1
+				458 button (disabled) 下一页
+					459 image
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 311 button 框架销售合同

@@ -1,0 +1,219 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/sales/additional-fees".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/additional-fees
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 销售业务
+					10 image
+					11 text 销售业务
+					12 image
+				13 button 框架销售合同
+				14 button 销售订单
+				15 button 附加费用
+				16 button 收款流水
+				17 button 销售发货单
+				18 button 销售退货
+				19 button 业绩银行
+				20 button 价格策略
+				21 button Goodwill订单
+				22 button 销售团队
+				23 button 销售目标
+				24 button 销售发票
+				25 button CRM客户管理
+					26 image
+					27 text CRM客户管理
+					28 image
+				29 button 客户管理
+				30 button 联系人管理
+				31 button 销售报价
+				32 button 客户物料对照
+				33 button 商机管理
+				34 button 线索管理
+				35 button 跟进记录
+				36 button 公海客户
+				37 button 服务管理
+					38 image
+					39 text 服务管理
+					40 image
+				41 button 服务工单
+				42 button 服务报价单
+				43 button 服务结算单
+				44 button 接单中心
+				45 button 派工中心
+				46 button 服务分析
+				47 button 质保管理
+				48 button 服务配置
+			49 image
+			50 text 免费试用中，还剩 9 天 — 试用期间享全部功能
+			51 button 查看方案
+				52 image
+				53 text 查看方案
+			54 button
+				55 image
+			56 container
+				57 container 业务分类
+					58 container
+						59 checkbox 工作台, Value: 0
+						60 checkbox 供应链, Value: 0
+						61 checkbox 销售, Value: 1
+						62 checkbox 生产, Value: 0
+						63 checkbox 项目, Value: 0
+						64 checkbox 行政, Value: 0
+						65 checkbox 财务, Value: 0
+						66 checkbox 报表, Value: 0
+						67 checkbox 系统, Value: 0
+				68 button Description: 展开搜索, Help: 搜索
+					69 image
+				70 button (collapsed) Description: 通知，18 条未读, Secondary Actions: Expand
+					71 image
+					72 text 18
+				73 button Description: 打开推广奖励, Help: 推广
+				74 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				75 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				76 button 立即订阅, Help: 试用还剩 9 天 · 立即订阅享专属优惠
+					77 image
+					78 text 立即订阅
+				79 button 金
+					80 text 金
+					81 image
+			82 container
+				83 button 工作台
+					84 image
+					85 text 工作台
+				86 button 项目详情
+					87 text 项目详情
+				88 button 框架销售合同
+					89 text 框架销售合同
+				90 button 销售订单
+					91 text 销售订单
+				92 button 工作台
+					93 text 工作台
+				94 button 销售发货单
+					95 text 销售发货单
+				96 button 新建发货单
+					97 text 新建发货单
+				98 button 工作台
+					99 text 工作台
+				100 button 待出库发货单
+					101 text 待出库发货单
+				102 button 出库单列表
+					103 text 出库单列表
+				104 button 收款流水
+					105 text 收款流水
+				106 button 销售发票
+					107 text 销售发票
+				108 button 销售退货
+					109 text 销售退货
+				110 button 销售附加费用
+					111 text 销售附加费用
+			112 container
+				113 container
+					114 text 销售业务
+					115 image
+					116 text 附加费用
+					117 image
+					118 heading 附加费用, Value: 1
+						119 text 附加费用
+					120 text 销售附加费用创建、审批、财务执行与来源单关联管理
+					121 button 上手指南
+						122 image
+						123 text 上手指南
+				124 image
+				125 text 客户承担有效金额 ¥0.00 含税
+				126 image
+				127 text 公司承担有效金额 ¥0.00 内部成本
+				128 image
+				129 text 待审批费用单 0 笔
+				130 image
+				131 text 待开票 / 待付款 0 / 0 笔
+				132 image
+				133 text field (settable)
+				134 button 来源类型
+					135 text 来源类型
+					136 image
+				137 button 承担类型
+					138 text 承担类型
+					139 image
+				140 button 单据状态
+					141 text 单据状态
+					142 image
+				143 button 财务状态
+					144 text 财务状态
+					145 image
+				146 button 刷新
+					147 image
+				148 button 导出
+					149 image
+					150 text 导出
+					151 image
+				152 button 导出任务
+					153 image
+					154 text 导出任务
+				155 button 新增附加费用单
+					156 image
+					157 text 新增附加费用单
+				158 button 附加费用单 0
+					159 text 附加费用单
+					160 text 0
+				161 button 附加明细 0
+					162 text 附加明细
+					163 text 0
+				164 button 全部 0
+					165 text 全部
+					166 text 0
+				167 button 草稿 0
+					168 text 草稿
+					169 text 0
+				170 button 待审批 0
+					171 text 待审批
+					172 text 0
+				173 button 已生效 0
+					174 text 已生效
+					175 text 0
+				176 button 已作废 0
+					177 text 已作废
+					178 text 0
+				179 table
+					180 row
+						181 cell
+							182 checkbox (settable, integer) 0
+						183 cell
+							184 text 费用单号
+						185 cell
+							186 text 来源单据
+						187 cell
+							188 text 客户 / 项目
+						189 cell
+							190 text 承担类型
+						191 cell
+							192 text 费用项
+						193 cell
+							194 text 含税金额
+						195 cell
+							196 text 单据状态
+						197 cell
+							198 text 财务状态
+						199 cell
+							200 text 负责人
+						201 cell
+							202 text 操作
+					203 row
+						204 cell
+							205 text 当前条件下暂无附加费用单
+				206 text 共  0 条费用单 每页
+				207 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					208 text 10
+				209 text 条
+				210 button (disabled) 上一页
+					211 image
+				212 button 1
+				213 button (disabled) 下一页
+					214 image
+			215 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			216 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/sales/additional-fees

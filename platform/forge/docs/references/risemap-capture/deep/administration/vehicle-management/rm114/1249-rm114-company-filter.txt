@@ -1,0 +1,212 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/vehicles".
+1 AXWebArea RiseMap, URL: risemap.cn/ops/vehicles
+	2 container
+		3 container root
+			222 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			223 text 行政
+			224 button 收起侧边栏
+				225 image
+			226 container
+				227 button 审批中心
+					228 image
+					229 text 审批中心
+					230 image
+				231 button 我的审批
+				232 button 抄送我的
+				233 button 我发起的
+				234 button 行政申请
+				235 button 行政管理
+					236 image
+					237 text 行政管理
+					238 image
+				239 button 公司通知
+				240 button 用章管理
+				241 button 会议纪要
+				242 button 工作汇报
+				243 button 文档中心
+				244 button 固定资产
+				245 button 资质与申报
+				246 button 物料领取
+				247 button 设备维护
+				248 button 礼品管理
+				249 button 借出管理
+				250 button 车辆管理
+				251 button 人力资源
+					252 image
+					253 text 人力资源
+					254 image
+				255 button 人事工作台
+				256 button 员工档案
+				257 button 招聘管理
+				258 button 入职离职
+				259 button 薪酬福利
+				260 button 规章制度
+				261 button 通讯录
+				262 button 考勤假期
+					263 image
+					264 text 考勤假期
+					265 image
+				266 button 加班申请
+				267 button 请假管理
+				268 button 出差申请
+				269 button 考勤管理
+				270 button 考勤统计
+				271 button 流程中心
+					272 image
+					273 text 流程中心
+					274 image
+				275 button 审批记录
+				276 button 发起流程
+				277 button 流程定义
+				278 button 流程分类
+			279 image
+			280 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			281 button 查看方案
+				282 image
+				283 text 查看方案
+			284 button
+				285 image
+			286 container
+				287 container 业务分类
+					288 checkbox 工作台, Value: 0
+					289 checkbox 供应链, Value: 0
+					290 checkbox 销售, Value: 0
+					291 checkbox 生产, Value: 0
+					292 checkbox 项目, Value: 0
+					293 checkbox 行政, Value: 1
+					294 checkbox 财务, Value: 0
+					295 checkbox 报表, Value: 0
+					296 checkbox 系统, Value: 0
+				297 button Description: 展开搜索, Help: 搜索
+					298 image
+				299 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					300 image
+					301 text 2
+				302 button Description: 打开推广奖励, Help: 推广
+				303 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				304 link Description: 打开工单, Value: community.risemap.cn/support
+				305 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					306 image
+					307 text 立即订阅
+				308 button 金
+					309 text 金
+					310 image
+			311 container
+				312 button 工作台
+					313 image
+					314 text 工作台
+				319 button 用章管理
+					320 text 用章管理
+				321 button 会议纪要
+					322 text 会议纪要
+				323 button 新建会议纪要
+					324 text 新建会议纪要
+				325 button AI 模板管理
+					326 text AI 模板管理
+				327 button 工作汇报
+					328 text 工作汇报
+				329 button 新建工作汇报
+					330 text 新建工作汇报
+				331 button 文档中心
+					332 text 文档中心
+				333 button 固定资产
+					334 text 固定资产
+				335 button 资质与申报
+					336 text 资质与申报
+				337 button 物料领取
+					338 text 物料领取
+				339 button 设备维护
+					340 text 设备维护
+				341 button 礼品管理
+					342 text 礼品管理
+				428 button 借出管理
+					429 text 借出管理
+				430 button 车辆管理
+					431 text 车辆管理
+			432 container
+				433 container
+					434 text 行政管理
+					435 image
+					436 text 车辆管理
+					437 image
+					438 heading 车辆管理, Value: 1
+						439 text 车辆管理
+					440 text 公司用车申请、私车公用补贴与车辆台账一体化管理
+				441 image
+				442 text 可用车辆 0 共 0 辆 · 使用中 0
+				443 image
+				444 text 用车待审批 0 公司 0 · 私车 0
+				445 image
+				446 text 本月私车补贴 ¥0 已结算合计
+				447 image
+				448 text 累计里程 0 km 公司 0 km · 私车 0 km
+				449 button 公司用车(0)
+					450 text 公司用车
+					451 text (
+					452 text 0
+					453 text )
+				454 button 私车公用(0)
+					455 text 私车公用
+					456 text (
+					457 text 0
+					458 text )
+				459 button 用车日历
+				460 button 车辆台账(0)
+					461 text 车辆台账
+					462 text (
+					463 text 0
+					464 text )
+				465 button 用车统计
+				466 button 公司用车申请
+					467 image
+					468 text 公司用车申请
+				469 button 刷新
+					470 image
+				471 button
+					472 image
+				473 button
+					474 image
+				475 image
+				476 text field (settable)
+				477 button 全部公司
+					478 text 全部公司
+				479 button 全部状态
+					480 text 全部状态
+				481 table
+					482 row
+						483 cell
+							484 text 申请编号
+						485 cell
+							486 text 申请人
+						487 cell
+							488 text 用途/路线
+						489 cell
+							490 text 用车时间
+						491 cell
+							492 text 里程/人数
+						493 cell
+							494 text 派车
+						495 cell
+							496 text 状态
+						497 cell
+							498 text 操作
+					499 row
+						500 cell
+							501 image
+							502 text 暂无申请记录
+				503 text 共  0 条记录 每页
+				504 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					505 text 10
+				506 text 条
+				507 button (disabled) 上一页
+					508 image
+				509 button 1
+				510 button (disabled) 下一页
+					511 image
+			427 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			221 container Notifications alt+T
+		512 container
+			513 text 全部公司
+			514 image
+
+The focused UI element is 477 button 全部公司

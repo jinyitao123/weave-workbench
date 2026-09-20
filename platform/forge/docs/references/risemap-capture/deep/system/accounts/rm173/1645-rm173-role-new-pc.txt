@@ -1,0 +1,286 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/accounts".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/accounts
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 系统
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 系统设置
+					10 image
+					11 text 系统设置
+					12 image
+				13 button 基础配置
+				14 button 用户与角色
+				15 button 部门管理
+				16 button 用户会话
+				17 button 审计日志
+				18 button 业务设置
+					19 image
+					20 text 业务设置
+					21 image
+				22 button 商品管理
+				23 button 财务配置
+				24 button 行政管理
+				25 button 客户管理
+				26 button 采购销售
+				27 button 库存管理
+				28 button 其他配置
+				29 button 人事配置
+				30 button 项目管理
+				31 button 图纸配置
+				32 button 生产配置
+				33 button 委外配置
+				34 button 单据打印
+				35 button 插件中心
+					36 image
+					37 text 插件中心
+				38 button 服务订阅
+					39 image
+					40 text 服务订阅
+				41 button 推广奖励
+					42 image
+					43 text 推广奖励
+				44 button 字段管理
+					45 image
+					46 text 字段管理
+			47 image
+			48 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			49 button 查看方案
+				50 image
+				51 text 查看方案
+			52 button
+				53 image
+			54 container
+				55 container 业务分类
+					56 checkbox 工作台, Value: 0
+					57 checkbox 供应链, Value: 0
+					58 checkbox 销售, Value: 0
+					59 checkbox 生产, Value: 0
+					60 checkbox 项目, Value: 0
+					61 checkbox 行政, Value: 0
+					62 checkbox 财务, Value: 0
+					63 checkbox 报表, Value: 0
+					64 checkbox 系统, Value: 1
+				65 button Description: 展开搜索, Help: 搜索
+					66 image
+				67 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					68 image
+					69 text 2
+				70 button Description: 打开推广奖励, Help: 推广
+				71 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				72 link Description: 打开工单, Value: community.risemap.cn/support
+				73 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					74 image
+					75 text 立即订阅
+				76 button 金
+					77 text 金
+					78 image
+			79 container
+				80 button 工作台
+					81 image
+					82 text 工作台
+				83 button 调整记录
+					84 text 调整记录
+				85 button 销售统计
+					86 text 销售统计
+				87 button 采购统计
+					88 text 采购统计
+				89 button 库存统计
+					90 text 库存统计
+				91 button 项目统计
+					92 text 项目统计
+				93 button 组装统计
+					94 text 组装统计
+				95 button 财务总览
+					96 text 财务总览
+				97 button 损益分析
+					98 text 损益分析
+				99 button 资金分析
+					100 text 资金分析
+				101 button 往来账款
+					102 text 往来账款
+				103 button 税务库存
+					104 text 税务库存
+				105 button 风险监控
+					106 text 风险监控
+				107 button 基础配置
+					108 text 基础配置
+				109 button 账户管理
+					110 text 账户管理
+			111 container
+				112 text 系统设置
+				113 image
+				114 text 账号管理
+				115 button
+					116 image
+				117 heading 账号管理, Value: 1
+					118 text 账号管理
+				119 button 账号列表
+					120 image
+					121 text 账号列表
+				122 button 角色权限
+					123 image
+					124 text 角色权限
+				125 button 用户视图
+					126 image
+					127 text 用户视图
+				128 button 数据权限
+					129 image
+					130 text 数据权限
+				202 button 新建角色
+					203 image
+					204 text 新建角色
+				205 image
+				206 heading 财务, Value: 4
+					207 text 财务
+				208 button
+					209 image
+				210 button 删除
+					211 image
+				212 text 应收应付、收付款、费用、发票及对账
+				213 image
+				214 text 0  个用户 基础资料 供应商管理 财务配置 费用类别 + 172
+				215 image
+				216 heading 行政/HR, Value: 4
+					217 text 行政/HR
+				218 button
+					219 image
+				220 button 删除
+					221 image
+				222 text 员工管理、考勤假期、公告会议及资产
+				223 image
+				224 text 0  个用户 固定资产 新增资产 删除 编辑 + 218
+				225 image
+				226 heading 项目经理, Value: 4
+					227 text 项目经理
+				228 button
+					229 image
+				230 button 删除
+					231 image
+				232 text 项目管理、计划工时、图纸管理
+				233 image
+				234 text 0  个用户 基础资料 BOM管理 物料搜索 物料管理 + 99
+				235 image
+				236 heading 销售, Value: 4
+					237 text 销售
+				238 button
+					239 image
+				240 button 删除
+					241 image
+				242 text 销售报价、合同、订单、发货及客户管理
+				243 image
+				244 text 0  个用户 基础资料 产品追溯 物料搜索 物料组合 + 240
+				245 image
+				246 heading 采购, Value: 4
+					247 text 采购
+				248 button
+					249 image
+				250 button 删除
+					251 image
+				252 text 采购申请、询价、订单及供应商管理
+				253 image
+				254 text 0  个用户 基础资料 产品追溯 BOM管理 物料搜索 + 109
+				255 image
+				256 heading 仓库, Value: 4
+					257 text 仓库
+				258 button
+					259 image
+				260 button 删除
+					261 image
+				262 text 库存出入库、盘点、调拨及质检
+				263 image
+				264 text 0  个用户 基础资料 产品追溯 编辑 打印条码 + 153
+				265 image
+				266 heading 系统管理员, Value: 4
+					267 text 系统管理员
+				268 text 超级管理员
+				269 button
+					270 image
+				271 text 租户注册自动创建的系统管理员角色
+				272 image
+				273 text 1  个用户 关联销售合同列表 编辑 保存草稿 编辑/保存合同 + 2314 共  7 条记录 每页
+				274 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					275 text 20
+				276 text 条
+				277 button 1
+			200 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			201 container Notifications alt+T
+		278 container 新建角色
+			279 container :ru2:
+				280 image
+				281 text 新建角色
+			282 button 关闭
+				283 image
+			284 container
+				285 text * 角色名称
+			286 text field (settable)
+			287 text 角色描述
+			288 text field (settable)
+			289 text 角色类型
+			290 container
+				291 radio button (settable, integer) Description: 普通角色, Value: 1
+				292 text 普通角色
+			293 container
+				294 radio button (settable, integer) Description: 超级管理员, Value: 0
+				295 text 超级管理员
+			296 text 权限配置
+			297 image
+			298 text field (settable) PC权限搜索
+			299 button PC 权限
+			300 button 小程序权限
+			307 outline
+				308 container
+					309 row (selectable) Toggle 工作台 工作台
+						310 button Toggle 工作台
+							311 image
+						312 checkbox (settable, integer) 0
+						313 text 工作台
+					314 row (selectable) Toggle 供应链 供应链
+						315 button Toggle 供应链
+							316 image
+						317 checkbox (settable, integer) 0
+						318 text 供应链
+					319 row (selectable) Toggle 销售 销售
+						320 button Toggle 销售
+							321 image
+						322 checkbox (settable, integer) 0
+						323 text 销售
+					324 row (selectable) Toggle 生产 生产
+						325 button Toggle 生产
+							326 image
+						327 checkbox (settable, integer) 0
+						328 text 生产
+					329 row (selectable) Toggle 项目 项目
+						330 button Toggle 项目
+							331 image
+						332 checkbox (settable, integer) 0
+						333 text 项目
+					334 row (selectable) Toggle 行政 行政
+						335 button Toggle 行政
+							336 image
+						337 checkbox (settable, integer) 0
+						338 text 行政
+					339 row (selectable) Toggle 财务 财务
+						340 button Toggle 财务
+							341 image
+						342 checkbox (settable, integer) 0
+						343 text 财务
+					344 row (selectable) Toggle 报表 报表
+						345 button Toggle 报表
+							346 image
+						347 checkbox (settable, integer) 0
+						348 text 报表
+					349 row (selectable) Toggle 系统 系统
+						350 button Toggle 系统
+							351 image
+						352 checkbox (settable, integer) 0
+						353 text 系统
+			354 text PC  0  项  / 小程序入口 91 项
+			303 button 取消
+			304 button (disabled) 创建
+				305 image
+				306 text 创建
+
+The focused UI element is 202 button 新建角色

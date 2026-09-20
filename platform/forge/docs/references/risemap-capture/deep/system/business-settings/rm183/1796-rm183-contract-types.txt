@@ -1,0 +1,219 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/sales".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/sales
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 系统
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 系统设置
+					10 image
+					11 text 系统设置
+					12 image
+				13 button 基础配置
+				14 button 用户与角色
+				15 button 部门管理
+				16 button 用户会话
+				17 button 审计日志
+				18 button 业务设置
+					19 image
+					20 text 业务设置
+					21 image
+				22 button 商品管理
+				23 button 财务配置
+				24 button 行政管理
+				25 button 客户管理
+				26 button 采购销售
+				27 button 库存管理
+				28 button 其他配置
+				29 button 人事配置
+				30 button 项目管理
+				31 button 图纸配置
+				32 button 生产配置
+				33 button 委外配置
+				34 button 单据打印
+				35 button 插件中心
+					36 image
+					37 text 插件中心
+				38 button 服务订阅
+					39 image
+					40 text 服务订阅
+				41 button 推广奖励
+					42 image
+					43 text 推广奖励
+				44 button 字段管理
+					45 image
+					46 text 字段管理
+			47 image
+			48 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			49 button 查看方案
+				50 image
+				51 text 查看方案
+			52 button
+				53 image
+			54 container
+				55 container 业务分类
+					56 checkbox 工作台, Value: 0
+					57 checkbox 供应链, Value: 0
+					58 checkbox 销售, Value: 0
+					59 checkbox 生产, Value: 0
+					60 checkbox 项目, Value: 0
+					61 checkbox 行政, Value: 0
+					62 checkbox 财务, Value: 0
+					63 checkbox 报表, Value: 0
+					64 checkbox 系统, Value: 1
+				65 button Description: 展开搜索, Help: 搜索
+					66 image
+				67 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					68 image
+					69 text 2
+				70 button Description: 打开推广奖励, Help: 推广
+				71 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				72 link Description: 打开工单, Value: community.risemap.cn/support
+				73 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					74 image
+					75 text 立即订阅
+				76 button 金
+					77 text 金
+					78 image
+			79 container
+				80 button 工作台
+					81 image
+					82 text 工作台
+				83 button 资金分析
+					84 text 资金分析
+				85 button 往来账款
+					86 text 往来账款
+				87 button 税务库存
+					88 text 税务库存
+				89 button 风险监控
+					90 text 风险监控
+				91 button 基础配置
+					92 text 基础配置
+				93 button 账户管理
+					94 text 账户管理
+				95 button 部门管理
+					96 text 部门管理
+				97 button 用户会话
+					98 text 用户会话
+				99 button 审计日志
+					100 text 审计日志
+				101 button 商品管理配置
+					102 text 商品管理配置
+				103 button 财务配置
+					104 text 财务配置
+				105 button 行政配置
+					106 text 行政配置
+				107 button 客户管理配置
+					108 text 客户管理配置
+				109 button 销售配置
+					110 text 销售配置
+			111 container
+				112 text 业务设置
+				113 image
+				114 text 销售配置
+				115 heading 业务设置 - 采购销售, Value: 1
+					116 text 业务设置 -  采购销售
+				117 button 商品管理
+				118 button 财务配置
+				119 button 行政管理
+				120 button 客户管理
+				121 button 采购销售
+				122 button 库存管理
+				123 button 其他配置
+				124 button 人事配置
+				125 button 项目管理
+				126 button 图纸配置
+				127 button 生产配置
+				128 button 委外配置
+				129 button 单据打印
+				130 text 管理商品分组、计量单位、结算方式、仓库等业务基础数据配置
+				131 button AI 助手
+					132 image
+					133 text AI 助手
+				134 button 采购销售
+					135 image
+					136 text 采购销售
+					137 image
+				138 button 采购付款条件
+					139 image
+					140 text 采购付款条件
+				141 button 销售付款条件
+					142 image
+					143 text 销售付款条件
+				144 button 协同销售职责
+					145 image
+					146 text 协同销售职责
+				147 button 抬头管理
+					148 image
+					149 text 抬头管理
+				150 button 报价类型
+					151 image
+					152 text 报价类型
+				153 button 报价条款
+					154 image
+					155 text 报价条款
+				156 button 合同类型
+					157 image
+					158 text 合同类型
+				159 button 合同条款模板
+					160 image
+					161 text 合同条款模板
+				162 button 验收方式
+					163 image
+					164 text 验收方式
+				165 button 验收节点模板
+					166 image
+					167 text 验收节点模板
+				168 button 应付节点模板
+					169 image
+					170 text 应付节点模板
+				171 button 采购分类
+					172 image
+					173 text 采购分类
+				174 button 退货原因
+					175 image
+					176 text 退货原因
+				177 button 线索商机
+					178 image
+					179 text 线索商机
+					180 image
+				181 button 线索来源
+					182 image
+					183 text 线索来源
+				184 button 线索状态
+					185 image
+					186 text 线索状态
+				187 button 商机阶段
+					188 image
+					189 text 商机阶段
+				190 button 商机来源
+					191 image
+					192 text 商机来源
+				193 button Goodwill 订单
+					194 image
+					195 text Goodwill 订单
+					196 image
+				197 button 赠送类型
+					198 image
+					199 text 赠送类型
+				200 button 业绩配置
+					201 image
+					202 text 业绩配置
+					203 image
+				204 button 分配原因
+					205 image
+					206 text 分配原因
+				207 text 合同类型管理 配置销售合同业务类型，用于新建合同时选择
+				208 button 新增类型
+					209 image
+					210 text 新增类型
+				211 image
+				212 text 暂无合同类型
+				213 image
+				214 text 说明 合同类型用于销售合同分类与展示；新建合同时从已启用的类型中选择。拖拽仅本地排序，刷新后恢复服务端顺序。
+			215 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			216 container Notifications alt+T
+
+The focused UI element is 156 button 合同类型

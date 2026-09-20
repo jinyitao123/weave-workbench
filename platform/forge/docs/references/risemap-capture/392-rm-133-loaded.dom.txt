@@ -1,0 +1,205 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 财务
+- button "收起侧边栏":
+- navigation:
+  - button "资金管理":
+    - generic: 资金管理
+  - button "资金账户":
+    - generic: 资金账户
+  - button "资金流水":
+    - generic: 资金流水
+  - button "应收应付" [active]:
+    - generic: 应收应付
+  - button "收款管理":
+    - generic: 收款管理
+  - button "付款管理":
+    - generic: 付款管理
+  - button "退款申请":
+    - generic: 退款申请
+  - button "授信额度管理":
+    - generic: 授信额度管理
+  - button "借款贷款管理":
+    - generic: 借款贷款管理
+  - button "业务确认":
+    - generic: 业务确认
+  - button "销售收入确认":
+    - generic: 销售收入确认
+  - button "成本中心":
+    - generic: 成本中心
+  - button "费用中心":
+    - generic: 费用中心
+  - button "报销管理":
+    - generic: 报销管理
+  - button "对账单":
+    - generic: 对账单
+  - button "发票管理":
+    - generic: 发票管理
+  - button "发票总览":
+    - generic: 发票总览
+  - button "销项发票":
+    - generic: 销项发票
+  - button "进项发票":
+    - generic: 进项发票
+  - button "开票任务":
+    - generic: 开票任务
+  - button "调整记录":
+    - generic: 调整记录
+- generic: 免费试用中，还剩 14 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务" [pressed]:
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "规章制度":
+  - generic: 规章制度
+- button "通讯录":
+  - generic: 通讯录
+- button "加班申请":
+  - generic: 加班申请
+- button "请假管理":
+  - generic: 请假管理
+- button "出差申请":
+  - generic: 出差申请
+- button "考勤管理":
+  - generic: 考勤管理
+- button "考勤统计":
+  - generic: 考勤统计
+- button "审批记录":
+  - generic: 审批记录
+- button "发起流程":
+  - generic: 发起流程
+- button "流程定义":
+  - generic: 流程定义
+- button "流程分类":
+  - generic: 流程分类
+- button "资金账户":
+  - generic: 资金账户
+- button "资金流水":
+  - generic: 资金流水
+- button "应收应付":
+  - generic: 应收应付
+- main:
+  - generic: 资金管理
+  - generic: 应收应付
+  - heading "应收应付" [level=1]
+  - paragraph: 统一查看应收应付账款、管理期初建账、跟踪资金双向流动
+  - button "应收账款":
+    - text: 应收账款
+  - button "应付账款":
+    - text: 应付账款
+  - button "往来对冲":
+    - text: 往来对冲
+  - button "期初应收建账":
+    - text: 期初应收建账
+  - button "期初应付建账":
+    - text: 期初应付建账
+  - button "导出":
+    - text: 导出
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "搜索应收号/销售订单/客户..."
+  - button "账龄状态":
+    - generic: 账龄状态
+  - radiogroup:
+    - radio "列表" [checked]:
+      - generic: 列表
+    - radio "按客户":
+      - generic: 按客户
+    - radio "按订单":
+      - generic: 按订单
+  - button "来源":
+    - generic: 来源
+  - button:
+  - textbox "开始日期"
+  - generic: ~
+  - textbox "结束日期"
+  - generic: "未收余额:"
+  - textbox "最小"
+  - generic: ~
+  - textbox "最大"
+  - button "发票状态":
+    - generic: 发票状态
+  - button "业务员":
+    - generic: 业务员
+  - button "到期提醒":
+    - generic: 到期提醒
+  - table:
+    - rowgroup:
+      - row "应收编号 来源 客户/业务员 订单/项目 应收总额 已收/冲抵 未收余额 到期日 状态 发票 操作":
+        - columnheader:
+          - checkbox
+        - columnheader "应收编号":
+          - generic: 应收编号
+        - columnheader "来源":
+          - generic: 来源
+        - columnheader "客户/业务员":
+          - generic: 客户/业务员
+        - columnheader "订单/项目":
+          - generic: 订单/项目
+        - columnheader "应收总额":
+          - generic: 应收总额
+        - columnheader "已收/冲抵":
+          - generic: 已收/冲抵
+        - columnheader "未收余额":
+          - generic: 未收余额
+        - columnheader "到期日":
+          - generic: 到期日
+        - columnheader "状态":
+          - generic: 状态
+        - columnheader "发票":
+          - generic: 发票
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "暂无应收账款":
+        - cell "暂无应收账款":
+          - generic: 暂无应收账款
+  - text: 共
+  - strong: "0"
+  - text: 条
+  - text: "· 未收合计:"
+  - strong: ¥0.00
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 1-10分钟

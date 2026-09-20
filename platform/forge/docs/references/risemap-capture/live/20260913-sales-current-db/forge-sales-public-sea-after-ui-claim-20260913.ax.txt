@@ -1,0 +1,131 @@
+Browser tab: 28, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_customer_pool".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_customer_pool
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 公海客户
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_customer_pool
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 container
+						36 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+						37 button 固定 工作台
+					38 container
+						39 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+						40 button 固定 待办管理
+					41 container
+						42 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+						43 button 固定 AI 广场
+					44 container
+						45 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+						46 button 固定 引导中心
+			47 text 最近使用
+			48 button 切换侧边栏
+		49 container
+			50 button 在 Studio 中编辑
+			51 heading 公海客户, Value: 1
+				52 text 公海客户
+			53 text 未分配或已释放的客户资源池，销售人员可自行领取 20 CRM客户管理 / 公海客户
+			54 button (disabled) 新建公海客户
+			55 button 刷新
+			56 text 未分配或已释放的客户资源池，销售人员可自行领取
+			57 heading 公海客户, Value: 1
+				58 text 公海客户
+			59 text field (settable) 搜索客户名称
+			60 button 行业
+			61 button 来源
+			62 button 级别
+			63 button 清空筛选
+			64 table
+				65 row
+					66 cell
+						67 text 客户名称
+					68 cell
+						69 text 行业
+					70 cell
+						71 text 客户级别
+					72 cell
+						73 text 联系人
+					74 cell
+						75 text 所在城市
+					76 cell
+						77 text 来源
+					78 cell
+						79 text 预估价值
+					80 cell
+						81 text 释放天数
+					82 cell
+						83 text 状态
+					84 cell
+						85 text 操作
+				86 row
+					87 cell
+						88 text 无锡精密装备有限公司-20260913153034
+					89 cell
+						90 text 装备制造
+					91 cell
+						92 text A
+					93 cell
+						94 text 陈经理
+					95 cell
+						96 text 无锡
+					97 cell
+						98 text 展会名片
+					99 cell
+						100 text ¥ 180,000
+					101 cell
+						102 text 12  天
+					103 cell
+						104 text 已领取
+					105 cell
+						106 text 已进入客户档案
+				107 row
+					108 cell
+						109 text 无锡云起智能装备有限公司-20260913154204
+					110 cell
+						111 text 装备制造
+					112 cell
+						113 text A
+					114 cell
+						115 text 许明远
+					116 cell
+						117 text 无锡
+					118 cell
+						119 text 新建
+					120 cell
+						121 text ¥ 180,000
+					122 cell
+						123 text 0  天
+					124 cell
+						125 text 已领取
+					126 cell
+						127 text 已进入客户档案
+			128 text 共  2  条记录 每页 20 条 · 1 / 1
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_customer_pool

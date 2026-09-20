@@ -1,0 +1,391 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/other".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/other
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 系统
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 系统设置
+					10 image
+					11 text 系统设置
+					12 image
+				13 button 基础配置
+				14 button 用户与角色
+				15 button 部门管理
+				16 button 用户会话
+				17 button 审计日志
+				18 button 业务设置
+					19 image
+					20 text 业务设置
+					21 image
+				22 button 商品管理
+				23 button 财务配置
+				24 button 行政管理
+				25 button 客户管理
+				26 button 采购销售
+				27 button 库存管理
+				28 button 其他配置
+				29 button 人事配置
+				30 button 项目管理
+				31 button 图纸配置
+				32 button 生产配置
+				33 button 委外配置
+				34 button 单据打印
+				35 button 插件中心
+					36 image
+					37 text 插件中心
+				38 button 服务订阅
+					39 image
+					40 text 服务订阅
+				41 button 推广奖励
+					42 image
+					43 text 推广奖励
+				44 button 字段管理
+					45 image
+					46 text 字段管理
+			47 image
+			48 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			49 button 查看方案
+				50 image
+				51 text 查看方案
+			52 button
+				53 image
+			54 container
+				55 container 业务分类
+					56 checkbox 工作台, Value: 0
+					57 checkbox 供应链, Value: 0
+					58 checkbox 销售, Value: 0
+					59 checkbox 生产, Value: 0
+					60 checkbox 项目, Value: 0
+					61 checkbox 行政, Value: 0
+					62 checkbox 财务, Value: 0
+					63 checkbox 报表, Value: 0
+					64 checkbox 系统, Value: 1
+				65 button Description: 展开搜索, Help: 搜索
+					66 image
+				67 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					68 image
+					69 text 2
+				70 button Description: 打开推广奖励, Help: 推广
+				71 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				72 link Description: 打开工单, Value: community.risemap.cn/support
+				73 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					74 image
+					75 text 立即订阅
+				76 button 金
+					77 text 金
+					78 image
+			79 container
+				80 button 工作台
+					81 image
+					82 text 工作台
+				83 button 税务库存
+					84 text 税务库存
+				85 button 风险监控
+					86 text 风险监控
+				87 button 基础配置
+					88 text 基础配置
+				89 button 账户管理
+					90 text 账户管理
+				91 button 部门管理
+					92 text 部门管理
+				93 button 用户会话
+					94 text 用户会话
+				95 button 审计日志
+					96 text 审计日志
+				97 button 商品管理配置
+					98 text 商品管理配置
+				99 button 财务配置
+					100 text 财务配置
+				101 button 行政配置
+					102 text 行政配置
+				103 button 客户管理配置
+					104 text 客户管理配置
+				105 button 销售配置
+					106 text 销售配置
+				107 button 库存配置
+					108 text 库存配置
+				109 button 其他配置
+					110 text 其他配置
+			111 container
+				112 text 业务设置
+				113 image
+				114 text 其他配置
+				115 heading 业务设置 - 其他配置, Value: 1
+					116 text 业务设置 -  其他配置
+				117 button 商品管理
+				118 button 财务配置
+				119 button 行政管理
+				120 button 客户管理
+				121 button 采购销售
+				122 button 库存管理
+				123 button 其他配置
+				124 button 人事配置
+				125 button 项目管理
+				126 button 图纸配置
+				127 button 生产配置
+				128 button 委外配置
+				129 button 单据打印
+				130 text 管理商品分组、计量单位、结算方式、仓库等业务基础数据配置
+				131 button AI 助手
+					132 image
+					133 text AI 助手
+				134 button 其他配置
+					135 image
+					136 text 其他配置
+					137 image
+				138 button 会议室配置
+					139 image
+					140 text 会议室配置
+				141 button 印章类型
+					142 image
+					143 text 印章类型
+				144 button 文件类型
+					145 image
+					146 text 文件类型
+				147 button 设备分类配置
+					148 image
+					149 text 设备分类配置
+				150 button 维护类型配置
+					151 image
+					152 text 维护类型配置
+				153 button 维修类型配置
+					154 image
+					155 text 维修类型配置
+				156 button 工单费用分类
+					157 image
+					158 text 工单费用分类
+				159 button 维护项目配件配置
+					160 image
+					161 text 维护项目配件配置
+				162 button 单据命名规则
+					163 image
+					164 text 单据命名规则
+				165 text 单据文件命名规则
+				166 container
+					167 text 配置导出 / 下载 PDF 时的文件名格式，共  31  种业务单据，每种可独立配置
+				168 button 应用到同类单据
+					169 image
+					170 text 应用到同类单据
+				171 button 恢复默认
+					172 image
+					173 text 恢复默认
+				174 button 保存
+					175 image
+					176 text 保存
+				177 container
+					178 image
+					179 text field (settable)
+				180 button 销售单据 7
+					181 image
+					182 text 销售单据
+					183 text 7
+					184 image
+				185 button 销售报价单 未配置
+					186 text 销售报价单
+					187 text 未配置
+				188 button 销售订单 未配置
+					189 text 销售订单
+					190 text 未配置
+				191 button 销售合同 未配置
+					192 text 销售合同
+					193 text 未配置
+				194 button 销售出库单 未配置
+					195 text 销售出库单
+					196 text 未配置
+				197 button 销售发货单 未配置
+					198 text 销售发货单
+					199 text 未配置
+				200 button 销售退货单 未配置
+					201 text 销售退货单
+					202 text 未配置
+				203 button Goodwill 订单 未配置
+					204 text Goodwill 订单
+					205 text 未配置
+				206 button 采购单据 4
+					207 image
+					208 text 采购单据
+					209 text 4
+					210 image
+				211 button 采购申请单 未配置
+					212 text 采购申请单
+					213 text 未配置
+				214 button 采购订单 未配置
+					215 text 采购订单
+					216 text 未配置
+				217 button 采购入库单 未配置
+					218 text 采购入库单
+					219 text 未配置
+				220 button 采购退货单 未配置
+					221 text 采购退货单
+					222 text 未配置
+				223 button 库存单据 7
+					224 image
+					225 text 库存单据
+					226 text 7
+					227 image
+				228 button 其他入库单 未配置
+					229 text 其他入库单
+					230 text 未配置
+				231 button 库存盘点单 未配置
+					232 text 库存盘点单
+					233 text 未配置
+				234 button 库存调拨单 未配置
+					235 text 库存调拨单
+					236 text 未配置
+				237 button 库存报损单 未配置
+					238 text 库存报损单
+					239 text 未配置
+				240 button 到货登记单 未配置
+					241 text 到货登记单
+					242 text 未配置
+				243 button 进货检验单 未配置
+					244 text 进货检验单
+					245 text 未配置
+				246 button 不合格品单 未配置
+					247 text 不合格品单
+					248 text 未配置
+				249 button 财务单据 6
+					250 image
+					251 text 财务单据
+					252 text 6
+					253 image
+				254 button 应收单 未配置
+					255 text 应收单
+					256 text 未配置
+				257 button 应付单 未配置
+					258 text 应付单
+					259 text 未配置
+				260 button 借款单 未配置
+					261 text 借款单
+					262 text 未配置
+				263 button 收款单 / 付款单 未配置
+					264 text 收款单 / 付款单
+					265 text 未配置
+				266 button 对账单 未配置
+					267 text 对账单
+					268 text 未配置
+				269 button 成本转移单 未配置
+					270 text 成本转移单
+					271 text 未配置
+				272 button 制造单据 3
+					273 image
+					274 text 制造单据
+					275 text 3
+					276 image
+				277 button 工作令 / 工单 未配置
+					278 text 工作令 / 工单
+					279 text 未配置
+				280 button 外协订单 未配置
+					281 text 外协订单
+					282 text 未配置
+				283 button 物料发出单 未配置
+					284 text 物料发出单
+					285 text 未配置
+				286 button 运营单据 4
+					287 image
+					288 text 运营单据
+					289 text 4
+					290 image
+				291 button 固定资产卡片 未配置
+					292 text 固定资产卡片
+					293 text 未配置
+				294 button 物资领用单 未配置
+					295 text 物资领用单
+					296 text 未配置
+				297 button 用章申请单 未配置
+					298 text 用章申请单
+					299 text 未配置
+				300 button 会议纪要 未配置
+					301 text 会议纪要
+					302 text 未配置
+				303 text 共  31  种单据 已配置  0 / 31
+				304 container
+					305 image
+					306 text 应收单
+					395 image
+					308 text 财务单据 未配置 示例编号： AR-2026-0212  · 共  10  个可用字段
+				309 image
+				310 text 文件名预览 基于  2026/09/09 07:52  的示例数据
+				311 image
+				312 text 应收单_上海电力设计院_49200.00.pdf
+				313 text PDF 1 . 单据类型 2 . 分隔符 3 . 客户名称 4 . 分隔符 5 . 总金额 字段配置 5  个字段
+				314 button 添加字段
+					315 image
+					316 text 添加字段
+				317 button
+					318 image
+				319 text 1
+				320 image
+				321 text 单据类型
+				322 container
+					323 text 自动取单据类型名，如「销售报价单」  · 示例： 应收单
+				324 button
+					325 image
+				326 button
+					327 image
+				328 button
+					329 image
+				330 text 2
+				331 image
+				332 text 分隔符
+				333 button _
+				334 button -
+				335 button .
+				336 button ␣
+				337 button ()
+				338 button
+					339 image
+				340 button
+					341 image
+				342 button
+					343 image
+				344 text 3
+				396 image
+				346 text 客户名称
+				347 container
+					348 text 自动取客户公司名称  · 示例： 上海电力设计院
+				349 button
+					350 image
+				351 button
+					352 image
+				353 button
+					354 image
+				355 text 4
+				356 image
+				357 text 分隔符
+				358 button _
+				359 button -
+				360 button .
+				361 button ␣
+				362 button ()
+				363 button
+					364 image
+				365 button
+					366 image
+				367 text 5
+				397 image
+				369 text 总金额 单据总额（小写数字）  · 示例： 49200.00
+				376 button
+					377 image
+				378 image
+				379 text 命名规则说明
+				380 content list
+					381 container
+						382 AXListMarker • 
+						383 text 导出 / 下载 PDF 时，系统按当前规则自动拼接文件名（含  .pdf  后缀）。
+					384 container
+						385 AXListMarker • 
+						386 text 字段值（如客户、项目、单据号）从单据数据中自动获取；若该字段为空，则跳过该段并保留分隔符。
+					387 container
+						388 AXListMarker • 
+						389 text 建议至少包含  单据类型  和  日期 ，便于本地归档与检索。
+					390 container
+						391 AXListMarker • 
+						392 text 文件名中的特殊字符（ / \ : * ? " < > | ）将自动替换为下划线。
+			393 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			394 container Notifications alt+T
+
+The focused UI element is 254 button 应收单 未配置

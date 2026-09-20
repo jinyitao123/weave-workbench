@@ -1,0 +1,125 @@
+{
+  "snapshot": "/Users/jinyitao/Developer/inoForge/docs/references/risemap-public/20260909T015246Z",
+  "flowCount": 13,
+  "stepCount": 241,
+  "flows": [
+    {
+      "id": "p2p",
+      "title": "采购到付款",
+      "steps": 7,
+      "example": false
+    },
+    {
+      "id": "o2c",
+      "title": "销售到收款",
+      "steps": 6,
+      "example": true
+    },
+    {
+      "id": "expense",
+      "title": "费用报销",
+      "steps": 5,
+      "example": true
+    },
+    {
+      "id": "sales-finance-loop",
+      "title": "销售业财闭环",
+      "steps": 22,
+      "example": false
+    },
+    {
+      "id": "contract-order",
+      "title": "销售合同与销售订单",
+      "steps": 19,
+      "example": false
+    },
+    {
+      "id": "purchase-exec",
+      "title": "采购订单执行流程",
+      "steps": 21,
+      "example": false
+    },
+    {
+      "id": "project-mgmt",
+      "title": "项目创建与管理",
+      "steps": 20,
+      "example": false
+    },
+    {
+      "id": "labor-cost",
+      "title": "工时成本配置与核算",
+      "steps": 26,
+      "example": false
+    },
+    {
+      "id": "sn-trace",
+      "title": "供应商 SN 码管理",
+      "steps": 20,
+      "example": false
+    },
+    {
+      "id": "revenue-recognition",
+      "title": "销售合同收入确认方式",
+      "steps": 29,
+      "example": false
+    },
+    {
+      "id": "pricing",
+      "title": "价格策略与销售定价机制",
+      "steps": 28,
+      "example": false
+    },
+    {
+      "id": "ar-sources",
+      "title": "应收款来源全景",
+      "steps": 16,
+      "example": false
+    },
+    {
+      "id": "ap-sources",
+      "title": "应付款来源全景",
+      "steps": 22,
+      "example": false
+    }
+  ],
+  "referencedAssetCount": 1030,
+  "downloadedBusinessAssetSamples": [
+    {
+      "file": "taxPriceCalc-b5k4-X7m.js",
+      "bytes": 570,
+      "sourceMapReferences": []
+    },
+    {
+      "file": "useQuotationData-BqfSGeIm.js",
+      "bytes": 5075,
+      "sourceMapReferences": []
+    },
+    {
+      "file": "ProjectList-DVoQixLk.js",
+      "bytes": 47860,
+      "sourceMapReferences": []
+    },
+    {
+      "file": "ProjectDetail-C8FKE8-H.js",
+      "bytes": 373643,
+      "sourceMapReferences": []
+    },
+    {
+      "file": "TimesheetManagement-DgmQbry8.js",
+      "bytes": 37573,
+      "sourceMapReferences": []
+    },
+    {
+      "file": "ProjectSettingsCenter-CaRRywEF.js",
+      "bytes": 105445,
+      "sourceMapReferences": []
+    },
+    {
+      "file": "index-jA6F_W13.css",
+      "bytes": 390778,
+      "sourceMapReferences": []
+    }
+  ],
+  "entrySourceMapReferences": [],
+  "scope": "Public reference snapshots; not original source, backend implementation, or proof of runtime behavior. Only entry and selected app assets downloaded."
+}

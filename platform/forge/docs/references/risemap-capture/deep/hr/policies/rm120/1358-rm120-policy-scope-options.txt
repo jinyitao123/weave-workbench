@@ -1,0 +1,52 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/policies".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/policies
+	2 container
+		3 container Notifications alt+T
+		4 container 新增制度, ID: radix-:rc:
+			5 heading 新增制度, Value: 2, ID: radix-:rd:
+				6 text 新增制度
+			7 text 1
+			8 text 基本信息
+			9 text 2
+			10 text 正文与附件
+			11 container
+				12 text * 制度名称
+			13 text field (settable)
+			14 container
+				15 text * 制度分类
+			16 button 信息安全
+				17 text 信息安全
+			18 text 版本号
+			19 text field (settable) V1.0
+			20 text 适用范围
+			21 button 全体员工
+				22 text 全体员工
+			23 text 起草人
+			24 button 请选择起草人
+				25 text 请选择起草人
+			26 container
+				27 text * 审批人
+			28 button 请选择审批人
+				29 text 请选择审批人
+			30 text 生效日期
+			31 container
+				32 text field (settable)
+				33 button
+					34 image
+			35 text 下次审查日期
+			36 container
+				37 text field (settable)
+				38 button
+					39 image
+			40 container
+				41 text * 制度摘要
+			42 text entry area (settable)
+			43 button 取消
+			44 button 下一步
+				45 text 下一步
+				46 image
+			47 button Close
+				48 image
+				49 text Close
+
+The focused UI element is 21 button 全体员工

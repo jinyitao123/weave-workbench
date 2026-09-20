@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-16",
+  "implementationRevision": "8f4a80bd2951311e9c1390c8fe35daed550f6747",
+  "environment": {
+    "forgeUrl": "http://localhost:4495",
+    "database": "file:.objectstack/supply-procurement-batch1.sqlite"
+  },
+  "browserPath": [
+    "PO-1789546200198-AN-001",
+    "ARR-2026-0001",
+    "PIN-2026-0001",
+    "IQC-2026-0001",
+    "PIN-2026-0001"
+  ],
+  "observed": {
+    "receipt": { "code": "ARR-2026-0001", "status": "stocked", "quantity": 1 },
+    "pendingInspection": { "code": "PIN-2026-0001", "status": "inspected" },
+    "inspection": { "code": "IQC-2026-0001", "status": "completed", "result": "passed", "accepted": 1, "rejected": 0 },
+    "inbound": { "code": "PIN-2026-0001", "status": "stocked", "quantity": 1, "taxedAmount": 6500 },
+    "inventoryBalance": { "onHand": 1, "available": 1, "inventoryValue": 6500 },
+    "inventoryLedger": { "direction": "inbound", "movementType": "purchase_inbound", "quantity": 1, "afterOnHand": 1, "amount": 6500 }
+  },
+  "restartReadback": {
+    "serverStopped": true,
+    "serverRestartedWithSameDatabase": true,
+    "databaseValuesMatched": true,
+    "browserInboundStatus": "stocked"
+  },
+  "risemapBoundary": "RISEMAP current tenant had no actionable records on these five pages, so same-material RISEMAP business completion remains blocked."
+}

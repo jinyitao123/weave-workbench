@@ -1,0 +1,141 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/production/shortages".
+1 AXWebArea RiseMap, URL: risemap.cn/production/shortages
+	2 container
+		3 container root
+			169 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			170 text 生产
+			171 button 收起侧边栏
+				172 image
+			173 container
+				344 button 组装业务管理
+					345 image
+					346 text 组装业务管理
+					347 image
+				348 button 组装单
+				349 button 缺料待办
+				350 button 领料单
+				351 button 补料单
+				352 button 退料单
+				353 button 拆解单
+				354 button 换件单
+				355 container
+					356 button 图纸管理
+						357 image
+						358 text 图纸管理
+						359 image
+					360 button 进入图纸管理上手指南
+						361 image
+				362 button 图纸总览
+				363 button 图号档案
+				364 button 图纸评审
+				365 button 图纸发布
+				366 button 图纸变更
+				367 button 图纸发放记录
+				368 button 图纸关联查询
+				369 button 客户图纸
+				370 container
+					371 button 委外管理
+						372 image
+						373 text 委外管理
+						374 image
+					375 button 进入委外管理上手指南
+						376 image
+				377 button 委外看板
+				378 button 委外订单
+				379 button 委外发料
+				380 button 委外回厂
+				381 button 委外退料
+				382 button 委外对账
+				383 button 委外供应商
+				384 button 委外库存
+				385 button 批次追溯
+				386 button 委外未交
+				387 button 委外进货
+				388 button 委外对账单
+			201 image
+			202 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			203 button 查看方案
+				204 image
+				205 text 查看方案
+			206 button
+				207 image
+			208 container
+				209 container 业务分类
+					210 checkbox 工作台, Value: 0
+					211 checkbox 供应链, Value: 0
+					212 checkbox 销售, Value: 0
+					213 checkbox 生产, Value: 1
+					214 checkbox 项目, Value: 0
+					215 checkbox 行政, Value: 0
+					216 checkbox 财务, Value: 0
+					217 checkbox 报表, Value: 0
+					218 checkbox 系统, Value: 0
+				219 button Description: 展开搜索, Help: 搜索
+					220 image
+				221 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					222 image
+					223 text 2
+				224 button Description: 打开推广奖励, Help: 推广
+				225 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				226 link Description: 打开工单, Value: community.risemap.cn/support
+				227 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					228 image
+					229 text 立即订阅
+				230 button 金
+					231 text 金
+					232 image
+			233 container
+				234 button 工作台
+					235 image
+					236 text 工作台
+				243 button 销售发票
+					244 text 销售发票
+				245 button 客户管理
+					246 text 客户管理
+				247 button 名片扫描
+					248 text 名片扫描
+				249 button 联系人管理
+					250 text 联系人管理
+				251 button 销售报价
+					252 text 销售报价
+				253 button 新建销售报价
+					254 text 新建销售报价
+				255 button 客户物料对照
+					256 text 客户物料对照
+				257 button 商机管理
+					258 text 商机管理
+				259 button 线索管理
+					260 text 线索管理
+				261 button 跟进记录
+					262 text 跟进记录
+				263 button 公海客户
+					264 text 公海客户
+				389 button 组装单
+					390 text 组装单
+				391 button 新建组装单
+					392 text 新建组装单
+				393 button 缺料待办
+					394 text 缺料待办
+			395 container
+				396 container
+					397 text 组装业务管理
+					398 image
+					399 text 缺料待办
+					400 image
+					401 heading 缺料待办, Value: 1
+						402 text 缺料待办
+					403 text 对在产组装单实时做齐套分析：库存按计划完工日期优先分配后，不满足的物料自动汇成缺料待办
+				404 image
+				405 text 缺料单据 0
+				406 image
+				407 text 缺料物料 0 种
+				408 image
+				409 text 缺口总额 ¥0.00
+				410 image
+				411 text 最早计划完工 -
+				412 image
+				413 text 当前没有缺料 所有在产组装单均已齐套
+			343 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			168 container Notifications alt+T
+
+The focused UI element is 349 button 缺料待办

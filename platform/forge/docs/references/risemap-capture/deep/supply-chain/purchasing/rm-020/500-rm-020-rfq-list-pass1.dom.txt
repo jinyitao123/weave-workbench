@@ -1,0 +1,236 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 供应链
+- button "收起侧边栏":
+- navigation:
+  - button "到货检验":
+    - generic: 到货检验
+  - button "到货通知":
+    - generic: 到货通知
+  - button "到货登记":
+    - generic: 到货登记
+  - button "待检验库存":
+    - generic: 待检验库存
+  - button "检验单":
+    - generic: 检验单
+  - button "检验规则":
+    - generic: 检验规则
+  - button "基础资料":
+    - generic: 基础资料
+  - button "物料管理":
+    - generic: 物料管理
+  - button "物料组合":
+    - generic: 物料组合
+  - button "BOM管理":
+    - generic: BOM管理
+  - button "综合物料搜索":
+    - generic: 综合物料搜索
+  - button "供应商管理":
+    - generic: 供应商管理
+  - button "产品实例追溯":
+    - generic: 产品实例追溯
+  - button "仓库管理":
+    - generic: 仓库管理
+  - button "采购管理":
+    - generic: 采购管理
+  - button "采购发票":
+    - generic: 采购发票
+  - button "采购申请":
+    - generic: 采购申请
+  - button "采购待办池":
+    - generic: 采购待办池
+  - button "询价管理":
+    - generic: 询价管理
+  - button "采购订单":
+    - generic: 采购订单
+  - button "采购退换货":
+    - generic: 采购退换货
+  - button "供应商价格本":
+    - generic: 供应商价格本
+  - button "入库管理":
+    - generic: 入库管理
+  - button "全部入库单":
+    - generic: 全部入库单
+  - button "采购入库":
+    - generic: 采购入库
+  - button "生产入库":
+    - generic: 生产入库
+  - button "其他入库":
+    - generic: 其他入库
+  - button "期初入库":
+    - generic: 期初入库
+  - button "入库明细":
+    - generic: 入库明细
+  - button "库存管理":
+    - generic: 库存管理
+  - button "库存总览":
+    - generic: 库存总览
+  - button "不合格处理":
+    - generic: 不合格处理
+  - button "库存流水":
+    - generic: 库存流水
+  - button "库存锁定":
+    - generic: 库存锁定
+  - button "库存盘点":
+    - generic: 库存盘点
+  - button "调拨与借出":
+    - generic: 调拨与借出
+  - button "库存预警":
+    - generic: 库存预警
+  - button "报损单":
+    - generic: 报损单
+  - button "SN码管理":
+    - generic: SN码管理
+  - button "出库管理":
+    - generic: 出库管理
+  - button "出库单列表":
+    - generic: 出库单列表
+  - button "生产出库":
+    - generic: 生产出库
+  - button "其他出库":
+    - generic: 其他出库
+  - button "销售直接出库":
+    - generic: 销售直接出库
+  - button "待出库发货单":
+    - generic: 待出库发货单
+  - button "采购退换货出库":
+    - generic: 采购退换货出库
+  - button "出库明细":
+    - generic: 出库明细
+- generic: 免费试用中，还剩 14 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链" [pressed]:
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "基础配置":
+  - generic: 基础配置
+- button "仓库管理":
+  - generic: 仓库管理
+- button "物料管理":
+  - generic: 物料管理
+- button "供应商管理":
+  - generic: 供应商管理
+- button "物料组合":
+  - generic: 物料组合
+- button "新建物料组合":
+  - generic: 新建物料组合
+- button "BOM管理":
+  - generic: BOM管理
+- button "新建BOM":
+  - generic: 新建BOM
+- button "综合物料搜索":
+  - generic: 综合物料搜索
+- button "产品实例追溯":
+  - generic: 产品实例追溯
+- button "采购申请":
+  - generic: 采购申请
+- button "新建采购申请":
+  - generic: 新建采购申请
+- button "采购待办池":
+  - generic: 采购待办池
+- button "询价管理":
+  - generic: 询价管理
+- main:
+  - generic: 采购管理
+  - generic: 询价管理
+  - heading "询价管理" [level=1]
+  - paragraph: 发起询价、收集报价、多供应商比价择优
+  - button "下一步操作 采购订单":
+    - generic: 下一步操作
+    - generic: 采购订单
+  - paragraph: 创建询价
+  - paragraph: 待发布
+  - paragraph: 发布询价
+  - paragraph: 生成链接/设期限
+  - paragraph: 收集报价
+  - paragraph: 报价收集中
+  - paragraph: 确认比价
+  - paragraph: 已完成比价
+  - paragraph: 转采购单
+  - paragraph: 已转采购单
+  - paragraph: 任意阶段均可手动关闭 → 失效关闭
+  - button "新建询价单":
+    - text: 新建询价单
+  - button "导出":
+    - text: 导出
+  - button "导入/导出任务"
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "搜索询价单号/标题/项目..."
+  - button "范围":
+    - text: 范围
+  - button "状态":
+    - text: 状态
+  - table:
+    - rowgroup:
+      - row "询价单号 标题 来源 负责采购 供应商报价 物料数 状态 截止日期 操作":
+        - columnheader:
+          - checkbox
+        - columnheader "询价单号":
+          - generic: 询价单号
+        - columnheader "标题":
+          - generic: 标题
+        - columnheader "来源":
+          - generic: 来源
+        - columnheader "负责采购":
+          - generic: 负责采购
+        - columnheader "供应商报价":
+          - generic: 供应商报价
+        - columnheader "物料数":
+          - generic: 物料数
+        - columnheader "状态":
+          - generic: 状态
+        - columnheader "截止日期":
+          - generic: 截止日期
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "暂无匹配的询价单":
+        - cell "暂无匹配的询价单":
+          - generic: 暂无匹配的询价单
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"

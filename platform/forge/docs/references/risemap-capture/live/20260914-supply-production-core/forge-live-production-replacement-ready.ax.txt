@@ -1,0 +1,344 @@
+Browser tab: 56, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_production_replacement_workspace".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_production_replacement_workspace
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 button 切换侧边栏
+			9 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			10 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			11 text 换件单 已连接
+			12 button 搜索…
+			13 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			14 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_production_replacement_workspace
+			15 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			16 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		17 container
+			18 container
+				19 text 区域
+				20 content list
+					21 button 工作台
+					22 button 供应链
+					23 button 销售
+					24 button 生产
+					25 button 项目
+					26 button 行政
+					27 button 财务
+					28 button 报表
+					29 button 系统
+			30 container
+				31 button (expanded) 工作台, Secondary Actions: Collapse
+				32 content list
+					33 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					34 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					35 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					36 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			37 text 最近使用
+			38 button 切换侧边栏
+		39 container
+			40 button 在 Studio 中编辑
+			41 heading 换件单, Value: 1
+				42 text 换件单
+			43 text 保持整机库存不变并办理新旧件库存变化 组装业务管理 / 换件单
+			44 heading 换件单, Value: 1
+				45 text 换件单
+			46 text 成品不离库，仅更换内部零部件，支持审批、领新件和旧件回收
+			47 button 新建换件单
+			48 text 导入/导出通过生产数据任务处理
+			49 button 刷新
+			50 text 换件单总数 10 累计换件处数 20 新件领用成本 ¥91,600.00 旧件回收价值 ¥32,000.00
+			51 tab group 换件单状态筛选
+				52 button 全部(10)
+					53 text 全部(
+					54 text 10
+					55 text )
+				56 button 草稿
+				57 button 审批中
+				58 button 待领料
+				59 button 换件中
+				60 button 已完工
+				61 button 已入库
+				62 button 已驳回
+			63 text field (settable) 搜索换件单
+			64 button 清空筛选
+			65 table
+				66 row
+					67 cell
+						68 text 换件单号
+					69 cell
+						70 text 成品
+					71 cell
+						72 text 换件内容
+					73 cell
+						74 text 改制数量
+					75 cell
+						76 text 原因
+					77 cell
+						78 text 新件成本
+					79 cell
+						80 text 回收价值
+					81 cell
+						82 text 成本变化
+					83 cell
+						84 text 经手人
+					85 cell
+						86 text 日期
+					87 cell
+						88 text 状态
+					89 cell
+						90 text 操作
+				91 row
+					92 cell
+						93 text REP-2026-0007
+					94 cell
+						95 text 800型柔性线控制柜
+					96 cell
+						97 text 2  处换件
+					98 cell
+						99 text 1
+					100 cell
+						101 text 在库控制柜部件升级替换
+					102 cell
+						103 text ¥11,400.00
+					104 cell
+						105 text ¥3,200.00
+					106 cell
+						107 text ¥8,200.00
+					108 cell
+						109 text Dev Admin
+					110 cell
+						111 text 2026-09-10
+					112 cell
+						113 text 已入库
+					114 cell
+						115 button 查看
+				116 row
+					117 cell
+						118 text REP-2026-0002
+					119 cell
+						120 text 800型柔性线控制柜
+					121 cell
+						122 text 2  处换件
+					123 cell
+						124 text 1
+					125 cell
+						126 text 在库控制柜部件升级替换
+					127 cell
+						128 text ¥200.00
+					129 cell
+						130 text ¥3,200.00
+					131 cell
+						132 text -¥3,000.00
+					133 cell
+						134 text Dev Admin
+					135 cell
+						136 text 2026-09-10
+					137 cell
+						138 text 已入库
+					139 cell
+						140 button 查看
+				141 row
+					142 cell
+						143 text REP-2026-0010
+					144 cell
+						145 text 800型柔性线控制柜
+					146 cell
+						147 text 2  处换件
+					148 cell
+						149 text 1
+					150 cell
+						151 text 在库控制柜部件升级替换
+					152 cell
+						153 text ¥11,400.00
+					154 cell
+						155 text ¥3,200.00
+					156 cell
+						157 text ¥8,200.00
+					158 cell
+						159 text Dev Admin
+					160 cell
+						161 text 2026-09-10
+					162 cell
+						163 text 已入库
+					164 cell
+						165 button 查看
+				166 row
+					167 cell
+						168 text REP-2026-0006
+					169 cell
+						170 text 800型柔性线控制柜
+					171 cell
+						172 text 2  处换件
+					173 cell
+						174 text 1
+					175 cell
+						176 text 在库控制柜部件升级替换
+					177 cell
+						178 text ¥11,400.00
+					179 cell
+						180 text ¥3,200.00
+					181 cell
+						182 text ¥8,200.00
+					183 cell
+						184 text Dev Admin
+					185 cell
+						186 text 2026-09-10
+					187 cell
+						188 text 审批中
+					189 cell
+						190 button 查看
+				191 row
+					192 cell
+						193 text REP-2026-0005
+					194 cell
+						195 text 800型柔性线控制柜
+					196 cell
+						197 text 2  处换件
+					198 cell
+						199 text 1
+					200 cell
+						201 text 在库控制柜部件升级替换
+					202 cell
+						203 text ¥11,400.00
+					204 cell
+						205 text ¥3,200.00
+					206 cell
+						207 text ¥8,200.00
+					208 cell
+						209 text Dev Admin
+					210 cell
+						211 text 2026-09-10
+					212 cell
+						213 text 已入库
+					214 cell
+						215 button 查看
+				216 row
+					217 cell
+						218 text REP-2026-0008
+					219 cell
+						220 text 800型柔性线控制柜
+					221 cell
+						222 text 2  处换件
+					223 cell
+						224 text 1
+					225 cell
+						226 text 在库控制柜部件升级替换
+					227 cell
+						228 text ¥11,400.00
+					229 cell
+						230 text ¥3,200.00
+					231 cell
+						232 text ¥8,200.00
+					233 cell
+						234 text Dev Admin
+					235 cell
+						236 text 2026-09-10
+					237 cell
+						238 text 已入库
+					239 cell
+						240 button 查看
+				241 row
+					242 cell
+						243 text REP-2026-0003
+					244 cell
+						245 text 800型柔性线控制柜
+					246 cell
+						247 text 2  处换件
+					248 cell
+						249 text 1
+					250 cell
+						251 text 在库控制柜部件升级替换
+					252 cell
+						253 text ¥11,400.00
+					254 cell
+						255 text ¥3,200.00
+					256 cell
+						257 text ¥8,200.00
+					258 cell
+						259 text Dev Admin
+					260 cell
+						261 text 2026-09-10
+					262 cell
+						263 text 审批中
+					264 cell
+						265 button 查看
+				266 row
+					267 cell
+						268 text REP-2026-0009
+					269 cell
+						270 text 800型柔性线控制柜
+					271 cell
+						272 text 2  处换件
+					273 cell
+						274 text 1
+					275 cell
+						276 text 在库控制柜部件升级替换
+					277 cell
+						278 text ¥11,400.00
+					279 cell
+						280 text ¥3,200.00
+					281 cell
+						282 text ¥8,200.00
+					283 cell
+						284 text Dev Admin
+					285 cell
+						286 text 2026-09-10
+					287 cell
+						288 text 已入库
+					289 cell
+						290 button 查看
+				291 row
+					292 cell
+						293 text REP-2026-0001
+					294 cell
+						295 text 800型柔性线控制柜
+					296 cell
+						297 text 2  处换件
+					298 cell
+						299 text 1
+					300 cell
+						301 text 在库控制柜部件升级替换
+					302 cell
+						303 text ¥200.00
+					304 cell
+						305 text ¥3,200.00
+					306 cell
+						307 text -¥3,000.00
+					308 cell
+						309 text Dev Admin
+					310 cell
+						311 text 2026-09-10
+					312 cell
+						313 text 已入库
+					314 cell
+						315 button 查看
+				316 row
+					317 cell
+						318 text REP-2026-0004
+					319 cell
+						320 text 800型柔性线控制柜
+					321 cell
+						322 text 2  处换件
+					323 cell
+						324 text 1
+					325 cell
+						326 text 在库控制柜部件升级替换
+					327 cell
+						328 text ¥11,400.00
+					329 cell
+						330 text ¥3,200.00
+					331 cell
+						332 text ¥8,200.00
+					333 cell
+						334 text Dev Admin
+					335 cell
+						336 text 2026-09-10
+					337 cell
+						338 text 已入库
+					339 cell
+						340 button 查看
+			341 text 共  10  条记录 · 每页 20 条 · 1 / 1
+
+The focused UI element is 8 button 切换侧边栏

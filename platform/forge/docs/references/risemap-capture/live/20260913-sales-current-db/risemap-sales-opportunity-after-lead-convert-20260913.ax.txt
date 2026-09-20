@@ -1,0 +1,244 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/sales/opportunities".
+0 AXWebArea RiseMap, URL: risemap.cn/sales/opportunities
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 销售
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 销售业务
+					9 image
+					10 text 销售业务
+					11 image
+				12 button 框架销售合同
+				13 button 销售订单
+				14 button 附加费用
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+				36 button 服务管理
+					37 image
+					38 text 服务管理
+					39 image
+				40 button 服务工单
+				41 button 服务报价单
+				42 button 服务结算单
+				43 button 接单中心
+				44 button 派工中心
+				45 button 服务分析
+				46 button 质保管理
+				47 button 服务配置
+			48 image
+			49 text 免费试用中，还剩 9 天 — 试用期间享全部功能
+			50 button 查看方案
+				51 image
+				52 text 查看方案
+			53 button
+				54 image
+			55 container
+				56 container 业务分类
+					57 container
+						58 checkbox 工作台, Value: 0
+						59 checkbox 供应链, Value: 0
+						60 checkbox 销售, Value: 1
+						61 checkbox 生产, Value: 0
+						62 checkbox 项目, Value: 0
+						63 checkbox 行政, Value: 0
+						64 checkbox 财务, Value: 0
+						65 checkbox 报表, Value: 0
+						66 checkbox 系统, Value: 0
+				67 button Description: 展开搜索, Help: 搜索
+					68 image
+				69 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+					70 image
+					71 text 20
+				72 button Description: 打开推广奖励, Help: 推广
+				73 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				74 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				75 button 立即订阅, Help: 试用还剩 9 天 · 立即订阅享专属优惠
+					76 image
+					77 text 立即订阅
+				78 button 金
+					79 text 金
+					80 image
+			81 container
+				82 button 工作台
+					83 image
+					84 text 工作台
+				85 button Goodwill订单详情
+					86 text Goodwill订单详情
+				87 button 工作台
+					88 text 工作台
+				89 button 服务工单
+					90 text 服务工单
+				91 button 服务报价单
+					92 text 服务报价单
+				93 button 服务结算单
+					94 text 服务结算单
+				95 button 质保管理
+					96 text 质保管理
+				97 button 线索管理
+					98 text 线索管理
+				99 button 商机管理
+					100 text 商机管理
+				101 button 跟进记录
+					102 text 跟进记录
+				103 button 公海客户
+					104 text 公海客户
+			213 container
+				214 container
+					215 text CRM客户管理
+					216 image
+					217 text 商机管理
+					218 image
+					219 heading 商机管理, Value: 1
+						220 text 商机管理
+					221 text 跟踪和管理所有销售商机，推进成交转化
+				222 button 新建商机
+					223 image
+					224 text 新建商机
+				225 button 导入/导出
+					226 image
+					227 text 导入/导出
+					228 image
+				229 radio button 列表, Value: 1, ID: :ru:-list
+				230 radio button 看板, Value: 0, ID: :ru:-kanban
+				231 button
+					232 image
+				233 button 刷新
+					234 image
+				235 button
+					236 image
+				237 button
+					238 image
+				239 image
+				240 text field (settable)
+				241 button 范围
+					242 image
+					243 text 范围
+					244 image
+				245 button 阶段
+					246 text 阶段
+					247 image
+				248 button 来源
+					249 text 来源
+					250 image
+				251 table
+					252 row
+						253 cell
+							254 checkbox (settable, integer) 0
+						255 cell
+							256 text 商机名称
+						257 cell
+							258 text 客户名称
+							259 image
+						260 cell
+							261 text 联系人姓名
+						262 cell
+							263 text 职务
+						264 cell
+							265 text 联系电话
+						266 cell
+							267 text 邮箱
+						268 cell
+							269 text 商机阶段
+						270 cell
+							271 text 来源
+						272 cell
+							273 text 商机描述
+						274 cell
+							275 text 竞争对手
+						276 cell
+							277 text 红绿灯
+						278 cell
+							279 text 优先级
+						280 cell
+							281 text 商机金额
+							282 image
+						283 cell
+							284 text 成功率
+						285 cell
+							286 text 预计成交日期
+							287 image
+						288 cell
+							289 text 负责人
+							290 image
+						291 cell
+							292 text 操作
+					293 row
+						294 cell
+							295 checkbox (settable, integer) 0
+						296 cell
+							297 text 苏州澄岳自动化装备有限公司 - 项目
+							298 text OPP-2026-0001
+						299 cell
+							300 text 苏州澄岳自动化装备有限公司
+						301 cell
+							302 text -
+						303 cell
+							304 text -
+						305 cell
+							306 text -
+						307 cell
+							308 text -
+						309 cell
+							310 text 初步接触
+						311 cell
+							312 text -
+						313 cell
+							314 text 来源线索: LEAD-2026-0001 (官网注册)，联系人: 周启明 项目经理
+						315 cell
+							316 text -
+						317 cell
+							318 button
+						319 cell
+							320 text 中
+						321 cell
+							322 container
+								323 text ¥ 320,000
+						324 cell
+							325 container
+								326 text 0 %
+						327 cell
+							328 text 2026-06-30
+						329 cell
+							330 text 金一涛
+						331 cell
+							332 button 关注
+								333 image
+							334 button 编辑
+								335 image
+							336 button 删除
+								337 image
+				338 text 共  1 条记录 每页
+				339 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					340 text 20
+				341 text 条
+				342 button (disabled) 上一页
+					343 image
+				344 button 1
+				345 button (disabled) 下一页
+					346 image
+			211 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			212 container Notifications alt+T
+
+The focused UI element is 0 AXWebArea RiseMap, URL: risemap.cn/sales/opportunities

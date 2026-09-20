@@ -1,0 +1,51 @@
+- region "通知 alt+T"
+- banner:
+  - button "切换侧边栏":
+    - generic: 切换侧边栏
+  - generic: 销售团队
+  - button "搜索…":
+  - button "打开消息中心":
+  - link "在 Studio 中设计":
+    - /url: /_console/studio/forge/interfaces?surface=page:page_sales_teams
+  - button "DA":
+    - generic: DA
+- main:
+  - main:
+    - button "在 Studio 中编辑":
+    - heading "销售团队" [level=1]
+    - paragraph: 管理销售团队结构、成员分配和团队负责人
+    - generic: "11"
+    - strong: 销售管理 / 销售组织管理
+    - button "新建团队"
+    - button "刷新"
+    - generic: 管理销售团队结构、成员分配和团队负责人
+    - heading "销售组织管理" [level=1]
+    - generic: 销售团队已创建
+    - button "关闭提示": ×
+    - textbox "搜索团队":
+      - /placeholder: 搜索团队...
+    - button "清空筛选"
+    - table:
+      - rowgroup:
+        - row "团队名称 负责人 成员 创建 状态 说明 操作":
+          - columnheader "团队名称"
+          - columnheader "负责人"
+          - columnheader "成员"
+          - columnheader "创建"
+          - columnheader "状态"
+          - columnheader "说明"
+          - columnheader "操作"
+      - rowgroup:
+        - row "RISEMAP 对照销售团队 20260913 TEAM-RM-20260913 Dev Admin 1 人 2026-09-13 启用 用于 Forge 销售管理复刻的同材料销售团队 编辑":
+          - cell "RISEMAP 对照销售团队 20260913 TEAM-RM-20260913":
+            - button "RISEMAP 对照销售团队 20260913"
+            - generic: TEAM-RM-20260913
+          - cell "Dev Admin"
+          - cell "1 人"
+          - cell "2026-09-13"
+          - cell "启用":
+            - generic: 启用
+          - cell "用于 Forge 销售管理复刻的同材料销售团队"
+          - cell "编辑":
+            - button "编辑" [disabled]
+    - generic: 共 1 条记录 每页 10 条 · 1 / 1

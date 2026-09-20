@@ -1,0 +1,69 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/sales/follow-ups".
+0 AXWebArea RiseMap, URL: risemap.cn/sales/follow-ups
+	1 container
+		2 container Notifications alt+T
+		3 container 新增跟进记录, ID: radix-:r1q:
+			4 heading 新增跟进记录, Value: 2, ID: radix-:r1r:
+				5 text 新增跟进记录
+			6 text 新增跟进记录表单
+			7 container
+				8 button 基本信息 2/4
+					9 text 基本信息
+					10 image
+					11 text 2
+					12 text /
+					13 text 4
+				14 text * 客户
+				15 button 苏州澄岳自动化装备有限公司
+					54 image
+					55 text 苏州澄岳自动化装备有限公司
+					56 container
+						57 button
+							58 image
+						59 image
+				17 text 联系人
+				18 button 请选择联系人
+					19 text 请选择联系人
+				20 text 引用拜访计划
+				60 button 引用拜访计划
+					61 text 选择拜访计划（可选）
+				62 text 关联商机
+				21 button 选择商机（可选）
+					22 text 选择商机（可选）
+				23 text * 跟进方式
+				24 button 上门拜访
+					25 text 上门拜访
+					63 container
+						64 button
+							65 image
+						66 image
+				26 button 跟进详情 2/2
+					27 text 跟进详情
+					28 image
+					29 text 2
+					30 text /
+					31 text 2
+				32 text * 跟进内容
+				33 text entry area (settable) 拜访客户现场，确认柔性线控制柜扩容需求，客户关注交付周期、报价明细和现场调试支持。
+				34 text 跟进结果
+				35 text field (settable) 客户确认需求有效，下一步提交配置方案和报价测算。
+				36 button 下次跟进计划 1/2
+					37 text 下次跟进计划
+					38 image
+					39 text 1
+					40 text /
+					41 text 2
+				42 text 下次跟进日期
+				43 container
+					44 text field (settable)
+					45 button
+						46 image
+				47 text 下次跟进行动
+				48 text field (settable) 准备扩容方案、报价清单和交付计划，约客户复盘。
+			49 button 取消
+			50 button 创建
+			51 button Close
+				52 image
+				53 text Close
+
+The focused UI element is 48 text field (settable) 准备扩容方案、报价清单和交付计划，约客户复盘。

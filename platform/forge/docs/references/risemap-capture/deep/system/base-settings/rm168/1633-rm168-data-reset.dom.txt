@@ -1,0 +1,185 @@
+- generic: 系统
+- button:
+- navigation:
+  - button:
+    - generic: 系统设置
+  - button:
+    - generic: 基础配置
+  - button:
+    - generic: 用户与角色
+  - button:
+    - generic: 部门管理
+  - button:
+    - generic: 用户会话
+  - button:
+    - generic: 审计日志
+  - button:
+    - generic: 业务设置
+  - button:
+    - generic: 商品管理
+  - button:
+    - generic: 财务配置
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 客户管理
+  - button:
+    - generic: 采购销售
+  - button:
+    - generic: 库存管理
+  - button:
+    - generic: 其他配置
+  - button:
+    - generic: 人事配置
+  - button:
+    - generic: 项目管理
+  - button:
+    - generic: 图纸配置
+  - button:
+    - generic: 生产配置
+  - button:
+    - generic: 委外配置
+  - button:
+    - generic: 单据打印
+  - button:
+    - generic: 插件中心
+  - button:
+    - generic: 服务订阅
+  - button:
+    - generic: 推广奖励
+  - button:
+    - generic: 字段管理
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button [pressed]:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 开票任务
+- button:
+  - generic: 调整记录
+- button:
+  - generic: 销售统计
+- button:
+  - generic: 采购统计
+- button:
+  - generic: 库存统计
+- button:
+  - generic: 项目统计
+- button:
+  - generic: 组装统计
+- button:
+  - generic: 财务总览
+- button:
+  - generic: 损益分析
+- button:
+  - generic: 资金分析
+- button:
+  - generic: 往来账款
+- button:
+  - generic: 税务库存
+- button:
+  - generic: 风险监控
+- button:
+  - generic: 基础配置
+- main:
+  - generic: 系统设置
+  - heading [level=1]: 系统设置
+  - button [expanded]:
+  - button:
+    - paragraph: 企业信息
+    - paragraph: 管理企业基本信息、Logo等
+  - button:
+    - paragraph: 编码管理
+    - paragraph: 业务编号生成与校验规则
+  - button:
+    - paragraph: 通知设置
+    - paragraph: 配置系统通知和提醒规则
+  - button:
+    - paragraph: 邮件配置
+    - paragraph: 配置 SMTP 服务器，可选，不配置则使用官方邮件服务
+  - button:
+    - paragraph: 收件邮箱
+    - paragraph: 配置进项发票收件邮箱和可见范围
+  - button:
+    - paragraph: 数据管理
+    - paragraph: 数据备份、导入导出设置
+  - button:
+    - paragraph: 外观定制
+    - paragraph: 自定义系统主题和界面
+  - button:
+    - paragraph: 功能模块
+    - paragraph: 启用/隐藏侧边栏模块菜单
+  - button:
+    - paragraph: 热键管理
+    - paragraph: 自定义全局快捷键，提升操作效率
+  - heading [level=3]: 数据管理
+  - paragraph: 业务数据的重置与清理
+  - heading [level=3]: 一键重置业务数据
+  - paragraph: 默认仅物理删除本租户业务单据，可选择同时清理业务配置和基础数据。用户、角色、权限、组织及流程定义永久保留。操作不可恢复，请务必谨慎。
+  - button:
+    - text: 重置数据
+- button:
+- region "Notifications alt+T"
+- generic: 当前
+- dialog "确认重置业务数据":
+  - heading "确认重置业务数据" [level=2]
+  - paragraph: 此操作将物理删除且不可恢复，请确认范围后继续。
+  - paragraph: 选择清理范围
+  - checkbox "业务单据数据（必选） 采购、销售、库存、财务、项目、办公记录及流程实例/任务等运行数据" [checked] [disabled]
+  - generic: 业务单据数据（必选）
+  - generic: 采购、销售、库存、财务、项目、办公记录及流程实例/任务等运行数据
+  - checkbox "同时清理业务配置数据 租户业务规则、自定义字段、通知规则及客户自定义打印模板等" [active]
+  - generic: 同时清理业务配置数据
+  - generic: 租户业务规则、自定义字段、通知规则及客户自定义打印模板等
+  - checkbox "同时清理基础数据 员工、岗位、职级、客户、供应商、商品、仓库、银行账户、资产设备等业务主数据"
+  - generic: 同时清理基础数据
+  - generic: 员工、岗位、职级、客户、供应商、商品、仓库、银行账户、资产设备等业务主数据
+  - paragraph: 固定执行顺序：业务单据 → 业务配置 → 基础数据。失败将被记录，安全条件允许时继续后续范围。
+  - generic: 删除预览
+  - paragraph: 预计清除约 73 条数据。
+  - generic: 输入租户名称以确认
+  - textbox "输入租户名称以确认":
+    - /placeholder: 请输入贵租户/公司名称
+  - generic: 手机短信验证码
+  - textbox "手机短信验证码":
+    - /placeholder: 6 位验证码
+  - button "获取验证码"
+  - button "取消"
+  - button "确认重置"
+  - button "Close":
+    - generic: Close

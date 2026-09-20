@@ -1,0 +1,169 @@
+Browser tab: 54, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_subcontract_trace".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_subcontract_trace
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 批次追溯
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_subcontract_trace
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 批次追溯, Value: 1
+				44 text 批次追溯
+			45 text 材料批次与委外回厂成品批次的正向和反向追溯
+			46 heading 委外批次追溯, Value: 1
+				47 text 委外批次追溯
+			48 text 基于回厂倒冲记录的材料↔成品批次关联；出现质量问题时用它定位波及范围
+			49 checkbox 正向追溯 召回用 · 材料批次 → 用了它的成品, Value: 0
+				50 text 正向追溯
+				51 text 召回用 · 材料批次 → 用了它的成品
+			52 checkbox 反向追溯 成品批号 → 它用了哪些材料, Value: 1
+				53 text 反向追溯
+				54 text 成品批号 → 它用了哪些材料
+			55 text field (settable) Description: 输入成品批号, Value: SC-FG-BATCH-001
+			56 button 追溯
+			57 button 导出
+			58 container
+				59 text 已找到  4  条批次关联，可用于质量召回和来源核查。
+			60 table
+				61 row
+					62 cell
+						63 text 材料批次
+					64 cell
+						65 text 材料
+					66 cell
+						67 text 数量
+					68 cell
+						69 text 委外订单
+					70 cell
+						71 text 供应商
+					72 cell
+						73 text 成品批次
+					74 cell
+						75 text 回厂单
+					76 cell
+						77 text 成品
+					78 cell
+						79 text 成品数量
+					80 cell
+						81 text 日期
+				82 row
+					83 cell
+						84 text SC-BATCH-001
+					85 cell
+						86 text 冷轧钢板
+					87 cell
+						88 text 6
+					89 cell
+						90 button SC-ORDER-20260913171455-001
+					91 cell
+						92 text 锐联钣金委外厂
+					93 cell
+						94 text SC-FG-BATCH-001
+					95 cell
+						96 text SR-API-20260912-001
+					97 cell
+						98 text 电控柜门板
+					99 cell
+						100 text 3
+					101 cell
+						102 text 2026-09-12
+				103 row
+					104 cell
+						105 text SC-BATCH-001
+					106 cell
+						107 text 冷轧钢板
+					108 cell
+						109 text 6
+					110 cell
+						111 button SC-ORDER-20260913172030-001
+					112 cell
+						113 text 锐联钣金委外厂
+					114 cell
+						115 text SC-FG-BATCH-001
+					116 cell
+						117 text SR-API-20260913172034-001
+					118 cell
+						119 text 电控柜门板
+					120 cell
+						121 text 3
+					122 cell
+						123 text 2026-09-12
+				124 row
+					125 cell
+						126 text SC-BATCH-001
+					127 cell
+						128 text 冷轧钢板
+					129 cell
+						130 text 6
+					131 cell
+						132 button SC-ORDER-20260913172346-001
+					133 cell
+						134 text 锐联钣金委外厂
+					135 cell
+						136 text SC-FG-BATCH-001
+					137 cell
+						138 text SR-API-20260913172348-001
+					139 cell
+						140 text 电控柜门板
+					141 cell
+						142 text 3
+					143 cell
+						144 text 2026-09-12
+				145 row
+					146 cell
+						147 text SC-BATCH-001
+					148 cell
+						149 text 冷轧钢板
+					150 cell
+						151 text 6
+					152 cell
+						153 button SC-ORDER-20260913171741-001
+					154 cell
+						155 text 锐联钣金委外厂
+					156 cell
+						157 text SC-FG-BATCH-001
+					158 cell
+						159 text SR-API-20260913171743-001
+					160 cell
+						161 text 电控柜门板
+					162 cell
+						163 text 3
+					164 cell
+						165 text 2026-09-12
+			166 text 共  4  条追溯结果 结果可导出，用于质量召回和来源核查。
+
+The focused UI element is 56 button 追溯

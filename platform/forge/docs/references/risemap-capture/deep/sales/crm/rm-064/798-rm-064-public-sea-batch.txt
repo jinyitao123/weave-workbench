@@ -1,0 +1,189 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/public-sea".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/public-sea
+	2 container
+		3 container root
+			169 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			170 text 销售
+			171 button 收起侧边栏
+				172 image
+			173 container
+				174 button 销售业务
+					175 image
+					176 text 销售业务
+					177 image
+				178 button 框架销售合同
+				179 button 销售订单
+				180 button 收款流水
+				181 button 销售发货单
+				182 button 销售退货
+				183 button 业绩银行
+				184 button 价格策略
+				185 button Goodwill订单
+				186 button 销售团队
+				187 button 销售目标
+				188 button 销售发票
+				189 button CRM客户管理
+					190 image
+					191 text CRM客户管理
+					192 image
+				193 button 客户管理
+				194 button 联系人管理
+				195 button 销售报价
+				196 button 客户物料对照
+				197 button 商机管理
+				198 button 线索管理
+				199 button 跟进记录
+				200 button 公海客户
+			201 image
+			202 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			203 button 查看方案
+				204 image
+				205 text 查看方案
+			206 button
+				207 image
+			208 container
+				209 container 业务分类
+					210 checkbox 工作台, Value: 0
+					211 checkbox 供应链, Value: 0
+					212 checkbox 销售, Value: 1
+					213 checkbox 生产, Value: 0
+					214 checkbox 项目, Value: 0
+					215 checkbox 行政, Value: 0
+					216 checkbox 财务, Value: 0
+					217 checkbox 报表, Value: 0
+					218 checkbox 系统, Value: 0
+				219 button Description: 展开搜索, Help: 搜索
+					220 image
+				221 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					222 image
+					223 text 2
+				224 button Description: 打开推广奖励, Help: 推广
+				225 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				226 link Description: 打开工单, Value: community.risemap.cn/support
+				227 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					228 image
+					229 text 立即订阅
+				230 button 金
+					231 text 金
+					232 image
+			233 container
+				234 button 工作台
+					235 image
+					236 text 工作台
+				239 button Goodwill订单详情
+					240 text Goodwill订单详情
+				241 button 销售团队
+					242 text 销售团队
+				243 button 销售目标
+					244 text 销售目标
+				245 button 销售发票
+					246 text 销售发票
+				247 button 客户管理
+					248 text 客户管理
+				249 button 名片扫描
+					250 text 名片扫描
+				251 button 联系人管理
+					252 text 联系人管理
+				253 button 销售报价
+					254 text 销售报价
+				255 button 新建销售报价
+					256 text 新建销售报价
+				257 button 客户物料对照
+					258 text 客户物料对照
+				259 button 商机管理
+					260 text 商机管理
+				261 button 线索管理
+					262 text 线索管理
+				263 button 跟进记录
+					264 text 跟进记录
+				340 button 公海客户
+					341 text 公海客户
+			342 container
+				343 container
+					344 text CRM客户管理
+					345 image
+					346 text 公海客户
+					347 image
+					348 heading 公海客户, Value: 1
+						349 text 公海客户
+					350 text 未分配或已释放的客户资源池，销售人员可自行领取
+				351 button 新建公海客户
+					352 image
+					353 text 新建公海客户
+				354 button 批量操作
+					355 image
+					356 text 批量操作
+					357 image
+				358 button 导入
+					359 image
+					360 text 导入
+				361 button 导出
+					362 image
+					363 text 导出
+					364 image
+				365 button 导入/导出任务
+					366 image
+					367 text 导入/导出任务
+				368 button 刷新
+					369 image
+				370 button
+					371 image
+				372 button
+					373 image
+				374 image
+				375 text field (settable)
+				376 button 行业
+					377 text 行业
+					378 image
+				379 button 来源
+					380 text 来源
+					381 image
+				382 button 级别
+					383 text 级别
+					384 image
+				385 table
+					386 row
+						387 cell
+							388 checkbox (settable, integer) 0
+						389 cell
+							390 text 客户名称
+						391 cell
+							392 text 行业
+						393 cell
+							394 text 客户级别
+						395 cell
+							396 text 联系人
+						397 cell
+							398 text 所在城市
+						399 cell
+							400 text 来源
+						401 cell
+							402 text 预估价值
+						403 cell
+							404 text 释放天数
+						405 cell
+							406 text 操作
+					407 row
+						408 cell
+							409 image
+							410 text 公海暂无客户
+				411 text 共  0 条记录 每页
+				412 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					413 text 20
+				414 text 条
+				415 button (disabled) 上一页
+					416 image
+				417 button 1
+				418 button (disabled) 下一页
+					419 image
+			339 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			168 container Notifications alt+T
+		420 container
+			421 image
+			422 text 批量领取
+			423 image
+			424 text 批量分配
+			425 image
+			426 text 删除
+
+The focused UI element is 354 button 批量操作

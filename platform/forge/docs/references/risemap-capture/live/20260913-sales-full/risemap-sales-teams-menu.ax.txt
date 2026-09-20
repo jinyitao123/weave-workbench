@@ -1,0 +1,132 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/sales/organization".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/organization
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				88 button 销售业务
+					89 image
+					90 text 销售业务
+					91 image
+				92 button 框架销售合同
+				93 button 销售订单
+				94 button 附加费用
+				95 button 收款流水
+				96 button 销售发货单
+				97 button 销售退货
+				98 button 业绩银行
+				99 button 价格策略
+				100 button Goodwill订单
+				101 button 销售团队
+				102 button 销售目标
+				103 button 销售发票
+				104 button CRM客户管理
+					105 image
+					106 text CRM客户管理
+					107 image
+				108 button 客户管理
+				109 button 联系人管理
+				110 button 销售报价
+				111 button 客户物料对照
+				112 button 商机管理
+				113 button 线索管理
+				114 button 跟进记录
+				115 button 公海客户
+				116 button 服务管理
+					117 image
+					118 text 服务管理
+					119 image
+				120 button 服务工单
+				121 button 服务报价单
+				122 button 服务结算单
+				123 button 接单中心
+				124 button 派工中心
+				125 button 服务分析
+				126 button 质保管理
+				127 button 服务配置
+			128 image
+			129 text 免费试用中，还剩 9 天 — 试用期间享全部功能
+			130 button 查看方案
+				131 image
+				132 text 查看方案
+			133 button
+				134 image
+			17 container
+				135 container 业务分类
+					136 container
+						137 checkbox 工作台, Value: 0
+						138 checkbox 供应链, Value: 0
+						139 checkbox 销售, Value: 1
+						140 checkbox 生产, Value: 0
+						141 checkbox 项目, Value: 0
+						142 checkbox 行政, Value: 0
+						143 checkbox 财务, Value: 0
+						144 checkbox 报表, Value: 0
+						145 checkbox 系统, Value: 0
+				28 button Description: 展开搜索, Help: 搜索
+					29 image
+				30 button (collapsed) Description: 通知，18 条未读, Secondary Actions: Expand
+					31 image
+					146 text 18
+				32 button Description: 打开推广奖励, Help: 推广
+				33 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				34 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				147 button 立即订阅, Help: 试用还剩 9 天 · 立即订阅享专属优惠
+					148 image
+					149 text 立即订阅
+				35 button 金
+					150 text 金
+					36 image
+			37 container
+				38 button 工作台
+					39 image
+					151 text 工作台
+				41 button 待出库发货单
+					152 text 待出库发货单
+				42 button 出库单列表
+					153 text 出库单列表
+				43 button 收款流水
+					154 text 收款流水
+				44 button 销售发票
+					155 text 销售发票
+				45 button 销售退货
+					156 text 销售退货
+				46 button 销售附加费用
+					157 text 销售附加费用
+				47 button 业绩银行
+					158 text 业绩银行
+				48 button 工作台
+					159 text 工作台
+				49 button 工作台
+					160 text 工作台
+				50 button 工作台
+					161 text 工作台
+				51 button 价格策略
+					162 text 价格策略
+				52 button Goodwill订单
+					163 text Goodwill订单
+				53 button 销售发货单
+					164 text 销售发货单
+				165 button 销售团队
+					166 text 销售团队
+			167 container
+				168 text 销售管理
+				169 image
+				170 text 销售组织管理
+				171 heading 销售组织管理, Value: 1
+					172 text 销售组织管理
+				173 text 管理销售团队结构、成员分配和团队负责人
+				174 button 新建团队
+					175 image
+					176 text 新建团队
+				177 image
+				178 text field (settable)
+				179 image
+				180 text 暂无销售团队，请点击新建团队
+			86 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			87 container Notifications alt+T
+
+The focused UI element is 101 button 销售团队

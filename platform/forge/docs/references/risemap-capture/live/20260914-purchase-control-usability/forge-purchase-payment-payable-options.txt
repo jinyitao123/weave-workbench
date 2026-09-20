@@ -1,0 +1,241 @@
+- region "通知 alt+T"
+- banner:
+  - link "ObjectOS":
+    - /url: /_console/apps/forge
+  - generic "本平台处于预览版，功能可能调整。": 预览版
+  - generic: /
+  - button "Forge":
+    - generic: Forge
+  - generic: /
+  - link "页面":
+    - /url: /_console/apps/forge
+  - generic: /
+  - generic: 付款管理
+  - button "搜索…":
+    - generic: 搜索…
+    - generic: ⌘
+    - text: K
+  - button "打开消息中心":
+  - link "在 Studio 中设计":
+    - /url: /_console/studio/forge/interfaces?surface=page:page_purchase_payment
+  - button "帮助与文档":
+  - button "DA":
+    - generic: DA
+- text: 区域
+- list:
+  - button "工作台":
+    - generic: 工作台
+  - button "供应链":
+    - generic: 供应链
+  - button "销售":
+    - generic: 销售
+  - button "生产":
+    - generic: 生产
+  - button "项目":
+    - generic: 项目
+  - button "行政":
+    - generic: 行政
+  - button "财务":
+    - generic: 财务
+  - button "报表":
+    - generic: 报表
+  - button "系统":
+    - generic: 系统
+- button "工作台" [expanded]:
+  - text: 工作台
+- list:
+  - link "工作台":
+    - /url: /_console/apps/forge/page/page_workbench
+    - generic: 工作台
+  - link "待办管理":
+    - /url: /_console/apps/forge/page/page_workbench
+    - generic: 待办管理
+  - link "AI 广场":
+    - /url: /_console/apps/forge/page/page_workspace_recovery_status
+    - generic: AI 广场
+  - link "引导中心":
+    - /url: /_console/apps/forge/page/page_workspace_recovery_status
+    - generic: 引导中心
+- text: 最近使用
+- button "切换侧边栏":
+  - generic: 切换侧边栏
+- main:
+  - main:
+    - button "在 Studio 中编辑":
+    - heading "付款管理" [level=1]
+    - paragraph: 采购应付的付款申请、审批、实际出账、核销和撤销
+    - generic: 资金管理 / 付款管理
+    - heading "付款管理" [level=1]
+    - generic: 统一管理付款计划、审批、实际出账、应付核销与逆向撤销
+    - generic: 采购应付和订单预付都需业务申请与审批；财务登记实际付款。普通付款有误时先取消待核销或反核销，再按原账户撤销付款。
+    - button "付款任务"
+    - button "预付款管理"
+    - text: 付款任务
+    - generic: "4"
+    - generic: 全部来源
+    - text: 待审批
+    - generic: "0"
+    - text: 待登记/部分付款
+    - generic: "0"
+    - text: 申请 / 已付
+    - generic: ¥32,000.00 / ¥32,000.00
+    - heading "发起采购付款申请" [level=2]
+    - generic: 应付账款 *
+    - button "付款应付" [expanded]:
+      - generic: 请选择
+      - generic: ⌄
+    - listbox "付款应付":
+      - option "请选择" [active] [selected]
+      - option "AP-PRE-20260913170230 · 锐联钣金委外厂 · 余额 ¥5,300.00"
+      - option "AP-PIN-2026-0003 · 南京锐联电气技术有限公司 · 余额 ¥6,800.00"
+      - option "AP-REC-CHAIN-20260913172346-001 · 锐联钣金委外厂 · 余额 ¥71.00"
+      - option "AP-REC-MULTI-ORDER-004 · 锐联钣金委外厂 · 余额 ¥71.00"
+      - option "AP-PRE-20260913165812 · 锐联钣金委外厂 · 余额 ¥5,300.00"
+      - option "AP-REC-MULTI-ORDER-004B · 锐联钣金委外厂 · 余额 ¥24.00"
+      - option "AP-PIN-2026-0001 · 南京锐联电气技术有限公司 · 余额 ¥6,800.00"
+      - option "AP-PIN-2026-0004 · 南京锐联电气技术有限公司 · 余额 ¥6,800.00"
+      - option "AP-PIN-2026-0002 · 南京锐联电气技术有限公司 · 余额 ¥6,800.00"
+      - option "AP-REC-CHAIN-20260912-001 · 锐联钣金委外厂 · 余额 ¥71.00"
+      - option "AP-PIN-2026-0005 · 南京锐联电气技术有限公司 · 余额 ¥6,800.00"
+    - generic: 付款任务编号 *
+    - textbox "付款任务编号"
+    - generic: 申请付款金额 *
+    - textbox "申请付款金额"
+    - generic: 付款方式 *
+    - button "付款方式":
+      - generic: 银行转账
+      - generic: ⌄
+    - generic: 收款户名 *
+    - textbox "收款户名"
+    - generic: 收款账号 *
+    - textbox "收款账号"
+    - generic: 开户银行
+    - textbox "收款开户银行"
+    - generic: 计划付款日 *
+    - button "计划付款日":
+      - generic: 2026-09-14
+      - generic: ▣
+    - button "发起付款申请" [disabled]
+    - heading "付款任务" [level=2]
+    - generic: 审批意见 *
+    - textbox "付款审批意见"
+    - table:
+      - rowgroup:
+        - row "付款任务编号 来源 来源单据号 供应商/往来单位 申请付款金额 应付款金额 已付/待付 付款审批状态 操作":
+          - columnheader "付款任务编号"
+          - columnheader "来源"
+          - columnheader "来源单据号"
+          - columnheader "供应商/往来单位"
+          - columnheader "申请付款金额"
+          - columnheader "应付款金额"
+          - columnheader "已付/待付"
+          - columnheader "付款审批状态"
+          - columnheader "操作"
+      - rowgroup:
+        - row "PT-PRE-API-20260913170230 采购预付 PO-PRE-20260913170230 锐联钣金委外厂 ¥8,000.00 ¥6,800.00 ¥8,000.00 / ¥0.00 已付清":
+          - cell "PT-PRE-API-20260913170230"
+          - cell "采购预付"
+          - cell "PO-PRE-20260913170230"
+          - cell "锐联钣金委外厂"
+          - cell "¥8,000.00"
+          - cell "¥6,800.00"
+          - cell "¥8,000.00 / ¥0.00"
+          - cell "已付清"
+          - cell
+        - row "PT-PRE-API-20260913165721 采购预付 PO-PRE-20260913165721 锐联钣金委外厂 ¥8,000.00 ¥0.00 ¥8,000.00 / ¥0.00 已付清":
+          - cell "PT-PRE-API-20260913165721"
+          - cell "采购预付"
+          - cell "PO-PRE-20260913165721"
+          - cell "锐联钣金委外厂"
+          - cell "¥8,000.00"
+          - cell "¥0.00"
+          - cell "¥8,000.00 / ¥0.00"
+          - cell "已付清"
+          - cell
+        - row "PT-PRE-API-20260913165812 采购预付 PO-PRE-20260913165812 锐联钣金委外厂 ¥8,000.00 ¥6,800.00 ¥8,000.00 / ¥0.00 已付清":
+          - cell "PT-PRE-API-20260913165812"
+          - cell "采购预付"
+          - cell "PO-PRE-20260913165812"
+          - cell "锐联钣金委外厂"
+          - cell "¥8,000.00"
+          - cell "¥6,800.00"
+          - cell "¥8,000.00 / ¥0.00"
+          - cell "已付清"
+          - cell
+        - row "PT-PRE-API-20260913165656 采购预付 PO-PRE-20260913165656 锐联钣金委外厂 ¥8,000.00 ¥0.00 ¥8,000.00 / ¥0.00 已付清":
+          - cell "PT-PRE-API-20260913165656"
+          - cell "采购预付"
+          - cell "PO-PRE-20260913165656"
+          - cell "锐联钣金委外厂"
+          - cell "¥8,000.00"
+          - cell "¥0.00"
+          - cell "¥8,000.00 / ¥0.00"
+          - cell "已付清"
+          - cell
+    - heading "登记付款、核销与撤销" [level=2]
+    - generic: 付款账户 *
+    - button "实际付款账户":
+      - generic: 请选择
+      - generic: ⌄
+    - generic: 付款流水号 *
+    - textbox "付款流水号"
+    - generic: 付款日期 *
+    - button "付款日期":
+      - generic: 2026-09-14
+      - generic: ▣
+    - generic: 付款金额 *
+    - textbox "付款金额"
+    - generic: 银行流水号
+    - textbox "付款银行流水号"
+    - generic: 核销意见 *
+    - textbox "付款核销意见"
+    - generic: 撤销原因 *
+    - textbox "付款撤销原因"
+    - table:
+      - rowgroup:
+        - row "付款流水号 付款任务 供应商 付款账户 付款日期 金额 核销状态 操作":
+          - columnheader "付款流水号"
+          - columnheader "付款任务"
+          - columnheader "供应商"
+          - columnheader "付款账户"
+          - columnheader "付款日期"
+          - columnheader "金额"
+          - columnheader "核销状态"
+          - columnheader "操作"
+      - rowgroup:
+        - row "PAY-PRE-API-20260913165721 PT-PRE-API-20260913165721 锐联钣金委外厂 预付款与供应商退款账户 2026-09-10 ¥8,000.00 已核销":
+          - cell "PAY-PRE-API-20260913165721"
+          - cell "PT-PRE-API-20260913165721"
+          - cell "锐联钣金委外厂"
+          - cell "预付款与供应商退款账户"
+          - cell "2026-09-10"
+          - cell "¥8,000.00"
+          - cell "已核销"
+          - cell
+        - row "PAY-PRE-API-20260913170230 PT-PRE-API-20260913170230 锐联钣金委外厂 预付款与供应商退款账户 2026-09-10 ¥8,000.00 已核销":
+          - cell "PAY-PRE-API-20260913170230"
+          - cell "PT-PRE-API-20260913170230"
+          - cell "锐联钣金委外厂"
+          - cell "预付款与供应商退款账户"
+          - cell "2026-09-10"
+          - cell "¥8,000.00"
+          - cell "已核销"
+          - cell
+        - row "PAY-PRE-API-20260913165656 PT-PRE-API-20260913165656 锐联钣金委外厂 预付款与供应商退款账户 2026-09-10 ¥8,000.00 已核销":
+          - cell "PAY-PRE-API-20260913165656"
+          - cell "PT-PRE-API-20260913165656"
+          - cell "锐联钣金委外厂"
+          - cell "预付款与供应商退款账户"
+          - cell "2026-09-10"
+          - cell "¥8,000.00"
+          - cell "已核销"
+          - cell
+        - row "PAY-PRE-API-20260913165812 PT-PRE-API-20260913165812 锐联钣金委外厂 预付款与供应商退款账户 2026-09-10 ¥8,000.00 已核销":
+          - cell "PAY-PRE-API-20260913165812"
+          - cell "PT-PRE-API-20260913165812"
+          - cell "锐联钣金委外厂"
+          - cell "预付款与供应商退款账户"
+          - cell "2026-09-10"
+          - cell "¥8,000.00"
+          - cell "已核销"
+          - cell

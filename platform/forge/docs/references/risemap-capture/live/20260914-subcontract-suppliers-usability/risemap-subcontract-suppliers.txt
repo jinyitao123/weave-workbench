@@ -1,0 +1,133 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/subcontract/suppliers".
+1 AXWebArea RiseMap, URL: risemap.cn/subcontract/suppliers
+	2 container root
+		3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+		4 text 生产
+		5 button 收起侧边栏
+			6 image
+		7 container
+			62 button 组装业务管理
+				63 image
+				64 text 组装业务管理
+				65 image
+			66 button 组装单
+			67 button 缺料待办
+			68 button 领料单
+			69 button 补料单
+			70 button 退料单
+			71 button 拆解单
+			72 button 换件单
+			73 container
+				74 button 图纸管理
+					75 image
+					76 text 图纸管理
+					77 image
+				78 button 进入图纸管理上手指南
+					79 image
+			80 button 图纸总览
+			81 button 图号档案
+			82 button 图纸评审
+			83 button 图纸发布
+			84 button 图纸变更
+			85 button 图纸发放记录
+			86 button 图纸关联查询
+			87 button 客户图纸
+			88 container
+				89 button 委外管理
+					90 image
+					91 text 委外管理
+					92 image
+				93 button 进入委外管理上手指南
+					94 image
+			95 button 委外看板
+			96 button 委外订单
+			97 button 委外发料
+			98 button 委外回厂
+			99 button 委外退料
+			100 button 委外对账
+			101 button 委外供应商
+			102 button 委外库存
+			103 button 批次追溯
+			104 button 委外未交
+			105 button 委外进货
+			106 button 委外对账单
+		107 image
+		108 text 免费试用中，还剩 8 天 — 试用期间享全部功能
+		109 button 查看方案
+			110 image
+			111 text 查看方案
+		112 button
+			113 image
+		16 container
+			114 container 业务分类
+				115 container
+					116 checkbox 工作台, Value: 0
+					117 checkbox 供应链, Value: 0
+					118 checkbox 销售, Value: 0
+					119 checkbox 生产, Value: 1
+					120 checkbox 项目, Value: 0
+					121 checkbox 行政, Value: 0
+					122 checkbox 财务, Value: 0
+					123 checkbox 报表, Value: 0
+					124 checkbox 系统, Value: 0
+			27 button Description: 展开搜索, Help: 搜索
+				28 image
+			29 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+				30 image
+				125 text 20
+			31 button Description: 打开推广奖励, Help: 推广
+			32 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+			33 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+			126 button 立即订阅, Help: 试用还剩 8 天 · 立即订阅享专属优惠
+				127 image
+				128 text 立即订阅
+			34 button 金
+				129 text 金
+				35 image
+		36 container
+			37 button 工作台
+				38 image
+				130 text 工作台
+			39 button 工作台
+				131 text 工作台
+			40 button 组装单
+				132 text 组装单
+			41 button 缺料待办
+				133 text 缺料待办
+			42 button 领料单
+				134 text 领料单
+			43 button 补料单
+				135 text 补料单
+			44 button 退料单
+				136 text 退料单
+			45 button 工作台
+				137 text 工作台
+			46 button 工作台
+				138 text 工作台
+			47 button 拆解单
+				139 text 拆解单
+			48 button 换件单
+				140 text 换件单
+			49 button 图纸总览
+				141 text 图纸总览
+			50 button 委外退料
+				142 text 委外退料
+			51 button 委外对账
+				143 text 委外对账
+			52 button 委外供应商
+				144 text 委外供应商
+		53 container
+			54 image
+			55 heading 委外供应商, Value: 1
+				145 text 委外供应商
+			146 text 维护工艺能力、信用等级、加工价目表；准时率与良率由已完成单据派生，不可手工改写
+			56 image
+			57 text field (settable)
+			58 button 全部工艺能力
+				147 text 全部工艺能力
+			59 switch Description: 仅看已启用委外, Value: 1, ID: :r6:
+			148 text 仅看已启用委外 共 0 家 没有符合条件的委外供应商 供应商需先在主数据建档，再在这里开通委外档案
+		60 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+		61 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/subcontract/suppliers

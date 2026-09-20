@@ -1,0 +1,121 @@
+Browser tab: 4, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_sales_outbound_list".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_outbound_list
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 出库单列表
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_sales_outbound_list
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 出库单列表, Value: 1
+				44 text 出库单列表
+			45 text 管理所有出库单和待出库发货单 05 出库管理 / 出库单列表
+			46 button 返回待出库发货单
+			47 button 打开对象记录
+			48 button 刷新
+			49 text 管理所有出库单和待出库发货单
+			50 heading 出库单列表, Value: 1
+				51 text 出库单列表
+			52 button (disabled) 打印条码
+			53 button (disabled) 导出
+			54 text 出库单 1 出库数量 1 库存金额 ¥ 58,000.00 收入已确认 0
+			55 text field (settable) 搜索出库单
+			56 pop up button (collapsed) Description: 业务类型, Secondary Actions: Expand
+			57 pop up button (collapsed) Description: 状态, Secondary Actions: Expand
+			58 button 清空筛选
+			59 table
+				60 row
+					61 cell
+						62 text 出库单号
+					63 cell
+						64 text 关联单号
+					65 cell
+						66 text 销售单号
+					67 cell
+						68 text 客户单号
+					69 cell
+						70 text 往来单位
+					71 cell
+						72 text 物料明细
+					73 cell
+						74 text 仓库
+					75 cell
+						76 text 出库日期
+					77 cell
+						78 text 状态
+					79 cell
+						80 text 物流信息
+					81 cell
+						82 text 收入确认
+					83 cell
+						84 text 操作员
+					85 cell
+						86 text 操作
+				87 row
+					88 cell
+						89 button OUT-CONVERT-20260909-001
+						90 container
+							91 text 库存  3  →  2
+					92 cell
+						93 text DN-CONVERT-20260909-001
+					94 cell
+						95 text SO-CONVERT-20260909-001
+					96 cell
+						97 text —
+					98 cell
+						99 text 苏州澄岳自动化装备有限公司
+					100 cell
+						101 text FG-RM-CAB-800-0001
+						102 container
+							103 text 1  台 ·  ¥ 58,000.00
+					104 cell
+						105 text WH-RM-01 · 贯联验证原料仓
+					106 cell
+						107 text 2026-09-09
+					108 cell
+						109 text 已出库
+					110 cell
+						111 text 客户自取
+					112 cell
+						113 text 待确认
+					114 cell
+						115 text Dev Admin
+					116 cell
+						117 button 查看
+			118 text 共  1  条记录 每页 20 条 · 1 / 1
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_outbound_list

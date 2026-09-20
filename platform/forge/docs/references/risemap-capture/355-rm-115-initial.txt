@@ -1,0 +1,293 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/workbench".
+0 AXWebArea RiseMap, URL: risemap.cn/hr/workbench
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 行政
+			5 button 收起侧边栏
+				6 image
+			7 container
+				623 button 审批中心
+					624 image
+					625 text 审批中心
+					626 image
+				627 button 我的审批
+				628 button 抄送我的
+				629 button 我发起的
+				630 button 行政申请
+				631 button 行政管理
+					632 image
+					633 text 行政管理
+					634 image
+				635 button 公司通知
+				636 button 用章管理
+				637 button 会议纪要
+				638 button 工作汇报
+				639 button 文档中心
+				640 button 固定资产
+				641 button 资质与申报
+				642 button 物料领取
+				643 button 设备维护
+				644 button 礼品管理
+				645 button 借出管理
+				646 button 车辆管理
+				647 button 人力资源
+					648 image
+					649 text 人力资源
+					650 image
+				651 button 人事工作台
+				652 button 员工档案
+				653 button 招聘管理
+				654 button 入职离职
+				655 button 薪酬福利
+				656 button 规章制度
+				657 button 通讯录
+				658 button 考勤假期
+					659 image
+					660 text 考勤假期
+					661 image
+				662 button 加班申请
+				663 button 请假管理
+				664 button 出差申请
+				665 button 考勤管理
+				666 button 考勤统计
+				667 button 流程中心
+					668 image
+					669 text 流程中心
+					670 image
+				671 button 审批记录
+				672 button 发起流程
+				673 button 流程定义
+				674 button 流程分类
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 1
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				681 button 行政申请
+					682 text 行政申请
+				683 button 公司通知
+					684 text 公司通知
+				685 button 用章管理
+					686 text 用章管理
+				687 button 会议纪要
+					688 text 会议纪要
+				689 button 工作汇报
+					690 text 工作汇报
+				691 button 文档中心
+					692 text 文档中心
+				693 button 固定资产
+					694 text 固定资产
+				695 button 资质与申报
+					696 text 资质与申报
+				697 button 物料领取
+					698 text 物料领取
+				699 button 设备维护
+					700 text 设备维护
+				701 button 礼品管理
+					702 text 礼品管理
+				703 button 借出管理
+					704 text 借出管理
+				705 button 车辆管理
+					706 text 车辆管理
+				707 button 人事工作台
+					708 text 人事工作台
+			709 container
+				710 container
+					711 text 人力资源
+					712 image
+					713 text 人事工作台
+					714 image
+					715 heading 人事工作台, Value: 1
+						716 text 人事工作台
+					717 text 数据截止 2026-09-08
+				718 button 员工档案
+					719 image
+					720 text 员工档案
+				721 button 招聘管理
+					722 image
+					723 text 招聘管理
+				724 image
+				725 text 在职人数 0 占总人数 0%
+				726 image
+				727 text 试用期 0 未转正人员
+				728 image
+				729 text 本月入职 0 新员工
+				730 image
+				731 text 本月离职 0 离职率 0%
+				732 image
+				733 text 招聘中岗位 0 待招聘
+				734 image
+				735 text 月薪资总额 ¥0.00 人均 ¥0
+				736 image
+				737 heading 人员与成本趋势, Value: 3
+					738 text 人员与成本趋势
+				739 text 人员曲线 (左轴) 汇总人数 正式员工 实习/试用 成本面积 (右轴) 人力成本
+				740 image
+					741 text 2026-04
+					742 text 2026-05
+					743 text 2026-06
+					744 text 2026-07
+					745 text 2026-08
+					746 text 2026-09
+					747 text ¥0k
+					748 text ¥1k
+					749 text ¥2k
+					750 text ¥3k
+					751 text ¥4k
+					752 text 成本(k)
+				753 text 当前汇总 0人
+				754 image
+				755 text +0 环比 正式员工 0人
+				756 image
+				757 text +0 环比 实习/试用 0人
+				758 image
+				759 text +0 环比 人力成本 ¥0k
+				760 image
+				761 text +0% 环比
+				762 image
+				763 heading 招聘动态分析, Value: 3
+					764 text 招聘动态分析
+				765 button 查看全部
+					766 text 查看全部
+					767 image
+				768 text 招聘漏斗 简历投递 0 筛选通过 0 面试中 0 Offer沟通 0 已录用 0 在招岗位进度
+				769 table
+					770 row
+						771 cell
+							772 text 岗位
+						773 cell
+							774 text 状态
+					775 row
+						776 cell
+							777 text 暂无招聘中岗位
+				778 image
+				779 heading 薪资情况总结, Value: 3
+					780 text 薪资情况总结
+				781 button 详情
+					782 text 详情
+					783 image
+				784 text 月薪资总额 ¥0 0人发放 人均月薪 ¥0 含社保公积金 年度薪资预算 ¥0 已使用  75 % 薪资分布
+				785 image
+					786 text 5K以下
+					787 text 5-10K
+					788 text 10-15K
+					789 text 15-20K
+					790 text 20-25K
+					791 text 25K以上
+					792 text 0
+					793 text 1
+					794 text 2
+					795 text 3
+					796 text 4
+				797 text 部门薪资占比
+				798 image
+					799 image
+				800 table
+					801 row
+						802 cell
+							803 text 部门
+						804 cell
+							805 text 人数
+						806 cell
+							807 text 月薪资总额
+						808 cell
+							809 text 人均月薪
+						810 cell
+							811 text 占比
+					812 row
+						813 cell
+							814 text 合计
+						815 cell
+							816 text 0
+						817 cell
+							818 text ¥0
+						819 cell
+							820 text ¥0
+						821 cell
+							822 text 100%
+				823 image
+				824 heading 入离职动态, Value: 3
+					825 text 入离职动态
+				826 button 查看全部
+					827 text 查看全部
+					828 image
+				829 text 暂无入离职动态
+				830 image
+				831 heading 部门人员分布, Value: 3
+					832 text 部门人员分布
+				833 image
+				834 heading 月度入离职统计, Value: 3
+					835 text 月度入离职统计
+				836 image
+					837 text 2026-05
+					838 text 2026-07
+					839 text 2026-09
+					840 text 0
+					841 text 1
+					842 text 2
+					843 text 4
+				844 content list
+					845 container
+						846 image
+						847 text 入职
+					848 container
+						849 image
+						850 text 离职
+				851 heading 快捷入口, Value: 4
+					852 text 快捷入口
+				853 button 招聘管理
+					854 image
+					855 text 招聘管理
+					856 image
+				857 button 薪酬福利
+					858 image
+					859 text 薪酬福利
+					860 image
+				861 button 考勤统计
+					862 image
+					863 text 考勤统计
+					864 image
+				865 button 请假管理
+					866 image
+					867 text 请假管理
+					868 image
+				869 button 入职离职
+					870 image
+					871 text 入职离职
+					872 image
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 651 button 人事工作台

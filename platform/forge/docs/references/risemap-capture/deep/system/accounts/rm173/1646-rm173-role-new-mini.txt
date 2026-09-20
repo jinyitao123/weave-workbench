@@ -1,0 +1,526 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/accounts".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/accounts
+	2 container 新建角色
+		3 container :ru2:
+			4 image
+			5 text 新建角色
+		6 button 关闭
+			7 image
+		8 container
+			9 text * 角色名称
+		10 text field (settable)
+		11 text 角色描述
+		12 text field (settable)
+		13 text 角色类型
+		14 container
+			15 radio button (settable, integer) Description: 普通角色, Value: 1
+			16 text 普通角色
+		17 container
+			18 radio button (settable, integer) Description: 超级管理员, Value: 0
+			19 text 超级管理员
+		20 text 权限配置
+		21 image
+		22 text field (settable) 小程序权限搜索
+		23 button PC 权限
+		24 button 小程序权限
+		25 container (showing 0-500 of 510 items)
+			26 button 收起管理员视角
+				27 image
+			28 checkbox (settable, integer) 0
+			29 text 管理员视角
+			30 button 收起工作台
+				31 image
+			32 checkbox (settable, integer) 0
+			33 text 工作台 主页面
+			34 button 收起经营概览
+				35 image
+			36 checkbox (settable, integer) 0
+			37 text 经营概览 分组
+			38 checkbox (settable, integer) 0
+			39 text 经营概览详情 入口
+			40 button 收起趋势分析
+				41 image
+			42 checkbox (settable, integer) 0
+			43 text 趋势分析 分组
+			44 checkbox (settable, integer) 0
+			45 text 签约趋势 入口
+			46 checkbox (settable, integer) 0
+			47 text 回款趋势 入口
+			48 checkbox (disabled, settable, integer) 0
+			49 text 资金结构 分组
+			50 button 收起常用应用
+				51 image
+			52 checkbox (settable, integer) 0
+			53 text 常用应用 分组
+			54 checkbox (settable, integer) 0
+			55 text 审批 入口
+			56 checkbox (settable, integer) 0
+			57 text 分析 入口
+			58 checkbox (settable, integer) 0
+			59 text 合同 入口
+			60 checkbox (settable, integer) 0
+			61 text 项目 入口
+			62 checkbox (settable, integer) 0
+			63 text 客户 入口
+			64 checkbox (settable, integer) 0
+			65 text 订单 入口
+			66 checkbox (settable, integer) 0
+			67 text 财务 入口
+			68 checkbox (settable, integer) 0
+			69 text 生产 入口
+			70 button 收起待办
+				71 image
+			72 checkbox (settable, integer) 0
+			73 text 待办 主页面
+			74 checkbox (settable, integer) 0
+			75 text 工作任务 页面
+			76 button 收起审批待办
+				77 image
+			78 checkbox (settable, integer) 0
+			79 text 审批待办 页面
+			80 checkbox (settable, integer) 0
+			81 text 常规审批摘要 页面
+			82 button 收起应用
+				83 image
+			84 checkbox (settable, integer) 0
+			85 text 应用 主页面
+			86 button 收起常用应用
+				87 image
+			88 checkbox (settable, integer) 0
+			89 text 常用应用 分组
+			90 checkbox (settable, integer) 0
+			91 text 审批中心 页面
+			92 checkbox (settable, integer) 0
+			93 text 合同管理 页面
+			94 checkbox (settable, integer) 0
+			95 text 销售订单 页面
+			96 button 收起公共服务
+				97 image
+			98 checkbox (settable, integer) 0
+			99 text 公共服务 分组
+			100 checkbox (settable, integer) 0
+			101 text 通讯录 页面
+			102 checkbox (settable, integer) 0
+			103 text 快捷工时填报 页面
+			104 checkbox (settable, integer) 0
+			105 text 文档中心 页面
+			106 checkbox (settable, integer) 0
+			107 text 加班申请 页面
+			108 checkbox (settable, integer) 0
+			109 text 出差申请 页面
+			110 checkbox (settable, integer) 0
+			111 text 报销管理 页面
+			112 checkbox (settable, integer) 0
+			113 text 考勤记录 页面
+			114 checkbox (settable, integer) 0
+			115 text 请假申请 页面
+			116 checkbox (settable, integer) 0
+			117 text 薪酬福利 页面
+			118 button 收起CRM管理
+				119 image
+			120 checkbox (settable, integer) 0
+			121 text CRM管理 分组
+			122 checkbox (settable, integer) 0
+			123 text 业绩分析 页面
+			124 checkbox (settable, integer) 0
+			125 text 商机管理 页面
+			126 checkbox (settable, integer) 0
+			127 text 客户管理 页面
+			128 checkbox (settable, integer) 0
+			129 text 回款管理 页面
+			130 button 收起业务管理
+				131 image
+			132 checkbox (settable, integer) 0
+			133 text 业务管理 分组
+			134 checkbox (settable, integer) 0
+			135 text 项目管理 页面
+			136 checkbox (settable, integer) 0
+			137 text 工时管理 页面
+			138 checkbox (settable, integer) 0
+			139 text 库存管理 页面
+			140 checkbox (settable, integer) 0
+			141 text 采购订单 页面
+			142 checkbox (settable, integer) 0
+			143 text 供应商SN码 页面
+			144 button 收起销售视角
+				145 image
+			146 checkbox (settable, integer) 1
+			147 image
+			148 text 销售视角
+			149 button 收起工作台
+				150 image
+			151 checkbox (settable, integer) 1
+			152 image
+			153 text 工作台 主页面
+			154 checkbox (disabled, settable, integer) 0
+			155 text 本月业绩总览 分组
+			156 button 收起常用功能
+				157 image
+			158 checkbox (settable, integer) 1
+			159 image
+			160 text 常用功能 分组
+			161 checkbox (settable, integer) 1
+			162 image
+			163 text 线索 入口
+			164 checkbox (settable, integer) 1
+			165 image
+			166 text 客户 入口
+			167 checkbox (settable, integer) 1
+			168 image
+			169 text 联系人 入口
+			170 checkbox (settable, integer) 1
+			171 image
+			172 text 商机 入口
+			173 checkbox (settable, integer) 1
+			174 image
+			175 text 报价 入口
+			176 checkbox (settable, integer) 1
+			177 image
+			178 text 回款 入口
+			179 checkbox (settable, integer) 1
+			180 image
+			181 text 合同 入口
+			182 checkbox (settable, integer) 1
+			183 image
+			184 text 跟进 入口
+			185 checkbox (settable, integer) 1
+			186 image
+			187 text 更多 入口
+			188 checkbox (disabled, settable, integer) 0
+			189 text 我的业绩 分组
+			190 button 收起待办与跟进
+				191 image
+			192 checkbox (settable, integer) 1
+			193 image
+			194 text 待办与跟进 分组
+			195 checkbox (settable, integer) 1
+			196 image
+			197 text 查看全部待办 入口
+			198 checkbox (settable, integer) 1
+			199 image
+			200 text 写跟进 入口
+			201 button 收起业绩趋势
+				202 image
+			203 checkbox (settable, integer) 1
+			204 image
+			205 text 业绩趋势 分组
+			206 checkbox (settable, integer) 1
+			207 image
+			208 text 本周趋势 入口
+			209 checkbox (settable, integer) 1
+			210 image
+			211 text 本月趋势 入口
+			212 button 收起商机漏斗
+				213 image
+			214 checkbox (settable, integer) 1
+			215 image
+			216 text 商机漏斗 分组
+			217 checkbox (settable, integer) 1
+			218 image
+			219 text 商机漏斗详情 入口
+			220 button 收起团队龙虎榜
+				221 image
+			222 checkbox (settable, integer) 1
+			223 image
+			224 text 团队龙虎榜 分组
+			225 checkbox (settable, integer) 1
+			226 image
+			227 text 回款榜 入口
+			228 checkbox (settable, integer) 1
+			229 image
+			230 text 商机榜 入口
+			231 checkbox (settable, integer) 1
+			232 image
+			233 text 合同榜 入口
+			234 button 收起业务动态
+				235 image
+			236 checkbox (settable, integer) 1
+			237 image
+			238 text 业务动态 分组
+			239 checkbox (settable, integer) 1
+			240 image
+			241 text 查看全部动态 入口
+			242 checkbox (settable, integer) 1
+			243 image
+			244 text 打开业务动态 入口
+			245 button 收起待办
+				246 image
+			247 checkbox (settable, integer) 1
+			248 image
+			249 text 待办 主页面
+			250 checkbox (settable, integer) 1
+			251 image
+			252 text 工作任务 页面
+			253 button 收起审批待办
+				254 image
+			255 checkbox (settable, integer) 1
+			256 image
+			257 text 审批待办 页面
+			258 checkbox (settable, integer) 1
+			259 image
+			260 text 常规审批摘要 页面
+			261 button 收起应用
+				262 image
+			263 checkbox (settable, integer) 1
+			264 image
+			265 text 应用 主页面
+			266 button 收起常用应用
+				267 image
+			268 checkbox (settable, integer) 1
+			269 image
+			270 text 常用应用 分组
+			271 checkbox (settable, integer) 1
+			272 image
+			273 text 审批中心 页面
+			274 checkbox (settable, integer) 1
+			275 image
+			276 text 合同管理 页面
+			277 checkbox (settable, integer) 1
+			278 image
+			279 text 销售订单 页面
+			280 button 收起公共服务
+				281 image
+			282 checkbox (settable, integer) 1
+			283 image
+			284 text 公共服务 分组
+			285 checkbox (settable, integer) 1
+			286 image
+			287 text 通讯录 页面
+			288 checkbox (settable, integer) 1
+			289 image
+			290 text 快捷工时填报 页面
+			291 checkbox (settable, integer) 1
+			292 image
+			293 text 文档中心 页面
+			294 checkbox (settable, integer) 1
+			295 image
+			296 text 加班申请 页面
+			297 checkbox (settable, integer) 1
+			298 image
+			299 text 出差申请 页面
+			300 checkbox (settable, integer) 1
+			301 image
+			302 text 报销管理 页面
+			303 checkbox (settable, integer) 1
+			304 image
+			305 text 考勤记录 页面
+			306 checkbox (settable, integer) 1
+			307 image
+			308 text 请假申请 页面
+			309 checkbox (settable, integer) 1
+			310 image
+			311 text 薪酬福利 页面
+			312 button 收起CRM管理
+				313 image
+			314 checkbox (settable, integer) 1
+			315 image
+			316 text CRM管理 分组
+			317 checkbox (settable, integer) 1
+			318 image
+			319 text 业绩分析 页面
+			320 checkbox (settable, integer) 1
+			321 image
+			322 text 商机管理 页面
+			323 checkbox (settable, integer) 1
+			324 image
+			325 text 客户管理 页面
+			326 checkbox (settable, integer) 1
+			327 image
+			328 text 回款管理 页面
+			329 button 收起业务管理
+				330 image
+			331 checkbox (settable, integer) 1
+			332 image
+			333 text 业务管理 分组
+			334 checkbox (settable, integer) 1
+			335 image
+			336 text 项目管理 页面
+			337 checkbox (settable, integer) 1
+			338 image
+			339 text 工时管理 页面
+			340 checkbox (settable, integer) 1
+			341 image
+			342 text 库存管理 页面
+			343 checkbox (settable, integer) 1
+			344 image
+			345 text 采购订单 页面
+			346 checkbox (settable, integer) 1
+			347 image
+			348 text 供应商SN码 页面
+			349 button 收起仓库视角
+				350 image
+			351 checkbox (settable, integer) 1
+			352 image
+			353 text 仓库视角
+			354 button 收起工作台
+				355 image
+			356 checkbox (settable, integer) 1
+			357 image
+			358 text 工作台 主页面
+			359 checkbox (settable, integer) 1
+			360 image
+			361 text 通知中心 入口
+			362 button 收起快捷操作
+				363 image
+			364 checkbox (settable, integer) 1
+			365 image
+			366 text 快捷操作 分组
+			367 checkbox (settable, integer) 1
+			368 image
+			369 text 到货登记 入口
+			370 checkbox (settable, integer) 1
+			371 image
+			372 text 扫码出库 入口
+			373 checkbox (settable, integer) 1
+			374 image
+			375 text 物料查询 入口
+			376 checkbox (settable, integer) 1
+			377 image
+			378 text 库位查询 入口
+			379 checkbox (disabled, settable, integer) 0
+			380 text 今日概览 分组
+			381 button 收起任务清单
+				382 image
+			383 checkbox (settable, integer) 1
+			384 image
+			385 text 任务清单 分组
+			386 checkbox (settable, integer) 1
+			387 image
+			388 text 全部任务 入口
+			389 checkbox (settable, integer) 1
+			390 image
+			391 text 待入库 入口
+			392 checkbox (settable, integer) 1
+			393 image
+			394 text 待出库 入口
+			395 checkbox (settable, integer) 1
+			396 image
+			397 text 待发货 入口
+			398 checkbox (settable, integer) 1
+			399 image
+			400 text 异常 入口
+			401 checkbox (settable, integer) 1
+			402 image
+			403 text 今日已完成 入口
+			404 checkbox (settable, integer) 1
+			405 image
+			406 text 今日扫码 入口
+			407 checkbox (settable, integer) 1
+			408 image
+			409 text 查看任务详情 入口
+			410 checkbox (settable, integer) 1
+			411 image
+			412 text 处理任务 入口
+			413 checkbox (settable, integer) 1
+			414 image
+			415 text 查看库存流水 入口
+			416 button 收起最近操作
+				417 image
+			418 checkbox (settable, integer) 1
+			419 image
+			420 text 最近操作 分组
+			421 checkbox (settable, integer) 1
+			422 image
+			423 text 查看全部库存流水 入口
+			424 button 收起待办
+				425 image
+			426 checkbox (settable, integer) 1
+			427 image
+			428 text 待办 主页面
+			429 checkbox (settable, integer) 1
+			430 image
+			431 text 工作任务 页面
+			432 button 收起审批待办
+				433 image
+			434 checkbox (settable, integer) 1
+			435 image
+			436 text 审批待办 页面
+			437 checkbox (settable, integer) 1
+			438 image
+			439 text 常规审批摘要 页面
+			440 button 收起应用
+				441 image
+			442 checkbox (settable, integer) 1
+			443 image
+			444 text 应用 主页面
+			445 button 收起常用应用
+				446 image
+			447 checkbox (settable, integer) 1
+			448 image
+			449 text 常用应用 分组
+			450 checkbox (settable, integer) 1
+			451 image
+			452 text 审批中心 页面
+			453 checkbox (settable, integer) 1
+			454 image
+			455 text 合同管理 页面
+			456 checkbox (settable, integer) 1
+			457 image
+			458 text 销售订单 页面
+			459 button 收起CRM管理
+				460 image
+			461 checkbox (settable, integer) 1
+			462 image
+			463 text CRM管理 分组
+			464 checkbox (settable, integer) 1
+			465 image
+			466 text 业绩分析 页面
+			467 checkbox (settable, integer) 1
+			468 image
+			469 text 商机管理 页面
+			470 checkbox (settable, integer) 1
+			471 image
+			472 text 客户管理 页面
+			473 checkbox (settable, integer) 1
+			474 image
+			475 text 回款管理 页面
+			476 button 收起业务管理
+				477 image
+			478 checkbox (settable, integer) 1
+			479 image
+			480 text 业务管理 分组
+			481 checkbox (settable, integer) 1
+			482 image
+			483 text 项目管理 页面
+			484 checkbox (settable, integer) 1
+			485 image
+			486 text 工时管理 页面
+			487 checkbox (settable, integer) 1
+			488 image
+			489 text 库存管理 页面
+			490 checkbox (settable, integer) 1
+			491 image
+			492 text 采购订单 页面
+			493 checkbox (settable, integer) 1
+			494 image
+			495 text 供应商SN码 页面
+			496 button 收起公共服务
+				497 image
+			498 checkbox (settable, integer) 1
+			499 image
+			500 text 公共服务 分组
+			501 checkbox (settable, integer) 1
+			502 image
+			503 text 通讯录 页面
+			504 checkbox (settable, integer) 1
+			505 image
+			506 text 快捷工时填报 页面
+			507 checkbox (settable, integer) 1
+			508 image
+			509 text 文档中心 页面
+			510 checkbox (settable, integer) 1
+			511 image
+			512 text 加班申请 页面
+			513 checkbox (settable, integer) 1
+			514 image
+			515 text 出差申请 页面
+			516 checkbox (settable, integer) 1
+			517 image
+			518 text 报销管理
+		519 text PC  0  项  / 小程序入口 91 项
+		520 button 取消
+		521 button (disabled) 创建
+			522 image
+			523 text 创建
+
+The focused UI element is 24 button 小程序权限

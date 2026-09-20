@@ -1,0 +1,532 @@
+Browser tab: 59, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_production_material_workspace".
+0 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_production_material_workspace
+	1 container root
+		2 container 通知 alt+T
+		3 container
+			4 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			5 container 本平台处于预览版，功能可能调整。
+				6 text 预览版
+			7 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			8 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			9 text 领料单
+			10 button 搜索…
+				11 text 搜索…
+				12 text ⌘
+				13 text K
+			14 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			15 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_production_material_workspace
+			16 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			17 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		18 container
+			19 container
+				20 text 区域
+				21 content list
+					22 button 工作台
+					23 button 供应链
+					24 button 销售
+					25 button 生产
+					26 button 项目
+					27 button 行政
+					28 button 财务
+					29 button 报表
+					30 button 系统
+			31 container
+				32 button (expanded) 工作台, Secondary Actions: Collapse
+				33 content list
+					34 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					35 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					37 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			38 text 最近使用
+			39 button 切换侧边栏
+		40 container
+			41 button 在 Studio 中编辑
+			42 heading 领料单, Value: 1
+				43 text 领料单
+			44 text 生产领料单审批与库存过账
+			45 heading 领料单, Value: 1
+				46 text 领料单
+			47 text 组装领料、拆解领料、补料、退料的出入库单据，关联来源单与出入库单据
+			48 button 新建领料单
+				49 text 新建
+				50 text 领料单
+			51 text 导出与导入任务在生产数据任务中统一处理
+			52 button 刷新
+			53 text 领料单 19 物料种类 76 物料数量 185 净领用金额 ¥330,900.00
+			54 tab group 单据状态筛选
+				55 button 全部(19)
+					56 text 全部(
+					57 text 19
+					58 text )
+				59 button 审批中
+				60 button 已确认
+				61 button 已驳回
+				62 button 已作废
+			63 text field (settable) 搜索生产物料单
+			64 button 清空筛选
+			65 text 物料种类  76  · 物料数量  185
+			66 table
+				67 row
+					68 cell
+						69 text 单据编号
+					70 cell
+						71 text 类型
+					72 cell
+						73 text 成品
+					74 cell
+						75 text 来源组装单
+					76 cell
+						77 text 物料种数
+					78 cell
+						79 text 数量
+					80 cell
+						81 text 金额
+					82 cell
+						83 text 经手人
+					84 cell
+						85 text 经手日期
+					86 cell
+						87 text 状态
+					88 cell
+						89 text 操作
+				90 row
+					91 cell
+						92 text MAT-2026-0019
+					93 cell
+						94 text 领料单
+					95 cell
+						96 text 800型柔性线控制柜
+					97 cell
+						98 text ASM-2026-0032
+					99 cell
+						100 text 4
+					101 cell
+						102 text 10
+					103 cell
+						104 text ¥32,640.00
+					105 cell
+						106 text Dev Admin
+					107 cell
+						108 text 2026-09-10
+					109 cell
+						110 text 已确认
+					111 cell
+						112 button 查看
+				113 row
+					114 cell
+						115 text MAT-2026-0001
+					116 cell
+						117 text 领料单
+					118 cell
+						119 text 800型柔性线控制柜
+					120 cell
+						121 text ASM-2026-0001
+					122 cell
+						123 text 4
+					124 cell
+						125 text 10
+					126 cell
+						127 text ¥0.00
+					128 cell
+						129 text Dev Admin
+					130 cell
+						131 text 2026-09-10
+					132 cell
+						133 text 审批中
+					134 cell
+						135 button 查看
+				136 row
+					137 cell
+						138 text MAT-2026-0014
+					139 cell
+						140 text 领料单
+					141 cell
+						142 text 800型柔性线控制柜
+					143 cell
+						144 text ASM-2026-0022
+					145 cell
+						146 text 4
+					147 cell
+						148 text 10
+					149 cell
+						150 text ¥32,640.00
+					151 cell
+						152 text Dev Admin
+					153 cell
+						154 text 2026-09-10
+					155 cell
+						156 text 已确认
+					157 cell
+						158 button 查看
+				159 row
+					160 cell
+						161 text MAT-2026-0009
+					162 cell
+						163 text 领料单
+					164 cell
+						165 text 800型柔性线控制柜
+					166 cell
+						167 text ASM-2026-0016
+					168 cell
+						169 text 4
+					170 cell
+						171 text 10
+					172 cell
+						173 text ¥32,640.00
+					174 cell
+						175 text Dev Admin
+					176 cell
+						177 text 2026-09-10
+					178 cell
+						179 text 已确认
+					180 cell
+						181 button 查看
+				182 row
+					183 cell
+						184 text MAT-2026-0018
+					185 cell
+						186 text 领料单
+					187 cell
+						188 text 800型柔性线控制柜
+					189 cell
+						190 text ASM-2026-0030
+					191 cell
+						192 text 4
+					193 cell
+						194 text 10
+					195 cell
+						196 text ¥32,640.00
+					197 cell
+						198 text Dev Admin
+					199 cell
+						200 text 2026-09-10
+					201 cell
+						202 text 已确认
+					203 cell
+						204 button 查看
+				205 row
+					206 cell
+						207 text MAT-2026-0004
+					208 cell
+						209 text 领料单
+					210 cell
+						211 text 800型柔性线控制柜
+					212 cell
+						213 text ASM-2026-0007
+					214 cell
+						215 text 4
+					216 cell
+						217 text 10
+					218 cell
+						219 text ¥1,000.00
+					220 cell
+						221 text Dev Admin
+					222 cell
+						223 text 2026-09-10
+					224 cell
+						225 text 已确认
+					226 cell
+						227 button 查看
+				228 row
+					229 cell
+						230 text MAT-2026-0006
+					231 cell
+						232 text 领料单
+					233 cell
+						234 text 800型柔性线控制柜
+					235 cell
+						236 text ASM-2026-0011
+					237 cell
+						238 text 4
+					239 cell
+						240 text 5
+					241 cell
+						242 text ¥500.00
+					243 cell
+						244 text Dev Admin
+					245 cell
+						246 text 2026-09-14
+					247 cell
+						248 text 已确认
+					249 cell
+						250 button 查看
+				251 row
+					252 cell
+						253 text MAT-2026-0005
+					254 cell
+						255 text 领料单
+					256 cell
+						257 text 800型柔性线控制柜
+					258 cell
+						259 text ASM-2026-0009
+					260 cell
+						261 text 4
+					262 cell
+						263 text 10
+					264 cell
+						265 text ¥1,000.00
+					266 cell
+						267 text Dev Admin
+					268 cell
+						269 text 2026-09-10
+					270 cell
+						271 text 已确认
+					272 cell
+						273 button 查看
+				274 row
+					275 cell
+						276 text MAT-2026-0012
+					277 cell
+						278 text 领料单
+					279 cell
+						280 text 800型柔性线控制柜
+					281 cell
+						282 text ASM-2026-0018
+					283 cell
+						284 text 4
+					285 cell
+						286 text 10
+					287 cell
+						288 text ¥32,640.00
+					289 cell
+						290 text Dev Admin
+					291 cell
+						292 text 2026-09-10
+					293 cell
+						294 text 已确认
+					295 cell
+						296 button 查看
+				297 row
+					298 cell
+						299 text MAT-2026-0017
+					300 cell
+						301 text 领料单
+					302 cell
+						303 text 800型柔性线控制柜
+					304 cell
+						305 text ASM-2026-0028
+					306 cell
+						307 text 4
+					308 cell
+						309 text 10
+					310 cell
+						311 text ¥32,640.00
+					312 cell
+						313 text Dev Admin
+					314 cell
+						315 text 2026-09-10
+					316 cell
+						317 text 已确认
+					318 cell
+						319 button 查看
+				320 row
+					321 cell
+						322 text MAT-2026-0010
+					323 cell
+						324 text 领料单
+					325 cell
+						326 text 800型柔性线控制柜
+					327 cell
+						328 text ASM-2026-0006
+					329 cell
+						330 text 4
+					331 cell
+						332 text 10
+					333 cell
+						334 text ¥0.00
+					335 cell
+						336 text Dev Admin
+					337 cell
+						338 text 2026-09-14
+					339 cell
+						340 text 审批中
+					341 cell
+						342 button 查看
+				343 row
+					344 cell
+						345 text MAT-2026-0008
+					346 cell
+						347 text 领料单
+					348 cell
+						349 text 800型柔性线控制柜
+					350 cell
+						351 text ASM-2026-0014
+					352 cell
+						353 text 4
+					354 cell
+						355 text 10
+					356 cell
+						357 text ¥32,640.00
+					358 cell
+						359 text Dev Admin
+					360 cell
+						361 text 2026-09-10
+					362 cell
+						363 text 已确认
+					364 cell
+						365 button 查看
+				366 row
+					367 cell
+						368 text MAT-2026-0003
+					369 cell
+						370 text 领料单
+					371 cell
+						372 text 800型柔性线控制柜
+					373 cell
+						374 text ASM-2026-0005
+					375 cell
+						376 text 4
+					377 cell
+						378 text 10
+					379 cell
+						380 text ¥1,000.00
+					381 cell
+						382 text Dev Admin
+					383 cell
+						384 text 2026-09-10
+					385 cell
+						386 text 已确认
+					387 cell
+						388 button 查看
+				389 row
+					390 cell
+						391 text MAT-2026-0015
+					392 cell
+						393 text 领料单
+					394 cell
+						395 text 800型柔性线控制柜
+					396 cell
+						397 text ASM-2026-0024
+					398 cell
+						399 text 4
+					400 cell
+						401 text 10
+					402 cell
+						403 text ¥32,640.00
+					404 cell
+						405 text Dev Admin
+					406 cell
+						407 text 2026-09-10
+					408 cell
+						409 text 已确认
+					410 cell
+						411 button 查看
+				412 row
+					413 cell
+						414 text MAT-2026-0011
+					415 cell
+						416 text 领料单
+					417 cell
+						418 text 800型柔性线控制柜
+					419 cell
+						420 text ASM-2026-0006
+					421 cell
+						422 text 4
+					423 cell
+						424 text 10
+					425 cell
+						426 text ¥0.00
+					427 cell
+						428 text Dev Admin
+					429 cell
+						430 text 2026-09-14
+					431 cell
+						432 text 审批中
+					433 cell
+						434 button 查看
+				435 row
+					436 cell
+						437 text MAT-2026-0007
+					438 cell
+						439 text 领料单
+					440 cell
+						441 text 800型柔性线控制柜
+					442 cell
+						443 text ASM-2026-0012
+					444 cell
+						445 text 4
+					446 cell
+						447 text 10
+					448 cell
+						449 text ¥1,000.00
+					450 cell
+						451 text Dev Admin
+					452 cell
+						453 text 2026-09-10
+					454 cell
+						455 text 已确认
+					456 cell
+						457 button 查看
+				458 row
+					459 cell
+						460 text MAT-2026-0016
+					461 cell
+						462 text 领料单
+					463 cell
+						464 text 800型柔性线控制柜
+					465 cell
+						466 text ASM-2026-0026
+					467 cell
+						468 text 4
+					469 cell
+						470 text 10
+					471 cell
+						472 text ¥32,640.00
+					473 cell
+						474 text Dev Admin
+					475 cell
+						476 text 2026-09-10
+					477 cell
+						478 text 已确认
+					479 cell
+						480 button 查看
+				481 row
+					482 cell
+						483 text MAT-2026-0013
+					484 cell
+						485 text 领料单
+					486 cell
+						487 text 800型柔性线控制柜
+					488 cell
+						489 text ASM-2026-0020
+					490 cell
+						491 text 4
+					492 cell
+						493 text 10
+					494 cell
+						495 text ¥32,640.00
+					496 cell
+						497 text Dev Admin
+					498 cell
+						499 text 2026-09-10
+					500 cell
+						501 text 已确认
+					502 cell
+						503 button 查看
+				504 row
+					505 cell
+						506 text MAT-2026-0002
+					507 cell
+						508 text 领料单
+					509 cell
+						510 text 800型柔性线控制柜
+					511 cell
+						512 text ASM-2026-0003
+					513 cell
+						514 text 4
+					515 cell
+						516 text 10
+					517 cell
+						518 text ¥0.00
+					519 cell
+						520 text Dev Admin
+					521 cell
+						522 text 2026-09-10
+					523 cell
+						524 text 审批中
+					525 cell
+						526 button 查看
+			527 container
+				528 text 共  19  条记录 · 每页 20 条 · 1 / 1
+
+The focused UI element is 0 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_production_material_workspace

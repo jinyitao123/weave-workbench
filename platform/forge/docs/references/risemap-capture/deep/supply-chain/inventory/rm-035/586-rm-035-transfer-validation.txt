@@ -1,0 +1,334 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/inventory/transfer/new".
+1 AXWebArea RiseMap, URL: risemap.cn/inventory/transfer/new
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 到货检验
+					10 image
+					11 text 到货检验
+					12 image
+				13 button 到货通知
+				14 button 到货登记
+				15 button 待检验库存
+				16 button 检验单
+				17 button 检验规则
+				18 button 基础资料
+					19 image
+					20 text 基础资料
+					21 image
+				22 button 物料管理
+				23 button 物料组合
+				24 button BOM管理
+				25 button 综合物料搜索
+				26 button 供应商管理
+				27 button 产品实例追溯
+				28 button 仓库管理
+				29 button 采购管理
+					30 image
+					31 text 采购管理
+					32 image
+				33 button 采购发票
+				34 button 采购申请
+				35 button 采购待办池
+				36 button 询价管理
+				37 button 采购订单
+				38 button 采购退换货
+				39 button 供应商价格本
+				40 button 入库管理
+					41 image
+					42 text 入库管理
+					43 image
+				44 button 全部入库单
+				45 button 采购入库
+				46 button 生产入库
+				47 button 其他入库
+				48 button 期初入库
+				49 button 入库明细
+				50 button 库存管理
+					51 image
+					52 text 库存管理
+					53 image
+				54 button 库存总览
+				55 button 不合格处理
+				56 button 库存流水
+				57 button 库存锁定
+				58 button 库存盘点
+				59 button 调拨与借出
+				60 button 库存预警
+				61 button 报损单
+				62 button SN码管理
+				63 button 出库管理
+					64 image
+					65 text 出库管理
+					66 image
+				67 button 出库单列表
+				68 button 生产出库
+				69 button 其他出库
+				70 button 销售直接出库
+				71 button 待出库发货单
+				72 button 采购退换货出库
+				73 button 出库明细
+			74 image
+			75 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			76 button 查看方案
+				77 image
+				78 text 查看方案
+			79 button
+				80 image
+			81 container
+				82 container 业务分类
+					83 checkbox 工作台, Value: 0
+					84 checkbox 供应链, Value: 1
+					85 checkbox 销售, Value: 0
+					86 checkbox 生产, Value: 0
+					87 checkbox 项目, Value: 0
+					88 checkbox 行政, Value: 0
+					89 checkbox 财务, Value: 0
+					90 checkbox 报表, Value: 0
+					91 checkbox 系统, Value: 0
+				92 button Description: 展开搜索, Help: 搜索
+					93 image
+				94 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					95 image
+					96 text 2
+				97 button Description: 打开推广奖励, Help: 推广
+				98 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				99 link Description: 打开工单, Value: community.risemap.cn/support
+				100 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					101 image
+					102 text 立即订阅
+				103 button 金
+					104 text 金
+					105 image
+			106 container
+				107 button 工作台
+					108 image
+					109 text 工作台
+				308 button 采购入库
+					309 text 采购入库
+				310 button 新建入库单
+					311 text 新建入库单
+				436 button 生产入库
+					437 text 生产入库
+				438 button 其他入库
+					439 text 其他入库
+				440 button 期初入库
+					441 text 期初入库
+				442 button 入库明细
+					443 text 入库明细
+				444 button 库存总览
+					445 text 库存总览
+				446 button 不合格处理
+					447 text 不合格处理
+				448 button 库存流水
+					449 text 库存流水
+				450 button 库存锁定
+					451 text 库存锁定
+				452 button 库存盘点
+					453 text 库存盘点
+				454 button 新建盘点
+					455 text 新建盘点
+				456 button 调拨与借出
+					457 text 调拨与借出
+				458 button 新建调拨
+					459 text 新建调拨
+			460 container
+				461 text 库存管理
+				462 image
+				463 text 库存调拨与借出
+				464 image
+				465 text 新建单据
+				466 button
+					467 image
+				468 heading 新建调拨/借出单, Value: 1
+					469 text 新建调拨/借出单
+				470 button 取消
+				471 button 保存草稿
+					472 image
+					473 text 保存草稿
+				474 button 提交审核
+					475 image
+					476 text 提交审核
+				477 text 1
+				478 heading 业务类型, Value: 3
+					479 text 业务类型
+				480 text 单据编号
+				481 text field (settable)
+				482 button 普通调拨 跨仓调拨或库内移位
+					483 image
+					484 text 普通调拨
+					485 text 跨仓调拨或库内移位
+				486 button 借出管理 借出/归还业务单位
+					487 image
+					488 text 借出管理
+					489 text 借出/归还业务单位
+				490 button 变价调拨 调拨并调整价格
+					491 image
+					492 text 变价调拨
+					493 text 调拨并调整价格
+				502 text 2
+				503 heading 调出仓库 → 调入仓库, Value: 3
+					504 text 调出仓库 → 调入仓库
+				505 container
+					692 image
+					507 text 发货仓库 *
+				508 button 请选择发货仓库
+					509 text 请选择发货仓库
+				713 text 调出仓库不能为空
+				656 image
+				657 container
+					679 image
+					659 text 调入仓库 *
+				660 button 请选择调入仓库
+					661 text 请选择调入仓库
+				714 text 调入仓库不能为空
+				516 container
+					517 text 调拨原因  *
+				693 button 项目需求
+				694 button 库存调配
+				695 button 项目补货
+				696 button 项目剩余退回
+				697 button 紧急调拨
+				523 text field (settable)
+				715 text 调拨原因不能为空
+				524 text 3
+				525 heading 物料明细, Value: 3
+					526 text 物料明细
+				698 text 调价比例
+				699 text field (settable)
+				700 text %
+				701 button 应用
+				527 button 选择物料
+					528 image
+					529 text 选择物料
+				716 text 请至少添加一行调拨物料
+				530 table
+					531 row
+						532 cell
+							533 text #
+							534 button Description: 调整#列宽, Help: 拖动调整列宽
+						535 cell
+							536 text 物料名称
+							537 button Description: 调整物料名称列宽, Help: 拖动调整列宽
+						538 cell
+							539 text 型号
+							540 button Description: 调整型号列宽, Help: 拖动调整列宽
+						541 cell
+							542 text 规格
+							543 button Description: 调整规格列宽, Help: 拖动调整列宽
+						544 cell
+							545 text 单位
+							546 button Description: 调整单位列宽, Help: 拖动调整列宽
+						547 cell
+							548 text 库存
+							549 button Description: 调整库存列宽, Help: 拖动调整列宽
+						550 cell
+							551 text 数量  *
+							552 button Description: 调整数量列宽, Help: 拖动调整列宽
+						553 cell
+							554 text 含税单价
+							555 button Description: 调整含税单价列宽, Help: 拖动调整列宽
+						556 cell
+							557 text 不含税单价
+							558 button Description: 调整不含税单价列宽, Help: 拖动调整列宽
+						702 cell
+							703 text 调后价
+							704 button Description: 调整调后价列宽, Help: 拖动调整列宽
+						559 cell
+							560 text 税率
+							561 button Description: 调整税率列宽, Help: 拖动调整列宽
+						562 cell
+							563 text 含税金额
+							564 button Description: 调整含税金额列宽, Help: 拖动调整列宽
+						565 cell
+							566 text 批次/SN
+							567 button Description: 调整批次/SN列宽, Help: 拖动调整列宽
+						705 cell
+							706 text 调出库位
+							707 button Description: 调整调出库位列宽, Help: 拖动调整列宽
+						686 cell
+							687 text 调入库位
+							688 button Description: 调整调入库位列宽, Help: 拖动调整列宽
+						574 cell
+							575 text 操作
+					576 row
+						577 cell
+							578 text 1
+						579 cell
+							580 button 选择物料
+								581 image
+								582 text 选择物料
+						583 cell
+							584 text -
+						585 cell
+							586 text -
+						587 cell
+							588 text 台
+						589 cell
+							590 text -
+						591 cell
+							592 text field (settable) 1
+						593 cell
+							594 text -
+						595 cell
+							596 text ¥ 0.0000
+						708 cell
+							709 text field (settable)
+						597 cell
+							598 text -
+						599 cell
+							600 text -
+						601 cell
+							602 text -
+						710 cell
+							711 text 请先选物料
+						689 cell
+							690 button (disabled) 请先选仓库
+								691 text 请先选仓库
+						608 cell
+							609 button 删除
+								610 image
+				611 button 添加空行
+					612 image
+					613 text 添加空行
+				614 button 从物料库添加
+					615 image
+					616 text 从物料库添加
+				617 text 合计 ¥ 0.00
+				618 container
+					619 text 0  种 ·  0
+				620 text 4
+				621 heading 备注说明, Value: 3
+					622 text 备注说明
+				623 text (选填)
+				624 text entry area (settable)
+				625 heading 单据预览, Value: 4
+					626 text 单据预览
+				627 text 单号
+				628 text 待提交生成
+				629 text 业务类型
+				712 image
+				631 text 变价调拨
+				632 text 发出方
+				633 text -
+				634 text 接收仓库
+				635 text -
+				636 text 物料价值
+				637 container
+					638 text ¥ 0.00
+				639 container
+					640 text 0  种 ·  0
+				641 image
+				642 text 操作提示
+				643 content list
+					644 text • 调拨数量不可超过发出仓库库存
+					645 text • 提交后需审核通过才可执行
+					646 text • 变价调拨需标注调价后单价
+			276 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			277 container Notifications alt+T
+
+The focused UI element is 474 button 提交审核

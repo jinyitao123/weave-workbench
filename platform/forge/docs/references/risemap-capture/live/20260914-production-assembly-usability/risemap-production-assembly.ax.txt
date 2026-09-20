@@ -1,0 +1,207 @@
+Browser tab: 49, Title: "RiseMap", URL: "https://risemap.cn/production/assembly".
+0 AXWebArea RiseMap, URL: risemap.cn/production/assembly
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 生产
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 组装业务管理
+					9 image
+					10 text 组装业务管理
+					11 image
+				12 button 组装单
+				13 button 缺料待办
+				14 button 领料单
+				15 button 补料单
+				16 button 退料单
+				17 button 拆解单
+				18 button 换件单
+				19 container
+					20 button 图纸管理
+						21 image
+						22 text 图纸管理
+						23 image
+					24 button 进入图纸管理上手指南
+						25 image
+				26 button 图纸总览
+				27 button 图号档案
+				28 button 图纸评审
+				29 button 图纸发布
+				30 button 图纸变更
+				31 button 图纸发放记录
+				32 button 图纸关联查询
+				33 button 客户图纸
+				34 container
+					35 button 委外管理
+						36 image
+						37 text 委外管理
+						38 image
+					39 button 进入委外管理上手指南
+						40 image
+				41 button 委外看板
+				42 button 委外订单
+				43 button 委外发料
+				44 button 委外回厂
+				45 button 委外退料
+				46 button 委外对账
+				47 button 委外供应商
+				48 button 委外库存
+				49 button 批次追溯
+				50 button 委外未交
+				51 button 委外进货
+				52 button 委外对账单
+			53 image
+			54 text 免费试用中，还剩 8 天 — 试用期间享全部功能
+			55 button 查看方案
+				56 image
+				57 text 查看方案
+			58 button
+				59 image
+			60 container
+				61 container 业务分类
+					62 container
+						63 checkbox 工作台, Value: 0
+						64 checkbox 供应链, Value: 0
+						65 checkbox 销售, Value: 0
+						66 checkbox 生产, Value: 1
+						67 checkbox 项目, Value: 0
+						68 checkbox 行政, Value: 0
+						69 checkbox 财务, Value: 0
+						70 checkbox 报表, Value: 0
+						71 checkbox 系统, Value: 0
+				72 button Description: 展开搜索, Help: 搜索
+					73 image
+				74 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+					75 image
+					76 text 20
+				77 button Description: 打开推广奖励, Help: 推广
+				78 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				79 link Description: 打开工单, Value: community.risemap.cn/support
+				80 button 立即订阅, Help: 试用还剩 8 天 · 立即订阅享专属优惠
+					81 image
+					82 text 立即订阅
+				83 button 金
+					84 text 金
+					85 image
+			86 container
+				87 button 工作台
+					88 image
+					89 text 工作台
+				90 button 工作台
+					91 text 工作台
+				92 button 服务工单
+					93 text 服务工单
+				94 button 新建服务工单
+					95 text 新建服务工单
+				96 button 服务报价单
+					97 text 服务报价单
+				98 button 新建服务报价单
+					99 text 新建服务报价单
+				100 button 服务结算单
+					101 text 服务结算单
+				102 button 派工中心
+					103 text 派工中心
+				104 button 接单中心
+					105 text 接单中心
+				106 button 质保管理
+					107 text 质保管理
+				108 button 工作台
+					109 text 工作台
+				110 button 服务分析
+					111 text 服务分析
+				112 button 服务配置
+					113 text 服务配置
+				114 button 工作台
+					115 text 工作台
+				116 button 组装单
+					117 text 组装单
+			118 container
+				119 container
+					120 text 组装业务管理
+					121 image
+					122 text 组装单
+					123 image
+					124 heading 组装单, Value: 1
+						125 text 组装单
+					126 text 按 BOM 将原材料组装为成品，组装中可分批登记入库，入库数量与完工状态独立维护
+				127 image
+				128 text 组装单总数 0
+				129 image
+				130 text 进行中 0
+				131 image
+				132 text 累计合格入库 0 件
+				133 image
+				134 text 累计物料投入 ¥0.00
+				135 button 全部(0)
+					136 text 全部
+					137 text (
+					138 text 0
+					139 text )
+				140 button 草稿
+				141 button 审批中
+				142 button 待领料
+				143 button 组装中
+				144 button 已完工
+				145 button 已驳回
+				146 button 已取消
+				147 button 新建组装单
+					148 image
+					149 text 新建组装单
+				150 button 导出
+					151 image
+					152 text 导出
+					153 image
+				154 button 导入/导出任务
+				155 button 刷新
+					156 image
+				157 button
+					158 image
+				159 button
+					160 image
+				161 image
+				162 text field (settable)
+				163 table
+					164 row
+						165 cell
+							166 text 组装单号
+						167 cell
+							168 text 成品
+						169 cell
+							170 text BOM
+						171 cell
+							172 text 计划数量
+						173 cell
+							174 text 合格数量
+						175 cell
+							176 text 不合格数量
+						177 cell
+							178 text 物料种数
+						179 cell
+							180 text 物料成本
+						181 cell
+							182 text 来源订单
+						183 cell
+							184 text 创建日期
+						185 cell
+							186 text 创建人
+						187 cell
+							188 text 操作
+					200 row
+						201 cell
+							202 image
+							203 text 暂无组装单
+				189 text 共  0 条记录 每页
+				190 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					191 text 20
+				192 text 条
+				193 button (disabled) 上一页
+					194 image
+				195 button 1
+				196 button (disabled) 下一页
+					197 image
+			198 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			199 container Notifications alt+T
+
+The focused UI element is 12 button 组装单

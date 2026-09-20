@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_all_inbounds",
+  "archetype": "analysis",
+  "checks": {
+    "replication": { "status": "blocked", "notes": "RISEMAP 仅有期初入库记录，跨来源同材料聚合待复核。", "evidence": ["docs/forge-all-inbounds-page-contract-20260916.md"] },
+    "visual": { "status": "pending", "notes": "桌面和 390×844 首屏已检查且无页面横向溢出；截图与独立复核待完成。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/supply-inbound-browser-readback-20260916.json"] },
+    "interaction": { "status": "pass", "notes": "筛选、勾选打印范围、刷新、新建分流和来源详情入口均已在内置浏览器检查。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/supply-inbound-browser-readback-20260916.json"] },
+    "business": { "status": "pass", "notes": "页面同时回读采购入库和其他入库，金额、往来单位、仓库及状态与来源单一致。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/supply-inbound-browser-readback-20260916.json"] }
+  }
+}

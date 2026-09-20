@@ -1,0 +1,134 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 项目
+- button "收起侧边栏":
+- navigation:
+  - button "项目管理":
+    - generic: 项目管理
+  - button "项目中心":
+    - generic: 项目中心
+  - button "项目分析中心":
+    - generic: 项目分析中心
+  - button "任务管理":
+    - generic: 任务管理
+  - button "工时管理":
+    - generic: 工时管理
+  - button "项目配置中心" [active]:
+    - generic: 项目配置中心
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目" [pressed]:
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "新建退料单":
+  - generic: 新建退料单
+- button "委外对账":
+  - generic: 委外对账
+- button "委外供应商":
+  - generic: 委外供应商
+- button "委外库存":
+  - generic: 委外库存
+- button "批次追溯":
+  - generic: 批次追溯
+- button "委外未交":
+  - generic: 委外未交
+- button "委外进货":
+  - generic: 委外进货
+- button "委外对账单":
+  - generic: 委外对账单
+- button "项目中心":
+  - generic: 项目中心
+- button "项目分析中心":
+  - generic: 项目分析中心
+- button "任务管理":
+  - generic: 任务管理
+- button "工时管理":
+  - generic: 工时管理
+- button "快捷工时填报":
+  - generic: 快捷工时填报
+- button "项目配置中心":
+  - generic: 项目配置中心
+- main:
+  - generic: 项目管理
+  - generic: 项目配置中心
+  - heading "项目配置中心" [level=2]:
+    - text: 项目配置中心
+  - paragraph: 统一管理项目相关配置：计划模板、工时成本等
+  - generic: 计划模板总数
+  - generic: "0"
+  - generic: 系统模板
+  - generic: "0"
+  - generic: 自定义模板
+  - generic: "0"
+  - generic: 项目复制模板
+  - generic: "0"
+  - generic: 工时成本配置
+  - generic: —
+  - button "计划模板":
+    - text: 计划模板
+  - button "交付包模板":
+    - text: 交付包模板
+  - button "工时成本配置":
+    - text: 工时成本配置
+  - generic: 管理项目计划模板，新项目一键套用标准结构
+  - paragraph: 创建、编辑、复用项目计划模板，新项目可一键套用标准结构
+  - button "新建模板":
+    - text: 新建模板
+  - generic: 全部模板
+  - generic: "0"
+  - generic: 系统模板
+  - generic: "0"
+  - generic: 自定义模板
+  - generic: "0"
+  - generic: 项目复制
+  - generic: "0"
+  - radiogroup:
+    - radio "全部" [checked]:
+      - generic: 全部
+    - radio "系统":
+      - generic: 系统
+    - radio "自定义":
+      - generic: 自定义
+    - radio "项目复制":
+      - generic: 项目复制
+  - button "全部分类":
+    - generic: 全部分类
+  - textbox "搜索模板名称、描述"
+  - generic: 暂无模板
+  - generic: 点击「新建模板」开始创建。
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 周日

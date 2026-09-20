@@ -1,0 +1,162 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 工作台
+- button "收起侧边栏":
+- navigation:
+  - button "工作台":
+    - generic: 工作台
+  - button "AI 广场":
+    - generic: AI 广场
+  - button "引导中心":
+    - generic: 引导中心
+  - button "待办管理" [active]:
+    - generic: 待办管理
+- generic: 免费试用中，还剩 14 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台" [pressed]:
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "库存配置":
+  - generic: 库存配置
+- button "其他配置":
+  - generic: 其他配置
+- button "人事配置":
+  - generic: 人事配置
+- button "项目管理配置":
+  - generic: 项目管理配置
+- button "图纸配置":
+  - generic: 图纸配置
+- button "生产管理配置":
+  - generic: 生产管理配置
+- button "委外配置":
+  - generic: 委外配置
+- button "单据打印":
+  - generic: 单据打印
+- button "插件中心":
+  - generic: 插件中心
+- button "服务订阅管理":
+  - generic: 服务订阅管理
+- button "推广奖励":
+  - generic: 推广奖励
+- button "字段管理":
+  - generic: 字段管理
+- button "引导中心":
+  - generic: 引导中心
+- button "待办管理":
+  - generic: 待办管理
+- main:
+  - generic: 工作中心
+  - generic: 待办管理
+  - heading "待办管理" [level=1]
+  - paragraph: 共 0 项任务 · 待处理 0 · 进行中 0 · 已完成 0
+  - heading "待办管理" [level=2]
+  - button "列表":
+    - text: 列表
+  - button "任务":
+    - text: 任务
+  - button "我关注的":
+    - text: 我关注的
+  - button "动态":
+    - text: 动态
+  - paragraph: 快速访问
+  - button "全部任务":
+    - generic: 全部任务
+  - button "我创建的":
+    - generic: 我创建的
+  - button "我分配的":
+    - generic: 我分配的
+  - button "已完成":
+    - generic: 已完成
+  - button "超期记录 0":
+    - generic: 超期记录
+    - generic: "0"
+  - paragraph: 任务清单
+  - button:
+  - button "新建待办":
+    - text: 新建待办
+  - heading "全部任务" [level=2]
+  - generic: 0 条
+  - textbox "搜索待办内容、负责人…"
+  - button "排序":
+    - text: 排序
+  - radiogroup:
+    - radio [checked]:
+    - radio:
+  - radiogroup:
+    - radio "全部状态" [checked]:
+      - generic: 全部状态
+    - radio "待处理":
+      - generic: 待处理
+    - radio "进行中":
+      - generic: 进行中
+    - radio "已完成":
+      - generic: 已完成
+    - radio "已逾期":
+      - generic: 已逾期
+    - radio "已取消":
+      - generic: 已取消
+  - radiogroup:
+    - radio "全部优先级" [checked]:
+      - generic: 全部优先级
+    - radio "高":
+      - generic: 高
+    - radio "中":
+      - generic: 中
+    - radio "低":
+      - generic: 低
+  - paragraph: 待处理
+  - paragraph: "0"
+  - paragraph: 进行中
+  - paragraph: "0"
+  - paragraph: 已完成
+  - paragraph: "0"
+  - paragraph: 已逾期
+  - paragraph: "0"
+  - generic: 待办内容
+  - generic: 最新进度说明
+  - generic: 负责人
+  - generic: 截止日期
+  - generic: 进度
+  - generic: 优先级
+  - generic: 状态
+  - generic: 操作
+  - paragraph: 暂无待办事项
+  - generic: 共 0 条
+  - button [disabled]:
+  - button "1"
+  - button [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"

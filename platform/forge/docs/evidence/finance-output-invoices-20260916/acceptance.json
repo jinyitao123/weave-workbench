@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_output_invoices",
+  "archetype": "task_workspace",
+  "reviewedRevision": "ffc42ab4f17838e785a60b8a3d866ef857f34cd1",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/finance-management.page.ts": "34832aa0d0c7561a7e8ba031b6618ec6274b9b5c468492fb1997b7f04bf346d7",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "8830c910309c7d731c9289965590eb5572e550be39ea70c4b3c69c3baf78a036",
+    "apps/forge-objectstack/src/actions/finance-workflow.action.ts": "fc8507687ed365aa64fe5522a5d0b0a2f9785c7258f9c8732d516feb957ef62f",
+    "apps/forge-objectstack/src/objects/finance.object.ts": "bde56a88a22566da2502b92e9c8ea3bce36fb9d18f107d6245983253c9f9b4c0",
+    "docs/forge-page-polish-baseline.md": "87391dcd1a7e8feefa96b358d42815d22e0eedebf578d0ff0e470550b0d45eb4"
+  },
+  "environment": {
+    "forgeUrl": "http://localhost:4441",
+    "database": "apps/forge-objectstack/.objectstack/finance-sales-cycle.sqlite",
+    "materials": "Two issued sales invoices and receivables from the invoice-task flow, plus one red invoice created through the page"
+  },
+  "checks": {
+    "replication": {
+      "status": "blocked",
+      "notes": "RISEMAP current page is empty; title, periods, metrics, statuses, search, columns and empty state are observed, while row actions and same-material outcomes remain unavailable.",
+      "evidence": ["docs/evidence/finance-output-invoices-20260916/acceptance.md"]
+    },
+    "visual": {
+      "status": "pending",
+      "notes": "Populated desktop and 390x844 narrow views, status filtering, search empty state, reset and red-reversal dialog were checked in the built-in browser. Independent visual review remains pending.",
+      "evidence": ["docs/evidence/finance-output-invoices-20260916/acceptance.md"]
+    },
+    "interaction": {
+      "status": "blocked",
+      "notes": "Forge filtering, required-field blocking, red reversal and cancellation passed. RISEMAP row-level behavior remains unavailable with the current empty account.",
+      "evidence": ["docs/evidence/finance-output-invoices-20260916/acceptance.md", "apps/forge-objectstack/tests/invoice-output-readback.mjs"]
+    },
+    "business": {
+      "status": "blocked",
+      "notes": "Forge invoice, receivable, red invoice and reversal-log readback passed before and after same-SQLite restart. RISEMAP same-material business outcome remains unavailable.",
+      "evidence": ["apps/forge-objectstack/tests/invoice-output-readback.mjs"]
+    }
+  },
+  "visualEvidence": {
+    "desktop": { "width": 1280, "height": 720, "evidence": ["docs/evidence/finance-output-invoices-20260916/acceptance.md"] },
+    "narrow": { "width": 390, "height": 844, "evidence": ["docs/evidence/finance-output-invoices-20260916/acceptance.md"] },
+    "reference": ["docs/forge-finance-sales-cycle-page-delivery-20260916.md"],
+    "populated": ["docs/evidence/finance-output-invoices-20260916/acceptance.md"],
+    "empty": ["docs/evidence/finance-output-invoices-20260916/acceptance.md"],
+    "form": ["docs/evidence/finance-output-invoices-20260916/acceptance.md"],
+    "error": ["docs/evidence/finance-output-invoices-20260916/acceptance.md"]
+  },
+  "requirements": [
+    { "id": "OUT-INV-001", "status": "pass", "steps": "Open both current pages and inspect the four periods.", "expected": "Matching title, responsibility and period scope.", "observed": "Title responsibility and four period controls match the observed page structure.", "evidence": ["docs/forge-finance-sales-cycle-page-delivery-20260916.md"] },
+    { "id": "OUT-INV-002", "status": "pass", "steps": "Compare UI metrics with line-derived tax and signed invoice totals before and after red reversal.", "expected": "Period metrics remain stable under local filters and match persisted amounts.", "observed": "62000 before reversal and 26000 signed total after reversal; net and tax matched line-derived values.", "evidence": ["docs/evidence/finance-output-invoices-20260916/acceptance.md", "apps/forge-objectstack/tests/invoice-output-readback.mjs"] },
+    { "id": "OUT-INV-003", "status": "pass", "steps": "Switch statuses, search NO-MATCH and reset.", "expected": "Only rows and counts change while period metrics remain stable.", "observed": "Counts became all 3, normal 1, voided 0 and red 2; empty search and reset behaved correctly.", "evidence": ["docs/evidence/finance-output-invoices-20260916/acceptance.md"] },
+    { "id": "OUT-INV-004", "status": "pending", "steps": "Inspect all business columns against related records.", "expected": "Order, customer, email, project, amounts and tax resolve from actual data.", "observed": "Order, customer, amounts and tax resolved. Current materials have no contact email or project link, so those cells show an explicit dash.", "evidence": ["docs/evidence/finance-output-invoices-20260916/acceptance.md"] },
+    { "id": "OUT-INV-005", "status": "pending", "steps": "Open detail, submit empty reversal, complete reversal and attempt invalid repeats.", "expected": "Actions are reachable, invalid operations are blocked and successful reversal is readable.", "observed": "Forge paths passed; RISEMAP row behavior remains unavailable.", "evidence": ["docs/evidence/finance-output-invoices-20260916/acceptance.md", "apps/forge-objectstack/tests/invoice-output-readback.mjs"] },
+    { "id": "OUT-INV-006", "status": "pass", "steps": "Check desktop and 390x844 built-in-browser views with data, empty search and dialog.", "expected": "Usable first screen without page-level overflow; wide table scrolls inside its card.", "observed": "Desktop and narrow views passed, including the standard date input and full red-reversal dialog.", "evidence": ["docs/evidence/finance-output-invoices-20260916/acceptance.md"] },
+    { "id": "OUT-INV-007", "status": "pending", "steps": "Read invoices, receivables, lines and reversal log, restart the same SQLite and read again.", "expected": "Source, status, signed amount and linkages remain consistent.", "observed": "Forge readback passed before and after restart; RISEMAP same-material outcome remains unavailable.", "evidence": ["apps/forge-objectstack/tests/invoice-output-readback.mjs"] }
+  ],
+  "review": {
+    "implementer": "current finance task",
+    "reviewer": "",
+    "reviewedAt": "",
+    "status": "pending",
+    "evidence": []
+  }
+}

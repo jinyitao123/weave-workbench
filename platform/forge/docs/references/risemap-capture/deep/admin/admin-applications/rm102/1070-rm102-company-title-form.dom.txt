@@ -1,0 +1,279 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 委外未交
+- button:
+  - generic: 委外进货
+- button:
+  - generic: 委外对账单
+- button:
+  - generic: 项目中心
+- button:
+  - generic: 项目分析中心
+- button:
+  - generic: 任务管理
+- button:
+  - generic: 工时管理
+- button:
+  - generic: 快捷工时填报
+- button:
+  - generic: 项目配置中心
+- button:
+  - generic: 新建计划模板
+- button:
+  - generic: 我的审批
+- button:
+  - generic: 抄送我的
+- button:
+  - generic: 我发起的
+- button:
+  - generic: 行政申请
+- main:
+  - generic: 审批中心
+  - generic: 行政申请
+  - heading [level=1]: 行政申请
+  - paragraph: 选择需要办理的事项，填写申请后进入对应审批流程
+  - textbox:
+    - /placeholder: 搜索申请事项或流程名称
+  - tablist:
+    - tab [selected]:
+      - text: 全部申请
+      - generic: "11"
+    - tab:
+      - text: 考勤假期
+      - generic: "5"
+    - tab:
+      - text: 行政事务
+      - generic: "3"
+    - tab:
+      - text: 用车资质
+      - generic: "3"
+    - tab:
+      - text: 其他申请
+      - generic: "0"
+  - heading [level=2]: 考勤假期
+  - generic: 5 项可申请事项
+  - button:
+    - strong: 加班申请
+    - generic: 登记加班时间与补偿方式
+  - button:
+    - strong: 请假申请
+    - generic: 年假、事假、病假等假期
+  - button:
+    - strong: 出差申请
+    - generic: 填写行程与出差计划
+  - button:
+    - strong: 补签申请
+    - generic: 补录异常考勤打卡
+  - button:
+    - strong: 报销申请
+    - generic: 提交员工费用报销
+  - heading [level=2]: 行政事务
+  - generic: 3 项可申请事项
+  - button:
+    - strong: 用章申请
+    - generic: 公章、合同章等用印
+  - button:
+    - strong: 礼品申请
+    - generic: 客户礼赠与内部礼品领用
+  - button:
+    - strong: 物料领取
+    - generic: 办公及行政物料领用
+  - heading [level=2]: 用车资质
+  - generic: 3 项可申请事项
+  - button:
+    - strong: 公司用车
+    - generic: 申请公司车辆与行程
+  - button:
+    - strong: 私车公用
+    - generic: 登记私车公用与预计里程
+  - button:
+    - strong: 资质续期
+    - generic: 证照续期、变更与复审
+- button:
+- region "Notifications alt+T"
+- generic: 周日
+- dialog "新建用章申请":
+  - heading "新建用章申请" [level=2]:
+    - text: 新建用章申请
+  - generic: "*"
+  - generic: 公司抬头
+  - button "请选择公司":
+    - generic: 请选择公司
+  - button "新增公司抬头" [active]:
+  - generic: "*"
+  - generic: 具体印章
+  - button "请选择印章":
+    - generic: 请选择印章
+  - generic: 紧急程度
+  - button "普通":
+    - generic "普通"
+  - generic: "*"
+  - generic: 用章事由
+  - textbox "如：签署合同、开具证明、投标文件盖章等"
+  - generic: 关联合同
+  - button "不关联合同":
+    - generic: 不关联合同
+  - button "请先选择合同类型" [disabled]:
+    - generic: 请先选择合同类型
+  - textbox "可输入关键词过滤合同"
+  - generic: "*"
+  - generic: 文件类型
+  - button "请选择":
+    - generic: 请选择
+  - generic: "*"
+  - generic: 盖章份数
+  - textbox: "1"
+  - generic: "*"
+  - generic: 文件名称
+  - textbox "请输入需盖章文件的名称"
+  - generic: "*"
+  - generic: 用章日期
+  - textbox "请选择日期": 2026年9月8日
+  - button:
+  - button:
+  - generic: 是否外带
+  - radiogroup:
+    - radio "否（现场盖章）" [checked]
+    - radio "是（需携带外出）"
+  - generic: "*"
+  - generic: 上传盖章文件
+  - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件":
+    - generic: 点击或拖拽文件到此处上传
+    - generic: 支持 Ctrl+V 粘贴截图
+    - generic: 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+  - generic: 备注
+  - textbox "如有特殊说明请备注"
+  - paragraph:
+    - text: 用章须知
+  - paragraph: 1. 公章/合同章使用须经总经理审批；2. 外带印章须在归还日期前归还；3. 严禁在空白文件上盖章。
+  - button "取消"
+  - button "提交申请":
+    - text: 提交申请
+  - button "Close":
+    - generic: Close
+- dialog "新增公司抬头":
+  - heading "新增公司抬头" [level=3]
+  - button "关闭":
+  - text: 抬头名称
+  - generic: "*"
+  - textbox "请输入公司抬头"
+  - text: 统一社会信用代码
+  - generic: "*"
+  - textbox "请输入统一社会信用代码"
+  - button "取消"
+  - button "添加"

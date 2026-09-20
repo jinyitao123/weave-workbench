@@ -1,0 +1,207 @@
+Browser tab: 33, Title: "RiseMap", URL: "https://risemap.cn/after-sales/orders/new".
+0 AXWebArea RiseMap, URL: risemap.cn/after-sales/orders/new
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 销售
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 销售业务
+					9 image
+					10 text 销售业务
+					11 image
+				12 button 框架销售合同
+				13 button 销售订单
+				14 button 附加费用
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+				36 button 服务管理
+					37 image
+					38 text 服务管理
+					39 image
+				40 button 服务工单
+				41 button 服务报价单
+				42 button 服务结算单
+				43 button 接单中心
+				44 button 派工中心
+				45 button 服务分析
+				46 button 质保管理
+				47 button 服务配置
+			48 image
+			49 text 免费试用中，还剩 8 天 — 试用期间享全部功能
+			50 button 查看方案
+				51 image
+				52 text 查看方案
+			53 button
+				54 image
+			55 container
+				56 container 业务分类
+					57 container
+						58 checkbox 工作台, Value: 0
+						59 checkbox 供应链, Value: 0
+						60 checkbox 销售, Value: 1
+						61 checkbox 生产, Value: 0
+						62 checkbox 项目, Value: 0
+						63 checkbox 行政, Value: 0
+						64 checkbox 财务, Value: 0
+						65 checkbox 报表, Value: 0
+						66 checkbox 系统, Value: 0
+				67 button Description: 展开搜索, Help: 搜索
+					68 image
+				69 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+					70 image
+					71 text 20
+				72 button Description: 打开推广奖励, Help: 推广
+				73 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				74 link Description: 打开工单, Value: community.risemap.cn/support
+				75 button 立即订阅, Help: 试用还剩 8 天 · 立即订阅享专属优惠
+					76 image
+					77 text 立即订阅
+				78 button 金
+					79 text 金
+					80 image
+			81 container
+				82 button 工作台
+					83 image
+					84 text 工作台
+				87 button 委外回厂
+					88 text 委外回厂
+				89 button 不合格处理
+					90 text 不合格处理
+				91 button 采购订单
+					92 text 采购订单
+				93 button 工作台
+					94 text 工作台
+				95 button 工作台
+					96 text 工作台
+				97 button 工作台
+					98 text 工作台
+				99 button 组装单
+					100 text 组装单
+				101 button 工作台
+					102 text 工作台
+				103 button 项目详情
+					104 text 项目详情
+				105 button 销售发货单
+					106 text 销售发货单
+				107 button 新建发货单
+					108 text 新建发货单
+				109 button 工作台
+					110 text 工作台
+				111 button 服务工单
+					112 text 服务工单
+				181 button 新建服务工单
+					182 text 新建服务工单
+			183 container
+				184 container
+					185 text 服务管理
+					186 image
+					187 text 新建工单
+					188 image
+					189 heading 新建服务工单, Value: 1
+						190 text 新建服务工单
+					191 text 一页填写：选客户 / 订单 → 自动带出产品与质保 → 描述问题 → 提交
+					192 button 返回列表
+						193 image
+						194 text 返回列表
+				195 text 1 服务需求 * 工单类型  *
+				196 button 请选择工单类型…
+					197 text 请选择工单类型…
+				198 text 服务方式
+				199 button 上门服务
+					200 text 上门服务
+				201 text 紧急程度
+				202 button 中
+					203 text 中
+				204 text 2 客户与产品 * 客户  *
+				205 button 搜索客户名称...
+					206 text 搜索客户名称...
+				207 text 联系人 请先选择客户 联系电话  *
+				208 text field (settable)
+				209 text 关联销售订单  * 自动带出产品、质保与金额
+				210 container
+					211 text 请先选择客户
+					212 image
+				213 text 服务地址
+				214 text field (settable)
+				215 text 3 质保信息（根据客户 / 订单 / 产品 自动判定） 需人工判断 请人工核对销售订单 / 合同质保条款 质保状态
+				216 button 需人工判断
+					217 text 需人工判断
+				218 text 质保起始
+				219 container
+					220 text field (settable)
+					221 button
+						222 image
+				223 text 质保截止
+				224 container
+					225 text field (settable)
+					226 button
+						227 image
+				228 text 剩余天数 — 4 费用与报价 * 服务责任  *
+				229 button 免费服务 质保或合同权益覆盖
+					230 text 免费服务
+					231 text 质保或合同权益覆盖
+				232 button 需要报价 先报价，客户接受后再派工
+					233 text 需要报价
+					234 text 先报价，客户接受后再派工
+				235 button 待人工判定 范围或责任暂未确认
+					236 text 待人工判定
+					237 text 范围或责任暂未确认
+				238 container quote-lines-section
+					239 image
+					240 text 报价处理 待人工判定
+					241 text 服务范围或责任尚未确认，保存后进入人工判定，不会自动生成正式报价。
+				242 text 5 问题 / 服务内容 * 工单标题
+				243 text field (settable)
+				244 text 问题描述 / 服务内容  *
+				245 text entry area (settable)
+				246 text 故障现象
+				247 text field (settable)
+				248 text 影响范围
+				249 text field (settable)
+				250 text 客户期望时间
+				251 container
+					252 text field (settable)
+					253 button
+						254 image
+				255 text 报价清单小计
+				256 text ¥0.00
+				257 text 报价折扣
+				258 text ¥0.00
+				259 text 合同 / 质保覆盖
+				260 text ¥0.00
+				261 text 客户预计应付
+				262 text 待判定
+				263 button 取消
+					264 image
+					265 text 取消
+				266 button 保存草稿
+					267 image
+					268 text 保存草稿
+				269 button 提交工单
+					270 image
+					271 text 提交工单
+			179 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			180 container Notifications alt+T
+
+The focused UI element is 0 AXWebArea RiseMap, URL: risemap.cn/after-sales/orders/new

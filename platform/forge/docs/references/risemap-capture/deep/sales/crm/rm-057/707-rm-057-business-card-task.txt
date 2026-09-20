@@ -1,0 +1,208 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/customers/scan".
+1 AXWebArea RiseMap, URL: risemap.cn/base/customers/scan
+	2 container
+		3 container root
+			171 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			172 text 销售
+			173 button 收起侧边栏
+				174 image
+			175 container
+				176 button 销售业务
+					177 image
+					178 text 销售业务
+					179 image
+				180 button 框架销售合同
+				181 button 销售订单
+				182 button 收款流水
+				183 button 销售发货单
+				184 button 销售退货
+				185 button 业绩银行
+				186 button 价格策略
+				187 button Goodwill订单
+				188 button 销售团队
+				189 button 销售目标
+				190 button 销售发票
+				191 button CRM客户管理
+					192 image
+					193 text CRM客户管理
+					366 image
+				367 button 客户管理
+				368 button 联系人管理
+				369 button 销售报价
+				370 button 客户物料对照
+				371 button 商机管理
+				372 button 线索管理
+				373 button 跟进记录
+				374 button 公海客户
+			203 image
+			204 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			205 button 查看方案
+				206 image
+				207 text 查看方案
+			208 button
+				209 image
+			210 container
+				211 container 业务分类
+					212 checkbox 工作台, Value: 0
+					213 checkbox 供应链, Value: 0
+					214 checkbox 销售, Value: 1
+					215 checkbox 生产, Value: 0
+					216 checkbox 项目, Value: 0
+					217 checkbox 行政, Value: 0
+					218 checkbox 财务, Value: 0
+					219 checkbox 报表, Value: 0
+					220 checkbox 系统, Value: 0
+				221 button Description: 展开搜索, Help: 搜索
+					222 image
+				223 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					224 image
+					225 text 2
+				226 button Description: 打开推广奖励, Help: 推广
+				227 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				228 link Description: 打开工单, Value: community.risemap.cn/support
+				229 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					230 image
+					231 text 立即订阅
+				232 button 金
+					233 text 金
+					234 image
+			235 container
+				236 button 工作台
+					237 image
+					238 text 工作台
+				247 button 新建发货单
+					248 text 新建发货单
+				249 button 销售退货
+					250 text 销售退货
+				251 button 新建销售退货
+					252 text 新建销售退货
+				253 button 业绩银行
+					254 text 业绩银行
+				255 button 价格策略
+					256 text 价格策略
+				257 button 新增框架协议
+					258 text 新增框架协议
+				259 button 新增特价
+					260 text 新增特价
+				261 button Goodwill订单
+					262 text Goodwill订单
+				263 button Goodwill订单详情
+					264 text Goodwill订单详情
+				265 button 销售团队
+					266 text 销售团队
+				282 button 销售目标
+					283 text 销售目标
+				284 button 销售发票
+					285 text 销售发票
+				375 button 客户管理
+					376 text 客户管理
+				377 button 名片扫描
+					378 text 名片扫描
+			379 container
+				380 text 基础资料
+				381 image
+				382 text 名片扫描
+				383 button
+					384 image
+				385 image
+				386 heading 名片扫描创建客户, Value: 1
+					387 text 名片扫描创建客户
+				388 button 刷新
+					389 image
+				390 button 新建识别任务
+					391 image
+					392 text 新建识别任务
+				470 heading 上传名片创建任务, Value: 2
+					471 image
+					472 text 上传名片创建任务
+				473 button 关闭
+					474 image
+				475 text 任务标题
+				476 text field (settable) 任务标题, ID: card-scan-task-title
+				477 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 JPG / PNG 格式，单次最多 50 张
+					478 image
+					479 text 点击或拖拽文件到此处上传
+					480 text 支持 Ctrl+V 粘贴截图
+					481 text 支持 JPG / PNG 格式，单次最多 50 张
+				482 button (disabled) 创建任务 (0 张)
+				393 image
+				394 text 累计创建客户
+				395 text 0
+				396 text 本月 +0
+				397 image
+				398 text 累计创建联系人
+				399 text 0
+				400 text 本月 +0
+				401 image
+				402 text 已成交客户
+				403 text 0
+				404 text 转化率 0%
+				405 image
+				406 text 识别任务
+				407 text 0
+				408 text 0 个待处理
+				409 image
+				410 text 识别额度
+				411 container
+					412 text 年度配额  10  次
+				413 text 已使用  0  次，剩余  10  次 0 %
+				414 image
+				415 text 剩余额度不足，超出部分需充值后使用
+				416 button 充值额度
+					417 image
+					418 text 充值额度
+				419 heading 近6个月名片扫描趋势, Value: 3
+					420 text 近6个月名片扫描趋势
+				421 container
+					422 image
+						423 text 4月
+						424 text 5月
+						425 text 6月
+						426 text 7月
+						427 text 8月
+						428 text 9月
+						429 text 0
+						430 text 1
+						431 text 2
+						432 text 3
+						433 text 4
+					434 content list
+						435 container
+							436 image
+							437 text 扫描名片
+						438 container
+							439 image
+							440 text 创建客户
+						441 container
+							442 image
+							443 text 创建联系人
+				444 heading 最近成交客户, Value: 3
+					445 text 最近成交客户
+				446 button 查看全部
+					447 image
+					448 text 查看全部
+				449 text 杭 杭州中控技术
+				450 container
+					451 text 刘伟  ·  04-05
+				452 text ¥128,000 西 西门子（中国）
+				453 container
+					454 text 孙晓峰  ·  04-03
+				455 text ¥256,000 横 横河电机
+				456 container
+					457 text 黄海涛  ·  03-28
+				458 text ¥89,500 艾 艾默生过程管理
+				459 container
+					460 text 马丽  ·  03-25
+				461 text ¥175,000 正 正泰仪器仪表
+				462 container
+					463 text 吴强  ·  03-20
+				464 text ¥62,000
+				465 image
+				466 text 识别任务列表 ( 0 )
+				467 image
+				468 text 暂无识别任务
+				469 button + 上传名片创建任务
+			281 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			170 container Notifications alt+T
+
+The focused UI element is 390 button 新建识别任务

@@ -1,0 +1,169 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 财务
+- button "收起侧边栏":
+- navigation:
+  - button "资金管理":
+    - generic: 资金管理
+  - button "资金账户":
+    - generic: 资金账户
+  - button "资金流水":
+    - generic: 资金流水
+  - button "应收应付":
+    - generic: 应收应付
+  - button "收款管理":
+    - generic: 收款管理
+  - button "付款管理":
+    - generic: 付款管理
+  - button "退款申请":
+    - generic: 退款申请
+  - button "授信额度管理":
+    - generic: 授信额度管理
+  - button "借款贷款管理":
+    - generic: 借款贷款管理
+  - button "业务确认":
+    - generic: 业务确认
+  - button "销售收入确认":
+    - generic: 销售收入确认
+  - button "成本中心":
+    - generic: 成本中心
+  - button "费用中心":
+    - generic: 费用中心
+  - button "报销管理":
+    - generic: 报销管理
+  - button "对账单":
+    - generic: 对账单
+  - button "发票管理":
+    - generic: 发票管理
+  - button "发票总览":
+    - generic: 发票总览
+  - button "销项发票":
+    - generic: 销项发票
+  - button "进项发票":
+    - generic: 进项发票
+  - button "开票任务" [active]:
+    - generic: 开票任务
+  - button "调整记录":
+    - generic: 调整记录
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务" [pressed]:
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "新建贷款":
+  - generic: 新建贷款
+- button "销售收入确认":
+  - generic: 销售收入确认
+- button "成本中心":
+  - generic: 成本中心
+- button "报销管理":
+  - generic: 报销管理
+- button "新建报销":
+  - generic: 新建报销
+- button "对账单":
+  - generic: 对账单
+- button "客户对账单":
+  - generic: 客户对账单
+- button "新建客户对账":
+  - generic: 新建客户对账
+- button "供应商对账单":
+  - generic: 供应商对账单
+- button "新建供应商对账":
+  - generic: 新建供应商对账
+- button "发票总览":
+  - generic: 发票总览
+- button "销项发票":
+  - generic: 销项发票
+- button "进项发票":
+  - generic: 进项发票
+- button "开票任务":
+  - generic: 开票任务
+- main:
+  - generic: 发票管理
+  - generic: 开票任务
+  - heading "开票任务" [level=1]
+  - paragraph: 处理已审批的开票申请并跟踪开票进度
+  - radiogroup:
+    - radio "本月":
+      - generic: 本月
+    - radio "本季":
+      - generic: 本季
+    - radio "半年":
+      - generic: 半年
+    - radio "全年" [checked]:
+      - generic: 全年
+  - paragraph: 待处理开票
+  - paragraph: "0"
+  - paragraph: 需要财务开票
+  - paragraph: 待开票金额
+  - paragraph: ¥0.00
+  - paragraph: 已审批待处理
+  - paragraph: 全部申请
+  - paragraph: "0"
+  - paragraph: 待审批 0 · 已撤回 0
+  - generic: 开票申请列表
+  - generic: · 共 0 条
+  - radiogroup:
+    - radio "全部" [checked]:
+      - generic: 全部
+    - radio "待审批":
+      - generic: 待审批
+    - radio "已审批":
+      - generic: 已审批
+    - radio "已开票":
+      - generic: 已开票
+    - radio "已驳回":
+      - generic: 已驳回
+  - button "刷新列表"
+  - table:
+    - table:
+      - rowgroup:
+        - row "申请编号 合同/订单 客户 申请金额 发票类型 税率 申请人 申请时间 状态 操作":
+          - columnheader "申请编号"
+          - columnheader "合同/订单"
+          - columnheader "客户"
+          - columnheader "申请金额"
+          - columnheader "发票类型"
+          - columnheader "税率"
+          - columnheader "申请人"
+          - columnheader "申请时间"
+          - columnheader "状态"
+          - columnheader "操作"
+      - rowgroup:
+        - row "暂无符合条件的开票任务":
+          - cell "暂无符合条件的开票任务"
+- button "打开 AI 助手":
+- region "Notifications alt+T"

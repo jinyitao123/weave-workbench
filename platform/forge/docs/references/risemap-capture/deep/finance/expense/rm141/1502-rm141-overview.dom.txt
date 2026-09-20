@@ -1,0 +1,184 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 财务
+- button "收起侧边栏":
+- navigation:
+  - button "资金管理":
+    - generic: 资金管理
+  - button "资金账户":
+    - generic: 资金账户
+  - button "资金流水":
+    - generic: 资金流水
+  - button "应收应付":
+    - generic: 应收应付
+  - button "收款管理":
+    - generic: 收款管理
+  - button "付款管理":
+    - generic: 付款管理
+  - button "退款申请":
+    - generic: 退款申请
+  - button "授信额度管理":
+    - generic: 授信额度管理
+  - button "借款贷款管理":
+    - generic: 借款贷款管理
+  - button "业务确认":
+    - generic: 业务确认
+  - button "销售收入确认":
+    - generic: 销售收入确认
+  - button "成本中心":
+    - generic: 成本中心
+  - button "费用中心" [active]:
+    - generic: 费用中心
+  - button "报销管理":
+    - generic: 报销管理
+  - button "对账单":
+    - generic: 对账单
+  - button "发票管理":
+    - generic: 发票管理
+  - button "发票总览":
+    - generic: 发票总览
+  - button "销项发票":
+    - generic: 销项发票
+  - button "进项发票":
+    - generic: 进项发票
+  - button "开票任务":
+    - generic: 开票任务
+  - button "调整记录":
+    - generic: 调整记录
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务" [pressed]:
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "资金账户":
+  - generic: 资金账户
+- button "资金流水":
+  - generic: 资金流水
+- button "应收应付":
+  - generic: 应收应付
+- button "收款管理":
+  - generic: 收款管理
+- button "付款管理":
+  - generic: 付款管理
+- button "费用中心":
+  - generic: 费用中心
+- button "新建付款申请":
+  - generic: 新建付款申请
+- button "退款申请":
+  - generic: 退款申请
+- button "授信额度管理":
+  - generic: 授信额度管理
+- button "借款管理":
+  - generic: 借款管理
+- button "新建借款":
+  - generic: 新建借款
+- button "新建贷款":
+  - generic: 新建贷款
+- button "销售收入确认":
+  - generic: 销售收入确认
+- button "成本中心":
+  - generic: 成本中心
+- main:
+  - generic: 业务确认
+  - generic: 费用中心
+  - heading "费用中心" [level=1]
+  - paragraph: 追踪各项运营费用，分析费用趋势与预算偏差
+  - button "全部"
+  - button "按月"
+  - button "按季"
+  - generic: 选择月或季
+  - button "自定义范围":
+    - text: 自定义范围
+  - generic: 全部时间
+  - generic: 0笔
+  - button "企业支出 0":
+    - text: 企业支出
+    - generic: "0"
+  - button "费用统计":
+    - text: 费用统计
+  - button "新建付款申请":
+    - text: 新建付款申请
+  - button "导出":
+    - text: 导出
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "搜索付款申请..."
+  - button "类别":
+    - text: 类别
+  - button "状态":
+    - text: 状态
+  - table:
+    - rowgroup:
+      - row "申请单号 申请日期 类别 费用归属 收款方 付款事由 金额 申请人 紧急 状态":
+        - columnheader:
+          - checkbox
+        - columnheader "申请单号":
+          - generic: 申请单号
+        - columnheader "申请日期":
+          - generic: 申请日期
+        - columnheader "类别":
+          - generic: 类别
+        - columnheader "费用归属":
+          - generic: 费用归属
+        - columnheader "收款方":
+          - generic: 收款方
+        - columnheader "付款事由":
+          - generic: 付款事由
+        - columnheader "金额":
+          - generic: 金额
+        - columnheader "申请人":
+          - generic: 申请人
+        - columnheader "紧急":
+          - generic: 紧急
+        - columnheader "状态":
+          - generic: 状态
+    - rowgroup:
+      - row "暂无匹配的付款申请":
+        - cell "暂无匹配的付款申请":
+          - generic: 暂无匹配的付款申请
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"

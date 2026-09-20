@@ -1,0 +1,261 @@
+Browser tab: 50, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_production_assembly_workspace?id=0X3uXemh7wnreIkh".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_production_assembly_workspace?id=0X3uXemh7wnreIkh
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 组装单
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_production_assembly_workspace
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 组装单, Value: 1
+				44 text 组装单
+			45 text 按生效BOM办理齐套、领退补料、分批生产入库与独立完工 制造与装配 / 组装单 /  ASM-2026-0006 待领料
+			46 heading ASM-2026-0006, Value: 1
+				47 text ASM-2026-0006
+			48 text 800型柔性线控制柜  ·  V1.0
+			49 button 刷新齐套
+			50 button 生成领料单
+			51 text 草稿 待领料 组装中 已完工 成品 800型柔性线控制柜 计划数量 2 齐套率 100 % 缺料项 0 合格入库 0 不合格数量 0 净领用数量 0 物料投入成本 ¥0.00
+			52 heading 物料需求与执行, Value: 2
+				53 text 物料需求与执行
+			54 table
+				55 row
+					56 cell
+						57 text 物料编码
+					58 cell
+						59 text 名称
+					60 cell
+						61 text 单台用量
+					62 cell
+						63 text 需求数量
+					64 cell
+						65 text 可用快照
+					66 cell
+						67 text 已分配
+					68 cell
+						69 text 缺料
+					70 cell
+						71 text BOM领料
+					72 cell
+						73 text 补料
+					74 cell
+						75 text 退料
+					76 cell
+						77 text 净领用
+					78 cell
+						79 text 投入金额
+				80 row
+					81 cell
+						82 text RM-CAB-800
+					83 cell
+						84 text 800型柜体
+					85 cell
+						86 text 1
+					87 cell
+						88 text 2
+					89 cell
+						90 text 984
+					91 cell
+						92 text 2
+					93 cell
+						94 text 0
+					95 cell
+						96 text 0
+					97 cell
+						98 text 0
+					99 cell
+						100 text 0
+					101 cell
+						102 text 0
+					103 cell
+						104 text ¥0.00
+				105 row
+					106 cell
+						107 text RM-PLC-1215C
+					108 cell
+						109 text PLC CPU 1215C
+					110 cell
+						111 text 1
+					112 cell
+						113 text 2
+					114 cell
+						115 text 984
+					116 cell
+						117 text 2
+					118 cell
+						119 text 0
+					120 cell
+						121 text 0
+					122 cell
+						123 text 0
+					124 cell
+						125 text 0
+					126 cell
+						127 text 0
+					128 cell
+						129 text ¥0.00
+				130 row
+					131 cell
+						132 text RM-HMI-700
+					133 cell
+						134 text 7英寸触摸屏
+					135 cell
+						136 text 1
+					137 cell
+						138 text 2
+					139 cell
+						140 text 984
+					141 cell
+						142 text 2
+					143 cell
+						144 text 0
+					145 cell
+						146 text 0
+					147 cell
+						148 text 0
+					149 cell
+						150 text 0
+					151 cell
+						152 text 0
+					153 cell
+						154 text ¥0.00
+				155 row
+					156 cell
+						157 text RM-PSU-24V10A
+					158 cell
+						159 text 24V 10A开关电源
+					160 cell
+						161 text 2
+					162 cell
+						163 text 4
+					164 cell
+						165 text 968
+					166 cell
+						167 text 4
+					168 cell
+						169 text 0
+					170 cell
+						171 text 0
+					172 cell
+						173 text 0
+					174 cell
+						175 text 0
+					176 cell
+						177 text 0
+					178 cell
+						179 text ¥0.00
+			180 heading 关联领退补料单, Value: 2
+				181 text 关联领退补料单
+			182 table
+				183 row
+					184 cell
+						185 text 单据编号
+					186 cell
+						187 text 类型
+					188 cell
+						189 text 物料种数
+					190 cell
+						191 text 数量
+					192 cell
+						193 text 金额
+					194 cell
+						195 text 日期
+					196 cell
+						197 text 状态
+					198 cell
+						199 text 操作
+				200 row
+					201 cell
+						202 text MAT-2026-0010
+					203 cell
+						204 text 领料单
+					205 cell
+						206 text 4
+					207 cell
+						208 text 10
+					209 cell
+						210 text ¥0.00
+					211 cell
+						212 text 2026-09-14
+					213 cell
+						214 text 审批中
+					215 cell
+						216 button 查看
+				217 row
+					218 cell
+						219 text MAT-2026-0011
+					220 cell
+						221 text 领料单
+					222 cell
+						223 text 4
+					224 cell
+						225 text 10
+					226 cell
+						227 text ¥0.00
+					228 cell
+						229 text 2026-09-14
+					230 cell
+						231 text 审批中
+					232 cell
+						233 button 查看
+			234 heading 生产入库记录, Value: 2
+				235 text 生产入库记录
+			236 table
+				237 row
+					238 cell
+						239 text 入库单号
+					240 cell
+						241 text 合格数量
+					242 cell
+						243 text 不合格数量
+					244 cell
+						245 text 单位成本
+					246 cell
+						247 text 入库金额
+					248 cell
+						249 text 批次
+					250 cell
+						251 text 日期
+			252 container 确认生成领料单
+				253 text 确认生成领料单
+				254 text ASM-2026-0006
+				255 button 关闭
+				256 text 确认后将按当前 BOM 需求生成领料单，并进入领料办理页面。
+				257 button 取消
+				258 button 确认提交
+
+The focused UI element is 50 button 生成领料单

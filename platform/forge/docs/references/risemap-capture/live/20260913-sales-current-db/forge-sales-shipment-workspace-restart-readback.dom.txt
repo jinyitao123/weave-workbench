@@ -1,0 +1,141 @@
+Browser tab: 23, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_sales_shipment_workspace".
+0 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_shipment_workspace
+	1 container root
+		2 container 通知 alt+T
+		3 container
+			4 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			5 container 本平台处于预览版，功能可能调整。
+				6 text 预览版
+			7 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			8 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			9 text 销售发货单
+			10 button 搜索…
+				11 text 搜索…
+				12 text ⌘
+				13 text K
+			14 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			15 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_sales_shipment_workspace
+			16 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			17 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		18 container
+			19 container
+				20 text 区域
+				21 content list
+					22 button 工作台
+					23 button 供应链
+					24 button 销售
+					25 button 生产
+					26 button 项目
+					27 button 行政
+					28 button 财务
+					29 button 报表
+					30 button 系统
+			31 container
+				32 button (expanded) 工作台, Secondary Actions: Collapse
+				33 content list
+					34 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					35 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					37 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			38 text 最近使用
+			39 button 切换侧边栏
+		40 container
+			41 button 在 Studio 中编辑
+			42 heading 销售发货单, Value: 1
+				43 text 销售发货单
+			44 text 发货出库登记、物流跟踪、签收回执与开票联动 03 销售业务 / 销售发货单
+			45 button 下一步操作　待出库发货单 ›
+			46 button 新建发货单
+			47 button 打开对象记录
+			48 button 刷新
+			49 text 发货出库登记、物流跟踪、签收回执与开票联动
+			50 heading 销售发货单, Value: 1
+				51 text 销售发货单
+			52 text 发货单 2 待出库 0 已出库数量 2 含税金额 ¥ 256,000.00
+			53 text field (settable) 搜索发货单
+			54 pop up button (collapsed) Description: 状态, Secondary Actions: Expand
+			55 button 范围
+			56 button 清空筛选
+			57 table
+				58 row
+					59 cell
+						60 text 发货单号
+					61 cell
+						62 text 关联订单
+					63 cell
+						64 text 客户单号
+					65 cell
+						66 text 客户名称
+					67 cell
+						68 text 收货人
+					69 cell
+						70 text 状态
+					71 cell
+						72 text 出库进度
+					73 cell
+						74 text 含税金额
+					75 cell
+						76 text 出库单
+					77 cell
+						78 text 出库日期
+					79 cell
+						80 text 负责人
+					81 cell
+						82 text 操作
+				83 row
+					84 cell
+						85 button SPLIT-DN-2
+						86 text SO-CONVERT-20260909-001 发货 SPLIT-DN-2
+					87 cell
+						88 text SO-CONVERT-20260909-001
+					89 cell
+						90 text —
+					91 cell
+						92 text 苏州澄岳自动化装备有限公司
+					93 cell
+						94 text 周启明
+					95 cell
+						96 text 已出库
+					97 cell
+						98 container
+							99 text 1  /  1  台
+					100 cell
+						101 text ¥ 128,000.00
+					102 cell
+						103 text SPLIT-OUT-2
+					104 cell
+						105 text 2026-09-09
+					106 cell
+						107 text Dev Admin
+					108 cell
+						109 button 查看
+				110 row
+					111 cell
+						112 button DN-CONVERT-20260909-001
+						113 text SO-CONVERT-20260909-001 发货 DN-CONVERT-20260909-001
+					114 cell
+						115 text SO-CONVERT-20260909-001
+					116 cell
+						117 text —
+					118 cell
+						119 text 苏州澄岳自动化装备有限公司
+					120 cell
+						121 text 周启明
+					122 cell
+						123 text 已出库
+					124 cell
+						125 container
+							126 text 1  /  1  台
+					127 cell
+						128 text ¥ 128,000.00
+					129 cell
+						130 text OUT-CONVERT-20260909-001
+					131 cell
+						132 text 2026-09-09
+					133 cell
+						134 text Dev Admin
+					135 cell
+						136 button 查看
+			137 text 共  2  条记录 每页 10 条 · 1 / 1
+
+The focused UI element is 0 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_shipment_workspace

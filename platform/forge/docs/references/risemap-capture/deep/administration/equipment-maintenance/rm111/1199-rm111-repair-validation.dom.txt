@@ -1,0 +1,265 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 行政申请
+- button:
+  - generic: 公司通知
+- button:
+  - generic: 发布通知
+- button:
+  - generic: 用章管理
+- button:
+  - generic: 会议纪要
+- button:
+  - generic: 新建会议纪要
+- button:
+  - generic: AI 模板管理
+- button:
+  - generic: 工作汇报
+- button:
+  - generic: 新建工作汇报
+- button:
+  - generic: 文档中心
+- button:
+  - generic: 固定资产
+- button:
+  - generic: 资质与申报
+- button:
+  - generic: 物料领取
+- button:
+  - generic: 设备维护
+- main:
+  - heading [level=1]: 设备维护保养
+  - paragraph: 设备台账管理、维护/维修工单与提醒
+  - button:
+    - text: 设备台账
+  - button:
+    - text: 工单管理
+  - button:
+    - text: 维保规则
+  - button:
+    - text: 提醒中心
+    - generic: "0"
+  - button:
+    - text: 费用统计
+  - button:
+    - text: 新增维护
+  - button:
+    - text: 新增维修
+  - button:
+    - text: 导出
+  - button:
+  - button:
+  - button:
+  - textbox:
+    - /placeholder: 搜索工单号、设备、执行人...
+  - button:
+    - text: 工单分类
+  - button:
+    - text: 状态
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader
+        - columnheader:
+          - generic: 工单编号
+        - columnheader:
+          - generic: 工单分类
+        - columnheader:
+          - generic: 工单类型
+        - columnheader:
+          - generic: 设备名称
+        - columnheader:
+          - generic: 设备编号
+        - columnheader:
+          - generic: 状态
+        - columnheader:
+          - generic: 优先级
+        - columnheader:
+          - generic: 计划日期
+        - columnheader:
+          - generic: 实际开始
+        - columnheader:
+          - generic: 实际完成
+        - columnheader:
+          - generic: 执行人
+        - columnheader:
+          - generic: 工时
+        - columnheader:
+          - generic: 费用
+        - columnheader:
+          - generic: 操作
+    - rowgroup:
+      - row:
+        - cell:
+          - generic: 暂无工单
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button [disabled]:
+  - button: "1"
+  - button [disabled]:
+- button:
+- region "Notifications alt+T":
+  - list:
+    - button "Close toast":
+    - generic: 提交失败，请检查必填项，必填项已在表单中标红。
+- dialog "新增维修工单":
+  - heading "新增维修工单" [level=2]:
+    - text: 新增维修工单
+  - generic: "*"
+  - generic: 设备
+  - button "选择设备":
+    - generic: 选择设备
+  - paragraph: 请选择设备
+  - generic: "*"
+  - generic: 工单类型
+  - button "请选择类型":
+    - generic: 请选择类型
+  - button "新增维修类型":
+  - paragraph: 请选择工单类型
+  - generic: "*"
+  - generic: 计划日期
+  - textbox "请选择计划日期": 2026年9月9日
+  - button:
+  - button:
+  - generic: "*"
+  - generic: 执行人
+  - button "请选择执行人":
+    - generic: 请选择执行人
+  - paragraph: 请选择执行人
+  - generic: "*"
+  - generic: 工作内容
+  - textbox "描述保养/维修项目内容"
+  - paragraph: 请填写工作内容
+  - generic: 优先级
+  - button "中":
+    - generic "中"
+  - generic: 预计工时(h)
+  - textbox: "0"
+  - generic: 预计费用(¥)
+  - textbox: "0"
+  - generic: 所需备件
+  - textbox "多个备件用\"、\"分隔"
+  - button "取消"
+  - button "创建工单" [active]
+  - button "Close":
+    - generic: Close

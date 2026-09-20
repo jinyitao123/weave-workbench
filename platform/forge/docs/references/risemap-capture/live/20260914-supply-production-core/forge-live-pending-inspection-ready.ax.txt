@@ -1,0 +1,83 @@
+Browser tab: 56, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_pending_inspection_workspace".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_pending_inspection_workspace
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 button 切换侧边栏
+			9 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			10 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			11 text 待检验库存 已连接
+			12 button 搜索…
+			13 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			14 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_pending_inspection_workspace
+			15 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			16 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		17 container
+			18 container
+				19 text 区域
+				20 content list
+					21 button 工作台
+					22 button 供应链
+					23 button 销售
+					24 button 生产
+					25 button 项目
+					26 button 行政
+					27 button 财务
+					28 button 报表
+					29 button 系统
+			30 container
+				31 button (expanded) 工作台, Secondary Actions: Collapse
+				32 content list
+					33 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					34 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					35 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					36 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			37 text 最近使用
+			38 button 切换侧边栏
+		39 container
+			40 button 在 Studio 中编辑
+			41 heading 待检验库存, Value: 1
+				42 text 待检验库存
+			43 text 按到货物料行跟踪待检状态并生成检验单
+			44 heading 待检验库存, Value: 1
+				45 text 待检验库存
+			46 text 每个物料独立一条待检记录，关联来料检验流程 下一步操作　检验单　›
+			47 text field (settable) 搜索待检记录
+			48 button 到货登记
+			49 button 检验单
+			50 button 刷新
+			51 table
+				52 row
+					53 cell
+						54 text 待检单号
+					55 cell
+						56 text 物料编码
+					57 cell
+						58 text 物料名称
+					59 cell
+						60 text 规格型号
+					61 cell
+						62 text 到货数量
+					63 cell
+						64 text 单位
+					65 cell
+						66 text 批次号
+					67 cell
+						68 text 供应商/客户
+					69 cell
+						70 text 采购合同
+					71 cell
+						72 text 到货日期
+					73 cell
+						74 text 状态
+					75 cell
+						76 text 关联检验单
+					77 cell
+						78 text 检验结果
+					79 cell
+						80 text 操作
+
+The focused UI element is 5 link Description: ObjectOS, URL: localhost:4321/_console/apps/forge

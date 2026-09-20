@@ -1,0 +1,220 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/quick-entry/timesheet".
+0 AXWebArea RiseMap, URL: risemap.cn/quick-entry/timesheet
+	1 container
+		2 container root
+			201 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			202 text 项目
+			203 button 收起侧边栏
+				204 image
+			205 container
+				206 button 项目管理
+					207 image
+					208 text 项目管理
+					209 image
+				210 button 项目中心
+				211 button 项目分析中心
+				212 button 任务管理
+				213 button 工时管理
+				214 button 项目配置中心
+			215 image
+			216 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			217 button 查看方案
+				218 image
+				219 text 查看方案
+			220 button
+				221 image
+			222 container
+				223 container 业务分类
+					224 checkbox 工作台, Value: 0
+					225 checkbox 供应链, Value: 0
+					226 checkbox 销售, Value: 0
+					227 checkbox 生产, Value: 0
+					228 checkbox 项目, Value: 1
+					229 checkbox 行政, Value: 0
+					230 checkbox 财务, Value: 0
+					231 checkbox 报表, Value: 0
+					232 checkbox 系统, Value: 0
+				233 button Description: 展开搜索, Help: 搜索
+					234 image
+				235 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					236 image
+					237 text 2
+				238 button Description: 打开推广奖励, Help: 推广
+				239 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				240 link Description: 打开工单, Value: community.risemap.cn/support
+				241 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					242 image
+					243 text 立即订阅
+				244 button 金
+					245 text 金
+					246 image
+			247 container
+				248 button 工作台
+					249 image
+					250 text 工作台
+				253 button 委外退料
+					254 text 委外退料
+				255 button 新建退料单
+					256 text 新建退料单
+				257 button 委外对账
+					258 text 委外对账
+				259 button 委外供应商
+					260 text 委外供应商
+				261 button 委外库存
+					262 text 委外库存
+				263 button 批次追溯
+					264 text 批次追溯
+				265 button 委外未交
+					266 text 委外未交
+				267 button 委外进货
+					268 text 委外进货
+				269 button 委外对账单
+					270 text 委外对账单
+				271 button 项目中心
+					272 text 项目中心
+				273 button 项目分析中心
+					274 text 项目分析中心
+				275 button 任务管理
+					276 text 任务管理
+				277 button 工时管理
+					278 text 工时管理
+				388 button 快捷工时填报
+					389 text 快捷工时填报
+			390 container
+				391 text 项目管理
+				392 image
+				393 text 快捷工时填报
+				394 button 返回工时管理
+					395 image
+					396 text 返回工时管理
+				397 image
+				398 heading 快捷工时填报, Value: 1
+					399 text 快捷工时填报
+				400 text 多项目 · 批量
+				401 container
+					402 text 一次填报多条记录，支持  项目工时 、 非项目工时（会议/培训/公司活动） 、 闲置工时（等待排期/设备等待等） ，避免多次录入。
+				403 button 清空
+				404 button 提交 1 条 · 合计 0h
+					405 image
+					406 text 提交 1 条 · 合计 0h
+				407 text 批量设置日期
+				408 container
+					409 text field (settable) 2026年9月9日
+					410 button
+						411 image
+					412 button
+						413 image
+				414 button 应用到全部
+					415 image
+					416 text 应用到全部
+				417 image
+				418 text 快捷模板
+				419 button 单项目 · 8h
+					420 image
+					421 text 单项目 · 8h
+				422 button 双项目各 4h
+					423 image
+					424 text 双项目各 4h
+				425 button 项目6h + 会议2h
+					426 image
+					427 text 项目6h + 会议2h
+				428 button 全天培训 · 8h
+					429 image
+					430 text 全天培训 · 8h
+				431 button 项目6h + 闲置2h
+					432 image
+					433 text 项目6h + 闲置2h
+				434 button 均分到 8h, Help: 按当前行数均分8小时
+					435 image
+					436 text 均分到 8h
+				437 table
+					438 row
+						439 cell
+							440 text #
+						441 cell
+							442 text 日期
+						443 cell
+							444 text 工时分类
+						445 cell
+							446 text 项目 / 非项目 / 闲置类别
+						447 cell
+							448 text 工作内容  *
+						449 cell
+							450 text 工时类型
+						451 cell
+							452 text 工时(h)
+						453 cell
+							454 text 备注
+						455 cell
+							456 text 操作
+					457 row
+						458 cell
+							459 text 1
+						460 cell
+							461 container
+								462 text field (settable) 2026年9月9日
+								463 button
+									464 image
+								465 button
+									466 image
+						467 cell
+							468 radio button 项目, Value: 1
+								469 image
+								470 text 项目
+							471 radio button 非项, Value: 0
+								472 image
+								473 text 非项
+							474 radio button 闲置, Value: 0
+								475 image
+								476 text 闲置
+						477 cell
+							478 button 选择项目
+								479 text 选择项目
+						480 cell
+							481 text field (settable)
+						482 cell
+							483 button 选择
+								484 text 选择
+						485 cell
+							486 text field (settable)
+						487 cell
+							488 text field (settable)
+						489 cell
+							490 button 复制此行
+								491 image
+							492 button (disabled) 删除此行
+								493 image
+				494 button 添加项目工时
+					495 image
+					496 text 添加项目工时
+				497 button 添加非项目工时
+					498 image
+					499 text 添加非项目工时
+				500 button 添加闲置工时
+					501 image
+					502 text 添加闲置工时
+				503 text 共  1  条
+				504 image
+				505 text 合计工时 0 h
+				506 image
+				507 text 项目工时 0 h 1  条记录
+				508 image
+				509 text 非项目工时 0 h 0  条记录
+				510 image
+				511 text 闲置工时 0 h 0  条记录
+				512 image
+				513 text 覆盖日期 1 天 09-09 0h
+				514 image
+				515 text 小贴士： 使用「快捷模板」可一键生成常见组合；「均分到 8h」会按当前行数自动平均分配；提交后将统一进入工时审核流程。
+				516 image
+				517 text 填报人：当前登录用户
+				518 button 保存草稿
+					519 image
+					520 text 保存草稿
+				521 button 批量提交 1 条 · 0h
+					522 image
+					523 text 批量提交 1 条 · 0h
+			387 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+
+The focused UI element is 0 AXWebArea RiseMap, URL: risemap.cn/quick-entry/timesheet

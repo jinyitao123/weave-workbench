@@ -1,0 +1,216 @@
+Browser tab: 7, Title: "RiseMap", URL: "https://risemap.cn/inventory/outbound/shipments".
+1 AXWebArea RiseMap, URL: risemap.cn/inventory/outbound/shipments
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				70 button 到货检验
+					71 image
+					72 text 到货检验
+					73 image
+				74 button 到货通知
+				75 button 到货登记
+				76 button 待检验库存
+				77 button 检验单
+				78 button 检验规则
+				79 button 基础资料
+					80 image
+					81 text 基础资料
+					82 image
+				83 button 物料管理
+				84 button 物料组合
+				85 button BOM管理
+				86 button 综合物料搜索
+				87 button 供应商管理
+				88 button 产品实例追溯
+				89 button 仓库管理
+				90 button 采购管理
+					91 image
+					92 text 采购管理
+					93 image
+				94 button 采购发票
+				95 button 采购申请
+				96 button 采购待办池
+				97 button 询价管理
+				98 button 采购订单
+				99 button 采购退换货
+				100 button 供应商价格本
+				101 button 入库管理
+					102 image
+					103 text 入库管理
+					104 image
+				105 button 全部入库单
+				106 button 采购入库
+				107 button 生产入库
+				108 button 其他入库
+				109 button 期初入库
+				110 button 入库明细
+				111 button 库存管理
+					112 image
+					113 text 库存管理
+					114 image
+				115 button 库存总览
+				116 button 不合格处理
+				117 button 处置执行中心
+				118 button 库存流水
+				119 button 库存锁定
+				120 button 库存盘点
+				121 button 调拨与借出
+				122 button 库存预警
+				123 button 报损单
+				124 button SN码管理
+				125 button 出库管理
+					126 image
+					127 text 出库管理
+					128 image
+				129 button 出库单列表
+				130 button 生产出库
+				131 button 其他出库
+				132 button 销售直接出库
+				133 button 待出库发货单
+				134 button 采购退换货出库
+				135 button 出库明细
+			136 image
+			137 text 免费试用中，还剩 9 天 — 试用期间享全部功能
+			138 button 查看方案
+				139 image
+				230 text 查看方案
+			140 button
+				141 image
+			17 container
+				142 container 业务分类
+					143 container
+						144 checkbox 工作台, Value: 0
+						145 checkbox 供应链, Value: 1
+						146 checkbox 销售, Value: 0
+						147 checkbox 生产, Value: 0
+						148 checkbox 项目, Value: 0
+						149 checkbox 行政, Value: 0
+						150 checkbox 财务, Value: 0
+						151 checkbox 报表, Value: 0
+						152 checkbox 系统, Value: 0
+				27 button Description: 展开搜索, Help: 搜索
+					28 image
+				29 button (collapsed) Description: 通知，18 条未读, Secondary Actions: Expand
+					30 image
+					153 text 18
+				31 button Description: 打开推广奖励, Help: 推广
+				32 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				33 link Description: 打开工单, Value: community.risemap.cn/support
+				154 button 立即订阅, Help: 试用还剩 9 天 · 立即订阅享专属优惠
+					155 image
+					156 text 立即订阅
+				34 button 金
+					157 text 金
+					35 image
+			36 container
+				37 button 工作台
+					38 image
+					158 text 工作台
+				39 button 项目详情
+					159 text 项目详情
+				40 button 框架销售合同
+					160 text 框架销售合同
+				41 button 销售订单
+					161 text 销售订单
+				42 button 工作台
+					162 text 工作台
+				43 button 销售发货单
+					163 text 销售发货单
+				44 button 新建发货单
+					164 text 新建发货单
+				45 button 工作台
+					165 text 工作台
+				46 button 待出库发货单
+					166 text 待出库发货单
+			47 container
+				48 container
+					167 text 出库管理
+					49 image
+					168 text 待出库发货单
+					50 image
+					51 heading 待出库发货单, Value: 1
+						169 text 待出库发货单
+					170 text 管理所有出库单和待出库发货单
+					52 button 下一步操作 出库单列表, Help: 前往出库管理 · 出库单列表
+						171 text 下一步操作
+						172 text 出库单列表
+						53 image
+				54 button 刷新
+					55 image
+				56 button
+					57 image
+				58 button
+					59 image
+				60 image
+				61 text field (settable)
+				62 table
+					63 row
+						64 cell
+							65 checkbox (settable, integer) 0
+						173 cell
+							174 text 发货单号
+						175 cell
+							176 text 客户单号
+						177 cell
+							178 text 客户
+						179 cell
+							180 text 收货人
+						181 cell
+							182 text 收货地址
+						183 cell
+							184 text 含税金额
+						185 cell
+							186 text 出库进度
+						187 cell
+							188 text 状态
+						189 cell
+							190 text 日期
+						191 cell
+							192 text 操作
+					193 row
+						194 cell
+							195 checkbox (settable, integer) 0
+						196 cell
+							197 text DN-2026-0001
+							198 text SC-OEM-20260909-001
+						199 cell
+							200 text —
+						201 cell
+							202 text 苏州澄岳自动化装备有限公司
+						203 cell
+							204 text 周启明
+						205 cell
+							206 text 苏州市工业园区澄岳路9号
+						207 cell
+							208 text ¥128,000.00
+						209 cell
+							210 container
+								211 text 0 / 1 台
+								212 container 尚未被任何出库单占用
+									213 image
+									214 text 待建 1 台
+						215 cell
+							216 text 待发货
+						217 cell
+							218 text 2026-09-09
+						219 cell
+							220 button 查看详情
+								221 image
+							222 button 去发货
+				223 text 共  1 条记录 每页
+				66 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					224 text 20
+				225 text 条
+				226 button (disabled) 上一页
+					227 image
+				67 button 1
+				228 button (disabled) 下一页
+					229 image
+			68 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			69 container Notifications alt+T
+
+The focused UI element is 6 button 收起侧边栏

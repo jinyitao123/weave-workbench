@@ -1,0 +1,278 @@
+- region "通知 alt+T"
+- banner:
+  - link "ObjectOS":
+    - /url: /_console/apps/forge
+  - generic "本平台处于预览版，功能可能调整。": 预览版
+  - generic: /
+  - button "Forge":
+    - generic: Forge
+  - generic: /
+  - button "销售订单":
+    - text: 销售订单
+  - generic: /
+  - generic: 一键转换验收销售订单
+  - button "搜索…":
+    - generic: 搜索…
+    - generic: ⌘
+    - text: K
+  - button "打开消息中心":
+  - link "在 Studio 中设计":
+    - /url: /_console/studio/forge/data?surface=object:forge_sales_order
+  - button "帮助与文档":
+  - button "DA":
+    - generic: DA
+- text: 区域
+- list:
+  - button "客户与销售":
+    - generic: 客户与销售
+  - button "采购与供应":
+    - generic: 采购与供应
+  - button "物料与库存":
+    - generic: 物料与库存
+  - button "生产与 BOM":
+    - generic: 生产与 BOM
+- button "销售业务" [expanded]:
+  - text: 销售业务
+- list:
+  - link "销售报价":
+    - /url: /_console/apps/forge/forge_quotation
+    - generic: 销售报价
+  - button "固定 销售报价":
+  - link "框架销售合同":
+    - /url: /_console/apps/forge/forge_sales_contract
+    - generic: 框架销售合同
+  - button "固定 框架销售合同":
+  - link "销售订单":
+    - /url: /_console/apps/forge/forge_sales_order
+    - generic: 销售订单
+  - button "固定 销售订单":
+  - link "销售发货单":
+    - /url: /_console/apps/forge/forge_sales_shipment
+    - generic: 销售发货单
+  - button "固定 销售发货单":
+- button "客户档案" [expanded]:
+  - text: 客户档案
+- list:
+  - link "客户":
+    - /url: /_console/apps/forge/forge_customer
+    - generic: 客户
+  - button "固定 客户":
+  - link "联系人":
+    - /url: /_console/apps/forge/forge_contact
+    - generic: 联系人
+  - button "固定 联系人":
+  - link "联系方式":
+    - /url: /_console/apps/forge/forge_contact_channel
+    - generic: 联系方式
+  - button "固定 联系方式":
+- button "客户配置" [expanded]:
+  - text: 客户配置
+- list:
+  - link "客户分类":
+    - /url: /_console/apps/forge/forge_customer_category
+    - generic: 客户分类
+  - button "固定 客户分类":
+  - link "客户级别":
+    - /url: /_console/apps/forge/forge_customer_level
+    - generic: 客户级别
+  - button "固定 客户级别":
+  - link "报价类型":
+    - /url: /_console/apps/forge/forge_quotation_type
+    - generic: 报价类型
+  - button "固定 报价类型":
+  - link "报价主体":
+    - /url: /_console/apps/forge/forge_quotation_issuer
+    - generic: 报价主体
+  - button "固定 报价主体":
+  - link "合同类型":
+    - /url: /_console/apps/forge/forge_contract_type
+    - generic: 合同类型
+  - button "固定 合同类型":
+- text: 最近使用
+- button "切换侧边栏":
+  - generic: 切换侧边栏
+- main:
+  - main:
+    - heading "一键转换验收销售订单" [level=1]
+    - generic: 销售订单
+    - button "复制记录 ID":
+    - button "添加到收藏":
+    - toolbar "页面标题栏操作":
+      - button "创建发货单":
+        - generic: 创建发货单
+      - button "编辑":
+        - generic: 编辑
+      - button "更多操作":
+    - button "刷新":
+    - region "Record highlights":
+      - generic "双击编辑":
+        - link "周启明":
+          - /url: /apps/forge/forge_contact/record/SXEXLYXT-ChitspX?from=%5B%7B%22o%22%3A%22forge_sales_order%22%2C%22i%22%3A%22b5iM_l0abRg29mVV%22%2C%22t%22%3A%22%E4%B8%80%E9%94%AE%E8%BD%AC%E6%8D%A2%E9%AA%8C%E6%94%B6%E9%94%80%E5%94%AE%E8%AE%A2%E5%8D%95%22%7D%5D
+          - generic "周启明"
+        - button "双击编辑":
+      - generic "双击编辑":
+        - generic "SO-CONVERT-20260909-001":
+          - generic "SO-CONVERT-20260909-001"
+        - button "双击编辑":
+    - list "记录路径":
+      - listitem "草稿，已完成":
+        - generic: ✓草稿
+      - listitem "待审批，已完成":
+        - generic: ✓待审批
+      - listitem "已审批，已完成":
+        - generic: ✓已审批
+      - listitem "执行中，当前阶段":
+        - generic: 执行中
+      - listitem "部分发货，未开始":
+        - generic: 部分发货
+      - listitem "已发货，未开始":
+        - generic: 已发货
+      - listitem "已完成，未开始":
+        - generic: 已完成
+      - listitem "已取消，已失败，未到达":
+        - generic: ✗已取消
+    - tablist:
+      - tab "详情" [selected]:
+        - generic: 详情
+      - tab "相关 2 项":
+        - generic: 相关
+        - generic "2 项": "2"
+      - tab "历史":
+        - generic: 历史
+    - tabpanel "详情":
+      - generic: 订单来源
+      - generic "双击编辑":
+        - generic "关联合同":
+          - generic: 关联合同
+        - button "双击编辑":
+      - generic: 客户
+      - generic "双击编辑":
+        - link "苏州澄岳自动化装备有限公司":
+          - /url: /apps/forge/forge_customer/record/v6FJCBj0_ZSdT0y7?from=%5B%7B%22o%22%3A%22forge_sales_order%22%2C%22i%22%3A%22b5iM_l0abRg29mVV%22%2C%22t%22%3A%22%E4%B8%80%E9%94%AE%E8%BD%AC%E6%8D%A2%E9%AA%8C%E6%94%B6%E9%94%80%E5%94%AE%E8%AE%A2%E5%8D%95%22%7D%5D
+          - generic "苏州澄岳自动化装备有限公司"
+        - button "双击编辑":
+      - generic: 关联合同
+      - generic "双击编辑":
+        - link "一键转换验收框架合同":
+          - /url: /apps/forge/forge_sales_contract/record/YW-PKoXVy18P4Nsd?from=%5B%7B%22o%22%3A%22forge_sales_order%22%2C%22i%22%3A%22b5iM_l0abRg29mVV%22%2C%22t%22%3A%22%E4%B8%80%E9%94%AE%E8%BD%AC%E6%8D%A2%E9%AA%8C%E6%94%B6%E9%94%80%E5%94%AE%E8%AE%A2%E5%8D%95%22%7D%5D
+          - generic "一键转换验收框架合同"
+        - button "双击编辑":
+      - generic: 来源报价单
+      - generic "双击编辑":
+        - link "一键转换验收报价":
+          - /url: /apps/forge/forge_quotation/record/VQwWp038mM2oiKt7?from=%5B%7B%22o%22%3A%22forge_sales_order%22%2C%22i%22%3A%22b5iM_l0abRg29mVV%22%2C%22t%22%3A%22%E4%B8%80%E9%94%AE%E8%BD%AC%E6%8D%A2%E9%AA%8C%E6%94%B6%E9%94%80%E5%94%AE%E8%AE%A2%E5%8D%95%22%7D%5D
+          - generic "一键转换验收报价"
+        - button "双击编辑":
+      - generic: 计划交货日期
+      - generic "双击编辑":
+        - generic: 10月9日
+        - button "双击编辑":
+      - generic: 负责人
+      - generic "双击编辑":
+        - generic: DA
+        - generic "Dev Admin"
+        - button "双击编辑":
+      - generic: 使用授信额度
+      - generic "双击编辑":
+        - checkbox [disabled]
+        - button "双击编辑":
+      - generic: 付款条件
+      - generic "双击编辑":
+        - generic "订单生效后30天内付款"
+        - button "双击编辑":
+      - generic: 付款方式
+      - generic "双击编辑":
+        - generic "银行转账":
+          - generic: 银行转账
+        - button "双击编辑":
+      - generic: 收入确认方式
+      - generic "双击编辑":
+        - generic "按发货出库":
+          - generic: 按发货出库
+        - button "双击编辑":
+      - generic: 订单含税金额
+      - generic "双击编辑":
+        - generic: 243,200
+        - button "双击编辑":
+      - generic: 发货单数
+      - button "1":
+        - generic: "1"
+        - button:
+      - generic: 已建发货单金额
+      - generic "双击编辑":
+        - generic: 128,000
+        - button "双击编辑":
+      - generic: 订单状态
+      - button "执行中":
+        - generic "执行中":
+          - generic: 执行中
+        - button:
+      - generic: 收货地址
+      - generic "双击编辑":
+        - generic "苏州市工业园区澄岳路9号"
+        - button "双击编辑":
+      - button "显示 7 个空字段":
+        - text: 显示 7 个空字段
+      - generic: 更多详情
+      - generic: 附件说明
+      - generic "双击编辑":
+        - generic: —
+        - button "双击编辑":
+      - generic: 备注
+      - generic "双击编辑":
+        - generic "由合同 SC-CONVERT-20260909-001 转换生成"
+        - button "双击编辑":
+      - generic: 创建人
+      - link "Dev Admin":
+        - /url: /apps/forge/sys_user/record/Ks5YmOaxmzxlaZNLoCyPWmaZHIVnsL1v?from=%5B%7B%22o%22%3A%22forge_sales_order%22%2C%22i%22%3A%22b5iM_l0abRg29mVV%22%2C%22t%22%3A%22%E4%B8%80%E9%94%AE%E8%BD%AC%E6%8D%A2%E9%AA%8C%E6%94%B6%E9%94%80%E5%94%AE%E8%AE%A2%E5%8D%95%22%7D%5D
+        - generic "Dev Admin"
+      - generic: ·
+      - time: 54分钟前
+      - generic: 更新人
+      - link "Dev Admin":
+        - /url: /apps/forge/sys_user/record/Ks5YmOaxmzxlaZNLoCyPWmaZHIVnsL1v?from=%5B%7B%22o%22%3A%22forge_sales_order%22%2C%22i%22%3A%22b5iM_l0abRg29mVV%22%2C%22t%22%3A%22%E4%B8%80%E9%94%AE%E8%BD%AC%E6%8D%A2%E9%AA%8C%E6%94%B6%E9%94%80%E5%94%AE%E8%AE%A2%E5%8D%95%22%7D%5D
+        - generic "Dev Admin"
+      - generic: ·
+      - time: 16分钟前
+    - region "Discussion":
+      - heading "讨论 (7)" [level=2]:
+        - text: 讨论
+        - generic: (7)
+      - combobox "筛选活动":
+        - generic: 全部动态
+      - button "粗体 (Ctrl+B)":
+      - button "斜体 (Ctrl+I)":
+      - button "列表":
+      - button "行内代码":
+      - button "提及某人":
+      - button "预览":
+      - button "提交 (Ctrl+Enter)" [disabled]:
+      - textbox "留下评论… (Ctrl+Enter 提交)"
+      - generic: 系统
+      - generic: 54分钟前
+      - paragraph: Created 销售订单 "一键转换验收销售订单"
+      - button "添加表情回应":
+      - generic: 系统
+      - generic: 54分钟前
+      - paragraph: Updated 销售订单 "一键转换验收销售订单"
+      - button "添加表情回应":
+      - generic: 系统
+      - generic: 54分钟前
+      - paragraph: Updated 销售订单 "一键转换验收销售订单"
+      - button "添加表情回应":
+      - generic: 系统
+      - generic: 16分钟前
+      - paragraph: Updated 销售订单 "一键转换验收销售订单"
+      - button "添加表情回应":
+      - generic: 系统
+      - generic: 16分钟前
+      - paragraph: Updated 销售订单 "一键转换验收销售订单"
+      - button "添加表情回应":
+      - generic: 系统
+      - generic: 16分钟前
+      - paragraph: Updated 销售订单 "一键转换验收销售订单"
+      - button "添加表情回应":
+      - generic: 系统
+      - generic: 16分钟前
+      - paragraph: Updated 销售订单 "一键转换验收销售订单"
+      - button "添加表情回应":

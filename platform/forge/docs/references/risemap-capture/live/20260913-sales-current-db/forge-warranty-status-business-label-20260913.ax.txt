@@ -1,0 +1,107 @@
+Browser tab: 28, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_warranty_management".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_warranty_management
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 质保管理
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_warranty_management
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 container
+						36 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+						37 button 固定 工作台
+					38 container
+						39 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+						40 button 固定 待办管理
+					41 container
+						42 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+						43 button 固定 AI 广场
+					44 container
+						45 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+						46 button 固定 引导中心
+			47 text 最近使用
+			48 button 切换侧边栏
+		49 container
+			50 button 在 Studio 中编辑
+			51 heading 质保管理, Value: 1
+				52 text 质保管理
+			53 text 质保卡台账、到期预警、激活与延保，以及质保规则配置 27 服务管理  /  质保管理
+			54 button 服务工单
+			55 button 刷新
+			56 text 质保卡台账、到期预警、激活与延保，以及质保规则配置
+			57 heading 质保管理, Value: 1
+				58 text 质保管理
+			59 text 生效中 0 在保的质保卡 待激活 0 激活式起算，客户还没激活 宽限期 0 已过保但仍在宽限天数内 已过保 0 含宽限期已用尽
+			60 button 概览
+			61 button 质保卡
+			62 button 质保规则
+			63 text field (settable) 搜索质保卡、客户或产品
+			64 button 清空筛选
+			65 table
+				66 row
+					67 cell
+						68 text 质保卡号
+					69 cell
+						70 text 客户
+					71 cell
+						72 text 产品/SN
+					73 cell
+						74 text 判定粒度
+					75 cell
+						76 text 开始日期
+					77 cell
+						78 text 到期日期
+					79 cell
+						80 text 状态
+					81 cell
+						82 text 责任方
+					83 cell
+						84 text 操作
+				85 row
+					86 cell
+						87 text WC-20260913152607
+					88 cell
+						89 text 苏州澄岳自动化装备有限公司
+					90 cell
+						91 text 800型柔性线控制柜
+					92 cell
+						93 text 整机/整单服务
+					94 cell
+						95 text 2026-09-10
+					96 cell
+						97 text 2027-09-10
+					98 cell
+						99 text 生效中
+					100 cell
+						101 text 供应商
+					102 cell
+						103 text —
+			104 text 共  1  条记录 每页 20 条 · 1 / 1
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_warranty_management

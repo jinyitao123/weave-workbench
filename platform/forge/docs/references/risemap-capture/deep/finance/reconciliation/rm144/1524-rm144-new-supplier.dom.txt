@@ -1,0 +1,192 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 财务
+- button "收起侧边栏":
+- navigation:
+  - button "资金管理":
+    - generic: 资金管理
+  - button "资金账户":
+    - generic: 资金账户
+  - button "资金流水":
+    - generic: 资金流水
+  - button "应收应付":
+    - generic: 应收应付
+  - button "收款管理":
+    - generic: 收款管理
+  - button "付款管理":
+    - generic: 付款管理
+  - button "退款申请":
+    - generic: 退款申请
+  - button "授信额度管理":
+    - generic: 授信额度管理
+  - button "借款贷款管理":
+    - generic: 借款贷款管理
+  - button "业务确认":
+    - generic: 业务确认
+  - button "销售收入确认":
+    - generic: 销售收入确认
+  - button "成本中心":
+    - generic: 成本中心
+  - button "费用中心":
+    - generic: 费用中心
+  - button "报销管理":
+    - generic: 报销管理
+  - button "对账单":
+    - generic: 对账单
+  - button "发票管理":
+    - generic: 发票管理
+  - button "发票总览":
+    - generic: 发票总览
+  - button "销项发票":
+    - generic: 销项发票
+  - button "进项发票":
+    - generic: 进项发票
+  - button "开票任务":
+    - generic: 开票任务
+  - button "调整记录":
+    - generic: 调整记录
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务" [pressed]:
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "退款申请":
+  - generic: 退款申请
+- button "授信额度管理":
+  - generic: 授信额度管理
+- button "借款管理":
+  - generic: 借款管理
+- button "新建借款":
+  - generic: 新建借款
+- button "新建贷款":
+  - generic: 新建贷款
+- button "销售收入确认":
+  - generic: 销售收入确认
+- button "成本中心":
+  - generic: 成本中心
+- button "报销管理":
+  - generic: 报销管理
+- button "新建报销":
+  - generic: 新建报销
+- button "对账单":
+  - generic: 对账单
+- button "客户对账单":
+  - generic: 客户对账单
+- button "新建客户对账":
+  - generic: 新建客户对账
+- button "供应商对账单":
+  - generic: 供应商对账单
+- button "新建供应商对账":
+  - generic: 新建供应商对账
+- main:
+  - generic: 财务管理
+  - generic: 对账中心
+  - generic: 供应商对账单
+  - generic: 生成对账单
+  - button:
+  - heading "生成供应商对账单" [level=1]
+  - generic: "1"
+  - heading "对账维度" [level=3]
+  - button "按供应商 汇总该客户/供应商在期间内所有往来明细":
+    - generic: 按供应商
+    - paragraph: 汇总该客户/供应商在期间内所有往来明细
+  - button "按合同 按指定合同筛选相关往来交易":
+    - generic: 按合同
+    - paragraph: 按指定合同筛选相关往来交易
+  - button "按订单 按指定订单筛选相关往来交易":
+    - generic: 按订单
+    - paragraph: 按指定订单筛选相关往来交易
+  - button "按收货 按发货单或入库单筛选交易":
+    - generic: 按收货
+    - paragraph: 按发货单或入库单筛选交易
+  - button "按发票 按发票维度核对收发货与开票匹配":
+    - generic: 按发票
+    - paragraph: 按发票维度核对收发货与开票匹配
+  - button "按余额汇总 汇总截止某日的往来余额":
+    - generic: 按余额汇总
+    - paragraph: 汇总截止某日的往来余额
+  - generic: "2"
+  - heading "对账信息" [level=3]
+  - generic: "*"
+  - generic: 选择供应商
+  - button "搜索供应商名称...":
+    - generic: 搜索供应商名称...
+  - generic: "3"
+  - heading "时间范围" [level=3]:
+    - text: 时间范围
+  - button "本月 当前月份数据":
+    - text: 本月
+    - paragraph: 当前月份数据
+  - button "上月 上个月份数据":
+    - text: 上月
+    - paragraph: 上个月份数据
+  - button "自定义 自定义起止日期":
+    - text: 自定义
+    - paragraph: 自定义起止日期
+  - button "截止某日 截止到指定日期":
+    - text: 截止某日
+    - paragraph: 截止到指定日期
+  - generic: 开始日期
+  - textbox "请选择日期": 2026年9月1日
+  - button:
+  - button:
+  - generic: 结束日期
+  - textbox "请选择日期": 2026年9月30日
+  - button:
+  - button:
+  - generic: "4"
+  - heading "对账依据" [level=3]
+  - button "按发货/收货对账 适合业务部门、仓库、采购核实数量金额":
+    - text: 按发货/收货对账
+    - paragraph: 适合业务部门、仓库、采购核实数量金额
+  - button "按开票对账 适合财务核应收应付、税票":
+    - text: 按开票对账
+    - paragraph: 适合财务核应收应付、税票
+  - button "按往来余额对账 适合月底财务确认往来余额":
+    - text: 按往来余额对账
+    - paragraph: 适合月底财务确认往来余额
+  - button "按合同执行对账 适合项目型业务、老板看整体执行":
+    - text: 按合同执行对账
+    - paragraph: 适合项目型业务、老板看整体执行
+  - button "5 数据口径 （高级选项）":
+    - generic: "5"
+    - heading "数据口径" [level=3]:
+      - text: 数据口径
+    - generic: （高级选项）
+  - button "生成预览":
+    - text: 生成预览
+- button "打开 AI 助手":
+- region "Notifications alt+T"

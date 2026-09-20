@@ -1,0 +1,167 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 财务
+- button "收起侧边栏":
+- navigation:
+  - button "资金管理":
+    - generic: 资金管理
+  - button "资金账户":
+    - generic: 资金账户
+  - button "资金流水":
+    - generic: 资金流水
+  - button "应收应付":
+    - generic: 应收应付
+  - button "收款管理":
+    - generic: 收款管理
+  - button "付款管理":
+    - generic: 付款管理
+  - button "退款申请":
+    - generic: 退款申请
+  - button "授信额度管理":
+    - generic: 授信额度管理
+  - button "借款贷款管理":
+    - generic: 借款贷款管理
+  - button "业务确认":
+    - generic: 业务确认
+  - button "销售收入确认":
+    - generic: 销售收入确认
+  - button "成本中心":
+    - generic: 成本中心
+  - button "费用中心":
+    - generic: 费用中心
+  - button "报销管理":
+    - generic: 报销管理
+  - button "对账单":
+    - generic: 对账单
+  - button "发票管理":
+    - generic: 发票管理
+  - button "发票总览" [active]:
+    - generic: 发票总览
+  - button "销项发票":
+    - generic: 销项发票
+  - button "进项发票":
+    - generic: 进项发票
+  - button "开票任务":
+    - generic: 开票任务
+  - button "调整记录":
+    - generic: 调整记录
+- generic: 免费试用中，还剩 14 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务" [pressed]:
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "资金账户":
+  - generic: 资金账户
+- button "资金流水":
+  - generic: 资金流水
+- button "应收应付":
+  - generic: 应收应付
+- button "收款管理":
+  - generic: 收款管理
+- button "付款管理":
+  - generic: 付款管理
+- button "退款申请":
+  - generic: 退款申请
+- button "授信额度管理":
+  - generic: 授信额度管理
+- button "借款管理":
+  - generic: 借款管理
+- button "销售收入确认":
+  - generic: 销售收入确认
+- button "成本中心":
+  - generic: 成本中心
+- button "费用中心":
+  - generic: 费用中心
+- button "报销管理":
+  - generic: 报销管理
+- button "对账单":
+  - generic: 对账单
+- button "发票总览":
+  - generic: 发票总览
+- main:
+  - generic: 发票管理
+  - generic: 发票总览
+  - heading "发票总览" [level=1]
+  - paragraph: 发票开具统计、进销项盲区预警、税负趋势与全盘指标看板
+  - heading "全盘指标概览" [level=2]
+  - radiogroup:
+    - radio "本月":
+      - generic: 本月
+    - radio "本季":
+      - generic: 本季
+    - radio "半年":
+      - generic: 半年
+    - radio "全年" [checked]:
+      - generic: 全年
+  - paragraph: 销项发票总额
+  - paragraph: ¥0.00
+  - paragraph: 税额 ¥0.00
+  - paragraph: 进项发票总额
+  - paragraph: ¥0.00
+  - paragraph: 税额 ¥0.00
+  - paragraph: 应纳税额(预计)
+  - paragraph: ¥0.00
+  - paragraph: 税负率 0.00%
+  - paragraph: 未开票总额
+  - paragraph: ¥0.00
+  - paragraph: 销项待开 ¥0.00 · 进项待收 ¥0.00
+  - heading "月度发票趋势" [level=3]
+  - list:
+    - text: 销项
+    - text: 进项
+    - text: 净额
+  - heading "税额构成分析" [level=3]
+  - generic: 销项税额
+  - generic: ¥0.00
+  - generic: 进项税额
+  - generic: ¥0.00
+  - generic: 进销税差额
+  - generic: ¥0.00
+  - generic: 销项追溯
+  - heading "销项发票台账" [level=4]
+  - paragraph: 核对客户发票开具状态、明细行导出与作废红冲操作
+  - button "查看销项发票"
+  - generic: 进项管理
+  - heading "进项发票与抵扣" [level=4]
+  - paragraph: 识别供应商发票、管理抵扣状态及批量抵扣申报
+  - button "管理进项发票"
+  - generic: 待办跟进
+  - heading "未开票与开票任务" [level=4]
+  - paragraph: 处理销售/采购订单未开票汇总，并审批开票流程任务
+  - button "查看开票任务"
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 1-10分钟

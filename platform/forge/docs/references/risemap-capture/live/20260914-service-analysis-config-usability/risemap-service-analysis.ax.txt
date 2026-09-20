@@ -1,0 +1,205 @@
+Browser tab: 47, Title: "RiseMap", URL: "https://risemap.cn/after-sales/stats".
+1 AXWebArea RiseMap, URL: risemap.cn/after-sales/stats
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button
+					10 image
+					11 image
+				12 button
+				13 button
+				14 button
+				15 button
+				16 button
+				17 button
+				18 button
+				19 button
+				20 button
+				21 button
+				22 button
+				23 button
+				24 button
+				25 button
+				26 button
+				27 button
+					28 image
+					29 image
+				30 button
+				31 button
+				32 button
+				33 button
+				34 button
+				35 button
+				36 button
+				37 button
+				38 button
+					39 image
+					40 image
+				41 button
+				42 button
+				43 button
+				44 button
+				45 button
+				46 button
+				47 button
+				48 button
+			49 container
+				50 container 业务分类
+					51 checkbox 工作台, Value: 0
+					52 checkbox 供应链, Value: 0
+					53 checkbox 销售, Value: 1
+					54 checkbox 生产, Value: 0
+					55 checkbox 项目, Value: 0
+					56 checkbox 行政, Value: 0
+					57 checkbox 财务, Value: 0
+					58 checkbox 报表, Value: 0
+					59 checkbox 系统, Value: 0
+				60 button Description: 展开搜索, Help: 搜索
+					61 image
+				62 button (collapsed) Description: 通知, Secondary Actions: Expand
+					63 image
+				64 button Description: 打开推广奖励, Help: 推广
+				65 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				66 link Description: 打开工单, Value: community.risemap.cn/support
+				67 button 金
+					68 text 金
+					69 image
+			70 container
+				71 button 工作台
+					72 image
+					73 text 工作台
+				74 button 销售发货单
+					75 text 销售发货单
+				76 button 新建发货单
+					77 text 新建发货单
+				78 button 工作台
+					79 text 工作台
+				80 button 服务工单
+					81 text 服务工单
+				82 button 新建服务工单
+					83 text 新建服务工单
+				84 button 服务报价单
+					85 text 服务报价单
+				86 button 新建服务报价单
+					87 text 新建服务报价单
+				88 button 服务结算单
+					89 text 服务结算单
+				90 button 派工中心
+					91 text 派工中心
+				92 button 接单中心
+					93 text 接单中心
+				94 button 质保管理
+					95 text 质保管理
+				96 button 工作台
+					97 text 工作台
+				98 button 服务分析
+					99 text 服务分析
+				100 button 服务配置
+					101 text 服务配置
+			102 container
+				103 container
+					104 text 服务管理
+					105 image
+					106 text 服务分析
+					107 image
+					108 heading 服务分析, Value: 1
+						109 text 服务分析
+					110 text 按人 / 客户 / 类型 / 时间 / 区域多维透视，含期间对比、经营摘要与质量预警
+					111 button 服务工单
+				112 image
+				113 text 时间
+				114 button 今日
+				115 button 近7天
+				116 button 近30天
+				117 button 近90天
+				118 button 本季
+				119 button 全部
+				120 button 全部地区
+					121 text 全部地区
+				122 button 全部团队
+					123 text 全部团队
+				124 button 全部计费
+					125 text 全部计费
+				126 button 全部类型
+					127 text 全部类型
+				128 text 紧急
+				129 button 紧急
+				130 button 高
+				131 button 中
+				132 button 低
+				133 image
+				134 button 售后主管视角
+				135 button 工程师视角
+				136 button 财务视角
+				137 button 重置
+					138 image
+					139 text 重置
+				140 text 工单总量 0 完成 0 · 在办 0 · 超时 0 SLA 达标率 0% 超时 0 单 一次解决率 0% 单次处理即解决占比 平均响应 / 处理 0分 / 0h 受理与处理总时长 客户满意度 — 回访三项均分（5 分制）· 0 条 服务收入 ¥0 备件成本 ¥0 服务毛利 ¥0 无收入 问题解决率 0% 客户/回访 确认已解决
+				141 button 按 服务人员 分析
+					142 text 按 
+					143 text 服务人员
+					144 text  分析
+				145 button 按 客户 分析
+					146 text 按 
+					147 text 客户
+					148 text  分析
+				149 button 按 工单类型 分析
+					150 text 按 
+					151 text 工单类型
+					152 text  分析
+				153 button 按 时间(月) 分析
+					154 text 按 
+					155 text 时间(月)
+					156 text  分析
+				157 button 按 区域 分析
+					158 text 按 
+					159 text 区域
+					160 text  分析
+				161 text 共  0  组
+				162 button
+					163 image
+				164 button
+					165 image
+				166 table
+					167 row
+						168 cell
+							169 text #
+						170 cell
+							171 text 服务人员
+						172 cell
+							173 text 工单量（占比）
+						174 cell
+							175 text 完成
+						176 cell
+							177 text 平均响应
+						178 cell
+							179 text 平均处理
+						180 cell
+							181 text SLA 达标
+						182 cell
+							183 text 满意度
+						184 cell
+							185 text 服务收入
+				186 text 共  0 组 每页
+				187 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					188 text 20
+				189 text 条
+				190 button (disabled) 上一页
+					191 image
+				192 button 1
+				193 button (disabled) 下一页
+					194 image
+				195 image
+				196 text 经营摘要 近30天内没有符合当前筛选条件的工单。
+				197 image
+				198 text 质量预警 本期各项指标均在阈值内，暂无质量预警。
+				199 image
+				200 text 加载中…
+			201 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			202 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/after-sales/stats

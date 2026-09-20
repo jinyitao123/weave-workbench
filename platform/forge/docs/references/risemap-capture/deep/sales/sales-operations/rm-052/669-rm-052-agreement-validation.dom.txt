@@ -1,0 +1,156 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同":
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "联系人管理":
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "采购退换货出库":
+  - generic: 采购退换货出库
+- button "出库明细":
+  - generic: 出库明细
+- button "框架销售合同":
+  - generic: 框架销售合同
+- button "新建合同":
+  - generic: 新建合同
+- button "销售订单":
+  - generic: 销售订单
+- button "新建销售订单":
+  - generic: 新建销售订单
+- button "收款流水":
+  - generic: 收款流水
+- button "销售发货单":
+  - generic: 销售发货单
+- button "新建发货单":
+  - generic: 新建发货单
+- button "销售退货":
+  - generic: 销售退货
+- button "新建销售退货":
+  - generic: 新建销售退货
+- button "业绩银行":
+  - generic: 业绩银行
+- button "价格策略":
+  - generic: 价格策略
+- button "新增框架协议":
+  - generic: 新增框架协议
+- main:
+  - generic: 销售管理
+  - generic: 价格策略中心
+  - generic: 新增框架协议
+  - button:
+  - heading "新建框架协议" [level=1]
+  - button "取消"
+  - button "保存草稿":
+    - text: 保存草稿
+  - button "提交审批" [active]:
+    - text: 提交审批
+  - heading "基本信息" [level=2]
+  - generic: 客户 *
+  - button "请选择客户":
+    - generic: 请选择客户
+  - paragraph: 客户不能为空
+  - text: 生效日期 *
+  - textbox "请选择日期"
+  - button:
+  - paragraph: 生效日期不能为空
+  - text: 到期日期
+  - textbox "请选择日期" [disabled]
+  - button:
+  - checkbox "长期有效（不限制结束时间）" [checked]
+  - generic: 长期有效（不限制结束时间）
+  - generic: 备注
+  - textbox "可选，输入备注信息…"
+  - heading "协议物料" [level=2]
+  - generic: 请至少添加一项物料
+  - button "按价格组添加":
+    - text: 按价格组添加
+  - button "添加物料":
+    - text: 添加物料
+  - paragraph: 暂无物料，请添加协议物料
+  - button "逐个添加物料":
+    - text: 逐个添加物料
+  - button "按价格组批量添加":
+    - text: 按价格组批量添加
+- button "打开 AI 助手":
+- region "Notifications alt+T":
+  - list:
+    - button "Close toast":
+    - generic: 提交失败，请检查必填项，必填项已在表单中标红。

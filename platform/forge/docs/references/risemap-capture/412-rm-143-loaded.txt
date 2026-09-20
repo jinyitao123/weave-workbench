@@ -1,0 +1,149 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/reconciliations".
+0 AXWebArea RiseMap, URL: risemap.cn/finance/reconciliations
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 财务
+			5 button 收起侧边栏
+				6 image
+			7 container
+				793 button 资金管理
+					794 image
+					795 text 资金管理
+					796 image
+				797 button 资金账户
+				798 button 资金流水
+				799 button 应收应付
+				800 button 收款管理
+				801 button 付款管理
+				802 button 退款申请
+				803 button 授信额度管理
+				804 button 借款贷款管理
+				805 button 业务确认
+					806 image
+					807 text 业务确认
+					808 image
+				809 button 销售收入确认
+				810 button 成本中心
+				811 button 费用中心
+				812 button 报销管理
+				813 button 对账单
+					814 image
+					815 text 对账单
+				816 button 发票管理
+					817 image
+					818 text 发票管理
+					819 image
+				820 button 发票总览
+				821 button 销项发票
+				822 button 进项发票
+				823 button 开票任务
+				824 button 调整记录
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 1
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				737 button 流程分类
+					738 text 流程分类
+				825 button 资金账户
+					826 text 资金账户
+				827 button 资金流水
+					828 text 资金流水
+				829 button 应收应付
+					830 text 应收应付
+				831 button 收款管理
+					832 text 收款管理
+				833 button 付款管理
+					834 text 付款管理
+				835 button 退款申请
+					836 text 退款申请
+				837 button 授信额度管理
+					838 text 授信额度管理
+				839 button 借款管理
+					840 text 借款管理
+				841 button 销售收入确认
+					842 text 销售收入确认
+				843 button 成本中心
+					844 text 成本中心
+				845 button 费用中心
+					846 text 费用中心
+				847 button 报销管理
+					848 text 报销管理
+				849 button 对账单
+					850 text 对账单
+			851 container
+				852 container
+					853 text 财务管理
+					854 image
+					855 text 对账单
+					856 image
+					857 heading 对账单, Value: 1
+						858 text 对账单
+					859 text 自动核对银行流水、供应商对账与内部往来
+				860 heading 对账中心, Value: 1
+					861 text 对账中心
+				862 text 管理客户和供应商对账单，支持多维度对账与差异处理
+				863 image
+				864 heading 客户对账单, Value: 2
+					865 text 客户对账单
+				866 text 应收账款对账管理
+				867 image
+				868 text 对账单数量
+				869 text 0
+				870 image
+				871 text 应收余额合计
+				872 text ¥0.00
+				873 image
+				874 heading 供应商对账单, Value: 2
+					875 text 供应商对账单
+				876 text 应付账款对账管理
+				877 image
+				878 text 对账单数量
+				879 text 0
+				880 image
+				881 text 应付余额合计
+				882 text ¥0.00
+				883 image
+				884 text 待处理 0
+				885 image
+				886 text 已确认 0
+				887 image
+				888 text 有差异 0
+				889 heading 最近对账单, Value: 3
+					890 text 最近对账单
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 813 button 对账单

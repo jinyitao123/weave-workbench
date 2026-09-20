@@ -1,0 +1,200 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/reports/purchase".
+0 AXWebArea RiseMap, URL: risemap.cn/reports/purchase
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 报表
+			5 button 收起侧边栏
+				6 image
+			7 container
+				900 button 销售统计
+					901 image
+					902 text 销售统计
+				903 button 采购统计
+					904 image
+					905 text 采购统计
+				906 button 库存统计
+					907 image
+					908 text 库存统计
+				909 button 项目统计
+					910 image
+					911 text 项目统计
+				912 button 组装统计
+					913 image
+					914 text 组装统计
+				915 button 财务统计
+					916 image
+					917 text 财务统计
+					918 image
+				919 button 财务总览
+				920 button 损益分析
+				921 button 资金分析
+				922 button 往来账款
+				923 button 税务库存
+				924 button 风险监控
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 0
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 1
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				837 button 授信额度管理
+					838 text 授信额度管理
+				839 button 借款管理
+					840 text 借款管理
+				841 button 销售收入确认
+					842 text 销售收入确认
+				843 button 成本中心
+					844 text 成本中心
+				845 button 费用中心
+					846 text 费用中心
+				847 button 报销管理
+					848 text 报销管理
+				849 button 对账单
+					850 text 对账单
+				851 button 发票总览
+					852 text 发票总览
+				853 button 销项发票
+					854 text 销项发票
+				855 button 进项发票
+					856 text 进项发票
+				857 button 开票任务
+					858 text 开票任务
+				859 button 调整记录
+					860 text 调整记录
+				925 button 销售统计
+					926 text 销售统计
+				927 button 采购统计
+					928 text 采购统计
+			929 container
+				930 image
+				931 text 报表中心
+				932 heading 采购统计, Value: 1
+					933 text 采购统计
+				934 text 采购订单、入库、付款、开票与供应商表现分析。
+				935 button 导出报表
+					936 image
+					937 text 导出报表
+				938 container 采购报表维度
+					939 button 采购统计
+						940 text 采购统计
+					941 button 采购申请
+					942 button 询价统计
+					943 button 供应商统计
+				944 image
+				945 text 筛选条件
+				946 container
+					947 image
+					948 text field (settable)
+				949 pop up button (collapsed, settable) Value: 全部组织, Secondary Actions: Expand
+					950 menu
+						951 (selected) 全部组织
+						952 我负责的
+				953 pop up button (collapsed, settable) Value: 本月, Secondary Actions: Expand
+					954 menu
+						955 (selected) 本月
+						956 本季度
+						957 本年度
+				958 button 刷新
+					959 image
+					960 text 刷新
+				961 image
+				962 text 更新时间 ： 2026/9/8 23:02:24 当前展示 采购统计 统计数据。 统计周期 2026-09-01 至 2026-09-30
+				963 container
+					964 image
+					965 text 采购额
+					966 pop up button (collapsed) Description: 查看采购额计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						967 image
+					968 image
+					969 text 0.00 较上月 --
+				970 container
+					971 image
+					972 text 采购订单
+					973 pop up button (collapsed) Description: 查看采购订单计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						974 image
+					975 image
+					976 text 0单 本月 0 单
+				977 container
+					978 image
+					979 text 已入库
+					980 pop up button (collapsed) Description: 查看已入库计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						981 image
+					982 image
+					983 text 0.00 入库率 --
+				984 container
+					985 image
+					986 text 待付款
+					987 pop up button (collapsed) Description: 查看待付款计算说明, Help: 查看计算说明, Secondary Actions: Expand
+						988 image
+					989 image
+					990 text 0.00 付款中 0 单
+				991 container
+					992 heading 采购与付款趋势, Value: 2
+						993 text 采购与付款趋势
+					994 text 采购额 付款额
+					995 image
+						996 text 2026-09-02
+						997 text 2026-09-05
+						998 text 2026-09-08
+						999 text 2026-09-11
+						1000 text 2026-09-14
+						1001 text 2026-09-17
+						1002 text 2026-09-20
+						1003 text 2026-09-23
+						1004 text 2026-09-26
+						1005 text 2026-09-30
+				1006 container
+					1007 heading 入库状态占比, Value: 2
+						1008 text 入库状态占比
+					1009 image
+						1010 text 入库占比
+				1011 container
+					1012 heading 采购执行漏斗, Value: 2
+						1013 text 采购执行漏斗
+					1014 text 5 个阶段 1 需求 基准 0% 0 2 询价 阶段转化 0% 0% 0 3 下单 阶段转化 0% 0% 0 4 到货 阶段转化 0% 0% 0 5 入库 阶段转化 0% 0% 0
+				1015 container
+					1016 heading 供应商交付与质量表现, Value: 2
+						1017 text 供应商交付与质量表现
+					1018 text 本月评估 暂无数据
+				1019 container
+					1020 heading 供应商采购额排行, Value: 2
+						1021 text 供应商采购额排行
+					1022 text TOP 5
+				1023 container
+					1024 heading 物料采购金额排行, Value: 2
+						1025 text 物料采购金额排行
+					1026 text 全量排行
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 903 button 采购统计

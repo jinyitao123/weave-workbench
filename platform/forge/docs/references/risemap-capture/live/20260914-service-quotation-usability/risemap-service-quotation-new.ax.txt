@@ -1,0 +1,194 @@
+Browser tab: 33, Title: "RiseMap", URL: "https://risemap.cn/after-sales/quotations/new".
+0 AXWebArea RiseMap, URL: risemap.cn/after-sales/quotations/new
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 销售
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 销售业务
+					9 image
+					10 text 销售业务
+					11 image
+				12 button 框架销售合同
+				13 button 销售订单
+				14 button 附加费用
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+				36 button 服务管理
+					37 image
+					38 text 服务管理
+					39 image
+				40 button 服务工单
+				41 button 服务报价单
+				42 button 服务结算单
+				43 button 接单中心
+				44 button 派工中心
+				45 button 服务分析
+				46 button 质保管理
+				47 button 服务配置
+			48 image
+			49 text 免费试用中，还剩 8 天 — 试用期间享全部功能
+			50 button 查看方案
+				51 image
+				52 text 查看方案
+			53 button
+				54 image
+			55 container
+				56 container 业务分类
+					57 container
+						58 checkbox 工作台, Value: 0
+						59 checkbox 供应链, Value: 0
+						60 checkbox 销售, Value: 1
+						61 checkbox 生产, Value: 0
+						62 checkbox 项目, Value: 0
+						63 checkbox 行政, Value: 0
+						64 checkbox 财务, Value: 0
+						65 checkbox 报表, Value: 0
+						66 checkbox 系统, Value: 0
+				67 button Description: 展开搜索, Help: 搜索
+					68 image
+				69 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+					70 image
+					71 text 20
+				72 button Description: 打开推广奖励, Help: 推广
+				73 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				74 link Description: 打开工单, Value: community.risemap.cn/support
+				75 button 立即订阅, Help: 试用还剩 8 天 · 立即订阅享专属优惠
+					76 image
+					77 text 立即订阅
+				78 button 金
+					79 text 金
+					80 image
+			81 container
+				82 button 工作台
+					83 image
+					84 text 工作台
+				91 button 采购订单
+					92 text 采购订单
+				93 button 工作台
+					94 text 工作台
+				95 button 工作台
+					96 text 工作台
+				97 button 工作台
+					98 text 工作台
+				99 button 组装单
+					100 text 组装单
+				101 button 工作台
+					102 text 工作台
+				103 button 项目详情
+					104 text 项目详情
+				105 button 销售发货单
+					106 text 销售发货单
+				107 button 新建发货单
+					108 text 新建发货单
+				109 button 工作台
+					110 text 工作台
+				111 button 服务工单
+					112 text 服务工单
+				181 button 新建服务工单
+					182 text 新建服务工单
+				183 button 服务报价单
+					184 text 服务报价单
+				185 button 新建服务报价单
+					186 text 新建服务报价单
+			187 container
+				188 container
+					189 text 服务管理
+					190 image
+					191 text 服务报价单 / 新建
+					192 image
+					193 heading 新建服务报价单, Value: 1
+						194 text 新建服务报价单
+					195 text 选择服务工单后维护报价清单，报价单与工单保持一对多关联
+					196 button 返回报价单
+						197 image
+						198 text 返回报价单
+				199 heading 基础信息, Value: 2
+					200 text 基础信息
+				201 container
+					202 text 关联服务工单  *
+				203 pop up button (collapsed, settable) Value: 请选择工单, Secondary Actions: Expand
+					204 menu
+						205 (selected) 请选择工单
+						206 WO-2026-0001 · 苏州澄岳自动化装备有限公司 · RISEMAP 对照服务工单 20260913
+				207 text 客户
+				208 text —
+				209 text 联系人
+				210 text —
+				211 text 报价有效期
+				212 date field (settable) 2026-10-13
+					213 container
+						214 stepper
+						215 stepper
+						216 stepper
+					217 pop up button 显示日期选择器
+				218 heading 报价清单, Value: 2
+					219 text 报价清单
+				220 button 添加项目
+					221 image
+					222 text 添加项目
+				223 container
+					224 text 类别
+					225 pop up button (collapsed, settable) Value: 服务费, Secondary Actions: Expand
+						226 menu
+							227 (selected) 服务费
+							228 备件
+					229 text 项目名称
+					230 combo box (settable)
+					231 text 规格 / 说明
+					232 text field (settable)
+					233 text 单位
+					234 text field (settable) 项
+					235 text 数量
+					236 stepper (settable, integer) 1
+					237 text 含税单价
+					238 stepper (settable)
+					239 text 金额 ¥ 0.00
+					240 button (disabled) 删除项目
+						241 image
+				242 container
+					243 text 整单折扣%
+					244 stepper (settable, integer) 整单折扣%, Value: 0
+				245 text 小计  ¥ 0.00 折扣  ¥ 0.00 报价合计 ¥ 0.00
+				246 heading 报价条款, Value: 2
+					247 text 报价条款
+				248 text 报价方式
+				249 pop up button (collapsed, settable) Value: 预估费用（以结算为准）, Secondary Actions: Expand
+					250 menu
+						251 (selected) 预估费用（以结算为准）
+						252 一口价（接受后锁定）
+				253 text 付款方式
+				254 pop up button (collapsed, settable) Value: 全额预收, Secondary Actions: Expand
+					255 menu
+						256 (selected) 全额预收
+						257 分阶段付款
+				258 text 报价说明
+				259 text entry area (settable)
+				260 button 取消
+				261 button 保存草稿
+				262 button 保存并发送
+			179 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			180 container Notifications alt+T
+
+The focused UI element is 0 AXWebArea RiseMap, URL: risemap.cn/after-sales/quotations/new

@@ -1,0 +1,258 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/contacts".
+1 AXWebArea RiseMap, URL: risemap.cn/base/contacts
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 销售业务
+					10 image
+					11 text 销售业务
+					12 image
+				13 button 框架销售合同
+				14 button 销售订单
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+			36 image
+			37 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			38 button 查看方案
+				39 image
+				40 text 查看方案
+			41 button
+				42 image
+			43 container
+				44 container 业务分类
+					45 checkbox 工作台, Value: 0
+					46 checkbox 供应链, Value: 0
+					47 checkbox 销售, Value: 1
+					48 checkbox 生产, Value: 0
+					49 checkbox 项目, Value: 0
+					50 checkbox 行政, Value: 0
+					51 checkbox 财务, Value: 0
+					52 checkbox 报表, Value: 0
+					53 checkbox 系统, Value: 0
+				54 button Description: 展开搜索, Help: 搜索
+					55 image
+				56 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					57 image
+					58 text 2
+				59 button Description: 打开推广奖励, Help: 推广
+				60 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				61 link Description: 打开工单, Value: community.risemap.cn/support
+				62 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					63 image
+					64 text 立即订阅
+				65 button 金
+					66 text 金
+					67 image
+			68 container
+				69 button 工作台
+					70 image
+					71 text 工作台
+				72 button 销售退货
+					73 text 销售退货
+				74 button 新建销售退货
+					75 text 新建销售退货
+				76 button 业绩银行
+					77 text 业绩银行
+				78 button 价格策略
+					79 text 价格策略
+				80 button 新增框架协议
+					81 text 新增框架协议
+				82 button 新增特价
+					83 text 新增特价
+				84 button Goodwill订单
+					85 text Goodwill订单
+				86 button Goodwill订单详情
+					87 text Goodwill订单详情
+				88 button 销售团队
+					89 text 销售团队
+				90 button 销售目标
+					91 text 销售目标
+				92 button 销售发票
+					93 text 销售发票
+				94 button 客户管理
+					95 text 客户管理
+				96 button 名片扫描
+					97 text 名片扫描
+				98 button 联系人管理
+					99 text 联系人管理
+			100 container
+				101 text CRM客户管理
+				102 image
+				103 text 联系人管理
+				104 heading 联系人管理, Value: 1
+					105 text 联系人管理
+				106 text 以人为中心管理客户联系人，持续跟踪任职变化和全部联系方式
+				107 button 新增联系人
+					108 image
+					109 text 新增联系人
+				110 button 导入/导出
+					111 image
+					112 text 导入/导出
+					113 image
+				114 container 联系人统计
+					115 container
+						116 text 联系人总数 0
+					117 container
+						118 text 在职 0
+					119 container
+						120 text 不在原公司 0
+					121 container
+						122 text 关键决策人 KP 0
+				123 tab group 任职状态筛选
+					124 tab (selected, settable, boolean) 全部 0, Value: 1
+					125 tab (selectable, settable, boolean) 在职 0, Value: 0
+					126 tab (selectable, settable, boolean) 已跳槽 0, Value: 0
+					127 tab (selectable, settable, boolean) 已离职 0, Value: 0
+					128 tab (selectable, settable, boolean) 已退休 0, Value: 0
+					129 tab (selectable, settable, boolean) 停用 0, Value: 0
+				130 image
+				131 text field (settable)
+				132 text field (settable) 按职务筛选联系人
+				133 button 全部维护人
+					134 text 全部维护人
+				135 button Description: 刷新联系人数据, Help: 刷新
+					136 image
+				137 checkbox Description: 切换为紧凑行高, Help: 紧凑行高, Value: 0
+					138 image
+				139 image
+				140 text 暂无匹配联系人
+				141 text 可调整搜索条件或新增联系人
+			142 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			143 container Notifications alt+T
+		144 container 新增联系人 客户关系档案 · CRM
+			145 container :r8c:
+				146 image
+				147 text 新增联系人 客户关系档案 · CRM
+			148 button 关闭
+				149 image
+			150 container
+				151 text 新
+				152 heading 新联系人, Value: 4
+					153 text 新联系人
+				154 text 待填写职位
+				155 text 在职
+				156 heading 客户关系, Value: 5
+					157 text 客户关系
+				158 image
+				159 text 所属客户 待选择
+				160 image
+				161 text 决策权重 价格
+				162 image
+				163 text 维护人 待选择
+				164 image
+				165 text 任职资料
+				166 image
+				167 text 联系方式
+				168 image
+				169 text 补充说明
+				170 heading 01 任职资料, Value: 4
+					171 text 01 任职资料
+				172 text *  必填
+				173 container
+					174 text * 姓名
+				175 text field (settable)
+				176 text 性别
+				177 button 性别
+					178 text 请选择性别
+				179 container
+					180 text * 所属客户
+				181 button 请选择客户
+					182 text 请选择客户
+				183 text 部门
+				184 text field (settable)
+				185 text 职位
+				186 text field (settable)
+				187 text 决策权重
+				188 button 决策权重
+					189 text 价格
+					190 container
+						191 button
+							192 image
+						193 image
+				194 text 维护人
+				195 button 维护人
+					196 text 请选择维护人
+				197 text 任职状态
+				198 button 任职状态
+					199 text 在职
+				200 container
+					201 checkbox (settable, integer) Description: 设为该客户的主要联系人, Value: 0
+					202 text 设为该客户的主要联系人
+				203 heading 02 联系方式, Value: 4
+					204 text 02 联系方式
+				205 text 星标表示主要联系方式 类型 标签 联系方式
+				206 image
+				207 button 联系方式类型
+					208 text 手机
+				209 text field (settable) Description: 联系方式标签, Value: 工作手机
+				210 text field (settable) 联系方式内容
+				211 button 设为主要联系方式
+					212 image
+				213 button 删除联系方式
+					214 image
+				215 image
+				216 button 联系方式类型
+					217 text 座机
+				218 text field (settable) Description: 联系方式标签, Value: 办公座机
+				219 text field (settable) 联系方式内容
+				220 button 设为主要联系方式
+					221 image
+				222 button 删除联系方式
+					223 image
+				224 image
+				225 button 联系方式类型
+					226 text 邮箱
+				227 text field (settable) Description: 联系方式标签, Value: 工作邮箱
+				228 text field (settable) 联系方式内容
+				229 button 设为主要联系方式
+					230 image
+				231 button 删除联系方式
+					232 image
+				233 text 联系方式类型
+				234 button 新增联系方式类型
+					235 text 手机
+				236 button 添加联系方式
+					237 image
+					238 text 添加联系方式
+				239 heading 03 补充说明, Value: 4
+					240 text 03 补充说明
+				241 text 备注
+				242 text entry area (settable)
+			243 text 资料尚未保存
+			244 button 取消
+			245 button 保存联系人
+		246 container
+			247 image
+			248 text field (settable)
+			249 text 价格
+			250 image
+			251 text 交期
+			252 text 质量
+			253 text 服务
+			254 text 品牌
+			255 text 付款条件
+
+The focused UI element is 248 text field (settable)

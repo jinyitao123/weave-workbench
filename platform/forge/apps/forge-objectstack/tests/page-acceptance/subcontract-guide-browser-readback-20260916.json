@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-16",
+  "forgeUrl": "http://localhost:4496/_console/apps/forge/page/page_subcontract_guide",
+  "database": "file:.objectstack/production-placeholders-batch1.sqlite",
+  "risemap": {
+    "url": "https://risemap.cn/subcontract/guide",
+    "observed": [
+      "四个角色：委外业务员、仓库人员、质检 / 收货、财务人员；文章数为 13 / 7 / 5 / 6",
+      "六阶段：准备供应商、创建委外订单、委外发料、回厂验收、异常处理、对账结算；非本角色阶段不可选",
+      "八类目录：快速开始、订单管理、发料管理、回厂与质检、退料与赔偿、对账结算、库存与报表、常见问题",
+      "委外业务员目录计数 2 / 2 / 1 / 1 / 2 / 1 / 2 / 2；仓库人员 1 / 0 / 2 / 0 / 1 / 0 / 1 / 2",
+      "在订单管理目录下搜索“回厂”，返回跨目录结果 7 条：审核委外订单、登记回厂并录入验收结果、处理不良或超耗赔偿、生成并审核委外对账、查询供应商委外库存、使用委外业务报表、为什么有些单据不能反审核",
+      "代表文章同时提供“查看…/新建…（录入…）”两个真实入口，另有标记已掌握与学习进度"
+    ],
+    "unresolved": [
+      "学习进度是否跨设备同步",
+      "角色选项是否与账号权限联动",
+      "RISEMAP 发料、回厂、退料、对账当前是否有可办理数据"
+    ]
+  },
+  "forge": {
+    "observedOnFinalCommit": [
+      "四角色文章数与 RISEMAP 一致：委外业务员 13、仓库人员 7、质检 / 收货 5、财务人员 6",
+      "角色切换同步改变角色说明、关注阶段数（6 / 3 / 4 / 3）、目录可用项与当前文章",
+      "目录按角色显示计数，数量为 0 的分类保留位置并呈说明状态，不作为可点击按钮",
+      "在委外业务员 + 订单管理目录下搜索“回厂”，返回与 RISEMAP 相同的 7 条跨目录结果",
+      "标题区正确显示委徽标、生产 / 委外管理层级与“打开委外看板”主动作"
+    ],
+    "observedOnImmediatelyPrecedingBuild": [
+      "标记已掌握后进度由 0 / 5 变为 1 / 5，刷新后仍为 1 / 5 且列表显示 ✓",
+      "打开委外看板进入 page_subcontract_dashboard",
+      "取消已掌握可恢复进度"
+    ],
+    "deepLinksVerified": [
+      "page_subcontract_workspace?new=1 打开新建委外订单表单（含办理前准备、加工件、发料计划）",
+      "page_subcontract_issue_workspace?new=1 打开新建发料单表单",
+      "page_subcontract_receipt_workspace?new=1 打开新建回厂记录表单",
+      "page_subcontract_return_workspace?new=1 打开新建退料单表单"
+    ],
+    "restartReadback": "同一 SQLite 文件停服重建后重启（dist/objectstack.json 重新生成，Artifact 187 Pages / 267 Actions），指南与四个深链页面正常加载，浏览器本地学习偏好保留"
+  },
+  "pendingOnFinalCommit": [
+    "打开委外看板按钮点验（引用上一构建证据，最终构建待复核）",
+    "从指南点击“新建发料单”按钮进入表单（深链已按 URL 验证，按钮点击待复核）",
+    "390x844 窄屏首屏无重叠、无横向溢出",
+    "控制台 error / warn 扫描",
+    "桌面与窄屏对照截图存档"
+  ],
+  "boundary": {
+    "learningState": "浏览器 localStorage 偏好，不是服务器业务状态",
+    "dataGap": "本 worktree SQLite 中委外供应商档案、加工类型、付款条件、外协加工件均为 0 条，委外订单表单可打开但无法在本环境完成提交；委外主数据就绪后需再跑一次提交与回读",
+    "searchResidual": "搜索命中集合取决于 Forge 指南正文文案；本轮“回厂”与 RISEMAP 完全一致，其他关键词需继续抽查"
+  }
+}

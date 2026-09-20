@@ -1,0 +1,157 @@
+Browser tab: 3, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_sales_shipment_workspace".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_shipment_workspace
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 button 切换侧边栏
+			9 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			10 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			11 text 销售发货单 已连接
+			12 button 搜索…
+			13 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			14 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_sales_shipment_workspace
+			15 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			16 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		17 container
+			18 container
+				19 text 区域
+				20 content list
+					21 button 工作台
+					22 button 供应链
+					23 button 销售
+					24 button 生产
+					25 button 项目
+					26 button 行政
+					27 button 财务
+					28 button 报表
+					29 button 系统
+			30 container
+				31 button (expanded) 工作台, Secondary Actions: Collapse
+				32 content list
+					33 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					34 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					35 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					36 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			37 text 最近使用
+			38 button 切换侧边栏
+		39 container
+			40 button 在 Studio 中编辑
+			41 heading 销售发货单, Value: 1
+				42 text 销售发货单
+			43 text 发货出库登记、物流跟踪、签收回执与开票联动 03 销售业务 / 销售发货单
+			44 button 下一步操作　待出库发货单 ›
+			45 button 新建发货单
+			46 button 打开对象记录
+			47 button 刷新
+			48 text 发货出库登记、物流跟踪、签收回执与开票联动
+			49 heading 销售发货单, Value: 1
+				50 text 销售发货单
+			51 text 发货单 2 待出库 1 已出库数量 1 含税金额 ¥ 384,000.00
+			52 text field (settable) 搜索发货单
+			53 pop up button (collapsed) Description: 状态, Secondary Actions: Expand
+			54 button 范围
+			55 button 清空筛选
+			56 table
+				57 row
+					58 cell
+						59 text 发货单号
+					60 cell
+						61 text 关联订单
+					62 cell
+						63 text 客户单号
+					64 cell
+						65 text 客户名称
+					66 cell
+						67 text 收货人
+					68 cell
+						69 text 状态
+					70 cell
+						71 text 出库进度
+					72 cell
+						73 text 含税金额
+					74 cell
+						75 text 出库单
+					76 cell
+						77 text 出库日期
+					78 cell
+						79 text 负责人
+					80 cell
+						81 text 操作
+				82 row
+					83 cell
+						84 button DN-CONVERT-20260909-OVER
+						85 text SO-CONVERT-20260909-001 发货 DN-CONVERT-20260909-OVER
+					86 cell
+						87 text SO-CONVERT-20260909-001
+					88 cell
+						89 text —
+					90 cell
+						91 text 苏州澄岳自动化装备有限公司
+					92 cell
+						93 text 周启明
+					94 cell
+						95 text 待发货
+					96 cell
+						97 container
+							98 text 0  /  2  台
+					99 cell
+						100 text ¥ 256,000.00
+					101 cell
+						102 text 0
+					103 cell
+						104 text 2026-09-09
+					105 cell
+						106 text Dev Admin
+					107 cell
+						108 button 确认发货
+						109 button 查看
+				110 row
+					111 cell
+						112 button DN-CONVERT-20260909-001
+						113 text SO-CONVERT-20260909-001 发货 DN-CONVERT-20260909-001
+					114 cell
+						115 text —
+					116 cell
+						117 text —
+					118 cell
+						119 text 苏州澄岳自动化装备有限公司
+					120 cell
+						121 text 周启明
+					122 cell
+						123 text 已出库
+					124 cell
+						125 container
+							126 text 1  /  1  台
+					127 cell
+						128 text ¥ 128,000.00
+					129 cell
+						130 text OUT-CONVERT-20260909-001
+					131 cell
+						132 text 2026-09-09
+					133 cell
+						134 text Dev Admin
+					135 cell
+						136 button 查看
+			137 text 共  2  条记录 每页 10 条 · 1 / 1
+			138 container 确认发货
+				139 text 确认发货
+				140 text DN-CONVERT-20260909-OVER · SO-CONVERT-20260909-001 发货 DN-CONVERT-20260909-OVER
+				141 button 关闭
+				142 text 出库单号 *
+				143 text field (settable) Description: 出库单号, Value: OUT-FORGE-20260913-001
+				144 text 出库仓库 *
+				145 pop up button (collapsed) Description: 出库仓库, Secondary Actions: Expand
+				146 text 出库日期 *
+				147 pop up button (collapsed) Description: 出库日期, Secondary Actions: Expand
+				148 text 出库数量 *
+				149 stepper (settable, integer) Description: 出库数量, Value: 2
+				150 checkbox (settable, integer) Description: 客户自取, Value: 0
+				151 text 备注
+				152 text entry area (settable) 出库备注
+				153 button 取消
+				154 button 下一步
+
+The focused UI element is 108 button 确认发货

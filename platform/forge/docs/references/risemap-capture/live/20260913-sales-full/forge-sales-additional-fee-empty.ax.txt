@@ -1,0 +1,112 @@
+Browser tab: 4, Title: "ObjectOS", URL: "http://localhost:4322/_console/apps/forge/page/page_sales_additional_fee".
+1 AXWebArea ObjectOS, URL: localhost:4322/_console/apps/forge/page/page_sales_additional_fee
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4322/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4322/_console/apps/forge
+			10 text 附加费用
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4322/_console/studio/forge/interfaces?surface=page:page_sales_additional_fee
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4322/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4322/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4322/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4322/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 附加费用, Value: 1
+				44 text 附加费用
+			45 text 销售附加费用创建、审批和财务处理跟踪 03 销售业务 / 附加费用
+			46 button (disabled) 上手指南
+			47 button 刷新
+			48 button (disabled) 导出
+			49 button (disabled) 导出任务
+			50 button 新增附加费用单
+			51 text 销售附加费用创建、审批、财务执行与来源单关联管理
+			52 heading 附加费用, Value: 1
+				53 text 附加费用
+			54 text 客户承担有效金额 ¥0.00 含税 公司承担有效金额 ¥0.00 内部成本 待审批费用单 0 笔 待开票 / 待付款 0  /  0 笔
+			55 text field (settable) 搜索附加费用
+			56 pop up button (collapsed) Description: 来源类型, Secondary Actions: Expand
+			57 pop up button (collapsed) Description: 承担类型, Secondary Actions: Expand
+			58 pop up button (collapsed) Description: 单据状态, Secondary Actions: Expand
+			59 pop up button (collapsed) Description: 财务状态, Secondary Actions: Expand
+			60 button 清空筛选
+			61 button 附加费用单 0
+				62 text 附加费用单 
+				63 text 0
+			64 button 附加明细 0
+				65 text 附加明细 
+				66 text 0
+			67 button 全部 0
+				68 text 全部 
+				69 text 0
+			70 button 草稿 0
+				71 text 草稿 
+				72 text 0
+			73 button 待审批 0
+				74 text 待审批 
+				75 text 0
+			76 button 已生效 0
+				77 text 已生效 
+				78 text 0
+			79 button 已作废 0
+				80 text 已作废 
+				81 text 0
+			82 table
+				83 row
+					84 cell
+						85 text 费用单号
+					86 cell
+						87 text 来源单据
+					88 cell
+						89 text 客户 / 项目
+					90 cell
+						91 text 承担类型
+					92 cell
+						93 text 费用项
+					94 cell
+						95 text 含税金额
+					96 cell
+						97 text 单据状态
+					98 cell
+						99 text 财务状态
+					100 cell
+						101 text 负责人
+					102 cell
+						103 text 操作
+				104 row
+					105 cell
+						106 text ◇
+						107 text 当前条件下暂无附加费用单
+						108 text 新增客户承担或公司承担费用后，会在这里跟踪审批和财务处理状态。
+			109 text 共  0  条费用单 每页 10 条 · 1 / 1
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4322/_console/apps/forge/page/page_sales_additional_fee

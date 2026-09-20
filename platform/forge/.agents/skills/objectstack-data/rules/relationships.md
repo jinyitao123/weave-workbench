@@ -1,0 +1,395 @@
+# Relationship Patterns
+
+Guide for modeling relationships between objects using `lookup`, `master_detail`, and junction patterns.
+
+## Relationship Types
+
+| Type | Lifecycle | Required | Sharing | Roll-ups | Use Case |
+|:-----|:----------|:---------|:--------|:---------|:---------|
+| `lookup` | Independent | Optional by default | Independent | Supported via `summary` | "Related to" |
+| `master_detail` | Coupled (cascade delete) | Forced only under `controlled_by_parent`; else lint-warned | Inherits parent | Supported via `summary` | "Owned by" |
+| `tree` | Self-reference | Optional — and so is `reference`, which when written must name this object itself; any other object is refused at parse, not lint-warned | N/A | Not available | Hierarchical |
+
+## When to Use lookup vs master_detail
+
+### Use `lookup` When:
+- Child record can exist independently
+- Parent deletion should only clear the FK (`deleteBehavior: 'set_null'`, the default)
+- Relationship is optional
+- **Example:** `task.assigned_to → user` (task can exist without assignment)
+
+### Use `master_detail` When:
+- Child record is meaningless without parent
+- Parent deletion should cascade to children
+- Relationship is mandatory
+- **Example:** `invoice_line_item.invoice_id → invoice` (line items belong to invoice)
+
+## Patterns
+
+### One-to-Many: lookup
+
+```typescript
+// Parent: Account
+export default ObjectSchema.create({
+  name: 'account',
+  fields: {
+    name: { type: 'text', required: true },
+  }
+});
+
+// Child: Contact (independent lifecycle)
+export default ObjectSchema.create({
+  name: 'contact',
+  fields: {
+    first_name: { type: 'text', required: true },
+    account_id: {
+      type: 'lookup',
+      reference: 'account',
+      required: false,  // Contact can exist without account
+    },
+  }
+});
+```
+
+### One-to-Many: master_detail
+
+```typescript
+// Parent: Invoice
+export default ObjectSchema.create({
+  name: 'invoice',
+  fields: {
+    invoice_number: { type: 'text', required: true },
+    total: {
+      type: 'summary',
+      summaryOperations: {
+        object: 'invoice_line_item',
+        field: 'amount',
+        function: 'sum',
+      },
+    },
+  }
+});
+
+// Child: Line Item (owned by parent)
+export default ObjectSchema.create({
+  name: 'invoice_line_item',
+  fields: {
+    invoice_id: {
+      type: 'master_detail',
+      reference: 'invoice',
+      deleteBehavior: 'cascade',  // Delete line items when invoice deleted
+      required: true,
+    },
+    product: { type: 'text', required: true },
+    amount: { type: 'currency', required: true },
+  }
+});
+```
+
+### Many-to-Many: Junction Object
+
+```typescript
+// Side A: Project
+export default ObjectSchema.create({
+  name: 'project',
+  fields: {
+    name: { type: 'text', required: true },
+  }
+});
+
+// Side B: Employee
+export default ObjectSchema.create({
+  name: 'employee',
+  fields: {
+    name: { type: 'text', required: true },
+  }
+});
+
+// Junction: Project Assignment
+export default ObjectSchema.create({
+  name: 'project_assignment',
+  fields: {
+    project_id: {
+      type: 'lookup',
+      reference: 'project',
+      required: true,
+    },
+    employee_id: {
+      type: 'lookup',
+      reference: 'employee',
+      required: true,
+    },
+    role: { type: 'text' },
+    hours_allocated: { type: 'number' },
+  },
+  indexes: [
+    // One assignment per (project, employee) pair.
+    { fields: ['project_id', 'employee_id'], unique: 'organization' },
+  ],
+});
+```
+
+### Hierarchical: tree (Self-Reference)
+
+```typescript
+export default ObjectSchema.create({
+  name: 'category',
+  fields: {
+    name: { type: 'text', required: true },
+    parent_category: {
+      type: 'tree',
+      reference: 'category',  // Self-reference
+      required: false,
+    },
+  }
+});
+```
+
+## Delete Behaviors
+
+Configure `deleteBehavior` on `master_detail` — `cascade` or `restrict` **only**;
+an authored `set_null` is refused at publish (it would orphan the detail row).
+
+| Behavior | Effect | Use Case |
+|:---------|:-------|:---------|
+| `cascade` | Delete all child records | Invoice → Line Items |
+| `restrict` | Prevent parent deletion if children exist | Department → Employees |
+
+```typescript
+{
+  type: 'master_detail',
+  reference: 'parent_object',
+  deleteBehavior: 'cascade',  // or 'restrict' — 'set_null' is refused here
+}
+```
+
+## Roll-up Summaries
+
+A parent `summary` field aggregates a child collection. The engine recomputes it
+**server-side** whenever a child is inserted/updated/deleted (inside the same
+transaction as the write, so it's consistent and never summed on the client).
+
+```typescript
+// On the PARENT object:
+{
+  type: 'summary',
+  summaryOperations: {
+    object: 'invoice_line',        // child object to aggregate
+    field: 'amount',               // child field to aggregate (ignored for count)
+    function: 'sum',               // 'count' | 'sum' | 'min' | 'max' | 'avg'
+    // relationshipField: 'invoice' // optional; auto-detected from the child's
+                                     // master_detail/lookup field referencing
+                                     // this parent when omitted
+    // filter: { status: 'received' } // optional; only children matching this
+                                       // `where` predicate are aggregated
+  },
+}
+```
+
+Empty collections roll up to `0` for `count`/`sum`, `null` for `min`/`max`/`avg`.
+Pairs naturally with inline editing (below): the parent total updates atomically
+as line items are saved.
+
+Add `filter` (a query `where` FilterCondition) to aggregate only a **subset** of
+the children — this is how a single child object feeds several different totals.
+For example one `engagement` child yields `total_signups`
+(`filter: { type: 'signup' }`) and `total_clicks` (`filter: { type: 'click' }`),
+and a `procurement_receipt` child yields `received_amount`
+(`function: 'sum', filter: { status: 'received' }`). The predicate is ANDed with
+the parent-FK match; a child moving in or out of it (e.g. a status change)
+recomputes the parent on its next write like any other child update. Operator
+and compound forms work too (`filter: { type: { $in: ['signup','trial'] } }`).
+
+## Inline Editing (Master-Detail Entry)
+
+Declare inline editing **on the relationship**, in the data model — not in a form
+view. Set `inlineEdit: true` on the child's `master_detail` (or `lookup`) field
+that points back to the parent. The parent's **standard** create/edit form then
+renders an editable grid for these children and saves parent + children in **one
+atomic transaction** — with no form-view config and no bespoke page. The UI is
+derived from metadata (relationship FK + child fields → grid columns).
+
+```typescript
+// On the CHILD object's FK field:
+export default ObjectSchema.create({
+  name: 'invoice_line',
+  fields: {
+    invoice: {
+      type: 'master_detail',
+      reference: 'invoice',
+      inlineEdit: true,            // ← edited inline within the Invoice form
+      inlineTitle: 'Line Items',   // optional grid title
+      // inlineColumns / inlineAmountField — optional overrides; columns are
+      // otherwise derived from this object's fields.
+    },
+    quantity: { type: 'number' },
+    amount:   { type: 'currency' },
+  },
+});
+```
+
+**Set `inlineEdit` only for true line-item / composition children** (invoice
+lines, order items, expense lines) — the things a user enters *together with*
+the parent. **Leave it off for associations** (comments, attachments, activity,
+audit): those are also `master_detail` (cascade delete) but should NOT clutter
+the parent's entry form — surface them as related lists on the detail page.
+
+A form view may still set `subforms` to override the derived columns/order, but
+the relationship `inlineEdit` is the primary, zero-config path. See the
+objectstack-ui skill (Master-Detail Forms) for the rendering side.
+
+#### Inline-edit form factor (`grid` vs `form`)
+
+`inlineEdit` also picks how the children are entered:
+
+```typescript
+inlineEdit: true       // auto — pick grid/form from the child's shape (default)
+inlineEdit: 'grid'     // editable line-item grid (fast bulk entry; thin children)
+inlineEdit: 'form'     // read-only list; "Add" / per-row edit opens the FULL form
+```
+
+- **`'grid'`** — spreadsheet-like editable grid. Best for *thin* line items
+  (invoice/order lines): few columns, high volume, keyboard-fast.
+- **`'form'`** — compact read-only list; Add / per-row edit opens the child's
+  complete form. Best for *fat* children (long text, attachments, many fields)
+  that don't fit a narrow grid cell.
+- **`true`** / omitted — **smart default**: picks `form` when the child has
+  rich/form-only fields (textarea, file, image, json, location…) or more than ~8
+  editable fields, else `grid`. Set the string to override.
+
+**Modeling a `'grid'` line item for the full editor.** The grid lights up extra
+behaviors purely from how you model the child + parent (no UI config — details
+in the objectstack-ui skill → Master-Detail Forms):
+
+```typescript
+// Parent
+Invoice = {
+  fields: {
+    tax_rate: Field.number({ label: 'Tax Rate (%)' }),          // → live Subtotal/Tax/Total stack
+    total: Field.summary({ summaryOperations: {                  // server roll-up of the line subtotal
+      object: 'invoice_line', field: 'amount', function: 'sum' } }),
+  },
+}
+// Child line
+InvoiceLine = {
+  fields: {
+    invoice:  Field.masterDetail('invoice', { inlineEdit: 'grid' }),
+    position: Field.number({ defaultValue: 0 }),                 // → drag-reorder, persisted (auto-hidden col)
+    product:  Field.lookup('product', { required: true }),       // → catalog typeahead
+    description: Field.text(),                                    // ← auto-filled from product.description
+    quantity: Field.number({ required: true, defaultValue: 1 }),
+    unit_price: Field.currency(),                                // ← auto-filled from product.unit_price
+    amount:   Field.currency({ expression: 'record.quantity * record.unit_price' }), // computed, read-only, live
+  },
+}
+```
+
+- **Computed column** — a *stored* `currency`/`number` field with an `expression`
+  renders read-only and recomputes live in the grid, then persists. Keep it
+  stored (NOT a `formula` field) so the parent `summary` can roll it up; the
+  server only treats `type: 'formula'` as computed, so on a stored field the
+  `expression` is a client compute hint and the sent value is stored verbatim.
+- **Catalog auto-fill** — a `lookup` line field + sibling columns whose names
+  match fields on the referenced record (e.g. `unit_price`, `description`) →
+  picking a record fills those cells.
+- **Sort field** — a numeric `position` / `sort_order` / `sequence` field is
+  auto-detected, hidden from the grid, and stamped on drag-reorder.
+
+### Detail-page related lists (the read-side mirror)
+
+Where `inlineEdit` is the **write** side (child pulled into the parent's entry
+form), the **related list** on the parent's record detail page is the **read**
+side. You usually don't declare it: every child relationship
+(`master_detail` and `lookup`) is shown as a related list on the parent's detail
+page **by default** — owned (`master_detail`) children first. The relationship
+flags exist to *refine* that:
+
+```typescript
+// On the CHILD object's FK field:
+project: {
+  type: 'master_detail',
+  reference: 'project',
+  inlineEdit: true,                 // write side: edit inline in the Project form
+  relatedList: 'primary',           // read side: promote to its OWN detail-page tab
+  relatedListTitle: 'Tasks',        // title of the detail-page list
+  relatedListColumns: ['title', 'status', 'priority', 'due_date'],
+},
+
+// Suppress a noisy association from the detail page entirely:
+audit_ref: { type: 'master_detail', reference: 'invoice', relatedList: false },
+```
+
+`relatedList` is tri-state — a *prominence* hint, not a layout switch (ADR-0085):
+
+- `'primary'` — CORE relationship: the detail page gives it its **own tab**.
+  Every non-primary related list stacks under a single shared **Related** tab,
+  so `'primary'` is the one-word way to promote a child table to a first-class
+  tab without a custom page.
+- `false` — suppress this child from the parent's detail page (chatty
+  association/log children you don't want surfaced).
+- `true` / omitted — shown in the shared **Related** tab.
+
+`relatedListTitle` / `relatedListColumns` override the derived title / columns;
+both are optional — when omitted, columns auto-derive from the child object's
+`highlightFields` (the same source the lookup picker uses). Audit FKs
+(`created_by`/`updated_by`/`owner_id`) never become related lists. A child that
+references the parent through several FKs (e.g. `primary_account` +
+`partner_account`) yields **one related list per FK**; a self-referential FK
+(a hierarchy) surfaces a "children" list. See the objectstack-ui skill for the
+rendering side.
+
+## Incorrect vs Correct
+
+### ❌ Incorrect — Using lookup When master_detail is Needed
+
+```typescript
+// Invoice line items should NOT be independent
+export default ObjectSchema.create({
+  name: 'invoice_line_item',
+  fields: {
+    invoice_id: {
+      type: 'lookup',  // ❌ Child can exist without parent — wrong!
+      reference: 'invoice',
+    },
+  }
+});
+```
+
+### ✅ Correct — Using master_detail for Owned Children
+
+```typescript
+export default ObjectSchema.create({
+  name: 'invoice_line_item',
+  fields: {
+    invoice_id: {
+      type: 'master_detail',  // ✅ Child owned by parent
+      reference: 'invoice',
+      deleteBehavior: 'cascade',
+      required: true,
+    },
+  }
+});
+```
+
+### ❌ Incorrect — Native Many-to-Many
+
+```typescript
+// ObjectStack does not have native many-to-many type
+{
+  type: 'many_to_many',  // ❌ Not a valid field type
+  reference: 'tag',
+}
+```
+
+### ✅ Correct — Junction Object Pattern
+
+```typescript
+// Create explicit junction object with two lookup fields
+export default ObjectSchema.create({
+  name: 'post_tag',
+  fields: {
+    post_id: { type: 'lookup', reference: 'post', required: true },
+    tag_id: { type: 'lookup', reference: 'tag', required: true },
+  },
+});
+```

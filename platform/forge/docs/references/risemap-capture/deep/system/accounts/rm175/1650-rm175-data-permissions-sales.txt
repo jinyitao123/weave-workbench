@@ -1,0 +1,640 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/accounts".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/accounts
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 系统
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 系统设置
+					10 image
+					11 text 系统设置
+					12 image
+				13 button 基础配置
+				14 button 用户与角色
+				15 button 部门管理
+				16 button 用户会话
+				17 button 审计日志
+				18 button 业务设置
+					19 image
+					20 text 业务设置
+					21 image
+				22 button 商品管理
+				23 button 财务配置
+				24 button 行政管理
+				25 button 客户管理
+				26 button 采购销售
+				27 button 库存管理
+				28 button 其他配置
+				29 button 人事配置
+				30 button 项目管理
+				31 button 图纸配置
+				32 button 生产配置
+				33 button 委外配置
+				34 button 单据打印
+				35 button 插件中心
+					36 image
+					37 text 插件中心
+				38 button 服务订阅
+					39 image
+					40 text 服务订阅
+				41 button 推广奖励
+					42 image
+					43 text 推广奖励
+				44 button 字段管理
+					45 image
+					46 text 字段管理
+			47 image
+			48 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			49 button 查看方案
+				50 image
+				51 text 查看方案
+			52 button
+				53 image
+			54 container
+				55 container 业务分类
+					56 checkbox 工作台, Value: 0
+					57 checkbox 供应链, Value: 0
+					58 checkbox 销售, Value: 0
+					59 checkbox 生产, Value: 0
+					60 checkbox 项目, Value: 0
+					61 checkbox 行政, Value: 0
+					62 checkbox 财务, Value: 0
+					63 checkbox 报表, Value: 0
+					64 checkbox 系统, Value: 1
+				65 button Description: 展开搜索, Help: 搜索
+					66 image
+				67 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					68 image
+					69 text 2
+				70 button Description: 打开推广奖励, Help: 推广
+				71 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				72 link Description: 打开工单, Value: community.risemap.cn/support
+				73 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					74 image
+					75 text 立即订阅
+				76 button 金
+					77 text 金
+					78 image
+			79 container
+				80 button 工作台
+					81 image
+					82 text 工作台
+				83 button 调整记录
+					84 text 调整记录
+				85 button 销售统计
+					86 text 销售统计
+				87 button 采购统计
+					88 text 采购统计
+				89 button 库存统计
+					90 text 库存统计
+				91 button 项目统计
+					92 text 项目统计
+				93 button 组装统计
+					94 text 组装统计
+				95 button 财务总览
+					96 text 财务总览
+				97 button 损益分析
+					98 text 损益分析
+				99 button 资金分析
+					100 text 资金分析
+				101 button 往来账款
+					102 text 往来账款
+				103 button 税务库存
+					104 text 税务库存
+				105 button 风险监控
+					106 text 风险监控
+				107 button 基础配置
+					108 text 基础配置
+				109 button 账户管理
+					110 text 账户管理
+			111 container
+				112 text 系统设置
+				113 image
+				114 text 账号管理
+				115 button
+					116 image
+				117 heading 账号管理, Value: 1
+					118 text 账号管理
+				119 button 账号列表
+					120 image
+					121 text 账号列表
+				122 button 角色权限
+					123 image
+					124 text 角色权限
+				125 button 用户视图
+					126 image
+					127 text 用户视图
+				128 button 数据权限
+					129 image
+					130 text 数据权限
+				209 image
+				210 text 数据权限说明 按
+				211 text 角色
+				212 text 和
+				213 text 业务模块
+				214 text 维度配置数据可见范围。 未配置的模块走系统默认逻辑（自己 + 直属下属 + 本部门及子部门）。拥有多个角色的用户取最宽范围。 选择角色：
+				215 button 财务
+				216 button 行政/HR
+				217 button 项目经理
+				218 button 销售
+				219 button 采购
+				220 button 仓库
+				221 button 系统管理员超级管理员
+					222 text 系统管理员
+					223 text 超级管理员
+				224 text 采购 5  项 批量设置
+				225 pop up button (collapsed, settable) Value: 选择范围..., Secondary Actions: Expand
+					226 menu
+						227 (disabled) 选择范围...
+						228 全部重置为系统默认
+						229 全部数据
+						230 本部门及子部门
+						231 仅本部门
+						232 本人及下属
+						233 仅本人
+				234 text 采购订单
+				235 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					236 menu
+						237 (selected) 系统默认
+						238 全部数据
+						239 本部门及子部门
+						240 仅本部门
+						241 本人及下属
+						242 仅本人
+				243 text 采购申请
+				244 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					245 menu
+						246 (selected) 系统默认
+						247 全部数据
+						248 本部门及子部门
+						249 仅本部门
+						250 本人及下属
+						251 仅本人
+				252 text 采购退货
+				253 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					254 menu
+						255 (selected) 系统默认
+						256 全部数据
+						257 本部门及子部门
+						258 仅本部门
+						259 本人及下属
+						260 仅本人
+				261 text 询价管理
+				262 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					263 menu
+						264 (selected) 系统默认
+						265 全部数据
+						266 本部门及子部门
+						267 仅本部门
+						268 本人及下属
+						269 仅本人
+				270 text 采购付款流水
+				271 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					272 menu
+						273 (selected) 系统默认
+						274 全部数据
+						275 本部门及子部门
+						276 仅本部门
+						277 本人及下属
+						278 仅本人
+				279 text 供应商 1  项 批量设置
+				280 pop up button (collapsed, settable) Value: 选择范围..., Secondary Actions: Expand
+					281 menu
+						282 (disabled) 选择范围...
+						283 全部重置为系统默认
+						284 全部数据
+						285 本部门及子部门
+						286 仅本部门
+						287 本人及下属
+						288 仅本人
+				289 text 供应商管理
+				290 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					291 menu
+						292 (selected) 系统默认
+						293 全部数据
+						294 本部门及子部门
+						295 仅本部门
+						296 本人及下属
+						297 仅本人
+				298 text 客户 5  项 批量设置
+				299 pop up button (collapsed, settable) Value: 选择范围..., Secondary Actions: Expand
+					300 menu
+						301 (disabled) 选择范围...
+						302 全部重置为系统默认
+						303 全部数据
+						304 本部门及子部门
+						305 仅本部门
+						306 本人及下属
+						307 仅本人
+				308 text 客户管理
+				309 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					310 menu
+						311 (selected) 系统默认
+						312 全部数据
+						313 本部门及子部门
+						314 仅本部门
+						315 本人及下属
+						316 仅本人
+				317 text 线索管理
+				318 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					319 menu
+						320 (selected) 系统默认
+						321 全部数据
+						322 本部门及子部门
+						323 仅本部门
+						324 本人及下属
+						325 仅本人
+				326 text 商机管理
+				327 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					328 menu
+						329 (selected) 系统默认
+						330 全部数据
+						331 本部门及子部门
+						332 仅本部门
+						333 本人及下属
+						334 仅本人
+				335 text 销售报价
+				336 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					337 menu
+						338 (selected) 系统默认
+						339 全部数据
+						340 本部门及子部门
+						341 仅本部门
+						342 本人及下属
+						343 仅本人
+				344 text 跟进记录
+				345 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					346 menu
+						347 (selected) 系统默认
+						348 全部数据
+						349 本部门及子部门
+						350 仅本部门
+						351 本人及下属
+						352 仅本人
+				353 text 销售 8  项 批量设置
+				354 pop up button (collapsed, settable) Value: 选择范围..., Secondary Actions: Expand
+					355 menu
+						356 (disabled) 选择范围...
+						357 全部重置为系统默认
+						358 全部数据
+						359 本部门及子部门
+						360 仅本部门
+						361 本人及下属
+						362 仅本人
+				363 text 销售合同
+				364 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					365 menu
+						366 (selected) 系统默认
+						367 全部数据
+						368 本部门及子部门
+						369 仅本部门
+						370 本人及下属
+						371 仅本人
+				372 text 销售订单
+				373 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					374 menu
+						375 (selected) 系统默认
+						376 全部数据
+						377 本部门及子部门
+						378 仅本部门
+						379 本人及下属
+						380 仅本人
+				381 text 销售发货单
+				382 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					383 menu
+						384 (selected) 系统默认
+						385 全部数据
+						386 本部门及子部门
+						387 仅本部门
+						388 本人及下属
+						389 仅本人
+				390 text 销售退货
+				391 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					392 menu
+						393 (selected) 系统默认
+						394 全部数据
+						395 本部门及子部门
+						396 仅本部门
+						397 本人及下属
+						398 仅本人
+				399 text Goodwill订单
+				400 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					401 menu
+						402 (selected) 系统默认
+						403 全部数据
+						404 本部门及子部门
+						405 仅本部门
+						406 本人及下属
+						407 仅本人
+				408 text 业绩银行
+				409 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					410 menu
+						411 (selected) 系统默认
+						412 全部数据
+						413 本部门及子部门
+						414 仅本部门
+						415 本人及下属
+						416 仅本人
+				417 text 特价审批
+				418 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					419 menu
+						420 (selected) 系统默认
+						421 全部数据
+						422 本部门及子部门
+						423 仅本部门
+						424 本人及下属
+						425 仅本人
+				426 text 销售收款流水
+				427 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					428 menu
+						429 (selected) 系统默认
+						430 全部数据
+						431 本部门及子部门
+						432 仅本部门
+						433 本人及下属
+						434 仅本人
+				435 text 项目 3  项 批量设置
+				436 pop up button (collapsed, settable) Value: 选择范围..., Secondary Actions: Expand
+					437 menu
+						438 (disabled) 选择范围...
+						439 全部重置为系统默认
+						440 全部数据
+						441 本部门及子部门
+						442 仅本部门
+						443 本人及下属
+						444 仅本人
+				445 text 项目中心
+				446 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					447 menu
+						448 (selected) 系统默认
+						449 全部数据
+						450 本部门及子部门
+						451 仅本部门
+						452 本人及下属
+						453 仅本人
+				454 text 任务管理
+				455 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					456 menu
+						457 (selected) 系统默认
+						458 全部数据
+						459 本部门及子部门
+						460 仅本部门
+						461 本人及下属
+						462 仅本人
+				463 text 工时管理
+				464 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					465 menu
+						466 (selected) 系统默认
+						467 全部数据
+						468 本部门及子部门
+						469 仅本部门
+						470 本人及下属
+						471 仅本人
+				472 text 图纸 1  项 批量设置
+				473 pop up button (collapsed, settable) Value: 选择范围..., Secondary Actions: Expand
+					474 menu
+						475 (disabled) 选择范围...
+						476 全部重置为系统默认
+						477 全部数据
+						478 本部门及子部门
+						479 仅本部门
+						480 本人及下属
+						481 仅本人
+				482 text 图纸档案
+				483 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					484 menu
+						485 (selected) 系统默认
+						486 全部数据
+						487 本部门及子部门
+						488 仅本部门
+						489 本人及下属
+						490 仅本人
+				491 text 办公 13  项 批量设置
+				492 pop up button (collapsed, settable) Value: 选择范围..., Secondary Actions: Expand
+					493 menu
+						494 (disabled) 选择范围...
+						495 全部重置为系统默认
+						496 全部数据
+						497 本部门及子部门
+						498 仅本部门
+						499 本人及下属
+						500 仅本人
+				501 text 员工档案
+				502 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					503 menu
+						504 (selected) 系统默认
+						505 全部数据
+						506 本部门及子部门
+						507 仅本部门
+						508 本人及下属
+						509 仅本人
+				510 text 日程事件
+				511 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					512 menu
+						513 (selected) 系统默认
+						514 全部数据
+						515 本部门及子部门
+						516 仅本部门
+						517 本人及下属
+						518 仅本人
+				519 text 请假记录
+				520 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					521 menu
+						522 (selected) 系统默认
+						523 全部数据
+						524 本部门及子部门
+						525 仅本部门
+						526 本人及下属
+						527 仅本人
+				528 text 加班申请
+				529 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					530 menu
+						531 (selected) 系统默认
+						532 全部数据
+						533 本部门及子部门
+						534 仅本部门
+						535 本人及下属
+						536 仅本人
+				537 text 工作汇报
+				538 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					539 menu
+						540 (selected) 系统默认
+						541 全部数据
+						542 本部门及子部门
+						543 仅本部门
+						544 本人及下属
+						545 仅本人
+				546 text 出差申请
+				547 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					548 menu
+						549 (selected) 系统默认
+						550 全部数据
+						551 本部门及子部门
+						552 仅本部门
+						553 本人及下属
+						554 仅本人
+				555 text 考勤管理
+				556 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					557 menu
+						558 (selected) 系统默认
+						559 全部数据
+						560 本部门及子部门
+						561 仅本部门
+						562 本人及下属
+						563 仅本人
+				564 text 会议纪要
+				565 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					566 menu
+						567 (selected) 系统默认
+						568 全部数据
+						569 本部门及子部门
+						570 仅本部门
+						571 本人及下属
+						572 仅本人
+				573 text 用章申请
+				574 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					575 menu
+						576 (selected) 系统默认
+						577 全部数据
+						578 本部门及子部门
+						579 仅本部门
+						580 本人及下属
+						581 仅本人
+				582 text 礼品申请
+				583 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					584 menu
+						585 (selected) 系统默认
+						586 全部数据
+						587 本部门及子部门
+						588 仅本部门
+						589 本人及下属
+						590 仅本人
+				591 text 物料领取
+				592 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					593 menu
+						594 (selected) 系统默认
+						595 全部数据
+						596 本部门及子部门
+						597 仅本部门
+						598 本人及下属
+						599 仅本人
+				600 text 工单管理
+				601 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					602 menu
+						603 (selected) 系统默认
+						604 全部数据
+						605 本部门及子部门
+						606 仅本部门
+						607 本人及下属
+						608 仅本人
+				609 text 借用管理
+				610 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					611 menu
+						612 (selected) 系统默认
+						613 全部数据
+						614 本部门及子部门
+						615 仅本部门
+						616 本人及下属
+						617 仅本人
+				618 text 财务 3  项 批量设置
+				619 pop up button (collapsed, settable) Value: 选择范围..., Secondary Actions: Expand
+					620 menu
+						621 (disabled) 选择范围...
+						622 全部重置为系统默认
+						623 全部数据
+						624 本部门及子部门
+						625 仅本部门
+						626 本人及下属
+						627 仅本人
+				628 text 费用报销
+				629 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					630 menu
+						631 (selected) 系统默认
+						632 全部数据
+						633 本部门及子部门
+						634 仅本部门
+						635 本人及下属
+						636 仅本人
+				637 text 企业支出-付款申请
+				638 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					639 menu
+						640 (selected) 系统默认
+						641 全部数据
+						642 本部门及子部门
+						643 仅本部门
+						644 本人及下属
+						645 仅本人
+				646 text 员工借款
+				647 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					648 menu
+						649 (selected) 系统默认
+						650 全部数据
+						651 本部门及子部门
+						652 仅本部门
+						653 本人及下属
+						654 仅本人
+				655 text 委外 5  项 批量设置
+				656 pop up button (collapsed, settable) Value: 选择范围..., Secondary Actions: Expand
+					657 menu
+						658 (disabled) 选择范围...
+						659 全部重置为系统默认
+						660 全部数据
+						661 本部门及子部门
+						662 仅本部门
+						663 本人及下属
+						664 仅本人
+				665 text 委外订单
+				666 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					667 menu
+						668 (selected) 系统默认
+						669 全部数据
+						670 本部门及子部门
+						671 仅本部门
+						672 本人及下属
+						673 仅本人
+				674 text 委外发料单
+				675 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					676 menu
+						677 (selected) 系统默认
+						678 全部数据
+						679 本部门及子部门
+						680 仅本部门
+						681 本人及下属
+						682 仅本人
+				683 text 委外回厂单
+				684 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					685 menu
+						686 (selected) 系统默认
+						687 全部数据
+						688 本部门及子部门
+						689 仅本部门
+						690 本人及下属
+						691 仅本人
+				692 text 委外退料单
+				693 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					694 menu
+						695 (selected) 系统默认
+						696 全部数据
+						697 本部门及子部门
+						698 仅本部门
+						699 本人及下属
+						700 仅本人
+				701 text 委外对账单
+				702 pop up button (collapsed, settable) Value: 系统默认, Secondary Actions: Expand
+					703 menu
+						704 (selected) 系统默认
+						705 全部数据
+						706 本部门及子部门
+						707 仅本部门
+						708 本人及下属
+						709 仅本人
+				710 text 已配置 0 / 44 个模块
+				711 button 保存
+					712 image
+					713 text 保存
+			207 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			208 container Notifications alt+T
+
+The focused UI element is 218 button 销售

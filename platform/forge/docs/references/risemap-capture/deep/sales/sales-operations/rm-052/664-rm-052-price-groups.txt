@@ -1,0 +1,145 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/pricing".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/pricing
+	2 container root
+		3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+		4 text 销售
+		5 button 收起侧边栏
+			6 image
+		7 container
+			8 button 销售业务
+				9 image
+				10 text 销售业务
+				11 image
+			12 button 框架销售合同
+			13 button 销售订单
+			14 button 收款流水
+			15 button 销售发货单
+			16 button 销售退货
+			17 button 业绩银行
+			18 button 价格策略
+			19 button Goodwill订单
+			20 button 销售团队
+			21 button 销售目标
+			22 button 销售发票
+			23 button CRM客户管理
+				24 image
+				25 text CRM客户管理
+				26 image
+			27 button 客户管理
+			28 button 联系人管理
+			29 button 销售报价
+			30 button 客户物料对照
+			31 button 商机管理
+			32 button 线索管理
+			33 button 跟进记录
+			34 button 公海客户
+		35 image
+		36 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+		37 button 查看方案
+			38 image
+			39 text 查看方案
+		40 button
+			41 image
+		42 container
+			43 container 业务分类
+				44 checkbox 工作台, Value: 0
+				45 checkbox 供应链, Value: 0
+				46 checkbox 销售, Value: 1
+				47 checkbox 生产, Value: 0
+				48 checkbox 项目, Value: 0
+				49 checkbox 行政, Value: 0
+				50 checkbox 财务, Value: 0
+				51 checkbox 报表, Value: 0
+				52 checkbox 系统, Value: 0
+			53 button Description: 展开搜索, Help: 搜索
+				54 image
+			55 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+				56 image
+				57 text 2
+			58 button Description: 打开推广奖励, Help: 推广
+			59 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+			60 link Description: 打开工单, Value: community.risemap.cn/support
+			61 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+				62 image
+				63 text 立即订阅
+			64 button 金
+				65 text 金
+				66 image
+		67 container
+			68 button 工作台
+				69 image
+				70 text 工作台
+			71 button 待出库发货单
+				72 text 待出库发货单
+			73 button 采购退换货出库
+				74 text 采购退换货出库
+			75 button 出库明细
+				76 text 出库明细
+			77 button 框架销售合同
+				78 text 框架销售合同
+			79 button 新建合同
+				80 text 新建合同
+			81 button 销售订单
+				82 text 销售订单
+			83 button 新建销售订单
+				84 text 新建销售订单
+			85 button 收款流水
+				86 text 收款流水
+			87 button 销售发货单
+				88 text 销售发货单
+			89 button 新建发货单
+				90 text 新建发货单
+			91 button 销售退货
+				92 text 销售退货
+			93 button 新建销售退货
+				94 text 新建销售退货
+			95 button 业绩银行
+				96 text 业绩银行
+			97 button 价格策略
+				98 text 价格策略
+		99 container
+			100 container
+				101 text 销售业务
+				102 image
+				103 text 价格策略
+				104 image
+				105 heading 价格策略, Value: 1
+					106 text 价格策略
+				107 text 统一管理商品定价、折扣策略、框架协议及特价审批
+			108 button 物料定价
+				109 image
+				110 text 物料定价
+			111 button 价格组管理
+				112 image
+				113 text 价格组管理
+			114 button 框架协议价
+				115 image
+				116 text 框架协议价
+			117 button 特价审批
+				118 image
+				119 text 特价审批
+			120 button 价格调整记录
+				121 image
+				122 text 价格调整记录
+			123 button 价格历史
+				124 image
+				125 text 价格历史
+			126 image
+			127 text 价格组
+			128 button 新建
+				129 image
+				130 text 新建
+			131 image
+			132 text field (settable)
+			133 text 暂无价格组
+			134 button 未分配物料 0 尚未加入任何销售价格组
+				135 image
+				136 text 未分配物料
+				137 text 0
+				138 text 尚未加入任何销售价格组
+			139 image
+			140 text 请从左侧选择一个价格组
+		141 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+		142 container Notifications alt+T
+
+The focused UI element is 111 button 价格组管理

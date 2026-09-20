@@ -1,0 +1,41 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/seals".
+0 AXWebArea RiseMap, URL: risemap.cn/ops/seals
+	1 container 新增印章
+		2 heading 新增印章, Value: 3
+			3 text 新增印章
+		4 button 关闭
+			5 image
+		6 container
+			7 text 印章名称  *
+			8 text field (settable)
+			9 text 印章编号
+			10 text field (settable)
+			11 text 印章类型  *
+			12 button 请选择
+				13 text 请选择
+			14 button 新增印章类型
+				15 image
+			16 text 公司抬头
+			17 button 请选择
+				18 text 请选择
+			19 button 新增公司抬头
+				20 image
+			21 text 管理人  *
+			22 button 请选择管理人
+				23 text 请选择管理人
+			24 text 所属部门  *
+			25 button 请选择部门
+				26 text 请选择部门
+			27 text 存放位置
+			28 text field (settable)
+			29 text 说明
+			30 text entry area (settable)
+			31 text 登记日期
+			32 container
+				33 text field (settable)
+				34 button
+					35 image
+		36 button 取消
+		37 button 确定
+
+The focused UI element is 14 button 新增印章类型

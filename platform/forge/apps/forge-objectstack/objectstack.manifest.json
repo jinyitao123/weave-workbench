@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.objectstack.dev/template-manifest.json",
+  "name": "apps/forge-objectstack",
+  "namespace": "apps_forge_objectsta",
+  "specVersion": "^17.0.0",
+  "displayName": "Apps/Forge Objectstack",
+  "category": "starter",
+  "isStarter": true,
+  "skills": [
+    "objectstack-platform",
+    "objectstack-data"
+  ],
+  "readmePath": "README.md",
+  "scaffold": {
+    "variables": {
+      "appName": {
+        "type": "string",
+        "prompt": "Application name",
+        "default": "my-app"
+      }
+    }
+  }
+}

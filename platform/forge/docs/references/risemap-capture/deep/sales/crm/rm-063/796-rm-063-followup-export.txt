@@ -1,0 +1,181 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/follow-ups".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/follow-ups
+	2 container
+		3 container root
+			169 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			170 text 销售
+			171 button 收起侧边栏
+				172 image
+			173 container
+				174 button 销售业务
+					175 image
+					176 text 销售业务
+					177 image
+				178 button 框架销售合同
+				179 button 销售订单
+				180 button 收款流水
+				181 button 销售发货单
+				182 button 销售退货
+				183 button 业绩银行
+				184 button 价格策略
+				185 button Goodwill订单
+				186 button 销售团队
+				187 button 销售目标
+				188 button 销售发票
+				189 button CRM客户管理
+					190 image
+					191 text CRM客户管理
+					192 image
+				193 button 客户管理
+				194 button 联系人管理
+				195 button 销售报价
+				196 button 客户物料对照
+				197 button 商机管理
+				198 button 线索管理
+				199 button 跟进记录
+				200 button 公海客户
+			201 image
+			202 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			203 button 查看方案
+				204 image
+				205 text 查看方案
+			206 button
+				207 image
+			208 container
+				209 container 业务分类
+					210 checkbox 工作台, Value: 0
+					211 checkbox 供应链, Value: 0
+					212 checkbox 销售, Value: 1
+					213 checkbox 生产, Value: 0
+					214 checkbox 项目, Value: 0
+					215 checkbox 行政, Value: 0
+					216 checkbox 财务, Value: 0
+					217 checkbox 报表, Value: 0
+					218 checkbox 系统, Value: 0
+				219 button Description: 展开搜索, Help: 搜索
+					220 image
+				221 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					222 image
+					223 text 2
+				224 button Description: 打开推广奖励, Help: 推广
+				225 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				226 link Description: 打开工单, Value: community.risemap.cn/support
+				227 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					228 image
+					229 text 立即订阅
+				230 button 金
+					231 text 金
+					232 image
+			233 container
+				234 button 工作台
+					235 image
+					236 text 工作台
+				237 button Goodwill订单
+					238 text Goodwill订单
+				239 button Goodwill订单详情
+					240 text Goodwill订单详情
+				241 button 销售团队
+					242 text 销售团队
+				243 button 销售目标
+					244 text 销售目标
+				245 button 销售发票
+					246 text 销售发票
+				247 button 客户管理
+					248 text 客户管理
+				249 button 名片扫描
+					250 text 名片扫描
+				251 button 联系人管理
+					252 text 联系人管理
+				253 button 销售报价
+					254 text 销售报价
+				255 button 新建销售报价
+					256 text 新建销售报价
+				257 button 客户物料对照
+					258 text 客户物料对照
+				259 button 商机管理
+					260 text 商机管理
+				261 button 线索管理
+					262 text 线索管理
+				263 button 跟进记录
+					264 text 跟进记录
+			265 container
+				266 container
+					267 text CRM客户管理
+					268 image
+					269 text 跟进记录
+					270 image
+					271 heading 跟进记录, Value: 1
+						272 text 跟进记录
+					273 text 记录和管理所有客户及商机的跟进活动
+				274 image
+				275 text 总跟进记录 0
+				276 image
+				277 text 本周跟进 0
+				278 image
+				279 text 待跟进 0
+				280 image
+				281 text 已过期 0
+				282 image
+				283 text 覆盖客户 0
+				284 image
+				285 text field (settable)
+				286 button 范围
+					287 image
+					288 text 范围
+					289 image
+				290 button 客户负责人
+					291 text 客户负责人
+				292 button 跟进状态
+					293 image
+					294 text 跟进状态
+					295 image
+				296 button 高级筛选
+					297 image
+					298 text 高级筛选
+				299 button 导出
+					300 image
+					301 text 导出
+					302 image
+				303 button 新增跟进
+					304 image
+					305 text 新增跟进
+				306 image
+				307 text 类型:
+				308 button 全部
+				309 button 电话沟通
+				310 button 微信沟通
+				311 button 邮件往来
+				312 button 上门拜访
+				313 button 客户来访
+				314 button 线上会议
+				315 button 产品演示
+				316 button 方案讲解
+				317 button 商务谈判
+				318 button 其他
+				319 button 最新优先
+					320 image
+					321 text 最新优先
+				322 视图切换
+					323 radio button 列表, Value: 0
+						324 image
+						325 text 列表
+					326 radio button 日历, Value: 1
+						327 image
+						328 text 日历
+				329 button
+					330 image
+				331 text 2026年9月
+				332 button
+					333 image
+				334 image
+				335 text 人员筛选:
+				336 button 全部人员
+					337 text 全部人员
+				338 text 一 二 三 四 五 六 日 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 频次： 0次 1次 2次 3-4次 5次+ 本月合计  0  次跟进 本月统计 0 次跟进 按类型
+			339 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			168 container Notifications alt+T
+		340 container
+			341 text 导出当前列表
+			342 text 自定义导出
+
+The focused UI element is 299 button 导出

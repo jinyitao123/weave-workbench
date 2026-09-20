@@ -1,0 +1,41 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/benefits".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/benefits
+	2 container
+		3 container Notifications alt+T
+		4 container 新建福利发放, ID: radix-:ra:
+			5 image
+			6 heading 新建福利发放, Value: 2, ID: radix-:rb:
+				7 text 新建福利发放
+			8 text 从兑换码库或实物库选择福利，定向发放给员工
+			9 text 新建福利发放表单
+			10 text 1
+			11 text 选择福利
+			12 text 2
+			13 text 选择对象
+			14 text 3
+			15 text 设置数量
+			16 text 4
+			17 text 确认发放
+			18 container
+				19 text * 发放标题
+			20 text field (settable)
+			21 text 福利类型
+			22 button 兑换码 电子券码、购物卡、会员卡等
+				23 image
+				24 text 兑换码
+				25 text 电子券码、购物卡、会员卡等
+			26 button 实物福利 实体礼品、办公用品、节日礼盒等
+				27 image
+				28 text 实物福利
+				29 text 实体礼品、办公用品、节日礼盒等
+			30 container
+				31 text * 选择 实物
+			32 button 取消
+			33 button (disabled) 下一步
+				34 text 下一步
+				35 image
+			36 button Close
+				37 image
+				38 text Close
+
+The focused UI element is 26 button 实物福利 实体礼品、办公用品、节日礼盒等

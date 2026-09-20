@@ -1,0 +1,139 @@
+{
+  "resources": [
+    {
+      "url": "https://community.risemap.cn/",
+      "path": "community/home.html",
+      "bytes": 98064,
+      "sha256": "b38cc3c184a879a0a002d0c09356cc10a84ed824241160b24669f3fafbe92d1d",
+      "contentType": "text/html; charset=utf-8",
+      "discoveredFrom": null,
+      "capturedAt": "2026-09-09T01:52:48.384295+00:00"
+    },
+    {
+      "url": "https://community.risemap.cn/docs",
+      "path": "community/docs.html",
+      "bytes": 76109,
+      "sha256": "3dbe7deabddd491bf7d8d706512667f19f31678f99f20c23893ea80e482156ee",
+      "contentType": "text/html; charset=utf-8",
+      "discoveredFrom": null,
+      "capturedAt": "2026-09-09T01:52:48.389310+00:00"
+    },
+    {
+      "url": "https://community.risemap.cn/tutorials",
+      "path": "community/tutorials.html",
+      "bytes": 97798,
+      "sha256": "8cc92f368642a9fe7b07999f7874221e28cf56abf22abbc6e52803e313ce8f65",
+      "contentType": "text/html; charset=utf-8",
+      "discoveredFrom": null,
+      "capturedAt": "2026-09-09T01:52:48.391818+00:00"
+    },
+    {
+      "url": "https://community.risemap.cn/flow",
+      "path": "community/flow.html",
+      "bytes": 86097,
+      "sha256": "544509a3a75f993836f59f177203febe2ef40d7314a5cf114fdc560e033c2462",
+      "contentType": "text/html; charset=utf-8",
+      "discoveredFrom": null,
+      "capturedAt": "2026-09-09T01:52:48.396260+00:00"
+    },
+    {
+      "url": "https://community.risemap.cn/changelog",
+      "path": "community/changelog.html",
+      "bytes": 342158,
+      "sha256": "4bd1fa50864c52f062ad780f42c0e490349d0a2fb25c6e2ab92bba05c9b05667",
+      "contentType": "text/html; charset=utf-8",
+      "discoveredFrom": null,
+      "capturedAt": "2026-09-09T01:52:48.399544+00:00"
+    },
+    {
+      "url": "https://risemap.cn/",
+      "path": "app/home.html",
+      "bytes": 487,
+      "sha256": "b13ded784a909e8cbe78ce9f02b1d3944b5497b840d3700ddb79df7e90479cb6",
+      "contentType": "text/html",
+      "discoveredFrom": null,
+      "capturedAt": "2026-09-09T01:52:48.411615+00:00"
+    },
+    {
+      "url": "https://community.risemap.cn/_next/static/chunks/app/(site)/flow/page-83c31d456b09f583.js",
+      "path": "community/flow-public-bundle.js",
+      "bytes": 101458,
+      "sha256": "abae887132e2b184469ff6901f77d16de52e10cae065f1957e15561ad334de6b",
+      "contentType": "application/javascript; charset=UTF-8",
+      "discoveredFrom": "https://community.risemap.cn/flow",
+      "capturedAt": "2026-09-09T01:52:48.696395+00:00"
+    },
+    {
+      "url": "https://risemap.cn/assets/index-_5337QrC.js",
+      "path": "app/entry-public-bundle.js",
+      "bytes": 1534844,
+      "sha256": "0ee2f20cc37f92ceb69da79f33df9daec0653819e3aa0adc5fe662347a1f4292",
+      "contentType": "application/javascript",
+      "discoveredFrom": "https://risemap.cn/",
+      "capturedAt": "2026-09-09T01:52:49.436520+00:00"
+    },
+    {
+      "url": "https://risemap.cn/assets/taxPriceCalc-b5k4-X7m.js",
+      "path": "app/assets/taxPriceCalc-b5k4-X7m.js",
+      "bytes": 570,
+      "sha256": "38ba79d72542931a3b74df78aeff6efdb7bac5d722a43a2fc21c2109c83bb376",
+      "contentType": "application/javascript",
+      "discoveredFrom": "https://risemap.cn/assets/index-_5337QrC.js",
+      "capturedAt": "2026-09-09T01:52:50.552888+00:00"
+    },
+    {
+      "url": "https://risemap.cn/assets/useQuotationData-BqfSGeIm.js",
+      "path": "app/assets/useQuotationData-BqfSGeIm.js",
+      "bytes": 5075,
+      "sha256": "008cd0c02dfc4559d1cf8e42676bc47a9171f6d9dcba29c20e38562874076369",
+      "contentType": "application/javascript",
+      "discoveredFrom": "https://risemap.cn/assets/index-_5337QrC.js",
+      "capturedAt": "2026-09-09T01:52:50.553417+00:00"
+    },
+    {
+      "url": "https://risemap.cn/assets/ProjectList-DVoQixLk.js",
+      "path": "app/assets/ProjectList-DVoQixLk.js",
+      "bytes": 47860,
+      "sha256": "7e38be1e1d8ca05fdcb164bafce879680fcd6a12bcd26cd38c25dcf4711c2a63",
+      "contentType": "application/javascript",
+      "discoveredFrom": "https://risemap.cn/assets/index-_5337QrC.js",
+      "capturedAt": "2026-09-09T01:52:50.553798+00:00"
+    },
+    {
+      "url": "https://risemap.cn/assets/ProjectDetail-C8FKE8-H.js",
+      "path": "app/assets/ProjectDetail-C8FKE8-H.js",
+      "bytes": 373643,
+      "sha256": "9cd3447ea5653457f2eaf550e9b94eece545004c1e84ace97860deca2d9c80e3",
+      "contentType": "application/javascript",
+      "discoveredFrom": "https://risemap.cn/assets/index-_5337QrC.js",
+      "capturedAt": "2026-09-09T01:52:50.554521+00:00"
+    },
+    {
+      "url": "https://risemap.cn/assets/TimesheetManagement-DgmQbry8.js",
+      "path": "app/assets/TimesheetManagement-DgmQbry8.js",
+      "bytes": 37573,
+      "sha256": "95ecb400836290e18a8f3a393b56cb6b9efc55aaf7947dbc4f7a644d9c2d2217",
+      "contentType": "application/javascript",
+      "discoveredFrom": "https://risemap.cn/assets/index-_5337QrC.js",
+      "capturedAt": "2026-09-09T01:52:50.555233+00:00"
+    },
+    {
+      "url": "https://risemap.cn/assets/ProjectSettingsCenter-CaRRywEF.js",
+      "path": "app/assets/ProjectSettingsCenter-CaRRywEF.js",
+      "bytes": 105445,
+      "sha256": "4ceb522e3a6acefd642a3bc63e22ae447d5c34d4ee6156b9216e71fdbd28b57e",
+      "contentType": "application/javascript",
+      "discoveredFrom": "https://risemap.cn/assets/index-_5337QrC.js",
+      "capturedAt": "2026-09-09T01:52:50.556152+00:00"
+    },
+    {
+      "url": "https://risemap.cn/assets/index-jA6F_W13.css",
+      "path": "app/assets/index-jA6F_W13.css",
+      "bytes": 390778,
+      "sha256": "da4d49fafb18b6fffc7ddf4a1d10a266638c8ecbaf6b8ebf45ea683c8de17014",
+      "contentType": "text/css",
+      "discoveredFrom": "https://risemap.cn/assets/index-_5337QrC.js",
+      "capturedAt": "2026-09-09T01:52:50.557128+00:00"
+    }
+  ]
+}

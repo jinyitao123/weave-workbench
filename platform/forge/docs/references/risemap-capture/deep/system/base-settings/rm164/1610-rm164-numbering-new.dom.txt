@@ -1,0 +1,399 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 系统
+- button "收起侧边栏":
+- navigation:
+  - button "系统设置":
+    - generic: 系统设置
+  - button "基础配置":
+    - generic: 基础配置
+  - button "用户与角色":
+    - generic: 用户与角色
+  - button "部门管理":
+    - generic: 部门管理
+  - button "用户会话":
+    - generic: 用户会话
+  - button "审计日志":
+    - generic: 审计日志
+  - button "业务设置":
+    - generic: 业务设置
+  - button "商品管理":
+    - generic: 商品管理
+  - button "财务配置":
+    - generic: 财务配置
+  - button "行政管理":
+    - generic: 行政管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "采购销售":
+    - generic: 采购销售
+  - button "库存管理":
+    - generic: 库存管理
+  - button "其他配置":
+    - generic: 其他配置
+  - button "人事配置":
+    - generic: 人事配置
+  - button "项目管理":
+    - generic: 项目管理
+  - button "图纸配置":
+    - generic: 图纸配置
+  - button "生产配置":
+    - generic: 生产配置
+  - button "委外配置":
+    - generic: 委外配置
+  - button "单据打印":
+    - generic: 单据打印
+  - button "插件中心":
+    - generic: 插件中心
+  - button "服务订阅":
+    - generic: 服务订阅
+  - button "推广奖励":
+    - generic: 推广奖励
+  - button "字段管理":
+    - generic: 字段管理
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统" [pressed]:
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "开票任务":
+  - generic: 开票任务
+- button "调整记录":
+  - generic: 调整记录
+- button "销售统计":
+  - generic: 销售统计
+- button "采购统计":
+  - generic: 采购统计
+- button "库存统计":
+  - generic: 库存统计
+- button "项目统计":
+  - generic: 项目统计
+- button "组装统计":
+  - generic: 组装统计
+- button "财务总览":
+  - generic: 财务总览
+- button "损益分析":
+  - generic: 损益分析
+- button "资金分析":
+  - generic: 资金分析
+- button "往来账款":
+  - generic: 往来账款
+- button "税务库存":
+  - generic: 税务库存
+- button "风险监控":
+  - generic: 风险监控
+- button "基础配置":
+  - generic: 基础配置
+- main:
+  - generic: 系统设置
+  - heading "系统设置" [level=1]
+  - button "收起设置导航" [expanded]:
+  - button "企业信息 管理企业基本信息、Logo等":
+    - paragraph: 企业信息
+    - paragraph: 管理企业基本信息、Logo等
+  - button "编码管理 业务编号生成与校验规则":
+    - paragraph: 编码管理
+    - paragraph: 业务编号生成与校验规则
+  - button "通知设置 配置系统通知和提醒规则":
+    - paragraph: 通知设置
+    - paragraph: 配置系统通知和提醒规则
+  - button "邮件配置 配置 SMTP 服务器，可选，不配置则使用官方邮件服务":
+    - paragraph: 邮件配置
+    - paragraph: 配置 SMTP 服务器，可选，不配置则使用官方邮件服务
+  - button "收件邮箱 配置进项发票收件邮箱和可见范围":
+    - paragraph: 收件邮箱
+    - paragraph: 配置进项发票收件邮箱和可见范围
+  - button "数据管理 数据备份、导入导出设置":
+    - paragraph: 数据管理
+    - paragraph: 数据备份、导入导出设置
+  - button "外观定制 自定义系统主题和界面":
+    - paragraph: 外观定制
+    - paragraph: 自定义系统主题和界面
+  - button "功能模块 启用/隐藏侧边栏模块菜单":
+    - paragraph: 功能模块
+    - paragraph: 启用/隐藏侧边栏模块菜单
+  - button "热键管理 自定义全局快捷键，提升操作效率":
+    - paragraph: 热键管理
+    - paragraph: 自定义全局快捷键，提升操作效率
+  - heading "编码管理" [level=3]
+  - paragraph: 统一维护业务编号规则；未配置有效规则时，业务继续使用系统默认生成逻辑
+  - generic: 60 项编码
+  - button "一键恢复默认":
+    - text: 一键恢复默认
+  - button "新增编码" [active]:
+    - text: 新增编码
+  - paragraph: 同一单号可按业务类型配置不同规则。新增或编辑时，可通过下拉框选择固定文字、日期、物料一至五级分类码和流水号并调整顺序。物料不存在的分类级别按空值生成；修改只影响新编号，不修改历史数据。
+  - textbox "搜索编码名称、模块或模板"
+  - button "全部模块":
+    - generic "全部模块"
+  - table:
+    - rowgroup:
+      - row "业务模块 单号 业务类型 编号组成 / 示例 重置周期 跳码数量 操作":
+        - columnheader "业务模块": 业务模块
+        - columnheader "单号": 单号
+        - columnheader "业务类型": 业务类型
+        - columnheader "编号组成 / 示例": 编号组成 / 示例
+        - columnheader "重置周期": 重置周期
+        - columnheader "跳码数量": 跳码数量
+        - columnheader "操作": 操作
+    - rowgroup:
+      - 'row "运营管理 设备编号 默认系统编码 通用类型 EQ-{SEQ:5} 示例：EQ-00001 不重置 0"':
+        - cell "运营管理"
+        - cell "设备编号 默认系统编码":
+          - paragraph: 设备编号
+          - paragraph: 默认系统编码
+        - cell "通用类型":
+          - generic: 通用类型
+        - 'cell "EQ-{SEQ:5} 示例：EQ-00001"':
+          - paragraph: "EQ-{SEQ:5}"
+          - paragraph: 示例：EQ-00001
+        - cell "不重置"
+        - cell "0"
+        - cell:
+          - button "编辑":
+          - button "复制为新规则":
+      - 'row "运营管理 资产编号 默认系统编码 通用类型 FA-{YYYY}-{SEQ:5} 示例：FA-2026-00001 每年 0"':
+        - cell "运营管理"
+        - cell "资产编号 默认系统编码":
+          - paragraph: 资产编号
+          - paragraph: 默认系统编码
+        - cell "通用类型":
+          - generic: 通用类型
+        - 'cell "FA-{YYYY}-{SEQ:5} 示例：FA-2026-00001"':
+          - paragraph: "FA-{YYYY}-{SEQ:5}"
+          - paragraph: 示例：FA-2026-00001
+        - cell "每年"
+        - cell "0"
+        - cell:
+          - button "编辑":
+          - button "复制为新规则":
+      - 'row "运营管理 车辆编号 默认系统编码 通用类型 VH-{SEQ:4} 示例：VH-0001 不重置 0"':
+        - cell "运营管理"
+        - cell "车辆编号 默认系统编码":
+          - paragraph: 车辆编号
+          - paragraph: 默认系统编码
+        - cell "通用类型":
+          - generic: 通用类型
+        - 'cell "VH-{SEQ:4} 示例：VH-0001"':
+          - paragraph: "VH-{SEQ:4}"
+          - paragraph: 示例：VH-0001
+        - cell "不重置"
+        - cell "0"
+        - cell:
+          - button "编辑":
+          - button "复制为新规则":
+      - 'row "运营管理 物品编号 暂未接入 通用类型 ITEM-{SEQ:6} 示例：ITEM-000001 不重置 0"':
+        - cell "运营管理"
+        - cell "物品编号 暂未接入":
+          - paragraph: 物品编号
+          - paragraph: 暂未接入
+        - cell "通用类型":
+          - generic: 通用类型
+        - 'cell "ITEM-{SEQ:6} 示例：ITEM-000001"':
+          - paragraph: "ITEM-{SEQ:6}"
+          - paragraph: 示例：ITEM-000001
+        - cell "不重置"
+        - cell "0"
+        - cell
+      - 'row "委外管理 委外订单号 默认系统编码 通用类型 OS-{YYYY}-{SEQ:4} 示例：OS-2026-0001 每年 0"':
+        - cell "委外管理"
+        - cell "委外订单号 默认系统编码":
+          - paragraph: 委外订单号
+          - paragraph: 默认系统编码
+        - cell "通用类型":
+          - generic: 通用类型
+        - 'cell "OS-{YYYY}-{SEQ:4} 示例：OS-2026-0001"':
+          - paragraph: "OS-{YYYY}-{SEQ:4}"
+          - paragraph: 示例：OS-2026-0001
+        - cell "每年"
+        - cell "0"
+        - cell:
+          - button "编辑":
+          - button "复制为新规则":
+      - 'row "委外管理 委外发料单号 默认系统编码 通用类型 OSI-{YYYY}-{SEQ:4} 示例：OSI-2026-0001 每年 0"':
+        - cell "委外管理"
+        - cell "委外发料单号 默认系统编码":
+          - paragraph: 委外发料单号
+          - paragraph: 默认系统编码
+        - cell "通用类型":
+          - generic: 通用类型
+        - 'cell "OSI-{YYYY}-{SEQ:4} 示例：OSI-2026-0001"':
+          - paragraph: "OSI-{YYYY}-{SEQ:4}"
+          - paragraph: 示例：OSI-2026-0001
+        - cell "每年"
+        - cell "0"
+        - cell:
+          - button "编辑":
+          - button "复制为新规则":
+      - 'row "委外管理 委外回厂单号 默认系统编码 通用类型 OSR-{YYYY}-{SEQ:4} 示例：OSR-2026-0001 每年 0"':
+        - cell "委外管理"
+        - cell "委外回厂单号 默认系统编码":
+          - paragraph: 委外回厂单号
+          - paragraph: 默认系统编码
+        - cell "通用类型":
+          - generic: 通用类型
+        - 'cell "OSR-{YYYY}-{SEQ:4} 示例：OSR-2026-0001"':
+          - paragraph: "OSR-{YYYY}-{SEQ:4}"
+          - paragraph: 示例：OSR-2026-0001
+        - cell "每年"
+        - cell "0"
+        - cell:
+          - button "编辑":
+          - button "复制为新规则":
+      - 'row "委外管理 委外退料单号 默认系统编码 通用类型 OSRT-{YYYY}-{SEQ:4} 示例：OSRT-2026-0001 每年 0"':
+        - cell "委外管理"
+        - cell "委外退料单号 默认系统编码":
+          - paragraph: 委外退料单号
+          - paragraph: 默认系统编码
+        - cell "通用类型":
+          - generic: 通用类型
+        - 'cell "OSRT-{YYYY}-{SEQ:4} 示例：OSRT-2026-0001"':
+          - paragraph: "OSRT-{YYYY}-{SEQ:4}"
+          - paragraph: 示例：OSRT-2026-0001
+        - cell "每年"
+        - cell "0"
+        - cell:
+          - button "编辑":
+          - button "复制为新规则":
+      - 'row "委外管理 委外对账单号 默认系统编码 通用类型 OSRC-{YYYY}-{SEQ:4} 示例：OSRC-2026-0001 每年 0"':
+        - cell "委外管理"
+        - cell "委外对账单号 默认系统编码":
+          - paragraph: 委外对账单号
+          - paragraph: 默认系统编码
+        - cell "通用类型":
+          - generic: 通用类型
+        - 'cell "OSRC-{YYYY}-{SEQ:4} 示例：OSRC-2026-0001"':
+          - paragraph: "OSRC-{YYYY}-{SEQ:4}"
+          - paragraph: 示例：OSRC-2026-0001
+        - cell "每年"
+        - cell "0"
+        - cell:
+          - button "编辑":
+          - button "复制为新规则":
+      - 'row "委外管理 委外待入库单号 默认系统编码 通用类型 OSPI-{YYYY}-{SEQ:4} 示例：OSPI-2026-0001 每年 0"':
+        - cell "委外管理"
+        - cell "委外待入库单号 默认系统编码":
+          - paragraph: 委外待入库单号
+          - paragraph: 默认系统编码
+        - cell "通用类型":
+          - generic: 通用类型
+        - 'cell "OSPI-{YYYY}-{SEQ:4} 示例：OSPI-2026-0001"':
+          - paragraph: "OSPI-{YYYY}-{SEQ:4}"
+          - paragraph: 示例：OSPI-2026-0001
+        - cell "每年"
+        - cell "0"
+        - cell:
+          - button "编辑":
+          - button "复制为新规则":
+  - text: 共
+  - strong: "60"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button "上一页":
+  - button "1"
+  - button "2"
+  - button "3"
+  - button "4"
+  - button "5"
+  - button "6"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 当前
+- dialog "新增编码规则":
+  - heading "新增编码规则" [level=3]
+  - button "关闭":
+  - generic: 业务模块
+  - textbox "业务模块": 基础资料
+  - generic: 单号
+  - button "单号":
+    - generic "客户编号"
+  - generic: 业务类型
+  - button "业务类型 未配置专属类型时继续匹配通用类型，仍未命中则使用原编号逻辑":
+    - generic "企业客户"
+  - generic: 未配置专属类型时继续匹配通用类型，仍未命中则使用原编号逻辑
+  - generic: 编号组成
+  - button "固定文字 / 分隔符":
+    - generic "固定文字 / 分隔符"
+  - textbox "第 1 项固定文字":
+    - /placeholder: 例如：SO- 或 /
+    - text: C
+  - button "上移" [disabled]:
+  - button "下移":
+  - button "删除":
+  - button "四位年份（2026）":
+    - generic "四位年份（2026）"
+  - generic: 系统自动生成
+  - button "上移":
+  - button "下移":
+  - button "删除":
+  - button "月份（07）":
+    - generic "月份（07）"
+  - generic: 系统自动生成
+  - button "上移":
+  - button "下移":
+  - button "删除":
+  - button "日期（21）":
+    - generic "日期（21）"
+  - generic: 系统自动生成
+  - button "上移":
+  - button "下移":
+  - button "删除":
+  - button "流水号":
+    - generic "流水号"
+  - button "6 位":
+    - generic "6 位"
+  - button "上移":
+  - button "下移" [disabled]:
+  - button "删除":
+  - button "添加组成项":
+    - generic "添加组成项"
+  - generic: 按从左到右的顺序组成最终编号
+  - generic: 流水号重置周期
+  - button "流水号重置周期":
+    - generic "每日"
+  - generic: 示例编号
+  - textbox "示例编号": C20260909000001
+  - generic: 跳码数量
+  - spinbutton "跳码数量 默认0；每个新周期从N+1开始，后续连续递增": "0"
+  - generic: 默认0；每个新周期从N+1开始，后续连续递增
+  - paragraph: 编号预览
+  - paragraph: 示例编号：C20260909000001；当前周期首次流水号为 1
+  - button "取消"
+  - button "新增规则"

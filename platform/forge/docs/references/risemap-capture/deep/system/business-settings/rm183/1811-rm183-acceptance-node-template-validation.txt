@@ -1,0 +1,60 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/sales".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/sales
+	2 container 新增验收节点模板
+		3 heading 新增验收节点模板, Value: 3
+			4 text 新增验收节点模板
+		5 button 关闭
+			6 image
+		7 container
+			8 text 模板名称  *
+			9 text field (settable)
+			57 text 模板名称不能为空 收入确认模式  *
+			11 button 手动 — 由财务手动发起确认，灵活配置节点
+				12 text 手动 — 由财务手动发起确认，灵活配置节点
+			13 text 备注
+			14 text field (settable)
+			15 text 验收节点  *
+			16 button 添加节点
+				17 image
+				18 text 添加节点
+			58 text 验收节点不能为空
+			19 table
+				20 row
+					21 cell
+						22 text #
+					23 cell
+						24 text 节点名称 *
+					25 cell
+						26 text 完成条件
+					27 cell
+						28 text 验收方式
+				29 row
+					30 cell
+						31 text 1
+					32 cell
+						33 text field (settable)
+					34 cell
+						35 text field (settable)
+					36 cell
+						37 button 请选择
+							38 text 请选择
+					41 cell
+						42 button
+							43 image
+				44 row
+					45 cell
+						46 text 2
+					47 cell
+						48 text field (settable)
+					49 cell
+						50 text field (settable)
+					51 cell
+						52 button 请选择
+							53 text 请选择
+					54 cell
+						55 button
+							56 image
+		39 button 取消
+		40 button 保存
+
+The focused UI element is 40 button 保存

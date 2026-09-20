@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_other_outbounds",
+  "archetype": "task_workspace",
+  "checks": {
+    "replication": { "status": "blocked", "notes": "本轮未实时打开 RISEMAP 其他出库页面，缺少当前页面证据。", "evidence": [] },
+    "visual": { "status": "pending", "notes": "列表视图原先同时渲染自绘面包屑与一份独立标题区，已合并为共享 ForgePageHeader（标题 + 说明 + 新建/刷新动作）；新建与编辑子视图的子路径保留。桌面与窄屏截图待内置浏览器恢复。", "evidence": [] },
+    "interaction": { "status": "pending", "notes": "待实际操作：新建其他出库、刷新、筛选、行操作、出库提交与编辑草稿。", "evidence": [] },
+    "business": { "status": "pending", "notes": "出库库存回写与来源关系未在本轮验收；需在同一 SQLite 上跑停服重启回读。", "evidence": [] }
+  }
+}

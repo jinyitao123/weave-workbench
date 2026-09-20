@@ -1,0 +1,189 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 报表
+- button "收起侧边栏":
+- navigation:
+  - button "销售统计":
+    - generic: 销售统计
+  - button "采购统计":
+    - generic: 采购统计
+  - button "库存统计":
+    - generic: 库存统计
+  - button "项目统计":
+    - generic: 项目统计
+  - button "组装统计":
+    - generic: 组装统计
+  - button "财务统计":
+    - generic: 财务统计
+  - button "财务总览":
+    - generic: 财务总览
+  - button "损益分析":
+    - generic: 损益分析
+  - button "资金分析":
+    - generic: 资金分析
+  - button "往来账款":
+    - generic: 往来账款
+  - button "税务库存":
+    - generic: 税务库存
+  - button "风险监控":
+    - generic: 风险监控
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表" [pressed]:
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "成本中心":
+  - generic: 成本中心
+- button "报销管理":
+  - generic: 报销管理
+- button "新建报销":
+  - generic: 新建报销
+- button "对账单":
+  - generic: 对账单
+- button "客户对账单":
+  - generic: 客户对账单
+- button "新建客户对账":
+  - generic: 新建客户对账
+- button "供应商对账单":
+  - generic: 供应商对账单
+- button "新建供应商对账":
+  - generic: 新建供应商对账
+- button "发票总览":
+  - generic: 发票总览
+- button "销项发票":
+  - generic: 销项发票
+- button "进项发票":
+  - generic: 进项发票
+- button "开票任务":
+  - generic: 开票任务
+- button "调整记录":
+  - generic: 调整记录
+- button "销售统计":
+  - generic: 销售统计
+- main:
+  - main:
+    - paragraph: 报表中心
+    - heading "销售统计" [level=1]
+    - paragraph: 销售收入、成本、毛利额与毛利率的多维盈利能力分析。
+    - button "导出报表":
+      - text: 导出报表
+    - navigation "销售报表维度":
+      - button "销售订单"
+      - button "销售合同"
+      - button "线索统计"
+      - button "商机统计"
+      - button "跟进记录"
+      - button "报价统计"
+      - button "客户统计"
+      - button "毛利分析": 毛利分析
+    - text: 筛选条件
+    - textbox:
+      - /placeholder: 搜索商品、销售订单、客户或销售员
+    - combobox:
+      - option "全部维度" [selected]
+      - option "我负责的"
+    - combobox:
+      - option "本月" [selected]
+      - option "本季度"
+      - option "本年度"
+    - button "刷新":
+      - text: 刷新
+    - text: 更新时间：2026/9/9 06:49:13，当前展示 毛利分析 统计数据。
+    - generic: 统计周期 2026-09-01 至 2026-09-30
+    - generic: 销售收入
+    - button "查看销售收入计算说明" [expanded]:
+    - generic: "0.00"
+    - generic: 较上月 --
+    - generic: 销售成本
+    - button "查看销售成本计算说明":
+    - generic: "0.00"
+    - generic: 成本占比 --（仅计已维护成本价明细的收入）
+    - generic: 销售毛利
+    - button "查看销售毛利计算说明":
+    - generic: "0.00"
+    - generic: 较上月 --（仅计已维护成本价明细）
+    - generic: 综合毛利率
+    - button "查看综合毛利率计算说明":
+    - generic: "--"
+    - generic: 高于目标 --
+    - heading "销售收入与毛利趋势" [level=2]
+    - generic: 销售收入
+    - generic: 销售毛利
+    - generic: 销售成本
+    - heading "品类毛利贡献占比" [level=2]
+    - heading "毛利健康度分析" [level=2]
+    - paragraph: 综合毛利率、成本、服务贡献与风险评估
+    - generic: 综合分析
+    - generic: 综合毛利率
+    - generic: 销售毛利 / 销售收入
+    - generic: "--"
+    - generic: 销售成本率
+    - generic: 销售成本 / 已计成本收入（仅计已维护成本价明细）
+    - generic: "--"
+    - generic: 服务毛利贡献
+    - generic: 设计与服务类毛利占比
+    - generic: "--"
+    - generic: 低毛利订单
+    - generic: 毛利率低于目标30%
+    - generic: 0单
+    - generic: 负毛利风险
+    - generic: 销售毛利小于0
+    - generic: 0单
+    - heading "商品毛利贡献排行" [level=2]
+    - paragraph: 按当前统计周期降序排列
+    - generic: TOP 5
+    - heading "客户毛利贡献排行" [level=2]
+    - paragraph: 核心对象贡献度对比
+    - generic: 全量排行
+    - heading "销售员毛利率排行" [level=2]
+    - paragraph: 按当前统计周期降序排列
+    - generic: TOP 5
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2026-09-04
+- dialog [active]:
+  - paragraph: 销售收入
+  - paragraph: 指标口径说明
+  - term: 指标说明
+  - definition: 统计符合“销售收入”业务条件的有效金额合计。
+  - term: 计算方式
+  - definition: 把符合当前状态和时间条件的“销售收入”金额相加
+  - term: 统计范围
+  - definition: 当前页面筛选条件及统计周期
+  - term: 排除规则
+  - definition: 草稿、已取消、已作废记录
+  - term: 数据单位
+  - definition: 人民币元

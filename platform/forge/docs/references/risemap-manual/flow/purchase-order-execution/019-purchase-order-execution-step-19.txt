@@ -1,0 +1,203 @@
+Browser tab: 1347074625, Title: "业务流程 · RiseMap 社区", URL: "https://community.risemap.cn/flow".
+1 AXWebArea 业务流程 · RiseMap 社区, URL: community.risemap.cn/flow
+	2 container
+		3 link Description: RiseMap 社区, Value: community.risemap.cn/
+		4 link Description: 业务流程, Value: community.risemap.cn/flow
+		5 link Description: 教程, Value: community.risemap.cn/tutorials
+		6 link Description: 智能问答, Value: community.risemap.cn/ask
+		7 link Description: 文档, Value: community.risemap.cn/docs
+		8 link Description: 更新日志, Value: community.risemap.cn/changelog
+		9 link Description: 排期计划, Value: community.risemap.cn/roadmap
+		10 link Description: 提交工单, Value: community.risemap.cn/support
+		11 link Description: 实施服务, Value: community.risemap.cn/services
+		12 link Description: 定制软件, Value: community.risemap.cn/custom
+		13 link Description: 搜索, Value: community.risemap.cn/search
+		14 button 切换语言
+		15 button 切换到深色模式
+	16 container
+		146 text 申请部门
+		147 text 采购部门
+		19 text 供应商
+		148 text 仓储 / 收货
+		149 text 质检
+		22 container
+			23 image
+			150 button 📝 1 采购申请 采购申请单 PR
+				151 text 📝
+				152 text 1
+				153 text 采购申请
+				154 text 采购申请单 PR
+			155 button ➕ 2 添加物料明细
+				156 text ➕
+				157 text 2
+				158 text 添加物料明细
+			159 button ⚖️ 3 采购申请审批
+				160 text ⚖️
+				161 text 3
+				162 text 采购申请审批
+			163 button 🗂️ 4 采购代办池 代办池
+				164 text 🗂️
+				165 text 4
+				166 text 采购代办池
+				167 text 代办池
+			168 button 🔗 5 供应商分组分配
+				169 text 🔗
+				170 text 5
+				171 text 供应商分组分配
+			172 button 📋 6 采购订单 采购订单 PO
+				173 text 📋
+				174 text 6
+				175 text 采购订单
+				176 text 采购订单 PO
+			177 button ⚖️ 7 订单审批
+				178 text ⚖️
+				179 text 7
+				180 text 订单审批
+			181 button 💳 8 发起付款
+				182 text 💳
+				183 text 8
+				184 text 发起付款
+			185 button 🚚 9 供应商发货
+				186 text 🚚
+				187 text 9
+				188 text 供应商发货
+			189 button 📥 10 到货登记 到货登记单
+				190 text 📥
+				191 text 10
+				192 text 到货登记
+				193 text 到货登记单
+			194 button 🔀 11 是否需要检验
+				195 text 🔀
+				196 text 11
+				197 text 是否需要检验
+			198 button ✅ 12 免检入库
+				199 text ✅
+				200 text 12
+				201 text 免检入库
+			202 button 🧪 13 待检验库存 待检库存
+				203 text 🧪
+				204 text 13
+				205 text 待检验库存
+				206 text 待检库存
+			207 button 📑 14 检验单 检验单
+				208 text 📑
+				209 text 14
+				210 text 检验单
+				211 text 检验单
+			212 button 🔬 15 质检结果
+				213 text 🔬
+				214 text 15
+				215 text 质检结果
+			216 button ✅ 16 检验合格入库
+				217 text ✅
+				218 text 16
+				219 text 检验合格入库
+			220 button ⚠️ 17 不合格处理
+				221 text ⚠️
+				222 text 17
+				223 text 不合格处理
+			224 button ⛔ 18 拒收退回
+				225 text ⛔
+				226 text 18
+				227 text 拒收退回
+			228 button ⚖️ 19 让步审批
+				229 text ⚖️
+				230 text 19
+				231 text 让步审批
+			232 button 📦 20 让步入库
+				233 text 📦
+				234 text 20
+				235 text 让步入库
+			236 button 🏁 21 入库完成
+				237 text 🏁
+				238 text 21
+				239 text 入库完成
+		59 text 流程目录
+		60 button 收起目录
+		61 container
+			62 text ▾ 采购与供应链
+			63 button 🛒 采购到付款
+				64 text 🛒
+				65 text 采购到付款
+			66 button 🛒 采购订单执行流程
+				67 text 🛒
+				68 text 采购订单执行流程
+			69 text ▾ 销售与收款
+			70 button 💰 销售到收款 示例
+				71 text 💰
+				72 text 销售到收款
+				73 text 示例
+			74 button 💰 销售业财闭环
+				75 text 💰
+				76 text 销售业财闭环
+			77 button 📄 销售合同与销售订单
+				78 text 📄
+				79 text 销售合同与销售订单
+			80 button 🏷️ 价格策略与销售定价机制
+				81 text 🏷️
+				82 text 价格策略与销售定价机制
+			83 text ▾ 财务与费用
+			84 button 🧾 费用报销 示例
+				85 text 🧾
+				86 text 费用报销
+				87 text 示例
+			88 text ▾ 项目与交付
+			89 button 🏗️ 项目创建与管理
+				90 text 🏗️
+				91 text 项目创建与管理
+			92 button ⏱️ 工时成本配置与核算
+				93 text ⏱️
+				94 text 工时成本配置与核算
+			95 text ▾ 仓储与质量
+			96 button 🔖 供应商 SN 码管理
+				97 text 🔖
+				98 text 供应商 SN 码管理
+			99 text ▾ 财务与核算
+			100 button 📈 销售合同收入确认方式
+				101 text 📈
+				102 text 销售合同收入确认方式
+			103 button 📥 应收款来源全景
+				104 text 📥
+				105 text 应收款来源全景
+			106 button 📤 应付款来源全景
+				107 text 📤
+				108 text 应付款来源全景
+		109 text 采购申请审批 → 代办池汇总分配 → 下单审批 / 付款 → 到货 → 免检 / 质检分流 → 合格 / 让步 / 拒收三路裁决入库。
+		110 text 环节详情
+		111 button 收起详情
+		240 text ⚖️ 步骤 19 / 21 采购部门
+		241 heading 让步审批, Value: 3
+			242 text 让步审批
+		243 text 采购 / 质量主管审批（可能价格折让）。
+		244 text 参与角色
+		245 text 采购 / 质量主管
+		246 text 对应单据
+		247 text —
+		248 text 关键校验
+		249 text 通过 → 让步入库
+		122 button 缩小
+		123 text 80 %
+		124 button 放大
+		125 button 适应
+		126 button ▶ 自动演示
+		127 text 滚轮缩放 · 拖动平移 · 点击步骤看详情
+	128 container
+		129 text RiseMap 社区 教程、文档、更新日志与产品排期，集中、清晰、随时可查。 内容
+		130 content list
+			131 link Description: 业务流程, Value: community.risemap.cn/flow
+			132 link Description: 产品教程, Value: community.risemap.cn/tutorials
+			133 link Description: 使用文档, Value: community.risemap.cn/docs
+			134 link Description: 更新日志, Value: community.risemap.cn/changelog
+			135 link Description: 排期计划, Value: community.risemap.cn/roadmap
+		136 text 参与
+		137 content list
+			138 link Description: 提交工单, Value: community.risemap.cn/support
+			139 link Description: 查询工单进度, Value: community.risemap.cn/support/track
+			140 link Description: 全站搜索, Value: community.risemap.cn/search
+		141 text 管理
+		142 content list
+			143 link Description: 管理后台, Value: community.risemap.cn/admin
+		144 text ©  2026  RiseMap.  由管理后台统一发布内容。
+	145 button 智能客服
+
+The focused UI element is 228 button ⚖️ 19 让步审批

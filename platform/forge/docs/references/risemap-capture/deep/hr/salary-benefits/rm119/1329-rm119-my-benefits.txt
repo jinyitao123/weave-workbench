@@ -1,0 +1,161 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/compensation".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/compensation
+	2 container root
+		3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+		4 text 行政
+		5 button 收起侧边栏
+			6 image
+		7 container
+			8 button 审批中心
+				9 image
+				10 text 审批中心
+				11 image
+			12 button 我的审批
+			13 button 抄送我的
+			14 button 我发起的
+			15 button 行政申请
+			16 button 行政管理
+				17 image
+				18 text 行政管理
+				19 image
+			20 button 公司通知
+			21 button 用章管理
+			22 button 会议纪要
+			23 button 工作汇报
+			24 button 文档中心
+			25 button 固定资产
+			26 button 资质与申报
+			27 button 物料领取
+			28 button 设备维护
+			29 button 礼品管理
+			30 button 借出管理
+			31 button 车辆管理
+			32 button 人力资源
+				33 image
+				34 text 人力资源
+				35 image
+			36 button 人事工作台
+			37 button 员工档案
+			38 button 招聘管理
+			39 button 入职离职
+			40 button 薪酬福利
+			41 button 规章制度
+			42 button 通讯录
+			43 button 考勤假期
+				44 image
+				45 text 考勤假期
+				46 image
+			47 button 加班申请
+			48 button 请假管理
+			49 button 出差申请
+			50 button 考勤管理
+			51 button 考勤统计
+			52 button 流程中心
+				53 image
+				54 text 流程中心
+				55 image
+			56 button 审批记录
+			57 button 发起流程
+			58 button 流程定义
+			59 button 流程分类
+		60 image
+		61 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+		62 button 查看方案
+			63 image
+			64 text 查看方案
+		65 button
+			66 image
+		67 container
+			68 container 业务分类
+				69 checkbox 工作台, Value: 0
+				70 checkbox 供应链, Value: 0
+				71 checkbox 销售, Value: 0
+				72 checkbox 生产, Value: 0
+				73 checkbox 项目, Value: 0
+				74 checkbox 行政, Value: 1
+				75 checkbox 财务, Value: 0
+				76 checkbox 报表, Value: 0
+				77 checkbox 系统, Value: 0
+			78 button Description: 展开搜索, Help: 搜索
+				79 image
+			80 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+				81 image
+				82 text 2
+			83 button Description: 打开推广奖励, Help: 推广
+			84 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+			85 link Description: 打开工单, Value: community.risemap.cn/support
+			86 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+				87 image
+				88 text 立即订阅
+			89 button 金
+				90 text 金
+				91 image
+		92 container
+			93 button 工作台
+				94 image
+				95 text 工作台
+			96 button 物料领取
+				97 text 物料领取
+			98 button 设备维护
+				99 text 设备维护
+			100 button 礼品管理
+				101 text 礼品管理
+			102 button 借出管理
+				103 text 借出管理
+			104 button 车辆管理
+				105 text 车辆管理
+			106 button 新建公司用车申请
+				107 text 新建公司用车申请
+			108 button 新建私车公用申请
+				109 text 新建私车公用申请
+			110 button 新增车辆
+				111 text 新增车辆
+			112 button 人事工作台
+				113 text 人事工作台
+			114 button 员工档案
+				115 text 员工档案
+			116 button 招聘管理
+				117 text 招聘管理
+			118 button 候选人详情
+				119 text 候选人详情
+			120 button 入职离职
+				121 text 入职离职
+			122 button 薪酬福利
+				123 text 薪酬福利
+		124 container
+			125 container
+				126 text 人力资源
+				127 image
+				128 text 薪酬福利
+				129 image
+				130 heading 薪酬福利, Value: 1
+					131 text 薪酬福利
+				132 text 工资条、薪酬结构、社保公积金、年终奖与福利计划
+			133 button 隐藏金额
+				172 image
+				135 text 隐藏金额
+			136 radio button 我的薪酬, Value: 1, ID: :r4:-employee
+				137 image
+				138 text 我的薪酬
+			139 radio button 管理后台, Value: 0, ID: :r4:-admin
+				140 image
+				141 text 管理后台
+			142 text - - -  ·  -  ·  -  · 入职  - 本月实发 ¥0.00 本月税前 ¥0.00 年度累计(税前) ¥0.00
+			143 button 薪酬概览
+				144 image
+				145 text 薪酬概览
+			146 button 工资条
+				147 image
+				148 text 工资条
+			149 button 福利明细
+				150 image
+				151 text 福利明细
+			173 text 您的年度福利总价值（估算） ¥0.00 福利发放 :  ¥0.00/年 发放记录 :  0条 固定福利项 :  0项 覆盖类别 :  0类
+			174 image
+			175 text 福利发放记录 累计  ¥0.00
+			176 link Description: 查看全部, Value: risemap.cn/hr/benefits
+			177 text 固定福利项目
+		170 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+		171 container Notifications alt+T
+
+The focused UI element is 149 button 福利明细

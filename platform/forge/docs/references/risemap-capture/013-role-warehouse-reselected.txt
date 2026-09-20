@@ -1,0 +1,90 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/tenant-init".
+0 AXWebArea RiseMap, URL: risemap.cn/tenant-init
+	1 container root
+		2 container
+			3 image
+			4 heading 系统配置, Value: 1
+				5 text 系统配置
+			6 text 完成以下步骤，让系统更好地为您服务
+			44 button 跳过剩余，进入系统
+				45 image
+				46 text 跳过剩余，进入系统
+		9 text 必须项已全部完成 6  /  8
+		39 image
+		10 heading 初始化审批流程, Value: 3
+			11 text 初始化审批流程
+		12 text 必须 已完成
+		40 image
+		18 heading 系统流程表单初始化, Value: 3
+			19 text 系统流程表单初始化
+		20 text 必须 已完成
+		41 image
+		21 heading 自定义字段初始化, Value: 3
+			22 text 自定义字段初始化
+		23 text 必须 已完成
+		42 image
+		24 heading 表单模块配置, Value: 3
+			25 text 表单模块配置
+		26 text 必须 已完成
+		43 image
+		27 heading 初始化通知配置, Value: 3
+			28 text 初始化通知配置
+		29 text 必须 已完成
+		47 image
+		30 heading 初始化财务配置, Value: 3
+			31 text 初始化财务配置
+		32 text 必须 已完成 以下为可选步骤，可跳过 7
+		33 heading 选择预设角色, Value: 3
+			34 text 选择预设角色
+		48 text 勾选需要的角色模板，系统自动创建并分配权限
+		49 button 销售 销售报价、合同、订单、发货及客户管理 254 项权限
+			50 image
+			51 heading 销售, Value: 4
+				52 text 销售
+			53 text 销售报价、合同、订单、发货及客户管理
+			54 container
+				55 text 254  项权限
+		56 button 采购 采购申请、询价、订单及供应商管理 113 项权限
+			57 image
+			58 heading 采购, Value: 4
+				59 text 采购
+			60 text 采购申请、询价、订单及供应商管理
+			61 container
+				62 text 113  项权限
+		63 button 仓库 库存出入库、盘点、调拨及质检 157 项权限
+			64 image
+			65 heading 仓库, Value: 4
+				66 text 仓库
+			67 text 库存出入库、盘点、调拨及质检
+			68 container
+				69 text 157  项权限
+		70 button 财务 应收应付、收付款、费用、发票及对账 176 项权限
+			71 image
+			72 heading 财务, Value: 4
+				73 text 财务
+			74 text 应收应付、收付款、费用、发票及对账
+			75 container
+				76 text 176  项权限
+		77 button 行政/HR 员工管理、考勤假期、公告会议及资产 222 项权限
+			78 image
+			79 heading 行政/HR, Value: 4
+				80 text 行政/HR
+			81 text 员工管理、考勤假期、公告会议及资产
+			82 container
+				83 text 222  项权限
+		84 button 项目经理 项目管理、计划工时、图纸管理 103 项权限
+			85 image
+			86 heading 项目经理, Value: 4
+				87 text 项目经理
+			88 text 项目管理、计划工时、图纸管理
+			89 container
+				90 text 103  项权限
+		91 text 已选  3  个角色
+		92 button 创建选中的角色
+		93 button 跳过
+		35 text 8
+		36 heading 预设业务设置, Value: 3
+			37 text 预设业务设置
+		38 container Notifications alt+T
+
+The focused UI element is 63 button 仓库 库存出入库、盘点、调拨及质检 157 项权限

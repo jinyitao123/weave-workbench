@@ -1,0 +1,299 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 委外未交
+- button:
+  - generic: 委外进货
+- button:
+  - generic: 委外对账单
+- button:
+  - generic: 项目中心
+- button:
+  - generic: 项目分析中心
+- button:
+  - generic: 任务管理
+- button:
+  - generic: 工时管理
+- button:
+  - generic: 快捷工时填报
+- button:
+  - generic: 项目配置中心
+- button:
+  - generic: 新建计划模板
+- button:
+  - generic: 我的审批
+- button:
+  - generic: 抄送我的
+- button:
+  - generic: 我发起的
+- button:
+  - generic: 行政申请
+- main:
+  - generic: 审批中心
+  - generic: 行政申请
+  - heading [level=1]: 行政申请
+  - paragraph: 选择需要办理的事项，填写申请后进入对应审批流程
+  - textbox:
+    - /placeholder: 搜索申请事项或流程名称
+  - tablist:
+    - tab [selected]:
+      - text: 全部申请
+      - generic: "11"
+    - tab:
+      - text: 考勤假期
+      - generic: "5"
+    - tab:
+      - text: 行政事务
+      - generic: "3"
+    - tab:
+      - text: 用车资质
+      - generic: "3"
+    - tab:
+      - text: 其他申请
+      - generic: "0"
+  - heading [level=2]: 考勤假期
+  - generic: 5 项可申请事项
+  - button:
+    - strong: 加班申请
+    - generic: 登记加班时间与补偿方式
+  - button:
+    - strong: 请假申请
+    - generic: 年假、事假、病假等假期
+  - button:
+    - strong: 出差申请
+    - generic: 填写行程与出差计划
+  - button:
+    - strong: 补签申请
+    - generic: 补录异常考勤打卡
+  - button:
+    - strong: 报销申请
+    - generic: 提交员工费用报销
+  - heading [level=2]: 行政事务
+  - generic: 3 项可申请事项
+  - button:
+    - strong: 用章申请
+    - generic: 公章、合同章等用印
+  - button:
+    - strong: 礼品申请
+    - generic: 客户礼赠与内部礼品领用
+  - button:
+    - strong: 物料领取
+    - generic: 办公及行政物料领用
+  - heading [level=2]: 用车资质
+  - generic: 3 项可申请事项
+  - button:
+    - strong: 公司用车
+    - generic: 申请公司车辆与行程
+  - button:
+    - strong: 私车公用
+    - generic: 登记私车公用与预计里程
+  - button:
+    - strong: 资质续期
+    - generic: 证照续期、变更与复审
+- button:
+- region "Notifications alt+T"
+- generic: 周日
+- dialog "提交补签申请":
+  - heading "提交补签申请" [level=2]
+  - paragraph: 填写补签信息
+  - generic: "*"
+  - generic: 考勤日期
+  - textbox "请选择考勤日期" [active]
+  - button:
+  - generic: "*"
+  - generic: 补签类型
+  - radiogroup:
+    - radio "上班补签" [checked]
+    - radio "下班补签"
+    - radio "上下班补签"
+    - radio "外勤补签"
+    - radio "出差补签"
+    - radio "加班补签"
+    - radio "夜班/跨天补签"
+    - radio "排班异常补签"
+    - radio "系统/设备异常补签"
+    - radio "管理员修正补签"
+  - generic: 更正签到时间
+  - textbox "请选择签到时间"
+  - button:
+  - generic: 更正签退时间
+  - textbox "请选择签退时间" [disabled]
+  - button:
+  - generic: "*"
+  - generic: 补签原因
+  - textbox "请详细说明补签原因，如：手机故障、考勤机异常、忘记打卡等..."
+  - paragraph:
+    - text: 提交后将发送至人事部门审批，请确保补签信息真实准确。虚假补签将按公司规章制度处理。
+  - button "取消"
+  - button "提交申请":
+    - text: 提交申请
+  - button "Close":
+    - generic: Close
+- button:
+- button: 2026年 九月
+- button:
+- generic: 日
+- generic: 一
+- generic: 二
+- generic: 三
+- generic: 四
+- generic: 五
+- generic: 六
+- button: "30"
+- button: "31"
+- button: "1"
+- button: "2"
+- button: "3"
+- button: "4"
+- button: "5"
+- button: "6"
+- button: "7"
+- button: "8"
+- button: "9"
+- button: "10"
+- button: "11"
+- button: "12"
+- button: "13"
+- button: "14"
+- button: "15"
+- button: "16"
+- button: "17"
+- button: "18"
+- button: "19"
+- button: "20"
+- button: "21"
+- button: "22"
+- button: "23"
+- button: "24"
+- button: "25"
+- button: "26"
+- button: "27"
+- button: "28"
+- button: "29"
+- button: "30"
+- button: "1"
+- button: "2"
+- button: "3"
+- button: "4"
+- button: "5"
+- button: "6"
+- button: "7"
+- button: "8"
+- button: "9"
+- button: "10"
+- button: 今天
+- button: 清除

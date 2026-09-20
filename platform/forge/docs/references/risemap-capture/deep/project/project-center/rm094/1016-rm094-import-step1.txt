@@ -1,0 +1,222 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/project/list".
+0 AXWebArea RiseMap, URL: risemap.cn/project/list
+	1 container
+		2 container root
+			201 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			202 text 项目
+			203 button 收起侧边栏
+				204 image
+			205 container
+				206 button 项目管理
+					207 image
+					208 text 项目管理
+					209 image
+				210 button 项目中心
+				211 button 项目分析中心
+				212 button 任务管理
+				213 button 工时管理
+				214 button 项目配置中心
+			215 image
+			216 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			217 button 查看方案
+				218 image
+				219 text 查看方案
+			220 button
+				221 image
+			222 container
+				223 container 业务分类
+					224 checkbox 工作台, Value: 0
+					225 checkbox 供应链, Value: 0
+					226 checkbox 销售, Value: 0
+					227 checkbox 生产, Value: 0
+					228 checkbox 项目, Value: 1
+					229 checkbox 行政, Value: 0
+					230 checkbox 财务, Value: 0
+					231 checkbox 报表, Value: 0
+					232 checkbox 系统, Value: 0
+				233 button Description: 展开搜索, Help: 搜索
+					234 image
+				235 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					236 image
+					237 text 2
+				238 button Description: 打开推广奖励, Help: 推广
+				239 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				240 link Description: 打开工单, Value: community.risemap.cn/support
+				241 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					242 image
+					243 text 立即订阅
+				244 button 金
+					245 text 金
+					246 image
+			247 container
+				248 button 工作台
+					249 image
+					250 text 工作台
+				251 button 新建委外订单
+					252 text 新建委外订单
+				253 button 委外发料
+					254 text 委外发料
+				255 button 新建发料单
+					256 text 新建发料单
+				257 button 委外回厂
+					258 text 委外回厂
+				259 button 委外退料
+					260 text 委外退料
+				261 button 新建退料单
+					262 text 新建退料单
+				263 button 委外对账
+					264 text 委外对账
+				265 button 委外供应商
+					266 text 委外供应商
+				267 button 委外库存
+					268 text 委外库存
+				269 button 批次追溯
+					270 text 批次追溯
+				271 button 委外未交
+					272 text 委外未交
+				273 button 委外进货
+					274 text 委外进货
+				275 button 委外对账单
+					276 text 委外对账单
+				277 button 项目中心
+					278 text 项目中心
+			279 container
+				280 text 项目管理
+				281 image
+				282 text 项目中心
+				283 heading 项目中心, Value: 1
+					284 text 项目中心
+				285 button 表格
+					286 image
+					287 text 表格
+				288 button 甘特图
+					289 image
+					290 text 甘特图
+				291 button 项目分析中心
+					292 image
+					293 text 项目分析中心
+				294 button 新建项目
+					295 image
+					296 text 新建项目
+				297 button 全部
+					298 text 全部
+				299 button 待执行
+				300 button 进行中
+				301 button 已暂停
+				302 button 已完工
+				303 button 已结算
+				304 button 已终止
+				305 button 已归档
+				306 button 导入/导出
+					307 image
+					308 text 导入/导出
+					309 image
+				310 text 分组
+				311 button 按状态
+				312 button 按负责人
+				313 button 按进度
+				314 button 按客户
+				315 button 刷新
+					316 image
+				317 button
+					318 image
+				319 button
+					320 image
+				321 button 范围
+					322 image
+					323 text 范围
+					324 image
+				325 image
+				326 text field (settable)
+				327 container 点击清除排序
+					328 image
+					329 text 按 创建时间 降序
+					330 image
+				331 table
+					332 row
+						333 cell
+							334 checkbox (settable, integer) 0
+						335 cell
+							336 text 项目名称
+							337 image
+						338 cell
+							339 text 客户名称
+							340 image
+						341 cell
+							342 text 项目经理
+							343 image
+						344 cell
+							345 text 项目周期
+							346 image
+						347 cell
+							348 text 项目进度
+							349 image
+						350 cell
+							351 text 预计营收
+							352 image
+						353 cell
+							354 text 预算金额
+							355 image
+						356 cell
+							357 text 合同金额
+							358 image
+						359 cell
+							360 text 总成本
+							361 image
+						362 cell
+							363 text 毛利率
+							364 image
+						365 cell
+							366 text 回款率
+							367 image
+						368 cell
+							369 text 创建时间
+							370 image
+						371 cell
+							372 text 操作
+					373 row
+						374 cell
+							375 image
+							376 text 暂无匹配的项目
+				377 text 共  0 条记录 每页
+				378 combo box (collapsed) Value: 10, Secondary Actions: Expand
+					379 text 10
+				380 text 条
+				381 button (disabled) 上一页
+					382 image
+				383 button 1
+				384 button (disabled) 下一页
+					385 image
+				387 container
+					388 heading 导入项目, Value: 2
+						389 text 导入项目
+					390 text Step  1  / 3
+					391 button
+						392 image
+					393 text 导入流程
+					394 content list
+						395 container
+							396 AXListMarker 1. 
+							397 text 上传 Excel 文件（ .xlsx ）
+						398 container
+							399 AXListMarker 2. 
+							400 text 在预览表中为每列指定对应字段
+						401 container
+							402 AXListMarker 3. 
+							403 text 设置数据起始行（默认跳过第 1 行表头）
+						404 container
+							405 AXListMarker 4. 
+							406 text 点击"开始导入"，系统校验并写入数据
+					407 image
+					408 container
+						409 text 拖拽文件到此处，或 点击选择文件
+					410 container
+						411 text 支持  .xlsx  格式
+					412 button 下载模板
+						413 image
+						414 text 下载模板
+					415 button 取消
+			386 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+
+The focused UI element is 0 AXWebArea RiseMap, URL: risemap.cn/project/list

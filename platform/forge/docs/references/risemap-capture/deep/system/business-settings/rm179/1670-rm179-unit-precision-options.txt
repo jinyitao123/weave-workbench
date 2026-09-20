@@ -1,0 +1,19 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/product".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/product
+	2 container 添加计量单位
+		3 heading 添加计量单位, Value: 3
+			4 text 添加计量单位
+		5 button 关闭
+			6 image
+		7 container
+			8 text 单位名称  *
+			9 text field (settable)
+			10 text 数量精度  *
+			11 button 不允许小数
+				12 text 不允许小数
+			13 text 备注
+			14 text field (settable)
+		15 button 取消
+		16 button 添加
+
+The focused UI element is 11 button 不允许小数

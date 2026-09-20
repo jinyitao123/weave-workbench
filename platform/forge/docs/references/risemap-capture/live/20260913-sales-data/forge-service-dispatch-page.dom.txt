@@ -1,0 +1,112 @@
+- region "通知 alt+T"
+- banner:
+  - link "ObjectOS":
+    - /url: /_console/apps/forge
+  - generic "本平台处于预览版，功能可能调整。": 预览版
+  - button "切换侧边栏":
+    - generic: 切换侧边栏
+  - generic: /
+  - button "Forge":
+    - generic: Forge
+  - generic: /
+  - link "页面":
+    - /url: /_console/apps/forge
+  - generic: /
+  - generic: 派工中心
+  - button "搜索…":
+  - button "打开消息中心":
+  - link "在 Studio 中设计":
+    - /url: /_console/studio/forge/interfaces?surface=page:page_service_dispatch
+  - button "帮助与文档":
+  - button "DA":
+    - generic: DA
+- text: 区域
+- list:
+  - button "工作台":
+    - generic: 工作台
+  - button "供应链":
+    - generic: 供应链
+  - button "销售":
+    - generic: 销售
+  - button "生产":
+    - generic: 生产
+  - button "项目":
+    - generic: 项目
+  - button "行政":
+    - generic: 行政
+  - button "财务":
+    - generic: 财务
+  - button "报表":
+    - generic: 报表
+  - button "系统":
+    - generic: 系统
+- button "工作台" [expanded]:
+  - text: 工作台
+- list:
+  - link "工作台":
+    - /url: /_console/apps/forge/page/page_workbench
+    - generic: 工作台
+  - link "待办管理":
+    - /url: /_console/apps/forge/page/page_workbench
+    - generic: 待办管理
+  - link "AI 广场":
+    - /url: /_console/apps/forge/page/page_workspace_recovery_status
+    - generic: AI 广场
+  - link "引导中心":
+    - /url: /_console/apps/forge/page/page_workspace_recovery_status
+    - generic: 引导中心
+- text: 最近使用
+- button "切换侧边栏":
+  - generic: 切换侧边栏
+- main:
+  - main:
+    - button "在 Studio 中编辑":
+    - heading "派工中心" [level=1]
+    - paragraph: 集中处理待分派工单，结合工程师负载、区域与技能完成调度
+    - generic: "25"
+    - strong: 服务管理 / 派工中心
+    - button "服务工单"
+    - button "刷新"
+    - generic: 集中处理待分派工单，结合工程师负载、区域与技能完成调度
+    - heading "派工中心" [level=1]
+    - generic: 待分派工单
+    - generic: "0"
+    - generic: 紧急 / 停机
+    - generic: "0"
+    - generic: 已超时
+    - generic: "0"
+    - generic: 今日新增
+    - generic: "0"
+    - button "待分派 0"
+    - button "派工日历"
+    - button "资源负载"
+    - button "SLA 监控 0"
+    - textbox "工单号 / 客户 / 标题"
+    - button "全部地区"
+    - button "全部类型"
+    - button "全部紧急度"
+    - button "清空筛选"
+    - table:
+      - rowgroup:
+        - row "工单信息 客户信息 服务对象 紧急度 状态 区域 服务工程师 SLA 操作":
+          - columnheader "工单信息"
+          - columnheader "客户信息"
+          - columnheader "服务对象"
+          - columnheader "紧急度"
+          - columnheader "状态"
+          - columnheader "区域"
+          - columnheader "服务工程师"
+          - columnheader "SLA"
+          - columnheader "操作"
+      - rowgroup:
+        - row "WO-FORGE-20260913 苏州澄岳自动化装备有限公司 800型柔性线控制柜 中 服务中 — RISEMAP 对照服务工程师 20260913 — —":
+          - cell "WO-FORGE-20260913"
+          - cell "苏州澄岳自动化装备有限公司"
+          - cell "800型柔性线控制柜"
+          - cell "中"
+          - cell "服务中"
+          - cell "—"
+          - cell "RISEMAP 对照服务工程师 20260913"
+          - cell "—"
+          - cell "—"
+    - generic: 共 1 条记录 每页 20 条 · 1 / 1

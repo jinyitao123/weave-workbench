@@ -1,0 +1,188 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/warehouses".
+1 AXWebArea RiseMap, URL: risemap.cn/base/warehouses
+	2 container root
+		3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+		4 text 供应链
+		5 button 收起侧边栏
+			6 image
+		7 container
+			8 button 到货检验
+				9 image
+				10 text 到货检验
+				11 image
+			12 button 到货通知
+			13 button 到货登记
+			14 button 待检验库存
+			15 button 检验单
+			16 button 检验规则
+			17 button 基础资料
+				18 image
+				19 text 基础资料
+				20 image
+			21 button 物料管理
+			22 button 物料组合
+			23 button BOM管理
+			24 button 综合物料搜索
+			25 button 供应商管理
+			26 button 产品实例追溯
+			27 button 仓库管理
+			28 button 采购管理
+				29 image
+				30 text 采购管理
+				31 image
+			32 button 采购发票
+			33 button 采购申请
+			34 button 采购待办池
+			35 button 询价管理
+			36 button 采购订单
+			37 button 采购退换货
+			38 button 供应商价格本
+			39 button 入库管理
+				40 image
+				41 text 入库管理
+				42 image
+			43 button 全部入库单
+			44 button 采购入库
+			45 button 生产入库
+			46 button 其他入库
+			47 button 期初入库
+			48 button 入库明细
+			49 button 库存管理
+				50 image
+				51 text 库存管理
+				52 image
+			53 button 库存总览
+			54 button 不合格处理
+			55 button 库存流水
+			56 button 库存锁定
+			57 button 库存盘点
+			58 button 调拨与借出
+			59 button 库存预警
+			60 button 报损单
+			61 button SN码管理
+			62 button 出库管理
+				63 image
+				64 text 出库管理
+				65 image
+			66 button 出库单列表
+			67 button 生产出库
+			68 button 其他出库
+			69 button 销售直接出库
+			70 button 待出库发货单
+			71 button 采购退换货出库
+			72 button 出库明细
+		73 image
+		74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+		75 button 查看方案
+			76 image
+			77 text 查看方案
+		78 button
+			79 image
+		80 container
+			81 container 业务分类
+				82 checkbox 工作台, Value: 0
+				83 checkbox 供应链, Value: 1
+				84 checkbox 销售, Value: 0
+				85 checkbox 生产, Value: 0
+				86 checkbox 项目, Value: 0
+				87 checkbox 行政, Value: 0
+				88 checkbox 财务, Value: 0
+				89 checkbox 报表, Value: 0
+				90 checkbox 系统, Value: 0
+			91 button Description: 展开搜索, Help: 搜索
+				92 image
+			93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+				94 image
+				95 text 2
+			96 button Description: 打开推广奖励, Help: 推广
+			97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+			98 link Description: 打开工单, Value: community.risemap.cn/support
+			99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+				100 image
+				101 text 立即订阅
+			102 button 金
+				103 text 金
+				104 image
+		105 container
+			106 button 工作台
+				107 image
+				108 text 工作台
+			109 button 调整记录
+				110 text 调整记录
+			111 button 销售统计
+				112 text 销售统计
+			113 button 采购统计
+				114 text 采购统计
+			115 button 库存统计
+				116 text 库存统计
+			117 button 项目统计
+				118 text 项目统计
+			119 button 组装统计
+				120 text 组装统计
+			121 button 财务总览
+				122 text 财务总览
+			123 button 损益分析
+				124 text 损益分析
+			125 button 资金分析
+				126 text 资金分析
+			127 button 往来账款
+				128 text 往来账款
+			129 button 税务库存
+				130 text 税务库存
+			131 button 风险监控
+				132 text 风险监控
+			133 button 基础配置
+				134 text 基础配置
+			135 button 仓库管理
+				136 text 仓库管理
+		137 container
+			138 container
+				139 text 基础资料
+				140 image
+				141 text 仓库管理
+				142 image
+				143 heading 仓库管理, Value: 1
+					144 text 仓库管理
+				145 text 管理主仓 / 项目仓 / 备品仓，掌握库存、采购、销售全景
+			146 image
+			147 text 总仓库数 0
+			148 image
+			149 text 总库存 SKU 0
+			150 image
+			151 text 库存总量 0
+			152 image
+			153 text 总采购金额 ¥0.00 累计采购入库
+			154 image
+			155 text 预估销售总额 ¥0.00 库存总量趋势 近 12 个月 · 单位：件 0 件
+			156 image
+			157 text +0 件
+			158 image
+			159 container
+				160 text ·  0 件
+			161 text 总采购金额趋势 近 12 个月 · 单位：万元 ¥0万
+			162 image
+			163 text 0.0 万
+			164 image
+			165 container
+				166 text ·  0 万
+			167 heading 仓库列表, Value: 3
+				168 text 仓库列表
+			169 text 0  个
+			170 仓库展示方式
+				171 radio button 卡片, Value: 1, ID: :r4:-card
+					172 image
+					173 text 卡片
+				174 radio button 表格, Value: 0, ID: :r4:-table
+					175 image
+					176 text 表格
+			177 button 新增仓库
+				178 image
+				179 text 新增仓库
+			180 container 仓库类型筛选
+				181 checkbox 全部, Value: 1
+			182 image
+			183 text 暂无仓库数据，点击右上角「新增仓库」创建
+		184 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+		185 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/base/warehouses

@@ -1,0 +1,179 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/finance/loans/new".
+1 AXWebArea RiseMap, URL: risemap.cn/finance/loans/new
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 财务
+			6 button 收起侧边栏
+				7 image
+			8 container
+				181 button 资金管理
+					182 image
+					183 text 资金管理
+					184 image
+				185 button 资金账户
+				186 button 资金流水
+				187 button 应收应付
+				188 button 收款管理
+				189 button 付款管理
+				190 button 退款申请
+				191 button 授信额度管理
+				192 button 借款贷款管理
+				193 button 业务确认
+					194 image
+					195 text 业务确认
+					196 image
+				197 button 销售收入确认
+				198 button 成本中心
+				199 button 费用中心
+				200 button 报销管理
+				201 button 对账单
+					202 image
+					203 text 对账单
+				204 button 发票管理
+					205 image
+					206 text 发票管理
+					207 image
+				208 button 发票总览
+				209 button 销项发票
+				210 button 进项发票
+				211 button 开票任务
+				212 button 调整记录
+			61 image
+			62 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			63 button 查看方案
+				64 image
+				65 text 查看方案
+			66 button
+				67 image
+			68 container
+				69 container 业务分类
+					70 checkbox 工作台, Value: 0
+					71 checkbox 供应链, Value: 0
+					72 checkbox 销售, Value: 0
+					73 checkbox 生产, Value: 0
+					74 checkbox 项目, Value: 0
+					75 checkbox 行政, Value: 0
+					76 checkbox 财务, Value: 1
+					77 checkbox 报表, Value: 0
+					78 checkbox 系统, Value: 0
+				79 button Description: 展开搜索, Help: 搜索
+					80 image
+				81 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					82 image
+					83 text 2
+				84 button Description: 打开推广奖励, Help: 推广
+				85 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				86 link Description: 打开工单, Value: community.risemap.cn/support
+				87 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					88 image
+					89 text 立即订阅
+				90 button 金
+					91 text 金
+					92 image
+			93 container
+				94 button 工作台
+					95 image
+					96 text 工作台
+				119 button 流程定义
+					120 text 流程定义
+				121 button 编辑流程
+					122 text 编辑流程
+				123 button 流程分类
+					124 text 流程分类
+				213 button 资金账户
+					214 text 资金账户
+				215 button 资金流水
+					216 text 资金流水
+				217 button 应收应付
+					218 text 应收应付
+				219 button 收款管理
+					220 text 收款管理
+				221 button 付款管理
+					222 text 付款管理
+				223 button 费用中心
+					224 text 费用中心
+				225 button 新建付款申请
+					226 text 新建付款申请
+				227 button 退款申请
+					228 text 退款申请
+				229 button 授信额度管理
+					230 text 授信额度管理
+				231 button 借款管理
+					232 text 借款管理
+				233 button 新建借款
+					234 text 新建借款
+			235 container
+				236 text 财务管理
+				237 image
+				238 text 借款贷款管理
+				239 image
+				240 text 申请借款
+				241 button
+					242 image
+				243 image
+				244 heading 申请借款/预支, Value: 1
+					245 text 申请借款/预支
+				246 text 填写借款信息，提交审批流程
+				247 button 取消
+				248 button 保存草稿
+					249 image
+					250 text 保存草稿
+				251 button 提交审批
+					252 image
+					253 text 提交审批
+				254 text 借款单号
+				255 text field (settable)
+				256 container
+					257 text * 借款标题/用途
+				258 text field (settable)
+				297 text 借款标题/用途不能为空
+				259 text 用途类别
+				260 button 请选择
+					261 text 请选择
+				262 container
+					263 text * 借款金额
+				264 container
+					265 text ¥
+					266 text field (settable)
+				298 text 借款金额不能为空且需大于0
+				267 container
+					268 text 关联项目
+					269 image
+						270 text ?
+				271 button 选择关联项目...
+					272 text 选择关联项目...
+				273 text 预计归还日期
+				274 container
+					275 text field (settable) 2026年10月8日
+					276 button
+						277 image
+					278 button
+						279 image
+				280 text 备注
+				281 text entry area (settable)
+				282 text 附件上传
+				283 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 image/*、pdf、doc、docx、xls、xlsx 格式，可同时上传多个文件
+					284 image
+					285 text 点击或拖拽文件到此处上传
+					286 text 支持 Ctrl+V 粘贴截图
+					287 text 支持 image/*、pdf、doc、docx、xls、xlsx 格式，可同时上传多个文件
+				288 heading 审批流程, Value: 3
+					289 image
+					290 text 审批流程
+				291 container
+					292 text 开始
+					293 text 审批
+					294 text SINGLE
+					295 text 系统管理员
+					296 text 结束
+			179 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			180 container Notifications alt+T
+				299 content list
+					300 container
+						301 button Close toast
+							302 image
+						303 image
+						304 text 提交失败，请检查必填项，必填项已在表单中标红。
+
+The focused UI element is 251 button 提交审批

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "pageId": "page_purchase_arrival_workspace",
+  "archetype": "task_workspace",
+  "reviewedRevision": "8f4a80bd2951311e9c1390c8fe35daed550f6747",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/purchase-arrival-workspace.page.ts": "15d800a7d5a746a81384f7b4303636c0e07149b62520ab92409a293b6038eb03",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "3d6e283d1c59fc11809c1aa6a66f62195bcfee413f522eae831a8370ae9116e1",
+    "apps/forge-objectstack/src/actions/procurement.action.ts": "829804443cc5e6a77ec21c541ad5bf8c50220974c99bd1191c9119e0add5b54d"
+  },
+  "environment": { "forgeUrl": "http://localhost:4495", "database": "file:.objectstack/supply-procurement-batch1.sqlite", "materials": "ARR-2026-0001" },
+  "checks": {
+    "replication": { "status": "blocked", "notes": "RISEMAP 当前租户无到货数据，同材料结果待复核。", "evidence": ["docs/forge-arrival-registration-page-contract-20260916.md"] },
+    "visual": { "status": "pending", "notes": "桌面表单、详情和 390x844 列表首屏已检查；缺少落盘截图并待独立复核。", "evidence": [] },
+    "interaction": { "status": "pass", "notes": "提交确认、提交反馈、详情状态和下一步入口已操作。", "evidence": ["docs/forge-arrival-registration-page-contract-20260916.md"] },
+    "business": { "status": "pass", "notes": "ARR-2026-0001 生成一条逐物料待检记录。", "evidence": ["apps/forge-objectstack/tests/page-acceptance/supply-receipt-browser-readback-20260916.json"] }
+  },
+  "visualEvidence": { "desktop": { "width": 1440, "height": 900, "evidence": [] }, "narrow": { "width": 390, "height": 844, "evidence": [] }, "reference": [], "populated": [], "empty": [], "form": [], "error": [] },
+  "requirements": [{ "id": "REQ-ARR-001", "status": "pass", "steps": "提交一行采购到货", "expected": "生成待检记录且来源完整", "observed": "到货状态待检验，待检单 PIN-2026-0001 可见", "evidence": ["docs/forge-arrival-registration-page-contract-20260916.md"] }],
+  "review": { "implementer": "Codex /root", "reviewer": "", "reviewedAt": "2026-09-16", "status": "pending", "evidence": [] }
+}

@@ -1,0 +1,103 @@
+Browser tab: 4, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_sales_collection_flow".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_collection_flow
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 收款流水
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_sales_collection_flow
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 收款流水, Value: 1
+				44 text 收款流水
+			45 text 收款资金流水、订单分配与核销前解绑 03 销售业务 / 收款流水
+			46 button 打开开票与结算
+			47 button 刷新
+			48 text 展示收款资金流水 · 手动分配到销售订单 · 核销前可解绑 · 分配后刷新订单回款进度
+			49 heading 收款流水, Value: 1
+				50 text 收款流水
+			51 text 收款流水总额 ¥0.00 0  笔流水 已分配金额 ¥0.00 已关联到订单 未分配金额 ¥0.00 待分配到订单 待分配 0 部分分配 + 待分配笔数
+			52 button 全部 (0)
+				53 text 全部 (
+				54 text 0
+				55 text )
+			56 button 待分配 (0)
+				57 text 待分配 (
+				58 text 0
+				59 text )
+			60 button 部分分配 (0)
+				61 text 部分分配 (
+				62 text 0
+				63 text )
+			64 button 已分配 (0)
+				65 text 已分配 (
+				66 text 0
+				67 text )
+			68 text field (settable) 搜索流水号或订单
+			69 text field (settable) 按对方名称筛选
+			70 text field (settable) 按金额筛选
+			71 pop up button (collapsed) Description: 开始日期, Secondary Actions: Expand
+			72 text ~
+			73 pop up button (collapsed) Description: 结束日期, Secondary Actions: Expand
+			74 button 清空筛选
+			75 table
+				76 row
+					77 cell
+						78 text 流水号
+					79 cell
+						80 text 往来单位/客户
+					81 cell
+						82 text 收款日期
+					83 cell
+						84 text 方式
+					85 cell
+						86 text 收款账户
+					87 cell
+						88 text 收款金额
+					89 cell
+						90 text 已分配 / 未分配
+					91 cell
+						92 text 状态
+					93 cell
+						94 text 操作
+				95 row
+					96 cell
+						97 text ◇
+						98 text 暂无收款流水
+						99 text 登记到账后会在这里按待分配、部分分配和已分配状态跟踪。
+			100 text 共  0  条记录 每页 20 条 · 1 / 1
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_sales_collection_flow

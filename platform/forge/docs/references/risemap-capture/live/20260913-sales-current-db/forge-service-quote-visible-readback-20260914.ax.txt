@@ -1,0 +1,119 @@
+Browser tab: 29, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_service_orders".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_service_orders
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 服务工单
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_service_orders
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 服务工单, Value: 1
+				44 text 服务工单
+			45 text 统一管理客户报修、安装调试、巡检保养、备件更换和有偿服务 21 服务管理 / 服务工单
+			46 button 服务配置
+			47 button 派工中心
+			48 button 新建服务工单
+			49 button 刷新
+			50 text 统一管理客户报修、安装调试、巡检保养、备件更换和有偿服务
+			51 heading 服务工单, Value: 1
+				52 text 服务工单
+			226 text 服务报价单已生成 工单总数 4 待分派 0 待接单 0 服务中 1
+			54 button 工单列表
+			55 button 服务中
+			56 button 已完工
+			57 text field (settable) Description: 搜索服务工单, Value: WO-FLOW-20260913155720
+			58 pop up button (collapsed) Description: 全部类型, Secondary Actions: Expand
+			59 pop up button (collapsed) Description: 全部状态, Secondary Actions: Expand
+			60 button 清空筛选
+			61 table
+				62 row
+					63 cell
+						64 text 工单信息
+					65 cell
+						66 text 客户信息
+					67 cell
+						68 text 服务属性
+					69 cell
+						70 text 质保 / 报价
+					71 cell
+						72 text 状态
+					73 cell
+						74 text 工程师
+					75 cell
+						76 text 时效信息
+					77 cell
+						78 text 操作
+				115 row
+					116 cell
+						117 button WO-FLOW-20260913155720
+						118 text 800型柔性线控制柜现场调试支持
+						119 text PLC 通讯参数复核
+					120 cell
+						121 text 苏州澄岳自动化装备有限公司
+						122 container
+							123 text 周启明  ·  13800002609
+						124 container
+							125 text SO-CONVERT-20260909-001  ·  —
+					126 cell
+						127 text 现场调试支持
+						128 container
+							129 text 上门服务  ·  中
+						130 text 苏州澄岳自动化装备有限公司现场
+					131 cell
+						132 text 在保
+						133 container
+							134 text 2026-09-10  至  2027-09-10
+						135 text 已生成服务报价
+					136 cell
+						137 container
+							138 text 已完工
+						139 container
+							140 text 下一步： 客户确认服务报价
+					141 cell
+						142 text 售后工程师-苏州现场支持
+						143 text 派给苏州现场支持工程师处理
+					144 cell
+						145 text 2026-09-15
+						146 container
+							147 text SLA  —
+					148 cell
+						149 container
+							230 text 已生成报价 已生成结算
+							229 button 生成质保
+			225 text 共  1  条记录 每页 20 条 · 1 / 1
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_service_orders

@@ -1,0 +1,216 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/inventory/arrival".
+1 AXWebArea RiseMap, URL: risemap.cn/inventory/arrival
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				93 button 到货检验
+					94 image
+					95 text 到货检验
+					96 image
+				97 button 到货通知
+				98 button 到货登记
+				99 button 待检验库存
+				100 button 检验单
+				101 button 检验规则
+				102 button 基础资料
+					103 image
+					104 text 基础资料
+					105 image
+				106 button
+				107 button
+				108 button
+				109 button
+				110 button
+				111 button
+				112 button
+				113 button 采购管理
+					114 image
+					115 text 采购管理
+					116 image
+				117 button
+				118 button
+				119 button
+				120 button
+				121 button
+				122 button
+				123 button
+				124 button 入库管理
+					125 image
+					126 text 入库管理
+					127 image
+				128 button
+				129 button
+				130 button
+				131 button
+				132 button
+				133 button
+				134 button 库存管理
+					135 image
+					136 text 库存管理
+					137 image
+				138 button
+				139 button
+				140 button
+				141 button
+				142 button
+				143 button
+				144 button
+				145 button
+				146 button
+				147 button
+				148 button 出库管理
+					149 image
+					150 text 出库管理
+					151 image
+				152 button
+				153 button
+				154 button
+				155 button
+				156 button
+				157 button
+				158 button
+			17 container
+				159 container 业务分类
+					160 container
+						161 checkbox 工作台, Value: 0
+						162 checkbox 供应链, Value: 1
+						163 checkbox 销售, Value: 0
+						164 checkbox 生产, Value: 0
+						165 checkbox 项目, Value: 0
+						166 checkbox 行政, Value: 0
+						167 checkbox 财务, Value: 0
+						168 checkbox 报表, Value: 0
+						169 checkbox 系统, Value: 0
+				28 button Description: 展开搜索, Help: 搜索
+					29 image
+				30 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+					31 image
+					170 text 20
+				32 button Description: 打开推广奖励, Help: 推广
+				33 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				34 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				171 button 立即订阅
+					172 image
+				35 button 金
+					173 text 金
+					36 image
+			37 container
+				38 button 工作台
+					39 image
+					174 text 工作台
+				40 button 采购订单
+					175 text 采购订单
+				41 button 销售订单
+					176 text 销售订单
+				42 button 组装单
+					177 text 组装单
+				43 button 工作台
+					178 text 工作台
+				44 button 领料单
+					179 text 领料单
+				45 button 补料单
+					180 text 补料单
+				46 button 退料单
+					181 text 退料单
+				47 button 拆解单
+					182 text 拆解单
+				48 button 换件单
+					183 text 换件单
+				49 button 到货登记
+					184 text 到货登记
+				50 button 待检验库存
+					185 text 待检验库存
+				51 button 检验单
+					186 text 检验单
+				52 button 采购入库
+					187 text 采购入库
+				53 button 采购退货
+					188 text 采购退货
+			54 container
+				55 container
+					189 text 到货检验
+					56 image
+					190 text 到货登记
+					57 image
+					58 heading 到货登记, Value: 1
+						191 text 到货登记
+					192 text 登记到货物料，进入待检或免检流程
+					59 button 下一步操作 待检验库存, Help: 前往到货检验 · 待检验库存
+						193 text 下一步操作
+						194 text 待检验库存
+						60 image
+				61 button 订单明细
+					62 image
+					195 text 订单明细
+				63 button 物料明细
+					64 image
+					196 text 物料明细
+				65 button 新建到货登记
+					66 image
+					197 text 新建到货登记
+				67 button 导出
+					68 image
+					198 text 导出
+					69 image
+				70 button 导入/导出任务
+				71 button 刷新
+					72 image
+				73 button
+					74 image
+				75 button
+					76 image
+				77 image
+				78 text field (settable)
+				79 button 状态
+					80 image
+					199 text 状态
+					81 image
+				82 button 类型
+					83 image
+					200 text 类型
+					84 image
+				85 table
+					86 row
+						87 cell
+							88 checkbox (settable, integer) 0
+						201 cell
+							202 text 到货单号
+							203 image
+						204 cell
+							205 text 类型
+						206 cell
+							207 text 到货日期
+							208 image
+						209 cell
+							210 text 仓库
+						211 cell
+							212 text 对方
+						213 cell
+							214 text 关联单号
+						215 cell
+							216 text 物料种类数量
+							217 image
+						218 cell
+							219 text 含税金额
+							220 image
+						221 cell
+							222 text 状态
+						223 cell
+							224 text 操作
+				225 text 共  0 条记录 每页
+				89 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					226 text 20
+				227 text 条
+				228 button (disabled) 上一页
+					229 image
+				90 button 1
+				230 button (disabled) 下一页
+					231 image
+			91 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			92 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/inventory/arrival

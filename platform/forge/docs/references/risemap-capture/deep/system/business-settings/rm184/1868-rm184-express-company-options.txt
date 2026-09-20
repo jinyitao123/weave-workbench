@@ -1,0 +1,38 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/settings/business/inventory".
+1 AXWebArea RiseMap, URL: risemap.cn/settings/business/inventory
+	2 container 新增快递公司
+		3 heading 新增快递公司, Value: 3
+			4 text 新增快递公司
+		5 button 关闭
+			6 image
+		7 container
+			8 text 快递公司  *
+			9 button 输入公司名称或编码搜索...
+				10 text 输入公司名称或编码搜索...
+				11 image
+			12 container
+				13 image
+				14 text field (settable)
+				15 text 请输入关键词搜索快递公司
+			16 text 描述
+			17 text field (settable)
+			18 text 标识颜色
+			19 button
+			20 button
+			21 button
+			22 button
+			23 button
+			24 button
+			25 button
+			26 button
+			27 button
+			28 button
+			29 button
+			30 button
+			31 text 预览
+			32 image
+			33 text 公司名称 CODE
+		34 button 取消
+		35 button 添加
+
+The focused UI element is 14 text field (settable)

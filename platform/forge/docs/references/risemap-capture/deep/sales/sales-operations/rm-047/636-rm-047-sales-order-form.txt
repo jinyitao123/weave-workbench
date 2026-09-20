@@ -1,0 +1,331 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/sales/orders/new".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/orders/new
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 销售
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 销售业务
+					10 image
+					11 text 销售业务
+					12 image
+				13 button 框架销售合同
+				14 button 销售订单
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+			36 image
+			37 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			38 button 查看方案
+				39 image
+				247 text 查看方案
+			40 button
+				41 image
+			42 container
+				43 container 业务分类
+					44 checkbox 工作台, Value: 0
+					45 checkbox 供应链, Value: 0
+					46 checkbox 销售, Value: 1
+					47 checkbox 生产, Value: 0
+					48 checkbox 项目, Value: 0
+					49 checkbox 行政, Value: 0
+					50 checkbox 财务, Value: 0
+					51 checkbox 报表, Value: 0
+					52 checkbox 系统, Value: 0
+				53 button Description: 展开搜索, Help: 搜索
+					54 image
+				55 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					56 image
+					57 text 2
+				58 button Description: 打开推广奖励, Help: 推广
+				59 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				60 link Description: 打开工单, Value: community.risemap.cn/support
+				61 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					62 image
+					63 text 立即订阅
+				64 button 金
+					65 text 金
+					66 image
+			67 container
+				68 button 工作台
+					69 image
+					70 text 工作台
+				73 button 新建报损
+					74 text 新建报损
+				75 button SN管理
+					76 text SN管理
+				77 button 出库单列表
+					78 text 出库单列表
+				79 button 生产出库
+					80 text 生产出库
+				81 button 其他出库
+					82 text 其他出库
+				83 button 新建出库单
+					84 text 新建出库单
+				85 button 销售直接出库
+					86 text 销售直接出库
+				87 button 待出库发货单
+					88 text 待出库发货单
+				89 button 采购退换货出库
+					90 text 采购退换货出库
+				91 button 出库明细
+					92 text 出库明细
+				93 button 框架销售合同
+					94 text 框架销售合同
+				95 button 新建合同
+					96 text 新建合同
+				97 button 销售订单
+					98 text 销售订单
+				248 button 新建销售订单
+					249 text 新建销售订单
+			250 container
+				251 text 销售管理
+				252 image
+				253 text 销售订单
+				254 image
+				255 text 新建订单
+				256 button
+					257 image
+				258 text 直接新建 草稿
+				259 heading 新建销售订单, Value: 1
+					260 text 新建销售订单
+				261 image
+				262 text 订单来源 · 决定订单与合同关系和统计口径
+				263 button 直接新建 独立订单，不关联合同。适用于普通成交、一次性业务。
+					264 image
+					265 text 直接新建
+					266 image
+					267 text 独立订单，不关联合同。适用于普通成交、一次性业务。
+				268 button 关联合同 关联已签订合同，引用其价格/账期/规则。若合同约定总金额或单品数量上限，超出时订单进入审批。
+					269 image
+					270 text 关联合同
+					271 text 关联已签订合同，引用其价格/账期/规则。若合同约定总金额或单品数量上限，超出时订单进入审批。
+				272 button 订单基本信息 0/8
+					273 text 订单基本信息
+					274 image
+					275 text 0
+					276 text /
+					277 text 8
+				278 text 订单名称
+				279 text field (settable)
+				280 text 客户单号
+				281 text field (settable)
+				282 container
+					283 text * 客户
+				284 button 搜索客户名称...
+					285 text 搜索客户名称...
+				286 text 客户联系人
+				287 text 请先选择客户
+				288 button (disabled) 新增联系人
+					289 image
+				290 text 联系电话
+				291 text field (settable)
+				292 container
+					293 text * 计划交货日期
+				294 container
+					295 text field (settable)
+					296 button
+						297 image
+				298 text 收货地址
+				299 button (disabled) 请先选择客户
+					300 text 请先选择客户
+				301 button (disabled) 新增收货地址
+					302 image
+				303 text 备注
+				304 text entry area (settable)
+				305 text 公司账户
+				306 button 搜索允许打印的公司账户...
+					307 text 搜索允许打印的公司账户...
+				308 image
+				309 text 销售人员 · 负责人承担订单业绩，协同销售参与订单协作
+				310 container
+					311 text 负责人  *
+				312 button (disabled) 金一涛（当前下单人）
+					313 text 金一涛（当前下单人）
+				314 text 默认当前下单人，也可从客户主负责人或协同销售中选择。
+				315 text 协同销售 已选  0  人
+				316 button (disabled) 请先选择客户
+					317 text 请先选择客户
+				318 text 默认带出客户档案中的协同销售，可按本订单增减。
+				319 image
+				320 text 物料明细 已添加  0  项
+				321 button 列设置
+					322 image
+					323 text 列设置
+				324 button 添加行
+					325 image
+					326 text 添加行
+				327 button (disabled) 从特价, Help: 从该客户的特价申请中引入（可重复引入多份；已存在非特价行时需先清空）
+					328 image
+					329 text 从特价
+				330 button (disabled) 从报价单, Help: 从该客户的报价单中引入
+					331 image
+					332 text 从报价单
+				333 button 粘贴导入, Help: 粘贴表格数据
+					334 image
+					335 text 粘贴导入
+				336 button Excel 导入, Help: Excel 文件导入
+					337 image
+					338 text Excel 导入
+				339 button 物料主数据, Help: 从物料主数据挑选
+					340 image
+					341 text 物料主数据
+				342 button 组合物料, Help: 从组合物料中选择
+					343 image
+					344 text 组合物料
+				345 container
+					346 image
+					347 text 可单击「添加行」后在物料名称单元格中弹窗选择物料/规格；或从特价 / 报价单 / 组合物料 / 粘贴 / Excel 批量引入
+				348 image
+				349 text 已选  0  /  0  项
+				350 button (disabled) 批量数量
+					351 image
+					352 text 批量数量
+				353 button (disabled) 批量单价
+					354 image
+					355 text 批量单价
+				356 button (disabled) 批量税率
+					357 image
+					358 text 批量税率
+				359 button (disabled) 批量折扣
+					360 image
+					361 text 批量折扣
+				362 button (disabled) 批量删除
+					363 image
+					364 text 批量删除
+				365 button (disabled) 全选
+					366 image
+					367 text 全选
+				368 button (disabled) 取消选择
+					369 image
+					370 text 取消选择
+				371 table
+					372 row
+						373 cell
+							374 checkbox (settable, integer) 0
+						375 cell
+							376 text 编码
+						377 cell
+							378 text 物料名称 *
+						379 cell
+							380 text 规格 *
+						381 cell
+							382 text 型号 *
+						383 cell
+							384 text 分类 *
+						385 cell
+							386 text 单位 *
+						387 cell SRM 跨仓汇总账面数量
+							388 text 当前库存
+						389 cell SRM 跨仓汇总可用库存
+							390 text 可用库存
+						391 cell
+							392 text 数量 *
+						393 cell
+							394 text 含税单价 *
+						395 cell
+							396 text 不含税单价 *
+						397 cell
+							398 text 税率 *
+						399 cell
+							400 text 折扣%
+						401 cell
+							402 text 未税金额
+						403 cell
+							404 text 折后含税小计
+						405 cell
+							406 text 备注
+						407 cell
+							408 text 操作
+					409 row
+						410 cell
+							411 image
+							412 text 尚未添加物料
+							413 text 点击上方「添加行」后在单元格弹窗中选择物料/规格，或「从特价 / 报价单 / 组合物料 / 粘贴 / Excel」批量引入
+							414 button 添加第一行
+								415 image
+								416 text 添加第一行
+				417 text 有效明细  0  项 含税总价 ¥ 0.00 折扣金额 -¥ 0.00 未税金额 ¥ 0.00 折扣后含税总额 ¥ 0.00
+				418 button 附加费用
+					419 heading 附加费用, Value: 3
+						420 image
+						421 text 附加费用
+				422 button 添加费用
+					423 image
+					424 text 添加费用
+				425 button
+					426 image
+				427 image
+				428 text 暂无附加费用
+				429 button + 添加费用
+				430 image
+				431 text 付款与结算 使用授信额度
+				432 text 启用后订单金额将占用客户授信额度，按约定账期结算
+				433 button
+				434 container
+					435 text 付款条件  *
+				436 button 请选择付款条件
+					437 text 请选择付款条件
+				438 container
+					439 text 付款方式  *
+				468 button 银行转账
+				469 button 支付宝
+				470 button 微信支付
+				471 button 现金
+				472 button 支票
+				473 button 其他
+				474 button 电汇
+				475 button 承兑汇票
+				476 button 在线支付
+				477 button 信用证
+				441 image
+				442 text 收入确认方式
+				443 container
+					444 text 触发方式  *
+				445 button 按发货出库
+					446 text 按发货出库
+				447 text 发货出库后自动确认收入
+				448 text 按发货出库：仅保存触发方式，不维护收入确认明细行。
+				449 text 4
+				450 heading 附件, Value: 3
+					451 text 附件
+				452 text (选填)
+				453 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+					454 image
+					455 text 点击或拖拽文件到此处上传
+					456 text 支持 Ctrl+V 粘贴截图
+					457 text 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+				458 text 商品折后金额 ¥ 0.00 （ 已优惠 ¥0.00 ） 客户承担附加费 ¥ 0.00 公司承担附加费 ¥ 0.00 订单金额 ¥ 0.00
+				459 button 预览
+					460 image
+					461 text 预览
+				462 button 保存
+					463 image
+					464 text 保存
+				465 button 提交
+					466 image
+					467 text 提交
+			245 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			246 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/sales/orders/new

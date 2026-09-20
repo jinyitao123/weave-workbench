@@ -1,0 +1,267 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 系统
+- button "收起侧边栏":
+- navigation:
+  - button "系统设置":
+    - generic: 系统设置
+  - button "基础配置":
+    - generic: 基础配置
+  - button "用户与角色":
+    - generic: 用户与角色
+  - button "部门管理":
+    - generic: 部门管理
+  - button "用户会话":
+    - generic: 用户会话
+  - button "审计日志":
+    - generic: 审计日志
+  - button "业务设置":
+    - generic: 业务设置
+  - button "商品管理":
+    - generic: 商品管理
+  - button "财务配置":
+    - generic: 财务配置
+  - button "行政管理":
+    - generic: 行政管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "采购销售":
+    - generic: 采购销售
+  - button "库存管理":
+    - generic: 库存管理
+  - button "其他配置":
+    - generic: 其他配置
+  - button "人事配置":
+    - generic: 人事配置
+  - button "项目管理":
+    - generic: 项目管理
+  - button "图纸配置":
+    - generic: 图纸配置
+  - button "生产配置":
+    - generic: 生产配置
+  - button "委外配置":
+    - generic: 委外配置
+  - button "单据打印":
+    - generic: 单据打印
+  - button "插件中心":
+    - generic: 插件中心
+  - button "服务订阅":
+    - generic: 服务订阅
+  - button "推广奖励":
+    - generic: 推广奖励
+  - button "字段管理":
+    - generic: 字段管理
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统" [pressed]:
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "开票任务":
+  - generic: 开票任务
+- button "调整记录":
+  - generic: 调整记录
+- button "销售统计":
+  - generic: 销售统计
+- button "采购统计":
+  - generic: 采购统计
+- button "库存统计":
+  - generic: 库存统计
+- button "项目统计":
+  - generic: 项目统计
+- button "组装统计":
+  - generic: 组装统计
+- button "财务总览":
+  - generic: 财务总览
+- button "损益分析":
+  - generic: 损益分析
+- button "资金分析":
+  - generic: 资金分析
+- button "往来账款":
+  - generic: 往来账款
+- button "税务库存":
+  - generic: 税务库存
+- button "风险监控":
+  - generic: 风险监控
+- button "基础配置":
+  - generic: 基础配置
+- main:
+  - generic: 系统设置
+  - heading "系统设置" [level=1]
+  - button "收起设置导航" [expanded]:
+  - button "企业信息 管理企业基本信息、Logo等":
+    - paragraph: 企业信息
+    - paragraph: 管理企业基本信息、Logo等
+  - button "编码管理 业务编号生成与校验规则":
+    - paragraph: 编码管理
+    - paragraph: 业务编号生成与校验规则
+  - button "通知设置 配置系统通知和提醒规则":
+    - paragraph: 通知设置
+    - paragraph: 配置系统通知和提醒规则
+  - button "邮件配置 配置 SMTP 服务器，可选，不配置则使用官方邮件服务":
+    - paragraph: 邮件配置
+    - paragraph: 配置 SMTP 服务器，可选，不配置则使用官方邮件服务
+  - button "收件邮箱 配置进项发票收件邮箱和可见范围":
+    - paragraph: 收件邮箱
+    - paragraph: 配置进项发票收件邮箱和可见范围
+  - button "数据管理 数据备份、导入导出设置":
+    - paragraph: 数据管理
+    - paragraph: 数据备份、导入导出设置
+  - button "外观定制 自定义系统主题和界面":
+    - paragraph: 外观定制
+    - paragraph: 自定义系统主题和界面
+  - button "功能模块 启用/隐藏侧边栏模块菜单":
+    - paragraph: 功能模块
+    - paragraph: 启用/隐藏侧边栏模块菜单
+  - button "热键管理 自定义全局快捷键，提升操作效率":
+    - paragraph: 热键管理
+    - paragraph: 自定义全局快捷键，提升操作效率
+  - heading "通知设置" [level=3]
+  - paragraph: 配置通知渠道和各业务模块的通知规则
+  - heading "通知渠道" [level=4]
+  - generic: 站内信
+  - switch [checked]
+  - paragraph: 系统内部消息推送，登录后可在通知中心查看
+  - generic: 邮件
+  - switch
+  - paragraph: 通过企业邮箱发送通知邮件
+  - generic: 企业微信
+  - switch
+  - paragraph: 通过企业微信应用推送通知（需对接企业微信API）
+  - generic: 飞书机器人
+  - switch
+  - paragraph: 通过飞书机器人推送通知（需对接飞书API）
+  - generic: 钉钉
+  - switch
+  - paragraph: 通过钉钉工作通知推送消息（需对接钉钉API）
+  - heading "通知规则" [level=4]
+  - textbox "搜索通知规则":
+    - /placeholder: 搜索模块、事件名称或触发说明
+  - button "全部模块":
+    - generic "全部模块"
+  - table:
+    - rowgroup:
+      - row "模块 事件 批量切换站内信 站内信 启用":
+        - columnheader "模块": 模块
+        - columnheader "事件": 事件
+        - columnheader "批量切换站内信 站内信":
+          - button "批量切换站内信":
+          - generic: 站内信
+        - columnheader "启用":
+          - switch [checked]
+          - generic: 启用
+    - rowgroup:
+      - row "流程中心 流程已反审核 流程反审核完成时触发":
+        - cell "流程中心"
+        - cell "流程已反审核 流程反审核完成时触发":
+          - text: 流程已反审核
+          - paragraph: 流程反审核完成时触发
+        - cell:
+          - button:
+        - cell:
+          - switch [checked]
+      - row "流程中心 流程审批驳回 流程审批驳回时触发":
+        - cell "流程中心"
+        - cell "流程审批驳回 流程审批驳回时触发":
+          - text: 流程审批驳回
+          - paragraph: 流程审批驳回时触发
+        - cell:
+          - button:
+        - cell:
+          - switch [checked]
+      - row "流程中心 流程审批通过 流程审批通过时触发":
+        - cell "流程中心"
+        - cell "流程审批通过 流程审批通过时触发":
+          - text: 流程审批通过
+          - paragraph: 流程审批通过时触发
+        - cell:
+          - button:
+        - cell:
+          - switch [checked]
+      - row "流程中心 流程超期 流程实例整体超过预期完成时间时触发":
+        - cell "流程中心"
+        - cell "流程超期 流程实例整体超过预期完成时间时触发":
+          - text: 流程超期
+          - paragraph: 流程实例整体超过预期完成时间时触发
+        - cell:
+          - button:
+        - cell:
+          - switch [checked]
+      - row "流程中心 任务转办 审批任务被转交给其他人处理时触发":
+        - cell "流程中心"
+        - cell "任务转办 审批任务被转交给其他人处理时触发":
+          - text: 任务转办
+          - paragraph: 审批任务被转交给其他人处理时触发
+        - cell:
+          - button:
+        - cell:
+          - switch [checked]
+      - row "流程中心 任务超时 审批任务超过截止时间未处理时触发":
+        - cell "流程中心"
+        - cell "任务超时 审批任务超过截止时间未处理时触发":
+          - text: 任务超时
+          - paragraph: 审批任务超过截止时间未处理时触发
+        - cell:
+          - button:
+        - cell:
+          - switch [checked]
+      - row "流程中心 任务催办 发起人催促审批人处理任务时触发":
+        - cell "流程中心"
+        - cell "任务催办 发起人催促审批人处理任务时触发":
+          - text: 任务催办
+          - paragraph: 发起人催促审批人处理任务时触发
+        - cell:
+          - button:
+        - cell:
+          - switch [checked]
+  - text: 共
+  - strong: "77"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "10"
+  - generic: 条
+  - button "上一页":
+  - button "1"
+  - generic: ...
+  - button "4"
+  - button "5"
+  - button "6"
+  - button "7"
+  - button "8"
+  - button "下一页" [disabled]:
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 当前

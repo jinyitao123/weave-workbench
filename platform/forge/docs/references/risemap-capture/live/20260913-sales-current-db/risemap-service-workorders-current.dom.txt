@@ -1,0 +1,209 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/after-sales/orders".
+0 AXWebArea RiseMap, URL: risemap.cn/after-sales/orders
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 销售
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 销售业务
+					9 image
+					10 text 销售业务
+					11 image
+				12 button 框架销售合同
+				13 button 销售订单
+				14 button 附加费用
+				15 button 收款流水
+				16 button 销售发货单
+				17 button 销售退货
+				18 button 业绩银行
+				19 button 价格策略
+				20 button Goodwill订单
+				21 button 销售团队
+				22 button 销售目标
+				23 button 销售发票
+				24 button CRM客户管理
+					25 image
+					26 text CRM客户管理
+					27 image
+				28 button 客户管理
+				29 button 联系人管理
+				30 button 销售报价
+				31 button 客户物料对照
+				32 button 商机管理
+				33 button 线索管理
+				34 button 跟进记录
+				35 button 公海客户
+				36 button 服务管理
+					37 image
+					38 text 服务管理
+					39 image
+				40 button 服务工单
+				41 button 服务报价单
+				42 button 服务结算单
+				43 button 接单中心
+				44 button 派工中心
+				45 button 服务分析
+				46 button 质保管理
+				47 button 服务配置
+			48 image
+			49 text 免费试用中，还剩 9 天 — 试用期间享全部功能
+			50 button 查看方案
+				51 image
+				52 text 查看方案
+			53 button
+				54 image
+			55 container
+				56 container 业务分类
+					57 container
+						58 checkbox 工作台, Value: 0
+						59 checkbox 供应链, Value: 0
+						60 checkbox 销售, Value: 1
+						61 checkbox 生产, Value: 0
+						62 checkbox 项目, Value: 0
+						63 checkbox 行政, Value: 0
+						64 checkbox 财务, Value: 0
+						65 checkbox 报表, Value: 0
+						66 checkbox 系统, Value: 0
+				67 button Description: 展开搜索, Help: 搜索
+					68 image
+				69 button (collapsed) Description: 通知，18 条未读, Secondary Actions: Expand
+					70 image
+					71 text 18
+				72 button Description: 打开推广奖励, Help: 推广
+				73 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				74 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+				75 button 立即订阅, Help: 试用还剩 9 天 · 立即订阅享专属优惠
+					76 image
+					77 text 立即订阅
+				78 button 金
+					79 text 金
+					80 image
+			81 container
+				82 button 工作台
+					83 image
+					84 text 工作台
+				101 button 服务工单详情
+					102 text 服务工单详情
+				103 button 销售团队
+					104 text 销售团队
+				105 button 销售目标
+					106 text 销售目标
+				107 button 工作台
+					108 text 工作台
+				109 button Goodwill订单
+					110 text Goodwill订单
+				111 button Goodwill订单详情
+					112 text Goodwill订单详情
+				203 button 框架销售合同
+					204 text 框架销售合同
+				205 button 销售订单
+					206 text 销售订单
+				207 button 销售发货单
+					208 text 销售发货单
+				209 button 销售发票
+					210 text 销售发票
+				211 button 收款流水
+					212 text 收款流水
+				213 button 业绩银行
+					214 text 业绩银行
+				215 button 销售报价
+					216 text 销售报价
+				217 button 服务工单
+					218 text 服务工单
+			219 container
+				220 container
+					221 text 服务管理
+					222 image
+					223 text 服务工单
+					224 image
+					225 heading 服务工单, Value: 1
+						226 text 服务工单
+					227 text 统一管理客户报修、安装调试、巡检保养、备件更换和有偿服务
+					228 button 下一步操作 派工中心, Help: 前往服务管理 · 派工中心
+						229 text 下一步操作
+						230 text 派工中心
+						231 image
+				232 image
+				233 text field (settable)
+				234 button 全部类型
+					235 text 全部类型
+				236 button 全部紧急度
+					237 text 全部紧急度
+				238 button 全部状态
+					239 text 全部状态
+				240 text 共  1  单
+				241 button 新建服务工单
+					242 image
+					243 text 新建服务工单
+				244 button
+					245 image
+				246 button 刷新
+					247 image
+				248 button
+					249 image
+				250 button
+					251 image
+				252 table
+					253 row
+						254 cell
+							255 checkbox (settable, integer) 0
+						256 cell
+							257 text 工单信息
+							258 image
+						259 cell
+							260 text 客户信息
+							261 image
+						262 cell
+							263 text 服务对象
+						264 cell
+							265 text 服务属性
+						266 cell
+							267 text 状态
+						268 cell
+							269 text 负责人
+							270 image
+						271 cell
+							272 text 时效信息
+							273 image
+						274 cell
+							275 text 操作
+					276 row
+						277 cell
+							278 checkbox (settable, integer) 0
+						279 cell
+							280 text WO-2026-0001
+							281 text RISEMAP 对照服务工单 20260913
+						282 cell
+							283 text 苏州澄岳自动化装备有限公司
+							284 image
+							285 text 周启明
+						286 cell
+							287 text （整单服务 / 未指定产品）
+						288 cell
+							289 text RISEMAP 对照服务类型 20260913 中 未配置质保
+						290 cell
+							291 text 服务中
+						292 cell
+							293 text RISEMAP 对照服务工程师 20260913
+						294 cell
+							295 text 09-13 21:55
+							296 container
+								297 text 响应  0 分
+						298 cell
+							299 button 查看工单
+								300 image
+				301 text 共  1 条工单 每页
+				302 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					303 text 20
+				304 text 条
+				305 button (disabled) 上一页
+					306 image
+				307 button 1
+				308 button (disabled) 下一页
+					309 image
+			201 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+			202 container Notifications alt+T
+
+The focused UI element is 40 button 服务工单

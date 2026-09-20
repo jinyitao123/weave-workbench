@@ -1,0 +1,299 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/purchase/requests/new".
+1 AXWebArea RiseMap, URL: risemap.cn/purchase/requests/new
+	2 container
+		3 container root
+			4 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			5 text 供应链
+			6 button 收起侧边栏
+				7 image
+			8 container
+				9 button 到货检验
+					10 image
+					11 text 到货检验
+					12 image
+				13 button 到货通知
+				14 button 到货登记
+				15 button 待检验库存
+				16 button 检验单
+				17 button 检验规则
+				18 button 基础资料
+					19 image
+					20 text 基础资料
+					21 image
+				22 button 物料管理
+				23 button 物料组合
+				24 button BOM管理
+				25 button 综合物料搜索
+				26 button 供应商管理
+				27 button 产品实例追溯
+				28 button 仓库管理
+				29 button 采购管理
+					30 image
+					31 text 采购管理
+					32 image
+				33 button 采购发票
+				34 button 采购申请
+				35 button 采购待办池
+				36 button 询价管理
+				37 button 采购订单
+				38 button 采购退换货
+				39 button 供应商价格本
+				40 button 入库管理
+					41 image
+					42 text 入库管理
+					43 image
+				44 button 全部入库单
+				45 button 采购入库
+				46 button 生产入库
+				47 button 其他入库
+				48 button 期初入库
+				49 button 入库明细
+				50 button 库存管理
+					51 image
+					52 text 库存管理
+					53 image
+				54 button 库存总览
+				55 button 不合格处理
+				56 button 库存流水
+				57 button 库存锁定
+				58 button 库存盘点
+				59 button 调拨与借出
+				60 button 库存预警
+				61 button 报损单
+				62 button SN码管理
+				63 button 出库管理
+					64 image
+					65 text 出库管理
+					66 image
+				67 button 出库单列表
+				68 button 生产出库
+				69 button 其他出库
+				70 button 销售直接出库
+				71 button 待出库发货单
+				72 button 采购退换货出库
+				73 button 出库明细
+			74 image
+			75 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			76 button 查看方案
+				77 image
+				78 text 查看方案
+			79 button
+				80 image
+			81 container
+				82 container 业务分类
+					83 checkbox 工作台, Value: 0
+					84 checkbox 供应链, Value: 1
+					85 checkbox 销售, Value: 0
+					86 checkbox 生产, Value: 0
+					87 checkbox 项目, Value: 0
+					88 checkbox 行政, Value: 0
+					89 checkbox 财务, Value: 0
+					90 checkbox 报表, Value: 0
+					91 checkbox 系统, Value: 0
+				92 button Description: 展开搜索, Help: 搜索
+					93 image
+				94 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					95 image
+					96 text 2
+				97 button Description: 打开推广奖励, Help: 推广
+				98 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				99 link Description: 打开工单, Value: community.risemap.cn/support
+				100 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					101 image
+					102 text 立即订阅
+				103 button 金
+					104 text 金
+					105 image
+			106 container
+				107 button 工作台
+					108 image
+					109 text 工作台
+				112 button 税务库存
+					113 text 税务库存
+				114 button 风险监控
+					115 text 风险监控
+				116 button 基础配置
+					117 text 基础配置
+				118 button 仓库管理
+					119 text 仓库管理
+				120 button 物料管理
+					121 text 物料管理
+				122 button 供应商管理
+					123 text 供应商管理
+				124 button 物料组合
+					125 text 物料组合
+				126 button 新建物料组合
+					127 text 新建物料组合
+				128 button BOM管理
+					129 text BOM管理
+				130 button 新建BOM
+					131 text 新建BOM
+				132 button 综合物料搜索
+					133 text 综合物料搜索
+				134 button 产品实例追溯
+					135 text 产品实例追溯
+				136 button 采购申请
+					137 text 采购申请
+				245 button 新建采购申请
+					246 text 新建采购申请
+			247 container
+				248 text 采购管理
+				249 image
+				250 text 采购申请
+				251 image
+				252 text 新建申请
+				253 button
+					254 image
+				255 text 草稿
+				256 heading 新建采购申请, Value: 1
+					257 text 新建采购申请
+				258 button 保存草稿
+					259 image
+					260 text 保存草稿
+				261 button 提交审批
+					262 image
+					263 text 提交审批
+				264 heading 创建方式, Value: 3
+					265 image
+					266 text 创建方式
+				267 container
+					268 text 创建方式  *
+				269 button 直接新建
+					270 text 直接新建
+				271 heading 基本信息, Value: 3
+					272 image
+					273 text 基本信息
+				274 text 采购申请单号
+				275 text field (settable)
+				276 button 基本信息 3/12
+					277 text 基本信息
+					278 image
+					279 text 3
+					280 text /
+					281 text 12
+				282 text 申请标题
+				283 text field (settable)
+				284 text 优先级
+				285 button 高
+					286 image
+					287 text 高
+				288 button 中
+					289 image
+					290 text 中
+				291 button 低
+					292 image
+					293 text 低
+				294 text 关联项目
+				295 button 搜索项目名称...
+					296 text 搜索项目名称...
+				297 text 关联客户
+				298 button 搜索客户名称...
+					299 text 搜索客户名称...
+				300 container
+					301 text * 币种
+				302 button ¥ 人民币 (CNY)
+					303 text ¥ 人民币 (CNY)
+				304 container
+					305 text 申请日期 只读
+				306 text field (disabled) 2026-09-08
+				307 container
+					308 text * 期望到货日期
+				309 container
+					310 text field (settable)
+					311 button
+						312 image
+				313 container
+					314 text * 负责人
+				315 button 请选择负责人
+					316 text 请选择负责人
+				317 text 建议供应商
+				318 button 搜索供应商名称...
+					319 text 搜索供应商名称...
+				320 container
+					321 text * 采购原因
+				322 text entry area (settable)
+				323 text 附件
+				324 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+					325 image
+					326 text 点击或拖拽文件到此处上传
+					327 text 支持 Ctrl+V 粘贴截图
+					328 text 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+				329 text 备注
+				330 text entry area (settable)
+				331 heading 采购明细 0 项, Value: 3
+					332 image
+					333 text 采购明细 0  项
+				334 button 列设置
+					335 image
+					336 text 列设置
+				337 button 从物料库选择
+					338 image
+					339 text 从物料库选择
+				340 button 手动添加
+					341 image
+					342 text 手动添加
+				343 button 快速粘贴
+					344 image
+					345 text 快速粘贴
+				346 button Excel 导入
+					347 image
+					348 text Excel 导入
+				349 button 添加组合
+					350 image
+					351 text 添加组合
+				352 button 关联销售订单
+					353 image
+					354 text 关联销售订单
+				355 text 已选  0  /  0  项
+				356 button (disabled) # 批量数量
+				357 button (disabled) ¥ 批量含税单价
+				358 button (disabled) ¥ 批量不含税单价
+				359 button (disabled) % 批量税率
+				360 button (disabled) 批量删除
+					361 image
+					362 text 批量删除
+				363 image
+				364 text 暂无采购明细
+				365 text 可从物料库选择、物料组合或快速粘贴批量添加
+				366 button 从物料库选择
+					367 image
+					368 text 从物料库选择
+				369 button 手动添加
+					370 image
+					371 text 手动添加
+				372 button 快速粘贴
+					373 image
+					374 text 快速粘贴
+				375 button Excel 导入
+					376 image
+					377 text Excel 导入
+				378 button 添加组合
+					379 image
+					380 text 添加组合
+				381 button 关联销售订单
+					382 image
+					383 text 关联销售订单
+				384 heading 审批信息, Value: 3
+					385 image
+					386 text 审批信息
+				387 text 申请日期
+				388 image
+				389 text 2026-09-08
+				390 heading 审批流程, Value: 3
+					391 image
+					392 text 审批流程
+				400 container
+					401 text 开始
+					402 text 审批
+					403 text SINGLE
+					404 text 系统管理员
+					405 text 结束
+				395 heading 申请概要, Value: 3
+					396 text 申请概要
+				397 text 优先级
+				398 image
+				399 text 中 币种 人民币 物料数量 0  项 预估含税金额 ¥ 0.00
+			243 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			244 container Notifications alt+T
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/purchase/requests/new

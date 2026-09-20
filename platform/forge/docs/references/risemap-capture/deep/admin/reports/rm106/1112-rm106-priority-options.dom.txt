@@ -1,0 +1,237 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 行政
+- button "收起侧边栏":
+- navigation:
+  - button "审批中心":
+    - generic: 审批中心
+  - button "我的审批":
+    - generic: 我的审批
+  - button "抄送我的":
+    - generic: 抄送我的
+  - button "我发起的":
+    - generic: 我发起的
+  - button "行政申请":
+    - generic: 行政申请
+  - button "行政管理":
+    - generic: 行政管理
+  - button "公司通知":
+    - generic: 公司通知
+  - button "用章管理":
+    - generic: 用章管理
+  - button "会议纪要":
+    - generic: 会议纪要
+  - button "工作汇报":
+    - generic: 工作汇报
+  - button "文档中心":
+    - generic: 文档中心
+  - button "固定资产":
+    - generic: 固定资产
+  - button "资质与申报":
+    - generic: 资质与申报
+  - button "物料领取":
+    - generic: 物料领取
+  - button "设备维护":
+    - generic: 设备维护
+  - button "礼品管理":
+    - generic: 礼品管理
+  - button "借出管理":
+    - generic: 借出管理
+  - button "车辆管理":
+    - generic: 车辆管理
+  - button "人力资源":
+    - generic: 人力资源
+  - button "人事工作台":
+    - generic: 人事工作台
+  - button "员工档案":
+    - generic: 员工档案
+  - button "招聘管理":
+    - generic: 招聘管理
+  - button "入职离职":
+    - generic: 入职离职
+  - button "薪酬福利":
+    - generic: 薪酬福利
+  - button "规章制度":
+    - generic: 规章制度
+  - button "通讯录":
+    - generic: 通讯录
+  - button "考勤假期":
+    - generic: 考勤假期
+  - button "加班申请":
+    - generic: 加班申请
+  - button "请假管理":
+    - generic: 请假管理
+  - button "出差申请":
+    - generic: 出差申请
+  - button "考勤管理":
+    - generic: 考勤管理
+  - button "考勤统计":
+    - generic: 考勤统计
+  - button "流程中心":
+    - generic: 流程中心
+  - button "审批记录":
+    - generic: 审批记录
+  - button "发起流程":
+    - generic: 发起流程
+  - button "流程定义":
+    - generic: 流程定义
+  - button "流程分类":
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政" [pressed]:
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "项目配置中心":
+  - generic: 项目配置中心
+- button "新建计划模板":
+  - generic: 新建计划模板
+- button "我的审批":
+  - generic: 我的审批
+- button "抄送我的":
+  - generic: 抄送我的
+- button "我发起的":
+  - generic: 我发起的
+- button "行政申请":
+  - generic: 行政申请
+- button "公司通知":
+  - generic: 公司通知
+- button "发布通知":
+  - generic: 发布通知
+- button "用章管理":
+  - generic: 用章管理
+- button "会议纪要":
+  - generic: 会议纪要
+- button "新建会议纪要":
+  - generic: 新建会议纪要
+- button "AI 模板管理":
+  - generic: AI 模板管理
+- button "工作汇报":
+  - generic: 工作汇报
+- button "新建工作汇报":
+  - generic: 新建工作汇报
+- main:
+  - generic: 行政管理
+  - generic: 工作汇报
+  - generic: 新建汇报
+  - button:
+  - heading "新建工作汇报" [level=1]
+  - button "保存草稿":
+    - text: 保存草稿
+  - button "提交审批":
+    - text: 提交审批
+  - generic: "*"
+  - generic: 汇报标题
+  - textbox "周报"
+  - heading "* 工作内容" [level=4]:
+    - generic: "*"
+    - text: 工作内容
+  - button "添加":
+    - text: 添加
+  - generic: 工作内容
+  - generic: 完成度
+  - generic: 优先级
+  - generic: "1."
+  - textbox "描述工作内容..."
+  - textbox: "0"
+  - generic: "%"
+  - button "中" [active]:
+    - generic "中"
+  - button [disabled]:
+  - heading "* 工作总结" [level=4]:
+    - generic: "*"
+    - text: 工作总结
+  - textbox "本周期完成的主要工作内容、产出和结果..."
+  - heading "下期计划" [level=4]:
+    - text: 下期计划
+  - textbox "下一周期的工作计划和目标..."
+  - heading "问题与风险" [level=4]:
+    - text: 问题与风险
+  - textbox "当前问题、风险点，以及需要的支持..."
+  - heading "项目进度说明" [level=4]:
+    - text: 项目进度说明
+  - textbox "关联项目的进展、里程碑完成情况..."
+  - heading "KPI 完成情况" [level=4]:
+    - text: KPI 完成情况
+  - textbox "填写 KPI 指标完成情况..."
+  - heading "商机跟进" [level=4]:
+    - text: 商机跟进
+  - textbox "填写商机跟进情况..."
+  - heading "客户拜访" [level=4]:
+    - text: 客户拜访
+  - textbox "填写客户拜访情况..."
+  - heading "技术问题" [level=4]:
+    - text: 技术问题
+  - textbox "填写技术问题和解决进展..."
+  - heading "人员动态" [level=4]:
+    - text: 人员动态
+  - textbox "填写人员安排、协作动态..."
+  - heading "次日计划" [level=4]:
+    - text: 次日计划
+  - textbox "填写次日工作计划..."
+  - heading "自评得分" [level=4]:
+    - text: 自评得分
+  - spinbutton
+  - heading "基本信息" [level=4]
+  - generic: 关联规则
+  - button "不关联规则（自由汇报）":
+    - generic: 不关联规则（自由汇报）
+  - generic: 汇报类型
+  - button "周报":
+    - generic "周报"
+  - generic: "*"
+  - generic: 汇报周期
+  - button:
+  - textbox "开始日期"
+  - generic: ~
+  - textbox "结束日期"
+  - generic: 附件
+  - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件":
+    - generic: 点击或拖拽文件到此处上传
+    - generic: 支持 Ctrl+V 粘贴截图
+    - generic: 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+  - paragraph: 填写提示
+  - list:
+    - listitem: 工作总结建议聚焦结果、数据和产出。
+    - listitem: 问题与风险建议写清影响范围和需要支持的事项。
+    - listitem: 提交后会按所选审批人进入审批流程。
+    - listitem: 草稿保存后会跳转到详情页，可继续补充后再提交。
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 周日
+- generic: 高
+- generic: 中
+- generic: 低

@@ -1,0 +1,133 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/subcontract/suppliers".
+0 AXWebArea RiseMap, URL: risemap.cn/subcontract/suppliers
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 生产
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 组装业务管理
+					9 image
+					10 text 组装业务管理
+					11 image
+				12 button 组装单
+				13 button 缺料待办
+				14 button 领料单
+				15 button 补料单
+				16 button 退料单
+				17 button 拆解单
+				18 button 换件单
+				19 container
+					20 button 图纸管理
+						21 image
+						22 text 图纸管理
+						23 image
+					24 button 进入图纸管理上手指南
+						25 image
+				26 button 图纸总览
+				27 button 图号档案
+				28 button 图纸评审
+				29 button 图纸发布
+				30 button 图纸变更
+				31 button 图纸发放记录
+				32 button 图纸关联查询
+				33 button 客户图纸
+				34 container
+					35 button 委外管理
+						36 image
+						37 text 委外管理
+						38 image
+					39 button 进入委外管理上手指南
+						40 image
+				41 button 委外看板
+				42 button 委外订单
+				43 button 委外发料
+				44 button 委外回厂
+				45 button 委外退料
+				46 button 委外对账
+				47 button 委外供应商
+				48 button 委外库存
+				49 button 批次追溯
+				50 button 委外未交
+				51 button 委外进货
+				52 button 委外对账单
+			53 image
+			54 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+			55 button 查看方案
+				56 image
+				57 text 查看方案
+			58 button
+				59 image
+			60 container
+				61 container 业务分类
+					62 checkbox 工作台, Value: 0
+					63 checkbox 供应链, Value: 0
+					64 checkbox 销售, Value: 0
+					65 checkbox 生产, Value: 1
+					66 checkbox 项目, Value: 0
+					67 checkbox 行政, Value: 0
+					68 checkbox 财务, Value: 0
+					69 checkbox 报表, Value: 0
+					70 checkbox 系统, Value: 0
+				71 button Description: 展开搜索, Help: 搜索
+					72 image
+				73 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					74 image
+					75 text 2
+				76 button Description: 打开推广奖励, Help: 推广
+				77 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				78 link Description: 打开工单, Value: community.risemap.cn/support
+				79 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					80 image
+					81 text 立即订阅
+				82 button 金
+					83 text 金
+					84 image
+			85 container
+				86 button 工作台
+					87 image
+					88 text 工作台
+				215 button 图纸关联查询
+					216 text 图纸关联查询
+				217 button 客户图纸
+					218 text 客户图纸
+				219 button 新建客户图纸
+					220 text 新建客户图纸
+				221 button 委外管理上手指南
+					222 text 委外管理上手指南
+				223 button 委外看板
+					224 text 委外看板
+				225 button 委外订单
+					226 text 委外订单
+				227 button 新建委外订单
+					228 text 新建委外订单
+				229 button 委外发料
+					230 text 委外发料
+				231 button 新建发料单
+					232 text 新建发料单
+				233 button 委外回厂
+					234 text 委外回厂
+				235 button 委外退料
+					236 text 委外退料
+				237 button 新建退料单
+					238 text 新建退料单
+				239 button 委外对账
+					240 text 委外对账
+				241 button 委外供应商
+					242 text 委外供应商
+			243 container
+				244 image
+				245 heading 委外供应商, Value: 1
+					246 text 委外供应商
+				247 text 维护工艺能力、信用等级、加工价目表；准时率与良率由已完成单据派生，不可手工改写
+				248 image
+				249 text field (settable)
+				250 button 全部工艺能力
+					251 text 全部工艺能力
+				252 checkbox (settable, integer) Description: 仅看已启用委外, Value: 1
+				253 text 共 0 家 没有符合条件的委外供应商 供应商需先在主数据建档，再在这里开通委外档案
+			199 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+
+The focused UI element is 47 button 委外供应商

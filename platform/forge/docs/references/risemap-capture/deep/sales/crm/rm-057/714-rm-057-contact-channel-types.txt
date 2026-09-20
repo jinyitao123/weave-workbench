@@ -1,0 +1,414 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/base/customers".
+1 AXWebArea RiseMap, URL: risemap.cn/base/customers
+	2 container
+		3 container root
+			171 container
+				172 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+				173 text 销售
+				174 button 收起侧边栏
+					175 image
+				176 container
+					177 button 销售业务
+						178 image
+						179 text 销售业务
+						180 image
+					181 button 框架销售合同
+					182 button 销售订单
+					183 button 收款流水
+					184 button 销售发货单
+					185 button 销售退货
+					186 button 业绩银行
+					187 button 价格策略
+					188 button Goodwill订单
+					189 button 销售团队
+					190 button 销售目标
+					191 button 销售发票
+				192 container
+					193 button CRM客户管理
+						194 image
+						195 text CRM客户管理
+						196 image
+					197 button 客户管理
+					198 button 联系人管理
+					199 button 销售报价
+					200 button 客户物料对照
+					201 button 商机管理
+					202 button 线索管理
+					203 button 跟进记录
+					204 button 公海客户
+				205 image
+				206 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+				207 button 查看方案
+					208 image
+					209 text 查看方案
+				210 button
+					211 image
+				212 container 业务分类
+					213 checkbox 工作台, Value: 0
+					214 checkbox 供应链, Value: 0
+					215 checkbox 销售, Value: 1
+					216 checkbox 生产, Value: 0
+					217 checkbox 项目, Value: 0
+					218 checkbox 行政, Value: 0
+					219 checkbox 财务, Value: 0
+					220 checkbox 报表, Value: 0
+					221 checkbox 系统, Value: 0
+				222 button Description: 展开搜索, Help: 搜索
+					223 image
+				224 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					225 image
+					226 text 2
+				227 button Description: 打开推广奖励, Help: 推广
+				228 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				229 link Description: 打开工单, Value: community.risemap.cn/support
+				230 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					231 image
+					232 text 立即订阅
+				233 button 金
+					234 text 金
+					235 image
+				236 button 工作台
+					237 image
+					238 text 工作台
+				239 button 新建发货单
+					240 text 新建发货单
+				241 button 销售退货
+					242 text 销售退货
+				243 button 新建销售退货
+					244 text 新建销售退货
+				245 button 业绩银行
+					246 text 业绩银行
+				247 button 价格策略
+					248 text 价格策略
+				249 button 新增框架协议
+					250 text 新增框架协议
+				251 button 新增特价
+					252 text 新增特价
+				253 button Goodwill订单
+					254 text Goodwill订单
+				255 button Goodwill订单详情
+					256 text Goodwill订单详情
+				257 button 销售团队
+					258 text 销售团队
+				259 button 销售目标
+					260 text 销售目标
+				261 button 销售发票
+					262 text 销售发票
+				263 button 客户管理
+					264 text 客户管理
+				265 button 名片扫描
+					266 text 名片扫描
+				267 container
+					268 text CRM客户管理
+					269 image
+					270 text 客户管理
+					271 heading 客户管理, Value: 1
+						272 text 客户管理
+					273 tab group 客户负责人范围
+						274 tab (selected, settable, boolean) 全部, Value: 1
+						275 tab (selectable, settable, boolean) 我负责的, Value: 0
+						276 tab (selectable, settable, boolean) 我参与的, Value: 0
+						277 tab (selectable, settable, boolean) 下属负责的, Value: 0
+						278 tab (selectable, settable, boolean) 下属参与的, Value: 0
+					279 button 新增客户
+						280 image
+						281 text 新增客户
+					282 button 导入/导出
+						283 image
+						284 text 导入/导出
+						285 image
+					286 button 批量操作
+						287 image
+						288 text 批量操作
+						289 image
+					290 button 扫描名片
+						291 image
+						292 text 扫描名片
+					293 button
+						294 image
+					295 button 刷新
+						296 image
+					297 button
+						298 image
+					299 button
+						300 image
+					301 image
+					302 text field (settable)
+					303 button 分类
+						304 text 分类
+						305 image
+					306 button 主负责人
+						307 text 主负责人
+						308 image
+					309 button 协同销售
+						310 text 协同销售
+						311 image
+					312 button 客户类型
+						313 text 客户类型
+						314 image
+					315 button 标签
+						316 text 标签
+						317 image
+					318 button 状态
+						319 text 状态
+						320 image
+					321 button 级别
+						322 text 级别
+						323 image
+					324 container 点击清除排序
+						325 image
+						326 text 按 创建时间 降序
+						327 image
+					328 table
+						329 row
+							330 cell
+								331 checkbox (settable, integer) 0
+							332 cell
+								333 text 客户名称
+								334 image
+							335 cell
+								336 text 主负责人
+							337 cell
+								338 text 主要联系人电话
+							339 cell
+								340 text 协同销售
+							341 cell
+								342 text 信用额度
+							343 cell
+								344 text 账期天数
+							345 cell
+								346 text 红绿灯
+							347 cell
+								348 text 最近跟进时间
+								349 image
+							350 cell
+								351 text 拜访计划日期
+								352 image
+							353 cell
+								354 text 最近交易时间
+								355 image
+							356 cell
+								357 text 操作
+						358 row
+							359 cell
+								360 image
+								361 text 暂无数据
+					362 text 共  0 条记录 每页
+					363 combo box (collapsed) Value: 20, Secondary Actions: Expand
+						364 text 20
+					365 text 条
+					366 button (disabled) 上一页
+						367 image
+					368 button 1
+					369 button (disabled) 下一页
+						370 image
+				371 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			170 container Notifications alt+T
+		372 container 新增客户, ID: radix-:r4i:
+			373 heading 新增客户, Value: 2, ID: radix-:r4j:
+				374 text 新增客户
+			375 text 新增客户信息表单
+			376 container
+				377 text 录入个人客户 输入个人客户姓名
+				378 button 客户类型
+					379 image
+					380 text 个人
+				381 text field (settable)
+				382 text 客户名称不能为空
+				383 button 联系人
+					384 text 联系人
+					385 image
+				386 text 联系人独立维护，可随客户一次新增多位
+				387 button 新增联系人
+					388 image
+					389 text 新增联系人
+				390 text 1 联系人  1
+				391 button 主要联系人
+					392 image
+					393 text 主要联系人
+				394 button Description: 删除联系人1, Help: 删除联系人
+					395 image
+				396 text 姓名
+				397 text field (settable)
+				398 text 职位
+				399 text field (settable)
+				400 text 性别
+				401 button 性别
+					402 text 请选择性别
+				403 text 部门
+				404 text field (settable)
+				405 text 决策权重
+				406 button 请选择决策权重
+					407 text 请选择决策权重
+				408 text 备注
+				409 text field (settable)
+				410 text 联系方式 同一类型可添加多条
+				411 button 添加联系方式
+					412 image
+					413 text 添加联系方式
+					414 image
+				415 text 类型 标签 联系方式 操作
+				416 button 联系方式类型
+					417 text 手机
+				418 text field (settable) Description: 联系方式标签, Value: 工作手机
+				419 text field (settable) 工作手机联系方式
+				420 button Description: 删除工作手机, Help: 删除联系方式
+					421 image
+				422 button 联系方式类型
+					423 text 座机
+				424 text field (settable) Description: 联系方式标签, Value: 办公座机
+				425 text field (settable) 办公座机联系方式
+				426 button Description: 删除办公座机, Help: 删除联系方式
+					427 image
+				428 button 联系方式类型
+					429 text 邮箱
+				430 text field (settable) Description: 联系方式标签, Value: 工作邮箱
+				431 text field (settable) 工作邮箱联系方式
+				432 button Description: 删除工作邮箱, Help: 删除联系方式
+					433 image
+				434 text 2 联系人  2
+				435 button Description: 设联系人2为主要联系人, Help: 设为主要联系人
+					436 image
+					437 text 主要联系人
+				438 button Description: 删除联系人2, Help: 删除联系人
+					439 image
+				440 text 姓名
+				441 text field (settable)
+				442 text 职位
+				443 text field (settable)
+				444 text 性别
+				445 button 性别
+					446 text 请选择性别
+				447 text 部门
+				448 text field (settable)
+				449 text 决策权重
+				450 button 请选择决策权重
+					451 text 请选择决策权重
+				452 text 备注
+				453 text field (settable)
+				454 text 联系方式 同一类型可添加多条
+				455 button 添加联系方式
+					456 image
+					457 text 添加联系方式
+					458 image
+				459 text 类型 标签 联系方式 操作
+				460 button 联系方式类型
+					461 text 手机
+				462 text field (settable) Description: 联系方式标签, Value: 工作手机
+				463 text field (settable) 工作手机联系方式
+				464 button Description: 删除工作手机, Help: 删除联系方式
+					465 image
+				466 button 联系方式类型
+					467 text 座机
+				468 text field (settable) Description: 联系方式标签, Value: 办公座机
+				469 text field (settable) 办公座机联系方式
+				470 button Description: 删除办公座机, Help: 删除联系方式
+					471 image
+				472 button 联系方式类型
+					473 text 邮箱
+				474 text field (settable) Description: 联系方式标签, Value: 工作邮箱
+				475 text field (settable) 工作邮箱联系方式
+				476 button Description: 删除工作邮箱, Help: 删除联系方式
+					477 image
+				478 button 客户资料 1/5
+					479 text 客户资料
+					480 image
+					481 text 1
+					482 text /
+					483 text 5
+				484 text * 客户分类
+				485 button 请选择分类
+					486 text 请选择分类
+				487 button 新增客户分类
+					488 image
+				489 text 客户分类不能为空 客户级别
+				490 button 请选择级别
+					491 text 请选择级别
+				492 button 新增客户等级
+					493 image
+				494 text 行业
+				495 button 请选择行业
+					496 text 请选择行业
+				497 text 负责人
+				498 button 金 金一涛 (默认部门)
+					499 text 金
+					500 text 金一涛
+					501 text (
+					502 text 默认部门
+					503 text )
+					504 container
+						505 button
+							506 image
+						507 image
+				508 text 客户描述
+				509 text entry area (settable)
+				510 button 标签与团队
+					511 text 标签与团队
+					512 image
+				513 text 协同销售
+				514 pop up button (collapsed) 请搜索团队成员..., Secondary Actions: Expand
+					515 text 请搜索团队成员...
+					516 image
+				517 button 开票信息 0/6
+					518 text 开票信息
+					519 image
+					520 text 0
+					521 text /
+					522 text 6
+				523 text 发票类型
+				524 button 请选择发票类型
+					525 text 请选择发票类型
+				526 text 纳税人识别号
+				527 text field (settable)
+				528 text 开户银行
+				529 text field (settable)
+				530 text 银行账号
+				531 text field (settable)
+				532 text 开票地址
+				533 text field (settable)
+				534 text 开票电话
+				535 text field (settable)
+				536 button 商务条件 0/2
+					537 text 商务条件
+					538 image
+					539 text 0
+					540 text /
+					541 text 2
+				542 text 默认付款条件
+				543 button 请选择付款条件
+					544 text 请选择付款条件
+				545 text 收入确认方式
+				546 button 请选择收入确认方式
+					547 text 请选择收入确认方式
+				548 button 商务信息 0/4
+					549 text 商务信息
+					550 image
+					551 text 0
+					552 text /
+					553 text 4
+				554 text 详细地址
+				555 text field (settable)
+				556 text 省份
+				557 button 请选择省份
+					558 text 请选择省份
+				559 text 城市
+				560 button (disabled) 请先选择省份
+					561 text 请先选择省份
+				562 text 备注
+				563 text entry area (settable)
+			564 button 取消
+			565 button 创建客户
+			566 button Close
+				567 image
+				568 text Close
+		569 container
+			570 text 手机
+			571 text 座机
+			572 text 邮箱
+			573 text 微信
+			574 text 钉钉
+			575 text QQ
+			576 text LinkedIn
+			577 text 其他
+
+The focused UI element is 455 button 添加联系方式

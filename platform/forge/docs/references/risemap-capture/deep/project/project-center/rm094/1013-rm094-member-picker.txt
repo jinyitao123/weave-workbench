@@ -1,0 +1,264 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/project/list".
+0 AXWebArea RiseMap, URL: risemap.cn/project/list
+	1 container
+		2 container root
+			201 container
+				202 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+				203 text 项目
+				204 button 收起侧边栏
+					205 image
+				206 container
+					207 button 项目管理
+						208 image
+						209 text 项目管理
+						210 image
+					211 button 项目中心
+					212 button 项目分析中心
+					213 button 任务管理
+					214 button 工时管理
+					215 button 项目配置中心
+				216 image
+				217 text 免费试用中，还剩 13 天 — 试用期间享全部功能
+				218 button 查看方案
+					219 image
+					220 text 查看方案
+				221 button
+					222 image
+				223 container 业务分类
+					224 checkbox 工作台, Value: 0
+					225 checkbox 供应链, Value: 0
+					226 checkbox 销售, Value: 0
+					227 checkbox 生产, Value: 0
+					228 checkbox 项目, Value: 1
+					229 checkbox 行政, Value: 0
+					230 checkbox 财务, Value: 0
+					231 checkbox 报表, Value: 0
+					232 checkbox 系统, Value: 0
+				233 button Description: 展开搜索, Help: 搜索
+					234 image
+				235 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					236 image
+					237 text 2
+				238 button Description: 打开推广奖励, Help: 推广
+				239 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				240 link Description: 打开工单, Value: community.risemap.cn/support
+				241 button 立即订阅, Help: 试用还剩 13 天 · 立即订阅享专属优惠
+					242 image
+					243 text 立即订阅
+				244 button 金
+					245 text 金
+					246 image
+				247 button 工作台
+					248 image
+					249 text 工作台
+				250 button 新建委外订单
+					251 text 新建委外订单
+				252 button 委外发料
+					253 text 委外发料
+				254 button 新建发料单
+					255 text 新建发料单
+				256 button 委外回厂
+					257 text 委外回厂
+				258 button 委外退料
+					259 text 委外退料
+				260 button 新建退料单
+					261 text 新建退料单
+				262 button 委外对账
+					263 text 委外对账
+				264 button 委外供应商
+					265 text 委外供应商
+				266 button 委外库存
+					267 text 委外库存
+				268 button 批次追溯
+					269 text 批次追溯
+				270 button 委外未交
+					271 text 委外未交
+				272 button 委外进货
+					273 text 委外进货
+				274 button 委外对账单
+					275 text 委外对账单
+				276 button 项目中心
+					277 text 项目中心
+				278 container
+					279 text 项目管理
+					280 image
+					281 text 项目中心
+					282 heading 项目中心, Value: 1
+						283 text 项目中心
+					284 button 表格
+						285 image
+						286 text 表格
+					287 button 甘特图
+						288 image
+						289 text 甘特图
+					290 button 项目分析中心
+						291 image
+						292 text 项目分析中心
+					293 button 新建项目
+						294 image
+						295 text 新建项目
+					296 button 全部
+						297 text 全部
+					298 button 待执行
+					299 button 进行中
+					300 button 已暂停
+					301 button 已完工
+					302 button 已结算
+					303 button 已终止
+					304 button 已归档
+					305 button 导入/导出
+						306 image
+						307 text 导入/导出
+						308 image
+					309 text 分组
+					310 button 按状态
+					311 button 按负责人
+					312 button 按进度
+					313 button 按客户
+					314 button 刷新
+						315 image
+					316 button
+						317 image
+					318 button
+						319 image
+					320 button 范围
+						321 image
+						322 text 范围
+						323 image
+					324 image
+					325 text field (settable)
+					326 container 点击清除排序
+						327 image
+						328 text 按 创建时间 降序
+						329 image
+					330 table
+						331 row
+							332 cell
+								333 checkbox (settable, integer) 0
+							334 cell
+								335 text 项目名称
+								336 image
+							337 cell
+								338 text 客户名称
+								339 image
+							340 cell
+								341 text 项目经理
+								342 image
+							343 cell
+								344 text 项目周期
+								345 image
+							346 cell
+								347 text 项目进度
+								348 image
+							349 cell
+								350 text 预计营收
+								351 image
+							352 cell
+								353 text 预算金额
+								354 image
+							355 cell
+								356 text 合同金额
+								357 image
+							358 cell
+								359 text 总成本
+								360 image
+							361 cell
+								362 text 毛利率
+								363 image
+							364 cell
+								365 text 回款率
+								366 image
+							367 cell
+								368 text 创建时间
+								369 image
+							370 cell
+								371 text 操作
+						372 row
+							373 cell
+								374 image
+								375 text 暂无匹配的项目
+					376 text 共  0 条记录 每页
+					377 combo box (collapsed) Value: 10, Secondary Actions: Expand
+						378 text 10
+					379 text 条
+					380 button (disabled) 上一页
+						381 image
+					382 button 1
+					383 button (disabled) 下一页
+						384 image
+				385 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			200 container Notifications alt+T
+		386 container 新建项目, ID: radix-:r1cg:
+			387 heading 新建项目, Value: 2, ID: radix-:r1ch:
+				388 text 新建项目
+			389 text 填写项目信息并关联客户、商机、合同，配置团队成员
+			390 container
+				391 text 基本信息 项目编号（选填）
+				392 text field (settable) 项目编号（选填）, ID: project-no-modal
+				393 text 项目名称 *
+				394 text field (settable)
+				395 text 项目类型 *
+				396 button 请选择项目类型
+					397 text 请选择项目类型
+				398 button 新增项目类型
+					399 image
+				400 text 优先级
+				401 radio button 高, Value: 0
+				402 radio button 中, Value: 1
+				403 radio button 低, Value: 0
+				404 image
+				405 text 计划开始日期 *
+				406 container
+					407 text field (settable)
+					408 button
+						409 image
+				410 image
+				411 text 计划结束日期 *
+				412 container
+					413 text field (settable)
+					414 button
+						415 image
+				416 image
+				417 text 预计营收 ( 人民币 )
+				418 text field (settable)
+				419 image
+				420 text 预算金额 ( 人民币 )
+				421 text field (settable)
+				422 text 项目描述
+				423 text entry area (settable)
+				424 text 关联客户 *
+				425 button 搜索客户名称...
+					426 text 搜索客户名称...
+				427 text 关联商机 （可选，支持多选）
+				428 image
+				429 text 请先选择关联客户，系统将自动筛选该客户下的商机 关联合同 （可选，支持多选）
+				430 image
+				431 text 请先选择关联客户，系统将自动筛选该客户下的合同 关联订单 （可选，支持多选；项目总金额按已选订单汇总）
+				432 image
+				433 text 请先选择关联客户，系统将自动筛选该客户下的订单
+				434 image
+				435 text 项目附件 （选填）
+				436 button 点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+					437 image
+					438 text 点击或拖拽文件到此处上传
+					439 text 支持 Ctrl+V 粘贴截图
+					440 text 支持 PDF、Word、Excel、图片、压缩包等格式，可同时上传多个文件
+				441 text 团队成员 *
+				442 button 添加成员
+					443 text 添加成员
+				444 image
+				445 text 暂未添加团队成员 点击右上角「添加成员」按钮选择项目成员
+			446 button 取消
+			447 button 创建项目
+			448 button Close
+				449 image
+				450 text Close
+		451 container
+			452 image
+			453 text field (settable)
+			454 text 金
+			455 text 金一涛
+			456 text 默认部门
+			457 text 系统管理员
+
+The focused UI element is 453 text field (settable)

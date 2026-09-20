@@ -1,0 +1,15 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/ops/equipment-maintenance".
+1 AXWebArea RiseMap, URL: risemap.cn/ops/equipment-maintenance
+	2 container 新增设备类型
+		3 heading 新增设备类型, Value: 3
+			4 text 新增设备类型
+		5 button 关闭
+			6 image
+		7 container
+			8 text 类型名称 *
+			9 text field (settable)
+			10 text 类型名称不能为空
+		11 button 取消
+		12 button 添加
+
+The focused UI element is 12 button 添加

@@ -1,0 +1,37 @@
+Browser tab: 54, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_subcontract_suppliers".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_subcontract_suppliers
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link localhost:4321/_console/apps/forge
+			6 pop up button (collapsed) Secondary Actions: Expand
+			7 link localhost:4321/_console/apps/forge
+			8 button
+			9 pop up button (collapsed) Secondary Actions: Expand
+			10 link localhost:4321/_console/studio/forge/interfaces?surface=page:page_subcontract_suppliers
+			11 pop up button (collapsed) Secondary Actions: Expand
+			12 pop up button (collapsed) Secondary Actions: Expand
+		13 container
+			14 container
+				15 content list
+					16 button
+					17 button
+					18 button
+					19 button
+					20 button
+					21 button
+					22 button
+					23 button
+					24 button
+			25 container
+				26 button (expanded) Secondary Actions: Collapse
+				27 content list
+					28 link localhost:4321/_console/apps/forge/page/page_workbench
+					29 link localhost:4321/_console/apps/forge/page/page_workbench
+					30 link localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					31 link localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			32 button
+		33 container
+			34 heading 1
+
+The focused UI element is 1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_subcontract_suppliers

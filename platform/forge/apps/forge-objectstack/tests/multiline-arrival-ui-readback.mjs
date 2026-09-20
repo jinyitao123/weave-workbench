@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import { readFile, writeFile } from 'node:fs/promises';
+import { connect } from '../scripts/api-client.mjs';
+const path='.objectstack/acceptance/multiline-arrival-report.json',report=JSON.parse(await readFile(path,'utf8')),api=await connect();
+const find=async(object,where)=>{const query=new URLSearchParams({$filter:JSON.stringify(where),$top:'100'}),response=await api.request(`/data/${object}?${query}`);assert.equal(response.status,200);return response.value.records.filter(record=>Object.entries(where).every(([key,value])=>record[key]===value));};
+const receipts=await find('forge_purchase_receipt',{logistics_number:process.env.FORGE_UI_LOGISTICS||'FORGE-UI-ARR-20260910'});assert.equal(receipts.length,1);const receipt=receipts[0];
+assert.deepEqual({status:receipt.status,lines:receipt.line_count,quantity:receipt.total_quantity,taxed:receipt.taxed_amount},{status:'pending_inspection',lines:4,quantity:8,taxed:33260.02});
+const lines=await find('forge_purchase_receipt_line',{receipt_id:receipt.id});assert.equal(lines.length,4);assert.ok(lines.every(line=>line.status==='pending_inspection'&&line.warehouse_id));
+const notice=(await find('forge_purchase_arrival_notice',{id:receipt.notice_id}))[0];assert.deepEqual({status:notice.status,arrived:notice.arrived_quantity,planned:notice.planned_quantity},{status:'arrived',arrived:8,planned:8});
+report.ids.browserReceipt=receipt.id;report.ids.browserNotice=notice.id;report.ids.browserReceiptLines=lines.map(line=>line.id);report.browserVerification={verifiedAt:new Date().toISOString(),status:'passed',action:'submitted four material rows to pending inspection in the built-in browser',lineCount:4,totalQuantity:8,taxedAmount:33260.02,logisticsNumber:receipt.logistics_number};
+await writeFile(path,JSON.stringify(report,null,2));console.log('PASS built-in browser multiline arrival persisted as pending-inspection inventory');

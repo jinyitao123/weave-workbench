@@ -1,0 +1,143 @@
+- region "通知 alt+T"
+- banner:
+  - link "ObjectOS":
+    - /url: /_console/apps/forge
+  - generic "本平台处于预览版，功能可能调整。": 预览版
+  - button "切换侧边栏":
+    - generic: 切换侧边栏
+  - generic: /
+  - button "Forge":
+    - generic: Forge
+  - generic: /
+  - link "页面":
+    - /url: /_console/apps/forge
+  - generic: /
+  - generic: 服务工单
+  - button "搜索…":
+  - button "打开消息中心":
+  - link "在 Studio 中设计":
+    - /url: /_console/studio/forge/interfaces?surface=page:page_service_orders
+  - button "帮助与文档":
+  - button "DA":
+    - generic: DA
+- text: 区域
+- list:
+  - button "工作台":
+    - generic: 工作台
+  - button "供应链":
+    - generic: 供应链
+  - button "销售":
+    - generic: 销售
+  - button "生产":
+    - generic: 生产
+  - button "项目":
+    - generic: 项目
+  - button "行政":
+    - generic: 行政
+  - button "财务":
+    - generic: 财务
+  - button "报表":
+    - generic: 报表
+  - button "系统":
+    - generic: 系统
+- button "工作台" [expanded]:
+  - text: 工作台
+- list:
+  - link "工作台":
+    - /url: /_console/apps/forge/page/page_workbench
+    - generic: 工作台
+  - link "待办管理":
+    - /url: /_console/apps/forge/page/page_workbench
+    - generic: 待办管理
+  - link "AI 广场":
+    - /url: /_console/apps/forge/page/page_workspace_recovery_status
+    - generic: AI 广场
+  - link "引导中心":
+    - /url: /_console/apps/forge/page/page_workspace_recovery_status
+    - generic: 引导中心
+- text: 最近使用
+- button "切换侧边栏":
+  - generic: 切换侧边栏
+- main:
+  - main:
+    - button "在 Studio 中编辑":
+    - heading "服务工单" [level=1]
+    - paragraph: 统一管理客户报修、安装调试、巡检保养、备件更换和有偿服务
+    - generic: "21"
+    - strong: 服务管理 / 服务工单
+    - button "服务配置"
+    - button "派工中心"
+    - button "新建服务工单"
+    - button "刷新"
+    - generic: 统一管理客户报修、安装调试、巡检保养、备件更换和有偿服务
+    - heading "服务工单" [level=1]
+    - status: 工单已派工
+    - generic: 工单总数
+    - generic: "1"
+    - generic: 待分派
+    - generic: "0"
+    - generic: 待接单
+    - generic: "1"
+    - generic: 服务中
+    - generic: "0"
+    - button "工单列表"
+    - button "服务中"
+    - button "已完工"
+    - textbox "搜索服务工单":
+      - /placeholder: 工单号 / 客户 / 标题 / 联系人
+      - text: WO-FORGE-20260913
+    - button "全部类型":
+      - generic: 请选择
+      - generic: ⌄
+    - button "全部状态":
+      - generic: 请选择
+      - generic: ⌄
+    - button "清空筛选"
+    - table:
+      - rowgroup:
+        - row "工单信息 客户信息 服务属性 质保 / 报价 状态 工程师 时效信息 操作":
+          - columnheader "工单信息"
+          - columnheader "客户信息"
+          - columnheader "服务属性"
+          - columnheader "质保 / 报价"
+          - columnheader "状态"
+          - columnheader "工程师"
+          - columnheader "时效信息"
+          - columnheader "操作"
+      - rowgroup:
+        - row "WO-FORGE-20260913 RISEMAP 对照服务工单 20260913 PLC 通讯参数复核 苏州澄岳自动化装备有限公司 周启明 · 13800002609 SO-WF-20260909-001 · SC-CONVERT-20260909-001 RISEMAP 对照服务类型 20260913 上门服务 · 中 苏州澄岳自动化装备有限公司现场 未配置质保卡，按人工录入日期待判定 2026-09-10 至 2027-09-10 待人工判定 待接单 下一步：工程师接单 RISEMAP 对照服务工程师 20260913 派给对照服务工程师，用于 Forge 同材料复刻验收 2026-09-15 SLA — 工程师接单":
+          - cell "WO-FORGE-20260913 RISEMAP 对照服务工单 20260913 PLC 通讯参数复核":
+            - button "WO-FORGE-20260913"
+            - generic: RISEMAP 对照服务工单 20260913
+            - generic: PLC 通讯参数复核
+          - cell "苏州澄岳自动化装备有限公司 周启明 · 13800002609 SO-WF-20260909-001 · SC-CONVERT-20260909-001":
+            - text: 苏州澄岳自动化装备有限公司
+            - generic: 周启明 · 13800002609
+            - generic: SO-WF-20260909-001 · SC-CONVERT-20260909-001
+          - cell "RISEMAP 对照服务类型 20260913 上门服务 · 中 苏州澄岳自动化装备有限公司现场":
+            - text: RISEMAP 对照服务类型 20260913
+            - generic: 上门服务 · 中
+            - generic: 苏州澄岳自动化装备有限公司现场
+          - cell "未配置质保卡，按人工录入日期待判定 2026-09-10 至 2027-09-10 待人工判定":
+            - text: 未配置质保卡，按人工录入日期待判定
+            - generic: 2026-09-10 至 2027-09-10
+            - generic: 待人工判定
+          - cell "待接单 下一步：工程师接单":
+            - generic: 待接单
+            - generic: 下一步：工程师接单
+          - cell "RISEMAP 对照服务工程师 20260913 派给对照服务工程师，用于 Forge 同材料复刻验收":
+            - text: RISEMAP 对照服务工程师 20260913
+            - generic: 派给对照服务工程师，用于 Forge 同材料复刻验收
+          - cell "2026-09-15 SLA —":
+            - text: 2026-09-15
+            - generic: SLA —
+          - cell "工程师接单":
+            - button "工程师接单" [active]
+    - generic: 共 1 条记录 每页 20 条 · 1 / 1
+    - dialog "工程师接单":
+      - generic: 工程师接单
+      - generic: 当前操作将推进工单状态
+      - button "关闭": ×
+      - generic: 确认后状态变为“服务中”，页面展示处理记录、预约客户、到场签到和提交服务结果入口。
+      - button "取消"
+      - button "确认接单"

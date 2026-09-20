@@ -1,0 +1,279 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 行政
+- button "收起侧边栏":
+- navigation:
+  - button "审批中心":
+    - generic: 审批中心
+  - button "我的审批":
+    - generic: 我的审批
+  - button "抄送我的":
+    - generic: 抄送我的
+  - button "我发起的":
+    - generic: 我发起的
+  - button "行政申请":
+    - generic: 行政申请
+  - button "行政管理":
+    - generic: 行政管理
+  - button "公司通知":
+    - generic: 公司通知
+  - button "用章管理":
+    - generic: 用章管理
+  - button "会议纪要":
+    - generic: 会议纪要
+  - button "工作汇报":
+    - generic: 工作汇报
+  - button "文档中心":
+    - generic: 文档中心
+  - button "固定资产":
+    - generic: 固定资产
+  - button "资质与申报":
+    - generic: 资质与申报
+  - button "物料领取":
+    - generic: 物料领取
+  - button "设备维护":
+    - generic: 设备维护
+  - button "礼品管理":
+    - generic: 礼品管理
+  - button "借出管理":
+    - generic: 借出管理
+  - button "车辆管理":
+    - generic: 车辆管理
+  - button "人力资源":
+    - generic: 人力资源
+  - button "人事工作台":
+    - generic: 人事工作台
+  - button "员工档案":
+    - generic: 员工档案
+  - button "招聘管理":
+    - generic: 招聘管理
+  - button "入职离职":
+    - generic: 入职离职
+  - button "薪酬福利":
+    - generic: 薪酬福利
+  - button "规章制度":
+    - generic: 规章制度
+  - button "通讯录":
+    - generic: 通讯录
+  - button "考勤假期":
+    - generic: 考勤假期
+  - button "加班申请":
+    - generic: 加班申请
+  - button "请假管理":
+    - generic: 请假管理
+  - button "出差申请":
+    - generic: 出差申请
+  - button "考勤管理":
+    - generic: 考勤管理
+  - button "考勤统计":
+    - generic: 考勤统计
+  - button "流程中心":
+    - generic: 流程中心
+  - button "审批记录":
+    - generic: 审批记录
+  - button "发起流程":
+    - generic: 发起流程
+  - button "流程定义":
+    - generic: 流程定义
+  - button "流程分类":
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售":
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政" [pressed]:
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "我的审批":
+  - generic: 我的审批
+- button "抄送我的":
+  - generic: 抄送我的
+- button "我发起的":
+  - generic: 我发起的
+- button "行政申请":
+  - generic: 行政申请
+- button "公司通知":
+  - generic: 公司通知
+- button "发布通知":
+  - generic: 发布通知
+- button "用章管理":
+  - generic: 用章管理
+- button "会议纪要":
+  - generic: 会议纪要
+- button "新建会议纪要":
+  - generic: 新建会议纪要
+- button "AI 模板管理":
+  - generic: AI 模板管理
+- button "工作汇报":
+  - generic: 工作汇报
+- button "新建工作汇报":
+  - generic: 新建工作汇报
+- button "文档中心":
+  - generic: 文档中心
+- button "固定资产":
+  - generic: 固定资产
+- main:
+  - generic: 行政管理
+  - generic: 固定资产
+  - heading "固定资产" [level=1]
+  - paragraph: 资产台账、折旧核算、使用人变更、报废流程的统一管控
+  - button "新增资产":
+    - text: 新增资产
+  - button "批量导入":
+    - text: 批量导入
+  - button "导出":
+    - text: 导出
+  - button "执行月度折旧":
+    - text: 执行月度折旧
+  - button "刷新":
+  - button:
+  - button:
+  - textbox "搜索编号、名称、品牌..."
+  - button "状态":
+    - text: 状态
+  - button "全部分类":
+    - generic: 全部分类
+  - button "全部部门":
+    - generic: 全部部门
+  - table:
+    - rowgroup:
+      - row "资产编号 资产名称 资产分类 资产原值 累计折旧 预计残值(¥) 资产净值 月折旧额 责任人 部门 状态 购入日期 操作":
+        - columnheader:
+          - checkbox
+        - columnheader "资产编号":
+          - generic: 资产编号
+        - columnheader "资产名称":
+          - generic: 资产名称
+        - columnheader "资产分类":
+          - generic: 资产分类
+        - columnheader "资产原值":
+          - generic: 资产原值
+        - columnheader "累计折旧":
+          - generic: 累计折旧
+        - columnheader "预计残值(¥)":
+          - generic: 预计残值(¥)
+        - columnheader "资产净值":
+          - generic: 资产净值
+        - columnheader "月折旧额":
+          - generic: 月折旧额
+        - columnheader "责任人":
+          - generic: 责任人
+        - columnheader "部门":
+          - generic: 部门
+        - columnheader "状态":
+          - generic: 状态
+        - columnheader "购入日期":
+          - generic: 购入日期
+        - columnheader "操作":
+          - generic: 操作
+    - rowgroup:
+      - row "暂无匹配的资产记录":
+        - cell "暂无匹配的资产记录":
+          - generic: 暂无匹配的资产记录
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button "上一页" [disabled]:
+  - button "1"
+  - button "下一页" [disabled]:
+  - dialog:
+    - heading "新增固定资产" [level=2]
+    - button:
+    - generic: 资产图片
+    - button "上传图片":
+      - generic: 上传图片
+    - paragraph: 第一张作为主图，可拖拽调整顺序，最多 8 张
+    - button "从云相册选择":
+      - text: 从云相册选择
+    - generic: 资产编号
+    - textbox "不填则按编号规则自动生成"
+    - generic: "*"
+    - generic: 资产名称
+    - textbox "如：ThinkPad X1 Carbon"
+    - paragraph: 资产名称不能为空
+    - generic: "*"
+    - generic: 资产分类
+    - button "请选择资产分类":
+      - generic: 请选择资产分类
+    - paragraph: 资产分类不能为空
+    - generic: 品牌
+    - textbox "品牌名称"
+    - generic: 规格型号
+    - textbox "如：i7-1365U/32G/1T"
+    - generic: "*"
+    - generic: 资产原值(¥)
+    - textbox "0.00"
+    - paragraph: 资产原值不能为空
+    - generic: "*"
+    - generic: 购入日期
+    - textbox "请选择日期"
+    - button:
+    - paragraph: 购入日期不能为空
+    - generic: 折旧方法
+    - button "直线法":
+      - generic "直线法"
+    - generic: 使用年限(年)
+    - textbox: "5"
+    - generic: 残值率(%)
+    - textbox: "5"
+    - generic: 已折旧金额(¥)
+    - textbox [disabled]: "0"
+    - generic: 预计残值(¥)
+    - textbox [disabled]: "0"
+    - generic: 供应商
+    - textbox "供应商名称"
+    - generic: "*"
+    - generic: 使用部门
+    - button "默认部门":
+      - generic: 默认部门
+      - button:
+    - generic: "*"
+    - generic: 责任人
+    - button "请选择责任人":
+      - generic: 请选择责任人
+    - paragraph: 责任人不能为空
+    - generic: 存放地点
+    - textbox "如：总部3楼-工程部"
+    - generic: 发票号
+    - textbox "发票编号"
+    - generic: 备注
+    - textbox "备注信息..."
+    - button "取消"
+    - button "保存" [active]
+- button "打开 AI 助手":
+- region "Notifications alt+T"

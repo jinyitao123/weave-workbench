@@ -1,0 +1,321 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 委外未交
+- button:
+  - generic: 委外进货
+- button:
+  - generic: 委外对账单
+- button:
+  - generic: 项目中心
+- button:
+  - generic: 项目分析中心
+- button:
+  - generic: 任务管理
+- button:
+  - generic: 工时管理
+- button:
+  - generic: 快捷工时填报
+- button:
+  - generic: 项目配置中心
+- button:
+  - generic: 新建计划模板
+- button:
+  - generic: 我的审批
+- button:
+  - generic: 抄送我的
+- button:
+  - generic: 我发起的
+- button:
+  - generic: 行政申请
+- main:
+  - generic: 审批中心
+  - generic: 行政申请
+  - heading [level=1]: 行政申请
+  - paragraph: 选择需要办理的事项，填写申请后进入对应审批流程
+  - textbox:
+    - /placeholder: 搜索申请事项或流程名称
+  - tablist:
+    - tab [selected]:
+      - text: 全部申请
+      - generic: "11"
+    - tab:
+      - text: 考勤假期
+      - generic: "5"
+    - tab:
+      - text: 行政事务
+      - generic: "3"
+    - tab:
+      - text: 用车资质
+      - generic: "3"
+    - tab:
+      - text: 其他申请
+      - generic: "0"
+  - heading [level=2]: 考勤假期
+  - generic: 5 项可申请事项
+  - button:
+    - strong: 加班申请
+    - generic: 登记加班时间与补偿方式
+  - button:
+    - strong: 请假申请
+    - generic: 年假、事假、病假等假期
+  - button:
+    - strong: 出差申请
+    - generic: 填写行程与出差计划
+  - button:
+    - strong: 补签申请
+    - generic: 补录异常考勤打卡
+  - button:
+    - strong: 报销申请
+    - generic: 提交员工费用报销
+  - heading [level=2]: 行政事务
+  - generic: 3 项可申请事项
+  - button:
+    - strong: 用章申请
+    - generic: 公章、合同章等用印
+  - button:
+    - strong: 礼品申请
+    - generic: 客户礼赠与内部礼品领用
+  - button:
+    - strong: 物料领取
+    - generic: 办公及行政物料领用
+  - heading [level=2]: 用车资质
+  - generic: 3 项可申请事项
+  - button:
+    - strong: 公司用车
+    - generic: 申请公司车辆与行程
+  - button:
+    - strong: 私车公用
+    - generic: 登记私车公用与预计里程
+  - button:
+    - strong: 资质续期
+    - generic: 证照续期、变更与复审
+- button:
+- region "Notifications alt+T"
+- generic: 周日
+- dialog "报销申请":
+  - heading "报销申请" [level=2]
+  - paragraph: 提交员工费用报销
+  - heading "基本信息" [level=2]
+  - paragraph: 填写报销归属、报销人与费用归集信息
+  - generic: "*"
+  - generic: 费用标题
+  - textbox "如：华能项目现场差旅报销"
+  - generic: "*"
+  - generic: 报销人
+  - button "金 金一涛 (默认部门)" [disabled]:
+    - generic: 金
+    - generic: 金一涛
+    - generic: (默认部门)
+  - switch "代他人报销"
+  - generic: 代他人报销
+  - generic: "*"
+  - generic: 成本归属
+  - button "项目成本":
+    - generic "项目成本"
+  - generic: "*"
+  - generic: 关联项目
+  - generic: (至少选择一个，可选多个，选择后可配置费用分摊)
+  - button "选择关联项目":
+    - generic: 选择关联项目...
+  - heading "付款与核销信息" [level=2]
+  - paragraph: 填写付款安排、借款核销及补充说明
+  - generic: 供应商
+  - button "搜索并选择供应商...":
+    - generic: 搜索并选择供应商...
+  - generic: 期望付款时间
+  - textbox "请选择日期"
+  - button:
+  - generic: 关联借款单
+  - button "选择要核销的借款单...":
+    - generic: 选择要核销的借款单...
+  - generic: 备注说明
+  - textbox "补充说明费用用途、出差事由等..."
+  - heading "费用明细 *" [level=2]
+  - paragraph: 逐项填写费用，并将对应票据附在费用项下
+  - button "添加费用项":
+    - text: 添加费用项
+  - button "智能识别发票，自动生成费用明细 AI 上传发票图片或PDF，AI 自动识别票面信息并为每张发票生成一行费用 剩余 10 / 10 次 立即识别":
+    - generic: 智能识别发票，自动生成费用明细
+    - generic: AI
+    - paragraph: 上传发票图片或PDF，AI 自动识别票面信息并为每张发票生成一行费用
+    - generic: 剩余 10 / 10 次
+    - text: 立即识别
+  - generic: 费用类别
+  - generic: 金额(¥)
+  - generic: 说明 *
+  - generic: 日期
+  - button "销售费用":
+    - generic "销售费用"
+  - textbox "0.00"
+  - textbox "费用说明..."
+  - textbox "请选择日期": 2026年9月8日
+  - button:
+  - button:
+  - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持图片 / PDF / Word / Excel，可上传多个文件":
+    - generic: 点击或拖拽文件到此处上传
+    - generic: 支持 Ctrl+V 粘贴截图
+    - generic: 支持图片 / PDF / Word / Excel，可上传多个文件
+  - generic: 共 1 项
+  - text: 合计：
+  - generic: ¥0
+  - heading "收款方式" [level=2]
+  - paragraph: 选择或新增收款账户，审批通过后报销款支付至此
+  - generic: 非必填
+  - button "新增收款方式":
+    - text: 新增收款方式
+  - paragraph: 未选择收款账户，不影响保存或提交审批。
+  - heading "新增收款账户" [level=2]
+  - button:
+  - generic: 收款渠道
+  - button "银行卡":
+    - generic: 银行卡
+  - button "微信":
+    - generic: 微信
+  - button "支付宝":
+    - generic: 支付宝
+  - button "其他" [active]:
+    - generic: 其他
+  - generic: "*"
+  - generic: 渠道名称
+  - 'textbox "如: 云闪付/数字人民币"'
+  - generic: "*"
+  - generic: 收款人
+  - textbox "收款人姓名"
+  - generic: "*"
+  - generic: 收款账号
+  - textbox "请输入收款账号"
+  - generic: 标签
+  - 'textbox "如: 本人账户 / 备用账户(可选)"'
+  - generic: 备注
+  - textbox "收款账户备注信息(可选)"
+  - button "取消"
+  - button "添加账户"
+  - heading "审批流程" [level=3]:
+    - text: 审批流程
+  - paragraph: 开始
+  - paragraph: 审批
+  - generic: SINGLE
+  - paragraph: 系统管理员
+  - paragraph: 结束
+  - button "取消"
+  - button "保存草稿":
+    - text: 保存草稿
+  - button "提交审批":
+    - text: 提交审批
+  - button "Close":
+    - generic: Close

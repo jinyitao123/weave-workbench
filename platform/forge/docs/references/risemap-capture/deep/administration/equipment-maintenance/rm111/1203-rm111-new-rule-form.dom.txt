@@ -1,0 +1,253 @@
+- generic: 行政
+- button:
+- navigation:
+  - button:
+    - generic: 审批中心
+  - button:
+    - generic: 我的审批
+  - button:
+    - generic: 抄送我的
+  - button:
+    - generic: 我发起的
+  - button:
+    - generic: 行政申请
+  - button:
+    - generic: 行政管理
+  - button:
+    - generic: 公司通知
+  - button:
+    - generic: 用章管理
+  - button:
+    - generic: 会议纪要
+  - button:
+    - generic: 工作汇报
+  - button:
+    - generic: 文档中心
+  - button:
+    - generic: 固定资产
+  - button:
+    - generic: 资质与申报
+  - button:
+    - generic: 物料领取
+  - button:
+    - generic: 设备维护
+  - button:
+    - generic: 礼品管理
+  - button:
+    - generic: 借出管理
+  - button:
+    - generic: 车辆管理
+  - button:
+    - generic: 人力资源
+  - button:
+    - generic: 人事工作台
+  - button:
+    - generic: 员工档案
+  - button:
+    - generic: 招聘管理
+  - button:
+    - generic: 入职离职
+  - button:
+    - generic: 薪酬福利
+  - button:
+    - generic: 规章制度
+  - button:
+    - generic: 通讯录
+  - button:
+    - generic: 考勤假期
+  - button:
+    - generic: 加班申请
+  - button:
+    - generic: 请假管理
+  - button:
+    - generic: 出差申请
+  - button:
+    - generic: 考勤管理
+  - button:
+    - generic: 考勤统计
+  - button:
+    - generic: 流程中心
+  - button:
+    - generic: 审批记录
+  - button:
+    - generic: 发起流程
+  - button:
+    - generic: 流程定义
+  - button:
+    - generic: 流程分类
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button:
+  - text: 查看方案
+- button:
+- banner:
+  - navigation:
+    - button:
+      - text: 工作台
+    - button:
+      - text: 供应链
+    - button:
+      - text: 销售
+    - button:
+      - text: 生产
+    - button:
+      - text: 项目
+    - button [pressed]:
+      - text: 行政
+    - button:
+      - text: 财务
+    - button:
+      - text: 报表
+    - button:
+      - text: 系统
+  - button:
+  - button:
+    - generic: "2"
+  - button:
+  - link:
+    - /url: https://community.risemap.cn/
+  - link:
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button:
+    - generic: 立即订阅
+  - button:
+    - generic: 金
+- button:
+  - generic: 工作台
+- button:
+  - generic: 行政申请
+- button:
+  - generic: 公司通知
+- button:
+  - generic: 发布通知
+- button:
+  - generic: 用章管理
+- button:
+  - generic: 会议纪要
+- button:
+  - generic: 新建会议纪要
+- button:
+  - generic: AI 模板管理
+- button:
+  - generic: 工作汇报
+- button:
+  - generic: 新建工作汇报
+- button:
+  - generic: 文档中心
+- button:
+  - generic: 固定资产
+- button:
+  - generic: 资质与申报
+- button:
+  - generic: 物料领取
+- button:
+  - generic: 设备维护
+- main:
+  - heading [level=1]: 设备维护保养
+  - paragraph: 设备台账管理、维护/维修工单与提醒
+  - button:
+    - text: 设备台账
+  - button:
+    - text: 工单管理
+  - button:
+    - text: 维保规则
+  - button:
+    - text: 提醒中心
+    - generic: "0"
+  - button:
+    - text: 费用统计
+  - button:
+    - text: 新建规则
+  - button:
+  - button:
+  - button:
+  - textbox:
+    - /placeholder: 搜索规则名称、设备类型...
+  - button:
+    - text: 状态
+  - button:
+    - text: 优先级
+  - generic: 共 0 条规则，覆盖 0 类设备
+  - table:
+    - rowgroup:
+      - row:
+        - columnheader:
+          - generic: 规则名称
+        - columnheader:
+          - generic: 设备类型
+        - columnheader:
+          - generic: 优先级
+        - columnheader:
+          - generic: 周期
+        - columnheader:
+          - generic: 提前提醒
+        - columnheader:
+          - generic: 适用设备
+        - columnheader:
+          - generic: 维护任务
+        - columnheader:
+          - generic: 预估费用
+        - columnheader:
+          - generic: 状态
+        - columnheader:
+          - generic: 操作
+    - rowgroup:
+      - row:
+        - cell:
+          - generic: 暂无维保规则
+  - text: 共
+  - strong: "0"
+  - text: 条记录
+  - generic: 每页
+  - combobox:
+    - generic: "20"
+  - generic: 条
+  - button [disabled]:
+  - button: "1"
+  - button [disabled]:
+- button:
+- region "Notifications alt+T"
+- dialog "新建维保规则":
+  - heading "新建维保规则" [level=2]:
+    - text: 新建维保规则
+  - generic: "*"
+  - generic: 规则名称
+  - textbox "例如：CNC设备季度保养" [active]
+  - generic: "*"
+  - generic: 设备类型
+  - button "请选择设备类型":
+    - generic: 请选择设备类型
+  - button "新增设备类型":
+  - generic: 周期间隔
+  - textbox: "3"
+  - generic: 单位
+  - button "月":
+    - generic "月"
+  - generic: 提前提醒(天)
+  - textbox: "7"
+  - generic: 优先级
+  - radiogroup:
+    - radio "高"
+    - radio "中" [checked]
+    - radio "低"
+  - generic: "*"
+  - generic: 保养任务项
+  - textbox "多个任务用\"、\"分隔，如：润滑油更换、精度校验、冷却系统清洁"
+  - generic: "*"
+  - generic: 适用设备
+  - generic: 请先选择设备类型
+  - generic: 维护成本项目
+  - generic: 项目名称
+  - generic: 维护项目配件
+  - generic: 预估费用
+  - generic: 操作
+  - generic: 暂无维护成本项目
+  - textbox "项目名称，如：润滑油/滤芯/轴承"
+  - button "选择维护项目配件":
+    - generic: 选择维护项目配件
+  - textbox "费用(¥)": "0"
+  - button:
+  - button "取消"
+  - button "创建规则"
+  - button "Close":
+    - generic: Close

@@ -1,0 +1,183 @@
+Browser tab: 1, Title: "RiseMap", URL: "https://risemap.cn/sales/goodwill/2099141151628992514".
+1 AXWebArea RiseMap, URL: risemap.cn/sales/goodwill/2099141151628992514
+	2 container root
+		3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+		4 text 销售
+		5 button 收起侧边栏
+			6 image
+		7 container
+			8 button 销售业务
+				9 image
+				10 text 销售业务
+				11 image
+			12 button 框架销售合同
+			13 button 销售订单
+			14 button 附加费用
+			15 button 收款流水
+			16 button 销售发货单
+			17 button 销售退货
+			18 button 业绩银行
+			19 button 价格策略
+			20 button Goodwill订单
+			21 button 销售团队
+			22 button 销售目标
+			23 button 销售发票
+			24 button CRM客户管理
+				25 image
+				26 text CRM客户管理
+				27 image
+			28 button 客户管理
+			29 button 联系人管理
+			30 button 销售报价
+			31 button 客户物料对照
+			32 button 商机管理
+			33 button 线索管理
+			34 button 跟进记录
+			35 button 公海客户
+			36 button 服务管理
+				37 image
+				38 text 服务管理
+				39 image
+			40 button 服务工单
+			41 button 服务报价单
+			42 button 服务结算单
+			43 button 接单中心
+			44 button 派工中心
+			45 button 服务分析
+			46 button 质保管理
+			47 button 服务配置
+		48 image
+		49 text 免费试用中，还剩 9 天 — 试用期间享全部功能
+		50 button 查看方案
+			51 image
+			52 text 查看方案
+		53 button
+			54 image
+		55 container
+			56 container 业务分类
+				57 container
+					58 checkbox 工作台, Value: 0
+					59 checkbox 供应链, Value: 0
+					60 checkbox 销售, Value: 1
+					61 checkbox 生产, Value: 0
+					62 checkbox 项目, Value: 0
+					63 checkbox 行政, Value: 0
+					64 checkbox 财务, Value: 0
+					65 checkbox 报表, Value: 0
+					66 checkbox 系统, Value: 0
+			67 button Description: 展开搜索, Help: 搜索
+				68 image
+			69 button (collapsed) Description: 通知，20 条未读, Secondary Actions: Expand
+				70 image
+				71 text 20
+			72 button Description: 打开推广奖励, Help: 推广
+			73 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+			74 link Description: 打开工单, Help: 工单, Value: community.risemap.cn/support
+			75 button 立即订阅, Help: 试用还剩 9 天 · 立即订阅享专属优惠
+				76 image
+				77 text 立即订阅
+			78 button 金
+				79 text 金
+				80 image
+		81 container
+			82 button 工作台
+				83 image
+				84 text 工作台
+			85 button 销售目标
+				86 text 销售目标
+			87 button 工作台
+				88 text 工作台
+			89 button Goodwill订单
+				90 text Goodwill订单
+			91 button Goodwill订单详情
+				92 text Goodwill订单详情
+			93 button 框架销售合同
+				94 text 框架销售合同
+			95 button 销售订单
+				96 text 销售订单
+			97 button 销售发货单
+				98 text 销售发货单
+			99 button 销售发票
+				100 text 销售发票
+			101 button 收款流水
+				102 text 收款流水
+			103 button 业绩银行
+				104 text 业绩银行
+			105 button 销售报价
+				106 text 销售报价
+			107 button 服务工单
+				108 text 服务工单
+			109 button 服务报价单
+				110 text 服务报价单
+			111 button 服务结算单
+				112 text 服务结算单
+		113 container
+			114 text 销售管理
+			115 image
+			116 text Goodwill订单
+			117 image
+			118 text GW-2026-0001
+			119 button
+				120 image
+			121 image
+			122 text GW-2026-0001
+			123 image
+			124 text 发货中
+			125 image
+			126 text RISEMAP 对照赠送类型 20260913
+			127 heading 苏州澄岳自动化装备有限公司 - Goodwill 订单, Value: 1
+				128 text 苏州澄岳自动化装备有限公司  - Goodwill 订单
+			129 button 确认完成
+				130 image
+				131 text 确认完成
+			132 button 反审核
+				133 image
+				134 text 反审核
+			135 button 一键反审核
+				136 image
+				137 text 一键反审核
+			138 button 打印
+				139 image
+				140 text 打印
+			141 image
+			142 text 草稿
+			143 image
+			144 text 待审批
+			145 image
+			146 text 已审批
+			147 image
+			148 text 发货中 5 已完成
+			149 button 基本信息
+			150 button 物品清单 1
+				151 text 物品清单
+				152 text 1
+			153 button 发货记录 1
+				154 text 发货记录
+				155 text 1
+			156 button 审批记录 1
+				157 text 审批记录
+				158 text 1
+			159 button 操作记录 4
+				160 text 操作记录
+				161 text 4
+			162 text DN-2026-0002 待发货 — 配送信息 无物流信息 收件人 周启明 13800002609 收货地址 苏州市工业园区澄岳路9号 发货物品
+			163 image
+			164 text 800型柔性线控制柜 x2
+			165 button Description: 拖动快捷操作面板；按方向键调整，回车复位, Help: 按住拖动；双击复位
+				166 image
+			167 button 确认完成
+				168 image
+			169 button 反审核
+				170 image
+			171 button 打印
+				172 image
+		173 button Description: 打开 AI 助手, Help: 移入边缘显示 AI 助手
+		174 container Notifications alt+T
+			175 content list
+				176 container
+					177 button Close toast
+						178 image
+					179 image
+					180 text 发货已记录
+
+The focused UI element is 1 AXWebArea RiseMap, URL: risemap.cn/sales/goodwill/2099141151628992514

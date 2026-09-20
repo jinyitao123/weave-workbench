@@ -1,0 +1,282 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同":
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "附加费用":
+    - generic: 附加费用
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "联系人管理":
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+  - button "服务管理":
+    - generic: 服务管理
+  - button "服务工单":
+    - generic: 服务工单
+  - button "服务报价单":
+    - generic: 服务报价单
+  - button "服务结算单":
+    - generic: 服务结算单
+  - button "接单中心":
+    - generic: 接单中心
+  - button "派工中心":
+    - generic: 派工中心
+  - button "服务分析":
+    - generic: 服务分析
+  - button "质保管理":
+    - generic: 质保管理
+  - button "服务配置":
+    - generic: 服务配置
+- generic: 免费试用中，还剩 9 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，18 条未读":
+    - generic: "18"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "商机管理":
+  - generic: 商机管理
+- button "线索管理":
+  - generic: 线索管理
+- button "跟进记录":
+  - generic: 跟进记录
+- button "公海客户":
+  - generic: 公海客户
+- button "服务工单":
+  - generic: 服务工单
+- button "服务报价单":
+  - generic: 服务报价单
+- button "服务结算单":
+  - generic: 服务结算单
+- button "接单中心":
+  - generic: 接单中心
+- button "派工中心":
+  - generic: 派工中心
+- button "服务分析":
+  - generic: 服务分析
+- button "质保管理":
+  - generic: 质保管理
+- button "服务配置":
+  - generic: 服务配置
+- button "新建服务工单":
+  - generic: 新建服务工单
+- button "服务工单详情":
+  - generic: 服务工单详情
+- main:
+  - generic: 服务管理
+  - generic: WO-2026-0001
+  - heading "RISEMAP 对照服务工单 20260913" [level=1]
+  - paragraph: 苏州澄岳自动化装备有限公司 · 周启明 13800002609
+  - button "返回列表":
+    - text: 返回列表
+  - generic: RISEMAP 对照服务类型 20260913
+  - generic "服务执行状态": 服务：待接单
+  - generic "报价、结算与收款状态": 商业：
+  - generic: 中
+  - button "工程师接单":
+    - text: 工程师接单
+  - button "拒单"
+  - button "改派"
+  - text: 工单阶段
+  - generic: 当前阶段：待接单
+  - generic: 待受理
+  - generic: 待分派
+  - generic: "3"
+  - generic: 待接单
+  - generic: "4"
+  - generic: 服务中
+  - generic: "5"
+  - generic: 已完工
+  - generic: "6"
+  - generic: 待回访
+  - generic: "7"
+  - generic: 已回访
+  - text: 客户与联系人
+  - generic "苏州澄岳自动化装备有限公司 · 周启明"
+  - text: 产品与设备
+  - generic "（整单服务 / 未指定产品）"
+  - text: 当前负责人
+  - generic: RISEMAP 对照服务工程师 20260913
+  - text: 响应与时效
+  - generic: 0 分钟响应
+  - button "概览": 概览
+  - button "处理记录"
+  - button "工时"
+  - button "团队"
+  - button "成本费用"
+  - button "报价和结算单"
+  - button "备件申请"
+  - button "服务报告"
+  - button "客户反馈"
+  - button "回访"
+  - button "操作日志"
+  - generic: 服务权益
+  - generic: 未配置
+  - generic: 来源：合同 · SC-OEM-20260909-001
+  - generic: 无质保期信息
+  - generic: 客户资产
+  - generic: 未建档
+  - generic: （整单服务 / 未指定产品）
+  - generic: 未维护安装位置 · —
+  - generic: SLA 响应
+  - generic: 未配置
+  - generic: 截止 待计算
+  - generic: 首响 0 分钟
+  - generic: 客户与产品
+  - generic: 客户
+  - text: 苏州澄岳自动化装备有限公司
+  - generic: (2097487596635807745)
+  - generic: 联系人 / 电话
+  - text: 周启明 · 13800002609
+  - generic: 工单来源
+  - generic: 内部创建
+  - generic: 负责人
+  - generic: RISEMAP 对照服务工程师 20260913
+  - generic: 产品 / 型号
+  - generic: （整单服务 / 未指定产品）
+  - generic: SN / 追溯码
+  - generic: —
+  - generic: 销售订单
+  - button "SO-2026-0001"
+  - generic: 关联项目
+  - generic: —
+  - generic: 关联合同
+  - generic: SC-OEM-20260909-001
+  - generic: 受影响产品
+  - generic: 1 项
+  - generic: 质保状态
+  - text: 未配置质保
+  - generic: 质保截止
+  - generic: —
+  - generic: 是否收费
+  - generic: 免费
+  - generic: 服务方式
+  - generic: 上门服务
+  - generic: 服务地址
+  - text: 苏州澄岳自动化装备有限公司现场
+  - generic: 问题描述 / 服务内容
+  - paragraph: 800型柔性线控制柜交付后例行调试支持，用于 Forge 同材料复刻验收。
+  - generic: 故障现象： PLC 通讯参数复核
+  - generic: 影响范围：单工位调试支持
+  - text: 来源详情
+  - generic: 内部创建
+  - generic: 提交时间
+  - generic: 2026-09-13 21:55:38
+  - generic: 提交人
+  - generic: 金一涛
+  - generic: 提交设备
+  - generic: —
+  - generic: 紧急/停机
+  - generic: 中
+  - generic: 提交时附件
+  - generic: 客户提交时未上传附件
+  - generic: 关单检查
+  - generic: 0 项阻断待处理
+  - generic: 暂不可关闭
+  - generic: 闭环状态
+  - generic: 服务状态
+  - generic: 待接单
+  - generic: 服务关闭与财务结清分开管理
+  - generic: 商业状态
+  - generic: —
+  - generic: 报价、结算与收款的综合口径
+  - generic: 应收状态
+  - generic: 尚未生单
+  - generic: 未结清不阻止服务关闭
+  - text: 分享与客户查询入口
+  - generic: 内部协作分享
+  - generic: 含成本/协同
+  - generic: 拿到链接即可查看，工单关闭后自动失效。供应商/研发/老板临时查看。
+  - button "生成内部分享链接":
+    - text: 生成内部分享链接
+  - generic: 客户对外查询门户
+  - generic: 已脱敏
+  - generic: 客户凭 13800002609 + 工单号 WO-2026-0001 免登录查询；可在线确认费用 / 接受报价 / 评价。
+  - generic: 查询入口
+  - code: https://risemap.cn/service-portal
+  - button "复制":
+  - generic: 专属直达
+  - code: https://risemap.cn/service-portal?phone=13800002609&code=WO-2026-0001
+  - button "复制":
+  - button "预览客户视图":
+    - text: 预览客户视图
+  - button "发短信通知客户":
+    - text: 发短信通知客户
+  - button "拖动快捷操作面板；按方向键调整，回车复位":
+  - button "拆分工单":
+  - button "沟通记录":
+  - button "客户反馈":
+  - button "操作日志":
+- button "打开 AI 助手"
+- region "Notifications alt+T":
+  - list:
+    - button "Close toast":
+    - generic: 已派工给 RISEMAP 对照服务工程师 20260913，等待工程师接单

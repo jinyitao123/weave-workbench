@@ -1,0 +1,47 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/hr/benefits".
+1 AXWebArea RiseMap, URL: risemap.cn/hr/benefits
+	2 container
+		3 container Notifications alt+T
+		4 container 新建兑换码池, ID: radix-:r4:
+			5 heading 新建兑换码池, Value: 2, ID: radix-:r5:
+				6 image
+				7 text 新建兑换码池
+			8 text 新建兑换码池表单
+			9 container
+				10 container
+					11 text * 码池名称
+				12 text field (settable)
+				40 text 请输入码池名称
+				13 text 兑换码类型
+				14 button 购物卡
+					15 text 购物卡
+				16 container
+					17 text * 单张面值(¥)
+				18 stepper (settable)
+				41 text 请输入单张面值
+				19 container
+					20 text * 兑换码总数
+				21 stepper (settable)
+				42 text 请输入兑换码总数
+				22 container
+					23 text * 有效期至
+				43 container
+					44 text field (settable)
+					45 button
+						46 image
+					47 text 请选择有效期
+				48 text 请选择有效期
+				28 text 供应商/来源
+				29 text field (settable)
+				30 text 兑换码列表 (每行一个)
+				31 text entry area (settable)
+				32 text 支持直接粘贴批量兑换码，或后续通过导入 Excel 补充
+				33 text 描述
+				34 text entry area (settable)
+				35 button 取消
+				36 button 创建码池
+			37 button Close
+				38 image
+				39 text Close
+
+The focused UI element is 12 text field (settable)

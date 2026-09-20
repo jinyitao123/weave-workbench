@@ -1,0 +1,115 @@
+Browser tab: 8, Title: "ObjectOS", URL: "http://localhost:4321/_console/apps/forge/page/page_pending_outbound_shipments".
+1 AXWebArea ObjectOS, URL: localhost:4321/_console/apps/forge/page/page_pending_outbound_shipments
+	2 container root
+		3 container 通知 alt+T
+		4 container
+			5 link Description: ObjectOS, Value: localhost:4321/_console/apps/forge
+			6 container 本平台处于预览版，功能可能调整。
+				7 text 预览版
+			8 pop up button (collapsed) Forge, ID: radix-_r_c_, Secondary Actions: Expand
+			9 link Description: 页面, Value: localhost:4321/_console/apps/forge
+			10 text 待出库发货单
+			11 button 搜索…
+				12 text 搜索…
+				13 text ⌘
+				14 text K
+			15 pop up button (collapsed) Description: 打开消息中心, Help: 消息中心, Secondary Actions: Expand
+			16 link Description: 在 Studio 中设计, Value: localhost:4321/_console/studio/forge/interfaces?surface=page:page_pending_outbound_shipments
+			17 pop up button (collapsed) Description: 帮助与文档, ID: radix-_r_f_, Secondary Actions: Expand
+			18 pop up button (collapsed) DA, ID: radix-_r_h_, Secondary Actions: Expand
+		19 container
+			20 container
+				21 text 区域
+				22 content list
+					23 button 工作台
+					24 button 供应链
+					25 button 销售
+					26 button 生产
+					27 button 项目
+					28 button 行政
+					29 button 财务
+					30 button 报表
+					31 button 系统
+			32 container
+				33 button (expanded) 工作台, Secondary Actions: Collapse
+				34 content list
+					35 link Description: 工作台, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					36 link Description: 待办管理, Value: localhost:4321/_console/apps/forge/page/page_workbench
+					37 link Description: AI 广场, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+					38 link Description: 引导中心, Value: localhost:4321/_console/apps/forge/page/page_workspace_recovery_status
+			39 text 最近使用
+			40 button 切换侧边栏
+		41 container
+			42 button 在 Studio 中编辑
+			43 heading 待出库发货单, Value: 1
+				44 text 待出库发货单
+			45 text 管理所有出库单和待出库发货单 04 出库管理 / 待出库发货单
+			46 button 下一步操作　出库单列表 ›
+			47 button 返回销售发货单
+			48 button 刷新
+			49 text 管理所有出库单和待出库发货单
+			50 heading 待出库发货单, Value: 1
+				51 text 待出库发货单
+			52 text 待出库发货单 1 待出库数量 1 待出库金额 ¥ 128,000.00 已生成出库单 0
+			53 text field (settable) 搜索待出库发货单
+			54 button 清空筛选
+			55 table
+				56 row
+					57 cell
+						58 text 发货单号
+					59 cell
+						60 text 客户单号
+					61 cell
+						62 text 客户
+					63 cell
+						64 text 收货人
+					65 cell
+						66 text 收货地址
+					67 cell
+						68 text 含税金额
+					69 cell
+						70 text 出库进度
+					71 cell
+						72 text 状态
+					73 cell
+						74 text 日期
+					75 cell
+						76 text 负责人
+					77 cell
+						78 text 操作
+				79 row
+					80 cell
+						81 button DN-PENDING-UI-20260913-001
+						82 text SO-WF-20260909-001
+					83 cell
+						84 text —
+					85 cell
+						86 text 苏州澄岳自动化装备有限公司
+					87 cell
+						88 text 周启明
+					89 cell
+						90 text 苏州市工业园区澄岳路9号
+					91 cell
+						92 text ¥ 128,000.00
+					93 cell
+						94 container
+							95 text 0  /  1  台
+					96 cell
+						97 text 待发货
+					98 cell
+						99 text 2026-09-13
+					100 cell
+						101 text Dev Admin
+					102 cell
+						103 button 创建出库单
+						104 button 查看
+			105 text 共  1  条记录 每页 20 条 · 1 / 1
+			106 container 确认创建销售出库单
+				107 text 确认创建销售出库单
+				108 text DN-PENDING-UI-20260913-001 · 苏州澄岳自动化装备有限公司
+				109 button 关闭
+				124 text 请确认发货单、仓库、数量和库存扣减影响无误；确认后将创建销售出库单并回写发货进度。
+				122 button 取消
+				123 button 确认提交
+
+The focused UI element is 123 button 确认提交

@@ -1,0 +1,200 @@
+Browser tab: 1347074611, Title: "RiseMap", URL: "https://risemap.cn/inventory/outbound/shipments".
+0 AXWebArea RiseMap, URL: risemap.cn/inventory/outbound/shipments
+	1 container
+		2 container root
+			3 image Description: 南京汇川技术研发中心有限公司, Help: 返回首页
+			4 text 供应链
+			5 button 收起侧边栏
+				6 image
+			7 container
+				8 button 到货检验
+					9 image
+					10 text 到货检验
+					11 image
+				12 button 到货通知
+				13 button 到货登记
+				14 button 待检验库存
+				15 button 检验单
+				16 button 检验规则
+				17 button 基础资料
+					18 image
+					19 text 基础资料
+					20 image
+				21 button 物料管理
+				22 button 物料组合
+				23 button BOM管理
+				24 button 综合物料搜索
+				25 button 供应商管理
+				26 button 产品实例追溯
+				27 button 仓库管理
+				28 button 采购管理
+					29 image
+					30 text 采购管理
+					31 image
+				32 button 采购发票
+				33 button 采购申请
+				34 button 采购待办池
+				35 button 询价管理
+				36 button 采购订单
+				37 button 采购退换货
+				38 button 供应商价格本
+				39 button 入库管理
+					40 image
+					41 text 入库管理
+					42 image
+				43 button 全部入库单
+				44 button 采购入库
+				45 button 生产入库
+				46 button 其他入库
+				47 button 期初入库
+				48 button 入库明细
+				49 button 库存管理
+					50 image
+					51 text 库存管理
+					52 image
+				53 button 库存总览
+				54 button 不合格处理
+				55 button 库存流水
+				56 button 库存锁定
+				57 button 库存盘点
+				58 button 调拨与借出
+				59 button 库存预警
+				60 button 报损单
+				61 button SN码管理
+				62 button 出库管理
+					63 image
+					64 text 出库管理
+					65 image
+				66 button 出库单列表
+				67 button 生产出库
+				68 button 其他出库
+				69 button 销售直接出库
+				70 button 待出库发货单
+				71 button 采购退换货出库
+				72 button 出库明细
+			73 image
+			74 text 免费试用中，还剩 14 天 — 试用期间享全部功能
+			75 button 查看方案
+				76 image
+				77 text 查看方案
+			78 button
+				79 image
+			80 container
+				81 container 业务分类
+					82 checkbox 工作台, Value: 0
+					83 checkbox 供应链, Value: 1
+					84 checkbox 销售, Value: 0
+					85 checkbox 生产, Value: 0
+					86 checkbox 项目, Value: 0
+					87 checkbox 行政, Value: 0
+					88 checkbox 财务, Value: 0
+					89 checkbox 报表, Value: 0
+					90 checkbox 系统, Value: 0
+				91 button Description: 展开搜索, Help: 搜索
+					92 image
+				93 button (collapsed) Description: 通知，2 条未读, Secondary Actions: Expand
+					94 image
+					95 text 2
+				96 button Description: 打开推广奖励, Help: 推广
+				97 link Description: 打开社区, Help: 社区, Value: community.risemap.cn/
+				98 link Description: 打开工单, Value: community.risemap.cn/support
+				99 button 立即订阅, Help: 试用还剩 14 天 · 立即订阅享专属优惠
+					100 image
+					101 text 立即订阅
+				102 button 金
+					103 text 金
+					104 image
+			105 container
+				106 button 工作台
+					107 image
+					108 text 工作台
+				178 button 库存总览
+					179 text 库存总览
+				180 button 不合格处理
+					181 text 不合格处理
+				182 button 库存流水
+					183 text 库存流水
+				184 button 库存锁定
+					185 text 库存锁定
+				186 button 库存盘点
+					187 text 库存盘点
+				188 button 调拨与借出
+					189 text 调拨与借出
+				190 button 库存预警
+					191 text 库存预警
+				192 button 报损单
+					193 text 报损单
+				194 button SN管理
+					195 text SN管理
+				196 button 出库单列表
+					197 text 出库单列表
+				198 button 生产出库
+					199 text 生产出库
+				200 button 其他出库
+					201 text 其他出库
+				202 button 销售直接出库
+					203 text 销售直接出库
+				204 button 待出库发货单
+					205 text 待出库发货单
+			206 container
+				207 container
+					208 text 出库管理
+					209 image
+					210 text 待出库发货单
+					211 image
+					212 heading 待出库发货单, Value: 1
+						213 text 待出库发货单
+					214 text 管理所有出库单和待出库发货单
+					215 button 下一步操作 出库单列表, Help: 前往出库管理 · 出库单列表
+						216 text 下一步操作
+						217 text 出库单列表
+						218 image
+				219 button 刷新
+					220 image
+				221 button
+					222 image
+				223 button
+					224 image
+				225 image
+				226 text field (settable)
+				227 table
+					228 row
+						229 cell
+							230 checkbox (settable, integer) 0
+						231 cell
+							232 text 发货单号
+						233 cell
+							234 text 客户单号
+						235 cell
+							236 text 客户
+						237 cell
+							238 text 收货人
+						239 cell
+							240 text 收货地址
+						241 cell
+							242 text 含税金额
+						243 cell
+							244 text 出库进度
+						245 cell
+							246 text 状态
+						247 cell
+							248 text 日期
+						249 cell
+							250 text 操作
+					251 row
+						252 cell
+							253 image
+							254 text 暂无待出库的发货单
+				255 text 共  0 条记录 每页
+				256 combo box (collapsed) Value: 20, Secondary Actions: Expand
+					257 text 20
+				258 text 条
+				259 button (disabled) 上一页
+					260 image
+				261 button 1
+				262 button (disabled) 下一页
+					263 image
+			164 button Description: 打开 AI 助手, Help: 拖动可移动位置 · 点击打开 AI 助手
+			165 container Notifications alt+T
+
+The focused UI element is 70 button 待出库发货单

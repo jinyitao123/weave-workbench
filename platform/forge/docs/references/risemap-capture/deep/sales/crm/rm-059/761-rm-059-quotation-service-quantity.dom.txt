@@ -1,0 +1,407 @@
+- img "南京汇川技术研发中心有限公司"
+- generic: 销售
+- button "收起侧边栏":
+- navigation:
+  - button "销售业务":
+    - generic: 销售业务
+  - button "框架销售合同":
+    - generic: 框架销售合同
+  - button "销售订单":
+    - generic: 销售订单
+  - button "收款流水":
+    - generic: 收款流水
+  - button "销售发货单":
+    - generic: 销售发货单
+  - button "销售退货":
+    - generic: 销售退货
+  - button "业绩银行":
+    - generic: 业绩银行
+  - button "价格策略":
+    - generic: 价格策略
+  - button "Goodwill订单":
+    - generic: Goodwill订单
+  - button "销售团队":
+    - generic: 销售团队
+  - button "销售目标":
+    - generic: 销售目标
+  - button "销售发票":
+    - generic: 销售发票
+  - button "CRM客户管理":
+    - generic: CRM客户管理
+  - button "客户管理":
+    - generic: 客户管理
+  - button "联系人管理":
+    - generic: 联系人管理
+  - button "销售报价":
+    - generic: 销售报价
+  - button "客户物料对照":
+    - generic: 客户物料对照
+  - button "商机管理":
+    - generic: 商机管理
+  - button "线索管理":
+    - generic: 线索管理
+  - button "跟进记录":
+    - generic: 跟进记录
+  - button "公海客户":
+    - generic: 公海客户
+- generic: 免费试用中，还剩 13 天 — 试用期间享全部功能
+- button "查看方案":
+  - text: 查看方案
+- button:
+- banner:
+  - navigation "业务分类":
+    - button "工作台":
+      - text: 工作台
+    - button "供应链":
+      - text: 供应链
+    - button "销售" [pressed]:
+      - text: 销售
+    - button "生产":
+      - text: 生产
+    - button "项目":
+      - text: 项目
+    - button "行政":
+      - text: 行政
+    - button "财务":
+      - text: 财务
+    - button "报表":
+      - text: 报表
+    - button "系统":
+      - text: 系统
+  - button "展开搜索":
+  - button "通知，2 条未读":
+    - generic: "2"
+  - button "打开推广奖励":
+  - link "打开社区":
+    - /url: https://community.risemap.cn/
+  - link "打开工单":
+    - /url: https://community.risemap.cn/support
+    - generic: 工单
+  - button "立即订阅":
+    - generic: 立即订阅
+  - button "金":
+    - generic: 金
+- button "工作台":
+  - generic: 工作台
+- button "业绩银行":
+  - generic: 业绩银行
+- button "价格策略":
+  - generic: 价格策略
+- button "新增框架协议":
+  - generic: 新增框架协议
+- button "新增特价":
+  - generic: 新增特价
+- button "Goodwill订单":
+  - generic: Goodwill订单
+- button "Goodwill订单详情":
+  - generic: Goodwill订单详情
+- button "销售团队":
+  - generic: 销售团队
+- button "销售目标":
+  - generic: 销售目标
+- button "销售发票":
+  - generic: 销售发票
+- button "客户管理":
+  - generic: 客户管理
+- button "名片扫描":
+  - generic: 名片扫描
+- button "联系人管理":
+  - generic: 联系人管理
+- button "销售报价":
+  - generic: 销售报价
+- button "新建销售报价":
+  - generic: 新建销售报价
+- main:
+  - generic: 销售管理
+  - generic: 销售报价
+  - generic: 新建报价
+  - button:
+  - heading "新建报价单" [level=1]
+  - button "管理员视角":
+    - text: 管理员视角
+  - button "取消"
+  - button "预览报价单":
+    - text: 预览报价单
+  - button "保存草稿":
+    - text: 保存草稿
+  - button "提交审核":
+    - text: 提交审核
+  - button "报价基本信息 2/8":
+    - generic: 报价基本信息
+    - generic: 2/8
+  - generic: 报价单号
+  - textbox "留空则按编码规则自动生成"
+  - generic: "*"
+  - generic: 客户
+  - button "搜索客户名称...":
+    - generic: 搜索客户名称...
+  - generic: "*"
+  - generic: 负责人
+  - button "金一涛（当前开单人）" [disabled]:
+    - generic "金一涛（当前开单人）"
+  - paragraph: 默认当前开单人，也可从客户主负责人或协同销售中选择。
+  - generic: 联系人
+  - generic: 请先选择客户
+  - generic: 关联商机
+  - button "请先选择客户" [disabled]:
+    - generic: 请先选择客户
+  - generic: "*"
+  - generic: 报价类型
+  - button "新增报价类型":
+  - generic: "*"
+  - generic: 报价主体
+  - button "请选择":
+    - generic: 请选择
+  - button "新增公司抬头":
+  - generic: 有效期
+  - spinbutton: "30"
+  - generic: 天
+  - generic: 至 2026-10-08
+  - button "商务条款 1/4":
+    - generic: 商务条款
+    - generic: 1/4
+  - generic: 销售付款条件
+  - button "请选择销售付款条件":
+    - generic: 请选择销售付款条件
+  - generic: 付款方式
+  - button "请选择付款方式":
+    - generic: 请选择付款方式
+  - generic: 交货期
+  - spinbutton: "30"
+  - generic: 工作日
+  - paragraph: 自合同签订之日起计算
+  - generic: 报价说明
+  - textbox "输入报价说明、特殊条款、技术要求等补充信息..."
+  - button "+ 含税含运"
+  - button "+ 不含安装调试"
+  - button "+ FOB上海"
+  - button "+ 质保1年"
+  - button "+ 含技术培训"
+  - button "+ 7×24小时技术支持"
+  - heading "报价明细" [level=3]
+  - generic "物料字段显示模式":
+    - button "常用字段"
+    - button "全部字段"
+  - button "添加物料":
+    - text: 添加物料
+  - button "新建分组":
+    - text: 新建分组
+  - button "平铺显示":
+    - text: 平铺显示
+  - button "物料组合":
+    - text: 物料组合
+  - button "新增临时物料":
+    - text: 新增临时物料
+  - button "批量导入物料":
+    - text: 批量导入物料
+  - button "供应商价本":
+    - text: 供应商价本
+  - generic: 已选 0 项
+  - button "批量数量" [disabled]:
+    - text: 批量数量
+  - button "批量调价" [disabled]:
+    - text: 批量调价
+  - button "批量调税率" [disabled]:
+    - text: 批量调税率
+  - button "统一折扣" [disabled]:
+    - text: 统一折扣
+  - button "批量删除" [disabled]:
+    - text: 批量删除
+  - button "取消选择" [disabled]:
+    - text: 取消选择
+  - table:
+    - rowgroup:
+      - row "# 编码 物料/服务名称* 型号* 规格* 分类* 单位* 数量* 含税单价* 不含税单价* 税率* 折扣% 折后含税小计":
+        - columnheader
+        - columnheader:
+          - checkbox
+        - columnheader "#": "#"
+        - columnheader "编码": 编码
+        - columnheader "物料/服务名称*": 物料/服务名称*
+        - columnheader "型号*": 型号*
+        - columnheader "规格*": 规格*
+        - columnheader "分类*": 分类*
+        - columnheader "单位*": 单位*
+        - columnheader "数量*": 数量*
+        - columnheader "含税单价*": 含税单价*
+        - columnheader "不含税单价*": 不含税单价*
+        - columnheader "税率*": 税率*
+        - columnheader "折扣%": 折扣%
+        - columnheader "折后含税小计": 折后含税小计
+        - columnheader
+    - rowgroup:
+      - row "全部物料 1 项 添加物料 ¥0.00":
+        - cell:
+        - cell "全部物料 1 项 添加物料":
+          - generic: 全部物料
+          - generic: 1 项
+          - button "添加物料":
+            - text: 添加物料
+        - cell "¥0.00":
+          - generic: ¥0.00
+      - row "1 — * * * 选择分类 * 选择单位 * 1 13% -":
+        - cell:
+        - cell
+        - cell "1":
+          - generic: "1"
+        - cell "—"
+        - cell "*":
+          - textbox "输入物料/服务名称"
+          - button "从物料库选择":
+          - generic: "*"
+        - cell "*":
+          - textbox "型号"
+          - generic: "*"
+        - cell "*":
+          - textbox "规格"
+          - generic: "*"
+        - cell "选择分类 *":
+          - generic: 选择分类
+          - generic: "*"
+        - cell "选择单位 *":
+          - button "选择单位":
+            - generic: 选择单位
+          - generic: "*"
+        - cell "1":
+          - button:
+          - textbox: "1"
+          - button:
+        - cell:
+          - textbox
+        - cell:
+          - textbox "0"
+        - cell "13%":
+          - button "13%":
+            - generic "13%"
+        - cell:
+          - textbox "0"
+        - cell "-"
+        - cell:
+          - button "行备注":
+          - button "复制行":
+          - button "删除行" [disabled]:
+  - button "添加空行":
+    - text: 添加空行
+  - generic: 未税
+  - generic: ¥0.00
+  - generic: 税额
+  - generic: ¥0.00
+  - generic: 物料含税
+  - generic: ¥0.00
+  - generic: 报价总额
+  - generic: ¥0.00
+  - heading "服务费用明细" [level=3]
+  - button "添加服务费":
+    - text: 添加服务费
+  - paragraph: 暂无服务费项目
+  - paragraph: 可添加技术服务费、安装调试费、运输费、项目管理费等
+  - button "报价条款 0 条 随报价单输出的商务约定" [expanded]:
+    - generic: 报价条款
+    - generic: 0 条
+    - generic: 随报价单输出的商务约定
+  - paragraph: 维护随报价单输出的商务条款
+  - button "选择预设":
+    - text: 选择预设
+  - button "自定义":
+    - text: 自定义
+  - text: 暂未添加报价条款
+  - text: 可从预设条款中选择，或新增自定义条款
+  - complementary:
+    - heading "报价汇总" [level=3]
+    - generic: 实时
+    - generic: 客户
+    - paragraph: 暂未选择客户
+    - paragraph: 未选择报价类型 · 0 项物料 · 0 项服务
+    - paragraph: 报价总额（含税）
+    - paragraph: ¥0.00
+    - generic: 物料金额
+    - generic: ¥0.00
+    - generic: 服务费用
+    - generic: ¥0.00
+    - generic: 折后未税
+    - generic: ¥0.00
+    - generic: 税额
+    - generic: ¥0.00
+    - paragraph: 总成本
+    - paragraph: ¥0.00
+    - paragraph: 毛利
+    - paragraph: ¥0.00
+    - paragraph: 毛利率
+    - paragraph: 0.0%
+    - paragraph: 有效期
+    - paragraph: 30 天
+    - paragraph: 有效至
+    - paragraph: 2026-10-08
+    - paragraph: 付款方式
+    - paragraph: 未设置
+    - paragraph: 交货期
+    - paragraph: "30"
+    - button "价格预警设置 任何偏差" [expanded]:
+      - text: 价格预警设置
+      - generic: 任何偏差
+    - generic: 偏差阈值
+    - paragraph: 仅当本次报价与历史成交/报价偏差超过此百分比时触发预警
+    - slider: "0"
+    - textbox: "0"
+    - generic: "%"
+    - button "任何偏差"
+    - button "≥3%"
+    - button "≥5%"
+    - button "≥10%"
+    - text: 附件资料
+    - generic: "0"
+    - button "云文档":
+      - text: 云文档
+    - button "点击或拖拽文件到此处上传 支持 Ctrl+V 粘贴截图 支持 PDF、Word、Excel、图片、DWG、压缩包等格式，单个文件不超过 500 MB":
+      - generic: 点击或拖拽文件到此处上传
+      - generic: 支持 Ctrl+V 粘贴截图
+      - generic: 支持 PDF、Word、Excel、图片、DWG、压缩包等格式，单个文件不超过 500 MB
+- button "打开 AI 助手":
+- region "Notifications alt+T"
+- generic: 2025-10
+- dialog "添加服务项目":
+  - heading "添加服务项目" [level=3]
+  - button "关闭":
+  - generic: 服务名称 *
+  - textbox "如：技术服务费、安装调试费、运输费..."
+  - generic: 计费方式 *
+  - button "固定金额 直接输入费用金额":
+    - generic: 固定金额
+    - paragraph: 直接输入费用金额
+  - button "单价×数量 单价乘以数量计算" [active]:
+    - generic: 单价×数量
+    - paragraph: 单价乘以数量计算
+  - button "按比例 按基数百分比计算":
+    - generic: 按比例
+    - paragraph: 按基数百分比计算
+  - generic: 不含税单价 (¥)
+  - spinbutton
+  - generic: 数量
+  - button [disabled]:
+  - textbox: "1"
+  - button:
+  - generic: 服务费折扣
+  - textbox "0"
+  - generic: "%"
+  - button "无"
+  - button "5%"
+  - button "10%"
+  - button "15%"
+  - button "20%"
+  - generic: 税率
+  - textbox "0": "13"
+  - generic: "%"
+  - button "免税"
+  - button "1%"
+  - button "3%"
+  - button "6%"
+  - button "9%"
+  - button "13%"
+  - generic: 费用金额
+  - generic: ¥0.00
+  - generic: 含税总值 (13%)
+  - generic: ¥0.00
+  - generic: 备注说明
+  - textbox "如：含技术方案设计、现场调试、系统集成等"
+  - button "取消"
+  - button "确认添加" [disabled]
