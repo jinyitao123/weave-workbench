@@ -22,7 +22,7 @@ pnpm dev
 
 桌面客户端使用 ObjectStack 原生 OAuth Provider 登录。部署时启用 `OS_OIDC_PROVIDER_ENABLED=true` 与 `OS_OIDC_DCR_ENABLED=true`；`docker-compose.yml` 已给出默认值。Workbench 作为公开客户端动态注册，使用授权码、PKCE 和本机回环回调，不携带客户端密钥，也不采集用户密码。
 
-远程环境的 `OS_BASE_URL` 必须是实际 HTTPS 公网地址，`OS_TRUSTED_ORIGINS` 同步包含该地址。HTTP 仅用于 `localhost` 或 `127.0.0.1` 本地开发。部署后用 `FORGE_EXPECT_BROWSER_OAUTH=1 pnpm acceptance:deploy-smoke` 检查发现文档和三个 OAuth 端点是否完整。
+`OS_BASE_URL` 必须是客户端实际访问的地址，可按客户内网环境配置为 HTTP 或 HTTPS；`OS_TRUSTED_ORIGINS` 同步包含该地址。部署后用 `FORGE_EXPECT_BROWSER_OAUTH=1 pnpm acceptance:deploy-smoke` 检查发现文档和三个 OAuth 端点是否完整。
 
 ## 代码入口
 
