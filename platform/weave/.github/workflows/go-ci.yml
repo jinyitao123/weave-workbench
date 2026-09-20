@@ -1,0 +1,75 @@
+name: Go CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: weave_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d weave_test"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:55432/weave_test?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+      - name: Download modules
+        run: go mod download
+      - name: Build, test, and governance
+        run: make ci
+
+  workbench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - name: Install Workbench dependencies
+        working-directory: workbench
+        run: pnpm install --frozen-lockfile
+      - name: Verify Workbench runtime closure
+        working-directory: workbench
+        run: pnpm run verify-runtime-closure
+      - name: Install native build dependencies
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+      - name: Build native isolation launcher
+        working-directory: workbench/native/landlock-run
+        run: |
+          pnpm build:ts
+          pnpm build:native
+          node ./test/entry.test.js
+      - name: Build and test Workbench
+        run: make workbench-check
+
+  compose-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate platform compose file
+        run: make compose-check
+      - name: Validate deployment scripts
+        run: |
+          bash -n scripts/deploy-main.sh
+          python3 -m unittest discover -s scripts -p 'test_deployment_state.py'
