@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/product-capabilities.schema.json",
+  "title": "Workbench Product Capabilities",
+  "description": "A bounded server-side projection of the product capabilities available to one authenticated subject. Missing or unavailable decisions must never be treated as allowed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "status", "subject", "source", "evaluatedAt", "capabilities"],
+  "properties": {
+    "version": { "const": "1" },
+    "status": { "enum": ["ready", "unavailable"] },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "organizationId": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "organization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 160 }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["weave", "cerbos", "openfga", "other"] },
+        "policyVersion": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "evaluatedAt": { "type": "string", "format": "date-time" },
+    "capabilities": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "decision", "reason"],
+        "properties": {
+          "id": { "enum": ["team.read", "run.read", "debug.simulate", "debug.sandbox_write", "release.publish"] },
+          "decision": { "enum": ["allow", "deny", "unavailable"] },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "decisionId": { "type": "string", "minLength": 1, "maxLength": 128 }
+        }
+      }
+    },
+    "message": { "type": "string", "maxLength": 500 }
+  }
+}

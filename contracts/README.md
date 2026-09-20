@@ -2,9 +2,15 @@
 
 本目录是桌面、Weave 与 Forge 之间定义的唯一来源。
 
+当前 `v1/` 的 Schema 是契约草稿，尚不代表三方已实现和验收。身份与执行控制的响应、错误和取消细节需要随对应功能补齐。组件仓引用本仓的契约版本与提交，不另维护一份互相漂移的副本。
+
 第一批契约包括：
 
-- `identity`：ObjectStack 用户、组织、设备会话和任务委托。
+- `enterprise-session`：桌面可见的登录身份、身份来源、组织环境和安全存储状态。
+- `product-capabilities`：员工或开发者当前可使用的五项产品能力及判断原因。
+- `authorization-evaluation`：主体、动作、资源和上下文对应的一次权限判断记录。
+- `task-delegation`：一次任务获准使用的动作、资源、有效期和撤销状态。
+- `identity`：工作请求中的设备会话和 Weave 短期任务委托。
 - `work-request`：桌面递交的目标、材料、范围和期望交付。
 - `business-action`：Weave 调用 Forge 业务动作的输入、幂等与权限上下文。
 - `task-notification`：Forge 或 Weave 向指定员工创建的待办。
@@ -12,4 +18,3 @@
 - `execution-control`：重试、超时、额度、取消和未知结果核对。
 
 契约落地前必须补齐调用者、身份、输入、输出、错误、版本、幂等、取消和审计字段。
-
