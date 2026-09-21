@@ -9,8 +9,8 @@ const amount = (label: string, readonly = false) => Field.currency({ label, prec
 
 // Live RISEMAP 2026-09-09: the account had no project type, so CABINET_OTC was created before the first project.
 export const ProjectType = master('forge_project_type', '项目类型', 'tags', {
-  name: text('类型名称', true), code: code('类型编码'), color: text('标识颜色'), active: Field.boolean({ label: '启用', defaultValue: true }), remarks: remarks(),
-}, ['code', 'name', 'color', 'active']);
+  name: text('类型名称', true), code: code('类型编码'), color: text('标识颜色'), active: Field.boolean({ label: '启用', defaultValue: true }), sort_order: Field.number({ label: '排序', min: 0, scale: 0, defaultValue: 100 }), remarks: remarks(),
+}, ['code', 'name', 'color', 'active', 'sort_order']);
 
 export const Project = ObjectSchema.create({
   name: 'forge_project', label: '项目中心', pluralLabel: '项目中心', icon: 'briefcase-business', sharingModel: 'private',

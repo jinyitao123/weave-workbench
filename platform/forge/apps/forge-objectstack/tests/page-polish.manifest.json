@@ -1,4 +1,208 @@
 {
+  "reports": [
+    {
+      "file": "sales-statistics.page.ts",
+      "pages": [
+        "page_sales_statistics"
+      ],
+      "archetype": "analysis",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/reports-system-placeholders-20260921/page-sales-statistics.md"
+    },
+    {
+      "file": "purchase-statistics.page.ts",
+      "pages": [
+        "page_purchase_statistics"
+      ],
+      "archetype": "analysis",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/reports-system-placeholders-20260921/page-purchase-statistics.md"
+    },
+    {
+      "file": "inventory-statistics.page.ts",
+      "pages": [
+        "page_inventory_statistics"
+      ],
+      "archetype": "analysis",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/reports-system-placeholders-20260921/page-inventory-statistics.md"
+    },
+    {
+      "file": "assembly-statistics.page.ts",
+      "pages": [
+        "page_assembly_statistics"
+      ],
+      "archetype": "analysis",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/reports-system-placeholders-20260921/page-assembly-statistics.md"
+    },
+    {
+      "file": "finance-overview.page.ts",
+      "pages": [
+        "page_finance_overview"
+      ],
+      "archetype": "analysis",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/reports-system-placeholders-20260921/page-finance-overview.md"
+    },
+    {
+      "file": "profit-loss.page.ts",
+      "pages": [
+        "page_profit_loss"
+      ],
+      "archetype": "analysis",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/reports-system-placeholders-20260921/page-profit-loss.md"
+    },
+    {
+      "file": "management-profit-report.page.ts",
+      "pages": [
+        "page_management_profit_report"
+      ],
+      "archetype": "analysis",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/reports-system-placeholders-20260921/page-management-profit-report.md"
+    },
+    {
+      "file": "fund-analysis.page.ts",
+      "pages": [
+        "page_fund_analysis"
+      ],
+      "archetype": "analysis",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/reports-system-placeholders-20260921/page-fund-analysis.md"
+    },
+    {
+      "file": "current-account-analysis.page.ts",
+      "pages": [
+        "page_current_account_analysis"
+      ],
+      "archetype": "analysis",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/reports-system-placeholders-20260921/page-current-account-analysis.md"
+    },
+    {
+      "file": "tax-inventory-analysis.page.ts",
+      "pages": [
+        "page_tax_inventory_analysis"
+      ],
+      "archetype": "analysis",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/reports-system-placeholders-20260921/page-tax-inventory-analysis.md"
+    },
+    {
+      "file": "risk-monitoring.page.ts",
+      "pages": [
+        "page_risk_monitoring"
+      ],
+      "archetype": "analysis",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/reports-system-placeholders-20260921/page-risk-monitoring.md"
+    }
+  ],
+  "businessSettings": [
+    {
+      "file": "finance-business-config.page.ts",
+      "pages": [
+        "page_finance_business_config"
+      ],
+      "archetype": "configuration",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/system-placeholders-20260921/page-finance-business-config.md"
+    },
+    {
+      "file": "administration-business-config.page.ts",
+      "pages": [
+        "page_administration_business_config"
+      ],
+      "archetype": "configuration",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/system-placeholders-20260921/page-administration-business-config.md"
+    },
+    {
+      "file": "other-business-config.page.ts",
+      "pages": [
+        "page_other_business_config"
+      ],
+      "archetype": "configuration",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/system-placeholders-20260921/page-other-business-config.md"
+    },
+    {
+      "file": "hr-business-config.page.ts",
+      "pages": [
+        "page_hr_business_config"
+      ],
+      "archetype": "configuration",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/system-placeholders-20260921/page-hr-business-config.md"
+    },
+    {
+      "file": "project-business-config.page.ts",
+      "pages": [
+        "page_project_business_config"
+      ],
+      "archetype": "configuration",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/system-placeholders-20260921/page-project-business-config.md"
+    },
+    {
+      "file": "business-prerequisite-config.page.ts",
+      "pages": [
+        "page_drawing_business_config"
+      ],
+      "archetype": "configuration",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/system-placeholders-20260921/page-drawing-business-config.md"
+    },
+    {
+      "file": "production-config.page.ts",
+      "pages": [
+        "page_production_config"
+      ],
+      "archetype": "configuration",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/system-placeholders-20260921/page-production-business-config.md"
+    },
+    {
+      "file": "business-prerequisite-config.page.ts",
+      "pages": [
+        "page_subcontract_business_config"
+      ],
+      "archetype": "configuration",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/system-placeholders-20260921/page-subcontract-business-config.md"
+    },
+    {
+      "file": "print-business-config.page.ts",
+      "pages": [
+        "page_print_business_config"
+      ],
+      "archetype": "configuration",
+      "reference": "project-timesheet-cost.page.ts",
+      "designStatus": "review_required",
+      "contract": "docs/evidence/system-placeholders-20260921/page-print-business-config.md"
+    }
+  ],
   "administration": [
     {
       "file": "approval-center.page.ts",
