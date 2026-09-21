@@ -7,14 +7,14 @@ import { BrowserGlobe, useAppShellOverlay, useFocusTrap } from './ui'
 
 interface Command { id:string; label:string; detail:string; shortcut?:string; icon:ReactNode; run():void }
 
-export function CommandPalette({ open, onClose, onNavigate, onNewSession, onToggleSidebar, onToggleTerminal, onOpenBrowser, platform = 'darwin' }: { open:boolean; onClose():void; onNavigate(view:WorkspaceView):void; onNewSession():void; onToggleSidebar():void; onToggleTerminal():void; onOpenBrowser():void; platform?:NodeJS.Platform }) {
+export function CommandPalette({ open, canDevelop = true, onClose, onNavigate, onNewSession, onToggleSidebar, onToggleTerminal, onOpenBrowser, platform = 'darwin' }: { open:boolean; canDevelop?:boolean; onClose():void; onNavigate(view:WorkspaceView):void; onNewSession():void; onToggleSidebar():void; onToggleTerminal():void; onOpenBrowser():void; platform?:NodeJS.Platform }) {
   const [query,setQuery]=useState('')
   const [active,setActive]=useState(0)
   const inputRef=useRef<HTMLInputElement>(null)
   const paletteRef=useFocusTrap<HTMLDivElement>(open,onClose)
   const commands:Command[]=[
     {id:'new',label:'开始工作',detail:'开始一项新的工作',shortcut:shortcutLabel(platform, ['Primary', 'N']),icon:<NotebookPen size={14}/>,run:onNewSession},
-    {id:'development',label:'打开开发中心',detail:'调试业务应用、能力和本地项目',icon:<Blocks size={14}/>,run:()=>onNavigate('development')},
+    ...(canDevelop ? [{id:'development',label:'打开开发中心',detail:'调试业务应用、能力和本地项目',icon:<Blocks size={14}/>,run:()=>onNavigate('development')}] : []),
     {id:'projects',label:'Open Projects',detail:'Browse local workspaces',icon:<Folder size={14}/>,run:()=>onNavigate('projects')},
     {id:'activity',label:'Open Activity',detail:'See work that needs attention',icon:<Bell size={14}/>,run:()=>onNavigate('activity')},
     {id:'scheduled',label:'Open Scheduled',detail:'Manage recurring work',icon:<CalendarClock size={14}/>,run:()=>onNavigate('scheduled')},
