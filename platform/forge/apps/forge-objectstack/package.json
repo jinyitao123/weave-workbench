@@ -228,9 +228,13 @@
     "@objectstack/connector-mcp": "17.3.0",
     "@objectstack/connector-openapi": "17.3.0",
     "@objectstack/connector-rest": "17.3.0",
+    "@objectstack/plugin-approvals": "17.3.0",
     "@objectstack/plugin-hono-server": "17.3.0",
     "@objectstack/runtime": "17.3.0",
-    "@objectstack/spec": "17.3.0"
+    "@objectstack/service-automation": "17.3.0",
+    "@objectstack/service-messaging": "17.3.0",
+    "@objectstack/spec": "17.3.0",
+    "@objectstack/trigger-record-change": "17.3.0"
   },
   "devDependencies": {
     "@objectstack/cli": "17.3.0",

@@ -176,7 +176,7 @@ export const SalesOutbound = master('forge_sales_outbound', '销售出库单', '
 }, ['code', 'name', 'shipment_id', 'order_id', 'warehouse_id', 'sku_id', 'outbound_on', 'quantity', 'available_quantity', 'before_on_hand', 'after_on_hand', 'inventory_amount', 'status']);
 
 export const GoodwillOrder = master('forge_goodwill_order', 'Goodwill订单', 'gift', {
-  name: text('订单名称', true), code: code('Goodwill单号'), customer_id: reference('forge_customer', '客户', true),
+  name: text('订单名称', true), code: code('Goodwill单号'), customer_id: reference('forge_customer', '客户', true), project_id: reference('forge_project', '关联项目'),
   contact_name: text('联系人'), contact_phone: text('联系电话'),
   gift_type: Field.select([{ value: 'relationship', label: '客情维护' }, { value: 'compensation', label: '补偿赠送' }, { value: 'sample', label: '样品赠送' }, { value: 'service', label: '服务备件' }, { value: 'onsite_support', label: '现场支持物料' }], { label: '赠送类型', defaultValue: 'relationship', ...required }),
   reason: Field.textarea({ label: '申请原因', ...required }), item_summary: text('物品种类/总数'), item_name: text('物品名称'),
@@ -187,7 +187,7 @@ export const GoodwillOrder = master('forge_goodwill_order', 'Goodwill订单', 'g
   shipped_quantity: Field.number({ label: '已发数量', min: 0, scale: 4, defaultValue: 0 }), logistics_company: text('物流公司'), tracking_no: text('运单号'),
   delivery_address: text('收货地址'), recipient: text('收件人'), recipient_phone: text('收件电话'), shipped_at: Field.datetime({ label: '发货时间', readonly: true }), completed_at: Field.datetime({ label: '完成时间', readonly: true }),
   responsible_id: owner(true), remarks: remarks(),
-}, ['code', 'customer_id', 'contact_name', 'gift_type', 'reason', 'item_summary', 'quantity', 'status', 'shipment_code', 'shipment_status', 'shipped_quantity', 'responsible_id']);
+}, ['code', 'customer_id', 'project_id', 'contact_name', 'gift_type', 'reason', 'item_summary', 'quantity', 'status', 'shipment_code', 'shipment_status', 'shipped_quantity', 'responsible_id']);
 
 export const SalesTeam = master('forge_sales_team', '销售团队', 'users', {
   name: text('团队名称', true), code: code('团队编码'), manager_id: Field.user({ label: '负责人' }), member_count: Field.number({ label: '成员数', min: 0, scale: 0, defaultValue: 0 }),
