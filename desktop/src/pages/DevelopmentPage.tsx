@@ -1,9 +1,9 @@
 import '@/styles/team-workspace.css'
-import { Bot, CheckCircle2, ChevronDown, Code2, ExternalLink, Pencil, Plus, RefreshCw, Save, Search, UserMinus, UserPlus, UsersRound, Workflow } from 'lucide-react'
+import { Archive, Bot, CheckCircle2, ChevronDown, Code2, ExternalLink, GitFork, Pencil, Plus, RefreshCw, Save, Search, Trash2, UserMinus, UserPlus, UsersRound, Workflow } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Modal, ProductField, ProductTextArea } from '@/components/ui'
 import { configurationLabel, MemberInspector } from '@/components/development/MemberInspector'
-import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseUpdateTeamInput, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation } from '@/types/api'
+import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation } from '@/types/api'
 
 interface DevelopmentPageProps {
   environments: EnterpriseEnvironmentStatus[]
@@ -17,7 +17,11 @@ interface DevelopmentPageProps {
   onCreateTeamMember(input: EnterpriseCreateTeamMemberInput): Promise<EnterpriseTeamMemberMutationResult>
   onRemoveTeamMember(teamId: string, memberId: string): Promise<void>
   onCreateWorkflow(input: EnterpriseCreateWorkflowInput): Promise<EnterpriseCreateWorkflowResult>
+  onCreateWorkflowDraft(workflowId: string): Promise<EnterpriseUpdateWorkflowDraftResult>
+  onUpdateWorkflow(input: EnterpriseUpdateWorkflowDraftInput): Promise<EnterpriseUpdateWorkflowDraftResult>
   onValidateWorkflow(workflowId: string, version: number): Promise<EnterpriseWorkflowValidation>
+  onPublishWorkflow(workflowId: string, version: number): Promise<void>
+  onArchiveWorkflow(workflowId: string): Promise<void>
   onLoadMemberDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft>
   onSaveMemberDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft>
   onApplyMemberDraft(teamId: string, agentId: string, revision: number): Promise<EnterpriseTeamMemberConfigDraft>
@@ -49,7 +53,7 @@ function workflowLayout(workflow: EnterpriseWorkflowObservation) {
   return { width, height, positions }
 }
 
-export function DevelopmentPage({ environments, overview, loading, error, onRefresh, onOpenForge, onCreateTeam, onUpdateTeam, onCreateTeamMember, onRemoveTeamMember, onCreateWorkflow, onValidateWorkflow, onLoadMemberDraft, onSaveMemberDraft, onApplyMemberDraft }: DevelopmentPageProps) {
+export function DevelopmentPage({ environments, overview, loading, error, onRefresh, onOpenForge, onCreateTeam, onUpdateTeam, onCreateTeamMember, onRemoveTeamMember, onCreateWorkflow, onCreateWorkflowDraft, onUpdateWorkflow, onValidateWorkflow, onPublishWorkflow, onArchiveWorkflow, onLoadMemberDraft, onSaveMemberDraft, onApplyMemberDraft }: DevelopmentPageProps) {
   const forge = environments.find((environment) => environment.id === 'forge-development')
   const weave = environments.find((environment) => environment.id === 'weave-development')
   const [activeTab, setActiveTab] = useState<'teams' | 'apps'>('teams')
@@ -88,6 +92,18 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
   const [validation, setValidation] = useState<{ workflowId: string; version: number; result: EnterpriseWorkflowValidation }>()
   const [validating, setValidating] = useState(false)
   const [validationError, setValidationError] = useState('')
+  const [workflowBusy, setWorkflowBusy] = useState(false)
+  const [nodeEditOpen, setNodeEditOpen] = useState(false)
+  const [nodeEditLabel, setNodeEditLabel] = useState('')
+  const [nodeEditInstruction, setNodeEditInstruction] = useState('')
+  const [nodeEditMember, setNodeEditMember] = useState('')
+  const [stepCreateOpen, setStepCreateOpen] = useState(false)
+  const [stepCreateLabel, setStepCreateLabel] = useState('')
+  const [stepCreateDuty, setStepCreateDuty] = useState('')
+  const [stepCreateMember, setStepCreateMember] = useState('')
+  const [stepRemoveOpen, setStepRemoveOpen] = useState(false)
+  const [parallelOpen, setParallelOpen] = useState(false)
+  const [archiveOpen, setArchiveOpen] = useState(false)
   // App passes inline callbacks. Parent refreshes must never reset an edited draft.
   const loadRef = useRef(onLoadMemberDraft)
   loadRef.current = onLoadMemberDraft
@@ -217,7 +233,7 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
     setFlowCreateOpen(true)
   }
   const nodeTypeLabel = (type: string) => ({ lead: '负责人', worker: '执行成员', deliver: '交付', wait: '人工处理', condition: '条件判断', parallel: '并行', join: '汇合', loop: '循环', transform: '转换', handoff: '交接' })[type] ?? '处理步骤'
-  const issueLabel = (code: string) => ({ workflow_agent_version_not_found: '成员版本不可用', workflow_agent_version_mismatch: '成员版本已变化', workflow_node_unreachable: '步骤未接入流程', workflow_route_missing: '步骤缺少下一步', workflow_dependency_missing: '依赖能力未配置', workflow_factory_unavailable: '执行能力不可用', workflow_trigger_invalid: '启动方式配置无效' })[code] ?? '流程配置需要调整'
+  const issueLabel = (code: string) => ({ workflow_agent_version_not_found: '成员版本不可用', workflow_agent_version_mismatch: '成员版本已变化', workflow_node_unreachable: '步骤未接入流程', workflow_route_missing: '步骤缺少下一步', workflow_dependency_missing: '依赖能力未配置', workflow_factory_unavailable: '执行能力不可用', workflow_trigger_invalid: '启动方式配置无效', workflow_provider_revision_required: '尚未配置可用的模型服务', workflow_credential_unavailable: '运行凭据不可用', workflow_dependency_version_required: '运行环境版本不可用', workflow_frozen_manifest_mismatch: '成员运行配置需要重新应用' })[code] ?? '流程配置需要调整'
   const currentValidation = selectedWorkflow?.draftVersion && validation?.workflowId === selectedWorkflow.id && validation.version === selectedWorkflow.draftVersion ? validation.result : undefined
   const validateWorkflow = async () => {
     if (!selectedWorkflow?.draftVersion || validating) return
@@ -229,6 +245,131 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
       const message = cause instanceof Error ? cause.message : ''
       setValidationError(message === 'workflow store failed' ? '成员还没有可用于运行的模型版本，暂时无法检查草稿' : configurationLabel(message, '流程检查失败'))
     } finally { setValidating(false) }
+  }
+  const saveWorkflowGraph = async (graphDefinition: EnterpriseWorkflowGraphDefinition) => {
+    if (!selectedWorkflow?.draftVersion || !selectedWorkflow.draftUpdatedAt || !selectedWorkflow.triggerConfig || workflowBusy) return false
+    setWorkflowBusy(true); setValidationError(''); setValidation(undefined)
+    try {
+      await onUpdateWorkflow({ version: '1', workflowId: selectedWorkflow.id, draftVersion: selectedWorkflow.draftVersion, expectedUpdatedAt: selectedWorkflow.draftUpdatedAt, triggerConfig: selectedWorkflow.triggerConfig, graphDefinition })
+      onRefresh()
+      return true
+    } catch (cause) {
+      setValidationError(cause instanceof Error ? configurationLabel(cause.message, '流程保存失败') : '流程保存失败')
+      return false
+    } finally { setWorkflowBusy(false) }
+  }
+  const openNodeEdit = () => {
+    if (!selectedNode || !selectedWorkflow?.graphDefinition) return
+    setValidationError('')
+    const raw = selectedWorkflow.graphDefinition.nodes.find((node) => node.id === selectedNode.id)
+    const config = raw?.config ?? {}
+    setNodeEditLabel(configurationLabel(raw?.label, nodeTypeLabel(selectedNode.type)))
+    const instruction = typeof config.instruction === 'string' ? config.instruction : typeof config.result_requirement === 'string' ? config.result_requirement : undefined
+    const agentID = typeof config.agent_id === 'string' ? config.agent_id : undefined
+    setNodeEditInstruction(configurationLabel(instruction, ''))
+    setNodeEditMember(configurationLabel(agentID, selectedNode.workerId ?? selectedTeam?.workers[0]?.id ?? ''))
+    setNodeEditOpen(true)
+  }
+  const saveNode = async () => {
+    if (!selectedNode || !selectedWorkflow?.graphDefinition || !nodeEditLabel.trim()) return
+    const graph = structuredClone(selectedWorkflow.graphDefinition)
+    const node = graph.nodes.find((item) => item.id === selectedNode.id)
+    if (!node) return
+    node.label = nodeEditLabel.trim()
+    const config = { ...(node.config ?? {}) }
+    if (node.type === 'lead') config.instruction = nodeEditInstruction.trim()
+    if (node.type === 'worker') {
+      if (!nodeEditMember) return
+      const memberDraft = await onLoadMemberDraft(selectedTeam!.id, nodeEditMember)
+      config.agent_id = nodeEditMember; config.agent_version = memberDraft.baseAgentVersion; config.result_requirement = nodeEditInstruction.trim()
+    }
+    node.config = config
+    if (await saveWorkflowGraph(graph)) setNodeEditOpen(false)
+  }
+  const openStepCreate = () => {
+    setValidationError('')
+    setStepCreateLabel('执行步骤'); setStepCreateDuty('完成上一步分配的工作并返回可核验结果'); setStepCreateMember(selectedTeam?.workers.find((member) => member.enabled)?.id ?? ''); setStepCreateOpen(true)
+  }
+  const replaceNodeReference = (value: unknown, before: string, after: string): unknown => {
+    if (Array.isArray(value)) return value.map((item) => replaceNodeReference(item, before, after))
+    if (!value || typeof value !== 'object') return value
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, key === 'node_id' && item === before ? after : replaceNodeReference(item, before, after)]))
+  }
+  const createStep = async () => {
+    if (!selectedNode || !selectedWorkflow?.graphDefinition || !stepCreateLabel.trim() || !stepCreateDuty.trim() || !stepCreateMember) return
+    const graph = structuredClone(selectedWorkflow.graphDefinition)
+    const outgoing = graph.edges.find((edge) => edge.from_node_id === selectedNode.id && (edge.route === 'success' || !edge.route))
+    if (!outgoing) { setValidationError('这个步骤后面没有可插入的位置'); return }
+    const memberDraft = await onLoadMemberDraft(selectedTeam!.id, stepCreateMember)
+    const id = `step-${Date.now().toString(36)}`
+    const target = graph.nodes.find((node) => node.id === outgoing.to_node_id)
+    if (target) Object.assign(target, replaceNodeReference(target, selectedNode.id, id))
+    graph.nodes.push({ id, type: 'worker', label: stepCreateLabel.trim(), config: { kind: 'consult', agent_id: stepCreateMember, agent_version: memberDraft.baseAgentVersion, result_requirement: stepCreateDuty.trim() }, inputs: { task: { value: { source: 'node_output', node_id: selectedNode.id, path: '' }, expected_type: 'text' } }, output: { type: 'text' } })
+    graph.edges = graph.edges.filter((edge) => edge !== outgoing)
+    graph.edges.push({ id: `${selectedNode.id}-${id}`, from_node_id: selectedNode.id, to_node_id: id, route: 'success' }, { id: `${id}-${outgoing.to_node_id}`, from_node_id: id, to_node_id: outgoing.to_node_id, route: 'success' })
+    if (await saveWorkflowGraph(graph)) { setStepCreateOpen(false); setFlowSelection({ workflow: selectedWorkflow.id, node: id }) }
+  }
+  const removeStep = async () => {
+    if (!selectedNode || !selectedWorkflow?.graphDefinition || selectedNode.type !== 'worker') return
+    const graph = structuredClone(selectedWorkflow.graphDefinition)
+    const incoming = graph.edges.filter((edge) => edge.to_node_id === selectedNode.id)
+    const outgoing = graph.edges.filter((edge) => edge.from_node_id === selectedNode.id)
+    if (incoming.length !== 1 || outgoing.length !== 1) { setValidationError('分支步骤需要先调整流程关系'); return }
+    const before = incoming[0].from_node_id, after = outgoing[0].to_node_id
+    const target = graph.nodes.find((node) => node.id === after)
+    if (target) Object.assign(target, replaceNodeReference(target, selectedNode.id, before))
+    graph.nodes = graph.nodes.filter((node) => node.id !== selectedNode.id)
+    graph.edges = graph.edges.filter((edge) => edge.from_node_id !== selectedNode.id && edge.to_node_id !== selectedNode.id)
+    graph.edges.push({ id: `${before}-${after}`, from_node_id: before, to_node_id: after, route: 'success' })
+    if (await saveWorkflowGraph(graph)) { setStepRemoveOpen(false); setFlowSelection({ workflow: selectedWorkflow.id, node: before }) }
+  }
+  const applyParallelPattern = async () => {
+    if (!selectedWorkflow?.graphDefinition || selectedTeam!.workers.filter((member) => member.enabled).length < 2) return
+    const workers = selectedTeam!.workers.filter((member) => member.enabled).slice(0, 2)
+    const drafts = await Promise.all(workers.map((member) => onLoadMemberDraft(selectedTeam!.id, member.id)))
+    const graph = structuredClone(selectedWorkflow.graphDefinition)
+    const lead = graph.nodes.find((node) => node.type === 'lead')
+    if (!lead) { setValidationError('当前流程缺少负责人步骤'); return }
+    const prefix = Date.now().toString(36)
+    const parallel = `parallel-${prefix}`, join = `join-${prefix}`, deliver = `deliver-${prefix}`
+    graph.entry_node_id = lead.id
+    graph.nodes = [lead,
+      { id: parallel, type: 'parallel', label: '并行执行', config: { join_node_id: join } },
+      ...workers.map((member, index) => ({ id: `branch-${prefix}-${index + 1}`, type: 'worker', label: member.name, config: { kind: 'dispatch', agent_id: member.id, agent_version: drafts[index].baseAgentVersion, result_requirement: drafts[index].relationship.resultRequirement || '返回可核验结果' }, inputs: { task: { value: { source: 'node_output', node_id: lead.id, path: '' }, expected_type: 'text' } }, output: { type: 'text' } })),
+      { id: join, type: 'join', label: '汇总结果', config: { policy: 'all_success' } },
+      { id: deliver, type: 'deliver', label: '交付结果', config: { result: { source: 'node_output', node_id: join, path: '' } } },
+    ]
+    const branches = graph.nodes.filter((node) => node.id.startsWith(`branch-${prefix}-`))
+    graph.edges = [{ id: `${lead.id}-${parallel}`, from_node_id: lead.id, to_node_id: parallel, route: 'success' }, ...branches.flatMap((node) => [{ id: `${parallel}-${node.id}`, from_node_id: parallel, to_node_id: node.id, route: 'branch' }, { id: `${node.id}-${join}`, from_node_id: node.id, to_node_id: join, route: 'join' }]), { id: `${join}-${deliver}`, from_node_id: join, to_node_id: deliver, route: 'success' }]
+    if (await saveWorkflowGraph(graph)) setParallelOpen(false)
+  }
+  const publishWorkflow = async () => {
+    if (!selectedWorkflow?.draftVersion || workflowBusy) return
+    setWorkflowBusy(true); setValidationError('')
+    try {
+      const result = await onValidateWorkflow(selectedWorkflow.id, selectedWorkflow.draftVersion)
+      setValidation({ workflowId: selectedWorkflow.id, version: selectedWorkflow.draftVersion, result })
+      if (!result.valid) return
+      await onPublishWorkflow(selectedWorkflow.id, selectedWorkflow.draftVersion)
+      onRefresh()
+    } catch (cause) { setValidationError(cause instanceof Error ? configurationLabel(cause.message, '流程发布失败') : '流程发布失败') }
+    finally { setWorkflowBusy(false) }
+  }
+  const createWorkflowDraft = async () => {
+    if (!selectedWorkflow || selectedWorkflow.draftVersion || workflowBusy) return
+    setWorkflowBusy(true); setValidationError(''); setValidation(undefined)
+    try {
+      await onCreateWorkflowDraft(selectedWorkflow.id)
+      onRefresh()
+    } catch (cause) { setValidationError(cause instanceof Error ? configurationLabel(cause.message, '新版本创建失败') : '新版本创建失败') }
+    finally { setWorkflowBusy(false) }
+  }
+  const archiveWorkflow = async () => {
+    if (!selectedWorkflow || workflowBusy) return
+    setWorkflowBusy(true); setValidationError('')
+    try { await onArchiveWorkflow(selectedWorkflow.id); setArchiveOpen(false); setFlowSelection({ workflow: '', node: '' }); onRefresh() }
+    catch (cause) { setValidationError(cause instanceof Error ? configurationLabel(cause.message, '流程归档失败') : '流程归档失败') }
+    finally { setWorkflowBusy(false) }
   }
   const environmentSummary = (environment: EnterpriseEnvironmentStatus | undefined, fallback: string, canOpen = false) => <div className="development-environment-summary">
     <i className={environment?.available ? 'is-online' : ''}/><span><strong>{environment?.name ?? fallback}</strong><small>{loading ? '正在检查' : environment?.available ? '可用' : '暂不可用'}</small></span>
@@ -269,7 +410,7 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
             </button>
           })}</div>
           {!members.length ? <div className="development-observation-empty">暂无成员</div> : null}</> : <div className="workflow-stage">
-            <div className="workflow-stage__toolbar"><span>{selectedWorkflow ? configurationLabel(selectedWorkflow.name, '未命名流程') : '工作流程'}</span><div>{selectedWorkflow?.draftVersion ? <button type="button" disabled={validating} onClick={() => void validateWorkflow()}><CheckCircle2 size={12}/>{validating ? '正在检查' : '检查草稿'}</button> : null}<button type="button" onClick={openFlowCreate}><Plus size={12}/>新建流程</button></div></div>
+            <div className="workflow-stage__toolbar"><span>{selectedWorkflow ? configurationLabel(selectedWorkflow.name, '未命名流程') : '工作流程'}</span><div>{selectedWorkflow?.draftVersion ? <><button type="button" disabled={workflowBusy || selectedTeam.workers.filter((member) => member.enabled).length < 2} onClick={() => setParallelOpen(true)}><GitFork size={12}/>并行协作</button><button type="button" disabled={workflowBusy || validating} onClick={() => void validateWorkflow()}><CheckCircle2 size={12}/>{validating ? '正在检查' : '检查'}</button><button type="button" className="is-primary" disabled={workflowBusy} onClick={() => void publishWorkflow()}>{workflowBusy ? '处理中' : '发布'}</button><button type="button" aria-label="归档流程" title="归档流程" disabled={workflowBusy} onClick={() => setArchiveOpen(true)}><Archive size={12}/></button></> : selectedWorkflow?.publishedVersion ? <button type="button" className="is-primary" disabled={workflowBusy} onClick={() => void createWorkflowDraft()}><Pencil size={12}/>{workflowBusy ? '正在创建' : '编辑新版本'}</button> : null}<button type="button" onClick={openFlowCreate}><Plus size={12}/>新建流程</button></div></div>
             {currentValidation ? <div className={`workflow-validation ${currentValidation.valid ? 'is-valid' : 'is-invalid'}`} role="status">{currentValidation.valid ? '草稿通过检查' : `${currentValidation.issues.length} 项配置需要调整`}</div> : validationError ? <div className="workflow-validation is-invalid" role="alert">{validationError}</div> : null}
             {selectedTeam.workflows.length > 1 ? <div className="workflow-switcher">{selectedTeam.workflows.map((workflow) => <button type="button" key={workflow.id} className={workflow.id === selectedWorkflow?.id ? 'is-active' : ''} onClick={() => setFlowSelection({ workflow: workflow.id, node: '' })}>{configurationLabel(workflow.name, '未命名流程')}</button>)}</div> : null}
             {selectedWorkflow && graphLayout ? <div className="workflow-graph-scroll"><div className="workflow-graph" style={{ width: graphLayout.width, height: graphLayout.height }}>
@@ -296,8 +437,8 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
             <footer className="member-inspector__footer"><small>{currentDraft.revision ? '应用后，新工作使用这份配置' : '当前配置已用于新工作'}</small><span className="member-inspector__footer-actions"><button type="button" className="button" disabled={saving || !dirty || !currentDraft.configuration.displayName.trim()} onClick={() => void save()}><Save size={13}/>保存草稿</button><button type="button" className="button button--primary" disabled={saving || dirty || currentDraft.revision < 1} onClick={() => void applyMemberDraft()}><CheckCircle2 size={13}/>{saving ? '处理中' : '应用配置'}</button></span></footer>
           </> : !draftLoading && !draftError ? <div className="team-config-loading">选择团队成员</div> : null}
         </aside> : <aside className="member-inspector" aria-label="流程步骤">
-          <header className="member-inspector__heading"><span><small>流程步骤</small><h3>{configurationLabel(selectedNode?.label, selectedNode ? nodeTypeLabel(selectedNode.type) : '选择步骤')}</h3></span>{selectedWorkflow ? <span className="member-inspector__state">{selectedWorkflow.publishedVersion ? '已发布' : '草稿'}</span> : null}</header>
-          {selectedWorkflow && selectedNode ? <div className="workflow-inspector"><dl className="member-summary"><div className="member-summary-row"><dt>所属流程</dt><dd>{configurationLabel(selectedWorkflow.name, '未命名流程')}</dd></div><div className="member-summary-row"><dt>步骤类型</dt><dd>{nodeTypeLabel(selectedNode.type)}</dd></div>{selectedNode.workerId ? <div className="member-summary-row"><dt>执行成员</dt><dd>{configurationLabel(members.find((member) => member.id === selectedNode.workerId)?.name, '团队成员')}</dd></div> : null}<div className="member-summary-row"><dt>当前版本</dt><dd>{selectedWorkflow.publishedVersion ? `正式版 ${selectedWorkflow.publishedVersion}` : selectedWorkflow.draftVersion ? '开发草稿' : '未保存'}</dd></div></dl>{currentValidation && !currentValidation.valid ? <section className="workflow-issues"><h4>检查结果</h4>{currentValidation.issues.filter((issue) => !issue.nodeId || issue.nodeId === selectedNode.id).map((issue, index) => <p key={`${issue.code}-${index}`}>{issueLabel(issue.code)}</p>)}</section> : null}</div> : <div className="team-config-loading">创建流程后可查看步骤配置</div>}
+          <header className="member-inspector__heading"><span><small>流程步骤</small><h3>{configurationLabel(selectedNode?.label, selectedNode ? nodeTypeLabel(selectedNode.type) : '选择步骤')}</h3></span>{selectedWorkflow ? <span className="member-inspector__state">{selectedWorkflow.draftVersion ? '草稿' : selectedWorkflow.publishedVersion ? '已发布' : ''}</span> : null}</header>
+          {selectedWorkflow && selectedNode ? <div className="workflow-inspector"><div className="workflow-inspector__actions"><button type="button" disabled={!selectedWorkflow.draftVersion || workflowBusy} onClick={openNodeEdit}><Pencil size={12}/>编辑步骤</button><button type="button" disabled={!selectedWorkflow.draftVersion || workflowBusy || selectedNode.type === 'deliver' || !selectedWorkflow.edges.some((edge) => edge.from === selectedNode.id && (edge.route === 'success' || !edge.route))} onClick={openStepCreate}><Plus size={12}/>插入步骤</button>{selectedNode.type === 'worker' ? <button type="button" className="is-danger" disabled={workflowBusy} onClick={() => { setValidationError(''); setStepRemoveOpen(true) }}><Trash2 size={12}/>移除步骤</button> : null}</div><dl className="member-summary"><div className="member-summary-row"><dt>所属流程</dt><dd>{configurationLabel(selectedWorkflow.name, '未命名流程')}</dd></div><div className="member-summary-row"><dt>步骤类型</dt><dd>{nodeTypeLabel(selectedNode.type)}</dd></div>{selectedNode.workerId ? <div className="member-summary-row"><dt>执行成员</dt><dd>{configurationLabel(members.find((member) => member.id === selectedNode.workerId)?.name, '团队成员')}</dd></div> : null}<div className="member-summary-row"><dt>当前版本</dt><dd>{selectedWorkflow.draftVersion ? '开发草稿' : selectedWorkflow.publishedVersion ? `正式版 ${selectedWorkflow.publishedVersion}` : '未保存'}</dd></div></dl>{currentValidation && !currentValidation.valid ? <section className="workflow-issues"><h4>检查结果</h4>{currentValidation.issues.filter((issue) => !issue.nodeId || issue.nodeId === selectedNode.id).map((issue, index) => <p key={`${issue.code}-${index}`}>{issueLabel(issue.code)}</p>)}</section> : null}</div> : <div className="team-config-loading">创建流程后可查看步骤配置</div>}
         </aside>}
       </div> : null}
     </section>
@@ -317,5 +458,10 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
       <button type="button" className="button" disabled={flowCreating} onClick={() => setFlowCreateOpen(false)}>取消</button>
       <button type="button" className="button button--primary" disabled={flowCreating || !flowCreateName.trim() || !flowCreateDescription.trim()} onClick={() => void createWorkflow()}>{flowCreating ? '正在创建' : '创建流程'}</button>
     </>}><div className="team-create-form"><ProductField autoFocus label="流程名称" maxLength={80} value={flowCreateName} onChange={(event) => setFlowCreateName(event.target.value)}/><ProductTextArea label="流程用途" rows={4} maxLength={2000} value={flowCreateDescription} onChange={(event) => setFlowCreateDescription(event.target.value)}/>{flowCreateError ? <p role="alert">{flowCreateError}</p> : null}</div></Modal> : null}
+    {nodeEditOpen && selectedNode ? <Modal title="编辑流程步骤" onClose={() => { if (!workflowBusy) setNodeEditOpen(false) }} footer={<><button type="button" className="button" disabled={workflowBusy} onClick={() => setNodeEditOpen(false)}>取消</button><button type="button" className="button button--primary" disabled={workflowBusy || !nodeEditLabel.trim() || (selectedNode.type === 'worker' && !nodeEditMember)} onClick={() => void saveNode()}>{workflowBusy ? '正在保存' : '保存步骤'}</button></>}><div className="team-create-form"><ProductField autoFocus label="步骤名称" maxLength={80} value={nodeEditLabel} onChange={(event) => setNodeEditLabel(event.target.value)}/>{selectedNode.type === 'lead' || selectedNode.type === 'worker' ? <ProductTextArea label={selectedNode.type === 'lead' ? '处理指令' : '交付要求'} rows={5} maxLength={2000} value={nodeEditInstruction} onChange={(event) => setNodeEditInstruction(event.target.value)}/> : null}{selectedNode.type === 'worker' ? <div className="workflow-member-picker" role="group" aria-label="执行成员">{selectedTeam?.workers.filter((member) => member.enabled).map((member) => <button type="button" key={member.id} className={nodeEditMember === member.id ? 'is-active' : ''} aria-pressed={nodeEditMember === member.id} onClick={() => setNodeEditMember(member.id)}><Bot size={13}/>{configurationLabel(member.name, '团队成员')}</button>)}</div> : null}{validationError ? <p role="alert">{validationError}</p> : null}</div></Modal> : null}
+    {stepCreateOpen ? <Modal title="插入执行步骤" onClose={() => { if (!workflowBusy) setStepCreateOpen(false) }} footer={<><button type="button" className="button" disabled={workflowBusy} onClick={() => setStepCreateOpen(false)}>取消</button><button type="button" className="button button--primary" disabled={workflowBusy || !stepCreateLabel.trim() || !stepCreateDuty.trim() || !stepCreateMember} onClick={() => void createStep()}>{workflowBusy ? '正在保存' : '插入步骤'}</button></>}><div className="team-create-form"><ProductField autoFocus label="步骤名称" maxLength={80} value={stepCreateLabel} onChange={(event) => setStepCreateLabel(event.target.value)}/><ProductTextArea label="交付要求" rows={5} maxLength={2000} value={stepCreateDuty} onChange={(event) => setStepCreateDuty(event.target.value)}/><div className="workflow-member-picker" role="group" aria-label="执行成员">{selectedTeam?.workers.filter((member) => member.enabled).map((member) => <button type="button" key={member.id} className={stepCreateMember === member.id ? 'is-active' : ''} aria-pressed={stepCreateMember === member.id} onClick={() => setStepCreateMember(member.id)}><Bot size={13}/>{configurationLabel(member.name, '团队成员')}</button>)}</div>{validationError ? <p role="alert">{validationError}</p> : null}</div></Modal> : null}
+    {stepRemoveOpen && selectedNode ? <Modal title="移除流程步骤" onClose={() => { if (!workflowBusy) setStepRemoveOpen(false) }} footer={<><button type="button" className="button" disabled={workflowBusy} onClick={() => setStepRemoveOpen(false)}>取消</button><button type="button" className="button button--danger" disabled={workflowBusy} onClick={() => void removeStep()}>{workflowBusy ? '正在移除' : '移除步骤'}</button></>}><p>移除“{configurationLabel(selectedNode.label, '执行步骤')}”后，前后步骤会直接连接。</p>{validationError ? <p role="alert">{validationError}</p> : null}</Modal> : null}
+    {parallelOpen ? <Modal title="改为并行协作" onClose={() => { if (!workflowBusy) setParallelOpen(false) }} footer={<><button type="button" className="button" disabled={workflowBusy} onClick={() => setParallelOpen(false)}>取消</button><button type="button" className="button button--primary" disabled={workflowBusy || (selectedTeam?.workers.filter((member) => member.enabled).length ?? 0) < 2} onClick={() => void applyParallelPattern()}>{workflowBusy ? '正在保存' : '应用并行流程'}</button></>}><div className="team-create-form"><p>负责人理解任务后，前两位启用成员并行处理，全部完成后汇总交付。</p><div className="workflow-parallel-members">{selectedTeam?.workers.filter((member) => member.enabled).slice(0, 2).map((member) => <span key={member.id}><Bot size={13}/>{configurationLabel(member.name, '团队成员')}</span>)}</div></div></Modal> : null}
+    {archiveOpen && selectedWorkflow ? <Modal title="归档工作流程" onClose={() => { if (!workflowBusy) setArchiveOpen(false) }} footer={<><button type="button" className="button" disabled={workflowBusy} onClick={() => setArchiveOpen(false)}>取消</button><button type="button" className="button button--danger" disabled={workflowBusy} onClick={() => void archiveWorkflow()}>{workflowBusy ? '正在归档' : '归档流程'}</button></>}><p>“{configurationLabel(selectedWorkflow.name, '当前流程')}”将不再用于新工作，已有版本和运行记录仍会保留。</p>{validationError ? <p role="alert">{validationError}</p> : null}</Modal> : null}
   </div></div>
 }

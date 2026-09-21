@@ -27,9 +27,13 @@ const updateTeam = vi.fn(async () => undefined)
 const createTeamMember = vi.fn(async () => ({ id: 'new-member', name: '法务复核员' }))
 const removeTeamMember = vi.fn(async () => undefined)
 const createWorkflow = vi.fn(async () => ({ id: 'created-flow', name: '合同流程', draftVersion: 1 }))
+const createWorkflowDraft = vi.fn(async () => ({ draftVersion: 2, updatedAt: '2026-09-21T00:02:00Z' }))
+const updateWorkflow = vi.fn(async () => ({ draftVersion: 1, updatedAt: '2026-09-21T00:01:00Z' }))
 const validateWorkflow = vi.fn(async () => ({ valid: true, issues: [] }))
+const publishWorkflow = vi.fn(async () => undefined)
+const archiveWorkflow = vi.fn(async () => undefined)
 async function render(value: EnterpriseDevelopmentOverview = overview, onRefresh = () => undefined) {
-  await act(async () => root.render(<DevelopmentPage environments={[]} overview={value} loading={false} error="" onRefresh={onRefresh} onOpenForge={() => undefined} onCreateTeam={createTeam} onUpdateTeam={updateTeam} onCreateTeamMember={createTeamMember} onRemoveTeamMember={removeTeamMember} onCreateWorkflow={createWorkflow} onValidateWorkflow={validateWorkflow} onLoadMemberDraft={(team, member) => load(team, member)} onSaveMemberDraft={save} onApplyMemberDraft={applyDraft}/>))
+  await act(async () => root.render(<DevelopmentPage environments={[]} overview={value} loading={false} error="" onRefresh={onRefresh} onOpenForge={() => undefined} onCreateTeam={createTeam} onUpdateTeam={updateTeam} onCreateTeamMember={createTeamMember} onRemoveTeamMember={removeTeamMember} onCreateWorkflow={createWorkflow} onCreateWorkflowDraft={createWorkflowDraft} onUpdateWorkflow={updateWorkflow} onValidateWorkflow={validateWorkflow} onPublishWorkflow={publishWorkflow} onArchiveWorkflow={archiveWorkflow} onLoadMemberDraft={(team, member) => load(team, member)} onSaveMemberDraft={save} onApplyMemberDraft={applyDraft}/>))
 }
 async function click(label: string) {
   const button = [...document.querySelectorAll<HTMLButtonElement>('button')].find((item) => item.textContent?.trim() === label || item.getAttribute('aria-label') === label)
@@ -168,8 +172,17 @@ it('edits team details and adds and removes an execution member', async () => {
 it('checks the current draft and shows a readable result', async () => {
   const value: EnterpriseDevelopmentOverview = { ...overview, teams: [{ ...overview.teams[0], workflows: [{ id: 'flow-id', name: '合同流程', status: 'active', draftVersion: 2, inspectedVersion: 2, nodes: [{ id: 'start', type: 'lead', label: '理解任务' }], edges: [] }] }] }
   await render(value)
-  await click('工作流程'); await click('检查草稿')
+  await click('工作流程'); await click('检查')
   expect(validateWorkflow).toHaveBeenCalledWith('flow-id', 2)
   expect(container.textContent).toContain('草稿通过检查')
   expect(container.textContent).not.toContain('flow-id')
+})
+
+it('opens a new draft from a published workflow', async () => {
+  const refresh = vi.fn()
+  const value: EnterpriseDevelopmentOverview = { ...overview, teams: [{ ...overview.teams[0], workflows: [{ id: 'flow-id', name: '合同流程', status: 'active', publishedVersion: 1, inspectedVersion: 1, nodes: [{ id: 'start', type: 'lead', label: '理解任务' }], edges: [] }] }] }
+  await render(value, refresh)
+  await click('工作流程'); await click('编辑新版本')
+  expect(createWorkflowDraft).toHaveBeenCalledWith('flow-id')
+  expect(refresh).toHaveBeenCalledTimes(1)
 })
