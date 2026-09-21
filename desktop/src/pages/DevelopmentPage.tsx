@@ -107,13 +107,12 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
   </div>
 
   return <div className="page development-shell"><div className="page-container development-page">
-    <header className="page-header"><h1>开发中心</h1><button type="button" className="icon-button" aria-label="刷新开发中心" title="刷新开发中心" disabled={saving || loading} onClick={() => navigate(() => { onRefresh(); setRetry((value) => value + 1) })}><RefreshCw size={14} className={loading ? 'spin' : ''}/></button></header>
     <div className="development-toolbar">
       <nav className="development-tabs" aria-label="开发中心分类">
         <button type="button" className={activeTab === 'teams' ? 'is-active' : ''} aria-pressed={activeTab === 'teams'} onClick={() => setActiveTab('teams')}><UsersRound size={14}/><strong>智能体团队</strong></button>
         <button type="button" className={activeTab === 'apps' ? 'is-active' : ''} aria-pressed={activeTab === 'apps'} onClick={() => setActiveTab('apps')}><Code2 size={14}/><strong>应用开发</strong></button>
       </nav>
-      {activeTab === 'teams' ? environmentSummary(weave, 'Weave 协作服务') : environmentSummary(forge, 'Forge 业务环境', true)}
+      <div className="development-toolbar__meta">{activeTab === 'teams' ? environmentSummary(weave, 'Weave 协作服务') : environmentSummary(forge, 'Forge 业务环境', true)}<button type="button" className="icon-button" aria-label="刷新开发中心" title="刷新开发中心" disabled={saving || loading} onClick={() => navigate(() => { onRefresh(); setRetry((value) => value + 1) })}><RefreshCw size={13} className={loading ? 'spin' : ''}/></button></div>
     </div>
     {activeTab === 'apps' ? <section className="development-app-workspace"><div><Code2 size={20}/><span><strong>应用开发调试区</strong></span></div><button type="button" className="button button--primary" disabled={!forge?.available} onClick={() => forge && onOpenForge(forge.url)}>打开 Forge 开发环境</button></section> : null}
     <section className="team-workspace" aria-label="智能体团队配置" hidden={activeTab !== 'teams'}>

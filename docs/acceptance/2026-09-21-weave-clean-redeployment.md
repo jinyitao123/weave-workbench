@@ -12,12 +12,15 @@
 - 以真实 Forge 开发账号从桌面重新登录，Weave 自动新建绑定。恢复管理员角色后，桌面开发中心显示 Weave 可用并读取到空团队状态。
 - Weave `main` 已合并为 `90484dca`，同时包含升级编号修复、成员配置草稿和 `developer / admin` 新建团队权限。部署镜像 `weave-platform:mvp1-90484dca` 后容器保持 `healthy`、重启次数为 0，`/v1/ready` 返回 `ready`。
 - 在 GooeyPi 桌面实际点击“开发 → 新建团队”，填写“合同交接团队”和团队目标后创建成功。桌面直接进入该团队，显示“团队负责人”和“执行成员”，右侧成员配置可读取；页面未显示团队、成员或运行 UUID。
+- 成员草稿首次保存后再次编辑曾返回版本冲突。Weave `main@f3feb01d` 修复了已有草稿的更新路径，并增加真实 PostgreSQL 回归，覆盖连续保存和过期版本冲突。
+- 镜像 `weave-platform:mvp1-f3feb01d` 已部署，容器为 `healthy`、重启次数为 0，`/v1/ready` 返回 `ready`。在 GooeyPi 桌面再次编辑负责人职责并保存成功；刷新开发中心后新内容仍可读回。
+- 开发中心移除重复页标题，压缩顶部页签与服务状态；成员配置改为摘要优先、按区编辑。页签和编辑按钮已显式取消通用方形背景及阴影，并在桌面实机画面确认。
 
 ## 本次新增边界
 
 当前最小新建流程由 Workbench Host 调用 Weave 现有智能体和团队接口，创建两个可编辑初始成员后建立团队；团队建立失败会尝试回收本次成员。服务端原子创建向导仍是后续增强，不阻塞当前 MVP1 开发者从空组织开始配置。
 
-桌面定向测试 14 项、桌面生产构建、总仓检查和 Weave 数据库升级包测试通过。扩大到 Weave `internal/app/api` 的真实 PostgreSQL 包测试时，`access_change_pg_test` 与 `game_decisions_test` 各有一项失败；它们不属于本次新建团队路径，本记录不据此宣称 Weave 全量回归通过。
+桌面定向测试、桌面生产构建、总仓检查和 Weave 数据库升级包测试通过。成员草稿连续保存的真实 PostgreSQL 定向回归通过。扩大到 Weave `internal/app/api` 的真实 PostgreSQL 包测试时，`access_change_pg_test` 与 `game_decisions_test` 各有一项失败；它们不属于本次新建团队路径，本记录不据此宣称 Weave 全量回归通过。
 
 ## 本机连接事实
 

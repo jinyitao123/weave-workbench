@@ -31,7 +31,7 @@ async function click(label: string) {
   await act(async () => button.click())
 }
 async function editDuty(value: string) {
-  const button = [...container.querySelectorAll<HTMLButtonElement>('.member-setting__toggle')].find((item) => item.textContent?.startsWith('团队职责'))!
+  const button = container.querySelector<HTMLButtonElement>('.member-config-card__action')!
   await act(async () => button.click())
   const input = container.querySelector<HTMLTextAreaElement>('textarea')!
   await act(async () => {
@@ -78,7 +78,7 @@ it('ignores stale responses after selecting another member', async () => {
 })
 
 it('shows bindings without exposing internal identifiers or fake resource options', async () => {
-  await render(); await click('技能与工具')
+  await render(); await click('能力')
   expect(container.textContent).toContain('已绑定工具服务')
   expect(container.textContent).not.toContain('3a57aefc')
   expect(container.querySelector('select')).toBeNull()
