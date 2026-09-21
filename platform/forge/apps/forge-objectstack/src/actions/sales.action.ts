@@ -122,6 +122,12 @@ return { id: contractId, quotation_id: id, line_count: lines.length };
 
 export const ContractSubmit = defineAction({
   name: 'contract_submit', label: '提交审批', objectName: 'forge_sales_contract', icon: 'send', locations: [...locations], order: 10,
+  ai: {
+    exposed: true,
+    description: '以当前员工身份提交一份草稿销售合同。提交前校验来源报价、合同明细和金额，成功后合同进入待审批状态。',
+    category: 'action',
+    requiresConfirmation: false,
+  },
   visible: `record.status == 'draft'`, confirmText: '提交前将校验来源报价和合同金额，是否继续？', refreshAfter: true,
   successMessage: '合同已提交审批',
   body: {
@@ -136,17 +142,20 @@ if (record.quotation_id) {
 }
 const lines = await ctx.api.object('forge_sales_contract_line').find({ where: { contract_id: id } });
 if (!lines.length) throw new Error('合同至少需要一条物料明细');
+const assignments = await ctx.api.object('sys_user_position').find({ where: { position: 'contract_reviewer' } });
+const now = Date.now();
+const activeAssignments = assignments.filter(item => {
+  const from = item.valid_from ? Date.parse(item.valid_from) : Number.NEGATIVE_INFINITY;
+  const until = item.valid_until ? Date.parse(item.valid_until) : Number.POSITIVE_INFINITY;
+  return from <= now && now < until;
+});
+if (!activeAssignments.length) throw new Error('未配置合同复核岗，请先在系统设置中为员工分配该岗位');
+if (activeAssignments.length > 1) throw new Error('合同复核岗当前有多名员工，请先明确本次合同的复核负责人');
 const total = Math.round(lines.reduce((sum, line) => sum + Number(line.taxed_subtotal || 0), 0) * 10000) / 10000;
 await ctx.api.object('forge_sales_contract').update({ id, total_amount: total, status: 'pending_approval' });
-return { id, total_amount: total, status: 'pending_approval' };
+return { id, total_amount: total, status: 'pending_approval', routed: true };
 `,
   },
-});
-
-export const ContractApprove = defineAction({
-  name: 'contract_approve', label: '同意', objectName: 'forge_sales_contract', icon: 'circle-check', locations: [...locations], order: 10,
-  visible: `record.status == 'pending_approval'`, confirmText: '确认同意并开始执行这份合同？', refreshAfter: true,
-  successMessage: '合同审批通过，已进入执行中', body: statusBody('forge_sales_contract', 'pending_approval', 'active'),
 });
 
 export const SalesOrderSubmit = defineAction({
