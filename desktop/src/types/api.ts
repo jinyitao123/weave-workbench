@@ -991,6 +991,7 @@ export interface PrimeWorkApi {
     validateDevelopmentWorkflow(workflowId: string, version: number): Promise<EnterpriseWorkflowValidation>
     getTeamMemberConfigDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft>
     saveTeamMemberConfigDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft>
+    applyTeamMemberConfigDraft(teamId: string, agentId: string, revision: number): Promise<EnterpriseTeamMemberConfigDraft>
     getWorkOverview(): Promise<EnterpriseWorkOverview>
     submitWork(choice: EnterpriseWorkChoice, goal: string): Promise<EnterpriseWorkReceipt>
     completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }>

@@ -61,6 +61,7 @@ const api: PrimeWorkApi = {
     validateDevelopmentWorkflow: (workflowId, version) => invoke('enterprise:validate-development-workflow', workflowId, version),
     getTeamMemberConfigDraft: (teamId, agentId) => invoke('enterprise:get-team-member-config-draft', teamId, agentId),
     saveTeamMemberConfigDraft: (draft) => invoke('enterprise:save-team-member-config-draft', draft),
+    applyTeamMemberConfigDraft: (teamId, agentId, revision) => invoke('enterprise:apply-team-member-config-draft', teamId, agentId, revision),
     getWorkOverview: () => invoke('enterprise:get-work-overview'),
     submitWork: (choice, goal) => invoke('enterprise:submit-work', choice, goal),
     completeHumanTask: (task, payload) => invoke('enterprise:complete-human-task', task, payload),

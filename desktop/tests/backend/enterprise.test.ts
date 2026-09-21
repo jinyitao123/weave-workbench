@@ -128,6 +128,9 @@ describe('EnterpriseService', () => {
     const saved = await service.saveTeamMemberConfigDraft(draft)
     expect(saved).toMatchObject({ revision: 1, configuration: { displayName: '合同复核员' } })
     expect(requests.at(-1)).toMatchObject({ method: 'PUT', body: { revision: 0, configuration: { display_name: '合同复核员' } } })
+    const applied = await service.applyTeamMemberConfigDraft('team-1', 'worker-1', 1)
+    expect(applied.revision).toBe(0)
+    expect(requests.at(-1)).toEqual({ method: 'POST', body: { revision: 1 } })
   })
 
   it('creates an editable team with a lead and an execution member', async () => {

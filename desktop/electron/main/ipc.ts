@@ -265,6 +265,7 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   handle('enterprise:validate-development-workflow', (_event, workflowId, version) => services.enterprise.validateDevelopmentWorkflow(requireString(workflowId, 'workflowId', { min: 1, max: 160 }), requireInteger(version, 'version', 1, 1_000_000)))
   handle('enterprise:get-team-member-config-draft', (_event, teamId, agentId) => services.enterprise.getTeamMemberConfigDraft(requireString(teamId, 'teamId', { min: 1, max: 160 }), requireString(agentId, 'agentId', { min: 1, max: 160 })))
   handle('enterprise:save-team-member-config-draft', (_event, draft) => services.enterprise.saveTeamMemberConfigDraft(requireRecord(draft, 'draft') as unknown as import('../../src/types/api').EnterpriseTeamMemberConfigDraft))
+  handle('enterprise:apply-team-member-config-draft', (_event, teamId, agentId, revision) => services.enterprise.applyTeamMemberConfigDraft(requireString(teamId, 'teamId', { min: 1, max: 160 }), requireString(agentId, 'agentId', { min: 1, max: 160 }), requireInteger(revision, 'revision', 1, 1_000_000)))
   handle('enterprise:get-work-overview', () => services.enterprise.getWorkOverview())
   handle('enterprise:submit-work', (_event, choice, goal) => services.enterprise.submitWork(requireEnterpriseWorkChoice(choice), requireString(goal, 'goal', { min: 1, max: 20_000 })))
   handle('enterprise:complete-human-task', (_event, task, payload) => services.enterprise.completeHumanTask(requireEnterpriseHumanTask(task), requireRecord(payload, 'payload')))
