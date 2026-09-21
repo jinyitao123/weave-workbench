@@ -1,7 +1,7 @@
-import { Check, Pencil } from 'lucide-react'
+import { Check, Pencil, Plus, Trash2, Upload } from 'lucide-react'
 import { useState } from 'react'
-import { ProductField, ProductSelect, ProductSwitch, ProductTextArea } from '@/components/ui'
-import type { EnterpriseDevelopmentOverview, EnterpriseTeamMemberConfigDraft } from '@/types/api'
+import { Modal, ProductField, ProductSelect, ProductSwitch, ProductTextArea } from '@/components/ui'
+import type { EnterpriseDevelopmentOverview, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberSkill } from '@/types/api'
 
 export function configurationLabel(value: string | undefined, fallback: string): string {
   if (!value?.trim()) return fallback
@@ -31,6 +31,8 @@ export function MemberInspector({ draft, runtimes, onChange }: {
 }) {
   const [section, setSection] = useState<Section>('role')
   const [editing, setEditing] = useState<Section | null>(null)
+  const [skillEditor, setSkillEditor] = useState<{ index: number; value: EnterpriseTeamMemberSkill }>()
+  const [skillError, setSkillError] = useState('')
   const config = draft.configuration
   const relationship = draft.relationship
   const setConfig = <K extends keyof typeof config>(key: K, value: typeof config[K]) => onChange({ ...draft, configuration: { ...config, [key]: value } })
@@ -43,6 +45,31 @@ export function MemberInspector({ draft, runtimes, onChange }: {
   const executionSteps = config.engine === 'loom'
     ? ['接收团队任务', '装载指令与上下文', '模型调用与工具执行', '校验并返回结果']
     : ['接收团队任务', '发送到运行位置', `${engineOptions.find((item) => item.value === config.engine)?.label ?? '外部智能体'}执行`, '返回团队结果']
+  const openSkill = (index = -1, value: EnterpriseTeamMemberSkill = { name: '', description: '', body: '', alwaysActive: false }) => { setSkillError(''); setSkillEditor({ index, value }) }
+  const saveSkill = () => {
+    if (!skillEditor) return
+    const value = { ...skillEditor.value, name: skillEditor.value.name.trim(), description: skillEditor.value.description.trim(), body: skillEditor.value.body.trim() }
+    if (!value.name || !value.body) { setSkillError('请填写技能名称和内容'); return }
+    if (config.skills.some((skill, index) => index !== skillEditor.index && skill.name.trim() === value.name)) { setSkillError('技能名称不能重复'); return }
+    const skills = [...config.skills]
+    if (skillEditor.index < 0) skills.push(value); else skills[skillEditor.index] = value
+    setConfig('skills', skills); setSkillEditor(undefined)
+  }
+  const uploadSkill = async (file: File | undefined) => {
+    if (!file) return
+    if (file.size > 512 * 1024) {
+      setSkillEditor({ index: -1, value: { name: file.name.replace(/\.(md|txt)$/i, '').trim(), description: '', body: '', alwaysActive: false } })
+      setSkillError('技能文件不能超过 512 KB')
+      return
+    }
+    try {
+      const body = await file.text()
+      openSkill(-1, { name: file.name.replace(/\.(md|txt)$/i, '').trim(), description: '', body, alwaysActive: false })
+    } catch {
+      setSkillEditor({ index: -1, value: { name: file.name.replace(/\.(md|txt)$/i, '').trim(), description: '', body: '', alwaysActive: false } })
+      setSkillError('技能文件读取失败')
+    }
+  }
 
   return <>
     <nav className="member-inspector__tabs" aria-label="成员配置分类">{sections.map((item) => <button type="button" key={item.value} aria-pressed={section === item.value} className={section === item.value ? 'is-active' : ''} onClick={() => { setSection(item.value); setEditing(null) }}>{item.label}</button>)}</nav>
@@ -78,10 +105,11 @@ export function MemberInspector({ draft, runtimes, onChange }: {
       </section> : null}
 
       {section === 'resources' ? <>
-        <section className="member-resource-group"><h4>已配置技能</h4>{config.skillNames.length ? <ul>{config.skillNames.map((name, index) => <li key={`${name}-${index}`}>{configurationLabel(name, '已绑定技能')}</li>)}</ul> : <p>暂无技能</p>}</section>
+        <section className="member-resource-group"><div className="member-resource-toolbar"><h4>技能</h4><span><label className="button member-skill-upload"><Upload size={12}/>上传<input type="file" accept=".md,.txt,text/markdown,text/plain" onChange={(event) => { void uploadSkill(event.target.files?.[0]); event.target.value = '' }}/></label><button type="button" className="button" onClick={() => openSkill()}><Plus size={12}/>手动添加</button></span></div>{config.skills.length ? <ul className="member-skill-list">{config.skills.map((skill, index) => <li key={`${skill.name}-${index}`}><button type="button" onClick={() => openSkill(index, skill)}><strong>{configurationLabel(skill.name, '未命名技能')}</strong><small>{configurationLabel(skill.description, '手动技能')}</small></button><button type="button" aria-label={`移除${configurationLabel(skill.name, '技能')}`} title="移除技能" onClick={() => setConfig('skills', config.skills.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={12}/></button></li>)}</ul> : <p>暂无技能</p>}{config.skillNames.length ? <div className="member-resource-readonly"><small>现有版本绑定</small>{config.skillNames.map((name, index) => <span key={`${name}-${index}`}>{configurationLabel(name, '已绑定技能')}</span>)}</div> : null}</section>
         <section className="member-resource-group"><h4>已配置工具服务</h4>{config.mcpServerIds.length ? <ul>{config.mcpServerIds.map((name, index) => <li key={`${name}-${index}`}>{configurationLabel(name, '已绑定工具服务')}</li>)}</ul> : <p>暂无工具服务</p>}</section>
         {(['permissionAllow', 'permissionAsk', 'permissionDeny'] as const).filter((key) => config[key].length).map((key) => <section className="member-resource-group" key={key}><h4>{permissionNames[key]}</h4><ul>{config[key].map((name, index) => <li key={`${name}-${index}`}>{configurationLabel(name, '已配置调用规则')}</li>)}</ul></section>)}
       </> : null}
     </div>
+    {skillEditor ? <Modal title={skillEditor.index < 0 ? '添加技能' : '编辑技能'} onClose={() => setSkillEditor(undefined)} footer={<><button type="button" className="button" onClick={() => setSkillEditor(undefined)}>取消</button><button type="button" className="button button--primary" disabled={!skillEditor.value.name.trim() || !skillEditor.value.body.trim()} onClick={saveSkill}>保存技能</button></>}><div className="team-create-form"><ProductField autoFocus label="技能名称" maxLength={80} value={skillEditor.value.name} onChange={(event) => setSkillEditor({ ...skillEditor, value: { ...skillEditor.value, name: event.target.value } })}/><ProductField label="用途" maxLength={240} value={skillEditor.value.description} onChange={(event) => setSkillEditor({ ...skillEditor, value: { ...skillEditor.value, description: event.target.value } })}/><ProductTextArea label="技能内容" rows={12} value={skillEditor.value.body} onChange={(event) => setSkillEditor({ ...skillEditor, value: { ...skillEditor.value, body: event.target.value } })}/><ProductSwitch label="每次执行都加载" checked={skillEditor.value.alwaysActive} onChange={(value) => setSkillEditor({ ...skillEditor, value: { ...skillEditor.value, alwaysActive: value } })}/>{skillError ? <p role="alert">{skillError}</p> : null}</div></Modal> : null}
   </>
 }

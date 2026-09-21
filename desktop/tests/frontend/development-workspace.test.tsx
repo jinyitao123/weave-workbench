@@ -15,7 +15,7 @@ const overview: EnterpriseDevelopmentOverview = {
 }
 function fixture(agentId = 'reviewer'): EnterpriseTeamMemberConfigDraft {
   return { version: '1', teamId: 'team', agentId, agentName: agentId, baseAgentVersion: 1, revision: 1, updatedAt: '',
-    configuration: { displayName: agentId === 'reviewer' ? '审核员' : '起草员', role: 'worker', engine: 'loom', runtimeId: '', model: '', systemPrompt: '检查合同', skillNames: [], mcpServerIds: ['3a57aefc-a5c4-44d3-8e0d-e46d06cd2d41'], permissionAllow: [], permissionAsk: [], permissionDeny: [], memoryEnabled: false, memoryScope: 'tenant', maxTokens: 0, maxOutputTokens: 0, stepBudget: 0, maxCostUsd: 0, outputSchema: '' },
+    configuration: { displayName: agentId === 'reviewer' ? '审核员' : '起草员', role: 'worker', engine: 'loom', runtimeId: '', model: '', systemPrompt: '检查合同', skillNames: [], skills: [], mcpServerIds: ['3a57aefc-a5c4-44d3-8e0d-e46d06cd2d41'], permissionAllow: [], permissionAsk: [], permissionDeny: [], memoryEnabled: false, memoryScope: 'tenant', maxTokens: 0, maxOutputTokens: 0, stepBudget: 0, maxCostUsd: 0, outputSchema: '' },
     relationship: { duty: '检查条款', whenToUse: '', contextInstruction: '', allowedKinds: [], defaultKind: '', resultRequirement: '', enabled: true },
   }
 }
@@ -88,6 +88,23 @@ it('shows bindings without exposing internal identifiers or fake resource option
   expect(container.textContent).toContain('已绑定工具服务')
   expect(container.textContent).not.toContain('3a57aefc')
   expect(container.querySelector('select')).toBeNull()
+})
+
+it('creates a handwritten skill inside the selected member draft', async () => {
+  await render(); await click('能力'); await click('手动添加')
+  const dialog = document.querySelector('[role=dialog]')!
+  const inputs = dialog.querySelectorAll<HTMLInputElement>('input')
+  const body = dialog.querySelector<HTMLTextAreaElement>('textarea')!
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(inputs[0], '合同风险检查')
+    inputs[0].dispatchEvent(new Event('input', { bubbles: true }))
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(inputs[1], '检查关键合同风险')
+    inputs[1].dispatchEvent(new Event('input', { bubbles: true }))
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(body, '逐条检查合同并列出风险。')
+    body.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  await click('保存技能'); await click('保存草稿')
+  expect(save.mock.calls.at(-1)?.[0].configuration.skills).toEqual([{ name: '合同风险检查', description: '检查关键合同风险', body: '逐条检查合同并列出风险。', alwaysActive: false }])
 })
 
 it('turns the empty state into a minimal team creation path', async () => {

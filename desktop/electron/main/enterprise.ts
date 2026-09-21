@@ -56,10 +56,14 @@ function stringList(value: unknown): string[] {
 
 function memberAgentConfiguration(value: Record<string, unknown>, agentName: string): EnterpriseTeamMemberAgentConfiguration {
   const outputSchema = value.output_schema === undefined || value.output_schema === null ? '' : JSON.stringify(value.output_schema, null, 2)
+  const skills = Array.isArray(value.skills) ? value.skills.flatMap((item) => {
+    const skill = record(item), name = textValue(skill?.name), body = textValue(skill?.body)
+    return name && body ? [{ name, description: textValue(skill?.description) ?? '', body, alwaysActive: skill?.always_active === true }] : []
+  }) : []
   return {
     displayName: textValue(value.display_name) ?? agentName, role: textValue(value.role) ?? 'worker',
     engine: textValue(value.engine) ?? 'loom', runtimeId: textValue(value.runtime_id) ?? '', model: textValue(value.model) ?? '',
-    systemPrompt: typeof value.system_prompt === 'string' ? value.system_prompt : '', skillNames: stringList(value.skill_names),
+    systemPrompt: typeof value.system_prompt === 'string' ? value.system_prompt : '', skillNames: stringList(value.skill_names), skills,
     mcpServerIds: stringList(value.mcp_server_ids), permissionAllow: stringList(value.permission_allow),
     permissionAsk: stringList(value.permission_ask), permissionDeny: stringList(value.permission_deny),
     memoryEnabled: value.memory_enabled === true, memoryScope: textValue(value.memory_scope) ?? 'tenant',
@@ -509,7 +513,7 @@ export class EnterpriseService {
       configuration: {
         display_name: draft.configuration.displayName.trim(), role: draft.configuration.role, engine: draft.configuration.engine,
         runtime_id: draft.configuration.runtimeId.trim(), model: draft.configuration.model.trim(), system_prompt: draft.configuration.systemPrompt,
-        skill_names: draft.configuration.skillNames, mcp_server_ids: draft.configuration.mcpServerIds,
+        skill_names: draft.configuration.skillNames, skills: draft.configuration.skills.map((skill) => ({ name: skill.name, description: skill.description, body: skill.body, always_active: skill.alwaysActive })), mcp_server_ids: draft.configuration.mcpServerIds,
         permission_allow: draft.configuration.permissionAllow, permission_ask: draft.configuration.permissionAsk, permission_deny: draft.configuration.permissionDeny,
         memory_enabled: draft.configuration.memoryEnabled, memory_scope: draft.configuration.memoryScope,
         max_tokens: draft.configuration.maxTokens, max_output_tokens: draft.configuration.maxOutputTokens,

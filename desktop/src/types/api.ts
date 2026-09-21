@@ -177,6 +177,7 @@ export interface EnterpriseTeamMemberAgentConfiguration {
     model: string
     systemPrompt: string
     skillNames: string[]
+    skills: EnterpriseTeamMemberSkill[]
     mcpServerIds: string[]
     permissionAllow: string[]
     permissionAsk: string[]
@@ -188,6 +189,13 @@ export interface EnterpriseTeamMemberAgentConfiguration {
     stepBudget: number
     maxCostUsd: number
     outputSchema: string
+}
+
+export interface EnterpriseTeamMemberSkill {
+  name: string
+  description: string
+  body: string
+  alwaysActive: boolean
 }
 
 export interface EnterpriseTeamMemberRelationshipConfiguration {
