@@ -1,4 +1,4 @@
-import type { EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamObservation, EnterpriseWorkflowObservation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
+import type { EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberConfigDraft, EnterpriseTeamObservation, EnterpriseWorkflowObservation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 
@@ -48,6 +48,38 @@ function textValue(value: unknown): string | undefined {
 
 function numberValue(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
+}
+
+function stringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+}
+
+function teamMemberConfigDraft(value: unknown): EnterpriseTeamMemberConfigDraft {
+  const source = record(value), configuration = record(source?.configuration), relationship = record(source?.relationship)
+  const teamId = textValue(source?.team_id), agentId = textValue(source?.agent_id), agentName = textValue(source?.agent_name)
+  const baseAgentVersion = numberValue(source?.base_agent_version), revision = numberValue(source?.revision), updatedAt = textValue(source?.updated_at)
+  if (!source || !configuration || !relationship || !teamId || !agentId || !agentName || !baseAgentVersion || revision === undefined || !updatedAt) throw new Error('Weave 返回了无法识别的团队成员配置')
+  const outputSchema = configuration.output_schema === undefined || configuration.output_schema === null ? '' : JSON.stringify(configuration.output_schema, null, 2)
+  return {
+    version: '1', teamId, agentId, agentName, baseAgentVersion, revision, updatedAt,
+    ...(textValue(source.updated_by) ? { updatedBy: textValue(source.updated_by) } : {}),
+    configuration: {
+      displayName: textValue(configuration.display_name) ?? agentName, role: textValue(configuration.role) ?? 'worker',
+      engine: textValue(configuration.engine) ?? 'loom', runtimeId: textValue(configuration.runtime_id) ?? '', model: textValue(configuration.model) ?? '',
+      systemPrompt: typeof configuration.system_prompt === 'string' ? configuration.system_prompt : '', skillNames: stringList(configuration.skill_names),
+      mcpServerIds: stringList(configuration.mcp_server_ids), permissionAllow: stringList(configuration.permission_allow),
+      permissionAsk: stringList(configuration.permission_ask), permissionDeny: stringList(configuration.permission_deny),
+      memoryEnabled: configuration.memory_enabled === true, memoryScope: textValue(configuration.memory_scope) ?? 'tenant',
+      maxTokens: numberValue(configuration.max_tokens) ?? 0, maxOutputTokens: numberValue(configuration.max_output_tokens) ?? 0,
+      stepBudget: numberValue(configuration.step_budget) ?? 0, maxCostUsd: numberValue(configuration.max_cost_usd) ?? 0, outputSchema,
+    },
+    relationship: {
+      duty: typeof relationship.duty === 'string' ? relationship.duty : '', whenToUse: typeof relationship.when_to_use === 'string' ? relationship.when_to_use : '',
+      contextInstruction: typeof relationship.context_instruction === 'string' ? relationship.context_instruction : '', allowedKinds: stringList(relationship.allowed_kinds),
+      defaultKind: typeof relationship.default_kind === 'string' ? relationship.default_kind : '', resultRequirement: typeof relationship.result_requirement === 'string' ? relationship.result_requirement : '',
+      enabled: relationship.enabled !== false,
+    },
+  }
 }
 
 function member(value: unknown): EnterpriseTeamMember | undefined {
@@ -244,7 +276,7 @@ export class EnterpriseService {
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有开发中心权限')
-    const rawTeams = await this.weaveJSON('/v1/teams?include=roster,summary&status=all')
+    const [rawTeams, rawRuntimes] = await Promise.all([this.weaveJSON('/v1/teams?include=roster,summary&status=all'), this.weaveJSON('/v1/runtimes')])
     if (!Array.isArray(rawTeams)) throw new Error('Weave 返回了无法识别的团队列表')
     const teams = await Promise.all(rawTeams.map(async (item): Promise<EnterpriseTeamObservation> => {
       const source = record(item)
@@ -297,10 +329,50 @@ export class EnterpriseService {
         } } : {}),
       }
     }))
-    return { version: '1', loadedAt: new Date().toISOString(), teams }
+    const runtimeSource = record(rawRuntimes)
+    const runtimes = (Array.isArray(runtimeSource?.runtimes) ? runtimeSource.runtimes : []).flatMap((value) => {
+      const item = record(value), id = textValue(item?.id), name = textValue(item?.name)
+      if (!id || !name) return []
+      return [{ id, name, engines: stringList(item?.engines), status: textValue(item?.health_status) ?? 'unknown', online: item?.online === true }]
+    })
+    return { version: '1', loadedAt: new Date().toISOString(), teams, runtimes }
   }
 
-  private async weaveRequest(path: string, method: 'POST', body: unknown): Promise<{ status: number; body: unknown }> {
+  async getTeamMemberConfigDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft> {
+    const session = await this.getSession()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有团队配置权限')
+    return teamMemberConfigDraft(await this.weaveJSON(`/v1/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(agentId)}/config-draft`))
+  }
+
+  async saveTeamMemberConfigDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft> {
+    if (!draft?.teamId || !draft.agentId || !Number.isInteger(draft.revision) || !draft.configuration?.displayName?.trim()) throw new Error('团队成员配置不完整')
+    let outputSchema: unknown
+    if (draft.configuration.outputSchema.trim()) {
+      try { outputSchema = JSON.parse(draft.configuration.outputSchema) }
+      catch { throw new Error('输出格式需要填写有效的 JSON') }
+    }
+    const result = await this.weaveRequest(`/v1/teams/${encodeURIComponent(draft.teamId)}/members/${encodeURIComponent(draft.agentId)}/config-draft`, 'PUT', {
+      revision: draft.revision,
+      configuration: {
+        display_name: draft.configuration.displayName.trim(), role: draft.configuration.role, engine: draft.configuration.engine,
+        runtime_id: draft.configuration.runtimeId.trim(), model: draft.configuration.model.trim(), system_prompt: draft.configuration.systemPrompt,
+        skill_names: draft.configuration.skillNames, mcp_server_ids: draft.configuration.mcpServerIds,
+        permission_allow: draft.configuration.permissionAllow, permission_ask: draft.configuration.permissionAsk, permission_deny: draft.configuration.permissionDeny,
+        memory_enabled: draft.configuration.memoryEnabled, memory_scope: draft.configuration.memoryScope,
+        max_tokens: draft.configuration.maxTokens, max_output_tokens: draft.configuration.maxOutputTokens,
+        step_budget: draft.configuration.stepBudget, max_cost_usd: draft.configuration.maxCostUsd, ...(outputSchema === undefined ? {} : { output_schema: outputSchema }),
+      },
+      relationship: {
+        duty: draft.relationship.duty, when_to_use: draft.relationship.whenToUse, context_instruction: draft.relationship.contextInstruction,
+        allowed_kinds: draft.relationship.allowedKinds, default_kind: draft.relationship.defaultKind,
+        result_requirement: draft.relationship.resultRequirement, enabled: draft.relationship.enabled,
+      },
+    })
+    return teamMemberConfigDraft(result.body)
+  }
+
+  private async weaveRequest(path: string, method: 'POST' | 'PUT', body: unknown): Promise<{ status: number; body: unknown }> {
     const response = await this.fetch(new URL(path, this.weaveUrl), {
       method, headers: new Headers({ ...(Object.fromEntries(await this.authorizationHeaders())), Accept: 'application/json', 'Content-Type': 'application/json' }),
       body: JSON.stringify(body), redirect: 'error', signal: AbortSignal.timeout(15_000),

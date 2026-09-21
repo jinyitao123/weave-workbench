@@ -113,6 +113,47 @@ export interface EnterpriseDevelopmentOverview {
   version: '1'
   loadedAt: string
   teams: EnterpriseTeamObservation[]
+  runtimes: Array<{ id: string; name: string; engines: string[]; status: string; online: boolean }>
+}
+
+export interface EnterpriseTeamMemberConfigDraft {
+  version: '1'
+  teamId: string
+  agentId: string
+  agentName: string
+  baseAgentVersion: number
+  revision: number
+  updatedAt: string
+  updatedBy?: string
+  configuration: {
+    displayName: string
+    role: string
+    engine: string
+    runtimeId: string
+    model: string
+    systemPrompt: string
+    skillNames: string[]
+    mcpServerIds: string[]
+    permissionAllow: string[]
+    permissionAsk: string[]
+    permissionDeny: string[]
+    memoryEnabled: boolean
+    memoryScope: string
+    maxTokens: number
+    maxOutputTokens: number
+    stepBudget: number
+    maxCostUsd: number
+    outputSchema: string
+  }
+  relationship: {
+    duty: string
+    whenToUse: string
+    contextInstruction: string
+    allowedKinds: string[]
+    defaultKind: string
+    resultRequirement: string
+    enabled: boolean
+  }
 }
 
 export interface EnterpriseWorkChoice {
@@ -883,6 +924,8 @@ export interface PrimeWorkApi {
     signIn(email: string, password: string): Promise<EnterpriseSession>
     signOut(): Promise<EnterpriseSession>
     getDevelopmentOverview(): Promise<EnterpriseDevelopmentOverview>
+    getTeamMemberConfigDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft>
+    saveTeamMemberConfigDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft>
     getWorkOverview(): Promise<EnterpriseWorkOverview>
     submitWork(choice: EnterpriseWorkChoice, goal: string): Promise<EnterpriseWorkReceipt>
     completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }>

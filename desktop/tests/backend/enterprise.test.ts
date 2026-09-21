@@ -88,6 +88,7 @@ describe('EnterpriseService', () => {
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'admin@example.test', name: 'Admin' } })
       if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1', role: 'admin' }, organization: { id: 'default' } })
       expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer weave-token')
+      if (url.endsWith('/v1/runtimes')) return Response.json({ runtimes: [{ id: 'runtime-local', name: '本机运行时', engines: ['codex'], health_status: 'healthy', online: true }] })
       if (url.includes('/v1/teams?')) return Response.json([{ team: { id: 'team-1', display_name: '合同交接团队', objective: '完成合同交接', status: 'active' }, lead: { id: 'lead-1', display_name: '负责人', role: 'avatar', enabled: true }, workers: [{ id: 'worker-1', display_name: '审核员', role: 'worker', configured_duty: '审核合同', enabled: true }], summary: { worker_count: 1, active_workflow_count: 1, published_workflow_count: 1, health: { conclusion: 'healthy', reason_codes: [] } } }])
       if (url.endsWith('/v1/teams/team-1/workflows')) return Response.json({ workflows: [{ id: 'flow-1', name: '合同处理', status: 'active', published_version: 2, trigger_summary: { type: 'manual' } }] })
       if (url.endsWith('/v1/workflows/flow-1/versions/2')) return Response.json({ graph_definition: { nodes: [{ id: 'review', type: 'agent', label: '审核', config: { agent_id: 'worker-1' } }], edges: [] } })
@@ -98,8 +99,35 @@ describe('EnterpriseService', () => {
     await service.signIn('admin@example.test', 'secret')
 
     await expect(service.getDevelopmentOverview()).resolves.toMatchObject({
-      version: '1', teams: [{ id: 'team-1', name: '合同交接团队', lead: { name: '负责人' }, workers: [{ name: '审核员', duty: '审核合同' }], workflows: [{ id: 'flow-1', inspectedVersion: 2, nodes: [{ id: 'review', workerId: 'worker-1' }] }], runs: [{ id: 'run-1', status: 'succeeded' }] }],
+      version: '1', runtimes: [{ name: '本机运行时', online: true }], teams: [{ id: 'team-1', name: '合同交接团队', lead: { name: '负责人' }, workers: [{ name: '审核员', duty: '审核合同' }], workflows: [{ id: 'flow-1', inspectedVersion: 2, nodes: [{ id: 'review', workerId: 'worker-1' }] }], runs: [{ id: 'run-1', status: 'succeeded' }] }],
     })
+  })
+
+  it('reads and saves a server-backed team member configuration draft', async () => {
+    const requests: Array<{ method: string; body?: Record<string, unknown> }> = []
+    const response = (revision: number) => ({
+      version: '1', team_id: 'team-1', agent_id: 'worker-1', agent_name: 'reviewer', base_agent_version: 3, revision,
+      updated_at: '2026-09-21T10:00:00Z', configuration: {
+        display_name: revision ? '合同复核员' : '审核员', role: 'worker', engine: 'pi', runtime_id: 'local-pi', model: 'default',
+        system_prompt: '检查合同', skill_names: ['contract-review'], mcp_server_ids: ['forge'], permission_allow: ['contract.read'],
+        memory_enabled: true, memory_scope: 'tenant', max_tokens: 12000, output_schema: { type: 'object' },
+      }, relationship: { duty: '复核合同', when_to_use: '合同提交后', allowed_kinds: ['handoff'], default_kind: 'handoff', enabled: true },
+    })
+    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = String(input)
+      if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'admin@example.test', name: 'Admin' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1', role: 'developer' }, organization: { id: 'default' } })
+      requests.push({ method: init?.method ?? 'GET', ...(init?.body ? { body: JSON.parse(String(init.body)) as Record<string, unknown> } : {}) })
+      return Response.json(response(init?.method === 'PUT' ? 1 : 0))
+    }) as typeof fetch
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('admin@example.test', 'secret')
+    const draft = await service.getTeamMemberConfigDraft('team-1', 'worker-1')
+    expect(draft).toMatchObject({ agentName: 'reviewer', revision: 0, configuration: { engine: 'pi', outputSchema: expect.stringContaining('object') }, relationship: { duty: '复核合同' } })
+    draft.configuration.displayName = '合同复核员'
+    const saved = await service.saveTeamMemberConfigDraft(draft)
+    expect(saved).toMatchObject({ revision: 1, configuration: { displayName: '合同复核员' } })
+    expect(requests.at(-1)).toMatchObject({ method: 'PUT', body: { revision: 0, configuration: { display_name: '合同复核员' } } })
   })
 
   it('submits a bound work request and completes a human task without exposing the token', async () => {
