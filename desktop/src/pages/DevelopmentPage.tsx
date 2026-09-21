@@ -331,16 +331,17 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
     const lead = graph.nodes.find((node) => node.type === 'lead')
     if (!lead) { setValidationError('当前流程缺少负责人步骤'); return }
     const prefix = Date.now().toString(36)
-    const parallel = `parallel-${prefix}`, join = `join-${prefix}`, deliver = `deliver-${prefix}`
+    const parallel = `parallel-${prefix}`, join = `join-${prefix}`, finalizer = `finalizer-${prefix}`, deliver = `deliver-${prefix}`
     graph.entry_node_id = lead.id
     graph.nodes = [lead,
       { id: parallel, type: 'parallel', label: '并行执行', config: { join_node_id: join } },
       ...workers.map((member, index) => ({ id: `branch-${prefix}-${index + 1}`, type: 'worker', label: member.name, config: { kind: 'dispatch', agent_id: member.id, agent_version: drafts[index].baseAgentVersion, result_requirement: drafts[index].relationship.resultRequirement || '返回可核验结果' }, inputs: { task: { value: { source: 'node_output', node_id: lead.id, path: '' }, expected_type: 'text' } }, output: { type: 'text' } })),
       { id: join, type: 'join', label: '汇总结果', config: { policy: 'all_success' } },
-      { id: deliver, type: 'deliver', label: '交付结果', config: { result: { source: 'node_output', node_id: join, path: '' } } },
+      { id: finalizer, type: 'worker', label: '整理交付', config: { kind: 'consult', agent_id: workers[0].id, agent_version: drafts[0].baseAgentVersion, result_requirement: '整合并行成员的结果，消除冲突并返回可核验的最终交付。' }, inputs: { results: { value: { source: 'node_output', node_id: join, path: '' }, expected_type: 'json' }, run_input: { value: { source: 'run_input', path: '' }, expected_type: 'text' } }, output: { type: 'text' } },
+      { id: deliver, type: 'deliver', label: '交付结果', config: { result: { source: 'node_output', node_id: finalizer, path: '' } } },
     ]
     const branches = graph.nodes.filter((node) => node.id.startsWith(`branch-${prefix}-`))
-    graph.edges = [{ id: `${lead.id}-${parallel}`, from_node_id: lead.id, to_node_id: parallel, route: 'success' }, ...branches.flatMap((node) => [{ id: `${parallel}-${node.id}`, from_node_id: parallel, to_node_id: node.id, route: 'branch' }, { id: `${node.id}-${join}`, from_node_id: node.id, to_node_id: join, route: 'join' }]), { id: `${join}-${deliver}`, from_node_id: join, to_node_id: deliver, route: 'success' }]
+    graph.edges = [{ id: `${lead.id}-${parallel}`, from_node_id: lead.id, to_node_id: parallel, route: 'success' }, ...branches.flatMap((node) => [{ id: `${parallel}-${node.id}`, from_node_id: parallel, to_node_id: node.id, route: 'branch' }, { id: `${node.id}-${join}`, from_node_id: node.id, to_node_id: join, route: 'join' }]), { id: `${join}-${finalizer}`, from_node_id: join, to_node_id: finalizer, route: 'success' }, { id: `${finalizer}-${deliver}`, from_node_id: finalizer, to_node_id: deliver, route: 'success' }]
     if (await saveWorkflowGraph(graph)) setParallelOpen(false)
   }
   const publishWorkflow = async () => {
