@@ -53,6 +53,9 @@ const api: PrimeWorkApi = {
     signIn: (email, password) => invoke<EnterpriseSession>('enterprise:sign-in', email, password),
     signOut: () => invoke<EnterpriseSession>('enterprise:sign-out'),
     getDevelopmentOverview: () => invoke('enterprise:get-development-overview'),
+    getWorkOverview: () => invoke('enterprise:get-work-overview'),
+    submitWork: (choice, goal) => invoke('enterprise:submit-work', choice, goal),
+    completeHumanTask: (task, payload) => invoke('enterprise:complete-human-task', task, payload),
   },
   projects: {
     list: (harness) => invoke('projects:list', harness),

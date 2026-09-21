@@ -94,6 +94,43 @@
 .development-node-strip small, .development-node-strip em { color: var(--text-tertiary); font-size: 8px; font-style: normal; }
 .development-run-list { display: grid; gap: 1px; }
 .development-run-list article { padding: 7px 2px; border-bottom: 1px solid var(--border); }
+.enterprise-work-page { width: min(100%, 960px); }
+.work-submit-card, .work-panel { border: 1px solid var(--border); border-radius: 12px; background: var(--surface-raised); }
+.work-submit-card { padding: 17px; }
+.work-section-title { display: flex; align-items: flex-start; gap: 10px; }
+.work-section-title > span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; color: var(--prime); background: var(--prime-soft); }
+.work-section-title h2, .work-panel-heading h2 { margin: 0; font-size: 12.5px; font-weight: 590; }
+.work-section-title p { margin: 3px 0 0; color: var(--text-tertiary); font-size: 10px; }
+.work-submit-card form { display: grid; grid-template-columns: 240px minmax(0, 1fr); align-items: end; gap: 12px; margin-top: 15px; }
+.work-submit-card label { display: grid; gap: 5px; color: var(--text-secondary); font-size: 9.5px; }
+.work-submit-card label:nth-child(2) { grid-column: 2; grid-row: 1 / 3; }
+.work-submit-card select, .work-submit-card textarea, .work-task-list textarea { width: 100%; border: 1px solid var(--border-strong); border-radius: 8px; color: var(--text); background: var(--canvas); outline: none; font-size: 10.5px; }
+.work-submit-card select { height: 34px; padding: 0 8px; }
+.work-submit-card textarea, .work-task-list textarea { padding: 8px; resize: vertical; line-height: 1.45; }
+.work-submit-card select:focus, .work-submit-card textarea:focus, .work-task-list textarea:focus { border-color: var(--prime); }
+.work-submit-card form > button { width: max-content; display: inline-flex; align-items: center; gap: 5px; }
+.work-receipt { display: flex; align-items: center; gap: 9px; margin-top: 13px; padding: 9px 10px; border-radius: 8px; color: var(--success); background: var(--success-soft); }
+.work-receipt span { min-width: 0; display: flex; flex-direction: column; }
+.work-receipt strong { font-size: 10.5px; }
+.work-receipt small { overflow: hidden; margin-top: 2px; font-size: 8.5px; white-space: nowrap; text-overflow: ellipsis; }
+.work-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 13px; }
+.work-panel { min-height: 230px; overflow: hidden; }
+.work-panel-heading { height: 45px; display: flex; align-items: center; gap: 7px; padding: 0 13px; border-bottom: 1px solid var(--border); color: var(--text-secondary); }
+.work-panel-heading h2 { flex: 1; color: var(--text); }
+.work-panel-heading span { min-width: 20px; padding: 2px 5px; border-radius: 6px; background: var(--surface-hover); text-align: center; font-size: 9px; }
+.work-empty { min-height: 145px; display: grid; place-items: center; padding: 20px; color: var(--text-tertiary); font-size: 10px; text-align: center; }
+.work-task-list, .work-run-list { display: grid; }
+.work-task-list article { padding: 12px 13px; border-bottom: 1px solid var(--border); }
+.work-task-list header, .work-run-list article { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.work-task-list header span, .work-run-list article > span { min-width: 0; display: flex; flex-direction: column; }
+.work-task-list strong, .work-run-list strong { font-size: 10.5px; }
+.work-task-list small, .work-run-list small { overflow: hidden; margin-top: 2px; color: var(--text-tertiary); font-size: 8.5px; white-space: nowrap; text-overflow: ellipsis; }
+.work-task-list header i, .work-run-list i { color: var(--warning); font-size: 8.5px; font-style: normal; white-space: nowrap; }
+.work-task-list p { margin: 9px 0; color: var(--text-secondary); font-size: 9.5px; line-height: 1.45; }
+.work-task-list article > div { display: flex; justify-content: flex-end; gap: 6px; margin-top: 7px; }
+.work-run-list article { min-height: 54px; padding: 8px 13px; border-bottom: 1px solid var(--border); }
+.work-run-list i.is-succeeded { color: var(--success); }
+.work-run-list i.is-failed, .work-run-list i.is-cancelled { color: var(--danger); }
 
 @media (max-width: 720px) {
   .development-environment { align-items: flex-start; flex-wrap: wrap; }
@@ -103,6 +140,8 @@
   .development-team-list { display: flex; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--border); }
   .development-team-list button { min-width: 190px; }
   .development-roster { grid-template-columns: 1fr; }
+  .work-submit-card form, .work-columns { grid-template-columns: 1fr; }
+  .work-submit-card label:nth-child(2) { grid-column: auto; grid-row: auto; }
 }
 .page-tools--activity { align-items: center; }
 .activity-tools__right { display: flex; align-items: center; justify-content: flex-end; gap: 7px; }

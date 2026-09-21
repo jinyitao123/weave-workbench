@@ -1,5 +1,5 @@
 import { ipcMain, shell, type IpcMainEvent, type IpcMainInvokeEvent, type WebContents } from 'electron'
-import type { ApplicationMenuName, AppMeta, HarnessId, SessionChangeEvent, ThemeMode } from '../../src/types/api'
+import type { ApplicationMenuName, AppMeta, EnterpriseHumanTask, EnterpriseWorkChoice, HarnessId, SessionChangeEvent, ThemeMode } from '../../src/types/api'
 import type { AgentRpcManager } from './agent-rpc'
 import type { GitService } from './git'
 import type { CuaDriverService } from './cua-driver'
@@ -78,6 +78,21 @@ function requireMenuCoordinate(value: unknown): number {
 function requireResolvedTheme(value: unknown): Exclude<ThemeMode, 'system'> {
   if (value === 'light' || value === 'dark') return value
   throw new TypeError('Invalid resolved theme')
+}
+
+function requireEnterpriseWorkChoice(value: unknown): EnterpriseWorkChoice {
+  const source = requireRecord(value, 'choice')
+  const version = source.version
+  if (typeof version !== 'number' || !Number.isInteger(version) || version < 1) throw new TypeError('Invalid workflow version')
+  return {
+    teamId: requireString(source.teamId, 'teamId', { min: 1, max: 128 }), teamName: requireString(source.teamName, 'teamName', { min: 1, max: 300 }),
+    workflowId: requireString(source.workflowId, 'workflowId', { min: 1, max: 128 }), workflowName: requireString(source.workflowName, 'workflowName', { min: 1, max: 300 }), version,
+  }
+}
+
+function requireEnterpriseHumanTask(value: unknown): Pick<EnterpriseHumanTask, 'runId' | 'interactionId'> {
+  const source = requireRecord(value, 'task')
+  return { runId: requireString(source.runId, 'runId', { min: 1, max: 256 }), interactionId: requireString(source.interactionId, 'interactionId', { min: 1, max: 256 }) }
 }
 
 type IpcEvent = IpcMainInvokeEvent | IpcMainEvent
@@ -242,6 +257,9 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   ))
   handle('enterprise:sign-out', () => services.enterprise.signOut())
   handle('enterprise:get-development-overview', () => services.enterprise.getDevelopmentOverview())
+  handle('enterprise:get-work-overview', () => services.enterprise.getWorkOverview())
+  handle('enterprise:submit-work', (_event, choice, goal) => services.enterprise.submitWork(requireEnterpriseWorkChoice(choice), requireString(goal, 'goal', { min: 1, max: 20_000 })))
+  handle('enterprise:complete-human-task', (_event, task, payload) => services.enterprise.completeHumanTask(requireEnterpriseHumanTask(task), requireRecord(payload, 'payload')))
 
   handle('projects:list', (_event, harness) => projectsFor(requireHarness(harness)).list())
   handle('projects:list-files', (_event, root, harness) => projectsFor(requireHarness(harness)).listFiles(root))
