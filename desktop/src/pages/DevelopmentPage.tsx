@@ -1,9 +1,9 @@
 import '@/styles/team-workspace.css'
-import { Bot, Code2, ExternalLink, Plus, RefreshCw, Save, Search, UsersRound } from 'lucide-react'
+import { Bot, CheckCircle2, Code2, ExternalLink, Plus, RefreshCw, Save, Search, UsersRound, Workflow } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Modal, ProductField, ProductTextArea } from '@/components/ui'
 import { configurationLabel, MemberInspector } from '@/components/development/MemberInspector'
-import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseTeamMemberConfigDraft } from '@/types/api'
+import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseTeamMemberConfigDraft, EnterpriseWorkflowObservation } from '@/types/api'
 
 interface DevelopmentPageProps {
   environments: EnterpriseEnvironmentStatus[]
@@ -13,17 +13,44 @@ interface DevelopmentPageProps {
   onRefresh(): void
   onOpenForge(url: string): void
   onCreateTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult>
+  onCreateWorkflow(input: EnterpriseCreateWorkflowInput): Promise<EnterpriseCreateWorkflowResult>
   onLoadMemberDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft>
   onSaveMemberDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft>
 }
 
 const fingerprint = (draft: EnterpriseTeamMemberConfigDraft) => JSON.stringify([draft.configuration, draft.relationship])
 
-export function DevelopmentPage({ environments, overview, loading, error, onRefresh, onOpenForge, onCreateTeam, onLoadMemberDraft, onSaveMemberDraft }: DevelopmentPageProps) {
+function workflowLayout(workflow: EnterpriseWorkflowObservation) {
+  const nodes = workflow.nodes
+  const nodeIds = new Set(nodes.map((node) => node.id))
+  const forwardEdges = workflow.edges.filter((edge) => nodeIds.has(edge.from) && nodeIds.has(edge.to) && edge.route !== 'back')
+  const indegree = new Map(nodes.map((node) => [node.id, 0]))
+  forwardEdges.forEach((edge) => indegree.set(edge.to, (indegree.get(edge.to) ?? 0) + 1))
+  const remaining = new Set(nodes.map((node) => node.id))
+  const levels: typeof nodes[] = []
+  while (remaining.size) {
+    let level = nodes.filter((node) => remaining.has(node.id) && (indegree.get(node.id) ?? 0) === 0)
+    if (!level.length) level = nodes.filter((node) => remaining.has(node.id)).slice(0, 1)
+    levels.push(level)
+    level.forEach((node) => {
+      remaining.delete(node.id)
+      forwardEdges.filter((edge) => edge.from === node.id && remaining.has(edge.to)).forEach((edge) => indegree.set(edge.to, Math.max(0, (indegree.get(edge.to) ?? 0) - 1)))
+    })
+  }
+  const width = Math.max(430, levels.length * 150 - 20)
+  const height = Math.max(240, Math.max(1, ...levels.map((level) => level.length)) * 82 + 54)
+  const positions = new Map<string, { x: number; y: number }>()
+  levels.forEach((level, column) => level.forEach((node, row) => positions.set(node.id, { x: column * 150, y: height / 2 - ((level.length - 1) * 82) / 2 + row * 82 - 26 })))
+  return { width, height, positions }
+}
+
+export function DevelopmentPage({ environments, overview, loading, error, onRefresh, onOpenForge, onCreateTeam, onCreateWorkflow, onLoadMemberDraft, onSaveMemberDraft }: DevelopmentPageProps) {
   const forge = environments.find((environment) => environment.id === 'forge-development')
   const weave = environments.find((environment) => environment.id === 'weave-development')
   const [activeTab, setActiveTab] = useState<'teams' | 'apps'>('teams')
+  const [workspaceView, setWorkspaceView] = useState<'members' | 'workflow'>('members')
   const [selection, setSelection] = useState({ team: '', member: '' })
+  const [flowSelection, setFlowSelection] = useState({ workflow: '', node: '' })
   const [query, setQuery] = useState('')
   const [draft, setDraft] = useState<EnterpriseTeamMemberConfigDraft>()
   const [baseline, setBaseline] = useState('')
@@ -38,12 +65,20 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
   const [createObjective, setCreateObjective] = useState('')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
+  const [flowCreateOpen, setFlowCreateOpen] = useState(false)
+  const [flowCreateName, setFlowCreateName] = useState('')
+  const [flowCreateDescription, setFlowCreateDescription] = useState('')
+  const [flowCreating, setFlowCreating] = useState(false)
+  const [flowCreateError, setFlowCreateError] = useState('')
   // App passes inline callbacks. Parent refreshes must never reset an edited draft.
   const loadRef = useRef(onLoadMemberDraft)
   loadRef.current = onLoadMemberDraft
   const selectedTeam = overview?.teams.find((team) => team.id === selection.team) ?? overview?.teams[0]
   const members = selectedTeam ? [selectedTeam.lead, ...selectedTeam.workers].filter((item): item is NonNullable<typeof item> => Boolean(item)) : []
   const selectedMember = members.find((member) => member.id === selection.member) ?? members[0]
+  const selectedWorkflow = selectedTeam?.workflows.find((workflow) => workflow.id === flowSelection.workflow) ?? selectedTeam?.workflows[0]
+  const selectedNode = selectedWorkflow?.nodes.find((node) => node.id === flowSelection.node) ?? selectedWorkflow?.nodes[0]
+  const graphLayout = selectedWorkflow ? workflowLayout(selectedWorkflow) : undefined
   const teamId = selectedTeam?.id
   const memberId = selectedMember?.id
   const currentDraft = draft?.teamId === teamId && draft?.agentId === memberId ? draft : undefined
@@ -101,6 +136,27 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
     } finally { setCreating(false) }
   }
   const openCreate = () => { setCreateError(''); setCreateOpen(true) }
+  const createWorkflow = async () => {
+    const lead = selectedTeam?.lead, worker = selectedTeam?.workers.find((member) => member.enabled)
+    const name = flowCreateName.trim(), description = flowCreateDescription.trim()
+    if (!selectedTeam || !lead || !worker || !name || !description || flowCreating) return
+    setFlowCreating(true); setFlowCreateError('')
+    try {
+      const created = await onCreateWorkflow({ version: '1', teamId: selectedTeam.id, name, description, leadId: lead.id, workerId: worker.id })
+      setFlowSelection({ workflow: created.id, node: '' })
+      setFlowCreateOpen(false); setFlowCreateName(''); setFlowCreateDescription('')
+      onRefresh()
+    } catch (cause) {
+      setFlowCreateError(cause instanceof Error ? configurationLabel(cause.message, '流程创建失败') : '流程创建失败')
+    } finally { setFlowCreating(false) }
+  }
+  const openFlowCreate = () => {
+    setFlowCreateError('')
+    setFlowCreateName(selectedTeam ? `${configurationLabel(selectedTeam.name, '团队')}流程` : '')
+    setFlowCreateDescription(selectedTeam?.objective ?? '')
+    setFlowCreateOpen(true)
+  }
+  const nodeTypeLabel = (type: string) => ({ lead: '负责人', worker: '执行成员', deliver: '交付', wait: '人工处理', condition: '条件判断', parallel: '并行', join: '汇合', loop: '循环', transform: '转换', handoff: '交接' })[type] ?? '处理步骤'
   const environmentSummary = (environment: EnterpriseEnvironmentStatus | undefined, fallback: string, canOpen = false) => <div className="development-environment-summary">
     <i className={environment?.available ? 'is-online' : ''}/><span><strong>{environment?.name ?? fallback}</strong><small>{loading ? '正在检查' : environment?.available ? '可用' : '暂不可用'}</small></span>
     {canOpen ? <button type="button" className="development-environment-open" aria-label="打开 Forge" title="打开 Forge" disabled={!environment?.available} onClick={() => environment && onOpenForge(environment.url)}><ExternalLink size={13}/></button> : null}
@@ -127,7 +183,8 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
         </aside>
         <main className="team-stage">
           <header className="team-stage__header"><h2>{configurationLabel(selectedTeam.name, '未命名团队')}</h2>{selectedTeam.objective ? <p>{configurationLabel(selectedTeam.objective, '团队协作')}</p> : null}</header>
-          <div className="team-stage__section-heading"><h3>团队成员</h3></div>
+          <nav className="team-stage__views" aria-label="团队开发视图"><button type="button" className={workspaceView === 'members' ? 'is-active' : ''} aria-pressed={workspaceView === 'members'} onClick={() => navigate(() => setWorkspaceView('members'))}><UsersRound size={13}/>团队分工</button><button type="button" className={workspaceView === 'workflow' ? 'is-active' : ''} aria-pressed={workspaceView === 'workflow'} onClick={() => navigate(() => setWorkspaceView('workflow'))}><Workflow size={13}/>工作流程</button></nav>
+          {workspaceView === 'members' ? <><div className="team-stage__section-heading"><h3>团队成员</h3></div>
           <div className="team-member-grid">{members.map((member) => {
             const selected = member.id === memberId
             const name = selected && currentDraft ? currentDraft.configuration.displayName : member.name
@@ -139,9 +196,23 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
               {selected && (dirty || saved) ? <span className="team-member-card__draft">{dirty ? '未保存' : '草稿已保存'}</span> : null}
             </button>
           })}</div>
-          {!members.length ? <div className="development-observation-empty">暂无成员</div> : null}
+          {!members.length ? <div className="development-observation-empty">暂无成员</div> : null}</> : <div className="workflow-stage">
+            <div className="workflow-stage__toolbar"><span>{selectedWorkflow ? configurationLabel(selectedWorkflow.name, '未命名流程') : '工作流程'}</span><button type="button" onClick={openFlowCreate}><Plus size={12}/>新建流程</button></div>
+            {selectedTeam.workflows.length > 1 ? <div className="workflow-switcher">{selectedTeam.workflows.map((workflow) => <button type="button" key={workflow.id} className={workflow.id === selectedWorkflow?.id ? 'is-active' : ''} onClick={() => setFlowSelection({ workflow: workflow.id, node: '' })}>{configurationLabel(workflow.name, '未命名流程')}</button>)}</div> : null}
+            {selectedWorkflow && graphLayout ? <div className="workflow-graph-scroll"><div className="workflow-graph" style={{ width: graphLayout.width, height: graphLayout.height }}>
+              <svg aria-hidden="true" width={graphLayout.width} height={graphLayout.height}><defs><marker id="workflow-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8Z"/></marker></defs>{selectedWorkflow.edges.map((edge, index) => {
+                const from = graphLayout.positions.get(edge.from), to = graphLayout.positions.get(edge.to)
+                if (!from || !to) return null
+                const startX = from.x + 122, startY = from.y + 26, endX = to.x - 2, endY = to.y + 26
+                const back = endX <= startX
+                const path = back ? `M ${startX} ${startY} C ${startX + 34} ${graphLayout.height - 10}, ${Math.max(8, endX - 34)} ${graphLayout.height - 10}, ${endX} ${endY}` : `M ${startX} ${startY} C ${(startX + endX) / 2} ${startY}, ${(startX + endX) / 2} ${endY}, ${endX} ${endY}`
+                return <path key={`${edge.from}-${edge.to}-${index}`} d={path} className={back ? 'is-back' : ''} markerEnd="url(#workflow-arrow)"/>
+              })}</svg>
+              {selectedWorkflow.nodes.map((node) => { const position = graphLayout.positions.get(node.id); if (!position) return null; return <button type="button" key={node.id} style={{ left: position.x, top: position.y }} className={`workflow-graph__node ${node.id === selectedNode?.id ? 'is-selected' : ''}`} aria-pressed={node.id === selectedNode?.id} onClick={() => setFlowSelection({ workflow: selectedWorkflow.id, node: node.id })}><span>{node.type === 'deliver' ? <CheckCircle2 size={15}/> : node.type === 'lead' ? <UsersRound size={15}/> : <Bot size={15}/>}</span><span><strong>{configurationLabel(node.label, nodeTypeLabel(node.type))}</strong><small>{nodeTypeLabel(node.type)}</small></span></button> })}
+            </div></div> : <div className="workflow-empty"><Workflow size={20}/><strong>还没有工作流程</strong><p>先建立一条基础流程，再按实际需要增加分支、并行、人工处理或循环。</p><button type="button" className="button button--primary" disabled={!selectedTeam.lead || !selectedTeam.workers.some((member) => member.enabled)} onClick={openFlowCreate}><Plus size={13}/>新建流程</button></div>}
+          </div>}
         </main>
-        <aside className="member-inspector" aria-label="成员配置">
+        {workspaceView === 'members' ? <aside className="member-inspector" aria-label="成员配置">
           <header className="member-inspector__heading"><span><small>成员配置</small><h3>{configurationLabel(currentDraft?.configuration.displayName ?? selectedMember?.name, '选择成员')}</h3></span><span className="member-inspector__state" role="status">{dirty ? '未保存' : saved ? '已保存' : currentDraft?.revision ? '草稿' : ''}</span></header>
           {draftLoading ? <div className="team-config-loading">正在读取配置…</div> : null}
           {draftError ? <div className="member-inspector__error" role="alert">{draftError}{!currentDraft ? <button type="button" className="button" onClick={() => setRetry((value) => value + 1)}>重试</button> : null}</div> : null}
@@ -151,7 +222,10 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
             </fieldset>
             <footer className="member-inspector__footer"><small>保存到草稿，不影响运行</small><button type="button" className="button button--primary" disabled={saving || !dirty || !currentDraft.configuration.displayName.trim()} onClick={() => void save()}><Save size={13}/>{saving ? '正在保存' : '保存草稿'}</button></footer>
           </> : !draftLoading && !draftError ? <div className="team-config-loading">选择团队成员</div> : null}
-        </aside>
+        </aside> : <aside className="member-inspector" aria-label="流程步骤">
+          <header className="member-inspector__heading"><span><small>流程步骤</small><h3>{configurationLabel(selectedNode?.label, selectedNode ? nodeTypeLabel(selectedNode.type) : '选择步骤')}</h3></span>{selectedWorkflow ? <span className="member-inspector__state">{selectedWorkflow.publishedVersion ? '已发布' : '草稿'}</span> : null}</header>
+          {selectedWorkflow && selectedNode ? <div className="workflow-inspector"><dl className="member-summary"><div className="member-summary-row"><dt>所属流程</dt><dd>{configurationLabel(selectedWorkflow.name, '未命名流程')}</dd></div><div className="member-summary-row"><dt>步骤类型</dt><dd>{nodeTypeLabel(selectedNode.type)}</dd></div>{selectedNode.workerId ? <div className="member-summary-row"><dt>执行成员</dt><dd>{configurationLabel(members.find((member) => member.id === selectedNode.workerId)?.name, '团队成员')}</dd></div> : null}<div className="member-summary-row"><dt>当前版本</dt><dd>{selectedWorkflow.publishedVersion ? `正式版 ${selectedWorkflow.publishedVersion}` : selectedWorkflow.draftVersion ? '开发草稿' : '未保存'}</dd></div></dl></div> : <div className="team-config-loading">创建流程后可查看步骤配置</div>}
+        </aside>}
       </div> : null}
     </section>
     {pendingAction ? <Modal title="有未保存的修改" onClose={() => { if (!saving) setPendingAction(null) }} footer={<>
@@ -163,5 +237,9 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
       <button type="button" className="button" disabled={creating} onClick={() => setCreateOpen(false)}>取消</button>
       <button type="button" className="button button--primary" disabled={creating || !createName.trim() || !createObjective.trim()} onClick={() => void createTeam()}>{creating ? '正在创建' : '创建团队'}</button>
     </>}><div className="team-create-form"><ProductField autoFocus label="团队名称" maxLength={80} value={createName} onChange={(event) => setCreateName(event.target.value)}/><ProductTextArea label="团队目标" rows={5} maxLength={2000} value={createObjective} onChange={(event) => setCreateObjective(event.target.value)}/>{createError ? <p role="alert">{createError}</p> : null}</div></Modal> : null}
+    {flowCreateOpen ? <Modal title="新建工作流程" onClose={() => { if (!flowCreating) setFlowCreateOpen(false) }} footer={<>
+      <button type="button" className="button" disabled={flowCreating} onClick={() => setFlowCreateOpen(false)}>取消</button>
+      <button type="button" className="button button--primary" disabled={flowCreating || !flowCreateName.trim() || !flowCreateDescription.trim()} onClick={() => void createWorkflow()}>{flowCreating ? '正在创建' : '创建流程'}</button>
+    </>}><div className="team-create-form"><ProductField autoFocus label="流程名称" maxLength={80} value={flowCreateName} onChange={(event) => setFlowCreateName(event.target.value)}/><ProductTextArea label="流程用途" rows={4} maxLength={2000} value={flowCreateDescription} onChange={(event) => setFlowCreateDescription(event.target.value)}/>{flowCreateError ? <p role="alert">{flowCreateError}</p> : null}</div></Modal> : null}
   </div></div>
 }

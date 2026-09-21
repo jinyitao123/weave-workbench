@@ -81,7 +81,7 @@ export interface EnterpriseWorkflowObservation {
   triggerType?: string
   latestRunId?: string
   nodes: Array<{ id: string; type: string; label?: string; workerId?: string }>
-  edges: Array<{ from: string; to: string; label?: string }>
+  edges: Array<{ from: string; to: string; label?: string; route?: string }>
 }
 
 export interface EnterpriseRunObservation {
@@ -126,6 +126,21 @@ export interface EnterpriseCreateTeamResult {
   id: string
   name: string
   objective: string
+}
+
+export interface EnterpriseCreateWorkflowInput {
+  version: '1'
+  teamId: string
+  name: string
+  description: string
+  leadId: string
+  workerId: string
+}
+
+export interface EnterpriseCreateWorkflowResult {
+  id: string
+  name: string
+  draftVersion: number
 }
 
 export interface EnterpriseTeamMemberAgentConfiguration {
@@ -943,6 +958,7 @@ export interface PrimeWorkApi {
     signOut(): Promise<EnterpriseSession>
     getDevelopmentOverview(): Promise<EnterpriseDevelopmentOverview>
     createDevelopmentTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult>
+    createDevelopmentWorkflow(input: EnterpriseCreateWorkflowInput): Promise<EnterpriseCreateWorkflowResult>
     getTeamMemberConfigDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft>
     saveTeamMemberConfigDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft>
     getWorkOverview(): Promise<EnterpriseWorkOverview>
