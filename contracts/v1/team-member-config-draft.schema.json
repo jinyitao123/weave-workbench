@@ -28,7 +28,12 @@
         "role": { "type": "string", "minLength": 1 },
         "engine": { "type": "string", "minLength": 1 },
         "skillNames": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-        "skills": { "type": "array", "items": { "$ref": "#/$defs/skill" } }
+        "skills": { "type": "array", "items": { "$ref": "#/$defs/skill" } },
+        "businessCapabilityIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 160 }
+        }
       }
     },
     "skill": {

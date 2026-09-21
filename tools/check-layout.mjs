@@ -17,6 +17,7 @@ const required = [
   'platform/forge/apps/forge-objectstack/package.json',
   'contracts/v1/work-request.schema.json',
   'contracts/v1/business-action.schema.json',
+  'contracts/v1/business-capability-catalog.schema.json',
   'contracts/v1/task-notification.schema.json',
   'contracts/v1/delivery-receipt.schema.json',
   'scenarios/sales-contract-handoff/README.md',

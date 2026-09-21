@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/business-capability-catalog.schema.json",
+  "title": "Developer Business Capability Catalog",
+  "description": "Developer-visible business capabilities projected from an authenticated Forge environment. MCP server names, generic tool names, arguments and credentials are deliberately excluded.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "provider", "capabilities", "refreshedAt"],
+  "properties": {
+    "version": { "const": "1" },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "status"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "status": { "enum": ["available", "unavailable"] }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "description", "effect", "resourceType", "status"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "description": { "type": "string", "minLength": 1, "maxLength": 240 },
+          "effect": { "enum": ["read", "write"] },
+          "resourceType": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "requiresEmployeeIntent": { "type": "boolean", "default": false },
+          "status": { "enum": ["available", "unavailable"] }
+        }
+      }
+    },
+    "refreshedAt": { "type": "string", "format": "date-time" }
+  }
+}
