@@ -53,6 +53,7 @@ const api: PrimeWorkApi = {
     signIn: (email, password) => invoke<EnterpriseSession>('enterprise:sign-in', email, password),
     signOut: () => invoke<EnterpriseSession>('enterprise:sign-out'),
     getDevelopmentOverview: () => invoke('enterprise:get-development-overview'),
+    getBusinessCapabilityCatalog: () => invoke('enterprise:get-business-capability-catalog'),
     createDevelopmentTeam: (input) => invoke('enterprise:create-development-team', input),
     updateDevelopmentTeam: (input) => invoke('enterprise:update-development-team', input),
     createDevelopmentTeamMember: (input) => invoke('enterprise:create-development-team-member', input),

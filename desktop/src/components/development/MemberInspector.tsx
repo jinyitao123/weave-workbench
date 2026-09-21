@@ -1,7 +1,7 @@
 import { Check, Pencil, Plus, Trash2, Upload } from 'lucide-react'
 import { useState } from 'react'
 import { Modal, ProductField, ProductSelect, ProductSwitch, ProductTextArea } from '@/components/ui'
-import type { EnterpriseDevelopmentOverview, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberSkill } from '@/types/api'
+import type { EnterpriseBusinessCapabilityCatalog, EnterpriseDevelopmentOverview, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberSkill } from '@/types/api'
 
 export function configurationLabel(value: string | undefined, fallback: string): string {
   if (!value?.trim()) return fallback
@@ -24,9 +24,11 @@ const sections: Array<{ value: Section; label: string }> = [
 ]
 const engines = [{ value: 'loom', label: 'Weave 内置运行时' }, { value: 'codex', label: 'Codex' }, { value: 'claude', label: 'Claude' }, { value: 'opencode', label: 'OpenCode' }]
 
-export function MemberInspector({ draft, runtimes, onChange }: {
+export function MemberInspector({ draft, runtimes, businessCapabilities, businessCapabilityError, onChange }: {
   draft: EnterpriseTeamMemberConfigDraft
   runtimes: EnterpriseDevelopmentOverview['runtimes']
+  businessCapabilities?: EnterpriseBusinessCapabilityCatalog
+  businessCapabilityError?: string
   onChange(draft: EnterpriseTeamMemberConfigDraft): void
 }) {
   const [section, setSection] = useState<Section>('role')
@@ -63,6 +65,10 @@ export function MemberInspector({ draft, runtimes, onChange }: {
     const skills = [...config.skills]
     if (skillEditor.index < 0) skills.push(value); else skills[skillEditor.index] = value
     setConfig('skills', skills); setSkillEditor(undefined)
+  }
+  const toggleBusinessCapability = (id: string) => {
+    const selected = config.businessCapabilityIds.includes(id)
+    setConfig('businessCapabilityIds', selected ? config.businessCapabilityIds.filter((value) => value !== id) : [...config.businessCapabilityIds, id])
   }
   const uploadSkill = async (file: File | undefined) => {
     if (!file) return
@@ -114,6 +120,10 @@ export function MemberInspector({ draft, runtimes, onChange }: {
       </section> : null}
 
       {section === 'resources' ? <>
+        <section className="member-resource-group"><div className="member-resource-toolbar"><h4>业务能力</h4><small>Forge 按当前员工权限提供</small></div>{businessCapabilityError ? <p role="alert">{businessCapabilityError}</p> : businessCapabilities?.capabilities.length ? <ul className="member-capability-list">{businessCapabilities.capabilities.map((capability) => {
+          const selected = config.businessCapabilityIds.includes(capability.id)
+          return <li key={capability.id}><button type="button" aria-pressed={selected} className={selected ? 'is-selected' : ''} onClick={() => toggleBusinessCapability(capability.id)}><span><strong>{configurationLabel(capability.name, '业务能力')}</strong><small>{configurationLabel(capability.description, '由 Forge 提供')}</small></span>{selected ? <Check size={14}/> : <Plus size={14}/>}</button></li>
+        })}</ul> : <p>暂无可分配的业务能力</p>}{config.businessCapabilityIds.filter((id) => !businessCapabilities?.capabilities.some((capability) => capability.id === id)).map((id) => <div className="member-resource-unavailable" key={id}><span>已有业务能力当前不可用</span><button type="button" onClick={() => toggleBusinessCapability(id)}>移除</button></div>)}</section>
         <section className="member-resource-group"><div className="member-resource-toolbar"><h4>技能</h4><span><label className="button member-skill-upload"><Upload size={12}/>上传<input type="file" accept=".md,.txt,text/markdown,text/plain" onChange={(event) => { void uploadSkill(event.target.files?.[0]); event.target.value = '' }}/></label><button type="button" className="button" onClick={() => openSkill()}><Plus size={12}/>手动添加</button></span></div>{config.skills.length ? <ul className="member-skill-list">{config.skills.map((skill, index) => <li key={`${skill.name}-${index}`}><button type="button" onClick={() => openSkill(index, skill)}><strong>{configurationLabel(skill.name, '未命名技能')}</strong><small>{configurationLabel(skill.description, '手动技能')}</small></button><button type="button" aria-label={`移除${configurationLabel(skill.name, '技能')}`} title="移除技能" onClick={() => setConfig('skills', config.skills.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={12}/></button></li>)}</ul> : <p>暂无技能</p>}{config.skillNames.length ? <div className="member-resource-readonly"><small>现有版本绑定</small>{config.skillNames.map((name, index) => <span key={`${name}-${index}`}>{configurationLabel(name, '已绑定技能')}</span>)}</div> : null}</section>
         <section className="member-resource-group"><h4>已配置工具服务</h4>{config.mcpServerIds.length ? <ul>{config.mcpServerIds.map((name, index) => <li key={`${name}-${index}`}>{configurationLabel(name, '已绑定工具服务')}</li>)}</ul> : <p>暂无工具服务</p>}</section>
         {(['permissionAllow', 'permissionAsk', 'permissionDeny'] as const).filter((key) => config[key].length).map((key) => <section className="member-resource-group" key={key}><h4>{permissionNames[key]}</h4><ul>{config[key].map((name, index) => <li key={`${name}-${index}`}>{configurationLabel(name, '已配置调用规则')}</li>)}</ul></section>)}

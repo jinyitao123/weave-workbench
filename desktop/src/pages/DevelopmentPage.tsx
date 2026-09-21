@@ -3,7 +3,7 @@ import { Archive, Bot, CheckCircle2, ChevronDown, Code2, ExternalLink, GitFork, 
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import { Modal, ProductField, ProductTextArea } from '@/components/ui'
 import { configurationLabel, MemberInspector } from '@/components/development/MemberInspector'
-import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation } from '@/types/api'
+import type { EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation } from '@/types/api'
 
 interface DevelopmentPageProps {
   environments: EnterpriseEnvironmentStatus[]
@@ -12,6 +12,7 @@ interface DevelopmentPageProps {
   error: string
   onRefresh(): void
   onOpenForge(url: string): void
+  onLoadBusinessCapabilities(): Promise<EnterpriseBusinessCapabilityCatalog>
   onCreateTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult>
   onUpdateTeam(input: EnterpriseUpdateTeamInput): Promise<void>
   onCreateTeamMember(input: EnterpriseCreateTeamMemberInput): Promise<EnterpriseTeamMemberMutationResult>
@@ -34,7 +35,7 @@ function workflowLayout(workflow: EnterpriseWorkflowObservation) {
   const nodeIds = new Set(nodes.map((node) => node.id))
   const forwardEdges = workflow.edges.filter((edge) => nodeIds.has(edge.from) && nodeIds.has(edge.to) && edge.route !== 'back')
   const indegree = new Map(nodes.map((node) => [node.id, 0]))
-  forwardEdges.forEach((edge) => indegree.set(edge.to, (indegree.get(edge.to) ?? 0) + 1))
+  forwardEdges.forEach((edge) => { indegree.set(edge.to, (indegree.get(edge.to) ?? 0) + 1) })
   const remaining = new Set(nodes.map((node) => node.id))
   const levels: typeof nodes[] = []
   while (remaining.size) {
@@ -43,17 +44,19 @@ function workflowLayout(workflow: EnterpriseWorkflowObservation) {
     levels.push(level)
     level.forEach((node) => {
       remaining.delete(node.id)
-      forwardEdges.filter((edge) => edge.from === node.id && remaining.has(edge.to)).forEach((edge) => indegree.set(edge.to, Math.max(0, (indegree.get(edge.to) ?? 0) - 1)))
+      forwardEdges.filter((edge) => edge.from === node.id && remaining.has(edge.to)).forEach((edge) => { indegree.set(edge.to, Math.max(0, (indegree.get(edge.to) ?? 0) - 1)) })
     })
   }
   const width = Math.max(430, levels.length * 150 - 20)
   const height = Math.max(240, Math.max(1, ...levels.map((level) => level.length)) * 82 + 54)
   const positions = new Map<string, { x: number; y: number }>()
-  levels.forEach((level, column) => level.forEach((node, row) => positions.set(node.id, { x: column * 150, y: height / 2 - ((level.length - 1) * 82) / 2 + row * 82 - 26 })))
+  levels.forEach((level, column) => {
+    level.forEach((node, row) => { positions.set(node.id, { x: column * 150, y: height / 2 - ((level.length - 1) * 82) / 2 + row * 82 - 26 }) })
+  })
   return { width, height, positions }
 }
 
-export function DevelopmentPage({ environments, overview, loading, error, onRefresh, onOpenForge, onCreateTeam, onUpdateTeam, onCreateTeamMember, onRemoveTeamMember, onCreateWorkflow, onCreateWorkflowDraft, onUpdateWorkflow, onValidateWorkflow, onPublishWorkflow, onArchiveWorkflow, onLoadMemberDraft, onSaveMemberDraft, onApplyMemberDraft }: DevelopmentPageProps) {
+export function DevelopmentPage({ environments, overview, loading, error, onRefresh, onOpenForge, onLoadBusinessCapabilities, onCreateTeam, onUpdateTeam, onCreateTeamMember, onRemoveTeamMember, onCreateWorkflow, onCreateWorkflowDraft, onUpdateWorkflow, onValidateWorkflow, onPublishWorkflow, onArchiveWorkflow, onLoadMemberDraft, onSaveMemberDraft, onApplyMemberDraft }: DevelopmentPageProps) {
   const forge = environments.find((environment) => environment.id === 'forge-development')
   const weave = environments.find((environment) => environment.id === 'weave-development')
   const [activeTab, setActiveTab] = useState<'teams' | 'apps'>('teams')
@@ -67,6 +70,8 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
   const [draftLoading, setDraftLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [draftError, setDraftError] = useState('')
+  const [businessCapabilities, setBusinessCapabilities] = useState<EnterpriseBusinessCapabilityCatalog>()
+  const [businessCapabilityError, setBusinessCapabilityError] = useState('')
   const [saved, setSaved] = useState(false)
   const [retry, setRetry] = useState(0)
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null)
@@ -109,6 +114,8 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
   // App passes inline callbacks. Parent refreshes must never reset an edited draft.
   const loadRef = useRef(onLoadMemberDraft)
   loadRef.current = onLoadMemberDraft
+  const loadBusinessCapabilitiesRef = useRef(onLoadBusinessCapabilities)
+  loadBusinessCapabilitiesRef.current = onLoadBusinessCapabilities
   const selectedTeam = overview?.teams.find((team) => team.id === selection.team) ?? overview?.teams[0]
   const members = selectedTeam ? [selectedTeam.lead, ...selectedTeam.workers].filter((item): item is NonNullable<typeof item> => Boolean(item)) : []
   const selectedMember = members.find((member) => member.id === selection.member) ?? members[0]
@@ -133,6 +140,16 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
     }).finally(() => { if (alive) setDraftLoading(false) })
     return () => { alive = false }
   }, [teamId, memberId, retry])
+
+  useEffect(() => {
+    let alive = true
+    void loadBusinessCapabilitiesRef.current().then((value) => {
+      if (alive) { setBusinessCapabilities(value); setBusinessCapabilityError('') }
+    }).catch((cause) => {
+      if (alive) setBusinessCapabilityError(cause instanceof Error ? configurationLabel(cause.message, '业务能力读取失败') : '业务能力读取失败')
+    })
+    return () => { alive = false }
+  }, [retry])
 
   useEffect(() => {
     if (!dirty) return
@@ -462,7 +479,7 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
           {draftError ? <div className="member-inspector__error" role="alert">{draftError}{!currentDraft ? <button type="button" className="button" onClick={() => setRetry((value) => value + 1)}>重试</button> : null}</div> : null}
           {currentDraft ? <>
             <fieldset className="member-inspector__fields" disabled={saving}>
-              <MemberInspector key={`${teamId}/${memberId}`} draft={currentDraft} runtimes={overview?.runtimes ?? []} onChange={(value) => { setDraft(value); setSaved(false); setDraftError('') }}/>
+              <MemberInspector key={`${teamId}/${memberId}`} draft={currentDraft} runtimes={overview?.runtimes ?? []} businessCapabilities={businessCapabilities} businessCapabilityError={businessCapabilityError} onChange={(value) => { setDraft(value); setSaved(false); setDraftError('') }}/>
             </fieldset>
             <footer className="member-inspector__footer"><small>{currentDraft.revision ? '应用后，新工作使用这份配置' : '当前配置已用于新工作'}</small><span className="member-inspector__footer-actions"><button type="button" className="button" disabled={saving || !dirty || !currentDraft.configuration.displayName.trim()} onClick={() => void save()}><Save size={13}/>保存草稿</button><button type="button" className="button button--primary" disabled={saving || dirty || currentDraft.revision < 1} onClick={() => void applyMemberDraft()}><CheckCircle2 size={13}/>{saving ? '处理中' : '应用配置'}</button></span></footer>
           </> : !draftLoading && !draftError ? <div className="team-config-loading">选择团队成员</div> : null}

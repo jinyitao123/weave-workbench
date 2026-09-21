@@ -41,7 +41,7 @@ describe('EnterpriseService', () => {
     await expect(service.getSession()).resolves.toMatchObject({ status: 'signed-out' })
   })
 
-  it('restores only an encrypted Weave session and removes it on logout', async () => {
+  it('restores encrypted Forge and Weave sessions and removes them on logout', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'gooeypi-enterprise-'))
     const sessionPath = join(directory, 'session.json')
     const codec = {
@@ -57,13 +57,35 @@ describe('EnterpriseService', () => {
       await expect(first.signIn('member@example.test', 'secret')).resolves.toMatchObject({ status: 'signed-in', storage: 'encrypted' })
       const persisted = await readFile(sessionPath, 'utf8')
       expect(persisted).not.toContain('weave-secret')
-      expect(persisted).not.toContain('secret\"')
+      expect(persisted).not.toContain('forge-secret')
+      expect(persisted).not.toContain('secret"')
       const restarted = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetcher, sessionPath, sessionCodec: codec })
       await expect(restarted.getSession()).resolves.toMatchObject({ status: 'signed-in', role: 'member', storage: 'encrypted' })
       expect((await restarted.authorizationHeaders()).get('Authorization')).toBe('Bearer weave-secret')
       await restarted.signOut()
       await expect(readFile(sessionPath, 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
     } finally { await rm(directory, { recursive: true, force: true }) }
+  })
+
+  it('projects Forge actions into developer-facing business capabilities', async () => {
+    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = String(input)
+      if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1', role: 'developer' }, organization: { id: 'default' } })
+      if (url.endsWith('/api/v1/mcp')) {
+        expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer forge-token')
+        expect(JSON.parse(String(init?.body))).toMatchObject({ method: 'tools/call', params: { name: 'list_actions' } })
+        return Response.json({ jsonrpc: '2.0', id: 'business-capability-catalog', result: { content: [{ type: 'text', text: JSON.stringify({ actions: [{ name: 'ContractSubmit', objectName: 'sales_contract', label: '提交销售合同', description: '校验后提交合同' }] }) }] } })
+      }
+      return Response.json({}, { status: 404 })
+    }) as typeof fetch
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('developer@example.test', 'secret')
+
+    await expect(service.getBusinessCapabilityCatalog()).resolves.toMatchObject({
+      provider: { name: 'Forge 业务环境', status: 'available' },
+      capabilities: [{ id: 'forge:action:sales_contract.ContractSubmit', name: '提交销售合同', effect: 'write', requiresEmployeeIntent: true }],
+    })
   })
 
   it('reports Forge and Weave health without forwarding credentials', async () => {

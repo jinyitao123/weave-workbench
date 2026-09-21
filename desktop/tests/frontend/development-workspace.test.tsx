@@ -15,7 +15,7 @@ const overview: EnterpriseDevelopmentOverview = {
 }
 function fixture(agentId = 'reviewer'): EnterpriseTeamMemberConfigDraft {
   return { version: '1', teamId: 'team', agentId, agentName: agentId, baseAgentVersion: 1, revision: 1, updatedAt: '',
-    configuration: { displayName: agentId === 'reviewer' ? '审核员' : '起草员', role: 'worker', engine: 'loom', runtimeId: '', model: '', systemPrompt: '检查合同', skillNames: [], skills: [], mcpServerIds: ['3a57aefc-a5c4-44d3-8e0d-e46d06cd2d41'], permissionAllow: [], permissionAsk: [], permissionDeny: [], memoryEnabled: false, memoryScope: 'tenant', maxTokens: 0, maxOutputTokens: 0, stepBudget: 0, maxCostUsd: 0, outputSchema: '' },
+    configuration: { displayName: agentId === 'reviewer' ? '审核员' : '起草员', role: 'worker', engine: 'loom', runtimeId: '', model: '', systemPrompt: '检查合同', skillNames: [], skills: [], mcpServerIds: ['3a57aefc-a5c4-44d3-8e0d-e46d06cd2d41'], businessCapabilityIds: [], permissionAllow: [], permissionAsk: [], permissionDeny: [], memoryEnabled: false, memoryScope: 'tenant', maxTokens: 0, maxOutputTokens: 0, stepBudget: 0, maxCostUsd: 0, outputSchema: '' },
     relationship: { duty: '检查条款', whenToUse: '', contextInstruction: '', allowedKinds: [], defaultKind: '', resultRequirement: '', enabled: true },
   }
 }
@@ -33,7 +33,7 @@ const validateWorkflow = vi.fn(async () => ({ valid: true, issues: [] }))
 const publishWorkflow = vi.fn(async () => undefined)
 const archiveWorkflow = vi.fn(async () => undefined)
 async function render(value: EnterpriseDevelopmentOverview = overview, onRefresh = () => undefined) {
-  await act(async () => root.render(<DevelopmentPage environments={[]} overview={value} loading={false} error="" onRefresh={onRefresh} onOpenForge={() => undefined} onCreateTeam={createTeam} onUpdateTeam={updateTeam} onCreateTeamMember={createTeamMember} onRemoveTeamMember={removeTeamMember} onCreateWorkflow={createWorkflow} onCreateWorkflowDraft={createWorkflowDraft} onUpdateWorkflow={updateWorkflow} onValidateWorkflow={validateWorkflow} onPublishWorkflow={publishWorkflow} onArchiveWorkflow={archiveWorkflow} onLoadMemberDraft={(team, member) => load(team, member)} onSaveMemberDraft={save} onApplyMemberDraft={applyDraft}/>))
+  await act(async () => root.render(<DevelopmentPage environments={[]} overview={value} loading={false} error="" onRefresh={onRefresh} onOpenForge={() => undefined} onLoadBusinessCapabilities={async () => ({ version: '1', provider: { id: 'forge', name: 'Forge 业务环境', status: 'available' }, capabilities: [], refreshedAt: '' })} onCreateTeam={createTeam} onUpdateTeam={updateTeam} onCreateTeamMember={createTeamMember} onRemoveTeamMember={removeTeamMember} onCreateWorkflow={createWorkflow} onCreateWorkflowDraft={createWorkflowDraft} onUpdateWorkflow={updateWorkflow} onValidateWorkflow={validateWorkflow} onPublishWorkflow={publishWorkflow} onArchiveWorkflow={archiveWorkflow} onLoadMemberDraft={(team, member) => load(team, member)} onSaveMemberDraft={save} onApplyMemberDraft={applyDraft}/>))
 }
 async function click(label: string) {
   const button = [...document.querySelectorAll<HTMLButtonElement>('button')].find((item) => item.textContent?.trim() === label || item.getAttribute('aria-label') === label)
