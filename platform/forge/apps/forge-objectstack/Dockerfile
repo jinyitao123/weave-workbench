@@ -9,6 +9,8 @@
 # Or run the full app + Postgres stack: see docker-compose.yml.
 # Docs: https://objectstack.ai/docs/deployment/self-hosting
 
+ARG OBJECTSTACK_RUNTIME_IMAGE=ghcr.io/objectstack-ai/objectstack:17.4.0
+
 # ── Build stage: compile TypeScript metadata to the artifact ─────────
 FROM node:24.19.0-slim AS build
 WORKDIR /app
@@ -27,7 +29,10 @@ RUN pnpm exec objectstack build  # → dist/objectstack.json
 # not be resolved for you. `latest` floats to whatever release is newest,
 # which is unrelated to the @objectstack/cli your app resolves — pin it to
 # that version, the CLI that builds your artifact, before you deploy.
-FROM ghcr.io/objectstack-ai/objectstack:17.4.0
+FROM ${OBJECTSTACK_RUNTIME_IMAGE}
+ARG FORGE_SOURCE_REVISION=unknown
+LABEL org.opencontainers.image.title="inoForge" \
+      org.opencontainers.image.revision="${FORGE_SOURCE_REVISION}"
 COPY --from=build --chown=node:node /app/dist/objectstack.json /srv/app/objectstack.json
 
 # OS_DATABASE_URL, OS_AUTH_SECRET, and OS_SECRET_KEY are injected at runtime —

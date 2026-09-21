@@ -46,3 +46,15 @@ pnpm build
 ## 发布边界
 
 仓库保留 [Dockerfile](Dockerfile) 和 [docker-compose.yml](docker-compose.yml)；这些文件存在不代表当前版本已完成部署、恢复或客户交付验证。实际发布须遵循[正式版本交付要求](../../docs/first-release.md)，按本次版本记录配置和证据，不沿用脚手架的默认服务能力承诺。
+
+单机或客户内网部署使用 `scripts/deploy.sh`。它按源码提交生成固定镜像版本，发布前备份已有 PostgreSQL，健康检查失败时恢复上一镜像，并把不含密钥的发布记录写入 `.deploy/releases/`。环境差异只放在未提交的 `.env` 中，业务数据继续保存在独立 Docker volume。
+
+```sh
+./scripts/deploy.sh
+```
+
+服务器需要通过 `sudo` 使用 Docker 时，先显式传入待发布提交，避免以 root 身份读取 Git 工作树：
+
+```sh
+FORGE_SOURCE_REVISION="$(git rev-parse HEAD)" sudo --preserve-env=FORGE_SOURCE_REVISION ./scripts/deploy.sh
+```
