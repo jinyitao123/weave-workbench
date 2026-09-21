@@ -31,9 +31,10 @@
     "user": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "name", "email"],
+      "required": ["id", "weaveUserId", "name", "email"],
       "properties": {
         "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "weaveUserId": { "type": "string", "minLength": 1, "maxLength": 128 },
         "name": { "type": "string", "minLength": 1, "maxLength": 160 },
         "email": { "type": "string", "format": "email", "maxLength": 320 }
       }

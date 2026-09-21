@@ -56,7 +56,7 @@ export interface EnterpriseSession {
   environment: { origin: string; secure: boolean }
   storage: 'encrypted' | 'session-only'
   identitySource?: { kind: 'forge-account'; issuer: string }
-  user?: { id: string; name: string; email: string }
+  user?: { id: string; weaveUserId?: string; name: string; email: string }
   organization?: { id: string; name: string }
   role?: EnterpriseRole
   message?: string
@@ -113,6 +113,42 @@ export interface EnterpriseDevelopmentOverview {
   version: '1'
   loadedAt: string
   teams: EnterpriseTeamObservation[]
+}
+
+export interface EnterpriseWorkChoice {
+  teamId: string
+  teamName: string
+  workflowId: string
+  workflowName: string
+  version: number
+}
+
+export interface EnterpriseHumanTask {
+  interactionId: string
+  runId: string
+  teamId: string
+  workflowId: string
+  workflowVersion: number
+  title: string
+  instructions: string
+  audience?: string
+  updatedAt: string
+}
+
+export interface EnterpriseWorkOverview {
+  loadedAt: string
+  choices: EnterpriseWorkChoice[]
+  tasks: EnterpriseHumanTask[]
+  runs: EnterpriseRunObservation[]
+}
+
+export interface EnterpriseWorkReceipt {
+  workId: string
+  runId: string
+  taskId: string
+  workflowId: string
+  workflowVersion: number
+  repeated: boolean
 }
 
 export type ApplicationMenuName = 'file' | 'edit' | 'view' | 'window' | 'help'
@@ -847,6 +883,9 @@ export interface PrimeWorkApi {
     signIn(email: string, password: string): Promise<EnterpriseSession>
     signOut(): Promise<EnterpriseSession>
     getDevelopmentOverview(): Promise<EnterpriseDevelopmentOverview>
+    getWorkOverview(): Promise<EnterpriseWorkOverview>
+    submitWork(choice: EnterpriseWorkChoice, goal: string): Promise<EnterpriseWorkReceipt>
+    completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }>
   }
   projects: {
     list(harness?: HarnessId): Promise<ProjectRecord[]>

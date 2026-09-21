@@ -35,7 +35,7 @@ import { useStableCallback } from '@/hooks/useStableCallback'
 import { useToast } from '@/hooks/useToast'
 import { useWorkspaceActions } from '@/hooks/useWorkspaceActions'
 import { useWorkspaceRuntime } from '@/hooks/useWorkspaceRuntime'
-import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseDevelopmentOverview, type EnterpriseEnvironmentStatus, type EnterpriseSession, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceView } from '@/types/api'
+import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseDevelopmentOverview, type EnterpriseEnvironmentStatus, type EnterpriseHumanTask, type EnterpriseSession, type EnterpriseWorkChoice, type EnterpriseWorkOverview, type EnterpriseWorkReceipt, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceView } from '@/types/api'
 
 const Transcript = lazy(() => import('@/components/Transcript').then((module) => ({ default: module.Transcript })))
 const Inspector = lazy(() => import('@/components/Inspector').then((module) => ({ default: module.Inspector })))
@@ -52,6 +52,7 @@ const PluginsPage = lazy(() => import('@/pages/PluginsPage').then((module) => ({
 const SettingsPage = lazy(() => import('@/pages/SettingsPage').then((module) => ({ default: module.SettingsPage })))
 const DevelopmentPage = lazy(() => import('@/pages/DevelopmentPage').then((module) => ({ default: module.DevelopmentPage })))
 const AccountPage = lazy(() => import('@/pages/AccountPage').then((module) => ({ default: module.AccountPage })))
+const EnterpriseWorkPage = lazy(() => import('@/pages/EnterpriseWorkPage').then((module) => ({ default: module.EnterpriseWorkPage })))
 
 const hasBridge = () => typeof window !== 'undefined' && typeof window.prime !== 'undefined'
 // Stable fallback identities keep memoized children from re-rendering while the catalog loads.
@@ -119,9 +120,13 @@ export default function App() {
   const [developmentOverview, setDevelopmentOverview] = useState<EnterpriseDevelopmentOverview>()
   const [developmentLoading, setDevelopmentLoading] = useState(false)
   const [developmentError, setDevelopmentError] = useState('')
+  const [workOverview, setWorkOverview] = useState<EnterpriseWorkOverview>()
+  const [workReceipt, setWorkReceipt] = useState<EnterpriseWorkReceipt>()
+  const [workLoading, setWorkLoading] = useState(false)
+  const [workError, setWorkError] = useState('')
   const [enterpriseSession, setEnterpriseSession] = useState<EnterpriseSession | undefined>(() => enterpriseBridge ? undefined : ({
     version: '1', status: 'signed-in', environment: { origin: 'http://localhost', secure: false }, storage: 'session-only',
-    identitySource: { kind: 'forge-account', issuer: 'http://localhost' }, user: { id: 'preview', name: 'Preview', email: 'preview@example.test' },
+    identitySource: { kind: 'forge-account', issuer: 'http://localhost' }, user: { id: 'preview', weaveUserId: 'preview-weave', name: 'Preview', email: 'preview@example.test' },
     organization: { id: 'preview', name: 'Preview' }, role: 'admin',
   }))
   const { toast, setToast } = useToast()
@@ -154,8 +159,28 @@ export default function App() {
   const signOut = useCallback(async () => {
     if (!enterpriseBridge) return
     setDevelopmentOverview(undefined)
+    setWorkOverview(undefined)
     setEnterpriseSession(await enterpriseBridge.signOut())
   }, [enterpriseBridge])
+  const refreshWorkOverview = useCallback(() => {
+    if (!enterpriseBridge || workLoading) return
+    setWorkLoading(true); setWorkError('')
+    void enterpriseBridge.getWorkOverview().then(setWorkOverview).catch((error) => { setWorkError(errorMessage(error)); reportError(error) }).finally(() => setWorkLoading(false))
+  }, [enterpriseBridge, reportError, workLoading])
+  const submitEnterpriseWork = useCallback(async (choice: EnterpriseWorkChoice, goal: string) => {
+    if (!enterpriseBridge) return
+    setWorkLoading(true); setWorkError('')
+    try { setWorkReceipt(await enterpriseBridge.submitWork(choice, goal)); setTimeout(refreshWorkOverview, 700) }
+    catch (error) { setWorkError(errorMessage(error)); reportError(error); throw error }
+    finally { setWorkLoading(false) }
+  }, [enterpriseBridge, refreshWorkOverview, reportError])
+  const completeEnterpriseTask = useCallback(async (task: EnterpriseHumanTask, decision: 'approved' | 'rejected', comment: string) => {
+    if (!enterpriseBridge) return
+    setWorkLoading(true); setWorkError('')
+    try { await enterpriseBridge.completeHumanTask(task, { decision, comment }); setTimeout(refreshWorkOverview, 700) }
+    catch (error) { setWorkError(errorMessage(error)); reportError(error); throw error }
+    finally { setWorkLoading(false) }
+  }, [enterpriseBridge, refreshWorkOverview, reportError])
   // The shell handlers answer with false instead of rejecting, so the refusal
   // reaches the user as a toast rather than disappearing into a dropped result.
   const openExternal = useCallback((url: string) => {
@@ -769,8 +794,12 @@ export default function App() {
   useEffect(() => {
     if (view === 'development' && canDevelop && !developmentOverview && !developmentLoading) refreshDevelopmentOverview()
   }, [canDevelop, developmentLoading, developmentOverview, refreshDevelopmentOverview, view])
+  useEffect(() => {
+    if (view === 'activity' && enterpriseBridge && !workOverview && !workLoading) refreshWorkOverview()
+  }, [enterpriseBridge, refreshWorkOverview, view, workLoading, workOverview])
 
   const page = view === 'projects' ? <ProjectsPage projects={projects} sortMode={settingsState.settings.projectSortMode} onAdd={() => void addProject()} onOpen={selectProject} onRemove={(project) => void removeProject(project)} onTogglePin={(project) => void togglePinProject(project)} />
+    : view === 'activity' && enterpriseBridge ? <EnterpriseWorkPage overview={workOverview} loading={workLoading} error={workError} receipt={workReceipt} onRefresh={refreshWorkOverview} onSubmit={submitEnterpriseWork} onComplete={completeEnterpriseTask} />
     : view === 'activity' ? <ActivityPage sessions={sessions} projects={projects} clearedActivity={clearedActivity} onOpen={selectSession} onClear={clearActivity} />
     : view === 'development' ? <DevelopmentPage session={enterpriseSession} environments={enterpriseStatuses} overview={developmentOverview} loading={enterpriseStatusLoading || developmentLoading} error={developmentError} onRefresh={() => { refreshEnterpriseStatus(); refreshDevelopmentOverview() }} onSignOut={() => void signOut()} onOpenForge={openForge} onNavigate={navigate} onAddProject={() => void addProject()} />
     : view === 'scheduled' ? <ScheduledPage harness={activeHarness} schedules={schedules} nativeHeartbeats={activeHarness === 'prime' ? heartbeats : []} projects={projects} sessions={sessions} models={provider.catalog?.models ?? EMPTY_MODELS} lastSelectedModel={provider.model} error={scheduleError} initialProjectId={activeProject?.id} initialSessionId={activeSession?.id} selectedScheduleId={scheduleFocusId} onCreate={createSchedule} onUpdate={updateSchedule} onPause={(id: string) => mutateSchedule(() => bridge!.schedules.pause(id))} onResume={(id: string) => mutateSchedule(() => bridge!.schedules.resume(id))} onDelete={(id: string) => mutateSchedule(() => bridge!.schedules.delete(id))} onRunNow={(id: string) => mutateSchedule(() => bridge!.schedules.runNow(id))} onPreview={async (timing: ScheduleTiming) => bridge ? bridge.schedules.preview(timing, 3) : { timing, occurrences: [] }} onOpenSession={openScheduledSession} onManageHeartbeat={manageHeartbeat} />
