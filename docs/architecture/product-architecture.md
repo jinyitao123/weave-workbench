@@ -45,6 +45,6 @@ flowchart LR
 
 总仓负责桌面、跨组件契约、版本组合、发布协调与真实场景验收。Weave 和 inoForge 保留独立源码主仓，总仓通过 subtree 集成确定提交，详见[开发和发布方式](delivery-model.md)。
 
-第一条闭环采用[销售合同跨员工交接](../../scenarios/sales-contract-handoff/README.md)。先证明材料递交、团队执行、业务写回、待办交接和独立读回，再扩展其他业务。
+业务主线以[OTC 业务主流程](otc-business-flow.md)为准。第一条闭环采用[销售合同跨员工交接](../../scenarios/sales-contract-handoff/README.md)，先证明材料递交、三名员工并行复核、退回修改、正式结果写回和独立读回，再沿同一笔业务扩展订单、交付、验收和回款。
 
 主架构不预先铺开接口字段、数据库表、全部页面和执行算法。实施哪个跨组件功能，就在 [contracts](../../contracts/README.md) 补齐其身份、输入输出、错误、幂等、取消与审计约定。改变本页的职责、权威状态或部署边界时，才需要修订主架构并说明影响。
