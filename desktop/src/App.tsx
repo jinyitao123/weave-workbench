@@ -52,6 +52,7 @@ const PluginsPage = lazy(() => import('@/pages/PluginsPage').then((module) => ({
 const SettingsPage = lazy(() => import('@/pages/SettingsPage').then((module) => ({ default: module.SettingsPage })))
 const DevelopmentPage = lazy(() => import('@/pages/DevelopmentPage').then((module) => ({ default: module.DevelopmentPage })))
 const EnterpriseWorkPage = lazy(() => import('@/pages/EnterpriseWorkPage').then((module) => ({ default: module.EnterpriseWorkPage })))
+const AccountPage = lazy(() => import('@/pages/AccountPage').then((module) => ({ default: module.AccountPage })))
 
 const hasBridge = () => typeof window !== 'undefined' && typeof window.prime !== 'undefined'
 // Stable fallback identities keep memoized children from re-rendering while the catalog loads.
@@ -808,6 +809,8 @@ export default function App() {
         if (!await bridge.settings.resetBrowserData()) { const error = new Error('GooeyPi could not clear all browser data. Close active downloads and try again.'); reportError(error); throw error }
         setBrowserGeneration((value) => value + 1)
       }} onOpenDocs={() => openExternal(HARNESS_PROVIDER_DOCS[activeHarness])} /> : null
+
+  if (enterpriseBridge && enterpriseSession?.status !== 'signed-in') return <I18nProvider preference={settingsState.settings.locale}><Suspense fallback={<LoadingPanel label="account" />}><AccountPage session={enterpriseSession} onSignIn={signIn} /></Suspense></I18nProvider>
 
   return <I18nProvider preference={settingsState.settings.locale}><div className="app-shell" aria-busy={!initialized} data-platform={platform} data-ready={initialized ? 'true' : 'false'}>
     {sidebarVisible && initialized ? <Sidebar projects={projects} sessions={sessions} clearedAttention={clearedAttention} activeProjectId={activeProject?.id} activeSessionId={workspace.activeSessionId} activeView={view} activeHarness={activeHarness} harnesses={meta?.harnesses ?? null} canDevelop={canDevelop} updateState={appUpdates.state} onUpdateAction={appUpdates.act} onSelectHarness={selectHarness} projectSortMode={settingsState.settings.projectSortMode} {...sidebarActions} overlay={layout.compactLayout} platform={platform} /> : null}

@@ -1,5 +1,5 @@
-import { ChevronDown, X } from 'lucide-react'
-import { useEffect, useId, useRef, type ButtonHTMLAttributes, type ReactNode, type RefObject, type SelectHTMLAttributes } from 'react'
+import { Check, ChevronDown, X } from 'lucide-react'
+import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode, type RefObject, type SelectHTMLAttributes } from 'react'
 import { createPortal } from 'react-dom'
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -51,6 +51,59 @@ export function SelectControl({ icon, compact, className = '', label, children, 
       <ChevronDown className="select-control__chevron" size={12} aria-hidden="true" />
     </label>
   )
+}
+
+export function ProductSelect<T extends string>({ value, options, label, disabled, onChange, className = '' }: {
+  value: T
+  options: Array<{ value: T; label: string; detail?: string }>
+  label: string
+  disabled?: boolean
+  onChange(value: T): void
+  className?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([])
+  const listId = useId()
+  const selectedIndex = Math.max(0, options.findIndex((option) => option.value === value))
+  const selected = options[selectedIndex]
+  const close = (restoreFocus = false) => {
+    setOpen(false)
+    if (restoreFocus) requestAnimationFrame(() => triggerRef.current?.focus())
+  }
+  const show = () => {
+    if (disabled || !options.length) return
+    setOpen(true)
+    requestAnimationFrame(() => optionRefs.current[selectedIndex]?.focus())
+  }
+  useEffect(() => {
+    if (!open) return
+    const dismiss = (event: PointerEvent) => {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) close()
+    }
+    document.addEventListener('pointerdown', dismiss)
+    return () => document.removeEventListener('pointerdown', dismiss)
+  }, [open])
+  return <div className={`product-select ${className}`} ref={rootRef}>
+    <button ref={triggerRef} type="button" className="product-select__trigger" aria-label={label} aria-haspopup="listbox" aria-expanded={open} aria-controls={open ? listId : undefined} disabled={disabled || !options.length} onClick={() => open ? close() : show()} onKeyDown={(event) => {
+      if (!open && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) { event.preventDefault(); show() }
+    }}>
+      <span><strong>{selected?.label ?? '暂无可选项'}</strong>{selected?.detail ? <small>{selected.detail}</small> : null}</span><ChevronDown size={14} aria-hidden="true"/>
+    </button>
+    {open ? <div id={listId} className="product-select__menu" role="listbox" aria-label={label} onKeyDown={(event) => {
+      const current = optionRefs.current.findIndex((item) => item === document.activeElement)
+      if (event.key === 'Escape') { event.preventDefault(); close(true); return }
+      if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+      event.preventDefault()
+      const next = (current + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length
+      optionRefs.current[next]?.focus()
+    }} onBlur={(event) => {
+      if (event.relatedTarget instanceof Node && !rootRef.current?.contains(event.relatedTarget)) close()
+    }}>
+      {options.map((option, index) => <button ref={(element) => { optionRefs.current[index] = element }} type="button" role="option" aria-selected={option.value === value} className={option.value === value ? 'is-selected' : ''} key={option.value} onClick={() => { onChange(option.value); close(true) }}><span><strong>{option.label}</strong>{option.detail ? <small>{option.detail}</small> : null}</span>{option.value === value ? <Check size={14} aria-hidden="true"/> : null}</button>)}
+    </div> : null}
+  </div>
 }
 
 export function Segmented<T extends string>({ value, options, onChange, label }: {

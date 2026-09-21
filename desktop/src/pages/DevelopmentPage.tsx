@@ -1,4 +1,4 @@
-import { Activity, Boxes, ChevronRight, CircleDot, Code2, RefreshCw, Users, UsersRound, Workflow } from 'lucide-react'
+import { Activity, ChevronRight, CircleDot, Code2, ExternalLink, RefreshCw, Users, UsersRound, Workflow } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import type { EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus } from '@/types/api'
 
@@ -24,30 +24,31 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
     if (!overview.teams.some((team) => team.id === selectedTeamID)) setSelectedTeamID(overview.teams[0].id)
   }, [overview, selectedTeamID])
   const selectedTeam = useMemo(() => overview?.teams.find((team) => team.id === selectedTeamID), [overview, selectedTeamID])
-  const environmentCard = (id: 'forge-development' | 'weave-development') => {
+  const environmentSummary = (id: 'forge-development' | 'weave-development') => {
     const environment = id === 'forge-development' ? forge : weave
     const isForge = id === 'forge-development'
     const fallbackName = isForge ? 'Forge 业务环境' : 'Weave 协作服务'
-    const detail = isForge ? (forge?.version ? `ObjectStack ${forge.version}` : '业务应用与流程') : '团队、任务与执行'
     const state = loading ? '正在检查' : environment?.available ? '可用' : '暂不可用'
-    return <div className="development-environment">
-      <span className={`environment-mark ${environment?.available ? 'is-online' : ''}`}><Boxes size={18}/></span>
-      <span className="environment-copy"><strong>{environment?.name ?? fallbackName}</strong><small>{detail}</small></span>
-      <span className={`environment-state ${environment?.available ? 'is-online' : ''}`}><i/>{state}</span>
-      {isForge && environment?.available && !environment.secure ? <span className="environment-note">当前通过 HTTP 连接</span> : null}
-      {isForge ? <button type="button" className="button" disabled={!environment?.available} onClick={() => environment && onOpenForge(environment.url)}>打开 Forge</button> : <span className="environment-note">Workbench 通过此服务读取团队与运行</span>}
+    const version = environment?.version ? (isForge ? `ObjectStack ${environment.version}` : environment.version) : ''
+    const detail = [state, version, isForge && environment?.available && !environment.secure ? 'HTTP' : ''].filter(Boolean).join(' · ')
+    return <div className="development-environment-summary">
+      <i className={environment?.available ? 'is-online' : ''}/>
+      <span><strong>{environment?.name ?? fallbackName}</strong><small>{detail}</small></span>
+      {isForge ? <button type="button" className="development-environment-open" aria-label="打开 Forge" title="打开 Forge" disabled={!environment?.available} onClick={() => environment && onOpenForge(environment.url)}><ExternalLink size={13}/></button> : null}
     </div>
   }
   return <div className="page scroll-area"><div className="page-container development-page">
-    <header className="page-header"><div><h1>开发中心</h1><p>查看业务环境、协作服务、团队配置和真实运行。</p></div><button type="button" className="icon-button" aria-label="重新检查环境" title="重新检查环境" onClick={onRefresh}><RefreshCw size={14} className={loading ? 'spin' : ''}/></button></header>
-    <nav className="development-tabs" aria-label="开发中心分类">
-      <button type="button" className={activeTab === 'teams' ? 'is-active' : ''} onClick={() => setActiveTab('teams')}><UsersRound size={15}/><span><strong>智能体团队</strong><small>Weave 团队与运行</small></span></button>
-      <button type="button" className={activeTab === 'apps' ? 'is-active' : ''} onClick={() => setActiveTab('apps')}><Code2 size={15}/><span><strong>应用开发</strong><small>Forge 业务应用</small></span></button>
-    </nav>
+    <header className="page-header"><div><h1>开发中心</h1></div><button type="button" className="icon-button" aria-label="重新检查环境" title="重新检查环境" onClick={onRefresh}><RefreshCw size={14} className={loading ? 'spin' : ''}/></button></header>
+    <div className="development-toolbar">
+      <nav className="development-tabs" aria-label="开发中心分类">
+        <button type="button" className={activeTab === 'teams' ? 'is-active' : ''} onClick={() => setActiveTab('teams')}><UsersRound size={14}/><strong>智能体团队</strong></button>
+        <button type="button" className={activeTab === 'apps' ? 'is-active' : ''} onClick={() => setActiveTab('apps')}><Code2 size={14}/><strong>应用开发</strong></button>
+      </nav>
+      {environmentSummary(activeTab === 'teams' ? 'weave-development' : 'forge-development')}
+    </div>
     {activeTab === 'teams' ? <>
-    <section className="development-environments" aria-label="Weave 协作服务环境">{environmentCard('weave-development')}</section>
     <section className="development-observation" aria-label="团队与运行开发调试区">
-      <div className="development-section-heading"><div><h2>团队与运行</h2><p>这里直接读取 Weave 当前组织中的真实定义与执行记录。</p></div>{overview ? <small>更新于 {new Date(overview.loadedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</small> : null}</div>
+      <div className="development-section-heading"><div><h2>团队与运行</h2></div>{overview ? <small>更新于 {new Date(overview.loadedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</small> : null}</div>
       {error ? <div className="development-inline-error" role="alert">{error}</div> : null}
       {!overview && loading ? <div className="development-observation-empty">正在读取团队配置…</div> : null}
       {overview && overview.teams.length === 0 ? <div className="development-observation-empty"><Users size={20}/><strong>当前组织还没有团队</strong><span>团队建立后会在这里显示角色、版本和运行证据。</span></div> : null}
@@ -63,9 +64,8 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
       </div> : null}
     </section>
     </> : <>
-      <section className="development-environments" aria-label="Forge 业务环境">{environmentCard('forge-development')}</section>
       <section className="development-app-workspace" aria-label="应用开发调试区">
-        <div><Code2 size={20}/><span><strong>应用开发调试区</strong><small>在 Forge 中查看业务对象、页面、流程和动作，并使用当前开发环境联调。</small></span></div>
+        <div><Code2 size={20}/><span><strong>应用开发调试区</strong></span></div>
         <button type="button" className="button button--primary" disabled={!forge?.available} onClick={() => forge && onOpenForge(forge.url)}>打开 Forge 开发环境</button>
       </section>
     </>}
