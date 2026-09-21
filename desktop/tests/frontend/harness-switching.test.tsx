@@ -438,7 +438,7 @@ describe('sidebar brand switcher', () => {
     expect(trigger).not.toBeNull()
     expect(trigger!.getAttribute('aria-haspopup')).toBe('menu')
     expect(trigger!.getAttribute('aria-expanded')).toBe('false')
-    expect(trigger!.textContent).toContain('Prime')
+    expect(trigger!.getAttribute('aria-label')).toContain('Prime Work')
 
     await click(trigger!)
     const menu = container.querySelector('[role="menu"]')
@@ -467,8 +467,8 @@ describe('sidebar brand switcher', () => {
     const onSelectHarness = vi.fn()
     await renderSidebar(onSelectHarness, 'omp', allDetectedMeta)
 
-    expect([...container.querySelectorAll('nav.sidebar__primary button span')].map((item) => item.textContent)).toContain('Scheduled')
-    expect(container.textContent).toContain('Capabilities')
+    expect([...container.querySelectorAll('nav.sidebar__primary button span')].map((item) => item.textContent)).toEqual(expect.arrayContaining(['开始工作', '搜索', 'My tasks', 'Development']))
+    expect(container.textContent).not.toContain('Capabilities')
 
     await click(container.querySelector('.brand-switcher__trigger')!)
     expect(container.querySelector('[role="menu"]')).not.toBeNull()

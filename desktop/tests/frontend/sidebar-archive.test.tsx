@@ -68,20 +68,20 @@ describe('sidebar project context menu', () => {
     })
 
     expect([...container.querySelectorAll('.project-row__main')].map((button) => button.textContent)).toEqual(['Alpha', 'Zeta'])
-    await press(container.querySelector('[aria-label="Sort projects"]')!)
+    await press(container.querySelector('[aria-label="Sort workspace folders"]')!)
     const alphabetical = [...container.querySelectorAll<HTMLElement>('[role="menuitemradio"]')].find((item) => item.textContent?.includes('Alphabetical'))
     expect(alphabetical).toBeDefined()
     await press(alphabetical!)
     expect(onSetProjectSortMode).toHaveBeenCalledWith('alphabetical')
 
     await rightClick(container.querySelector('.project-row')!)
-    const pin = [...container.querySelectorAll('[aria-label^="Project options"] button')].find((button) => button.textContent?.includes('Pin project'))
+    const pin = [...container.querySelectorAll('[aria-label^="Project options"] button')].find((button) => button.textContent?.includes('Pin workspace folder'))
     expect(pin).toBeDefined()
     await press(pin!)
     expect(onTogglePinProject).toHaveBeenCalledWith(projects[1])
   })
 
-  it('dismisses the sort menu when adding a project', async () => {
+  it('dismisses the sort menu when starting new work', async () => {
     await act(async () => {
       root.render(
         <Sidebar
@@ -92,10 +92,10 @@ describe('sidebar project context menu', () => {
       )
     })
 
-    await press(container.querySelector('[aria-label="Sort projects"]')!)
+    await press(container.querySelector('[aria-label="Sort workspace folders"]')!)
     expect(container.querySelector('[role="menuitemradio"]')).not.toBeNull()
     await act(async () => {
-      container.querySelector('[aria-label="Add project"]')!.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }))
+      container.querySelector('.sidebar__primary button')!.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }))
     })
     expect(container.querySelector('[role="menuitemradio"]')).toBeNull()
   })
@@ -111,7 +111,7 @@ describe('sidebar project context menu', () => {
       )
     })
     await rightClick(container.querySelector('.project-row')!)
-    expect([...container.querySelectorAll('[aria-label^="Project options"] button')].some((button) => button.textContent?.includes('Pin project'))).toBe(false)
+    expect([...container.querySelectorAll('[aria-label^="Project options"] button')].some((button) => button.textContent?.includes('Pin workspace folder'))).toBe(false)
   })
 
   it('requires confirmation before downloading and restarting an available update', async () => {
@@ -236,10 +236,10 @@ describe('sidebar project context menu', () => {
 
     expect(container.querySelector('.sidebar__primary .lucide-notebook-pen')).not.toBeNull()
     expect(container.querySelector('.project-row__new-session .lucide-notebook-pen')).not.toBeNull()
-    expect(container.querySelector('.sidebar__section-heading .lucide-folder-plus')).not.toBeNull()
-    expect(container.querySelector('.sidebar__primary button[title="New session (⌘N)"]')).not.toBeNull()
+    expect(container.querySelector('.sidebar__section-heading .lucide-folder-plus')).toBeNull()
+    expect(container.querySelector('.sidebar__primary button[title="开始新工作 (⌘N)"]')).not.toBeNull()
     expect(container.querySelector('[aria-label="New session in Project"][title="New session in Project"]')).not.toBeNull()
-    expect(container.querySelector('[aria-label="Add project"][title="Add project"]')).not.toBeNull()
+    expect(container.querySelector('[aria-label="Add project"][title="Add project"]')).toBeNull()
   })
 
   it('shows Linux shortcut names on Linux', async () => {
@@ -264,7 +264,7 @@ describe('sidebar project context menu', () => {
       )
     })
 
-    expect(container.querySelector('.sidebar__primary button[title="New session (Ctrl+N)"]')).not.toBeNull()
+    expect(container.querySelector('.sidebar__primary button[title="开始新工作 (Ctrl+N)"]')).not.toBeNull()
     expect(container.querySelector('[aria-label="Hide sidebar (Ctrl+B)"]')).not.toBeNull()
     expect(container.textContent).not.toContain('⌘')
   })

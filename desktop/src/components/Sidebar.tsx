@@ -1,21 +1,19 @@
 import {
   Archive,
   Bell,
-  CalendarClock,
   Check,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
   Copy,
   Download,
+  Blocks,
   Folder,
   FolderOpen,
-  FolderPlus,
   ListFilter,
   LoaderCircle,
   MessageCircleQuestion,
   NotebookPen,
-  PackageOpen,
   PanelLeftClose,
   Pin,
   MoreHorizontal,
@@ -27,7 +25,7 @@ import {
 import { memo, useEffect, useMemo, useState, type CSSProperties, type ReactElement } from 'react'
 import { PROJECT_SORT_MODES, type AppMeta, type AppUpdateState, type HarnessId, type ProjectRecord, type ProjectSortMode, type SessionRecord, type WorkspaceView } from '@/types/api'
 import { formatRelative } from '@/lib/data'
-import { HARNESS_PRODUCT_NAMES, HARNESS_SELECTOR_ORDER, HARNESS_SHORT_NAMES } from '@/lib/harness'
+import { HARNESS_PRODUCT_NAMES, HARNESS_SELECTOR_ORDER } from '@/lib/harness'
 import { sortProjects } from '@/lib/project-order'
 import { useI18n, type MessageKey } from '@/lib/i18n'
 import { shortcutLabel } from '@/lib/platform-shortcuts'
@@ -63,6 +61,7 @@ export interface SidebarProps {
   onArchiveSession(session: SessionRecord): Promise<void>
   overlay?: boolean
   platform?: NodeJS.Platform
+  canDevelop?: boolean
 }
 
 const statusLabel: Record<SessionRecord['status'], string> = {
@@ -185,7 +184,7 @@ async function copySessionUuid(id: string): Promise<void> {
   if (!copied) throw new Error('Copy is unavailable')
 }
 
-function SidebarView({ projects, sessions, activeProjectId, activeSessionId, activeView, activeHarness = 'omp', harnesses, clearedAttention = {}, updateState = { phase: 'unsupported' }, onUpdateAction, onSelectHarness, onSelectProject, onSelectSession, onNavigate, onNewSession, onAddProject, onRemoveProject, projectSortMode = 'recent', onSetProjectSortMode = () => undefined, onTogglePinProject = () => undefined, onClose, onOpenPalette, onRenameSession, onArchiveSession, overlay = false, platform = 'darwin' }: SidebarProps) {
+function SidebarView({ projects, sessions, activeProjectId, activeSessionId, activeView, activeHarness = 'omp', harnesses, clearedAttention = {}, updateState = { phase: 'unsupported' }, onUpdateAction, onSelectHarness, onSelectProject, onSelectSession, onNavigate, onNewSession, onRemoveProject, projectSortMode = 'recent', onSetProjectSortMode = () => undefined, onTogglePinProject = () => undefined, onClose, onOpenPalette, onRenameSession, onArchiveSession, overlay = false, platform = 'darwin', canDevelop = true }: SidebarProps) {
   const { t } = useI18n()
   const [query, setQuery] = useState('')
   const [harnessMenuOpen, setHarnessMenuOpen] = useState(false)
@@ -265,12 +264,12 @@ function SidebarView({ projects, sessions, activeProjectId, activeSessionId, act
             className="brand-switcher__trigger"
             aria-haspopup="menu"
             aria-expanded={harnessMenuOpen}
-            aria-label={`${HARNESS_PRODUCT_NAMES[activeHarness]} — switch harness`}
-            title={`${HARNESS_PRODUCT_NAMES[activeHarness]} — switch harness`}
+            aria-label={`Weave Workbench — ${HARNESS_PRODUCT_NAMES[activeHarness]}`}
+            title={`当前运行环境：${HARNESS_PRODUCT_NAMES[activeHarness]}`}
             onClick={() => setHarnessMenuOpen((open) => !open)}
           >
             <HarnessMark harness={activeHarness} size={24} />
-            <span className="brand-switcher__name"><strong>{HARNESS_SHORT_NAMES[activeHarness]}</strong><small>Work</small></span>
+            <span className="brand-switcher__name"><strong>Weave</strong><small>Workbench</small></span>
             <ChevronDown size={12} aria-hidden="true" />
           </button>
           {harnessMenuOpen ? (
@@ -293,30 +292,28 @@ function SidebarView({ projects, sessions, activeProjectId, activeSessionId, act
           ) : null}
         </div>
         <div className="sidebar__title-actions no-drag">
-          <IconButton label={`New session (${newSessionShortcut})`} onClick={() => onNewSession()}><NotebookPen size={16} /></IconButton>
+          <IconButton label={`开始新工作 (${newSessionShortcut})`} onClick={() => onNewSession()}><NotebookPen size={16} /></IconButton>
           <IconButton label={`Hide sidebar (${sidebarShortcut})`} onClick={onClose}><PanelLeftClose size={16} /></IconButton>
         </div>
       </div>
 
       <nav className="sidebar__primary" aria-label="Primary">
-        <button type="button" title={`New session (${newSessionShortcut})`} onClick={() => onNewSession()}><NotebookPen size={15} /><span>New session</span><kbd>{newSessionShortcut}</kbd></button>
-        <button type="button" title="Search" onClick={() => { setSearchOpen((open) => !open); window.setTimeout(() => document.getElementById('session-search')?.focus(), 0) }} className={searchOpen ? 'is-active' : ''}><Search size={15} /><span>Search</span></button>
+        <button type="button" title={`开始新工作 (${newSessionShortcut})`} onClick={() => onNewSession()}><NotebookPen size={15} /><span>开始工作</span><kbd>{newSessionShortcut}</kbd></button>
+        <button type="button" title="搜索工作记录" onClick={() => { setSearchOpen((open) => !open); window.setTimeout(() => document.getElementById('session-search')?.focus(), 0) }} className={searchOpen ? 'is-active' : ''}><Search size={15} /><span>搜索</span></button>
         {searchOpen ? (
           <div className="sidebar-search">
             <Search size={13} />
-            <input id="session-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Projects, chats, branches" aria-label="Search projects and sessions" />
+            <input id="session-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="工作名称或内容" aria-label="搜索工作记录" />
             {query ? <button type="button" title="Clear search" aria-label="Clear search" onClick={() => setQuery('')}>×</button> : null}
           </div>
         ) : null}
-        <button type="button" title={t('nav.projects')} className={activeView === 'projects' ? 'is-active' : ''} onClick={() => onNavigate('projects')}><Folder size={15} /><span>{t('nav.projects')}</span></button>
         <button type="button" title={t('nav.activity')} className={activeView === 'activity' ? 'is-active' : ''} onClick={() => onNavigate('activity')}><Bell size={15} /><span>{t('nav.activity')}</span>{unreadCount ? <span className="nav-count">{unreadCount}</span> : null}</button>
-        <button type="button" title={t('nav.scheduled')} className={activeView === 'scheduled' ? 'is-active' : ''} onClick={() => onNavigate('scheduled')}><CalendarClock size={15} /><span>{t('nav.scheduled')}</span></button>
-        <button type="button" title={t('nav.capabilities')} className={activeView === 'plugins' ? 'is-active' : ''} onClick={() => onNavigate('plugins')}><PackageOpen size={15} /><span>{t('nav.capabilities')}</span></button>
+        {canDevelop ? <button type="button" title={t('nav.development')} className={activeView === 'development' ? 'is-active' : ''} onClick={() => onNavigate('development')}><Blocks size={15} /><span>{t('nav.development')}</span></button> : null}
       </nav>
 
       <div className="sidebar__scroll scroll-area">
-        <div className="sidebar__section-heading"><span>Projects</span><span className="sidebar__section-heading-actions"><IconButton size="small" className="sidebar__sort-toggle" aria-haspopup="menu" aria-expanded={projectSortMenuOpen} label={t('projects.sort')} onClick={() => setProjectSortMenuOpen((open) => !open)}><ListFilter size={13} /></IconButton><IconButton size="small" label="Add project" onClick={onAddProject}><FolderPlus size={13} /></IconButton>{projectSortMenuOpen ? <div className="sidebar__sort-menu" role="menu" aria-label={t('projects.sort.menu')}>{PROJECT_SORT_MODES.map((mode) => <button key={mode} type="button" role="menuitemradio" aria-checked={projectSortMode === mode} className={projectSortMode === mode ? 'is-active' : ''} onClick={() => { setProjectSortMenuOpen(false); onSetProjectSortMode(mode) }}>{t(PROJECT_SORT_LABEL_KEYS[mode])}{projectSortMode === mode ? <Check size={12} aria-hidden="true" /> : null}</button>)}</div> : null}</span></div>
-        {visibleProjects.length === 0 ? <p className="sidebar__empty">No matching work</p> : null}
+        <div className="sidebar__section-heading"><span>工作记录</span><span className="sidebar__section-heading-actions"><IconButton size="small" className="sidebar__sort-toggle" aria-haspopup="menu" aria-expanded={projectSortMenuOpen} label={t('projects.sort')} onClick={() => setProjectSortMenuOpen((open) => !open)}><ListFilter size={13} /></IconButton>{projectSortMenuOpen ? <div className="sidebar__sort-menu" role="menu" aria-label={t('projects.sort.menu')}>{PROJECT_SORT_MODES.map((mode) => <button key={mode} type="button" role="menuitemradio" aria-checked={projectSortMode === mode} className={projectSortMode === mode ? 'is-active' : ''} onClick={() => { setProjectSortMenuOpen(false); onSetProjectSortMode(mode) }}>{t(PROJECT_SORT_LABEL_KEYS[mode])}{projectSortMode === mode ? <Check size={12} aria-hidden="true" /> : null}</button>)}</div> : null}</span></div>
+        {visibleProjects.length === 0 ? <p className="sidebar__empty">暂无工作记录</p> : null}
         {visibleProjects.map((project) => {
           const projectSessions = (sessionsByProject.get(project.id) ?? []).filter((session) => !normalized || `${session.title} ${session.preview ?? ''}`.toLowerCase().includes(normalized) || project.name.toLowerCase().includes(normalized))
           const isCollapsed = collapsed[project.id] ?? false
@@ -425,6 +422,7 @@ export function areSidebarPropsEqual(previous: SidebarProps, next: SidebarProps)
     && previous.onArchiveSession === next.onArchiveSession
     && previous.overlay === next.overlay
     && previous.platform === next.platform
+    && previous.canDevelop === next.canDevelop
 }
 
 export const Sidebar = memo(SidebarView, areSidebarPropsEqual)

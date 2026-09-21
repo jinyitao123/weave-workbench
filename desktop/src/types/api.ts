@@ -6,7 +6,7 @@
 export const BROWSER_PARTITION = 'persist:prime-work-browser'
 
 export type ThemeMode = 'system' | 'light' | 'dark'
-export type WorkspaceView = 'session' | 'projects' | 'activity' | 'scheduled' | 'plugins' | 'settings'
+export type WorkspaceView = 'session' | 'activity' | 'development' | 'projects' | 'scheduled' | 'plugins' | 'settings'
 export type InspectorTab = 'summary' | 'changes' | 'browser' | 'files'
 export type SessionStatus = 'idle' | 'running' | 'waiting' | 'complete' | 'failed' | 'unknown'
 
@@ -37,6 +37,31 @@ export interface AppMeta {
   harnesses: Record<HarnessId, HarnessStatus>
 }
 
+export interface EnterpriseEnvironmentStatus {
+  id: string
+  name: string
+  url: string
+  available: boolean
+  secure: boolean
+  version?: string
+  checkedAt: string
+  message?: string
+}
+
+export type EnterpriseRole = 'member' | 'developer' | 'admin'
+
+export interface EnterpriseSession {
+  version: '1'
+  status: 'signed-out' | 'signed-in' | 'blocked' | 'unavailable'
+  environment: { origin: string; secure: boolean }
+  storage: 'encrypted' | 'session-only'
+  identitySource?: { kind: 'forge-account'; issuer: string }
+  user?: { id: string; name: string; email: string }
+  organization?: { id: string; name: string }
+  role?: EnterpriseRole
+  message?: string
+}
+
 export type ApplicationMenuName = 'file' | 'edit' | 'view' | 'window' | 'help'
 
 export type AppUpdatePhase = 'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'not-available' | 'error' | 'unsupported'
@@ -61,10 +86,14 @@ export interface ProjectRecord {
   id: string
   /** Agent harness this project grant belongs to; grants never cross harnesses. */
   harness: HarnessId
+  /** App-managed personal workspaces let people start work without selecting a code project. */
+  purpose?: 'personal' | 'project'
   name: string
   path: string
   folders: string[]
   primaryFolder: string
+  materialsFolder?: string
+  deliveriesFolder?: string
   pinned: boolean
   createdAt: string
   lastOpenedAt: string
@@ -758,6 +787,12 @@ export interface PrimeWorkApi {
     check(): Promise<AppUpdateState>
     downloadAndInstall(): Promise<boolean>
     onChanged(callback: (state: AppUpdateState) => void): () => void
+  }
+  enterprise: {
+    getStatus(): Promise<EnterpriseEnvironmentStatus[]>
+    getSession(): Promise<EnterpriseSession>
+    signIn(email: string, password: string): Promise<EnterpriseSession>
+    signOut(): Promise<EnterpriseSession>
   }
   projects: {
     list(harness?: HarnessId): Promise<ProjectRecord[]>

@@ -83,7 +83,8 @@ function commandOptions(dialog: HTMLElement): HTMLButtonElement[] {
 }
 
 const expectedOrder = [
-  'New session',
+  '开始工作',
+  '打开开发中心',
   'Open Projects',
   'Open Activity',
   'Open Scheduled',
@@ -118,10 +119,10 @@ describe.each<HarnessId>(['prime', 'omp', 'pi'])('command palette for %s', (harn
     await waitFor(() => [...document.body.querySelectorAll('h1')].find((heading) => heading.textContent === 'Scheduled'))
     expect(document.body.textContent).toContain(`Unattended ${HARNESS_SHORT_NAMES[harness]} work`)
 
-    await act(async () => {
-      container.querySelector<HTMLButtonElement>('.sidebar__primary button[title="Projects"]')!.click()
-    })
-    await waitFor(() => [...document.body.querySelectorAll('h1')].find((heading) => heading.textContent === 'Projects'))
+    dialog = await openPalette()
+    const projects = commandOptions(dialog).find((option) => option.textContent?.includes('Open Projects'))!
+    await act(async () => { projects.click() })
+    await waitFor(() => [...document.body.querySelectorAll('h1')].find((heading) => heading.textContent === '工作空间文件夹'))
 
     dialog = await openPalette()
     input = dialog.querySelector<HTMLInputElement>('[role="combobox"]')!

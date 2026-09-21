@@ -13,7 +13,7 @@ import { ProjectRunControl, type ProjectScriptKind } from './ProjectRunControl'
 import type { MouseEvent } from 'react'
 
 const viewTitles: Record<Exclude<WorkspaceView, 'session'>, MessageKey> = {
-  projects: 'nav.projects', activity: 'nav.activity', scheduled: 'nav.scheduled', plugins: 'nav.capabilities', settings: 'nav.settings',
+  projects: 'nav.projects', activity: 'nav.activity', development: 'nav.development', scheduled: 'nav.scheduled', plugins: 'nav.capabilities', settings: 'nav.settings',
 }
 
 const windowsMenus: ReadonlyArray<{ name: ApplicationMenuName; label: string }> = [
@@ -70,11 +70,11 @@ export function TitleToolbar({ project, gitBranch, view, productName = 'Prime Wo
         {(gitBranch ?? project?.gitBranch) && view === 'session' ? <span className="branch-pill"><GitBranch size={12} />{gitBranch ?? project?.gitBranch}</span> : null}
       </div>
       <div className="title-toolbar__actions no-drag">
-        {view === 'session' && project && onRunProjectScript && onStopProjectScript && onSaveProjectScripts
+        {view === 'session' && project && project.purpose !== 'personal' && onRunProjectScript && onStopProjectScript && onSaveProjectScripts
           ? <ProjectRunControl project={project} activeKind={activeProjectScriptKind} onRun={onRunProjectScript} onStop={onStopProjectScript} onSave={onSaveProjectScripts} />
           : null}
         {view === 'session' && onToggleVoice ? <IconButton className={voiceOpen ? 'is-active voice-toggle--active' : ''} label={voiceOpen ? 'Close realtime voice' : 'Open realtime voice'} onClick={onToggleVoice}><AudioWaveform size={17} /></IconButton> : null}
-        {view === 'session' ? <IconButton className={terminalOpen ? 'is-active' : ''} label={`Toggle terminal (${terminalShortcut})`} onClick={onToggleTerminal}><Terminal size={17} /></IconButton> : null}
+        {view === 'session' && project?.purpose !== 'personal' ? <IconButton className={terminalOpen ? 'is-active' : ''} label={`Toggle terminal (${terminalShortcut})`} onClick={onToggleTerminal}><Terminal size={17} /></IconButton> : null}
         {view === 'session' ? <IconButton label={`Open browser (${browserShortcut})`} onClick={onOpenBrowser}><BrowserGlobe size={18} /></IconButton> : null}
         {view === 'session' ? <IconButton className={inspectorOpen ? 'is-active' : ''} label="Toggle inspector" onClick={onToggleInspector}><PanelRight size={16} /></IconButton> : null}
         {view !== 'session' && sidebarOpen ? <IconButton label={`Hide sidebar (${sidebarShortcut})`} onClick={onToggleSidebar}><PanelLeft size={16} /></IconButton> : null}

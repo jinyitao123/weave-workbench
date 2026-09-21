@@ -54,6 +54,7 @@ interface ComposerProps {
   /** Active harness short name for inline copy ("Prime" / "OMP"). */
   shortName?: string
   harness?: HarnessId
+  personalWorkspace?: boolean
   imageInputSupported: boolean
   /** Primary action for Enter; Ctrl/Cmd+Enter selects the opposite action. */
   messageEnterAction?: MessageEnterAction
@@ -140,6 +141,7 @@ export const Composer = memo(function Composer({
   agentName = 'Prime Agent',
   shortName = 'Prime',
   harness = 'prime',
+  personalWorkspace = false,
   imageInputSupported,
   messageEnterAction = 'queue',
   contextUsage,
@@ -485,8 +487,8 @@ export const Composer = memo(function Composer({
             value={value}
             disabled={disabled || loading}
             rows={2}
-            placeholder={disabled ? 'Add a project to begin' : loading ? 'Loading session…' : submitting ? `Starting ${shortName}…` : `Ask ${shortName} anything, @ for sessions and skills, / for commands`}
-            aria-label={`Message ${shortName}`}
+            placeholder={disabled ? '正在准备工作空间…' : loading ? '正在加载…' : submitting ? '正在开始…' : personalWorkspace ? '说说你想完成什么，也可以添加文件' : `Ask ${shortName} anything, @ for sessions and skills, / for commands`}
+            aria-label={personalWorkspace ? '给工作助手发消息' : `Message ${shortName}`}
             role="combobox"
             aria-autocomplete="list"
             aria-expanded={Boolean(menu && suggestions.length)}
@@ -728,7 +730,7 @@ export const Composer = memo(function Composer({
                 <Zap size={12} fill={fast ? 'currentColor' : 'none'} /> <span className="fast-mode-toggle__label">Fast</span>
               </button>
             ) : null}
-            <CheckoutPicker catalog={checkoutCatalog} fallbackLabel={checkoutLabel} loading={checkoutsLoading} onExecute={onExecuteCheckout} />
+            {!personalWorkspace ? <CheckoutPicker catalog={checkoutCatalog} fallbackLabel={checkoutLabel} loading={checkoutsLoading} onExecute={onExecuteCheckout} /> : null}
           </div>
           <div className="composer__actions">
             {dictation.state === 'connecting' || dictation.state === 'recording' ? <button type="button" className="context-usage-dial context-usage-dial--cancel" aria-label="Cancel dictation" title="Cancel dictation" onClick={dictation.cancel}><X size={14} /></button> : <span
@@ -775,7 +777,7 @@ export const Composer = memo(function Composer({
           </div>
         </div>
       </div>
-      <p className="composer-note">{shortName} can make mistakes. Review commands and changes before committing.</p>
+      <p className="composer-note">{personalWorkspace ? '重要内容和业务结果请在使用前确认。' : `${shortName} can make mistakes. Review commands and changes before committing.`}</p>
     </div>
   )
 })

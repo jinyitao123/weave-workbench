@@ -43,6 +43,7 @@ import { RepositoryUseGate } from './repository-use-gate'
 import { VoiceService, voiceSecretStorageStatus } from './voice'
 import { isAllowedRendererAudioPermission } from './voice-permissions'
 import { createManualUpdateCheck, getAutoUpdater, UpdateService } from './updates'
+import { EnterpriseService } from './enterprise'
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'prime-work', privileges: { standard: true, secure: true, supportFetchAPI: true } }])
 
@@ -592,6 +593,20 @@ async function bootstrap(): Promise<void> {
   const projects = new ProjectService(stateStore, () => mainWindow)
   const ompProjects = new ProjectService(stateStore, () => mainWindow, 'omp')
   const piProjects = new ProjectService(stateStore, () => mainWindow, 'pi')
+  const personalWorkspaceRoot = join(userDataPath, 'workspaces')
+  await Promise.all([
+    projects.ensurePersonalWorkspace(join(personalWorkspaceRoot, 'prime')),
+    ompProjects.ensurePersonalWorkspace(join(personalWorkspaceRoot, 'omp')),
+    piProjects.ensurePersonalWorkspace(join(personalWorkspaceRoot, 'pi')),
+  ])
+  const enterprise = new EnterpriseService({
+    sessionPath: join(userDataPath, 'enterprise-session.json'),
+    sessionCodec: {
+      available: () => safeStorage.isEncryptionAvailable(),
+      encrypt: (value) => safeStorage.encryptString(value),
+      decrypt: (value) => safeStorage.decryptString(value),
+    },
+  })
   const repositoryUseGate = new RepositoryUseGate()
   const checkouts: Record<HarnessId, CheckoutService> = {
     prime: new CheckoutService(() => stateStore.getSettings().checkoutStrategy, projects, repositoryUseGate),
@@ -1032,7 +1047,7 @@ async function bootstrap(): Promise<void> {
   }
   trustedRendererUrl = resolveRendererUrl()
   ipc = registerIpc({
-    meta, refreshHarnesses, projects, checkouts, sessions, agents, terminals, git, plugins, providers, settings, updates, cuaDriver, heartbeats, schedules, browser: browserService, voice, pets,
+    meta, refreshHarnesses, projects, checkouts, sessions, agents, terminals, git, plugins, providers, settings, updates, enterprise, cuaDriver, heartbeats, schedules, browser: browserService, voice, pets,
     popupApplicationMenu, setTitleBarTheme,
     omp: { projects: ompProjects, sessions: ompSessions, agents: ompManager, catalog: ompCatalog, plugins: ompPlugins },
     pi: { projects: piProjects, sessions: piSessions, agents: piManager, catalog: piCatalog, plugins: piPlugins },

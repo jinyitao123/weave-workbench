@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { basename, dirname, join, posix, relative, resolve, win32 } from 'node:path'
-import { lstat, readdir, readFile, realpath } from 'node:fs/promises'
+import { lstat, mkdir, readdir, readFile, realpath } from 'node:fs/promises'
 import type { BigIntStats, Dirent } from 'node:fs'
 import { dialog, type BrowserWindow } from 'electron'
 import { homedir } from 'node:os'
@@ -481,8 +481,10 @@ export class ProjectService {
       let sessionCount = 0
       for (const folder of folders) sessionCount += sessionStats.get(folder)?.count ?? 0
       const record: ProjectRecord = {
-        id: project.id, harness: project.harness, name: project.name, path: project.path, folders: project.folders, primaryFolder: project.primaryFolder,
+        id: project.id, harness: project.harness, purpose: project.purpose ?? 'project', name: project.name, path: project.path, folders: project.folders, primaryFolder: project.primaryFolder,
         pinned: project.pinned, createdAt: project.createdAt, lastOpenedAt: project.lastOpenedAt, scripts: project.scripts ? { ...project.scripts } : undefined,
+        materialsFolder: project.purpose === 'personal' ? join(project.primaryFolder, '材料') : undefined,
+        deliveriesFolder: project.purpose === 'personal' ? join(project.primaryFolder, '成果') : undefined,
         sessionCount,
         gitBranch: undefined,
       }
@@ -589,6 +591,7 @@ export class ProjectService {
       const created: PersistedProject = {
         id: randomUUID(),
         harness: this.harness,
+        purpose: 'project',
         name: basename(path) || path,
         path,
         folders: [path],
@@ -662,11 +665,34 @@ export class ProjectService {
   async add(): Promise<ProjectRecord | null> {
     const parent = this.windowProvider()
     const result = parent
-      ? await dialog.showOpenDialog(parent, { title: 'Add project folder', properties: ['openDirectory', 'createDirectory'] })
-      : await dialog.showOpenDialog({ title: 'Add project folder', properties: ['openDirectory', 'createDirectory'] })
+      ? await dialog.showOpenDialog(parent, { title: '选择工作空间文件夹', properties: ['openDirectory', 'createDirectory'] })
+      : await dialog.showOpenDialog({ title: '选择工作空间文件夹', properties: ['openDirectory', 'createDirectory'] })
     if (result.canceled || result.filePaths.length !== 1) return null
     const { path, identity } = await this.captureFolderIdentity(result.filePaths[0])
     return this.grantProjectFolder(path, identity)
+  }
+
+  async ensurePersonalWorkspace(pathValue: string): Promise<ProjectRecord> {
+    const requested = resolve(requireString(pathValue, 'personal workspace', { min: 1, max: 4096 }))
+    await mkdir(requested, { recursive: true, mode: 0o700 })
+    const materialsFolder = join(requested, '材料')
+    const deliveriesFolder = join(requested, '成果')
+    await Promise.all([
+      mkdir(materialsFolder, { recursive: true, mode: 0o700 }),
+      mkdir(deliveriesFolder, { recursive: true, mode: 0o700 }),
+    ])
+    const { path, identity } = await this.captureFolderIdentity(requested)
+    const granted = await this.grantProjectFolder(path, identity)
+    const project = await this.store.update((state): PersistedProject => {
+      const current = state.projects.find((item) => item.id === granted.id && item.harness === this.harness)
+      if (!current) throw new Error('Personal workspace grant disappeared while it was being initialized')
+      current.purpose = 'personal'
+      current.name = '我的工作'
+      current.pinned = true
+      return current
+    })
+    this.authorizationRevision += 1
+    return { ...granted, ...project, purpose: 'personal', name: '我的工作', pinned: true, materialsFolder, deliveriesFolder }
   }
 
   async grantInferred(pathValue: unknown): Promise<ProjectRecord> {

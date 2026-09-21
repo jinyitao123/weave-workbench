@@ -41,6 +41,8 @@ flowchart LR
 
 ## 仓库与实施范围
 
+2026-09-21 明确：MVP1 桌面使用本仓 `desktop/` 的 GooeyPi 产品改造，来源版本见 `components.lock.json`。独立仓库历史主线中的 DSH/Host（`apps/desktop`）不作为本方案桌面基线；已有登录实现仅可供接口适配参考，不能直接替换 GooeyPi，也不能沿用其桌面验收结论。
+
 总仓负责桌面、跨组件契约、版本组合、发布协调与真实场景验收。Weave 和 inoForge 保留独立源码主仓，总仓通过 subtree 集成确定提交，详见[开发和发布方式](delivery-model.md)。
 
 第一条闭环采用[销售合同跨员工交接](../../scenarios/sales-contract-handoff/README.md)。先证明材料递交、团队执行、业务写回、待办交接和独立读回，再扩展其他业务。

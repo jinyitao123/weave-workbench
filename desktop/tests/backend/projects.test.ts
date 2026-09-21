@@ -65,6 +65,24 @@ function deferred<T>() {
 }
 
 describe('ProjectService list enrichment', () => {
+  it('creates one private personal workspace and reuses it on later startups', async () => {
+    const { root, service, store } = setup()
+    const personal = join(root, 'personal')
+    service.bindProviders({ sessions: async () => [], branch: async () => undefined })
+
+    const first = await service.ensurePersonalWorkspace(personal)
+    const second = await service.ensurePersonalWorkspace(personal)
+
+    expect(first).toMatchObject({ purpose: 'personal', name: '我的工作', pinned: true })
+    expect(second.id).toBe(first.id)
+    expect(store.snapshot().projects).toHaveLength(1)
+    expect(lstatSync(join(personal, '材料')).isDirectory()).toBe(true)
+    expect(lstatSync(join(personal, '成果')).isDirectory()).toBe(true)
+    expect(first.materialsFolder).toBe(join(personal, '材料'))
+    expect(first.deliveriesFolder).toBe(join(personal, '成果'))
+    await expect(service.authorizeCwd(personal)).resolves.toBe(realpathSync(personal))
+  })
+
   it('coalesces concurrent denied read-only checks without branch enrichment', async () => {
     const { root, service } = setup()
     const sessionsStarted = deferred<void>()

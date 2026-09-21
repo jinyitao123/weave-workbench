@@ -106,7 +106,7 @@ describe('packaged smoke launch', () => {
   let unpacked: string
 
   const writeFakeApplication = (script: string): void => {
-    const executable = join(unpacked, 'gooeypi')
+    const executable = join(unpacked, 'weave-workbench')
     writeFileSync(executable, `#!/usr/bin/env bash\nset -euo pipefail\n${script}\n`, { encoding: 'utf8' })
     chmodSync(executable, 0o755)
   }
@@ -171,7 +171,7 @@ describe('packaged smoke launch', () => {
   })
 
   it('reports a missing packaged executable rather than launching something else', async () => {
-    rmSync(join(unpacked, 'gooeypi'), { force: true })
+    rmSync(join(unpacked, 'weave-workbench'), { force: true })
 
     await expect(launcher.smokePackagedApp('linux', 'x64')).rejects.toThrow('missing its executable')
 

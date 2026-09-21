@@ -193,19 +193,19 @@ describe('project ordering controls in App', () => {
     await waitFor(() => container.querySelector('.sidebar__section-heading'))
 
     expect([...container.querySelectorAll('.project-row__main')].map((button) => button.textContent)).toEqual(['Inferred', 'Alpha', 'Zeta'])
-    await press(container.querySelector('[aria-label="Sort projects"]')!)
+    await press(container.querySelector('[aria-label="Sort workspace folders"]')!)
     await press([...container.querySelectorAll<HTMLElement>('[role="menuitemradio"]')].find((item) => item.textContent?.includes('Alphabetical'))!)
     expect(bridge.settings.update).toHaveBeenCalledWith({ projectSortMode: 'alphabetical' })
 
-    await press(container.querySelector('[aria-label="Sort projects"]')!)
+    await press(container.querySelector('[aria-label="Sort workspace folders"]')!)
     expect([...container.querySelectorAll('.project-row__main')].map((button) => button.textContent)).toEqual(['Alpha', 'Inferred', 'Zeta'])
     await act(async () => {
       container.querySelector('.project-row')?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 }))
     })
-    const pin = [...container.querySelectorAll('[aria-label^="Project options"] button')].find((button) => button.textContent?.includes('Pin project'))
+    const pin = [...container.querySelectorAll('[aria-label^="Project options"] button')].find((button) => button.textContent?.includes('Pin workspace folder'))
     expect(pin).toBeDefined()
     await press(pin!)
     expect(bridge.projects.setPinned).toHaveBeenCalledWith('alpha', true, 'prime')
-    expect([...container.querySelectorAll('[aria-label^="Project options"] button')].some((button) => button.textContent?.includes('Pin project'))).toBe(false)
+    expect([...container.querySelectorAll('[aria-label^="Project options"] button')].some((button) => button.textContent?.includes('Pin workspace folder'))).toBe(false)
   })
 })

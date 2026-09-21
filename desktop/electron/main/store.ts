@@ -201,6 +201,7 @@ function parseProject(value: unknown, preHarnessState: boolean): PersistedProjec
   return {
     id: value.id || randomUUID(),
     harness,
+    purpose: value.purpose === 'personal' ? 'personal' : 'project',
     name: value.name,
     path: value.path,
     folders,

@@ -123,7 +123,7 @@ function writeMacReleaseFixture(directory: string, { omit }: { omit?: string } =
     const artifactDirectory = join(inputDirectory, `artifact-${index}`)
     mkdirSync(artifactDirectory, { recursive: true })
     const content = name.endsWith('.yml')
-      ? 'version: 0.2.0\nfiles:\n  - url: GooeyPi-0.2.0-x64.zip\n    sha512: x64-digest\n    size: 42\npath: GooeyPi-0.2.0-x64.zip\nsha512: x64-digest\n'
+      ? 'version: 0.2.0\nfiles:\n  - url: Weave Workbench-0.2.0-x64.zip\n    sha512: x64-digest\n    size: 42\npath: Weave Workbench-0.2.0-x64.zip\nsha512: x64-digest\n'
       : `asset ${index}`
     writeFileSync(join(artifactDirectory, name), content)
   }
@@ -895,18 +895,30 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
 describe('GitHub Release publication', () => {
   test('selects an exact enabled platform set', () => {
     expect(parseReleasePlatforms('mac,linux')).toEqual(['mac', 'linux'])
-    expect(expectedGitHubReleaseAssets('0.2.0', ['mac', 'linux'])).not.toContain('GooeyPi-0.2.0-win-x64.exe')
-    expect(expectedGitHubReleaseAssets('0.2.0', ['mac'])).toEqual(['GooeyPi-0.2.0-arm64.zip', 'GooeyPi-0.2.0-intel-chip.dmg', 'GooeyPi-0.2.0-m-chip.dmg', 'GooeyPi-0.2.0-x64.zip', 'latest-mac.yml'])
-    expect(expectedDownloadedReleaseAssets('0.2.0', ['mac'])).toEqual(['GooeyPi-0.2.0-arm64.zip', 'GooeyPi-0.2.0-x64.dmg', 'GooeyPi-0.2.0-arm64.dmg', 'GooeyPi-0.2.0-x64.zip', 'latest-mac.yml'])
+    expect(expectedGitHubReleaseAssets('0.2.0', ['mac', 'linux'])).not.toContain('Weave Workbench-0.2.0-win-x64.exe')
+    expect(expectedGitHubReleaseAssets('0.2.0', ['mac'])).toEqual([
+      'Weave Workbench-0.2.0-arm64.zip',
+      'Weave Workbench-0.2.0-intel-chip.dmg',
+      'Weave Workbench-0.2.0-m-chip.dmg',
+      'Weave Workbench-0.2.0-x64.zip',
+      'latest-mac.yml',
+    ])
+    expect(expectedDownloadedReleaseAssets('0.2.0', ['mac'])).toEqual([
+      'Weave Workbench-0.2.0-arm64.zip',
+      'Weave Workbench-0.2.0-x64.dmg',
+      'Weave Workbench-0.2.0-arm64.dmg',
+      'Weave Workbench-0.2.0-x64.zip',
+      'latest-mac.yml',
+    ])
     expect(expectedGitHubReleaseAssets('0.2.0', ['linux'])).toEqual([
-      'GooeyPi-0.2.0-linux-aarch64.pacman',
-      'GooeyPi-0.2.0-linux-aarch64.rpm',
-      'GooeyPi-0.2.0-linux-amd64.deb',
-      'GooeyPi-0.2.0-linux-arm64.AppImage',
-      'GooeyPi-0.2.0-linux-arm64.deb',
-      'GooeyPi-0.2.0-linux-x64.pacman',
-      'GooeyPi-0.2.0-linux-x86_64.AppImage',
-      'GooeyPi-0.2.0-linux-x86_64.rpm',
+      'Weave Workbench-0.2.0-linux-aarch64.pacman',
+      'Weave Workbench-0.2.0-linux-aarch64.rpm',
+      'Weave Workbench-0.2.0-linux-amd64.deb',
+      'Weave Workbench-0.2.0-linux-arm64.AppImage',
+      'Weave Workbench-0.2.0-linux-arm64.deb',
+      'Weave Workbench-0.2.0-linux-x64.pacman',
+      'Weave Workbench-0.2.0-linux-x86_64.AppImage',
+      'Weave Workbench-0.2.0-linux-x86_64.rpm',
       'latest-linux-arm64.yml',
       'latest-linux.yml',
     ])
@@ -930,9 +942,9 @@ describe('GitHub Release publication', () => {
     expect(produced).toHaveLength(targetCount)
     // Only the two macOS DMGs are renamed for the public download page.
     expect([...names].filter(([published, downloaded]) => published !== downloaded)).toEqual([
-      ['GooeyPi-0.2.0-intel-chip.dmg', 'GooeyPi-0.2.0-x64.dmg'],
-      ['GooeyPi-0.2.0-m-chip.dmg', 'GooeyPi-0.2.0-arm64.dmg'],
-      ['GooeyPi-0.2.0-win-x64.msix', 'GooeyPi-0.2.0-win-x64.appx'],
+      ['Weave Workbench-0.2.0-intel-chip.dmg', 'Weave Workbench-0.2.0-x64.dmg'],
+      ['Weave Workbench-0.2.0-m-chip.dmg', 'Weave Workbench-0.2.0-arm64.dmg'],
+      ['Weave Workbench-0.2.0-win-x64.msix', 'Weave Workbench-0.2.0-win-x64.appx'],
     ])
   })
 
@@ -951,11 +963,11 @@ describe('GitHub Release publication', () => {
   test('reports the published name of a missing artifact through the rename map', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'gooeypi-github-release-missing-'))
     try {
-      const { projectDirectory, inputDirectory } = writeMacReleaseFixture(directory, { omit: 'GooeyPi-0.2.0-arm64.dmg' })
+      const { projectDirectory, inputDirectory } = writeMacReleaseFixture(directory, { omit: 'Weave Workbench-0.2.0-arm64.dmg' })
       // The arm64 DMG publishes as m-chip.dmg: the report must name the missing
       // published asset, not whichever entry happens to share its sort index.
       await expect(prepareGitHubRelease({ inputDirectory, outputDirectory: join(directory, 'out'), projectDirectory, platforms: ['mac'], tag: 'v0.2.0' })).rejects.toThrow(
-        /incomplete; missing GooeyPi-0\.2\.0-m-chip\.dmg$/,
+        /incomplete; missing Weave Workbench-0\.2\.0-m-chip\.dmg$/,
       )
     } finally {
       rmSync(directory, { recursive: true, force: true })
@@ -965,17 +977,17 @@ describe('GitHub Release publication', () => {
   test('takes legacy updater fields from the primary architecture manifest, not the first sorted path', () => {
     const directory = mkdtempSync(join(tmpdir(), 'gooeypi-update-metadata-'))
     try {
-      const arm64 = writeUpdateManifest(directory, 'a-arm64', 'GooeyPi-0.2.0-arm64.zip', 'arm64-digest', '2026-01-01T00:00:00.000Z')
-      const x64 = writeUpdateManifest(directory, 'z-x64', 'GooeyPi-0.2.0-x64.zip', 'x64-digest', '2026-02-02T00:00:00.000Z')
+      const arm64 = writeUpdateManifest(directory, 'a-arm64', 'Weave Workbench-0.2.0-arm64.zip', 'arm64-digest', '2026-01-01T00:00:00.000Z')
+      const x64 = writeUpdateManifest(directory, 'z-x64', 'Weave Workbench-0.2.0-x64.zip', 'x64-digest', '2026-02-02T00:00:00.000Z')
       const merged = mergeUpdateMetadata([arm64, x64], '0.2.0')
-      expect(merged.path).toBe('GooeyPi-0.2.0-x64.zip')
+      expect(merged.path).toBe('Weave Workbench-0.2.0-x64.zip')
       expect(merged.sha512).toBe('x64-digest')
       expect(merged.releaseDate).toBe('2026-02-02T00:00:00.000Z')
-      expect(merged.files.map((file: { url: string }) => file.url)).toEqual(['GooeyPi-0.2.0-arm64.zip', 'GooeyPi-0.2.0-x64.zip'])
+      expect(merged.files.map((file: { url: string }) => file.url)).toEqual(['Weave Workbench-0.2.0-arm64.zip', 'Weave Workbench-0.2.0-x64.zip'])
       // Renaming the artifact directories reverses the path sort order without
       // changing which manifest supplies the legacy fields.
-      const swappedArm64 = writeUpdateManifest(directory, 'z-arm', 'GooeyPi-0.2.0-arm64.zip', 'arm64-digest', '2026-01-01T00:00:00.000Z')
-      const swappedX64 = writeUpdateManifest(directory, 'a-intel', 'GooeyPi-0.2.0-x64.zip', 'x64-digest', '2026-02-02T00:00:00.000Z')
+      const swappedArm64 = writeUpdateManifest(directory, 'z-arm', 'Weave Workbench-0.2.0-arm64.zip', 'arm64-digest', '2026-01-01T00:00:00.000Z')
+      const swappedX64 = writeUpdateManifest(directory, 'a-intel', 'Weave Workbench-0.2.0-x64.zip', 'x64-digest', '2026-02-02T00:00:00.000Z')
       expect(mergeUpdateMetadata([swappedArm64, swappedX64], '0.2.0')).toEqual(merged)
       expect(mergeUpdateMetadata([swappedX64, swappedArm64], '0.2.0')).toEqual(merged)
     } finally {
@@ -991,12 +1003,12 @@ describe('GitHub Release publication', () => {
         writeFileSync(path, `version: 0.2.0\nfiles:\n${file}`)
         return path
       }
-      const sized = (size: string) => `  - url: GooeyPi-0.2.0-x64.zip\n    sha512: digest\n    size: ${size}\n`
-      expect(() => mergeUpdateMetadata([write('missing-size.yml', '  - url: GooeyPi-0.2.0-x64.zip\n    sha512: digest\n')], '0.2.0')).toThrow(/invalid size/)
+      const sized = (size: string) => `  - url: Weave Workbench-0.2.0-x64.zip\n    sha512: digest\n    size: ${size}\n`
+      expect(() => mergeUpdateMetadata([write('missing-size.yml', '  - url: Weave Workbench-0.2.0-x64.zip\n    sha512: digest\n')], '0.2.0')).toThrow(/invalid size/)
       expect(() => mergeUpdateMetadata([write('zero-size.yml', sized('0'))], '0.2.0')).toThrow(/invalid size/)
       expect(() => mergeUpdateMetadata([write('negative-size.yml', sized('-1'))], '0.2.0')).toThrow(/invalid size/)
       expect(() => mergeUpdateMetadata([write('text-size.yml', sized("'42'"))], '0.2.0')).toThrow(/invalid size/)
-      expect(() => mergeUpdateMetadata([write('empty-digest.yml', "  - url: GooeyPi-0.2.0-x64.zip\n    sha512: ''\n    size: 42\n")], '0.2.0')).toThrow(/no sha512/)
+      expect(() => mergeUpdateMetadata([write('empty-digest.yml', "  - url: Weave Workbench-0.2.0-x64.zip\n    sha512: ''\n    size: 42\n")], '0.2.0')).toThrow(/no sha512/)
       expect(() => mergeUpdateMetadata([write('valid.yml', sized('42'))], '0.2.0')).not.toThrow()
       expect(() => mergeUpdateMetadata([write('a.yml', sized('42')), write('b.yml', sized('43'))], '0.2.0')).toThrow(/disagrees/)
       expect(() => mergeUpdateMetadata([], '0.2.0')).toThrow(/missing/)
@@ -1006,9 +1018,9 @@ describe('GitHub Release publication', () => {
   })
 
   test('deletes only unexpected assets from a resumed draft release', () => {
-    const assets = ['GooeyPi-0.2.0-m-chip.dmg', 'GooeyPi-0.1.9-arm64.dmg', 'latest-mac.yml', 'SHA256SUMS.txt']
-    const expected = ['GooeyPi-0.2.0-m-chip.dmg', 'latest-mac.yml', 'SHA256SUMS.txt']
-    expect(staleDraftReleaseAssets(assets, expected)).toEqual(['GooeyPi-0.1.9-arm64.dmg'])
+    const assets = ['Weave Workbench-0.2.0-m-chip.dmg', 'Weave Workbench-0.1.9-arm64.dmg', 'latest-mac.yml', 'SHA256SUMS.txt']
+    const expected = ['Weave Workbench-0.2.0-m-chip.dmg', 'latest-mac.yml', 'SHA256SUMS.txt']
+    expect(staleDraftReleaseAssets(assets, expected)).toEqual(['Weave Workbench-0.1.9-arm64.dmg'])
     expect(staleDraftReleaseAssets(expected, expected)).toEqual([])
     // An empty expected set would delete the whole draft, so it fails instead.
     expect(() => staleDraftReleaseAssets(assets, [])).toThrow(/expected release asset set is empty/)
@@ -1021,12 +1033,12 @@ describe('GitHub Release publication', () => {
     const directory = mkdtempSync(join(tmpdir(), 'gooeypi-draft-prune-'))
     try {
       mkdirSync(join(directory, 'release-assets'))
-      for (const name of ['GooeyPi-0.2.0-m-chip.dmg', 'SHA256SUMS.txt']) writeFileSync(join(directory, 'release-assets', name), 'asset')
-      writeFileSync(join(directory, 'draft.json'), JSON.stringify({ assets: [{ name: 'GooeyPi-0.2.0-m-chip.dmg' }, { name: 'GooeyPi-0.1.9-arm64.dmg' }] }))
+      for (const name of ['Weave Workbench-0.2.0-m-chip.dmg', 'SHA256SUMS.txt']) writeFileSync(join(directory, 'release-assets', name), 'asset')
+      writeFileSync(join(directory, 'draft.json'), JSON.stringify({ assets: [{ name: 'Weave Workbench-0.2.0-m-chip.dmg' }, { name: 'Weave Workbench-0.1.9-arm64.dmg' }] }))
       const args = ['scripts/release/prune-draft-release-assets.mjs', '--assets', join(directory, 'draft.json'), '--expected', join(directory, 'release-assets')]
       const result = spawnSync(process.execPath, args, { encoding: 'utf8' })
       expect(result.status).toBe(0)
-      expect(result.stdout.trim().split('\n')).toEqual(['GooeyPi-0.1.9-arm64.dmg'])
+      expect(result.stdout.trim().split('\n')).toEqual(['Weave Workbench-0.1.9-arm64.dmg'])
       const failed = spawnSync(process.execPath, args.slice(0, 3), { encoding: 'utf8' })
       expect(failed.status).toBe(1)
       expect(failed.stderr).toMatch(/Draft release asset pruning failed/)
@@ -1060,20 +1072,20 @@ describe('GitHub Release publication', () => {
       mkdirSync(artifactDirectory)
       const updateTarget =
         name === 'latest-mac.yml'
-          ? 'GooeyPi-0.2.0-arm64.zip'
+          ? 'Weave Workbench-0.2.0-arm64.zip'
           : name === 'latest-linux.yml'
-            ? 'GooeyPi-0.2.0-linux-x86_64.AppImage'
+            ? 'Weave Workbench-0.2.0-linux-x86_64.AppImage'
             : name === 'latest-linux-arm64.yml'
-              ? 'GooeyPi-0.2.0-linux-arm64.AppImage'
-              : 'GooeyPi-0.2.0-win-x64.exe'
+              ? 'Weave Workbench-0.2.0-linux-arm64.AppImage'
+              : 'Weave Workbench-0.2.0-win-x64.exe'
       const content = name.startsWith('latest')
-        ? `version: 0.2.0\nfiles:\n  - url: ${updateTarget}\n    sha512: checksum-${index}\n    size: ${index + 1}\n${name === 'latest-mac.yml' ? '  - url: GooeyPi-0.2.0-arm64.dmg\n    sha512: checksum-arm64-dmg\n    size: 44\n' : ''}path: ${updateTarget}\nsha512: checksum-${index}\n`
+        ? `version: 0.2.0\nfiles:\n  - url: ${updateTarget}\n    sha512: checksum-${index}\n    size: ${index + 1}\n${name === 'latest-mac.yml' ? '  - url: Weave Workbench-0.2.0-arm64.dmg\n    sha512: checksum-arm64-dmg\n    size: 44\n' : ''}path: ${updateTarget}\nsha512: checksum-${index}\n`
         : `asset ${index}`
       writeFileSync(join(artifactDirectory, name), content)
     }
     const secondMacManifest = join(inputDirectory, 'macos-x64')
     mkdirSync(secondMacManifest)
-    writeFileSync(join(secondMacManifest, 'latest-mac.yml'), 'version: 0.2.0\nfiles:\n  - url: GooeyPi-0.2.0-x64.zip\n    sha512: checksum-x64\n    size: 42\n')
+    writeFileSync(join(secondMacManifest, 'latest-mac.yml'), 'version: 0.2.0\nfiles:\n  - url: Weave Workbench-0.2.0-x64.zip\n    sha512: checksum-x64\n    size: 42\n')
     try {
       const result = await prepareGitHubRelease({ inputDirectory, outputDirectory, projectDirectory, tag: 'v0.2.0' })
       expect(result.assets).toEqual(expected)
@@ -1087,16 +1099,16 @@ describe('GitHub Release publication', () => {
         expect(checksums).toContain(`${digest}  ${name}`)
       }
       const macFeed = readFileSync(join(outputDirectory, 'latest-mac.yml'), 'utf8')
-      expect(macFeed).toContain('GooeyPi-0.2.0-arm64.zip')
-      expect(macFeed).toContain('GooeyPi-0.2.0-x64.zip')
-      expect(macFeed).toContain('GooeyPi-0.2.0-m-chip.dmg')
-      expect(macFeed).not.toContain('GooeyPi-0.2.0-arm64.dmg')
+      expect(macFeed).toContain('Weave Workbench-0.2.0-arm64.zip')
+      expect(macFeed).toContain('Weave Workbench-0.2.0-x64.zip')
+      expect(macFeed).toContain('Weave Workbench-0.2.0-m-chip.dmg')
+      expect(macFeed).not.toContain('Weave Workbench-0.2.0-arm64.dmg')
       const linuxFeed = readFileSync(join(outputDirectory, 'latest-linux.yml'), 'utf8')
-      expect(linuxFeed).toContain('GooeyPi-0.2.0-linux-x86_64.AppImage')
-      expect(linuxFeed).not.toContain('GooeyPi-0.2.0-linux-arm64.AppImage')
+      expect(linuxFeed).toContain('Weave Workbench-0.2.0-linux-x86_64.AppImage')
+      expect(linuxFeed).not.toContain('Weave Workbench-0.2.0-linux-arm64.AppImage')
       const linuxArmFeed = readFileSync(join(outputDirectory, 'latest-linux-arm64.yml'), 'utf8')
-      expect(linuxArmFeed).toContain('GooeyPi-0.2.0-linux-arm64.AppImage')
-      expect(linuxArmFeed).not.toContain('GooeyPi-0.2.0-linux-x86_64.AppImage')
+      expect(linuxArmFeed).toContain('Weave Workbench-0.2.0-linux-arm64.AppImage')
+      expect(linuxArmFeed).not.toContain('Weave Workbench-0.2.0-linux-x86_64.AppImage')
     } finally {
       rmSync(directory, { recursive: true, force: true })
     }
@@ -1119,12 +1131,12 @@ describe('GitHub Release publication', () => {
         mkdirSync(artifactDirectory)
         const updateTarget =
           name === 'latest-mac.yml'
-            ? 'GooeyPi-0.2.0-arm64.zip'
+            ? 'Weave Workbench-0.2.0-arm64.zip'
             : name === 'latest-linux.yml'
-              ? 'GooeyPi-0.2.0-linux-x86_64.AppImage'
+              ? 'Weave Workbench-0.2.0-linux-x86_64.AppImage'
               : name === 'latest-linux-arm64.yml'
-                ? 'GooeyPi-0.2.0-linux-arm64.AppImage'
-                : 'GooeyPi-0.2.0-win-x64.exe'
+                ? 'Weave Workbench-0.2.0-linux-arm64.AppImage'
+                : 'Weave Workbench-0.2.0-win-x64.exe'
         writeFileSync(join(artifactDirectory, name), name.startsWith('latest') ? `version: 0.2.0\nfiles:\n  - url: ${updateTarget}\n    sha512: checksum-${index}\n` : `asset ${index}`)
       }
       const duplicateDirectory = join(inputDirectory, 'duplicate')
@@ -1197,12 +1209,12 @@ describe('post-package verification helpers', () => {
 
   test('keeps every platform native unpack allowlist exact and architecture-specific', () => {
     const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
-    expect(packageJson.author).toEqual({ name: 'GooeyPi contributors', email: '42459108+am-will@users.noreply.github.com' })
-    expect(packageJson.description).toBe('A desktop workspace for Pi, OMP, and Prime Agent')
-    expect(packageJson.homepage).toBe('https://github.com/am-will/gooey-pi')
-    expect(packageJson.build.productName).toBe('GooeyPi')
-    expect(packageJson.build.appId).toBe('app.gooeypi.desktop')
-    expect(packageJson.desktopName).toBe('gooeypi.desktop')
+    expect(packageJson.author).toEqual({ name: 'Weave Workbench contributors', email: '42459108+am-will@users.noreply.github.com' })
+    expect(packageJson.description).toBe('The desktop workspace for Weave teams and Forge business applications')
+    expect(packageJson.homepage).toBe('https://github.com/jinyitao123/weave-next')
+    expect(packageJson.build.productName).toBe('Weave Workbench')
+    expect(packageJson.build.appId).toBe('com.inocube.weave-workbench')
+    expect(packageJson.desktopName).toBe('weave-workbench.desktop')
     expect(packageJson.build.linux.synopsis).toBe(packageJson.description)
     expect(packageJson.build.linux.syncDesktopName).toBe(true)
     expect(packageJson.build.mac.icon).toBe('assets/icon.icns')
