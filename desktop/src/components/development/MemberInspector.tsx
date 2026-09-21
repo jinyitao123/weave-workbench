@@ -40,6 +40,9 @@ export function MemberInspector({ draft, runtimes, onChange }: {
   if (config.runtimeId && !runtimes.some((runtime) => runtime.id === config.runtimeId)) runtimeOptions.push({ value: config.runtimeId, label: '当前绑定位置（未连接）' })
   const permissionNames: Record<string, string> = { permissionAllow: '允许调用', permissionAsk: '调用前询问', permissionDeny: '禁止调用' }
   const toggleEditor = (target: Section) => setEditing((value) => value === target ? null : target)
+  const executionSteps = config.engine === 'loom'
+    ? ['接收团队任务', '装载指令与上下文', '模型调用与工具执行', '校验并返回结果']
+    : ['接收团队任务', '发送到运行位置', `${engineOptions.find((item) => item.value === config.engine)?.label ?? '外部智能体'}执行`, '返回团队结果']
 
   return <>
     <nav className="member-inspector__tabs" aria-label="成员配置分类">{sections.map((item) => <button type="button" key={item.value} aria-pressed={section === item.value} className={section === item.value ? 'is-active' : ''} onClick={() => { setSection(item.value); setEditing(null) }}>{item.label}</button>)}</nav>
@@ -71,6 +74,7 @@ export function MemberInspector({ draft, runtimes, onChange }: {
           {config.memoryEnabled ? <ProductSelect label="记忆范围" value={config.memoryScope} options={[{ value: 'tenant', label: '团队空间' }, { value: 'user', label: '当前员工' }, { value: 'session', label: '当前会话' }]} onChange={(value) => setConfig('memoryScope', value)}/> : null}
           <div className="member-limit-grid"><ProductField label="总令牌上限" type="number" min={0} value={config.maxTokens} onChange={(event) => setConfig('maxTokens', Number(event.target.value))}/><ProductField label="单次输出上限" type="number" min={0} value={config.maxOutputTokens} onChange={(event) => setConfig('maxOutputTokens', Number(event.target.value))}/><ProductField label="步骤上限" type="number" min={0} value={config.stepBudget} onChange={(event) => setConfig('stepBudget', Number(event.target.value))}/><ProductField label="成本上限（美元）" type="number" min={0} step="0.01" value={config.maxCostUsd} onChange={(event) => setConfig('maxCostUsd', Number(event.target.value))}/></div>
         </div> : <dl className="member-summary"><SummaryRow label="执行引擎" value={engineOptions.find((item) => item.value === config.engine)?.label}/><SummaryRow label="运行位置" value={runtimeOptions.find((item) => item.value === config.runtimeId)?.label}/><SummaryRow label="模型" value={config.model || '跟随运行环境'}/><SummaryRow label="记忆" value={config.memoryEnabled ? '已启用' : '未启用'}/></dl>}
+        <div className="member-execution-flow" aria-label="成员执行链"><strong>成员执行链</strong><ol>{executionSteps.map((step, index) => <li key={step}><span>{index + 1}</span>{step}</li>)}</ol></div>
       </section> : null}
 
       {section === 'resources' ? <>

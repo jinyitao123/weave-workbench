@@ -122,6 +122,12 @@
 .member-inspector__footer small { font-size: 10px; color: var(--text-tertiary); }
 .member-inspector__footer button { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 .member-inspector__footer-actions { display: flex; align-items: center; gap: 6px; }
+.member-execution-flow { margin: 12px 14px 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.member-execution-flow > strong { color: var(--text-secondary); font-size: 10.5px; }
+.member-execution-flow ol { display: grid; gap: 7px; margin: 10px 0 0; padding: 0; list-style: none; }
+.member-execution-flow li { position: relative; display: flex; align-items: center; min-height: 24px; gap: 8px; color: var(--text-secondary); font-size: 10.5px; }
+.member-execution-flow li:not(:last-child)::after { position: absolute; top: 22px; left: 10px; width: 1px; height: 9px; background: var(--border); content: ''; }
+.member-execution-flow li span { display: inline-flex; width: 20px; height: 20px; flex: 0 0 20px; align-items: center; justify-content: center; border: 1px solid var(--border-strong); border-radius: 50%; color: var(--text-tertiary); font-size: 9px; }
 .member-inspector__error { display: flex; flex-direction: column; gap: 9px; padding: 12px 16px; color: var(--danger); font-size: 11px; }
 .team-config-loading { padding: 40px 16px; color: var(--text-tertiary); font-size: 11px; text-align: center; }
 @container (max-width: 1050px) {
