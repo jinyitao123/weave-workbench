@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/development-observation.schema.json",
+  "title": "Workbench Development Observation",
+  "description": "A read-only projection of Weave team definitions, exact workflow versions and attributed runs for an authenticated developer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "loadedAt", "teams"],
+  "properties": {
+    "version": { "const": "1" },
+    "loadedAt": { "type": "string", "format": "date-time" },
+    "teams": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "status", "workers", "workflows", "runs"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "status": { "type": "string", "minLength": 1 },
+          "objective": { "type": "string" },
+          "lead": { "$ref": "#/$defs/member" },
+          "workers": { "type": "array", "items": { "$ref": "#/$defs/member" } },
+          "workflows": { "type": "array", "items": { "$ref": "#/$defs/workflow" } },
+          "runs": { "type": "array", "items": { "$ref": "#/$defs/run" } }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "role", "enabled"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "role": { "type": "string", "minLength": 1 },
+        "duty": { "type": "string" },
+        "enabled": { "type": "boolean" }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "status", "nodes", "edges"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "minLength": 1 },
+        "publishedVersion": { "type": "integer", "minimum": 1 },
+        "draftVersion": { "type": "integer", "minimum": 1 },
+        "inspectedVersion": { "type": "integer", "minimum": 1 },
+        "nodes": { "type": "array", "items": { "type": "object" } },
+        "edges": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "minLength": 1 },
+        "step": { "type": "string" },
+        "startedAt": { "type": "string" },
+        "durationMs": { "type": "integer", "minimum": 0 },
+        "tokensIn": { "type": "integer", "minimum": 0 },
+        "tokensOut": { "type": "integer", "minimum": 0 },
+        "costUsd": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

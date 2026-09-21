@@ -49,11 +49,60 @@
 .development-grid > button > span { width: 40px; height: 40px; display: grid; grid-row: 1 / 3; place-items: center; border-radius: 10px; color: var(--prime); background: var(--prime-soft); }
 .development-grid strong { align-self: end; font-size: 12.5px; font-weight: 580; }
 .development-grid small { margin-top: 5px; color: var(--text-secondary); font-size: 10.5px; line-height: 1.5; }
+.development-observation { margin-top: 22px; }
+.development-section-heading { min-height: 48px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.development-section-heading h2 { margin: 0; font-size: 15px; font-weight: 590; }
+.development-section-heading p { margin: 4px 0 0; color: var(--text-tertiary); font-size: 10.5px; }
+.development-section-heading > small { color: var(--text-tertiary); font-size: 9.5px; }
+.development-inline-error { margin: 8px 0; padding: 9px 11px; border-radius: 8px; color: var(--danger); background: var(--danger-soft); font-size: 10.5px; }
+.development-observation-empty { min-height: 120px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px; border: 1px solid var(--border); border-radius: 12px; color: var(--text-tertiary); background: var(--surface-raised); font-size: 10.5px; }
+.development-observation-empty strong { color: var(--text); font-size: 12px; }
+.development-observation-layout { min-height: 390px; display: grid; grid-template-columns: 210px minmax(0, 1fr); overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-raised); }
+.development-team-list { padding: 8px; border-right: 1px solid var(--border); background: var(--surface-subtle); }
+.development-team-list button { width: 100%; min-height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 10px; border-radius: 8px; color: var(--text-secondary); text-align: left; }
+.development-team-list button:hover, .development-team-list button.is-active { color: var(--text); background: var(--surface-raised); }
+.development-team-list button > span { min-width: 0; display: flex; flex-direction: column; }
+.development-team-list strong { overflow: hidden; font-size: 11.5px; font-weight: 570; white-space: nowrap; text-overflow: ellipsis; }
+.development-team-list small { margin-top: 3px; color: var(--text-tertiary); font-size: 9px; }
+.development-team-detail { min-width: 0; padding: 18px 20px 24px; }
+.development-team-detail > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.development-team-detail h3 { margin: 3px 0 4px; font-size: 18px; font-weight: 590; }
+.development-team-detail header p { max-width: 560px; margin: 0; color: var(--text-secondary); font-size: 10.5px; line-height: 1.45; }
+.development-kicker { color: var(--text-tertiary); font-size: 9px; text-transform: uppercase; }
+.development-health { display: inline-flex; align-items: center; gap: 5px; padding: 4px 7px; border-radius: 6px; color: var(--success); background: var(--success-soft); font-size: 9px; white-space: nowrap; }
+.development-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 0; }
+.development-facts span { display: flex; flex-direction: column; padding: 9px 10px; border: 1px solid var(--border); border-radius: 8px; }
+.development-facts strong { font-size: 14px; font-weight: 590; }
+.development-facts small { margin-top: 2px; color: var(--text-tertiary); font-size: 9px; }
+.development-detail-section { margin-top: 17px; }
+.development-detail-section h4 { margin: 0 0 8px; color: var(--text-secondary); font-size: 10px; font-weight: 590; }
+.development-roster { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.development-roster article, .development-workflows article { padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-subtle); }
+.development-roster article > span { color: var(--prime); font-size: 8.5px; }
+.development-roster strong { display: block; margin-top: 2px; font-size: 10.5px; }
+.development-roster p { margin: 3px 0 0; color: var(--text-tertiary); font-size: 9px; line-height: 1.4; }
+.development-subempty { min-height: 52px; display: flex; align-items: center; gap: 8px; padding: 10px; border: 1px dashed var(--border-strong); border-radius: 8px; color: var(--text-tertiary); font-size: 9.5px; }
+.development-workflows { display: grid; gap: 7px; }
+.development-workflows article header, .development-run-list article { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.development-workflows article header span, .development-run-list article > span { display: flex; flex-direction: column; }
+.development-workflows strong, .development-run-list strong { font-size: 10.5px; }
+.development-workflows small, .development-run-list small { margin-top: 2px; color: var(--text-tertiary); font-size: 8.5px; }
+.development-workflows i, .development-run-list i { color: var(--prime); font-size: 8.5px; font-style: normal; }
+.development-node-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+.development-node-strip > span { display: flex; align-items: center; gap: 4px; }
+.development-node-strip b { padding: 3px 5px; border-radius: 5px; background: var(--prime-soft); font-size: 8.5px; font-weight: 550; }
+.development-node-strip small, .development-node-strip em { color: var(--text-tertiary); font-size: 8px; font-style: normal; }
+.development-run-list { display: grid; gap: 1px; }
+.development-run-list article { padding: 7px 2px; border-bottom: 1px solid var(--border); }
 
 @media (max-width: 720px) {
   .development-environment { align-items: flex-start; flex-wrap: wrap; }
   .environment-copy { min-width: 180px; }
   .development-grid { grid-template-columns: 1fr; }
+  .development-observation-layout { grid-template-columns: 1fr; }
+  .development-team-list { display: flex; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--border); }
+  .development-team-list button { min-width: 190px; }
+  .development-roster { grid-template-columns: 1fr; }
 }
 .page-tools--activity { align-items: center; }
 .activity-tools__right { display: flex; align-items: center; justify-content: flex-end; gap: 7px; }

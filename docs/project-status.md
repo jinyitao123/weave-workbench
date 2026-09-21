@@ -1,6 +1,6 @@
 # 当前项目状态
 
-更新：2026-09-20。接手先执行 `make status`；本页是工作摘要，不是线上实时状态。
+更新：2026-09-21。接手先执行 `make status`；本页是工作摘要，不是线上实时状态。
 
 ## 当前目标与边界
 
@@ -22,10 +22,10 @@
 | ENG-01 | 架构和接手规范 / 总仓 | 完成 | 本地文档、入口检查、4 项工具回归通过；见[本轮证据](acceptance/2026-09-20-engineering-baseline.md)，远端共享另见 ENG-02 |
 | PLAN-01 | MVP1 验收目标和落地步骤 / 总仓 | 完成 | 已保存[验收方案](plans/mvp1.md)和[执行顺序](plans/mvp1-delivery.md)；仅方案归档，不代表功能实现 |
 | SYNC-01 | Weave 健康观察修复回流 / weave-next → 总仓 | 完成 | 独立 Weave 提交 `a80b466b` 通过包测试、真实 PostgreSQL 回归与依赖守卫；总仓锁定并提交为 `507e6245`，组件检查一致 |
-| ENG-02 | 总仓远端与共享基线 / 总仓 | 进行中 | `codex/product-shell` 已推送到 `jinyitao123/weave-workbench`；桌面产品壳仍有未提交成果，需按归属拆分后再形成完整共享基线 |
-| ENV-01 | Forge 账号接入 / Forge、GooeyPi 桌面 | 已实现，待真实账号验收 | GooeyPi 已实现一次 Forge 登录、Weave 会话交换、安全存储、退出登录和按角色显示开发入口；完整测试通过，真实 `admin@inoforge.local` 登录尚缺应用密码 |
-| ACCESS-01 | Weave 自动绑定与三类角色 / Weave、Workbench | 已实现组件切片 | Weave PR #5 已实现 `issuer + subject + organization` 持久绑定、首次创建 `member`、重复登录保留现有角色，并移除外部权限引擎；仍缺真实 PostgreSQL 与三角色端到端验收 |
-| OBS-01 | 团队配置与执行可见 / 总仓、Weave | 待开始 | 在 ENV-01 基础上接入团队详情、关系图和真实运行记录；开发者能从任务追到版本、节点和失败原因 |
+| ENG-02 | 总仓远端与共享基线 / 总仓 | 完成 | GooeyPi 已成为 `main` 和 `codex/product-shell` 的桌面基线，旧 DSH 分支与工作树已清理；当前继续在 GooeyPi 上推进 MVP1 |
+| ENV-01 | Forge 账号接入 / Forge、GooeyPi 桌面 | 通过 | 真实 Forge 账号已完成一次登录、Weave 会话交换、系统安全存储、进程重开恢复和退出边界验证；见[登录验收](acceptance/2026-09-21-gooeypi-mvp1-login.md) |
+| ACCESS-01 | Weave 自动绑定与三类角色 / Weave、Workbench | 通过当前管理员路径 | 真实 PostgreSQL 中首次绑定、重复登录稳定读回和管理员角色保留已验证；`member` 无法从命令入口进入开发中心；三名独立真实账号矩阵仍纳入 ACCEPT-01 |
+| OBS-01 | 团队配置与执行可见 / 总仓、Weave | 进行中 | GooeyPi 已接入真实团队、角色、准确流程版本、节点关系和团队归属运行；真实 `design-studio` 可读，当前服务端无流程与运行，因此执行时间线和失败定位仍待 FLOW-01 产生真实运行后验收 |
 | FLOW-01 | 合同材料到跨员工待办 / 三仓 | 待开始 | 在 ENV-01、OBS-01 基础上按[销售场景](../scenarios/sales-contract-handoff/README.md)推进；业务写回并由独立身份读回才算通过 |
 | DEV-01 | 团队与应用修改、测试、发布 / 三仓 | 待开始 | 员工路径贯通后，完成团队草稿、两类调试、一次 Forge 变更与版本发布；员工实际用到新能力 |
 | ACCEPT-01 | MVP1 组合验收 / 总仓 | 待开始 | 按 MVP1 验证正常与异常路径、安装重开和版本证据；必需项全部通过后完成 |
@@ -34,7 +34,7 @@ ENG-01、PLAN-01 由本次“梳理会话接入与主架构”会话完成。SYN
 
 ## 未提交现场与组件偏差
 
-当前基线：分支 `codex/product-shell`，账号边界与 Forge 来源同步由提交 `06871965` 留档。桌面产品壳层仍有未提交改动；本轮只撤回其中账号权限接入部分并保留工作空间、开发入口等无关成果。完整清单以 `make status` 为准。
+当前基线：分支 `codex/product-shell`。GooeyPi 登录与权限边界已合入并推送；正在开发的 OBS-01 改动以当前工作树和 `make status` 为准。
 
 Weave 的回流结果为：
 
@@ -51,6 +51,6 @@ Weave 的回流结果为：
 
 ObjectStack HTTP OAuth 草稿 PR #19342 不再属于 MVP1 依赖。是否关闭外部草稿 PR 由对应上游仓库单独处理；当前总仓已移除补丁和相关配置。
 
-## 下一会话第一步
+## 当前推进点
 
-使用真实 Forge 应用密码在已启动的 GooeyPi 完成首次登录、重启读回、重复登录、角色调整不被覆盖和停用拒绝；通过后以 GooeyPi 分支替换远端旧 DSH 主线并清理旧工作树，再进入 OBS-01。
+用 FLOW-01 的合同团队产生第一条真实流程版本和运行，使开发中心从当前真实空状态进入可追踪的“版本—节点—运行”状态；随后完成两名员工待办和 Forge 独立读回。

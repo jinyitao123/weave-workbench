@@ -15,5 +15,6 @@
 - `task-notification`：Forge 或 Weave 向指定员工创建的待办。
 - `delivery-receipt`：业务结果、证据、用量和独立核验结果。
 - `execution-control`：重试、超时、额度、取消和未知结果核对。
+- `development-observation`：开发中心读取团队定义、准确版本和归属运行的只读投影。
 
 契约落地前必须补齐调用者、身份、输入、输出、错误、版本、幂等、取消和审计字段。

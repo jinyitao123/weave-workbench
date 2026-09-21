@@ -241,6 +241,7 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     requireString(password, 'password', { min: 1, max: 1024 }),
   ))
   handle('enterprise:sign-out', () => services.enterprise.signOut())
+  handle('enterprise:get-development-overview', () => services.enterprise.getDevelopmentOverview())
 
   handle('projects:list', (_event, harness) => projectsFor(requireHarness(harness)).list())
   handle('projects:list-files', (_event, root, harness) => projectsFor(requireHarness(harness)).listFiles(root))

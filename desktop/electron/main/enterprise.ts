@@ -1,4 +1,4 @@
-import type { EnterpriseEnvironmentStatus, EnterpriseRole, EnterpriseSession } from '../../src/types/api'
+import type { EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamObservation, EnterpriseWorkflowObservation } from '../../src/types/api'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 
 const DEFAULT_FORGE_URL = 'http://124.223.189.112'
@@ -39,6 +39,58 @@ function record(value: unknown): Record<string, unknown> | undefined {
 
 function role(value: unknown): EnterpriseRole | undefined {
   return value === 'member' || value === 'developer' || value === 'admin' ? value : undefined
+}
+
+function textValue(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value : undefined
+}
+
+function numberValue(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
+}
+
+function member(value: unknown): EnterpriseTeamMember | undefined {
+  const source = record(value)
+  const id = textValue(source?.id)
+  const name = textValue(source?.display_name) ?? textValue(source?.name)
+  if (!source || !id || !name) return undefined
+  return {
+    id, name, role: textValue(source.role) ?? 'worker', enabled: source.enabled !== false,
+    ...(textValue(source.configured_duty) ?? textValue(source.duty) ? { duty: textValue(source.configured_duty) ?? textValue(source.duty) } : {}),
+  }
+}
+
+function workflowGraph(value: unknown): Pick<EnterpriseWorkflowObservation, 'nodes' | 'edges'> {
+  const graph = record(value)
+  const nodes = Array.isArray(graph?.nodes) ? graph.nodes.flatMap((item) => {
+    const source = record(item)
+    const config = record(source?.config)
+    const id = textValue(source?.id)
+    const type = textValue(source?.type)
+    if (!id || !type) return []
+    return [{ id, type, ...(textValue(source?.label) ? { label: textValue(source?.label) } : {}), ...(textValue(config?.agent_id) ? { workerId: textValue(config?.agent_id) } : {}) }]
+  }) : []
+  const edges = Array.isArray(graph?.edges) ? graph.edges.flatMap((item) => {
+    const source = record(item)
+    const from = textValue(source?.from) ?? textValue(source?.source) ?? textValue(source?.from_node_id)
+    const to = textValue(source?.to) ?? textValue(source?.target) ?? textValue(source?.to_node_id)
+    if (!from || !to) return []
+    return [{ from, to, ...(textValue(source?.label) ? { label: textValue(source?.label) } : {}) }]
+  }) : []
+  return { nodes, edges }
+}
+
+function runObservation(value: unknown): EnterpriseRunObservation | undefined {
+  const source = record(value)
+  const id = textValue(source?.run_id)
+  const status = textValue(source?.status)
+  if (!id || !status) return undefined
+  return {
+    id, status, durationMs: Math.max(0, numberValue(source?.duration_ms) ?? 0), tokensIn: Math.max(0, numberValue(source?.tokens_in) ?? 0),
+    tokensOut: Math.max(0, numberValue(source?.tokens_out) ?? 0), costUsd: Math.max(0, numberValue(source?.cost_usd) ?? 0),
+    ...(textValue(source?.agent) ? { agent: textValue(source?.agent) } : {}), ...(textValue(source?.step) ? { step: textValue(source?.step) } : {}),
+    ...(textValue(source?.started_at) ? { startedAt: textValue(source?.started_at) } : {}),
+  }
 }
 
 /** Read-only environment visibility. Account binding is reintroduced through the MVP1 contract. */
@@ -168,6 +220,82 @@ export class EnterpriseService {
     this.expiresAt = 0
     if (this.sessionPath) await unlink(this.sessionPath).catch(() => undefined)
     return this.signedOut()
+  }
+
+  private async weaveJSON(path: string): Promise<unknown> {
+    const response = await this.fetch(new URL(path, this.weaveUrl), {
+      headers: await this.authorizationHeaders(), redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    })
+    if (response.status === 401 || response.status === 403) {
+      await response.body?.cancel()
+      await this.signOut()
+      throw new Error('登录已失效，请重新登录')
+    }
+    if (!response.ok) {
+      await response.body?.cancel()
+      throw new Error(`Weave 读取失败（${response.status}）`)
+    }
+    return response.json()
+  }
+
+  async getDevelopmentOverview(): Promise<EnterpriseDevelopmentOverview> {
+    const session = await this.getSession()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有开发中心权限')
+    const rawTeams = await this.weaveJSON('/v1/teams?include=roster,summary&status=all')
+    if (!Array.isArray(rawTeams)) throw new Error('Weave 返回了无法识别的团队列表')
+    const teams = await Promise.all(rawTeams.map(async (item): Promise<EnterpriseTeamObservation> => {
+      const source = record(item)
+      const team = record(source?.team)
+      const id = textValue(team?.id)
+      const name = textValue(team?.display_name) ?? textValue(team?.name)
+      const status = textValue(team?.status)
+      if (!id || !name || !status) throw new Error('Weave 返回了无法识别的团队')
+      const [rawWorkflows, rawRuns] = await Promise.all([
+        this.weaveJSON(`/v1/teams/${encodeURIComponent(id)}/workflows`),
+        this.weaveJSON(`/v1/runs?owning_team_id=${encodeURIComponent(id)}&limit=12`),
+      ])
+      const workflowList = record(rawWorkflows)
+      const workflows = await Promise.all((Array.isArray(workflowList?.workflows) ? workflowList.workflows : []).map(async (item): Promise<EnterpriseWorkflowObservation> => {
+        const row = record(item)
+        const workflowID = textValue(row?.id)
+        const workflowName = textValue(row?.name)
+        const workflowStatus = textValue(row?.status)
+        if (!workflowID || !workflowName || !workflowStatus) throw new Error('Weave 返回了无法识别的工作流')
+        const publishedVersion = numberValue(row?.published_version)
+        const draftVersion = numberValue(row?.draft_version)
+        const inspectedVersion = publishedVersion ?? draftVersion
+        let graph = { nodes: [], edges: [] } as Pick<EnterpriseWorkflowObservation, 'nodes' | 'edges'>
+        if (inspectedVersion) {
+          const rawVersion = record(await this.weaveJSON(`/v1/workflows/${encodeURIComponent(workflowID)}/versions/${inspectedVersion}`))
+          graph = workflowGraph(rawVersion?.graph_definition)
+        }
+        const trigger = record(row?.trigger_summary)
+        const latest = record(row?.latest_run)
+        return {
+          id: workflowID, name: workflowName, status: workflowStatus, ...graph,
+          ...(textValue(row?.description) ? { description: textValue(row?.description) } : {}),
+          ...(publishedVersion ? { publishedVersion } : {}), ...(draftVersion ? { draftVersion } : {}), ...(inspectedVersion ? { inspectedVersion } : {}),
+          ...(textValue(trigger?.type) ? { triggerType: textValue(trigger?.type) } : {}), ...(textValue(latest?.run_id) ? { latestRunId: textValue(latest?.run_id) } : {}),
+        }
+      }))
+      const runList = record(rawRuns)
+      const summary = record(source?.summary)
+      const health = record(summary?.health)
+      return {
+        id, name, status, workflows,
+        workers: (Array.isArray(source?.workers) ? source.workers : []).flatMap((value) => member(value) ?? []),
+        runs: (Array.isArray(runList?.runs) ? runList.runs : []).flatMap((value) => runObservation(value) ?? []),
+        ...(textValue(team?.objective) ? { objective: textValue(team?.objective) } : {}), ...(textValue(team?.evaluation) ? { evaluation: textValue(team?.evaluation) } : {}),
+        ...(member(source?.lead) ? { lead: member(source?.lead) } : {}),
+        ...(summary ? { summary: {
+          workerCount: numberValue(summary.worker_count) ?? 0, activeWorkflowCount: numberValue(summary.active_workflow_count) ?? 0,
+          publishedWorkflowCount: numberValue(summary.published_workflow_count) ?? 0, ...(textValue(health?.conclusion) ? { health: textValue(health?.conclusion) } : {}),
+          reasons: Array.isArray(health?.reason_codes) ? health.reason_codes.filter((value): value is string => typeof value === 'string') : [],
+        } } : {}),
+      }
+    }))
+    return { version: '1', loadedAt: new Date().toISOString(), teams }
   }
 
   async getStatus(): Promise<EnterpriseEnvironmentStatus[]> {

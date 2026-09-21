@@ -35,7 +35,7 @@ import { useStableCallback } from '@/hooks/useStableCallback'
 import { useToast } from '@/hooks/useToast'
 import { useWorkspaceActions } from '@/hooks/useWorkspaceActions'
 import { useWorkspaceRuntime } from '@/hooks/useWorkspaceRuntime'
-import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseEnvironmentStatus, type EnterpriseSession, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceView } from '@/types/api'
+import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseDevelopmentOverview, type EnterpriseEnvironmentStatus, type EnterpriseSession, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceView } from '@/types/api'
 
 const Transcript = lazy(() => import('@/components/Transcript').then((module) => ({ default: module.Transcript })))
 const Inspector = lazy(() => import('@/components/Inspector').then((module) => ({ default: module.Inspector })))
@@ -116,6 +116,9 @@ export default function App() {
   const [submitting, setSubmitting] = useState(false)
   const [enterpriseStatuses, setEnterpriseStatuses] = useState<EnterpriseEnvironmentStatus[]>([])
   const [enterpriseStatusLoading, setEnterpriseStatusLoading] = useState(false)
+  const [developmentOverview, setDevelopmentOverview] = useState<EnterpriseDevelopmentOverview>()
+  const [developmentLoading, setDevelopmentLoading] = useState(false)
+  const [developmentError, setDevelopmentError] = useState('')
   const [enterpriseSession, setEnterpriseSession] = useState<EnterpriseSession | undefined>(() => enterpriseBridge ? undefined : ({
     version: '1', status: 'signed-in', environment: { origin: 'http://localhost', secure: false }, storage: 'session-only',
     identitySource: { kind: 'forge-account', issuer: 'http://localhost' }, user: { id: 'preview', name: 'Preview', email: 'preview@example.test' },
@@ -150,6 +153,7 @@ export default function App() {
   }, [enterpriseBridge])
   const signOut = useCallback(async () => {
     if (!enterpriseBridge) return
+    setDevelopmentOverview(undefined)
     setEnterpriseSession(await enterpriseBridge.signOut())
   }, [enterpriseBridge])
   // The shell handlers answer with false instead of rejecting, so the refusal
@@ -750,13 +754,25 @@ export default function App() {
   }, [bridge, busy, externalSessionRunning, queuedMessages, sendPrompt, submitting])
 
   const canDevelop = enterpriseSession?.role === 'developer' || enterpriseSession?.role === 'admin'
+  const refreshDevelopmentOverview = useCallback(() => {
+    if (!enterpriseBridge || developmentLoading || !canDevelop) return
+    setDevelopmentLoading(true)
+    setDevelopmentError('')
+    void enterpriseBridge.getDevelopmentOverview()
+      .then(setDevelopmentOverview)
+      .catch((error) => { setDevelopmentError(errorMessage(error)); reportError(error) })
+      .finally(() => setDevelopmentLoading(false))
+  }, [canDevelop, developmentLoading, enterpriseBridge, reportError])
   useEffect(() => {
     if (view === 'development' && !canDevelop) setView('session')
   }, [canDevelop, view])
+  useEffect(() => {
+    if (view === 'development' && canDevelop && !developmentOverview && !developmentLoading) refreshDevelopmentOverview()
+  }, [canDevelop, developmentLoading, developmentOverview, refreshDevelopmentOverview, view])
 
   const page = view === 'projects' ? <ProjectsPage projects={projects} sortMode={settingsState.settings.projectSortMode} onAdd={() => void addProject()} onOpen={selectProject} onRemove={(project) => void removeProject(project)} onTogglePin={(project) => void togglePinProject(project)} />
     : view === 'activity' ? <ActivityPage sessions={sessions} projects={projects} clearedActivity={clearedActivity} onOpen={selectSession} onClear={clearActivity} />
-    : view === 'development' ? <DevelopmentPage session={enterpriseSession} environments={enterpriseStatuses} loading={enterpriseStatusLoading} onRefresh={refreshEnterpriseStatus} onSignOut={() => void signOut()} onOpenForge={openForge} onNavigate={navigate} onAddProject={() => void addProject()} />
+    : view === 'development' ? <DevelopmentPage session={enterpriseSession} environments={enterpriseStatuses} overview={developmentOverview} loading={enterpriseStatusLoading || developmentLoading} error={developmentError} onRefresh={() => { refreshEnterpriseStatus(); refreshDevelopmentOverview() }} onSignOut={() => void signOut()} onOpenForge={openForge} onNavigate={navigate} onAddProject={() => void addProject()} />
     : view === 'scheduled' ? <ScheduledPage harness={activeHarness} schedules={schedules} nativeHeartbeats={activeHarness === 'prime' ? heartbeats : []} projects={projects} sessions={sessions} models={provider.catalog?.models ?? EMPTY_MODELS} lastSelectedModel={provider.model} error={scheduleError} initialProjectId={activeProject?.id} initialSessionId={activeSession?.id} selectedScheduleId={scheduleFocusId} onCreate={createSchedule} onUpdate={updateSchedule} onPause={(id: string) => mutateSchedule(() => bridge!.schedules.pause(id))} onResume={(id: string) => mutateSchedule(() => bridge!.schedules.resume(id))} onDelete={(id: string) => mutateSchedule(() => bridge!.schedules.delete(id))} onRunNow={(id: string) => mutateSchedule(() => bridge!.schedules.runNow(id))} onPreview={async (timing: ScheduleTiming) => bridge ? bridge.schedules.preview(timing, 3) : { timing, occurrences: [] }} onOpenSession={openScheduledSession} onManageHeartbeat={manageHeartbeat} />
     : view === 'plugins' ? <PluginsPage harness={activeHarness} skills={pluginSkills.skills} warnings={pluginSkills.warnings} loading={pluginSkills.loading} activeProjectPath={activeProject?.primaryFolder} askUserEnabled={settingsState.settings.askUserEnabled} onSetAskUserEnabled={(enabled) => settingsState.updateSettings({ askUserEnabled: enabled })} browserEnabled={settingsState.settings.browserEnabled} onSetBrowserEnabled={(enabled) => settingsState.updateSettings({ browserEnabled: enabled })} computerUseEnabled={settingsState.settings.computerUseEnabled} onSetComputerUseEnabled={(enabled) => settingsState.updateSettings({ computerUseEnabled: enabled })} onOpenExternal={openExternal} onRefresh={pluginSkills.refresh} onInstall={installSkill} onInstallExtension={installExtension} onSetMcpSupport={setMcpSupport} onConnectMcp={connectMcp} onSetMcpEnabled={setMcpEnabled} onMutateCapability={mutateCapability} />
     : view === 'settings' ? <SettingsPage initialSection={settingsSectionRequest.section} initialSectionRequestId={settingsSectionRequest.id} settings={settingsState.settings} meta={meta} providerCatalog={provider.catalog} voice={bridge?.voice ?? null} pets={bridge?.pets ?? null} onClose={() => navigate('session')} onUpdate={settingsState.updateSettings} onRefreshHarnesses={refreshDetectedHarnesses} onRefreshProviders={() => provider.refresh(true)} onSaveProviderApiKey={provider.saveApiKey} onLogoutProvider={provider.logout} onSetProviderEnabled={provider.setEnabled} onSetAllProvidersEnabled={provider.setAllEnabled} onSetAllProvidersDisabled={provider.setAllDisabled} onSetModelEnabled={provider.setModelEnabled} onStartProviderOAuth={provider.startOAuth} onResetBrowser={async () => {

@@ -62,6 +62,59 @@ export interface EnterpriseSession {
   message?: string
 }
 
+export interface EnterpriseTeamMember {
+  id: string
+  name: string
+  role: string
+  duty?: string
+  enabled: boolean
+}
+
+export interface EnterpriseWorkflowObservation {
+  id: string
+  name: string
+  description?: string
+  status: string
+  publishedVersion?: number
+  draftVersion?: number
+  inspectedVersion?: number
+  triggerType?: string
+  latestRunId?: string
+  nodes: Array<{ id: string; type: string; label?: string; workerId?: string }>
+  edges: Array<{ from: string; to: string; label?: string }>
+}
+
+export interface EnterpriseRunObservation {
+  id: string
+  status: string
+  agent?: string
+  step?: string
+  startedAt?: string
+  durationMs: number
+  tokensIn: number
+  tokensOut: number
+  costUsd: number
+}
+
+export interface EnterpriseTeamObservation {
+  id: string
+  name: string
+  objective?: string
+  status: string
+  evaluation?: string
+  lead?: EnterpriseTeamMember
+  workers: EnterpriseTeamMember[]
+  workflows: EnterpriseWorkflowObservation[]
+  runs: EnterpriseRunObservation[]
+  summary?: { workerCount: number; activeWorkflowCount: number; publishedWorkflowCount: number; health?: string; reasons: string[] }
+}
+
+export interface EnterpriseDevelopmentOverview {
+  version: '1'
+  loadedAt: string
+  teams: EnterpriseTeamObservation[]
+}
+
 export type ApplicationMenuName = 'file' | 'edit' | 'view' | 'window' | 'help'
 
 export type AppUpdatePhase = 'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'not-available' | 'error' | 'unsupported'
@@ -793,6 +846,7 @@ export interface PrimeWorkApi {
     getSession(): Promise<EnterpriseSession>
     signIn(email: string, password: string): Promise<EnterpriseSession>
     signOut(): Promise<EnterpriseSession>
+    getDevelopmentOverview(): Promise<EnterpriseDevelopmentOverview>
   }
   projects: {
     list(harness?: HarnessId): Promise<ProjectRecord[]>
