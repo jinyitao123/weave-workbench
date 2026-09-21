@@ -16,5 +16,6 @@
 - `delivery-receipt`：业务结果、证据、用量和独立核验结果。
 - `execution-control`：重试、超时、额度、取消和未知结果核对。
 - `development-observation`：开发中心读取团队定义、准确版本和归属运行的只读投影。
+- `team-member-config-draft`：开发中心按团队成员保存、刷新后可读回且不影响正式运行的配置草稿。
 
 契约落地前必须补齐调用者、身份、输入、输出、错误、版本、幂等、取消和审计字段。
