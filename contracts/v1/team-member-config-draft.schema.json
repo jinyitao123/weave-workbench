@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/team-member-config-draft.schema.json",
+  "title": "Weave Team Member Configuration Draft",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "teamId", "agentId", "agentName", "baseAgentVersion", "revision", "configuration", "relationship", "updatedAt"],
+  "properties": {
+    "version": { "const": "1" },
+    "teamId": { "type": "string", "minLength": 1 },
+    "agentId": { "type": "string", "minLength": 1 },
+    "agentName": { "type": "string", "minLength": 1 },
+    "baseAgentVersion": { "type": "integer", "minimum": 1 },
+    "revision": { "type": "integer", "minimum": 0 },
+    "configuration": { "type": "object" },
+    "relationship": { "type": "object" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "updatedBy": { "type": "string" }
+  }
+}
