@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://workbench.inocube.local/contracts/v1/enterprise-session.schema.json",
   "title": "Workbench Enterprise Session Projection",
-  "description": "The bounded Forge identity and Weave role projection exposed to the desktop after product sign-in. Passwords, cookies, and bearer tokens are never part of this contract.",
+  "description": "The bounded Forge identity and verified product-permission projection exposed to the desktop after sign-in. Passwords, cookies, and bearer tokens are never part of this contract.",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "status", "environment", "storage"],
@@ -48,14 +48,19 @@
         "name": { "type": "string", "minLength": 1, "maxLength": 160 }
       }
     },
-    "role": { "enum": ["member", "developer", "admin"] },
+    "permissions": {
+      "type": "array",
+      "items": { "enum": ["teams:use", "teams:develop", "teams:admin"] },
+      "minItems": 1,
+      "uniqueItems": true
+    },
     "binding": { "$ref": "./account-binding.schema.json" },
     "message": { "type": "string", "maxLength": 500 }
   },
   "allOf": [
     {
       "if": { "properties": { "status": { "const": "signed-in" } } },
-      "then": { "required": ["user", "identitySource", "role", "binding"] }
+      "then": { "required": ["user", "identitySource", "permissions"] }
     }
   ]
 }

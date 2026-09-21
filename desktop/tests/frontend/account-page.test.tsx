@@ -58,7 +58,7 @@ describe('GooeyPi enterprise account entry', () => {
   })
 
   it('keeps signed-in account management in settings without another login form', async () => {
-    await act(async () => root.render(<EnterpriseAccountSettings session={{ version: '1', status: 'signed-in', storage: 'encrypted', environment: { origin: 'http://forge.example.test', secure: false }, user: { id: 'employee', name: 'Employee', email: 'employee@example.test' }, organization: { id: 'default', name: 'Default' }, role: 'member' }} onSignIn={async () => undefined} onSignOut={async () => undefined} />))
+    await act(async () => root.render(<EnterpriseAccountSettings session={{ version: '1', status: 'signed-in', storage: 'encrypted', environment: { origin: 'http://forge.example.test', secure: false }, user: { id: 'employee', name: 'Employee', email: 'employee@example.test' }, organization: { id: 'default', name: 'Default' }, permissions: ['teams:use'] }} onSignIn={async () => undefined} onSignOut={async () => undefined} />))
     expect(container.textContent).toContain('Employee')
     expect(container.textContent).toContain('退出登录')
     expect(container.querySelector('form')).toBeNull()

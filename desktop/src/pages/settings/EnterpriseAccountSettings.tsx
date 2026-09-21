@@ -39,7 +39,7 @@ export function EnterpriseAccountSettings({ session, onSignIn, onSignOut }: Ente
     <section className="settings-group">
       <h2>Forge 与 Weave</h2>
       {session?.status === 'signed-in' && session.user ? <div className="settings-row enterprise-account-summary">
-        <span><strong>{session.user.name}</strong><small>{session.user.email} · {session.role} · {session.organization?.name ?? session.organization?.id}</small></span>
+        <span><strong>{session.user.name}</strong><small>{session.user.email} · {session.organization?.name ?? session.organization?.id}</small></span>
         <button type="button" className="button" disabled={busy} onClick={() => void signOut()}>{busy ? '正在退出…' : '退出登录'}</button>
       </div> : <form className="enterprise-account-form" onSubmit={(event) => void submit(event)}>
         <label><span>账号</span><input type="email" name="email" value={email} autoComplete="username" placeholder="name@company.com" onChange={(event) => setEmail(event.target.value)} /></label>

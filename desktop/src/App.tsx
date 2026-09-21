@@ -127,7 +127,7 @@ export default function App() {
   const [enterpriseSession, setEnterpriseSession] = useState<EnterpriseSession | undefined>(() => enterpriseBridge ? undefined : ({
     version: '1', status: 'signed-in', environment: { origin: 'http://localhost', secure: false }, storage: 'session-only',
     identitySource: { kind: 'forge-account', issuer: 'http://localhost' }, user: { id: 'preview', weaveUserId: 'preview-weave', name: 'Preview', email: 'preview@example.test' },
-    organization: { id: 'preview', name: 'Preview' }, role: 'admin',
+    organization: { id: 'preview', name: 'Preview' }, permissions: ['teams:use', 'teams:develop', 'teams:admin'],
   }))
   const { toast, setToast } = useToast()
   const [changesCardDismissed, setChangesCardDismissed] = useState(false)
@@ -780,7 +780,7 @@ export default function App() {
       .finally(() => { queuedFlushRef.current = false })
   }, [bridge, busy, externalSessionRunning, queuedMessages, sendPrompt, submitting])
 
-  const canDevelop = enterpriseSession?.role === 'developer' || enterpriseSession?.role === 'admin'
+  const canDevelop = enterpriseSession?.permissions?.includes('teams:develop') === true
   const refreshDevelopmentOverview = useCallback(() => {
     if (!enterpriseBridge || developmentLoading || !canDevelop) return
     setDevelopmentLoading(true)
