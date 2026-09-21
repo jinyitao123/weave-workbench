@@ -28,7 +28,7 @@ Forge 的开发登录身份是 `admin@inoforge.local`。密码、令牌和模型
 
 2026-09-21 当前 Mac 的网络代理会截断公网 `8080` 的 HTTP 请求；服务器本机的 Weave 健康检查正常。桌面联调临时使用 SSH 转发 `127.0.0.1:18080 → 服务器 127.0.0.1:8080`，并通过 `WORKBENCH_WEAVE_URL=http://127.0.0.1:18080` 启动。该设置只属于当前开发机，不是客户部署配置。
 
-当前 Weave 联调镜像为 `weave-platform:mvp1-5aeec0cd`，源码提交为 `5aeec0cd6463373d85bad0acd07ee0423b9ed2e0`；Forge 联调镜像为 `inoforge-app:sha-0e0962c28e19`。两项服务沿用现有数据卷，没有清理 Forge 或 Weave 数据。健康检查和 Forge 权限驱动的双账号桌面入口已经通过；组织尚未接入可供 Loom 团队使用的模型。
+当前 Weave 联调镜像为 `weave-platform:mvp1-cddc417e`，源码提交为 `cddc417e32383cb4872758184dc80fa10de36952`；Forge 联调镜像为 `inoforge-app:sha-0e0962c28e19`。两项服务沿用现有数据卷，没有清理 Forge 或 Weave 数据。健康检查和 Forge 权限驱动的双账号桌面入口已经通过。当前开发机通过临时反向转发向组织模型目录提供 `qwen3:0.6b`，仅用于本轮串联调试，不是客户部署方案。
 
 ## 历史观察（2026-09-20 首轮桌面验收）
 
