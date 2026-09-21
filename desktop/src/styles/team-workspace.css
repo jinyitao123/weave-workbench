@@ -114,7 +114,10 @@
 .workflow-switcher { display: flex; gap: 5px; margin: 8px 0 2px; overflow-x: auto; }
 .workflow-switcher button { flex-shrink: 0; padding: 5px 8px; border-radius: 6px; color: var(--text-tertiary); background: var(--surface-subtle); font-size: 9.5px; }
 .workflow-switcher button.is-active { color: var(--prime); background: var(--prime-soft); }
-.workflow-graph-scroll { min-height: 280px; overflow: auto; padding: 14px 8px 20px; }
+.workflow-graph-scroll { min-height: 280px; overflow: auto; padding: 14px 8px 20px; cursor: grab; overscroll-behavior: contain; touch-action: none; }
+.workflow-graph-scroll:focus-visible { outline: 1px solid var(--prime); outline-offset: -1px; }
+.workflow-graph-scroll.is-panning { cursor: grabbing; user-select: none; }
+.workflow-graph-scroll .workflow-graph__node { cursor: pointer; }
 .workflow-graph { position: relative; margin: 0 auto; }
 .workflow-graph > svg { position: absolute; inset: 0; overflow: visible; }
 .workflow-graph > svg path { fill: none; stroke: var(--border-strong); stroke-width: 1.2; }

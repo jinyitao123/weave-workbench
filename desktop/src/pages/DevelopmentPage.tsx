@@ -1,6 +1,6 @@
 import '@/styles/team-workspace.css'
 import { Archive, Bot, CheckCircle2, ChevronDown, Code2, ExternalLink, GitFork, Pencil, Plus, RefreshCw, Save, Search, Trash2, UserMinus, UserPlus, UsersRound, Workflow } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import { Modal, ProductField, ProductTextArea } from '@/components/ui'
 import { configurationLabel, MemberInspector } from '@/components/development/MemberInspector'
 import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation } from '@/types/api'
@@ -104,6 +104,8 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
   const [stepRemoveOpen, setStepRemoveOpen] = useState(false)
   const [parallelOpen, setParallelOpen] = useState(false)
   const [archiveOpen, setArchiveOpen] = useState(false)
+  const [workflowPanning, setWorkflowPanning] = useState(false)
+  const workflowPanRef = useRef<{ pointerId: number; x: number; y: number; left: number; top: number } | undefined>(undefined)
   // App passes inline callbacks. Parent refreshes must never reset an edited draft.
   const loadRef = useRef(onLoadMemberDraft)
   loadRef.current = onLoadMemberDraft
@@ -377,6 +379,34 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
     {canOpen ? <button type="button" className="development-environment-open" aria-label="打开 Forge" title="打开 Forge" disabled={!environment?.available} onClick={() => environment && onOpenForge(environment.url)}><ExternalLink size={13}/></button> : null}
   </div>
 
+  const startWorkflowPan = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || (event.target as Element).closest('button')) return
+    const viewport = event.currentTarget
+    workflowPanRef.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop }
+    viewport.setPointerCapture(event.pointerId)
+    setWorkflowPanning(true)
+    event.preventDefault()
+  }
+  const moveWorkflowPan = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const origin = workflowPanRef.current
+    if (!origin || origin.pointerId !== event.pointerId) return
+    event.currentTarget.scrollLeft = origin.left - (event.clientX - origin.x)
+    event.currentTarget.scrollTop = origin.top - (event.clientY - origin.y)
+  }
+  const stopWorkflowPan = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (workflowPanRef.current?.pointerId !== event.pointerId) return
+    workflowPanRef.current = undefined
+    setWorkflowPanning(false)
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
+  }
+  const panWorkflowWithKeyboard = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const amount = 72
+    const delta = event.key === 'ArrowLeft' ? [-amount, 0] : event.key === 'ArrowRight' ? [amount, 0] : event.key === 'ArrowUp' ? [0, -amount] : event.key === 'ArrowDown' ? [0, amount] : undefined
+    if (!delta) return
+    event.currentTarget.scrollBy({ left: delta[0], top: delta[1], behavior: 'smooth' })
+    event.preventDefault()
+  }
+
   return <div className="page development-shell"><div className="page-container development-page">
     <div className="development-toolbar">
       <nav className="development-tabs" aria-label="开发中心分类">
@@ -414,7 +444,7 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
             <div className="workflow-stage__toolbar"><span>{selectedWorkflow ? configurationLabel(selectedWorkflow.name, '未命名流程') : '工作流程'}</span><div>{selectedWorkflow?.draftVersion ? <><button type="button" disabled={workflowBusy || selectedTeam.workers.filter((member) => member.enabled).length < 2} onClick={() => setParallelOpen(true)}><GitFork size={12}/>并行协作</button><button type="button" disabled={workflowBusy || validating} onClick={() => void validateWorkflow()}><CheckCircle2 size={12}/>{validating ? '正在检查' : '检查'}</button><button type="button" className="is-primary" disabled={workflowBusy} onClick={() => void publishWorkflow()}>{workflowBusy ? '处理中' : '发布'}</button><button type="button" aria-label="归档流程" title="归档流程" disabled={workflowBusy} onClick={() => setArchiveOpen(true)}><Archive size={12}/></button></> : selectedWorkflow?.publishedVersion ? <button type="button" className="is-primary" disabled={workflowBusy} onClick={() => void createWorkflowDraft()}><Pencil size={12}/>{workflowBusy ? '正在创建' : '编辑新版本'}</button> : null}<button type="button" onClick={openFlowCreate}><Plus size={12}/>新建流程</button></div></div>
             {currentValidation ? <div className={`workflow-validation ${currentValidation.valid ? 'is-valid' : 'is-invalid'}`} role="status">{currentValidation.valid ? '草稿通过检查' : `${currentValidation.issues.length} 项配置需要调整`}</div> : validationError ? <div className="workflow-validation is-invalid" role="alert">{validationError}</div> : null}
             {selectedTeam.workflows.length > 1 ? <div className="workflow-switcher">{selectedTeam.workflows.map((workflow) => <button type="button" key={workflow.id} className={workflow.id === selectedWorkflow?.id ? 'is-active' : ''} onClick={() => setFlowSelection({ workflow: workflow.id, node: '' })}>{configurationLabel(workflow.name, '未命名流程')}</button>)}</div> : null}
-            {selectedWorkflow && graphLayout ? <div className="workflow-graph-scroll"><div className="workflow-graph" style={{ width: graphLayout.width, height: graphLayout.height }}>
+            {selectedWorkflow && graphLayout ? <div className={`workflow-graph-scroll ${workflowPanning ? 'is-panning' : ''}`} aria-label="流程画布" tabIndex={0} onPointerDown={startWorkflowPan} onPointerMove={moveWorkflowPan} onPointerUp={stopWorkflowPan} onPointerCancel={stopWorkflowPan} onKeyDown={panWorkflowWithKeyboard}><div className="workflow-graph" style={{ width: graphLayout.width, height: graphLayout.height }}>
               <svg aria-hidden="true" width={graphLayout.width} height={graphLayout.height}><defs><marker id="workflow-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8Z"/></marker></defs>{selectedWorkflow.edges.map((edge, index) => {
                 const from = graphLayout.positions.get(edge.from), to = graphLayout.positions.get(edge.to)
                 if (!from || !to) return null
