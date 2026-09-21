@@ -125,6 +125,7 @@ export interface EnterpriseDevelopmentOverview {
   loadedAt: string
   teams: EnterpriseTeamObservation[]
   runtimes: Array<{ id: string; name: string; engines: string[]; status: string; online: boolean }>
+  models: string[]
 }
 
 export interface EnterpriseCreateTeamInput {
