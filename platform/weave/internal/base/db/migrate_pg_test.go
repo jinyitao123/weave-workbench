@@ -41,6 +41,8 @@ func TestMergedMigrationsFreshAndExistingDatabase(t *testing.T) {
 			if err := Migrate(ctx, pool); err != nil {
 				t.Fatal(err)
 			}
+			// Both branches' tables must exist; retaining a duplicate version would
+			// otherwise make one branch disappear from the version-only ledger.
 			for _, table := range []string{"weave_capability_definitions", "weave_capability_invocations", "weave_game_decision_bindings", "weave_game_decision_admissions", "weave_game_decision_cancellations"} {
 				var exists bool
 				if err := pool.QueryRow(ctx, `SELECT to_regclass($1) IS NOT NULL`, table).Scan(&exists); err != nil || !exists {
