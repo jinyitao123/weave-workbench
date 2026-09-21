@@ -105,7 +105,7 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
   const [parallelOpen, setParallelOpen] = useState(false)
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [workflowPanning, setWorkflowPanning] = useState(false)
-  const workflowPanRef = useRef<{ pointerId: number; x: number; y: number; left: number; top: number } | undefined>(undefined)
+  const workflowPanRef = useRef<{ pointerId: number; x: number; left: number } | undefined>(undefined)
   // App passes inline callbacks. Parent refreshes must never reset an edited draft.
   const loadRef = useRef(onLoadMemberDraft)
   loadRef.current = onLoadMemberDraft
@@ -382,7 +382,7 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
   const startWorkflowPan = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 || (event.target as Element).closest('button')) return
     const viewport = event.currentTarget
-    workflowPanRef.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop }
+    workflowPanRef.current = { pointerId: event.pointerId, x: event.clientX, left: viewport.scrollLeft }
     viewport.setPointerCapture(event.pointerId)
     setWorkflowPanning(true)
     event.preventDefault()
@@ -391,7 +391,6 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
     const origin = workflowPanRef.current
     if (!origin || origin.pointerId !== event.pointerId) return
     event.currentTarget.scrollLeft = origin.left - (event.clientX - origin.x)
-    event.currentTarget.scrollTop = origin.top - (event.clientY - origin.y)
   }
   const stopWorkflowPan = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (workflowPanRef.current?.pointerId !== event.pointerId) return
@@ -401,9 +400,9 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
   }
   const panWorkflowWithKeyboard = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     const amount = 72
-    const delta = event.key === 'ArrowLeft' ? [-amount, 0] : event.key === 'ArrowRight' ? [amount, 0] : event.key === 'ArrowUp' ? [0, -amount] : event.key === 'ArrowDown' ? [0, amount] : undefined
-    if (!delta) return
-    event.currentTarget.scrollBy({ left: delta[0], top: delta[1], behavior: 'smooth' })
+    const delta = event.key === 'ArrowLeft' ? -amount : event.key === 'ArrowRight' ? amount : undefined
+    if (delta === undefined) return
+    event.currentTarget.scrollBy({ left: delta, behavior: 'smooth' })
     event.preventDefault()
   }
 
