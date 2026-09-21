@@ -1,4 +1,4 @@
-import type { EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberConfigDraft, EnterpriseTeamObservation, EnterpriseWorkflowObservation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
+import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseWorkflowObservation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 
@@ -54,31 +54,42 @@ function stringList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
 }
 
+function memberAgentConfiguration(value: Record<string, unknown>, agentName: string): EnterpriseTeamMemberAgentConfiguration {
+  const outputSchema = value.output_schema === undefined || value.output_schema === null ? '' : JSON.stringify(value.output_schema, null, 2)
+  return {
+    displayName: textValue(value.display_name) ?? agentName, role: textValue(value.role) ?? 'worker',
+    engine: textValue(value.engine) ?? 'loom', runtimeId: textValue(value.runtime_id) ?? '', model: textValue(value.model) ?? '',
+    systemPrompt: typeof value.system_prompt === 'string' ? value.system_prompt : '', skillNames: stringList(value.skill_names),
+    mcpServerIds: stringList(value.mcp_server_ids), permissionAllow: stringList(value.permission_allow),
+    permissionAsk: stringList(value.permission_ask), permissionDeny: stringList(value.permission_deny),
+    memoryEnabled: value.memory_enabled === true, memoryScope: textValue(value.memory_scope) ?? 'tenant',
+    maxTokens: numberValue(value.max_tokens) ?? 0, maxOutputTokens: numberValue(value.max_output_tokens) ?? 0,
+    stepBudget: numberValue(value.step_budget) ?? 0, maxCostUsd: numberValue(value.max_cost_usd) ?? 0, outputSchema,
+  }
+}
+
+function memberRelationshipConfiguration(value: Record<string, unknown>): EnterpriseTeamMemberRelationshipConfiguration {
+  return {
+    duty: typeof value.duty === 'string' ? value.duty : '', whenToUse: typeof value.when_to_use === 'string' ? value.when_to_use : '',
+    contextInstruction: typeof value.context_instruction === 'string' ? value.context_instruction : '', allowedKinds: stringList(value.allowed_kinds),
+    defaultKind: typeof value.default_kind === 'string' ? value.default_kind : '', resultRequirement: typeof value.result_requirement === 'string' ? value.result_requirement : '',
+    enabled: value.enabled !== false,
+  }
+}
+
 function teamMemberConfigDraft(value: unknown): EnterpriseTeamMemberConfigDraft {
   const source = record(value), configuration = record(source?.configuration), relationship = record(source?.relationship)
+  const publishedConfiguration = record(source?.published_configuration), publishedRelationship = record(source?.published_relationship)
   const teamId = textValue(source?.team_id), agentId = textValue(source?.agent_id), agentName = textValue(source?.agent_name)
   const baseAgentVersion = numberValue(source?.base_agent_version), revision = numberValue(source?.revision), updatedAt = textValue(source?.updated_at)
   if (!source || !configuration || !relationship || !teamId || !agentId || !agentName || !baseAgentVersion || revision === undefined || !updatedAt) throw new Error('Weave 返回了无法识别的团队成员配置')
-  const outputSchema = configuration.output_schema === undefined || configuration.output_schema === null ? '' : JSON.stringify(configuration.output_schema, null, 2)
   return {
     version: '1', teamId, agentId, agentName, baseAgentVersion, revision, updatedAt,
     ...(textValue(source.updated_by) ? { updatedBy: textValue(source.updated_by) } : {}),
-    configuration: {
-      displayName: textValue(configuration.display_name) ?? agentName, role: textValue(configuration.role) ?? 'worker',
-      engine: textValue(configuration.engine) ?? 'loom', runtimeId: textValue(configuration.runtime_id) ?? '', model: textValue(configuration.model) ?? '',
-      systemPrompt: typeof configuration.system_prompt === 'string' ? configuration.system_prompt : '', skillNames: stringList(configuration.skill_names),
-      mcpServerIds: stringList(configuration.mcp_server_ids), permissionAllow: stringList(configuration.permission_allow),
-      permissionAsk: stringList(configuration.permission_ask), permissionDeny: stringList(configuration.permission_deny),
-      memoryEnabled: configuration.memory_enabled === true, memoryScope: textValue(configuration.memory_scope) ?? 'tenant',
-      maxTokens: numberValue(configuration.max_tokens) ?? 0, maxOutputTokens: numberValue(configuration.max_output_tokens) ?? 0,
-      stepBudget: numberValue(configuration.step_budget) ?? 0, maxCostUsd: numberValue(configuration.max_cost_usd) ?? 0, outputSchema,
-    },
-    relationship: {
-      duty: typeof relationship.duty === 'string' ? relationship.duty : '', whenToUse: typeof relationship.when_to_use === 'string' ? relationship.when_to_use : '',
-      contextInstruction: typeof relationship.context_instruction === 'string' ? relationship.context_instruction : '', allowedKinds: stringList(relationship.allowed_kinds),
-      defaultKind: typeof relationship.default_kind === 'string' ? relationship.default_kind : '', resultRequirement: typeof relationship.result_requirement === 'string' ? relationship.result_requirement : '',
-      enabled: relationship.enabled !== false,
-    },
+    ...(publishedConfiguration ? { publishedConfiguration: memberAgentConfiguration(publishedConfiguration, agentName) } : {}),
+    ...(publishedRelationship ? { publishedRelationship: memberRelationshipConfiguration(publishedRelationship) } : {}),
+    configuration: memberAgentConfiguration(configuration, agentName),
+    relationship: memberRelationshipConfiguration(relationship),
   }
 }
 
@@ -338,6 +349,53 @@ export class EnterpriseService {
     return { version: '1', loadedAt: new Date().toISOString(), teams, runtimes }
   }
 
+  async createDevelopmentTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult> {
+    const name = input?.name?.trim()
+    const objective = input?.objective?.trim()
+    if (input?.version !== '1' || !name || name.length > 80 || !objective || objective.length > 2_000) throw new Error('请填写团队名称和目标')
+    const session = await this.getSession()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有新建团队权限')
+
+    const suffix = randomUUID()
+    const leadName = `team-${suffix}-lead`
+    const workerName = `team-${suffix}-worker`
+    const createdAgents: string[] = []
+    try {
+      const lead = record((await this.weaveRequest('/v1/agents', 'POST', {
+        name: leadName, display_name: '团队负责人', role: 'avatar', engine: 'loom', graph_type: 'standard',
+        spec: { system_prompt: `负责理解“${name}”的目标，组织协作并汇总可核验结果。` },
+      })).body)
+      const leadID = textValue(lead?.id)
+      if (!leadID) throw new Error('Weave 没有返回团队负责人')
+      createdAgents.push(leadName)
+
+      const worker = record((await this.weaveRequest('/v1/agents', 'POST', {
+        name: workerName, display_name: '执行成员', role: 'worker', engine: 'loom', graph_type: 'standard',
+        spec: { system_prompt: `围绕“${objective}”完成分配的工作，并返回可核验结果。` },
+      })).body)
+      const workerID = textValue(worker?.id)
+      if (!workerID) throw new Error('Weave 没有返回执行成员')
+      createdAgents.push(workerName)
+
+      const result = record((await this.weaveRequest('/v1/teams', 'POST', {
+        name: `team-${suffix}`, display_name: name, objective, primary_scenario: objective,
+        success_criteria: '完成团队目标并提供可核验结果', lead_avatar_id: leadID,
+        workers: [{
+          worker_agent_id: workerID, duty: '完成负责人分配的工作', when_to_use: '负责人需要执行具体任务时',
+          context_instruction: '保留任务上下文与来源，清楚说明完成内容和未完成项。',
+          allowed_kinds: ['consult', 'dispatch', 'handoff'], default_kind: 'dispatch', result_requirement: '返回可核验结果',
+        }],
+      })).body)
+      const id = textValue(result?.id)
+      if (!id) throw new Error('Weave 没有返回新团队')
+      return { id, name: textValue(result?.display_name) ?? name, objective: textValue(result?.objective) ?? objective }
+    } catch (error) {
+      await Promise.allSettled(createdAgents.map((agentName) => this.deleteWeaveResource(`/v1/agents/${encodeURIComponent(agentName)}`)))
+      throw error
+    }
+  }
+
   async getTeamMemberConfigDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft> {
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
@@ -387,6 +445,13 @@ export class EnterpriseService {
       throw new Error(error)
     }
     return { status: response.status, body: result }
+  }
+
+  private async deleteWeaveResource(path: string): Promise<void> {
+    const response = await this.fetch(new URL(path, this.weaveUrl), {
+      method: 'DELETE', headers: await this.authorizationHeaders(), redirect: 'error', signal: AbortSignal.timeout(8_000),
+    })
+    await response.body?.cancel()
   }
 
   private async workProjectID(): Promise<string> {

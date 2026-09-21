@@ -4,7 +4,7 @@
   "title": "Weave Team Member Configuration Draft",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "teamId", "agentId", "agentName", "baseAgentVersion", "revision", "publishedConfiguration", "publishedRelationship", "configuration", "relationship", "updatedAt"],
+  "required": ["version", "teamId", "agentId", "agentName", "baseAgentVersion", "revision", "configuration", "relationship", "updatedAt"],
   "properties": {
     "version": { "const": "1" },
     "teamId": { "type": "string", "minLength": 1 },
