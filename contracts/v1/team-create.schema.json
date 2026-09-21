@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://weave.local/contracts/v1/team-create.schema.json",
+  "title": "Team create",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "name", "objective"],
+  "properties": {
+    "version": { "const": "1" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "objective": { "type": "string", "minLength": 1, "maxLength": 2000 }
+  }
+}

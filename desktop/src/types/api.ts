@@ -116,16 +116,19 @@ export interface EnterpriseDevelopmentOverview {
   runtimes: Array<{ id: string; name: string; engines: string[]; status: string; online: boolean }>
 }
 
-export interface EnterpriseTeamMemberConfigDraft {
+export interface EnterpriseCreateTeamInput {
   version: '1'
-  teamId: string
-  agentId: string
-  agentName: string
-  baseAgentVersion: number
-  revision: number
-  updatedAt: string
-  updatedBy?: string
-  configuration: {
+  name: string
+  objective: string
+}
+
+export interface EnterpriseCreateTeamResult {
+  id: string
+  name: string
+  objective: string
+}
+
+export interface EnterpriseTeamMemberAgentConfiguration {
     displayName: string
     role: string
     engine: string
@@ -144,8 +147,9 @@ export interface EnterpriseTeamMemberConfigDraft {
     stepBudget: number
     maxCostUsd: number
     outputSchema: string
-  }
-  relationship: {
+}
+
+export interface EnterpriseTeamMemberRelationshipConfiguration {
     duty: string
     whenToUse: string
     contextInstruction: string
@@ -153,7 +157,21 @@ export interface EnterpriseTeamMemberConfigDraft {
     defaultKind: string
     resultRequirement: string
     enabled: boolean
-  }
+}
+
+export interface EnterpriseTeamMemberConfigDraft {
+  version: '1'
+  teamId: string
+  agentId: string
+  agentName: string
+  baseAgentVersion: number
+  revision: number
+  updatedAt: string
+  updatedBy?: string
+  publishedConfiguration?: EnterpriseTeamMemberAgentConfiguration
+  publishedRelationship?: EnterpriseTeamMemberRelationshipConfiguration
+  configuration: EnterpriseTeamMemberAgentConfiguration
+  relationship: EnterpriseTeamMemberRelationshipConfiguration
 }
 
 export interface EnterpriseWorkChoice {
@@ -924,6 +942,7 @@ export interface PrimeWorkApi {
     signIn(email: string, password: string): Promise<EnterpriseSession>
     signOut(): Promise<EnterpriseSession>
     getDevelopmentOverview(): Promise<EnterpriseDevelopmentOverview>
+    createDevelopmentTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult>
     getTeamMemberConfigDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft>
     saveTeamMemberConfigDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft>
     getWorkOverview(): Promise<EnterpriseWorkOverview>

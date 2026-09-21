@@ -257,6 +257,7 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   ))
   handle('enterprise:sign-out', () => services.enterprise.signOut())
   handle('enterprise:get-development-overview', () => services.enterprise.getDevelopmentOverview())
+  handle('enterprise:create-development-team', (_event, input) => services.enterprise.createDevelopmentTeam(requireRecord(input, 'input') as unknown as import('../../src/types/api').EnterpriseCreateTeamInput))
   handle('enterprise:get-team-member-config-draft', (_event, teamId, agentId) => services.enterprise.getTeamMemberConfigDraft(requireString(teamId, 'teamId', { min: 1, max: 160 }), requireString(agentId, 'agentId', { min: 1, max: 160 })))
   handle('enterprise:save-team-member-config-draft', (_event, draft) => services.enterprise.saveTeamMemberConfigDraft(requireRecord(draft, 'draft') as unknown as import('../../src/types/api').EnterpriseTeamMemberConfigDraft))
   handle('enterprise:get-work-overview', () => services.enterprise.getWorkOverview())
