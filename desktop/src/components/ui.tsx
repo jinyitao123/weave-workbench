@@ -1,5 +1,5 @@
 import { Check, ChevronDown, X } from 'lucide-react'
-import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode, type RefObject, type SelectHTMLAttributes } from 'react'
+import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type RefObject, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 import { createPortal } from 'react-dom'
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -104,6 +104,18 @@ export function ProductSelect<T extends string>({ value, options, label, disable
       {options.map((option, index) => <button ref={(element) => { optionRefs.current[index] = element }} type="button" role="option" aria-selected={option.value === value} className={option.value === value ? 'is-selected' : ''} key={option.value} onClick={() => { onChange(option.value); close(true) }}><span><strong>{option.label}</strong>{option.detail ? <small>{option.detail}</small> : null}</span>{option.value === value ? <Check size={14} aria-hidden="true"/> : null}</button>)}
     </div> : null}
   </div>
+}
+
+export function ProductField({ label, detail, className = '', ...props }: InputHTMLAttributes<HTMLInputElement> & { label: string; detail?: string }) {
+  return <label className={`product-field ${className}`}><span><strong>{label}</strong>{detail ? <small>{detail}</small> : null}</span><input {...props}/></label>
+}
+
+export function ProductTextArea({ label, detail, className = '', ...props }: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string; detail?: string }) {
+  return <label className={`product-field product-field--textarea ${className}`}><span><strong>{label}</strong>{detail ? <small>{detail}</small> : null}</span><textarea {...props}/></label>
+}
+
+export function ProductSwitch({ checked, label, detail, disabled, onChange }: { checked: boolean; label: string; detail?: string; disabled?: boolean; onChange(value: boolean): void }) {
+  return <button type="button" className={`product-switch ${checked ? 'is-checked' : ''}`} role="switch" aria-checked={checked} disabled={disabled} onClick={() => onChange(!checked)}><span><strong>{label}</strong>{detail ? <small>{detail}</small> : null}</span><i aria-hidden="true"><b/></i></button>
 }
 
 export function Segmented<T extends string>({ value, options, onChange, label }: {
