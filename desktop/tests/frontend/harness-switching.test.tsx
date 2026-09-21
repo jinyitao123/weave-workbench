@@ -750,6 +750,8 @@ describe('harness settings surfaces', () => {
         onSetAllProvidersDisabled={noopAsync}
         onSetModelEnabled={noopAsync}
         onStartProviderOAuth={noopAsync}
+        onEnterpriseSignIn={noopAsync}
+        onEnterpriseSignOut={noopAsync}
       />
     )
 
