@@ -21,6 +21,7 @@ function fixture(agentId = 'reviewer'): EnterpriseTeamMemberConfigDraft {
 }
 const load = vi.fn(async (_team: string, member: string) => fixture(member))
 const save = vi.fn(async (draft: EnterpriseTeamMemberConfigDraft) => ({ ...draft, revision: draft.revision + 1 }))
+const applyDraft = vi.fn(async (_team: string, _member: string, _revision: number) => ({ ...fixture(), revision: 0 }))
 const createTeam = vi.fn(async () => ({ id: 'created-team', name: '采购团队', objective: '处理采购工作' }))
 const updateTeam = vi.fn(async () => undefined)
 const createTeamMember = vi.fn(async () => ({ id: 'new-member', name: '法务复核员' }))
@@ -28,7 +29,7 @@ const removeTeamMember = vi.fn(async () => undefined)
 const createWorkflow = vi.fn(async () => ({ id: 'created-flow', name: '合同流程', draftVersion: 1 }))
 const validateWorkflow = vi.fn(async () => ({ valid: true, issues: [] }))
 async function render(value: EnterpriseDevelopmentOverview = overview, onRefresh = () => undefined) {
-  await act(async () => root.render(<DevelopmentPage environments={[]} overview={value} loading={false} error="" onRefresh={onRefresh} onOpenForge={() => undefined} onCreateTeam={createTeam} onUpdateTeam={updateTeam} onCreateTeamMember={createTeamMember} onRemoveTeamMember={removeTeamMember} onCreateWorkflow={createWorkflow} onValidateWorkflow={validateWorkflow} onLoadMemberDraft={(team, member) => load(team, member)} onSaveMemberDraft={save}/>))
+  await act(async () => root.render(<DevelopmentPage environments={[]} overview={value} loading={false} error="" onRefresh={onRefresh} onOpenForge={() => undefined} onCreateTeam={createTeam} onUpdateTeam={updateTeam} onCreateTeamMember={createTeamMember} onRemoveTeamMember={removeTeamMember} onCreateWorkflow={createWorkflow} onValidateWorkflow={validateWorkflow} onLoadMemberDraft={(team, member) => load(team, member)} onSaveMemberDraft={save} onApplyMemberDraft={applyDraft}/>))
 }
 async function click(label: string) {
   const button = [...document.querySelectorAll<HTMLButtonElement>('button')].find((item) => item.textContent?.trim() === label || item.getAttribute('aria-label') === label)
@@ -56,7 +57,7 @@ it('keeps edits when the parent supplies fresh callback identities', async () =>
   expect(container.querySelector('textarea')?.value).toBe('检查付款条件')
   await click('保存草稿')
   expect(save.mock.calls[0]?.[0].relationship.duty).toBe('检查付款条件')
-  expect(container.querySelector('.member-inspector__state')?.textContent).toBe('已保存')
+  expect(container.querySelector('.member-inspector__state')?.textContent).toBe('草稿')
 })
 
 it('protects unsaved edits on member switch, and only switches after a successful save', async () => {

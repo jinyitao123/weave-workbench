@@ -20,6 +20,7 @@ interface DevelopmentPageProps {
   onValidateWorkflow(workflowId: string, version: number): Promise<EnterpriseWorkflowValidation>
   onLoadMemberDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft>
   onSaveMemberDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft>
+  onApplyMemberDraft(teamId: string, agentId: string, revision: number): Promise<EnterpriseTeamMemberConfigDraft>
 }
 
 const fingerprint = (draft: EnterpriseTeamMemberConfigDraft) => JSON.stringify([draft.configuration, draft.relationship])
@@ -48,7 +49,7 @@ function workflowLayout(workflow: EnterpriseWorkflowObservation) {
   return { width, height, positions }
 }
 
-export function DevelopmentPage({ environments, overview, loading, error, onRefresh, onOpenForge, onCreateTeam, onUpdateTeam, onCreateTeamMember, onRemoveTeamMember, onCreateWorkflow, onValidateWorkflow, onLoadMemberDraft, onSaveMemberDraft }: DevelopmentPageProps) {
+export function DevelopmentPage({ environments, overview, loading, error, onRefresh, onOpenForge, onCreateTeam, onUpdateTeam, onCreateTeamMember, onRemoveTeamMember, onCreateWorkflow, onValidateWorkflow, onLoadMemberDraft, onSaveMemberDraft, onApplyMemberDraft }: DevelopmentPageProps) {
   const forge = environments.find((environment) => environment.id === 'forge-development')
   const weave = environments.find((environment) => environment.id === 'weave-development')
   const [activeTab, setActiveTab] = useState<'teams' | 'apps'>('teams')
@@ -136,6 +137,16 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
     } catch (cause) {
       setDraftError(cause instanceof Error ? configurationLabel(cause.message, '配置保存失败') : '配置保存失败')
       return false
+    } finally { setSaving(false) }
+  }
+  const applyMemberDraft = async () => {
+    if (!currentDraft || currentDraft.revision < 1 || dirty || saving) return
+    setSaving(true); setDraftError(''); setSaved(false)
+    try {
+      const value = await onApplyMemberDraft(currentDraft.teamId, currentDraft.agentId, currentDraft.revision)
+      setDraft(value); setBaseline(fingerprint(value)); onRefresh()
+    } catch (cause) {
+      setDraftError(cause instanceof Error ? configurationLabel(cause.message, '配置应用失败') : '配置应用失败')
     } finally { setSaving(false) }
   }
   const createTeam = async () => {
@@ -275,14 +286,14 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
           </div>}
         </main>
         {workspaceView === 'members' ? <aside className="member-inspector" aria-label="成员配置">
-          <header className="member-inspector__heading"><span><small>成员配置</small><h3>{configurationLabel(currentDraft?.configuration.displayName ?? selectedMember?.name, '选择成员')}</h3></span><span className="member-inspector__actions"><span className="member-inspector__state" role="status">{dirty ? '未保存' : saved ? '已保存' : currentDraft?.revision ? '草稿' : ''}</span>{selectedMember?.role !== 'avatar' ? <button type="button" aria-label="移出成员" title="移出成员" disabled={saving} onClick={() => navigate(() => { setTeamMutationError(''); setMemberRemoveOpen(true) })}><UserMinus size={13}/></button> : null}</span></header>
+          <header className="member-inspector__heading"><span><small>成员配置</small><h3>{configurationLabel(currentDraft?.configuration.displayName ?? selectedMember?.name, '选择成员')}</h3></span><span className="member-inspector__actions"><span className="member-inspector__state" role="status">{dirty ? '未保存' : currentDraft?.revision ? '草稿' : currentDraft ? '已生效' : ''}</span>{selectedMember?.role !== 'avatar' ? <button type="button" aria-label="移出成员" title="移出成员" disabled={saving} onClick={() => navigate(() => { setTeamMutationError(''); setMemberRemoveOpen(true) })}><UserMinus size={13}/></button> : null}</span></header>
           {draftLoading ? <div className="team-config-loading">正在读取配置…</div> : null}
           {draftError ? <div className="member-inspector__error" role="alert">{draftError}{!currentDraft ? <button type="button" className="button" onClick={() => setRetry((value) => value + 1)}>重试</button> : null}</div> : null}
           {currentDraft ? <>
             <fieldset className="member-inspector__fields" disabled={saving}>
               <MemberInspector key={`${teamId}/${memberId}`} draft={currentDraft} runtimes={overview?.runtimes ?? []} onChange={(value) => { setDraft(value); setSaved(false); setDraftError('') }}/>
             </fieldset>
-            <footer className="member-inspector__footer"><small>保存到草稿，不影响运行</small><button type="button" className="button button--primary" disabled={saving || !dirty || !currentDraft.configuration.displayName.trim()} onClick={() => void save()}><Save size={13}/>{saving ? '正在保存' : '保存草稿'}</button></footer>
+            <footer className="member-inspector__footer"><small>{currentDraft.revision ? '应用后，新工作使用这份配置' : '当前配置已用于新工作'}</small><span className="member-inspector__footer-actions"><button type="button" className="button" disabled={saving || !dirty || !currentDraft.configuration.displayName.trim()} onClick={() => void save()}><Save size={13}/>保存草稿</button><button type="button" className="button button--primary" disabled={saving || dirty || currentDraft.revision < 1} onClick={() => void applyMemberDraft()}><CheckCircle2 size={13}/>{saving ? '处理中' : '应用配置'}</button></span></footer>
           </> : !draftLoading && !draftError ? <div className="team-config-loading">选择团队成员</div> : null}
         </aside> : <aside className="member-inspector" aria-label="流程步骤">
           <header className="member-inspector__heading"><span><small>流程步骤</small><h3>{configurationLabel(selectedNode?.label, selectedNode ? nodeTypeLabel(selectedNode.type) : '选择步骤')}</h3></span>{selectedWorkflow ? <span className="member-inspector__state">{selectedWorkflow.publishedVersion ? '已发布' : '草稿'}</span> : null}</header>

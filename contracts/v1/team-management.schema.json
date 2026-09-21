@@ -5,7 +5,8 @@
   "oneOf": [
     { "$ref": "#/$defs/updateTeam" },
     { "$ref": "#/$defs/addMember" },
-    { "$ref": "#/$defs/removeMember" }
+    { "$ref": "#/$defs/removeMember" },
+    { "$ref": "#/$defs/applyMemberDraft" }
   ],
   "$defs": {
     "updateTeam": {
@@ -42,6 +43,18 @@
         "operation": { "const": "remove-member" },
         "teamId": { "type": "string", "minLength": 1 },
         "memberId": { "type": "string", "minLength": 1 }
+      }
+    },
+    "applyMemberDraft": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "operation", "teamId", "memberId", "revision"],
+      "properties": {
+        "version": { "const": "1" },
+        "operation": { "const": "apply-member-draft" },
+        "teamId": { "type": "string", "minLength": 1 },
+        "memberId": { "type": "string", "minLength": 1 },
+        "revision": { "type": "integer", "minimum": 1 }
       }
     }
   }

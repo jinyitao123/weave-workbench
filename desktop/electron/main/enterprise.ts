@@ -524,6 +524,15 @@ export class EnterpriseService {
     return teamMemberConfigDraft(result.body)
   }
 
+  async applyTeamMemberConfigDraft(teamId: string, agentId: string, revision: number): Promise<EnterpriseTeamMemberConfigDraft> {
+    if (!teamId || !agentId || !Number.isInteger(revision) || revision < 1) throw new Error('请选择要应用的成员草稿')
+    const session = await this.getSession()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有团队配置权限')
+    const result = await this.weaveRequest(`/v1/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(agentId)}/config-draft/apply`, 'POST', { revision })
+    return teamMemberConfigDraft(result.body)
+  }
+
   private async weaveRequest(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown): Promise<{ status: number; body: unknown }> {
     const response = await this.fetch(new URL(path, this.weaveUrl), {
       method, headers: new Headers({ ...(Object.fromEntries(await this.authorizationHeaders())), Accept: 'application/json', 'Content-Type': 'application/json' }),
