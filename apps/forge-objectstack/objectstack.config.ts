@@ -3,6 +3,7 @@ import * as objects from './src/objects/index.js';
 import * as actions from './src/actions/index.js';
 import * as pages from './src/pages/index.js';
 import * as hooks from './src/hooks/index.js';
+import * as seedData from './src/data/index.js';
 
 const object = (id: string, label: string, objectName: string, icon?: string) => ({
   id, type: 'object' as const, label, objectName, ...(icon ? { icon } : {}),
@@ -35,6 +36,7 @@ export default defineStack({
     engines: { protocol: '>=17.3.0 <18' },
   },
   objects: Object.values(objects),
+  data: Object.values(seedData),
   actions: Object.values(actions),
   hooks: Object.values(hooks),
   pages: Object.values(pages),
@@ -289,33 +291,24 @@ export default defineStack({
       {
         id: 'reports', label: '报表', icon: 'chart-no-axes-combined', navigation: [
           group('business_reports', '报表', [
-            page('sales_statistics', '销售统计', 'page_reports_gap', 'chart-column'),
-            page('purchase_statistics', '采购统计', 'page_reports_gap', 'chart-column'),
-            page('inventory_statistics', '库存统计', 'page_reports_gap', 'chart-column'),
-            page('assembly_statistics', '组装统计', 'page_reports_gap', 'chart-column'),
+            page('sales_statistics', '销售统计', 'page_sales_statistics', 'chart-column'),
+            page('purchase_statistics', '采购统计', 'page_purchase_statistics', 'chart-column'),
+            page('inventory_statistics', '库存统计', 'page_inventory_statistics', 'chart-column'),
+            page('assembly_statistics', '组装统计', 'page_assembly_statistics', 'chart-column'),
           ]),
           group('finance_reports', '财务统计', [
-            page('finance_overview', '财务总览', 'page_reports_gap', 'layout-dashboard'),
-            page('profit_loss', '损益分析', 'page_reports_gap', 'chart-pie'),
-            page('fund_analysis', '资金分析', 'page_reports_gap', 'chart-line'),
-            page('receivable_report', '往来账款', 'page_reports_gap', 'scale'),
-            page('tax_inventory', '税务库存', 'page_reports_gap', 'file-chart-column'),
-            page('risk_monitoring', '风险监控', 'page_reports_gap', 'shield-alert'),
+            page('finance_overview', '财务总览', 'page_finance_overview', 'layout-dashboard'),
+            page('profit_loss', '损益分析', 'page_profit_loss', 'chart-pie'),
+            page('management_profit_report', '管理利润表', 'page_management_profit_report', 'file-chart-column'),
+            page('fund_analysis', '资金分析', 'page_fund_analysis', 'chart-line'),
+            page('receivable_report', '往来账款', 'page_current_account_analysis', 'scale'),
+            page('tax_inventory', '税务库存', 'page_tax_inventory_analysis', 'file-chart-column'),
+            page('risk_monitoring', '风险监控', 'page_risk_monitoring', 'shield-alert'),
           ]),
         ],
       },
       {
-        id: 'system', label: '系统', icon: 'settings', navigation: [
-          group('system_settings', '系统设置', [
-            page('system_base_config', '基础配置', 'page_system_gap', 'settings-2'),
-            page('system_users_roles', '用户与角色', 'page_system_gap', 'users'),
-            page('system_departments', '部门管理', 'page_system_gap', 'network'),
-            page('system_sessions', '用户会话', 'page_system_gap', 'monitor'),
-            page('system_audit', '审计日志', 'page_system_gap', 'scroll-text'),
-          ]),
-          group('business_settings', '业务设置', [
-          group('finance_settings', '财务配置', [page('finance_config_gap', '财务配置', 'page_system_gap', 'landmark')]),
-          group('administration_settings', '行政管理', [page('administration_config_gap', '行政管理', 'page_system_gap', 'building')]),
+        id: 'business_settings', label: '业务设置', icon: 'settings', navigation: [
           group('material_settings', '商品管理', [
             object('material_skus', '规格与价格', 'forge_material_sku', 'boxes'),
             object('material_categories', '物料分类', 'forge_material_category', 'tags'),
@@ -338,22 +331,23 @@ export default defineStack({
             page('inventory_business_config', '库存管理配置', 'page_inventory_business_config', 'sliders-horizontal'),
           ]),
           group('project_business_settings', '项目管理', [
-            object('project_types', '项目类型', 'forge_project_type', 'tags'),
+            page('project_business_config', '项目管理配置', 'page_project_business_config', 'briefcase-business'),
           ]),
-          group('other_settings', '其他配置', [page('other_config_gap', '其他配置', 'page_system_gap', 'sliders-horizontal')]),
-          group('hr_settings', '人事配置', [page('hr_config_gap', '人事配置', 'page_system_gap', 'users')]),
+          group('finance_settings', '财务配置', [page('finance_business_config', '付款方式与费用类别', 'page_finance_business_config', 'landmark')]),
+          group('administration_settings', '行政管理', [page('administration_business_config', '行政管理配置', 'page_administration_business_config', 'building')]),
+          group('other_settings', '其他配置', [page('other_business_config', '其他配置', 'page_other_business_config', 'sliders-horizontal')]),
+          group('hr_settings', '人事配置', [page('hr_business_config', '人事配置', 'page_hr_business_config', 'users')]),
           group('drawing_settings', '图纸配置', [page('drawing_business_config', '图纸配置', 'page_drawing_business_config', 'ruler')]),
           group('production_settings', '生产配置', [page('production_config', '生产配置', 'page_production_config', 'factory')]),
           group('subcontract_settings', '委外配置', [
             page('subcontract_business_config', '委外字典', 'page_subcontract_business_config', 'truck'),
             page('subcontract_policy', '委外控制规则', 'page_subcontract_policy', 'shield-check'),
           ]),
-          group('document_printing', '单据打印', [page('document_printing_gap', '单据打印', 'page_system_gap', 'printer')]),
+          group('document_printing', '单据打印', [page('document_printing', '单据打印', 'page_print_business_config', 'printer')]),
           group('plugin_center', '插件中心', [page('plugin_center_gap', '插件中心', 'page_system_gap', 'blocks')]),
           group('service_subscription', '服务订阅', [page('service_subscription_gap', '服务订阅', 'page_system_gap', 'rss')]),
           group('promotion_rewards', '推广奖励', [page('promotion_rewards_gap', '推广奖励', 'page_system_gap', 'award')]),
           group('field_management', '字段管理', [page('field_management_gap', '字段管理', 'page_system_gap', 'list')]),
-          ]),
         ],
       },
     ],

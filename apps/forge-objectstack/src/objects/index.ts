@@ -21,3 +21,5 @@ export * from './production-prerequisite.object.js';
 export * from './delivery.object.js';
 export * from './workspace.object.js';
 export * from './administration.object.js';
+export * from './management-profit-report.object.js';
+export * from './business-setting.object.js';

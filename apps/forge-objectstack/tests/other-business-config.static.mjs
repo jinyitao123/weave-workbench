@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { readFileSync } from 'node:fs';
+const page=readFileSync(new URL('../src/pages/other-business-config.page.ts',import.meta.url),'utf8');
+const object=readFileSync(new URL('../src/objects/business-setting.object.ts',import.meta.url),'utf8');
+const config=readFileSync(new URL('../objectstack.config.ts',import.meta.url),'utf8');
+test('其他配置替换占位入口',()=>{assert.match(config,/page\('other_business_config', '其他配置', 'page_other_business_config'/);assert.doesNotMatch(config,/page\('other_config_gap'/)});
+test('九类配置与会议室专用字段齐全',()=>{for(const x of ['会议室配置','印章类型','文件类型','设备分类配置','维护类型配置','维修类型配置','工单费用分类','维护项目配件配置','单据命名规则'])assert.match(page,new RegExp(x));for(const x of ['forge_meeting_room','location','capacity','enabled'])assert.match(object,new RegExp(x))});
+test('页面具备持久化和三档防挤压',()=>{for(const x of ["'POST'","method:'PATCH'","method:'DELETE'",'确认删除','980px','760px','520px'])assert.match(page,new RegExp(x.replace(/[()]/g,'\\$&'))) });
+test('会议室搜索与状态筛选均为有效控件',()=>{for(const x of ['value={q}','setQ(e.target.value)','value={roomStatus}','setRoomStatus(e.target.value)','全部状态'])assert.match(page,new RegExp(x.replace(/[()]/g,'\\$&'))) });

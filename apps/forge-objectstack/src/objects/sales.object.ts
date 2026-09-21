@@ -78,7 +78,9 @@ export const SalesOrder = master('forge_sales_order', '销售订单', 'clipboard
   source_type: choice('订单来源', ['直接新建', '关联合同'], '直接新建'), customer_id: reference('forge_customer', '客户', true),
   contact_id: reference('forge_contact', '联系人'), contract_id: reference('forge_sales_contract', '关联合同'),
   quotation_id: reference('forge_quotation', '来源报价单'), project_name: text('所属项目'),
+  company_account_id: reference('forge_fund_account', '公司账户'), suggested_supplier_id: reference('forge_supplier', '整单建议供应商'),
   planned_delivery_on: Field.date({ label: '计划交货日期', ...required }), responsible_id: owner(true),
+  collaborator_ids: Field.lookup('sys_user', { label: '协同销售', multiple: true, relatedList: false }),
   use_credit: Field.boolean({ label: '使用授信额度', defaultValue: false }), payment_term: text('付款条件', true), payment_method: paymentMethod(),
   revenue_trigger: revenueTrigger(), total_amount: nonNegativeMoney('订单含税金额'), recognized_amount: nonNegativeMoney('已确认收入'),
   invoiced_amount: nonNegativeMoney('已开票金额'), shipped_amount: nonNegativeMoney('已发货金额'), collected_amount: nonNegativeMoney('已回款金额'),
@@ -86,12 +88,12 @@ export const SalesOrder = master('forge_sales_order', '销售订单', 'clipboard
   planned_shipment_amount: nonNegativeMoney('已建发货单金额'),
   status: { ...choice('订单状态', ['草稿', '待审批', '已审批', '执行中', '部分发货', '已发货', '已完成', '已取消'], '草稿'), readonly: true },
   delivery_address: text('收货地址'), delivery_contact: text('收货人'), delivery_phone: text('联系电话'),
-  attachment_note: text('附件说明'), remarks: remarks(),
+  attachment_ids: Field.file({ label: '订单附件', multiple: true }), attachment_note: text('附件说明'), remarks: remarks(),
 }, ['code', 'customer_po_number', 'name', 'contract_id', 'customer_id', 'total_amount', 'status', 'planned_delivery_on', 'responsible_id']);
 
 export const SalesOrderLine = master('forge_sales_order_line', '销售订单明细', 'list', {
   name: text('物料/服务名称', true), order_id: reference('forge_sales_order', '销售订单', true),
-  contract_line_id: reference('forge_sales_contract_line', '来源合同明细'), quotation_line_id: reference('forge_quotation_line', '来源报价明细'),
+  contract_line_id: reference('forge_sales_contract_line', '来源合同明细'), quotation_line_id: reference('forge_quotation_line', '来源报价明细'), suggested_supplier_id: reference('forge_supplier', '建议供应商'),
   sku_id: reference('forge_material_sku', '物料规格', true), item_code: text('物料编码'), model: text('型号'), specification: text('规格'), unit_name: text('单位'),
   quantity: positiveQuantity(), shipped_quantity: Field.number({ label: '已发货数量', min: 0, scale: 4, defaultValue: 0 }),
   invoiced_quantity: Field.number({ label: '已开票数量', min: 0, scale: 4, defaultValue: 0 }),

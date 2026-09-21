@@ -18,6 +18,7 @@
     "acceptance:console-controls": "node tests/console-controls.static.mjs",
     "acceptance:finance-workflow": "node tests/finance-workflow.integration.mjs",
     "acceptance:page-polish": "node tests/page-polish.static.mjs",
+    "page-pixel-compare": "node tests/page-pixel-compare.mjs",
     "acceptance:product-structure": "node tests/risemap-product-structure.static.mjs && node tests/navigation-linkage.static.mjs",
     "acceptance:master-data": "node tests/master-data.integration.mjs",
     "acceptance:sales": "node tests/sales-foundation.integration.mjs",
@@ -224,15 +225,17 @@
     "acceptance:subcontract-group": "node tests/subcontract-group-ui-readback.mjs"
   },
   "dependencies": {
-    "@objectstack/spec": "17.3.0",
-    "@objectstack/runtime": "17.3.0",
-    "@objectstack/plugin-hono-server": "17.3.0",
-    "@objectstack/connector-rest": "17.3.0",
+    "@objectstack/connector-mcp": "17.3.0",
     "@objectstack/connector-openapi": "17.3.0",
-    "@objectstack/connector-mcp": "17.3.0"
+    "@objectstack/connector-rest": "17.3.0",
+    "@objectstack/plugin-hono-server": "17.3.0",
+    "@objectstack/runtime": "17.3.0",
+    "@objectstack/spec": "17.3.0"
   },
   "devDependencies": {
     "@objectstack/cli": "17.3.0",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0",
     "typescript": "6.0.3"
   },
   "packageManager": "pnpm@10.30.3",

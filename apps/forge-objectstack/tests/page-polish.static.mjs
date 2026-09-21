@@ -15,6 +15,8 @@ let reviewRequiredPages = 0;
 
 for (const [area, entries] of Object.entries(manifest)) {
   for (const entry of entries) {
+    if (area === 'sales' && entry.pages.length !== 1) findings.push(`${area}/${entry.file}: 销售页面必须逐页登记，不能合并验收状态`);
+    if (area === 'sales' && (typeof entry.acceptance !== 'string' || !entry.acceptance.trim())) findings.push(`${area}/${entry.file}: 销售页面缺少逐页结构化验收记录`);
     if (!allowedArchetypes.has(entry.archetype)) findings.push(`${area}/${entry.file}: 缺少有效页面主原型`);
     if (!allowedDesignStatuses.has(entry.designStatus)) findings.push(`${area}/${entry.file}: 缺少有效设计验收状态`);
     if (!allowedReferences.has(entry.reference)) findings.push(`${area}/${entry.file}: 缺少有效参考页面`);
@@ -61,10 +63,17 @@ const financeBlock = config.slice(financeStart, financeEnd);
 const financePages = [...financeBlock.matchAll(/page\([^,]+,[^,]+,\s*'([^']+)'/g)].map(match => match[1]);
 const polishedFinancePages = new Set(manifest.finance.flatMap(entry => entry.pages));
 for (const page of financePages) if (!polishedFinancePages.has(page)) findings.push(`finance: ${page} 未加入 page-polish 清单`);
+const salesStart = config.indexOf("id: 'sales'");
+const salesEnd = config.indexOf("id: 'production'", salesStart);
+const salesBlock = config.slice(salesStart, salesEnd);
+const salesPages = [...salesBlock.matchAll(/page\([^,]+,[^,]+,\s*'([^']+)'/g)].map(match => match[1]);
+const polishedSalesPages = new Set((manifest.sales || []).flatMap(entry => entry.pages));
+for (const page of salesPages) if (!polishedSalesPages.has(page)) findings.push(`sales: ${page} 未加入 page-polish 清单`);
+for (const page of polishedSalesPages) if (!salesPages.includes(page)) findings.push(`sales: ${page} 不在当前销售导航中`);
 assert.equal(financeBlock.includes("'page_finance_gap'"), false, '财务导航仍指向空白占位页');
 assert.match(productUi, /div:has\(>\.forge-product\)>div\.space-y-2\{display:none!important\}/, 'product-ui.ts 必须隐藏 Console 自动标题，避免产品页出现重复标题区');
 assert.match(productUi, /\.forge-product \.btn,.forge-product \.icon-btn\{height:34px;[^}]*border-radius:8px/, 'product-ui.ts 必须统一财务页主次按钮尺寸与圆角');
 assert.match(productUi, /\.forge-product\.bank-flow \.page-shell,.forge-product\.finance-page \.fp-shell,.forge-product \.body\{width:min\(1380px,100%\);max-width:1380px/, 'product-ui.ts 必须按工时管理页面统一财务内容宽度');
 assert.match(productUi, /\.forge-product \.card,.forge-product \.panel,.forge-product \.metric,.forge-product \.metric-card,.forge-product \.process\{[^}]*border-radius:10px/, 'product-ui.ts 必须统一财务卡片层级与圆角');
 assert.deepEqual(findings, [], findings.join('\n'));
-console.log(`PASS page-polish 清单覆盖 ${Object.values(manifest).flat().length} 个页面条目；${acceptedPages} 个页面设计已验收，${reviewRequiredPages} 个页面仍需逐页精修；${financePages.length} 个财务入口均已纳入且导航无空白占位入口`);
+console.log(`PASS page-polish 清单覆盖 ${Object.values(manifest).flat().length} 个页面条目；${acceptedPages} 个页面设计已验收，${reviewRequiredPages} 个页面仍需逐页精修；${financePages.length} 个财务入口与 ${salesPages.length} 个销售入口均已纳入且导航无空白占位入口`);
