@@ -35,7 +35,7 @@ export function EnterpriseAccountSettings({ session, onSignIn, onSignOut }: Ente
   }
 
   return <div className="settings-section enterprise-account-settings">
-    <div className="settings-section__header"><h1>企业账号</h1><p>使用 Forge 账号登录，Workbench 会自动连接对应的 Weave 身份。</p></div>
+    <div className="settings-section__header"><h1>企业账号</h1></div>
     <section className="settings-group">
       <h2>Forge 与 Weave</h2>
       {session?.status === 'signed-in' && session.user ? <div className="settings-row enterprise-account-summary">
