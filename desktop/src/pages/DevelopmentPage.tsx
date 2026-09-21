@@ -1,5 +1,5 @@
 import '@/styles/team-workspace.css'
-import { Bot, CheckCircle2, Code2, ExternalLink, Pencil, Plus, RefreshCw, Save, Search, UserMinus, UserPlus, UsersRound, Workflow } from 'lucide-react'
+import { Bot, CheckCircle2, ChevronDown, Code2, ExternalLink, Pencil, Plus, RefreshCw, Save, Search, UserMinus, UserPlus, UsersRound, Workflow } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Modal, ProductField, ProductTextArea } from '@/components/ui'
 import { configurationLabel, MemberInspector } from '@/components/development/MemberInspector'
@@ -57,6 +57,7 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
   const [selection, setSelection] = useState({ team: '', member: '' })
   const [flowSelection, setFlowSelection] = useState({ workflow: '', node: '' })
   const [query, setQuery] = useState('')
+  const [teamSwitcherOpen, setTeamSwitcherOpen] = useState(false)
   const [draft, setDraft] = useState<EnterpriseTeamMemberConfigDraft>()
   const [baseline, setBaseline] = useState('')
   const [draftLoading, setDraftLoading] = useState(false)
@@ -249,13 +250,12 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
       {overview?.teams.length === 0 ? <div className="team-workspace-empty"><UsersRound size={20}/><strong>当前组织还没有团队</strong><button type="button" className="button button--primary" onClick={openCreate}><Plus size={13}/>新建团队</button></div> : null}
       {selectedTeam ? <div className={`team-workspace__layout team-workspace__layout--${workspaceView}`}>
         <aside className="team-collection" aria-label="团队列表">
-          <div className="team-collection__heading"><span>团队</span><button type="button" aria-label="新建团队" title="新建团队" onClick={openCreate}><Plus size={13}/></button></div>
-          <label className="team-collection__search"><Search size={13}/><input aria-label="搜索团队" placeholder="搜索团队" value={query} onChange={(event) => setQuery(event.target.value)}/></label>
-          <div className="team-collection__items">{filteredTeams.map((team) => <button type="button" key={team.id} disabled={saving} aria-pressed={team.id === teamId} className={team.id === teamId ? 'is-active' : ''} onClick={() => { if (team.id !== teamId) navigate(() => setSelection({ team: team.id, member: '' })) }}><UsersRound size={14}/><span>{configurationLabel(team.name, '未命名团队')}</span></button>)}{!filteredTeams.length ? <p>没有匹配的团队</p> : null}</div>
+          <button type="button" className="team-switcher__trigger" aria-haspopup="menu" aria-expanded={teamSwitcherOpen} onClick={() => setTeamSwitcherOpen((value) => !value)}><UsersRound size={14}/><span>{configurationLabel(selectedTeam.name, '未命名团队')}</span><ChevronDown size={13}/></button>
+          {teamSwitcherOpen ? <div className="team-switcher__panel"><div className="team-collection__heading"><span>切换团队</span><button type="button" aria-label="新建团队" title="新建团队" onClick={() => { setTeamSwitcherOpen(false); openCreate() }}><Plus size={13}/></button></div><label className="team-collection__search"><Search size={13}/><input autoFocus aria-label="搜索团队" placeholder="搜索团队" value={query} onChange={(event) => setQuery(event.target.value)}/></label><div className="team-collection__items" role="menu">{filteredTeams.map((team) => <button type="button" role="menuitem" key={team.id} disabled={saving} aria-current={team.id === teamId ? 'true' : undefined} className={team.id === teamId ? 'is-active' : ''} onClick={() => { setTeamSwitcherOpen(false); setQuery(''); if (team.id !== teamId) navigate(() => setSelection({ team: team.id, member: '' })) }}><UsersRound size={14}/><span>{configurationLabel(team.name, '未命名团队')}</span></button>)}{!filteredTeams.length ? <p>没有匹配的团队</p> : null}</div></div> : null}
+          <nav className="team-stage__views" aria-label="团队开发视图"><button type="button" className={workspaceView === 'members' ? 'is-active' : ''} aria-pressed={workspaceView === 'members'} onClick={() => navigate(() => setWorkspaceView('members'))}><UsersRound size={13}/>团队分工</button><button type="button" className={workspaceView === 'workflow' ? 'is-active' : ''} aria-pressed={workspaceView === 'workflow'} onClick={() => navigate(() => setWorkspaceView('workflow'))}><Workflow size={13}/>工作流程</button></nav>
+          <button type="button" className="team-context-edit" aria-label="编辑团队资料" title="编辑团队资料" onClick={openTeamEdit}><Pencil size={13}/></button>
         </aside>
         <main className="team-stage">
-          <header className="team-stage__header"><div><h2>{configurationLabel(selectedTeam.name, '未命名团队')}</h2>{selectedTeam.objective ? <p>{configurationLabel(selectedTeam.objective, '团队协作')}</p> : null}</div><button type="button" aria-label="编辑团队资料" title="编辑团队资料" onClick={openTeamEdit}><Pencil size={13}/></button></header>
-          <nav className="team-stage__views" aria-label="团队开发视图"><button type="button" className={workspaceView === 'members' ? 'is-active' : ''} aria-pressed={workspaceView === 'members'} onClick={() => navigate(() => setWorkspaceView('members'))}><UsersRound size={13}/>团队分工</button><button type="button" className={workspaceView === 'workflow' ? 'is-active' : ''} aria-pressed={workspaceView === 'workflow'} onClick={() => navigate(() => setWorkspaceView('workflow'))}><Workflow size={13}/>工作流程</button></nav>
           {workspaceView === 'members' ? <><div className="team-stage__section-heading"><h3>团队成员</h3><button type="button" onClick={openMemberCreate}><UserPlus size={12}/>添加成员</button></div>
           <div className="team-member-grid">{members.map((member) => {
             const selected = member.id === memberId
