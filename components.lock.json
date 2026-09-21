@@ -8,12 +8,12 @@
     },
     "weave": {
       "source": "https://github.com/jinyitao123/weave-next.git",
-      "revision": "c9a546c45f5ca0938ed0fa4d7ae1c0a403af97b5",
+      "revision": "4e3c3b2279a31244c93ed954bc427a305aedad9f",
       "importPath": "platform/weave"
     },
     "forge": {
       "source": "https://github.com/jinyitao123/inoForge.git",
-      "revision": "0d7999327d4e6afa63b95e4f763b38f12f012bc8",
+      "revision": "0e0962c28e19f29d9d91505411a915741f725f26",
       "importPath": "platform/forge"
     }
   }
