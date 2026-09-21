@@ -101,6 +101,7 @@ export interface EnterpriseTeamObservation {
   name: string
   objective?: string
   status: string
+  updatedAt: string
   evaluation?: string
   lead?: EnterpriseTeamMember
   workers: EnterpriseTeamMember[]
@@ -126,6 +127,26 @@ export interface EnterpriseCreateTeamResult {
   id: string
   name: string
   objective: string
+}
+
+export interface EnterpriseUpdateTeamInput {
+  version: '1'
+  teamId: string
+  name: string
+  objective: string
+  expectedUpdatedAt: string
+}
+
+export interface EnterpriseCreateTeamMemberInput {
+  version: '1'
+  teamId: string
+  name: string
+  duty: string
+}
+
+export interface EnterpriseTeamMemberMutationResult {
+  id: string
+  name: string
 }
 
 export interface EnterpriseCreateWorkflowInput {
@@ -963,6 +984,9 @@ export interface PrimeWorkApi {
     signOut(): Promise<EnterpriseSession>
     getDevelopmentOverview(): Promise<EnterpriseDevelopmentOverview>
     createDevelopmentTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult>
+    updateDevelopmentTeam(input: EnterpriseUpdateTeamInput): Promise<void>
+    createDevelopmentTeamMember(input: EnterpriseCreateTeamMemberInput): Promise<EnterpriseTeamMemberMutationResult>
+    removeDevelopmentTeamMember(teamId: string, memberId: string): Promise<void>
     createDevelopmentWorkflow(input: EnterpriseCreateWorkflowInput): Promise<EnterpriseCreateWorkflowResult>
     validateDevelopmentWorkflow(workflowId: string, version: number): Promise<EnterpriseWorkflowValidation>
     getTeamMemberConfigDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft>

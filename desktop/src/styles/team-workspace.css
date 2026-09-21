@@ -22,6 +22,10 @@
 .team-collection__items > button.is-active { color: var(--prime); background: var(--prime-soft); }
 .team-collection__items > p { color: var(--text-tertiary); text-align: center; font-size: 11px; }
 .team-stage { min-width: 0; overflow: auto; padding: 18px 22px; }
+.team-stage__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.team-stage__header > div { min-width: 0; }
+.team-stage__header > button, .member-inspector__actions > button { flex: none; display: inline-grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--text-tertiary); }
+.team-stage__header > button:hover, .member-inspector__actions > button:hover { background: var(--surface-subtle); color: var(--text); }
 .team-stage__header h2 { margin: 0; font-size: 16px; font-weight: 580; overflow-wrap: anywhere; }
 .team-stage__header p { margin: 7px 0 0; color: var(--text-tertiary); font-size: 11px; line-height: 1.65; }
 .team-stage__views { display: flex; gap: 16px; margin-top: 18px; border-bottom: 1px solid var(--border); }
@@ -47,6 +51,7 @@
 .member-inspector__heading > span:first-child { min-width: 0; }
 .member-inspector__heading small { font-size: 10px; color: var(--text-tertiary); }
 .member-inspector__heading h3 { margin: 4px 0 0; font-size: 13px; font-weight: 580; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.member-inspector__actions { display: flex; align-items: center; gap: 7px; }
 .member-inspector__state { color: var(--prime); font-size: 10px; white-space: nowrap; }
 .member-inspector__fields { border: 0; padding: 0; margin: 0; min-width: 0; min-height: 0; display: flex; flex: 1; flex-direction: column; }
 .member-inspector__fields:disabled { opacity: .65; }

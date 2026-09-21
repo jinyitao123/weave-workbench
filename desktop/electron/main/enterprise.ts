@@ -1,4 +1,4 @@
-import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
+import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 
@@ -295,7 +295,8 @@ export class EnterpriseService {
       const id = textValue(team?.id)
       const name = textValue(team?.display_name) ?? textValue(team?.name)
       const status = textValue(team?.status)
-      if (!id || !name || !status) throw new Error('Weave 返回了无法识别的团队')
+      const updatedAt = textValue(team?.updated_at)
+      if (!id || !name || !status || !updatedAt) throw new Error('Weave 返回了无法识别的团队')
       const [rawWorkflows, rawRuns] = await Promise.all([
         this.weaveJSON(`/v1/teams/${encodeURIComponent(id)}/workflows`),
         this.weaveJSON(`/v1/runs?view=team&team_id=${encodeURIComponent(id)}&aggregation_mode=root-subtree&limit=12`),
@@ -328,7 +329,7 @@ export class EnterpriseService {
       const summary = record(source?.summary)
       const health = record(summary?.health)
       return {
-        id, name, status, workflows,
+        id, name, status, updatedAt, workflows,
         workers: (Array.isArray(source?.workers) ? source.workers : []).flatMap((value) => member(value) ?? []),
         runs: (Array.isArray(runList?.runs) ? runList.runs : []).flatMap((value) => runObservation(value) ?? []),
         ...(textValue(team?.objective) ? { objective: textValue(team?.objective) } : {}), ...(textValue(team?.evaluation) ? { evaluation: textValue(team?.evaluation) } : {}),
@@ -394,6 +395,48 @@ export class EnterpriseService {
       await Promise.allSettled(createdAgents.map((agentName) => this.deleteWeaveResource(`/v1/agents/${encodeURIComponent(agentName)}`)))
       throw error
     }
+  }
+
+  async updateDevelopmentTeam(input: EnterpriseUpdateTeamInput): Promise<void> {
+    const name = input?.name?.trim(), objective = input?.objective?.trim()
+    if (input?.version !== '1' || !input.teamId || !name || name.length > 80 || !objective || objective.length > 2_000 || !input.expectedUpdatedAt) throw new Error('团队资料不完整')
+    const session = await this.getSession()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有团队配置权限')
+    await this.weaveRequest(`/v1/teams/${encodeURIComponent(input.teamId)}/profile`, 'PUT', { display_name: name, objective, expected_updated_at: input.expectedUpdatedAt })
+  }
+
+  async createDevelopmentTeamMember(input: EnterpriseCreateTeamMemberInput): Promise<EnterpriseTeamMemberMutationResult> {
+    const name = input?.name?.trim(), duty = input?.duty?.trim()
+    if (input?.version !== '1' || !input.teamId || !name || name.length > 80 || !duty || duty.length > 2_000) throw new Error('请填写成员名称和职责')
+    const session = await this.getSession()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有团队配置权限')
+    const agentName = `team-member-${randomUUID()}`
+    const created = record((await this.weaveRequest('/v1/agents', 'POST', {
+      name: agentName, display_name: name, role: 'worker', engine: 'loom', graph_type: 'standard',
+      spec: { system_prompt: duty },
+    })).body)
+    const agentID = textValue(created?.id)
+    if (!agentID) throw new Error('Weave 没有返回新成员')
+    try {
+      await this.weaveRequest(`/v1/teams/${encodeURIComponent(input.teamId)}/workers`, 'POST', {
+        worker_agent_id: agentID, duty, when_to_use: '负责人分配相关工作时', context_instruction: '保留任务上下文和材料来源。',
+        allowed_kinds: ['consult', 'dispatch', 'handoff'], default_kind: 'dispatch', result_requirement: '返回可核验结果',
+      })
+    } catch (error) {
+      await this.deleteWeaveResource(`/v1/agents/${encodeURIComponent(agentName)}`)
+      throw error
+    }
+    return { id: agentID, name }
+  }
+
+  async removeDevelopmentTeamMember(teamId: string, memberId: string): Promise<void> {
+    if (!teamId || !memberId) throw new Error('请选择要移出的成员')
+    const session = await this.getSession()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有团队配置权限')
+    await this.weaveRequest(`/v1/teams/${encodeURIComponent(teamId)}/workers/${encodeURIComponent(memberId)}`, 'DELETE')
   }
 
   async createDevelopmentWorkflow(input: EnterpriseCreateWorkflowInput): Promise<EnterpriseCreateWorkflowResult> {
@@ -481,10 +524,10 @@ export class EnterpriseService {
     return teamMemberConfigDraft(result.body)
   }
 
-  private async weaveRequest(path: string, method: 'POST' | 'PUT', body: unknown): Promise<{ status: number; body: unknown }> {
+  private async weaveRequest(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown): Promise<{ status: number; body: unknown }> {
     const response = await this.fetch(new URL(path, this.weaveUrl), {
       method, headers: new Headers({ ...(Object.fromEntries(await this.authorizationHeaders())), Accept: 'application/json', 'Content-Type': 'application/json' }),
-      body: JSON.stringify(body), redirect: 'error', signal: AbortSignal.timeout(15_000),
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }), redirect: 'error', signal: AbortSignal.timeout(15_000),
     })
     const result = await response.json().catch(() => undefined)
     if (response.status === 401 || response.status === 403) {
