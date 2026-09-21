@@ -22,7 +22,7 @@ Forge 的开发登录身份是 `admin@inoforge.local`。密码、令牌和模型
 
 ## 连接配置
 
-当前桌面以 `WORKBENCH_FORGE_URL`、`WORKBENCH_WEAVE_URL` 两个启动环境变量覆盖开发默认地址，实现在 `desktop/electron/main/enterprise.ts`。它目前只做服务健康探测，不代表统一身份和权限已经贯通。
+当前桌面以 `WORKBENCH_FORGE_URL`、`WORKBENCH_WEAVE_URL` 两个启动环境变量覆盖开发默认地址，实现在 `desktop/electron/main/enterprise.ts`。GooeyPi 已接入 Forge 登录与 Weave 自动绑定；密码不落盘，Weave 会话由操作系统安全存储加密，安全存储不可用时仅保留到本次退出。真实账号闭环状态见对应验收记录。
 
 目标是由管理员为组织配置 Forge/Weave 地址，安装或登录时交给桌面使用；云端与私有化采用同一连接约定，普通员工无需手填地址。此配置下发机制尚未实现，实施进度见[项目状态](../project-status.md)。
 

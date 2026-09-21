@@ -1,15 +1,15 @@
 {
-  "name": "gooeypi",
+  "name": "weave-workbench-desktop",
   "version": "1.1.17",
   "private": true,
-  "description": "A desktop workspace for Pi, OMP, and Prime Agent",
+  "description": "The desktop workspace for Weave teams and Forge business applications",
   "main": "out/main/index.js",
-  "desktopName": "gooeypi.desktop",
+  "desktopName": "weave-workbench.desktop",
   "author": {
-    "name": "GooeyPi contributors",
+    "name": "Weave Workbench contributors",
     "email": "42459108+am-will@users.noreply.github.com"
   },
-  "homepage": "https://github.com/am-will/gooey-pi",
+  "homepage": "https://github.com/jinyitao123/weave-next",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -85,8 +85,9 @@
     "vitest": "^4.1.10"
   },
   "build": {
-    "appId": "app.gooeypi.desktop",
-    "productName": "GooeyPi",
+    "appId": "com.inocube.weave-workbench",
+    "productName": "Weave Workbench",
+    "executableName": "weave-workbench",
     "asar": {
       "smartUnpack": false
     },
@@ -113,7 +114,7 @@
       "entitlementsInherit": "build/entitlements.mac.inherit.plist",
       "extendInfo": {
         "LSUIElement": true,
-        "NSMicrophoneUsageDescription": "GooeyPi uses the microphone for dictation and realtime voice sessions you start."
+        "NSMicrophoneUsageDescription": "Weave Workbench uses the microphone for dictation and realtime voice sessions you start."
       },
       "notarize": true,
       "asarUnpack": [
@@ -139,7 +140,7 @@
     },
     "linux": {
       "category": "Development",
-      "synopsis": "A desktop workspace for Pi, OMP, and Prime Agent",
+      "synopsis": "The desktop workspace for Weave teams and Forge business applications",
       "syncDesktopName": true,
       "target": [
         "AppImage",
@@ -206,11 +207,6 @@
     "directories": {
       "output": "release"
     },
-    "publish": {
-      "provider": "github",
-      "owner": "am-will",
-      "repo": "gooey-pi"
-    },
     "afterPack": "scripts/release/after-pack.cjs",
     "extraResources": [
       {
@@ -234,10 +230,10 @@
       "en-US"
     ],
     "appx": {
-      "applicationId": "GooeyPi",
-      "identityName": "GooeyPi",
-      "publisherDisplayName": "GooeyPi",
-      "displayName": "GooeyPi",
+      "applicationId": "WeaveWorkbench",
+      "identityName": "WeaveWorkbench",
+      "publisherDisplayName": "Weave Workbench",
+      "displayName": "Weave Workbench",
       "backgroundColor": "#171716",
       "languages": [
         "en-US"

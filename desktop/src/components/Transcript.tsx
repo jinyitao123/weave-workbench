@@ -39,12 +39,15 @@ interface TranscriptProps {
   git: GitStatus
   /** Active harness; brands the assistant marks and working copy. */
   harness?: HarnessId
+  personalWorkspace?: boolean
   loading?: boolean
   active?: boolean
   showReasoning?: boolean
   showTools?: boolean
   onOpenChanges(): void
   onSuggestion(prompt: string): void
+  onOpenMaterials?(): void
+  onChooseWorkspace?(): void
   suggestionsDisabled?: boolean
   /** Render the pinned changes card here; the app docks it beside the composer when false. */
   showPinnedChanges?: boolean
@@ -80,7 +83,7 @@ function ActiveAssistantMessage({ message, harness, showReasoning, showTools }: 
 
 
 
-export function Transcript({ messages, git, harness = 'prime', loading, active = false, showReasoning = true, showTools = true, onOpenChanges, onSuggestion, suggestionsDisabled, showPinnedChanges = true, bottomDockHasChanges = false, queuedMessageCount = 0, onOpenSessionReference }: TranscriptProps) {
+export function Transcript({ messages, git, harness = 'prime', personalWorkspace = false, loading, active = false, showReasoning = true, showTools = true, onOpenChanges, onSuggestion, onOpenMaterials, onChooseWorkspace, suggestionsDisabled, showPinnedChanges = true, bottomDockHasChanges = false, queuedMessageCount = 0, onOpenSessionReference }: TranscriptProps) {
   const groupedMessages = useMemo(() => coalesceAssistantTurns(messages), [messages])
   const { announcement, hiddenCount, scrollRef, showEarlier, updatePinnedState, visibleMessages } = useTranscriptScroll(groupedMessages)
   const activeAssistantId = useMemo(() => active && groupedMessages.at(-1)?.role === 'assistant' ? groupedMessages.at(-1)?.id : undefined, [active, groupedMessages])
@@ -99,13 +102,19 @@ export function Transcript({ messages, git, harness = 'prime', loading, active =
         {loading ? <div className="transcript-loading"><LoaderCircle className="spin" size={16} /> Loading session…</div> : null}
         {!loading && messages.length === 0 ? <div className="session-welcome">
           <AssistantMark harness={harness} size={34} />
-          <h1>What should we work on?</h1>
-          <p>{HARNESS_SHORT_NAMES[harness]} can inspect this project, edit files, run tools, and keep working across sessions.</p>
-          <div className="prompt-suggestions">
+          <h1>{personalWorkspace ? '开始一项工作' : 'What should we work on?'}</h1>
+          <p>{personalWorkspace ? '说说你想完成什么，也可以直接添加文件或打开网页。' : `${HARNESS_SHORT_NAMES[harness]} can inspect this project, edit files, run tools, and keep working across sessions.`}</p>
+          <div className="prompt-suggestions">{personalWorkspace ? <>
+            <button type="button" disabled={suggestionsDisabled} onClick={() => onSuggestion('请帮我整理这些材料')}>整理材料</button>
+            <button type="button" disabled={suggestionsDisabled} onClick={() => onSuggestion('请帮我完成这件事的后续工作')}>完成后续</button>
+            <button type="button" disabled={suggestionsDisabled} onClick={() => onSuggestion('看看我现在有哪些需要处理的工作')}>查看待办</button>
+            {onOpenMaterials ? <button type="button" onClick={onOpenMaterials}>打开材料文件夹</button> : null}
+            {onChooseWorkspace ? <button type="button" onClick={onChooseWorkspace}>选择工作空间文件夹</button> : null}
+          </> : <>
             <button type="button" disabled={suggestionsDisabled} onClick={() => onSuggestion('Summarize this project')}>Summarize this project</button>
             <button type="button" disabled={suggestionsDisabled} onClick={() => onSuggestion('Find a useful next task')}>Find a useful next task</button>
             <button type="button" disabled={suggestionsDisabled} onClick={() => onSuggestion('Run the test suite')}>Run the test suite</button>
-          </div>
+          </>}</div>
         </div> : null}
         {hiddenCount > 0 ? <button type="button" className="transcript__show-earlier" onClick={showEarlier}>Show {Math.min(250, hiddenCount)} earlier messages</button> : null}
         {visibleMessages.map((message) => <ErrorBoundary key={message.id} fallback={<div className="message message--render-failure" role="note">This message could not be displayed.</div>}>

@@ -1,4 +1,4 @@
-import { Bell, CalendarClock, Folder, LayoutPanelLeft, NotebookPen, PackageOpen, Search, Settings, Terminal, } from 'lucide-react'
+import { Bell, Blocks, CalendarClock, Folder, LayoutPanelLeft, NotebookPen, PackageOpen, Search, Settings, Terminal, } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import type { WorkspaceView } from '@/types/api'
@@ -13,7 +13,8 @@ export function CommandPalette({ open, onClose, onNavigate, onNewSession, onTogg
   const inputRef=useRef<HTMLInputElement>(null)
   const paletteRef=useFocusTrap<HTMLDivElement>(open,onClose)
   const commands:Command[]=[
-    {id:'new',label:'New session',detail:'Start fresh in the current project',shortcut:shortcutLabel(platform, ['Primary', 'N']),icon:<NotebookPen size={14}/>,run:onNewSession},
+    {id:'new',label:'开始工作',detail:'开始一项新的工作',shortcut:shortcutLabel(platform, ['Primary', 'N']),icon:<NotebookPen size={14}/>,run:onNewSession},
+    {id:'development',label:'打开开发中心',detail:'调试业务应用、能力和本地项目',icon:<Blocks size={14}/>,run:()=>onNavigate('development')},
     {id:'projects',label:'Open Projects',detail:'Browse local workspaces',icon:<Folder size={14}/>,run:()=>onNavigate('projects')},
     {id:'activity',label:'Open Activity',detail:'See work that needs attention',icon:<Bell size={14}/>,run:()=>onNavigate('activity')},
     {id:'scheduled',label:'Open Scheduled',detail:'Manage recurring work',icon:<CalendarClock size={14}/>,run:()=>onNavigate('scheduled')},
