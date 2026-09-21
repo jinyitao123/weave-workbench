@@ -18,7 +18,7 @@ import type { VoiceService } from './voice'
 import type { UpdateService } from './updates'
 import type { EnterpriseService } from './enterprise'
 import type { AgentBrowserService } from './browser/agent-service'
-import { requireExistingPath, requireRecord, requireString, requireWebUrl } from './validation'
+import { requireExistingPath, requireInteger, requireRecord, requireString, requireWebUrl } from './validation'
 
 interface Services {
   meta: AppMeta
@@ -259,6 +259,7 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   handle('enterprise:get-development-overview', () => services.enterprise.getDevelopmentOverview())
   handle('enterprise:create-development-team', (_event, input) => services.enterprise.createDevelopmentTeam(requireRecord(input, 'input') as unknown as import('../../src/types/api').EnterpriseCreateTeamInput))
   handle('enterprise:create-development-workflow', (_event, input) => services.enterprise.createDevelopmentWorkflow(requireRecord(input, 'input') as unknown as import('../../src/types/api').EnterpriseCreateWorkflowInput))
+  handle('enterprise:validate-development-workflow', (_event, workflowId, version) => services.enterprise.validateDevelopmentWorkflow(requireString(workflowId, 'workflowId', { min: 1, max: 160 }), requireInteger(version, 'version', 1, 1_000_000)))
   handle('enterprise:get-team-member-config-draft', (_event, teamId, agentId) => services.enterprise.getTeamMemberConfigDraft(requireString(teamId, 'teamId', { min: 1, max: 160 }), requireString(agentId, 'agentId', { min: 1, max: 160 })))
   handle('enterprise:save-team-member-config-draft', (_event, draft) => services.enterprise.saveTeamMemberConfigDraft(requireRecord(draft, 'draft') as unknown as import('../../src/types/api').EnterpriseTeamMemberConfigDraft))
   handle('enterprise:get-work-overview', () => services.enterprise.getWorkOverview())

@@ -3,7 +3,7 @@ import { Bot, CheckCircle2, Code2, ExternalLink, Plus, RefreshCw, Save, Search, 
 import { useEffect, useRef, useState } from 'react'
 import { Modal, ProductField, ProductTextArea } from '@/components/ui'
 import { configurationLabel, MemberInspector } from '@/components/development/MemberInspector'
-import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseTeamMemberConfigDraft, EnterpriseWorkflowObservation } from '@/types/api'
+import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseTeamMemberConfigDraft, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation } from '@/types/api'
 
 interface DevelopmentPageProps {
   environments: EnterpriseEnvironmentStatus[]
@@ -14,6 +14,7 @@ interface DevelopmentPageProps {
   onOpenForge(url: string): void
   onCreateTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult>
   onCreateWorkflow(input: EnterpriseCreateWorkflowInput): Promise<EnterpriseCreateWorkflowResult>
+  onValidateWorkflow(workflowId: string, version: number): Promise<EnterpriseWorkflowValidation>
   onLoadMemberDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft>
   onSaveMemberDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft>
 }
@@ -44,7 +45,7 @@ function workflowLayout(workflow: EnterpriseWorkflowObservation) {
   return { width, height, positions }
 }
 
-export function DevelopmentPage({ environments, overview, loading, error, onRefresh, onOpenForge, onCreateTeam, onCreateWorkflow, onLoadMemberDraft, onSaveMemberDraft }: DevelopmentPageProps) {
+export function DevelopmentPage({ environments, overview, loading, error, onRefresh, onOpenForge, onCreateTeam, onCreateWorkflow, onValidateWorkflow, onLoadMemberDraft, onSaveMemberDraft }: DevelopmentPageProps) {
   const forge = environments.find((environment) => environment.id === 'forge-development')
   const weave = environments.find((environment) => environment.id === 'weave-development')
   const [activeTab, setActiveTab] = useState<'teams' | 'apps'>('teams')
@@ -70,6 +71,9 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
   const [flowCreateDescription, setFlowCreateDescription] = useState('')
   const [flowCreating, setFlowCreating] = useState(false)
   const [flowCreateError, setFlowCreateError] = useState('')
+  const [validation, setValidation] = useState<{ workflowId: string; version: number; result: EnterpriseWorkflowValidation }>()
+  const [validating, setValidating] = useState(false)
+  const [validationError, setValidationError] = useState('')
   // App passes inline callbacks. Parent refreshes must never reset an edited draft.
   const loadRef = useRef(onLoadMemberDraft)
   loadRef.current = onLoadMemberDraft
@@ -157,6 +161,19 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
     setFlowCreateOpen(true)
   }
   const nodeTypeLabel = (type: string) => ({ lead: '负责人', worker: '执行成员', deliver: '交付', wait: '人工处理', condition: '条件判断', parallel: '并行', join: '汇合', loop: '循环', transform: '转换', handoff: '交接' })[type] ?? '处理步骤'
+  const issueLabel = (code: string) => ({ workflow_agent_version_not_found: '成员版本不可用', workflow_agent_version_mismatch: '成员版本已变化', workflow_node_unreachable: '步骤未接入流程', workflow_route_missing: '步骤缺少下一步', workflow_dependency_missing: '依赖能力未配置', workflow_factory_unavailable: '执行能力不可用', workflow_trigger_invalid: '启动方式配置无效' })[code] ?? '流程配置需要调整'
+  const currentValidation = selectedWorkflow?.draftVersion && validation?.workflowId === selectedWorkflow.id && validation.version === selectedWorkflow.draftVersion ? validation.result : undefined
+  const validateWorkflow = async () => {
+    if (!selectedWorkflow?.draftVersion || validating) return
+    setValidating(true); setValidationError('')
+    try {
+      const result = await onValidateWorkflow(selectedWorkflow.id, selectedWorkflow.draftVersion)
+      setValidation({ workflowId: selectedWorkflow.id, version: selectedWorkflow.draftVersion, result })
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : ''
+      setValidationError(message === 'workflow store failed' ? '成员还没有可用于运行的模型版本，暂时无法检查草稿' : configurationLabel(message, '流程检查失败'))
+    } finally { setValidating(false) }
+  }
   const environmentSummary = (environment: EnterpriseEnvironmentStatus | undefined, fallback: string, canOpen = false) => <div className="development-environment-summary">
     <i className={environment?.available ? 'is-online' : ''}/><span><strong>{environment?.name ?? fallback}</strong><small>{loading ? '正在检查' : environment?.available ? '可用' : '暂不可用'}</small></span>
     {canOpen ? <button type="button" className="development-environment-open" aria-label="打开 Forge" title="打开 Forge" disabled={!environment?.available} onClick={() => environment && onOpenForge(environment.url)}><ExternalLink size={13}/></button> : null}
@@ -197,7 +214,8 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
             </button>
           })}</div>
           {!members.length ? <div className="development-observation-empty">暂无成员</div> : null}</> : <div className="workflow-stage">
-            <div className="workflow-stage__toolbar"><span>{selectedWorkflow ? configurationLabel(selectedWorkflow.name, '未命名流程') : '工作流程'}</span><button type="button" onClick={openFlowCreate}><Plus size={12}/>新建流程</button></div>
+            <div className="workflow-stage__toolbar"><span>{selectedWorkflow ? configurationLabel(selectedWorkflow.name, '未命名流程') : '工作流程'}</span><div>{selectedWorkflow?.draftVersion ? <button type="button" disabled={validating} onClick={() => void validateWorkflow()}><CheckCircle2 size={12}/>{validating ? '正在检查' : '检查草稿'}</button> : null}<button type="button" onClick={openFlowCreate}><Plus size={12}/>新建流程</button></div></div>
+            {currentValidation ? <div className={`workflow-validation ${currentValidation.valid ? 'is-valid' : 'is-invalid'}`} role="status">{currentValidation.valid ? '草稿通过检查' : `${currentValidation.issues.length} 项配置需要调整`}</div> : validationError ? <div className="workflow-validation is-invalid" role="alert">{validationError}</div> : null}
             {selectedTeam.workflows.length > 1 ? <div className="workflow-switcher">{selectedTeam.workflows.map((workflow) => <button type="button" key={workflow.id} className={workflow.id === selectedWorkflow?.id ? 'is-active' : ''} onClick={() => setFlowSelection({ workflow: workflow.id, node: '' })}>{configurationLabel(workflow.name, '未命名流程')}</button>)}</div> : null}
             {selectedWorkflow && graphLayout ? <div className="workflow-graph-scroll"><div className="workflow-graph" style={{ width: graphLayout.width, height: graphLayout.height }}>
               <svg aria-hidden="true" width={graphLayout.width} height={graphLayout.height}><defs><marker id="workflow-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8Z"/></marker></defs>{selectedWorkflow.edges.map((edge, index) => {
@@ -208,7 +226,7 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
                 const path = back ? `M ${startX} ${startY} C ${startX + 34} ${graphLayout.height - 10}, ${Math.max(8, endX - 34)} ${graphLayout.height - 10}, ${endX} ${endY}` : `M ${startX} ${startY} C ${(startX + endX) / 2} ${startY}, ${(startX + endX) / 2} ${endY}, ${endX} ${endY}`
                 return <path key={`${edge.from}-${edge.to}-${index}`} d={path} className={back ? 'is-back' : ''} markerEnd="url(#workflow-arrow)"/>
               })}</svg>
-              {selectedWorkflow.nodes.map((node) => { const position = graphLayout.positions.get(node.id); if (!position) return null; return <button type="button" key={node.id} style={{ left: position.x, top: position.y }} className={`workflow-graph__node ${node.id === selectedNode?.id ? 'is-selected' : ''}`} aria-pressed={node.id === selectedNode?.id} onClick={() => setFlowSelection({ workflow: selectedWorkflow.id, node: node.id })}><span>{node.type === 'deliver' ? <CheckCircle2 size={15}/> : node.type === 'lead' ? <UsersRound size={15}/> : <Bot size={15}/>}</span><span><strong>{configurationLabel(node.label, nodeTypeLabel(node.type))}</strong><small>{nodeTypeLabel(node.type)}</small></span></button> })}
+              {selectedWorkflow.nodes.map((node) => { const position = graphLayout.positions.get(node.id); if (!position) return null; const hasIssue = currentValidation?.issues.some((issue) => issue.nodeId === node.id); return <button type="button" key={node.id} style={{ left: position.x, top: position.y }} className={`workflow-graph__node ${node.id === selectedNode?.id ? 'is-selected' : ''} ${hasIssue ? 'has-issue' : ''}`} aria-pressed={node.id === selectedNode?.id} onClick={() => setFlowSelection({ workflow: selectedWorkflow.id, node: node.id })}><span>{node.type === 'deliver' ? <CheckCircle2 size={15}/> : node.type === 'lead' ? <UsersRound size={15}/> : <Bot size={15}/>}</span><span><strong>{configurationLabel(node.label, nodeTypeLabel(node.type))}</strong><small>{nodeTypeLabel(node.type)}</small></span></button> })}
             </div></div> : <div className="workflow-empty"><Workflow size={20}/><strong>还没有工作流程</strong><p>先建立一条基础流程，再按实际需要增加分支、并行、人工处理或循环。</p><button type="button" className="button button--primary" disabled={!selectedTeam.lead || !selectedTeam.workers.some((member) => member.enabled)} onClick={openFlowCreate}><Plus size={13}/>新建流程</button></div>}
           </div>}
         </main>
@@ -224,7 +242,7 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
           </> : !draftLoading && !draftError ? <div className="team-config-loading">选择团队成员</div> : null}
         </aside> : <aside className="member-inspector" aria-label="流程步骤">
           <header className="member-inspector__heading"><span><small>流程步骤</small><h3>{configurationLabel(selectedNode?.label, selectedNode ? nodeTypeLabel(selectedNode.type) : '选择步骤')}</h3></span>{selectedWorkflow ? <span className="member-inspector__state">{selectedWorkflow.publishedVersion ? '已发布' : '草稿'}</span> : null}</header>
-          {selectedWorkflow && selectedNode ? <div className="workflow-inspector"><dl className="member-summary"><div className="member-summary-row"><dt>所属流程</dt><dd>{configurationLabel(selectedWorkflow.name, '未命名流程')}</dd></div><div className="member-summary-row"><dt>步骤类型</dt><dd>{nodeTypeLabel(selectedNode.type)}</dd></div>{selectedNode.workerId ? <div className="member-summary-row"><dt>执行成员</dt><dd>{configurationLabel(members.find((member) => member.id === selectedNode.workerId)?.name, '团队成员')}</dd></div> : null}<div className="member-summary-row"><dt>当前版本</dt><dd>{selectedWorkflow.publishedVersion ? `正式版 ${selectedWorkflow.publishedVersion}` : selectedWorkflow.draftVersion ? '开发草稿' : '未保存'}</dd></div></dl></div> : <div className="team-config-loading">创建流程后可查看步骤配置</div>}
+          {selectedWorkflow && selectedNode ? <div className="workflow-inspector"><dl className="member-summary"><div className="member-summary-row"><dt>所属流程</dt><dd>{configurationLabel(selectedWorkflow.name, '未命名流程')}</dd></div><div className="member-summary-row"><dt>步骤类型</dt><dd>{nodeTypeLabel(selectedNode.type)}</dd></div>{selectedNode.workerId ? <div className="member-summary-row"><dt>执行成员</dt><dd>{configurationLabel(members.find((member) => member.id === selectedNode.workerId)?.name, '团队成员')}</dd></div> : null}<div className="member-summary-row"><dt>当前版本</dt><dd>{selectedWorkflow.publishedVersion ? `正式版 ${selectedWorkflow.publishedVersion}` : selectedWorkflow.draftVersion ? '开发草稿' : '未保存'}</dd></div></dl>{currentValidation && !currentValidation.valid ? <section className="workflow-issues"><h4>检查结果</h4>{currentValidation.issues.filter((issue) => !issue.nodeId || issue.nodeId === selectedNode.id).map((issue, index) => <p key={`${issue.code}-${index}`}>{issueLabel(issue.code)}</p>)}</section> : null}</div> : <div className="team-config-loading">创建流程后可查看步骤配置</div>}
         </aside>}
       </div> : null}
     </section>

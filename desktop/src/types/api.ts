@@ -143,6 +143,11 @@ export interface EnterpriseCreateWorkflowResult {
   draftVersion: number
 }
 
+export interface EnterpriseWorkflowValidation {
+  valid: boolean
+  issues: Array<{ code: string; message: string; nodeId?: string }>
+}
+
 export interface EnterpriseTeamMemberAgentConfiguration {
     displayName: string
     role: string
@@ -959,6 +964,7 @@ export interface PrimeWorkApi {
     getDevelopmentOverview(): Promise<EnterpriseDevelopmentOverview>
     createDevelopmentTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult>
     createDevelopmentWorkflow(input: EnterpriseCreateWorkflowInput): Promise<EnterpriseCreateWorkflowResult>
+    validateDevelopmentWorkflow(workflowId: string, version: number): Promise<EnterpriseWorkflowValidation>
     getTeamMemberConfigDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft>
     saveTeamMemberConfigDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft>
     getWorkOverview(): Promise<EnterpriseWorkOverview>

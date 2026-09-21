@@ -1,4 +1,4 @@
-import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseWorkflowObservation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
+import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 
@@ -431,6 +431,20 @@ export class EnterpriseService {
     const id = textValue(workflow?.id), workflowName = textValue(workflow?.name), draftVersion = numberValue(draft?.version)
     if (!id || !workflowName || !draftVersion) throw new Error('Weave 没有返回新流程')
     return { id, name: workflowName, draftVersion }
+  }
+
+  async validateDevelopmentWorkflow(workflowId: string, version: number): Promise<EnterpriseWorkflowValidation> {
+    if (!workflowId || !Number.isInteger(version) || version < 1) throw new Error('流程版本无效')
+    const session = await this.getSession()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有流程配置权限')
+    const result = record((await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}/versions/${version}/validate`, 'POST', {})).body)
+    if (typeof result?.valid !== 'boolean' || !Array.isArray(result.issues)) throw new Error('Weave 返回了无法识别的检查结果')
+    return { valid: result.valid, issues: result.issues.flatMap((value) => {
+      const issue = record(value), code = textValue(issue?.code), message = textValue(issue?.message)
+      if (!code || !message) return []
+      return [{ code, message, ...(textValue(issue?.node_id) ? { nodeId: textValue(issue?.node_id) } : {}) }]
+    }) }
   }
 
   async getTeamMemberConfigDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft> {

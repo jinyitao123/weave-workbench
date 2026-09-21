@@ -23,8 +23,9 @@ const load = vi.fn(async (_team: string, member: string) => fixture(member))
 const save = vi.fn(async (draft: EnterpriseTeamMemberConfigDraft) => ({ ...draft, revision: draft.revision + 1 }))
 const createTeam = vi.fn(async () => ({ id: 'created-team', name: '采购团队', objective: '处理采购工作' }))
 const createWorkflow = vi.fn(async () => ({ id: 'created-flow', name: '合同流程', draftVersion: 1 }))
+const validateWorkflow = vi.fn(async () => ({ valid: true, issues: [] }))
 async function render(value: EnterpriseDevelopmentOverview = overview, onRefresh = () => undefined) {
-  await act(async () => root.render(<DevelopmentPage environments={[]} overview={value} loading={false} error="" onRefresh={onRefresh} onOpenForge={() => undefined} onCreateTeam={createTeam} onCreateWorkflow={createWorkflow} onLoadMemberDraft={(team, member) => load(team, member)} onSaveMemberDraft={save}/>))
+  await act(async () => root.render(<DevelopmentPage environments={[]} overview={value} loading={false} error="" onRefresh={onRefresh} onOpenForge={() => undefined} onCreateTeam={createTeam} onCreateWorkflow={createWorkflow} onValidateWorkflow={validateWorkflow} onLoadMemberDraft={(team, member) => load(team, member)} onSaveMemberDraft={save}/>))
 }
 async function click(label: string) {
   const button = [...document.querySelectorAll<HTMLButtonElement>('button')].find((item) => item.textContent?.trim() === label || item.getAttribute('aria-label') === label)
@@ -110,4 +111,13 @@ it('creates a basic workflow from the current team without exposing internal ide
   await click('工作流程'); await click('新建流程')
   await click('创建流程')
   expect(createWorkflow).toHaveBeenCalledWith({ version: '1', teamId: 'team', name: '合同团队流程', description: '处理合同', leadId: 'lead-id', workerId: 'reviewer' })
+})
+
+it('checks the current draft and shows a readable result', async () => {
+  const value: EnterpriseDevelopmentOverview = { ...overview, teams: [{ ...overview.teams[0], workflows: [{ id: 'flow-id', name: '合同流程', status: 'active', draftVersion: 2, inspectedVersion: 2, nodes: [{ id: 'start', type: 'lead', label: '理解任务' }], edges: [] }] }] }
+  await render(value)
+  await click('工作流程'); await click('检查草稿')
+  expect(validateWorkflow).toHaveBeenCalledWith('flow-id', 2)
+  expect(container.textContent).toContain('草稿通过检查')
+  expect(container.textContent).not.toContain('flow-id')
 })
