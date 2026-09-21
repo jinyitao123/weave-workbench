@@ -48,7 +48,7 @@ export interface EnterpriseEnvironmentStatus {
   message?: string
 }
 
-export type EnterpriseRole = 'member' | 'developer' | 'admin'
+export type EnterprisePermission = 'teams:use' | 'teams:develop' | 'teams:admin'
 
 export interface EnterpriseSession {
   version: '1'
@@ -58,7 +58,7 @@ export interface EnterpriseSession {
   identitySource?: { kind: 'forge-account'; issuer: string }
   user?: { id: string; weaveUserId?: string; name: string; email: string }
   organization?: { id: string; name: string }
-  role?: EnterpriseRole
+  permissions?: EnterprisePermission[]
   message?: string
 }
 

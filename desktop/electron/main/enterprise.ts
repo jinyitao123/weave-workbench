@@ -1,4 +1,4 @@
-import type { EnterpriseBusinessCapability, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
+import type { EnterpriseBusinessCapability, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 
@@ -38,8 +38,10 @@ function record(value: unknown): Record<string, unknown> | undefined {
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined
 }
 
-function role(value: unknown): EnterpriseRole | undefined {
-  return value === 'member' || value === 'developer' || value === 'admin' ? value : undefined
+function enterprisePermissions(value: unknown): EnterprisePermission[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const permissions = value.filter((item): item is EnterprisePermission => item === 'teams:use' || item === 'teams:develop' || item === 'teams:admin')
+  return permissions.includes('teams:use') ? Array.from(new Set(permissions)) : undefined
 }
 
 function textValue(value: unknown): string | undefined {
@@ -203,12 +205,12 @@ export class EnterpriseService {
     try {
       const saved = record(JSON.parse(await readFile(this.sessionPath, 'utf8')))
       const projection = record(saved?.session) as EnterpriseSession | undefined
-      if ((saved?.version !== 1 && saved?.version !== 2) || typeof saved.expiresAt !== 'number' || projection?.status !== 'signed-in') return
+      if (saved?.version !== 3 || typeof saved.expiresAt !== 'number' || projection?.status !== 'signed-in' || !enterprisePermissions(projection.permissions)) return
       if (saved.expiresAt <= Date.now()) { await unlink(this.sessionPath).catch(() => undefined); return }
-      const encryptedWeaveToken = saved.version === 1 ? saved.token : saved.weaveToken
+      const encryptedWeaveToken = saved.weaveToken
       if (typeof encryptedWeaveToken !== 'string') return
       this.weaveToken = this.sessionCodec.decrypt(Buffer.from(encryptedWeaveToken, 'base64'))
-      if (saved.version === 2 && typeof saved.forgeToken === 'string') this.forgeToken = this.sessionCodec.decrypt(Buffer.from(saved.forgeToken, 'base64'))
+      if (typeof saved.forgeToken === 'string') this.forgeToken = this.sessionCodec.decrypt(Buffer.from(saved.forgeToken, 'base64'))
       this.expiresAt = saved.expiresAt
       this.session = { ...projection, storage: 'encrypted' }
     } catch { /* missing, malformed, or undecryptable sessions start signed out */ }
@@ -216,7 +218,7 @@ export class EnterpriseService {
 
   private async persist(): Promise<void> {
     if (!this.sessionPath || !this.sessionCodec?.available() || !this.session || !this.weaveToken) return
-    const saved = JSON.stringify({ version: 2, expiresAt: this.expiresAt, weaveToken: this.sessionCodec.encrypt(this.weaveToken).toString('base64'), ...(this.forgeToken ? { forgeToken: this.sessionCodec.encrypt(this.forgeToken).toString('base64') } : {}), session: { ...this.session, storage: 'encrypted' } })
+    const saved = JSON.stringify({ version: 3, expiresAt: this.expiresAt, weaveToken: this.sessionCodec.encrypt(this.weaveToken).toString('base64'), ...(this.forgeToken ? { forgeToken: this.sessionCodec.encrypt(this.forgeToken).toString('base64') } : {}), session: { ...this.session, storage: 'encrypted' } })
     await writeFile(this.sessionPath, saved, { encoding: 'utf8', mode: 0o600 })
     this.session = { ...this.session, storage: 'encrypted' }
   }
@@ -262,8 +264,8 @@ export class EnterpriseService {
       const weave = record(await exchanged.json())
       const subject = record(weave?.subject)
       const organization = record(weave?.organization)
-      const weaveRole = role(subject?.role)
-      if (typeof weave?.token !== 'string' || typeof subject?.id !== 'string' || typeof organization?.id !== 'string' || !weaveRole) {
+      const permissions = enterprisePermissions(weave?.permissions)
+      if (typeof weave?.token !== 'string' || typeof subject?.id !== 'string' || typeof organization?.id !== 'string' || !permissions) {
         throw new Error('Weave 返回了无法识别的账号绑定结果')
       }
       this.weaveToken = weave.token
@@ -280,7 +282,7 @@ export class EnterpriseService {
           email: typeof subject.email === 'string' && subject.email.trim() ? subject.email : typeof forgeUser.email === 'string' && forgeUser.email.trim() ? forgeUser.email : normalizedEmail,
         },
         organization: { id: organization.id, name: typeof organization.name === 'string' && organization.name.trim() ? organization.name : organization.id },
-        role: weaveRole,
+        permissions,
       }
       await this.persist()
       return await this.getSession()
@@ -321,7 +323,7 @@ export class EnterpriseService {
   async getDevelopmentOverview(): Promise<EnterpriseDevelopmentOverview> {
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有开发中心权限')
+    if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有开发中心权限')
     const [rawTeams, rawRuntimes] = await Promise.all([this.weaveJSON('/v1/teams?include=roster,summary&status=all'), this.weaveJSON('/v1/runtimes')])
     if (!Array.isArray(rawTeams)) throw new Error('Weave 返回了无法识别的团队列表')
     const teams = await Promise.all(rawTeams.map(async (item): Promise<EnterpriseTeamObservation> => {
@@ -395,7 +397,7 @@ export class EnterpriseService {
   async getBusinessCapabilityCatalog(): Promise<EnterpriseBusinessCapabilityCatalog> {
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有开发中心权限')
+    if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有开发中心权限')
     if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务能力')
     const response = await this.fetch(new URL('/api/v1/mcp', this.forgeUrl), {
       method: 'POST',
@@ -434,7 +436,7 @@ export class EnterpriseService {
     if (input?.version !== '1' || !name || name.length > 80 || !objective || objective.length > 2_000) throw new Error('请填写团队名称和目标')
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有新建团队权限')
+    if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有新建团队权限')
 
     const suffix = randomUUID()
     const leadName = `team-${suffix}-lead`
@@ -480,7 +482,7 @@ export class EnterpriseService {
     if (input?.version !== '1' || !input.teamId || !name || name.length > 80 || !objective || objective.length > 2_000 || !input.expectedUpdatedAt) throw new Error('团队资料不完整')
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有团队配置权限')
+    if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有团队配置权限')
     await this.weaveRequest(`/v1/teams/${encodeURIComponent(input.teamId)}/profile`, 'PUT', { display_name: name, objective, expected_updated_at: input.expectedUpdatedAt })
   }
 
@@ -489,7 +491,7 @@ export class EnterpriseService {
     if (input?.version !== '1' || !input.teamId || !name || name.length > 80 || !duty || duty.length > 2_000) throw new Error('请填写成员名称和职责')
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有团队配置权限')
+    if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有团队配置权限')
     const agentName = `team-member-${randomUUID()}`
     const created = record((await this.weaveRequest('/v1/agents', 'POST', {
       name: agentName, display_name: name, role: 'worker', engine: 'loom', graph_type: 'standard',
@@ -513,7 +515,7 @@ export class EnterpriseService {
     if (!teamId || !memberId) throw new Error('请选择要移出的成员')
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有团队配置权限')
+    if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有团队配置权限')
     await this.weaveRequest(`/v1/teams/${encodeURIComponent(teamId)}/workers/${encodeURIComponent(memberId)}`, 'DELETE')
   }
 
@@ -523,7 +525,7 @@ export class EnterpriseService {
     if (input?.version !== '1' || !input.teamId || !input.leadId || !input.workerId || !name || name.length > 80 || !description || description.length > 2_000) throw new Error('请填写流程名称和用途')
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有流程配置权限')
+    if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有流程配置权限')
     const [lead, worker] = await Promise.all([
       this.getTeamMemberConfigDraft(input.teamId, input.leadId),
       this.getTeamMemberConfigDraft(input.teamId, input.workerId),
@@ -558,7 +560,7 @@ export class EnterpriseService {
     if (input?.version !== '1' || !input.workflowId || !Number.isInteger(input.draftVersion) || input.draftVersion < 1 || !input.expectedUpdatedAt || !record(input.triggerConfig) || !workflowDefinition(input.graphDefinition)) throw new Error('流程草稿无效')
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有流程配置权限')
+    if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有流程配置权限')
     const result = record((await this.weaveRequest(`/v1/workflows/${encodeURIComponent(input.workflowId)}/versions/${input.draftVersion}`, 'PUT', {
       expected_updated_at: input.expectedUpdatedAt,
       trigger_config: input.triggerConfig,
@@ -573,7 +575,7 @@ export class EnterpriseService {
     if (!workflowId) throw new Error('流程无效')
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有流程配置权限')
+    if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有流程配置权限')
     const result = record((await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}/drafts`, 'POST', {})).body)
     const updatedAt = textValue(result?.updated_at), draftVersion = numberValue(result?.version)
     if (!updatedAt || !draftVersion) throw new Error('Weave 没有返回新版本草稿')
@@ -584,7 +586,7 @@ export class EnterpriseService {
     if (!workflowId || !Number.isInteger(version) || version < 1) throw new Error('流程版本无效')
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有流程配置权限')
+    if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有流程配置权限')
     const result = record((await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}/versions/${version}/validate`, 'POST', {})).body)
     if (typeof result?.valid !== 'boolean' || !Array.isArray(result.issues)) throw new Error('Weave 返回了无法识别的检查结果')
     return { valid: result.valid, issues: result.issues.flatMap((value) => {
@@ -598,7 +600,7 @@ export class EnterpriseService {
     if (!workflowId || !Number.isInteger(version) || version < 1) throw new Error('流程版本无效')
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有流程发布权限')
+    if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有流程发布权限')
     await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}/versions/${version}/publish`, 'POST', {})
   }
 
@@ -606,14 +608,14 @@ export class EnterpriseService {
     if (!workflowId) throw new Error('流程无效')
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有流程归档权限')
+    if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有流程归档权限')
     await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}`, 'DELETE')
   }
 
   async getTeamMemberConfigDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft> {
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有团队配置权限')
+    if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有团队配置权限')
     return teamMemberConfigDraft(await this.weaveJSON(`/v1/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(agentId)}/config-draft`))
   }
 
@@ -648,7 +650,7 @@ export class EnterpriseService {
     if (!teamId || !agentId || !Number.isInteger(revision) || revision < 1) throw new Error('请选择要应用的成员草稿')
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有团队配置权限')
+    if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有团队配置权限')
     const result = await this.weaveRequest(`/v1/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(agentId)}/config-draft/apply`, 'POST', { revision })
     return teamMemberConfigDraft(result.body)
   }

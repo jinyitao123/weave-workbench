@@ -16,7 +16,7 @@ describe('EnterpriseService', () => {
       }
       if (url === 'http://weave.example.test/v1/auth/external/exchange') {
         expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer forge-secret-token')
-        return Response.json({ token: 'weave-secret-token', subject: { id: 'weave-1', externalId: 'forge-1', email: 'developer@example.test', name: 'Developer', role: 'developer' }, organization: { id: 'default' } })
+        return Response.json({ token: 'weave-secret-token', subject: { id: 'weave-1', externalId: 'forge-1', email: 'developer@example.test', name: 'Developer' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
       }
       return Response.json({}, { status: 404 })
     }) as typeof fetch
@@ -25,7 +25,7 @@ describe('EnterpriseService', () => {
     })
 
     const session = await service.signIn(' developer@example.test ', 'secret')
-    expect(session).toMatchObject({ status: 'signed-in', storage: 'session-only', user: { id: 'forge-1', email: 'developer@example.test' }, organization: { id: 'default' }, role: 'developer' })
+    expect(session).toMatchObject({ status: 'signed-in', storage: 'session-only', user: { id: 'forge-1', email: 'developer@example.test' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
     expect(JSON.stringify(session)).not.toContain('secret-token')
     expect((await service.authorizationHeaders()).get('Authorization')).toBe('Bearer weave-secret-token')
     await expect(service.signOut()).resolves.toMatchObject({ status: 'signed-out' })
@@ -51,7 +51,7 @@ describe('EnterpriseService', () => {
     }
     const fetcher = (async (input: URL | RequestInfo) => String(input).includes('sign-in')
       ? Response.json({ token: 'forge-secret', user: { id: 'forge-1', email: 'member@example.test', name: 'Member' } })
-      : Response.json({ token: 'weave-secret', expiresIn: 3600, subject: { id: 'weave-1', externalId: 'forge-1', email: 'member@example.test', name: 'Member', role: 'member' }, organization: { id: 'default' } })) as typeof fetch
+      : Response.json({ token: 'weave-secret', expiresIn: 3600, subject: { id: 'weave-1', externalId: 'forge-1', email: 'member@example.test', name: 'Member' }, organization: { id: 'default' }, permissions: ['teams:use'] })) as typeof fetch
     try {
       const first = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetcher, sessionPath, sessionCodec: codec })
       await expect(first.signIn('member@example.test', 'secret')).resolves.toMatchObject({ status: 'signed-in', storage: 'encrypted' })
@@ -60,7 +60,7 @@ describe('EnterpriseService', () => {
       expect(persisted).not.toContain('forge-secret')
       expect(persisted).not.toContain('secret"')
       const restarted = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetcher, sessionPath, sessionCodec: codec })
-      await expect(restarted.getSession()).resolves.toMatchObject({ status: 'signed-in', role: 'member', storage: 'encrypted' })
+      await expect(restarted.getSession()).resolves.toMatchObject({ status: 'signed-in', permissions: ['teams:use'], storage: 'encrypted' })
       expect((await restarted.authorizationHeaders()).get('Authorization')).toBe('Bearer weave-secret')
       await restarted.signOut()
       await expect(readFile(sessionPath, 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
@@ -71,7 +71,7 @@ describe('EnterpriseService', () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1', role: 'developer' }, organization: { id: 'default' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
       if (url.endsWith('/api/v1/mcp')) {
         expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer forge-token')
         expect(JSON.parse(String(init?.body))).toMatchObject({ method: 'tools/call', params: { name: 'list_actions' } })
@@ -108,7 +108,7 @@ describe('EnterpriseService', () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'admin@example.test', name: 'Admin' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1', role: 'admin' }, organization: { id: 'default' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop', 'teams:admin'] })
       expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer weave-token')
       if (url.endsWith('/v1/runtimes')) return Response.json({ runtimes: [{ id: 'runtime-local', name: '本机运行时', engines: ['codex'], health_status: 'healthy', online: true }] })
       if (url.includes('/v1/teams?')) return Response.json([{ team: { id: 'team-1', display_name: '合同交接团队', objective: '完成合同交接', status: 'active', updated_at: '2026-09-21T00:00:00Z' }, lead: { id: 'lead-1', display_name: '负责人', role: 'avatar', enabled: true }, workers: [{ id: 'worker-1', display_name: '审核员', role: 'worker', configured_duty: '审核合同', enabled: true }], summary: { worker_count: 1, active_workflow_count: 1, published_workflow_count: 1, health: { conclusion: 'healthy', reason_codes: [] } } }])
@@ -138,7 +138,7 @@ describe('EnterpriseService', () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'admin@example.test', name: 'Admin' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1', role: 'developer' }, organization: { id: 'default' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
       requests.push({ method: init?.method ?? 'GET', ...(init?.body ? { body: JSON.parse(String(init.body)) as Record<string, unknown> } : {}) })
       return Response.json(response(init?.method === 'PUT' ? 1 : 0))
     }) as typeof fetch
@@ -161,7 +161,7 @@ describe('EnterpriseService', () => {
       const url = String(input), method = init?.method ?? 'GET'
       const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test', name: 'Developer' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1', role: 'developer' }, organization: { id: 'default' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
       calls.push({ url, method, body })
       if (url.endsWith('/v1/agents') && body?.role === 'avatar') return Response.json({ id: 'lead-1', ...body }, { status: 201 })
       if (url.endsWith('/v1/agents') && body?.role === 'worker') return Response.json({ id: 'worker-1', ...body }, { status: 201 })
@@ -182,7 +182,7 @@ describe('EnterpriseService', () => {
       const url = new URL(String(input)), method = init?.method ?? 'GET'
       const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined
       if (url.pathname.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test' } })
-      if (url.pathname.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1', role: 'developer' }, organization: { id: 'default' } })
+      if (url.pathname.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
       calls.push({ path: url.pathname, method, body })
       if (url.pathname === '/v1/agents') return Response.json({ id: 'worker-2', name: body?.name }, { status: 201 })
       if (method === 'DELETE') return new Response(null, { status: 204 })
@@ -208,7 +208,7 @@ describe('EnterpriseService', () => {
       const url = String(input), method = init?.method ?? 'GET'
       const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test', name: 'Developer' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1', role: 'developer' }, organization: { id: 'default' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
       calls.push({ url, method, body })
       if (url.endsWith('/members/lead-1/config-draft')) return Response.json({ version: '1', team_id: 'team-1', agent_id: 'lead-1', agent_name: 'lead', base_agent_version: 2, revision: 0, updated_at: '2026-09-21T00:00:00Z', configuration: { display_name: '负责人', role: 'avatar', engine: 'loom', system_prompt: '理解任务' }, relationship: {} })
       if (url.endsWith('/members/worker-1/config-draft')) return Response.json({ version: '1', team_id: 'team-1', agent_id: 'worker-1', agent_name: 'worker', base_agent_version: 3, revision: 0, updated_at: '2026-09-21T00:00:00Z', configuration: { display_name: '执行成员', role: 'worker', engine: 'loom' }, relationship: { result_requirement: '返回成果', enabled: true } })
@@ -227,7 +227,7 @@ describe('EnterpriseService', () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test', name: 'Developer' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1', role: 'developer' }, organization: { id: 'default' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
       expect(init?.method).toBe('POST')
       expect(JSON.parse(String(init?.body))).toEqual({})
       return Response.json({ valid: false, issues: [{ phase: 4, path: '/nodes/0', node_id: 'review', code: 'workflow_route_missing', message: 'route missing', occurrence: 1 }] })
@@ -245,7 +245,7 @@ describe('EnterpriseService', () => {
       const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined
       calls.push({ url, body })
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'member@example.test', name: 'Member' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1', role: 'member' }, organization: { id: 'default' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
       if (url.includes('/v1/teams?status=active')) return Response.json([{ id: 'team-1', display_name: '合同团队' }])
       if (url.endsWith('/v1/teams/team-1/workflows')) return Response.json({ workflows: [{ id: 'flow-1', name: '合同复核', published_version: 1 }] })
       if (url.includes('/v1/runs?view=team')) return Response.json({ runs: [{ run_id: 'run-1', status: 'running' }] })
