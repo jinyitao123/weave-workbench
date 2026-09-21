@@ -8,7 +8,7 @@
     },
     "weave": {
       "source": "https://github.com/jinyitao123/weave-next.git",
-      "revision": "73e79583a468129a185fe4c7da909ba3db084c9a",
+      "revision": "10782bd3127051565169cd0b2c29727b9d3539ad",
       "importPath": "platform/weave"
     },
     "forge": {
