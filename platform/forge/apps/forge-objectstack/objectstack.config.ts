@@ -9,6 +9,7 @@ import * as pages from './src/pages/index.js';
 import * as hooks from './src/hooks/index.js';
 import * as seedData from './src/data/index.js';
 import * as flows from './src/flows/index.js';
+import * as permissions from './src/permissions/index.js';
 
 const object = (id: string, label: string, objectName: string, icon?: string) => ({
   id, type: 'object' as const, label, objectName, ...(icon ? { icon } : {}),
@@ -53,6 +54,7 @@ export default defineStack({
   hooks: Object.values(hooks),
   pages: Object.values(pages),
   flows: Object.values(flows),
+  permissions: Object.values(permissions),
   apps: [{
     name: 'forge', label: 'Forge', icon: 'factory', active: true, isDefault: true,
     // Keep RISEMAP's observed top-level information architecture. Empty areas
