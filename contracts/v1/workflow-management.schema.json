@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/workflow-management.schema.json",
+  "title": "Workbench workflow management",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["version", "operation", "workflowId"],
+      "properties": {
+        "version": { "const": "1" },
+        "operation": { "const": "create-draft" },
+        "workflowId": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": ["version", "operation", "workflowId", "draftVersion", "expectedUpdatedAt", "triggerConfig", "graphDefinition"],
+      "properties": {
+        "version": { "const": "1" },
+        "operation": { "const": "save-draft" },
+        "workflowId": { "type": "string", "minLength": 1 },
+        "draftVersion": { "type": "integer", "minimum": 1 },
+        "expectedUpdatedAt": { "type": "string", "format": "date-time" },
+        "triggerConfig": { "type": "object" },
+        "graphDefinition": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": ["version", "operation", "workflowId", "draftVersion"],
+      "properties": {
+        "version": { "const": "1" },
+        "operation": { "enum": ["publish", "validate"] },
+        "workflowId": { "type": "string", "minLength": 1 },
+        "draftVersion": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": ["version", "operation", "workflowId"],
+      "properties": {
+        "version": { "const": "1" },
+        "operation": { "const": "archive" },
+        "workflowId": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
+import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 
@@ -126,6 +126,21 @@ function workflowGraph(value: unknown): Pick<EnterpriseWorkflowObservation, 'nod
     return [{ from, to, ...(textValue(source?.label) ? { label: textValue(source?.label) } : {}), ...(textValue(source?.route) ? { route: textValue(source?.route) } : {}) }]
   }) : []
   return { nodes, edges }
+}
+
+function workflowDefinition(value: unknown): EnterpriseWorkflowGraphDefinition | undefined {
+  const graph = record(value)
+  if (!graph || numberValue(graph.schema_version) !== 1 || !textValue(graph.entry_node_id) || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) return undefined
+  const nodes = graph.nodes.flatMap((item) => {
+    const node = record(item), id = textValue(node?.id), type = textValue(node?.type)
+    return node && id && type ? [{ ...node, id, type }] : []
+  })
+  const edges = graph.edges.flatMap((item) => {
+    const edge = record(item), from = textValue(edge?.from_node_id), to = textValue(edge?.to_node_id)
+    return edge && from && to ? [{ ...edge, from_node_id: from, to_node_id: to }] : []
+  })
+  if (nodes.length !== graph.nodes.length || edges.length !== graph.edges.length) return undefined
+  return { ...graph, schema_version: 1, entry_node_id: textValue(graph.entry_node_id)!, nodes, edges }
 }
 
 function runObservation(value: unknown): EnterpriseRunObservation | undefined {
@@ -314,11 +329,17 @@ export class EnterpriseService {
         if (!workflowID || !workflowName || !workflowStatus) throw new Error('Weave 返回了无法识别的工作流')
         const publishedVersion = numberValue(row?.published_version)
         const draftVersion = numberValue(row?.draft_version)
-        const inspectedVersion = publishedVersion ?? draftVersion
+        const inspectedVersion = draftVersion ?? publishedVersion
         let graph = { nodes: [], edges: [] } as Pick<EnterpriseWorkflowObservation, 'nodes' | 'edges'>
+        let definition: EnterpriseWorkflowGraphDefinition | undefined
+        let triggerConfig: Record<string, unknown> | undefined
+        let draftUpdatedAt: string | undefined
         if (inspectedVersion) {
           const rawVersion = record(await this.weaveJSON(`/v1/workflows/${encodeURIComponent(workflowID)}/versions/${inspectedVersion}`))
           graph = workflowGraph(rawVersion?.graph_definition)
+          definition = workflowDefinition(rawVersion?.graph_definition)
+          triggerConfig = record(rawVersion?.trigger_config)
+          if (draftVersion && inspectedVersion === draftVersion) draftUpdatedAt = textValue(rawVersion?.updated_at)
         }
         const trigger = record(row?.trigger_summary)
         const latest = record(row?.latest_run)
@@ -327,6 +348,7 @@ export class EnterpriseService {
           ...(textValue(row?.description) ? { description: textValue(row?.description) } : {}),
           ...(publishedVersion ? { publishedVersion } : {}), ...(draftVersion ? { draftVersion } : {}), ...(inspectedVersion ? { inspectedVersion } : {}),
           ...(textValue(trigger?.type) ? { triggerType: textValue(trigger?.type) } : {}), ...(textValue(latest?.run_id) ? { latestRunId: textValue(latest?.run_id) } : {}),
+          ...(definition ? { graphDefinition: definition } : {}), ...(triggerConfig ? { triggerConfig } : {}), ...(draftUpdatedAt ? { draftUpdatedAt } : {}),
         }
       }))
       const runList = record(rawRuns)
@@ -480,6 +502,32 @@ export class EnterpriseService {
     return { id, name: workflowName, draftVersion }
   }
 
+  async updateDevelopmentWorkflowDraft(input: EnterpriseUpdateWorkflowDraftInput): Promise<EnterpriseUpdateWorkflowDraftResult> {
+    if (input?.version !== '1' || !input.workflowId || !Number.isInteger(input.draftVersion) || input.draftVersion < 1 || !input.expectedUpdatedAt || !record(input.triggerConfig) || !workflowDefinition(input.graphDefinition)) throw new Error('流程草稿无效')
+    const session = await this.getSession()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有流程配置权限')
+    const result = record((await this.weaveRequest(`/v1/workflows/${encodeURIComponent(input.workflowId)}/versions/${input.draftVersion}`, 'PUT', {
+      expected_updated_at: input.expectedUpdatedAt,
+      trigger_config: input.triggerConfig,
+      graph_definition: input.graphDefinition,
+    })).body)
+    const updatedAt = textValue(result?.updated_at), draftVersion = numberValue(result?.version)
+    if (!updatedAt || !draftVersion) throw new Error('Weave 没有返回流程草稿')
+    return { draftVersion, updatedAt }
+  }
+
+  async createDevelopmentWorkflowDraft(workflowId: string): Promise<EnterpriseUpdateWorkflowDraftResult> {
+    if (!workflowId) throw new Error('流程无效')
+    const session = await this.getSession()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有流程配置权限')
+    const result = record((await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}/drafts`, 'POST', {})).body)
+    const updatedAt = textValue(result?.updated_at), draftVersion = numberValue(result?.version)
+    if (!updatedAt || !draftVersion) throw new Error('Weave 没有返回新版本草稿')
+    return { draftVersion, updatedAt }
+  }
+
   async validateDevelopmentWorkflow(workflowId: string, version: number): Promise<EnterpriseWorkflowValidation> {
     if (!workflowId || !Number.isInteger(version) || version < 1) throw new Error('流程版本无效')
     const session = await this.getSession()
@@ -492,6 +540,22 @@ export class EnterpriseService {
       if (!code || !message) return []
       return [{ code, message, ...(textValue(issue?.node_id) ? { nodeId: textValue(issue?.node_id) } : {}) }]
     }) }
+  }
+
+  async publishDevelopmentWorkflow(workflowId: string, version: number): Promise<void> {
+    if (!workflowId || !Number.isInteger(version) || version < 1) throw new Error('流程版本无效')
+    const session = await this.getSession()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有流程发布权限')
+    await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}/versions/${version}/publish`, 'POST', {})
+  }
+
+  async archiveDevelopmentWorkflow(workflowId: string): Promise<void> {
+    if (!workflowId) throw new Error('流程无效')
+    const session = await this.getSession()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有流程归档权限')
+    await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}`, 'DELETE')
   }
 
   async getTeamMemberConfigDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft> {

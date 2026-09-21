@@ -80,8 +80,18 @@ export interface EnterpriseWorkflowObservation {
   inspectedVersion?: number
   triggerType?: string
   latestRunId?: string
+  draftUpdatedAt?: string
+  triggerConfig?: Record<string, unknown>
+  graphDefinition?: EnterpriseWorkflowGraphDefinition
   nodes: Array<{ id: string; type: string; label?: string; workerId?: string }>
   edges: Array<{ from: string; to: string; label?: string; route?: string }>
+}
+
+export interface EnterpriseWorkflowGraphDefinition extends Record<string, unknown> {
+  schema_version: number
+  entry_node_id: string
+  nodes: Array<Record<string, unknown> & { id: string; type: string; label?: string; config?: Record<string, unknown> }>
+  edges: Array<Record<string, unknown> & { id?: string; from_node_id: string; to_node_id: string; route?: string }>
 }
 
 export interface EnterpriseRunObservation {
@@ -162,6 +172,20 @@ export interface EnterpriseCreateWorkflowResult {
   id: string
   name: string
   draftVersion: number
+}
+
+export interface EnterpriseUpdateWorkflowDraftInput {
+  version: '1'
+  workflowId: string
+  draftVersion: number
+  expectedUpdatedAt: string
+  triggerConfig: Record<string, unknown>
+  graphDefinition: EnterpriseWorkflowGraphDefinition
+}
+
+export interface EnterpriseUpdateWorkflowDraftResult {
+  draftVersion: number
+  updatedAt: string
 }
 
 export interface EnterpriseWorkflowValidation {
@@ -996,7 +1020,11 @@ export interface PrimeWorkApi {
     createDevelopmentTeamMember(input: EnterpriseCreateTeamMemberInput): Promise<EnterpriseTeamMemberMutationResult>
     removeDevelopmentTeamMember(teamId: string, memberId: string): Promise<void>
     createDevelopmentWorkflow(input: EnterpriseCreateWorkflowInput): Promise<EnterpriseCreateWorkflowResult>
+    createDevelopmentWorkflowDraft(workflowId: string): Promise<EnterpriseUpdateWorkflowDraftResult>
+    updateDevelopmentWorkflowDraft(input: EnterpriseUpdateWorkflowDraftInput): Promise<EnterpriseUpdateWorkflowDraftResult>
     validateDevelopmentWorkflow(workflowId: string, version: number): Promise<EnterpriseWorkflowValidation>
+    publishDevelopmentWorkflow(workflowId: string, version: number): Promise<void>
+    archiveDevelopmentWorkflow(workflowId: string): Promise<void>
     getTeamMemberConfigDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft>
     saveTeamMemberConfigDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft>
     applyTeamMemberConfigDraft(teamId: string, agentId: string, revision: number): Promise<EnterpriseTeamMemberConfigDraft>

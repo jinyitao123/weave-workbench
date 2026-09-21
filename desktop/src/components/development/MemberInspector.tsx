@@ -37,6 +37,15 @@ export function MemberInspector({ draft, runtimes, onChange }: {
   const relationship = draft.relationship
   const setConfig = <K extends keyof typeof config>(key: K, value: typeof config[K]) => onChange({ ...draft, configuration: { ...config, [key]: value } })
   const setRelationship = <K extends keyof typeof relationship>(key: K, value: typeof relationship[K]) => onChange({ ...draft, relationship: { ...relationship, [key]: value } })
+  const setEngine = (engine: string) => onChange({
+    ...draft,
+    configuration: {
+      ...config,
+      engine,
+      model: engine === 'loom' ? config.model : '',
+      runtimeId: engine === 'loom' ? '' : config.runtimeId,
+    },
+  })
   const engineOptions = engines.some((engine) => engine.value === config.engine) ? engines : [...engines, { value: config.engine, label: configurationLabel(config.engine, '当前执行引擎') }]
   const runtimeOptions = [{ value: '', label: '自动选择' }, ...runtimes.map((runtime) => ({ value: runtime.id, label: configurationLabel(runtime.name, '已登记运行位置'), detail: runtime.online ? '在线' : '离线' }))]
   if (config.runtimeId && !runtimes.some((runtime) => runtime.id === config.runtimeId)) runtimeOptions.push({ value: config.runtimeId, label: '当前绑定位置（未连接）' })
@@ -94,8 +103,8 @@ export function MemberInspector({ draft, runtimes, onChange }: {
       {section === 'execution' ? <section className={`member-config-card ${editing === 'execution' ? 'is-editing' : ''}`}>
         <header><div><h4>运行方式</h4><p>选择执行引擎、运行位置和资源边界。</p></div><EditorButton editing={editing === 'execution'} label="调整" onClick={() => toggleEditor('execution')}/></header>
         {editing === 'execution' ? <div className="member-config-form">
-          <div className="product-field"><span><strong>执行引擎</strong></span><ProductSelect label="执行引擎" value={config.engine} options={engineOptions} onChange={(value) => setConfig('engine', value)}/></div>
-          <ProductField label="模型" value={config.model} placeholder="跟随运行环境" onChange={(event) => setConfig('model', event.target.value)}/>
+          <div className="product-field"><span><strong>执行引擎</strong></span><ProductSelect label="执行引擎" value={config.engine} options={engineOptions} onChange={setEngine}/></div>
+          {config.engine === 'loom' ? <ProductField label="模型" value={config.model} placeholder="填写模型名称" onChange={(event) => setConfig('model', event.target.value)}/> : null}
           <div className="product-field"><span><strong>运行位置</strong></span><ProductSelect label="运行位置" value={config.runtimeId} options={runtimeOptions} onChange={(value) => setConfig('runtimeId', value)}/></div>
           <ProductSwitch label="启用记忆" checked={config.memoryEnabled} onChange={(value) => setConfig('memoryEnabled', value)}/>
           {config.memoryEnabled ? <ProductSelect label="记忆范围" value={config.memoryScope} options={[{ value: 'tenant', label: '团队空间' }, { value: 'user', label: '当前员工' }, { value: 'session', label: '当前会话' }]} onChange={(value) => setConfig('memoryScope', value)}/> : null}
