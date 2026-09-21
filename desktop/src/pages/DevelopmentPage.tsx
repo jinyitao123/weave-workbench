@@ -126,6 +126,7 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
   const memberId = selectedMember?.id
   const currentDraft = draft?.teamId === teamId && draft?.agentId === memberId ? draft : undefined
   const dirty = Boolean(currentDraft && fingerprint(currentDraft) !== baseline)
+  const memberModelReady = Boolean(currentDraft && (currentDraft.configuration.engine !== 'loom' || overview?.models.includes(currentDraft.configuration.model)))
   const filteredTeams = overview?.teams.filter((team) => configurationLabel(team.name, '未命名团队').toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())) ?? []
 
   useEffect(() => {
@@ -479,9 +480,9 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
           {draftError ? <div className="member-inspector__error" role="alert">{draftError}{!currentDraft ? <button type="button" className="button" onClick={() => setRetry((value) => value + 1)}>重试</button> : null}</div> : null}
           {currentDraft ? <>
             <fieldset className="member-inspector__fields" disabled={saving}>
-              <MemberInspector key={`${teamId}/${memberId}`} draft={currentDraft} runtimes={overview?.runtimes ?? []} businessCapabilities={businessCapabilities} businessCapabilityError={businessCapabilityError} onChange={(value) => { setDraft(value); setSaved(false); setDraftError('') }}/>
+              <MemberInspector key={`${teamId}/${memberId}`} draft={currentDraft} runtimes={overview?.runtimes ?? []} models={overview?.models ?? []} businessCapabilities={businessCapabilities} businessCapabilityError={businessCapabilityError} onChange={(value) => { setDraft(value); setSaved(false); setDraftError('') }}/>
             </fieldset>
-            <footer className="member-inspector__footer"><small>{currentDraft.revision ? '应用后，新工作使用这份配置' : '当前配置已用于新工作'}</small><span className="member-inspector__footer-actions"><button type="button" className="button" disabled={saving || !dirty || !currentDraft.configuration.displayName.trim()} onClick={() => void save()}><Save size={13}/>保存草稿</button><button type="button" className="button button--primary" disabled={saving || dirty || currentDraft.revision < 1} onClick={() => void applyMemberDraft()}><CheckCircle2 size={13}/>{saving ? '处理中' : '应用配置'}</button></span></footer>
+            <footer className="member-inspector__footer"><small>{memberModelReady ? (currentDraft.revision ? '应用后，新工作使用这份配置' : '当前配置已用于新工作') : '请先接入并选择可用模型'}</small><span className="member-inspector__footer-actions"><button type="button" className="button" disabled={saving || !dirty || !currentDraft.configuration.displayName.trim() || !memberModelReady} onClick={() => void save()}><Save size={13}/>保存草稿</button><button type="button" className="button button--primary" disabled={saving || dirty || currentDraft.revision < 1 || !memberModelReady} onClick={() => void applyMemberDraft()}><CheckCircle2 size={13}/>{saving ? '处理中' : '应用配置'}</button></span></footer>
           </> : !draftLoading && !draftError ? <div className="team-config-loading">选择团队成员</div> : null}
         </aside> : <aside className="member-inspector" aria-label="流程步骤">
           <header className="member-inspector__heading"><span><small>流程步骤</small><h3>{configurationLabel(selectedNode?.label, selectedNode ? nodeTypeLabel(selectedNode.type) : '选择步骤')}</h3></span>{selectedWorkflow ? <span className="member-inspector__state">{selectedWorkflow.draftVersion ? '草稿' : selectedWorkflow.publishedVersion ? '已发布' : ''}</span> : null}</header>

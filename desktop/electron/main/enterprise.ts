@@ -324,7 +324,11 @@ export class EnterpriseService {
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有开发中心权限')
-    const [rawTeams, rawRuntimes] = await Promise.all([this.weaveJSON('/v1/teams?include=roster,summary&status=all'), this.weaveJSON('/v1/runtimes')])
+    const [rawTeams, rawRuntimes, rawModels] = await Promise.all([
+      this.weaveJSON('/v1/teams?include=roster,summary&status=all'),
+      this.weaveJSON('/v1/runtimes'),
+      this.weaveJSON('/v1/development/model-catalog'),
+    ])
     if (!Array.isArray(rawTeams)) throw new Error('Weave 返回了无法识别的团队列表')
     const teams = await Promise.all(rawTeams.map(async (item): Promise<EnterpriseTeamObservation> => {
       const source = record(item)
@@ -391,7 +395,9 @@ export class EnterpriseService {
       if (!id || !name) return []
       return [{ id, name, engines: stringList(item?.engines), status: textValue(item?.health_status) ?? 'unknown', online: item?.online === true }]
     })
-    return { version: '1', loadedAt: new Date().toISOString(), teams, runtimes }
+    const modelSource = record(rawModels)
+    const models = stringList(modelSource?.models)
+    return { version: '1', loadedAt: new Date().toISOString(), teams, runtimes, models }
   }
 
   async getBusinessCapabilityCatalog(): Promise<EnterpriseBusinessCapabilityCatalog> {

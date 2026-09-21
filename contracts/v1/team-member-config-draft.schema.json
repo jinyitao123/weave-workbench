@@ -27,6 +27,8 @@
         "displayName": { "type": "string", "minLength": 1 },
         "role": { "type": "string", "minLength": 1 },
         "engine": { "type": "string", "minLength": 1 },
+        "model": { "type": "string" },
+        "runtimeId": { "type": "string" },
         "skillNames": { "type": "array", "items": { "type": "string", "minLength": 1 } },
         "skills": { "type": "array", "items": { "$ref": "#/$defs/skill" } },
         "businessCapabilityIds": {

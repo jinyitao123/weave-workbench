@@ -9,13 +9,13 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let root: Root
 let container: HTMLDivElement
 const overview: EnterpriseDevelopmentOverview = {
-  version: '1', loadedAt: '', runtimes: [], teams: [{ id: 'team', name: '合同团队', status: 'active', updatedAt: '2026-09-21T00:00:00Z', workflows: [], runs: [], workers: [
+  version: '1', loadedAt: '', runtimes: [], models: ['deepseek-v4-flash'], teams: [{ id: 'team', name: '合同团队', status: 'active', updatedAt: '2026-09-21T00:00:00Z', workflows: [], runs: [], workers: [
     { id: 'reviewer', name: '审核员', role: 'worker', enabled: true }, { id: 'writer', name: '起草员', role: 'worker', enabled: true },
   ] }],
 }
 function fixture(agentId = 'reviewer'): EnterpriseTeamMemberConfigDraft {
   return { version: '1', teamId: 'team', agentId, agentName: agentId, baseAgentVersion: 1, revision: 1, updatedAt: '',
-    configuration: { displayName: agentId === 'reviewer' ? '审核员' : '起草员', role: 'worker', engine: 'loom', runtimeId: '', model: '', systemPrompt: '检查合同', skillNames: [], skills: [], mcpServerIds: ['3a57aefc-a5c4-44d3-8e0d-e46d06cd2d41'], businessCapabilityIds: [], permissionAllow: [], permissionAsk: [], permissionDeny: [], memoryEnabled: false, memoryScope: 'tenant', maxTokens: 0, maxOutputTokens: 0, stepBudget: 0, maxCostUsd: 0, outputSchema: '' },
+    configuration: { displayName: agentId === 'reviewer' ? '审核员' : '起草员', role: 'worker', engine: 'loom', runtimeId: '', model: 'deepseek-v4-flash', systemPrompt: '检查合同', skillNames: [], skills: [], mcpServerIds: ['3a57aefc-a5c4-44d3-8e0d-e46d06cd2d41'], businessCapabilityIds: [], permissionAllow: [], permissionAsk: [], permissionDeny: [], memoryEnabled: false, memoryScope: 'tenant', maxTokens: 0, maxOutputTokens: 0, stepBudget: 0, maxCostUsd: 0, outputSchema: '' },
     relationship: { duty: '检查条款', whenToUse: '', contextInstruction: '', allowedKinds: [], defaultKind: '', resultRequirement: '', enabled: true },
   }
 }
@@ -92,6 +92,15 @@ it('shows bindings without exposing internal identifiers or fake resource option
   expect(container.textContent).toContain('已绑定工具服务')
   expect(container.textContent).not.toContain('3a57aefc')
   expect(container.querySelector('select')).toBeNull()
+})
+
+it('shows only organization models for Loom and hides desktop runtime placement', async () => {
+  await render({ ...overview, models: [] }); await click('执行')
+  expect(container.textContent).toContain('当前模型不可用，请选择组织已接入的模型')
+  expect(container.textContent).not.toContain('运行位置')
+  await click('调整')
+  expect(container.textContent).toContain('组织尚未配置可用模型')
+  expect(container.querySelector<HTMLButtonElement>('[aria-label="模型"]')?.disabled).toBe(true)
 })
 
 it('creates a handwritten skill inside the selected member draft', async () => {

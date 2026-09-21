@@ -24,9 +24,10 @@ const sections: Array<{ value: Section; label: string }> = [
 ]
 const engines = [{ value: 'loom', label: 'Weave 内置运行时' }, { value: 'codex', label: 'Codex' }, { value: 'claude', label: 'Claude' }, { value: 'opencode', label: 'OpenCode' }]
 
-export function MemberInspector({ draft, runtimes, businessCapabilities, businessCapabilityError, onChange }: {
+export function MemberInspector({ draft, runtimes, models, businessCapabilities, businessCapabilityError, onChange }: {
   draft: EnterpriseTeamMemberConfigDraft
   runtimes: EnterpriseDevelopmentOverview['runtimes']
+  models: EnterpriseDevelopmentOverview['models']
   businessCapabilities?: EnterpriseBusinessCapabilityCatalog
   businessCapabilityError?: string
   onChange(draft: EnterpriseTeamMemberConfigDraft): void
@@ -44,13 +45,16 @@ export function MemberInspector({ draft, runtimes, businessCapabilities, busines
     configuration: {
       ...config,
       engine,
-      model: engine === 'loom' ? config.model : '',
+      model: engine === 'loom' ? (models.includes(config.model) ? config.model : models[0] ?? '') : '',
       runtimeId: engine === 'loom' ? '' : config.runtimeId,
     },
   })
   const engineOptions = engines.some((engine) => engine.value === config.engine) ? engines : [...engines, { value: config.engine, label: configurationLabel(config.engine, '当前执行引擎') }]
   const runtimeOptions = [{ value: '', label: '自动选择' }, ...runtimes.map((runtime) => ({ value: runtime.id, label: configurationLabel(runtime.name, '已登记运行位置'), detail: runtime.online ? '在线' : '离线' }))]
   if (config.runtimeId && !runtimes.some((runtime) => runtime.id === config.runtimeId)) runtimeOptions.push({ value: config.runtimeId, label: '当前绑定位置（未连接）' })
+  const modelOptions: Array<{ value: string; label: string; detail?: string }> = models.map((model) => ({ value: model, label: model }))
+  if (config.model && !models.includes(config.model)) modelOptions.push({ value: config.model, label: config.model, detail: '当前模型尚未接入' })
+  const modelReady = config.engine !== 'loom' || models.includes(config.model)
   const permissionNames: Record<string, string> = { permissionAllow: '允许调用', permissionAsk: '调用前询问', permissionDeny: '禁止调用' }
   const toggleEditor = (target: Section) => setEditing((value) => value === target ? null : target)
   const executionSteps = config.engine === 'loom'
@@ -107,15 +111,15 @@ export function MemberInspector({ draft, runtimes, businessCapabilities, busines
       </section> : null}
 
       {section === 'execution' ? <section className={`member-config-card ${editing === 'execution' ? 'is-editing' : ''}`}>
-        <header><div><h4>运行方式</h4><p>选择执行引擎、运行位置和资源边界。</p></div><EditorButton editing={editing === 'execution'} label="调整" onClick={() => toggleEditor('execution')}/></header>
+        <header><div><h4>运行方式</h4><p>选择执行引擎和资源边界。</p></div><EditorButton editing={editing === 'execution'} label="调整" onClick={() => toggleEditor('execution')}/></header>
         {editing === 'execution' ? <div className="member-config-form">
           <div className="product-field"><span><strong>执行引擎</strong></span><ProductSelect label="执行引擎" value={config.engine} options={engineOptions} onChange={setEngine}/></div>
-          {config.engine === 'loom' ? <ProductField label="模型" value={config.model} placeholder="填写模型名称" onChange={(event) => setConfig('model', event.target.value)}/> : null}
-          <div className="product-field"><span><strong>运行位置</strong></span><ProductSelect label="运行位置" value={config.runtimeId} options={runtimeOptions} onChange={(value) => setConfig('runtimeId', value)}/></div>
+          {config.engine === 'loom' ? <><div className="product-field"><span><strong>模型</strong></span><ProductSelect label="模型" value={config.model} options={modelOptions} disabled={!models.length} onChange={(value) => setConfig('model', value)}/></div>{!modelReady ? <p className="member-inspector__error" role="alert">组织尚未配置可用模型</p> : null}</> : null}
+          {config.engine !== 'loom' ? <div className="product-field"><span><strong>运行位置</strong></span><ProductSelect label="运行位置" value={config.runtimeId} options={runtimeOptions} onChange={(value) => setConfig('runtimeId', value)}/></div> : null}
           <ProductSwitch label="启用记忆" checked={config.memoryEnabled} onChange={(value) => setConfig('memoryEnabled', value)}/>
           {config.memoryEnabled ? <ProductSelect label="记忆范围" value={config.memoryScope} options={[{ value: 'tenant', label: '团队空间' }, { value: 'user', label: '当前员工' }, { value: 'session', label: '当前会话' }]} onChange={(value) => setConfig('memoryScope', value)}/> : null}
           <div className="member-limit-grid"><ProductField label="总令牌上限" type="number" min={0} value={config.maxTokens} onChange={(event) => setConfig('maxTokens', Number(event.target.value))}/><ProductField label="单次输出上限" type="number" min={0} value={config.maxOutputTokens} onChange={(event) => setConfig('maxOutputTokens', Number(event.target.value))}/><ProductField label="步骤上限" type="number" min={0} value={config.stepBudget} onChange={(event) => setConfig('stepBudget', Number(event.target.value))}/><ProductField label="成本上限（美元）" type="number" min={0} step="0.01" value={config.maxCostUsd} onChange={(event) => setConfig('maxCostUsd', Number(event.target.value))}/></div>
-        </div> : <dl className="member-summary"><SummaryRow label="执行引擎" value={engineOptions.find((item) => item.value === config.engine)?.label}/><SummaryRow label="运行位置" value={runtimeOptions.find((item) => item.value === config.runtimeId)?.label}/><SummaryRow label="模型" value={config.model || '跟随运行环境'}/><SummaryRow label="记忆" value={config.memoryEnabled ? '已启用' : '未启用'}/></dl>}
+        </div> : <dl className="member-summary"><SummaryRow label="执行引擎" value={engineOptions.find((item) => item.value === config.engine)?.label}/>{config.engine !== 'loom' ? <SummaryRow label="运行位置" value={runtimeOptions.find((item) => item.value === config.runtimeId)?.label}/> : null}<SummaryRow label="模型" value={config.model || '未配置'}/><SummaryRow label="记忆" value={config.memoryEnabled ? '已启用' : '未启用'}/>{!modelReady ? <div className="member-inspector__error" role="alert">当前模型不可用，请选择组织已接入的模型</div> : null}</dl>}
         <div className="member-execution-flow" aria-label="成员执行链"><strong>成员执行链</strong><ol>{executionSteps.map((step, index) => <li key={step}><span>{index + 1}</span>{step}</li>)}</ol></div>
       </section> : null}
 
