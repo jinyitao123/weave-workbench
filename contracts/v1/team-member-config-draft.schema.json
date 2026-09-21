@@ -12,11 +12,35 @@
     "agentName": { "type": "string", "minLength": 1 },
     "baseAgentVersion": { "type": "integer", "minimum": 1 },
     "revision": { "type": "integer", "minimum": 0 },
-    "publishedConfiguration": { "type": "object" },
+    "publishedConfiguration": { "$ref": "#/$defs/configuration" },
     "publishedRelationship": { "type": "object" },
-    "configuration": { "type": "object" },
+    "configuration": { "$ref": "#/$defs/configuration" },
     "relationship": { "type": "object" },
     "updatedAt": { "type": "string", "format": "date-time" },
     "updatedBy": { "type": "string" }
+  },
+  "$defs": {
+    "configuration": {
+      "type": "object",
+      "required": ["displayName", "role", "engine", "skillNames", "skills"],
+      "properties": {
+        "displayName": { "type": "string", "minLength": 1 },
+        "role": { "type": "string", "minLength": 1 },
+        "engine": { "type": "string", "minLength": 1 },
+        "skillNames": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "skills": { "type": "array", "items": { "$ref": "#/$defs/skill" } }
+      }
+    },
+    "skill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "description", "body", "alwaysActive"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "description": { "type": "string", "maxLength": 240 },
+        "body": { "type": "string", "minLength": 1, "maxLength": 524288 },
+        "alwaysActive": { "type": "boolean" }
+      }
+    }
   }
 }

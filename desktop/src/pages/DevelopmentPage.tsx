@@ -247,7 +247,7 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
       {error ? <div className="development-inline-error" role="alert">{configurationLabel(error, '团队读取失败')}</div> : null}
       {!overview && loading ? <div className="development-observation-empty">正在读取团队配置…</div> : null}
       {overview?.teams.length === 0 ? <div className="team-workspace-empty"><UsersRound size={20}/><strong>当前组织还没有团队</strong><button type="button" className="button button--primary" onClick={openCreate}><Plus size={13}/>新建团队</button></div> : null}
-      {selectedTeam ? <div className="team-workspace__layout">
+      {selectedTeam ? <div className={`team-workspace__layout team-workspace__layout--${workspaceView}`}>
         <aside className="team-collection" aria-label="团队列表">
           <div className="team-collection__heading"><span>团队</span><button type="button" aria-label="新建团队" title="新建团队" onClick={openCreate}><Plus size={13}/></button></div>
           <label className="team-collection__search"><Search size={13}/><input aria-label="搜索团队" placeholder="搜索团队" value={query} onChange={(event) => setQuery(event.target.value)}/></label>
