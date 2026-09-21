@@ -257,6 +257,7 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   ))
   handle('enterprise:sign-out', () => services.enterprise.signOut())
   handle('enterprise:get-development-overview', () => services.enterprise.getDevelopmentOverview())
+  handle('enterprise:get-business-capability-catalog', () => services.enterprise.getBusinessCapabilityCatalog())
   handle('enterprise:create-development-team', (_event, input) => services.enterprise.createDevelopmentTeam(requireRecord(input, 'input') as unknown as import('../../src/types/api').EnterpriseCreateTeamInput))
   handle('enterprise:update-development-team', (_event, input) => services.enterprise.updateDevelopmentTeam(requireRecord(input, 'input') as unknown as import('../../src/types/api').EnterpriseUpdateTeamInput))
   handle('enterprise:create-development-team-member', (_event, input) => services.enterprise.createDevelopmentTeamMember(requireRecord(input, 'input') as unknown as import('../../src/types/api').EnterpriseCreateTeamMemberInput))

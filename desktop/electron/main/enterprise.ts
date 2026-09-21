@@ -1,4 +1,4 @@
-import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
+import type { EnterpriseBusinessCapability, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 
@@ -54,6 +54,15 @@ function stringList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
 }
 
+function parseMcpResponse(value: string): unknown {
+  const trimmed = value.trim()
+  if (!trimmed) throw new Error('Forge 没有返回业务能力')
+  if (trimmed.startsWith('{')) return JSON.parse(trimmed)
+  const data = trimmed.split(/\r?\n/).filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trim()).find((line) => line && line !== '[DONE]')
+  if (!data) throw new Error('Forge 返回了无法识别的业务能力')
+  return JSON.parse(data)
+}
+
 function memberAgentConfiguration(value: Record<string, unknown>, agentName: string): EnterpriseTeamMemberAgentConfiguration {
   const outputSchema = value.output_schema === undefined || value.output_schema === null ? '' : JSON.stringify(value.output_schema, null, 2)
   const skills = Array.isArray(value.skills) ? value.skills.flatMap((item) => {
@@ -64,7 +73,7 @@ function memberAgentConfiguration(value: Record<string, unknown>, agentName: str
     displayName: textValue(value.display_name) ?? agentName, role: textValue(value.role) ?? 'worker',
     engine: textValue(value.engine) ?? 'loom', runtimeId: textValue(value.runtime_id) ?? '', model: textValue(value.model) ?? '',
     systemPrompt: typeof value.system_prompt === 'string' ? value.system_prompt : '', skillNames: stringList(value.skill_names), skills,
-    mcpServerIds: stringList(value.mcp_server_ids), permissionAllow: stringList(value.permission_allow),
+    mcpServerIds: stringList(value.mcp_server_ids), businessCapabilityIds: stringList(value.business_capability_ids), permissionAllow: stringList(value.permission_allow),
     permissionAsk: stringList(value.permission_ask), permissionDeny: stringList(value.permission_deny),
     memoryEnabled: value.memory_enabled === true, memoryScope: textValue(value.memory_scope) ?? 'tenant',
     maxTokens: numberValue(value.max_tokens) ?? 0, maxOutputTokens: numberValue(value.max_output_tokens) ?? 0,
@@ -167,6 +176,7 @@ export class EnterpriseService {
   private loaded = false
   private session?: EnterpriseSession
   private weaveToken?: string
+  private forgeToken?: string
   private expiresAt = 0
 
   constructor(options: EnterpriseServiceOptions = {}) {
@@ -193,9 +203,12 @@ export class EnterpriseService {
     try {
       const saved = record(JSON.parse(await readFile(this.sessionPath, 'utf8')))
       const projection = record(saved?.session) as EnterpriseSession | undefined
-      if (saved?.version !== 1 || typeof saved.token !== 'string' || typeof saved.expiresAt !== 'number' || projection?.status !== 'signed-in') return
+      if ((saved?.version !== 1 && saved?.version !== 2) || typeof saved.expiresAt !== 'number' || projection?.status !== 'signed-in') return
       if (saved.expiresAt <= Date.now()) { await unlink(this.sessionPath).catch(() => undefined); return }
-      this.weaveToken = this.sessionCodec.decrypt(Buffer.from(saved.token, 'base64'))
+      const encryptedWeaveToken = saved.version === 1 ? saved.token : saved.weaveToken
+      if (typeof encryptedWeaveToken !== 'string') return
+      this.weaveToken = this.sessionCodec.decrypt(Buffer.from(encryptedWeaveToken, 'base64'))
+      if (saved.version === 2 && typeof saved.forgeToken === 'string') this.forgeToken = this.sessionCodec.decrypt(Buffer.from(saved.forgeToken, 'base64'))
       this.expiresAt = saved.expiresAt
       this.session = { ...projection, storage: 'encrypted' }
     } catch { /* missing, malformed, or undecryptable sessions start signed out */ }
@@ -203,7 +216,7 @@ export class EnterpriseService {
 
   private async persist(): Promise<void> {
     if (!this.sessionPath || !this.sessionCodec?.available() || !this.session || !this.weaveToken) return
-    const saved = JSON.stringify({ version: 1, expiresAt: this.expiresAt, token: this.sessionCodec.encrypt(this.weaveToken).toString('base64'), session: { ...this.session, storage: 'encrypted' } })
+    const saved = JSON.stringify({ version: 2, expiresAt: this.expiresAt, weaveToken: this.sessionCodec.encrypt(this.weaveToken).toString('base64'), ...(this.forgeToken ? { forgeToken: this.sessionCodec.encrypt(this.forgeToken).toString('base64') } : {}), session: { ...this.session, storage: 'encrypted' } })
     await writeFile(this.sessionPath, saved, { encoding: 'utf8', mode: 0o600 })
     this.session = { ...this.session, storage: 'encrypted' }
   }
@@ -254,6 +267,7 @@ export class EnterpriseService {
         throw new Error('Weave 返回了无法识别的账号绑定结果')
       }
       this.weaveToken = weave.token
+      this.forgeToken = forge.token
       this.expiresAt = Date.now() + (typeof weave.expiresIn === 'number' && weave.expiresIn > 0 ? Math.min(weave.expiresIn, 8 * 60 * 60) : 8 * 60 * 60) * 1000
       this.session = {
         version: '1', status: 'signed-in',
@@ -272,6 +286,7 @@ export class EnterpriseService {
       return await this.getSession()
     } catch (error) {
       this.weaveToken = undefined
+      this.forgeToken = undefined
       this.session = undefined
       if (error instanceof Error && !['fetch failed', 'The operation was aborted due to timeout'].includes(error.message)) throw error
       throw new Error('企业服务暂时无法连接')
@@ -280,6 +295,7 @@ export class EnterpriseService {
 
   async signOut(): Promise<EnterpriseSession> {
     this.weaveToken = undefined
+    this.forgeToken = undefined
     this.session = undefined
     this.expiresAt = 0
     if (this.sessionPath) await unlink(this.sessionPath).catch(() => undefined)
@@ -374,6 +390,42 @@ export class EnterpriseService {
       return [{ id, name, engines: stringList(item?.engines), status: textValue(item?.health_status) ?? 'unknown', online: item?.online === true }]
     })
     return { version: '1', loadedAt: new Date().toISOString(), teams, runtimes }
+  }
+
+  async getBusinessCapabilityCatalog(): Promise<EnterpriseBusinessCapabilityCatalog> {
+    const session = await this.getSession()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有开发中心权限')
+    if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务能力')
+    const response = await this.fetch(new URL('/api/v1/mcp', this.forgeUrl), {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${this.forgeToken}`, Accept: 'application/json, text/event-stream', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 'business-capability-catalog', method: 'tools/call', params: { name: 'list_actions', arguments: {} } }),
+      redirect: 'error', signal: AbortSignal.timeout(15_000),
+    })
+    const raw = await response.text()
+    if (response.status === 401 || response.status === 403) {
+      await this.signOut()
+      throw new Error('登录已失效，请重新登录')
+    }
+    if (!response.ok) throw new Error(`Forge 业务能力读取失败（${response.status}）`)
+    const envelope = record(parseMcpResponse(raw))
+    const result = record(envelope?.result)
+    const content = Array.isArray(result?.content) ? result.content : []
+    const text = content.map((item) => textValue(record(item)?.text)).find(Boolean)
+    const payload = text ? record(JSON.parse(text)) : undefined
+    const actions = Array.isArray(payload?.actions) ? payload.actions : []
+    const capabilities = actions.flatMap((value): EnterpriseBusinessCapability[] => {
+      const action = record(value), actionName = textValue(action?.name), objectName = textValue(action?.objectName)
+      if (!actionName || !objectName) return []
+      return [{
+        id: `forge:action:${objectName}.${actionName}`,
+        name: textValue(action?.label) ?? textValue(action?.description) ?? actionName,
+        description: textValue(action?.description) ?? textValue(action?.label) ?? actionName,
+        effect: 'write', resourceType: objectName, requiresEmployeeIntent: true, status: 'available',
+      }]
+    })
+    return { version: '1', provider: { id: 'forge', name: 'Forge 业务环境', status: 'available' }, capabilities, refreshedAt: new Date().toISOString() }
   }
 
   async createDevelopmentTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult> {
@@ -577,7 +629,7 @@ export class EnterpriseService {
       configuration: {
         display_name: draft.configuration.displayName.trim(), role: draft.configuration.role, engine: draft.configuration.engine,
         runtime_id: draft.configuration.runtimeId.trim(), model: draft.configuration.model.trim(), system_prompt: draft.configuration.systemPrompt,
-        skill_names: draft.configuration.skillNames, skills: draft.configuration.skills.map((skill) => ({ name: skill.name, description: skill.description, body: skill.body, always_active: skill.alwaysActive })), mcp_server_ids: draft.configuration.mcpServerIds,
+        skill_names: draft.configuration.skillNames, skills: draft.configuration.skills.map((skill) => ({ name: skill.name, description: skill.description, body: skill.body, always_active: skill.alwaysActive })), mcp_server_ids: draft.configuration.mcpServerIds, business_capability_ids: draft.configuration.businessCapabilityIds,
         permission_allow: draft.configuration.permissionAllow, permission_ask: draft.configuration.permissionAsk, permission_deny: draft.configuration.permissionDeny,
         memory_enabled: draft.configuration.memoryEnabled, memory_scope: draft.configuration.memoryScope,
         max_tokens: draft.configuration.maxTokens, max_output_tokens: draft.configuration.maxOutputTokens,

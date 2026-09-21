@@ -92,7 +92,7 @@ export function ProductSelect<T extends string>({ value, options, label, disable
       <span><strong>{selected?.label ?? '暂无可选项'}</strong>{selected?.detail ? <small>{selected.detail}</small> : null}</span><ChevronDown size={14} aria-hidden="true"/>
     </button>
     {open ? <div id={listId} className="product-select__menu" role="listbox" aria-label={label} onKeyDown={(event) => {
-      const current = optionRefs.current.findIndex((item) => item === document.activeElement)
+      const current = optionRefs.current.indexOf(document.activeElement as HTMLButtonElement | null)
       if (event.key === 'Escape') { event.preventDefault(); close(true); return }
       if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
       event.preventDefault()

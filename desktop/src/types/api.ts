@@ -203,6 +203,7 @@ export interface EnterpriseTeamMemberAgentConfiguration {
     skillNames: string[]
     skills: EnterpriseTeamMemberSkill[]
     mcpServerIds: string[]
+    businessCapabilityIds: string[]
     permissionAllow: string[]
     permissionAsk: string[]
     permissionDeny: string[]
@@ -213,6 +214,23 @@ export interface EnterpriseTeamMemberAgentConfiguration {
     stepBudget: number
     maxCostUsd: number
     outputSchema: string
+}
+
+export interface EnterpriseBusinessCapability {
+  id: string
+  name: string
+  description: string
+  effect: 'read' | 'write'
+  resourceType: string
+  requiresEmployeeIntent: boolean
+  status: 'available' | 'unavailable'
+}
+
+export interface EnterpriseBusinessCapabilityCatalog {
+  version: '1'
+  provider: { id: string; name: string; status: 'available' | 'unavailable' }
+  capabilities: EnterpriseBusinessCapability[]
+  refreshedAt: string
 }
 
 export interface EnterpriseTeamMemberSkill {
@@ -1015,6 +1033,7 @@ export interface PrimeWorkApi {
     signIn(email: string, password: string): Promise<EnterpriseSession>
     signOut(): Promise<EnterpriseSession>
     getDevelopmentOverview(): Promise<EnterpriseDevelopmentOverview>
+    getBusinessCapabilityCatalog(): Promise<EnterpriseBusinessCapabilityCatalog>
     createDevelopmentTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult>
     updateDevelopmentTeam(input: EnterpriseUpdateTeamInput): Promise<void>
     createDevelopmentTeamMember(input: EnterpriseCreateTeamMemberInput): Promise<EnterpriseTeamMemberMutationResult>
