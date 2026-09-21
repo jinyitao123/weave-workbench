@@ -25,7 +25,7 @@
 | ENG-02 | 总仓远端与共享基线 / 总仓 | 完成 | GooeyPi 已成为 `main` 和 `codex/product-shell` 的桌面基线，旧 DSH 分支与工作树已清理；当前继续在 GooeyPi 上推进 MVP1 |
 | ENV-01 | Forge 账号接入 / Forge、GooeyPi 桌面 | 通过 | 真实 Forge 账号已完成一次登录、Weave 会话交换、系统安全存储、进程重开恢复和退出边界验证；见[登录验收](acceptance/2026-09-21-gooeypi-mvp1-login.md) |
 | ACCESS-01 | Weave 自动绑定与三类角色 / Weave、Workbench | 通过当前管理员路径 | 真实 PostgreSQL 中首次绑定、重复登录稳定读回和管理员角色保留已验证；`member` 无法从命令入口进入开发中心；三名独立真实账号矩阵仍纳入 ACCEPT-01 |
-| OBS-01 | 团队配置与执行可见 / 总仓、Weave | 进行中 | GooeyPi 开发中心已拆为“智能体团队 / 应用开发”两个页签，当前服务状态收在右上角；团队页读取真实角色、流程版本、节点和运行。默认 `design-studio` 的代码种子与线上遗留数据均已清除，桌面刷新后只显示真实合同交接团队 |
+| OBS-01 | 团队配置与执行可见 / 总仓、Weave | 进行中 | 第一阶段已完成团队成员配置工作区：开发者可选择真实成员，查看职责、模型、运行时、技能、材料和限制，保存 Weave 侧草稿并刷新读回。草稿尚不影响已发布团队；差异比较、试运行和发布仍待后续阶段完成 |
 | FLOW-01 | 合同材料到跨员工待办 / 三仓 | 进行中 | 已从原生桌面以管理员发起工作，再退出到独立登录首页并以第二个 Forge 账号登录、读取待办、填写意见和确认接收；运行 `run-13f7d179-6dae-5cde-8581-c722cef51c2c` 从桌面刷新后显示成功。材料上传、Forge 业务动作与浏览器业务结果读回、文件成果尚未完成 |
 | DEV-01 | 团队与应用修改、测试、发布 / 三仓 | 待开始 | 员工路径贯通后，完成团队草稿、两类调试、一次 Forge 变更与版本发布；员工实际用到新能力 |
 | ACCEPT-01 | MVP1 组合验收 / 总仓 | 待开始 | 按 MVP1 验证正常与异常路径、安装重开和版本证据；必需项全部通过后完成 |
@@ -34,20 +34,14 @@ ENG-01、PLAN-01 由本次“梳理会话接入与主架构”会话完成。SYN
 
 ## 未提交现场与组件偏差
 
-当前基线：分支 `codex/product-shell`。GooeyPi 登录与权限边界已合入并推送；正在开发的 OBS-01 改动以当前工作树和 `make status` 为准。
+当前本地基线已收拢到总仓 `main`；GooeyPi 登录、权限边界和团队成员配置草稿均进入该组合版本。当前工作树与组件偏差以 `make status` 为准。
 
 Weave 的回流结果为：
 
 - `platform/weave/internal/kernel/workflowhealth/store.go`：健康观察查询从旧字段 `build_run_id` 改用 `candidate_content_hash`。
 - `platform/weave/internal/kernel/workflowhealth/store_pg_test.go`：真实 PostgreSQL 回归用例随修复进入提交。
 
-独立 Weave 工作树 `/Users/jinyitao/Developer/weave-next-workflow-health-fix` 保存提交 `a80b466b`，尚未推送；原 `/Users/jinyitao/Developer/weave-next` 的其他未提交工作未被改动。
-
-独立 Weave 工作树 `/Users/jinyitao/Developer/weave-next-product-access` 的 [weave-next PR #5](https://github.com/jinyitao123/weave-next/pull/5) 已更新为 Forge 账号自动绑定和 Weave 原生三类角色，当前提交 `cb453045`。Cerbos、五项权限投影和固定开发者名单已移除，角色更新只接受 `member / developer / admin`；首次建绑、重复登录、角色保留和停用拒绝已通过真实 PostgreSQL 定向验证。跨系统真实账号登录仍待部署组合验证。
-
-独立 Workbench 工作树 `/Users/jinyitao/Developer/weave-workbench-product-access-upstream` 的 [weave-workbench PR #1](https://github.com/jinyitao123/weave-workbench/pull/1) 已更新为一次 Forge 登录与 Weave 会话交换，提交 `a4623cf0`。界面只呈现 Weave 角色，开发者不自动获得 Host 运维权限。
-
-独立 Forge 工作树 `/Users/jinyitao/Developer/inoForge-workbench-oauth` 已用提交 `bea0706` 撤回 OAuth 试验，inoForge PR #1 已关闭。Forge 页面任务已将五个并行页面工作树确认合入 `main`，并以提交 `6e25449b` 收口销售与行政页面休整及字段约束修复；总仓 `platform/forge` 已同步该确定提交。联调服务器运行同一提交，健康检查通过并留有发布前数据库与环境配置备份；应用业务对象的结构漂移告警已清除，ObjectStack 17.4.0 自带的 `sys_view_definition` 索引迁移仍有一项平台级告警。
+2026-09-21 已完成本地分支和工作树收拢。Weave 的账号接入、团队配置草稿、运行时修复、MCP 修复及历史智能体能力已进入源码主仓；Forge 页面成果和已撤回的 OAuth 试验历史已进入源码主仓；总仓已重新同步并通过组件一致性检查。详情见[分支与工作树收拢记录](acceptance/2026-09-21-branch-worktree-consolidation.md)。远端推送、重新部署和业务闭环仍分别验收，不由本次本地收拢代替。
 
 ObjectStack HTTP OAuth 草稿 PR #19342 不再属于 MVP1 依赖。是否关闭外部草稿 PR 由对应上游仓库单独处理；当前总仓已移除补丁和相关配置。
 
