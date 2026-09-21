@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 2,
+  "pageId": "page_sales_additional_fee",
+  "archetype": "task_workspace",
+  "status": "review_required",
+  "observedAt": "2026-09-20",
+  "environment": {
+    "forgeUrl": "http://localhost:3000",
+    "database": "待本页同材料验收时填写",
+    "materials": "待 RISEMAP 实时页面恢复后建立同材料"
+  },
+  "checks": {
+    "replication": {
+      "status": "blocked",
+      "notes": "RISEMAP 当前已登录页面空白，客户页仍保留未保存内容确认；尚无本页当轮实时双侧证据。",
+      "evidence": []
+    },
+    "visual": {
+      "status": "pending",
+      "notes": "Forge 已完成 1280x900 与 760x900 控件几何复扫，但尚无本页 RISEMAP 同视口 PNG、实算像素差异图和双侧几何 JSON。",
+      "evidence": [
+        "docs/evidence/sales-controls-20260920/geometry-audit.json"
+      ]
+    },
+    "interaction": {
+      "status": "pending",
+      "notes": "尚待按本页可见控件逐项完成双侧点击、输入、阻断、提交、反馈和回读。",
+      "evidence": []
+    },
+    "business": {
+      "status": "pending",
+      "notes": "尚待使用同一组可识别材料完成 RISEMAP 与 Forge 正常路径、关键异常、API 断言和同一 SQLite 停服重启回读。",
+      "evidence": []
+    }
+  },
+  "requirements": [],
+  "review": {
+    "implementer": "Codex 当前实施会话",
+    "reviewer": "",
+    "reviewedAt": "",
+    "status": "pending",
+    "evidence": []
+  },
+  "limitations": [
+    "本记录用于逐页保留部分证明和真实阻塞，不构成 accepted。",
+    "不得以全组几何零相交替代本页像素、交互、业务或持久化验收。"
+  ]
+}

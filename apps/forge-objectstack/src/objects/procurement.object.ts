@@ -349,7 +349,7 @@ export const PurchaseInbound = master('forge_purchase_inbound', '采购入库单
   name: text('入库单名称', true), code: code('入库单号'), inbound_type: select('入库类型', [['purchase', '采购入库']], 'purchase'),
   source_type: select('来源类型', [['purchase_order', '采购订单'], ['purchase_replacement', '采购换货补货'], ['exempt_inspection', '免检入库']], 'purchase_order'), order_id: reference('forge_purchase_order', '采购订单', true),
   purchase_return_id: reference('forge_purchase_return', '采购换货单'),
-  inspection_id: reference('forge_purchase_inspection', '兼容首条检验单'), order_line_id: reference('forge_purchase_order_line', '兼容首条订单明细', true),
+  inspection_id: reference('forge_purchase_inspection', '兼容首条检验单', true), order_line_id: reference('forge_purchase_order_line', '兼容首条订单明细', true),
   sku_id: reference('forge_material_sku', '兼容首条物料规格', true), item_code: text('兼容首条物料编码'), batch_number: text('兼容首条批次号'),
   quantity: positiveQuantity('兼容首条入库数量'), unit_cost: nonNegativeMoney('兼容首条库存单价'), inventory_amount: nonNegativeMoney('兼容首条库存金额'),
   before_on_hand: nonNegativeQuantity('兼容首条入库前库存', true), after_on_hand: nonNegativeQuantity('兼容首条入库后库存', true),
@@ -365,7 +365,7 @@ export const PurchaseInbound = master('forge_purchase_inbound', '采购入库单
 
 export const PurchaseInboundLine = master('forge_purchase_inbound_line', '采购入库明细', 'list', {
   name: text('物料名称', true), inbound_id: reference('forge_purchase_inbound', '采购入库单', true),
-  inspection_id: reference('forge_purchase_inspection', '采购检验单'), receipt_id: reference('forge_purchase_receipt', '到货登记', true),
+  inspection_id: reference('forge_purchase_inspection', '采购检验单', true), receipt_id: reference('forge_purchase_receipt', '到货登记', true),
   receipt_line_id: reference('forge_purchase_receipt_line', '到货登记明细', true), order_id: reference('forge_purchase_order', '采购订单', true),
   purchase_return_id: reference('forge_purchase_return', '采购换货单'), purchase_return_line_id: reference('forge_purchase_return_line', '采购换货明细'),
   order_line_id: reference('forge_purchase_order_line', '采购订单明细', true), supplier_id: reference('forge_supplier', '供应商', true),

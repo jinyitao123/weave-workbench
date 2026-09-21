@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { readFileSync } from 'node:fs';
+const page=readFileSync(new URL('../src/pages/hr-business-config.page.ts',import.meta.url),'utf8');
+const object=readFileSync(new URL('../src/objects/business-setting.object.ts',import.meta.url),'utf8');
+const seed=readFileSync(new URL('../src/data/business-setting.seed.ts',import.meta.url),'utf8');
+const config=readFileSync(new URL('../objectstack.config.ts',import.meta.url),'utf8');
+test('人事配置替换占位入口',()=>{assert.match(config,/page\('hr_business_config', '人事配置', 'page_hr_business_config'/);assert.doesNotMatch(config,/page\('hr_config_gap'/)});
+test('十二类 RISEMAP 人事配置齐全',()=>{for(const x of ['岗位管理','职级管理','假期类型','请假配置','交通方式','补签类型','班次类型','假日类型','工资项配置','招聘渠道','手册分类','制度分类'])assert.match(page,new RegExp(x))});
+test('专用对象与真实选项已建模',()=>{for(const x of ['forge_hr_leave_config','forge_hr_salary_item','minimum_minutes','item_type'])assert.match(object,new RegExp(x));for(const x of ['上班补签','弹性工时','临时停工日','BOSS直聘','入职指南','信息安全'])assert.match(seed,new RegExp(x))});
+test('可编辑配置不会在重启时被种子覆盖',()=>{assert.equal((seed.match(/mode: 'ignore'/g)||[]).length,2)});
+test('页面具备 CRUD 阻断和三档防挤压',()=>{for(const x of ["'POST'","method:'PATCH'","method:'DELETE'",'确认删除','980px','760px','520px','请填写编码和名称','请填写名称'])assert.match(page,new RegExp(x.replace(/[()]/g,'\\$&')))});
