@@ -20,7 +20,7 @@ export const DrawingBusinessSetting = master('forge_drawing_business_setting', '
     { value: 'change_type', label: '变更类型' }, { value: 'change_level', label: '变更等级' },
     { value: 'version_type', label: '版本类型' }, { value: 'review_category', label: '评审分类' },
     { value: 'participant_role', label: '参与人角色' }, { value: 'issue_category', label: '问题分类' },
-    { value: 'issue_severity', label: '问题严重度' },
+    { value: 'issue_severity', label: '问题严重度' }, { value: 'confidentiality', label: '保密等级' },
   ], { label: '配置分类', required: true, storage: { notNull: true } }),
   description: Field.textarea({ label: '用途说明' }), color: text('标识颜色'), enabled: enabled(), sort_order: sortOrder(), remarks: remarks(),
 }, ['category', 'name', 'code', 'enabled', 'sort_order', 'description']);

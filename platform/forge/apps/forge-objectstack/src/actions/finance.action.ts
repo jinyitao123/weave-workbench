@@ -271,6 +271,70 @@ const allocations=await ctx.api.object('forge_collection_allocation').find({wher
 ` },
 });
 
+export const ProjectReconcileOrderLedger = defineAction({
+  name: 'project_reconcile_order_ledger', label: '核对订单履约账', objectName: 'forge_project', icon: 'list-checks',
+  locations: [...locations], order: 75,
+  visible: `record.status != 'settled' && record.status != 'archived' && record.status != 'terminated'`,
+  refreshAfter: true,
+  description: '按实际出库、有效发票和已审核核销重算关联订单、合同和项目汇总；发现超发、超开或超收时停止写入并提示来源。',
+  confirmText: '系统将按来源单据重算发货、开票和回款汇总，不会新增、删除或改变来源单据。是否继续？',
+  successMessage: '订单履约账已核对并同步',
+  body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
+const projectId=ctx.recordId||(ctx.record&&ctx.record.id),project=ctx.record;
+if(ctx.recordLoadDenied===true||!projectId||!project)throw new Error('当前项目不存在或不可访问');
+if(['settled','archived','terminated'].includes(project.status))throw new Error('已结算、已归档或已终止项目不能重算履约账');
+const links=await ctx.api.object('forge_project_sales_link').find({where:{project_id:projectId}});
+if(!links.length)throw new Error('当前项目尚未关联销售订单');
+const round4=v=>Math.round((Number(v)+Number.EPSILON)*10000)/10000,eps=0.0001,prepared=[];
+for(const link of links){
+  const order=await ctx.api.object('forge_sales_order').findOne({where:{id:link.order_id}});
+  if(!order)throw new Error('项目关联订单不存在：'+link.order_id);
+  const lines=await ctx.api.object('forge_sales_order_line').find({where:{order_id:order.id}});
+  if(!lines.length)throw new Error('订单 '+order.code+' 缺少订单明细');
+  const shipmentLines=await ctx.api.object('forge_sales_shipment_line').find({where:{order_id:order.id}}),shipments=await ctx.api.object('forge_sales_shipment').find({where:{}}),outbounds=(await ctx.api.object('forge_sales_outbound').find({where:{order_id:order.id}})).filter(x=>x.status==='outbounded');
+  const shipmentById=new Map(shipments.map(x=>[x.id,x])),linePatches=[],shipmentPatches=[];
+  for(const line of lines){
+    const related=shipmentLines.filter(x=>x.order_line_id===line.id&&!['cancelled'].includes((shipmentById.get(x.shipment_id)||{}).status));
+    const shipped=round4(related.reduce((sum,x)=>sum+outbounds.filter(y=>y.shipment_id===x.shipment_id&&y.sku_id===x.sku_id).reduce((s,y)=>s+Number(y.quantity||0),0),0));
+    if(shipped>Number(line.quantity||0)+eps)throw new Error('订单 '+order.code+' 明细 '+line.name+' 实际出库数量超过订单数量');
+    linePatches.push({id:line.id,shipped_quantity:shipped});
+  }
+  for(const shipment of shipments.filter(x=>shipmentLines.some(line=>line.shipment_id===x.id)&&x.status!=='cancelled')){
+    const ownLines=shipmentLines.filter(x=>x.shipment_id===shipment.id),ownOutbounds=outbounds.filter(x=>x.shipment_id===shipment.id),nextLines=[];
+    for(const shipmentLine of ownLines){
+      const orderLine=lines.find(x=>x.id===shipmentLine.order_line_id);if(!orderLine)throw new Error('发货单 '+shipment.code+' 的订单明细不存在');
+      const unit=round4(Number(orderLine.taxed_subtotal||0)/Number(orderLine.quantity||1)),subtotal=round4(unit*Number(shipmentLine.quantity||0)),outboundQuantity=round4(ownOutbounds.filter(x=>x.sku_id===shipmentLine.sku_id).reduce((s,x)=>s+Number(x.quantity||0),0));
+      if(outboundQuantity>Number(shipmentLine.quantity||0)+eps)throw new Error('发货单 '+shipment.code+' 实际出库数量超过计划发货数量');
+      nextLines.push({id:shipmentLine.id,taxed_unit_price:unit,taxed_subtotal:subtotal,outbound_quantity:outboundQuantity});
+    }
+    const totalQuantity=round4(ownLines.reduce((s,x)=>s+Number(x.quantity||0),0)),outboundQuantity=round4(nextLines.reduce((s,x)=>s+x.outbound_quantity,0)),totalAmount=round4(nextLines.reduce((s,x)=>s+x.taxed_subtotal,0)),status=outboundQuantity>=totalQuantity-eps?'outbounded':outboundQuantity>0?'partially_outbounded':'pending_shipment';
+    shipmentPatches.push({id:shipment.id,total_quantity:totalQuantity,outbound_quantity:outboundQuantity,outbound_count:ownOutbounds.length,total_amount:totalAmount,status,lines:nextLines});
+  }
+  const invoices=(await ctx.api.object('forge_sales_invoice').find({where:{order_id:order.id}})).filter(x=>x.invoice_type!=='red'&&!['voided','red_reversed','red_invoice'].includes(x.status)),invoiceIds=new Set(invoices.map(x=>x.id)),invoiceLines=(await ctx.api.object('forge_sales_invoice_line').find({where:{order_id:order.id}})).filter(x=>invoiceIds.has(x.invoice_id)),allocations=(await ctx.api.object('forge_collection_allocation').find({where:{order_id:order.id}})).filter(x=>x.status==='approved');
+  const invoicePatches=[],receivablePatches=[];
+  for(const invoice of invoices){
+    const collected=round4(allocations.filter(x=>x.invoice_id===invoice.id).reduce((s,x)=>s+Number(x.amount||0),0)),net=round4(Number(invoice.total_amount||0)-Number(invoice.red_reversed_amount||0));
+    if(collected>net+eps)throw new Error('发票 '+invoice.code+' 已审核核销金额超过有效开票金额');
+    const outstanding=round4(net-collected),status=outstanding<=eps?'settled':Number(invoice.red_reversed_amount||0)>0?'partially_red_reversed':'issued';invoicePatches.push({id:invoice.id,collected_amount:collected,outstanding_amount:outstanding,status});
+    const receivables=(await ctx.api.object('forge_accounts_receivable').find({where:{invoice_id:invoice.id}})).filter(x=>x.status!=='red_reversed');
+    if(!receivables.length)throw new Error('发票 '+invoice.code+' 缺少有效应收账款');
+    const receivableTotal=round4(receivables.reduce((s,x)=>s+Number(x.original_amount||0)-Number(x.red_reversed_amount||0),0));if(Math.abs(receivableTotal-net)>eps)throw new Error('发票 '+invoice.code+' 与应收原值不一致');
+    for(const receivable of receivables){const arCollected=round4(allocations.filter(x=>x.receivable_id===receivable.id).reduce((s,x)=>s+Number(x.amount||0),0)),arNet=round4(Number(receivable.original_amount||0)-Number(receivable.red_reversed_amount||0)-Number(receivable.offset_amount||0));if(arCollected>arNet+eps)throw new Error('应收 '+receivable.code+' 已审核核销金额超过应收余额');const arOutstanding=round4(arNet-arCollected);receivablePatches.push({id:receivable.id,collected_amount:arCollected,outstanding_amount:arOutstanding,status:arOutstanding<=eps?'settled':arCollected>0?'partially_collected':'unpaid'});}
+  }
+  const totalQuantity=round4(lines.reduce((s,x)=>s+Number(x.quantity||0),0)),shippedQuantity=round4(linePatches.reduce((s,x)=>s+x.shipped_quantity,0)),invoicedAmount=round4(invoices.reduce((s,x)=>s+Number(x.total_amount||0)-Number(x.red_reversed_amount||0),0)),collectedAmount=round4(allocations.reduce((s,x)=>s+Number(x.amount||0),0));
+  if(invoices.length&&!invoiceLines.length&&lines.length!==1)throw new Error('订单 '+order.code+' 有效发票缺少明细，多行订单无法确定分摊数量');
+  for(const line of lines){let invoiced=round4(invoiceLines.filter(x=>x.order_line_id===line.id).reduce((s,x)=>s+Number(x.quantity||0)-Number(x.red_reversed_quantity||0),0));if(invoices.length&&!invoiceLines.length){const lineAmount=Number(line.taxed_subtotal||0);if(!(lineAmount>0))throw new Error('订单 '+order.code+' 明细 '+line.name+' 含税金额无效，无法反算开票数量');invoiced=round4(Number(line.quantity||0)*invoicedAmount/lineAmount);}const linePatch=linePatches.find(x=>x.id===line.id);if(invoiced>Number(line.quantity||0)+eps)throw new Error('订单 '+order.code+' 明细 '+line.name+' 有效开票数量超过订单数量');if(invoiced>linePatch.shipped_quantity+eps)throw new Error('订单 '+order.code+' 明细 '+line.name+' 有效开票数量超过实际出库数量');linePatch.invoiced_quantity=invoiced;}
+  if(invoicedAmount>Number(order.total_amount||0)+eps)throw new Error('订单 '+order.code+' 有效开票金额超过订单金额');if(collectedAmount>invoicedAmount+eps)throw new Error('订单 '+order.code+' 已审核回款超过有效开票金额');
+  const shippedAmount=round4(lines.reduce((s,line)=>s+Number(line.taxed_subtotal||0)*Number(linePatches.find(x=>x.id===line.id).shipped_quantity||0)/Number(line.quantity||1),0)),status=shippedQuantity>=totalQuantity-eps?'shipped':shippedQuantity>0?'partially_shipped':(['draft','cancelled'].includes(order.status)?order.status:'active');
+  prepared.push({link,order,linePatches,shipmentPatches,invoicePatches,receivablePatches,orderPatch:{id:order.id,shipped_amount:shippedAmount,invoiced_amount:invoicedAmount,collected_amount:collectedAmount,status}});
+}
+for(const item of prepared){for(const patch of item.linePatches)await ctx.api.object('forge_sales_order_line').update(patch);for(const shipment of item.shipmentPatches){for(const patch of shipment.lines)await ctx.api.object('forge_sales_shipment_line').update(patch);const {lines,...header}=shipment;await ctx.api.object('forge_sales_shipment').update(header);}for(const patch of item.invoicePatches)await ctx.api.object('forge_sales_invoice').update(patch);for(const patch of item.receivablePatches)await ctx.api.object('forge_accounts_receivable').update(patch);await ctx.api.object('forge_sales_order').update(item.orderPatch);await ctx.api.object('forge_project_sales_link').update({id:item.link.id,order_amount:Number(item.order.total_amount||0),invoice_amount:item.orderPatch.invoiced_amount,collected_amount:item.orderPatch.collected_amount});}
+const contractIds=[...new Set(prepared.map(x=>x.order.contract_id).filter(Boolean))];for(const contractId of contractIds){const orders=(await ctx.api.object('forge_sales_order').find({where:{contract_id:contractId}})).filter(x=>x.status!=='cancelled'),patched=new Map(prepared.filter(x=>x.order.contract_id===contractId).map(x=>[x.order.id,x.orderPatch])),sum=field=>round4(orders.reduce((s,x)=>{const patch=patched.get(x.id);return s+Number(patch&&patch[field]!==undefined?patch[field]:x[field]||0);},0));await ctx.api.object('forge_sales_contract').update({id:contractId,ordered_count:orders.length,ordered_amount:sum('total_amount'),shipped_amount:sum('shipped_amount'),invoiced_amount:sum('invoiced_amount'),collected_amount:sum('collected_amount')});}
+const orderAmount=round4(prepared.reduce((s,x)=>s+Number(x.order.total_amount||0),0)),invoiceAmount=round4(prepared.reduce((s,x)=>s+x.orderPatch.invoiced_amount,0)),collectedAmount=round4(prepared.reduce((s,x)=>s+x.orderPatch.collected_amount,0));await ctx.api.object('forge_project').update({id:projectId,contract_amount:orderAmount,invoice_amount:invoiceAmount,collected_amount:collectedAmount});
+return{id:projectId,order_count:prepared.length,contract_amount:orderAmount,invoice_amount:invoiceAmount,collected_amount:collectedAmount,orders:prepared.map(x=>({id:x.order.id,code:x.order.code,status:x.orderPatch.status,shipped_amount:x.orderPatch.shipped_amount,invoiced_amount:x.orderPatch.invoiced_amount,collected_amount:x.orderPatch.collected_amount}))};
+` },
+});
+
 export const ProjectSettle = defineAction({
   name: 'project_settle', label: '项目结算', objectName: 'forge_project', icon: 'chart-no-axes-combined',
   locations: [...locations], order: 90, visible: `record.status == 'completed'`, refreshAfter: true,

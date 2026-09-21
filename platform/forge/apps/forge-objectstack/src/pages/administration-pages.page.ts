@@ -7,6 +7,7 @@ import { vehicleManagementSource } from './vehicle-management.page.js';
 import { salaryBenefitsSource } from './salary-benefits.page.js';
 import { attendanceManagementSource } from './attendance-management.page.js';
 import { attendanceStatisticsSource } from './attendance-statistics.page.js';
+import { directorySource } from './directory.page.js';
 
 type Archetype = 'workbench' | 'task_workspace' | 'timesheet_composite' | 'analysis' | 'configuration';
 type Definition = {
@@ -121,7 +122,7 @@ export default App;${forgeProductUiRuntime}`;
 
 const pages = Object.fromEntries(definitions.map(def => [def.name, {
   name: def.name, label: def.label, description: def.description, icon: 'building',
-  type: 'app' as const, kind: 'react' as const, source: def.name === 'page_hr_workspace' ? hrWorkspaceSource : def.name === 'page_recruitment' ? recruitmentSource : def.name === 'page_onboarding_offboarding' ? onboardingSource : def.name === 'page_equipment_maintenance' ? equipmentMaintenanceSource : def.name === 'page_fixed_assets' ? fixedAssetsSource : def.name === 'page_gift_management' ? giftManagementSource : def.name === 'page_loan_management' ? loanManagementSource : def.name === 'page_vehicle_management' ? vehicleManagementSource : def.name === 'page_salary_benefits' ? salaryBenefitsSource : def.name === 'page_attendance_management' ? attendanceManagementSource : def.name === 'page_attendance_statistics' ? attendanceStatisticsSource : sourceFor(def),
+  type: 'app' as const, kind: 'react' as const, source: def.name === 'page_hr_workspace' ? hrWorkspaceSource : def.name === 'page_recruitment' ? recruitmentSource : def.name === 'page_onboarding_offboarding' ? onboardingSource : def.name === 'page_equipment_maintenance' ? equipmentMaintenanceSource : def.name === 'page_fixed_assets' ? fixedAssetsSource : def.name === 'page_gift_management' ? giftManagementSource : def.name === 'page_loan_management' ? loanManagementSource : def.name === 'page_vehicle_management' ? vehicleManagementSource : def.name === 'page_salary_benefits' ? salaryBenefitsSource : def.name === 'page_attendance_management' ? attendanceManagementSource : def.name === 'page_attendance_statistics' ? attendanceStatisticsSource : def.name === 'page_directory' ? directorySource : sourceFor(def),
 }]));
 
 
