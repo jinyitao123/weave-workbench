@@ -54,6 +54,7 @@ const api: PrimeWorkApi = {
     signOut: () => invoke<EnterpriseSession>('enterprise:sign-out'),
     getDevelopmentOverview: () => invoke('enterprise:get-development-overview'),
     createDevelopmentTeam: (input) => invoke('enterprise:create-development-team', input),
+    createDevelopmentWorkflow: (input) => invoke('enterprise:create-development-workflow', input),
     getTeamMemberConfigDraft: (teamId, agentId) => invoke('enterprise:get-team-member-config-draft', teamId, agentId),
     saveTeamMemberConfigDraft: (draft) => invoke('enterprise:save-team-member-config-draft', draft),
     getWorkOverview: () => invoke('enterprise:get-work-overview'),

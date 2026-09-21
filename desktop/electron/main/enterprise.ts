@@ -1,4 +1,4 @@
-import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseWorkflowObservation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
+import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterpriseRole, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseWorkflowObservation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 
@@ -119,7 +119,7 @@ function workflowGraph(value: unknown): Pick<EnterpriseWorkflowObservation, 'nod
     const from = textValue(source?.from) ?? textValue(source?.source) ?? textValue(source?.from_node_id)
     const to = textValue(source?.to) ?? textValue(source?.target) ?? textValue(source?.to_node_id)
     if (!from || !to) return []
-    return [{ from, to, ...(textValue(source?.label) ? { label: textValue(source?.label) } : {}) }]
+    return [{ from, to, ...(textValue(source?.label) ? { label: textValue(source?.label) } : {}), ...(textValue(source?.route) ? { route: textValue(source?.route) } : {}) }]
   }) : []
   return { nodes, edges }
 }
@@ -394,6 +394,43 @@ export class EnterpriseService {
       await Promise.allSettled(createdAgents.map((agentName) => this.deleteWeaveResource(`/v1/agents/${encodeURIComponent(agentName)}`)))
       throw error
     }
+  }
+
+  async createDevelopmentWorkflow(input: EnterpriseCreateWorkflowInput): Promise<EnterpriseCreateWorkflowResult> {
+    const name = input?.name?.trim()
+    const description = input?.description?.trim()
+    if (input?.version !== '1' || !input.teamId || !input.leadId || !input.workerId || !name || name.length > 80 || !description || description.length > 2_000) throw new Error('请填写流程名称和用途')
+    const session = await this.getSession()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (session.role !== 'developer' && session.role !== 'admin') throw new Error('当前账号没有流程配置权限')
+    const [lead, worker] = await Promise.all([
+      this.getTeamMemberConfigDraft(input.teamId, input.leadId),
+      this.getTeamMemberConfigDraft(input.teamId, input.workerId),
+    ])
+    const result = record((await this.weaveRequest(`/v1/teams/${encodeURIComponent(input.teamId)}/workflows`, 'POST', {
+      name,
+      description,
+      trigger_config: { schema_version: 1, type: 'conversation_explicit', config: {} },
+      graph_definition: {
+        schema_version: 1,
+        entry_node_id: 'understand',
+        input_contract: { type: 'text' },
+        output_contract: { type: 'text' },
+        nodes: [
+          { id: 'understand', type: 'lead', label: '理解任务', config: { instruction: lead.configuration.systemPrompt || `理解任务目标并明确“${description}”的交付要求。` }, inputs: { task: { value: { source: 'run_input', path: '' }, expected_type: 'text' } }, output: { type: 'text' } },
+          { id: 'execute', type: 'worker', label: worker.configuration.displayName, config: { kind: 'consult', agent_id: input.workerId, agent_version: worker.baseAgentVersion, result_requirement: worker.relationship.resultRequirement || '完成分配的工作并返回可核验结果' }, inputs: { task: { value: { source: 'node_output', node_id: 'understand', path: '' }, expected_type: 'text' } }, output: { type: 'text' } },
+          { id: 'deliver', type: 'deliver', label: '交付结果', config: { result: { source: 'node_output', node_id: 'execute', path: '' } } },
+        ],
+        edges: [
+          { id: 'understand-execute', from_node_id: 'understand', to_node_id: 'execute', route: 'success' },
+          { id: 'execute-deliver', from_node_id: 'execute', to_node_id: 'deliver', route: 'success' },
+        ],
+      },
+    })).body)
+    const workflow = record(result?.workflow), draft = record(result?.draft)
+    const id = textValue(workflow?.id), workflowName = textValue(workflow?.name), draftVersion = numberValue(draft?.version)
+    if (!id || !workflowName || !draftVersion) throw new Error('Weave 没有返回新流程')
+    return { id, name: workflowName, draftVersion }
   }
 
   async getTeamMemberConfigDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft> {
