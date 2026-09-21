@@ -9,7 +9,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let root: Root
 let container: HTMLDivElement
 const overview: EnterpriseDevelopmentOverview = {
-  version: '1', loadedAt: '', runtimes: [], teams: [{ id: 'team', name: '合同团队', status: 'active', workflows: [], runs: [], workers: [
+  version: '1', loadedAt: '', runtimes: [], teams: [{ id: 'team', name: '合同团队', status: 'active', updatedAt: '2026-09-21T00:00:00Z', workflows: [], runs: [], workers: [
     { id: 'reviewer', name: '审核员', role: 'worker', enabled: true }, { id: 'writer', name: '起草员', role: 'worker', enabled: true },
   ] }],
 }
@@ -22,10 +22,13 @@ function fixture(agentId = 'reviewer'): EnterpriseTeamMemberConfigDraft {
 const load = vi.fn(async (_team: string, member: string) => fixture(member))
 const save = vi.fn(async (draft: EnterpriseTeamMemberConfigDraft) => ({ ...draft, revision: draft.revision + 1 }))
 const createTeam = vi.fn(async () => ({ id: 'created-team', name: '采购团队', objective: '处理采购工作' }))
+const updateTeam = vi.fn(async () => undefined)
+const createTeamMember = vi.fn(async () => ({ id: 'new-member', name: '法务复核员' }))
+const removeTeamMember = vi.fn(async () => undefined)
 const createWorkflow = vi.fn(async () => ({ id: 'created-flow', name: '合同流程', draftVersion: 1 }))
 const validateWorkflow = vi.fn(async () => ({ valid: true, issues: [] }))
 async function render(value: EnterpriseDevelopmentOverview = overview, onRefresh = () => undefined) {
-  await act(async () => root.render(<DevelopmentPage environments={[]} overview={value} loading={false} error="" onRefresh={onRefresh} onOpenForge={() => undefined} onCreateTeam={createTeam} onCreateWorkflow={createWorkflow} onValidateWorkflow={validateWorkflow} onLoadMemberDraft={(team, member) => load(team, member)} onSaveMemberDraft={save}/>))
+  await act(async () => root.render(<DevelopmentPage environments={[]} overview={value} loading={false} error="" onRefresh={onRefresh} onOpenForge={() => undefined} onCreateTeam={createTeam} onUpdateTeam={updateTeam} onCreateTeamMember={createTeamMember} onRemoveTeamMember={removeTeamMember} onCreateWorkflow={createWorkflow} onValidateWorkflow={validateWorkflow} onLoadMemberDraft={(team, member) => load(team, member)} onSaveMemberDraft={save}/>))
 }
 async function click(label: string) {
   const button = [...document.querySelectorAll<HTMLButtonElement>('button')].find((item) => item.textContent?.trim() === label || item.getAttribute('aria-label') === label)
@@ -111,6 +114,37 @@ it('creates a basic workflow from the current team without exposing internal ide
   await click('工作流程'); await click('新建流程')
   await click('创建流程')
   expect(createWorkflow).toHaveBeenCalledWith({ version: '1', teamId: 'team', name: '合同团队流程', description: '处理合同', leadId: 'lead-id', workerId: 'reviewer' })
+})
+
+it('edits team details and adds and removes an execution member', async () => {
+  const refresh = vi.fn()
+  await render(overview, refresh)
+  await click('编辑团队资料')
+  const fields = document.querySelectorAll<HTMLInputElement>('input')
+  const objective = document.querySelector<HTMLTextAreaElement>('textarea')!
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(fields[fields.length - 1], '合同交接组')
+    fields[fields.length - 1].dispatchEvent(new Event('input', { bubbles: true }))
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(objective, '完成合同复核和交接')
+    objective.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  await click('保存')
+  expect(updateTeam).toHaveBeenCalledWith({ version: '1', teamId: 'team', name: '合同交接组', objective: '完成合同复核和交接', expectedUpdatedAt: '2026-09-21T00:00:00Z' })
+
+  await click('添加成员')
+  const memberName = document.querySelectorAll<HTMLInputElement>('input').item(document.querySelectorAll<HTMLInputElement>('input').length - 1)
+  const duty = document.querySelector<HTMLTextAreaElement>('textarea')!
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(memberName, '法务复核员')
+    memberName.dispatchEvent(new Event('input', { bubbles: true }))
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(duty, '复核合同法律条款')
+    duty.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  await click('添加')
+  expect(createTeamMember).toHaveBeenCalledWith({ version: '1', teamId: 'team', name: '法务复核员', duty: '复核合同法律条款' })
+
+  await click('移出成员'); await click('移出团队')
+  expect(removeTeamMember).toHaveBeenCalledWith('team', 'reviewer')
 })
 
 it('checks the current draft and shows a readable result', async () => {

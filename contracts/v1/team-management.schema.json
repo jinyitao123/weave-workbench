@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/team-management.schema.json",
+  "title": "Workbench team management",
+  "oneOf": [
+    { "$ref": "#/$defs/updateTeam" },
+    { "$ref": "#/$defs/addMember" },
+    { "$ref": "#/$defs/removeMember" }
+  ],
+  "$defs": {
+    "updateTeam": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "operation", "teamId", "name", "objective", "expectedUpdatedAt"],
+      "properties": {
+        "version": { "const": "1" },
+        "operation": { "const": "update-team" },
+        "teamId": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "objective": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "expectedUpdatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "addMember": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "operation", "teamId", "name", "duty"],
+      "properties": {
+        "version": { "const": "1" },
+        "operation": { "const": "add-member" },
+        "teamId": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "duty": { "type": "string", "minLength": 1, "maxLength": 2000 }
+      }
+    },
+    "removeMember": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "operation", "teamId", "memberId"],
+      "properties": {
+        "version": { "const": "1" },
+        "operation": { "const": "remove-member" },
+        "teamId": { "type": "string", "minLength": 1 },
+        "memberId": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

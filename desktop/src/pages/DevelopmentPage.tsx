@@ -1,9 +1,9 @@
 import '@/styles/team-workspace.css'
-import { Bot, CheckCircle2, Code2, ExternalLink, Plus, RefreshCw, Save, Search, UsersRound, Workflow } from 'lucide-react'
+import { Bot, CheckCircle2, Code2, ExternalLink, Pencil, Plus, RefreshCw, Save, Search, UserMinus, UserPlus, UsersRound, Workflow } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Modal, ProductField, ProductTextArea } from '@/components/ui'
 import { configurationLabel, MemberInspector } from '@/components/development/MemberInspector'
-import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseTeamMemberConfigDraft, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation } from '@/types/api'
+import type { EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseUpdateTeamInput, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation } from '@/types/api'
 
 interface DevelopmentPageProps {
   environments: EnterpriseEnvironmentStatus[]
@@ -13,6 +13,9 @@ interface DevelopmentPageProps {
   onRefresh(): void
   onOpenForge(url: string): void
   onCreateTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult>
+  onUpdateTeam(input: EnterpriseUpdateTeamInput): Promise<void>
+  onCreateTeamMember(input: EnterpriseCreateTeamMemberInput): Promise<EnterpriseTeamMemberMutationResult>
+  onRemoveTeamMember(teamId: string, memberId: string): Promise<void>
   onCreateWorkflow(input: EnterpriseCreateWorkflowInput): Promise<EnterpriseCreateWorkflowResult>
   onValidateWorkflow(workflowId: string, version: number): Promise<EnterpriseWorkflowValidation>
   onLoadMemberDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft>
@@ -45,7 +48,7 @@ function workflowLayout(workflow: EnterpriseWorkflowObservation) {
   return { width, height, positions }
 }
 
-export function DevelopmentPage({ environments, overview, loading, error, onRefresh, onOpenForge, onCreateTeam, onCreateWorkflow, onValidateWorkflow, onLoadMemberDraft, onSaveMemberDraft }: DevelopmentPageProps) {
+export function DevelopmentPage({ environments, overview, loading, error, onRefresh, onOpenForge, onCreateTeam, onUpdateTeam, onCreateTeamMember, onRemoveTeamMember, onCreateWorkflow, onValidateWorkflow, onLoadMemberDraft, onSaveMemberDraft }: DevelopmentPageProps) {
   const forge = environments.find((environment) => environment.id === 'forge-development')
   const weave = environments.find((environment) => environment.id === 'weave-development')
   const [activeTab, setActiveTab] = useState<'teams' | 'apps'>('teams')
@@ -66,6 +69,15 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
   const [createObjective, setCreateObjective] = useState('')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
+  const [teamEditOpen, setTeamEditOpen] = useState(false)
+  const [teamEditName, setTeamEditName] = useState('')
+  const [teamEditObjective, setTeamEditObjective] = useState('')
+  const [memberCreateOpen, setMemberCreateOpen] = useState(false)
+  const [memberCreateName, setMemberCreateName] = useState('')
+  const [memberCreateDuty, setMemberCreateDuty] = useState('')
+  const [memberRemoveOpen, setMemberRemoveOpen] = useState(false)
+  const [teamMutationBusy, setTeamMutationBusy] = useState(false)
+  const [teamMutationError, setTeamMutationError] = useState('')
   const [flowCreateOpen, setFlowCreateOpen] = useState(false)
   const [flowCreateName, setFlowCreateName] = useState('')
   const [flowCreateDescription, setFlowCreateDescription] = useState('')
@@ -140,6 +152,38 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
     } finally { setCreating(false) }
   }
   const openCreate = () => { setCreateError(''); setCreateOpen(true) }
+  const openTeamEdit = () => {
+    if (!selectedTeam) return
+    setTeamMutationError(''); setTeamEditName(selectedTeam.name); setTeamEditObjective(selectedTeam.objective ?? ''); setTeamEditOpen(true)
+  }
+  const updateTeam = async () => {
+    if (!selectedTeam || !teamEditName.trim() || !teamEditObjective.trim() || teamMutationBusy) return
+    setTeamMutationBusy(true); setTeamMutationError('')
+    try {
+      await onUpdateTeam({ version: '1', teamId: selectedTeam.id, name: teamEditName.trim(), objective: teamEditObjective.trim(), expectedUpdatedAt: selectedTeam.updatedAt })
+      setTeamEditOpen(false); onRefresh()
+    } catch (cause) { setTeamMutationError(cause instanceof Error ? configurationLabel(cause.message, '团队资料保存失败') : '团队资料保存失败') }
+    finally { setTeamMutationBusy(false) }
+  }
+  const openMemberCreate = () => { setTeamMutationError(''); setMemberCreateName(''); setMemberCreateDuty(''); setMemberCreateOpen(true) }
+  const createMember = async () => {
+    if (!selectedTeam || !memberCreateName.trim() || !memberCreateDuty.trim() || teamMutationBusy) return
+    setTeamMutationBusy(true); setTeamMutationError('')
+    try {
+      const member = await onCreateTeamMember({ version: '1', teamId: selectedTeam.id, name: memberCreateName.trim(), duty: memberCreateDuty.trim() })
+      setSelection({ team: selectedTeam.id, member: member.id }); setMemberCreateOpen(false); onRefresh()
+    } catch (cause) { setTeamMutationError(cause instanceof Error ? configurationLabel(cause.message, '成员添加失败') : '成员添加失败') }
+    finally { setTeamMutationBusy(false) }
+  }
+  const removeMember = async () => {
+    if (!selectedTeam || !selectedMember || selectedMember.role === 'avatar' || teamMutationBusy) return
+    setTeamMutationBusy(true); setTeamMutationError('')
+    try {
+      await onRemoveTeamMember(selectedTeam.id, selectedMember.id)
+      setSelection({ team: selectedTeam.id, member: selectedTeam.lead?.id ?? '' }); setMemberRemoveOpen(false); onRefresh()
+    } catch (cause) { setTeamMutationError(cause instanceof Error ? configurationLabel(cause.message, '成员移出失败') : '成员移出失败') }
+    finally { setTeamMutationBusy(false) }
+  }
   const createWorkflow = async () => {
     const lead = selectedTeam?.lead, worker = selectedTeam?.workers.find((member) => member.enabled)
     const name = flowCreateName.trim(), description = flowCreateDescription.trim()
@@ -199,9 +243,9 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
           <div className="team-collection__items">{filteredTeams.map((team) => <button type="button" key={team.id} disabled={saving} aria-pressed={team.id === teamId} className={team.id === teamId ? 'is-active' : ''} onClick={() => { if (team.id !== teamId) navigate(() => setSelection({ team: team.id, member: '' })) }}><UsersRound size={14}/><span>{configurationLabel(team.name, '未命名团队')}</span></button>)}{!filteredTeams.length ? <p>没有匹配的团队</p> : null}</div>
         </aside>
         <main className="team-stage">
-          <header className="team-stage__header"><h2>{configurationLabel(selectedTeam.name, '未命名团队')}</h2>{selectedTeam.objective ? <p>{configurationLabel(selectedTeam.objective, '团队协作')}</p> : null}</header>
+          <header className="team-stage__header"><div><h2>{configurationLabel(selectedTeam.name, '未命名团队')}</h2>{selectedTeam.objective ? <p>{configurationLabel(selectedTeam.objective, '团队协作')}</p> : null}</div><button type="button" aria-label="编辑团队资料" title="编辑团队资料" onClick={openTeamEdit}><Pencil size={13}/></button></header>
           <nav className="team-stage__views" aria-label="团队开发视图"><button type="button" className={workspaceView === 'members' ? 'is-active' : ''} aria-pressed={workspaceView === 'members'} onClick={() => navigate(() => setWorkspaceView('members'))}><UsersRound size={13}/>团队分工</button><button type="button" className={workspaceView === 'workflow' ? 'is-active' : ''} aria-pressed={workspaceView === 'workflow'} onClick={() => navigate(() => setWorkspaceView('workflow'))}><Workflow size={13}/>工作流程</button></nav>
-          {workspaceView === 'members' ? <><div className="team-stage__section-heading"><h3>团队成员</h3></div>
+          {workspaceView === 'members' ? <><div className="team-stage__section-heading"><h3>团队成员</h3><button type="button" onClick={openMemberCreate}><UserPlus size={12}/>添加成员</button></div>
           <div className="team-member-grid">{members.map((member) => {
             const selected = member.id === memberId
             const name = selected && currentDraft ? currentDraft.configuration.displayName : member.name
@@ -231,7 +275,7 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
           </div>}
         </main>
         {workspaceView === 'members' ? <aside className="member-inspector" aria-label="成员配置">
-          <header className="member-inspector__heading"><span><small>成员配置</small><h3>{configurationLabel(currentDraft?.configuration.displayName ?? selectedMember?.name, '选择成员')}</h3></span><span className="member-inspector__state" role="status">{dirty ? '未保存' : saved ? '已保存' : currentDraft?.revision ? '草稿' : ''}</span></header>
+          <header className="member-inspector__heading"><span><small>成员配置</small><h3>{configurationLabel(currentDraft?.configuration.displayName ?? selectedMember?.name, '选择成员')}</h3></span><span className="member-inspector__actions"><span className="member-inspector__state" role="status">{dirty ? '未保存' : saved ? '已保存' : currentDraft?.revision ? '草稿' : ''}</span>{selectedMember?.role !== 'avatar' ? <button type="button" aria-label="移出成员" title="移出成员" disabled={saving} onClick={() => navigate(() => { setTeamMutationError(''); setMemberRemoveOpen(true) })}><UserMinus size={13}/></button> : null}</span></header>
           {draftLoading ? <div className="team-config-loading">正在读取配置…</div> : null}
           {draftError ? <div className="member-inspector__error" role="alert">{draftError}{!currentDraft ? <button type="button" className="button" onClick={() => setRetry((value) => value + 1)}>重试</button> : null}</div> : null}
           {currentDraft ? <>
@@ -255,6 +299,9 @@ export function DevelopmentPage({ environments, overview, loading, error, onRefr
       <button type="button" className="button" disabled={creating} onClick={() => setCreateOpen(false)}>取消</button>
       <button type="button" className="button button--primary" disabled={creating || !createName.trim() || !createObjective.trim()} onClick={() => void createTeam()}>{creating ? '正在创建' : '创建团队'}</button>
     </>}><div className="team-create-form"><ProductField autoFocus label="团队名称" maxLength={80} value={createName} onChange={(event) => setCreateName(event.target.value)}/><ProductTextArea label="团队目标" rows={5} maxLength={2000} value={createObjective} onChange={(event) => setCreateObjective(event.target.value)}/>{createError ? <p role="alert">{createError}</p> : null}</div></Modal> : null}
+    {teamEditOpen ? <Modal title="编辑团队资料" onClose={() => { if (!teamMutationBusy) setTeamEditOpen(false) }} footer={<><button type="button" className="button" disabled={teamMutationBusy} onClick={() => setTeamEditOpen(false)}>取消</button><button type="button" className="button button--primary" disabled={teamMutationBusy || !teamEditName.trim() || !teamEditObjective.trim()} onClick={() => void updateTeam()}>{teamMutationBusy ? '正在保存' : '保存'}</button></>}><div className="team-create-form"><ProductField autoFocus label="团队名称" maxLength={80} value={teamEditName} onChange={(event) => setTeamEditName(event.target.value)}/><ProductTextArea label="团队目标" rows={5} maxLength={2000} value={teamEditObjective} onChange={(event) => setTeamEditObjective(event.target.value)}/>{teamMutationError ? <p role="alert">{teamMutationError}</p> : null}</div></Modal> : null}
+    {memberCreateOpen ? <Modal title="添加成员" onClose={() => { if (!teamMutationBusy) setMemberCreateOpen(false) }} footer={<><button type="button" className="button" disabled={teamMutationBusy} onClick={() => setMemberCreateOpen(false)}>取消</button><button type="button" className="button button--primary" disabled={teamMutationBusy || !memberCreateName.trim() || !memberCreateDuty.trim()} onClick={() => void createMember()}>{teamMutationBusy ? '正在添加' : '添加'}</button></>}><div className="team-create-form"><ProductField autoFocus label="成员名称" maxLength={80} value={memberCreateName} onChange={(event) => setMemberCreateName(event.target.value)}/><ProductTextArea label="团队职责" rows={5} maxLength={2000} value={memberCreateDuty} onChange={(event) => setMemberCreateDuty(event.target.value)}/>{teamMutationError ? <p role="alert">{teamMutationError}</p> : null}</div></Modal> : null}
+    {memberRemoveOpen && selectedMember ? <Modal title="移出成员" onClose={() => { if (!teamMutationBusy) setMemberRemoveOpen(false) }} footer={<><button type="button" className="button" disabled={teamMutationBusy} onClick={() => setMemberRemoveOpen(false)}>取消</button><button type="button" className="button button--danger" disabled={teamMutationBusy} onClick={() => void removeMember()}>{teamMutationBusy ? '正在移出' : '移出团队'}</button></>}><p>“{configurationLabel(selectedMember.name, '当前成员')}”将不再参与这个团队的新工作，已有运行记录仍会保留。</p>{teamMutationError ? <p role="alert">{teamMutationError}</p> : null}</Modal> : null}
     {flowCreateOpen ? <Modal title="新建工作流程" onClose={() => { if (!flowCreating) setFlowCreateOpen(false) }} footer={<>
       <button type="button" className="button" disabled={flowCreating} onClick={() => setFlowCreateOpen(false)}>取消</button>
       <button type="button" className="button button--primary" disabled={flowCreating || !flowCreateName.trim() || !flowCreateDescription.trim()} onClick={() => void createWorkflow()}>{flowCreating ? '正在创建' : '创建流程'}</button>

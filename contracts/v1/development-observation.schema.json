@@ -14,11 +14,12 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "name", "status", "workers", "workflows", "runs"],
+        "required": ["id", "name", "status", "updatedAt", "workers", "workflows", "runs"],
         "properties": {
           "id": { "type": "string", "minLength": 1 },
           "name": { "type": "string", "minLength": 1 },
           "status": { "type": "string", "minLength": 1 },
+          "updatedAt": { "type": "string", "format": "date-time" },
           "objective": { "type": "string" },
           "lead": { "$ref": "#/$defs/member" },
           "workers": { "type": "array", "items": { "$ref": "#/$defs/member" } },
