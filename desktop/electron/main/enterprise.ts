@@ -344,6 +344,35 @@ export class EnterpriseService {
     return response.json()
   }
 
+  private async forgeOptionalJSON(path: string): Promise<unknown> {
+    await this.load()
+    if (this.expiresAt <= Date.now()) await this.signOut()
+    if (!this.forgeToken) throw new Error('请重新登录以读取员工工作事项')
+    const response = await this.fetch(new URL(path, this.forgeUrl), {
+      headers: { Authorization: `Bearer ${this.forgeToken}`, Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    })
+    if (response.status === 404) { await response.body?.cancel(); return undefined }
+    if (response.status === 401 || response.status === 403) {
+      await response.body?.cancel(); await this.signOut(); throw new Error('登录已失效，请重新登录')
+    }
+    if (!response.ok) { await response.body?.cancel(); throw new Error(`Forge 工作事项读取失败（${response.status}）`) }
+    return response.json()
+  }
+
+  private async forgeRequest(path: string, body: unknown): Promise<{ status: number; body: unknown }> {
+    await this.load()
+    if (this.expiresAt <= Date.now()) await this.signOut()
+    if (!this.forgeToken) throw new Error('请重新登录以处理员工工作事项')
+    const response = await this.fetch(new URL(path, this.forgeUrl), {
+      method: 'POST', headers: { Authorization: `Bearer ${this.forgeToken}`, Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body), redirect: 'error', signal: AbortSignal.timeout(15_000),
+    })
+    const result = await response.json().catch(() => undefined)
+    if (response.status === 401 || response.status === 403) { await this.signOut(); throw new Error('登录已失效，请重新登录') }
+    if (!response.ok) throw new Error(textValue(record(result)?.message) ?? textValue(record(result)?.error) ?? `Forge 工作事项处理失败（${response.status}）`)
+    return { status: response.status, body: result }
+  }
+
   async teamWorkspace(command: TeamWorkspaceCommand): Promise<unknown> {
     const session = await this.getSession()
     if (session.status !== 'signed-in' || !session.permissions?.includes('teams:develop')) throw new Error('当前账号没有团队开发权限')
@@ -711,10 +740,11 @@ export class EnterpriseService {
     const teams = await this.getTeamCatalog()
     const choices = (await Promise.all(teams.map((team) => this.getTeamChoices(team)))).flat()
     const projectID = await this.workProjectID()
-    const [rawRuns, rawTasks, rawNotifications] = await Promise.all([
+    const [rawRuns, rawTasks, rawNotifications, rawApprovals] = await Promise.all([
       this.weaveJSON(`/v1/runs?project_id=${encodeURIComponent(projectID)}&aggregation_mode=root-subtree&limit=50`),
       this.weaveJSON('/v1/human-tasks?limit=50'),
       this.forgeJSON('/api/v1/notifications?limit=50'),
+      this.forgeOptionalJSON('/api/v1/approvals/requests?limit=50'),
     ])
     const taskList = record(rawTasks)
     const tasks = (Array.isArray(taskList?.tasks) ? taskList.tasks : []).flatMap((value): EnterpriseHumanTask[] => {
@@ -725,6 +755,27 @@ export class EnterpriseService {
       if (!interactionId || !runId || !teamId || !workflowId || !workflowVersion || !title || !instructions || !updatedAt) return []
       return [{ interactionId, runId, teamId, workflowId, workflowVersion, title, instructions, updatedAt, ...(textValue(task?.audience_ref) ? { audience: textValue(task?.audience_ref) } : {}) }]
     })
+    const approvalEnvelope = record(rawApprovals)
+    const approvalValues = Array.isArray(rawApprovals) ? rawApprovals
+      : Array.isArray(approvalEnvelope?.requests) ? approvalEnvelope.requests
+        : Array.isArray(approvalEnvelope?.data) ? approvalEnvelope.data : []
+    for (const value of approvalValues) {
+      const approval = record(value), viewer = record(approval?.viewer)
+      const id = textValue(approval?.id), status = textValue(approval?.status), updatedAt = textValue(approval?.updated_at) ?? textValue(approval?.created_at)
+      const canDecide = status === 'pending' && viewer?.can_act === true
+      const canResubmit = status === 'returned' && viewer?.is_submitter === true
+      if (!id || !updatedAt || (!canDecide && !canResubmit)) continue
+      const processName = textValue(approval?.process_name) ?? '业务审批'
+      const stepName = textValue(approval?.current_step)
+      tasks.push({
+        interactionId: id, runId: `forge:${canResubmit ? 'revision' : 'approval'}:${id}`,
+        teamId: 'forge', workflowId: 'business-approval', workflowVersion: 1,
+        title: canResubmit ? `${processName}需要修改` : (stepName ?? processName),
+        instructions: canResubmit ? '请根据审批意见修改业务材料，完成后重新提交。' : '请核对业务材料并给出审批意见。',
+        updatedAt, source: 'forge', mode: canResubmit ? 'revision' : 'approval',
+        ...(textValue(approval?.object_name) ? { materialLabel: textValue(approval?.object_name) } : {}),
+      })
+    }
     const notificationList = record(rawNotifications)
     const items = (Array.isArray(notificationList?.notifications) ? notificationList.notifications : []).flatMap((value): EnterpriseWorkItem[] => {
       const notification = record(value), data = record(notification?.data), continuation = record(data?.continuation), material = record(data?.material)
@@ -797,6 +848,15 @@ export class EnterpriseService {
 
   async completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }> {
     if (!textValue(task?.runId) || !textValue(task?.interactionId) || !record(payload)) throw new Error('待办信息无效')
+    const forgeMatch = /^forge:(approval|revision):(.+)$/.exec(task.runId)
+    if (forgeMatch) {
+      if (forgeMatch[2] !== task.interactionId) throw new Error('审批事项已变化，请刷新后重试')
+      const decision = textValue(payload.decision)
+      const operation = forgeMatch[1] === 'revision' ? 'resubmit' : decision === 'rejected' ? 'revise' : decision === 'approved' ? 'approve' : ''
+      if (!operation) throw new Error('请选择审批处理方式')
+      await this.forgeRequest(`/api/v1/approvals/requests/${encodeURIComponent(task.interactionId)}/${operation}`, { comment: textValue(payload.comment) ?? '' })
+      return { runId: task.runId, repeated: false }
+    }
     const result = await this.weaveRequest(`/v1/human-tasks/${encodeURIComponent(task.runId)}/complete`, 'POST', {
       interaction_id: task.interactionId, payload, idempotency_key: `workbench-human-${task.interactionId}`,
     })

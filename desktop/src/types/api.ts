@@ -288,6 +288,9 @@ export interface EnterpriseHumanTask {
   instructions: string
   audience?: string
   updatedAt: string
+  source?: 'weave' | 'forge'
+  mode?: 'human_step' | 'approval' | 'revision'
+  materialLabel?: string
 }
 
 export interface EnterpriseWorkItem {
