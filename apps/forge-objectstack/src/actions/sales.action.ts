@@ -123,12 +123,6 @@ return { id: contractId, quotation_id: id, line_count: lines.length };
 export const ContractSubmit = defineAction({
   name: 'contract_submit', label: '提交审批', objectName: 'forge_sales_contract', icon: 'send', locations: [...locations], order: 10,
   requiredPermissions: ['sales_contract_operator'],
-  ai: {
-    exposed: true,
-    description: '以当前员工身份提交一份草稿销售合同。提交前校验来源报价、合同明细和金额，成功后合同进入待审批状态。',
-    category: 'action',
-    requiresConfirmation: false,
-  },
   visible: `record.status == 'draft'`, confirmText: '提交前将校验来源报价和合同金额，是否继续？', refreshAfter: true,
   successMessage: '合同已提交审批',
   body: {
@@ -143,18 +137,138 @@ if (record.quotation_id) {
 }
 const lines = await ctx.api.object('forge_sales_contract_line').find({ where: { contract_id: id } });
 if (!lines.length) throw new Error('合同至少需要一条物料明细');
-const assignments = await ctx.api.object('sys_user_position').find({ where: { position: 'contract_reviewer' } });
 const now = Date.now();
-const activeAssignments = assignments.filter(item => {
-  const from = item.valid_from ? Date.parse(item.valid_from) : Number.NEGATIVE_INFINITY;
-  const until = item.valid_until ? Date.parse(item.valid_until) : Number.POSITIVE_INFINITY;
-  return from <= now && now < until;
-});
-if (!activeAssignments.length) throw new Error('未配置合同复核岗，请先在系统设置中为员工分配该岗位');
-if (activeAssignments.length > 1) throw new Error('合同复核岗当前有多名员工，请先明确本次合同的复核负责人');
+const reviewerPositions = [
+  ['contract_delivery_reviewer', '合同交付复核岗'],
+  ['contract_commercial_reviewer', '合同商务复核岗'],
+];
+const reviewerUsers = [];
+for (const [position, label] of reviewerPositions) {
+  const assignments = await ctx.api.object('sys_user_position').find({ where: { position } });
+  const active = assignments.filter(item => {
+    const from = item.valid_from ? Date.parse(item.valid_from) : Number.NEGATIVE_INFINITY;
+    const until = item.valid_until ? Date.parse(item.valid_until) : Number.POSITIVE_INFINITY;
+    return from <= now && now < until;
+  });
+  if (!active.length) throw new Error('未配置' + label + '，请先在系统设置中为员工分配该岗位');
+  if (active.length > 1) throw new Error(label + '当前有多名员工，请先明确本次合同的复核负责人');
+  reviewerUsers.push(active[0].user_id);
+}
+if (reviewerUsers[0] === reviewerUsers[1]) throw new Error('交付复核与商务复核必须由不同员工承担');
 const total = Math.round(lines.reduce((sum, line) => sum + Number(line.taxed_subtotal || 0), 0) * 10000) / 10000;
 await ctx.api.object('forge_sales_contract').update({ id, total_amount: total, status: 'pending_approval' });
 return { id, total_amount: total, status: 'pending_approval', routed: true };
+`,
+  },
+});
+
+export const ContractSubmitFrozenMaterial = defineAction({
+  name: 'contract_submit_frozen_material', label: '提交指定合同版本', objectName: 'forge_sales_contract', icon: 'file-check',
+  locations: ['record_more'], visible: false,
+  requiredPermissions: ['sales_contract_operator'],
+  ai: {
+    exposed: true,
+    description: '把员工本次明确授权的已冻结合同文件绑定到草稿合同并提交正式审批。必须使用本次工作材料中的 Forge 文件标识、文件名和 SHA-256；相同文件重复调用只返回原提交结果，不会重复发起审批。',
+    category: 'action',
+    requiresConfirmation: false,
+  },
+  params: [
+    { name: 'material_file_id', label: '合同文件', type: 'text', required: true },
+    { name: 'material_name', label: '文件名称', type: 'text', required: true },
+    { name: 'material_sha256', label: '文件 SHA-256', type: 'text', required: true },
+  ],
+  body: {
+    language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
+const id = ctx.recordId || (ctx.record && ctx.record.id);
+if (ctx.recordLoadDenied === true || !id || !ctx.record) throw new Error('当前合同不存在或不可访问');
+const record = ctx.record;
+const fileId = String(ctx.input.material_file_id || '').trim();
+const materialName = String(ctx.input.material_name || '').trim();
+const sha256 = String(ctx.input.material_sha256 || '').trim().toLowerCase();
+if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(fileId)) throw new Error('合同文件标识无效');
+if (!materialName || materialName.length > 255) throw new Error('合同文件名称无效');
+if (!/^[0-9a-f]{64}$/.test(sha256)) throw new Error('合同文件摘要无效');
+if (record.submitted_material_id || record.submitted_material_sha256) {
+  if (record.submitted_material_id === fileId && record.submitted_material_sha256 === sha256 && record.submitted_material_name === materialName) {
+    return { id, status: record.status, material_file_id: fileId, material_name: materialName, material_sha256: sha256, repeated: true };
+  }
+  throw new Error('当前合同已经绑定另一份提交版本，请刷新合同后处理');
+}
+if (record.status !== 'draft') throw new Error('仅草稿合同可以提交正式审批');
+const actor = ctx.session && ctx.session.userId;
+if (!actor) throw new Error('无法识别当前提交人');
+const file = await ctx.api.object('sys_file').findOne({ where: { id: fileId } });
+if (!file || file.status !== 'committed') throw new Error('本次合同文件不存在或尚未上传完成');
+if (file.owner_id && file.owner_id !== actor) throw new Error('本次合同文件不属于当前员工');
+if (file.name !== materialName) throw new Error('合同文件名称与冻结材料不一致');
+if (record.quotation_id) {
+  const quote = await ctx.api.object('forge_quotation').findOne({ where: { id: record.quotation_id } });
+  if (!quote || quote.status !== 'accepted') throw new Error('来源报价需为已接受状态');
+}
+const lines = await ctx.api.object('forge_sales_contract_line').find({ where: { contract_id: id } });
+if (!lines.length) throw new Error('合同至少需要一条物料明细');
+const nowMs = Date.now();
+const reviewerPositions = [
+  ['contract_delivery_reviewer', '合同交付复核岗'],
+  ['contract_commercial_reviewer', '合同商务复核岗'],
+];
+const reviewerUsers = [];
+for (const [position, label] of reviewerPositions) {
+  const assignments = await ctx.api.object('sys_user_position').find({ where: { position } });
+  const active = assignments.filter(item => {
+    const from = item.valid_from ? Date.parse(item.valid_from) : Number.NEGATIVE_INFINITY;
+    const until = item.valid_until ? Date.parse(item.valid_until) : Number.POSITIVE_INFINITY;
+    return from <= nowMs && nowMs < until;
+  });
+  if (!active.length) throw new Error('未配置' + label + '，请先在系统设置中为员工分配该岗位');
+  if (active.length > 1) throw new Error(label + '当前有多名员工，请先明确本次合同的复核负责人');
+  reviewerUsers.push(active[0].user_id);
+}
+if (reviewerUsers[0] === reviewerUsers[1]) throw new Error('交付复核与商务复核必须由不同员工承担');
+const total = Math.round(lines.reduce((sum, line) => sum + Number(line.taxed_subtotal || 0), 0) * 10000) / 10000;
+const submittedAt = new Date().toISOString();
+let outcome;
+try {
+  outcome = await ctx.api.transaction(async () => {
+    const current = await ctx.api.object('forge_sales_contract').findOne({ where: { id } });
+    if (!current) throw new Error('当前合同不存在或不可访问');
+    const submission = await ctx.api.object('forge_sales_contract_submission').findOne({ where: { contract_id: id } });
+    if (submission || current.submitted_material_id || current.submitted_material_sha256) {
+      const sameMaterial = submission
+        ? submission.material_file_id === fileId && submission.material_sha256 === sha256 && submission.material_name === materialName
+        : current.submitted_material_id === fileId && current.submitted_material_sha256 === sha256 && current.submitted_material_name === materialName;
+      if (sameMaterial) return { repeated: true, status: current.status, submitted_at: current.submitted_at || submission.submitted_at };
+      throw new Error('当前合同已经绑定另一份提交版本，请刷新合同后处理');
+    }
+    if (current.status !== 'draft') throw new Error('仅草稿合同可以提交正式审批');
+    await ctx.api.object('forge_sales_contract_submission').insert({
+      name: String(current.code || current.name || '合同') + ' 首次提交', contract_id: id,
+      material_file_id: fileId, material_name: materialName, material_sha256: sha256,
+      submitted_by: actor, submitted_at: submittedAt,
+    });
+    await ctx.api.object('forge_sales_contract').update({
+      id, total_amount: total, status: 'pending_approval',
+      submitted_material_id: fileId, submitted_material_name: materialName,
+      submitted_material_sha256: sha256, submitted_at: submittedAt,
+    });
+    return { repeated: false, status: 'pending_approval', submitted_at: submittedAt };
+  });
+} catch (error) {
+  const current = await ctx.api.object('forge_sales_contract').findOne({ where: { id } });
+  const submission = await ctx.api.object('forge_sales_contract_submission').findOne({ where: { contract_id: id } });
+  if (current && submission && current.status === 'pending_approval' && submission.material_file_id === fileId && submission.material_sha256 === sha256 && submission.material_name === materialName) {
+    outcome = { repeated: true, status: current.status, submitted_at: current.submitted_at || submission.submitted_at };
+  } else if (submission && (submission.material_file_id !== fileId || submission.material_sha256 !== sha256 || submission.material_name !== materialName)) {
+    throw new Error('当前合同已经绑定另一份提交版本，请刷新合同后处理');
+  } else {
+    throw error;
+  }
+}
+const saved = await ctx.api.object('forge_sales_contract').findOne({ where: { id } });
+if (!saved || saved.submitted_material_id !== fileId || saved.submitted_material_sha256 !== sha256 || saved.status !== 'pending_approval') {
+  throw new Error('合同提交结果与本次固定材料不一致，请核对后重试');
+}
+return { id, total_amount: saved.total_amount, status: saved.status, material_file_id: fileId, material_name: materialName, material_sha256: sha256, submitted_at: outcome.submitted_at, repeated: outcome.repeated };
 `,
   },
 });
