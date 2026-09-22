@@ -128,4 +128,15 @@ describe('capability extension environment parity (OMP and pi)', () => {
     const unsafe = adapter.buildStartArgs({ cwd: '/work', environment: { GOOEYPI_COLLABORATION_EXTENSION_PATH: '--session-injection' } })
     expect(unsafe).not.toContain('--session-injection')
   })
+
+  it.each([
+    ['prime', PRIME_RPC_ADAPTER],
+    ['omp', OMP_RPC_ADAPTER],
+    ['pi', PI_RPC_ADAPTER],
+  ] as const)('injects enterprise team handoff into %s without accepting an unsafe path', (_harness, adapter) => {
+    const args = adapter.buildStartArgs({ cwd: '/work', environment: { GOOEYPI_ENTERPRISE_EXTENSION_PATH: '/app/extensions/gooeypi-enterprise.ts' } })
+    expect(args.slice(-2)).toEqual(['--extension', '/app/extensions/gooeypi-enterprise.ts'])
+    const unsafe = adapter.buildStartArgs({ cwd: '/work', environment: { GOOEYPI_ENTERPRISE_EXTENSION_PATH: '--enterprise-injection' } })
+    expect(unsafe).not.toContain('--enterprise-injection')
+  })
 })

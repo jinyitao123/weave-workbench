@@ -35,7 +35,7 @@ import { useStableCallback } from '@/hooks/useStableCallback'
 import { useToast } from '@/hooks/useToast'
 import { useWorkspaceActions } from '@/hooks/useWorkspaceActions'
 import { useWorkspaceRuntime } from '@/hooks/useWorkspaceRuntime'
-import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseCreateTeamInput, type EnterpriseCreateTeamMemberInput, type EnterpriseCreateWorkflowInput, type EnterpriseDevelopmentOverview, type EnterpriseEnvironmentStatus, type EnterpriseHumanTask, type EnterpriseSession, type EnterpriseTeamMemberConfigDraft, type EnterpriseUpdateTeamInput, type EnterpriseUpdateWorkflowDraftInput, type EnterpriseWorkChoice, type EnterpriseWorkOverview, type EnterpriseWorkReceipt, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceView } from '@/types/api'
+import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseDevelopmentOverview, type EnterpriseEnvironmentStatus, type EnterpriseHumanTask, type EnterpriseSession, type EnterpriseWorkItem, type EnterpriseWorkOverview, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceView } from '@/types/api'
 
 const Transcript = lazy(() => import('@/components/Transcript').then((module) => ({ default: module.Transcript })))
 const Inspector = lazy(() => import('@/components/Inspector').then((module) => ({ default: module.Inspector })))
@@ -105,7 +105,11 @@ export default function App() {
   const [gitSnapshot, setGitSnapshot] = useState(() => ({ cwd: bridge ? undefined : SAMPLE_PROJECTS[0]?.primaryFolder, status: bridge ? { isRepo: false, files: [] } as GitStatus : SAMPLE_GIT }))
   const [checkoutCatalog, setCheckoutCatalog] = useState<CheckoutCatalog>()
   const [checkoutsLoading, setCheckoutsLoading] = useState(false)
-  const [view, setView] = useState<WorkspaceView>('session')
+  const [view, setViewDirectly] = useState<WorkspaceView>('session')
+  const currentView = useRef(view); currentView.current = view
+  const developmentNavigationGuard = useRef<((action: () => void) => void) | undefined>(undefined)
+  const registerDevelopmentNavigationGuard = useCallback((guard?: (action: () => void) => void) => { developmentNavigationGuard.current = guard }, [])
+  const setView = useCallback<typeof setViewDirectly>((next) => { const value = typeof next === 'function' ? next(currentView.current) : next; if (currentView.current === 'development' && value !== 'development' && developmentNavigationGuard.current) developmentNavigationGuard.current(() => setViewDirectly(value)); else setViewDirectly(value) }, [])
   const [settingsSectionRequest, setSettingsSectionRequest] = useState<{ section: 'general' | 'agent' | 'account'; id: number }>({ section: 'general', id: 0 })
   const [noHarnessPromptDismissed, setNoHarnessPromptDismissed] = useState(false)
   const [browserGeneration, setBrowserGeneration] = useState(0)
@@ -121,7 +125,6 @@ export default function App() {
   const [developmentLoading, setDevelopmentLoading] = useState(false)
   const [developmentError, setDevelopmentError] = useState('')
   const [workOverview, setWorkOverview] = useState<EnterpriseWorkOverview>()
-  const [workReceipt, setWorkReceipt] = useState<EnterpriseWorkReceipt>()
   const [workLoading, setWorkLoading] = useState(false)
   const [workError, setWorkError] = useState('')
   const [enterpriseSession, setEnterpriseSession] = useState<EnterpriseSession | undefined>(() => enterpriseBridge ? undefined : ({
@@ -169,13 +172,6 @@ export default function App() {
     setWorkLoading(true); setWorkError('')
     void enterpriseBridge.getWorkOverview().then(setWorkOverview).catch((error) => { setWorkError(errorMessage(error)); reportError(error) }).finally(() => setWorkLoading(false))
   }, [enterpriseBridge, reportError, workLoading])
-  const submitEnterpriseWork = useCallback(async (choice: EnterpriseWorkChoice, goal: string) => {
-    if (!enterpriseBridge) return
-    setWorkLoading(true); setWorkError('')
-    try { setWorkReceipt(await enterpriseBridge.submitWork(choice, goal)); setTimeout(refreshWorkOverview, 700) }
-    catch (error) { setWorkError(errorMessage(error)); reportError(error); throw error }
-    finally { setWorkLoading(false) }
-  }, [enterpriseBridge, refreshWorkOverview, reportError])
   const completeEnterpriseTask = useCallback(async (task: EnterpriseHumanTask, decision: 'approved' | 'rejected', comment: string) => {
     if (!enterpriseBridge) return
     setWorkLoading(true); setWorkError('')
@@ -485,6 +481,17 @@ export default function App() {
     },
     clearSessionAttention, reportError,
   })
+  const continueEnterpriseWork = useCallback((item: EnterpriseWorkItem) => {
+    const details = [
+      `继续处理员工工作事项：${item.title}`, item.instructions ?? item.summary ?? '',
+      item.returnReason ? `退回原因：${item.returnReason}` : '', item.materialLabel ? `当前材料：${item.materialLabel}` : '',
+      item.workReference ? `原工作引用：${item.workReference}` : '', item.runReference ? `原运行引用：${item.runReference}` : '',
+      item.returnTarget ? `修改完成后返回位置：${item.returnTarget}` : '', item.reviewScope ? `复核范围：${item.reviewScope}` : '',
+      '先理解事项和当前材料，和我一起完成修改；未经我明确要求，不要直接重新提交。',
+    ].filter(Boolean).join('\n')
+    newSession()
+    workspace.queuePrompt(details, 'queue')
+  }, [newSession, workspace])
   const openTerminalLink = useCallback((url: string, external: boolean) => {
     if (external) {
       openExternal(url)
@@ -791,7 +798,7 @@ export default function App() {
       .finally(() => setDevelopmentLoading(false))
   }, [canDevelop, developmentLoading, enterpriseBridge, reportError])
   useEffect(() => {
-    if (view === 'development' && !canDevelop) setView('session')
+    if (view === 'development' && !canDevelop) setViewDirectly('session')
   }, [canDevelop, view])
   useEffect(() => {
     if (view === 'development' && canDevelop && !developmentOverview && !developmentLoading && !developmentError) refreshDevelopmentOverview()
@@ -801,9 +808,9 @@ export default function App() {
   }, [enterpriseBridge, refreshWorkOverview, view, workLoading, workOverview])
 
   const page = view === 'projects' ? <ProjectsPage projects={projects} sortMode={settingsState.settings.projectSortMode} onAdd={() => void addProject()} onOpen={selectProject} onRemove={(project) => void removeProject(project)} onTogglePin={(project) => void togglePinProject(project)} />
-    : view === 'activity' && enterpriseBridge ? <EnterpriseWorkPage overview={workOverview} loading={workLoading} error={workError} receipt={workReceipt} onRefresh={refreshWorkOverview} onSubmit={submitEnterpriseWork} onComplete={completeEnterpriseTask} />
+    : view === 'activity' && enterpriseBridge ? <EnterpriseWorkPage overview={workOverview} loading={workLoading} error={workError} onRefresh={refreshWorkOverview} onComplete={completeEnterpriseTask} onContinue={continueEnterpriseWork} />
     : view === 'activity' ? <ActivityPage sessions={sessions} projects={projects} clearedActivity={clearedActivity} onOpen={selectSession} onClear={clearActivity} />
-    : view === 'development' ? <DevelopmentPage environments={enterpriseStatuses} overview={developmentOverview} loading={enterpriseStatusLoading || developmentLoading} error={developmentError} onRefresh={() => { refreshEnterpriseStatus(); refreshDevelopmentOverview() }} onOpenForge={openForge} onLoadBusinessCapabilities={() => enterpriseBridge!.getBusinessCapabilityCatalog()} onCreateTeam={(input: EnterpriseCreateTeamInput) => enterpriseBridge!.createDevelopmentTeam(input)} onUpdateTeam={(input: EnterpriseUpdateTeamInput) => enterpriseBridge!.updateDevelopmentTeam(input)} onCreateTeamMember={(input: EnterpriseCreateTeamMemberInput) => enterpriseBridge!.createDevelopmentTeamMember(input)} onRemoveTeamMember={(teamId, memberId) => enterpriseBridge!.removeDevelopmentTeamMember(teamId, memberId)} onCreateWorkflow={(input: EnterpriseCreateWorkflowInput) => enterpriseBridge!.createDevelopmentWorkflow(input)} onCreateWorkflowDraft={(workflowId) => enterpriseBridge!.createDevelopmentWorkflowDraft(workflowId)} onUpdateWorkflow={(input: EnterpriseUpdateWorkflowDraftInput) => enterpriseBridge!.updateDevelopmentWorkflowDraft(input)} onValidateWorkflow={(workflowId, version) => enterpriseBridge!.validateDevelopmentWorkflow(workflowId, version)} onPublishWorkflow={(workflowId, version) => enterpriseBridge!.publishDevelopmentWorkflow(workflowId, version)} onArchiveWorkflow={(workflowId) => enterpriseBridge!.archiveDevelopmentWorkflow(workflowId)} onLoadMemberDraft={(teamId, agentId) => enterpriseBridge!.getTeamMemberConfigDraft(teamId, agentId)} onSaveMemberDraft={(draft: EnterpriseTeamMemberConfigDraft) => enterpriseBridge!.saveTeamMemberConfigDraft(draft)} onApplyMemberDraft={(teamId, agentId, revision) => enterpriseBridge!.applyTeamMemberConfigDraft(teamId, agentId, revision)} />
+    : view === 'development' ? <DevelopmentPage onNavigationGuard={registerDevelopmentNavigationGuard} key={enterpriseSession?.user?.id} accountId={enterpriseSession?.user?.id} environments={enterpriseStatuses} onOpenForge={openForge} overview={developmentOverview} loading={enterpriseStatusLoading || developmentLoading} error={developmentError} onRefresh={() => { refreshEnterpriseStatus(); refreshDevelopmentOverview() }} bridge={enterpriseBridge!} />
     : view === 'scheduled' ? <ScheduledPage harness={activeHarness} schedules={schedules} nativeHeartbeats={activeHarness === 'prime' ? heartbeats : []} projects={projects} sessions={sessions} models={provider.catalog?.models ?? EMPTY_MODELS} lastSelectedModel={provider.model} error={scheduleError} initialProjectId={activeProject?.id} initialSessionId={activeSession?.id} selectedScheduleId={scheduleFocusId} onCreate={createSchedule} onUpdate={updateSchedule} onPause={(id: string) => mutateSchedule(() => bridge!.schedules.pause(id))} onResume={(id: string) => mutateSchedule(() => bridge!.schedules.resume(id))} onDelete={(id: string) => mutateSchedule(() => bridge!.schedules.delete(id))} onRunNow={(id: string) => mutateSchedule(() => bridge!.schedules.runNow(id))} onPreview={async (timing: ScheduleTiming) => bridge ? bridge.schedules.preview(timing, 3) : { timing, occurrences: [] }} onOpenSession={openScheduledSession} onManageHeartbeat={manageHeartbeat} />
     : view === 'plugins' ? <PluginsPage harness={activeHarness} skills={pluginSkills.skills} warnings={pluginSkills.warnings} loading={pluginSkills.loading} activeProjectPath={activeProject?.primaryFolder} askUserEnabled={settingsState.settings.askUserEnabled} onSetAskUserEnabled={(enabled) => settingsState.updateSettings({ askUserEnabled: enabled })} browserEnabled={settingsState.settings.browserEnabled} onSetBrowserEnabled={(enabled) => settingsState.updateSettings({ browserEnabled: enabled })} computerUseEnabled={settingsState.settings.computerUseEnabled} onSetComputerUseEnabled={(enabled) => settingsState.updateSettings({ computerUseEnabled: enabled })} onOpenExternal={openExternal} onRefresh={pluginSkills.refresh} onInstall={installSkill} onInstallExtension={installExtension} onSetMcpSupport={setMcpSupport} onConnectMcp={connectMcp} onSetMcpEnabled={setMcpEnabled} onMutateCapability={mutateCapability} />
     : view === 'settings' ? <SettingsPage initialSection={settingsSectionRequest.section} initialSectionRequestId={settingsSectionRequest.id} settings={settingsState.settings} meta={meta} providerCatalog={provider.catalog} voice={bridge?.voice ?? null} pets={bridge?.pets ?? null} enterpriseSession={enterpriseSession} onEnterpriseSignIn={signIn} onEnterpriseSignOut={signOut} onClose={() => navigate('session')} onUpdate={settingsState.updateSettings} onRefreshHarnesses={refreshDetectedHarnesses} onRefreshProviders={() => provider.refresh(true)} onSaveProviderApiKey={provider.saveApiKey} onLogoutProvider={provider.logout} onSetProviderEnabled={provider.setEnabled} onSetAllProvidersEnabled={provider.setAllEnabled} onSetAllProvidersDisabled={provider.setAllDisabled} onSetModelEnabled={provider.setModelEnabled} onStartProviderOAuth={provider.startOAuth} onResetBrowser={async () => {

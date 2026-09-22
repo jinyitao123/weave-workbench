@@ -195,6 +195,8 @@ export interface EnterpriseWorkflowValidation {
 }
 
 export interface EnterpriseTeamMemberAgentConfiguration {
+    toolLoopControl?: { sliceRounds: number; initialTotalRounds: number } | null
+    maxToolRepeats?: number
     displayName: string
     role: string
     engine: string
@@ -269,8 +271,10 @@ export interface EnterpriseTeamMemberConfigDraft {
 export interface EnterpriseWorkChoice {
   teamId: string
   teamName: string
+  teamObjective?: string
   workflowId: string
   workflowName: string
+  workflowDescription?: string
   version: number
 }
 
@@ -286,14 +290,38 @@ export interface EnterpriseHumanTask {
   updatedAt: string
 }
 
+export interface EnterpriseWorkItem {
+  id: string
+  kind: 'result' | 'failure' | 'revision_required' | 'human_review'
+  title: string
+  summary?: string
+  instructions?: string
+  status: 'unread' | 'pending' | 'in_progress' | 'completed' | 'cancelled'
+  actionable: boolean
+  read: boolean
+  source: 'weave' | 'forge'
+  createdAt: string
+  actionUrl?: string
+  workReference?: string
+  runReference?: string
+  materialLabel?: string
+  returnReason?: string
+  returnTarget?: 'origin_review' | 'team' | 'member' | 'human_step'
+  reviewScope?: 'whole_team' | 'affected_members' | 'human_step'
+}
+
 export interface EnterpriseWorkOverview {
   loadedAt: string
   choices: EnterpriseWorkChoice[]
   tasks: EnterpriseHumanTask[]
+  items: EnterpriseWorkItem[]
   runs: EnterpriseRunObservation[]
 }
 
 export interface EnterpriseWorkReceipt {
+  inputRevisionId?: string
+  clientRequestId?: string
+  taskSha256?: string
   workId: string
   runId: string
   taskId: string
@@ -1029,6 +1057,8 @@ export interface PrimeWorkApi {
     onChanged(callback: (state: AppUpdateState) => void): () => void
   }
   enterprise: {
+    teamWorkspace: import('./team-workspace').TeamWorkspaceBridge
+    invalidateHandoff(runtimeId: string): Promise<void>
     getStatus(): Promise<EnterpriseEnvironmentStatus[]>
     getSession(): Promise<EnterpriseSession>
     signIn(email: string, password: string): Promise<EnterpriseSession>

@@ -1,31 +1,71 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://workbench.inocube.local/contracts/v1/task-notification.schema.json",
-  "title": "Workbench Task Notification",
+  "title": "Workbench Employee Work Item",
+  "description": "Forge-owned projection of a notification or actionable continuation for one employee. It is independent of any business object or approval flow.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "notificationId", "workId", "taskId", "organizationId", "assignee", "title", "status", "createdAt", "source"],
+  "required": ["version", "itemId", "kind", "organizationId", "assigneeAccountId", "title", "status", "source", "createdAt"],
   "properties": {
     "version": { "const": "1" },
-    "notificationId": { "type": "string", "minLength": 1, "maxLength": 128 },
-    "workId": { "type": "string", "minLength": 1, "maxLength": 128 },
-    "taskId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "itemId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "kind": { "enum": ["result", "failure", "revision_required", "human_review"] },
     "organizationId": { "type": "string", "minLength": 1, "maxLength": 128 },
-    "assignee": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "assigneeAccountId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "initiatorAccountId": { "type": "string", "minLength": 1, "maxLength": 128 },
     "title": { "type": "string", "minLength": 1, "maxLength": 300 },
     "summary": { "type": "string", "maxLength": 4000 },
-    "status": { "enum": ["pending", "claimed", "completed", "cancelled"] },
+    "instructions": { "type": "string", "maxLength": 8000 },
+    "status": { "enum": ["unread", "pending", "in_progress", "completed", "cancelled"] },
+    "actionable": { "type": "boolean" },
     "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
     "dueAt": { "type": "string", "format": "date-time" },
+    "material": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "reference"],
+      "properties": {
+        "version": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "reference": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "label": { "type": "string", "maxLength": 300 }
+      }
+    },
     "source": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["system", "reference"],
+      "required": ["system", "workReference", "idempotencyKey"],
       "properties": {
         "system": { "enum": ["weave", "forge"] },
-        "reference": { "type": "string", "minLength": 1, "maxLength": 512 }
+        "workReference": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "runReference": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "sessionReference": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "idempotencyKey": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    },
+    "continuation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["returnTarget", "reviewScope"],
+      "properties": {
+        "parentItemId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "reason": { "type": "string", "maxLength": 4000 },
+        "returnTarget": { "enum": ["origin_review", "team", "member", "human_step"] },
+        "targetReference": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "reviewScope": { "enum": ["whole_team", "affected_members", "human_step"] }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "enum": ["revision_required", "human_review"] } } },
+      "then": { "required": ["actionable", "instructions", "continuation"], "properties": { "actionable": { "const": true } } }
+    },
+    {
+      "if": { "properties": { "kind": { "enum": ["result", "failure"] } } },
+      "then": { "properties": { "actionable": { "const": false } }
+      }
+    }
+  ]
 }
-

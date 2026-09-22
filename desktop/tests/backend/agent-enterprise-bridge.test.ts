@@ -1,0 +1,170 @@
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { AgentEnterpriseBridge } from '../../electron/main/enterprise/agent-bridge'
+import { digest } from '../../electron/main/enterprise/handoff-store'
+import type { TranscriptMessage } from '../../src/types/api'
+
+const bridges: AgentEnterpriseBridge[] = [], directories: string[] = []
+afterEach(async () => {
+  await Promise.all(bridges.splice(0).map((bridge) => bridge.stop()))
+  await Promise.all(directories.splice(0).map((path) => rm(path, { recursive: true, force: true })))
+})
+function user(id: string, text: string): TranscriptMessage { return { id, role: 'user', parts: [{ type: 'text', text }] } }
+async function fixture() {
+  const cwd = await mkdtemp(join(tmpdir(), 'handoff-')); directories.push(cwd)
+  const content = '# 合同\n客户：测试客户\n金额：12345 元\n交期：2026-10-01\n'
+  await writeFile(join(cwd, '合同.md'), content)
+  const materials = [{ path: '合同.md', sha256: digest(content) }]
+  const choice = { teamId: 'team-contract', teamName: '合同团队', teamObjective: '复核合同并完成交接', workflowId: 'workflow-review', workflowName: '合同复核', workflowDescription: '接合同全文，检查金额和交期，交付复核意见', version: 3 }
+  const service = {
+    accountKey: vi.fn(async () => 'employee-a'),
+    getTeamCatalog: vi.fn(async () => [{ id: choice.teamId, name: choice.teamName, objective: choice.teamObjective }, { id: 'leave', name: '休假团队', objective: '安排休假' }]),
+    getTeamChoices: vi.fn(async () => [choice]),
+    submitWork: vi.fn(async (_choice: unknown, _goal: string, source?: { assertCurrent(): Promise<void> }) => {
+      await source?.assertCurrent()
+      return { workId: 'work', runId: 'run', taskId: 'task', workflowId: choice.workflowId, workflowVersion: 3, repeated: false }
+    }),
+  }
+  const transcript: TranscriptMessage[] = []
+  const sessions = { read: vi.fn(async () => transcript) }
+  const bridge = new AgentEnterpriseBridge({ service, sessions: { prime: sessions, omp: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts' })
+  await bridge.start(); bridges.push(bridge)
+  const environment = bridge.environmentFor({ cwd, sessionPath: '/sessions/current.jsonl', harness: 'pi' })
+  bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, '/sessions/current.jsonl', 'runtime')
+  let turnKey = ''
+  const call = async (method: string, params: Record<string, unknown> = {}) => {
+    const response = await fetch(environment.GOOEYPI_ENTERPRISE_URL!, { method: 'POST', headers: { Authorization: `Bearer ${environment.GOOEYPI_ENTERPRISE_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ method, params: { turn_key: turnKey, ...params } }) })
+    return { status: response.status, body: await response.json() as { ok: boolean; result: Record<string, unknown>; error?: string } }
+  }
+  const input = async (text: string, id: string) => {
+    await bridge.employeeCommand('runtime', { type: 'prompt', message: text })
+    transcript.push(user(id, text))
+    const active = await call('activate', { prompt: text }); turnKey = active.body.result?.turn_key as string
+  }
+  const discover = async () => {
+    const search = await call('search', { work_summary: '复核合同' })
+    const teams = search.body.result.teams as Array<{ team_key: string }>
+    const describe = await call('describe', { team_key: teams[0].team_key })
+    const capabilities = describe.body.result.capabilities as Array<{ handoff_key: string }>
+    return { handoff_key: capabilities[0].handoff_key, goal: '复核这版合同', materials }
+  }
+  await input('这版给他们看看', 'employee-turn-1')
+  return { call, input, discover, service, bridge, materials, cwd, transcript, content }
+}
+
+describe('employee-bound material handoff', () => {
+  it('binds a runtime created before its session file and accepts the first employee turn', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'handoff-race-')); directories.push(cwd)
+    const transcript: TranscriptMessage[] = []
+    const service = {
+      accountKey: vi.fn(async () => 'employee-a'), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []), submitWork: vi.fn(),
+    }
+    const sessions = { read: vi.fn(async () => transcript) }
+    const bridge = new AgentEnterpriseBridge({ service, sessions: { prime: sessions, omp: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts' })
+    await bridge.start(); bridges.push(bridge)
+    const environment = bridge.environmentFor({ cwd, harness: 'pi' })
+    bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, undefined, 'new-runtime')
+    bridge.bindRuntimeSession('new-runtime', '/sessions/new.jsonl')
+    await bridge.employeeCommand('new-runtime', { type: 'prompt', message: '把这份材料交给团队' })
+    transcript.push(user('first-turn', '把这份材料交给团队'))
+    const response = await fetch(environment.GOOEYPI_ENTERPRISE_URL!, {
+      method: 'POST', headers: { Authorization: `Bearer ${environment.GOOEYPI_ENTERPRISE_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'activate', params: { prompt: '把这份材料交给团队' } }),
+    })
+    expect(response.status).toBe(200)
+    expect((await response.json() as { result: { turn_key: string } }).result.turn_key).toBeTruthy()
+  })
+
+  it('filters summaries, expands only one team, and hands off actual frozen contract content', async () => {
+    const f = await fixture()
+    const search = await f.call('search', { work_summary: '检查合同' })
+    expect(search.body.result.teams).toHaveLength(1)
+    expect(f.service.getTeamChoices).not.toHaveBeenCalled()
+    const params = await f.discover()
+    const submitted = await f.call('submit', params)
+    expect(submitted.status).toBe(200)
+    expect(submitted.body.result.status).toBe('accepted')
+    const task = JSON.parse(f.service.submitWork.mock.calls[0][1])
+    expect(task.materials[0]).toEqual({ name: '合同.md', content: f.content, bytes: Buffer.byteLength(f.content), sha256: digest(f.content) })
+  })
+  it('invalidates the old turn before a later employee steer is written to the transcript', async () => {
+    const f = await fixture(), params = await f.discover()
+    await f.bridge.employeeCommand('runtime', { type: 'steer', message: '先等等' })
+    expect((await f.call('submit', params)).status).toBe(409)
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+  it('revokes a renderer-queued employee change before the runtime sees it', async () => {
+    const f = await fixture(), params = await f.discover()
+    f.bridge.invalidateHandoff('runtime')
+    expect((await f.call('submit', params)).status).toBe(409)
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+  it('does not replace authorization with the last user message', async () => {
+    const f = await fixture(), params = await f.discover()
+    f.transcript.push(user('employee-later', '先别发'))
+    expect((await f.call('submit', params)).status).toBe(409)
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+  it('rejects another account and invalidates a same-account login', async () => {
+    const f = await fixture(), params = await f.discover()
+    f.service.accountKey.mockResolvedValue('employee-b')
+    expect((await f.call('submit', params)).status).toBe(409)
+    f.service.accountKey.mockResolvedValue('employee-a')
+    f.bridge.invalidateAccount()
+    expect((await f.call('submit', params)).status).toBe(409)
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+  it('rejects missing materials, changed versions and paths outside the working directory', async () => {
+    const f = await fixture(), params = await f.discover()
+    expect((await f.call('submit', { ...params, materials: [] })).status).toBe(409)
+    expect((await f.call('submit', { ...params, materials: [{ path: 'absent.md', sha256: digest('x') }] })).status).toBe(409)
+    await writeFile(join(f.cwd, '合同.md'), 'changed')
+    expect((await f.call('submit', params)).body.error).toContain('版本已变化')
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+  it('retries an identical package after failure without rereading a changed file or conversation', async () => {
+    const f = await fixture(), params = await f.discover()
+    f.service.submitWork.mockRejectedValueOnce(new Error('connection lost'))
+    expect((await f.call('submit', params)).body.result.status).toBe('unknown')
+    await writeFile(join(f.cwd, '合同.md'), 'later draft')
+    f.transcript.push({ id: 'assistant-later', role: 'assistant', parts: [{ type: 'text', text: '稍后重试' }] })
+    expect((await f.call('submit', params)).status).toBe(200)
+    expect(f.service.submitWork.mock.calls[0][1]).toBe(f.service.submitWork.mock.calls[1][1])
+    const first = f.service.submitWork.mock.calls[0][2] as unknown as { sourceMessages: unknown }
+    const second = f.service.submitWork.mock.calls[1][2] as unknown as { sourceMessages: unknown }
+    expect(first.sourceMessages).toEqual(second.sourceMessages)
+    expect((await f.call('submit', { ...params, goal: '修改目标' })).body.error).toContain('已冻结')
+  })
+  it('recovers the original request under a fresh employee turn and rejects a different account', async () => {
+    const f = await fixture(), params = await f.discover()
+    const first = await f.call('submit', params)
+    const recoveryKey = first.body.result.recovery_key
+    await f.input('核对刚才的接单回执，仍然交接原版', 'employee-turn-2')
+    expect((await f.call('recover', { recovery_key: recoveryKey })).body.result.status).toBe('accepted')
+    expect(f.service.submitWork.mock.calls[0][1]).toBe(f.service.submitWork.mock.calls[1][1])
+    f.service.accountKey.mockResolvedValue('employee-b')
+    await f.input('恢复原交接', 'other-account-turn')
+    expect((await f.call('recover', { recovery_key: recoveryKey })).body.error).toContain('不属于当前员工')
+    expect(f.service.submitWork).toHaveBeenCalledTimes(2)
+  })
+
+  it('coalesces concurrent identical submissions', async () => {
+    const f = await fixture(), params = await f.discover()
+    let release!: () => void
+    const barrier = new Promise<void>((resolve) => { release = resolve })
+    f.service.submitWork.mockImplementation(async () => { await barrier; return { workId: 'work', runId: 'run', taskId: 'task', workflowId: 'workflow-review', workflowVersion: 3, repeated: false } })
+    const first = f.call('submit', params), second = f.call('submit', params)
+    await vi.waitFor(() => expect(f.service.submitWork).toHaveBeenCalledOnce())
+    release()
+    expect((await Promise.all([first, second])).map((result) => result.status)).toEqual([200, 200])
+    expect(f.service.submitWork).toHaveBeenCalledOnce()
+  })
+  it('rejects a removed published version before preparing material delivery', async () => {
+    const f = await fixture(), params = await f.discover()
+    f.service.getTeamChoices.mockResolvedValue([])
+    expect((await f.call('submit', params)).body.error).toContain('版本已经变化')
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+})

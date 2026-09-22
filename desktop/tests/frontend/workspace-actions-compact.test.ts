@@ -65,6 +65,7 @@ function fixture({ runtime: configuredRuntime = null, sessionStatus = 'idle', ow
   const start = vi.fn(async () => runtime('started-runtime'))
   const followUp = vi.fn(async () => true)
   const queuePrompt = vi.fn()
+  const invalidateHandoff = vi.fn(async () => {})
   const setToast = vi.fn()
   const reportError = vi.fn()
   const workspace = {
@@ -86,6 +87,7 @@ function fixture({ runtime: configuredRuntime = null, sessionStatus = 'idle', ow
   }
   const agentList = vi.fn(async () => configuredRuntime ? [configuredRuntime] : [])
   const bridge = {
+    enterprise: { invalidateHandoff },
     agent: { list: agentList, command, start, stop: vi.fn(async () => false) },
     sessions: { followUp },
   } as unknown as PrimeWorkApi
@@ -119,7 +121,7 @@ function fixture({ runtime: configuredRuntime = null, sessionStatus = 'idle', ow
     reportError,
   } as unknown as WorkspaceActionsDeps))
 
-  return { actions, command, start, followUp, queuePrompt, setToast, reportError, messages: () => messages }
+  return { actions, command, start, followUp, queuePrompt, invalidateHandoff, setToast, reportError, messages: () => messages }
 }
 
 describe('/compact dispatch', () => {
@@ -191,5 +193,27 @@ describe('/compact dispatch', () => {
     expect(fixtureState.followUp).not.toHaveBeenCalled()
     expect(fixtureState.queuePrompt).toHaveBeenCalledWith('/compact', 'queue')
     expect(fixtureState.setToast).toHaveBeenCalledWith('Compaction will run when the current turn finishes.')
+  })
+})
+
+
+describe('queued employee input invalidates enterprise handoff', () => {
+  it('revokes before storing a local queue entry even though no runtime command is sent', async () => {
+    const f = fixture({ runtime: runtime('streaming', true), ownsStreaming: true })
+    let finish!: () => void
+    f.invalidateHandoff.mockImplementation(() => new Promise<void>((resolve) => { finish = resolve }))
+    const sending = f.actions.sendPrompt('先别发', [], 'queue')
+    expect(f.invalidateHandoff).toHaveBeenCalledWith('streaming')
+    expect(f.queuePrompt).not.toHaveBeenCalled()
+    finish()
+    await sending
+    expect(f.queuePrompt).toHaveBeenCalledWith('先别发', 'queue')
+    expect(f.command).not.toHaveBeenCalled()
+  })
+  it('does not silently queue an employee change when revocation fails', async () => {
+    const f = fixture({ runtime: runtime('streaming', true), ownsStreaming: true })
+    f.invalidateHandoff.mockRejectedValueOnce(new Error('bridge disconnected'))
+    await expect(f.actions.sendPrompt('先别发', [], 'queue')).rejects.toThrow('bridge disconnected')
+    expect(f.queuePrompt).not.toHaveBeenCalled()
   })
 })

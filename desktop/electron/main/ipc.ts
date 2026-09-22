@@ -17,6 +17,7 @@ import type { TerminalService } from './terminal'
 import type { VoiceService } from './voice'
 import type { UpdateService } from './updates'
 import type { EnterpriseService } from './enterprise'
+import type { AgentEnterpriseBridge } from './enterprise/agent-bridge'
 import type { AgentBrowserService } from './browser/agent-service'
 import { requireExistingPath, requireInteger, requireRecord, requireString, requireWebUrl } from './validation'
 
@@ -36,6 +37,7 @@ interface Services {
   settings: SettingsService
   updates: UpdateService
   enterprise: EnterpriseService
+  enterpriseBridge?: AgentEnterpriseBridge
   cuaDriver: CuaDriverService
   heartbeats: HeartbeatService
   schedules: AutomationService
@@ -249,13 +251,19 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   handle('updates:get-state', () => services.updates.getState())
   handle('updates:check', () => services.updates.check())
   handle('updates:download-and-install', () => services.updates.downloadAndInstall())
+  handle('enterprise:invalidate-handoff', (_event, runtimeId) => {
+    const id = requireString(runtimeId, 'runtimeId', { min: 1, max: 256 })
+    agentsForRuntime(id)
+    services.enterpriseBridge?.invalidateHandoff(id)
+  })
   handle('enterprise:get-status', () => services.enterprise.getStatus())
   handle('enterprise:get-session', () => services.enterprise.getSession())
-  handle('enterprise:sign-in', (_event, email, password) => services.enterprise.signIn(
+  handle('enterprise:sign-in', (_event, email, password) => { services.enterpriseBridge?.invalidateAccount(); return services.enterprise.signIn(
     requireString(email, 'email', { min: 3, max: 320 }),
     requireString(password, 'password', { min: 1, max: 1024 }),
-  ))
-  handle('enterprise:sign-out', () => services.enterprise.signOut())
+  ) })
+  handle('enterprise:sign-out', () => { services.enterpriseBridge?.invalidateAccount(); return services.enterprise.signOut() })
+  handle('enterprise:team-workspace', (_event, command) => services.enterprise.teamWorkspace(requireRecord(command, 'command') as unknown as import('../../src/types/team-workspace').TeamWorkspaceCommand))
   handle('enterprise:get-development-overview', () => services.enterprise.getDevelopmentOverview())
   handle('enterprise:get-business-capability-catalog', () => services.enterprise.getBusinessCapabilityCatalog())
   handle('enterprise:create-development-team', (_event, input) => services.enterprise.createDevelopmentTeam(requireRecord(input, 'input') as unknown as import('../../src/types/api').EnterpriseCreateTeamInput))
@@ -316,7 +324,14 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     const { harness: _harness, ...startOptions } = options
     return agentsFor(harness).start(startOptions)
   })
-  handle('agent:command', (_event, runtimeId, command) => agentsForRuntime(runtimeId).command(runtimeId, command))
+  handle('agent:command', async (_event, runtimeId, command) => {
+    const id = requireString(runtimeId, 'runtimeId', { min: 1, max: 256 })
+    const manager = agentsForRuntime(id)
+    const current = manager.list().find((runtime) => runtime.runtimeId === id)
+    if (current?.sessionFile) services.enterpriseBridge?.bindRuntimeSession(id, current.sessionFile)
+    await services.enterpriseBridge?.employeeCommand(id, command)
+    return manager.command(id, command)
+  })
   handle('agent:stop', (_event, runtimeId) => agentsForRuntime(runtimeId).stop(runtimeId))
   handle('agent:list', () => [...services.agents.list(), ...services.omp.agents.list(), ...services.pi.agents.list()])
 
