@@ -64,13 +64,13 @@ export const SalesContract = master('forge_sales_contract', '框架销售合同'
 }, ['code', 'customer_po_number', 'name', 'contract_type_id', 'customer_id', 'total_amount', 'ordered_amount', 'status', 'signed_on', 'responsible_id']);
 
 export const SalesContractLine = master('forge_sales_contract_line', '合同物料明细', 'list', {
-  name: text('物料名称', true), contract_id: reference('forge_sales_contract', '销售合同', true),
+  name: text('物料名称', true), contract_id: Field.masterDetail('forge_sales_contract', { label: '销售合同', deleteBehavior: 'cascade', inlineEdit: 'grid', ...required }),
   quotation_line_id: reference('forge_quotation_line', '来源报价明细'), sku_id: reference('forge_material_sku', '物料规格', true),
   item_code: text('物料编码'), model: text('型号'), specification: text('规格'), unit_name: text('单位'),
   quantity_limit: positiveQuantity('数量上限'), ordered_quantity: Field.number({ label: '已下单数量', min: 0, scale: 4, defaultValue: 0 }),
   taxed_unit_price: nonNegativeMoney('协议含税单价'), tax_rate: percentage('税率', 13), discount_rate: percentage('折扣率', 0),
   taxed_subtotal: nonNegativeMoney('含税小计'), remarks: remarks(),
-}, ['contract_id', 'item_code', 'name', 'model', 'quantity_limit', 'ordered_quantity', 'taxed_unit_price', 'taxed_subtotal']);
+}, ['contract_id', 'item_code', 'name', 'model', 'quantity_limit', 'ordered_quantity', 'taxed_unit_price', 'taxed_subtotal'], 'controlled_by_parent');
 
 // RM-047 / DR-0178 to DR-0183. Direct and contract-backed orders converge on this execution document.
 export const SalesOrder = master('forge_sales_order', '销售订单', 'clipboard-list', {

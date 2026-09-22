@@ -39,9 +39,16 @@ export function dictionary(name: string, label: string) {
   });
 }
 
-export function master(name: string, label: string, icon: string, fields: Record<string, Field>, columns: string[]) {
+export function master(
+  name: string,
+  label: string,
+  icon: string,
+  fields: Record<string, Field>,
+  columns: string[],
+  sharingModel: 'private' | 'public_read' | 'public_read_write' | 'controlled_by_parent' = 'private',
+) {
   return ObjectSchema.create({
-    name, label, pluralLabel: label, icon, sharingModel: 'private', fields,
+    name, label, pluralLabel: label, icon, sharingModel, fields,
     nameField: 'name', listViews: { all: { label: '全部', type: 'grid', columns } },
     enable: { apiEnabled: true, searchable: true, trackHistory: true },
   });
