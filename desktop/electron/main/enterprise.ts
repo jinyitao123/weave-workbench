@@ -462,7 +462,32 @@ export class EnterpriseService {
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有开发中心权限')
-    const capabilities = await this.getBusinessCapabilities()
+    if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务能力')
+    const response = await this.fetch(new URL('/api/v1/meta/actions', this.forgeUrl), {
+      headers: { Authorization: `Bearer ${this.forgeToken}`, Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(15_000),
+    })
+    if (response.status === 401) { await response.body?.cancel(); await this.signOut(); throw new Error('登录已失效，请重新登录') }
+    if (response.status === 403) {
+      const denied = record(await response.json().catch(() => undefined)), detail = record(denied?.error)
+      if (textValue(detail?.code) === 'PASSWORD_EXPIRED') throw new Error('Forge 账号密码已过期，请更新密码后重新登录')
+      throw new Error('当前账号没有读取 Forge 业务能力的权限')
+    }
+    if (!response.ok) { await response.body?.cancel(); throw new Error(`Forge 业务能力读取失败（${response.status}）`) }
+    const raw = await response.json()
+    const envelope = record(raw)
+    const data = record(envelope?.data) ?? envelope
+    const actions = Array.isArray(raw) ? raw : Array.isArray(data?.items) ? data.items : []
+    const capabilities = actions.flatMap((value): EnterpriseBusinessCapability[] => {
+      const action = record(value), ai = record(action?.ai)
+      const actionName = textValue(action?.name), objectName = textValue(action?.objectName) ?? textValue(action?.object)
+      if (ai?.exposed !== true || !actionName || !objectName || objectName.startsWith('sys_')) return []
+      return [{
+        id: `forge:action:${objectName}.${actionName}`,
+        name: textValue(action?.label) ?? textValue(ai?.description) ?? actionName,
+        description: textValue(ai?.description) ?? textValue(action?.label) ?? actionName,
+        effect: 'write', resourceType: objectName, requiresEmployeeIntent: true, status: 'available',
+      }]
+    })
     return { version: '1', provider: { id: 'forge', name: 'Forge 业务环境', status: 'available' }, capabilities, refreshedAt: new Date().toISOString() }
   }
 
