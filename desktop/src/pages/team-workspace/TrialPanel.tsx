@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ProductSelect, ProductTextArea } from '@/components/ui'
 import type { EnterpriseBusinessCapabilityCatalog } from '@/types/api'
 import type { TeamWorkspace, TeamWorkspaceBridge } from '@/types/team-workspace'
-export const runLabel = (status: string) => ({ submitting: '等待接单', queued: '排队中', running: '执行中', succeeded: '已完成', failed: '失败', cancelled: '已取消', blocked: '等待处理', pending: '等待执行', completed: '已完成' }[status] ?? '等待更新')
+export const runLabel = (status: string) => ({ submitting: '等待接单', queued: '排队中', running: '执行中', succeeded: '已完成', failed: '失败', cancelled: '已取消', blocked: '等待处理', pending: '等待执行', completed: '已完成', tool_started: '执行中', tool_completed: '已完成', tool_failed: '失败' }[status] ?? '等待更新')
 type Activity = { status: string; members: Array<{ name: string; status: string; runtime?: { model?: string; configured_model?: string }; stages: Array<{ name: string; status: string; inputs: Array<{ source: string; summary?: string }>; tools: Array<{ name: string; status: string; input?: string; output?: string }>; failure_reason?: string }> }>; outputs: Array<{ title: string; content?: string }> }
 export function TrialPanel({ teamId, initialFlowId, draft, businessCapabilities, bridge, flush, refresh }: { initialFlowId?: string; teamId: string; draft: TeamWorkspace; businessCapabilities?: EnterpriseBusinessCapabilityCatalog; bridge: TeamWorkspaceBridge; flush(): Promise<TeamWorkspace | undefined>; refresh(): Promise<void> }) {
   const [flow, setFlow] = useState(initialFlowId ?? draft.document.workflows[0]?.id ?? '')
@@ -15,6 +15,7 @@ export function TrialPanel({ teamId, initialFlowId, draft, businessCapabilities,
   const [runStatus, setRunStatus] = useState('')
   const [runOutput, setRunOutput] = useState('')
   const pending = useRef<{ requestId: string; revision: number; flow: string; input: string; businessActions: EnterpriseBusinessCapabilityCatalog['capabilities'] } | undefined>(undefined)
+  const submitting = useRef(false)
   const trial = draft.trials.find((t) => t.request_id === selected)
   useEffect(() => {
     if (!trial) return
@@ -39,6 +40,8 @@ export function TrialPanel({ teamId, initialFlowId, draft, businessCapabilities,
     // Polling is tied to this receipt, not to every refreshed overview object.
   }, [bridge, teamId, trial?.request_id, trial?.run_id])
   const submit = async () => {
+    if (submitting.current) return
+    submitting.current = true
     setBusy(true); setError('')
     try {
       const saved = await flush(); if (!saved) return
@@ -51,7 +54,7 @@ export function TrialPanel({ teamId, initialFlowId, draft, businessCapabilities,
       await bridge({ action: 'trial', teamId, revision: request.revision, workflowId: request.flow, requestId: request.requestId, input: request.input, businessActions: request.businessActions })
       setSelected(request.requestId); await refresh(); pending.current = undefined
     } catch (cause) { setError((cause as Error).message) }
-    finally { setBusy(false) }
+    finally { submitting.current = false; setBusy(false) }
   }
   return <div className="tw-form">
     <h3>测试任务</h3>
