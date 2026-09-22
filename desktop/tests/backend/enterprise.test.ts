@@ -287,6 +287,40 @@ describe('EnterpriseService', () => {
     expect(JSON.stringify(calls)).not.toContain('weave-token')
   })
 
+  it('loads native Forge approvals and routes return and resubmit decisions to Forge', async () => {
+    const calls: Array<{ url: string; method: string; body?: Record<string, unknown> }> = []
+    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = String(input), method = init?.method ?? 'GET'
+      const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined
+      calls.push({ url, method, body })
+      if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'sales-1', email: 'sales@example.test', name: 'Sales' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-sales-1', externalId: 'sales-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      if (url.includes('/v1/teams?status=active')) return Response.json([])
+      if (url.includes('/v1/runs?project_id=')) return Response.json({ runs: [] })
+      if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
+      if (url.endsWith('/api/v1/notifications?limit=50')) return Response.json({ notifications: [] })
+      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [
+        { id: 'approval-1', process_name: '销售合同复核', current_step: '财务复核', object_name: '销售合同', status: 'pending', updated_at: '2026-09-22T08:00:00Z', viewer: { can_act: true } },
+        { id: 'approval-2', process_name: '销售合同复核', object_name: '销售合同', status: 'returned', updated_at: '2026-09-22T09:00:00Z', viewer: { is_submitter: true } },
+      ] })
+      if (url.endsWith('/api/v1/approvals/requests/approval-1/revise')) return Response.json({ status: 'returned' })
+      if (url.endsWith('/api/v1/approvals/requests/approval-2/resubmit')) return Response.json({ status: 'pending' })
+      return Response.json({}, { status: 404 })
+    }) as typeof fetch
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('sales@example.test', 'secret')
+
+    const overview = await service.getWorkOverview()
+    expect(overview.tasks).toMatchObject([
+      { interactionId: 'approval-1', runId: 'forge:approval:approval-1', source: 'forge', mode: 'approval' },
+      { interactionId: 'approval-2', runId: 'forge:revision:approval-2', source: 'forge', mode: 'revision' },
+    ])
+    await service.completeHumanTask(overview.tasks[0], { decision: 'rejected', comment: '请补充付款条件' })
+    await service.completeHumanTask(overview.tasks[1], { decision: 'approved', comment: '已补充' })
+    expect(calls.find((call) => call.url.endsWith('/approval-1/revise'))).toMatchObject({ method: 'POST', body: { comment: '请补充付款条件' } })
+    expect(calls.find((call) => call.url.endsWith('/approval-2/resubmit'))).toMatchObject({ method: 'POST', body: { comment: '已补充' } })
+  })
+
   it('returns bounded unavailable states when the environments cannot be reached', async () => {
     const service = new EnterpriseService({
       environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' },
