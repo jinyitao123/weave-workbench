@@ -13,7 +13,11 @@ export function teamChoices(team: TeamSummary, value: unknown): EnterpriseWorkCh
   return (Array.isArray(workflows) ? workflows : []).flatMap((item) => {
     const flow = record(item)
     return typeof flow.id === 'string' && typeof flow.name === 'string' && Number.isInteger(flow.published_version) && Number(flow.published_version) > 0
-      ? [{ teamId: team.id, teamName: team.name, teamObjective: team.objective, workflowId: flow.id, workflowName: flow.name, version: Number(flow.published_version), ...(typeof flow.description === 'string' ? { workflowDescription: flow.description } : {}) }] : []
+      ? [{
+          teamId: team.id, teamName: team.name, teamObjective: team.objective, workflowId: flow.id, workflowName: flow.name,
+          businessCapabilityIds: Array.isArray(flow.business_capability_ids) ? flow.business_capability_ids.filter((value): value is string => typeof value === 'string') : [],
+          version: Number(flow.published_version), ...(typeof flow.description === 'string' ? { workflowDescription: flow.description } : {}),
+        }] : []
   })
 }
 function terms(text: string): Set<string> {

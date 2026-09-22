@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import { EnterpriseService } from '../../electron/main/enterprise'
 
-const choice = { teamId: 'team', teamName: '合同团队', workflowId: 'workflow', workflowName: '合同复核', version: 3 }
+const choice = { teamId: 'team', teamName: '合同团队', workflowId: 'workflow', workflowName: '合同复核', businessCapabilityIds: ['forge:action:forge_sales_contract.contract_submit'], version: 3 }
 const hash = (text: string) => createHash('sha256').update(text).digest('hex')
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 async function fixture() {
@@ -23,6 +23,7 @@ async function fixture() {
       const sources = body.source_messages as Array<{ event_seq: number; sha256: string; message_id: string }>
       expect(sources.length).toBeGreaterThan(0)
       expect(sources.every((source, i) => /^[a-f0-9]{64}$/.test(source.sha256) && (i === 0 || source.event_seq > sources[i - 1].event_seq))).toBe(true)
+      expect(body.authorized_business_capability_ids).toEqual([])
       const id = String(body.registration_id), encoded = JSON.stringify(body)
       if (registrations.has(id) && registrations.get(id) !== encoded) return Response.json({ error: 'input_registration_conflict' }, { status: 409 })
       if (!registrations.has(id) && heads.has(String(body.workbench_session_id))) return Response.json({ error: 'input_revision_conflict' }, { status: 409 })
@@ -41,7 +42,7 @@ async function fixture() {
   const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
   await service.signIn('employee@example.test', 'test')
   let current = true
-  const source = { idempotencySeed: 'session:employee-message:team', sessionKey: 'session', sourceMessages: [{ messageId: 'employee-message', eventSeq: 2, sha256: hash('这版给他们看看') }], accountKey: await service.accountKey(), resources: [{ type: 'forge-file' as const, id: 'file-contract-v1', name: '合同.md', bytes: 12, sha256: hash('合同正文') }], assertCurrent: async () => { if (!current) throw new Error('员工已改变要求') } }
+  const source = { idempotencySeed: 'session:employee-message:team', sessionKey: 'session', sourceMessages: [{ messageId: 'employee-message', eventSeq: 2, sha256: hash('这版给他们看看') }], accountKey: await service.accountKey(), resources: [{ type: 'forge-file' as const, id: 'file-contract-v1', name: '合同.md', bytes: 12, sha256: hash('合同正文') }], authorizedBusinessCapabilityIds: [], assertCurrent: async () => { if (!current) throw new Error('员工已改变要求') } }
   return { service, source, registrations, runs, calls, drop: () => { dropDispatchResponse = true }, wrongDigest: () => { mismatchDigest = true }, changeDuringRegistration: () => { afterRegistration = async () => { current = false } }, logoutDuringRegistration: () => { afterRegistration = async () => { await service.signOut() } } }
 }
 describe('Weave handoff admission contract', () => {

@@ -17,12 +17,14 @@ async function fixture() {
   const content = '# 合同\n客户：测试客户\n金额：12345 元\n交期：2026-10-01\n'
   await writeFile(join(cwd, '合同.md'), content)
   const materials = [{ path: '合同.md', sha256: digest(content) }]
-  const choice = { teamId: 'team-contract', teamName: '合同团队', teamObjective: '复核合同并完成交接', workflowId: 'workflow-review', workflowName: '合同复核', workflowDescription: '接合同全文，检查金额和交期，交付复核意见', version: 3 }
+  const businessCapabilityId = 'forge:action:forge_sales_contract.contract_submit'
+  const choice = { teamId: 'team-contract', teamName: '合同团队', teamObjective: '复核合同并完成交接', workflowId: 'workflow-review', workflowName: '合同复核', workflowDescription: '接合同全文，检查金额和交期，交付复核意见', businessCapabilityIds: [businessCapabilityId], version: 3 }
   const service = {
     accountKey: vi.fn(async () => 'employee-a'),
     getTeamCatalog: vi.fn(async () => [{ id: choice.teamId, name: choice.teamName, objective: choice.teamObjective }, { id: 'leave', name: '休假团队', objective: '安排休假' }]),
     getTeamChoices: vi.fn(async () => [choice]),
-    stageWorkMaterials: vi.fn(async (items: Array<{ name: string; bytes: number; sha256: string }>) => items.map((item, index) => ({ type: 'forge-file' as const, id: `file-${index + 1}`, name: item.name, bytes: item.bytes, sha256: item.sha256 }))),
+    getBusinessCapabilities: vi.fn(async () => [{ id: businessCapabilityId, name: '提交合同', description: '把合同提交到业务流程', effect: 'write' as const, resourceType: 'forge_sales_contract', requiresEmployeeIntent: true, status: 'available' as const }]),
+    stageWorkMaterials: vi.fn(async (items: Array<{ name: string; content: string; bytes: number; sha256: string }>) => items.map((item, index) => ({ type: 'forge-file' as const, id: `file-${index + 1}`, name: item.name, bytes: item.bytes, sha256: item.sha256 }))),
     submitWork: vi.fn(async (_choice: unknown, _goal: string, source?: { assertCurrent(): Promise<void> }) => {
       await source?.assertCurrent()
       return { workId: 'work', runId: 'run', taskId: 'task', workflowId: choice.workflowId, workflowVersion: 3, repeated: false }
@@ -48,11 +50,11 @@ async function fixture() {
     const search = await call('search', { work_summary: '复核合同' })
     const teams = search.body.result.teams as Array<{ team_key: string }>
     const describe = await call('describe', { team_key: teams[0].team_key })
-    const capabilities = describe.body.result.capabilities as Array<{ handoff_key: string }>
-    return { handoff_key: capabilities[0].handoff_key, goal: '复核这版合同', materials }
+    const capabilities = describe.body.result.capabilities as Array<{ handoff_key: string; business_actions: Array<{ action_key: string }> }>
+    return { handoff_key: capabilities[0].handoff_key, business_actions: [], goal: '复核这版合同', materials, available_actions: capabilities[0].business_actions }
   }
   await input('这版给他们看看', 'employee-turn-1')
-  return { call, input, discover, service, bridge, materials, cwd, transcript, content }
+  return { call, input, discover, service, bridge, materials, cwd, transcript, content, businessCapabilityId }
 }
 
 describe('employee-bound material handoff', () => {
@@ -61,6 +63,7 @@ describe('employee-bound material handoff', () => {
     const transcript: TranscriptMessage[] = []
     const service = {
       accountKey: vi.fn(async () => 'employee-a'), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
+      getBusinessCapabilities: vi.fn(async () => []),
       stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),
     }
     const sessions = { read: vi.fn(async () => transcript) }
@@ -90,6 +93,18 @@ describe('employee-bound material handoff', () => {
     expect(submitted.body.result.status).toBe('accepted')
     const task = JSON.parse(f.service.submitWork.mock.calls[0][1])
     expect(task.materials[0]).toEqual({ name: '合同.md', content: f.content, bytes: Buffer.byteLength(f.content), sha256: digest(f.content) })
+    expect(f.service.submitWork.mock.calls[0][2]).toMatchObject({ authorizedBusinessCapabilityIds: [] })
+  })
+  it('authorizes only the business action selected for the current employee intent', async () => {
+    const f = await fixture(), params = await f.discover()
+    const actionKey = params.available_actions[0].action_key
+    expect((await f.call('submit', { ...params, business_actions: [actionKey] })).status).toBe(200)
+    expect(f.service.submitWork.mock.calls[0][2]).toMatchObject({ authorizedBusinessCapabilityIds: [f.businessCapabilityId] })
+  })
+  it('rejects a business action that was not returned for this team view', async () => {
+    const f = await fixture(), params = await f.discover()
+    expect((await f.call('submit', { ...params, business_actions: ['invented-action'] })).status).toBe(409)
+    expect(f.service.submitWork).not.toHaveBeenCalled()
   })
   it('invalidates the old turn before a later employee steer is written to the transcript', async () => {
     const f = await fixture(), params = await f.discover()
@@ -138,6 +153,17 @@ describe('employee-bound material handoff', () => {
     const second = f.service.submitWork.mock.calls[1][2] as unknown as { sourceMessages: unknown }
     expect(first.sourceMessages).toEqual(second.sourceMessages)
     expect((await f.call('submit', { ...params, goal: '修改目标' })).body.error).toContain('已冻结')
+  })
+  it('freezes material before upload and resumes an upload failure with the original bytes', async () => {
+    const f = await fixture(), params = await f.discover()
+    f.service.stageWorkMaterials.mockRejectedValueOnce(new Error('upload interrupted'))
+    const first = await f.call('submit', params)
+    expect(first.body.result).toMatchObject({ status: 'unknown' })
+    await writeFile(join(f.cwd, '合同.md'), 'later draft')
+    await f.input('继续交接刚才固定的版本', 'employee-turn-2')
+    expect((await f.call('recover', { recovery_key: first.body.result.recovery_key })).body.result.status).toBe('accepted')
+    const retriedMaterials = f.service.stageWorkMaterials.mock.calls[1][0]
+    expect(retriedMaterials[0].content).toBe(f.content)
   })
   it('recovers the original request under a fresh employee turn and rejects a different account', async () => {
     const f = await fixture(), params = await f.discover()

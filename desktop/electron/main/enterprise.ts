@@ -462,6 +462,13 @@ export class EnterpriseService {
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有开发中心权限')
+    const capabilities = await this.getBusinessCapabilities()
+    return { version: '1', provider: { id: 'forge', name: 'Forge 业务环境', status: 'available' }, capabilities, refreshedAt: new Date().toISOString() }
+  }
+
+  async getBusinessCapabilities(allowedIds?: string[]): Promise<EnterpriseBusinessCapability[]> {
+    const session = await this.getSession()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务能力')
     const response = await this.fetch(new URL('/api/v1/mcp', this.forgeUrl), {
       method: 'POST',
@@ -482,17 +489,19 @@ export class EnterpriseService {
     const text = content.map((item) => textValue(record(item)?.text)).find(Boolean)
     const payload = text ? record(JSON.parse(text)) : undefined
     const actions = Array.isArray(payload?.actions) ? payload.actions : []
-    const capabilities = actions.flatMap((value): EnterpriseBusinessCapability[] => {
+    const allow = allowedIds ? new Set(allowedIds) : undefined
+    return actions.flatMap((value): EnterpriseBusinessCapability[] => {
       const action = record(value), actionName = textValue(action?.name), objectName = textValue(action?.objectName)
       if (!actionName || !objectName) return []
+      const id = `forge:action:${objectName}.${actionName}`
+      if (allow && !allow.has(id)) return []
       return [{
-        id: `forge:action:${objectName}.${actionName}`,
+        id,
         name: textValue(action?.label) ?? textValue(action?.description) ?? actionName,
         description: textValue(action?.description) ?? textValue(action?.label) ?? actionName,
         effect: 'write', resourceType: objectName, requiresEmployeeIntent: true, status: 'available',
       }]
     })
-    return { version: '1', provider: { id: 'forge', name: 'Forge 业务环境', status: 'available' }, capabilities, refreshedAt: new Date().toISOString() }
   }
 
   async createDevelopmentTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult> {
@@ -845,6 +854,7 @@ export class EnterpriseService {
     sourceMessages: Array<{ messageId: string; eventSeq: number; sha256: string }>
     accountKey: string
     resources: EnterpriseWorkResource[]
+    authorizedBusinessCapabilityIds: string[]
     assertCurrent(): Promise<void>
   }): Promise<EnterpriseWorkReceipt> {
     const normalized = goal.trim()
@@ -865,6 +875,7 @@ export class EnterpriseService {
       registration_id: workId, workbench_session_id: workbenchSessionID, team_id: choice.teamId, workflow_id: choice.workflowId,
       workflow_version: choice.version, task: normalized,
       resources: source?.resources,
+      authorized_business_capability_ids: source?.authorizedBusinessCapabilityIds ?? [],
       source_messages: source?.sourceMessages.map((message) => ({ message_id: message.messageId, event_seq: message.eventSeq, sha256: message.sha256 }))
         ?? [{ message_id: workId, event_seq: 0, sha256: createHash('sha256').update(normalized).digest('hex') }],
     }, assertCurrent, this.forgeToken ? { 'X-Weave-Forge-Authorization': `Bearer ${this.forgeToken}` } : undefined)

@@ -86,9 +86,11 @@ function requireEnterpriseWorkChoice(value: unknown): EnterpriseWorkChoice {
   const source = requireRecord(value, 'choice')
   const version = source.version
   if (typeof version !== 'number' || !Number.isInteger(version) || version < 1) throw new TypeError('Invalid workflow version')
+  if (!Array.isArray(source.businessCapabilityIds) || source.businessCapabilityIds.length > 32 || source.businessCapabilityIds.some((item) => typeof item !== 'string' || !item.startsWith('forge:action:') || item.length > 160)) throw new TypeError('Invalid business capabilities')
   return {
     teamId: requireString(source.teamId, 'teamId', { min: 1, max: 128 }), teamName: requireString(source.teamName, 'teamName', { min: 1, max: 300 }),
     workflowId: requireString(source.workflowId, 'workflowId', { min: 1, max: 128 }), workflowName: requireString(source.workflowName, 'workflowName', { min: 1, max: 300 }), version,
+    businessCapabilityIds: [...new Set(source.businessCapabilityIds)],
   }
 }
 

@@ -1,6 +1,6 @@
 /** Enterprise team handoff tools shared by Prime Agent, OMP, and Pi. */
 
-interface SchemaOptions { description?: string; minLength?: number; maxLength?: number }
+interface SchemaOptions { description?: string; minLength?: number; maxLength?: number; minItems?: number; maxItems?: number }
 interface HostTypebox {
   Object(properties: Record<string, unknown>, options?: SchemaOptions): unknown
   String(options?: SchemaOptions): unknown
@@ -109,7 +109,7 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
     async execute(_id, params) { return result(await turnCall('describe', params)) },
   })
 
-  pi.registerTool<{ handoff_key: string; goal: string; materials: Array<{ path: string; sha256: string }> }>({
+  pi.registerTool<{ handoff_key: string; goal: string; business_actions: string[]; materials: Array<{ path: string; sha256: string }> }>({
     name: 'gooeypi_enterprise_work_submit',
     label: '提交给企业团队',
     description: '把当前会话中的工作交给刚刚查看过的团队承接能力。桌面核验本次员工轮次、账号和指定材料版本，冻结全文并取得接单回执。',
@@ -117,6 +117,7 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
       '根据完整对话判断员工是否同意把当前工作交给企业团队；语义不清楚时在原会话自然确认。',
       'handoff_key 必须来自本会话最近一次团队承接能力查看；不得编造或沿用其他会话的结果。',
       'goal 要概括需要团队继续完成的工作和预期结果，不要加入员工没有表达的业务事实。',
+      'business_actions 只能使用本轮团队承接能力返回的 action_key。员工只是要求查看、分析或给建议时必须传空数组；只有员工已明确授权对应业务动作时才选择该动作。不要因为团队具备某项能力就自动授权。',
       'materials 必须列出员工指定版本的实际工作文件及读取时核对的 SHA-256；当前支持工作目录内 UTF-8 文本或 Markdown。没有实际材料时先补齐，不得只提交目标或哈希。',
       '员工说先等等或改变要求后停止旧交接；失败时重试相同参数，不重新生成版本或目标。接单回执仅代表服务接受，不能声称团队已经处理完成。收到接单回执后结束本轮，不轮询团队结果；结果和退回事项会进入员工的“我的工作”。向员工用“已接单”“结果待核对”等中文报告，不展示 accepted 等状态编码、内部标识或哈希。',
       '本工具只交给 Weave 团队，不代表 Forge 业务状态已经提交或审批通过。',
@@ -124,6 +125,7 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
     parameters: Type.Object({
       handoff_key: Type.String({ minLength: 1, maxLength: 128, description: '团队承接能力查看返回的交接键' }),
       goal: Type.String({ minLength: 1, maxLength: 20_000, description: '交给团队的工作目标和预期结果' }),
+      business_actions: Type.Array(Type.String({ minLength: 1, maxLength: 128 }), { maxItems: 32, description: '本次员工明确允许执行的业务动作；纯审阅传空数组' }),
       materials: Type.Array(Type.Object({
         path: Type.String({ minLength: 1, description: '当前工作目录中的材料文件路径' }),
         sha256: Type.String({ minLength: 64, maxLength: 64, description: '读取员工指定版本时核对的文件 SHA-256' }),
