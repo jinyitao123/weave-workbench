@@ -30,7 +30,7 @@ Forge 的开发登录身份是 `admin@inoforge.local`。密码、令牌和模型
 
 2026-09-22 扫描复核：Forge 公网健康返回 HTTP 200；Weave 公网 `8080` 返回空响应，但本机既有 `127.0.0.1:18080/v1/health` 返回 HTTP 200。因此不能将公网直连失败判断为 Weave 服务停止，也无需据此重新部署。继续联调应先核对桌面启动环境是否沿用上述转发地址。本轮未读取服务器容器镜像，未改变转发或部署配置；健康响应不代表业务通过。
 
-当前 Weave 联调镜像为 `weave-platform:mvp1-288bf617`，源码提交 `288bf6173b4a0e3e11d340dacb14faac9cce3081`；`/v1/health` 返回的 `build_commit` 与源码提交一致。Forge 镜像为 `inoforge-app:sha-5aed3c2f8be2`，来源提交 `5aed3c2f8be23421c61599e9e0b58576ad779263`。两次部署都沿用原数据卷，并分别在 `/home/ubuntu/weave-mvp1-backups/20260922T112219Z-288bf617/database.dump` 与 `/home/ubuntu/inoforge-backups/20260922T112303Z-5aed3c2f/database.sql.gz` 保存部署前数据库备份。组织已接入 DeepSeek V4.1 Flash（模型标识 `deepseek-flash`），密钥保留于服务器私有配置。旧 `qwen3:0.6b` 反向模型转发仅为历史调试路径。
+当前 Weave 联调镜像为 `weave-platform:mvp1-9e6b19d6`，源码提交 `9e6b19d681a560ac18958a79701ea1d3665a0ac2`；`/v1/health` 返回的 `build_commit` 与源码提交一致，容器健康且重启次数为 0。Forge 镜像为 `inoforge-app:sha-5aed3c2f8be2`，来源提交 `5aed3c2f8be23421c61599e9e0b58576ad779263`。部署沿用原数据卷并在切换前保存数据库备份。组织已接入 DeepSeek V4.1 Flash（模型标识 `deepseek-flash`），密钥保留于服务器私有配置。旧 `qwen3:0.6b` 反向模型转发仅为历史调试路径。
 
 ## 历史观察（2026-09-20 首轮桌面验收）
 

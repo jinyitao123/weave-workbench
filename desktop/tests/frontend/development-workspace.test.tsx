@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { DevelopmentPage } from '../../src/pages/DevelopmentPage'
 import { newMember } from '../../src/pages/team-workspace/member'
 import { initialGraph } from '../../src/pages/team-workspace/graph'
+import { runLabel } from '../../src/pages/team-workspace/TrialPanel'
 import type { EnterpriseDevelopmentOverview, PrimeWorkApi } from '../../src/types/api'
 import type { TeamWorkspace, TeamWorkspaceCommand } from '../../src/types/team-workspace'
 
@@ -94,4 +95,14 @@ it('does not store unsaved edits on a delay, navigation or unmount', async () =>
   await click('继续编辑')
   await act(async () => root.render(null))
   expect(call.mock.calls.filter(([command]) => command.action === 'save')).toHaveLength(0)
+})
+
+it('prevents duplicate trial submission and names tool completion states', async () => {
+  await open(); await click('工作流程'); await click('调试'); await edit('测试输入', '隔离调试材料')
+  const start = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '开始调试')!
+  await act(async () => { start.click(); start.click() })
+  expect(call.mock.calls.filter(([command]) => command.action === 'trial')).toHaveLength(1)
+  expect(runLabel('tool_started')).toBe('执行中')
+  expect(runLabel('tool_completed')).toBe('已完成')
+  expect(runLabel('tool_failed')).toBe('失败')
 })
