@@ -1,6 +1,10 @@
-import type { EnterpriseBusinessCapability, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
+import { teamWorkspaceRequest } from './enterprise/team-workspace'
+import type { TeamWorkspaceCommand } from '../../src/types/team-workspace'
+import type { EnterpriseBusinessCapability, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
+import { submissionUUID } from './enterprise/handoff-store'
+import { teamCatalog, teamChoices, type TeamSummary } from './enterprise/team-catalog'
 
 const DEFAULT_FORGE_URL = 'http://124.223.189.112'
 const DEFAULT_WEAVE_URL = 'http://124.223.189.112:8080'
@@ -72,6 +76,7 @@ function memberAgentConfiguration(value: Record<string, unknown>, agentName: str
     return name && body ? [{ name, description: textValue(skill?.description) ?? '', body, alwaysActive: skill?.always_active === true }] : []
   }) : []
   return {
+    toolLoopControl: record(value.tool_loop_control) ? { sliceRounds: Number(record(value.tool_loop_control)?.slice_rounds), initialTotalRounds: Number(record(value.tool_loop_control)?.initial_total_rounds) } : null, maxToolRepeats: Number(value.max_tool_repeats ?? 0),
     displayName: textValue(value.display_name) ?? agentName, role: textValue(value.role) ?? 'worker',
     engine: textValue(value.engine) ?? 'loom', runtimeId: textValue(value.runtime_id) ?? '', model: textValue(value.model) ?? '',
     systemPrompt: typeof value.system_prompt === 'string' ? value.system_prompt : '', skillNames: stringList(value.skill_names), skills,
@@ -320,6 +325,36 @@ export class EnterpriseService {
     return response.json()
   }
 
+  private async forgeJSON(path: string): Promise<unknown> {
+    await this.load()
+    if (this.expiresAt <= Date.now()) await this.signOut()
+    if (!this.forgeToken) throw new Error('请重新登录以读取员工工作事项')
+    const response = await this.fetch(new URL(path, this.forgeUrl), {
+      headers: { Authorization: `Bearer ${this.forgeToken}`, Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    })
+    if (response.status === 401 || response.status === 403) {
+      await response.body?.cancel()
+      await this.signOut()
+      throw new Error('登录已失效，请重新登录')
+    }
+    if (!response.ok) {
+      await response.body?.cancel()
+      throw new Error(`Forge 工作事项读取失败（${response.status}）`)
+    }
+    return response.json()
+  }
+
+  async teamWorkspace(command: TeamWorkspaceCommand): Promise<unknown> {
+    const session = await this.getSession()
+    if (session.status !== 'signed-in' || !session.permissions?.includes('teams:develop')) throw new Error('当前账号没有团队开发权限')
+    if (!command.accountId || command.accountId !== session.user?.id) throw new Error('编辑账号已变化，请重新打开团队')
+    const account = await this.accountKey()
+    const assertCurrent = async () => { if (await this.accountKey() !== account) throw new Error('账号已切换，请重新打开团队') }
+    const result = await teamWorkspaceRequest(command, (path) => this.weaveJSON(path), (path, method, body) => this.weaveRequest(path, method, body, assertCurrent))
+    await assertCurrent()
+    return result
+  }
+
   async getDevelopmentOverview(): Promise<EnterpriseDevelopmentOverview> {
     const session = await this.getSession()
     if (session.status !== 'signed-in') throw new Error('请先登录')
@@ -338,48 +373,12 @@ export class EnterpriseService {
       const status = textValue(team?.status)
       const updatedAt = textValue(team?.updated_at)
       if (!id || !name || !status || !updatedAt) throw new Error('Weave 返回了无法识别的团队')
-      const [rawWorkflows, rawRuns] = await Promise.all([
-        this.weaveJSON(`/v1/teams/${encodeURIComponent(id)}/workflows`),
-        this.weaveJSON(`/v1/runs?view=team&team_id=${encodeURIComponent(id)}&aggregation_mode=root-subtree&limit=12`),
-      ])
-      const workflowList = record(rawWorkflows)
-      const workflows = await Promise.all((Array.isArray(workflowList?.workflows) ? workflowList.workflows : []).map(async (item): Promise<EnterpriseWorkflowObservation> => {
-        const row = record(item)
-        const workflowID = textValue(row?.id)
-        const workflowName = textValue(row?.name)
-        const workflowStatus = textValue(row?.status)
-        if (!workflowID || !workflowName || !workflowStatus) throw new Error('Weave 返回了无法识别的工作流')
-        const publishedVersion = numberValue(row?.published_version)
-        const draftVersion = numberValue(row?.draft_version)
-        const inspectedVersion = draftVersion ?? publishedVersion
-        let graph = { nodes: [], edges: [] } as Pick<EnterpriseWorkflowObservation, 'nodes' | 'edges'>
-        let definition: EnterpriseWorkflowGraphDefinition | undefined
-        let triggerConfig: Record<string, unknown> | undefined
-        let draftUpdatedAt: string | undefined
-        if (inspectedVersion) {
-          const rawVersion = record(await this.weaveJSON(`/v1/workflows/${encodeURIComponent(workflowID)}/versions/${inspectedVersion}`))
-          graph = workflowGraph(rawVersion?.graph_definition)
-          definition = workflowDefinition(rawVersion?.graph_definition)
-          triggerConfig = record(rawVersion?.trigger_config)
-          if (draftVersion && inspectedVersion === draftVersion) draftUpdatedAt = textValue(rawVersion?.updated_at)
-        }
-        const trigger = record(row?.trigger_summary)
-        const latest = record(row?.latest_run)
-        return {
-          id: workflowID, name: workflowName, status: workflowStatus, ...graph,
-          ...(textValue(row?.description) ? { description: textValue(row?.description) } : {}),
-          ...(publishedVersion ? { publishedVersion } : {}), ...(draftVersion ? { draftVersion } : {}), ...(inspectedVersion ? { inspectedVersion } : {}),
-          ...(textValue(trigger?.type) ? { triggerType: textValue(trigger?.type) } : {}), ...(textValue(latest?.run_id) ? { latestRunId: textValue(latest?.run_id) } : {}),
-          ...(definition ? { graphDefinition: definition } : {}), ...(triggerConfig ? { triggerConfig } : {}), ...(draftUpdatedAt ? { draftUpdatedAt } : {}),
-        }
-      }))
-      const runList = record(rawRuns)
       const summary = record(source?.summary)
       const health = record(summary?.health)
       return {
-        id, name, status, updatedAt, workflows,
+        id, name, status, updatedAt, workflows: [],
         workers: (Array.isArray(source?.workers) ? source.workers : []).flatMap((value) => member(value) ?? []),
-        runs: (Array.isArray(runList?.runs) ? runList.runs : []).flatMap((value) => runObservation(value) ?? []),
+        runs: [],
         ...(textValue(team?.objective) ? { objective: textValue(team?.objective) } : {}), ...(textValue(team?.evaluation) ? { evaluation: textValue(team?.evaluation) } : {}),
         ...(member(source?.lead) ? { lead: member(source?.lead) } : {}),
         ...(summary ? { summary: {
@@ -412,10 +411,11 @@ export class EnterpriseService {
       redirect: 'error', signal: AbortSignal.timeout(15_000),
     })
     const raw = await response.text()
-    if (response.status === 401 || response.status === 403) {
+    if (response.status === 401) {
       await this.signOut()
       throw new Error('登录已失效，请重新登录')
     }
+    if (response.status === 403) throw new Error('当前账号没有读取 Forge 业务能力的权限')
     if (!response.ok) throw new Error(`Forge 业务能力读取失败（${response.status}）`)
     const envelope = record(parseMcpResponse(raw))
     const result = record(envelope?.result)
@@ -635,6 +635,8 @@ export class EnterpriseService {
     const result = await this.weaveRequest(`/v1/teams/${encodeURIComponent(draft.teamId)}/members/${encodeURIComponent(draft.agentId)}/config-draft`, 'PUT', {
       revision: draft.revision,
       configuration: {
+        tool_loop_control: draft.configuration.toolLoopControl ? { slice_rounds: draft.configuration.toolLoopControl.sliceRounds, initial_total_rounds: draft.configuration.toolLoopControl.initialTotalRounds } : null,
+        max_tool_repeats: draft.configuration.maxToolRepeats ?? 0,
         display_name: draft.configuration.displayName.trim(), role: draft.configuration.role, engine: draft.configuration.engine,
         runtime_id: draft.configuration.runtimeId.trim(), model: draft.configuration.model.trim(), system_prompt: draft.configuration.systemPrompt,
         skill_names: draft.configuration.skillNames, skills: draft.configuration.skills.map((skill) => ({ name: skill.name, description: skill.description, body: skill.body, always_active: skill.alwaysActive })), mcp_server_ids: draft.configuration.mcpServerIds, business_capability_ids: draft.configuration.businessCapabilityIds,
@@ -661,9 +663,11 @@ export class EnterpriseService {
     return teamMemberConfigDraft(result.body)
   }
 
-  private async weaveRequest(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown): Promise<{ status: number; body: unknown }> {
+  private async weaveRequest(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown, assertCurrent?: () => Promise<void>): Promise<{ status: number; body: unknown }> {
+    const headers = new Headers({ ...(Object.fromEntries(await this.authorizationHeaders())), Accept: 'application/json', 'Content-Type': 'application/json' })
+    await assertCurrent?.()
     const response = await this.fetch(new URL(path, this.weaveUrl), {
-      method, headers: new Headers({ ...(Object.fromEntries(await this.authorizationHeaders())), Accept: 'application/json', 'Content-Type': 'application/json' }),
+      method, headers,
       ...(body === undefined ? {} : { body: JSON.stringify(body) }), redirect: 'error', signal: AbortSignal.timeout(15_000),
     })
     const result = await response.json().catch(() => undefined)
@@ -672,7 +676,7 @@ export class EnterpriseService {
       throw new Error('登录已失效，请重新登录')
     }
     if (!response.ok) {
-      const error = textValue(record(result)?.error) ?? `Weave 请求失败（${response.status}）`
+      const error = textValue(record(result)?.error) ?? textValue(record(result)?.message) ?? `Weave 请求失败（${response.status}）`
       throw new Error(error)
     }
     return { status: response.status, body: result }
@@ -692,27 +696,25 @@ export class EnterpriseService {
     return `workbench-${subject}`
   }
 
+  async accountKey(): Promise<string> {
+    const session = await this.getSession()
+    if (session.status !== 'signed-in' || !session.user?.id || !session.user.weaveUserId || !session.organization?.id) throw new Error('请先登录')
+    return createHash('sha256').update(JSON.stringify([this.forgeUrl.origin, this.weaveUrl.origin, session.organization.id, session.user.id, session.user.weaveUserId])).digest('hex')
+  }
+
+  async getTeamCatalog(): Promise<TeamSummary[]> { return teamCatalog(await this.weaveJSON('/v1/teams?status=active')) }
+  async getTeamChoices(team: TeamSummary): Promise<EnterpriseWorkChoice[]> {
+    return teamChoices(team, await this.weaveJSON(`/v1/teams/${encodeURIComponent(team.id)}/workflows`))
+  }
+
   async getWorkOverview(): Promise<EnterpriseWorkOverview> {
-    const rawTeams = await this.weaveJSON('/v1/teams?status=active')
-    if (!Array.isArray(rawTeams)) throw new Error('Weave 返回了无法识别的团队列表')
-    const choices = (await Promise.all(rawTeams.map(async (value) => {
-      const team = record(value)
-      const teamId = textValue(team?.id)
-      const teamName = textValue(team?.display_name) ?? textValue(team?.name)
-      if (!teamId || !teamName) return []
-      const response = record(await this.weaveJSON(`/v1/teams/${encodeURIComponent(teamId)}/workflows`))
-      return (Array.isArray(response?.workflows) ? response.workflows : []).flatMap((item): EnterpriseWorkChoice[] => {
-        const workflow = record(item)
-        const workflowId = textValue(workflow?.id)
-        const workflowName = textValue(workflow?.name)
-        const version = numberValue(workflow?.published_version)
-        return workflowId && workflowName && version ? [{ teamId, teamName, workflowId, workflowName, version }] : []
-      })
-    }))).flat()
-    const teamIDs = [...new Set(choices.map((choice) => choice.teamId))]
-    const [rawTeamRuns, rawTasks] = await Promise.all([
-      Promise.all(teamIDs.map((teamID) => this.weaveJSON(`/v1/runs?view=team&team_id=${encodeURIComponent(teamID)}&aggregation_mode=root-subtree&limit=30`))),
+    const teams = await this.getTeamCatalog()
+    const choices = (await Promise.all(teams.map((team) => this.getTeamChoices(team)))).flat()
+    const projectID = await this.workProjectID()
+    const [rawRuns, rawTasks, rawNotifications] = await Promise.all([
+      this.weaveJSON(`/v1/runs?project_id=${encodeURIComponent(projectID)}&aggregation_mode=root-subtree&limit=50`),
       this.weaveJSON('/v1/human-tasks?limit=50'),
+      this.forgeJSON('/api/v1/notifications?limit=50'),
     ])
     const taskList = record(rawTasks)
     const tasks = (Array.isArray(taskList?.tasks) ? taskList.tasks : []).flatMap((value): EnterpriseHumanTask[] => {
@@ -723,34 +725,74 @@ export class EnterpriseService {
       if (!interactionId || !runId || !teamId || !workflowId || !workflowVersion || !title || !instructions || !updatedAt) return []
       return [{ interactionId, runId, teamId, workflowId, workflowVersion, title, instructions, updatedAt, ...(textValue(task?.audience_ref) ? { audience: textValue(task?.audience_ref) } : {}) }]
     })
-    return {
-      loadedAt: new Date().toISOString(), choices, tasks,
-      runs: rawTeamRuns.flatMap((value) => {
-        const runList = record(value)
-        return (Array.isArray(runList?.runs) ? runList.runs : []).flatMap((run) => runObservation(run) ?? [])
-      }),
-    }
+    const notificationList = record(rawNotifications)
+    const items = (Array.isArray(notificationList?.notifications) ? notificationList.notifications : []).flatMap((value): EnterpriseWorkItem[] => {
+      const notification = record(value), data = record(notification?.data), continuation = record(data?.continuation), material = record(data?.material)
+      const id = textValue(notification?.id), title = textValue(notification?.title), createdAt = textValue(notification?.createdAt) ?? textValue(notification?.created_at)
+      if (!id || !title || !createdAt) return []
+      const requestedKind = textValue(data?.kind)
+      const kind: EnterpriseWorkItem['kind'] = requestedKind === 'revision_required' || requestedKind === 'human_review' || requestedKind === 'failure' || requestedKind === 'result'
+        ? requestedKind : textValue(notification?.type)?.includes('error') ? 'failure' : 'result'
+      const actionable = kind === 'revision_required' || kind === 'human_review'
+      const statusValue = textValue(data?.status)
+      const status: EnterpriseWorkItem['status'] = statusValue === 'pending' || statusValue === 'in_progress' || statusValue === 'completed' || statusValue === 'cancelled'
+        ? statusValue : notification?.read === true ? 'completed' : actionable ? 'pending' : 'unread'
+      const returnTarget = textValue(continuation?.returnTarget)
+      const reviewScope = textValue(continuation?.reviewScope)
+      return [{
+        id, kind, title, status, actionable, read: notification?.read === true,
+        source: textValue(data?.source) === 'weave' ? 'weave' : 'forge', createdAt,
+        ...(textValue(notification?.body) ? { summary: textValue(notification?.body) } : {}),
+        ...(textValue(data?.instructions) ? { instructions: textValue(data?.instructions) } : {}),
+        ...(textValue(notification?.actionUrl) ?? textValue(notification?.action_url) ? { actionUrl: textValue(notification?.actionUrl) ?? textValue(notification?.action_url) } : {}),
+        ...(textValue(data?.workReference) ? { workReference: textValue(data?.workReference) } : {}),
+        ...(textValue(data?.runReference) ? { runReference: textValue(data?.runReference) } : {}),
+        ...(textValue(material?.label) ? { materialLabel: textValue(material?.label) } : {}),
+        ...(textValue(continuation?.reason) ? { returnReason: textValue(continuation?.reason) } : {}),
+        ...(returnTarget === 'origin_review' || returnTarget === 'team' || returnTarget === 'member' || returnTarget === 'human_step' ? { returnTarget } : {}),
+        ...(reviewScope === 'whole_team' || reviewScope === 'affected_members' || reviewScope === 'human_step' ? { reviewScope } : {}),
+      }]
+    })
+    const runList = record(rawRuns)
+    return { loadedAt: new Date().toISOString(), choices, tasks, items, runs: (Array.isArray(runList?.runs) ? runList.runs : []).flatMap((run) => runObservation(run) ?? []) }
   }
 
-  async submitWork(choice: EnterpriseWorkChoice, goal: string): Promise<EnterpriseWorkReceipt> {
+  async submitWork(choice: EnterpriseWorkChoice, goal: string, source?: {
+    idempotencySeed: string
+    sessionKey: string
+    sourceMessages: Array<{ messageId: string; eventSeq: number; sha256: string }>
+    accountKey: string
+    assertCurrent(): Promise<void>
+  }): Promise<EnterpriseWorkReceipt> {
     const normalized = goal.trim()
     if (!normalized || !choice?.teamId || !choice.workflowId || !Number.isInteger(choice.version) || choice.version < 1) throw new Error('工作内容或团队流程无效')
-    const workId = randomUUID()
-    const workbenchSessionID = `${await this.workProjectID()}-${workId}`
+    const assertCurrent = async () => {
+      if (source) {
+        if (await this.accountKey() !== source.accountKey) throw new Error('当前账号已变化，本次交接已失效')
+        await source.assertCurrent()
+      }
+    }
+    await assertCurrent()
+    const projectID = await this.workProjectID()
+    const workId = source
+      ? submissionUUID(`${source.accountKey}:${source.idempotencySeed}`)
+      : randomUUID()
+    const workbenchSessionID = source ? `${projectID}-${source.sessionKey}-${workId}` : `${projectID}-${workId}`
     const registered = await this.weaveRequest('/v1/workbench/dispatch-inputs', 'POST', {
       registration_id: workId, workbench_session_id: workbenchSessionID, team_id: choice.teamId, workflow_id: choice.workflowId,
       workflow_version: choice.version, task: normalized,
-      source_messages: [{ message_id: workId, event_seq: 0, sha256: createHash('sha256').update(normalized).digest('hex') }],
-    })
+      source_messages: source?.sourceMessages.map((message) => ({ message_id: message.messageId, event_seq: message.eventSeq, sha256: message.sha256 }))
+        ?? [{ message_id: workId, event_seq: 0, sha256: createHash('sha256').update(normalized).digest('hex') }],
+    }, assertCurrent)
     const registration = record(registered.body)
     const inputRevisionID = textValue(registration?.input_revision_id), clientRequestID = textValue(registration?.client_request_id)
-    if (!inputRevisionID || !clientRequestID) throw new Error('Weave 没有返回可提交的工作编号')
-    const dispatched = await this.weaveRequest(`/v1/teams/${encodeURIComponent(choice.teamId)}/dispatch`, 'POST', { input_revision_id: inputRevisionID, client_request_id: clientRequestID })
+    if (!inputRevisionID || !clientRequestID || registration?.task_sha256 !== createHash('sha256').update(normalized).digest('hex')) throw new Error('Weave 输入回执与本次固定材料不一致，结果待核对')
+    const dispatched = await this.weaveRequest(`/v1/teams/${encodeURIComponent(choice.teamId)}/dispatch`, 'POST', { input_revision_id: inputRevisionID, client_request_id: clientRequestID }, assertCurrent)
     const result = record(dispatched.body)
     const runId = textValue(result?.run_id), taskId = textValue(result?.task_id), workflowId = textValue(result?.workflow_id)
     const workflowVersion = numberValue(result?.workflow_version)
-    if (!runId || !taskId || !workflowId || !workflowVersion) throw new Error('Weave 没有返回运行回执')
-    return { workId, runId, taskId, workflowId, workflowVersion, repeated: dispatched.status === 200 }
+    if (!runId || !taskId || workflowId !== choice.workflowId || workflowVersion !== choice.version) throw new Error('Weave 没有返回匹配的接单回执，结果待核对')
+    return { workId, runId, taskId, workflowId, workflowVersion, inputRevisionId: inputRevisionID, clientRequestId: clientRequestID, taskSha256: registration.task_sha256 as string, repeated: dispatched.status === 200 }
   }
 
   async completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }> {

@@ -48,6 +48,8 @@ const api: PrimeWorkApi = {
     onChanged: (callback) => subscribe<AppUpdateState>('updates:changed', callback),
   },
   enterprise: {
+    teamWorkspace: (command) => invoke('enterprise:team-workspace', command),
+    invalidateHandoff: (runtimeId) => invoke('enterprise:invalidate-handoff', runtimeId),
     getStatus: () => invoke<EnterpriseEnvironmentStatus[]>('enterprise:get-status'),
     getSession: () => invoke<EnterpriseSession>('enterprise:get-session'),
     signIn: (email, password) => invoke<EnterpriseSession>('enterprise:sign-in', email, password),

@@ -32,6 +32,7 @@ import { AgentScheduleBridge } from './schedules/agent-bridge'
 import { AgentBrowserBridge } from './browser/agent-bridge'
 import { AgentBrowserService } from './browser/agent-service'
 import { AgentCollaborationBridge } from './collaboration/agent-bridge'
+import { AgentEnterpriseBridge } from './enterprise/agent-bridge'
 import { configureGooeyPiAgentMessageSigning, loadOrCreateGooeyPiAgentMessageKey } from './collaboration/message-envelope'
 import { extensionInjection, resolveExtensionPath, type ExtensionCapability } from './extension-manifest'
 import { SessionService } from './sessions'
@@ -62,6 +63,7 @@ let agentScheduleBridges: AgentScheduleBridge[] = []
 let agentBrowser: AgentBrowserService | null = null
 let agentBrowserBridge: AgentBrowserBridge | null = null
 let agentCollaborationBridge: AgentCollaborationBridge | null = null
+let agentEnterpriseBridge: AgentEnterpriseBridge | null = null
 let backgroundMode: MacBackgroundController | null = null
 let shutdownStarted = false
 let shutdownApproved = false
@@ -800,6 +802,7 @@ async function bootstrap(): Promise<void> {
   const ompScheduleExtensionPath = extensionPathFor('omp', 'schedule')
   const ompAskUserExtensionPath = extensionPathFor('omp', 'askUser')
   const collaborationExtensionPath = extensionPathFor('omp', 'collaboration')
+  const enterpriseExtensionPath = extensionPathFor('omp', 'enterprise')
   const piFastModeExtensionPath = extensionPathFor('pi', 'piFastMode')
   const computerUseSkill = async () => {
     const status = await cuaDriver.status()
@@ -961,21 +964,33 @@ async function bootstrap(): Promise<void> {
     disabledProviders: { prime: disabledProviders, omp: ompDisabledProviders, pi: piDisabledProviders },
     disabledModels: { prime: disabledModels, omp: ompDisabledModels, pi: piDisabledModels },
   })
+  const enterpriseBridge = new AgentEnterpriseBridge({
+    service: enterprise,
+    sessions: { prime: sessions, omp: ompSessions, pi: piSessions },
+    extensionPath: enterpriseExtensionPath,
+    storage: {
+      directory: join(userDataPath, 'enterprise-handoffs'),
+      codec: { available: () => safeStorage.isEncryptionAvailable(), encrypt: (value) => safeStorage.encryptString(value), decrypt: (value) => safeStorage.decryptString(value) },
+    },
+  })
   await Promise.all([
     scheduleBridge.start(),
     ompScheduleBridge.start(),
     piScheduleBridge.start(),
     browserBridge.start(),
     collaborationBridge.start(),
+    enterpriseBridge.start(),
   ])
   agentScheduleBridges = [scheduleBridge, ompScheduleBridge, piScheduleBridge]
   agentBrowserBridge = browserBridge
   agentCollaborationBridge = collaborationBridge
+  agentEnterpriseBridge = enterpriseBridge
   const revokeRuntimeCapabilities = (environment: NodeJS.ProcessEnv, runtimeScheduleBridge: AgentScheduleBridge): void => {
     const claims: Array<[string, { revoke(token: string | undefined): boolean }, string | undefined]> = [
       ['schedule', runtimeScheduleBridge, environment.PRIME_WORK_SCHEDULE_TOKEN],
       ['browser', browserBridge, environment.PRIME_WORK_BROWSER_TOKEN],
       ['collaboration', collaborationBridge, environment.GOOEYPI_COLLABORATION_TOKEN],
+      ['enterprise', enterpriseBridge, environment.GOOEYPI_ENTERPRISE_TOKEN],
     ]
     for (const [name, bridge, token] of claims) {
       try { bridge.revoke(token) } catch (error) {
@@ -987,6 +1002,7 @@ async function bootstrap(): Promise<void> {
     ...scheduleBridge.environmentFor(scope),
     ...(stateStore.getSettings().browserEnabled ? browserBridge.environmentFor(scope) : {}),
     ...collaborationBridge.environmentFor({ ...scope, harness: 'prime' }),
+    ...enterpriseBridge.environmentFor({ ...scope, harness: 'prime' }),
     PRIME_WORK_ASK_USER_EXTENSION_PATH: stateStore.getSettings().askUserEnabled && scope.interactive ? ompAskUserExtensionPath : undefined,
     GOOEYPI_MANAGES_ASK_USER: '1',
     GOOEYPI_CUA_DRIVER_PATH: stateStore.getSettings().computerUseEnabled ? cuaDriver.executable() ?? undefined : undefined,
@@ -995,6 +1011,7 @@ async function bootstrap(): Promise<void> {
   agents.setRuntimeStartListener((environment, info) => {
     browserBridge.bindSession(environment.PRIME_WORK_BROWSER_TOKEN, info.sessionFile)
     collaborationBridge.bindSession(environment.GOOEYPI_COLLABORATION_TOKEN, info.sessionFile, info.runtimeId)
+    enterpriseBridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, info.sessionFile, info.runtimeId)
   })
   agents.setRuntimeEndListener((environment) => revokeRuntimeCapabilities(environment, scheduleBridge))
   // OMP runtimes get the same capability-scoped brokers through OMP-flavored
@@ -1008,12 +1025,14 @@ async function bootstrap(): Promise<void> {
   ompManager.setRuntimeEnvironmentProvider((scope) => ({
     ...extensionRuntimeEnvironment(ompScheduleBridge.environmentFor(scope), () => browserBridge.environmentFor(scope), capabilityExtensionPaths, stateStore.getSettings().askUserEnabled && scope.interactive, stateStore.getSettings().browserEnabled),
     ...collaborationBridge.environmentFor({ ...scope, harness: 'omp' }),
+    ...enterpriseBridge.environmentFor({ ...scope, harness: 'omp' }),
     GOOEYPI_CUA_DRIVER_PATH: stateStore.getSettings().computerUseEnabled ? cuaDriver.executable() ?? undefined : undefined,
     GOOEYPI_COMPUTER_USE_SKILL_PATH: stateStore.getSettings().computerUseEnabled && cuaDriver.executable() ? computerUseSkillPath : undefined,
   }))
   ompManager.setRuntimeStartListener((environment, info) => {
     browserBridge.bindSession(environment.PRIME_WORK_BROWSER_TOKEN, info.sessionFile)
     collaborationBridge.bindSession(environment.GOOEYPI_COLLABORATION_TOKEN, info.sessionFile, info.runtimeId)
+    enterpriseBridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, info.sessionFile, info.runtimeId)
   })
   ompManager.setRuntimeEndListener((environment) => revokeRuntimeCapabilities(environment, ompScheduleBridge))
   // Pi runtimes receive the identical capability surface: pi's extension API
@@ -1021,6 +1040,7 @@ async function bootstrap(): Promise<void> {
   piManager.setRuntimeEnvironmentProvider((scope) => ({
     ...extensionRuntimeEnvironment(piScheduleBridge.environmentFor(scope), () => browserBridge.environmentFor(scope), capabilityExtensionPaths, stateStore.getSettings().askUserEnabled && scope.interactive, stateStore.getSettings().browserEnabled),
     ...collaborationBridge.environmentFor({ ...scope, harness: 'pi' }),
+    ...enterpriseBridge.environmentFor({ ...scope, harness: 'pi' }),
     GOOEYPI_PI_FAST_MODE_EXTENSION_PATH: piFastModeExtensionPath,
     GOOEYPI_CUA_DRIVER_PATH: stateStore.getSettings().computerUseEnabled ? cuaDriver.executable() ?? undefined : undefined,
     GOOEYPI_COMPUTER_USE_SKILL_PATH: stateStore.getSettings().computerUseEnabled && cuaDriver.executable() ? computerUseSkillPath : undefined,
@@ -1028,6 +1048,7 @@ async function bootstrap(): Promise<void> {
   piManager.setRuntimeStartListener((environment, info) => {
     browserBridge.bindSession(environment.PRIME_WORK_BROWSER_TOKEN, info.sessionFile)
     collaborationBridge.bindSession(environment.GOOEYPI_COLLABORATION_TOKEN, info.sessionFile, info.runtimeId)
+    enterpriseBridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, info.sessionFile, info.runtimeId)
   })
   piManager.setRuntimeEndListener((environment) => revokeRuntimeCapabilities(environment, piScheduleBridge))
   if (shutdownStarted) return
@@ -1049,6 +1070,7 @@ async function bootstrap(): Promise<void> {
   ipc = registerIpc({
     meta, refreshHarnesses, projects, checkouts, sessions, agents, terminals, git, plugins, providers, settings, updates, enterprise, cuaDriver, heartbeats, schedules, browser: browserService, voice, pets,
     popupApplicationMenu, setTitleBarTheme,
+    enterpriseBridge,
     omp: { projects: ompProjects, sessions: ompSessions, agents: ompManager, catalog: ompCatalog, plugins: ompPlugins },
     pi: { projects: piProjects, sessions: piSessions, agents: piManager, catalog: piCatalog, plugins: piPlugins },
     applyInterfaceZoom,
@@ -1212,6 +1234,7 @@ app.on('before-quit', (event) => {
     ...agentScheduleBridges.map((bridge) => bridge.stop()),
     agentBrowserBridge?.stop() ?? Promise.resolve(),
     agentCollaborationBridge?.stop() ?? Promise.resolve(),
+    agentEnterpriseBridge?.stop() ?? Promise.resolve(),
     automation?.stop() ?? Promise.resolve(),
     terminals?.killAll() ?? Promise.resolve(),
     agents?.stopAll() ?? Promise.resolve(),

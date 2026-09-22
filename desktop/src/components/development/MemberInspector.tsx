@@ -1,5 +1,6 @@
-import { Check, Pencil, Plus, Trash2, Upload } from 'lucide-react'
+import { Check, Plus, Trash2, Upload } from 'lucide-react'
 import { useState } from 'react'
+import { EditableText } from '@/pages/team-workspace/EditableText'
 import { Modal, ProductField, ProductSelect, ProductSwitch, ProductTextArea } from '@/components/ui'
 import type { EnterpriseBusinessCapabilityCatalog, EnterpriseDevelopmentOverview, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberSkill } from '@/types/api'
 
@@ -7,14 +8,6 @@ export function configurationLabel(value: string | undefined, fallback: string):
   if (!value?.trim()) return fallback
   if (/\b[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}\b|^(?:run|interaction)-/i.test(value) || /^[\da-f]{24,}$/i.test(value)) return fallback
   return value
-}
-
-function SummaryRow({ label, value }: { label: string; value?: string }) {
-  return <div className="member-summary-row"><dt>{label}</dt><dd>{configurationLabel(value, '未设置')}</dd></div>
-}
-
-function EditorButton({ editing, label, onClick }: { editing: boolean; label: string; onClick(): void }) {
-  return <button type="button" className="member-config-card__action" onClick={onClick}>{editing ? <Check size={12}/> : <Pencil size={12}/>} {editing ? '完成' : label}</button>
 }
 
 type Section = 'role' | 'instructions' | 'execution' | 'resources'
@@ -33,7 +26,6 @@ export function MemberInspector({ draft, runtimes, models, businessCapabilities,
   onChange(draft: EnterpriseTeamMemberConfigDraft): void
 }) {
   const [section, setSection] = useState<Section>('role')
-  const [editing, setEditing] = useState<Section | null>(null)
   const [skillEditor, setSkillEditor] = useState<{ index: number; value: EnterpriseTeamMemberSkill }>()
   const [skillError, setSkillError] = useState('')
   const config = draft.configuration
@@ -56,10 +48,6 @@ export function MemberInspector({ draft, runtimes, models, businessCapabilities,
   if (config.model && !models.includes(config.model)) modelOptions.push({ value: config.model, label: config.model, detail: '当前模型尚未接入' })
   const modelReady = config.engine !== 'loom' || models.includes(config.model)
   const permissionNames: Record<string, string> = { permissionAllow: '允许调用', permissionAsk: '调用前询问', permissionDeny: '禁止调用' }
-  const toggleEditor = (target: Section) => setEditing((value) => value === target ? null : target)
-  const executionSteps = config.engine === 'loom'
-    ? ['接收团队任务', '装载指令与上下文', '模型调用与工具执行', '校验并返回结果']
-    : ['接收团队任务', '发送到运行位置', `${engineOptions.find((item) => item.value === config.engine)?.label ?? '外部智能体'}执行`, '返回团队结果']
   const openSkill = (index = -1, value: EnterpriseTeamMemberSkill = { name: '', description: '', body: '', alwaysActive: false }) => { setSkillError(''); setSkillEditor({ index, value }) }
   const saveSkill = () => {
     if (!skillEditor) return
@@ -91,36 +79,29 @@ export function MemberInspector({ draft, runtimes, models, businessCapabilities,
   }
 
   return <>
-    <nav className="member-inspector__tabs" aria-label="成员配置分类">{sections.map((item) => <button type="button" key={item.value} aria-pressed={section === item.value} className={section === item.value ? 'is-active' : ''} onClick={() => { setSection(item.value); setEditing(null) }}>{item.label}</button>)}</nav>
+    <nav className="member-inspector__tabs" aria-label="成员配置分类">{sections.map((item) => <button type="button" key={item.value} aria-pressed={section === item.value} className={section === item.value ? 'is-active' : ''} onClick={() => { setSection(item.value) }}>{item.label}</button>)}</nav>
     <div className="member-inspector__body">
-      {section === 'role' ? <section className={`member-config-card ${editing === 'role' ? 'is-editing' : ''}`}>
-        <header><div><h4>定位与职责</h4><p>定义成员在团队中的身份、参与时机和交付边界。</p></div><EditorButton editing={editing === 'role'} label="编辑" onClick={() => toggleEditor('role')}/></header>
-        {editing === 'role' ? <div className="member-config-form">
-          <ProductField label="显示名称" value={config.displayName} onChange={(event) => setConfig('displayName', event.target.value)}/>
-          {config.role !== 'avatar' ? <ProductSwitch label="参与团队协作" checked={relationship.enabled} onChange={(value) => setRelationship('enabled', value)}/> : null}
-          <ProductTextArea label="团队职责" rows={4} value={relationship.duty} onChange={(event) => setRelationship('duty', event.target.value)}/>
-          <ProductTextArea label="何时参与" rows={3} value={relationship.whenToUse} onChange={(event) => setRelationship('whenToUse', event.target.value)}/>
-          <ProductTextArea label="交付要求" rows={3} value={relationship.resultRequirement} onChange={(event) => setRelationship('resultRequirement', event.target.value)}/>
-          <ProductTextArea label="协作上下文" rows={3} value={relationship.contextInstruction} onChange={(event) => setRelationship('contextInstruction', event.target.value)}/>
-        </div> : <dl className="member-summary"><SummaryRow label="名称" value={config.displayName}/><SummaryRow label="职责" value={relationship.duty}/><SummaryRow label="参与时机" value={relationship.whenToUse}/><SummaryRow label="交付要求" value={relationship.resultRequirement}/></dl>}
-      </section> : null}
+      {section === 'role' ? <div className="tw-member-definition">
+        <EditableText label="成员名称" value={config.displayName} multiline={false} placeholder="例如：问题分类员" onChange={(value) => setConfig('displayName', value)}/>
+        <EditableText label="团队职责" value={relationship.duty} placeholder="例如：将用户反馈按产品模块分类，找出重复问题，并保留原始反馈依据。" onChange={(value) => setRelationship('duty', value)}/>
+        <EditableText label="交付要求" value={relationship.resultRequirement} placeholder="例如：返回分类清单，每项包含问题摘要、所属模块和原文依据。" onChange={(value) => setRelationship('resultRequirement', value)}/>
+        <details className="tw-member-advanced"><summary>参与条件与协作设置</summary><EditableText label="何时参与" value={relationship.whenToUse} placeholder="例如：任务涉及用户反馈分类时参与。" onChange={(value) => setRelationship('whenToUse', value)}/><EditableText label="协作上下文" value={relationship.contextInstruction} placeholder="例如：保留其他成员已标记的不确定事项，交给负责人确认。" onChange={(value) => setRelationship('contextInstruction', value)}/>{config.role !== 'avatar' && <ProductSwitch label="参与团队协作" checked={relationship.enabled} onChange={(value) => setRelationship('enabled', value)}/>}</details>
+      </div> : null}
 
-      {section === 'instructions' ? <section className={`member-config-card ${editing === 'instructions' ? 'is-editing' : ''}`}>
-        <header><div><h4>工作指令</h4><p>约束成员如何理解任务、执行和输出。</p></div><EditorButton editing={editing === 'instructions'} label="编辑" onClick={() => toggleEditor('instructions')}/></header>
-        {editing === 'instructions' ? <div className="member-config-form"><ProductTextArea label="系统指令" className="member-instruction-editor" rows={12} value={config.systemPrompt} onChange={(event) => setConfig('systemPrompt', event.target.value)}/><ProductTextArea label="输出格式" detail="JSON Schema，可留空" rows={7} value={config.outputSchema} onChange={(event) => setConfig('outputSchema', event.target.value)}/></div> : <div className="member-instruction-summary"><strong>系统指令</strong><p>{configurationLabel(config.systemPrompt, '未设置')}</p><small>{config.outputSchema ? '使用结构化输出' : '使用自由文本输出'}</small></div>}
-      </section> : null}
+      {section === 'instructions' ? <div className="tw-member-definition"><EditableText label="工作方法" value={config.systemPrompt} placeholder="例如：先读完整输入，再按模块分类；无法确定归属时单独列出，不猜测缺失事实。" onChange={(value) => setConfig('systemPrompt', value)}/><details className="tw-member-advanced"><summary>结构化输出格式</summary><EditableText label="输出格式" value={config.outputSchema} placeholder="JSON Schema；没有程序对接要求时可留空。" onChange={(value) => setConfig('outputSchema', value)}/></details></div> : null}
 
-      {section === 'execution' ? <section className={`member-config-card ${editing === 'execution' ? 'is-editing' : ''}`}>
-        <header><div><h4>运行方式</h4><p>选择执行引擎和资源边界。</p></div><EditorButton editing={editing === 'execution'} label="调整" onClick={() => toggleEditor('execution')}/></header>
-        {editing === 'execution' ? <div className="member-config-form">
+      {section === 'execution' ? <section className="member-config-card">
+        <header><div><h4>运行方式</h4></div></header>
+        {<div className="member-config-form">
           <div className="product-field"><span><strong>执行引擎</strong></span><ProductSelect label="执行引擎" value={config.engine} options={engineOptions} onChange={setEngine}/></div>
           {config.engine === 'loom' ? <><div className="product-field"><span><strong>模型</strong></span><ProductSelect label="模型" value={config.model} options={modelOptions} disabled={!models.length} onChange={(value) => setConfig('model', value)}/></div>{!modelReady ? <p className="member-inspector__error" role="alert">组织尚未配置可用模型</p> : null}</> : null}
           {config.engine !== 'loom' ? <div className="product-field"><span><strong>运行位置</strong></span><ProductSelect label="运行位置" value={config.runtimeId} options={runtimeOptions} onChange={(value) => setConfig('runtimeId', value)}/></div> : null}
+          <details className="tw-member-advanced"><summary>执行限制与记忆</summary>{config.engine === 'loom' && <><ProductSwitch label="设置工具执行轮次" checked={!!config.toolLoopControl} onChange={(enabled) => setConfig('toolLoopControl', enabled ? { sliceRounds: 5, initialTotalRounds: 30 } : null)}/>{config.toolLoopControl && <div className="member-limit-grid"><ProductField label="每次连续执行轮数" type="number" min={1} max={1000} value={config.toolLoopControl.sliceRounds} onChange={(e) => setConfig('toolLoopControl', { ...config.toolLoopControl!, sliceRounds: Number(e.target.value) })}/><ProductField label="总执行轮数" type="number" min={1} value={config.toolLoopControl.initialTotalRounds} onChange={(e) => setConfig('toolLoopControl', { ...config.toolLoopControl!, initialTotalRounds: Number(e.target.value) })}/></div>}<ProductField label="相同工具调用最多连续重复次数" type="number" min={0} value={config.maxToolRepeats ?? 0} onChange={(e) => setConfig('maxToolRepeats', Number(e.target.value))}/></>}
           <ProductSwitch label="启用记忆" checked={config.memoryEnabled} onChange={(value) => setConfig('memoryEnabled', value)}/>
           {config.memoryEnabled ? <ProductSelect label="记忆范围" value={config.memoryScope} options={[{ value: 'tenant', label: '团队空间' }, { value: 'user', label: '当前员工' }, { value: 'session', label: '当前会话' }]} onChange={(value) => setConfig('memoryScope', value)}/> : null}
           <div className="member-limit-grid"><ProductField label="总令牌上限" type="number" min={0} value={config.maxTokens} onChange={(event) => setConfig('maxTokens', Number(event.target.value))}/><ProductField label="单次输出上限" type="number" min={0} value={config.maxOutputTokens} onChange={(event) => setConfig('maxOutputTokens', Number(event.target.value))}/><ProductField label="步骤上限" type="number" min={0} value={config.stepBudget} onChange={(event) => setConfig('stepBudget', Number(event.target.value))}/><ProductField label="成本上限（美元）" type="number" min={0} step="0.01" value={config.maxCostUsd} onChange={(event) => setConfig('maxCostUsd', Number(event.target.value))}/></div>
-        </div> : <dl className="member-summary"><SummaryRow label="执行引擎" value={engineOptions.find((item) => item.value === config.engine)?.label}/>{config.engine !== 'loom' ? <SummaryRow label="运行位置" value={runtimeOptions.find((item) => item.value === config.runtimeId)?.label}/> : null}<SummaryRow label="模型" value={config.model || '未配置'}/><SummaryRow label="记忆" value={config.memoryEnabled ? '已启用' : '未启用'}/>{!modelReady ? <div className="member-inspector__error" role="alert">当前模型不可用，请选择组织已接入的模型</div> : null}</dl>}
-        <div className="member-execution-flow" aria-label="成员执行链"><strong>成员执行链</strong><ol>{executionSteps.map((step, index) => <li key={step}><span>{index + 1}</span>{step}</li>)}</ol></div>
+          </details></div>}
+
       </section> : null}
 
       {section === 'resources' ? <>

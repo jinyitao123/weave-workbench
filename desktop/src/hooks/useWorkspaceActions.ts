@@ -316,6 +316,9 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
       if (queuedFlushPromptId) workspace.removeQueuedPrompt(queuedFlushPromptId)
     }
     if (ownsStreamingRuntime && currentRuntime && bridge) {
+      // Renderer-queued inputs have not reached agent:command yet. Revoke the
+      // old handoff now, even while the new employee message waits in the UI.
+      await bridge.enterprise.invalidateHandoff(currentRuntime.runtimeId)
       if (compactCommand) {
         // Compacting mid-turn would abort the running turn, so it waits for the
         // idle flush like any queued prompt.
@@ -419,6 +422,7 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
           }
         }
         if ((intent === 'queue' || compactCommand) && images.length === 0 && (activeRuntime?.isStreaming || selectedSession?.status === 'running')) {
+          if (activeRuntime) await bridge.enterprise.invalidateHandoff(activeRuntime.runtimeId)
           if (!queuedFlushPromptId) queuedPromptId = workspace.queuePrompt(prompt, compactCommand ? 'queue' : intent)
           if (compactCommand && intent === 'steer') setToast('Compaction will run when the current turn finishes.')
           return

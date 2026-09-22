@@ -14,12 +14,13 @@ interface Fixture {
   registrations: Registration[]
 }
 
-type PrimeFixtureApi = Pick<ExtensionAPI, 'registerTool'>
+type PrimeFixtureApi = Pick<ExtensionAPI, 'registerTool' | 'on'>
 type PiFixtureApi = PiFastModeExtensionApi & Omit<OmpExtensionApi, 'typebox'>
 
 function primeHost(): Fixture {
   const registrations: Registration[] = []
   const target: PrimeFixtureApi = {
+    on: (event) => { registrations.push({ kind: 'event', name: event }) },
     registerTool: (tool) => { registrations.push({ kind: 'tool', name: tool.name }) },
   }
   const api = new Proxy(target, {
@@ -37,7 +38,8 @@ function primeHost(): Fixture {
 function ompHost(): Fixture {
   const registrations: Registration[] = []
   const schema = (kind: string) => (...args: unknown[]) => ({ kind, args })
-  const target: OmpExtensionApi = {
+  const target: OmpExtensionApi & { on(event: string, handler: unknown): void } = {
+    on: (event) => { registrations.push({ kind: 'event', name: event }) },
     typebox: {
       Type: {
         Object: schema('object'),
@@ -97,6 +99,10 @@ const expectedRegistrations: Record<string, Registration[]> = {
   'omp-work-collaboration.ts': [
     ...['gooeypi_session_list', 'gooeypi_session_models', 'gooeypi_session_create', 'gooeypi_session_read', 'gooeypi_session_send', 'gooeypi_session_wait'].map((name) => ({ kind: 'tool' as const, name })),
   ],
+  'gooeypi-enterprise.ts': [
+    { kind: 'event', name: 'before_agent_start' },
+    ...['gooeypi_enterprise_team_search', 'gooeypi_enterprise_team_describe', 'gooeypi_enterprise_work_submit', 'gooeypi_enterprise_work_recover'].map((name) => ({ kind: 'tool' as const, name })),
+  ],
   'omp-work-schedules.ts': [
     ...['scheduled_tasks_list', 'scheduled_task_create_once', 'scheduled_task_create_recurring', 'scheduled_task_update', 'scheduled_task_manage'].map((name) => ({ kind: 'tool' as const, name })),
   ],
@@ -110,6 +116,7 @@ const brokerVariables: Partial<Record<ExtensionInjection['capability'], readonly
   browser: ['PRIME_WORK_BROWSER_URL', 'PRIME_WORK_BROWSER_TOKEN'],
   schedule: ['PRIME_WORK_SCHEDULE_URL', 'PRIME_WORK_SCHEDULE_TOKEN'],
   collaboration: ['GOOEYPI_COLLABORATION_URL', 'GOOEYPI_COLLABORATION_TOKEN'],
+  enterprise: ['GOOEYPI_ENTERPRISE_URL', 'GOOEYPI_ENTERPRISE_TOKEN'],
 }
 
 const LEGACY_UNPREFIXED_TOOLS = [

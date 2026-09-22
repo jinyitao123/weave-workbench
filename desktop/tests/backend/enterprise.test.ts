@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EnterpriseService } from '../../electron/main/enterprise'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
@@ -88,6 +89,22 @@ describe('EnterpriseService', () => {
     })
   })
 
+  it('keeps the enterprise session when Forge denies one capability catalog', async () => {
+    const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
+      const url = String(input)
+      if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
+      if (url.endsWith('/api/v1/mcp')) return Response.json({}, { status: 403 })
+      return Response.json({}, { status: 404 })
+    }) as typeof fetch
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('developer@example.test', 'secret')
+
+    await expect(service.getBusinessCapabilityCatalog()).rejects.toThrow('当前账号没有读取 Forge 业务能力的权限')
+    await expect(service.getSession()).resolves.toMatchObject({ status: 'signed-in' })
+    expect((await service.authorizationHeaders()).get('Authorization')).toBe('Bearer weave-token')
+  })
+
   it('reports Forge and Weave health without forwarding credentials', async () => {
     const fetchMock = vi.fn(async (input: URL, _init?: RequestInit) => new Response(JSON.stringify(
       input.hostname === 'forge.example.test' ? { data: { version: '17.4.0' } } : { status: 'ready' },
@@ -104,13 +121,14 @@ describe('EnterpriseService', () => {
     expect(fetchMock.mock.calls.every((call) => !new Headers(call[1]?.headers).has('Authorization'))).toBe(true)
   })
 
-  it('projects authenticated Weave teams, exact workflow graphs, and attributed runs', async () => {
+  it('loads only the remote team catalog before selecting a draft', async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'admin@example.test', name: 'Admin' } })
       if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop', 'teams:admin'] })
       expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer weave-token')
       if (url.endsWith('/v1/runtimes')) return Response.json({ runtimes: [{ id: 'runtime-local', name: '本机运行时', engines: ['codex'], health_status: 'healthy', online: true }] })
+      if (url.endsWith('/v1/development/model-catalog')) return Response.json({ models: ['qwen3:0.6b'] })
       if (url.includes('/v1/teams?')) return Response.json([{ team: { id: 'team-1', display_name: '合同交接团队', objective: '完成合同交接', status: 'active', updated_at: '2026-09-21T00:00:00Z' }, lead: { id: 'lead-1', display_name: '负责人', role: 'avatar', enabled: true }, workers: [{ id: 'worker-1', display_name: '审核员', role: 'worker', configured_duty: '审核合同', enabled: true }], summary: { worker_count: 1, active_workflow_count: 1, published_workflow_count: 1, health: { conclusion: 'healthy', reason_codes: [] } } }])
       if (url.endsWith('/v1/teams/team-1/workflows')) return Response.json({ workflows: [{ id: 'flow-1', name: '合同处理', status: 'active', published_version: 2, trigger_summary: { type: 'manual' } }] })
       if (url.endsWith('/v1/workflows/flow-1/versions/2')) return Response.json({ graph_definition: { nodes: [{ id: 'review', type: 'agent', label: '审核', config: { agent_id: 'worker-1' } }], edges: [] } })
@@ -121,7 +139,7 @@ describe('EnterpriseService', () => {
     await service.signIn('admin@example.test', 'secret')
 
     await expect(service.getDevelopmentOverview()).resolves.toMatchObject({
-      version: '1', runtimes: [{ name: '本机运行时', online: true }], teams: [{ id: 'team-1', name: '合同交接团队', lead: { name: '负责人' }, workers: [{ name: '审核员', duty: '审核合同' }], workflows: [{ id: 'flow-1', inspectedVersion: 2, nodes: [{ id: 'review', workerId: 'worker-1' }] }], runs: [{ id: 'run-1', status: 'succeeded' }] }],
+      version: '1', runtimes: [{ name: '本机运行时', online: true }], teams: [{ id: 'team-1', name: '合同交接团队', lead: { name: '负责人' }, workers: [{ name: '审核员', duty: '审核合同' }], workflows: [], runs: [] }],
     })
   })
 
@@ -248,9 +266,10 @@ describe('EnterpriseService', () => {
       if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
       if (url.includes('/v1/teams?status=active')) return Response.json([{ id: 'team-1', display_name: '合同团队' }])
       if (url.endsWith('/v1/teams/team-1/workflows')) return Response.json({ workflows: [{ id: 'flow-1', name: '合同复核', published_version: 1 }] })
-      if (url.includes('/v1/runs?view=team')) return Response.json({ runs: [{ run_id: 'run-1', status: 'running' }] })
+      if (url.includes('/v1/runs?project_id=workbench-weave-1')) return Response.json({ runs: [{ run_id: 'run-1', status: 'running' }] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [{ interaction_id: 'human-1', run_id: 'run-1', team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 1, title: '复核', instructions: '确认', updated_at: '2026-09-21T00:00:00Z' }] })
-      if (url.endsWith('/v1/workbench/dispatch-inputs')) return Response.json({ input_revision_id: 'input-1', client_request_id: 'client-1' }, { status: 201 })
+      if (url.endsWith('/api/v1/notifications?limit=50')) return Response.json({ notifications: [{ id: 'notice-1', type: 'work.revision', title: '材料需要修改', body: '请补充交付日期', read: false, createdAt: '2026-09-21T01:00:00Z', data: { kind: 'revision_required', source: 'weave', status: 'pending', workReference: 'work-1', runReference: 'run-1', instructions: '补充交付日期后重新提交', material: { label: '当前材料' }, continuation: { reason: '缺少交付日期', returnTarget: 'origin_review', reviewScope: 'affected_members' } } }] })
+      if (url.endsWith('/v1/workbench/dispatch-inputs')) return Response.json({ input_revision_id: 'input-1', client_request_id: 'client-1', task_sha256: createHash('sha256').update(String(body?.task)).digest('hex') }, { status: 201 })
       if (url.endsWith('/v1/teams/team-1/dispatch')) return Response.json({ run_id: 'run-2', task_id: 'task-2', workflow_id: 'flow-1', workflow_version: 1 }, { status: 201 })
       if (url.endsWith('/v1/human-tasks/run-1/complete')) return Response.json({ run_id: 'run-1', idempotent: false }, { status: 202 })
       return Response.json({}, { status: 404 })
@@ -259,7 +278,7 @@ describe('EnterpriseService', () => {
     const session = await service.signIn('member@example.test', 'secret')
     expect(session.user?.weaveUserId).toBe('weave-1')
     const overview = await service.getWorkOverview()
-    expect(overview).toMatchObject({ choices: [{ teamId: 'team-1', workflowId: 'flow-1', version: 1 }], tasks: [{ interactionId: 'human-1' }], runs: [{ id: 'run-1' }] })
+    expect(overview).toMatchObject({ choices: [{ teamId: 'team-1', workflowId: 'flow-1', version: 1 }], tasks: [{ interactionId: 'human-1' }], items: [{ id: 'notice-1', kind: 'revision_required', actionable: true, returnTarget: 'origin_review', reviewScope: 'affected_members' }], runs: [{ id: 'run-1' }] })
     await expect(service.submitWork(overview.choices[0], '提交合同')).resolves.toMatchObject({ runId: 'run-2', workflowVersion: 1 })
     await expect(service.completeHumanTask(overview.tasks[0], { decision: 'approved' })).resolves.toEqual({ runId: 'run-1', repeated: false })
     const registration = calls.find((call) => call.url.endsWith('/v1/workbench/dispatch-inputs'))?.body
