@@ -1,4 +1,4 @@
-import type { EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseWorkflowGraphDefinition } from './api'
+import type { EnterpriseBusinessCapability, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseWorkflowGraphDefinition } from './api'
 
 export interface TeamDefinition {
   name: string
@@ -16,7 +16,7 @@ export interface TeamWorkspace {
 export type TeamWorkspaceCommand = (
   | { action: 'get' | 'delete'; teamId: string }
   | { action: 'save'; teamId: string; revision: number; document: TeamDefinition }
-  | { action: 'trial'; teamId: string; revision: number; workflowId: string; requestId: string; input: string }
+  | { action: 'trial'; teamId: string; revision: number; workflowId: string; requestId: string; input: string; businessActions: EnterpriseBusinessCapability[] }
   | { action: 'publish'; teamId: string; revision: number }
   | { action: 'input'; teamId: string; requestId: string }
   | { action: 'activity'; teamId: string; runId: string }

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { ProductSelect, ProductTextArea } from '@/components/ui'
+import type { EnterpriseBusinessCapabilityCatalog } from '@/types/api'
 import type { TeamWorkspace, TeamWorkspaceBridge } from '@/types/team-workspace'
 export const runLabel = (status: string) => ({ submitting: '等待接单', queued: '排队中', running: '执行中', succeeded: '已完成', failed: '失败', cancelled: '已取消', blocked: '等待处理', pending: '等待执行', completed: '已完成' }[status] ?? '等待更新')
 type Activity = { status: string; members: Array<{ name: string; status: string; runtime?: { model?: string; configured_model?: string }; stages: Array<{ name: string; status: string; inputs: Array<{ source: string; summary?: string }>; tools: Array<{ name: string; status: string; input?: string; output?: string }>; failure_reason?: string }> }>; outputs: Array<{ title: string; content?: string }> }
-export function TrialPanel({ teamId, initialFlowId, draft, bridge, flush, refresh }: { initialFlowId?: string; teamId: string; draft: TeamWorkspace; bridge: TeamWorkspaceBridge; flush(): Promise<TeamWorkspace | undefined>; refresh(): Promise<void> }) {
+export function TrialPanel({ teamId, initialFlowId, draft, businessCapabilities, bridge, flush, refresh }: { initialFlowId?: string; teamId: string; draft: TeamWorkspace; businessCapabilities?: EnterpriseBusinessCapabilityCatalog; bridge: TeamWorkspaceBridge; flush(): Promise<TeamWorkspace | undefined>; refresh(): Promise<void> }) {
   const [flow, setFlow] = useState(initialFlowId ?? draft.document.workflows[0]?.id ?? '')
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
@@ -13,7 +14,7 @@ export function TrialPanel({ teamId, initialFlowId, draft, bridge, flush, refres
   const [frozenInput, setFrozenInput] = useState('')
   const [runStatus, setRunStatus] = useState('')
   const [runOutput, setRunOutput] = useState('')
-  const pending = useRef<{ requestId: string; revision: number; flow: string; input: string } | undefined>(undefined)
+  const pending = useRef<{ requestId: string; revision: number; flow: string; input: string; businessActions: EnterpriseBusinessCapabilityCatalog['capabilities'] } | undefined>(undefined)
   const trial = draft.trials.find((t) => t.request_id === selected)
   useEffect(() => {
     if (!trial) return
@@ -41,9 +42,13 @@ export function TrialPanel({ teamId, initialFlowId, draft, bridge, flush, refres
     setBusy(true); setError('')
     try {
       const saved = await flush(); if (!saved) return
-      if (!pending.current || pending.current.revision !== saved.revision || pending.current.input !== input || pending.current.flow !== flow) pending.current = { requestId: crypto.randomUUID(), revision: saved.revision, flow, input }
+      const selectedIds = new Set(saved.document.members.flatMap((member) => member.configuration.businessCapabilityIds))
+      const businessActions = (businessCapabilities?.capabilities ?? []).filter((action) => selectedIds.has(action.id))
+      const missing = [...selectedIds].filter((id) => !businessActions.some((action) => action.id === id && action.actionName && action.objectName))
+      if (missing.length) throw new Error('当前团队使用的 Forge 业务能力缺少调试定义，请刷新业务能力后重试')
+      if (!pending.current || pending.current.revision !== saved.revision || pending.current.input !== input || pending.current.flow !== flow) pending.current = { requestId: crypto.randomUUID(), revision: saved.revision, flow, input, businessActions }
       const request = pending.current
-      await bridge({ action: 'trial', teamId, revision: request.revision, workflowId: request.flow, requestId: request.requestId, input: request.input })
+      await bridge({ action: 'trial', teamId, revision: request.revision, workflowId: request.flow, requestId: request.requestId, input: request.input, businessActions: request.businessActions })
       setSelected(request.requestId); await refresh(); pending.current = undefined
     } catch (cause) { setError((cause as Error).message) }
     finally { setBusy(false) }

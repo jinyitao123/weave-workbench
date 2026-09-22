@@ -21,7 +21,14 @@ export async function teamWorkspaceRequest(command: TeamWorkspaceCommand, read: 
     case 'get': result = await read(base); break
     case 'save': result = (await write(base, 'PUT', { expected_revision: command.revision, document: documentToWire(command.document) })).body; break
     case 'publish': result = (await write(`${base}/publish`, 'POST', { revision: command.revision })).body; break
-    case 'trial': return (await write(`${base}/trials`, 'POST', { revision: command.revision, workflow_id: command.workflowId, request_id: command.requestId, input: command.input })).body
+    case 'trial': return (await write(`${base}/trials`, 'POST', {
+      revision: command.revision, workflow_id: command.workflowId, request_id: command.requestId, input: command.input,
+      business_actions: command.businessActions.map((action) => ({
+        capability_id: action.id, name: action.actionName, object_name: action.objectName, label: action.name,
+        description: action.description, requires_record: action.requiresRecord === true,
+        requires_confirmation: action.requiresConfirmation === true, params: action.params ?? [],
+      })),
+    })).body
     case 'input': return read(`${base}/trials/${encodeURIComponent(command.requestId)}/input`)
     case 'activity': {
       const activity = await read(`/v1/runs/${encodeURIComponent(command.runId)}/activity`) as { deliverables?: Array<{ id: string }> }

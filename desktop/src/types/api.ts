@@ -227,6 +227,11 @@ export interface EnterpriseBusinessCapability {
   resourceType: string
   requiresEmployeeIntent: boolean
   status: 'available' | 'unavailable'
+  actionName?: string
+  objectName?: string
+  requiresRecord?: boolean
+  requiresConfirmation?: boolean
+  params?: Array<{ name: string; type?: 'string' | 'number' | 'boolean' | 'array'; required?: boolean; description?: string; enum?: string[] }>
 }
 
 export interface EnterpriseBusinessCapabilityCatalog {
