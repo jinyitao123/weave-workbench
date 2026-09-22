@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Bot, Code2, Plus, RefreshCw, UsersRound, Workflow, Play, X } from 'lucide-react'
 import { Modal, ProductField, ProductTextArea, ProductSelect } from '@/components/ui'
 import { MemberInspector } from '@/components/development/MemberInspector'
-import type { PrimeWorkApi, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus } from '@/types/api'
+import type { PrimeWorkApi, EnterpriseBusinessCapabilityCatalog, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus } from '@/types/api'
 import type { TeamDefinition, TeamWorkspaceBridge } from '@/types/team-workspace'
 import { useTeamDraft } from './team-workspace/useTeamDraft'
 import { newMember } from './team-workspace/member'
@@ -25,7 +25,18 @@ export function DevelopmentPage({ overview, loading, error, accountId, bridge, e
   const [busy, setBusy] = useState(false)
   const [name, setName] = useState(''), [objective, setObjective] = useState(''), [mutationError, setMutationError] = useState('')
   const [createdTeam, setCreatedTeam] = useState<{ id: string; name: string }>()
+  const [businessCapabilities, setBusinessCapabilities] = useState<EnterpriseBusinessCapabilityCatalog>()
+  const [businessCapabilityError, setBusinessCapabilityError] = useState('')
   const call = useCallback(<T,>(command: Parameters<TeamWorkspaceBridge>[0]) => bridge.teamWorkspace<T>({ ...command, accountId }), [bridge, accountId])
+  useEffect(() => {
+    let active = true
+    setBusinessCapabilityError('')
+    if (typeof bridge.getBusinessCapabilityCatalog !== 'function') return () => { active = false }
+    void bridge.getBusinessCapabilityCatalog().then((catalog) => { if (active) setBusinessCapabilities(catalog) }).catch((cause) => {
+      if (active) { setBusinessCapabilities(undefined); setBusinessCapabilityError((cause as Error).message) }
+    })
+    return () => { active = false }
+  }, [bridge, accountId])
   const teams = (overview?.teams ?? []).filter((t) => t.status !== 'archived')
   const selected = teamId || teams[0]?.id || ''
   const create = async () => {
@@ -39,12 +50,12 @@ export function DevelopmentPage({ overview, loading, error, accountId, bridge, e
   return <div className="page development-shell"><div className="page-container development-page tw-restored">
     <div className="development-toolbar"><nav className="development-tabs" aria-label="开发中心分类"><button type="button" className={tab === 'teams' ? 'is-active' : ''} onClick={() => setTab('teams')}><UsersRound size={14}/><strong>智能体团队</strong></button><button type="button" className={tab === 'apps' ? 'is-active' : ''} onClick={() => navigate(() => setTab('apps'))}><Code2 size={14}/><strong>应用开发</strong></button></nav><button type="button" className="icon-button" aria-label="刷新开发中心" disabled={loading} onClick={onRefresh}><RefreshCw size={14}/></button></div>
     {error && <p className="tw-alert" role="alert">{error}</p>}
-    {tab === 'apps' ? <section className="development-app-workspace"><strong>应用开发调试区</strong><button type="button" className="button" disabled={!forge?.available} onClick={() => forge && onOpenForge?.(forge.url)}>打开 Forge 开发环境</button></section> : selected ? <TeamEditor key={selected} teamId={selected} teams={options} overview={overview} bridge={call} registerGuard={registerGuard} onSelect={setTeamId} onCreate={() => setCreating(true)} onDeleted={() => { setTeamId(''); setCreatedTeam(undefined); onRefresh() }}/> : <div className="team-workspace-empty"><UsersRound size={24}/><strong>{loading ? '正在读取团队…' : '当前组织还没有团队'}</strong><button type="button" className="button" onClick={() => setCreating(true)}>新建团队</button></div>}
+    {tab === 'apps' ? <section className="development-app-workspace"><strong>应用开发调试区</strong><button type="button" className="button" disabled={!forge?.available} onClick={() => forge && onOpenForge?.(forge.url)}>打开 Forge 开发环境</button></section> : selected ? <TeamEditor key={selected} teamId={selected} teams={options} overview={overview} businessCapabilities={businessCapabilities} businessCapabilityError={businessCapabilityError} bridge={call} registerGuard={registerGuard} onSelect={setTeamId} onCreate={() => setCreating(true)} onDeleted={() => { setTeamId(''); setCreatedTeam(undefined); onRefresh() }}/> : <div className="team-workspace-empty"><UsersRound size={24}/><strong>{loading ? '正在读取团队…' : '当前组织还没有团队'}</strong><button type="button" className="button" onClick={() => setCreating(true)}>新建团队</button></div>}
     {creating && <Modal title="新建团队" onClose={() => { if (!busy) setCreating(false) }} footer={<><button type="button" className="button" disabled={busy} onClick={() => setCreating(false)}>取消</button><button type="button" className="button button--primary" disabled={busy || !name.trim() || !objective.trim()} onClick={() => void create()}>{busy ? '正在创建' : '创建团队'}</button></>}><div className="tw-form"><ProductField autoFocus label="团队名称" maxLength={80} value={name} onChange={(e) => setName(e.target.value)}/><ProductTextArea label="团队目标" rows={4} maxLength={2000} value={objective} onChange={(e) => setObjective(e.target.value)}/>{mutationError && <p role="alert">{mutationError}</p>}</div></Modal>}
   </div></div>
 }
 
-function TeamEditor({ teamId, teams, overview, bridge, registerGuard, onSelect, onCreate, onDeleted }: { teamId: string; teams: Array<{ id: string; name: string }>; overview?: EnterpriseDevelopmentOverview; bridge: TeamWorkspaceBridge; registerGuard(guard?: (action: () => void) => void): void; onSelect(id: string): void; onCreate(): void; onDeleted(): void }) {
+function TeamEditor({ teamId, teams, overview, businessCapabilities, businessCapabilityError, bridge, registerGuard, onSelect, onCreate, onDeleted }: { teamId: string; teams: Array<{ id: string; name: string }>; overview?: EnterpriseDevelopmentOverview; businessCapabilities?: EnterpriseBusinessCapabilityCatalog; businessCapabilityError?: string; bridge: TeamWorkspaceBridge; registerGuard(guard?: (action: () => void) => void): void; onSelect(id: string): void; onCreate(): void; onDeleted(): void }) {
   const workspace = useTeamDraft(teamId, bridge)
   const { draft, dirty, saving, error, edit, flush, replace } = workspace
   const [view, setView] = useState<'members' | 'workflow'>('members')
@@ -114,7 +125,7 @@ function TeamEditor({ teamId, teams, overview, bridge, registerGuard, onSelect, 
       </main>
       <aside className="member-inspector" aria-label={title}><header className="member-inspector__heading"><span><small>{panel === 'object' ? view === 'members' ? '成员配置' : '流程步骤' : doc.name}</small><h3>{title}</h3></span>{panel !== 'object' ? <button type="button" className="icon-button" aria-label="返回对象详情" onClick={() => setPanel('object')}><X size={15}/></button> : view === 'members' && member?.configuration.role !== 'avatar' ? <ObjectMenu label="成员" actions={[{ label: '移出团队', danger: true, run: removeMember }]}/> : view === 'workflow' && step ? <ObjectMenu label="步骤" actions={[{ label: '在后面插入步骤', run: addStep }, ...(['worker', 'parallel'].includes(step.type) ? [{ label: '添加并行分支', run: () => changeGraph('branch') }] : []), ...(step.type === 'parallel' ? [{ label: '改为依次执行', run: () => changeGraph('serial') }] : []), ...(step.type === 'worker' ? [{ label: '删除步骤', danger: true, run: () => { try { const next = removeStep(flow.graph_definition, step.id); change({ ...doc, workflows: doc.workflows.map((f) => f.id === flow.id ? { ...f, graph_definition: next } : f) }); setUndo({ document: structuredClone(doc), label: `已删除“${step.label || '执行步骤'}”` }); setStepId('') } catch (cause) { setActionError((cause as Error).message) } } }] : []) ]}/> : null}</header>
         <fieldset className="member-inspector__fields" disabled={!!draft.publishing_revision || busy}>
-          {panel === 'object' && view === 'members' && member && <MemberInspector key={member.id} draft={{ version: '1', teamId, agentId: member.id, agentName: member.configuration.displayName, baseAgentVersion: 1, revision: draft.revision, updatedAt: draft.updated_at, configuration: member.configuration, relationship: member.relationship }} models={overview?.models ?? []} runtimes={overview?.runtimes ?? []} onChange={(next) => change({ ...doc, members: doc.members.map((m) => m.id === member.id ? { ...m, configuration: next.configuration, relationship: next.relationship } : m) })}/>}
+          {panel === 'object' && view === 'members' && member && <MemberInspector key={member.id} draft={{ version: '1', teamId, agentId: member.id, agentName: member.configuration.displayName, baseAgentVersion: 1, revision: draft.revision, updatedAt: draft.updated_at, configuration: member.configuration, relationship: member.relationship }} models={overview?.models ?? []} runtimes={overview?.runtimes ?? []} businessCapabilities={businessCapabilities} businessCapabilityError={businessCapabilityError} onChange={(next) => change({ ...doc, members: doc.members.map((m) => m.id === member.id ? { ...m, configuration: next.configuration, relationship: next.relationship } : m) })}/>}
           {panel === 'object' && view === 'workflow' && flow && step && <StepInspector key={step.id} flow={flow} step={step} members={doc.members} onChange={(next) => change({ ...doc, workflows: doc.workflows.map((f) => f.id === flow.id ? { ...f, graph_definition: { ...f.graph_definition, nodes: f.graph_definition.nodes.map((n) => n.id === next.id ? next : n) } } : f) })}/>}
           {panel === 'trial' && <div className="tw-inspector-content"><TrialPanel key={flow?.id} initialFlowId={flow?.id} teamId={teamId} draft={draft} bridge={bridge} flush={async () => { if (dirty) throw new Error('请先保存修改，再调试本次配置'); return draft }} refresh={workspace.refreshTrials}/></div>}
         </fieldset>

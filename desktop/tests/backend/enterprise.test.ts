@@ -73,10 +73,13 @@ describe('EnterpriseService', () => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test' } })
       if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
-      if (url.endsWith('/api/v1/mcp')) {
+      if (url.endsWith('/api/v1/meta/actions')) {
         expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer forge-token')
-        expect(JSON.parse(String(init?.body))).toMatchObject({ method: 'tools/call', params: { name: 'list_actions' } })
-        return Response.json({ jsonrpc: '2.0', id: 'business-capability-catalog', result: { content: [{ type: 'text', text: JSON.stringify({ actions: [{ name: 'ContractSubmit', objectName: 'sales_contract', label: '提交销售合同', description: '校验后提交合同' }] }) }] } })
+        expect(init?.method).toBeUndefined()
+        return Response.json({ data: { items: [
+          { name: 'ContractSubmit', objectName: 'sales_contract', label: '提交销售合同', ai: { exposed: true, description: '校验后提交合同' }, requiredPermissions: ['sales_contract_operator'] },
+          { name: 'InternalOnly', objectName: 'sales_contract', label: '内部动作', ai: { exposed: false } },
+        ] } })
       }
       return Response.json({}, { status: 404 })
     }) as typeof fetch
@@ -94,13 +97,29 @@ describe('EnterpriseService', () => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test' } })
       if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
-      if (url.endsWith('/api/v1/mcp')) return Response.json({}, { status: 403 })
+      if (url.endsWith('/api/v1/meta/actions')) return Response.json({}, { status: 403 })
       return Response.json({}, { status: 404 })
     }) as typeof fetch
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
     await service.signIn('developer@example.test', 'secret')
 
     await expect(service.getBusinessCapabilityCatalog()).rejects.toThrow('当前账号没有读取 Forge 业务能力的权限')
+    await expect(service.getSession()).resolves.toMatchObject({ status: 'signed-in' })
+    expect((await service.authorizationHeaders()).get('Authorization')).toBe('Bearer weave-token')
+  })
+
+  it('explains an expired Forge password without discarding the Weave session', async () => {
+    const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
+      const url = String(input)
+      if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
+      if (url.endsWith('/api/v1/meta/actions')) return Response.json({ error: { code: 'PASSWORD_EXPIRED', message: 'expired' } }, { status: 403 })
+      return Response.json({}, { status: 404 })
+    }) as typeof fetch
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('developer@example.test', 'secret')
+
+    await expect(service.getBusinessCapabilityCatalog()).rejects.toThrow('Forge 账号密码已过期，请更新密码后重新登录')
     await expect(service.getSession()).resolves.toMatchObject({ status: 'signed-in' })
     expect((await service.authorizationHeaders()).get('Authorization')).toBe('Bearer weave-token')
   })

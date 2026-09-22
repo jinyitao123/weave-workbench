@@ -105,7 +105,7 @@ export function MemberInspector({ draft, runtimes, models, businessCapabilities,
       </section> : null}
 
       {section === 'resources' ? <>
-        <section className="member-resource-group"><div className="member-resource-toolbar"><h4>业务能力</h4><small>Forge 按当前员工权限提供</small></div>{businessCapabilityError ? <p role="alert">{businessCapabilityError}</p> : businessCapabilities?.capabilities.length ? <ul className="member-capability-list">{businessCapabilities.capabilities.map((capability) => {
+        <section className="member-resource-group"><div className="member-resource-toolbar"><h4>业务能力</h4><small>由 Forge 提供，运行时按发起员工权限校验</small></div>{businessCapabilityError ? <p role="alert">{businessCapabilityError}</p> : businessCapabilities?.capabilities.length ? <ul className="member-capability-list">{businessCapabilities.capabilities.map((capability) => {
           const selected = config.businessCapabilityIds.includes(capability.id)
           return <li key={capability.id}><button type="button" aria-pressed={selected} className={selected ? 'is-selected' : ''} onClick={() => toggleBusinessCapability(capability.id)}><span><strong>{configurationLabel(capability.name, '业务能力')}</strong><small>{configurationLabel(capability.description, '由 Forge 提供')}</small></span>{selected ? <Check size={14}/> : <Plus size={14}/>}</button></li>
         })}</ul> : <p>暂无可分配的业务能力</p>}{config.businessCapabilityIds.filter((id) => !businessCapabilities?.capabilities.some((capability) => capability.id === id)).map((id) => <div className="member-resource-unavailable" key={id}><span>已有业务能力当前不可用</span><button type="button" onClick={() => toggleBusinessCapability(id)}>移除</button></div>)}</section>
