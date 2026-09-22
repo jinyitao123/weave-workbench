@@ -481,11 +481,22 @@ export class EnterpriseService {
       const action = record(value), ai = record(action?.ai)
       const actionName = textValue(action?.name), objectName = textValue(action?.objectName) ?? textValue(action?.object)
       if (ai?.exposed !== true || !actionName || !objectName || objectName.startsWith('sys_')) return []
+      const params = (Array.isArray(action?.params) ? action.params : []).flatMap((value) => {
+        const param = record(value), name = textValue(param?.name) ?? textValue(param?.field)
+        if (!name) return []
+        const rawType = textValue(param?.type) ?? 'string'
+        const type: 'string' | 'number' | 'boolean' | 'array' = rawType === 'boolean' ? 'boolean' : rawType === 'array' ? 'array' : ['number', 'integer', 'currency'].includes(rawType) ? 'number' : 'string'
+        const options = Array.isArray(param?.enum) ? param.enum : Array.isArray(param?.options) ? param.options : []
+        const values = options.flatMap((item) => typeof item === 'string' ? [item] : textValue(record(item)?.value) ? [textValue(record(item)?.value)!] : [])
+        return [{ name, type, required: param?.required === true, description: textValue(param?.description) ?? textValue(param?.label) ?? '', ...(values.length ? { enum: values } : {}) }]
+      })
       return [{
         id: `forge:action:${objectName}.${actionName}`,
         name: textValue(action?.label) ?? textValue(ai?.description) ?? actionName,
         description: textValue(ai?.description) ?? textValue(action?.label) ?? actionName,
         effect: 'write', resourceType: objectName, requiresEmployeeIntent: true, status: 'available',
+        actionName, objectName, requiresRecord: action?.requiresRecord !== false,
+        requiresConfirmation: ai?.requiresConfirmation === true, params,
       }]
     })
     return { version: '1', provider: { id: 'forge', name: 'Forge 业务环境', status: 'available' }, capabilities, refreshedAt: new Date().toISOString() }

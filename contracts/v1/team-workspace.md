@@ -5,8 +5,8 @@
 - 调用者：Forge 已授予 teams:develop 的当前 Weave 用户；服务端逐次验证组织与团队归属。
 - GET /v1/teams/:id/development 读取 revision、document、prepared_revision、trials 和线上基线。PUT 接收 expected_revision 与完整 document，使用 CAS；过期返回 409。只有用户明确保存才提交 PUT；编辑、字段失焦、切换页面、退出组件和调试不得隐式提交。保存只提交点击时的快照，之后的编辑保持未保存；CAS 不得覆盖并发修改。
 - document 包含 name、objective、members（现有成员标识或新成员临时标识、configuration、relationship）、workflows（标识、名称、用途、graph_definition、trigger_config）。删除仅从草稿移除；服务端发布时保留历史并归档。
-- POST /v1/teams/:id/development/trials 接收 revision、workflow_id、request_id（UUID）和固定 input 文本。服务端解析并冻结成员与流程，不改变已发布配置；复用 Kernel AdmitCandidate、队列、取消和运行记录。重复请求必须复用原配置和材料，改变内容返回冲突。
-- 试跑首版仅开放无外部业务副作用的 Loom 团队；未隔离的外部工具或业务写入明确拒绝，不移除能力后冒充完整试跑。input 支持员工授权文本样例；不借用另一员工身份。
+- POST /v1/teams/:id/development/trials 接收 revision、workflow_id、request_id（UUID）、固定 input 文本，以及当前候选成员所引用 Forge 动作的冻结定义。服务端解析并冻结成员、流程和动作定义，不改变已发布配置；复用 Kernel AdmitCandidate、队列、取消和运行记录。重复请求必须复用原配置、材料和动作定义，改变任一内容返回冲突。
+- Forge 业务动作在开发试跑中使用隔离调试分发器：工具名称、说明、必填字段和枚举与本次冻结目录一致，调用输入和模拟输出进入真实运行轨迹，但不携带 Forge 凭据、不访问 Forge、不写业务数据。只有服务端登记的开发试跑任务可使用该分发器；正式运行仍要求当前员工的任务委托。尚未隔离的通用 MCP、Skill 或其他外部权限继续明确拒绝，不移除能力后冒充完整试跑。input 支持开发者提供的文本样例；不借用另一员工身份。
 - GET 运行 activity/delivery 显示实际输入来源、版本和输出；摘要须标记为摘要。完整原始输入单独按当前试跑权限读取。
 - POST /v1/teams/:id/development/publish 接收 revision，要求每个待发布流程存在相同草稿的成功试跑。固定 candidate 发布、可重复恢复；所有流程和成员一次激活。失败不部分切换线上目录。试跑后修改使原结果过期。
 - DELETE /v1/teams/:id/development/team 为可追溯退役，不抹除版本、运行或成果；正在执行的工作沿用冻结版本。

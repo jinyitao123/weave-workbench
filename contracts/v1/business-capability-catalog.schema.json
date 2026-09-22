@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://workbench.inocube.local/contracts/v1/business-capability-catalog.schema.json",
   "title": "Developer Business Capability Catalog",
-  "description": "Developer-visible business capabilities projected from an authenticated Forge environment. MCP server names, generic tool names, arguments and credentials are deliberately excluded.",
+  "description": "Developer-visible business capabilities projected from an authenticated Forge environment. Forge action identity and input constraints may be frozen for isolated trials; MCP server names, generic tool names and credentials are excluded.",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "provider", "capabilities", "refreshedAt"],
@@ -31,7 +31,26 @@
           "effect": { "enum": ["read", "write"] },
           "resourceType": { "type": "string", "minLength": 1, "maxLength": 128 },
           "requiresEmployeeIntent": { "type": "boolean", "default": false },
-          "status": { "enum": ["available", "unavailable"] }
+          "status": { "enum": ["available", "unavailable"] },
+          "actionName": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "objectName": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "requiresRecord": { "type": "boolean", "default": false },
+          "requiresConfirmation": { "type": "boolean", "default": false },
+          "params": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name"],
+              "properties": {
+                "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+                "type": { "enum": ["string", "number", "boolean", "array"] },
+                "required": { "type": "boolean", "default": false },
+                "description": { "type": "string", "maxLength": 240 },
+                "enum": { "type": "array", "items": { "type": "string" }, "maxItems": 100 }
+              }
+            }
+          }
         }
       }
     },

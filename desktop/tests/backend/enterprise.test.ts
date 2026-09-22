@@ -77,7 +77,7 @@ describe('EnterpriseService', () => {
         expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer forge-token')
         expect(init?.method).toBeUndefined()
         return Response.json({ data: { items: [
-          { name: 'ContractSubmit', objectName: 'sales_contract', label: '提交销售合同', ai: { exposed: true, description: '校验后提交合同' }, requiredPermissions: ['sales_contract_operator'] },
+          { name: 'ContractSubmit', objectName: 'sales_contract', label: '提交销售合同', ai: { exposed: true, description: '校验后提交合同' }, params: [{ name: 'material_file_id', label: '合同文件', type: 'text', required: true }], requiredPermissions: ['sales_contract_operator'] },
           { name: 'InternalOnly', objectName: 'sales_contract', label: '内部动作', ai: { exposed: false } },
         ] } })
       }
@@ -88,7 +88,7 @@ describe('EnterpriseService', () => {
 
     await expect(service.getBusinessCapabilityCatalog()).resolves.toMatchObject({
       provider: { name: 'Forge 业务环境', status: 'available' },
-      capabilities: [{ id: 'forge:action:sales_contract.ContractSubmit', name: '提交销售合同', effect: 'write', requiresEmployeeIntent: true }],
+      capabilities: [{ id: 'forge:action:sales_contract.ContractSubmit', name: '提交销售合同', effect: 'write', requiresEmployeeIntent: true, actionName: 'ContractSubmit', objectName: 'sales_contract', requiresRecord: true, params: [{ name: 'material_file_id', type: 'string', required: true }] }],
     })
   })
 
