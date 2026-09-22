@@ -13,6 +13,7 @@ export const salesContractOperatorPermission = definePermissionSet({
   name: 'sales_contract_operator',
   label: '销售合同办理',
   description: '允许销售员工新建、修改并提交自己负责的销售合同。',
+  systemPermissions: ['sales_contract_operator'],
   objects: {
     forge_sales_contract: {
       allowCreate: true,

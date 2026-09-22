@@ -2,6 +2,7 @@ import { defineStack, type NavigationItemInput } from '@objectstack/spec';
 import { AutomationServicePlugin } from '@objectstack/service-automation';
 import { MessagingServicePlugin } from '@objectstack/service-messaging';
 import { ApprovalsServicePlugin } from '@objectstack/plugin-approvals';
+import { MCPServerPlugin } from '@objectstack/mcp';
 import { RecordChangeTriggerPlugin } from '@objectstack/trigger-record-change';
 import * as objects from './src/objects/index.js';
 import * as actions from './src/actions/index.js';
@@ -10,7 +11,6 @@ import * as hooks from './src/hooks/index.js';
 import * as seedData from './src/data/index.js';
 import * as flows from './src/flows/index.js';
 import * as permissions from './src/permissions/index.js';
-import * as sharingRules from './src/sharing/index.js';
 
 const object = (id: string, label: string, objectName: string, icon?: string) => ({
   id, type: 'object' as const, label, objectName, ...(icon ? { icon } : {}),
@@ -42,12 +42,13 @@ export default defineStack({
     id: 'forge', namespace: 'forge', version: '0.1.0', type: 'app', name: 'Forge',
     engines: { protocol: '>=17.3.0 <18' },
   },
-  requires: ['automation', 'triggers', 'queue', 'messaging'],
+  requires: ['automation', 'triggers', 'queue', 'approvals', 'messaging'],
   plugins: [
     new AutomationServicePlugin(),
     new MessagingServicePlugin(),
     new ApprovalsServicePlugin({ recordReaderVisibleObjects: ['forge_sales_contract'] }),
     new RecordChangeTriggerPlugin(),
+    new MCPServerPlugin(),
   ],
   objects: Object.values(objects),
   data: Object.values(seedData),
@@ -56,7 +57,6 @@ export default defineStack({
   pages: Object.values(pages),
   flows: Object.values(flows),
   permissions: Object.values(permissions),
-  sharingRules: Object.values(sharingRules),
   apps: [{
     name: 'forge', label: 'Forge', icon: 'factory', active: true, isDefault: true,
     // Keep RISEMAP's observed top-level information architecture. Empty areas

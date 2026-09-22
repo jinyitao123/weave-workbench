@@ -24,6 +24,9 @@ importers:
       '@objectstack/connector-rest':
         specifier: 17.3.0
         version: 17.3.0
+      '@objectstack/mcp':
+        specifier: 17.3.0
+        version: 17.3.0
       '@objectstack/plugin-approvals':
         specifier: 17.3.0
         version: 17.3.0
