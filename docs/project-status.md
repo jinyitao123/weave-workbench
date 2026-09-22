@@ -51,4 +51,6 @@ ObjectStack HTTP OAuth 草稿 PR #19342 不再属于 MVP1 依赖。是否关闭�
 
 下一步按[落地步骤](plans/mvp1-delivery.md)完成 Weave 到 Forge MCP 的受限身份委托、合同文件读取和能力目录绑定。运行反馈由系统自动提供，不要求每团队配置通知工具；业务退回继续使用 Forge 原生审批修订环，不使用终态投递目标承载。
 
-本轮只完成设计和范围落档，业务链路尚未通过。D5 完整隔离调试、D6 Forge 应用修改留在首个业务闭环后的 MVP1 开发验收批次。首个闭环需要的 Forge 正式提交和复核动作前置，不能再以“Forge 以后再接”留下半条业务流。历史实现和失败证据见[本轮验收记录](acceptance/2026-09-22-handoff-reliability-and-team-development.md)。
+已核实当前能力绑定的具体断点：桌面能从 Forge MCP 读取 `list_actions`，成员草稿也会保存 `business_capability_ids`，但 Weave 发布与执行阶段没有消费这些标识，既不会生成冻结 MCP 绑定，也没有员工级 Forge 委托凭据。当前字段只是配置记录，不能据此声称团队已经获得业务动作；下一批必须在 Weave 编译发布阶段解析能力标识，并把本次员工、组织、材料版本和允许动作绑定成短期执行授权。
+
+本轮已完成原生审批与桌面待办的第一批本地实现，业务链路仍未通过。D5 完整隔离调试、D6 Forge 应用修改留在首个业务闭环后的 MVP1 开发验收批次。首个闭环需要的受限委托、真实文件和团队业务动作继续前置，不能再以“Forge 以后再接”留下半条业务流。历史实现和失败证据见[本轮验收记录](acceptance/2026-09-22-handoff-reliability-and-team-development.md)。
