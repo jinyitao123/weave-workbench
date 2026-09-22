@@ -692,8 +692,9 @@ export class EnterpriseService {
     return teamMemberConfigDraft(result.body)
   }
 
-  private async weaveRequest(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown, assertCurrent?: () => Promise<void>): Promise<{ status: number; body: unknown }> {
+  private async weaveRequest(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown, assertCurrent?: () => Promise<void>, extraHeaders?: HeadersInit): Promise<{ status: number; body: unknown }> {
     const headers = new Headers({ ...(Object.fromEntries(await this.authorizationHeaders())), Accept: 'application/json', 'Content-Type': 'application/json' })
+    if (extraHeaders) for (const [name, value] of new Headers(extraHeaders)) headers.set(name, value)
     await assertCurrent?.()
     const response = await this.fetch(new URL(path, this.weaveUrl), {
       method, headers,
@@ -834,7 +835,7 @@ export class EnterpriseService {
       workflow_version: choice.version, task: normalized,
       source_messages: source?.sourceMessages.map((message) => ({ message_id: message.messageId, event_seq: message.eventSeq, sha256: message.sha256 }))
         ?? [{ message_id: workId, event_seq: 0, sha256: createHash('sha256').update(normalized).digest('hex') }],
-    }, assertCurrent)
+    }, assertCurrent, this.forgeToken ? { 'X-Weave-Forge-Authorization': `Bearer ${this.forgeToken}` } : undefined)
     const registration = record(registered.body)
     const inputRevisionID = textValue(registration?.input_revision_id), clientRequestID = textValue(registration?.client_request_id)
     if (!inputRevisionID || !clientRequestID || registration?.task_sha256 !== createHash('sha256').update(normalized).digest('hex')) throw new Error('Weave 输入回执与本次固定材料不一致，结果待核对')

@@ -2,13 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://workbench.inocube.local/contracts/v1/task-delegation.schema.json",
   "title": "Weave Task Delegation",
-  "description": "The auditable projection of a short-lived task authorization. Credentials and signed token bodies are outside this contract.",
+  "description": "The auditable projection of a short-lived task authorization. The credential reference is opaque; credentials and signed token bodies remain outside this contract.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "delegationId", "subject", "actor", "taskId", "actions", "resources", "issuedAt", "expiresAt", "status", "correlationId"],
+  "required": ["version", "delegationId", "credentialRef", "subject", "actor", "taskId", "inputRevisionId", "workflow", "actions", "resources", "issuedAt", "expiresAt", "status", "correlationId"],
   "properties": {
     "version": { "const": "1" },
     "delegationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "credentialRef": { "type": "string", "minLength": 1, "maxLength": 256 },
     "subject": {
       "type": "object",
       "additionalProperties": false,
@@ -28,6 +29,16 @@
       }
     },
     "taskId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "inputRevisionId": { "type": "string", "format": "uuid" },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "version": { "type": "integer", "minimum": 1 }
+      }
+    },
     "actions": { "type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 128 } },
     "resources": {
       "type": "array",
@@ -40,7 +51,8 @@
         "required": ["type"],
         "properties": {
           "type": { "type": "string", "minLength": 1, "maxLength": 128 },
-          "id": { "type": "string", "minLength": 1, "maxLength": 128 }
+          "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
         }
       }
     },
