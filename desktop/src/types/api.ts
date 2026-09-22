@@ -275,6 +275,7 @@ export interface EnterpriseWorkChoice {
   workflowId: string
   workflowName: string
   workflowDescription?: string
+  businessCapabilityIds: string[]
   version: number
 }
 

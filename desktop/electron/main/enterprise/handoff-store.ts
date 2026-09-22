@@ -14,7 +14,7 @@ export interface HandoffStorage {
   directory: string
   codec: { available(): boolean; encrypt(value: string): Buffer; decrypt(value: Buffer): string }
 }
-/** Per-account immutable requests. Atomic rename occurs before the first network write. */
+/** Per-account immutable checkpoints. Callers persist local intent before network preparation. */
 export class HandoffStore {
   private readonly memory = new Map<string, { fingerprint: string; value: unknown }>()
   private readonly pending = new Map<string, Promise<unknown>>()

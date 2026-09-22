@@ -9,21 +9,22 @@ import { searchTeams, type TeamSummary } from './team-catalog'
 
 interface EnterpriseSessionReader { read(filePath: unknown): Promise<TranscriptMessage[]> }
 export interface AgentEnterpriseBridgeOptions {
-  service: Pick<EnterpriseService, 'accountKey' | 'getTeamCatalog' | 'getTeamChoices' | 'stageWorkMaterials' | 'submitWork'>
+  service: Pick<EnterpriseService, 'accountKey' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'stageWorkMaterials' | 'submitWork'>
   sessions: Record<'prime' | 'omp' | 'pi', EnterpriseSessionReader>
   extensionPath: string
   storage?: HandoffStorage
 }
-interface FrozenHandoff {
+interface FrozenHandoffIntent {
   task: string
   materials: FrozenMaterial[]
-  resources: EnterpriseWorkResource[]
+  authorizedBusinessCapabilityIds: string[]
   sourceMessages: Array<{ messageId: string; eventSeq: number; sha256: string }>
   choice: EnterpriseWorkChoice
   accountKey: string
   idempotencySeed: string
   sessionKey: string
 }
+interface FrozenHandoff extends FrozenHandoffIntent { resources: EnterpriseWorkResource[] }
 interface EmployeeTurn {
   key: string
   prompt: string
@@ -41,6 +42,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   protected readonly rateLimitError = '企业团队交接请求过于频繁，请稍后重试'
   private readonly teams = new Map<string, Map<string, TeamSummary>>()
   private readonly handoffs = new Map<string, Map<string, EnterpriseWorkChoice>>()
+  private readonly businessActions = new Map<string, Map<string, Map<string, string>>>()
   private readonly runtimes = new Map<string, string>()
   private readonly pendingRuntimeTokens = new Map<string, string>()
   private readonly turns = new Map<string, EmployeeTurn>()
@@ -53,7 +55,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     return { GOOEYPI_ENTERPRISE_URL: url, GOOEYPI_ENTERPRISE_TOKEN: token, GOOEYPI_ENTERPRISE_EXTENSION_PATH: this.options.extensionPath }
   }
   protected onClaimRevoked(claim: CapabilityClaim): void {
-    this.teams.delete(claim.token); this.handoffs.delete(claim.token); this.turns.delete(claim.token); this.inputs.delete(claim.token)
+    this.teams.delete(claim.token); this.handoffs.delete(claim.token); this.businessActions.delete(claim.token); this.turns.delete(claim.token); this.inputs.delete(claim.token)
     for (const [runtime, token] of this.runtimes) if (token === claim.token) this.runtimes.delete(runtime)
     for (const [runtime, token] of this.pendingRuntimeTokens) if (token === claim.token) this.pendingRuntimeTokens.delete(runtime)
   }
@@ -79,10 +81,10 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const token = this.runtimes.get(runtimeId)
     if (!token) return
     this.inputs.set(token, Symbol())
-    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token)
+    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token)
   }
   invalidateAccount(): void {
-    this.turns.clear(); this.inputs.clear(); this.teams.clear(); this.handoffs.clear()
+    this.turns.clear(); this.inputs.clear(); this.teams.clear(); this.handoffs.clear(); this.businessActions.clear()
   }
   /** Called only by the trusted desktop input path, before forwarding to the runtime. */
   async employeeCommand(runtimeId: unknown, command: unknown): Promise<void> {
@@ -92,7 +94,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (!token) return
     const marker = Symbol()
     this.inputs.set(token, marker)
-    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token)
+    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token)
     const claim = this.claimForToken(token)
     if (!claim?.harness || !claim.sessionPath || typeof value.message !== 'string') return
     try {
@@ -119,9 +121,9 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (method === 'submit') return this.submit(claim, params, turn)
     if (method === 'recover') {
       const recoveryKey = requireString(params.recovery_key, 'recovery_key', { min: 64, max: 64 })
-      const frozen = await this.store.recover<FrozenHandoff>(recoveryKey)
-      if (frozen.accountKey !== turn.accountKey || frozen.sessionKey !== digest(claim.sessionPath!).slice(0, 24)) throw new Error('该交接不属于当前员工与会话')
-      return this.deliver(claim, turn, frozen, recoveryKey)
+      const intent = await this.store.recover<FrozenHandoffIntent>(recoveryKey)
+      if (intent.accountKey !== turn.accountKey || intent.sessionKey !== digest(claim.sessionPath!).slice(0, 24)) throw new Error('该交接不属于当前员工与会话')
+      return this.prepareDelivery(claim, turn, intent, recoveryKey)
     }
     throw new TypeError(`Unsupported enterprise method ${method}`)
   }
@@ -152,30 +154,66 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const handoffs = this.handoffs.get(claim.token) ?? new Map<string, EnterpriseWorkChoice>()
     for (const choice of choices) handoffs.set(handoffKey(choice), choice)
     this.handoffs.set(claim.token, handoffs)
-    return { team: { name: team.name, summary: team.objective }, capabilities: choices.map((choice) => ({ handoff_key: handoffKey(choice), name: choice.workflowName, description: choice.workflowDescription })) }
+    const scopeByHandoff = this.businessActions.get(claim.token) ?? new Map<string, Map<string, string>>()
+    const capabilities = await Promise.all(choices.map(async (choice) => {
+      const available = await this.options.service.getBusinessCapabilities(choice.businessCapabilityIds)
+      const actionMap = new Map(available.map((action) => [digest(`action:${handoffKey(choice)}:${action.id}`).slice(0, 24), action.id]))
+      scopeByHandoff.set(handoffKey(choice), actionMap)
+      return {
+        handoff_key: handoffKey(choice), name: choice.workflowName, description: choice.workflowDescription,
+        business_actions: available.map((action) => ({ action_key: digest(`action:${handoffKey(choice)}:${action.id}`).slice(0, 24), name: action.name, description: action.description })),
+      }
+    }))
+    this.businessActions.set(claim.token, scopeByHandoff)
+    return { team: { name: team.name, summary: team.objective }, capabilities }
   }
   private async submit(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn): Promise<unknown> {
     const key = requireString(params.handoff_key, 'handoff_key', { min: 1, max: 128, trim: true })
     const goal = requireString(params.goal, 'goal', { min: 1, max: 20_000, trim: true })
+    if (!Array.isArray(params.business_actions) || params.business_actions.length > 32 || params.business_actions.some((value) => typeof value !== 'string')) throw new Error('本次业务动作范围无效')
+    const actionKeys = params.business_actions as string[]
+    if (new Set(actionKeys).size !== actionKeys.length) throw new Error('本次业务动作不能重复')
     const selections = materialSelection(params.materials)
     const choice = this.handoffs.get(claim.token)?.get(key)
     if (!choice) throw new Error('请先查看团队的承接能力，并使用本轮返回的交接项')
+    const actionMap = this.businessActions.get(claim.token)?.get(key)
+    if (!actionMap) throw new Error('请先查看团队当前可用的业务动作')
+    const authorizedBusinessCapabilityIds = actionKeys.map((actionKey) => {
+      const action = actionMap.get(actionKey)
+      if (!action) throw new Error('业务动作不属于本轮查看的团队能力')
+      return action
+    }).sort()
     const sourceMessages = await this.evidence(claim, turn)
     const sessionKey = digest(claim.sessionPath!).slice(0, 24)
     const idempotencySeed = `${sessionKey}:${turn.messageId}:${key}`
     const identity = `${turn.accountKey}:${idempotencySeed}`
-    const fingerprint = digest(JSON.stringify({ goal, selections, key }))
-    const frozen = await this.store.freeze(identity, fingerprint, async () => {
+    const fingerprint = digest(JSON.stringify({ goal, selections, key, authorizedBusinessCapabilityIds }))
+    const intent = await this.store.freeze<FrozenHandoffIntent>(identity, fingerprint, async () => {
       const current = await this.options.service.getTeamChoices({ id: choice.teamId, name: choice.teamName })
       if (!current.some((item) => handoffKey(item) === key)) throw new Error('承接流程版本已经变化，请重新查找')
       const materials = await freezeMaterials(claim.cwd, selections)
       const task = executionText(goal, materials)
       await this.evidence(claim, turn)
-      const resources = await this.options.service.stageWorkMaterials(materials, async () => { await this.evidence(claim, turn) })
-      await this.evidence(claim, turn)
-      return { task, materials, resources, sourceMessages, choice, accountKey: turn.accountKey, idempotencySeed, sessionKey }
+      return { task, materials, authorizedBusinessCapabilityIds, sourceMessages, choice, accountKey: turn.accountKey, idempotencySeed, sessionKey }
     })
-    return this.deliver(claim, turn, frozen, digest(identity))
+    return this.prepareDelivery(claim, turn, intent, digest(identity))
+  }
+  private async prepareDelivery(claim: CapabilityClaim, turn: EmployeeTurn, intent: FrozenHandoffIntent, recoveryKey: string): Promise<unknown> {
+    try {
+      const resourcesFingerprint = digest(JSON.stringify(intent.materials.map(({ name, bytes, sha256 }) => ({ name, bytes, sha256 }))))
+      const frozen = await this.store.freeze<FrozenHandoff>(`${intent.accountKey}:${intent.idempotencySeed}:resources`, resourcesFingerprint, async () => {
+        const resources = await this.options.service.stageWorkMaterials(intent.materials, async () => { await this.evidence(claim, turn) })
+        await this.evidence(claim, turn)
+        return { ...intent, resources }
+      })
+      return this.deliver(claim, turn, frozen, recoveryKey)
+    } catch (error) {
+      return {
+        status: 'unknown', recovery_key: recoveryKey,
+        message: error instanceof Error ? error.message : '材料交付结果待核对',
+        next_step: '已保留本次固定材料。员工仍要求交接时使用恢复工具继续，不得重读或换成另一版材料。',
+      }
+    }
   }
   private async deliver(claim: CapabilityClaim, turn: EmployeeTurn, frozen: FrozenHandoff, recoveryKey: string): Promise<unknown> {
     await this.evidence(claim, turn)
@@ -184,6 +222,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const operation = this.options.service.submitWork(frozen.choice, frozen.task, {
       idempotencySeed: frozen.idempotencySeed, sessionKey: frozen.sessionKey, sourceMessages: frozen.sourceMessages, accountKey: frozen.accountKey,
       resources: frozen.resources,
+      authorizedBusinessCapabilityIds: frozen.authorizedBusinessCapabilityIds,
       assertCurrent: async () => { await this.evidence(claim, turn) },
     }).then((receipt) => ({
       status: 'accepted', team: frozen.choice.teamName, workflow: frozen.choice.workflowName,
