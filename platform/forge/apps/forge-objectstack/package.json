@@ -228,6 +228,7 @@
     "@objectstack/connector-mcp": "17.3.0",
     "@objectstack/connector-openapi": "17.3.0",
     "@objectstack/connector-rest": "17.3.0",
+    "@objectstack/mcp": "17.3.0",
     "@objectstack/plugin-approvals": "17.3.0",
     "@objectstack/plugin-hono-server": "17.3.0",
     "@objectstack/runtime": "17.3.0",
