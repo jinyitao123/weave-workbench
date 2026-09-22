@@ -1,4 +1,4 @@
-import { Field } from '@objectstack/spec/data';
+import { Field, ObjectSchema } from '@objectstack/spec/data';
 import { master, dictionary, text, code, reference, choice, owner, remarks, required, money } from '../model.js';
 
 const positiveQuantity = (label = '数量') => Field.number({ label, min: 0.0001, scale: 4, ...required });
@@ -60,8 +60,36 @@ export const SalesContract = master('forge_sales_contract', '框架销售合同'
   status: { ...choice('合同状态', ['草稿', '待审批', '执行中', '已完成', '已终止', '已驳回'], '草稿'), readonly: true },
   payment_term: text('付款条件'), delivery_cycle_days: Field.number({ label: '交货周期（天）', min: 0, scale: 0, defaultValue: 21 }),
   warranty_months: Field.number({ label: '质保期（月）', min: 0, scale: 0 }), business_terms: Field.textarea({ label: '合同条款' }),
-  attachment_ids: Field.file({ label: '合同附件', multiple: true }), attachment_note: text('附件说明'), remarks: remarks(),
+  attachment_ids: Field.file({ label: '合同附件', multiple: true }), attachment_note: text('附件说明'),
+  submitted_material_id: Field.file({ label: '本次提交版本', readonly: true }),
+  submitted_material_name: Field.text({ label: '提交版本名称', readonly: true, maxLength: 255 }),
+  submitted_material_sha256: Field.text({ label: '提交版本摘要', readonly: true, maxLength: 64 }),
+  submitted_at: Field.datetime({ label: '提交时间', readonly: true }),
+  remarks: remarks(),
 }, ['code', 'customer_po_number', 'name', 'contract_type_id', 'customer_id', 'total_amount', 'ordered_amount', 'status', 'signed_on', 'responsible_id']);
+
+// Internal submission ledger. The unique contract reference serializes competing
+// first submissions while the contract keeps the employee-visible frozen file.
+export const SalesContractSubmission = ObjectSchema.create({
+  name: 'forge_sales_contract_submission',
+  label: '合同提交记录',
+  pluralLabel: '合同提交记录',
+  icon: 'file-check',
+  sharingModel: 'private',
+  nameField: 'name',
+  fields: {
+    name: text('提交批次', true),
+    contract_id: reference('forge_sales_contract', '销售合同', true),
+    material_file_id: Field.text({ label: '材料引用', ...required, maxLength: 64 }),
+    material_name: Field.text({ label: '材料名称', ...required, maxLength: 255 }),
+    material_sha256: Field.text({ label: '材料摘要', ...required, maxLength: 64 }),
+    submitted_by: Field.user({ label: '提交人', ...required }),
+    submitted_at: Field.datetime({ label: '提交时间', ...required }),
+  },
+  listViews: { all: { label: '全部记录', type: 'grid', columns: ['name', 'contract_id', 'material_name', 'submitted_by', 'submitted_at'] } },
+  indexes: [{ fields: ['contract_id'], unique: 'organization' }],
+  enable: { apiEnabled: false, searchable: false, trackHistory: true, files: false, feeds: false, activities: false },
+});
 
 export const SalesContractLine = master('forge_sales_contract_line', '合同物料明细', 'list', {
   name: text('物料名称', true), contract_id: Field.masterDetail('forge_sales_contract', { label: '销售合同', deleteBehavior: 'cascade', inlineEdit: 'grid', ...required }),
