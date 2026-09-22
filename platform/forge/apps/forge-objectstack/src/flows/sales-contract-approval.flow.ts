@@ -24,10 +24,13 @@ export const SalesContractApprovalFlow = defineFlow({
     {
       id: 'contract_review',
       type: 'approval',
-      label: '合同复核',
+      label: '交付与商务会签',
       config: {
-        approvers: [{ type: 'position', value: 'contract_reviewer' }],
-        behavior: 'first_response',
+        approvers: [
+          { type: 'position', value: 'contract_delivery_reviewer', group: 'delivery' },
+          { type: 'position', value: 'contract_commercial_reviewer', group: 'commercial' },
+        ],
+        behavior: 'per_group',
         lockRecord: true,
         onEmptyApprovers: 'fail',
         maxRevisions: 3,
