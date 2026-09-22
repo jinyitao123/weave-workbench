@@ -41,7 +41,7 @@ async function fixture() {
   const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
   await service.signIn('employee@example.test', 'test')
   let current = true
-  const source = { idempotencySeed: 'session:employee-message:team', sessionKey: 'session', sourceMessages: [{ messageId: 'employee-message', eventSeq: 2, sha256: hash('这版给他们看看') }], accountKey: await service.accountKey(), assertCurrent: async () => { if (!current) throw new Error('员工已改变要求') } }
+  const source = { idempotencySeed: 'session:employee-message:team', sessionKey: 'session', sourceMessages: [{ messageId: 'employee-message', eventSeq: 2, sha256: hash('这版给他们看看') }], accountKey: await service.accountKey(), resources: [{ type: 'forge-file' as const, id: 'file-contract-v1', name: '合同.md', bytes: 12, sha256: hash('合同正文') }], assertCurrent: async () => { if (!current) throw new Error('员工已改变要求') } }
   return { service, source, registrations, runs, calls, drop: () => { dropDispatchResponse = true }, wrongDigest: () => { mismatchDigest = true }, changeDuringRegistration: () => { afterRegistration = async () => { current = false } }, logoutDuringRegistration: () => { afterRegistration = async () => { await service.signOut() } } }
 }
 describe('Weave handoff admission contract', () => {
