@@ -22,6 +22,7 @@ async function fixture() {
     accountKey: vi.fn(async () => 'employee-a'),
     getTeamCatalog: vi.fn(async () => [{ id: choice.teamId, name: choice.teamName, objective: choice.teamObjective }, { id: 'leave', name: '休假团队', objective: '安排休假' }]),
     getTeamChoices: vi.fn(async () => [choice]),
+    stageWorkMaterials: vi.fn(async (items: Array<{ name: string; bytes: number; sha256: string }>) => items.map((item, index) => ({ type: 'forge-file' as const, id: `file-${index + 1}`, name: item.name, bytes: item.bytes, sha256: item.sha256 }))),
     submitWork: vi.fn(async (_choice: unknown, _goal: string, source?: { assertCurrent(): Promise<void> }) => {
       await source?.assertCurrent()
       return { workId: 'work', runId: 'run', taskId: 'task', workflowId: choice.workflowId, workflowVersion: 3, repeated: false }
@@ -59,7 +60,8 @@ describe('employee-bound material handoff', () => {
     const cwd = await mkdtemp(join(tmpdir(), 'handoff-race-')); directories.push(cwd)
     const transcript: TranscriptMessage[] = []
     const service = {
-      accountKey: vi.fn(async () => 'employee-a'), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []), submitWork: vi.fn(),
+      accountKey: vi.fn(async () => 'employee-a'), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
+      stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),
     }
     const sessions = { read: vi.fn(async () => transcript) }
     const bridge = new AgentEnterpriseBridge({ service, sessions: { prime: sessions, omp: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts' })

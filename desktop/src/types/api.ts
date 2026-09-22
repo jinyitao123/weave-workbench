@@ -333,6 +333,14 @@ export interface EnterpriseWorkReceipt {
   repeated: boolean
 }
 
+export interface EnterpriseWorkResource {
+  type: 'forge-file'
+  id: string
+  name: string
+  bytes: number
+  sha256: string
+}
+
 export type ApplicationMenuName = 'file' | 'edit' | 'view' | 'window' | 'help'
 
 export type AppUpdatePhase = 'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'not-available' | 'error' | 'unsupported'

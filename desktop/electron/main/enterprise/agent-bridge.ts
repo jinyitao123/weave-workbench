@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { EnterpriseService } from '../enterprise'
-import type { EnterpriseWorkChoice, TranscriptMessage } from '../../../src/types/api'
+import type { EnterpriseWorkChoice, EnterpriseWorkResource, TranscriptMessage } from '../../../src/types/api'
 import { CapabilityBridge, type CapabilityClaim } from '../lib/capability-bridge'
 import { requireString } from '../validation'
 import { digest, HandoffStore, type HandoffStorage } from './handoff-store'
@@ -9,7 +9,7 @@ import { searchTeams, type TeamSummary } from './team-catalog'
 
 interface EnterpriseSessionReader { read(filePath: unknown): Promise<TranscriptMessage[]> }
 export interface AgentEnterpriseBridgeOptions {
-  service: Pick<EnterpriseService, 'accountKey' | 'getTeamCatalog' | 'getTeamChoices' | 'submitWork'>
+  service: Pick<EnterpriseService, 'accountKey' | 'getTeamCatalog' | 'getTeamChoices' | 'stageWorkMaterials' | 'submitWork'>
   sessions: Record<'prime' | 'omp' | 'pi', EnterpriseSessionReader>
   extensionPath: string
   storage?: HandoffStorage
@@ -17,6 +17,7 @@ export interface AgentEnterpriseBridgeOptions {
 interface FrozenHandoff {
   task: string
   materials: FrozenMaterial[]
+  resources: EnterpriseWorkResource[]
   sourceMessages: Array<{ messageId: string; eventSeq: number; sha256: string }>
   choice: EnterpriseWorkChoice
   accountKey: string
@@ -170,7 +171,9 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       const materials = await freezeMaterials(claim.cwd, selections)
       const task = executionText(goal, materials)
       await this.evidence(claim, turn)
-      return { task, materials, sourceMessages, choice, accountKey: turn.accountKey, idempotencySeed, sessionKey }
+      const resources = await this.options.service.stageWorkMaterials(materials, async () => { await this.evidence(claim, turn) })
+      await this.evidence(claim, turn)
+      return { task, materials, resources, sourceMessages, choice, accountKey: turn.accountKey, idempotencySeed, sessionKey }
     })
     return this.deliver(claim, turn, frozen, digest(identity))
   }
@@ -180,6 +183,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (pending) return pending
     const operation = this.options.service.submitWork(frozen.choice, frozen.task, {
       idempotencySeed: frozen.idempotencySeed, sessionKey: frozen.sessionKey, sourceMessages: frozen.sourceMessages, accountKey: frozen.accountKey,
+      resources: frozen.resources,
       assertCurrent: async () => { await this.evidence(claim, turn) },
     }).then((receipt) => ({
       status: 'accepted', team: frozen.choice.teamName, workflow: frozen.choice.workflowName,

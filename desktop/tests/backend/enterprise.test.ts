@@ -326,6 +326,24 @@ describe('EnterpriseService', () => {
     expect(calls.find((call) => call.url.endsWith('/approval-2/resubmit'))).toMatchObject({ method: 'POST', body: { comment: '已补充' } })
   })
 
+  it('uploads the exact frozen bytes to Forge before dispatch', async () => {
+    const content = '# 合同\n固定版本\n', uploaded: string[] = []
+    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = String(input)
+      if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'sales-1' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'sales-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      if (url.endsWith('/api/v1/storage/upload/presigned')) return Response.json({ data: { fileId: 'file-1', uploadUrl: '/upload/file-1', method: 'PUT', headers: { 'Content-Type': 'text/plain' } } })
+      if (url.endsWith('/upload/file-1')) { uploaded.push(Buffer.from(init?.body as Uint8Array).toString('utf8')); return new Response(null, { status: 200 }) }
+      if (url.endsWith('/api/v1/storage/upload/complete')) return Response.json({ data: { fileId: 'file-1' } })
+      return Response.json({}, { status: 404 })
+    }) as typeof fetch
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('sales@example.test', 'secret')
+    const resources = await service.stageWorkMaterials([{ name: '合同.md', content, bytes: Buffer.byteLength(content), sha256: createHash('sha256').update(content).digest('hex') }], async () => undefined)
+    expect(uploaded).toEqual([content])
+    expect(resources).toEqual([{ type: 'forge-file', id: 'file-1', name: '合同.md', bytes: Buffer.byteLength(content), sha256: createHash('sha256').update(content).digest('hex') }])
+  })
+
   it('returns bounded unavailable states when the environments cannot be reached', async () => {
     const service = new EnterpriseService({
       environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' },

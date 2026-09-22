@@ -1,6 +1,7 @@
 import { teamWorkspaceRequest } from './enterprise/team-workspace'
 import type { TeamWorkspaceCommand } from '../../src/types/team-workspace'
-import type { EnterpriseBusinessCapability, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt } from '../../src/types/api'
+import type { EnterpriseBusinessCapability, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource } from '../../src/types/api'
+import type { FrozenMaterial } from './enterprise/materials'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 import { submissionUUID } from './enterprise/handoff-store'
@@ -371,6 +372,35 @@ export class EnterpriseService {
     if (response.status === 401 || response.status === 403) { await this.signOut(); throw new Error('登录已失效，请重新登录') }
     if (!response.ok) throw new Error(textValue(record(result)?.message) ?? textValue(record(result)?.error) ?? `Forge 工作事项处理失败（${response.status}）`)
     return { status: response.status, body: result }
+  }
+
+  async stageWorkMaterials(materials: FrozenMaterial[], assertCurrent: () => Promise<void>): Promise<EnterpriseWorkResource[]> {
+    if (!materials.length) throw new Error('请指定本次交接的工作材料')
+    await this.load()
+    if (this.expiresAt <= Date.now()) await this.signOut()
+    if (!this.forgeToken) throw new Error('请重新登录以上传工作材料')
+    const resources: EnterpriseWorkResource[] = []
+    for (const material of materials) {
+      await assertCurrent()
+      const prepared = await this.forgeRequest('/api/v1/storage/upload/presigned', {
+        filename: material.name, mimeType: 'text/plain; charset=utf-8', size: material.bytes, scope: 'user',
+      })
+      const envelope = record(prepared.body), descriptor = record(envelope?.data) ?? envelope
+      const fileId = textValue(descriptor?.fileId), uploadUrl = textValue(descriptor?.uploadUrl), method = textValue(descriptor?.method) ?? 'PUT'
+      if (!fileId || !uploadUrl) throw new Error('Forge 没有返回材料上传地址')
+      const uploaded = await this.fetch(new URL(uploadUrl, this.forgeUrl), {
+        method, headers: record(descriptor?.headers) as Record<string, string> | undefined,
+        body: Buffer.from(material.content, 'utf8'), redirect: 'error', signal: AbortSignal.timeout(30_000),
+      })
+      if (!uploaded.ok) { await uploaded.body?.cancel(); throw new Error(`材料“${material.name}”上传失败（${uploaded.status}）`) }
+      await uploaded.body?.cancel()
+      const completed = await this.forgeRequest('/api/v1/storage/upload/complete', { fileId })
+      const completedEnvelope = record(completed.body), completedData = record(completedEnvelope?.data) ?? completedEnvelope
+      if ((textValue(completedData?.fileId) ?? fileId) !== fileId) throw new Error('Forge 返回的材料版本与本次上传不一致')
+      resources.push({ type: 'forge-file', id: fileId, name: material.name, bytes: material.bytes, sha256: material.sha256 })
+    }
+    await assertCurrent()
+    return resources
   }
 
   async teamWorkspace(command: TeamWorkspaceCommand): Promise<unknown> {
@@ -814,6 +844,7 @@ export class EnterpriseService {
     sessionKey: string
     sourceMessages: Array<{ messageId: string; eventSeq: number; sha256: string }>
     accountKey: string
+    resources: EnterpriseWorkResource[]
     assertCurrent(): Promise<void>
   }): Promise<EnterpriseWorkReceipt> {
     const normalized = goal.trim()
@@ -833,6 +864,7 @@ export class EnterpriseService {
     const registered = await this.weaveRequest('/v1/workbench/dispatch-inputs', 'POST', {
       registration_id: workId, workbench_session_id: workbenchSessionID, team_id: choice.teamId, workflow_id: choice.workflowId,
       workflow_version: choice.version, task: normalized,
+      resources: source?.resources,
       source_messages: source?.sourceMessages.map((message) => ({ message_id: message.messageId, event_seq: message.eventSeq, sha256: message.sha256 }))
         ?? [{ message_id: workId, event_seq: 0, sha256: createHash('sha256').update(normalized).digest('hex') }],
     }, assertCurrent, this.forgeToken ? { 'X-Weave-Forge-Authorization': `Bearer ${this.forgeToken}` } : undefined)
