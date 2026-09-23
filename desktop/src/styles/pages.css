@@ -150,7 +150,16 @@
 .work-task-list header i, .work-run-list i { color: var(--warning); font-size: 8.5px; font-style: normal; white-space: nowrap; }
 .work-task-list p { margin: 9px 0; color: var(--text-secondary); font-size: 9.5px; line-height: 1.45; }
 .work-task-list article > div { display: flex; justify-content: flex-end; gap: 6px; margin-top: 7px; }
+.work-approval-context { margin: 10px 0; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-subtle); }
+.work-approval-context h3 { margin: 0; font-size: 12px; }
+.work-approval-context dl { display: grid; gap: 7px; margin: 12px 0; }
+.work-approval-context dl > div { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 10px; font-size: 10px; line-height: 1.5; }
+.work-approval-context dt { color: var(--text-tertiary); }
+.work-approval-context dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.work-approval-context pre { max-height: 360px; overflow: auto; margin: 8px 0 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; color: var(--text); background: var(--surface-raised); font-size: 10px; line-height: 1.6; font-family: inherit; white-space: pre-wrap; overflow-wrap: anywhere; }
 .work-run-list article { min-height: 54px; padding: 8px 13px; border-bottom: 1px solid var(--border); }
+.work-message-actions { display: flex; flex: none; align-items: center; gap: 8px; }
+.work-message-actions .button { min-height: 26px; padding: 4px 9px; font-size: 9px; }
 .work-run-list i.is-succeeded { color: var(--success); }
 .work-run-list i.is-failed, .work-run-list i.is-cancelled { color: var(--danger); }
 

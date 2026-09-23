@@ -285,9 +285,12 @@ describe('EnterpriseService', () => {
       if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
       if (url.includes('/v1/teams?status=active')) return Response.json([{ id: 'team-1', display_name: '合同团队' }])
       if (url.endsWith('/v1/teams/team-1/workflows')) return Response.json({ workflows: [{ id: 'flow-1', name: '合同复核', published_version: 1 }] })
-      if (url.includes('/v1/runs?project_id=workbench-weave-1')) return Response.json({ runs: [{ run_id: 'run-1', status: 'running' }] })
+      if (url.includes('/v1/runs?project_id=workbench-weave-1&limit=50')) return Response.json({ runs: [{ run_id: 'run-1', status: 'running' }] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [{ interaction_id: 'human-1', run_id: 'run-1', team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 1, title: '复核', instructions: '确认', updated_at: '2026-09-21T00:00:00Z' }] })
-      if (url.endsWith('/api/v1/notifications?limit=50')) return Response.json({ notifications: [{ id: 'notice-1', type: 'work.revision', title: '材料需要修改', body: '请补充交付日期', read: false, createdAt: '2026-09-21T01:00:00Z', data: { kind: 'revision_required', source: 'weave', status: 'pending', workReference: 'work-1', runReference: 'run-1', instructions: '补充交付日期后重新提交', material: { label: '当前材料' }, continuation: { reason: '缺少交付日期', returnTarget: 'origin_review', reviewScope: 'affected_members' } } }] })
+      if (url.endsWith('/api/v1/notifications?limit=200')) return Response.json({ success: true, data: { notifications: [
+        { id: 'notice-1', type: 'work.revision', title: '材料需要修改', body: '请补充交付日期', read: false, createdAt: '2026-09-21T01:00:00Z', data: { kind: 'revision_required', source: 'weave', status: 'pending', workReference: 'work-1', runReference: 'run-1', instructions: '补充交付日期后重新提交', material: { label: '当前材料' }, continuation: { reason: '缺少交付日期', returnTarget: 'origin_review', reviewScope: 'affected_members' } } },
+        { id: 'notice-1', type: 'work.revision', title: '材料需要修改', body: '重复投递不应重复显示', read: false, createdAt: '2026-09-21T01:01:00Z' },
+      ] } })
       if (url.endsWith('/v1/workbench/dispatch-inputs')) {
         expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer weave-token')
         expect(new Headers(init?.headers).get('X-Weave-Forge-Authorization')).toBe('Bearer forge-token')
@@ -302,11 +305,12 @@ describe('EnterpriseService', () => {
     const session = await service.signIn('member@example.test', 'secret')
     expect(session.user?.weaveUserId).toBe('weave-1')
     const overview = await service.getWorkOverview()
+    expect(overview.items).toHaveLength(1)
     expect(overview).toMatchObject({ choices: [{ teamId: 'team-1', workflowId: 'flow-1', version: 1 }], tasks: [{ interactionId: 'human-1' }], items: [{ id: 'notice-1', kind: 'revision_required', actionable: true, returnTarget: 'origin_review', reviewScope: 'affected_members' }], runs: [{ id: 'run-1' }] })
     await expect(service.submitWork(overview.choices[0], '提交合同')).resolves.toMatchObject({ runId: 'run-2', workflowVersion: 1 })
     await expect(service.completeHumanTask(overview.tasks[0], { decision: 'approved' })).resolves.toEqual({ runId: 'run-1', repeated: false })
     const registration = calls.find((call) => call.url.endsWith('/v1/workbench/dispatch-inputs'))?.body
-    expect(registration).toMatchObject({ team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 1, task: '提交合同' })
+    expect(registration).toMatchObject({ team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 1, project_id: 'workbench-weave-1', task: '提交合同' })
     expect(String(registration?.workbench_session_id)).toMatch(/^workbench-weave-1-/)
     expect(JSON.stringify(calls)).not.toContain('weave-token')
   })
@@ -322,11 +326,12 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/teams?status=active')) return Response.json([])
       if (url.includes('/v1/runs?project_id=')) return Response.json({ runs: [] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
-      if (url.endsWith('/api/v1/notifications?limit=50')) return Response.json({ notifications: [] })
+      if (url.endsWith('/api/v1/notifications?limit=200')) return Response.json({ notifications: [] })
       if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [
         { id: 'approval-1', process_name: '销售合同复核', current_step: '财务复核', object_name: '销售合同', status: 'pending', updated_at: '2026-09-22T08:00:00Z', viewer: { can_act: true } },
         { id: 'approval-2', process_name: '销售合同复核', object_name: '销售合同', status: 'returned', updated_at: '2026-09-22T09:00:00Z', viewer: { is_submitter: true } },
       ] })
+      if (url.endsWith('/api/v1/approvals/requests/approval-2/actions')) return Response.json({ data: [{ action: 'submit' }, { action: 'revise', comment: '请补齐附件' }] })
       if (url.endsWith('/api/v1/approvals/requests/approval-1/revise')) return Response.json({ status: 'returned' })
       if (url.endsWith('/api/v1/approvals/requests/approval-2/resubmit')) return Response.json({ status: 'pending' })
       return Response.json({}, { status: 404 })
@@ -337,12 +342,44 @@ describe('EnterpriseService', () => {
     const overview = await service.getWorkOverview()
     expect(overview.tasks).toMatchObject([
       { interactionId: 'approval-1', runId: 'forge:approval:approval-1', source: 'forge', mode: 'approval' },
-      { interactionId: 'approval-2', runId: 'forge:revision:approval-2', source: 'forge', mode: 'revision' },
+      { interactionId: 'approval-2', runId: 'forge:revision:approval-2', source: 'forge', mode: 'revision', instructions: '退回原因：请补齐附件' },
     ])
     await service.completeHumanTask(overview.tasks[0], { decision: 'rejected', comment: '请补充付款条件' })
     await service.completeHumanTask(overview.tasks[1], { decision: 'approved', comment: '已补充' })
     expect(calls.find((call) => call.url.endsWith('/approval-1/revise'))).toMatchObject({ method: 'POST', body: { comment: '请补充付款条件' } })
     expect(calls.find((call) => call.url.endsWith('/approval-2/resubmit'))).toMatchObject({ method: 'POST', body: { comment: '已补充' } })
+  })
+
+  it('reads only the current reviewer\'s frozen approval file and rejects changed bytes', async () => {
+    const original = '# 合同\n仅供验收\n'
+    const digest = createHash('sha256').update(original).digest('hex')
+    const attachment = '# 技术协议\n验收标准\n'
+    const attachmentDigest = createHash('sha256').update(attachment).digest('hex')
+    const mainId = '25c12143-7f58-4cb9-bb32-a1d8150bbd7e'
+    const attachmentId = 'a614d076-8baa-48fd-b631-4bf8e48b8009'
+    let fileContent = original
+    const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
+      const url = String(input)
+      if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'reviewer-1' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-reviewer-1', externalId: 'reviewer-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      if (url.endsWith('/api/v1/approvals/requests/approval-1')) return Response.json({
+        status: 'pending', record_title: '设备验收合同', step_label: '交付复核', viewer: { can_act: true },
+        payload: { name: '设备验收合同', submitted_material_id: mainId, submitted_material_name: '合同.md', submitted_material_sha256: digest, submitted_attachment_manifest: JSON.stringify([{ file_id: attachmentId, name: '技术协议.md', sha256: attachmentDigest }]) },
+        payload_labels: { name: '合同名称' },
+      })
+      if (url.endsWith(`/api/v1/storage/files/${mainId}/url`)) return Response.json({ data: { url: '/api/v1/storage/_local/raw/signed-file' } })
+      if (url.endsWith(`/api/v1/storage/files/${attachmentId}/url`)) return Response.json({ data: { url: '/api/v1/storage/_local/raw/signed-attachment' } })
+      if (url.endsWith('/api/v1/storage/_local/raw/signed-file')) return new Response(fileContent)
+      if (url.endsWith('/api/v1/storage/_local/raw/signed-attachment')) return new Response(attachment)
+      return Response.json({}, { status: 404 })
+    }) as typeof fetch
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' }, fetch: fetchMock })
+    await service.signIn('reviewer@example.test', 'secret')
+
+    const context = await service.getApprovalContext('approval-1')
+    expect(context).toMatchObject({ title: '设备验收合同', step: '交付复核', files: [{ name: '合同.md', content: original, verified: true }, { name: '技术协议.md', content: attachment, verified: true }] })
+    fileContent = '# 另一份合同\n'
+    await expect(service.getApprovalContext('approval-1')).rejects.toThrow('审批文件与提交版本不一致')
   })
 
   it('uploads the exact frozen bytes to Forge before dispatch', async () => {

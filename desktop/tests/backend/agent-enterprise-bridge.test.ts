@@ -24,6 +24,7 @@ async function fixture() {
     getTeamCatalog: vi.fn(async () => [{ id: choice.teamId, name: choice.teamName, objective: choice.teamObjective }, { id: 'leave', name: '休假团队', objective: '安排休假' }]),
     getTeamChoices: vi.fn(async () => [choice]),
     getBusinessCapabilities: vi.fn(async () => [{ id: businessCapabilityId, name: '提交合同', description: '把合同提交到业务流程', effect: 'write' as const, resourceType: 'forge_sales_contract', requiresEmployeeIntent: true, status: 'available' as const }]),
+    findBusinessRecords: vi.fn(async () => [{ objectName: 'forge_sales_contract', recordId: 'contract-1', name: 'TEST-100 设备交接验收合同', code: 'SC-TEST-001' }]),
     stageWorkMaterials: vi.fn(async (items: Array<{ name: string; content: string; bytes: number; sha256: string }>) => items.map((item, index) => ({ type: 'forge-file' as const, id: `file-${index + 1}`, name: item.name, bytes: item.bytes, sha256: item.sha256 }))),
     submitWork: vi.fn(async (_choice: unknown, _goal: string, source?: { assertCurrent(): Promise<void> }) => {
       await source?.assertCurrent()
@@ -64,6 +65,7 @@ describe('employee-bound material handoff', () => {
     const service = {
       accountKey: vi.fn(async () => 'employee-a'), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
       getBusinessCapabilities: vi.fn(async () => []),
+      findBusinessRecords: vi.fn(async () => []),
       stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),
     }
     const sessions = { read: vi.fn(async () => transcript) }
@@ -98,8 +100,13 @@ describe('employee-bound material handoff', () => {
   it('authorizes only the business action selected for the current employee intent', async () => {
     const f = await fixture(), params = await f.discover()
     const actionKey = params.available_actions[0].action_key
-    expect((await f.call('submit', { ...params, business_actions: [actionKey] })).status).toBe(200)
+    const found = await f.call('find_business_record', { handoff_key: params.handoff_key, work_summary: 'TEST-100 设备交接验收合同' })
+    const recordKey = (found.body.result.records as Array<{ record_key: string }>)[0].record_key
+    expect(found.body.result.records).toEqual([{ record_key: recordKey, name: 'TEST-100 设备交接验收合同', code: 'SC-TEST-001', object: '销售合同' }])
+    expect(JSON.stringify(found.body.result.records)).not.toContain('contract-1')
+    expect((await f.call('submit', { ...params, business_record_key: recordKey, business_actions: [actionKey] })).status).toBe(200)
     expect(f.service.submitWork.mock.calls[0][2]).toMatchObject({ authorizedBusinessCapabilityIds: [f.businessCapabilityId] })
+    expect(JSON.parse(f.service.submitWork.mock.calls[0][1])).toMatchObject({ businessContext: { objectName: 'forge_sales_contract', recordId: 'contract-1', name: 'TEST-100 设备交接验收合同', code: 'SC-TEST-001' } })
   })
   it('rejects a business action that was not returned for this team view', async () => {
     const f = await fixture(), params = await f.discover()

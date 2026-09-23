@@ -14,6 +14,7 @@
 - `business-action`：Weave 调用 Forge 业务动作的输入、幂等与权限上下文。
 - `business-capability-catalog`：开发中心可分配给团队成员的中文业务能力，不暴露 MCP 工具、参数或凭据。
 - `task-notification`：Forge 或 Weave 向指定员工创建的待办。
+- `team-run-event`：Weave 将团队运行终态交给 Forge 原生收件箱的系统事件。
 - `delivery-receipt`：业务结果、证据、用量和独立核验结果。
 - `execution-control`：重试、超时、额度、取消和未知结果核对。
 - `development-observation`：开发中心读取团队定义、准确版本和归属运行的只读投影。
