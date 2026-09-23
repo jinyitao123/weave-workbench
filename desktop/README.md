@@ -162,7 +162,7 @@ GooeyPi is built around local projects and local harness sessions. It does not r
 
 Remote pages open in a separate browser profile with Node access disabled. Project paths and desktop actions are checked in the main process, and third-party capabilities still run with your operating-system permissions. Review packages, commands, MCP servers, and projects before allowing them to act.
 
-For suspected vulnerabilities, follow the [security policy](.github/SECURITY.md) and do not post sensitive details publicly. See [docs/security.md](docs/security.md) for the full technical security model.
+For suspected vulnerabilities, follow the [security policy](.github/SECURITY.md) and do not post sensitive details publicly. See [docs/安全模型.md](docs/安全模型.md) for the full technical security model.
 
 ## Development checks
 
@@ -176,7 +176,7 @@ npm run test:e2e
 npm run build
 ```
 
-See the [validation guide](docs/validation.md) for the source-of-truth checks and reproducible commands.
+See the [validation guide](docs/测试与验收说明.md) for the source-of-truth checks and reproducible commands.
 
 To make an installable local QA build, run the command for your operating system:
 

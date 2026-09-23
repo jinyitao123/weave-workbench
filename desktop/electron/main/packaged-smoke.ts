@@ -13,7 +13,7 @@ export const PACKAGED_RENDERER_URL = 'prime-work://app/index.html'
  * completed an authorized IPC round trip. It grants no capability, opens no new
  * IPC surface, and reports readiness only after the ordinary renderer trust
  * gate in `registerIpc` has already admitted the sender, so it stays safe in
- * shipped builds; see docs/security.md.
+ * shipped builds; see docs/安全模型.md.
  */
 export const PACKAGED_SMOKE_FLAG = '--packaged-smoke='
 export const PACKAGED_SMOKE_READY_EVENT = 'gooeypi-packaged-smoke-ready'

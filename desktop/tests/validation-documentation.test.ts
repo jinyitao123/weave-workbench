@@ -7,7 +7,7 @@ import { localMarkdownTargets } from './helpers/markdown'
 type RecordValue = Record<string, unknown>
 
 const load = createRequire(import.meta.url)('js-yaml').load as (source: string) => unknown
-const validationPath = resolve('docs/validation.md')
+const validationPath = resolve('docs/测试与验收说明.md')
 const validation = readFileSync(validationPath, 'utf8')
 const packageManifest = JSON.parse(readFileSync(resolve('package.json'), 'utf8')) as { scripts: Record<string, string> }
 const workflowsPath = resolve('.github/workflows')

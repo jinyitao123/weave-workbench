@@ -852,7 +852,7 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
     const workflow = readFileSync('.github/workflows/release.yml', 'utf8')
     expect(workflow).toContain('GOOEYPI_WINDOWS_CERT_SUBJECT: ${{ vars.GOOEYPI_WINDOWS_CERT_SUBJECT }}')
     expect(workflow).toContain('GOOEYPI_WINDOWS_CERT_THUMBPRINT: ${{ vars.GOOEYPI_WINDOWS_CERT_THUMBPRINT }}')
-    const security = readFileSync('docs/security.md', 'utf8')
+    const security = readFileSync('docs/安全模型.md', 'utf8')
     expect(security).toContain('`GOOEYPI_WINDOWS_CERT_SUBJECT`')
     expect(security).toContain('`GOOEYPI_WINDOWS_CERT_THUMBPRINT`')
     expect(security).toContain('when neither is configured, public Windows packaging fails closed')
@@ -1750,7 +1750,7 @@ describe('vendored supply-chain pins', () => {
     expect(provenance).toContain('unmodified')
     expect(provenance).toMatch(/before\s+invoking npm's installer/)
 
-    const security = readFileSync('docs/security.md', 'utf8')
+    const security = readFileSync('docs/安全模型.md', 'utf8')
     expect(security).toContain("Before invoking npm's installer")
     expect(security).not.toContain('Before invoking npm,')
     expect(security).not.toContain('lifecycle scripts, extensions')

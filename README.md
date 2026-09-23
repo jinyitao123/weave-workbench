@@ -2,11 +2,13 @@
 
 Weave Workbench 是桌面工作助手、智能体团队与 Forge 业务系统的统一产品仓库。
 
-新会话从[项目状态](docs/project-status.md)开始，执行 `make status` 核对现场。主方案见[产品架构](docs/architecture/product-architecture.md)，协作方式见[工程管理](docs/engineering/README.md)。Weave 和 inoForge 保留独立源码主仓，本仓按确定版本组合交付，见[同步与发布](docs/architecture/delivery-model.md)。
+全部文档入口见[文档索引](docs/README.md)，长期维护规则见 [AGENTS.md](AGENTS.md#文档管理所有-agent-与开发任务必须遵守)。
 
-第一版产品目标见[MVP1 验收方案](docs/plans/mvp1.md)，具体推进顺序见[MVP1 落地步骤](docs/plans/mvp1-delivery.md)。
+新会话从[项目状态](docs/项目状态.md)开始，执行 `make status` 核对现场。主方案见[产品架构](docs/architecture/系统架构设计.md)，协作方式见[工程管理](docs/engineering/README.md)。Weave 和 inoForge 保留独立源码主仓，本仓按确定版本组合交付，见[同步与发布](docs/architecture/开发与发布方式.md)。
 
-当前阶段成果见[MVP1 第一阶段版本说明](docs/releases/mvp1-phase1-20260923.md)：已保全真实交接、提交审批和人工退回，完整修改重提仍未通过。新增[场景索引](scenarios/README.md)、[共性问题与客户规则分类](docs/plans/mvp1-phase1-priorities.md)及[仓库分支收束方案](docs/engineering/mvp1-phase1-repository-convergence.md)。
+第一版产品目标见[MVP1 验收方案](docs/plans/MVP1阶段说明.md)，具体推进顺序见[MVP1 落地步骤](docs/plans/MVP1阶段说明.md#落地步骤)。
+
+当前阶段成果见[MVP1 第一阶段版本说明](docs/releases/001-MVP1第一阶段里程碑.md)：已保全真实交接、提交审批和人工退回，完整修改重提仍未通过。新增[场景索引](scenarios/README.md)、[共性问题与客户规则分类](docs/plans/问题清单.md)及[仓库分支收束方案](docs/engineering/仓库与分支收束.md)。
 
 用户在桌面端完成日常工作并提交材料，Weave 负责组织智能体、派发任务和保障执行，Forge 负责业务数据、流程、权限和最终业务结果。这个仓库负责把三者组合成一个可以发布、验证和持续演进的产品。
 

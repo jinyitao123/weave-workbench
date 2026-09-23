@@ -1,7 +1,7 @@
 # Contributing
 
 See the [source setup](README.md#run-from-source) and
-[validation guide](docs/validation.md) for the supported toolchain and checks.
+[validation guide](docs/测试与验收说明.md) for the supported toolchain and checks.
 
 ## Local macOS development without release credentials
 
