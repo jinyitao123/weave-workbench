@@ -7,6 +7,8 @@ import { dump, load } from 'js-yaml'
 import { validateReleaseTag } from './validate-release-tag.mjs'
 
 const RELEASE_PLATFORMS = ['mac', 'linux', 'win']
+const { build: buildConfiguration } = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'))
+const PRODUCT_NAME = buildConfiguration.productName
 const UPDATE_METADATA_BY_PLATFORM = {
   mac: ['latest-mac.yml'],
   // electron-builder gives non-x64 Linux builds an architecture-specific feed
@@ -41,23 +43,23 @@ export function parseReleasePlatforms(value = RELEASE_PLATFORMS.join(',')) {
 export function releaseAssetNames(version, platforms = RELEASE_PLATFORMS) {
   const assets = {
     mac: [
-      [`GooeyPi-${version}-m-chip.dmg`, `GooeyPi-${version}-arm64.dmg`],
-      [`GooeyPi-${version}-intel-chip.dmg`, `GooeyPi-${version}-x64.dmg`],
-      [`GooeyPi-${version}-arm64.zip`],
-      [`GooeyPi-${version}-x64.zip`],
+      [`${PRODUCT_NAME}-${version}-m-chip.dmg`, `${PRODUCT_NAME}-${version}-arm64.dmg`],
+      [`${PRODUCT_NAME}-${version}-intel-chip.dmg`, `${PRODUCT_NAME}-${version}-x64.dmg`],
+      [`${PRODUCT_NAME}-${version}-arm64.zip`],
+      [`${PRODUCT_NAME}-${version}-x64.zip`],
     ],
     linux: [
-      [`GooeyPi-${version}-linux-arm64.AppImage`],
-      [`GooeyPi-${version}-linux-arm64.deb`],
-      [`GooeyPi-${version}-linux-aarch64.pacman`],
-      [`GooeyPi-${version}-linux-aarch64.rpm`],
-      [`GooeyPi-${version}-linux-x86_64.AppImage`],
-      [`GooeyPi-${version}-linux-amd64.deb`],
-      [`GooeyPi-${version}-linux-x64.pacman`],
-      [`GooeyPi-${version}-linux-x86_64.rpm`],
+      [`${PRODUCT_NAME}-${version}-linux-arm64.AppImage`],
+      [`${PRODUCT_NAME}-${version}-linux-arm64.deb`],
+      [`${PRODUCT_NAME}-${version}-linux-aarch64.pacman`],
+      [`${PRODUCT_NAME}-${version}-linux-aarch64.rpm`],
+      [`${PRODUCT_NAME}-${version}-linux-x86_64.AppImage`],
+      [`${PRODUCT_NAME}-${version}-linux-amd64.deb`],
+      [`${PRODUCT_NAME}-${version}-linux-x64.pacman`],
+      [`${PRODUCT_NAME}-${version}-linux-x86_64.rpm`],
     ],
     // electron-builder emits the MSIX-compatible package as .appx; publish the same bytes with the modern .msix extension.
-    win: [[`GooeyPi-${version}-win-x64.exe`], [`GooeyPi-${version}-win-x64.zip`], [`GooeyPi-${version}-win-x64.msix`, `GooeyPi-${version}-win-x64.appx`]],
+    win: [[`${PRODUCT_NAME}-${version}-win-x64.exe`], [`${PRODUCT_NAME}-${version}-win-x64.zip`], [`${PRODUCT_NAME}-${version}-win-x64.msix`, `${PRODUCT_NAME}-${version}-win-x64.appx`]],
   }
   const entries = platforms
     .flatMap((platform) => [...assets[platform], ...UPDATE_METADATA_BY_PLATFORM[platform].map((name) => [name])])

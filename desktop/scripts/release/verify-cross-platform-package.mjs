@@ -37,7 +37,8 @@ const { build: buildConfiguration } = JSON.parse(readFileSync(new URL('../../pac
  * after its lowercased form, so package.json stays the only inventory of it.
  */
 export function packagedExecutablePath(unpackedDirectory, target) {
-  const name = target === 'win' ? `${buildConfiguration.productName}.exe` : buildConfiguration.productName.toLowerCase()
+  const executableName = buildConfiguration.executableName ?? buildConfiguration.productName
+  const name = target === 'win' ? `${executableName}.exe` : executableName
   const path = join(unpackedDirectory, name)
   if (!existsSync(path) || !lstatSync(path).isFile()) throw new Error(`Packaged ${target} application is missing its executable: ${path}`)
   return path
