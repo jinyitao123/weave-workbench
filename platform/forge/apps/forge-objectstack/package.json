@@ -12,7 +12,7 @@
     "start": "objectstack start",
     "prebuild": "node tests/page-polish.static.mjs",
     "build": "objectstack build",
-    "postbuild": "node tests/navigation-linkage.static.mjs",
+    "postbuild": "node tests/navigation-linkage.static.mjs && node tests/authenticated-page-fetch.static.mjs",
     "validate": "objectstack validate",
     "typecheck": "tsc --noEmit",
     "acceptance:approval-workbench-context": "node --experimental-strip-types --test tests/approval-workbench-context.integration.mjs",
