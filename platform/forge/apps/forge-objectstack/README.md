@@ -47,6 +47,23 @@ pnpm build
 
 仓库保留 [Dockerfile](Dockerfile) 和 [docker-compose.yml](docker-compose.yml)；这些文件存在不代表当前版本已完成部署、恢复或客户交付验证。实际发布须遵循[正式版本交付要求](../../docs/first-release.md)，按本次版本记录配置和证据，不沿用脚手架的默认服务能力承诺。
 
+### 固定构建 ObjectUI Console
+
+Forge CLI 17.3.0 从应用工作目录优先解析 `node_modules/@objectstack/console`。发布镜像在这个包内注入固定 ObjectUI 构建产物，CLI 的 Console 路由因此使用新七应用界面；Forge API、`/api/v1/mcp` 和事件流仍由原 Nginx `location /` 转发到同一个 Forge 服务。
+
+产物来源与完整摘要由 [`console94.lock.json`](console94.lock.json) 锁定。需要 Node 24.19.0 和 pnpm 10.31.0；先让 `OBJECTUI_SOURCE_DIR` 指向含锁定提交的 ObjectUI Git checkout，再执行：
+
+```sh
+OBJECTUI_SOURCE_DIR=/path/to/objectui pnpm console94:build
+pnpm console94:verify
+```
+
+构建脚本用 `git archive` 读取锁定的 ObjectUI 提交，不读取工作区改动。它将站点基路径设为 `/_console/`，移除仅供分析且包含构建机绝对路径的 `stats.html`，修正生成 HTML 中嵌套路由下会错误解析的 manifest 相对地址，再对注入文件树逐字节校验。产物写入 `.generated/console94/`，已加入 Git 与主构建上下文忽略列表。
+
+Docker Compose 通过 BuildKit `additional_contexts` 注入该目录；直接使用 Compose 构建时，也将 `console94-build.env` 中的源码修订和树摘要传入 `FORGE_CONSOLE_SOURCE_REVISION`、`FORGE_CONSOLE_TREE_SHA256`。`scripts/deploy.sh` 自动传递同一上下文和摘要，并在备份和切换前检查构建材料。镜像构建还会复核 Console 包、CLI 版本、源提交戳和完整产物摘要；Docker 镜像标签及发布记录都写入 Console 源提交与树摘要。ObjectStack runtime 固定为 `17.3.0` 的 OCI digest，与 Forge 锁定的 CLI 主机版本配套；现有发布流程通过重新启用上一应用/代理镜像回滚，候选失败时不会改变公网入口。
+
+当前已确认的官方 `17.3.0` runtime 使用 Node 22，而 Forge app build stage 使用 Node 24.19.0；依赖树含原生 `better-sqlite3`。本机没有 Docker，尚未验证该 native addon 在 runtime 中的加载行为。候选镜像启动健康检查必须通过后才能接受该镜像组合；此次静态构建和 Console 文件校验不替代这一步。
+
 单机或客户内网部署使用 `scripts/deploy.sh`。公网同源入口由独立 Nginx 容器提供，Forge 应用端口只暴露在 Compose 内网。Nginx 对文本和 JSON 使用 gzip；仅 200、内容哈希命名且 MIME 属于 JavaScript、CSS 或字体的资源可获一年浏览器缓存。HTML 需重新验证，带认证的响应保持私有，写入、认证和上传响应不缓存；SSE/MCP 流按事件到达且不压缩。Nginx 不启用共享响应缓存。
 
 发布脚本按同一源码提交构建带修订标识的应用和代理镜像，发布前备份已有 PostgreSQL；先在仅绑定回环地址的候选端口验证 Nginx 与 Forge，再更新应用、重新验证候选入口，最后切换公网端口。任一健康检查失败会尝试恢复上一应用与代理镜像；首次由直连切换到代理时，失败则恢复上一应用的原公网端口。发布记录写入 `.deploy/releases/`，包含镜像标识、端口和备份位置，不含密钥。环境差异只放在未提交的 `.env` 中，业务数据继续保存在独立 Docker volume。

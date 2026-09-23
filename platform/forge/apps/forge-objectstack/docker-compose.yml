@@ -14,6 +14,8 @@ x-forge-proxy: &forge-proxy
     context: .
     dockerfile: Dockerfile
     target: proxy
+    additional_contexts:
+      console94: ${FORGE_CONSOLE_BUILD_CONTEXT:-.generated/console94}
     args:
       FORGE_SOURCE_REVISION: ${FORGE_SOURCE_REVISION:-unknown}
   depends_on:
@@ -34,6 +36,11 @@ services:
       context: .
       dockerfile: Dockerfile
       target: app
+      additional_contexts:
+        console94: ${FORGE_CONSOLE_BUILD_CONTEXT:-.generated/console94}
+      args:
+        CONSOLE_SOURCE_REVISION: ${FORGE_CONSOLE_SOURCE_REVISION:-unknown}
+        CONSOLE_TREE_SHA256: ${FORGE_CONSOLE_TREE_SHA256:-unknown}
     expose:
       - "8080"
     volumes:
