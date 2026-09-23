@@ -2,6 +2,7 @@ node_modules
 .deploy/
 dist
 .generated/console94/
+.generated/console94-layout.json
 .objectstack/
 *.log
 .DS_Store
