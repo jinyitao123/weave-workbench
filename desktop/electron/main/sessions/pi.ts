@@ -1,10 +1,11 @@
 import { randomBytes } from 'node:crypto'
 import { appendFileSync, readFileSync } from 'node:fs'
+import { readdir } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
-import { isRecord } from '../validation'
+import { basename, join, relative, resolve, sep } from 'node:path'
+import { isPathWithin, isRecord } from '../validation'
 import type { SessionServiceOptions } from '../sessions'
-import type { SessionCatalogIo } from './catalog'
+import type { SessionCatalogEntry, SessionCatalogIo } from './catalog'
 import {
   createBranchSummaryTranscriptReader,
   createBucketedCatalogIo,
@@ -40,11 +41,35 @@ export function piSessionRoot(): string {
 
 export const piTimestampFromSessionName = timestampFromBucketedSessionName
 
-export function createPiCatalogIo(): SessionCatalogIo {
-  return createBucketedCatalogIo()
+function isAccountScopedPiRoot(root: string): boolean {
+  const parts = resolve(root).split(sep)
+  return parts.length >= 4 && parts.at(-1) === 'pi' && parts.at(-3) === 'accounts' && parts.at(-4) === 'agent-sessions'
 }
 
-export const isPiSessionPath = isBucketedSessionPath
+export function createPiCatalogIo(): SessionCatalogIo {
+  const bucketed = createBucketedCatalogIo()
+  return {
+    ...bucketed,
+    async readDirectory(root: string): Promise<readonly SessionCatalogEntry[]> {
+      const nested = await bucketed.readDirectory(root)
+      if (!isAccountScopedPiRoot(root)) return nested
+      // PI_CODING_AGENT_SESSION_DIR is an exact directory. Account-scoped Pi
+      // sessions therefore sit directly below this root, unlike the default
+      // ~/.pi/agent/sessions/<cwd-bucket>/ layout.
+      const direct = (await readdir(root, { withFileTypes: true }))
+        .filter((entry) => entry.isFile() && piTimestampFromSessionName(entry.name) !== undefined)
+        .map((entry) => ({ name: entry.name, isFile: () => true, isSymbolicLink: () => false }))
+      return [...direct, ...nested]
+    },
+  }
+}
+
+export function isPiSessionPath(root: string, path: string): boolean {
+  if (isBucketedSessionPath(root, path)) return true
+  if (!isAccountScopedPiRoot(root) || !isPathWithin(root, path)) return false
+  const segments = relative(root, path).split(sep)
+  return segments.length === 1 && segments[0] === basename(path) && piTimestampFromSessionName(segments[0]!) !== undefined
+}
 
 const piMetadataParser = createBucketedMetadataParser((state, value) => {
   if (value.type === 'model_change') {

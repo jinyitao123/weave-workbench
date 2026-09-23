@@ -1,11 +1,12 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { basename, dirname, join, posix, relative, resolve, win32 } from 'node:path'
-import { lstat, mkdir, readdir, readFile, realpath } from 'node:fs/promises'
-import type { BigIntStats, Dirent } from 'node:fs'
+import { basename, dirname, extname, isAbsolute, join, posix, relative, resolve, win32 } from 'node:path'
+import { constants } from 'node:fs'
+import { lstat, mkdir, open, readFile, readdir, realpath, rename, rm } from 'node:fs/promises'
+import type { BigIntStats, Dirent, Stats } from 'node:fs'
 import { dialog, type BrowserWindow } from 'electron'
 import { homedir } from 'node:os'
 import { sortProjects } from '../../src/lib/project-order'
-import type { GitWorktree, HarnessId, ProjectFileEntry, ProjectFileListing, ProjectRecord, ProjectScripts, SessionRecord } from '../../src/types/api'
+import type { GitWorktree, HarnessId, ProjectFileEntry, ProjectFileListing, ProjectRecord, ProjectScripts, SessionRecord, WorkspaceMaterialReference } from '../../src/types/api'
 import { listGitWorktrees } from './git'
 import { HARNESSES } from './harness'
 import { mapLimit } from './lib/async'
@@ -13,6 +14,31 @@ import type { FolderIdentity, JsonStateStore, PersistedProject } from './store'
 import { isPathWithin, rejectUnknownKeys, requireBoolean, requireExistingDirectory, requireExistingPath, requireId, requireInteger, requireRecord, requireString } from './validation'
 
 const MAX_CONCURRENT_BRANCH_LOOKUPS = 4
+const MAX_WORKSPACE_TEXT_MATERIAL_BYTES = 700_000
+
+function workspaceTextMaterialName(value: unknown): { name: string; mimeType: WorkspaceMaterialReference['mimeType'] } {
+  const name = requireString(value, 'file name', { min: 1, max: 255 })
+  if (name === '.' || name === '..' || [...name].some((part) => {
+    const code = part.codePointAt(0)!
+    return part === '/' || part === '\\' || code <= 31 || code === 127
+  }) || basename(name) !== name || Buffer.byteLength(name) > 200) {
+    throw new TypeError('Text attachment name is invalid')
+  }
+  const extension = extname(name).toLowerCase()
+  if (!['.txt', '.md', '.markdown'].includes(extension)) throw new TypeError('Only UTF-8 text and Markdown attachments are supported')
+  return { name, mimeType: extension === '.txt' ? 'text/plain' : 'text/markdown' }
+}
+
+function workspaceTextMaterialBytes(value: unknown): Buffer {
+  if (!(value instanceof Uint8Array)) throw new TypeError('Text attachment bytes are invalid')
+  if (value.byteLength < 1 || value.byteLength > MAX_WORKSPACE_TEXT_MATERIAL_BYTES) throw new TypeError('Text attachment must be between 1 byte and 700 KB')
+  const bytes = Buffer.from(value)
+  let text: string
+  try { text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes) }
+  catch { throw new TypeError('Text attachment must be valid UTF-8') }
+  if (!text.trim() || text.includes('\0')) throw new TypeError('Text attachment is empty or contains a NUL byte')
+  return bytes
+}
 
 function inferredId(path: string): string {
   return `inferred-${createHash('sha256').update(path).digest('hex').slice(0, 24)}`
@@ -768,6 +794,85 @@ export class ProjectService {
     this.assertScopeRevision(grantRevision)
     this.authorizationRevision += 1
     return { ...granted, ...project, purpose: 'personal', name: '我的工作', pinned: true, materialsFolder, deliveriesFolder }
+  }
+
+  /** Copies a selected UTF-8 text file into the currently owned workspace. */
+  async importTextMaterial(projectIdValue: unknown, workspacePathValue: unknown, nameValue: unknown, bytesValue: unknown): Promise<WorkspaceMaterialReference> {
+    const scope = this.accountScope
+    const scopeRevision = this.accountScopeRevision
+    const projectId = requireId(projectIdValue, 'project id')
+    const requestedWorkspacePath = requireString(workspacePathValue, 'workspace path', { min: 1, max: 4096 })
+    const { name, mimeType } = workspaceTextMaterialName(nameValue)
+    const bytes = workspaceTextMaterialBytes(bytesValue)
+    const sha256 = createHash('sha256').update(bytes).digest('hex')
+    this.assertScopeRevision(scopeRevision)
+
+    const project = this.ownProjects(this.store.snapshot().projects, scope).find((item) => item.id === projectId)
+    if (!project) throw new TypeError('The active workspace is no longer available in this account')
+    const root = await this.authorizeCwd(requestedWorkspacePath)
+    const projectRoots = [...new Set([project.primaryFolder, ...project.folders])]
+    let belongsToProject = false
+    for (const projectRoot of projectRoots) {
+      try {
+        if (isPathWithin(await realpath(projectRoot), root)) { belongsToProject = true; break }
+      } catch { /* A removed secondary folder is not an authorized destination. */ }
+    }
+    if (!belongsToProject) throw new TypeError('The active workspace path is outside this project')
+    this.assertScopeRevision(scopeRevision)
+
+    const ensurePrivateDirectory = async (path: string, parent: string): Promise<string> => {
+      let info: Stats
+      try { info = await lstat(path) }
+      catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+        await mkdir(path, { mode: 0o700 })
+        info = await lstat(path)
+      }
+      if (!info.isDirectory() || info.isSymbolicLink()) throw new TypeError('Workspace materials directory must be a stable directory')
+      const canonical = await realpath(path)
+      if (!isPathWithin(parent, canonical)) throw new TypeError('Workspace materials directory must stay inside the active workspace')
+      return canonical
+    }
+
+    const materialsRoot = await ensurePrivateDirectory(join(root, '材料'), root)
+    const attachmentsRoot = await ensurePrivateDirectory(join(materialsRoot, '附件'), materialsRoot)
+    const attachmentDirectory = join(attachmentsRoot, randomUUID())
+    let temporaryPath: string | undefined
+    let handle: Awaited<ReturnType<typeof open>> | undefined
+    try {
+      await mkdir(attachmentDirectory, { mode: 0o700 })
+      const canonicalDirectory = await realpath(attachmentDirectory)
+      if (!isPathWithin(attachmentsRoot, canonicalDirectory)) throw new TypeError('Workspace attachment path is invalid')
+      temporaryPath = join(canonicalDirectory, `.writing-${randomUUID()}`)
+      const flags = constants.O_RDWR | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW ?? 0)
+      handle = await open(temporaryPath, flags, 0o600)
+      await handle.writeFile(bytes)
+      await handle.chmod(0o600)
+      await handle.sync()
+      const fileInfo = await handle.stat()
+      const verify = Buffer.alloc(bytes.length)
+      const { bytesRead } = await handle.read(verify, 0, verify.length, 0)
+      if (!fileInfo.isFile() || fileInfo.size !== bytes.length || bytesRead !== bytes.length || createHash('sha256').update(verify).digest('hex') !== sha256) {
+        throw new Error('Imported workspace material changed while it was being saved')
+      }
+      await handle.close()
+      handle = undefined
+
+      const destination = join(canonicalDirectory, name)
+      await rename(temporaryPath, destination)
+      temporaryPath = undefined
+      this.assertScopeRevision(scopeRevision)
+      const currentProject = this.ownProjects(this.store.snapshot().projects, scope).find((item) => item.id === projectId)
+      if (!currentProject || resolve(currentProject.primaryFolder) !== resolve(project.primaryFolder)) throw new TypeError('The active workspace changed while the attachment was being imported')
+      await this.authorizeCwd(root)
+      const path = relative(root, destination).split(/[\\/]/).join('/')
+      if (!path || path === '..' || path.startsWith('../') || isAbsolute(path)) throw new TypeError('Imported attachment path is outside the active workspace')
+      return { projectId, harness: this.harness, workspacePath: root, name, path, sha256, bytes: bytes.length, mimeType }
+    } catch (error) {
+      await handle?.close().catch(() => undefined)
+      await rm(attachmentDirectory, { recursive: true, force: true }).catch(() => undefined)
+      throw error
+    }
   }
 
   async grantInferred(pathValue: unknown): Promise<ProjectRecord> {

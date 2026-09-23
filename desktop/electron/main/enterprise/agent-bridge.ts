@@ -2,12 +2,15 @@ import { randomUUID } from 'node:crypto'
 import { approvalContextView, type ApprovalRevisionSubmission, type EnterpriseService } from '../enterprise'
 import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseWorkChoice, EnterpriseWorkResource, TranscriptMessage } from '../../../src/types/api'
 import { CapabilityBridge, type CapabilityClaim } from '../lib/capability-bridge'
+import { canonicalSessionPath } from '../session-paths'
 import { rejectUnknownKeys, requireString } from '../validation'
 import { digest, HandoffStore, submissionUUID, type HandoffStorage } from './handoff-store'
 import { executionText, freezeMaterials, materialSelection, type FrozenMaterial, type MaterialLimits } from './materials'
 import { searchTeams, type TeamSummary } from './team-catalog'
 
-interface EnterpriseSessionReader { read(filePath: unknown): Promise<TranscriptMessage[]> }
+interface EnterpriseSessionReader {
+  read(filePath: unknown): Promise<TranscriptMessage[]>
+}
 export interface AgentEnterpriseBridgeOptions {
   service: Pick<EnterpriseService, 'accountKey' | 'getApprovalContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'findBusinessRecords' | 'stageWorkMaterials' | 'submitWork' | 'submitApprovalRevision' | 'getApprovalRevisionReceipt'>
   sessions: Record<'prime' | 'omp' | 'pi', EnterpriseSessionReader>
@@ -32,6 +35,7 @@ interface EmployeeTurn {
   prompt: string
   accountKey: string
   baseline: Set<string>
+  pendingSessionPrompts?: string[]
   messageId?: string
 }
 interface PendingReturnedApproval {
@@ -157,7 +161,10 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   private readonly businessRecords = new Map<string, Map<string, { objectName: string; recordId: string; name: string; code?: string }>>()
   private readonly runtimes = new Map<string, string>()
   private readonly pendingRuntimeTokens = new Map<string, string>()
+  private readonly pendingFirstPrompts = new Set<string>()
+  private readonly newSessionTokens = new Set<string>()
   private readonly turns = new Map<string, EmployeeTurn>()
+  private readonly sessionBindingWaiters = new Map<string, Set<() => void>>()
   private readonly inputs = new Map<string, symbol>()
   private readonly inFlight = new Map<string, Promise<unknown>>()
   private readonly revisionInFlight = new Map<string, Promise<unknown>>()
@@ -171,6 +178,9 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   }
   protected onClaimRevoked(claim: CapabilityClaim): void {
     this.teams.delete(claim.token); this.handoffs.delete(claim.token); this.businessActions.delete(claim.token); this.businessRecords.delete(claim.token); this.turns.delete(claim.token); this.inputs.delete(claim.token); this.returnedApprovals.delete(claim.token)
+    this.pendingFirstPrompts.delete(claim.token)
+    this.newSessionTokens.delete(claim.token)
+    this.notifySessionBinding(claim.token)
     for (const [runtime, token] of this.runtimes) if (token === claim.token) this.runtimes.delete(runtime)
     for (const [runtime, token] of this.pendingRuntimeTokens) if (token === claim.token) this.pendingRuntimeTokens.delete(runtime)
   }
@@ -189,27 +199,78 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   }
   bindSession(token: string | undefined, sessionFile: string | undefined, runtimeId?: string): void {
     if (!token) return
+    const claim = this.claimForToken(token)
+    if (!claim) {
+      if (runtimeId) {
+        this.runtimes.delete(runtimeId)
+        this.pendingRuntimeTokens.delete(runtimeId)
+      }
+      return
+    }
+    if (runtimeId && !claim.sessionPath) this.newSessionTokens.add(token)
     if (runtimeId && !sessionFile) {
-      this.pendingRuntimeTokens.set(runtimeId, token)
+      this.runtimes.set(runtimeId, token)
+      if (!claim.sessionPath) {
+        this.pendingRuntimeTokens.set(runtimeId, token)
+        this.pendingFirstPrompts.add(token)
+      }
       return
     }
     if (!sessionFile) return
-    const claim = this.claimForToken(token)
+    if (claim.sessionPath && canonicalSessionPath(claim.sessionPath) !== canonicalSessionPath(sessionFile)) {
+      this.revoke(token)
+      throw new Error('Pi 会话文件与桌面授权会话不匹配，企业能力已失效')
+    }
     if (claim && !claim.sessionPath) claim.sessionPath = sessionFile
     if (claim && runtimeId) {
       this.runtimes.set(runtimeId, token)
       this.pendingRuntimeTokens.delete(runtimeId)
+      this.pendingFirstPrompts.delete(token)
+      this.notifySessionBinding(token)
     }
   }
   bindRuntimeSession(runtimeId: string, sessionFile: string): void {
-    const token = this.pendingRuntimeTokens.get(runtimeId)
+    const token = this.pendingRuntimeTokens.get(runtimeId) ?? this.runtimes.get(runtimeId)
     if (token) this.bindSession(token, sessionFile, runtimeId)
   }
+  private notifySessionBinding(token: string): void {
+    const waiters = this.sessionBindingWaiters.get(token)
+    if (!waiters) return
+    this.sessionBindingWaiters.delete(token)
+    for (const wake of waiters) wake()
+  }
+  private async waitForSessionBinding(claim: CapabilityClaim, turn: EmployeeTurn): Promise<void> {
+    if (claim.sessionPath) return
+    if (!turn.pendingSessionPrompts) throw new Error('企业团队能力尚未绑定到当前桌面会话')
+    await new Promise<void>((resolveWait) => {
+      let settled = false
+      let timer: NodeJS.Timeout
+      const waiters = this.sessionBindingWaiters.get(claim.token) ?? new Set<() => void>()
+      const wake = () => {
+        if (settled) return
+        settled = true
+        clearTimeout(timer)
+        waiters.delete(wake)
+        if (!waiters.size) this.sessionBindingWaiters.delete(claim.token)
+        resolveWait()
+      }
+      timer = setTimeout(wake, 2_000)
+      this.sessionBindingWaiters.set(claim.token, waiters)
+      waiters.add(wake)
+      if (claim.sessionPath || this.claimForToken(claim.token) !== claim || this.turns.get(claim.token) !== turn) wake()
+    })
+    if (this.claimForToken(claim.token) !== claim || this.turns.get(claim.token) !== turn
+      || await this.options.service.accountKey() !== turn.accountKey) throw new Error('员工轮次或账号已变化，请按当前要求重新处理')
+    if (!claim.sessionPath) throw new Error('Pi 会话文件尚未绑定，请在会话准备完成后重试')
+  }
   invalidateHandoff(runtimeId: string): void {
-    const token = this.runtimes.get(runtimeId)
+    const token = this.runtimes.get(runtimeId) ?? this.pendingRuntimeTokens.get(runtimeId)
     if (!token) return
+    this.pendingRuntimeTokens.delete(runtimeId)
+    this.pendingFirstPrompts.delete(token)
     this.inputs.set(token, Symbol())
     this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessRecords.delete(token)
+    this.notifySessionBinding(token)
   }
   invalidateAccount(): void {
     this.revokeAllClaims()
@@ -223,7 +284,9 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       if (returnedApprovalContextHandle !== undefined) throw new Error('退回事项上下文只能绑定到桌面工作提示')
       return
     }
-    const token = typeof runtimeId === 'string' ? this.runtimes.get(runtimeId) : undefined
+    const token = typeof runtimeId === 'string'
+      ? this.runtimes.get(runtimeId) ?? this.pendingRuntimeTokens.get(runtimeId)
+      : undefined
     if (!token) {
       if (returnedApprovalContextHandle !== undefined) throw new Error('退回事项上下文未绑定到当前桌面会话')
       return
@@ -231,15 +294,22 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const marker = Symbol()
     this.inputs.set(token, marker)
     this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessRecords.delete(token)
+    this.notifySessionBinding(token)
     const claim = this.claimForToken(token)
-    if (!claim?.harness || !claim.sessionPath || typeof value.message !== 'string') {
+    if (!claim?.harness || typeof value.message !== 'string') {
       if (returnedApprovalContextHandle !== undefined) throw new Error('退回事项上下文未绑定到当前桌面会话')
       return
     }
+    const pathPending = !claim.sessionPath
+    if (pathPending && (value.type !== 'prompt' || !this.pendingFirstPrompts.has(token))) {
+      if (returnedApprovalContextHandle !== undefined) throw new Error('退回事项上下文未绑定到当前桌面会话')
+      return
+    }
+    if (pathPending) this.pendingFirstPrompts.delete(token)
     let pendingApproval: PendingReturnedApproval | undefined
     let handle: string | undefined
     if (returnedApprovalContextHandle !== undefined) {
-      if (value.type !== 'prompt' || typeof returnedApprovalContextHandle !== 'string' || returnedApprovalContextHandle.length < 20 || returnedApprovalContextHandle.length > 128) {
+      if (!claim.sessionPath || value.type !== 'prompt' || typeof returnedApprovalContextHandle !== 'string' || returnedApprovalContextHandle.length < 20 || returnedApprovalContextHandle.length > 128) {
         throw new Error('退回事项上下文与当前会话不匹配')
       }
       handle = returnedApprovalContextHandle
@@ -260,16 +330,32 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           throw new Error('退回意见或材料版本已变化，请重新打开待办')
         }
       }
-      const messages = await this.options.sessions[claim.harness].read(claim.sessionPath)
-      if (this.inputs.get(token) === marker) {
+      const newSessionFirstPrompt = this.newSessionTokens.has(token) && value.type === 'prompt'
+      const pendingSessionPrompts = pathPending || newSessionFirstPrompt ? [value.message.trim()] : undefined
+      let messages: TranscriptMessage[] = []
+      if (claim.sessionPath) {
+        try { messages = await this.options.sessions[claim.harness].read(claim.sessionPath) }
+        catch (error) {
+          if (!(newSessionFirstPrompt && (error as NodeJS.ErrnoException)?.code === 'ENOENT')) throw error
+          // Pi may report the future session path before creating its file.
+          // This is only allowed for a runtime started without a resume path.
+        }
+      }
+      const currentRuntimeToken = typeof runtimeId === 'string'
+        ? this.runtimes.get(runtimeId) ?? this.pendingRuntimeTokens.get(runtimeId)
+        : undefined
+      if (this.inputs.get(token) === marker && this.claimForToken(token) === claim && currentRuntimeToken === token) {
         if (pendingApproval) {
-          if (this.claimForToken(token) !== claim) throw new Error('退回事项上下文已失效，请重新打开待办')
+          if (!claim.sessionPath || this.claimForToken(token) !== claim) throw new Error('退回事项上下文已失效，请重新打开待办')
           this.returnedApprovals.set(token, { ...pendingApproval, sessionPath: claim.sessionPath })
           this.pendingReturnedApprovals.delete(handle!)
         }
+        this.pendingFirstPrompts.delete(token)
+        this.newSessionTokens.delete(token)
         this.turns.set(token, {
           key: randomUUID(), prompt: value.message.trim(), accountKey,
           baseline: new Set(messages.filter((message) => message.role === 'user').map((message) => message.id)),
+          ...(pendingSessionPrompts ? { pendingSessionPrompts } : {}),
         })
       } else if (pendingApproval) {
         throw new Error('员工轮次已变化，退回事项不能继续')
@@ -283,15 +369,17 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     }
   }
   protected async dispatch(method: string, params: Record<string, unknown>, claim: CapabilityClaim): Promise<unknown> {
-    if (!claim.harness || !claim.sessionPath) throw new Error('企业团队能力尚未绑定到当前会话')
+    if (!claim.harness) throw new Error('企业团队能力尚未绑定到当前会话')
     const turn = this.turns.get(claim.token)
-    if (!turn || this.claimForToken(claim.token) !== claim || await this.options.service.accountKey() !== turn.accountKey) throw new Error('员工轮次或账号已变化，请按当前要求重新处理')
+    const accountKey = await this.options.service.accountKey()
+    if (!turn || this.claimForToken(claim.token) !== claim || accountKey !== turn.accountKey) throw new Error('员工轮次或账号已变化，请按当前要求重新处理')
     if (this.turns.get(claim.token) !== turn || this.claimForToken(claim.token) !== claim) throw new Error('员工轮次或账号已变化，请按当前要求重新处理')
     if (method === 'activate') {
       if (params.prompt !== turn.prompt) throw new Error('运行时处理的员工输入与当前轮次不一致')
       return { turn_key: turn.key }
     }
     if (params.turn_key !== turn.key) throw new Error('员工要求已变化，旧交接不能继续')
+    if (!claim.sessionPath) await this.waitForSessionBinding(claim, turn)
     await this.evidence(claim, turn)
     if (method === 'search') return this.search(claim, params, turn)
     if (method === 'describe') return this.describe(claim, params, turn)
@@ -323,6 +411,13 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const transcript = await this.options.sessions[claim.harness!].read(claim.sessionPath!)
     const messages = transcript.map((message, eventSeq) => ({ message, eventSeq, text: messageText(message) }))
     const authorization = [...messages].reverse().find((entry) => entry.message.role === 'user')
+    if (turn.pendingSessionPrompts) {
+      const userMessages = messages.filter((entry) => entry.message.role === 'user').map((entry) => entry.text)
+      if (userMessages.length !== turn.pendingSessionPrompts.length
+        || userMessages.some((prompt, index) => prompt !== turn.pendingSessionPrompts![index])) {
+        throw new Error('无法核对新 Pi 会话中的员工消息顺序，请重新打开会话')
+      }
+    }
     if (await this.options.service.accountKey() !== turn.accountKey || this.turns.get(claim.token) !== turn || this.claimForToken(claim.token) !== claim) throw new Error('员工轮次或账号已变化，旧交接不能继续')
     if (!authorization || authorization.text !== turn.prompt || turn.baseline.has(authorization.message.id) || (turn.messageId && turn.messageId !== authorization.message.id)) throw new Error('当前员工输入尚未进入原会话，或员工要求已经变化')
     turn.messageId = authorization.message.id

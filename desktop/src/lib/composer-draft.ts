@@ -1,8 +1,11 @@
+import type { HarnessId, WorkspaceMaterialReference } from '@/types/api'
+
 export interface ComposerDraftSnapshot {
   text: string
   model?: string
   effort?: string
   fast?: boolean
+  attachments?: WorkspaceMaterialReference[]
 }
 
 const LEGACY_COMPOSER_DRAFT_KEY = 'prime-work.composer-draft'
@@ -14,7 +17,22 @@ export function composerDraftStorageKey(scope: string): string {
 
 /** Model, effort, and fast mode ride along with typed text; alone they are not a draft. */
 function emptyDraft(snapshot: ComposerDraftSnapshot): boolean {
-  return !snapshot.text
+  return !snapshot.text && !snapshot.attachments?.length
+}
+
+const harnesses = new Set<HarnessId>(['prime', 'omp', 'pi'])
+function isMaterialReference(value: unknown): value is WorkspaceMaterialReference {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  const item = value as Partial<WorkspaceMaterialReference>
+  return typeof item.projectId === 'string' && /^[A-Za-z0-9_.:@-]{1,256}$/.test(item.projectId)
+    && typeof item.harness === 'string' && harnesses.has(item.harness as HarnessId)
+    && typeof item.workspacePath === 'string' && item.workspacePath.length > 0 && item.workspacePath.length <= 4096 && !item.workspacePath.includes('\0')
+    && typeof item.name === 'string' && item.name.length > 0 && item.name.length <= 255
+    && typeof item.path === 'string' && item.path.startsWith('材料/') && !item.path.startsWith('/') && !item.path.includes('\\')
+    && !item.path.split('/').some((part) => !part || part === '.' || part === '..')
+    && typeof item.sha256 === 'string' && /^[0-9a-f]{64}$/.test(item.sha256)
+    && Number.isSafeInteger(item.bytes) && Number(item.bytes) > 0 && Number(item.bytes) <= 700_000
+    && (item.mimeType === 'text/plain' || item.mimeType === 'text/markdown')
 }
 
 /** Snapshot the composer's current DOM value so a crash-and-reload keeps the draft. */
@@ -34,6 +52,7 @@ export function saveComposerDraft(scope: string, snapshot: ComposerDraftSnapshot
       model: snapshot.model || previous?.model,
       effort: snapshot.effort ?? previous?.effort,
       fast: snapshot.fast ?? previous?.fast,
+      attachments: snapshot.attachments ?? previous?.attachments,
     }
     if (emptyDraft(next)) {
       window.sessionStorage.removeItem(key)
@@ -51,7 +70,8 @@ export function readComposerDraft(scope: string): ComposerDraftSnapshot | null {
     if (raw) {
       const parsed = JSON.parse(raw) as unknown
       if (parsed && typeof parsed === 'object' && typeof (parsed as ComposerDraftSnapshot).text === 'string') {
-        return parsed as ComposerDraftSnapshot
+        const snapshot = parsed as ComposerDraftSnapshot
+        return { ...snapshot, attachments: Array.isArray(snapshot.attachments) ? snapshot.attachments.filter(isMaterialReference) : undefined }
       }
     }
     const legacy = window.sessionStorage.getItem(LEGACY_COMPOSER_DRAFT_KEY)

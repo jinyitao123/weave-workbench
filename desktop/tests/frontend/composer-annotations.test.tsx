@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Mock } from 'vitest'
 import { Composer } from '../../src/components/Composer'
 import { groupModelsByProvider } from '../../src/hooks/useProviderCatalog'
-import type { BrowserAnnotation, PrimeModelDescriptor, PrimeProviderDescriptor, PromptDeliveryIntent, PromptImage, SessionRecord, TerminalPromptContext, TerminalSelectionContext } from '../../src/types/api'
+import type { BrowserAnnotation, PrimeModelDescriptor, PrimeProviderDescriptor, PromptDeliveryIntent, PromptImage, SessionRecord, TerminalPromptContext, TerminalSelectionContext, WorkspaceMaterialReference } from '../../src/types/api'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -53,6 +53,7 @@ let container: HTMLDivElement
 let root: Root
 
 beforeEach(() => {
+  window.sessionStorage.clear()
   container = document.createElement('div')
   document.body.append(container)
   root = createRoot(container)
@@ -61,13 +62,17 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount())
   container.remove()
+  window.sessionStorage.clear()
   vi.restoreAllMocks()
 })
 
 interface RenderOptions {
   annotations?: BrowserAnnotation[]
+  draftKey?: string
+  workspaceProjectId?: string
   sendSignal?: number
-  onSend?: Mock<(prompt: string, images: PromptImage[], intent: PromptDeliveryIntent) => Promise<void>>
+  onSend?: Mock<(prompt: string, images: PromptImage[], intent: PromptDeliveryIntent, textAttachments: WorkspaceMaterialReference[]) => Promise<void>>
+  onImportTextFile?: Mock<(name: string, bytes: Uint8Array) => Promise<WorkspaceMaterialReference>>
   onRemoveAnnotation?: Mock<(id: string) => void>
   onClearAnnotations?: Mock<() => void>
   terminalSelection?: TerminalSelectionContext
@@ -76,7 +81,7 @@ interface RenderOptions {
   sessions?: SessionRecord[]
 }
 
-function renderComposer({ annotations = [], sendSignal = 0, onSend = vi.fn(async () => undefined), onRemoveAnnotation = vi.fn(), onClearAnnotations = vi.fn(), terminalSelection, getTerminalContext, onClearTerminalSelection = vi.fn(), sessions = [] }: RenderOptions = {}) {
+function renderComposer({ annotations = [], draftKey, workspaceProjectId = 'project', sendSignal = 0, onSend = vi.fn(async () => undefined), onImportTextFile, onRemoveAnnotation = vi.fn(), onClearAnnotations = vi.fn(), terminalSelection, getTerminalContext, onClearTerminalSelection = vi.fn(), sessions = [] }: RenderOptions = {}) {
   act(() =>
     root.render(
       <Composer
@@ -93,6 +98,8 @@ function renderComposer({ annotations = [], sendSignal = 0, onSend = vi.fn(async
         messageEnterAction="queue"
         skills={[]}
         sessions={sessions}
+        workspaceProjectId={workspaceProjectId}
+        draftKey={draftKey}
         annotations={annotations}
         terminalSelection={terminalSelection}
         getTerminalContext={getTerminalContext}
@@ -101,6 +108,7 @@ function renderComposer({ annotations = [], sendSignal = 0, onSend = vi.fn(async
         onEffortChange={vi.fn()}
         onFastChange={vi.fn()}
         onSend={onSend}
+        onImportTextFile={onImportTextFile}
         onStop={vi.fn()}
         onRemoveAnnotation={onRemoveAnnotation}
         onClearAnnotations={onClearAnnotations}
@@ -126,6 +134,59 @@ const clickSend = async () => {
     await Promise.resolve()
   })
 }
+
+describe('Composer workspace text attachments', () => {
+  it('imports a Markdown file, keeps a persistent reference chip, and sends only the reference', async () => {
+    const content = '# Attachment source\nexact text\n'
+    const reference: WorkspaceMaterialReference = {
+      projectId: 'project', harness: 'prime', workspacePath: '/workspace/project', name: 'source.md', path: '材料/附件/opaque/source.md',
+      sha256: 'b'.repeat(64), bytes: new TextEncoder().encode(content).byteLength, mimeType: 'text/markdown',
+    }
+    const onSend = vi.fn(async () => undefined)
+    const onImportTextFile = vi.fn(async (_name: string, bytes: Uint8Array) => {
+      expect(new TextDecoder().decode(bytes)).toBe(content)
+      return reference
+    })
+    renderComposer({ onSend, onImportTextFile })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    const file = new File([content], 'source.md', { type: 'text/markdown' })
+    Object.defineProperty(input, 'files', { configurable: true, value: [file] })
+    await act(async () => {
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+      await Promise.resolve()
+    })
+
+    expect(onImportTextFile).toHaveBeenCalledWith('source.md', expect.any(Uint8Array))
+    expect(container.textContent).toContain('source.md')
+    await clickSend()
+    expect(onSend).toHaveBeenCalledWith('[Attached file]', [], 'queue', [reference])
+  })
+
+  it('reopens the same relative path and digest from the draft, then drops the reference when removed', async () => {
+    const draftKey = 'project:session'
+    const reference: WorkspaceMaterialReference = {
+      projectId: 'project', harness: 'prime', workspacePath: '/workspace/project', name: 'source.md', path: '材料/附件/opaque/source.md',
+      sha256: 'c'.repeat(64), bytes: 12, mimeType: 'text/markdown',
+    }
+    const onImportTextFile = vi.fn(async () => reference)
+    renderComposer({ draftKey, onImportTextFile })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    Object.defineProperty(input, 'files', { configurable: true, value: [new File(['persisted ref'], 'source.md', { type: 'text/markdown' })] })
+    await act(async () => { input.dispatchEvent(new Event('change', { bubbles: true })); await Promise.resolve() })
+    const storageKey = `prime-work.composer-draft.v2:${draftKey}`
+    expect(JSON.parse(window.sessionStorage.getItem(storageKey) ?? '{}').attachments).toEqual([reference])
+
+    await act(async () => root.unmount())
+    root = createRoot(container)
+    renderComposer({ draftKey, onImportTextFile })
+    expect(container.textContent).toContain('source.md')
+    expect(onImportTextFile).toHaveBeenCalledOnce()
+
+    const remove = container.querySelector('button[aria-label="Remove source.md"]') as HTMLButtonElement
+    await act(async () => { remove.click(); await Promise.resolve() })
+    expect(window.sessionStorage.getItem(storageKey)).toBeNull()
+  })
+})
 
 describe('Composer session mentions', () => {
   it('closes an accepted mention and only reopens it after editing back into the query', async () => {

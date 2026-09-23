@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { DragEvent } from 'react'
-import type { PromptImage } from '@/types/api'
+import type { HarnessId, PromptImage, WorkspaceMaterialReference } from '@/types/api'
 
 const supportedImageTypes = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp'])
 export const MAX_COMPOSER_FILE_COUNT = 8
 export const MAX_COMPOSER_IMAGE_SOURCE_BYTES = 1_350_000
+export const MAX_COMPOSER_TEXT_SOURCE_BYTES = 700_000
 
 export interface ComposerImage extends PromptImage {
   id: string
@@ -19,8 +20,22 @@ export interface ComposerUnsupportedFile {
   mimeType: string
 }
 
+export interface ComposerTextFile {
+  id: string
+  reference: WorkspaceMaterialReference
+  size: number
+}
+
 interface UseComposerImagesOptions {
   shortName: string
+  projectId?: string
+  harness?: HarnessId
+  importTextFile?: (name: string, bytes: Uint8Array) => Promise<WorkspaceMaterialReference>
+}
+
+function isSupportedTextFile(file: File): boolean {
+  const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase()
+  return ['.txt', '.md', '.markdown'].includes(extension)
 }
 
 function base64FromBuffer(buffer: ArrayBuffer): string {
@@ -34,18 +49,21 @@ function isFileDrag(event: DragEvent<HTMLElement>): boolean {
   return Array.from(event.dataTransfer.types).includes('Files')
 }
 
-export function useComposerImages({ shortName }: UseComposerImagesOptions) {
+export function useComposerImages({ shortName, projectId, harness, importTextFile }: UseComposerImagesOptions) {
   const [images, setImages] = useState<ComposerImage[]>([])
+  const [textFiles, setTextFiles] = useState<ComposerTextFile[]>([])
   const [unsupportedFiles, setUnsupportedFiles] = useState<ComposerUnsupportedFile[]>([])
   const [error, setError] = useState('')
   const [processing, setProcessing] = useState(false)
   const [dragging, setDragging] = useState(false)
   const imagesRef = useRef<ComposerImage[]>([])
+  const textFilesRef = useRef<ComposerTextFile[]>([])
   const unsupportedFilesRef = useRef<ComposerUnsupportedFile[]>([])
   const pendingBatchesRef = useRef(0)
   const errorRevisionRef = useRef(0)
   const reservedCountRef = useRef(0)
-  const reservedBytesRef = useRef(0)
+  const reservedImageBytesRef = useRef(0)
+  const reservedTextBytesRef = useRef(0)
   const dragDepthRef = useRef(0)
   const mountedRef = useRef(true)
 
@@ -64,13 +82,15 @@ export function useComposerImages({ shortName }: UseComposerImagesOptions) {
   const ingest = useCallback(async (files: readonly File[]) => {
     if (files.length === 0) return
     const startingErrorRevision = errorRevisionRef.current
-    if (imagesRef.current.length + unsupportedFilesRef.current.length + reservedCountRef.current + files.length > MAX_COMPOSER_FILE_COUNT) {
+    if (imagesRef.current.length + textFilesRef.current.length + unsupportedFilesRef.current.length + reservedCountRef.current + files.length > MAX_COMPOSER_FILE_COUNT) {
       updateError(`You can attach up to ${MAX_COMPOSER_FILE_COUNT} files.`)
       return
     }
 
-    const imageFiles = files.filter((file) => supportedImageTypes.has(file.type.toLowerCase()))
-    const otherFiles = files.filter((file) => !supportedImageTypes.has(file.type.toLowerCase()))
+    const textCandidates = files.filter(isSupportedTextFile)
+    const imageFiles = files.filter((file) => !isSupportedTextFile(file) && supportedImageTypes.has(file.type.toLowerCase()))
+    const textFilesToImport = importTextFile ? textCandidates : []
+    const otherFiles = files.filter((file) => !imageFiles.includes(file) && !textFilesToImport.includes(file))
     if (otherFiles.length > 0) {
       const added = otherFiles.map((file, index): ComposerUnsupportedFile => ({
         id: crypto.randomUUID(),
@@ -83,56 +103,96 @@ export function useComposerImages({ shortName }: UseComposerImagesOptions) {
       setUnsupportedFiles(next)
       setError('')
     }
-    if (imageFiles.length === 0) return
+    if (imageFiles.length === 0 && textFilesToImport.length === 0) return
 
-    const sourceBytes = imageFiles.reduce((sum, file) => sum + file.size, 0)
+    const imageSourceBytes = imageFiles.reduce((sum, file) => sum + file.size, 0)
     const currentBytes = imagesRef.current.reduce((sum, image) => sum + image.size, 0)
-    if (currentBytes + reservedBytesRef.current + sourceBytes > MAX_COMPOSER_IMAGE_SOURCE_BYTES) {
+    if (currentBytes + reservedImageBytesRef.current + imageSourceBytes > MAX_COMPOSER_IMAGE_SOURCE_BYTES) {
       updateError('These images are too large to send. Attach smaller images (about 1.3 MB total).')
       return
     }
+    const textSourceBytes = textFilesToImport.reduce((sum, file) => sum + file.size, 0)
+    const currentTextBytes = textFilesRef.current.reduce((sum, file) => sum + file.size, 0)
+    if (textFilesToImport.some((file) => file.size < 1) || currentTextBytes + reservedTextBytesRef.current + textSourceBytes > MAX_COMPOSER_TEXT_SOURCE_BYTES) {
+      updateError('Text and Markdown attachments must total 700 KB or less.')
+      return
+    }
 
-    reservedCountRef.current += imageFiles.length
-    reservedBytesRef.current += sourceBytes
+    const reservedCount = imageFiles.length + textFilesToImport.length
+    reservedCountRef.current += reservedCount
+    reservedImageBytesRef.current += imageSourceBytes
+    reservedTextBytesRef.current += textSourceBytes
     pendingBatchesRef.current += 1
     setProcessing(true)
     try {
-      const added = await Promise.all(imageFiles.map(async (file, index): Promise<ComposerImage> => ({
-        id: crypto.randomUUID(),
-        name: file.name || `Attached image ${index + 1}`,
-        size: file.size,
-        type: 'image',
-        mimeType: file.type.toLowerCase(),
-        data: base64FromBuffer(await file.arrayBuffer()),
-      })))
+      const [imageResults, textResults] = await Promise.all([
+        Promise.allSettled(imageFiles.map(async (file, index): Promise<ComposerImage> => ({
+          id: crypto.randomUUID(),
+          name: file.name || `Attached image ${index + 1}`,
+          size: file.size,
+          type: 'image',
+          mimeType: file.type.toLowerCase(),
+          data: base64FromBuffer(await file.arrayBuffer()),
+        }))),
+        Promise.allSettled(textFilesToImport.map(async (file): Promise<ComposerTextFile> => {
+          const reference = await importTextFile!(file.name, new Uint8Array(await file.arrayBuffer()))
+          if ((projectId && reference.projectId !== projectId) || (harness && reference.harness !== harness)) {
+            throw new Error('The active workspace changed while the attachment was importing.')
+          }
+          return {
+          id: crypto.randomUUID(),
+            reference,
+            size: reference.bytes,
+          }
+        })),
+      ])
       if (!mountedRef.current) return
-      const next = [...imagesRef.current, ...added]
-      imagesRef.current = next
-      setImages(next)
-      if (errorRevisionRef.current === startingErrorRevision) setError('')
+      const addedImages = imageResults.flatMap((result) => result.status === 'fulfilled' ? [result.value] : [])
+      const addedTextFiles = textResults.flatMap((result) => result.status === 'fulfilled' ? [result.value] : [])
+      if (addedImages.length > 0) {
+        const next = [...imagesRef.current, ...addedImages]
+        imagesRef.current = next
+        setImages(next)
+      }
+      if (addedTextFiles.length > 0) {
+        const next = [...textFilesRef.current, ...addedTextFiles]
+        textFilesRef.current = next
+        setTextFiles(next)
+      }
+      const failedImage = imageResults.find((result) => result.status === 'rejected')
+      const failedText = textResults.find((result) => result.status === 'rejected')
+      if (failedImage) updateError(`${shortName} could not read the image.`)
+      else if (failedText) updateError(`${shortName} could not import the text or Markdown file.`)
+      else if (errorRevisionRef.current === startingErrorRevision) setError('')
     } catch {
       if (mountedRef.current) updateError(`${shortName} could not read the image.`)
     } finally {
-      reservedCountRef.current -= imageFiles.length
-      reservedBytesRef.current -= sourceBytes
+      reservedCountRef.current -= reservedCount
+      reservedImageBytesRef.current -= imageSourceBytes
+      reservedTextBytesRef.current -= textSourceBytes
       pendingBatchesRef.current -= 1
       if (mountedRef.current && pendingBatchesRef.current === 0) setProcessing(false)
     }
-  }, [shortName, updateError])
+  }, [harness, importTextFile, projectId, shortName, updateError])
 
   const clear = useCallback(() => {
     imagesRef.current = []
+    textFilesRef.current = []
     unsupportedFilesRef.current = []
     setImages([])
+    setTextFiles([])
     setUnsupportedFiles([])
   }, [])
 
   const remove = useCallback((id: string) => {
     const nextImages = imagesRef.current.filter((image) => image.id !== id)
+    const nextTextFiles = textFilesRef.current.filter((file) => file.id !== id)
     const nextFiles = unsupportedFilesRef.current.filter((file) => file.id !== id)
     imagesRef.current = nextImages
+    textFilesRef.current = nextTextFiles
     unsupportedFilesRef.current = nextFiles
     setImages(nextImages)
+    setTextFiles(nextTextFiles)
     setUnsupportedFiles(nextFiles)
     updateError('')
   }, [updateError])
@@ -140,8 +200,8 @@ export function useComposerImages({ shortName }: UseComposerImagesOptions) {
   const restoreWithinLimits = useCallback((restored: ComposerImage[]) => {
     const current = imagesRef.current
     const currentIds = new Set(current.map((image) => image.id))
-    let count = current.length + unsupportedFilesRef.current.length + reservedCountRef.current
-    let bytes = current.reduce((sum, image) => sum + image.size, 0) + reservedBytesRef.current
+    let count = current.length + textFilesRef.current.length + unsupportedFilesRef.current.length + reservedCountRef.current
+    let bytes = current.reduce((sum, image) => sum + image.size, 0) + reservedImageBytesRef.current
     const accepted: ComposerImage[] = []
     let omitted = 0
     for (const image of restored) {
@@ -159,6 +219,32 @@ export function useComposerImages({ shortName }: UseComposerImagesOptions) {
       const next = [...accepted, ...current]
       imagesRef.current = next
       setImages(next)
+    }
+    return { restored: accepted.length, omitted }
+  }, [])
+
+  const restoreTextFilesWithinLimits = useCallback((restored: ComposerTextFile[]) => {
+    const current = textFilesRef.current
+    const currentIds = new Set(current.map((file) => file.id))
+    let count = imagesRef.current.length + current.length + unsupportedFilesRef.current.length + reservedCountRef.current
+    let bytes = current.reduce((sum, file) => sum + file.size, 0) + reservedTextBytesRef.current
+    const accepted: ComposerTextFile[] = []
+    let omitted = 0
+    for (const file of restored) {
+      if (currentIds.has(file.id)) continue
+      if (count >= MAX_COMPOSER_FILE_COUNT || bytes + file.size > MAX_COMPOSER_TEXT_SOURCE_BYTES) {
+        omitted += 1
+        continue
+      }
+      accepted.push(file)
+      currentIds.add(file.id)
+      count += 1
+      bytes += file.size
+    }
+    if (accepted.length > 0) {
+      const next = [...accepted, ...current]
+      textFilesRef.current = next
+      setTextFiles(next)
     }
     return { restored: accepted.length, omitted }
   }, [])
@@ -194,6 +280,8 @@ export function useComposerImages({ shortName }: UseComposerImagesOptions) {
   return {
     images,
     imagesRef,
+    textFiles,
+    textFilesRef,
     unsupportedFiles,
     unsupportedFilesRef,
     error,
@@ -205,6 +293,7 @@ export function useComposerImages({ shortName }: UseComposerImagesOptions) {
     clear,
     remove,
     restoreWithinLimits,
+    restoreTextFilesWithinLimits,
     dragHandlers: { onDragEnter, onDragOver, onDragLeave, onDrop },
   }
 }
