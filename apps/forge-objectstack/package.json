@@ -15,6 +15,7 @@
     "postbuild": "node tests/navigation-linkage.static.mjs",
     "validate": "objectstack validate",
     "typecheck": "tsc --noEmit",
+    "acceptance:approval-workbench-context": "node --experimental-strip-types --test tests/approval-workbench-context.integration.mjs",
     "acceptance:console-controls": "node tests/console-controls.static.mjs",
     "acceptance:finance-workflow": "node tests/finance-workflow.integration.mjs",
     "acceptance:page-polish": "node tests/page-polish.static.mjs",
