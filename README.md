@@ -6,6 +6,8 @@ Weave Workbench 是桌面工作助手、智能体团队与 Forge 业务系统的
 
 第一版产品目标见[MVP1 验收方案](docs/plans/mvp1.md)，具体推进顺序见[MVP1 落地步骤](docs/plans/mvp1-delivery.md)。
 
+当前阶段成果见[MVP1 第一阶段版本说明](docs/releases/mvp1-phase1-20260923.md)：已保全真实交接、提交审批和人工退回，完整修改重提仍未通过。新增[场景索引](scenarios/README.md)、[共性问题与客户规则分类](docs/plans/mvp1-phase1-priorities.md)及[仓库分支收束方案](docs/engineering/mvp1-phase1-repository-convergence.md)。
+
 用户在桌面端完成日常工作并提交材料，Weave 负责组织智能体、派发任务和保障执行，Forge 负责业务数据、流程、权限和最终业务结果。这个仓库负责把三者组合成一个可以发布、验证和持续演进的产品。
 
 桌面端首次启动会提供“我的工作”，其中包含用户可直接看到的“材料”和“成果”文件夹。用户也可以选择任意本地文件夹作为工作空间，明确允许桌面助手读取和修改的范围。

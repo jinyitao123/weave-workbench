@@ -1,0 +1,272 @@
+{
+  "schemaVersion": 1,
+  "milestone": "mvp1-phase1-20260923",
+  "label": "MVP1 第一阶段：首次交接及人工退回",
+  "scopeConfirmedByUser": "已有交接、提交审批和人工退回作为阶段成果",
+  "status": "local_archival_milestone",
+  "fullBusinessLoopAccepted": false,
+  "remotePublished": false,
+  "archivedAt": "2026-09-23",
+  "sourceSnapshot": {
+    "createdAt": "2026-09-23T02:16:27.702388+00:00",
+    "parent": "4d56fcd17b4dfe4cecee21a7945a3c737318209a",
+    "sourceSnapshotCommit": "25ea3176146a7fcf29f4a64b21c48e378593553c",
+    "sourceSnapshotRef": "refs/heads/codex/mvp1-phase1-source-20260923",
+    "tree": "9f68e8175a05052d0a1d1b4beb0fea86360fe0ed",
+    "activeBranch": "codex/reliable-team-handoff",
+    "activeIndexSha256": "2a7a21e48bac0c40fe468df568301fa366480674d740697d9cbb70258e45e701",
+    "files": [
+      {
+        "path": "contracts/README.md",
+        "sha256": "04df0c4a75d6c5b176671746726791371b14e2ce4caf88c8df00ba1c158aac17"
+      },
+      {
+        "path": "contracts/v1/README.md",
+        "sha256": "2a586433f74515d5e04c3cdc085f78747b9b950c15efeb19cb3651bd17a51e49"
+      },
+      {
+        "path": "contracts/v1/team-run-event.schema.json",
+        "sha256": "3b12c114bc54a61a17229dce642120e40caf348779b0e310d9d0fe7a1dd892a7"
+      },
+      {
+        "path": "desktop/assets/extensions/gooeypi-enterprise.ts",
+        "sha256": "562f2c67ca941b225379cc2a6285c4578c24301ab3025f7f540accf2442b36fb"
+      },
+      {
+        "path": "desktop/electron/main/enterprise.ts",
+        "sha256": "a1e5c16170d2f2ca2dbc5818101364668ee4c8a6fed95ed9682de4f254675c68"
+      },
+      {
+        "path": "desktop/electron/main/enterprise/agent-bridge.ts",
+        "sha256": "624382d8c32c538df36219f5733c247bf90f8eea931766ec93efdeaff7629ef8"
+      },
+      {
+        "path": "desktop/electron/main/enterprise/materials.ts",
+        "sha256": "c0b49668cd4d7cda43d6ae0e48200ff04752e3ae0534f5c40fd62b8ec373b3ed"
+      },
+      {
+        "path": "desktop/electron/main/ipc.ts",
+        "sha256": "521c496c283f109842cc6e0eb9a622f757f44ae7000be8582f909dcb0da3098c"
+      },
+      {
+        "path": "desktop/electron/preload/index.ts",
+        "sha256": "e0b2f4f9899db1b40d2e1ef04b63c15c5f0347b95beeea2058ced8a29c55e437"
+      },
+      {
+        "path": "desktop/src/App.tsx",
+        "sha256": "6b3b976393a28a686f10705f5bf046a3175828ece71e34fb4c19ffbf8fcbb89b"
+      },
+      {
+        "path": "desktop/src/pages/EnterpriseWorkPage.tsx",
+        "sha256": "49c0e7ceb564e83eb6472a792e16c03590a3a08c7239a9659eecf3981fa0f711"
+      },
+      {
+        "path": "desktop/src/styles/pages.css",
+        "sha256": "3efd7ab7314194e577a19df004cd7f0aaf17f25077235e38e96b0fa7f6509218"
+      },
+      {
+        "path": "desktop/src/types/api.ts",
+        "sha256": "296d8bbe1ebc32f8c6052f2d54dc5cad444020746b778d8cfb6db242901b2707"
+      },
+      {
+        "path": "desktop/tests/backend/agent-enterprise-bridge.test.ts",
+        "sha256": "fa01814534bdc88b0e5ce8cbf496f335b3b022b56b2d67b7a4dd7e550216e8ba"
+      },
+      {
+        "path": "desktop/tests/backend/enterprise.test.ts",
+        "sha256": "0377883fd387e2b77f5750200c80be33ee50353e16b735535dffb42a10166822"
+      },
+      {
+        "path": "desktop/tests/backend/shipped-extension-contracts.test.ts",
+        "sha256": "75d97c1be38ed7a2412374a0c66bb9d0ff822286dc353b37bf9f6b519427b2d7"
+      },
+      {
+        "path": "docs/acceptance/2026-09-23-product-use-deep-audit.md",
+        "sha256": "87b10d59a2b01d9e4dfc5da2476f24188d98965efce9000cc88230745cc68a46"
+      },
+      {
+        "path": "docs/acceptance/2026-09-23-sales-contract-scenario-audit.md",
+        "sha256": "b2bc4f6a282a6d69b526fcb6d76cd6d002f3cca22f756752b872092d2741c17f"
+      },
+      {
+        "path": "docs/project-status.md",
+        "sha256": "115302d5254afa8f525d8d9d920cfc2385c616ec640564d93cbf3259fa924000"
+      }
+    ],
+    "excluded": [
+      "scenarios/sales-contract-handoff/test-accounts.md"
+    ],
+    "scope": "handoff -> formal approval submission -> human return; not full dual approval completion"
+  },
+  "milestoneRef": "refs/tags/mvp1-phase1-20260923",
+  "milestoneBranch": "refs/heads/codex/mvp1-phase1-20260923",
+  "componentRefs": [
+    {
+      "repository": "weave-next",
+      "role": "runtime",
+      "ref": "refs/archive/mvp1-phase1-20260923/runtime",
+      "commit": "a5893a0d1b119438a10ecd639f8eb923528dfd3a"
+    },
+    {
+      "repository": "weave-next",
+      "role": "candidate",
+      "ref": "refs/archive/mvp1-phase1-20260923/candidate",
+      "commit": "6da5d43d24376ba5195a3bb980d77be47d3e2715"
+    },
+    {
+      "repository": "weave-next",
+      "role": "main",
+      "ref": "refs/archive/mvp1-phase1-20260923/main",
+      "commit": "cddc417e32383cb4872758184dc80fa10de36952"
+    },
+    {
+      "repository": "inoForge",
+      "role": "runtime",
+      "ref": "refs/archive/mvp1-phase1-20260923/runtime",
+      "commit": "2ec1de8f0accbb8d690558651d62530d7736f899"
+    },
+    {
+      "repository": "inoForge",
+      "role": "candidate",
+      "ref": "refs/archive/mvp1-phase1-20260923/candidate",
+      "commit": "74488f58b1a3150d034cd88c5297f156a3d92ae0"
+    },
+    {
+      "repository": "inoForge",
+      "role": "main",
+      "ref": "refs/archive/mvp1-phase1-20260923/main",
+      "commit": "3a451067f137abb574c4d35433ce8a79ccca7aad"
+    },
+    {
+      "repository": "loom",
+      "role": "runtime-dependency",
+      "ref": "refs/archive/mvp1-phase1-20260923/runtime-dependency",
+      "commit": "2d1aeb8e3a12dc8d4a4a9ded76e1dcf803e6a802"
+    },
+    {
+      "repository": "loom",
+      "role": "main-not-adopted",
+      "ref": "refs/archive/mvp1-phase1-20260923/main-not-adopted",
+      "commit": "cfe9385fa9e95281bf01aa7a6d252d5f94af5d40"
+    },
+    {
+      "repository": "weave-server",
+      "role": "main-not-adopted",
+      "ref": "refs/archive/mvp1-phase1-20260923/main-not-adopted",
+      "commit": "a64a74b62bb992078d853968381cef37159c5314"
+    },
+    {
+      "repository": "weave-kernel",
+      "role": "main-not-adopted",
+      "ref": "refs/archive/mvp1-phase1-20260923/main-not-adopted",
+      "commit": "1e2340ff4b4d93ca85537c8ecfebcbd75bfdfb16"
+    },
+    {
+      "repository": "weave-runtime",
+      "role": "main-not-adopted",
+      "ref": "refs/archive/mvp1-phase1-20260923/main-not-adopted",
+      "commit": "1f3e1f3e4025125d6a4dcdb20310e3cfa7cb463d"
+    },
+    {
+      "repository": "weave-builder",
+      "role": "main-not-adopted",
+      "ref": "refs/archive/mvp1-phase1-20260923/main-not-adopted",
+      "commit": "4eb495e12e5d4c4ca34c289d740a230df99ad4c8"
+    }
+  ],
+  "integrationLockAtArchive": {
+    "schemaVersion": 1,
+    "components": {
+      "desktop": {
+        "source": "https://github.com/am-will/gooey-pi.git",
+        "revision": "459c9965690468c69d7434f82acf4b5eeee8e4bf",
+        "importPath": "desktop"
+      },
+      "weave": {
+        "source": "https://github.com/jinyitao123/weave-next.git",
+        "revision": "9e6b19d681a560ac18958a79701ea1d3665a0ac2",
+        "importPath": "platform/weave"
+      },
+      "forge": {
+        "source": "https://github.com/jinyitao123/inoForge.git",
+        "revision": "5aed3c2f8be23421c61599e9e0b58576ad779263",
+        "importPath": "platform/forge"
+      }
+    }
+  },
+  "runtimeObservation": {
+    "observedAt": "2026-09-23T02:16:42Z",
+    "host": "124.223.189.112",
+    "mode": "read_only_docker_inspect_and_dependency_versions",
+    "weave": {
+      "sourceCommit": "a5893a0d1b119438a10ecd639f8eb923528dfd3a",
+      "image": "weave-platform:mvp1-a5893a0d",
+      "imageId": "sha256:5d7168851af4a374548d5f3239f6ce4a92ddf29961ea85dd510ff80d87fbb4c9",
+      "health": "healthy"
+    },
+    "forge": {
+      "sourceCommit": "2ec1de8f0accbb8d690558651d62530d7736f899",
+      "image": "inoforge-app:sha-2ec1de8",
+      "imageId": "sha256:c6103048337b1d6d1cbd5131e38c87a7603e26a061098d0f0dee547761888020",
+      "health": "healthy"
+    },
+    "loom": {
+      "module": "github.com/jinyitao123/loom",
+      "version": "v0.8.2-0.20260912125929-2d1aeb8e3a12",
+      "commit": "2d1aeb8e3a12dc8d4a4a9ded76e1dcf803e6a802"
+    },
+    "objectstack": {
+      "plugin-approvals": "17.3.0",
+      "service-automation": "17.3.0",
+      "service-messaging": "17.3.0"
+    },
+    "teamConfiguration": {
+      "observedAt": "2026-09-23T02:18:48.413169+00:00",
+      "hashEncoding": "UTF-8 canonical JSON, sorted keys, no spaces, non-ASCII preserved",
+      "workflows": [
+        {
+          "team_id": "07fdd6bb-7be2-47ba-9299-66833059bd6a",
+          "team_name": "team-793777c7-47df-4b1b-8e1a-4f2fabeec108",
+          "display_name": "合同交接协作团队",
+          "workflow_id": "73ecab64-855a-4e4d-9989-6bd14a9cf7b2",
+          "workflow_name": "合同交接团队流程",
+          "published_version": 14,
+          "graphSha256": "e8c133ed7dc6d493be37a53a9431fde46eb623e5e02903e6cae627d01cfadbe5",
+          "triggerSha256": "8e7eebec24b6de1f039d369322e9ee18c238ce64d31740015d855641c5619420"
+        }
+      ]
+    },
+    "limitations": [
+      "Published team fingerprint is current configuration, not proof of the configuration used by every historical run.",
+      "No fresh desktop business execution, deployment or business data mutation in this archival batch.",
+      "Docker image IDs are locally inspected content IDs, not registry RepoDigests."
+    ]
+  },
+  "verification": {
+    "desktopTypecheck": "passed on 2026-09-23",
+    "desktopTargetedTests": {
+      "files": 3,
+      "passed": 37,
+      "command": "npx vitest run tests/backend/agent-enterprise-bridge.test.ts tests/backend/enterprise.test.ts tests/backend/shipped-extension-contracts.test.ts"
+    },
+    "businessEvidence": [
+      "docs/acceptance/2026-09-23-sales-contract-scenario-audit.md",
+      "docs/acceptance/2026-09-23-product-use-deep-audit.md"
+    ],
+    "newScenarioAcceptance": {
+      "lead-to-opportunity": "not_run",
+      "quotation-review": "not_run"
+    }
+  },
+  "exclusions": [
+    "Test credentials, model keys, user sessions, material bodies and database volumes.",
+    "Uncommitted .build outputs in component worktrees.",
+    "Unactivated Weave and Forge candidate commits are archived separately and not part of the runtime pair."
+  ],
+  "reproductionLimits": [
+    "Root platform subtree locks differ from observed service revisions; do not deploy subtree copies as the observed runtime.",
+    "Published team definitions and business records remain in the existing environment; fingerprints alone are not a database restore package.",
+    "No new signed desktop installer or Windows build in this archival batch.",
+    "Local archival refs have not been pushed; branch merge/deletion/migration needs user confirmation."
+  ]
+}
