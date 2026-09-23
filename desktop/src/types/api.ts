@@ -1098,6 +1098,7 @@ export interface PrimeWorkApi {
     getSession(): Promise<EnterpriseSession>
     signIn(email: string, password: string): Promise<EnterpriseSession>
     signOut(): Promise<EnterpriseSession>
+    onSessionChanged(callback: (session: EnterpriseSession) => void): () => void
     getDevelopmentOverview(): Promise<EnterpriseDevelopmentOverview>
     getBusinessCapabilityCatalog(): Promise<EnterpriseBusinessCapabilityCatalog>
     createDevelopmentTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult>

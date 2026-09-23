@@ -18,6 +18,8 @@ interface UseBootstrapOptions {
   ready?: boolean
   /** Harness whose projects, sessions, and runtimes populate the workspace. */
   harness?: HarnessId
+  /** Opaque current employee identity; changes invalidate the previous workspace snapshot. */
+  accountScope?: string
   setProjects: React.Dispatch<React.SetStateAction<ProjectRecord[]>>
   setSessions: React.Dispatch<React.SetStateAction<SessionRecord[]>>
   setSchedules: React.Dispatch<React.SetStateAction<AutomationScheduleRecord[]>>
@@ -29,6 +31,8 @@ interface UseBootstrapOptions {
   sessionHasOpenExtensionUi?(filePath: string): boolean
   /** Runs when the effect notices a harness change, before refetching (view reset). Must be identity-stable. */
   onHarnessSwitch?(): void
+  /** Stops old-account runtimes and clears account-owned renderer state. Must be identity-stable. */
+  onAccountSwitch?(): void
   reportError(error: unknown): void
 }
 
@@ -120,6 +124,7 @@ export function useBootstrap({
   bridge,
   ready = true,
   harness = 'prime',
+  accountScope,
   setProjects,
   setSessions,
   setSchedules,
@@ -130,11 +135,13 @@ export function useBootstrap({
   attachRuntime,
   sessionHasOpenExtensionUi = NO_OPEN_EXTENSION_UI,
   onHarnessSwitch,
+  onAccountSwitch,
   reportError,
 }: UseBootstrapOptions) {
   const [meta, setMeta] = useState<AppMeta | null>(null)
   const [initialized, setInitialized] = useState(!bridge)
   const previousHarnessRef = useRef(harness)
+  const previousAccountScopeRef = useRef(accountScope)
 
   const refreshHarnesses = useCallback(async () => {
     if (!bridge) return null
@@ -148,16 +155,19 @@ export function useBootstrap({
       setInitialized(!bridge)
       return
     }
-    // Switching harness rides the exact workspace-switch path: clear the
-    // visible catalog, bump the workspace generation (which resets runtime,
-    // transcript, and queued prompts), then bootstrap the new harness. The
-    // generation captured below guards the async startup activation the same
-    // way it does on first launch.
-    if (previousHarnessRef.current !== harness) {
+    // Harness or employee changes clear the visible catalog and advance the
+    // workspace generation before any new scoped read completes. The startup
+    // generation below rejects snapshots already in flight for the old scope.
+    const harnessChanged = previousHarnessRef.current !== harness
+    const accountChanged = previousAccountScopeRef.current !== accountScope
+    if (harnessChanged || accountChanged) {
       previousHarnessRef.current = harness
+      previousAccountScopeRef.current = accountScope
       setProjects([])
       setSessions([])
-      onHarnessSwitch?.()
+      runtimeSessionsRef.current.clear()
+      if (harnessChanged) onHarnessSwitch?.()
+      if (accountChanged) onAccountSwitch?.()
       activateWorkspace()
     }
     let cancelled = false
@@ -229,6 +239,8 @@ export function useBootstrap({
     attachRuntime,
     bridge,
     harness,
+    accountScope,
+    onAccountSwitch,
     onHarnessSwitch,
     reportError,
     ready,
@@ -285,7 +297,7 @@ export function useBootstrap({
       unsubscribe()
       if (refreshTimer !== null) window.clearTimeout(refreshTimer)
     }
-  }, [bridge, harness, initialized, ready, reportError, sessionHasOpenExtensionUi, setSessions, workspaceRef])
+  }, [accountScope, bridge, harness, initialized, ready, reportError, sessionHasOpenExtensionUi, setSessions, workspaceRef])
 
   return { meta, initialized, refreshHarnesses }
 }

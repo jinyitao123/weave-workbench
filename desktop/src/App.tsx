@@ -127,6 +127,7 @@ export default function App() {
   const [workOverview, setWorkOverview] = useState<EnterpriseWorkOverview>()
   const [workLoading, setWorkLoading] = useState(false)
   const [workError, setWorkError] = useState('')
+  const enterpriseSessionRevisionRef = useRef(0)
   const [enterpriseSession, setEnterpriseSession] = useState<EnterpriseSession | undefined>(() => enterpriseBridge ? undefined : ({
     version: '1', status: 'signed-in', environment: { origin: 'http://localhost', secure: false }, storage: 'session-only',
     identitySource: { kind: 'forge-account', issuer: 'http://localhost' }, user: { id: 'preview', weaveUserId: 'preview-weave', name: 'Preview', email: 'preview@example.test' },
@@ -148,36 +149,54 @@ export default function App() {
   const reportError = useCallback((error: unknown) => {
     setToast(errorMessage(error))
   }, [])
+  const publishEnterpriseSession = useCallback((session: EnterpriseSession) => {
+    enterpriseSessionRevisionRef.current++
+    setEnterpriseSession(session)
+  }, [])
   useEffect(() => {
     if (!enterpriseBridge) return
-    void enterpriseBridge.getSession().then(setEnterpriseSession).catch((error) => {
+    const revision = enterpriseSessionRevisionRef.current
+    void enterpriseBridge.getSession().then((session) => {
+      if (enterpriseSessionRevisionRef.current === revision) publishEnterpriseSession(session)
+    }).catch((error) => {
       reportError(error)
-      setEnterpriseSession({ version: '1', status: 'unavailable', environment: { origin: '', secure: false }, storage: 'session-only', message: '无法读取登录状态' })
+      if (enterpriseSessionRevisionRef.current === revision) publishEnterpriseSession({ version: '1', status: 'unavailable', environment: { origin: '', secure: false }, storage: 'session-only', message: '无法读取登录状态' })
     })
-  }, [enterpriseBridge, reportError])
+  }, [enterpriseBridge, publishEnterpriseSession, reportError])
+  useEffect(() => {
+    if (!enterpriseBridge) return
+    return enterpriseBridge.onSessionChanged(publishEnterpriseSession)
+  }, [enterpriseBridge, publishEnterpriseSession])
   const signIn = useCallback(async (email: string, password: string) => {
     if (!enterpriseBridge) return
-    setEnterpriseSession(await enterpriseBridge.signIn(email, password))
+    try { publishEnterpriseSession(await enterpriseBridge.signIn(email, password)) }
+    catch (error) { publishEnterpriseSession(await enterpriseBridge.getSession().catch(() => ({ version: '1', status: 'unavailable', environment: { origin: '', secure: false }, storage: 'session-only', message: '无法读取登录状态' }))); throw error }
     setDevelopmentOverview(undefined); setDevelopmentError('')
     setWorkOverview(undefined); setWorkError('')
-  }, [enterpriseBridge])
+  }, [enterpriseBridge, publishEnterpriseSession])
   const signOut = useCallback(async () => {
     if (!enterpriseBridge) return
     setDevelopmentOverview(undefined)
     setWorkOverview(undefined)
-    setEnterpriseSession(await enterpriseBridge.signOut())
-  }, [enterpriseBridge])
+    publishEnterpriseSession(await enterpriseBridge.signOut())
+  }, [enterpriseBridge, publishEnterpriseSession])
   const refreshWorkOverview = useCallback(() => {
     if (!enterpriseBridge || workLoading) return
+    const sessionRevision = enterpriseSessionRevisionRef.current
     setWorkLoading(true); setWorkError('')
-    void enterpriseBridge.getWorkOverview().then(setWorkOverview).catch((error) => { setWorkError(errorMessage(error)); reportError(error) }).finally(() => setWorkLoading(false))
+    void enterpriseBridge.getWorkOverview().then((overview) => {
+      if (enterpriseSessionRevisionRef.current === sessionRevision) setWorkOverview(overview)
+    }).catch((error) => {
+      if (enterpriseSessionRevisionRef.current === sessionRevision) { setWorkError(errorMessage(error)); reportError(error) }
+    }).finally(() => { if (enterpriseSessionRevisionRef.current === sessionRevision) setWorkLoading(false) })
   }, [enterpriseBridge, reportError, workLoading])
   const completeEnterpriseTask = useCallback(async (task: EnterpriseHumanTask, decision: 'approved' | 'rejected', comment: string) => {
     if (!enterpriseBridge) return
+    const sessionRevision = enterpriseSessionRevisionRef.current
     setWorkLoading(true); setWorkError('')
-    try { await enterpriseBridge.completeHumanTask(task, { decision, comment }); setTimeout(refreshWorkOverview, 700) }
-    catch (error) { setWorkError(errorMessage(error)); reportError(error); throw error }
-    finally { setWorkLoading(false) }
+    try { await enterpriseBridge.completeHumanTask(task, { decision, comment }); if (enterpriseSessionRevisionRef.current === sessionRevision) setTimeout(refreshWorkOverview, 700) }
+    catch (error) { if (enterpriseSessionRevisionRef.current === sessionRevision) { setWorkError(errorMessage(error)); reportError(error) }; throw error }
+    finally { if (enterpriseSessionRevisionRef.current === sessionRevision) setWorkLoading(false) }
   }, [enterpriseBridge, refreshWorkOverview, reportError])
   const inspectEnterpriseTask = useCallback(async (task: EnterpriseHumanTask) => {
     if (!enterpriseBridge || task.source !== 'forge') throw new Error('当前事项没有业务审批材料')
@@ -278,6 +297,8 @@ export default function App() {
     : `${activeProject?.id ?? 'no-project'}:new:${workspace.workspaceGeneration}`
   const activeTerminalSessionPath = workspace.runtime?.sessionFile ?? activeSession?.filePath
   const [terminalSessions, setTerminalSessions] = useState<TerminalSessionMount[]>([])
+  const terminalSessionsRef = useRef<TerminalSessionMount[]>([])
+  terminalSessionsRef.current = terminalSessions
   const [terminalDrawerRevision, setTerminalDrawerRevision] = useState(0)
   const activeTerminalSession = useMemo(() => terminalSessions.find((terminal) => terminal.workspaceKey === terminalSessionKey
     || Boolean(activeTerminalSessionPath && terminal.sessionPath === activeTerminalSessionPath)), [activeTerminalSessionPath, terminalSessionKey, terminalSessions])
@@ -308,11 +329,27 @@ export default function App() {
   const onHarnessSwitch = useCallback(() => {
     setScheduleFocusId(null)
   }, [])
+  const onAccountSwitch = useCallback(() => {
+    setDevelopmentOverview(undefined); setDevelopmentError(''); setDevelopmentLoading(false)
+    setWorkOverview(undefined); setWorkError(''); setWorkLoading(false)
+    setScheduleFocusId(null)
+    setTerminalSelection(undefined)
+    setTerminalSessions([])
+    setActiveProjectScriptRun(undefined)
+    activeProjectScriptRunRef.current = undefined
+    projectScriptStartingRef.current = false
+    extension.clearExtensionUi()
+    workspace.runtimeSessionsRef.current.clear()
+    terminalSessionsRef.current = []
+  }, [extension.clearExtensionUi, workspace.runtimeSessionsRef])
+  const enterpriseWorkspaceScope = enterpriseSession?.status === 'signed-in'
+    ? `${enterpriseSession.organization?.id ?? ''}:${enterpriseSession.user?.weaveUserId ?? enterpriseSession.user?.id ?? ''}`
+    : undefined
   const { meta, initialized, refreshHarnesses } = useBootstrap({
-    bridge, ready: settingsState.initialized, harness: activeHarness, setProjects, setSessions, setSchedules, setScheduleError,
+    bridge, ready: settingsState.initialized, harness: activeHarness, accountScope: enterpriseWorkspaceScope, setProjects, setSessions, setSchedules, setScheduleError,
     runtimeSessionsRef: workspace.runtimeSessionsRef, workspaceRef: workspace.workspaceRef,
     activateWorkspace: workspace.activateWorkspace, attachRuntime: workspace.attachRuntime,
-    sessionHasOpenExtensionUi: extension.hasOpenRequestForSession, onHarnessSwitch, reportError,
+    sessionHasOpenExtensionUi: extension.hasOpenRequestForSession, onHarnessSwitch, onAccountSwitch, reportError,
   })
   const platform = meta?.platform ?? detectRendererPlatform()
   const detectedHarnesses = useMemo(
@@ -800,12 +837,13 @@ export default function App() {
   const canDevelop = enterpriseSession?.permissions?.includes('teams:develop') === true
   const refreshDevelopmentOverview = useCallback(() => {
     if (!enterpriseBridge || developmentLoading || !canDevelop) return
+    const sessionRevision = enterpriseSessionRevisionRef.current
     setDevelopmentLoading(true)
     setDevelopmentError('')
     void enterpriseBridge.getDevelopmentOverview()
-      .then(setDevelopmentOverview)
-      .catch((error) => { setDevelopmentError(/fetch failed|failed to fetch/i.test(errorMessage(error)) ? '无法连接 Weave，请稍后刷新。' : errorMessage(error)) })
-      .finally(() => setDevelopmentLoading(false))
+      .then((overview) => { if (enterpriseSessionRevisionRef.current === sessionRevision) setDevelopmentOverview(overview) })
+      .catch((error) => { if (enterpriseSessionRevisionRef.current === sessionRevision) setDevelopmentError(/fetch failed|failed to fetch/i.test(errorMessage(error)) ? '无法连接 Weave，请稍后刷新。' : errorMessage(error)) })
+      .finally(() => { if (enterpriseSessionRevisionRef.current === sessionRevision) setDevelopmentLoading(false) })
   }, [canDevelop, developmentLoading, enterpriseBridge, reportError])
   useEffect(() => {
     if (view === 'development' && !canDevelop) setViewDirectly('session')

@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, Menu, nativeTheme, protocol, safeStorage, session, shell, webContents } from 'electron'
 import type { BrowserWindowConstructorOptions, Input, WebContents } from 'electron'
 import { extname, isAbsolute, join, relative, resolve, win32 as win32Path } from 'node:path'
-import { readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { pathToFileURL } from 'node:url'
 import { assertNoMcpAuthenticationCommand } from '../../src/lib/mcp-policy'
@@ -16,6 +16,7 @@ import { GitService } from './git'
 import { CheckoutService } from './checkouts'
 import { isTrustedRendererUrl, registerIpc, type IpcRegistration } from './ipc'
 import { HarnessDiscoveryService, reconcileActiveHarness } from './harness-discovery'
+import { HARNESSES } from './harness'
 import { beginProcessShutdown, runProcess, stopChildProcesses } from './process-utils'
 import { PluginService, beginPluginDiscoveryShutdown } from './plugins'
 import { PrimeProviderService } from './providers'
@@ -586,6 +587,28 @@ async function bootstrap(): Promise<void> {
   const primeExecutable = () => discovery.executable('prime')
   const ompExecutable = () => discovery.executable('omp')
   const piExecutable = () => discovery.executable('pi')
+  const enterprise = new EnterpriseService({
+    sessionPath: join(userDataPath, 'enterprise-session.json'),
+    sessionCodec: {
+      available: () => safeStorage.isEncryptionAvailable(),
+      encrypt: (value) => safeStorage.encryptString(value),
+      decrypt: (value) => safeStorage.decryptString(value),
+    },
+  })
+  const initialEnterpriseSession = await enterprise.getSession()
+  let enterpriseAccountScope = initialEnterpriseSession.status === 'signed-in' ? enterprise.accountKeyForSession(initialEnterpriseSession) : undefined
+  let accountScopeChanging = false
+  const assertAccountScopeReady = (): void => {
+    if (accountScopeChanging) throw new Error('账号切换中，请稍后重试')
+  }
+  const workspaceRootForAccount = (accountScope: string | undefined) => accountScope
+    ? join(userDataPath, 'workspaces', 'accounts', accountScope)
+    : join(userDataPath, 'workspaces')
+  const personalWorkspaceForAccount = (harness: HarnessId, accountScope: string | undefined) => join(workspaceRootForAccount(accountScope), harness)
+  const sessionRootForScope = (harness: HarnessId, accountScope: string | undefined) => accountScope
+    ? join(userDataPath, 'agent-sessions', 'accounts', accountScope, harness)
+    : HARNESSES[harness].sessionRoot(homedir())
+  const sessionRootForAccount = (harness: HarnessId, accountScope = enterpriseAccountScope) => sessionRootForScope(harness, accountScope)
   const sessions = new SessionService(stateStore, primeExecutable)
   // OMP has no live-CLI overlay (`omp list --json` does not exist), so the OMP
   // catalog is constructed with a null executable and JSONL-only metadata.
@@ -595,20 +618,16 @@ async function bootstrap(): Promise<void> {
   const projects = new ProjectService(stateStore, () => mainWindow)
   const ompProjects = new ProjectService(stateStore, () => mainWindow, 'omp')
   const piProjects = new ProjectService(stateStore, () => mainWindow, 'pi')
-  const personalWorkspaceRoot = join(userDataPath, 'workspaces')
-  await Promise.all([
-    projects.ensurePersonalWorkspace(join(personalWorkspaceRoot, 'prime')),
-    ompProjects.ensurePersonalWorkspace(join(personalWorkspaceRoot, 'omp')),
-    piProjects.ensurePersonalWorkspace(join(personalWorkspaceRoot, 'pi')),
-  ])
-  const enterprise = new EnterpriseService({
-    sessionPath: join(userDataPath, 'enterprise-session.json'),
-    sessionCodec: {
-      available: () => safeStorage.isEncryptionAvailable(),
-      encrypt: (value) => safeStorage.encryptString(value),
-      decrypt: (value) => safeStorage.decryptString(value),
-    },
-  })
+  const projectServicesByHarness = { prime: projects, omp: ompProjects, pi: piProjects } as const
+  const projectServices = [projects, ompProjects, piProjects] as const
+  const sessionServices = { prime: sessions, omp: ompSessions, pi: piSessions } as const
+  for (const service of projectServices) service.setAccountScope(enterpriseAccountScope)
+  if (enterpriseAccountScope) {
+    const roots = (['prime', 'omp', 'pi'] as const).map((harness) => [sessionServices[harness], sessionRootForAccount(harness)] as const)
+    await Promise.all(roots.map(([, root]) => mkdir(root, { recursive: true, mode: 0o700 })))
+    for (const [service, root] of roots) await service.setSessionRoot(root)
+  }
+  await Promise.all((['prime', 'omp', 'pi'] as const).map((harness) => projectServicesByHarness[harness].ensurePersonalWorkspace(personalWorkspaceForAccount(harness, enterpriseAccountScope))))
   const repositoryUseGate = new RepositoryUseGate()
   const checkouts: Record<HarnessId, CheckoutService> = {
     prime: new CheckoutService(() => stateStore.getSettings().checkoutStrategy, projects, repositoryUseGate),
@@ -619,6 +638,7 @@ async function bootstrap(): Promise<void> {
   // when any harness's own grants authorize it. Prime is consulted first so
   // Prime-only setups keep their exact behavior and error text.
   const authorizeEitherCwd = async (cwd: string): Promise<string> => {
+    assertAccountScopeReady()
     try { return await projects.authorizeCwd(cwd) } catch (error) {
       for (const fallback of [ompProjects, piProjects]) {
         try { return await fallback.authorizeCwd(cwd) } catch { /* try the next harness; the Prime error is rethrown */ }
@@ -627,6 +647,7 @@ async function bootstrap(): Promise<void> {
     }
   }
   const authorizeEitherReadOnlyCwd = async (cwd: string): Promise<string> => {
+    assertAccountScopeReady()
     try { return await projects.authorizeReadOnlyCwd(cwd) } catch (error) {
       for (const fallback of [ompProjects, piProjects]) {
         try { return await fallback.authorizeReadOnlyCwd(cwd) } catch { /* try the next harness; the Prime error is rethrown */ }
@@ -635,6 +656,7 @@ async function bootstrap(): Promise<void> {
     }
   }
   const requireEitherSessionPath = async (path: string): Promise<string> => {
+    assertAccountScopeReady()
     try { return await sessions.requireSessionPath(path) } catch (error) {
       for (const fallback of [ompSessions, piSessions]) {
         try { return await fallback.requireSessionPath(path) } catch { /* try the next harness; the Prime error is rethrown */ }
@@ -998,16 +1020,20 @@ async function bootstrap(): Promise<void> {
       }
     }
   }
-  agents.setRuntimeEnvironmentProvider((scope) => ({
-    ...scheduleBridge.environmentFor(scope),
-    ...(stateStore.getSettings().browserEnabled ? browserBridge.environmentFor(scope) : {}),
-    ...collaborationBridge.environmentFor({ ...scope, harness: 'prime' }),
-    ...enterpriseBridge.environmentFor({ ...scope, harness: 'prime' }),
-    PRIME_WORK_ASK_USER_EXTENSION_PATH: stateStore.getSettings().askUserEnabled && scope.interactive ? ompAskUserExtensionPath : undefined,
-    GOOEYPI_MANAGES_ASK_USER: '1',
-    GOOEYPI_CUA_DRIVER_PATH: stateStore.getSettings().computerUseEnabled ? cuaDriver.executable() ?? undefined : undefined,
-    GOOEYPI_COMPUTER_USE_SKILL_PATH: stateStore.getSettings().computerUseEnabled && cuaDriver.executable() ? computerUseSkillPath : undefined,
-  }))
+  agents.setRuntimeEnvironmentProvider((scope) => {
+    assertAccountScopeReady()
+    return {
+      ...scheduleBridge.environmentFor(scope),
+      ...(stateStore.getSettings().browserEnabled ? browserBridge.environmentFor(scope) : {}),
+      ...collaborationBridge.environmentFor({ ...scope, harness: 'prime' }),
+      ...enterpriseBridge.environmentFor({ ...scope, harness: 'prime' }),
+      ...(enterpriseAccountScope ? { PRIME_AGENT_SESSION_DIR: sessionRootForAccount('prime') } : {}),
+      PRIME_WORK_ASK_USER_EXTENSION_PATH: stateStore.getSettings().askUserEnabled && scope.interactive ? ompAskUserExtensionPath : undefined,
+      GOOEYPI_MANAGES_ASK_USER: '1',
+      GOOEYPI_CUA_DRIVER_PATH: stateStore.getSettings().computerUseEnabled ? cuaDriver.executable() ?? undefined : undefined,
+      GOOEYPI_COMPUTER_USE_SKILL_PATH: stateStore.getSettings().computerUseEnabled && cuaDriver.executable() ? computerUseSkillPath : undefined,
+    }
+  })
   agents.setRuntimeStartListener((environment, info) => {
     browserBridge.bindSession(environment.PRIME_WORK_BROWSER_TOKEN, info.sessionFile)
     collaborationBridge.bindSession(environment.GOOEYPI_COLLABORATION_TOKEN, info.sessionFile, info.runtimeId)
@@ -1022,13 +1048,17 @@ async function bootstrap(): Promise<void> {
     browser: ompBrowserExtensionPath,
     askUser: ompAskUserExtensionPath,
   }
-  ompManager.setRuntimeEnvironmentProvider((scope) => ({
-    ...extensionRuntimeEnvironment(ompScheduleBridge.environmentFor(scope), () => browserBridge.environmentFor(scope), capabilityExtensionPaths, stateStore.getSettings().askUserEnabled && scope.interactive, stateStore.getSettings().browserEnabled),
-    ...collaborationBridge.environmentFor({ ...scope, harness: 'omp' }),
-    ...enterpriseBridge.environmentFor({ ...scope, harness: 'omp' }),
-    GOOEYPI_CUA_DRIVER_PATH: stateStore.getSettings().computerUseEnabled ? cuaDriver.executable() ?? undefined : undefined,
-    GOOEYPI_COMPUTER_USE_SKILL_PATH: stateStore.getSettings().computerUseEnabled && cuaDriver.executable() ? computerUseSkillPath : undefined,
-  }))
+  ompManager.setRuntimeEnvironmentProvider((scope) => {
+    assertAccountScopeReady()
+    return {
+      ...extensionRuntimeEnvironment(ompScheduleBridge.environmentFor(scope), () => browserBridge.environmentFor(scope), capabilityExtensionPaths, stateStore.getSettings().askUserEnabled && scope.interactive, stateStore.getSettings().browserEnabled),
+      ...collaborationBridge.environmentFor({ ...scope, harness: 'omp' }),
+      ...enterpriseBridge.environmentFor({ ...scope, harness: 'omp' }),
+      ...(enterpriseAccountScope ? { PI_CODING_AGENT_SESSION_DIR: sessionRootForAccount('omp') } : {}),
+      GOOEYPI_CUA_DRIVER_PATH: stateStore.getSettings().computerUseEnabled ? cuaDriver.executable() ?? undefined : undefined,
+      GOOEYPI_COMPUTER_USE_SKILL_PATH: stateStore.getSettings().computerUseEnabled && cuaDriver.executable() ? computerUseSkillPath : undefined,
+    }
+  })
   ompManager.setRuntimeStartListener((environment, info) => {
     browserBridge.bindSession(environment.PRIME_WORK_BROWSER_TOKEN, info.sessionFile)
     collaborationBridge.bindSession(environment.GOOEYPI_COLLABORATION_TOKEN, info.sessionFile, info.runtimeId)
@@ -1037,20 +1067,88 @@ async function bootstrap(): Promise<void> {
   ompManager.setRuntimeEndListener((environment) => revokeRuntimeCapabilities(environment, ompScheduleBridge))
   // Pi runtimes receive the identical capability surface: pi's extension API
   // is the ancestor of OMP's, so the omp-work-* files are shared by design.
-  piManager.setRuntimeEnvironmentProvider((scope) => ({
-    ...extensionRuntimeEnvironment(piScheduleBridge.environmentFor(scope), () => browserBridge.environmentFor(scope), capabilityExtensionPaths, stateStore.getSettings().askUserEnabled && scope.interactive, stateStore.getSettings().browserEnabled),
-    ...collaborationBridge.environmentFor({ ...scope, harness: 'pi' }),
-    ...enterpriseBridge.environmentFor({ ...scope, harness: 'pi' }),
-    GOOEYPI_PI_FAST_MODE_EXTENSION_PATH: piFastModeExtensionPath,
-    GOOEYPI_CUA_DRIVER_PATH: stateStore.getSettings().computerUseEnabled ? cuaDriver.executable() ?? undefined : undefined,
-    GOOEYPI_COMPUTER_USE_SKILL_PATH: stateStore.getSettings().computerUseEnabled && cuaDriver.executable() ? computerUseSkillPath : undefined,
-  }))
+  piManager.setRuntimeEnvironmentProvider((scope) => {
+    assertAccountScopeReady()
+    return {
+      ...extensionRuntimeEnvironment(piScheduleBridge.environmentFor(scope), () => browserBridge.environmentFor(scope), capabilityExtensionPaths, stateStore.getSettings().askUserEnabled && scope.interactive, stateStore.getSettings().browserEnabled),
+      ...collaborationBridge.environmentFor({ ...scope, harness: 'pi' }),
+      ...enterpriseBridge.environmentFor({ ...scope, harness: 'pi' }),
+      ...(enterpriseAccountScope ? { PI_CODING_AGENT_SESSION_DIR: sessionRootForAccount('pi') } : {}),
+      GOOEYPI_PI_FAST_MODE_EXTENSION_PATH: piFastModeExtensionPath,
+      GOOEYPI_CUA_DRIVER_PATH: stateStore.getSettings().computerUseEnabled ? cuaDriver.executable() ?? undefined : undefined,
+      GOOEYPI_COMPUTER_USE_SKILL_PATH: stateStore.getSettings().computerUseEnabled && cuaDriver.executable() ? computerUseSkillPath : undefined,
+    }
+  })
   piManager.setRuntimeStartListener((environment, info) => {
     browserBridge.bindSession(environment.PRIME_WORK_BROWSER_TOKEN, info.sessionFile)
     collaborationBridge.bindSession(environment.GOOEYPI_COLLABORATION_TOKEN, info.sessionFile, info.runtimeId)
     enterpriseBridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, info.sessionFile, info.runtimeId)
   })
   piManager.setRuntimeEndListener((environment) => revokeRuntimeCapabilities(environment, piScheduleBridge))
+  const runtimeManagers = [agents, ompManager, piManager] as const
+  let accountTransitionQueue: Promise<void> = Promise.resolve()
+  const setAccountScope = async (nextScope: string | undefined, keepPaused: boolean, mayResume: () => boolean): Promise<void> => {
+    const previousScope = enterpriseAccountScope
+    const previousRoots = Object.fromEntries((['prime', 'omp', 'pi'] as const).map((harness) => [harness, sessionServices[harness].sessionRoot])) as Record<HarnessId, string>
+    const changedRoots: HarnessId[] = []
+    accountScopeChanging = true
+    enterpriseBridge.invalidateAccount()
+    try {
+      await Promise.all(runtimeManagers.map((manager) => manager.pauseStartsAndStop()))
+      await terminals!.pauseCreationsAndKillAll()
+      if (nextScope !== previousScope) {
+        for (const harness of ['prime', 'omp', 'pi'] as const) {
+          const root = sessionRootForScope(harness, nextScope)
+          await mkdir(root, { recursive: true, mode: 0o700 })
+          await sessionServices[harness].setSessionRoot(root)
+          changedRoots.push(harness)
+        }
+        for (const service of projectServices) service.setAccountScope(nextScope)
+        await Promise.all((['prime', 'omp', 'pi'] as const).map((harness) => projectServicesByHarness[harness].ensurePersonalWorkspace(personalWorkspaceForAccount(harness, nextScope))))
+        enterpriseAccountScope = nextScope
+      }
+      await Promise.all(runtimeManagers.map((manager) => manager.requestRuntimeEnvironmentRefresh()))
+      const resume = !keepPaused && mayResume()
+      accountScopeChanging = !resume
+      if (resume) {
+        for (const manager of runtimeManagers) manager.resumeStarts()
+        terminals!.resumeCreations()
+      }
+    } catch (error) {
+      let rollbackSucceeded = true
+      for (const service of projectServices) service.setAccountScope(previousScope)
+      for (const harness of changedRoots.reverse()) {
+        try {
+          await mkdir(previousRoots[harness], { recursive: true, mode: 0o700 })
+          await sessionServices[harness].setSessionRoot(previousRoots[harness])
+        } catch { rollbackSucceeded = false }
+      }
+      enterpriseAccountScope = previousScope
+      const resume = rollbackSucceeded && !keepPaused && mayResume()
+      accountScopeChanging = !resume
+      if (resume) {
+        for (const manager of runtimeManagers) manager.resumeStarts()
+        terminals!.resumeCreations()
+      }
+      throw error
+    }
+  }
+  enterprise.setSessionScopeChangeHandler(async (changedSession, generation, phase) => {
+    const transition = accountTransitionQueue.then(async () => {
+      if (!enterprise.isSessionGenerationCurrent(generation)) return
+      const nextScope = changedSession.status === 'signed-in' ? enterprise.accountKeyForSession(changedSession) : undefined
+      await setAccountScope(nextScope, phase === 'sign-in-start', () => enterprise.isSessionGenerationCurrent(generation))
+      if (!enterprise.isSessionGenerationCurrent(generation)) return
+      const renderer = mainWindow?.webContents
+      if (renderer && !renderer.isDestroyed()
+        && isTrustedRendererUrl(renderer.getURL(), trustedRendererUrl)
+        && isTrustedRendererUrl(renderer.mainFrame.url, trustedRendererUrl)) {
+        renderer.send('enterprise:session-changed', changedSession)
+      }
+    })
+    accountTransitionQueue = transition.catch(() => undefined)
+    await transition
+  })
   if (shutdownStarted) return
   const meta: AppMeta = {
     version: app.getVersion(),

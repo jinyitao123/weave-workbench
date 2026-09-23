@@ -106,6 +106,9 @@ export class TerminalService {
   private readonly terminals = new Map<string, OwnedTerminal>()
   private readonly activeBySession = new Map<string, string>()
   private readonly terminationPromises = new Map<OwnedTerminal, Promise<void>>()
+  private creationsPaused = false
+  private activeCreations = 0
+  private readonly creationWaiters = new Set<() => void>()
   private readonly allowedShells = systemShells()
   private totalOutputWindowStartedAt = Date.now()
   private totalOutputWindowBytes = 0
@@ -136,6 +139,19 @@ export class TerminalService {
   }
 
   async create(owner: WebContents, raw: unknown): Promise<{ terminalId: string; shell: string }> {
+    if (this.creationsPaused) throw new Error('Terminal creation is paused while the account is changing')
+    this.activeCreations += 1
+    try { return await this.createAdmitted(owner, raw) }
+    finally {
+      this.activeCreations -= 1
+      if (this.activeCreations === 0) {
+        for (const resolveWaiter of this.creationWaiters) resolveWaiter()
+        this.creationWaiters.clear()
+      }
+    }
+  }
+
+  private async createAdmitted(owner: WebContents, raw: unknown): Promise<{ terminalId: string; shell: string }> {
     const options = requireRecord(raw, 'terminal options')
     rejectUnknownKeys(options, ['cwd', 'sessionPath', 'shell', 'command', 'cols', 'rows'], 'terminal options')
     const cwd = await this.authorizeCwd(requireString(options.cwd, 'cwd', { min: 1, max: 4096 }))
@@ -240,6 +256,16 @@ export class TerminalService {
     const starting = [...this.terminals].map(([id, terminal]) => this.terminate(id, terminal))
     await Promise.all([...new Set([...this.terminationPromises.values(), ...starting])])
   }
+
+  /** Close terminal admission, drain PTYs being created, and then kill every account's old terminals. */
+  async pauseCreationsAndKillAll(): Promise<void> {
+    this.creationsPaused = true
+    if (this.activeCreations > 0) await new Promise<void>((resolveWaiter) => this.creationWaiters.add(resolveWaiter))
+    await this.killAll()
+  }
+
+  /** Reopen terminal admission after the account-scope transition has completed. */
+  resumeCreations(): void { this.creationsPaused = false }
 
   /** Terminates every PTY and descendant process tree bound to one session. */
   async killForSession(sessionPathValue: unknown): Promise<void> {
