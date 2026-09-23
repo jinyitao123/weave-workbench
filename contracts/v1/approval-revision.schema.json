@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/approval-revision.schema.json",
+  "title": "Returned Approval Material Revision",
+  "description": "Workbench submits exact Forge file references for the current returned native approval. Actor and business record are derived on the server.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["returnVersion", "sourceMaterialVersion", "idempotencyKey", "primary", "attachments"],
+  "properties": {
+    "returnVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "sourceMaterialVersion": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "idempotencyKey": { "type": "string", "format": "uuid" },
+    "primary": { "$ref": "#/$defs/file" },
+    "attachments": { "type": "array", "maxItems": 10, "items": { "$ref": "#/$defs/file" } }
+  },
+  "$defs": {
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileId", "name", "sha256"],
+      "properties": {
+        "fileId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestId", "bindingId", "newVersionDigest", "state", "repeated"],
+      "properties": {
+        "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "bindingId": { "type": "string", "format": "uuid" },
+        "newVersionDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "state": { "enum": ["prepared", "resumed", "resume_unknown"] },
+        "repeated": { "const": true }
+      }
+    }
+  }
+}

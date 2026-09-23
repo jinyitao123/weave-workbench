@@ -15,6 +15,7 @@
 - `business-capability-catalog`：开发中心可分配给团队成员的 Forge 业务能力及动作参数说明，不暴露 MCP 工具或凭据；参数来源映射保存在成员配置草稿并随发布版本冻结。
 - `task-notification`：Forge 或 Weave 向指定员工创建的待办。
 - `approval-context`：Workbench 按当前 Forge 身份读取单个原生审批的受限快照、退回版本与材料；修订材料由 Forge 领域动作校验并经 ObjectStack 原生守卫重提，不开放桌面直接重提。
+- `approval-revision`：退回事项的新主件与附件引用、来源版本和幂等键；Forge 插件固定材料并调用受守卫的原生重提，回执区分准备完成、已进入下一轮和恢复状态未知。
 - `team-run-event`：Weave 将团队运行终态交给 Forge 原生收件箱的系统事件。
 - `delivery-receipt`：业务结果、证据、用量和独立核验结果。
 - `execution-control`：重试、超时、额度、取消和未知结果核对。
