@@ -1,6 +1,6 @@
 import { teamWorkspaceRequest } from './enterprise/team-workspace'
 import type { TeamWorkspaceCommand } from '../../src/types/team-workspace'
-import type { EnterpriseApprovalContext, EnterpriseBusinessCapability, EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkReadStatus, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource } from '../../src/types/api'
+import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkReadStatus, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource } from '../../src/types/api'
 import type { FrozenMaterial } from './enterprise/materials'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
@@ -54,6 +54,16 @@ function enterprisePermissions(value: unknown): EnterprisePermission[] | undefin
 
 function textValue(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined
+}
+
+export function approvalContextView(context: EnterpriseApprovalContext): EnterpriseApprovalContextView {
+  return {
+    title: context.title,
+    step: context.step,
+    ...(context.returnReason !== undefined ? { returnReason: context.returnReason } : {}),
+    fields: context.fields.map((field) => ({ ...field })),
+    files: context.files.map(({ name, content, verified }) => ({ name, content, verified })),
+  }
 }
 
 async function responseErrorCode(response: Response): Promise<string | undefined> {
@@ -1172,8 +1182,17 @@ export class EnterpriseService {
     const isReviewer = approval?.status === 'pending' && approval.viewer === 'current_approver'
     const isSubmitter = approval?.status === 'returned' && approval.viewer === 'original_submitter'
     const title = textValue(approval?.title), step = textValue(approval?.step)
+    const businessObject = record(approval?.businessObject)
+    const objectName = textValue(businessObject?.objectName), recordId = textValue(businessObject?.recordId)
+    const recordName = textValue(businessObject?.recordName)
+    const sourceMaterialVersion = textValue(approval?.sourceMaterialVersion)
+    const returnVersion = textValue(approval?.returnVersion)
     if (approval?.version !== '1' || approval.requestId !== approvalId || (!isReviewer && !isSubmitter)
-      || !title || title.length > 300 || !step || step.length > 160) {
+      || !title || title.length > 300 || !step || step.length > 160
+      || !objectName || objectName.length > 160 || !recordId || recordId.length > 128
+      || (recordName !== undefined && recordName.length > 300)
+      || !sourceMaterialVersion || !/^[0-9a-f]{64}$/.test(sourceMaterialVersion)
+      || (isSubmitter && (!returnVersion || returnVersion.length > 128))) {
       throw new Error('这项审批已无法由当前员工处理，请刷新待办')
     }
     if (!Array.isArray(approval.fields) || approval.fields.length > 64 || !Array.isArray(approval.files) || approval.files.length > 11) {
@@ -1187,8 +1206,8 @@ export class EnterpriseService {
       return fieldValue.trim() ? [{ label, value: fieldValue }] : []
     })
     const files = approval.files.map((value) => {
-      const file = record(value), name = textValue(file?.name), content = file?.content
-      if (!name || name.length > 255 || file?.mediaType !== 'text/plain; charset=utf-8'
+      const file = record(value), fileId = textValue(file?.fileId), name = textValue(file?.name), content = file?.content
+      if (!fileId || fileId.length > 128 || !name || name.length > 255 || file?.mediaType !== 'text/plain; charset=utf-8'
         || typeof content !== 'string' || content.length > 2 * 1024 * 1024
         || !Number.isInteger(file.bytes) || (file.bytes as number) < 0 || (file.bytes as number) > 2 * 1024 * 1024
         || typeof file.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(file.sha256)) {
@@ -1198,15 +1217,17 @@ export class EnterpriseService {
       if (bytes.length !== file.bytes || createHash('sha256').update(bytes).digest('hex') !== file.sha256) {
         throw new Error('审批文件与提交版本不一致，请暂停处理')
       }
-      return { name, content, verified: true }
+      return { fileId, name, mediaType: 'text/plain; charset=utf-8' as const, bytes: bytes.length, sha256: file.sha256, content, verified: true }
     })
     const returnReason = approval.returnReason
-    if (returnReason !== undefined && (typeof returnReason !== 'string' || returnReason.length > 4000)) {
+    if ((isSubmitter && typeof returnReason !== 'string')
+      || (returnReason !== undefined && (typeof returnReason !== 'string' || returnReason.length > 4000))) {
       throw new Error('Forge 审批上下文格式无效')
     }
     return {
-      title, step,
-      ...(isSubmitter && returnReason ? { returnReason } : {}),
+      requestId: approvalId, status: isSubmitter ? 'returned' : 'pending', viewer: isSubmitter ? 'original_submitter' : 'current_approver',
+      title, step, businessObject: { objectName, recordId, ...(recordName ? { recordName } : {}) }, sourceMaterialVersion,
+      ...(isSubmitter ? { returnVersion, returnReason: returnReason as string } : {}),
       fields, files,
     }
   }
@@ -1265,8 +1286,9 @@ export class EnterpriseService {
     const forgeMatch = /^forge:(approval|revision):(.+)$/.exec(task.runId)
     if (forgeMatch) {
       if (forgeMatch[2] !== task.interactionId) throw new Error('审批事项已变化，请刷新后重试')
+      if (forgeMatch[1] === 'revision') throw new Error('Forge 修订材料递交业务动作尚未接通，审批事项未递交')
       const decision = textValue(payload.decision)
-      const operation = forgeMatch[1] === 'revision' ? 'resubmit' : decision === 'rejected' ? 'revise' : decision === 'approved' ? 'approve' : ''
+      const operation = decision === 'rejected' ? 'revise' : decision === 'approved' ? 'approve' : ''
       if (!operation) throw new Error('请选择审批处理方式')
       await this.forgeRequest(`/api/v1/approvals/requests/${encodeURIComponent(task.interactionId)}/${operation}`, { comment: textValue(payload.comment) ?? '' }, generation)
       return { runId: task.runId, repeated: false }

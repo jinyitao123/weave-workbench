@@ -5,8 +5,10 @@ import { digest } from './handoff-store'
 
 export interface MaterialSelection { path: string; sha256: string }
 export interface FrozenMaterial { name: string; sha256: string; bytes: number; content: string }
-export function materialSelection(value: unknown): MaterialSelection[] {
-  if (!Array.isArray(value) || !value.length || value.length > 8) throw new Error('请指定本次交接的工作材料及版本')
+export interface MaterialLimits { maxFiles: number; maxFileBytes: number; maxTotalBytes: number }
+const HANDOFF_MATERIAL_LIMITS: MaterialLimits = { maxFiles: 8, maxFileBytes: 700_000, maxTotalBytes: 700_000 }
+export function materialSelection(value: unknown, limits = HANDOFF_MATERIAL_LIMITS): MaterialSelection[] {
+  if (!Array.isArray(value) || !value.length || value.length > limits.maxFiles) throw new Error('请指定本次交接的工作材料及版本')
   const selections = value.map((entry: unknown) => {
     const item = entry as MaterialSelection | null
     if (!item || typeof item.path !== 'string' || !item.path.trim() || typeof item.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(item.sha256)) throw new Error('材料必须包含文件路径和已核对的 SHA-256 版本')
@@ -15,7 +17,7 @@ export function materialSelection(value: unknown): MaterialSelection[] {
   if (new Set(selections.map((entry) => entry.path)).size !== selections.length) throw new Error('同一材料不能重复列入交接')
   return selections
 }
-export async function freezeMaterials(cwd: string, selections: MaterialSelection[]): Promise<FrozenMaterial[]> {
+export async function freezeMaterials(cwd: string, selections: MaterialSelection[], limits = HANDOFF_MATERIAL_LIMITS): Promise<FrozenMaterial[]> {
   const root = await realpath(cwd)
   const result: FrozenMaterial[] = []
   let total = 0
@@ -27,7 +29,7 @@ export async function freezeMaterials(cwd: string, selections: MaterialSelection
     const file = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0))
     try {
       const stat = await file.stat()
-      if (!stat.isFile() || stat.size > 700_000 || total + stat.size > 700_000) throw new Error('工作材料超出本次交接大小限制')
+      if (!stat.isFile() || stat.size > limits.maxFileBytes || total + stat.size > limits.maxTotalBytes) throw new Error('工作材料超出本次交接大小限制')
       const buffer = Buffer.alloc(stat.size + 1)
       const { bytesRead } = await file.read(buffer, 0, buffer.length, 0)
       const bytes = buffer.subarray(0, bytesRead)

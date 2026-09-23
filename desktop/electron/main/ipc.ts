@@ -16,10 +16,10 @@ import type { SessionService } from './sessions'
 import type { TerminalService } from './terminal'
 import type { VoiceService } from './voice'
 import type { UpdateService } from './updates'
-import type { EnterpriseService } from './enterprise'
+import { approvalContextView, type EnterpriseService } from './enterprise'
 import type { AgentEnterpriseBridge } from './enterprise/agent-bridge'
 import type { AgentBrowserService } from './browser/agent-service'
-import { requireExistingPath, requireInteger, requireRecord, requireString, requireWebUrl } from './validation'
+import { rejectUnknownKeys, requireExistingPath, requireInteger, requireRecord, requireString, requireWebUrl } from './validation'
 
 interface Services {
   meta: AppMeta
@@ -282,7 +282,11 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   handle('enterprise:save-team-member-config-draft', (_event, draft) => services.enterprise.saveTeamMemberConfigDraft(requireRecord(draft, 'draft') as unknown as import('../../src/types/api').EnterpriseTeamMemberConfigDraft))
   handle('enterprise:apply-team-member-config-draft', (_event, teamId, agentId, revision) => services.enterprise.applyTeamMemberConfigDraft(requireString(teamId, 'teamId', { min: 1, max: 160 }), requireString(agentId, 'agentId', { min: 1, max: 160 }), requireInteger(revision, 'revision', 1, 1_000_000)))
   handle('enterprise:get-work-overview', () => services.enterprise.getWorkOverview())
-  handle('enterprise:get-approval-context', (_event, approvalId) => services.enterprise.getApprovalContext(requireString(approvalId, 'approvalId', { min: 1, max: 160 })))
+  handle('enterprise:get-approval-context', async (_event, approvalId) => approvalContextView(await services.enterprise.getApprovalContext(requireString(approvalId, 'approvalId', { min: 1, max: 128 }))))
+  handle('enterprise:pin-returned-approval-context', (_event, approvalId) => {
+    if (!services.enterpriseBridge) throw new Error('桌面退回事项能力暂不可用')
+    return services.enterpriseBridge.pinReturnedApprovalContext(requireString(approvalId, 'approvalId', { min: 1, max: 128 }))
+  })
   handle('enterprise:submit-work', (_event, choice, goal) => services.enterprise.submitWork(requireEnterpriseWorkChoice(choice), requireString(goal, 'goal', { min: 1, max: 20_000 })))
   handle('enterprise:complete-human-task', (_event, task, payload) => services.enterprise.completeHumanTask(requireEnterpriseHumanTask(task), requireRecord(payload, 'payload')))
 
@@ -327,12 +331,16 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     const { harness: _harness, ...startOptions } = options
     return agentsFor(harness).start(startOptions)
   })
-  handle('agent:command', async (_event, runtimeId, command) => {
+  handle('agent:command', async (_event, runtimeId, command, deliveryContext) => {
     const id = requireString(runtimeId, 'runtimeId', { min: 1, max: 256 })
     const manager = agentsForRuntime(id)
+    const delivery = deliveryContext === undefined ? undefined : requireRecord(deliveryContext, 'deliveryContext')
+    if (delivery) rejectUnknownKeys(delivery, ['returnedApprovalContextHandle'], 'deliveryContext')
+    const approvalContextHandle = delivery?.returnedApprovalContextHandle
+    if (approvalContextHandle !== undefined && typeof approvalContextHandle !== 'string') throw new TypeError('deliveryContext.returnedApprovalContextHandle must be a string')
     const current = manager.list().find((runtime) => runtime.runtimeId === id)
     if (current?.sessionFile) services.enterpriseBridge?.bindRuntimeSession(id, current.sessionFile)
-    await services.enterpriseBridge?.employeeCommand(id, command)
+    await services.enterpriseBridge?.employeeCommand(id, command, approvalContextHandle)
     return manager.command(id, command)
   })
   handle('agent:stop', (_event, runtimeId) => agentsForRuntime(runtimeId).stop(runtimeId))

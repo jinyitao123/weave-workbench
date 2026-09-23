@@ -35,7 +35,7 @@ import { useStableCallback } from '@/hooks/useStableCallback'
 import { useToast } from '@/hooks/useToast'
 import { useWorkspaceActions } from '@/hooks/useWorkspaceActions'
 import { useWorkspaceRuntime } from '@/hooks/useWorkspaceRuntime'
-import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseApprovalContext, type EnterpriseDevelopmentOverview, type EnterpriseEnvironmentStatus, type EnterpriseHumanTask, type EnterpriseSession, type EnterpriseWorkItem, type EnterpriseWorkOverview, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceView } from '@/types/api'
+import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseApprovalContextView, type EnterpriseDevelopmentOverview, type EnterpriseEnvironmentStatus, type EnterpriseHumanTask, type EnterpriseSession, type EnterpriseWorkItem, type EnterpriseWorkOverview, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceView } from '@/types/api'
 
 const Transcript = lazy(() => import('@/components/Transcript').then((module) => ({ default: module.Transcript })))
 const Inspector = lazy(() => import('@/components/Inspector').then((module) => ({ default: module.Inspector })))
@@ -522,23 +522,36 @@ export default function App() {
     },
     clearSessionAttention, reportError,
   })
-  const continueEnterpriseWork = useCallback((item: EnterpriseWorkItem, context?: EnterpriseApprovalContext) => {
-    const reason = context?.returnReason ?? item.returnReason
+  const continueEnterpriseWork = useCallback(async (item: EnterpriseWorkItem, context?: EnterpriseApprovalContextView) => {
+    let returnedApprovalContextHandle: string | undefined
+    let currentContext = context
+    if (item.source === 'forge' && item.kind === 'revision_required') {
+      try {
+        if (!context || !enterpriseBridge) throw new Error('请从“我的工作”重新打开本人退回的审批事项')
+        const binding = await enterpriseBridge.pinReturnedApprovalContext(item.id)
+        returnedApprovalContextHandle = binding.handle
+        currentContext = binding.context
+      } catch (error) {
+        setToast(errorMessage(error))
+        return
+      }
+    }
+    const reason = currentContext?.returnReason ?? item.returnReason
     const details = [
-      `继续处理员工工作事项：${item.title}`,
-      context?.returnReason ? '' : item.instructions ?? item.summary ?? '',
+      `继续处理员工工作事项：${currentContext?.title ?? item.title}`,
+      currentContext ? '' : item.instructions ?? item.summary ?? '',
       reason ? `退回原因：${reason}` : '',
-      item.materialLabel ? `当前材料：${item.materialLabel}` : '',
-      context ? `当前审批步骤：${context.step}` : '',
-      ...(context?.fields.map((field) => `${field.label}：${field.value}`) ?? []),
-      ...(context?.files.map((file) => `已核对的提交文件《${file.name}》：\n${file.content}`) ?? []),
+      !currentContext && item.materialLabel ? `当前材料：${item.materialLabel}` : '',
+      currentContext ? `当前审批步骤：${currentContext.step}` : '',
+      ...(currentContext?.fields.map((field) => `${field.label}：${field.value}`) ?? []),
+      ...(currentContext?.files.map((file) => `已核对的提交文件《${file.name}》：\n${file.content}`) ?? []),
       item.workReference ? `原工作引用：${item.workReference}` : '', item.runReference ? `原运行引用：${item.runReference}` : '',
       item.returnTarget ? `修改完成后返回位置：${item.returnTarget}` : '', item.reviewScope ? `复核范围：${item.reviewScope}` : '',
-      '先理解退回事项、退回原因和当前材料，和我一起完成修改。员工明确要求递交修订材料时，只能使用 Forge 当前提供的业务操作；没有对应操作时说明原因，不得声称材料已递交或审批流程已继续。',
+      '先理解退回事项、最新退回原因和原提交材料，和我一起完成修改。只有员工明确要求递交修订材料时，才调用固定修订材料工具保存本轮准确正文和员工指定文件。该工具只准备本地加密材料包，Forge 修订递交业务动作尚未接通；明确告知员工材料尚未递交、原审批尚未继续，不得调用原生审批重提操作、其他审批状态接口或声称业务成功。',
     ].filter(Boolean).join('\n')
     newSession()
-    workspace.queuePrompt(details, 'queue')
-  }, [newSession, workspace])
+    workspace.queuePrompt(details, 'queue', undefined, undefined, returnedApprovalContextHandle)
+  }, [enterpriseBridge, newSession, setToast, workspace])
   const openTerminalLink = useCallback((url: string, external: boolean) => {
     if (external) {
       openExternal(url)
@@ -830,7 +843,7 @@ export default function App() {
     const next = queuedMessages[0]
     if (next.flushAttemptFailed) return
     queuedFlushRef.current = true
-    void sendPrompt(next.text, [], 'queue', next.id)
+    void sendPrompt(next.text, [], 'queue', next.id, next.returnedApprovalContextHandle)
       .finally(() => { queuedFlushRef.current = false })
   }, [bridge, busy, externalSessionRunning, queuedMessages, sendPrompt, submitting])
 
