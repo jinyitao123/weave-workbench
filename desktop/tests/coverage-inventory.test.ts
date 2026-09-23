@@ -26,6 +26,7 @@ const REQUIRED_SAFETY_MODULES = [
   'electron/main/collaboration/agent-bridge.ts',
   'electron/main/collaboration/message-envelope.ts',
   'electron/main/schedules/agent-bridge.ts',
+  'electron/main/schedules/ownership.ts',
   'electron/main/schedules/executor.ts',
   'electron/main/schedules/heartbeats.ts',
   'electron/main/schedules/recurrence.ts',

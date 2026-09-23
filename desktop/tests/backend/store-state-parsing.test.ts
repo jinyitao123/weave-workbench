@@ -382,4 +382,25 @@ describe('persisted schedule parsing', () => {
     expect(schedules).toHaveLength(500)
     expect(schedules[0].id).toBe('schedule-0')
   })
+
+  it('keeps only schedule ownership records tied to a persisted schedule and valid opaque scope', () => {
+    const scope = 'a'.repeat(64)
+    const { scheduleOwnerships } = loadState({
+      version: 5,
+      schedules: [validSchedule, { ...validSchedule, id: 'review' }],
+      scheduleOwnerships: [
+        { scheduleId: 'schedule-1', ownerScope: scope, state: 'migrated' },
+        { scheduleId: 'review', ownerScope: null, state: 'needs_review', originalStatus: 'active' },
+        { scheduleId: 'schedule-1', ownerScope: 'b'.repeat(64), state: 'bound' },
+        { scheduleId: 'missing-schedule', ownerScope: scope, state: 'bound' },
+        { scheduleId: 'invalid-scope', ownerScope: 'short', state: 'bound' },
+        { scheduleId: 'invalid-review', ownerScope: scope, state: 'needs_review' },
+      ],
+    })
+
+    expect(scheduleOwnerships).toEqual([
+      { scheduleId: 'schedule-1', ownerScope: scope, state: 'migrated', originalStatus: undefined },
+      { scheduleId: 'review', ownerScope: null, state: 'needs_review', originalStatus: 'active' },
+    ])
+  })
 })

@@ -16,7 +16,7 @@ export interface AgentScheduleBridgeOptions {
 }
 
 function taskInScope(task: AutomationScheduleRecord, scope: AgentScheduleScope, harness: HarnessId): boolean {
-  return task.harness === harness && task.target.projectId === scope.projectId && (task.target.kind === 'project' || task.target.sessionId === scope.sessionId)
+  return task.ownerMigrationState !== 'needs_review' && task.harness === harness && task.target.projectId === scope.projectId && (task.target.kind === 'project' || task.target.sessionId === scope.sessionId)
 }
 
 export class AgentScheduleBridge extends CapabilityBridge {

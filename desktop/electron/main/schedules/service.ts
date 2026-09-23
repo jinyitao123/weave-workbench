@@ -14,6 +14,8 @@ import type {
   HarnessId,
 } from '../../../src/types/api'
 import type { JsonStateStore } from '../store'
+import type { PersistedScheduleOwnership } from './ownership'
+import { findScheduleOwnership, isScheduleBoundToScope, migrateLegacyScheduleOwnerships, OWNER_SCOPE_PATTERN, publicSchedule, REVIEW_REQUIRED_REASON } from './ownership'
 import { rejectUnknownKeys, requireId, requireRecord, requireString } from '../validation'
 import {
   countMissedOccurrences,
@@ -35,6 +37,10 @@ export interface ScheduleRunResult {
 }
 
 export interface AutomationServiceOptions {
+  /** Trusted scope supplied by the main process from the verified EnterpriseService session. */
+  initialOwnerScope?: string | null
+  /** Graceful account change; after this bound, the main process stops runtimes and waits once more. */
+  accountScopeDrainTimeoutMs?: number
   validateTarget(target: ScheduleTarget, harness: HarnessId): Promise<void>
   validateExecution(execution: ScheduleExecution, harness: HarnessId): Promise<void>
   validatePrompt?(prompt: string, harness: HarnessId): void
@@ -112,32 +118,122 @@ function parsePatch(value: unknown, now: Date): SchedulePatch {
 
 function cloneTask(task: AutomationScheduleRecord): AutomationScheduleRecord { return structuredClone(task) }
 
+interface QueuedRun {
+  task: AutomationScheduleRecord
+  runId: string
+  ownerScope: string | null
+}
+
 export class AutomationService {
   private readonly listeners = new Set<(event: ScheduleChangeEvent) => void>()
   private readonly now: () => Date
   private timer: NodeJS.Timeout | null = null
   private closed = false
   private activeRuns = 0
-  private readonly stopWaiters = new Set<() => void>()
-  private readonly pending: Array<{ task: AutomationScheduleRecord; runId: string }> = []
+  private readonly idleWaiters = new Set<() => void>()
+  private readonly pending: QueuedRun[] = []
+  private ownerScope: string | null
+  private ownerScopeRevision = 0
+  private ownerScopeReady = true
+  private readonly accountScopeDrainTimeoutMs: number
 
   constructor(private readonly store: JsonStateStore, private readonly options: AutomationServiceOptions) {
     this.now = options.now ?? (() => new Date())
+    this.ownerScope = options.initialOwnerScope ?? null
+    this.accountScopeDrainTimeoutMs = options.accountScopeDrainTimeoutMs ?? 30_000
+  }
+
+  private assertOwnerScopeReady(): void {
+    if (this.closed || !this.ownerScopeReady) throw new Error('账号正在切换，计划暂不可用。')
+  }
+
+  private requireBoundOwnership(state: ReturnType<JsonStateStore['snapshot']>, scheduleId: string, ownerScope = this.ownerScope): PersistedScheduleOwnership {
+    this.assertOwnerScopeReady()
+    const ownership = findScheduleOwnership(state.scheduleOwnerships, scheduleId)
+    if (!ownership || ownership.state === 'needs_review' || ownership.ownerScope !== ownerScope) {
+      throw new Error(ownership?.state === 'needs_review' ? REVIEW_REQUIRED_REASON : 'Scheduled task was not found')
+    }
+    return ownership
+  }
+
+  private assertScopeRevision(expectedRevision: number, expectedOwnerScope: string | null): void {
+    if (!this.ownerScopeReady || this.ownerScopeRevision !== expectedRevision || this.ownerScope !== expectedOwnerScope) {
+      throw new Error('账号切换中，请稍后重试。')
+    }
+  }
+
+  private waitForActiveRuns(timeoutMs: number): Promise<boolean> {
+    if (this.activeRuns === 0) return Promise.resolve(true)
+    return new Promise((resolveWait) => {
+      let settled = false
+      let timer: NodeJS.Timeout | undefined
+      const finish = (result: boolean) => {
+        if (settled) return
+        settled = true
+        if (timer) clearTimeout(timer)
+        this.idleWaiters.delete(onIdle)
+        resolveWait(result)
+      }
+      const onIdle = () => finish(true)
+      this.idleWaiters.add(onIdle)
+      if (Number.isFinite(timeoutMs)) timer = setTimeout(() => finish(false), Math.max(0, timeoutMs))
+    })
+  }
+
+  private settleRunWaiters(): void {
+    if (this.activeRuns !== 0) return
+    for (const resolveIdle of this.idleWaiters) resolveIdle()
+    this.idleWaiters.clear()
   }
 
   async start(): Promise<void> {
     this.closed = false
+    const initial = this.store.snapshot()
+    const knownOwners = new Set(initial.scheduleOwnerships.map(({ scheduleId }) => scheduleId))
+    if (initial.schedules.some((task) => !knownOwners.has(task.id))) {
+      await this.store.update((state) => migrateLegacyScheduleOwnerships(state))
+    }
     await this.reconcileInterruptedRuns()
-    await this.blockInvalidActivePrompts()
-    await this.recoverMissed()
+    await this.blockInvalidActivePrompts(this.ownerScope)
+    await this.recoverMissed(this.ownerScopeRevision)
     this.armTimer()
   }
 
-  private async blockInvalidActivePrompts(): Promise<void> {
+  /** Prevent new claims before the main process changes project and session roots. */
+  async beginAccountScopeTransition(): Promise<boolean> {
+    this.ownerScopeReady = false
+    this.ownerScopeRevision += 1
+    if (this.timer) clearTimeout(this.timer)
+    this.timer = null
+    return this.waitForActiveRuns(this.accountScopeDrainTimeoutMs)
+  }
+
+  /** Called only after the main process has installed the matching verified account roots. */
+  async completeAccountScopeTransition(ownerScope: string | undefined): Promise<void> {
+    if (ownerScope !== undefined && !OWNER_SCOPE_PATTERN.test(ownerScope)) throw new TypeError('Invalid verified account scope')
+    this.ownerScope = ownerScope ?? null
+    this.ownerScopeRevision += 1
+    const revision = this.ownerScopeRevision
+    this.ownerScopeReady = false
+    await this.blockInvalidActivePrompts(this.ownerScope, revision)
+    await this.recoverMissed(revision)
+    this.ownerScopeReady = true
+    this.changed({ reason: 'updated' })
+    this.armTimer()
+    this.drain()
+  }
+
+  /** Bounded second wait used after the main process has stopped runtimes on a long task. */
+  waitForAccountScopeDrain(timeoutMs = this.accountScopeDrainTimeoutMs): Promise<boolean> {
+    return this.waitForActiveRuns(timeoutMs)
+  }
+
+  private async blockInvalidActivePrompts(ownerScope: string | null, expectedRevision = this.ownerScopeRevision): Promise<void> {
     if (!this.options.validatePrompt) return
     const updatedAt = this.now().toISOString()
     await this.store.update((state) => {
       for (const task of state.schedules) {
+        if (this.ownerScopeRevision !== expectedRevision || !isScheduleBoundToScope(state, task.id, ownerScope)) continue
         if (task.status !== 'active') continue
         try { this.options.validatePrompt!(task.prompt, task.harness) }
         catch (error) {
@@ -160,6 +256,8 @@ export class AutomationService {
     const finishedAt = this.now().toISOString()
     await this.store.update((state) => {
       for (const task of state.schedules) {
+        const ownership = findScheduleOwnership(state.scheduleOwnerships, task.id)
+        if (!ownership || ownership.state === 'needs_review') continue
         for (const run of task.runs) {
           if (run.status !== 'queued' && run.status !== 'running') continue
           run.status = 'interrupted'
@@ -175,8 +273,9 @@ export class AutomationService {
     if (this.timer) clearTimeout(this.timer)
     this.timer = null
     this.pending.splice(0)
-    if (this.activeRuns === 0) return
-    await new Promise<void>((resolveStop) => this.stopWaiters.add(resolveStop))
+    if (!await this.waitForActiveRuns(this.accountScopeDrainTimeoutMs)) {
+      console.error('Scheduled runs did not stop before shutdown; unfinished history will be marked interrupted on next launch.')
+    }
   }
 
   onDidChange(listener: (event: ScheduleChangeEvent) => void): () => void {
@@ -185,21 +284,48 @@ export class AutomationService {
   }
 
   hasActiveSchedules(): boolean {
-    return this.store.snapshot().schedules.some((task) => task.status === 'active')
+    if (this.closed || !this.ownerScopeReady) return false
+    const state = this.store.snapshot()
+    return state.schedules.some((task) => task.status === 'active' && isScheduleBoundToScope(state, task.id, this.ownerScope))
   }
 
   list(harness?: HarnessId): AutomationScheduleRecord[] {
-    return this.store.snapshot().schedules.filter((task) => harness === undefined || task.harness === harness).map(cloneTask).sort((left, right) => {
+    this.assertOwnerScopeReady()
+    const state = this.store.snapshot()
+    return state.schedules.filter((task) => {
+      if (harness !== undefined && task.harness !== harness) return false
+      const ownership = findScheduleOwnership(state.scheduleOwnerships, task.id)
+      if (ownership?.state === 'needs_review') return this.ownerScope === null
+      return ownership?.ownerScope === this.ownerScope && (ownership.state === 'bound' || ownership.state === 'migrated')
+    }).map((task) => publicSchedule(task, findScheduleOwnership(state.scheduleOwnerships, task.id)!)).sort((left, right) => {
       const next = (left.nextRunAt ?? 'z').localeCompare(right.nextRunAt ?? 'z')
       return next || right.updatedAt.localeCompare(left.updatedAt)
     })
   }
 
   get(idValue: unknown): AutomationScheduleRecord {
+    this.assertOwnerScopeReady()
     const id = requireId(idValue, 'schedule id')
-    const task = this.store.snapshot().schedules.find((candidate) => candidate.id === id)
+    const state = this.store.snapshot()
+    const task = state.schedules.find((candidate) => candidate.id === id)
+    const ownership = findScheduleOwnership(state.scheduleOwnerships, id)
+    if (!task || !ownership) throw new Error('Scheduled task was not found')
+    if (ownership.state === 'needs_review') {
+      if (this.ownerScope !== null) throw new Error('Scheduled task was not found')
+      return publicSchedule(task, ownership)
+    }
+    if (ownership.ownerScope !== this.ownerScope) throw new Error('Scheduled task was not found')
+    return publicSchedule(task, ownership)
+  }
+
+  private boundTask(idValue: unknown): { task: AutomationScheduleRecord; ownership: PersistedScheduleOwnership; ownerScope: string | null; scopeRevision: number } {
+    this.assertOwnerScopeReady()
+    const id = requireId(idValue, 'schedule id')
+    const state = this.store.snapshot()
+    const task = state.schedules.find((candidate) => candidate.id === id)
     if (!task) throw new Error('Scheduled task was not found')
-    return cloneTask(task)
+    const ownership = this.requireBoundOwnership(state, id)
+    return { task, ownership, ownerScope: this.ownerScope, scopeRevision: this.ownerScopeRevision }
   }
 
   preview(timingValue: unknown, countValue: unknown = 3): SchedulePreview {
@@ -211,10 +337,14 @@ export class AutomationService {
   }
 
   async create(inputValue: unknown, createdBy: 'user' | 'agent' = 'user', harness: HarnessId = 'prime'): Promise<AutomationScheduleRecord> {
+    this.assertOwnerScopeReady()
+    const ownerScope = this.ownerScope
+    const scopeRevision = this.ownerScopeRevision
     const now = this.now()
     const input = parseInput(inputValue, now)
     this.options.validatePrompt?.(input.prompt, harness)
     await Promise.all([this.options.validateTarget(input.target, harness), this.options.validateExecution(input.execution, harness)])
+    this.assertScopeRevision(scopeRevision, ownerScope)
     const nextRunAt = nextScheduleOccurrence(input.timing, new Date(now.getTime() - 1))
     if (!nextRunAt) throw new TypeError('Schedule has no future occurrence')
     const task: AutomationScheduleRecord = {
@@ -234,33 +364,40 @@ export class AutomationService {
       nextRunAt,
       runs: [],
     }
+    const ownership: PersistedScheduleOwnership = { scheduleId: task.id, ownerScope, state: 'bound' }
     await this.store.update((state) => {
+      this.assertScopeRevision(scopeRevision, ownerScope)
       if (state.schedules.length >= MAX_TASKS) throw new Error(`GooeyPi supports at most ${MAX_TASKS} scheduled tasks`)
       state.schedules.push(task)
+      state.scheduleOwnerships.push(ownership)
     })
+    this.assertScopeRevision(scopeRevision, ownerScope)
     this.changed({ taskId: task.id, reason: 'created' })
     this.armTimer()
-    return cloneTask(task)
+    return publicSchedule(task, ownership)
   }
 
   async update(idValue: unknown, patchValue: unknown): Promise<AutomationScheduleRecord> {
-    const id = requireId(idValue, 'schedule id')
+    const { task: current, ownership, ownerScope, scopeRevision } = this.boundTask(idValue)
+    const id = current.id
     const now = this.now()
     const patch = parsePatch(patchValue, now)
-    const current = this.get(id)
     if (current.revision !== patch.revision) throw new Error('Scheduled task changed; reload it before saving')
     const target = patch.target ?? current.target
     const execution = patch.execution ?? current.execution
     const prompt = patch.prompt ?? current.prompt
     this.options.validatePrompt?.(prompt, current.harness)
     await Promise.all([this.options.validateTarget(target, current.harness), this.options.validateExecution(execution, current.harness)])
+    this.assertScopeRevision(scopeRevision, ownerScope)
     const timing = patch.timing ?? current.timing
     const nextRunAt = nextScheduleOccurrence(timing, new Date(now.getTime() - 1))
     if (!nextRunAt) throw new TypeError('Schedule has no future occurrence')
     let updated!: AutomationScheduleRecord
     await this.store.update((state) => {
+      this.assertScopeRevision(scopeRevision, ownerScope)
       const task = state.schedules.find((candidate) => candidate.id === id)
       if (!task) throw new Error('Scheduled task was not found')
+      this.requireBoundOwnership(state, id, ownerScope)
       if (task.revision !== patch.revision) throw new Error('Scheduled task changed; reload it before saving')
       updated = {
         ...task,
@@ -277,25 +414,29 @@ export class AutomationService {
       }
       Object.assign(task, updated)
     })
+    this.assertScopeRevision(scopeRevision, ownerScope)
     this.changed({ taskId: id, reason: 'updated' })
     this.armTimer()
-    return cloneTask(updated)
+    return publicSchedule(updated, ownership)
   }
 
   async pause(idValue: unknown): Promise<AutomationScheduleRecord> { return this.setStatus(idValue, 'paused') }
 
   async resume(idValue: unknown): Promise<AutomationScheduleRecord> {
-    const id = requireId(idValue, 'schedule id')
+    const { task: current, ownership, ownerScope, scopeRevision } = this.boundTask(idValue)
+    const id = current.id
     const now = this.now()
-    const current = this.get(id)
     this.options.validatePrompt?.(current.prompt, current.harness)
     await Promise.all([this.options.validateTarget(current.target, current.harness), this.options.validateExecution(current.execution, current.harness)])
+    this.assertScopeRevision(scopeRevision, ownerScope)
     const nextRunAt = nextScheduleOccurrence(current.timing, new Date(now.getTime() - 1))
     if (!nextRunAt) throw new Error('This schedule has no future occurrence')
     let updated!: AutomationScheduleRecord
     await this.store.update((state) => {
+      this.assertScopeRevision(scopeRevision, ownerScope)
       const task = state.schedules.find((candidate) => candidate.id === id)
       if (!task) throw new Error('Scheduled task was not found')
+      this.requireBoundOwnership(state, id, ownerScope)
       task.status = 'active'
       task.blockedReason = undefined
       task.nextRunAt = nextRunAt
@@ -303,9 +444,10 @@ export class AutomationService {
       task.updatedAt = now.toISOString()
       updated = cloneTask(task)
     })
+    this.assertScopeRevision(scopeRevision, ownerScope)
     this.changed({ taskId: id, reason: 'updated' })
     this.armTimer()
-    return updated
+    return publicSchedule(updated, ownership)
   }
 
   /**
@@ -314,13 +456,18 @@ export class AutomationService {
    * schedule executors do not expose a reliable cancellation primitive.
    */
   async delete(idValue: unknown): Promise<boolean> {
-    const id = requireId(idValue, 'schedule id')
+    const { task, ownerScope, scopeRevision } = this.boundTask(idValue)
+    const id = task.id
     const removed = await this.store.update((state) => {
+      this.assertScopeRevision(scopeRevision, ownerScope)
+      this.requireBoundOwnership(state, id, ownerScope)
       const index = state.schedules.findIndex((candidate) => candidate.id === id)
       if (index < 0) return false
       state.schedules.splice(index, 1)
+      state.scheduleOwnerships = state.scheduleOwnerships.filter((candidate) => candidate.scheduleId !== id)
       return true
     })
+    this.assertScopeRevision(scopeRevision, ownerScope)
     if (removed) {
       for (let index = this.pending.length - 1; index >= 0; index -= 1) {
         if (this.pending[index].task.id === id) this.pending.splice(index, 1)
@@ -332,17 +479,21 @@ export class AutomationService {
   }
 
   async runNow(idValue: unknown): Promise<ScheduleRunRecord> {
-    const task = this.get(idValue)
+    const { task, ownerScope, scopeRevision } = this.boundTask(idValue)
     this.options.validatePrompt?.(task.prompt, task.harness)
     await Promise.all([this.options.validateTarget(task.target, task.harness), this.options.validateExecution(task.execution, task.harness)])
-    return this.enqueue(task, 'manual', this.now().toISOString())
+    this.assertScopeRevision(scopeRevision, ownerScope)
+    return this.enqueue(task, ownerScope, scopeRevision, 'manual', this.now().toISOString())
   }
 
   private async setStatus(idValue: unknown, status: 'paused'): Promise<AutomationScheduleRecord> {
-    const id = requireId(idValue, 'schedule id')
+    const { task, ownerScope, scopeRevision, ownership } = this.boundTask(idValue)
+    const id = task.id
     const now = this.now().toISOString()
     let updated!: AutomationScheduleRecord
     await this.store.update((state) => {
+      this.assertScopeRevision(scopeRevision, ownerScope)
+      this.requireBoundOwnership(state, id, ownerScope)
       const task = state.schedules.find((candidate) => candidate.id === id)
       if (!task) throw new Error('Scheduled task was not found')
       task.status = status
@@ -352,17 +503,19 @@ export class AutomationService {
       task.updatedAt = now
       updated = cloneTask(task)
     })
+    this.assertScopeRevision(scopeRevision, ownerScope)
     this.changed({ taskId: id, reason: 'updated' })
     this.armTimer()
-    return updated
+    return publicSchedule(updated, ownership)
   }
 
   private armTimer(): void {
-    if (this.closed) return
+    if (this.closed || !this.ownerScopeReady) return
     if (this.timer) clearTimeout(this.timer)
     this.timer = null
-    const next = this.store.snapshot().schedules
-      .filter((task) => task.status === 'active' && task.nextRunAt)
+    const state = this.store.snapshot()
+    const next = state.schedules
+      .filter((task) => task.status === 'active' && task.nextRunAt && isScheduleBoundToScope(state, task.id, this.ownerScope))
       .map((task) => Date.parse(task.nextRunAt!))
       .filter(Number.isFinite)
       .reduce<number | undefined>((earliest, value) => earliest === undefined || value < earliest ? value : earliest, undefined)
@@ -370,35 +523,40 @@ export class AutomationService {
     const delay = Math.max(0, Math.min(2_147_483_647, next - this.now().getTime()))
     this.timer = setTimeout(() => {
       this.timer = null
-      void this.processDue()
+      const revision = this.ownerScopeRevision
+      void this.processDue(revision)
         .catch((error) => console.error('Scheduled task processing failed:', error))
         .finally(() => this.armTimer())
     }, delay)
     this.timer.unref()
   }
 
-  private async recoverMissed(): Promise<void> {
+  private async recoverMissed(expectedRevision: number): Promise<void> {
     const now = this.now()
-    const snapshot = this.store.snapshot().schedules
+    const state = this.store.snapshot()
+    const snapshot = state.schedules.filter((task) => isScheduleBoundToScope(state, task.id, this.ownerScope))
     for (const task of snapshot) {
+      if (this.ownerScopeRevision !== expectedRevision) return
       if (task.status !== 'active' || !task.nextRunAt || Date.parse(task.nextRunAt) >= now.getTime() - DUE_GRACE_MS) continue
-      await this.skipMissed(task, now)
+      await this.skipMissed(task, now, expectedRevision, this.ownerScope)
     }
   }
 
-  private async processDue(): Promise<void> {
-    if (this.closed) return
+  private async processDue(expectedRevision = this.ownerScopeRevision): Promise<void> {
+    if (!this.isScopeCurrent(this.ownerScope, expectedRevision)) return
     const now = this.now()
-    const due = this.store.snapshot().schedules
-      .filter((task) => task.status === 'active' && task.nextRunAt && Date.parse(task.nextRunAt) <= now.getTime())
+    const state = this.store.snapshot()
+    const due = state.schedules
+      .filter((task) => task.status === 'active' && task.nextRunAt && Date.parse(task.nextRunAt) <= now.getTime() && isScheduleBoundToScope(state, task.id, this.ownerScope))
       .sort((left, right) => left.nextRunAt!.localeCompare(right.nextRunAt!))
     for (const task of due) {
-      if (now.getTime() - Date.parse(task.nextRunAt!) > DUE_GRACE_MS) await this.skipMissed(task, now)
-      else await this.claimAndEnqueue(task, now)
+      if (!this.isScopeCurrent(this.ownerScope, expectedRevision)) return
+      if (now.getTime() - Date.parse(task.nextRunAt!) > DUE_GRACE_MS) await this.skipMissed(task, now, expectedRevision, this.ownerScope)
+      else await this.claimAndEnqueue(task, now, expectedRevision, this.ownerScope)
     }
   }
 
-  private async skipMissed(snapshot: AutomationScheduleRecord, now: Date): Promise<void> {
+  private async skipMissed(snapshot: AutomationScheduleRecord, now: Date, expectedRevision: number, ownerScope: string | null): Promise<void> {
     const scheduledFor = snapshot.nextRunAt
     if (!scheduledFor) return
     const missed = countMissedOccurrences(snapshot.timing, new Date(scheduledFor), now, 10_000)
@@ -408,6 +566,7 @@ export class AutomationService {
       execution: snapshot.execution, skippedCount: Math.max(1, missed), error: 'GooeyPi was not available when this task was due.',
     }
     await this.store.update((state) => {
+      if (this.ownerScopeRevision !== expectedRevision || this.ownerScope !== ownerScope || !isScheduleBoundToScope(state, snapshot.id, ownerScope)) return
       const task = state.schedules.find((candidate) => candidate.id === snapshot.id)
       if (task?.status !== 'active' || task.nextRunAt !== scheduledFor) return
       this.pushRun(task, run)
@@ -419,60 +578,89 @@ export class AutomationService {
     this.changed({ taskId: snapshot.id, reason: 'run' })
   }
 
-  private async claimAndEnqueue(snapshot: AutomationScheduleRecord, now: Date): Promise<void> {
+  private async claimAndEnqueue(snapshot: AutomationScheduleRecord, now: Date, expectedRevision: number, ownerScope: string | null): Promise<void> {
     const scheduledFor = snapshot.nextRunAt
     if (!scheduledFor) return
-    let claimed: AutomationScheduleRecord | undefined
+    let queued: QueuedRun | undefined
     await this.store.update((state) => {
+      if (!this.isScopeCurrent(ownerScope, expectedRevision) || !isScheduleBoundToScope(state, snapshot.id, ownerScope)) return
       const task = state.schedules.find((candidate) => candidate.id === snapshot.id)
       if (task?.status !== 'active' || task.nextRunAt !== scheduledFor) return
       const next = nextScheduleOccurrence(task.timing, new Date(Date.parse(scheduledFor) + 1))
       if (next) task.nextRunAt = next
       else { task.nextRunAt = undefined; task.status = 'completed' }
       task.updatedAt = now.toISOString()
-      claimed = cloneTask(task)
+      const run: ScheduleRunRecord = {
+        id: randomUUID(), taskId: task.id, taskRevision: task.revision, trigger: 'scheduled', scheduledFor,
+        queuedAt: now.toISOString(), status: 'queued', execution: structuredClone(task.execution),
+      }
+      this.pushRun(task, run)
+      queued = { task: cloneTask(task), runId: run.id, ownerScope }
     })
-    if (claimed) await this.enqueue(claimed, 'scheduled', scheduledFor)
+    if (!queued) return
+    this.pending.push(queued)
+    this.changed({ taskId: queued.task.id, reason: 'run' })
+    this.drain()
   }
 
-  private async enqueue(task: AutomationScheduleRecord, trigger: 'scheduled' | 'manual', scheduledFor: string): Promise<ScheduleRunRecord> {
+  private async enqueue(task: AutomationScheduleRecord, ownerScope: string | null, scopeRevision: number, trigger: 'scheduled' | 'manual', scheduledFor: string): Promise<ScheduleRunRecord> {
+    this.assertScopeRevision(scopeRevision, ownerScope)
     const now = this.now().toISOString()
     const run: ScheduleRunRecord = {
       id: randomUUID(), taskId: task.id, taskRevision: task.revision, trigger, scheduledFor,
       queuedAt: now, status: 'queued', execution: structuredClone(task.execution),
     }
     await this.store.update((state) => {
+      this.assertScopeRevision(scopeRevision, ownerScope)
+      this.requireBoundOwnership(state, task.id, ownerScope)
       const current = state.schedules.find((candidate) => candidate.id === task.id)
-      if (!current) throw new Error('Scheduled task was deleted before its run could start')
+      if (!current || current.revision !== task.revision) throw new Error('Scheduled task changed before its run could start')
       this.pushRun(current, run)
     })
-    this.pending.push({ task: cloneTask(task), runId: run.id })
+    this.pending.push({ task: cloneTask(task), runId: run.id, ownerScope })
     this.changed({ taskId: task.id, reason: 'run' })
     this.drain()
     return structuredClone(run)
   }
 
   private drain(): void {
-    if (this.closed) return
+    if (this.closed || !this.ownerScopeReady) return
     while (this.activeRuns < MAX_CONCURRENT_RUNS) {
-      const item = this.pending.shift()
-      if (!item) return
+      const index = this.pending.findIndex((item) => item.ownerScope === this.ownerScope)
+      if (index < 0) return
+      const [item] = this.pending.splice(index, 1)
       this.activeRuns += 1
-      void this.dispatch(item.task, item.runId).catch((error) => console.error('Scheduled run bookkeeping failed:', error)).finally(() => {
+      void this.dispatch(item).catch((error) => console.error('Scheduled run bookkeeping failed:', error)).finally(() => {
         this.activeRuns -= 1
-        if (this.closed && this.activeRuns === 0) {
-          for (const resolveStop of this.stopWaiters) resolveStop()
-          this.stopWaiters.clear()
-        }
+        this.settleRunWaiters()
         this.drain()
       })
     }
   }
 
-  private async dispatch(task: AutomationScheduleRecord, runId: string): Promise<void> {
+  private isScopeCurrent(ownerScope: string | null, expectedRevision: number): boolean {
+    return !this.closed && this.ownerScopeReady && this.ownerScope === ownerScope && this.ownerScopeRevision === expectedRevision
+  }
+
+  private requeue(item: QueuedRun): void {
+    if (this.closed || this.pending.some((candidate) => candidate.runId === item.runId)) return
+    this.pending.unshift(item)
+  }
+
+  private async dispatch(item: QueuedRun): Promise<void> {
+    const { task, runId, ownerScope } = item
+    const scopeRevision = this.ownerScopeRevision
+    if (!this.isScopeCurrent(ownerScope, scopeRevision)) { this.requeue(item); return }
     const startedAt = this.now().toISOString()
-    if (!await this.markRunStarted(task.id, runId, task.revision, startedAt)) {
+    const start = await this.markRunStarted(task.id, runId, task.revision, startedAt, ownerScope, scopeRevision)
+    if (start === 'deferred') { this.requeue(item); return }
+    if (start === 'cancelled') {
       this.changed({ taskId: task.id, reason: 'run' })
+      return
+    }
+    if (!this.isScopeCurrent(ownerScope, scopeRevision)) {
+      await this.deferRun(task.id, runId)
+      this.requeue(item)
       return
     }
     try {
@@ -495,21 +683,31 @@ export class AutomationService {
     this.changed({ taskId: task.id, reason: 'run' })
   }
 
-  private async markRunStarted(taskId: string, runId: string, expectedRevision: number, startedAt: string): Promise<boolean> {
+  private async markRunStarted(taskId: string, runId: string, expectedRevision: number, startedAt: string, ownerScope: string | null, scopeRevision: number): Promise<'started' | 'deferred' | 'cancelled'> {
     return this.store.update((state) => {
+      if (!this.isScopeCurrent(ownerScope, scopeRevision)) return 'deferred'
+      if (!isScheduleBoundToScope(state, taskId, ownerScope)) return 'deferred'
       const task = state.schedules.find((candidate) => candidate.id === taskId)
-      if (!task) return false
+      if (!task) return 'cancelled'
       const run = task.runs.find((candidate) => candidate.id === runId)
-      if (run?.status !== 'queued') return false
+      if (run?.status !== 'queued') return 'cancelled'
       if (run.taskRevision !== expectedRevision || task.revision !== expectedRevision) {
         Object.assign(run, {
           status: 'cancelled', finishedAt: startedAt,
           error: 'Scheduled task changed before this queued run could start.',
         })
-        return false
+        return 'cancelled'
       }
       Object.assign(run, { status: 'running', startedAt })
-      return true
+      return 'started'
+    })
+  }
+
+  private async deferRun(taskId: string, runId: string): Promise<void> {
+    await this.store.update((state) => {
+      const run = state.schedules.find((candidate) => candidate.id === taskId)?.runs.find((candidate) => candidate.id === runId)
+      if (run?.status !== 'running') return
+      Object.assign(run, { status: 'queued', startedAt: undefined, finishedAt: undefined, error: undefined })
     })
   }
 

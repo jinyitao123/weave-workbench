@@ -390,7 +390,7 @@ describe('JsonStateStore', () => {
       schedules: [],
     }))
     const state = new JsonStateStore(path).snapshot()
-    expect(state.version).toBe(4)
+    expect(state.version).toBe(5)
     expect(state.projects.map((project) => project.harness)).toEqual(['prime'])
     expect(state.settings.activeHarness).toBe('prime')
     expect(state.settings.ompApprovalMode).toBe('inherit')
@@ -454,7 +454,7 @@ describe('JsonStateStore', () => {
       schedules: [],
     }))
     const state = new JsonStateStore(path).snapshot()
-    expect(state.version).toBe(4)
+    expect(state.version).toBe(5)
     expect(state.projects.map((project) => project.harness)).toEqual(['pi'])
     expect(state.settings.activeHarness).toBe('pi')
   })
@@ -493,7 +493,7 @@ describe('JsonStateStore', () => {
       schedules: [],
     }))
     const state = new JsonStateStore(path).snapshot()
-    expect(state.version).toBe(4)
+    expect(state.version).toBe(5)
     expect(state.settings.piDisabledProviders).toEqual([])
   })
 
@@ -513,7 +513,7 @@ describe('JsonStateStore', () => {
     expect(() => store.getProjects()).toThrow(UnsupportedStateVersionError)
     expect(() => store.getArchivedSessions()).toThrow(UnsupportedStateVersionError)
     await expect(store.ready()).rejects.toBeInstanceOf(UnsupportedStateVersionError)
-    await expect(store.ready()).rejects.toThrow(/version 99.*newer.*version 4.*upgrade GooeyPi/i)
+    await expect(store.ready()).rejects.toThrow(/version 99.*newer.*version 5.*upgrade GooeyPi/i)
     await expect(store.update(mutator)).rejects.toBeInstanceOf(UnsupportedStateVersionError)
     expect(mutator).not.toHaveBeenCalled()
     await store.beginShutdown()
@@ -582,7 +582,7 @@ describe('JsonStateStore', () => {
     const migrated = await openDesktopStateStore(dir)
     expect(migrated.snapshot().projects.map(({ id, harness }) => ({ id, harness }))).toEqual([{ id: 'omp-project', harness: 'omp' }])
     await migrated.beginShutdown()
-    expect(JSON.parse(readFileSync(currentPath, 'utf8'))).toMatchObject({ version: 4, projects: [{ id: 'omp-project', harness: 'omp' }] })
+    expect(JSON.parse(readFileSync(currentPath, 'utf8'))).toMatchObject({ version: 5, projects: [{ id: 'omp-project', harness: 'omp' }] })
     expect(existsSync(legacyPath)).toBe(false)
     const firstBackup = readdirSync(dir).find((name) => name.startsWith(`${LEGACY_DESKTOP_STATE_FILENAME}.migrated-v4-`))
     expect(firstBackup).toBeDefined()
@@ -616,7 +616,7 @@ describe('JsonStateStore', () => {
     const dir = makeDirectory()
     const currentPath = join(dir, CURRENT_DESKTOP_STATE_FILENAME)
     const legacyPath = join(dir, LEGACY_DESKTOP_STATE_FILENAME)
-    const currentRaw = JSON.stringify({ version: 4, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] })
+    const currentRaw = JSON.stringify({ version: 5, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [], scheduleOwnerships: [] })
     const legacyRaw = JSON.stringify({ version: 2, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] })
     writeFileSync(currentPath, currentRaw)
     writeFileSync(legacyPath, legacyRaw)
@@ -642,7 +642,7 @@ describe('JsonStateStore', () => {
     const dir = makeDirectory()
     const currentPath = join(dir, CURRENT_DESKTOP_STATE_FILENAME)
     const legacyPath = join(dir, LEGACY_DESKTOP_STATE_FILENAME)
-    writeFileSync(currentPath, JSON.stringify({ version: 4, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] }))
+    writeFileSync(currentPath, JSON.stringify({ version: 5, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [], scheduleOwnerships: [] }))
     writeFileSync(legacyPath, JSON.stringify({ version: 2, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] }))
     const events: string[] = []
     const directory: JsonStateStoreFileHandle = {
@@ -687,7 +687,7 @@ describe('JsonStateStore', () => {
     }, legacyPath)
 
     await store.ready()
-    expect(JSON.parse(readFileSync(currentPath, 'utf8'))).toMatchObject({ version: 4, projects: [] })
+    expect(JSON.parse(readFileSync(currentPath, 'utf8'))).toMatchObject({ version: 5, projects: [] })
     expect(existsSync(legacyPath)).toBe(false)
   })
 
@@ -720,7 +720,7 @@ describe('JsonStateStore', () => {
     const dir = makeDirectory()
     const currentPath = join(dir, CURRENT_DESKTOP_STATE_FILENAME)
     const legacyPath = join(dir, LEGACY_DESKTOP_STATE_FILENAME)
-    const currentRaw = JSON.stringify({ version: 4, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] })
+    const currentRaw = JSON.stringify({ version: 5, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [], scheduleOwnerships: [] })
     const legacyRaw = JSON.stringify({ version: 2, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] })
     writeFileSync(currentPath, currentRaw)
     writeFileSync(legacyPath, legacyRaw)
@@ -755,7 +755,7 @@ describe('JsonStateStore', () => {
     const dir = makeDirectory()
     const currentPath = join(dir, CURRENT_DESKTOP_STATE_FILENAME)
     const legacyPath = join(dir, LEGACY_DESKTOP_STATE_FILENAME)
-    const currentRaw = JSON.stringify({ version: 4, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] })
+    const currentRaw = JSON.stringify({ version: 5, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [], scheduleOwnerships: [] })
     const legacyRaw = JSON.stringify({ version: 2, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] })
     writeFileSync(currentPath, currentRaw)
     writeFileSync(legacyPath, legacyRaw)
@@ -792,7 +792,7 @@ describe('JsonStateStore', () => {
     const dir = makeDirectory()
     const currentPath = join(dir, CURRENT_DESKTOP_STATE_FILENAME)
     const legacyPath = join(dir, LEGACY_DESKTOP_STATE_FILENAME)
-    const currentRaw = JSON.stringify({ version: 4, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] })
+    const currentRaw = JSON.stringify({ version: 5, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [], scheduleOwnerships: [] })
     const legacyRaw = JSON.stringify({ version: 2, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] })
     writeFileSync(currentPath, currentRaw)
     writeFileSync(legacyPath, legacyRaw)
@@ -868,7 +868,7 @@ describe('JsonStateStore', () => {
     const path = join(dir, 'state.json')
     writeFileSync(path, '{broken')
     const store = new JsonStateStore(path)
-    expect(store.snapshot().version).toBe(4)
+    expect(store.snapshot().version).toBe(5)
     expect(store.snapshot().projects).toEqual([])
 
     await store.update((state) => { state.archivedSessions.push('after-recovery') })

@@ -57,7 +57,7 @@ function schedulesWithRuns(count: number, status: ScheduleRunStatus = 'succeeded
 }
 
 function stateWithSchedules(schedules: AutomationScheduleRecord[]) {
-  return { version: 4, projects: [], settings: {}, archivedSessions: [], dismissedProjectPaths: [], schedules }
+  return { version: 4, projects: [], settings: {}, archivedSessions: [], dismissedProjectPaths: [], schedules, scheduleOwnerships: schedules.map(({ id }) => ({ scheduleId: id, ownerScope: null, state: 'bound' })) }
 }
 
 function stateFile(state: unknown): { path: string; store: JsonStateStore } {

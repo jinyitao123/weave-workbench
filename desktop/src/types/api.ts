@@ -1010,6 +1010,8 @@ export interface AutomationScheduleRecord {
   updatedAt: string
   nextRunAt?: string
   blockedReason?: string
+  /** Projection only. Persisted ownership metadata lives in the main-process store. */
+  ownerMigrationState?: 'bound' | 'migrated' | 'needs_review'
   runs: ScheduleRunRecord[]
 }
 

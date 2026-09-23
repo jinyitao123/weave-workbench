@@ -912,6 +912,8 @@ async function bootstrap(): Promise<void> {
   )
   const scheduledRuns: Record<HarnessId, ScheduledRunExecutor> = { prime: primeScheduledRuns, omp: ompScheduledRuns, pi: piScheduledRuns }
   const schedules = new AutomationService(stateStore, {
+    initialOwnerScope: enterpriseAccountScope ?? null,
+    accountScopeDrainTimeoutMs: 30_000,
     validateTarget: (target, harness) => scheduledRuns[harness].validateTarget(target),
     validateExecution: (execution, harness) => scheduledRuns[harness].validateExecution(execution),
     validatePrompt: assertNoMcpAuthenticationCommand,
@@ -1092,10 +1094,25 @@ async function bootstrap(): Promise<void> {
     const previousRoots = Object.fromEntries((['prime', 'omp', 'pi'] as const).map((harness) => [harness, sessionServices[harness].sessionRoot])) as Record<HarnessId, string>
     const changedRoots: HarnessId[] = []
     accountScopeChanging = true
-    enterpriseBridge.invalidateAccount()
+    let scheduleGateStarted = false
+    let terminalsPaused = false
+    let managersResumed = false
     try {
-      await Promise.all(runtimeManagers.map((manager) => manager.pauseStartsAndStop()))
-      await terminals!.pauseCreationsAndKillAll()
+      const drained = await schedules.beginAccountScopeTransition()
+      scheduleGateStarted = true
+      enterpriseBridge.invalidateAccount()
+      if (!drained) {
+        await Promise.all(runtimeManagers.map((manager) => manager.pauseStartsAndStop()))
+        await terminals!.pauseCreationsAndKillAll()
+        terminalsPaused = true
+        if (!await schedules.waitForAccountScopeDrain()) {
+          throw new Error('计划任务在 30 秒内未停止。账号范围已冻结，请先关闭桌面进程后重试切换。')
+        }
+      } else {
+        await Promise.all(runtimeManagers.map((manager) => manager.pauseStartsAndStop()))
+        await terminals!.pauseCreationsAndKillAll()
+        terminalsPaused = true
+      }
       if (nextScope !== previousScope) {
         for (const harness of ['prime', 'omp', 'pi'] as const) {
           const root = sessionRootForScope(harness, nextScope)
@@ -1109,13 +1126,26 @@ async function bootstrap(): Promise<void> {
       }
       await Promise.all(runtimeManagers.map((manager) => manager.requestRuntimeEnvironmentRefresh()))
       const resume = !keepPaused && mayResume()
-      accountScopeChanging = !resume
       if (resume) {
         for (const manager of runtimeManagers) manager.resumeStarts()
+        managersResumed = true
         terminals!.resumeCreations()
+        terminalsPaused = false
+        await schedules.completeAccountScopeTransition(nextScope)
+        accountScopeChanging = false
+      } else {
+        accountScopeChanging = true
       }
     } catch (error) {
       let rollbackSucceeded = true
+      if (managersResumed) {
+        try { await Promise.all(runtimeManagers.map((manager) => manager.pauseStartsAndStop())) }
+        catch { rollbackSucceeded = false }
+      }
+      if (!terminalsPaused) {
+        try { await terminals!.pauseCreationsAndKillAll(); terminalsPaused = true }
+        catch { rollbackSucceeded = false }
+      }
       for (const service of projectServices) service.setAccountScope(previousScope)
       for (const harness of changedRoots.reverse()) {
         try {
@@ -1124,11 +1154,20 @@ async function bootstrap(): Promise<void> {
         } catch { rollbackSucceeded = false }
       }
       enterpriseAccountScope = previousScope
-      const resume = rollbackSucceeded && !keepPaused && mayResume()
-      accountScopeChanging = !resume
+      let previousSessionMatches = false
+      try {
+        const session = await enterprise.getSession()
+        previousSessionMatches = previousScope === undefined
+          ? session.status === 'signed-out'
+          : session.status === 'signed-in' && enterprise.accountKeyForSession(session) === previousScope
+      } catch { previousSessionMatches = false }
+      const resume = rollbackSucceeded && !keepPaused && mayResume() && previousSessionMatches
+      accountScopeChanging = true
       if (resume) {
         for (const manager of runtimeManagers) manager.resumeStarts()
         terminals!.resumeCreations()
+        if (scheduleGateStarted) await schedules.completeAccountScopeTransition(previousScope)
+        accountScopeChanging = false
       }
       throw error
     }

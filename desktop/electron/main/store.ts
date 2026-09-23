@@ -4,6 +4,7 @@ import { open, rename, unlink } from 'node:fs/promises'
 import type { FileHandle } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join } from 'node:path'
 import { INTERFACE_FONT_SCALES, PRIME_THINKING_LEVELS, PROJECT_SORT_MODES, type AppSettings, type HarnessId, type ProjectRecord, type ProjectScripts, type ScheduleExecution, type AutomationScheduleRecord, type ScheduleRunRecord, type ScheduleTarget, type ScheduleTiming } from '../../src/types/api'
+import { parseScheduleOwnerships, type PersistedScheduleOwnership } from './schedules/ownership'
 import { normalizeScheduleRunHistory } from './schedules/retention'
 import { isRecord } from './validation'
 
@@ -21,18 +22,21 @@ export interface PersistedProject extends Omit<ProjectRecord, 'sessionCount' | '
 }
 
 export interface DesktopState {
-  version: 4
+  version: 5
   projects: PersistedProject[]
   settings: AppSettings
   archivedSessions: string[]
   dismissedProjectPaths: string[]
   schedules: AutomationScheduleRecord[]
+  /** Main-process-only ownership metadata; never returned directly over IPC. */
+  scheduleOwnerships: PersistedScheduleOwnership[]
 }
 
+// Keep the established path stable; the JSON schema version below makes v4 binaries fail closed.
 export const CURRENT_DESKTOP_STATE_FILENAME = 'prime-work-state-v4.json'
 export const LEGACY_DESKTOP_STATE_FILENAME = 'prime-work-state.json'
-const CURRENT_DESKTOP_STATE_VERSION = 4 as const
-type SupportedDesktopStateVersion = 1 | 2 | 3 | typeof CURRENT_DESKTOP_STATE_VERSION
+const CURRENT_DESKTOP_STATE_VERSION = 5 as const
+type SupportedDesktopStateVersion = 1 | 2 | 3 | 4 | typeof CURRENT_DESKTOP_STATE_VERSION
 
 export class StateCompatibilityError extends Error {
   constructor(message: string) {
@@ -154,7 +158,7 @@ export function defaultSettings(): AppSettings {
 }
 
 function defaultState(): DesktopState {
-  return { version: CURRENT_DESKTOP_STATE_VERSION, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] }
+  return { version: CURRENT_DESKTOP_STATE_VERSION, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [], scheduleOwnerships: [] }
 }
 
 /** Versions 1 and 2 predate harness scoping, so only an absent value migrates to Prime. */
@@ -418,13 +422,15 @@ function capUnboundedCollections(state: DesktopState): void {
   if (state.archivedSessions.length > MAX_ARCHIVED_SESSIONS) state.archivedSessions = state.archivedSessions.slice(-MAX_ARCHIVED_SESSIONS)
   if (state.dismissedProjectPaths.length > MAX_DISMISSED_PROJECT_PATHS) state.dismissedProjectPaths = state.dismissedProjectPaths.slice(-MAX_DISMISSED_PROJECT_PATHS)
   normalizeScheduleRunHistory(state.schedules)
+  const scheduleIds = new Set(state.schedules.map(({ id }) => id))
+  state.scheduleOwnerships = state.scheduleOwnerships.filter((owner) => scheduleIds.has(owner.scheduleId)).slice(-500)
 }
 
 function parseStateVersion(value: Record<string, unknown>, statePath: string): SupportedDesktopStateVersion {
   if (!Number.isSafeInteger(value.version)) throw new Error('Desktop state is missing a supported integer schema version')
   const version = Number(value.version)
   if (version > CURRENT_DESKTOP_STATE_VERSION) throw new UnsupportedStateVersionError(version, statePath)
-  if (version !== 1 && version !== 2 && version !== 3 && version !== CURRENT_DESKTOP_STATE_VERSION) {
+  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== CURRENT_DESKTOP_STATE_VERSION) {
     throw new Error(`Desktop state schema version ${version} is not supported`)
   }
   return version
@@ -438,13 +444,16 @@ function parseState(value: unknown, statePath: string): { sourceVersion: Support
   // Versions 1 and 2 predate harness scoping. Their absent harness fields are
   // the only project records allowed to inherit Prime; schedules first existed
   // in v2, so a v1 schedule is never eligible for legacy authority migration.
+  const projects = Array.isArray(value.projects) ? value.projects.map((project) => parseProject(project, preHarnessProjectState)).filter((item): item is PersistedProject => item !== null) : []
+  const schedules = version !== 1 && Array.isArray(value.schedules) ? value.schedules.map((schedule) => parseSchedule(schedule, preHarnessScheduleState)).filter((item): item is AutomationScheduleRecord => item !== null).slice(0, 500) : []
   const state: DesktopState = {
     version: CURRENT_DESKTOP_STATE_VERSION,
-    projects: Array.isArray(value.projects) ? value.projects.map((project) => parseProject(project, preHarnessProjectState)).filter((item): item is PersistedProject => item !== null) : [],
+    projects,
     settings: parseSettings(value.settings, preHarnessProjectState),
     archivedSessions: Array.isArray(value.archivedSessions) ? value.archivedSessions.filter((item): item is string => typeof item === 'string') : [],
     dismissedProjectPaths: Array.isArray(value.dismissedProjectPaths) ? value.dismissedProjectPaths.filter((item): item is string => typeof item === 'string') : [],
-    schedules: version !== 1 && Array.isArray(value.schedules) ? value.schedules.map((schedule) => parseSchedule(schedule, preHarnessScheduleState)).filter((item): item is AutomationScheduleRecord => item !== null).slice(0, 500) : [],
+    schedules,
+    scheduleOwnerships: parseScheduleOwnerships(value.scheduleOwnerships, schedules),
   }
   capUnboundedCollections(state)
   return { sourceVersion: version, state }
@@ -890,6 +899,7 @@ export class JsonStateStore {
       archivedSessions: [],
       dismissedProjectPaths: [],
       schedules: [],
+      scheduleOwnerships: [],
       [WINDOWS_LEGACY_TOMBSTONE_KEY]: marker,
     }, null, 2)}\n`
     try {
