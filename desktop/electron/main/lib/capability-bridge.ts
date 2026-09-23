@@ -7,6 +7,7 @@ import { requireRecord, requireString } from '../validation'
 const MAX_BODY_BYTES = 1_100_000
 const TOKEN_TTL_MS = 24 * 60 * 60_000
 const RATE_WINDOW_MS = 60_000
+const CAPABILITY_EXPIRED_ERROR = '企业团队会话授权已失效，请重新启动当前桌面会话后继续。'
 
 export interface CapabilityClaim {
   token: string
@@ -93,11 +94,16 @@ export abstract class CapabilityBridge {
     return true
   }
 
+  /** Revoke every runtime credential when the identity boundary changes. */
+  protected revokeAllClaims(): void {
+    for (const token of [...this.claims.keys()]) this.revoke(token)
+  }
+
   /** Subclasses may release token-keyed bindings when their base claim is removed. */
   protected onClaimRevoked(_claim: CapabilityClaim): void {}
 
   async stop(): Promise<void> {
-    for (const token of [...this.claims.keys()]) this.revoke(token)
+    this.revokeAllClaims()
     const server = this.server
     this.server = null
     this.port = 0
@@ -116,8 +122,8 @@ export abstract class CapabilityBridge {
       if (!authorization?.startsWith('Bearer ')) { send(response, 401, { ok: false, error: 'Unauthorized' }); return }
       const presented = authorization.slice(7)
       const claim = [...this.claims.values()].find((candidate) => safeEqual(candidate.token, presented))
-      if (!claim) { send(response, 401, { ok: false, error: 'Capability expired' }); return }
-      if (claim.expiresAt <= Date.now()) { this.revoke(claim.token); send(response, 401, { ok: false, error: 'Capability expired' }); return }
+      if (!claim) { send(response, 401, { ok: false, error: CAPABILITY_EXPIRED_ERROR }); return }
+      if (claim.expiresAt <= Date.now()) { this.revoke(claim.token); send(response, 401, { ok: false, error: CAPABILITY_EXPIRED_ERROR }); return }
       if (Date.now() - claim.windowStartedAt >= RATE_WINDOW_MS) { claim.windowStartedAt = Date.now(); claim.requests = 0 }
       claim.requests += 1
       if (claim.requests > this.rateLimit) { send(response, 429, { ok: false, error: this.rateLimitError }); return }
@@ -127,8 +133,8 @@ export abstract class CapabilityBridge {
       const params = input.params === undefined ? {} : requireRecord(input.params, 'params')
       // Authentication above happens before an arbitrarily slow body arrives. Re-check
       // the exact claim object at the dispatch boundary so revocation cannot be raced.
-      if (this.claims.get(claim.token) !== claim) { send(response, 401, { ok: false, error: 'Capability expired' }); return }
-      if (claim.expiresAt <= Date.now()) { this.revoke(claim.token); send(response, 401, { ok: false, error: 'Capability expired' }); return }
+      if (this.claims.get(claim.token) !== claim) { send(response, 401, { ok: false, error: CAPABILITY_EXPIRED_ERROR }); return }
+      if (claim.expiresAt <= Date.now()) { this.revoke(claim.token); send(response, 401, { ok: false, error: CAPABILITY_EXPIRED_ERROR }); return }
       const result = await this.dispatch(method, params, claim)
       send(response, 200, { ok: true, result })
     } catch (error) {

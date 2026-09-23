@@ -535,7 +535,7 @@ export class EnterpriseService {
         id,
         name: textValue(action?.label) ?? textValue(action?.description) ?? actionName,
         description: textValue(action?.description) ?? textValue(action?.label) ?? actionName,
-        effect: 'write', resourceType: objectName, requiresEmployeeIntent: true, status: 'available',
+        effect: 'write', resourceType: objectName, requiresEmployeeIntent: true, status: 'available', requiresRecord: action?.requiresRecord !== false,
       }]
     })
   }
@@ -558,7 +558,7 @@ export class EnterpriseService {
     }
     const ranked = matches.sort((left, right) => right.score - left.score || right.updatedAt.localeCompare(left.updatedAt))
     const positive = ranked.filter((item) => item.score > 0)
-    return (positive.length ? positive : ranked.length === 1 ? ranked : []).slice(0, 10).map(({ score: _score, updatedAt: _updatedAt, ...item }) => item)
+    return positive.slice(0, 10).map(({ score: _score, updatedAt: _updatedAt, ...item }) => item)
   }
 
   async createDevelopmentTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult> {
@@ -996,6 +996,7 @@ export class EnterpriseService {
     sourceMessages: Array<{ messageId: string; eventSeq: number; sha256: string }>
     accountKey: string
     resources: EnterpriseWorkResource[]
+    businessContext?: { objectName: string; recordId: string }
     authorizedBusinessCapabilityIds: string[]
     assertCurrent(): Promise<void>
   }): Promise<EnterpriseWorkReceipt> {
@@ -1017,6 +1018,7 @@ export class EnterpriseService {
       registration_id: workId, workbench_session_id: workbenchSessionID, team_id: choice.teamId, workflow_id: choice.workflowId,
       workflow_version: choice.version, project_id: projectID, task: normalized,
       resources: source?.resources,
+      ...(source?.businessContext ? { business_record: { object_name: source.businessContext.objectName, record_id: source.businessContext.recordId } } : {}),
       authorized_business_capability_ids: source?.authorizedBusinessCapabilityIds ?? [],
       source_messages: source?.sourceMessages.map((message) => ({ message_id: message.messageId, event_seq: message.eventSeq, sha256: message.sha256 }))
         ?? [{ message_id: workId, event_seq: 0, sha256: createHash('sha256').update(normalized).digest('hex') }],

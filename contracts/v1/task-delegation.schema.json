@@ -54,8 +54,10 @@
           "id": { "type": "string", "minLength": 1, "maxLength": 128 },
           "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
           "name": { "type": "string", "minLength": 1, "maxLength": 255 },
-          "bytes": { "type": "integer", "minimum": 1, "maximum": 700000 }
-        }
+          "bytes": { "type": "integer", "minimum": 1, "maximum": 700000 },
+          "object_name": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,127}$" }
+        },
+        "allOf": [{ "if": { "properties": { "type": { "const": "forge-record" } } }, "then": { "required": ["object_name"] } }]
       }
     },
     "issuedAt": { "type": "string", "format": "date-time" },

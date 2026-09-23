@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { EnterpriseService } from '../enterprise'
-import type { EnterpriseWorkChoice, EnterpriseWorkResource, TranscriptMessage } from '../../../src/types/api'
+import type { EnterpriseBusinessCapability, EnterpriseWorkChoice, EnterpriseWorkResource, TranscriptMessage } from '../../../src/types/api'
 import { CapabilityBridge, type CapabilityClaim } from '../lib/capability-bridge'
 import { requireString } from '../validation'
 import { digest, HandoffStore, type HandoffStorage } from './handoff-store'
@@ -43,7 +43,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   protected readonly rateLimitError = '企业团队交接请求过于频繁，请稍后重试'
   private readonly teams = new Map<string, Map<string, TeamSummary>>()
   private readonly handoffs = new Map<string, Map<string, EnterpriseWorkChoice>>()
-  private readonly businessActions = new Map<string, Map<string, Map<string, string>>>()
+  private readonly businessActions = new Map<string, Map<string, Map<string, EnterpriseBusinessCapability>>>()
   private readonly businessRecords = new Map<string, Map<string, { objectName: string; recordId: string; name: string; code?: string }>>()
   private readonly runtimes = new Map<string, string>()
   private readonly pendingRuntimeTokens = new Map<string, string>()
@@ -86,6 +86,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessRecords.delete(token)
   }
   invalidateAccount(): void {
+    this.revokeAllClaims()
     this.turns.clear(); this.inputs.clear(); this.teams.clear(); this.handoffs.clear(); this.businessActions.clear(); this.businessRecords.clear()
   }
   /** Called only by the trusted desktop input path, before forwarding to the runtime. */
@@ -112,6 +113,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (!claim.harness || !claim.sessionPath) throw new Error('企业团队能力尚未绑定到当前会话')
     const turn = this.turns.get(claim.token)
     if (!turn || this.claimForToken(claim.token) !== claim || await this.options.service.accountKey() !== turn.accountKey) throw new Error('员工轮次或账号已变化，请按当前要求重新处理')
+    if (this.turns.get(claim.token) !== turn || this.claimForToken(claim.token) !== claim) throw new Error('员工轮次或账号已变化，请按当前要求重新处理')
     if (method === 'activate') {
       if (params.prompt !== turn.prompt) throw new Error('运行时处理的员工输入与当前轮次不一致')
       return { turn_key: turn.key }
@@ -134,13 +136,13 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const key = requireString(params.handoff_key, 'handoff_key', { min: 1, max: 128, trim: true })
     const summary = requireString(params.work_summary, 'work_summary', { min: 1, max: 4_000, trim: true })
     if (!this.handoffs.get(claim.token)?.has(key)) throw new Error('请先查看团队的承接能力')
-    const actionIds = [...(this.businessActions.get(claim.token)?.get(key)?.values() ?? [])]
-    const objectNames = [...new Set(actionIds.flatMap((id) => /^forge:action:([^.]+)\./.exec(id)?.[1] ?? []))]
+    const actions = [...(this.businessActions.get(claim.token)?.get(key)?.values() ?? [])]
+    const objectNames = [...new Set(actions.map((action) => action.resourceType))]
     const records = await this.options.service.findBusinessRecords(objectNames, summary)
     await this.evidence(claim, turn)
     const mapped = new Map(records.map((item) => [digest(`record:${turn.accountKey}:${item.objectName}:${item.recordId}`).slice(0, 24), item]))
     this.businessRecords.set(claim.token, mapped)
-    return { records: [...mapped].map(([recordKey, item]) => ({ record_key: recordKey, name: item.name, ...(item.code ? { code: item.code } : {}), object: item.objectName === 'forge_sales_contract' ? '销售合同' : '业务记录' })) }
+    return { records: [...mapped].map(([recordKey, item]) => ({ record_key: recordKey, name: item.name, ...(item.code ? { code: item.code } : {}), object: '业务记录' })) }
   }
   private async evidence(claim: CapabilityClaim, turn: EmployeeTurn) {
     const transcript = await this.options.sessions[claim.harness!].read(claim.sessionPath!)
@@ -169,16 +171,17 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const handoffs = this.handoffs.get(claim.token) ?? new Map<string, EnterpriseWorkChoice>()
     for (const choice of choices) handoffs.set(handoffKey(choice), choice)
     this.handoffs.set(claim.token, handoffs)
-    const scopeByHandoff = this.businessActions.get(claim.token) ?? new Map<string, Map<string, string>>()
+    const scopeByHandoff = this.businessActions.get(claim.token) ?? new Map<string, Map<string, EnterpriseBusinessCapability>>()
     const capabilities = await Promise.all(choices.map(async (choice) => {
       const available = await this.options.service.getBusinessCapabilities(choice.businessCapabilityIds)
-      const actionMap = new Map(available.map((action) => [digest(`action:${handoffKey(choice)}:${action.id}`).slice(0, 24), action.id]))
+      const actionMap = new Map(available.map((action) => [digest(`action:${handoffKey(choice)}:${action.id}`).slice(0, 24), action]))
       scopeByHandoff.set(handoffKey(choice), actionMap)
       return {
         handoff_key: handoffKey(choice), name: choice.workflowName, description: choice.workflowDescription,
         business_actions: available.map((action) => ({ action_key: digest(`action:${handoffKey(choice)}:${action.id}`).slice(0, 24), name: action.name, description: action.description })),
       }
     }))
+    await this.evidence(claim, turn)
     this.businessActions.set(claim.token, scopeByHandoff)
     return { team: { name: team.name, summary: team.objective }, capabilities }
   }
@@ -196,12 +199,15 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const authorizedBusinessCapabilityIds = actionKeys.map((actionKey) => {
       const action = actionMap.get(actionKey)
       if (!action) throw new Error('业务动作不属于本轮查看的团队能力')
-      return action
+      return action.id
     }).sort()
     const businessRecordKey = typeof params.business_record_key === 'string' ? params.business_record_key.trim() : ''
     const businessContext = businessRecordKey ? this.businessRecords.get(claim.token)?.get(businessRecordKey) : undefined
     if (businessRecordKey && !businessContext) throw new Error('业务记录选择已失效，请按当前工作重新查找')
-    if (authorizedBusinessCapabilityIds.some((id) => id.startsWith('forge:action:forge_sales_contract.')) && !businessContext) throw new Error('请先按当前工作查找并绑定要提交的销售合同')
+    for (const actionKey of actionKeys) {
+      const action = actionMap.get(actionKey)!
+      if (action.requiresRecord !== false && (!businessContext || businessContext.objectName !== action.resourceType)) throw new Error('请先按当前工作查找并绑定该动作所需的业务记录')
+    }
     const sourceMessages = await this.evidence(claim, turn)
     const sessionKey = digest(claim.sessionPath!).slice(0, 24)
     const idempotencySeed = `${sessionKey}:${turn.messageId}:${key}`
@@ -241,6 +247,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const operation = this.options.service.submitWork(frozen.choice, frozen.task, {
       idempotencySeed: frozen.idempotencySeed, sessionKey: frozen.sessionKey, sourceMessages: frozen.sourceMessages, accountKey: frozen.accountKey,
       resources: frozen.resources,
+      businessContext: frozen.businessContext,
       authorizedBusinessCapabilityIds: frozen.authorizedBusinessCapabilityIds,
       assertCurrent: async () => { await this.evidence(claim, turn) },
     }).then((receipt) => ({

@@ -12,19 +12,19 @@ afterEach(async () => {
   await Promise.all(directories.splice(0).map((path) => rm(path, { recursive: true, force: true })))
 })
 function user(id: string, text: string): TranscriptMessage { return { id, role: 'user', parts: [{ type: 'text', text }] } }
-async function fixture() {
+async function fixture(objectName = 'forge_sales_contract') {
   const cwd = await mkdtemp(join(tmpdir(), 'handoff-')); directories.push(cwd)
   const content = '# 合同\n客户：测试客户\n金额：12345 元\n交期：2026-10-01\n'
   await writeFile(join(cwd, '合同.md'), content)
   const materials = [{ path: '合同.md', sha256: digest(content) }]
-  const businessCapabilityId = 'forge:action:forge_sales_contract.contract_submit'
+  const businessCapabilityId = `forge:action:${objectName}.submit`
   const choice = { teamId: 'team-contract', teamName: '合同团队', teamObjective: '复核合同并完成交接', workflowId: 'workflow-review', workflowName: '合同复核', workflowDescription: '接合同全文，检查金额和交期，交付复核意见', businessCapabilityIds: [businessCapabilityId], version: 3 }
   const service = {
     accountKey: vi.fn(async () => 'employee-a'),
     getTeamCatalog: vi.fn(async () => [{ id: choice.teamId, name: choice.teamName, objective: choice.teamObjective }, { id: 'leave', name: '休假团队', objective: '安排休假' }]),
     getTeamChoices: vi.fn(async () => [choice]),
-    getBusinessCapabilities: vi.fn(async () => [{ id: businessCapabilityId, name: '提交合同', description: '把合同提交到业务流程', effect: 'write' as const, resourceType: 'forge_sales_contract', requiresEmployeeIntent: true, status: 'available' as const }]),
-    findBusinessRecords: vi.fn(async () => [{ objectName: 'forge_sales_contract', recordId: 'contract-1', name: 'TEST-100 设备交接验收合同', code: 'SC-TEST-001' }]),
+    getBusinessCapabilities: vi.fn(async () => [{ id: businessCapabilityId, name: '提交合同', description: '把合同提交到业务流程', effect: 'write' as const, resourceType: objectName, requiresRecord: true, requiresEmployeeIntent: true, status: 'available' as const }]),
+    findBusinessRecords: vi.fn(async () => [{ objectName, recordId: 'contract-1', name: 'TEST-100 设备交接验收合同', code: 'SC-TEST-001' }]),
     stageWorkMaterials: vi.fn(async (items: Array<{ name: string; content: string; bytes: number; sha256: string }>) => items.map((item, index) => ({ type: 'forge-file' as const, id: `file-${index + 1}`, name: item.name, bytes: item.bytes, sha256: item.sha256 }))),
     submitWork: vi.fn(async (_choice: unknown, _goal: string, source?: { assertCurrent(): Promise<void> }) => {
       await source?.assertCurrent()
@@ -102,10 +102,10 @@ describe('employee-bound material handoff', () => {
     const actionKey = params.available_actions[0].action_key
     const found = await f.call('find_business_record', { handoff_key: params.handoff_key, work_summary: 'TEST-100 设备交接验收合同' })
     const recordKey = (found.body.result.records as Array<{ record_key: string }>)[0].record_key
-    expect(found.body.result.records).toEqual([{ record_key: recordKey, name: 'TEST-100 设备交接验收合同', code: 'SC-TEST-001', object: '销售合同' }])
+    expect(found.body.result.records).toEqual([{ record_key: recordKey, name: 'TEST-100 设备交接验收合同', code: 'SC-TEST-001', object: '业务记录' }])
     expect(JSON.stringify(found.body.result.records)).not.toContain('contract-1')
     expect((await f.call('submit', { ...params, business_record_key: recordKey, business_actions: [actionKey] })).status).toBe(200)
-    expect(f.service.submitWork.mock.calls[0][2]).toMatchObject({ authorizedBusinessCapabilityIds: [f.businessCapabilityId] })
+    expect(f.service.submitWork.mock.calls[0][2]).toMatchObject({ authorizedBusinessCapabilityIds: [f.businessCapabilityId], businessContext: { objectName: 'forge_sales_contract', recordId: 'contract-1' } })
     expect(JSON.parse(f.service.submitWork.mock.calls[0][1])).toMatchObject({ businessContext: { objectName: 'forge_sales_contract', recordId: 'contract-1', name: 'TEST-100 设备交接验收合同', code: 'SC-TEST-001' } })
   })
   it('rejects a business action that was not returned for this team view', async () => {
@@ -131,13 +131,13 @@ describe('employee-bound material handoff', () => {
     expect((await f.call('submit', params)).status).toBe(409)
     expect(f.service.submitWork).not.toHaveBeenCalled()
   })
-  it('rejects another account and invalidates a same-account login', async () => {
+  it('rejects another account and revokes runtime credentials when the account session changes', async () => {
     const f = await fixture(), params = await f.discover()
     f.service.accountKey.mockResolvedValue('employee-b')
     expect((await f.call('submit', params)).status).toBe(409)
     f.service.accountKey.mockResolvedValue('employee-a')
     f.bridge.invalidateAccount()
-    expect((await f.call('submit', params)).status).toBe(409)
+    expect((await f.call('submit', params)).status).toBe(401)
     expect(f.service.submitWork).not.toHaveBeenCalled()
   })
   it('rejects missing materials, changed versions and paths outside the working directory', async () => {
@@ -202,4 +202,29 @@ describe('employee-bound material handoff', () => {
     expect((await f.call('submit', params)).body.error).toContain('版本已经变化')
     expect(f.service.submitWork).not.toHaveBeenCalled()
   })
+  it('requires the declared business record for a non-contract action as well', async () => {
+    const f = await fixture('forge_quote'), params = await f.discover()
+    const business_actions = [params.available_actions[0].action_key]
+    expect((await f.call('submit', { ...params, business_actions })).body.error).toContain('绑定该动作所需的业务记录')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    const found = await f.call('find_business_record', { handoff_key: params.handoff_key, work_summary: 'TEST-100' })
+    const recordKey = (found.body.result.records as Array<{ record_key: string }>)[0].record_key
+    expect((await f.call('submit', { ...params, business_actions, business_record_key: recordKey })).body.result.status).toBe('accepted')
+    expect(f.service.submitWork.mock.calls[0][2]).toMatchObject({ businessContext: { objectName: 'forge_quote', recordId: 'contract-1' } })
+  })
+  it('rejects a late capability response after the employee changes the request', async () => {
+    const f = await fixture()
+    const search = await f.call('search', { work_summary: '合同' })
+    const teamKey = (search.body.result.teams as Array<{ team_key: string }>)[0].team_key
+    const result = await f.service.getBusinessCapabilities()
+    let release!: (value: typeof result) => void
+    f.service.getBusinessCapabilities.mockImplementationOnce(() => new Promise((resolve) => { release = resolve }))
+    const pending = f.call('describe', { team_key: teamKey })
+    await vi.waitFor(() => expect(release).toBeTypeOf('function'))
+    f.bridge.invalidateAccount()
+    release(result)
+    expect((await pending).status).toBe(409)
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+
 })

@@ -82,15 +82,17 @@ export default function (pi: ExtensionApi): void | Promise<void> {
 
 function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
   let turnKey: string | undefined
+  let turnSetupError: string | undefined
   pi.on('before_agent_start', async (event) => {
     turnKey = undefined
+    turnSetupError = undefined
     try {
       const active = await call('activate', { prompt: event.prompt.trim() }) as { turn_key: string }
       turnKey = active.turn_key
-    } catch { /* Ordinary local work does not require enterprise sign-in. */ }
+    } catch (error) { turnSetupError = error instanceof Error ? error.message : String(error) }
   })
   const turnCall = (method: string, params: Record<string, unknown>) => {
-    if (!turnKey) throw new Error('当前没有已绑定的员工轮次，请等待员工输入后继续')
+    if (!turnKey) throw new Error(turnSetupError ?? '当前没有已绑定的员工轮次，请等待员工输入后继续')
     return call(method, { ...params, turn_key: turnKey })
   }
   pi.registerTool({
