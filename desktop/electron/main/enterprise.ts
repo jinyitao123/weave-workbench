@@ -1,6 +1,6 @@
 import { teamWorkspaceRequest } from './enterprise/team-workspace'
 import type { TeamWorkspaceCommand } from '../../src/types/team-workspace'
-import type { EnterpriseApprovalContext, EnterpriseBusinessCapability, EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource } from '../../src/types/api'
+import type { EnterpriseApprovalContext, EnterpriseBusinessCapability, EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkReadStatus, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource } from '../../src/types/api'
 import type { FrozenMaterial } from './enterprise/materials'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
@@ -481,7 +481,7 @@ export class EnterpriseService {
     return result
   }
 
-  private async forgeJSON(path: string, expectedGeneration = this.authGeneration): Promise<unknown> {
+  private async forgeJSON(path: string, expectedGeneration = this.authGeneration, resourceLabel = '工作事项'): Promise<unknown> {
     const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.forgeUrl), 'forge', { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }, expectedGeneration)
     if (response.status === 401 || response.status === 403) {
       await response.body?.cancel()
@@ -490,20 +490,8 @@ export class EnterpriseService {
     }
     if (!response.ok) {
       await response.body?.cancel()
-      throw new Error(`Forge 工作事项读取失败（${response.status}）`)
+      throw new Error(`Forge ${resourceLabel}读取失败（${response.status}）`)
     }
-    const result = await response.json()
-    this.assertCurrentAuth(snapshot)
-    return result
-  }
-
-  private async forgeOptionalJSON(path: string, expectedGeneration = this.authGeneration): Promise<unknown> {
-    const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.forgeUrl), 'forge', { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }, expectedGeneration)
-    if (response.status === 404) { await response.body?.cancel(); return undefined }
-    if (response.status === 401 || response.status === 403) {
-      await response.body?.cancel(); await this.signOutIfCurrent(snapshot); throw new Error('登录已失效，请重新登录')
-    }
-    if (!response.ok) { await response.body?.cancel(); throw new Error(`Forge 工作事项读取失败（${response.status}）`) }
     const result = await response.json()
     this.assertCurrentAuth(snapshot)
     return result
@@ -1007,16 +995,28 @@ export class EnterpriseService {
   async getWorkOverview(): Promise<EnterpriseWorkOverview> {
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    const teams = await this.getTeamCatalog(generation)
-    const choices = (await Promise.all(teams.map((team) => this.getTeamChoices(team, generation)))).flat()
     const projectID = await this.workProjectID(generation)
-    const [rawRuns, rawTasks, rawNotifications, rawApprovals] = await Promise.all([
-      this.weaveJSON(`/v1/runs?project_id=${encodeURIComponent(projectID)}&limit=50`, generation),
-      this.weaveJSON('/v1/human-tasks?limit=50', generation),
-      this.forgeJSON('/api/v1/notifications?limit=200', generation),
-      this.forgeOptionalJSON('/api/v1/approvals/requests?limit=50', generation),
+    const read = async <T>(operation: () => Promise<T>): Promise<{ value?: T; error?: string }> => {
+      try { return { value: await operation() } }
+      catch (error) { return { error: error instanceof Error ? error.message : '读取失败' } }
+    }
+    const [teamsRead, runsRead, weaveTasksRead, notificationsRead, approvalsRead] = await Promise.all([
+      read(() => this.getTeamCatalog(generation)),
+      read(() => this.weaveJSON(`/v1/runs?project_id=${encodeURIComponent(projectID)}&limit=50`, generation)),
+      read(() => this.weaveJSON('/v1/human-tasks?limit=50', generation)),
+      read(() => this.forgeJSON('/api/v1/notifications?limit=200', generation, '通知')),
+      read(() => this.forgeJSON('/api/v1/approvals/requests?limit=50', generation, '审批事项')),
     ])
-    const taskList = record(rawTasks)
+    const choices: EnterpriseWorkChoice[] = []
+    let teamChoicesError = teamsRead.error
+    if (teamsRead.value) {
+      const workflowReads = await Promise.all(teamsRead.value.map((team) => read(() => this.getTeamChoices(team, generation))))
+      for (const result of workflowReads) {
+        if (result.value) choices.push(...result.value)
+        else if (result.error) teamChoicesError ??= result.error
+      }
+    }
+    const taskList = record(weaveTasksRead.value)
     const tasks = (Array.isArray(taskList?.tasks) ? taskList.tasks : []).flatMap((value): EnterpriseHumanTask[] => {
       const task = record(value)
       const interactionId = textValue(task?.interaction_id), runId = textValue(task?.run_id), teamId = textValue(task?.team_id)
@@ -1025,10 +1025,12 @@ export class EnterpriseService {
       if (!interactionId || !runId || !teamId || !workflowId || !workflowVersion || !title || !instructions || !updatedAt) return []
       return [{ interactionId, runId, teamId, workflowId, workflowVersion, title, instructions, updatedAt, ...(textValue(task?.audience_ref) ? { audience: textValue(task?.audience_ref) } : {}) }]
     })
+    const rawApprovals = approvalsRead.value
     const approvalEnvelope = record(rawApprovals)
     const approvalValues = Array.isArray(rawApprovals) ? rawApprovals
       : Array.isArray(approvalEnvelope?.requests) ? approvalEnvelope.requests
         : Array.isArray(approvalEnvelope?.data) ? approvalEnvelope.data : []
+    const approvalDetailsErrors: string[] = []
     for (const value of approvalValues) {
       const approval = record(value), viewer = record(approval?.viewer), payload = record(approval?.payload)
       const id = textValue(approval?.id), status = textValue(approval?.status), updatedAt = textValue(approval?.updated_at) ?? textValue(approval?.created_at)
@@ -1037,10 +1039,14 @@ export class EnterpriseService {
       if (!id || !updatedAt || (!canDecide && !canResubmit)) continue
       let returnReason: string | undefined
       if (canResubmit) {
-        const actionEnvelope = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(id)}/actions`, generation))
-        const actions = Array.isArray(actionEnvelope?.data) ? actionEnvelope.data : []
-        const latestRevision = [...actions].reverse().map(record).find((action) => action?.action === 'revise')
-        returnReason = textValue(latestRevision?.comment)
+        try {
+          const actionEnvelope = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(id)}/actions`, generation, '审批意见'))
+          const actions = Array.isArray(actionEnvelope?.data) ? actionEnvelope.data : []
+          const latestRevision = [...actions].reverse().map(record).find((action) => action?.action === 'revise')
+          returnReason = textValue(latestRevision?.comment)
+        } catch (error) {
+          approvalDetailsErrors.push(error instanceof Error ? error.message : '审批意见读取失败')
+        }
       }
       const processName = textValue(approval?.process_label) ?? textValue(approval?.process_name) ?? '业务审批'
       const stepName = textValue(approval?.step_label) ?? textValue(approval?.current_step)
@@ -1054,7 +1060,7 @@ export class EnterpriseService {
         ...(textValue(payload?.submitted_material_name) ?? textValue(approval?.object_label) ? { materialLabel: textValue(payload?.submitted_material_name) ?? textValue(approval?.object_label) } : {}),
       })
     }
-    const notificationEnvelope = record(rawNotifications)
+    const notificationEnvelope = record(notificationsRead.value)
     const notificationList = record(notificationEnvelope?.data) ?? notificationEnvelope
     const items = (Array.isArray(notificationList?.notifications) ? notificationList.notifications : []).flatMap((value): EnterpriseWorkItem[] => {
       const notification = record(value), data = record(notification?.data), continuation = record(data?.continuation), material = record(data?.material)
@@ -1087,9 +1093,19 @@ export class EnterpriseService {
         ...(reviewScope === 'whole_team' || reviewScope === 'affected_members' || reviewScope === 'human_step' ? { reviewScope } : {}),
       }]
     }).filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index)
-    const runList = record(rawRuns)
+    const runList = record(runsRead.value)
     this.assertAuthGeneration(generation)
-    return { loadedAt: new Date().toISOString(), choices, tasks, items, runs: (Array.isArray(runList?.runs) ? runList.runs : []).flatMap((run) => runObservation(run) ?? []) }
+    const readStatus = (error?: string): EnterpriseWorkReadStatus => error ? { status: 'failed', error } : { status: 'loaded' }
+    return {
+      loadedAt: new Date().toISOString(), choices, tasks, items,
+      runs: (Array.isArray(runList?.runs) ? runList.runs : []).flatMap((run) => runObservation(run) ?? []),
+      reads: {
+        runs: readStatus(runsRead.error), teamChoices: readStatus(teamChoicesError),
+        weaveTasks: readStatus(weaveTasksRead.error),
+        forgeApprovals: readStatus(approvalsRead.error ?? (approvalDetailsErrors.length ? [...new Set(approvalDetailsErrors)].join('；') : undefined)),
+        notifications: readStatus(notificationsRead.error),
+      },
+    }
   }
 
   async getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContext> {
