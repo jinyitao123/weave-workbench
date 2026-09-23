@@ -14,6 +14,7 @@
 - `business-action`：Weave 调用 Forge 业务动作的输入、幂等与权限上下文。
 - `business-capability-catalog`：开发中心可分配给团队成员的 Forge 业务能力及动作参数说明，不暴露 MCP 工具或凭据；参数来源映射保存在成员配置草稿并随发布版本冻结。
 - `task-notification`：Forge 或 Weave 向指定员工创建的待办。
+- `approval-context`：Workbench 按当前 Forge 身份读取单个原生审批的受限快照与材料；审批归属和决定权仍由 ObjectStack 原生审批服务负责。
 - `team-run-event`：Weave 将团队运行终态交给 Forge 原生收件箱的系统事件。
 - `delivery-receipt`：业务结果、证据、用量和独立核验结果。
 - `execution-control`：重试、超时、额度、取消和未知结果核对。
