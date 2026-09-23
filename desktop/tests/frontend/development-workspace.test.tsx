@@ -23,13 +23,19 @@ async function click(label: string) {
   await act(async () => button.click())
 }
 async function edit(label: string, value: string) {
-  const input = [...container.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input,textarea')].find((item) => item.getAttribute('aria-label') === label || item.closest('label')?.textContent?.includes(label))!
+  const input = [...document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input,textarea')].find((item) => item.getAttribute('aria-label') === label || item.closest('label')?.textContent?.includes(label))!
   expect(input, label).toBeTruthy()
   await act(async () => { Object.getOwnPropertyDescriptor(input instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype, 'value')!.set!.call(input, value); input.dispatchEvent(new Event('input', { bubbles: true })) })
 }
 async function open() { await act(async () => root.render(<DevelopmentPage overview={overview} loading={false} onRefresh={() => {}} bridge={bridge}/>)) }
 async function selectMember(name: string) { await act(async () => [...container.querySelectorAll<HTMLButtonElement>('.team-member-card')].find((b) => b.textContent?.includes(name))!.click()) }
 async function saveSoon() { await click('保存') }
+async function chooseProductOption(label: string, name: string) {
+  await click(label)
+  const option = [...document.querySelectorAll<HTMLButtonElement>('[role="option"]')].find((button) => button.textContent?.includes(name))
+  if (!option) throw new Error(`Missing option: ${name}`)
+  await act(async () => option.click())
+}
 beforeEach(() => {
   vi.clearAllMocks()
   const lead = newMember('deepseek-flash'), worker = newMember('deepseek-flash')
@@ -71,6 +77,49 @@ it('shows actual flow links and material bindings, and invalidates old trial app
   expect(publish.disabled).toBe(true)
   await saveSoon()
   expect(JSON.stringify(remote.document.workflows[0].graph_definition.nodes.find((n) => n.id === 'work')!.inputs)).not.toContain('run_input')
+})
+it('keeps the explicitly selected executor through save and a fresh read', async () => {
+  const reviewer = newMember('deepseek-flash')
+  reviewer.configuration.displayName = '复核员'
+  remote.document.members.push(reviewer)
+  await open(); await click('工作流程'); await click('编辑步骤 审核员')
+  expect(container.querySelector<HTMLButtonElement>('[aria-label="执行成员"]')?.textContent).toContain('审核员')
+  await chooseProductOption('执行成员', '复核员'); await saveSoon()
+  expect(remote.document.workflows[0].graph_definition.nodes.find((node) => node.id === 'work')?.config?.agent_id).toBe(reviewer.id)
+
+  await act(async () => root.render(null)); await open(); await click('工作流程'); await click('编辑步骤 审核员')
+  expect(container.querySelector<HTMLButtonElement>('[aria-label="执行成员"]')?.textContent).toContain('复核员')
+  expect(remote.document.workflows[0].graph_definition.nodes.find((node) => node.id === 'work')?.config?.agent_id).toBe(reviewer.id)
+})
+it('shows an unavailable executor and blocks save without discarding local edits', async () => {
+  const workflow = remote.document.workflows[0]
+  workflow.graph_definition.nodes = workflow.graph_definition.nodes.map((node) => node.id === 'work' ? { ...node, config: { ...node.config, agent_id: 'removed-member' } } : node)
+  await open(); await click('工作流程'); await click('编辑步骤 审核员')
+  expect(container.textContent).toContain('原执行成员不可用')
+  expect(container.querySelector<HTMLButtonElement>('[aria-label="执行成员"]')?.textContent).toContain('原执行成员不可用')
+  await click('编辑步骤名称内容'); await edit('步骤名称', '修订后的审核步骤'); await saveSoon()
+  expect(call.mock.calls.filter(([command]) => command.action === 'save')).toHaveLength(0)
+  expect(remote.document.workflows[0].graph_definition.nodes.find((node) => node.id === 'work')?.config?.agent_id).toBe('removed-member')
+  expect(container.querySelector<HTMLInputElement>('input')?.value).toBe('修订后的审核步骤')
+  expect(container.textContent).toContain('请重新选择执行成员')
+})
+it('inserts the selected responsible member instead of silently replacing it with the first worker', async () => {
+  await open(); await click('工作流程'); await click('编辑步骤 审核员'); await click('下一步')
+  await chooseProductOption('由谁执行', '负责人')
+  await edit('步骤名称', '负责人复核'); await edit('这一步完成什么工作', '汇总并复核前一步结果。')
+  await click('添加步骤')
+  expect(container.querySelector<HTMLButtonElement>('[aria-label="执行成员"]')?.textContent).toContain('负责人')
+  expect(container.querySelector<HTMLButtonElement>('[aria-label="编辑步骤 负责人复核"]')?.textContent).toContain('负责人处理')
+  expect(container.textContent).toContain('汇总并复核前一步结果。')
+})
+it('requires an explicit executor selection before adding a step', async () => {
+  await open(); await click('工作流程'); await click('编辑步骤 审核员'); await click('下一步')
+  expect(document.querySelector<HTMLButtonElement>('[aria-label="由谁执行"]')?.textContent).toContain('请选择执行成员')
+  await edit('步骤名称', '待分配步骤'); await edit('这一步完成什么工作', '等待明确选择执行成员。')
+  await click('添加步骤')
+  expect(document.body.textContent).toContain('请选择执行成员后再添加步骤')
+  expect(document.querySelector<HTMLInputElement>('input')?.value).toBe('待分配步骤')
+  expect([...container.querySelectorAll<HTMLButtonElement>('.workflow-graph__node')]).toHaveLength(3)
 })
 it('only saves the clicked snapshot and retains edits made while it is in flight', async () => {
   await open(); await click('编辑成员名称内容')
