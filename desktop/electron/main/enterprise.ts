@@ -24,6 +24,15 @@ interface EnterpriseServiceOptions {
 
 type EnterpriseAuthProvider = 'forge' | 'weave'
 interface EnterpriseAuthSnapshot { generation: number; provider: EnterpriseAuthProvider; token: string }
+export interface ApprovalRevisionFileReference { fileId: string; name: string; sha256: string }
+export interface ApprovalRevisionSubmission {
+  returnVersion: string
+  sourceMaterialVersion: string
+  idempotencyKey: string
+  primary: ApprovalRevisionFileReference
+  attachments: ApprovalRevisionFileReference[]
+}
+export interface ForgeHttpResult { status: number; body: unknown }
 
 function environmentUrl(value: string | undefined, fallback: string, label: string): URL {
   const configured = value?.trim() || fallback
@@ -516,6 +525,37 @@ export class EnterpriseService {
     this.assertCurrentAuth(snapshot)
     if (response.status === 401 || response.status === 403) { await this.signOutIfCurrent(snapshot); throw new Error('登录已失效，请重新登录') }
     if (!response.ok) throw new Error(textValue(record(result)?.message) ?? textValue(record(result)?.error) ?? `Forge 工作事项处理失败（${response.status}）`)
+    return { status: response.status, body: result }
+  }
+
+  async submitApprovalRevision(requestId: string, body: ApprovalRevisionSubmission, assertCurrent: () => Promise<void>): Promise<ForgeHttpResult> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    await assertCurrent()
+    const { response, snapshot } = await this.authenticatedFetch(
+      new URL(`/api/v1/approvals/requests/${encodeURIComponent(requestId)}/workbench-revision`, this.forgeUrl), 'forge', {
+        method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify(body), redirect: 'error', signal: AbortSignal.timeout(15_000),
+      }, generation,
+    )
+    const result = await response.json().catch(() => undefined)
+    this.assertCurrentAuth(snapshot)
+    if (response.status === 401 || response.status === 403) { await this.signOutIfCurrent(snapshot); throw new Error('登录已失效，请重新登录') }
+    return { status: response.status, body: result }
+  }
+
+  async getApprovalRevisionReceipt(requestId: string, idempotencyKey: string, assertCurrent: () => Promise<void>): Promise<ForgeHttpResult> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    await assertCurrent()
+    const { response, snapshot } = await this.authenticatedFetch(
+      new URL(`/api/v1/approvals/requests/${encodeURIComponent(requestId)}/workbench-revision/${encodeURIComponent(idempotencyKey)}`, this.forgeUrl), 'forge', {
+        headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      }, generation,
+    )
+    const result = await response.json().catch(() => undefined)
+    this.assertCurrentAuth(snapshot)
+    if (response.status === 401 || response.status === 403) { await this.signOutIfCurrent(snapshot); throw new Error('登录已失效，请重新登录') }
     return { status: response.status, body: result }
   }
 

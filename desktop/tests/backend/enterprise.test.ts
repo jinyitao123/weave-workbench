@@ -687,6 +687,43 @@ describe('EnterpriseService', () => {
     expect(resources).toEqual([{ type: 'forge-file', id: 'file-1', name: '合同.md', bytes: Buffer.byteLength(content), sha256: createHash('sha256').update(content).digest('hex') }])
   })
 
+  it('posts only frozen Forge file references and reads the same revision receipt', async () => {
+    const calls: Array<{ url: string; method: string; body?: Record<string, unknown> }> = []
+    const idempotencyKey = '550e8400-e29b-41d4-a716-446655440000'
+    const receipt = {
+      requestId: 'approval-2', bindingId: '550e8400-e29b-41d4-a716-446655440001',
+      newVersionDigest: createHash('sha256').update('new-contract').digest('hex'), state: 'resumed', repeated: true,
+    }
+    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = String(input), method = init?.method ?? 'GET'
+      const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined
+      calls.push({ url, method, body })
+      if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'sales-1' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-sales-1', externalId: 'sales-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      if (url.endsWith('/api/v1/approvals/requests/approval-2/workbench-revision')) return Response.json({ data: receipt })
+      if (url.endsWith(`/api/v1/approvals/requests/approval-2/workbench-revision/${idempotencyKey}`)) return Response.json({ data: receipt })
+      return Response.json({}, { status: 404 })
+    }) as typeof fetch
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('sales@example.test', 'secret')
+    const body = {
+      returnVersion: 'revise-1', sourceMaterialVersion: createHash('sha256').update('source').digest('hex'), idempotencyKey,
+      primary: { fileId: 'primary-file', name: '修订正文.md', sha256: createHash('sha256').update('primary').digest('hex') },
+      attachments: [{ fileId: 'attachment-file', name: '报价附件.txt', sha256: createHash('sha256').update('attachment').digest('hex') }],
+    }
+    const post = await service.submitApprovalRevision('approval-2', body, async () => undefined)
+    const readback = await service.getApprovalRevisionReceipt('approval-2', idempotencyKey, async () => undefined)
+    expect(post).toEqual({ status: 200, body: { data: receipt } })
+    expect(readback).toEqual({ status: 200, body: { data: receipt } })
+    expect(calls.filter((call) => call.url.endsWith('/approval-2/workbench-revision'))).toEqual([expect.objectContaining({
+      url: 'http://forge/api/v1/approvals/requests/approval-2/workbench-revision', method: 'POST', body,
+    })])
+    expect(calls.find((call) => call.method === 'GET' && call.url.includes('/workbench-revision/'))?.url)
+      .toBe(`http://forge/api/v1/approvals/requests/approval-2/workbench-revision/${idempotencyKey}`)
+    expect(JSON.stringify(calls)).not.toContain('recordId')
+    expect(calls.some((call) => call.url.endsWith('/approval-2/resubmit'))).toBe(false)
+  })
+
   it('returns bounded unavailable states when the environments cannot be reached', async () => {
     const service = new EnterpriseService({
       environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' },

@@ -547,7 +547,7 @@ export default function App() {
       ...(currentContext?.files.map((file) => `已核对的提交文件《${file.name}》：\n${file.content}`) ?? []),
       item.workReference ? `原工作引用：${item.workReference}` : '', item.runReference ? `原运行引用：${item.runReference}` : '',
       item.returnTarget ? `修改完成后返回位置：${item.returnTarget}` : '', item.reviewScope ? `复核范围：${item.reviewScope}` : '',
-      '先理解退回事项、最新退回原因和原提交材料，和我一起完成修改。只有员工明确要求递交修订材料时，才调用固定修订材料工具保存本轮准确正文和员工指定文件。该工具只准备本地加密材料包，Forge 修订递交业务动作尚未接通；明确告知员工材料尚未递交、原审批尚未继续，不得调用原生审批重提操作、其他审批状态接口或声称业务成功。',
+      '先理解退回事项、最新退回原因和原提交材料，和我一起完成修改。只有员工明确要求递交修订材料时，才调用退回修订工具；该工具固定本轮正文和员工指定附件，再通过 Forge 受控修订能力递交。只有 resumed 表示原审批已进入下一轮；prepared 和 resume_unknown 都不能声称成功。unavailable、upload_unknown 或 rejected 时说明具体阻塞。结果未知时只查询同一回执，不重新读取文件或重提。绝不调用原生审批重提或其他审批状态接口。',
     ].filter(Boolean).join('\n')
     newSession()
     workspace.queuePrompt(details, 'queue', undefined, undefined, returnedApprovalContextHandle)

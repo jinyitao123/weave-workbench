@@ -1,15 +1,15 @@
 import { randomUUID } from 'node:crypto'
-import { approvalContextView, type EnterpriseService } from '../enterprise'
+import { approvalContextView, type ApprovalRevisionSubmission, type EnterpriseService } from '../enterprise'
 import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseWorkChoice, EnterpriseWorkResource, TranscriptMessage } from '../../../src/types/api'
 import { CapabilityBridge, type CapabilityClaim } from '../lib/capability-bridge'
 import { rejectUnknownKeys, requireString } from '../validation'
-import { digest, HandoffStore, type HandoffStorage } from './handoff-store'
+import { digest, HandoffStore, submissionUUID, type HandoffStorage } from './handoff-store'
 import { executionText, freezeMaterials, materialSelection, type FrozenMaterial, type MaterialLimits } from './materials'
 import { searchTeams, type TeamSummary } from './team-catalog'
 
 interface EnterpriseSessionReader { read(filePath: unknown): Promise<TranscriptMessage[]> }
 export interface AgentEnterpriseBridgeOptions {
-  service: Pick<EnterpriseService, 'accountKey' | 'getApprovalContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'findBusinessRecords' | 'stageWorkMaterials' | 'submitWork'>
+  service: Pick<EnterpriseService, 'accountKey' | 'getApprovalContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'findBusinessRecords' | 'stageWorkMaterials' | 'submitWork' | 'submitApprovalRevision' | 'getApprovalRevisionReceipt'>
   sessions: Record<'prime' | 'omp' | 'pi', EnterpriseSessionReader>
   extensionPath: string
   storage?: HandoffStorage
@@ -55,13 +55,32 @@ interface FrozenRevisionIntent {
   requestId: string
   returnVersion: string
   sourceMaterialVersion: string
+  idempotencyKey: string
   businessObject: EnterpriseApprovalContext['businessObject']
   returnReason: string
   sourceFiles: FrozenRevisionSourceFile[]
-  body: { content: string; bytes: number; sha256: string; bytesBase64: string }
+  body: { name: string; content: string; bytes: number; sha256: string; bytesBase64: string }
   materials: FrozenRevisionFile[]
 }
-const REVISION_MATERIAL_LIMITS: MaterialLimits = { maxFiles: 11, maxFileBytes: 2 * 1024 * 1024, maxTotalBytes: 8 * 1024 * 1024 }
+interface ReturnedRevisionFileReference { fileId: string; name: string; sha256: string }
+interface ReturnedRevisionReceipt {
+  requestId: string
+  bindingId: string
+  newVersionDigest: string
+  state: 'prepared' | 'resumed' | 'resume_unknown'
+  repeated: true
+}
+interface ReturnedRevisionProgress {
+  version: 1
+  phase: 'upload_started' | 'uploaded' | 'request_started' | 'receipt' | 'rejected'
+  idempotencyKey: string
+  rejectionState?: 'unavailable' | 'rejected'
+  primary?: ReturnedRevisionFileReference
+  attachments?: ReturnedRevisionFileReference[]
+  receipt?: ReturnedRevisionReceipt
+  message?: string
+}
+const REVISION_MATERIAL_LIMITS: MaterialLimits = { maxFiles: 10, maxFileBytes: 2 * 1024 * 1024, maxTotalBytes: 8 * 1024 * 1024 }
 function messageText(message: TranscriptMessage): string {
   return message.parts.flatMap((part) => part.type === 'text' || part.type === 'agentMessage' ? [part.text] : []).join('\n').trim()
 }
@@ -96,6 +115,38 @@ function revisionFile(material: FrozenMaterial): FrozenRevisionFile {
   if (bytes.length !== material.bytes || digest(bytes) !== material.sha256) throw new Error('工作材料与本轮摘要不一致，请暂停处理')
   return { name: material.name, mediaType: 'text/plain; charset=utf-8', bytes: bytes.length, sha256: material.sha256, bytesBase64: bytes.toString('base64') }
 }
+function revisionReceipt(value: unknown, requestId: string): ReturnedRevisionReceipt | undefined {
+  const envelope = value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined
+  const data = envelope?.data && typeof envelope.data === 'object' && !Array.isArray(envelope.data) ? envelope.data as Record<string, unknown> : envelope
+  if (!data || data.requestId !== requestId || typeof data.bindingId !== 'string'
+    || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(data.bindingId)
+    || typeof data.newVersionDigest !== 'string' || !/^[0-9a-f]{64}$/.test(data.newVersionDigest)
+    || (data.state !== 'prepared' && data.state !== 'resumed' && data.state !== 'resume_unknown')
+    || data.repeated !== true) return undefined
+  return { requestId, bindingId: data.bindingId, newVersionDigest: data.newVersionDigest, state: data.state, repeated: true }
+}
+function restoreRevisionMaterial(file: FrozenRevisionFile): FrozenMaterial {
+  const bytes = Buffer.from(file.bytesBase64, 'base64')
+  if (bytes.toString('base64') !== file.bytesBase64 || bytes.length !== file.bytes || digest(bytes) !== file.sha256) {
+    throw new Error('本地固定材料包无法通过字节摘要校验，请勿重新读取文件')
+  }
+  let content: string
+  try { content = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes) }
+  catch { throw new Error('本地固定材料不是有效的 UTF-8 文本') }
+  if (!content.trim() || content.includes('\0')) throw new Error('本地固定材料为空或无法安全读取')
+  return { name: file.name, content, bytes: bytes.length, sha256: file.sha256 }
+}
+function revisionReceiptResult(receipt: ReturnedRevisionReceipt, files: Array<{ name: string }>, receiptConfirmed = true): Record<string, unknown> {
+  const message = receipt.state === 'resumed'
+    ? 'Forge 已确认修订材料递交，原审批已进入下一轮。'
+    : receipt.state === 'prepared'
+      ? receiptConfirmed ? 'Forge 已固定修订材料，但原审批是否继续尚未确认；请刷新待办核对。' : '上次 Forge 回执显示修订材料已固定，但当前无法刷新；审批是否继续仍未确认。'
+      : 'Forge 修订请求状态尚未确认，桌面只查询了原回执，没有重提；请在 Forge 核对。'
+  return {
+    status: receipt.state, submitted: receipt.state === 'resumed', receiptConfirmed,
+    message, materials: files.map((file) => ({ name: file.name })),
+  }
+}
 
 export class AgentEnterpriseBridge extends CapabilityBridge {
   protected readonly rateLimit = 60
@@ -109,6 +160,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   private readonly turns = new Map<string, EmployeeTurn>()
   private readonly inputs = new Map<string, symbol>()
   private readonly inFlight = new Map<string, Promise<unknown>>()
+  private readonly revisionInFlight = new Map<string, Promise<unknown>>()
   private readonly pendingReturnedApprovals = new Map<string, PendingReturnedApproval>()
   private readonly returnedApprovals = new Map<string, BoundReturnedApproval>()
   private readonly store: HandoffStore
@@ -245,7 +297,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (method === 'describe') return this.describe(claim, params, turn)
     if (method === 'find_business_record') return this.findBusinessRecord(claim, params, turn)
     if (method === 'submit') return this.submit(claim, params, turn)
-    if (method === 'revision_prepare') return this.prepareReturnedRevision(claim, params, turn)
+    if (method === 'revision_submit') return this.submitReturnedRevision(claim, params, turn)
     if (method === 'recover') {
       const recoveryKey = requireString(params.recovery_key, 'recovery_key', { min: 64, max: 64 })
       const intent = await this.store.recover<FrozenHandoffIntent>(recoveryKey)
@@ -348,7 +400,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     })
     return this.prepareDelivery(claim, turn, intent, digest(identity))
   }
-  private async prepareReturnedRevision(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn): Promise<unknown> {
+  private async submitReturnedRevision(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn): Promise<unknown> {
     rejectUnknownKeys(params, ['turn_key', 'employee_request', 'body', 'materials'], 'revision')
     const bound = this.returnedApprovals.get(claim.token)
     if (!bound || bound.sessionPath !== claim.sessionPath || bound.accountKey !== turn.accountKey) {
@@ -364,11 +416,6 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       throw new Error('修订材料清单无效，请按当前要求重新整理')
     }
     const selections = params.materials.length ? materialSelection(params.materials, REVISION_MATERIAL_LIMITS) : []
-    const latest = await this.options.service.getApprovalContext(bound.context.requestId)
-    assertReturnedApproval(latest, bound.context.requestId)
-    if (returnedApprovalFingerprint(latest) !== bound.fingerprint) {
-      throw new Error('退回意见、业务对象或原材料版本已变化，请刷新待办后重新处理')
-    }
     const sourceMessages = await this.evidence(claim, turn)
     const employeeMessageId = turn.messageId
     if (!employeeMessageId) throw new Error('无法核对当前员工轮次，请重新发送本轮要求')
@@ -376,7 +423,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const employeeRequestSha256 = digest(Buffer.from(employeeRequest, 'utf8'))
     const employeeRoundId = digest(JSON.stringify([bound.accountKey, sessionKey, employeeMessageId, employeeRequestSha256]))
     const bodySha256 = digest(bodyBytes)
-    const identity = `${bound.accountKey}:returned-revision:${latest.requestId}:${latest.returnVersion}:${employeeRoundId}`
+    const identity = `${bound.accountKey}:returned-revision:${bound.context.requestId}:${bound.context.returnVersion}:${employeeRoundId}`
     const fingerprint = digest(JSON.stringify({
       context: bound.fingerprint, employeeRoundId, bodySha256,
       materials: selections.map((selection) => ({ path: selection.path, sha256: selection.sha256 })),
@@ -385,7 +432,15 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     let intent: FrozenRevisionIntent
     try {
       intent = await this.store.freeze<FrozenRevisionIntent>(identity, fingerprint, async () => {
+        const latest = await this.options.service.getApprovalContext(bound.context.requestId)
+        assertReturnedApproval(latest, bound.context.requestId)
+        if (returnedApprovalFingerprint(latest) !== bound.fingerprint) {
+          throw new Error('退回意见、业务对象或原材料版本已变化，请刷新待办后重新处理')
+        }
         const frozen = await freezeMaterials(claim.cwd, selections, REVISION_MATERIAL_LIMITS)
+        if (bodyBytes.length + frozen.reduce((total, file) => total + file.bytes, 0) > 8 * 1024 * 1024) {
+          throw new Error('修订正文和附件总量超出 Forge 固定材料限制')
+        }
         await this.evidence(claim, turn)
         if (turn.messageId !== employeeMessageId || await this.options.service.accountKey() !== bound.accountKey) {
           throw new Error('员工账号或轮次已变化，旧修订意图不能继续')
@@ -400,8 +455,9 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           version: 1, accountKey: bound.accountKey, sessionKey, employeeRoundId, employeeMessageId,
           employeeRequest, employeeRequestSha256, sourceMessages, requestId: latest.requestId,
           returnVersion: latest.returnVersion, sourceMaterialVersion: latest.sourceMaterialVersion,
+          idempotencyKey: submissionUUID(employeeRoundId),
           businessObject: structuredClone(latest.businessObject), returnReason: latest.returnReason,
-          sourceFiles, body: { content: body, bytes: bodyBytes.length, sha256: bodySha256, bytesBase64: bodyBytes.toString('base64') },
+          sourceFiles, body: { name: '修订正文.md', content: body, bytes: bodyBytes.length, sha256: bodySha256, bytesBase64: bodyBytes.toString('base64') },
           materials: frozen.map(revisionFile),
         }
       })
@@ -411,12 +467,196 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       }
       throw error
     }
-    return {
-      status: 'prepared_only', submitted: false,
-      message: '修订正文和材料已安全固定在本地。Forge 修订递交业务动作尚未接通，因此审批未递交、流程未继续。',
-      body: { bytes: intent.body.bytes, sha256: intent.body.sha256 },
-      materials: intent.materials.map(({ name, bytes }) => ({ name, bytes })),
+    const prior = this.revisionInFlight.get(identity)
+    if (prior) return prior
+    const operation = this.deliverReturnedRevision(claim, turn, bound, intent, fingerprint)
+    this.revisionInFlight.set(identity, operation)
+    try { return await operation } finally { this.revisionInFlight.delete(identity) }
+  }
+  private async deliverReturnedRevision(
+    claim: CapabilityClaim,
+    turn: EmployeeTurn,
+    bound: BoundReturnedApproval,
+    intent: FrozenRevisionIntent,
+    intentFingerprint: string,
+  ): Promise<unknown> {
+    const progressKey = `returned-revision:${intent.accountKey}:${intent.sessionKey}:${intent.requestId}:${intent.returnVersion}:${intent.employeeRoundId}:progress`
+    const progressFingerprint = digest(JSON.stringify({
+      intentFingerprint, idempotencyKey: intent.idempotencyKey, requestId: intent.requestId,
+      returnVersion: intent.returnVersion, sourceMaterialVersion: intent.sourceMaterialVersion,
+    }))
+    const publicFiles = [{ name: intent.body.name }, ...intent.materials.map(({ name }) => ({ name }))]
+    const assertCurrent = async () => {
+      await this.evidence(claim, turn)
+      if (await this.options.service.accountKey() !== intent.accountKey
+        || this.returnedApprovals.get(claim.token) !== bound
+        || this.claimForToken(claim.token) === undefined) throw new Error('员工账号或轮次已变化，旧修订意图不能继续')
     }
+    const assertApprovalCurrent = async () => {
+      await assertCurrent()
+      const latest = await this.options.service.getApprovalContext(intent.requestId)
+      assertReturnedApproval(latest, intent.requestId)
+      if (returnedApprovalFingerprint(latest) !== bound.fingerprint) throw new Error('退回意见、业务对象或原材料版本已变化，请刷新待办后重新处理')
+      await assertCurrent()
+    }
+    const resolveReceipt = async (prior?: ReturnedRevisionProgress): Promise<unknown> => {
+      let result: { status: number; body: unknown }
+      try {
+        result = await this.options.service.getApprovalRevisionReceipt(intent.requestId, intent.idempotencyKey, assertCurrent)
+      } catch {
+        if (prior?.receipt) return revisionReceiptResult(prior.receipt, publicFiles, false)
+        if (prior?.phase === 'upload_started') return {
+          status: 'upload_unknown', submitted: false, receiptConfirmed: false, materials: publicFiles,
+          message: '修订材料包已固定，但文件上传结果无法确认。审批递交未确认，桌面没有重传；请核对 Forge 后重新打开事项。',
+        }
+        return {
+          status: 'resume_unknown', submitted: false, receiptConfirmed: false, materials: publicFiles,
+          message: '修订递交请求可能已发送，但回执暂时无法读取。桌面没有重提；请在 Forge 核对。',
+        }
+      }
+      if (result.status === 404) {
+        if (prior?.receipt) return revisionReceiptResult(prior.receipt, publicFiles, false)
+        if (prior?.phase === 'upload_started') return {
+          status: 'upload_unknown', submitted: false, receiptConfirmed: false, materials: publicFiles,
+          message: '修订材料包已固定，但 Forge 没有可核对的修订回执。审批递交未确认，桌面没有重传；请核对 Forge 后重新打开事项。',
+        }
+        return {
+          status: 'resume_unknown', submitted: false, receiptConfirmed: false, materials: publicFiles,
+          message: 'Forge 没有返回修订回执。原请求可能已处理，桌面没有重提；请在 Forge 核对。',
+        }
+      }
+      const receipt = result.status >= 200 && result.status < 300 ? revisionReceipt(result.body, intent.requestId) : undefined
+      if (!receipt) {
+        if (prior?.receipt) return revisionReceiptResult(prior.receipt, publicFiles, false)
+        if (prior?.phase === 'upload_started') return {
+          status: 'upload_unknown', submitted: false, receiptConfirmed: false, materials: publicFiles,
+          message: '修订材料包已固定，但 Forge 上传/修订结果没有可核对的回执。桌面没有重传；请核对 Forge 后重新打开事项。',
+        }
+        return {
+          status: 'resume_unknown', submitted: false, receiptConfirmed: false, materials: publicFiles,
+          message: 'Forge 修订回执无效或暂不可用。桌面没有重提；请在 Forge 核对。',
+        }
+      }
+      const progress: ReturnedRevisionProgress = {
+        version: 1, phase: 'receipt', idempotencyKey: intent.idempotencyKey,
+        ...(prior?.primary ? { primary: prior.primary } : {}), ...(prior?.attachments ? { attachments: prior.attachments } : {}), receipt,
+      }
+      await this.store.checkpoint(progressKey, progressFingerprint, progress)
+      return revisionReceiptResult(receipt, publicFiles)
+    }
+
+    const saved = await this.store.inspect<ReturnedRevisionProgress>(progressKey)
+    if (saved && saved.fingerprint !== progressFingerprint) throw new Error('本轮修订材料已固定；员工账号、事项或材料变化后不能继续旧请求')
+    let progress = saved?.value
+    if (progress && (progress.idempotencyKey !== intent.idempotencyKey || progress.version !== 1)) {
+      throw new Error('修订请求恢复记录无效，请在 Forge 核对后重新打开事项')
+    }
+    if (progress?.phase === 'rejected') return {
+      status: progress.rejectionState ?? 'rejected', submitted: false, receiptConfirmed: false, materials: publicFiles,
+      message: progress.message ?? '修订材料已固定，但 Forge 拒绝了本次请求；审批未确认递交。请刷新待办。',
+    }
+    if (progress?.phase === 'request_started' || progress?.phase === 'receipt') return resolveReceipt(progress)
+    if (progress?.phase === 'upload_started') {
+      const receiptResult = await resolveReceipt(progress)
+      const receiptState = receiptResult && typeof receiptResult === 'object' && !Array.isArray(receiptResult)
+        ? (receiptResult as Record<string, unknown>).status : undefined
+      const receiptConfirmed = receiptResult && typeof receiptResult === 'object' && !Array.isArray(receiptResult)
+        ? (receiptResult as Record<string, unknown>).receiptConfirmed === true : false
+      if (receiptState !== 'resume_unknown' || receiptConfirmed) return receiptResult
+      return {
+        status: 'upload_unknown', submitted: false, receiptConfirmed: false, materials: publicFiles,
+        message: '修订材料包已固定，但上传结果无法确认。审批递交未发送或未确认；为避免重复文件，桌面没有重传。请核对 Forge 后重新打开事项。',
+      }
+    }
+
+    let references: { primary: ReturnedRevisionFileReference; attachments: ReturnedRevisionFileReference[] }
+    if (progress?.phase === 'uploaded' && progress.primary && Array.isArray(progress.attachments)) {
+      references = { primary: progress.primary, attachments: progress.attachments }
+      const expected = [intent.body, ...intent.materials]
+      const actual = [references.primary, ...references.attachments]
+      if (actual.length !== expected.length || actual.some((file, index) => file.name !== expected[index]!.name || file.sha256 !== expected[index]!.sha256 || !file.fileId)) {
+        throw new Error('上传回执与原固定材料包不一致；桌面不会重新上传')
+      }
+    } else if (!progress) {
+      await assertApprovalCurrent()
+      progress = await this.store.checkpoint(progressKey, progressFingerprint, {
+        version: 1, phase: 'upload_started', idempotencyKey: intent.idempotencyKey,
+      })
+      try {
+        const uploadMaterials = [
+          restoreRevisionMaterial({ name: intent.body.name, mediaType: 'text/plain; charset=utf-8', bytes: intent.body.bytes, sha256: intent.body.sha256, bytesBase64: intent.body.bytesBase64 }),
+          ...intent.materials.map(restoreRevisionMaterial),
+        ]
+        const uploaded = await this.options.service.stageWorkMaterials(uploadMaterials, assertCurrent)
+        if (uploaded.length !== uploadMaterials.length || uploaded.some((file, index) => file.type !== 'forge-file'
+          || file.name !== uploadMaterials[index]!.name || file.bytes !== uploadMaterials[index]!.bytes || file.sha256 !== uploadMaterials[index]!.sha256 || !file.id)) {
+          throw new Error('Forge 上传回执与固定材料包不一致')
+        }
+        references = {
+          primary: { fileId: uploaded[0]!.id, name: uploaded[0]!.name, sha256: uploaded[0]!.sha256 },
+          attachments: uploaded.slice(1).map((file) => ({ fileId: file.id, name: file.name, sha256: file.sha256 })),
+        }
+        progress = await this.store.checkpoint(progressKey, progressFingerprint, {
+          version: 1, phase: 'uploaded', idempotencyKey: intent.idempotencyKey,
+          primary: references.primary, attachments: references.attachments,
+        })
+      } catch (error) {
+        if (error instanceof Error && /登录已失效|请先登录|账号已切换|员工轮次或账号已变化/.test(error.message)) throw error
+        return {
+          status: 'upload_unknown', submitted: false, receiptConfirmed: false, materials: publicFiles,
+          message: '修订材料包已固定，但 Forge 文件上传未能取得完整回执。审批未递交；桌面不会盲目重传，以免产生重复文件。请重新打开事项后再由员工发起新一轮。',
+        }
+      }
+    } else {
+      throw new Error('修订材料上传状态不完整；桌面只查询原回执，不会重传')
+    }
+
+    await assertApprovalCurrent()
+    progress = await this.store.checkpoint(progressKey, progressFingerprint, {
+      version: 1, phase: 'request_started', idempotencyKey: intent.idempotencyKey,
+      primary: references.primary, attachments: references.attachments,
+    })
+    const request: ApprovalRevisionSubmission = {
+      returnVersion: intent.returnVersion, sourceMaterialVersion: intent.sourceMaterialVersion,
+      idempotencyKey: intent.idempotencyKey, primary: references.primary, attachments: references.attachments,
+    }
+    let response: { status: number; body: unknown }
+    try {
+      response = await this.options.service.submitApprovalRevision(intent.requestId, request, assertCurrent)
+    } catch (error) {
+      if (error instanceof Error && /登录已失效|请先登录|账号已切换|员工轮次或账号已变化/.test(error.message)) {
+        throw error
+      }
+      return resolveReceipt(progress)
+    }
+    if (response.status === 404) {
+      const rejected: ReturnedRevisionProgress = {
+        ...progress, phase: 'rejected', rejectionState: 'unavailable',
+        message: '当前 Forge 服务没有退回材料修订接口（404）。修订材料已固定，但审批未递交。',
+      }
+      await this.store.checkpoint(progressKey, progressFingerprint, rejected)
+      return { status: 'unavailable', submitted: false, receiptConfirmed: false, materials: publicFiles, message: rejected.message }
+    }
+    if (response.status === 409 || response.status === 400 || response.status === 413 || response.status === 422) {
+      const rejected: ReturnedRevisionProgress = {
+        ...progress, phase: 'rejected', rejectionState: 'rejected',
+        message: response.status === 409
+          ? 'Forge 检测到审批或材料版本冲突，拒绝了本次递交。请刷新待办。'
+          : response.status === 413 ? 'Forge 拒绝了超出大小限制的修订材料。审批未递交。'
+            : response.status === 422 ? 'Forge 无法核验修订材料及摘要，审批未递交。请刷新材料。'
+              : 'Forge 拒绝了修订材料请求，审批未递交。',
+      }
+      await this.store.checkpoint(progressKey, progressFingerprint, rejected)
+      return { status: 'rejected', submitted: false, receiptConfirmed: false, materials: publicFiles, message: rejected.message }
+    }
+    const receipt = response.status >= 200 && response.status < 300 ? revisionReceipt(response.body, intent.requestId) : undefined
+    if (receipt) {
+      const confirmed: ReturnedRevisionProgress = { ...progress, phase: 'receipt', receipt }
+      try { await this.store.checkpoint(progressKey, progressFingerprint, confirmed) }
+      catch { /* request_started remains durable; the next attempt only reads the Forge receipt */ }
+      return revisionReceiptResult(receipt, publicFiles)
+    }
+    return resolveReceipt(progress)
   }
   private async prepareDelivery(claim: CapabilityClaim, turn: EmployeeTurn, intent: FrozenHandoffIntent, recoveryKey: string): Promise<unknown> {
     try {
