@@ -18,8 +18,8 @@ const overview: EnterpriseWorkOverview = {
   items: [{ id: 'notice-1', kind: 'result', title: '合同团队已完成', status: 'unread', actionable: false, read: false, source: 'forge', createdAt: '2026-09-23T01:00:00Z' }],
   runs: [{ id: 'run-1', status: 'running', startedAt: '2026-09-23T01:00:00Z', durationMs: 0, tokensIn: 0, tokensOut: 0, costUsd: 0 }],
   reads: {
-    runs: { status: 'loaded' }, teamChoices: { status: 'loaded' }, weaveTasks: { status: 'failed', error: 'Weave 读取失败（503）' },
-    forgeApprovals: { status: 'loaded' }, notifications: { status: 'failed', error: 'Forge 通知读取失败（503）' },
+    runs: { status: 'loaded' }, teamChoices: { status: 'loaded' }, weaveTasks: { status: 'failed', error: '团队信息读取失败（503）' },
+    forgeApprovals: { status: 'loaded' }, notifications: { status: 'failed', error: '通知读取失败（503）' },
   },
 }
 
@@ -44,8 +44,8 @@ it('shows available work beside source-specific errors and offers retry without 
 
   expect(container.textContent).toContain('合同交付复核')
   expect(container.textContent).toContain('合同团队已完成')
-  expect(container.textContent).toContain('Weave 人工待办暂时不可用：Weave 读取失败（503）')
-  expect(container.textContent).toContain('工作通知暂时不可用：Forge 通知读取失败（503）')
+  expect(container.textContent).toContain('团队人工步骤暂时不可用：团队信息读取失败（503）')
+  expect(container.textContent).toContain('工作通知暂时不可用：通知读取失败（503）')
   expect(container.textContent).not.toContain('当前没有待处理事项。')
 
   const retries = [...container.querySelectorAll<HTMLButtonElement>('button')].filter((button) => button.textContent === '重试读取')
