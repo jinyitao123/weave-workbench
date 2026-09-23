@@ -3,7 +3,7 @@ node_modules/
 dist/
 out/
 release/
+!/desktop/scripts/release/
 .build/
 coverage/
 *.log
-
