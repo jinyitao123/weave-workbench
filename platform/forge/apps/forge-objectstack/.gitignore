@@ -1,6 +1,7 @@
 node_modules
 .deploy/
 dist
+.generated/console94/
 .objectstack/
 *.log
 .DS_Store

@@ -13,10 +13,37 @@ if ! command -v docker >/dev/null 2>&1; then
   echo "未找到 Docker。" >&2
   exit 1
 fi
+if ! docker buildx version >/dev/null 2>&1; then
+  echo "部署需要 Docker Buildx，以传入已验证的 Console 94 构建上下文。" >&2
+  exit 1
+fi
 if ! command -v curl >/dev/null 2>&1 || ! command -v gzip >/dev/null 2>&1; then
   echo "部署需要 curl 和 gzip。" >&2
   exit 1
 fi
+
+CONSOLE_BUILD_CONTEXT=${FORGE_CONSOLE_BUILD_CONTEXT:-.generated/console94}
+case "$CONSOLE_BUILD_CONTEXT" in
+  /*) ;;
+  *) CONSOLE_BUILD_CONTEXT="$APP_DIR/$CONSOLE_BUILD_CONTEXT" ;;
+esac
+CONSOLE_BUILD_ENV="$CONSOLE_BUILD_CONTEXT/console94-build.env"
+if [ ! -f "$CONSOLE_BUILD_CONTEXT/console94.lock.json" ] || [ ! -f "$CONSOLE_BUILD_CONTEXT/console94-build.json" ] || [ ! -f "$CONSOLE_BUILD_CONTEXT/dist/index.html" ] || [ ! -f "$CONSOLE_BUILD_ENV" ]; then
+  echo "缺少 Console 94 固定构建上下文。先按 apps/forge-objectstack/README.md 构建并验证 Console。" >&2
+  exit 1
+fi
+console_context_value() {
+  awk -v key="$1" 'index($0, key "=") == 1 { value = substr($0, length(key) + 2) } END { print value }' "$CONSOLE_BUILD_ENV"
+}
+CONSOLE_SOURCE_REVISION=$(console_context_value source_revision)
+CONSOLE_TREE_SHA256=$(console_context_value tree_sha256)
+if [ "${#CONSOLE_SOURCE_REVISION}" -ne 40 ] || [ "${#CONSOLE_TREE_SHA256}" -ne 64 ]; then
+  echo "Console 94 构建上下文缺少有效源码修订或产物摘要。" >&2
+  exit 1
+fi
+case "$CONSOLE_SOURCE_REVISION$CONSOLE_TREE_SHA256" in
+  *[!0-9a-f]*) echo "Console 94 构建上下文包含无效摘要。" >&2; exit 1 ;;
+esac
 
 # Read only numeric, non-secret settings from Compose's .env without sourcing
 # it as shell code. Compose itself remains responsible for secret expansion.
@@ -111,19 +138,25 @@ else
 fi
 
 echo "构建 Forge 镜像：$IMAGE"
-BUILDX_GIT_INFO=false docker build \
+BUILDX_GIT_INFO=false docker buildx build \
   --progress=plain \
   --target app \
+  --build-context "console94=$CONSOLE_BUILD_CONTEXT" \
   --build-arg "FORGE_SOURCE_REVISION=$SOURCE_REVISION" \
+  --build-arg "CONSOLE_SOURCE_REVISION=$CONSOLE_SOURCE_REVISION" \
+  --build-arg "CONSOLE_TREE_SHA256=$CONSOLE_TREE_SHA256" \
   --tag "$IMAGE" \
+  --load \
   .
 
 echo "构建 Nginx 入口镜像：$PROXY_IMAGE"
-BUILDX_GIT_INFO=false docker build \
+BUILDX_GIT_INFO=false docker buildx build \
   --progress=plain \
   --target proxy \
+  --build-context "console94=$CONSOLE_BUILD_CONTEXT" \
   --build-arg "FORGE_SOURCE_REVISION=$SOURCE_REVISION" \
   --tag "$PROXY_IMAGE" \
+  --load \
   .
 
 FORGE_HEALTH_ATTEMPTS=${FORGE_HEALTH_ATTEMPTS:-60}
@@ -286,6 +319,8 @@ PROXY_IMAGE_ID=$(docker image inspect --format '{{.Id}}' "$PROXY_IMAGE")
 {
   printf 'released_at=%s\n' "$RELEASE_ID"
   printf 'source_revision=%s\n' "$SOURCE_REVISION"
+  printf 'console_source_revision=%s\n' "$CONSOLE_SOURCE_REVISION"
+  printf 'console_tree_sha256=%s\n' "$CONSOLE_TREE_SHA256"
   printf 'app_image=%s\n' "$IMAGE"
   printf 'app_image_id=%s\n' "$IMAGE_ID"
   printf 'proxy_image=%s\n' "$PROXY_IMAGE"

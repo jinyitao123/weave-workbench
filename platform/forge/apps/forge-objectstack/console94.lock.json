@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "https://github.com/objectstack-ai/objectui.git",
+    "revision": "94f5a3095c920515fc5a96e519d303e3932e8f8e",
+    "packageName": "@object-ui/console",
+    "packageVersion": "17.6.0",
+    "nodeVersion": "24.19.0",
+    "pnpmVersion": "10.31.0",
+    "buildCommand": "VITE_BASE_PATH=/_console/ pnpm -r --filter @object-ui/console... build"
+  },
+  "forge": {
+    "cliVersion": "17.3.0",
+    "consolePackageName": "@objectstack/console",
+    "runtimeImage": "ghcr.io/objectstack-ai/objectstack:17.3.0",
+    "runtimeImageDigest": "sha256:2b1f7efb8fcab00fd6b7cf741faa7ab6d75866d6b7b6e6b8b1bec69ce8f6e0ce",
+    "runtimeImageReference": "ghcr.io/objectstack-ai/objectstack:17.3.0@sha256:2b1f7efb8fcab00fd6b7cf741faa7ab6d75866d6b7b6e6b8b1bec69ce8f6e0ce",
+    "registryDigestVerifiedAt": "2026-09-23"
+  },
+  "artifact": {
+    "basePath": "/_console/",
+    "upstreamReferenceTreeSha256": "29d4daf2918777611ee53ae59add30630dc829e01f98492eb62eaa2b182e5303",
+    "referenceNotes": "The raw reference tree includes stats.html, which embeds the temporary absolute build path; that build-only report is excluded from the shipped bundle.",
+    "runtimeSourceTreeSha256": "c4e483d70c2d9b57226cea7dc242f9e93445822657ce5407ad9c34b8ea112e78",
+    "excludedBuildOnlyFiles": ["stats.html"],
+    "rawIndexSha256": "5bc4b5a64bb5276078cf37d3efddcac01e0a36d6c98be21f377d512580e99694",
+    "patches": [
+      {
+        "path": "index.html",
+        "description": "Use an absolute manifest URL so nested SPA routes do not resolve it below the route path.",
+        "from": "href=\"./manifest.json\"",
+        "to": "href=\"/_console/manifest.json\""
+      },
+      {
+        "path": "dist/.objectui-sha",
+        "description": "Stamp the exact ObjectUI source revision consumed by ObjectStack CLI drift reporting.",
+        "content": "94f5a3095c920515fc5a96e519d303e3932e8f8e"
+      }
+    ],
+    "packagedTreeSha256": "99962f68ff9bd9e8de5b89aeb130288dbd832fa178fb7c9790571b6be2eee54a"
+  }
+}

@@ -205,13 +205,14 @@ try {
     readFile(path.resolve(HERE, '../scripts/deploy.sh'), 'utf8'),
   ]);
   const stages = [...dockerfile.matchAll(/^FROM\s+.*?\s+AS\s+([A-Za-z0-9_-]+)\s*$/gim)].map((match) => match[1]);
-  assert.equal(stages.at(-1), 'app', 'plain docker build must still produce the Forge app image');
+  assert.equal(stages.at(-1), 'app', 'plain docker buildx build must still produce the Forge app image');
   assert.ok(stages.includes('proxy'), 'Dockerfile must define a separately targetable proxy stage');
   assert.match(composeFile, /services:\s*\n\s+app:\s*[\s\S]*?target:\s*app/, 'Compose app build must explicitly target the app stage');
   assert.match(composeFile, /x-forge-proxy:[\s\S]*?target:\s*proxy/, 'Compose proxy build must explicitly target the proxy stage');
   assert.match(composeFile, /127\.0\.0\.1:\$\{FORGE_CANDIDATE_PORT:-14612\}:80/, 'candidate port must bind to loopback');
-  assert.match(deployScript, /docker build \\\n\s+--progress=plain \\\n\s+--target app/, 'deploy.sh must explicitly build the Forge app stage');
-  assert.match(deployScript, /docker build \\\n\s+--progress=plain \\\n\s+--target proxy/, 'deploy.sh must explicitly build the Nginx stage');
+  assert.match(deployScript, /docker buildx build \\\n\s+--progress=plain \\\n\s+--target app/, 'deploy.sh must explicitly build the Forge app stage');
+  assert.match(deployScript, /docker buildx build \\\n\s+--progress=plain \\\n\s+--target proxy/, 'deploy.sh must explicitly build the Nginx stage');
+  assert.match(deployScript, /--build-context \"console94=\$CONSOLE_BUILD_CONTEXT\"/, 'deploy.sh must pass the verified Console context to Buildx');
   pass('Compose and deploy keep app/proxy image targets and loopback candidate separate');
 
   let serverConfig = await readFile(NGINX_CONFIG, 'utf8');

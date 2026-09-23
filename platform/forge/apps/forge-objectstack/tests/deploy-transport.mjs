@@ -61,7 +61,7 @@ const dockerScript = [
   '  esac',
   '  exit 0',
   'fi',
-  'if [ "$1" = "build" ]; then exit 0; fi',
+  'if [ "$1" = "buildx" ] && [ "$2" = "build" ]; then exit 0; fi',
   'exit 0',
 ].join('\n') + '\n';
 
@@ -89,6 +89,16 @@ async function runCase({ name, publicFailure, previousProxy }) {
     const fakeBin = path.join(tempDir, 'bin');
     const stateDir = path.join(tempDir, 'state');
     await Promise.all([mkdir(scriptsDir, { recursive: true }), mkdir(fakeBin), mkdir(stateDir)]);
+    const consoleContext = path.join(appDir, '.generated/console94');
+    await mkdir(path.join(consoleContext, 'dist'), { recursive: true });
+    await writeFile(path.join(consoleContext, 'console94.lock.json'), '{}\n');
+    await writeFile(path.join(consoleContext, 'console94-build.json'), '{}\n');
+    await writeFile(path.join(consoleContext, 'console94-build.env'), [
+      'source_revision=94f5a3095c920515fc5a96e519d303e3932e8f8e',
+      'tree_sha256=99962f68ff9bd9e8de5b89aeb130288dbd832fa178fb7c9790571b6be2eee54a',
+      '',
+    ].join('\n'));
+    await writeFile(path.join(consoleContext, 'dist/index.html'), '<html></html>');
     await copyFile(SOURCE_DEPLOY, path.join(scriptsDir, 'deploy.sh'));
     await writeFile(path.join(appDir, '.env'), [
       'POSTGRES_PASSWORD=' + SECRETS[0],
@@ -128,6 +138,7 @@ async function runCase({ name, publicFailure, previousProxy }) {
     const commandLog = await readFile(logPath, 'utf8');
     assert.match(commandLog, /--target app/, name + ': app image must use its explicit Docker stage');
     assert.match(commandLog, /--target proxy/, name + ': proxy image must use its explicit Docker stage');
+    assert.match(commandLog, /build-context console94=/, name + ': image builds must receive the fixed Console context');
     assert.match(commandLog, /candidatePort=14612/, name + ': candidate port must reach Compose');
     return { tempDir, stateDir, result, output, commandLog };
   } catch (error) {
@@ -152,6 +163,8 @@ try {
     throw new Error('release record missing; output=' + success.output + '; files=' + contents.join(','));
   }
   assert.match(releaseRecord, /source_revision=0123456789ab/);
+  assert.match(releaseRecord, /console_source_revision=94f5a3095c920515fc5a96e519d303e3932e8f8e/);
+  assert.match(releaseRecord, /console_tree_sha256=99962f68ff9bd9e8de5b89aeb130288dbd832fa178fb7c9790571b6be2eee54a/);
   assert.match(releaseRecord, /app_image_id=sha256:new-app-image/);
   assert.match(releaseRecord, /proxy_image_id=sha256:new-proxy-image/);
   assert.doesNotMatch(releaseRecord, /test-(?:postgres|auth|key)-secret/);
