@@ -4,6 +4,7 @@ import { MessagingServicePlugin } from '@objectstack/service-messaging';
 import { ApprovalsServicePlugin } from '@objectstack/plugin-approvals';
 import { MCPServerPlugin } from '@objectstack/mcp';
 import { RecordChangeTriggerPlugin } from '@objectstack/trigger-record-change';
+import { WeaveRunEventPlugin } from './src/plugins/weave-run-event.plugin.js';
 import * as objects from './src/objects/index.js';
 import * as actions from './src/actions/index.js';
 import * as pages from './src/pages/index.js';
@@ -49,6 +50,7 @@ export default defineStack({
     new ApprovalsServicePlugin({ recordReaderVisibleObjects: ['forge_sales_contract'] }),
     new RecordChangeTriggerPlugin(),
     new MCPServerPlugin(),
+    new WeaveRunEventPlugin(),
   ],
   objects: Object.values(objects),
   data: Object.values(seedData),
