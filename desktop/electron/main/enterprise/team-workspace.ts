@@ -8,10 +8,16 @@ function keys(value: unknown, convert: (key: string) => string): unknown {
   return Object.fromEntries(Object.entries(value).map(([key, item]) => [convert(key), key === 'output_schema' || key === 'outputSchema' ? item : keys(item, convert)]))
 }
 function documentToWire(doc: TeamDefinition) {
-  return { ...doc, members: doc.members.map((member) => ({ ...member,
-    configuration: keys({ ...member.configuration, outputSchema: member.configuration.outputSchema.trim() ? JSON.parse(member.configuration.outputSchema) : null }, (key) => key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)),
-    relationship: keys(member.relationship, (key) => key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)),
-  })) }
+  return { ...doc, members: doc.members.map((member) => {
+    const { businessCapabilityBindings, ...configuration } = member.configuration
+    return { ...member,
+      configuration: keys({ ...configuration,
+        ...(businessCapabilityBindings.length ? { businessCapabilityBindings } : {}),
+        outputSchema: member.configuration.outputSchema.trim() ? JSON.parse(member.configuration.outputSchema) : null,
+      }, (key) => key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)),
+      relationship: keys(member.relationship, (key) => key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)),
+    }
+  }) }
 }
 export async function teamWorkspaceRequest(command: TeamWorkspaceCommand, read: (path: string) => Promise<unknown>, write: (path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown) => Promise<{ body: unknown }>) {
   if (!command || typeof command.teamId !== 'string' || !command.teamId.trim()) throw new Error('请选择团队')
