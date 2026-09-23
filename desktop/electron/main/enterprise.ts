@@ -1,6 +1,6 @@
 import { teamWorkspaceRequest } from './enterprise/team-workspace'
 import type { TeamWorkspaceCommand } from '../../src/types/team-workspace'
-import type { EnterpriseApprovalContext, EnterpriseBusinessCapability, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource } from '../../src/types/api'
+import type { EnterpriseApprovalContext, EnterpriseBusinessCapability, EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource } from '../../src/types/api'
 import type { FrozenMaterial } from './enterprise/materials'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
@@ -61,6 +61,35 @@ function stringList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
 }
 
+function businessCapabilityParams(value: unknown): NonNullable<EnterpriseBusinessCapability['params']> {
+  return Array.isArray(value) ? value.flatMap((item) => {
+    const param = record(item), name = textValue(param?.name) ?? textValue(param?.field)
+    if (!name) return []
+    const rawType = textValue(param?.type) ?? 'string'
+    const type: 'string' | 'number' | 'boolean' | 'array' | 'file' = rawType === 'file' ? 'file' : rawType === 'boolean' ? 'boolean' : rawType === 'array' ? 'array' : ['number', 'integer', 'currency'].includes(rawType) ? 'number' : 'string'
+    const options = Array.isArray(param?.enum) ? param.enum : Array.isArray(param?.options) ? param.options : []
+    const values = options.flatMap((option) => typeof option === 'string' ? [option] : textValue(record(option)?.value) ? [textValue(record(option)?.value)!] : [])
+    return [{ name, label: textValue(param?.label) ?? textValue(param?.title), type, multiple: param?.multiple === true, required: param?.required === true, description: textValue(param?.description) ?? '', ...(values.length ? { enum: values } : {}) }]
+  }) : []
+}
+
+const materialBindingSources = ['materials.single.id', 'materials.single.name', 'materials.single.sha256', 'materials.manifest_json'] as const
+
+function businessCapabilityBindings(value: unknown): EnterpriseBusinessCapabilityBinding[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((item) => {
+    const binding = record(item), capabilityId = textValue(binding?.capability_id) ?? textValue(binding?.capabilityId)
+    if (!capabilityId || !Array.isArray(binding?.parameters)) throw new Error('Weave 返回的业务字段映射无效')
+    const parameters = binding.parameters.flatMap((parameter) => {
+      const source = record(parameter), name = textValue(source?.name), resource = textValue(source?.source)
+      if (!name || !resource || !materialBindingSources.includes(resource as typeof materialBindingSources[number])) throw new Error('Weave 返回了无法识别的业务字段来源')
+      return [{ name, source: resource as EnterpriseBusinessCapabilityBinding['parameters'][number]['source'] }]
+    })
+    if (!parameters.length) throw new Error('Weave 返回了没有参数的业务字段映射')
+    return [{ capabilityId, parameters }]
+  })
+}
+
 function parseMcpResponse(value: string): unknown {
   const trimmed = value.trim()
   if (!trimmed) throw new Error('Forge 没有返回业务能力')
@@ -81,7 +110,7 @@ function memberAgentConfiguration(value: Record<string, unknown>, agentName: str
     displayName: textValue(value.display_name) ?? agentName, role: textValue(value.role) ?? 'worker',
     engine: textValue(value.engine) ?? 'loom', runtimeId: textValue(value.runtime_id) ?? '', model: textValue(value.model) ?? '',
     systemPrompt: typeof value.system_prompt === 'string' ? value.system_prompt : '', skillNames: stringList(value.skill_names), skills,
-    mcpServerIds: stringList(value.mcp_server_ids), businessCapabilityIds: stringList(value.business_capability_ids), permissionAllow: stringList(value.permission_allow),
+    mcpServerIds: stringList(value.mcp_server_ids), businessCapabilityIds: stringList(value.business_capability_ids), businessCapabilityBindings: businessCapabilityBindings(value.business_capability_bindings), permissionAllow: stringList(value.permission_allow),
     permissionAsk: stringList(value.permission_ask), permissionDeny: stringList(value.permission_deny),
     memoryEnabled: value.memory_enabled === true, memoryScope: textValue(value.memory_scope) ?? 'tenant',
     maxTokens: numberValue(value.max_tokens) ?? 0, maxOutputTokens: numberValue(value.max_output_tokens) ?? 0,
@@ -481,15 +510,7 @@ export class EnterpriseService {
       const action = record(value), ai = record(action?.ai)
       const actionName = textValue(action?.name), objectName = textValue(action?.objectName) ?? textValue(action?.object)
       if (ai?.exposed !== true || !actionName || !objectName || objectName.startsWith('sys_')) return []
-      const params = (Array.isArray(action?.params) ? action.params : []).flatMap((value) => {
-        const param = record(value), name = textValue(param?.name) ?? textValue(param?.field)
-        if (!name) return []
-        const rawType = textValue(param?.type) ?? 'string'
-        const type: 'string' | 'number' | 'boolean' | 'array' = rawType === 'boolean' ? 'boolean' : rawType === 'array' ? 'array' : ['number', 'integer', 'currency'].includes(rawType) ? 'number' : 'string'
-        const options = Array.isArray(param?.enum) ? param.enum : Array.isArray(param?.options) ? param.options : []
-        const values = options.flatMap((item) => typeof item === 'string' ? [item] : textValue(record(item)?.value) ? [textValue(record(item)?.value)!] : [])
-        return [{ name, type, required: param?.required === true, description: textValue(param?.description) ?? textValue(param?.label) ?? '', ...(values.length ? { enum: values } : {}) }]
-      })
+      const params = businessCapabilityParams(action?.params)
       return [{
         id: `forge:action:${objectName}.${actionName}`,
         name: textValue(action?.label) ?? textValue(ai?.description) ?? actionName,
@@ -536,6 +557,7 @@ export class EnterpriseService {
         name: textValue(action?.label) ?? textValue(action?.description) ?? actionName,
         description: textValue(action?.description) ?? textValue(action?.label) ?? actionName,
         effect: 'write', resourceType: objectName, requiresEmployeeIntent: true, status: 'available', requiresRecord: action?.requiresRecord !== false,
+        actionName, objectName, requiresConfirmation: action?.requiresConfirmation === true, params: businessCapabilityParams(action?.params),
       }]
     })
   }
@@ -765,6 +787,7 @@ export class EnterpriseService {
         display_name: draft.configuration.displayName.trim(), role: draft.configuration.role, engine: draft.configuration.engine,
         runtime_id: draft.configuration.runtimeId.trim(), model: draft.configuration.model.trim(), system_prompt: draft.configuration.systemPrompt,
         skill_names: draft.configuration.skillNames, skills: draft.configuration.skills.map((skill) => ({ name: skill.name, description: skill.description, body: skill.body, always_active: skill.alwaysActive })), mcp_server_ids: draft.configuration.mcpServerIds, business_capability_ids: draft.configuration.businessCapabilityIds,
+        business_capability_bindings: draft.configuration.businessCapabilityBindings.map((binding) => ({ capability_id: binding.capabilityId, parameters: binding.parameters })),
         permission_allow: draft.configuration.permissionAllow, permission_ask: draft.configuration.permissionAsk, permission_deny: draft.configuration.permissionDeny,
         memory_enabled: draft.configuration.memoryEnabled, memory_scope: draft.configuration.memoryScope,
         max_tokens: draft.configuration.maxTokens, max_output_tokens: draft.configuration.maxOutputTokens,

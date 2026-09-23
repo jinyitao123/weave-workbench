@@ -183,6 +183,12 @@
 .member-capability-list button span { display: grid; min-width: 0; gap: 3px; }
 .member-capability-list button strong { color: var(--text-primary); font-size: 10.5px; }
 .member-capability-list button small { overflow: hidden; color: var(--text-tertiary); font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
+.member-capability-parameters { display: grid; gap: 8px; margin: 8px 2px 12px 12px; padding: 10px; border-left: 2px solid var(--accent); background: var(--surface-muted); }
+.member-capability-parameters > p { margin: 0; color: var(--text-tertiary); font-size: 10px; }
+.member-capability-parameter { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(160px, 1.3fr); align-items: center; gap: 10px; }
+.member-capability-parameter > span { display: grid; min-width: 0; gap: 3px; }
+.member-capability-parameter strong { overflow: hidden; color: var(--text-primary); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.member-capability-parameter small { overflow: hidden; color: var(--text-tertiary); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .member-resource-unavailable { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; padding: 7px 9px; border-radius: 7px; background: var(--surface-muted); color: var(--text-tertiary); font-size: 9.5px; }
 .member-resource-unavailable button { color: var(--danger); }
 .member-inspector__error { display: flex; flex-direction: column; gap: 9px; padding: 12px 16px; color: var(--danger); font-size: 11px; }

@@ -44,7 +44,9 @@
               "required": ["name"],
               "properties": {
                 "name": { "type": "string", "minLength": 1, "maxLength": 128 },
-                "type": { "enum": ["string", "number", "boolean", "array"] },
+                "label": { "type": "string", "maxLength": 128 },
+                "type": { "enum": ["string", "number", "boolean", "array", "file"] },
+                "multiple": { "type": "boolean", "default": false },
                 "required": { "type": "boolean", "default": false },
                 "description": { "type": "string", "maxLength": 240 },
                 "enum": { "type": "array", "items": { "type": "string" }, "maxItems": 100 }
