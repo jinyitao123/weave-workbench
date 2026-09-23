@@ -1,6 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { TeamDefinition, TeamWorkspace, TeamWorkspaceBridge } from '@/types/team-workspace'
 
+function executorConfigurationError(document: TeamDefinition): string | undefined {
+  for (const flow of document.workflows) for (const node of flow.graph_definition.nodes) {
+    const memberRole = node.type === 'worker' ? 'worker' : node.type === 'lead' ? 'avatar' : undefined
+    if (!memberRole) continue
+    const member = memberRole === 'worker'
+      ? document.members.find((candidate) => candidate.id === String(node.config?.agent_id ?? '').trim() && candidate.configuration.role === memberRole && candidate.relationship.enabled)
+      : document.members.find((candidate) => candidate.configuration.role === memberRole && candidate.relationship.enabled)
+    if (!member) {
+      const label = node.label?.trim() || (memberRole === 'worker' ? '执行步骤' : '负责人步骤')
+      const repair = memberRole === 'worker' ? '请重新选择执行成员后再保存。' : '请恢复启用的负责人后再保存。'
+      return `流程“${flow.name || '未命名流程'}”中的“${label}”没有可用的${memberRole === 'worker' ? '执行成员' : '负责人'}，${repair}`
+    }
+  }
+  return undefined
+}
+
 export function useTeamDraft(teamId: string, bridge: TeamWorkspaceBridge) {
   const [draft, setDraft] = useState<TeamWorkspace>()
   const [saving, setSaving] = useState(false)
@@ -12,6 +28,8 @@ export function useTeamDraft(teamId: string, bridge: TeamWorkspaceBridge) {
     const s = state.current
     if (s.flight) return s.flight
     if (!s.remote || !s.document || s.saved === s.generation) return s.remote
+    const invalidExecutor = executorConfigurationError(s.document)
+    if (invalidExecutor) { setError(invalidExecutor); throw new Error(invalidExecutor) }
     setSaving(true); setError('')
     s.flight = (async () => {
       try {
@@ -49,7 +67,7 @@ export function useTeamDraft(teamId: string, bridge: TeamWorkspaceBridge) {
     const s = state.current
     if (!s.remote || s.remote.publishing_revision) return
     s.document = document; s.generation += 1
-    setDraft({ ...s.remote, document }); setDirty(true)
+    setDraft({ ...s.remote, document }); setDirty(true); setError('')
   }
   const refreshTrials = async () => {
     const remote = await bridge({ action: 'get', teamId })
