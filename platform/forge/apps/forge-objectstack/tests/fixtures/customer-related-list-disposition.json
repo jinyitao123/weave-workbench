@@ -1,0 +1,367 @@
+{
+  "sourceObject": "forge_customer",
+  "sourceCommit": "394d060835f18d3d02a37930c94a17a254af4dc9",
+  "entries": [
+    {
+      "objectName": "forge_accounts_receivable",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "应收余额与到期状态是客户往来信息；后续从财务应用查看，客户详情不重复展示。",
+      "owningApplication": "finance"
+    },
+    {
+      "objectName": "forge_bom",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "BOM管理由供应链应用维护和查看；客户详情相关区按确认仅保留八组关联。",
+      "owningApplication": "supply_chain"
+    },
+    {
+      "objectName": "forge_cash_receipt",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "收款记录及未核销金额支持客户账款查询；后续从财务应用查看，客户详情不重复展示。",
+      "owningApplication": "finance"
+    },
+    {
+      "objectName": "forge_collection_allocation",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "收款核销是收款与应收间的分摊中间明细，客户页保留收款和应收汇总；后续从财务应用查看，客户详情不重复展示。",
+      "owningApplication": "finance"
+    },
+    {
+      "objectName": "forge_contact",
+      "referenceField": "customer_id",
+      "disposition": "keep",
+      "reason": "联系人档案是客户直接维护的基础信息。",
+      "relatedListTitle": "联系人",
+      "relatedListColumns": [
+        "name",
+        "is_primary",
+        "job_title",
+        "department",
+        "employment_status"
+      ],
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_counterparty_offset",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "往来对冲是应收应付对冲的内部调整单，避免与应收和对账单重复展示；后续从财务应用查看，客户详情不重复展示。",
+      "owningApplication": "finance"
+    },
+    {
+      "objectName": "forge_counterparty_statement",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "往来对账单由财务应用维护和查看；客户详情相关区按确认仅保留八组关联。",
+      "owningApplication": "finance"
+    },
+    {
+      "objectName": "forge_customer_drawing",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "客户图纸由生产应用维护和查看；客户详情相关区按确认仅保留八组关联。",
+      "owningApplication": "production"
+    },
+    {
+      "objectName": "forge_customer_material_map",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "客户物料对照由销售应用维护和查看；客户详情相关区按确认仅保留八组关联。",
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_customer_pool",
+      "referenceField": "claimed_customer_id",
+      "disposition": "hide",
+      "reason": "领取客户字段只回指已领取公海记录；公海记录不是客户后续办理事项；后续从销售应用查看，客户详情不重复展示。",
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_customer_prepayment",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "预收及剩余余额是客户往来汇总信息；后续从财务应用查看，客户详情不重复展示。",
+      "owningApplication": "finance"
+    },
+    {
+      "objectName": "forge_customer_prepayment_offset",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "预收冲抵是预收款的记账明细，客户页保留预收余额汇总；后续从财务应用查看，客户详情不重复展示。",
+      "owningApplication": "finance"
+    },
+    {
+      "objectName": "forge_customer_refund",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "客户退款由财务应用维护和查看；客户详情相关区按确认仅保留八组关联。",
+      "owningApplication": "finance"
+    },
+    {
+      "objectName": "forge_customer_team_member",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "客户团队成员由销售应用维护和查看；客户详情相关区按确认仅保留八组关联。",
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_finance_credit_request",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "客户授信申请由财务应用维护和查看；客户详情相关区按确认仅保留八组关联。",
+      "owningApplication": "finance"
+    },
+    {
+      "objectName": "forge_goodwill_order",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "Goodwill订单由销售应用维护和查看；客户详情相关区按确认仅保留八组关联。",
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_other_inbound",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "其他入库是库存处理单据，客户字段只是业务来源关联；后续从供应链应用查看，客户详情不重复展示。",
+      "owningApplication": "supply_chain"
+    },
+    {
+      "objectName": "forge_other_outbound",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "其他出库是库存处理单据，客户字段只是业务来源关联；后续从供应链应用查看，客户详情不重复展示。",
+      "owningApplication": "supply_chain"
+    },
+    {
+      "objectName": "forge_overtime_request",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "加班申请由行政应用维护和查看；客户详情相关区按确认仅保留八组关联。",
+      "owningApplication": "administration"
+    },
+    {
+      "objectName": "forge_pending_inspection",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "待检验库存是收货检验中间状态，应在采购和库存工作区处理；后续从供应链应用查看，客户详情不重复展示。",
+      "owningApplication": "supply_chain"
+    },
+    {
+      "objectName": "forge_project",
+      "referenceField": "customer_id",
+      "disposition": "keep",
+      "reason": "客户关联项目是销售、项目和交付协作的正式业务对象。",
+      "relatedListTitle": "项目",
+      "relatedListColumns": [
+        "code",
+        "name",
+        "planned_start_on",
+        "planned_end_on",
+        "progress",
+        "status"
+      ],
+      "owningApplication": "project"
+    },
+    {
+      "objectName": "forge_project_cost_entry",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "项目成本池是内部成本归集明细，不应混入客户档案；后续从项目应用查看，客户详情不重复展示。",
+      "owningApplication": "project"
+    },
+    {
+      "objectName": "forge_project_expense",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "项目费用报销是内部报销明细，不是客户事项；后续从财务应用查看，客户详情不重复展示。",
+      "owningApplication": "finance"
+    },
+    {
+      "objectName": "forge_purchase_receipt",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "采购到货登记属于采购收货流程，客户关联不是客户办理记录；后续从供应链应用查看，客户详情不重复展示。",
+      "owningApplication": "supply_chain"
+    },
+    {
+      "objectName": "forge_purchase_request",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "采购申请属于采购内部流程，客户关联是可选项目来源信息；后续从供应链应用查看，客户详情不重复展示。",
+      "owningApplication": "supply_chain"
+    },
+    {
+      "objectName": "forge_quotation",
+      "referenceField": "customer_id",
+      "disposition": "keep",
+      "reason": "客户报价是客户交易过程中的正式文档。",
+      "relatedListTitle": "报价",
+      "relatedListColumns": [
+        "code",
+        "name",
+        "item_count",
+        "total_amount",
+        "status",
+        "valid_until"
+      ],
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_revenue_recognition",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "收入确认是财务内部会计事件，不是客户日常办理记录；后续从财务应用查看，客户详情不重复展示。",
+      "owningApplication": "finance"
+    },
+    {
+      "objectName": "forge_sales_additional_fee",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "附加费用影响客户交易结算，保留其业务状态；后续从销售应用查看，客户详情不重复展示。",
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_sales_contract",
+      "referenceField": "customer_id",
+      "disposition": "keep",
+      "reason": "客户销售合同是正式交易及续办入口。",
+      "relatedListTitle": "合同",
+      "relatedListColumns": [
+        "code",
+        "name",
+        "total_amount",
+        "ordered_amount",
+        "status",
+        "signed_on"
+      ],
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_sales_follow_up",
+      "referenceField": "customer_id",
+      "disposition": "keep",
+      "reason": "客户沟通记录和下次计划是直接客户经营信息。",
+      "relatedListTitle": "跟进",
+      "relatedListColumns": [
+        "name",
+        "follow_type",
+        "followed_at",
+        "next_follow_on",
+        "status"
+      ],
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_sales_invoice",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "已开具发票及未结金额是客户交易结果；后续从财务应用查看，客户详情不重复展示。",
+      "owningApplication": "finance"
+    },
+    {
+      "objectName": "forge_sales_invoice_request",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "开票申请是发票生成前的内部工作流节点，客户页保留正式发票；后续从财务应用查看，客户详情不重复展示。",
+      "owningApplication": "finance"
+    },
+    {
+      "objectName": "forge_sales_lead",
+      "referenceField": "converted_customer_id",
+      "disposition": "hide",
+      "reason": "转化客户字段是销售线索的反向转化指针；线索继续在销售漏斗办理，不作为客户日常子列表；后续从销售应用查看，客户详情不重复展示。",
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_sales_opportunity",
+      "referenceField": "customer_id",
+      "disposition": "keep",
+      "reason": "客户商机用于持续销售跟进和预测。",
+      "relatedListTitle": "商机",
+      "relatedListColumns": [
+        "name",
+        "stage",
+        "source",
+        "amount",
+        "win_rate",
+        "expected_close_on"
+      ],
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_sales_order",
+      "referenceField": "customer_id",
+      "disposition": "keep",
+      "reason": "客户订单是履约过程中的正式业务记录。",
+      "relatedListTitle": "订单",
+      "relatedListColumns": [
+        "code",
+        "name",
+        "total_amount",
+        "status",
+        "planned_delivery_on"
+      ],
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_sales_return",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "退货单是客户售后和交易调整的正式记录；后续从销售应用查看，客户详情不重复展示。",
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_sales_shipment",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "发货记录是客户订单履约的重要结果；后续从销售应用查看，客户详情不重复展示。",
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_service_order",
+      "referenceField": "customer_id",
+      "disposition": "keep",
+      "reason": "客户售后请求和处理结果用于持续服务。",
+      "relatedListTitle": "售后工单",
+      "relatedListColumns": [
+        "code",
+        "name",
+        "service_type",
+        "service_mode",
+        "urgency",
+        "status",
+        "engineer_name",
+        "expected_visit_on",
+        "service_result",
+        "next_step"
+      ],
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_service_quotation",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "服务报价是客户服务交易的正式文档；后续从销售应用查看，客户详情不重复展示。",
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_service_settlement",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "服务结算是客户服务交易的正式结果；后续从销售应用查看，客户详情不重复展示。",
+      "owningApplication": "sales"
+    },
+    {
+      "objectName": "forge_warranty_card",
+      "referenceField": "customer_id",
+      "disposition": "hide",
+      "reason": "质保范围和期限是客户售后服务依据；后续从销售应用查看，客户详情不重复展示。",
+      "owningApplication": "sales"
+    }
+  ],
+  "policy": "客户详情默认显示联系人、跟进、商机、报价、合同、订单、项目、售后工单；其他记录保留在其所属业务应用。"
+}

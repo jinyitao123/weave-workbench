@@ -1,2 +1,18 @@
 export { weaveTeamDeveloperPermission } from './team-development.permission.js';
 export { salesContractOperatorPermission, salesContractReviewerPermission } from './sales-contract.permission.js';
+export {
+  administrationSettingsManagerPermission,
+  documentPrintingSettingsManagerPermission,
+  financeSettingsManagerPermission,
+  projectReferenceReaderPermission,
+  productionReferenceReaderPermission,
+  productionSettingsManagerPermission,
+  projectSettingsManagerPermission,
+  reportsDefaultTemplateReaderPermission,
+  reportsSettingsManagerPermission,
+  salesCustomerFollowUpOperatorPermission,
+  salesReferenceReaderPermission,
+  salesSettingsManagerPermission,
+  supplyChainReferenceReaderPermission,
+  supplyChainSettingsManagerPermission,
+} from './application-settings.permission.js';

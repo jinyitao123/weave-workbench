@@ -1,0 +1,2050 @@
+{
+  "applications": [
+    {
+      "key": "supply_chain",
+      "definition": {
+        "name": "forge_supply_chain",
+        "label": "供应链",
+        "icon": "boxes",
+        "active": true,
+        "isDefault": false,
+        "areas": [
+          {
+            "id": "supply_chain",
+            "label": "供应链",
+            "icon": "boxes",
+            "navigation": [
+              {
+                "id": "purchase_arrival_notices",
+                "label": "到货通知",
+                "icon": "package-search",
+                "type": "page",
+                "pageName": "page_purchase_arrival_notice"
+              },
+              {
+                "id": "arrival_inspection",
+                "label": "到货检验",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "purchase_receipts",
+                    "label": "到货登记",
+                    "icon": "package-check",
+                    "type": "page",
+                    "pageName": "page_purchase_arrival_workspace"
+                  },
+                  {
+                    "id": "pending_inspections",
+                    "label": "待检验库存",
+                    "icon": "clipboard-clock",
+                    "type": "page",
+                    "pageName": "page_pending_inspection_workspace"
+                  },
+                  {
+                    "id": "purchase_inspections",
+                    "label": "检验单",
+                    "icon": "clipboard-check",
+                    "type": "page",
+                    "pageName": "page_purchase_inspection_workspace"
+                  },
+                  {
+                    "id": "inspection_rules",
+                    "label": "检验规则",
+                    "icon": "list-check",
+                    "type": "page",
+                    "pageName": "page_inspection_rules"
+                  }
+                ]
+              },
+              {
+                "id": "supply_master_data",
+                "label": "基础资料",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "materials",
+                    "label": "物料管理",
+                    "icon": "package",
+                    "type": "page",
+                    "pageName": "page_material_workspace"
+                  },
+                  {
+                    "id": "material_combinations",
+                    "label": "物料组合",
+                    "icon": "boxes",
+                    "type": "page",
+                    "pageName": "page_material_combinations"
+                  },
+                  {
+                    "id": "bom_workspace",
+                    "label": "BOM管理",
+                    "icon": "git-branch",
+                    "type": "page",
+                    "pageName": "page_bom_workspace"
+                  },
+                  {
+                    "id": "material_search",
+                    "label": "综合物料搜索",
+                    "icon": "search",
+                    "type": "page",
+                    "pageName": "page_material_search"
+                  },
+                  {
+                    "id": "suppliers",
+                    "label": "供应商管理",
+                    "icon": "truck",
+                    "type": "page",
+                    "pageName": "page_supplier_workspace"
+                  },
+                  {
+                    "id": "product_trace",
+                    "label": "产品实例追溯",
+                    "icon": "search-check",
+                    "type": "page",
+                    "pageName": "page_product_trace"
+                  },
+                  {
+                    "id": "warehouses",
+                    "label": "仓库管理",
+                    "icon": "warehouse",
+                    "type": "page",
+                    "pageName": "page_warehouse_workspace"
+                  }
+                ]
+              },
+              {
+                "id": "purchase_management",
+                "label": "采购管理",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "purchase_invoices",
+                    "label": "采购发票",
+                    "icon": "receipt-text",
+                    "type": "page",
+                    "pageName": "page_purchase_invoice_entry"
+                  },
+                  {
+                    "id": "purchase_requests",
+                    "label": "采购申请",
+                    "icon": "file-plus-2",
+                    "type": "page",
+                    "pageName": "page_purchase_request_pool"
+                  },
+                  {
+                    "id": "purchase_todo",
+                    "label": "采购待办池",
+                    "icon": "list-todo",
+                    "type": "page",
+                    "pageName": "page_purchase_todo_pool"
+                  },
+                  {
+                    "id": "purchase_inquiry",
+                    "label": "询价管理",
+                    "icon": "messages-square",
+                    "type": "page",
+                    "pageName": "page_purchase_inquiry"
+                  },
+                  {
+                    "id": "purchase_orders",
+                    "label": "采购订单",
+                    "icon": "shopping-cart",
+                    "type": "page",
+                    "pageName": "page_purchase_order_workspace"
+                  },
+                  {
+                    "id": "purchase_returns",
+                    "label": "采购退换货",
+                    "icon": "rotate-ccw",
+                    "type": "page",
+                    "pageName": "page_purchase_return"
+                  },
+                  {
+                    "id": "supplier_prices",
+                    "label": "供应商价格本",
+                    "icon": "badge-dollar-sign",
+                    "type": "page",
+                    "pageName": "page_supplier_price_book"
+                  }
+                ]
+              },
+              {
+                "id": "inbound_management",
+                "label": "入库管理",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "all_inbounds",
+                    "label": "全部入库单",
+                    "icon": "package-plus",
+                    "type": "page",
+                    "pageName": "page_all_inbounds"
+                  },
+                  {
+                    "id": "purchase_inbounds",
+                    "label": "采购入库",
+                    "icon": "package-plus",
+                    "type": "page",
+                    "pageName": "page_purchase_inbound_workspace"
+                  },
+                  {
+                    "id": "production_inbounds",
+                    "label": "生产入库",
+                    "icon": "package-plus",
+                    "type": "page",
+                    "pageName": "page_production_inbound_entry"
+                  },
+                  {
+                    "id": "other_inbounds",
+                    "label": "其他入库",
+                    "icon": "package-plus",
+                    "type": "page",
+                    "pageName": "page_other_inbounds"
+                  },
+                  {
+                    "id": "opening_inbounds",
+                    "label": "期初入库",
+                    "icon": "package-plus",
+                    "type": "page",
+                    "pageName": "page_opening_inbounds"
+                  },
+                  {
+                    "id": "inbound_lines",
+                    "label": "入库明细",
+                    "icon": "list",
+                    "type": "page",
+                    "pageName": "page_inbound_lines"
+                  }
+                ]
+              },
+              {
+                "id": "inventory_management",
+                "label": "库存管理",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "inventory_balances",
+                    "label": "库存总览",
+                    "icon": "boxes",
+                    "type": "page",
+                    "pageName": "page_inventory_overview"
+                  },
+                  {
+                    "id": "inventory_ncr",
+                    "label": "不合格处理",
+                    "icon": "triangle-alert",
+                    "type": "page",
+                    "pageName": "page_inventory_ncr"
+                  },
+                  {
+                    "id": "inventory_disposal_center",
+                    "label": "处置执行中心",
+                    "icon": "clipboard-check",
+                    "type": "page",
+                    "pageName": "page_inventory_disposal_center"
+                  },
+                  {
+                    "id": "inventory_ledgers",
+                    "label": "库存流水",
+                    "icon": "book-open",
+                    "type": "page",
+                    "pageName": "page_inventory_ledger"
+                  },
+                  {
+                    "id": "inventory_locks",
+                    "label": "库存锁定",
+                    "icon": "lock",
+                    "type": "page",
+                    "pageName": "page_inventory_locks"
+                  },
+                  {
+                    "id": "inventory_count",
+                    "label": "库存盘点",
+                    "icon": "clipboard-check",
+                    "type": "page",
+                    "pageName": "page_inventory_count"
+                  },
+                  {
+                    "id": "inventory_transfer",
+                    "label": "调拨与借出",
+                    "icon": "arrow-left-right",
+                    "type": "page",
+                    "pageName": "page_inventory_transfer"
+                  },
+                  {
+                    "id": "inventory_alerts",
+                    "label": "库存预警",
+                    "icon": "bell-ring",
+                    "type": "page",
+                    "pageName": "page_inventory_alerts"
+                  },
+                  {
+                    "id": "inventory_loss",
+                    "label": "报损单",
+                    "icon": "file-warning",
+                    "type": "page",
+                    "pageName": "page_inventory_loss"
+                  },
+                  {
+                    "id": "inventory_sn",
+                    "label": "SN码管理",
+                    "icon": "scan-line",
+                    "type": "page",
+                    "pageName": "page_inventory_sn"
+                  }
+                ]
+              },
+              {
+                "id": "outbound_management",
+                "label": "出库管理",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "sales_outbounds",
+                    "label": "出库单列表",
+                    "icon": "truck",
+                    "type": "page",
+                    "pageName": "page_sales_outbound_list"
+                  },
+                  {
+                    "id": "production_outbounds",
+                    "label": "生产出库",
+                    "icon": "package-minus",
+                    "type": "page",
+                    "pageName": "page_production_outbounds"
+                  },
+                  {
+                    "id": "other_outbounds",
+                    "label": "其他出库",
+                    "icon": "package-minus",
+                    "type": "page",
+                    "pageName": "page_other_outbounds"
+                  },
+                  {
+                    "id": "sales_direct_outbounds",
+                    "label": "销售直接出库",
+                    "icon": "package-minus",
+                    "type": "page",
+                    "pageName": "page_sales_direct_outbounds"
+                  },
+                  {
+                    "id": "pending_shipments",
+                    "label": "待出库发货单",
+                    "icon": "list-todo",
+                    "type": "page",
+                    "pageName": "page_pending_outbound_shipments"
+                  },
+                  {
+                    "id": "purchase_return_outbounds",
+                    "label": "采购退换货出库",
+                    "icon": "undo-2",
+                    "type": "page",
+                    "pageName": "page_purchase_return_outbounds"
+                  },
+                  {
+                    "id": "outbound_lines",
+                    "label": "出库明细",
+                    "icon": "list",
+                    "type": "page",
+                    "pageName": "page_outbound_lines"
+                  }
+                ]
+              },
+              {
+                "id": "business_settings",
+                "type": "group",
+                "label": "业务设置",
+                "children": [
+                  {
+                    "id": "material_settings",
+                    "label": "商品管理",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "material_skus",
+                        "label": "规格与价格",
+                        "icon": "boxes",
+                        "type": "object",
+                        "objectName": "forge_material_sku"
+                      },
+                      {
+                        "id": "material_categories",
+                        "label": "物料分类",
+                        "icon": "tags",
+                        "type": "object",
+                        "objectName": "forge_material_category"
+                      },
+                      {
+                        "id": "units",
+                        "label": "计量单位",
+                        "icon": "ruler",
+                        "type": "object",
+                        "objectName": "forge_unit"
+                      },
+                      {
+                        "id": "supplier_categories",
+                        "label": "供应商分类",
+                        "icon": "tags",
+                        "type": "object",
+                        "objectName": "forge_supplier_category"
+                      },
+                      {
+                        "id": "supplier_levels",
+                        "label": "供应商级别",
+                        "icon": "star",
+                        "type": "object",
+                        "objectName": "forge_supplier_level"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_supply_chain_settings_manage"
+                    ]
+                  },
+                  {
+                    "id": "inventory_settings",
+                    "label": "库存管理",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "warehouse_types",
+                        "label": "仓库类型",
+                        "icon": "warehouse",
+                        "type": "object",
+                        "objectName": "forge_warehouse_type"
+                      },
+                      {
+                        "id": "inventory_business_config",
+                        "label": "库存管理配置",
+                        "icon": "sliders-horizontal",
+                        "type": "page",
+                        "pageName": "page_inventory_business_config"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_supply_chain_settings_manage"
+                    ]
+                  },
+                  {
+                    "id": "document_printing",
+                    "label": "单据打印",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "document_printing",
+                        "label": "单据打印",
+                        "icon": "printer",
+                        "type": "page",
+                        "pageName": "page_print_business_config"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_print_settings_manage"
+                    ]
+                  }
+                ],
+                "expanded": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "key": "sales",
+      "definition": {
+        "name": "forge_sales",
+        "label": "销售",
+        "icon": "badge-dollar-sign",
+        "active": true,
+        "isDefault": false,
+        "areas": [
+          {
+            "id": "sales",
+            "label": "销售",
+            "icon": "badge-dollar-sign",
+            "navigation": [
+              {
+                "id": "sales_contracts",
+                "label": "框架销售合同",
+                "icon": "scroll-text",
+                "type": "page",
+                "pageName": "page_sales_contract_workspace"
+              },
+              {
+                "id": "sales_business",
+                "label": "销售业务",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "sales_orders",
+                    "label": "销售订单",
+                    "icon": "clipboard-list",
+                    "type": "page",
+                    "pageName": "page_sales_order_workspace"
+                  },
+                  {
+                    "id": "sales_additional_fees",
+                    "label": "附加费用",
+                    "icon": "receipt",
+                    "type": "page",
+                    "pageName": "page_sales_additional_fee"
+                  },
+                  {
+                    "id": "sales_collections",
+                    "label": "收款流水",
+                    "icon": "badge-dollar-sign",
+                    "type": "page",
+                    "pageName": "page_sales_collection_flow"
+                  },
+                  {
+                    "id": "sales_shipments",
+                    "label": "销售发货单",
+                    "icon": "package-check",
+                    "type": "page",
+                    "pageName": "page_sales_shipment_workspace"
+                  },
+                  {
+                    "id": "sales_returns",
+                    "label": "销售退货",
+                    "icon": "undo-2",
+                    "type": "page",
+                    "pageName": "page_sales_return_workspace"
+                  },
+                  {
+                    "id": "sales_performance_bank",
+                    "label": "业绩银行",
+                    "icon": "landmark",
+                    "type": "page",
+                    "pageName": "page_sales_performance_bank"
+                  },
+                  {
+                    "id": "sales_pricing",
+                    "label": "价格策略",
+                    "icon": "tag",
+                    "type": "page",
+                    "pageName": "page_sales_pricing"
+                  },
+                  {
+                    "id": "goodwill_orders",
+                    "label": "Goodwill订单",
+                    "icon": "gift",
+                    "type": "page",
+                    "pageName": "page_goodwill_orders"
+                  },
+                  {
+                    "id": "sales_teams",
+                    "label": "销售团队",
+                    "icon": "users",
+                    "type": "page",
+                    "pageName": "page_sales_teams"
+                  },
+                  {
+                    "id": "sales_targets",
+                    "label": "销售目标",
+                    "icon": "target",
+                    "type": "page",
+                    "pageName": "page_sales_targets"
+                  },
+                  {
+                    "id": "sales_invoices",
+                    "label": "销售发票",
+                    "icon": "receipt-text",
+                    "type": "page",
+                    "pageName": "page_sales_invoice_request"
+                  }
+                ]
+              },
+              {
+                "id": "crm_customer_management",
+                "label": "CRM客户管理",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "customers",
+                    "label": "客户管理",
+                    "icon": "building-2",
+                    "type": "page",
+                    "pageName": "page_sales_customers"
+                  },
+                  {
+                    "id": "contacts",
+                    "label": "联系人管理",
+                    "icon": "contact",
+                    "type": "page",
+                    "pageName": "page_sales_contacts"
+                  },
+                  {
+                    "id": "quotations",
+                    "label": "销售报价",
+                    "icon": "file-text",
+                    "type": "page",
+                    "pageName": "page_sales_quotations"
+                  },
+                  {
+                    "id": "customer_material_map",
+                    "label": "客户物料对照",
+                    "icon": "tags",
+                    "type": "page",
+                    "pageName": "page_customer_material_map"
+                  },
+                  {
+                    "id": "opportunities",
+                    "label": "商机管理",
+                    "icon": "sparkles",
+                    "type": "page",
+                    "pageName": "page_sales_opportunities"
+                  },
+                  {
+                    "id": "leads",
+                    "label": "线索管理",
+                    "icon": "funnel",
+                    "type": "page",
+                    "pageName": "page_sales_leads"
+                  },
+                  {
+                    "id": "follow_ups",
+                    "label": "跟进记录",
+                    "icon": "messages-square",
+                    "type": "page",
+                    "pageName": "page_sales_follow_ups"
+                  },
+                  {
+                    "id": "customer_pool",
+                    "label": "公海客户",
+                    "icon": "users-round",
+                    "type": "page",
+                    "pageName": "page_customer_pool"
+                  }
+                ]
+              },
+              {
+                "id": "service_management",
+                "label": "服务管理",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "service_orders",
+                    "label": "服务工单",
+                    "icon": "wrench",
+                    "type": "page",
+                    "pageName": "page_service_orders"
+                  },
+                  {
+                    "id": "service_quotations",
+                    "label": "服务报价单",
+                    "icon": "file-text",
+                    "type": "page",
+                    "pageName": "page_service_quotations"
+                  },
+                  {
+                    "id": "service_settlements",
+                    "label": "服务结算单",
+                    "icon": "receipt-text",
+                    "type": "page",
+                    "pageName": "page_service_settlements"
+                  },
+                  {
+                    "id": "service_workspace",
+                    "label": "接单中心",
+                    "icon": "calendar-check",
+                    "type": "page",
+                    "pageName": "page_service_workspace"
+                  },
+                  {
+                    "id": "service_dispatch",
+                    "label": "派工中心",
+                    "icon": "route",
+                    "type": "page",
+                    "pageName": "page_service_dispatch"
+                  },
+                  {
+                    "id": "service_analysis",
+                    "label": "服务分析",
+                    "icon": "chart-no-axes-combined",
+                    "type": "page",
+                    "pageName": "page_service_analysis"
+                  },
+                  {
+                    "id": "warranty_management",
+                    "label": "质保管理",
+                    "icon": "shield-check",
+                    "type": "page",
+                    "pageName": "page_warranty_management"
+                  },
+                  {
+                    "id": "service_config",
+                    "label": "服务配置",
+                    "icon": "settings",
+                    "type": "page",
+                    "pageName": "page_service_config"
+                  }
+                ]
+              },
+              {
+                "id": "business_settings",
+                "type": "group",
+                "label": "业务设置",
+                "children": [
+                  {
+                    "id": "customer_settings",
+                    "label": "客户管理",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "customer_categories",
+                        "label": "客户分类",
+                        "icon": "tags",
+                        "type": "object",
+                        "objectName": "forge_customer_category"
+                      },
+                      {
+                        "id": "customer_levels",
+                        "label": "客户级别",
+                        "icon": "star",
+                        "type": "object",
+                        "objectName": "forge_customer_level"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_sales_settings_manage"
+                    ]
+                  },
+                  {
+                    "id": "sales_contract_settings",
+                    "type": "group",
+                    "label": "报价与合同",
+                    "children": [
+                      {
+                        "id": "quotation_types",
+                        "label": "报价类型",
+                        "icon": "tags",
+                        "type": "object",
+                        "objectName": "forge_quotation_type"
+                      },
+                      {
+                        "id": "quotation_issuers",
+                        "label": "报价主体",
+                        "icon": "landmark",
+                        "type": "object",
+                        "objectName": "forge_quotation_issuer"
+                      },
+                      {
+                        "id": "contract_types",
+                        "label": "合同类型",
+                        "icon": "tags",
+                        "type": "object",
+                        "objectName": "forge_contract_type"
+                      }
+                    ],
+                    "expanded": true,
+                    "requiredPermissions": [
+                      "forge_sales_settings_manage"
+                    ]
+                  },
+                  {
+                    "id": "document_printing",
+                    "label": "单据打印",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "document_printing",
+                        "label": "单据打印",
+                        "icon": "printer",
+                        "type": "page",
+                        "pageName": "page_print_business_config"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_print_settings_manage"
+                    ]
+                  }
+                ],
+                "expanded": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "key": "production",
+      "definition": {
+        "name": "forge_production",
+        "label": "生产",
+        "icon": "factory",
+        "active": true,
+        "isDefault": false,
+        "areas": [
+          {
+            "id": "production",
+            "label": "生产",
+            "icon": "factory",
+            "navigation": [
+              {
+                "id": "production_prerequisites",
+                "label": "生产准备检查",
+                "icon": "list-checks",
+                "type": "page",
+                "pageName": "page_production_prerequisites"
+              },
+              {
+                "id": "assembly_management",
+                "label": "组装业务管理",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "assembly_orders",
+                    "label": "组装单",
+                    "icon": "factory",
+                    "type": "page",
+                    "pageName": "page_production_assembly_workspace"
+                  },
+                  {
+                    "id": "assembly_shortages",
+                    "label": "缺料待办",
+                    "icon": "triangle-alert",
+                    "type": "page",
+                    "pageName": "page_production_shortage_workspace"
+                  },
+                  {
+                    "id": "production_issues",
+                    "label": "领料单",
+                    "icon": "package-minus",
+                    "type": "page",
+                    "pageName": "page_production_material_workspace"
+                  },
+                  {
+                    "id": "production_supplies",
+                    "label": "补料单",
+                    "icon": "package-plus",
+                    "type": "page",
+                    "pageName": "page_production_supply_workspace"
+                  },
+                  {
+                    "id": "production_returns",
+                    "label": "退料单",
+                    "icon": "undo-2",
+                    "type": "page",
+                    "pageName": "page_production_return_workspace"
+                  },
+                  {
+                    "id": "disassembly_orders",
+                    "label": "拆解单",
+                    "icon": "unplug",
+                    "type": "page",
+                    "pageName": "page_production_disassembly_workspace"
+                  },
+                  {
+                    "id": "replacement_orders",
+                    "label": "换件单",
+                    "icon": "replace",
+                    "type": "page",
+                    "pageName": "page_production_replacement_workspace"
+                  }
+                ]
+              },
+              {
+                "id": "drawing_management",
+                "label": "图纸管理",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "drawing_guide",
+                    "label": "进入图纸管理上手指南",
+                    "icon": "book-open",
+                    "type": "page",
+                    "pageName": "page_drawing_guide"
+                  },
+                  {
+                    "id": "drawing_workspace",
+                    "label": "图纸总览",
+                    "icon": "ruler",
+                    "type": "page",
+                    "pageName": "page_drawing_workspace"
+                  },
+                  {
+                    "id": "drawing_archive",
+                    "label": "图号档案",
+                    "icon": "archive",
+                    "type": "page",
+                    "pageName": "page_drawing_archive"
+                  },
+                  {
+                    "id": "drawing_review",
+                    "label": "图纸评审",
+                    "icon": "clipboard-check",
+                    "type": "page",
+                    "pageName": "page_drawing_review"
+                  },
+                  {
+                    "id": "drawing_release",
+                    "label": "图纸发布",
+                    "icon": "send",
+                    "type": "page",
+                    "pageName": "page_drawing_release"
+                  },
+                  {
+                    "id": "drawing_change",
+                    "label": "图纸变更",
+                    "icon": "git-compare",
+                    "type": "page",
+                    "pageName": "page_drawing_change"
+                  },
+                  {
+                    "id": "drawing_distribution",
+                    "label": "图纸发放记录",
+                    "icon": "history",
+                    "type": "page",
+                    "pageName": "page_drawing_distribution"
+                  },
+                  {
+                    "id": "drawing_query",
+                    "label": "图纸关联查询",
+                    "icon": "search",
+                    "type": "page",
+                    "pageName": "page_drawing_query"
+                  },
+                  {
+                    "id": "customer_drawings",
+                    "label": "客户图纸",
+                    "icon": "file-image",
+                    "type": "page",
+                    "pageName": "page_customer_drawings"
+                  }
+                ]
+              },
+              {
+                "id": "subcontract_management",
+                "label": "委外管理",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "subcontract_guide",
+                    "label": "进入委外管理上手指南",
+                    "icon": "book-open",
+                    "type": "page",
+                    "pageName": "page_subcontract_guide"
+                  },
+                  {
+                    "id": "subcontract_dashboard",
+                    "label": "委外看板",
+                    "icon": "layout-dashboard",
+                    "type": "page",
+                    "pageName": "page_subcontract_dashboard"
+                  },
+                  {
+                    "id": "subcontract_workspace",
+                    "label": "委外订单",
+                    "icon": "clipboard-list",
+                    "type": "page",
+                    "pageName": "page_subcontract_workspace"
+                  },
+                  {
+                    "id": "subcontract_issues",
+                    "label": "委外发料",
+                    "icon": "package-minus",
+                    "type": "page",
+                    "pageName": "page_subcontract_issue_workspace"
+                  },
+                  {
+                    "id": "subcontract_receipts",
+                    "label": "委外回厂",
+                    "icon": "package-check",
+                    "type": "page",
+                    "pageName": "page_subcontract_receipt_workspace"
+                  },
+                  {
+                    "id": "subcontract_returns",
+                    "label": "委外退料",
+                    "icon": "undo-2",
+                    "type": "page",
+                    "pageName": "page_subcontract_return_workspace"
+                  },
+                  {
+                    "id": "subcontract_reconciliation",
+                    "label": "委外对账",
+                    "icon": "file-check-2",
+                    "type": "page",
+                    "pageName": "page_subcontract_reconciliation"
+                  },
+                  {
+                    "id": "subcontract_suppliers",
+                    "label": "委外供应商",
+                    "icon": "factory",
+                    "type": "page",
+                    "pageName": "page_subcontract_suppliers"
+                  },
+                  {
+                    "id": "subcontract_pricing",
+                    "label": "加工价目",
+                    "icon": "badge-chinese-yuan",
+                    "type": "page",
+                    "pageName": "page_subcontract_pricing"
+                  },
+                  {
+                    "id": "subcontract_stock",
+                    "label": "委外库存",
+                    "icon": "warehouse",
+                    "type": "page",
+                    "pageName": "page_subcontract_stock"
+                  },
+                  {
+                    "id": "subcontract_trace",
+                    "label": "批次追溯",
+                    "icon": "search-check",
+                    "type": "page",
+                    "pageName": "page_subcontract_trace"
+                  },
+                  {
+                    "id": "subcontract_undelivered",
+                    "label": "委外未交",
+                    "icon": "list-todo",
+                    "type": "page",
+                    "pageName": "page_subcontract_undelivered"
+                  },
+                  {
+                    "id": "subcontract_inbound_report",
+                    "label": "委外进货",
+                    "icon": "package-search",
+                    "type": "page",
+                    "pageName": "page_subcontract_inbound_report"
+                  },
+                  {
+                    "id": "subcontract_reconciliation_report",
+                    "label": "委外对账单",
+                    "icon": "file-chart-column",
+                    "type": "page",
+                    "pageName": "page_subcontract_reconciliation_report"
+                  }
+                ]
+              },
+              {
+                "id": "business_settings",
+                "type": "group",
+                "label": "业务设置",
+                "children": [
+                  {
+                    "id": "drawing_settings",
+                    "label": "图纸配置",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "drawing_business_config",
+                        "label": "图纸配置",
+                        "icon": "ruler",
+                        "type": "page",
+                        "pageName": "page_drawing_business_config"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_production_settings_manage"
+                    ]
+                  },
+                  {
+                    "id": "production_settings",
+                    "label": "生产配置",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "production_config",
+                        "label": "生产配置",
+                        "icon": "factory",
+                        "type": "page",
+                        "pageName": "page_production_config"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_production_settings_manage"
+                    ]
+                  },
+                  {
+                    "id": "subcontract_settings",
+                    "label": "委外配置",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "subcontract_business_config",
+                        "label": "委外字典",
+                        "icon": "truck",
+                        "type": "page",
+                        "pageName": "page_subcontract_business_config"
+                      },
+                      {
+                        "id": "subcontract_policy",
+                        "label": "委外控制规则",
+                        "icon": "shield-check",
+                        "type": "page",
+                        "pageName": "page_subcontract_policy"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_production_settings_manage"
+                    ]
+                  },
+                  {
+                    "id": "document_printing",
+                    "label": "单据打印",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "document_printing",
+                        "label": "单据打印",
+                        "icon": "printer",
+                        "type": "page",
+                        "pageName": "page_print_business_config"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_print_settings_manage"
+                    ]
+                  }
+                ],
+                "expanded": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "key": "project",
+      "definition": {
+        "name": "forge_project",
+        "label": "项目",
+        "icon": "briefcase-business",
+        "active": true,
+        "isDefault": false,
+        "areas": [
+          {
+            "id": "project",
+            "label": "项目",
+            "icon": "briefcase-business",
+            "navigation": [
+              {
+                "id": "projects",
+                "label": "项目中心",
+                "icon": "briefcase-business",
+                "type": "page",
+                "pageName": "page_project_center"
+              },
+              {
+                "id": "project_management",
+                "label": "项目管理",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "project_operating_analysis",
+                    "label": "项目分析中心",
+                    "icon": "chart-no-axes-combined",
+                    "type": "page",
+                    "pageName": "page_project_operating_analysis"
+                  },
+                  {
+                    "id": "project_plan_workspace",
+                    "label": "任务管理",
+                    "icon": "list-checks",
+                    "type": "page",
+                    "pageName": "page_project_task_workspace"
+                  },
+                  {
+                    "id": "project_timesheet_cost",
+                    "label": "工时管理",
+                    "icon": "clock-3",
+                    "type": "page",
+                    "pageName": "page_project_timesheet_cost"
+                  },
+                  {
+                    "id": "project_settings",
+                    "label": "项目配置中心",
+                    "icon": "sliders-horizontal",
+                    "type": "page",
+                    "pageName": "page_project_settings"
+                  }
+                ]
+              },
+              {
+                "id": "project_execution_and_cost",
+                "label": "项目执行与成本",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "delivery_acceptance_workspace",
+                    "label": "交付验收",
+                    "icon": "badge-check",
+                    "type": "page",
+                    "pageName": "page_delivery_acceptance_workspace"
+                  },
+                  {
+                    "id": "project_expense_cost",
+                    "label": "项目费用与成本",
+                    "icon": "hand-coins",
+                    "type": "page",
+                    "pageName": "page_project_expense_cost"
+                  }
+                ]
+              },
+              {
+                "id": "business_settings",
+                "type": "group",
+                "label": "业务设置",
+                "children": [
+                  {
+                    "id": "project_business_settings",
+                    "label": "项目管理",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "project_business_config",
+                        "label": "项目管理配置",
+                        "icon": "briefcase-business",
+                        "type": "page",
+                        "pageName": "page_project_business_config"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_project_settings_manage"
+                    ]
+                  },
+                  {
+                    "id": "document_printing",
+                    "label": "单据打印",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "document_printing",
+                        "label": "单据打印",
+                        "icon": "printer",
+                        "type": "page",
+                        "pageName": "page_print_business_config"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_print_settings_manage"
+                    ]
+                  }
+                ],
+                "expanded": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "key": "administration",
+      "definition": {
+        "name": "forge_administration",
+        "label": "行政",
+        "icon": "building",
+        "active": true,
+        "isDefault": false,
+        "areas": [
+          {
+            "id": "administration",
+            "label": "行政",
+            "icon": "building",
+            "navigation": [
+              {
+                "id": "my_approvals",
+                "label": "我的审批",
+                "icon": "check-check",
+                "type": "page",
+                "pageName": "page_my_approvals"
+              },
+              {
+                "id": "approval_center",
+                "label": "审批中心",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "cc_to_me",
+                    "label": "抄送我的",
+                    "icon": "send",
+                    "type": "page",
+                    "pageName": "page_cc_to_me"
+                  },
+                  {
+                    "id": "initiated_by_me",
+                    "label": "我发起的",
+                    "icon": "file-up",
+                    "type": "page",
+                    "pageName": "page_initiated_by_me"
+                  },
+                  {
+                    "id": "administration_requests",
+                    "label": "行政申请",
+                    "icon": "file-plus-2",
+                    "type": "page",
+                    "pageName": "page_administration_requests"
+                  }
+                ]
+              },
+              {
+                "id": "administration_management",
+                "label": "行政管理",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "administration_notice",
+                    "label": "公司通知",
+                    "icon": "megaphone",
+                    "type": "page",
+                    "pageName": "page_administration_notice"
+                  },
+                  {
+                    "id": "seal_management",
+                    "label": "用章管理",
+                    "icon": "stamp",
+                    "type": "page",
+                    "pageName": "page_seal_management"
+                  },
+                  {
+                    "id": "meeting_minutes",
+                    "label": "会议纪要",
+                    "icon": "notebook-pen",
+                    "type": "page",
+                    "pageName": "page_meeting_minutes"
+                  },
+                  {
+                    "id": "work_reports",
+                    "label": "工作汇报",
+                    "icon": "clipboard-list",
+                    "type": "page",
+                    "pageName": "page_work_reports"
+                  },
+                  {
+                    "id": "document_center",
+                    "label": "文档中心",
+                    "icon": "folder-open",
+                    "type": "page",
+                    "pageName": "page_document_center"
+                  },
+                  {
+                    "id": "fixed_assets",
+                    "label": "固定资产",
+                    "icon": "building-2",
+                    "type": "page",
+                    "pageName": "page_fixed_assets"
+                  },
+                  {
+                    "id": "qualification_declaration",
+                    "label": "资质与申报",
+                    "icon": "file-check-2",
+                    "type": "page",
+                    "pageName": "page_qualification_declaration"
+                  },
+                  {
+                    "id": "material_pickup",
+                    "label": "物料领取",
+                    "icon": "package",
+                    "type": "page",
+                    "pageName": "page_material_pickup"
+                  },
+                  {
+                    "id": "equipment_maintenance",
+                    "label": "设备维护",
+                    "icon": "wrench",
+                    "type": "page",
+                    "pageName": "page_equipment_maintenance"
+                  },
+                  {
+                    "id": "gift_management",
+                    "label": "礼品管理",
+                    "icon": "gift",
+                    "type": "page",
+                    "pageName": "page_gift_management"
+                  },
+                  {
+                    "id": "loan_management",
+                    "label": "借出管理",
+                    "icon": "handshake",
+                    "type": "page",
+                    "pageName": "page_loan_management"
+                  },
+                  {
+                    "id": "vehicle_management",
+                    "label": "车辆管理",
+                    "icon": "car",
+                    "type": "page",
+                    "pageName": "page_vehicle_management"
+                  }
+                ]
+              },
+              {
+                "id": "human_resources",
+                "label": "人力资源",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "hr_workspace",
+                    "label": "人事工作台",
+                    "icon": "layout-dashboard",
+                    "type": "page",
+                    "pageName": "page_hr_workspace"
+                  },
+                  {
+                    "id": "employee_records",
+                    "label": "员工档案",
+                    "icon": "contact",
+                    "type": "page",
+                    "pageName": "page_employee_records"
+                  },
+                  {
+                    "id": "recruitment",
+                    "label": "招聘管理",
+                    "icon": "user-plus",
+                    "type": "page",
+                    "pageName": "page_recruitment"
+                  },
+                  {
+                    "id": "onboarding_offboarding",
+                    "label": "入职离职",
+                    "icon": "log-out",
+                    "type": "page",
+                    "pageName": "page_onboarding_offboarding"
+                  },
+                  {
+                    "id": "salary_benefits",
+                    "label": "薪酬福利",
+                    "icon": "wallet-cards",
+                    "type": "page",
+                    "pageName": "page_salary_benefits"
+                  },
+                  {
+                    "id": "rules_policies",
+                    "label": "规章制度",
+                    "icon": "book-open",
+                    "type": "page",
+                    "pageName": "page_rules_policies"
+                  },
+                  {
+                    "id": "directory",
+                    "label": "通讯录",
+                    "icon": "contact-round",
+                    "type": "page",
+                    "pageName": "page_directory"
+                  }
+                ]
+              },
+              {
+                "id": "attendance_leave",
+                "label": "考勤假期",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "overtime_requests",
+                    "label": "加班申请",
+                    "icon": "clock-3",
+                    "type": "page",
+                    "pageName": "page_overtime_requests"
+                  },
+                  {
+                    "id": "leave_management",
+                    "label": "请假管理",
+                    "icon": "calendar-off",
+                    "type": "page",
+                    "pageName": "page_leave_management"
+                  },
+                  {
+                    "id": "business_trip",
+                    "label": "出差申请",
+                    "icon": "plane",
+                    "type": "page",
+                    "pageName": "page_business_trip"
+                  },
+                  {
+                    "id": "attendance_management",
+                    "label": "考勤管理",
+                    "icon": "calendar-check",
+                    "type": "page",
+                    "pageName": "page_attendance_management"
+                  },
+                  {
+                    "id": "attendance_statistics",
+                    "label": "考勤统计",
+                    "icon": "chart-column",
+                    "type": "page",
+                    "pageName": "page_attendance_statistics"
+                  }
+                ]
+              },
+              {
+                "id": "process_center",
+                "label": "流程中心",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "approval_records",
+                    "label": "审批记录",
+                    "icon": "history",
+                    "type": "page",
+                    "pageName": "page_approval_records"
+                  },
+                  {
+                    "id": "start_process",
+                    "label": "发起流程",
+                    "icon": "play",
+                    "type": "page",
+                    "pageName": "page_start_process"
+                  },
+                  {
+                    "id": "process_definitions",
+                    "label": "流程定义",
+                    "icon": "git-branch",
+                    "type": "page",
+                    "pageName": "page_process_definitions"
+                  },
+                  {
+                    "id": "process_categories",
+                    "label": "流程分类",
+                    "icon": "tags",
+                    "type": "page",
+                    "pageName": "page_process_categories"
+                  }
+                ]
+              },
+              {
+                "id": "business_settings",
+                "type": "group",
+                "label": "业务设置",
+                "children": [
+                  {
+                    "id": "administration_settings",
+                    "label": "行政管理",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "administration_business_config",
+                        "label": "行政管理配置",
+                        "icon": "building",
+                        "type": "page",
+                        "pageName": "page_administration_business_config"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_administration_settings_manage"
+                    ]
+                  },
+                  {
+                    "id": "other_settings",
+                    "label": "其他配置",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "other_business_config",
+                        "label": "其他配置",
+                        "icon": "sliders-horizontal",
+                        "type": "page",
+                        "pageName": "page_other_business_config"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_administration_settings_manage"
+                    ]
+                  },
+                  {
+                    "id": "hr_settings",
+                    "label": "人事配置",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "hr_business_config",
+                        "label": "人事配置",
+                        "icon": "users",
+                        "type": "page",
+                        "pageName": "page_hr_business_config"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_administration_settings_manage"
+                    ]
+                  },
+                  {
+                    "id": "document_printing",
+                    "label": "单据打印",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "document_printing",
+                        "label": "单据打印",
+                        "icon": "printer",
+                        "type": "page",
+                        "pageName": "page_print_business_config"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_print_settings_manage"
+                    ]
+                  }
+                ],
+                "expanded": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "key": "finance",
+      "definition": {
+        "name": "forge_finance",
+        "label": "财务",
+        "icon": "landmark",
+        "active": true,
+        "isDefault": false,
+        "areas": [
+          {
+            "id": "finance",
+            "label": "财务",
+            "icon": "landmark",
+            "navigation": [
+              {
+                "id": "fund_accounts",
+                "label": "资金账户",
+                "icon": "wallet",
+                "type": "page",
+                "pageName": "page_fund_accounts"
+              },
+              {
+                "id": "fund_management",
+                "label": "资金管理",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "bank_flow",
+                    "label": "资金流水",
+                    "icon": "landmark",
+                    "type": "page",
+                    "pageName": "page_bank_flow"
+                  },
+                  {
+                    "id": "bank_statement",
+                    "label": "银行余额对账",
+                    "icon": "file-check-2",
+                    "type": "page",
+                    "pageName": "page_bank_statement"
+                  },
+                  {
+                    "id": "opening_balance",
+                    "label": "期初往来账与对冲",
+                    "icon": "book-open-check",
+                    "type": "page",
+                    "pageName": "page_opening_balance"
+                  },
+                  {
+                    "id": "receivables_payables",
+                    "label": "应收应付",
+                    "icon": "scale",
+                    "type": "page",
+                    "pageName": "page_receivables_payables"
+                  },
+                  {
+                    "id": "customer_prepayment",
+                    "label": "收款管理",
+                    "icon": "badge-dollar-sign",
+                    "type": "page",
+                    "pageName": "page_customer_prepayment"
+                  },
+                  {
+                    "id": "purchase_payment",
+                    "label": "付款管理",
+                    "icon": "send-horizontal",
+                    "type": "page",
+                    "pageName": "page_purchase_payment"
+                  },
+                  {
+                    "id": "refunds",
+                    "label": "退款申请",
+                    "icon": "undo-2",
+                    "type": "page",
+                    "pageName": "page_supplier_refund"
+                  },
+                  {
+                    "id": "credit_limits",
+                    "label": "授信额度管理",
+                    "icon": "gauge",
+                    "type": "page",
+                    "pageName": "page_credit_management"
+                  },
+                  {
+                    "id": "loans",
+                    "label": "借款贷款管理",
+                    "icon": "hand-coins",
+                    "type": "page",
+                    "pageName": "page_finance_loans"
+                  }
+                ]
+              },
+              {
+                "id": "business_confirmation",
+                "label": "业务确认",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "revenue_recognition",
+                    "label": "销售收入确认",
+                    "icon": "badge-dollar-sign",
+                    "type": "page",
+                    "pageName": "page_revenue_recognition"
+                  },
+                  {
+                    "id": "cost_center",
+                    "label": "成本中心",
+                    "icon": "chart-pie",
+                    "type": "page",
+                    "pageName": "page_finance_cost_center"
+                  },
+                  {
+                    "id": "expense_center",
+                    "label": "费用中心",
+                    "icon": "receipt",
+                    "type": "page",
+                    "pageName": "page_finance_expense_center"
+                  },
+                  {
+                    "id": "reimbursement",
+                    "label": "报销管理",
+                    "icon": "file-spreadsheet",
+                    "type": "page",
+                    "pageName": "page_finance_reimbursement"
+                  },
+                  {
+                    "id": "reconciliation_pool",
+                    "label": "待对账池",
+                    "icon": "list-filter",
+                    "type": "page",
+                    "pageName": "page_reconciliation_pool"
+                  },
+                  {
+                    "id": "customer_reconciliation",
+                    "label": "客户对账",
+                    "icon": "file-check-2",
+                    "type": "page",
+                    "pageName": "page_customer_reconciliation"
+                  },
+                  {
+                    "id": "supplier_reconciliation",
+                    "label": "供应商对账",
+                    "icon": "file-check-2",
+                    "type": "page",
+                    "pageName": "page_supplier_reconciliation"
+                  }
+                ]
+              },
+              {
+                "id": "invoice_management",
+                "label": "发票管理",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "invoice_overview",
+                    "label": "发票总览",
+                    "icon": "files",
+                    "type": "page",
+                    "pageName": "page_invoice_overview"
+                  },
+                  {
+                    "id": "output_invoices",
+                    "label": "销项发票",
+                    "icon": "receipt-text",
+                    "type": "page",
+                    "pageName": "page_output_invoices"
+                  },
+                  {
+                    "id": "input_invoices",
+                    "label": "进项发票",
+                    "icon": "receipt-text",
+                    "type": "page",
+                    "pageName": "page_input_invoices"
+                  },
+                  {
+                    "id": "invoice_tasks",
+                    "label": "开票任务",
+                    "icon": "list-todo",
+                    "type": "page",
+                    "pageName": "page_invoice_tasks"
+                  },
+                  {
+                    "id": "invoice_adjustments",
+                    "label": "调整记录",
+                    "icon": "history",
+                    "type": "page",
+                    "pageName": "page_invoice_adjustments"
+                  },
+                  {
+                    "id": "invoice_tax_variances",
+                    "label": "税率差异留痕",
+                    "icon": "badge-percent",
+                    "type": "page",
+                    "pageName": "page_invoice_tax_variances"
+                  },
+                  {
+                    "id": "invoice_reversal",
+                    "label": "发票冲销（Forge）",
+                    "icon": "receipt-text",
+                    "type": "page",
+                    "pageName": "page_invoice_reversal"
+                  },
+                  {
+                    "id": "collection_settlement",
+                    "label": "开票与结算（Forge）",
+                    "icon": "wallet-cards",
+                    "type": "page",
+                    "pageName": "page_collection_settlement_workspace"
+                  }
+                ]
+              },
+              {
+                "id": "business_settings",
+                "type": "group",
+                "label": "业务设置",
+                "children": [
+                  {
+                    "id": "settlement_condition_settings",
+                    "type": "group",
+                    "label": "结算条件",
+                    "children": [
+                      {
+                        "id": "payment_conditions",
+                        "label": "付款条件",
+                        "icon": "calendar-clock",
+                        "type": "object",
+                        "objectName": "forge_payment_condition"
+                      }
+                    ],
+                    "expanded": true,
+                    "requiredPermissions": [
+                      "forge_finance_settings_manage"
+                    ]
+                  },
+                  {
+                    "id": "finance_settings",
+                    "label": "财务配置",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "finance_business_config",
+                        "label": "付款方式与费用类别",
+                        "icon": "landmark",
+                        "type": "page",
+                        "pageName": "page_finance_business_config"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_finance_settings_manage"
+                    ]
+                  },
+                  {
+                    "id": "document_printing",
+                    "label": "单据打印",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "document_printing",
+                        "label": "单据打印",
+                        "icon": "printer",
+                        "type": "page",
+                        "pageName": "page_print_business_config"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_print_settings_manage"
+                    ]
+                  }
+                ],
+                "expanded": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "key": "reports",
+      "definition": {
+        "name": "forge_reports",
+        "label": "报表",
+        "icon": "chart-no-axes-combined",
+        "active": true,
+        "isDefault": false,
+        "areas": [
+          {
+            "id": "reports",
+            "label": "报表",
+            "icon": "chart-no-axes-combined",
+            "navigation": [
+              {
+                "id": "sales_statistics",
+                "label": "销售统计",
+                "icon": "chart-column",
+                "type": "page",
+                "pageName": "page_sales_statistics"
+              },
+              {
+                "id": "business_reports",
+                "label": "报表",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "purchase_statistics",
+                    "label": "采购统计",
+                    "icon": "chart-column",
+                    "type": "page",
+                    "pageName": "page_purchase_statistics"
+                  },
+                  {
+                    "id": "inventory_statistics",
+                    "label": "库存统计",
+                    "icon": "chart-column",
+                    "type": "page",
+                    "pageName": "page_inventory_statistics"
+                  },
+                  {
+                    "id": "assembly_statistics",
+                    "label": "组装统计",
+                    "icon": "chart-column",
+                    "type": "page",
+                    "pageName": "page_assembly_statistics"
+                  }
+                ]
+              },
+              {
+                "id": "finance_reports",
+                "label": "财务统计",
+                "type": "group",
+                "expanded": true,
+                "children": [
+                  {
+                    "id": "finance_overview",
+                    "label": "财务总览",
+                    "icon": "layout-dashboard",
+                    "type": "page",
+                    "pageName": "page_finance_overview"
+                  },
+                  {
+                    "id": "profit_loss",
+                    "label": "损益分析",
+                    "icon": "chart-pie",
+                    "type": "page",
+                    "pageName": "page_profit_loss"
+                  },
+                  {
+                    "id": "management_profit_report",
+                    "label": "管理利润表",
+                    "icon": "file-chart-column",
+                    "type": "page",
+                    "pageName": "page_management_profit_report"
+                  },
+                  {
+                    "id": "fund_analysis",
+                    "label": "资金分析",
+                    "icon": "chart-line",
+                    "type": "page",
+                    "pageName": "page_fund_analysis"
+                  },
+                  {
+                    "id": "receivable_report",
+                    "label": "往来账款",
+                    "icon": "scale",
+                    "type": "page",
+                    "pageName": "page_current_account_analysis"
+                  },
+                  {
+                    "id": "tax_inventory",
+                    "label": "税务库存",
+                    "icon": "file-chart-column",
+                    "type": "page",
+                    "pageName": "page_tax_inventory_analysis"
+                  },
+                  {
+                    "id": "risk_monitoring",
+                    "label": "风险监控",
+                    "icon": "shield-alert",
+                    "type": "page",
+                    "pageName": "page_risk_monitoring"
+                  }
+                ]
+              },
+              {
+                "id": "business_settings",
+                "type": "group",
+                "label": "业务设置",
+                "children": [
+                  {
+                    "id": "report_templates",
+                    "label": "报表模板与默认口径",
+                    "icon": "file-chart-column",
+                    "type": "object",
+                    "objectName": "forge_report_template",
+                    "requiredPermissions": [
+                      "forge_reports_settings_manage"
+                    ]
+                  },
+                  {
+                    "id": "document_printing",
+                    "label": "单据打印",
+                    "type": "group",
+                    "expanded": true,
+                    "children": [
+                      {
+                        "id": "document_printing",
+                        "label": "单据打印",
+                        "icon": "printer",
+                        "type": "page",
+                        "pageName": "page_print_business_config"
+                      }
+                    ],
+                    "requiredPermissions": [
+                      "forge_print_settings_manage"
+                    ]
+                  }
+                ],
+                "expanded": true
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

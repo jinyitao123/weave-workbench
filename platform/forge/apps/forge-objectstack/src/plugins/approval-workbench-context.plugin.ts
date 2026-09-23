@@ -11,6 +11,7 @@ const MAX_FILES = 11;
 const MAX_FIELDS = 64;
 const MAX_FIELD_VALUE = 4_000;
 const FILE_FIELD_TYPES = new Set(['file']);
+const TEXT_MEDIA_TYPES = new Set(['text/plain', 'text/plain; charset=utf-8']);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SYSTEM_CONTEXT: ExecutionContext = { isSystem: true, positions: [], permissions: [] };
 
@@ -110,6 +111,13 @@ async function sha256(bytes: Uint8Array): Promise<string> {
   input.set(bytes);
   const digest = await globalThis.crypto.subtle.digest('SHA-256', input.buffer);
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function canonicalJson(value: unknown): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  return `{${Object.keys(value).sort().filter((key) => (value as JsonRecord)[key] !== undefined)
+    .map((key) => `${JSON.stringify(key)}:${canonicalJson((value as JsonRecord)[key])}`).join(',')}}`;
 }
 
 function snapshotFiles(payload: unknown, fields: Set<string>): Map<string, SnapshotFile> {
@@ -225,7 +233,7 @@ async function readSnapshotFiles(
   engine: IObjectQLEngine,
   storage: IStorageService,
   allowedFiles: Map<string, SnapshotFile>,
-): Promise<Array<{ name: string; mediaType: 'text/plain; charset=utf-8'; bytes: number; sha256: string; content: string }>> {
+): Promise<Array<{ fileId: string; name: string; mediaType: 'text/plain; charset=utf-8'; bytes: number; sha256: string; content: string }>> {
   if (allowedFiles.size === 0) return [];
   const ids = [...allowedFiles.keys()];
   const rows = await engine.find('sys_file', {
@@ -250,7 +258,7 @@ async function readSnapshotFiles(
         !Number.isInteger(file.size) || (file.size as number) < 0) {
       throw new ContextFailure(422, 'APPROVAL_MATERIAL_UNAVAILABLE', 'An approval text material is unavailable.');
     }
-    if (file.mime_type !== 'text/plain') {
+    if (!TEXT_MEDIA_TYPES.has(String(file.mime_type))) {
       throw new ContextFailure(415, 'APPROVAL_MATERIAL_UNSUPPORTED_TYPE', 'Only text/plain approval materials can be previewed.');
     }
     if ((file.size as number) > MAX_FILE_BYTES) {
@@ -271,6 +279,7 @@ async function readSnapshotFiles(
       throw new ContextFailure(422, 'APPROVAL_MATERIAL_INVALID', 'An approval text material is not valid UTF-8.');
     }
     files.push({
+      fileId: id,
       name: file.name.trim().slice(0, 255),
       mediaType: 'text/plain; charset=utf-8' as const,
       bytes: bytes.length,
@@ -281,10 +290,12 @@ async function readSnapshotFiles(
   return files;
 }
 
-function returnReason(actions: ApprovalActionRow[]): string | undefined {
+function latestReturn(actions: ApprovalActionRow[]): { returnVersion: string; returnReason: string } | undefined {
   for (const action of [...actions].reverse()) {
     if (action.action !== 'revise') continue;
-    return boundedText(action.comment, 4_000);
+    const returnVersion = boundedText(action.id, 128);
+    if (!returnVersion) return undefined;
+    return { returnVersion, returnReason: boundedText(action.comment, 4_000) ?? '' };
   }
   return undefined;
 }
@@ -354,7 +365,16 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
           const title = boundedText(request.record_title, 300) ?? boundedText(request.object_label, 300) ?? '审批事项';
           const step = boundedText(request.step_label, 160);
           if (!step) throw new ContextFailure(422, 'APPROVAL_CONTEXT_INVALID', 'The approval step is unavailable.');
-          const reason = request.status === 'returned' ? returnReason(actions) : undefined;
+          const objectName = boundedText(request.object_name, 160);
+          const recordId = boundedText(request.record_id, 128);
+          if (!objectName || !recordId || !isRecord(request.payload)) {
+            throw new ContextFailure(422, 'APPROVAL_CONTEXT_INVALID', 'The approval source is unavailable.');
+          }
+          const sourceMaterialVersion = await sha256(new TextEncoder().encode(canonicalJson(request.payload)));
+          const latest = request.status === 'returned' ? latestReturn(actions) : undefined;
+          if (request.status === 'returned' && !latest) {
+            throw new ContextFailure(422, 'APPROVAL_CONTEXT_INVALID', 'The return decision is unavailable.');
+          }
           const response = {
             version: '1',
             requestId,
@@ -362,7 +382,12 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
             viewer,
             title,
             step,
-            ...(reason ? { returnReason: reason } : {}),
+            businessObject: {
+              objectName, recordId,
+              ...(boundedText(request.record_title, 300) ? { recordName: boundedText(request.record_title, 300) } : {}),
+            },
+            sourceMaterialVersion,
+            ...(latest ?? {}),
             fields: projectFields(request, engine),
             files,
           };

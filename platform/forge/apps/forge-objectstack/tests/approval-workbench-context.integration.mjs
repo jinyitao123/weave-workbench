@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
 import { ApprovalWorkbenchContextPlugin } from '../src/plugins/approval-workbench-context.plugin.ts';
+import { approvalPayloadVersion } from '../src/plugins/contract-revision-material.ts';
 
 const CONTRACT_OBJECT = 'forge_sales_contract';
 const CONTRACT_A = 'contract-A';
@@ -156,6 +157,11 @@ function createHarness() {
 
   return {
     async start() { await ready(); },
+    changePayload(requestId, payload) {
+      const request = requests.get(requestId);
+      assert.ok(request, 'fixture request exists');
+      request.payload = payload;
+    },
     async call(requestId, token, extraHeaders = {}) {
       const handler = routes.get('/api/v1/approvals/requests/:requestId/workbench-context');
       assert.ok(handler, 'approval context route mounted');
@@ -183,6 +189,10 @@ test('pending approver receives only this request snapshot and verified text byt
   assert.equal(result.status, 200);
   assert.equal(result.body.viewer, 'current_approver');
   assert.equal(result.body.title, '设备验收合同 A');
+  assert.deepEqual(result.body.businessObject, { objectName: CONTRACT_OBJECT, recordId: CONTRACT_A, recordName: '设备验收合同 A' });
+  assert.match(result.body.sourceMaterialVersion, /^[0-9a-f]{64}$/);
+  assert.equal(result.body.sourceMaterialVersion,
+    await approvalPayloadVersion(contextPayload(harness.fixtureFiles.materialA, [harness.fixtureFiles.attachmentA])));
   assert.deepEqual(result.body.fields, [
     { label: '合同名称', value: '设备验收合同' },
     { label: '合同编号', value: 'HT-2026-001' },
@@ -194,6 +204,7 @@ test('pending approver receives only this request snapshot and verified text byt
     { name: '合同正文.txt', content: '合同正文 A', sha256: sha256(harness.fixtureFiles.materialA.bytes), bytes: harness.fixtureFiles.materialA.bytes.length },
     { name: '技术说明.txt', content: '技术说明 A', sha256: sha256(harness.fixtureFiles.attachmentA.bytes), bytes: harness.fixtureFiles.attachmentA.bytes.length },
   ]);
+  assert.deepEqual(result.body.files.map(({ fileId }) => fileId), ['file-main-A', 'file-attachment-A']);
   assert.deepEqual(result.fileQueries[0].query.where.id.$in.sort(), ['file-attachment-A', 'file-main-A']);
   assert.equal(result.fileQueries[0].options.context.isSystem, true);
   assert.deepEqual(result.downloadedKeys.sort(), ['key-attachment-A', 'key-main-A']);
@@ -225,7 +236,24 @@ test('returned request is readable only by its original submitter', async () => 
   assert.equal(submitter.body.viewer, 'original_submitter');
   assert.equal(submitter.body.status, 'returned');
   assert.equal(submitter.body.returnReason, '请补充签字页');
+  assert.equal(submitter.body.returnVersion, 'action-revise');
+  assert.deepEqual(submitter.body.businessObject, { objectName: CONTRACT_OBJECT, recordId: 'contract-returned', recordName: '已退回合同' });
+  assert.match(submitter.body.sourceMaterialVersion, /^[0-9a-f]{64}$/);
   assert.equal(submitter.body.revisionReady, undefined);
+});
+
+test('source material version is stable across key order and changes with the frozen payload', async () => {
+  const harness = createHarness();
+  await harness.start();
+  const initial = await harness.call('approval-A', 'reviewer-token');
+  assert.equal(initial.status, 200);
+  const original = contextPayload(harness.fixtureFiles.materialA, [harness.fixtureFiles.attachmentA]);
+  harness.changePayload('approval-A', Object.fromEntries(Object.entries(original).reverse()));
+  const reordered = await harness.call('approval-A', 'reviewer-token');
+  assert.equal(reordered.body.sourceMaterialVersion, initial.body.sourceMaterialVersion);
+  harness.changePayload('approval-A', { ...original, name: '经修改的合同' });
+  const changed = await harness.call('approval-A', 'reviewer-token');
+  assert.notEqual(changed.body.sourceMaterialVersion, initial.body.sourceMaterialVersion);
 });
 
 test('invalid bearer and material hash mismatch fail closed', async () => {
@@ -262,4 +290,13 @@ test('unsupported MIME type has a distinct response and no storage read', async 
   assert.equal(result.status, 415);
   assert.equal(result.body.error.code, 'APPROVAL_MATERIAL_UNSUPPORTED_TYPE');
   assert.deepEqual(result.downloadedKeys, []);
+});
+
+test('UTF-8 text upload MIME is accepted while the returned contract stays normalized', async () => {
+  const harness = createHarness();
+  await harness.start();
+  harness.fixtureFiles.materialA.mime_type = 'text/plain; charset=utf-8';
+  const result = await harness.call('approval-A', 'reviewer-token');
+  assert.equal(result.status, 200);
+  assert.equal(result.body.files[0].mediaType, 'text/plain; charset=utf-8');
 });

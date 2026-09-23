@@ -29,7 +29,13 @@ RUN pnpm exec objectstack build  # → dist/objectstack.json
 # not be resolved for you. `latest` floats to whatever release is newest,
 # which is unrelated to the @objectstack/cli your app resolves — pin it to
 # that version, the CLI that builds your artifact, before you deploy.
-FROM ${OBJECTSTACK_RUNTIME_IMAGE}
+FROM nginx:1.30.5-alpine AS proxy
+ARG FORGE_SOURCE_REVISION=unknown
+LABEL org.opencontainers.image.title="inoForge Nginx" \
+      org.opencontainers.image.revision="${FORGE_SOURCE_REVISION}"
+COPY transport/nginx.conf /etc/nginx/conf.d/default.conf
+
+FROM ${OBJECTSTACK_RUNTIME_IMAGE} AS app
 ARG FORGE_SOURCE_REVISION=unknown
 LABEL org.opencontainers.image.title="inoForge" \
       org.opencontainers.image.revision="${FORGE_SOURCE_REVISION}"

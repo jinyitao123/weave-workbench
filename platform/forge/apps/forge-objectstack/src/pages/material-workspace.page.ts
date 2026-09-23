@@ -7,9 +7,9 @@ const css =
 const source = `
 ${forgeProductUiRuntime}
 const css=${JSON.stringify(css)};
-function App(){
+function App(){const adapter=useAdapter();
   const [state,setState]=React.useState({loading:true,materials:[],categories:[],units:[],skus:[],error:''}),[tab,setTab]=React.useState('list'),[query,setQuery]=React.useState(''),[category,setCategory]=React.useState(''),[property,setProperty]=React.useState(''),[status,setStatus]=React.useState(''),[brand,setBrand]=React.useState(''),[selected,setSelected]=React.useState([]),[page,setPage]=React.useState(1),[dialog,setDialog]=React.useState(null),[busy,setBusy]=React.useState(false),[toast,setToast]=React.useState('');
-  async function request(path,options={}){const r=await fetch('/api/v1'+path,{credentials:'include',headers:{'Content-Type':'application/json'},...options}),p=await r.json().catch(()=>({}));if(!r.ok)throw new Error(p.error&&p.error.message||p.message||('HTTP '+r.status));return p;}
+  async function request(path,options={}){const r=await ForgeApiResponse(adapter,path,{credentials:'include',headers:{'Content-Type':'application/json'},...options}),p=await r.json().catch(()=>({}));if(!r.ok)throw new Error(p.error&&p.error.message||p.message||('HTTP '+r.status));return p;}
   async function load(){setState(s=>({...s,loading:true,error:''}));try{const [materials,categories,units,skus]=await Promise.all(['forge_material','forge_material_category','forge_unit','forge_material_sku'].map(n=>request('/data/'+n+'?$top=500').then(p=>p.records||[])));setState({loading:false,materials,categories,units,skus,error:''});}catch(e){setState(s=>({...s,loading:false,error:String(e.message||e)}));}}
   React.useEffect(()=>{load()},[]);
   const byId=(rows,id)=>rows.find(x=>x.id===id),catName=id=>byId(state.categories,id)?.name||'—',unitName=id=>byId(state.units,id)?.name||'—',skuCount=id=>state.skus.filter(s=>s.material_id===id).length;

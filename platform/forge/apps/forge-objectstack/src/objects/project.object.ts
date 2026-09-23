@@ -18,7 +18,7 @@ export const Project = ObjectSchema.create({
     name: text('项目名称', true),
     code: Field.autonumber({ label: '项目编号', autonumberFormat: 'PRJ-{YYYY}-{000}' }),
     type_id: reference('forge_project_type', '项目类型', true),
-    customer_id: reference('forge_customer', '客户', true), manager_id: owner(true),
+    customer_id: { ...reference('forge_customer', '客户', true), relatedList: true, relatedListTitle: '项目', relatedListColumns: ["code", "name", "planned_start_on", "planned_end_on", "progress", "status"] }, manager_id: owner(true),
     priority: select('优先级', [['high', '高'], ['medium', '中'], ['low', '低']], 'medium'),
     planned_start_on: Field.date({ label: '计划开始日期', ...required }),
     planned_end_on: Field.date({ label: '计划结束日期', ...required }),
@@ -169,7 +169,7 @@ export const ProjectTimesheet = master('forge_project_timesheet', '项目工时'
 // RISEMAP RM-140: approved business records feed a traceable cost pool before operating analysis consumes them.
 export const ProjectCostEntry = master('forge_project_cost_entry', '项目成本池', 'circle-dollar-sign', {
   name: text('成本名称', true), code: code('成本编号'), project_id: reference('forge_project', '项目', true),
-  customer_id: reference('forge_customer', '客户', true), source_type: select('来源类型', [
+  customer_id: { ...reference('forge_customer', '客户', true), relatedList: false }, source_type: select('来源类型', [
     ['timesheet', '项目工时'], ['production_material', '生产材料'], ['expense', '费用报销'], ['subcontract', '委外'], ['manual', '手工登记'],
   ]),
   cost_type: select('成本类型', [['labor', '人工成本'], ['material', '材料成本'], ['manufacturing', '制造费用'], ['travel', '差旅费用'], ['subcontract', '委外成本'], ['other', '其他成本']]),

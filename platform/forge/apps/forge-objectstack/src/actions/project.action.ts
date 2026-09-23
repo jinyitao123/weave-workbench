@@ -13,7 +13,7 @@ export const CustomerCreateProject = defineAction({
     { field: 'expected_revenue', objectOverride: 'forge_project' }, { field: 'budget_amount', objectOverride: 'forge_project' },
     { field: 'manager_id', objectOverride: 'forge_project', required: true }, { field: 'description', objectOverride: 'forge_project' },
   ],
-  onSuccess: { navigate: '/_console/apps/forge/forge_project/record/${result.id}' },
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.project/forge_project/record/${result.id}' },
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const customerId = ctx.recordId || (ctx.record && ctx.record.id); const customer = ctx.record;
 if (ctx.recordLoadDenied === true || !customerId || !customer) throw new Error('当前客户不存在或不可访问');
@@ -122,7 +122,7 @@ export const ProjectCreateManualPlan = defineAction({
     { field: 'critical_path', objectOverride: 'forge_project_work_item', defaultValue: false },
     { field: 'planned_deliverable', objectOverride: 'forge_project_work_item' },
   ],
-  onSuccess: { navigate: '/_console/apps/forge/forge_project_plan/record/${result.id}' },
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.project/forge_project_plan/record/${result.id}' },
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const projectId = ctx.recordId || (ctx.record && ctx.record.id); const project = ctx.record;
 if (ctx.recordLoadDenied === true || !projectId || !project) throw new Error('当前项目不存在或不可访问');
