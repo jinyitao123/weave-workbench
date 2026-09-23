@@ -1,10 +1,11 @@
-import { chmodSync, lstatSync, mkdirSync, mkdtempSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { chmodSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
 import { lstat, realpath } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { isAbsolute, join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { isBroadProjectRoot, ProjectService } from '../../electron/main/projects'
+import { freezeMaterials } from '../../electron/main/enterprise/materials'
 import { CheckoutService } from '../../electron/main/checkouts'
 import { RepositoryUseGate } from '../../electron/main/repository-use-gate'
 import { JsonStateStore } from '../../electron/main/store'
@@ -373,6 +374,44 @@ describe('ProjectService list enrichment', () => {
 
     expect(started).toEqual(projectRoots.slice(0, concurrencyLimit))
     await expect(service.authorizeCwd(projectRoots.at(-1)!)).resolves.toBe(realpathSync(projectRoots.at(-1)!))
+  })
+})
+
+describe('ProjectService workspace text attachments', () => {
+  it('stores the selected Markdown bytes under the active workspace and reuses the same path and digest for handoff freezing', async () => {
+    const { root, service } = setup()
+    const workspacePath = join(root, 'personal')
+    const project = await service.ensurePersonalWorkspace(workspacePath)
+    const content = '# Source document\n\nKeep this exact text.\n'
+    const bytes = new TextEncoder().encode(content)
+
+    const reference = await service.importTextMaterial(project.id, project.primaryFolder, 'source.md', bytes)
+    const filePath = join(project.primaryFolder, ...reference.path.split('/'))
+    const frozen = await freezeMaterials(project.primaryFolder, [{ path: reference.path, sha256: reference.sha256 }])
+
+    expect(reference).toMatchObject({ projectId: project.id, harness: 'prime', name: 'source.md', bytes: bytes.byteLength, mimeType: 'text/markdown' })
+    expect(isAbsolute(reference.path)).toBe(false)
+    expect(reference.path).toMatch(/^材料\/附件\/[0-9a-f-]+\/source\.md$/)
+    expect(readFileSync(filePath)).toEqual(Buffer.from(bytes))
+    expect(statSync(filePath).mode & 0o777).toBe(0o600)
+    expect(frozen).toEqual([{ name: 'source.md', sha256: reference.sha256, bytes: bytes.byteLength, content }])
+  })
+
+  it('rejects unsupported, invalid UTF-8, unsafe names, and references from a previous account scope', async () => {
+    const { root, service } = setup()
+    const firstScope = 'a'.repeat(64)
+    service.setAccountScope(firstScope)
+    const project = await service.ensurePersonalWorkspace(join(root, 'account-a'))
+    const bytes = new TextEncoder().encode('valid text\n')
+
+    await expect(service.importTextMaterial(project.id, project.primaryFolder, '../outside.md', bytes)).rejects.toThrow(/name is invalid/)
+    await expect(service.importTextMaterial(project.id, project.primaryFolder, 'source.docx', bytes)).rejects.toThrow(/Only UTF-8 text and Markdown/)
+    await expect(service.importTextMaterial(project.id, project.primaryFolder, 'source.md', new Uint8Array([0xff, 0xfe]))).rejects.toThrow(/valid UTF-8/)
+
+    const reference = await service.importTextMaterial(project.id, project.primaryFolder, 'source.md', bytes)
+    service.setAccountScope('b'.repeat(64))
+    await expect(service.importTextMaterial(project.id, project.primaryFolder, 'other.md', bytes)).rejects.toThrow(/no longer available in this account/)
+    expect((await service.list()).map((item) => item.id)).not.toContain(reference.projectId)
   })
 })
 

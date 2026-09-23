@@ -292,6 +292,7 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
 
   handle('projects:list', (_event, harness) => projectsFor(requireHarness(harness)).list())
   handle('projects:list-files', (_event, root, harness) => projectsFor(requireHarness(harness)).listFiles(root))
+  handle('projects:import-text-material', (_event, projectId, workspacePath, name, bytes, harness) => projectsFor(requireHarness(harness)).importTextMaterial(projectId, workspacePath, name, bytes))
   handle('projects:list-checkouts', (_event, projectId, harness) => checkoutsFor(requireHarness(harness)).list(projectId))
   handle('projects:execute-checkout', (_event, projectId, action, harness) => checkoutsFor(requireHarness(harness)).execute(projectId, action))
   handle('projects:add', (_event, harness) => projectsFor(requireHarness(harness)).add())

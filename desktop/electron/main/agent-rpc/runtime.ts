@@ -129,6 +129,7 @@ export class RpcRuntime {
     watchdogTimings: Partial<CompactionWatchdogTimings> = {},
     private readonly adapter: HarnessRpcAdapter = PRIME_RPC_ADAPTER,
     private readonly chunkAssemblyTiming: RpcChunkAssemblyTiming = DEFAULT_RPC_CHUNK_ASSEMBLY_TIMING,
+    private readonly onSessionFile?: (info: RuntimeInfo) => void,
   ) {
     this.watchdogTimings = { ...DEFAULT_COMPACTION_WATCHDOG_TIMINGS, ...watchdogTimings }
     this.info = { runtimeId: this.runtimeId, harness: this.adapter.id, cwd, isStreaming: false, isCompacting: false, sessionActions: emptySessionActionSnapshot() }
@@ -767,7 +768,13 @@ export class RpcRuntime {
     }
     // Canonicalize once at the boundary (cached): every later comparison
     // against catalog and validator paths uses the canonical form.
-    if (typeof raw.sessionFile === 'string') this.info.sessionFile = canonicalSessionPath(raw.sessionFile)
+    if (typeof raw.sessionFile === 'string') {
+      const sessionFile = canonicalSessionPath(raw.sessionFile)
+      if (sessionFile !== this.info.sessionFile) {
+        this.info.sessionFile = sessionFile
+        try { this.onSessionFile?.(this.snapshot()) } catch { /* session capability binding must not break runtime state updates */ }
+      }
+    }
     if (typeof raw.isStreaming === 'boolean') this.info.isStreaming = raw.isStreaming
     if (typeof raw.isCompacting === 'boolean') this.info.isCompacting = raw.isCompacting
     if (typeof raw.thinkingLevel === 'string') this.info.thinkingLevel = raw.thinkingLevel

@@ -132,6 +132,23 @@ const processExists = (pid: number): boolean => {
 }
 
 describe('agent RPC command frame bounds', () => {
+  it('rebinds runtime capabilities when a new Pi session file appears after the first prompt', async () => {
+    const sessionFile = '/sessions/runtime-late-session.jsonl'
+    const state = `{ id: command.id, type: 'response', command: 'get_state', success: true, data: { sessionId: 'late-session', ...(stateCalls++ > 0 ? { sessionFile: ${JSON.stringify(sessionFile)} } : {}), isStreaming: false } }`
+    const fake = fakeAgent("{ id: command.id, type: 'response', command: 'prompt', success: true }", state)
+    const manager = managerFor(fake.executable)
+    const reported: RuntimeInfo[] = []
+    manager.setRuntimeStartListener((_environment, info) => reported.push(info))
+
+    const started = await manager.start({ cwd: fake.cwd })
+    expect(reported).toHaveLength(1)
+    expect(reported[0].sessionFile).toBeUndefined()
+
+    await manager.command(started.runtimeId, { type: 'prompt', message: '首轮员工输入' })
+    await vi.waitFor(() => expect(reported).toHaveLength(2))
+    expect(reported[1].sessionFile).toBe(sessionFile)
+  })
+
   it('drains an in-flight runtime start before reopening admission for another account', async () => {
     const fake = fakeAgent("{ id: command.id, type: 'response', command: 'prompt', success: true }")
     const manager = managerFor(fake.executable)

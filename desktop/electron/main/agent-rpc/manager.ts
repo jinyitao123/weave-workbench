@@ -68,7 +68,7 @@ export class AgentRpcManager {
     this.runtimeEnvironmentProvider = provider
   }
 
-  /** Called once per successfully started runtime with the environment it was spawned with, so capability bridges can bind their claims to the runtime's session. */
+  /** Called after runtime start and when a harness reports or changes its session file, so capability bridges can bind the runtime's session scope. */
   setRuntimeStartListener(listener: (environment: NodeJS.ProcessEnv, info: RuntimeInfo) => void): void {
     this.runtimeStartListener = listener
   }
@@ -132,6 +132,8 @@ export class AgentRpcManager {
     const runtimeEnvironmentRevision = this.runtimeEnvironmentRevision
     const runtimeEnvironment = this.runtimeEnvironmentProvider({ cwd, sessionPath, interactive })
     let runtime: RpcRuntime | undefined
+    let runtimeStartReported = false
+    let lastReportedSessionFile: string | undefined
     let workspaceUse!: WorkspaceUseLease
     workspaceUse = await this.beginWorkspaceUse(
       cwd,
@@ -160,6 +162,14 @@ export class AgentRpcManager {
         approvalMode: this.approvalMode(),
         environment: runtimeEnvironment,
       })
+      const bindReportedSession = (info: RuntimeInfo): void => {
+        if (!runtimeStartReported || !info.sessionFile || !runtime
+          || this.runtimes.get(runtime.runtimeId) !== runtime
+          || this.retiringRuntimes.has(runtime.runtimeId)
+          || info.sessionFile === lastReportedSessionFile) return
+        lastReportedSessionFile = info.sessionFile
+        try { this.runtimeStartListener?.(runtimeEnvironment, info) } catch { /* capability binding must never fail runtime state updates */ }
+      }
       runtime = await this.admitRuntime(() => {
         const created = new RpcRuntime(
           executable,
@@ -176,6 +186,8 @@ export class AgentRpcManager {
           runtimeEnvironment,
           {},
           this.adapter,
+          undefined,
+          bindReportedSession,
         )
         // Record the environment generation before admission resolves so a
         // concurrent settings refresh cannot mistake this child for a new one.
@@ -186,9 +198,12 @@ export class AgentRpcManager {
       await runtime.handshake()
       await this.decorate(runtime)
       if (runtime.snapshot().fastModeSupported && options.fast === true) await runtime.setServiceTier('priority', true)
-      try { this.runtimeStartListener(runtimeEnvironment, runtime.snapshot()) } catch { /* capability binding must never fail a start */ }
+      const started = runtime.snapshot()
+      try { this.runtimeStartListener(runtimeEnvironment, started) } catch { /* capability binding must never fail a start */ }
+      lastReportedSessionFile = started.sessionFile
+      runtimeStartReported = true
       this.startingRuntimes.delete(runtime.runtimeId)
-      return runtime.snapshot()
+      return started
     } catch (error) {
       if (runtime) {
         // Release the runtime slot explicitly: the close-event cleanup may never

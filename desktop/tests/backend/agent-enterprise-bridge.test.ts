@@ -97,15 +97,49 @@ async function fixture(objectName = 'forge_sales_contract') {
     return { handoff_key: capabilities[0].handoff_key, business_actions: [], goal: '复核这版合同', materials, available_actions: capabilities[0].business_actions }
   }
   await input('这版给他们看看', 'employee-turn-1')
-  return { call, callWithTurn, input, discover, openReturned, service, bridge, materials, cwd, transcript, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts }
+  return { call, callWithTurn, input, discover, openReturned, service, bridge, environment, materials, cwd, transcript, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts }
 }
 
 describe('employee-bound material handoff', () => {
-  it('binds a runtime created before its session file and accepts the first employee turn', async () => {
+  it('keeps a new Pi turn when the reported session file has not been created yet', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'handoff-future-session-')); directories.push(cwd)
+    const transcript: TranscriptMessage[] = []
+    const service = {
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(),
+      getTeamCatalog: vi.fn(async () => [{ id: 'team-lead', name: '线索分析团队', objective: '整理线索事实' }]),
+      getTeamChoices: vi.fn(async () => []), getBusinessCapabilities: vi.fn(async () => []),
+      findBusinessRecords: vi.fn(async () => []), stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),
+      submitApprovalRevision: vi.fn(async () => ({ status: 404, body: {} })),
+      getApprovalRevisionReceipt: vi.fn(async () => ({ status: 404, body: {} })),
+    }
+    const sessions = { read: vi.fn(async () => transcript) }
+    sessions.read.mockRejectedValueOnce(Object.assign(new Error('session file not created'), { code: 'ENOENT' }))
+    const bridge = new AgentEnterpriseBridge({ service, sessions: { prime: sessions, omp: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts' })
+    await bridge.start(); bridges.push(bridge)
+    const environment = bridge.environmentFor({ cwd, harness: 'pi' })
+    bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, '/sessions/future.jsonl', 'new-runtime')
+    const prompt = '把这版线索交给团队只做分析'
+    await bridge.employeeCommand('new-runtime', { type: 'prompt', message: prompt })
+    transcript.push(user('new-message', prompt))
+    const call = async (method: string, params: Record<string, unknown>) => {
+      const response = await fetch(environment.GOOEYPI_ENTERPRISE_URL!, {
+        method: 'POST', headers: { Authorization: `Bearer ${environment.GOOEYPI_ENTERPRISE_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ method, params }),
+      })
+      return { status: response.status, body: await response.json() as { result?: Record<string, unknown>; error?: string } }
+    }
+    const active = await call('activate', { prompt })
+    expect(active.status).toBe(200)
+    const search = await call('search', { turn_key: active.body.result?.turn_key, work_summary: '线索事实分析' })
+    expect(search.status).toBe(200)
+    expect(search.body.result?.teams).toEqual([{ team_key: expect.any(String), name: '线索分析团队', summary: '整理线索事实' }])
+  })
+
+  it('keeps the first Pi employee turn when the runtime token is bound before its session file', async () => {
     const cwd = await mkdtemp(join(tmpdir(), 'handoff-race-')); directories.push(cwd)
     const transcript: TranscriptMessage[] = []
     const service = {
-      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getTeamCatalog: vi.fn(async () => [{ id: 'team-lead', name: '线索分析团队', objective: '整理线索并返回依据和待确认项' }]), getTeamChoices: vi.fn(async () => []),
       getBusinessCapabilities: vi.fn(async () => []),
       findBusinessRecords: vi.fn(async () => []),
       stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),
@@ -116,15 +150,138 @@ describe('employee-bound material handoff', () => {
     await bridge.start(); bridges.push(bridge)
     const environment = bridge.environmentFor({ cwd, harness: 'pi' })
     bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, undefined, 'new-runtime')
+    const call = async (method: string, params: Record<string, unknown>) => {
+      const response = await fetch(environment.GOOEYPI_ENTERPRISE_URL!, {
+        method: 'POST', headers: { Authorization: `Bearer ${environment.GOOEYPI_ENTERPRISE_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ method, params }),
+      })
+      return { status: response.status, body: await response.json() as { result?: Record<string, unknown>; error?: string } }
+    }
+    const firstPrompt = '读取材料/北辰线索沟通纪要.md，先整理再查找可承接团队'
+
+    // The desktop forwards the first prompt before Pi has reported its new
+    // session file. The runtime token exists, but is still in the pending map.
+    await bridge.employeeCommand('new-runtime', { type: 'prompt', message: firstPrompt })
+    const firstActivation = await call('activate', { prompt: firstPrompt })
+    expect(firstActivation.status).toBe(200)
+    const firstTurnKey = firstActivation.body.result?.turn_key as string
+    expect(firstTurnKey).toBeTruthy()
+    transcript.push(user('first-turn', firstPrompt))
+    transcript.push({ id: 'assistant-read-material', role: 'assistant', parts: [{ type: 'text', text: '已读取北辰线索沟通纪要.md。' }] })
+    const firstSearchPromise = call('search', { turn_key: firstTurnKey, work_summary: '整理北辰设备线索的需求和待确认事项' })
+    const bindingWaiters = (bridge as unknown as { sessionBindingWaiters: Map<string, Set<() => void>> }).sessionBindingWaiters
+    await vi.waitFor(() => expect(bindingWaiters.size).toBe(1))
     bridge.bindRuntimeSession('new-runtime', '/sessions/new.jsonl')
-    await bridge.employeeCommand('new-runtime', { type: 'prompt', message: '把这份材料交给团队' })
-    transcript.push(user('first-turn', '把这份材料交给团队'))
+    const firstSearch = await firstSearchPromise
+    expect(firstSearch.status).toBe(200)
+    expect(firstSearch.body.result?.teams).toEqual([{ team_key: expect.any(String), name: '线索分析团队', summary: '整理线索并返回依据和待确认项' }])
+
+    const followUp = '按刚才的纪要继续找线索分析团队'
+    // The renderer revokes the previous turn before queuing a changed employee
+    // request; the following IPC command must establish a fresh turn on the
+    // already-bound runtime.
+    bridge.invalidateHandoff('new-runtime')
+    await bridge.employeeCommand('new-runtime', { type: 'follow_up', message: followUp })
+    transcript.push(user('follow-up-turn', followUp))
+    const followUpActivation = await call('activate', { prompt: followUp })
+    expect(followUpActivation.status).toBe(200)
+    const followUpTurnKey = followUpActivation.body.result?.turn_key as string
+    expect(followUpTurnKey).toBeTruthy()
+    expect(followUpTurnKey).not.toBe(firstTurnKey)
+
+    const staleTurn = await call('search', { turn_key: firstTurnKey, work_summary: '旧轮次的请求' })
+    expect(staleTurn.status).toBe(409)
+    expect(staleTurn.body.error).toContain('员工要求已变化')
+
+    const followUpSearch = await call('search', { turn_key: followUpTurnKey, work_summary: '继续整理北辰线索' })
+    expect(followUpSearch.status).toBe(200)
+    service.accountKey.mockResolvedValue('employee-b')
+    const changedAccount = await call('search', { turn_key: followUpTurnKey, work_summary: '切换账号后的旧轮次' })
+    expect(changedAccount.status).toBe(409)
+    expect(changedAccount.body.error).toContain('员工轮次或账号已变化')
+  })
+
+  it('clears a first-prompt authorization when its pending runtime handoff is invalidated', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'handoff-pending-invalidate-')); directories.push(cwd)
+    const transcript: TranscriptMessage[] = []
+    const service = {
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
+      getBusinessCapabilities: vi.fn(async () => []), findBusinessRecords: vi.fn(async () => []),
+      stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),
+      submitApprovalRevision: vi.fn(async () => ({ status: 404, body: {} })), getApprovalRevisionReceipt: vi.fn(async () => ({ status: 404, body: {} })),
+    }
+    const sessions = { read: vi.fn(async () => transcript) }
+    const bridge = new AgentEnterpriseBridge({ service, sessions: { prime: sessions, omp: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts' })
+    await bridge.start(); bridges.push(bridge)
+    const environment = bridge.environmentFor({ cwd, harness: 'pi' })
+    bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, undefined, 'pending-runtime')
+    await bridge.employeeCommand('pending-runtime', { type: 'prompt', message: '读取北辰沟通纪要' })
+
+    bridge.invalidateHandoff('pending-runtime')
+    expect((bridge as unknown as { pendingRuntimeTokens: Map<string, string> }).pendingRuntimeTokens.has('pending-runtime')).toBe(false)
+    await bridge.employeeCommand('pending-runtime', { type: 'prompt', message: '改成另一条线索' })
+    transcript.push(user('changed-intent', '改成另一条线索'))
+    bridge.bindRuntimeSession('pending-runtime', '/sessions/pending.jsonl')
+
     const response = await fetch(environment.GOOEYPI_ENTERPRISE_URL!, {
       method: 'POST', headers: { Authorization: `Bearer ${environment.GOOEYPI_ENTERPRISE_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ method: 'activate', params: { prompt: '把这份材料交给团队' } }),
+      body: JSON.stringify({ method: 'activate', params: { prompt: '改成另一条线索' } }),
     })
-    expect(response.status).toBe(200)
-    expect((await response.json() as { result: { turn_key: string } }).result.turn_key).toBeTruthy()
+    expect(response.status).toBe(409)
+    expect((await response.json() as { error?: string }).error).toContain('员工轮次或账号已变化')
+  })
+
+  it('does not treat an old same-text message in a restored session as a new authorization', async () => {
+    const f = await fixture()
+    const sameText = '这版给他们看看'
+    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: sameText })
+    const activation = await f.call('activate', { prompt: sameText })
+    expect(activation.status).toBe(200)
+    const turnKey = activation.body.result?.turn_key as string
+
+    const result = await f.callWithTurn('search', { work_summary: '复核合同' }, turnKey)
+    expect(result.status).toBe(409)
+    expect(result.body.error).toContain('当前员工输入尚未进入原会话')
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+
+  it('rejects a new-session first prompt if the transcript contains more than that one user message', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'handoff-new-session-ambiguous-')); directories.push(cwd)
+    const transcript: TranscriptMessage[] = []
+    const service = {
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
+      getBusinessCapabilities: vi.fn(async () => []), findBusinessRecords: vi.fn(async () => []),
+      stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),
+      submitApprovalRevision: vi.fn(async () => ({ status: 404, body: {} })), getApprovalRevisionReceipt: vi.fn(async () => ({ status: 404, body: {} })),
+    }
+    const sessions = { read: vi.fn(async () => transcript) }
+    const bridge = new AgentEnterpriseBridge({ service, sessions: { prime: sessions, omp: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts' })
+    await bridge.start(); bridges.push(bridge)
+    const environment = bridge.environmentFor({ cwd, harness: 'pi' })
+    bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, undefined, 'ambiguous-runtime')
+    const prompt = '读取北辰沟通纪要'
+    await bridge.employeeCommand('ambiguous-runtime', { type: 'prompt', message: prompt })
+    const activateResponse = await fetch(environment.GOOEYPI_ENTERPRISE_URL!, {
+      method: 'POST', headers: { Authorization: `Bearer ${environment.GOOEYPI_ENTERPRISE_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'activate', params: { prompt } }),
+    })
+    const activated = await activateResponse.json() as { result: { turn_key: string } }
+    transcript.push(user('first-prompt', prompt), user('unexpected-follow-up', '改成别的材料'))
+    bridge.bindRuntimeSession('ambiguous-runtime', '/sessions/ambiguous.jsonl')
+
+    const response = await fetch(environment.GOOEYPI_ENTERPRISE_URL!, {
+      method: 'POST', headers: { Authorization: `Bearer ${environment.GOOEYPI_ENTERPRISE_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'search', params: { turn_key: activated.result.turn_key, work_summary: '北辰线索' } }),
+    })
+    expect(response.status).toBe(409)
+    expect((await response.json() as { error?: string }).error).toContain('无法核对新 Pi 会话中的员工消息顺序')
+  })
+
+  it('revokes a runtime claim when the reported session path differs from its scoped path', async () => {
+    const f = await fixture()
+    expect(() => f.bridge.bindSession(f.environment.GOOEYPI_ENTERPRISE_TOKEN, '/sessions/other.jsonl', 'runtime'))
+      .toThrow('Pi 会话文件与桌面授权会话不匹配')
+    expect((await f.call('activate', { prompt: '这版给他们看看' })).status).toBe(401)
   })
 
   it('filters summaries, expands only one team, and hands off actual frozen contract content', async () => {

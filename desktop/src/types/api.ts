@@ -433,6 +433,21 @@ export interface ProjectRecord {
   scripts?: ProjectScripts
 }
 
+/** A text attachment copied into the currently authorized workspace. */
+export interface WorkspaceMaterialReference {
+  projectId: string
+  harness: HarnessId
+  /** Absolute workspace identity retained locally and never sent to the model. */
+  workspacePath: string
+  name: string
+  path: string
+  sha256: string
+  bytes: number
+  mimeType: 'text/plain' | 'text/markdown'
+}
+
+export type WorkspaceMaterialPromptReference = Pick<WorkspaceMaterialReference, 'name' | 'path' | 'sha256' | 'bytes' | 'mimeType'>
+
 export interface SessionRecord {
   id: string
   /** Agent harness that owns this session; populated by the owning session service. */
@@ -1153,6 +1168,7 @@ export interface PrimeWorkApi {
   projects: {
     list(harness?: HarnessId): Promise<ProjectRecord[]>
     listFiles(root: string, harness?: HarnessId): Promise<ProjectFileListing>
+    importTextMaterial(projectId: string, workspacePath: string, name: string, bytes: Uint8Array, harness?: HarnessId): Promise<WorkspaceMaterialReference>
     listCheckouts(projectId: string, harness?: HarnessId): Promise<CheckoutCatalog>
     executeCheckout(projectId: string, action: CheckoutAction, harness?: HarnessId): Promise<CheckoutChangeResult>
     add(harness?: HarnessId): Promise<ProjectRecord | null>

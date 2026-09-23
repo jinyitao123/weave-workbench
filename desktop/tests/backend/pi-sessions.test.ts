@@ -214,6 +214,23 @@ describe('pi catalog discovery', () => {
 })
 
 describe('pi session path authorization', () => {
+  it('reads the flat files produced by an account-scoped Pi session directory', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'workbench-pi-account-sessions-')); dirs.push(dir)
+    const root = join(dir, 'agent-sessions', 'accounts', 'account-a', 'pi')
+    const project = join(dir, 'project')
+    mkdirSync(root, { recursive: true }); mkdirSync(project)
+    const direct = join(root, NAME_A)
+    writePiSession(direct, { id: 'account-direct', cwd: project })
+    mkdirSync(join(root, BUCKET))
+    writePiSession(join(root, BUCKET, NAME_B), { id: 'account-bucketed', cwd: project })
+    const service = new SessionService(new JsonStateStore(join(dir, 'state.json')), null, undefined, piSessionServiceOptions(root))
+
+    expect(isPiSessionPath(root, direct)).toBe(true)
+    await expect(service.requireSessionPath(direct)).resolves.toBe(realpathSync(direct))
+    expect((await service.list()).map((record) => record.id).sort()).toEqual(['account-bucketed', 'account-direct'])
+    expect(isPiSessionPath(root, join(dir, NAME_A))).toBe(false)
+  })
+
   it('contains sessions to one bucket level below the realpathed root', async () => {
     const { root, project, service } = setup()
     mkdirSync(join(root, BUCKET))

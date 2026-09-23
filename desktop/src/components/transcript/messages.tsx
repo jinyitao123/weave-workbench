@@ -1,10 +1,11 @@
 import { Fragment, memo, useEffect, useId, useRef, useState, type ReactNode } from 'react'
-import { Check, ChevronDown, ChevronRight, Copy, Target } from 'lucide-react'
+import { Check, ChevronDown, ChevronRight, Copy, FileText, Target } from 'lucide-react'
 import type { HarnessId, MessagePart, TranscriptMessage } from '@/types/api'
 import { splitAnnotationBlock } from '@/lib/browser-annotations'
 import { splitCapabilityRouting } from '@/lib/capability-mentions'
 import { routedSessionReferences, splitSessionRouting, type RoutedSessionReference } from '@/lib/session-mentions'
 import { splitTerminalContextBlock } from '@/lib/terminal-context'
+import { splitWorkspaceMaterialContext } from '@/lib/workspace-material-attachments'
 import { writeClipboardText } from '@/lib/clipboard'
 import { boundText } from '@/lib/render-bounds'
 import { HARNESS_SHORT_NAMES } from '@/lib/harness'
@@ -222,7 +223,8 @@ function SessionReferenceText({ text, references, onOpen }: { text: string; refe
 }
 
 function visibleUserText(text: string): string {
-  const terminal = splitTerminalContextBlock(text)
+  const materials = splitWorkspaceMaterialContext(text)
+  const terminal = splitTerminalContextBlock(materials.text)
   const annotations = splitAnnotationBlock(terminal.text)
   const capability = splitCapabilityRouting(annotations.text)
   return splitSessionRouting(capability.text).text
@@ -232,12 +234,13 @@ function UserText({ text, onOpenSessionReference }: { text: string; onOpenSessio
   // Sent prompts can carry verbose model-facing context blocks. Keep both
   // attachments collapsed and capability routing hidden while preserving the
   // user's own message.
-  const terminal = splitTerminalContextBlock(text)
+  const materials = splitWorkspaceMaterialContext(text)
+  const terminal = splitTerminalContextBlock(materials.text)
   const annotations = splitAnnotationBlock(terminal.text)
   const capability = splitCapabilityRouting(annotations.text)
   const sessions = splitSessionRouting(capability.text)
   const references = routedSessionReferences(sessions.block)
-  if (!sessions.block && !capability.block && !annotations.block && !terminal.block) return <InlineText text={text} />
+  if (!sessions.block && !capability.block && !annotations.block && !terminal.block && !materials.attachments.length) return <InlineText text={text} />
   return (
     <>
       {sessions.text && sessions.text !== '[Page annotations]' && sessions.text !== '[Terminal selection]' ? <SessionReferenceText text={sessions.text} references={references} onOpen={onOpenSessionReference} /> : null}
@@ -252,6 +255,15 @@ function UserText({ text, onOpenSessionReference }: { text: string; onOpenSessio
           <summary>{`Selected text from ${terminal.label ?? 'terminal'}`}</summary>
           <pre>{terminal.selection}</pre>
         </details>
+      ) : null}
+      {materials.attachments.length > 0 ? (
+        <div className="composer-attachments" aria-label="Attachments">
+          {materials.attachments.map((attachment) => (
+            <span className="composer-attachment" key={`${attachment.path}:${attachment.sha256}`} title={attachment.name}>
+              <span><FileText size={12} />{attachment.name}</span>
+            </span>
+          ))}
+        </div>
       ) : null}
     </>
   )

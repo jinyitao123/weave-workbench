@@ -6,9 +6,10 @@ import { errorMessage } from '@/lib/errors'
 import { HARNESS_AGENT_NAMES } from '@/lib/harness'
 import { parseMcpAuthenticationCommand } from '@/lib/mcp-policy'
 import { parseSessionActionSnapshot, streamingBehaviorForIntent } from '@/lib/session-actions'
+import { appendWorkspaceMaterialContext } from '@/lib/workspace-material-attachments'
 import type { DEFAULT_SETTINGS } from '@/lib/data'
 import { type createSingleFlightAdmission, findProjectForSession, findRuntimeForWorkspace, newSessionProject, projectContainsPath, workspaceCwd } from '@/lib/workspace'
-import type { CapabilityMutationInput, ExtensionInstallInput, GitStatus, HarnessId, McpConnectionInput, McpStateInput, PrimeWorkApi, ProjectRecord, ProjectSortMode, PromptDeliveryIntent, PromptImage, ScheduleInput, SchedulePatch, SessionRecord, TranscriptMessage, WorkspaceView } from '@/types/api'
+import type { CapabilityMutationInput, ExtensionInstallInput, GitStatus, HarnessId, McpConnectionInput, McpStateInput, PrimeWorkApi, ProjectRecord, ProjectSortMode, PromptDeliveryIntent, PromptImage, ScheduleInput, SchedulePatch, SessionRecord, TranscriptMessage, WorkspaceMaterialReference, WorkspaceView } from '@/types/api'
 import type { useAppSettings } from '@/hooks/useAppSettings'
 import type { usePanelLayout } from '@/hooks/usePanelLayout'
 import type { usePluginSkills } from '@/hooks/usePluginSkills'
@@ -285,24 +286,31 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
     intent: PromptDeliveryIntent = 'queue',
     queuedFlushPromptId?: string,
     returnedApprovalContextHandle?: string,
+    textAttachments: WorkspaceMaterialReference[] = [],
   ) => {
     const { bridge, sessions, workspace, provider, settingsState, submissionAdmissionRef, demoTimerRef, setSessions, setSubmitting, setView, setToast, reportError } = getDeps()
     const commandHarness = workspace.workspaceRef?.current?.project?.harness ?? settingsState.settings.activeHarness
+    const currentWorkspaceProject = workspace.workspaceRef.current.project
+    const currentWorkspaceCwd = workspace.workspaceRef.current.cwd
+    if (textAttachments.some((attachment) => attachment.projectId !== currentWorkspaceProject?.id || attachment.harness !== currentWorkspaceProject.harness || attachment.workspacePath !== currentWorkspaceCwd)) {
+      throw new Error('A text attachment belongs to a different workspace. Reattach it before sending.')
+    }
+    const promptToDeliver = appendWorkspaceMaterialContext(prompt, textAttachments)
     const compactCommand = parseCompactCommand(prompt)
     const mcpCommand = parseMcpCommand(prompt, commandHarness)
-    if (mcpCommand?.type === 'open' && images.length === 0) {
+    if (mcpCommand?.type === 'open' && images.length === 0 && textAttachments.length === 0) {
       setView('plugins')
       setToast('Manage MCP integrations in Capabilities.')
       return
     }
-    if (mcpCommand?.type === 'authenticate') {
+    if (mcpCommand?.type === 'authenticate' && images.length === 0 && textAttachments.length === 0) {
       const target = mcpCommand.server ? ` to sign in to ${mcpCommand.server}` : ' to authenticate network MCP servers'
       setToast(`Network MCP authentication is managed outside GooeyPi. Use ${HARNESS_AGENT_NAMES[commandHarness]} directly${target}.`)
       return
     }
-    if (compactCommand && images.length > 0) {
+    if (compactCommand && (images.length > 0 || textAttachments.length > 0)) {
       reportError('/compact does not accept attachments. Remove the attachment and try again.')
-      return
+      throw new Error('/compact does not accept attachments. Remove the attachment and try again.')
     }
     const currentWorkspace = workspace.workspaceRef.current
     const currentRuntime = workspace.runtime
@@ -323,23 +331,23 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
       if (compactCommand) {
         // Compacting mid-turn would abort the running turn, so it waits for the
         // idle flush like any queued prompt.
-        if (!queuedFlushPromptId) workspace.queuePrompt(prompt, 'queue')
+        if (!queuedFlushPromptId) workspace.queuePrompt(promptToDeliver, 'queue')
         if (intent === 'steer') setToast('Compaction will run when the current turn finishes.')
         return
       }
       if (intent === 'queue' && images.length === 0) {
-        if (!queuedFlushPromptId) workspace.queuePrompt(prompt, intent)
+        if (!queuedFlushPromptId) workspace.queuePrompt(promptToDeliver, intent)
         return
       }
       if (intent === 'steer') {
         const sentAt = Date.now()
-        const pendingSteerId = workspace.queuePrompt(prompt, intent, [{ type: 'text', text: prompt }, ...images], sentAt)
+        const pendingSteerId = workspace.queuePrompt(promptToDeliver, intent, [{ type: 'text', text: promptToDeliver }, ...images], sentAt)
         if (currentWorkspace.sessionFile) {
           const sentAtIso = new Date(sentAt).toISOString()
           setSessions((items) => items.map((session) => session.filePath === currentWorkspace.sessionFile ? { ...session, lastUserMessageAt: sentAtIso } : session))
         }
         try {
-          const response = await bridge.agent.command(currentRuntime.runtimeId, { type: 'steer', message: prompt, ...(images.length ? { images } : {}) })
+          const response = await bridge.agent.command(currentRuntime.runtimeId, { type: 'steer', message: promptToDeliver, ...(images.length ? { images } : {}) })
           workspace.acceptSteer(pendingSteerId)
           const actions = parseSessionActionSnapshot(response.sessionActions)
           if (actions) workspace.acknowledgeSteer(pendingSteerId, actions)
@@ -367,17 +375,17 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
       let queuedPromptId: string | undefined
       const sentAt = Date.now()
       const sentAtIso = new Date(sentAt).toISOString()
-      const userMessage: TranscriptMessage = { id: `user-${sentAt}`, role: 'user', timestamp: sentAt, parts: [{ type: 'text', text: prompt }, ...images] }
+      const userMessage: TranscriptMessage = { id: `user-${sentAt}`, role: 'user', timestamp: sentAt, parts: [{ type: 'text', text: promptToDeliver }, ...images] }
       let userMessageAppended = false
       const followUpExternalSession = async (sessionFile: string): Promise<boolean> => {
         if (!bridge) return false
         if (returnedApprovalContextHandle) throw new Error('无法把退回事项绑定到桌面以外的运行会话')
         // The daemon owns the message once accepted; queuing it locally as
         // well would deliver it a second time via the idle flush.
-        return bridge.sessions.followUp(sessionFile, prompt, intent)
+        return bridge.sessions.followUp(sessionFile, promptToDeliver, intent)
       }
       try {
-        if (returnedApprovalContextHandle && (intent !== 'queue' || images.length > 0 || compactCommand)) {
+        if (returnedApprovalContextHandle && (intent !== 'queue' || images.length > 0 || textAttachments.length > 0 || compactCommand)) {
           throw new Error('退回审批上下文只能绑定到新的桌面工作轮次')
         }
         if (!admitted.project || !admitted.cwd) { reportError('Add a project before starting a session.'); return }
@@ -426,9 +434,9 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
             return
           }
         }
-        if ((intent === 'queue' || compactCommand) && images.length === 0 && (activeRuntime?.isStreaming || selectedSession?.status === 'running')) {
+        if ((intent === 'queue' || compactCommand) && images.length === 0 && textAttachments.length === 0 && (activeRuntime?.isStreaming || selectedSession?.status === 'running')) {
           if (activeRuntime) await bridge.enterprise.invalidateHandoff(activeRuntime.runtimeId)
-          if (!queuedFlushPromptId) queuedPromptId = workspace.queuePrompt(prompt, compactCommand ? 'queue' : intent)
+          if (!queuedFlushPromptId) queuedPromptId = workspace.queuePrompt(promptToDeliver, compactCommand ? 'queue' : intent)
           if (compactCommand && intent === 'steer') setToast('Compaction will run when the current turn finishes.')
           return
         }
@@ -486,7 +494,7 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
           // Follow-ups are daemon-owned. Steers get a renderer-only pending
           // row so pickup can move them into history without redelivery.
           if (intent === 'steer') queuedPromptId = workspace.queuePrompt(prompt, intent, userMessage.parts, sentAt)
-          const response = await bridge.agent.command(activeRuntime.runtimeId, { type: intent === 'steer' ? 'steer' : 'follow_up', message: prompt, ...(images.length ? { images } : {}) })
+          const response = await bridge.agent.command(activeRuntime.runtimeId, { type: intent === 'steer' ? 'steer' : 'follow_up', message: promptToDeliver, ...(images.length ? { images } : {}) })
           const actions = parseSessionActionSnapshot(response.sessionActions)
           if (actions) {
             workspace.setRuntime((current) => current?.runtimeId === activeRuntime.runtimeId
@@ -505,7 +513,7 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
           workspace.setMessages((items) => [...items, { id: `assistant-${Date.now()}`, role: 'assistant', timestamp: Date.now(), streaming: true, parts: [] }])
           await bridge.agent.command(activeRuntime.runtimeId, {
             type: 'prompt',
-            message: prompt,
+            message: promptToDeliver,
             streamingBehavior: streamingBehaviorForIntent(intent),
             ...(images.length ? { images } : {}),
           }, returnedApprovalContextHandle ? { returnedApprovalContextHandle } : undefined)

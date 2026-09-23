@@ -21,6 +21,7 @@ import type {
   TerminalPromptContext,
   TerminalSelectionContext,
   VoiceTranscriptionProvider,
+  WorkspaceMaterialReference,
 } from '@/types/api'
 import { appendAnnotationsToPrompt } from '@/lib/browser-annotations'
 import { appendCapabilityRouting } from '@/lib/capability-mentions'
@@ -29,7 +30,7 @@ import { appendSessionRouting, findSessionMentions } from '@/lib/session-mention
 import { clearComposerDraft, readComposerDraft, saveComposerDraft, takeComposerDraft } from '@/lib/composer-draft'
 import { contextDialLabel } from '@/lib/format-cost'
 import { messageActionForKey } from '@/lib/message-shortcuts'
-import { useComposerImages } from '@/hooks/useComposerImages'
+import { useComposerImages, type ComposerTextFile } from '@/hooks/useComposerImages'
 import { useDictation } from '@/hooks/useDictation'
 import { IconButton, SelectControl } from './ui'
 import { ExecutingModelChip, type ExecutingModelChipProps } from './ExecutingModelChip'
@@ -54,6 +55,7 @@ interface ComposerProps {
   /** Active harness short name for inline copy ("Prime" / "OMP"). */
   shortName?: string
   harness?: HarnessId
+  workspaceProjectId?: string
   personalWorkspace?: boolean
   imageInputSupported: boolean
   /** Primary action for Enter; Ctrl/Cmd+Enter selects the opposite action. */
@@ -88,7 +90,8 @@ interface ComposerProps {
   checkoutLabel?: string
   checkoutsLoading?: boolean
   onExecuteCheckout?(action: CheckoutAction): Promise<void> | void
-  onSend(prompt: string, images: PromptImage[], intent: PromptDeliveryIntent): Promise<void> | void
+  onSend(prompt: string, images: PromptImage[], intent: PromptDeliveryIntent, textAttachments: WorkspaceMaterialReference[]): Promise<void> | void
+  onImportTextFile?(name: string, bytes: Uint8Array): Promise<WorkspaceMaterialReference>
   onStop(): Promise<void> | void
   onRemoveAnnotation?(id: string): void
   /** Called after a send that included the annotations, and by the attachment's remove control. */
@@ -141,6 +144,7 @@ export const Composer = memo(function Composer({
   agentName = 'Prime Agent',
   shortName = 'Prime',
   harness = 'prime',
+  workspaceProjectId,
   personalWorkspace = false,
   imageInputSupported,
   messageEnterAction = 'queue',
@@ -167,6 +171,7 @@ export const Composer = memo(function Composer({
   checkoutsLoading = false,
   onExecuteCheckout,
   onSend,
+  onImportTextFile,
   onStop,
   onRemoveAnnotation = noop,
   onClearAnnotations = noop,
@@ -179,8 +184,9 @@ export const Composer = memo(function Composer({
   const [activeSuggestion, setActiveSuggestion] = useState(0)
   const [annotationsOpen, setAnnotationsOpen] = useState(false)
   const [terminalSelectionOpen, setTerminalSelectionOpen] = useState(false)
-  const imageAttachments = useComposerImages({ shortName })
-  const { images, imagesRef, unsupportedFiles, unsupportedFilesRef, error: attachmentError, setError: setAttachmentError, processing: processingImages } = imageAttachments
+  const imageAttachments = useComposerImages({ shortName, projectId: workspaceProjectId, harness, importTextFile: onImportTextFile })
+  const { images, imagesRef, textFiles, textFilesRef, unsupportedFiles, unsupportedFilesRef, error: attachmentError, setError: setAttachmentError, processing: processingImages } = imageAttachments
+  const pendingSubmissionAttachmentsRef = useRef<WorkspaceMaterialReference[]>([])
   const dictation = useDictation(voice, transcriptionProvider, setAttachmentError)
   const menuId = useId()
   const menuRef = useRef<HTMLDivElement>(null)
@@ -200,14 +206,23 @@ export const Composer = memo(function Composer({
     restoredDraftRef.current = true
     const draft = readComposerDraft(draftKey)
     if (!draft) return
+    const attachments = (draft.attachments ?? []).filter((attachment) => attachment.projectId === workspaceProjectId && attachment.harness === harness)
+    if (attachments.length > 0) {
+      const restored = imageAttachments.restoreTextFilesWithinLimits(attachments.map((reference): ComposerTextFile => ({
+        id: `${reference.path}:${reference.sha256}`,
+        reference,
+        size: reference.bytes,
+      })))
+      if (restored.omitted > 0) setAttachmentError('Some draft attachments could not be restored because the workspace attachment limits are full.')
+    }
     if (draft.model && draft.model !== model) onModelChange(draft.model)
     if (draft.effort && draft.effort !== effort) onEffortChange(draft.effort as PrimeThinkingLevel)
     if (draft.fast !== undefined && draft.fast !== fast) onFastChange(draft.fast)
-  }, [draftKey, effort, fast, model, onEffortChange, onFastChange, onModelChange])
+  }, [draftKey, effort, fast, harness, imageAttachments.restoreTextFilesWithinLimits, model, onEffortChange, onFastChange, onModelChange, setAttachmentError, workspaceProjectId])
 
   useEffect(() => {
-    if (draftKey) saveComposerDraft(draftKey, { text: value, model, effort, fast })
-  }, [draftKey, effort, fast, model, value])
+    if (draftKey) saveComposerDraft(draftKey, { text: value, model, effort, fast, attachments: textFiles.length ? textFiles.map((file) => file.reference) : pendingSubmissionAttachmentsRef.current })
+  }, [draftKey, effort, fast, model, textFiles, value])
 
   useEffect(() => {
     const mentionMatch = /(?:^|\s)@([^@\n]*)$/.exec(value)
@@ -274,6 +289,7 @@ export const Composer = memo(function Composer({
 
   const submit = async (intent: PromptDeliveryIntent = 'queue', valueOverride?: string) => {
     const currentImages = imagesRef.current
+    const currentTextFiles = textFilesRef.current
     const currentUnsupportedFiles = unsupportedFilesRef.current
     const currentAnnotations = annotationsRef.current
     const currentTerminalContext = terminalSelection?.text ? getTerminalContext?.() : undefined
@@ -281,9 +297,9 @@ export const Composer = memo(function Composer({
     const draftValue = valueOverride ?? value
     const prompt = draftValue.trim() || (currentImages.length > 0
       ? (currentImages.length === 1 ? '[Attached image]' : '[Attached images]')
-      : currentUnsupportedFiles.length > 0 ? (currentUnsupportedFiles.length === 1 ? '[Attached file]' : '[Attached files]')
+      : currentTextFiles.length > 0 || currentUnsupportedFiles.length > 0 ? (currentTextFiles.length + currentUnsupportedFiles.length === 1 ? '[Attached file]' : '[Attached files]')
         : currentAnnotations.length > 0 ? '[Page annotations]' : '[Terminal selection]')
-    if ((!draftValue.trim() && currentImages.length === 0 && currentUnsupportedFiles.length === 0 && currentAnnotations.length === 0 && !hasTerminalSelection) || loading || disabled || (intent !== 'steer' && !busy && (submitting || submittingRef.current))) return
+    if ((!draftValue.trim() && currentImages.length === 0 && currentTextFiles.length === 0 && currentUnsupportedFiles.length === 0 && currentAnnotations.length === 0 && !hasTerminalSelection) || loading || disabled || (intent !== 'steer' && !busy && (submitting || submittingRef.current))) return
     if (imageAttachments.hasPending()) {
       setAttachmentError('Wait for the file to finish processing before sending.')
       return
@@ -299,6 +315,7 @@ export const Composer = memo(function Composer({
       return
     }
     const submittedImages = currentImages.map(({ type, data, mimeType }) => ({ type, data, mimeType }))
+    const submittedTextFiles = currentTextFiles.map((file) => file.reference)
     // Recognized @ mentions carry explicit routing semantics; annotations then
     // ride along inside the prompt as their own delimited plain-text block.
     const referencedSessions = findSessionMentions(prompt, sessions, sessionReferenceIds)
@@ -317,26 +334,34 @@ export const Composer = memo(function Composer({
     submittingRef.current = true
     const submittedValue = draftValue
     const submittedComposerImages = currentImages
+    const submittedComposerTextFiles = currentTextFiles
+    pendingSubmissionAttachmentsRef.current = submittedTextFiles
     setValue('')
     imageAttachments.clear()
     setAttachmentError('')
     setMenu(null)
     try {
-      await onSend(promptWithContext, submittedImages, intent)
+      await onSend(promptWithContext, submittedImages, intent, submittedTextFiles)
+      pendingSubmissionAttachmentsRef.current = []
       if (draftKey) clearComposerDraft(draftKey)
       // The annotations were delivered: clear the attachment and page markers.
       if (currentAnnotations.length > 0) onClearAnnotations()
-    } catch {
+    } catch (error) {
       if (mountedRef.current) {
         setValue((current) => current || submittedValue)
         const restoration = imageAttachments.restoreWithinLimits(submittedComposerImages)
-        if (restoration.omitted > 0) {
+        const fileRestoration = imageAttachments.restoreTextFilesWithinLimits(submittedComposerTextFiles)
+        pendingSubmissionAttachmentsRef.current = []
+        if (restoration.omitted + fileRestoration.omitted > 0) {
           const restoredImages = restoration.restored > 0 ? ` along with ${restoration.restored} submitted image${restoration.restored === 1 ? '' : 's'}` : ''
-          setAttachmentError(`Message was not sent. Your draft was restored${restoredImages}, but ${restoration.omitted} submitted image${restoration.omitted === 1 ? '' : 's'} could not be restored because the attachment limits are full.`)
-        } else if (submittedComposerImages.length > 0) {
-          setAttachmentError('Message was not sent. Your draft and images were restored.')
+          const restoredFiles = fileRestoration.restored > 0 ? ` and ${fileRestoration.restored} text file${fileRestoration.restored === 1 ? '' : 's'}` : ''
+          setAttachmentError(`Message was not sent. Your draft was restored${restoredImages}${restoredFiles}, but ${restoration.omitted + fileRestoration.omitted} attachment${restoration.omitted + fileRestoration.omitted === 1 ? '' : 's'} could not be restored because the attachment limits are full.`)
+        } else if (submittedComposerImages.length > 0 || submittedComposerTextFiles.length > 0) {
+          const cause = error instanceof Error ? error.message : ''
+          setAttachmentError(cause ? `${cause} Your draft and attachments were restored.` : 'Message was not sent. Your draft and attachments were restored.')
         } else {
-          setAttachmentError('Message was not sent. Your draft was restored.')
+          const cause = error instanceof Error ? error.message : ''
+          setAttachmentError(cause ? `${cause} Your draft was restored.` : 'Message was not sent. Your draft was restored.')
         }
       }
     } finally {
@@ -443,7 +468,7 @@ export const Composer = memo(function Composer({
   const sendQueuedMessageImmediately = async (queued: QueuedPrompt) => {
     onDeleteQueuedMessage?.(queued)
     try {
-      await onSend(queued.text, [], 'steer')
+      await onSend(queued.text, [], 'steer', [])
     } catch {
       // sendPrompt reports failures itself; there is no composer draft to restore.
     }
@@ -595,7 +620,7 @@ export const Composer = memo(function Composer({
             <pre>{terminalSelection.text}</pre>
           </div>
         ) : null}
-        {images.length || unsupportedFiles.length || annotations.length || terminalSelection?.text ? (
+        {images.length || textFiles.length || unsupportedFiles.length || annotations.length || terminalSelection?.text ? (
           <div className="composer-attachments" aria-label="Attachments">
             {annotations.length ? (
               <div className="composer-attachment composer-attachment--annotations" title={`${annotations.length} page annotation${annotations.length === 1 ? '' : 's'}`}>
@@ -655,6 +680,21 @@ export const Composer = memo(function Composer({
                 </button>
               </div>
             ))}
+            {textFiles.map((file) => (
+              <div className="composer-attachment" key={file.id}>
+                <span>
+                  <Paperclip size={12} />
+                  {file.reference.name}
+                </span>
+                <button
+                  type="button"
+                  aria-label={`Remove ${file.reference.name}`}
+                  onClick={() => imageAttachments.remove(file.id)}
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
             {unsupportedFiles.map((file) => (
               <div className="composer-attachment" key={file.id}>
                 <span>
@@ -678,7 +718,7 @@ export const Composer = memo(function Composer({
           </p>
         ) : null}
         <p id={imageStatusId} className="sr-only" role="status" aria-live="polite">
-          {imageAttachments.dragging ? 'Drop files to attach.' : processingImages ? 'Adding files.' : images.length + unsupportedFiles.length ? `${images.length + unsupportedFiles.length} file${images.length + unsupportedFiles.length === 1 ? '' : 's'} attached.` : ''}
+          {imageAttachments.dragging ? 'Drop files to attach.' : processingImages ? 'Adding files.' : images.length + textFiles.length + unsupportedFiles.length ? `${images.length + textFiles.length + unsupportedFiles.length} file${images.length + textFiles.length + unsupportedFiles.length === 1 ? '' : 's'} attached.` : ''}
         </p>
         <div className="composer__footer">
           <div className="composer__controls">
@@ -699,6 +739,7 @@ export const Composer = memo(function Composer({
               className="sr-only"
               type="file"
               multiple
+              accept=".txt,.md,.markdown,text/plain,text/markdown,image/png,image/jpeg,image/gif,image/webp"
               tabIndex={-1}
               aria-label="Choose files to attach"
               aria-describedby={imageStatusId}
@@ -768,7 +809,7 @@ export const Composer = memo(function Composer({
                 type="button"
                 className="send-button"
                 aria-label="Send message"
-                disabled={(!value.trim() && images.length === 0 && unsupportedFiles.length === 0 && annotations.length === 0 && !terminalSelection?.text) || processingImages || submitting || loading || disabled}
+              disabled={(!value.trim() && images.length === 0 && textFiles.length === 0 && unsupportedFiles.length === 0 && annotations.length === 0 && !terminalSelection?.text) || processingImages || submitting || loading || disabled}
                 onClick={() => void submit()}
               >
                 <ArrowUp size={17} />
