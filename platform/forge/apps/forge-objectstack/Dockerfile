@@ -21,9 +21,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
 COPY --from=console94 / /app/.console94/
-RUN rm -rf /app/node_modules/@objectstack/console/dist \
-    && cp -a /app/.console94/dist /app/node_modules/@objectstack/console/dist \
-    && node scripts/verify-console94.mjs /app/.console94 /app/node_modules/@objectstack/console /app/node_modules/@objectstack/cli/package.json
+RUN node scripts/inject-console94.mjs /app /app/.console94 /app/.generated/console94-layout.json
 RUN pnpm exec objectstack build  # → dist/objectstack.json
 
 # ── Runtime: the official ObjectStack runtime image ──────────────────
@@ -59,7 +57,12 @@ COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/objectstack.config.ts ./objectstack.config.ts
 COPY --from=build --chown=node:node /app/src ./src
 COPY --from=build --chown=node:node /app/dist ./dist
-RUN node -e "const p=require('./node_modules/@objectstack/cli/package.json'); if(p.version!=='17.3.0') throw new Error('Expected @objectstack/cli@17.3.0, got '+p.version)"
+COPY --from=build --chown=node:node /app/.console94/console94.lock.json /tmp/console94.lock.json
+COPY --from=build --chown=node:node /app/.console94/console94-build.json /tmp/console94-build.json
+COPY --from=build --chown=node:node /app/.generated/console94-layout.json /tmp/console94-layout.json
+COPY --from=build --chown=node:node /app/scripts/console94-artifact.mjs /app/scripts/console94-runtime.mjs /app/scripts/verify-console94-runtime.mjs /tmp/
+RUN node /tmp/verify-console94-runtime.mjs /srv/app /tmp/console94.lock.json /tmp/console94-build.json /tmp/console94-layout.json \
+    && rm -f /tmp/console94.lock.json /tmp/console94-build.json /tmp/console94-layout.json /tmp/console94-artifact.mjs /tmp/console94-runtime.mjs /tmp/verify-console94-runtime.mjs
 
 # The Forge app contains a small runtime plugin that exposes the authenticated
 # Weave event ingress. Boot the authored config so this code is present; a pure

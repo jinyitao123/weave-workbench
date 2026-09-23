@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
-import { cp, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { verifyConsoleArtifact } from '../scripts/console94-artifact.mjs';
+import { resolveForgeConsolePackage } from '../scripts/console94-runtime.mjs';
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONTEXT_DIR = path.resolve(process.env.FORGE_CONSOLE_BUILD_CONTEXT || path.join(APP_DIR, '.generated/console94'));
@@ -13,46 +14,21 @@ const lock = JSON.parse(await readFile(path.join(APP_DIR, 'console94.lock.json')
 const contextLock = JSON.parse(await readFile(path.join(CONTEXT_DIR, 'console94.lock.json'), 'utf8'));
 assert.deepEqual(contextLock, lock);
 const manifest = JSON.parse(await readFile(path.join(CONTEXT_DIR, 'console94-build.json'), 'utf8'));
-await verifyConsoleArtifact({ distDir: path.join(CONTEXT_DIR, 'dist'), manifest, lock });
+const resolvedConsole = await resolveForgeConsolePackage(APP_DIR, lock);
+await verifyConsoleArtifact({ distDir: path.join(resolvedConsole.consoleDir, 'dist'), manifest, lock });
 
 const tempDir = await mkdtemp(path.join(os.tmpdir(), 'forge-console94-cli-server-'));
-const tempNodeModules = path.join(tempDir, 'node_modules');
-const objectstackGroup = path.join(tempNodeModules, '@objectstack');
-const consolePackage = path.join(objectstackGroup, 'console');
 const portProbe = createServer();
 let port;
 let child;
 let output = '';
 
-async function linkDependencies() {
-  await mkdir(objectstackGroup, { recursive: true });
-  for (const entry of await readdir(path.join(APP_DIR, 'node_modules'), { withFileTypes: true })) {
-    if (entry.name === '@objectstack') {
-      for (const scoped of await readdir(path.join(APP_DIR, 'node_modules/@objectstack'))) {
-        if (scoped === 'console') continue;
-        await symlink(path.join(APP_DIR, 'node_modules/@objectstack', scoped), path.join(objectstackGroup, scoped));
-      }
-    } else {
-      await symlink(path.join(APP_DIR, 'node_modules', entry.name), path.join(tempNodeModules, entry.name));
-    }
-  }
-  await mkdir(path.join(consolePackage, 'dist'), { recursive: true });
-  await writeFile(path.join(consolePackage, 'package.json'), JSON.stringify({
-    name: lock.forge.consolePackageName,
-    version: lock.forge.cliVersion,
-    type: 'module',
-    exports: { './package.json': './package.json', '.': './plugin.js' },
-  }));
-  await cp(path.join(CONTEXT_DIR, 'dist'), path.join(consolePackage, 'dist'), { recursive: true });
-}
-
 try {
-  await mkdir(tempNodeModules, { recursive: true });
   await mkdir(path.join(tempDir, '.objectstack/data/uploads'), { recursive: true });
   await writeFile(path.join(tempDir, 'package.json'), '{"name":"forge-console94-cli-smoke","type":"module"}\n');
   await cp(path.join(APP_DIR, 'objectstack.config.ts'), path.join(tempDir, 'objectstack.config.ts'));
   await symlink(path.join(APP_DIR, 'src'), path.join(tempDir, 'src'), 'dir');
-  await linkDependencies();
+  await symlink(path.join(APP_DIR, 'node_modules'), path.join(tempDir, 'node_modules'), 'dir');
 
   await new Promise((resolve, reject) => {
     portProbe.once('error', reject);
@@ -106,7 +82,7 @@ try {
   const assetPath = html.match(/src="(\/_console\/assets\/[^\"]+\.js)"/)?.[1];
   assert.ok(assetPath, 'served index must reference a JavaScript asset below /_console/');
   assert.equal((await fetch(`http://127.0.0.1:${port}${assetPath}`)).status, 200);
-  console.log(`ObjectStack CLI served the pinned Console at /_console/ and a nested SPA route on loopback port ${port}.`);
+  console.log(`ObjectStack CLI served the pnpm-resolved Console at /_console/ and a nested SPA route on loopback port ${port}.`);
 } finally {
   if (portProbe.listening) await new Promise((resolve) => portProbe.close(resolve));
   if (child && child.exitCode === null) {
