@@ -15,6 +15,8 @@ export interface FolderIdentity {
 }
 
 export interface PersistedProject extends Omit<ProjectRecord, 'sessionCount' | 'gitBranch' | 'inferred'> {
+  /** Opaque Forge-account scope. Missing means a pre-scope local project. */
+  accountScope?: string
   folderIdentities?: Record<string, FolderIdentity>
 }
 
@@ -181,6 +183,13 @@ function parseProjectScripts(value: unknown): ProjectScripts | undefined {
 function parseProject(value: unknown, preHarnessState: boolean): PersistedProject | null {
   if (!isRecord(value)) return null
   if (typeof value.id !== 'string' || typeof value.name !== 'string' || typeof value.path !== 'string') return null
+  const accountScope = value.accountScope === undefined
+    ? undefined
+    : typeof value.accountScope === 'string' && /^[a-f0-9]{64}$/.test(value.accountScope)
+      ? value.accountScope
+      : null
+  // An invalid scope must not be repaired into an unscoped, globally visible project.
+  if (accountScope === null) return null
   const folders = Array.isArray(value.folders) ? value.folders.filter((item): item is string => typeof item === 'string') : [value.path]
   if (!folders.length || typeof value.primaryFolder !== 'string') return null
   const harness = parseHarness(value.harness, preHarnessState)
@@ -209,6 +218,7 @@ function parseProject(value: unknown, preHarnessState: boolean): PersistedProjec
     pinned: typeof value.pinned === 'boolean' ? value.pinned : false,
     createdAt: validDate(value.createdAt) ? value.createdAt : now,
     lastOpenedAt: validDate(value.lastOpenedAt) ? value.lastOpenedAt : now,
+    accountScope,
     folderIdentities: Object.keys(folderIdentities).length ? folderIdentities : undefined,
     scripts: parseProjectScripts(value.scripts),
   }

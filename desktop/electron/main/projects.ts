@@ -139,6 +139,8 @@ function isSameFolderIdentity(expected: FolderIdentity, current: FolderIdentity,
  * the single dismissedProjectPaths list in persisted state.
  */
 export class ProjectService {
+  private accountScope: string | undefined
+  private accountScopeRevision = 0
   // Reassigned wholesale (build-new-map-then-swap) so authorization reads are
   // never served from a partially repopulated map.
   private authorizedRoots = new Map<string, FolderIdentity>()
@@ -160,9 +162,28 @@ export class ProjectService {
     private readonly identityFilesystem: FolderIdentityFilesystem = defaultFolderIdentityFilesystem,
   ) {}
 
-  /** Persisted projects visible to this instance: exactly its own harness's records. */
-  private ownProjects(projects: readonly PersistedProject[]): PersistedProject[] {
-    return projects.filter((project) => project.harness === this.harness)
+  /** Switches the project catalog and filesystem grants to one opaque account scope. */
+  setAccountScope(scope?: string): void {
+    if (scope !== undefined && !/^[a-f0-9]{64}$/.test(scope)) {
+      throw new TypeError('account scope must be an opaque SHA-256 hex key')
+    }
+    if (scope === this.accountScope) return
+    this.accountScope = scope
+    this.accountScopeRevision += 1
+    this.authorizationRevision += 1
+    this.authorizationRefresh = undefined
+    this.authorizedRoots = new Map()
+    this.readOnlyRoots = new Map()
+    this.quarantinedBroadRoots = new Set()
+  }
+
+  private assertScopeRevision(revision: number): void {
+    if (revision !== this.accountScopeRevision) throw new TypeError('project account scope changed while the request was being checked')
+  }
+
+  /** Persisted projects visible to this instance: its harness and active account scope only. */
+  private ownProjects(projects: readonly PersistedProject[], scope = this.accountScope): PersistedProject[] {
+    return projects.filter((project) => project.harness === this.harness && project.accountScope === scope)
   }
 
   private async captureFolderIdentity(pathValue: string): Promise<{ path: string; identity: FolderIdentity }> {
@@ -209,7 +230,7 @@ export class ProjectService {
       if (authorizationRevision !== this.authorizationRevision) return new Set<string>()
       const refreshed = new Set<string>()
       for (const refresh of refreshes) {
-        const project = state.projects.find((item) => item.harness === this.harness && item.folders.some((folder) => resolve(folder) === refresh.configured))
+        const project = state.projects.find((item) => item.harness === this.harness && item.accountScope === this.accountScope && item.folders.some((folder) => resolve(folder) === refresh.configured))
         const storedKey = project?.folderIdentities?.[refresh.configured] ? refresh.configured : refresh.canonical
         const stored = project?.folderIdentities?.[storedKey]
         if (!project || !stored) continue
@@ -253,8 +274,8 @@ export class ProjectService {
     this.stopProjectProcesses = providers.stopProjectProcesses ?? (async () => undefined)
   }
 
-  private async migrateLegacyFolderIdentities(): Promise<void> {
-    const legacyProjects = this.ownProjects(this.store.snapshot().projects).filter((project) => project.folderIdentities === undefined)
+  private async migrateLegacyFolderIdentities(scope: string | undefined, scopeRevision: number): Promise<void> {
+    const legacyProjects = this.ownProjects(this.store.snapshot().projects, scope).filter((project) => project.folderIdentities === undefined)
     if (!legacyProjects.length) return
 
     const captured = new Map<string, Record<string, FolderIdentity>>()
@@ -272,9 +293,10 @@ export class ProjectService {
     if (!captured.size) return
 
     await this.store.update((state) => {
+      if (scopeRevision !== this.accountScopeRevision) return
       for (const project of state.projects) {
         const identities = captured.get(project.id)
-        if (identities && project.folderIdentities === undefined) project.folderIdentities = identities
+        if (identities && project.harness === this.harness && project.accountScope === scope && project.folderIdentities === undefined) project.folderIdentities = identities
       }
     })
   }
@@ -349,8 +371,8 @@ export class ProjectService {
    * project holding its main repository, so a worktree keeps showing under the
    * repository it belongs to instead of as a sibling project.
    */
-  private async absorbLinkedWorktreeProjects(): Promise<void> {
-    const own = this.ownProjects(this.store.snapshot().projects)
+  private async absorbLinkedWorktreeProjects(scope: string | undefined, scopeRevision: number): Promise<void> {
+    const own = this.ownProjects(this.store.snapshot().projects, scope)
     if (own.length < 2) return
     const ownerByFolder = new Map<string, string>()
     for (const project of own) {
@@ -375,26 +397,32 @@ export class ProjectService {
     if (!absorptions.size) return
 
     await this.store.update((state) => {
+      if (scopeRevision !== this.accountScopeRevision) return
       const byId = new Map(state.projects.map((project) => [project.id, project]))
       const absorbed = new Set<string>()
       for (const [childId, parentId] of absorptions) {
         const child = byId.get(childId)
         const parent = byId.get(parentId)
-        if (!child || !parent || parent.harness !== child.harness) continue
+        if (!child || !parent || parent.harness !== this.harness || child.harness !== this.harness || parent.accountScope !== scope || child.accountScope !== scope) continue
         const folders = new Set(parent.folders.map((folder) => resolve(folder)))
         for (const folder of child.folders) folders.add(resolve(folder))
         parent.folders = [...folders]
         parent.folderIdentities = { ...parent.folderIdentities, ...child.folderIdentities }
         absorbed.add(childId)
       }
-      if (absorbed.size) state.projects = state.projects.filter((project) => !absorbed.has(project.id))
+      if (absorbed.size) state.projects = state.projects.filter((project) => !(absorbed.has(project.id) && project.harness === this.harness && project.accountScope === scope))
     })
     this.authorizationRevision += 1
   }
 
   private async buildAuthorizationContext(authorizationRevision: number): Promise<AuthorizationContext> {
-    await this.migrateLegacyFolderIdentities()
-    await this.absorbLinkedWorktreeProjects()
+    const accountScope = this.accountScope
+    const scopeRevision = this.accountScopeRevision
+    this.assertScopeRevision(scopeRevision)
+    await this.migrateLegacyFolderIdentities(accountScope, scopeRevision)
+    this.assertScopeRevision(scopeRevision)
+    await this.absorbLinkedWorktreeProjects(accountScope, scopeRevision)
+    this.assertScopeRevision(scopeRevision)
     const nextAuthorized = new Map<string, FolderIdentity>()
     const nextReadOnly = new Map<string, FolderIdentity>()
     const nextQuarantinedBroadRoots = new Set<string>()
@@ -402,7 +430,7 @@ export class ProjectService {
     const persisted: PersistedAuthorizationContext[] = []
     const represented = new Set<string>()
 
-    for (const project of this.ownProjects(this.store.snapshot().projects)) {
+    for (const project of this.ownProjects(this.store.snapshot().projects, accountScope)) {
       const folderSet = new Set<string>()
       let primaryGranted = false
       for (const folder of project.folders) {
@@ -430,9 +458,15 @@ export class ProjectService {
     const dismissed = await this.resolveDismissedProjectPaths(snapshot.dismissedProjectPaths)
     const sessions = await this.sessionProvider()
     const canonicalSessionPaths = await this.canonicalizeSessionPaths(sessions)
-    const discoveredSessionRoots = await this.discoverValidSessionRoots(sessions, dismissed, represented, authorizationRevision)
+    // A session file has no Forge-account provenance. Keep these inferred roots
+    // available to the legacy local scope, but never expose them to an account
+    // until session storage itself can prove ownership.
+    const discoveredSessionRoots = accountScope === undefined
+      ? await this.discoverValidSessionRoots(sessions, dismissed, represented, authorizationRevision)
+      : []
     for (const { canonical, identity } of discoveredSessionRoots) nextReadOnly.set(canonical, identity)
 
+    this.assertScopeRevision(scopeRevision)
     if (authorizationRevision === this.authorizationRevision && identityRefreshes.length) {
       const refreshed = await this.persistFolderIdentityRefreshes(identityRefreshes, authorizationRevision)
       for (const refresh of identityRefreshes) if (!refreshed.has(refresh.configured)) nextAuthorized.delete(refresh.configured)
@@ -448,10 +482,12 @@ export class ProjectService {
   private refreshAuthorization(force = false): Promise<AuthorizationContext> {
     if (force) this.authorizationRevision += 1
     const revision = this.authorizationRevision
+    const scopeRevision = this.accountScopeRevision
     if (!force && this.authorizationRefresh?.revision === revision) return this.authorizationRefresh.promise
     const promise = this.buildAuthorizationContext(revision)
     const tracked = promise.then(
       (context) => {
+        this.assertScopeRevision(scopeRevision)
         if (this.authorizationRefresh?.promise === tracked) this.authorizationRefresh = undefined
         return context
       },
@@ -465,7 +501,9 @@ export class ProjectService {
   }
 
   async list(): Promise<ProjectRecord[]> {
+    const scopeRevision = this.accountScopeRevision
     const { sessions, canonicalSessionPaths, persisted, discoveredSessionRoots } = await this.refreshAuthorization()
+    this.assertScopeRevision(scopeRevision)
     const sessionStats = aggregateSessionProjectStats(sessions, canonicalSessionPaths)
     const records: ProjectRecord[] = []
     const branchTargets: Array<{ record: ProjectRecord; cwd: string }> = []
@@ -526,6 +564,7 @@ export class ProjectService {
       }
       return target
     })
+    this.assertScopeRevision(scopeRevision)
     return sortProjects(records, 'recent')
   }
 
@@ -542,15 +581,21 @@ export class ProjectService {
   }
 
   async adoptCheckoutWorktree(idValue: unknown, parentCwdValue: unknown, pathValue: unknown): Promise<ProjectRecord> {
+    const scope = this.accountScope
+    const scopeRevision = this.accountScopeRevision
     const id = requireId(idValue, 'project id')
     const project = await this.resolveCheckoutProject(id)
+    this.assertScopeRevision(scopeRevision)
     const parentCwd = await this.authorizeCwd(requireString(parentCwdValue, 'cwd', { min: 1, max: 4096 }))
+    this.assertScopeRevision(scopeRevision)
     if (resolve(project.primaryFolder) !== parentCwd) throw new TypeError('worktree parent project is not an authorized grant')
     const requested = resolve(requireString(pathValue, 'worktree path', { min: 1, max: 4096 }))
     const linked = (await listGitWorktrees(parentCwd)).find((worktree) => resolve(worktree.path) === requested)
+    this.assertScopeRevision(scopeRevision)
     if (!linked) throw new TypeError('worktree path is not linked to the authorized Git repository')
     const { path, identity } = await this.captureFolderIdentity(linked.path)
-    const next = await this.persistWorktree(parentCwd, path, identity)
+    this.assertScopeRevision(scopeRevision)
+    const next = await this.persistWorktree(parentCwd, path, identity, scope, scopeRevision)
     if (next.id !== id) throw new TypeError('worktree belongs to a different project grant')
     return next
   }
@@ -572,17 +617,25 @@ export class ProjectService {
   }
 
   /**
-   * Grants `path` to this harness: undismisses it, refreshes or creates the
-   * owning persisted project, publishes the authorization, and returns the
-   * enriched record. `knownSessions` reuses an already-loaded session list.
+   * Grants `path` to this harness and account scope: undismisses it, refreshes
+   * or creates the owning persisted project, publishes authorization, and
+   * returns the enriched record. `knownSessions` reuses an already-loaded list.
    */
-  private async grantProjectFolder(path: string, identity: FolderIdentity, knownSessions?: readonly SessionRecord[]): Promise<ProjectRecord> {
+  private async grantProjectFolder(
+    path: string,
+    identity: FolderIdentity,
+    knownSessions?: readonly SessionRecord[],
+    scope = this.accountScope,
+    scopeRevision = this.accountScopeRevision,
+  ): Promise<ProjectRecord> {
+    this.assertScopeRevision(scopeRevision)
     if (await this.isBroadRoot(path)) throw new TypeError('Broad filesystem roots cannot be added as projects')
     this.removalRoots.delete(path)
     const now = new Date().toISOString()
     const project = await this.store.update((state): PersistedProject => {
+      this.assertScopeRevision(scopeRevision)
       state.dismissedProjectPaths = state.dismissedProjectPaths.filter((item) => resolve(item) !== path)
-      const existing = this.ownProjects(state.projects).find((item) => resolve(item.path) === path || item.folders.some((folder) => resolve(folder) === path))
+      const existing = this.ownProjects(state.projects, scope).find((item) => resolve(item.path) === path || item.folders.some((folder) => resolve(folder) === path))
       if (existing) {
         existing.lastOpenedAt = now
         existing.folderIdentities = { ...existing.folderIdentities, [path]: identity }
@@ -591,6 +644,7 @@ export class ProjectService {
       const created: PersistedProject = {
         id: randomUUID(),
         harness: this.harness,
+        accountScope: scope,
         purpose: 'project',
         name: basename(path) || path,
         path,
@@ -604,18 +658,24 @@ export class ProjectService {
       state.projects.push(created)
       return created
     })
+    this.assertScopeRevision(scopeRevision)
     this.authorizationRevision += 1
+    const grantRevision = this.accountScopeRevision
     this.authorizedRoots.set(path, identity)
     const sessions = knownSessions ?? await this.sessionProvider()
-    return { ...project, sessionCount: sessions.filter((session) => resolve(session.projectPath) === path).length, gitBranch: await this.branchProvider(path) }
+    this.assertScopeRevision(grantRevision)
+    const gitBranch = await this.branchProvider(path)
+    this.assertScopeRevision(grantRevision)
+    return { ...project, sessionCount: sessions.filter((session) => resolve(session.projectPath) === path).length, gitBranch }
   }
 
-  private async persistWorktree(parentCwd: string, path: string, identity: FolderIdentity): Promise<ProjectRecord> {
+  private async persistWorktree(parentCwd: string, path: string, identity: FolderIdentity, scope: string | undefined, scopeRevision: number): Promise<ProjectRecord> {
+    this.assertScopeRevision(scopeRevision)
     if (await this.isBroadRoot(path)) throw new TypeError('Broad filesystem roots cannot be added as projects')
     this.removalRoots.delete(path)
     const now = new Date().toISOString()
     let parentId: string | undefined
-    for (const item of this.ownProjects(this.store.snapshot().projects)) {
+    for (const item of this.ownProjects(this.store.snapshot().projects, scope)) {
       for (const candidate of new Set([item.path, ...item.folders])) {
         try {
           if (await requireExistingDirectory(candidate, 'project folder') === parentCwd) {
@@ -628,8 +688,9 @@ export class ProjectService {
     }
     if (!parentId) throw new TypeError('worktree parent project is not an authorized grant')
     const project = await this.store.update((state): PersistedProject => {
+      this.assertScopeRevision(scopeRevision)
       state.dismissedProjectPaths = state.dismissedProjectPaths.filter((item) => resolve(item) !== path)
-      const own = this.ownProjects(state.projects)
+      const own = this.ownProjects(state.projects, scope)
       const parent = own.find((item) => item.id === parentId)
       if (!parent) throw new TypeError('worktree parent project is not an authorized grant')
       const absorbed = own.filter((item) => item.id !== parent.id && (resolve(item.path) === path || item.folders.some((folder) => resolve(folder) === path)))
@@ -647,13 +708,16 @@ export class ProjectService {
       parent.folderIdentities = identities
       if (absorbed.length) {
         const absorbedIds = new Set(absorbed.map((item) => item.id))
-        state.projects = state.projects.filter((item) => !absorbedIds.has(item.id))
+        state.projects = state.projects.filter((item) => !(absorbedIds.has(item.id) && item.harness === this.harness && item.accountScope === scope))
       }
       return parent
     })
+    this.assertScopeRevision(scopeRevision)
     this.authorizationRevision += 1
+    const worktreeRevision = this.accountScopeRevision
     this.authorizedRoots.set(path, identity)
     const sessions = await this.sessionProvider()
+    this.assertScopeRevision(worktreeRevision)
     const granted = new Set(project.folders.map((folder) => resolve(folder)))
     return {
       ...project,
@@ -663,16 +727,23 @@ export class ProjectService {
   }
 
   async add(): Promise<ProjectRecord | null> {
+    const scope = this.accountScope
+    const scopeRevision = this.accountScopeRevision
     const parent = this.windowProvider()
     const result = parent
       ? await dialog.showOpenDialog(parent, { title: '选择工作空间文件夹', properties: ['openDirectory', 'createDirectory'] })
       : await dialog.showOpenDialog({ title: '选择工作空间文件夹', properties: ['openDirectory', 'createDirectory'] })
     if (result.canceled || result.filePaths.length !== 1) return null
+    this.assertScopeRevision(scopeRevision)
     const { path, identity } = await this.captureFolderIdentity(result.filePaths[0])
-    return this.grantProjectFolder(path, identity)
+    this.assertScopeRevision(scopeRevision)
+    return this.grantProjectFolder(path, identity, undefined, scope, scopeRevision)
   }
 
   async ensurePersonalWorkspace(pathValue: string): Promise<ProjectRecord> {
+    const scope = this.accountScope
+    const scopeRevision = this.accountScopeRevision
+    this.assertScopeRevision(scopeRevision)
     const requested = resolve(requireString(pathValue, 'personal workspace', { min: 1, max: 4096 }))
     await mkdir(requested, { recursive: true, mode: 0o700 })
     const materialsFolder = join(requested, '材料')
@@ -681,25 +752,34 @@ export class ProjectService {
       mkdir(materialsFolder, { recursive: true, mode: 0o700 }),
       mkdir(deliveriesFolder, { recursive: true, mode: 0o700 }),
     ])
+    this.assertScopeRevision(scopeRevision)
     const { path, identity } = await this.captureFolderIdentity(requested)
-    const granted = await this.grantProjectFolder(path, identity)
+    const granted = await this.grantProjectFolder(path, identity, undefined, scope, scopeRevision)
+    const grantRevision = this.accountScopeRevision
     const project = await this.store.update((state): PersistedProject => {
-      const current = state.projects.find((item) => item.id === granted.id && item.harness === this.harness)
+      this.assertScopeRevision(grantRevision)
+      const current = state.projects.find((item) => item.id === granted.id && item.harness === this.harness && item.accountScope === scope)
       if (!current) throw new Error('Personal workspace grant disappeared while it was being initialized')
       current.purpose = 'personal'
       current.name = '我的工作'
       current.pinned = true
       return current
     })
+    this.assertScopeRevision(grantRevision)
     this.authorizationRevision += 1
     return { ...granted, ...project, purpose: 'personal', name: '我的工作', pinned: true, materialsFolder, deliveriesFolder }
   }
 
   async grantInferred(pathValue: unknown): Promise<ProjectRecord> {
+    const scope = this.accountScope
+    const scopeRevision = this.accountScopeRevision
+    if (scope !== undefined) throw new TypeError('Session-derived project ownership is unknown for this account; select the folder explicitly')
     const { path, identity } = await this.captureFolderIdentity(String(pathValue))
+    this.assertScopeRevision(scopeRevision)
     if (await this.isBroadRoot(path)) throw new TypeError('Broad filesystem roots cannot be inferred as projects')
     this.removalRoots.delete(path)
     const sessions = await this.sessionProvider()
+    this.assertScopeRevision(scopeRevision)
     let discovered = false
     for (const session of sessions) {
       try {
@@ -707,17 +787,20 @@ export class ProjectService {
       } catch { /* Ignore stale session project paths. */ }
     }
     if (!discovered) throw new TypeError(`Project path was not discovered from a ${HARNESSES[this.harness].productName} session`)
-    return this.grantProjectFolder(path, identity, sessions)
+    return this.grantProjectFolder(path, identity, sessions, scope, scopeRevision)
   }
 
   async remove(idValue: unknown): Promise<boolean> {
     const authorizationRevision = ++this.authorizationRevision
+    const scope = this.accountScope
+    const scopeRevision = this.accountScopeRevision
     const id = requireId(idValue, 'project id')
     const roots: string[] = []
     try {
       this.pendingRemovalIds.add(id)
 
-      const persisted = this.ownProjects(this.store.snapshot().projects).find((project) => project.id === id)
+      const persisted = this.ownProjects(this.store.snapshot().projects, scope).find((project) => project.id === id)
+      if (!persisted && scope !== undefined) return false
       const persistedPaths: string[] = []
       if (persisted) {
         for (const folder of persisted.folders) {
@@ -728,6 +811,7 @@ export class ProjectService {
           this.readOnlyRoots.delete(configured)
           try {
             const canonical = await requireExistingDirectory(configured, 'project folder')
+            this.assertScopeRevision(scopeRevision)
             if (canonical !== configured) {
               persistedPaths.push(canonical)
               this.removalRoots.add(canonical)
@@ -753,9 +837,11 @@ export class ProjectService {
 
         if (!inferredPath) {
           const sessions = await this.sessionProvider()
+          this.assertScopeRevision(scopeRevision)
           for (const pathValue of [...new Set(sessions.map((session) => session.projectPath).filter((p): p is string => Boolean(p)))]) {
             try {
               const path = await requireExistingDirectory(pathValue, 'session project path')
+              this.assertScopeRevision(scopeRevision)
               if (inferredId(path) === id && !(await this.isBroadRoot(path))) {
                 inferredPath = path
                 this.removalRoots.add(path)
@@ -772,9 +858,11 @@ export class ProjectService {
       if (roots.length) {
         for (const root of roots) this.removalRoots.add(root)
         await this.stopProjectProcesses([...new Set(roots)])
+        this.assertScopeRevision(scopeRevision)
       }
       return await this.store.update((state) => {
-        const index = state.projects.findIndex((project) => project.id === id && project.harness === this.harness)
+        this.assertScopeRevision(scopeRevision)
+        const index = state.projects.findIndex((project) => project.id === id && project.harness === this.harness && project.accountScope === scope)
         const paths = index >= 0 ? persistedPaths : inferredPath ? [inferredPath] : []
         if (!paths.length) return false
         if (index >= 0) state.projects.splice(index, 1)
@@ -800,9 +888,12 @@ export class ProjectService {
   }
 
   async touch(idValue: unknown): Promise<boolean> {
+    const scope = this.accountScope
+    const scopeRevision = this.accountScopeRevision
     const id = requireId(idValue, 'project id')
     return this.store.update((state) => {
-      const project = state.projects.find((item) => item.id === id && item.harness === this.harness)
+      this.assertScopeRevision(scopeRevision)
+      const project = state.projects.find((item) => item.id === id && item.harness === this.harness && item.accountScope === scope)
       if (!project) return false
       project.lastOpenedAt = new Date().toISOString()
       return true
@@ -810,10 +901,13 @@ export class ProjectService {
   }
 
   async setPinned(idValue: unknown, pinnedValue: unknown): Promise<boolean> {
+    const scope = this.accountScope
+    const scopeRevision = this.accountScopeRevision
     const id = requireId(idValue, 'project id')
     const pinned = requireBoolean(pinnedValue, 'pinned')
     return this.store.update((state) => {
-      const project = state.projects.find((item) => item.id === id && item.harness === this.harness)
+      this.assertScopeRevision(scopeRevision)
+      const project = state.projects.find((item) => item.id === id && item.harness === this.harness && item.accountScope === scope)
       if (!project) return false
       project.pinned = pinned
       return true
@@ -821,13 +915,16 @@ export class ProjectService {
   }
 
   async updateScripts(idValue: unknown, scriptsValue: unknown): Promise<ProjectScripts> {
+    const scope = this.accountScope
+    const scopeRevision = this.accountScopeRevision
     const id = requireId(idValue, 'project id')
     const input = requireRecord(scriptsValue, 'project scripts')
     rejectUnknownKeys(input, ['setup', 'run'], 'project scripts')
     const setup = requireString(input.setup, 'setup script', { max: 64 * 1024, trim: true })
     const run = requireString(input.run, 'run script', { max: 64 * 1024, trim: true })
     return this.store.update((state) => {
-      const project = state.projects.find((item) => item.id === id && item.harness === this.harness)
+      this.assertScopeRevision(scopeRevision)
+      const project = state.projects.find((item) => item.id === id && item.harness === this.harness && item.accountScope === scope)
       if (!project) throw new Error('Project is not explicitly granted to this harness')
       const previous = project.scripts
       project.scripts = {
@@ -845,10 +942,13 @@ export class ProjectService {
   }
 
   async markSetupStarted(idValue: unknown, setupValue: unknown): Promise<ProjectScripts> {
+    const scope = this.accountScope
+    const scopeRevision = this.accountScopeRevision
     const id = requireId(idValue, 'project id')
     const setup = requireString(setupValue, 'setup script', { min: 1, max: 64 * 1024 })
     return this.store.update((state) => {
-      const project = state.projects.find((item) => item.id === id && item.harness === this.harness)
+      this.assertScopeRevision(scopeRevision)
+      const project = state.projects.find((item) => item.id === id && item.harness === this.harness && item.accountScope === scope)
       if (!project?.scripts || project.scripts.setup !== setup) throw new Error('Project setup script changed before it could start')
       project.scripts.setupLastRun = setup
       project.scripts.setupLastExitCode = undefined
@@ -857,11 +957,14 @@ export class ProjectService {
   }
 
   async finishSetup(idValue: unknown, setupValue: unknown, exitCodeValue: unknown): Promise<ProjectScripts | undefined> {
+    const scope = this.accountScope
+    const scopeRevision = this.accountScopeRevision
     const id = requireId(idValue, 'project id')
     const setup = requireString(setupValue, 'setup script', { min: 1, max: 64 * 1024 })
     const exitCode = requireInteger(exitCodeValue, 'setup exit code', -2_147_483_648, 2_147_483_647)
     return this.store.update((state) => {
-      const project = state.projects.find((item) => item.id === id && item.harness === this.harness)
+      this.assertScopeRevision(scopeRevision)
+      const project = state.projects.find((item) => item.id === id && item.harness === this.harness && item.accountScope === scope)
       if (!project?.scripts || project.scripts.setup !== setup || project.scripts.setupLastRun !== setup) return undefined
       project.scripts.setupLastExitCode = exitCode
       return { ...project.scripts }

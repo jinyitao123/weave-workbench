@@ -1035,6 +1035,100 @@ describe('ProjectService harness scoping', () => {
 })
 
 
+describe('ProjectService account scoping', () => {
+  it('keeps legacy projects local and creates independent account grants for the same explicitly selected folder', async () => {
+    const { root, service, store } = setup()
+    const accountA = 'a'.repeat(64)
+    const accountB = 'b'.repeat(64)
+    const now = new Date().toISOString()
+    await store.update((state) => { state.projects.push({
+      id: 'legacy-project', harness: 'prime', name: 'Legacy', path: root, folders: [root], primaryFolder: root,
+      pinned: false, createdAt: now, lastOpenedAt: now, folderIdentities: identities(root),
+    }) })
+    service.bindProviders({ sessions: async () => [], branch: async () => undefined })
+
+    expect((await service.list()).map((project) => project.id)).toEqual(['legacy-project'])
+    service.setAccountScope(accountA)
+    await expect(service.authorizeCwd(root)).rejects.toThrow(/not inside an added Prime Work project/)
+    electronMocks.dialog.showOpenDialog.mockResolvedValue({ canceled: false, filePaths: [root] })
+    const grantA = await service.add()
+    expect(grantA).not.toBeNull()
+    expect((await service.list()).map((project) => project.id)).toEqual([grantA!.id])
+    expect(store.snapshot().projects.find((project) => project.id === grantA!.id)?.accountScope).toBe(accountA)
+    await expect(service.authorizeCwd(root)).resolves.toBe(realpathSync(root))
+
+    service.setAccountScope(accountB)
+    expect(await service.list()).toEqual([])
+    await expect(service.authorizeCwd(root)).rejects.toThrow(/not inside an added Prime Work project/)
+    const grantB = await service.add()
+    expect(grantB).not.toBeNull()
+    expect(grantB!.id).not.toBe(grantA!.id)
+    expect((await service.list()).map((project) => project.id)).toEqual([grantB!.id])
+    await expect(service.remove(grantA!.id)).resolves.toBe(false)
+    await expect(service.setPinned(grantA!.id, true)).resolves.toBe(false)
+    const canonicalRoot = realpathSync(root)
+    expect(store.snapshot().projects.map(({ id, path, accountScope }) => ({ id, path, accountScope }))).toEqual([
+      { id: 'legacy-project', path: root, accountScope: undefined },
+      { id: grantA!.id, path: canonicalRoot, accountScope: accountA },
+      { id: grantB!.id, path: canonicalRoot, accountScope: accountB },
+    ])
+
+    service.setAccountScope(accountA)
+    expect((await service.list()).map((project) => project.id)).toEqual([grantA!.id])
+    service.setAccountScope()
+    expect((await service.list()).map((project) => project.id)).toEqual(['legacy-project'])
+    await expect(service.authorizeCwd(root)).resolves.toBe(realpathSync(root))
+    expect(store.snapshot().projects).toHaveLength(3)
+  })
+
+  it('tags account-managed personal workspaces with the active scope without reassigning legacy folders', async () => {
+    const { root, service, store } = setup()
+    const legacyPath = join(root, 'legacy-personal')
+    await service.ensurePersonalWorkspace(legacyPath)
+    const legacyId = store.snapshot().projects[0]!.id
+
+    service.setAccountScope('f'.repeat(64))
+    const accountPath = join(root, 'account-personal')
+    const accountProject = await service.ensurePersonalWorkspace(accountPath)
+    expect(store.snapshot().projects.find((project) => project.id === accountProject.id)?.accountScope).toBe('f'.repeat(64))
+    expect(store.snapshot().projects.find((project) => project.id === legacyId)?.accountScope).toBeUndefined()
+
+    service.setAccountScope()
+    expect((await service.list()).map((project) => project.id)).toEqual([legacyId])
+    expect(store.snapshot().projects).toHaveLength(2)
+  })
+
+  it('rejects non-opaque scope keys and does not expose unowned session-derived roots to a scoped account', async () => {
+    const { root, service } = setup()
+    service.bindProviders({
+      sessions: async () => [session('local-session', root, '2026-03-01T00:00:00.000Z', '2026-03-02T00:00:00.000Z')],
+      branch: async () => undefined,
+    })
+
+    for (const invalid of ['account@example.test', 'A'.repeat(64), 'a'.repeat(63), '']) {
+      expect(() => service.setAccountScope(invalid)).toThrow(/opaque SHA-256 hex key/)
+    }
+    service.setAccountScope('c'.repeat(64))
+    expect(await service.list()).toEqual([])
+    await expect(service.grantInferred(root)).rejects.toThrow(/ownership is unknown/)
+    await expect(service.authorizeReadOnlyCwd(root)).rejects.toThrow(/not inside an added Prime Work project/)
+  })
+
+  it('rejects a project listing that began under an account scope changed while reading local sessions', async () => {
+    const { service } = setup()
+    const sessions = deferred<SessionRecord[]>()
+    service.bindProviders({ sessions: () => sessions.promise, branch: async () => undefined })
+    service.setAccountScope('d'.repeat(64))
+
+    const staleList = service.list()
+    service.setAccountScope('e'.repeat(64))
+    sessions.resolve([])
+    await expect(staleList).rejects.toThrow(/account scope changed/)
+    expect(await service.list()).toEqual([])
+  })
+})
+
+
 describe('ProjectService worktrees', () => {
   it('returns no checkout choices for an authorized non-Git project', async () => {
     const { root, service, store } = setup()

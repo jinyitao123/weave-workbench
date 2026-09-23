@@ -73,6 +73,33 @@ describe('persisted project parsing', () => {
     expect(loadState({ version: 3, projects: { id: 'p' } }).projects).toEqual([])
   })
 
+  it('preserves valid opaque account scopes, keeps old projects unscoped, and drops malformed scopes', () => {
+    const project = {
+      id: 'project',
+      harness: 'prime',
+      name: 'Project',
+      path: '/repos/project',
+      folders: ['/repos/project'],
+      primaryFolder: '/repos/project',
+    }
+    const validScope = 'a'.repeat(64)
+    const { projects } = loadState({
+      version: 4,
+      projects: [
+        { ...project, id: 'legacy' },
+        { ...project, id: 'scoped', accountScope: validScope },
+        { ...project, id: 'short', accountScope: 'abc123' },
+        { ...project, id: 'uppercase', accountScope: 'A'.repeat(64) },
+        { ...project, id: 'null', accountScope: null },
+      ],
+    })
+
+    expect(projects.map(({ id, accountScope }) => ({ id, accountScope }))).toEqual([
+      { id: 'legacy', accountScope: undefined },
+      { id: 'scoped', accountScope: validScope },
+    ])
+  })
+
   it('keeps only folder identities with string device and inode numbers and a plausible birth time', () => {
     const { projects } = loadState({
       version: 3,
