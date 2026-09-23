@@ -15,7 +15,13 @@ it('keeps workflow input bindings and structured output schemas unchanged across
   await teamWorkspaceRequest({ action: 'save', teamId: 'team', revision: 2, document: result.document }, read, write)
   const body = (write.mock.calls as unknown as Array<[string, string, { document: { members: Array<{ configuration: typeof config }>; workflows: Array<{ graph_definition: unknown }> } }]>)[0][2]
   expect(body.document.members[0].configuration.output_schema).toEqual(config.output_schema)
+  expect(body.document.members[0].configuration).not.toHaveProperty('business_capability_bindings')
   expect(body.document.workflows[0].graph_definition).toEqual(graph)
+
+  result.document.members[0].configuration.businessCapabilityBindings = [{ capabilityId: 'forge:action:example.submit', parameters: [{ name: 'material_file_id', source: 'materials.single.id' }] }]
+  await teamWorkspaceRequest({ action: 'save', teamId: 'team', revision: 2, document: result.document }, read, write)
+  const boundBody = (write.mock.calls as unknown as Array<[string, string, unknown]>)[1][2]
+  expect(boundBody).toMatchObject({ document: { members: [{ configuration: { business_capability_bindings: [{ capability_id: 'forge:action:example.submit', parameters: [{ name: 'material_file_id', source: 'materials.single.id' }] }] } }] } })
 })
 
 it('freezes Forge action definitions into a development trial request', async () => {
