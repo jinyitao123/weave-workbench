@@ -464,7 +464,7 @@ describe('EnterpriseService', () => {
       })
       if (url.endsWith('/api/v1/approvals/requests/approval-2/workbench-context')) return Response.json({
         version: '1', requestId: 'approval-2', status: 'returned', viewer: 'original_submitter',
-        title: '设备验收合同', step: '销售修改', returnReason: '请补齐附件', revisionReady: true,
+        title: '设备验收合同', step: '销售修改', returnReason: '请补齐附件',
         fields: [{ label: '合同名称', value: '设备验收合同' }], files: [],
       })
       return Response.json({}, { status: 404 })
@@ -474,7 +474,9 @@ describe('EnterpriseService', () => {
 
     const context = await service.getApprovalContext('approval-1')
     expect(context).toMatchObject({ title: '设备验收合同', step: '交付复核', fields: [{ label: '合同名称', value: '设备验收合同' }], files: [{ name: '合同.md', content: original, verified: true }, { name: '技术协议.md', content: attachment, verified: true }] })
-    await expect(service.getApprovalContext('approval-2')).resolves.toMatchObject({ title: '设备验收合同', step: '销售修改', returnReason: '请补齐附件', revisionReady: true, files: [] })
+    const returnedContext = await service.getApprovalContext('approval-2')
+    expect(returnedContext).toMatchObject({ title: '设备验收合同', step: '销售修改', returnReason: '请补齐附件', files: [] })
+    expect(returnedContext).not.toHaveProperty('revisionReady')
     expect(calls.filter((url) => url.includes('/api/v1/data/') || /\/api\/v1\/storage\/files\/[^/]+\/url/.test(url))).toEqual([])
     expect(calls.filter((url) => url.includes('/workbench-context'))).toHaveLength(2)
     fileContent = '# 另一份合同\n'
@@ -482,19 +484,21 @@ describe('EnterpriseService', () => {
   })
 
   it.each([
-    [401, '登录已失效，请重新登录'],
-    [404, '这项审批已无法由当前员工处理，请刷新待办'],
-    [409, '审批状态已变化，请刷新待办'],
-    [413, '审批材料过大，请在 Forge 中查看'],
-    [422, '审批材料暂不支持在桌面中预览，请在 Forge 中查看'],
-  ])('handles approval context HTTP %i without exposing the response body', async (status, message) => {
+    [401, undefined, '登录已失效，请重新登录'],
+    [404, 'APPROVAL_CONTEXT_NOT_FOUND', '这项审批已无法由当前员工处理，请刷新待办'],
+    [409, 'APPROVAL_CONTEXT_STALE', '审批状态已变化，请刷新待办'],
+    [413, 'APPROVAL_MATERIAL_TOO_LARGE', '审批材料过大，请在 Forge 中查看'],
+    [415, 'APPROVAL_MATERIAL_UNSUPPORTED_TYPE', '此审批材料格式暂不支持桌面预览，请在 Forge 中查看'],
+    [422, 'APPROVAL_MATERIAL_HASH_MISMATCH', '审批材料与本次提交版本不一致，请暂停处理并刷新待办'],
+    [422, 'APPROVAL_MATERIAL_HASH_UNAVAILABLE', '审批记录没有可核验的材料摘要，请在 Forge 中查看'],
+  ])('handles approval context HTTP %i safely', async (status, code, message) => {
     const secret = 'PRIVATE_APPROVAL_RESPONSE_BODY'
     const calls: string[] = []
     const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
       const url = String(input); calls.push(url)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'reviewer-1' } })
       if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-reviewer-1', externalId: 'reviewer-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
-      if (url.endsWith('/api/v1/approvals/requests/approval-1/workbench-context')) return Response.json({ error: 'approval_context_error', detail: secret }, { status })
+      if (url.endsWith('/api/v1/approvals/requests/approval-1/workbench-context')) return Response.json({ error: { code, detail: secret } }, { status })
       return Response.json({}, { status: 404 })
     }) as typeof fetch
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' }, fetch: fetchMock })
@@ -531,6 +535,35 @@ describe('EnterpriseService', () => {
     await contextRequest.promise
     await service.signIn('b@example.test', 'secret')
     lateContext.resolve(Response.json({ version: '1', requestId: 'approval-1', status: 'pending', viewer: 'current_approver', title: '旧账号合同正文', step: '交付复核', fields: [], files: [] }))
+
+    await expect(pending).rejects.toThrow('账号已切换，旧请求结果已丢弃')
+    await expect(service.getSession()).resolves.toMatchObject({ status: 'signed-in', user: { id: 'b@example.test' } })
+  })
+
+  it('discards an approval context error after the account changes', async () => {
+    const contextRequest = deferred<void>(), lateContext = deferred<Response>()
+    const fetchMock = vi.fn((input: URL | RequestInfo, init?: RequestInit) => {
+      const url = String(input)
+      if (url.endsWith('/api/v1/auth/sign-in/email')) {
+        const email = (JSON.parse(String(init?.body)) as { email: string }).email
+        return Promise.resolve(Response.json({ token: `forge-token-${email}`, user: { id: email } }))
+      }
+      if (url.endsWith('/v1/auth/external/exchange')) {
+        const account = new Headers(init?.headers).get('Authorization')?.replace('Bearer forge-token-', '') ?? 'unknown'
+        return Promise.resolve(Response.json({ token: `weave-token-${account}`, subject: { id: `weave-${account}`, externalId: account }, organization: { id: 'default' }, permissions: ['teams:use'] }))
+      }
+      if (url.endsWith('/api/v1/approvals/requests/approval-1/workbench-context')) {
+        contextRequest.resolve(undefined)
+        return lateContext.promise
+      }
+      return Promise.resolve(Response.json({}, { status: 404 }))
+    }) as typeof fetch
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' }, fetch: fetchMock })
+    await service.signIn('a@example.test', 'secret')
+    const pending = service.getApprovalContext('approval-1')
+    await contextRequest.promise
+    await service.signIn('b@example.test', 'secret')
+    lateContext.resolve(Response.json({ error: { code: 'APPROVAL_MATERIAL_HASH_MISMATCH', detail: '旧账号响应' } }, { status: 422 }))
 
     await expect(pending).rejects.toThrow('账号已切换，旧请求结果已丢弃')
     await expect(service.getSession()).resolves.toMatchObject({ status: 'signed-in', user: { id: 'b@example.test' } })

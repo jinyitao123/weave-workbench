@@ -14,7 +14,6 @@
     "title": { "type": "string", "minLength": 1, "maxLength": 300 },
     "step": { "type": "string", "minLength": 1, "maxLength": 160 },
     "returnReason": { "type": "string", "maxLength": 4000 },
-    "revisionReady": { "type": "boolean" },
     "fields": {
       "type": "array",
       "maxItems": 64,

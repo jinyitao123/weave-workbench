@@ -56,6 +56,17 @@ function textValue(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined
 }
 
+async function responseErrorCode(response: Response): Promise<string | undefined> {
+  try {
+    const envelope = record(await response.json())
+    const error = record(envelope?.error)
+    const code = textValue(error?.code)
+    return code && /^[A-Z][A-Z0-9_]{0,79}$/.test(code) ? code : undefined
+  } catch {
+    return undefined
+  }
+}
+
 function numberValue(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
@@ -1088,6 +1099,8 @@ export class EnterpriseService {
       new URL(`/api/v1/approvals/requests/${encodeURIComponent(approvalId)}/workbench-context`, this.forgeUrl),
       'forge', { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }, generation,
     )
+    try { this.assertCurrentAuth(snapshot) }
+    catch (error) { await response.body?.cancel(); throw error }
     if (response.status === 401) {
       await response.body?.cancel()
       await this.signOutIfCurrent(snapshot)
@@ -1105,9 +1118,28 @@ export class EnterpriseService {
       await response.body?.cancel()
       throw new Error('审批材料过大，请在 Forge 中查看')
     }
+    if (response.status === 415) {
+      const code = await responseErrorCode(response)
+      this.assertCurrentAuth(snapshot)
+      throw new Error(code === 'APPROVAL_MATERIAL_UNSUPPORTED_TYPE'
+        ? '此审批材料格式暂不支持桌面预览，请在 Forge 中查看'
+        : '审批材料暂时无法读取，请刷新待办')
+    }
     if (response.status === 422) {
-      await response.body?.cancel()
-      throw new Error('审批材料暂不支持在桌面中预览，请在 Forge 中查看')
+      const code = await responseErrorCode(response)
+      this.assertCurrentAuth(snapshot)
+      const message = code === 'APPROVAL_MATERIAL_HASH_MISMATCH'
+        ? '审批材料与本次提交版本不一致，请暂停处理并刷新待办'
+        : code === 'APPROVAL_MATERIAL_HASH_UNAVAILABLE'
+          ? '审批记录没有可核验的材料摘要，请在 Forge 中查看'
+          : code === 'APPROVAL_MATERIAL_INVALID'
+            ? '审批材料无法安全校验，请在 Forge 中查看'
+            : code === 'APPROVAL_MATERIAL_UNAVAILABLE'
+              ? '审批材料当前不可用，请在 Forge 中查看'
+              : code === 'APPROVAL_CONTEXT_TOO_LARGE'
+                ? '审批内容过大，暂不能在桌面中预览，请在 Forge 中查看'
+                : '审批材料暂时无法安全读取，请刷新待办'
+      throw new Error(message)
     }
     if (!response.ok) {
       await response.body?.cancel()
@@ -1156,13 +1188,9 @@ export class EnterpriseService {
     if (returnReason !== undefined && (typeof returnReason !== 'string' || returnReason.length > 4000)) {
       throw new Error('Forge 审批上下文格式无效')
     }
-    if (approval.revisionReady !== undefined && typeof approval.revisionReady !== 'boolean') {
-      throw new Error('Forge 审批上下文格式无效')
-    }
     return {
       title, step,
       ...(isSubmitter && returnReason ? { returnReason } : {}),
-      ...(isSubmitter && typeof approval.revisionReady === 'boolean' ? { revisionReady: approval.revisionReady } : {}),
       fields, files,
     }
   }

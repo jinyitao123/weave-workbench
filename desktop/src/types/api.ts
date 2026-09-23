@@ -312,7 +312,6 @@ export interface EnterpriseApprovalContext {
   title: string
   step: string
   returnReason?: string
-  revisionReady?: boolean
   fields: Array<{ label: string; value: string }>
   files: Array<{ name: string; content: string; verified: boolean }>
 }
