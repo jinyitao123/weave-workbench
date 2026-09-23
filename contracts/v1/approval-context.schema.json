@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/approval-context.schema.json",
+  "title": "Native Approval Context for Workbench",
+  "description": "A bounded, read-only context projection for one Forge-native approval, authorized by the current ObjectStack participant identity.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "requestId", "status", "viewer", "title", "step", "fields", "files"],
+  "properties": {
+    "version": { "const": "1" },
+    "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "status": { "enum": ["pending", "returned"] },
+    "viewer": { "enum": ["current_approver", "original_submitter"] },
+    "title": { "type": "string", "minLength": 1, "maxLength": 300 },
+    "step": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "returnReason": { "type": "string", "maxLength": 4000 },
+    "revisionReady": { "type": "boolean" },
+    "fields": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "value"],
+        "properties": {
+          "label": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "value": { "type": "string", "maxLength": 4000 }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "maxItems": 11,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "mediaType", "bytes", "sha256", "content"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "mediaType": { "const": "text/plain; charset=utf-8" },
+          "bytes": { "type": "integer", "minimum": 0, "maximum": 2097152 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "content": { "type": "string", "maxLength": 2097152 }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "pending" } } },
+      "then": { "properties": { "viewer": { "const": "current_approver" } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "returned" } } },
+      "then": { "properties": { "viewer": { "const": "original_submitter" } } }
+    }
+  ]
+}
