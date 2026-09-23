@@ -342,6 +342,18 @@ export interface EnterpriseWorkOverview {
   tasks: EnterpriseHumanTask[]
   items: EnterpriseWorkItem[]
   runs: EnterpriseRunObservation[]
+  reads: {
+    runs: EnterpriseWorkReadStatus
+    teamChoices: EnterpriseWorkReadStatus
+    weaveTasks: EnterpriseWorkReadStatus
+    forgeApprovals: EnterpriseWorkReadStatus
+    notifications: EnterpriseWorkReadStatus
+  }
+}
+
+export interface EnterpriseWorkReadStatus {
+  status: 'loaded' | 'failed'
+  error?: string
 }
 
 export interface EnterpriseWorkReceipt {
