@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AgentEnterpriseBridge } from '../../electron/main/enterprise/agent-bridge'
-import { digest } from '../../electron/main/enterprise/handoff-store'
+import { digest, submissionUUID } from '../../electron/main/enterprise/handoff-store'
 import type { EnterpriseApprovalContext, TranscriptMessage } from '../../src/types/api'
 
 const bridges: AgentEnterpriseBridge[] = [], directories: string[] = []
@@ -25,6 +25,7 @@ async function fixture(objectName = 'forge_sales_contract') {
     files: [{ fileId: `source-file-${requestId}`, name: '原合同.md', mediaType: 'text/plain; charset=utf-8', bytes: Buffer.byteLength(sourceContent), sha256: digest(sourceContent), content: sourceContent, verified: true }],
   })
   const contexts = new Map([['approval-1', approvalContext('approval-1', 'revise-1', 'contract-1')], ['approval-2', approvalContext('approval-2', 'revise-2', 'contract-2')]])
+  const revisionReceipts = new Map<string, Record<string, unknown>>()
   const businessCapabilityId = `forge:action:${objectName}.submit`
   const choice = { teamId: 'team-contract', teamName: '合同团队', teamObjective: '复核合同并完成交接', workflowId: 'workflow-review', workflowName: '合同复核', workflowDescription: '接合同全文，检查金额和交期，交付复核意见', businessCapabilityIds: [businessCapabilityId], version: 3 }
   const service = {
@@ -42,6 +43,17 @@ async function fixture(objectName = 'forge_sales_contract') {
     submitWork: vi.fn(async (_choice: unknown, _goal: string, source?: { assertCurrent(): Promise<void> }) => {
       await source?.assertCurrent()
       return { workId: 'work', runId: 'run', taskId: 'task', workflowId: choice.workflowId, workflowVersion: 3, repeated: false }
+    }),
+    submitApprovalRevision: vi.fn(async (requestId: string, body: { idempotencyKey: string }, assertCurrent: () => Promise<void>) => {
+      await assertCurrent()
+      const receipt = { requestId, bindingId: '550e8400-e29b-41d4-a716-446655440000', newVersionDigest: digest('new-revision-v1'), state: 'resumed', repeated: true }
+      revisionReceipts.set(body.idempotencyKey, receipt)
+      return { status: 200, body: { data: receipt } }
+    }),
+    getApprovalRevisionReceipt: vi.fn(async (requestId: string, idempotencyKey: string, assertCurrent: () => Promise<void>) => {
+      await assertCurrent()
+      const receipt = revisionReceipts.get(idempotencyKey)
+      return receipt?.requestId === requestId ? { status: 200, body: { data: receipt } } : { status: 404, body: {} }
     }),
   }
   const transcript: TranscriptMessage[] = []
@@ -85,7 +97,7 @@ async function fixture(objectName = 'forge_sales_contract') {
     return { handoff_key: capabilities[0].handoff_key, business_actions: [], goal: '复核这版合同', materials, available_actions: capabilities[0].business_actions }
   }
   await input('这版给他们看看', 'employee-turn-1')
-  return { call, callWithTurn, input, discover, openReturned, service, bridge, materials, cwd, transcript, content, businessCapabilityId, contexts, storageDirectory }
+  return { call, callWithTurn, input, discover, openReturned, service, bridge, materials, cwd, transcript, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts }
 }
 
 describe('employee-bound material handoff', () => {
@@ -97,6 +109,7 @@ describe('employee-bound material handoff', () => {
       getBusinessCapabilities: vi.fn(async () => []),
       findBusinessRecords: vi.fn(async () => []),
       stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),
+      submitApprovalRevision: vi.fn(async () => ({ status: 404, body: {} })), getApprovalRevisionReceipt: vi.fn(async () => ({ status: 404, body: {} })),
     }
     const sessions = { read: vi.fn(async () => transcript) }
     const bridge = new AgentEnterpriseBridge({ service, sessions: { prime: sessions, omp: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts' })
@@ -144,7 +157,7 @@ describe('employee-bound material handoff', () => {
     const employeeRequest = '按退回意见补全验收要求，帮我递交这版修订材料'
     await f.input(employeeRequest, 'employee-revision-1')
     const body = '修订后的合同正文：验收包含现场联调和连续运行三天。'
-    const result = await f.call('revision_prepare', { employee_request: employeeRequest, body, materials: f.materials })
+    const result = await f.call('revision_submit', { employee_request: employeeRequest, body, materials: f.materials })
 
     expect(opened.context).toMatchObject({ title: '测试合同', step: '销售修改', returnReason: '请补齐验收要求' })
     expect(opened.context).not.toHaveProperty('requestId')
@@ -153,27 +166,41 @@ describe('employee-bound material handoff', () => {
     expect(opened.context).not.toHaveProperty('sourceMaterialVersion')
     expect(opened.context.files[0]).not.toHaveProperty('fileId')
     expect(opened.context.files[0]).not.toHaveProperty('sha256')
-    expect(result.body.result).toMatchObject({ status: 'prepared_only', submitted: false, materials: [{ name: '合同.md', bytes: Buffer.byteLength(f.content) }] })
-    expect(result.body.result.message).toContain('审批未递交、流程未继续')
+    expect(result.body.result).toMatchObject({ status: 'resumed', submitted: true, materials: [{ name: '修订正文.md' }, { name: '合同.md' }] })
+    expect(result.body.result.message).toContain('已进入下一轮')
     expect(f.service.submitWork).not.toHaveBeenCalled()
+    expect(f.service.stageWorkMaterials.mock.calls[0]![0]).toMatchObject([
+      { name: '修订正文.md', content: body, bytes: Buffer.byteLength(body), sha256: digest(body) },
+      { name: '合同.md', content: f.content, bytes: Buffer.byteLength(f.content), sha256: digest(f.content) },
+    ])
+    const sent = f.service.submitApprovalRevision.mock.calls[0]!
+    expect(sent[0]).toBe('approval-1')
+    expect(sent[1]).toMatchObject({
+      returnVersion: 'revise-1', sourceMaterialVersion: f.contexts.get('approval-1')!.sourceMaterialVersion,
+      idempotencyKey: expect.stringMatching(/^[0-9a-f-]{36}$/),
+      primary: { fileId: 'file-1', name: '修订正文.md', sha256: digest(body) },
+      attachments: [{ fileId: 'file-2', name: '合同.md', sha256: digest(f.content) }],
+    })
 
     const files = await readdir(f.storageDirectory)
-    expect(files).toHaveLength(1)
-    const stored = JSON.parse((await readFile(join(f.storageDirectory, files[0]!))).toString('utf8')) as { value: {
+    const saved = await Promise.all(files.map(async (file) => JSON.parse((await readFile(join(f.storageDirectory, file))).toString('utf8')) as { value: Record<string, unknown> }))
+    const stored = saved.find((entry) => entry.value.requestId === 'approval-1') as { value: {
       requestId: string; returnVersion: string; sourceMaterialVersion: string; businessObject: { objectName: string; recordId: string };
       employeeMessageId: string; employeeRoundId: string; employeeRequest: string; body: { content: string; bytesBase64: string; sha256: string };
+      idempotencyKey: string;
       sourceMessages: Array<{ messageId: string; eventSeq: number; sha256: string }>;
       sourceFiles: Array<{ fileId: string; bytesBase64: string }>; materials: Array<{ name: string; bytesBase64: string; sha256: string }>
     } }
     expect(stored.value).toMatchObject({
       requestId: 'approval-1', returnVersion: 'revise-1', sourceMaterialVersion: f.contexts.get('approval-1')!.sourceMaterialVersion,
       businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1' }, employeeRequest,
-      body: { content: body, bytesBase64: Buffer.from(body).toString('base64'), sha256: digest(body) },
+      body: { name: '修订正文.md', content: body, bytesBase64: Buffer.from(body).toString('base64'), sha256: digest(body) },
       sourceFiles: [{ fileId: 'source-file-approval-1', bytesBase64: Buffer.from('# 原提交合同\n客户：测试客户\n').toString('base64') }],
       materials: [{ name: '合同.md', bytesBase64: Buffer.from(f.content).toString('base64'), sha256: digest(f.content) }],
     })
     expect(stored.value.employeeMessageId).toBe('employee-revision-1')
     expect(stored.value.employeeRoundId).toMatch(/^[0-9a-f]{64}$/)
+    expect(stored.value.idempotencyKey).toBe(submissionUUID(stored.value.employeeRoundId))
     expect(stored.value.sourceMessages.find((message) => message.messageId === 'employee-revision-1')?.sha256).toBe(digest(employeeRequest))
   })
   it('rejects a pinned context if the account or return version changes before the Pi prompt starts', async () => {
@@ -196,18 +223,100 @@ describe('employee-bound material handoff', () => {
     const employeeRequest = '请把当前修订版递交上去'
     await f.input(employeeRequest, 'employee-revision-retry')
     const params = { employee_request: employeeRequest, body: '当前最终正文', materials: f.materials }
-    const first = await f.call('revision_prepare', params)
-    expect(first.body.result.status).toBe('prepared_only')
+    const first = await f.call('revision_submit', params)
+    expect(first.body.result.status).toBe('resumed')
     await writeFile(join(f.cwd, '合同.md'), '被修改的本地草稿')
 
-    const retry = await f.call('revision_prepare', params)
+    const retry = await f.call('revision_submit', params)
     expect(retry.body.result).toEqual(first.body.result)
-    const changedBody = await f.call('revision_prepare', { ...params, body: '新的正文' })
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
+    expect(f.service.submitApprovalRevision).toHaveBeenCalledOnce()
+    expect(f.service.getApprovalRevisionReceipt).toHaveBeenCalledOnce()
+    const changedBody = await f.call('revision_submit', { ...params, body: '新的正文' })
     expect(changedBody.status).toBe(409)
     expect(changedBody.body.error).toContain('本轮修订材料已固定')
-    const changedMaterial = await f.call('revision_prepare', { ...params, materials: [{ path: '合同.md', sha256: digest('被修改的本地草稿') }] })
+    const changedMaterial = await f.call('revision_submit', { ...params, materials: [{ path: '合同.md', sha256: digest('被修改的本地草稿') }] })
     expect(changedMaterial.status).toBe(409)
     expect(changedMaterial.body.error).toContain('本轮修订材料已固定')
+  })
+  it('queries the same receipt after a lost POST response and never reuploads or reposts', async () => {
+    const f = await fixture()
+    await f.openReturned()
+    const employeeRequest = '请递交这版修订材料'
+    await f.input(employeeRequest, 'employee-revision-lost-response')
+    const params = { employee_request: employeeRequest, body: '修订正文', materials: f.materials }
+    const receipt = {
+      requestId: 'approval-1', bindingId: '550e8400-e29b-41d4-a716-446655440000',
+      newVersionDigest: digest('new-revision-v1'), state: 'resume_unknown', repeated: true,
+    }
+    f.service.submitApprovalRevision.mockImplementationOnce(async (_requestId: string, _body: unknown, assertCurrent: () => Promise<void>) => {
+      await assertCurrent()
+      throw new Error('connection dropped after request')
+    })
+    f.service.getApprovalRevisionReceipt.mockImplementationOnce(async (_requestId: string, _key: string, assertCurrent: () => Promise<void>) => {
+      await assertCurrent()
+      return { status: 200, body: { data: receipt } }
+    })
+
+    const first = await f.call('revision_submit', params)
+    expect(first.body.result).toMatchObject({ status: 'resume_unknown', submitted: false })
+    const retry = await f.call('revision_submit', params)
+    expect(retry.body.result.status).toBe('resume_unknown')
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
+    expect(f.service.submitApprovalRevision).toHaveBeenCalledOnce()
+    expect(f.service.getApprovalRevisionReceipt).toHaveBeenCalledTimes(2)
+  })
+  it('does not repeat an interrupted file upload when its receipt cannot be recovered', async () => {
+    const f = await fixture()
+    await f.openReturned()
+    const employeeRequest = '请递交这版正文和附件'
+    await f.input(employeeRequest, 'employee-revision-upload-interrupted')
+    f.service.stageWorkMaterials.mockRejectedValueOnce(new Error('upload connection interrupted'))
+    const params = { employee_request: employeeRequest, body: '正文', materials: f.materials }
+
+    const first = await f.call('revision_submit', params)
+    expect(first.body.result).toMatchObject({ status: 'upload_unknown', submitted: false })
+    const retry = await f.call('revision_submit', params)
+    expect(retry.body.result).toMatchObject({ status: 'upload_unknown', submitted: false })
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
+    expect(f.service.submitApprovalRevision).not.toHaveBeenCalled()
+    expect(f.service.getApprovalRevisionReceipt).toHaveBeenCalledOnce()
+  })
+  it('reports a Forge prepared receipt without claiming that the next approval round resumed', async () => {
+    const f = await fixture()
+    await f.openReturned()
+    const employeeRequest = '帮我递交这版正文'
+    await f.input(employeeRequest, 'employee-revision-prepared')
+    f.service.submitApprovalRevision.mockImplementationOnce(async (_requestId: string, body: { idempotencyKey: string }, assertCurrent: () => Promise<void>) => {
+      await assertCurrent()
+      const receipt = {
+        requestId: 'approval-1', bindingId: '550e8400-e29b-41d4-a716-446655440000',
+        newVersionDigest: digest('new-revision-v1'), state: 'prepared', repeated: true,
+      }
+      f.revisionReceipts.set(body.idempotencyKey, receipt)
+      return { status: 200, body: { data: receipt } }
+    })
+    const result = await f.call('revision_submit', { employee_request: employeeRequest, body: '修订正文', materials: [] })
+    expect(result.body.result).toMatchObject({ status: 'prepared', submitted: false, receiptConfirmed: true })
+    expect(result.body.result.message).toContain('尚未确认')
+  })
+  it('fails closed on a 404 Forge service and does not fall back to native resubmit', async () => {
+    const f = await fixture()
+    await f.openReturned()
+    const employeeRequest = '请提交修改后的合同'
+    await f.input(employeeRequest, 'employee-revision-old-server')
+    f.service.submitApprovalRevision.mockImplementationOnce(async () => ({ status: 404, body: { message: 'not found' } as unknown as { data: { requestId: string; bindingId: string; newVersionDigest: string; state: string; repeated: boolean } } }))
+    const params = { employee_request: employeeRequest, body: '修订正文', materials: f.materials }
+
+    const first = await f.call('revision_submit', params)
+    expect(first.body.result).toMatchObject({ status: 'unavailable', submitted: false, receiptConfirmed: false })
+    expect(first.body.result.message).toContain('没有退回材料修订接口')
+    const retry = await f.call('revision_submit', params)
+    expect(retry.body.result).toEqual(first.body.result)
+    expect(f.service.submitApprovalRevision).toHaveBeenCalledOnce()
+    expect(f.service.getApprovalRevisionReceipt).not.toHaveBeenCalled()
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
   })
   it('blocks an old returned revision when the account, approval, or employee round changes', async () => {
     const f = await fixture()
@@ -217,7 +326,7 @@ describe('employee-bound material handoff', () => {
     const params = { employee_request: employeeRequest, body: '修订正文', materials: f.materials }
 
     await f.input('先等等，重新核对一下', 'employee-revision-new-round')
-    const oldRound = await f.callWithTurn('revision_prepare', params, oldTurnKey)
+    const oldRound = await f.callWithTurn('revision_submit', params, oldTurnKey)
     expect(oldRound.status).toBe(409)
     expect(oldRound.body.error).toContain('员工要求已变化')
 
@@ -227,15 +336,18 @@ describe('employee-bound material handoff', () => {
     f.transcript.push(user('opened-approval-2', secondPrompt))
     const active = await f.call('activate', { prompt: secondPrompt })
     const secondTurnKey = active.body.result.turn_key as string
-    const changedApproval = await f.callWithTurn('revision_prepare', params, secondTurnKey)
+    const changedApproval = await f.callWithTurn('revision_submit', params, secondTurnKey)
     expect(changedApproval.status).toBe(409)
     expect(changedApproval.body.error).toContain('员工本轮要求已变化')
 
     f.service.accountKey.mockResolvedValue('employee-b')
-    const changedAccount = await f.callWithTurn('revision_prepare', { ...params, employee_request: secondPrompt }, secondTurnKey)
+    const changedAccount = await f.callWithTurn('revision_submit', { ...params, employee_request: secondPrompt }, secondTurnKey)
     expect(changedAccount.status).toBe(409)
     expect(changedAccount.body.error).toContain('账号已变化')
     expect(f.service.submitWork).not.toHaveBeenCalled()
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitApprovalRevision).not.toHaveBeenCalled()
+    expect(f.service.getApprovalRevisionReceipt).not.toHaveBeenCalled()
   })
   it('stops when the latest return version or business object changed after opening', async () => {
     const f = await fixture()
@@ -244,7 +356,7 @@ describe('employee-bound material handoff', () => {
     await f.input(employeeRequest, 'employee-revision-stale-context')
     const context = f.contexts.get('approval-1')!
     f.contexts.set('approval-1', { ...context, returnVersion: 'revise-2', businessObject: { ...context.businessObject, recordId: 'contract-2' } })
-    const result = await f.call('revision_prepare', { employee_request: employeeRequest, body: '正文', materials: [] })
+    const result = await f.call('revision_submit', { employee_request: employeeRequest, body: '正文', materials: [] })
     expect(result.status).toBe(409)
     expect(result.body.error).toContain('退回意见、业务对象或原材料版本已变化')
     await expect(readdir(f.storageDirectory)).rejects.toMatchObject({ code: 'ENOENT' })
