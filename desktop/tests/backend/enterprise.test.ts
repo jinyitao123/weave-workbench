@@ -443,36 +443,97 @@ describe('EnterpriseService', () => {
     expect(calls.find((call) => call.url.endsWith('/approval-2/resubmit'))).toMatchObject({ method: 'POST', body: { comment: '已补充' } })
   })
 
-  it('reads only the current reviewer\'s frozen approval file and rejects changed bytes', async () => {
+  it('maps only the bounded Forge approval context and rejects changed file bytes', async () => {
     const original = '# 合同\n仅供验收\n'
     const digest = createHash('sha256').update(original).digest('hex')
     const attachment = '# 技术协议\n验收标准\n'
     const attachmentDigest = createHash('sha256').update(attachment).digest('hex')
-    const mainId = '25c12143-7f58-4cb9-bb32-a1d8150bbd7e'
-    const attachmentId = 'a614d076-8baa-48fd-b631-4bf8e48b8009'
     let fileContent = original
+    const calls: string[] = []
     const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
-      const url = String(input)
+      const url = String(input); calls.push(url)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'reviewer-1' } })
       if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-reviewer-1', externalId: 'reviewer-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
-      if (url.endsWith('/api/v1/approvals/requests/approval-1')) return Response.json({
-        status: 'pending', record_title: '设备验收合同', step_label: '交付复核', viewer: { can_act: true },
-        payload: { name: '设备验收合同', submitted_material_id: mainId, submitted_material_name: '合同.md', submitted_material_sha256: digest, submitted_attachment_manifest: JSON.stringify([{ file_id: attachmentId, name: '技术协议.md', sha256: attachmentDigest }]) },
-        payload_labels: { name: '合同名称' },
+      if (url.endsWith('/api/v1/approvals/requests/approval-1/workbench-context')) return Response.json({
+        version: '1', requestId: 'approval-1', status: 'pending', viewer: 'current_approver',
+        title: '设备验收合同', step: '交付复核', fields: [{ label: '合同名称', value: '设备验收合同' }],
+        files: [
+          { name: '合同.md', mediaType: 'text/plain; charset=utf-8', bytes: Buffer.byteLength(fileContent), sha256: digest, content: fileContent },
+          { name: '技术协议.md', mediaType: 'text/plain; charset=utf-8', bytes: Buffer.byteLength(attachment), sha256: attachmentDigest, content: attachment },
+        ],
       })
-      if (url.endsWith(`/api/v1/storage/files/${mainId}/url`)) return Response.json({ data: { url: '/api/v1/storage/_local/raw/signed-file' } })
-      if (url.endsWith(`/api/v1/storage/files/${attachmentId}/url`)) return Response.json({ data: { url: '/api/v1/storage/_local/raw/signed-attachment' } })
-      if (url.endsWith('/api/v1/storage/_local/raw/signed-file')) return new Response(fileContent)
-      if (url.endsWith('/api/v1/storage/_local/raw/signed-attachment')) return new Response(attachment)
+      if (url.endsWith('/api/v1/approvals/requests/approval-2/workbench-context')) return Response.json({
+        version: '1', requestId: 'approval-2', status: 'returned', viewer: 'original_submitter',
+        title: '设备验收合同', step: '销售修改', returnReason: '请补齐附件', revisionReady: true,
+        fields: [{ label: '合同名称', value: '设备验收合同' }], files: [],
+      })
       return Response.json({}, { status: 404 })
     }) as typeof fetch
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' }, fetch: fetchMock })
     await service.signIn('reviewer@example.test', 'secret')
 
     const context = await service.getApprovalContext('approval-1')
-    expect(context).toMatchObject({ title: '设备验收合同', step: '交付复核', files: [{ name: '合同.md', content: original, verified: true }, { name: '技术协议.md', content: attachment, verified: true }] })
+    expect(context).toMatchObject({ title: '设备验收合同', step: '交付复核', fields: [{ label: '合同名称', value: '设备验收合同' }], files: [{ name: '合同.md', content: original, verified: true }, { name: '技术协议.md', content: attachment, verified: true }] })
+    await expect(service.getApprovalContext('approval-2')).resolves.toMatchObject({ title: '设备验收合同', step: '销售修改', returnReason: '请补齐附件', revisionReady: true, files: [] })
+    expect(calls.filter((url) => url.includes('/api/v1/data/') || /\/api\/v1\/storage\/files\/[^/]+\/url/.test(url))).toEqual([])
+    expect(calls.filter((url) => url.includes('/workbench-context'))).toHaveLength(2)
     fileContent = '# 另一份合同\n'
     await expect(service.getApprovalContext('approval-1')).rejects.toThrow('审批文件与提交版本不一致')
+  })
+
+  it.each([
+    [401, '登录已失效，请重新登录'],
+    [404, '这项审批已无法由当前员工处理，请刷新待办'],
+    [409, '审批状态已变化，请刷新待办'],
+    [413, '审批材料过大，请在 Forge 中查看'],
+    [422, '审批材料暂不支持在桌面中预览，请在 Forge 中查看'],
+  ])('handles approval context HTTP %i without exposing the response body', async (status, message) => {
+    const secret = 'PRIVATE_APPROVAL_RESPONSE_BODY'
+    const calls: string[] = []
+    const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
+      const url = String(input); calls.push(url)
+      if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'reviewer-1' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-reviewer-1', externalId: 'reviewer-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      if (url.endsWith('/api/v1/approvals/requests/approval-1/workbench-context')) return Response.json({ error: 'approval_context_error', detail: secret }, { status })
+      return Response.json({}, { status: 404 })
+    }) as typeof fetch
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' }, fetch: fetchMock })
+    await service.signIn('reviewer@example.test', 'secret')
+
+    const error = await service.getApprovalContext('approval-1').then(() => undefined, (reason: unknown) => reason)
+    expect(error).toBeInstanceOf(Error)
+    expect((error as Error).message).toBe(message)
+    expect((error as Error).message).not.toContain(secret)
+    expect(calls.filter((url) => url.includes('/api/v1/data/') || /\/api\/v1\/storage\/files\/[^/]+\/url/.test(url))).toEqual([])
+  })
+
+  it('discards an approval context response after the account changes', async () => {
+    const contextRequest = deferred<void>(), lateContext = deferred<Response>()
+    const fetchMock = vi.fn((input: URL | RequestInfo, init?: RequestInit) => {
+      const url = String(input)
+      if (url.endsWith('/api/v1/auth/sign-in/email')) {
+        const email = (JSON.parse(String(init?.body)) as { email: string }).email
+        return Promise.resolve(Response.json({ token: `forge-token-${email}`, user: { id: email } }))
+      }
+      if (url.endsWith('/v1/auth/external/exchange')) {
+        const account = new Headers(init?.headers).get('Authorization')?.replace('Bearer forge-token-', '') ?? 'unknown'
+        return Promise.resolve(Response.json({ token: `weave-token-${account}`, subject: { id: `weave-${account}`, externalId: account }, organization: { id: 'default' }, permissions: ['teams:use'] }))
+      }
+      if (url.endsWith('/api/v1/approvals/requests/approval-1/workbench-context')) {
+        contextRequest.resolve(undefined)
+        return lateContext.promise
+      }
+      return Promise.resolve(Response.json({}, { status: 404 }))
+    }) as typeof fetch
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' }, fetch: fetchMock })
+    await service.signIn('a@example.test', 'secret')
+    const pending = service.getApprovalContext('approval-1')
+    await contextRequest.promise
+    await service.signIn('b@example.test', 'secret')
+    lateContext.resolve(Response.json({ version: '1', requestId: 'approval-1', status: 'pending', viewer: 'current_approver', title: '旧账号合同正文', step: '交付复核', fields: [], files: [] }))
+
+    await expect(pending).rejects.toThrow('账号已切换，旧请求结果已丢弃')
+    await expect(service.getSession()).resolves.toMatchObject({ status: 'signed-in', user: { id: 'b@example.test' } })
   })
 
   it('uploads the exact frozen bytes to Forge before dispatch', async () => {

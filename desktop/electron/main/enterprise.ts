@@ -1084,78 +1084,85 @@ export class EnterpriseService {
   async getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContext> {
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in' || !this.forgeToken) throw new Error('请先登录')
-    const operationSnapshot: EnterpriseAuthSnapshot = { generation, provider: 'forge', token: this.forgeToken }
-    const approval = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(approvalId)}`, generation))
-    const viewer = record(approval?.viewer), payload = record(approval?.payload)
-    const isReviewer = viewer?.can_act === true && textValue(approval?.status) === 'pending'
-    const isSubmitter = viewer?.is_submitter === true && textValue(approval?.status) === 'returned'
-    if (!approval || !payload || (!isReviewer && !isSubmitter)) {
+    const { response, snapshot } = await this.authenticatedFetch(
+      new URL(`/api/v1/approvals/requests/${encodeURIComponent(approvalId)}/workbench-context`, this.forgeUrl),
+      'forge', { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }, generation,
+    )
+    if (response.status === 401) {
+      await response.body?.cancel()
+      await this.signOutIfCurrent(snapshot)
+      throw new Error('登录已失效，请重新登录')
+    }
+    if (response.status === 403 || response.status === 404) {
+      await response.body?.cancel()
       throw new Error('这项审批已无法由当前员工处理，请刷新待办')
     }
-    let returnReason: string | undefined
-    if (isSubmitter) {
-      const actionEnvelope = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(approvalId)}/actions`, generation))
-      const actions = Array.isArray(actionEnvelope?.data) ? actionEnvelope.data : []
-      const latestRevision = [...actions].reverse().map(record).find((action) => action?.action === 'revise')
-      returnReason = textValue(latestRevision?.comment)
+    if (response.status === 409) {
+      await response.body?.cancel()
+      throw new Error('审批状态已变化，请刷新待办')
     }
-    const currentRecordEnvelope = isSubmitter && textValue(approval.record_id)
-      ? record(await this.forgeJSON(`/api/v1/data/${encodeURIComponent(textValue(approval.object_name) ?? '')}/${encodeURIComponent(String(approval.record_id))}`, generation))
-      : undefined
-    const currentRecord = record(currentRecordEnvelope?.record)
-    if (isSubmitter && !currentRecord) throw new Error('当前合同材料无法读取，请刷新待办')
-    const material = currentRecord ?? payload
-    const revisionReady = isSubmitter && textValue(material.submitted_attachment_revision_request_id) === approvalId
-      && Boolean(textValue(material.submitted_attachment_manifest))
-    const labels = record(approval.payload_labels), display = record(approval.payload_display)
-    const preferred = ['name', 'code', 'customer_id', 'total_amount', 'business_terms', 'payment_term', 'delivery_address', 'warranty_months', 'submitted_material_name']
-    const fields = preferred.flatMap((key) => {
-      const value = isSubmitter ? material[key] : display?.[key] ?? payload[key]
-      if ((typeof value !== 'string' && typeof value !== 'number') || !String(value).trim()) return []
-      return [{ label: textValue(labels?.[key]) ?? key, value: String(value) }]
+    if (response.status === 413) {
+      await response.body?.cancel()
+      throw new Error('审批材料过大，请在 Forge 中查看')
+    }
+    if (response.status === 422) {
+      await response.body?.cancel()
+      throw new Error('审批材料暂不支持在桌面中预览，请在 Forge 中查看')
+    }
+    if (!response.ok) {
+      await response.body?.cancel()
+      throw new Error('Forge 审批上下文暂时无法读取')
+    }
+    let rawContext: unknown
+    try { rawContext = await response.json() }
+    catch {
+      this.assertCurrentAuth(snapshot)
+      throw new Error('Forge 审批上下文格式无效')
+    }
+    this.assertCurrentAuth(snapshot)
+    const approval = record(rawContext)
+    const isReviewer = approval?.status === 'pending' && approval.viewer === 'current_approver'
+    const isSubmitter = approval?.status === 'returned' && approval.viewer === 'original_submitter'
+    const title = textValue(approval?.title), step = textValue(approval?.step)
+    if (approval?.version !== '1' || approval.requestId !== approvalId || (!isReviewer && !isSubmitter)
+      || !title || title.length > 300 || !step || step.length > 160) {
+      throw new Error('这项审批已无法由当前员工处理，请刷新待办')
+    }
+    if (!Array.isArray(approval.fields) || approval.fields.length > 64 || !Array.isArray(approval.files) || approval.files.length > 11) {
+      throw new Error('Forge 审批上下文格式无效')
+    }
+    const fields = approval.fields.flatMap((value) => {
+      const field = record(value), label = textValue(field?.label), fieldValue = field?.value
+      if (!label || label.length > 160 || typeof fieldValue !== 'string' || fieldValue.length > 4000) {
+        throw new Error('Forge 审批上下文格式无效')
+      }
+      return fieldValue.trim() ? [{ label, value: fieldValue }] : []
     })
-    const files: EnterpriseApprovalContext['files'] = []
-    const manifest: Array<{ file_id: string; name: string; sha256: string }> = []
-    const mainFileId = textValue(material.submitted_material_id), mainHash = textValue(material.submitted_material_sha256)
-    if (mainFileId && mainHash) manifest.push({ file_id: mainFileId, name: textValue(material.submitted_material_name) ?? '合同文件', sha256: mainHash })
-    const attachmentManifest = textValue(material.submitted_attachment_manifest)
-    if (attachmentManifest) {
-      let parsed: unknown
-      try { parsed = JSON.parse(attachmentManifest) } catch { throw new Error('审批附件清单格式无效') }
-      if (!Array.isArray(parsed) || parsed.length > 10) throw new Error('审批附件清单格式无效')
-      for (const item of parsed) {
-        const entry = record(item), fileId = textValue(entry?.file_id), name = textValue(entry?.name), sha256 = textValue(entry?.sha256)
-        if (!fileId || !name || !sha256) throw new Error('审批附件清单不完整')
-        manifest.push({ file_id: fileId, name, sha256 })
+    const files = approval.files.map((value) => {
+      const file = record(value), name = textValue(file?.name), content = file?.content
+      if (!name || name.length > 255 || file?.mediaType !== 'text/plain; charset=utf-8'
+        || typeof content !== 'string' || content.length > 2 * 1024 * 1024
+        || !Number.isInteger(file.bytes) || (file.bytes as number) < 0 || (file.bytes as number) > 2 * 1024 * 1024
+        || typeof file.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(file.sha256)) {
+        throw new Error('审批文件校验信息无效')
       }
-    }
-    for (const file of manifest) {
-      this.assertCurrentAuth(operationSnapshot)
-      const { file_id: fileId, name, sha256: expectedHash } = file
-      if (!/^[0-9a-f-]{36}$/i.test(fileId) || !/^[0-9a-f]{64}$/i.test(expectedHash)) throw new Error('审批文件校验信息无效')
-      const signed = record(await this.forgeJSON(`/api/v1/storage/files/${encodeURIComponent(fileId)}/url`, generation))
-      const signedData = record(signed?.data), rawUrl = textValue(signedData?.url)
-      if (!rawUrl) throw new Error('审批文件暂时无法读取')
-      const downloadUrl = new URL(rawUrl, this.forgeUrl)
-      if (downloadUrl.origin !== this.forgeUrl.origin || !downloadUrl.pathname.startsWith('/api/v1/storage/')) {
-        throw new Error('审批文件地址不属于当前 Forge 环境')
+      const bytes = Buffer.from(content, 'utf8')
+      if (bytes.length !== file.bytes || createHash('sha256').update(bytes).digest('hex') !== file.sha256) {
+        throw new Error('审批文件与提交版本不一致，请暂停处理')
       }
-      const response = await this.fetch(downloadUrl, { redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
-      this.assertCurrentAuth(operationSnapshot)
-      if (!response.ok) { await response.body?.cancel(); throw new Error(`审批文件读取失败（${response.status}）`) }
-      const bytes = Buffer.from(await response.arrayBuffer())
-      this.assertCurrentAuth(operationSnapshot)
-      if (bytes.length > 2 * 1024 * 1024) throw new Error('审批文件过大，请在 Forge 中查看')
-      const actualHash = createHash('sha256').update(bytes).digest('hex')
-      if (actualHash !== expectedHash.toLowerCase()) throw new Error('审批文件与提交版本不一致，请暂停处理')
-      files.push({ name, content: new TextDecoder('utf-8', { fatal: true }).decode(bytes), verified: true })
+      return { name, content, verified: true }
+    })
+    const returnReason = approval.returnReason
+    if (returnReason !== undefined && (typeof returnReason !== 'string' || returnReason.length > 4000)) {
+      throw new Error('Forge 审批上下文格式无效')
     }
-    this.assertCurrentAuth(operationSnapshot)
+    if (approval.revisionReady !== undefined && typeof approval.revisionReady !== 'boolean') {
+      throw new Error('Forge 审批上下文格式无效')
+    }
     return {
-      title: textValue(approval.record_title) ?? textValue(payload.name) ?? '业务审批',
-      step: textValue(approval.step_label) ?? textValue(approval.process_label) ?? '审批',
-      ...(returnReason ? { returnReason } : {}),
-      ...(isSubmitter ? { revisionReady } : {}),
+      title, step,
+      ...(isSubmitter && returnReason ? { returnReason } : {}),
+      ...(isSubmitter && typeof approval.revisionReady === 'boolean' ? { revisionReady: approval.revisionReady } : {}),
       fields, files,
     }
   }
