@@ -1,16 +1,21 @@
 import { access, readFile, readdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { repositoryRoot, validateLock } from './project-status.mjs'
+import { localOnlyDocuments, validateDocumentPaths } from './documentation-policy.mjs'
 
 process.chdir(repositoryRoot)
 
 const required = [
   'AGENTS.md',
-  'docs/project-status.md',
-  'docs/architecture/product-architecture.md',
-  'docs/architecture/delivery-model.md',
+  'docs/README.md',
+  'docs/acceptance/README.md',
+  'docs/releases/README.md',
+  'desktop/docs/README.md',
+  'docs/项目状态.md',
+  'docs/architecture/系统架构设计.md',
+  'docs/architecture/开发与发布方式.md',
   'docs/engineering/README.md',
-  'docs/environments/development.md',
+  'docs/environments/开发联调环境.md',
   '.github/workflows/project-check.yml',
   'desktop/package.json',
   'platform/weave/go.mod',
@@ -20,7 +25,7 @@ const required = [
   'contracts/v1/business-capability-catalog.schema.json',
   'contracts/v1/task-notification.schema.json',
   'contracts/v1/delivery-receipt.schema.json',
-  'scenarios/sales-contract-handoff/README.md',
+  'scenarios/sales-contract-handoff/合同场景设计.md',
 ]
 
 await Promise.all(required.map((path) => access(path)))
@@ -36,8 +41,12 @@ async function markdownFiles(directory) {
   }
   return files
 }
-const documents = ['README.md', 'AGENTS.md',
-  ...await markdownFiles('docs'), ...await markdownFiles('contracts'), ...await markdownFiles('scenarios')]
+const rootDocuments = (await readdir('.', { withFileTypes: true }))
+  .filter(entry => entry.isFile() && entry.name.endsWith('.md')).map(entry => entry.name)
+const documents = [...rootDocuments, 'desktop/README.md', 'desktop/AGENTS.md', 'desktop/CONTRIBUTING.md',
+  ...await markdownFiles('docs'), ...await markdownFiles('contracts'), ...await markdownFiles('scenarios'),
+  ...await markdownFiles('desktop/docs')].filter(path => !localOnlyDocuments.has(path))
+validateDocumentPaths(documents)
 for (const file of documents) {
   const content = (await readFile(file, 'utf8')).replace(/```[\s\S]*?```/g, '')
   for (const [, target] of content.matchAll(/\[[^\]]*\]\(([^\s)]+)\)/g)) {
@@ -48,4 +57,4 @@ for (const file of documents) {
     })
   }
 }
-console.log(`Workbench layout, component lock and ${documents.length} document links checked (file targets only).`)
+console.log(`Workbench layout, component lock, document names, archive numbers and ${documents.length} document links checked (file targets only).`)

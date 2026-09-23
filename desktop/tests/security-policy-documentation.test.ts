@@ -5,7 +5,7 @@ import { localMarkdownTargets } from './helpers/markdown'
 
 const policyPath = resolve('.github/SECURITY.md')
 const readmePath = resolve('README.md')
-const securityModelPath = resolve('docs/security.md')
+const securityModelPath = resolve('docs/安全模型.md')
 const policy = readFileSync(policyPath, 'utf8')
 const readme = readFileSync(readmePath, 'utf8')
 const securityModel = readFileSync(securityModelPath, 'utf8')

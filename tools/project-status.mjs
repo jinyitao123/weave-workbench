@@ -73,7 +73,7 @@ function main() {
     if (item.dirty) console.log(`组件未提交改动:\n${item.dirty}`)
   }
   if (mode !== '--check-components') console.log(`\n工作树:\n${report.dirty || '干净'}`)
-  console.log('\n只核对本地 Git 与文件，不证明远端版本、部署或业务验收。接手见 docs/project-status.md。')
+  console.log('\n只核对本地 Git 与文件，不证明远端版本、部署或业务验收。接手见 docs/项目状态.md。')
   if (mode !== '--status' && !checkReadiness(report, mode === '--check-release')) {
     console.error('检查未通过：先处理来源偏差；发布候选还要求整个工作树干净。')
     process.exitCode = 1

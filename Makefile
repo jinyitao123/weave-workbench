@@ -3,6 +3,7 @@
 check:
 	@node tools/check-layout.mjs
 	@node --test tools/project-status.test.mjs
+	@node --test tools/documentation-policy.test.mjs
 
 status:
 	@node tools/project-status.mjs

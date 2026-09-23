@@ -15,7 +15,7 @@ whose `install` step runs [`.cursor/install.sh`](.cursor/install.sh) on Cursor's
 default Ubuntu image. That script pins Node via `.nvmrc` (24.15.0) with `nvm`,
 installs the Electron/xvfb system libraries, bootstraps the repo-pinned npm, and
 runs `npm ci`. Canonical toolchain and check commands live in
-[`docs/validation.md`](docs/validation.md); do not restate versions here.
+[`docs/测试与验收说明.md`](docs/测试与验收说明.md); do not restate versions here.
 
 `node`/`npm` come from `nvm`. A harness shell can be shadowed by another `node`
 on `PATH`, so select the pinned toolchain before running `node`/`npm` if `node
