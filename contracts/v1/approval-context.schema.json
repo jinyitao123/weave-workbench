@@ -5,7 +5,7 @@
   "description": "A bounded, read-only context projection for one Forge-native approval, authorized by the current ObjectStack participant identity.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "requestId", "status", "viewer", "title", "step", "fields", "files"],
+  "required": ["version", "requestId", "status", "viewer", "title", "step", "businessObject", "sourceMaterialVersion", "fields", "files"],
   "properties": {
     "version": { "const": "1" },
     "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
@@ -14,6 +14,18 @@
     "title": { "type": "string", "minLength": 1, "maxLength": 300 },
     "step": { "type": "string", "minLength": 1, "maxLength": 160 },
     "returnReason": { "type": "string", "maxLength": 4000 },
+    "returnVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "businessObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objectName", "recordId"],
+      "properties": {
+        "objectName": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "recordId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "recordName": { "type": "string", "minLength": 1, "maxLength": 300 }
+      }
+    },
+    "sourceMaterialVersion": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "fields": {
       "type": "array",
       "maxItems": 64,
@@ -33,8 +45,9 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "mediaType", "bytes", "sha256", "content"],
+        "required": ["fileId", "name", "mediaType", "bytes", "sha256", "content"],
         "properties": {
+          "fileId": { "type": "string", "minLength": 1, "maxLength": 128 },
           "name": { "type": "string", "minLength": 1, "maxLength": 255 },
           "mediaType": { "const": "text/plain; charset=utf-8" },
           "bytes": { "type": "integer", "minimum": 0, "maximum": 2097152 },
@@ -51,7 +64,10 @@
     },
     {
       "if": { "properties": { "status": { "const": "returned" } } },
-      "then": { "properties": { "viewer": { "const": "original_submitter" } } }
+      "then": {
+        "required": ["returnVersion", "returnReason"],
+        "properties": { "viewer": { "const": "original_submitter" } }
+      }
     }
   ]
 }
