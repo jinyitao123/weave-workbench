@@ -534,7 +534,7 @@ export default function App() {
       ...(context?.files.map((file) => `已核对的提交文件《${file.name}》：\n${file.content}`) ?? []),
       item.workReference ? `原工作引用：${item.workReference}` : '', item.runReference ? `原运行引用：${item.runReference}` : '',
       item.returnTarget ? `修改完成后返回位置：${item.returnTarget}` : '', item.reviewScope ? `复核范围：${item.reviewScope}` : '',
-      '先理解事项和当前材料，和我一起完成修改；未经我明确要求，不要直接重新提交。',
+      '先理解退回事项、退回原因和当前材料，和我一起完成修改。员工明确要求递交修订材料时，只能使用 Forge 当前提供的业务操作；没有对应操作时说明原因，不得声称材料已递交或审批流程已继续。',
     ].filter(Boolean).join('\n')
     newSession()
     workspace.queuePrompt(details, 'queue')

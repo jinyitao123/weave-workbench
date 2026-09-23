@@ -1049,7 +1049,7 @@ export class EnterpriseService {
         interactionId: id, runId: `forge:${canResubmit ? 'revision' : 'approval'}:${id}`,
         teamId: 'forge', workflowId: 'business-approval', workflowVersion: 1,
         title: canResubmit ? `${recordTitle ?? processName}需要修改` : (recordTitle ? `${recordTitle} · ${stepName ?? processName}` : stepName ?? processName),
-        instructions: canResubmit ? returnReason ? `退回原因：${returnReason}` : '请根据审批意见修改业务材料，完成后重新提交。' : '请核对业务材料并给出审批意见。',
+        instructions: canResubmit ? returnReason ? `退回原因：${returnReason}` : '请根据审批意见协助员工修改业务材料。' : '请核对业务材料并给出审批意见。',
         updatedAt, source: 'forge', mode: canResubmit ? 'revision' : 'approval',
         ...(textValue(payload?.submitted_material_name) ?? textValue(approval?.object_label) ? { materialLabel: textValue(payload?.submitted_material_name) ?? textValue(approval?.object_label) } : {}),
       })
