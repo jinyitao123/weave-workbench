@@ -58,6 +58,15 @@ function record(value: unknown): JsonRecord | undefined {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as JsonRecord : undefined;
 }
 
+function approvalPayloadFromRawRow(value: unknown): JsonRecord | undefined {
+  const row = record(value);
+  if (!row) return undefined;
+  if (record(row.payload)) return record(row.payload);
+  if (typeof row.payload_json !== 'string') return undefined;
+  try { return record(JSON.parse(row.payload_json)); }
+  catch { return undefined; }
+}
+
 function text(value: unknown, max: number): string | undefined {
   if (typeof value !== 'string') return undefined;
   const result = value.trim();
@@ -278,7 +287,7 @@ export class ContractRevisionMaterialService {
         const approval = await this.engine.findOne('sys_approval_request', { where: { id: input.requestId } }, scoped);
         if (!approval || approval.status !== 'returned' || approval.object_name !== CONTRACT_OBJECT ||
             approval.record_id !== request.record_id || approval.submitter_id !== actorId ||
-            await approvalPayloadVersion(approval.payload) !== input.sourceMaterialVersion) {
+            await approvalPayloadVersion(approvalPayloadFromRawRow(approval)) !== input.sourceMaterialVersion) {
           throw new Error('REVISION_STALE: approval changed while material was prepared');
         }
         const existing = await this.engine.findOne(LEDGER_OBJECT, { where: { approval_request_id: input.requestId } }, scoped);

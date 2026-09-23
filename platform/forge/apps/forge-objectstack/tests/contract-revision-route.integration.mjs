@@ -28,7 +28,8 @@ async function fixture({ failAfterAction = false, failBeforeAction = false } = {
     },
     async findOne(name, query) {
       if (name === 'forge_sales_contract') return query.where.id === contractId ? contract : null;
-      if (name === 'sys_approval_request') return query.where.id === requestId ? request : null;
+      if (name === 'sys_approval_request') return query.where.id === requestId
+        ? { ...request, payload: undefined, payload_json: JSON.stringify(request.payload) } : null;
       if (name === 'forge_sales_contract_revision_material') {
         if (query.where.id) return [...ledger.values()].find((row) => row.id === query.where.id) ?? null;
         if (query.where.approval_request_id) return ledger.get(query.where.approval_request_id) ?? null;
