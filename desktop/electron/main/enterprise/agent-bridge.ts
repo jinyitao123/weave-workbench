@@ -9,7 +9,7 @@ import { searchTeams, type TeamSummary } from './team-catalog'
 
 interface EnterpriseSessionReader { read(filePath: unknown): Promise<TranscriptMessage[]> }
 export interface AgentEnterpriseBridgeOptions {
-  service: Pick<EnterpriseService, 'accountKey' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'stageWorkMaterials' | 'submitWork'>
+  service: Pick<EnterpriseService, 'accountKey' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'findBusinessRecords' | 'stageWorkMaterials' | 'submitWork'>
   sessions: Record<'prime' | 'omp' | 'pi', EnterpriseSessionReader>
   extensionPath: string
   storage?: HandoffStorage
@@ -23,6 +23,7 @@ interface FrozenHandoffIntent {
   accountKey: string
   idempotencySeed: string
   sessionKey: string
+  businessContext?: { objectName: string; recordId: string; name: string; code?: string }
 }
 interface FrozenHandoff extends FrozenHandoffIntent { resources: EnterpriseWorkResource[] }
 interface EmployeeTurn {
@@ -43,6 +44,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   private readonly teams = new Map<string, Map<string, TeamSummary>>()
   private readonly handoffs = new Map<string, Map<string, EnterpriseWorkChoice>>()
   private readonly businessActions = new Map<string, Map<string, Map<string, string>>>()
+  private readonly businessRecords = new Map<string, Map<string, { objectName: string; recordId: string; name: string; code?: string }>>()
   private readonly runtimes = new Map<string, string>()
   private readonly pendingRuntimeTokens = new Map<string, string>()
   private readonly turns = new Map<string, EmployeeTurn>()
@@ -55,7 +57,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     return { GOOEYPI_ENTERPRISE_URL: url, GOOEYPI_ENTERPRISE_TOKEN: token, GOOEYPI_ENTERPRISE_EXTENSION_PATH: this.options.extensionPath }
   }
   protected onClaimRevoked(claim: CapabilityClaim): void {
-    this.teams.delete(claim.token); this.handoffs.delete(claim.token); this.businessActions.delete(claim.token); this.turns.delete(claim.token); this.inputs.delete(claim.token)
+    this.teams.delete(claim.token); this.handoffs.delete(claim.token); this.businessActions.delete(claim.token); this.businessRecords.delete(claim.token); this.turns.delete(claim.token); this.inputs.delete(claim.token)
     for (const [runtime, token] of this.runtimes) if (token === claim.token) this.runtimes.delete(runtime)
     for (const [runtime, token] of this.pendingRuntimeTokens) if (token === claim.token) this.pendingRuntimeTokens.delete(runtime)
   }
@@ -81,10 +83,10 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const token = this.runtimes.get(runtimeId)
     if (!token) return
     this.inputs.set(token, Symbol())
-    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token)
+    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessRecords.delete(token)
   }
   invalidateAccount(): void {
-    this.turns.clear(); this.inputs.clear(); this.teams.clear(); this.handoffs.clear(); this.businessActions.clear()
+    this.turns.clear(); this.inputs.clear(); this.teams.clear(); this.handoffs.clear(); this.businessActions.clear(); this.businessRecords.clear()
   }
   /** Called only by the trusted desktop input path, before forwarding to the runtime. */
   async employeeCommand(runtimeId: unknown, command: unknown): Promise<void> {
@@ -94,7 +96,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (!token) return
     const marker = Symbol()
     this.inputs.set(token, marker)
-    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token)
+    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessRecords.delete(token)
     const claim = this.claimForToken(token)
     if (!claim?.harness || !claim.sessionPath || typeof value.message !== 'string') return
     try {
@@ -118,6 +120,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     await this.evidence(claim, turn)
     if (method === 'search') return this.search(claim, params, turn)
     if (method === 'describe') return this.describe(claim, params, turn)
+    if (method === 'find_business_record') return this.findBusinessRecord(claim, params, turn)
     if (method === 'submit') return this.submit(claim, params, turn)
     if (method === 'recover') {
       const recoveryKey = requireString(params.recovery_key, 'recovery_key', { min: 64, max: 64 })
@@ -126,6 +129,18 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       return this.prepareDelivery(claim, turn, intent, recoveryKey)
     }
     throw new TypeError(`Unsupported enterprise method ${method}`)
+  }
+  private async findBusinessRecord(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn) {
+    const key = requireString(params.handoff_key, 'handoff_key', { min: 1, max: 128, trim: true })
+    const summary = requireString(params.work_summary, 'work_summary', { min: 1, max: 4_000, trim: true })
+    if (!this.handoffs.get(claim.token)?.has(key)) throw new Error('请先查看团队的承接能力')
+    const actionIds = [...(this.businessActions.get(claim.token)?.get(key)?.values() ?? [])]
+    const objectNames = [...new Set(actionIds.flatMap((id) => /^forge:action:([^.]+)\./.exec(id)?.[1] ?? []))]
+    const records = await this.options.service.findBusinessRecords(objectNames, summary)
+    await this.evidence(claim, turn)
+    const mapped = new Map(records.map((item) => [digest(`record:${turn.accountKey}:${item.objectName}:${item.recordId}`).slice(0, 24), item]))
+    this.businessRecords.set(claim.token, mapped)
+    return { records: [...mapped].map(([recordKey, item]) => ({ record_key: recordKey, name: item.name, ...(item.code ? { code: item.code } : {}), object: item.objectName === 'forge_sales_contract' ? '销售合同' : '业务记录' })) }
   }
   private async evidence(claim: CapabilityClaim, turn: EmployeeTurn) {
     const transcript = await this.options.sessions[claim.harness!].read(claim.sessionPath!)
@@ -183,18 +198,22 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       if (!action) throw new Error('业务动作不属于本轮查看的团队能力')
       return action
     }).sort()
+    const businessRecordKey = typeof params.business_record_key === 'string' ? params.business_record_key.trim() : ''
+    const businessContext = businessRecordKey ? this.businessRecords.get(claim.token)?.get(businessRecordKey) : undefined
+    if (businessRecordKey && !businessContext) throw new Error('业务记录选择已失效，请按当前工作重新查找')
+    if (authorizedBusinessCapabilityIds.some((id) => id.startsWith('forge:action:forge_sales_contract.')) && !businessContext) throw new Error('请先按当前工作查找并绑定要提交的销售合同')
     const sourceMessages = await this.evidence(claim, turn)
     const sessionKey = digest(claim.sessionPath!).slice(0, 24)
     const idempotencySeed = `${sessionKey}:${turn.messageId}:${key}`
     const identity = `${turn.accountKey}:${idempotencySeed}`
-    const fingerprint = digest(JSON.stringify({ goal, selections, key, authorizedBusinessCapabilityIds }))
+    const fingerprint = digest(JSON.stringify({ goal, selections, key, authorizedBusinessCapabilityIds, businessContext }))
     const intent = await this.store.freeze<FrozenHandoffIntent>(identity, fingerprint, async () => {
       const current = await this.options.service.getTeamChoices({ id: choice.teamId, name: choice.teamName })
       if (!current.some((item) => handoffKey(item) === key)) throw new Error('承接流程版本已经变化，请重新查找')
       const materials = await freezeMaterials(claim.cwd, selections)
-      const task = executionText(goal, materials)
+      const task = executionText(goal, materials, businessContext)
       await this.evidence(claim, turn)
-      return { task, materials, authorizedBusinessCapabilityIds, sourceMessages, choice, accountKey: turn.accountKey, idempotencySeed, sessionKey }
+      return { task, materials, authorizedBusinessCapabilityIds, sourceMessages, choice, accountKey: turn.accountKey, idempotencySeed, sessionKey, ...(businessContext ? { businessContext } : {}) }
     })
     return this.prepareDelivery(claim, turn, intent, digest(identity))
   }

@@ -299,6 +299,15 @@ export interface EnterpriseHumanTask {
   materialLabel?: string
 }
 
+export interface EnterpriseApprovalContext {
+  title: string
+  step: string
+  returnReason?: string
+  revisionReady?: boolean
+  fields: Array<{ label: string; value: string }>
+  files: Array<{ name: string; content: string; verified: boolean }>
+}
+
 export interface EnterpriseWorkItem {
   id: string
   kind: 'result' | 'failure' | 'revision_required' | 'human_review'
@@ -1096,6 +1105,7 @@ export interface PrimeWorkApi {
     saveTeamMemberConfigDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft>
     applyTeamMemberConfigDraft(teamId: string, agentId: string, revision: number): Promise<EnterpriseTeamMemberConfigDraft>
     getWorkOverview(): Promise<EnterpriseWorkOverview>
+    getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContext>
     submitWork(choice: EnterpriseWorkChoice, goal: string): Promise<EnterpriseWorkReceipt>
     completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }>
   }

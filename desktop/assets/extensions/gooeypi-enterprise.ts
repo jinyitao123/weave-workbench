@@ -5,6 +5,7 @@ interface HostTypebox {
   Object(properties: Record<string, unknown>, options?: SchemaOptions): unknown
   String(options?: SchemaOptions): unknown
   Array(items: unknown, options?: SchemaOptions): unknown
+  Optional(item: unknown): unknown
 }
 interface ToolResult { content: Array<{ type: 'text'; text: string }>; details: Record<string, unknown> }
 interface ExtensionApi {
@@ -27,10 +28,23 @@ async function importHostModule(specifier: string): Promise<Record<string, unkno
 async function resolveHostTypebox(): Promise<HostTypebox> {
   const Type = (await importHostModule('typebox'))?.Type as HostTypebox | undefined
   if (Type) return Type
+  const optionalMarker = Symbol('optional')
   return {
-    Object: (properties, options) => ({ type: 'object', properties, required: Object.keys(properties), ...(options ?? {}) }),
+    Object: (properties, options) => ({
+      type: 'object',
+      properties: Object.fromEntries(Object.entries(properties).map(([key, value]) => {
+        if (value && typeof value === 'object' && optionalMarker in value) {
+          const { [optionalMarker]: _optional, ...schema } = value as Record<PropertyKey, unknown>
+          return [key, schema]
+        }
+        return [key, value]
+      })),
+      required: Object.entries(properties).filter(([, value]) => !(value && typeof value === 'object' && optionalMarker in value)).map(([key]) => key),
+      ...(options ?? {}),
+    }),
     String: (options) => ({ type: 'string', ...(options ?? {}) }),
     Array: (items, options) => ({ type: 'array', items, ...(options ?? {}) }),
+    Optional: (item) => ({ ...(item as Record<PropertyKey, unknown>), [optionalMarker]: true }),
   }
 }
 
@@ -109,7 +123,22 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
     async execute(_id, params) { return result(await turnCall('describe', params)) },
   })
 
-  pi.registerTool<{ handoff_key: string; goal: string; business_actions: string[]; materials: Array<{ path: string; sha256: string }> }>({
+  pi.registerTool<{ handoff_key: string; work_summary: string }>({
+    name: 'gooeypi_enterprise_business_record_find',
+    label: '查找当前业务记录',
+    description: '在当前员工有权查看的 Forge 记录中，按工作摘要查找团队业务动作要处理的准确对象。返回名称和一次性记录键，不向员工展示内部编号。',
+    promptGuidelines: [
+      '只有员工明确要执行团队返回的业务动作时才查找。handoff_key 必须来自本轮团队承接能力。',
+      '对象唯一时直接绑定；多个同样匹配时只询问员工可识别的名称或业务编号，不展示数据库标识。',
+    ],
+    parameters: Type.Object({
+      handoff_key: Type.String({ minLength: 1, maxLength: 128, description: '团队承接能力查看返回的交接键' }),
+      work_summary: Type.String({ minLength: 1, maxLength: 4_000, description: '要定位的当前业务对象摘要' }),
+    }),
+    async execute(_id, params) { return result(await turnCall('find_business_record', params)) },
+  })
+
+  pi.registerTool<{ handoff_key: string; goal: string; business_record_key?: string; business_actions: string[]; materials: Array<{ path: string; sha256: string }> }>({
     name: 'gooeypi_enterprise_work_submit',
     label: '提交给企业团队',
     description: '把当前会话中的工作交给刚刚查看过的团队承接能力。桌面核验本次员工轮次、账号和指定材料版本，冻结全文并取得接单回执。',
@@ -125,6 +154,7 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
     parameters: Type.Object({
       handoff_key: Type.String({ minLength: 1, maxLength: 128, description: '团队承接能力查看返回的交接键' }),
       goal: Type.String({ minLength: 1, maxLength: 20_000, description: '交给团队的工作目标和预期结果' }),
+      business_record_key: Type.Optional(Type.String({ minLength: 1, maxLength: 128, description: '业务记录查找返回的一次性记录键；纯审阅不填' })),
       business_actions: Type.Array(Type.String({ minLength: 1, maxLength: 128 }), { maxItems: 32, description: '本次员工明确允许执行的业务动作；纯审阅传空数组' }),
       materials: Type.Array(Type.Object({
         path: Type.String({ minLength: 1, description: '当前工作目录中的材料文件路径' }),

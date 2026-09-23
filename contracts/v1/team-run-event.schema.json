@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/team-run-event.schema.json",
+  "title": "Weave Team Run Employee Event",
+  "description": "A terminal Weave team-run event delivered by the platform connector into the Forge-owned native inbox.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "eventId",
+    "kind",
+    "organizationId",
+    "assigneeAccountId",
+    "title",
+    "summary",
+    "occurredAt",
+    "source"
+  ],
+  "properties": {
+    "version": { "const": "1" },
+    "eventId": { "type": "string", "format": "uuid" },
+    "kind": { "enum": ["result", "failure", "revision_required", "cancelled"] },
+    "organizationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "assigneeAccountId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "title": { "type": "string", "minLength": 1, "maxLength": 300 },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 4000 },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "actionUrl": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workReference", "runReference", "sessionReference", "idempotencyKey"],
+      "properties": {
+        "workReference": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "runReference": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "sessionReference": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "idempotencyKey": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    }
+  }
+}

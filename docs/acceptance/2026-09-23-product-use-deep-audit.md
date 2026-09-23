@@ -1,0 +1,221 @@
+# 从产品实际使用出发的跨系统深度审计
+
+审计日期：2026-09-23。审计对象：Workbench 桌面、Weave、Loom、Forge / ObjectStack，以及这些产品正在使用的正式源码仓、联调分支和 124 环境。**本轮只读审计，未修改产品代码、团队配置、真实业务数据或部署。**
+
+## 结论
+
+当前产品已经能让员工通过桌面 Pi 准备文本材料、把固定版本交给远端团队，能让开发者从桌面修改部分团队配置，也已经产生过真实 Forge 审批和另一位员工的退回操作。**尚没有证据证明一条符合当前场景要求的完整业务闭环已经通过。**
+
+主要断点位于接单之后：员工找不到自己发起的运行；团队检查缺项没有形成可续办的明确结果；消息打开后没有稳定取得原工作及其材料；人工复核没有接到处理员工自己的 Pi；修订只补附件，不能完成正文改版和下一轮材料快照；最终双人复核与独立业务读回没有完成。
+
+系统不是全部为合同硬编码。固定输入、远端团队配置、能力目录、后台运行、原生收件箱等共性基础已有实现。特殊化主要出现在**业务记录和文件参数、桌面审批材料解释、合同修订和重提**的连接处。继续给这些连接加对象名判断、JSON 键别名和提示词，会加重问题。
+
+还有两类需要先处理的范围约束缺口：桌面切换账号仍共享工作现场；Weave 人工步骤缺少按实际处理员工校验。另有本次意图约束不足：动作和员工已经绑定，但执行时的业务记录、文件引用仍由模型重填，尚未强制等于员工交接时固定的对象与材料。
+
+本轮提出的最小方向是：保留现有运行时与能力桥，把身份、材料、结果和续办的连接补完整；业务差异留在 Forge 领域动作与流程定义，团队分工留在 Weave 配置，桌面消费通用工作和事项投影。不需要重建一套系统。
+
+## 证据分级与检查边界
+
+- **已实际验证**：分别注明本轮只读现场，或历史桌面实际操作记录。本轮读取服务端数据只能核对当前事实，不能代替桌面办理验收。
+- **仅有代码依据**：已沿调用链核对实现，能确定缺少连接、存在错误分支或约束缺口；没有通过写入、越权、断网或取消试验复现的，明确保留这一限制。
+- **还需验证**：没有完成相应用户路径、证据不足或产品语义未确定。不能当成已发生的故障或已通过的能力。
+
+本轮读取了本地产品架构、MVP1、OTC 主流程、合同真人场景、跨组件契约及已有验收记录；检查实际源码与依赖；读取桌面可见内容；通过 SSH 在 124 环境读取镜像、依赖版本和只读数据库记录。没有新发起团队运行、切换用户办理业务、改变审批状态或运行写入测试。
+
+浏览器连接期间发生工具错误，未在本轮重新完成 Forge 浏览器最终读回；历史浏览器退回证据仍按历史记录引用。桌面后续界面现场发生变化，未完成最新通知的刷新读回，不能据此推断通知丢失。
+
+## 审计的是哪一套系统
+
+2026-09-23 本轮只读核对如下。远端 main 使用 git ls-remote 读取，未 fetch、合并或发布。
+
+| 层次 | 正式仓库 / 位置 | 本轮核对的版本与实际关系 |
+| --- | --- | --- |
+| 产品组合与桌面 | weave-workbench | 远端 main 为 1f6ce214；当前分支 codex/reliable-team-handoff 为 4d56fcd1，另有未提交的桌面、契约改动。实际桌面包含工作树实现，不能仅用 HEAD 重建 |
+| 总仓组件锁 | components.lock.json | Weave 锁 9e6b19d6；Forge 锁 5aed3c2；它们都不等于当前 124 部署 |
+| 当前 Weave 源码链 | weave-next；联调工作树 weave-next-deepseek-flash-20260922 | 远端 main 为 cddc417e；124 部署 a5893a0d；联调候选 HEAD 为 6da5d43d，最后一个用量补丁尚未部署 |
+| Forge 源码链 | inoForge；联调工作树 inoForge-weave-run-inbox | 远端 main 为 38be4f3，本地 main 为 3a45106；124 部署 2ec1de8；候选 74488f5 尚未启用。通知接入和冻结材料增补不能视为已进入正式 main |
+| Loom | loom | 远端 main 为 cfe9385；当前 Weave go.mod 锁定 2d1aeb8e3a12 对应伪版本。不能把 Loom 最新 main 的能力自动计入运行镜像 |
+| 独立 Weave Server | weave-server | 远端 main 为 a64a74b；存在正式分仓，但当前 MVP1 的 weave-next 不依赖该模块 |
+| 独立 Kernel / Runtime | weave-kernel、weave-runtime | 远端 main 分别为 1e2340f、1f3e1f3；本轮核对模块边界与版本关系，没有把分仓能力当作当前部署能力 |
+| 独立 Builder | weave-builder | 远端 main 为 4eb495e；不是当前桌面的 Forge 应用开发闭环 |
+| ObjectStack 实际依赖 | Forge 容器内安装包 | plugin-approvals、service-automation、service-messaging 均为 17.3.0；审批修订和消息判断以此版本的实际依赖源码为准 |
+
+本轮 124 镜像读回：Forge 为 inoforge-app:sha-2ec1de8，镜像摘要 c6103048337b…；Weave 为 weave-platform:mvp1-a5893a0d，镜像摘要 5d7168851af4…；Forge 上传目录已有持久卷。Weave 主机端口实际绑定 127.0.0.1:8080，桌面联调仍依赖本机转发。
+
+源码归属依据当前[交付规则](/Users/jinyitao/Developer/weave-workbench/docs/architecture/delivery-model.md#L5)。拆仓是否改为 MVP1 的正式发布来源需要单独明确，本轮不启动迁移。环境文档中的旧镜像及“公网 8080”描述不能再作为当前事实。
+
+## 真实流程与现状
+
+图中“已验证”不表示整条业务通过；虚线表示未接齐或未验收。
+
+~~~mermaid
+flowchart TD
+    A["销售小王：桌面 Pi 准备文本材料<br/>已验证"] --> B["按员工轮次固定目标、文件与授权<br/>接单与同请求恢复已验证"]
+    B --> C["Weave 接单，Loom 成员后台协作<br/>已实际运行"]
+    C -. "缺项只有文字，续办语义未接齐" .-> D["应收到“需要补充”<br/>离线后打开原工作给 Pi 继续"]
+    C --> E["Forge 首次提交审批<br/>已发生，但只绑定正文"]
+    E --> F["交付负责人小李：本人桌面读正文并退回<br/>已验证；未通过本人 Pi 办理"]
+    E -. "未完成实际办理" .-> G["商务财务小陈复核"]
+    F --> H["Forge 原审批已退回<br/>小王桌面接回并交给 Pi"]
+    H --> I["再次交给团队补附件<br/>接单后动作报错，运行失败"]
+    I --> J["失败事件进入 Forge 原生收件箱<br/>本轮只读确认已持久化"]
+    H -. "正文新版、完整材料快照、重提未通" .-> K["新版本交付与商务两项复核"]
+    K -. "尚未完成" .-> L["正式评审结果、文件交付与独立 Forge 读回"]
+~~~
+
+实际操作链按用户目标拆开如下。
+
+| 流程 / 谁从哪里发起 | 中间处理与结果交给谁 | 当前能完成到哪里 | 现状与证据 |
+| --- | --- | --- | --- |
+| 员工登录桌面 | Forge 身份 → Weave 自动绑定 → 桌面工作入口 | 一次登录、恢复会话、按产品权限显示开发入口 | 历史实测通过；多人会话和文件隔离另有缺陷，不能把登录通过等同账号隔离通过 |
+| 小王在 Pi 整理材料 | 本地 Pi 读取和生成工作目录文件 | 已产生真实 Markdown 合同及附件 | 已验证文本工作片段；未验证实际办公二进制文件端到端 |
+| 小王说“这版给他们看看” | Pi 找团队、读取说明、固定输入 → Weave 接单 | 真实接单、缺文件拒绝、进程重开同请求恢复 | 历史实测；成果合格与正式业务提交是另外两步 |
+| 团队检查缺项后交还销售 | 应由运行结果自动进原生收件箱 → Pi 得到原工作及材料 | 当前有终态通知，但没有完整“需要补充—续办—父工作关联” | 代码有缺口；这段场景未通过 |
+| 团队执行合同提交动作 | Forge 校验并发起双岗位原生审批 | 产生过真实审批，小李能看到并退回 | 局部真实通过；正文与附件包不完整，不能计整条审批通过 |
+| 小李、小陈用本人 Pi 复核 | Pi 读事项材料、整理意见，Forge 用本人身份办理 | 小李目前通过待办表单退回；审核态缺 Pi 入口；小陈未完成 | 片段通过，目标路径未通过 |
+| 销售按人工意见改版重提 | 原审批与意见 → Pi 改版 → Forge 固定新版本 → 两项重审 | 最近一次补附件接单后失败；正文改版动作与新快照仍有断点 | 未通过；本轮远端确认仍为 returned |
+| 后台运行结束反馈员工 | Weave 系统事件 → Forge messaging → 原生 inbox | 最新失败事件确实进入收件箱 | 本轮只读确认；最新消息的桌面刷新/打开续办未复验 |
+| 两人通过后的合同成果交付 | Forge 业务结果 → 员工桌面 → 使用者打开文件 → 审计人独立读回 | 尚未发生这条完整路径 | 还需验证 |
+| 非合同“产品反馈分类”配置 | 小周从桌面新建、增加成员/步骤、显式保存、再进入 | 已有创建、编辑、保存、部分读回记录 | 不代表删除、调试、生效及实际处理完成 |
+| 开发者调整合同团队 | 桌面成员能力与指令 → 模拟调试 → 更新团队 | 有真实 UI 操作和发布读回；随后销售真实使用过 | 调试用合成文本和模拟动作，正式运行仍失败；不算同材料效果验收 |
+| Forge 应用开发 | 桌面应用开发页 → 打开 Forge 环境 | 当前只有跳转入口 | D6 尚未形成编辑、差异、检查、预览与发布闭环，属于后续 MVP1 范围 |
+
+开发者链路的断点如下。
+
+~~~mermaid
+flowchart LR
+    A["小周：桌面团队卡片和流程图"] --> B["原位修改成员、模型、指令、Forge能力"]
+    B --> C["显式保存草稿<br/>已有实际保存与读回"]
+    C --> D["文本调试、模拟Forge工具"]
+    D --> E["更新团队<br/>已有UI操作"]
+    E --> F["销售使用发布版本"]
+    F --> G["真实工具/完整材料失败"]
+    D -. "缺同材料真实读取与写入隔离" .-> H["不能证明正式业务可执行"]
+    C -. "缺完整工具选择/字段映射/冲突恢复" .-> I["换复杂场景仍需工程介入"]
+~~~
+
+## 本轮当前事实，避免重复旧结论
+
+| 证据 | 观察结果 | 可以说明什么 / 不能说明什么 |
+| --- | --- | --- |
+| R1：桌面只读查看“我的待办” | 待我处理 1 项；“我发起的工作”显示 0 并提示尚未发起；存在多条团队处理消息 | 直接证明用户可见信息不一致；该页面是已缓存 overview，不能用它判断最新通知未送达 |
+| R2：124 只读查询最新运行 | run-5478201b-8eb1-5a29-8aa3-682202873f29 为 failed；错误为 unreported token dimension must be zero-valued；终态 00:45:54 UTC | 团队接单后失败。不能由用量错误推断 Forge 附件动作已成功 |
+| R3：同一运行的归属 | TeamRun 的 project_id 为团队项目 UUID；固定输入为 workbench-员工标识；parent_run_id 为空 | 支持运行查询和后续关联的断点；不能靠取消账号过滤修复 |
+| R4：通知双端只读核对 | Weave outbox delivered，1 次；Forge notification_delivery 为 success；sys_inbox_message 中有“合同交接团队流程处理失败”，00:45:55 UTC | 最新失败通知确实已持久化。Weave 的 delivered 单独只代表 Forge 接收，本次另查原生收件箱后才确认最终持久化 |
+| R5：Forge 合同与审批只读核对 | 合同仍 pending_approval；附件列表为空；修订附件清单为空；仅一条原生请求且为 returned | 尚未补齐附件、未形成新审批轮次、未评审通过 |
+| R6：桌面已有工作消息 | 标题“流程已完成”，正文却含“提交失败、无写入”等模型结论及内部 ID；历史一次提交实际已形成审批 | 运行完成与业务结果混淆；文字说明不能替代 Forge 回执。不能认为所有历史消息对应当前配置质量 |
+| R7：源码与镜像 | 已部署版本与 main、总仓锁、候选补丁不同 | 用户验收对象必须明确版本组合；源码检查通过不代表当前部署具备 |
+
+需纠正的旧印象：当前团队搜索已经使用工作摘要进行名称/目标相关性筛选，详情按所选团队展开；UUID、固定交接包也已实现。团队和模型来自远端，并未把合同团队固定写在桌面。当前界面已使用显式保存、每团队一个流程，并保留后端多流程能力。这些不应继续作为“尚未修复”的旧问题。
+
+## 产品设计对照与复用判断
+
+已确定的设计来源是[产品基线](/Users/jinyitao/Developer/weave-workbench/docs/architecture/product-architecture.md)、[MVP1](/Users/jinyitao/Developer/weave-workbench/docs/plans/mvp1.md)和[真人场景](/Users/jinyitao/Developer/weave-workbench/scenarios/sales-contract-handoff/README.md)。后续明确指令优先，例如“不保存就不存储”覆盖早期自动保存提议。
+
+| 能力 | 换场景能复用什么 | 目前不合理的绑定 / 合理承载位置 |
+| --- | --- | --- |
+| 员工对话与固定交接 | 同账号、同轮次、冻结字节、UUID、接单回执可复用 | 文本限制需补原件能力；账号现场应由桌面隔离 |
+| 团队发现与分工 | 远端团队目标、成员、模型、技能与发布定义可复用 | 搜索不应恢复固定合同判断；大目录检索与工作列表需解耦 |
+| Forge 业务能力 | 按元数据选择、成员能力与任务授权取交集可复用 | 合同提交规则属于 Forge；记录/材料引用应由契约绑定，不靠模型抄写 |
+| 审批和员工接力 | ObjectStack 已有原生审批、岗位、任职、退回和下一轮机制 | 桌面不应解析合同专有字段决定能否重提；Forge 输出可办动作及版本材料 |
+| 后台结果通知 | Weave outbox → 原生 messaging/inbox 是通用机制 | 缺“需要补充”结果语义；不能要求各团队配置通知工具 |
+| 材料修订 | 可复用文件存储、固定输入和原生审批轮次 | 合同当前“仅补附件”不能代表通用材料修订；业务版本形成由 Forge 各领域动作承载 |
+| 团队调试 | 候选版本、文本执行、模拟工具可复用 | 模拟通过不能证明真实业务；写入隔离须由服务端环境与权限保证 |
+| 非合同正式办理 | 纯文本分类团队可通过同界面配置；部分操作已有记录 | 采购仍使用另一套自建审批，不能直接复用合同的原生员工待办链 |
+
+通用化的最小边界：桌面只需要知道“当前事项、可读材料、当前结果、允许执行的动作”；Weave 只需要知道“本次固定输入、成员配置、允许工具、执行结果”；Forge 继续定义合同、采购等对象各自如何提交、退回、修订和完成。无需把所有领域强行变成相同审批，也无需新建平行员工事项体系。
+
+## 问题清单
+
+P0 表示继续多人和真实写入验收前应先修；P1 阻断本批目标或容易导致误办；P2 为复用、运维或后续开发体验问题。优先级不等于已在线复现。
+
+### 身份、授权与事项归属
+
+| 编号 / 类型 / 证据 | 应当怎样 → 实际怎样；触发与影响 | 原因、位置及必要依据 |
+| --- | --- | --- |
+| A01 · P0 · 已有功能错误 · 历史实测＋代码 | 换账号后只见本人会话和材料 → 小周曾看到小王会话，默认工作目录仍共用。影响所有多人场景，旧运行迟到响应也可能污染新账号视图 | 登录退出仅重置企业 overview，未隔离 sessions/projects/runtime；全局 Pi 会话和 workspaces/pi。见 [App](/Users/jinyitao/Developer/weave-workbench/desktop/src/App.tsx#L158)、[主进程](/Users/jinyitao/Developer/weave-workbench/desktop/electron/main/index.ts#L594)。交接凭据已有撤销，不等于整个工作现场已隔离 |
+| A02 · P0 · 权限约束缺失 · 代码，未越权实测 | “待我处理”应只归属实际受理员工 → Weave human wait 的列表、详情、complete 仅校验 workspace member。组织内别的员工可能读取和办理 | AudienceRef 只存储/返回；Actor 用于审计和幂等，未做受理人判断；两轮交叉检查未发现统一记录级检查。见 [API](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/app/api/human_tasks.go#L324)、[查询](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/kernel/teamrun/human_tasks.go#L49)、[恢复](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/kernel/teamrun/human_resume.go#L143)。Forge 原生审批的授权不能覆盖此独立路径 |
+| A03 · P0 · 意图范围契约缺口 · 代码，未错误写入实测 | 授权 A 记录/A 文件应只能操作 A → 工具执行仍接受模型重填的 recordId 和文件参数。模型可能在当前员工已有权限范围内用错记录或自己的另一文件 | Weave 确实验证员工、动作、租约、期限和接单文件字节，但 resources 只进工具说明，执行参数未与其强制比较。见 [工具描述](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/kernel/businessaction/runtime.go#L472)、[出站参数](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/kernel/businessaction/runtime.go#L608)、[接单核验](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/app/api/business_delegation.go#L98)。不是“完全无鉴权”或已证实跨员工写入 |
+| A04 · P1 · 权限设计偏差 · 代码，实际可见范围待验 | 复核人按事项取得所需材料 → 合同复核权限集同时授予多类业务对象 viewAllRecords。换员工/客户场景可能取得超出当前事项的合同、客户、报价 | Forge 角色配置把办理能力与广域数据读取绑在一起。需依据真实岗位职责核对，不把“能审一份合同”自动等同“读全部合同”。见 [复核权限集](/Users/jinyitao/Developer/inoForge-weave-run-inbox/apps/forge-objectstack/src/permissions/sales-contract.permission.ts#L50) 及其复用的 viewAllRecords；本轮未试读他人业务数据 |
+
+### 员工从接单到继续工作的连接
+
+| 编号 / 类型 / 证据 | 应当怎样 → 实际怎样；触发与影响 | 原因、位置及必要依据 |
+| --- | --- | --- |
+| A05 · P1 · 流程未接上 · 本轮现场＋代码 | 接单后从“我发起的工作”找回准确运行 → 桌面显示 0，员工无法判断状态，容易另起重复工作 | 桌面用合成 project 过滤；无 team selector 的 /v1/runs 走 legacy audit 读模型，另服务端把运行 project 映射成团队默认项目。两处错位。见 [桌面查询](/Users/jinyitao/Developer/weave-workbench/desktop/electron/main/enterprise.ts#L839)、[运行 API](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/app/api/runs.go#L100)、[项目解析](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/app/api/workflow_manual_run.go#L58) |
+| A06 · P1 · 加载与状态错误 · 代码；缓存现场已见 | 审批、运行和通知应各自可用且更新 → overview 把全团队/流程及两系统请求串联，一处失败可阻断整页；已有 overview 不自动刷新 | getWorkOverview 先枚举全团队流程，再 Promise.all；App 只在 overview 为空时加载。见 [聚合](/Users/jinyitao/Developer/weave-workbench/desktop/electron/main/enterprise.ts#L836)、[刷新条件](/Users/jinyitao/Developer/weave-workbench/desktop/src/App.tsx#L817)。本次最新失败通知已入 inbox，桌面旧列表不是丢件证据 |
+| A07 · P1 · 能力未做完整 · 代码＋场景未通过 | 团队发现缺项后，应结束为“需要补充”并让员工从原工作续办 → 现终态事件只按 succeeded/failed/cancelled 生成，缺项通常只在正文里出现 | schema 允许 revision_required，但物化查询不产生该结果。见 [事件生成](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/app/api/employee_run_events.go#L165)。这是结果语义与连接缺口，不要求另建 Forge 业务待办 |
+| A08 · P1 · 续办连接缺失 · 代码＋本轮父关联为空 | 打开消息应读最新原工作、材料与意见 → 桌面把通知文字拼成新会话；后续提交没有结构化父工作绑定 | [continueEnterpriseWork](/Users/jinyitao/Developer/weave-workbench/desktop/src/App.tsx#L488) 始终 newSession，普通运行消息没有重新读取 run/material；[输入登记](/Users/jinyitao/Developer/weave-workbench/desktop/electron/main/enterprise.ts#L1015) 未传父版本关系。原生审批修改入口已读材料，但同样缺持久业务关联 |
+| A09 · P1 · 结果表达偏差 · 本轮现场＋代码 | 用户应区分团队检查结束、动作成功、审批通过 → “流程已完成”的消息正文可能是提交失败；还展示内部 ID、原始工具错误、模型未经核验的状态断言 | 通知按 run.status 直接命名并截取最终文本；缺业务回执关联。见 [事件标题和正文](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/app/api/employee_run_events.go#L174)、[桌面消息](/Users/jinyitao/Developer/weave-workbench/desktop/src/pages/EnterpriseWorkPage.tsx#L56)。已读还可能被投影为 completed；此兜底对真实可办消息的影响待验 |
+| A10 · P1 · 审核者 Pi 路径未接上 · 代码＋历史操作 | 小李/小陈在本人事项内让 Pi 阅读、整理意见并按授权办理 → 审核态只有查看材料、意见框、退回/同意；Pi 入口只在销售 revision 模式 | [待办页](/Users/jinyitao/Developer/weave-workbench/desktop/src/pages/EnterpriseWorkPage.tsx#L45)、[企业工具路由](/Users/jinyitao/Developer/weave-workbench/desktop/electron/main/enterprise/agent-bridge.ts#L121)。表单操作真实有效，但不能代替明确要求的本人 Pi 路径 |
+| A11 · P1 · 成果交付能力缺口 · 代码＋仅文本实测 | 用户递交办公原件并让接收人下载打开 → 当前只接受 Markdown/TXT/CSV/JSON，审批文件按 UTF-8 展示；运行卡片也没有完整成果入口 | [冻结材料](/Users/jinyitao/Developer/weave-workbench/desktop/electron/main/enterprise/materials.ts#L26)、[上传 MIME](/Users/jinyitao/Developer/weave-workbench/desktop/electron/main/enterprise.ts#L385)、[审批解码](/Users/jinyitao/Developer/weave-workbench/desktop/electron/main/enterprise.ts#L979)。实际原件与解析文本没有分开；不能用文本摘要完成 E7 |
+| A12 · P2 · 业务对象发现能力过窄 · 代码，误选待验 | Pi 能关联“这个客户、上次报价、这份合同” → 只抓各对象前 100 条后做本地文本包含打分；唯一记录即使零相关也可能返回 | [业务查找](/Users/jinyitao/Developer/weave-workbench/desktop/electron/main/enterprise.ts#L543)、[对象来源](/Users/jinyitao/Developer/weave-workbench/desktop/electron/main/enterprise/agent-bridge.ts#L137)。查找依赖所选团队动作反推对象，无法形成可靠的关系查询；不能断言用户业务不存在 |
+
+### 材料修订、审批和恢复
+
+| 编号 / 类型 / 证据 | 应当怎样 → 实际怎样；触发与影响 | 原因、位置及必要依据 |
+| --- | --- | --- |
+| A13 · P1 · 业务动作能力不完整 · 实测＋代码 | 提交应包含准确正文及全部复核材料；退回后能修改正文和附件 → 首次动作只绑定单个主文件；修订动作只补附件，主合同不能换版 | [首次动作](/Users/jinyitao/Developer/inoForge-weave-run-inbox/apps/forge-objectstack/src/actions/sales.action.ts#L166)、[附件动作](/Users/jinyitao/Developer/inoForge-weave-run-inbox/apps/forge-objectstack/src/actions/sales.action.ts#L285)。本轮合同附件为空。首次提交唯一记录是合理幂等约束，不能解除它来假装支持修订。原生下一轮会产生新 request ID，因此并非永远不能多轮补附件；真正缺口是不能替换正文、同一轮首次绑定后不能纠正清单、缺完整版本回执 |
+| A14 · P1 · 依赖集成 Bug · 代码，第二轮待实测 | 重提形成新审批轮次并固定新材料，旧轮次保持旧版 → 当前原生回边重提继续用原 automation 的 $record；liveRecord 仅参与审批人路由，新 payload 仍用 input.record | ObjectStack 17.3.0 [openNodeRequest](/Users/jinyitao/Developer/inoForge-weave-run-inbox/apps/forge-objectstack/node_modules/@objectstack/plugin-approvals/dist/index.mjs#L3824)、[payload 写入](/Users/jinyitao/Developer/inoForge-weave-run-inbox/apps/forge-objectstack/node_modules/@objectstack/plugin-approvals/dist/index.mjs#L3891)、[resubmit 信号](/Users/jinyitao/Developer/inoForge-weave-run-inbox/apps/forge-objectstack/node_modules/@objectstack/plugin-approvals/dist/index.mjs#L4797)、[恢复旧变量](/Users/jinyitao/Developer/inoForge-weave-run-inbox/apps/forge-objectstack/node_modules/@objectstack/service-automation/dist/index.js#L2902)。原生平台已有退回/新轮次能力，缺的是这条材料快照衔接，不能说整套审批没能力 |
+| A15 · P1 · 场景特例放错层 · 代码 | 通用桌面应按事项材料和可办动作展示 → 桌面写死合同字段、submitted_attachment_*、补附件文案，以附件轮次决定可重提 | [审批上下文](/Users/jinyitao/Developer/weave-workbench/desktop/electron/main/enterprise.ts#L940)、[合同专用动作门禁](/Users/jinyitao/Developer/weave-workbench/desktop/electron/main/enterprise/agent-bridge.ts#L204)。换采购或一般文档审批会缺字段、材料或正确门禁。合同规则应移回 Forge 投影/动作，而非新增所有对象的桌面 if 分支 |
+| A16 · P1 · 错误与未知结果处理缺口 · 实测＋代码 | 错误应指出真实阻塞，已写业务但回执丢失应核对 → 先前一次提交已形成审批却返回材料不一致；最近附件工具失败又被用量错误掩盖 | 前一文件字段错误已有修复部署，但真实“未知→核对→恢复”用户路径未验收。待部署 6da5d43d 修用量累计，并非附件工具根因，也非旧 cddc417e 的重复补丁。见 [回执合并](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/kernel/teamrun/workflow_interpreter.go#L348)。74488f5 的 id/file_id 兼容未证明是实际错误参数，暂不作为解决方案 |
+| A17 · P2 · 上传恢复能力缺口 · 代码＋已记录限制 | 同一固定材料恢复应复用已成功上传文件 → 全包 resources 最后才落盘；中途失败或回执丢失可能重新上传前面的文件 | [逐文件上传](/Users/jinyitao/Developer/weave-workbench/desktop/electron/main/enterprise.ts#L383)、[整包保存](/Users/jinyitao/Developer/weave-workbench/desktop/electron/main/enterprise/agent-bridge.ts#L223)。内容固定不等于存储严格一次；可产生孤立文件，不能据此断言已重复审批 |
+| A18 · P1 · 失败续办与取消未接上 · 代码，超时/取消待验 | 长任务、断线、取消后员工能回到原工作继续或明确停止 → 桌面没有运行详情/停止/阶段恢复入口；30 分钟 Forge 任务委托到期没有完整用户续授权状态 | [期限](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/app/api/business_delegation.go#L25)、[运行 guard](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/kernel/businessaction/runtime.go#L325)、[桌面运行列表](/Users/jinyitao/Developer/weave-workbench/desktop/src/pages/EnterpriseWorkPage.tsx#L49)。后端已有停止、部分阶段恢复，属产品连接缺口；不能把 Pi recover 当运行恢复，也不能将停止 Weave 当撤销 Forge 写入 |
+| A19 · P1 · 跨业务复用断裂 · 代码 | 合同、采购等共用原生审批和员工事项基础 → 合同走 sys_approval_request，采购仍创建 forge_approval_instance/task，Forge 导航还保留自建审批页 | 主仓与联调分支均有两套路径。合同 /system/approvals 确实可用，问题是换业务后路径分裂；不能说所有审批都不可用。见 [Forge 配置](/Users/jinyitao/Developer/inoForge-weave-run-inbox/apps/forge-objectstack/objectstack.config.ts#L232)，[采购写入自建审批](/Users/jinyitao/Developer/inoForge-weave-run-inbox/apps/forge-objectstack/src/actions/procurement.action.ts#L18) 和 [自建审批页面](/Users/jinyitao/Developer/inoForge-weave-run-inbox/apps/forge-objectstack/src/pages/approval-center.page.ts#L12) |
+| A20 · P1 · 岗位路由语义不一致 · 代码，组合边界待验 | 提交检查与真实路由应解析同一组有效员工 → Forge 提交预检过滤任职有效期，原生 17.3 路由不按同样规则处理 | 在一名有效、一名过期任职并存时，预检与实际审批人可能不一致。已确认当前测试岗位配置不等于证明所有有效期/多人/无人场景正确。见 [Forge 预检](/Users/jinyitao/Developer/inoForge-weave-run-inbox/apps/forge-objectstack/src/actions/sales.action.ts#L225) 和 [原生岗位展开](/Users/jinyitao/Developer/inoForge-weave-run-inbox/apps/forge-objectstack/node_modules/@objectstack/plugin-approvals/dist/index.mjs#L3514)。上游当前有意区分路由与权限有效期，需选明确账号或正式扩展统一产品口径，不能未经分析直接改第三方过滤规则，也不在团队提示词里指定固定小李小陈 |
+
+### 开发者配置与交付
+
+| 编号 / 类型 / 证据 | 应当怎样 → 实际怎样；触发与影响 | 原因、位置及必要依据 |
+| --- | --- | --- |
+| A21 · P1 · 明确 UI Bug · 代码，未点击复现 | 选择负责人作为新增下一步，应由负责人执行 → 对话框允许选择 avatar，applyGraph 只认 worker，随后静默改用首个 worker | [插入执行者](/Users/jinyitao/Developer/weave-workbench/desktop/src/pages/DevelopmentPage.tsx#L95)、[选择项](/Users/jinyitao/Developer/weave-workbench/desktop/src/pages/DevelopmentPage.tsx#L136)。会让保存的流程与开发者选择不一致 |
+| A22 · P1 · 配置能力未开放完整 · 代码 | 不同团队通过目录和字段选择配置工具与数据 → Forge 动作可勾选，普通 MCP 服务和权限列表只读；输入映射固定整份原输入/前序输出，路径为空 | [成员能力](/Users/jinyitao/Developer/weave-workbench/desktop/src/components/development/MemberInspector.tsx#L108)、[步骤输入](/Users/jinyitao/Developer/weave-workbench/desktop/src/pages/team-workspace/StepInspector.tsx#L25)。运行桥复杂参数也不支持 object 结构、array items 为空 schema，[工具 schema](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/kernel/businessaction/runtime.go#L567)。文本 JSON 附件是这一缺口的后果之一 |
+| A23 · P1 · 调试效果与生效门槛不匹配 · 实测边界＋代码 | 同材料试跑可说明配置是否满足目标 → 当前导入文本、模拟 Forge 动作；模拟合法 JSON 即成功，发布门槛只看准确修订 trial succeeded | [模拟 host](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/kernel/businessaction/runtime.go#L527)、[试跑门槛](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/app/api/team_development_runs.go#L134)、[桌面调试](/Users/jinyitao/Developer/weave-workbench/desktop/src/pages/team-workspace/TrialPanel.tsx#L62)。当前模拟并非真实工具隔离执行；不能以此宣称业务参数、权限和材料链已通过 |
+| A24 · P1 · 并发和版本恢复不完整 · 代码，双开发者待验 | CAS 冲突后保留双方改动、比较合并；坏版本可恢复旧可用版本 → 保存失败后仍用旧 revision 重试；“恢复生效配置”只恢复当前已发布配置到草稿 | [草稿保存](/Users/jinyitao/Developer/weave-workbench/desktop/src/pages/team-workspace/useTeamDraft.ts#L19)、[恢复入口](/Users/jinyitao/Developer/weave-workbench/desktop/src/pages/DevelopmentPage.tsx#L132)。服务端拒绝覆盖是正确的，但用户缺恢复路径；差异目前主要列对象名，缺实际前后内容 |
+| A25 · P2 · 观察/后续开发入口未接齐 · 代码 | 看实际成员执行结构、由运行回到配置；以后能改 Forge 应用 → 桌面只展示团队工作流，未消费成员 topology；应用开发仅跳转 Forge | [Weave 真实拓扑](/Users/jinyitao/Developer/weave-next-deepseek-flash-20260922/internal/app/api/topology.go#L22)、[应用入口](/Users/jinyitao/Developer/weave-workbench/desktop/src/pages/DevelopmentPage.tsx#L53)。Loom 的声明拓扑、团队流程、实际工具循环轨迹是不同视图。D6 仍是后续范围，不能把跳转算已完成 |
+| A26 · P1/P2 · 发布组合与文档漂移 · 本轮核对 | 同一产品版本应可重建，接手能知道在验什么 → main、锁定副本、联调分支、线上镜像、未提交桌面不一致；契约仍有旧方向表述 | [组件锁](/Users/jinyitao/Developer/weave-workbench/components.lock.json)、[架构要求团队缺项不创建业务事项](/Users/jinyitao/Developer/weave-workbench/docs/architecture/product-architecture.md#L46) 与 [契约旧表述](/Users/jinyitao/Developer/weave-workbench/contracts/v1/README.md#L114) 相冲突。用户使用失败可能被另一版本的测试误报为已修复 |
+
+## 最小修复顺序与验收方法
+
+以下是审计建议，不表示本轮已经实施。每批只补本批需要的连接，按场景验证后再扩大。
+
+| 顺序 / 覆盖问题 | 最小可行改法 | 怎样证明用户真的完成 |
+| --- | --- | --- |
+| 1. 先锁住同一员工与本次意图：A01–A04 | 桌面按企业账号隔离默认工作目录、会话与运行时，拒绝旧账号迟到响应；Weave 人工节点明确受理账号并统一过滤 list/get/complete；固定输入增加结构化业务记录与资源参数绑定，由桥注入或检查；Forge 权限集按岗位职责收窄 | 两名普通员工和开发者交替登录、退出重开，不能看到/打开/续跑对方内容；非受理人无法读办人类节点；员工有 A/B 两记录两文件但本轮只授权 A，传 B 出站前拒绝。合法动作仍成功且重试不重复 |
+| 2. 让接单后可见、可接回：A05–A10、A12 | 提供按当前员工与固定输入关联的 TeamRun 查询；工作页分区加载并更新；结构化区分可交付、需补充、执行失败与业务结果；消息打开后读最新工作及材料并关联原会话/新会话；审核态接 Pi 上下文与本人可办动作；业务查找复用 Forge 授权搜索/关系 | 小王自然表达发起后马上在列表找到工作；退出 Pi 后团队继续；缺项结果在离线后仍可见，打开即拿到原版本和意见；下一次提交保留父工作。小李用口语让自己的 Pi 形成退回意见，小陈只办理本人事项；不要求内部 ID |
+| 3. 固定完整材料版本与审批轮次：A11、A13–A15、A17 | 原文件 bytes/MIME 与解析内容并存，复用文件存储和下载；Forge 合同领域动作接完整正文/附件包，形成新的正式材料版本；原生审批开新轮次时固定该版本，旧快照不可变；Forge 输出材料与可办动作投影，删去桌面合同专用门禁；上传使用稳定请求键并逐文件保存回执 | 同一 DOCX 或 PDF 原件从销售经团队到两复核人下载打开，内容一致；人工要求修改正文，Pi 生成下一版；第二轮确实看到新正文和附件，第一轮仍能查看旧版；回包丢失和多文件中断恢复不再生成重复文件；不能只验证补附件 |
+| 4. 修好错误与继续：A16、A18 | 保留工具原始错误和已有动作事实，用量不完整作为附属状态；未知结果先查 Forge 业务回执；将现有 stop/retry/recovery 接到本人运行详情；委托过期显示需原员工续授权，保持固定输入和已发生动作 | 覆盖写入已成功但响应丢失、模型后续失败、等待超 30 分钟、断线重开、取消中请求。每次能说明哪些已发生、哪些停止；恢复不重复审批，取消不谎称撤销 Forge 写入 |
+| 5. 让开发者能交付可靠配置：A21–A25 | 修执行人 silent fallback；开放已有工具目录与最小字段映射；用同一冻结材料做只读调试并注明模拟范围；外部写工具另接服务端隔离环境；冲突可拉最新并保留本地差异；恢复已知可用历史版本；消费真实成员拓扑与运行轨迹 | 小周从桌面创建“产品反馈分类”，完成增删改、保存前不落盘、同材料对照、调试、更新与重开读回；后一成员消费明确字段并调用已授权工具；两开发者并发不覆盖，坏版本能恢复，新工作实际使用正确版本 |
+| 6. 收敛原生审批和交付组合：A19、A20、A26 | 沿现有 ObjectStack 能力逐个迁移仍走自建审批的业务入口，先选一个非合同对象；提交预检与实际岗位路由使用同一有效任职规则；在当前确定的 MVP1 来源链集成精确提交，更新部署/契约证据；不把拆仓迁移混入本轮修复 | 合同与一个现有采购/业务审批均从同一桌面工作入口办理，不新增桌面对象名特判；多人/无人/过期任职结果一致；换一台干净环境按版本记录可重建；验证记录对应同一组件组合 |
+
+第一条合同真人场景的最终通过顺序固定为：
+
+1. 小王通过 Pi 拟定合同，用自然表达授权团队检查。
+2. 团队实际指出一次缺项；小王离线再回来，从原工作接回、修改、再递交。
+3. 小王明确授权正式提交；Forge 固定完整材料版本并分配两项人工复核。
+4. 小李、小陈各在自己桌面通过 Pi 阅读对应材料；至少一人真实退回。
+5. 小王按意见修改正文或附件，形成新版本；Forge 新轮次重新完成两项复核，旧轮次意见与材料保留。
+6. Forge 记录明确的正式结果，桌面显示同一事实；交付物使用者下载打开，独立审计身份在 Forge 浏览器重新核对。
+
+配置变化必须由小周在桌面完成；能力补缺才在各正式源码仓实现。不能用后台直接改团队或业务状态代替上述用户操作。
+
+## 尚未确定的方案，与已有要求分开
+
+1. **评审通过与合同生效的状态映射。** 现有 Forge 审批通过即写 active 并允许继续创建销售订单；OTC 文档在合同/SOW 评审后还列正式审批、盖章归档和下单条件。见 [合同通过后状态与通知](/Users/jinyitao/Developer/inoForge-weave-run-inbox/apps/forge-objectstack/src/flows/sales-contract-approval.flow.ts#L40)。需要明确本批原生审批代表哪一关、active 业务含义是什么。不能擅自要求新建某个字段，也不能据当前代码直接宣称后续门槛已满足。
+2. **发布来源的最终收敛。** 当前总仓规则仍消费 weave-next，独立分仓已存在。先明确当前 MVP1 的唯一组合；是否改切 split repos 是独立决定。
+3. **外部写工具的隔离环境怎么提供。** 服务端必须真正隔离这一要求已确定；使用独立测试部署、租户或其他机制尚需按现有平台能力选型，不能通过桌面按钮模拟。
+4. **可见历史版本恢复的产品细节。** 已要求失败恢复与历史追溯；恢复旧版是直接激活还是以新发布记录恢复，需要约定审计语义，不影响先补最小可用路径。
+5. **不在当前首批硬塞的内容。** 全 OTC 到回款、任意业务域、复杂循环设计器、自动局部重跑、能力市场和完整 Forge 应用开发仍按 MVP1 后续范围推进。它们尚未完成不应被误判为本次合同链每一步的先决条件。
+
+## 关键历史证据与本轮限制
+
+- [固定材料、接单、重开恢复、缺文件及错误成果记录](/Users/jinyitao/Developer/weave-workbench/docs/acceptance/2026-09-22-handoff-reliability-and-team-development.md)
+- [团队编辑、非合同团队部分操作与模拟调试边界](/Users/jinyitao/Developer/weave-workbench/docs/acceptance/2026-09-22-team-workspace-editor.md)
+- [登录与安全会话恢复记录](/Users/jinyitao/Developer/weave-workbench/docs/acceptance/2026-09-21-gooeypi-mvp1-login.md)
+- [前轮合同现场及特殊化纠偏](/Users/jinyitao/Developer/weave-workbench/docs/acceptance/2026-09-23-sales-contract-scenario-audit.md)
+
+本轮没有重新制造“先别发”、网络故障、超时、并发修改、取消、越权或新审批轮次。此前“先别发”曾复现旧请求仍派发，之后有代码修复和组件检查，但修复后的真人场景被搁置，仍是待验证。模拟测试和健康检查不升级为这些业务路径已通过。
+
+本轮仅输出审计文档及状态索引；未启用 Forge 74488f5 或 Weave 6da5d43d，未改动现存失败运行和退回事项。
+
+文档检查：69 处本地证据链接均可访问，26 个问题编号完整；make check 的文档/结构检查及 4 项工程入口测试通过，git diff --check 通过。这些只验证审计交付物与工程入口，不是业务场景通过证据。

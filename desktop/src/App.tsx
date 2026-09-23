@@ -35,7 +35,7 @@ import { useStableCallback } from '@/hooks/useStableCallback'
 import { useToast } from '@/hooks/useToast'
 import { useWorkspaceActions } from '@/hooks/useWorkspaceActions'
 import { useWorkspaceRuntime } from '@/hooks/useWorkspaceRuntime'
-import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseDevelopmentOverview, type EnterpriseEnvironmentStatus, type EnterpriseHumanTask, type EnterpriseSession, type EnterpriseWorkItem, type EnterpriseWorkOverview, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceView } from '@/types/api'
+import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseApprovalContext, type EnterpriseDevelopmentOverview, type EnterpriseEnvironmentStatus, type EnterpriseHumanTask, type EnterpriseSession, type EnterpriseWorkItem, type EnterpriseWorkOverview, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceView } from '@/types/api'
 
 const Transcript = lazy(() => import('@/components/Transcript').then((module) => ({ default: module.Transcript })))
 const Inspector = lazy(() => import('@/components/Inspector').then((module) => ({ default: module.Inspector })))
@@ -179,6 +179,10 @@ export default function App() {
     catch (error) { setWorkError(errorMessage(error)); reportError(error); throw error }
     finally { setWorkLoading(false) }
   }, [enterpriseBridge, refreshWorkOverview, reportError])
+  const inspectEnterpriseTask = useCallback(async (task: EnterpriseHumanTask) => {
+    if (!enterpriseBridge || task.source !== 'forge') throw new Error('当前事项没有业务审批材料')
+    return enterpriseBridge.getApprovalContext(task.interactionId)
+  }, [enterpriseBridge])
   // The shell handlers answer with false instead of rejecting, so the refusal
   // reaches the user as a toast rather than disappearing into a dropped result.
   const openExternal = useCallback((url: string) => {
@@ -481,10 +485,16 @@ export default function App() {
     },
     clearSessionAttention, reportError,
   })
-  const continueEnterpriseWork = useCallback((item: EnterpriseWorkItem) => {
+  const continueEnterpriseWork = useCallback((item: EnterpriseWorkItem, context?: EnterpriseApprovalContext) => {
+    const reason = context?.returnReason ?? item.returnReason
     const details = [
-      `继续处理员工工作事项：${item.title}`, item.instructions ?? item.summary ?? '',
-      item.returnReason ? `退回原因：${item.returnReason}` : '', item.materialLabel ? `当前材料：${item.materialLabel}` : '',
+      `继续处理员工工作事项：${item.title}`,
+      context?.returnReason ? '' : item.instructions ?? item.summary ?? '',
+      reason ? `退回原因：${reason}` : '',
+      item.materialLabel ? `当前材料：${item.materialLabel}` : '',
+      context ? `当前审批步骤：${context.step}` : '',
+      ...(context?.fields.map((field) => `${field.label}：${field.value}`) ?? []),
+      ...(context?.files.map((file) => `已核对的提交文件《${file.name}》：\n${file.content}`) ?? []),
       item.workReference ? `原工作引用：${item.workReference}` : '', item.runReference ? `原运行引用：${item.runReference}` : '',
       item.returnTarget ? `修改完成后返回位置：${item.returnTarget}` : '', item.reviewScope ? `复核范围：${item.reviewScope}` : '',
       '先理解事项和当前材料，和我一起完成修改；未经我明确要求，不要直接重新提交。',
@@ -804,11 +814,11 @@ export default function App() {
     if (view === 'development' && canDevelop && !developmentOverview && !developmentLoading && !developmentError) refreshDevelopmentOverview()
   }, [canDevelop, developmentError, developmentLoading, developmentOverview, refreshDevelopmentOverview, view])
   useEffect(() => {
-    if (view === 'activity' && enterpriseBridge && !workOverview && !workLoading) refreshWorkOverview()
-  }, [enterpriseBridge, refreshWorkOverview, view, workLoading, workOverview])
+    if (view === 'activity' && enterpriseBridge && !workOverview && !workLoading && !workError) refreshWorkOverview()
+  }, [enterpriseBridge, refreshWorkOverview, view, workError, workLoading, workOverview])
 
   const page = view === 'projects' ? <ProjectsPage projects={projects} sortMode={settingsState.settings.projectSortMode} onAdd={() => void addProject()} onOpen={selectProject} onRemove={(project) => void removeProject(project)} onTogglePin={(project) => void togglePinProject(project)} />
-    : view === 'activity' && enterpriseBridge ? <EnterpriseWorkPage overview={workOverview} loading={workLoading} error={workError} onRefresh={refreshWorkOverview} onComplete={completeEnterpriseTask} onContinue={continueEnterpriseWork} />
+    : view === 'activity' && enterpriseBridge ? <EnterpriseWorkPage overview={workOverview} loading={workLoading} error={workError} onRefresh={refreshWorkOverview} onComplete={completeEnterpriseTask} onInspect={inspectEnterpriseTask} onContinue={continueEnterpriseWork} />
     : view === 'activity' ? <ActivityPage sessions={sessions} projects={projects} clearedActivity={clearedActivity} onOpen={selectSession} onClear={clearActivity} />
     : view === 'development' ? <DevelopmentPage onNavigationGuard={registerDevelopmentNavigationGuard} key={enterpriseSession?.user?.id} accountId={enterpriseSession?.user?.id} environments={enterpriseStatuses} onOpenForge={openForge} overview={developmentOverview} loading={enterpriseStatusLoading || developmentLoading} error={developmentError} onRefresh={() => { refreshEnterpriseStatus(); refreshDevelopmentOverview() }} bridge={enterpriseBridge!} />
     : view === 'scheduled' ? <ScheduledPage harness={activeHarness} schedules={schedules} nativeHeartbeats={activeHarness === 'prime' ? heartbeats : []} projects={projects} sessions={sessions} models={provider.catalog?.models ?? EMPTY_MODELS} lastSelectedModel={provider.model} error={scheduleError} initialProjectId={activeProject?.id} initialSessionId={activeSession?.id} selectedScheduleId={scheduleFocusId} onCreate={createSchedule} onUpdate={updateSchedule} onPause={(id: string) => mutateSchedule(() => bridge!.schedules.pause(id))} onResume={(id: string) => mutateSchedule(() => bridge!.schedules.resume(id))} onDelete={(id: string) => mutateSchedule(() => bridge!.schedules.delete(id))} onRunNow={(id: string) => mutateSchedule(() => bridge!.schedules.runNow(id))} onPreview={async (timing: ScheduleTiming) => bridge ? bridge.schedules.preview(timing, 3) : { timing, occurrences: [] }} onOpenSession={openScheduledSession} onManageHeartbeat={manageHeartbeat} />

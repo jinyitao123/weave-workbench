@@ -70,6 +70,7 @@ const api: PrimeWorkApi = {
     saveTeamMemberConfigDraft: (draft) => invoke('enterprise:save-team-member-config-draft', draft),
     applyTeamMemberConfigDraft: (teamId, agentId, revision) => invoke('enterprise:apply-team-member-config-draft', teamId, agentId, revision),
     getWorkOverview: () => invoke('enterprise:get-work-overview'),
+    getApprovalContext: (approvalId) => invoke('enterprise:get-approval-context', approvalId),
     submitWork: (choice, goal) => invoke('enterprise:submit-work', choice, goal),
     completeHumanTask: (task, payload) => invoke('enterprise:complete-human-task', task, payload),
   },

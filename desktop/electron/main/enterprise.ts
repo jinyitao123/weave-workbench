@@ -1,6 +1,6 @@
 import { teamWorkspaceRequest } from './enterprise/team-workspace'
 import type { TeamWorkspaceCommand } from '../../src/types/team-workspace'
-import type { EnterpriseBusinessCapability, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource } from '../../src/types/api'
+import type { EnterpriseApprovalContext, EnterpriseBusinessCapability, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource } from '../../src/types/api'
 import type { FrozenMaterial } from './enterprise/materials'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
@@ -540,6 +540,27 @@ export class EnterpriseService {
     })
   }
 
+  async findBusinessRecords(objectNames: string[], workSummary: string): Promise<Array<{ objectName: string; recordId: string; name: string; code?: string }>> {
+    const requested = [...new Set(objectNames)].filter((name) => /^[a-z][a-z0-9_]{1,127}$/.test(name) && !name.startsWith('sys_'))
+    if (!requested.length) return []
+    const terms = [...new Set(workSummary.toLowerCase().split(/[\s，。；、：,.!?！？（）()《》“”"'\-_/]+/).map((value) => value.trim()).filter((value) => value.length >= 2))]
+    const matches: Array<{ objectName: string; recordId: string; name: string; code?: string; score: number; updatedAt: string }> = []
+    for (const objectName of requested) {
+      const payload = record(await this.forgeJSON(`/api/v1/data/${encodeURIComponent(objectName)}?$top=100`))
+      const rows = Array.isArray(payload?.records) ? payload.records : Array.isArray(record(payload?.data)?.records) ? record(payload?.data)?.records as unknown[] : []
+      for (const value of rows) {
+        const row = record(value), recordId = textValue(row?.id), name = textValue(row?.name) ?? textValue(row?.title), code = textValue(row?.code)
+        if (!row || !recordId || !name) continue
+        const haystack = [name, code, textValue(row.customer_po_number), textValue(row.remarks)].filter(Boolean).join(' ').toLowerCase()
+        const score = terms.reduce((total, term) => total + (haystack.includes(term) ? Math.max(2, term.length) : 0), 0)
+        matches.push({ objectName, recordId, name, ...(code ? { code } : {}), score, updatedAt: textValue(row.updated_at) ?? textValue(row.created_at) ?? '' })
+      }
+    }
+    const ranked = matches.sort((left, right) => right.score - left.score || right.updatedAt.localeCompare(left.updatedAt))
+    const positive = ranked.filter((item) => item.score > 0)
+    return (positive.length ? positive : ranked.length === 1 ? ranked : []).slice(0, 10).map(({ score: _score, updatedAt: _updatedAt, ...item }) => item)
+  }
+
   async createDevelopmentTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult> {
     const name = input?.name?.trim()
     const objective = input?.objective?.trim()
@@ -817,9 +838,9 @@ export class EnterpriseService {
     const choices = (await Promise.all(teams.map((team) => this.getTeamChoices(team)))).flat()
     const projectID = await this.workProjectID()
     const [rawRuns, rawTasks, rawNotifications, rawApprovals] = await Promise.all([
-      this.weaveJSON(`/v1/runs?project_id=${encodeURIComponent(projectID)}&aggregation_mode=root-subtree&limit=50`),
+      this.weaveJSON(`/v1/runs?project_id=${encodeURIComponent(projectID)}&limit=50`),
       this.weaveJSON('/v1/human-tasks?limit=50'),
-      this.forgeJSON('/api/v1/notifications?limit=50'),
+      this.forgeJSON('/api/v1/notifications?limit=200'),
       this.forgeOptionalJSON('/api/v1/approvals/requests?limit=50'),
     ])
     const taskList = record(rawTasks)
@@ -836,39 +857,52 @@ export class EnterpriseService {
       : Array.isArray(approvalEnvelope?.requests) ? approvalEnvelope.requests
         : Array.isArray(approvalEnvelope?.data) ? approvalEnvelope.data : []
     for (const value of approvalValues) {
-      const approval = record(value), viewer = record(approval?.viewer)
+      const approval = record(value), viewer = record(approval?.viewer), payload = record(approval?.payload)
       const id = textValue(approval?.id), status = textValue(approval?.status), updatedAt = textValue(approval?.updated_at) ?? textValue(approval?.created_at)
       const canDecide = status === 'pending' && viewer?.can_act === true
       const canResubmit = status === 'returned' && viewer?.is_submitter === true
       if (!id || !updatedAt || (!canDecide && !canResubmit)) continue
-      const processName = textValue(approval?.process_name) ?? '业务审批'
-      const stepName = textValue(approval?.current_step)
+      let returnReason: string | undefined
+      if (canResubmit) {
+        const actionEnvelope = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(id)}/actions`))
+        const actions = Array.isArray(actionEnvelope?.data) ? actionEnvelope.data : []
+        const latestRevision = [...actions].reverse().map(record).find((action) => action?.action === 'revise')
+        returnReason = textValue(latestRevision?.comment)
+      }
+      const processName = textValue(approval?.process_label) ?? textValue(approval?.process_name) ?? '业务审批'
+      const stepName = textValue(approval?.step_label) ?? textValue(approval?.current_step)
+      const recordTitle = textValue(approval?.record_title)
       tasks.push({
         interactionId: id, runId: `forge:${canResubmit ? 'revision' : 'approval'}:${id}`,
         teamId: 'forge', workflowId: 'business-approval', workflowVersion: 1,
-        title: canResubmit ? `${processName}需要修改` : (stepName ?? processName),
-        instructions: canResubmit ? '请根据审批意见修改业务材料，完成后重新提交。' : '请核对业务材料并给出审批意见。',
+        title: canResubmit ? `${recordTitle ?? processName}需要修改` : (recordTitle ? `${recordTitle} · ${stepName ?? processName}` : stepName ?? processName),
+        instructions: canResubmit ? returnReason ? `退回原因：${returnReason}` : '请根据审批意见修改业务材料，完成后重新提交。' : '请核对业务材料并给出审批意见。',
         updatedAt, source: 'forge', mode: canResubmit ? 'revision' : 'approval',
-        ...(textValue(approval?.object_name) ? { materialLabel: textValue(approval?.object_name) } : {}),
+        ...(textValue(payload?.submitted_material_name) ?? textValue(approval?.object_label) ? { materialLabel: textValue(payload?.submitted_material_name) ?? textValue(approval?.object_label) } : {}),
       })
     }
-    const notificationList = record(rawNotifications)
+    const notificationEnvelope = record(rawNotifications)
+    const notificationList = record(notificationEnvelope?.data) ?? notificationEnvelope
     const items = (Array.isArray(notificationList?.notifications) ? notificationList.notifications : []).flatMap((value): EnterpriseWorkItem[] => {
       const notification = record(value), data = record(notification?.data), continuation = record(data?.continuation), material = record(data?.material)
       const id = textValue(notification?.id), title = textValue(notification?.title), createdAt = textValue(notification?.createdAt) ?? textValue(notification?.created_at)
       if (!id || !title || !createdAt) return []
       const requestedKind = textValue(data?.kind)
+      const notificationType = textValue(notification?.type) ?? ''
       const kind: EnterpriseWorkItem['kind'] = requestedKind === 'revision_required' || requestedKind === 'human_review' || requestedKind === 'failure' || requestedKind === 'result'
-        ? requestedKind : textValue(notification?.type)?.includes('error') ? 'failure' : 'result'
+        ? requestedKind : notificationType.includes('revision_required') ? 'revision_required' : notificationType.includes('failure') || notificationType.includes('error') ? 'failure' : 'result'
       const actionable = kind === 'revision_required' || kind === 'human_review'
+      const displayTitle = /[0-9a-f]{8}-[0-9a-f-]{27,}/i.test(title)
+        ? kind === 'failure' ? '团队处理失败' : kind === 'revision_required' ? '团队工作需要修改' : kind === 'human_review' ? '需要人工处理' : '团队工作已完成'
+        : title
       const statusValue = textValue(data?.status)
       const status: EnterpriseWorkItem['status'] = statusValue === 'pending' || statusValue === 'in_progress' || statusValue === 'completed' || statusValue === 'cancelled'
         ? statusValue : notification?.read === true ? 'completed' : actionable ? 'pending' : 'unread'
       const returnTarget = textValue(continuation?.returnTarget)
       const reviewScope = textValue(continuation?.reviewScope)
       return [{
-        id, kind, title, status, actionable, read: notification?.read === true,
-        source: textValue(data?.source) === 'weave' ? 'weave' : 'forge', createdAt,
+        id, kind, title: displayTitle, status, actionable, read: notification?.read === true,
+        source: textValue(data?.source) === 'weave' || notificationType.startsWith('weave.') ? 'weave' : 'forge', createdAt,
         ...(textValue(notification?.body) ? { summary: textValue(notification?.body) } : {}),
         ...(textValue(data?.instructions) ? { instructions: textValue(data?.instructions) } : {}),
         ...(textValue(notification?.actionUrl) ?? textValue(notification?.action_url) ? { actionUrl: textValue(notification?.actionUrl) ?? textValue(notification?.action_url) } : {}),
@@ -879,9 +913,81 @@ export class EnterpriseService {
         ...(returnTarget === 'origin_review' || returnTarget === 'team' || returnTarget === 'member' || returnTarget === 'human_step' ? { returnTarget } : {}),
         ...(reviewScope === 'whole_team' || reviewScope === 'affected_members' || reviewScope === 'human_step' ? { reviewScope } : {}),
       }]
-    })
+    }).filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index)
     const runList = record(rawRuns)
     return { loadedAt: new Date().toISOString(), choices, tasks, items, runs: (Array.isArray(runList?.runs) ? runList.runs : []).flatMap((run) => runObservation(run) ?? []) }
+  }
+
+  async getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContext> {
+    const approval = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(approvalId)}`))
+    const viewer = record(approval?.viewer), payload = record(approval?.payload)
+    const isReviewer = viewer?.can_act === true && textValue(approval?.status) === 'pending'
+    const isSubmitter = viewer?.is_submitter === true && textValue(approval?.status) === 'returned'
+    if (!approval || !payload || (!isReviewer && !isSubmitter)) {
+      throw new Error('这项审批已无法由当前员工处理，请刷新待办')
+    }
+    let returnReason: string | undefined
+    if (isSubmitter) {
+      const actionEnvelope = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(approvalId)}/actions`))
+      const actions = Array.isArray(actionEnvelope?.data) ? actionEnvelope.data : []
+      const latestRevision = [...actions].reverse().map(record).find((action) => action?.action === 'revise')
+      returnReason = textValue(latestRevision?.comment)
+    }
+    const currentRecordEnvelope = isSubmitter && textValue(approval.record_id)
+      ? record(await this.forgeJSON(`/api/v1/data/${encodeURIComponent(textValue(approval.object_name) ?? '')}/${encodeURIComponent(String(approval.record_id))}`))
+      : undefined
+    const currentRecord = record(currentRecordEnvelope?.record)
+    if (isSubmitter && !currentRecord) throw new Error('当前合同材料无法读取，请刷新待办')
+    const material = currentRecord ?? payload
+    const revisionReady = isSubmitter && textValue(material.submitted_attachment_revision_request_id) === approvalId
+      && Boolean(textValue(material.submitted_attachment_manifest))
+    const labels = record(approval.payload_labels), display = record(approval.payload_display)
+    const preferred = ['name', 'code', 'customer_id', 'total_amount', 'business_terms', 'payment_term', 'delivery_address', 'warranty_months', 'submitted_material_name']
+    const fields = preferred.flatMap((key) => {
+      const value = isSubmitter ? material[key] : display?.[key] ?? payload[key]
+      if ((typeof value !== 'string' && typeof value !== 'number') || !String(value).trim()) return []
+      return [{ label: textValue(labels?.[key]) ?? key, value: String(value) }]
+    })
+    const files: EnterpriseApprovalContext['files'] = []
+    const manifest: Array<{ file_id: string; name: string; sha256: string }> = []
+    const mainFileId = textValue(material.submitted_material_id), mainHash = textValue(material.submitted_material_sha256)
+    if (mainFileId && mainHash) manifest.push({ file_id: mainFileId, name: textValue(material.submitted_material_name) ?? '合同文件', sha256: mainHash })
+    const attachmentManifest = textValue(material.submitted_attachment_manifest)
+    if (attachmentManifest) {
+      let parsed: unknown
+      try { parsed = JSON.parse(attachmentManifest) } catch { throw new Error('审批附件清单格式无效') }
+      if (!Array.isArray(parsed) || parsed.length > 10) throw new Error('审批附件清单格式无效')
+      for (const item of parsed) {
+        const entry = record(item), fileId = textValue(entry?.file_id), name = textValue(entry?.name), sha256 = textValue(entry?.sha256)
+        if (!fileId || !name || !sha256) throw new Error('审批附件清单不完整')
+        manifest.push({ file_id: fileId, name, sha256 })
+      }
+    }
+    for (const file of manifest) {
+      const { file_id: fileId, name, sha256: expectedHash } = file
+      if (!/^[0-9a-f-]{36}$/i.test(fileId) || !/^[0-9a-f]{64}$/i.test(expectedHash)) throw new Error('审批文件校验信息无效')
+      const signed = record(await this.forgeJSON(`/api/v1/storage/files/${encodeURIComponent(fileId)}/url`))
+      const signedData = record(signed?.data), rawUrl = textValue(signedData?.url)
+      if (!rawUrl) throw new Error('审批文件暂时无法读取')
+      const downloadUrl = new URL(rawUrl, this.forgeUrl)
+      if (downloadUrl.origin !== this.forgeUrl.origin || !downloadUrl.pathname.startsWith('/api/v1/storage/')) {
+        throw new Error('审批文件地址不属于当前 Forge 环境')
+      }
+      const response = await this.fetch(downloadUrl, { redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
+      if (!response.ok) { await response.body?.cancel(); throw new Error(`审批文件读取失败（${response.status}）`) }
+      const bytes = Buffer.from(await response.arrayBuffer())
+      if (bytes.length > 2 * 1024 * 1024) throw new Error('审批文件过大，请在 Forge 中查看')
+      const actualHash = createHash('sha256').update(bytes).digest('hex')
+      if (actualHash !== expectedHash.toLowerCase()) throw new Error('审批文件与提交版本不一致，请暂停处理')
+      files.push({ name, content: new TextDecoder('utf-8', { fatal: true }).decode(bytes), verified: true })
+    }
+    return {
+      title: textValue(approval.record_title) ?? textValue(payload.name) ?? '业务审批',
+      step: textValue(approval.step_label) ?? textValue(approval.process_label) ?? '审批',
+      ...(returnReason ? { returnReason } : {}),
+      ...(isSubmitter ? { revisionReady } : {}),
+      fields, files,
+    }
   }
 
   async submitWork(choice: EnterpriseWorkChoice, goal: string, source?: {
@@ -909,7 +1015,7 @@ export class EnterpriseService {
     const workbenchSessionID = source ? `${projectID}-${source.sessionKey}-${workId}` : `${projectID}-${workId}`
     const registered = await this.weaveRequest('/v1/workbench/dispatch-inputs', 'POST', {
       registration_id: workId, workbench_session_id: workbenchSessionID, team_id: choice.teamId, workflow_id: choice.workflowId,
-      workflow_version: choice.version, task: normalized,
+      workflow_version: choice.version, project_id: projectID, task: normalized,
       resources: source?.resources,
       authorized_business_capability_ids: source?.authorizedBusinessCapabilityIds ?? [],
       source_messages: source?.sourceMessages.map((message) => ({ message_id: message.messageId, event_seq: message.eventSeq, sha256: message.sha256 }))
