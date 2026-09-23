@@ -101,7 +101,7 @@ describe('Windows desktop-state compatibility protocol', () => {
       'file-sync', 'publish-v4',
       'file-sync', 'publish-tombstone',
     ])
-    expect(JSON.parse(readFileSync(currentPath, 'utf8'))).toMatchObject({ version: 4, projects: [] })
+    expect(JSON.parse(readFileSync(currentPath, 'utf8'))).toMatchObject({ version: 5, projects: [] })
     expect(expectCompletedTombstone(legacyPath)).toMatchObject({ backupFile: null, reason: 'fresh' })
     expectReleasedLegacyReaderHasNoAuthority(legacyPath)
 
@@ -299,7 +299,7 @@ describe('Windows desktop-state compatibility protocol', () => {
     const directory = makeDirectory()
     const currentPath = join(directory, CURRENT_DESKTOP_STATE_FILENAME)
     const legacyPath = join(directory, LEGACY_DESKTOP_STATE_FILENAME)
-    const current = JSON.stringify({ version: 4, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] })
+    const current = JSON.stringify({ version: 5, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [], scheduleOwnerships: [] })
     const recreatedLegacy = legacyState('downgrade-write')
     writeFileSync(currentPath, current)
     writeFileSync(legacyPath, recreatedLegacy)
@@ -323,7 +323,7 @@ describe('Windows desktop-state compatibility protocol', () => {
     const directory = makeDirectory()
     const currentPath = join(directory, CURRENT_DESKTOP_STATE_FILENAME)
     const legacyPath = join(directory, LEGACY_DESKTOP_STATE_FILENAME)
-    const current = JSON.stringify({ version: 4, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] })
+    const current = JSON.stringify({ version: 5, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [], scheduleOwnerships: [] })
     const recreatedLegacy = legacyState('downgrade-write')
     writeFileSync(currentPath, current)
     writeFileSync(legacyPath, recreatedLegacy)
@@ -359,7 +359,7 @@ describe('Windows desktop-state compatibility protocol', () => {
     const directory = makeDirectory()
     const currentPath = join(directory, CURRENT_DESKTOP_STATE_FILENAME)
     const legacyPath = join(directory, LEGACY_DESKTOP_STATE_FILENAME)
-    const current = JSON.stringify({ version: 4, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] })
+    const current = JSON.stringify({ version: 5, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [], scheduleOwnerships: [] })
     const recreatedLegacy = legacyState('downgrade-write')
     writeFileSync(currentPath, current)
     writeFileSync(legacyPath, recreatedLegacy)
