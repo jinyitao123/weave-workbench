@@ -19,7 +19,7 @@ export const AccountingOpeningSetup = master('forge_accounting_opening_setup', '
 
 export const CounterpartyOffset = master('forge_counterparty_offset', '往来对冲单', 'arrow-left-right', {
   name: text('对冲名称', true), code: code('对冲编号'), receivable_id: reference('forge_accounts_receivable', '应收账款', true),
-  payable_id: reference('forge_accounts_payable', '应付账款', true), customer_id: reference('forge_customer', '客户', true),
+  payable_id: reference('forge_accounts_payable', '应付账款', true), customer_id: { ...reference('forge_customer', '客户', true), relatedList: false },
   supplier_id: reference('forge_supplier', '供应商', true), counterparty_name: text('往来单位名称', true),
   identity_basis: Field.select([{ value: 'credit_code', label: '统一社会信用代码一致' }, { value: 'normalized_name', label: '单位名称一致' }], { label: '主体判定依据', ...required, readonly: true }),
   amount: amount('对冲金额'), offset_on: Field.date({ label: '对冲日期', ...required }),

@@ -21,13 +21,13 @@ export const Customer = master('forge_customer', '客户管理', 'building-2', {
 // “我参与的 / 下属参与的” customer-owner scopes.
 export const CustomerTeamMember = master('forge_customer_team_member', '客户团队成员', 'users', {
   name: text('成员名称', true), membership_key: code('成员关系键'),
-  customer_id: reference('forge_customer', '客户', true), user_id: Field.user({ label: '团队成员', required: true, storage: { notNull: true } }),
+  customer_id: { ...reference('forge_customer', '客户', true), relatedList: false }, user_id: Field.user({ label: '团队成员', required: true, storage: { notNull: true } }),
   member_duty: Field.select([{ value: 'collaborator', label: '协同销售' }], { label: '成员职责', defaultValue: 'collaborator' }),
   active: Field.boolean({ label: '有效成员', defaultValue: true }), remarks: remarks(),
 }, ['customer_id', 'user_id', 'member_duty', 'active']);
 
 export const Contact = master('forge_contact', '联系人管理', 'contact', {
-  name: text('姓名', true), customer_id: reference('forge_customer', '客户', true),
+  name: text('姓名', true), customer_id: { ...reference('forge_customer', '客户', true), relatedList: true, relatedListTitle: '联系人', relatedListColumns: ["name", "is_primary", "job_title", "department", "employment_status"] },
   is_primary: Field.boolean({ label: '主要联系人', defaultValue: false }), job_title: text('职位'), department: text('部门'),
   gender: text('性别'), decision_weight: text('决策权重'),
   employment_status: Field.select([

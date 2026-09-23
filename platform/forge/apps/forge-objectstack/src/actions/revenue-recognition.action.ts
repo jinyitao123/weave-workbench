@@ -13,7 +13,7 @@ export const SalesOrderCreateRevenueRecognition = defineAction({
     { field: 'financial_period', objectOverride: 'forge_revenue_recognition', required: true },
     { field: 'remarks', objectOverride: 'forge_revenue_recognition' },
   ],
-  onSuccess: { navigate: '/_console/apps/forge/page/page_revenue_recognition?recognition=${result.id}' },
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.finance/page_revenue_recognition?recognition=${result.id}' },
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const id=ctx.recordId||(ctx.record&&ctx.record.id),order=ctx.record,actor=ctx.session&&ctx.session.userId;
 if(ctx.recordLoadDenied===true||!id||!order)throw new Error('销售订单不存在或不可访问');

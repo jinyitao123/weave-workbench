@@ -80,7 +80,7 @@ export const QuotationConvertToContract = defineAction({
     { field: 'starts_on', objectOverride: 'forge_sales_contract', required: true },
     { field: 'ends_on', objectOverride: 'forge_sales_contract', required: true },
   ],
-  onSuccess: { navigate: '/_console/apps/forge/forge_sales_contract/record/${result.id}' },
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.sales/forge_sales_contract/record/${result.id}' },
   body: {
     language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id);
@@ -433,7 +433,7 @@ export const SalesOrderCreateShipment = defineAction({
     { field: 'quantity', objectOverride: 'forge_sales_shipment_line', required: true },
     { field: 'remarks', objectOverride: 'forge_sales_shipment' },
   ],
-  onSuccess: { navigate: '/_console/apps/forge/forge_sales_shipment/record/${result.id}' },
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.sales/forge_sales_shipment/record/${result.id}' },
   body: {
     language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id);
@@ -498,7 +498,7 @@ export const SalesShipmentCreateOutbound = defineAction({
     { field: 'customer_pickup', objectOverride: 'forge_sales_outbound' },
     { field: 'remarks', objectOverride: 'forge_sales_outbound' },
   ],
-  onSuccess: { navigate: '/_console/apps/forge/forge_sales_outbound/record/${result.id}' },
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.supply-chain/forge_sales_outbound/record/${result.id}' },
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id); const shipment = ctx.record;
 if (ctx.recordLoadDenied === true || !id || !shipment) throw new Error('当前发货单不存在或不可访问');
@@ -541,7 +541,7 @@ export const ContractConvertToSalesOrder = defineAction({
     { field: 'payment_method', objectOverride: 'forge_sales_order', required: true, defaultValue: 'bank_transfer' },
     { field: 'delivery_address', objectOverride: 'forge_sales_order' },
   ],
-  onSuccess: { navigate: '/_console/apps/forge/forge_sales_order/record/${result.id}' },
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.sales/forge_sales_order/record/${result.id}' },
   body: {
     language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id);

@@ -8,12 +8,34 @@
 
 name: inoforge
 
+x-forge-proxy: &forge-proxy
+  image: ${FORGE_PROXY_IMAGE:-inoforge-proxy:local}
+  build:
+    context: .
+    dockerfile: Dockerfile
+    target: proxy
+    args:
+      FORGE_SOURCE_REVISION: ${FORGE_SOURCE_REVISION:-unknown}
+  depends_on:
+    app:
+      condition: service_healthy
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/_forge_transport_health || exit 1"]
+    interval: 10s
+    timeout: 3s
+    retries: 5
+    start_period: 5s
+
 services:
   app:
     image: ${FORGE_IMAGE:-inoforge-app:local}
-    build: .
-    ports:
-      - "${FORGE_HTTP_PORT:-8080}:8080"
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: app
+    expose:
+      - "8080"
     volumes:
       - uploads:/srv/app/.objectstack/data/uploads
     environment:
@@ -35,6 +57,18 @@ services:
       timeout: 5s
       retries: 5
       start_period: 60s
+
+  proxy:
+    <<: *forge-proxy
+    ports:
+      - "${FORGE_HTTP_BIND:-0.0.0.0}:${FORGE_HTTP_PORT:-8080}:80"
+
+  proxy-candidate:
+    <<: *forge-proxy
+    profiles:
+      - transport-candidate
+    ports:
+      - "127.0.0.1:${FORGE_CANDIDATE_PORT:-14612}:80"
 
   db:
     image: ${POSTGRES_IMAGE:-postgres:17}

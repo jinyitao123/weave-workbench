@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit",
     "acceptance:approval-workbench-context": "node --experimental-strip-types --test tests/approval-workbench-context.integration.mjs",
     "acceptance:console-controls": "node tests/console-controls.static.mjs",
+    "acceptance:approval-resubmit-guard": "node --experimental-strip-types tests/approval-resubmit-guard.integration.mjs",
     "acceptance:finance-workflow": "node tests/finance-workflow.integration.mjs",
     "acceptance:page-polish": "node tests/page-polish.static.mjs",
     "page-pixel-compare": "node tests/page-pixel-compare.mjs",

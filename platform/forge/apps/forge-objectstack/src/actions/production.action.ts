@@ -12,7 +12,7 @@ export const BomCreateAssembly = defineAction({
     { field: 'warehouse_id', objectOverride: 'forge_assembly_order' }, { field: 'sales_order_id', objectOverride: 'forge_assembly_order' },
     { field: 'planned_completion_on', objectOverride: 'forge_assembly_order' }, { field: 'remarks', objectOverride: 'forge_assembly_order' },
   ],
-  onSuccess: { navigate: '/_console/apps/forge/page/page_production_assembly_workspace?id=${result.id}' },
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.production/page_production_assembly_workspace?id=${result.id}' },
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const id=ctx.recordId||(ctx.record&&ctx.record.id),bom=ctx.record,actor=ctx.session&&ctx.session.userId;
 if(ctx.recordLoadDenied===true||!id||!bom)throw new Error('当前BOM不存在或不可访问');if(!actor)throw new Error('无法识别当前操作人');
@@ -91,7 +91,7 @@ export const AssemblyCreateMaterialDocument = defineAction({
     { name: 'handled_on', label: '业务日期', type: 'date', required: true }, { name: 'lines_json', label: '补退料明细', type: 'textarea' },
     { name: 'remarks', label: '备注', type: 'textarea' },
   ],
-  onSuccess: { navigate: '/_console/apps/forge/page/page_production_material_workspace?id=${result.id}' },
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.production/page_production_material_workspace?id=${result.id}' },
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const id=ctx.recordId||(ctx.record&&ctx.record.id),order=ctx.record,actor=ctx.session&&ctx.session.userId;if(ctx.recordLoadDenied===true||!id||!order)throw new Error('当前组装单不存在或不可访问');if(!actor)throw new Error('无法识别当前操作人');const type=ctx.input.document_type;if(!['issue','supply','return'].includes(type))throw new Error('单据类型无效');if(!ctx.input.handled_on)throw new Error('业务日期不能为空');if(!order.warehouse_id)throw new Error('组装单未设置出入库仓库');
 if(type==='issue'&&order.status!=='waiting_pick')throw new Error('领料只能选择待领料组装单');if(type!=='issue'&&order.status!=='assembling')throw new Error('补退料只能选择组装中组装单');const round4=v=>Math.round((Number(v)+Number.EPSILON)*10000)/10000,assemblyLines=await ctx.api.object('forge_assembly_material_line').find({where:{assembly_id:id}});let inputs=[];

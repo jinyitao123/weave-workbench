@@ -6,7 +6,7 @@ const bomCss = `
 
 const bomPageSource = `
 const css=${JSON.stringify(forgeProductUiCss + bomCss)};
-function App(){
+function App(){const adapter=useAdapter();
   const pageSize=12;
   const initialId=new URLSearchParams(window.location.search).get('id');
   const [view,setView]=React.useState(initialId?'detail':'list');
@@ -23,7 +23,7 @@ function App(){
   const [collapsed,setCollapsed]=React.useState({});
 
   async function request(path,options){
-    const response=await fetch('/api/v1'+path,{credentials:'include',headers:{'Content-Type':'application/json'},...options});
+    const response=await ForgeApiResponse(adapter,path,{credentials:'include',headers:{'Content-Type':'application/json'},...options});
     const payload=await response.json().catch(()=>({}));
     if(!response.ok)throw new Error((typeof payload.error==='string'?payload.error:payload.error?.message)||(Array.isArray(payload.fields)&&payload.fields.length?payload.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||payload.message||'请求失败');
     return payload;
@@ -43,7 +43,7 @@ function App(){
   function exportBoms(){const rows=filtered.length?filtered:state.boms,head=['BOM编号','BOM名称','产品/设备','BOM类型','当前版本','状态','适用项目','物料数','未税成本','更新时间'],body=rows.map(b=>[b.code,b.name,b.product_name||'',typeText[b.bom_type]||b.bom_type,b.version||'',statusText[b.status]||b.status,state.projects.find(p=>p.id===b.project_id)?.name||'',b.node_count||0,b.total_cost||0,String(b.updated_at||'').slice(0,16)]),csv=[head,...body].map(r=>r.map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join('\\n'));const text=[head,...body].map(r=>r.join(',')).join('\\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\\ufeff'+text],{type:'text/csv'}));a.download='BOM列表.csv';a.click();setToast('已导出 '+body.length+' 条 BOM');}
   function nodeKey(n){const sku=state.skus.find(x=>x.id===n.sku_id),mat=state.materials.find(x=>x.id===sku?.material_id);return (mat?.code||sku?.code||n.name||'—')+' · '+(mat?.name||sku?.name||'');}
   function openCompare(){if(selected.length!==2)return setToast('请选择两条 BOM 进行对比');const [a,b]=selected.map(id=>state.boms.find(x=>x.id===id));const na=state.nodes.filter(n=>n.bom_id===a.id),nb=state.nodes.filter(n=>n.bom_id===b.id);const mapA=new Map(na.map(n=>[nodeKey(n),n])),mapB=new Map(nb.map(n=>[nodeKey(n),n]));const keys=[...new Set([...mapA.keys(),...mapB.keys()])].sort();const rows=keys.map(k=>{const x=mapA.get(k),y=mapB.get(k),qa=Number(x?.quantity||0),qb=Number(y?.quantity||0);return {key:k,a:qa,b:qb,status:!x?'新增':!y?'缺失':qa===qb?'一致':'数量变化'};});setDialog({kind:'compare',a,b,rows,error:''});}
-  async function createBom(){if(!dialog)return;const name=String(dialog.name||'').trim();if(!name)return setDialog(d=>({...d,error:'请填写 BOM 名称'}));setBusy(true);try{await (async()=>{const r=await fetch('/api/v1/data/forge_bom',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,code:'BOM-'+String(Date.now()).slice(-8),product_name:String(dialog.product_name||'').trim()||name,bom_type:dialog.bom_type||'standard',project_id:dialog.project_id||null,change_note:String(dialog.change_note||'').trim()||null})});const txt=await r.text();if(!r.ok)throw new Error('HTTP '+r.status+' '+txt.slice(0,160));return JSON.parse(txt||'{}');})();setDialog(null);setToast('BOM 已创建（草稿）');await loadList();}catch(error){setDialog(d=>({...d,error:String(error.message||error)}));}finally{setBusy(false);}}
+  async function createBom(){if(!dialog)return;const name=String(dialog.name||'').trim();if(!name)return setDialog(d=>({...d,error:'请填写 BOM 名称'}));setBusy(true);try{await (async()=>{const r=await ForgeApiResponse(adapter,'/data/forge_bom',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,code:'BOM-'+String(Date.now()).slice(-8),product_name:String(dialog.product_name||'').trim()||name,bom_type:dialog.bom_type||'standard',project_id:dialog.project_id||null,change_note:String(dialog.change_note||'').trim()||null})});const txt=await r.text();if(!r.ok)throw new Error('HTTP '+r.status+' '+txt.slice(0,160));return JSON.parse(txt||'{}');})();setDialog(null);setToast('BOM 已创建（草稿）');await loadList();}catch(error){setDialog(d=>({...d,error:String(error.message||error)}));}finally{setBusy(false);}}
 function routeTo(id,replace=false){
     const url=id?window.location.pathname+'?id='+encodeURIComponent(id):window.location.pathname;
     window.history[replace?'replaceState':'pushState']({},'',url);

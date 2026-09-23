@@ -62,7 +62,7 @@ export const BomCopyNewVersion = defineAction({
   name: 'bom_copy_new_version', label: '复制到新版本', objectName: 'forge_bom', icon: 'git-branch-plus',
   locations: [...locations], order: 20, visible: `record.status == 'active'`, refreshAfter: true,
   params: [{ field: 'change_note', objectOverride: 'forge_bom', required: true }],
-  onSuccess: { navigate: '/_console/apps/forge/forge_bom/record/${result.id}' }, successMessage: '新版本草稿已创建',
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.supply-chain/forge_bom/record/${result.id}' }, successMessage: '新版本草稿已创建',
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const id=ctx.recordId||(ctx.record&&ctx.record.id); const bom=ctx.record;
 if(ctx.recordLoadDenied===true||!id||!bom||bom.status!=='active') throw new Error('仅已生效BOM可以复制新版本');
@@ -84,7 +84,7 @@ export const BomCreateProjectVariant = defineAction({
   name: 'bom_create_project_variant', label: '从标准BOM创建项目BOM', objectName: 'forge_bom', icon: 'folder-git-2',
   locations: [...locations], order: 30, visible: `record.status == 'active' && record.bom_type == 'standard'`, refreshAfter: true,
   params: [{ field: 'project_id', objectOverride: 'forge_bom', required: true }, { field: 'change_note', objectOverride: 'forge_bom' }],
-  onSuccess: { navigate: '/_console/apps/forge/forge_bom/record/${result.id}' }, successMessage: '项目BOM草稿已创建',
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.supply-chain/forge_bom/record/${result.id}' }, successMessage: '项目BOM草稿已创建',
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const id=ctx.recordId||(ctx.record&&ctx.record.id); const bom=ctx.record;
 if(ctx.recordLoadDenied===true||!id||!bom||bom.status!=='active'||bom.bom_type!=='standard') throw new Error('仅已生效标准BOM可以派生项目BOM');

@@ -93,10 +93,260 @@ function fixture() {
   return { entry, record, files, historical, io, check: () => checkPageDelivery(entry, io) };
 }
 
+function v3Fixture({ surfaceType = 'action', target = 'goods_receipt.post', stateEffect = 'writes_business_state' } = {}) {
+  const revision = 'c'.repeat(40);
+  const sourcePaths = [
+    'apps/forge-objectstack/src/actions/goods-receipt.action.ts',
+    'apps/forge-objectstack/src/objects/goods-receipt.object.ts',
+    'apps/forge-objectstack/src/views/goods-receipt.view.ts',
+    'apps/forge-objectstack/src/apps/supply-chain.app.ts',
+  ];
+  const files = new Map(sourcePaths.map(name => [name, Buffer.from(`source: ${name}`)]));
+  const evidenceCounter = { value: 0 };
+  const featureId = 'supply-chain.goods-receipt-post';
+  const materialId = 'CASE-GATE-001';
+  function addEvidence(label, kind, method, extra = {}) {
+    const extension = kind === 'forge_screenshot' ? 'png' : 'json';
+    const path = `docs/evidence/v3-${++evidenceCounter.value}.${extension}`;
+    const item = {
+      path, kind, claim: label, method, actor: 'operator-01', role: 'warehouse_operator',
+      materialId, capturedAt: '2026-09-23T11:00:00+08:00', revision, featureId, target,
+      ...extra,
+    };
+    if (extension === 'png') {
+      files.set(path, PNG.sync.write(solidPng(item.viewport.width, item.viewport.height)));
+    } else {
+      files.set(path, Buffer.from(JSON.stringify({
+        featureId, target, materialId, revision, actor: item.actor, role: item.role, claim: item.claim, method: item.method,
+        decision: item.decision, database: item.database, databaseType: item.databaseType,
+      })));
+    }
+    return item;
+  }
+  const simpleEvidence = label => addEvidence(label, 'manual_observation', 'observed_in_forge');
+  const checks = Object.fromEntries(['requirements', 'visual', 'interaction', 'business', 'permissions', 'persistence', 'performance']
+    .map(key => [key, { status: 'pass', notes: `Observed ${key}`, evidence: [simpleEvidence(key)] }]));
+  checks.visual.evidence = [
+    addEvidence('Desktop Forge capture', 'forge_screenshot', 'browser_capture', { viewport: { class: 'desktop', width: 1440, height: 900 } }),
+    addEvidence('Narrow Forge capture', 'forge_screenshot', 'browser_capture', { viewport: { class: 'narrow', width: 390, height: 844 } }),
+  ];
+  checks.interaction.evidence = [addEvidence('Normal UI path', 'interaction_recording', 'live_forge_ui')];
+  checks.business.evidence = [addEvidence('Independent result readback', 'business_result_readback', 'independent_forge_readback')];
+  const allowedRole = {
+    role: 'warehouse_operator', principal: 'operator-01', action: 'goods_receipt.post',
+    expected: 'allowed', actual: 'allowed', status: 'pass',
+    evidence: [addEvidence('Authorized operator can post', 'permission_attempt', 'role_permission_check', { role: 'warehouse_operator' })],
+  };
+  const deniedRole = {
+    role: 'sales_viewer', principal: 'viewer-02', action: 'goods_receipt.post',
+    expected: 'denied', actual: 'denied', status: 'pass',
+    evidence: [addEvidence('Viewer cannot post', 'permission_attempt', 'role_permission_check', { role: 'sales_viewer', actor: 'viewer-02' })],
+  };
+  checks.permissions.roles = [allowedRole, deniedRole];
+  const restartReadback = addEvidence('Same database after full restart', 'restart_readback', 'complete_stop_restart_readback', {
+    database: '.objectstack/gate-v3.sqlite', databaseType: 'sqlite',
+  });
+  checks.persistence.scope = 'required';
+  checks.persistence.evidence = [restartReadback];
+  checks.performance.metrics = [
+    ['coldOpenMs', 880, 1800], ['refreshMs', 420, 1200], ['navigationMs', 190, 600],
+    ['requestCount', 18, 30], ['transferBytes', 240000, 500000],
+  ].map(([name, value, budget]) => ({
+    name, value, budget, budgetSource: 'forge-page-delivery-standard.md', status: 'pass',
+    evidence: [addEvidence(`${name} trace`, 'performance_trace', 'fixed_material_performance_run')],
+  }));
+  const record = {
+    schemaVersion: 3, featureId, app: 'supply-chain', surfaceType, target,
+    ...(surfaceType === 'page' ? { pageId: target } : {}),
+    reviewedRevision: revision,
+    subjectFiles: Object.fromEntries(sourcePaths.map(name => [name, createHash('sha256').update(files.get(name)).digest('hex')])) ,
+    environment: {
+      forgeUrl: 'http://127.0.0.1:4611', databaseType: 'sqlite', database: '.objectstack/gate-v3.sqlite',
+      materials: [{ id: materialId, name: '门禁验收材料' }],
+    },
+    designBaseline: { revision: 'forge-baseline-2026-09', evidence: [addEvidence('Forge visual baseline', 'design_baseline', 'baseline_document_review')] },
+    referenceEvidence: [], checks,
+    requirements: [{
+      id: 'REQ-001', source: { type: 'forge_decision', reference: '收货办理合同' },
+      statement: '仓库人员可以按正式收货材料完成入库', subjectFiles: [sourcePaths[0], sourcePaths[1]],
+      steps: ['打开收货单', '提交入库', '独立查看正式结果'], expected: '库存形成对应入库记录',
+      actual: '库存形成对应入库记录', stateEffect, status: 'pass',
+      evidence: [addEvidence('Requirement execution', 'business_result_readback', 'independent_forge_readback')],
+    }],
+    settingsConsumers: [],
+    review: {
+      implementer: 'builder-01', reviewer: 'reviewer-02', reviewedAt: '2026-09-23T11:30:00+08:00',
+      reviewedRevision: revision, status: 'pass', decision: 'accepted',
+      evidence: [addEvidence('Independent review decision', 'independent_review', 'reviewed_subject_and_evidence', {
+        actor: 'reviewer-02', role: 'independent_reviewer', decision: 'accepted',
+      })],
+    },
+  };
+  const entry = {
+    featureId, app: 'supply-chain', surfaceType, target, subjectFiles: sourcePaths, requirementIds: ['REQ-001'],
+    designStatus: 'accepted', acceptance: 'docs/acceptance/v3-record.json',
+  };
+  const historical = new Map(files);
+  const io = {
+    async read(name) {
+      if (name === entry.acceptance) return Buffer.from(JSON.stringify(record));
+      if (!files.has(name)) throw new Error('missing');
+      return files.get(name);
+    },
+    async atRevision(commit, name) {
+      if (commit !== revision || !historical.has(name)) throw new Error('missing revision');
+      return historical.get(name);
+    },
+  };
+  return { entry, record, files, historical, io, check: () => checkPageDelivery(entry, io), addEvidence };
+}
+
 test('complete record passes; legacy review debt remains visibly unaccepted', async () => {
   const f = fixture();
   assert.deepEqual(await f.check(), []);
   assert.deepEqual(await checkPageDelivery({ designStatus: 'review_required' }, f.io), []);
+});
+
+test('schemaVersion 1 partial and schemaVersion 2 accepted history keep their original validation path', async () => {
+  const f = fixture();
+  assert.deepEqual(await f.check(), []);
+  f.entry.designStatus = 'review_required';
+  f.record.schemaVersion = 1;
+  assert.deepEqual(await f.check(), []);
+});
+
+test('schemaVersion 3 accepts native actions without pageId or React page files and without RISEMAP evidence', async () => {
+  const f = v3Fixture();
+  assert.deepEqual(await f.check(), []);
+});
+
+test('schemaVersion 3 binds a custom pageId only for a page surface', async () => {
+  const page = v3Fixture({ surfaceType: 'page', target: 'page_goods_receipt' });
+  assert.deepEqual(await page.check(), []);
+  const action = v3Fixture();
+  action.record.pageId = 'page_goods_receipt';
+  assert.ok((await action.check()).some(error => error.includes('只有 surfaceType=page')));
+});
+
+test('schemaVersion 3 rejects path-only fake acceptance and incomplete dimension evidence', async () => {
+  const f = v3Fixture();
+  f.record.checks.visual.evidence = [];
+  f.record.checks.business.evidence = [f.addEvidence('API only', 'business_result_readback', 'direct_api_readback')];
+  f.record.checks.permissions.roles = [];
+  f.record.checks.persistence.evidence = [];
+  f.record.review.reviewer = f.record.review.implementer;
+  f.record.review.evidence = [];
+  const errors = await f.check();
+  for (const token of ['Forge desktop', 'Forge narrow', '独立 Forge 业务结果回读', '两个真实角色', 'persistence: 缺少结构化证据', '独立复核']) {
+    assert.ok(errors.some(error => error.includes(token)), token);
+  }
+});
+
+test('schemaVersion 3 rejects accepted claims and success reports while manifest remains review_required', async () => {
+  const f = v3Fixture();
+  f.entry.designStatus = 'review_required';
+  f.entry.evidence = 'docs/evidence/overall-success.md';
+  let errors = await f.check();
+  assert.ok(errors.some(error => error.includes('不得附带总体成功报告')));
+  assert.ok(errors.some(error => error.includes('结构化 accepted 决议冲突')));
+  delete f.entry.evidence;
+  f.record.review.decision = 'pending';
+  f.record.review.status = 'pending';
+  f.record.review.evidence = [];
+  assert.deepEqual(await f.check(), []);
+});
+
+test('schemaVersion 3 rejects wrong target/version and files outside the declared feature scope', async () => {
+  const f = v3Fixture();
+  f.record.target = 'unrelated.invoice.export';
+  f.record.subjectFiles['apps/forge-objectstack/src/pages/unrelated.page.ts'] = createHash('sha256')
+    .update(Buffer.from('unrelated')).digest('hex');
+  f.files.set('apps/forge-objectstack/src/pages/unrelated.page.ts', Buffer.from('unrelated'));
+  const visual = f.record.checks.visual.evidence[0];
+  visual.revision = 'b'.repeat(40);
+  const errors = await f.check();
+  for (const token of ['target 与 manifest 不一致', '受验文件与 manifest 声明范围不一致', '证据版本与 reviewedRevision 不一致']) {
+    assert.ok(errors.some(error => error.includes(token)), token);
+  }
+});
+
+test('schemaVersion 3 rejects a commit that cannot provide the reviewed source version', async () => {
+  const f = v3Fixture();
+  f.record.reviewedRevision = 'd'.repeat(40);
+  const errors = await f.check();
+  for (const token of ['无法读取被验收提交中的文件', 'reviewedRevision 与验收版本不一致', '证据版本与 reviewedRevision 不一致']) {
+    assert.ok(errors.some(error => error.includes(token)), token);
+  }
+});
+
+test('schemaVersion 3 rejects self-reported hashes and evidence detached from its recorded feature', async () => {
+  const f = v3Fixture();
+  const sourcePath = Object.keys(f.record.subjectFiles)[0];
+  const changedSource = Buffer.from('changed after the reviewed revision');
+  f.files.set(sourcePath, changedSource);
+  f.record.subjectFiles[sourcePath] = createHash('sha256').update(changedSource).digest('hex');
+  const resultEvidence = f.record.checks.business.evidence[0];
+  f.files.set(resultEvidence.path, Buffer.from(JSON.stringify({
+    featureId: 'another.feature', target: 'other.target', materialId: 'OTHER',
+    revision: 'e'.repeat(40), actor: 'unknown', claim: 'unrelated', method: 'unrelated', role: 'unknown',
+  })));
+  const errors = await f.check();
+  assert.ok(errors.some(error => error.includes('与被验收版本不匹配')));
+  assert.ok(errors.some(error => error.includes('JSON 证据 featureId 与证据登记不一致')));
+});
+
+test('schemaVersion 3 requires restart readback when a requirement changes persisted state', async () => {
+  const f = v3Fixture();
+  f.record.checks.persistence.scope = 'not_applicable';
+  f.record.checks.persistence.reason = 'claimed read-only';
+  f.record.checks.persistence.evidence = [f.addEvidence('Scope assessment', 'persistence_scope_assessment', 'reviewed_scope')];
+  const errors = await f.check();
+  assert.ok(errors.some(error => error.includes('有状态写入要求时必须执行')));
+});
+
+test('schemaVersion 3 permits reviewed persistence non-applicability for a read-only report', async () => {
+  const f = v3Fixture({ surfaceType: 'report', target: 'supplier_performance_summary', stateEffect: 'read_only' });
+  f.record.checks.persistence.scope = 'not_applicable';
+  f.record.checks.persistence.reason = '报表只读，不产生业务或用户设置写入';
+  f.record.checks.persistence.evidence = [f.addEvidence('No-write scope reviewed', 'persistence_scope_assessment', 'reviewed_scope', {
+    actor: 'reviewer-02', role: 'independent_reviewer',
+  })];
+  assert.deepEqual(await f.check(), []);
+});
+
+test('schemaVersion 3 rejects missing role and performance proof', async () => {
+  const f = v3Fixture();
+  f.record.checks.permissions.roles.pop();
+  f.record.checks.performance.metrics = f.record.checks.performance.metrics.filter(metric => metric.name !== 'refreshMs');
+  f.record.requirements[0].subjectFiles = ['apps/forge-objectstack/src/pages/unrelated.page.ts'];
+  const errors = await f.check();
+  for (const token of ['两个真实角色', 'refreshMs', '实现文件超出受验范围']) assert.ok(errors.some(error => error.includes(token)), token);
+});
+
+test('schemaVersion 3 rejects requirements omitted from the manifest coverage set', async () => {
+  const f = v3Fixture();
+  f.entry.requirementIds.push('REQ-002');
+  const errors = await f.check();
+  assert.ok(errors.some(error => error.includes('requirements 编号集合与 manifest requirementIds 不一致')));
+});
+
+test('schemaVersion 3 requires configuration consumers to prove actual business effect', async () => {
+  const f = v3Fixture({ stateEffect: 'changes_configuration' });
+  let errors = await f.check();
+  assert.ok(errors.some(error => error.includes('缺少 settingsConsumers 的实际业务消费者')));
+
+  f.record.settingsConsumers = [{
+    requirementId: 'REQ-001', settingId: 'warehouse.default-bin', consumerTarget: 'goods_receipt.post',
+    expectedEffect: '新收货单采用配置的默认货位', actualEffect: '新收货单采用配置的默认货位', status: 'pass',
+    evidence: [f.record.checks.persistence.evidence[0]],
+  }];
+  errors = await f.check();
+  assert.ok(errors.some(error => error.includes('缺少要求的证据类型 business_result_readback')));
+
+  f.record.settingsConsumers[0].evidence = [f.addEvidence(
+    'Configured bin used by a new receipt', 'business_result_readback', 'independent_forge_readback',
+  )];
+  assert.deepEqual(await f.check(), []);
 });
 
 test('accepted cannot be obtained by filling only evidence path', async () => {

@@ -86,7 +86,7 @@ export const DrawingDistributionRecipient = master('forge_drawing_distribution_r
 }, ['distribution_id','name','recipient_type','organization','confirmation_status','receipt_status','confirmed_at']);
 
 export const CustomerDrawing = master('forge_customer_drawing', '客户图纸', 'file-input', {
-  name: text('图纸名称', true), code: code('客户图号'), customer_id: reference('forge_customer', '客户名称', true), version: { ...text('版本'), defaultValue: 'V1' },
+  name: text('图纸名称', true), code: code('客户图号'), customer_id: { ...reference('forge_customer', '客户名称', true), relatedList: false }, version: { ...text('版本'), defaultValue: 'V1' },
   contact: text('联系人'), contract_number: text('合同号'), order_number: text('订单号'), received_on: Field.date({ label: '接收日期' }), valid_until: Field.date({ label: '有效期' }),
   confidentiality: select('保密等级', [['general','一般'],['confidential','机密'],['top_secret','绝密']], 'general'), usage_scope: select('使用范围', [['project_only','仅限本项目'],['cross_project','可跨项目使用'],['named_people','仅限指定人员']], 'project_only'),
   customer_original_files: Field.file({ label: '客户原图', multiple: true, description: 'RISEMAP RM-080：不限格式，可直接上传压缩包。' }),

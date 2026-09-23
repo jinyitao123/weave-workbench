@@ -28,7 +28,7 @@ export const OtherInbound = master('forge_other_inbound', '其他入库单', 'pa
   counterparty_type: Field.select([
     { value: 'customer', label: '客户' }, { value: 'supplier', label: '供应商' },
   ], { label: '往来单位类型', defaultValue: 'customer' }),
-  customer_id: reference('forge_customer', '客户'), supplier_id: reference('forge_supplier', '供应商'),
+  customer_id: { ...reference('forge_customer', '客户'), relatedList: false }, supplier_id: reference('forge_supplier', '供应商'),
   arrival_reason: Field.textarea({ label: '到货原因' }), source_code: text('来源单号'), handler_id: owner(true),
   line_count: quantity('物料行数', false, 0), total_quantity: quantity('入库数量', false, 0),
   total_amount: nonNegativeMoney('含税金额'), status: Field.select([
@@ -65,7 +65,7 @@ export const OtherOutboundType = master('forge_other_outbound_type', '其他出�
 
 export const OtherOutbound = master('forge_other_outbound', '其他出库单', 'package-minus', {
   name: text('出库单名称', true), code: code('出库单号'), outbound_type_id: reference('forge_other_outbound_type', '出库类型', true),
-  outbound_on: Field.date({ label: '出库日期', ...required }), customer_id: reference('forge_customer', '客户'),
+  outbound_on: Field.date({ label: '出库日期', ...required }), customer_id: { ...reference('forge_customer', '客户'), relatedList: false },
   project_id: reference('forge_project', '关联项目'), reason: Field.textarea({ label: '出库原因' }), handler_id: owner(true),
   shipping_method: Field.select([{ value: 'express', label: '快递' }, { value: 'freight', label: '物流' }, { value: 'pickup', label: '客户自取' }, { value: 'delivery', label: '送货' }, { value: 'other', label: '其他' }], { label: '发货方式', defaultValue: 'express' }),
   logistics_company: text('物流公司'), tracking_number: text('快递/物流单号'), recipient: text('收件人'), phone: text('联系电话'), address: Field.textarea({ label: '收货地址' }),

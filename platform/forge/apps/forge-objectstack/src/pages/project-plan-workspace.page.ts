@@ -7,12 +7,12 @@ const projectPlanCss = `
 
 const projectPlanPageSource = `
 const css=${JSON.stringify(forgeProductUiCss + projectPlanCss)};
-function App(){
+function App(){const adapter=useAdapter();
   const initialId=new URLSearchParams(window.location.search).get('id');
   const [view,setView]=React.useState(initialId?'detail':'list');
   const [state,setState]=React.useState({loading:true,plans:[],projects:[],customers:[],orders:[],contracts:[],links:[],items:[],reports:[],users:[],evidence:[],identityMappings:[],plan:null,project:null,error:''});
   const [filters,setFilters]=React.useState({search:'',status:''});const [tab,setTab]=React.useState('计划表');const [busy,setBusy]=React.useState(false);const [dialog,setDialog]=React.useState(null);const [toast,setToast]=React.useState('');const [collapsed,setCollapsed]=React.useState({});
-  async function request(path,options){const response=await fetch('/api/v1'+path,{credentials:'include',headers:{'Content-Type':'application/json'},...options});const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error((typeof payload.error==='string'?payload.error:payload.error?.message)||(Array.isArray(payload.fields)&&payload.fields.length?payload.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||payload.message||'请求失败');return payload}
+  async function request(path,options){const response=await ForgeApiResponse(adapter,path,{credentials:'include',headers:{'Content-Type':'application/json'},...options});const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error((typeof payload.error==='string'?payload.error:payload.error?.message)||(Array.isArray(payload.fields)&&payload.fields.length?payload.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||payload.message||'请求失败');return payload}
   async function fetchAll(object,filter){const rows=[];let skip=0;for(let guard=0;guard<100;guard++){const params=new URLSearchParams({$top:'100',$skip:String(skip)});if(filter)params.set('$filter',JSON.stringify(filter));const payload=await request('/data/'+object+'?'+params);const batch=payload.records||[];rows.push(...batch);if(batch.length<100)break;skip+=batch.length}return rows}
   function routeTo(id,replace=false){const url=id?window.location.pathname+'?id='+encodeURIComponent(id):window.location.pathname;window.history[replace?'replaceState':'pushState']({},'',url);if(id){setView('detail');setTab('计划表');loadDetail(id)}else{setView('list');loadList()}}
   async function loadList(){setState(s=>({...s,loading:true,error:'',plan:null}));try{const [plans,projects]=await Promise.all([fetchAll('forge_project_plan'),fetchAll('forge_project')]);setState(s=>({...s,loading:false,plans,projects,error:''}))}catch(error){setState(s=>({...s,loading:false,error:String(error.message||error)}))}}
