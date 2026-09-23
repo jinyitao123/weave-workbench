@@ -474,7 +474,7 @@ export class EnterpriseService {
     }
     if (!response.ok) {
       await response.body?.cancel()
-      throw new Error(`Weave 读取失败（${response.status}）`)
+      throw new Error(`团队信息读取失败（${response.status}）`)
     }
     const result = await response.json()
     this.assertCurrentAuth(snapshot)
@@ -490,7 +490,7 @@ export class EnterpriseService {
     }
     if (!response.ok) {
       await response.body?.cancel()
-      throw new Error(`Forge ${resourceLabel}读取失败（${response.status}）`)
+      throw new Error(`${resourceLabel}读取失败（${response.status}）`)
     }
     const result = await response.json()
     this.assertCurrentAuth(snapshot)
