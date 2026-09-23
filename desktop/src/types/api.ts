@@ -207,6 +207,7 @@ export interface EnterpriseTeamMemberAgentConfiguration {
     skills: EnterpriseTeamMemberSkill[]
     mcpServerIds: string[]
     businessCapabilityIds: string[]
+    businessCapabilityBindings: EnterpriseBusinessCapabilityBinding[]
     permissionAllow: string[]
     permissionAsk: string[]
     permissionDeny: string[]
@@ -231,7 +232,15 @@ export interface EnterpriseBusinessCapability {
   objectName?: string
   requiresRecord?: boolean
   requiresConfirmation?: boolean
-  params?: Array<{ name: string; type?: 'string' | 'number' | 'boolean' | 'array'; required?: boolean; description?: string; enum?: string[] }>
+  params?: Array<{ name: string; label?: string; type?: 'string' | 'number' | 'boolean' | 'array' | 'file'; multiple?: boolean; required?: boolean; description?: string; enum?: string[] }>
+}
+
+export interface EnterpriseBusinessCapabilityBinding {
+  capabilityId: string
+  parameters: Array<{
+    name: string
+    source: 'materials.single.id' | 'materials.single.name' | 'materials.single.sha256' | 'materials.manifest_json'
+  }>
 }
 
 export interface EnterpriseBusinessCapabilityCatalog {

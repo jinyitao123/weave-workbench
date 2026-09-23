@@ -77,7 +77,7 @@ describe('EnterpriseService', () => {
         expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer forge-token')
         expect(init?.method).toBeUndefined()
         return Response.json({ data: { items: [
-          { name: 'ContractSubmit', objectName: 'sales_contract', label: '提交销售合同', ai: { exposed: true, description: '校验后提交合同' }, params: [{ name: 'material_file_id', label: '合同文件', type: 'text', required: true }], requiredPermissions: ['sales_contract_operator'] },
+          { name: 'ContractSubmit', objectName: 'sales_contract', label: '提交销售合同', ai: { exposed: true, description: '校验后提交合同' }, params: [{ name: 'material_file_id', label: '合同文件', type: 'text', required: true }, { name: 'attachments', label: '附件', type: 'file', multiple: true }], requiredPermissions: ['sales_contract_operator'] },
           { name: 'InternalOnly', objectName: 'sales_contract', label: '内部动作', ai: { exposed: false } },
         ] } })
       }
@@ -88,7 +88,7 @@ describe('EnterpriseService', () => {
 
     await expect(service.getBusinessCapabilityCatalog()).resolves.toMatchObject({
       provider: { name: 'Forge 业务环境', status: 'available' },
-      capabilities: [{ id: 'forge:action:sales_contract.ContractSubmit', name: '提交销售合同', effect: 'write', requiresEmployeeIntent: true, actionName: 'ContractSubmit', objectName: 'sales_contract', requiresRecord: true, params: [{ name: 'material_file_id', type: 'string', required: true }] }],
+      capabilities: [{ id: 'forge:action:sales_contract.ContractSubmit', name: '提交销售合同', effect: 'write', requiresEmployeeIntent: true, actionName: 'ContractSubmit', objectName: 'sales_contract', requiresRecord: true, params: [{ name: 'material_file_id', label: '合同文件', type: 'string', required: true }, { name: 'attachments', label: '附件', type: 'file', multiple: true }] }],
     })
   })
 
@@ -169,6 +169,7 @@ describe('EnterpriseService', () => {
       updated_at: '2026-09-21T10:00:00Z', configuration: {
         display_name: revision ? '合同复核员' : '审核员', role: 'worker', engine: 'pi', runtime_id: 'local-pi', model: 'default',
         system_prompt: '检查合同', skill_names: ['contract-review'], mcp_server_ids: ['forge'], permission_allow: ['contract.read'],
+        business_capability_ids: ['forge:action:sales_contract.ContractSubmit'], business_capability_bindings: [{ capability_id: 'forge:action:sales_contract.ContractSubmit', parameters: [{ name: 'material_file_id', source: 'materials.single.id' }] }],
         memory_enabled: true, memory_scope: 'tenant', max_tokens: 12000, output_schema: { type: 'object' },
       }, relationship: { duty: '复核合同', when_to_use: '合同提交后', allowed_kinds: ['handoff'], default_kind: 'handoff', enabled: true },
     })
@@ -182,11 +183,11 @@ describe('EnterpriseService', () => {
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
     await service.signIn('admin@example.test', 'secret')
     const draft = await service.getTeamMemberConfigDraft('team-1', 'worker-1')
-    expect(draft).toMatchObject({ agentName: 'reviewer', revision: 0, configuration: { engine: 'pi', outputSchema: expect.stringContaining('object') }, relationship: { duty: '复核合同' } })
+    expect(draft).toMatchObject({ agentName: 'reviewer', revision: 0, configuration: { engine: 'pi', outputSchema: expect.stringContaining('object'), businessCapabilityBindings: [{ capabilityId: 'forge:action:sales_contract.ContractSubmit', parameters: [{ name: 'material_file_id', source: 'materials.single.id' }] }] }, relationship: { duty: '复核合同' } })
     draft.configuration.displayName = '合同复核员'
     const saved = await service.saveTeamMemberConfigDraft(draft)
     expect(saved).toMatchObject({ revision: 1, configuration: { displayName: '合同复核员' } })
-    expect(requests.at(-1)).toMatchObject({ method: 'PUT', body: { revision: 0, configuration: { display_name: '合同复核员' } } })
+    expect(requests.at(-1)).toMatchObject({ method: 'PUT', body: { revision: 0, configuration: { display_name: '合同复核员', business_capability_bindings: [{ capability_id: 'forge:action:sales_contract.ContractSubmit', parameters: [{ name: 'material_file_id', source: 'materials.single.id' }] }] } } })
     const applied = await service.applyTeamMemberConfigDraft('team-1', 'worker-1', 1)
     expect(applied.revision).toBe(0)
     expect(requests.at(-1)).toEqual({ method: 'POST', body: { revision: 1 } })

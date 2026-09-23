@@ -44,7 +44,7 @@ export async function teamWorkspaceRequest(command: TeamWorkspaceCommand, read: 
   const decode = (doc: WireDocument) => ({ ...doc, members: (doc.members ?? []).map((member) => {
     const schema = member.configuration.output_schema
     const configuration = keys(member.configuration, (key) => key.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase())) as Record<string, unknown>
-    for (const field of ['skillNames', 'skills', 'mcpServerIds', 'businessCapabilityIds', 'permissionAllow', 'permissionAsk', 'permissionDeny']) if (!Array.isArray(configuration[field])) configuration[field] = []
+    for (const field of ['skillNames', 'skills', 'mcpServerIds', 'businessCapabilityIds', 'businessCapabilityBindings', 'permissionAllow', 'permissionAsk', 'permissionDeny']) if (!Array.isArray(configuration[field])) configuration[field] = []
     return { ...member,
       configuration: { ...configuration, outputSchema: schema == null ? '' : JSON.stringify(schema, null, 2) },
       relationship: keys(member.relationship, (key) => key.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase())),

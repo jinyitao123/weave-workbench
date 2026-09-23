@@ -35,6 +35,38 @@
           "type": "array",
           "uniqueItems": true,
           "items": { "type": "string", "minLength": 1, "maxLength": 160 }
+        },
+        "businessCapabilityBindings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/businessCapabilityBinding" }
+        }
+      }
+    },
+    "businessCapabilityBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capabilityId", "parameters"],
+      "properties": {
+        "capabilityId": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "parameters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/businessCapabilityParameterBinding" }
+        }
+      }
+    },
+    "businessCapabilityParameterBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "source"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "source": {
+          "enum": [
+            "materials.single.id",
+            "materials.single.name",
+            "materials.single.sha256",
+            "materials.manifest_json"
+          ]
         }
       }
     },
