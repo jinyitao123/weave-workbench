@@ -1,13 +1,13 @@
-import { watch, type Dirent, type Stats } from 'node:fs'
+import { type Dirent, type Stats, watch } from 'node:fs'
 import { readdir, realpath } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join, resolve, sep } from 'node:path'
-import type { HarnessId, SessionChangeEvent, SessionRecord, TranscriptMessage } from '../../src/types/api'
 import { assertNoMcpAuthenticationCommand } from '../../src/lib/mcp-policy'
+import type { HarnessId, SessionChangeEvent, SessionRecord, TranscriptMessage } from '../../src/types/api'
 import { queueDaemonFollowUp } from './agent-daemon'
-import { comparePaths, createAdmissionQueue, createSingleFlight, type AdmissionQueue } from './lib/async'
-import { resolveExecutable, runProcess, type ExecutableSource } from './process-utils'
-import { SessionMetadataCatalog, type SessionCatalogIo, type SessionNameTimestamp } from './sessions/catalog'
+import { type AdmissionQueue, comparePaths, createAdmissionQueue, createSingleFlight } from './lib/async'
+import { type ExecutableSource, resolveExecutable, runProcess } from './process-utils'
+import { type SessionCatalogIo, SessionMetadataCatalog, type SessionNameTimestamp } from './sessions/catalog'
 import { createSessionMetadataReader, type SessionMetadata, type SessionMetadataReader } from './sessions/metadata'
 import { readTranscript } from './sessions/transcript'
 import type { JsonStateStore } from './store'
@@ -76,13 +76,13 @@ export interface SessionServiceOptions {
 
 export class SessionService {
   readonly harness: HarnessId
-  readonly sessionRoot: string
+  private currentSessionRoot: string
   private readonly recursiveWatch: boolean
   private runtimeForSession: (filePath: string) => RuntimeSessionState | undefined = () => undefined
   private listRuntimeSessions: (() => readonly RuntimeSessionSnapshot[]) | null = null
   private stopRuntimeForSession: (filePath: string) => Promise<void> = async () => undefined
   private renameRuntimeSession: (filePath: string, title: string) => Promise<boolean> = async () => false
-  private readonly catalog: SessionMetadataCatalog
+  private catalog: SessionMetadataCatalog
   private readonly metadataReader: SessionMetadataReader
   private readonly transcriptReads = createSingleFlight<string, TranscriptMessage[]>()
   private readonly transcriptAdmission: AdmissionQueue
@@ -90,6 +90,9 @@ export class SessionService {
   private readonly isSessionPathAuthorized: SessionPathAuthorizer
   private readonly watchDirectory: SessionWatchFactory
   private readonly renameFile: ((filePath: string, title: string) => boolean) | undefined
+  private readonly maxSessionFiles: number
+  private readonly catalogIo: SessionCatalogIo | undefined
+  private readonly catalogNameTimestamp: SessionNameTimestamp | undefined
   private readonly changeListeners = new Set<(event: SessionChangeEvent) => void>()
   private sessionWatcher: SessionWatcher | null = null
   private readonly bucketWatchers = new Map<string, SessionWatcher>()
@@ -100,6 +103,11 @@ export class SessionService {
   private readonly changedNames = new Set<string>()
   private catalogOnlyChange = false
   private followUpsInFlight = 0
+  private rootGeneration = 0
+  private rootTransitioning = false
+  private activeRootOperations = 0
+  private readonly rootOperationWaiters = new Set<() => void>()
+  private rootChangeTail: Promise<void> = Promise.resolve()
 
   constructor(
     private readonly store: JsonStateStore,
@@ -118,21 +126,116 @@ export class SessionService {
       closedError: () => new Error('Too many transcript reads are pending'),
     })
     this.harness = options.harness ?? 'prime'
-    this.sessionRoot = options.sessionRoot ?? join(homedir(), '.prime', 'agent', 'sessions')
+    this.currentSessionRoot = options.sessionRoot ?? join(homedir(), '.prime', 'agent', 'sessions')
+    this.maxSessionFiles = maxSessionFiles
+    this.catalogIo = options.catalogIo
+    this.catalogNameTimestamp = options.catalogNameTimestamp
     this.recursiveWatch = options.recursiveWatch === true
     this.metadataReader = options.metadataReader ?? createSessionMetadataReader()
     this.transcriptReader = options.transcriptReader ?? readTranscript
     this.isSessionPathAuthorized = options.isSessionPathAuthorized ?? authorizePrimeSessionPath
     this.watchDirectory = options.watchDirectory ?? watchSessionDirectory
-    this.catalog = new SessionMetadataCatalog(
-      () => this.sessionRoot,
-      primeAgentPath,
-      maxSessionFiles,
-      (filePath, knownStat) => this.readMetadata(filePath, knownStat),
-      options.catalogIo,
-      options.catalogNameTimestamp,
-    )
+    this.catalog = this.createCatalog()
     this.renameFile = options.renameFile
+  }
+
+  get sessionRoot(): string { return this.currentSessionRoot }
+
+  /**
+   * Switch this service to a different harness session root. The change is a
+   * barrier: new operations are rejected while old operations settle, active
+   * runtimes attached to the old root are stopped, and the catalog/watchers
+   * are rebuilt before this promise resolves.
+   */
+  setSessionRoot(rootValue: unknown): Promise<void> {
+    const operation = this.rootChangeTail.then(async () => {
+      const requestedRoot = requireString(rootValue, 'sessionRoot', { min: 1, max: 4_096 })
+      await this.changeSessionRoot(requestedRoot)
+    })
+    this.rootChangeTail = operation.then(() => undefined, () => undefined)
+    return operation
+  }
+
+  private createCatalog(): SessionMetadataCatalog {
+    return new SessionMetadataCatalog(
+      () => this.sessionRoot,
+      this.primeAgentPath,
+      this.maxSessionFiles,
+      (filePath, knownStat) => this.readMetadata(filePath, knownStat),
+      this.catalogIo,
+      this.catalogNameTimestamp,
+    )
+  }
+
+  private async changeSessionRoot(requestedRoot: string): Promise<void> {
+    // Store only the canonical root. This prevents a caller from retargeting
+    // the service later by changing a symlink used when selecting the root.
+    const nextRoot = await requireExistingDirectory(requestedRoot, 'sessionRoot')
+    const previousConfiguredRoot = this.currentSessionRoot
+    let previousRoot: string | undefined
+    try { previousRoot = await realpath(this.sessionRoot) } catch { /* A harness may not have created its session directory yet. */ }
+    if (previousRoot === nextRoot) return
+
+    this.rootTransitioning = true
+    this.rootGeneration += 1
+    this.stopWatcher()
+    try {
+      await this.waitForRootOperations()
+      if (previousRoot) await this.stopRuntimesWithin(previousRoot)
+      this.currentSessionRoot = nextRoot
+      this.catalog = this.createCatalog()
+      this.rootTransitioning = false
+      this.startWatcher()
+    } catch (error) {
+      // A failed runtime stop leaves the original scope active. Rebuild its
+      // catalog too, because the generation change invalidated all old reads.
+      this.currentSessionRoot = previousConfiguredRoot
+      this.catalog = this.createCatalog()
+      this.rootTransitioning = false
+      this.startWatcher()
+      throw error
+    }
+  }
+
+  private async stopRuntimesWithin(root: string): Promise<void> {
+    const runtimePaths = [...new Set((this.listRuntimeSessions?.() ?? [])
+      .map((runtime) => runtime.sessionFile)
+      .filter((filePath): filePath is string => typeof filePath === 'string'))]
+    const results = await Promise.allSettled(runtimePaths.map(async (filePath) => {
+      let canonicalPath: string
+      try { canonicalPath = await realpath(filePath) } catch { return }
+      if (this.isSessionPathAuthorized(root, canonicalPath)) await this.stopRuntimeForSession(canonicalPath)
+    }))
+    const failure = results.find((result): result is PromiseRejectedResult => result.status === 'rejected')
+    if (failure) throw failure.reason
+  }
+
+  private beginRootOperation(): { generation: number; release(): void } {
+    if (this.rootTransitioning) throw new Error('Session root is changing')
+    this.activeRootOperations += 1
+    const generation = this.rootGeneration
+    let released = false
+    return {
+      generation,
+      release: () => {
+        if (released) return
+        released = true
+        this.activeRootOperations -= 1
+        if (this.activeRootOperations === 0) {
+          for (const resolveWaiter of this.rootOperationWaiters) resolveWaiter()
+          this.rootOperationWaiters.clear()
+        }
+      },
+    }
+  }
+
+  private assertRootGeneration(generation: number): void {
+    if (this.rootTransitioning || generation !== this.rootGeneration) throw new Error('Session root changed during the operation')
+  }
+
+  private async waitForRootOperations(): Promise<void> {
+    if (this.activeRootOperations === 0) return
+    await new Promise<void>((resolveWaiter) => this.rootOperationWaiters.add(resolveWaiter))
   }
 
   bindRuntimeHooks(hooks: {
@@ -157,34 +260,40 @@ export class SessionService {
   }
 
   async list(projectPath?: unknown, includeArchivedValue: unknown = false, forceValue: unknown = false): Promise<SessionRecord[]> {
-    const includeArchived = requireBoolean(includeArchivedValue, 'includeArchived')
-    const force = requireBoolean(forceValue, 'force')
-    const requestedProject = projectPath ? requireString(projectPath, 'projectPath', { min: 1, max: 4096 }) : undefined
-    let project = requestedProject ? resolve(requestedProject) : undefined
-    if (requestedProject) {
-      try { project = await requireExistingDirectory(requestedProject, 'projectPath') } catch { /* Preserve stale lexical filtering. */ }
-    }
-    // A caller reconciling a just-created session cannot rely on fs.watch:
-    // recursive delivery varies by platform and an event may still be queued.
-    // Force advances the scan revision while retaining metadata-level caches.
-    if (force) this.catalog.invalidateLiveCatalog()
-    const sessions = await this.catalog.all()
-    const archived = new Set(this.store.getArchivedSessions().map((path) => resolve(path)))
-    // One runtime snapshot per list call; each session then resolves in O(1).
-    const runtimeBySession = this.snapshotRuntimeSessions()
-    const records: SessionRecord[] = []
-    for (const original of sessions) {
-      const metadata = { ...original }
-      const isArchived = archived.has(resolve(metadata.filePath))
-      if ((isArchived && !includeArchived) || (project && resolve(metadata.projectPath) !== project)) continue
-      const runtime = runtimeBySession
-        ? runtimeBySession.get(resolve(metadata.filePath))
-        : this.runtimeForSession(metadata.filePath)
-      if (runtime) metadata.status = runtime.isStreaming || runtime.isCompacting ? 'running' : 'idle'
-      const { sessionName: _sessionName, ...record } = metadata
-      records.push({ ...record, harness: this.harness, archived: isArchived })
-    }
-    return records.sort((a, b) => Date.parse(b.lastUserMessageAt ?? b.createdAt) - Date.parse(a.lastUserMessageAt ?? a.createdAt) || comparePaths(a.filePath, b.filePath))
+    const operation = this.beginRootOperation()
+    try {
+      const includeArchived = requireBoolean(includeArchivedValue, 'includeArchived')
+      const force = requireBoolean(forceValue, 'force')
+      const requestedProject = projectPath ? requireString(projectPath, 'projectPath', { min: 1, max: 4096 }) : undefined
+      let project = requestedProject ? resolve(requestedProject) : undefined
+      if (requestedProject) {
+        try { project = await requireExistingDirectory(requestedProject, 'projectPath') } catch { /* Preserve stale lexical filtering. */ }
+      }
+      // A caller reconciling a just-created session cannot rely on fs.watch:
+      // recursive delivery varies by platform and an event may still be queued.
+      // Force advances the scan revision while retaining metadata-level caches.
+      const catalog = this.catalog
+      if (force) catalog.invalidateLiveCatalog()
+      const sessions = await catalog.all()
+      this.assertRootGeneration(operation.generation)
+      const archived = new Set(this.store.getArchivedSessions().map((path) => resolve(path)))
+      // One runtime snapshot per list call; each session then resolves in O(1).
+      const runtimeBySession = this.snapshotRuntimeSessions()
+      const records: SessionRecord[] = []
+      for (const original of sessions) {
+        const metadata = { ...original }
+        const isArchived = archived.has(resolve(metadata.filePath))
+        if ((isArchived && !includeArchived) || (project && resolve(metadata.projectPath) !== project)) continue
+        const runtime = runtimeBySession
+          ? runtimeBySession.get(resolve(metadata.filePath))
+          : this.runtimeForSession(metadata.filePath)
+        if (runtime) metadata.status = runtime.isStreaming || runtime.isCompacting ? 'running' : 'idle'
+        const { sessionName: _sessionName, ...record } = metadata
+        records.push({ ...record, harness: this.harness, archived: isArchived })
+      }
+      this.assertRootGeneration(operation.generation)
+      return records.sort((a, b) => Date.parse(b.lastUserMessageAt ?? b.createdAt) - Date.parse(a.lastUserMessageAt ?? a.createdAt) || comparePaths(a.filePath, b.filePath))
+    } finally { operation.release() }
   }
 
   private snapshotRuntimeSessions(): Map<string, RuntimeSessionState> | null {
@@ -204,28 +313,38 @@ export class SessionService {
   }
 
   async read(filePath: unknown): Promise<TranscriptMessage[]> {
-    const requested = requireString(filePath, 'filePath', { min: 1, max: 4096 })
-    const safePath = await this.requireSessionPath(requested)
-    // Coalesced callers share one immutable result; the IPC boundary clones it
-    // for the renderer, so a pre-IPC structuredClone would be a second copy.
-    return this.transcriptReads.run(safePath, () => this.transcriptAdmission.run(async () => {
-      const runtime = this.runtimeForSession(safePath)
-      return this.transcriptReader(safePath, runtime?.isStreaming === true || runtime?.isCompacting === true)
-    }))
+    const operation = this.beginRootOperation()
+    try {
+      const requested = requireString(filePath, 'filePath', { min: 1, max: 4096 })
+      const safePath = await this.requireSessionPath(requested)
+      this.assertRootGeneration(operation.generation)
+      // Coalesced callers share one immutable result; the IPC boundary clones it
+      // for the renderer, so a pre-IPC structuredClone would be a second copy.
+      const result = await this.transcriptReads.run(`${operation.generation}\0${safePath}`, () => this.transcriptAdmission.run(async () => {
+        const runtime = this.runtimeForSession(safePath)
+        return this.transcriptReader(safePath, runtime?.isStreaming === true || runtime?.isCompacting === true)
+      }))
+      this.assertRootGeneration(operation.generation)
+      return result
+    } finally { operation.release() }
   }
 
   async followUp(filePath: unknown, message: unknown, intent: unknown = 'queue'): Promise<boolean> {
-    if (intent !== 'queue' && intent !== 'steer') throw new TypeError('Invalid active-session message intent')
-    const safeMessage = requireString(message, 'message', { min: 1, max: 64 * 1024 })
-    assertNoMcpAuthenticationCommand(safeMessage, this.harness)
-    if (this.followUpsInFlight >= 4) throw new Error('Too many active-session replies are in flight')
-    this.followUpsInFlight += 1
-    try { return await this.queueActiveFollowUp(filePath, safeMessage, intent) }
-    finally { this.followUpsInFlight -= 1 }
+    const operation = this.beginRootOperation()
+    try {
+      if (intent !== 'queue' && intent !== 'steer') throw new TypeError('Invalid active-session message intent')
+      const safeMessage = requireString(message, 'message', { min: 1, max: 64 * 1024 })
+      assertNoMcpAuthenticationCommand(safeMessage, this.harness)
+      if (this.followUpsInFlight >= 4) throw new Error('Too many active-session replies are in flight')
+      this.followUpsInFlight += 1
+      try { return await this.queueActiveFollowUp(filePath, safeMessage, intent, operation.generation) }
+      finally { this.followUpsInFlight -= 1 }
+    } finally { operation.release() }
   }
 
-  private async queueActiveFollowUp(filePath: unknown, message: unknown, intent: 'queue' | 'steer'): Promise<boolean> {
+  private async queueActiveFollowUp(filePath: unknown, message: unknown, intent: 'queue' | 'steer', generation: number): Promise<boolean> {
     const safePath = await this.requireSessionPath(filePath)
+    this.assertRootGeneration(generation)
     const safeMessage = requireString(message, 'message', { min: 1, max: 64 * 1024 })
     const primeAgentPath = resolveExecutable(this.primeAgentPath)
     if (!primeAgentPath) throw new Error('Prime Agent executable was not found')
@@ -234,6 +353,7 @@ export class SessionService {
     // parallelism and caches the result; reuse it instead of re-listing with
     // up to MAX_SESSION_FILES * 4 serial realpath calls.
     const active = (await this.catalog.liveSessions()).get(safePath)
+    this.assertRootGeneration(generation)
     if (active?.lifecycle !== 'live' || active.isSessionActive !== true) return false
     const activeSessionId = requireId(active.activeSessionId ?? active.id, 'activeSessionId')
     if (activeSessionId.startsWith('-')) throw new Error('Prime Agent returned an invalid active session identifier')
@@ -245,37 +365,67 @@ export class SessionService {
     if (!Array.isArray(statuses) || statuses.length > 64) throw new Error('Prime Agent returned an invalid daemon status')
     const current = statuses.find((value) => isRecord(value) && value.status === 'current' && value.isDefault === true)
     if (!isRecord(current) || typeof current.socketPath !== 'string') throw new Error('Prime Agent did not report its active daemon socket')
+    this.assertRootGeneration(generation)
     await queueDaemonFollowUp(current.socketPath, activeSessionId, safeMessage, intent === 'steer' ? 'steer' : 'follow_up')
+    this.assertRootGeneration(generation)
     return true
   }
 
   async rename(filePath: unknown, title: unknown): Promise<boolean> {
-    const safePath = await this.requireSessionPath(filePath)
-    const safeTitle = requireString(title, 'title', { min: 1, max: 200, trim: true })
-    if (safeTitle.startsWith('-') || /[\r\n]/.test(safeTitle)) throw new TypeError('title contains invalid characters')
-    if (await this.renameRuntimeSession(safePath, safeTitle)) return true
-    const primeAgentPath = resolveExecutable(this.primeAgentPath)
-    // OMP/pi services are constructed with a null CLI path (electron/main/index.ts).
-    if (!primeAgentPath) return this.renameFile?.(safePath, safeTitle) ?? false
-    const metadata = await this.readMetadata(safePath)
-    const result = await runProcess(primeAgentPath, ['rename', metadata.id, safeTitle, '--json'], { timeoutMs: 30_000 })
-    return result.code === 0
+    const operation = this.beginRootOperation()
+    try {
+      const safePath = await this.requireSessionPath(filePath)
+      this.assertRootGeneration(operation.generation)
+      const safeTitle = requireString(title, 'title', { min: 1, max: 200, trim: true })
+      if (safeTitle.startsWith('-') || /[\r\n]/.test(safeTitle)) throw new TypeError('title contains invalid characters')
+      if (await this.renameRuntimeSession(safePath, safeTitle)) {
+        this.assertRootGeneration(operation.generation)
+        return true
+      }
+      const primeAgentPath = resolveExecutable(this.primeAgentPath)
+      // OMP/pi services are constructed with a null CLI path (electron/main/index.ts).
+      if (!primeAgentPath) {
+        const renamed = this.renameFile?.(safePath, safeTitle) ?? false
+        this.assertRootGeneration(operation.generation)
+        return renamed
+      }
+      const metadata = await this.readMetadata(safePath)
+      this.assertRootGeneration(operation.generation)
+      const result = await runProcess(primeAgentPath, ['rename', metadata.id, safeTitle, '--json'], { timeoutMs: 30_000 })
+      this.assertRootGeneration(operation.generation)
+      return result.code === 0
+    } finally { operation.release() }
   }
 
   async archive(filePath: unknown, archivedValue: unknown = true): Promise<boolean> {
-    const safePath = await this.requireSessionPath(filePath)
-    const archived = requireBoolean(archivedValue, 'archived')
-    if (archived) await this.stopRuntimeForSession(safePath)
-    await this.store.update((state) => {
-      state.archivedSessions = state.archivedSessions.filter((path) => resolve(path) !== resolve(safePath))
-      if (archived) state.archivedSessions.push(safePath)
-    })
-    return true
+    const operation = this.beginRootOperation()
+    try {
+      const safePath = await this.requireSessionPath(filePath)
+      this.assertRootGeneration(operation.generation)
+      const archived = requireBoolean(archivedValue, 'archived')
+      if (archived) await this.stopRuntimeForSession(safePath)
+      this.assertRootGeneration(operation.generation)
+      await this.store.update((state) => {
+        state.archivedSessions = state.archivedSessions.filter((path) => resolve(path) !== resolve(safePath))
+        if (archived) state.archivedSessions.push(safePath)
+      })
+      this.assertRootGeneration(operation.generation)
+      return true
+    } finally { operation.release() }
   }
 
   async requireSessionPath(value: unknown): Promise<string> {
+    const operation = this.beginRootOperation()
+    try {
+      const safePath = await this.requireSessionPathWithinRoot(this.sessionRoot, value)
+      this.assertRootGeneration(operation.generation)
+      return safePath
+    } finally { operation.release() }
+  }
+
+  private async requireSessionPathWithinRoot(sessionRoot: string, value: unknown): Promise<string> {
     const requested = requireString(value, 'filePath', { min: 1, max: 4096 })
-    const root = await realpath(this.sessionRoot)
+    const root = await realpath(sessionRoot)
     const path = await realpath(requested)
     if (!this.isSessionPathAuthorized(root, path)) throw new TypeError('Session path is outside the Prime session directory')
     return path
@@ -283,21 +433,24 @@ export class SessionService {
 
   private startWatcher(): void {
     if (this.sessionWatcher || this.watcherRetry || !this.changeListeners.size) return
+    const watchedRoot = this.sessionRoot
+    const generation = this.rootGeneration
     try {
       // A missing session root (harness never used on this machine) throws
       // here and lands in the retry below, which watches once the root appears.
-      const watcher = this.watchDirectory(this.sessionRoot, { persistent: false }, (_eventType, filename) => {
-        this.queueSessionChange(filename)
-        if (this.recursiveWatch) this.refreshBucketWatchers(watcher)
+      const watcher = this.watchDirectory(watchedRoot, { persistent: false }, (_eventType, filename) => {
+        if (this.rootTransitioning || this.rootGeneration !== generation || this.sessionRoot !== watchedRoot) return
+        this.queueSessionChange(filename, generation)
+        if (this.recursiveWatch) this.refreshBucketWatchers(watcher, watchedRoot, generation)
       })
       this.sessionWatcher = watcher
-      if (this.recursiveWatch) this.refreshBucketWatchers(watcher)
+      if (this.recursiveWatch) this.refreshBucketWatchers(watcher, watchedRoot, generation)
       watcher.on('error', () => {
-        if (this.sessionWatcher !== watcher) return
+        if (this.sessionWatcher !== watcher || this.rootGeneration !== generation) return
         watcher.close()
         this.sessionWatcher = null
         this.closeBucketWatchers()
-        this.queueSessionChange(null)
+        this.queueSessionChange(null, generation)
         this.scheduleWatcherRetry()
       })
     } catch {
@@ -320,6 +473,7 @@ export class SessionService {
     this.closeBucketWatchers()
     if (this.watcherRetry) clearTimeout(this.watcherRetry)
     if (this.changeTimer) clearTimeout(this.changeTimer)
+    this.bucketWatcherRefresh = null
     this.watcherRetry = null
     this.changeTimer = null
     this.changedNames.clear()
@@ -334,31 +488,35 @@ export class SessionService {
    * every platform keeps behavior identical where recursive `fs.watch` is not
    * implemented (notably Linux).
    */
-  private refreshBucketWatchers(rootWatcher: SessionWatcher): void {
+  private refreshBucketWatchers(rootWatcher: SessionWatcher, watchedRoot: string, generation: number): void {
+    if (this.rootGeneration !== generation || this.rootTransitioning || this.sessionWatcher !== rootWatcher) return
     if (this.bucketWatcherRefresh) {
       this.bucketWatcherRefreshPending = true
       return
     }
-    this.bucketWatcherRefresh = this.performBucketWatcherRefresh(rootWatcher)
-      .finally(() => {
-        const refreshAgain = this.bucketWatcherRefreshPending
-        this.bucketWatcherRefreshPending = false
-        this.bucketWatcherRefresh = null
-        const currentWatcher = this.sessionWatcher
-        if (refreshAgain && currentWatcher && this.changeListeners.size) this.refreshBucketWatchers(currentWatcher)
-      })
+    const refresh = this.performBucketWatcherRefresh(rootWatcher, watchedRoot, generation).finally(() => {
+      if (this.bucketWatcherRefresh !== refresh) return
+      const refreshAgain = this.bucketWatcherRefreshPending
+      this.bucketWatcherRefreshPending = false
+      this.bucketWatcherRefresh = null
+      const currentWatcher = this.sessionWatcher
+      if (refreshAgain && currentWatcher && this.changeListeners.size && !this.rootTransitioning) {
+        this.refreshBucketWatchers(currentWatcher, this.sessionRoot, this.rootGeneration)
+      }
+    })
+    this.bucketWatcherRefresh = refresh
   }
 
-  private async performBucketWatcherRefresh(rootWatcher: SessionWatcher): Promise<void> {
+  private async performBucketWatcherRefresh(rootWatcher: SessionWatcher, watchedRoot: string, generation: number): Promise<void> {
     let entries: Dirent<string>[]
     let root: string
     try {
       [entries, root] = await Promise.all([
-        readdir(this.sessionRoot, { withFileTypes: true }),
-        realpath(this.sessionRoot),
+        readdir(watchedRoot, { withFileTypes: true }),
+        realpath(watchedRoot),
       ])
     } catch { return }
-    if (this.sessionWatcher !== rootWatcher || !this.changeListeners.size) return
+    if (this.sessionWatcher !== rootWatcher || this.rootGeneration !== generation || this.rootTransitioning || !this.changeListeners.size) return
 
     const bucketNames = entries
       .filter((entry) => entry.isDirectory() && !entry.isSymbolicLink()
@@ -377,19 +535,19 @@ export class SessionService {
       if (this.bucketWatchers.has(name)) continue
       try {
         const bucketPath = await realpath(join(root, name))
-        if (this.sessionWatcher !== rootWatcher || !this.changeListeners.size) return
+        if (this.sessionWatcher !== rootWatcher || this.rootGeneration !== generation || this.rootTransitioning || !this.changeListeners.size) return
         if (!isPathWithin(root, bucketPath) || bucketPath === root) continue
         const watcher = this.watchDirectory(bucketPath, { persistent: false }, (_eventType, filename) => {
-          if (this.sessionWatcher !== rootWatcher) return
+          if (this.sessionWatcher !== rootWatcher || this.rootGeneration !== generation || this.rootTransitioning) return
           const leaf = typeof filename === 'string' ? filename : ''
-          this.queueSessionChange(leaf ? join(name, leaf) : null)
+          this.queueSessionChange(leaf ? join(name, leaf) : null, generation)
         })
         this.bucketWatchers.set(name, watcher)
         watcher.on('error', () => {
-          if (this.bucketWatchers.get(name) !== watcher) return
+          if (this.bucketWatchers.get(name) !== watcher || this.rootGeneration !== generation) return
           watcher.close()
           this.bucketWatchers.delete(name)
-          this.queueSessionChange(null)
+          this.queueSessionChange(null, generation)
         })
       } catch { /* The root watcher will report replacements and retry discovery. */ }
     }
@@ -412,7 +570,8 @@ export class SessionService {
     return segments.every((segment) => segment.length > 0 && !segment.startsWith('.'))
   }
 
-  private queueSessionChange(filename: string | Buffer | null): void {
+  private queueSessionChange(filename: string | Buffer | null, generation = this.rootGeneration): void {
+    if (this.rootTransitioning || generation !== this.rootGeneration) return
     const name = typeof filename === 'string' ? filename : Buffer.isBuffer(filename) ? filename.toString('utf8') : ''
     if (!name || !this.isWatchedSessionName(name)) {
       this.catalogOnlyChange = true
@@ -422,15 +581,18 @@ export class SessionService {
       this.catalogOnlyChange = true
     }
     if (!this.changeTimer) {
+      const watchedRoot = this.sessionRoot
+      const catalog = this.catalog
       this.changeTimer = setTimeout(() => {
         this.changeTimer = null
-        void this.flushSessionChanges()
+        void this.flushSessionChanges(generation, watchedRoot, catalog)
       }, 120)
       this.changeTimer.unref()
     }
   }
 
-  private async flushSessionChanges(): Promise<void> {
+  private async flushSessionChanges(generation: number, watchedRoot: string, catalog: SessionMetadataCatalog): Promise<void> {
+    if (this.rootTransitioning || generation !== this.rootGeneration) return
     const names = [...this.changedNames]
     let catalogOnly = this.catalogOnlyChange
     this.changedNames.clear()
@@ -438,28 +600,33 @@ export class SessionService {
 
     let paths: string[]
     if (!catalogOnly && names.length) {
-      const result = await this.catalog.reconcileKnownChanges(names)
+      const result = await catalog.reconcileKnownChanges(names)
+      if (this.rootTransitioning || generation !== this.rootGeneration) return
       if (result.kind === 'reconciled') {
         paths = result.paths
       } else {
-        paths = await this.resolveChangedSessionPaths(names)
+        paths = await this.resolveChangedSessionPaths(names, watchedRoot, generation)
         if (paths.length !== names.length) catalogOnly = true
       }
     } else {
       // Missing/invalid names, watcher errors, and admission overflow leave
       // the changed catalog membership unknowable, so retain the full-scan path.
-      this.catalog.invalidateLiveCatalog()
-      paths = await this.resolveChangedSessionPaths(names)
+      catalog.invalidateLiveCatalog()
+      paths = await this.resolveChangedSessionPaths(names, watchedRoot, generation)
       if (paths.length !== names.length) catalogOnly = true
     }
-    if (!this.changeListeners.size) return
+    if (this.rootTransitioning || generation !== this.rootGeneration || !this.changeListeners.size) return
     for (const filePath of paths) this.emitChange({ filePath, harness: this.harness })
     if (catalogOnly) this.emitChange({ harness: this.harness })
   }
 
-  private async resolveChangedSessionPaths(names: readonly string[]): Promise<string[]> {
+  private async resolveChangedSessionPaths(names: readonly string[], watchedRoot: string, generation: number): Promise<string[]> {
     return (await Promise.all(names.map(async (name) => {
-      try { return await this.requireSessionPath(join(this.sessionRoot, name)) } catch { return null }
+      if (this.rootTransitioning || generation !== this.rootGeneration) return null
+      try {
+        const path = await this.requireSessionPathWithinRoot(watchedRoot, join(watchedRoot, name))
+        return this.rootTransitioning || generation !== this.rootGeneration ? null : path
+      } catch { return null }
     }))).filter((path): path is string => path !== null)
   }
 

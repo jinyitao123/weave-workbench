@@ -19,6 +19,7 @@ interface FrozenHandoffIntent {
   materials: FrozenMaterial[]
   authorizedBusinessCapabilityIds: string[]
   sourceMessages: Array<{ messageId: string; eventSeq: number; sha256: string }>
+  employeeMessageId: string
   choice: EnterpriseWorkChoice
   accountKey: string
   idempotencySeed: string
@@ -128,6 +129,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       const recoveryKey = requireString(params.recovery_key, 'recovery_key', { min: 64, max: 64 })
       const intent = await this.store.recover<FrozenHandoffIntent>(recoveryKey)
       if (intent.accountKey !== turn.accountKey || intent.sessionKey !== digest(claim.sessionPath!).slice(0, 24)) throw new Error('该交接不属于当前员工与会话')
+      if (!intent.employeeMessageId || intent.employeeMessageId !== turn.messageId) throw new Error('员工要求已变化，旧交接不能恢复')
       return this.prepareDelivery(claim, turn, intent, recoveryKey)
     }
     throw new TypeError(`Unsupported enterprise method ${method}`)
@@ -209,6 +211,8 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       if (action.requiresRecord !== false && (!businessContext || businessContext.objectName !== action.resourceType)) throw new Error('请先按当前工作查找并绑定该动作所需的业务记录')
     }
     const sourceMessages = await this.evidence(claim, turn)
+    const employeeMessageId = turn.messageId
+    if (!employeeMessageId) throw new Error('无法确认当前员工授权消息')
     const sessionKey = digest(claim.sessionPath!).slice(0, 24)
     const idempotencySeed = `${sessionKey}:${turn.messageId}:${key}`
     const identity = `${turn.accountKey}:${idempotencySeed}`
@@ -219,7 +223,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       const materials = await freezeMaterials(claim.cwd, selections)
       const task = executionText(goal, materials, businessContext)
       await this.evidence(claim, turn)
-      return { task, materials, authorizedBusinessCapabilityIds, sourceMessages, choice, accountKey: turn.accountKey, idempotencySeed, sessionKey, ...(businessContext ? { businessContext } : {}) }
+      return { task, materials, authorizedBusinessCapabilityIds, sourceMessages, employeeMessageId, choice, accountKey: turn.accountKey, idempotencySeed, sessionKey, ...(businessContext ? { businessContext } : {}) }
     })
     return this.prepareDelivery(claim, turn, intent, digest(identity))
   }

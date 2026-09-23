@@ -167,16 +167,26 @@ describe('employee-bound material handoff', () => {
     const first = await f.call('submit', params)
     expect(first.body.result).toMatchObject({ status: 'unknown' })
     await writeFile(join(f.cwd, '合同.md'), 'later draft')
-    await f.input('继续交接刚才固定的版本', 'employee-turn-2')
     expect((await f.call('recover', { recovery_key: first.body.result.recovery_key })).body.result.status).toBe('accepted')
     const retriedMaterials = f.service.stageWorkMaterials.mock.calls[1][0]
     expect(retriedMaterials[0].content).toBe(f.content)
   })
-  it('recovers the original request under a fresh employee turn and rejects a different account', async () => {
+  it('rejects an old recovery key after the employee changes the request without uploading or submitting', async () => {
+    const f = await fixture(), params = await f.discover()
+    f.service.stageWorkMaterials.mockRejectedValueOnce(new Error('upload interrupted'))
+    const first = await f.call('submit', params)
+    const recoveryKey = first.body.result.recovery_key as string
+    await f.input('先等等，暂时不要提交', 'employee-turn-2')
+    const recovered = await f.call('recover', { recovery_key: recoveryKey })
+    expect(recovered.status).toBe(409)
+    expect(recovered.body.error).toContain('员工要求已变化')
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+  it('recovers the original request within its authorized employee turn and rejects a different account', async () => {
     const f = await fixture(), params = await f.discover()
     const first = await f.call('submit', params)
     const recoveryKey = first.body.result.recovery_key
-    await f.input('核对刚才的接单回执，仍然交接原版', 'employee-turn-2')
     expect((await f.call('recover', { recovery_key: recoveryKey })).body.result.status).toBe('accepted')
     expect(f.service.submitWork.mock.calls[0][1]).toBe(f.service.submitWork.mock.calls[1][1])
     f.service.accountKey.mockResolvedValue('employee-b')

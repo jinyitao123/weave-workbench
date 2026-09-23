@@ -22,6 +22,9 @@ interface EnterpriseServiceOptions {
   }
 }
 
+type EnterpriseAuthProvider = 'forge' | 'weave'
+interface EnterpriseAuthSnapshot { generation: number; provider: EnterpriseAuthProvider; token: string }
+
 function environmentUrl(value: string | undefined, fallback: string, label: string): URL {
   const configured = value?.trim() || fallback
   const url = new URL(configured)
@@ -211,10 +214,14 @@ export class EnterpriseService {
   private readonly sessionPath?: string
   private readonly sessionCodec?: EnterpriseServiceOptions['sessionCodec']
   private loaded = false
+  private authGeneration = 0
+  private loginAttempt = 0
+  private persistenceQueue: Promise<void> = Promise.resolve()
   private session?: EnterpriseSession
   private weaveToken?: string
   private forgeToken?: string
   private expiresAt = 0
+  private sessionScopeChangeHandler?: (session: EnterpriseSession, generation: number, phase: 'sign-in-start' | 'signed-in' | 'signed-out') => Promise<void>
 
   constructor(options: EnterpriseServiceOptions = {}) {
     this.environment = options.environment ?? process.env
@@ -223,6 +230,21 @@ export class EnterpriseService {
     this.weaveUrl = environmentUrl(this.environment.WORKBENCH_WEAVE_URL, DEFAULT_WEAVE_URL, 'Weave')
     this.sessionPath = options.sessionPath
     this.sessionCodec = options.sessionCodec
+  }
+
+  setSessionScopeChangeHandler(handler: (session: EnterpriseSession, generation: number, phase: 'sign-in-start' | 'signed-in' | 'signed-out') => Promise<void>): void {
+    this.sessionScopeChangeHandler = handler
+  }
+
+  private async notifySessionScopeChanged(session: EnterpriseSession, phase: 'sign-in-start' | 'signed-in' | 'signed-out'): Promise<void> {
+    await this.sessionScopeChangeHandler?.(structuredClone(session), this.authGeneration, phase)
+  }
+
+  isSessionGenerationCurrent(generation: number): boolean { return generation === this.authGeneration }
+
+  accountKeyForSession(session: EnterpriseSession): string {
+    if (session.status !== 'signed-in' || !session.user?.id || !session.user.weaveUserId || !session.organization?.id) throw new Error('请先登录')
+    return createHash('sha256').update(JSON.stringify([this.forgeUrl.origin, this.weaveUrl.origin, session.organization.id, session.user.id, session.user.weaveUserId])).digest('hex')
   }
 
   private signedOut(message?: string): EnterpriseSession {
@@ -236,26 +258,92 @@ export class EnterpriseService {
   private async load(): Promise<void> {
     if (this.loaded) return
     this.loaded = true
+    const generation = this.authGeneration
     if (!this.sessionPath || !this.sessionCodec?.available()) return
     try {
       const saved = record(JSON.parse(await readFile(this.sessionPath, 'utf8')))
       const projection = record(saved?.session) as EnterpriseSession | undefined
       if (saved?.version !== 3 || typeof saved.expiresAt !== 'number' || projection?.status !== 'signed-in' || !enterprisePermissions(projection.permissions)) return
-      if (saved.expiresAt <= Date.now()) { await unlink(this.sessionPath).catch(() => undefined); return }
+      if (generation !== this.authGeneration) return
+      if (saved.expiresAt <= Date.now()) { await this.clearPersisted(generation); return }
       const encryptedWeaveToken = saved.weaveToken
       if (typeof encryptedWeaveToken !== 'string') return
-      this.weaveToken = this.sessionCodec.decrypt(Buffer.from(encryptedWeaveToken, 'base64'))
-      if (typeof saved.forgeToken === 'string') this.forgeToken = this.sessionCodec.decrypt(Buffer.from(saved.forgeToken, 'base64'))
+      const weaveToken = this.sessionCodec.decrypt(Buffer.from(encryptedWeaveToken, 'base64'))
+      const forgeToken = typeof saved.forgeToken === 'string' ? this.sessionCodec.decrypt(Buffer.from(saved.forgeToken, 'base64')) : undefined
+      if (generation !== this.authGeneration) return
+      this.weaveToken = weaveToken
+      this.forgeToken = forgeToken
       this.expiresAt = saved.expiresAt
       this.session = { ...projection, storage: 'encrypted' }
     } catch { /* missing, malformed, or undecryptable sessions start signed out */ }
   }
 
-  private async persist(): Promise<void> {
-    if (!this.sessionPath || !this.sessionCodec?.available() || !this.session || !this.weaveToken) return
-    const saved = JSON.stringify({ version: 3, expiresAt: this.expiresAt, weaveToken: this.sessionCodec.encrypt(this.weaveToken).toString('base64'), ...(this.forgeToken ? { forgeToken: this.sessionCodec.encrypt(this.forgeToken).toString('base64') } : {}), session: { ...this.session, storage: 'encrypted' } })
-    await writeFile(this.sessionPath, saved, { encoding: 'utf8', mode: 0o600 })
-    this.session = { ...this.session, storage: 'encrypted' }
+  private queuePersistence(operation: () => Promise<void>): Promise<void> {
+    const next = this.persistenceQueue.then(operation, operation)
+    this.persistenceQueue = next.catch(() => undefined)
+    return next
+  }
+
+  private async persist(generation: number): Promise<void> {
+    if (!this.sessionPath || !this.sessionCodec?.available()) return
+    await this.queuePersistence(async () => {
+      if (generation !== this.authGeneration || !this.session || !this.weaveToken) return
+      const saved = JSON.stringify({ version: 3, expiresAt: this.expiresAt, weaveToken: this.sessionCodec!.encrypt(this.weaveToken).toString('base64'), ...(this.forgeToken ? { forgeToken: this.sessionCodec!.encrypt(this.forgeToken).toString('base64') } : {}), session: { ...this.session, storage: 'encrypted' } })
+      await writeFile(this.sessionPath!, saved, { encoding: 'utf8', mode: 0o600 })
+      if (generation === this.authGeneration && this.session) this.session = { ...this.session, storage: 'encrypted' }
+    })
+  }
+
+  private async clearPersisted(generation: number): Promise<void> {
+    if (!this.sessionPath) return
+    await this.queuePersistence(async () => {
+      if (generation === this.authGeneration) await unlink(this.sessionPath!).catch(() => undefined)
+    })
+  }
+
+  private clearSessionState(): void {
+    this.weaveToken = undefined
+    this.forgeToken = undefined
+    this.session = undefined
+    this.expiresAt = 0
+  }
+
+  private currentToken(provider: EnterpriseAuthProvider): string | undefined {
+    return provider === 'weave' ? this.weaveToken : this.forgeToken
+  }
+
+  private assertCurrentAuth(snapshot: EnterpriseAuthSnapshot): void {
+    if (snapshot.generation !== this.authGeneration || this.currentToken(snapshot.provider) !== snapshot.token) {
+      throw new Error('账号已切换，旧请求结果已丢弃')
+    }
+  }
+
+  private assertAuthGeneration(generation: number): void {
+    if (generation !== this.authGeneration) throw new Error('账号已切换，旧请求结果已丢弃')
+  }
+
+  private async authenticatedFetch(input: URL | RequestInfo, provider: EnterpriseAuthProvider, init: RequestInit = {}, expectedGeneration = this.authGeneration): Promise<{ response: Response; snapshot: EnterpriseAuthSnapshot }> {
+    await this.load()
+    this.assertAuthGeneration(expectedGeneration)
+    if ((this.weaveToken || this.forgeToken) && this.expiresAt <= Date.now()) await this.signOut()
+    const token = this.currentToken(provider)
+    if (!token) throw new Error('请先登录')
+    const snapshot = { generation: this.authGeneration, provider, token }
+    const headers = new Headers(init.headers)
+    headers.set('Authorization', `Bearer ${token}`)
+    const response = await this.fetch(input, { ...init, headers })
+    try { this.assertCurrentAuth(snapshot) }
+    catch (error) { await response.body?.cancel(); throw error }
+    return { response, snapshot }
+  }
+
+  private async signOutIfCurrent(snapshot: EnterpriseAuthSnapshot): Promise<void> {
+    try { this.assertCurrentAuth(snapshot) } catch { return }
+    await this.signOut()
+  }
+
+  private assertLoginCurrent(generation: number, attempt: number): void {
+    if (generation !== this.authGeneration || attempt !== this.loginAttempt) throw new Error('账号已切换，旧登录请求已取消')
   }
 
   async getSession(): Promise<EnterpriseSession> {
@@ -264,9 +352,19 @@ export class EnterpriseService {
     return structuredClone(this.session ?? this.signedOut())
   }
 
+  private async sessionSnapshot(): Promise<{ session: EnterpriseSession; generation: number }> {
+    const generation = this.authGeneration
+    const session = await this.getSession()
+    if (generation !== this.authGeneration && session.status === 'signed-out' && !this.weaveToken && !this.forgeToken) {
+      return { session, generation: this.authGeneration }
+    }
+    this.assertAuthGeneration(generation)
+    return { session, generation }
+  }
+
   async authorizationHeaders(): Promise<Headers> {
     await this.load()
-    if (this.expiresAt <= Date.now()) await this.signOut()
+    if ((this.weaveToken || this.forgeToken) && this.expiresAt <= Date.now()) await this.signOut()
     if (!this.weaveToken) throw new Error('请先登录')
     return new Headers({ Authorization: `Bearer ${this.weaveToken}` })
   }
@@ -274,29 +372,40 @@ export class EnterpriseService {
   async signIn(email: string, password: string): Promise<EnterpriseSession> {
     const normalizedEmail = email.trim()
     if (!normalizedEmail || !password) throw new Error('请输入账号和密码')
+    const attempt = ++this.loginAttempt
+    await this.load()
+    if (attempt !== this.loginAttempt) throw new Error('账号已切换，旧登录请求已取消')
+    const generation = ++this.authGeneration
+    this.clearSessionState()
+    await this.clearPersisted(generation)
+    await this.notifySessionScopeChanged(this.signedOut(), 'sign-in-start')
     try {
       const signedIn = await this.fetch(new URL('/api/v1/auth/sign-in/email', this.forgeUrl), {
         method: 'POST', headers: { 'Content-Type': 'application/json', Origin: this.forgeUrl.origin, Referer: `${this.forgeUrl.origin}/` },
         body: JSON.stringify({ email: normalizedEmail, password }), redirect: 'error', signal: AbortSignal.timeout(15_000),
       })
+      this.assertLoginCurrent(generation, attempt)
       if (!signedIn.ok) {
         await signedIn.body?.cancel()
         if (signedIn.status === 401 || signedIn.status === 403) throw new Error('账号或密码不正确')
         throw new Error('Forge 登录服务暂时不可用')
       }
       const forge = record(await signedIn.json())
+      this.assertLoginCurrent(generation, attempt)
       const forgeUser = record(forge?.user)
       if (typeof forge?.token !== 'string' || typeof forgeUser?.id !== 'string') throw new Error('Forge 返回了无法识别的登录结果')
       const exchanged = await this.fetch(new URL('/v1/auth/external/exchange', this.weaveUrl), {
         method: 'POST', headers: { Accept: 'application/json', Authorization: `Bearer ${forge.token}` },
         redirect: 'error', signal: AbortSignal.timeout(15_000),
       })
+      this.assertLoginCurrent(generation, attempt)
       if (!exchanged.ok) {
         await exchanged.body?.cancel()
         if (exchanged.status === 401 || exchanged.status === 403) throw new Error('当前账号无法进入 Weave')
         throw new Error('Weave 账号绑定服务暂时不可用')
       }
       const weave = record(await exchanged.json())
+      this.assertLoginCurrent(generation, attempt)
       const subject = record(weave?.subject)
       const organization = record(weave?.organization)
       const permissions = enterprisePermissions(weave?.permissions)
@@ -319,101 +428,102 @@ export class EnterpriseService {
         organization: { id: organization.id, name: typeof organization.name === 'string' && organization.name.trim() ? organization.name : organization.id },
         permissions,
       }
-      await this.persist()
-      return await this.getSession()
+      await this.persist(generation)
+      this.assertLoginCurrent(generation, attempt)
+      await this.notifySessionScopeChanged(this.session, 'signed-in')
+      this.assertLoginCurrent(generation, attempt)
+      const session = await this.getSession()
+      this.assertLoginCurrent(generation, attempt)
+      return session
     } catch (error) {
-      this.weaveToken = undefined
-      this.forgeToken = undefined
-      this.session = undefined
+      if (generation !== this.authGeneration || attempt !== this.loginAttempt) throw new Error('账号已切换，旧登录请求已取消')
+      this.clearSessionState()
+      await this.clearPersisted(generation).catch(() => undefined)
+      await this.notifySessionScopeChanged(this.signedOut(), 'signed-out').catch(() => undefined)
       if (error instanceof Error && !['fetch failed', 'The operation was aborted due to timeout'].includes(error.message)) throw error
       throw new Error('企业服务暂时无法连接')
     }
   }
 
   async signOut(): Promise<EnterpriseSession> {
-    this.weaveToken = undefined
-    this.forgeToken = undefined
-    this.session = undefined
-    this.expiresAt = 0
-    if (this.sessionPath) await unlink(this.sessionPath).catch(() => undefined)
+    this.loginAttempt++
+    const generation = ++this.authGeneration
+    this.clearSessionState()
+    await this.clearPersisted(generation).catch(() => undefined)
+    await this.notifySessionScopeChanged(this.signedOut(), 'signed-out')
     return this.signedOut()
   }
 
-  private async weaveJSON(path: string): Promise<unknown> {
-    const response = await this.fetch(new URL(path, this.weaveUrl), {
-      headers: await this.authorizationHeaders(), redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    })
+  private async weaveJSON(path: string, expectedGeneration = this.authGeneration): Promise<unknown> {
+    const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.weaveUrl), 'weave', { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }, expectedGeneration)
     if (response.status === 401 || response.status === 403) {
       await response.body?.cancel()
-      await this.signOut()
+      await this.signOutIfCurrent(snapshot)
       throw new Error('登录已失效，请重新登录')
     }
     if (!response.ok) {
       await response.body?.cancel()
       throw new Error(`Weave 读取失败（${response.status}）`)
     }
-    return response.json()
+    const result = await response.json()
+    this.assertCurrentAuth(snapshot)
+    return result
   }
 
-  private async forgeJSON(path: string): Promise<unknown> {
-    await this.load()
-    if (this.expiresAt <= Date.now()) await this.signOut()
-    if (!this.forgeToken) throw new Error('请重新登录以读取员工工作事项')
-    const response = await this.fetch(new URL(path, this.forgeUrl), {
-      headers: { Authorization: `Bearer ${this.forgeToken}`, Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    })
+  private async forgeJSON(path: string, expectedGeneration = this.authGeneration): Promise<unknown> {
+    const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.forgeUrl), 'forge', { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }, expectedGeneration)
     if (response.status === 401 || response.status === 403) {
       await response.body?.cancel()
-      await this.signOut()
+      await this.signOutIfCurrent(snapshot)
       throw new Error('登录已失效，请重新登录')
     }
     if (!response.ok) {
       await response.body?.cancel()
       throw new Error(`Forge 工作事项读取失败（${response.status}）`)
     }
-    return response.json()
+    const result = await response.json()
+    this.assertCurrentAuth(snapshot)
+    return result
   }
 
-  private async forgeOptionalJSON(path: string): Promise<unknown> {
-    await this.load()
-    if (this.expiresAt <= Date.now()) await this.signOut()
-    if (!this.forgeToken) throw new Error('请重新登录以读取员工工作事项')
-    const response = await this.fetch(new URL(path, this.forgeUrl), {
-      headers: { Authorization: `Bearer ${this.forgeToken}`, Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    })
+  private async forgeOptionalJSON(path: string, expectedGeneration = this.authGeneration): Promise<unknown> {
+    const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.forgeUrl), 'forge', { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }, expectedGeneration)
     if (response.status === 404) { await response.body?.cancel(); return undefined }
     if (response.status === 401 || response.status === 403) {
-      await response.body?.cancel(); await this.signOut(); throw new Error('登录已失效，请重新登录')
+      await response.body?.cancel(); await this.signOutIfCurrent(snapshot); throw new Error('登录已失效，请重新登录')
     }
     if (!response.ok) { await response.body?.cancel(); throw new Error(`Forge 工作事项读取失败（${response.status}）`) }
-    return response.json()
+    const result = await response.json()
+    this.assertCurrentAuth(snapshot)
+    return result
   }
 
-  private async forgeRequest(path: string, body: unknown): Promise<{ status: number; body: unknown }> {
-    await this.load()
-    if (this.expiresAt <= Date.now()) await this.signOut()
-    if (!this.forgeToken) throw new Error('请重新登录以处理员工工作事项')
-    const response = await this.fetch(new URL(path, this.forgeUrl), {
-      method: 'POST', headers: { Authorization: `Bearer ${this.forgeToken}`, Accept: 'application/json', 'Content-Type': 'application/json' },
+  private async forgeRequest(path: string, body: unknown, expectedGeneration = this.authGeneration): Promise<{ status: number; body: unknown }> {
+    const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.forgeUrl), 'forge', {
+      method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify(body), redirect: 'error', signal: AbortSignal.timeout(15_000),
-    })
+    }, expectedGeneration)
     const result = await response.json().catch(() => undefined)
-    if (response.status === 401 || response.status === 403) { await this.signOut(); throw new Error('登录已失效，请重新登录') }
+    this.assertCurrentAuth(snapshot)
+    if (response.status === 401 || response.status === 403) { await this.signOutIfCurrent(snapshot); throw new Error('登录已失效，请重新登录') }
     if (!response.ok) throw new Error(textValue(record(result)?.message) ?? textValue(record(result)?.error) ?? `Forge 工作事项处理失败（${response.status}）`)
     return { status: response.status, body: result }
   }
 
   async stageWorkMaterials(materials: FrozenMaterial[], assertCurrent: () => Promise<void>): Promise<EnterpriseWorkResource[]> {
     if (!materials.length) throw new Error('请指定本次交接的工作材料')
+    const generation = this.authGeneration
     await this.load()
-    if (this.expiresAt <= Date.now()) await this.signOut()
+    this.assertAuthGeneration(generation)
+    if ((this.weaveToken || this.forgeToken) && this.expiresAt <= Date.now()) await this.signOut()
     if (!this.forgeToken) throw new Error('请重新登录以上传工作材料')
     const resources: EnterpriseWorkResource[] = []
     for (const material of materials) {
       await assertCurrent()
+      this.assertAuthGeneration(generation)
       const prepared = await this.forgeRequest('/api/v1/storage/upload/presigned', {
         filename: material.name, mimeType: 'text/plain; charset=utf-8', size: material.bytes, scope: 'user',
-      })
+      }, generation)
       const envelope = record(prepared.body), descriptor = record(envelope?.data) ?? envelope
       const fileId = textValue(descriptor?.fileId), uploadUrl = textValue(descriptor?.uploadUrl), method = textValue(descriptor?.method) ?? 'PUT'
       if (!fileId || !uploadUrl) throw new Error('Forge 没有返回材料上传地址')
@@ -423,34 +533,37 @@ export class EnterpriseService {
       })
       if (!uploaded.ok) { await uploaded.body?.cancel(); throw new Error(`材料“${material.name}”上传失败（${uploaded.status}）`) }
       await uploaded.body?.cancel()
-      const completed = await this.forgeRequest('/api/v1/storage/upload/complete', { fileId })
+      await assertCurrent()
+      this.assertAuthGeneration(generation)
+      const completed = await this.forgeRequest('/api/v1/storage/upload/complete', { fileId }, generation)
       const completedEnvelope = record(completed.body), completedData = record(completedEnvelope?.data) ?? completedEnvelope
       if ((textValue(completedData?.fileId) ?? fileId) !== fileId) throw new Error('Forge 返回的材料版本与本次上传不一致')
       resources.push({ type: 'forge-file', id: fileId, name: material.name, bytes: material.bytes, sha256: material.sha256 })
     }
     await assertCurrent()
+    this.assertAuthGeneration(generation)
     return resources
   }
 
   async teamWorkspace(command: TeamWorkspaceCommand): Promise<unknown> {
-    const session = await this.getSession()
+    const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in' || !session.permissions?.includes('teams:develop')) throw new Error('当前账号没有团队开发权限')
     if (!command.accountId || command.accountId !== session.user?.id) throw new Error('编辑账号已变化，请重新打开团队')
     const account = await this.accountKey()
-    const assertCurrent = async () => { if (await this.accountKey() !== account) throw new Error('账号已切换，请重新打开团队') }
-    const result = await teamWorkspaceRequest(command, (path) => this.weaveJSON(path), (path, method, body) => this.weaveRequest(path, method, body, assertCurrent))
+    const assertCurrent = async () => { this.assertAuthGeneration(generation); if (await this.accountKey() !== account) throw new Error('账号已切换，请重新打开团队') }
+    const result = await teamWorkspaceRequest(command, (path) => this.weaveJSON(path, generation), (path, method, body) => this.weaveRequest(path, method, body, assertCurrent, undefined, generation))
     await assertCurrent()
     return result
   }
 
   async getDevelopmentOverview(): Promise<EnterpriseDevelopmentOverview> {
-    const session = await this.getSession()
+    const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有开发中心权限')
     const [rawTeams, rawRuntimes, rawModels] = await Promise.all([
-      this.weaveJSON('/v1/teams?include=roster,summary&status=all'),
-      this.weaveJSON('/v1/runtimes'),
-      this.weaveJSON('/v1/development/model-catalog'),
+      this.weaveJSON('/v1/teams?include=roster,summary&status=all', generation),
+      this.weaveJSON('/v1/runtimes', generation),
+      this.weaveJSON('/v1/development/model-catalog', generation),
     ])
     if (!Array.isArray(rawTeams)) throw new Error('Weave 返回了无法识别的团队列表')
     const teams = await Promise.all(rawTeams.map(async (item): Promise<EnterpriseTeamObservation> => {
@@ -484,25 +597,28 @@ export class EnterpriseService {
     })
     const modelSource = record(rawModels)
     const models = stringList(modelSource?.models)
+    this.assertAuthGeneration(generation)
     return { version: '1', loadedAt: new Date().toISOString(), teams, runtimes, models }
   }
 
   async getBusinessCapabilityCatalog(): Promise<EnterpriseBusinessCapabilityCatalog> {
-    const session = await this.getSession()
+    const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有开发中心权限')
     if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务能力')
-    const response = await this.fetch(new URL('/api/v1/meta/actions', this.forgeUrl), {
-      headers: { Authorization: `Bearer ${this.forgeToken}`, Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(15_000),
-    })
-    if (response.status === 401) { await response.body?.cancel(); await this.signOut(); throw new Error('登录已失效，请重新登录') }
+    const { response, snapshot } = await this.authenticatedFetch(new URL('/api/v1/meta/actions', this.forgeUrl), 'forge', {
+      headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(15_000),
+    }, generation)
+    if (response.status === 401) { await response.body?.cancel(); await this.signOutIfCurrent(snapshot); throw new Error('登录已失效，请重新登录') }
     if (response.status === 403) {
       const denied = record(await response.json().catch(() => undefined)), detail = record(denied?.error)
+      this.assertCurrentAuth(snapshot)
       if (textValue(detail?.code) === 'PASSWORD_EXPIRED') throw new Error('Forge 账号密码已过期，请更新密码后重新登录')
       throw new Error('当前账号没有读取 Forge 业务能力的权限')
     }
     if (!response.ok) { await response.body?.cancel(); throw new Error(`Forge 业务能力读取失败（${response.status}）`) }
     const raw = await response.json()
+    this.assertCurrentAuth(snapshot)
     const envelope = record(raw)
     const data = record(envelope?.data) ?? envelope
     const actions = Array.isArray(raw) ? raw : Array.isArray(data?.items) ? data.items : []
@@ -520,22 +636,24 @@ export class EnterpriseService {
         requiresConfirmation: ai?.requiresConfirmation === true, params,
       }]
     })
+    this.assertCurrentAuth(snapshot)
     return { version: '1', provider: { id: 'forge', name: 'Forge 业务环境', status: 'available' }, capabilities, refreshedAt: new Date().toISOString() }
   }
 
   async getBusinessCapabilities(allowedIds?: string[]): Promise<EnterpriseBusinessCapability[]> {
-    const session = await this.getSession()
+    const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务能力')
-    const response = await this.fetch(new URL('/api/v1/mcp', this.forgeUrl), {
+    const { response, snapshot } = await this.authenticatedFetch(new URL('/api/v1/mcp', this.forgeUrl), 'forge', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${this.forgeToken}`, Accept: 'application/json, text/event-stream', 'Content-Type': 'application/json' },
+      headers: { Accept: 'application/json, text/event-stream', 'Content-Type': 'application/json' },
       body: JSON.stringify({ jsonrpc: '2.0', id: 'business-capability-catalog', method: 'tools/call', params: { name: 'list_actions', arguments: {} } }),
       redirect: 'error', signal: AbortSignal.timeout(15_000),
-    })
+    }, generation)
     const raw = await response.text()
+    this.assertCurrentAuth(snapshot)
     if (response.status === 401) {
-      await this.signOut()
+      await this.signOutIfCurrent(snapshot)
       throw new Error('登录已失效，请重新登录')
     }
     if (response.status === 403) throw new Error('当前账号没有读取 Forge 业务能力的权限')
@@ -547,7 +665,7 @@ export class EnterpriseService {
     const payload = text ? record(JSON.parse(text)) : undefined
     const actions = Array.isArray(payload?.actions) ? payload.actions : []
     const allow = allowedIds ? new Set(allowedIds) : undefined
-    return actions.flatMap((value): EnterpriseBusinessCapability[] => {
+    const capabilities = actions.flatMap((value): EnterpriseBusinessCapability[] => {
       const action = record(value), actionName = textValue(action?.name), objectName = textValue(action?.objectName)
       if (!actionName || !objectName) return []
       const id = `forge:action:${objectName}.${actionName}`
@@ -560,15 +678,19 @@ export class EnterpriseService {
         actionName, objectName, requiresConfirmation: action?.requiresConfirmation === true, params: businessCapabilityParams(action?.params),
       }]
     })
+    this.assertCurrentAuth(snapshot)
+    return capabilities
   }
 
   async findBusinessRecords(objectNames: string[], workSummary: string): Promise<Array<{ objectName: string; recordId: string; name: string; code?: string }>> {
     const requested = [...new Set(objectNames)].filter((name) => /^[a-z][a-z0-9_]{1,127}$/.test(name) && !name.startsWith('sys_'))
     if (!requested.length) return []
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
     const terms = [...new Set(workSummary.toLowerCase().split(/[\s，。；、：,.!?！？（）()《》“”"'\-_/]+/).map((value) => value.trim()).filter((value) => value.length >= 2))]
     const matches: Array<{ objectName: string; recordId: string; name: string; code?: string; score: number; updatedAt: string }> = []
     for (const objectName of requested) {
-      const payload = record(await this.forgeJSON(`/api/v1/data/${encodeURIComponent(objectName)}?$top=100`))
+      const payload = record(await this.forgeJSON(`/api/v1/data/${encodeURIComponent(objectName)}?$top=100`, generation))
       const rows = Array.isArray(payload?.records) ? payload.records : Array.isArray(record(payload?.data)?.records) ? record(payload?.data)?.records as unknown[] : []
       for (const value of rows) {
         const row = record(value), recordId = textValue(row?.id), name = textValue(row?.name) ?? textValue(row?.title), code = textValue(row?.code)
@@ -580,6 +702,7 @@ export class EnterpriseService {
     }
     const ranked = matches.sort((left, right) => right.score - left.score || right.updatedAt.localeCompare(left.updatedAt))
     const positive = ranked.filter((item) => item.score > 0)
+    this.assertAuthGeneration(generation)
     return positive.slice(0, 10).map(({ score: _score, updatedAt: _updatedAt, ...item }) => item)
   }
 
@@ -587,7 +710,7 @@ export class EnterpriseService {
     const name = input?.name?.trim()
     const objective = input?.objective?.trim()
     if (input?.version !== '1' || !name || name.length > 80 || !objective || objective.length > 2_000) throw new Error('请填写团队名称和目标')
-    const session = await this.getSession()
+    const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有新建团队权限')
 
@@ -599,7 +722,7 @@ export class EnterpriseService {
       const lead = record((await this.weaveRequest('/v1/agents', 'POST', {
         name: leadName, display_name: '团队负责人', role: 'avatar', engine: 'loom', graph_type: 'standard',
         spec: { system_prompt: `负责理解“${name}”的目标，组织协作并汇总可核验结果。` },
-      })).body)
+      }, undefined, undefined, generation)).body)
       const leadID = textValue(lead?.id)
       if (!leadID) throw new Error('Weave 没有返回团队负责人')
       createdAgents.push(leadName)
@@ -607,7 +730,7 @@ export class EnterpriseService {
       const worker = record((await this.weaveRequest('/v1/agents', 'POST', {
         name: workerName, display_name: '执行成员', role: 'worker', engine: 'loom', graph_type: 'standard',
         spec: { system_prompt: `围绕“${objective}”完成分配的工作，并返回可核验结果。` },
-      })).body)
+      }, undefined, undefined, generation)).body)
       const workerID = textValue(worker?.id)
       if (!workerID) throw new Error('Weave 没有返回执行成员')
       createdAgents.push(workerName)
@@ -620,12 +743,12 @@ export class EnterpriseService {
           context_instruction: '保留任务上下文与来源，清楚说明完成内容和未完成项。',
           allowed_kinds: ['consult', 'dispatch', 'handoff'], default_kind: 'dispatch', result_requirement: '返回可核验结果',
         }],
-      })).body)
+      }, undefined, undefined, generation)).body)
       const id = textValue(result?.id)
       if (!id) throw new Error('Weave 没有返回新团队')
       return { id, name: textValue(result?.display_name) ?? name, objective: textValue(result?.objective) ?? objective }
     } catch (error) {
-      await Promise.allSettled(createdAgents.map((agentName) => this.deleteWeaveResource(`/v1/agents/${encodeURIComponent(agentName)}`)))
+      await Promise.allSettled(createdAgents.map((agentName) => this.deleteWeaveResource(`/v1/agents/${encodeURIComponent(agentName)}`, generation)))
       throw error
     }
   }
@@ -633,32 +756,32 @@ export class EnterpriseService {
   async updateDevelopmentTeam(input: EnterpriseUpdateTeamInput): Promise<void> {
     const name = input?.name?.trim(), objective = input?.objective?.trim()
     if (input?.version !== '1' || !input.teamId || !name || name.length > 80 || !objective || objective.length > 2_000 || !input.expectedUpdatedAt) throw new Error('团队资料不完整')
-    const session = await this.getSession()
+    const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有团队配置权限')
-    await this.weaveRequest(`/v1/teams/${encodeURIComponent(input.teamId)}/profile`, 'PUT', { display_name: name, objective, expected_updated_at: input.expectedUpdatedAt })
+    await this.weaveRequest(`/v1/teams/${encodeURIComponent(input.teamId)}/profile`, 'PUT', { display_name: name, objective, expected_updated_at: input.expectedUpdatedAt }, undefined, undefined, generation)
   }
 
   async createDevelopmentTeamMember(input: EnterpriseCreateTeamMemberInput): Promise<EnterpriseTeamMemberMutationResult> {
     const name = input?.name?.trim(), duty = input?.duty?.trim()
     if (input?.version !== '1' || !input.teamId || !name || name.length > 80 || !duty || duty.length > 2_000) throw new Error('请填写成员名称和职责')
-    const session = await this.getSession()
+    const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有团队配置权限')
     const agentName = `team-member-${randomUUID()}`
     const created = record((await this.weaveRequest('/v1/agents', 'POST', {
       name: agentName, display_name: name, role: 'worker', engine: 'loom', graph_type: 'standard',
       spec: { system_prompt: duty },
-    })).body)
+    }, undefined, undefined, generation)).body)
     const agentID = textValue(created?.id)
     if (!agentID) throw new Error('Weave 没有返回新成员')
     try {
       await this.weaveRequest(`/v1/teams/${encodeURIComponent(input.teamId)}/workers`, 'POST', {
         worker_agent_id: agentID, duty, when_to_use: '负责人分配相关工作时', context_instruction: '保留任务上下文和材料来源。',
         allowed_kinds: ['consult', 'dispatch', 'handoff'], default_kind: 'dispatch', result_requirement: '返回可核验结果',
-      })
+      }, undefined, undefined, generation)
     } catch (error) {
-      await this.deleteWeaveResource(`/v1/agents/${encodeURIComponent(agentName)}`)
+      await this.deleteWeaveResource(`/v1/agents/${encodeURIComponent(agentName)}`, generation)
       throw error
     }
     return { id: agentID, name }
@@ -666,22 +789,22 @@ export class EnterpriseService {
 
   async removeDevelopmentTeamMember(teamId: string, memberId: string): Promise<void> {
     if (!teamId || !memberId) throw new Error('请选择要移出的成员')
-    const session = await this.getSession()
+    const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有团队配置权限')
-    await this.weaveRequest(`/v1/teams/${encodeURIComponent(teamId)}/workers/${encodeURIComponent(memberId)}`, 'DELETE')
+    await this.weaveRequest(`/v1/teams/${encodeURIComponent(teamId)}/workers/${encodeURIComponent(memberId)}`, 'DELETE', undefined, undefined, undefined, generation)
   }
 
   async createDevelopmentWorkflow(input: EnterpriseCreateWorkflowInput): Promise<EnterpriseCreateWorkflowResult> {
     const name = input?.name?.trim()
     const description = input?.description?.trim()
     if (input?.version !== '1' || !input.teamId || !input.leadId || !input.workerId || !name || name.length > 80 || !description || description.length > 2_000) throw new Error('请填写流程名称和用途')
-    const session = await this.getSession()
+    const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有流程配置权限')
     const [lead, worker] = await Promise.all([
-      this.getTeamMemberConfigDraft(input.teamId, input.leadId),
-      this.getTeamMemberConfigDraft(input.teamId, input.workerId),
+      this.getTeamMemberConfigDraft(input.teamId, input.leadId, generation),
+      this.getTeamMemberConfigDraft(input.teamId, input.workerId, generation),
     ])
     const result = record((await this.weaveRequest(`/v1/teams/${encodeURIComponent(input.teamId)}/workflows`, 'POST', {
       name,
@@ -702,7 +825,7 @@ export class EnterpriseService {
           { id: 'execute-deliver', from_node_id: 'execute', to_node_id: 'deliver', route: 'success' },
         ],
       },
-    })).body)
+    }, undefined, undefined, generation)).body)
     const workflow = record(result?.workflow), draft = record(result?.draft)
     const id = textValue(workflow?.id), workflowName = textValue(workflow?.name), draftVersion = numberValue(draft?.version)
     if (!id || !workflowName || !draftVersion) throw new Error('Weave 没有返回新流程')
@@ -711,14 +834,14 @@ export class EnterpriseService {
 
   async updateDevelopmentWorkflowDraft(input: EnterpriseUpdateWorkflowDraftInput): Promise<EnterpriseUpdateWorkflowDraftResult> {
     if (input?.version !== '1' || !input.workflowId || !Number.isInteger(input.draftVersion) || input.draftVersion < 1 || !input.expectedUpdatedAt || !record(input.triggerConfig) || !workflowDefinition(input.graphDefinition)) throw new Error('流程草稿无效')
-    const session = await this.getSession()
+    const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有流程配置权限')
     const result = record((await this.weaveRequest(`/v1/workflows/${encodeURIComponent(input.workflowId)}/versions/${input.draftVersion}`, 'PUT', {
       expected_updated_at: input.expectedUpdatedAt,
       trigger_config: input.triggerConfig,
       graph_definition: input.graphDefinition,
-    })).body)
+    }, undefined, undefined, generation)).body)
     const updatedAt = textValue(result?.updated_at), draftVersion = numberValue(result?.version)
     if (!updatedAt || !draftVersion) throw new Error('Weave 没有返回流程草稿')
     return { draftVersion, updatedAt }
@@ -726,10 +849,10 @@ export class EnterpriseService {
 
   async createDevelopmentWorkflowDraft(workflowId: string): Promise<EnterpriseUpdateWorkflowDraftResult> {
     if (!workflowId) throw new Error('流程无效')
-    const session = await this.getSession()
+    const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有流程配置权限')
-    const result = record((await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}/drafts`, 'POST', {})).body)
+    const result = record((await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}/drafts`, 'POST', {}, undefined, undefined, generation)).body)
     const updatedAt = textValue(result?.updated_at), draftVersion = numberValue(result?.version)
     if (!updatedAt || !draftVersion) throw new Error('Weave 没有返回新版本草稿')
     return { draftVersion, updatedAt }
@@ -737,10 +860,10 @@ export class EnterpriseService {
 
   async validateDevelopmentWorkflow(workflowId: string, version: number): Promise<EnterpriseWorkflowValidation> {
     if (!workflowId || !Number.isInteger(version) || version < 1) throw new Error('流程版本无效')
-    const session = await this.getSession()
+    const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有流程配置权限')
-    const result = record((await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}/versions/${version}/validate`, 'POST', {})).body)
+    const result = record((await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}/versions/${version}/validate`, 'POST', {}, undefined, undefined, generation)).body)
     if (typeof result?.valid !== 'boolean' || !Array.isArray(result.issues)) throw new Error('Weave 返回了无法识别的检查结果')
     return { valid: result.valid, issues: result.issues.flatMap((value) => {
       const issue = record(value), code = textValue(issue?.code), message = textValue(issue?.message)
@@ -751,29 +874,33 @@ export class EnterpriseService {
 
   async publishDevelopmentWorkflow(workflowId: string, version: number): Promise<void> {
     if (!workflowId || !Number.isInteger(version) || version < 1) throw new Error('流程版本无效')
-    const session = await this.getSession()
+    const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有流程发布权限')
-    await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}/versions/${version}/publish`, 'POST', {})
+    await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}/versions/${version}/publish`, 'POST', {}, undefined, undefined, generation)
   }
 
   async archiveDevelopmentWorkflow(workflowId: string): Promise<void> {
     if (!workflowId) throw new Error('流程无效')
-    const session = await this.getSession()
+    const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有流程归档权限')
-    await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}`, 'DELETE')
+    await this.weaveRequest(`/v1/workflows/${encodeURIComponent(workflowId)}`, 'DELETE', undefined, undefined, undefined, generation)
   }
 
-  async getTeamMemberConfigDraft(teamId: string, agentId: string): Promise<EnterpriseTeamMemberConfigDraft> {
+  async getTeamMemberConfigDraft(teamId: string, agentId: string, expectedGeneration = this.authGeneration): Promise<EnterpriseTeamMemberConfigDraft> {
+    this.assertAuthGeneration(expectedGeneration)
     const session = await this.getSession()
+    this.assertAuthGeneration(expectedGeneration)
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有团队配置权限')
-    return teamMemberConfigDraft(await this.weaveJSON(`/v1/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(agentId)}/config-draft`))
+    return teamMemberConfigDraft(await this.weaveJSON(`/v1/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(agentId)}/config-draft`, expectedGeneration))
   }
 
   async saveTeamMemberConfigDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft> {
     if (!draft?.teamId || !draft.agentId || !Number.isInteger(draft.revision) || !draft.configuration?.displayName?.trim()) throw new Error('团队成员配置不完整')
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in' || !session.permissions?.includes('teams:develop')) throw new Error('当前账号没有团队配置权限')
     let outputSchema: unknown
     if (draft.configuration.outputSchema.trim()) {
       try { outputSchema = JSON.parse(draft.configuration.outputSchema) }
@@ -798,30 +925,32 @@ export class EnterpriseService {
         allowed_kinds: draft.relationship.allowedKinds, default_kind: draft.relationship.defaultKind,
         result_requirement: draft.relationship.resultRequirement, enabled: draft.relationship.enabled,
       },
-    })
+    }, undefined, undefined, generation)
     return teamMemberConfigDraft(result.body)
   }
 
   async applyTeamMemberConfigDraft(teamId: string, agentId: string, revision: number): Promise<EnterpriseTeamMemberConfigDraft> {
     if (!teamId || !agentId || !Number.isInteger(revision) || revision < 1) throw new Error('请选择要应用的成员草稿')
-    const session = await this.getSession()
+    const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有团队配置权限')
-    const result = await this.weaveRequest(`/v1/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(agentId)}/config-draft/apply`, 'POST', { revision })
+    const result = await this.weaveRequest(`/v1/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(agentId)}/config-draft/apply`, 'POST', { revision }, undefined, undefined, generation)
     return teamMemberConfigDraft(result.body)
   }
 
-  private async weaveRequest(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown, assertCurrent?: () => Promise<void>, extraHeaders?: HeadersInit): Promise<{ status: number; body: unknown }> {
-    const headers = new Headers({ ...(Object.fromEntries(await this.authorizationHeaders())), Accept: 'application/json', 'Content-Type': 'application/json' })
+  private async weaveRequest(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown, assertCurrent?: () => Promise<void>, extraHeaders?: HeadersInit, expectedGeneration = this.authGeneration): Promise<{ status: number; body: unknown }> {
+    const headers = new Headers({ Accept: 'application/json', 'Content-Type': 'application/json' })
     if (extraHeaders) for (const [name, value] of new Headers(extraHeaders)) headers.set(name, value)
+    this.assertAuthGeneration(expectedGeneration)
     await assertCurrent?.()
-    const response = await this.fetch(new URL(path, this.weaveUrl), {
+    const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.weaveUrl), 'weave', {
       method, headers,
       ...(body === undefined ? {} : { body: JSON.stringify(body) }), redirect: 'error', signal: AbortSignal.timeout(15_000),
-    })
+    }, expectedGeneration)
     const result = await response.json().catch(() => undefined)
+    this.assertCurrentAuth(snapshot)
     if (response.status === 401 || response.status === 403) {
-      await this.signOut()
+      await this.signOutIfCurrent(snapshot)
       throw new Error('登录已失效，请重新登录')
     }
     if (!response.ok) {
@@ -831,40 +960,50 @@ export class EnterpriseService {
     return { status: response.status, body: result }
   }
 
-  private async deleteWeaveResource(path: string): Promise<void> {
-    const response = await this.fetch(new URL(path, this.weaveUrl), {
-      method: 'DELETE', headers: await this.authorizationHeaders(), redirect: 'error', signal: AbortSignal.timeout(8_000),
-    })
+  private async deleteWeaveResource(path: string, expectedGeneration = this.authGeneration): Promise<void> {
+    const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.weaveUrl), 'weave', { method: 'DELETE', redirect: 'error', signal: AbortSignal.timeout(8_000) }, expectedGeneration)
+    if (response.status === 401 || response.status === 403) {
+      await response.body?.cancel()
+      await this.signOutIfCurrent(snapshot)
+      throw new Error('登录已失效，请重新登录')
+    }
+    if (!response.ok) { await response.body?.cancel(); throw new Error(`Weave 删除失败（${response.status}）`) }
     await response.body?.cancel()
+    this.assertCurrentAuth(snapshot)
   }
 
-  private async workProjectID(): Promise<string> {
+  private async workProjectID(expectedGeneration = this.authGeneration): Promise<string> {
+    this.assertAuthGeneration(expectedGeneration)
     const session = await this.getSession()
+    this.assertAuthGeneration(expectedGeneration)
     const subject = session.user?.weaveUserId ?? session.user?.id
     if (session.status !== 'signed-in' || !subject) throw new Error('请先登录')
     return `workbench-${subject}`
   }
 
-  async accountKey(): Promise<string> {
+  async accountKey(expectedGeneration = this.authGeneration): Promise<string> {
+    this.assertAuthGeneration(expectedGeneration)
     const session = await this.getSession()
-    if (session.status !== 'signed-in' || !session.user?.id || !session.user.weaveUserId || !session.organization?.id) throw new Error('请先登录')
-    return createHash('sha256').update(JSON.stringify([this.forgeUrl.origin, this.weaveUrl.origin, session.organization.id, session.user.id, session.user.weaveUserId])).digest('hex')
+    this.assertAuthGeneration(expectedGeneration)
+    return this.accountKeyForSession(session)
   }
 
-  async getTeamCatalog(): Promise<TeamSummary[]> { return teamCatalog(await this.weaveJSON('/v1/teams?status=active')) }
-  async getTeamChoices(team: TeamSummary): Promise<EnterpriseWorkChoice[]> {
-    return teamChoices(team, await this.weaveJSON(`/v1/teams/${encodeURIComponent(team.id)}/workflows`))
+  async getTeamCatalog(expectedGeneration = this.authGeneration): Promise<TeamSummary[]> { return teamCatalog(await this.weaveJSON('/v1/teams?status=active', expectedGeneration)) }
+  async getTeamChoices(team: TeamSummary, expectedGeneration = this.authGeneration): Promise<EnterpriseWorkChoice[]> {
+    return teamChoices(team, await this.weaveJSON(`/v1/teams/${encodeURIComponent(team.id)}/workflows`, expectedGeneration))
   }
 
   async getWorkOverview(): Promise<EnterpriseWorkOverview> {
-    const teams = await this.getTeamCatalog()
-    const choices = (await Promise.all(teams.map((team) => this.getTeamChoices(team)))).flat()
-    const projectID = await this.workProjectID()
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    const teams = await this.getTeamCatalog(generation)
+    const choices = (await Promise.all(teams.map((team) => this.getTeamChoices(team, generation)))).flat()
+    const projectID = await this.workProjectID(generation)
     const [rawRuns, rawTasks, rawNotifications, rawApprovals] = await Promise.all([
-      this.weaveJSON(`/v1/runs?project_id=${encodeURIComponent(projectID)}&limit=50`),
-      this.weaveJSON('/v1/human-tasks?limit=50'),
-      this.forgeJSON('/api/v1/notifications?limit=200'),
-      this.forgeOptionalJSON('/api/v1/approvals/requests?limit=50'),
+      this.weaveJSON(`/v1/runs?project_id=${encodeURIComponent(projectID)}&limit=50`, generation),
+      this.weaveJSON('/v1/human-tasks?limit=50', generation),
+      this.forgeJSON('/api/v1/notifications?limit=200', generation),
+      this.forgeOptionalJSON('/api/v1/approvals/requests?limit=50', generation),
     ])
     const taskList = record(rawTasks)
     const tasks = (Array.isArray(taskList?.tasks) ? taskList.tasks : []).flatMap((value): EnterpriseHumanTask[] => {
@@ -887,7 +1026,7 @@ export class EnterpriseService {
       if (!id || !updatedAt || (!canDecide && !canResubmit)) continue
       let returnReason: string | undefined
       if (canResubmit) {
-        const actionEnvelope = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(id)}/actions`))
+        const actionEnvelope = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(id)}/actions`, generation))
         const actions = Array.isArray(actionEnvelope?.data) ? actionEnvelope.data : []
         const latestRevision = [...actions].reverse().map(record).find((action) => action?.action === 'revise')
         returnReason = textValue(latestRevision?.comment)
@@ -938,11 +1077,15 @@ export class EnterpriseService {
       }]
     }).filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index)
     const runList = record(rawRuns)
+    this.assertAuthGeneration(generation)
     return { loadedAt: new Date().toISOString(), choices, tasks, items, runs: (Array.isArray(runList?.runs) ? runList.runs : []).flatMap((run) => runObservation(run) ?? []) }
   }
 
   async getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContext> {
-    const approval = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(approvalId)}`))
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in' || !this.forgeToken) throw new Error('请先登录')
+    const operationSnapshot: EnterpriseAuthSnapshot = { generation, provider: 'forge', token: this.forgeToken }
+    const approval = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(approvalId)}`, generation))
     const viewer = record(approval?.viewer), payload = record(approval?.payload)
     const isReviewer = viewer?.can_act === true && textValue(approval?.status) === 'pending'
     const isSubmitter = viewer?.is_submitter === true && textValue(approval?.status) === 'returned'
@@ -951,13 +1094,13 @@ export class EnterpriseService {
     }
     let returnReason: string | undefined
     if (isSubmitter) {
-      const actionEnvelope = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(approvalId)}/actions`))
+      const actionEnvelope = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(approvalId)}/actions`, generation))
       const actions = Array.isArray(actionEnvelope?.data) ? actionEnvelope.data : []
       const latestRevision = [...actions].reverse().map(record).find((action) => action?.action === 'revise')
       returnReason = textValue(latestRevision?.comment)
     }
     const currentRecordEnvelope = isSubmitter && textValue(approval.record_id)
-      ? record(await this.forgeJSON(`/api/v1/data/${encodeURIComponent(textValue(approval.object_name) ?? '')}/${encodeURIComponent(String(approval.record_id))}`))
+      ? record(await this.forgeJSON(`/api/v1/data/${encodeURIComponent(textValue(approval.object_name) ?? '')}/${encodeURIComponent(String(approval.record_id))}`, generation))
       : undefined
     const currentRecord = record(currentRecordEnvelope?.record)
     if (isSubmitter && !currentRecord) throw new Error('当前合同材料无法读取，请刷新待办')
@@ -987,9 +1130,10 @@ export class EnterpriseService {
       }
     }
     for (const file of manifest) {
+      this.assertCurrentAuth(operationSnapshot)
       const { file_id: fileId, name, sha256: expectedHash } = file
       if (!/^[0-9a-f-]{36}$/i.test(fileId) || !/^[0-9a-f]{64}$/i.test(expectedHash)) throw new Error('审批文件校验信息无效')
-      const signed = record(await this.forgeJSON(`/api/v1/storage/files/${encodeURIComponent(fileId)}/url`))
+      const signed = record(await this.forgeJSON(`/api/v1/storage/files/${encodeURIComponent(fileId)}/url`, generation))
       const signedData = record(signed?.data), rawUrl = textValue(signedData?.url)
       if (!rawUrl) throw new Error('审批文件暂时无法读取')
       const downloadUrl = new URL(rawUrl, this.forgeUrl)
@@ -997,13 +1141,16 @@ export class EnterpriseService {
         throw new Error('审批文件地址不属于当前 Forge 环境')
       }
       const response = await this.fetch(downloadUrl, { redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
+      this.assertCurrentAuth(operationSnapshot)
       if (!response.ok) { await response.body?.cancel(); throw new Error(`审批文件读取失败（${response.status}）`) }
       const bytes = Buffer.from(await response.arrayBuffer())
+      this.assertCurrentAuth(operationSnapshot)
       if (bytes.length > 2 * 1024 * 1024) throw new Error('审批文件过大，请在 Forge 中查看')
       const actualHash = createHash('sha256').update(bytes).digest('hex')
       if (actualHash !== expectedHash.toLowerCase()) throw new Error('审批文件与提交版本不一致，请暂停处理')
       files.push({ name, content: new TextDecoder('utf-8', { fatal: true }).decode(bytes), verified: true })
     }
+    this.assertCurrentAuth(operationSnapshot)
     return {
       title: textValue(approval.record_title) ?? textValue(payload.name) ?? '业务审批',
       step: textValue(approval.step_label) ?? textValue(approval.process_label) ?? '审批',
@@ -1025,14 +1172,17 @@ export class EnterpriseService {
   }): Promise<EnterpriseWorkReceipt> {
     const normalized = goal.trim()
     if (!normalized || !choice?.teamId || !choice.workflowId || !Number.isInteger(choice.version) || choice.version < 1) throw new Error('工作内容或团队流程无效')
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
     const assertCurrent = async () => {
+      this.assertAuthGeneration(generation)
       if (source) {
-        if (await this.accountKey() !== source.accountKey) throw new Error('当前账号已变化，本次交接已失效')
+        if (await this.accountKey(generation) !== source.accountKey) throw new Error('当前账号已变化，本次交接已失效')
         await source.assertCurrent()
       }
     }
     await assertCurrent()
-    const projectID = await this.workProjectID()
+    const projectID = await this.workProjectID(generation)
     const workId = source
       ? submissionUUID(`${source.accountKey}:${source.idempotencySeed}`)
       : randomUUID()
@@ -1045,11 +1195,11 @@ export class EnterpriseService {
       authorized_business_capability_ids: source?.authorizedBusinessCapabilityIds ?? [],
       source_messages: source?.sourceMessages.map((message) => ({ message_id: message.messageId, event_seq: message.eventSeq, sha256: message.sha256 }))
         ?? [{ message_id: workId, event_seq: 0, sha256: createHash('sha256').update(normalized).digest('hex') }],
-    }, assertCurrent, this.forgeToken ? { 'X-Weave-Forge-Authorization': `Bearer ${this.forgeToken}` } : undefined)
+    }, assertCurrent, this.forgeToken ? { 'X-Weave-Forge-Authorization': `Bearer ${this.forgeToken}` } : undefined, generation)
     const registration = record(registered.body)
     const inputRevisionID = textValue(registration?.input_revision_id), clientRequestID = textValue(registration?.client_request_id)
     if (!inputRevisionID || !clientRequestID || registration?.task_sha256 !== createHash('sha256').update(normalized).digest('hex')) throw new Error('Weave 输入回执与本次固定材料不一致，结果待核对')
-    const dispatched = await this.weaveRequest(`/v1/teams/${encodeURIComponent(choice.teamId)}/dispatch`, 'POST', { input_revision_id: inputRevisionID, client_request_id: clientRequestID }, assertCurrent)
+    const dispatched = await this.weaveRequest(`/v1/teams/${encodeURIComponent(choice.teamId)}/dispatch`, 'POST', { input_revision_id: inputRevisionID, client_request_id: clientRequestID }, assertCurrent, undefined, generation)
     const result = record(dispatched.body)
     const runId = textValue(result?.run_id), taskId = textValue(result?.task_id), workflowId = textValue(result?.workflow_id)
     const workflowVersion = numberValue(result?.workflow_version)
@@ -1059,18 +1209,20 @@ export class EnterpriseService {
 
   async completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }> {
     if (!textValue(task?.runId) || !textValue(task?.interactionId) || !record(payload)) throw new Error('待办信息无效')
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
     const forgeMatch = /^forge:(approval|revision):(.+)$/.exec(task.runId)
     if (forgeMatch) {
       if (forgeMatch[2] !== task.interactionId) throw new Error('审批事项已变化，请刷新后重试')
       const decision = textValue(payload.decision)
       const operation = forgeMatch[1] === 'revision' ? 'resubmit' : decision === 'rejected' ? 'revise' : decision === 'approved' ? 'approve' : ''
       if (!operation) throw new Error('请选择审批处理方式')
-      await this.forgeRequest(`/api/v1/approvals/requests/${encodeURIComponent(task.interactionId)}/${operation}`, { comment: textValue(payload.comment) ?? '' })
+      await this.forgeRequest(`/api/v1/approvals/requests/${encodeURIComponent(task.interactionId)}/${operation}`, { comment: textValue(payload.comment) ?? '' }, generation)
       return { runId: task.runId, repeated: false }
     }
     const result = await this.weaveRequest(`/v1/human-tasks/${encodeURIComponent(task.runId)}/complete`, 'POST', {
       interaction_id: task.interactionId, payload, idempotency_key: `workbench-human-${task.interactionId}`,
-    })
+    }, undefined, undefined, generation)
     const body = record(result.body)
     const runId = textValue(body?.run_id)
     if (!runId) throw new Error('Weave 没有返回待办处理结果')

@@ -7,6 +7,12 @@ import { join } from 'node:path'
 
 afterEach(() => { vi.unstubAllGlobals() })
 
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>((done) => { resolve = done })
+  return { promise, resolve }
+}
+
 describe('EnterpriseService', () => {
   it('uses one Forge login to create a session-only Weave binding', async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
@@ -24,13 +30,99 @@ describe('EnterpriseService', () => {
     const service = new EnterpriseService({
       environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' }, fetch: fetchMock,
     })
+    const scopeChanges: Array<{ status: string; generation: number; phase: string }> = []
+    service.setSessionScopeChangeHandler(async (changed, generation, phase) => { scopeChanges.push({ status: changed.status, generation, phase }) })
 
     const session = await service.signIn(' developer@example.test ', 'secret')
     expect(session).toMatchObject({ status: 'signed-in', storage: 'session-only', user: { id: 'forge-1', email: 'developer@example.test' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
     expect(JSON.stringify(session)).not.toContain('secret-token')
+    expect(service.accountKeyForSession(session)).toBe(await service.accountKey())
+    expect(scopeChanges.map(({ status, phase }) => [status, phase])).toEqual([['signed-out', 'sign-in-start'], ['signed-in', 'signed-in']])
+    expect(scopeChanges[0]?.generation).toBe(scopeChanges[1]?.generation)
+    const activeGeneration = scopeChanges[1]?.generation
+    expect(activeGeneration).toBeDefined()
+    expect(service.isSessionGenerationCurrent(activeGeneration ?? -1)).toBe(true)
     expect((await service.authorizationHeaders()).get('Authorization')).toBe('Bearer weave-secret-token')
     await expect(service.signOut()).resolves.toMatchObject({ status: 'signed-out' })
+    expect(scopeChanges.at(-1)).toMatchObject({ status: 'signed-out', phase: 'signed-out' })
     await expect(service.authorizationHeaders()).rejects.toThrow('请先登录')
+  })
+
+  it('discards an old account 401 without signing out the account that replaced it', async () => {
+    const oldUnauthorized = deferred<Response>(), oldSuccess = deferred<Response>()
+    const unauthorizedStarted = deferred<void>(), successStarted = deferred<void>()
+    let oldReadCount = 0
+    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = String(input)
+      if (url.endsWith('/api/v1/auth/sign-in/email')) {
+        const email = (JSON.parse(String(init?.body)) as { email: string }).email
+        return Response.json({ token: `forge-token-${email}`, user: { id: email, email, name: email } })
+      }
+      if (url.endsWith('/v1/auth/external/exchange')) {
+        const email = new Headers(init?.headers).get('Authorization')?.replace('Bearer forge-token-', '') ?? 'unknown'
+        return Response.json({ token: `weave-token-${email}`, subject: { id: `weave-${email}`, externalId: email, email, name: email }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      }
+      if (url.endsWith('/v1/teams?status=active') && new Headers(init?.headers).get('Authorization') === 'Bearer weave-token-a@example.test') {
+        oldReadCount++
+        if (oldReadCount === 1) { unauthorizedStarted.resolve(); return oldUnauthorized.promise }
+        successStarted.resolve()
+        return oldSuccess.promise
+      }
+      if (url.endsWith('/v1/teams?status=active')) return Response.json({ teams: [] })
+      return Response.json({}, { status: 404 })
+    }) as typeof fetch
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' }, fetch: fetchMock })
+    await service.signIn('a@example.test', 'secret')
+    const previousUnauthorizedRead = service.getTeamCatalog()
+    const previousSuccessfulRead = service.getTeamCatalog()
+    await Promise.all([unauthorizedStarted.promise, successStarted.promise])
+    await service.signIn('b@example.test', 'secret')
+    oldUnauthorized.resolve(Response.json({}, { status: 401 }))
+    oldSuccess.resolve(Response.json({ teams: [{ id: 'team-a', name: 'A', objective: 'A', status: 'active' }] }))
+
+    await expect(previousUnauthorizedRead).rejects.toThrow('账号已切换')
+    await expect(previousSuccessfulRead).rejects.toThrow('账号已切换')
+    await expect(service.getSession()).resolves.toMatchObject({ status: 'signed-in', user: { id: 'b@example.test' } })
+    expect((await service.authorizationHeaders()).get('Authorization')).toBe('Bearer weave-token-b@example.test')
+  })
+
+  it('does not let a delayed earlier sign-in overwrite the account that logged in later', async () => {
+    const delayedExchange = deferred<Response>(), started = deferred<void>()
+    const directory = await mkdtemp(join(tmpdir(), 'gooeypi-enterprise-switch-'))
+    const sessionPath = join(directory, 'session.json')
+    const codec = {
+      available: () => true,
+      encrypt: (value: string) => Buffer.from(`encrypted:${value}`),
+      decrypt: (value: Buffer) => value.toString().replace(/^encrypted:/, ''),
+    }
+    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = String(input)
+      if (url.endsWith('/api/v1/auth/sign-in/email')) {
+        const email = (JSON.parse(String(init?.body)) as { email: string }).email
+        return Response.json({ token: `forge-token-${email}`, user: { id: email, email, name: email } })
+      }
+      if (url.endsWith('/v1/auth/external/exchange')) {
+        const email = new Headers(init?.headers).get('Authorization')?.replace('Bearer forge-token-', '') ?? 'unknown'
+        if (email === 'a@example.test') { started.resolve(); return delayedExchange.promise }
+        return Response.json({ token: `weave-token-${email}`, subject: { id: `weave-${email}`, externalId: email, email, name: email }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      }
+      return Response.json({}, { status: 404 })
+    }) as typeof fetch
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' }, fetch: fetchMock, sessionPath, sessionCodec: codec })
+    try {
+      const earlierLogin = service.signIn('a@example.test', 'secret')
+      await started.promise
+      await service.signIn('b@example.test', 'secret')
+      delayedExchange.resolve(Response.json({ token: 'weave-token-a@example.test', subject: { id: 'weave-a', externalId: 'a@example.test', email: 'a@example.test', name: 'A' }, organization: { id: 'default' }, permissions: ['teams:use'] }))
+
+      await expect(earlierLogin).rejects.toThrow('账号已切换')
+      await expect(service.getSession()).resolves.toMatchObject({ status: 'signed-in', user: { id: 'b@example.test' } })
+      expect((await service.authorizationHeaders()).get('Authorization')).toBe('Bearer weave-token-b@example.test')
+      const persisted = await readFile(sessionPath, 'utf8')
+      expect(JSON.parse(persisted).session.user.id).toBe('b@example.test')
+      const restarted = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' }, fetch: fetchMock, sessionPath, sessionCodec: codec })
+      await expect(restarted.getSession()).resolves.toMatchObject({ status: 'signed-in', user: { id: 'b@example.test' } })
+    } finally { await rm(directory, { recursive: true, force: true }) }
   })
 
   it('does not keep a partial session when Forge credentials are rejected', async () => {

@@ -31,6 +31,9 @@ export class AgentRpcManager {
   private runtimeStartListener: (environment: NodeJS.ProcessEnv, info: RuntimeInfo) => void = () => undefined
   private runtimeEndListener: (environment: NodeJS.ProcessEnv, info?: RuntimeInfo) => void = () => undefined
   private runtimeAdmission: Promise<void> = Promise.resolve()
+  private startsPaused = false
+  private activeStarts = 0
+  private readonly startWaiters = new Set<() => void>()
   private beginWorkspaceUse: (
     cwd: string,
     owner: WorkspaceUseOwner,
@@ -87,6 +90,19 @@ export class AgentRpcManager {
   }
 
   private async startWithMode(raw: unknown, interactive: boolean): Promise<RuntimeInfo> {
+    if (this.startsPaused) throw new Error('Agent starts are paused while the account is changing')
+    this.activeStarts += 1
+    try { return await this.startWithModeAdmitted(raw, interactive) }
+    finally {
+      this.activeStarts -= 1
+      if (this.activeStarts === 0) {
+        for (const resolveWaiter of this.startWaiters) resolveWaiter()
+        this.startWaiters.clear()
+      }
+    }
+  }
+
+  private async startWithModeAdmitted(raw: unknown, interactive: boolean): Promise<RuntimeInfo> {
     this.requireOpen()
     const executable = resolveExecutable(this.executable)
     if (!executable) throw new Error(`${this.adapter.agentName} executable was not found`)
@@ -199,6 +215,16 @@ export class AgentRpcManager {
     await Promise.all([...this.runtimes.values()].map((runtime) => this.retireWhenIdle(runtime)))
   }
 
+  /** Close admission, drain starts already in flight, then stop every resident child. */
+  async pauseStartsAndStop(): Promise<void> {
+    this.startsPaused = true
+    if (this.activeStarts > 0) await new Promise<void>((resolveWaiter) => this.startWaiters.add(resolveWaiter))
+    await Promise.all(this.list().map((runtime) => this.stop(runtime.runtimeId)))
+  }
+
+  /** Reopen runtime admission after an account-scope transition has completed. */
+  resumeStarts(): void { this.startsPaused = false }
+
   async command(runtimeId: unknown, rawCommand: unknown): Promise<RpcObject> {
     try {
       return await this.dispatchCommand(runtimeId, rawCommand)
@@ -214,6 +240,7 @@ export class AgentRpcManager {
 
   private async dispatchCommand(runtimeId: unknown, rawCommand: unknown): Promise<RpcObject> {
     this.requireOpen()
+    if (this.startsPaused) throw new Error('Agent commands are paused while the account is changing')
     const runtime = this.requireRuntime(runtimeId)
     if (this.retiringRuntimes.has(runtime.runtimeId)) throw new Error('Runtime is being retired for a branch checkout')
     const command = await validateRpcCommand(rawCommand, this.validateSessionPath)

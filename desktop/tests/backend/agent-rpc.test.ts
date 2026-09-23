@@ -132,6 +132,36 @@ const processExists = (pid: number): boolean => {
 }
 
 describe('agent RPC command frame bounds', () => {
+  it('drains an in-flight runtime start before reopening admission for another account', async () => {
+    const fake = fakeAgent("{ id: command.id, type: 'response', command: 'prompt', success: true }")
+    const manager = managerFor(fake.executable)
+    let entered!: () => void
+    let release!: () => void
+    const admissionEntered = new Promise<void>((resolve) => { entered = resolve })
+    const admissionGate = new Promise<void>((resolve) => { release = resolve })
+    manager.setWorkspaceUseProvider(async () => {
+      entered()
+      await admissionGate
+      return { release: () => undefined }
+    })
+
+    const starting = manager.start({ cwd: fake.cwd })
+    await admissionEntered
+    let quiesced = false
+    const quiesce = manager.pauseStartsAndStop().then(() => { quiesced = true })
+    await expect(manager.start({ cwd: fake.cwd })).rejects.toThrow('paused while the account is changing')
+    expect(quiesced).toBe(false)
+
+    release()
+    const oldRuntime = await starting
+    await quiesce
+    expect(manager.list()).toEqual([])
+    await expect(manager.command(oldRuntime.runtimeId, { type: 'prompt', message: 'old account' })).rejects.toThrow()
+
+    manager.resumeStarts()
+    await expect(manager.start({ cwd: fake.cwd })).resolves.toMatchObject({ cwd: fake.cwd })
+  })
+
   it('holds repository use for the lifetime of a runtime', async () => {
     const fake = fakeAgent("{ id: command.id, type: 'response', command: 'prompt', success: true }")
     const manager = managerFor(fake.executable)
