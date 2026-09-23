@@ -424,7 +424,7 @@ describe('EnterpriseService', () => {
     expect(JSON.stringify(calls)).not.toContain('weave-token')
   })
 
-  it('loads native Forge approvals and routes return and resubmit decisions to Forge', async () => {
+  it('loads native Forge approvals, routes reviewer decisions, and blocks native resubmit', async () => {
     const calls: Array<{ url: string; method: string; body?: Record<string, unknown> }> = []
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input), method = init?.method ?? 'GET'
@@ -442,7 +442,6 @@ describe('EnterpriseService', () => {
       ] })
       if (url.endsWith('/api/v1/approvals/requests/approval-2/actions')) return Response.json({ data: [{ action: 'submit' }, { action: 'revise', comment: '请补齐附件' }] })
       if (url.endsWith('/api/v1/approvals/requests/approval-1/revise')) return Response.json({ status: 'returned' })
-      if (url.endsWith('/api/v1/approvals/requests/approval-2/resubmit')) return Response.json({ status: 'pending' })
       return Response.json({}, { status: 404 })
     }) as typeof fetch
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
@@ -454,9 +453,9 @@ describe('EnterpriseService', () => {
       { interactionId: 'approval-2', runId: 'forge:revision:approval-2', source: 'forge', mode: 'revision', instructions: '退回原因：请补齐附件' },
     ])
     await service.completeHumanTask(overview.tasks[0], { decision: 'rejected', comment: '请补充付款条件' })
-    await service.completeHumanTask(overview.tasks[1], { decision: 'approved', comment: '已补充' })
+    await expect(service.completeHumanTask(overview.tasks[1], { decision: 'approved', comment: '已补充' })).rejects.toThrow('Forge 修订材料递交业务动作尚未接通')
     expect(calls.find((call) => call.url.endsWith('/approval-1/revise'))).toMatchObject({ method: 'POST', body: { comment: '请补充付款条件' } })
-    expect(calls.find((call) => call.url.endsWith('/approval-2/resubmit'))).toMatchObject({ method: 'POST', body: { comment: '已补充' } })
+    expect(calls.some((call) => call.url.endsWith('/approval-2/resubmit'))).toBe(false)
   })
 
   it('keeps Weave runs and tasks visible when Forge approvals and notifications fail', async () => {
@@ -556,14 +555,16 @@ describe('EnterpriseService', () => {
       if (url.endsWith('/api/v1/approvals/requests/approval-1/workbench-context')) return Response.json({
         version: '1', requestId: 'approval-1', status: 'pending', viewer: 'current_approver',
         title: '设备验收合同', step: '交付复核', fields: [{ label: '合同名称', value: '设备验收合同' }],
+        businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1', recordName: '设备验收合同' }, sourceMaterialVersion: createHash('sha256').update('source-v1').digest('hex'),
         files: [
-          { name: '合同.md', mediaType: 'text/plain; charset=utf-8', bytes: Buffer.byteLength(fileContent), sha256: digest, content: fileContent },
-          { name: '技术协议.md', mediaType: 'text/plain; charset=utf-8', bytes: Buffer.byteLength(attachment), sha256: attachmentDigest, content: attachment },
+          { fileId: 'approval-file-1', name: '合同.md', mediaType: 'text/plain; charset=utf-8', bytes: Buffer.byteLength(fileContent), sha256: digest, content: fileContent },
+          { fileId: 'approval-file-2', name: '技术协议.md', mediaType: 'text/plain; charset=utf-8', bytes: Buffer.byteLength(attachment), sha256: attachmentDigest, content: attachment },
         ],
       })
       if (url.endsWith('/api/v1/approvals/requests/approval-2/workbench-context')) return Response.json({
         version: '1', requestId: 'approval-2', status: 'returned', viewer: 'original_submitter',
-        title: '设备验收合同', step: '销售修改', returnReason: '请补齐附件',
+        title: '设备验收合同', step: '销售修改', returnReason: '请补齐附件', returnVersion: 'revise-1',
+        businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1', recordName: '设备验收合同' }, sourceMaterialVersion: createHash('sha256').update('source-v1').digest('hex'),
         fields: [{ label: '合同名称', value: '设备验收合同' }], files: [],
       })
       return Response.json({}, { status: 404 })
@@ -572,9 +573,9 @@ describe('EnterpriseService', () => {
     await service.signIn('reviewer@example.test', 'secret')
 
     const context = await service.getApprovalContext('approval-1')
-    expect(context).toMatchObject({ title: '设备验收合同', step: '交付复核', fields: [{ label: '合同名称', value: '设备验收合同' }], files: [{ name: '合同.md', content: original, verified: true }, { name: '技术协议.md', content: attachment, verified: true }] })
+    expect(context).toMatchObject({ requestId: 'approval-1', status: 'pending', viewer: 'current_approver', title: '设备验收合同', step: '交付复核', businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1' }, sourceMaterialVersion: createHash('sha256').update('source-v1').digest('hex'), fields: [{ label: '合同名称', value: '设备验收合同' }], files: [{ fileId: 'approval-file-1', name: '合同.md', content: original, sha256: digest, verified: true }, { fileId: 'approval-file-2', name: '技术协议.md', content: attachment, sha256: attachmentDigest, verified: true }] })
     const returnedContext = await service.getApprovalContext('approval-2')
-    expect(returnedContext).toMatchObject({ title: '设备验收合同', step: '销售修改', returnReason: '请补齐附件', files: [] })
+    expect(returnedContext).toMatchObject({ requestId: 'approval-2', status: 'returned', viewer: 'original_submitter', title: '设备验收合同', step: '销售修改', returnReason: '请补齐附件', returnVersion: 'revise-1', businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1' }, sourceMaterialVersion: createHash('sha256').update('source-v1').digest('hex'), files: [] })
     expect(returnedContext).not.toHaveProperty('revisionReady')
     expect(calls.filter((url) => url.includes('/api/v1/data/') || /\/api\/v1\/storage\/files\/[^/]+\/url/.test(url))).toEqual([])
     expect(calls.filter((url) => url.includes('/workbench-context'))).toHaveLength(2)

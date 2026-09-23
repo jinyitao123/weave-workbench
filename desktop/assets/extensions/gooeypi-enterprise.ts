@@ -176,6 +176,28 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
     parameters: Type.Object({ recovery_key: Type.String({ minLength: 64, maxLength: 64, description: '原提交结果中的恢复凭据' }) }),
     async execute(_id, params) { return result(await turnCall('recover', params)) },
   })
+  pi.registerTool<{ employee_request: string; body: string; materials: Array<{ path: string; sha256: string }> }>({
+    name: 'gooeypi_approval_revision_prepare',
+    label: '固定审批修订材料',
+    description: '为当前已打开的 Forge 退回事项准备一份加密本地固定材料包。此工具只准备和核对材料，不会向 Forge 递交，也不会推进审批流程。',
+    promptGuidelines: [
+      '只处理桌面“我的工作”刚打开并交给本会话的本人退回事项；不能自行选择或猜测另一条审批。',
+      '只有当前员工明确要求递交修订材料时才调用。员工仅在讨论、查看、修改草稿、要求建议、说稍后再办或表达含糊时，不得调用。不要重复要求已经清楚的员工确认。',
+      'employee_request 必须逐字提供本轮员工提出递交要求的原文；body 必须是本轮最终修订正文的准确内容，不补写员工未授权的事实。',
+      'materials 只列出员工本轮指定的实际修订文件路径和读取前核对的 SHA-256；没有修订文件时传空数组。',
+      '成功结果表示材料已固定在本地，绝不表示 Forge 已递交或审批已继续。当前业务递交动作不可用时，明确告诉员工材料已准备但尚未递交；不得调用或暗示调用原生 resubmit。',
+      '同一员工轮次内失败后只能用完全相同正文和文件摘要重试；若正文、文件、账号、事项或员工轮次变化，停止旧意图并要求员工从当前退回事项重新开始。',
+    ],
+    parameters: Type.Object({
+      employee_request: Type.String({ minLength: 1, maxLength: 20_000, description: '员工本轮明确要求递交修订材料的原文' }),
+      body: Type.String({ minLength: 1, maxLength: 2 * 1024 * 1024, description: '本轮准备递交的准确修订正文' }),
+      materials: Type.Array(Type.Object({
+        path: Type.String({ minLength: 1, description: '当前工作目录中的修订材料路径' }),
+        sha256: Type.String({ minLength: 64, maxLength: 64, description: '本轮修订文件的 SHA-256' }),
+      }), { maxItems: 11, description: '本轮员工指定的实际修订文件；正文作为独立材料固定' }),
+    }),
+    async execute(_id, params) { return result(await turnCall('revision_prepare', params as Record<string, unknown>)) },
+  })
 }
 
 export type EnterpriseExtensionApi = ExtensionApi

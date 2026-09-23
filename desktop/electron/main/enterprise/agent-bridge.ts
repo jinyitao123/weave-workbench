@@ -1,15 +1,15 @@
 import { randomUUID } from 'node:crypto'
-import type { EnterpriseService } from '../enterprise'
-import type { EnterpriseBusinessCapability, EnterpriseWorkChoice, EnterpriseWorkResource, TranscriptMessage } from '../../../src/types/api'
+import { approvalContextView, type EnterpriseService } from '../enterprise'
+import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseWorkChoice, EnterpriseWorkResource, TranscriptMessage } from '../../../src/types/api'
 import { CapabilityBridge, type CapabilityClaim } from '../lib/capability-bridge'
-import { requireString } from '../validation'
+import { rejectUnknownKeys, requireString } from '../validation'
 import { digest, HandoffStore, type HandoffStorage } from './handoff-store'
-import { executionText, freezeMaterials, materialSelection, type FrozenMaterial } from './materials'
+import { executionText, freezeMaterials, materialSelection, type FrozenMaterial, type MaterialLimits } from './materials'
 import { searchTeams, type TeamSummary } from './team-catalog'
 
 interface EnterpriseSessionReader { read(filePath: unknown): Promise<TranscriptMessage[]> }
 export interface AgentEnterpriseBridgeOptions {
-  service: Pick<EnterpriseService, 'accountKey' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'findBusinessRecords' | 'stageWorkMaterials' | 'submitWork'>
+  service: Pick<EnterpriseService, 'accountKey' | 'getApprovalContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'findBusinessRecords' | 'stageWorkMaterials' | 'submitWork'>
   sessions: Record<'prime' | 'omp' | 'pi', EnterpriseSessionReader>
   extensionPath: string
   storage?: HandoffStorage
@@ -34,10 +34,68 @@ interface EmployeeTurn {
   baseline: Set<string>
   messageId?: string
 }
+interface PendingReturnedApproval {
+  accountKey: string
+  context: EnterpriseApprovalContext
+  fingerprint: string
+  createdAt: number
+}
+interface BoundReturnedApproval extends PendingReturnedApproval { sessionPath: string }
+interface FrozenRevisionFile { name: string; mediaType: 'text/plain; charset=utf-8'; bytes: number; sha256: string; bytesBase64: string }
+interface FrozenRevisionSourceFile extends FrozenRevisionFile { fileId: string }
+interface FrozenRevisionIntent {
+  version: 1
+  accountKey: string
+  sessionKey: string
+  employeeRoundId: string
+  employeeMessageId: string
+  employeeRequest: string
+  employeeRequestSha256: string
+  sourceMessages: Array<{ messageId: string; eventSeq: number; sha256: string }>
+  requestId: string
+  returnVersion: string
+  sourceMaterialVersion: string
+  businessObject: EnterpriseApprovalContext['businessObject']
+  returnReason: string
+  sourceFiles: FrozenRevisionSourceFile[]
+  body: { content: string; bytes: number; sha256: string; bytesBase64: string }
+  materials: FrozenRevisionFile[]
+}
+const REVISION_MATERIAL_LIMITS: MaterialLimits = { maxFiles: 11, maxFileBytes: 2 * 1024 * 1024, maxTotalBytes: 8 * 1024 * 1024 }
 function messageText(message: TranscriptMessage): string {
   return message.parts.flatMap((part) => part.type === 'text' || part.type === 'agentMessage' ? [part.text] : []).join('\n').trim()
 }
 function handoffKey(choice: EnterpriseWorkChoice): string { return digest(JSON.stringify([choice.teamId, choice.workflowId, choice.version])).slice(0, 24) }
+function returnedApprovalFingerprint(context: EnterpriseApprovalContext): string {
+  return digest(JSON.stringify({
+    requestId: context.requestId, status: context.status, viewer: context.viewer, title: context.title, step: context.step,
+    businessObject: context.businessObject, sourceMaterialVersion: context.sourceMaterialVersion,
+    returnVersion: context.returnVersion, returnReason: context.returnReason, fields: context.fields,
+    files: context.files.map(({ fileId, name, mediaType, bytes, sha256 }) => ({ fileId, name, mediaType, bytes, sha256 })),
+  }))
+}
+function assertReturnedApproval(context: EnterpriseApprovalContext, requestId?: string): asserts context is EnterpriseApprovalContext & {
+  status: 'returned'; viewer: 'original_submitter'; returnVersion: string; returnReason: string
+} {
+  if (context?.status !== 'returned' || context.viewer !== 'original_submitter'
+    || (requestId && context.requestId !== requestId)
+    || !context.requestId || context.requestId.length > 128 || !context.returnVersion || context.returnVersion.length > 128 || !/^[0-9a-f]{64}$/.test(context.sourceMaterialVersion)
+    || !context.businessObject?.objectName || context.businessObject.objectName.length > 160
+    || !context.businessObject.recordId || context.businessObject.recordId.length > 128
+    || (context.businessObject.recordName !== undefined && context.businessObject.recordName.length > 300)
+    || typeof context.returnReason !== 'string' || !Array.isArray(context.files) || context.files.length > 11
+    || context.files.some((file) => !file.fileId || file.fileId.length > 128 || !file.name || file.name.length > 255 || file.mediaType !== 'text/plain; charset=utf-8'
+      || !Number.isInteger(file.bytes) || file.bytes < 0 || file.bytes > 2 * 1024 * 1024
+      || !/^[0-9a-f]{64}$/.test(file.sha256) || file.verified !== true
+      || Buffer.byteLength(file.content, 'utf8') !== file.bytes || digest(Buffer.from(file.content, 'utf8')) !== file.sha256)) {
+    throw new Error('当前退回事项或材料版本不完整，请刷新待办')
+  }
+}
+function revisionFile(material: FrozenMaterial): FrozenRevisionFile {
+  const bytes = Buffer.from(material.content, 'utf8')
+  if (bytes.length !== material.bytes || digest(bytes) !== material.sha256) throw new Error('工作材料与本轮摘要不一致，请暂停处理')
+  return { name: material.name, mediaType: 'text/plain; charset=utf-8', bytes: bytes.length, sha256: material.sha256, bytesBase64: bytes.toString('base64') }
+}
 
 export class AgentEnterpriseBridge extends CapabilityBridge {
   protected readonly rateLimit = 60
@@ -51,6 +109,8 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   private readonly turns = new Map<string, EmployeeTurn>()
   private readonly inputs = new Map<string, symbol>()
   private readonly inFlight = new Map<string, Promise<unknown>>()
+  private readonly pendingReturnedApprovals = new Map<string, PendingReturnedApproval>()
+  private readonly returnedApprovals = new Map<string, BoundReturnedApproval>()
   private readonly store: HandoffStore
 
   constructor(private readonly options: AgentEnterpriseBridgeOptions) { super(); this.store = new HandoffStore(options.storage) }
@@ -58,9 +118,22 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     return { GOOEYPI_ENTERPRISE_URL: url, GOOEYPI_ENTERPRISE_TOKEN: token, GOOEYPI_ENTERPRISE_EXTENSION_PATH: this.options.extensionPath }
   }
   protected onClaimRevoked(claim: CapabilityClaim): void {
-    this.teams.delete(claim.token); this.handoffs.delete(claim.token); this.businessActions.delete(claim.token); this.businessRecords.delete(claim.token); this.turns.delete(claim.token); this.inputs.delete(claim.token)
+    this.teams.delete(claim.token); this.handoffs.delete(claim.token); this.businessActions.delete(claim.token); this.businessRecords.delete(claim.token); this.turns.delete(claim.token); this.inputs.delete(claim.token); this.returnedApprovals.delete(claim.token)
     for (const [runtime, token] of this.runtimes) if (token === claim.token) this.runtimes.delete(runtime)
     for (const [runtime, token] of this.pendingRuntimeTokens) if (token === claim.token) this.pendingRuntimeTokens.delete(runtime)
+  }
+  async pinReturnedApprovalContext(requestId: string): Promise<{ handle: string; context: EnterpriseApprovalContextView }> {
+    if (!requestId || requestId.length > 128) throw new Error('退回事项上下文无效，请刷新待办')
+    const accountBefore = await this.options.service.accountKey()
+    const context = await this.options.service.getApprovalContext(requestId)
+    const accountAfter = await this.options.service.accountKey()
+    assertReturnedApproval(context, requestId)
+    if (accountBefore !== accountAfter) throw new Error('当前账号已变化，请重新打开退回事项')
+    const now = Date.now()
+    for (const [handle, pending] of this.pendingReturnedApprovals) if (now - pending.createdAt > 10 * 60_000) this.pendingReturnedApprovals.delete(handle)
+    const handle = randomUUID()
+    this.pendingReturnedApprovals.set(handle, { accountKey: accountAfter, context, fingerprint: returnedApprovalFingerprint(context), createdAt: now })
+    return { handle, context: approvalContextView(context) }
   }
   bindSession(token: string | undefined, sessionFile: string | undefined, runtimeId?: string): void {
     if (!token) return
@@ -89,26 +162,73 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   invalidateAccount(): void {
     this.revokeAllClaims()
     this.turns.clear(); this.inputs.clear(); this.teams.clear(); this.handoffs.clear(); this.businessActions.clear(); this.businessRecords.clear()
+    this.pendingReturnedApprovals.clear(); this.returnedApprovals.clear()
   }
   /** Called only by the trusted desktop input path, before forwarding to the runtime. */
-  async employeeCommand(runtimeId: unknown, command: unknown): Promise<void> {
+  async employeeCommand(runtimeId: unknown, command: unknown, returnedApprovalContextHandle?: unknown): Promise<void> {
     const value = command as { type?: string; message?: string } | null
-    if (!value || !['prompt', 'steer', 'follow_up', 'abort', 'compact'].includes(value.type ?? '')) return
+    if (!value || !['prompt', 'steer', 'follow_up', 'abort', 'compact'].includes(value.type ?? '')) {
+      if (returnedApprovalContextHandle !== undefined) throw new Error('退回事项上下文只能绑定到桌面工作提示')
+      return
+    }
     const token = typeof runtimeId === 'string' ? this.runtimes.get(runtimeId) : undefined
-    if (!token) return
+    if (!token) {
+      if (returnedApprovalContextHandle !== undefined) throw new Error('退回事项上下文未绑定到当前桌面会话')
+      return
+    }
     const marker = Symbol()
     this.inputs.set(token, marker)
     this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessRecords.delete(token)
     const claim = this.claimForToken(token)
-    if (!claim?.harness || !claim.sessionPath || typeof value.message !== 'string') return
+    if (!claim?.harness || !claim.sessionPath || typeof value.message !== 'string') {
+      if (returnedApprovalContextHandle !== undefined) throw new Error('退回事项上下文未绑定到当前桌面会话')
+      return
+    }
+    let pendingApproval: PendingReturnedApproval | undefined
+    let handle: string | undefined
+    if (returnedApprovalContextHandle !== undefined) {
+      if (value.type !== 'prompt' || typeof returnedApprovalContextHandle !== 'string' || returnedApprovalContextHandle.length < 20 || returnedApprovalContextHandle.length > 128) {
+        throw new Error('退回事项上下文与当前会话不匹配')
+      }
+      handle = returnedApprovalContextHandle
+      pendingApproval = this.pendingReturnedApprovals.get(handle)
+      if (!pendingApproval || Date.now() - pendingApproval.createdAt > 10 * 60_000) {
+        this.pendingReturnedApprovals.delete(handle)
+        throw new Error('退回事项上下文已过期，请重新打开待办')
+      }
+    }
     try {
       const accountKey = await this.options.service.accountKey()
+      if (pendingApproval && pendingApproval.accountKey !== accountKey) throw new Error('当前账号已变化，退回事项不能继续')
+      if (pendingApproval) {
+        const currentContext = await this.options.service.getApprovalContext(pendingApproval.context.requestId)
+        assertReturnedApproval(currentContext, pendingApproval.context.requestId)
+        if (returnedApprovalFingerprint(currentContext) !== pendingApproval.fingerprint
+          || await this.options.service.accountKey() !== accountKey) {
+          throw new Error('退回意见或材料版本已变化，请重新打开待办')
+        }
+      }
       const messages = await this.options.sessions[claim.harness].read(claim.sessionPath)
-      if (this.inputs.get(token) === marker) this.turns.set(token, {
-        key: randomUUID(), prompt: value.message.trim(), accountKey,
-        baseline: new Set(messages.filter((message) => message.role === 'user').map((message) => message.id)),
-      })
-    } catch { /* Local work remains available without an enterprise account; handoff fails closed. */ }
+      if (this.inputs.get(token) === marker) {
+        if (pendingApproval) {
+          if (this.claimForToken(token) !== claim) throw new Error('退回事项上下文已失效，请重新打开待办')
+          this.returnedApprovals.set(token, { ...pendingApproval, sessionPath: claim.sessionPath })
+          this.pendingReturnedApprovals.delete(handle!)
+        }
+        this.turns.set(token, {
+          key: randomUUID(), prompt: value.message.trim(), accountKey,
+          baseline: new Set(messages.filter((message) => message.role === 'user').map((message) => message.id)),
+        })
+      } else if (pendingApproval) {
+        throw new Error('员工轮次已变化，退回事项不能继续')
+      }
+    } catch (error) {
+      if (pendingApproval) {
+        if (handle) this.pendingReturnedApprovals.delete(handle)
+        throw error
+      }
+      /* Local work remains available without an enterprise account; handoff fails closed. */
+    }
   }
   protected async dispatch(method: string, params: Record<string, unknown>, claim: CapabilityClaim): Promise<unknown> {
     if (!claim.harness || !claim.sessionPath) throw new Error('企业团队能力尚未绑定到当前会话')
@@ -125,6 +245,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (method === 'describe') return this.describe(claim, params, turn)
     if (method === 'find_business_record') return this.findBusinessRecord(claim, params, turn)
     if (method === 'submit') return this.submit(claim, params, turn)
+    if (method === 'revision_prepare') return this.prepareReturnedRevision(claim, params, turn)
     if (method === 'recover') {
       const recoveryKey = requireString(params.recovery_key, 'recovery_key', { min: 64, max: 64 })
       const intent = await this.store.recover<FrozenHandoffIntent>(recoveryKey)
@@ -226,6 +347,76 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       return { task, materials, authorizedBusinessCapabilityIds, sourceMessages, employeeMessageId, choice, accountKey: turn.accountKey, idempotencySeed, sessionKey, ...(businessContext ? { businessContext } : {}) }
     })
     return this.prepareDelivery(claim, turn, intent, digest(identity))
+  }
+  private async prepareReturnedRevision(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn): Promise<unknown> {
+    rejectUnknownKeys(params, ['turn_key', 'employee_request', 'body', 'materials'], 'revision')
+    const bound = this.returnedApprovals.get(claim.token)
+    if (!bound || bound.sessionPath !== claim.sessionPath || bound.accountKey !== turn.accountKey) {
+      throw new Error('请从“我的工作”重新打开本人退回的审批事项')
+    }
+    const employeeRequest = requireString(params.employee_request, 'employee_request', { min: 1, max: 20_000, trim: false })
+    if (employeeRequest !== turn.prompt) throw new Error('员工本轮要求已变化，旧修订意图不能继续')
+    const body = requireString(params.body, 'body', { min: 1, max: 2 * 1024 * 1024, trim: false })
+    if (!body.trim() || body.includes('\0')) throw new Error('修订正文为空或无法安全保存')
+    const bodyBytes = Buffer.from(body, 'utf8')
+    if (bodyBytes.length > 2 * 1024 * 1024) throw new Error('修订正文超出固定材料大小限制')
+    if (!Array.isArray(params.materials) || params.materials.length > REVISION_MATERIAL_LIMITS.maxFiles) {
+      throw new Error('修订材料清单无效，请按当前要求重新整理')
+    }
+    const selections = params.materials.length ? materialSelection(params.materials, REVISION_MATERIAL_LIMITS) : []
+    const latest = await this.options.service.getApprovalContext(bound.context.requestId)
+    assertReturnedApproval(latest, bound.context.requestId)
+    if (returnedApprovalFingerprint(latest) !== bound.fingerprint) {
+      throw new Error('退回意见、业务对象或原材料版本已变化，请刷新待办后重新处理')
+    }
+    const sourceMessages = await this.evidence(claim, turn)
+    const employeeMessageId = turn.messageId
+    if (!employeeMessageId) throw new Error('无法核对当前员工轮次，请重新发送本轮要求')
+    const sessionKey = digest(claim.sessionPath).slice(0, 24)
+    const employeeRequestSha256 = digest(Buffer.from(employeeRequest, 'utf8'))
+    const employeeRoundId = digest(JSON.stringify([bound.accountKey, sessionKey, employeeMessageId, employeeRequestSha256]))
+    const bodySha256 = digest(bodyBytes)
+    const identity = `${bound.accountKey}:returned-revision:${latest.requestId}:${latest.returnVersion}:${employeeRoundId}`
+    const fingerprint = digest(JSON.stringify({
+      context: bound.fingerprint, employeeRoundId, bodySha256,
+      materials: selections.map((selection) => ({ path: selection.path, sha256: selection.sha256 })),
+    }))
+    if (!this.options.storage?.codec.available()) throw new Error('安全存储不可用，无法固定修订材料包')
+    let intent: FrozenRevisionIntent
+    try {
+      intent = await this.store.freeze<FrozenRevisionIntent>(identity, fingerprint, async () => {
+        const frozen = await freezeMaterials(claim.cwd, selections, REVISION_MATERIAL_LIMITS)
+        await this.evidence(claim, turn)
+        if (turn.messageId !== employeeMessageId || await this.options.service.accountKey() !== bound.accountKey) {
+          throw new Error('员工账号或轮次已变化，旧修订意图不能继续')
+        }
+        const sourceFiles = latest.files.map((file): FrozenRevisionSourceFile => {
+          const bytes = Buffer.from(file.content, 'utf8')
+          if (bytes.length !== file.bytes || digest(bytes) !== file.sha256) throw new Error('原始审批材料与冻结版本不一致，请暂停处理')
+          return { fileId: file.fileId, name: file.name, mediaType: file.mediaType, bytes: bytes.length, sha256: file.sha256, bytesBase64: bytes.toString('base64') }
+        })
+        if (sourceFiles.reduce((total, file) => total + file.bytes, 0) > 8 * 1024 * 1024) throw new Error('原始审批材料超出本地固定包大小限制')
+        return {
+          version: 1, accountKey: bound.accountKey, sessionKey, employeeRoundId, employeeMessageId,
+          employeeRequest, employeeRequestSha256, sourceMessages, requestId: latest.requestId,
+          returnVersion: latest.returnVersion, sourceMaterialVersion: latest.sourceMaterialVersion,
+          businessObject: structuredClone(latest.businessObject), returnReason: latest.returnReason,
+          sourceFiles, body: { content: body, bytes: bodyBytes.length, sha256: bodySha256, bytesBase64: bodyBytes.toString('base64') },
+          materials: frozen.map(revisionFile),
+        }
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('本轮交接内容已冻结')) {
+        throw new Error('本轮修订材料已固定；正文或文件改变后请从当前退回事项重新开始')
+      }
+      throw error
+    }
+    return {
+      status: 'prepared_only', submitted: false,
+      message: '修订正文和材料已安全固定在本地。Forge 修订递交业务动作尚未接通，因此审批未递交、流程未继续。',
+      body: { bytes: intent.body.bytes, sha256: intent.body.sha256 },
+      materials: intent.materials.map(({ name, bytes }) => ({ name, bytes })),
+    }
   }
   private async prepareDelivery(claim: CapabilityClaim, turn: EmployeeTurn, intent: FrozenHandoffIntent, recoveryKey: string): Promise<unknown> {
     try {

@@ -72,6 +72,7 @@ const api: PrimeWorkApi = {
     applyTeamMemberConfigDraft: (teamId, agentId, revision) => invoke('enterprise:apply-team-member-config-draft', teamId, agentId, revision),
     getWorkOverview: () => invoke('enterprise:get-work-overview'),
     getApprovalContext: (approvalId) => invoke('enterprise:get-approval-context', approvalId),
+    pinReturnedApprovalContext: (approvalId) => invoke('enterprise:pin-returned-approval-context', approvalId),
     submitWork: (choice, goal) => invoke('enterprise:submit-work', choice, goal),
     completeHumanTask: (task, payload) => invoke('enterprise:complete-human-task', task, payload),
   },
@@ -99,7 +100,7 @@ const api: PrimeWorkApi = {
   },
   agent: {
     start: (options) => invoke('agent:start', options),
-    command: (runtimeId, command) => invoke('agent:command', runtimeId, command),
+    command: (runtimeId, command, deliveryContext) => invoke('agent:command', runtimeId, command, deliveryContext),
     stop: (runtimeId) => invoke('agent:stop', runtimeId),
     list: () => invoke('agent:list'),
     onEvent: (callback) => subscribe<PrimeEventEnvelope>('agent:event', callback),

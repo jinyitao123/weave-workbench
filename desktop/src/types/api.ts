@@ -309,6 +309,21 @@ export interface EnterpriseHumanTask {
 }
 
 export interface EnterpriseApprovalContext {
+  requestId: string
+  status: 'pending' | 'returned'
+  viewer: 'current_approver' | 'original_submitter'
+  title: string
+  step: string
+  businessObject: { objectName: string; recordId: string; recordName?: string }
+  sourceMaterialVersion: string
+  returnVersion?: string
+  returnReason?: string
+  fields: Array<{ label: string; value: string }>
+  files: Array<{ fileId: string; name: string; mediaType: 'text/plain; charset=utf-8'; bytes: number; sha256: string; content: string; verified: boolean }>
+}
+
+/** Renderer-safe approval projection. Native object and file identifiers stay in the main process. */
+export interface EnterpriseApprovalContextView {
   title: string
   step: string
   returnReason?: string
@@ -797,6 +812,8 @@ export interface QueuedPrompt {
   parts?: MessagePart[]
   /** The most recent automatic flush attempt failed admission. */
   flushAttemptFailed?: boolean
+  /** Opaque main-process context binding for a returned approval continuation. */
+  returnedApprovalContextHandle?: string
 }
 
 export interface SessionActionSnapshot {
@@ -1128,7 +1145,8 @@ export interface PrimeWorkApi {
     saveTeamMemberConfigDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft>
     applyTeamMemberConfigDraft(teamId: string, agentId: string, revision: number): Promise<EnterpriseTeamMemberConfigDraft>
     getWorkOverview(): Promise<EnterpriseWorkOverview>
-    getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContext>
+    getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContextView>
+    pinReturnedApprovalContext(approvalId: string): Promise<{ handle: string; context: EnterpriseApprovalContextView }>
     submitWork(choice: EnterpriseWorkChoice, goal: string): Promise<EnterpriseWorkReceipt>
     completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }>
   }
@@ -1156,7 +1174,7 @@ export interface PrimeWorkApi {
   }
   agent: {
     start(options: { cwd: string; sessionPath?: string; model?: string; thinking?: string; fast?: boolean; harness?: HarnessId }): Promise<RuntimeInfo>
-    command(runtimeId: string, command: Record<string, unknown>): Promise<Record<string, unknown>>
+    command(runtimeId: string, command: Record<string, unknown>, deliveryContext?: { returnedApprovalContextHandle?: string }): Promise<Record<string, unknown>>
     stop(runtimeId: string): Promise<boolean>
     list(): Promise<RuntimeInfo[]>
     onEvent(callback: (envelope: PrimeEventEnvelope) => void): () => void
