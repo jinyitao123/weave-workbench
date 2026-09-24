@@ -7,12 +7,13 @@ import { rejectUnknownKeys, requireString } from '../validation'
 import { digest, HandoffStore, submissionUUID, type HandoffStorage } from './handoff-store'
 import { executionText, freezeMaterials, materialSelection, type FrozenMaterial, type MaterialLimits } from './materials'
 import { searchTeams, type TeamSummary } from './team-catalog'
+import { businessReadErrorResult, type BusinessRecordCandidate, type BusinessRecordRead, type BusinessRecordSearchPage, type BusinessRecordSnapshot } from './business-records'
 
 interface EnterpriseSessionReader {
   read(filePath: unknown): Promise<TranscriptMessage[]>
 }
 export interface AgentEnterpriseBridgeOptions {
-  service: Pick<EnterpriseService, 'accountKey' | 'getApprovalContext' | 'getWorkNotificationSource' | 'getWorkContinuationContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'findBusinessRecords' | 'stageWorkMaterials' | 'submitWork' | 'submitApprovalRevision' | 'getApprovalRevisionReceipt'>
+  service: Pick<EnterpriseService, 'accountKey' | 'getApprovalContext' | 'getWorkNotificationSource' | 'getWorkContinuationContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'getBusinessObjectDirectory' | 'findBusinessRecords' | 'readBusinessRecord' | 'stageWorkMaterials' | 'submitWork' | 'submitApprovalRevision' | 'getApprovalRevisionReceipt'>
   sessions: Record<'prime' | 'omp' | 'pi', EnterpriseSessionReader>
   extensionPath: string
   storage?: HandoffStorage
@@ -27,7 +28,8 @@ interface FrozenHandoffIntent {
   accountKey: string
   idempotencySeed: string
   sessionKey: string
-  businessContext?: { objectName: string; recordId: string; name: string; code?: string }
+  businessContext?: { objectName: string; recordId: string; name: string; code?: string; recordVersion?: string }
+  businessSnapshot?: BusinessRecordSnapshot
   continuation?: { workbenchSessionID: string; inputRevisionID: string; runID: string; teamID: string }
 }
 interface FrozenHandoff extends FrozenHandoffIntent { resources: EnterpriseWorkResource[] }
@@ -54,6 +56,13 @@ interface PendingWorkContinuation {
   createdAt: number
 }
 interface BoundWorkContinuation extends PendingWorkContinuation { sessionPath: string }
+interface ScopedBusinessObject { objectName: string; label: string; handoffKey: string; accountKey: string; turnKey: string; directoryComplete: boolean }
+interface ScopedBusinessRecord extends BusinessRecordCandidate {
+  handoffKey: string
+  accountKey: string
+  turnKey: string
+  snapshot?: BusinessRecordSnapshot
+}
 interface FrozenRevisionFile { name: string; mediaType: 'text/plain; charset=utf-8'; bytes: number; sha256: string; bytesBase64: string }
 interface FrozenRevisionSourceFile extends FrozenRevisionFile { fileId: string }
 interface FrozenRevisionIntent {
@@ -107,7 +116,7 @@ function returnedApprovalFingerprint(context: EnterpriseApprovalContext): string
   }))
 }
 function workContinuationFingerprint(context: EnterpriseWorkContinuationContext): string {
-  return digest(JSON.stringify({ source: context.source, input: context.input, finalResult: context.run.finalResult ?? null }))
+  return digest(JSON.stringify({ source: context.source, input: context.input, finalResult: context.run.finalResult ?? null, actionOutcomes: context.run.actionOutcomes ?? null }))
 }
 function assertReturnedApproval(context: EnterpriseApprovalContext, requestId?: string): asserts context is EnterpriseApprovalContext & {
   status: 'returned'; viewer: 'original_submitter'; returnVersion: string; returnReason: string
@@ -170,7 +179,8 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   private readonly teams = new Map<string, Map<string, TeamSummary>>()
   private readonly handoffs = new Map<string, Map<string, EnterpriseWorkChoice>>()
   private readonly businessActions = new Map<string, Map<string, Map<string, EnterpriseBusinessCapability>>>()
-  private readonly businessRecords = new Map<string, Map<string, { objectName: string; recordId: string; name: string; code?: string }>>()
+  private readonly businessObjects = new Map<string, Map<string, ScopedBusinessObject>>()
+  private readonly businessRecords = new Map<string, Map<string, ScopedBusinessRecord>>()
   private readonly runtimes = new Map<string, string>()
   private readonly pendingRuntimeTokens = new Map<string, string>()
   private readonly pendingFirstPrompts = new Set<string>()
@@ -193,7 +203,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     return { GOOEYPI_ENTERPRISE_URL: url, GOOEYPI_ENTERPRISE_TOKEN: token, GOOEYPI_ENTERPRISE_EXTENSION_PATH: this.options.extensionPath }
   }
   protected onClaimRevoked(claim: CapabilityClaim): void {
-    this.teams.delete(claim.token); this.handoffs.delete(claim.token); this.businessActions.delete(claim.token); this.businessRecords.delete(claim.token); this.turns.delete(claim.token); this.inputs.delete(claim.token); this.returnedApprovals.delete(claim.token); this.workContinuations.delete(claim.token); this.workLineages.delete(claim.token)
+    this.teams.delete(claim.token); this.handoffs.delete(claim.token); this.businessActions.delete(claim.token); this.businessObjects.delete(claim.token); this.businessRecords.delete(claim.token); this.turns.delete(claim.token); this.inputs.delete(claim.token); this.returnedApprovals.delete(claim.token); this.workContinuations.delete(claim.token); this.workLineages.delete(claim.token)
     this.pendingFirstPrompts.delete(claim.token)
     this.newSessionTokens.delete(claim.token)
     this.notifySessionBinding(claim.token)
@@ -251,6 +261,9 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         runStatus: context.run.status,
         materials,
         ...(context.run.finalResult ? { finalResult: { title: context.run.finalResult.title, contentType: context.run.finalResult.contentType, content: context.run.finalResult.content } } : {}),
+        ...(context.run.actionOutcomes !== undefined ? {
+          actionOutcomes: context.run.actionOutcomes.map(({ actionName, objectName, status, summary }) => ({ actionName, objectName, status, summary })),
+        } : {}),
       },
     }
   }
@@ -326,12 +339,12 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     this.pendingRuntimeTokens.delete(runtimeId)
     this.pendingFirstPrompts.delete(token)
     this.inputs.set(token, Symbol())
-    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessRecords.delete(token); this.workContinuations.delete(token)
+    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessObjects.delete(token); this.businessRecords.delete(token); this.workContinuations.delete(token)
     this.notifySessionBinding(token)
   }
   invalidateAccount(): void {
     this.revokeAllClaims()
-    this.turns.clear(); this.inputs.clear(); this.teams.clear(); this.handoffs.clear(); this.businessActions.clear(); this.businessRecords.clear()
+    this.turns.clear(); this.inputs.clear(); this.teams.clear(); this.handoffs.clear(); this.businessActions.clear(); this.businessObjects.clear(); this.businessRecords.clear()
     this.pendingReturnedApprovals.clear(); this.returnedApprovals.clear()
     this.pendingWorkContinuations.clear(); this.workContinuations.clear(); this.workLineages.clear()
   }
@@ -352,7 +365,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const previousWorkLineage = this.workLineages.get(token)
     const marker = Symbol()
     this.inputs.set(token, marker)
-    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessRecords.delete(token); this.workContinuations.delete(token)
+    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessObjects.delete(token); this.businessRecords.delete(token); this.workContinuations.delete(token)
     this.notifySessionBinding(token)
     const claim = this.claimForToken(token)
     if (!claim?.harness || typeof value.message !== 'string') {
@@ -500,7 +513,9 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     await this.evidence(claim, turn)
     if (method === 'search') return this.search(claim, params, turn)
     if (method === 'describe') return this.describe(claim, params, turn)
+    if (method === 'list_business_objects') return this.listBusinessObjects(claim, params, turn)
     if (method === 'find_business_record') return this.findBusinessRecord(claim, params, turn)
+    if (method === 'read_business_record') return this.readBusinessRecord(claim, params, turn)
     if (method === 'submit') return this.submit(claim, params, turn)
     if (method === 'revision_submit') return this.submitReturnedRevision(claim, params, turn)
     if (method === 'recover') {
@@ -512,21 +527,127 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     }
     throw new TypeError(`Unsupported enterprise method ${method}`)
   }
-  private async findBusinessRecord(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn) {
+  private async listBusinessObjects(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn) {
+    rejectUnknownKeys(params, ['turn_key', 'handoff_key'], 'business object directory')
     const key = requireString(params.handoff_key, 'handoff_key', { min: 1, max: 128, trim: true })
-    const summary = requireString(params.work_summary, 'work_summary', { min: 1, max: 4_000, trim: true })
     if (!this.handoffs.get(claim.token)?.has(key)) throw new Error('请先查看团队的承接能力')
-    const actions = [...(this.businessActions.get(claim.token)?.get(key)?.values() ?? [])]
-    const objectNames = [...new Set(actions.map((action) => action.resourceType))]
-    const boundRecord = turn.workContinuation?.context.input.businessRecord
-    if (boundRecord && !objectNames.includes(boundRecord.objectName)) throw new Error('原工作绑定的业务记录不属于当前团队能力')
-    const records = await this.options.service.findBusinessRecords(objectNames, summary)
+    let directory
+    try { directory = await this.options.service.getBusinessObjectDirectory() }
+    catch (error) {
+      await this.evidence(claim, turn)
+      return businessReadErrorResult(error)
+    }
     await this.evidence(claim, turn)
-    const scopedRecords = boundRecord ? records.filter((item) => item.objectName === boundRecord.objectName && item.recordId === boundRecord.recordID) : records
-    if (boundRecord && !scopedRecords.length) throw new Error('原工作绑定的业务记录当前不可见，请刷新原工作')
-    const mapped = new Map(scopedRecords.map((item) => [digest(`record:${turn.accountKey}:${item.objectName}:${item.recordId}`).slice(0, 24), item]))
+    const boundRecord = turn.workContinuation?.context.input.businessRecord
+    const visible = boundRecord ? directory.objects.filter((item) => item.objectName === boundRecord.objectName) : directory.objects
+    if (boundRecord && !visible.length) return { status: 'not_found', message: '原工作绑定的业务对象当前不在员工可见目录中', objects: [], directory_complete: directory.complete }
+    const objects = new Map<string, ScopedBusinessObject>()
+    const presented = visible.map((item) => {
+      const objectRef = randomUUID().replaceAll('-', '')
+      objects.set(objectRef, { ...item, handoffKey: key, accountKey: turn.accountKey, turnKey: turn.key, directoryComplete: directory.complete })
+      return { object_ref: objectRef, name: item.label }
+    })
+    this.businessObjects.set(claim.token, objects)
+    this.businessRecords.delete(claim.token)
+    return {
+      status: directory.complete ? 'complete' : 'partial', objects: presented,
+      ...(directory.totalCount !== undefined && directory.complete ? { total_count: directory.totalCount } : {}),
+      directory_complete: directory.complete,
+      message: '对象目录只表示当前账号可见元数据；记录读取仍由 Forge 原生 query_records 或 get_record 单独授权校验。',
+    }
+  }
+  private async findBusinessRecord(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn) {
+    rejectUnknownKeys(params, ['turn_key', 'handoff_key', 'object_ref', 'work_summary', 'offset', 'limit'], 'business record search')
+    const key = requireString(params.handoff_key, 'handoff_key', { min: 1, max: 128, trim: true })
+    const objectRef = requireString(params.object_ref, 'object_ref', { min: 32, max: 64, trim: true })
+    const summary = requireString(params.work_summary, 'work_summary', { min: 1, max: 4_000, trim: true })
+    const offset = params.offset === undefined ? 0 : params.offset
+    const limit = params.limit === undefined ? 20 : params.limit
+    if (!Number.isInteger(offset) || (offset as number) < 0 || (offset as number) > 10_000
+      || !Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 50) throw new Error('业务记录分页参数无效')
+    if (!this.handoffs.get(claim.token)?.has(key)) throw new Error('请先查看团队的承接能力')
+    const object = this.businessObjects.get(claim.token)?.get(objectRef)
+    if (!object || object.handoffKey !== key || object.turnKey !== turn.key || object.accountKey !== turn.accountKey) throw new Error('业务对象引用已失效，请按当前员工轮次重新读取对象目录')
+    const boundRecord = turn.workContinuation?.context.input.businessRecord
+    if (boundRecord && object.objectName !== boundRecord.objectName) throw new Error('原工作只能继续使用已绑定的业务对象')
+    let records: BusinessRecordSearchPage['records']
+    let page: BusinessRecordSearchPage | BusinessRecordRead
+    try {
+      page = boundRecord
+        ? await this.readBoundBusinessRecord(object, boundRecord, turn)
+        : await this.options.service.findBusinessRecords(object.objectName, summary, offset as number, limit as number)
+      records = 'candidate' in page ? [page.candidate] : page.records
+    } catch (error) {
+      await this.evidence(claim, turn)
+      const failure = businessReadErrorResult(error)
+      return { ...failure, records: [], directory_complete: object.directoryComplete }
+    }
+    await this.evidence(claim, turn)
+    const mapped = new Map<string, ScopedBusinessRecord>()
+    const presented = records.map((item) => {
+      const recordKey = randomUUID().replaceAll('-', '')
+      const bound = 'candidate' in page ? page : undefined
+      mapped.set(recordKey, {
+        ...item, handoffKey: key, accountKey: turn.accountKey, turnKey: turn.key,
+        ...(bound ? { snapshot: bound.snapshot } : {}),
+      })
+      return {
+        record_key: recordKey, name: item.name, object: object.label,
+        ...(item.code ? { code: item.code } : {}), ...(item.status ? { status: item.status } : {}),
+        ...(item.owner ? { owner: item.owner } : {}), ...(item.recordVersion ? { record_version: item.recordVersion } : {}),
+      }
+    })
     this.businessRecords.set(claim.token, mapped)
-    return { records: [...mapped].map(([recordKey, item]) => ({ record_key: recordKey, name: item.name, ...(item.code ? { code: item.code } : {}), object: '业务记录' })) }
+    const hasMore = 'candidate' in page ? false : page.hasMore
+    const warning = 'warning' in page ? page.warning : undefined
+    const complete = object.directoryComplete && ('candidate' in page ? page.snapshot.completeness === 'complete' : page.complete)
+    const status = presented.length > 1 ? complete ? 'multiple_candidates' : 'partial_candidates'
+      : presented.length ? complete ? 'candidate' : 'partial_candidates'
+        : hasMore ? 'next_page' : complete ? 'not_found' : 'partial'
+    return {
+      status,
+      message: warning ?? (presented.length ? complete
+        ? '候选记录仅供结合员工原话选择；Host 尚未固定完整记录快照。唯一候选也不会由 Host 自动绑定。'
+        : '当前对象目录或查询页不完整；以下仅为部分候选，不能证明没有其它匹配。唯一候选也不会由 Host 自动绑定。'
+        : hasMore ? '当前页没有相关记录，仍有下一页可查。'
+          : complete ? '当前页没有与检索意图相关的可见记录。' : '当前对象目录或查询页不完整，不能据此断言未找到。'),
+      records: presented, selection_required: presented.length > 0, offset: 'candidate' in page ? 0 : page.offset,
+      limit: 'candidate' in page ? 1 : page.limit, has_more: hasMore, complete, directory_complete: object.directoryComplete,
+      ...(warning ? { warning } : {}),
+    }
+  }
+  private async readBoundBusinessRecord(object: ScopedBusinessObject, boundRecord: NonNullable<EnterpriseWorkContinuationContext['input']['businessRecord']>, turn: EmployeeTurn) {
+    if (object.objectName !== boundRecord.objectName) throw new Error('原工作只能继续使用已绑定的业务对象')
+    const read = await this.options.service.readBusinessRecord(boundRecord.objectName, boundRecord.recordID)
+    if (await this.options.service.accountKey() !== turn.accountKey) throw new Error('员工账号已变化，旧记录读取结果已丢弃')
+    if (read.candidate.recordId !== boundRecord.recordID || read.candidate.objectName !== boundRecord.objectName) throw new Error('Forge 返回的业务记录与原工作绑定不一致')
+    return read
+  }
+  private async readBusinessRecord(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn) {
+    rejectUnknownKeys(params, ['turn_key', 'handoff_key', 'record_key'], 'business record read')
+    const key = requireString(params.handoff_key, 'handoff_key', { min: 1, max: 128, trim: true })
+    const recordKey = requireString(params.record_key, 'record_key', { min: 32, max: 64, trim: true })
+    if (!this.handoffs.get(claim.token)?.has(key)) throw new Error('请先查看团队的承接能力')
+    const selected = this.businessRecords.get(claim.token)?.get(recordKey)
+    if (!selected || selected.handoffKey !== key || selected.turnKey !== turn.key || selected.accountKey !== turn.accountKey) throw new Error('业务记录选择已失效，请按当前员工轮次重新查找')
+    const boundRecord = turn.workContinuation?.context.input.businessRecord
+    if (boundRecord && (selected.objectName !== boundRecord.objectName || selected.recordId !== boundRecord.recordID)) throw new Error('原工作只能继续使用已绑定的业务记录')
+    let read: BusinessRecordRead
+    try { read = selected.snapshot ? { candidate: selected, snapshot: selected.snapshot } : await this.options.service.readBusinessRecord(selected.objectName, selected.recordId) }
+    catch (error) {
+      await this.evidence(claim, turn)
+      return businessReadErrorResult(error)
+    }
+    await this.evidence(claim, turn)
+    if (read.candidate.objectName !== selected.objectName || read.candidate.recordId !== selected.recordId) throw new Error('Forge 返回的业务记录与选择不一致')
+    const updated = { ...selected, ...read.candidate, snapshot: read.snapshot }
+    this.businessRecords.get(claim.token)?.set(recordKey, updated)
+    return {
+      status: 'read', record_key: recordKey, name: updated.name, object: updated.objectLabel,
+      ...(updated.code ? { code: updated.code } : {}), ...(updated.status ? { business_status: updated.status } : {}),
+      ...(updated.owner ? { owner: updated.owner } : {}), ...(updated.recordVersion ? { record_version: updated.recordVersion } : {}),
+      snapshot: read.snapshot, complete: read.snapshot.completeness === 'complete',
+    }
   }
   private async evidence(claim: CapabilityClaim, turn: EmployeeTurn) {
     const transcript = await this.options.sessions[claim.harness!].read(claim.sessionPath!)
@@ -618,16 +739,41 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const businessRecordKey = typeof params.business_record_key === 'string' ? params.business_record_key.trim() : ''
     const selectedBusinessContext = businessRecordKey ? this.businessRecords.get(claim.token)?.get(businessRecordKey) : undefined
     if (businessRecordKey && !selectedBusinessContext) throw new Error('业务记录选择已失效，请按当前工作重新查找')
+    if (selectedBusinessContext && (selectedBusinessContext.handoffKey !== key || selectedBusinessContext.turnKey !== turn.key || selectedBusinessContext.accountKey !== turn.accountKey)) {
+      throw new Error('业务记录选择不属于当前员工轮次，请重新查找')
+    }
     const boundRecord = workContinuation?.context.input.businessRecord
     if (boundRecord && selectedBusinessContext && (selectedBusinessContext.objectName !== boundRecord.objectName || selectedBusinessContext.recordId !== boundRecord.recordID)) {
       throw new Error('原工作绑定的业务记录不能替换')
     }
-    const businessContext = selectedBusinessContext ?? (boundRecord ? {
+    let businessContext = selectedBusinessContext ? {
+      objectName: selectedBusinessContext.objectName, recordId: selectedBusinessContext.recordId,
+      name: selectedBusinessContext.name, ...(selectedBusinessContext.code ? { code: selectedBusinessContext.code } : {}),
+      ...(selectedBusinessContext.recordVersion ? { recordVersion: selectedBusinessContext.recordVersion } : {}),
+    } : boundRecord ? {
       objectName: boundRecord.objectName, recordId: boundRecord.recordID, name: '原工作业务记录',
-    } : undefined)
+    } : undefined
+    let businessSnapshot = selectedBusinessContext?.snapshot
     for (const actionKey of actionKeys) {
       const action = actionMap.get(actionKey)!
       if (action.requiresRecord !== false && (!businessContext || businessContext.objectName !== action.resourceType)) throw new Error('请先按当前工作查找并绑定该动作所需的业务记录')
+    }
+    if (businessContext && !businessSnapshot) {
+      const read = await this.options.service.readBusinessRecord(businessContext.objectName, businessContext.recordId)
+      await this.evidence(claim, turn)
+      if (read.candidate.objectName !== businessContext.objectName || read.candidate.recordId !== businessContext.recordId) {
+        throw new Error('Forge 当前记录与员工选择不一致，桌面已停止交接')
+      }
+      businessContext = {
+        objectName: read.candidate.objectName, recordId: read.candidate.recordId,
+        name: read.candidate.name,
+        ...(read.candidate.code ? { code: read.candidate.code } : {}),
+        ...(read.candidate.recordVersion ? { recordVersion: read.candidate.recordVersion } : {}),
+      }
+      businessSnapshot = read.snapshot
+      if (businessRecordKey) {
+        this.businessRecords.get(claim.token)?.set(businessRecordKey, { ...selectedBusinessContext!, ...read.candidate, snapshot: read.snapshot })
+      }
     }
     const sourceMessages = await this.evidence(claim, turn)
     await this.assertWorkContinuationCurrent(claim, turn)
@@ -636,17 +782,18 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const sessionKey = digest(claim.sessionPath!).slice(0, 24)
     const idempotencySeed = `${sessionKey}:${turn.messageId}:${key}`
     const identity = `${turn.accountKey}:${idempotencySeed}`
-    const fingerprint = digest(JSON.stringify({ goal, selections, key, authorizedBusinessCapabilityIds, businessContext, continuation: workContinuation?.context.source }))
+    const fingerprint = digest(JSON.stringify({ goal, selections, key, authorizedBusinessCapabilityIds, businessContext, businessSnapshot: businessSnapshot ?? null, continuation: workContinuation?.context.source }))
     const intent = await this.store.freeze<FrozenHandoffIntent>(identity, fingerprint, async () => {
       const current = await this.options.service.getTeamChoices({ id: choice.teamId, name: choice.teamName })
       if (!current.some((item) => handoffKey(item) === key)) throw new Error('承接流程版本已经变化，请重新查找')
       const materials = await freezeMaterials(claim.cwd, selections)
-      const task = executionText(goal, materials, businessContext)
+      const task = executionText(goal, materials, businessSnapshot)
       await this.evidence(claim, turn)
       return {
         task, materials, authorizedBusinessCapabilityIds, sourceMessages, employeeMessageId, choice,
         accountKey: turn.accountKey, idempotencySeed, sessionKey,
         ...(businessContext ? { businessContext } : {}),
+        ...(businessSnapshot ? { businessSnapshot } : {}),
         ...(workContinuation ? { continuation: {
           workbenchSessionID: workContinuation.context.source.workbenchSessionID,
           inputRevisionID: workContinuation.context.source.inputRevisionID,

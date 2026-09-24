@@ -99,9 +99,9 @@ describe('Weave handoff admission contract', () => {
   })
   it('registers the exact selected record and refuses to reuse its key for another record', async () => {
     const f = await fixture()
-    const source = { ...f.source, businessContext: { objectName: 'forge_quote', recordId: 'quote-a' } }
+    const source = { ...f.source, businessContext: { objectName: 'forge_quote', recordId: 'quote-a', recordVersion: 'revision-7' } }
     await f.service.submitWork(choice, '核对报价', source)
-    expect(f.calls[0].body.business_record).toEqual({ object_name: 'forge_quote', record_id: 'quote-a' })
+    expect(f.calls[0].body.business_record).toEqual({ object_name: 'forge_quote', record_id: 'quote-a', record_version: 'revision-7' })
     await expect(f.service.submitWork(choice, '核对报价', { ...source, businessContext: { ...source.businessContext, recordId: 'quote-b' } })).rejects.toThrow('input_registration_conflict')
     expect(f.runs.size).toBe(1)
   })
