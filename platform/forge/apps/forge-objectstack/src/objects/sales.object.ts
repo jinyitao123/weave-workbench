@@ -25,6 +25,7 @@ export const Quotation = master('forge_quotation', '销售报价', 'file-text', 
   quotation_date: Field.date({ label: '报价日期', ...required }), valid_until: Field.date({ label: '有效期至', ...required }),
   payment_method: paymentMethod(), payment_term: text('付款条件'), responsible_id: owner(true),
   status: { ...choice('报价状态', ['草稿', '待审批', '已审批', '已驳回', '已发送', '已接受'], '草稿'), readonly: true },
+  pricing_version: Field.number({ label: '核价版本', min: 0, scale: 0, defaultValue: 0, hidden: true, readonly: true }),
   item_count: Field.number({ label: '物料/服务数', min: 0, scale: 0, defaultValue: 0 }),
   subtotal: nonNegativeMoney('折前含税金额'), discount_amount: nonNegativeMoney('折扣金额'),
   tax_amount: nonNegativeMoney('税额'), total_amount: nonNegativeMoney('报价含税总额'), cost_total: nonNegativeMoney('总成本'),
@@ -40,6 +41,39 @@ export const QuotationLine = master('forge_quotation_line', '报价明细', 'lis
   tax_rate: percentage('税率', 13), discount_rate: percentage('折扣率', 0), taxed_subtotal: nonNegativeMoney('折后含税小计'),
   cost_price: nonNegativeMoney('成本单价'), sort_order: Field.number({ label: '排序', min: 0, scale: 0, defaultValue: 0 }), remarks: remarks(),
 }, ['quotation_id', 'group_name', 'name', 'model', 'quantity', 'taxed_unit_price', 'tax_rate', 'discount_rate', 'taxed_subtotal']);
+
+// A committed claim per quote version serializes competing native adjustments
+// without relying on an ObjectQL compare-and-swap API that 17.3 does not expose.
+export const QuotationPriceAdjustmentReceipt = ObjectSchema.create({
+  name: 'forge_quotation_price_adjustment_receipt',
+  label: '报价调整回执',
+  pluralLabel: '报价调整回执',
+  icon: 'receipt-text',
+  sharingModel: 'private',
+  nameField: 'name',
+  fields: {
+    name: text('请求回执', true),
+    quotation_id: reference('forge_quotation', '报价单', true),
+    operation: Field.select([{ value: 'price_adjustment', label: '明细调价' }, { value: 'recalculation', label: '金额重算' }], { label: '操作类型', defaultValue: 'price_adjustment' }),
+    quotation_line_id: Field.text({ label: '报价明细标识', ...required, maxLength: 128 }),
+    expected_version: Field.number({ label: '调整前版本', min: 0, scale: 0, ...required }),
+    resulting_version: Field.number({ label: '调整后版本', min: 0, scale: 0, ...required }),
+    idempotency_key: Field.text({ label: '请求标识', ...required, maxLength: 128 }),
+    request_signature: Field.text({ label: '请求签名', ...required, maxLength: 512 }),
+    requested_unit_price: nonNegativeMoney('修改后含税单价'),
+    line_subtotal: nonNegativeMoney('明细小计'),
+    quotation_total: nonNegativeMoney('报价含税总额'),
+    cost_total: nonNegativeMoney('总成本'),
+    cost_analysis_available: Field.boolean({ label: '成本数据完整' }),
+    requested_by: Field.user({ label: '操作员工', ...required }),
+    recorded_at: Field.datetime({ label: '保存时间', ...required }),
+  },
+  indexes: [
+    { fields: ['quotation_id', 'expected_version'], unique: 'organization' },
+    { fields: ['quotation_id', 'idempotency_key'], unique: 'organization' },
+  ],
+  enable: { apiEnabled: false, searchable: false, trackHistory: true, files: false, feeds: false, activities: false },
+});
 
 // RM-046 / DR-0165 to DR-0177. A contract constrains orders and never represents shipment execution itself.
 export const SalesContract = master('forge_sales_contract', '框架销售合同', 'scroll-text', {

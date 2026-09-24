@@ -1,11 +1,37 @@
 import type { Plugin, PluginContext } from '@objectstack/core';
-import type { IHttpServer } from '@objectstack/spec/contracts';
+import { makeExecutionContextResolver } from '@objectstack/plugin-hono-server';
+import type { IHttpRequest, IHttpResponse, IHttpServer, IObjectQLEngine } from '@objectstack/spec/contracts';
+import type { ExecutionContext } from '@objectstack/spec/kernel';
 import type { EmitInput, MessagingService } from '@objectstack/service-messaging';
 
 const EVENT_PATH = '/api/v1/apps/forge/weave-events/team-runs';
+const SOURCE_PATH = '/api/v1/workbench/notifications/:notificationId/source';
 const EVENT_SECRET_ENV = 'FORGE_WEAVE_EVENT_SECRET';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const NATIVE_NOTIFICATION_ID = /^[A-Za-z0-9_-]{12,128}$/;
 const EVENT_KINDS = new Set(['result', 'failure', 'revision_required', 'cancelled']);
+const SYSTEM_CONTEXT: ExecutionContext = { isSystem: true, positions: [], permissions: [] };
+
+function sessionHeaders(headers: IHttpRequest['headers']): Headers {
+  const result = new Headers();
+  for (const [name, value] of Object.entries(headers ?? {})) {
+    if (Array.isArray(value)) for (const part of value) result.append(name, part);
+    else result.set(name, value);
+  }
+  return result;
+}
+
+async function sourceError(response: IHttpResponse, status: number, code: string): Promise<void> {
+  response.header('Cache-Control', 'no-store');
+  await response.status(status).json({ error: { code } });
+}
+
+function eventPayload(value: unknown): Record<string, unknown> | null {
+  if (typeof value === 'string') {
+    try { return eventPayload(JSON.parse(value)); } catch { return null; }
+  }
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
 
 interface TeamRunEvent {
   version: '1';
@@ -96,6 +122,56 @@ export class WeaveRunEventPlugin implements Plugin {
         return;
       }
       const messaging = ctx.getService<MessagingService>('messaging');
+      const resolveContext = makeExecutionContextResolver(ctx);
+      server.get(SOURCE_PATH, async (req, res) => {
+        res.header('Cache-Control', 'no-store');
+        const actor = await resolveContext({ req: { raw: { headers: sessionHeaders(req.headers) } } });
+        if (!actor?.userId) return sourceError(res, 401, 'UNAUTHENTICATED');
+        const notificationId = boundedString(req.params?.notificationId, 128);
+        if (!notificationId || !NATIVE_NOTIFICATION_ID.test(notificationId)) return sourceError(res, 404, 'TEAM_MESSAGE_NOT_FOUND');
+        let engine: IObjectQLEngine | null = null;
+        try { engine = ctx.getService<IObjectQLEngine>('objectql'); } catch { /* unavailable */ }
+        if (!engine) return sourceError(res, 503, 'TEAM_MESSAGE_UNAVAILABLE');
+        try {
+          const inbox = await engine.find('sys_inbox_message', {
+            where: { notification_id: notificationId, user_id: actor.userId },
+            fields: ['notification_id', 'user_id', 'organization_id', 'topic'],
+            limit: 2,
+          }, { context: SYSTEM_CONTEXT });
+          if (!inbox.length || inbox.some((row) => row.user_id !== actor.userId ||
+              row.notification_id !== notificationId ||
+              !boundedString(row.topic, 128)?.startsWith('weave.team_run.') ||
+              row.topic !== inbox[0].topic ||
+              row.organization_id !== inbox[0].organization_id)) {
+            return sourceError(res, 404, 'TEAM_MESSAGE_NOT_FOUND');
+          }
+          const notice = await engine.findOne('sys_notification', {
+            where: { id: notificationId },
+            fields: ['id', 'topic', 'organization_id', 'payload'],
+          }, { context: SYSTEM_CONTEXT });
+          if (!notice || notice.id !== notificationId || notice.topic !== inbox[0].topic ||
+              notice.organization_id !== inbox[0].organization_id) {
+            return sourceError(res, 404, 'TEAM_MESSAGE_NOT_FOUND');
+          }
+          const event = eventPayload(eventPayload(notice.payload)?.weaveEvent);
+          const kind = boundedString(event?.kind, 64);
+          const workReference = boundedString(event?.workReference, 512);
+          const runReference = boundedString(event?.runReference, 512);
+          const sessionReference = boundedString(event?.sessionReference, 512);
+          if (event?.version !== '1' || !kind || !EVENT_KINDS.has(kind) ||
+              notice.topic !== `weave.team_run.${kind}` ||
+              !workReference || !runReference || !sessionReference) {
+            return sourceError(res, 404, 'TEAM_MESSAGE_NOT_FOUND');
+          }
+          await res.status(200).json({
+            version: '1', notificationId, kind,
+            source: { system: 'weave', workReference, runReference, sessionReference },
+          });
+        } catch {
+          ctx.logger.error('[weave-run-events] failed to read an owned team message source');
+          await sourceError(res, 503, 'TEAM_MESSAGE_UNAVAILABLE');
+        }
+      });
       server.post(EVENT_PATH, async (req, res) => {
         const secret = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.[EVENT_SECRET_ENV]?.trim() ?? '';
         if (!secret) {

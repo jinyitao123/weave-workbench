@@ -31,6 +31,7 @@
     "acceptance:master-data": "node tests/master-data.integration.mjs",
     "acceptance:sales": "node tests/sales-foundation.integration.mjs",
     "acceptance:sales-workflow": "node tests/sales-workflow.integration.mjs",
+    "acceptance:quotation-adjustment-native": "node tests/quotation-adjustment.native.integration.mjs",
     "acceptance:sales-conversion": "node tests/sales-conversion.integration.mjs",
     "acceptance:sales-shipment": "node tests/sales-shipment.integration.mjs",
     "acceptance:sales-outbound": "node tests/sales-outbound.integration.mjs",
