@@ -7,7 +7,7 @@ import { rejectUnknownKeys, requireString } from '../validation'
 import { digest, HandoffStore, submissionUUID, type HandoffStorage } from './handoff-store'
 import { executionText, freezeMaterials, materialSelection, type FrozenMaterial, type MaterialLimits } from './materials'
 import { searchTeams, type TeamSummary } from './team-catalog'
-import { businessReadErrorResult, type BusinessRecordCandidate, type BusinessRecordRead, type BusinessRecordSearchPage, type BusinessRecordSnapshot } from './business-records'
+import { businessReadErrorResult, type BusinessObjectDirectory, type BusinessRecordCandidate, type BusinessRecordRead, type BusinessRecordSearchPage, type BusinessRecordSnapshot } from './business-records'
 
 interface EnterpriseSessionReader {
   read(filePath: unknown): Promise<TranscriptMessage[]>
@@ -531,7 +531,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     rejectUnknownKeys(params, ['turn_key', 'handoff_key'], 'business object directory')
     const key = requireString(params.handoff_key, 'handoff_key', { min: 1, max: 128, trim: true })
     if (!this.handoffs.get(claim.token)?.has(key)) throw new Error('请先查看团队的承接能力')
-    let directory
+    let directory: BusinessObjectDirectory
     try { directory = await this.options.service.getBusinessObjectDirectory() }
     catch (error) {
       await this.evidence(claim, turn)
