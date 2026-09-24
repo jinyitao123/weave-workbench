@@ -76,7 +76,7 @@ describe('Forge native MCP object reads', () => {
     await expect(f.service.findBusinessRecords('sales_quote', 'Q-240', 0, 20)).rejects.toMatchObject({ kind: 'forbidden' })
     expect((await f.service.getSession()).status).toBe('signed-in')
     const calls = f.calls.filter((call) => call.path === '/api/v1/mcp')
-    expect(calls.map((call) => (call.body?.params as Record<string, unknown>).name)).toEqual(['list_objects', 'describe_object', 'query_records'])
+    expect(calls.map((call) => ((call.body?.params ?? {}) as Record<string, unknown>).name)).toEqual(['list_objects', 'describe_object', 'query_records'])
     expect(calls[2]?.body).toMatchObject({ params: { arguments: { objectName: 'sales_quote', limit: 20, offset: 0 } } })
   })
 
@@ -86,7 +86,7 @@ describe('Forge native MCP object reads', () => {
     expect(read.candidate).toMatchObject({ objectName: 'sales_quote', recordId: 'internal-id', name: '设备交接报价', code: 'Q-240', recordVersion: '3' })
     expect(read.snapshot).toMatchObject({ completeness: 'complete', pricingDetailCompleteness: 'complete', expectedDetailCount: 0 })
     expect(f.calls.some((call) => call.path === '/api/v1/meta/object/sales_quote' && call.authorization === 'Bearer forge-token')).toBe(true)
-    expect(f.calls.filter((call) => call.path === '/api/v1/mcp').map((call) => (call.body?.params as Record<string, unknown>).name)).toEqual(['list_objects', 'get_record'])
+    expect(f.calls.filter((call) => call.path === '/api/v1/mcp').map((call) => ((call.body?.params ?? {}) as Record<string, unknown>).name)).toEqual(['list_objects', 'get_record'])
     expect(f.calls.every((call) => !JSON.stringify(call.body ?? {}).includes('run_action'))).toBe(true)
   })
 
