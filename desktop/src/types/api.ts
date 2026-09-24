@@ -360,6 +360,7 @@ export interface EnterpriseWorkContinuationContextView {
   runStatus: 'queued' | 'running' | 'parked' | 'cancel_requested' | 'succeeded' | 'failed' | 'cancelled' | 'abandoned'
   materials: Array<{ name: string; bytes: number; sha256: string; content: string }>
   finalResult?: { title: string; contentType: string; content: string }
+  actionOutcomes?: Array<{ actionName: string; objectName: string; status: 'succeeded' | 'failed' | 'unknown'; summary: string }>
 }
 
 export interface EnterpriseWorkOverview {
