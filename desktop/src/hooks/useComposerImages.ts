@@ -162,7 +162,12 @@ export function useComposerImages({ shortName, projectId, harness, importTextFil
       const failedImage = imageResults.find((result) => result.status === 'rejected')
       const failedText = textResults.find((result) => result.status === 'rejected')
       if (failedImage) updateError(`${shortName} could not read the image.`)
-      else if (failedText) updateError(`${shortName} could not import the text or Markdown file.`)
+      else if (failedText) {
+        const failure = failedText.reason
+        updateError(failure instanceof Error && failure.message.startsWith('Workspace authorization timed out before attaching this file.')
+          ? failure.message
+          : `${shortName} could not import the text or Markdown file.`)
+      }
       else if (errorRevisionRef.current === startingErrorRevision) setError('')
     } catch {
       if (mountedRef.current) updateError(`${shortName} could not read the image.`)
