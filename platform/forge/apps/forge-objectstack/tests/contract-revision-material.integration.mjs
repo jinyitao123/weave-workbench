@@ -15,7 +15,8 @@ async function harness() {
   const request = {
     id: requestId, object_name: 'forge_sales_contract', record_id: contractId,
     submitter_id: 'sales-A', status: 'returned', payload: oldPayload,
-    flow_run_id: 'run-A', created_at: '2026-09-23T10:00:00.000Z',
+    flow_run_id: 'run-A', flow_node_id: 'contract_review',
+    node_config_json: JSON.stringify({ __round: 1 }), created_at: '2026-09-23T10:00:00.000Z',
     viewer: { is_submitter: true },
   };
   const files = new Map([
@@ -29,8 +30,11 @@ async function harness() {
   const contract = { id: contractId, status: 'pending_approval', code: 'HT-A', submitted_material_id: 'old-file' };
   const engine = {
     async find(name, query) {
-      if (name === 'sys_approval_request') return relatedRequests.filter((row) =>
-        row.flow_run_id === query.where.flow_run_id && row.object_name === query.where.object_name && row.record_id === query.where.record_id);
+      if (name === 'sys_approval_request') {
+        if (query.where.id) return relatedRequests.filter((row) => row.id === query.where.id);
+        return relatedRequests.filter((row) =>
+          row.flow_run_id === query.where.flow_run_id && row.object_name === query.where.object_name && row.record_id === query.where.record_id);
+      }
       if (name !== 'sys_file') throw new Error(`unexpected collection ${name}`);
       return query.where.id.$in.map((id) => files.get(id)).filter(Boolean);
     },
@@ -131,7 +135,8 @@ test('lost response is reconciled from native action and next-round request with
   actions.push({ id: 'resubmit-action-A', action: 'resubmit' });
   assert.equal((await service.receipt(requestId, input.idempotencyKey, context))?.state, 'resume_unknown');
   relatedRequests.push({ id: 'approval-round-2', object_name: 'forge_sales_contract', record_id: contractId,
-    flow_run_id: 'run-A', created_at: '2026-09-23T10:01:00.000Z' });
+    flow_run_id: 'run-A', flow_node_id: 'contract_review', node_config_json: JSON.stringify({ __round: 2 }),
+    created_at: '2026-09-23T10:01:00.000Z' });
   const outcome = await service.receipt(requestId, input.idempotencyKey, context);
   assert.deepEqual(outcome, {
     requestId, bindingId: binding.bindingId, newVersionDigest: binding.newVersionDigest,

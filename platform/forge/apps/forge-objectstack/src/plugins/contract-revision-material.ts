@@ -67,6 +67,42 @@ function approvalPayloadFromRawRow(value: unknown): JsonRecord | undefined {
   catch { return undefined; }
 }
 
+function approvalRoundFromRawRow(value: unknown): number {
+  const row = record(value);
+  if (!row) return 1;
+  const config = record(row.node_config_json) ?? (() => {
+    if (typeof row.node_config_json !== 'string') return undefined;
+    try { return record(JSON.parse(row.node_config_json)); }
+    catch { return undefined; }
+  })();
+  const round = Number(config?.__round);
+  return Number.isSafeInteger(round) && round > 0 ? round : 1;
+}
+
+function timestampMillis(value: unknown): number | undefined {
+  if (!(typeof value === 'string' || typeof value === 'number' || value instanceof Date)) return undefined;
+  const timestamp = value instanceof Date ? value.getTime() : new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : undefined;
+}
+
+function nativeResubmissionRequestId(value: unknown): string | undefined {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const requestId = nativeResubmissionRequestId(item);
+      if (requestId) return requestId;
+    }
+    return undefined;
+  }
+  const item = record(value);
+  if (!item) return undefined;
+  if (item.resubmitted === true) return text(item.requestId, 128);
+  for (const child of Object.values(item)) {
+    const requestId = nativeResubmissionRequestId(child);
+    if (requestId) return requestId;
+  }
+  return undefined;
+}
+
 function text(value: unknown, max: number): string | undefined {
   if (typeof value !== 'string') return undefined;
   const result = value.trim();
@@ -229,15 +265,29 @@ export class ContractRevisionMaterialService {
     if (!hasResubmit) {
       return { requestId, bindingId: String(row.id), newVersionDigest: String(row.new_version_digest), state: 'prepared', repeated: true };
     }
-    if (!request.flow_run_id || !request.created_at) {
+    if (!request.flow_run_id) {
       return { requestId, bindingId: String(row.id), newVersionDigest: String(row.new_version_digest), state: 'resume_unknown', repeated: true };
     }
+    const originalRows = await this.engine.find('sys_approval_request', {
+      where: { id: requestId }, fields: ['id', 'flow_node_id', 'node_config_json', 'created_at'], limit: 1,
+    }, { context: SYSTEM_CONTEXT });
+    const original = originalRows?.[0];
+    const flowNodeId = text(original?.flow_node_id ?? request.flow_node_id, 128);
+    if (!original || !flowNodeId) {
+      return { requestId, bindingId: String(row.id), newVersionDigest: String(row.new_version_digest), state: 'resume_unknown', repeated: true };
+    }
+    const originalRound = approvalRoundFromRawRow(original);
+    const originalTime = timestampMillis(original.created_at ?? request.created_at);
     const related = await this.engine.find('sys_approval_request', {
       where: { flow_run_id: request.flow_run_id, object_name: CONTRACT_OBJECT, record_id: request.record_id },
-      fields: ['id', 'created_at'], orderBy: [{ field: 'created_at', order: 'desc' }], limit: 20,
+      fields: ['id', 'flow_node_id', 'node_config_json', 'created_at'], orderBy: [{ field: 'created_at', order: 'desc' }], limit: 50,
     }, { context: SYSTEM_CONTEXT });
-    const resumed = related.some((candidate) => String(candidate.id) !== requestId &&
-      typeof candidate.created_at === 'string' && candidate.created_at > request.created_at!);
+    const resumed = related.some((candidate) => {
+      if (String(candidate.id) === requestId || String(candidate.flow_node_id ?? '') !== flowNodeId) return false;
+      if (approvalRoundFromRawRow(candidate) > originalRound) return true;
+      const candidateTime = timestampMillis(candidate.created_at);
+      return originalTime !== undefined && candidateTime !== undefined && candidateTime > originalTime;
+    });
     return {
       requestId, bindingId: String(row.id), newVersionDigest: String(row.new_version_digest),
       state: resumed ? 'resumed' : 'resume_unknown', repeated: true,
@@ -282,6 +332,7 @@ export class ContractRevisionMaterialService {
     };
 
     try {
+      const organizationId = text(context.tenantId, 128) ?? text(request.organization_id, 128);
       return await this.engine.transaction(async (transactionContext) => {
         const scoped = { context: transactionContext };
         const approval = await this.engine.findOne('sys_approval_request', { where: { id: input.requestId } }, scoped);
@@ -324,7 +375,7 @@ export class ContractRevisionMaterialService {
           newVersionDigest, idempotencyKey: input.idempotencyKey,
           contractId: request.record_id, requestId: input.requestId, repeated: false,
         };
-      }, SYSTEM_CONTEXT, { require: true });
+      }, { ...SYSTEM_CONTEXT, ...(organizationId ? { tenantId: organizationId } : {}) }, { require: true });
     } catch (error) {
       // A competing transaction may have committed the exact same binding
       // after our read. Query the unique approval key before reporting failure.
@@ -349,6 +400,45 @@ export class ContractRevisionMaterialPlugin implements Plugin {
       const storage = ctx.getService<IStorageService>('storage');
       const materials = new ContractRevisionMaterialService(approvals, engine, storage);
       ctx.registerService(CONTRACT_REVISION_MATERIAL_SERVICE, materials);
+
+      // ObjectStack 17.3 resumes the existing run snapshot at the native
+      // approval_revise back-edge. Refresh the contract payload only when that
+      // native continuation carries its resubmit marker and the corresponding
+      // Forge material binding and audit action are already persisted. The
+      // approval plugin still creates and owns the next request and round.
+      const nativeApprovals = approvals as IApprovalService & {
+        openNodeRequest?: (input: JsonRecord, context: ExecutionContext) => Promise<unknown>;
+      };
+      if (typeof nativeApprovals.openNodeRequest === 'function') {
+        const openNativeRequest = nativeApprovals.openNodeRequest.bind(approvals);
+        nativeApprovals.openNodeRequest = async (rawInput, context) => {
+          const input = record(rawInput);
+          const requestId = nativeResubmissionRequestId(input?.variables);
+          const recordId = text(input?.recordId, 128);
+          if (input?.object !== CONTRACT_OBJECT || !requestId || !recordId) {
+            return openNativeRequest(rawInput, context);
+          }
+          const returned = await approvals.getRequest(requestId, context);
+          if (!returned || returned.object_name !== CONTRACT_OBJECT || returned.record_id !== recordId ||
+              returned.status !== 'returned') {
+            return openNativeRequest(rawInput, context);
+          }
+          const actions = await approvals.listActions(requestId, context);
+          if (![...actions].reverse().some((action) => action.action === 'resubmit')) {
+            return openNativeRequest(rawInput, context);
+          }
+          const binding = await engine.findOne(LEDGER_OBJECT, {
+            where: { approval_request_id: requestId },
+          }, { context: SYSTEM_CONTEXT });
+          if (!binding || binding.contract_id !== recordId || binding.submitted_by !== returned.submitter_id) {
+            return openNativeRequest(rawInput, context);
+          }
+          const liveContract = await engine.findOne(CONTRACT_OBJECT, { where: { id: recordId } }, { context: SYSTEM_CONTEXT });
+          if (!liveContract) throw new Error('REVISION_STALE: revised contract is unavailable');
+          return openNativeRequest({ ...input, record: liveContract }, context);
+        };
+      }
+
       let server: IHttpServer;
       try { server = ctx.getService<IHttpServer>('http.server'); }
       catch { return; }

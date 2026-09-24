@@ -19,28 +19,234 @@ export const QuotationRecalculate = defineAction({
   locations: ['record_more'], visible: `record.status == 'draft'`, refreshAfter: true,
   successMessage: '报价金额已按明细重新计算',
   body: {
-    language: 'js', capabilities: ['api.read', 'api.write'], source: `
+    language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id);
 if (ctx.recordLoadDenied === true || !id) throw new Error('当前报价不存在或不可访问');
-const lines = await ctx.api.object('forge_quotation_line').find({ where: { quotation_id: id } });
-if (!lines.length) throw new Error('报价至少需要一条明细');
-let subtotal = 0, total = 0, tax = 0, cost = 0;
-for (const line of lines) {
-  const quantity = Number(line.quantity || 0);
-  const unitPrice = Number(line.taxed_unit_price || 0);
-  const lineTotal = Number(line.taxed_subtotal || 0);
-  const rate = Number(line.tax_rate || 0) / 100;
-  subtotal += quantity * unitPrice;
-  total += lineTotal;
-  tax += rate > 0 ? lineTotal - lineTotal / (1 + rate) : 0;
-  cost += quantity * Number(line.cost_price || 0);
+const actor = String(ctx.session && ctx.session.userId || '').trim();
+const quotationObject = ctx.api.object('forge_quotation');
+const lineObject = ctx.api.object('forge_quotation_line');
+const receiptObject = ctx.api.object('forge_quotation_price_adjustment_receipt');
+let attemptedVersion = null;
+try {
+  return await ctx.api.transaction(async () => {
+    const quote = await quotationObject.findOne({ where: { id } });
+    if (!quote) throw new Error('当前报价不存在或不可访问');
+    const lines = await lineObject.find({ where: { quotation_id: id } });
+    if (!lines.length) throw new Error('报价至少需要一条明细');
+    let subtotal = 0, total = 0, tax = 0, cost = 0, costComplete = true;
+    for (const line of lines) {
+      const quantity = Number(line.quantity || 0);
+      const unitPrice = Number(line.taxed_unit_price || 0);
+      const lineTotal = Number(line.taxed_subtotal || 0);
+      const rate = Number(line.tax_rate || 0) / 100;
+      subtotal += quantity * unitPrice;
+      total += lineTotal;
+      tax += rate > 0 ? lineTotal - lineTotal / (1 + rate) : 0;
+      if (line.cost_price === null || line.cost_price === undefined || line.cost_price === '') costComplete = false;
+      else cost += quantity * Number(line.cost_price);
+    }
+    const round4 = value => Math.round((value + Number.EPSILON) * 10000) / 10000;
+    const totals = {
+      item_count: lines.length,
+      subtotal: round4(subtotal),
+      discount_amount: round4(subtotal - total),
+      tax_amount: round4(tax),
+      total_amount: round4(total),
+      cost_total: costComplete ? round4(cost) : null,
+    };
+    const matches = (current, next) => next === null
+      ? current === null || current === undefined || current === ''
+      : current !== null && current !== undefined && current !== '' && Number.isFinite(Number(current)) && Math.abs(Number(current) - next) <= 0.0001;
+    const unchanged = Number(quote.item_count || 0) === totals.item_count
+      && matches(quote.subtotal, totals.subtotal)
+      && matches(quote.discount_amount, totals.discount_amount)
+      && matches(quote.tax_amount, totals.tax_amount)
+      && matches(quote.total_amount, totals.total_amount)
+      && matches(quote.cost_total, totals.cost_total);
+    const currentVersion = quote.pricing_version === null || quote.pricing_version === undefined ? 0 : Number(quote.pricing_version);
+    if (!Number.isInteger(currentVersion) || currentVersion < 0) throw new Error('报价版本无效，请先核对报价记录');
+    if (unchanged) return { id, ...totals, pricing_version: currentVersion, cost_analysis_available: costComplete };
+    if (!actor) throw new Error('无法识别当前重新计算员工');
+    attemptedVersion = currentVersion;
+    const nextVersion = currentVersion + 1;
+    const idempotencyKey = 'recalculate:' + currentVersion;
+    const signature = JSON.stringify({ operation: 'recalculation', quotation_id: id, expected_version: currentVersion, ...totals });
+    const existing = await receiptObject.findOne({ where: { quotation_id: id, expected_version: currentVersion } });
+    if (existing) throw new Error('报价版本已变化，请刷新报价后重新计算');
+    await receiptObject.insert({
+      name: '重新计算报价金额', quotation_id: id, operation: 'recalculation', quotation_line_id: 'recalculate',
+      expected_version: currentVersion, resulting_version: nextVersion, idempotency_key: idempotencyKey,
+      request_signature: signature, requested_unit_price: null, line_subtotal: null,
+      quotation_total: totals.total_amount, cost_total: totals.cost_total,
+      cost_analysis_available: costComplete, requested_by: actor, recorded_at: new Date().toISOString(),
+    });
+    await quotationObject.update({ id, ...totals, pricing_version: nextVersion });
+    return { id, ...totals, pricing_version: nextVersion, cost_analysis_available: costComplete };
+  });
+} catch (error) {
+  const current = await quotationObject.findOne({ where: { id } });
+  if (current && attemptedVersion !== null) {
+    const currentVersion = current.pricing_version === null || current.pricing_version === undefined ? 0 : Number(current.pricing_version);
+    if (currentVersion !== attemptedVersion) throw new Error('报价版本已变化，请刷新报价后重新核对');
+  }
+  throw error;
 }
-const round4 = value => Math.round((value + Number.EPSILON) * 10000) / 10000;
-await ctx.api.object('forge_quotation').update({ id,
-  item_count: lines.length, subtotal: round4(subtotal), discount_amount: round4(subtotal - total),
-  tax_amount: round4(tax), total_amount: round4(total), cost_total: round4(cost)
+`,
+  },
 });
-return { id, item_count: lines.length, total_amount: round4(total) };
+
+export const QuotationAdjustLinePrice = defineAction({
+  name: 'quotation_adjust_line_price', label: '调整报价明细单价', objectName: 'forge_quotation', icon: 'calculator',
+  locations: ['record_more'], visible: false, refreshAfter: true,
+  requiredPermissions: ['sales_quotation_adjust'],
+  successMessage: '报价明细与报价金额已保存',
+  ai: {
+    exposed: true,
+    description: '只调整当前员工负责的草稿报价中指定一行的含税单价，并在同一事务中重算报价金额。必须带报价版本、明细标识和稳定请求标识；相同请求返回原回执，异参或旧版本会冲突。',
+    category: 'action',
+    requiresConfirmation: false,
+  },
+  params: [
+    { name: 'line_id', label: '报价明细标识', type: 'text', required: true },
+    { name: 'expected_version', label: '报价版本', type: 'number', required: true },
+    { name: 'taxed_unit_price', label: '新的含税单价', type: 'number', required: true },
+    { name: 'idempotency_key', label: '请求标识', type: 'text', required: true },
+  ],
+  body: {
+    language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
+const id = String(ctx.recordId || (ctx.record && ctx.record.id) || '').trim();
+const actor = String(ctx.session && ctx.session.userId || '').trim();
+if (ctx.recordLoadDenied === true) throw new Error('当前员工无权读取这份报价');
+if (!id || !ctx.record) throw new Error('本次报价调整缺少可校验的目标记录');
+if (!actor) throw new Error('无法识别当前操作员工');
+const adjustment = ctx.input || {};
+const allowed = ['expected_version', 'idempotency_key', 'line_id', 'taxed_unit_price'];
+const routeKeys = ['objectName', 'recordId'];
+for (const key of Object.keys(adjustment)) if (!allowed.includes(key) && !routeKeys.includes(key)) throw new Error('报价调整只接受本次授权的单行标量参数');
+if (adjustment.objectName && adjustment.objectName !== 'forge_quotation') throw new Error('报价调整对象与本次授权不一致');
+if (adjustment.recordId && String(adjustment.recordId) !== id) throw new Error('报价调整记录与本次授权不一致');
+for (const key of allowed) if (!Object.prototype.hasOwnProperty.call(adjustment, key)) throw new Error('报价调整缺少必填参数');
+const lineId = String(adjustment.line_id || '').trim();
+const idempotencyKey = String(adjustment.idempotency_key || '').trim();
+const expectedVersion = Number(adjustment.expected_version);
+const requestedPrice = Number(adjustment.taxed_unit_price);
+const round4 = value => Math.round((value + Number.EPSILON) * 10000) / 10000;
+if (!lineId || lineId.length > 128) throw new Error('报价明细标识无效');
+if (!idempotencyKey || idempotencyKey.length > 128) throw new Error('报价调整请求标识无效');
+if (!Number.isInteger(expectedVersion) || expectedVersion < 0) throw new Error('报价版本无效');
+if (!Number.isFinite(requestedPrice) || requestedPrice < 0 || round4(requestedPrice) !== requestedPrice) throw new Error('含税单价必须是大于或等于零且最多四位小数的数字');
+const signature = JSON.stringify({ quotation_id: id, line_id: lineId, expected_version: expectedVersion, taxed_unit_price: requestedPrice });
+const quotationObject = ctx.api.object('forge_quotation');
+const lineObject = ctx.api.object('forge_quotation_line');
+const receiptObject = ctx.api.object('forge_quotation_price_adjustment_receipt');
+const replayReceipt = async receipt => {
+  if (receipt.operation !== 'price_adjustment' || receipt.requested_by !== actor || receipt.request_signature !== signature) throw new Error('同一请求标识已用于不同输入');
+  return {
+    id,
+    line_total: Number(receipt.line_subtotal),
+    total_amount: Number(receipt.quotation_total),
+    pricing_version: Number(receipt.resulting_version),
+    cost_total: receipt.cost_analysis_available ? Number(receipt.cost_total) : null,
+    cost_analysis_available: receipt.cost_analysis_available === true,
+    repeated: true,
+  };
+};
+try {
+  return await ctx.api.transaction(async () => {
+    const quote = await quotationObject.findOne({ where: { id } });
+    if (!quote) throw new Error('事务内无法读取当前报价记录');
+    if (quote.responsible_id !== actor) throw new Error('只有当前报价负责人可以调整这份报价');
+    const prior = await receiptObject.findOne({ where: { quotation_id: id, idempotency_key: idempotencyKey } });
+    if (prior) return replayReceipt(prior);
+    if (quote.status !== 'draft') throw new Error('仅草稿报价可以调整');
+    const currentVersion = quote.pricing_version === null || quote.pricing_version === undefined ? 0 : Number(quote.pricing_version);
+    if (currentVersion !== expectedVersion) throw new Error('报价版本已变化，请刷新报价后重新核对');
+    const line = await lineObject.findOne({ where: { id: lineId, quotation_id: id } });
+    if (!line) throw new Error('指定报价明细不属于当前报价或已不存在');
+    const quantity = Number(line.quantity);
+    const discountRate = Number(line.discount_rate);
+    const taxRate = Number(line.tax_rate);
+    if (line.quantity === null || line.quantity === undefined || line.quantity === '' || !Number.isFinite(quantity) || quantity <= 0) throw new Error('指定报价明细的数量无效');
+    if (line.discount_rate === null || line.discount_rate === undefined || line.discount_rate === '' || !Number.isFinite(discountRate) || discountRate < 0 || discountRate > 100) throw new Error('指定报价明细的折扣率无效');
+    if (line.tax_rate === null || line.tax_rate === undefined || line.tax_rate === '' || !Number.isFinite(taxRate) || taxRate < 0 || taxRate > 100) throw new Error('指定报价明细的税率无效');
+    const nextLineSubtotal = round4(quantity * requestedPrice * (1 - discountRate / 100));
+    const untaxedUnitPrice = round4(requestedPrice / (1 + taxRate / 100));
+    const lines = await lineObject.find({ where: { quotation_id: id } });
+    if (!lines.length) throw new Error('报价至少需要一条明细');
+    let subtotal = 0, total = 0, tax = 0, cost = 0, costComplete = true;
+    let targetFound = false;
+    for (const currentLine of lines) {
+      const isTarget = currentLine.id === lineId;
+      if (isTarget) targetFound = true;
+      const currentQuantity = Number(currentLine.quantity);
+      const currentDiscount = Number(currentLine.discount_rate);
+      const currentTaxRate = Number(currentLine.tax_rate);
+      const currentUnitPrice = isTarget ? requestedPrice : Number(currentLine.taxed_unit_price);
+      if (currentLine.quantity === null || currentLine.quantity === undefined || currentLine.quantity === '' || !Number.isFinite(currentQuantity) || currentQuantity <= 0) throw new Error('报价明细数量缺失或无效，不能重算总额');
+      if (currentLine.discount_rate === null || currentLine.discount_rate === undefined || currentLine.discount_rate === '' || !Number.isFinite(currentDiscount) || currentDiscount < 0 || currentDiscount > 100) throw new Error('报价明细折扣率缺失或无效，不能重算总额');
+      if (currentLine.tax_rate === null || currentLine.tax_rate === undefined || currentLine.tax_rate === '' || !Number.isFinite(currentTaxRate) || currentTaxRate < 0 || currentTaxRate > 100) throw new Error('报价明细税率缺失或无效，不能重算税额');
+      if ((!isTarget && (currentLine.taxed_unit_price === null || currentLine.taxed_unit_price === undefined || currentLine.taxed_unit_price === '')) || !Number.isFinite(currentUnitPrice) || currentUnitPrice < 0) throw new Error('报价明细含税单价缺失或无效，不能重算总额');
+      const calculatedLineTotal = round4(currentQuantity * currentUnitPrice * (1 - currentDiscount / 100));
+      if (!isTarget) {
+        const storedLineTotal = Number(currentLine.taxed_subtotal);
+        if (currentLine.taxed_subtotal === null || currentLine.taxed_subtotal === undefined || currentLine.taxed_subtotal === '' || !Number.isFinite(storedLineTotal) || Math.abs(storedLineTotal - calculatedLineTotal) > 0.0001) throw new Error('其他报价明细金额与数量、单价或折扣不一致，请先核对原报价');
+      }
+      subtotal += currentQuantity * currentUnitPrice;
+      total += calculatedLineTotal;
+      const rate = currentTaxRate / 100;
+      tax += rate > 0 ? calculatedLineTotal - calculatedLineTotal / (1 + rate) : 0;
+      if (currentLine.cost_price === null || currentLine.cost_price === undefined || currentLine.cost_price === '') costComplete = false;
+      else {
+        const costPrice = Number(currentLine.cost_price);
+        if (!Number.isFinite(costPrice) || costPrice < 0) costComplete = false;
+        else cost += currentQuantity * costPrice;
+      }
+    }
+    if (!targetFound) throw new Error('指定报价明细不属于当前报价或已不存在');
+    const nextVersion = currentVersion + 1;
+    const now = new Date().toISOString();
+    const totals = {
+      item_count: lines.length,
+      subtotal: round4(subtotal),
+      discount_amount: round4(subtotal - total),
+      tax_amount: round4(tax),
+      total_amount: round4(total),
+      cost_total: costComplete ? round4(cost) : null,
+      pricing_version: nextVersion,
+    };
+    await receiptObject.insert({
+      name: '报价单行价格调整', quotation_id: id, operation: 'price_adjustment', quotation_line_id: lineId,
+      expected_version: currentVersion, resulting_version: nextVersion,
+      idempotency_key: idempotencyKey, request_signature: signature,
+      requested_unit_price: requestedPrice, line_subtotal: nextLineSubtotal,
+      quotation_total: totals.total_amount, cost_total: totals.cost_total,
+      cost_analysis_available: costComplete, requested_by: actor, recorded_at: now,
+    });
+    await lineObject.update({
+      id: lineId, taxed_unit_price: requestedPrice, untaxed_unit_price: untaxedUnitPrice,
+      taxed_subtotal: nextLineSubtotal,
+    });
+    await quotationObject.update({ id, ...totals });
+    return {
+      id,
+      line_total: nextLineSubtotal,
+      total_amount: totals.total_amount,
+      pricing_version: nextVersion,
+      cost_total: totals.cost_total,
+      cost_analysis_available: costComplete,
+      repeated: false,
+    };
+  });
+} catch (error) {
+  const quote = await quotationObject.findOne({ where: { id } });
+  if (quote && quote.responsible_id === actor) {
+    const prior = await receiptObject.findOne({ where: { quotation_id: id, idempotency_key: idempotencyKey } });
+    if (prior) return replayReceipt(prior);
+    const currentVersion = quote.pricing_version === null || quote.pricing_version === undefined ? 0 : Number(quote.pricing_version);
+    if (currentVersion !== expectedVersion) throw new Error('报价版本已变化，请刷新报价后重新核对');
+  }
+  throw error;
+}
 `,
   },
 });
