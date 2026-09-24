@@ -12,7 +12,7 @@ interface EnterpriseSessionReader {
   read(filePath: unknown): Promise<TranscriptMessage[]>
 }
 export interface AgentEnterpriseBridgeOptions {
-  service: Pick<EnterpriseService, 'accountKey' | 'getApprovalContext' | 'getWorkContinuationContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'findBusinessRecords' | 'stageWorkMaterials' | 'submitWork' | 'submitApprovalRevision' | 'getApprovalRevisionReceipt'>
+  service: Pick<EnterpriseService, 'accountKey' | 'getApprovalContext' | 'getWorkNotificationSource' | 'getWorkContinuationContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'findBusinessRecords' | 'stageWorkMaterials' | 'submitWork' | 'submitApprovalRevision' | 'getApprovalRevisionReceipt'>
   sessions: Record<'prime' | 'omp' | 'pi', EnterpriseSessionReader>
   extensionPath: string
   storage?: HandoffStorage
@@ -213,16 +213,26 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     this.pendingReturnedApprovals.set(handle, { accountKey: accountAfter, context, fingerprint: returnedApprovalFingerprint(context), createdAt: now })
     return { handle, context: approvalContextView(context) }
   }
-  async pinWorkContinuationContext(item: Pick<EnterpriseWorkItem, 'source' | 'workReference' | 'runReference' | 'sessionReference'>): Promise<{ handle: string; context: EnterpriseWorkContinuationContextView }> {
-    if (item?.source !== 'weave' || !item.workReference || !item.runReference || !item.sessionReference) {
-      throw new Error('工作消息缺少原工作引用，桌面无法安全继续')
-    }
+  async pinWorkContinuationContext(item: Pick<EnterpriseWorkItem, 'id' | 'source' | 'notificationType' | 'workReference' | 'runReference' | 'sessionReference'>): Promise<{ handle: string; context: EnterpriseWorkContinuationContextView }> {
+    if (item?.source !== 'weave' || !item.id) throw new Error('当前消息不是可续接的团队工作')
     const accountBefore = await this.options.service.accountKey()
-    const context = await this.options.service.getWorkContinuationContext({
-      workReference: item.workReference, runReference: item.runReference, sessionReference: item.sessionReference,
-    })
-    if (context.source.inputRevisionID !== item.workReference || context.source.runID !== item.runReference
-      || context.source.workbenchSessionID !== item.sessionReference) throw new Error('工作消息与原团队工作不匹配，请刷新工作消息')
+    let references = { workReference: item.workReference ?? '', runReference: item.runReference ?? '', sessionReference: item.sessionReference ?? '' }
+    const hasAllReferences = Boolean(references.workReference && references.runReference && references.sessionReference)
+    if (!hasAllReferences) {
+      const teamRunType = /^weave\.team_run\.(result|failure|revision_required|cancelled)$/.exec(item.notificationType ?? '')
+      if (!teamRunType) throw new Error('工作消息缺少原工作引用，桌面无法安全继续')
+      const source = await this.options.service.getWorkNotificationSource(item.id)
+      if (source.notificationID !== item.id || source.kind !== teamRunType[1]
+        || item.workReference && item.workReference !== source.source.workReference
+        || item.runReference && item.runReference !== source.source.runReference
+        || item.sessionReference && item.sessionReference !== source.source.sessionReference) {
+        throw new Error('Forge 工作消息来源与当前通知不匹配，请刷新工作列表')
+      }
+      references = { ...source.source }
+    }
+    const context = await this.options.service.getWorkContinuationContext(references)
+    if (context.source.inputRevisionID !== references.workReference || context.source.runID !== references.runReference
+      || context.source.workbenchSessionID !== references.sessionReference) throw new Error('工作消息与原团队工作不匹配，请刷新工作消息')
     const accountAfter = await this.options.service.accountKey()
     if (accountBefore !== accountAfter) throw new Error('当前账号已变化，请重新打开工作消息')
     const materials = context.input.materials.map((material) => {

@@ -14,9 +14,12 @@ interface EnterpriseWorkPageProps {
 
 const statusCopy = (status: string) => ({ parked: '等待处理', queued: '排队中', running: '处理中', success: '已完成', succeeded: '已完成', completed: '已完成', failed: '失败', cancelled: '已取消' })[status] ?? readableName(status, '状态更新中')
 const itemSourceCopy = (item: EnterpriseWorkItem) => item.source === 'weave' ? '团队执行消息' : 'Forge 业务通知'
-const canContinueItem = (item: EnterpriseWorkItem) => item.source === 'weave' && Boolean(item.workReference && item.runReference && item.sessionReference)
+const canContinueItem = (item: EnterpriseWorkItem) => item.source === 'weave' && (
+  Boolean(item.workReference && item.runReference && item.sessionReference)
+  || /^weave\.team_run\.(result|failure|revision_required|cancelled)$/.test(item.notificationType ?? '')
+)
 const itemSummary = (item: EnterpriseWorkItem) => item.summary ?? (item.source === 'weave'
-  ? item.kind === 'failure' ? '团队运行失败，业务结果需要在 Forge 核对。' : '团队运行已返回结果，业务是否完成需单独核对。'
+  ? item.kind === 'failure' ? '团队运行失败，业务结果需要在 Forge 核对。' : item.kind === 'cancelled' ? '团队运行已取消；Forge 业务状态需单独核对。' : '团队运行已返回结果，业务是否完成需单独核对。'
   : item.kind === 'failure' ? '业务处理失败，请打开原事项查看。' : '业务状态有更新，请打开原事项核对。')
 const formatTime = (value?: string) => value ? new Date(value).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '团队协作记录'
 const internalIdentifier = /[0-9a-f]{8}-[0-9a-f-]{27,}/i

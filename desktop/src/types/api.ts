@@ -334,7 +334,8 @@ export interface EnterpriseApprovalContextView {
 
 export interface EnterpriseWorkItem {
   id: string
-  kind: 'result' | 'failure' | 'revision_required' | 'human_review'
+  kind: 'result' | 'failure' | 'revision_required' | 'human_review' | 'cancelled'
+  notificationType?: string
   title: string
   summary?: string
   instructions?: string
@@ -1174,7 +1175,7 @@ export interface PrimeWorkApi {
     getWorkOverview(): Promise<EnterpriseWorkOverview>
     getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContextView>
     pinReturnedApprovalContext(approvalId: string): Promise<{ handle: string; context: EnterpriseApprovalContextView }>
-    pinWorkContinuationContext(item: Pick<EnterpriseWorkItem, 'source' | 'workReference' | 'runReference' | 'sessionReference'>): Promise<{ handle: string; context: EnterpriseWorkContinuationContextView }>
+    pinWorkContinuationContext(item: Pick<EnterpriseWorkItem, 'id' | 'source' | 'notificationType' | 'workReference' | 'runReference' | 'sessionReference'>): Promise<{ handle: string; context: EnterpriseWorkContinuationContextView }>
     submitWork(choice: EnterpriseWorkChoice, goal: string): Promise<EnterpriseWorkReceipt>
     completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }>
   }

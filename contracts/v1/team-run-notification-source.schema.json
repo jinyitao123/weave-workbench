@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/team-run-notification-source.schema.json",
+  "title": "Employee Team Run Notification Source",
+  "description": "Exact Weave source references of one native Forge inbox message, read only by that message's authenticated recipient.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "notificationId", "kind", "source"],
+  "properties": {
+    "version": { "const": "1" },
+    "notificationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "kind": { "enum": ["result", "failure", "revision_required", "cancelled"] },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system", "workReference", "runReference", "sessionReference"],
+      "properties": {
+        "system": { "const": "weave" },
+        "workReference": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "runReference": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "sessionReference": { "type": "string", "minLength": 1, "maxLength": 512 }
+      }
+    }
+  }
+}

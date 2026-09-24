@@ -545,7 +545,14 @@ export default function App() {
     } else if (item.source === 'weave') {
       try {
         if (!enterpriseBridge) throw new Error('团队续接能力暂不可用')
-        const binding = await enterpriseBridge.pinWorkContinuationContext(item)
+        const binding = await enterpriseBridge.pinWorkContinuationContext({
+          id: item.id,
+          source: item.source,
+          ...(item.notificationType ? { notificationType: item.notificationType } : {}),
+          ...(item.workReference ? { workReference: item.workReference } : {}),
+          ...(item.runReference ? { runReference: item.runReference } : {}),
+          ...(item.sessionReference ? { sessionReference: item.sessionReference } : {}),
+        })
         workContinuationContextHandle = binding.handle
         teamContext = binding.context
       } catch (error) {

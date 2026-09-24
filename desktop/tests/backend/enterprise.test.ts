@@ -423,6 +423,7 @@ describe('EnterpriseService', () => {
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [{ interaction_id: 'human-1', run_id: 'run-1', team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 1, title: '复核', instructions: '确认', updated_at: '2026-09-21T00:00:00Z' }] })
       if (url.endsWith('/api/v1/notifications?limit=200')) return Response.json({ success: true, data: { notifications: [
         { id: 'notice-1', type: 'work.revision', title: '材料需要修改', body: '请补充交付日期', read: false, createdAt: '2026-09-21T01:00:00Z', data: { kind: 'revision_required', source: { system: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' }, status: 'pending', instructions: '补充交付日期后重新提交', material: { label: '当前材料' }, continuation: { reason: '缺少交付日期', returnTarget: 'origin_review', reviewScope: 'affected_members' } } },
+        { id: 'notice-native', type: 'weave.team_run.result', title: '合同检查结果', body: '已有团队结果', read: false, createdAt: '2026-09-21T02:00:00Z' },
         { id: 'notice-1', type: 'work.revision', title: '材料需要修改', body: '重复投递不应重复显示', read: false, createdAt: '2026-09-21T01:01:00Z' },
       ] } })
       if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [] })
@@ -440,8 +441,11 @@ describe('EnterpriseService', () => {
     const session = await service.signIn('member@example.test', 'secret')
     expect(session.user?.weaveUserId).toBe('weave-1')
     const overview = await service.getWorkOverview()
-    expect(overview.items).toHaveLength(1)
-    expect(overview).toMatchObject({ choices: [{ teamId: 'team-1', workflowId: 'flow-1', version: 1 }], tasks: [{ interactionId: 'human-1' }], items: [{ id: 'notice-1', kind: 'revision_required', actionable: true, source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1', returnTarget: 'origin_review', reviewScope: 'affected_members' }], runs: [{ id: 'run-1' }], reads: { runs: { status: 'loaded' }, teamChoices: { status: 'loaded' }, weaveTasks: { status: 'loaded' }, forgeApprovals: { status: 'loaded' }, notifications: { status: 'loaded' } } })
+    expect(overview.items).toHaveLength(2)
+    expect(overview).toMatchObject({ choices: [{ teamId: 'team-1', workflowId: 'flow-1', version: 1 }], tasks: [{ interactionId: 'human-1' }], items: [
+      { id: 'notice-1', kind: 'revision_required', actionable: true, source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1', returnTarget: 'origin_review', reviewScope: 'affected_members' },
+      { id: 'notice-native', kind: 'result', source: 'weave', notificationType: 'weave.team_run.result', status: 'unknown' },
+    ], runs: [{ id: 'run-1' }], reads: { runs: { status: 'loaded' }, teamChoices: { status: 'loaded' }, weaveTasks: { status: 'loaded' }, forgeApprovals: { status: 'loaded' }, notifications: { status: 'loaded' } } })
     await expect(service.submitWork(overview.choices[0], '提交合同')).resolves.toMatchObject({ runId: 'run-2', workflowVersion: 1 })
     await expect(service.completeHumanTask(overview.tasks[0], { decision: 'approved' })).resolves.toEqual({ runId: 'run-1', repeated: false })
     const registration = calls.find((call) => call.url.endsWith('/v1/workbench/dispatch-inputs'))?.body
@@ -598,6 +602,30 @@ describe('EnterpriseService', () => {
     await expect(service.getWorkContinuationContext({ ...references, workReference: '10000000-0000-4000-8000-000000000002' })).rejects.toThrow('工作消息与原团队工作不匹配')
     await expect(service.getWorkContinuationContext({ ...references, runReference: 'run-other' })).rejects.toThrow('工作消息与原团队工作不匹配')
     await expect(service.getWorkContinuationContext({ ...references, sessionReference: 'another-session' })).rejects.toThrow('工作消息与原团队工作不匹配')
+  })
+
+  it('reads a missing Weave source only through the current Forge-owned notification endpoint', async () => {
+    let body: Record<string, unknown> = {
+      version: '1', notificationId: 'native-notice-1', kind: 'revision_required',
+      source: { system: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' },
+    }
+    const calls: Array<{ url: string; auth?: string }> = []
+    const fetchMock = workOverviewFetch((url, init) => {
+      if (url.endsWith('/api/v1/workbench/notifications/native-notice-1/source')) {
+        calls.push({ url, auth: new Headers(init?.headers).get('Authorization') ?? undefined })
+        return Response.json(body)
+      }
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('employee@example.test', 'secret')
+
+    await expect(service.getWorkNotificationSource('native-notice-1')).resolves.toMatchObject({
+      notificationID: 'native-notice-1', kind: 'revision_required', source: { workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' },
+    })
+    expect(calls[0]).toMatchObject({ url: 'http://forge/api/v1/workbench/notifications/native-notice-1/source', auth: 'Bearer forge-token-employee@example.test' })
+    body = { ...body, notificationId: 'another-notice' }
+    await expect(service.getWorkNotificationSource('native-notice-1')).rejects.toThrow('工作消息来源与当前消息不匹配')
   })
 
   it('reads original work files through the owner-only Forge route and verifies the Weave material tuple', async () => {
