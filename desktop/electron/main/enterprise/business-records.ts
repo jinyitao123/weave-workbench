@@ -170,10 +170,6 @@ function displayFields(fields: BusinessField[]): BusinessField[] {
   return fields.filter(canExposeField).slice(0, MAX_SNAPSHOT_FIELDS)
 }
 
-function valueForField(row: JsonRecord, field: BusinessField): unknown {
-  return row[field.name]
-}
-
 function stringValue(value: unknown): string | undefined {
   if (typeof value === 'string') {
     const trimmed = value.trim()
@@ -395,7 +391,7 @@ export class ForgeBusinessReader {
     private readonly getObjectMetadata: (objectName: string, generation: number) => Promise<unknown>,
   ) {}
 
-  private async relatedObjectMetadata(root: BusinessObjectSummary, rootFields: BusinessField[], directory: BusinessObjectDirectory, generation: number) {
+  private async relatedObjectMetadata(root: BusinessObjectSummary, directory: BusinessObjectDirectory, generation: number) {
     const directorySignature = hashIdentity(directory.objects.map((item) => [item.objectName, item.label]))
     const cacheKey = `${generation}:${root.objectName}:${directorySignature}`
     const cached = this.relationIndexes.get(cacheKey)
@@ -469,7 +465,7 @@ export class ForgeBusinessReader {
     const positiveButUndisplayable = scored.filter((entry) => entry.score > 0).length > matches.length
     const noSearchFieldsReturned = result.rows.length > 0 && !search.some((field) => result.rows.some((rowValue) => {
       const row = object(rowValue)
-      return row ? Object.prototype.hasOwnProperty.call(row, field.name) : false
+      return row ? Object.hasOwn(row, field.name) : false
     }))
     const hasMore = queryHasMore(result, pageOffset, limit)
     return {
@@ -506,7 +502,7 @@ export class ForgeBusinessReader {
     let blockingDetailMismatch = false
 
     const relationIndex = referenceMetadataAvailable
-      ? await this.relatedObjectMetadata(rootObject, rootFields, directory, generation)
+      ? await this.relatedObjectMetadata(rootObject, directory, generation)
       : { relations: [], complete: false }
     if (!relationIndex.complete) {
       partial = true
