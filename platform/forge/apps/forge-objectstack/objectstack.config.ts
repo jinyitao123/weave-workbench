@@ -8,6 +8,7 @@ import { ApprovalWorkbenchContextPlugin } from './src/plugins/approval-workbench
 import { ApprovalResubmitGuardPlugin } from './src/plugins/approval-resubmit-guard.plugin.js';
 import { ContractRevisionMaterialPlugin } from './src/plugins/contract-revision-material.js';
 import { WeaveRunEventPlugin } from './src/plugins/weave-run-event.plugin.js';
+import { WorkbenchOwnedMaterialPlugin } from './src/plugins/workbench-owned-material.plugin.js';
 import { forgeApplicationPlugins } from './src/apps/index.js';
 import { sharedForgeCorePlugin } from './src/apps/shared-core.js';
 export default defineStack({
@@ -29,6 +30,7 @@ export default defineStack({
     new RecordChangeTriggerPlugin(),
     new MCPServerPlugin(),
     new WeaveRunEventPlugin(),
+    new WorkbenchOwnedMaterialPlugin(),
     new ApprovalWorkbenchContextPlugin(),
     new ContractRevisionMaterialPlugin(),
     sharedForgeCorePlugin,

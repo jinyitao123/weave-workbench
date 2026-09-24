@@ -645,28 +645,94 @@ export const ServiceOrderEngineerAccept = defineAction({
 
 export const SalesLeadConvertToOpportunity = defineAction({
   name: 'sales_lead_convert_to_opportunity', label: '转为商机', objectName: 'forge_sales_lead', icon: 'sparkles', locations: [...locations], order: 10,
+  requiredPermissions: ['sales_lead_convert'],
   visible: `record.status == 'new' || record.status == 'following' || record.status == 'public_pool'`, refreshAfter: true,
   description: '确认后会将线索转为客户档案和销售商机。', successMessage: '线索已转为客户和商机',
+  ai: {
+    exposed: true,
+    description: '将当前员工可处理且尚未转化的线索转为客户和商机；同一线索与相同金额、预计成交日期重复调用时返回原关联，不同输入或失效状态会被拒绝。',
+    category: 'action',
+    requiresConfirmation: false,
+  },
   params: [{ field: 'amount', objectOverride: 'forge_sales_opportunity' }, { field: 'expected_close_on', objectOverride: 'forge_sales_opportunity' }],
   body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
-const id = ctx.recordId || (ctx.record && ctx.record.id); const lead = ctx.record;
-if (ctx.recordLoadDenied === true || !id || !lead) throw new Error('当前线索不存在或不可访问');
-if (!['new','following','public_pool'].includes(lead.status)) throw new Error('当前线索状态不能转化');
-const now = new Date().toISOString();
-let customerId = null, opportunityId = null;
-const existingCustomer = await ctx.api.object('forge_customer').find({ where: { name: lead.company_name } });
-customerId = existingCustomer[0]?.id;
-if (!customerId) {
-  const categories = await ctx.api.object('forge_customer_category').find({ where: { code: 'CUST-CAT-PROJECT' } });
-  let categoryId = categories[0]?.id;
-  if (!categoryId) { const cat = await ctx.api.object('forge_customer_category').insert({ name: '项目客户', code: 'CUST-CAT-PROJECT', status: 'active' }); categoryId = typeof cat === 'string' ? cat : cat && (cat.id || (cat.record && cat.record.id)); }
-  const created = await ctx.api.object('forge_customer').insert({ name: lead.company_name, customer_type: 'company', category_id: categoryId, responsible_id: lead.responsible_id || null, remarks: '由销售线索转入客户档案' });
-  customerId = typeof created === 'string' ? created : created && (created.id || (created.record && created.record.id));
+const id = String(ctx.recordId || (ctx.record && ctx.record.id) || '').trim();
+if (ctx.recordLoadDenied === true || !id || !ctx.record) throw new Error('当前线索不存在或不可访问');
+const params = ctx.input || {};
+const amount = params.amount === undefined || params.amount === null || params.amount === '' ? 0 : Number(params.amount);
+if (!Number.isFinite(amount) || amount < 0) throw new Error('商机金额必须是大于或等于零的数字');
+const expectedCloseOn = params.expected_close_on || null;
+const requestSignature = JSON.stringify({ amount, expected_close_on: expectedCloseOn });
+const leadObject = ctx.api.object('forge_sales_lead');
+const opportunityObject = ctx.api.object('forge_sales_opportunity');
+
+const existingResult = async lead => {
+  if (!lead || lead.status !== 'converted') throw new Error('当前线索状态已变化，不能继续转化，请刷新后核对');
+  if (!lead.conversion_request_signature) throw new Error('该线索已转化，但缺少原转化输入记录；请先核对已关联商机，不能再次创建');
+  if (lead.conversion_request_signature !== requestSignature) throw new Error('该线索已按不同金额或预计成交日期转化；请刷新并核对现有商机');
+  const customerId = lead.converted_customer_id;
+  const opportunityId = lead.converted_opportunity_id;
+  if (!customerId || !opportunityId) throw new Error('该线索的转化关系不完整；请先核对客户和商机记录');
+  const opportunity = await opportunityObject.findOne({ where: { id: opportunityId } });
+  if (!opportunity || opportunity.lead_id !== id || opportunity.customer_id !== customerId) {
+    throw new Error('该线索的客户与商机关联已变化；请先核对现有业务记录');
+  }
+  return { id, status: 'converted', customer_id: customerId, opportunity_id: opportunityId };
+};
+
+try {
+  return await ctx.api.transaction(async () => {
+    const lead = await leadObject.findOne({ where: { id } });
+    if (!lead) throw new Error('当前线索不存在或不可访问');
+    if (lead.status === 'converted') return existingResult(lead);
+    if (!['new', 'following', 'public_pool'].includes(lead.status)) throw new Error('当前线索状态已变化，不能转化，请刷新后核对');
+    if (!lead.responsible_id) throw new Error('请先为线索指定负责人，再转化为商机');
+
+    const linkedOpportunities = await opportunityObject.find({ where: { lead_id: id } });
+    if (linkedOpportunities.length) throw new Error('该线索已存在关联商机，但转化关系不完整；请先核对记录，不会重复创建');
+
+    const now = new Date().toISOString();
+    const existingCustomers = await ctx.api.object('forge_customer').find({ where: { name: lead.company_name } });
+    let customerId = existingCustomers[0]?.id || null;
+    if (!customerId) {
+      const categories = await ctx.api.object('forge_customer_category').find({ where: { code: 'CUST-CAT-PROJECT' } });
+      const categoryId = categories[0]?.id || null;
+      if (!categoryId) throw new Error('销售业务设置缺少项目客户分类；请先由管理员维护分类后再转化线索');
+      const createdCustomer = await ctx.api.object('forge_customer').insert({
+        name: lead.company_name, customer_type: 'company', category_id: categoryId,
+        responsible_id: lead.responsible_id, remarks: '由销售线索转入客户档案',
+      });
+      customerId = typeof createdCustomer === 'string' ? createdCustomer : createdCustomer && (createdCustomer.id || (createdCustomer.record && createdCustomer.record.id));
+      if (!customerId) throw new Error('客户创建后未返回记录标识');
+    }
+
+    const createdOpportunity = await opportunityObject.insert({
+      name: lead.company_name + ' 项目商机', customer_id: customerId, lead_id: id,
+      contact_name: lead.contact_name || null, phone: lead.phone || null,
+      stage: 'needs_confirmed', source: lead.source || '线索转化', description: lead.remarks || null,
+      priority: 'medium', amount, win_rate: 30, expected_close_on: expectedCloseOn,
+      responsible_id: lead.responsible_id,
+    });
+    const opportunityId = typeof createdOpportunity === 'string'
+      ? createdOpportunity
+      : createdOpportunity && (createdOpportunity.id || (createdOpportunity.record && createdOpportunity.record.id));
+    if (!opportunityId) throw new Error('商机创建后未返回记录标识');
+
+    await leadObject.update({
+      id, status: 'converted', converted_customer_id: customerId,
+      converted_opportunity_id: opportunityId, converted_at: now,
+      conversion_request_signature: requestSignature,
+    });
+    return { id, status: 'converted', customer_id: customerId, opportunity_id: opportunityId };
+  });
+} catch (error) {
+  // A concurrent identical request can lose the unique lead_id insert after
+  // the winning transaction commits. Re-read the source and return its result
+  // only when the persisted input signature matches this request.
+  const current = await leadObject.findOne({ where: { id } });
+  if (current && current.status === 'converted') return existingResult(current);
+  throw error;
 }
-const createdOpportunity = await ctx.api.object('forge_sales_opportunity').insert({ name: lead.company_name + ' 项目商机', customer_id: customerId, lead_id: id, contact_name: lead.contact_name || null, phone: lead.phone || null, stage: 'needs_confirmed', source: lead.source || '线索转化', description: lead.remarks || null, priority: 'medium', amount: Number(ctx.input.amount || 0), win_rate: 30, expected_close_on: ctx.input.expected_close_on || null, responsible_id: lead.responsible_id || null });
-opportunityId = typeof createdOpportunity === 'string' ? createdOpportunity : createdOpportunity && (createdOpportunity.id || (createdOpportunity.record && createdOpportunity.record.id));
-await ctx.api.object('forge_sales_lead').update({ id, status: 'converted', converted_customer_id: customerId, converted_opportunity_id: opportunityId, converted_at: now });
-return { id, status: 'converted', customer_id: customerId, opportunity_id: opportunityId };
 ` },
 });
 

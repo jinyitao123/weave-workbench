@@ -51,7 +51,7 @@ pnpm build
 
 Forge CLI 17.3.0 会通过自身的 `resolveConsolePath` 解析 Console 包。pnpm 锁文件将 `@objectstack/console` 留在 CLI 的虚拟依赖树里，应用顶层通常没有 `node_modules/@objectstack/console`。打包脚本调用 CLI 同一解析器定位真实包目录后再注入，不假设顶层路径；注入前复制旧 `dist` 作为回滚备份，目录替换遇到 overlay 文件系统的跨设备错误时改用复制，摘要验证失败则从备份恢复。注入路径及产物摘要会写入构建期布局标记。最终镜像再用 runtime 内的 CLI 重解析该包，并逐文件校验摘要与构建期路径标记一致。Forge API、`/api/v1/mcp` 和事件流仍由原 Nginx `location /` 转发到同一个 Forge 服务。
 
-产物来源与完整摘要由 [`console94.lock.json`](console94.lock.json) 锁定。需要 Node 24.19.0 和 pnpm 10.31.0；先让 `OBJECTUI_SOURCE_DIR` 指向含锁定提交的 ObjectUI Git checkout，再执行：
+Forge 项目支持 Node 24 及以上。产物来源与完整摘要由 [`console94.lock.json`](console94.lock.json) 锁定；复现这份 Console 产物时使用 Node 24.19.0 和 pnpm 10.31.0。先让 `OBJECTUI_SOURCE_DIR` 指向含锁定提交的 ObjectUI Git checkout，再执行：
 
 ```sh
 OBJECTUI_SOURCE_DIR=/path/to/objectui pnpm console94:build

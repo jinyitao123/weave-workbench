@@ -5,7 +5,7 @@
   "type": "module",
   "engines": {
     "pnpm": ">=10.15",
-    "node": ">=24.19.0 <25"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "objectstack dev",
