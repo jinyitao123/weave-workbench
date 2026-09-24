@@ -87,6 +87,23 @@
       "required": ["status"],
       "properties": {
         "status": { "enum": ["queued", "running", "parked", "cancel_requested", "succeeded", "failed", "cancelled", "abandoned"] },
+        "action_outcomes": {
+          "type": "array", "maxItems": 100,
+          "description": "Platform-recorded Forge action outcomes; absent is not proof that no action ran.",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["node_id", "call_id", "action_name", "object_name", "status", "summary"],
+            "properties": {
+              "node_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+              "call_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+              "action_name": { "type": "string", "minLength": 1, "maxLength": 128 },
+              "object_name": { "type": "string", "minLength": 1, "maxLength": 128 },
+              "record_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+              "status": { "enum": ["succeeded", "failed", "unknown"] },
+              "summary": { "type": "string", "minLength": 1, "maxLength": 500 }
+            }
+          }
+        },
         "final_result": {
           "type": "object",
           "additionalProperties": false,
