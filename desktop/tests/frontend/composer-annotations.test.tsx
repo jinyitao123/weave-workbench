@@ -136,6 +136,32 @@ const clickSend = async () => {
 }
 
 describe('Composer workspace text attachments', () => {
+  it('shows an authorization timeout recovery message and allows a retry', async () => {
+    const content = '# Retry attachment\n'
+    const reference: WorkspaceMaterialReference = {
+      projectId: 'project', harness: 'prime', workspacePath: '/workspace/project', name: 'source.md', path: '材料/附件/opaque/source.md',
+      sha256: 'd'.repeat(64), bytes: new TextEncoder().encode(content).byteLength, mimeType: 'text/markdown',
+    }
+    const onSend = vi.fn(async () => undefined)
+    const onImportTextFile = vi.fn()
+      .mockRejectedValueOnce(new Error('Workspace authorization timed out before attaching this file. Retry the import.'))
+      .mockResolvedValueOnce(reference)
+    renderComposer({ onSend, onImportTextFile })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    const file = new File([content], 'source.md', { type: 'text/markdown' })
+
+    Object.defineProperty(input, 'files', { configurable: true, value: [file] })
+    await act(async () => { input.dispatchEvent(new Event('change', { bubbles: true })); await Promise.resolve() })
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain('Workspace authorization timed out')
+
+    Object.defineProperty(input, 'files', { configurable: true, value: [file] })
+    await act(async () => { input.dispatchEvent(new Event('change', { bubbles: true })); await Promise.resolve() })
+    expect(container.querySelector('[role="alert"]')).toBeNull()
+    expect(container.textContent).toContain('source.md')
+    await clickSend()
+    expect(onSend).toHaveBeenCalledWith('[Attached file]', [], 'queue', [reference])
+  })
+
   it('imports a Markdown file, keeps a persistent reference chip, and sends only the reference', async () => {
     const content = '# Attachment source\nexact text\n'
     const reference: WorkspaceMaterialReference = {

@@ -15,6 +15,8 @@ import { isPathWithin, rejectUnknownKeys, requireBoolean, requireExistingDirecto
 
 const MAX_CONCURRENT_BRANCH_LOOKUPS = 4
 const MAX_WORKSPACE_TEXT_MATERIAL_BYTES = 700_000
+const WORKSPACE_ATTACHMENT_AUTHORIZATION_TIMEOUT_MS = 30_000
+const WORKSPACE_ATTACHMENT_AUTHORIZATION_TIMEOUT_MESSAGE = 'Workspace authorization timed out before attaching this file. Retry the import.'
 
 function workspaceTextMaterialName(value: unknown): { name: string; mimeType: WorkspaceMaterialReference['mimeType'] } {
   const name = requireString(value, 'file name', { min: 1, max: 255 })
@@ -809,7 +811,7 @@ export class ProjectService {
 
     const project = this.ownProjects(this.store.snapshot().projects, scope).find((item) => item.id === projectId)
     if (!project) throw new TypeError('The active workspace is no longer available in this account')
-    const root = await this.authorizeCwd(requestedWorkspacePath)
+    const root = await this.authorizeWorkspaceAttachmentCwd(requestedWorkspacePath)
     const projectRoots = [...new Set([project.primaryFolder, ...project.folders])]
     let belongsToProject = false
     for (const projectRoot of projectRoots) {
@@ -859,12 +861,15 @@ export class ProjectService {
       handle = undefined
 
       const destination = join(canonicalDirectory, name)
-      await rename(temporaryPath, destination)
-      temporaryPath = undefined
+      // Finish asynchronous scope and workspace checks before publishing the file.
+      // If reauthorization stalls, the renderer can time out and clean up the temp file.
       this.assertScopeRevision(scopeRevision)
       const currentProject = this.ownProjects(this.store.snapshot().projects, scope).find((item) => item.id === projectId)
       if (!currentProject || resolve(currentProject.primaryFolder) !== resolve(project.primaryFolder)) throw new TypeError('The active workspace changed while the attachment was being imported')
-      await this.authorizeCwd(root)
+      await this.authorizeWorkspaceAttachmentCwd(root)
+      this.assertScopeRevision(scopeRevision)
+      await rename(temporaryPath, destination)
+      temporaryPath = undefined
       const path = relative(root, destination).split(/[\\/]/).join('/')
       if (!path || path === '..' || path.startsWith('../') || isAbsolute(path)) throw new TypeError('Imported attachment path is outside the active workspace')
       return { projectId, harness: this.harness, workspacePath: root, name, path, sha256, bytes: bytes.length, mimeType }
@@ -1217,6 +1222,20 @@ export class ProjectService {
     const cwd = await requireExistingDirectory(value, 'cwd')
     await this.authorizedRootFor(cwd, { readOnly: false })
     return cwd
+  }
+
+  private async authorizeWorkspaceAttachmentCwd(value: string): Promise<string> {
+    let timeout: ReturnType<typeof setTimeout> | undefined
+    try {
+      return await Promise.race([
+        this.authorizeCwd(value),
+        new Promise<never>((_resolve, reject) => {
+          timeout = setTimeout(() => reject(new Error(WORKSPACE_ATTACHMENT_AUTHORIZATION_TIMEOUT_MESSAGE)), WORKSPACE_ATTACHMENT_AUTHORIZATION_TIMEOUT_MS)
+        }),
+      ])
+    } finally {
+      if (timeout !== undefined) clearTimeout(timeout)
+    }
   }
 
   async authorizeReadOnlyCwd(value: string): Promise<string> {

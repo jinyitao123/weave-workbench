@@ -1,4 +1,4 @@
-import { chmodSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
+import { chmodSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
 import { lstat, realpath } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
@@ -378,6 +378,90 @@ describe('ProjectService list enrichment', () => {
 })
 
 describe('ProjectService workspace text attachments', () => {
+  it('finishes workspace reauthorization before publishing an imported Markdown file', async () => {
+    const { root, service } = setup()
+    const workspacePath = join(root, 'personal')
+    const project = await service.ensurePersonalWorkspace(workspacePath)
+    const authorizationStarted = deferred<void>()
+    const releaseAuthorization = deferred<void>()
+    const authorizeCwd = service.authorizeCwd.bind(service)
+    let authorizationCalls = 0
+    vi.spyOn(service, 'authorizeCwd').mockImplementation(async (path) => {
+      authorizationCalls += 1
+      if (authorizationCalls === 2) {
+        authorizationStarted.resolve()
+        await releaseAuthorization.promise
+      }
+      return authorizeCwd(path)
+    })
+
+    const bytes = new TextEncoder().encode('# Delayed authorization check\n')
+    const importing = service.importTextMaterial(project.id, project.primaryFolder, 'source.md', bytes)
+    try {
+      await authorizationStarted.promise
+      const attachmentsRoot = join(workspacePath, '材料', '附件')
+      const [attachmentDirectory] = readdirSync(attachmentsRoot)
+      expect(readdirSync(join(attachmentsRoot, attachmentDirectory)).some((name) => name === 'source.md')).toBe(false)
+      expect(readdirSync(join(attachmentsRoot, attachmentDirectory)).some((name) => name.startsWith('.writing-'))).toBe(true)
+    } finally {
+      releaseAuthorization.resolve()
+    }
+
+    const reference = await importing
+    expect(readFileSync(join(workspacePath, ...reference.path.split('/')))).toEqual(Buffer.from(bytes))
+  })
+
+  it('times out a stuck workspace reauthorization, removes the temporary file, and allows retry', async () => {
+    const { root, service } = setup()
+    const workspacePath = join(root, 'personal')
+    const project = await service.ensurePersonalWorkspace(workspacePath)
+    const authorizationStarted = deferred<void>()
+    const releaseLateAuthorization = deferred<void>()
+    const lateAuthorizationFinished = deferred<void>()
+    const authorizeCwd = service.authorizeCwd.bind(service)
+    let authorizationCalls = 0
+    vi.spyOn(service, 'authorizeCwd').mockImplementation(async (path) => {
+      authorizationCalls += 1
+      if (authorizationCalls === 2) {
+        authorizationStarted.resolve()
+        await releaseLateAuthorization.promise
+        try { return await authorizeCwd(path) }
+        finally { lateAuthorizationFinished.resolve() }
+      }
+      return authorizeCwd(path)
+    })
+
+    const bytes = new TextEncoder().encode('# Retry after timeout\n')
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    try {
+      const firstImport = service.importTextMaterial(project.id, project.primaryFolder, 'source.md', bytes)
+      await authorizationStarted.promise
+      const failed = expect(firstImport).rejects.toThrow(/Workspace authorization timed out before attaching this file/)
+      await vi.advanceTimersByTimeAsync(30_000)
+      await failed
+
+      const attachmentsRoot = join(workspacePath, '材料', '附件')
+      expect(readdirSync(attachmentsRoot)).toEqual([])
+      vi.useRealTimers()
+
+      const reference = await service.importTextMaterial(project.id, project.primaryFolder, 'source.md', bytes)
+      const attachmentDirectory = join(workspacePath, ...reference.path.split('/').slice(0, -1))
+      const filePath = join(workspacePath, ...reference.path.split('/'))
+      expect(readFileSync(filePath)).toEqual(Buffer.from(bytes))
+      expect(readdirSync(attachmentDirectory)).toEqual(['source.md'])
+      expect(readdirSync(attachmentsRoot)).toHaveLength(1)
+
+      releaseLateAuthorization.resolve()
+      await lateAuthorizationFinished.promise
+      expect(readdirSync(attachmentDirectory)).toEqual(['source.md'])
+      expect(readdirSync(attachmentsRoot)).toHaveLength(1)
+      expect(readFileSync(filePath)).toEqual(Buffer.from(bytes))
+    } finally {
+      releaseLateAuthorization.resolve()
+      vi.useRealTimers()
+    }
+  })
+
   it('stores the selected Markdown bytes under the active workspace and reuses the same path and digest for handoff freezing', async () => {
     const { root, service } = setup()
     const workspacePath = join(root, 'personal')
