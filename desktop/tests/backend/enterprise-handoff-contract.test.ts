@@ -8,6 +8,7 @@ const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 async function fixture() {
   const registrations = new Map<string, string>(), heads = new Set<string>(), runs = new Map<string, string>()
   let dropDispatchResponse = false, mismatchDigest = false
+  let rejectContinuation = false
   let afterRegistration = async () => {}
   const calls: { path: string; body: Record<string, unknown> }[] = []
   const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
@@ -24,6 +25,7 @@ async function fixture() {
       expect(sources.length).toBeGreaterThan(0)
       expect(sources.every((source, i) => /^[a-f0-9]{64}$/.test(source.sha256) && (i === 0 || source.event_seq > sources[i - 1].event_seq))).toBe(true)
       expect(body.authorized_business_capability_ids).toEqual([])
+      if (body.revision_context && rejectContinuation) return Response.json({ error: 'input_revision_conflict' }, { status: 409 })
       const id = String(body.registration_id), encoded = JSON.stringify(body)
       if (registrations.has(id) && registrations.get(id) !== encoded) return Response.json({ error: 'input_registration_conflict' }, { status: 409 })
       if (!registrations.has(id) && heads.has(String(body.workbench_session_id))) return Response.json({ error: 'input_revision_conflict' }, { status: 409 })
@@ -43,7 +45,7 @@ async function fixture() {
   await service.signIn('employee@example.test', 'test')
   let current = true
   const source = { idempotencySeed: 'session:employee-message:team', sessionKey: 'session', sourceMessages: [{ messageId: 'employee-message', eventSeq: 2, sha256: hash('这版给他们看看') }], accountKey: await service.accountKey(), resources: [{ type: 'forge-file' as const, id: 'file-contract-v1', name: '合同.md', bytes: 12, sha256: hash('合同正文') }], authorizedBusinessCapabilityIds: [], assertCurrent: async () => { if (!current) throw new Error('员工已改变要求') } }
-  return { service, source, registrations, runs, calls, drop: () => { dropDispatchResponse = true }, wrongDigest: () => { mismatchDigest = true }, changeDuringRegistration: () => { afterRegistration = async () => { current = false } }, logoutDuringRegistration: () => { afterRegistration = async () => { await service.signOut() } } }
+  return { service, source, registrations, runs, calls, drop: () => { dropDispatchResponse = true }, wrongDigest: () => { mismatchDigest = true }, rejectContinuation: () => { rejectContinuation = true }, changeDuringRegistration: () => { afterRegistration = async () => { current = false } }, logoutDuringRegistration: () => { afterRegistration = async () => { await service.signOut() } } }
 }
 describe('Weave handoff admission contract', () => {
   it('recovers a lost dispatch response with the identical UUID and body, producing one run', async () => {
@@ -61,6 +63,26 @@ describe('Weave handoff admission contract', () => {
     await f.service.submitWork(choice, '合同甲', f.source)
     await f.service.submitWork(choice, '合同乙', { ...f.source, idempotencySeed: 'session:second-message:team' })
     expect(f.registrations.size).toBe(2)
+  })
+  it('reuses the original session and sends a compare-and-swap parent that rejects a stale head', async () => {
+    const f = await fixture()
+    f.rejectContinuation()
+    const continuation = {
+      workbenchSessionID: 'workbench-employee-session',
+      inputRevisionID: '10000000-0000-4000-8000-000000000001',
+      runID: 'run-parent', teamID: choice.teamId,
+    }
+
+    await expect(f.service.submitWork(choice, '按补充材料继续复核', { ...f.source, continuation })).rejects.toThrow('原工作输入版本已变化')
+    const registration = f.calls.find((call) => call.path.endsWith('dispatch-inputs'))?.body
+    expect(registration).toMatchObject({
+      workbench_session_id: continuation.workbenchSessionID,
+      expected_revision_id: continuation.inputRevisionID,
+      revision_context: { parent_input_revision_id: continuation.inputRevisionID, parent_run_id: continuation.runID },
+      team_id: choice.teamId,
+    })
+    expect(f.calls.some((call) => call.path.endsWith('/dispatch'))).toBe(false)
+    expect(f.runs.size).toBe(0)
   })
   it('does not dispatch after a changed employee request or logout during registration', async () => {
     for (const mode of ['change', 'logout']) {

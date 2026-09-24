@@ -32,6 +32,7 @@
           "resourceType": { "type": "string", "minLength": 1, "maxLength": 128 },
           "requiresEmployeeIntent": { "type": "boolean", "default": false },
           "status": { "enum": ["available", "unavailable"] },
+          "unavailableReason": { "type": "string", "minLength": 1, "maxLength": 240 },
           "actionName": { "type": "string", "minLength": 1, "maxLength": 128 },
           "objectName": { "type": "string", "minLength": 1, "maxLength": 128 },
           "requiresRecord": { "type": "boolean", "default": false },

@@ -46,7 +46,10 @@ export function TrialPanel({ teamId, initialFlowId, draft, businessCapabilities,
     try {
       const saved = await flush(); if (!saved) return
       const selectedIds = new Set(saved.document.members.flatMap((member) => member.configuration.businessCapabilityIds))
-      const businessActions = (businessCapabilities?.capabilities ?? []).filter((action) => selectedIds.has(action.id))
+      const catalog = businessCapabilities?.capabilities ?? []
+      const unavailable = [...selectedIds].map((id) => catalog.find((action) => action.id === id)).find((action) => !action || action.status !== 'available')
+      if (unavailable) throw new Error(unavailable?.unavailableReason ?? '当前团队已选择不可用的 Forge 业务能力，请先移除后再调试')
+      const businessActions = catalog.filter((action) => selectedIds.has(action.id) && action.status === 'available')
       const missing = [...selectedIds].filter((id) => !businessActions.some((action) => action.id === id && action.actionName && action.objectName))
       if (missing.length) throw new Error('当前团队使用的 Forge 业务能力缺少调试定义，请刷新业务能力后重试')
       if (!pending.current || pending.current.revision !== saved.revision || pending.current.input !== input || pending.current.flow !== flow) pending.current = { requestId: crypto.randomUUID(), revision: saved.revision, flow, input, businessActions }

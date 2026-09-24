@@ -33,6 +33,25 @@ export interface ApprovalRevisionSubmission {
   attachments: ApprovalRevisionFileReference[]
 }
 export interface ForgeHttpResult { status: number; body: unknown }
+export interface EnterpriseWorkContinuationContext {
+  version: '1'
+  source: { inputRevisionID: string; runID: string; workbenchSessionID: string }
+  input: {
+    task: string
+    taskSHA256: string
+    teamID: string
+    workflowID: string
+    workflowVersion: number
+    materials: Array<{ id: string; name: string; bytes: number; sha256: string; mediaType?: string; content?: string }>
+    sourceMessages: Array<{ messageID: string; eventSeq: number; sha256: string }>
+    businessRecord?: { objectName: string; recordID: string; recordVersion?: string }
+    parent?: { rootInputRevisionID: string; parentInputRevisionID?: string; parentRunID?: string }
+  }
+  run: {
+    status: 'queued' | 'running' | 'parked' | 'cancel_requested' | 'succeeded' | 'failed' | 'cancelled' | 'abandoned'
+    finalResult?: { id: string; title: string; contentType: string; content: string; sha256: string }
+  }
+}
 
 function environmentUrl(value: string | undefined, fallback: string, label: string): URL {
   const configured = value?.trim() || fallback
@@ -94,12 +113,35 @@ function stringList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
 }
 
+const BUSINESS_CAPABILITY_SCALAR_TYPES = new Set(['string', 'text', 'textarea', 'email', 'url', 'date', 'datetime', 'number', 'integer', 'currency', 'boolean', 'file', 'select', 'enum', 'picklist'])
+
+function businessCapabilityUnavailableReason(value: unknown): string | undefined {
+  if (value === undefined || value === null) return undefined
+  if (!Array.isArray(value)) return '业务参数结构暂不支持，当前不能绑定/执行'
+  for (const raw of value) {
+    const parameter = record(raw)
+    if (!parameter || !(textValue(parameter.name) ?? textValue(parameter.field))) return '业务参数结构暂不支持，当前不能绑定/执行'
+    const type = (textValue(parameter.type) ?? 'string').toLowerCase()
+    if (type === 'array') {
+      return record(parameter.items)
+        ? '数组条目结构当前不能绑定/执行'
+        : '数组缺少条目结构，当前不能绑定/执行'
+    }
+    if (!BUSINESS_CAPABILITY_SCALAR_TYPES.has(type)) return '业务参数结构暂不支持，当前不能绑定/执行'
+  }
+  return undefined
+}
+
 function businessCapabilityParams(value: unknown): NonNullable<EnterpriseBusinessCapability['params']> {
   return Array.isArray(value) ? value.flatMap((item) => {
     const param = record(item), name = textValue(param?.name) ?? textValue(param?.field)
     if (!name) return []
-    const rawType = textValue(param?.type) ?? 'string'
-    const type: 'string' | 'number' | 'boolean' | 'array' | 'file' = rawType === 'file' ? 'file' : rawType === 'boolean' ? 'boolean' : rawType === 'array' ? 'array' : ['number', 'integer', 'currency'].includes(rawType) ? 'number' : 'string'
+    const rawType = (textValue(param?.type) ?? 'string').toLowerCase()
+    const type: NonNullable<EnterpriseBusinessCapability['params']>[number]['type'] = rawType === 'file' ? 'file'
+      : rawType === 'boolean' ? 'boolean'
+        : rawType === 'array' ? 'array'
+          : ['number', 'integer', 'currency'].includes(rawType) ? 'number'
+            : BUSINESS_CAPABILITY_SCALAR_TYPES.has(rawType) ? 'string' : 'unsupported'
     const options = Array.isArray(param?.enum) ? param.enum : Array.isArray(param?.options) ? param.options : []
     const values = options.flatMap((option) => typeof option === 'string' ? [option] : textValue(record(option)?.value) ? [textValue(record(option)?.value)!] : [])
     return [{ name, label: textValue(param?.label) ?? textValue(param?.title), type, multiple: param?.multiple === true, required: param?.required === true, description: textValue(param?.description) ?? '', ...(values.length ? { enum: values } : {}) }]
@@ -232,6 +274,91 @@ function runObservation(value: unknown): EnterpriseRunObservation | undefined {
     tokensOut: Math.max(0, numberValue(source?.tokens_out) ?? 0), costUsd: Math.max(0, numberValue(source?.cost_usd) ?? 0),
     ...(textValue(source?.agent) ? { agent: textValue(source?.agent) } : {}), ...(textValue(source?.step) ? { step: textValue(source?.step) } : {}),
     ...(textValue(source?.started_at) ? { startedAt: textValue(source?.started_at) } : {}),
+  }
+}
+
+const CONTINUATION_RUN_STATUSES = new Set(['queued', 'running', 'parked', 'cancel_requested', 'succeeded', 'failed', 'cancelled', 'abandoned'])
+const CONTINUATION_SHA256 = /^[0-9a-f]{64}$/
+const CONTINUATION_SOURCE_SHA256 = /^[0-9a-fA-F]{64}$/
+const CONTINUATION_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const CONTINUATION_TOTAL_BYTES = 8 * 1024 * 1024
+const CONTINUATION_TEXT_TYPES = new Set(['text/plain', 'text/plain; charset=utf-8'])
+
+function boundedIdentity(value: unknown, maxLength: number): string | undefined {
+  return typeof value === 'string' && value.length > 0 && value.length <= maxLength && value.trim() === value && !value.includes('\0') ? value : undefined
+}
+
+function parseWorkContinuationContext(value: unknown): EnterpriseWorkContinuationContext {
+  const envelope = record(value), source = record(envelope?.source), input = record(envelope?.input), run = record(envelope?.run)
+  const inputRevisionID = boundedIdentity(source?.input_revision_id, 128)
+  const runID = boundedIdentity(source?.run_id, 128)
+  const workbenchSessionID = boundedIdentity(source?.workbench_session_id, 256)
+  const task = typeof input?.task === 'string' ? input.task : undefined
+  const taskSHA256 = typeof input?.task_sha256 === 'string' ? input.task_sha256 : undefined
+  const teamID = boundedIdentity(input?.team_id, 128)
+  const workflowID = boundedIdentity(input?.workflow_id, 128)
+  const workflowVersion = numberValue(input?.workflow_version)
+  const status = typeof run?.status === 'string' ? run.status : undefined
+  if (envelope?.version !== '1' || !inputRevisionID || !CONTINUATION_UUID.test(inputRevisionID) || !runID || !workbenchSessionID
+    || !task || !task.trim() || task.length > 1_048_576 || task.includes('\0')
+    || !taskSHA256 || !CONTINUATION_SHA256.test(taskSHA256)
+    || createHash('sha256').update(task, 'utf8').digest('hex') !== taskSHA256
+    || !teamID || !workflowID || !Number.isInteger(workflowVersion) || workflowVersion! < 1
+    || !run || !status || !CONTINUATION_RUN_STATUSES.has(status)
+    || !Array.isArray(input?.materials) || input.materials.length > 8
+    || !Array.isArray(input?.source_messages) || input.source_messages.length < 1 || input.source_messages.length > 256) {
+    throw new Error('团队工作上下文不完整或摘要校验失败，请刷新工作消息')
+  }
+  const materials = input.materials.flatMap((entry): EnterpriseWorkContinuationContext['input']['materials'] => {
+    const item = record(entry), id = boundedIdentity(item?.id, 128), name = boundedIdentity(item?.name, 255)
+    const bytes = numberValue(item?.bytes), sha256 = typeof item?.sha256 === 'string' ? item.sha256 : undefined
+    return item?.type === 'forge-file' && id && name && Number.isInteger(bytes) && bytes! >= 1 && bytes! <= 700_000 && sha256 && CONTINUATION_SHA256.test(sha256)
+      ? [{ id, name, bytes: bytes!, sha256 }]
+      : []
+  })
+  if (materials.length !== input.materials.length) throw new Error('团队固定材料清单不完整，请刷新工作消息')
+  const sourceMessages = input.source_messages.flatMap((entry): EnterpriseWorkContinuationContext['input']['sourceMessages'] => {
+    const message = record(entry), messageID = boundedIdentity(message?.message_id, 256)
+    const eventSeq = numberValue(message?.event_seq)
+    const sha256 = typeof message?.sha256 === 'string' ? message.sha256 : undefined
+    return messageID && eventSeq !== undefined && Number.isInteger(eventSeq) && eventSeq >= 0 && sha256 && CONTINUATION_SOURCE_SHA256.test(sha256)
+      ? [{ messageID, eventSeq, sha256 }]
+      : []
+  })
+  if (sourceMessages.length !== input.source_messages.length) throw new Error('团队原始消息摘要不完整，请刷新工作消息')
+  let businessRecord: EnterpriseWorkContinuationContext['input']['businessRecord']
+  if (input.business_record !== undefined) {
+    const recordValue = record(input.business_record)
+    const objectName = boundedIdentity(recordValue?.object_name, 128), recordID = boundedIdentity(recordValue?.record_id, 128)
+    const recordVersion = recordValue?.record_version === undefined ? undefined : boundedIdentity(recordValue.record_version, 128)
+    if (!objectName || !recordID || recordValue?.record_version !== undefined && !recordVersion) throw new Error('团队工作绑定的业务记录不完整，请刷新工作消息')
+    businessRecord = { objectName, recordID, ...(recordVersion ? { recordVersion } : {}) }
+  }
+  let parent: EnterpriseWorkContinuationContext['input']['parent']
+  if (input.parent !== undefined) {
+    const parentValue = record(input.parent)
+    const rootInputRevisionID = boundedIdentity(parentValue?.root_input_revision_id, 128)
+    const parentInputRevisionID = parentValue?.parent_input_revision_id === undefined ? undefined : boundedIdentity(parentValue.parent_input_revision_id, 128)
+    const parentRunID = parentValue?.parent_run_id === undefined ? undefined : boundedIdentity(parentValue.parent_run_id, 128)
+    if (!rootInputRevisionID || !CONTINUATION_UUID.test(rootInputRevisionID)
+      || parentInputRevisionID !== undefined && !CONTINUATION_UUID.test(parentInputRevisionID)
+      || parentRunID !== undefined && !parentRunID) throw new Error('团队原工作关联不完整，请刷新工作消息')
+    parent = { rootInputRevisionID, ...(parentInputRevisionID ? { parentInputRevisionID } : {}), ...(parentRunID ? { parentRunID } : {}) }
+  }
+  let finalResult: EnterpriseWorkContinuationContext['run']['finalResult']
+  if (run.final_result !== undefined) {
+    const result = record(run.final_result), id = boundedIdentity(result?.id, 128), title = boundedIdentity(result?.title, 300)
+    const contentType = boundedIdentity(result?.content_type, 160), content = typeof result?.content === 'string' ? result.content : undefined
+    const sha256 = typeof result?.sha256 === 'string' ? result.sha256 : undefined
+    if (!id || !title || !contentType || content === undefined || content.length > 100_000 || !sha256 || !CONTINUATION_SHA256.test(sha256)
+      || createHash('sha256').update(content, 'utf8').digest('hex') !== sha256) throw new Error('团队最终交付摘要校验失败，请刷新工作消息')
+    finalResult = { id, title, contentType, content, sha256 }
+  }
+  return {
+    version: '1',
+    source: { inputRevisionID, runID, workbenchSessionID },
+    input: { task, taskSHA256, teamID, workflowID, workflowVersion: workflowVersion!, materials, sourceMessages, ...(businessRecord ? { businessRecord } : {}), ...(parent ? { parent } : {}) },
+    run: { status: status as EnterpriseWorkContinuationContext['run']['status'], ...(finalResult ? { finalResult } : {}) },
   }
 }
 
@@ -571,7 +698,7 @@ export class EnterpriseService {
       await assertCurrent()
       this.assertAuthGeneration(generation)
       const prepared = await this.forgeRequest('/api/v1/storage/upload/presigned', {
-        filename: material.name, mimeType: 'text/plain; charset=utf-8', size: material.bytes, scope: 'user',
+        filename: material.name, mimeType: 'text/plain; charset=utf-8', size: material.bytes, scope: 'attachments',
       }, generation)
       const envelope = record(prepared.body), descriptor = record(envelope?.data) ?? envelope
       const fileId = textValue(descriptor?.fileId), uploadUrl = textValue(descriptor?.uploadUrl), method = textValue(descriptor?.method) ?? 'PUT'
@@ -676,11 +803,13 @@ export class EnterpriseService {
       const actionName = textValue(action?.name), objectName = textValue(action?.objectName) ?? textValue(action?.object)
       if (ai?.exposed !== true || !actionName || !objectName || objectName.startsWith('sys_')) return []
       const params = businessCapabilityParams(action?.params)
+      const unavailableReason = businessCapabilityUnavailableReason(action?.params)
       return [{
         id: `forge:action:${objectName}.${actionName}`,
         name: textValue(action?.label) ?? textValue(ai?.description) ?? actionName,
         description: textValue(ai?.description) ?? textValue(action?.label) ?? actionName,
-        effect: 'write', resourceType: objectName, requiresEmployeeIntent: true, status: 'available',
+        effect: 'write', resourceType: objectName, requiresEmployeeIntent: true, status: unavailableReason ? 'unavailable' : 'available',
+        ...(unavailableReason ? { unavailableReason } : {}),
         actionName, objectName, requiresRecord: action?.requiresRecord !== false,
         requiresConfirmation: ai?.requiresConfirmation === true, params,
       }]
@@ -719,6 +848,7 @@ export class EnterpriseService {
       if (!actionName || !objectName) return []
       const id = `forge:action:${objectName}.${actionName}`
       if (allow && !allow.has(id)) return []
+      if (businessCapabilityUnavailableReason(action?.params)) return []
       return [{
         id,
         name: textValue(action?.label) ?? textValue(action?.description) ?? actionName,
@@ -1114,6 +1244,7 @@ export class EnterpriseService {
     const notificationList = record(notificationEnvelope?.data) ?? notificationEnvelope
     const items = (Array.isArray(notificationList?.notifications) ? notificationList.notifications : []).flatMap((value): EnterpriseWorkItem[] => {
       const notification = record(value), data = record(notification?.data), continuation = record(data?.continuation), material = record(data?.material)
+      const source = record(data?.source) ?? record(notification?.source)
       const id = textValue(notification?.id), title = textValue(notification?.title), createdAt = textValue(notification?.createdAt) ?? textValue(notification?.created_at)
       if (!id || !title || !createdAt) return []
       const requestedKind = textValue(data?.kind)
@@ -1126,17 +1257,18 @@ export class EnterpriseService {
         : title
       const statusValue = textValue(data?.status)
       const status: EnterpriseWorkItem['status'] = statusValue === 'pending' || statusValue === 'in_progress' || statusValue === 'completed' || statusValue === 'cancelled'
-        ? statusValue : notification?.read === true ? 'completed' : actionable ? 'pending' : 'unread'
+        ? statusValue : actionable ? 'pending' : 'unknown'
       const returnTarget = textValue(continuation?.returnTarget)
       const reviewScope = textValue(continuation?.reviewScope)
       return [{
         id, kind, title: displayTitle, status, actionable, read: notification?.read === true,
-        source: textValue(data?.source) === 'weave' || notificationType.startsWith('weave.') ? 'weave' : 'forge', createdAt,
+        source: (textValue(source?.system) ?? textValue(data?.source)) === 'weave' || notificationType.startsWith('weave.') ? 'weave' : 'forge', createdAt,
         ...(textValue(notification?.body) ? { summary: textValue(notification?.body) } : {}),
         ...(textValue(data?.instructions) ? { instructions: textValue(data?.instructions) } : {}),
         ...(textValue(notification?.actionUrl) ?? textValue(notification?.action_url) ? { actionUrl: textValue(notification?.actionUrl) ?? textValue(notification?.action_url) } : {}),
-        ...(textValue(data?.workReference) ? { workReference: textValue(data?.workReference) } : {}),
-        ...(textValue(data?.runReference) ? { runReference: textValue(data?.runReference) } : {}),
+        ...(textValue(source?.workReference) ?? textValue(data?.workReference) ? { workReference: textValue(source?.workReference) ?? textValue(data?.workReference) } : {}),
+        ...(textValue(source?.runReference) ?? textValue(data?.runReference) ? { runReference: textValue(source?.runReference) ?? textValue(data?.runReference) } : {}),
+        ...(textValue(source?.sessionReference) ?? textValue(data?.sessionReference) ? { sessionReference: textValue(source?.sessionReference) ?? textValue(data?.sessionReference) } : {}),
         ...(textValue(material?.label) ? { materialLabel: textValue(material?.label) } : {}),
         ...(textValue(continuation?.reason) ? { returnReason: textValue(continuation?.reason) } : {}),
         ...(returnTarget === 'origin_review' || returnTarget === 'team' || returnTarget === 'member' || returnTarget === 'human_step' ? { returnTarget } : {}),
@@ -1156,6 +1288,41 @@ export class EnterpriseService {
         notifications: readStatus(notificationsRead.error),
       },
     }
+  }
+
+  async getWorkContinuationContext(references: { workReference: string; runReference: string; sessionReference: string }): Promise<EnterpriseWorkContinuationContext> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    const workReference = boundedIdentity(references?.workReference, 512)
+    const runReference = boundedIdentity(references?.runReference, 512)
+    const sessionReference = boundedIdentity(references?.sessionReference, 512)
+    if (!workReference || !runReference || !sessionReference) throw new Error('工作消息缺少原工作引用，请刷新工作消息')
+    const context = parseWorkContinuationContext(await this.weaveJSON(`/v1/runs/${encodeURIComponent(runReference)}/workbench-context`, generation))
+    if (context.source.inputRevisionID !== workReference || context.source.runID !== runReference || context.source.workbenchSessionID !== sessionReference) {
+      throw new Error('工作消息与原团队工作不匹配，请刷新工作消息')
+    }
+    const accountBeforeMaterials = await this.accountKey(generation)
+    let totalBytes = 0
+    const materials: EnterpriseWorkContinuationContext['input']['materials'] = []
+    for (const expected of context.input.materials) {
+      const raw = record(await this.forgeJSON(`/api/v1/workbench/materials/${encodeURIComponent(expected.id)}`, generation, '原工作材料'))
+      const fileId = boundedIdentity(raw?.fileId, 128), name = boundedIdentity(raw?.name, 255)
+      const mediaType = boundedIdentity(raw?.mediaType, 160), bytes = numberValue(raw?.bytes)
+      const sha256 = typeof raw?.sha256 === 'string' ? raw.sha256 : undefined
+      const content = typeof raw?.content === 'string' ? raw.content : undefined
+      if (raw?.version !== '1' || fileId !== expected.id || name !== expected.name || !mediaType || !CONTINUATION_TEXT_TYPES.has(mediaType)
+        || !Number.isInteger(bytes) || bytes !== expected.bytes || !sha256 || sha256 !== expected.sha256 || !content || content.includes('\0')
+        || Buffer.byteLength(content, 'utf8') !== bytes || createHash('sha256').update(content, 'utf8').digest('hex') !== sha256) {
+        throw new Error('原工作材料与固定输入不一致，桌面不会继续')
+      }
+      totalBytes += bytes!
+      if (totalBytes > CONTINUATION_TOTAL_BYTES) throw new Error('原工作材料总量超出桌面读取限制')
+      materials.push({ ...expected, mediaType, content })
+    }
+    if (await this.accountKey(generation) !== accountBeforeMaterials) throw new Error('当前账号已变化，原工作材料不能继续使用')
+    context.input.materials = materials
+    this.assertAuthGeneration(generation)
+    return context
   }
 
   async getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContext> {
@@ -1279,6 +1446,7 @@ export class EnterpriseService {
     accountKey: string
     resources: EnterpriseWorkResource[]
     businessContext?: { objectName: string; recordId: string }
+    continuation?: { workbenchSessionID: string; inputRevisionID: string; runID: string; teamID: string }
     authorizedBusinessCapabilityIds: string[]
     assertCurrent(): Promise<void>
   }): Promise<EnterpriseWorkReceipt> {
@@ -1286,6 +1454,8 @@ export class EnterpriseService {
     if (!normalized || !choice?.teamId || !choice.workflowId || !Number.isInteger(choice.version) || choice.version < 1) throw new Error('工作内容或团队流程无效')
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (source?.continuation && (!source.continuation.workbenchSessionID || !source.continuation.inputRevisionID || !source.continuation.runID
+      || source.continuation.teamID !== choice.teamId)) throw new Error('原工作续版引用与当前团队不匹配')
     const assertCurrent = async () => {
       this.assertAuthGeneration(generation)
       if (source) {
@@ -1298,16 +1468,29 @@ export class EnterpriseService {
     const workId = source
       ? submissionUUID(`${source.accountKey}:${source.idempotencySeed}`)
       : randomUUID()
-    const workbenchSessionID = source ? `${projectID}-${source.sessionKey}-${workId}` : `${projectID}-${workId}`
-    const registered = await this.weaveRequest('/v1/workbench/dispatch-inputs', 'POST', {
-      registration_id: workId, workbench_session_id: workbenchSessionID, team_id: choice.teamId, workflow_id: choice.workflowId,
-      workflow_version: choice.version, project_id: projectID, task: normalized,
-      resources: source?.resources,
-      ...(source?.businessContext ? { business_record: { object_name: source.businessContext.objectName, record_id: source.businessContext.recordId } } : {}),
-      authorized_business_capability_ids: source?.authorizedBusinessCapabilityIds ?? [],
-      source_messages: source?.sourceMessages.map((message) => ({ message_id: message.messageId, event_seq: message.eventSeq, sha256: message.sha256 }))
-        ?? [{ message_id: workId, event_seq: 0, sha256: createHash('sha256').update(normalized).digest('hex') }],
-    }, assertCurrent, this.forgeToken ? { 'X-Weave-Forge-Authorization': `Bearer ${this.forgeToken}` } : undefined, generation)
+    const workbenchSessionID = source?.continuation?.workbenchSessionID ?? (source ? `${projectID}-${source.sessionKey}-${workId}` : `${projectID}-${workId}`)
+    let registered: { status: number; body: unknown }
+    try {
+      registered = await this.weaveRequest('/v1/workbench/dispatch-inputs', 'POST', {
+        registration_id: workId, workbench_session_id: workbenchSessionID,
+        ...(source?.continuation ? {
+          expected_revision_id: source.continuation.inputRevisionID,
+          revision_context: { parent_input_revision_id: source.continuation.inputRevisionID, parent_run_id: source.continuation.runID },
+        } : {}),
+        team_id: choice.teamId, workflow_id: choice.workflowId,
+        workflow_version: choice.version, project_id: projectID, task: normalized,
+        resources: source?.resources,
+        ...(source?.businessContext ? { business_record: { object_name: source.businessContext.objectName, record_id: source.businessContext.recordId } } : {}),
+        authorized_business_capability_ids: source?.authorizedBusinessCapabilityIds ?? [],
+        source_messages: source?.sourceMessages.map((message) => ({ message_id: message.messageId, event_seq: message.eventSeq, sha256: message.sha256 }))
+          ?? [{ message_id: workId, event_seq: 0, sha256: createHash('sha256').update(normalized).digest('hex') }],
+      }, assertCurrent, this.forgeToken ? { 'X-Weave-Forge-Authorization': `Bearer ${this.forgeToken}` } : undefined, generation)
+    } catch (error) {
+      if (source?.continuation && error instanceof Error && /409|input_revision_conflict|dispatch_revision_source_changed|dispatch_revision_source_mismatch/.test(error.message)) {
+        throw new Error('原工作输入版本已变化，请刷新工作消息后重新继续')
+      }
+      throw error
+    }
     const registration = record(registered.body)
     const inputRevisionID = textValue(registration?.input_revision_id), clientRequestID = textValue(registration?.client_request_id)
     if (!inputRevisionID || !clientRequestID || registration?.task_sha256 !== createHash('sha256').update(normalized).digest('hex')) throw new Error('Weave 输入回执与本次固定材料不一致，结果待核对')
