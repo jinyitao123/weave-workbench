@@ -232,7 +232,8 @@ export interface EnterpriseBusinessCapability {
   objectName?: string
   requiresRecord?: boolean
   requiresConfirmation?: boolean
-  params?: Array<{ name: string; label?: string; type?: 'string' | 'number' | 'boolean' | 'array' | 'file'; multiple?: boolean; required?: boolean; description?: string; enum?: string[] }>
+  unavailableReason?: string
+  params?: Array<{ name: string; label?: string; type?: 'string' | 'number' | 'boolean' | 'array' | 'file' | 'unsupported'; multiple?: boolean; required?: boolean; description?: string; enum?: string[] }>
 }
 
 export interface EnterpriseBusinessCapabilityBinding {
@@ -337,7 +338,7 @@ export interface EnterpriseWorkItem {
   title: string
   summary?: string
   instructions?: string
-  status: 'unread' | 'pending' | 'in_progress' | 'completed' | 'cancelled'
+  status: 'unknown' | 'unread' | 'pending' | 'in_progress' | 'completed' | 'cancelled'
   actionable: boolean
   read: boolean
   source: 'weave' | 'forge'
@@ -345,10 +346,19 @@ export interface EnterpriseWorkItem {
   actionUrl?: string
   workReference?: string
   runReference?: string
+  sessionReference?: string
   materialLabel?: string
   returnReason?: string
   returnTarget?: 'origin_review' | 'team' | 'member' | 'human_step'
   reviewScope?: 'whole_team' | 'affected_members' | 'human_step'
+}
+
+/** Renderer-safe subset used only after the main process validates the exact Weave run context. */
+export interface EnterpriseWorkContinuationContextView {
+  task: string
+  runStatus: 'queued' | 'running' | 'parked' | 'cancel_requested' | 'succeeded' | 'failed' | 'cancelled' | 'abandoned'
+  materials: Array<{ name: string; bytes: number; sha256: string; content: string }>
+  finalResult?: { title: string; contentType: string; content: string }
 }
 
 export interface EnterpriseWorkOverview {
@@ -829,6 +839,8 @@ export interface QueuedPrompt {
   flushAttemptFailed?: boolean
   /** Opaque main-process context binding for a returned approval continuation. */
   returnedApprovalContextHandle?: string
+  /** Opaque main-process binding for a Weave-owned work continuation. */
+  workContinuationContextHandle?: string
 }
 
 export interface SessionActionSnapshot {
@@ -1162,6 +1174,7 @@ export interface PrimeWorkApi {
     getWorkOverview(): Promise<EnterpriseWorkOverview>
     getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContextView>
     pinReturnedApprovalContext(approvalId: string): Promise<{ handle: string; context: EnterpriseApprovalContextView }>
+    pinWorkContinuationContext(item: Pick<EnterpriseWorkItem, 'source' | 'workReference' | 'runReference' | 'sessionReference'>): Promise<{ handle: string; context: EnterpriseWorkContinuationContextView }>
     submitWork(choice: EnterpriseWorkChoice, goal: string): Promise<EnterpriseWorkReceipt>
     completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }>
   }
@@ -1190,7 +1203,7 @@ export interface PrimeWorkApi {
   }
   agent: {
     start(options: { cwd: string; sessionPath?: string; model?: string; thinking?: string; fast?: boolean; harness?: HarnessId }): Promise<RuntimeInfo>
-    command(runtimeId: string, command: Record<string, unknown>, deliveryContext?: { returnedApprovalContextHandle?: string }): Promise<Record<string, unknown>>
+    command(runtimeId: string, command: Record<string, unknown>, deliveryContext?: { returnedApprovalContextHandle?: string; workContinuationContextHandle?: string }): Promise<Record<string, unknown>>
     stop(runtimeId: string): Promise<boolean>
     list(): Promise<RuntimeInfo[]>
     onEvent(callback: (envelope: PrimeEventEnvelope) => void): () => void

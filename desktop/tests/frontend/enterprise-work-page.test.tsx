@@ -10,6 +10,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let root: Root
 let container: HTMLDivElement
 const refresh = vi.fn()
+const continueWork = vi.fn()
 
 const overview: EnterpriseWorkOverview = {
   loadedAt: '2026-09-23T01:00:00Z',
@@ -25,6 +26,7 @@ const overview: EnterpriseWorkOverview = {
 
 beforeEach(() => {
   refresh.mockClear()
+  continueWork.mockClear()
   container = document.createElement('div')
   document.body.append(container)
   root = createRoot(container)
@@ -39,14 +41,21 @@ it('shows available work beside source-specific errors and offers retry without 
   await act(async () => root.render(<EnterpriseWorkPage
     overview={overview} loading={false} error="" onRefresh={refresh}
     onComplete={vi.fn(async () => undefined)} onInspect={vi.fn(async () => ({ title: '', step: '', fields: [], files: [] }))}
-    onContinue={vi.fn()}
+    onContinue={continueWork}
   />))
 
   expect(container.textContent).toContain('合同交付复核')
   expect(container.textContent).toContain('合同团队已完成')
+  expect(container.textContent).toContain('团队执行 · 处理中')
+  expect(container.textContent).toContain('Forge 业务通知')
   expect(container.textContent).toContain('团队人工步骤暂时不可用：团队信息读取失败（503）')
   expect(container.textContent).toContain('工作通知暂时不可用：通知读取失败（503）')
   expect(container.textContent).not.toContain('当前没有待处理事项。')
+
+  const unsafeContinuation = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '原工作暂不可续接')
+  expect(unsafeContinuation?.disabled).toBe(true)
+  await act(async () => unsafeContinuation?.click())
+  expect(continueWork).not.toHaveBeenCalled()
 
   const retries = [...container.querySelectorAll<HTMLButtonElement>('button')].filter((button) => button.textContent === '重试读取')
   expect(retries).toHaveLength(2)

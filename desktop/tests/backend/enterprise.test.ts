@@ -396,7 +396,7 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/runs?project_id=workbench-weave-1&limit=50')) return Response.json({ runs: [{ run_id: 'run-1', status: 'running' }] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [{ interaction_id: 'human-1', run_id: 'run-1', team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 1, title: '复核', instructions: '确认', updated_at: '2026-09-21T00:00:00Z' }] })
       if (url.endsWith('/api/v1/notifications?limit=200')) return Response.json({ success: true, data: { notifications: [
-        { id: 'notice-1', type: 'work.revision', title: '材料需要修改', body: '请补充交付日期', read: false, createdAt: '2026-09-21T01:00:00Z', data: { kind: 'revision_required', source: 'weave', status: 'pending', workReference: 'work-1', runReference: 'run-1', instructions: '补充交付日期后重新提交', material: { label: '当前材料' }, continuation: { reason: '缺少交付日期', returnTarget: 'origin_review', reviewScope: 'affected_members' } } },
+        { id: 'notice-1', type: 'work.revision', title: '材料需要修改', body: '请补充交付日期', read: false, createdAt: '2026-09-21T01:00:00Z', data: { kind: 'revision_required', source: { system: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' }, status: 'pending', instructions: '补充交付日期后重新提交', material: { label: '当前材料' }, continuation: { reason: '缺少交付日期', returnTarget: 'origin_review', reviewScope: 'affected_members' } } },
         { id: 'notice-1', type: 'work.revision', title: '材料需要修改', body: '重复投递不应重复显示', read: false, createdAt: '2026-09-21T01:01:00Z' },
       ] } })
       if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [] })
@@ -415,7 +415,7 @@ describe('EnterpriseService', () => {
     expect(session.user?.weaveUserId).toBe('weave-1')
     const overview = await service.getWorkOverview()
     expect(overview.items).toHaveLength(1)
-    expect(overview).toMatchObject({ choices: [{ teamId: 'team-1', workflowId: 'flow-1', version: 1 }], tasks: [{ interactionId: 'human-1' }], items: [{ id: 'notice-1', kind: 'revision_required', actionable: true, returnTarget: 'origin_review', reviewScope: 'affected_members' }], runs: [{ id: 'run-1' }], reads: { runs: { status: 'loaded' }, teamChoices: { status: 'loaded' }, weaveTasks: { status: 'loaded' }, forgeApprovals: { status: 'loaded' }, notifications: { status: 'loaded' } } })
+    expect(overview).toMatchObject({ choices: [{ teamId: 'team-1', workflowId: 'flow-1', version: 1 }], tasks: [{ interactionId: 'human-1' }], items: [{ id: 'notice-1', kind: 'revision_required', actionable: true, source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1', returnTarget: 'origin_review', reviewScope: 'affected_members' }], runs: [{ id: 'run-1' }], reads: { runs: { status: 'loaded' }, teamChoices: { status: 'loaded' }, weaveTasks: { status: 'loaded' }, forgeApprovals: { status: 'loaded' }, notifications: { status: 'loaded' } } })
     await expect(service.submitWork(overview.choices[0], '提交合同')).resolves.toMatchObject({ runId: 'run-2', workflowVersion: 1 })
     await expect(service.completeHumanTask(overview.tasks[0], { decision: 'approved' })).resolves.toEqual({ runId: 'run-1', repeated: false })
     const registration = calls.find((call) => call.url.endsWith('/v1/workbench/dispatch-inputs'))?.body
@@ -516,6 +516,103 @@ describe('EnterpriseService', () => {
     const recovered = await service.getWorkOverview()
     expect(recovered.reads.notifications).toEqual({ status: 'loaded' })
     expect(recovered.items).toMatchObject([{ id: 'notice-recovered' }])
+  })
+
+  it('does not treat reading a work message as completing the underlying item', async () => {
+    const fetchMock = workOverviewFetch((url) => {
+      if (url.endsWith('/v1/teams?status=active')) return Response.json({ teams: [] })
+      if (url.includes('/v1/runs?project_id=')) return Response.json({ runs: [] })
+      if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
+      if (url.endsWith('/api/v1/notifications?limit=200')) return Response.json({ notifications: [
+        { id: 'notice-read', type: 'business.result', title: '合同状态更新', read: true, createdAt: '2026-09-24T01:00:00Z' },
+      ] })
+      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [] })
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('employee@example.test', 'secret')
+
+    await expect(service.getWorkOverview()).resolves.toMatchObject({ items: [{ id: 'notice-read', read: true, status: 'unknown' }] })
+  })
+
+  it('fetches an exact Weave continuation and compares all notification references', async () => {
+    const task = '请对照已固定的技术协议检查合同。'
+    const result = '团队建议补充验收日期。'
+    const sha256 = (value: string) => createHash('sha256').update(value, 'utf8').digest('hex')
+    const payload = {
+      version: '1',
+      source: { input_revision_id: '10000000-0000-4000-8000-000000000001', run_id: 'run-1', workbench_session_id: 'workbench-session-1' },
+      input: {
+        task, task_sha256: sha256(task), team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 2,
+        materials: [], source_messages: [{ message_id: 'employee-message', event_seq: 1, sha256: sha256('员工要求').toUpperCase() }],
+      },
+      run: { status: 'succeeded', final_result: { id: 'deliverable-1', title: '团队检查结果', content_type: 'text/markdown', content: result, sha256: sha256(result) } },
+    }
+    const calls: Array<{ url: string; headers: Headers }> = []
+    const fetchMock = workOverviewFetch((url, init) => {
+      if (url.endsWith('/workbench-context')) {
+        calls.push({ url, headers: new Headers(init?.headers) })
+        return Response.json(payload)
+      }
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('employee@example.test', 'secret')
+    const references = { workReference: payload.source.input_revision_id, runReference: 'run-1', sessionReference: 'workbench-session-1' }
+
+    await expect(service.getWorkContinuationContext(references)).resolves.toMatchObject({
+      source: { inputRevisionID: references.workReference, runID: references.runReference, workbenchSessionID: references.sessionReference },
+      input: { task, teamID: 'team-1', workflowID: 'flow-1', workflowVersion: 2, sourceMessages: [{ sha256: sha256('员工要求').toUpperCase() }] },
+      run: { status: 'succeeded', finalResult: { title: '团队检查结果', content: result } },
+    })
+    expect(calls).toHaveLength(1)
+    expect(calls[0]?.url).toBe('http://weave/v1/runs/run-1/workbench-context')
+    expect(calls[0]?.headers.get('Authorization')).toBe('Bearer weave-token-employee@example.test')
+
+    await expect(service.getWorkContinuationContext({ ...references, workReference: '10000000-0000-4000-8000-000000000002' })).rejects.toThrow('工作消息与原团队工作不匹配')
+    await expect(service.getWorkContinuationContext({ ...references, runReference: 'run-other' })).rejects.toThrow('工作消息与原团队工作不匹配')
+    await expect(service.getWorkContinuationContext({ ...references, sessionReference: 'another-session' })).rejects.toThrow('工作消息与原团队工作不匹配')
+  })
+
+  it('reads original work files through the owner-only Forge route and verifies the Weave material tuple', async () => {
+    const task = '检查这份原工作材料。', content = '原工作材料正文\n'
+    const sha256 = (value: string) => createHash('sha256').update(value, 'utf8').digest('hex')
+    const material = { type: 'forge-file', id: '10000000-0000-4000-8000-000000000002', name: '技术协议.txt', bytes: Buffer.byteLength(content), sha256: sha256(content) }
+    const payload = {
+      version: '1',
+      source: { input_revision_id: '10000000-0000-4000-8000-000000000001', run_id: 'run-1', workbench_session_id: 'workbench-session-1' },
+      input: {
+        task, task_sha256: sha256(task), team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 2,
+        materials: [material], source_messages: [{ message_id: 'employee-message', event_seq: 1, sha256: sha256('员工要求') }],
+      },
+      run: { status: 'succeeded' },
+    }
+    const calls: Array<{ url: string; auth?: string }> = []
+    let forgeDigest = material.sha256
+    let fileReadStatus = 200
+    const fetchMock = workOverviewFetch((url, init) => {
+      calls.push({ url, auth: new Headers(init?.headers).get('Authorization') ?? undefined })
+      if (url.endsWith('/workbench-context')) return Response.json(payload)
+      if (url.endsWith(`/api/v1/workbench/materials/${material.id}`)) return fileReadStatus === 200 ? Response.json({
+          version: '1', fileId: material.id, name: material.name, mediaType: 'text/plain; charset=utf-8',
+          bytes: Buffer.byteLength(content), sha256: forgeDigest, content,
+        }) : Response.json({ error: { code: 'WORKBENCH_MATERIAL_NOT_FOUND' } }, { status: fileReadStatus })
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('employee@example.test', 'secret')
+    const references = { workReference: payload.source.input_revision_id, runReference: 'run-1', sessionReference: 'workbench-session-1' }
+
+    await expect(service.getWorkContinuationContext(references)).resolves.toMatchObject({ input: { materials: [{ id: material.id, content }] } })
+    expect(calls).toMatchObject([
+      { url: 'http://weave/v1/runs/run-1/workbench-context', auth: 'Bearer weave-token-employee@example.test' },
+      { url: `http://forge/api/v1/workbench/materials/${material.id}`, auth: 'Bearer forge-token-employee@example.test' },
+    ])
+    forgeDigest = sha256('different bytes')
+    await expect(service.getWorkContinuationContext(references)).rejects.toThrow('原工作材料与固定输入不一致')
+    forgeDigest = material.sha256
+    fileReadStatus = 404
+    await expect(service.getWorkContinuationContext(references)).rejects.toThrow('原工作材料读取失败（404）')
   })
 
   it('discards an in-flight overview when the signed-in account changes', async () => {
@@ -670,12 +767,15 @@ describe('EnterpriseService', () => {
   })
 
   it('uploads the exact frozen bytes to Forge before dispatch', async () => {
-    const content = '# 合同\n固定版本\n', uploaded: string[] = []
+    const content = '# 合同\n固定版本\n', uploaded: string[] = [], uploads: Array<Record<string, unknown>> = []
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'sales-1' } })
       if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'sales-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
-      if (url.endsWith('/api/v1/storage/upload/presigned')) return Response.json({ data: { fileId: 'file-1', uploadUrl: '/upload/file-1', method: 'PUT', headers: { 'Content-Type': 'text/plain' } } })
+      if (url.endsWith('/api/v1/storage/upload/presigned')) {
+        uploads.push(JSON.parse(String(init?.body)) as Record<string, unknown>)
+        return Response.json({ data: { fileId: 'file-1', uploadUrl: '/upload/file-1', method: 'PUT', headers: { 'Content-Type': 'text/plain' } } })
+      }
       if (url.endsWith('/upload/file-1')) { uploaded.push(Buffer.from(init?.body as Uint8Array).toString('utf8')); return new Response(null, { status: 200 }) }
       if (url.endsWith('/api/v1/storage/upload/complete')) return Response.json({ data: { fileId: 'file-1' } })
       return Response.json({}, { status: 404 })
@@ -684,6 +784,7 @@ describe('EnterpriseService', () => {
     await service.signIn('sales@example.test', 'secret')
     const resources = await service.stageWorkMaterials([{ name: '合同.md', content, bytes: Buffer.byteLength(content), sha256: createHash('sha256').update(content).digest('hex') }], async () => undefined)
     expect(uploaded).toEqual([content])
+    expect(uploads).toEqual([{ filename: '合同.md', mimeType: 'text/plain; charset=utf-8', size: Buffer.byteLength(content), scope: 'attachments' }])
     expect(resources).toEqual([{ type: 'forge-file', id: 'file-1', name: '合同.md', bytes: Buffer.byteLength(content), sha256: createHash('sha256').update(content).digest('hex') }])
   })
 

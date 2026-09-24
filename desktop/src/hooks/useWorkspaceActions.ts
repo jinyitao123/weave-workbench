@@ -287,6 +287,7 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
     queuedFlushPromptId?: string,
     returnedApprovalContextHandle?: string,
     textAttachments: WorkspaceMaterialReference[] = [],
+    workContinuationContextHandle?: string,
   ) => {
     const { bridge, sessions, workspace, provider, settingsState, submissionAdmissionRef, demoTimerRef, setSessions, setSubmitting, setView, setToast, reportError } = getDeps()
     const commandHarness = workspace.workspaceRef?.current?.project?.harness ?? settingsState.settings.activeHarness
@@ -379,7 +380,7 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
       let userMessageAppended = false
       const followUpExternalSession = async (sessionFile: string): Promise<boolean> => {
         if (!bridge) return false
-        if (returnedApprovalContextHandle) throw new Error('无法把退回事项绑定到桌面以外的运行会话')
+        if (returnedApprovalContextHandle || workContinuationContextHandle) throw new Error('无法把企业工作上下文绑定到桌面以外的运行会话')
         // The daemon owns the message once accepted; queuing it locally as
         // well would deliver it a second time via the idle flush.
         return bridge.sessions.followUp(sessionFile, promptToDeliver, intent)
@@ -388,6 +389,10 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
         if (returnedApprovalContextHandle && (intent !== 'queue' || images.length > 0 || textAttachments.length > 0 || compactCommand)) {
           throw new Error('退回审批上下文只能绑定到新的桌面工作轮次')
         }
+        if (workContinuationContextHandle && (intent !== 'queue' || images.length > 0 || textAttachments.length > 0 || compactCommand)) {
+          throw new Error('团队工作上下文只能绑定到新的桌面工作轮次')
+        }
+        if (returnedApprovalContextHandle && workContinuationContextHandle) throw new Error('当前工作提示不能同时绑定两项企业上下文')
         if (!admitted.project || !admitted.cwd) { reportError('Add a project before starting a session.'); return }
         // The harness comes from the workspace's own project, never global
         // settings: a prompt landing between a harness switch and the
@@ -516,7 +521,10 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
             message: promptToDeliver,
             streamingBehavior: streamingBehaviorForIntent(intent),
             ...(images.length ? { images } : {}),
-          }, returnedApprovalContextHandle ? { returnedApprovalContextHandle } : undefined)
+          }, returnedApprovalContextHandle || workContinuationContextHandle ? {
+            ...(returnedApprovalContextHandle ? { returnedApprovalContextHandle } : {}),
+            ...(workContinuationContextHandle ? { workContinuationContextHandle } : {}),
+          } : undefined)
           completeQueuedFlush()
           if (startedRuntime && startedSessionNeedsTitle) {
             void titleStartedSession({

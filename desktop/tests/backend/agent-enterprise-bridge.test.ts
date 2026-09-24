@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AgentEnterpriseBridge } from '../../electron/main/enterprise/agent-bridge'
 import { digest, submissionUUID } from '../../electron/main/enterprise/handoff-store'
 import type { EnterpriseApprovalContext, TranscriptMessage } from '../../src/types/api'
+import type { EnterpriseWorkContinuationContext } from '../../electron/main/enterprise'
 
 const bridges: AgentEnterpriseBridge[] = [], directories: string[] = []
 afterEach(async () => {
@@ -12,6 +13,19 @@ afterEach(async () => {
   await Promise.all(directories.splice(0).map((path) => rm(path, { recursive: true, force: true })))
 })
 function user(id: string, text: string): TranscriptMessage { return { id, role: 'user', parts: [{ type: 'text', text }] } }
+function workContinuationContext(): EnterpriseWorkContinuationContext {
+  const task = '请按客户确认的技术协议继续检查交付范围。'
+  const finalResult = '团队检查发现验收期限仍需确认。'
+  return {
+    version: '1' as const,
+    source: { inputRevisionID: 'input-1', runID: 'run-1', workbenchSessionID: 'workbench-session-1' },
+    input: {
+      task, taskSHA256: digest(task), teamID: 'team-contract', workflowID: 'workflow-review', workflowVersion: 3,
+      materials: [], sourceMessages: [{ messageID: 'employee-message', eventSeq: 1, sha256: digest('员工原始要求') }],
+    },
+    run: { status: 'succeeded' as const, finalResult: { id: 'deliverable-1', title: '交付检查意见', contentType: 'text/markdown', content: finalResult, sha256: digest(finalResult) } },
+  }
+}
 async function fixture(objectName = 'forge_sales_contract') {
   const cwd = await mkdtemp(join(tmpdir(), 'handoff-')); directories.push(cwd)
   const content = '# 合同\n客户：测试客户\n金额：12345 元\n交期：2026-10-01\n'
@@ -28,6 +42,7 @@ async function fixture(objectName = 'forge_sales_contract') {
   const revisionReceipts = new Map<string, Record<string, unknown>>()
   const businessCapabilityId = `forge:action:${objectName}.submit`
   const choice = { teamId: 'team-contract', teamName: '合同团队', teamObjective: '复核合同并完成交接', workflowId: 'workflow-review', workflowName: '合同复核', workflowDescription: '接合同全文，检查金额和交期，交付复核意见', businessCapabilityIds: [businessCapabilityId], version: 3 }
+  let continuationSequence = 1
   const service = {
     accountKey: vi.fn(async () => 'employee-a'),
     getApprovalContext: vi.fn(async (requestId: string) => {
@@ -35,13 +50,24 @@ async function fixture(objectName = 'forge_sales_contract') {
       if (!context) throw new Error('这项审批已无法由当前员工处理，请刷新待办')
       return structuredClone(context)
     }),
+    getWorkContinuationContext: vi.fn(async (references: { workReference: string; runReference: string; sessionReference: string }) => {
+      const context = workContinuationContext()
+      context.source.inputRevisionID = references.workReference
+      context.source.runID = references.runReference
+      context.source.workbenchSessionID = references.sessionReference
+      return context
+    }),
     getTeamCatalog: vi.fn(async () => [{ id: choice.teamId, name: choice.teamName, objective: choice.teamObjective }, { id: 'leave', name: '休假团队', objective: '安排休假' }]),
     getTeamChoices: vi.fn(async () => [choice]),
     getBusinessCapabilities: vi.fn(async () => [{ id: businessCapabilityId, name: '提交合同', description: '把合同提交到业务流程', effect: 'write' as const, resourceType: objectName, requiresRecord: true, requiresEmployeeIntent: true, status: 'available' as const }]),
     findBusinessRecords: vi.fn(async () => [{ objectName, recordId: 'contract-1', name: 'TEST-100 设备交接验收合同', code: 'SC-TEST-001' }]),
     stageWorkMaterials: vi.fn(async (items: Array<{ name: string; content: string; bytes: number; sha256: string }>) => items.map((item, index) => ({ type: 'forge-file' as const, id: `file-${index + 1}`, name: item.name, bytes: item.bytes, sha256: item.sha256 }))),
-    submitWork: vi.fn(async (_choice: unknown, _goal: string, source?: { assertCurrent(): Promise<void> }) => {
+    submitWork: vi.fn(async (_choice: unknown, _goal: string, source?: { assertCurrent(): Promise<void>; continuation?: { inputRevisionID: string; runID: string } }) => {
       await source?.assertCurrent()
+      if (source?.continuation) {
+        const sequence = ++continuationSequence
+        return { workId: `work-${sequence}`, runId: `run-${sequence}`, inputRevisionId: `input-${sequence}`, taskId: `task-${sequence}`, workflowId: choice.workflowId, workflowVersion: 3, repeated: false }
+      }
       return { workId: 'work', runId: 'run', taskId: 'task', workflowId: choice.workflowId, workflowVersion: 3, repeated: false }
     }),
     submitApprovalRevision: vi.fn(async (requestId: string, body: { idempotencyKey: string }, assertCurrent: () => Promise<void>) => {
@@ -101,11 +127,185 @@ async function fixture(objectName = 'forge_sales_contract') {
 }
 
 describe('employee-bound material handoff', () => {
+  it('reads and binds the exact Weave work context before opening a Pi continuation', async () => {
+    const f = await fixture()
+    const item = { source: 'weave' as const, workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' }
+    const binding = await f.bridge.pinWorkContinuationContext(item)
+    expect(binding.context).toMatchObject({ task: '请按客户确认的技术协议继续检查交付范围。', runStatus: 'succeeded', finalResult: { title: '交付检查意见' } })
+    const prompt = `继续原工作\n${binding.context.task}`
+    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: prompt }, undefined, binding.handle)
+    f.transcript.push(user('continued-work', prompt))
+    await expect(f.call('activate', { prompt })).resolves.toMatchObject({ body: { result: { turn_key: expect.any(String) } } })
+  })
+
+  it('keeps the parent work across two employee turns while refreshing the team and authorizing each new handoff', async () => {
+    const f = await fixture()
+    const item = { source: 'weave' as const, workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' }
+    const binding = await f.bridge.pinWorkContinuationContext(item)
+    const openedPrompt = `继续原团队工作\n${binding.context.task}`
+    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: openedPrompt }, undefined, binding.handle)
+    f.transcript.push(user('continued-work-open', openedPrompt))
+    const opened = await f.call('activate', { prompt: openedPrompt })
+    expect(opened.body.result.turn_key).toBeTypeOf('string')
+
+    const revisedMaterial = '# 合同\n已补验收期限\n'
+    await writeFile(join(f.cwd, '合同.md'), revisedMaterial)
+    f.bridge.invalidateHandoff('runtime')
+    const oldTurn = await f.callWithTurn('activate', { prompt: openedPrompt }, opened.body.result.turn_key as string)
+    expect(oldTurn.status).toBe(409)
+    await f.input('我补上验收期限了，再让原团队按这版检查。', 'continued-work-round-2')
+    const round2 = await f.discover()
+    const second = await f.call('submit', {
+      ...round2,
+      goal: '按我这次补充的验收期限，继续核对原工作。',
+      materials: [{ path: '合同.md', sha256: digest(revisedMaterial) }],
+    })
+    expect(second.status).toBe(200)
+    expect(second.body.result.status).toBe('accepted')
+    expect(f.service.submitWork.mock.calls[0]?.[2]).toMatchObject({ continuation: {
+      workbenchSessionID: 'workbench-session-1', inputRevisionID: 'input-1', runID: 'run-1', teamID: 'team-contract',
+    }, authorizedBusinessCapabilityIds: [] })
+
+    f.bridge.invalidateHandoff('runtime')
+    await f.input('再补一处表述，请继续检查刚才那版。', 'continued-work-round-3')
+    const round3 = await f.discover()
+    const third = await f.call('submit', {
+      ...round3,
+      goal: '继续检查刚才那版补充后的合同。',
+      materials: [{ path: '合同.md', sha256: digest(revisedMaterial) }],
+    })
+    expect(third.status).toBe(200)
+    expect(third.body.result.status).toBe('accepted')
+    expect(f.service.submitWork.mock.calls[1]?.[2]).toMatchObject({ continuation: {
+      workbenchSessionID: 'workbench-session-1', inputRevisionID: 'input-2', runID: 'run-2', teamID: 'team-contract',
+    }, authorizedBusinessCapabilityIds: [] })
+    expect(f.service.getTeamCatalog).toHaveBeenCalledTimes(2)
+    expect(f.service.getTeamChoices).toHaveBeenCalledTimes(4)
+    expect(f.service.getBusinessCapabilities).toHaveBeenCalledTimes(2)
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledTimes(2)
+    expect(f.service.stageWorkMaterials.mock.calls.map(([materials]) => materials[0]?.content)).toEqual([revisedMaterial, revisedMaterial])
+  })
+
+  it('refuses a different team when describing a linked continuation', async () => {
+    const f = await fixture()
+    const binding = await f.bridge.pinWorkContinuationContext({ source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' })
+    const prompt = '继续原合同工作'
+    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: prompt }, undefined, binding.handle)
+    f.transcript.push(user('continued-work-team-check', prompt))
+    const active = await f.call('activate', { prompt })
+    const turnKey = active.body.result.turn_key as string
+    const search = await f.callWithTurn('search', { work_summary: '安排休假' }, turnKey)
+    const leave = (search.body.result.teams as Array<{ team_key: string; name: string }>).find((team) => team.name === '休假团队')
+    expect(leave).toBeDefined()
+
+    const result = await f.callWithTurn('describe', { team_key: leave!.team_key }, turnKey)
+    expect(result.status).toBe(409)
+    expect(result.body.error).toContain('原工作续办必须使用原团队')
+    expect(f.service.getTeamChoices).not.toHaveBeenCalled()
+  })
+
+  it('keeps the work lineage across two employee turns while refreshing actions and material inputs each round', async () => {
+    const f = await fixture()
+    const item = { source: 'weave' as const, workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' }
+    const binding = await f.bridge.pinWorkContinuationContext(item)
+    const openedPrompt = `继续原团队工作\n${binding.context.task}`
+    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: openedPrompt }, undefined, binding.handle)
+    f.transcript.push(user('continued-work-open', openedPrompt))
+    const opened = await f.call('activate', { prompt: openedPrompt })
+    expect(opened.body.result.turn_key).toBeTypeOf('string')
+
+    const revisedMaterial = '# 合同\n已补验收期限\n'
+    await writeFile(join(f.cwd, '合同.md'), revisedMaterial)
+    await f.input('我补上验收期限了，再让原团队按这版检查。', 'continued-work-round-2')
+    const round2 = await f.discover()
+    const second = await f.call('submit', {
+      ...round2,
+      goal: '按我这次补充的验收期限，继续核对原工作。',
+      materials: [{ path: '合同.md', sha256: digest(revisedMaterial) }],
+    })
+    expect(second.status).toBe(200)
+    expect(second.body.result.status).toBe('accepted')
+    expect(f.service.submitWork.mock.calls[0]?.[2]).toMatchObject({ continuation: {
+      workbenchSessionID: 'workbench-session-1', inputRevisionID: 'input-1', runID: 'run-1', teamID: 'team-contract',
+    } })
+
+    await f.input('再补一处表述，请继续检查刚才那版。', 'continued-work-round-3')
+    const round3 = await f.discover()
+    const third = await f.call('submit', {
+      ...round3,
+      goal: '继续检查刚才那版补充后的合同。',
+      materials: [{ path: '合同.md', sha256: digest(revisedMaterial) }],
+    })
+    expect(third.status).toBe(200)
+    expect(third.body.result.status).toBe('accepted')
+    expect(f.service.submitWork.mock.calls[1]?.[2]).toMatchObject({ continuation: {
+      workbenchSessionID: 'workbench-session-1', inputRevisionID: 'input-2', runID: 'run-2', teamID: 'team-contract',
+    } })
+  })
+
+  it('refuses to describe a different team for a linked continuation', async () => {
+    const f = await fixture()
+    const binding = await f.bridge.pinWorkContinuationContext({ source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' })
+    const prompt = '继续原合同工作'
+    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: prompt }, undefined, binding.handle)
+    f.transcript.push(user('continued-work-team-check', prompt))
+    const active = await f.call('activate', { prompt })
+    const turnKey = active.body.result.turn_key as string
+    const search = await f.callWithTurn('search', { work_summary: '安排休假' }, turnKey)
+    const leave = (search.body.result.teams as Array<{ team_key: string; name: string }>).find((team) => team.name === '休假团队')
+    expect(leave).toBeDefined()
+
+    const result = await f.callWithTurn('describe', { team_key: leave!.team_key }, turnKey)
+    expect(result.status).toBe(409)
+    expect(result.body.error).toContain('原工作续办必须使用原团队')
+    expect(f.service.getTeamChoices).not.toHaveBeenCalled()
+  })
+
+  it('rejects mismatched or changed Weave source references before Pi receives a continuation', async () => {
+    const f = await fixture()
+    const item = { source: 'weave' as const, workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' }
+    const mismatched = workContinuationContext()
+    mismatched.source.runID = 'another-run'
+    f.service.getWorkContinuationContext.mockResolvedValueOnce(mismatched)
+    await expect(f.bridge.pinWorkContinuationContext(item)).rejects.toThrow('工作消息与原团队工作不匹配')
+
+    const opened = workContinuationContext(), statusChanged = workContinuationContext()
+    statusChanged.run.status = 'running'
+    f.service.getWorkContinuationContext.mockResolvedValueOnce(opened).mockResolvedValueOnce(statusChanged)
+    const binding = await f.bridge.pinWorkContinuationContext(item)
+    await expect(f.bridge.employeeCommand('runtime', { type: 'prompt', message: '继续原工作' }, undefined, binding.handle)).resolves.toBeUndefined()
+
+    const current = workContinuationContext(), changedResult = workContinuationContext()
+    const newerResult = '团队重新核对后的不同结论。'
+    changedResult.run.finalResult = { ...changedResult.run.finalResult!, content: newerResult, sha256: digest(newerResult) }
+    f.service.getWorkContinuationContext.mockResolvedValueOnce(current).mockResolvedValueOnce(changedResult)
+    const resultBinding = await f.bridge.pinWorkContinuationContext(item)
+    await expect(f.bridge.employeeCommand('runtime', { type: 'prompt', message: '按新结果继续' }, undefined, resultBinding.handle)).rejects.toThrow('团队工作或固定材料版本已变化')
+  })
+
+  it('fails closed when an original Forge file needs the restricted owner-only reader', async () => {
+    const f = await fixture()
+    const context = workContinuationContext()
+    context.input.materials.push({ id: 'file-private', name: '合同.txt', bytes: 10, sha256: digest('合同内容') })
+    f.service.getWorkContinuationContext.mockResolvedValueOnce(context)
+    await expect(f.bridge.pinWorkContinuationContext({ source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' })).rejects.toThrow('没有取得经核验的原文')
+  })
+
+  it('passes only Forge-owner-verified original file text to the Pi context', async () => {
+    const f = await fixture()
+    const content = '原工作固定材料正文'
+    const context = workContinuationContext()
+    context.input.materials.push({ id: 'file-private', name: '合同.txt', bytes: Buffer.byteLength(content), sha256: digest(content), mediaType: 'text/plain; charset=utf-8', content })
+    f.service.getWorkContinuationContext.mockResolvedValueOnce(context)
+    const binding = await f.bridge.pinWorkContinuationContext({ source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' })
+    expect(binding.context.materials).toEqual([{ name: '合同.txt', bytes: Buffer.byteLength(content), sha256: digest(content), content }])
+  })
+
   it('keeps a new Pi turn when the reported session file has not been created yet', async () => {
     const cwd = await mkdtemp(join(tmpdir(), 'handoff-future-session-')); directories.push(cwd)
     const transcript: TranscriptMessage[] = []
     const service = {
-      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(),
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()),
       getTeamCatalog: vi.fn(async () => [{ id: 'team-lead', name: '线索分析团队', objective: '整理线索事实' }]),
       getTeamChoices: vi.fn(async () => []), getBusinessCapabilities: vi.fn(async () => []),
       findBusinessRecords: vi.fn(async () => []), stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),
@@ -139,7 +339,7 @@ describe('employee-bound material handoff', () => {
     const cwd = await mkdtemp(join(tmpdir(), 'handoff-race-')); directories.push(cwd)
     const transcript: TranscriptMessage[] = []
     const service = {
-      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getTeamCatalog: vi.fn(async () => [{ id: 'team-lead', name: '线索分析团队', objective: '整理线索并返回依据和待确认项' }]), getTeamChoices: vi.fn(async () => []),
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()), getTeamCatalog: vi.fn(async () => [{ id: 'team-lead', name: '线索分析团队', objective: '整理线索并返回依据和待确认项' }]), getTeamChoices: vi.fn(async () => []),
       getBusinessCapabilities: vi.fn(async () => []),
       findBusinessRecords: vi.fn(async () => []),
       stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),
@@ -205,7 +405,7 @@ describe('employee-bound material handoff', () => {
     const cwd = await mkdtemp(join(tmpdir(), 'handoff-pending-invalidate-')); directories.push(cwd)
     const transcript: TranscriptMessage[] = []
     const service = {
-      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
       getBusinessCapabilities: vi.fn(async () => []), findBusinessRecords: vi.fn(async () => []),
       stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),
       submitApprovalRevision: vi.fn(async () => ({ status: 404, body: {} })), getApprovalRevisionReceipt: vi.fn(async () => ({ status: 404, body: {} })),
@@ -249,7 +449,7 @@ describe('employee-bound material handoff', () => {
     const cwd = await mkdtemp(join(tmpdir(), 'handoff-new-session-ambiguous-')); directories.push(cwd)
     const transcript: TranscriptMessage[] = []
     const service = {
-      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
       getBusinessCapabilities: vi.fn(async () => []), findBusinessRecords: vi.fn(async () => []),
       stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),
       submitApprovalRevision: vi.fn(async () => ({ status: 404, body: {} })), getApprovalRevisionReceipt: vi.fn(async () => ({ status: 404, body: {} })),

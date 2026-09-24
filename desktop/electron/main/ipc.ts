@@ -287,6 +287,18 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     if (!services.enterpriseBridge) throw new Error('桌面退回事项能力暂不可用')
     return services.enterpriseBridge.pinReturnedApprovalContext(requireString(approvalId, 'approvalId', { min: 1, max: 128 }))
   })
+  handle('enterprise:pin-work-continuation-context', (_event, rawItem) => {
+    if (!services.enterpriseBridge) throw new Error('桌面团队续接能力暂不可用')
+    const item = requireRecord(rawItem, 'item')
+    rejectUnknownKeys(item, ['source', 'workReference', 'runReference', 'sessionReference'], 'item')
+    if (item.source !== 'weave') throw new TypeError('item.source must be weave')
+    return services.enterpriseBridge.pinWorkContinuationContext({
+      source: 'weave',
+      workReference: requireString(item.workReference, 'item.workReference', { min: 1, max: 512 }),
+      runReference: requireString(item.runReference, 'item.runReference', { min: 1, max: 512 }),
+      sessionReference: requireString(item.sessionReference, 'item.sessionReference', { min: 1, max: 512 }),
+    })
+  })
   handle('enterprise:submit-work', (_event, choice, goal) => services.enterprise.submitWork(requireEnterpriseWorkChoice(choice), requireString(goal, 'goal', { min: 1, max: 20_000 })))
   handle('enterprise:complete-human-task', (_event, task, payload) => services.enterprise.completeHumanTask(requireEnterpriseHumanTask(task), requireRecord(payload, 'payload')))
 
@@ -336,12 +348,14 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     const id = requireString(runtimeId, 'runtimeId', { min: 1, max: 256 })
     const manager = agentsForRuntime(id)
     const delivery = deliveryContext === undefined ? undefined : requireRecord(deliveryContext, 'deliveryContext')
-    if (delivery) rejectUnknownKeys(delivery, ['returnedApprovalContextHandle'], 'deliveryContext')
+    if (delivery) rejectUnknownKeys(delivery, ['returnedApprovalContextHandle', 'workContinuationContextHandle'], 'deliveryContext')
     const approvalContextHandle = delivery?.returnedApprovalContextHandle
+    const workContinuationContextHandle = delivery?.workContinuationContextHandle
     if (approvalContextHandle !== undefined && typeof approvalContextHandle !== 'string') throw new TypeError('deliveryContext.returnedApprovalContextHandle must be a string')
+    if (workContinuationContextHandle !== undefined && typeof workContinuationContextHandle !== 'string') throw new TypeError('deliveryContext.workContinuationContextHandle must be a string')
     const current = manager.list().find((runtime) => runtime.runtimeId === id)
     if (current?.sessionFile) services.enterpriseBridge?.bindRuntimeSession(id, current.sessionFile)
-    await services.enterpriseBridge?.employeeCommand(id, command, approvalContextHandle)
+    await services.enterpriseBridge?.employeeCommand(id, command, approvalContextHandle, workContinuationContextHandle)
     return manager.command(id, command)
   })
   handle('agent:stop', (_event, runtimeId) => agentsForRuntime(runtimeId).stop(runtimeId))
