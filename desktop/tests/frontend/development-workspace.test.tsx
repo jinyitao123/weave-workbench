@@ -6,7 +6,7 @@ import { DevelopmentPage } from '../../src/pages/DevelopmentPage'
 import { newMember } from '../../src/pages/team-workspace/member'
 import { initialGraph } from '../../src/pages/team-workspace/graph'
 import { runLabel } from '../../src/pages/team-workspace/TrialPanel'
-import type { EnterpriseDevelopmentOverview, PrimeWorkApi } from '../../src/types/api'
+import type { EnterpriseBusinessCapabilityCatalog, EnterpriseDevelopmentOverview, PrimeWorkApi } from '../../src/types/api'
 import type { TeamWorkspace, TeamWorkspaceCommand } from '../../src/types/team-workspace'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -16,7 +16,8 @@ const call = vi.fn(async (command: TeamWorkspaceCommand): Promise<unknown> => {
   if (command.action === 'save') { if (command.revision !== remote.revision) throw new Error('草稿冲突'); remote = { ...remote, revision: remote.revision + 1, document: command.document } }
   return structuredClone(remote)
 })
-const bridge = { teamWorkspace: call, createDevelopmentTeam: vi.fn() } as unknown as PrimeWorkApi['enterprise']
+const getBusinessCapabilityCatalog = vi.fn(async (): Promise<EnterpriseBusinessCapabilityCatalog> => ({ version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [], refreshedAt: '' }))
+const bridge = { teamWorkspace: call, createDevelopmentTeam: vi.fn(), getBusinessCapabilityCatalog } as unknown as PrimeWorkApi['enterprise']
 async function click(label: string) {
   const button = [...document.querySelectorAll<HTMLButtonElement>('button')].find((item) => item.textContent?.trim() === label || item.getAttribute('aria-label') === label)
   if (!button) throw new Error(`Missing button: ${label}`)
@@ -55,6 +56,42 @@ it('saves one remote team draft while keeping the original member inspector', as
   await saveSoon()
   expect(remote.document.members[1].relationship.duty).toBe('检查付款条款')
   expect(remote.document.objective).toBe('逐条核对原文')
+})
+it('marks an array action unavailable, keeps a selected one removable, and blocks update', async () => {
+  const capabilityId = 'forge:action:forge_quote.update_lines'
+  const worker = remote.document.members[1]!
+  worker.configuration.businessCapabilityIds = [capabilityId]
+  const published = structuredClone(remote.document)
+  published.members[1]!.configuration.businessCapabilityIds = []
+  published.members[1]!.configuration.businessCapabilityBindings = []
+  remote.published_document = published
+  remote.trials = [{ request_id: 'trial-ready', revision: 1, workflow_id: 'flow', run_id: 'run-ready', status: 'succeeded', created_at: '2026-09-24T00:00:00Z' }]
+  getBusinessCapabilityCatalog.mockResolvedValueOnce({
+    version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [{
+      id: capabilityId, name: '调整报价明细', description: '按授权调整报价明细', effect: 'write', resourceType: 'forge_quote', requiresEmployeeIntent: true,
+      status: 'unavailable', unavailableReason: '数组缺少条目结构，当前不能绑定/执行', actionName: 'update_lines', objectName: 'forge_quote',
+      params: [{ name: 'lines', label: '明细', type: 'array' }],
+    }],
+  })
+
+  await open()
+  await selectMember('审核员')
+  await click('能力')
+  expect(container.textContent).toContain('数组缺少条目结构，当前不能绑定/执行')
+  const changeNote = container.querySelector<HTMLButtonElement>('.tw-change-note')
+  expect(changeNote).not.toBeNull()
+  await act(async () => changeNote!.click())
+  const update = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent?.trim() === '更新团队')
+  expect(update?.disabled).toBe(true)
+
+  await click('返回对象详情')
+  await click('能力')
+  const capabilityButton = container.querySelector<HTMLButtonElement>('.member-capability-list li > button')
+  expect(capabilityButton?.getAttribute('aria-pressed')).toBe('true')
+  expect(capabilityButton?.disabled).toBe(false)
+  await act(async () => capabilityButton!.click())
+  expect(capabilityButton?.getAttribute('aria-pressed')).toBe('false')
+  expect(capabilityButton?.disabled).toBe(true)
 })
 it('blocks removal of referenced members and keeps the desktop on one visible flow', async () => {
   await open(); await selectMember('审核员'); await click('成员操作'); await click('移出团队')

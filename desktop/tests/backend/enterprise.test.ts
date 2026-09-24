@@ -185,6 +185,8 @@ describe('EnterpriseService', () => {
         expect(init?.method).toBeUndefined()
         return Response.json({ data: { items: [
           { name: 'ContractSubmit', objectName: 'sales_contract', label: '提交销售合同', ai: { exposed: true, description: '校验后提交合同' }, params: [{ name: 'material_file_id', label: '合同文件', type: 'text', required: true }, { name: 'attachments', label: '附件', type: 'file', multiple: true }], requiredPermissions: ['sales_contract_operator'] },
+          { name: 'UpdateQuoteLines', objectName: 'forge_quote', label: '调整报价明细', ai: { exposed: true, description: '按要求调整报价明细' }, params: [{ name: 'lines', label: '明细', type: 'array', required: true }] },
+          { name: 'UpdateQuoteObject', objectName: 'forge_quote', label: '更新报价结构', ai: { exposed: true, description: '按要求更新报价结构' }, params: [{ name: 'value', label: '结构', type: 'object', required: true }] },
           { name: 'InternalOnly', objectName: 'sales_contract', label: '内部动作', ai: { exposed: false } },
         ] } })
       }
@@ -195,8 +197,32 @@ describe('EnterpriseService', () => {
 
     await expect(service.getBusinessCapabilityCatalog()).resolves.toMatchObject({
       provider: { name: 'Forge 业务环境', status: 'available' },
-      capabilities: [{ id: 'forge:action:sales_contract.ContractSubmit', name: '提交销售合同', effect: 'write', requiresEmployeeIntent: true, actionName: 'ContractSubmit', objectName: 'sales_contract', requiresRecord: true, params: [{ name: 'material_file_id', label: '合同文件', type: 'string', required: true }, { name: 'attachments', label: '附件', type: 'file', multiple: true }] }],
+      capabilities: [
+        { id: 'forge:action:sales_contract.ContractSubmit', name: '提交销售合同', effect: 'write', requiresEmployeeIntent: true, status: 'available', actionName: 'ContractSubmit', objectName: 'sales_contract', requiresRecord: true, params: [{ name: 'material_file_id', label: '合同文件', type: 'string', required: true }, { name: 'attachments', label: '附件', type: 'file', multiple: true }] },
+        { id: 'forge:action:forge_quote.UpdateQuoteLines', status: 'unavailable', unavailableReason: '数组缺少条目结构，当前不能绑定/执行', params: [{ name: 'lines', label: '明细', type: 'array', required: true }] },
+        { id: 'forge:action:forge_quote.UpdateQuoteObject', status: 'unavailable', unavailableReason: '业务参数结构暂不支持，当前不能绑定/执行', params: [{ name: 'value', label: '结构', type: 'unsupported', required: true }] },
+      ],
     })
+  })
+
+  it('does not return array or unknown-structure actions in the employee-authorizable Forge directory', async () => {
+    const actions = [
+      { name: 'UpdateQuoteLines', objectName: 'forge_quote', label: '调整报价明细', description: '按要求调整报价明细', params: [{ name: 'lines', type: 'array' }] },
+      { name: 'UpdateQuoteObject', objectName: 'forge_quote', label: '更新报价结构', description: '按要求更新报价结构', params: [{ name: 'value', type: 'object' }] },
+      { name: 'ReadQuote', objectName: 'forge_quote', label: '读取报价', description: '读取报价', params: [{ name: 'quote_id', type: 'text' }] },
+    ]
+    const fetchMock = workOverviewFetch((url) => {
+      if (url.endsWith('/api/v1/mcp')) return Response.json({ jsonrpc: '2.0', id: 'business-capability-catalog', result: { content: [{ type: 'text', text: JSON.stringify({ actions }) }] } })
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('employee@example.test', 'secret')
+
+    await expect(service.getBusinessCapabilities([
+      'forge:action:forge_quote.UpdateQuoteLines',
+      'forge:action:forge_quote.UpdateQuoteObject',
+      'forge:action:forge_quote.ReadQuote',
+    ])).resolves.toMatchObject([{ id: 'forge:action:forge_quote.ReadQuote', status: 'available' }])
   })
 
   it('keeps the enterprise session when Forge denies one capability catalog', async () => {
