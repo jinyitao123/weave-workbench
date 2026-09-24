@@ -6,6 +6,7 @@ import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 import { submissionUUID } from './enterprise/handoff-store'
 import { teamCatalog, teamChoices, type TeamSummary } from './enterprise/team-catalog'
+import { businessReadErrorResult, ForgeBusinessReadError, ForgeBusinessReader, type BusinessObjectDirectory, type BusinessRecordRead, type BusinessRecordSearchPage } from './enterprise/business-records'
 
 const DEFAULT_FORGE_URL = 'http://124.223.189.112'
 const DEFAULT_WEAVE_URL = 'http://124.223.189.112:8080'
@@ -56,6 +57,7 @@ export interface EnterpriseWorkContinuationContext {
   run: {
     status: 'queued' | 'running' | 'parked' | 'cancel_requested' | 'succeeded' | 'failed' | 'cancelled' | 'abandoned'
     finalResult?: { id: string; title: string; contentType: string; content: string; sha256: string }
+    actionOutcomes?: Array<{ nodeID: string; callID: string; actionName: string; objectName: string; recordID?: string; status: 'succeeded' | 'failed' | 'unknown'; summary: string }>
   }
 }
 
@@ -109,6 +111,16 @@ async function responseErrorCode(response: Response): Promise<string | undefined
   } catch {
     return undefined
   }
+}
+
+function forgeMcpReadError(message: string): ForgeBusinessReadError {
+  if (/403|forbidden|permission|not authorized|access denied|unknown tool|not registered|data:read|无权|权限|未授权|拒绝/i.test(message)) {
+    return new ForgeBusinessReadError('forbidden', '当前账号没有读取该业务数据的权限')
+  }
+  if (/not found|does not exist|no such (?:object|record)|不存在|未找到/i.test(message)) {
+    return new ForgeBusinessReadError('not_found', '当前员工无法读取所选业务记录')
+  }
+  return new ForgeBusinessReadError('failed', 'Forge 原生读取工具执行失败，请刷新后重试')
 }
 
 function numberValue(value: unknown): number | undefined {
@@ -360,11 +372,27 @@ function parseWorkContinuationContext(value: unknown): EnterpriseWorkContinuatio
       || createHash('sha256').update(content, 'utf8').digest('hex') !== sha256) throw new Error('团队最终交付摘要校验失败，请刷新工作消息')
     finalResult = { id, title, contentType, content, sha256 }
   }
+  let actionOutcomes: NonNullable<EnterpriseWorkContinuationContext['run']['actionOutcomes']> | undefined
+  if (run.action_outcomes !== undefined) {
+    if (!Array.isArray(run.action_outcomes) || run.action_outcomes.length > 100) throw new Error('团队业务动作事实格式无效，请刷新工作消息')
+    actionOutcomes = run.action_outcomes.flatMap((entry): NonNullable<EnterpriseWorkContinuationContext['run']['actionOutcomes']> => {
+      const outcome = record(entry)
+      const nodeID = boundedIdentity(outcome?.node_id, 128), callID = boundedIdentity(outcome?.call_id, 256)
+      const actionName = boundedIdentity(outcome?.action_name, 128), objectName = boundedIdentity(outcome?.object_name, 128)
+      const recordID = outcome?.record_id === undefined ? undefined : boundedIdentity(outcome.record_id, 128)
+      const outcomeStatus = textValue(outcome?.status), summary = boundedIdentity(outcome?.summary, 500)
+      if (!nodeID || !callID || !actionName || !objectName || !summary
+        || outcome?.record_id !== undefined && !recordID
+        || outcomeStatus !== 'succeeded' && outcomeStatus !== 'failed' && outcomeStatus !== 'unknown') return []
+      return [{ nodeID, callID, actionName, objectName, ...(recordID ? { recordID } : {}), status: outcomeStatus, summary }]
+    })
+    if (actionOutcomes.length !== run.action_outcomes.length) throw new Error('团队业务动作事实不完整，请刷新工作消息')
+  }
   return {
     version: '1',
     source: { inputRevisionID, runID, workbenchSessionID },
     input: { task, taskSHA256, teamID, workflowID, workflowVersion: workflowVersion!, materials, sourceMessages, ...(businessRecord ? { businessRecord } : {}), ...(parent ? { parent } : {}) },
-    run: { status: status as EnterpriseWorkContinuationContext['run']['status'], ...(finalResult ? { finalResult } : {}) },
+    run: { status: status as EnterpriseWorkContinuationContext['run']['status'], ...(finalResult ? { finalResult } : {}), ...(actionOutcomes !== undefined ? { actionOutcomes } : {}) },
   }
 }
 
@@ -376,6 +404,7 @@ export class EnterpriseService {
   private readonly weaveUrl: URL
   private readonly sessionPath?: string
   private readonly sessionCodec?: EnterpriseServiceOptions['sessionCodec']
+  private readonly businessReader: ForgeBusinessReader
   private loaded = false
   private authGeneration = 0
   private loginAttempt = 0
@@ -393,6 +422,10 @@ export class EnterpriseService {
     this.weaveUrl = environmentUrl(this.environment.WORKBENCH_WEAVE_URL, DEFAULT_WEAVE_URL, 'Weave')
     this.sessionPath = options.sessionPath
     this.sessionCodec = options.sessionCodec
+    this.businessReader = new ForgeBusinessReader(
+      (name, args, generation) => this.forgeMcpTool(name, args, generation),
+      (objectName, generation) => this.forgeObjectMetadata(objectName, generation),
+    )
   }
 
   setSessionScopeChangeHandler(handler: (session: EnterpriseSession, generation: number, phase: 'sign-in-start' | 'signed-in' | 'signed-out') => Promise<void>): void {
@@ -649,6 +682,59 @@ export class EnterpriseService {
     return result
   }
 
+  private async forgeMcpTool(
+    name: 'list_objects' | 'describe_object' | 'query_records' | 'get_record',
+    args: Record<string, unknown>,
+    expectedGeneration: number,
+  ): Promise<unknown> {
+    if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务记录')
+    const { response, snapshot } = await this.authenticatedFetch(new URL('/api/v1/mcp', this.forgeUrl), 'forge', {
+      method: 'POST', headers: { Accept: 'application/json, text/event-stream', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: `business-read-${randomUUID()}`, method: 'tools/call', params: { name, arguments: args } }),
+      redirect: 'error', signal: AbortSignal.timeout(15_000),
+    }, expectedGeneration)
+    const raw = await response.text()
+    this.assertCurrentAuth(snapshot)
+    if (response.status === 401) {
+      await this.signOutIfCurrent(snapshot)
+      throw new Error('登录已失效，请重新登录')
+    }
+    if (response.status === 403) throw new ForgeBusinessReadError('forbidden', '当前账号没有读取该业务数据的权限')
+    if (!response.ok) throw new ForgeBusinessReadError('failed', `Forge 业务读取失败（${response.status}）`)
+    const envelope = record(parseMcpResponse(raw))
+    if (!envelope) throw new ForgeBusinessReadError('failed', 'Forge 原生读取工具返回格式无法识别')
+    const rpcError = record(envelope.error)
+    if (rpcError) throw forgeMcpReadError(textValue(rpcError.message) ?? '')
+    const result = record(envelope.result)
+    if (!result) throw new ForgeBusinessReadError('failed', 'Forge 原生读取工具没有返回结果')
+    const content = Array.isArray(result.content) ? result.content : []
+    const text = content.map((item) => textValue(record(item)?.text)).find(Boolean)
+    if (result.isError === true) throw forgeMcpReadError(text ?? '')
+    if (result.structuredContent !== undefined) return result.structuredContent
+    if (!text) throw new ForgeBusinessReadError('failed', 'Forge 原生读取工具没有返回数据')
+    try { return JSON.parse(text) as unknown }
+    catch { return text }
+  }
+
+  private async forgeObjectMetadata(objectName: string, expectedGeneration: number): Promise<unknown> {
+    if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务元数据')
+    const { response, snapshot } = await this.authenticatedFetch(
+      new URL(`/api/v1/meta/object/${encodeURIComponent(objectName)}`, this.forgeUrl), 'forge',
+      { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(15_000) }, expectedGeneration,
+    )
+    if (response.status === 401) {
+      await response.body?.cancel()
+      await this.signOutIfCurrent(snapshot)
+      throw new Error('登录已失效，请重新登录')
+    }
+    if (response.status === 403) { await response.body?.cancel(); throw new ForgeBusinessReadError('forbidden', '当前账号没有读取该对象元数据的权限') }
+    if (response.status === 404) { await response.body?.cancel(); throw new ForgeBusinessReadError('not_found', '所选业务对象当前不可见') }
+    if (!response.ok) { await response.body?.cancel(); throw new ForgeBusinessReadError('failed', `Forge 对象元数据读取失败（${response.status}）`) }
+    const result = await response.json()
+    this.assertCurrentAuth(snapshot)
+    return result
+  }
+
   private async forgeRequest(path: string, body: unknown, expectedGeneration = this.authGeneration): Promise<{ status: number; body: unknown }> {
     const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.forgeUrl), 'forge', {
       method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
@@ -867,28 +953,31 @@ export class EnterpriseService {
     return capabilities
   }
 
-  async findBusinessRecords(objectNames: string[], workSummary: string): Promise<Array<{ objectName: string; recordId: string; name: string; code?: string }>> {
-    const requested = [...new Set(objectNames)].filter((name) => /^[a-z][a-z0-9_]{1,127}$/.test(name) && !name.startsWith('sys_'))
-    if (!requested.length) return []
+  async getBusinessObjectDirectory(): Promise<BusinessObjectDirectory> {
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    const terms = [...new Set(workSummary.toLowerCase().split(/[\s，。；、：,.!?！？（）()《》“”"'\-_/]+/).map((value) => value.trim()).filter((value) => value.length >= 2))]
-    const matches: Array<{ objectName: string; recordId: string; name: string; code?: string; score: number; updatedAt: string }> = []
-    for (const objectName of requested) {
-      const payload = record(await this.forgeJSON(`/api/v1/data/${encodeURIComponent(objectName)}?$top=100`, generation))
-      const rows = Array.isArray(payload?.records) ? payload.records : Array.isArray(record(payload?.data)?.records) ? record(payload?.data)?.records as unknown[] : []
-      for (const value of rows) {
-        const row = record(value), recordId = textValue(row?.id), name = textValue(row?.name) ?? textValue(row?.title), code = textValue(row?.code)
-        if (!row || !recordId || !name) continue
-        const haystack = [name, code, textValue(row.customer_po_number), textValue(row.remarks)].filter(Boolean).join(' ').toLowerCase()
-        const score = terms.reduce((total, term) => total + (haystack.includes(term) ? Math.max(2, term.length) : 0), 0)
-        matches.push({ objectName, recordId, name, ...(code ? { code } : {}), score, updatedAt: textValue(row.updated_at) ?? textValue(row.created_at) ?? '' })
-      }
-    }
-    const ranked = matches.sort((left, right) => right.score - left.score || right.updatedAt.localeCompare(left.updatedAt))
-    const positive = ranked.filter((item) => item.score > 0)
+    if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务记录')
+    const directory = await this.businessReader.listObjects(generation)
     this.assertAuthGeneration(generation)
-    return positive.slice(0, 10).map(({ score: _score, updatedAt: _updatedAt, ...item }) => item)
+    return directory
+  }
+
+  async findBusinessRecords(objectName: string, workSummary: string, offset: number, limit: number): Promise<BusinessRecordSearchPage> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务记录')
+    const result = await this.businessReader.findRecords(objectName, workSummary, offset, limit, generation)
+    this.assertAuthGeneration(generation)
+    return result
+  }
+
+  async readBusinessRecord(objectName: string, recordId: string): Promise<BusinessRecordRead> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务记录')
+    const result = await this.businessReader.readRecord(objectName, recordId, generation)
+    this.assertAuthGeneration(generation)
+    return result
   }
 
   async createDevelopmentTeam(input: EnterpriseCreateTeamInput): Promise<EnterpriseCreateTeamResult> {
@@ -1477,7 +1566,7 @@ export class EnterpriseService {
     sourceMessages: Array<{ messageId: string; eventSeq: number; sha256: string }>
     accountKey: string
     resources: EnterpriseWorkResource[]
-    businessContext?: { objectName: string; recordId: string }
+    businessContext?: { objectName: string; recordId: string; recordVersion?: string }
     continuation?: { workbenchSessionID: string; inputRevisionID: string; runID: string; teamID: string }
     authorizedBusinessCapabilityIds: string[]
     assertCurrent(): Promise<void>
@@ -1512,7 +1601,10 @@ export class EnterpriseService {
         team_id: choice.teamId, workflow_id: choice.workflowId,
         workflow_version: choice.version, project_id: projectID, task: normalized,
         resources: source?.resources,
-        ...(source?.businessContext ? { business_record: { object_name: source.businessContext.objectName, record_id: source.businessContext.recordId } } : {}),
+        ...(source?.businessContext ? { business_record: {
+          object_name: source.businessContext.objectName, record_id: source.businessContext.recordId,
+          ...(source.businessContext.recordVersion ? { record_version: source.businessContext.recordVersion } : {}),
+        } } : {}),
         authorized_business_capability_ids: source?.authorizedBusinessCapabilityIds ?? [],
         source_messages: source?.sourceMessages.map((message) => ({ message_id: message.messageId, event_seq: message.eventSeq, sha256: message.sha256 }))
           ?? [{ message_id: workId, event_seq: 0, sha256: createHash('sha256').update(normalized).digest('hex') }],

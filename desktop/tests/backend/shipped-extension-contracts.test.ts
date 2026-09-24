@@ -101,7 +101,7 @@ const expectedRegistrations: Record<string, Registration[]> = {
   ],
   'gooeypi-enterprise.ts': [
     { kind: 'event', name: 'before_agent_start' },
-    ...['gooeypi_enterprise_team_search', 'gooeypi_enterprise_team_describe', 'gooeypi_enterprise_business_record_find', 'gooeypi_enterprise_work_submit', 'gooeypi_enterprise_work_recover'].map((name) => ({ kind: 'tool' as const, name })),
+    ...['gooeypi_enterprise_team_search', 'gooeypi_enterprise_team_describe', 'gooeypi_enterprise_business_objects', 'gooeypi_enterprise_business_record_find', 'gooeypi_enterprise_business_record_read', 'gooeypi_enterprise_work_submit', 'gooeypi_enterprise_work_recover', 'gooeypi_approval_revision_submit'].map((name) => ({ kind: 'tool' as const, name })),
   ],
   'omp-work-schedules.ts': [
     ...['scheduled_tasks_list', 'scheduled_task_create_once', 'scheduled_task_create_recurring', 'scheduled_task_update', 'scheduled_task_manage'].map((name) => ({ kind: 'tool' as const, name })),
