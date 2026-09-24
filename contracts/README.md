@@ -34,7 +34,7 @@ Workbench 对 `source.system=weave` 的原生消息，以当前 Forge/Weave 登�
 
 Workbench 新上传的团队材料使用 ObjectStack 原生 `scope=attachments`，使原生下载路由进入 `authorizeFileRead`；其原生授权会优先核对当前文件所有人。Workbench 对每个原工作 `forge-file` 引用，调用 `GET /api/v1/workbench/materials/{fileId}` 取得有长度与 SHA 校验的文本内容。Forge 插件从当前登录会话确定用户，只读取 `sys_file` 中 `scope=attachments` 或已有的 `scope=user`、`acl=private`、`status=committed` 且 `owner_id` 等于该用户的未绑定文本文件；由原生 storage 服务读原始字节，校验元数据长度，计算 SHA-256，按 [owned-text-material](v1/owned-text-material.schema.json) 返回。Workbench 再与 Weave 固定输入的文件 ID、名称、字节数、摘要逐项比较，全部一致才将原文交给 Pi。未登录返回 401，非所有人或不存在返回 404，超限返回 413，格式不支持返回 415，字节不一致返回 422，服务不可用返回 503；响应禁用缓存。调用方不能借此读取其他员工文件或审批文件。
 
-已存的 `scope=user` 工作材料仍可能通过 ObjectStack 17.3 原生文件 URL 路由绕过读取钩子；新插件不能替该原路由撤销已签发的 URL。上线前必须按 Weave 固定输入清单盘点这些确切文件，在隔离候选验证使用原生元数据能力转换为受钩子保护的 `attachments` scope，并独立检查其他员工无法从原生 URL 读取；失败则 C01 材料权限仍未关闭。不能批量修改其他业务的个人文件，也不改 ObjectStack 源码。
+已存的 `scope=user` 工作材料仍可能通过 ObjectStack 17.3 原生文件 URL 路由绕过读取钩子；新插件不能替该原路由撤销已签发的 URL。124 本轮按用户要求全新初始化 Forge/Weave 应用及业务卷，旧文件会一并删除，不迁移旧内容；必须独立验证新上传使用 `attachments` 后，其他员工与匿名请求均不能从原生 URL 读取。若其他部署要保留旧数据，则先按 Weave 固定输入清单盘点确切文件，验证以原生元数据能力迁到受钩子保护的范围；未验证前不能关闭 C01 材料权限。不能批量修改其他业务的个人文件，也不改 ObjectStack 源码。
 
 团队运行状态、团队最终产物与 Forge 正式业务回执分别呈现。此只读响应不授予新的写动作；员工提出补充或修改时建立新轮次，按当前权限重新固定输入。继续原团队工作时必须复用服务端返回的 `workbench_session_id`、`input_revision_id`、`team_id`，将本次 `expected_revision_id` 指向当前输入，`revision_context.parent_input_revision_id/parent_run_id` 指向所打开的原输入与运行；若服务端 head 已变化，应提示刷新并重新选择当前工作，不把结果另起为无关联任务。正式审批消息继续使用原生 [审批上下文](v1/approval-context.schema.json)，不走此接口。取消已经发生的业务动作依 Forge 规则处理。
 
