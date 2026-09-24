@@ -1,6 +1,6 @@
 import { salesContractOperatorPermission, salesContractReviewerPermission } from '../../permissions/sales-contract.permission.js';
 import { salesLeadConversionPermission, salesLeadOwnerPermission } from '../../permissions/sales-lead-conversion.permission.js';
-import { salesQuotationAdjustmentPermission } from '../../permissions/sales-quotation.permission.js';
+import { salesQuotationAdjustmentPermission, salesQuotationDraftPermission } from '../../permissions/sales-quotation.permission.js';
 import {
   salesReferenceReaderPermission,
   salesCustomerFollowUpOperatorPermission,
@@ -14,6 +14,7 @@ export const salesApplication = defineForgeApplicationPackage('sales', [
   salesLeadOwnerPermission,
   salesLeadConversionPermission,
   salesQuotationAdjustmentPermission,
+  salesQuotationDraftPermission,
   salesReferenceReaderPermission,
   salesCustomerFollowUpOperatorPermission,
   salesSettingsManagerPermission,

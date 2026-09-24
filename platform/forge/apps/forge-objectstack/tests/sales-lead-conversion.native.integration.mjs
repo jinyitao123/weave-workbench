@@ -42,7 +42,7 @@ async function cleanupPreviousTestUsers() {
   await postgres.connect();
   let users;
   try {
-    users = await postgres.query("SELECT id FROM sys_user WHERE email = 'admin@objectos.ai' OR email = 'lead-conversion-admin@example.test' OR email LIKE 'lead-conversion-admin-%@example.test' OR email LIKE 'lead-conversion-reader-%@example.test'");
+    users = await postgres.query("SELECT id FROM sys_user WHERE email = 'admin@objectos.ai' OR email = 'lead-conversion-admin@example.test' OR email LIKE 'lead-conversion-admin-%@example.test' OR email LIKE 'lead-conversion-reader-%@example.test' OR email LIKE 'lead-conversion-peer-%@example.test'");
   } catch (error) {
     if (error?.code === '42P01') return;
     throw error;
@@ -266,20 +266,40 @@ async function read(api, objectName, id) {
   return response.value?.record || response.value?.data?.record;
 }
 
+async function setOwnerId(objectName, recordId, ownerId) {
+  assert.match(objectName, /^forge_[a-z_]+$/);
+  if (isPostgres) {
+    await postgres.query(`UPDATE "${objectName}" SET owner_id = $1 WHERE id = $2`, [ownerId, recordId]);
+    return;
+  }
+  const { DatabaseSync } = await import('node:sqlite');
+  sqlite = new DatabaseSync(dbPath);
+  sqlite.prepare(`UPDATE "${objectName}" SET owner_id = ? WHERE id = ?`).run(ownerId, recordId);
+  sqlite.close();
+  sqlite = null;
+}
+
+async function canRead(api, objectName, id) {
+  const response = await api.request(`/data/${objectName}/${id}`);
+  const record = response.value?.record || response.value?.data?.record;
+  return response.status < 400 && Boolean(record?.id);
+}
+
 async function invoke(api, leadId, params) {
   return api.request(`/actions/forge_sales_lead/sales_lead_convert_to_opportunity/${leadId}`, 'POST', { params });
 }
 
-async function createLead(api, ownerId, label) {
+async function createLead(api, ownerId, label, companyNameOverride = null) {
   const suffix = randomUUID().replaceAll('-', '').slice(0, 12).toUpperCase();
+  const companyName = companyNameOverride || `${label}公司-${suffix}`;
   const id = await create(api, 'forge_sales_lead', {
     name: `${label}线索`, code: `LEAD-${runId}-${suffix}`,
-    company_name: `${label}公司-${suffix}`, contact_name: '测试联系人',
+    company_name: companyName, contact_name: '测试联系人',
     phone: '13800000000', source: '隔离运行时测试',
     responsible_id: ownerId, remarks: 'Forge 原生运行时线索转化验证',
   });
   created.leads.push(id);
-  return { id, companyName: `${label}公司-${suffix}` };
+  return { id, companyName };
 }
 
 async function ensureProjectCustomerCategory(admin) {
@@ -431,6 +451,9 @@ try {
   assert.ok(reader.userId, 'Registered employee must be present in ObjectStack identity data');
   await assignPermission(admin, reader.userId, reader.user, permissionSets, 'sales_lead_owner');
 
+  const peer = await signup(admin, `lead-conversion-peer-${runId}@example.test`);
+  await assignPermission(admin, peer.userId, peer.user, permissionSets, 'sales_lead_owner');
+
   const blockedLead = await createLead(reader, reader.userId, '无转化权限');
   const readerRecord = await read(reader, 'forge_sales_lead', blockedLead.id);
   assert.equal(readerRecord.status, 'new', 'owner permission must allow the assigned employee to read their own lead');
@@ -487,6 +510,27 @@ try {
   assert.equal((await findAll(admin, 'forge_customer', { name: missingCategoryLead.companyName })).length, 0);
   assert.equal((await findAll(admin, 'forge_sales_opportunity', { lead_id: missingCategoryLead.id })).length, 0);
 
+  const crossOwnerCompany = `同名客户归属冲突-${runId}`;
+  const ownSameNameCustomerId = await create(admin, 'forge_customer', {
+    name: crossOwnerCompany, category_id: projectCategoryId, responsible_id: reader.userId,
+    remarks: '隔离测试：同名客户归属当前销售',
+  });
+  created.customers.push(ownSameNameCustomerId);
+  await setOwnerId('forge_customer', ownSameNameCustomerId, reader.userId);
+  const otherOwnerCustomerId = await create(admin, 'forge_customer', {
+    name: crossOwnerCompany, category_id: projectCategoryId, responsible_id: peer.userId,
+    remarks: '隔离测试：客户归属为另一位销售',
+  });
+  created.customers.push(otherOwnerCustomerId);
+  await setOwnerId('forge_customer', otherOwnerCustomerId, peer.userId);
+  const crossOwnerLead = await createLead(reader, reader.userId, '同名公司线索', crossOwnerCompany);
+  const conflictingConversion = await invoke(reader, crossOwnerLead.id, { amount: 88000 });
+  assert.ok(conflictingConversion.status >= 400, 'A lead must not silently reuse a same-name customer owned by another sales employee');
+  assert.match(errorMessage(conflictingConversion), /同名客户已归属其他销售/);
+  assert.equal((await read(reader, 'forge_sales_lead', crossOwnerLead.id)).status, 'new');
+  assert.equal((await findAll(admin, 'forge_customer', { name: crossOwnerCompany })).length, 2);
+  assert.equal((await findAll(admin, 'forge_sales_opportunity', { lead_id: crossOwnerLead.id })).length, 0);
+
   const normalLead = await createLead(reader, reader.userId, '权限通过');
   const params = { amount: 320000, expected_close_on: '2026-10-30' };
   const callArgs = {
@@ -507,6 +551,15 @@ try {
   assert.equal((await findAll(admin, 'forge_sales_opportunity', { lead_id: normalLead.id })).length, 1);
   const convertedLead = await read(reader, 'forge_sales_lead', normalLead.id);
   assert.ok(convertedLead.conversion_request_signature, 'the conversion capability can read the persisted replay signature');
+  const convertedCustomer = await read(reader, 'forge_customer', firstResult.customer_id);
+  const convertedOpportunity = await read(reader, 'forge_sales_opportunity', firstResult.opportunity_id);
+  assert.equal(convertedCustomer.owner_id, reader.userId, 'A newly created customer must inherit the authorized lead owner in native system context');
+  assert.equal(convertedCustomer.responsible_id, reader.userId);
+  assert.equal(convertedOpportunity.owner_id, reader.userId, 'A newly created opportunity must inherit the authorized lead owner in native system context');
+  assert.equal(convertedOpportunity.responsible_id, reader.userId);
+  assert.equal(await canRead(peer, 'forge_sales_lead', normalLead.id), false, 'another sales employee must not read this employee\'s lead');
+  assert.equal(await canRead(peer, 'forge_customer', firstResult.customer_id), false, 'an unrelated employee without the conversion capability must not read its customer');
+  assert.equal(await canRead(peer, 'forge_sales_opportunity', firstResult.opportunity_id), false, 'an unrelated employee must not read its opportunity');
 
   const concurrentLead = await createLead(reader, reader.userId, '并发同参');
   const concurrentSame = await Promise.all(Array.from({ length: 4 }, () => invoke(reader, concurrentLead.id, params)));

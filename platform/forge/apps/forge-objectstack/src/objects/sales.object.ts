@@ -34,7 +34,7 @@ export const Quotation = master('forge_quotation', '销售报价', 'file-text', 
 }, ['code', 'name', 'customer_id', 'responsible_id', 'item_count', 'total_amount', 'status', 'valid_until']);
 
 export const QuotationLine = master('forge_quotation_line', '报价明细', 'list', {
-  name: text('物料/服务名称', true), quotation_id: reference('forge_quotation', '报价单', true),
+  name: text('物料/服务名称', true), quotation_id: { ...reference('forge_quotation', '报价单', true), inlineEdit: true, inlineTitle: '报价明细' },
   line_type: choice('明细类型', ['物料', '服务项目'], '物料'), group_name: text('分组'), sku_id: reference('forge_material_sku', '物料规格'),
   item_code: text('编码'), model: text('型号'), specification: text('规格'), unit_name: text('单位'),
   quantity: positiveQuantity(), taxed_unit_price: nonNegativeMoney('含税单价'), untaxed_unit_price: nonNegativeMoney('不含税单价'),
