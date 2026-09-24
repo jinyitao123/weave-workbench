@@ -263,6 +263,16 @@ EOF
   return 0
 }
 
+# A fresh installation has no upstream for Nginx yet. Boot the app (whose
+# entrypoint completes schema preflight before serving) before probing a proxy.
+if [ -z "$PREVIOUS_CONTAINER" ]; then
+  echo "首次部署：初始化数据库与 Forge 应用。"
+  if ! FORGE_IMAGE="$IMAGE" docker compose up -d --no-build app || ! wait_for_app_container; then
+    echo "首次初始化未通过；公网入口未启用。" >&2
+    exit 1
+  fi
+fi
+
 # Validate the proxy on a loopback-only port before switching the public entry.
 echo "启动候选 Nginx，端口：$CANDIDATE_PORT"
 CANDIDATE_STARTED=1

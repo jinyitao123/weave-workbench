@@ -16,7 +16,8 @@ import { ContractRevisionMaterialPlugin, approvalPayloadVersion } from '../src/p
 
 const DATABASE = 'forge_contract_test';
 const HOST = '127.0.0.1';
-const PORT = 55439;
+const PORT = Number(process.env.FORGE_NATIVE_PG_APPROVAL_PORT || 55439);
+assert.ok(Number.isInteger(PORT) && PORT > 0 && PORT < 65536, 'FORGE_NATIVE_PG_APPROVAL_PORT must be a valid local PostgreSQL port');
 const SYSTEM = { isSystem: true, positions: [], permissions: [] };
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const id = () => randomUUID();

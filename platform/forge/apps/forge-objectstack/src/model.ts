@@ -21,7 +21,12 @@ const optionCodes = {
   标准: 'standard', 项目: 'project', 试制: 'trial', 根节点: 'root', 分组: 'group', 子BOM: 'sub_bom',
 } as const;
 type OptionLabel = keyof typeof optionCodes;
-export const choice = (label: string, values: OptionLabel[], defaultValue?: OptionLabel) => Field.select(
+export const materialPropertyLabels = ['原材料', '半成品', '成品', '贸易商品', '消耗品', '服务', '备件', '包装材料'] as const;
+export const materialSourceTypeLabels = ['采购', '自制', '外协', '虚拟'] as const;
+export const materialPropertyOptions = materialPropertyLabels.map(label => ({ value: optionCodes[label], label }));
+export const materialSourceTypeOptions = materialSourceTypeLabels.map(label => ({ value: optionCodes[label], label }));
+
+export const choice = (label: string, values: readonly OptionLabel[], defaultValue?: OptionLabel) => Field.select(
   values.map(value => ({ value: optionCodes[value], label: value })),
   { label, ...(defaultValue ? { defaultValue: optionCodes[defaultValue] } : {}) },
 );

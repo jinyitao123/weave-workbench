@@ -57,6 +57,8 @@ COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/objectstack.config.ts ./objectstack.config.ts
 COPY --from=build --chown=node:node /app/src ./src
 COPY --from=build --chown=node:node /app/dist ./dist
+COPY --from=build --chown=node:node /app/scripts/notification-lease-preflight.mjs /app/scripts/start-with-migrations.sh ./scripts/
+COPY --from=build --chown=node:node /app/scripts/schema/notification-lease-precision.sql ./scripts/schema/notification-lease-precision.sql
 COPY --from=build --chown=node:node /app/.console94/console94.lock.json /tmp/console94.lock.json
 COPY --from=build --chown=node:node /app/.console94/console94-build.json /tmp/console94-build.json
 COPY --from=build --chown=node:node /app/.generated/console94-layout.json /tmp/console94-layout.json
@@ -67,7 +69,7 @@ RUN node /tmp/verify-console94-runtime.mjs /srv/app /tmp/console94.lock.json /tm
 # The Forge app contains a small runtime plugin that exposes the authenticated
 # Weave event ingress. Boot the authored config so this code is present; a pure
 # objectstack.json boot can carry its metadata but cannot execute Plugin.init().
-CMD ["node", "/srv/app/node_modules/@objectstack/cli/bin/run.js", "serve", "objectstack.config.ts"]
+CMD ["sh", "/srv/app/scripts/start-with-migrations.sh", "node", "/srv/app/node_modules/@objectstack/cli/bin/run.js", "serve", "objectstack.config.ts"]
 
 # OS_DATABASE_URL, OS_AUTH_SECRET, OS_SECRET_KEY, and
 # FORGE_WEAVE_EVENT_SECRET are injected at runtime —

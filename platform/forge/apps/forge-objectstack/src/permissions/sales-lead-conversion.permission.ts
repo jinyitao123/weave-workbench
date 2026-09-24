@@ -32,7 +32,7 @@ export const salesLeadConversionPermission = definePermissionSet({
     forge_customer: {
       allowCreate: true,
       allowRead: true,
-      readScope: 'org',
+      readScope: 'own',
       writeScope: 'own',
     },
     forge_customer_category: {

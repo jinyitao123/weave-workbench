@@ -69,6 +69,8 @@ Docker Compose 通过 BuildKit `additional_contexts` 注入该目录；直接使
 
 单机或客户内网部署使用 `scripts/deploy.sh`。公网同源入口由独立 Nginx 容器提供，Forge 应用端口只暴露在 Compose 内网。Nginx 对文本和 JSON 使用 gzip；仅 200、内容哈希命名且 MIME 属于 JavaScript、CSS 或字体的资源可获一年浏览器缓存。HTML 需重新验证，带认证的响应保持私有，写入、认证和上传响应不缓存；SSE/MCP 流按事件到达且不压缩。Nginx 不启用共享响应缓存。
 
+容器启动时先执行 `scripts/notification-lease-preflight.mjs`，再启动正式服务。空 PostgreSQL 库通过固定版本 ObjectStack 导出的 `NotificationDelivery` 和原生 SQL driver 建立通知投递表；已有库只核对三个租约字段。遇到 17.3 的 `real` 类型时执行 [精度迁移](scripts/schema/notification-lease-precision.sql)，并验证为 `double precision`；已正确时不重置领取状态。迁移失败则不启动应用和消息处理器，不等待首条通知才手工修表。该流程用于当前单机单应用进程部署；升级前须停止旧应用，不适用于新旧消息工作进程并发执行迁移。原根目录日期 SQL 已迁入应用构建上下文，历史执行证据仍可按旧提交追溯。
+
 发布脚本按同一源码提交构建带修订标识的应用和代理镜像，发布前备份已有 PostgreSQL；先在仅绑定回环地址的候选端口验证 Nginx 与 Forge，再更新应用、重新验证候选入口，最后切换公网端口。任一健康检查失败会尝试恢复上一应用与代理镜像；首次由直连切换到代理时，失败则恢复上一应用的原公网端口。发布记录写入 `.deploy/releases/`，包含镜像标识、端口和备份位置，不含密钥。环境差异只放在未提交的 `.env` 中，业务数据继续保存在独立 Docker volume。
 
 ```sh

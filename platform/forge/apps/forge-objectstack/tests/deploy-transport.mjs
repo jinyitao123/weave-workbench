@@ -18,7 +18,7 @@ const dockerScript = [
   'printf "candidatePort=%s proxyImage=%s appImage=%s %s\\n" "$FORGE_CANDIDATE_PORT" "$FORGE_PROXY_IMAGE" "$FORGE_IMAGE" "$*" >> "$FORGE_DEPLOY_TEST_LOG"',
   'if [ "$1" = "compose" ] && [ "$2" = "ps" ]; then',
   '  case "$4" in',
-  '    app) if [ -f "$FORGE_DEPLOY_TEST_STATE/app-updated" ]; then echo new-app; else echo old-app; fi ;;',
+  '    app) if [ -f "$FORGE_DEPLOY_TEST_STATE/app-updated" ]; then echo new-app; elif [ "$FORGE_TEST_FRESH" != 1 ]; then echo old-app; fi ;;',
   '    proxy) if [ "$FORGE_TEST_PREVIOUS_PROXY" = 1 ]; then echo old-proxy; fi ;;',
   '    db) : ;;',
   '  esac',
@@ -51,7 +51,7 @@ const dockerScript = [
   '  case " $* " in',
   '    *" up "*)',
   '      case " $* " in',
-  '      *" proxy-candidate "*) touch "$FORGE_DEPLOY_TEST_STATE/candidate-started" ;;',
+  '      *" proxy-candidate "*) if [ "$FORGE_TEST_FRESH" = 1 ] && [ ! -f "$FORGE_DEPLOY_TEST_STATE/app-updated" ]; then exit 1; fi; touch "$FORGE_DEPLOY_TEST_STATE/candidate-started" ;;',
   '      *" app "*)',
   '        if [ "$FORGE_IMAGE" = "inoforge-app:sha-old" ]; then rm -f "$FORGE_DEPLOY_TEST_STATE/app-updated"; touch "$FORGE_DEPLOY_TEST_STATE/app-rolled-back";',
   '        else touch "$FORGE_DEPLOY_TEST_STATE/app-updated"; fi',
@@ -81,7 +81,7 @@ const curlScript = [
   'esac',
 ].join('\n') + '\n';
 
-async function runCase({ name, publicFailure, previousProxy }) {
+async function runCase({ name, publicFailure, previousProxy, fresh = false }) {
   const tempDir = await mkdtemp(path.join(tmpdir(), 'forge-deploy-transport-'));
   try {
     const appDir = path.join(tempDir, 'app');
@@ -126,6 +126,7 @@ async function runCase({ name, publicFailure, previousProxy }) {
       FORGE_DEPLOY_TEST_STATE: stateDir,
       FORGE_TEST_FAIL_PUBLIC: publicFailure ? '1' : '0',
       FORGE_TEST_PREVIOUS_PROXY: previousProxy ? '1' : '0',
+      FORGE_TEST_FRESH: fresh ? '1' : '0',
     };
     const result = spawnSync('/bin/sh', [path.join(scriptsDir, 'deploy.sh')], {
       cwd: appDir,
@@ -149,6 +150,12 @@ async function runCase({ name, publicFailure, previousProxy }) {
 
 const cases = [];
 try {
+  const fresh = await runCase({ name: 'fresh deployment', publicFailure: false, previousProxy: false, fresh: true });
+  cases.push(fresh);
+  assert.equal(fresh.result.status, 0, 'fresh deployment should initialize its app before testing the proxy:\n' + fresh.output);
+  assert.ok(fresh.commandLog.indexOf('up -d --no-build app') < fresh.commandLog.indexOf('up -d --no-build --no-deps --force-recreate proxy-candidate'));
+  console.log('PASS fresh deployment initializes the app before probing its proxy');
+
   const success = await runCase({ name: 'successful release', publicFailure: false, previousProxy: false });
   cases.push(success);
   assert.equal(success.result.status, 0, 'successful release should exit zero:\n' + success.output);
