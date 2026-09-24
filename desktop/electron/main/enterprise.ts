@@ -33,6 +33,12 @@ export interface ApprovalRevisionSubmission {
   attachments: ApprovalRevisionFileReference[]
 }
 export interface ForgeHttpResult { status: number; body: unknown }
+export interface EnterpriseWorkNotificationSource {
+  version: '1'
+  notificationID: string
+  kind: 'result' | 'failure' | 'revision_required' | 'cancelled'
+  source: { system: 'weave'; workReference: string; runReference: string; sessionReference: string }
+}
 export interface EnterpriseWorkContinuationContext {
   version: '1'
   source: { inputRevisionID: string; runID: string; workbenchSessionID: string }
@@ -1249,8 +1255,12 @@ export class EnterpriseService {
       if (!id || !title || !createdAt) return []
       const requestedKind = textValue(data?.kind)
       const notificationType = textValue(notification?.type) ?? ''
-      const kind: EnterpriseWorkItem['kind'] = requestedKind === 'revision_required' || requestedKind === 'human_review' || requestedKind === 'failure' || requestedKind === 'result'
-        ? requestedKind : notificationType.includes('revision_required') ? 'revision_required' : notificationType.includes('failure') || notificationType.includes('error') ? 'failure' : 'result'
+      const nativeTeamRunKind = /^weave\.team_run\.(result|failure|revision_required|cancelled)$/.exec(notificationType)?.[1]
+      const kind: EnterpriseWorkItem['kind'] = requestedKind === 'revision_required' || requestedKind === 'human_review' || requestedKind === 'failure' || requestedKind === 'result' || requestedKind === 'cancelled'
+        ? requestedKind : nativeTeamRunKind === 'revision_required' ? 'revision_required'
+          : nativeTeamRunKind === 'failure' ? 'failure'
+            : nativeTeamRunKind === 'cancelled' ? 'cancelled'
+              : notificationType.includes('revision_required') ? 'revision_required' : notificationType.includes('failure') || notificationType.includes('error') ? 'failure' : 'result'
       const actionable = kind === 'revision_required' || kind === 'human_review'
       const displayTitle = /[0-9a-f]{8}-[0-9a-f-]{27,}/i.test(title)
         ? kind === 'failure' ? '团队处理失败' : kind === 'revision_required' ? '团队工作需要修改' : kind === 'human_review' ? '需要人工处理' : '团队工作已完成'
@@ -1262,7 +1272,8 @@ export class EnterpriseService {
       const reviewScope = textValue(continuation?.reviewScope)
       return [{
         id, kind, title: displayTitle, status, actionable, read: notification?.read === true,
-        source: (textValue(source?.system) ?? textValue(data?.source)) === 'weave' || notificationType.startsWith('weave.') ? 'weave' : 'forge', createdAt,
+        source: (textValue(source?.system) ?? textValue(data?.source)) === 'weave' || notificationType.startsWith('weave.') ? 'weave' : 'forge',
+        notificationType, createdAt,
         ...(textValue(notification?.body) ? { summary: textValue(notification?.body) } : {}),
         ...(textValue(data?.instructions) ? { instructions: textValue(data?.instructions) } : {}),
         ...(textValue(notification?.actionUrl) ?? textValue(notification?.action_url) ? { actionUrl: textValue(notification?.actionUrl) ?? textValue(notification?.action_url) } : {}),
@@ -1323,6 +1334,27 @@ export class EnterpriseService {
     context.input.materials = materials
     this.assertAuthGeneration(generation)
     return context
+  }
+
+  async getWorkNotificationSource(notificationIDValue: string): Promise<EnterpriseWorkNotificationSource> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    const notificationID = boundedIdentity(notificationIDValue, 128)
+    if (!notificationID) throw new Error('工作消息无效，请刷新工作列表')
+    const raw = record(await this.forgeJSON(`/api/v1/workbench/notifications/${encodeURIComponent(notificationID)}/source`, generation, '工作消息来源'))
+    const source = record(raw?.source)
+    const responseNotificationID = boundedIdentity(raw?.notificationId, 128)
+    const kind = boundedIdentity(raw?.kind, 64)
+    const workReference = boundedIdentity(source?.workReference, 512)
+    const runReference = boundedIdentity(source?.runReference, 512)
+    const sessionReference = boundedIdentity(source?.sessionReference, 512)
+    if (raw?.version !== '1' || responseNotificationID !== notificationID
+      || kind !== 'result' && kind !== 'failure' && kind !== 'revision_required' && kind !== 'cancelled'
+      || source?.system !== 'weave' || !workReference || !runReference || !sessionReference) {
+      throw new Error('工作消息来源与当前消息不匹配，请刷新工作列表')
+    }
+    this.assertAuthGeneration(generation)
+    return { version: '1', notificationID, kind, source: { system: 'weave', workReference, runReference, sessionReference } }
   }
 
   async getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContext> {

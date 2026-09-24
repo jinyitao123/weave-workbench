@@ -19,6 +19,7 @@
 - `approval-context`：Workbench 按当前 Forge 身份读取单个原生审批的受限快照、退回版本与材料；修订材料由 Forge 领域动作校验并经 ObjectStack 原生守卫重提，不开放桌面直接重提。
 - `approval-revision`：退回事项的新主件与附件引用、来源版本和幂等键；Forge 插件固定材料并调用受守卫的原生重提，回执区分准备完成、已进入下一轮和恢复状态未知。
 - `team-run-event`：Weave 将团队运行终态交给 Forge 原生收件箱的系统事件。
+- `team-run-notification-source`：员工点击原生收件箱中的 Weave 团队消息时，按当前身份读取这条消息已保存的来源引用，用于打开原工作。
 - `delivery-receipt`：业务结果、证据、用量和独立核验结果。
 - `execution-control`：重试、超时、额度、取消和未知结果核对。
 - `development-observation`：开发中心读取团队定义、准确版本和归属运行的只读投影。
@@ -29,6 +30,8 @@
 ## 团队运行消息继续原工作
 
 Workbench 对 `source.system=weave` 的原生消息，以当前 Forge/Weave 登录员工身份调用 `GET /v1/runs/{runId}/workbench-context`。Weave 只从该员工本人已消费的 `weave_dispatch_input_revisions` 找到运行，按 `workbenchRunAccess` 同一归属规则拒绝他人；不得凭客户端传入的员工、材料或记录 ID 扩权。返回值符合 [work-continuation](v1/work-continuation.schema.json)。其中 `source.input_revision_id/run_id/workbench_session_id` 必须分别与消息的 `workReference/runReference/sessionReference` 完全一致，桌面才可把上下文交给 Pi；消息标题和摘要不作为权威输入。401 表示登录无效，404 表示运行不存在或不属于当前员工，503 表示权威读取不可用；缺失或不匹配的固定输入不得退化成消息正文继续。
+
+ObjectStack 17.3 原生 `GET /api/v1/notifications` 按当前员工返回消息，但会省略 `sys_notification.payload.weaveEvent` 中的来源引用。Workbench 在点击 `weave.team_run.*` 消息时，以当前 Forge 登录身份调用 `GET /api/v1/workbench/notifications/{notificationId}/source`；Forge 现有 Weave 事件插件先核对原生 `sys_inbox_message` 的 `notification_id`、`user_id` 与当前员工，再从该原生通知的 `payload.weaveEvent` 投影 [team-run-notification-source](v1/team-run-notification-source.schema.json)。非收件人或无对应事件返回 404，不提供按他人账号列消息的接口，也不复制收件箱状态。得到三引用后，桌面继续向 Weave 核对原运行；任一环节失败则保留消息，不转为自由文本继续。
 
 `input.materials` 只是原任务已验证的 Forge 文件引用和摘要；需要原件时仍以当前员工的 Forge 权限读取并重新校验字节。ObjectStack 17.3 原生存储下载接口对未关联业务记录的 `scope:user` 文件未调用文件读取授权钩子，因此 Workbench 不能直接用它续接材料；Forge 插件提供仅限原文件所有人的受控读取，仍使用原生 `sys_file` 与存储服务，不复制文件。正式审批材料继续由已有审批上下文按请求快照读取。若材料读回失败、长度或摘要不匹配，桌面不得把文件 ID 或通知摘要交给 Pi 当作原文。
 

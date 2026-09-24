@@ -290,13 +290,15 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   handle('enterprise:pin-work-continuation-context', (_event, rawItem) => {
     if (!services.enterpriseBridge) throw new Error('桌面团队续接能力暂不可用')
     const item = requireRecord(rawItem, 'item')
-    rejectUnknownKeys(item, ['source', 'workReference', 'runReference', 'sessionReference'], 'item')
+    rejectUnknownKeys(item, ['id', 'source', 'notificationType', 'workReference', 'runReference', 'sessionReference'], 'item')
     if (item.source !== 'weave') throw new TypeError('item.source must be weave')
     return services.enterpriseBridge.pinWorkContinuationContext({
+      id: requireString(item.id, 'item.id', { min: 1, max: 128 }),
       source: 'weave',
-      workReference: requireString(item.workReference, 'item.workReference', { min: 1, max: 512 }),
-      runReference: requireString(item.runReference, 'item.runReference', { min: 1, max: 512 }),
-      sessionReference: requireString(item.sessionReference, 'item.sessionReference', { min: 1, max: 512 }),
+      ...(item.notificationType !== undefined ? { notificationType: requireString(item.notificationType, 'item.notificationType', { min: 1, max: 128 }) } : {}),
+      ...(item.workReference !== undefined ? { workReference: requireString(item.workReference, 'item.workReference', { min: 1, max: 512 }) } : {}),
+      ...(item.runReference !== undefined ? { runReference: requireString(item.runReference, 'item.runReference', { min: 1, max: 512 }) } : {}),
+      ...(item.sessionReference !== undefined ? { sessionReference: requireString(item.sessionReference, 'item.sessionReference', { min: 1, max: 512 }) } : {}),
     })
   })
   handle('enterprise:submit-work', (_event, choice, goal) => services.enterprise.submitWork(requireEnterpriseWorkChoice(choice), requireString(goal, 'goal', { min: 1, max: 20_000 })))

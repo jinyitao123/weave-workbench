@@ -62,3 +62,18 @@ it('shows available work beside source-specific errors and offers retry without 
   await act(async () => retries[0]!.click())
   expect(refresh).toHaveBeenCalledOnce()
 })
+
+it('keeps a native Weave team-run notification openable when its source is resolved on click', async () => {
+  const item = { ...overview.items[0]!, source: 'weave' as const, notificationType: 'weave.team_run.result' }
+  await act(async () => root.render(<EnterpriseWorkPage
+    overview={{ ...overview, items: [item], reads: { ...overview.reads, notifications: { status: 'loaded' } } }}
+    loading={false} error="" onRefresh={refresh}
+    onComplete={vi.fn(async () => undefined)} onInspect={vi.fn(async () => ({ title: '', step: '', fields: [], files: [] }))}
+    onContinue={continueWork}
+  />))
+
+  const continueButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '交给 Pi 查看')
+  expect(continueButton?.disabled).toBe(false)
+  await act(async () => continueButton?.click())
+  expect(continueWork).toHaveBeenCalledWith(item)
+})
