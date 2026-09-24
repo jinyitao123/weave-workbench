@@ -68,7 +68,10 @@
                     "label": "物料管理",
                     "icon": "package",
                     "type": "page",
-                    "pageName": "page_material_workspace"
+                    "pageName": "page_material_workspace",
+                    "requiredPermissions": [
+                      "forge_supply_chain_settings_manage"
+                    ]
                   },
                   {
                     "id": "material_combinations",
@@ -372,7 +375,10 @@
                         "label": "规格与价格",
                         "icon": "boxes",
                         "type": "object",
-                        "objectName": "forge_material_sku"
+                        "objectName": "forge_material_sku",
+                        "requiredPermissions": [
+                          "forge_supply_chain_settings_manage"
+                        ]
                       },
                       {
                         "id": "material_categories",
@@ -477,7 +483,10 @@
                 "label": "框架销售合同",
                 "icon": "scroll-text",
                 "type": "page",
-                "pageName": "page_sales_contract_workspace"
+                "pageName": "page_sales_contract_workspace",
+                "requiredPermissions": [
+                  "sales_contract_operator"
+                ]
               },
               {
                 "id": "sales_business",

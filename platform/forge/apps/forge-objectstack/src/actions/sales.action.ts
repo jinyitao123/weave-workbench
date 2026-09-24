@@ -489,6 +489,18 @@ if (record.quotation_id) {
 }
 const lines = await ctx.api.object('forge_sales_contract_line').find({ where: { contract_id: id } });
 if (!lines.length) throw new Error('合同至少需要一条物料明细');
+const organizationId = String(ctx.session && ctx.session.organizationId || '');
+if (!organizationId) throw new Error('无法确认当前销售组织，请重新登录后再试');
+const belongsToOrganization = row => row && String(row.organization_id || '') === organizationId;
+for (let index = 0; index < lines.length; index += 1) {
+  const line = lines[index];
+  const sku = await ctx.api.object('forge_material_sku').findOne({ where: { id: line.sku_id } });
+  if (!belongsToOrganization(sku) || sku.enabled === false) throw new Error('第' + (index + 1) + '条合同明细的物料规格不存在、已停用或不属于当前组织');
+  const material = await ctx.api.object('forge_material').findOne({ where: { id: sku.material_id } });
+  if (!belongsToOrganization(material) || material.status === 'inactive') throw new Error('第' + (index + 1) + '条合同明细的物料不存在、已停用或不属于当前组织');
+  const unit = material.unit_id ? await ctx.api.object('forge_unit').findOne({ where: { id: material.unit_id } }) : null;
+  if (!belongsToOrganization(unit) || unit.status === 'inactive') throw new Error('第' + (index + 1) + '条合同明细的计量单位不可用');
+}
 const now = Date.now();
 const reviewerPositions = [
   ['contract_delivery_reviewer', '合同交付复核岗'],

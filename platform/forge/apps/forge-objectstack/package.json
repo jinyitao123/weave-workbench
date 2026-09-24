@@ -30,6 +30,7 @@
     "acceptance:product-structure": "node tests/risemap-product-structure.static.mjs && node tests/navigation-linkage.static.mjs",
     "acceptance:master-data": "node tests/master-data.integration.mjs",
     "acceptance:sales": "node tests/sales-foundation.integration.mjs",
+    "acceptance:sales-contract-access": "node tests/sales-contract-access.static.mjs && node --experimental-strip-types --test tests/sales-contract-sku-guard.test.mjs",
     "acceptance:sales-workflow": "node tests/sales-workflow.integration.mjs",
     "acceptance:quotation-adjustment-native": "node tests/quotation-adjustment.native.integration.mjs",
     "acceptance:sales-conversion": "node tests/sales-conversion.integration.mjs",
