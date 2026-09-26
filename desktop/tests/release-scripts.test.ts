@@ -1198,11 +1198,13 @@ describe('post-package verification helpers', () => {
       '/out/preload/index.js',
       '/out/renderer/index.html',
       '/node_modules/node-pty/lib/index.js',
+      '/node_modules/partial-json/dist/index.js',
       '/node_modules/zeromq/lib/index.js',
       '/node_modules/zeromq/build/manifest.json',
     ]
     expect(() => assertAsarLayout(entries)).not.toThrow()
     expect(() => assertAsarLayout([...entries, '/node_modules/react/index.js'])).toThrow(/duplicated/)
+    expect(() => assertAsarLayout(entries.filter((entry) => !entry.includes('partial-json')))).toThrow(/partial-json/)
     expect(() => assertAsarLayout(entries.filter((entry) => !entry.includes('node-pty')))).toThrow(/missing required/)
     expect(() => assertAsarLayout(entries.map((entry) => entry.replaceAll('/', '\\')))).not.toThrow()
   })

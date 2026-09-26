@@ -265,6 +265,7 @@ export function assertAsarLayout(entries) {
     'out/preload/index.js',
     'out/renderer/index.html',
     'node_modules/node-pty/lib/index.js',
+    'node_modules/partial-json/dist/index.js',
     'node_modules/zeromq/lib/index.js',
     'node_modules/zeromq/build/manifest.json',
   ]
