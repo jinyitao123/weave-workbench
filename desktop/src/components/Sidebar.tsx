@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Copy,
   Download,
-  Blocks,
   Folder,
   FolderOpen,
   ListFilter,
@@ -61,7 +60,6 @@ export interface SidebarProps {
   onArchiveSession(session: SessionRecord): Promise<void>
   overlay?: boolean
   platform?: NodeJS.Platform
-  canDevelop?: boolean
 }
 
 const statusLabel: Record<SessionRecord['status'], string> = {
@@ -184,7 +182,7 @@ async function copySessionUuid(id: string): Promise<void> {
   if (!copied) throw new Error('Copy is unavailable')
 }
 
-function SidebarView({ projects, sessions, activeProjectId, activeSessionId, activeView, activeHarness = 'omp', harnesses, clearedAttention = {}, updateState = { phase: 'unsupported' }, onUpdateAction, onSelectHarness, onSelectProject, onSelectSession, onNavigate, onNewSession, onRemoveProject, projectSortMode = 'recent', onSetProjectSortMode = () => undefined, onTogglePinProject = () => undefined, onClose, onOpenPalette, onRenameSession, onArchiveSession, overlay = false, platform = 'darwin', canDevelop = true }: SidebarProps) {
+function SidebarView({ projects, sessions, activeProjectId, activeSessionId, activeView, activeHarness = 'omp', harnesses, clearedAttention = {}, updateState = { phase: 'unsupported' }, onUpdateAction, onSelectHarness, onSelectProject, onSelectSession, onNavigate, onNewSession, onRemoveProject, projectSortMode = 'recent', onSetProjectSortMode = () => undefined, onTogglePinProject = () => undefined, onClose, onOpenPalette, onRenameSession, onArchiveSession, overlay = false, platform = 'darwin' }: SidebarProps) {
   const { t } = useI18n()
   const [query, setQuery] = useState('')
   const [harnessMenuOpen, setHarnessMenuOpen] = useState(false)
@@ -308,7 +306,6 @@ function SidebarView({ projects, sessions, activeProjectId, activeSessionId, act
           </div>
         ) : null}
         <button type="button" title={t('nav.activity')} className={activeView === 'activity' ? 'is-active' : ''} onClick={() => onNavigate('activity')}><Bell size={15} /><span>{t('nav.activity')}</span>{unreadCount ? <span className="nav-count">{unreadCount}</span> : null}</button>
-        {canDevelop ? <button type="button" title={t('nav.development')} className={activeView === 'development' ? 'is-active' : ''} onClick={() => onNavigate('development')}><Blocks size={15} /><span>{t('nav.development')}</span></button> : null}
       </nav>
 
       <div className="sidebar__scroll scroll-area">
@@ -422,7 +419,6 @@ export function areSidebarPropsEqual(previous: SidebarProps, next: SidebarProps)
     && previous.onArchiveSession === next.onArchiveSession
     && previous.overlay === next.overlay
     && previous.platform === next.platform
-    && previous.canDevelop === next.canDevelop
 }
 
 export const Sidebar = memo(SidebarView, areSidebarPropsEqual)

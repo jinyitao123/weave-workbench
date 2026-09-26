@@ -49,6 +49,10 @@ const api: PrimeWorkApi = {
   },
   enterprise: {
     teamWorkspace: (command) => invoke('enterprise:team-workspace', command),
+    updateTeamDevelopment: (runtimeId, input) => invoke('enterprise:update-team-development', runtimeId, input),
+    getTeamDevelopmentProposal: (runtimeId) => invoke('enterprise:get-team-development-proposal', runtimeId),
+    getTeamDevelopmentState: (runtimeId) => invoke('enterprise:get-team-development-state', runtimeId),
+    getTeamDevelopmentStateForSession: (sessionFile) => invoke('enterprise:get-team-development-state-for-session', sessionFile),
     invalidateHandoff: (runtimeId) => invoke('enterprise:invalidate-handoff', runtimeId),
     getStatus: () => invoke<EnterpriseEnvironmentStatus[]>('enterprise:get-status'),
     getSession: () => invoke<EnterpriseSession>('enterprise:get-session'),

@@ -37,8 +37,8 @@ function palette(open: boolean, platform: NodeJS.Platform = 'darwin') {
 }
 
 describe('app shell overlay refcount', () => {
-  it('hides the development command for members', async () => {
-    await act(async () => { root.render(<CommandPalette open canDevelop={false} onClose={noop} onNavigate={noop} onNewSession={noop} onToggleSidebar={noop} onToggleTerminal={noop} onOpenBrowser={noop} />) })
+  it('does not expose the former development route in the command palette', async () => {
+    await act(async () => { root.render(<CommandPalette open onClose={noop} onNavigate={noop} onNewSession={noop} onToggleSidebar={noop} onToggleTerminal={noop} onOpenBrowser={noop} />) })
     expect(document.body.textContent).not.toContain('打开开发中心')
   })
 

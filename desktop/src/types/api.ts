@@ -6,8 +6,8 @@
 export const BROWSER_PARTITION = 'persist:prime-work-browser'
 
 export type ThemeMode = 'system' | 'light' | 'dark'
-export type WorkspaceView = 'session' | 'activity' | 'development' | 'projects' | 'scheduled' | 'plugins' | 'settings'
-export type InspectorTab = 'summary' | 'changes' | 'browser' | 'files'
+export type WorkspaceView = 'session' | 'activity' | 'projects' | 'scheduled' | 'plugins' | 'settings'
+export type InspectorTab = 'summary' | 'development' | 'team-division' | 'team-workflow' | 'changes' | 'browser' | 'files'
 export type SessionStatus = 'idle' | 'running' | 'waiting' | 'complete' | 'failed' | 'unknown'
 
 export const HARNESS_IDS = ['omp', 'prime', 'pi'] as const
@@ -1152,6 +1152,10 @@ export interface PrimeWorkApi {
   }
   enterprise: {
     teamWorkspace: import('./team-workspace').TeamWorkspaceBridge
+    updateTeamDevelopment(runtimeId: string, input: import('./team-workspace').TeamDevelopmentContextInput): Promise<void>
+    getTeamDevelopmentProposal(runtimeId: string): Promise<import('./team-workspace').TeamDevelopmentProposalResult | undefined>
+    getTeamDevelopmentState(runtimeId: string): Promise<import('./team-workspace').TeamDevelopmentState>
+    getTeamDevelopmentStateForSession(sessionFile: string): Promise<import('./team-workspace').TeamDevelopmentState>
     invalidateHandoff(runtimeId: string): Promise<void>
     getStatus(): Promise<EnterpriseEnvironmentStatus[]>
     getSession(): Promise<EnterpriseSession>

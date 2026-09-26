@@ -84,7 +84,6 @@ function commandOptions(dialog: HTMLElement): HTMLButtonElement[] {
 
 const expectedOrder = [
   '开始工作',
-  '打开开发中心',
   'Open Projects',
   'Open Activity',
   'Open Scheduled',

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { TeamDefinition, TeamWorkspace, TeamWorkspaceBridge } from '@/types/team-workspace'
+import { stripDerivedJoinOutput } from './graph'
 
 function executorConfigurationError(document: TeamDefinition): string | undefined {
   for (const flow of document.workflows) for (const node of flow.graph_definition.nodes) {
@@ -49,9 +50,10 @@ export function useTeamDraft(teamId: string, bridge: TeamWorkspaceBridge) {
     return s.flight
   }, [bridge, teamId])
   const replace = useCallback((remote: TeamWorkspace) => {
-    state.current.remote = remote; state.current.document = remote.document
-    state.current.generation = 0; state.current.saved = 0
-    setDraft(remote); setDirty(false); setError('')
+    const normalized = stripDerivedJoinOutput(remote.document)
+    state.current.remote = remote; state.current.document = normalized.document
+    state.current.generation = normalized.changed ? 1 : 0; state.current.saved = 0
+    setDraft(normalized.changed ? { ...remote, document: normalized.document } : remote); setDirty(normalized.changed); setError('')
   }, [])
   const load = useCallback(async () => {
     try { replace(await bridge({ action: 'get', teamId })) }

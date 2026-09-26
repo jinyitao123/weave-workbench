@@ -64,7 +64,7 @@ describe('composer queue tray', () => {
 
     act(() => container.querySelector<HTMLButtonElement>('[aria-label^="Send queued message immediately"]')?.click())
     expect(onDelete).toHaveBeenCalledWith(queued)
-    expect(onSend).toHaveBeenCalledWith('run tests', [], 'steer')
+    expect(onSend).toHaveBeenCalledWith('run tests', [], 'steer', [])
 
     act(() => container.querySelector<HTMLButtonElement>('[aria-label^="Edit queued message"]')?.click())
     expect(onEdit).toHaveBeenCalledWith(queued)

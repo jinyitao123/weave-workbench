@@ -3,7 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { EnterpriseWorkPage } from '../../src/pages/EnterpriseWorkPage'
-import type { EnterpriseWorkOverview } from '../../src/types/api'
+import type { EnterpriseApprovalContextView, EnterpriseWorkOverview } from '../../src/types/api'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -11,6 +11,7 @@ let root: Root
 let container: HTMLDivElement
 const refresh = vi.fn()
 const continueWork = vi.fn()
+const assistPi = vi.fn(async () => undefined)
 
 const overview: EnterpriseWorkOverview = {
   loadedAt: '2026-09-23T01:00:00Z',
@@ -27,6 +28,7 @@ const overview: EnterpriseWorkOverview = {
 beforeEach(() => {
   refresh.mockClear()
   continueWork.mockClear()
+  assistPi.mockClear()
   container = document.createElement('div')
   document.body.append(container)
   root = createRoot(container)
@@ -41,6 +43,7 @@ it('shows available work beside source-specific errors and offers retry without 
   await act(async () => root.render(<EnterpriseWorkPage
     overview={overview} loading={false} error="" onRefresh={refresh}
     onComplete={vi.fn(async () => undefined)} onInspect={vi.fn(async () => ({ title: '', step: '', fields: [], files: [] }))}
+    onAssist={assistPi}
     onContinue={continueWork}
   />))
 
@@ -69,6 +72,7 @@ it('keeps a native Weave team-run notification openable when its source is resol
     overview={{ ...overview, items: [item], reads: { ...overview.reads, notifications: { status: 'loaded' } } }}
     loading={false} error="" onRefresh={refresh}
     onComplete={vi.fn(async () => undefined)} onInspect={vi.fn(async () => ({ title: '', step: '', fields: [], files: [] }))}
+    onAssist={assistPi}
     onContinue={continueWork}
   />))
 
@@ -76,4 +80,25 @@ it('keeps a native Weave team-run notification openable when its source is resol
   expect(continueButton?.disabled).toBe(false)
   await act(async () => continueButton?.click())
   expect(continueWork).toHaveBeenCalledWith(item)
+})
+
+it('lets a reviewer send the verified approval snapshot and files to Pi for read-only analysis', async () => {
+  const context: EnterpriseApprovalContextView = {
+    title: '合同交付复核', step: '交付与商务会签',
+    fields: [{ label: '合同编号', value: 'MVP1-C-001' }],
+    files: [{ name: '合同正文.md', content: '合同正文原文', verified: true }],
+  }
+  const inspect = vi.fn(async () => context)
+  await act(async () => root.render(<EnterpriseWorkPage
+    overview={{ ...overview, items: [], reads: { ...overview.reads, weaveTasks: { status: 'loaded' }, notifications: { status: 'loaded' } } }}
+    loading={false} error="" onRefresh={refresh}
+    onComplete={vi.fn(async () => undefined)} onInspect={inspect} onAssist={assistPi} onContinue={continueWork}
+  />))
+
+  const viewMaterials = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '查看材料')
+  await act(async () => viewMaterials?.click())
+  const assistButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '让 Pi 协助复核')
+  expect(assistButton?.disabled).toBe(false)
+  await act(async () => assistButton?.click())
+  expect(assistPi).toHaveBeenCalledWith(overview.tasks[0], context)
 })

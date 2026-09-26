@@ -102,7 +102,7 @@ describe('Weave handoff admission contract', () => {
     const source = { ...f.source, businessContext: { objectName: 'forge_quote', recordId: 'quote-a', recordVersion: 'revision-7' } }
     await f.service.submitWork(choice, '核对报价', source)
     expect(f.calls[0].body.business_record).toEqual({ object_name: 'forge_quote', record_id: 'quote-a', record_version: 'revision-7' })
-    await expect(f.service.submitWork(choice, '核对报价', { ...source, businessContext: { ...source.businessContext, recordId: 'quote-b' } })).rejects.toThrow('input_registration_conflict')
+    await expect(f.service.submitWork(choice, '核对报价', { ...source, businessContext: { ...source.businessContext, recordId: 'quote-b' } })).rejects.toThrow('已登记内容冲突')
     expect(f.runs.size).toBe(1)
   })
 

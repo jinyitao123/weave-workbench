@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto'
-import { approvalContextView, type ApprovalRevisionSubmission, type EnterpriseService, type EnterpriseWorkContinuationContext } from '../enterprise'
-import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseWorkChoice, EnterpriseWorkContinuationContextView, EnterpriseWorkItem, EnterpriseWorkResource, TranscriptMessage } from '../../../src/types/api'
+import { approvalContextView, WorkRegistrationRejectedError, type ApprovalRevisionSubmission, type EnterpriseService, type EnterpriseWorkContinuationContext } from '../enterprise'
+import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseWorkChoice, EnterpriseWorkContinuationContextView, EnterpriseWorkItem, EnterpriseWorkResource, TranscriptMessage, WorkspaceMaterialPromptReference } from '../../../src/types/api'
 import { CapabilityBridge, type CapabilityClaim } from '../lib/capability-bridge'
 import { canonicalSessionPath } from '../session-paths'
 import { rejectUnknownKeys, requireString } from '../validation'
 import { digest, HandoffStore, submissionUUID, type HandoffStorage } from './handoff-store'
 import { executionText, freezeMaterials, materialSelection, type FrozenMaterial, type MaterialLimits } from './materials'
 import { searchTeams, type TeamSummary } from './team-catalog'
+import { splitWorkspaceMaterialContext } from '../../../src/lib/workspace-material-attachments'
 import { businessReadErrorResult, type BusinessObjectDirectory, type BusinessRecordCandidate, type BusinessRecordRead, type BusinessRecordSearchPage, type BusinessRecordSnapshot } from './business-records'
 
 interface EnterpriseSessionReader {
@@ -38,6 +39,8 @@ interface EmployeeTurn {
   prompt: string
   accountKey: string
   baseline: Set<string>
+  authorizedMaterials: WorkspaceMaterialPromptReference[]
+  openingWorkContinuation?: boolean
   pendingSessionPrompts?: string[]
   messageId?: string
   workContinuation?: BoundWorkContinuation
@@ -105,6 +108,12 @@ interface ReturnedRevisionProgress {
 const REVISION_MATERIAL_LIMITS: MaterialLimits = { maxFiles: 10, maxFileBytes: 2 * 1024 * 1024, maxTotalBytes: 8 * 1024 * 1024 }
 function messageText(message: TranscriptMessage): string {
   return message.parts.flatMap((part) => part.type === 'text' || part.type === 'agentMessage' ? [part.text] : []).join('\n').trim()
+}
+function materialsAuthorizedForTurn(prompt: string): WorkspaceMaterialPromptReference[] {
+  // The hidden attachment envelope is produced by the desktop picker for this
+  // exact employee message. Mentioning an older filename or path is not a new
+  // authorization; reuse requires selecting the file again in the current turn.
+  return splitWorkspaceMaterialContext(prompt).attachments
 }
 function handoffKey(choice: EnterpriseWorkChoice): string { return digest(JSON.stringify([choice.teamId, choice.workflowId, choice.version])).slice(0, 24) }
 function returnedApprovalFingerprint(context: EnterpriseApprovalContext): string {
@@ -477,8 +486,10 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         this.turns.set(token, {
           key: randomUUID(), prompt: value.message.trim(), accountKey,
           baseline: new Set(messages.filter((message) => message.role === 'user').map((message) => message.id)),
+          authorizedMaterials: materialsAuthorizedForTurn(value.message),
           ...(pendingSessionPrompts ? { pendingSessionPrompts } : {}),
           ...(boundWorkContinuation ? { workContinuation: boundWorkContinuation } : {}),
+          ...(pendingWorkContinuation ? { openingWorkContinuation: true } : {}),
         })
       } else if (pendingApproval || pendingWorkContinuation) {
         throw new Error('员工轮次已变化，退回事项不能继续')
@@ -719,12 +730,13 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     return { team: { name: team.name, summary: team.objective }, capabilities }
   }
   private async submit(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn): Promise<unknown> {
+    if (turn.openingWorkContinuation) throw new Error('打开工作消息只授权查看已有结果；请等待员工在新消息中明确提出后续工作')
     const key = requireString(params.handoff_key, 'handoff_key', { min: 1, max: 128, trim: true })
     const goal = requireString(params.goal, 'goal', { min: 1, max: 20_000, trim: true })
     if (!Array.isArray(params.business_actions) || params.business_actions.length > 32 || params.business_actions.some((value) => typeof value !== 'string')) throw new Error('本次业务动作范围无效')
     const actionKeys = params.business_actions as string[]
     if (new Set(actionKeys).size !== actionKeys.length) throw new Error('本次业务动作不能重复')
-    const selections = materialSelection(params.materials)
+    const selections = params.materials === undefined ? [] : materialSelection(params.materials, undefined, true)
     const choice = this.handoffs.get(claim.token)?.get(key)
     if (!choice) throw new Error('请先查看团队的承接能力，并使用本轮返回的交接项')
     const workContinuation = turn.workContinuation
@@ -754,6 +766,11 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       objectName: boundRecord.objectName, recordId: boundRecord.recordID, name: '原工作业务记录',
     } : undefined
     let businessSnapshot = selectedBusinessContext?.snapshot
+    const authorizedMaterialKeys = new Set(turn.authorizedMaterials.map((item) => `${item.path}\u0000${item.sha256}`))
+    if (selections.some((item) => !authorizedMaterialKeys.has(`${item.path}\u0000${item.sha256}`))) {
+      throw new Error('只能交接本轮消息中实际附加的材料；如需复用旧文件，请先在本轮重新附加并核对版本')
+    }
+    if (selections.length === 0 && !businessContext) throw new Error('没有本次授权的文件或已读取的业务记录，无法交接')
     for (const actionKey of actionKeys) {
       const action = actionMap.get(actionKey)!
       if (action.requiresRecord !== false && (!businessContext || businessContext.objectName !== action.resourceType)) throw new Error('请先按当前工作查找并绑定该动作所需的业务记录')
@@ -991,7 +1008,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           restoreRevisionMaterial({ name: intent.body.name, mediaType: 'text/plain; charset=utf-8', bytes: intent.body.bytes, sha256: intent.body.sha256, bytesBase64: intent.body.bytesBase64 }),
           ...intent.materials.map(restoreRevisionMaterial),
         ]
-        const uploaded = await this.options.service.stageWorkMaterials(uploadMaterials, assertCurrent)
+        const uploaded = uploadMaterials.length ? await this.options.service.stageWorkMaterials(uploadMaterials, assertCurrent) : []
         if (uploaded.length !== uploadMaterials.length || uploaded.some((file, index) => file.type !== 'forge-file'
           || file.name !== uploadMaterials[index]!.name || file.bytes !== uploadMaterials[index]!.bytes || file.sha256 !== uploadMaterials[index]!.sha256 || !file.id)) {
           throw new Error('Forge 上传回执与固定材料包不一致')
@@ -1066,7 +1083,9 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     try {
       const resourcesFingerprint = digest(JSON.stringify(intent.materials.map(({ name, bytes, sha256 }) => ({ name, bytes, sha256 }))))
       const frozen = await this.store.freeze<FrozenHandoff>(`${intent.accountKey}:${intent.idempotencySeed}:resources`, resourcesFingerprint, async () => {
-        const resources = await this.options.service.stageWorkMaterials(intent.materials, async () => { await this.evidence(claim, turn) })
+        const resources = intent.materials.length
+          ? await this.options.service.stageWorkMaterials(intent.materials, async () => { await this.evidence(claim, turn) })
+          : []
         await this.evidence(claim, turn)
         return { ...intent, resources }
       })
@@ -1082,13 +1101,15 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   private async deliver(claim: CapabilityClaim, turn: EmployeeTurn, frozen: FrozenHandoff, recoveryKey: string): Promise<unknown> {
     await this.evidence(claim, turn)
     await this.assertWorkContinuationCurrent(claim, turn)
+    const restartAfterFailedRun = frozen.continuation && turn.workContinuation?.context.run.status === 'failed'
+      && frozen.authorizedBusinessCapabilityIds.length === 0
     const pending = this.inFlight.get(recoveryKey)
     if (pending) return pending
     const operation = this.options.service.submitWork(frozen.choice, frozen.task, {
       idempotencySeed: frozen.idempotencySeed, sessionKey: frozen.sessionKey, sourceMessages: frozen.sourceMessages, accountKey: frozen.accountKey,
       resources: frozen.resources,
       businessContext: frozen.businessContext,
-      continuation: frozen.continuation,
+      continuation: frozen.continuation ? { ...frozen.continuation, ...(restartAfterFailedRun ? { restartAfterFailedRun: true } : {}) } : undefined,
       authorizedBusinessCapabilityIds: frozen.authorizedBusinessCapabilityIds,
       assertCurrent: async () => {
         await this.evidence(claim, turn)
@@ -1132,11 +1153,14 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         materials: frozen.materials.map(({ name, bytes, sha256 }) => ({ name, bytes, sha256 })),
         receipt,
       }
-    }).catch((error: unknown) => ({
+    }).catch((error: unknown) => error instanceof WorkRegistrationRejectedError ? {
+      status: 'rejected', submitted: false, receiptConfirmed: false, message: error.message,
+      next_step: 'Weave 已明确拒绝本次登记，未创建团队运行。请刷新原工作并按当前员工要求重新提交。',
+    } : {
       status: 'unknown', recovery_key: recoveryKey,
       message: error instanceof Error ? error.message : '接单结果待核对',
       next_step: '保留原包。员工仍要求交接时使用恢复工具核对同一请求，不得重新提交另一份工作。',
-    }))
+    })
     this.inFlight.set(recoveryKey, operation)
     try { return await operation } finally { this.inFlight.delete(recoveryKey) }
   }

@@ -41,11 +41,12 @@ afterEach(async () => {
   vi.unstubAllGlobals()
 })
 
-function renderComposer(onSend = vi.fn(), imageInputSupported = true, busy = false, messageEnterAction: 'queue' | 'steer' = 'queue', contextUsage?: PrimeContextUsage, executingModel?: RuntimeInfo['executingModel']) {
+function renderComposer(onSend = vi.fn(), imageInputSupported = true, busy = false, messageEnterAction: 'queue' | 'steer' = 'queue', contextUsage?: PrimeContextUsage, executingModel?: RuntimeInfo['executingModel'], shortName = 'Prime') {
   act(() => root.render(<Composer
     busy={busy}
     model="provider/vision"
     effort="medium"
+    shortName={shortName}
     modelsByProvider={modelsByProvider}
     providers={providers}
     reasoningLevels={['medium']}
@@ -149,7 +150,7 @@ describe('Composer image ingestion', () => {
 
     expect(onSend).toHaveBeenCalledWith('[Attached image]', [{
       type: 'image', mimeType: 'image/png', data: 'iVBORw0KGgo=',
-    }], 'queue')
+    }], 'queue', [])
     expect(container.querySelector('.composer-attachment')).toBeNull()
   })
 
@@ -276,7 +277,7 @@ describe('Composer image ingestion', () => {
     expect(attachments).toHaveLength(2)
     expect(attachments.join(' ')).toContain('submitted.png')
     expect(attachments.join(' ')).toContain('new-draft.png')
-    expect(container.querySelector('[role="alert"]')?.textContent).toContain('draft and images were restored')
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain('draft and attachments were restored')
   })
 
   it('reports submitted images omitted from failed-send restoration when new images fill the limit', async () => {
@@ -295,7 +296,7 @@ describe('Composer image ingestion', () => {
     expect(container.querySelectorAll('.composer-attachment')).toHaveLength(8)
     expect(container.textContent).toContain('submitted-1.png')
     expect(container.textContent).not.toContain('submitted-2.png')
-    expect(container.querySelector('[role="alert"]')?.textContent).toContain('1 submitted image could not be restored because the attachment limits are full')
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain('1 attachment could not be restored because the attachment limits are full')
     expect(container.querySelector('[role="status"]')?.textContent).toContain('8 files attached')
   })
 
@@ -315,7 +316,7 @@ describe('Composer image ingestion', () => {
     expect(container.querySelectorAll('.composer-attachment')).toHaveLength(1)
     expect(container.textContent).toContain('new-large.png')
     expect(container.textContent).not.toContain('submitted-large.png')
-    expect(container.querySelector('[role="alert"]')?.textContent).toContain('1 submitted image could not be restored because the attachment limits are full')
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain('1 attachment could not be restored because the attachment limits are full')
   })
 
   it('opens a general file picker from the add menu and attaches its selection', async () => {
@@ -329,7 +330,7 @@ describe('Composer image ingestion', () => {
     act(() => (Array.from(container.querySelectorAll<HTMLButtonElement>('.composer-menu button')).find((button) => button.textContent?.includes('Add files')) as HTMLButtonElement).click())
     expect(click).toHaveBeenCalledOnce()
     expect(input?.multiple).toBe(true)
-    expect(input?.accept).toBe('')
+    expect(input?.accept).toBe('.txt,.md,.markdown,text/plain,text/markdown,image/png,image/jpeg,image/gif,image/webp')
     expect(container.querySelector('.composer-menu')).toBeNull()
     expect(container.querySelector('button[aria-label="Attach images"]')).toBeNull()
 
@@ -449,8 +450,8 @@ describe('Composer message delivery shortcuts', () => {
     await enterDraft('Queue this')
     await enterDraft('Steer with this', { ctrlKey: true })
 
-    expect(onSend).toHaveBeenNthCalledWith(1, 'Queue this', [], 'queue')
-    expect(onSend).toHaveBeenNthCalledWith(2, 'Steer with this', [], 'steer')
+    expect(onSend).toHaveBeenNthCalledWith(1, 'Queue this', [], 'queue', [])
+    expect(onSend).toHaveBeenNthCalledWith(2, 'Steer with this', [], 'steer', [])
   })
 
   it('allows Ctrl+Enter steering while an earlier delivery callback is still pending', async () => {
@@ -461,8 +462,8 @@ describe('Composer message delivery shortcuts', () => {
     await enterDraft('Queue this')
     await enterDraft('Steer immediately', { ctrlKey: true })
 
-    expect(onSend).toHaveBeenNthCalledWith(1, 'Queue this', [], 'queue')
-    expect(onSend).toHaveBeenNthCalledWith(2, 'Steer immediately', [], 'steer')
+    expect(onSend).toHaveBeenNthCalledWith(1, 'Queue this', [], 'queue', [])
+    expect(onSend).toHaveBeenNthCalledWith(2, 'Steer immediately', [], 'steer', [])
     await act(async () => { release?.(); await pending })
   })
 
@@ -472,8 +473,8 @@ describe('Composer message delivery shortcuts', () => {
     await enterDraft('Queue this', { ctrlKey: true })
     await enterDraft('Keep editing', { shiftKey: true })
 
-    expect(onSend).toHaveBeenNthCalledWith(1, 'Steer this', [], 'steer')
-    expect(onSend).toHaveBeenNthCalledWith(2, 'Queue this', [], 'queue')
+    expect(onSend).toHaveBeenNthCalledWith(1, 'Steer this', [], 'steer', [])
+    expect(onSend).toHaveBeenNthCalledWith(2, 'Queue this', [], 'queue', [])
     expect(onSend).toHaveBeenCalledTimes(2)
   })
 })
@@ -548,6 +549,10 @@ describe('Composer context usage and stop control', () => {
     expect(dial?.title).toContain('unavailable')
     expect(container.querySelector('button[aria-label="Stop Prime"] .lucide-square')).not.toBeNull()
     expect(container.querySelector('.lucide-circle-stop')).toBeNull()
+  })
+  it('labels the stop control with the active Pi harness', () => {
+    renderComposer(vi.fn(), true, true, 'queue', undefined, undefined, 'Pi')
+    expect(container.querySelector('button[aria-label="Stop Pi"] .lucide-square')).not.toBeNull()
   })
 })
 

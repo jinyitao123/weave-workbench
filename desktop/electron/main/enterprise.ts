@@ -34,6 +34,10 @@ export interface ApprovalRevisionSubmission {
   attachments: ApprovalRevisionFileReference[]
 }
 export interface ForgeHttpResult { status: number; body: unknown }
+export class WorkRegistrationRejectedError extends Error {}
+class WeaveHttpError extends Error {
+  constructor(message: string, readonly status: number) { super(message) }
+}
 export interface EnterpriseWorkNotificationSource {
   version: '1'
   notificationID: string
@@ -90,6 +94,17 @@ function enterprisePermissions(value: unknown): EnterprisePermission[] | undefin
 
 function textValue(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined
+}
+
+function approvalReturnSupersededByResubmit(actions: unknown[]): boolean {
+  let latestReturnIndex = -1
+  let latestResubmitIndex = -1
+  actions.forEach((value, index) => {
+    const action = record(value)?.action
+    if (action === 'revise') latestReturnIndex = index
+    if (action === 'resubmit') latestResubmitIndex = index
+  })
+  return latestResubmitIndex > latestReturnIndex
 }
 
 export function approvalContextView(context: EnterpriseApprovalContext): EnterpriseApprovalContextView {
@@ -779,7 +794,7 @@ export class EnterpriseService {
   }
 
   async stageWorkMaterials(materials: FrozenMaterial[], assertCurrent: () => Promise<void>): Promise<EnterpriseWorkResource[]> {
-    if (!materials.length) throw new Error('请指定本次交接的工作材料')
+    if (!materials.length) return []
     const generation = this.authGeneration
     await this.load()
     this.assertAuthGeneration(generation)
@@ -1229,7 +1244,7 @@ export class EnterpriseService {
     }
     if (!response.ok) {
       const error = textValue(record(result)?.error) ?? textValue(record(result)?.message) ?? `Weave 请求失败（${response.status}）`
-      throw new Error(error)
+      throw new WeaveHttpError(error, response.status)
     }
     return { status: response.status, body: result }
   }
@@ -1317,6 +1332,7 @@ export class EnterpriseService {
         try {
           const actionEnvelope = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(id)}/actions`, generation, '审批意见'))
           const actions = Array.isArray(actionEnvelope?.data) ? actionEnvelope.data : []
+          if (approvalReturnSupersededByResubmit(actions)) continue
           const latestRevision = [...actions].reverse().map(record).find((action) => action?.action === 'revise')
           returnReason = textValue(latestRevision?.comment)
         } catch (error) {
@@ -1567,7 +1583,7 @@ export class EnterpriseService {
     accountKey: string
     resources: EnterpriseWorkResource[]
     businessContext?: { objectName: string; recordId: string; recordVersion?: string }
-    continuation?: { workbenchSessionID: string; inputRevisionID: string; runID: string; teamID: string }
+    continuation?: { workbenchSessionID: string; inputRevisionID: string; runID: string; teamID: string; restartAfterFailedRun?: boolean }
     authorizedBusinessCapabilityIds: string[]
     assertCurrent(): Promise<void>
   }): Promise<EnterpriseWorkReceipt> {
@@ -1577,6 +1593,9 @@ export class EnterpriseService {
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (source?.continuation && (!source.continuation.workbenchSessionID || !source.continuation.inputRevisionID || !source.continuation.runID
       || source.continuation.teamID !== choice.teamId)) throw new Error('原工作续版引用与当前团队不匹配')
+    if (source?.continuation?.restartAfterFailedRun && source.authorizedBusinessCapabilityIds.length) {
+      throw new Error('失败工作有业务动作时，请先核对 Forge 结果再继续')
+    }
     const assertCurrent = async () => {
       this.assertAuthGeneration(generation)
       if (source) {
@@ -1596,7 +1615,9 @@ export class EnterpriseService {
         registration_id: workId, workbench_session_id: workbenchSessionID,
         ...(source?.continuation ? {
           expected_revision_id: source.continuation.inputRevisionID,
-          revision_context: { parent_input_revision_id: source.continuation.inputRevisionID, parent_run_id: source.continuation.runID },
+          ...(source.continuation.restartAfterFailedRun ? {} : {
+            revision_context: { parent_input_revision_id: source.continuation.inputRevisionID, parent_run_id: source.continuation.runID },
+          }),
         } : {}),
         team_id: choice.teamId, workflow_id: choice.workflowId,
         workflow_version: choice.version, project_id: projectID, task: normalized,
@@ -1610,8 +1631,10 @@ export class EnterpriseService {
           ?? [{ message_id: workId, event_seq: 0, sha256: createHash('sha256').update(normalized).digest('hex') }],
       }, assertCurrent, this.forgeToken ? { 'X-Weave-Forge-Authorization': `Bearer ${this.forgeToken}` } : undefined, generation)
     } catch (error) {
-      if (source?.continuation && error instanceof Error && /409|input_revision_conflict|dispatch_revision_source_changed|dispatch_revision_source_mismatch/.test(error.message)) {
-        throw new Error('原工作输入版本已变化，请刷新工作消息后重新继续')
+      if (error instanceof WeaveHttpError && error.status === 409) {
+        throw new WorkRegistrationRejectedError(source?.continuation
+          ? '原工作输入版本已变化或没有可修订的交付结果，请刷新工作消息后继续'
+          : '本次固定交接与已登记内容冲突，请核对当前员工要求后重新发起')
       }
       throw error
     }

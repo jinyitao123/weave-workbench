@@ -1256,6 +1256,7 @@ describe('post-package verification helpers', () => {
     expect(packageJson.build.linux.target).toEqual(['AppImage', 'deb', 'rpm', 'pacman'])
     expect(packageJson.build.win.target).toEqual(['nsis', 'zip', 'appx'])
     expect(packageJson.build.directories.output).toBe('release')
+    expect(packageJson.build.electronDist).toBe('node_modules/electron/dist')
   })
 
   test('verifies and uploads every configured Linux installer format', () => {

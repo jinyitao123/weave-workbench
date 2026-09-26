@@ -34,6 +34,8 @@ import { AgentBrowserBridge } from './browser/agent-bridge'
 import { AgentBrowserService } from './browser/agent-service'
 import { AgentCollaborationBridge } from './collaboration/agent-bridge'
 import { AgentEnterpriseBridge } from './enterprise/agent-bridge'
+import { TeamDevelopmentAgentBridge } from './development/agent-bridge'
+import type { TeamDevelopmentContextInput, TeamWorkspace } from '../../src/types/team-workspace'
 import { configureGooeyPiAgentMessageSigning, loadOrCreateGooeyPiAgentMessageKey } from './collaboration/message-envelope'
 import { extensionInjection, resolveExtensionPath, type ExtensionCapability } from './extension-manifest'
 import { SessionService } from './sessions'
@@ -65,6 +67,7 @@ let agentBrowser: AgentBrowserService | null = null
 let agentBrowserBridge: AgentBrowserBridge | null = null
 let agentCollaborationBridge: AgentCollaborationBridge | null = null
 let agentEnterpriseBridge: AgentEnterpriseBridge | null = null
+let teamDevelopmentBridge: TeamDevelopmentAgentBridge | null = null
 let backgroundMode: MacBackgroundController | null = null
 let shutdownStarted = false
 let shutdownApproved = false
@@ -825,6 +828,7 @@ async function bootstrap(): Promise<void> {
   const ompAskUserExtensionPath = extensionPathFor('omp', 'askUser')
   const collaborationExtensionPath = extensionPathFor('omp', 'collaboration')
   const enterpriseExtensionPath = extensionPathFor('omp', 'enterprise')
+  const teamDevelopmentExtensionPath = extensionPathFor('pi', 'teamDevelopment')
   const piFastModeExtensionPath = extensionPathFor('pi', 'piFastMode')
   const computerUseSkill = async () => {
     const status = await cuaDriver.status()
@@ -997,6 +1001,18 @@ async function bootstrap(): Promise<void> {
       codec: { available: () => safeStorage.isEncryptionAvailable(), encrypt: (value) => safeStorage.encryptString(value), decrypt: (value) => safeStorage.decryptString(value) },
     },
   })
+  const developmentBridge = new TeamDevelopmentAgentBridge({
+    accountKey: () => enterprise.accountKey(),
+    developer: async () => { const session = await enterprise.getSession(); if (session.status !== 'signed-in' || !session.permissions?.includes('teams:develop') || !session.user?.id) throw new Error('当前账号没有团队开发权限'); return { accountId: session.user.id } },
+    teams: async () => (await enterprise.getDevelopmentOverview()).teams.filter((team) => team.status !== 'archived').map((team) => ({ id: team.id, name: team.name, objective: team.objective })),
+    team: (teamId, accountId) => enterprise.teamWorkspace({ action: 'get', teamId, accountId }) as Promise<TeamWorkspace>,
+    catalog: () => enterprise.getBusinessCapabilityCatalog(),
+    extensionPath: teamDevelopmentExtensionPath,
+    storage: safeStorage.isEncryptionAvailable() ? {
+      directory: join(userDataPath, 'team-development-proposals'),
+      codec: { available: () => safeStorage.isEncryptionAvailable(), encrypt: (value) => safeStorage.encryptString(value), decrypt: (value) => safeStorage.decryptString(value) },
+    } : undefined,
+  })
   await Promise.all([
     scheduleBridge.start(),
     ompScheduleBridge.start(),
@@ -1004,17 +1020,20 @@ async function bootstrap(): Promise<void> {
     browserBridge.start(),
     collaborationBridge.start(),
     enterpriseBridge.start(),
+    developmentBridge.start(),
   ])
   agentScheduleBridges = [scheduleBridge, ompScheduleBridge, piScheduleBridge]
   agentBrowserBridge = browserBridge
   agentCollaborationBridge = collaborationBridge
   agentEnterpriseBridge = enterpriseBridge
+  teamDevelopmentBridge = developmentBridge
   const revokeRuntimeCapabilities = (environment: NodeJS.ProcessEnv, runtimeScheduleBridge: AgentScheduleBridge): void => {
     const claims: Array<[string, { revoke(token: string | undefined): boolean }, string | undefined]> = [
       ['schedule', runtimeScheduleBridge, environment.PRIME_WORK_SCHEDULE_TOKEN],
       ['browser', browserBridge, environment.PRIME_WORK_BROWSER_TOKEN],
       ['collaboration', collaborationBridge, environment.GOOEYPI_COLLABORATION_TOKEN],
       ['enterprise', enterpriseBridge, environment.GOOEYPI_ENTERPRISE_TOKEN],
+      ['team-development', developmentBridge, environment.GOOEYPI_TEAM_DEVELOPMENT_TOKEN],
     ]
     for (const [name, bridge, token] of claims) {
       try { bridge.revoke(token) } catch (error) {
@@ -1075,6 +1094,7 @@ async function bootstrap(): Promise<void> {
       ...extensionRuntimeEnvironment(piScheduleBridge.environmentFor(scope), () => browserBridge.environmentFor(scope), capabilityExtensionPaths, stateStore.getSettings().askUserEnabled && scope.interactive, stateStore.getSettings().browserEnabled),
       ...collaborationBridge.environmentFor({ ...scope, harness: 'pi' }),
       ...enterpriseBridge.environmentFor({ ...scope, harness: 'pi' }),
+      ...(scope.interactive ? developmentBridge.environmentFor({ ...scope, harness: 'pi' }) : {}),
       ...(enterpriseAccountScope ? { PI_CODING_AGENT_SESSION_DIR: sessionRootForAccount('pi') } : {}),
       GOOEYPI_PI_FAST_MODE_EXTENSION_PATH: piFastModeExtensionPath,
       GOOEYPI_CUA_DRIVER_PATH: stateStore.getSettings().computerUseEnabled ? cuaDriver.executable() ?? undefined : undefined,
@@ -1082,6 +1102,7 @@ async function bootstrap(): Promise<void> {
     }
   })
   piManager.setRuntimeStartListener((environment, info) => {
+    developmentBridge.bindRuntime(environment.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, info.runtimeId, info.sessionFile)
     browserBridge.bindSession(environment.PRIME_WORK_BROWSER_TOKEN, info.sessionFile)
     collaborationBridge.bindSession(environment.GOOEYPI_COLLABORATION_TOKEN, info.sessionFile, info.runtimeId)
     enterpriseBridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, info.sessionFile, info.runtimeId)
@@ -1101,6 +1122,7 @@ async function bootstrap(): Promise<void> {
       const drained = await schedules.beginAccountScopeTransition()
       scheduleGateStarted = true
       enterpriseBridge.invalidateAccount()
+      developmentBridge.invalidateAccount()
       if (!drained) {
         await Promise.all(runtimeManagers.map((manager) => manager.pauseStartsAndStop()))
         await terminals!.pauseCreationsAndKillAll()
@@ -1203,11 +1225,25 @@ async function bootstrap(): Promise<void> {
     meta.harnesses = harnesses
     return { meta: structuredClone(meta), settings: currentSettings }
   }
+  const checkTeamDevelopmentInput = async (input: TeamDevelopmentContextInput) => {
+    const signedIn = await enterprise.getSession()
+    if (signedIn.status !== 'signed-in' || !signedIn.permissions?.includes('teams:develop') || signedIn.user?.id !== input.accountId) throw new Error('当前账号没有团队开发权限')
+    const remote = await enterprise.teamWorkspace({ action: 'get', teamId: input.teamId, accountId: input.accountId }) as TeamWorkspace
+    if (remote.revision !== input.revision) throw new Error('团队草稿已被其他开发者更新，请刷新后重试')
+    return { accountKey: await enterprise.accountKey(), catalog: await enterprise.getBusinessCapabilityCatalog() }
+  }
+  const updateTeamDevelopment = async (runtimeId: string, input: TeamDevelopmentContextInput): Promise<void> => {
+    const { accountKey, catalog } = await checkTeamDevelopmentInput(input)
+    const runtime = piManager.list().find((item) => item.runtimeId === runtimeId)
+    if (!runtime) throw new Error('Pi 开发会话已结束，请重新打开')
+    await developmentBridge.bindContext(runtimeId, { teamId: input.teamId, revision: input.revision, document: input.document, selected: input.selected, catalog }, accountKey)
+  }
   trustedRendererUrl = resolveRendererUrl()
   ipc = registerIpc({
     meta, refreshHarnesses, projects, checkouts, sessions, agents, terminals, git, plugins, providers, settings, updates, enterprise, cuaDriver, heartbeats, schedules, browser: browserService, voice, pets,
     popupApplicationMenu, setTitleBarTheme,
     enterpriseBridge,
+    updateTeamDevelopment, getTeamDevelopmentProposal: (runtimeId: string) => developmentBridge.getProposal(runtimeId), getTeamDevelopmentState: (runtimeId: string) => developmentBridge.getState(runtimeId), getTeamDevelopmentStateForSession: (sessionFile: string) => developmentBridge.getStateForSession(sessionFile),
     omp: { projects: ompProjects, sessions: ompSessions, agents: ompManager, catalog: ompCatalog, plugins: ompPlugins },
     pi: { projects: piProjects, sessions: piSessions, agents: piManager, catalog: piCatalog, plugins: piPlugins },
     applyInterfaceZoom,
@@ -1372,6 +1408,7 @@ app.on('before-quit', (event) => {
     agentBrowserBridge?.stop() ?? Promise.resolve(),
     agentCollaborationBridge?.stop() ?? Promise.resolve(),
     agentEnterpriseBridge?.stop() ?? Promise.resolve(),
+    teamDevelopmentBridge?.stop() ?? Promise.resolve(),
     automation?.stop() ?? Promise.resolve(),
     terminals?.killAll() ?? Promise.resolve(),
     agents?.stopAll() ?? Promise.resolve(),

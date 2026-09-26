@@ -1,13 +1,14 @@
 /* Inspector */
 .inspector { position: relative; z-index: 10; width: var(--inspector-width, clamp(420px, 46vw, 660px)); min-width: 340px; flex: 0 0 var(--inspector-width, clamp(420px, 46vw, 660px)); display: flex; flex-direction: column; background: var(--canvas); animation: panel-in 150ms ease-out; }
-.inspector__tabs { height: 42px; flex: 0 0 42px; display: flex; align-items: stretch; gap: 2px; padding: 0 8px 0 12px; border-bottom: 1px solid var(--border); background: var(--canvas); }
-.inspector__tabs > button:not(.icon-button) { position: relative; min-width: 58px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; color: var(--text-secondary); background: transparent; font-size: 11.5px; }
-.inspector__tabs > button:not(.icon-button):hover { color: var(--text); }
-.inspector__tabs > button.is-active { color: var(--text); font-weight: 550; }
-.inspector__tabs > button.is-active::after { position: absolute; left: 8px; right: 8px; bottom: -1px; height: 1.5px; content: ""; background: var(--text); }
-.inspector__tabs > button span { min-width: 16px; height: 16px; display: grid; place-items: center; padding: 0 4px; border-radius: 8px; color: var(--text-secondary); background: var(--surface-hover); font-size: 9.5px; }
-.inspector__tab-spacer { flex: 1; }
-.inspector__tabs > .icon-button { align-self: center; }
+.inspector__tabs { height: 42px; flex: 0 0 42px; display: flex; align-items: stretch; gap: 6px; padding: 0 8px 0 12px; border-bottom: 1px solid var(--border); background: var(--canvas); }
+.inspector__tab-track { min-width: 0; flex: 1; display: flex; align-items: stretch; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.inspector__tab-track::-webkit-scrollbar { display: none; }
+.inspector__tab-track > button { position: relative; min-width: 58px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; color: var(--text-secondary); background: transparent; font-size: 11.5px; white-space: nowrap; }
+.inspector__tab-track > button:hover { color: var(--text); }
+.inspector__tab-track > button.is-active { color: var(--text); font-weight: 550; }
+.inspector__tab-track > button.is-active::after { position: absolute; left: 8px; right: 8px; bottom: -1px; height: 1.5px; content: ""; background: var(--text); }
+.inspector__tab-track > button span { min-width: 16px; height: 16px; display: grid; place-items: center; padding: 0 4px; border-radius: 8px; color: var(--text-secondary); background: var(--surface-hover); font-size: 9.5px; }
+.inspector__tabs > .icon-button { flex: 0 0 auto; align-self: center; }
 .inspector__body { flex: 1; min-height: 0; overflow: hidden; }
 .inspector-scroll { height: 100%; overflow: auto; }
 .summary-panel { padding: 22px; }
