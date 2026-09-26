@@ -95,7 +95,7 @@ describe('AgentBrowserBridge', () => {
     expect(bridge.revoke(token)).toBe(true)
     request.end(body.slice(-1))
 
-    await expect(response).resolves.toMatchObject({ status: 401, body: expect.stringContaining('Capability expired') })
+    await expect(response).resolves.toMatchObject({ status: 401, body: expect.stringContaining('授权已失效') })
     expect(calls).toHaveLength(0)
   })
 

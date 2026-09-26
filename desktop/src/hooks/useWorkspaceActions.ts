@@ -304,9 +304,12 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
       setToast('Manage MCP integrations in Capabilities.')
       return
     }
-    if (mcpCommand?.type === 'authenticate' && images.length === 0 && textAttachments.length === 0) {
+    if (mcpCommand?.type === 'authenticate') {
       const target = mcpCommand.server ? ` to sign in to ${mcpCommand.server}` : ' to authenticate network MCP servers'
-      setToast(`Network MCP authentication is managed outside GooeyPi. Use ${HARNESS_AGENT_NAMES[commandHarness]} directly${target}.`)
+      const message = `Network MCP authentication is managed outside GooeyPi. Use ${HARNESS_AGENT_NAMES[commandHarness]} directly${target}.`
+      const hasAttachments = images.length > 0 || textAttachments.length > 0
+      setToast(hasAttachments ? `${message} The command and attachments were not sent.` : message)
+      if (hasAttachments) throw new Error('Remove the authentication command or its attachments before sending.')
       return
     }
     if (compactCommand && (images.length > 0 || textAttachments.length > 0)) {

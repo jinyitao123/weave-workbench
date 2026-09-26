@@ -13,6 +13,25 @@ export interface TeamWorkspace {
   revision: number; published_revision: number; publishing_revision: number; prepared_revision: number
   document: TeamDefinition; published_document?: TeamDefinition; updated_at: string; trials: TeamTrial[]
 }
+export interface TeamDevelopmentContextInput {
+  teamId: string
+  accountId: string
+  revision: number
+  document: TeamDefinition
+  selected?: { kind: 'member' | 'step'; id: string }
+}
+export interface TeamDevelopmentProposalResult {
+  revision: number
+  baseDocument: TeamDefinition
+  document: TeamDefinition
+  changes: string[]
+}
+export interface TeamDevelopmentState {
+  teamId?: string
+  revision?: number
+  proposal?: TeamDevelopmentProposalResult
+  createProposal?: { name: string; objective: string }
+}
 export type TeamWorkspaceCommand = (
   | { action: 'get' | 'delete'; teamId: string }
   | { action: 'save'; teamId: string; revision: number; document: TeamDefinition }

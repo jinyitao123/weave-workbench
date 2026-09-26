@@ -1,8 +1,12 @@
-import { Check, Plus, Trash2, Upload } from 'lucide-react'
+import { Plus, Trash2, Upload } from 'lucide-react'
 import { useState } from 'react'
 import { EditableText } from '@/pages/team-workspace/EditableText'
 import { Modal, ProductField, ProductSelect, ProductSwitch, ProductTextArea } from '@/components/ui'
 import type { EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityCatalog, EnterpriseDevelopmentOverview, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberSkill } from '@/types/api'
+
+type BusinessCapability = EnterpriseBusinessCapabilityCatalog['capabilities'][number]
+type BusinessParameter = NonNullable<BusinessCapability['params']>[number]
+type BindingSource = EnterpriseBusinessCapabilityBinding['parameters'][number]['source']
 
 export function configurationLabel(value: string | undefined, fallback: string): string {
   if (!value?.trim()) return fallback
@@ -24,7 +28,7 @@ const materialBindingSources: Array<{ value: '' | EnterpriseBusinessCapabilityBi
   { value: 'materials.manifest_json', label: '本次全部文件 · 有序清单' },
 ]
 
-function parameterSourceOptions(parameter: NonNullable<EnterpriseBusinessCapabilityCatalog['capabilities'][number]['params']>[number], current?: EnterpriseBusinessCapabilityBinding['parameters'][number]['source']) {
+function parameterSourceOptions(parameter: BusinessParameter, current?: BindingSource) {
   const options = parameter.type === 'string'
     ? materialBindingSources
     : parameter.type === 'file' && !parameter.multiple
@@ -32,6 +36,24 @@ function parameterSourceOptions(parameter: NonNullable<EnterpriseBusinessCapabil
       : [{ value: '' as const, label: parameter.type === 'file' ? '暂不支持文件列表参数' : '由成员填写' }]
   if (current && !options.some((item) => item.value === current)) return [...options, { value: current, label: '当前映射与参数类型不兼容' }]
   return options
+}
+
+function singleFileParameters(parameters: BusinessParameter[]): Array<{ name: string; source: BindingSource }> | undefined {
+  const file = parameters.find((parameter) => /(?:^|_)file_id$/.test(parameter.name) && (parameter.type === 'string' || parameter.type === 'file') && !parameter.multiple)
+  if (!file) return undefined
+  const prefix = file.name.replace(/(?:^|_)file_id$/, '')
+  const name = parameters.find((parameter) => [prefix ? `${prefix}_name` : 'file_name', prefix ? `${prefix}_file_name` : 'name'].includes(parameter.name) && parameter.type === 'string')
+  const digest = parameters.find((parameter) => [prefix ? `${prefix}_sha256` : 'file_sha256', prefix ? `${prefix}_file_sha256` : 'sha256'].includes(parameter.name) && parameter.type === 'string')
+  if (!name || !digest) return undefined
+  return [
+    { name: file.name, source: 'materials.single.id' },
+    { name: name.name, source: 'materials.single.name' },
+    { name: digest.name, source: 'materials.single.sha256' },
+  ]
+}
+
+function capabilityImpact(capability: BusinessCapability): string {
+  return capability.effect === 'write' ? '会修改业务记录' : '只读取业务资料'
 }
 
 export function MemberInspector({ draft, runtimes, models, businessCapabilities, businessCapabilityError, onChange }: {
@@ -45,6 +67,10 @@ export function MemberInspector({ draft, runtimes, models, businessCapabilities,
   const [section, setSection] = useState<Section>('role')
   const [skillEditor, setSkillEditor] = useState<{ index: number; value: EnterpriseTeamMemberSkill }>()
   const [skillError, setSkillError] = useState('')
+  const [capabilityPickerOpen, setCapabilityPickerOpen] = useState(false)
+  const [capabilitySearch, setCapabilitySearch] = useState('')
+  const [expandedCapability, setExpandedCapability] = useState('')
+  const [individualFileMapping, setIndividualFileMapping] = useState('')
   const config = draft.configuration
   const relationship = draft.relationship
   const setConfig = <K extends keyof typeof config>(key: K, value: typeof config[K]) => onChange({ ...draft, configuration: { ...config, [key]: value } })
@@ -79,20 +105,33 @@ export function MemberInspector({ draft, runtimes, models, businessCapabilities,
     const selected = config.businessCapabilityIds.includes(id)
     const capability = businessCapabilities?.capabilities.find((item) => item.id === id)
     if (!selected && capability?.status === 'unavailable') return
+    const fileParameters = !selected && capability ? singleFileParameters(capability.params ?? []) : undefined
     onChange({ ...draft, configuration: {
       ...config,
       businessCapabilityIds: selected ? config.businessCapabilityIds.filter((value) => value !== id) : [...config.businessCapabilityIds, id],
-      businessCapabilityBindings: selected ? config.businessCapabilityBindings.filter((binding) => binding.capabilityId !== id) : config.businessCapabilityBindings,
+      businessCapabilityBindings: selected
+        ? config.businessCapabilityBindings.filter((binding) => binding.capabilityId !== id)
+        : fileParameters
+          ? [...config.businessCapabilityBindings.filter((binding) => binding.capabilityId !== id), { capabilityId: id, parameters: fileParameters }]
+          : config.businessCapabilityBindings,
     } })
+    setExpandedCapability(selected ? '' : id)
+    if (!selected) setCapabilityPickerOpen(false)
   }
-  const setBusinessCapabilityParamSource = (capabilityId: string, name: string, source: string) => {
+  const setBusinessCapabilitySources = (capabilityId: string, updates: Array<{ name: string; source: string }>) => {
     const current = config.businessCapabilityBindings.find((binding) => binding.capabilityId === capabilityId)
-    const parameters = (current?.parameters ?? []).filter((parameter) => parameter.name !== name)
-    if (source) parameters.push({ name, source: source as EnterpriseBusinessCapabilityBinding['parameters'][number]['source'] })
+    const names = new Set(updates.map((parameter) => parameter.name))
+    const parameters = (current?.parameters ?? []).filter((parameter) => !names.has(parameter.name))
+    for (const parameter of updates) if (parameter.source) parameters.push({ name: parameter.name, source: parameter.source as BindingSource })
     const bindings = config.businessCapabilityBindings.filter((binding) => binding.capabilityId !== capabilityId)
     if (parameters.length) bindings.push({ capabilityId, parameters })
     setConfig('businessCapabilityBindings', bindings)
   }
+  const setBusinessCapabilityParamSource = (capabilityId: string, name: string, source: string) => setBusinessCapabilitySources(capabilityId, [{ name, source }])
+  const availableToAdd = (businessCapabilities?.capabilities ?? []).filter((capability) =>
+    !config.businessCapabilityIds.includes(capability.id) &&
+    `${capability.name} ${capability.description}`.toLocaleLowerCase().includes(capabilitySearch.trim().toLocaleLowerCase()),
+  )
   const uploadSkill = async (file: File | undefined) => {
     if (!file) return
     if (file.size > 512 * 1024) {
@@ -136,16 +175,38 @@ export function MemberInspector({ draft, runtimes, models, businessCapabilities,
       </section> : null}
 
       {section === 'resources' ? <>
-        <section className="member-resource-group"><div className="member-resource-toolbar"><h4>业务能力</h4><small>由 Forge 提供，运行时按发起员工权限校验</small></div>{businessCapabilityError ? <p role="alert">{businessCapabilityError}</p> : businessCapabilities?.capabilities.length ? <ul className="member-capability-list">{businessCapabilities.capabilities.map((capability) => {
-          const selected = config.businessCapabilityIds.includes(capability.id)
-          const bindings = config.businessCapabilityBindings.find((binding) => binding.capabilityId === capability.id)
-          return <li key={capability.id}><button type="button" disabled={!selected && capability.status === 'unavailable'} aria-pressed={selected} className={selected ? 'is-selected' : ''} onClick={() => toggleBusinessCapability(capability.id)}><span><strong>{configurationLabel(capability.name, '业务能力')}</strong><small>{configurationLabel(capability.description, '由 Forge 提供')}</small></span>{selected ? <Check size={14}/> : <Plus size={14}/>}</button>{capability.status === 'unavailable' ? <p className="member-inspector__error" role="alert">{capability.unavailableReason ?? '该业务能力当前不可绑定或执行'}{selected ? '。移除后才能更新团队。' : ''}</p> : selected && capability.params?.length ? <div className="member-capability-parameters"><p>绑定后由系统注入，成员不能替换；文件清单包含全部已选材料并保留顺序。</p>{capability.params.map((parameter) => { const source = bindings?.parameters.find((item) => item.name === parameter.name)?.source; return <div className="member-capability-parameter" key={parameter.name}><span><strong>{configurationLabel(parameter.label, parameter.name)}</strong><small>{parameter.description || parameter.name}</small></span><ProductSelect label={`${parameter.label || parameter.name}来源`} value={source ?? ''} options={parameterSourceOptions(parameter, source)} onChange={(value) => setBusinessCapabilityParamSource(capability.id, parameter.name, value)}/></div> })}</div> : null}</li>
-        })}</ul> : <p>暂无可分配的业务能力</p>}{config.businessCapabilityIds.filter((id) => !businessCapabilities?.capabilities.some((capability) => capability.id === id)).map((id) => <div className="member-resource-unavailable" key={id}><span>已有业务能力当前不可用</span><button type="button" onClick={() => toggleBusinessCapability(id)}>移除</button></div>)}</section>
-        <section className="member-resource-group"><div className="member-resource-toolbar"><h4>技能</h4><span><label className="button member-skill-upload"><Upload size={12}/>上传<input type="file" accept=".md,.txt,text/markdown,text/plain" onChange={(event) => { void uploadSkill(event.target.files?.[0]); event.target.value = '' }}/></label><button type="button" className="button" onClick={() => openSkill()}><Plus size={12}/>手动添加</button></span></div>{config.skills.length ? <ul className="member-skill-list">{config.skills.map((skill, index) => <li key={`${skill.name}-${index}`}><button type="button" onClick={() => openSkill(index, skill)}><strong>{configurationLabel(skill.name, '未命名技能')}</strong><small>{configurationLabel(skill.description, '手动技能')}</small></button><button type="button" aria-label={`移除${configurationLabel(skill.name, '技能')}`} title="移除技能" onClick={() => setConfig('skills', config.skills.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={12}/></button></li>)}</ul> : <p>暂无技能</p>}{config.skillNames.length ? <div className="member-resource-readonly"><small>现有版本绑定</small>{config.skillNames.map((name, index) => <span key={`${name}-${index}`}>{configurationLabel(name, '已绑定技能')}</span>)}</div> : null}</section>
-        <section className="member-resource-group"><h4>已配置工具服务</h4>{config.mcpServerIds.length ? <ul>{config.mcpServerIds.map((name, index) => <li key={`${name}-${index}`}>{configurationLabel(name, '已绑定工具服务')}</li>)}</ul> : <p>暂无工具服务</p>}</section>
-        {(['permissionAllow', 'permissionAsk', 'permissionDeny'] as const).filter((key) => config[key].length).map((key) => <section className="member-resource-group" key={key}><h4>{permissionNames[key]}</h4><ul>{config[key].map((name, index) => <li key={`${name}-${index}`}>{configurationLabel(name, '已配置调用规则')}</li>)}</ul></section>)}
+        <section className="member-resource-group member-business-actions">
+          <div className="member-resource-toolbar"><div><h4>业务动作 <span className="member-resource-count">{config.businessCapabilityIds.length}</span></h4><small>由 Forge 提供；实际调用仍按发起员工的本次授权校验</small></div><button type="button" className="button" onClick={() => { setCapabilitySearch(''); setCapabilityPickerOpen(true) }}><Plus size={12}/>添加业务动作</button></div>
+          {businessCapabilityError ? <p role="alert" className="member-inspector__error">{businessCapabilityError}</p> : null}
+          {config.businessCapabilityIds.length ? <ul className="member-capability-list">{config.businessCapabilityIds.map((id) => {
+            const capability = businessCapabilities?.capabilities.find((item) => item.id === id)
+            if (!capability) return <li key={id} className="member-capability-assigned"><div className="member-capability-assigned__summary"><strong>已绑定的业务动作暂不可读取</strong><button type="button" className="button" onClick={() => toggleBusinessCapability(id)}>移除</button></div></li>
+            const bindings = config.businessCapabilityBindings.find((binding) => binding.capabilityId === id)
+            const fileParameters = singleFileParameters(capability.params ?? [])
+            const mappedSource = (name: string) => bindings?.parameters.find((item) => item.name === name)?.source
+            const fileMode = fileParameters?.every((item) => mappedSource(item.name) === item.source) ? 'single' : fileParameters?.every((item) => !mappedSource(item.name)) ? 'member' : 'individual'
+            const selectedFileMode = individualFileMapping === id ? 'individual' : fileMode
+            const parameters = (capability.params ?? []).filter((parameter) => selectedFileMode === 'individual' || !fileParameters?.some((item) => item.name === parameter.name))
+            const expanded = expandedCapability === id
+            return <li key={id} className="member-capability-assigned">
+              <div className="member-capability-assigned__summary"><span><strong>{configurationLabel(capability.name, '业务动作')}</strong><small>{capabilityImpact(capability)}{capability.requiresEmployeeIntent ? ' · 需本轮员工授权' : ''}</small></span><div className="member-capability-assigned__actions">{capability.params?.length ? <button type="button" className="button" aria-expanded={expanded} onClick={() => setExpandedCapability(expanded ? '' : id)}>{expanded ? '收起配置' : '配置输入'}</button> : null}<button type="button" className="button" aria-label={'移除' + configurationLabel(capability.name, '业务动作')} onClick={() => toggleBusinessCapability(id)}>移除</button></div></div>
+              {capability.status === 'unavailable' ? <p className="member-inspector__error" role="alert">{capability.unavailableReason ?? '该业务动作当前不可用'}。移除后才能更新团队。</p> : null}
+              {expanded ? <div className="member-capability-parameters"><p>{capability.description}</p>
+                {fileParameters ? <><ProductSelect label={configurationLabel(capability.name, '业务动作') + '文件来源'} value={selectedFileMode ?? 'member'} options={[{ value: 'single', label: '本次唯一文件（系统注入）' }, { value: 'member', label: '由成员填写' }, { value: 'individual', label: '分别设置接口字段' }]} onChange={(mode) => { if (mode === 'individual') { setIndividualFileMapping(id); return }; setIndividualFileMapping(''); setBusinessCapabilitySources(id, fileParameters.map((item) => ({ name: item.name, source: mode === 'single' ? item.source : '' }))) }}/>{selectedFileMode === 'single' ? <small>文件标识、名称和摘要来自同一份冻结文件；有多份材料时，此来源不可用。</small> : selectedFileMode === 'member' ? <small className="member-capability-caution">文件参数尚未绑定本次材料，成员需要自行提供。</small> : null}</> : null}
+                {parameters.map((parameter) => { const source = mappedSource(parameter.name); return <div className="member-capability-parameter" key={parameter.name}><span><strong>{configurationLabel(parameter.label, parameter.name)}</strong><small>{parameter.name}</small></span><ProductSelect label={(parameter.label || parameter.name) + '来源'} value={source ?? ''} options={parameterSourceOptions(parameter, source)} onChange={(value) => setBusinessCapabilityParamSource(id, parameter.name, value)}/></div> })}
+              </div> : null}
+            </li>
+          })}</ul> : <p className="member-resource-empty">当前成员没有配置业务动作。</p>}
+        </section>
+        <section className="member-resource-group"><div className="member-resource-toolbar"><h4>技能 <span className="member-resource-count">{config.skills.length + config.skillNames.length}</span></h4><span><label className="button member-skill-upload"><Upload size={12}/>上传<input type="file" accept=".md,.txt,text/markdown,text/plain" onChange={(event) => { void uploadSkill(event.target.files?.[0]); event.target.value = '' }}/></label><button type="button" className="button" onClick={() => openSkill()}><Plus size={12}/>新建技能</button></span></div>{config.skills.length ? <ul className="member-skill-list">{config.skills.map((skill, index) => <li key={skill.name + '-' + index}><button type="button" onClick={() => openSkill(index, skill)}><strong>{configurationLabel(skill.name, '未命名技能')}</strong><small>{configurationLabel(skill.description, '成员工作方法')}</small></button><button type="button" aria-label={'移除' + configurationLabel(skill.name, '技能')} onClick={() => setConfig('skills', config.skills.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={12}/></button></li>)}</ul> : !config.skillNames.length ? <p className="member-resource-empty">当前成员没有配置技能。</p> : null}{config.skillNames.length ? <div className="member-resource-readonly"><small>现有版本绑定</small>{config.skillNames.map((name, index) => <span key={name + '-' + index}>{configurationLabel(name, '已绑定技能')}</span>)}</div> : null}</section>
+        <section className="member-resource-group"><div className="member-resource-toolbar"><h4>其他工具（MCP） <span className="member-resource-count">{config.mcpServerIds.length}</span></h4></div>{config.mcpServerIds.length ? <ul>{config.mcpServerIds.map((name, index) => <li key={name + '-' + index}>{configurationLabel(name, '已绑定工具服务')}</li>)}</ul> : <p className="member-resource-empty">当前没有可分配的工具服务，连接由组织管理。</p>}</section>
+        {(['permissionAllow', 'permissionAsk', 'permissionDeny'] as const).filter((key) => config[key].length).map((key) => <section className="member-resource-group" key={key}><h4>{permissionNames[key]}</h4><ul>{config[key].map((name, index) => <li key={name + '-' + index}>{configurationLabel(name, '已配置调用规则')}</li>)}</ul></section>)}
       </> : null}
     </div>
+    {capabilityPickerOpen ? <Modal title="添加业务动作" onClose={() => setCapabilityPickerOpen(false)} footer={<button type="button" className="button" onClick={() => setCapabilityPickerOpen(false)}>关闭</button>}><div className="member-capability-picker">
+      <ProductField autoFocus label="搜索业务动作" value={capabilitySearch} onChange={(event) => setCapabilitySearch(event.target.value)}/>
+      {businessCapabilityError ? <p role="alert">{businessCapabilityError}</p> : !businessCapabilities ? <p>正在读取业务动作…</p> : availableToAdd.length ? <ul>{availableToAdd.map((capability) => <li key={capability.id}><div><strong>{configurationLabel(capability.name, '业务动作')}</strong><small>{capabilityImpact(capability)}{capability.requiresEmployeeIntent ? ' · 需本轮员工授权' : ''}</small></div><button type="button" className="button" disabled={capability.status === 'unavailable'} onClick={() => toggleBusinessCapability(capability.id)}>添加到成员</button><details><summary>查看说明与接口参数</summary><p>{capability.description}</p>{capability.params?.length ? <ul>{capability.params.map((parameter) => <li key={parameter.name}>{configurationLabel(parameter.label, parameter.name)}{parameter.required ? ' · 必填' : ''}</li>)}</ul> : null}</details>{capability.status === 'unavailable' ? <p role="alert">{capability.unavailableReason ?? '当前不能绑定该业务动作'}</p> : null}</li>)}</ul> : <p>没有其他可添加的业务动作。</p>}
+    </div></Modal> : null}
     {skillEditor ? <Modal title={skillEditor.index < 0 ? '添加技能' : '编辑技能'} onClose={() => setSkillEditor(undefined)} footer={<><button type="button" className="button" onClick={() => setSkillEditor(undefined)}>取消</button><button type="button" className="button button--primary" disabled={!skillEditor.value.name.trim() || !skillEditor.value.body.trim()} onClick={saveSkill}>保存技能</button></>}><div className="team-create-form member-skill-form"><ProductField autoFocus label="技能名称" maxLength={80} value={skillEditor.value.name} onChange={(event) => setSkillEditor({ ...skillEditor, value: { ...skillEditor.value, name: event.target.value } })}/><ProductField label="用途" maxLength={240} value={skillEditor.value.description} onChange={(event) => setSkillEditor({ ...skillEditor, value: { ...skillEditor.value, description: event.target.value } })}/><ProductTextArea label="技能内容" rows={7} value={skillEditor.value.body} onChange={(event) => setSkillEditor({ ...skillEditor, value: { ...skillEditor.value, body: event.target.value } })}/><ProductSwitch label="每次执行都加载" checked={skillEditor.value.alwaysActive} onChange={(value) => setSkillEditor({ ...skillEditor, value: { ...skillEditor.value, alwaysActive: value } })}/>{skillError ? <p role="alert">{skillError}</p> : null}</div></Modal> : null}
   </>
 }

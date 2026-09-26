@@ -13,7 +13,7 @@ import { ProjectRunControl, type ProjectScriptKind } from './ProjectRunControl'
 import type { MouseEvent } from 'react'
 
 const viewTitles: Record<Exclude<WorkspaceView, 'session'>, MessageKey> = {
-  projects: 'nav.projects', activity: 'nav.activity', development: 'nav.development', scheduled: 'nav.scheduled', plugins: 'nav.capabilities', settings: 'nav.settings',
+  projects: 'nav.projects', activity: 'nav.activity', scheduled: 'nav.scheduled', plugins: 'nav.capabilities', settings: 'nav.settings',
 }
 
 const windowsMenus: ReadonlyArray<{ name: ApplicationMenuName; label: string }> = [

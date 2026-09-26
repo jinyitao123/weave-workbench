@@ -18,6 +18,8 @@ import type { VoiceService } from './voice'
 import type { UpdateService } from './updates'
 import { approvalContextView, type EnterpriseService } from './enterprise'
 import type { AgentEnterpriseBridge } from './enterprise/agent-bridge'
+import type { TeamDevelopmentContextInput, TeamDevelopmentProposalResult } from '../../src/types/team-workspace'
+import type { TeamDevelopmentState } from '../../src/types/team-workspace'
 import type { AgentBrowserService } from './browser/agent-service'
 import { rejectUnknownKeys, requireExistingPath, requireInteger, requireRecord, requireString, requireWebUrl } from './validation'
 
@@ -38,6 +40,10 @@ interface Services {
   updates: UpdateService
   enterprise: EnterpriseService
   enterpriseBridge?: AgentEnterpriseBridge
+  updateTeamDevelopment(runtimeId: string, input: TeamDevelopmentContextInput): Promise<void>
+  getTeamDevelopmentProposal(runtimeId: string): Promise<TeamDevelopmentProposalResult | undefined>
+  getTeamDevelopmentState(runtimeId: string): Promise<TeamDevelopmentState>
+  getTeamDevelopmentStateForSession(sessionFile: string): Promise<TeamDevelopmentState>
   cuaDriver: CuaDriverService
   heartbeats: HeartbeatService
   schedules: AutomationService
@@ -266,6 +272,10 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   ) })
   handle('enterprise:sign-out', () => { services.enterpriseBridge?.invalidateAccount(); return services.enterprise.signOut() })
   handle('enterprise:team-workspace', (_event, command) => services.enterprise.teamWorkspace(requireRecord(command, 'command') as unknown as import('../../src/types/team-workspace').TeamWorkspaceCommand))
+  handle('enterprise:update-team-development', (_event, runtimeId, input) => services.updateTeamDevelopment(requireString(runtimeId, 'runtimeId', { min: 1, max: 256 }), requireRecord(input, 'input') as unknown as TeamDevelopmentContextInput))
+  handle('enterprise:get-team-development-proposal', (_event, runtimeId) => services.getTeamDevelopmentProposal(requireString(runtimeId, 'runtimeId', { min: 1, max: 256 })))
+  handle('enterprise:get-team-development-state', (_event, runtimeId) => services.getTeamDevelopmentState(requireString(runtimeId, 'runtimeId', { min: 1, max: 256 })))
+  handle('enterprise:get-team-development-state-for-session', (_event, sessionFile) => services.getTeamDevelopmentStateForSession(requireString(sessionFile, 'sessionFile', { min: 1, max: 4096 })))
   handle('enterprise:get-development-overview', () => services.enterprise.getDevelopmentOverview())
   handle('enterprise:get-business-capability-catalog', () => services.enterprise.getBusinessCapabilityCatalog())
   handle('enterprise:create-development-team', (_event, input) => services.enterprise.createDevelopmentTeam(requireRecord(input, 'input') as unknown as import('../../src/types/api').EnterpriseCreateTeamInput))

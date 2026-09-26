@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { EnterpriseService } from '../../electron/main/enterprise'
+import { EnterpriseService, WorkRegistrationRejectedError } from '../../electron/main/enterprise'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -454,6 +454,53 @@ describe('EnterpriseService', () => {
     expect(JSON.stringify(calls)).not.toContain('weave-token')
   })
 
+  it('restarts a failed read-only team run in the same work session without inventing a prior deliverable', async () => {
+    const registrations: Record<string, unknown>[] = []
+    const fetchMock = workOverviewFetch((url, init) => {
+      if (url.endsWith('/v1/workbench/dispatch-inputs')) {
+        const body = JSON.parse(String(init?.body)) as Record<string, unknown>
+        registrations.push(body)
+        return Response.json({ input_revision_id: 'new-input', client_request_id: 'new-client', task_sha256: createHash('sha256').update(String(body.task)).digest('hex') }, { status: 201 })
+      }
+      if (url.endsWith('/v1/teams/team-1/dispatch')) return Response.json({ run_id: 'new-run', task_id: 'new-task', workflow_id: 'flow-1', workflow_version: 1 }, { status: 201 })
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('sales@example.test', 'secret')
+    const accountKey = await service.accountKey()
+    const choice = { teamId: 'team-1', teamName: '团队', workflowId: 'flow-1', workflowName: '流程', businessCapabilityIds: [], version: 1 }
+    const base = {
+      sessionKey: 'session', sourceMessages: [{ messageId: 'message-1', eventSeq: 1, sha256: 'a'.repeat(64) }], accountKey,
+      resources: [], authorizedBusinessCapabilityIds: [], assertCurrent: async () => {},
+    }
+    const continuation = { workbenchSessionID: 'original-session', inputRevisionID: '550e8400-e29b-41d4-a716-446655440000', runID: 'failed-run', teamID: 'team-1' }
+    await service.submitWork(choice, '重新检查当前材料', { ...base, idempotencySeed: 'retry-1', continuation: { ...continuation, restartAfterFailedRun: true } })
+    expect(registrations[0]).toMatchObject({ workbench_session_id: 'original-session', expected_revision_id: continuation.inputRevisionID })
+    expect(registrations[0]).not.toHaveProperty('revision_context')
+    await service.submitWork(choice, '修订已有结论', { ...base, idempotencySeed: 'revision-1', continuation })
+    expect(registrations[1]).toMatchObject({ revision_context: { parent_input_revision_id: continuation.inputRevisionID, parent_run_id: continuation.runID } })
+    await expect(service.submitWork(choice, '再次检查', { ...base, idempotencySeed: 'unsafe-1', authorizedBusinessCapabilityIds: ['write'], continuation: { ...continuation, restartAfterFailedRun: true } })).rejects.toThrow('先核对 Forge 结果')
+    expect(registrations).toHaveLength(2)
+  })
+
+  it('treats a registration version conflict as a definite rejection without dispatching', async () => {
+    let dispatched = false
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: workOverviewFetch((url) => {
+      if (url.endsWith('/v1/workbench/dispatch-inputs')) return Response.json({ code: 'input_revision_conflict', error: 'current dispatch input revision changed' }, { status: 409 })
+      if (url.endsWith('/v1/teams/team-1/dispatch')) dispatched = true
+      return undefined
+    }) })
+    await service.signIn('sales@example.test', 'secret')
+    const source = {
+      idempotencySeed: 'same-intent', sessionKey: 'session', accountKey: await service.accountKey(),
+      sourceMessages: [{ messageId: 'message-1', eventSeq: 1, sha256: 'a'.repeat(64) }], resources: [], authorizedBusinessCapabilityIds: [],
+      continuation: { workbenchSessionID: 'original-session', inputRevisionID: '550e8400-e29b-41d4-a716-446655440000', runID: 'failed-run', teamID: 'team-1' },
+      assertCurrent: async () => {},
+    }
+    await expect(service.submitWork({ teamId: 'team-1', teamName: '团队', workflowId: 'flow-1', workflowName: '流程', businessCapabilityIds: [], version: 1 }, '重新检查', source)).rejects.toBeInstanceOf(WorkRegistrationRejectedError)
+    expect(dispatched).toBe(false)
+  })
+
   it('loads native Forge approvals, routes reviewer decisions, and blocks native resubmit', async () => {
     const calls: Array<{ url: string; method: string; body?: Record<string, unknown> }> = []
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
@@ -486,6 +533,34 @@ describe('EnterpriseService', () => {
     await expect(service.completeHumanTask(overview.tasks[1], { decision: 'approved', comment: '已补充' })).rejects.toThrow('Forge 修订材料递交业务动作尚未接通')
     expect(calls.find((call) => call.url.endsWith('/approval-1/revise'))).toMatchObject({ method: 'POST', body: { comment: '请补充付款条件' } })
     expect(calls.some((call) => call.url.endsWith('/approval-2/resubmit'))).toBe(false)
+  })
+
+  it('hides a returned approval task after its native resubmission, but keeps a later return actionable', async () => {
+    let actions: Array<{ action: string; comment?: string }> = [
+      { action: 'submit' },
+      { action: 'revise', comment: '第一轮请补充附件' },
+      { action: 'resubmit' },
+    ]
+    const fetchMock = workOverviewFetch((url) => {
+      if (url.endsWith('/v1/teams?status=active')) return Response.json({ teams: [] })
+      if (url.includes('/v1/runs?project_id=')) return Response.json({ runs: [] })
+      if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
+      if (url.endsWith('/api/v1/notifications?limit=200')) return Response.json({ notifications: [] })
+      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [
+        { id: 'approval-returned', process_name: '销售合同复核', record_title: '测试合同', object_name: 'forge_sales_contract', status: 'returned', updated_at: '2026-09-26T09:00:00Z', viewer: { is_submitter: true } },
+      ] })
+      if (url.endsWith('/api/v1/approvals/requests/approval-returned/actions')) return Response.json({ data: actions })
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('sales@example.test', 'secret')
+
+    await expect(service.getWorkOverview()).resolves.toMatchObject({ tasks: [] })
+
+    actions = [...actions, { action: 'submit' }, { action: 'revise', comment: '第二轮仍需补材料' }]
+    await expect(service.getWorkOverview()).resolves.toMatchObject({
+      tasks: [{ interactionId: 'approval-returned', mode: 'revision', instructions: '退回原因：第二轮仍需补材料' }],
+    })
   })
 
   it('keeps Weave runs and tasks visible when Forge approvals and notifications fail', async () => {

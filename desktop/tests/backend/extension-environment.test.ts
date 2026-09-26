@@ -139,4 +139,10 @@ describe('capability extension environment parity (OMP and pi)', () => {
     const unsafe = adapter.buildStartArgs({ cwd: '/work', environment: { GOOEYPI_ENTERPRISE_EXTENSION_PATH: '--enterprise-injection' } })
     expect(unsafe).not.toContain('--enterprise-injection')
   })
+
+  it('loads the scoped team-development tools in an ordinary Pi conversation', () => {
+    const args = PI_RPC_ADAPTER.buildStartArgs({ cwd: '/work', environment: { GOOEYPI_TEAM_DEVELOPMENT_EXTENSION_PATH: '/app/extensions/gooeypi-team-development.ts' } })
+    expect(args.slice(-2)).toEqual(['--extension', '/app/extensions/gooeypi-team-development.ts'])
+    expect(args).not.toContain('--no-builtin-tools')
+  })
 })

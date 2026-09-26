@@ -94,6 +94,7 @@ describe('safety-critical coverage inventory', () => {
     const shippedExtensions = inventory.includedFiles.filter((file) => file.startsWith('assets/extensions/'))
     expect(shippedExtensions).toEqual([
       'assets/extensions/gooeypi-enterprise.ts',
+      'assets/extensions/gooeypi-team-development.ts',
       'assets/extensions/omp-work-ask-user.ts',
       'assets/extensions/omp-work-browser.ts',
       'assets/extensions/omp-work-collaboration.ts',

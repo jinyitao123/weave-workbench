@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { TranscriptMessage } from '@/types/api'
+import type { HarnessId, TranscriptMessage } from '@/types/api'
+import { HARNESS_SHORT_NAMES } from '@/lib/harness'
 import { newestWindow } from '@/lib/render-bounds'
 
-export function useTranscriptScroll(messages: TranscriptMessage[]) {
+export function useTranscriptScroll(messages: TranscriptMessage[], harness: HarnessId = 'prime') {
   const scrollRef = useRef<HTMLDivElement>(null)
   const previousCountRef = useRef(0)
   const previousStreamingRef = useRef(false)
@@ -10,6 +11,7 @@ export function useTranscriptScroll(messages: TranscriptMessage[]) {
   const [visibleLimit, setVisibleLimit] = useState(250)
   const [announcement, setAnnouncement] = useState('')
   const streaming = messages.some((message) => message.streaming)
+  const shortName = HARNESS_SHORT_NAMES[harness]
   const visibleMessages = useMemo(() => newestWindow(messages, visibleLimit), [messages, visibleLimit])
   const hiddenCount = messages.length - visibleMessages.length
 
@@ -23,12 +25,12 @@ export function useTranscriptScroll(messages: TranscriptMessage[]) {
     } else if (streaming && pinnedToBottomRef.current) {
       frame = requestAnimationFrame(() => scroller && typeof scroller.scrollTo === 'function' && scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'auto' }))
     }
-    if (previousStreamingRef.current && !streaming) setAnnouncement('Prime response complete.')
-    else if (!previousStreamingRef.current && streaming) setAnnouncement('Prime is working.')
+    if (previousStreamingRef.current && !streaming) setAnnouncement(`${shortName} response complete.`)
+    else if (!previousStreamingRef.current && streaming) setAnnouncement(`${shortName} is working.`)
     previousStreamingRef.current = streaming
     previousCountRef.current = messages.length
     return () => { if (frame !== undefined) cancelAnimationFrame(frame) }
-  }, [messages, streaming])
+  }, [messages, shortName, streaming])
 
   const updatePinnedState = () => {
     const scroller = scrollRef.current

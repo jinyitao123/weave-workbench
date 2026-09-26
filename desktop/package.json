@@ -85,6 +85,7 @@
     "vitest": "^4.1.10"
   },
   "build": {
+    "electronDist": "node_modules/electron/dist",
     "appId": "com.inocube.weave-workbench",
     "productName": "Weave Workbench",
     "executableName": "weave-workbench",

@@ -195,18 +195,21 @@ describe('workspace MCP command policy', () => {
     const actions = createWorkspaceActions(() => ({
       bridge: { agent: { start: agentStart, command: agentCommand } },
       sessions: [],
-      workspace: { workspaceRef: { current: { project: { harness } } } },
+      workspace: { workspaceRef: { current: { project: { harness } } }, runtime: null, runtimeIdRef: { current: null }, runtimeOwnerRef: { current: null } },
       provider: {},
       settingsState: { settings: { activeHarness: harness } },
       setToast,
     } as unknown as WorkspaceActionsDeps))
 
     await actions.sendPrompt(prompt)
-    await actions.sendPrompt(prompt, [{ type: 'image', mimeType: 'image/png', data: 'iVBORw0KGgo=' }])
+    await expect(actions.sendPrompt(prompt, [{ type: 'image', mimeType: 'image/png', data: 'iVBORw0KGgo=' }]))
+      .rejects.toThrow('Remove the authentication command or its attachments before sending')
 
     expect(agentStart).not.toHaveBeenCalled()
     expect(agentCommand).not.toHaveBeenCalled()
-    expect(setToast).toHaveBeenCalledWith(`Network MCP authentication is managed outside GooeyPi. Use ${agentName} directly to sign in to ${server}.`)
+    const message = `Network MCP authentication is managed outside GooeyPi. Use ${agentName} directly to sign in to ${server}.`
+    expect(setToast).toHaveBeenNthCalledWith(1, message)
+    expect(setToast).toHaveBeenNthCalledWith(2, `${message} The command and attachments were not sent.`)
   })
 })
 
@@ -309,7 +312,7 @@ describe('idle prompt streaming behavior', () => {
       type: 'prompt',
       message: `idle ${intent}`,
       streamingBehavior,
-    })
+    }, undefined)
     expect(messages.filter((message) => message.role === 'user')).toHaveLength(1)
   })
 

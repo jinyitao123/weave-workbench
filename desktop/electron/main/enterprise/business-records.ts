@@ -42,6 +42,7 @@ export interface BusinessRecordRelationSnapshot {
   label: string
   direction: 'related' | 'reference'
   records: BusinessRecordFieldValue[][]
+  recordIds?: string[]
   returnedCount: number
   limit: number
   complete: boolean
@@ -537,6 +538,39 @@ export class ForgeBusinessReader {
       notes.push(`主记录声明了 ${expectedCount} 条明细，但未能从原生元数据确认对应的明细关系`)
     }
     let relatedRead = 0
+    const skuReadable = directory.objects.some((item) => item.objectName === 'forge_material_sku')
+    let skuFields: BusinessField[] | undefined
+    const skuCache = new Map<string, Promise<BusinessRecordFieldValue[]>>()
+    const skuLabels = async (line: unknown, fields: BusinessField[]): Promise<BusinessRecordFieldValue[]> => {
+      const skuReference = skuReadable ? fields.find((field) => field.reference === 'forge_material_sku') : undefined
+      const skuId = skuReference && text(object(line)?.[skuReference.name])
+      if (!skuId) return []
+      let pending = skuCache.get(skuId)
+      if (!pending) {
+        pending = (async () => {
+          skuFields ??= nativeFieldList(await this.getObjectMetadata('forge_material_sku', generation))
+          const sku = object(unwrapData(await this.callTool('get_record', {
+            objectName: 'forge_material_sku', recordId: skuId,
+          }, generation)))
+          if (!sku || recordID(sku) !== skuId) throw new Error('规格记录不可读取')
+          const codeField = skuFields.find((field) => field.name === 'code' && canExposeField(field))
+          const nameField = skuFields.find((field) => field.name === 'name' && canExposeField(field))
+          const code = codeField ? stringValue(sku[codeField.name]) : undefined
+          const name = nameField ? stringValue(sku[nameField.name]) : undefined
+          return [
+            ...(code ? [{ label: '物料规格编码', value: code }] : []),
+            ...(name ? [{ label: '物料规格名称', value: name }] : []),
+          ]
+        })()
+        skuCache.set(skuId, pending)
+      }
+      try { return await pending }
+      catch {
+        partial = true
+        notes.push('部分物料规格编码当前不可读取；物料编码不能代替规格编码')
+        return []
+      }
+    }
     for (const plan of plans) {
       const relation = relationTarget(plan.field)
       if (!relation) continue
@@ -545,16 +579,27 @@ export class ForgeBusinessReader {
           const remaining = MAX_TOTAL_RELATED_ROWS - relatedRead
           if (remaining <= 0) { truncated = true; notes.push('关联明细行数达到安全上限'); break }
           const limit = Math.min(MAX_RELATION_ROWS, remaining)
+          const skuReference = skuReadable ? plan.fields.find((field) => field.reference === 'forge_material_sku') : undefined
           const query = await this.callTool('query_records', {
             objectName: plan.summary.objectName,
             where: { [relationFieldName(plan.field)]: id },
-            fields: [...new Set(['id', ...displayFields(plan.fields).map((field) => field.name)])],
+            fields: [...new Set(['id', ...displayFields(plan.fields).map((field) => field.name), ...(skuReference ? [skuReference.name] : [])])],
             limit,
             offset: 0,
           }, generation)
           const page = queryRows(query)
-          const recordFields = page.rows.map((relatedRow) => snapshotFields(plan.fields, relatedRow))
+          const recordFields = await Promise.all(page.rows.map(async (relatedRow) => {
+            const snapshot = snapshotFields(plan.fields, relatedRow)
+            return { values: [...snapshot.values, ...await skuLabels(relatedRow, plan.fields)], truncated: snapshot.truncated }
+          }))
           const requiredForCalculation = plan.direction === 'related' && expectedCount !== undefined && isLineItemRelationship(plan.summary, plan.fields)
+          const actionRecordIds = requiredForCalculation ? page.rows.map((relatedRow) => {
+            const id = recordID(object(relatedRow) ?? {})
+            return id && id.length <= 128 ? id : undefined
+          }) : []
+          const hasActionRecordIds = requiredForCalculation && actionRecordIds.length > 0
+            && actionRecordIds.every((value): value is string => Boolean(value))
+            && new Set(actionRecordIds).size === actionRecordIds.length
           const hasMore = page.hasMore !== undefined ? page.hasMore : page.totalCount !== undefined ? page.totalCount > page.rows.length : page.rows.length >= limit
           const countMatches = !requiredForCalculation || page.rows.length === expectedCount && (page.totalCount === undefined || page.totalCount === expectedCount)
           const relationComplete = !hasMore && countMatches && recordFields.every((entry) => !entry.truncated)
@@ -562,8 +607,10 @@ export class ForgeBusinessReader {
           relations.push({
             label: relationLabel(plan.summary, plan.field), direction: plan.direction,
             records: recordFields.map((entry) => entry.values), returnedCount: page.rows.length, limit, complete: relationComplete,
+            ...(hasActionRecordIds && relationComplete ? { recordIds: actionRecordIds as string[] } : {}),
             ...(requiredForCalculation ? { requiredForCalculation: true, expectedCount } : {}),
           })
+          if (requiredForCalculation && !hasActionRecordIds) notes.push('部分明细缺少可校验的原生操作标识；不能让成员猜测明细引用')
           if (requiredForCalculation && countMatches && !hasMore) pricingDetailCompleteness = 'complete'
           if (requiredForCalculation && !countMatches) {
             blockingDetailMismatch = true

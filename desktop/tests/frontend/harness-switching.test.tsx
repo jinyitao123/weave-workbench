@@ -467,7 +467,7 @@ describe('sidebar brand switcher', () => {
     const onSelectHarness = vi.fn()
     await renderSidebar(onSelectHarness, 'omp', allDetectedMeta)
 
-    expect([...container.querySelectorAll('nav.sidebar__primary button span')].map((item) => item.textContent)).toEqual(expect.arrayContaining(['开始工作', '搜索', 'My tasks', 'Development']))
+    expect([...container.querySelectorAll('nav.sidebar__primary button span')].map((item) => item.textContent)).toEqual(['开始工作', '搜索', 'My tasks'])
     expect(container.textContent).not.toContain('Capabilities')
 
     await click(container.querySelector('.brand-switcher__trigger')!)

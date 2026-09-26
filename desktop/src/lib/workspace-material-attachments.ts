@@ -1,4 +1,4 @@
-import type { WorkspaceMaterialPromptReference, WorkspaceMaterialReference } from '@/types/api'
+import type { WorkspaceMaterialPromptReference, WorkspaceMaterialReference } from '../types/api'
 
 const OPEN = '<!-- gooeypi-workspace-materials:v1\n'
 const CLOSE = '\n-->'

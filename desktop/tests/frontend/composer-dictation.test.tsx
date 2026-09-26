@@ -78,6 +78,6 @@ describe('composer dictation controls', () => {
     act(() => root.render(<Composer {...composerProps({ onSend })} />))
     await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Transcribe and send message"]')?.click())
     expect(finish).toHaveBeenCalledOnce()
-    expect(onSend).toHaveBeenCalledWith('ship the voice feature', [], 'queue')
+    expect(onSend).toHaveBeenCalledWith('ship the voice feature', [], 'queue', [])
   })
 })

@@ -87,6 +87,54 @@ function readerFixture(options: { lineCount?: number; deniedLineQuery?: boolean;
 }
 
 describe('native Forge business record reads', () => {
+  it('keeps a line item material code distinct from its authorized SKU code', async () => {
+    const contractFields: Field[] = [
+      { name: 'id', type: 'text', label: 'ID' },
+      { name: 'name', type: 'text', label: '合同名称' },
+      { name: 'code', type: 'text', label: '合同编号' },
+      { name: 'item_count', type: 'number', label: '明细行数' },
+    ]
+    const contractLineFields: Field[] = [
+      { name: 'id', type: 'text', label: 'ID' },
+      { name: 'contract_id', type: 'lookup', label: '合同', reference: 'forge_sales_contract' },
+      { name: 'sku_id', type: 'lookup', label: '物料规格', reference: 'forge_material_sku' },
+      { name: 'item_code', type: 'text', label: '物料编码' },
+      { name: 'quantity_limit', type: 'number', label: '数量' },
+      { name: 'taxed_unit_price', type: 'currency', label: '单价' },
+    ]
+    const skuFields: Field[] = [
+      { name: 'id', type: 'text', label: 'ID' },
+      { name: 'code', type: 'text', label: '规格编码' },
+      { name: 'name', type: 'text', label: '规格名称' },
+    ]
+    const calls: ToolCall[] = []
+    const definitions: Record<string, Field[]> = {
+      forge_sales_contract: contractFields,
+      forge_sales_contract_line: contractLineFields,
+      forge_material_sku: skuFields,
+    }
+    const reader = new ForgeBusinessReader(async (name, args) => {
+      calls.push({ name, args })
+      if (name === 'list_objects') return { objects: Object.keys(definitions).map((objectName) => ({ name: objectName, label: objectName })), totalCount: 3 }
+      if (name === 'get_record' && args.objectName === 'forge_sales_contract') return { id: 'contract-1', name: '测试合同', code: 'C-1', item_count: 1 }
+      if (name === 'get_record' && args.objectName === 'forge_material_sku') return { id: 'sku-1', code: 'SKU-A', name: '设备 A 标准版' }
+      if (name === 'query_records' && args.objectName === 'forge_sales_contract_line') return {
+        records: [{ id: 'line-1', contract_id: 'contract-1', sku_id: 'sku-1', item_code: 'MATERIAL-A', quantity_limit: 2, taxed_unit_price: 900 }],
+        total: 1, hasMore: false,
+      }
+      throw new Error(`unexpected ${name}`)
+    }, async (objectName) => metadata(objectName, objectName, definitions[objectName]!))
+    const result = await reader.readRecord('forge_sales_contract', 'contract-1', 1)
+    const detail = result.snapshot.relations.find((relation) => relation.requiredForCalculation)
+    expect(detail?.records[0]).toEqual(expect.arrayContaining([
+      { label: '物料编码', value: 'MATERIAL-A' },
+      { label: '物料规格编码', value: 'SKU-A' },
+      { label: '物料规格名称', value: '设备 A 标准版' },
+    ]))
+    expect(detail?.records[0]).not.toEqual(expect.arrayContaining([{ label: '物料规格', value: 'sku-1' }]))
+    expect(calls.some((call) => call.name === 'get_record' && call.args.objectName === 'forge_material_sku')).toBe(true)
+  })
+
   it('does not expose a native owner user ID as a person name', async () => {
     const requested: Record<string, unknown>[] = []
     const fields = [
@@ -141,7 +189,7 @@ describe('native Forge business record reads', () => {
       pricingDetailCompleteness: 'complete',
       expectedDetailCount: 2,
     })
-    expect(read.snapshot.relations).toEqual(expect.arrayContaining([expect.objectContaining({ direction: 'related', returnedCount: 2, expectedCount: 2, requiredForCalculation: true, complete: true })]))
+    expect(read.snapshot.relations).toEqual(expect.arrayContaining([expect.objectContaining({ direction: 'related', returnedCount: 2, expectedCount: 2, requiredForCalculation: true, complete: true, recordIds: ['line-1', 'line-2'] })]))
     expect(f.metadataCalls).toEqual(['sales_quote', 'sales_quote_line', 'customer'])
     expect(f.calls.find((call) => call.name === 'query_records' && call.args.objectName === 'sales_quote_line')?.args.where).toEqual({ quote_id: 'quote-internal-1' })
     expect(f.calls.some((call) => call.name === 'query_records' && call.args.objectName === 'customer')).toBe(false)
@@ -158,6 +206,7 @@ describe('native Forge business record reads', () => {
     expect(read.snapshot).toMatchObject({ completeness: 'incomplete', pricingDetailCompleteness: 'incomplete', expectedDetailCount: 2 })
     expect(read.snapshot.completenessNotes.join(' ')).toContain('停止按完整明细核算')
     expect(read.snapshot.relations[0]).toMatchObject({ returnedCount: 1, expectedCount: 2, complete: false })
+    expect(read.snapshot.relations[0]).not.toHaveProperty('recordIds')
   })
 
   it('keeps the selected record while reporting a child query denial as incomplete detail data', async () => {

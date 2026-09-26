@@ -1,12 +1,13 @@
-import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AgentEnterpriseBridge } from '../../electron/main/enterprise/agent-bridge'
 import { digest, submissionUUID } from '../../electron/main/enterprise/handoff-store'
 import type { EnterpriseApprovalContext, TranscriptMessage } from '../../src/types/api'
-import type { EnterpriseWorkContinuationContext, EnterpriseWorkNotificationSource } from '../../electron/main/enterprise'
+import { WorkRegistrationRejectedError, type EnterpriseWorkContinuationContext, type EnterpriseWorkNotificationSource } from '../../electron/main/enterprise'
 import { ForgeBusinessReadError, type BusinessRecordSnapshot } from '../../electron/main/enterprise/business-records'
+import { appendWorkspaceMaterialContext } from '../../src/lib/workspace-material-attachments'
 
 const bridges: AgentEnterpriseBridge[] = [], directories: string[] = []
 afterEach(async () => {
@@ -31,8 +32,11 @@ async function fixture(objectName = 'forge_sales_contract') {
   const cwd = await mkdtemp(join(tmpdir(), 'handoff-')); directories.push(cwd)
   const content = '# 合同\n客户：测试客户\n金额：12345 元\n交期：2026-10-01\n'
   const sourceContent = '# 原提交合同\n客户：测试客户\n'
-  await writeFile(join(cwd, '合同.md'), content)
-  const materials = [{ path: '合同.md', sha256: digest(content) }]
+  const materialPath = '材料/附件/合同.md'
+  await mkdir(join(cwd, '材料', '附件'), { recursive: true })
+  await writeFile(join(cwd, materialPath), content)
+  const materialReference = { projectId: 'project-test', harness: 'pi' as const, workspacePath: cwd, name: '合同.md', path: materialPath, sha256: digest(content), bytes: Buffer.byteLength(content), mimeType: 'text/markdown' as const }
+  const materials = [{ path: materialPath, sha256: digest(content) }]
   const approvalContext = (requestId: string, returnVersion: string, recordId: string): EnterpriseApprovalContext => ({
     requestId, status: 'returned', viewer: 'original_submitter', title: '测试合同', step: '销售修改',
     businessObject: { objectName, recordId, recordName: '测试合同' }, sourceMaterialVersion: digest(`source:${requestId}`),
@@ -144,7 +148,7 @@ async function fixture(objectName = 'forge_sales_contract') {
     if (!recordKey) throw new Error('fixture did not return a business record')
     return { directory, objectRef, found, recordKey }
   }
-  await input('这版给他们看看', 'employee-turn-1')
+  await input(appendWorkspaceMaterialContext('这版给他们看看', [materialReference]), 'employee-turn-1')
   return { call, callWithTurn, input, discover, findRecord, openReturned, service, bridge, environment, materials, cwd, transcript, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, businessCandidate, businessSnapshot }
 }
 
@@ -196,16 +200,17 @@ describe('employee-bound material handoff', () => {
     expect(opened.body.result.turn_key).toBeTypeOf('string')
 
     const revisedMaterial = '# 合同\n已补验收期限\n'
-    await writeFile(join(f.cwd, '合同.md'), revisedMaterial)
+    await writeFile(join(f.cwd, '材料', '附件', '合同.md'), revisedMaterial)
     f.bridge.invalidateHandoff('runtime')
     const oldTurn = await f.callWithTurn('activate', { prompt: openedPrompt }, opened.body.result.turn_key as string)
     expect(oldTurn.status).toBe(409)
-    await f.input('我补上验收期限了，再让原团队按这版检查。', 'continued-work-round-2')
+    const revisedReference = { projectId: 'project-test', harness: 'pi' as const, workspacePath: f.cwd, name: '合同.md', path: '材料/附件/合同.md', sha256: digest(revisedMaterial), bytes: Buffer.byteLength(revisedMaterial), mimeType: 'text/markdown' as const }
+    await f.input(appendWorkspaceMaterialContext('我补上验收期限了，再让原团队按这版检查。', [revisedReference]), 'continued-work-round-2')
     const round2 = await f.discover()
     const second = await f.call('submit', {
       ...round2,
       goal: '按我这次补充的验收期限，继续核对原工作。',
-      materials: [{ path: '合同.md', sha256: digest(revisedMaterial) }],
+      materials: [{ path: '材料/附件/合同.md', sha256: digest(revisedMaterial) }],
     })
     expect(second.status).toBe(200)
     expect(second.body.result.status).toBe('accepted')
@@ -214,12 +219,12 @@ describe('employee-bound material handoff', () => {
     }, authorizedBusinessCapabilityIds: [] })
 
     f.bridge.invalidateHandoff('runtime')
-    await f.input('再补一处表述，请继续检查刚才那版。', 'continued-work-round-3')
+    await f.input(appendWorkspaceMaterialContext('再补一处表述，请继续检查刚才那版。', [revisedReference]), 'continued-work-round-3')
     const round3 = await f.discover()
     const third = await f.call('submit', {
       ...round3,
       goal: '继续检查刚才那版补充后的合同。',
-      materials: [{ path: '合同.md', sha256: digest(revisedMaterial) }],
+      materials: [{ path: '材料/附件/合同.md', sha256: digest(revisedMaterial) }],
     })
     expect(third.status).toBe(200)
     expect(third.body.result.status).toBe('accepted')
@@ -231,6 +236,43 @@ describe('employee-bound material handoff', () => {
     expect(f.service.getBusinessCapabilities).toHaveBeenCalledTimes(2)
     expect(f.service.stageWorkMaterials).toHaveBeenCalledTimes(2)
     expect(f.service.stageWorkMaterials.mock.calls.map(([materials]) => materials[0]?.content)).toEqual([revisedMaterial, revisedMaterial])
+  })
+
+  it('marks a failed read-only continuation as a fresh input in the same work session', async () => {
+    const f = await fixture()
+    f.service.getWorkContinuationContext.mockImplementation(async (references) => {
+      const context = workContinuationContext()
+      context.source.inputRevisionID = references.workReference
+      context.source.runID = references.runReference
+      context.source.workbenchSessionID = references.sessionReference
+      context.run.status = 'failed'
+      context.run.finalResult = undefined
+      return context
+    })
+    const binding = await f.bridge.pinWorkContinuationContext({ id: 'failed-work', source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' })
+    const reference = { projectId: 'project-test', harness: 'pi' as const, workspacePath: f.cwd, name: '合同.md', path: '材料/附件/合同.md', sha256: digest(f.content), bytes: Buffer.byteLength(f.content), mimeType: 'text/markdown' as const }
+    const openingPrompt = '查看上次失败的团队结果。'
+    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: openingPrompt }, undefined, binding.handle)
+    f.transcript.push(user('failed-run-opening', openingPrompt))
+    const activated = await f.call('activate', { prompt: openingPrompt })
+    expect(activated.status, JSON.stringify(activated.body)).toBe(200)
+    const turnKey = activated.body.result.turn_key as string
+    const search = await f.callWithTurn('search', { work_summary: '复核合同' }, turnKey)
+    const teamKey = (search.body.result.teams as Array<{ team_key: string }>)[0]!.team_key
+    const described = await f.callWithTurn('describe', { team_key: teamKey }, turnKey)
+    const handoffKey = (described.body.result.capabilities as Array<{ handoff_key: string }>)[0]!.handoff_key
+    const openingSubmit = await f.callWithTurn('submit', { handoff_key: handoffKey, business_actions: [], goal: '只读检查这版合同', materials: f.materials }, turnKey)
+    expect(openingSubmit.status).toBe(409)
+    expect(openingSubmit.body.error).toContain('打开工作消息只授权查看')
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+
+    await f.input(appendWorkspaceMaterialContext('这版合同重新交给原团队只读检查。', [reference]), 'failed-run-new-materials')
+    const params = await f.discover()
+    const result = await f.call('submit', params)
+    expect(result.body.result.status).toBe('accepted')
+    expect(f.service.submitWork.mock.calls[0]?.[2]).toMatchObject({ continuation: {
+      workbenchSessionID: 'workbench-session-1', inputRevisionID: 'input-1', runID: 'run-1', restartAfterFailedRun: true,
+    }, authorizedBusinessCapabilityIds: [] })
   })
 
   it('refuses a different team when describing a linked continuation', async () => {
@@ -644,7 +686,7 @@ describe('employee-bound material handoff', () => {
     const params = { employee_request: employeeRequest, body: '当前最终正文', materials: f.materials }
     const first = await f.call('revision_submit', params)
     expect(first.body.result.status).toBe('resumed')
-    await writeFile(join(f.cwd, '合同.md'), '被修改的本地草稿')
+    await writeFile(join(f.cwd, '材料', '附件', '合同.md'), '被修改的本地草稿')
 
     const retry = await f.call('revision_submit', params)
     expect(retry.body.result).toEqual(first.body.result)
@@ -654,7 +696,7 @@ describe('employee-bound material handoff', () => {
     const changedBody = await f.call('revision_submit', { ...params, body: '新的正文' })
     expect(changedBody.status).toBe(409)
     expect(changedBody.body.error).toContain('本轮修订材料已固定')
-    const changedMaterial = await f.call('revision_submit', { ...params, materials: [{ path: '合同.md', sha256: digest('被修改的本地草稿') }] })
+    const changedMaterial = await f.call('revision_submit', { ...params, materials: [{ path: '材料/附件/合同.md', sha256: digest('被修改的本地草稿') }] })
     expect(changedMaterial.status).toBe(409)
     expect(changedMaterial.body.error).toContain('本轮修订材料已固定')
   })
@@ -816,15 +858,50 @@ describe('employee-bound material handoff', () => {
     const f = await fixture(), params = await f.discover()
     expect((await f.call('submit', { ...params, materials: [] })).status).toBe(409)
     expect((await f.call('submit', { ...params, materials: [{ path: 'absent.md', sha256: digest('x') }] })).status).toBe(409)
-    await writeFile(join(f.cwd, '合同.md'), 'changed')
+    await writeFile(join(f.cwd, '材料', '附件', '合同.md'), 'changed')
     expect((await f.call('submit', params)).body.error).toContain('版本已变化')
     expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+  it('rejects an account-workspace file that was never attached or explicitly reused in this employee turn', async () => {
+    const f = await fixture()
+    const oldPath = '材料/附件/青峦工业合同.md'
+    const oldContent = '# 青峦工业合同\n'
+    await writeFile(join(f.cwd, oldPath), oldContent)
+    await f.input('请分析北辰装备线索。', 'employee-lead-turn')
+    const nextTurn = await f.discover()
+    const result = await f.call('submit', { ...nextTurn, materials: [{ path: oldPath, sha256: digest(oldContent) }] })
+    expect(result.status).toBe(409)
+    expect(result.body.error).toContain('只能交接本轮消息中实际附加的材料')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+  it('requires an earlier same-session attachment to be reattached in the current employee turn', async () => {
+    const f = await fixture()
+    await f.input('请继续检查上一轮附加的合同.md。', 'employee-explicit-reuse')
+    const namedOnly = await f.discover()
+    const denied = await f.call('submit', namedOnly)
+    expect(denied.status).toBe(409)
+    expect(denied.body.error).toContain('本轮重新附加')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+
+    const reference = {
+      projectId: 'project-test', harness: 'pi' as const, workspacePath: f.cwd,
+      name: '合同.md', path: '材料/附件/合同.md', sha256: digest(f.content),
+      bytes: Buffer.byteLength(f.content), mimeType: 'text/markdown' as const,
+    }
+    await f.input(appendWorkspaceMaterialContext('这轮我重新附加合同.md，请继续检查。', [reference]), 'employee-explicit-reattach')
+    const reattached = await f.discover()
+    const result = await f.call('submit', reattached)
+    expect(result.status).toBe(200)
+    expect(result.body.result.status).toBe('accepted')
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
+    expect(f.service.stageWorkMaterials.mock.calls[0]?.[0][0]?.content).toBe(f.content)
   })
   it('retries an identical package after failure without rereading a changed file or conversation', async () => {
     const f = await fixture(), params = await f.discover()
     f.service.submitWork.mockRejectedValueOnce(new Error('connection lost'))
     expect((await f.call('submit', params)).body.result.status).toBe('unknown')
-    await writeFile(join(f.cwd, '合同.md'), 'later draft')
+    await writeFile(join(f.cwd, '材料', '附件', '合同.md'), 'later draft')
     f.transcript.push({ id: 'assistant-later', role: 'assistant', parts: [{ type: 'text', text: '稍后重试' }] })
     expect((await f.call('submit', params)).status).toBe(200)
     expect(f.service.submitWork.mock.calls[0][1]).toBe(f.service.submitWork.mock.calls[1][1])
@@ -833,12 +910,20 @@ describe('employee-bound material handoff', () => {
     expect(first.sourceMessages).toEqual(second.sourceMessages)
     expect((await f.call('submit', { ...params, goal: '修改目标' })).body.error).toContain('已冻结')
   })
+  it('reports a definite Weave registration rejection without telling Pi to recover an accepted run', async () => {
+    const f = await fixture(), params = await f.discover()
+    f.service.submitWork.mockRejectedValueOnce(new WorkRegistrationRejectedError('原工作输入版本已变化'))
+    const rejected = await f.call('submit', params)
+    expect(rejected.body.result).toMatchObject({ status: 'rejected', submitted: false, receiptConfirmed: false })
+    expect(rejected.body.result).not.toHaveProperty('recovery_key')
+    expect(rejected.body.result.next_step).toContain('未创建团队运行')
+  })
   it('freezes material before upload and resumes an upload failure with the original bytes', async () => {
     const f = await fixture(), params = await f.discover()
     f.service.stageWorkMaterials.mockRejectedValueOnce(new Error('upload interrupted'))
     const first = await f.call('submit', params)
     expect(first.body.result).toMatchObject({ status: 'unknown' })
-    await writeFile(join(f.cwd, '合同.md'), 'later draft')
+    await writeFile(join(f.cwd, '材料', '附件', '合同.md'), 'later draft')
     expect((await f.call('recover', { recovery_key: first.body.result.recovery_key })).body.result.status).toBe('accepted')
     const retriedMaterials = f.service.stageWorkMaterials.mock.calls[1][0]
     expect(retriedMaterials[0].content).toBe(f.content)
@@ -890,9 +975,10 @@ describe('employee-bound material handoff', () => {
     expect((await f.call('submit', { ...params, business_actions })).body.error).toContain('绑定该动作所需的业务记录')
     expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
     const { recordKey } = await f.findRecord(params.handoff_key, 'TEST-100')
-    expect((await f.call('submit', { ...params, business_actions, business_record_key: recordKey })).body.result.status).toBe('accepted')
+    expect((await f.call('submit', { ...params, materials: [], business_actions, business_record_key: recordKey })).body.result.status).toBe('accepted')
     expect(f.service.submitWork.mock.calls[0][2]).toMatchObject({ businessContext: { objectName: 'forge_quote', recordId: 'contract-1', recordVersion: 'v7' } })
     expect(JSON.parse(f.service.submitWork.mock.calls[0][1]).businessSnapshot).toEqual(f.businessSnapshot)
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
   })
   it('rejects a late capability response after the employee changes the request', async () => {
     const f = await fixture()

@@ -165,7 +165,7 @@ describe('omp-work-browser extension', () => {
     const { tools: deniedTools, pi } = fakePi()
     denied(pi)
     const deniedTabs = deniedTools.find((candidate) => candidate.name === 'browser_tabs')!
-    await expect(deniedTabs.execute('call-1', { action: 'list' })).rejects.toThrow(/Unauthorized|expired/)
+    await expect(deniedTabs.execute('call-1', { action: 'list' })).rejects.toThrow('授权已失效')
     await bridge.stop()
     await expect(tool('browser_tabs').execute('call-2', { action: 'list' })).rejects.toSatisfy((error: unknown) => {
       const message = String((error as Error).message)

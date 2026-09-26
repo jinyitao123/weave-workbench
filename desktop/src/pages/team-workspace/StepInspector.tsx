@@ -1,18 +1,20 @@
 import { Check, FileText, Bot } from 'lucide-react'
 import { ProductSelect, ProductField } from '@/components/ui'
 import { EditableText } from './EditableText'
-import { bindings, originalBinding, predecessors, type Step } from './graph'
+import { bindings, isParallelBranchWorker, originalBinding, predecessors, type Step } from './graph'
 import type { TeamDefinition } from '@/types/team-workspace'
 export function StepInspector({ flow, step, members, onChange }: { flow: TeamDefinition['workflows'][number]; step: Step; members: TeamDefinition['members']; onChange(step: Step): void }) {
   const inputs = bindings(step)
   const lead = members.find((member) => member.configuration.role === 'avatar' && member.relationship.enabled)
+  const parallelBranchWorker = step.type === 'worker' && isParallelBranchWorker(flow.graph_definition, step.id)
   const agentId = String(step.config?.agent_id ?? '').trim()
   const assignedWorker = members.find((member) => member.id === agentId && member.configuration.role === 'worker' && member.relationship.enabled)
   const executorUnavailable = step.type === 'worker' ? !assignedWorker : step.type === 'lead' && !lead
   const selectedMember = step.type === 'lead' ? lead?.id ?? `unavailable-lead:${step.id}` : assignedWorker?.id ?? `unavailable-worker:${step.id}`
+  const availableExecutors = members.filter((member) => member.relationship.enabled && (!parallelBranchWorker || member.configuration.role === 'worker'))
   const executorOptions = [
     ...(executorUnavailable ? [{ value: selectedMember, label: step.type === 'worker' ? agentId ? '原执行成员不可用' : '尚未指定执行成员' : '负责人不可用' }] : []),
-    ...members.filter((member) => member.relationship.enabled).map((member) => ({ value: member.id, label: member.configuration.displayName })),
+    ...availableExecutors.map((member) => ({ value: member.id, label: member.configuration.displayName })),
   ]
   const isEntryLead = step.type === 'lead' && step.id === flow.graph_definition.entry_node_id
   const changeExecutor = (memberId: string) => {
@@ -22,10 +24,9 @@ export function StepInspector({ flow, step, members, onChange }: { flow: TeamDef
       onChange({ ...step, type: 'lead', config: { instruction: String(step.config?.instruction ?? step.config?.result_requirement ?? member.configuration.systemPrompt) } })
       return
     }
-    onChange({ ...step, type: 'worker', config: { kind: 'consult', agent_id: member.id, agent_version: 1, result_requirement: String(step.config?.result_requirement ?? step.config?.instruction ?? member.relationship.resultRequirement) } })
+    onChange({ ...step, type: 'worker', config: { kind: parallelBranchWorker ? 'dispatch' : 'consult', agent_id: member.id, agent_version: 1, result_requirement: String(step.config?.result_requirement ?? step.config?.instruction ?? member.relationship.resultRequirement) } })
   }
   return <div className="tw-inspector-content">
-    <EditableText label="步骤名称" value={step.label ?? ''} placeholder="例如：归类反馈、检查结果" multiline={false} onChange={(label) => onChange({ ...step, label })}/>
     {['lead', 'worker'].includes(step.type) && <>
       {executorUnavailable && <p role="alert">{step.type === 'worker' ? agentId ? '该步骤引用的执行成员不存在、已停用或角色不匹配，请重新选择执行成员后再保存。' : '该步骤尚未指定执行成员，请选择成员后再保存。' : '该流程缺少启用中的负责人，请先恢复负责人配置后再保存。'}</p>}
       {isEntryLead ? <div className="tw-assignee"><span>由谁执行</span><Bot size={15}/>{lead?.configuration.displayName || '负责人不可用'}</div> : <section><h4>由谁执行</h4><ProductSelect label="执行成员" value={selectedMember} options={executorOptions} onChange={changeExecutor}/></section>}

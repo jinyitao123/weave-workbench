@@ -8,7 +8,6 @@ const englishCatalog = {
   'common.reload': 'Reload GooeyPi',
   'nav.projects': 'Workspace folders',
   'nav.activity': 'My tasks',
-  'nav.development': 'Development',
   'nav.scheduled': 'Scheduled',
   'nav.capabilities': 'Capabilities',
   'nav.settings': 'Settings',
@@ -61,7 +60,6 @@ export type ResolvedLocale = 'en' | 'zh-CN'
 const simplifiedChineseCatalog: Partial<Record<MessageKey, Message>> = {
   'nav.projects': '工作空间文件夹',
   'nav.activity': '我的待办',
-  'nav.development': '开发',
   'nav.scheduled': '定时任务',
   'nav.capabilities': '功能',
   'nav.settings': '设置',

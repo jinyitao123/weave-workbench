@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 import type { HarnessId } from '../../src/types/api'
 
-export type ExtensionCapability = 'schedule' | 'browser' | 'askUser' | 'collaboration' | 'enterprise' | 'piFastMode'
+export type ExtensionCapability = 'schedule' | 'browser' | 'askUser' | 'collaboration' | 'enterprise' | 'teamDevelopment' | 'piFastMode'
 
 export interface ExtensionInjection {
   readonly capability: ExtensionCapability
@@ -25,6 +25,7 @@ const injectionsByHarness = {
   ],
   pi: [
     { capability: 'piFastMode', filename: 'pi-work-fast-mode.ts', environmentVariable: 'GOOEYPI_PI_FAST_MODE_EXTENSION_PATH' },
+    { capability: 'teamDevelopment', filename: 'gooeypi-team-development.ts', environmentVariable: 'GOOEYPI_TEAM_DEVELOPMENT_EXTENSION_PATH' },
     { capability: 'schedule', filename: 'omp-work-schedules.ts', environmentVariable: 'PRIME_WORK_SCHEDULE_EXTENSION_PATH' },
     { capability: 'browser', filename: 'omp-work-browser.ts', environmentVariable: 'PRIME_WORK_BROWSER_EXTENSION_PATH' },
     { capability: 'askUser', filename: 'omp-work-ask-user.ts', environmentVariable: 'PRIME_WORK_ASK_USER_EXTENSION_PATH' },

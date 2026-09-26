@@ -24,8 +24,8 @@ async function click(label: string) {
   await act(async () => button.click())
 }
 async function edit(label: string, value: string) {
-  const input = [...document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input,textarea')].find((item) => item.getAttribute('aria-label') === label || item.closest('label')?.textContent?.includes(label))!
-  expect(input, label).toBeTruthy()
+  const input = [...document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input,textarea')].find((item) => item.getAttribute('aria-label') === label || item.closest('label, .product-field')?.textContent?.includes(label) || item.parentElement?.textContent?.includes(label))!
+  if (!input) throw new Error(`Missing field ${label}; visible labels: ${[...document.querySelectorAll('label')].map((item) => item.textContent?.trim()).join(' | ')}`)
   await act(async () => { Object.getOwnPropertyDescriptor(input instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype, 'value')!.set!.call(input, value); input.dispatchEvent(new Event('input', { bubbles: true })) })
 }
 async function open() { await act(async () => root.render(<DevelopmentPage overview={overview} loading={false} onRefresh={() => {}} bridge={bridge}/>)) }
@@ -57,6 +57,11 @@ it('saves one remote team draft while keeping the original member inspector', as
   expect(remote.document.members[1].relationship.duty).toBe('检查付款条款')
   expect(remote.document.objective).toBe('逐条核对原文')
 })
+it('opens the requested team directly in its workflow canvas from the Pi sidebar', async () => {
+  await act(async () => root.render(<DevelopmentPage overview={overview} loading={false} initialTeamId="team" initialView="workflow" onRefresh={() => {}} bridge={bridge}/>))
+  expect(container.querySelector('.workflow-graph')).not.toBeNull()
+  expect(container.textContent).toContain('合同审核')
+})
 it('marks an array action unavailable, keeps a selected one removable, and blocks update', async () => {
   const capabilityId = 'forge:action:forge_quote.update_lines'
   const worker = remote.document.members[1]!
@@ -86,12 +91,50 @@ it('marks an array action unavailable, keeps a selected one removable, and block
 
   await click('返回对象详情')
   await click('能力')
-  const capabilityButton = container.querySelector<HTMLButtonElement>('.member-capability-list li > button')
-  expect(capabilityButton?.getAttribute('aria-pressed')).toBe('true')
-  expect(capabilityButton?.disabled).toBe(false)
-  await act(async () => capabilityButton!.click())
-  expect(capabilityButton?.getAttribute('aria-pressed')).toBe('false')
-  expect(capabilityButton?.disabled).toBe(true)
+  const remove = container.querySelector<HTMLButtonElement>('.member-capability-assigned__actions button[aria-label="移除调整报价明细"]')
+  expect(remove?.disabled).toBe(false)
+  await act(async () => remove!.click())
+  expect(container.querySelector('.member-capability-assigned')).toBeNull()
+  expect(container.textContent).toContain('当前成员没有配置业务动作')
+})
+it('keeps unassigned actions in the picker and binds one file to its three declared parameters', async () => {
+  const actionId = 'forge:action:sales_contract.ContractSubmit'
+  getBusinessCapabilityCatalog.mockResolvedValueOnce({
+    version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '',
+    capabilities: [
+      { id: actionId, name: '提交指定合同版本', description: '提交冻结合同文件', effect: 'write', resourceType: 'sales_contract',
+        requiresEmployeeIntent: true, status: 'available', actionName: 'ContractSubmit', objectName: 'sales_contract',
+        requiresRecord: true, params: [
+          { name: 'material_file_id', label: '合同文件', type: 'string', required: true },
+          { name: 'material_name', label: '文件名称', type: 'string', required: true },
+          { name: 'material_sha256', label: '文件 SHA-256', type: 'string', required: true },
+        ] },
+      { id: 'forge:action:sales_lead.convert', name: '转为商机', description: '转换已授权线索', effect: 'write',
+        resourceType: 'sales_lead', requiresEmployeeIntent: true, status: 'available', actionName: 'convert',
+        objectName: 'sales_lead', requiresRecord: true },
+    ],
+  })
+  await open()
+  await selectMember('审核员')
+  await click('能力')
+  expect(container.textContent).not.toContain('提交指定合同版本')
+  await click('添加业务动作')
+  expect(document.body.textContent).toContain('提交指定合同版本')
+  await click('添加到成员')
+  expect(container.textContent).toContain('提交指定合同版本')
+  expect(container.textContent).not.toContain('转为商机')
+  expect(container.textContent).toContain('本次唯一文件（系统注入）')
+  await saveSoon()
+  expect(remote.document.members[1]!.configuration.businessCapabilityBindings).toEqual([{
+    capabilityId: actionId, parameters: [
+      { name: 'material_file_id', source: 'materials.single.id' },
+      { name: 'material_name', source: 'materials.single.name' },
+      { name: 'material_sha256', source: 'materials.single.sha256' },
+    ],
+  }])
+  await chooseProductOption('提交指定合同版本文件来源', '由成员填写')
+  await saveSoon()
+  expect(remote.document.members[1]!.configuration.businessCapabilityBindings).toEqual([])
 })
 it('blocks removal of referenced members and keeps the desktop on one visible flow', async () => {
   await open(); await selectMember('审核员'); await click('成员操作'); await click('移出团队')
@@ -141,16 +184,44 @@ it('shows an unavailable executor and blocks save without discarding local edits
   expect(container.textContent).toContain('请重新选择执行成员')
 })
 it('inserts the selected responsible member instead of silently replacing it with the first worker', async () => {
-  await open(); await click('工作流程'); await click('编辑步骤 审核员'); await click('下一步')
+  await open(); await click('工作流程'); await click('编辑步骤 审核员'); await click('在此后添加'); await click('串行步骤')
   await chooseProductOption('由谁执行', '负责人')
   await edit('步骤名称', '负责人复核'); await edit('这一步完成什么工作', '汇总并复核前一步结果。')
   await click('添加步骤')
   expect(container.querySelector<HTMLButtonElement>('[aria-label="执行成员"]')?.textContent).toContain('负责人')
-  expect(container.querySelector<HTMLButtonElement>('[aria-label="编辑步骤 负责人复核"]')?.textContent).toContain('负责人处理')
+  expect(container.querySelector<HTMLButtonElement>('[aria-label="编辑步骤 负责人复核"]')?.textContent).toContain('负责人')
   expect(container.textContent).toContain('汇总并复核前一步结果。')
 })
+it('adds parallel dispatch members and lets the lead summarize after the join', async () => {
+  const delivery = newMember('deepseek-flash')
+  delivery.configuration.displayName = '交付检查员'
+  remote.document.members.push(delivery)
+
+  await open(); await click('工作流程'); await click('编辑步骤 审核员'); await click('在此后添加'); await click('并行分支')
+  await chooseProductOption('由谁执行', '交付检查员')
+  await edit('步骤名称', '交付检查'); await edit('这一步完成什么工作', '核对交付范围与验收标准，并引用原文。')
+  await click('添加步骤')
+
+  await click('编辑步骤 交付检查'); await click('分支操作')
+  expect([...container.querySelectorAll('[role="menuitem"]')].map((item) => item.textContent?.trim())).toEqual(['并行分支'])
+  await click('编辑步骤 并行分工'); await click('并行后续操作'); await click('汇合后串行步骤')
+  await chooseProductOption('由谁执行', '负责人')
+  await edit('步骤名称', '合同结果汇总'); await edit('这一步完成什么工作', '汇总两个并行检查结果，列出结论、原文依据和待确认项。')
+  await click('添加步骤'); await saveSoon()
+
+  const graph = remote.document.workflows[0]!.graph_definition
+  const parallel = graph.nodes.find((node) => node.type === 'parallel')!
+  const join = graph.nodes.find((node) => node.type === 'join')!
+  const branchWorkers = graph.edges.filter((edge) => edge.from_node_id === parallel.id).map((edge) => graph.nodes.find((node) => node.id === edge.to_node_id)!)
+  expect(branchWorkers.every((node) => node.type === 'worker' && node.config?.kind === 'dispatch')).toBe(true)
+  const finalizer = graph.nodes.find((node) => node.label === '合同结果汇总')!
+  expect(finalizer.type).toBe('lead')
+  expect(finalizer.config?.instruction).toBe('汇总两个并行检查结果，列出结论、原文依据和待确认项。')
+  expect(graph.edges).toContainEqual(expect.objectContaining({ from_node_id: join.id, to_node_id: finalizer.id, route: 'success' }))
+  expect(graph.nodes.find((node) => node.type === 'deliver')?.config?.result).toMatchObject({ node_id: finalizer.id })
+})
 it('requires an explicit executor selection before adding a step', async () => {
-  await open(); await click('工作流程'); await click('编辑步骤 审核员'); await click('下一步')
+  await open(); await click('工作流程'); await click('编辑步骤 审核员'); await click('在此后添加'); await click('串行步骤')
   expect(document.querySelector<HTMLButtonElement>('[aria-label="由谁执行"]')?.textContent).toContain('请选择执行成员')
   await edit('步骤名称', '待分配步骤'); await edit('这一步完成什么工作', '等待明确选择执行成员。')
   await click('添加步骤')
@@ -184,7 +255,7 @@ it('does not store unsaved edits on a delay, navigation or unmount', async () =>
 })
 
 it('prevents duplicate trial submission and names tool completion states', async () => {
-  await open(); await click('工作流程'); await click('调试'); await edit('测试输入', '隔离调试材料')
+  await open(); await click('工作流程'); await click('调试此流程'); await edit('测试输入', '隔离调试材料')
   const start = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '开始调试')!
   await act(async () => { start.click(); start.click() })
   expect(call.mock.calls.filter(([command]) => command.action === 'trial')).toHaveLength(1)
