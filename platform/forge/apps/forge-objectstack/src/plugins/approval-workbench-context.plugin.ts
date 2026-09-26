@@ -11,7 +11,10 @@ const MAX_FILES = 11;
 const MAX_FIELDS = 64;
 const MAX_FIELD_VALUE = 4_000;
 const FILE_FIELD_TYPES = new Set(['file']);
-const TEXT_MEDIA_TYPES = new Set(['text/plain', 'text/plain; charset=utf-8']);
+const TEXT_MEDIA_TYPES = new Set([
+  'text/plain', 'text/plain; charset=utf-8',
+  'text/markdown', 'text/markdown; charset=utf-8', 'text/x-markdown',
+]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SYSTEM_CONTEXT: ExecutionContext = { isSystem: true, positions: [], permissions: [] };
 
@@ -31,8 +34,9 @@ interface FileRow {
 
 interface SnapshotFile {
   fields: Set<string>;
-  sha256: string;
+  sha256?: string;
   name?: string;
+  primary?: boolean;
 }
 
 interface ContextField {
@@ -170,12 +174,21 @@ function snapshotFiles(payload: unknown, fields: Set<string>): Map<string, Snaps
   }
 
   const snapshot = new Map<string, SnapshotFile>();
+  const canDeriveLegacyAttachmentDigest = primaryIds.length > 0 && /^[0-9a-f]{64}$/.test(primarySha);
   for (const [id, names] of result) {
     const digest = digests.get(id);
     if (!digest) {
+      // Native contract approval payloads freeze attachment_ids, but earlier
+      // submissions did not persist the companion manifest. The committed
+      // ObjectStack file ID is immutable; derive its digest from those bytes
+      // only when the same frozen payload also carries a verified primary file.
+      if (canDeriveLegacyAttachmentDigest && names.has('attachment_ids')) {
+        snapshot.set(id, { fields: names });
+        continue;
+      }
       throw new ContextFailure(422, 'APPROVAL_MATERIAL_HASH_UNAVAILABLE', 'An approval material has no frozen SHA-256 value.');
     }
-    snapshot.set(id, { fields: names, ...digest });
+    snapshot.set(id, { fields: names, ...digest, primary: primaryIds.includes(id) });
   }
   return snapshot;
 }
@@ -235,7 +248,8 @@ async function readSnapshotFiles(
   allowedFiles: Map<string, SnapshotFile>,
 ): Promise<Array<{ fileId: string; name: string; mediaType: 'text/plain; charset=utf-8'; bytes: number; sha256: string; content: string }>> {
   if (allowedFiles.size === 0) return [];
-  const ids = [...allowedFiles.keys()];
+  const orderedFiles = [...allowedFiles.entries()].sort((left, right) => Number(right[1].primary === true) - Number(left[1].primary === true));
+  const ids = orderedFiles.map(([id]) => id);
   const rows = await engine.find('sys_file', {
     where: { id: { $in: ids } },
     fields: ['id', 'key', 'name', 'mime_type', 'size', 'status', 'ref_object', 'ref_id', 'ref_field'],
@@ -247,7 +261,8 @@ async function readSnapshotFiles(
   }
 
   const files = [];
-  for (const [id, snapshotFile] of allowedFiles) {
+  const seenContent = new Set<string>();
+  for (const [id, snapshotFile] of orderedFiles) {
     const file = byId.get(id);
     const fieldMatches = file && typeof file.ref_field === 'string' && snapshotFile.fields.has(file.ref_field);
     const hasOwner = file && (file.ref_object != null || file.ref_id != null || file.ref_field != null);
@@ -269,9 +284,12 @@ async function readSnapshotFiles(
       throw new ContextFailure(422, 'APPROVAL_MATERIAL_INVALID', 'An approval text material failed size validation.');
     }
     const digest = await sha256(bytes);
-    if (digest !== snapshotFile.sha256 || snapshotFile.name && snapshotFile.name !== file.name) {
+    if (snapshotFile.sha256 && digest !== snapshotFile.sha256 || snapshotFile.name && snapshotFile.name !== file.name) {
       throw new ContextFailure(422, 'APPROVAL_MATERIAL_HASH_MISMATCH', 'An approval text material does not match its frozen SHA-256 value.');
     }
+    const contentIdentity = `${file.name.trim()}\0${digest}`;
+    if (seenContent.has(contentIdentity)) continue;
+    seenContent.add(contentIdentity);
     let content: string;
     try {
       content = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
@@ -298,6 +316,16 @@ function latestReturn(actions: ApprovalActionRow[]): { returnVersion: string; re
     return { returnVersion, returnReason: boundedText(action.comment, 4_000) ?? '' };
   }
   return undefined;
+}
+
+function returnedApprovalSupersededByResubmit(actions: ApprovalActionRow[]): boolean {
+  let latestReturnIndex = -1;
+  let latestResubmitIndex = -1;
+  actions.forEach((action, index) => {
+    if (action.action === 'revise') latestReturnIndex = index;
+    if (action.action === 'resubmit') latestResubmitIndex = index;
+  });
+  return latestResubmitIndex > latestReturnIndex;
 }
 
 async function sendError(res: IHttpResponse, status: number, code: string, message: string): Promise<void> {
@@ -356,12 +384,14 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
             return;
           }
 
+          const actions = request.status === 'returned' ? await approvals.listActions(request.id, executionContext) : [];
+          if (request.status === 'returned' && returnedApprovalSupersededByResubmit(actions)) {
+            await sendError(res, 409, 'APPROVAL_CONTEXT_STALE', 'This returned approval has already been resubmitted.');
+            return;
+          }
           const materialFields = fileFieldNames(engine, request.object_name);
           const allowedFiles = snapshotFiles(request.payload, materialFields);
-          const [files, actions] = await Promise.all([
-            readSnapshotFiles(request, engine, storage, allowedFiles),
-            request.status === 'returned' ? approvals.listActions(request.id, executionContext) : Promise.resolve([]),
-          ]);
+          const files = await readSnapshotFiles(request, engine, storage, allowedFiles);
           const title = boundedText(request.record_title, 300) ?? boundedText(request.object_label, 300) ?? '审批事项';
           const step = boundedText(request.step_label, 160);
           if (!step) throw new ContextFailure(422, 'APPROVAL_CONTEXT_INVALID', 'The approval step is unavailable.');

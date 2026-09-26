@@ -550,7 +550,7 @@ try {
 
     const result = actionResult(mcpData(await invokeMcp(employee, createdQuote.id, {
       line_id: ownedLines.find(line => Number(line.sort_order) === 0).id,
-      expected_version: Number(quote.pricing_version || 0), taxed_unit_price: 900,
+      expected_pricing_version: Number(quote.pricing_version || 0), taxed_unit_price: 900,
       idempotency_key: `quote-cost-hidden-${runId}`,
     })));
     assert.deepEqual({ line_total: Number(result.line_total), total_amount: Number(result.total_amount), pricing_version: Number(result.pricing_version) }, { line_total: 1800, total_amount: 2100, pricing_version: 1 });
@@ -603,7 +603,7 @@ try {
     const lines = await findAll(employee, 'forge_quotation_line', { quotation_id: quote.id });
     const device = lines.find(line => line.line_type === 'material');
     const changed = await employee.request(`/actions/forge_quotation/quotation_adjust_line_price/${quote.id}`, 'POST', {
-      params: { line_id: device.id, expected_version: Number(quote.pricing_version || 0), taxed_unit_price: 900, idempotency_key: `draft-price-${runId}` },
+      params: { line_id: device.id, expected_pricing_version: Number(quote.pricing_version || 0), taxed_unit_price: 900, idempotency_key: `draft-price-${runId}` },
     });
     assert.equal(changed.status, 200, `Existing line-price action returned HTTP ${changed.status}: ${JSON.stringify(changed.value)}`);
     const ownerAfterAdjustment = await clientFor(employeeEmail, employeePassword);
@@ -632,7 +632,7 @@ try {
     const listing = mcpData(await unprivilegedEmployee.callMcpTool('list_actions', {}));
     assert.equal(listing?.actions?.some(item => item.name === 'quotation_adjust_line_price'), false);
     const denied = await invokeMcp(unprivilegedEmployee, primary.quoteId, {
-      line_id: primary.equipmentLineId, expected_version: 0, taxed_unit_price: 900,
+      line_id: primary.equipmentLineId, expected_pricing_version: 0, taxed_unit_price: 900,
       idempotency_key: `quote-${runId}-no-permission`,
     });
     assert.equal(denied?.isError, true);
@@ -647,17 +647,18 @@ try {
     const listing = mcpData(await employee.callMcpTool('list_actions', {}));
     const action = listing?.actions?.find(item => item.name === 'quotation_adjust_line_price');
     assert.ok(action, 'The authorized employee must see the scalar quote adjustment action');
+    assert.match(action.description, /expected_pricing_version.*pricing_version/, 'MCP catalog must distinguish quote pricing version from snapshot format version');
     const params = action.params || [];
-    assert.deepEqual(params.map(item => item.name).sort(), ['expected_version', 'idempotency_key', 'line_id', 'taxed_unit_price']);
+    assert.deepEqual(params.map(item => item.name).sort(), ['expected_pricing_version', 'idempotency_key', 'line_id', 'taxed_unit_price']);
     assert.deepEqual(params.map(item => [item.name, item.type]).sort((a, b) => a[0].localeCompare(b[0])), [
-      ['expected_version', 'number'], ['idempotency_key', 'string'], ['line_id', 'string'], ['taxed_unit_price', 'number'],
+      ['expected_pricing_version', 'number'], ['idempotency_key', 'string'], ['line_id', 'string'], ['taxed_unit_price', 'number'],
     ]);
     const forbiddenEdit = await employee.request(`/data/forge_quotation/${primary.quoteId}`, 'PATCH', { total_amount: 9999 });
     assert.ok(forbiddenEdit.status >= 400, 'The capability permission must not grant generic quote edits');
   });
 
   await test('employee changes only the authorized device line and atomically saves 2100', async () => {
-    const params = { line_id: primary.equipmentLineId, expected_version: 0, taxed_unit_price: 900, idempotency_key: `quote-${runId}-primary-v0` };
+    const params = { line_id: primary.equipmentLineId, expected_pricing_version: 0, taxed_unit_price: 900, idempotency_key: `quote-${runId}-primary-v0` };
     const result = actionResult(mcpData(await invokeMcp(employee, primary.quoteId, params)));
     assert.deepEqual({ line_total: Number(result.line_total), total_amount: Number(result.total_amount), pricing_version: Number(result.pricing_version) }, { line_total: 1800, total_amount: 2100, pricing_version: 1 });
     assert.equal(Object.hasOwn(result, 'cost_analysis_available'), false, 'MCP must not report cost availability');
@@ -672,7 +673,7 @@ try {
   });
 
   await test('same request replays while changed input and stale version conflict', async () => {
-    const original = { line_id: primary.equipmentLineId, expected_version: 0, taxed_unit_price: 900, idempotency_key: `quote-${runId}-primary-v0` };
+    const original = { line_id: primary.equipmentLineId, expected_pricing_version: 0, taxed_unit_price: 900, idempotency_key: `quote-${runId}-primary-v0` };
     const repeated = actionResult(mcpData(await invokeMcp(employee, primary.quoteId, original)));
     assert.equal(repeated.repeated, true);
     assert.deepEqual({ price: repeated.line_total, total: repeated.total_amount, version: repeated.pricing_version }, { price: 1800, total: 2100, version: 1 });
@@ -690,13 +691,13 @@ try {
 
   await test('foreign line and another employee record are rejected before writing', async () => {
     const foreignLine = await invokeMcp(employee, primary.quoteId, {
-      line_id: stranger.equipmentLineId, expected_version: 1, taxed_unit_price: 900,
+      line_id: stranger.equipmentLineId, expected_pricing_version: 1, taxed_unit_price: 900,
       idempotency_key: `quote-${runId}-foreign-line`,
     });
     assert.equal(foreignLine?.isError, true);
     assert.match(mcpText(foreignLine), /不属于当前报价/);
     const foreignQuote = await invokeMcp(employee, stranger.quoteId, {
-      line_id: stranger.equipmentLineId, expected_version: 0, taxed_unit_price: 900,
+      line_id: stranger.equipmentLineId, expected_pricing_version: 0, taxed_unit_price: 900,
       idempotency_key: `quote-${runId}-foreign-quote`,
     });
     assert.equal(foreignQuote?.isError, true);
@@ -714,7 +715,7 @@ try {
     const quote = await read(admin, 'forge_quotation', recalculate.quoteId);
     assert.deepEqual({ total: Number(quote.total_amount), version: Number(quote.pricing_version) }, { total: 2200, version: 1 });
     const stale = await invokeMcp(employee, recalculate.quoteId, {
-      line_id: recalculate.equipmentLineId, expected_version: 0, taxed_unit_price: 900,
+      line_id: recalculate.equipmentLineId, expected_pricing_version: 0, taxed_unit_price: 900,
       idempotency_key: `quote-${runId}-after-recalculate`,
     });
     assert.equal(stale?.isError, true);
@@ -723,7 +724,7 @@ try {
 
   await test('concurrent identical requests converge on one PostgreSQL version claim', async () => {
     const concurrent = await createQuote(admin, employee.userId, '并发同参');
-    const params = { line_id: concurrent.equipmentLineId, expected_version: 0, taxed_unit_price: 900, idempotency_key: `quote-${runId}-same-v0` };
+    const params = { line_id: concurrent.equipmentLineId, expected_pricing_version: 0, taxed_unit_price: 900, idempotency_key: `quote-${runId}-same-v0` };
     const results = await Promise.all(Array.from({ length: 4 }, () => invokeMcp(employee, concurrent.quoteId, params)));
     assert.ok(results.every(result => result?.isError !== true), 'Concurrent duplicate requests must all return the committed result');
     const values = results.map(result => actionResult(mcpData(result)));
@@ -736,8 +737,8 @@ try {
   await test('concurrent different requests allow only one result for the same version', async () => {
     const concurrent = await createQuote(admin, employee.userId, '并发异参');
     const results = await Promise.all([
-      invokeMcp(employee, concurrent.quoteId, { line_id: concurrent.equipmentLineId, expected_version: 0, taxed_unit_price: 900, idempotency_key: `quote-${runId}-different-a` }),
-      invokeMcp(employee, concurrent.quoteId, { line_id: concurrent.equipmentLineId, expected_version: 0, taxed_unit_price: 800, idempotency_key: `quote-${runId}-different-b` }),
+      invokeMcp(employee, concurrent.quoteId, { line_id: concurrent.equipmentLineId, expected_pricing_version: 0, taxed_unit_price: 900, idempotency_key: `quote-${runId}-different-a` }),
+      invokeMcp(employee, concurrent.quoteId, { line_id: concurrent.equipmentLineId, expected_pricing_version: 0, taxed_unit_price: 800, idempotency_key: `quote-${runId}-different-b` }),
     ]);
     assert.equal(results.filter(result => result?.isError !== true).length, 1);
     assert.equal(results.filter(result => result?.isError === true).length, 1);
@@ -752,7 +753,7 @@ try {
     const rollback = await createQuote(admin, employee.userId, '事务回滚');
     await installFailureTrigger(rollback.quoteId);
     const result = await invokeMcp(employee, rollback.quoteId, {
-      line_id: rollback.equipmentLineId, expected_version: 0, taxed_unit_price: 900,
+      line_id: rollback.equipmentLineId, expected_pricing_version: 0, taxed_unit_price: 900,
       idempotency_key: `quote-${runId}-rollback`,
     });
     assert.equal(result?.isError, true, 'A PostgreSQL trigger failure must reject the action');

@@ -7,7 +7,7 @@ import { SqlDriver } from '@objectstack/driver-sql';
 import { ObjectQL, bindHooksToEngine } from '@objectstack/objectql';
 import { QuickJSScriptRunner, hookBodyRunnerFactory } from '@objectstack/runtime';
 import { Field, ObjectSchema } from '@objectstack/spec/data';
-import { SalesContractLineSkuGuard } from '../src/hooks/sales-contract.hook.ts';
+import { SalesContractEmptyDates, SalesContractLineSkuGuard } from '../src/hooks/sales-contract.hook.ts';
 
 function simpleObject(name, fields) {
   return ObjectSchema.create({
@@ -94,4 +94,51 @@ test('ObjectStack 17.3 beforeInsert rejects disabled, cross-organization, and un
 
   const savedLines = await engine.find('forge_sales_contract_line', { where: {}, context: systemContext });
   assert.deepEqual(savedLines.map((line) => line.id), ['line-enabled'], 'rejected writes leave no contract line behind');
+});
+
+test('native contract form may clear unconfirmed signing and effective dates', async (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'forge-contract-date-hook-'));
+  const contract = simpleObject('forge_sales_contract', {
+    name: Field.text({ label: '合同名称', required: true }),
+    signed_on: Field.date({ label: '签订日期' }),
+    starts_on: Field.date({ label: '生效日期' }),
+    ends_on: Field.date({ label: '到期日期' }),
+  });
+  const driver = new SqlDriver({
+    client: 'better-sqlite3',
+    connection: { filename: join(directory, 'objectstack.sqlite') },
+    useNullAsDefault: true,
+  });
+  const engine = new ObjectQL();
+  const runner = new QuickJSScriptRunner();
+  engine.registerObject(contract);
+  engine.registerDriver(driver, true);
+  await engine.init();
+  await driver.initObjects([contract]);
+  const binding = bindHooksToEngine(engine, [SalesContractEmptyDates], {
+    packageId: 'forge-contract-date-test',
+    bodyRunner: hookBodyRunnerFactory(runner, { ql: engine, appId: 'forge-contract-date-test' }),
+    strict: true,
+  });
+  assert.equal(binding.registered, 2, 'both native insert and update pass through date normalization');
+  t.after(async () => {
+    await runner.dispose();
+    await driver.disconnect();
+    rmSync(directory, { recursive: true, force: true });
+  });
+  const context = { isSystem: true, positions: [], permissions: [] };
+  const created = await engine.insert('forge_sales_contract', {
+    id: 'contract-date-test', name: '未定签署日期的合同草稿',
+    signed_on: '', starts_on: '', ends_on: '',
+  }, { context });
+  assert.equal(created.signed_on, null);
+  assert.equal(created.starts_on, null);
+  assert.equal(created.ends_on, null);
+  await engine.update('forge_sales_contract', {
+    id: 'contract-date-test', signed_on: '', starts_on: '', ends_on: '',
+  }, { context });
+  const saved = await engine.findOne('forge_sales_contract', { where: { id: 'contract-date-test' }, context });
+  assert.equal(saved.signed_on, null);
+  assert.equal(saved.starts_on, null);
+  assert.equal(saved.ends_on, null);
 });
