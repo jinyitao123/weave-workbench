@@ -259,13 +259,13 @@ export const QuotationAdjustLinePrice = defineAction({
   successMessage: '报价明细与报价金额已保存',
   ai: {
     exposed: true,
-    description: '只调整当前员工负责的草稿报价中指定一行的含税单价，并在同一事务中重算报价金额。必须带报价版本、明细标识和稳定请求标识；相同请求返回原回执，异参或旧版本会冲突。',
+    description: '只调整当前员工负责的草稿报价中指定一行的含税单价，并在同一事务中重算报价金额。expected_pricing_version 必须取报价主记录的 pricing_version（新草稿可为 0），不能取工作快照格式 version；line_id 取同一报价已读取明细的原生标识。相同请求返回原回执，异参或旧版本会冲突。',
     category: 'action',
     requiresConfirmation: false,
   },
   params: [
     { name: 'line_id', label: '报价明细标识', type: 'text', required: true },
-    { name: 'expected_version', label: '报价版本', type: 'number', required: true },
+    { name: 'expected_pricing_version', label: '报价核价版本（pricing_version，非快照版本）', type: 'number', required: true },
     { name: 'taxed_unit_price', label: '新的含税单价', type: 'number', required: true },
     { name: 'idempotency_key', label: '请求标识', type: 'text', required: true },
   ],
@@ -277,7 +277,7 @@ if (ctx.recordLoadDenied === true) throw new Error('当前员工无权读取这�
 if (!id || !ctx.record) throw new Error('本次报价调整缺少可校验的目标记录');
 if (!actor) throw new Error('无法识别当前操作员工');
 const adjustment = ctx.input || {};
-const allowed = ['expected_version', 'idempotency_key', 'line_id', 'taxed_unit_price'];
+const allowed = ['expected_pricing_version', 'idempotency_key', 'line_id', 'taxed_unit_price'];
 const routeKeys = ['objectName', 'recordId'];
 for (const key of Object.keys(adjustment)) if (!allowed.includes(key) && !routeKeys.includes(key)) throw new Error('报价调整只接受本次授权的单行标量参数');
 if (adjustment.objectName && adjustment.objectName !== 'forge_quotation') throw new Error('报价调整对象与本次授权不一致');
@@ -285,7 +285,7 @@ if (adjustment.recordId && String(adjustment.recordId) !== id) throw new Error('
 for (const key of allowed) if (!Object.prototype.hasOwnProperty.call(adjustment, key)) throw new Error('报价调整缺少必填参数');
 const lineId = String(adjustment.line_id || '').trim();
 const idempotencyKey = String(adjustment.idempotency_key || '').trim();
-const expectedVersion = Number(adjustment.expected_version);
+const expectedVersion = Number(adjustment.expected_pricing_version);
 const requestedPrice = Number(adjustment.taxed_unit_price);
 const round4 = value => Math.round((value + Number.EPSILON) * 10000) / 10000;
 if (!lineId || lineId.length > 128) throw new Error('报价明细标识无效');

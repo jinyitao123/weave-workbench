@@ -49,11 +49,18 @@ function contextPayload(material, extraFiles = []) {
 function createHarness() {
   const materialA = textFile('file-main-A', 'key-main-A', '合同正文.txt', CONTRACT_A, 'submitted_material_id', '合同正文 A');
   const attachmentA = textFile('file-attachment-A', 'key-attachment-A', '技术说明.txt', CONTRACT_A, 'attachment_ids', '技术说明 A');
+  const duplicateMainAttachment = textFile('file-main-attachment-A', 'key-main-attachment-A', '合同正文.txt', CONTRACT_A, 'attachment_ids', '合同正文 A');
   const materialB = textFile('file-main-B', 'key-main-B', '合同正文 B.txt', CONTRACT_B, 'submitted_material_id', '合同正文 B');
-  const files = new Map([materialA, attachmentA, materialB].map((file) => [file.id, file]));
+  const files = new Map([materialA, attachmentA, duplicateMainAttachment, materialB].map((file) => [file.id, file]));
   const pendingA = approval({
     id: 'approval-A', recordId: CONTRACT_A, approver: 'reviewer-A', submitter: 'sales-A',
     payload: contextPayload(materialA, [attachmentA]), title: '设备验收合同 A',
+  });
+  const legacyAttachmentPayload = contextPayload(materialA, [attachmentA]);
+  delete legacyAttachmentPayload.submitted_attachment_manifest;
+  const pendingLegacyAttachment = approval({
+    id: 'approval-legacy-attachment', recordId: CONTRACT_A, approver: 'reviewer-A', submitter: 'sales-A',
+    payload: legacyAttachmentPayload, title: '设备验收合同 A（历史附件清单）',
   });
   const pendingB = approval({
     id: 'approval-B', recordId: CONTRACT_B, approver: 'reviewer-B', submitter: 'sales-B',
@@ -67,7 +74,7 @@ function createHarness() {
     id: 'approval-no-digest', recordId: CONTRACT_A, approver: 'reviewer-A', submitter: 'sales-A',
     payload: { name: '没有冻结摘要的合同', submitted_material_id: materialA.id }, title: '没有冻结摘要的合同',
   });
-  const requests = new Map([[pendingA.id, pendingA], [pendingB.id, pendingB], [returned.id, returned], [noFrozenDigest.id, noFrozenDigest]]);
+  const requests = new Map([[pendingA.id, pendingA], [pendingLegacyAttachment.id, pendingLegacyAttachment], [pendingB.id, pendingB], [returned.id, returned], [noFrozenDigest.id, noFrozenDigest]]);
   const sessions = new Map([
     ['reviewer-token', { user: { id: 'reviewer-A' }, session: { activeOrganizationId: 'org-A' } }],
     ['reviewer-b-token', { user: { id: 'reviewer-B' }, session: { activeOrganizationId: 'org-A' } }],
@@ -77,6 +84,9 @@ function createHarness() {
   const fileQueries = [];
   const downloadedKeys = [];
   let requestReads = 0;
+  const actionLists = new Map([[returned.id, [{
+    id: 'action-revise', request_id: returned.id, action: 'revise', comment: '请补充签字页',
+  }]]]);
 
   const engine = {
     async find(objectName, query, options) {
@@ -119,11 +129,7 @@ function createHarness() {
         },
       };
     },
-    async listActions(requestId) {
-      return requestId === returned.id ? [{
-        id: 'action-revise', request_id: requestId, action: 'revise', comment: '请补充签字页',
-      }] : [];
-    },
+    async listActions(requestId) { return actionLists.get(requestId) ?? []; },
   };
   const storage = {
     async download(key) {
@@ -162,6 +168,7 @@ function createHarness() {
       assert.ok(request, 'fixture request exists');
       request.payload = payload;
     },
+    setActions(requestId, actions) { actionLists.set(requestId, actions); },
     async call(requestId, token, extraHeaders = {}) {
       const handler = routes.get('/api/v1/approvals/requests/:requestId/workbench-context');
       assert.ok(handler, 'approval context route mounted');
@@ -177,7 +184,7 @@ function createHarness() {
       }, response);
       return { status, body, fileQueries: [...fileQueries], downloadedKeys: [...downloadedKeys], requestReads };
     },
-    get fixtureFiles() { return { materialA, attachmentA, materialB }; },
+    get fixtureFiles() { return { materialA, attachmentA, duplicateMainAttachment, materialB }; },
   };
 }
 
@@ -213,6 +220,35 @@ test('pending approver receives only this request snapshot and verified text byt
   assert.equal(JSON.stringify(result.body).includes('internal-request-id'), false);
 });
 
+test('legacy native contract approvals derive the companion digest from the immutable submitted file id', async () => {
+  const harness = createHarness();
+  await harness.start();
+  const result = await harness.call('approval-legacy-attachment', 'reviewer-token');
+
+  assert.equal(result.status, 200);
+  assert.deepEqual(result.body.files.map(({ name, sha256 }) => ({ name, sha256 })), [
+    { name: '合同正文.txt', sha256: sha256(harness.fixtureFiles.materialA.bytes) },
+    { name: '技术说明.txt', sha256: sha256(harness.fixtureFiles.attachmentA.bytes) },
+  ]);
+  assert.deepEqual(result.downloadedKeys.sort(), ['key-attachment-A', 'key-main-A']);
+});
+
+test('the same main document attached twice is returned once, ahead of companion files', async () => {
+  const harness = createHarness();
+  await harness.start();
+  harness.changePayload('approval-A', contextPayload(harness.fixtureFiles.materialA, [
+    harness.fixtureFiles.duplicateMainAttachment, harness.fixtureFiles.attachmentA,
+  ]));
+  const result = await harness.call('approval-A', 'reviewer-token');
+
+  assert.equal(result.status, 200);
+  assert.deepEqual(result.body.files.map(({ name, content }) => ({ name, content })), [
+    { name: '合同正文.txt', content: '合同正文 A' },
+    { name: '技术说明.txt', content: '技术说明 A' },
+  ]);
+  assert.equal(result.body.files.length, 2);
+});
+
 test('non-recipient and other-contract request stay unreadable even through a broader native reader tier', async () => {
   const harness = createHarness();
   await harness.start();
@@ -242,6 +278,22 @@ test('returned request is readable only by its original submitter', async () => 
   assert.equal(submitter.body.revisionReady, undefined);
 });
 
+test('returned request context expires after native resubmission without reading old files', async () => {
+  const harness = createHarness();
+  await harness.start();
+  harness.setActions('approval-returned', [
+    { id: 'action-submit', request_id: 'approval-returned', action: 'submit', comment: '提交' },
+    { id: 'action-revise', request_id: 'approval-returned', action: 'revise', comment: '请补充签字页' },
+    { id: 'action-resubmit', request_id: 'approval-returned', action: 'resubmit', comment: '已补充' },
+  ]);
+
+  const result = await harness.call('approval-returned', 'sales-token');
+  assert.equal(result.status, 409);
+  assert.equal(result.body.error.code, 'APPROVAL_CONTEXT_STALE');
+  assert.equal(result.fileQueries.length, 0);
+  assert.deepEqual(result.downloadedKeys, []);
+});
+
 test('source material version is stable across key order and changes with the frozen payload', async () => {
   const harness = createHarness();
   await harness.start();
@@ -262,8 +314,8 @@ test('invalid bearer and material hash mismatch fail closed', async () => {
   const unauthenticated = await harness.call('approval-A', 'unknown-token');
   assert.equal(unauthenticated.status, 401);
 
-  // Corrupting the frozen bytes while retaining the request snapshot digest must
-  // refuse the whole context; a newly computed digest is never passed off as frozen.
+  // Corrupting a frozen primary file while retaining its request digest must
+  // refuse the whole context.
   harness.fixtureFiles.materialA.bytes[0] = 0x58;
   const mismatch = await harness.call('approval-A', 'reviewer-token');
   assert.equal(mismatch.status, 422);
@@ -299,4 +351,17 @@ test('UTF-8 text upload MIME is accepted while the returned contract stays norma
   const result = await harness.call('approval-A', 'reviewer-token');
   assert.equal(result.status, 200);
   assert.equal(result.body.files[0].mediaType, 'text/plain; charset=utf-8');
+});
+
+test('committed Markdown contract materials are readable as plain text', async () => {
+  const harness = createHarness();
+  await harness.start();
+  harness.fixtureFiles.materialA.mime_type = 'text/markdown';
+  harness.fixtureFiles.attachmentA.mime_type = 'text/markdown; charset=utf-8';
+  const result = await harness.call('approval-A', 'reviewer-token');
+  assert.equal(result.status, 200);
+  assert.deepEqual(result.body.files.map((file) => file.mediaType), [
+    'text/plain; charset=utf-8', 'text/plain; charset=utf-8',
+  ]);
+  assert.deepEqual(result.body.files.map((file) => file.content), ['合同正文 A', '技术说明 A']);
 });

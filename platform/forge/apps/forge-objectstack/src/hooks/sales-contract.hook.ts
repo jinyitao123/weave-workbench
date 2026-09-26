@@ -1,5 +1,24 @@
 import { defineHook } from '@objectstack/spec/data';
 
+/** Drafts may have no agreed signing or effective dates. The native record
+ * editor sends a cleared date as an empty string, which PostgreSQL rejects. */
+export const SalesContractEmptyDates = defineHook({
+  name: 'sales_contract_empty_dates',
+  object: 'forge_sales_contract',
+  events: ['beforeInsert', 'beforeUpdate'],
+  priority: 90,
+  description: '空白合同日期按未确定保存，避免把界面清空操作当作无效日期。',
+  body: {
+    language: 'js',
+    capabilities: [],
+    source: `
+for (const field of ['signed_on', 'starts_on', 'ends_on']) {
+  if (ctx.input[field] === '') ctx.input[field] = null;
+}
+`,
+  },
+});
+
 /**
  * A contract line may only reference a currently selectable SKU. This hook
  * protects every insert path, including the custom contract form's Data API
