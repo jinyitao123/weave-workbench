@@ -52,6 +52,7 @@ for (const file of documents) {
   for (const [, target] of content.matchAll(/\[[^\]]*\]\(([^\s)]+)\)/g)) {
     if (/^(?:[a-z][a-z0-9+.-]*:|#)/i.test(target)) continue
     const path = decodeURIComponent(target.split('#')[0])
+    if (path.startsWith('/')) throw new Error(`Nonportable absolute document link: ${file} -> ${target}`)
     if (path) await access(resolve(dirname(file), path)).catch(() => {
       throw new Error(`Broken local document link: ${file} -> ${target}`)
     })
