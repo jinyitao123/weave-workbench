@@ -7,3 +7,5 @@ release/
 .build/
 coverage/
 *.log
+# Local-only scenario test credentials; never commit account passwords.
+/scenarios/sales-contract-handoff/test-accounts.md
