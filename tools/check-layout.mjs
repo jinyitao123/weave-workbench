@@ -1,9 +1,11 @@
-import { access, readFile, readdir } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
+import { execFileSync } from 'node:child_process'
+import { access, readFile, readdir, stat } from 'node:fs/promises'
+import { dirname, relative, resolve } from 'node:path'
 import { repositoryRoot, validateLock } from './project-status.mjs'
 import { localOnlyDocuments, validateDocumentPaths } from './documentation-policy.mjs'
 
 process.chdir(repositoryRoot)
+const trackedPaths = new Set(execFileSync('git', ['ls-files', '--cached', '-z'], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).split('\0').filter(Boolean))
 
 const required = [
   'AGENTS.md',
@@ -53,9 +55,20 @@ for (const file of documents) {
     if (/^(?:[a-z][a-z0-9+.-]*:|#)/i.test(target)) continue
     const path = decodeURIComponent(target.split('#')[0])
     if (path.startsWith('/')) throw new Error(`Nonportable absolute document link: ${file} -> ${target}`)
-    if (path) await access(resolve(dirname(file), path)).catch(() => {
+    if (!path) continue
+    const absoluteTarget = resolve(dirname(file), path)
+    await access(absoluteTarget).catch(() => {
       throw new Error(`Broken local document link: ${file} -> ${target}`)
     })
+    const repositoryPath = relative(repositoryRoot, absoluteTarget).replaceAll('\\', '/')
+    if (repositoryPath === '..' || repositoryPath.startsWith('../')) {
+      throw new Error(`Document link leaves the repository: ${file} -> ${target}`)
+    }
+    const targetStat = await stat(absoluteTarget)
+    const tracked = targetStat.isDirectory()
+      ? [...trackedPaths].some((entry) => entry.startsWith(`${repositoryPath ? `${repositoryPath}/` : ''}`))
+      : trackedPaths.has(repositoryPath)
+    if (!tracked) throw new Error(`Document link targets an untracked file: ${file} -> ${target}`)
   }
 }
 console.log(`Workbench layout, component lock, document names, archive numbers and ${documents.length} document links checked (file targets only).`)
