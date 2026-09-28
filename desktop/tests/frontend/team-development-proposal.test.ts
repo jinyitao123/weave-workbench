@@ -96,25 +96,25 @@ it('moves the Pi result protocol to an inserted final step, preserves it for a b
   const serial = applyTeamDevelopmentOperations(enabled.document, [{ kind: 'step_add', flow: 'flow', after: 'work', member: document.members[1]!.id, name: '第一汇总', requirement: '汇总检查意见。' }], catalog)
   const flowAfterSerial = serial.document.workflows[0]!.graph_definition
   const firstFinal = flowAfterSerial.nodes.find((node) => node.label === '第一汇总')!
-  expect((flowAfterSerial.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string }).node_id).toBe(firstFinal.id)
+  expect((flowAfterSerial.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string } | undefined)?.node_id).toBe(firstFinal.id)
   expect(flowAfterSerial.nodes.find((node) => node.id === 'work')?.output).toMatchObject({ type: 'text' })
   expect(firstFinal.output).toMatchObject({ type: 'json' })
 
   const second = applyTeamDevelopmentOperations(serial.document, [{ kind: 'step_add', flow: 'flow', after: firstFinal.id, member: document.members[1]!.id, name: '最终汇总', requirement: '形成最终意见。' }], catalog)
   const secondFlow = second.document.workflows[0]!.graph_definition
   const finalNode = secondFlow.nodes.find((node) => node.label === '最终汇总')!
-  expect((secondFlow.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string }).node_id).toBe(finalNode.id)
+  expect((secondFlow.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string } | undefined)?.node_id).toBe(finalNode.id)
   expect(secondFlow.nodes.find((node) => node.id === firstFinal.id)?.output).toMatchObject({ type: 'text' })
   expect(finalNode.output).toMatchObject({ type: 'json' })
 
   const branched = applyTeamDevelopmentOperations(second.document, [{ kind: 'step_add', flow: 'flow', after: 'work', member: document.members[1]!.id, name: '并行检查', requirement: '独立复核', placement: 'parallel' }], catalog)
   const branchGraph = branched.document.workflows[0]!.graph_definition
-  expect((branchGraph.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string }).node_id).toBe(finalNode.id)
+  expect((branchGraph.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string } | undefined)?.node_id).toBe(finalNode.id)
   expect(branchGraph.nodes.find((node) => node.id === finalNode.id)?.output).toMatchObject({ type: 'json' })
 
   const removed = applyTeamDevelopmentOperations(branched.document, [{ kind: 'step_remove', flow: 'flow', step: finalNode.id }], catalog)
   const repairedGraph = removed.document.workflows[0]!.graph_definition
-  const repairedSourceId = (repairedGraph.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string }).node_id
+  const repairedSourceId = (repairedGraph.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string } | undefined)?.node_id
   expect(repairedSourceId).toBe(firstFinal.id)
   expect(repairedGraph.nodes.some((node) => node.id === repairedSourceId)).toBe(true)
   expect(repairedGraph.nodes.find((node) => node.id === repairedSourceId)?.output).toMatchObject({ type: 'json' })
