@@ -3,7 +3,7 @@ import { freezeMaterials, makeFrozenTextMaterial } from '../../electron/main/ent
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { approvalContextView, EnterpriseService, WorkRegistrationRejectedError } from '../../electron/main/enterprise'
 import { digest } from '../../electron/main/enterprise/handoff-store'
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -105,13 +105,6 @@ describe('EnterpriseService', () => {
 
   it('does not let a delayed earlier sign-in overwrite the account that logged in later', async () => {
     const delayedExchange = deferred<Response>(), started = deferred<void>()
-    const directory = await mkdtemp(join(tmpdir(), 'gooeypi-enterprise-switch-'))
-    const sessionPath = join(directory, 'session.json')
-    const codec = {
-      available: () => true,
-      encrypt: (value: string) => Buffer.from(`encrypted:${value}`),
-      decrypt: (value: Buffer) => value.toString().replace(/^encrypted:/, ''),
-    }
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) {
@@ -125,21 +118,15 @@ describe('EnterpriseService', () => {
       }
       return Response.json({}, { status: 404 })
     }) as typeof fetch
-    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' }, fetch: fetchMock, sessionPath, sessionCodec: codec })
-    try {
-      const earlierLogin = service.signIn('a@example.test', 'secret')
-      await started.promise
-      await service.signIn('b@example.test', 'secret')
-      delayedExchange.resolve(Response.json({ token: 'weave-token-a@example.test', subject: { id: 'weave-a', externalId: 'a@example.test', email: 'a@example.test', name: 'A' }, organization: { id: 'default' }, permissions: ['teams:use'] }))
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' }, fetch: fetchMock })
+    const earlierLogin = service.signIn('a@example.test', 'secret')
+    await started.promise
+    await service.signIn('b@example.test', 'secret')
+    delayedExchange.resolve(Response.json({ token: 'weave-token-a@example.test', subject: { id: 'weave-a', externalId: 'a@example.test', email: 'a@example.test', name: 'A' }, organization: { id: 'default' }, permissions: ['teams:use'] }))
 
-      await expect(earlierLogin).rejects.toThrow('账号已切换')
-      await expect(service.getSession()).resolves.toMatchObject({ status: 'signed-in', user: { id: 'b@example.test' } })
-      expect((await service.authorizationHeaders()).get('Authorization')).toBe('Bearer weave-token-b@example.test')
-      const persisted = await readFile(sessionPath, 'utf8')
-      expect(JSON.parse(persisted).session.user.id).toBe('b@example.test')
-      const restarted = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' }, fetch: fetchMock, sessionPath, sessionCodec: codec })
-      await expect(restarted.getSession()).resolves.toMatchObject({ status: 'signed-in', user: { id: 'b@example.test' } })
-    } finally { await rm(directory, { recursive: true, force: true }) }
+    await expect(earlierLogin).rejects.toThrow('账号已切换')
+    await expect(service.getSession()).resolves.toMatchObject({ status: 'signed-in', user: { id: 'b@example.test' } })
+    expect((await service.authorizationHeaders()).get('Authorization')).toBe('Bearer weave-token-b@example.test')
   })
 
   it('does not keep a partial session when Forge credentials are rejected', async () => {
@@ -151,29 +138,45 @@ describe('EnterpriseService', () => {
     await expect(service.getSession()).resolves.toMatchObject({ status: 'signed-out' })
   })
 
-  it('restores encrypted Forge and Weave sessions and removes them on logout', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'gooeypi-enterprise-'))
-    const sessionPath = join(directory, 'session.json')
+  it('keeps Forge and Weave tokens in memory and leaves legacy encrypted session files untouched', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'gooeypi-enterprise-session-only-'))
+    const sessionPath = join(directory, 'enterprise-session.json')
+    const legacyContents = JSON.stringify({
+      version: 3,
+      expiresAt: Date.now() + 60 * 60 * 1000,
+      weaveToken: 'legacy-encrypted-weave-token',
+      forgeToken: 'legacy-encrypted-forge-token',
+      session: { version: '1', status: 'signed-in', permissions: ['teams:use'] },
+    })
+    await writeFile(sessionPath, legacyContents, { encoding: 'utf8', mode: 0o600 })
     const codec = {
-      available: () => true,
-      encrypt: (value: string) => Buffer.from(`encrypted:${value}`),
-      decrypt: (value: Buffer) => value.toString().replace(/^encrypted:/, ''),
+      available: vi.fn(() => true),
+      encrypt: vi.fn(() => { throw new Error('legacy session encryption must not be used') }),
+      decrypt: vi.fn(() => { throw new Error('legacy session decryption must not be used') }),
     }
     const fetcher = (async (input: URL | RequestInfo) => String(input).includes('sign-in')
       ? Response.json({ token: 'forge-secret', user: { id: 'forge-1', email: 'member@example.test', name: 'Member' } })
       : Response.json({ token: 'weave-secret', expiresIn: 3600, subject: { id: 'weave-1', externalId: 'forge-1', email: 'member@example.test', name: 'Member' }, organization: { id: 'default' }, permissions: ['teams:use'] })) as typeof fetch
+    const legacyOptions = Object.assign(
+      { environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetcher },
+      { sessionPath, sessionCodec: codec },
+    )
     try {
-      const first = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetcher, sessionPath, sessionCodec: codec })
-      await expect(first.signIn('member@example.test', 'secret')).resolves.toMatchObject({ status: 'signed-in', storage: 'encrypted' })
-      const persisted = await readFile(sessionPath, 'utf8')
-      expect(persisted).not.toContain('weave-secret')
-      expect(persisted).not.toContain('forge-secret')
-      expect(persisted).not.toContain('secret"')
-      const restarted = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetcher, sessionPath, sessionCodec: codec })
-      await expect(restarted.getSession()).resolves.toMatchObject({ status: 'signed-in', permissions: ['teams:use'], storage: 'encrypted' })
-      expect((await restarted.authorizationHeaders()).get('Authorization')).toBe('Bearer weave-secret')
-      await restarted.signOut()
-      await expect(readFile(sessionPath, 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
+      const service = new EnterpriseService(legacyOptions)
+      const session = await service.signIn('member@example.test', 'secret')
+      expect(session).toMatchObject({ status: 'signed-in', storage: 'session-only', user: { id: 'forge-1' } })
+      expect(JSON.stringify(session)).not.toContain('secret')
+      expect((await service.authorizationHeaders()).get('Authorization')).toBe('Bearer weave-secret')
+
+      await service.signOut()
+      const reopened = new EnterpriseService(legacyOptions)
+      await expect(reopened.getSession()).resolves.toMatchObject({ status: 'signed-out' })
+      await expect(reopened.authorizationHeaders()).rejects.toThrow('请先登录')
+      expect(codec.available).not.toHaveBeenCalled()
+      expect(codec.encrypt).not.toHaveBeenCalled()
+      expect(codec.decrypt).not.toHaveBeenCalled()
+      expect(await readFile(sessionPath, 'utf8')).toBe(legacyContents)
+      expect(await readdir(directory)).toEqual(['enterprise-session.json'])
     } finally { await rm(directory, { recursive: true, force: true }) }
   })
 

@@ -103,7 +103,7 @@ describe('Voice settings setup flow', () => {
     const dialog = container.querySelector<HTMLElement>('[role="dialog"]')!
     const input = dialog.querySelector<HTMLInputElement>('input[type="password"]')!
     await enter(input, 'sk-test-key')
-    const save = [...dialog.querySelectorAll('button')].find((button) => button.textContent?.includes('Save API key'))!
+    const save = [...dialog.querySelectorAll('button')].find((button) => button.textContent?.includes('Use API key'))!
     await click(save)
 
     expect(saveApiKey).toHaveBeenCalledWith('openai', 'sk-test-key')
@@ -148,7 +148,7 @@ describe('Voice settings setup flow', () => {
     expect(dialog.textContent).toContain('Enter it again after restarting GooeyPi')
     const input = dialog.querySelector<HTMLInputElement>('input[type="password"]')!
     await enter(input, 'sk-session-key')
-    const save = [...dialog.querySelectorAll('button')].find((button) => button.textContent?.includes('Save API key'))!
+    const save = [...dialog.querySelectorAll('button')].find((button) => button.textContent?.includes('Use API key'))!
     await click(save)
 
     expect(saveApiKey).toHaveBeenCalledWith('openai', 'sk-session-key')
@@ -191,7 +191,7 @@ describe('Voice settings setup flow', () => {
     const dialog = container.querySelector<HTMLElement>('[role="dialog"]')!
     expect(dialog.textContent).toContain('optional bearer token')
     await enter(dialog.querySelector<HTMLInputElement>('input[type="password"]')!, 'local-token')
-    await click([...dialog.querySelectorAll('button')].find((button) => button.textContent?.includes('Save token'))!)
+    await click([...dialog.querySelectorAll('button')].find((button) => button.textContent?.includes('Use token'))!)
     expect(saveApiKey).toHaveBeenCalledWith('self-hosted', 'local-token')
 
     await click([...container.querySelectorAll('button')].find((button) => button.textContent?.includes('Connect & test'))!)

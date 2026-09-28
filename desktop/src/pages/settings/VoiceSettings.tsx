@@ -153,8 +153,8 @@ export function VoiceSettings({ settings, onUpdate, voice, platform = 'darwin' }
           <div><h2 id="voice-connections-title">Connections</h2><p>Add a key for a hosted service. Voice keys stay in memory while GooeyPi is running; enter them again after restarting.</p></div>
         </div>
         {serviceState === 'ready' && status && sessionOnly ? (
-          <div className="voice-storage-notice" role="alert">
-            <ShieldAlert size={17} />
+          <div className="voice-storage-notice" role="status">
+            <KeyRound size={17} />
             <span><strong>Voice keys are session-only</strong><small>{status.storage.message ?? 'Keys stay available for this launch. Enter them again after restarting GooeyPi.'} You can still add a key for this session.</small></span>
           </div>
         ) : null}
@@ -262,7 +262,7 @@ export function VoiceSettings({ settings, onUpdate, voice, platform = 'darwin' }
         </div>
       </section>
 
-      {credential ? <Modal title={`Connect ${CREDENTIALS.find((item) => item.id === credential)?.name ?? credential}`} onClose={closeCredential} footer={<><button type="button" className="button" disabled={busy} onClick={closeCredential}>Cancel</button><button type="button" className="button button--primary" disabled={busy || !apiKey.trim()} onClick={() => void saveCredential()}>{busy ? 'Saving…' : credential === 'self-hosted' ? 'Save token' : 'Save API key'}</button></>}>
+      {credential ? <Modal title={`Connect ${CREDENTIALS.find((item) => item.id === credential)?.name ?? credential}`} onClose={closeCredential} footer={<><button type="button" className="button" disabled={busy} onClick={closeCredential}>Cancel</button><button type="button" className="button button--primary" disabled={busy || !apiKey.trim()} onClick={() => void saveCredential()}>{busy ? 'Applying…' : credential === 'self-hosted' ? 'Use token' : 'Use API key'}</button></>}>
         <p className="modal-intro">Paste the {credential === 'self-hosted' ? 'optional bearer token' : 'provider API key'}. {sessionOnly ? 'GooeyPi keeps it in desktop memory for this app session. Enter it again after restarting GooeyPi.' : 'GooeyPi encrypts it on this device and does not show the key again.'}</p>
         {failure ? <p className="settings-error" role="alert">{failure}</p> : null}
         <label className="field"><span>{credential === 'self-hosted' ? 'Access token' : 'API key'}</span><input autoFocus type="password" value={apiKey} autoComplete="off" spellCheck={false} placeholder={credential === 'self-hosted' ? 'Paste access token' : 'Paste API key'} onChange={(event) => setApiKey(event.target.value)} /></label>

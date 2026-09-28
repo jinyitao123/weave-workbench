@@ -7,6 +7,7 @@ import { defaultSettings, JsonStateStore, type PersistedProject } from '../../el
 import type { AutomationScheduleRecord, ScheduleTarget } from '../../src/types/api'
 
 const dirs: string[] = []
+const stores: JsonStateStore[] = []
 const ownerA = 'a'.repeat(64)
 const ownerB = 'b'.repeat(64)
 const execution = { model: 'auto', thinking: 'auto', speed: 'normal' } as const
@@ -14,7 +15,10 @@ const targetA: ScheduleTarget = { kind: 'project', projectId: 'project-a' }
 const targetB: ScheduleTarget = { kind: 'project', projectId: 'project-b' }
 const onceAt = (at: string) => ({ kind: 'once' as const, at })
 
-afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }) })
+afterEach(async () => {
+  await Promise.all(stores.splice(0).map((store) => store.beginShutdown()))
+  for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true })
+})
 
 function project(id: string, accountScope?: string): PersistedProject {
   return {
@@ -28,7 +32,13 @@ function stateFile(raw?: unknown): { dir: string; path: string; store: JsonState
   dirs.push(dir)
   const path = join(dir, 'state.json')
   if (raw !== undefined) writeFileSync(path, JSON.stringify(raw))
-  return { dir, path, store: new JsonStateStore(path) }
+  return { dir, path, store: trackedStore(path) }
+}
+
+function trackedStore(path: string): JsonStateStore {
+  const store = new JsonStateStore(path)
+  stores.push(store)
+  return store
 }
 
 function serviceFor(store: JsonStateStore, initialOwnerScope: string | null, run: AutomationServiceOptions['run'] = async () => ({}), now = () => new Date('2030-01-01T00:00:00.000Z'), accountScopeDrainTimeoutMs = 30_000) {
@@ -99,7 +109,7 @@ describe('scheduled task account ownership', () => {
     const created = await first.create({ prompt: 'Persistent A plan', target: targetA, timing: onceAt('2040-01-01T00:00:00Z'), execution })
     await first.stop()
 
-    const reopenedStore = new JsonStateStore(path)
+    const reopenedStore = trackedStore(path)
     const reopened = serviceFor(reopenedStore, ownerB)
     await reopened.start()
     expect(reopened.list()).toEqual([])
@@ -131,7 +141,7 @@ describe('scheduled task account ownership', () => {
     await service.start()
 
     const persisted = store.snapshot()
-    expect(persisted.version).toBe(5)
+    expect(persisted.version).toBe(6)
     expect(persisted.schedules).toEqual(sourceSchedules)
     expect(persisted.scheduleOwnerships).toEqual([
       { scheduleId: 'legacy-a', ownerScope: ownerA, state: 'migrated' },
@@ -203,7 +213,7 @@ describe('scheduled task account ownership', () => {
     expect(store.snapshot().schedules.find(({ id }) => id === task.id)?.runs[0].status).toBe('running')
     log.mockRestore()
 
-    const reopened = serviceFor(new JsonStateStore(path), ownerA)
+    const reopened = serviceFor(trackedStore(path), ownerA)
     await reopened.start()
     expect(reopened.get(task.id).runs[0]).toMatchObject({ status: 'interrupted', error: 'GooeyPi quit before this run could finish.' })
     await reopened.stop()
