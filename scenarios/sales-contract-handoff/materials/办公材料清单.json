@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "purpose": "124 场景流程测试，不构成真实合同、技术承诺或签署凭证",
+  "status": "prepared_not_dispatched",
+  "fontSha256": "876af2cd4854644e7f3e7feb2f688997fdb3343c6df6693611209c9dfb47ccec",
+  "materials": [
+    {
+      "source": "合同样例.md",
+      "sourceSha256": "4051a26859f224457557880ba12d6a638a427302c1b800433e6df43fe08b3ba2",
+      "file": "合同样例.docx",
+      "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "bytes": 37772,
+      "sha256": "9ea0f69e9a5904554152c952b38a98c1599fbe29721d4f391bce042183e23895",
+      "textMatchesSource": true
+    },
+    {
+      "source": "技术协议样例.md",
+      "sourceSha256": "705811b0dfee35758d661adc3f09f0c8957c3d394b236843994e01a5290cf8b1",
+      "file": "技术协议样例.pdf",
+      "mediaType": "application/pdf",
+      "bytes": 95683,
+      "sha256": "0e212a11e8d6c7b509f04109e3f0d207a75e146562bc305d9d09394f5a3a69b4",
+      "textMatchesSource": true
+    }
+  ],
+  "expectedFindings": [
+    "交付期限：合同 20 个日历日，技术协议 15 个日历日",
+    "连续运行验收：合同 24 小时，技术协议 72 小时"
+  ],
+  "pdfPages": 1
+}
