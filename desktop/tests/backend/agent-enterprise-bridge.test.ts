@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AgentEnterpriseBridge } from '../../electron/main/enterprise/agent-bridge'
 import { digest, submissionUUID } from '../../electron/main/enterprise/handoff-store'
+import { normalizeFrozenMaterial, type FrozenMaterial } from '../../electron/main/enterprise/materials'
 import type { EnterpriseApprovalContext, TranscriptMessage } from '../../src/types/api'
 import { WorkRegistrationRejectedError, type EnterpriseWorkContinuationContext, type EnterpriseWorkNotificationSource } from '../../electron/main/enterprise'
 import { ForgeBusinessReadError, type BusinessRecordSnapshot } from '../../electron/main/enterprise/business-records'
@@ -78,7 +79,10 @@ async function fixture(objectName = 'forge_sales_contract') {
     getBusinessObjectDirectory: vi.fn(async () => ({ objects: [{ objectName, label: businessCandidate.objectLabel }], complete: true, totalCount: 1 })),
     findBusinessRecords: vi.fn(async (_objectName: string, _summary: string, offset = 0, limit = 20) => ({ records: [businessCandidate], offset, limit, hasMore: false, complete: true })),
     readBusinessRecord: vi.fn(async () => ({ candidate: businessCandidate, snapshot: structuredClone(businessSnapshot) })),
-    stageWorkMaterials: vi.fn(async (items: Array<{ name: string; content: string; bytes: number; sha256: string }>) => items.map((item, index) => ({ type: 'forge-file' as const, id: `file-${index + 1}`, name: item.name, bytes: item.bytes, sha256: item.sha256 }))),
+    stageWorkMaterials: vi.fn(async (items: FrozenMaterial[]) => items.map((raw, index) => {
+      const item = normalizeFrozenMaterial(raw)
+      return { type: 'forge-file' as const, materialId: item.materialId, id: `file-${index + 1}`, name: item.name, mediaType: item.mediaType, bytes: item.bytes, sha256: item.sha256 }
+    })),
     submitWork: vi.fn(async (_choice: unknown, _goal: string, source?: { assertCurrent(): Promise<void>; continuation?: { inputRevisionID: string; runID: string } }) => {
       await source?.assertCurrent()
       if (source?.continuation) {
@@ -235,7 +239,7 @@ describe('employee-bound material handoff', () => {
     expect(f.service.getTeamChoices).toHaveBeenCalledTimes(4)
     expect(f.service.getBusinessCapabilities).toHaveBeenCalledTimes(2)
     expect(f.service.stageWorkMaterials).toHaveBeenCalledTimes(2)
-    expect(f.service.stageWorkMaterials.mock.calls.map(([materials]) => materials[0]?.content)).toEqual([revisedMaterial, revisedMaterial])
+    expect(f.service.stageWorkMaterials.mock.calls.map(([materials]) => materials[0]?.extraction.content)).toEqual([revisedMaterial, revisedMaterial])
   })
 
   it('marks a failed read-only continuation as a fresh input in the same work session', async () => {
@@ -543,7 +547,12 @@ describe('employee-bound material handoff', () => {
     expect(submitted.status).toBe(200)
     expect(submitted.body.result.status).toBe('accepted')
     const task = JSON.parse(f.service.submitWork.mock.calls[0][1])
-    expect(task.materials[0]).toEqual({ name: '合同.md', content: f.content, bytes: Buffer.byteLength(f.content), sha256: digest(f.content) })
+    expect(task.materials[0]).toMatchObject({
+      materialId: expect.stringMatching(/^[0-9a-f]{24}$/), name: '合同.md', mediaType: 'text/markdown',
+      bytes: Buffer.byteLength(f.content), sha256: digest(f.content),
+      extraction: { status: 'complete', sourceSha256: digest(f.content), sha256: digest(f.content), content: f.content },
+    })
+    expect(JSON.stringify(task)).not.toContain(Buffer.from(f.content).toString('base64'))
     expect(f.service.submitWork.mock.calls[0][2]).toMatchObject({ authorizedBusinessCapabilityIds: [] })
   })
   it('authorizes only the business action selected for the current employee intent', async () => {
@@ -631,8 +640,8 @@ describe('employee-bound material handoff', () => {
     expect(result.body.result.message).toContain('已进入下一轮')
     expect(f.service.submitWork).not.toHaveBeenCalled()
     expect(f.service.stageWorkMaterials.mock.calls[0]![0]).toMatchObject([
-      { name: '修订正文.md', content: body, bytes: Buffer.byteLength(body), sha256: digest(body) },
-      { name: '合同.md', content: f.content, bytes: Buffer.byteLength(f.content), sha256: digest(f.content) },
+      { name: '修订正文.md', extraction: { content: body }, bytes: Buffer.byteLength(body), sha256: digest(body) },
+      { name: '合同.md', extraction: { content: f.content }, bytes: Buffer.byteLength(f.content), sha256: digest(f.content) },
     ])
     const sent = f.service.submitApprovalRevision.mock.calls[0]!
     expect(sent[0]).toBe('approval-1')
@@ -895,7 +904,7 @@ describe('employee-bound material handoff', () => {
     expect(result.status).toBe(200)
     expect(result.body.result.status).toBe('accepted')
     expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
-    expect(f.service.stageWorkMaterials.mock.calls[0]?.[0][0]?.content).toBe(f.content)
+    expect(f.service.stageWorkMaterials.mock.calls[0]?.[0][0]?.extraction.content).toBe(f.content)
   })
   it('retries an identical package after failure without rereading a changed file or conversation', async () => {
     const f = await fixture(), params = await f.discover()
@@ -926,7 +935,7 @@ describe('employee-bound material handoff', () => {
     await writeFile(join(f.cwd, '材料', '附件', '合同.md'), 'later draft')
     expect((await f.call('recover', { recovery_key: first.body.result.recovery_key })).body.result.status).toBe('accepted')
     const retriedMaterials = f.service.stageWorkMaterials.mock.calls[1][0]
-    expect(retriedMaterials[0].content).toBe(f.content)
+    expect(retriedMaterials[0].extraction.content).toBe(f.content)
   })
   it('rejects an old recovery key after the employee changes the request without uploading or submitting', async () => {
     const f = await fixture(), params = await f.discover()

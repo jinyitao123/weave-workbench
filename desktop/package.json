@@ -45,8 +45,10 @@
   "dependencies": {
     "electron-updater": "^6.8.9",
     "js-yaml": "^5.3.0",
+    "mammoth": "1.13.0",
     "node-pty": "^1.1.0",
     "partial-json": "^0.1.7",
+    "pdfjs-dist": "6.3.289",
     "prime-agent": "file:vendor/prime-agent-0.7.0-gooeypi.1.tgz",
     "prime-agent-ai": "file:vendor/prime-agent-ai-0.7.0-gooeypi.1.tgz",
     "rrule": "^2.8.1",

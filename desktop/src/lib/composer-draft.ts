@@ -31,8 +31,8 @@ function isMaterialReference(value: unknown): value is WorkspaceMaterialReferenc
     && typeof item.path === 'string' && item.path.startsWith('材料/') && !item.path.startsWith('/') && !item.path.includes('\\')
     && !item.path.split('/').some((part) => !part || part === '.' || part === '..')
     && typeof item.sha256 === 'string' && /^[0-9a-f]{64}$/.test(item.sha256)
-    && Number.isSafeInteger(item.bytes) && Number(item.bytes) > 0 && Number(item.bytes) <= 700_000
-    && (item.mimeType === 'text/plain' || item.mimeType === 'text/markdown')
+    && Number.isSafeInteger(item.bytes) && Number(item.bytes) > 0 && Number(item.bytes) <= 2 * 1024 * 1024
+    && ({ '.txt': 'text/plain', '.md': 'text/markdown', '.markdown': 'text/markdown', '.csv': 'text/csv', '.json': 'application/json', '.pdf': 'application/pdf', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' } as Record<string, string>)[item.name.slice(item.name.lastIndexOf('.')).toLowerCase()] === item.mimeType
 }
 
 /** Snapshot the composer's current DOM value so a crash-and-reload keeps the draft. */

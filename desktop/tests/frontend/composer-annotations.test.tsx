@@ -136,6 +136,29 @@ const clickSend = async () => {
 }
 
 describe('Composer workspace text attachments', () => {
+  it('accepts a selected PDF as an original workspace material and forwards the exact bytes to the host', async () => {
+    const bytes = new TextEncoder().encode('%PDF-1')
+    const reference: WorkspaceMaterialReference = {
+      projectId: 'project', harness: 'prime', workspacePath: '/workspace/project', name: 'source.pdf', path: '材料/附件/opaque/source.pdf',
+      sha256: 'e'.repeat(64), bytes: bytes.byteLength, mimeType: 'application/pdf',
+    }
+    const onSend = vi.fn(async () => undefined)
+    const imported: Array<{ name: string; bytes: Uint8Array }> = []
+    const onImportTextFile = vi.fn(async (name: string, selected: Uint8Array) => { imported.push({ name, bytes: selected }); return reference })
+    renderComposer({ onSend, onImportTextFile })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    expect(input.accept).toContain('.pdf')
+    expect(input.accept).toContain('.docx')
+    Object.defineProperty(input, 'files', { configurable: true, value: [new File(['%PDF-1'], 'source.pdf', { type: 'application/pdf' })] })
+    await act(async () => { input.dispatchEvent(new Event('change', { bubbles: true })); await Promise.resolve() })
+    expect(onImportTextFile).toHaveBeenCalledWith('source.pdf', expect.any(Uint8Array))
+    expect(imported[0]?.name).toBe('source.pdf')
+    expect(Array.from(imported[0]?.bytes ?? [])).toEqual(Array.from(bytes))
+    expect(container.textContent).toContain('source.pdf')
+    await clickSend()
+    expect(onSend).toHaveBeenCalledWith('[Attached file]', [], 'queue', [reference])
+  })
+
   it('shows an authorization timeout recovery message and allows a retry', async () => {
     const content = '# Retry attachment\n'
     const reference: WorkspaceMaterialReference = {

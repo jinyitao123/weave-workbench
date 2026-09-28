@@ -5,7 +5,7 @@ import { CapabilityBridge, type CapabilityClaim } from '../lib/capability-bridge
 import { canonicalSessionPath } from '../session-paths'
 import { rejectUnknownKeys, requireString } from '../validation'
 import { digest, HandoffStore, submissionUUID, type HandoffStorage } from './handoff-store'
-import { executionText, freezeMaterials, materialSelection, type FrozenMaterial, type MaterialLimits } from './materials'
+import { executionText, freezeMaterials, makeFrozenTextMaterial, materialSelection, normalizeFrozenMaterial, normalizeFrozenMaterials, validateFrozenMaterial, type FrozenMaterial, type MaterialLimits } from './materials'
 import { searchTeams, type TeamSummary } from './team-catalog'
 import { splitWorkspaceMaterialContext } from '../../../src/lib/workspace-material-attachments'
 import { businessReadErrorResult, type BusinessObjectDirectory, type BusinessRecordCandidate, type BusinessRecordRead, type BusinessRecordSearchPage, type BusinessRecordSnapshot } from './business-records'
@@ -66,8 +66,9 @@ interface ScopedBusinessRecord extends BusinessRecordCandidate {
   turnKey: string
   snapshot?: BusinessRecordSnapshot
 }
-interface FrozenRevisionFile { name: string; mediaType: 'text/plain; charset=utf-8'; bytes: number; sha256: string; bytesBase64: string }
-interface FrozenRevisionSourceFile extends FrozenRevisionFile { fileId: string }
+interface FrozenRevisionFile extends FrozenMaterial {}
+interface LegacyFrozenRevisionFile { name: string; mediaType: 'text/plain; charset=utf-8'; bytes: number; sha256: string; bytesBase64: string }
+interface FrozenRevisionSourceFile { fileId: string; name: string; mediaType: string; bytes: number; sha256: string; bytesBase64: string }
 interface FrozenRevisionIntent {
   version: 1
   accountKey: string
@@ -85,7 +86,7 @@ interface FrozenRevisionIntent {
   returnReason: string
   sourceFiles: FrozenRevisionSourceFile[]
   body: { name: string; content: string; bytes: number; sha256: string; bytesBase64: string }
-  materials: FrozenRevisionFile[]
+  materials: Array<FrozenRevisionFile | LegacyFrozenRevisionFile>
 }
 interface ReturnedRevisionFileReference { fileId: string; name: string; sha256: string }
 interface ReturnedRevisionReceipt {
@@ -105,7 +106,7 @@ interface ReturnedRevisionProgress {
   receipt?: ReturnedRevisionReceipt
   message?: string
 }
-const REVISION_MATERIAL_LIMITS: MaterialLimits = { maxFiles: 10, maxFileBytes: 2 * 1024 * 1024, maxTotalBytes: 8 * 1024 * 1024 }
+const REVISION_MATERIAL_LIMITS: MaterialLimits = { maxFiles: 10, maxFileBytes: 2 * 1024 * 1024, maxTotalBytes: 8 * 1024 * 1024, maxTotalExtractedBytes: 700_000 }
 function messageText(message: TranscriptMessage): string {
   return message.parts.flatMap((part) => part.type === 'text' || part.type === 'agentMessage' ? [part.text] : []).join('\n').trim()
 }
@@ -145,9 +146,8 @@ function assertReturnedApproval(context: EnterpriseApprovalContext, requestId?: 
   }
 }
 function revisionFile(material: FrozenMaterial): FrozenRevisionFile {
-  const bytes = Buffer.from(material.content, 'utf8')
-  if (bytes.length !== material.bytes || digest(bytes) !== material.sha256) throw new Error('工作材料与本轮摘要不一致，请暂停处理')
-  return { name: material.name, mediaType: 'text/plain; charset=utf-8', bytes: bytes.length, sha256: material.sha256, bytesBase64: bytes.toString('base64') }
+  validateFrozenMaterial(material)
+  return structuredClone(material)
 }
 function revisionReceipt(value: unknown, requestId: string): ReturnedRevisionReceipt | undefined {
   const envelope = value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined
@@ -159,16 +159,15 @@ function revisionReceipt(value: unknown, requestId: string): ReturnedRevisionRec
     || data.repeated !== true) return undefined
   return { requestId, bindingId: data.bindingId, newVersionDigest: data.newVersionDigest, state: data.state, repeated: true }
 }
-function restoreRevisionMaterial(file: FrozenRevisionFile): FrozenMaterial {
+function restoreRevisionMaterial(file: FrozenRevisionFile | LegacyFrozenRevisionFile): FrozenMaterial {
+  if ('extraction' in file && file.extraction) return normalizeFrozenMaterial(file)
   const bytes = Buffer.from(file.bytesBase64, 'base64')
   if (bytes.toString('base64') !== file.bytesBase64 || bytes.length !== file.bytes || digest(bytes) !== file.sha256) {
     throw new Error('本地固定材料包无法通过字节摘要校验，请勿重新读取文件')
   }
-  let content: string
-  try { content = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes) }
+  try { new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes) }
   catch { throw new Error('本地固定材料不是有效的 UTF-8 文本') }
-  if (!content.trim() || content.includes('\0')) throw new Error('本地固定材料为空或无法安全读取')
-  return { name: file.name, content, bytes: bytes.length, sha256: file.sha256 }
+  return makeFrozenTextMaterial(file.name, bytes)
 }
 function revisionReceiptResult(receipt: ReturnedRevisionReceipt, files: Array<{ name: string }>, receiptConfirmed = true): Record<string, unknown> {
   const message = receipt.state === 'resumed'
@@ -1004,8 +1003,12 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         version: 1, phase: 'upload_started', idempotencyKey: intent.idempotencyKey,
       })
       try {
+        const bodyBytes = Buffer.from(intent.body.bytesBase64, 'base64')
+        if (bodyBytes.toString('base64') !== intent.body.bytesBase64 || bodyBytes.length !== intent.body.bytes || digest(bodyBytes) !== intent.body.sha256) {
+          throw new Error('本地固定修订正文无法通过字节摘要校验，请勿重新读取文件')
+        }
         const uploadMaterials = [
-          restoreRevisionMaterial({ name: intent.body.name, mediaType: 'text/plain; charset=utf-8', bytes: intent.body.bytes, sha256: intent.body.sha256, bytesBase64: intent.body.bytesBase64 }),
+          makeFrozenTextMaterial(intent.body.name, bodyBytes),
           ...intent.materials.map(restoreRevisionMaterial),
         ]
         const uploaded = uploadMaterials.length ? await this.options.service.stageWorkMaterials(uploadMaterials, assertCurrent) : []
@@ -1081,15 +1084,26 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   }
   private async prepareDelivery(claim: CapabilityClaim, turn: EmployeeTurn, intent: FrozenHandoffIntent, recoveryKey: string): Promise<unknown> {
     try {
-      const resourcesFingerprint = digest(JSON.stringify(intent.materials.map(({ name, bytes, sha256 }) => ({ name, bytes, sha256 }))))
+      const materials = normalizeFrozenMaterials(intent.materials)
+      const resourcesFingerprint = digest(JSON.stringify(materials.map(({ name, bytes, sha256 }) => ({ name, bytes, sha256 }))))
       const frozen = await this.store.freeze<FrozenHandoff>(`${intent.accountKey}:${intent.idempotencySeed}:resources`, resourcesFingerprint, async () => {
-        const resources = intent.materials.length
-          ? await this.options.service.stageWorkMaterials(intent.materials, async () => { await this.evidence(claim, turn) })
+        const resources = materials.length
+          ? await this.options.service.stageWorkMaterials(materials, async () => { await this.evidence(claim, turn) })
           : []
         await this.evidence(claim, turn)
-        return { ...intent, resources }
+        return { ...intent, materials, resources }
       })
-      return this.deliver(claim, turn, frozen, recoveryKey)
+      if (frozen.resources.length !== materials.length || frozen.resources.some((resource, index) => {
+        const material = materials[index]!
+        return resource.type !== 'forge-file' || !resource.id || resource.name !== material.name
+          || resource.bytes !== material.bytes || resource.sha256 !== material.sha256
+          || (resource.mediaType !== undefined && resource.mediaType !== material.mediaType)
+          || (resource.materialId !== undefined && resource.materialId !== material.materialId)
+      })) throw new Error('Forge 文件引用与本地固定材料清单不一致')
+      const resources = frozen.resources.map((resource, index) => ({
+        ...resource, materialId: materials[index]!.materialId, mediaType: materials[index]!.mediaType,
+      }))
+      return this.deliver(claim, turn, { ...frozen, materials, resources }, recoveryKey)
     } catch (error) {
       return {
         status: 'unknown', recovery_key: recoveryKey,

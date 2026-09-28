@@ -478,7 +478,22 @@ describe('ProjectService workspace text attachments', () => {
     expect(reference.path).toMatch(/^材料\/附件\/[0-9a-f-]+\/source\.md$/)
     expect(readFileSync(filePath)).toEqual(Buffer.from(bytes))
     expect(statSync(filePath).mode & 0o777).toBe(0o600)
-    expect(frozen).toEqual([{ name: 'source.md', sha256: reference.sha256, bytes: bytes.byteLength, content }])
+    expect(frozen).toHaveLength(1)
+    expect(frozen[0]).toMatchObject({ name: 'source.md', mediaType: 'text/markdown', sha256: reference.sha256, bytes: bytes.byteLength, extraction: { content, status: 'complete', sourceSha256: reference.sha256 } })
+    expect(Buffer.from(frozen[0]!.bytesBase64, 'base64')).toEqual(Buffer.from(bytes))
+  })
+
+  it.each([
+    ['sample-two-page.pdf', '合同.pdf', 'application/pdf'],
+    ['sample-paragraphs-table.docx', '交付清单.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+  ] as const)('copies %s into the authorized workspace without changing any source bytes', async (fixtureName, selectedName, mimeType) => {
+    const { root, service } = setup()
+    const project = await service.ensurePersonalWorkspace(join(root, 'personal'))
+    const bytes = readFileSync(new URL(`../fixtures/materials/${fixtureName}`, import.meta.url))
+    const reference = await service.importTextMaterial(project.id, project.primaryFolder, selectedName, new Uint8Array(bytes))
+    const saved = readFileSync(join(project.primaryFolder, ...reference.path.split('/')))
+    expect(reference).toMatchObject({ name: selectedName, mimeType, bytes: bytes.length })
+    expect(saved).toEqual(bytes)
   })
 
   it('rejects unsupported, invalid UTF-8, unsafe names, and references from a previous account scope', async () => {
@@ -489,7 +504,7 @@ describe('ProjectService workspace text attachments', () => {
     const bytes = new TextEncoder().encode('valid text\n')
 
     await expect(service.importTextMaterial(project.id, project.primaryFolder, '../outside.md', bytes)).rejects.toThrow(/name is invalid/)
-    await expect(service.importTextMaterial(project.id, project.primaryFolder, 'source.docx', bytes)).rejects.toThrow(/Only UTF-8 text and Markdown/)
+    await expect(service.importTextMaterial(project.id, project.primaryFolder, 'source.docx', bytes)).rejects.toThrow(/valid ZIP signature/)
     await expect(service.importTextMaterial(project.id, project.primaryFolder, 'source.md', new Uint8Array([0xff, 0xfe]))).rejects.toThrow(/valid UTF-8/)
 
     const reference = await service.importTextMaterial(project.id, project.primaryFolder, 'source.md', bytes)

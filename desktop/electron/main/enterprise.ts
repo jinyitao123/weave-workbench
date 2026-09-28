@@ -1,7 +1,7 @@
 import { teamWorkspaceRequest } from './enterprise/team-workspace'
 import type { TeamWorkspaceCommand } from '../../src/types/team-workspace'
 import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkReadStatus, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource } from '../../src/types/api'
-import type { FrozenMaterial } from './enterprise/materials'
+import { normalizeFrozenMaterial, validateFrozenMaterial, type FrozenMaterial } from './enterprise/materials'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 import { submissionUUID } from './enterprise/handoff-store'
@@ -801,18 +801,20 @@ export class EnterpriseService {
     if ((this.weaveToken || this.forgeToken) && this.expiresAt <= Date.now()) await this.signOut()
     if (!this.forgeToken) throw new Error('请重新登录以上传工作材料')
     const resources: EnterpriseWorkResource[] = []
-    for (const material of materials) {
+    for (const rawMaterial of materials) {
+      const material = normalizeFrozenMaterial(rawMaterial)
+      const sourceBytes = validateFrozenMaterial(material)
       await assertCurrent()
       this.assertAuthGeneration(generation)
       const prepared = await this.forgeRequest('/api/v1/storage/upload/presigned', {
-        filename: material.name, mimeType: 'text/plain; charset=utf-8', size: material.bytes, scope: 'attachments',
+        filename: material.name, mimeType: material.mediaType, size: material.bytes, scope: 'attachments',
       }, generation)
       const envelope = record(prepared.body), descriptor = record(envelope?.data) ?? envelope
       const fileId = textValue(descriptor?.fileId), uploadUrl = textValue(descriptor?.uploadUrl), method = textValue(descriptor?.method) ?? 'PUT'
       if (!fileId || !uploadUrl) throw new Error('Forge 没有返回材料上传地址')
       const uploaded = await this.fetch(new URL(uploadUrl, this.forgeUrl), {
         method, headers: record(descriptor?.headers) as Record<string, string> | undefined,
-        body: Buffer.from(material.content, 'utf8'), redirect: 'error', signal: AbortSignal.timeout(30_000),
+        body: Uint8Array.from(sourceBytes), redirect: 'error', signal: AbortSignal.timeout(30_000),
       })
       if (!uploaded.ok) { await uploaded.body?.cancel(); throw new Error(`材料“${material.name}”上传失败（${uploaded.status}）`) }
       await uploaded.body?.cancel()
@@ -821,7 +823,7 @@ export class EnterpriseService {
       const completed = await this.forgeRequest('/api/v1/storage/upload/complete', { fileId }, generation)
       const completedEnvelope = record(completed.body), completedData = record(completedEnvelope?.data) ?? completedEnvelope
       if ((textValue(completedData?.fileId) ?? fileId) !== fileId) throw new Error('Forge 返回的材料版本与本次上传不一致')
-      resources.push({ type: 'forge-file', id: fileId, name: material.name, bytes: material.bytes, sha256: material.sha256 })
+      resources.push({ type: 'forge-file', materialId: material.materialId, id: fileId, name: material.name, mediaType: material.mediaType, bytes: material.bytes, sha256: material.sha256 })
     }
     await assertCurrent()
     this.assertAuthGeneration(generation)

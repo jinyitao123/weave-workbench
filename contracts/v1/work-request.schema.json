@@ -50,16 +50,54 @@
     "material": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["materialId", "name", "mediaType", "size", "sha256", "reference"],
+      "required": ["name", "mediaType", "size", "sha256", "reference"],
       "properties": {
         "materialId": { "type": "string", "minLength": 1, "maxLength": 128 },
         "name": { "type": "string", "minLength": 1, "maxLength": 512 },
         "mediaType": { "type": "string", "minLength": 1, "maxLength": 160 },
-        "size": { "type": "integer", "minimum": 0 },
+        "size": { "type": "integer", "minimum": 0, "maximum": 2097152 },
         "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-        "reference": { "type": "string", "minLength": 1, "maxLength": 2048 }
+        "reference": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "extraction": { "$ref": "#/$defs/materialExtraction" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "mediaType": { "enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] } } },
+          "then": { "required": ["materialId", "extraction"] }
+        }
+      ]
+    },
+    "materialExtraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "mediaType", "size", "sha256", "sourceSha256", "content", "extractor", "coverage", "limitations"],
+      "properties": {
+        "status": { "enum": ["complete", "partial", "unsupported", "pending"] },
+        "mediaType": { "const": "text/plain; charset=utf-8" },
+        "size": { "type": "integer", "minimum": 0, "maximum": 700000 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "sourceSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "content": { "type": "string", "maxLength": 700000 },
+        "extractor": { "enum": ["utf8", "pdfjs-dist", "mammoth"] },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "pdfPageCount": { "type": "integer", "minimum": 1 },
+            "pdfTextPageCount": { "type": "integer", "minimum": 0 },
+            "pdfPagesWithoutText": { "type": "array", "uniqueItems": true, "items": { "type": "integer", "minimum": 1 } },
+            "docxParagraphCount": { "type": "integer", "minimum": 0 },
+            "docxTableCount": { "type": "integer", "minimum": 0 },
+            "docxTableCellCount": { "type": "integer", "minimum": 0 },
+            "docxOmittedContentCount": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["page-without-text", "embedded-image", "unsupported-document-content"] }
+        }
       }
     }
   }
 }
-

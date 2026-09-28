@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto'
+import { freezeMaterials, makeFrozenTextMaterial } from '../../electron/main/enterprise/materials'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EnterpriseService, WorkRegistrationRejectedError } from '../../electron/main/enterprise'
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -896,25 +897,55 @@ describe('EnterpriseService', () => {
   })
 
   it('uploads the exact frozen bytes to Forge before dispatch', async () => {
-    const content = '# 合同\n固定版本\n', uploaded: string[] = [], uploads: Array<Record<string, unknown>> = []
+    const content = '# 合同\n固定版本\n', uploaded: Buffer[] = [], uploads: Array<Record<string, unknown>> = []
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'sales-1' } })
       if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'sales-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
       if (url.endsWith('/api/v1/storage/upload/presigned')) {
         uploads.push(JSON.parse(String(init?.body)) as Record<string, unknown>)
-        return Response.json({ data: { fileId: 'file-1', uploadUrl: '/upload/file-1', method: 'PUT', headers: { 'Content-Type': 'text/plain' } } })
+        return Response.json({ data: { fileId: 'file-1', uploadUrl: '/upload/file-1', method: 'PUT', headers: { 'Content-Type': 'text/markdown' } } })
       }
-      if (url.endsWith('/upload/file-1')) { uploaded.push(Buffer.from(init?.body as Uint8Array).toString('utf8')); return new Response(null, { status: 200 }) }
+      if (url.endsWith('/upload/file-1')) { uploaded.push(Buffer.from(init?.body as Uint8Array)); return new Response(null, { status: 200 }) }
       if (url.endsWith('/api/v1/storage/upload/complete')) return Response.json({ data: { fileId: 'file-1' } })
       return Response.json({}, { status: 404 })
     }) as typeof fetch
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
     await service.signIn('sales@example.test', 'secret')
-    const resources = await service.stageWorkMaterials([{ name: '合同.md', content, bytes: Buffer.byteLength(content), sha256: createHash('sha256').update(content).digest('hex') }], async () => undefined)
-    expect(uploaded).toEqual([content])
-    expect(uploads).toEqual([{ filename: '合同.md', mimeType: 'text/plain; charset=utf-8', size: Buffer.byteLength(content), scope: 'attachments' }])
-    expect(resources).toEqual([{ type: 'forge-file', id: 'file-1', name: '合同.md', bytes: Buffer.byteLength(content), sha256: createHash('sha256').update(content).digest('hex') }])
+    const material = makeFrozenTextMaterial('合同.md', Buffer.from(content))
+    const resources = await service.stageWorkMaterials([material], async () => undefined)
+    expect(uploaded).toEqual([Buffer.from(content)])
+    expect(uploads).toEqual([{ filename: '合同.md', mimeType: 'text/markdown', size: Buffer.byteLength(content), scope: 'attachments' }])
+    expect(resources).toEqual([{ type: 'forge-file', materialId: material.materialId, id: 'file-1', name: '合同.md', mediaType: 'text/markdown', bytes: Buffer.byteLength(content), sha256: createHash('sha256').update(content).digest('hex') }])
+  })
+
+  it('uploads the byte-exact PDF original with its PDF MIME type and frozen material binding', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'forge-pdf-upload-'))
+    try {
+      const source = await readFile(new URL('../fixtures/materials/sample-two-page.pdf', import.meta.url))
+      const sourcePath = join(root, '合同.pdf')
+      await writeFile(sourcePath, source)
+      const material = (await freezeMaterials(root, [{ path: '合同.pdf', sha256: createHash('sha256').update(source).digest('hex') }]))[0]!
+      const uploadBodies: Buffer[] = [], uploads: Array<Record<string, unknown>> = []
+      const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+        const url = String(input)
+        if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'sales-1' } })
+        if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'sales-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
+        if (url.endsWith('/api/v1/storage/upload/presigned')) {
+          uploads.push(JSON.parse(String(init?.body)) as Record<string, unknown>)
+          return Response.json({ data: { fileId: 'pdf-file-1', uploadUrl: '/upload/pdf-file-1', method: 'PUT', headers: { 'Content-Type': 'application/pdf' } } })
+        }
+        if (url.endsWith('/upload/pdf-file-1')) { uploadBodies.push(Buffer.from(init?.body as Uint8Array)); return new Response(null, { status: 200 }) }
+        if (url.endsWith('/api/v1/storage/upload/complete')) return Response.json({ data: { fileId: 'pdf-file-1' } })
+        return Response.json({}, { status: 404 })
+      }) as typeof fetch
+      const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+      await service.signIn('sales@example.test', 'secret')
+      const resources = await service.stageWorkMaterials([material], async () => undefined)
+      expect(uploadBodies).toEqual([source])
+      expect(uploads).toEqual([{ filename: '合同.pdf', mimeType: 'application/pdf', size: source.length, scope: 'attachments' }])
+      expect(resources).toEqual([{ type: 'forge-file', materialId: material.materialId, id: 'pdf-file-1', name: '合同.pdf', mediaType: 'application/pdf', bytes: source.length, sha256: material.sha256 }])
+    } finally { await rm(root, { recursive: true, force: true }) }
   })
 
   it('posts only frozen Forge file references and reads the same revision receipt', async () => {
