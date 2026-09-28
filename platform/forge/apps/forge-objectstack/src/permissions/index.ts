@@ -11,7 +11,7 @@ export {
   procurementReviewerPermission, productionOperatorPermission, productionReviewerPermission,
   warehouseOperatorPermission, warehouseReviewerPermission, qualityInspectorPermission,
   deliveryOperatorPermission, financeReceivablesOperatorPermission, financeReviewerPermission,
-  serviceOperatorPermission,
+  serviceOperatorPermission, serviceManagerPermission,
 } from './otc-role.permission.js';
 export {
   administrationSettingsManagerPermission,

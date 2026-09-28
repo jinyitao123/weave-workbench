@@ -631,3 +631,492 @@ await ctx.api.object('forge_purchase_order').update({ id, line_count: lines.leng
 return { id, line_count: lines.length, total_quantity: totalQuantity, total_amount: totalAmount };
 ` },
 });
+
+const purchaseInquiryActionContext = `
+const actor = String((ctx.session && ctx.session.userId) || '').trim();
+const organizationId = String((ctx.user && ctx.user.organizationId) || (ctx.session && ctx.session.organizationId) || '').trim();
+if (!actor || !organizationId) throw new Error('无法识别当前采购经办人或组织');
+const db = name => ctx.api.object(name);
+const orgRows = async (name, where = {}) => {
+  const rows = await db(name).find({ where: { ...where, organization_id: organizationId } });
+  return (Array.isArray(rows) ? rows : []).filter(row => String(row.organization_id || '') === organizationId);
+};
+const orgRecord = async (name, id, label = '业务记录') => {
+  if (!id) throw new Error(label + '不存在或不属于当前组织');
+  const row = await db(name).findOne({ where: { id } });
+  if (!row || String(row.organization_id || '') !== organizationId) throw new Error(label + '不存在或不属于当前组织');
+  return row;
+};
+const isMine = row => [row && row.responsible_id, row && row.owner_id, row && row.created_by, row && row.manager_id].some(id => String(id || '') === actor);
+const accessibleProjectIds = async (includeInquiryProjects = false) => {
+  const [projects, memberships, pendingRows, requests] = await Promise.all([
+    orgRows('forge_project'), orgRows('forge_project_member', { user_id: actor }),
+    orgRows('forge_purchase_pending_item'), orgRows('forge_purchase_request'),
+  ]);
+  const ids = new Set(projects.filter(isMine).map(row => row.id));
+  for (const member of memberships) if (member.active === true || member.active === 1 || member.active === '1') ids.add(member.project_id);
+  const requestById = new Map(requests.map(row => [row.id, row]));
+  for (const pending of pendingRows) {
+    const request = requestById.get(pending.request_id);
+    if (!request || request.status !== 'approved' || String(pending.project_id || '') !== String(request.project_id || '') || pending.inquiry_id || !['ready', 'assigned', 'on_hold'].includes(pending.status) || !(Number(pending.remaining_quantity || 0) > 0) || pending.applicant_id !== (request.submitted_by || request.responsible_id)) continue;
+    const sourceOwned = pending.status === 'ready' && pending.responsible_id === request.responsible_id;
+    const claimedByActor = pending.responsible_id === actor && pending.owner_id === actor;
+    if ((sourceOwned || claimedByActor) && pending.project_id) ids.add(pending.project_id);
+  }
+  if (includeInquiryProjects) {
+    const inquiries = await orgRows('forge_purchase_inquiry');
+    for (const inquiry of inquiries) if (isMine(inquiry) && inquiry.project_id) ids.add(inquiry.project_id);
+  }
+  return ids;
+};
+const accessibleContractProjectId = async (contract, projectIds) => {
+  if (contract.project_id && projectIds.has(contract.project_id)) return contract.project_id;
+  const links = await orgRows('forge_project_sales_link', { contract_id: contract.id });
+  return links.find(link => projectIds.has(link.project_id))?.project_id || null;
+};
+const requireMine = (row, label = '询价单') => {
+  if (!isMine(row)) throw new Error('当前账号只能办理本人负责的' + label);
+};
+const inquiryFor = async (id, statuses) => {
+  const inquiry = await orgRecord('forge_purchase_inquiry', id, '询价单');
+  requireMine(inquiry);
+  if (statuses && !statuses.includes(inquiry.status)) throw new Error('询价单状态已变化，请刷新后重试');
+  return inquiry;
+};
+const idOf = value => typeof value === 'string' ? value : value && (value.id || (value.record && value.record.id) || (value.data && value.data.id));
+const round4 = value => Math.round((Number(value) + Number.EPSILON) * 10000) / 10000;
+const today = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+const validDate = value => /^\\d{4}-\\d{2}-\\d{2}$/.test(String(value || ''));
+`;
+
+function definePurchaseInquiryAction(name: string, label: string, operationSource: string) {
+  return defineAction({
+    name,
+    label,
+    objectName: 'forge_purchase_inquiry',
+    icon: 'messages-square',
+    locations: [],
+    requiredPermissions: ['forge_procurement_operator'],
+    params: [{ name: 'payload_json', label: '询价办理数据', type: 'textarea', required: true }],
+    refreshAfter: true,
+    body: {
+      language: 'js',
+      capabilities: ['api.read', 'api.write', 'api.transaction'],
+      source: `${purchaseInquiryActionContext}
+let payload;
+try { payload = JSON.parse(String(ctx.input.payload_json || '{}')); } catch { throw new Error('询价办理数据格式无效'); }
+if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('询价办理数据格式无效');
+return await ctx.api.transaction(async () => {
+${operationSource}
+});`,
+    },
+  });
+}
+
+export const PurchaseInquiryCreateDraft = definePurchaseInquiryAction(
+  'purchase_inquiry_create_draft', '保存询价草稿', `
+const name = String(payload.name || '').trim(), code = String(payload.code || '').trim();
+const sourceType = String(payload.source_type || ''), sourceId = String(payload.source_id || '');
+const dueOn = String(payload.due_on || ''), requestedProjectId = String(payload.project_id || '');
+if (!name || !code || !validDate(dueOn) || dueOn < today) throw new Error('询价标题、编号和有效截止日期不能为空');
+if (!['manual', 'purchase_request', 'sales_contract'].includes(sourceType)) throw new Error('询价来源无效');
+if (sourceType !== 'manual' && !sourceId) throw new Error('请选择有效的询价来源');
+const existing = await orgRows('forge_purchase_inquiry', { code });
+if (existing.length) {
+  const same = existing.find(row => isMine(row) && row.status === 'draft' && row.name === name && row.due_on === dueOn && row.source_type === sourceType && (row.purchase_request_id || row.sales_contract_id || '') === sourceId);
+  if (same) return { id: same.id, code: same.code, status: same.status, repeated: true };
+  throw new Error('询价单号已存在，请刷新后重试');
+}
+let source = null, sourceLines = [], sourceProjectId = null;
+if (sourceType === 'purchase_request') {
+  source = await orgRecord('forge_purchase_request', sourceId, '采购申请');
+  if (source.status !== 'approved') throw new Error('仅已审批的采购申请可以发起询价');
+  if (!(Array.isArray(payload.pending_ids) && payload.pending_ids.length)) requireMine(source, '采购申请');
+  sourceProjectId = source.project_id || null;
+  sourceLines = await orgRows('forge_purchase_request_line', { request_id: sourceId });
+} else if (sourceType === 'sales_contract') {
+  source = await orgRecord('forge_sales_contract', sourceId, '销售合同');
+  if (['draft', 'terminated', 'expired'].includes(source.status)) throw new Error('当前销售合同不能用于询价');
+  sourceProjectId = await accessibleContractProjectId(source, await accessibleProjectIds(true));
+  if (!sourceProjectId) throw new Error('只能从本人负责项目或合法采购待办关联项目中选择销售合同');
+  sourceLines = await orgRows('forge_sales_contract_line', { contract_id: sourceId });
+}
+const projectId = requestedProjectId || sourceProjectId;
+if (projectId) {
+  await orgRecord('forge_project', projectId, '关联项目');
+  const projectIds = await accessibleProjectIds(sourceType === 'sales_contract');
+  const linkedFromSource = !!source && String(sourceProjectId || '') === projectId;
+  if (!projectIds.has(projectId) && !linkedFromSource) throw new Error('只能关联本人负责、作为项目成员或当前来源单据允许的项目');
+}
+const pendingIds = Array.isArray(payload.pending_ids) ? [...new Set(payload.pending_ids.map(id => String(id || '')).filter(Boolean))] : [];
+if (pendingIds.length > 100) throw new Error('一次询价最多带入 100 条采购待办');
+if (pendingIds.length && (sourceType !== 'purchase_request' || !source || source.id !== sourceId)) throw new Error('采购待办只能从其来源采购申请发起询价');
+const pendingRows = [];
+if (pendingIds.length) {
+  for (const pendingId of pendingIds) {
+    const pending = await orgRecord('forge_purchase_pending_item', pendingId, '采购待办');
+    if (pending.request_id !== sourceId || !['ready', 'assigned', 'on_hold'].includes(pending.status) || pending.inquiry_id) throw new Error('所选采购待办已变化或不属于当前组织');
+    const request = await orgRecord('forge_purchase_request', pending.request_id, '来源采购申请');
+    const applicantId = request.submitted_by || request.responsible_id;
+    const sourceOwned = pending.status === 'ready' && pending.responsible_id === request.responsible_id;
+    const claimedByActor = pending.responsible_id === actor && pending.owner_id === actor;
+    if (request.status !== 'approved' || String(pending.project_id || '') !== String(request.project_id || '') || (!sourceOwned && !claimedByActor) || pending.applicant_id !== applicantId) throw new Error('采购待办已由其他经办人认领，或与来源申请归属不匹配');
+    const quantity = Number(pending.remaining_quantity || 0);
+    if (!(quantity > 0)) throw new Error('所选采购待办没有剩余数量');
+    const line = await orgRecord('forge_purchase_request_line', pending.request_line_id, '采购申请明细');
+    const requested = Number(pending.requested_quantity || 0), locked = Number(pending.locked_quantity || 0), ordered = Number(pending.ordered_quantity || 0);
+    const calculatedRemaining = round4(requested - locked - ordered);
+    if (line.request_id !== sourceId || Math.abs(requested - Number(line.quantity || 0)) > 0.0001 || Math.abs(calculatedRemaining - quantity) > 0.0001) throw new Error('采购待办来源明细或剩余数量与采购申请不一致');
+    pendingRows.push({ pending, line, quantity });
+  }
+}
+const sourceRows = pendingRows.length
+  ? pendingRows.map(item => ({ ...item.line, quantity: item.quantity, expected_arrival_on: item.pending.required_on || item.line.expected_arrival_on, pending_id: item.pending.id }))
+  : sourceLines;
+const now = new Date().toISOString();
+const made = await db('forge_purchase_inquiry').insert({
+  name, code, source_type: sourceType, project_id: projectId || null,
+  purchase_request_id: sourceType === 'purchase_request' ? sourceId : null,
+  sales_contract_id: sourceType === 'sales_contract' ? sourceId : null,
+  responsible_id: actor, owner_id: actor, supplier_count: 0, line_count: 0,
+  due_on: dueOn, status: 'draft', remarks: String(payload.remarks || '').trim() || null,
+});
+const inquiryId = idOf(made);
+if (!inquiryId) throw new Error('询价单创建后未返回编号');
+for (const line of sourceRows) {
+  const quantity = Number(line.quantity || line.quantity_limit || 0);
+  if (!(quantity > 0)) throw new Error('来源物料数量必须大于 0');
+  if (line.sku_id) await orgRecord('forge_material_sku', line.sku_id, '来源物料规格');
+  await db('forge_purchase_inquiry_line').insert({
+    name: line.name, inquiry_id: inquiryId, owner_id: actor, sku_id: line.sku_id || null,
+    item_code: line.item_code || null, model: line.model || null, specification: line.specification || null,
+    unit_name: line.unit_name || null, quantity, required_on: line.expected_arrival_on || null,
+    purchase_request_line_id: sourceType === 'purchase_request' ? line.id : null,
+    sales_contract_line_id: sourceType === 'sales_contract' ? line.id : null,
+    remarks: line.pending_id ? '由采购待办池选中生成' : '来源单据自动带入',
+  });
+}
+for (const item of pendingRows) await db('forge_purchase_pending_item').update({ id: item.pending.id, owner_id: actor, responsible_id: actor, inquiry_id: inquiryId, status: 'inquiring' });
+const lineCount = sourceRows.length;
+await db('forge_purchase_inquiry').update({ id: inquiryId, line_count: lineCount });
+return { id: inquiryId, code, status: 'draft', line_count: lineCount };
+`,
+);
+
+export const PurchaseInquiryAddLine = definePurchaseInquiryAction(
+  'purchase_inquiry_add_line', '添加询价物料', `
+const inquiry = await inquiryFor(payload.inquiry_id, ['draft']);
+const sku = await orgRecord('forge_material_sku', payload.sku_id, '物料规格');
+const material = sku.material_id ? await orgRecord('forge_material', sku.material_id, '物料') : null;
+const quantity = Number(payload.quantity || 0);
+if (!(quantity > 0) || !Number.isFinite(quantity)) throw new Error('询价数量必须大于 0');
+if (sku.enabled === false || sku.enabled === 0 || (material && material.status !== 'active')) throw new Error('物料规格未启用');
+const lines = await orgRows('forge_purchase_inquiry_line', { inquiry_id: inquiry.id });
+await db('forge_purchase_inquiry_line').insert({
+  name: material && material.name || sku.name || sku.code, inquiry_id: inquiry.id, owner_id: actor,
+  sku_id: sku.id, item_code: sku.code || null, model: material && material.model || sku.model || null,
+  specification: material && material.specification || sku.specification || sku.name || null,
+  unit_name: material && material.unit_name || sku.unit_name || null, quantity: round4(quantity),
+  required_on: validDate(payload.required_on) ? payload.required_on : null,
+  remarks: String(payload.remarks || '').trim() || null,
+});
+await db('forge_purchase_inquiry').update({ id: inquiry.id, line_count: lines.length + 1 });
+return { id: inquiry.id, line_count: lines.length + 1 };
+`,
+);
+
+export const PurchaseInquiryRemoveLine = definePurchaseInquiryAction(
+  'purchase_inquiry_remove_line', '移除询价物料', `
+const inquiry = await inquiryFor(payload.inquiry_id, ['draft']);
+const line = await orgRecord('forge_purchase_inquiry_line', payload.line_id, '询价物料');
+if (line.inquiry_id !== inquiry.id) throw new Error('询价物料不属于当前询价单');
+const relatedPending = line.purchase_request_line_id
+  ? await orgRows('forge_purchase_pending_item', { inquiry_id: inquiry.id, request_line_id: line.purchase_request_line_id })
+  : [];
+for (const pending of relatedPending) {
+  if (!isMine(pending) || pending.status !== 'inquiring') throw new Error('关联采购待办状态已变化，请刷新后重试');
+}
+await db('forge_purchase_inquiry_line').delete({ where: { id: line.id } });
+for (const pending of relatedPending) await db('forge_purchase_pending_item').update({
+  id: pending.id, inquiry_id: null, status: pending.assigned_supplier_id ? 'assigned' : 'ready',
+});
+const lines = await orgRows('forge_purchase_inquiry_line', { inquiry_id: inquiry.id });
+await db('forge_purchase_inquiry').update({ id: inquiry.id, line_count: lines.length });
+return { id: inquiry.id, line_count: lines.length };
+`,
+);
+
+export const PurchaseInquiryInviteSupplier = definePurchaseInquiryAction(
+  'purchase_inquiry_invite_supplier', '邀请供应商报价', `
+const inquiry = await inquiryFor(payload.inquiry_id, ['draft']);
+const supplier = await orgRecord('forge_supplier', payload.supplier_id, '供应商');
+if (supplier.status !== 'active' || supplier.approval_status !== 'approved') throw new Error('只能邀请已启用且已审批的供应商');
+const quotes = await orgRows('forge_purchase_inquiry_quote', { inquiry_id: inquiry.id });
+const existing = quotes.find(row => row.supplier_id === supplier.id);
+if (existing) return { id: inquiry.id, quote_id: existing.id, supplier_count: quotes.length, repeated: true };
+const code = 'RFQQ-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7).toUpperCase();
+const made = await db('forge_purchase_inquiry_quote').insert({
+  name: inquiry.code + ' · ' + supplier.name, code, inquiry_id: inquiry.id, owner_id: actor,
+  supplier_id: supplier.id, currency: 'cny', total_amount: 0, lead_days: 0, status: 'invited',
+});
+const quoteId = idOf(made);
+if (!quoteId) throw new Error('供应商报价创建后未返回编号');
+await db('forge_purchase_inquiry').update({ id: inquiry.id, supplier_count: quotes.length + 1 });
+return { id: inquiry.id, quote_id: quoteId, supplier_count: quotes.length + 1 };
+`,
+);
+
+export const PurchaseInquiryPublish = definePurchaseInquiryAction(
+  'purchase_inquiry_publish', '发布询价', `
+const inquiry = await inquiryFor(payload.inquiry_id, ['draft']);
+const [lines, quotes] = await Promise.all([
+  orgRows('forge_purchase_inquiry_line', { inquiry_id: inquiry.id }),
+  orgRows('forge_purchase_inquiry_quote', { inquiry_id: inquiry.id }),
+]);
+if (!lines.length || !quotes.length) throw new Error('发布前至少需要 1 条物料和 1 家供应商');
+if (!validDate(inquiry.due_on) || inquiry.due_on < today) throw new Error('报价截止日期已过，请先更新截止日期');
+const now = new Date().toISOString();
+await db('forge_purchase_inquiry').update({ id: inquiry.id, status: 'published', published_at: now });
+return { id: inquiry.id, status: 'published', published_at: now };
+`,
+);
+
+export const PurchaseInquirySaveQuote = definePurchaseInquiryAction(
+  'purchase_inquiry_save_quote', '登记供应商报价', `
+const inquiry = await inquiryFor(payload.inquiry_id, ['published']);
+const quote = await orgRecord('forge_purchase_inquiry_quote', payload.quote_id, '供应商报价');
+if (quote.inquiry_id !== inquiry.id || !['invited', 'submitted'].includes(quote.status)) throw new Error('当前供应商报价不能修改');
+const leadDays = Number(payload.lead_days), validUntil = String(payload.valid_until || ''), paymentTerm = String(payload.payment_term || '').trim();
+if (!Number.isFinite(leadDays) || leadDays < 0 || !validDate(validUntil) || !paymentTerm) throw new Error('请填写有效交期、报价有效期和付款条件');
+const lines = await orgRows('forge_purchase_inquiry_line', { inquiry_id: inquiry.id });
+const inputs = Array.isArray(payload.lines) ? payload.lines : [];
+if (!lines.length || inputs.length !== lines.length) throw new Error('报价需覆盖当前询价的全部物料');
+const inputById = new Map();
+for (const item of inputs) {
+  const id = String(item.inquiry_line_id || '');
+  if (!id || inputById.has(id)) throw new Error('报价明细包含重复或无效的询价物料');
+  inputById.set(id, item);
+}
+const previous = await orgRows('forge_purchase_inquiry_quote_line', { quote_id: quote.id });
+const previousByLine = new Map(previous.map(row => [row.inquiry_line_id, row]));
+let total = 0;
+for (const line of lines) {
+  const input = inputById.get(line.id);
+  if (!input) throw new Error('报价明细与询价物料不匹配');
+  const price = Number(input.taxed_unit_price), rate = Number(input.tax_rate == null ? 13 : input.tax_rate);
+  if (!Number.isFinite(price) || price < 0 || !Number.isFinite(rate) || rate < 0 || rate > 100) throw new Error('含税单价或税率无效');
+  const subtotal = round4(Number(line.quantity) * price);
+  total = round4(total + subtotal);
+  const old = previousByLine.get(line.id);
+  const fields = { name: line.name, quote_id: quote.id, inquiry_line_id: line.id, sku_id: line.sku_id, quantity: line.quantity, taxed_unit_price: round4(price), tax_rate: rate, taxed_subtotal: subtotal };
+  if (old) await db('forge_purchase_inquiry_quote_line').update({ id: old.id, ...fields });
+  else await db('forge_purchase_inquiry_quote_line').insert({ ...fields, owner_id: actor });
+}
+const now = new Date().toISOString();
+await db('forge_purchase_inquiry_quote').update({ id: quote.id, total_amount: total, lead_days: leadDays, valid_until: validUntil, payment_term: paymentTerm, status: 'submitted', submitted_at: now, remarks: String(payload.remarks || '').trim() || null });
+return { id: inquiry.id, quote_id: quote.id, total_amount: total, status: 'submitted' };
+`,
+);
+
+export const PurchaseInquirySelectQuote = definePurchaseInquiryAction(
+  'purchase_inquiry_select_quote', '确认中选报价', `
+const inquiry = await inquiryFor(payload.inquiry_id, ['published']);
+const quote = await orgRecord('forge_purchase_inquiry_quote', payload.quote_id, '供应商报价');
+if (quote.inquiry_id !== inquiry.id || quote.status !== 'submitted') throw new Error('只能选择本次询价中已登记的供应商报价');
+const lines = await orgRows('forge_purchase_inquiry_line', { inquiry_id: inquiry.id });
+const quoteLines = await orgRows('forge_purchase_inquiry_quote_line', { quote_id: quote.id });
+if (!lines.length || quoteLines.length !== lines.length || new Set(quoteLines.map(row => row.inquiry_line_id)).size !== lines.length || lines.some(line => !quoteLines.some(row => row.inquiry_line_id === line.id))) throw new Error('中选报价没有覆盖全部询价物料');
+const quotes = await orgRows('forge_purchase_inquiry_quote', { inquiry_id: inquiry.id });
+for (const item of quotes) {
+  const nextStatus = item.id === quote.id ? 'selected' : (item.status === 'invited' ? 'invited' : 'declined');
+  if (item.status !== nextStatus) await db('forge_purchase_inquiry_quote').update({ id: item.id, status: nextStatus });
+}
+const now = new Date().toISOString();
+await db('forge_purchase_inquiry').update({ id: inquiry.id, selected_quote_id: quote.id, status: 'compared', compared_at: now });
+return { id: inquiry.id, quote_id: quote.id, status: 'compared' };
+`,
+);
+
+export const PurchaseInquiryConvertToOrder = definePurchaseInquiryAction(
+  'purchase_inquiry_convert_to_order', '转采购订单', `
+const inquiry = await orgRecord('forge_purchase_inquiry', payload.inquiry_id, '询价单');
+requireMine(inquiry);
+if (inquiry.status === 'converted' && inquiry.converted_order_id) {
+  const existing = await orgRecord('forge_purchase_order', inquiry.converted_order_id, '已生成采购订单');
+  return { id: existing.id, code: existing.code, status: existing.status, inquiry_id: inquiry.id, repeated: true };
+}
+if (inquiry.status !== 'compared' || !inquiry.selected_quote_id) throw new Error('仅已确认中选报价的询价单可以转采购订单');
+if (inquiry.converted_order_id) throw new Error('询价单已关联其他采购订单，请刷新后核对');
+const warehouseId = String(payload.warehouse_id || ''), expected = String(payload.expected_arrival_on || ''), paymentTerm = String(payload.payment_term || '').trim();
+if (!warehouseId || !validDate(expected) || !paymentTerm) throw new Error('请选择目标仓库并填写到货日期和付款条件');
+const [quote, warehouse] = await Promise.all([
+  orgRecord('forge_purchase_inquiry_quote', inquiry.selected_quote_id, '中选报价'),
+  orgRecord('forge_warehouse', warehouseId, '目标仓库'),
+]);
+if (quote.inquiry_id !== inquiry.id || quote.status !== 'selected') throw new Error('中选报价与当前询价单不一致');
+const supplier = await orgRecord('forge_supplier', quote.supplier_id, '中选供应商');
+if (supplier.status !== 'active' || supplier.approval_status !== 'approved') throw new Error('中选供应商必须仍处于已启用且已审批状态');
+const inquiryLines = await orgRows('forge_purchase_inquiry_line', { inquiry_id: inquiry.id });
+const quoteLines = await orgRows('forge_purchase_inquiry_quote_line', { quote_id: quote.id });
+if (!inquiryLines.length || quoteLines.length !== inquiryLines.length) throw new Error('采购订单明细与询价报价不完整');
+const quoteLineById = new Map(quoteLines.map(line => [line.inquiry_line_id, line]));
+const prepared = [];
+for (const line of inquiryLines) {
+  const quoteLine = quoteLineById.get(line.id);
+  if (!quoteLine || Number(quoteLine.quantity) !== Number(line.quantity) || quoteLine.sku_id !== line.sku_id) throw new Error('中选报价明细与询价物料不一致');
+  if (!line.sku_id) throw new Error('采购订单物料缺少物料规格');
+  const sku = await orgRecord('forge_material_sku', line.sku_id, '采购物料规格');
+  const material = sku.material_id ? await orgRecord('forge_material', sku.material_id, '采购物料') : null;
+  const price = Number(quoteLine.taxed_unit_price), rate = Number(quoteLine.tax_rate || 0), quantity = Number(line.quantity);
+  if (!(quantity > 0) || !Number.isFinite(price) || price < 0 || !Number.isFinite(rate) || rate < 0 || rate > 100) throw new Error('中选报价数量、单价或税率无效');
+  prepared.push({ line, sku, material, quantity, taxed: round4(price), rate, untaxed: round4(price / (1 + rate / 100)), subtotal: round4(quantity * price) });
+}
+const totalQuantity = round4(prepared.reduce((sum, item) => sum + item.quantity, 0));
+const totalAmount = round4(prepared.reduce((sum, item) => sum + item.subtotal, 0));
+if (Math.abs(totalAmount - Number(quote.total_amount || 0)) > 0.0001) throw new Error('中选报价总额已变化，请重新登记报价并确认比价');
+const year = expected.slice(0, 4), existingOrders = await orgRows('forge_purchase_order');
+const prefix = 'PO-' + year + '-';
+let max = 0;
+for (const row of existingOrders) { const text = String(row.code || ''); if (text.slice(0, prefix.length) !== prefix) continue; const tail = Number(text.slice(prefix.length)); if (Number.isFinite(tail) && tail > max) max = tail; }
+const code = prefix + String(max + 1).padStart(4, '0');
+if ((await orgRows('forge_purchase_order', { code })).length) throw new Error('采购订单号已存在，请重试转单');
+const now = new Date().toISOString(), purchaseRequestId = inquiry.purchase_request_id || null;
+const orderMade = await db('forge_purchase_order').insert({
+  name: inquiry.name + '采购订单', code, owner_id: actor, supplier_id: supplier.id,
+  source_type: purchaseRequestId ? 'purchase_request' : 'inventory_replenishment',
+  purchase_request_id: purchaseRequestId, project_id: inquiry.project_id || null, warehouse_id: warehouse.id,
+  expected_arrival_on: expected, order_on: today, payment_term: paymentTerm, payment_method: 'bank_transfer',
+  currency: quote.currency || 'cny', exchange_rate: 1, payable_trigger: 'inbound', responsible_id: actor,
+  line_count: prepared.length, total_quantity: totalQuantity, total_amount: totalAmount,
+  arrived_quantity: 0, inbound_quantity: 0, returned_quantity: 0, replenished_quantity: 0,
+  status: 'pending_approval', submitted_at: now, submitted_by: actor,
+  remarks: '由询价单 ' + inquiry.code + ' 转入采购订单',
+});
+const orderId = idOf(orderMade);
+if (!orderId) throw new Error('采购订单创建后未返回编号');
+for (const item of prepared) await db('forge_purchase_order_line').insert({
+  name: item.line.name, order_id: orderId, owner_id: actor, sku_id: item.sku.id,
+  item_code: item.line.item_code || item.material && item.material.code || item.sku.code || null,
+  model: item.line.model || item.material && item.material.model || null,
+  specification: item.line.specification || item.sku.name || null,
+  unit_name: item.line.unit_name || item.material && item.material.unit_name || null,
+  quantity: item.quantity, arrived_quantity: 0, inspected_quantity: 0, accepted_quantity: 0,
+  inbound_quantity: 0, returned_quantity: 0, replenished_quantity: 0,
+  taxed_unit_price: item.taxed, untaxed_unit_price: item.untaxed, tax_rate: item.rate,
+  taxed_subtotal: item.subtotal, purchase_request_line_id: item.line.purchase_request_line_id || null,
+  expected_arrival_on: expected,
+});
+await db('forge_purchase_order_approval_log').insert({
+  name: code + ' 提交审核', order_id: orderId, action: 'submitted', from_status: 'draft', to_status: 'pending_approval',
+  comment: '由询价单 ' + inquiry.code + ' 转单并提交审核', occurred_at: now, operator_id: actor,
+});
+const pendingRows = await orgRows('forge_purchase_pending_item', { inquiry_id: inquiry.id });
+const pendingByRequestLine = new Map();
+for (const pending of pendingRows) {
+  if (!isMine(pending) || pending.status !== 'inquiring' || pending.inquiry_id !== inquiry.id) throw new Error('询价关联的采购待办状态已变化');
+  const request = await orgRecord('forge_purchase_request', pending.request_id, '来源采购申请');
+  const sourceLine = await orgRecord('forge_purchase_request_line', pending.request_line_id, '来源申请明细');
+  const applicantId = request.submitted_by || request.responsible_id;
+  const requested = Number(pending.requested_quantity || 0), locked = Number(pending.locked_quantity || 0), ordered = Number(pending.ordered_quantity || 0);
+  const calculatedRemaining = round4(requested - locked - ordered);
+  if (request.status !== 'approved' || String(pending.project_id || '') !== String(request.project_id || '') || sourceLine.request_id !== request.id || pending.applicant_id !== applicantId || Math.abs(requested - Number(sourceLine.quantity || 0)) > 0.0001 || Math.abs(calculatedRemaining - Number(pending.remaining_quantity || 0)) > 0.0001) throw new Error('采购待办来源或剩余数量已变化');
+  const items = pendingByRequestLine.get(pending.request_line_id) || [];
+  items.push(pending); pendingByRequestLine.set(pending.request_line_id, items);
+}
+for (const line of inquiryLines.filter(item => item.purchase_request_line_id)) {
+  const items = pendingByRequestLine.get(line.purchase_request_line_id) || [];
+  if (!items.length) continue;
+  let remainingToAllocate = Number(line.quantity);
+  const available = items.reduce((sum, item) => sum + Number(item.remaining_quantity || 0), 0);
+  if (available + 0.0001 < remainingToAllocate) throw new Error('采购待办剩余数量不足，无法完成转单');
+  for (const pending of items.sort((a, b) => String(a.id).localeCompare(String(b.id)))) {
+    if (remainingToAllocate <= 0.0001) break;
+    const allocation = Math.min(remainingToAllocate, Number(pending.remaining_quantity || 0));
+    if (!(allocation > 0)) continue;
+    const ordered = round4(Number(pending.ordered_quantity || 0) + allocation);
+    const remaining = round4(Number(pending.remaining_quantity || 0) - allocation);
+    await db('forge_purchase_pending_item').update({
+      id: pending.id, assigned_supplier_id: supplier.id, ordered_quantity: ordered,
+      remaining_quantity: remaining, status: remaining > 0.0001 ? 'partially_ordered' : 'ordered',
+    });
+    remainingToAllocate = round4(remainingToAllocate - allocation);
+  }
+}
+await db('forge_purchase_inquiry').update({ id: inquiry.id, status: 'converted', converted_order_id: orderId, converted_at: now });
+return { id: orderId, code, status: 'pending_approval', inquiry_id: inquiry.id, line_count: prepared.length, total_quantity: totalQuantity, total_amount: totalAmount };
+`,
+);
+
+export const PurchaseInquiryClose = definePurchaseInquiryAction(
+  'purchase_inquiry_close', '关闭询价', `
+const inquiry = await orgRecord('forge_purchase_inquiry', payload.inquiry_id, '询价单');
+requireMine(inquiry);
+if (inquiry.status === 'closed') return { id: inquiry.id, status: 'closed', repeated: true };
+if (!['draft', 'published', 'compared'].includes(inquiry.status) || inquiry.converted_order_id) throw new Error('当前询价单不能关闭');
+const pendingRows = await orgRows('forge_purchase_pending_item', { inquiry_id: inquiry.id });
+for (const pending of pendingRows) {
+  if (!isMine(pending) || pending.status !== 'inquiring') throw new Error('关联采购待办状态已变化，请刷新后重试');
+  await db('forge_purchase_pending_item').update({ id: pending.id, inquiry_id: null, status: pending.assigned_supplier_id ? 'assigned' : 'ready' });
+}
+await db('forge_purchase_inquiry').update({ id: inquiry.id, status: 'closed' });
+return { id: inquiry.id, status: 'closed' };
+`,
+);
+
+export const PurchaseInquiryWorkspaceRead = defineAction({
+  name: 'purchase_inquiry_workspace_read', label: '读取采购询价工作区', objectName: 'forge_purchase_inquiry',
+  icon: 'messages-square', locations: [], requiredPermissions: ['forge_procurement_operator'],
+  body: { language: 'js', capabilities: ['api.read'], source: `${purchaseInquiryActionContext}
+const list = async name => orgRows(name);
+const [allInquiries, allRequests, allContracts, allProjects, allSuppliers, allPending, allWarehouses, allSkus, allMaterials, currentUser] = await Promise.all([
+  list('forge_purchase_inquiry'), list('forge_purchase_request'), list('forge_sales_contract'), list('forge_project'),
+  list('forge_supplier'), list('forge_purchase_pending_item'), list('forge_warehouse'), list('forge_material_sku'),
+  list('forge_material'), db('sys_user').findOne({ where: { id: actor } }),
+]);
+const inquiries = allInquiries.filter(isMine).slice(0, 500), inquiryIds = new Set(inquiries.map(row => row.id));
+const requests = allRequests.filter(row => isMine(row) && row.status === 'approved').slice(0, 500), requestIds = new Set(requests.map(row => row.id));
+const projectIds = await accessibleProjectIds(true);
+const salesLinks = await list('forge_project_sales_link'), projectByContract = new Map();
+for (const link of salesLinks) if (projectIds.has(link.project_id) && !projectByContract.has(link.contract_id)) projectByContract.set(link.contract_id, link.project_id);
+const contracts = allContracts.filter(row => !['draft', 'terminated', 'expired'].includes(row.status) && (projectIds.has(row.project_id) || projectByContract.has(row.id))).slice(0, 500).map(row => ({
+  ...row, project_id: projectIds.has(row.project_id) ? row.project_id : projectByContract.get(row.id),
+}));
+const contractIds = new Set(contracts.map(row => row.id));
+const [lines, quotes, requestLines, contractLines] = await Promise.all([
+  list('forge_purchase_inquiry_line'), list('forge_purchase_inquiry_quote'), list('forge_purchase_request_line'), list('forge_sales_contract_line'),
+]);
+const visibleLines = lines.filter(row => inquiryIds.has(row.inquiry_id));
+const visibleQuotes = quotes.filter(row => inquiryIds.has(row.inquiry_id));
+const quoteIds = new Set(visibleQuotes.map(row => row.id));
+const visibleRequestsLines = requestLines.filter(row => requestIds.has(row.request_id));
+const visibleContractLines = contractLines.filter(row => contractIds.has(row.contract_id));
+const requestById = new Map(allRequests.map(row => [row.id, row]));
+const visiblePending = allPending.filter(row => {
+  if (row.inquiry_id || !['ready', 'assigned', 'on_hold'].includes(row.status) || !(Number(row.remaining_quantity || 0) > 0)) return false;
+  const request = requestById.get(row.request_id);
+  if (!request || request.status !== 'approved' || (request.submitted_by || request.responsible_id) !== row.applicant_id) return false;
+  const sourceOwned = row.status === 'ready' && row.responsible_id === request.responsible_id;
+  const claimedByActor = row.responsible_id === actor && row.owner_id === actor;
+  return sourceOwned || claimedByActor;
+});
+const visibleProjects = allProjects.filter(row => projectIds.has(row.id));
+return {
+  currentUserId: actor,
+  inquiries: inquiries.map(row => ({ id: row.id, name: row.name, code: row.code, source_type: row.source_type, project_id: row.project_id, purchase_request_id: row.purchase_request_id, sales_contract_id: row.sales_contract_id, responsible_id: row.responsible_id, supplier_count: row.supplier_count, line_count: row.line_count, due_on: row.due_on, selected_quote_id: row.selected_quote_id, converted_order_id: row.converted_order_id, published_at: row.published_at, compared_at: row.compared_at, converted_at: row.converted_at, status: row.status, remarks: row.remarks })),
+  lines: visibleLines.map(row => ({ id: row.id, name: row.name, inquiry_id: row.inquiry_id, sku_id: row.sku_id, item_code: row.item_code, model: row.model, specification: row.specification, unit_name: row.unit_name, quantity: row.quantity, required_on: row.required_on, purchase_request_line_id: row.purchase_request_line_id, sales_contract_line_id: row.sales_contract_line_id, remarks: row.remarks })),
+  quotes: visibleQuotes.map(row => ({ id: row.id, name: row.name, code: row.code, inquiry_id: row.inquiry_id, supplier_id: row.supplier_id, currency: row.currency, total_amount: row.total_amount, lead_days: row.lead_days, valid_until: row.valid_until, payment_term: row.payment_term, status: row.status, submitted_at: row.submitted_at, remarks: row.remarks })),
+  quoteLines: (await list('forge_purchase_inquiry_quote_line')).filter(row => quoteIds.has(row.quote_id)).map(row => ({ id: row.id, name: row.name, quote_id: row.quote_id, inquiry_line_id: row.inquiry_line_id, sku_id: row.sku_id, quantity: row.quantity, taxed_unit_price: row.taxed_unit_price, tax_rate: row.tax_rate, taxed_subtotal: row.taxed_subtotal, remarks: row.remarks })),
+  suppliers: allSuppliers.filter(row => row.status === 'active' && row.approval_status === 'approved').map(row => ({ id: row.id, name: row.name, status: row.status, approval_status: row.approval_status })),
+  skus: allSkus.filter(row => row.enabled !== false && row.enabled !== 0).map(row => ({ id: row.id, name: row.name, code: row.code, material_id: row.material_id, model: row.model, specification: row.specification, unit_name: row.unit_name, enabled: row.enabled })),
+  materials: allMaterials.map(row => ({ id: row.id, name: row.name, code: row.code, model: row.model, specification: row.specification, unit_name: row.unit_name, status: row.status })),
+  projects: visibleProjects.map(row => ({ id: row.id, name: row.name, status: row.status })),
+  requests: requests.map(row => ({ id: row.id, code: row.code, name: row.name, status: row.status, project_id: row.project_id })),
+  requestLines: visibleRequestsLines.map(row => ({ id: row.id, request_id: row.request_id, name: row.name, sku_id: row.sku_id, item_code: row.item_code, model: row.model, specification: row.specification, unit_name: row.unit_name, quantity: row.quantity, expected_arrival_on: row.expected_arrival_on })),
+  contracts: contracts.map(row => ({ id: row.id, code: row.code, name: row.name, status: row.status, project_id: row.project_id })),
+  contractLines: visibleContractLines.map(row => ({ id: row.id, contract_id: row.contract_id, name: row.name, sku_id: row.sku_id, item_code: row.item_code, model: row.model, specification: row.specification, unit_name: row.unit_name, quantity_limit: row.quantity_limit, expected_arrival_on: row.expected_arrival_on })),
+  warehouses: allWarehouses.map(row => ({ id: row.id, name: row.name, status: row.status })),
+  users: currentUser ? [{ id: currentUser.id, name: currentUser.name || currentUser.display_name || currentUser.username }] : [],
+  pendingItems: visiblePending.map(row => ({ id: row.id, code: row.code, request_id: row.request_id, request_code: row.request_code, request_line_id: row.request_line_id, project_id: row.project_id, name: row.name, item_code: row.item_code, model: row.model, specification: row.specification, unit_name: row.unit_name, requested_quantity: row.requested_quantity, locked_quantity: row.locked_quantity, ordered_quantity: row.ordered_quantity, remaining_quantity: row.remaining_quantity, assigned_supplier_id: row.assigned_supplier_id, inquiry_id: row.inquiry_id, required_on: row.required_on, status: row.status, responsible_id: row.responsible_id, applicant_id: row.applicant_id })),
+};
+` },
+});
