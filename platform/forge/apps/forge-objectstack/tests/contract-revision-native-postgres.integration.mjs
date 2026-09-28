@@ -84,6 +84,7 @@ async function invoke(routes, method, path, params, body, token = 'sales-token')
   let response;
   const res = {
     status(value) { status = value; return this; },
+    header() { return this; },
     json(value) { response = value; return this; },
     end() { return this; },
   };
@@ -245,6 +246,7 @@ test('native ObjectStack 17.3 contract revision uses PostgreSQL, preserves the o
     customer_id: ids.customer,
     responsible_id: ids.submitter,
     status: 'pending_approval',
+    requires_legal_review: false,
     attachment_ids: [ids.oldAttachment],
     submitted_material_id: ids.oldPrimary,
     submitted_material_name: 'contract-original.txt',
@@ -263,7 +265,7 @@ test('native ObjectStack 17.3 contract revision uses PostgreSQL, preserves the o
     tenantId: ids.organization,
     previous: { status: 'draft' },
   });
-  assert.equal(started.status, 'paused', 'the native approval node suspends the contract flow');
+  assert.equal(started.status, 'paused', `the native approval node suspends the contract flow: ${JSON.stringify(started)}`);
   assert.ok(started.runId);
   const initialRequests = await engine.find('sys_approval_request', {
     where: { flow_run_id: started.runId, object_name: 'forge_sales_contract', record_id: ids.contract },

@@ -55,6 +55,8 @@ interface ContextField {
 }
 
 interface OriginalFileReference {
+  sourceKind: 'approval';
+  requestId: string;
   fileId: string;
   name: string;
   mediaType: string;
@@ -290,6 +292,7 @@ function projectFields(request: ApprovalRequestRow, engine: IObjectQLEngine): Co
 
 async function readSnapshotFiles(
   request: ApprovalRequestRow,
+  requestId: string,
   engine: IObjectQLEngine,
   storage: IStorageService,
   allowedFiles: Map<string, SnapshotFile>,
@@ -361,6 +364,8 @@ async function readSnapshotFiles(
         throw new ContextFailure(422, 'APPROVAL_MATERIAL_HASH_MISMATCH', 'A binary approval material name does not match its frozen snapshot.');
       }
       originalFiles.push({
+        sourceKind: 'approval',
+        requestId,
         fileId: id,
         name: file.name.trim().slice(0, 255),
         mediaType,
@@ -429,6 +434,7 @@ async function authorizedApprovalRequest(
 }> {
   const request = await approvals.getRequest(requestId, executionContext);
   if (!request) throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+  if (request.id !== requestId) throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
   let viewer: 'current_approver' | 'original_submitter';
   if (request.status === 'pending' && request.viewer?.can_act === true) {
     viewer = 'current_approver';
@@ -494,7 +500,7 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
           }
           const materialFields = fileFieldNames(engine, request.object_name);
           const allowedFiles = snapshotFiles(request.payload, materialFields);
-          const snapshotMaterials = await readSnapshotFiles(request, engine, storage, allowedFiles);
+          const snapshotMaterials = await readSnapshotFiles(request, requestId, engine, storage, allowedFiles);
           const title = boundedText(request.record_title, 300) ?? boundedText(request.object_label, 300) ?? '审批事项';
           const step = boundedText(request.step_label, 160);
           if (!step) throw new ContextFailure(422, 'APPROVAL_CONTEXT_INVALID', 'The approval step is unavailable.');

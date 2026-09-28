@@ -186,6 +186,11 @@ function createHarness() {
       assert.ok(request, 'fixture request exists');
       request.status = status;
     },
+    setReturnedRequestId(requestId, returnedId) {
+      const request = requests.get(requestId);
+      assert.ok(request, 'fixture request exists');
+      request.id = returnedId;
+    },
     addFile(file) { files.set(file.id, file); },
     addRequest(request) { requests.set(request.id, request); },
     setActions(requestId, actions) { actionLists.set(requestId, actions); },
@@ -295,9 +300,11 @@ test('approval context returns PDF metadata only and original bytes only to the 
   const context = await harness.call('approval-PDF', 'reviewer-pdf-token');
 
   assert.equal(context.status, 200);
+  assert.equal(context.body.requestId, 'approval-PDF');
   assert.deepEqual(context.body.files, []);
   assert.deepEqual(context.body.originalFiles, [{
-    fileId: file.id, name: file.name, mediaType: 'application/pdf', bytes: file.bytes.length, sha256: digest,
+    sourceKind: 'approval', requestId: 'approval-PDF', fileId: file.id, name: file.name,
+    mediaType: 'application/pdf', bytes: file.bytes.length, sha256: digest,
   }]);
   assert.deepEqual(context.downloadedKeys, [], 'approval context returns metadata without reading or embedding binary bytes');
   assert.equal(JSON.stringify(context.body).includes(file.bytes.toString('utf8')), false, 'approval JSON never contains PDF bytes');
@@ -351,6 +358,27 @@ test('approval context returns PDF metadata only and original bytes only to the 
   const crossOrganization = await otherOrganization.callOriginal('approval-PDF', file.id, 'reviewer-pdf-token', digest);
   assert.equal(crossOrganization.status, 404);
   assert.deepEqual(crossOrganization.downloadedKeys, [], 'a cross-organization snapshot never reads storage');
+});
+
+test('a native request ID mismatch blocks both context metadata and original bytes', async () => {
+  const harness = createHarness();
+  await harness.start();
+  const file = harness.fixtureFiles.materialPdf;
+  const digest = sha256(file.bytes);
+  harness.setReturnedRequestId('approval-PDF', 'approval-alias');
+
+  const context = await harness.call('approval-PDF', 'reviewer-pdf-token');
+  assert.equal(context.status, 404);
+  assert.equal(context.body.error.code, 'APPROVAL_CONTEXT_NOT_FOUND');
+  assert.equal(context.body.originalFiles, undefined, 'a mismatched native request cannot return any original-file reference');
+  assert.deepEqual(context.fileQueries, []);
+  assert.deepEqual(context.downloadedKeys, []);
+
+  const original = await harness.callOriginal('approval-PDF', file.id, 'reviewer-pdf-token', digest);
+  assert.equal(original.status, 404);
+  assert.equal(original.body.error.code, 'APPROVAL_CONTEXT_NOT_FOUND');
+  assert.equal(original.raw, undefined);
+  assert.deepEqual(original.downloadedKeys, []);
 });
 
 test('approval context rejects snapshots exceeding the eight MiB aggregate before reading storage', async () => {
