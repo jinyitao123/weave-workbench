@@ -1,9 +1,9 @@
-import { existsSync, mkdtempSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defaultSettings } from '../../electron/main/store'
-import { VoiceService, voiceSecretStorageStatus, type VoiceServiceOptions } from '../../electron/main/voice'
+import { sessionOnlyVoiceSecretCodec, VoiceService, type VoiceServiceOptions } from '../../electron/main/voice'
 import type { HarnessId, RuntimeInfo } from '../../src/types/api'
 
 const directories: string[] = []
@@ -78,15 +78,6 @@ afterEach(() => {
 })
 
 describe('VoiceService', () => {
-  it('rejects Linux basic-text storage with actionable setup guidance', () => {
-    expect(voiceSecretStorageStatus('linux', true, 'basic_text')).toEqual({
-      available: false,
-      message: 'GooeyPi will not save voice API keys because this Linux desktop is using unprotected basic-text storage. Install and unlock GNOME Keyring (libsecret) or KWallet, then restart GooeyPi.',
-    })
-    expect(voiceSecretStorageStatus('linux', true, 'gnome_libsecret')).toEqual({ available: true })
-    expect(voiceSecretStorageStatus('win32', true)).toEqual({ available: true })
-  })
-
   it('stores encrypted API keys and only returns credential status', async () => {
     const { service } = makeService()
     expect(await service.credentialStatus()).toEqual({
@@ -102,10 +93,38 @@ describe('VoiceService', () => {
     expect(JSON.stringify(await service.credentialStatus())).not.toContain('sk-secret-value')
   })
 
+  it('keeps voice keys in memory and ignores legacy stored secrets in session-only mode', async () => {
+    const { service, options } = makeService({
+      secretCodec: sessionOnlyVoiceSecretCodec,
+      environment: { OPENAI_API_KEY: 'sk-environment' },
+    })
+    const legacySecretFile = JSON.stringify({ version: 1, secrets: { groq: 'ZW5jcnlwdGVkLWxlZ2FjeS1rZXk=' } })
+    writeFileSync(options.secretPath, legacySecretFile)
+
+    await expect(service.credentialStatus()).resolves.toEqual({
+      configured: { openai: true, groq: false, deepgram: false, 'self-hosted': false },
+      source: { openai: 'environment' },
+      storage: sessionOnlyVoiceSecretCodec.status(),
+    })
+    await expect(service.saveApiKey('groq', 'gsk-session-key')).resolves.toEqual({
+      configured: { openai: true, groq: true, deepgram: false, 'self-hosted': false },
+      source: { openai: 'environment', groq: 'session' },
+      storage: sessionOnlyVoiceSecretCodec.status(),
+    })
+    expect(readFileSync(options.secretPath, 'utf8')).toBe(legacySecretFile)
+
+    const restartedService = new VoiceService(options)
+    await expect(restartedService.credentialStatus()).resolves.toEqual({
+      configured: { openai: true, groq: false, deepgram: false, 'self-hosted': false },
+      source: { openai: 'environment' },
+      storage: sessionOnlyVoiceSecretCodec.status(),
+    })
+  })
+
   it('does not decrypt or use a saved key while secure storage is unavailable', async () => {
     let storageAvailable = true
     const decrypt = vi.fn((value: Buffer) => value.toString().replace(/^encrypted:/, ''))
-    const message = 'Install and unlock GNOME Keyring (libsecret) or KWallet, then restart GooeyPi.'
+    const message = 'Voice keys stay in memory while GooeyPi is running. Enter them again after restarting GooeyPi.'
     const fetchMock = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
       expect(init?.headers).toEqual({ Authorization: 'Bearer sk-session-value' })
       return new Response('v=0\r\no=answer')
@@ -139,8 +158,8 @@ describe('VoiceService', () => {
     expect(decrypt).not.toHaveBeenCalled()
   })
 
-  it('keeps a fallback key only in memory when secure storage is unavailable', async () => {
-    const message = 'Install and unlock GNOME Keyring (libsecret) or KWallet, then restart GooeyPi.'
+  it('keeps a fallback key only in memory when credential storage is unavailable', async () => {
+    const message = 'Voice keys stay in memory while GooeyPi is running. Enter them again after restarting GooeyPi.'
     const encrypt = vi.fn((value: string) => Buffer.from(`encrypted:${value}`))
     const { service, options } = makeService({
       secretCodec: {

@@ -29,7 +29,7 @@ function workContinuationContext(): EnterpriseWorkContinuationContext {
     run: { status: 'succeeded' as const, finalResult: { id: 'deliverable-1', title: '交付检查意见', contentType: 'text/markdown', content: finalResult, sha256: digest(finalResult) } },
   }
 }
-async function fixture(objectName = 'forge_sales_contract') {
+async function fixture(objectName = 'forge_sales_contract', configureStorage = true) {
   const cwd = await mkdtemp(join(tmpdir(), 'handoff-')); directories.push(cwd)
   const content = '# 合同\n客户：测试客户\n金额：12345 元\n交期：2026-10-01\n'
   const sourceContent = '# 原提交合同\n客户：测试客户\n'
@@ -113,10 +113,9 @@ async function fixture(objectName = 'forge_sales_contract') {
   const transcript: TranscriptMessage[] = []
   const sessions = { read: vi.fn(async () => transcript) }
   const storageDirectory = join(cwd, 'secure-intents')
-  let handoffStorageAvailable = true
   const bridge = new AgentEnterpriseBridge({
     service, sessions: { prime: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts',
-    storage: { directory: storageDirectory, codec: { available: () => handoffStorageAvailable, encrypt: (value) => Buffer.from(value), decrypt: (value) => value.toString('utf8') } },
+    ...(configureStorage ? { storage: { directory: storageDirectory } } : {}),
   })
   await bridge.start(); bridges.push(bridge)
   const environment = bridge.environmentFor({ cwd, sessionPath: '/sessions/current.jsonl', harness: 'pi' })
@@ -161,7 +160,7 @@ async function fixture(objectName = 'forge_sales_contract') {
     return { directory, objectRef, found, recordKey }
   }
   await input(appendWorkspaceMaterialContext('这版给他们看看', [materialReference]), 'employee-turn-1')
-  return { call, callWithTurn, input, discover, findRecord, openReturned, service, bridge, environment, materials, cwd, transcript, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, businessCandidate, businessSnapshot, setHandoffStorageAvailable: (available: boolean) => { handoffStorageAvailable = available } }
+  return { call, callWithTurn, input, discover, findRecord, openReturned, service, bridge, environment, materials, cwd, transcript, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, businessCandidate, businessSnapshot }
 }
 
 describe('employee-bound material handoff', () => {
@@ -996,17 +995,32 @@ describe('employee-bound material handoff', () => {
     expect(first.sourceMessages).toEqual(second.sourceMessages)
     expect((await f.call('submit', { ...params, goal: '修改目标' })).body.error).toContain('已冻结')
   })
-  it('stops a current employee intent before material upload or team dispatch when secure storage is unavailable', async () => {
+  it('persists a current employee intent as local JSON before material upload and team dispatch', async () => {
     const f = await fixture(), params = await f.discover()
     expect(await f.service.accountKey()).toBe('employee-a')
-    f.setHandoffStorageAvailable(false)
 
-    const failed = await f.call('submit', params)
-    expect(failed.body.error).toContain('安全存储不可用')
-    expect(failed.body.error).toContain('重启 GooeyPi')
-    expect(failed.body.error).toContain('不会上传材料或创建团队运行')
+    const submitted = await f.call('submit', params)
+    expect(submitted.body.result.status).toBe('accepted')
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
+    expect(f.service.submitWork).toHaveBeenCalledOnce()
+    const files = await readdir(f.storageDirectory)
+    expect(files.length).toBeGreaterThan(0)
+    expect(files.every((file) => /^[0-9a-f]{64}\.json$/.test(file))).toBe(true)
+    const saved = await Promise.all(files.map(async (file) => JSON.parse(await readFile(join(f.storageDirectory, file), 'utf8')) as { fingerprint: string; value: unknown }))
+    expect(saved.every((record) => typeof record.fingerprint === 'string' && 'value' in record)).toBe(true)
+  })
+
+  it('requires a configured persistence directory before fixing a returned revision package', async () => {
+    const f = await fixture('forge_sales_contract', false)
+    await f.openReturned()
+    const employeeRequest = '按退回意见补全验收要求，帮我递交这版修订材料'
+    await f.input(employeeRequest, 'employee-revision-no-storage-directory')
+
+    const result = await f.call('revision_submit', { employee_request: employeeRequest, body: '修订正文', materials: f.materials })
+    expect(result.body.error).toContain('本地交接存储目录未配置')
+    expect(result.body.error).not.toContain('安全存储')
     expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
-    expect(f.service.submitWork).not.toHaveBeenCalled()
+    expect(f.service.submitApprovalRevision).not.toHaveBeenCalled()
   })
   it('reports a definite Weave registration rejection without telling Pi to recover an accepted run', async () => {
     const f = await fixture(), params = await f.discover()

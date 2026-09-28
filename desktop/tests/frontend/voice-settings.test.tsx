@@ -13,7 +13,7 @@ vi.mock('../../src/components/ui', () => ({
 const emptyStatus: VoiceCredentialStatus = {
   configured: { openai: false, groq: false, deepgram: false, 'self-hosted': false },
   source: {},
-  storage: { available: true },
+  storage: { available: false, message: 'Voice keys stay in memory while GooeyPi is running. Enter them again after restarting GooeyPi.' },
 }
 
 let root: Root
@@ -91,8 +91,8 @@ describe('Voice settings setup flow', () => {
   it('opens an enabled API-key flow and saves through the voice bridge', async () => {
     const saveApiKey = vi.fn().mockResolvedValue({
       configured: { openai: true, groq: false, deepgram: false, 'self-hosted': false },
-      source: { openai: 'saved' },
-      storage: { available: true },
+      source: { openai: 'session' },
+      storage: emptyStatus.storage,
     } satisfies VoiceCredentialStatus)
     await render(<Harness voice={voiceBridge({ saveApiKey })} />)
 
@@ -109,16 +109,18 @@ describe('Voice settings setup flow', () => {
     expect(saveApiKey).toHaveBeenCalledWith('openai', 'sk-test-key')
   })
 
-  it('explains secure keychain retrieval in the realtime section', async () => {
+  it('explains that voice keys must be entered again after restarting', async () => {
     await render(<Harness voice={voiceBridge()} />)
 
     const realtime = container.querySelector<HTMLElement>('[aria-labelledby="voice-realtime-title"]')!
-    expect(realtime.textContent).toContain('Saved API keys are encrypted using your operating system’s internal keychain.')
-    expect(realtime.textContent).toContain('may ask for your password to retrieve the key')
+    expect(realtime.textContent).toContain('OpenAI keys stay in memory while GooeyPi is running.')
+    expect(realtime.textContent).toContain('Enter them again after restarting.')
+    expect(container.textContent).not.toContain('keychain')
+    expect(container.textContent).not.toContain('GNOME Keyring')
   })
 
-  it('allows a session key and warns that it will not persist without secure Linux storage', async () => {
-    const message = 'GooeyPi will not save voice API keys because this Linux desktop is using unprotected basic-text storage. Install and unlock GNOME Keyring (libsecret) or KWallet, then restart GooeyPi.'
+  it('allows a key for this app session and explains it must be entered again after restarting', async () => {
+    const message = 'Voice keys stay in memory while GooeyPi is running. Enter them again after restarting GooeyPi.'
     const saveApiKey = vi.fn().mockResolvedValue({
       configured: { openai: true, groq: false, deepgram: false, 'self-hosted': false },
       source: { openai: 'session' },
@@ -127,24 +129,23 @@ describe('Voice settings setup flow', () => {
     await render(<Harness voice={voiceBridge({
       credentialStatus: vi.fn().mockResolvedValue({
         configured: { openai: false, groq: false, deepgram: false, 'self-hosted': false },
-        source: { openai: 'saved' },
+        source: {},
         storage: { available: false, message },
       } satisfies VoiceCredentialStatus),
       saveApiKey,
     })} />)
 
-    expect(container.textContent).toContain('Keys will work only until GooeyPi quits')
-    expect(container.textContent).toContain('GNOME Keyring (libsecret) or KWallet')
-    expect(container.textContent).toContain('will not save it to disk')
-    expect(container.textContent).toContain('Storage locked')
+    expect(container.textContent).toContain('Voice keys are session-only')
+    expect(container.textContent).toContain('Enter them again after restarting GooeyPi')
+    expect(container.textContent).not.toContain('Storage locked')
     const openAiCard = [...container.querySelectorAll<HTMLElement>('.voice-connection-card')].find((card) => card.textContent?.includes('OpenAI'))!
     const addKey = [...openAiCard.querySelectorAll('button')].find((button) => button.textContent?.includes('Add key'))!
     expect(addKey.disabled).toBe(false)
     await click(addKey)
 
     const dialog = container.querySelector<HTMLElement>('[role="dialog"]')!
-    expect(dialog.textContent).toContain('only in desktop memory')
-    expect(dialog.textContent).toContain('will not write the key to disk')
+    expect(dialog.textContent).toContain('in desktop memory for this app session')
+    expect(dialog.textContent).toContain('Enter it again after restarting GooeyPi')
     const input = dialog.querySelector<HTMLInputElement>('input[type="password"]')!
     await enter(input, 'sk-session-key')
     const save = [...dialog.querySelectorAll('button')].find((button) => button.textContent?.includes('Save API key'))!
@@ -153,7 +154,7 @@ describe('Voice settings setup flow', () => {
     expect(saveApiKey).toHaveBeenCalledWith('openai', 'sk-session-key')
     expect(container.querySelector('[role="dialog"]')).toBeNull()
     expect(openAiCard.textContent).toContain('Session only')
-    expect(container.textContent).toContain('Keys will work only until GooeyPi quits')
+    expect(container.textContent).toContain('Voice keys are session-only')
   })
 
   it('explains how to recover an older desktop process instead of showing disabled key buttons', async () => {
@@ -168,8 +169,8 @@ describe('Voice settings setup flow', () => {
     const testSelfHosted = vi.fn().mockResolvedValue(true)
     const saveApiKey = vi.fn().mockResolvedValue({
       configured: { openai: false, groq: false, deepgram: false, 'self-hosted': true },
-      source: { 'self-hosted': 'saved' },
-      storage: { available: true },
+      source: { 'self-hosted': 'session' },
+      storage: emptyStatus.storage,
     } satisfies VoiceCredentialStatus)
     await render(<Harness voice={voiceBridge({ testSelfHosted, saveApiKey })} />)
 

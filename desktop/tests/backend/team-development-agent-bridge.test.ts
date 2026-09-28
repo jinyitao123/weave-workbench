@@ -58,7 +58,7 @@ it('binds Pi to one developer draft and returns a proposal without saving it', a
 
 it('restores a pending proposal for the same account and Pi session after a desktop restart', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'team-dev-proposal-')); tempDirectories.push(directory)
-  const storage = { directory, codec: { available: () => true, encrypt: (value: string) => Buffer.from(value), decrypt: (value: Buffer) => value.toString() } }
+  const storage = { directory }
   const worker = newMember('deepseek-flash'); worker.configuration.displayName = '审核员'
   const document: TeamDefinition = { name: '反馈团队', objective: '整理反馈', members: [worker], workflows: [] }
   const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [], refreshedAt: '' }

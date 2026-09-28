@@ -31,9 +31,20 @@ const MAX_PROVIDER_RESPONSE_BYTES = 2 * 1024 * 1024
 const REMOTE_TIMEOUT_MS = 90_000
 
 interface SecretCodec {
+  readonly sessionOnly?: boolean
   status(): VoiceCredentialStorageStatus
   encrypt(value: string): Buffer
   decrypt(value: Buffer): string
+}
+
+export const sessionOnlyVoiceSecretCodec: SecretCodec = {
+  sessionOnly: true,
+  status: () => ({
+    available: false,
+    message: 'Voice keys stay in memory while GooeyPi is running. Enter them again after restarting GooeyPi.',
+  }),
+  encrypt: () => { throw new Error('Session-only voice keys cannot be persisted.') },
+  decrypt: () => { throw new Error('Session-only voice keys cannot be loaded from disk.') },
 }
 
 interface SecretFile {
@@ -51,33 +62,6 @@ interface VoiceServiceOptions {
   fetch?: typeof fetch
   runProcess(file: string, args: readonly string[], options?: { timeoutMs?: number; maxBytes?: number }): Promise<ProcessResult>
   environment?: NodeJS.ProcessEnv
-}
-
-function voiceSecretStorageStatus(platform: NodeJS.Platform, encryptionAvailable: boolean, backend?: string): VoiceCredentialStorageStatus {
-  if (platform === 'linux' && backend === 'basic_text') {
-    return {
-      available: false,
-      message: 'GooeyPi will not save voice API keys because this Linux desktop is using unprotected basic-text storage. Install and unlock GNOME Keyring (libsecret) or KWallet, then restart GooeyPi.',
-    }
-  }
-  if (platform === 'linux' && backend === 'unknown') {
-    return {
-      available: false,
-      message: 'GooeyPi cannot access a secure Linux credential store yet. Start it from a desktop session with GNOME Keyring (libsecret) or KWallet installed and unlocked, then restart GooeyPi.',
-    }
-  }
-  if (!encryptionAvailable) {
-    return platform === 'linux'
-      ? {
-          available: false,
-          message: 'GooeyPi cannot find a secure Linux credential store. Install and unlock GNOME Keyring (libsecret) or KWallet, then restart GooeyPi.',
-        }
-      : {
-          available: false,
-          message: 'GooeyPi cannot access your operating system’s secure credential store. Unlock or repair it, then restart GooeyPi.',
-        }
-  }
-  return { available: true }
 }
 
 function credentialProvider(value: unknown): VoiceCredentialProvider {
@@ -166,6 +150,7 @@ class VoiceSecretStore {
   private async load(): Promise<void> {
     if (this.loaded) return
     this.loaded = true
+    if (this.codec.sessionOnly) return
     try {
       const raw = JSON.parse(await readFile(this.path, 'utf8')) as unknown
       if (!isRecord(raw) || raw.version !== 1 || !isRecord(raw.secrets)) return
@@ -210,8 +195,6 @@ class VoiceSecretStore {
   async get(provider: VoiceCredentialProvider): Promise<string> {
     const value = await this.getOptional(provider)
     if (value) return value
-    const storage = this.codec.status()
-    if (!storage.available) throw new Error(storage.message ?? 'Secure credential storage is unavailable on this system')
     throw new Error(`Add a ${provider} API key in Settings → Voice.`)
   }
 
@@ -227,7 +210,7 @@ class VoiceSecretStore {
     }
     const fromEnvironment = this.environmentKey(provider)
     if (fromEnvironment) return fromEnvironment
-    if (encrypted && !storage.available) throw new Error(storage.message ?? 'Secure credential storage is unavailable on this system')
+    if (encrypted && !storage.available) throw new Error(storage.message ?? 'Voice keys stay in memory for this app session. Enter them again after restarting GooeyPi.')
     return undefined
   }
 
@@ -236,7 +219,7 @@ class VoiceSecretStore {
     const key = requireString(keyValue, 'apiKey', { min: 1, max: MAX_SECRET_BYTES, trim: true })
     await this.load()
     const storage = this.codec.status()
-    if (!storage.available) {
+    if (this.codec.sessionOnly || !storage.available) {
       this.sessionValues[provider] = key
       return this.status()
     }
@@ -680,5 +663,4 @@ export class VoiceService {
   }
 }
 
-export { voiceSecretStorageStatus }
 export type { SecretCodec, VoiceServiceOptions }

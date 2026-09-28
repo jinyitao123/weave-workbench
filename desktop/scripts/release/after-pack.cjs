@@ -17,7 +17,8 @@ exports.default = async function hardenElectron(context) {
     version: FuseVersion.V1,
     resetAdHocDarwinSignature: process.platform === 'darwin',
     [FuseV1Options.RunAsNode]: false,
-    [FuseV1Options.EnableCookieEncryption]: true,
+    // Remote browser credentials are session-only; app settings contain no login tokens.
+    [FuseV1Options.EnableCookieEncryption]: false,
     [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
     [FuseV1Options.EnableNodeCliInspectArguments]: false,
     [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,

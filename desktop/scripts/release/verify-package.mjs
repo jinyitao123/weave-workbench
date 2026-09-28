@@ -18,7 +18,7 @@ import {
 } from './lib.mjs'
 import { assertPackageSizeBudgets, collectPackageSizeMetrics, describeSizeMetrics } from './size-budgets.mjs'
 
-export const QA_PACKAGE_SCOPE_NOTICE = 'Local QA verification is engineering-only. Unsigned packages may support engineering and read-only page checks, but this result does not establish Keychain availability or employee handoff acceptance.'
+export const QA_PACKAGE_SCOPE_NOTICE = 'Local QA verification is engineering-only. Package checks do not establish employee handoff or business acceptance.'
 
 function run(command, args) {
   const result = spawnSync(command, args, { encoding: 'utf8' })
@@ -82,7 +82,7 @@ function findSingleApp(directory, label) {
 function assertFuses(wire) {
   const expected = new Map([
     [FuseV1Options.RunAsNode, FuseState.DISABLE],
-    [FuseV1Options.EnableCookieEncryption, FuseState.ENABLE],
+    [FuseV1Options.EnableCookieEncryption, FuseState.DISABLE],
     [FuseV1Options.EnableNodeOptionsEnvironmentVariable, FuseState.DISABLE],
     [FuseV1Options.EnableNodeCliInspectArguments, FuseState.DISABLE],
     [FuseV1Options.EnableEmbeddedAsarIntegrityValidation, FuseState.ENABLE],
