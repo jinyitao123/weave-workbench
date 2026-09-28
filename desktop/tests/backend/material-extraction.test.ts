@@ -39,7 +39,7 @@ describe('frozen original document materials', () => {
   it('keeps the original PDF bytes and reports the page with no text instead of claiming full extraction', async () => {
     const { source, material } = await freezeFixture('sample-two-page.pdf', '合同样例.pdf')
     expectSourceBytes(material, source)
-    expect(material).toMatchObject({ mediaType: 'application/pdf', extraction: {
+    expect(material).toMatchObject({ mediaType: 'application/pdf', sourceKind: 'owner', extraction: {
       status: 'partial', extractor: 'pdfjs-dist',
       coverage: { pdfPageCount: 2, pdfTextPageCount: 1, pdfPagesWithoutText: [2] },
       limitations: expect.arrayContaining(['page-without-text', 'embedded-image']),
@@ -59,7 +59,7 @@ describe('frozen original document materials', () => {
   it('extracts DOCX paragraphs and tabular cells while binding text to the exact compressed source', async () => {
     const { source, material } = await freezeFixture('sample-paragraphs-table.docx', '交付清单.docx')
     expectSourceBytes(material, source)
-    expect(material).toMatchObject({ mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', extraction: {
+    expect(material).toMatchObject({ mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', sourceKind: 'owner', extraction: {
       status: 'complete', extractor: 'mammoth',
       coverage: { docxParagraphCount: 6, docxTableCount: 1, docxTableCellCount: 4, docxOmittedContentCount: 0 },
     } })

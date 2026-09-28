@@ -321,6 +321,35 @@ export interface EnterpriseApprovalContext {
   returnReason?: string
   fields: Array<{ label: string; value: string }>
   files: Array<{ fileId: string; name: string; mediaType: 'text/plain; charset=utf-8'; bytes: number; sha256: string; content: string; verified: boolean }>
+  originalFiles?: Array<{
+    sourceKind: 'approval'
+    requestId: string
+    fileId: string
+    name: string
+    mediaType: 'application/pdf' | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    bytes: number
+    sha256: string
+    bytesBase64: string
+    extraction: {
+      status: 'complete' | 'partial' | 'unsupported'
+      mediaType: 'text/plain; charset=utf-8'
+      bytes: number
+      sha256: string
+      sourceSha256: string
+      content: string
+      extractor: 'utf8' | 'pdfjs-dist' | 'mammoth'
+      coverage: {
+        pdfPageCount?: number
+        pdfTextPageCount?: number
+        pdfPagesWithoutText?: number[]
+        docxParagraphCount?: number
+        docxTableCount?: number
+        docxTableCellCount?: number
+        docxOmittedContentCount?: number
+      }
+      limitations: Array<'page-without-text' | 'embedded-image' | 'unsupported-document-content'>
+    }
+  }>
 }
 
 /** Renderer-safe approval projection. Native object and file identifiers stay in the main process. */
@@ -330,6 +359,26 @@ export interface EnterpriseApprovalContextView {
   returnReason?: string
   fields: Array<{ label: string; value: string }>
   files: Array<{ name: string; content: string; verified: boolean }>
+  originalFiles?: Array<{
+    name: string
+    mediaType: 'application/pdf' | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    bytes: number
+    verified: boolean
+    extraction: {
+      status: 'complete' | 'partial' | 'unsupported'
+      content: string
+      coverage: {
+        pdfPageCount?: number
+        pdfTextPageCount?: number
+        pdfPagesWithoutText?: number[]
+        docxParagraphCount?: number
+        docxTableCount?: number
+        docxTableCellCount?: number
+        docxOmittedContentCount?: number
+      }
+      limitations: Array<'page-without-text' | 'embedded-image' | 'unsupported-document-content'>
+    }
+  }>
 }
 
 export interface EnterpriseWorkItem {
@@ -358,7 +407,16 @@ export interface EnterpriseWorkItem {
 export interface EnterpriseWorkContinuationContextView {
   task: string
   runStatus: 'queued' | 'running' | 'parked' | 'cancel_requested' | 'succeeded' | 'failed' | 'cancelled' | 'abandoned'
-  materials: Array<{ name: string; bytes: number; sha256: string; content: string }>
+  materials: Array<{
+    name: string
+    bytes: number
+    sha256: string
+    content: string
+    extraction?: {
+      status: 'complete' | 'partial' | 'unsupported'
+      limitations: Array<'page-without-text' | 'embedded-image' | 'unsupported-document-content'>
+    }
+  }>
   finalResult?: { title: string; contentType: string; content: string }
   actionOutcomes?: Array<{ actionName: string; objectName: string; status: 'succeeded' | 'failed' | 'unknown'; summary: string }>
 }
@@ -397,6 +455,8 @@ export interface EnterpriseWorkReceipt {
 
 export interface EnterpriseWorkResource {
   type: 'forge-file'
+  sourceKind?: 'owner' | 'approval'
+  requestId?: string
   materialId?: string
   id: string
   name: string
