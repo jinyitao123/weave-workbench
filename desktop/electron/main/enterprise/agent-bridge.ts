@@ -876,7 +876,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       context: bound.fingerprint, employeeRoundId, bodySha256,
       materials: selections.map((selection) => ({ path: selection.path, sha256: selection.sha256 })),
     }))
-    if (!this.options.storage?.codec.available()) throw new Error('安全存储不可用，无法固定修订材料包')
+    if (!this.options.storage?.directory) throw new Error('本地交接存储目录未配置，无法固定修订材料包')
     let intent: FrozenRevisionIntent
     try {
       intent = await this.store.freeze<FrozenRevisionIntent>(identity, fingerprint, async () => {

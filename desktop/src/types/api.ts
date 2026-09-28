@@ -3,7 +3,7 @@
  * webview attribute must match the main process's will-attach-webview gate
  * exactly, or webview attach is silently blocked.
  */
-export const BROWSER_PARTITION = 'persist:prime-work-browser'
+export const BROWSER_PARTITION = 'prime-work-browser'
 
 export type ThemeMode = 'system' | 'light' | 'dark'
 export type WorkspaceView = 'session' | 'activity' | 'projects' | 'scheduled' | 'plugins' | 'settings'

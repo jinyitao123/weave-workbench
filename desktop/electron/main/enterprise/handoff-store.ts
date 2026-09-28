@@ -1,8 +1,10 @@
-import { createHash } from 'node:crypto'
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
+import { createHash, randomUUID } from 'node:crypto'
+import { chmod, mkdir, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
-export function digest(value: string | Buffer): string { return createHash('sha256').update(value).digest('hex') }
+export function digest(value: string | Buffer): string {
+  return createHash('sha256').update(value).digest('hex')
+}
 export function submissionUUID(seed: string): string {
   const bytes = createHash('sha256').update(seed).digest().subarray(0, 16)
   bytes[6] = (bytes[6] & 0x0f) | 0x80
@@ -12,11 +14,16 @@ export function submissionUUID(seed: string): string {
 }
 export interface HandoffStorage {
   directory: string
-  codec: { available(): boolean; encrypt(value: string): Buffer; decrypt(value: Buffer): string }
 }
-interface StoredValue { fingerprint: string; value: unknown }
-const STORAGE_UNAVAILABLE_FOR_FREEZE = '安全存储不可用，无法安全固定本轮交接。请解锁或修复系统钥匙串/凭据库，再重启 GooeyPi 后重新发起本轮；恢复前不会上传材料或创建团队运行。'
-const STORAGE_UNAVAILABLE_FOR_RECOVERY = '安全存储不可用，无法读取原交接记录。请解锁或修复系统钥匙串/凭据库并重启 GooeyPi，恢复后从原工作继续，不要重复提交。'
+interface StoredValue {
+  fingerprint: string
+  value: unknown
+}
+
+const STORAGE_DIRECTORY_REQUIRED = '本地交接存储目录未配置，无法固定交接内容。恢复目录配置前不会上传材料或创建团队运行。'
+const LEGACY_FORMAT_UNREADABLE = '检测到旧版加密交接记录；当前版本无法读取，原文件未修改。请先核对原工作状态，勿重复创建工作。'
+const RECORD_UNREADABLE = '无法读取原交接记录，请勿重新创建重复工作'
+
 /** Per-account immutable checkpoints. Callers persist local intent before network preparation. */
 export class HandoffStore {
   private readonly memory = new Map<string, StoredValue>()
@@ -26,20 +33,26 @@ export class HandoffStore {
 
   async freeze<T>(key: string, fingerprint: string, prepare: () => Promise<T>): Promise<T> {
     const prior = this.pending.get(key)
-    if (prior) { await prior; return this.freeze(key, fingerprint, prepare) }
+    if (prior) {
+      await prior
+      return this.freeze(key, fingerprint, prepare)
+    }
     const operation = this.loadOrPrepare(key, fingerprint, prepare)
     this.pending.set(key, operation)
-    try { return await operation } finally { this.pending.delete(key) }
+    try {
+      return await operation
+    } finally {
+      this.pending.delete(key)
+    }
   }
 
   async recover<T>(recoveryKey: string): Promise<T> {
     if (!/^[0-9a-f]{64}$/.test(recoveryKey)) throw new Error('交接恢复凭据无效')
     for (const [key, saved] of this.memory) if (digest(key) === recoveryKey) return structuredClone(saved.value) as T
-    if (!this.storage?.codec.available()) throw new Error(STORAGE_UNAVAILABLE_FOR_RECOVERY)
-    try {
-      const saved = JSON.parse(this.storage.codec.decrypt(await readFile(join(this.storage.directory, `${recoveryKey}.bin`)))) as { value: T }
-      return saved.value
-    } catch { throw new Error('无法读取原交接记录，请勿重新创建重复工作') }
+    if (!this.storage?.directory) throw new Error(STORAGE_DIRECTORY_REQUIRED)
+    const saved = await this.readSavedByFilename(recoveryKey)
+    if (!saved) throw new Error(RECORD_UNREADABLE)
+    return structuredClone(saved.value) as T
   }
 
   async inspect<T>(key: string): Promise<{ fingerprint: string; value: T } | undefined> {
@@ -56,7 +69,9 @@ export class HandoffStore {
   async checkpoint<T>(key: string, fingerprint: string, value: T): Promise<T> {
     const prior = this.checkpointQueues.get(key)
     let release!: () => void
-    const gate = new Promise<void>((resolve) => { release = resolve })
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
     const operation = prior ? prior.then(() => gate) : gate
     this.checkpointQueues.set(key, operation)
     try {
@@ -71,56 +86,87 @@ export class HandoffStore {
   private async loadSaved(key: string): Promise<StoredValue | undefined> {
     const saved = this.memory.get(key)
     if (saved) return saved
-    if (!this.storage) return undefined
-    if (!this.storage.codec.available()) throw new Error(STORAGE_UNAVAILABLE_FOR_FREEZE)
+    if (!this.storage?.directory) return undefined
+    return this.readSavedByFilename(digest(key))
+  }
+
+  private async readSavedByFilename(filename: string): Promise<StoredValue | undefined> {
+    if (!this.storage?.directory) return undefined
+    const path = join(this.storage.directory, `${filename}.json`)
+    let contents: Buffer
     try {
-      return JSON.parse(this.storage.codec.decrypt(await readFile(join(this.storage.directory, `${digest(key)}.bin`)))) as StoredValue
+      contents = await readFile(path)
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined
-      throw new Error('无法读取原交接记录，请勿重新创建重复工作')
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw new Error(RECORD_UNREADABLE)
+      await this.rejectLegacyRecord(filename)
+      return undefined
     }
+
+    try {
+      const parsed: unknown = JSON.parse(contents.toString('utf8'))
+      if (!isStoredValue(parsed)) throw new Error('invalid handoff record')
+      return parsed
+    } catch {
+      throw new Error(RECORD_UNREADABLE)
+    }
+  }
+
+  private async rejectLegacyRecord(filename: string): Promise<void> {
+    if (!this.storage?.directory) return
+    try {
+      await stat(join(this.storage.directory, `${filename}.bin`))
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return
+      throw new Error(RECORD_UNREADABLE)
+    }
+    throw new Error(LEGACY_FORMAT_UNREADABLE)
   }
 
   private async writeCheckpoint<T>(key: string, fingerprint: string, value: T): Promise<T> {
     const existing = await this.loadSaved(key)
     if (existing && existing.fingerprint !== fingerprint) throw new Error('本轮交接内容已冻结；目标或材料变化后请由员工发起新一轮交接')
     const saved = { fingerprint, value: structuredClone(value) }
-    if (this.storage) {
-      if (!this.storage.codec.available()) throw new Error(STORAGE_UNAVAILABLE_FOR_FREEZE)
-      const path = join(this.storage.directory, `${digest(key)}.bin`)
-      await mkdir(this.storage.directory, { recursive: true, mode: 0o700 })
-      const temp = `${path}.tmp`
-      await writeFile(temp, this.storage.codec.encrypt(JSON.stringify(saved)), { mode: 0o600 })
-      await rename(temp, path)
-    }
+    if (this.storage?.directory) await this.writeSaved(key, saved)
     this.memory.set(key, saved)
     return structuredClone(saved.value) as T
   }
 
   private async loadOrPrepare<T>(key: string, fingerprint: string, prepare: () => Promise<T>): Promise<T> {
-    let saved = this.memory.get(key)
-    const path = this.storage ? join(this.storage.directory, `${digest(key)}.bin`) : undefined
-    if (!saved && path && this.storage) {
-      if (!this.storage.codec.available()) throw new Error(STORAGE_UNAVAILABLE_FOR_FREEZE)
-      try { saved = JSON.parse(this.storage.codec.decrypt(await readFile(path))) } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw new Error('无法读取原交接记录，请勿重新创建重复工作')
-      }
-    }
+    const saved = await this.loadSaved(key)
     if (saved) {
       if (saved.fingerprint !== fingerprint) throw new Error('本轮交接内容已冻结；目标或材料变化后请由员工发起新一轮交接')
       this.memory.set(key, saved)
       return structuredClone(saved.value) as T
     }
     const value = await prepare()
-    saved = { fingerprint, value }
-    if (path && this.storage) {
-      if (!this.storage.codec.available()) throw new Error(STORAGE_UNAVAILABLE_FOR_FREEZE)
-      await mkdir(this.storage.directory, { recursive: true, mode: 0o700 })
-      const temp = `${path}.tmp`
-      await writeFile(temp, this.storage.codec.encrypt(JSON.stringify(saved)), { mode: 0o600 })
-      await rename(temp, path)
-    }
-    this.memory.set(key, saved)
+    const next = { fingerprint, value: structuredClone(value) }
+    if (this.storage?.directory) await this.writeSaved(key, next)
+    this.memory.set(key, next)
     return structuredClone(value)
   }
+
+  private async writeSaved(key: string, saved: StoredValue): Promise<void> {
+    const directory = this.storage?.directory
+    if (!directory) throw new Error(STORAGE_DIRECTORY_REQUIRED)
+    const filename = digest(key)
+    await mkdir(directory, { recursive: true, mode: 0o700 })
+    await chmod(directory, 0o700)
+    const path = join(directory, `${filename}.json`)
+    const temp = join(directory, `${filename}.${randomUUID()}.tmp`)
+    try {
+      await writeFile(temp, JSON.stringify(saved), { encoding: 'utf8', flag: 'wx', mode: 0o600 })
+      await rename(temp, path)
+    } catch (error) {
+      try {
+        await unlink(temp)
+      } catch (cleanupError) {
+        if ((cleanupError as NodeJS.ErrnoException).code !== 'ENOENT') throw cleanupError
+      }
+      throw error
+    }
+  }
+}
+
+function isStoredValue(value: unknown): value is StoredValue {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value) && typeof (value as StoredValue).fingerprint === 'string' && Object.hasOwn(value, 'value'))
 }

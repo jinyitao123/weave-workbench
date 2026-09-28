@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, Menu, nativeTheme, protocol, safeStorage, session, shell, webContents } from 'electron'
+import { app, BrowserWindow, dialog, Menu, nativeTheme, protocol, session, shell, webContents } from 'electron'
 import type { BrowserWindowConstructorOptions, Input, WebContents } from 'electron'
 import { extname, isAbsolute, join, relative, resolve, win32 as win32Path } from 'node:path'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
@@ -42,7 +42,7 @@ import { piSessionServiceOptions } from './sessions/pi'
 import { type JsonStateStore, openDesktopStateStore, StateCompatibilityError, StateMigrationError } from './store'
 import { TerminalService } from './terminal'
 import { RepositoryUseGate } from './repository-use-gate'
-import { VoiceService, voiceSecretStorageStatus } from './voice'
+import { VoiceService, sessionOnlyVoiceSecretCodec } from './voice'
 import { isAllowedRendererAudioPermission } from './voice-permissions'
 import { createManualUpdateCheck, getAutoUpdater, UpdateService } from './updates'
 import { EnterpriseService } from './enterprise'
@@ -583,14 +583,7 @@ async function bootstrap(): Promise<void> {
   if (shutdownStarted) return
   const primeExecutable = () => discovery.executable('prime')
   const piExecutable = () => discovery.executable('pi')
-  const enterprise = new EnterpriseService({
-    sessionPath: join(userDataPath, 'enterprise-session.json'),
-    sessionCodec: {
-      available: () => safeStorage.isEncryptionAvailable(),
-      encrypt: (value) => safeStorage.encryptString(value),
-      decrypt: (value) => safeStorage.decryptString(value),
-    },
-  })
+  const enterprise = new EnterpriseService()
   const initialEnterpriseSession = await enterprise.getSession()
   let enterpriseAccountScope = initialEnterpriseSession.status === 'signed-in' ? enterprise.accountKeyForSession(initialEnterpriseSession) : undefined
   let accountScopeChanging = false
@@ -734,15 +727,7 @@ async function bootstrap(): Promise<void> {
   if (stateStore.getSettings().computerUseEnabled) await cuaDriver.status()
   const voice = new VoiceService({
     secretPath: join(app.getPath('userData'), 'voice-secrets.json'),
-    secretCodec: {
-      status: () => voiceSecretStorageStatus(
-        process.platform,
-        safeStorage.isEncryptionAvailable(),
-        process.platform === 'linux' ? safeStorage.getSelectedStorageBackend() : undefined,
-      ),
-      encrypt: (value) => safeStorage.encryptString(value),
-      decrypt: (value) => safeStorage.decryptString(value),
-    },
+    secretCodec: sessionOnlyVoiceSecretCodec,
     settings: () => stateStore.getSettings(),
     projects: { prime: projects, pi: piProjects },
     agents: { prime: agents, pi: piManager },
@@ -904,7 +889,6 @@ async function bootstrap(): Promise<void> {
     extensionPath: enterpriseExtensionPath,
     storage: {
       directory: join(userDataPath, 'enterprise-handoffs'),
-      codec: { available: () => safeStorage.isEncryptionAvailable(), encrypt: (value) => safeStorage.encryptString(value), decrypt: (value) => safeStorage.decryptString(value) },
     },
   })
   const developmentBridge = new TeamDevelopmentAgentBridge({
@@ -914,10 +898,9 @@ async function bootstrap(): Promise<void> {
     team: (teamId, accountId) => enterprise.teamWorkspace({ action: 'get', teamId, accountId }) as Promise<TeamWorkspace>,
     catalog: () => enterprise.getBusinessCapabilityCatalog(),
     extensionPath: teamDevelopmentExtensionPath,
-    storage: safeStorage.isEncryptionAvailable() ? {
+    storage: {
       directory: join(userDataPath, 'team-development-proposals'),
-      codec: { available: () => safeStorage.isEncryptionAvailable(), encrypt: (value) => safeStorage.encryptString(value), decrypt: (value) => safeStorage.decryptString(value) },
-    } : undefined,
+    },
   })
   await Promise.all([
     scheduleBridge.start(),

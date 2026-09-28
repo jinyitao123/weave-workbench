@@ -225,12 +225,12 @@ describe('release preflight', () => {
     expect(() => verifyAppBundleIdentifier(app, expectedAppId, () => 'app.gooeypi.desktop.localdev')).toThrow(/does not match package\.json build\.appId/)
   })
 
-  test('strictly checks signed QA packages and keeps unsigned QA limited to engineering/read-only checks', async () => {
+  test('strictly checks QA signatures without treating packaging as business acceptance', async () => {
     const { QA_PACKAGE_SCOPE_NOTICE, verifyCodeSignatureIfPresent } = await import('../scripts/release/verify-package.mjs')
     const app = '/tmp/Weave Workbench.app'
     expect(readFileSync('CONTRIBUTING.md', 'utf8')).toContain('unsigned, unnotarized local-QA artifacts')
-    expect(QA_PACKAGE_SCOPE_NOTICE).toContain('engineering and read-only page checks')
-    expect(QA_PACKAGE_SCOPE_NOTICE).toContain('does not establish Keychain availability or employee handoff acceptance')
+    expect(QA_PACKAGE_SCOPE_NOTICE).toContain('engineering-only')
+    expect(QA_PACKAGE_SCOPE_NOTICE).toContain('Package checks do not establish employee handoff or business acceptance')
     const unsigned = vi.fn(() => { throw new Error('codesign failed: code object is not signed at all') })
     expect(verifyCodeSignatureIfPresent(app, { runCommand: unsigned })).toBeUndefined()
     expect(unsigned).toHaveBeenCalledOnce()

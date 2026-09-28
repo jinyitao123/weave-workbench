@@ -178,7 +178,7 @@
           "type": "string",
           "contentEncoding": "base64",
           "maxLength": 2796204,
-          "description": "Local encrypted handoff intent only. Never serialize this field into a cross-component request, Weave task, model input, or log."
+          "description": "Local account-scoped handoff checkpoint only (mode-0700 directory and mode-0600 file; no passwords or tokens). Never serialize this field into a cross-component request, Weave task, model input, or log."
         },
         "extraction": { "$ref": "#/$defs/materialExtraction" }
       },
@@ -275,5 +275,5 @@
       }
     }
   },
-  "description": "Host-protected persistent request prepared after a runtime turn is verified; turn credentials are ephemeral and not stored. materials.bytesBase64 is permitted only in the locally encrypted intent for exact-byte recovery. Cross-component requests, the Weave task, model input, and logs contain extraction text and hashes only. Each extraction.sourceSha256 binds the extracted UTF-8 bytes to the original SHA-256. The final sourceMessages entry identifies the employee authorization message."
+  "description": "Host-protected persistent request prepared after a runtime turn is verified; turn credentials are ephemeral and not stored. materials.bytesBase64 is permitted only in the local account-scoped checkpoint for exact-byte recovery. Cross-component requests, the Weave task, model input, and logs contain extraction text and hashes only. Each extraction.sourceSha256 binds the extracted UTF-8 bytes to the original SHA-256. The final sourceMessages entry identifies the employee authorization message."
 }

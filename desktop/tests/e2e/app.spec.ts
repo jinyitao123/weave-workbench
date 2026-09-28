@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { CURRENT_DESKTOP_STATE_FILENAME, LEGACY_DESKTOP_STATE_FILENAME } from '../../electron/main/store'
+import { BROWSER_PARTITION } from '../../src/types/api'
 
 let app: ElectronApplication | undefined
 let page: Page
@@ -628,6 +629,26 @@ test.describe('Prime Work desktop smoke', () => {
     currentFixture = undefined
   })
 
+  test('keeps login and browser credentials only until app exit', async () => {
+    if (!app || !currentFixture) throw new Error('Missing hermetic app')
+    const browserPersistent = await app.evaluate(async ({ session }, partition) => {
+      const browser = session.fromPartition(partition)
+      await browser.cookies.set({ url: 'https://example.test', name: 'session-probe', value: 'test-only' })
+      return browser.isPersistent()
+    }, BROWSER_PARTITION)
+    expect(browserPersistent).toBe(false)
+    expect(existsSync(join(currentFixture.userData, 'enterprise-session.json'))).toBe(false)
+    await closeHermeticApp(app)
+    app = await electron.launch({
+      args: ['.', `--user-data-dir=${currentFixture.userData}`], cwd: process.cwd(),
+      env: hermeticEnvironment(currentFixture.home, currentFixture.executable, currentFixture.piExecutable, currentFixture.cuaExecutable, enterpriseFixtureOrigin, false) as Record<string, string>, timeout: 20_000,
+    })
+    page = await app.firstWindow({ timeout: 15_000 })
+    await expect(page.getByRole('textbox', { name: '账号' })).toBeVisible({ timeout: 20_000 })
+    expect(await app.evaluate(async ({ session }, partition) => (await session.fromPartition(partition).cookies.get({ name: 'session-probe' })).length, BROWSER_PARTITION)).toBe(0)
+    expect(existsSync(join(currentFixture.userData, 'enterprise-session.json'))).toBe(false)
+  })
+
   test('opens Pi Work by default, keeps retired OMP history unaliased, and creates a Pi session', async () => {
     const piBrand = page.getByRole('button', { name: 'Weave Workbench — Pi Work' })
     await expect(piBrand).toBeVisible()
@@ -982,6 +1003,10 @@ test.describe('Prime Work desktop smoke', () => {
     for (const target of app.windows()) attachDiagnostics(target)
     page = await app.firstWindow({ timeout: 15_000 })
     attachDiagnostics(page)
+    await expect(page.getByRole('textbox', { name: '账号' })).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('textbox', { name: '账号' }).fill('e2e@example.test')
+    await page.getByRole('textbox', { name: '密码' }).fill('hermetic-e2e-only')
+    await page.getByRole('button', { name: '继续' }).click()
     await expect(page.locator('.app-shell')).toHaveAttribute('data-ready', 'true', { timeout: 20_000 })
 
     await expect(page.locator('.desktop-pet')).toHaveCount(0)
@@ -1183,7 +1208,7 @@ test.describe('Prime Work desktop smoke', () => {
     const sessionRow = page.locator('.session-row-wrap').filter({ hasText: 'Hermetic desktop fixture' })
     await sessionRow.locator('.session-row').click()
     await page.getByRole('tab', { name: 'Browser' }).click()
-    const preview = page.locator('.browser-preview webview[partition="persist:prime-work-browser"]')
+    const preview = page.locator('.browser-preview webview[partition="prime-work-browser"]')
     await expect(preview).toHaveCount(1)
     await expect.poll(() => preview.evaluate(async (node) => {
       const webview = node as HTMLElement & {
@@ -2001,7 +2026,7 @@ test.describe('Prime Work desktop smoke', () => {
   test('attaches an isolated browser guest without navigation errors', async () => {
     await page.getByRole('button', { name: /开始新工作/ }).click()
     await page.getByRole('tab', { name: 'Browser' }).click()
-    const guest = page.locator('webview[partition="persist:prime-work-browser"]')
+    const guest = page.locator('webview[partition="prime-work-browser"]')
     await expect(guest).toHaveCount(1)
     await expect.poll(() => guest.evaluate(async (node) => {
       const webview = node as HTMLElement & { executeJavaScript(script: string): Promise<unknown> }

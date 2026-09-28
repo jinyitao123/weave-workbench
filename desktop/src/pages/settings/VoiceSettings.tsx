@@ -131,7 +131,7 @@ export function VoiceSettings({ settings, onUpdate, voice, platform = 'darwin' }
   const provider = VOICE_PROVIDER_OPTIONS.find((option) => option.value === settings.voiceTranscriptionProvider) ?? VOICE_PROVIDER_OPTIONS[0]
   const selectedCredential = provider.credential
   const selectedConfigured = selectedCredential ? status?.configured[selectedCredential] ?? false : true
-  const secureStorageAvailable = status?.storage.available ?? false
+  const sessionOnly = status ? !status.storage.available : false
 
   return (
     <>
@@ -150,12 +150,12 @@ export function VoiceSettings({ settings, onUpdate, voice, platform = 'darwin' }
       <section className="voice-section" aria-labelledby="voice-connections-title">
         <div className="voice-section__heading">
           <span><ShieldCheck size={15} /></span>
-          <div><h2 id="voice-connections-title">Connections</h2><p>Add a key for any hosted service you want to use. Secure storage keeps keys encrypted between app sessions; otherwise they stay only in memory until GooeyPi quits.</p></div>
+          <div><h2 id="voice-connections-title">Connections</h2><p>Add a key for a hosted service. Voice keys stay in memory while GooeyPi is running; enter them again after restarting.</p></div>
         </div>
-        {serviceState === 'ready' && status && !secureStorageAvailable ? (
+        {serviceState === 'ready' && status && sessionOnly ? (
           <div className="voice-storage-notice" role="alert">
             <ShieldAlert size={17} />
-            <span><strong>Keys will work only until GooeyPi quits</strong><small>{status.storage.message} You can still add a key for this session. GooeyPi will keep it only in desktop memory and will not save it to disk.</small></span>
+            <span><strong>Voice keys are session-only</strong><small>{status.storage.message ?? 'Keys stay available for this launch. Enter them again after restarting GooeyPi.'} You can still add a key for this session.</small></span>
           </div>
         ) : null}
         {voice ? <div className="voice-connection-grid">
@@ -166,7 +166,7 @@ export function VoiceSettings({ settings, onUpdate, voice, platform = 'darwin' }
               <article className={`voice-connection-card${configured ? ' is-connected' : ''}`} key={item.id}>
                 <span className="voice-provider-mark" aria-hidden="true">{item.monogram}</span>
                 <div className="voice-connection-card__body">
-                  <span className="voice-connection-card__title"><strong>{item.name}</strong><i>{serviceState === 'checking' ? 'Checking…' : serviceState === 'restart-required' ? 'Restart required' : serviceState === 'error' ? 'Unavailable' : configured ? source === 'environment' ? 'Environment key' : source === 'session' ? 'Session only' : 'Connected' : source === 'saved' && !secureStorageAvailable ? 'Storage locked' : 'Not connected'}</i></span>
+                  <span className="voice-connection-card__title"><strong>{item.name}</strong><i>{serviceState === 'checking' ? 'Checking…' : serviceState === 'restart-required' ? 'Restart required' : serviceState === 'error' ? 'Unavailable' : configured ? source === 'environment' ? 'Environment key' : source === 'session' ? 'Session only' : 'Connected' : 'Not connected'}</i></span>
                   <small>{item.detail}</small>
                 </div>
                 {serviceState === 'ready' ? <button type="button" className="button" disabled={busy} onClick={() => openCredential(item.id)}><KeyRound size={13} /> {configured ? 'Replace key' : 'Add key'}</button> : null}
@@ -210,9 +210,9 @@ export function VoiceSettings({ settings, onUpdate, voice, platform = 'darwin' }
                 <input aria-label="Self-hosted model ID" value={selfHostedModel} placeholder="nvidia/parakeet-tdt-0.6b-v3" spellCheck={false} onChange={(event) => { setSelfHostedModel(event.target.value); setSelfHostedTestState('idle'); setSelfHostedMessage('') }} onBlur={() => { const value = selfHostedModel.trim(); if (value !== settings.voiceSelfHostedModel) update('voiceSelfHostedModel', value) }} />
               </label>
               <div className="voice-self-hosted-auth">
-                <span><strong>Access token</strong><small>Optional. Stored with the same OS-backed protection as your other voice keys.</small></span>
+                <span><strong>Access token</strong><small>Optional. Kept in memory while GooeyPi is running; enter it again after restarting.</small></span>
                 <span className="voice-self-hosted-auth__actions">
-                  <i>{status?.configured['self-hosted'] ? status.source['self-hosted'] === 'session' ? 'Session only' : status.source['self-hosted'] === 'environment' ? 'Environment token' : 'Token saved' : status?.source['self-hosted'] === 'saved' ? 'Storage locked' : 'No token'}</i>
+                  <i>{status?.configured['self-hosted'] ? status.source['self-hosted'] === 'session' ? 'Session only' : status.source['self-hosted'] === 'environment' ? 'Environment token' : 'Token set' : 'No token'}</i>
                   {voice && serviceState === 'ready' ? <button type="button" className="button" disabled={busy} onClick={() => openCredential('self-hosted')}><KeyRound size={13} /> {status?.configured['self-hosted'] ? 'Replace token' : 'Add token'}</button> : null}
                   {voice && serviceState === 'ready' && (status?.source['self-hosted'] === 'saved' || status?.source['self-hosted'] === 'session') ? <button type="button" className="button button--icon" aria-label="Remove self-hosted access token" disabled={busy} onClick={() => void removeCredential('self-hosted')}><Trash2 size={13} /></button> : null}
                 </span>
@@ -258,12 +258,12 @@ export function VoiceSettings({ settings, onUpdate, voice, platform = 'darwin' }
             <span>{status?.configured.openai ? <Check size={13} /> : <KeyRound size={13} />}{status?.configured.openai ? 'OpenAI is connected' : 'OpenAI key required'}</span>
             {!status?.configured.openai && voice && serviceState === 'ready' ? <button type="button" onClick={() => openCredential('openai')}>Add key</button> : null}
           </div>
-          {secureStorageAvailable ? <p className="voice-realtime-note">Saved API keys are encrypted using your operating system’s internal keychain. When you open the voice agent, your system may ask for your password to retrieve the key.</p> : null}
+          {sessionOnly ? <p className="voice-realtime-note">OpenAI keys stay in memory while GooeyPi is running. Enter them again after restarting.</p> : null}
         </div>
       </section>
 
       {credential ? <Modal title={`Connect ${CREDENTIALS.find((item) => item.id === credential)?.name ?? credential}`} onClose={closeCredential} footer={<><button type="button" className="button" disabled={busy} onClick={closeCredential}>Cancel</button><button type="button" className="button button--primary" disabled={busy || !apiKey.trim()} onClick={() => void saveCredential()}>{busy ? 'Saving…' : credential === 'self-hosted' ? 'Save token' : 'Save API key'}</button></>}>
-        <p className="modal-intro">{secureStorageAvailable ? `Paste the ${credential === 'self-hosted' ? 'optional bearer token' : 'provider API key'}. GooeyPi encrypts it with your operating system’s secure credential store and never reads it back into this screen.` : `Secure credential storage is unavailable. GooeyPi will keep this ${credential === 'self-hosted' ? 'token' : 'key'} only in desktop memory for the current app session. It will not write the ${credential === 'self-hosted' ? 'token' : 'key'} to disk, and it will be cleared when GooeyPi quits.`}</p>
+        <p className="modal-intro">Paste the {credential === 'self-hosted' ? 'optional bearer token' : 'provider API key'}. {sessionOnly ? 'GooeyPi keeps it in desktop memory for this app session. Enter it again after restarting GooeyPi.' : 'GooeyPi encrypts it on this device and does not show the key again.'}</p>
         {failure ? <p className="settings-error" role="alert">{failure}</p> : null}
         <label className="field"><span>{credential === 'self-hosted' ? 'Access token' : 'API key'}</span><input autoFocus type="password" value={apiKey} autoComplete="off" spellCheck={false} placeholder={credential === 'self-hosted' ? 'Paste access token' : 'Paste API key'} onChange={(event) => setApiKey(event.target.value)} /></label>
       </Modal> : null}
