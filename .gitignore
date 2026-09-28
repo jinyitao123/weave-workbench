@@ -7,5 +7,5 @@ release/
 .build/
 coverage/
 *.log
-# Local-only scenario test credentials; never commit account passwords.
+# Local compatibility link; the private-Git demo account book is tracked separately.
 /scenarios/sales-contract-handoff/test-accounts.md
