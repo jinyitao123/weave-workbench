@@ -41,6 +41,8 @@
         "required": ["type", "id", "name", "bytes", "sha256"],
         "properties": {
           "type": { "const": "forge-file" },
+          "sourceKind": { "enum": ["owner", "approval"] },
+          "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
           "materialId": { "type": "string", "pattern": "^[0-9a-f]{24}$" },
           "id": { "type": "string", "minLength": 1, "maxLength": 128 },
           "name": { "type": "string", "minLength": 1, "maxLength": 255 },
@@ -56,7 +58,31 @@
           },
           "bytes": { "type": "integer", "minimum": 1, "maximum": 2097152 },
           "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
-        }
+        },
+        "allOf": [
+          {
+            "if": { "required": ["mediaType"], "properties": { "mediaType": { "enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] } } },
+            "then": { "required": ["sourceKind"] }
+          },
+          {
+            "if": { "required": ["sourceKind"], "properties": { "sourceKind": { "const": "approval" } } },
+            "then": {
+              "required": ["requestId"],
+              "properties": { "mediaType": { "enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] } }
+            }
+          },
+          {
+            "if": { "required": ["sourceKind"], "properties": { "sourceKind": { "const": "owner" } } },
+            "then": {
+              "not": { "required": ["requestId"] },
+              "properties": { "mediaType": { "enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] } }
+            }
+          },
+          {
+            "if": { "required": ["requestId"] },
+            "then": { "required": ["sourceKind"] }
+          }
+        ]
       }
     },
     "authorizedBusinessCapabilityIds": {
@@ -140,6 +166,8 @@
       "required": ["materialId", "name", "mediaType", "sha256", "bytes", "bytesBase64", "extraction"],
       "properties": {
         "materialId": { "type": "string", "pattern": "^[0-9a-f]{24}$" },
+        "sourceKind": { "enum": ["owner", "approval"] },
+        "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
         "name": { "type": "string", "minLength": 1, "maxLength": 255 },
         "mediaType": {
           "enum": ["text/plain", "text/markdown", "text/csv", "application/json", "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
@@ -153,7 +181,31 @@
           "description": "Local encrypted handoff intent only. Never serialize this field into a cross-component request, Weave task, model input, or log."
         },
         "extraction": { "$ref": "#/$defs/materialExtraction" }
-      }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["mediaType"], "properties": { "mediaType": { "enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] } } },
+          "then": { "required": ["sourceKind"] }
+        },
+        {
+          "if": { "required": ["sourceKind"], "properties": { "sourceKind": { "const": "approval" } } },
+          "then": {
+            "required": ["requestId"],
+            "properties": { "mediaType": { "enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] } }
+          }
+        },
+        {
+          "if": { "required": ["sourceKind"], "properties": { "sourceKind": { "const": "owner" } } },
+          "then": {
+            "not": { "required": ["requestId"] },
+            "properties": { "mediaType": { "enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] } }
+          }
+        },
+        {
+          "if": { "required": ["requestId"] },
+          "then": { "required": ["sourceKind"] }
+        }
+      ]
     },
     "legacyTextMaterial": {
       "type": "object",

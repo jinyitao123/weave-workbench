@@ -59,7 +59,23 @@
     "originalFiles": {
       "type": "array",
       "maxItems": 11,
-      "items": { "$ref": "owned-original-material.schema.json" }
+      "description": "Only files frozen to this approval request; every item uses sourceKind=approval and requestId equal to the containing requestId.",
+      "items": { "$ref": "#/$defs/approvalOriginalMaterial" }
+    }
+  },
+  "$defs": {
+    "approvalOriginalMaterial": {
+      "allOf": [
+        { "$ref": "owned-original-material.schema.json" },
+        {
+          "type": "object",
+          "required": ["sourceKind", "requestId"],
+          "properties": {
+            "sourceKind": { "const": "approval" },
+            "requestId": { "type": "string", "minLength": 1, "maxLength": 128 }
+          }
+        }
+      ]
     }
   },
   "allOf": [
