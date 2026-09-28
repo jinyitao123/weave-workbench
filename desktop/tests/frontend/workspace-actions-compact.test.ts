@@ -1,8 +1,19 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createWorkspaceActions, type WorkspaceActionsDeps } from '../../src/hooks/useWorkspaceActions'
-import type { PrimeWorkApi, RuntimeInfo, SessionRecord, TranscriptMessage, WorkspaceMaterialReference } from '../../src/types/api'
+import type { PrimeModelDescriptor, PrimeWorkApi, ProjectRecord, RuntimeInfo, SessionRecord, TranscriptMessage, WorkspaceMaterialReference } from '../../src/types/api'
 
-const project = {
+interface Deferred<T> {
+  promise: Promise<T>
+  resolve(value: T): void
+}
+
+function deferred<T>(): Deferred<T> {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>((yes) => { resolve = yes })
+  return { promise, resolve }
+}
+
+const project: ProjectRecord = {
   id: 'compact-project',
   harness: 'prime' as const,
   name: 'Compact project',
@@ -40,9 +51,16 @@ interface FixtureOptions {
   sessionStatus?: SessionRecord['status']
   ownsStreaming?: boolean
   withSession?: boolean
+  provider?: {
+    model: string
+    effort: 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'
+    fast: boolean
+    selectedModel?: PrimeModelDescriptor
+    resolveModelSelection?: () => Promise<{ model: PrimeModelDescriptor; effort: 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'; fast: boolean } | undefined>
+  }
 }
 
-function fixture({ runtime: configuredRuntime = null, sessionStatus = 'idle', ownsStreaming = false, withSession = true }: FixtureOptions = {}) {
+function fixture({ runtime: configuredRuntime = null, sessionStatus = 'idle', ownsStreaming = false, withSession = true, provider = { model: 'auto', effort: 'medium', fast: false } }: FixtureOptions = {}) {
   let currentRuntime = configuredRuntime
   let messages: TranscriptMessage[] = []
   const currentSession = withSession ? session(sessionStatus) : undefined
@@ -62,8 +80,9 @@ function fixture({ runtime: configuredRuntime = null, sessionStatus = 'idle', ow
       : null as { runtimeId: string; generation: number } | null,
   }
   const command = vi.fn(async (_runtimeId: string, _command: Record<string, unknown>) => ({}))
-  const start = vi.fn(async () => runtime('started-runtime'))
+  const start = vi.fn(async () => ({ ...runtime('started-runtime'), sessionFile: currentSession?.filePath }))
   const followUp = vi.fn(async () => true)
+  const listSessions = vi.fn(async () => currentSession ? [currentSession] : [])
   const queuePrompt = vi.fn()
   const invalidateHandoff = vi.fn(async () => {})
   const setToast = vi.fn()
@@ -89,7 +108,7 @@ function fixture({ runtime: configuredRuntime = null, sessionStatus = 'idle', ow
   const bridge = {
     enterprise: { invalidateHandoff },
     agent: { list: agentList, command, start, stop: vi.fn(async () => false) },
-    sessions: { followUp },
+    sessions: { followUp, list: listSessions },
   } as unknown as PrimeWorkApi
   const workspaceSessions = currentSession ? [currentSession] : []
   const actions = createWorkspaceActions(() => ({
@@ -99,7 +118,7 @@ function fixture({ runtime: configuredRuntime = null, sessionStatus = 'idle', ow
     activeProject: project,
     workspace,
     settingsState: { settings: { activeHarness: 'prime' } },
-    provider: { model: 'auto', effort: 'medium', fast: false },
+    provider,
     submissionAdmissionRef: { current: { active: false, run: async (task: () => Promise<void>) => { await task(); return true } } },
     initialized: true,
     layout: {},
@@ -121,7 +140,7 @@ function fixture({ runtime: configuredRuntime = null, sessionStatus = 'idle', ow
     reportError,
   } as unknown as WorkspaceActionsDeps))
 
-  return { actions, command, start, followUp, queuePrompt, invalidateHandoff, setToast, reportError, workspaceRef, messages: () => messages }
+  return { actions, command, start, followUp, listSessions, queuePrompt, invalidateHandoff, setToast, reportError, workspaceRef, messages: () => messages }
 }
 
 describe('/compact dispatch', () => {
@@ -193,6 +212,48 @@ describe('/compact dispatch', () => {
     expect(fixtureState.followUp).not.toHaveBeenCalled()
     expect(fixtureState.queuePrompt).toHaveBeenCalledWith('/compact', 'queue')
     expect(fixtureState.setToast).toHaveBeenCalledWith('Compaction will run when the current turn finishes.')
+  })
+})
+
+describe('new runtime model admission', () => {
+  const model: PrimeModelDescriptor = {
+    key: 'anthropic/claude-fixture', provider: 'anthropic', id: 'claude-fixture', name: 'Claude Fixture', reasoning: true,
+    input: ['text'], contextWindow: 200_000, maxTokens: 8_192, availableThinkingLevels: ['low', 'medium', 'high'],
+    fastModeSupported: false, available: true,
+  }
+
+  it('waits for the current catalog selection before starting a new runtime', async () => {
+    const resolveModelSelection = vi.fn(async () => ({ model, effort: 'medium' as const, fast: false }))
+    const f = fixture({ provider: { model: '', effort: 'medium', fast: false, resolveModelSelection } })
+    f.start.mockResolvedValue({ ...runtime('started-runtime'), sessionFile: session().filePath })
+
+    await f.actions.sendPrompt('Start with the newly detected model')
+
+    expect(resolveModelSelection).toHaveBeenCalledOnce()
+    expect(f.start).toHaveBeenCalledWith(expect.objectContaining({ model: 'anthropic/claude-fixture', thinking: 'medium', fast: false, harness: 'prime' }))
+    expect(f.command).toHaveBeenCalledWith('started-runtime', expect.objectContaining({ type: 'prompt' }), undefined)
+  })
+
+  it('does not start into another workspace when model resolution finishes late', async () => {
+    const pendingSelection = deferred<{ model: PrimeModelDescriptor; effort: 'medium'; fast: false }>()
+    const resolveModelSelection = vi.fn(() => pendingSelection.promise)
+    const f = fixture({ provider: { model: '', effort: 'medium', fast: false, resolveModelSelection } })
+    const sending = f.actions.sendPrompt('Do not deliver after navigating')
+    await vi.waitFor(() => expect(resolveModelSelection).toHaveBeenCalledOnce())
+
+    f.workspaceRef.current = {
+      ...f.workspaceRef.current,
+      generation: 2,
+      project: { ...project, harness: 'pi' },
+      cwd: '/pi-project',
+      sessionFile: '/pi-project/other-session.jsonl',
+    }
+    pendingSelection.resolve({ model, effort: 'medium', fast: false })
+    await sending
+
+    expect(f.start).not.toHaveBeenCalled()
+    expect(f.command).not.toHaveBeenCalled()
+    expect(f.reportError).not.toHaveBeenCalled()
   })
 })
 

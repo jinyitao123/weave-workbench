@@ -539,6 +539,68 @@ describe('provider catalog per harness', () => {
     expect(state.model).toBe('openai-codex/gpt-5.6')
   })
 
+  it('resolves a newly available Pi model before the catalog selection effect settles', async () => {
+    const emptyPiCatalog: PrimeModelCatalog = { ...piCatalog, models: [], providers: [] }
+    const catalogMock = vi.fn((force: boolean, harness?: HarnessId) => {
+      if (harness === 'pi' && force) return Promise.resolve(piCatalog)
+      if (harness === 'pi') return Promise.resolve(emptyPiCatalog)
+      return Promise.resolve(primeCatalog)
+    })
+    const reportError = vi.fn()
+    const bridge = {
+      providers: { catalog: catalogMock, onAuthEvent: vi.fn().mockReturnValue(() => undefined) },
+    } as unknown as PrimeWorkApi
+    let state!: ReturnType<typeof useProviderCatalog>
+    function CatalogProbe({ harness }: { harness: HarnessId }) {
+      state = useProviderCatalog({ bridge, harness, runtime: null, syncRuntime: async () => undefined, reportError })
+      return <Probe />
+    }
+
+    await act(async () => { root.render(<CatalogProbe harness="pi" />); await Promise.resolve() })
+    expect(state.model).toBe('')
+
+    let selection!: Awaited<ReturnType<typeof state.resolveModelSelection>>
+    await act(async () => { selection = await state.resolveModelSelection() })
+
+    expect(catalogMock).toHaveBeenNthCalledWith(1, false, 'pi')
+    expect(catalogMock).toHaveBeenNthCalledWith(2, true, 'pi')
+    expect(selection).toMatchObject({ model: { key: 'openai-codex/gpt-5.6-luna' }, effort: 'medium', fast: false })
+    expect(state.model).toBe('openai-codex/gpt-5.6-luna')
+  })
+
+  it('does not apply a late Pi model resolution after switching back to Prime', async () => {
+    const latePiCatalog = deferred<PrimeModelCatalog>()
+    const emptyPiCatalog: PrimeModelCatalog = { ...piCatalog, models: [], providers: [] }
+    const catalogMock = vi.fn((force: boolean, harness?: HarnessId) => {
+      if (harness === 'pi' && force) return latePiCatalog.promise
+      if (harness === 'pi') return Promise.resolve(emptyPiCatalog)
+      return Promise.resolve(primeCatalog)
+    })
+    const reportError = vi.fn()
+    const bridge = {
+      providers: { catalog: catalogMock, onAuthEvent: vi.fn().mockReturnValue(() => undefined) },
+    } as unknown as PrimeWorkApi
+    let state!: ReturnType<typeof useProviderCatalog>
+    function CatalogProbe({ harness }: { harness: HarnessId }) {
+      state = useProviderCatalog({ bridge, harness, runtime: null, syncRuntime: async () => undefined, reportError })
+      return <Probe />
+    }
+
+    await act(async () => { root.render(<CatalogProbe harness="pi" />); await Promise.resolve() })
+    const pendingResolution = state.resolveModelSelection()
+    expect(catalogMock).toHaveBeenLastCalledWith(true, 'pi')
+
+    await act(async () => { root.render(<CatalogProbe harness="prime" />); await Promise.resolve() })
+    expect(state.model).toBe('openai-codex/gpt-5.6')
+    latePiCatalog.resolve(piCatalog)
+    let selection!: Awaited<ReturnType<typeof state.resolveModelSelection>>
+    await act(async () => { selection = await pendingResolution })
+
+    expect(selection).toBeUndefined()
+    expect(state.catalog).toBe(primeCatalog)
+    expect(state.model).toBe('openai-codex/gpt-5.6')
+  })
+
   it('restores a usable remembered model and replaces a stale preference with the first usable model', async () => {
     const alternate = { ...primeCatalog.models[0], key: 'openai-codex/gpt-5.5', id: 'gpt-5.5', name: 'GPT-5.5' }
     const catalog = { ...primeCatalog, models: [primeCatalog.models[0], alternate] }
