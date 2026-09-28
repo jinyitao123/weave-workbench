@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { PassThrough } from 'node:stream'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { AgentRpcManager, OMP_RPC_ADAPTER, PI_RPC_ADAPTER, PRIME_RPC_ADAPTER } from '../../electron/main/agent-rpc'
+import { AgentRpcManager, PI_RPC_ADAPTER, PRIME_RPC_ADAPTER } from '../../electron/main/agent-rpc'
 import { validateRpcCommand } from '../../electron/main/agent-rpc/command-schema'
 import { MAX_RPC_WRITE_FRAME_BYTES, rpcRequestFrameBytes } from '../../electron/main/agent-rpc/limits'
 import { RpcRuntime } from '../../electron/main/agent-rpc/runtime'
@@ -37,7 +37,7 @@ ${body}
   }
 
   it('includes a sanitized stderr tail when the agent exits before any frame', async () => {
-    const fake = writeExitingAgent(`process.stderr.write('Error: Tool "session_list" from extension "pi-session-search" conflicts with extension "omp-work-collaboration"')
+    const fake = writeExitingAgent(`process.stderr.write('Error: Tool "session_list" from extension "pi-session-search" conflicts with extension "gooeypi-work-collaboration"')
 process.exit(1)`)
     const runtime = new RpcRuntime(fake.executable, [], fake.cwd, () => undefined, () => undefined)
     try {
@@ -287,7 +287,6 @@ describe('agent RPC command frame bounds', () => {
 
   it.each([
     ['prime', PRIME_RPC_ADAPTER, '/mcp login notion'],
-    ['omp', OMP_RPC_ADAPTER, '/mcp reauth docs'],
     ['pi', PI_RPC_ADAPTER, '/mcp-auth files'],
   ] as const)('rejects forged %s auth commands for every main-process delivery mode', async (harness, adapter, message) => {
     const wireCommand = vi.fn(async () => ({ type: 'response', command: 'prompt', success: true, data: {} }))
@@ -318,7 +317,6 @@ describe('agent RPC command frame bounds', () => {
 describe('agent RPC prompt admission capabilities', () => {
   it.each([
     ['prime', PRIME_RPC_ADAPTER, true],
-    ['omp', OMP_RPC_ADAPTER, false],
     ['pi', PI_RPC_ADAPTER, false],
   ] as const)('keeps or strips streamingBehavior for %s at the wire seam', async (harness, adapter, accepts) => {
     const cwd = mkdtempSync(join(tmpdir(), `prompt-capability-${harness}-`))

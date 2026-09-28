@@ -1,4 +1,4 @@
-/** Enterprise team handoff tools shared by Prime Agent, OMP, and Pi. */
+/** Enterprise team handoff tools shared by Prime Agent and Pi Work. */
 
 interface SchemaOptions { description?: string; minLength?: number; maxLength?: number; minItems?: number; maxItems?: number; minimum?: number; maximum?: number; multipleOf?: number }
 interface HostTypebox {

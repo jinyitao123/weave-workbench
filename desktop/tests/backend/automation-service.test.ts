@@ -1,11 +1,11 @@
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { assertNoMcpAuthenticationCommand, NETWORK_MCP_AUTH_UNAVAILABLE } from '../../src/lib/mcp-policy'
 import type { ScheduleExecution, ScheduleTarget } from '../../src/types/api'
 import { AutomationService } from '../../electron/main/schedules/service'
-import { JsonStateStore } from '../../electron/main/store'
+import { defaultSettings, JsonStateStore } from '../../electron/main/store'
 
 const dirs: string[] = []
 function store(): JsonStateStore {
@@ -28,6 +28,48 @@ async function eventually(assertion: () => void): Promise<void> {
 }
 
 describe('AutomationService', () => {
+  it('hides and never runs a v5 OMP plan after preserving it as a paused archive', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'prime-work-retired-schedule-'))
+    dirs.push(dir)
+    const statePath = join(dir, 'state.json')
+    const now = '2029-01-01T00:00:00.000Z'
+    writeFileSync(statePath, JSON.stringify({
+      version: 5,
+      projects: [],
+      settings: { ...defaultSettings(), activeHarness: 'omp' },
+      archivedSessions: [],
+      dismissedProjectPaths: [],
+      schedules: [{
+        schemaVersion: 1, id: 'legacy-omp-plan', harness: 'omp', revision: 1,
+        title: 'Archived OMP plan', prompt: 'Do not execute this retired plan',
+        target: { kind: 'project', projectId: 'legacy-omp-project' },
+        timing: onceAt('2029-01-02T00:00:00.000Z'), execution,
+        status: 'active', createdBy: 'user', createdAt: now, updatedAt: now,
+        nextRunAt: '2029-01-02T00:00:00.000Z', runs: [],
+      }],
+      scheduleOwnerships: [],
+    }))
+    const stateStore = new JsonStateStore(statePath)
+    await stateStore.ready()
+    const validateTarget = vi.fn(async () => undefined)
+    const validateExecution = vi.fn(async () => undefined)
+    const run = vi.fn(async () => ({}))
+    const service = new AutomationService(stateStore, { validateTarget, validateExecution, run, now: () => new Date('2030-01-01T00:00:00Z') })
+    await service.start()
+
+    expect(stateStore.snapshot().schedules).toContainEqual(expect.objectContaining({
+      id: 'legacy-omp-plan', harness: 'omp', status: 'paused', nextRunAt: undefined,
+    }))
+    expect(service.list()).toEqual([])
+    expect(service.list('pi')).toEqual([])
+    expect(() => service.get('legacy-omp-plan')).toThrow('Scheduled task was not found')
+    await expect(service.runNow('legacy-omp-plan')).rejects.toThrow('Scheduled task was not found')
+    expect(validateTarget).not.toHaveBeenCalled()
+    expect(validateExecution).not.toHaveBeenCalled()
+    expect(run).not.toHaveBeenCalled()
+    await service.stop()
+  })
+
   it('creates, updates, pauses, resumes, and deletes versioned tasks', async () => {
     let now = new Date('2030-01-01T00:00:00Z')
     const service = new AutomationService(store(), {
@@ -133,7 +175,7 @@ describe('AutomationService', () => {
     await service.stop()
   })
 
-  it('keeps OMP and pi schedules isolated and routes validation and runs by harness', async () => {
+  it('keeps Prime and Pi schedules isolated and routes validation and runs by harness', async () => {
     const validateTarget = vi.fn(async () => undefined)
     const validateExecution = vi.fn(async () => undefined)
     const run = vi.fn(async () => ({}))
@@ -145,17 +187,11 @@ describe('AutomationService', () => {
     })
     await service.start()
     const prime = await service.create({ prompt: 'Prime run', target, timing: onceAt('2030-01-02T00:00:00Z'), execution })
-    const omp = await service.create({ prompt: 'OMP run', target, timing: onceAt('2030-01-02T00:00:00Z'), execution }, 'user', 'omp')
     const pi = await service.create({ prompt: 'Pi run', target, timing: onceAt('2030-01-02T00:00:00Z'), execution }, 'user', 'pi')
     expect(service.list('prime').map((task) => task.id)).toEqual([prime.id])
-    expect(service.list('omp').map((task) => task.id)).toEqual([omp.id])
     expect(service.list('pi').map((task) => task.id)).toEqual([pi.id])
-    expect(validateTarget).toHaveBeenCalledWith(target, 'omp')
-    expect(validateExecution).toHaveBeenCalledWith(execution, 'omp')
     expect(validateTarget).toHaveBeenCalledWith(target, 'pi')
     expect(validateExecution).toHaveBeenCalledWith(execution, 'pi')
-    await service.runNow(omp.id)
-    await eventually(() => expect(run).toHaveBeenCalledWith(expect.objectContaining({ id: omp.id, harness: 'omp' })))
     await service.runNow(pi.id)
     await eventually(() => expect(run).toHaveBeenCalledWith(expect.objectContaining({ id: pi.id, harness: 'pi' })))
     await service.stop()

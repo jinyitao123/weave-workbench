@@ -1,19 +1,18 @@
 # GooeyPi
 
-GooeyPi is a desktop workspace for [Pi](https://pi.dev/), [OMP](https://github.com/can1357/oh-my-pi), and [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent). It gives all three coding agents the same friendly interface on macOS, Linux, and Windows while leaving each harness in charge of its own models, logins, and saved sessions.
+GooeyPi is a desktop workspace for [Pi](https://pi.dev/) and [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent). It gives both coding agents the same interface on macOS, Linux, and Windows while each harness keeps ownership of its models, logins, and saved sessions.
 
 <img width="2234" height="1332" alt="GooeyPi desktop workspace" src="https://github.com/user-attachments/assets/864ff0e1-71cc-49da-955f-f226710ef890" />
 
-## Three harnesses, one workspace
+## Two harnesses, one workspace
 
-Use the switcher in the top-left corner to move between Pi Work, OMP Work, and Prime Work. GooeyPi detects the harnesses installed on your computer and shows the ones that are ready. You can refresh detection or set a custom executable path in Settings.
+Use the switcher in the top-left corner to move between Pi Work and Prime Work. GooeyPi detects the installed harnesses and shows the ones that are ready. You can refresh detection or set a custom executable path in Settings.
 
 Each harness keeps its own projects, sessions, model list, provider visibility, and running work. Switching harnesses changes the workspace without stopping work already running in another one.
 
 You only need one harness to get started:
 
 - [Pi](https://pi.dev/) is the base coding-agent harness in the Pi family.
-- [OMP](https://github.com/can1357/oh-my-pi) adds its own plugins, commands, and approval controls.
 - [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) adds Prime's provider integrations and native heartbeats.
 
 ## What you can do
@@ -58,7 +57,7 @@ You only need one harness to get started:
 
 ### Add capabilities
 
-The Capabilities page brings together packages, plugins, extensions, skills, prompts, and MCP servers. GooeyPi can manage local stdio MCP definitions for OMP and adapter-enabled Pi. Network MCP and authentication stay under the selected harness's direct control; those entries are visible but read-only in GooeyPi, with bounded definition-only removal available for cleanup. MCP discovery has an independent 2,500-definition-per-settings-file limit and reports an explicit warning when that limit is exceeded, so unrelated capabilities cannot hide supported MCP rows.
+The Capabilities page brings together packages, extensions, skills, prompts, and MCP servers. Prime Agent MCP configuration stays outside GooeyPi. For Pi Work, GooeyPi can manage local stdio MCP definitions through the Pi MCP Adapter. Network MCP and authentication stay under the selected harness's direct control; those entries are visible but read-only in GooeyPi, with bounded definition-only removal available for cleanup. MCP discovery has an independent 2,500-definition-per-settings-file limit and reports an explicit warning when that limit is exceeded, so unrelated capabilities cannot hide supported MCP rows.
 
 GooeyPi also ships optional capabilities for:
 
@@ -82,7 +81,7 @@ Ask User and computer control are off by default. You can enable, disable, or re
 
 ## Get started
 
-1. Install Pi, OMP, Prime Agent, or any combination of the three.
+1. Install Pi, Prime Agent, or both.
 2. Sign in or configure a model provider through each harness's own CLI.
 3. Download GooeyPi from [GitHub Releases](https://github.com/am-will/gooey-pi/releases), or run it from source.
 4. Add a project folder and start a session.
@@ -158,7 +157,7 @@ The Queue and Steer shortcuts can be swapped in **Settings → Harness → Messa
 
 ## Local data and safety
 
-GooeyPi is built around local projects and local harness sessions. It does not rewrite session history or take ownership of Pi, OMP, or Prime Agent credentials.
+GooeyPi is built around local projects and local harness sessions. It does not rewrite session history or take ownership of Pi or Prime Agent credentials.
 
 Remote pages open in a separate browser profile with Node access disabled. Project paths and desktop actions are checked in the main process, and third-party capabilities still run with your operating-system permissions. Review packages, commands, MCP servers, and projects before allowing them to act.
 

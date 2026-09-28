@@ -276,59 +276,7 @@ describe('Prime Agent discovery candidates', () => {
   })
 })
 
-describe('OMP discovery candidates', () => {
-  it('uses native executable names for every supported desktop platform', () => {
-    expect(HARNESSES.omp.executableName('darwin')).toBe('omp')
-    expect(HARNESSES.omp.executableName('linux')).toBe('omp')
-    expect(HARNESSES.omp.executableName('win32')).toBe('omp.exe')
-  })
-
-  it('honors only absolute OMP_BINARY overrides and scans absolute PATH entries', () => {
-    const relative = harnessExecutableCandidates(HARNESSES.omp, { OMP_BINARY: 'bin/omp', PATH: '/usr/bin:relative/bin' }, 'linux')
-    expect(relative).not.toContain('bin/omp')
-    expect(relative).not.toContain('relative/bin/omp')
-    expect(relative).toContain('/usr/bin/omp')
-    const absolute = harnessExecutableCandidates(HARNESSES.omp, { OMP_BINARY: '/opt/tools/omp', PATH: '/usr/bin' }, 'linux')
-    expect(absolute[0]).toBe('/opt/tools/omp')
-  })
-
-  it('prefers a saved absolute override before the environment override', () => {
-    const candidates = harnessExecutableCandidates(HARNESSES.omp, { OMP_BINARY: '/env/omp', PATH: '/usr/bin' }, 'linux', '/settings/omp')
-    expect(candidates.slice(0, 2)).toEqual(['/settings/omp', '/env/omp'])
-    expect(harnessExecutableCandidates(HARNESSES.omp, { OMP_BINARY: '/env/omp', PATH: '/usr/bin' }, 'linux', 'relative/omp')[0]).toBe('/env/omp')
-  })
-
-  it('searches shared package-manager and system locations independently of the configured shell', () => {
-    const home = '/Users/Ada'
-    for (const shell of ['/bin/bash', '/bin/zsh', '/opt/homebrew/bin/fish', undefined]) {
-      const candidates = harnessExecutableCandidates(HARNESSES.omp, {
-        PATH: '/usr/bin', SHELL: shell, BUN_INSTALL: '/Users/Ada/.bun', PNPM_HOME: '/Users/Ada/Library/pnpm', VOLTA_HOME: '/Users/Ada/.volta',
-      }, 'darwin', undefined, home)
-      expect(candidates).toContain('/Users/Ada/.local/bin/omp')
-      expect(candidates).toContain('/Users/Ada/.bun/bin/omp')
-      expect(candidates).toContain('/Users/Ada/Library/pnpm/omp')
-      expect(candidates).toContain('/Users/Ada/.volta/bin/omp')
-      expect(candidates).toContain('/Users/Ada/.local/share/mise/shims/omp')
-    }
-    const candidates = harnessExecutableCandidates(HARNESSES.omp, { PATH: '/usr/bin' }, 'darwin', undefined, home)
-    expect(candidates).toContain('/opt/homebrew/bin/omp')
-    expect(candidates).toContain('/usr/local/bin/omp')
-    expect(candidates.every((candidate) => isAbsolutePathForPlatform(candidate, 'darwin'))).toBe(true)
-  })
-
-  it('finds official and Bun-installed Windows OMP executables despite a stale process Path', () => {
-    const candidates = harnessExecutableCandidates(HARNESSES.omp, {
-      Path: 'C:\\bin', LOCALAPPDATA: 'C:\\Users\\Ada\\AppData\\Local', USERPROFILE: 'C:\\Users\\Ada', APPDATA: 'C:\\Users\\Ada\\AppData\\Roaming',
-      BUN_INSTALL: 'D:\\Bun', BUN_INSTALL_BIN: 'E:\\Portable\\bun-global-bin',
-    }, 'win32', undefined, 'C:\\Users\\Ada')
-    expect(candidates).toContain('C:\\bin\\omp.exe')
-    expect(candidates).toContain('C:\\Users\\Ada\\AppData\\Local\\omp\\omp.exe')
-    expect(candidates).toContain('C:\\Users\\Ada\\.bun\\bin\\omp.exe')
-    expect(candidates).toContain('D:\\Bun\\bin\\omp.exe')
-    expect(candidates).toContain('E:\\Portable\\bun-global-bin\\omp.exe')
-    expect(candidates.some((candidate) => candidate.includes('resources'))).toBe(false)
-  })
-
+describe('supported harness discovery candidates', () => {
   it('discovers only the official Pi npm command shim alongside native Windows executables', () => {
     const candidates = harnessExecutableCandidates(HARNESSES.pi, {
       Path: 'C:\\Windows', APPDATA: 'C:\\Users\\Ada\\AppData\\Roaming', LOCALAPPDATA: 'C:\\Users\\Ada\\AppData\\Local',
@@ -439,7 +387,6 @@ describe('OMP discovery candidates', () => {
     const env = { PATH: '/usr/bin', XDG_DATA_HOME: '/data' }
     expect(harnessExecutableCandidates(HARNESSES.pi, env, 'linux', undefined, '/home/ada')).toContain('/data/pi-node/current/bin/pi')
     expect(harnessExecutableCandidates(HARNESSES.prime, env, 'linux', undefined, '/home/ada')).toContain('/data/prime-agent-node/current/bin/prime-agent')
-    expect(harnessExecutableCandidates(HARNESSES.omp, env, 'linux', undefined, '/home/ada')).toContain('/home/linuxbrew/.linuxbrew/bin/omp')
   })
 
   it('boundedly discovers nvm installs without evaluating shell startup files', async () => {

@@ -39,19 +39,16 @@ describe('SettingsService.update', () => {
       showReasoningSummaries: false,
       showToolCalls: false,
       messageEnterAction: 'steer',
-      runtimePaths: { prime: '/opt/prime-agent', omp: '/opt/omp', pi: '/opt/pi' },
-      enabledHarnesses: ['prime', 'omp', 'prime'],
+      runtimePaths: { prime: '/opt/prime-agent', pi: '/opt/pi' },
+      enabledHarnesses: ['prime', 'pi'],
       telemetry: false,
       askUserEnabled: false,
       disabledProviders: ['openai', 'openai', 'google'],
       disabledModels: ['openai/gpt-5.6', 'openai/gpt-5.6'],
-      ompDisabledProviders: ['anthropic', 'anthropic'],
-      ompDisabledModels: ['anthropic/claude-sonnet-4'],
       piDisabledProviders: [],
       piDisabledModels: ['openai/gpt-5.6-codex'],
-      lastSelectedModels: { prime: 'openai/gpt-5.6-sol', omp: 'anthropic/claude-opus', pi: '' },
-      activeHarness: 'omp',
-      ompApprovalMode: 'always-ask',
+      lastSelectedModels: { prime: 'openai/gpt-5.6-sol', pi: '' },
+      activeHarness: 'pi',
       petEnabled: true,
       petId: 'codex/rocky',
       petSize: 65,
@@ -72,11 +69,11 @@ describe('SettingsService.update', () => {
       defaultInspectorTab: 'changes', browserHome: 'https://example.test/',
       browserAskForDownloads: false, terminalShell: '/bin/zsh', reduceMotion: true,
       showReasoningSummaries: false, showToolCalls: false, messageEnterAction: 'steer',
-      runtimePaths: { prime: '/opt/prime-agent', omp: '/opt/omp', pi: '/opt/pi' }, enabledHarnesses: ['prime', 'omp'],
-      telemetry: false, askUserEnabled: false, disabledProviders: ['openai', 'google'], disabledModels: ['openai/gpt-5.6'], ompDisabledProviders: ['anthropic'],
-      ompDisabledModels: ['anthropic/claude-sonnet-4'], piDisabledModels: ['openai/gpt-5.6-codex'],
-      lastSelectedModels: { prime: 'openai/gpt-5.6-sol', omp: 'anthropic/claude-opus', pi: '' },
-      activeHarness: 'omp', ompApprovalMode: 'always-ask', petEnabled: true, petId: 'codex/rocky', petSize: 65,
+      runtimePaths: { prime: '/opt/prime-agent', pi: '/opt/pi' }, enabledHarnesses: ['prime', 'pi'],
+      telemetry: false, askUserEnabled: false, disabledProviders: ['openai', 'google'], disabledModels: ['openai/gpt-5.6'],
+      piDisabledModels: ['openai/gpt-5.6-codex'],
+      lastSelectedModels: { prime: 'openai/gpt-5.6-sol', pi: '' },
+      activeHarness: 'pi', petEnabled: true, petId: 'codex/rocky', petSize: 65,
       voiceTranscriptionProvider: 'groq', voiceSelfHostedUrl: 'https://speech.example.test/v1', voiceSelfHostedModel: 'nvidia/parakeet-tdt-0.6b-v3', voiceRealtimeVoice: 'cedar',
     })
     expect(service.get()).toEqual(next)
@@ -103,8 +100,8 @@ describe('SettingsService.update', () => {
     await expect(service.update({ defaultInspectorTab: 'tools' })).rejects.toThrow(/Invalid inspector tab/)
     await expect(service.update({ checkoutStrategy: 'folders' })).rejects.toThrow(/Invalid checkout strategy/)
     await expect(service.update({ messageEnterAction: 'send' })).rejects.toThrow(/Invalid message Enter action/)
-    await expect(service.update({ runtimePaths: { prime: 'relative/prime-agent', omp: '', pi: '' } })).rejects.toThrow(/must be absolute/)
-    await expect(service.update({ runtimePaths: { prime: '/opt/prime-agent', omp: '', pi: '', extra: '/tmp/evil' } })).rejects.toThrow(/not supported/)
+    await expect(service.update({ runtimePaths: { prime: 'relative/prime-agent', pi: '' } })).rejects.toThrow(/must be absolute/)
+    await expect(service.update({ runtimePaths: { prime: '/opt/prime-agent', pi: '', extra: '/tmp/evil' } })).rejects.toThrow(/not supported/)
     await expect(service.update({ enabledHarnesses: [] })).rejects.toThrow(/At least one harness/)
     await expect(service.update({ enabledHarnesses: ['prime', 'codex'] })).rejects.toThrow(/is invalid/)
     await expect(service.update({ sidebarOpen: 'yes' })).rejects.toThrow(/must be a boolean/)
@@ -116,16 +113,15 @@ describe('SettingsService.update', () => {
     await expect(service.update({ disabledProviders: Array.from({ length: 129 }, () => 'p') })).rejects.toThrow(/bounded/)
     await expect(service.update({ disabledModels: ['../evil'] })).rejects.toThrow(/model key/)
     await expect(service.update({ disabledModels: Array.from({ length: 5_001 }, () => 'openai/gpt') })).rejects.toThrow(/bounded/)
-    await expect(service.update({ ompDisabledProviders: ['../evil'] })).rejects.toThrow(/provider ID/)
-    await expect(service.update({ ompDisabledProviders: Array.from({ length: 257 }, () => 'p') })).rejects.toThrow(/bounded/)
-    await expect(service.update({ ompDisabledModels: ['missing-slash'] })).rejects.toThrow(/model key/)
+    await expect(service.update({ ompDisabledProviders: ['../evil'] } as never)).rejects.toThrow(/not supported/)
+    await expect(service.update({ ompApprovalMode: 'sudo' } as never)).rejects.toThrow(/not supported/)
     await expect(service.update({ piDisabledProviders: ['../evil'] })).rejects.toThrow(/provider ID/)
     await expect(service.update({ piDisabledProviders: Array.from({ length: 257 }, () => 'p') })).rejects.toThrow(/bounded/)
     await expect(service.update({ piDisabledModels: ['provider/model with spaces'] })).rejects.toThrow(/model key/)
-    await expect(service.update({ lastSelectedModels: { prime: 'missing-slash', omp: '', pi: '' } })).rejects.toThrow(/model key/)
-    await expect(service.update({ lastSelectedModels: { prime: '', omp: '', pi: '', hostile: 'openai/gpt' } })).rejects.toThrow(/not supported/)
+    await expect(service.update({ lastSelectedModels: { prime: 'missing-slash', pi: '' } })).rejects.toThrow(/model key/)
+    await expect(service.update({ lastSelectedModels: { prime: '', pi: '', hostile: 'openai/gpt' } })).rejects.toThrow(/not supported/)
     await expect(service.update({ activeHarness: 'codex' })).rejects.toThrow(/Invalid harness/)
-    await expect(service.update({ ompApprovalMode: 'sudo' })).rejects.toThrow(/Invalid OMP approval mode/)
+    await expect(service.update({ activeHarness: 'omp' } as never)).rejects.toThrow(/Invalid harness/)
     await expect(service.update({ petId: '../escape' })).rejects.toThrow(/Invalid pet id/)
     await expect(service.update({ petSize: 49 })).rejects.toThrow(/integer from 50 to 125/)
     await expect(service.update({ voiceTranscriptionProvider: 'carrier-pigeon' })).rejects.toThrow(/Invalid voice transcription provider/)
@@ -164,13 +160,13 @@ describe('SettingsService.update', () => {
     const service = makeService()
     const onlyPi = await service.update({ enabledHarnesses: ['pi'] })
     expect(onlyPi.enabledHarnesses).toEqual(['pi'])
-    expect(onlyPi.activeHarness).toBe('omp')
+    expect(onlyPi.activeHarness).toBe('pi')
 
     const stillPi = await service.update({ enabledHarnesses: ['prime', 'pi'] })
-    expect(stillPi.activeHarness).toBe('omp')
+    expect(stillPi.activeHarness).toBe('pi')
 
     const fallback = await service.update({ enabledHarnesses: ['prime'] })
-    expect(fallback.activeHarness).toBe('omp')
+    expect(fallback.activeHarness).toBe('pi')
   })
 
   it('routes terminalShell through the injected shell validator', async () => {

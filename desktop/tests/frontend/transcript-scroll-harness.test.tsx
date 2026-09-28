@@ -17,7 +17,6 @@ function Announcement({ harness, messages }: { harness: HarnessId; messages: Tra
 describe('transcript live announcements', () => {
   it.each([
     ['prime', 'Prime'],
-    ['omp', 'OMP'],
     ['pi', 'Pi'],
   ] as const)('names the active %s harness while working and after completion', async (harness, shortName) => {
     const container = document.createElement('div')

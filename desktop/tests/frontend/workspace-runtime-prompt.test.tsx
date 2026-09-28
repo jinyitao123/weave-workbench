@@ -75,44 +75,44 @@ describe('prompt admission versus background transcript reads', () => {
   })
 
   it('keeps queued prompts with their thread when navigating away and back', () => {
-    const ompProject: ProjectRecord = {
+    const piProject: ProjectRecord = {
       ...project,
-      id: 'omp-project',
-      harness: 'omp',
-      path: '/omp-project',
-      folders: ['/omp-project'],
-      primaryFolder: '/omp-project',
+      id: 'pi-project',
+      harness: 'pi',
+      path: '/pi-project',
+      folders: ['/pi-project'],
+      primaryFolder: '/pi-project',
     }
-    const ompSession: SessionRecord = {
+    const piSession: SessionRecord = {
       ...session,
-      id: 'omp-session',
-      harness: 'omp',
-      filePath: '/omp-sessions/session.jsonl',
-      projectPath: '/omp-project',
+      id: 'pi-session',
+      harness: 'pi',
+      filePath: '/pi-sessions/session.jsonl',
+      projectPath: '/pi-project',
     }
     const otherSession: SessionRecord = {
-      ...ompSession,
+      ...piSession,
       id: 'other-session',
-      filePath: '/omp-sessions/other-session.jsonl',
+      filePath: '/pi-sessions/other-session.jsonl',
       title: 'Other session',
     }
-    act(() => { root.render(createElement(Probe, { bridge: null, initialProject: ompProject, initialSession: ompSession, sessions: [ompSession, otherSession] })) })
+    act(() => { root.render(createElement(Probe, { bridge: null, initialProject: piProject, initialSession: piSession, sessions: [piSession, otherSession] })) })
 
-    act(() => { latest.queuePrompt('keep this OMP follow-up', 'queue') })
-    expect(latest.pendingQueuedPrompts.map((prompt) => prompt.text)).toEqual(['keep this OMP follow-up'])
+    act(() => { latest.queuePrompt('keep this follow-up', 'queue') })
+    expect(latest.pendingQueuedPrompts.map((prompt) => prompt.text)).toEqual(['keep this follow-up'])
 
-    act(() => { latest.activateWorkspace(ompProject, otherSession) })
+    act(() => { latest.activateWorkspace(piProject, otherSession) })
     expect(latest.pendingQueuedPrompts).toEqual([])
     act(() => { latest.queuePrompt('other thread follow-up', 'queue') })
 
-    act(() => { latest.activateWorkspace(ompProject, ompSession) })
-    expect(latest.pendingQueuedPrompts.map((prompt) => prompt.text)).toEqual(['keep this OMP follow-up'])
+    act(() => { latest.activateWorkspace(piProject, piSession) })
+    expect(latest.pendingQueuedPrompts.map((prompt) => prompt.text)).toEqual(['keep this follow-up'])
 
-    act(() => { latest.activateWorkspace(ompProject, otherSession) })
+    act(() => { latest.activateWorkspace(piProject, otherSession) })
     expect(latest.pendingQueuedPrompts.map((prompt) => prompt.text)).toEqual(['other thread follow-up'])
   })
 
-  it.each(['prime', 'omp', 'pi'] as const)('promotes an acknowledged %s steer into history while leaving true queued prompts pending', (harness) => {
+  it.each(['prime', 'pi'] as const)('promotes an acknowledged %s steer into history while leaving true queued prompts pending', (harness) => {
     let flushFrame: FrameRequestCallback | undefined
     vi.stubGlobal('requestAnimationFrame', vi.fn((callback: FrameRequestCallback) => { flushFrame = callback; return 1 }))
     vi.stubGlobal('cancelAnimationFrame', vi.fn())

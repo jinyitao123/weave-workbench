@@ -24,11 +24,10 @@ import {
 } from './transcript'
 
 /**
- * Shared machinery for the bucketed JSONL session layouts the pi and OMP
- * harnesses use: `<root>/<bucket>/<ISO timestamp with dashes>_<uuid>.jsonl`,
+ * Machinery for Pi's bucketed JSONL session layout:
+ * `<root>/<bucket>/<ISO timestamp with dashes>_<uuid>.jsonl`,
  * a `{"type":"session","version":3,...}` header, then append-only entries with
- * `id`/`parentId` forming a branch tree. Only the display-name and
- * `model_change` record shapes differ between the two dialects.
+ * `id`/`parentId` forming a branch tree.
  */
 const MAX_BUCKET_DIRECTORIES = 4_096
 const MAX_BUCKET_CONCURRENCY = 8

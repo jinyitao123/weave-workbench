@@ -158,7 +158,6 @@ describe('transcript rendering', () => {
 
   it.each([
     ['prime', 'Prime'],
-    ['omp', 'OMP'],
     ['pi', 'Pi'],
   ] as const)('keeps an accepted %s steer in history without duplicating the working indicator', (harness, shortName) => {
     const html = renderToStaticMarkup(createElement(Transcript, {

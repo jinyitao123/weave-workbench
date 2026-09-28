@@ -20,12 +20,12 @@ const electron = vi.hoisted(() => ({
 vi.mock('electron', () => electron)
 
 import { extensionRuntimeEnvironment, type CapabilityExtensionPaths } from '../../electron/main/index'
-import { OMP_RPC_ADAPTER, PI_RPC_ADAPTER, PRIME_RPC_ADAPTER } from '../../electron/main/agent-rpc'
+import { PI_RPC_ADAPTER, PRIME_RPC_ADAPTER } from '../../electron/main/agent-rpc'
 
 const extensionPaths: CapabilityExtensionPaths = {
-  schedule: '/app/extensions/omp-work-schedules.ts',
-  browser: '/app/extensions/omp-work-browser.ts',
-  askUser: '/app/extensions/omp-work-ask-user.ts',
+  schedule: '/app/extensions/gooeypi-work-schedules.ts',
+  browser: '/app/extensions/gooeypi-work-browser.ts',
+  askUser: '/app/extensions/gooeypi-work-ask-user.ts',
 }
 
 /** What the schedule and browser bridges hand every runtime of the harness. */
@@ -41,13 +41,13 @@ const browserBridgeEnvironment = {
   PRIME_WORK_BROWSER_SKILL_PATH: '/app/skills/prime-work-browser',
 }
 
-describe('capability extension environment parity (OMP and pi)', () => {
+describe('capability extension environment parity (Pi and Prime)', () => {
   it('populates the three shared extension paths and strips the Prime-only skill paths', () => {
     const environment = extensionRuntimeEnvironment(scheduleBridgeEnvironment, () => browserBridgeEnvironment, extensionPaths)
 
-    expect(environment.PRIME_WORK_SCHEDULE_EXTENSION_PATH).toBe('/app/extensions/omp-work-schedules.ts')
-    expect(environment.PRIME_WORK_BROWSER_EXTENSION_PATH).toBe('/app/extensions/omp-work-browser.ts')
-    expect(environment.PRIME_WORK_ASK_USER_EXTENSION_PATH).toBe('/app/extensions/omp-work-ask-user.ts')
+    expect(environment.PRIME_WORK_SCHEDULE_EXTENSION_PATH).toBe('/app/extensions/gooeypi-work-schedules.ts')
+    expect(environment.PRIME_WORK_BROWSER_EXTENSION_PATH).toBe('/app/extensions/gooeypi-work-browser.ts')
+    expect(environment.PRIME_WORK_ASK_USER_EXTENSION_PATH).toBe('/app/extensions/gooeypi-work-ask-user.ts')
     expect(environment.GOOEYPI_MANAGES_ASK_USER).toBe('1')
     // The Prime-only --skill inputs never reach an extension-based harness.
     expect(environment.PRIME_WORK_SCHEDULE_SKILL_PATH).toBeUndefined()
@@ -59,23 +59,20 @@ describe('capability extension environment parity (OMP and pi)', () => {
     expect(environment.PRIME_WORK_BROWSER_TOKEN).toBe('browser-token')
   })
 
-  it.each([
-    ['omp', OMP_RPC_ADAPTER],
-    ['pi', PI_RPC_ADAPTER],
-  ] as const)('turns the shared environment into all three --extension injections for %s runtimes', (_harness, adapter) => {
+  it('turns the shared environment into all three --extension injections for Pi runtimes', () => {
     const environment = extensionRuntimeEnvironment(scheduleBridgeEnvironment, () => browserBridgeEnvironment, extensionPaths)
-    const args = adapter.buildStartArgs({ cwd: '/work', environment })
+    const args = PI_RPC_ADAPTER.buildStartArgs({ cwd: '/work', environment })
 
     const injected: string[] = []
     for (let index = 0; index < args.length - 1; index += 1) {
       if (args[index] === '--extension') injected.push(args[index + 1])
     }
     expect(injected).toEqual([
-      '/app/extensions/omp-work-schedules.ts',
-      '/app/extensions/omp-work-browser.ts',
-      '/app/extensions/omp-work-ask-user.ts',
+      '/app/extensions/gooeypi-work-schedules.ts',
+      '/app/extensions/gooeypi-work-browser.ts',
+      '/app/extensions/gooeypi-work-ask-user.ts',
     ])
-    // Neither extension-based harness receives Prime's --skill injections.
+    // Pi receives extension paths; Prime Agent uses its skill paths.
     expect(args).not.toContain('--skill')
   })
 
@@ -85,29 +82,24 @@ describe('capability extension environment parity (OMP and pi)', () => {
       GOOEYPI_PI_FAST_MODE_EXTENSION_PATH: '/app/extensions/pi-work-fast-mode.ts',
     }
     expect(PI_RPC_ADAPTER.buildStartArgs({ cwd: '/work', environment })).toContain('/app/extensions/pi-work-fast-mode.ts')
-    expect(OMP_RPC_ADAPTER.buildStartArgs({ cwd: '/work', environment })).not.toContain('/app/extensions/pi-work-fast-mode.ts')
+    expect(PRIME_RPC_ADAPTER.buildStartArgs({ cwd: '/work', environment })).not.toContain('/app/extensions/pi-work-fast-mode.ts')
   })
 
   it('keeps standalone copies suppressed while omitting the bundled tool when disabled', () => {
     const environment = extensionRuntimeEnvironment(scheduleBridgeEnvironment, () => browserBridgeEnvironment, extensionPaths, false)
     expect(environment.GOOEYPI_MANAGES_ASK_USER).toBe('1')
     expect(environment.PRIME_WORK_ASK_USER_EXTENSION_PATH).toBeUndefined()
-    for (const adapter of [OMP_RPC_ADAPTER, PI_RPC_ADAPTER]) {
-      expect(adapter.buildStartArgs({ cwd: '/work', environment })).not.toContain(extensionPaths.askUser)
-    }
+    expect(PI_RPC_ADAPTER.buildStartArgs({ cwd: '/work', environment })).not.toContain(extensionPaths.askUser)
   })
 
-  it.each([
-    ['omp', OMP_RPC_ADAPTER],
-    ['pi', PI_RPC_ADAPTER],
-  ] as const)('does not mint or inject a browser claim for %s when Browser is disabled', (_harness, adapter) => {
+  it('does not mint or inject a browser claim into Pi when Browser is disabled', () => {
     const mintBrowserClaim = vi.fn(() => browserBridgeEnvironment)
     const environment = extensionRuntimeEnvironment(scheduleBridgeEnvironment, mintBrowserClaim, extensionPaths, true, false)
     expect(mintBrowserClaim).not.toHaveBeenCalled()
     expect(environment.PRIME_WORK_BROWSER_EXTENSION_PATH).toBeUndefined()
     expect(environment.PRIME_WORK_BROWSER_URL).toBeUndefined()
     expect(environment.PRIME_WORK_BROWSER_TOKEN).toBeUndefined()
-    expect(adapter.buildStartArgs({ cwd: '/work', environment })).not.toContain(extensionPaths.browser)
+    expect(PI_RPC_ADAPTER.buildStartArgs({ cwd: '/work', environment })).not.toContain(extensionPaths.browser)
   })
 
   it('injects the bundled ask_user extension into Prime interactive runtimes', () => {
@@ -120,18 +112,16 @@ describe('capability extension environment parity (OMP and pi)', () => {
 
   it.each([
     ['prime', PRIME_RPC_ADAPTER],
-    ['omp', OMP_RPC_ADAPTER],
     ['pi', PI_RPC_ADAPTER],
   ] as const)('injects session collaboration into %s without accepting an unsafe path', (_harness, adapter) => {
-    const args = adapter.buildStartArgs({ cwd: '/work', environment: { GOOEYPI_COLLABORATION_EXTENSION_PATH: '/app/extensions/omp-work-collaboration.ts' } })
-    expect(args.slice(-2)).toEqual(['--extension', '/app/extensions/omp-work-collaboration.ts'])
+    const args = adapter.buildStartArgs({ cwd: '/work', environment: { GOOEYPI_COLLABORATION_EXTENSION_PATH: '/app/extensions/gooeypi-work-collaboration.ts' } })
+    expect(args.slice(-2)).toEqual(['--extension', '/app/extensions/gooeypi-work-collaboration.ts'])
     const unsafe = adapter.buildStartArgs({ cwd: '/work', environment: { GOOEYPI_COLLABORATION_EXTENSION_PATH: '--session-injection' } })
     expect(unsafe).not.toContain('--session-injection')
   })
 
   it.each([
     ['prime', PRIME_RPC_ADAPTER],
-    ['omp', OMP_RPC_ADAPTER],
     ['pi', PI_RPC_ADAPTER],
   ] as const)('injects enterprise team handoff into %s without accepting an unsafe path', (_harness, adapter) => {
     const args = adapter.buildStartArgs({ cwd: '/work', environment: { GOOEYPI_ENTERPRISE_EXTENSION_PATH: '/app/extensions/gooeypi-enterprise.ts' } })
@@ -144,5 +134,13 @@ describe('capability extension environment parity (OMP and pi)', () => {
     const args = PI_RPC_ADAPTER.buildStartArgs({ cwd: '/work', environment: { GOOEYPI_TEAM_DEVELOPMENT_EXTENSION_PATH: '/app/extensions/gooeypi-team-development.ts' } })
     expect(args.slice(-2)).toEqual(['--extension', '/app/extensions/gooeypi-team-development.ts'])
     expect(args).not.toContain('--no-builtin-tools')
+  })
+
+  it('keeps the enterprise extension mounted for Pi Work', () => {
+    const injection = extensionRuntimeEnvironment(scheduleBridgeEnvironment, () => browserBridgeEnvironment, extensionPaths)
+    const environment = { ...injection, GOOEYPI_ENTERPRISE_EXTENSION_PATH: '/app/extensions/gooeypi-enterprise.ts' }
+    expect(PI_RPC_ADAPTER.buildStartArgs({ cwd: '/work', environment }).slice(-2)).toEqual([
+      '--extension', '/app/extensions/gooeypi-enterprise.ts',
+    ])
   })
 })

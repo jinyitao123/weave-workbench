@@ -1,5 +1,5 @@
 import type { AutomationScheduleRecord } from '../../../src/types/api'
-import type { DesktopState } from '../store'
+import type { DesktopState, PersistedSchedule } from '../store'
 
 export interface PersistedScheduleOwnership {
   scheduleId: string
@@ -35,6 +35,11 @@ export function publicSchedule(task: AutomationScheduleRecord, ownership: Persis
 export function migrateLegacyScheduleOwnerships(state: Pick<DesktopState, 'projects' | 'schedules' | 'scheduleOwnerships'>): void {
   const known = new Set(state.scheduleOwnerships.map(({ scheduleId }) => scheduleId))
   for (const task of state.schedules) {
+    if (task.harness === 'omp') {
+      // Retired-harness records stay archived and never regain execution authority.
+      known.add(task.id)
+      continue
+    }
     if (known.has(task.id)) continue
     const matches = state.projects.filter((candidate) => candidate.id === task.target.projectId && candidate.harness === task.harness)
     const scope = matches.length === 1 ? matches[0].accountScope : undefined
@@ -44,7 +49,7 @@ export function migrateLegacyScheduleOwnerships(state: Pick<DesktopState, 'proje
   }
 }
 
-export function parseScheduleOwnerships(value: unknown, schedules: readonly AutomationScheduleRecord[]): PersistedScheduleOwnership[] {
+export function parseScheduleOwnerships(value: unknown, schedules: readonly PersistedSchedule[]): PersistedScheduleOwnership[] {
   if (!Array.isArray(value)) return []
   const scheduleIds = new Set(schedules.map(({ id }) => id))
   const seen = new Set<string>()

@@ -13,7 +13,7 @@ afterEach(async () => {
   for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true, maxRetries: 5 })
 })
 
-async function fixture(harness: 'prime' | 'omp' = 'prime') {
+async function fixture(harness: 'prime' | 'pi' = 'prime') {
   const dir = mkdtempSync(join(tmpdir(), 'prime-work-agent-schedules-'))
   dirs.push(dir)
   const service = new AutomationService(new JsonStateStore(join(dir, 'state.json')), {
@@ -69,8 +69,8 @@ describe('AgentScheduleBridge', () => {
     expect(list.body.result).toEqual(expect.arrayContaining([expect.objectContaining({ title: 'Follow up' })]))
   })
 
-  it('attributes OMP-created tasks to OMP and never lists same-project Prime tasks', async () => {
-    const { service, call } = await fixture('omp')
+  it('attributes Pi-created tasks to Pi and never lists same-project Prime tasks', async () => {
+    const { service, call } = await fixture('pi')
     await service.create({
       prompt: 'Prime-only', target: { kind: 'project', projectId: 'project-one' },
       timing: { kind: 'once', at: '2030-01-02T00:00:00Z' },
@@ -78,9 +78,9 @@ describe('AgentScheduleBridge', () => {
     })
     await call('create', {
       target: 'current_project',
-      input: { prompt: 'OMP-only', timing: { kind: 'once', at: '2030-01-02T00:00:00Z' }, execution: { model: 'auto', thinking: 'auto', speed: 'normal' } },
+      input: { prompt: 'Pi-only', timing: { kind: 'once', at: '2030-01-02T00:00:00Z' }, execution: { model: 'auto', thinking: 'auto', speed: 'normal' } },
     })
-    expect((await call('list', {})).body.result).toEqual([expect.objectContaining({ harness: 'omp', prompt: 'OMP-only' })])
+    expect((await call('list', {})).body.result).toEqual([expect.objectContaining({ harness: 'pi', prompt: 'Pi-only' })])
   })
 
   it('rejects non-JSON and missing content types but accepts parameterized application/json', async () => {

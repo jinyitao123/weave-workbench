@@ -94,7 +94,7 @@ const expectedOrder = [
   'Open Settings',
 ]
 
-describe.each<HarnessId>(['prime', 'omp', 'pi'])('command palette for %s', (harness) => {
+describe.each<HarnessId>(['prime', 'pi'])('command palette for %s', (harness) => {
   it('keeps Scheduled searchable and activatable by keyboard and pointer', async () => {
     harnessState.activeHarness = harness
     await act(async () => { root.render(<App />) })

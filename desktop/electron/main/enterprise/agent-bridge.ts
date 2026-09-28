@@ -15,7 +15,7 @@ interface EnterpriseSessionReader {
 }
 export interface AgentEnterpriseBridgeOptions {
   service: Pick<EnterpriseService, 'accountKey' | 'getApprovalContext' | 'getWorkNotificationSource' | 'getWorkContinuationContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'getBusinessObjectDirectory' | 'findBusinessRecords' | 'readBusinessRecord' | 'stageWorkMaterials' | 'submitWork' | 'submitApprovalRevision' | 'getApprovalRevisionReceipt'>
-  sessions: Record<'prime' | 'omp' | 'pi', EnterpriseSessionReader>
+  sessions: Record<'prime' | 'pi', EnterpriseSessionReader>
   extensionPath: string
   storage?: HandoffStorage
 }

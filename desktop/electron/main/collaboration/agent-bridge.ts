@@ -234,7 +234,7 @@ export class AgentCollaborationBridge extends CapabilityBridge {
   private async peersFor(source: CollaborationTarget): Promise<CollaborationTarget[]> {
     const peers: CollaborationTarget[] = []
     // Project grants are harness-scoped. A Prime session can collaborate with
-    // Prime peers (and likewise for OMP/pi), but its token never grants access
+    // Prime peers (and likewise for Pi), but its token never grants access
     // to another harness's session catalog even when the cwd text matches.
     const harness = source.session.harness
     const service = this.options.sessions[harness]

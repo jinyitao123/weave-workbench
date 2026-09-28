@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ExtensionAPI } from 'prime-agent'
 import { EXTENSION_INJECTIONS, SHIPPED_EXTENSION_FILENAMES, type ExtensionInjection } from '../../electron/main/extension-manifest'
-import type { OmpExtensionApi } from '../../assets/extensions/omp-work-browser'
+import type { WorkExtensionApi } from '../../assets/extensions/gooeypi-work-browser'
 import type { PiFastModeExtensionApi } from '../../assets/extensions/pi-work-fast-mode'
 
 type Registration = { kind: 'tool' | 'command' | 'event'; name: string }
@@ -17,7 +17,7 @@ interface Fixture {
 }
 
 type PrimeFixtureApi = Pick<ExtensionAPI, 'registerTool' | 'on'>
-type PiFixtureApi = PiFastModeExtensionApi & Omit<OmpExtensionApi, 'typebox'>
+type PiFixtureApi = PiFastModeExtensionApi & Omit<WorkExtensionApi, 'typebox'>
 
 function primeHost(): Fixture {
   const registrations: Registration[] = []
@@ -31,34 +31,6 @@ function primeHost(): Fixture {
       // Model the absent optional shim that shipped files probe before using their dynamic-import fallback.
       if (property === 'typebox') return undefined
       if (!(property in object)) throw new Error(`Prime fixture does not inject ${String(property)}`)
-      return Reflect.get(object, property, receiver)
-    },
-  })
-  return { api, registrations }
-}
-
-function ompHost(): Fixture {
-  const registrations: Registration[] = []
-  const schema = (kind: string) => (...args: unknown[]) => ({ kind, args })
-  const target: OmpExtensionApi & { on(event: string, handler: unknown): void } = {
-    on: (event) => { registrations.push({ kind: 'event', name: event }) },
-    typebox: {
-      Type: {
-        Object: schema('object'),
-        String: schema('string'),
-        Number: schema('number'),
-        Boolean: schema('boolean'),
-        Array: schema('array'),
-        Enum: schema('enum'),
-        Optional: schema('optional'),
-      },
-    },
-    registerTool: (tool) => { registrations.push({ kind: 'tool', name: tool.name }) },
-  }
-  const api = new Proxy(target, {
-    get(object, property, receiver) {
-      if (typeof property === 'symbol' || property === 'then' || property === 'constructor') return Reflect.get(object, property, receiver)
-      if (!(property in object)) throw new Error(`OMP fixture does not inject ${String(property)}`)
       return Reflect.get(object, property, receiver)
     },
   })
@@ -91,7 +63,6 @@ function piHost(): Fixture {
 
 const fixtureFactories = {
   prime: primeHost,
-  omp: ompHost,
   pi: piHost,
 }
 
@@ -99,11 +70,11 @@ const expectedRegistrations: Record<string, Registration[]> = {
   'prime-work-browser.ts': [
     ...['terminal_read', 'browser_tabs', 'browser_navigate', 'browser_screenshot', 'browser_read_page', 'browser_click', 'browser_type', 'browser_press_key', 'browser_scroll', 'browser_evaluate'].map((name) => ({ kind: 'tool' as const, name })),
   ],
-  'omp-work-browser.ts': [
+  'gooeypi-work-browser.ts': [
     ...['terminal_read', 'browser_tabs', 'browser_navigate', 'browser_screenshot', 'browser_read_page', 'browser_click', 'browser_type', 'browser_press_key', 'browser_scroll', 'browser_evaluate'].map((name) => ({ kind: 'tool' as const, name })),
   ],
-  'omp-work-ask-user.ts': [{ kind: 'tool', name: 'ask_user' }],
-  'omp-work-collaboration.ts': [
+  'gooeypi-work-ask-user.ts': [{ kind: 'tool', name: 'ask_user' }],
+  'gooeypi-work-collaboration.ts': [
     ...['gooeypi_session_list', 'gooeypi_session_models', 'gooeypi_session_create', 'gooeypi_session_read', 'gooeypi_session_send', 'gooeypi_session_wait'].map((name) => ({ kind: 'tool' as const, name })),
   ],
   'gooeypi-enterprise.ts': [
@@ -117,7 +88,7 @@ const expectedRegistrations: Record<string, Registration[]> = {
     { kind: 'tool', name: 'gooeypi_team_development_context' },
     { kind: 'tool', name: 'gooeypi_team_development_propose' },
   ],
-  'omp-work-schedules.ts': [
+  'gooeypi-work-schedules.ts': [
     ...['scheduled_tasks_list', 'scheduled_task_create_once', 'scheduled_task_create_recurring', 'scheduled_task_update', 'scheduled_task_manage'].map((name) => ({ kind: 'tool' as const, name })),
   ],
   'pi-work-fast-mode.ts': [
@@ -159,6 +130,15 @@ afterEach(() => {
 })
 
 describe('shipped extension contracts', () => {
+  it('keeps the enterprise handoff extension in the Pi runtime manifest', () => {
+    expect(EXTENSION_INJECTIONS.pi).toContainEqual({
+      capability: 'enterprise',
+      filename: 'gooeypi-enterprise.ts',
+      environmentVariable: 'GOOEYPI_ENTERPRISE_EXTENSION_PATH',
+    })
+    expect(SHIPPED_EXTENSION_FILENAMES).toContain('gooeypi-enterprise.ts')
+  })
+
   it('initializes every manifest injection against its genuine host surface', async () => {
     for (const filename of SHIPPED_EXTENSION_FILENAMES) {
       expect(expectedRegistrations[filename], `Missing registration contract for ${filename}`).toBeDefined()
@@ -176,15 +156,6 @@ describe('shipped extension contracts', () => {
         }
       }
     }
-  })
-
-  it('rejects an extension that reaches for a capability its host does not inject', () => {
-    const badExtension = (api: OmpExtensionApi) => {
-      api.typebox!.Type.Object({})
-    }
-    expect(() => badExtension(ompHost().api as OmpExtensionApi)).not.toThrow()
-    expect(() => badExtension(primeHost().api as OmpExtensionApi)).toThrow()
-    expect(() => badExtension(piHost().api as OmpExtensionApi)).toThrow()
   })
 
   it('routes Pi team-development tools to the scoped desktop bridge without saving proposals', async () => {
@@ -261,7 +232,7 @@ describe('shipped extension contracts', () => {
   it('rejects properties outside each host fixture from the proxy trap', () => {
     for (const [harness, factory] of Object.entries(fixtureFactories)) {
       const fixture = factory()
-      expect(() => Reflect.get(fixture.api, 'unsupportedCapability'), harness).toThrow(`${harness === 'prime' ? 'Prime' : harness === 'omp' ? 'OMP' : 'Pi'} fixture does not inject unsupportedCapability`)
+      expect(() => Reflect.get(fixture.api, 'unsupportedCapability'), harness).toThrow(`${harness === 'prime' ? 'Prime' : 'Pi'} fixture does not inject unsupportedCapability`)
     }
   })
 

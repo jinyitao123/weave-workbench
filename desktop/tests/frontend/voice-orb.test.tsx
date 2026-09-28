@@ -88,8 +88,8 @@ describe('realtime voice surface', () => {
       createRealtimeCall: vi.fn(async () => 'v=0\r\no=test-answer-value'),
       executeTool: vi.fn(),
     } as unknown as PrimeWorkApi['voice']
-    await act(async () => root.render(<VoiceOrb voice={voice} harness="omp" onClose={vi.fn()} onTaskStarted={vi.fn()} />))
-    expect(voice.createRealtimeCall).toHaveBeenCalledWith({ mode: 'conversation', sdp: 'v=0\r\no=test-offer-value', harness: 'omp' })
+    await act(async () => root.render(<VoiceOrb voice={voice} harness="pi" onClose={vi.fn()} onTaskStarted={vi.fn()} />))
+    expect(voice.createRealtimeCall).toHaveBeenCalledWith({ mode: 'conversation', sdp: 'v=0\r\no=test-offer-value', harness: 'pi' })
     const mute = container.querySelector<HTMLButtonElement>('[aria-label="Mute realtime voice"]')!
     expect(container.querySelector('[aria-label="Close realtime voice"]')).not.toBeNull()
     await act(async () => mute.click())
@@ -102,7 +102,7 @@ describe('realtime voice surface', () => {
     const pets = { list: vi.fn(async () => definitions), sprite: vi.fn() } as unknown as PrimeWorkApi['pets']
     const onClose = vi.fn()
     const voice = { createRealtimeCall: vi.fn(async () => 'v=0\r\no=test-answer-value'), executeTool: vi.fn() } as unknown as PrimeWorkApi['voice']
-    await act(async () => root.render(<VoiceOrb voice={voice} harness="omp" onClose={onClose} onTaskStarted={vi.fn()} pet={{ pets, petId: 'orb', agentBusy: false, reduceMotion: false }} />))
+    await act(async () => root.render(<VoiceOrb voice={voice} harness="pi" onClose={onClose} onTaskStarted={vi.fn()} pet={{ pets, petId: 'orb', agentBusy: false, reduceMotion: false }} />))
     expect(container.querySelector('.desktop-pet')).not.toBeNull()
     expect(container.querySelector('.voice-orb')).toBeNull()
     expect(container.textContent).toContain('Connecting')
@@ -119,7 +119,7 @@ describe('realtime voice surface', () => {
     const definitions: PetDefinition[] = [{ id: 'orb', petId: 'orb', displayName: 'Orb', description: 'Orb.', source: 'built-in', kind: 'orb' }]
     const pets = { list: vi.fn(async () => definitions), sprite: vi.fn() } as unknown as PrimeWorkApi['pets']
     const voice = { createRealtimeCall: vi.fn(async () => 'v=0\r\no=test-answer-value'), executeTool: vi.fn() } as unknown as PrimeWorkApi['voice']
-    const props = { voice, harness: 'omp' as const, onClose: vi.fn(), onTaskStarted: vi.fn() }
+    const props = { voice, harness: 'pi' as const, onClose: vi.fn(), onTaskStarted: vi.fn() }
     await act(async () => root.render(<VoiceOrb {...props} pet={{ pets, petId: 'orb', agentBusy: false, reduceMotion: false }} />))
     const audio = container.querySelector<HTMLAudioElement>('audio')!
     const remoteStream = { id: 'remote-stream' } as unknown as MediaStream
@@ -156,12 +156,12 @@ describe('realtime voice surface', () => {
   it('forwards model discovery calls through the pinned harness', async () => {
     const executeTool = vi.fn(async () => ({ output: '{"models":[]}' }))
     const voice = { createRealtimeCall: vi.fn(async () => 'v=0\r\no=test-answer-value'), executeTool } as unknown as PrimeWorkApi['voice']
-    await act(async () => root.render(<VoiceOrb voice={voice} harness="omp" onClose={vi.fn()} onTaskStarted={vi.fn()} />))
+    await act(async () => root.render(<VoiceOrb voice={voice} harness="pi" onClose={vi.fn()} onTaskStarted={vi.fn()} />))
     await act(async () => {
       FakePeer.latest.channel.dispatchEvent(new MessageEvent('message', { data: JSON.stringify({ type: 'response.function_call_arguments.done', call_id: 'call-models', name: 'list_models', arguments: JSON.stringify({ query: 'sonnet' }) }) }))
       await Promise.resolve()
     })
-    expect(executeTool).toHaveBeenCalledWith({ name: 'list_models', arguments: { query: 'sonnet' } }, 'omp')
+    expect(executeTool).toHaveBeenCalledWith({ name: 'list_models', arguments: { query: 'sonnet' } }, 'pi')
   })
 
   it('waits for the active response to finish before continuing after a tool call', async () => {
@@ -285,34 +285,34 @@ describe('realtime voice surface', () => {
   })
 
   it('keeps tool calls bound to the harness selected when the orb opened', async () => {
-    const executeTool = vi.fn(async () => ({ output: '{"active_harness":"omp"}' }))
+    const executeTool = vi.fn(async () => ({ output: '{"active_harness":"pi"}' }))
     const voice = { createRealtimeCall: vi.fn(async () => 'v=0\r\no=test-answer-value'), executeTool } as unknown as PrimeWorkApi['voice']
     const onClose = vi.fn()
     const onTaskStarted = vi.fn(async () => undefined)
-    await act(async () => root.render(<VoiceOrb voice={voice} harness="omp" onClose={onClose} onTaskStarted={onTaskStarted} />))
+    await act(async () => root.render(<VoiceOrb voice={voice} harness="pi" onClose={onClose} onTaskStarted={onTaskStarted} />))
     await act(async () => root.render(<VoiceOrb voice={voice} harness="prime" onClose={onClose} onTaskStarted={onTaskStarted} />))
     await act(async () => {
       FakePeer.latest.channel.dispatchEvent(new MessageEvent('message', { data: JSON.stringify({ type: 'response.function_call_arguments.done', call_id: 'call-context', name: 'get_local_context', arguments: '{}' }) }))
       await Promise.resolve()
     })
-    expect(executeTool).toHaveBeenCalledWith({ name: 'get_local_context', arguments: {} }, 'omp')
+    expect(executeTool).toHaveBeenCalledWith({ name: 'get_local_context', arguments: {} }, 'pi')
   })
 
   it('shows a durable failure instead of claiming an unconfirmed task started', async () => {
-    const executeTool = vi.fn(async () => { throw new Error('OMP did not create a visible session') })
+    const executeTool = vi.fn(async () => { throw new Error('Pi did not create a visible session') })
     const voice = { createRealtimeCall: vi.fn(async () => 'v=0\r\no=test-answer-value'), executeTool } as unknown as PrimeWorkApi['voice']
-    await act(async () => root.render(<VoiceOrb voice={voice} harness="omp" onClose={vi.fn()} onTaskStarted={vi.fn(async () => undefined)} />))
+    await act(async () => root.render(<VoiceOrb voice={voice} harness="pi" onClose={vi.fn()} onTaskStarted={vi.fn(async () => undefined)} />))
     await act(async () => {
       FakePeer.latest.channel.dispatchEvent(new MessageEvent('message', { data: JSON.stringify({ type: 'response.function_call_arguments.done', call_id: 'call-2', name: 'start_task', arguments: JSON.stringify({ project_id: 'p1', prompt: 'Build it' }) }) }))
       await Promise.resolve()
     })
-    expect(container.textContent).toContain('Task was not started: OMP did not create a visible session')
+    expect(container.textContent).toContain('Task was not started: Pi did not create a visible session')
     expect(container.textContent).not.toContain('Task started')
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     await act(async () => {
       FakePeer.latest.channel.dispatchEvent(new MessageEvent('message', { data: JSON.stringify({ type: 'error', error: { code: 'invalid_request_error', message: 'A response is already in progress.' } }) }))
     })
-    expect(container.textContent).toContain('Task was not started: OMP did not create a visible session')
+    expect(container.textContent).toContain('Task was not started: Pi did not create a visible session')
     consoleError.mockRestore()
   })
 })

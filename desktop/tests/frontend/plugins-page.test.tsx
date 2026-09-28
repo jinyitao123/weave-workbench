@@ -136,7 +136,7 @@ describe('PluginsPage bundled capability controls', () => {
     }
     const render = async (enabled: boolean) => act(async () => {
       root.render(<PluginsPage
-        harness="omp" skills={[{ ...docs, enabled }]} warnings={[]} loading={false}
+        harness="pi" skills={[{ ...docs, enabled }]} warnings={[]} loading={false}
         askUserEnabled={true} onSetAskUserEnabled={async () => undefined}
         browserEnabled={true} onSetBrowserEnabled={async () => undefined}
         computerUseEnabled={false} onSetComputerUseEnabled={async () => undefined} onOpenExternal={() => undefined}
@@ -219,7 +219,7 @@ describe('PluginsPage bundled capability controls', () => {
     const openExternal = vi.fn()
     await act(async () => {
       root.render(<PluginsPage
-        harness="omp" skills={[computerUse]} warnings={[]} loading={false}
+        harness="pi" skills={[computerUse]} warnings={[]} loading={false}
         askUserEnabled={true} onSetAskUserEnabled={async () => undefined}
         browserEnabled={true} onSetBrowserEnabled={async () => undefined}
         computerUseEnabled={false} onSetComputerUseEnabled={setEnabled} onOpenExternal={openExternal}
@@ -238,7 +238,7 @@ describe('PluginsPage bundled capability controls', () => {
     expect(container.textContent).toContain('Install Cua Driver before enabling Computer Use.')
   })
 
-  it('disables Prime MCP creation and only submits local stdio servers for OMP', async () => {
+  it('disables Prime MCP creation and creates local stdio servers through the Pi adapter', async () => {
     const connect = vi.fn(async () => ({ ok: true, output: 'saved server' }))
     await act(async () => {
       root.render(<PluginsPage
@@ -264,7 +264,7 @@ describe('PluginsPage bundled capability controls', () => {
 
     await act(async () => {
       root.render(<PluginsPage
-        harness="omp" skills={[]} warnings={[]} loading={false} activeProjectPath="/repo"
+        harness="pi" skills={[{ id: 'gooeypi-pi-mcp', name: 'Pi MCP Adapter', description: 'Adapter enabled.', kind: 'extension', location: 'system', enabled: true, source: 'npm:pi-mcp-adapter' }]} warnings={[]} loading={false} activeProjectPath="/repo"
         askUserEnabled={true} onSetAskUserEnabled={async () => undefined}
         browserEnabled={true} onSetBrowserEnabled={async () => undefined}
         computerUseEnabled={false} onSetComputerUseEnabled={async () => undefined} onOpenExternal={() => undefined}
@@ -403,7 +403,8 @@ describe('PluginsPage bundled capability controls', () => {
     expect(setMcpEnabled).not.toHaveBeenCalled()
   })
 
-  it.each(['omp', 'pi'] as const)('keeps unaddressable local %s MCP keys externally managed', async (harness) => {
+  it('keeps unaddressable local Pi MCP keys externally managed', async () => {
+    const harness = 'pi' as const
     const setMcpEnabled = vi.fn(async () => ({ ok: true, output: '' }))
     const mutateCapability = vi.fn(async () => ({ ok: true, output: '' }))
     const unusual: SkillRecord = {

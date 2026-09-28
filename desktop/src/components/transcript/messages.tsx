@@ -10,7 +10,7 @@ import { writeClipboardText } from '@/lib/clipboard'
 import { boundText } from '@/lib/render-bounds'
 import { HARNESS_SHORT_NAMES } from '@/lib/harness'
 import { MarkdownText } from '../MarkdownText'
-import { OmpMark, PiMark, PrimeMark } from '../ui'
+import { PiMark, PrimeMark } from '../ui'
 import { InlineText } from './syntax'
 import { TranscriptImage } from './TranscriptImage'
 import { ThinkingDots, WorkDisclosure, WorkTimeline } from './timeline'
@@ -131,7 +131,7 @@ function MessageActions({ message, text: suppliedText }: { message: TranscriptMe
   )
 }
 
-const HARNESS_MARKS = { omp: OmpMark, prime: PrimeMark, pi: PiMark } satisfies Record<HarnessId, unknown>
+const HARNESS_MARKS = { prime: PrimeMark, pi: PiMark } satisfies Record<HarnessId, unknown>
 
 function AssistantHarnessMark({ harness, size = 24 }: { harness: HarnessId; size?: number }) {
   const Mark = HARNESS_MARKS[harness]

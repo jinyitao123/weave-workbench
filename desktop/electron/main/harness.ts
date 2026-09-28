@@ -1,4 +1,4 @@
-import { join, win32 } from 'node:path'
+import { join } from 'node:path'
 
 import type { HarnessId } from '../../src/types/api'
 
@@ -39,20 +39,6 @@ export const HARNESSES: Record<HarnessId, HarnessDescriptor> = {
     windowsNpmShim: { shim: 'prime-agent.cmd', entrypoint: ['prime-agent', 'dist', 'bundle', 'cli.js'] },
     agentDir: (home) => join(home, '.prime', 'agent'),
     sessionRoot: (home) => join(home, '.prime', 'agent', 'sessions'),
-  },
-  omp: {
-    id: 'omp',
-    productName: 'OMP Work',
-    agentName: 'OMP',
-    executableName: (platform) => platform === 'win32' ? 'omp.exe' : 'omp',
-    binaryEnvVar: 'OMP_BINARY',
-    bundledResourceDirs: [],
-    candidateDirs: (platform, _home, env) => {
-      if (platform === 'win32') return env.LOCALAPPDATA ? [win32.join(env.LOCALAPPDATA, 'omp')] : []
-      return env.PI_INSTALL_DIR ? [env.PI_INSTALL_DIR] : []
-    },
-    agentDir: (home) => join(home, '.omp', 'agent'),
-    sessionRoot: (home) => join(home, '.omp', 'agent', 'sessions'),
   },
   pi: {
     id: 'pi',

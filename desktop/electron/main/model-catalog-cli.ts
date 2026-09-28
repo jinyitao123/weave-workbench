@@ -7,7 +7,7 @@ import { requireString } from './validation'
 
 /**
  * Shared model-catalog machinery for the harnesses whose catalog comes from an
- * external CLI (OMP's `omp models --json`, pi's RPC probe) instead of
+ * external CLI (Pi's RPC probe) instead of
  * in-process npm modules. Everything here is harness-agnostic: caching,
  * single-flight refresh, stale-catalog degradation, untrusted-entry validation,
  * provider derivation, and the version probe. Subclasses supply only how raw
@@ -109,7 +109,7 @@ export abstract class CliModelCatalogService implements ModelCatalogProvider {
     this.maxOutputBytes = options.maxOutputBytes ?? DEFAULT_CATALOG_MAX_OUTPUT_BYTES
   }
 
-  /** Harness name as it appears in user-facing warnings and errors ('OMP', 'Pi'). */
+  /** Harness name as it appears in user-facing warnings and errors ('Pi'). */
   protected abstract readonly harnessLabel: string
   /** Warning served when the harness CLI is not installed. */
   protected abstract readonly notInstalledWarning: string

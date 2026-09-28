@@ -29,7 +29,7 @@ import { sortProjects } from '@/lib/project-order'
 import { useI18n, type MessageKey } from '@/lib/i18n'
 import { shortcutLabel } from '@/lib/platform-shortcuts'
 import { sessionAttentionSignature, signatureCleared } from '@/app/session-attention'
-import { IconButton, Modal, OmpMark, PiMark, PrimeMark, useFocusTrap } from './ui'
+import { IconButton, Modal, PiMark, PrimeMark, useFocusTrap } from './ui'
 
 const PROJECT_SORT_LABEL_KEYS = { recent: 'projects.sort.recent', alphabetical: 'projects.sort.alphabetical' } as const satisfies Record<ProjectSortMode, MessageKey>
 
@@ -115,7 +115,7 @@ function SessionStatusMark({ status, attention }: { status: SessionRecord['statu
   return <span className={`session-status-mark session-status-mark--${status}`} title={title}><span /></span>
 }
 
-const HARNESS_MARKS: Record<HarnessId, (props: { size?: number }) => ReactElement> = { omp: OmpMark, prime: PrimeMark, pi: PiMark }
+const HARNESS_MARKS: Record<HarnessId, (props: { size?: number }) => ReactElement> = { prime: PrimeMark, pi: PiMark }
 
 function HarnessMark({ harness, size }: { harness: HarnessId; size: number }) {
   const Mark = HARNESS_MARKS[harness]
@@ -182,7 +182,7 @@ async function copySessionUuid(id: string): Promise<void> {
   if (!copied) throw new Error('Copy is unavailable')
 }
 
-function SidebarView({ projects, sessions, activeProjectId, activeSessionId, activeView, activeHarness = 'omp', harnesses, clearedAttention = {}, updateState = { phase: 'unsupported' }, onUpdateAction, onSelectHarness, onSelectProject, onSelectSession, onNavigate, onNewSession, onRemoveProject, projectSortMode = 'recent', onSetProjectSortMode = () => undefined, onTogglePinProject = () => undefined, onClose, onOpenPalette, onRenameSession, onArchiveSession, overlay = false, platform = 'darwin' }: SidebarProps) {
+function SidebarView({ projects, sessions, activeProjectId, activeSessionId, activeView, activeHarness = 'pi', harnesses, clearedAttention = {}, updateState = { phase: 'unsupported' }, onUpdateAction, onSelectHarness, onSelectProject, onSelectSession, onNavigate, onNewSession, onRemoveProject, projectSortMode = 'recent', onSetProjectSortMode = () => undefined, onTogglePinProject = () => undefined, onClose, onOpenPalette, onRenameSession, onArchiveSession, overlay = false, platform = 'darwin' }: SidebarProps) {
   const { t } = useI18n()
   const [query, setQuery] = useState('')
   const [harnessMenuOpen, setHarnessMenuOpen] = useState(false)

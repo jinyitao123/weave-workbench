@@ -3,7 +3,7 @@ import { mkdirSync, readFileSync, renameSync, statSync } from 'node:fs'
 import { open, rename, unlink } from 'node:fs/promises'
 import type { FileHandle } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join } from 'node:path'
-import { INTERFACE_FONT_SCALES, PRIME_THINKING_LEVELS, PROJECT_SORT_MODES, type AppSettings, type HarnessId, type ProjectRecord, type ProjectScripts, type ScheduleExecution, type AutomationScheduleRecord, type ScheduleRunRecord, type ScheduleTarget, type ScheduleTiming } from '../../src/types/api'
+import { HARNESS_IDS, INTERFACE_FONT_SCALES, PRIME_THINKING_LEVELS, PROJECT_SORT_MODES, type AppSettings, type HarnessId, type ProjectRecord, type ProjectScripts, type ScheduleExecution, type AutomationScheduleRecord, type ScheduleRunRecord, type ScheduleTarget, type ScheduleTiming } from '../../src/types/api'
 import { parseScheduleOwnerships, type PersistedScheduleOwnership } from './schedules/ownership'
 import { normalizeScheduleRunHistory } from './schedules/retention'
 import { isRecord } from './validation'
@@ -15,19 +15,26 @@ export interface FolderIdentity {
   birthtimeNs?: string
 }
 
-export interface PersistedProject extends Omit<ProjectRecord, 'sessionCount' | 'gitBranch' | 'inferred'> {
+/** OMP-owned records remain in the local archive but are never exposed to or run by this app. */
+export type RetiredHarnessId = 'omp'
+export type PersistedHarnessId = HarnessId | RetiredHarnessId
+
+export type PersistedProject = Omit<ProjectRecord, 'sessionCount' | 'gitBranch' | 'inferred' | 'harness'> & {
+  harness: PersistedHarnessId
   /** Opaque Forge-account scope. Missing means a pre-scope local project. */
   accountScope?: string
   folderIdentities?: Record<string, FolderIdentity>
 }
 
+export type PersistedSchedule = Omit<AutomationScheduleRecord, 'harness'> & { harness: PersistedHarnessId }
+
 export interface DesktopState {
-  version: 5
+  version: 6
   projects: PersistedProject[]
   settings: AppSettings
   archivedSessions: string[]
   dismissedProjectPaths: string[]
-  schedules: AutomationScheduleRecord[]
+  schedules: PersistedSchedule[]
   /** Main-process-only ownership metadata; never returned directly over IPC. */
   scheduleOwnerships: PersistedScheduleOwnership[]
 }
@@ -35,8 +42,8 @@ export interface DesktopState {
 // Keep the established path stable; the JSON schema version below makes v4 binaries fail closed.
 export const CURRENT_DESKTOP_STATE_FILENAME = 'prime-work-state-v4.json'
 export const LEGACY_DESKTOP_STATE_FILENAME = 'prime-work-state.json'
-const CURRENT_DESKTOP_STATE_VERSION = 5 as const
-type SupportedDesktopStateVersion = 1 | 2 | 3 | 4 | typeof CURRENT_DESKTOP_STATE_VERSION
+const CURRENT_DESKTOP_STATE_VERSION = 6 as const
+type SupportedDesktopStateVersion = 1 | 2 | 3 | 4 | 5 | typeof CURRENT_DESKTOP_STATE_VERSION
 
 export class StateCompatibilityError extends Error {
   constructor(message: string) {
@@ -125,21 +132,18 @@ export function defaultSettings(): AppSettings {
     showReasoningSummaries: true,
     showToolCalls: true,
     messageEnterAction: 'queue',
-    runtimePaths: { prime: '', omp: '', pi: '' },
-    enabledHarnesses: ['omp', 'prime', 'pi'],
+    runtimePaths: { prime: '', pi: '' },
+    enabledHarnesses: ['prime', 'pi'],
     telemetry: false,
     askUserEnabled: false,
     browserEnabled: true,
     computerUseEnabled: false,
     disabledProviders: [],
     disabledModels: [],
-    ompDisabledProviders: [],
-    ompDisabledModels: [],
     piDisabledProviders: [],
     piDisabledModels: [],
-    lastSelectedModels: { prime: '', omp: '', pi: '' },
-    activeHarness: 'omp',
-    ompApprovalMode: 'inherit',
+    lastSelectedModels: { prime: '', pi: '' },
+    activeHarness: 'pi',
     petEnabled: true,
     petId: 'orb',
     petSize: 75,
@@ -162,8 +166,9 @@ function defaultState(): DesktopState {
 }
 
 /** Versions 1 and 2 predate harness scoping, so only an absent value migrates to Prime. */
-function parseHarness(value: unknown, preHarnessState: boolean): HarnessId | null {
-  if (value === 'prime' || value === 'omp' || value === 'pi') return value
+function parseHarness(value: unknown, preHarnessState: boolean): PersistedHarnessId | null {
+  if (value === 'omp') return value
+  if (value === 'prime' || value === 'pi') return value
   return preHarnessState && value === undefined ? 'prime' : null
 }
 
@@ -237,16 +242,16 @@ function parseSettings(value: unknown, legacyState = false): AppSettings {
   const runtimePaths = isRecord(value.runtimePaths)
     ? {
         prime: parseRuntimePath(value.runtimePaths.prime, defaults.runtimePaths.prime),
-        omp: parseRuntimePath(value.runtimePaths.omp, defaults.runtimePaths.omp),
         pi: parseRuntimePath(value.runtimePaths.pi, defaults.runtimePaths.pi),
       }
     : defaults.runtimePaths
   const enabledHarnesses = Array.isArray(value.enabledHarnesses)
-    ? [...new Set(value.enabledHarnesses.filter((item): item is HarnessId => item === 'prime' || item === 'omp' || item === 'pi'))]
+    ? [...new Set(value.enabledHarnesses.filter((item): item is HarnessId => HARNESS_IDS.includes(item as HarnessId)))]
     : defaults.enabledHarnesses
   const usableHarnesses = enabledHarnesses.length ? enabledHarnesses : defaults.enabledHarnesses
-  const activeHarness = value.activeHarness === 'prime' || value.activeHarness === 'omp' || value.activeHarness === 'pi'
+  const activeHarness = value.activeHarness === 'prime' || value.activeHarness === 'pi'
     ? value.activeHarness as HarnessId
+    : value.activeHarness === 'omp' ? 'pi'
     : legacyState ? 'prime' : defaults.activeHarness
   const parseLastSelectedModel = (model: unknown, fallback: string): string => (
     typeof model === 'string' && model.length <= 385 && (!model || /^[a-z0-9][a-z0-9._-]{0,127}\/[a-z0-9._:/+-]{1,256}$/i.test(model))
@@ -256,7 +261,6 @@ function parseSettings(value: unknown, legacyState = false): AppSettings {
   const lastSelectedModels = isRecord(value.lastSelectedModels)
     ? {
         prime: parseLastSelectedModel(value.lastSelectedModels.prime, defaults.lastSelectedModels.prime),
-        omp: parseLastSelectedModel(value.lastSelectedModels.omp, defaults.lastSelectedModels.omp),
         pi: parseLastSelectedModel(value.lastSelectedModels.pi, defaults.lastSelectedModels.pi),
       }
     : defaults.lastSelectedModels
@@ -294,17 +298,12 @@ function parseSettings(value: unknown, legacyState = false): AppSettings {
       ? [...new Set(value.disabledProviders.filter((item): item is string => typeof item === 'string' && /^[a-z0-9][a-z0-9._-]{0,127}$/i.test(item)))].slice(0, 128)
       : defaults.disabledProviders,
     disabledModels: parseDisabledModels(value.disabledModels, defaults.disabledModels),
-    ompDisabledProviders: Array.isArray(value.ompDisabledProviders)
-      ? [...new Set(value.ompDisabledProviders.filter((item): item is string => typeof item === 'string' && /^[a-z0-9][a-z0-9._-]{0,127}$/i.test(item)))].slice(0, 256)
-      : defaults.ompDisabledProviders,
-    ompDisabledModels: parseDisabledModels(value.ompDisabledModels, defaults.ompDisabledModels),
     piDisabledProviders: Array.isArray(value.piDisabledProviders)
       ? [...new Set(value.piDisabledProviders.filter((item): item is string => typeof item === 'string' && /^[a-z0-9][a-z0-9._-]{0,127}$/i.test(item)))].slice(0, 256)
       : defaults.piDisabledProviders,
     piDisabledModels: parseDisabledModels(value.piDisabledModels, defaults.piDisabledModels),
     lastSelectedModels,
     activeHarness,
-    ompApprovalMode: value.ompApprovalMode === 'inherit' || value.ompApprovalMode === 'always-ask' || value.ompApprovalMode === 'write' || value.ompApprovalMode === 'yolo' ? value.ompApprovalMode : defaults.ompApprovalMode,
     petEnabled: typeof value.petEnabled === 'boolean' ? value.petEnabled : defaults.petEnabled,
     petId: boundedString(value.petId, 128) && /^[a-z0-9][a-z0-9._/-]{0,127}$/i.test(value.petId) ? value.petId : defaults.petId,
     petSize: Number.isInteger(value.petSize) && (value.petSize as number) >= 50 && (value.petSize as number) <= 125 ? value.petSize as number : defaults.petSize,
@@ -383,7 +382,7 @@ function parseScheduleRun(value: unknown): ScheduleRunRecord | null {
   }
 }
 
-function parseSchedule(value: unknown, preHarnessState: boolean): AutomationScheduleRecord | null {
+function parseSchedule(value: unknown, preHarnessState: boolean): PersistedSchedule | null {
   if (!isRecord(value) || value.schemaVersion !== 1 || !boundedString(value.id, 256)) return null
   if (!Number.isSafeInteger(value.revision) || Number(value.revision) < 1 || !boundedString(value.title, 200) || !boundedString(value.prompt, 1024 * 1024)) return null
   const target = parseScheduleTarget(value.target)
@@ -393,6 +392,8 @@ function parseSchedule(value: unknown, preHarnessState: boolean): AutomationSche
   if (!target || !timing || !execution || !harness || !SCHEDULE_STATUSES.has(String(value.status))) return null
   if ((value.createdBy !== 'user' && value.createdBy !== 'agent') || !validDate(value.createdAt) || !validDate(value.updatedAt)) return null
   const runs = Array.isArray(value.runs) ? value.runs.map(parseScheduleRun).filter((run): run is ScheduleRunRecord => run !== null) : []
+  const status = value.status === 'active' && harness === 'omp' ? 'paused' : value.status as AutomationScheduleRecord['status']
+  const retiredActiveSchedule = value.status === 'active' && harness === 'omp'
   return {
     schemaVersion: 1,
     id: value.id,
@@ -403,12 +404,14 @@ function parseSchedule(value: unknown, preHarnessState: boolean): AutomationSche
     target,
     timing,
     execution,
-    status: value.status as AutomationScheduleRecord['status'],
+    status,
     createdBy: value.createdBy,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
-    nextRunAt: validDate(value.nextRunAt) ? value.nextRunAt : undefined,
-    blockedReason: boundedString(value.blockedReason, 4_000, true) ? value.blockedReason : undefined,
+    nextRunAt: retiredActiveSchedule ? undefined : validDate(value.nextRunAt) ? value.nextRunAt : undefined,
+    blockedReason: retiredActiveSchedule
+      ? 'This archived schedule is preserved without execution.'
+      : boundedString(value.blockedReason, 4_000, true) ? value.blockedReason : undefined,
     runs,
   }
 }
@@ -430,7 +433,7 @@ function parseStateVersion(value: Record<string, unknown>, statePath: string): S
   if (!Number.isSafeInteger(value.version)) throw new Error('Desktop state is missing a supported integer schema version')
   const version = Number(value.version)
   if (version > CURRENT_DESKTOP_STATE_VERSION) throw new UnsupportedStateVersionError(version, statePath)
-  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== CURRENT_DESKTOP_STATE_VERSION) {
+  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5 && version !== CURRENT_DESKTOP_STATE_VERSION) {
     throw new Error(`Desktop state schema version ${version} is not supported`)
   }
   return version
@@ -445,7 +448,7 @@ function parseState(value: unknown, statePath: string): { sourceVersion: Support
   // the only project records allowed to inherit Prime; schedules first existed
   // in v2, so a v1 schedule is never eligible for legacy authority migration.
   const projects = Array.isArray(value.projects) ? value.projects.map((project) => parseProject(project, preHarnessProjectState)).filter((item): item is PersistedProject => item !== null) : []
-  const schedules = version !== 1 && Array.isArray(value.schedules) ? value.schedules.map((schedule) => parseSchedule(schedule, preHarnessScheduleState)).filter((item): item is AutomationScheduleRecord => item !== null).slice(0, 500) : []
+  const schedules = version !== 1 && Array.isArray(value.schedules) ? value.schedules.map((schedule) => parseSchedule(schedule, preHarnessScheduleState)).filter((item): item is PersistedSchedule => item !== null).slice(0, 500) : []
   const state: DesktopState = {
     version: CURRENT_DESKTOP_STATE_VERSION,
     projects,
@@ -531,10 +534,10 @@ export class JsonStateStore {
       this.state = parsed.state
       if (this.platform === 'win32' && legacyFilePath) {
         if (sourceKind === 'legacy') this.scheduleWindowsLegacyMigration(rawState)
-        else this.scheduleWindowsLegacyProtection()
+        else this.scheduleWindowsLegacyProtection(parsed.sourceVersion !== CURRENT_DESKTOP_STATE_VERSION)
         return
       }
-      const needsPersist = sourceKind === 'legacy' || (legacyFilePath !== undefined && parsed.sourceVersion !== CURRENT_DESKTOP_STATE_VERSION)
+      const needsPersist = sourceKind === 'legacy' || parsed.sourceVersion !== CURRENT_DESKTOP_STATE_VERSION
       if (needsPersist || legacyFilePath !== undefined) {
         this.scheduleInitialization(needsPersist, legacyFilePath !== undefined, 'GooeyPi desktop state migration could not be completed')
       }
@@ -711,11 +714,11 @@ export class JsonStateStore {
     }
   }
 
-  private scheduleWindowsLegacyProtection(): void {
-    this.scheduleInitializationOperation(
-      () => this.ensureWindowsLegacyProtection(true),
-      'GooeyPi could not protect v4 state from a downgraded Windows binary',
-    )
+  private scheduleWindowsLegacyProtection(persistCurrentStateUpgrade = false): void {
+    this.scheduleInitializationOperation(async () => {
+      await this.ensureWindowsLegacyProtection(true)
+      if (persistCurrentStateUpgrade) await this.persist(this.state)
+    }, 'GooeyPi could not protect v4 state from a downgraded Windows binary or upgrade its current state')
   }
 
   private scheduleWindowsRecoveryInitialization(

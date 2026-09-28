@@ -36,14 +36,14 @@ describe('RepositoryUseGate', () => {
     const gate = new RepositoryUseGate()
     const terminal = await gate.beginWorkspaceUse('/repo', { kind: 'terminal', terminalId: 'terminal-1' })
     const prime = await gate.beginWorkspaceUse('/repo', { kind: 'agent', harness: 'prime', runtimeId: 'prime-runtime' })
-    const omp = await gate.beginWorkspaceUse('/repo', { kind: 'agent', harness: 'omp', runtimeId: 'omp-runtime' })
+    const pi = await gate.beginWorkspaceUse('/repo', { kind: 'agent', harness: 'pi', runtimeId: 'pi-runtime' })
 
     await expect(gate.runBranchCheckout('/repo', async () => 'changed')).rejects.toMatchObject({
-      message: 'Branch checkout is unavailable while 1 terminal and 2 agents (prime, omp) are using this folder. Close the terminal or wait for the agent to finish.',
+      message: 'Branch checkout is unavailable while 1 terminal and 2 agents (prime, pi) are using this folder. Close the terminal or wait for the agent to finish.',
     })
     terminal.release()
     prime.release()
-    omp.release()
+    pi.release()
   })
 
   it('holds new workspace users until a branch checkout finishes', async () => {

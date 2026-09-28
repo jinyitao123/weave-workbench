@@ -144,9 +144,8 @@ export type PiModelCatalogOptions = CliModelCatalogOptions
 /**
  * Model catalog service for the pi harness, backed by the short-lived
  * `get_available_models` RPC probe instead of a CLI JSON list. Satisfies the
- * same `ModelCatalogProvider` surface as `PrimeProviderService` and
- * `OmpModelCatalogService`, so `AgentRpcManager` and the `providers:catalog`
- * IPC path can consume any of them.
+ * same `ModelCatalogProvider` surface as `PrimeProviderService`, so
+ * `AgentRpcManager` and the `providers:catalog` IPC path can consume it.
  *
  * The probe output is untrusted: it is byte-bounded, time-bounded, spawned
  * with an argv array and a sanitized environment, and every field is

@@ -194,14 +194,14 @@ describe('persisted settings parsing', () => {
     expect(loadState('not a state').settings).toEqual(defaultSettings())
   })
 
-  it('keeps only absolute, bounded runtime paths and known harness identifiers', () => {
+  it('drops retired OMP settings and migrates an OMP active harness selection to Pi', () => {
     const { settings } = loadState({
       version: 3,
-      settings: { runtimePaths: { prime: '/usr/local/bin/prime', omp: 'omp', pi: '/'.padEnd(4_097, 'x') }, enabledHarnesses: ['omp', 'omp', 'ollama'], activeHarness: 'ollama' },
+      settings: { runtimePaths: { prime: '/usr/local/bin/prime', omp: '/usr/local/bin/omp', pi: '/'.padEnd(4_097, 'x') }, enabledHarnesses: ['omp', 'omp', 'ollama'], activeHarness: 'omp' },
     })
-    expect(settings.runtimePaths).toEqual({ prime: '/usr/local/bin/prime', omp: '', pi: '' })
-    expect(settings.enabledHarnesses).toEqual(['omp'])
-    expect(settings.activeHarness).toBe('omp')
+    expect(settings.runtimePaths).toEqual({ prime: '/usr/local/bin/prime', pi: '' })
+    expect(settings.enabledHarnesses).toEqual(['prime', 'pi'])
+    expect(settings.activeHarness).toBe('pi')
   })
 
   it('defaults background behavior off and preserves valid opt-in values', () => {
@@ -233,8 +233,6 @@ describe('persisted settings parsing', () => {
     })
     expect(settings.disabledProviders).toEqual(['openai'])
     expect(settings.disabledModels).toEqual(['openai/gpt-5'])
-    expect(settings.ompDisabledProviders).toEqual(['anthropic'])
-    expect(settings.ompDisabledModels).toEqual([])
     expect(settings.piDisabledProviders).toEqual([])
     expect(settings.piDisabledModels).toEqual(['openai/gpt-5'])
   })

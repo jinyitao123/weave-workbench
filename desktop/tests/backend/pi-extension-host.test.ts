@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { OmpExtensionApi as BrowserExtensionApi } from '../../assets/extensions/omp-work-browser'
-import type { OmpExtensionApi as ScheduleExtensionApi } from '../../assets/extensions/omp-work-schedules'
-import type { OmpExtensionApi as AskUserExtensionApi } from '../../assets/extensions/omp-work-ask-user'
-import type { OmpExtensionApi as CollaborationExtensionApi } from '../../assets/extensions/omp-work-collaboration'
+import type { WorkExtensionApi as BrowserExtensionApi } from '../../assets/extensions/gooeypi-work-browser'
+import type { WorkExtensionApi as ScheduleExtensionApi } from '../../assets/extensions/gooeypi-work-schedules'
+import type { WorkExtensionApi as AskUserExtensionApi } from '../../assets/extensions/gooeypi-work-ask-user'
+import type { WorkExtensionApi as CollaborationExtensionApi } from '../../assets/extensions/gooeypi-work-collaboration'
 
 /**
- * Base pi host simulation: unlike OMP, pi injects no `pi.typebox` shim.
+ * Pi host simulation for shared GooeyPi extensions.
  * Extensions must fall back to resolving schema builders from the host's
  * `typebox` package (pi's loader aliases that specifier to its bundled copy;
  * under vitest it resolves from node_modules) and register the same tool
@@ -48,14 +48,14 @@ async function loadBrowserExtension() {
   vi.resetModules()
   vi.stubEnv('PRIME_WORK_BROWSER_URL', 'http://127.0.0.1:1/')
   vi.stubEnv('PRIME_WORK_BROWSER_TOKEN', 'token')
-  return (await import('../../assets/extensions/omp-work-browser')).default
+  return (await import('../../assets/extensions/gooeypi-work-browser')).default
 }
 
 async function loadScheduleExtension() {
   vi.resetModules()
   vi.stubEnv('PRIME_WORK_SCHEDULE_URL', 'http://127.0.0.1:1/')
   vi.stubEnv('PRIME_WORK_SCHEDULE_TOKEN', 'token')
-  return (await import('../../assets/extensions/omp-work-schedules')).default
+  return (await import('../../assets/extensions/gooeypi-work-schedules')).default
 }
 
 describe('extensions on a base pi host (no injected pi.typebox)', () => {
@@ -95,7 +95,7 @@ describe('extensions on a base pi host (no injected pi.typebox)', () => {
     vi.resetModules()
     vi.stubEnv('PRIME_WORK_BROWSER_URL', undefined as unknown as string)
     vi.stubEnv('PRIME_WORK_BROWSER_TOKEN', undefined as unknown as string)
-    const factory = (await import('../../assets/extensions/omp-work-browser')).default
+    const factory = (await import('../../assets/extensions/gooeypi-work-browser')).default
     const { tools, pi } = piHost()
     await factory(pi as unknown as BrowserExtensionApi)
     expect(tools).toHaveLength(0)
@@ -122,7 +122,7 @@ describe('extensions on a base pi host (no injected pi.typebox)', () => {
 
   it('ask-user extension registers ask_user with host-resolved schemas', async () => {
     vi.resetModules()
-    const factory = (await import('../../assets/extensions/omp-work-ask-user')).default
+    const factory = (await import('../../assets/extensions/gooeypi-work-ask-user')).default
     const { tools, pi } = piHost()
     await factory(pi as unknown as AskUserExtensionApi)
     expect(tools).toHaveLength(1)
@@ -138,7 +138,7 @@ describe('extensions on a base pi host (no injected pi.typebox)', () => {
     vi.resetModules()
     vi.stubEnv('GOOEYPI_COLLABORATION_URL', 'http://127.0.0.1:1/')
     vi.stubEnv('GOOEYPI_COLLABORATION_TOKEN', 'token')
-    const factory = (await import('../../assets/extensions/omp-work-collaboration')).default
+    const factory = (await import('../../assets/extensions/gooeypi-work-collaboration')).default
     const { tools, pi } = piHost()
     await factory(pi as unknown as CollaborationExtensionApi)
     expect(tools.map((tool) => tool.name)).toEqual(['gooeypi_session_list', 'gooeypi_session_models', 'gooeypi_session_create', 'gooeypi_session_read', 'gooeypi_session_send', 'gooeypi_session_wait'])

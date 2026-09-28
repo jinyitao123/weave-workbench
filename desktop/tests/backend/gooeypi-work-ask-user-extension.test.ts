@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import askUser, { type OmpExtensionApi } from '../../assets/extensions/omp-work-ask-user'
+import askUser, { type WorkExtensionApi } from '../../assets/extensions/gooeypi-work-ask-user'
 
 interface ToolContext {
   hasUI: boolean
@@ -29,13 +29,13 @@ function fixture() {
     typebox: { Type: { Object: schema('object'), String: schema('string'), Array: schema('array') } },
     registerTool: (tool: RegisteredTool) => tools.push(tool),
   }
-  askUser(pi as unknown as OmpExtensionApi)
+  askUser(pi as unknown as WorkExtensionApi)
   const tool = tools[0]
   if (!tool) throw new Error('ask_user was not registered')
   return { tools, tool }
 }
 
-describe('omp-work-ask-user extension', () => {
+describe('gooeypi-work-ask-user extension', () => {
   it('registers a standalone sequential ask_user tool', () => {
     const { tools, tool } = fixture()
     expect(tools).toHaveLength(1)
@@ -44,7 +44,7 @@ describe('omp-work-ask-user extension', () => {
     expect(tool.parameters).toBeDefined()
   })
 
-  it('groups OMP select requests and decodes app answers with context', async () => {
+  it('groups Pi select requests and decodes app answers with context', async () => {
     const { tool } = fixture()
     const select = vi.fn()
       .mockResolvedValueOnce(JSON.stringify({ answer: 'Beta', answerSource: 'option', context: 'For the pilot' }))

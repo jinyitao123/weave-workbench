@@ -275,7 +275,7 @@ export type SessionMetadataReader = (filePath: string, knownStat?: Stats) => Pro
  * the new byte range plus the retained tail, which is verified byte-for-byte
  * before the parse resumes. Truncation, tail mismatch, or a same-size rewrite
  * fall back to a full re-read. `reservedHeaderBytes` excludes a fixed-width
- * mutable prefix (for example the OMP title slot) from the incremental parse:
+ * mutable prefix from the incremental parse:
  * the caller re-reads that prefix itself on every snapshot.
  */
 export function createIncrementalMetadataReader<Accumulator extends object>(

@@ -110,7 +110,7 @@ function silentWav(): Uint8Array {
 }
 
 function harnessId(value: unknown): HarnessId {
-  if (value !== 'prime' && value !== 'omp' && value !== 'pi') throw new TypeError('Invalid voice harness')
+  if (value !== 'prime' && value !== 'pi') throw new TypeError('Invalid voice harness')
   return value
 }
 
@@ -272,7 +272,7 @@ class VoiceSecretStore {
 function orchestrationInstructions(harness: HarnessId): string {
   const harnessName = HARNESSES[harness].agentName
   return [
-    'You are the voice orchestrator inside GooeyPi, a desktop client for the Prime Agent, OMP, and Pi harnesses.',
+    'You are the voice orchestrator inside GooeyPi, a desktop client for Prime Agent and Pi Work.',
     `This voice session is locked to the currently selected ${harnessName} harness. Never switch harnesses.`,
     'Be concise and conversational. Answer general questions directly.',
     'Use get_local_context for the local date, time, time zone, approximate location, locale, or selected harness. Use search_web for current information. Use list_projects to resolve a project within the selected harness. Use list_models to resolve a requested model and its supported reasoning levels.',
@@ -475,7 +475,6 @@ export class VoiceService {
     const settings = this.options.settings()
     const disabled: Record<HarnessId, string[]> = {
       prime: settings.disabledProviders,
-      omp: settings.ompDisabledProviders,
       pi: settings.piDisabledProviders,
     }
     return new Set(disabled[harness])
@@ -485,7 +484,6 @@ export class VoiceService {
     const settings = this.options.settings()
     const disabled: Record<HarnessId, string[]> = {
       prime: settings.disabledModels,
-      omp: settings.ompDisabledModels,
       pi: settings.piDisabledModels,
     }
     return new Set(disabled[harness])
