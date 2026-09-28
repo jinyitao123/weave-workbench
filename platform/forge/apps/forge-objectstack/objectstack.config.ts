@@ -2,6 +2,7 @@ import { defineStack } from '@objectstack/spec';
 import { AutomationServicePlugin } from '@objectstack/service-automation';
 import { MessagingServicePlugin } from '@objectstack/service-messaging';
 import { ApprovalsServicePlugin } from '@objectstack/plugin-approvals';
+import { SharingServicePlugin } from '@objectstack/plugin-sharing';
 import { MCPServerPlugin } from '@objectstack/mcp';
 import { RecordChangeTriggerPlugin } from '@objectstack/trigger-record-change';
 import { ApprovalWorkbenchContextPlugin } from './src/plugins/approval-workbench-context.plugin.js';
@@ -9,6 +10,8 @@ import { ApprovalResubmitGuardPlugin } from './src/plugins/approval-resubmit-gua
 import { ContractRevisionMaterialPlugin } from './src/plugins/contract-revision-material.js';
 import { WeaveRunEventPlugin } from './src/plugins/weave-run-event.plugin.js';
 import { WorkbenchOwnedMaterialPlugin } from './src/plugins/workbench-owned-material.plugin.js';
+import { ProjectMemberSharingPlugin } from './src/plugins/project-member-sharing.plugin.js';
+import { ServiceOrderReferenceSharingPlugin } from './src/plugins/service-order-reference-sharing.plugin.js';
 import { forgeApplicationPlugins } from './src/apps/index.js';
 import { sharedForgeCorePlugin } from './src/apps/shared-core.js';
 export default defineStack({
@@ -18,11 +21,12 @@ export default defineStack({
   objects: [],
   apps: [],
   pages: [],
-  requires: ['automation', 'triggers', 'queue', 'approvals', 'messaging'],
+  requires: ['automation', 'triggers', 'queue', 'approvals', 'messaging', 'sharing'],
   plugins: [
     new AutomationServicePlugin(),
     new MessagingServicePlugin(),
     new ApprovalsServicePlugin({ recordReaderVisibleObjects: ['forge_sales_contract'] }),
+    new SharingServicePlugin(),
     new ApprovalResubmitGuardPlugin({
       requiredMaterialObjects: ['forge_sales_contract'],
       verifierServiceName: 'forge.contract.revision.material',
@@ -35,5 +39,7 @@ export default defineStack({
     new ContractRevisionMaterialPlugin(),
     sharedForgeCorePlugin,
     ...forgeApplicationPlugins,
+    new ProjectMemberSharingPlugin(),
+    new ServiceOrderReferenceSharingPlugin(),
   ],
 });

@@ -1306,7 +1306,11 @@ const serviceOrderTransitionBody = (from: string, to: string, extraSource = '') 
   source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id);
 const record = ctx.record;
+const actor = String(ctx.session && ctx.session.userId || '').trim();
+const organizationId = String((ctx.session && ctx.session.organizationId) || (ctx.user && ctx.user.organizationId) || '').trim();
+if (!actor || !organizationId) throw new Error('无法确认当前服务员工及组织');
 if (ctx.recordLoadDenied === true || !id || !record) throw new Error('当前服务工单不存在或不可访问');
+if (String(record.organization_id || '') !== organizationId) throw new Error('服务工单不属于当前组织');
 if (record.status !== '${from}') throw new Error('工单状态已变化，请刷新后重试');
 const now = new Date().toISOString();
 const patch = { id, status: '${to}' };
@@ -1316,9 +1320,78 @@ return { id, status: '${to}' };
 `,
 });
 
+const serviceOrderDispatchActorSource = `
+const actor = String(ctx.session && ctx.session.userId || '').trim();
+const organizationId = String((ctx.session && ctx.session.organizationId) || (ctx.user && ctx.user.organizationId) || '').trim();
+const id = String(ctx.recordId || (ctx.record && ctx.record.id) || '').trim();
+const record = ctx.record;
+if (!actor || !organizationId) throw new Error('无法确认当前服务员工及组织');
+if (ctx.recordLoadDenied === true || !id || !record) throw new Error('当前服务工单不存在或不可访问');
+if (String(record.organization_id || '') !== organizationId) throw new Error('服务工单不属于当前组织');
+if (record.status !== 'pending_dispatch') throw new Error('工单状态已变化，请刷新后重试');
+// This Action is gated by forge_service_manager; supervisors may dispatch any in-org queue item.
+`;
+
+const serviceOrderDispatchEngineerSource = `
+const positionRows = await ctx.api.object('sys_position').find({
+  where: { organization_id: organizationId },
+  fields: ['id', 'name', 'active', 'organization_id'],
+});
+const servicePositions = positionRows.filter(position => position.name === 'after_sales_operator' && position.active !== false);
+const servicePositionKeys = new Set(servicePositions.flatMap(position => [String(position.id || ''), String(position.name || '')]));
+const nowMs = Date.now();
+const effectiveAt = assignment => {
+  const from = assignment.valid_from ? Date.parse(String(assignment.valid_from)) : Number.NEGATIVE_INFINITY;
+  const until = assignment.valid_until ? Date.parse(String(assignment.valid_until)) : Number.POSITIVE_INFINITY;
+  return !Number.isNaN(from) && !Number.isNaN(until) && from <= nowMs && nowMs < until;
+};
+const [assignments, members, users] = await Promise.all([
+  ctx.api.object('sys_user_position').find({
+    where: { organization_id: organizationId },
+    fields: ['user_id', 'position', 'organization_id', 'valid_from', 'valid_until'],
+  }),
+  ctx.api.object('sys_member').find({
+    where: { organization_id: organizationId },
+    fields: ['user_id', 'organization_id', 'role'],
+  }),
+  ctx.api.object('sys_user').find({ where: {}, fields: ['id', 'name', 'banned'] }),
+]);
+const assignedUserIds = new Set(assignments
+  .filter(assignment => String(assignment.organization_id || '') === organizationId &&
+    servicePositionKeys.has(String(assignment.position || '')) && effectiveAt(assignment))
+  .map(assignment => String(assignment.user_id || '').trim())
+  .filter(Boolean));
+const memberUserIds = new Set(members
+  .filter(member => String(member.organization_id || '') === organizationId && member.role === 'member')
+  .map(member => String(member.user_id || '').trim())
+  .filter(Boolean));
+const engineers = users
+  .filter(user => user.id && assignedUserIds.has(String(user.id)) && memberUserIds.has(String(user.id)) && user.banned !== true)
+  .map(user => ({ id: String(user.id), name: String(user.name || '').trim() }))
+  .filter(user => user.name)
+  .sort((left, right) => left.name.localeCompare(right.name));
+`;
+
+export const ServiceOrderDispatchEngineers = defineAction({
+  name: 'service_order_dispatch_engineers', label: '查询可派服务工程师', objectName: 'forge_service_order', icon: 'users',
+  locations: [], requiredPermissions: ['forge_service_manager'],
+  body: {
+    language: 'js', capabilities: ['api.read'],
+    source: serviceOrderDispatchActorSource + serviceOrderDispatchEngineerSource + `
+return { engineers };
+`,
+  },
+});
+
+export const ServiceOrderManagerContext = defineAction({
+  name: 'service_order_manager_context', label: '查询售后管理权限', objectName: 'forge_service_order',
+  locations: [], requiredPermissions: ['forge_service_manager'],
+  body: { language: 'js', capabilities: ['api.read'], source: `return { canManage: true };` },
+});
+
 export const ServiceOrderCreate = defineAction({
   name: 'service_order_create', label: '创建服务工单', objectName: 'forge_service_order', icon: 'file-plus-2',
-  locations: [], refreshAfter: true, requiredPermissions: ['forge_service_operator'],
+  locations: [], refreshAfter: true, requiredPermissions: ['forge_service_manager'],
   params: [{ name: 'draft_json', label: '服务工单内容', type: 'textarea', required: true }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const actor=ctx.session&&ctx.session.userId,organizationId=String((ctx.session&&ctx.session.organizationId)||(ctx.user&&ctx.user.organizationId)||'');
@@ -1345,7 +1418,7 @@ return{id,status:'pending_acceptance'};
 
 export const ServiceOrderAccept = defineAction({
   name: 'service_order_accept', label: '受理', objectName: 'forge_service_order', icon: 'circle-check', locations: [...locations], order: 10,
-  requiredPermissions: ['forge_service_operator'],
+  requiredPermissions: ['forge_service_manager'],
   visible: `record.status == 'pending_acceptance'`, confirmText: '确认受理该服务工单并进入派工？', refreshAfter: true,
   successMessage: '服务工单已受理，等待派工',
   body: serviceOrderTransitionBody('pending_acceptance', 'pending_dispatch', `patch.accepted_at = now; patch.next_step = '派工';`),
@@ -1353,25 +1426,39 @@ export const ServiceOrderAccept = defineAction({
 
 export const ServiceOrderDispatch = defineAction({
   name: 'service_order_dispatch', label: '派工', objectName: 'forge_service_order', icon: 'route', locations: [...locations], order: 20,
-  requiredPermissions: ['forge_service_operator'],
+  requiredPermissions: ['forge_service_manager'],
   visible: `record.status == 'pending_dispatch'`, refreshAfter: true,
   successMessage: '服务工单已派工，等待工程师接单',
   params: [
-    { field: 'engineer_name', objectOverride: 'forge_service_order', required: true },
+    { field: 'engineer_id', objectOverride: 'forge_service_order', required: true },
     { field: 'scheduled_at', objectOverride: 'forge_service_order' },
     { field: 'dispatch_note', objectOverride: 'forge_service_order', required: true },
   ],
-  body: serviceOrderTransitionBody('pending_dispatch', 'pending_receive', `
-const engineerName = String(ctx.input.engineer_name || '').trim();
-const note = String(ctx.input.dispatch_note || '').trim();
-if (!engineerName) throw new Error('请选择或填写服务工程师');
+  body: {
+    language: 'js', capabilities: ['api.read', 'api.write'],
+    source: serviceOrderDispatchActorSource + serviceOrderDispatchEngineerSource + `
+const engineerId = String((ctx.input && ctx.input.engineer_id) || '').trim();
+const engineer = engineers.find(user => user.id === engineerId);
+const note = String((ctx.input && ctx.input.dispatch_note) || '').trim();
+if (!engineer) throw new Error('请选择当前组织中有效任职的售后工程师');
 if (!note) throw new Error('派工说明不能为空');
-patch.engineer_name = engineerName;
-patch.scheduled_at = ctx.input.scheduled_at || null;
-patch.dispatch_note = note;
-patch.dispatched_at = now;
-patch.next_step = '工程师接单';
-`),
+const now = new Date().toISOString();
+const patch = {
+  id,
+  status: 'pending_receive',
+  owner_id: engineer.id,
+  responsible_id: engineer.id,
+  engineer_id: engineer.id,
+  engineer_name: engineer.name,
+  scheduled_at: (ctx.input && ctx.input.scheduled_at) || null,
+  dispatch_note: note,
+  dispatched_at: now,
+  next_step: '工程师接单',
+};
+await ctx.api.object('forge_service_order').update(patch);
+return { id, status: patch.status, engineer_id: engineer.id, engineer_name: engineer.name };
+`,
+  },
 });
 
 export const ServiceOrderEngineerAccept = defineAction({
@@ -1379,7 +1466,26 @@ export const ServiceOrderEngineerAccept = defineAction({
   requiredPermissions: ['forge_service_operator'],
   visible: `record.status == 'pending_receive'`, confirmText: '确认工程师已接单并开始服务？', refreshAfter: true,
   successMessage: '工程师已接单，工单进入服务中',
-  body: serviceOrderTransitionBody('pending_receive', 'in_progress', `patch.received_at = now; patch.next_step = '处理记录 / 到场签到 / 提交服务结果';`),
+  body: {
+    language: 'js', capabilities: ['api.write'],
+    source: `
+const actor = String(ctx.session && ctx.session.userId || '').trim();
+const organizationId = String((ctx.session && ctx.session.organizationId) || (ctx.user && ctx.user.organizationId) || '').trim();
+const id = String(ctx.recordId || (ctx.record && ctx.record.id) || '').trim();
+const record = ctx.record;
+if (!actor || !organizationId) throw new Error('无法确认当前服务员工及组织');
+if (ctx.recordLoadDenied === true || !id || !record) throw new Error('当前服务工单不存在或不可访问');
+if (String(record.organization_id || '') !== organizationId) throw new Error('服务工单不属于当前组织');
+if (record.status !== 'pending_receive') throw new Error('工单状态已变化，请刷新后重试');
+if (String(record.engineer_id || '') !== actor || String(record.owner_id || '') !== actor || String(record.responsible_id || '') !== actor) {
+  throw new Error('只有当前指派的服务工程师可以接单');
+}
+const now = new Date().toISOString();
+const patch = { id, status: 'in_progress', received_at: now, next_step: '处理记录 / 到场签到 / 提交服务结果' };
+await ctx.api.object('forge_service_order').update(patch);
+return { id, status: patch.status };
+`,
+  },
 });
 
 
@@ -1519,7 +1625,7 @@ export const ServiceOrderComplete = defineAction({
   name: 'service_order_complete', label: '提交服务结果', objectName: 'forge_service_order', icon: 'check-circle', locations: [...locations], order: 40,
   requiredPermissions: ['forge_service_operator'],
   visible: `record.status == 'in_progress'`, refreshAfter: true,
-  successMessage: '服务工单已完工，可继续生成报价、结算或质保卡',
+  successMessage: '服务结果已提交，后续由主管处理报价与结算',
   params: [
     { field: 'service_hours', objectOverride: 'forge_service_order' },
     { field: 'treatment_record', objectOverride: 'forge_service_order' },
@@ -1527,6 +1633,7 @@ export const ServiceOrderComplete = defineAction({
     { field: 'service_result', objectOverride: 'forge_service_order' },
   ],
   body: serviceOrderTransitionBody('in_progress', 'completed', `
+if (String(record.engineer_id || '') !== actor || String(record.owner_id || '') !== actor || String(record.responsible_id || '') !== actor) throw new Error('只有当前指派的服务工程师可以提交服务结果');
 const result = String(ctx.input.service_result || '').trim();
 const treatment = String(ctx.input.treatment_record || '').trim();
 const hours = Number(ctx.input.service_hours || 0);
@@ -1546,7 +1653,7 @@ patch.next_step = '服务报价 / 服务结算 / 质保卡';
 
 export const ServiceOrderCreateQuotation = defineAction({
   name: 'service_order_create_quotation', label: '生成服务报价', objectName: 'forge_service_order', icon: 'file-text', locations: [...locations], order: 50,
-  requiredPermissions: ['forge_service_operator'],
+  requiredPermissions: ['forge_service_manager'],
   visible: `record.status == 'completed'`, refreshAfter: true,
   successMessage: '服务报价单已生成',
   params: [
@@ -1556,6 +1663,8 @@ export const ServiceOrderCreateQuotation = defineAction({
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id); const order = ctx.record;
 if (ctx.recordLoadDenied === true || !id || !order) throw new Error('当前服务工单不存在或不可访问');
+const organizationId = String((ctx.session && ctx.session.organizationId) || (ctx.user && ctx.user.organizationId) || '').trim();
+if (!organizationId || String(order.organization_id || '') !== organizationId) throw new Error('当前服务工单不属于当前组织');
 if (order.status !== 'completed') throw new Error('仅已完工服务工单可以生成报价');
 const amount = Number(ctx.input.total_amount || 0); if (!(amount >= 0)) throw new Error('报价金额不能为负数');
 if (!ctx.input.valid_until) throw new Error('有效期不能为空');
@@ -1572,13 +1681,15 @@ return { id: quotationId, code, service_order_id: id };
 
 export const ServiceOrderCreateSettlement = defineAction({
   name: 'service_order_create_settlement', label: '生成服务结算', objectName: 'forge_service_order', icon: 'receipt-text', locations: [...locations], order: 55,
-  requiredPermissions: ['forge_service_operator'],
+  requiredPermissions: ['forge_service_manager'],
   visible: `record.status == 'completed'`, refreshAfter: true,
   successMessage: '服务结算单已生成',
   params: [{ field: 'total_amount', objectOverride: 'forge_service_settlement', required: true }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id); const order = ctx.record;
 if (ctx.recordLoadDenied === true || !id || !order) throw new Error('当前服务工单不存在或不可访问');
+const organizationId = String((ctx.session && ctx.session.organizationId) || (ctx.user && ctx.user.organizationId) || '').trim();
+if (!organizationId || String(order.organization_id || '') !== organizationId) throw new Error('当前服务工单不属于当前组织');
 if (order.status !== 'completed') throw new Error('仅已完工服务工单可以生成结算');
 const amount = Number(ctx.input.total_amount || 0); if (!(amount >= 0)) throw new Error('结算金额不能为负数');
 const actor = ctx.session && ctx.session.userId;
@@ -1594,12 +1705,14 @@ return { id: settlementId, code, service_order_id: id };
 
 export const ServiceQuotationConfirm = defineAction({
   name: 'service_quotation_confirm', label: '客户确认', objectName: 'forge_service_quotation', icon: 'circle-check', locations: [...locations], order: 10,
-  requiredPermissions: ['forge_service_operator'],
+  requiredPermissions: ['forge_service_manager'],
   visible: `record.status == 'draft' || record.status == 'pending_confirmation'`, confirmText: '确认客户已接受这份服务报价？', refreshAfter: true,
   successMessage: '服务报价已确认',
   body: { language: 'js', capabilities: ['api.write'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id); const record = ctx.record;
 if (ctx.recordLoadDenied === true || !id || !record) throw new Error('当前服务报价不存在或不可访问');
+const organizationId = String((ctx.session && ctx.session.organizationId) || (ctx.user && ctx.user.organizationId) || '').trim();
+if (!organizationId || String(record.organization_id || '') !== organizationId) throw new Error('当前服务报价不属于当前组织');
 if (!['draft','pending_confirmation'].includes(record.status)) throw new Error('当前服务报价状态不能确认');
 await ctx.api.object('forge_service_quotation').update({ id, status: 'confirmed' });
 return { id, status: 'confirmed' };
@@ -1608,12 +1721,14 @@ return { id, status: 'confirmed' };
 
 export const ServiceQuotationCreateSettlement = defineAction({
   name: 'service_quotation_create_settlement', label: '转服务结算', objectName: 'forge_service_quotation', icon: 'receipt-text', locations: [...locations], order: 20,
-  requiredPermissions: ['forge_service_operator'],
+  requiredPermissions: ['forge_service_manager'],
   visible: `record.status == 'confirmed'`, refreshAfter: true,
   successMessage: '服务结算单已生成',
   body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id); const quote = ctx.record;
 if (ctx.recordLoadDenied === true || !id || !quote) throw new Error('当前服务报价不存在或不可访问');
+const organizationId = String((ctx.session && ctx.session.organizationId) || (ctx.user && ctx.user.organizationId) || '').trim();
+if (!organizationId || String(quote.organization_id || '') !== organizationId) throw new Error('当前服务报价不属于当前组织');
 if (quote.status !== 'confirmed') throw new Error('仅已确认服务报价可以转结算');
 const existing = await ctx.api.object('forge_service_settlement').find({ where: { quotation_id: id } });
 if (existing.length) throw new Error('该服务报价已生成服务结算');
@@ -1629,12 +1744,14 @@ return { id: settlementId, code, quotation_id: id };
 
 export const ServiceSettlementConfirm = defineAction({
   name: 'service_settlement_confirm', label: '确认结算', objectName: 'forge_service_settlement', icon: 'circle-check', locations: [...locations], order: 10,
-  requiredPermissions: ['forge_service_operator'],
+  requiredPermissions: ['forge_service_manager'],
   visible: `record.status == 'draft' || record.status == 'customer_confirming'`, confirmText: '确认服务结算金额并进入财务应收？', refreshAfter: true,
   successMessage: '服务结算已确认',
   body: { language: 'js', capabilities: ['api.write'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id); const record = ctx.record;
 if (ctx.recordLoadDenied === true || !id || !record) throw new Error('当前服务结算不存在或不可访问');
+const organizationId = String((ctx.session && ctx.session.organizationId) || (ctx.user && ctx.user.organizationId) || '').trim();
+if (!organizationId || String(record.organization_id || '') !== organizationId) throw new Error('当前服务结算不属于当前组织');
 if (!['draft','customer_confirming'].includes(record.status)) throw new Error('当前服务结算状态不能确认');
 await ctx.api.object('forge_service_settlement').update({ id, status: 'confirmed' });
 return { id, status: 'confirmed' };
@@ -1643,13 +1760,15 @@ return { id, status: 'confirmed' };
 
 export const ServiceSettlementCreateReceivable = defineAction({
   name: 'service_settlement_create_receivable', label: '生成应收', objectName: 'forge_service_settlement', icon: 'wallet-cards', locations: [...locations], order: 20,
-  requiredPermissions: ['forge_service_operator'],
+  requiredPermissions: ['forge_service_manager'],
   visible: `record.status == 'confirmed'`, refreshAfter: true,
   successMessage: '服务应收已生成',
   params: [{ field: 'due_on', objectOverride: 'forge_accounts_receivable', required: true }],
   body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id); const settlement = ctx.record;
 if (ctx.recordLoadDenied === true || !id || !settlement) throw new Error('当前服务结算不存在或不可访问');
+const organizationId = String((ctx.session && ctx.session.organizationId) || (ctx.user && ctx.user.organizationId) || '').trim();
+if (!organizationId || String(settlement.organization_id || '') !== organizationId) throw new Error('当前服务结算不属于当前组织');
 if (settlement.status !== 'confirmed') throw new Error('仅已确认服务结算可以生成应收');
 if (!ctx.input.due_on) throw new Error('应收到期日不能为空');
 const actor = ctx.session && ctx.session.userId;
@@ -1674,7 +1793,10 @@ export const ServiceOrderCreateWarranty = defineAction({
 const id = ctx.recordId || (ctx.record && ctx.record.id); const order = ctx.record;
 if (ctx.recordLoadDenied === true || !id || !order) throw new Error('当前服务工单不存在或不可访问');
 if (order.status !== 'completed') throw new Error('仅已完工服务工单可以生成质保卡');
-const actor=ctx.session&&ctx.session.userId;if(!actor)throw new Error('无法识别当前服务员工');
+const actor=String(ctx.session&&ctx.session.userId||'').trim();const organizationId=String((ctx.session&&ctx.session.organizationId)||(ctx.user&&ctx.user.organizationId)||'').trim();
+if(!actor||!organizationId)throw new Error('无法识别当前服务员工及组织');
+if(String(order.organization_id||'')!==organizationId)throw new Error('服务工单不属于当前组织');
+if (String(order.engineer_id || '') !== actor || String(order.owner_id || '') !== actor || String(order.responsible_id || '') !== actor) throw new Error('只有当前指派的服务工程师可以生成质保卡');
 const existing = await ctx.api.object('forge_warranty_card').find({ where: { service_order_id: id } });
 if (existing.length) throw new Error('该服务工单已生成质保卡');
 const code = 'WC-' + new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);
