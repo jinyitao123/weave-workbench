@@ -107,7 +107,7 @@ it('moves the protocol to a serial final member, preserves it for an upstream br
 
   const removedGraph = removeStep(branched.graph_definition, second.selected)
   const repaired = configureWorkflowResultProtocol({ ...branched, graph_definition: removedGraph }, true, undefined, second.selected)
-  const repairedSourceId = (repaired.graph_definition.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string }).node_id
+  const repairedSourceId = (repaired.graph_definition.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string } | undefined)?.node_id
   expect(repairedSourceId).toBe(first.selected)
   expect(repaired.graph_definition.nodes.some((node) => node.id === repairedSourceId)).toBe(true)
   expect(repaired.graph_definition.nodes.find((node) => node.id === repairedSourceId)?.output).toMatchObject({ type: 'json' })
