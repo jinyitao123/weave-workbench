@@ -268,6 +268,40 @@
         "previous_external_dependencies": 7,
         "external_dependencies": 7
       }
+    },
+    {
+      "date": "2026-09-28",
+      "source_commit": "518162a023437ff7ca894c2a41513e32d7a2596c",
+      "reason": "Add a Loom-only read tool for bounded UTF-8 chunks from the current frozen Workbench extraction, bind reads to the exact input revision, run, delegated materialId and source SHA-256, and keep extraction bodies out of the initial execution prompt while preserving original input facts. Exact measured ceilings with no spare allowance; package/dependency limits and original migration targets remain unchanged. Forge binary reads remain unavailable until their protected endpoint is integrated.",
+      "kernel": {
+        "previous_lines": 91433,
+        "previous_production_lines": 78719,
+        "lines_added": 1008,
+        "production_lines_added": 715
+      },
+      "app": {
+        "previous_lines": 80642,
+        "previous_production_lines": 61013,
+        "lines_added": 335,
+        "production_lines_added": 61
+      }
+    },
+    {
+      "date": "2026-09-28",
+      "source_commit": "ceb70d3e4b216af83bf553b8469d7fa0a48787f5",
+      "reason": "Add exact-source PDF/DOCX original-byte verification on owner or approval Forge routes, bound to the current run's encrypted employee delegation, sourceKind, approval requestId, If-Match SHA-256, MIME and length. Original bytes are discarded after verification; model-readable content remains the frozen desktop extraction, with partial/unavailable status preserved. Exact measured ceilings with no spare allowance; package/dependency limits and original migration targets remain unchanged.",
+      "kernel": {
+        "previous_lines": 92441,
+        "previous_production_lines": 79434,
+        "lines_added": 344,
+        "production_lines_added": 177
+      },
+      "app": {
+        "previous_lines": 80977,
+        "previous_production_lines": 61074,
+        "lines_added": 314,
+        "production_lines_added": 58
+      }
     }
   ],
   "migration_targets": {
@@ -305,8 +339,8 @@
     ]
   },
   "kernel": {
-    "lines": 91433,
-    "production_lines": 78719,
+    "lines": 92785,
+    "production_lines": 79611,
     "packages": 49,
     "external_dependencies": 5,
     "allowed_dependencies": [
@@ -330,8 +364,8 @@
     ]
   },
   "app": {
-    "lines": 80614,
-    "production_lines": 61002,
+    "lines": 81291,
+    "production_lines": 61132,
     "packages": 30,
     "external_dependencies": 7,
     "allowed_dependencies": [
