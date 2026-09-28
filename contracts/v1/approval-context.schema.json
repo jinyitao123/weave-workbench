@@ -55,6 +55,11 @@
           "content": { "type": "string", "maxLength": 2097152 }
         }
       }
+    },
+    "originalFiles": {
+      "type": "array",
+      "maxItems": 11,
+      "items": { "$ref": "owned-original-material.schema.json" }
     }
   },
   "allOf": [

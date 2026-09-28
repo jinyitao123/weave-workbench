@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/owned-original-material.schema.json",
+  "title": "Workbench Original Material Reference",
+  "description": "Metadata reference for an original PDF/DOCX file stored by Forge. The object contains no original bytes, extracted content, base64, or storage key.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fileId", "name", "mediaType", "bytes", "sha256"],
+  "properties": {
+    "fileId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+    "mediaType": {
+      "enum": [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ]
+    },
+    "bytes": { "type": "integer", "minimum": 1, "maximum": 2097152 },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

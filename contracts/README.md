@@ -16,6 +16,7 @@
 - `task-notification`：Forge 或 Weave 向指定员工创建的待办。
 - `work-continuation`：员工从原生收件箱打开一条 Weave 团队运行消息时，按确切运行读取原输入、固定材料和真实结果，继续原工作；它只读取已有状态，不成为第二套待办。
 - `owned-text-material`：原文件所有人用 Forge 当前登录身份取回自己上传的未绑定文本原件，校验字节后继续工作；审批参与者仍由审批上下文读取其获准快照。
+- `owned-original-material`：Workbench 可展示的 PDF/DOCX 原件元数据引用；原始字节只由 Forge owner 或原生审批快照授权路由提供，不放进 JSON、任务正文或模型输入。
 - `approval-context`：Workbench 按当前 Forge 身份读取单个原生审批的受限快照、退回版本与材料；修订材料由 Forge 领域动作校验并经 ObjectStack 原生守卫重提，不开放桌面直接重提。
 - `approval-revision`：退回事项的新主件与附件引用、来源版本和幂等键；Forge 插件固定材料并调用受守卫的原生重提，回执区分准备完成、已进入下一轮和恢复状态未知。
 - `team-run-event`：Weave 将团队运行终态交给 Forge 原生收件箱的系统事件。
