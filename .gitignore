@@ -7,5 +7,3 @@ release/
 .build/
 coverage/
 *.log
-# Local compatibility link; the private-Git demo account book is tracked separately.
-/scenarios/sales-contract-handoff/test-accounts.md
