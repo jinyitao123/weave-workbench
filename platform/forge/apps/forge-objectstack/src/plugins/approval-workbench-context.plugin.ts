@@ -6,7 +6,9 @@ import type { ExecutionContext } from '@objectstack/spec/kernel';
 import type { IObjectQLEngine } from '@objectstack/spec/contracts';
 
 const ROUTE = '/api/v1/approvals/requests/:requestId/workbench-context';
+const ORIGINAL_ROUTE = '/api/v1/approvals/requests/:requestId/workbench-context/files/:fileId/original';
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
+const MAX_TOTAL_FILE_BYTES = 8 * 1024 * 1024;
 const MAX_FILES = 11;
 const MAX_FIELDS = 64;
 const MAX_FIELD_VALUE = 4_000;
@@ -14,6 +16,10 @@ const FILE_FIELD_TYPES = new Set(['file']);
 const TEXT_MEDIA_TYPES = new Set([
   'text/plain', 'text/plain; charset=utf-8',
   'text/markdown', 'text/markdown; charset=utf-8', 'text/x-markdown',
+]);
+const ORIGINAL_MEDIA_TYPES = new Set([
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SYSTEM_CONTEXT: ExecutionContext = { isSystem: true, positions: [], permissions: [] };
@@ -27,6 +33,10 @@ interface FileRow {
   mime_type?: unknown;
   size?: unknown;
   status?: unknown;
+  scope?: unknown;
+  acl?: unknown;
+  owner_id?: unknown;
+  organization_id?: unknown;
   ref_object?: unknown;
   ref_id?: unknown;
   ref_field?: unknown;
@@ -42,6 +52,14 @@ interface SnapshotFile {
 interface ContextField {
   label?: string;
   value: string;
+}
+
+interface OriginalFileReference {
+  fileId: string;
+  name: string;
+  mediaType: string;
+  bytes: number;
+  sha256: string;
 }
 
 class ContextFailure extends Error {
@@ -76,6 +94,35 @@ function headersForSession(headers: IHttpRequest['headers']): Headers {
     }
   }
   return webHeaders;
+}
+
+function headerValue(headers: IHttpRequest['headers'], name: string): string | undefined {
+  const match = Object.entries(headers ?? {}).find(([key]) => key.toLowerCase() === name.toLowerCase())?.[1];
+  const value = Array.isArray(match) ? match[0] : match;
+  return typeof value === 'string' ? value.trim() : undefined;
+}
+
+function expectedSha256(headers: IHttpRequest['headers']): string | undefined {
+  const value = headerValue(headers, 'if-match');
+  return value?.match(/^"([0-9a-f]{64})"$/i)?.[1]?.toLowerCase();
+}
+
+function hasOriginalSignature(bytes: Uint8Array, mediaType: string, name: string): boolean {
+  if (mediaType === 'application/pdf') {
+    return name.toLowerCase().endsWith('.pdf') && bytes.byteLength >= 5 &&
+      String.fromCharCode(...bytes.subarray(0, 5)) === '%PDF-';
+  }
+  if (mediaType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    return name.toLowerCase().endsWith('.docx') && bytes.byteLength >= 4 &&
+      bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04;
+  }
+  return false;
+}
+
+function contentDisposition(name: string): string {
+  const fallback = name.replace(/[\u0000-\u001f\u007f"\\]/g, '_').replace(/[^\x20-\x7e]/g, '_').slice(0, 120) || 'original';
+  const encoded = encodeURIComponent(name).replace(/[!'()*]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
+  return `attachment; filename="${fallback}"; filename*=UTF-8''${encoded}`;
 }
 
 function readService<T>(ctx: PluginContext, name: string): T | undefined {
@@ -246,13 +293,16 @@ async function readSnapshotFiles(
   engine: IObjectQLEngine,
   storage: IStorageService,
   allowedFiles: Map<string, SnapshotFile>,
-): Promise<Array<{ fileId: string; name: string; mediaType: 'text/plain; charset=utf-8'; bytes: number; sha256: string; content: string }>> {
-  if (allowedFiles.size === 0) return [];
+): Promise<{
+  files: Array<{ fileId: string; name: string; mediaType: 'text/plain; charset=utf-8'; bytes: number; sha256: string; content: string }>;
+  originalFiles: OriginalFileReference[];
+}> {
+  if (allowedFiles.size === 0) return { files: [], originalFiles: [] };
   const orderedFiles = [...allowedFiles.entries()].sort((left, right) => Number(right[1].primary === true) - Number(left[1].primary === true));
   const ids = orderedFiles.map(([id]) => id);
   const rows = await engine.find('sys_file', {
     where: { id: { $in: ids } },
-    fields: ['id', 'key', 'name', 'mime_type', 'size', 'status', 'ref_object', 'ref_id', 'ref_field'],
+    fields: ['id', 'key', 'name', 'mime_type', 'size', 'status', 'scope', 'acl', 'owner_id', 'organization_id', 'ref_object', 'ref_id', 'ref_field'],
     limit: ids.length,
   }, { context: SYSTEM_CONTEXT });
   const byId = new Map<string, FileRow>();
@@ -260,7 +310,21 @@ async function readSnapshotFiles(
     if (row?.id != null) byId.set(String(row.id), row as FileRow);
   }
 
+  let totalBytes = 0;
+  for (const [id] of orderedFiles) {
+    const file = byId.get(id);
+    if (!file || !Number.isInteger(file.size) || (file.size as number) < 0) continue;
+    if ((file.size as number) > MAX_FILE_BYTES) {
+      throw new ContextFailure(413, 'APPROVAL_MATERIAL_TOO_LARGE', 'An approval material exceeds the 2 MiB limit.');
+    }
+    totalBytes += file.size as number;
+  }
+  if (totalBytes > MAX_TOTAL_FILE_BYTES) {
+    throw new ContextFailure(413, 'APPROVAL_CONTEXT_TOO_LARGE', 'Approval materials exceed the 8 MiB total limit.');
+  }
+
   const files = [];
+  const originalFiles: OriginalFileReference[] = [];
   const seenContent = new Set<string>();
   for (const [id, snapshotFile] of orderedFiles) {
     const file = byId.get(id);
@@ -273,11 +337,37 @@ async function readSnapshotFiles(
         !Number.isInteger(file.size) || (file.size as number) < 0) {
       throw new ContextFailure(422, 'APPROVAL_MATERIAL_UNAVAILABLE', 'An approval text material is unavailable.');
     }
-    if (!TEXT_MEDIA_TYPES.has(String(file.mime_type))) {
-      throw new ContextFailure(415, 'APPROVAL_MATERIAL_UNSUPPORTED_TYPE', 'Only text/plain approval materials can be previewed.');
+    const mediaType = String(file.mime_type);
+    const isBinaryOriginal = ORIGINAL_MEDIA_TYPES.has(mediaType);
+    if (!isBinaryOriginal && !TEXT_MEDIA_TYPES.has(mediaType)) {
+      throw new ContextFailure(415, 'APPROVAL_MATERIAL_UNSUPPORTED_TYPE', 'Only supported text, PDF, and DOCX approval materials can be read.');
+    }
+    if (isBinaryOriginal && (!snapshotFile.sha256 || !request.submitter_id || file.owner_id !== request.submitter_id ||
+        !['user', 'attachments'].includes(String(file.scope)) || file.acl !== 'private' ||
+        !request.organization_id || !file.organization_id || file.organization_id !== request.organization_id)) {
+      throw new ContextFailure(422, 'APPROVAL_MATERIAL_UNAVAILABLE', 'The binary approval material is not bound to its original submitter and organization.');
     }
     if ((file.size as number) > MAX_FILE_BYTES) {
       throw new ContextFailure(413, 'APPROVAL_MATERIAL_TOO_LARGE', 'An approval text material exceeds the 2 MiB limit.');
+    }
+    if (isBinaryOriginal) {
+      const filenameMatchesMime = mediaType === 'application/pdf'
+        ? file.name.toLowerCase().endsWith('.pdf')
+        : file.name.toLowerCase().endsWith('.docx');
+      if ((file.size as number) < 1 || !filenameMatchesMime) {
+        throw new ContextFailure(422, 'APPROVAL_MATERIAL_INVALID', 'A binary approval material has invalid metadata.');
+      }
+      if (snapshotFile.name && snapshotFile.name !== file.name) {
+        throw new ContextFailure(422, 'APPROVAL_MATERIAL_HASH_MISMATCH', 'A binary approval material name does not match its frozen snapshot.');
+      }
+      originalFiles.push({
+        fileId: id,
+        name: file.name.trim().slice(0, 255),
+        mediaType,
+        bytes: file.size as number,
+        sha256: snapshotFile.sha256 as string,
+      });
+      continue;
     }
     const bytes = await storage.download(file.key);
     if (bytes.length > MAX_FILE_BYTES || bytes.length !== file.size) {
@@ -305,7 +395,7 @@ async function readSnapshotFiles(
       content,
     });
   }
-  return files;
+  return { files, originalFiles };
 }
 
 function latestReturn(actions: ApprovalActionRow[]): { returnVersion: string; returnReason: string } | undefined {
@@ -328,7 +418,34 @@ function returnedApprovalSupersededByResubmit(actions: ApprovalActionRow[]): boo
   return latestResubmitIndex > latestReturnIndex;
 }
 
+async function authorizedApprovalRequest(
+  approvals: IApprovalService,
+  requestId: string,
+  executionContext: ExecutionContext,
+): Promise<{
+  request: ApprovalRequestRow;
+  viewer: 'current_approver' | 'original_submitter';
+  actions: ApprovalActionRow[];
+}> {
+  const request = await approvals.getRequest(requestId, executionContext);
+  if (!request) throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+  let viewer: 'current_approver' | 'original_submitter';
+  if (request.status === 'pending' && request.viewer?.can_act === true) {
+    viewer = 'current_approver';
+  } else if (request.status === 'returned' && request.viewer?.is_submitter === true) {
+    viewer = 'original_submitter';
+  } else {
+    throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+  }
+  const actions = request.status === 'returned' ? await approvals.listActions(request.id, executionContext) : [];
+  if (request.status === 'returned' && returnedApprovalSupersededByResubmit(actions)) {
+    throw new ContextFailure(409, 'APPROVAL_CONTEXT_STALE', 'This returned approval has already been resubmitted.');
+  }
+  return { request, viewer, actions };
+}
+
 async function sendError(res: IHttpResponse, status: number, code: string, message: string): Promise<void> {
+  res.header('Cache-Control', 'private, no-store');
   await res.status(status).json({ error: { code, message } });
 }
 
@@ -347,6 +464,7 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
       }
       const resolveContext = makeExecutionContextResolver(ctx);
       server.get(ROUTE, async (req, res) => {
+        res.header('Cache-Control', 'private, no-store');
         const executionContext = await resolveContext({ req: { raw: { headers: headersForSession(req.headers) } } });
         if (!executionContext?.userId) {
           await sendError(res, 401, 'UNAUTHENTICATED', 'A valid Forge session is required.');
@@ -367,31 +485,16 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
         }
 
         try {
-          // This is the sole authorization lookup. The service resolves the
-          // authenticated participant flags; caller-supplied ids are ignored.
-          const request = await approvals.getRequest(requestId, executionContext);
-          if (!request) {
-            await sendError(res, 404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
-            return;
-          }
-          let viewer: 'current_approver' | 'original_submitter';
-          if (request.status === 'pending' && request.viewer?.can_act === true) {
-            viewer = 'current_approver';
-          } else if (request.status === 'returned' && request.viewer?.is_submitter === true) {
-            viewer = 'original_submitter';
-          } else {
-            await sendError(res, 404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
-            return;
-          }
-
-          const actions = request.status === 'returned' ? await approvals.listActions(request.id, executionContext) : [];
-          if (request.status === 'returned' && returnedApprovalSupersededByResubmit(actions)) {
-            await sendError(res, 409, 'APPROVAL_CONTEXT_STALE', 'This returned approval has already been resubmitted.');
-            return;
+          // The native service resolves the authenticated participant flags;
+          // caller-supplied identities never widen the snapshot.
+          const { request, viewer, actions } = await authorizedApprovalRequest(approvals, requestId, executionContext);
+          const actorOrganizationId = executionContext.tenantId || executionContext.organizationId;
+          if (request.organization_id && request.organization_id !== actorOrganizationId) {
+            throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
           }
           const materialFields = fileFieldNames(engine, request.object_name);
           const allowedFiles = snapshotFiles(request.payload, materialFields);
-          const files = await readSnapshotFiles(request, engine, storage, allowedFiles);
+          const snapshotMaterials = await readSnapshotFiles(request, engine, storage, allowedFiles);
           const title = boundedText(request.record_title, 300) ?? boundedText(request.object_label, 300) ?? '审批事项';
           const step = boundedText(request.step_label, 160);
           if (!step) throw new ContextFailure(422, 'APPROVAL_CONTEXT_INVALID', 'The approval step is unavailable.');
@@ -419,7 +522,8 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
             sourceMaterialVersion,
             ...(latest ?? {}),
             fields: projectFields(request, engine),
-            files,
+            files: snapshotMaterials.files,
+            originalFiles: snapshotMaterials.originalFiles,
           };
           await res.status(200).json(response);
         } catch (error) {
@@ -428,6 +532,113 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
             return;
           }
           ctx.logger.error('[approval-workbench-context] failed to build a scoped approval context');
+          await sendError(res, 503, 'APPROVAL_CONTEXT_UNAVAILABLE', 'Approval context is unavailable.');
+        }
+      });
+
+      server.get(ORIGINAL_ROUTE, async (req, res) => {
+        res.header('Cache-Control', 'private, no-store');
+        res.header('X-Content-Type-Options', 'nosniff');
+        const executionContext = await resolveContext({ req: { raw: { headers: headersForSession(req.headers) } } });
+        if (!executionContext?.userId) {
+          await sendError(res, 401, 'UNAUTHENTICATED', 'A valid Forge session is required.');
+          return;
+        }
+        const requestId = boundedText(req.params?.requestId, 128);
+        const fileId = boundedText(req.params?.fileId, 128);
+        if (!requestId || !fileId || !isFileIdToken(fileId)) {
+          await sendError(res, 404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+          return;
+        }
+        const expected = expectedSha256(req.headers);
+        if (!expected) {
+          await sendError(res, 428, 'APPROVAL_MATERIAL_HASH_REQUIRED', 'The frozen material SHA-256 is required.');
+          return;
+        }
+
+        const approvals = readService<IApprovalService>(ctx, 'approvals');
+        const engine = readService<IObjectQLEngine>(ctx, 'objectql');
+        const storage = readService<IStorageService>(ctx, 'storage');
+        if (!approvals || !engine || !storage) {
+          await sendError(res, 503, 'APPROVAL_CONTEXT_UNAVAILABLE', 'Approval context is unavailable.');
+          return;
+        }
+
+        try {
+          const { request } = await authorizedApprovalRequest(approvals, requestId, executionContext);
+          const actorOrganizationId = executionContext.tenantId || executionContext.organizationId;
+          if (!request.organization_id || !actorOrganizationId || request.organization_id !== actorOrganizationId) {
+            throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+          }
+          const allowedFiles = snapshotFiles(request.payload, fileFieldNames(engine, request.object_name));
+          const snapshotFile = allowedFiles.get(fileId);
+          if (!snapshotFile) throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+          if (!snapshotFile.sha256) {
+            throw new ContextFailure(422, 'APPROVAL_MATERIAL_HASH_UNAVAILABLE', 'The approval material has no frozen SHA-256 value.');
+          }
+          if (snapshotFile.sha256 !== expected) {
+            throw new ContextFailure(409, 'APPROVAL_MATERIAL_HASH_MISMATCH', 'The requested SHA-256 does not match this approval snapshot.');
+          }
+
+          const rows = await engine.find('sys_file', {
+            where: { id: fileId },
+            fields: ['id', 'key', 'name', 'mime_type', 'size', 'status', 'scope', 'acl', 'owner_id', 'organization_id', 'ref_object', 'ref_id', 'ref_field'],
+            limit: 1,
+          }, { context: SYSTEM_CONTEXT });
+          const file = rows?.[0] as FileRow | undefined;
+          const fieldMatches = file && typeof file.ref_field === 'string' && snapshotFile.fields.has(file.ref_field);
+          const hasOwner = file && (file.ref_object != null || file.ref_id != null || file.ref_field != null);
+          const recordMatches = file && (!hasOwner || file.ref_object === request.object_name &&
+            String(file.ref_id ?? '') === request.record_id && fieldMatches);
+          const organizationMatches = file && file.organization_id === request.organization_id;
+          if (!file || !request.submitter_id || file.owner_id !== request.submitter_id ||
+              !['user', 'attachments'].includes(String(file.scope)) || file.acl !== 'private' || !recordMatches || !organizationMatches ||
+              !['committed', 'deleted'].includes(String(file.status))) {
+            throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+          }
+
+          const key = boundedText(file.key, 2048);
+          const name = boundedText(file.name, 255);
+          const size = Number(file.size);
+          const mediaType = typeof file.mime_type === 'string' ? file.mime_type.toLowerCase() : '';
+          if (!key || !name || !Number.isSafeInteger(size) || size < 1) {
+            throw new ContextFailure(422, 'APPROVAL_MATERIAL_INVALID', 'The approval material metadata is invalid.');
+          }
+          if (size > MAX_FILE_BYTES) {
+            throw new ContextFailure(413, 'APPROVAL_MATERIAL_TOO_LARGE', 'The original approval material exceeds the 2 MiB limit.');
+          }
+          if (!ORIGINAL_MEDIA_TYPES.has(mediaType)) {
+            throw new ContextFailure(415, 'APPROVAL_MATERIAL_UNSUPPORTED_TYPE', 'Only PDF and DOCX approval originals can be downloaded.');
+          }
+          if (snapshotFile.name && snapshotFile.name !== name) {
+            throw new ContextFailure(409, 'APPROVAL_MATERIAL_HASH_MISMATCH', 'The approval material name does not match its frozen snapshot.');
+          }
+
+          const bytes = await storage.download(key);
+          if (bytes.length !== size || bytes.length > MAX_FILE_BYTES || !hasOriginalSignature(bytes, mediaType, name)) {
+            throw new ContextFailure(422, 'APPROVAL_MATERIAL_INVALID', 'The original approval material failed MIME or size validation.');
+          }
+          const digest = await sha256(bytes);
+          if (digest !== snapshotFile.sha256 || digest !== expected) {
+            throw new ContextFailure(409, 'APPROVAL_MATERIAL_HASH_MISMATCH', 'The original approval material does not match its frozen SHA-256.');
+          }
+
+          res.header('Content-Type', mediaType);
+          res.header('Content-Length', String(bytes.length));
+          res.header('Content-Disposition', contentDisposition(name));
+          res.header('ETag', `"${digest}"`);
+          res.header('X-Content-SHA256', digest);
+          await res.status(200).send(bytes);
+          ctx.logger.info('[approval-workbench-context] original bytes read', {
+            userId: executionContext.userId, organizationId: actorOrganizationId,
+            requestId, fileId, mediaType, bytes: bytes.length, sha256: digest,
+          });
+        } catch (error) {
+          if (error instanceof ContextFailure) {
+            await sendError(res, error.status, error.code, error.message);
+            return;
+          }
+          ctx.logger.error('[approval-workbench-context] failed to read a scoped binary original');
           await sendError(res, 503, 'APPROVAL_CONTEXT_UNAVAILABLE', 'Approval context is unavailable.');
         }
       });

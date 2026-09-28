@@ -5,6 +5,7 @@ const round4 = (value: number) => Math.round((Number(value) + Number.EPSILON) * 
 
 export const SubcontractReconciliationCreate = defineAction({
   name: 'subcontract_reconciliation_create', label: '生成委外对账单', objectName: 'forge_supplier', icon: 'file-check-2',
+  requiredPermissions: ['forge_procurement_operator'],
   locations: [...locations], order: 40,
   params: [
     { field: 'code', objectOverride: 'forge_subcontract_reconciliation', required: true },

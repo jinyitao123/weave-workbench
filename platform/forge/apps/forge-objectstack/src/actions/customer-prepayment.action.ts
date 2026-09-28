@@ -4,6 +4,7 @@ const locations = ['record_header', 'record_more'] as const;
 
 export const SalesOrderRegisterCustomerPrepayment = defineAction({
   name: 'sales_order_register_customer_prepayment', label: '登记订单预收款', objectName: 'forge_sales_order', icon: 'badge-dollar-sign', locations: [...locations], order: 45,
+  requiredPermissions: ['forge_finance_receivables_operator'],
   visible: `record.status == 'approved' || record.status == 'active' || record.status == 'partially_shipped' || record.status == 'shipped' || record.status == 'completed'`, refreshAfter: true,
   params: [
     { field: 'code', objectOverride: 'forge_cash_receipt', required: true }, { field: 'account_id', objectOverride: 'forge_cash_receipt', required: true },

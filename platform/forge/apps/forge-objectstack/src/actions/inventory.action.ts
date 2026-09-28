@@ -1,9 +1,11 @@
 import { defineAction } from '@objectstack/spec';
 
 const locations = ['record_header', 'record_more'] as const;
+const otherInboundReviewerActions = new Set(['other_inbound_approve']);
 
 const otherInboundBase = (name: string, label: string, order: number, visible: string, source: string, successMessage: string, params: any[] = []) => defineAction({
   name, label, objectName: 'forge_other_inbound', icon: 'package-plus', locations: [...locations], order, visible,
+  requiredPermissions: [otherInboundReviewerActions.has(name) ? 'forge_warehouse_reviewer' : 'forge_warehouse_operator'],
   refreshAfter: true, successMessage, params,
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source },
 });
@@ -26,6 +28,7 @@ for(const line of lines)await ctx.api.object('forge_other_inbound_line').update(
 return{id,status:'pending_approval',line_count:lines.length,total_quantity:round4(totalQuantity),total_amount:round4(totalAmount)};`,'其他入库单已提交审批');
 
 export const OtherInboundApprove = otherInboundBase('other_inbound_approve','审批通过',20,"record.status == 'pending_approval'",`${otherInboundHelpers}
+if(inbound.responsible_id===actor||inbound.created_by===actor)throw new Error("入库经办人不能审核本人单据");
 const note=String(ctx.input.approval_note||'').trim();if(!note)throw new Error('请填写审批意见');if(!lines.length)throw new Error('至少需要一条入库物料');const now=new Date().toISOString();
 await ctx.api.object('forge_other_inbound').update({id,status:'approved',approval_note:note,approved_by:actor,approved_at:now});
 for(const line of lines)await ctx.api.object('forge_other_inbound_line').update({id:line.id,status:'approved'});
@@ -41,6 +44,7 @@ const reason=String(ctx.input.cancel_reason||'').trim();if(!reason)throw new Err
 
 export const OpeningInboundSubmit = defineAction({
   name: 'opening_inbound_submit', label: '提交审批', objectName: 'forge_opening_inbound', icon: 'send',
+  requiredPermissions: ['forge_warehouse_operator'],
   locations: [...locations], order: 10, visible: `record.status == 'draft'`, refreshAfter: true,
   description: '校验期初入库明细并提交审批；提交本身不改变库存。', successMessage: '期初入库单已提交审批',
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
@@ -59,6 +63,7 @@ return { id, status: 'pending_approval', line_count: lines.length, total_quantit
 
 export const OpeningInboundApprove = defineAction({
   name: 'opening_inbound_approve', label: '同意入库', objectName: 'forge_opening_inbound', icon: 'badge-check',
+  requiredPermissions: ['forge_warehouse_reviewer'],
   locations: [...locations], order: 20, visible: `record.status == 'pending_approval'`, refreshAfter: true,
   description: '审批通过后增加仓库可用库存，并为每条明细生成库存流水。', successMessage: '审批通过，库存已更新',
   params: [{ field: 'approval_note', objectOverride: 'forge_opening_inbound', required: true, defaultValue: '同意' }],
@@ -66,6 +71,8 @@ export const OpeningInboundApprove = defineAction({
 const id = ctx.recordId || (ctx.record && ctx.record.id); const inbound = ctx.record;
 if (ctx.recordLoadDenied === true || !id || !inbound) throw new Error('当前期初入库单不存在或不可访问');
 if (inbound.status !== 'pending_approval') throw new Error('仅待审批期初入库单可以审批入库');
+const actor = ctx.session && ctx.session.userId;
+if (!actor || inbound.responsible_id === actor || inbound.created_by === actor) throw new Error('入库经办人不能审核本人单据');
 const lines = await ctx.api.object('forge_opening_inbound_line').find({ where: { inbound_id: id } });
 if (!lines.length) throw new Error('期初入库单至少需要一条物料明细');
 const existingLedgers = await ctx.api.object('forge_inventory_ledger').find({ where: { source_id: id } });

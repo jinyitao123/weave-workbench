@@ -4,6 +4,7 @@ const locations = ['record_header', 'record_more'] as const;
 
 export const PurchaseOrderCreateReturn = defineAction({
   name: 'purchase_order_create_return', label: '新建采购退货', objectName: 'forge_purchase_order', icon: 'rotate-ccw', locations: [...locations], order: 55,
+  requiredPermissions: ['forge_procurement_operator'],
   visible: `record.status == 'approved' || record.status == 'partially_arrived' || record.status == 'arrived' || record.status == 'completed'`, refreshAfter: true,
   params: [
     { field: 'code', objectOverride: 'forge_purchase_return', required: true }, { field: 'order_line_id', objectOverride: 'forge_purchase_return_line', required: true },

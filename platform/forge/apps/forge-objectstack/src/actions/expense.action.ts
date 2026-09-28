@@ -4,6 +4,7 @@ const locations = ['record_header', 'record_more'] as const;
 
 export const ProjectCreateExpense = defineAction({
   name: 'project_create_expense', label: '新建项目费用', objectName: 'forge_project', icon: 'hand-coins', locations: [...locations], order: 110,
+  requiredPermissions: ['forge_project_manager'],
   visible: `record.status != 'settled' && record.status != 'terminated' && record.status != 'archived'`, refreshAfter: true,
   params: [
     { field: 'code', objectOverride: 'forge_project_expense', required: true }, { field: 'name', objectOverride: 'forge_project_expense', required: true },

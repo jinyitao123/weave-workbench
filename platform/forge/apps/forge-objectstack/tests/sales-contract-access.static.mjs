@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
-const [navigationText, settingsPermissions, salesContractPermissions, salesQuotationPermissions, settingsMigration, materialPage, contractPage, salesActions, materialObject] = await Promise.all([
+const [navigationText, settingsPermissions, salesContractPermissions, salesQuotationPermissions, settingsMigration, materialPage, contractPage, salesActions, materialObject, contractLineHook] = await Promise.all([
   read('../src/apps/application-navigation.json'),
   read('../src/permissions/application-settings.permission.ts'),
   read('../src/permissions/sales-contract.permission.ts'),
@@ -12,6 +12,7 @@ const [navigationText, settingsPermissions, salesContractPermissions, salesQuota
   read('../src/pages/sales-contract-create.page.ts'),
   read('../src/actions/sales.action.ts'),
   read('../src/objects/material.object.ts'),
+  read('../src/hooks/sales-contract.hook.ts'),
 ]);
 const navigation = JSON.parse(navigationText);
 
@@ -78,7 +79,8 @@ assert.match(contractPage, /unit\.status!=='inactive'/);
 assert.match(contractPage, /selectableSkus\.map\(item=>/);
 assert.match(contractPage, /sku=selectableSkus\.find\(item=>item\.code===code\)/);
 assert.match(contractPage, /selectableSkus\.some\(sku=>sku\.id===line\.sku_id\)/);
-assert.match(contractPage, /sourceLines\.some\(item=>!selectableSkus\.some\(sku=>sku\.id===item\.sku_id\)\)/);
+assert.match(contractPage, /sourceLines\.some\(item=>item\.line_type==='material'&&\(!item\.sku_id\|\|!selectableSkus\.some\(sku=>sku\.id===item\.sku_id\)\)\)/);
+assert.match(contractPage, /line\.line_type==='service'/);
 assert.match(contractPage, /未导入任何物料/);
 assert.match(contractPage, /bundleLines\.some\(item=>!selectableSkus\.some\(sku=>sku\.id===item\.sku_id\)\)/);
 
@@ -86,9 +88,16 @@ const contractSubmit = salesActions.slice(
   salesActions.indexOf('export const ContractSubmit = defineAction'),
   salesActions.indexOf('export const ContractSubmitFrozenMaterial'),
 );
+const contractDraftCreate = salesActions.slice(
+  salesActions.indexOf("export const SalesContractDraftCreate = defineAction"),
+  salesActions.indexOf('export const ContractSubmit = defineAction'),
+);
+assert.match(contractDraftCreate, /const contract = await ctx\.api\.object\('forge_sales_contract'\)\.insert\([\s\S]*?owner_id: actor,[\s\S]*?responsible_id: actor/);
 assert.match(contractSubmit, /if \(!organizationId\) throw new Error/);
 assert.match(contractSubmit, /sku\.enabled === false/);
 assert.match(contractSubmit, /material\.status === 'inactive'/);
 assert.match(contractSubmit, /unit\.status === 'inactive'/);
+assert.match(contractSubmit, /line\.line_type === 'service'[\s\S]*?服务明细必须有名称和数量/);
+assert.match(contractLineHook, /lineType === 'service'[\s\S]*?服务项目不能关联物料规格[\s\S]*?if \(lineType !== 'material'\)/);
 
 console.log('PASS sales contract navigation, own-record scope, SKU read/write boundary, and availability guards');

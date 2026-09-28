@@ -22,7 +22,7 @@ function textFile(id, key, name, recordId, field, content) {
 
 function approval({ id, recordId, status = 'pending', approver, submitter, payload, title }) {
   return {
-    id, process_name: 'flow:contract_approval', object_name: CONTRACT_OBJECT, record_id: recordId,
+    id, organization_id: 'org-A', process_name: 'flow:contract_approval', object_name: CONTRACT_OBJECT, record_id: recordId,
     status, submitter_id: submitter, current_step: 'review', step_label: '合同复核',
     record_title: title, object_label: '销售合同', payload,
     payload_labels: {
@@ -51,7 +51,13 @@ function createHarness() {
   const attachmentA = textFile('file-attachment-A', 'key-attachment-A', '技术说明.txt', CONTRACT_A, 'attachment_ids', '技术说明 A');
   const duplicateMainAttachment = textFile('file-main-attachment-A', 'key-main-attachment-A', '合同正文.txt', CONTRACT_A, 'attachment_ids', '合同正文 A');
   const materialB = textFile('file-main-B', 'key-main-B', '合同正文 B.txt', CONTRACT_B, 'submitted_material_id', '合同正文 B');
-  const files = new Map([materialA, attachmentA, duplicateMainAttachment, materialB].map((file) => [file.id, file]));
+  const pdfBytes = Buffer.from('%PDF-1.7\napproval-original');
+  const materialPdf = {
+    id: 'file-pdf-A', key: 'key-pdf-A', name: '合同正文.pdf', mime_type: 'application/pdf',
+    size: pdfBytes.length, status: 'committed', scope: 'attachments', acl: 'private', ref_object: CONTRACT_OBJECT, ref_id: 'contract-PDF',
+    ref_field: 'submitted_material_id', owner_id: 'sales-PDF', organization_id: 'org-A', bytes: pdfBytes,
+  };
+  const files = new Map([materialA, attachmentA, duplicateMainAttachment, materialB, materialPdf].map((file) => [file.id, file]));
   const pendingA = approval({
     id: 'approval-A', recordId: CONTRACT_A, approver: 'reviewer-A', submitter: 'sales-A',
     payload: contextPayload(materialA, [attachmentA]), title: '设备验收合同 A',
@@ -66,6 +72,10 @@ function createHarness() {
     id: 'approval-B', recordId: CONTRACT_B, approver: 'reviewer-B', submitter: 'sales-B',
     payload: contextPayload(materialB), title: '设备验收合同 B',
   });
+  const pendingPdf = approval({
+    id: 'approval-PDF', recordId: 'contract-PDF', approver: 'reviewer-PDF', submitter: 'sales-PDF',
+    payload: contextPayload(materialPdf), title: 'PDF 原件审批',
+  });
   const returned = approval({
     id: 'approval-returned', recordId: 'contract-returned', status: 'returned', approver: 'reviewer-old', submitter: 'sales-returned',
     payload: { name: '已退回合同', code: 'HT-RETURNED' }, title: '已退回合同',
@@ -74,15 +84,18 @@ function createHarness() {
     id: 'approval-no-digest', recordId: CONTRACT_A, approver: 'reviewer-A', submitter: 'sales-A',
     payload: { name: '没有冻结摘要的合同', submitted_material_id: materialA.id }, title: '没有冻结摘要的合同',
   });
-  const requests = new Map([[pendingA.id, pendingA], [pendingLegacyAttachment.id, pendingLegacyAttachment], [pendingB.id, pendingB], [returned.id, returned], [noFrozenDigest.id, noFrozenDigest]]);
+  const requests = new Map([[pendingA.id, pendingA], [pendingLegacyAttachment.id, pendingLegacyAttachment], [pendingB.id, pendingB], [pendingPdf.id, pendingPdf], [returned.id, returned], [noFrozenDigest.id, noFrozenDigest]]);
   const sessions = new Map([
     ['reviewer-token', { user: { id: 'reviewer-A' }, session: { activeOrganizationId: 'org-A' } }],
     ['reviewer-b-token', { user: { id: 'reviewer-B' }, session: { activeOrganizationId: 'org-A' } }],
+    ['reviewer-pdf-token', { user: { id: 'reviewer-PDF' }, session: { activeOrganizationId: 'org-A' } }],
+    ['submitter-pdf-token', { user: { id: 'sales-PDF' }, session: { activeOrganizationId: 'org-A' } }],
     ['sales-token', { user: { id: 'sales-returned' }, session: { activeOrganizationId: 'org-A' } }],
     ['former-reviewer-token', { user: { id: 'reviewer-old' }, session: { activeOrganizationId: 'org-A' } }],
   ]);
   const fileQueries = [];
   const downloadedKeys = [];
+  const auditEntries = [];
   let requestReads = 0;
   const actionLists = new Map([[returned.id, [{
     id: 'action-revise', request_id: returned.id, action: 'revise', comment: '请补充签字页',
@@ -92,7 +105,7 @@ function createHarness() {
     async find(objectName, query, options) {
       if (objectName === 'sys_file') {
         fileQueries.push({ query, options });
-        const ids = query.where.id.$in;
+        const ids = query.where.id.$in ?? [query.where.id];
         return ids.map((id) => files.get(id)).filter(Boolean);
       }
       // The canonical authz resolver asks the real query surface for session grants.
@@ -156,7 +169,7 @@ function createHarness() {
     },
     getKernel() { return {}; },
     hook(name, handler) { if (name === 'kernel:ready') ready = handler; },
-    logger: { error() {} },
+    logger: { error() {}, info(message, meta) { auditEntries.push({ message, meta }); } },
   };
   const plugin = new ApprovalWorkbenchContextPlugin();
   plugin.init(context);
@@ -168,6 +181,13 @@ function createHarness() {
       assert.ok(request, 'fixture request exists');
       request.payload = payload;
     },
+    setRequestStatus(requestId, status) {
+      const request = requests.get(requestId);
+      assert.ok(request, 'fixture request exists');
+      request.status = status;
+    },
+    addFile(file) { files.set(file.id, file); },
+    addRequest(request) { requests.set(request.id, request); },
     setActions(requestId, actions) { actionLists.set(requestId, actions); },
     async call(requestId, token, extraHeaders = {}) {
       const handler = routes.get('/api/v1/approvals/requests/:requestId/workbench-context');
@@ -176,6 +196,7 @@ function createHarness() {
       let body;
       const response = {
         status(value) { status = value; return this; },
+        header() { return this; },
         json(value) { body = value; },
       };
       await handler({
@@ -184,7 +205,24 @@ function createHarness() {
       }, response);
       return { status, body, fileQueries: [...fileQueries], downloadedKeys: [...downloadedKeys], requestReads };
     },
-    get fixtureFiles() { return { materialA, attachmentA, duplicateMainAttachment, materialB }; },
+    async callOriginal(requestId, fileId, token, sha256, extraHeaders = {}) {
+      const handler = routes.get('/api/v1/approvals/requests/:requestId/workbench-context/files/:fileId/original');
+      assert.ok(handler, 'approval original file route mounted');
+      let status = 200, body, raw;
+      const responseHeaders = {};
+      const response = {
+        status(value) { status = value; return this; },
+        header(name, value) { responseHeaders[name.toLowerCase()] = value; return this; },
+        json(value) { body = value; },
+        send(value) { raw = Buffer.from(value); },
+      };
+      await handler({
+        params: { requestId, fileId },
+        headers: { authorization: `Bearer ${token}`, ...(sha256 ? { 'if-match': `"${sha256}"` } : {}), ...extraHeaders },
+      }, response);
+      return { status, body, raw, headers: responseHeaders, downloadedKeys: [...downloadedKeys], auditEntries: [...auditEntries] };
+    },
+    get fixtureFiles() { return { materialA, attachmentA, duplicateMainAttachment, materialB, materialPdf }; },
   };
 }
 
@@ -247,6 +285,98 @@ test('the same main document attached twice is returned once, ahead of companion
     { name: '技术说明.txt', content: '技术说明 A' },
   ]);
   assert.equal(result.body.files.length, 2);
+});
+
+test('approval context returns PDF metadata only and original bytes only to the current snapshot participant', async () => {
+  const harness = createHarness();
+  await harness.start();
+  const file = harness.fixtureFiles.materialPdf;
+  const digest = sha256(file.bytes);
+  const context = await harness.call('approval-PDF', 'reviewer-pdf-token');
+
+  assert.equal(context.status, 200);
+  assert.deepEqual(context.body.files, []);
+  assert.deepEqual(context.body.originalFiles, [{
+    fileId: file.id, name: file.name, mediaType: 'application/pdf', bytes: file.bytes.length, sha256: digest,
+  }]);
+  assert.deepEqual(context.downloadedKeys, [], 'approval context returns metadata without reading or embedding binary bytes');
+  assert.equal(JSON.stringify(context.body).includes(file.bytes.toString('utf8')), false, 'approval JSON never contains PDF bytes');
+
+  const beforeUnauthorized = context.downloadedKeys.length;
+  const wrongReviewer = await harness.callOriginal('approval-PDF', file.id, 'reviewer-token', digest);
+  assert.equal(wrongReviewer.status, 404);
+  assert.equal(wrongReviewer.downloadedKeys.length, beforeUnauthorized, 'a nonparticipant cannot trigger storage reads');
+
+  const wrongRequest = await harness.callOriginal('approval-A', file.id, 'reviewer-token', digest);
+  assert.equal(wrongRequest.status, 404, 'a file from another request is not in this fixed snapshot');
+
+  const wrongHash = await harness.callOriginal('approval-PDF', file.id, 'reviewer-pdf-token', 'f'.repeat(64));
+  assert.equal(wrongHash.status, 409);
+  assert.equal(wrongHash.body.error.code, 'APPROVAL_MATERIAL_HASH_MISMATCH');
+  const missingHeader = await harness.callOriginal('approval-PDF', file.id, 'reviewer-pdf-token', undefined);
+  assert.equal(missingHeader.status, 428);
+  assert.equal(missingHeader.body.error.code, 'APPROVAL_MATERIAL_HASH_REQUIRED');
+  const noFrozenHash = await harness.callOriginal('approval-no-digest', harness.fixtureFiles.materialA.id, 'reviewer-token',
+    sha256(harness.fixtureFiles.materialA.bytes));
+  assert.equal(noFrozenHash.status, 422);
+  assert.equal(noFrozenHash.body.error.code, 'APPROVAL_MATERIAL_HASH_UNAVAILABLE');
+
+  const approvedOriginal = await harness.callOriginal('approval-PDF', file.id, 'reviewer-pdf-token', digest);
+  assert.equal(approvedOriginal.status, 200, JSON.stringify(approvedOriginal.body));
+  assert.deepEqual(approvedOriginal.raw, file.bytes);
+  assert.equal(approvedOriginal.body, undefined, 'original bytes are not placed in JSON');
+  assert.equal(approvedOriginal.headers['content-type'], 'application/pdf');
+  assert.equal(approvedOriginal.headers.etag, `"${digest}"`);
+  assert.equal(approvedOriginal.headers['x-content-sha256'], digest);
+  assert.equal(approvedOriginal.headers['cache-control'], 'private, no-store');
+  assert.ok(approvedOriginal.auditEntries.some(({ meta }) => meta.requestId === 'approval-PDF' &&
+    meta.fileId === file.id && meta.sha256 === digest && meta.userId === 'reviewer-PDF' && !('content' in meta)));
+
+  harness.setRequestStatus('approval-PDF', 'returned');
+  harness.setActions('approval-PDF', [{ id: 'return-PDF', request_id: 'approval-PDF', action: 'revise', comment: '请补充说明' }]);
+  const submitterOriginal = await harness.callOriginal('approval-PDF', file.id, 'submitter-pdf-token', digest);
+  assert.equal(submitterOriginal.status, 200, 'the original submitter may read a current returned snapshot');
+
+  harness.setActions('approval-PDF', [
+    { id: 'return-PDF', request_id: 'approval-PDF', action: 'revise', comment: '请补充说明' },
+    { id: 'resubmit-PDF', request_id: 'approval-PDF', action: 'resubmit', comment: '已补充' },
+  ]);
+  const staleOriginal = await harness.callOriginal('approval-PDF', file.id, 'submitter-pdf-token', digest);
+  assert.equal(staleOriginal.status, 409, 'a returned snapshot cannot be reused after resubmission');
+  assert.equal(staleOriginal.body.error.code, 'APPROVAL_CONTEXT_STALE');
+
+  const otherOrganization = createHarness();
+  await otherOrganization.start();
+  otherOrganization.fixtureFiles.materialPdf.organization_id = 'org-other';
+  const crossOrganization = await otherOrganization.callOriginal('approval-PDF', file.id, 'reviewer-pdf-token', digest);
+  assert.equal(crossOrganization.status, 404);
+  assert.deepEqual(crossOrganization.downloadedKeys, [], 'a cross-organization snapshot never reads storage');
+});
+
+test('approval context rejects snapshots exceeding the eight MiB aggregate before reading storage', async () => {
+  const harness = createHarness();
+  await harness.start();
+  const largeFiles = Array.from({ length: 4 }, (_, index) => {
+    const id = `file-large-${index + 1}`;
+    const bytes = Buffer.alloc(2 * 1024 * 1024, index + 1);
+    bytes.set(Buffer.from('%PDF-'), 0);
+    const file = {
+      id, key: `key-${id}`, name: `attachment-${index + 1}.pdf`, mime_type: 'application/pdf', size: bytes.length,
+      status: 'committed', scope: 'attachments', acl: 'private', owner_id: 'sales-large',
+      organization_id: 'org-A', ref_object: CONTRACT_OBJECT, ref_id: 'contract-large', ref_field: 'attachment_ids', bytes,
+    };
+    harness.addFile(file);
+    return file;
+  });
+  harness.addRequest(approval({
+    id: 'approval-large', recordId: 'contract-large', approver: 'reviewer-A', submitter: 'sales-large',
+    payload: contextPayload(harness.fixtureFiles.materialA, largeFiles), title: '超过总量限制的审批材料',
+  }));
+
+  const result = await harness.call('approval-large', 'reviewer-token');
+  assert.equal(result.status, 413);
+  assert.equal(result.body.error.code, 'APPROVAL_CONTEXT_TOO_LARGE');
+  assert.deepEqual(result.downloadedKeys, [], 'size limits are checked before storage bytes are fetched');
 });
 
 test('non-recipient and other-contract request stay unreadable even through a broader native reader tier', async () => {
@@ -336,7 +466,7 @@ test('a material without a snapshot digest is never presented as frozen', async 
 test('unsupported MIME type has a distinct response and no storage read', async () => {
   const harness = createHarness();
   await harness.start();
-  harness.fixtureFiles.materialA.mime_type = 'application/pdf';
+  harness.fixtureFiles.materialA.mime_type = 'image/png';
   const result = await harness.call('approval-A', 'reviewer-token');
 
   assert.equal(result.status, 415);

@@ -2,6 +2,7 @@ import { defineAction } from '@objectstack/spec';
 
 export const BomAnalyzeShortage = defineAction({
   name: 'bom_analyze_shortage', label: '开始分析', objectName: 'forge_bom', icon: 'chart-no-axes-column-increasing',
+  requiredPermissions: ['forge_production_operator'],
   locations: ['record_header', 'record_more'], order: 40, visible: `record.status == 'active'`, refreshAfter: true,
   params: [{ name: 'planned_quantity', label: '计划生产数量', type: 'number', required: true, defaultValue: 1 }],
   description: '按计划生产数量展开当前 BOM，汇总各仓库库存与锁定量，保存可追溯的缺料快照。', successMessage: '缺料分析已完成',

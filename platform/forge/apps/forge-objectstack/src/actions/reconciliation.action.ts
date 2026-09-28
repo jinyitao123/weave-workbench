@@ -54,6 +54,7 @@ const generateParams = [
 
 export const CustomerGenerateStatement = defineAction({
   name: 'customer_generate_statement', label: '生成客户对账单', objectName: 'forge_customer', icon: 'file-check-2',
+  requiredPermissions: ['forge_finance_reviewer'],
   locations: [...locations], order: 80, refreshAfter: true, description: '按已审核应收、收款核销和预收冲抵生成期间余额快照。',
   params: generateParams, successMessage: '客户对账单已生成',
   onSuccess: { navigate: '/_console/apps/com.inoforge.forge.finance/page_counterparty_reconciliation?statement=${result.id}' },
@@ -62,6 +63,7 @@ export const CustomerGenerateStatement = defineAction({
 
 export const SupplierGenerateStatement = defineAction({
   name: 'supplier_generate_statement', label: '生成供应商对账单', objectName: 'forge_supplier', icon: 'file-check-2',
+  requiredPermissions: ['forge_finance_reviewer'],
   locations: [...locations], order: 80, refreshAfter: true, description: '按已审核应付、付款核销和预付冲抵生成期间余额快照。',
   params: generateParams, successMessage: '供应商对账单已生成',
   onSuccess: { navigate: '/_console/apps/com.inoforge.forge.finance/page_counterparty_reconciliation?statement=${result.id}' },

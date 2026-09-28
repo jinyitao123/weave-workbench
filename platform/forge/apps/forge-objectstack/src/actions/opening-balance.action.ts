@@ -40,6 +40,7 @@ const id=ctx.recordId||(ctx.record&&ctx.record.id),setup=ctx.record,actor=ctx.se
 
 export const ReceivableCreateCounterpartyOffset = defineAction({
   name: 'receivable_create_counterparty_offset', label: '创建往来对冲', objectName: 'forge_accounts_receivable', icon: 'arrow-left-right', locations: [...locations], order: 30, refreshAfter: true,
+  requiredPermissions: ['forge_finance_receivables_operator'],
   visible: `record.status == 'unpaid' || record.status == 'partially_collected' || record.status == 'overdue'`,
   params: [{ name: 'code', label: '对冲单号', type: 'text', required: true }, { field: 'payable_id', objectOverride: 'forge_counterparty_offset', required: true }, { name: 'amount', label: '对冲金额', type: 'currency', required: true }, { name: 'offset_on', label: '对冲日期', type: 'date', required: true }, { name: 'remarks', label: '申请说明', type: 'textarea' }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `

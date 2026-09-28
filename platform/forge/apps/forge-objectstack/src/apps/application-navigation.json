@@ -499,7 +499,10 @@
                     "label": "销售订单",
                     "icon": "clipboard-list",
                     "type": "page",
-                    "pageName": "page_sales_order_workspace"
+                    "pageName": "page_sales_order_workspace",
+                    "requiredPermissions": [
+                      "sales_order_operator"
+                    ]
                   },
                   {
                     "id": "sales_additional_fees",
@@ -1155,7 +1158,10 @@
                 "label": "项目中心",
                 "icon": "briefcase-business",
                 "type": "page",
-                "pageName": "page_project_center"
+                "pageName": "page_project_center",
+                "requiredPermissions": [
+                  "forge_project_operator"
+                ]
               },
               {
                 "id": "project_management",
