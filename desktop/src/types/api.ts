@@ -397,8 +397,10 @@ export interface EnterpriseWorkReceipt {
 
 export interface EnterpriseWorkResource {
   type: 'forge-file'
+  materialId?: string
   id: string
   name: string
+  mediaType?: WorkspaceMaterialMimeType
   bytes: number
   sha256: string
 }
@@ -445,7 +447,15 @@ export interface ProjectRecord {
   scripts?: ProjectScripts
 }
 
-/** A text attachment copied into the currently authorized workspace. */
+export type WorkspaceMaterialMimeType =
+  | 'text/plain'
+  | 'text/markdown'
+  | 'text/csv'
+  | 'application/json'
+  | 'application/pdf'
+  | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+
+/** An employee-selected source file copied byte-for-byte into the authorized workspace. */
 export interface WorkspaceMaterialReference {
   projectId: string
   harness: HarnessId
@@ -455,7 +465,7 @@ export interface WorkspaceMaterialReference {
   path: string
   sha256: string
   bytes: number
-  mimeType: 'text/plain' | 'text/markdown'
+  mimeType: WorkspaceMaterialMimeType
 }
 
 export type WorkspaceMaterialPromptReference = Pick<WorkspaceMaterialReference, 'name' | 'path' | 'sha256' | 'bytes' | 'mimeType'>

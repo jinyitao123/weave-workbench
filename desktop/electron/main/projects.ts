@@ -6,7 +6,7 @@ import type { BigIntStats, Dirent, Stats } from 'node:fs'
 import { dialog, type BrowserWindow } from 'electron'
 import { homedir } from 'node:os'
 import { sortProjects } from '../../src/lib/project-order'
-import type { GitWorktree, HarnessId, ProjectFileEntry, ProjectFileListing, ProjectRecord, ProjectScripts, SessionRecord, WorkspaceMaterialReference } from '../../src/types/api'
+import type { GitWorktree, HarnessId, ProjectFileEntry, ProjectFileListing, ProjectRecord, ProjectScripts, SessionRecord, WorkspaceMaterialMimeType, WorkspaceMaterialReference } from '../../src/types/api'
 import { listGitWorktrees } from './git'
 import { HARNESSES } from './harness'
 import { mapLimit } from './lib/async'
@@ -14,11 +14,11 @@ import type { FolderIdentity, JsonStateStore, PersistedProject } from './store'
 import { isPathWithin, rejectUnknownKeys, requireBoolean, requireExistingDirectory, requireExistingPath, requireId, requireInteger, requireRecord, requireString } from './validation'
 
 const MAX_CONCURRENT_BRANCH_LOOKUPS = 4
-const MAX_WORKSPACE_TEXT_MATERIAL_BYTES = 700_000
+const MAX_WORKSPACE_MATERIAL_BYTES = 2 * 1024 * 1024
 const WORKSPACE_ATTACHMENT_AUTHORIZATION_TIMEOUT_MS = 30_000
 const WORKSPACE_ATTACHMENT_AUTHORIZATION_TIMEOUT_MESSAGE = 'Workspace authorization timed out before attaching this file. Retry the import.'
 
-function workspaceTextMaterialName(value: unknown): { name: string; mimeType: WorkspaceMaterialReference['mimeType'] } {
+function workspaceTextMaterialName(value: unknown): { name: string; mimeType: WorkspaceMaterialMimeType } {
   const name = requireString(value, 'file name', { min: 1, max: 255 })
   if (name === '.' || name === '..' || [...name].some((part) => {
     const code = part.codePointAt(0)!
@@ -27,18 +27,32 @@ function workspaceTextMaterialName(value: unknown): { name: string; mimeType: Wo
     throw new TypeError('Text attachment name is invalid')
   }
   const extension = extname(name).toLowerCase()
-  if (!['.txt', '.md', '.markdown'].includes(extension)) throw new TypeError('Only UTF-8 text and Markdown attachments are supported')
-  return { name, mimeType: extension === '.txt' ? 'text/plain' : 'text/markdown' }
+  const mimeTypeByExtension: Record<string, WorkspaceMaterialMimeType> = {
+    '.txt': 'text/plain', '.md': 'text/markdown', '.markdown': 'text/markdown',
+    '.csv': 'text/csv', '.json': 'application/json', '.pdf': 'application/pdf',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  }
+  const mimeType = mimeTypeByExtension[extension]
+  if (!mimeType) throw new TypeError('Only UTF-8 text, Markdown, CSV, JSON, PDF, and DOCX materials are supported')
+  return { name, mimeType }
 }
 
-function workspaceTextMaterialBytes(value: unknown): Buffer {
-  if (!(value instanceof Uint8Array)) throw new TypeError('Text attachment bytes are invalid')
-  if (value.byteLength < 1 || value.byteLength > MAX_WORKSPACE_TEXT_MATERIAL_BYTES) throw new TypeError('Text attachment must be between 1 byte and 700 KB')
+function workspaceTextMaterialBytes(value: unknown, mimeType: WorkspaceMaterialMimeType): Buffer {
+  if (!(value instanceof Uint8Array)) throw new TypeError('Workspace material bytes are invalid')
+  if (value.byteLength < 1 || value.byteLength > MAX_WORKSPACE_MATERIAL_BYTES) throw new TypeError('Workspace materials must be between 1 byte and 2 MiB each')
   const bytes = Buffer.from(value)
+  if (mimeType === 'application/pdf') {
+    if (bytes.length < 5 || bytes.subarray(0, 5).toString('ascii') !== '%PDF-') throw new TypeError('PDF material does not have a valid PDF signature')
+    return bytes
+  }
+  if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    if (bytes.length < 4 || bytes.readUInt32LE(0) !== 0x04034b50) throw new TypeError('DOCX material does not have a valid ZIP signature')
+    return bytes
+  }
   let text: string
   try { text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes) }
-  catch { throw new TypeError('Text attachment must be valid UTF-8') }
-  if (!text.trim() || text.includes('\0')) throw new TypeError('Text attachment is empty or contains a NUL byte')
+  catch { throw new TypeError('Text material must be valid UTF-8') }
+  if (!text.trim() || text.includes('\0')) throw new TypeError('Text material is empty or contains a NUL byte')
   return bytes
 }
 
@@ -798,14 +812,14 @@ export class ProjectService {
     return { ...granted, ...project, purpose: 'personal', name: '我的工作', pinned: true, materialsFolder, deliveriesFolder }
   }
 
-  /** Copies a selected UTF-8 text file into the currently owned workspace. */
+  /** Copies a selected employee material byte-for-byte into the currently owned workspace. */
   async importTextMaterial(projectIdValue: unknown, workspacePathValue: unknown, nameValue: unknown, bytesValue: unknown): Promise<WorkspaceMaterialReference> {
     const scope = this.accountScope
     const scopeRevision = this.accountScopeRevision
     const projectId = requireId(projectIdValue, 'project id')
     const requestedWorkspacePath = requireString(workspacePathValue, 'workspace path', { min: 1, max: 4096 })
     const { name, mimeType } = workspaceTextMaterialName(nameValue)
-    const bytes = workspaceTextMaterialBytes(bytesValue)
+    const bytes = workspaceTextMaterialBytes(bytesValue, mimeType)
     const sha256 = createHash('sha256').update(bytes).digest('hex')
     this.assertScopeRevision(scopeRevision)
 

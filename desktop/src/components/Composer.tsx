@@ -739,7 +739,7 @@ export const Composer = memo(function Composer({
               className="sr-only"
               type="file"
               multiple
-              accept=".txt,.md,.markdown,text/plain,text/markdown,image/png,image/jpeg,image/gif,image/webp"
+              accept=".txt,.md,.markdown,.csv,.json,.pdf,.docx,text/plain,text/markdown,text/csv,application/json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg,image/gif,image/webp"
               tabIndex={-1}
               aria-label="Choose files to attach"
               aria-describedby={imageStatusId}

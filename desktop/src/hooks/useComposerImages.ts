@@ -5,7 +5,8 @@ import type { HarnessId, PromptImage, WorkspaceMaterialReference } from '@/types
 const supportedImageTypes = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp'])
 export const MAX_COMPOSER_FILE_COUNT = 8
 export const MAX_COMPOSER_IMAGE_SOURCE_BYTES = 1_350_000
-export const MAX_COMPOSER_TEXT_SOURCE_BYTES = 700_000
+export const MAX_COMPOSER_MATERIAL_SOURCE_BYTES = 2 * 1024 * 1024
+export const MAX_COMPOSER_MATERIAL_TOTAL_BYTES = 8 * 1024 * 1024
 
 export interface ComposerImage extends PromptImage {
   id: string
@@ -35,7 +36,7 @@ interface UseComposerImagesOptions {
 
 function isSupportedTextFile(file: File): boolean {
   const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase()
-  return ['.txt', '.md', '.markdown'].includes(extension)
+  return ['.txt', '.md', '.markdown', '.csv', '.json', '.pdf', '.docx'].includes(extension)
 }
 
 function base64FromBuffer(buffer: ArrayBuffer): string {
@@ -113,8 +114,9 @@ export function useComposerImages({ shortName, projectId, harness, importTextFil
     }
     const textSourceBytes = textFilesToImport.reduce((sum, file) => sum + file.size, 0)
     const currentTextBytes = textFilesRef.current.reduce((sum, file) => sum + file.size, 0)
-    if (textFilesToImport.some((file) => file.size < 1) || currentTextBytes + reservedTextBytesRef.current + textSourceBytes > MAX_COMPOSER_TEXT_SOURCE_BYTES) {
-      updateError('Text and Markdown attachments must total 700 KB or less.')
+    if (textFilesToImport.some((file) => file.size < 1 || file.size > MAX_COMPOSER_MATERIAL_SOURCE_BYTES)
+      || currentTextBytes + reservedTextBytesRef.current + textSourceBytes > MAX_COMPOSER_MATERIAL_TOTAL_BYTES) {
+      updateError('Each source material must be at most 2 MiB and all selected materials must total at most 8 MiB.')
       return
     }
 
@@ -166,7 +168,7 @@ export function useComposerImages({ shortName, projectId, harness, importTextFil
         const failure = failedText.reason
         updateError(failure instanceof Error && failure.message.startsWith('Workspace authorization timed out before attaching this file.')
           ? failure.message
-          : `${shortName} could not import the text or Markdown file.`)
+          : `${shortName} could not import the selected material.`)
       }
       else if (errorRevisionRef.current === startingErrorRevision) setError('')
     } catch {
@@ -237,7 +239,7 @@ export function useComposerImages({ shortName, projectId, harness, importTextFil
     let omitted = 0
     for (const file of restored) {
       if (currentIds.has(file.id)) continue
-      if (count >= MAX_COMPOSER_FILE_COUNT || bytes + file.size > MAX_COMPOSER_TEXT_SOURCE_BYTES) {
+      if (count >= MAX_COMPOSER_FILE_COUNT || file.size > MAX_COMPOSER_MATERIAL_SOURCE_BYTES || bytes + file.size > MAX_COMPOSER_MATERIAL_TOTAL_BYTES) {
         omitted += 1
         continue
       }
