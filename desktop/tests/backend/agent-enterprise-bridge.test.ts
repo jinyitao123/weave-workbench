@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AgentEnterpriseBridge } from '../../electron/main/enterprise/agent-bridge'
 import { digest, submissionUUID } from '../../electron/main/enterprise/handoff-store'
-import { normalizeFrozenMaterial, type FrozenMaterial } from '../../electron/main/enterprise/materials'
+import { freezeApprovalOriginalMaterial, normalizeFrozenMaterial, type FrozenMaterial } from '../../electron/main/enterprise/materials'
 import type { EnterpriseApprovalContext, TranscriptMessage } from '../../src/types/api'
 import { WorkRegistrationRejectedError, type EnterpriseWorkContinuationContext, type EnterpriseWorkNotificationSource } from '../../electron/main/enterprise'
 import { ForgeBusinessReadError, type BusinessRecordSnapshot } from '../../electron/main/enterprise/business-records'
@@ -81,9 +81,16 @@ async function fixture(objectName = 'forge_sales_contract') {
     readBusinessRecord: vi.fn(async () => ({ candidate: businessCandidate, snapshot: structuredClone(businessSnapshot) })),
     stageWorkMaterials: vi.fn(async (items: FrozenMaterial[]) => items.map((raw, index) => {
       const item = normalizeFrozenMaterial(raw)
-      return { type: 'forge-file' as const, materialId: item.materialId, id: `file-${index + 1}`, name: item.name, mediaType: item.mediaType, bytes: item.bytes, sha256: item.sha256 }
+      return {
+        type: 'forge-file' as const, ...(item.sourceKind ? { sourceKind: item.sourceKind } : {}),
+        materialId: item.materialId, id: `file-${index + 1}`, name: item.name, mediaType: item.mediaType, bytes: item.bytes, sha256: item.sha256,
+      }
     })),
-    submitWork: vi.fn(async (_choice: unknown, _goal: string, source?: { assertCurrent(): Promise<void>; continuation?: { inputRevisionID: string; runID: string } }) => {
+    submitWork: vi.fn(async (_choice: unknown, _goal: string, source?: {
+      assertCurrent(): Promise<void>
+      continuation?: { inputRevisionID: string; runID: string }
+      resources?: Array<{ sourceKind?: string; requestId?: string; name: string; bytes: number; sha256: string }>
+    }) => {
       await source?.assertCurrent()
       if (source?.continuation) {
         const sequence = ++continuationSequence
@@ -555,6 +562,29 @@ describe('employee-bound material handoff', () => {
     expect(JSON.stringify(task)).not.toContain(Buffer.from(f.content).toString('base64'))
     expect(f.service.submitWork.mock.calls[0][2]).toMatchObject({ authorizedBusinessCapabilityIds: [] })
   })
+  it('freezes employee-selected PDF as owner and carries that source binding only in the Forge resource', async () => {
+    const f = await fixture()
+    const source = await readFile(new URL('../fixtures/materials/sample-two-page.pdf', import.meta.url))
+    const path = '材料/附件/验收附件.pdf'
+    await writeFile(join(f.cwd, path), source)
+    const reference = {
+      projectId: 'project-test', harness: 'pi' as const, workspacePath: f.cwd,
+      name: '验收附件.pdf', path, sha256: digest(source), bytes: source.length, mimeType: 'application/pdf' as const,
+    }
+    const prompt = appendWorkspaceMaterialContext('请只读核对这份验收附件。', [reference])
+    await f.input(prompt, 'employee-pdf-turn')
+    const discovered = await f.discover()
+    const submitted = await f.call('submit', { ...discovered, materials: [{ path, sha256: digest(source) }] })
+
+    expect(submitted.status).toBe(200)
+    expect(f.service.stageWorkMaterials.mock.calls[0]?.[0][0]).toMatchObject({ sourceKind: 'owner', name: '验收附件.pdf', bytes: source.length, sha256: digest(source) })
+    const task = JSON.parse(f.service.submitWork.mock.calls[0]![1]) as { materials: Array<Record<string, unknown>> }
+    expect(task.materials[0]).not.toHaveProperty('sourceKind')
+    expect(task.materials[0]).not.toHaveProperty('bytesBase64')
+    const resources = f.service.submitWork.mock.calls[0]![2]!.resources
+    expect(resources![0]).toMatchObject({ sourceKind: 'owner', name: '验收附件.pdf', bytes: source.length, sha256: digest(source) })
+    expect(resources![0]).not.toHaveProperty('requestId')
+  })
   it('authorizes only the business action selected for the current employee intent', async () => {
     const f = await fixture(), params = await f.discover()
     const actionKey = params.available_actions[0].action_key
@@ -672,6 +702,39 @@ describe('employee-bound material handoff', () => {
     expect(stored.value.employeeRoundId).toMatch(/^[0-9a-f]{64}$/)
     expect(stored.value.idempotencyKey).toBe(submissionUUID(stored.value.employeeRoundId))
     expect(stored.value.sourceMessages.find((message) => message.messageId === 'employee-revision-1')?.sha256).toBe(digest(employeeRequest))
+  })
+  it('freezes approval PDF source identity with its exact bytes in the same returned revision intent', async () => {
+    const f = await fixture()
+    const source = await readFile(new URL('../fixtures/materials/sample-two-page.pdf', import.meta.url))
+    const original = await freezeApprovalOriginalMaterial({
+      sourceKind: 'approval', requestId: 'approval-1', fileId: 'approval-pdf-1', name: '验收附件.pdf',
+      mediaType: 'application/pdf', bytes: source.length, sha256: digest(source),
+    }, source, 700_000)
+    const context = f.contexts.get('approval-1')!
+    f.contexts.set('approval-1', { ...context, originalFiles: [original] })
+
+    const opened = await f.openReturned()
+    expect(opened.context.originalFiles).toMatchObject([{ name: '验收附件.pdf', bytes: source.length, verified: true }])
+    expect(opened.context.originalFiles?.[0]).not.toHaveProperty('fileId')
+    expect(opened.context.originalFiles?.[0]).not.toHaveProperty('requestId')
+    expect(opened.context.originalFiles?.[0]).not.toHaveProperty('bytesBase64')
+    expect(opened.context.originalFiles?.[0]).not.toHaveProperty('sha256')
+
+    const employeeRequest = '按退回意见整理原审批附件并准备修订。'
+    await f.input(employeeRequest, 'employee-approval-pdf-revision')
+    await f.call('revision_submit', { employee_request: employeeRequest, body: '修订正文', materials: [] })
+
+    const files = await readdir(f.storageDirectory)
+    const saved = await Promise.all(files.map(async (file) => JSON.parse((await readFile(join(f.storageDirectory, file))).toString('utf8')) as { value: Record<string, unknown> }))
+    const stored = saved.find((entry) => entry.value.requestId === 'approval-1')!.value
+    expect(stored.sourceFiles).toMatchObject([{
+      fileId: 'source-file-approval-1', name: '原合同.md', mediaType: 'text/plain; charset=utf-8',
+      bytes: Buffer.byteLength('# 原提交合同\n客户：测试客户\n'), sha256: digest('# 原提交合同\n客户：测试客户\n'),
+    }, {
+      sourceKind: 'approval', requestId: 'approval-1', fileId: 'approval-pdf-1', name: '验收附件.pdf',
+      mediaType: 'application/pdf', bytes: source.length, sha256: digest(source), bytesBase64: source.toString('base64'),
+    }])
+    expect(f.service.submitApprovalRevision).toHaveBeenCalledOnce()
   })
   it('rejects a pinned context if the account or return version changes before the Pi prompt starts', async () => {
     const f = await fixture()

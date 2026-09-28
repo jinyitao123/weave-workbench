@@ -330,7 +330,9 @@ describe('Composer image ingestion', () => {
     act(() => (Array.from(container.querySelectorAll<HTMLButtonElement>('.composer-menu button')).find((button) => button.textContent?.includes('Add files')) as HTMLButtonElement).click())
     expect(click).toHaveBeenCalledOnce()
     expect(input?.multiple).toBe(true)
-    expect(input?.accept).toBe('.txt,.md,.markdown,text/plain,text/markdown,image/png,image/jpeg,image/gif,image/webp')
+    expect(input?.accept).toBe(
+      '.txt,.md,.markdown,.csv,.json,.pdf,.docx,text/plain,text/markdown,text/csv,application/json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg,image/gif,image/webp',
+    )
     expect(container.querySelector('.composer-menu')).toBeNull()
     expect(container.querySelector('button[aria-label="Attach images"]')).toBeNull()
 

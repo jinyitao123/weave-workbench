@@ -26,9 +26,21 @@ export interface MaterialExtraction {
   }
   limitations: Array<'page-without-text' | 'embedded-image' | 'unsupported-document-content'>
 }
+export interface FrozenApprovalOriginalMaterial {
+  sourceKind: 'approval'
+  requestId: string
+  fileId: string
+  name: string
+  mediaType: 'application/pdf' | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  bytes: number
+  sha256: string
+  bytesBase64: string
+  extraction: MaterialExtraction
+}
 /** The encrypted local snapshot contains exact source bytes; only extraction is sent to Weave. */
 export interface FrozenMaterial {
   materialId: string
+  sourceKind?: 'owner'
   name: string
   mediaType: WorkspaceMaterialMimeType
   sha256: string
@@ -307,7 +319,7 @@ async function extractDocx(bytes: Buffer, sourceSha256: string, maximum: number)
   return extraction
 }
 
-async function extractMaterial(name: string, mediaType: WorkspaceMaterialMimeType, bytes: Buffer, sourceSha256: string, maximum: number): Promise<MaterialExtraction> {
+async function extractMaterial(mediaType: WorkspaceMaterialMimeType, bytes: Buffer, sourceSha256: string, maximum: number): Promise<MaterialExtraction> {
   if (mediaType === 'application/pdf') {
     if (bytes.length < 5 || bytes.subarray(0, 5).toString('ascii') !== '%PDF-') throw new Error('PDF 文件签名无效，未上传原件')
     return extractPdf(bytes, sourceSha256, maximum)
@@ -321,6 +333,15 @@ async function extractMaterial(name: string, mediaType: WorkspaceMaterialMimeTyp
   const extraction = extractionRecord(content, sourceSha256, 'utf8')
   assertExtractionBudget(extraction, maximum)
   return extraction
+}
+
+export async function extractOriginalMaterialText(
+  mediaType: 'application/pdf' | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  sourceBytes: Buffer,
+  sourceSha256: string,
+  maximumExtractedBytes: number,
+): Promise<MaterialExtraction> {
+  return extractMaterial(mediaType, sourceBytes, sourceSha256, maximumExtractedBytes)
 }
 
 export async function freezeMaterials(cwd: string, selections: MaterialSelection[], limits = HANDOFF_MATERIAL_LIMITS): Promise<FrozenMaterial[]> {
@@ -346,9 +367,11 @@ export async function freezeMaterials(cwd: string, selections: MaterialSelection
       if (bytesRead !== stat.size || digest(sourceBytes) !== selection.sha256) throw new Error('材料版本已变化，请重新核对员工指定的文件')
       const remainingTextBudget = limits.maxTotalExtractedBytes - extractedBytes
       if (remainingTextBudget < 1) throw new Error('本次交接提取文本总量超过 700 KB 限额；未截断或上传')
-      const extraction = await extractMaterial(name, mediaType, sourceBytes, selection.sha256, remainingTextBudget)
+      const extraction = await extractMaterial(mediaType, sourceBytes, selection.sha256, remainingTextBudget)
       const material: FrozenMaterial = {
-        materialId: materialId(name, mediaType, selection.sha256), name, mediaType,
+        materialId: materialId(name, mediaType, selection.sha256),
+        ...(['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(mediaType) ? { sourceKind: 'owner' as const } : {}),
+        name, mediaType,
         sha256: selection.sha256, bytes: sourceBytes.length, bytesBase64: sourceBytes.toString('base64'), extraction,
       }
       validateFrozenMaterial(material)
@@ -361,10 +384,13 @@ export async function freezeMaterials(cwd: string, selections: MaterialSelection
 }
 
 export function validateFrozenMaterial(value: FrozenMaterial): Buffer {
+  const isOriginal = value?.mediaType === 'application/pdf' || value?.mediaType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   if (!value || typeof value !== 'object' || !value.name || materialMimeType(value.name) !== value.mediaType
     || !/^[0-9a-f]{24}$/.test(value.materialId) || value.materialId !== materialId(value.name, value.mediaType, value.sha256)
     || !Number.isInteger(value.bytes) || value.bytes < 1 || value.bytes > MAX_WORKSPACE_MATERIAL_BYTES
-    || !/^[0-9a-f]{64}$/.test(value.sha256) || typeof value.bytesBase64 !== 'string') {
+    || !/^[0-9a-f]{64}$/.test(value.sha256) || typeof value.bytesBase64 !== 'string'
+    || isOriginal && value.sourceKind !== 'owner'
+    || !isOriginal && value.sourceKind !== undefined) {
     throw new Error('本地固定材料清单无效')
   }
   const sourceBytes = Buffer.from(value.bytesBase64, 'base64')
@@ -376,6 +402,47 @@ export function validateFrozenMaterial(value: FrozenMaterial): Buffer {
     || !Number.isInteger(value.extraction.bytes) || value.extraction.bytes !== extractionBytes.length
     || value.extraction.bytes > MAX_WORKSPACE_EXTRACTION_BYTES || digest(extractionBytes) !== value.extraction.sha256) {
     throw new Error('本地固定提取文本与原件摘要不匹配；不会上传或继续交接')
+  }
+  return sourceBytes
+}
+
+/** Bind approval PDF/DOCX bytes to the exact native request snapshot before they enter a frozen revision intent. */
+export async function freezeApprovalOriginalMaterial(
+  reference: Omit<FrozenApprovalOriginalMaterial, 'bytesBase64' | 'extraction'>,
+  sourceBytes: Buffer,
+  maximumExtractedBytes: number,
+): Promise<FrozenApprovalOriginalMaterial> {
+  if (reference.sourceKind !== 'approval' || !reference.requestId || reference.requestId.length > 128
+    || !reference.fileId || reference.fileId.length > 128 || !reference.name || reference.name.length > 255
+    || !['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(reference.mediaType)
+    || materialMimeType(reference.name) !== reference.mediaType || !Number.isInteger(reference.bytes)
+    || reference.bytes < 1 || reference.bytes > MAX_WORKSPACE_MATERIAL_BYTES || sourceBytes.length !== reference.bytes
+    || !/^[0-9a-f]{64}$/.test(reference.sha256) || digest(sourceBytes) !== reference.sha256) {
+    throw new Error('审批原件与冻结审批版本不一致，请暂停处理')
+  }
+  const extraction = await extractOriginalMaterialText(reference.mediaType, sourceBytes, reference.sha256, maximumExtractedBytes)
+  const frozen: FrozenApprovalOriginalMaterial = { ...reference, bytesBase64: sourceBytes.toString('base64'), extraction }
+  validateFrozenApprovalOriginalMaterial(frozen)
+  return frozen
+}
+
+export function validateFrozenApprovalOriginalMaterial(value: FrozenApprovalOriginalMaterial): Buffer {
+  if (!value || typeof value !== 'object' || value.sourceKind !== 'approval' || !value.requestId || value.requestId.length > 128
+    || !value.fileId || value.fileId.length > 128 || !value.name || value.name.length > 255
+    || !['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(value.mediaType)
+    || materialMimeType(value.name) !== value.mediaType || !Number.isInteger(value.bytes) || value.bytes < 1
+    || value.bytes > MAX_WORKSPACE_MATERIAL_BYTES || !/^[0-9a-f]{64}$/.test(value.sha256) || typeof value.bytesBase64 !== 'string') {
+    throw new Error('本地固定审批原件清单无效')
+  }
+  const sourceBytes = Buffer.from(value.bytesBase64, 'base64')
+  if (sourceBytes.toString('base64') !== value.bytesBase64 || sourceBytes.length !== value.bytes || digest(sourceBytes) !== value.sha256) {
+    throw new Error('本地固定审批原件无法通过字节长度与 SHA-256 校验')
+  }
+  const extractionBytes = Buffer.from(value.extraction.content, 'utf8')
+  if (value.extraction.mediaType !== 'text/plain; charset=utf-8' || value.extraction.sourceSha256 !== value.sha256
+    || !Number.isInteger(value.extraction.bytes) || value.extraction.bytes !== extractionBytes.length
+    || value.extraction.bytes > MAX_WORKSPACE_EXTRACTION_BYTES || digest(extractionBytes) !== value.extraction.sha256) {
+    throw new Error('本地审批原件提取文本与原件摘要不匹配')
   }
   return sourceBytes
 }

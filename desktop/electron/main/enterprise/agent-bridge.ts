@@ -5,7 +5,7 @@ import { CapabilityBridge, type CapabilityClaim } from '../lib/capability-bridge
 import { canonicalSessionPath } from '../session-paths'
 import { rejectUnknownKeys, requireString } from '../validation'
 import { digest, HandoffStore, submissionUUID, type HandoffStorage } from './handoff-store'
-import { executionText, freezeMaterials, makeFrozenTextMaterial, materialSelection, normalizeFrozenMaterial, normalizeFrozenMaterials, validateFrozenMaterial, type FrozenMaterial, type MaterialLimits } from './materials'
+import { executionText, freezeMaterials, makeFrozenTextMaterial, materialSelection, normalizeFrozenMaterial, normalizeFrozenMaterials, validateFrozenApprovalOriginalMaterial, validateFrozenMaterial, type FrozenMaterial, type MaterialLimits } from './materials'
 import { searchTeams, type TeamSummary } from './team-catalog'
 import { splitWorkspaceMaterialContext } from '../../../src/lib/workspace-material-attachments'
 import { businessReadErrorResult, type BusinessObjectDirectory, type BusinessRecordCandidate, type BusinessRecordRead, type BusinessRecordSearchPage, type BusinessRecordSnapshot } from './business-records'
@@ -68,7 +68,16 @@ interface ScopedBusinessRecord extends BusinessRecordCandidate {
 }
 interface FrozenRevisionFile extends FrozenMaterial {}
 interface LegacyFrozenRevisionFile { name: string; mediaType: 'text/plain; charset=utf-8'; bytes: number; sha256: string; bytesBase64: string }
-interface FrozenRevisionSourceFile { fileId: string; name: string; mediaType: string; bytes: number; sha256: string; bytesBase64: string }
+interface FrozenRevisionSourceFile {
+  fileId: string
+  name: string
+  mediaType: string
+  bytes: number
+  sha256: string
+  bytesBase64: string
+  sourceKind?: 'approval'
+  requestId?: string
+}
 interface FrozenRevisionIntent {
   version: 1
   accountKey: string
@@ -123,6 +132,7 @@ function returnedApprovalFingerprint(context: EnterpriseApprovalContext): string
     businessObject: context.businessObject, sourceMaterialVersion: context.sourceMaterialVersion,
     returnVersion: context.returnVersion, returnReason: context.returnReason, fields: context.fields,
     files: context.files.map(({ fileId, name, mediaType, bytes, sha256 }) => ({ fileId, name, mediaType, bytes, sha256 })),
+    originalFiles: context.originalFiles?.map(({ sourceKind, requestId, fileId, name, mediaType, bytes, sha256 }) => ({ sourceKind, requestId, fileId, name, mediaType, bytes, sha256 })),
   }))
 }
 function workContinuationFingerprint(context: EnterpriseWorkContinuationContext): string {
@@ -141,9 +151,12 @@ function assertReturnedApproval(context: EnterpriseApprovalContext, requestId?: 
     || context.files.some((file) => !file.fileId || file.fileId.length > 128 || !file.name || file.name.length > 255 || file.mediaType !== 'text/plain; charset=utf-8'
       || !Number.isInteger(file.bytes) || file.bytes < 0 || file.bytes > 2 * 1024 * 1024
       || !/^[0-9a-f]{64}$/.test(file.sha256) || file.verified !== true
-      || Buffer.byteLength(file.content, 'utf8') !== file.bytes || digest(Buffer.from(file.content, 'utf8')) !== file.sha256)) {
+      || Buffer.byteLength(file.content, 'utf8') !== file.bytes || digest(Buffer.from(file.content, 'utf8')) !== file.sha256)
+    || context.originalFiles !== undefined && (!Array.isArray(context.originalFiles) || context.originalFiles.length > 11
+      || context.originalFiles.some((file) => file.sourceKind !== 'approval' || file.requestId !== context.requestId))) {
     throw new Error('当前退回事项或材料版本不完整，请刷新待办')
   }
+  context.originalFiles?.forEach((file) => { validateFrozenApprovalOriginalMaterial(file) })
 }
 function revisionFile(material: FrozenMaterial): FrozenRevisionFile {
   validateFrozenMaterial(material)
@@ -255,7 +268,10 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (accountBefore !== accountAfter) throw new Error('当前账号已变化，请重新打开工作消息')
     const materials = context.input.materials.map((material) => {
       if (!material.content || !material.mediaType) throw new Error('原工作包含固定材料，但没有取得经核验的原文，桌面不会仅凭文件引用继续')
-      return { name: material.name, bytes: material.bytes, sha256: material.sha256, content: material.content }
+      return {
+        name: material.name, bytes: material.bytes, sha256: material.sha256, content: material.content,
+        ...(material.extraction ? { extraction: { status: material.extraction.status, limitations: [...material.extraction.limitations] } } : {}),
+      }
     })
     const now = Date.now()
     for (const [handle, pending] of this.pendingWorkContinuations) if (now - pending.createdAt > 10 * 60_000) this.pendingWorkContinuations.delete(handle)
@@ -798,7 +814,14 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const sessionKey = digest(claim.sessionPath!).slice(0, 24)
     const idempotencySeed = `${sessionKey}:${turn.messageId}:${key}`
     const identity = `${turn.accountKey}:${idempotencySeed}`
-    const fingerprint = digest(JSON.stringify({ goal, selections, key, authorizedBusinessCapabilityIds, businessContext, businessSnapshot: businessSnapshot ?? null, continuation: workContinuation?.context.source }))
+    const fingerprint = digest(JSON.stringify({
+      goal, selections: selections.map((selection) => ({
+        ...selection,
+        ...(/\.(?:pdf|docx)$/i.test(selection.path) ? { sourceKind: 'owner' as const } : {}),
+      })),
+      key, authorizedBusinessCapabilityIds, businessContext, businessSnapshot: businessSnapshot ?? null,
+      continuation: workContinuation?.context.source,
+    }))
     const intent = await this.store.freeze<FrozenHandoffIntent>(identity, fingerprint, async () => {
       const current = await this.options.service.getTeamChoices({ id: choice.teamId, name: choice.teamName })
       if (!current.some((item) => handoffKey(item) === key)) throw new Error('承接流程版本已经变化，请重新查找')
@@ -870,6 +893,14 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           if (bytes.length !== file.bytes || digest(bytes) !== file.sha256) throw new Error('原始审批材料与冻结版本不一致，请暂停处理')
           return { fileId: file.fileId, name: file.name, mediaType: file.mediaType, bytes: bytes.length, sha256: file.sha256, bytesBase64: bytes.toString('base64') }
         })
+        for (const file of latest.originalFiles ?? []) {
+          const bytes = validateFrozenApprovalOriginalMaterial(file)
+          sourceFiles.push({
+            sourceKind: file.sourceKind, requestId: file.requestId, fileId: file.fileId,
+            name: file.name, mediaType: file.mediaType, bytes: file.bytes, sha256: file.sha256,
+            bytesBase64: bytes.toString('base64'),
+          })
+        }
         if (sourceFiles.reduce((total, file) => total + file.bytes, 0) > 8 * 1024 * 1024) throw new Error('原始审批材料超出本地固定包大小限制')
         return {
           version: 1, accountKey: bound.accountKey, sessionKey, employeeRoundId, employeeMessageId,
@@ -1085,7 +1116,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   private async prepareDelivery(claim: CapabilityClaim, turn: EmployeeTurn, intent: FrozenHandoffIntent, recoveryKey: string): Promise<unknown> {
     try {
       const materials = normalizeFrozenMaterials(intent.materials)
-      const resourcesFingerprint = digest(JSON.stringify(materials.map(({ name, bytes, sha256 }) => ({ name, bytes, sha256 }))))
+      const resourcesFingerprint = digest(JSON.stringify(materials.map(({ name, bytes, sha256, sourceKind }) => ({ name, bytes, sha256, sourceKind }))))
       const frozen = await this.store.freeze<FrozenHandoff>(`${intent.accountKey}:${intent.idempotencySeed}:resources`, resourcesFingerprint, async () => {
         const resources = materials.length
           ? await this.options.service.stageWorkMaterials(materials, async () => { await this.evidence(claim, turn) })
@@ -1098,6 +1129,8 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         return resource.type !== 'forge-file' || !resource.id || resource.name !== material.name
           || resource.bytes !== material.bytes || resource.sha256 !== material.sha256
           || (resource.mediaType !== undefined && resource.mediaType !== material.mediaType)
+          || resource.sourceKind !== material.sourceKind
+          || resource.requestId !== undefined
           || (resource.materialId !== undefined && resource.materialId !== material.materialId)
       })) throw new Error('Forge 文件引用与本地固定材料清单不一致')
       const resources = frozen.resources.map((resource, index) => ({

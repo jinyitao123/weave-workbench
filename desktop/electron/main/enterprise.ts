@@ -1,7 +1,7 @@
 import { teamWorkspaceRequest } from './enterprise/team-workspace'
 import type { TeamWorkspaceCommand } from '../../src/types/team-workspace'
-import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkReadStatus, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource } from '../../src/types/api'
-import { normalizeFrozenMaterial, validateFrozenMaterial, type FrozenMaterial } from './enterprise/materials'
+import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkReadStatus, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource, WorkspaceMaterialMimeType } from '../../src/types/api'
+import { extractOriginalMaterialText, freezeApprovalOriginalMaterial, normalizeFrozenMaterial, validateFrozenMaterial, MAX_WORKSPACE_EXTRACTION_BYTES, MAX_WORKSPACE_MATERIAL_BYTES, type FrozenApprovalOriginalMaterial, type FrozenMaterial, type MaterialExtraction } from './enterprise/materials'
 import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 import { submissionUUID } from './enterprise/handoff-store'
@@ -53,7 +53,18 @@ export interface EnterpriseWorkContinuationContext {
     teamID: string
     workflowID: string
     workflowVersion: number
-    materials: Array<{ id: string; name: string; bytes: number; sha256: string; mediaType?: string; content?: string }>
+    materials: Array<{
+      id: string
+      name: string
+      bytes: number
+      sha256: string
+      materialId?: string
+      mediaType?: WorkspaceMaterialMimeType | 'text/plain; charset=utf-8'
+      sourceKind?: 'owner' | 'approval'
+      requestId?: string
+      content?: string
+      extraction?: MaterialExtraction
+    }>
     sourceMessages: Array<{ messageID: string; eventSeq: number; sha256: string }>
     businessRecord?: { objectName: string; recordID: string; recordVersion?: string }
     parent?: { rootInputRevisionID: string; parentInputRevisionID?: string; parentRunID?: string }
@@ -114,6 +125,13 @@ export function approvalContextView(context: EnterpriseApprovalContext): Enterpr
     ...(context.returnReason !== undefined ? { returnReason: context.returnReason } : {}),
     fields: context.fields.map((field) => ({ ...field })),
     files: context.files.map(({ name, content, verified }) => ({ name, content, verified })),
+    ...(context.originalFiles ? { originalFiles: context.originalFiles.map(({ name, mediaType, bytes, extraction }) => ({
+      name, mediaType, bytes, verified: true,
+      extraction: {
+        status: extraction.status, content: extraction.content,
+        coverage: { ...extraction.coverage }, limitations: [...extraction.limitations],
+      },
+    })) } : {}),
   }
 }
 
@@ -126,6 +144,29 @@ async function responseErrorCode(response: Response): Promise<string | undefined
   } catch {
     return undefined
   }
+}
+
+async function readExactResponseBytes(response: Response, expectedBytes: number): Promise<Buffer> {
+  const reader = response.body?.getReader()
+  if (!reader) throw new Error('Forge 原件响应内容为空')
+  const chunks: Uint8Array[] = []
+  let totalBytes = 0
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      totalBytes += value.byteLength
+      if (totalBytes > expectedBytes) {
+        await reader.cancel()
+        throw new Error('Forge 原件超过冻结长度，已停止读取')
+      }
+      chunks.push(value)
+    }
+  } finally {
+    reader.releaseLock()
+  }
+  if (totalBytes !== expectedBytes) throw new Error('Forge 原件长度与冻结版本不一致')
+  return Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)), totalBytes)
 }
 
 function forgeMcpReadError(message: string): ForgeBusinessReadError {
@@ -316,6 +357,16 @@ const CONTINUATION_SOURCE_SHA256 = /^[0-9a-fA-F]{64}$/
 const CONTINUATION_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const CONTINUATION_TOTAL_BYTES = 8 * 1024 * 1024
 const CONTINUATION_TEXT_TYPES = new Set(['text/plain', 'text/plain; charset=utf-8'])
+const CONTINUATION_MATERIAL_TYPES = new Set<WorkspaceMaterialMimeType>([
+  'text/plain', 'text/markdown', 'text/csv', 'application/json', 'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+])
+const CONTINUATION_ORIGINAL_TYPES = new Set<WorkspaceMaterialMimeType>([
+  'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+])
+function isContinuationOriginalType(value: WorkspaceMaterialMimeType | 'text/plain; charset=utf-8'): value is 'application/pdf' | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' {
+  return value === 'application/pdf' || value === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+}
 
 function boundedIdentity(value: unknown, maxLength: number): string | undefined {
   return typeof value === 'string' && value.length > 0 && value.length <= maxLength && value.trim() === value && !value.includes('\0') ? value : undefined
@@ -345,8 +396,26 @@ function parseWorkContinuationContext(value: unknown): EnterpriseWorkContinuatio
   const materials = input.materials.flatMap((entry): EnterpriseWorkContinuationContext['input']['materials'] => {
     const item = record(entry), id = boundedIdentity(item?.id, 128), name = boundedIdentity(item?.name, 255)
     const bytes = numberValue(item?.bytes), sha256 = typeof item?.sha256 === 'string' ? item.sha256 : undefined
-    return item?.type === 'forge-file' && id && name && Number.isInteger(bytes) && bytes! >= 1 && bytes! <= 700_000 && sha256 && CONTINUATION_SHA256.test(sha256)
-      ? [{ id, name, bytes: bytes!, sha256 }]
+    const mediaType = item?.mediaType === undefined ? undefined : boundedIdentity(item.mediaType, 160) as WorkspaceMaterialMimeType | undefined
+    const materialId = item?.materialId === undefined ? undefined : boundedIdentity(item.materialId, 24)
+    const sourceKind = item?.sourceKind === 'owner' || item?.sourceKind === 'approval' ? item.sourceKind : undefined
+    const requestId = item?.requestId === undefined ? undefined : boundedIdentity(item.requestId, 128)
+    const binary = mediaType !== undefined && CONTINUATION_ORIGINAL_TYPES.has(mediaType)
+    const binaryNamedWithoutType = !mediaType && /\.(?:pdf|docx)$/i.test(name ?? '')
+    const fieldsValid = (item?.mediaType === undefined || Boolean(mediaType && CONTINUATION_MATERIAL_TYPES.has(mediaType)))
+      && (item?.materialId === undefined || Boolean(materialId && /^[0-9a-f]{24}$/.test(materialId)))
+      && (item?.sourceKind === undefined || sourceKind !== undefined)
+      && (item?.requestId === undefined || requestId !== undefined)
+    const sourceIsValid = fieldsValid && (binary
+      ? Boolean(materialId && /^[0-9a-f]{24}$/.test(materialId) && sourceKind
+        && (sourceKind === 'approval' ? requestId : !requestId))
+      : !binaryNamedWithoutType && sourceKind === undefined && requestId === undefined
+        && (materialId === undefined || /^[0-9a-f]{24}$/.test(materialId)))
+    const maxBytes = binary ? MAX_WORKSPACE_MATERIAL_BYTES : 700_000
+    return item?.type === 'forge-file' && id && name && Number.isInteger(bytes) && bytes! >= 1 && bytes! <= maxBytes
+      && sha256 && CONTINUATION_SHA256.test(sha256)
+      && sourceIsValid
+      ? [{ id, name, bytes: bytes!, sha256, ...(materialId ? { materialId } : {}), ...(mediaType ? { mediaType } : {}), ...(sourceKind ? { sourceKind } : {}), ...(requestId ? { requestId } : {}) }]
       : []
   })
   if (materials.length !== input.materials.length) throw new Error('团队固定材料清单不完整，请刷新工作消息')
@@ -762,6 +831,55 @@ export class EnterpriseService {
     return { status: response.status, body: result }
   }
 
+  private async readOriginalMaterialBytes(
+    path: string,
+    mediaType: 'application/pdf' | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    bytes: number,
+    sha256: string,
+    generation: number,
+    sourceLabel: '审批' | '原工作',
+  ): Promise<Buffer> {
+    const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.forgeUrl), 'forge', {
+      headers: { Accept: mediaType, 'Accept-Encoding': 'identity', 'If-Match': sha256 },
+      redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    }, generation)
+    if (response.status === 401) {
+      await response.body?.cancel()
+      await this.signOutIfCurrent(snapshot)
+      throw new Error('登录已失效，请重新登录')
+    }
+    if (response.status === 404) {
+      await response.body?.cancel()
+      throw new Error(`${sourceLabel}原件不属于当前员工或冻结材料，已停止读取`)
+    }
+    if (response.status === 409) {
+      await response.body?.cancel()
+      throw new Error(`${sourceLabel}原件版本已变化，请刷新后再处理`)
+    }
+    if (!response.ok) {
+      await response.body?.cancel()
+      throw new Error(`${sourceLabel}原件暂时无法安全读取，请刷新后再处理`)
+    }
+    const contentType = response.headers.get('content-type')?.split(';', 1)[0]?.trim().toLowerCase()
+    const contentLength = response.headers.get('content-length')
+    const responseDigest = response.headers.get('x-content-sha256')
+    const responseEtag = response.headers.get('etag')?.replace(/^"|"$/g, '')
+    const hasResponseDigest = responseDigest !== null || responseEtag !== undefined
+    if (contentType !== mediaType || contentLength !== String(bytes) || !hasResponseDigest
+      || responseDigest !== null && responseDigest !== sha256
+      || responseEtag !== undefined && responseEtag !== sha256) {
+      await response.body?.cancel()
+      this.assertCurrentAuth(snapshot)
+      throw new Error(`${sourceLabel}原件响应与冻结材料元数据不一致`)
+    }
+    const sourceBytes = await readExactResponseBytes(response, bytes)
+    this.assertCurrentAuth(snapshot)
+    if (createHash('sha256').update(sourceBytes).digest('hex') !== sha256) {
+      throw new Error(`${sourceLabel}原件字节摘要与冻结版本不一致`)
+    }
+    return sourceBytes
+  }
+
   async submitApprovalRevision(requestId: string, body: ApprovalRevisionSubmission, assertCurrent: () => Promise<void>): Promise<ForgeHttpResult> {
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
@@ -823,7 +941,11 @@ export class EnterpriseService {
       const completed = await this.forgeRequest('/api/v1/storage/upload/complete', { fileId }, generation)
       const completedEnvelope = record(completed.body), completedData = record(completedEnvelope?.data) ?? completedEnvelope
       if ((textValue(completedData?.fileId) ?? fileId) !== fileId) throw new Error('Forge 返回的材料版本与本次上传不一致')
-      resources.push({ type: 'forge-file', materialId: material.materialId, id: fileId, name: material.name, mediaType: material.mediaType, bytes: material.bytes, sha256: material.sha256 })
+      resources.push({
+        type: 'forge-file', ...(material.sourceKind ? { sourceKind: material.sourceKind } : {}),
+        materialId: material.materialId, id: fileId, name: material.name,
+        mediaType: material.mediaType, bytes: material.bytes, sha256: material.sha256,
+      })
     }
     await assertCurrent()
     this.assertAuthGeneration(generation)
@@ -1421,21 +1543,39 @@ export class EnterpriseService {
     }
     const accountBeforeMaterials = await this.accountKey(generation)
     let totalBytes = 0
+    let totalExtractedBytes = 0
     const materials: EnterpriseWorkContinuationContext['input']['materials'] = []
     for (const expected of context.input.materials) {
-      const raw = record(await this.forgeJSON(`/api/v1/workbench/materials/${encodeURIComponent(expected.id)}`, generation, '原工作材料'))
-      const fileId = boundedIdentity(raw?.fileId, 128), name = boundedIdentity(raw?.name, 255)
-      const mediaType = boundedIdentity(raw?.mediaType, 160), bytes = numberValue(raw?.bytes)
-      const sha256 = typeof raw?.sha256 === 'string' ? raw.sha256 : undefined
-      const content = typeof raw?.content === 'string' ? raw.content : undefined
-      if (raw?.version !== '1' || fileId !== expected.id || name !== expected.name || !mediaType || !CONTINUATION_TEXT_TYPES.has(mediaType)
-        || !Number.isInteger(bytes) || bytes !== expected.bytes || !sha256 || sha256 !== expected.sha256 || !content || content.includes('\0')
-        || Buffer.byteLength(content, 'utf8') !== bytes || createHash('sha256').update(content, 'utf8').digest('hex') !== sha256) {
-        throw new Error('原工作材料与固定输入不一致，桌面不会继续')
+      if (expected.mediaType && isContinuationOriginalType(expected.mediaType)) {
+        const originalPath = expected.sourceKind === 'owner'
+          ? `/api/v1/workbench/materials/${encodeURIComponent(expected.id)}/original`
+          : `/api/v1/approvals/requests/${encodeURIComponent(expected.requestId!)}/workbench-context/files/${encodeURIComponent(expected.id)}/original`
+        const sourceBytes = await this.readOriginalMaterialBytes(
+          originalPath, expected.mediaType, expected.bytes, expected.sha256, generation, '原工作',
+        )
+        const remainingExtractionBytes = MAX_WORKSPACE_EXTRACTION_BYTES - totalExtractedBytes
+        if (remainingExtractionBytes < 1) throw new Error('原工作材料提取文本总量超出桌面读取限制')
+        const extraction = await extractOriginalMaterialText(expected.mediaType, sourceBytes, expected.sha256, remainingExtractionBytes)
+        totalBytes += sourceBytes.length
+        totalExtractedBytes += extraction.bytes
+        if (totalBytes > CONTINUATION_TOTAL_BYTES) throw new Error('原工作材料总量超出桌面读取限制')
+        materials.push({ ...expected, extraction, content: extraction.content })
+      } else {
+        const raw = record(await this.forgeJSON(`/api/v1/workbench/materials/${encodeURIComponent(expected.id)}`, generation, '原工作材料'))
+        const fileId = boundedIdentity(raw?.fileId, 128), name = boundedIdentity(raw?.name, 255)
+        const mediaType = boundedIdentity(raw?.mediaType, 160), bytes = numberValue(raw?.bytes)
+        const sha256 = typeof raw?.sha256 === 'string' ? raw.sha256 : undefined
+        const content = typeof raw?.content === 'string' ? raw.content : undefined
+        if (raw?.version !== '1' || fileId !== expected.id || name !== expected.name || !mediaType || !CONTINUATION_TEXT_TYPES.has(mediaType)
+          || !Number.isInteger(bytes) || bytes !== expected.bytes || !sha256 || sha256 !== expected.sha256 || !content || content.includes('\0')
+          || Buffer.byteLength(content, 'utf8') !== bytes || createHash('sha256').update(content, 'utf8').digest('hex') !== sha256) {
+          throw new Error('原工作材料与固定输入不一致，桌面不会继续')
+        }
+        totalBytes += bytes!
+        totalExtractedBytes += bytes!
+        if (totalBytes > CONTINUATION_TOTAL_BYTES || totalExtractedBytes > MAX_WORKSPACE_EXTRACTION_BYTES) throw new Error('原工作材料总量超出桌面读取限制')
+        materials.push({ ...expected, mediaType: expected.mediaType ?? 'text/plain', content })
       }
-      totalBytes += bytes!
-      if (totalBytes > CONTINUATION_TOTAL_BYTES) throw new Error('原工作材料总量超出桌面读取限制')
-      materials.push({ ...expected, mediaType, content })
     }
     if (await this.accountKey(generation) !== accountBeforeMaterials) throw new Error('当前账号已变化，原工作材料不能继续使用')
     context.input.materials = materials
@@ -1565,6 +1705,46 @@ export class EnterpriseService {
       }
       return { fileId, name, mediaType: 'text/plain; charset=utf-8' as const, bytes: bytes.length, sha256: file.sha256, content, verified: true }
     })
+    let originalFiles: FrozenApprovalOriginalMaterial[] | undefined
+    if (approval.originalFiles !== undefined) {
+      if (!Array.isArray(approval.originalFiles) || approval.originalFiles.length > 11) throw new Error('Forge 审批上下文格式无效')
+      const seenIds = new Set<string>()
+      let totalOriginalBytes = 0
+      let totalExtractedBytes = 0
+      originalFiles = []
+      for (const value of approval.originalFiles) {
+        const file = record(value)
+        const sourceKind = file?.sourceKind
+        const requestId = textValue(file?.requestId)
+        const fileId = textValue(file?.fileId)
+        const name = textValue(file?.name)
+        const mediaType = file?.mediaType
+        const bytes = numberValue(file?.bytes)
+        const sha256 = typeof file?.sha256 === 'string' ? file.sha256 : undefined
+        if (sourceKind !== 'approval' || requestId !== approvalId || !fileId || fileId.length > 128 || seenIds.has(fileId)
+          || !name || name.length > 255
+          || mediaType !== 'application/pdf' && mediaType !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          || !Number.isInteger(bytes) || bytes! < 1 || bytes! > MAX_WORKSPACE_MATERIAL_BYTES
+          || !sha256 || !/^[0-9a-f]{64}$/.test(sha256)) {
+          throw new Error('审批原件来源或冻结版本无效，请暂停处理')
+        }
+        seenIds.add(fileId)
+        totalOriginalBytes += bytes!
+        if (totalOriginalBytes > 8 * 1024 * 1024) throw new Error('审批原件总量超出桌面读取限制')
+        const sourceBytes = await this.readOriginalMaterialBytes(
+          `/api/v1/approvals/requests/${encodeURIComponent(approvalId)}/workbench-context/files/${encodeURIComponent(fileId)}/original`,
+          mediaType, bytes!, sha256, generation, '审批',
+        )
+        const remainingExtractionBytes = MAX_WORKSPACE_EXTRACTION_BYTES - totalExtractedBytes
+        if (remainingExtractionBytes < 1) throw new Error('审批原件提取文本总量超出桌面读取限制')
+        const frozen = await freezeApprovalOriginalMaterial({
+          sourceKind: 'approval', requestId: approvalId, fileId, name,
+          mediaType, bytes: bytes!, sha256,
+        }, sourceBytes, remainingExtractionBytes)
+        totalExtractedBytes += frozen.extraction.bytes
+        originalFiles.push(frozen)
+      }
+    }
     const returnReason = approval.returnReason
     if ((isSubmitter && typeof returnReason !== 'string')
       || (returnReason !== undefined && (typeof returnReason !== 'string' || returnReason.length > 4000))) {
@@ -1574,7 +1754,7 @@ export class EnterpriseService {
       requestId: approvalId, status: isSubmitter ? 'returned' : 'pending', viewer: isSubmitter ? 'original_submitter' : 'current_approver',
       title, step, businessObject: { objectName, recordId, ...(recordName ? { recordName } : {}) }, sourceMaterialVersion,
       ...(isSubmitter ? { returnVersion, returnReason: returnReason as string } : {}),
-      fields, files,
+      fields, files, ...(originalFiles ? { originalFiles } : {}),
     }
   }
 

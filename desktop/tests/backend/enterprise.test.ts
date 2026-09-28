@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto'
 import { freezeMaterials, makeFrozenTextMaterial } from '../../electron/main/enterprise/materials'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { EnterpriseService, WorkRegistrationRejectedError } from '../../electron/main/enterprise'
+import { approvalContextView, EnterpriseService, WorkRegistrationRejectedError } from '../../electron/main/enterprise'
+import { digest } from '../../electron/main/enterprise/handoff-store'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -745,6 +746,71 @@ describe('EnterpriseService', () => {
     await expect(service.getWorkContinuationContext(references)).rejects.toThrow('原工作材料读取失败（404）')
   })
 
+  it('continues PDF and DOCX using only their frozen owner or approval source route', async () => {
+    const task = '复核原工作中冻结的二进制材料。'
+    const ownerBytes = await readFile(new URL('../fixtures/materials/sample-two-page.pdf', import.meta.url))
+    const approvalBytes = await readFile(new URL('../fixtures/materials/sample-paragraphs-table.docx', import.meta.url))
+    const sha256 = (value: string | Buffer) => createHash('sha256').update(value).digest('hex')
+    const ownerMaterial = {
+      type: 'forge-file', materialId: digest('owner-material').slice(0, 24), sourceKind: 'owner',
+      id: 'owner-pdf', name: 'owner.pdf', mediaType: 'application/pdf', bytes: ownerBytes.length, sha256: sha256(ownerBytes),
+    }
+    const approvalMaterial = {
+      type: 'forge-file', materialId: digest('approval-material').slice(0, 24), sourceKind: 'approval', requestId: 'approval-source-1',
+      id: 'approval-docx', name: 'approval.docx', mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      bytes: approvalBytes.length, sha256: sha256(approvalBytes),
+    }
+    const shaOfTask = sha256(task)
+    const payload = {
+      version: '1',
+      source: { input_revision_id: '10000000-0000-4000-8000-000000000001', run_id: 'run-originals', workbench_session_id: 'workbench-session-originals' },
+      input: {
+        task, task_sha256: shaOfTask, team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 2,
+        materials: [ownerMaterial, approvalMaterial],
+        source_messages: [{ message_id: 'employee-message', event_seq: 1, sha256: sha256('员工要求') }],
+      },
+      run: { status: 'succeeded' },
+    }
+    const calls: Array<{ url: string; headers: Headers }> = []
+    let denyOwner = false
+    const response = (bytes: Buffer, mediaType: string, digest: string) => new Response(Uint8Array.from(bytes), { status: 200, headers: {
+      'Content-Type': mediaType, 'Content-Length': String(bytes.length), ETag: `"${digest}"`,
+      'X-Content-SHA256': digest, 'Cache-Control': 'private, no-store',
+    } })
+    const fetchMock = workOverviewFetch((url, init) => {
+      calls.push({ url, headers: new Headers(init?.headers) })
+      if (url.endsWith('/workbench-context')) return Response.json(payload)
+      if (url.endsWith('/api/v1/workbench/materials/owner-pdf/original')) return denyOwner
+        ? Response.json({ error: { code: 'WORKBENCH_MATERIAL_NOT_FOUND' } }, { status: 404 })
+        : response(ownerBytes, 'application/pdf', ownerMaterial.sha256)
+      if (url.endsWith('/api/v1/approvals/requests/approval-source-1/workbench-context/files/approval-docx/original')) {
+        return response(approvalBytes, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', approvalMaterial.sha256)
+      }
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('employee@example.test', 'secret')
+    const references = { workReference: payload.source.input_revision_id, runReference: 'run-originals', sessionReference: 'workbench-session-originals' }
+
+    const context = await service.getWorkContinuationContext(references)
+    expect(context.input.materials).toMatchObject([
+      { materialId: ownerMaterial.materialId, sourceKind: 'owner', mediaType: 'application/pdf', sha256: ownerMaterial.sha256, extraction: { sourceSha256: ownerMaterial.sha256, status: 'partial' } },
+      { materialId: approvalMaterial.materialId, sourceKind: 'approval', requestId: 'approval-source-1', mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', sha256: approvalMaterial.sha256, extraction: { sourceSha256: approvalMaterial.sha256, status: 'complete' } },
+    ])
+    expect(context.input.materials[0]?.content).toContain('PDF PAGE 1: byte exact original.')
+    expect(context.input.materials[1]?.content).toContain('DOCX 第一段：原件字节保持不变。')
+    expect(calls.find((call) => call.url.endsWith('/owner-pdf/original'))?.headers.get('if-match')).toBe(ownerMaterial.sha256)
+    expect(calls.find((call) => call.url.endsWith('/approval-docx/original'))?.headers.get('if-match')).toBe(approvalMaterial.sha256)
+    expect(calls.some((call) => call.url === 'http://forge/api/v1/workbench/materials/owner-pdf')).toBe(false)
+    expect(calls.some((call) => call.url === 'http://forge/api/v1/workbench/materials/approval-docx')).toBe(false)
+
+    denyOwner = true
+    const originalRouteCount = calls.filter((call) => call.url.endsWith('/owner-pdf/original')).length
+    await expect(service.getWorkContinuationContext(references)).rejects.toThrow('原工作原件不属于当前员工')
+    expect(calls.filter((call) => call.url.endsWith('/owner-pdf/original'))).toHaveLength(originalRouteCount + 1)
+    expect(calls.some((call) => call.url === 'http://forge/api/v1/workbench/materials/owner-pdf')).toBe(false)
+  })
+
   it('discards an in-flight overview when the signed-in account changes', async () => {
     const oldRun = deferred<Response>(), oldRunStarted = deferred<void>()
     const fetchMock = workOverviewFetch((url, init) => {
@@ -808,6 +874,52 @@ describe('EnterpriseService', () => {
     expect(calls.filter((url) => url.includes('/workbench-context'))).toHaveLength(2)
     fileContent = '# 另一份合同\n'
     await expect(service.getApprovalContext('approval-1')).rejects.toThrow('审批文件与提交版本不一致')
+  })
+
+  it('reads approval originals only through the request-bound route and freezes exact PDF bytes with the approval source', async () => {
+    const source = await readFile(new URL('../fixtures/materials/sample-two-page.pdf', import.meta.url))
+    const sha256 = createHash('sha256').update(source).digest('hex')
+    const calls: Array<{ url: string; headers: Headers }> = []
+    let originalResponse: Response = new Response(source, { status: 200, headers: {
+      'Content-Type': 'application/pdf', 'Content-Length': String(source.length),
+      'X-Content-SHA256': sha256, ETag: `"${sha256}"`, 'Cache-Control': 'private, no-store',
+    } })
+    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = String(input), headers = new Headers(init?.headers)
+      calls.push({ url, headers })
+      if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'approver-1' } })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-approver-1', externalId: 'approver-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      if (url.endsWith('/api/v1/approvals/requests/approval-pdf/workbench-context')) return Response.json({
+        version: '1', requestId: 'approval-pdf', status: 'pending', viewer: 'current_approver',
+        title: '验收合同', step: '复核', fields: [], files: [],
+        businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-pdf' },
+        sourceMaterialVersion: createHash('sha256').update('source-pdf-v1').digest('hex'),
+        originalFiles: [{ sourceKind: 'approval', requestId: 'approval-pdf', fileId: 'approval-file-pdf', name: '验收附件.pdf', mediaType: 'application/pdf', bytes: source.length, sha256 }],
+      })
+      if (url.endsWith('/api/v1/approvals/requests/approval-pdf/workbench-context/files/approval-file-pdf/original')) return originalResponse
+      return Response.json({}, { status: 404 })
+    }) as typeof fetch
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('approver@example.test', 'secret')
+
+    const context = await service.getApprovalContext('approval-pdf')
+    expect(context.originalFiles?.[0]).toMatchObject({
+      sourceKind: 'approval', requestId: 'approval-pdf', fileId: 'approval-file-pdf',
+      name: '验收附件.pdf', mediaType: 'application/pdf', bytes: source.length, sha256,
+      extraction: { sourceSha256: sha256, status: 'partial' },
+    })
+    expect(Buffer.from(context.originalFiles![0]!.bytesBase64, 'base64')).toEqual(source)
+    const originalCall = calls.find((call) => call.url.endsWith('/files/approval-file-pdf/original'))!
+    expect(originalCall.headers.get('if-match')).toBe(sha256)
+    const view = approvalContextView(context)
+    expect(view.originalFiles?.[0]).toMatchObject({ name: '验收附件.pdf', bytes: source.length, verified: true })
+    expect(view.originalFiles?.[0]).not.toHaveProperty('fileId')
+    expect(view.originalFiles?.[0]).not.toHaveProperty('requestId')
+    expect(view.originalFiles?.[0]).not.toHaveProperty('bytesBase64')
+
+    originalResponse = new Response(null, { status: 404 })
+    await expect(service.getApprovalContext('approval-pdf')).rejects.toThrow('审批原件不属于当前员工或冻结材料')
+    expect(calls.filter((call) => call.url.includes('/api/v1/workbench/materials/'))).toEqual([])
   })
 
   it.each([
@@ -944,7 +1056,7 @@ describe('EnterpriseService', () => {
       const resources = await service.stageWorkMaterials([material], async () => undefined)
       expect(uploadBodies).toEqual([source])
       expect(uploads).toEqual([{ filename: '合同.pdf', mimeType: 'application/pdf', size: source.length, scope: 'attachments' }])
-      expect(resources).toEqual([{ type: 'forge-file', materialId: material.materialId, id: 'pdf-file-1', name: '合同.pdf', mediaType: 'application/pdf', bytes: source.length, sha256: material.sha256 }])
+      expect(resources).toEqual([{ type: 'forge-file', sourceKind: 'owner', materialId: material.materialId, id: 'pdf-file-1', name: '合同.pdf', mediaType: 'application/pdf', bytes: source.length, sha256: material.sha256 }])
     } finally { await rm(root, { recursive: true, force: true }) }
   })
 
