@@ -2,6 +2,7 @@ import { app, BrowserWindow, dialog, Menu, nativeTheme, protocol, session, shell
 import type { BrowserWindowConstructorOptions, Input, WebContents } from 'electron'
 import { extname, isAbsolute, join, relative, resolve, win32 as win32Path } from 'node:path'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { pathToFileURL } from 'node:url'
 import { assertNoMcpAuthenticationCommand } from '../../src/lib/mcp-policy'
@@ -1084,7 +1085,9 @@ async function bootstrap(): Promise<void> {
     homeDir: homedir(),
     harnesses: initialHarnesses,
   }
-  const updates = new UpdateService(getAutoUpdater(), { enabled: app.isPackaged })
+  const updates = new UpdateService(getAutoUpdater(), {
+    enabled: app.isPackaged && existsSync(join(process.resourcesPath, 'app-update.yml')),
+  })
   updateService = updates
   const refreshHarnesses = async () => {
     const harnesses = await discovery.refresh()
