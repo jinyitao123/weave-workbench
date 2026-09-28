@@ -74,3 +74,48 @@ it('limits a member step to explicitly selected task input and earlier results',
   expect(Object.values(proposal.document.workflows[0]!.graph_definition.nodes.find((node) => node.id === 'work')!.inputs ?? {}).some((binding) => binding.value.source === 'run_input')).toBe(false)
   expect(() => applyTeamDevelopmentOperations(document, [{ kind: 'step_input', flow: 'flow', step: 'work', source: 'node_output', from: 'deliver', selected: true }], catalog)).toThrow('前序结果')
 })
+
+it('uses the same result protocol configuration for Pi proposals and rejects an unsupported join source', () => {
+  const { document, catalog } = fixture()
+  const proposal = applyTeamDevelopmentOperations(document, [{ kind: 'result_protocol', flow: 'flow', enabled: true }], catalog)
+  const graph = proposal.document.workflows[0]!.graph_definition
+  expect(graph.result_protocol).toBe('workbench_result_v1')
+  expect(graph.output_contract).toMatchObject({ type: 'json', schema: { required: ['disposition', 'summary', 'missing_items'] } })
+  expect(graph.nodes.find((node) => node.id === 'work')?.output).toMatchObject({ type: 'json' })
+  expect(document.workflows[0]!.graph_definition.result_protocol).toBeUndefined()
+
+  const branched = applyTeamDevelopmentOperations(document, [{ kind: 'step_add', flow: 'flow', after: 'work', member: document.members[1]!.id, name: '并行复核', requirement: '独立检查', placement: 'parallel' }], catalog)
+  const join = branched.document.workflows[0]!.graph_definition.nodes.find((node) => node.type === 'join')!
+  const joinDelivery = applyTeamDevelopmentOperations(branched.document, [{ kind: 'delivery', flow: 'flow', from: join.id }], catalog)
+  expect(() => applyTeamDevelopmentOperations(joinDelivery.document, [{ kind: 'result_protocol', flow: 'flow', enabled: true }], catalog)).toThrow('并行汇合后添加负责人或成员汇总步骤')
+})
+
+it('moves the Pi result protocol to an inserted final step, preserves it for a branch, and removes stale delivery references', () => {
+  const { document, catalog } = fixture()
+  const enabled = applyTeamDevelopmentOperations(document, [{ kind: 'result_protocol', flow: 'flow', enabled: true }], catalog)
+  const serial = applyTeamDevelopmentOperations(enabled.document, [{ kind: 'step_add', flow: 'flow', after: 'work', member: document.members[1]!.id, name: '第一汇总', requirement: '汇总检查意见。' }], catalog)
+  const flowAfterSerial = serial.document.workflows[0]!.graph_definition
+  const firstFinal = flowAfterSerial.nodes.find((node) => node.label === '第一汇总')!
+  expect((flowAfterSerial.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string }).node_id).toBe(firstFinal.id)
+  expect(flowAfterSerial.nodes.find((node) => node.id === 'work')?.output).toMatchObject({ type: 'text' })
+  expect(firstFinal.output).toMatchObject({ type: 'json' })
+
+  const second = applyTeamDevelopmentOperations(serial.document, [{ kind: 'step_add', flow: 'flow', after: firstFinal.id, member: document.members[1]!.id, name: '最终汇总', requirement: '形成最终意见。' }], catalog)
+  const secondFlow = second.document.workflows[0]!.graph_definition
+  const finalNode = secondFlow.nodes.find((node) => node.label === '最终汇总')!
+  expect((secondFlow.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string }).node_id).toBe(finalNode.id)
+  expect(secondFlow.nodes.find((node) => node.id === firstFinal.id)?.output).toMatchObject({ type: 'text' })
+  expect(finalNode.output).toMatchObject({ type: 'json' })
+
+  const branched = applyTeamDevelopmentOperations(second.document, [{ kind: 'step_add', flow: 'flow', after: 'work', member: document.members[1]!.id, name: '并行检查', requirement: '独立复核', placement: 'parallel' }], catalog)
+  const branchGraph = branched.document.workflows[0]!.graph_definition
+  expect((branchGraph.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string }).node_id).toBe(finalNode.id)
+  expect(branchGraph.nodes.find((node) => node.id === finalNode.id)?.output).toMatchObject({ type: 'json' })
+
+  const removed = applyTeamDevelopmentOperations(branched.document, [{ kind: 'step_remove', flow: 'flow', step: finalNode.id }], catalog)
+  const repairedGraph = removed.document.workflows[0]!.graph_definition
+  const repairedSourceId = (repairedGraph.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string }).node_id
+  expect(repairedSourceId).toBe(firstFinal.id)
+  expect(repairedGraph.nodes.some((node) => node.id === repairedSourceId)).toBe(true)
+  expect(repairedGraph.nodes.find((node) => node.id === repairedSourceId)?.output).toMatchObject({ type: 'json' })
+})

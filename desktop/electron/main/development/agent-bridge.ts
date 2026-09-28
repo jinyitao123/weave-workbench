@@ -1,6 +1,7 @@
 import type { EnterpriseBusinessCapabilityCatalog } from '../../../src/types/api'
 import type { TeamDefinition, TeamWorkspace } from '../../../src/types/team-workspace'
 import { applyTeamDevelopmentOperations, type TeamDevelopmentProposal } from '../../../src/pages/team-workspace/development-proposal'
+import { WORKBENCH_RESULT_PROTOCOL } from '../../../src/pages/team-workspace/graph'
 import { CapabilityBridge, type CapabilityClaim, type CapabilityScope } from '../lib/capability-bridge'
 import { HandoffStore, type HandoffStorage } from '../enterprise/handoff-store'
 
@@ -153,6 +154,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
           const stepName = (id: unknown) => flow.graph_definition.nodes.find((node) => node.id === id)?.label ?? '未命名步骤'
           return {
             name: flow.name, description: flow.description,
+            resultProtocol: flow.graph_definition.result_protocol === WORKBENCH_RESULT_PROTOCOL ? '可要求补充材料' : '普通结果',
             steps: flow.graph_definition.nodes.map((node) => ({
               name: node.label || '未命名步骤', type: ({ lead: '负责人处理', worker: '成员执行', parallel: '并行分工', join: '汇合结果', deliver: '交付结果' } as Record<string, string>)[node.type] ?? '流程步骤',
               executor: node.type === 'lead' ? members.find((item) => item.configuration.role === 'avatar')?.configuration.displayName : node.type === 'worker' ? memberName(node.config?.agent_id) : undefined,
@@ -201,7 +203,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       if ('flow' in item) item.flow = flow(item.flow)?.id ?? item.flow
       if ('step' in item) item.step = stepId(value.flow, item.step)
       if ('after' in item) item.after = stepId(value.flow, item.after)
-      if ('from' in item && (item.kind === 'step_input' || item.kind === 'delivery')) item.from = stepId(value.flow, item.from)
+      if ('from' in item && (item.kind === 'step_input' || item.kind === 'delivery' || item.kind === 'result_protocol')) item.from = stepId(value.flow, item.from)
       if (item.kind === 'capability' && typeof item.capability === 'string') {
         const found = context.catalog.capabilities.filter((action) => action.name === item.capability)
         if (found.length !== 1) throw new Error(`业务动作“${item.capability}”不存在或名称重复`)

@@ -653,7 +653,7 @@ describe('EnterpriseService', () => {
         task, task_sha256: sha256(task), team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 2,
         materials: [], source_messages: [{ message_id: 'employee-message', event_seq: 1, sha256: sha256('员工要求').toUpperCase() }],
       },
-      run: { status: 'succeeded', final_result: { id: 'deliverable-1', title: '团队检查结果', content_type: 'text/markdown', content: result, sha256: sha256(result) } },
+      run: { status: 'succeeded', final_result: { id: 'deliverable-1', title: '团队检查结果', content_type: 'text/markdown', content: result, sha256: sha256(result), disposition: 'needs_input', summary: '已核对🧭', missing_items: ['验收日期'] } },
     }
     const calls: Array<{ url: string; headers: Headers }> = []
     const fetchMock = workOverviewFetch((url, init) => {
@@ -670,11 +670,26 @@ describe('EnterpriseService', () => {
     await expect(service.getWorkContinuationContext(references)).resolves.toMatchObject({
       source: { inputRevisionID: references.workReference, runID: references.runReference, workbenchSessionID: references.sessionReference },
       input: { task, teamID: 'team-1', workflowID: 'flow-1', workflowVersion: 2, sourceMessages: [{ sha256: sha256('员工要求').toUpperCase() }] },
-      run: { status: 'succeeded', finalResult: { title: '团队检查结果', content: result } },
+      run: { status: 'succeeded', finalResult: { title: '团队检查结果', content: result, disposition: 'needs_input', summary: '已核对🧭', missingItems: ['验收日期'] } },
     })
     expect(calls).toHaveLength(1)
     expect(calls[0]?.url).toBe('http://weave/v1/runs/run-1/workbench-context')
     expect(calls[0]?.headers.get('Authorization')).toBe('Bearer weave-token-employee@example.test')
+
+    const originalFinalResult = structuredClone(payload.run.final_result)
+    payload.run.final_result.summary = '🧭'.repeat(1000)
+    await expect(service.getWorkContinuationContext(references)).resolves.toMatchObject({ run: { finalResult: { summary: '🧭'.repeat(1000) } } })
+    payload.run.final_result.summary = '🧭'.repeat(1001)
+    await expect(service.getWorkContinuationContext(references)).rejects.toThrow('团队结果分类格式无效')
+    payload.run.final_result = { ...originalFinalResult, missing_items: [] }
+    await expect(service.getWorkContinuationContext(references)).rejects.toThrow('团队结果分类格式无效')
+    payload.run.final_result = { ...originalFinalResult, disposition: undefined as unknown as 'needs_input' }
+    await expect(service.getWorkContinuationContext(references)).rejects.toThrow('团队结果分类格式无效')
+    payload.run.final_result = { ...originalFinalResult, disposition: 'complete', missing_items: ['验收日期'] }
+    await expect(service.getWorkContinuationContext(references)).rejects.toThrow('团队结果分类格式无效')
+    payload.run.final_result = { ...originalFinalResult, disposition: 'complete', missing_items: [] }
+    await expect(service.getWorkContinuationContext(references)).resolves.toMatchObject({ run: { finalResult: { disposition: 'complete', missingItems: [] } } })
+    payload.run.final_result = originalFinalResult
 
     await expect(service.getWorkContinuationContext({ ...references, workReference: '10000000-0000-4000-8000-000000000002' })).rejects.toThrow('工作消息与原团队工作不匹配')
     await expect(service.getWorkContinuationContext({ ...references, runReference: 'run-other' })).rejects.toThrow('工作消息与原团队工作不匹配')

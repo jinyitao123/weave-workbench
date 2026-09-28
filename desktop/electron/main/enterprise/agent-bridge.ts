@@ -284,7 +284,12 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         task: context.input.task,
         runStatus: context.run.status,
         materials,
-        ...(context.run.finalResult ? { finalResult: { title: context.run.finalResult.title, contentType: context.run.finalResult.contentType, content: context.run.finalResult.content } } : {}),
+        ...(context.run.finalResult ? { finalResult: {
+          title: context.run.finalResult.title, contentType: context.run.finalResult.contentType, content: context.run.finalResult.content,
+          ...(context.run.finalResult.disposition ? { disposition: context.run.finalResult.disposition } : {}),
+          ...(context.run.finalResult.summary !== undefined ? { summary: context.run.finalResult.summary } : {}),
+          ...(context.run.finalResult.missingItems !== undefined ? { missingItems: [...context.run.finalResult.missingItems] } : {}),
+        } } : {}),
         ...(context.run.actionOutcomes !== undefined ? {
           actionOutcomes: context.run.actionOutcomes.map(({ actionName, objectName, status, summary }) => ({ actionName, objectName, status, summary })),
         } : {}),

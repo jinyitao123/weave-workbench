@@ -1,6 +1,6 @@
 import type { EnterpriseBusinessCapabilityCatalog } from '../../types/api'
 import type { TeamDefinition } from '../../types/team-workspace'
-import { addParallelBranch, bindings, initialGraph, insertStep, isParallelBranchWorker, originalBinding, predecessors, removeStep } from './graph'
+import { addParallelBranch, bindings, configureWorkflowResultProtocol, initialGraph, insertStep, isParallelBranchWorker, originalBinding, predecessors, removeStep, validateWorkflowResultProtocol, WORKBENCH_RESULT_PROTOCOL } from './graph'
 import { newMember } from './member'
 
 export type TeamDevelopmentOperation =
@@ -17,6 +17,7 @@ export type TeamDevelopmentOperation =
   | { kind: 'step_remove'; flow: string; step: string }
   | { kind: 'step_input'; flow: string; step: string; source: 'run_input' | 'node_output'; from?: string; selected: boolean }
   | { kind: 'delivery'; flow: string; from: string }
+  | { kind: 'result_protocol'; flow: string; enabled: boolean; from?: string }
   | { kind: 'join'; flow: string; step: string; policy: 'all_success' | 'fail_fast' | 'quorum' | 'deadline'; successCount?: number; deadlineSeconds?: number }
 
 export interface TeamDevelopmentProposal {
@@ -180,13 +181,18 @@ export function applyTeamDevelopmentOperations(base: TeamDefinition, raw: unknow
         const after = string(operation.after, '前置步骤', 128)
         const name = string(operation.name, '步骤名称', 80)
         const requirement = string(operation.requirement, '步骤任务')
+        const previousDeliverySourceId = String((target.graph_definition.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: unknown } | undefined)?.node_id ?? '')
         const next = operation.placement === 'parallel'
           ? addParallelBranch(target.graph_definition, after, actor)
           : operation.placement === undefined || operation.placement === 'serial'
             ? insertStep(target.graph_definition, after, actor)
             : undefined
         if (!next) throw new Error('步骤排列方式无效')
-        target.graph_definition = { ...next.graph, nodes: next.graph.nodes.map((node) => node.id !== next.selected ? node : node.type === 'lead' ? { ...node, label: name, config: { ...node.config, instruction: requirement } } : { ...node, label: name, config: { ...node.config, result_requirement: requirement } }) }
+        const graph = { ...next.graph, nodes: next.graph.nodes.map((node) => node.id !== next.selected ? node : node.type === 'lead' ? { ...node, label: name, config: { ...node.config, instruction: requirement } } : { ...node, label: name, config: { ...node.config, result_requirement: requirement } }) }
+        target.graph_definition = configureWorkflowResultProtocol(
+          { ...target, graph_definition: graph }, target.graph_definition.result_protocol === WORKBENCH_RESULT_PROTOCOL,
+          undefined, previousDeliverySourceId,
+        ).graph_definition
         changes.push(`新增${operation.placement === 'parallel' ? '并行' : '串行'}步骤：${name}`)
         break
       }
@@ -217,7 +223,12 @@ export function applyTeamDevelopmentOperations(base: TeamDefinition, raw: unknow
       case 'step_remove': {
         const target = flow(operation.flow)
         const stepId = string(operation.step, '步骤引用', 128)
-        target.graph_definition = removeStep(target.graph_definition, stepId)
+        const previousDeliverySourceId = String((target.graph_definition.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: unknown } | undefined)?.node_id ?? '')
+        const graph = removeStep(target.graph_definition, stepId)
+        target.graph_definition = configureWorkflowResultProtocol(
+          { ...target, graph_definition: graph }, target.graph_definition.result_protocol === WORKBENCH_RESULT_PROTOCOL,
+          undefined, previousDeliverySourceId,
+        ).graph_definition
         changes.push('移除流程步骤')
         break
       }
@@ -244,10 +255,16 @@ export function applyTeamDevelopmentOperations(base: TeamDefinition, raw: unknow
       case 'delivery': {
         const target = flow(operation.flow)
         const from = string(operation.from, '交付来源', 128)
-        const deliver = target.graph_definition.nodes.find((node) => node.type === 'deliver')
-        if (!deliver || !predecessors(target.graph_definition, deliver.id).some((node) => node.id === from)) throw new Error('交付来源必须是流程前序步骤')
-        target.graph_definition = { ...target.graph_definition, nodes: target.graph_definition.nodes.map((node) => node.id === deliver.id ? { ...node, config: { ...node.config, result: { source: 'node_output', node_id: from, path: '' } } } : node) }
+        target.graph_definition = configureWorkflowResultProtocol(target, target.graph_definition.result_protocol === WORKBENCH_RESULT_PROTOCOL, from).graph_definition
         changes.push('调整流程交付来源')
+        break
+      }
+      case 'result_protocol': {
+        const target = flow(operation.flow)
+        if (typeof operation.enabled !== 'boolean') throw new Error('结果分类须明确选择普通结果或可要求补充材料。')
+        const from = operation.from === undefined ? undefined : string(operation.from, '交付来源', 128)
+        target.graph_definition = configureWorkflowResultProtocol(target, operation.enabled, from).graph_definition
+        changes.push(`${operation.enabled ? '启用' : '关闭'}团队结果分类：${target.name}`)
         break
       }
       case 'join': {
@@ -268,6 +285,10 @@ export function applyTeamDevelopmentOperations(base: TeamDefinition, raw: unknow
       }
       default: throw new Error('Pi 提出了当前编辑器不支持的团队修改')
     }
+  }
+  for (const workflow of document.workflows) {
+    const issue = validateWorkflowResultProtocol(workflow)
+    if (issue) throw new Error(`流程“${workflow.name || '未命名流程'}”：${issue}`)
   }
   return { document, changes }
 }

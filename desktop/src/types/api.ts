@@ -409,7 +409,14 @@ export interface EnterpriseWorkContinuationContextView {
       limitations: Array<'page-without-text' | 'embedded-image' | 'unsupported-document-content'>
     }
   }>
-  finalResult?: { title: string; contentType: string; content: string }
+  finalResult?: {
+    title: string
+    contentType: string
+    content: string
+    disposition?: 'complete' | 'needs_input'
+    summary?: string
+    missingItems?: string[]
+  }
   actionOutcomes?: Array<{ actionName: string; objectName: string; status: 'succeeded' | 'failed' | 'unknown'; summary: string }>
 }
 

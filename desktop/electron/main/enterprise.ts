@@ -71,7 +71,10 @@ export interface EnterpriseWorkContinuationContext {
   }
   run: {
     status: 'queued' | 'running' | 'parked' | 'cancel_requested' | 'succeeded' | 'failed' | 'cancelled' | 'abandoned'
-    finalResult?: { id: string; title: string; contentType: string; content: string; sha256: string }
+    finalResult?: {
+      id: string; title: string; contentType: string; content: string; sha256: string
+      disposition?: 'complete' | 'needs_input'; summary?: string; missingItems?: string[]
+    }
     actionOutcomes?: Array<{ nodeID: string; callID: string; actionName: string; objectName: string; recordID?: string; status: 'succeeded' | 'failed' | 'unknown'; summary: string }>
   }
 }
@@ -454,7 +457,26 @@ function parseWorkContinuationContext(value: unknown): EnterpriseWorkContinuatio
     const sha256 = typeof result?.sha256 === 'string' ? result.sha256 : undefined
     if (!id || !title || !contentType || content === undefined || content.length > 100_000 || !sha256 || !CONTINUATION_SHA256.test(sha256)
       || createHash('sha256').update(content, 'utf8').digest('hex') !== sha256) throw new Error('团队最终交付摘要校验失败，请刷新工作消息')
-    finalResult = { id, title, contentType, content, sha256 }
+    const hasDisposition = result?.disposition !== undefined
+    const hasSummary = result?.summary !== undefined
+    const hasMissingItems = result?.missing_items !== undefined
+    let disposition: 'complete' | 'needs_input' | undefined
+    let summary: string | undefined
+    let missingItems: string[] | undefined
+    if (hasDisposition || hasSummary || hasMissingItems) {
+      if ((result?.disposition !== 'complete' && result?.disposition !== 'needs_input')
+        || typeof result?.summary !== 'string' || !result.summary.trim() || Array.from(result.summary).length > 1000
+        || !Array.isArray(result?.missing_items) || result.missing_items.length > 8
+        || result.missing_items.some((item) => typeof item !== 'string' || !item.trim() || Array.from(item).length > 200)
+        || result.disposition === 'needs_input' && result.missing_items.length < 1
+        || result.disposition === 'complete' && result.missing_items.length !== 0) {
+        throw new Error('团队结果分类格式无效，请刷新工作消息')
+      }
+      disposition = result.disposition
+      summary = result.summary.trim()
+      missingItems = (result.missing_items as string[]).map((item) => item.trim())
+    }
+    finalResult = { id, title, contentType, content, sha256, ...(disposition ? { disposition, summary, missingItems } : {}) }
   }
   let actionOutcomes: NonNullable<EnterpriseWorkContinuationContext['run']['actionOutcomes']> | undefined
   if (run.action_outcomes !== undefined) {

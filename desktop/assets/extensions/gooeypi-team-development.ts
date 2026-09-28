@@ -51,13 +51,14 @@ export default async function (pi: ExtensionApi): Promise<void> {
   })
   pi.registerTool<{ operations_json: string }>({
     name: 'gooeypi_team_development_propose', label: '提出团队修改',
-    description: '向 Pi 主会话右侧的团队开发面板提交结构化修改提案。传入 JSON 数组字符串；此操作只生成待预览候选，不应用、不保存、不发布。支持团队、成员、技能、业务动作、流程步骤、步骤输入、交付来源和汇合条件的受控修改。',
+    description: '向 Pi 主会话右侧的团队开发面板提交结构化修改提案。传入 JSON 数组字符串；此操作只生成待预览候选，不应用、不保存、不发布。支持团队、成员、技能、业务动作、流程步骤、步骤输入、交付来源、结果分类和汇合条件的受控修改。',
     promptGuidelines: [
       '只有开发者明确要求修改团队时才使用。以准确名称打开团队；名称不明确时先查找。随后读取草稿并提出最小修改。不要编辑本地文件、调用员工交接能力或编造业务动作。',
       'member/flow/step/capability 引用使用草稿和动作目录返回的准确名称；新成员先用 member_add 的 ref 创建，后续操作可用该 ref。同名对象需要开发者先在侧栏区分。',
       '示例：[{"kind":"member","member":"合同条款检查员","duty":"新职责"},{"kind":"capability","member":"合同提交员","capability":"提交指定合同版本","selected":true,"fileSource":"single"}]。fileSource 仅在动作声明单文件标识、名称、摘要三项时用 single，否则选 member。',
       '新增串行步骤可由负责人或执行成员负责；新增并行分支只能选择执行成员。并行分支必须由单个成员直接进入汇合，不能在分支内部再插串行步骤。要在并行检查后增加后续工作，把 after 指向“并行分工”步骤，平台会将新步骤放到汇合之后。使用 {kind:"step_add",flow:"合同复核流程",after:"并行分工",member:"合同协调员",name:"汇总检查结果",requirement:"汇总分支结论和原文依据",placement:"serial"}。不要猜测步骤或成员名称。',
       '控制每步可见内容用 step_input，source 只能是 run_input 或 node_output；后一种必须提供 from 前序步骤名称，selected 表示添加或移除。技能正文用 skill 操作。删除成员或步骤先处理流程引用。',
+      '结果分类使用 {kind:"result_protocol",flow:"合同复核流程",enabled:true} 启用，enabled:false 恢复普通结果；可选 from 指向当前流程中的负责人或成员步骤。仅负责人/成员步骤可生成“完成/需要补充”的固定结构。若当前交付来源是并行汇合等不支持类型，先在汇合后添加负责汇总的成员步骤，并调整交付来源。不要改写成员已有的业务指令来塞入格式要求。',
       '提案成功后说明具体修改并等待开发者在主会话右侧的团队开发面板检查、应用和保存；不要声称已经生效。',
     ],
     parameters: Type.Object({ operations_json: Type.String({ minLength: 2, maxLength: 100_000, description: '结构化团队修改 JSON 数组' }) }),
