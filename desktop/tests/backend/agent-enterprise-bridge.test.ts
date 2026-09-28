@@ -182,6 +182,19 @@ describe('employee-bound material handoff', () => {
     await expect(f.call('activate', { prompt })).resolves.toMatchObject({ body: { result: { turn_key: expect.any(String) } } })
   })
 
+  it('passes validated team disposition and missing items into the Pi continuation context', async () => {
+    const f = await fixture()
+    const context = workContinuationContext()
+    context.run.finalResult = {
+      ...context.run.finalResult!, disposition: 'needs_input', summary: '合同还缺验收日期。', missingItems: ['验收日期'],
+    }
+    f.service.getWorkContinuationContext.mockResolvedValueOnce(context)
+    const binding = await f.bridge.pinWorkContinuationContext({
+      id: 'notice-needs-input', source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1',
+    })
+    expect(binding.context.finalResult).toMatchObject({ disposition: 'needs_input', summary: '合同还缺验收日期。', missingItems: ['验收日期'] })
+  })
+
   it('passes trusted Weave action outcomes to Pi without exposing the bound record id', async () => {
     const f = await fixture()
     const context = workContinuationContext()

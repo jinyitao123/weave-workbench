@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { TeamDefinition, TeamWorkspace, TeamWorkspaceBridge } from '@/types/team-workspace'
-import { stripDerivedJoinOutput } from './graph'
+import { stripDerivedJoinOutput, validateWorkflowResultProtocol } from './graph'
 
 function executorConfigurationError(document: TeamDefinition): string | undefined {
   for (const flow of document.workflows) for (const node of flow.graph_definition.nodes) {
@@ -14,6 +14,10 @@ function executorConfigurationError(document: TeamDefinition): string | undefine
       const repair = memberRole === 'worker' ? '请重新选择执行成员后再保存。' : '请恢复启用的负责人后再保存。'
       return `流程“${flow.name || '未命名流程'}”中的“${label}”没有可用的${memberRole === 'worker' ? '执行成员' : '负责人'}，${repair}`
     }
+  }
+  for (const flow of document.workflows) {
+    const issue = validateWorkflowResultProtocol(flow)
+    if (issue) return `流程“${flow.name || '未命名流程'}”：${issue}`
   }
   return undefined
 }

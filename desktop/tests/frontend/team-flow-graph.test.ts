@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest'
 import { newMember } from '../../src/pages/team-workspace/member'
-import { canInsertSerialStep, initialGraph, insertStep, addParallelBranch, removeStep, serializeParallel, stripDerivedJoinOutput } from '../../src/pages/team-workspace/graph'
+import { canInsertSerialStep, configureWorkflowResultProtocol, initialGraph, insertStep, addParallelBranch, removeStep, serializeParallel, stripDerivedJoinOutput, validateWorkflowResultProtocol, WORKBENCH_RESULT_PROTOCOL } from '../../src/pages/team-workspace/graph'
 
 const member = newMember('organization-model')
 member.configuration.displayName = '问题分类员'
@@ -59,4 +59,56 @@ it('delivers the inserted final step and protects consumed outputs from deletion
   expect(() => removeStep(inserted.graph, 'work')).toThrow('输入来源')
   const restored = removeStep(inserted.graph, inserted.selected)
   expect(restored.nodes.find((n) => n.type === 'deliver')?.config?.result).toMatchObject({ node_id: 'work' })
+})
+
+it('configures the optional result protocol only on a final direct member and restores its text contract', () => {
+  const graph = initialGraph(member)
+  const flow = { id: 'flow', name: '检查', description: '', trigger_config: {}, graph_definition: graph }
+  const configured = configureWorkflowResultProtocol(flow, true)
+  expect(configured.graph_definition.result_protocol).toBe(WORKBENCH_RESULT_PROTOCOL)
+  expect(configured.graph_definition.output_contract).toMatchObject({ type: 'json', schema: { required: ['disposition', 'summary', 'missing_items'] } })
+  expect(configured.graph_definition.nodes.find((node) => node.id === 'work')?.output).toMatchObject({ type: 'json', schema: { properties: { disposition: { enum: ['complete', 'needs_input'] } } } })
+  expect(validateWorkflowResultProtocol(configured)).toBeUndefined()
+  expect(configureWorkflowResultProtocol(configured, false).graph_definition).toMatchObject({ output_contract: { type: 'text' } })
+  expect(configureWorkflowResultProtocol(configured, false).graph_definition.result_protocol).toBeUndefined()
+  expect(configured.graph_definition.result_protocol).toBe(WORKBENCH_RESULT_PROTOCOL)
+
+  expect(() => configureWorkflowResultProtocol(flow, true, 'lead')).toThrow('直接连接交付步骤')
+  const parallel = addParallelBranch(graph, 'work', member).graph
+  const join = parallel.nodes.find((node) => node.type === 'join')!
+  const fromJoin = { ...flow, graph_definition: { ...parallel, nodes: parallel.nodes.map((node) => node.type === 'deliver' ? { ...node, config: { ...node.config, result: { source: 'node_output', node_id: join.id, path: '' } } } : node) } }
+  expect(() => configureWorkflowResultProtocol(fromJoin, true)).toThrow('并行汇合后添加负责人或成员汇总步骤')
+
+  const custom = { ...flow, graph_definition: { ...graph, output_contract: { type: 'json', schema: { type: 'object' } } } }
+  expect(() => configureWorkflowResultProtocol(custom, true)).toThrow('桌面不会覆盖它')
+  const changedContract = { ...configured, graph_definition: { ...configured.graph_definition, output_contract: { type: 'json', schema: { type: 'object' } } } }
+  expect(() => configureWorkflowResultProtocol(changedContract, false)).toThrow('保留现有格式')
+  expect(changedContract.graph_definition.output_contract).toEqual({ type: 'json', schema: { type: 'object' } })
+})
+
+it('moves the protocol to a serial final member, preserves it for an upstream branch, and repairs delivery after deletion', () => {
+  const initial = initialGraph(member)
+  const flow = { id: 'flow', name: '检查', description: '', trigger_config: {}, graph_definition: initial }
+  const first = insertStep(initial, 'work', member)
+  const firstFlow = configureWorkflowResultProtocol({ ...flow, graph_definition: first.graph }, true)
+  const previousSourceId = first.selected
+  const second = insertStep(firstFlow.graph_definition, first.selected, member)
+  const serial = configureWorkflowResultProtocol({ ...firstFlow, graph_definition: second.graph }, true, undefined, previousSourceId)
+  const deliverySource = serial.graph_definition.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string }
+  expect(deliverySource.node_id).toBe(second.selected)
+  expect(serial.graph_definition.nodes.find((node) => node.id === first.selected)?.output).toMatchObject({ type: 'text' })
+  expect(serial.graph_definition.nodes.find((node) => node.id === second.selected)?.output).toMatchObject({ type: 'json' })
+
+  const branchedGraph = addParallelBranch(serial.graph_definition, 'work', member).graph
+  const branched = configureWorkflowResultProtocol({ ...serial, graph_definition: branchedGraph }, true, undefined, second.selected)
+  const branchDelivery = branched.graph_definition.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string }
+  expect(branchDelivery.node_id).toBe(second.selected)
+  expect(branched.graph_definition.nodes.find((node) => node.id === second.selected)?.output).toMatchObject({ type: 'json' })
+
+  const removedGraph = removeStep(branched.graph_definition, second.selected)
+  const repaired = configureWorkflowResultProtocol({ ...branched, graph_definition: removedGraph }, true, undefined, second.selected)
+  const repairedSourceId = (repaired.graph_definition.nodes.find((node) => node.type === 'deliver')?.config?.result as { node_id?: string }).node_id
+  expect(repairedSourceId).toBe(first.selected)
+  expect(repaired.graph_definition.nodes.some((node) => node.id === repairedSourceId)).toBe(true)
+  expect(repaired.graph_definition.nodes.find((node) => node.id === repairedSourceId)?.output).toMatchObject({ type: 'json' })
 })

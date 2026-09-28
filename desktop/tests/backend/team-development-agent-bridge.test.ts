@@ -41,12 +41,17 @@ it('binds Pi to one developer draft and returns a proposal without saving it', a
   expect((await bridge.getState('runtime')).createProposal).toBeUndefined()
   const context = (await call('context')).result
   expect((context?.team as { name: string } | undefined)?.name).toBe('合同团队')
+  expect(((context?.team as { workflows: Array<{ resultProtocol: string }> } | undefined)?.workflows[0]?.resultProtocol)).toBe('普通结果')
   expect(JSON.stringify(context)).not.toContain(worker.id)
   expect(JSON.stringify(context)).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)
-  const proposed = await call('propose', { operations: [{ kind: 'member', member: '审核员', duty: '核对付款条件' }] })
+  const proposed = await call('propose', { operations: [
+    { kind: 'member', member: '审核员', duty: '核对付款条件' },
+    { kind: 'result_protocol', flow: '复核', enabled: true, from: '审核员' },
+  ] })
   expect(proposed.ok).toBe(true)
   expect(document.members[1]?.relationship.duty).toBe('')
   expect((await bridge.getProposal('runtime'))?.document.members[1]?.relationship.duty).toBe('核对付款条件')
+  expect((await bridge.getProposal('runtime'))?.document.workflows[0]?.graph_definition.result_protocol).toBe('workbench_result_v1')
   account = 'developer-2'
   expect((await call('context')).ok).toBe(false)
 })
