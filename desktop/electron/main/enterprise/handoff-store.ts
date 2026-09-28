@@ -15,6 +15,8 @@ export interface HandoffStorage {
   codec: { available(): boolean; encrypt(value: string): Buffer; decrypt(value: Buffer): string }
 }
 interface StoredValue { fingerprint: string; value: unknown }
+const STORAGE_UNAVAILABLE_FOR_FREEZE = '安全存储不可用，无法安全固定本轮交接。请解锁或修复系统钥匙串/凭据库，再重启 GooeyPi 后重新发起本轮；恢复前不会上传材料或创建团队运行。'
+const STORAGE_UNAVAILABLE_FOR_RECOVERY = '安全存储不可用，无法读取原交接记录。请解锁或修复系统钥匙串/凭据库并重启 GooeyPi，恢复后从原工作继续，不要重复提交。'
 /** Per-account immutable checkpoints. Callers persist local intent before network preparation. */
 export class HandoffStore {
   private readonly memory = new Map<string, StoredValue>()
@@ -33,7 +35,7 @@ export class HandoffStore {
   async recover<T>(recoveryKey: string): Promise<T> {
     if (!/^[0-9a-f]{64}$/.test(recoveryKey)) throw new Error('交接恢复凭据无效')
     for (const [key, saved] of this.memory) if (digest(key) === recoveryKey) return structuredClone(saved.value) as T
-    if (!this.storage?.codec.available()) throw new Error('无法读取原交接记录')
+    if (!this.storage?.codec.available()) throw new Error(STORAGE_UNAVAILABLE_FOR_RECOVERY)
     try {
       const saved = JSON.parse(this.storage.codec.decrypt(await readFile(join(this.storage.directory, `${recoveryKey}.bin`)))) as { value: T }
       return saved.value
@@ -70,7 +72,7 @@ export class HandoffStore {
     const saved = this.memory.get(key)
     if (saved) return saved
     if (!this.storage) return undefined
-    if (!this.storage.codec.available()) throw new Error('安全存储不可用，无法读取本地交接记录')
+    if (!this.storage.codec.available()) throw new Error(STORAGE_UNAVAILABLE_FOR_FREEZE)
     try {
       return JSON.parse(this.storage.codec.decrypt(await readFile(join(this.storage.directory, `${digest(key)}.bin`)))) as StoredValue
     } catch (error) {
@@ -84,7 +86,7 @@ export class HandoffStore {
     if (existing && existing.fingerprint !== fingerprint) throw new Error('本轮交接内容已冻结；目标或材料变化后请由员工发起新一轮交接')
     const saved = { fingerprint, value: structuredClone(value) }
     if (this.storage) {
-      if (!this.storage.codec.available()) throw new Error('安全存储不可用，无法保存可恢复的交接')
+      if (!this.storage.codec.available()) throw new Error(STORAGE_UNAVAILABLE_FOR_FREEZE)
       const path = join(this.storage.directory, `${digest(key)}.bin`)
       await mkdir(this.storage.directory, { recursive: true, mode: 0o700 })
       const temp = `${path}.tmp`
@@ -99,7 +101,7 @@ export class HandoffStore {
     let saved = this.memory.get(key)
     const path = this.storage ? join(this.storage.directory, `${digest(key)}.bin`) : undefined
     if (!saved && path && this.storage) {
-      if (!this.storage.codec.available()) throw new Error('安全存储不可用，无法保存可恢复的交接')
+      if (!this.storage.codec.available()) throw new Error(STORAGE_UNAVAILABLE_FOR_FREEZE)
       try { saved = JSON.parse(this.storage.codec.decrypt(await readFile(path))) } catch (error) {
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw new Error('无法读取原交接记录，请勿重新创建重复工作')
       }
@@ -112,6 +114,7 @@ export class HandoffStore {
     const value = await prepare()
     saved = { fingerprint, value }
     if (path && this.storage) {
+      if (!this.storage.codec.available()) throw new Error(STORAGE_UNAVAILABLE_FOR_FREEZE)
       await mkdir(this.storage.directory, { recursive: true, mode: 0o700 })
       const temp = `${path}.tmp`
       await writeFile(temp, this.storage.codec.encrypt(JSON.stringify(saved)), { mode: 0o600 })

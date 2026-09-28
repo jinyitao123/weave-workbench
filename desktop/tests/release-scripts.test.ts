@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import {
   bootstrapNpm,
   parsePinnedNpmArtifact,
@@ -200,7 +200,7 @@ describe('release preflight', () => {
   })
 
   test('binds the requested target architecture to the produced mac artifacts', async () => {
-    const { assertBooleanEntitlement, assertRequestedArchitecture } = await import('../scripts/release/verify-package.mjs')
+    const { assertBooleanEntitlement, assertRequestedArchitecture, verifyAppBundleIdentifier, verifyCodeSignatureIfPresent } = await import('../scripts/release/verify-package.mjs')
     const artifacts = { dmg: 'release/mac/arm64/Prime Work-1.0.0-arm64.dmg', zip: 'release/mac/arm64/Prime Work-1.0.0-arm64.zip' }
     expect(() => assertRequestedArchitecture(artifacts, 'arm64')).not.toThrow()
     expect(() => assertRequestedArchitecture(artifacts, undefined)).not.toThrow()
@@ -215,6 +215,37 @@ describe('release preflight', () => {
     expect(() => assertBooleanEntitlement(`<key>${entitlement}</key><true/>`, entitlement, 'fixture')).not.toThrow()
     expect(() => assertBooleanEntitlement(`[Key] ${entitlement}\n[Value]\n[Bool] true`, entitlement, 'fixture')).not.toThrow()
     expect(() => assertBooleanEntitlement(`<key>${entitlement}</key><false/>`, entitlement, 'fixture')).toThrow(/missing required true entitlement/)
+
+    const app = '/tmp/Weave Workbench.app'
+    const plist = `${app}/Contents/Info.plist`
+    const expectedAppId = (JSON.parse(readFileSync('package.json', 'utf8')) as { build: { appId: string } }).build.appId
+    const readIdentifier = vi.fn(() => `${expectedAppId}\n`)
+    expect(verifyAppBundleIdentifier(app, expectedAppId, readIdentifier)).toBe(expectedAppId)
+    expect(readIdentifier).toHaveBeenCalledWith('plutil', ['-extract', 'CFBundleIdentifier', 'raw', '-o', '-', plist])
+    expect(() => verifyAppBundleIdentifier(app, expectedAppId, () => 'app.gooeypi.desktop.localdev')).toThrow(/does not match package\.json build\.appId/)
+  })
+
+  test('strictly checks signed QA packages and keeps unsigned QA limited to engineering/read-only checks', async () => {
+    const { QA_PACKAGE_SCOPE_NOTICE, verifyCodeSignatureIfPresent } = await import('../scripts/release/verify-package.mjs')
+    const app = '/tmp/Weave Workbench.app'
+    expect(readFileSync('CONTRIBUTING.md', 'utf8')).toContain('unsigned, unnotarized local-QA artifacts')
+    expect(QA_PACKAGE_SCOPE_NOTICE).toContain('engineering and read-only page checks')
+    expect(QA_PACKAGE_SCOPE_NOTICE).toContain('does not establish Keychain availability or employee handoff acceptance')
+    const unsigned = vi.fn(() => { throw new Error('codesign failed: code object is not signed at all') })
+    expect(verifyCodeSignatureIfPresent(app, { runCommand: unsigned })).toBeUndefined()
+    expect(unsigned).toHaveBeenCalledOnce()
+    expect(() => verifyCodeSignatureIfPresent(app, { required: true, runCommand: unsigned })).toThrow(/must have a valid code signature/)
+
+    const expectedAppId = (JSON.parse(readFileSync('package.json', 'utf8')) as { build: { appId: string } }).build.appId
+    const signed = vi.fn().mockReturnValueOnce(`Identifier=${expectedAppId}`).mockReturnValueOnce('')
+    expect(verifyCodeSignatureIfPresent(app, { runCommand: signed })).toContain(`Identifier=${expectedAppId}`)
+    expect(signed).toHaveBeenNthCalledWith(1, 'codesign', ['-dv', '--verbose=4', app])
+    expect(signed).toHaveBeenNthCalledWith(2, 'codesign', ['--verify', '--deep', '--strict', '--verbose=4', app])
+
+    const brokenAfterModification = vi.fn()
+      .mockReturnValueOnce('Identifier=com.inocube.weave-workbench')
+      .mockImplementationOnce(() => { throw new Error('code signature invalid after Info.plist modification') })
+    expect(() => verifyCodeSignatureIfPresent(app, { runCommand: brokenAfterModification })).toThrow(/code signature invalid after Info\.plist modification/)
   })
 
   test('enforces the repository Node and npm boundaries from checked-in metadata', () => {

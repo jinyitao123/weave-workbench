@@ -18,6 +18,8 @@ import {
 } from './lib.mjs'
 import { assertPackageSizeBudgets, collectPackageSizeMetrics, describeSizeMetrics } from './size-budgets.mjs'
 
+export const QA_PACKAGE_SCOPE_NOTICE = 'Local QA verification is engineering-only. Unsigned packages may support engineering and read-only page checks, but this result does not establish Keychain availability or employee handoff acceptance.'
+
 function run(command, args) {
   const result = spawnSync(command, args, { encoding: 'utf8' })
   if (result.error) throw result.error
@@ -26,6 +28,37 @@ function run(command, args) {
     throw new Error(`${command} failed with exit code ${result.status}${details ? `: ${details}` : ''}`)
   }
   return `${result.stdout ?? ''}${result.stderr ?? ''}`
+}
+
+export function assertBundleIdentifier(actual, expected, label = 'Packaged application') {
+  const bundleIdentifier = typeof actual === 'string' ? actual.trim() : ''
+  if (!bundleIdentifier || bundleIdentifier !== expected) {
+    throw new Error(`${label} bundle identifier ${bundleIdentifier || '<missing>'} does not match package.json build.appId ${expected || '<missing>'}`)
+  }
+}
+
+export function verifyAppBundleIdentifier(app, expectedAppId, runCommand = run) {
+  const plist = join(app, 'Contents', 'Info.plist')
+  const actual = runCommand('plutil', ['-extract', 'CFBundleIdentifier', 'raw', '-o', '-', plist])
+  assertBundleIdentifier(actual, expectedAppId)
+  return actual.trim()
+}
+
+/** Local QA may be unsigned; whenever a signature is present it must verify strictly. */
+export function verifyCodeSignatureIfPresent(app, { required = false, runCommand = run } = {}) {
+  let signature
+  try {
+    signature = runCommand('codesign', ['-dv', '--verbose=4', app])
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error)
+    if (/code object is not signed at all/i.test(detail)) {
+      if (required) throw new Error(`${basename(app)} must have a valid code signature`)
+      return undefined
+    }
+    throw error
+  }
+  runCommand('codesign', ['--verify', '--deep', '--strict', '--verbose=4', app])
+  return signature
 }
 
 function findFiles(directory, predicate, found = []) {
@@ -82,8 +115,9 @@ function assertPackagedMicrophoneEntitlements(app, productName) {
   }
 }
 
-async function verifyApp({ app, artifact, mode, expectedTeam }) {
+async function verifyApp({ app, artifact, mode, expectedTeam, expectedAppId }) {
   const productName = basename(app, '.app')
+  verifyAppBundleIdentifier(app, expectedAppId)
   const resources = join(app, 'Contents', 'Resources')
   const executable = join(app, 'Contents', 'MacOS', productName)
   const asar = join(resources, 'app.asar')
@@ -100,9 +134,8 @@ async function verifyApp({ app, artifact, mode, expectedTeam }) {
   assertUnpackedNativeLayout(unpacked, appArchitectures, (path) => parseArchitectures(run('lipo', ['-archs', path])))
   assertFuses(await getCurrentFuseWire(executable))
 
+  const signature = verifyCodeSignatureIfPresent(app, { required: mode === 'public' })
   if (mode === 'public') {
-    run('codesign', ['--verify', '--deep', '--strict', '--verbose=4', app])
-    const signature = run('codesign', ['-dv', '--verbose=4', app])
     const actualTeam = parseTeamIdentifier(signature)
     if (actualTeam !== expectedTeam) throw new Error(`Signature Team ID ${actualTeam ?? '<missing>'} does not match ${expectedTeam}`)
     assertPackagedMicrophoneEntitlements(app, productName)
@@ -175,17 +208,20 @@ export async function verifyPackage({ mode, releaseDirectory = resolve('release'
   if (!existsSync(releaseDirectory)) throw new Error(`Release directory does not exist: ${releaseDirectory}`)
   const expectedTeam = env.RELEASE_SIGNING_TEAM_ID?.trim()
   if (mode === 'public' && !expectedTeam) throw new Error('RELEASE_SIGNING_TEAM_ID is required for public verification')
+  const packageJson = JSON.parse(readFileSync(resolve('package.json'), 'utf8'))
+  const expectedAppId = packageJson?.build?.appId
+  if (typeof expectedAppId !== 'string' || !expectedAppId.trim()) throw new Error('package.json build.appId is required for macOS package verification')
 
   const artifactFiles = findFiles(releaseDirectory, (path, stat) => stat.isFile() && (path.endsWith('.dmg') || path.endsWith('.zip')))
   const artifacts = requireReleaseArtifacts(artifactFiles)
   assertRequestedArchitecture(artifacts, arch)
-  const dmgMetrics = await verifyDmg(artifacts.dmg, { mode, expectedTeam }, artifacts)
-  const zipMetrics = await verifyZip(artifacts.zip, { mode, expectedTeam }, artifacts)
+  const dmgMetrics = await verifyDmg(artifacts.dmg, { mode, expectedTeam, expectedAppId }, artifacts)
+  const zipMetrics = await verifyZip(artifacts.zip, { mode, expectedTeam, expectedAppId }, artifacts)
 
-  const packageJson = JSON.parse(readFileSync(resolve('package.json'), 'utf8'))
   console.log(
     `Verified ${mode} DMG and ZIP for GooeyPi ${packageJson.version}: archive integrity, contained application, exact native unpack allowlist and architectures, Electron fuses, and package size budgets (DMG payload: ${describeSizeMetrics(dmgMetrics)}; ZIP payload: ${describeSizeMetrics(zipMetrics)})${mode === 'public' ? ', signatures, microphone entitlements, notarization staples, and Gatekeeper' : ''}.`,
   )
+  if (mode === 'qa') console.log(QA_PACKAGE_SCOPE_NOTICE)
 }
 
 // Fail closed: run verification unless this module was provably imported by
