@@ -231,7 +231,9 @@ describe('release preflight', () => {
     expect(readFileSync('CONTRIBUTING.md', 'utf8')).toContain('unsigned, unnotarized local-QA artifacts')
     expect(QA_PACKAGE_SCOPE_NOTICE).toContain('engineering-only')
     expect(QA_PACKAGE_SCOPE_NOTICE).toContain('Package checks do not establish employee handoff or business acceptance')
-    const unsigned = vi.fn(() => { throw new Error('codesign failed: code object is not signed at all') })
+    const unsigned = vi.fn(() => {
+      throw new Error('codesign failed: code object is not signed at all')
+    })
     expect(verifyCodeSignatureIfPresent(app, { runCommand: unsigned })).toBeUndefined()
     expect(unsigned).toHaveBeenCalledOnce()
     expect(() => verifyCodeSignatureIfPresent(app, { required: true, runCommand: unsigned })).toThrow(/must have a valid code signature/)
@@ -242,9 +244,12 @@ describe('release preflight', () => {
     expect(signed).toHaveBeenNthCalledWith(1, 'codesign', ['-dv', '--verbose=4', app])
     expect(signed).toHaveBeenNthCalledWith(2, 'codesign', ['--verify', '--deep', '--strict', '--verbose=4', app])
 
-    const brokenAfterModification = vi.fn()
+    const brokenAfterModification = vi
+      .fn()
       .mockReturnValueOnce('Identifier=com.inocube.weave-workbench')
-      .mockImplementationOnce(() => { throw new Error('code signature invalid after Info.plist modification') })
+      .mockImplementationOnce(() => {
+        throw new Error('code signature invalid after Info.plist modification')
+      })
     expect(() => verifyCodeSignatureIfPresent(app, { runCommand: brokenAfterModification })).toThrow(/code signature invalid after Info\.plist modification/)
   })
 
