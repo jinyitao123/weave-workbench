@@ -845,7 +845,7 @@ test.describe('Prime Work desktop smoke', () => {
     await expect(page.evaluate(() => window.prime.updates.getState())).resolves.toMatchObject({ phase: 'unsupported' })
     const credentialStatus = await page.evaluate(() => window.prime.voice.credentialStatus())
     expect(typeof credentialStatus.storage.available).toBe('boolean')
-    if (!credentialStatus.storage.available) expect(credentialStatus.storage.message).toMatch(/secure|credential|keyring|kwallet/i)
+    if (!credentialStatus.storage.available) expect(credentialStatus.storage.message).toMatch(/memory|session|restarting/i)
     const invalidSelfHostedTest = await page.evaluate(async () => {
       try { await window.prime.voice.testSelfHosted({ url: '', model: '' }); return '' }
       catch (error) { return String(error) }

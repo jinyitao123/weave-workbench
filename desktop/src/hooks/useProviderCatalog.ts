@@ -186,6 +186,10 @@ export function useProviderCatalog({ bridge, ready = true, harness = 'prime', ru
   const sessionKey = activeSession?.id ?? ''
   const sessionKeyRef = useRef(sessionKey)
   useLayoutEffect(() => { sessionKeyRef.current = sessionKey })
+  const selectionScopeRef = useRef({ harness, sessionKey, runtimeId: runtime?.runtimeId })
+  useLayoutEffect(() => {
+    selectionScopeRef.current = { harness, sessionKey, runtimeId: runtime?.runtimeId }
+  }, [harness, runtime?.runtimeId, sessionKey])
   // Starts undefined so the first render with a catalog counts as a switch and
   // restores the initial session's effort as well as its model.
   const activeSessionIdRef = useRef<string | undefined>(undefined)
@@ -225,6 +229,45 @@ export function useProviderCatalog({ bridge, ready = true, harness = 'prime', ru
       if (effortRef.current !== activeSession.thinkingLevel) updateEffort(activeSession.thinkingLevel as PrimeThinkingLevel)
     }
   }, [activeSession, catalog, runtime?.model?.id, runtime?.model?.provider, runtime?.thinkingLevel, sessionKey, updateEffort, updateModel])
+
+  /** Resolves a usable model before a new runtime starts, even if catalog-selection effects are still pending. */
+  const resolveModelSelection = useCallback(async () => {
+    if (!bridge || !ready) return undefined
+    const target = { harness, sessionKey, runtimeId: runtime?.runtimeId }
+    const isCurrent = () => {
+      const current = selectionScopeRef.current
+      return current.harness === target.harness && current.sessionKey === target.sessionKey && current.runtimeId === target.runtimeId
+    }
+    const choose = (nextCatalog: PrimeModelCatalog) => {
+      const current = nextCatalog.models.find((candidate) => candidate.key === modelRef.current && isUsable(candidate))
+      if (current) return current
+      const pending = pendingSelectionsRef.current.get(target.sessionKey)
+      const pendingModel = pending && nextCatalog.models.find((candidate) => candidate.key === pending.model && isUsable(candidate))
+      return pendingModel ?? fallbackModel(nextCatalog)
+    }
+
+    let nextCatalog = catalog
+    let selected = nextCatalog ? choose(nextCatalog) : undefined
+    if (!selected) {
+      nextCatalog = await bridge.providers.catalog(true, target.harness)
+      if (!isCurrent()) return undefined
+      setCatalogFor(target.harness, nextCatalog)
+      selected = choose(nextCatalog)
+    }
+    if (!selected || !isCurrent()) return undefined
+
+    const nextEffort = selected.availableThinkingLevels.includes(effortRef.current)
+      ? effortRef.current
+      : selected.availableThinkingLevels.includes('medium') ? 'medium' : selected.availableThinkingLevels[0] ?? 'off'
+    const nextFast = selected.fastModeSupported && fastRef.current
+    if (modelRef.current !== selected.key) {
+      updateModel(selected.key)
+      rememberSelectionRef.current(selected.key)
+    }
+    if (effortRef.current !== nextEffort) updateEffort(nextEffort)
+    if (fastRef.current !== nextFast) updateFast(nextFast)
+    return { model: selected, effort: nextEffort, fast: nextFast }
+  }, [bridge, catalog, fallbackModel, harness, ready, runtime?.runtimeId, sessionKey, setCatalogFor, updateEffort, updateFast, updateModel])
 
   // Scoped to the runtime's reported tier so a catalog refresh cannot revert
   // an optimistic fast-mode toggle that the runtime has not confirmed yet.
@@ -357,7 +400,7 @@ export function useProviderCatalog({ bridge, ready = true, harness = 'prime', ru
 
   return {
     model, effort, fast, catalog, authEvent, selectedModel, reasoningLevels, modelsByProvider,
-    refresh, changeModel, changeEffort, changeFast,
+    refresh, resolveModelSelection, changeModel, changeEffort, changeFast,
     saveApiKey, logout, setEnabled, setAllEnabled, setAllDisabled, setModelEnabled, startOAuth, respondOAuth, cancelOAuth,
   }
 }

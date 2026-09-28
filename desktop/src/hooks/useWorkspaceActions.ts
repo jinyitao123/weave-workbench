@@ -402,7 +402,7 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
         // bootstrap effect's workspace reset would otherwise start the new
         // harness against the old workspace's cwd and session.
         const activeHarness = admitted.project.harness
-        if (images.length > 0 && !provider.selectedModel?.input.includes('image')) {
+        if (images.length > 0 && (!bridge || (provider.selectedModel && !provider.selectedModel.input.includes('image')))) {
           reportError('This model does not accept images. Remove the attachment or choose a vision model.')
           return
         }
@@ -425,11 +425,18 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
           return
         }
         await grantProject(admitted.project)
-        if (workspace.workspaceRef.current.generation !== generation) return
+        if (workspace.workspaceRef.current.generation !== generation || workspace.workspaceRef.current.project?.harness !== activeHarness) return
         const selected = workspace.workspaceRef.current
         if (!selected.cwd) throw new Error('The selected workspace has no working directory.')
+        const isAdmittedWorkspaceCurrent = () => {
+          const current = workspace.workspaceRef.current
+          return current.generation === generation
+            && current.project?.harness === activeHarness
+            && current.cwd === selected.cwd
+            && current.sessionFile === selected.sessionFile
+        }
         const liveRuntimes = (await bridge.agent.list()).filter((candidate) => candidate.harness === activeHarness)
-        if (workspace.workspaceRef.current.generation !== generation) return
+        if (!isAdmittedWorkspaceCurrent()) return
         const owner = workspace.runtimeOwnerRef.current
         const tracked = workspace.runtimeIdRef.current ? liveRuntimes.find((item) => item.runtimeId === workspace.runtimeIdRef.current) : undefined
         const belongsHere = Boolean(tracked && owner?.runtimeId === tracked.runtimeId && owner.generation === generation && tracked.cwd === selected.cwd && (!selected.sessionFile || tracked.sessionFile === selected.sessionFile))
@@ -441,6 +448,10 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
             setToast('Compaction is unavailable while this session is running outside GooeyPi.')
             return
           }
+        }
+        if (activeRuntime && images.length > 0 && !provider.selectedModel?.input.includes('image')) {
+          reportError('This model does not accept images. Remove the attachment or choose a vision model.')
+          return
         }
         if ((intent === 'queue' || compactCommand) && images.length === 0 && textAttachments.length === 0 && (activeRuntime?.isStreaming || selectedSession?.status === 'running')) {
           if (activeRuntime) await bridge.enterprise.invalidateHandoff(activeRuntime.runtimeId)
@@ -462,8 +473,26 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
             return
           }
           try {
-            if (!provider.model) throw new Error(`No model is available for ${HARNESS_AGENT_NAMES[activeHarness]}. Enable or connect a provider, then try again.`)
-            activeRuntime = await bridge.agent.start({ cwd: selected.cwd, sessionPath: selected.sessionFile, model: provider.model, thinking: provider.effort, fast: provider.fast, harness: activeHarness })
+            let model = provider.model
+            let thinking = provider.effort
+            let fast = provider.fast
+            let selectedModel = provider.selectedModel
+            if (provider.resolveModelSelection && (!model || !selectedModel)) {
+              const selection = await provider.resolveModelSelection()
+              if (!isAdmittedWorkspaceCurrent()) return
+              if (selection) {
+                model = selection.model.key
+                thinking = selection.effort
+                fast = selection.fast
+                selectedModel = selection.model
+              }
+            }
+            if (!model || !selectedModel) throw new Error(`No model is available for ${HARNESS_AGENT_NAMES[activeHarness]}. Enable or connect a provider, then try again.`)
+            if (images.length > 0 && !selectedModel.input.includes('image')) {
+              reportError('This model does not accept images. Remove the attachment or choose a vision model.')
+              return
+            }
+            activeRuntime = await bridge.agent.start({ cwd: selected.cwd, sessionPath: selected.sessionFile, model, thinking, fast, harness: activeHarness })
           } catch (startError) {
             if (images.length === 0 && selected.sessionFile && await followUpExternalSession(selected.sessionFile)) {
               if (intent === 'steer') appendUserMessage()
@@ -473,7 +502,7 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
             throw startError
           }
           startedRuntime = true
-          if (workspace.workspaceRef.current.generation !== generation) { await bridge.agent.stop(activeRuntime.runtimeId).catch(() => false); return }
+          if (!isAdmittedWorkspaceCurrent()) { await bridge.agent.stop(activeRuntime.runtimeId).catch(() => false); return }
           const indexedSession = await indexStartedSession({
             bridge,
             harness: activeHarness,
