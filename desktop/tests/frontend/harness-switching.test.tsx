@@ -36,23 +36,19 @@ const primeSession: SessionRecord = {
   id: 'prime-session', harness: 'prime', projectPath: '/prime', filePath: '/prime-sessions/current.jsonl', title: 'Prime session',
   createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z', status: 'idle', depth: 0,
 }
-const ompProject: ProjectRecord = { ...primeProject, id: 'omp-project', harness: 'omp', name: 'OMP project', path: '/omp', folders: ['/omp'], primaryFolder: '/omp' }
-const ompSession: SessionRecord = { ...primeSession, id: 'omp-session', harness: 'omp', projectPath: '/omp', filePath: '/omp-sessions/current.jsonl', title: 'OMP session' }
 const piProject: ProjectRecord = { ...primeProject, id: 'pi-project', harness: 'pi', name: 'Pi project', path: '/pi', folders: ['/pi'], primaryFolder: '/pi' }
 const piSession: SessionRecord = { ...primeSession, id: 'pi-session', harness: 'pi', projectPath: '/pi', filePath: '/pi-sessions/current.jsonl', title: 'Pi session' }
 const primeRuntime: RuntimeInfo = { runtimeId: 'prime-runtime', harness: 'prime', cwd: '/prime', sessionFile: primeSession.filePath, isStreaming: false }
-const ompRuntime: RuntimeInfo = { runtimeId: 'omp-runtime', harness: 'omp', cwd: '/omp', sessionFile: ompSession.filePath, isStreaming: false }
 const piRuntime: RuntimeInfo = { runtimeId: 'pi-runtime', harness: 'pi', cwd: '/pi', sessionFile: piSession.filePath, isStreaming: false }
 
 const meta: AppMeta = {
   version: '1', platform: 'darwin', homeDir: '/Users/you',
-  harnesses: { prime: { path: '/usr/local/bin/prime-agent', version: '0.7.0' }, omp: { path: null, version: null }, pi: { path: null, version: null } },
+  harnesses: { prime: { path: '/usr/local/bin/prime-agent', version: '0.7.0' }, pi: { path: null, version: null } },
 }
 const allDetectedMeta: AppMeta = {
   ...meta,
   harnesses: {
     prime: meta.harnesses.prime,
-    omp: { path: '/usr/local/bin/omp', version: '17.2.11' },
     pi: { path: '/usr/local/bin/pi', version: '0.84.1' },
   },
 }
@@ -90,9 +86,9 @@ async function select(element: HTMLSelectElement, value: string) {
 
 describe('bootstrap harness switching', () => {
   function makeBridge() {
-    const projectsList = vi.fn(async (harness?: HarnessId) => harness === 'omp' ? [ompProject] : harness === 'pi' ? [piProject] : [primeProject])
-    const sessionsList = vi.fn(async (_projectPath?: string, _includeArchived?: boolean, harness?: HarnessId) => harness === 'omp' ? [ompSession] : harness === 'pi' ? [piSession] : [primeSession])
-    const agentList = vi.fn(async () => [primeRuntime, ompRuntime, piRuntime])
+    const projectsList = vi.fn(async (harness?: HarnessId) => harness === 'pi' ? [piProject] : [primeProject])
+    const sessionsList = vi.fn(async (_projectPath?: string, _includeArchived?: boolean, harness?: HarnessId) => harness === 'pi' ? [piSession] : [primeSession])
+    const agentList = vi.fn(async () => [primeRuntime, piRuntime])
     const bridge = {
       projects: { list: projectsList },
       sessions: { list: sessionsList, onChanged: () => () => undefined },
@@ -175,9 +171,9 @@ describe('bootstrap harness switching', () => {
     await act(async () => { await Promise.resolve() })
     expect(workspace.attached).toEqual([primeRuntime])
 
-    await act(async () => { root.render(<BootstrapProbe harness="omp" />); await Promise.resolve(); await Promise.resolve() })
-    expect(projectsList).toHaveBeenLastCalledWith('omp')
-    expect(sessionsList).toHaveBeenLastCalledWith(undefined, true, 'omp')
+    await act(async () => { root.render(<BootstrapProbe harness="pi" />); await Promise.resolve(); await Promise.resolve() })
+    expect(projectsList).toHaveBeenLastCalledWith('pi')
+    expect(sessionsList).toHaveBeenLastCalledWith(undefined, true, 'pi')
     expect(onHarnessSwitch).toHaveBeenCalledTimes(1)
     // The switch clears the visible catalog before the new harness loads.
     expect(setProjects).toHaveBeenCalledWith([])
@@ -186,31 +182,31 @@ describe('bootstrap harness switching', () => {
     expect(workspace.activated).toEqual([
       { project: primeProject, session: primeSession },
       { project: undefined, session: undefined },
-      { project: ompProject, session: ompSession },
+      { project: piProject, session: piSession },
     ])
     await act(async () => { await Promise.resolve() })
-    expect(workspace.attached).toEqual([primeRuntime, ompRuntime])
+    expect(workspace.attached).toEqual([primeRuntime, piRuntime])
 
-    await act(async () => { root.render(<BootstrapProbe harness="pi" />); await Promise.resolve(); await Promise.resolve() })
-    expect(projectsList).toHaveBeenLastCalledWith('pi')
-    expect(sessionsList).toHaveBeenLastCalledWith(undefined, true, 'pi')
+    await act(async () => { root.render(<BootstrapProbe harness="prime" />); await Promise.resolve(); await Promise.resolve() })
+    expect(projectsList).toHaveBeenLastCalledWith('prime')
+    expect(sessionsList).toHaveBeenLastCalledWith(undefined, true, 'prime')
     expect(onHarnessSwitch).toHaveBeenCalledTimes(2)
     expect(workspace.activated).toEqual([
       { project: primeProject, session: primeSession },
       { project: undefined, session: undefined },
-      { project: ompProject, session: ompSession },
-      { project: undefined, session: undefined },
       { project: piProject, session: piSession },
+      { project: undefined, session: undefined },
+      { project: primeProject, session: primeSession },
     ])
     await act(async () => { await Promise.resolve() })
-    expect(workspace.attached).toEqual([primeRuntime, ompRuntime, piRuntime])
+    expect(workspace.attached).toEqual([primeRuntime, piRuntime, primeRuntime])
   })
 
   it('skips the startup activation when the user changes the workspace mid-fetch', async () => {
     const projects = deferred<ProjectRecord[]>()
     const bridge = {
-      projects: { list: vi.fn((harness?: HarnessId) => harness === 'omp' ? projects.promise : Promise.resolve([primeProject])) },
-      sessions: { list: async () => [ompSession], onChanged: () => () => undefined },
+      projects: { list: vi.fn((harness?: HarnessId) => harness === 'pi' ? projects.promise : Promise.resolve([primeProject])) },
+      sessions: { list: async () => [piSession], onChanged: () => () => undefined },
       agent: { list: async () => [] },
       app: { getMeta: async () => meta },
       schedules: { list: async () => [] },
@@ -233,19 +229,19 @@ describe('bootstrap harness switching', () => {
       return <Probe />
     }
     await act(async () => { root.render(<BootstrapProbe harness="prime" />); await Promise.resolve(); await Promise.resolve() })
-    await act(async () => { root.render(<BootstrapProbe harness="omp" />) })
+    await act(async () => { root.render(<BootstrapProbe harness="pi" />) })
     const activationsBeforeResolve = workspace.activated.length
-    // The user activates something else while the omp catalog is in flight.
-    act(() => { workspace.activateWorkspace(ompProject) })
-    await act(async () => { projects.resolve([ompProject]); await projects.promise; await Promise.resolve(); await Promise.resolve() })
+    // The user activates another workspace while the Pi catalog is in flight.
+    act(() => { workspace.activateWorkspace(primeProject) })
+    await act(async () => { projects.resolve([piProject]); await projects.promise; await Promise.resolve(); await Promise.resolve() })
     expect(workspace.activated.length).toBe(activationsBeforeResolve + 1)
   })
 
   it('only refreshes the session catalog for matching sessions:changed events', async () => {
     let onChangedCallback: ((event: { filePath?: string; harness?: HarnessId }) => void) | undefined
-    const sessionsList = vi.fn(async (_p?: string, _a?: boolean, harness?: HarnessId) => harness === 'omp' ? [ompSession] : [primeSession])
+    const sessionsList = vi.fn(async (_p?: string, _a?: boolean, harness?: HarnessId) => harness === 'pi' ? [piSession] : [primeSession])
     const bridge = {
-      projects: { list: async () => [ompProject] },
+      projects: { list: async () => [piProject] },
       sessions: {
         list: sessionsList,
         onChanged: (callback: typeof onChangedCallback) => { onChangedCallback = callback; return () => undefined },
@@ -265,7 +261,7 @@ describe('bootstrap harness switching', () => {
       const runtimeSessionsRef = { current: new Map<string, string>() }
       function BootstrapProbe() {
         useBootstrap({
-          bridge, harness: 'omp',
+          bridge, harness: 'pi',
           setProjects, setSessions, setSchedules, setScheduleError,
           runtimeSessionsRef, workspaceRef: workspace.workspaceRef,
           activateWorkspace: workspace.activateWorkspace, attachRuntime: workspace.attachRuntime,
@@ -283,10 +279,10 @@ describe('bootstrap harness switching', () => {
       await act(async () => { vi.advanceTimersByTime(200); await Promise.resolve() })
       expect(sessionsList.mock.calls.length).toBe(listCalls)
 
-      act(() => { onChangedCallback?.({ filePath: ompSession.filePath, harness: 'omp' }) })
+      act(() => { onChangedCallback?.({ filePath: piSession.filePath, harness: 'pi' }) })
       await act(async () => { vi.advanceTimersByTime(200); await Promise.resolve() })
       expect(sessionsList.mock.calls.length).toBe(listCalls + 1)
-      expect(sessionsList).toHaveBeenLastCalledWith(undefined, true, 'omp')
+      expect(sessionsList).toHaveBeenLastCalledWith(undefined, true, 'pi')
     } finally {
       vi.useRealTimers()
     }
@@ -303,16 +299,16 @@ describe('inactive harness event isolation', () => {
     const setRuntime = vi.fn()
     const queueAgentEvent = vi.fn()
     const reconcileTranscriptForEvent = vi.fn()
-    // The workspace shows the OMP harness; a prime runtime keeps streaming in
+    // The workspace shows Pi; the Prime runtime keeps streaming in
     // the background with its session file still registered.
     const runtimeSessionsRef = { current: new Map([[primeRuntime.runtimeId, primeSession.filePath]]) }
     function AgentEventsProbe() {
       useAgentEvents({
         bridge,
-        runtimeIdRef: { current: ompRuntime.runtimeId },
+        runtimeIdRef: { current: piRuntime.runtimeId },
         runtimeSessionsRef,
-        runtimeOwnerRef: { current: { runtimeId: ompRuntime.runtimeId, generation: 1 } },
-        workspaceRef: { current: { generation: 1, sessionFile: ompSession.filePath, cwd: '/omp' } },
+        runtimeOwnerRef: { current: { runtimeId: piRuntime.runtimeId, generation: 1 } },
+        workspaceRef: { current: { generation: 1, sessionFile: piSession.filePath, cwd: '/pi' } },
         setSessions,
         setRuntime,
         queueAgentEvent,
@@ -332,16 +328,16 @@ describe('inactive harness event isolation', () => {
       handler({ runtimeId: primeRuntime.runtimeId, event: { type: 'agent_end' } })
     })
     // Lifecycle updates only touch records whose filePath matches; the visible
-    // OMP catalog has none, so the session list is unchanged.
+    // The Prime event does not alter the active Pi session list.
     for (const [updater] of setSessions.mock.calls) {
-      expect((updater as (sessions: SessionRecord[]) => SessionRecord[])([ompSession])).toEqual([ompSession])
+      expect((updater as (sessions: SessionRecord[]) => SessionRecord[])([piSession])).toEqual([piSession])
     }
     expect(setRuntime).not.toHaveBeenCalled()
     expect(queueAgentEvent).not.toHaveBeenCalled()
     expect(reconcileTranscriptForEvent).not.toHaveBeenCalled()
 
     // The visible harness's own runtime still updates state.
-    act(() => { handler({ runtimeId: ompRuntime.runtimeId, event: { type: 'agent_start' } }) })
+    act(() => { handler({ runtimeId: piRuntime.runtimeId, event: { type: 'agent_start' } }) })
     expect(setRuntime).toHaveBeenCalled()
     expect(queueAgentEvent).toHaveBeenCalledTimes(1)
   })
@@ -463,9 +459,9 @@ describe('sidebar brand switcher', () => {
     expect(container.querySelector('[role="menu"]')).toBeNull()
   })
 
-  it('closes on Escape without selecting and shows shared navigation for OMP', async () => {
+  it('closes on Escape without selecting and shows shared navigation for Pi', async () => {
     const onSelectHarness = vi.fn()
-    await renderSidebar(onSelectHarness, 'omp', allDetectedMeta)
+    await renderSidebar(onSelectHarness, 'pi', allDetectedMeta)
 
     expect([...container.querySelectorAll('nav.sidebar__primary button span')].map((item) => item.textContent)).toEqual(['开始工作', '搜索', 'My tasks'])
     expect(container.textContent).not.toContain('Capabilities')
@@ -484,10 +480,10 @@ describe('provider catalog per harness', () => {
     models: [{ key: 'openai-codex/gpt-5.6', provider: 'openai-codex', id: 'gpt-5.6', name: 'GPT-5.6', reasoning: true, input: ['text'], contextWindow: 400_000, maxTokens: 128_000, availableThinkingLevels: ['low', 'medium', 'high'], fastModeSupported: true, available: true }],
     providers: [{ id: 'openai-codex', name: 'ChatGPT Plus/Pro', authMethod: 'oauth', configured: true, modelCount: 1, availableModelCount: 1, enabled: true }],
   }
-  const ompCatalog: PrimeModelCatalog = {
-    primeVersion: '17.2.11', refreshedAt: '2026-08-06T00:00:00.000Z',
+  const piCatalog: PrimeModelCatalog = {
+    primeVersion: '0.84.1', refreshedAt: '2026-08-06T00:00:00.000Z',
     models: [{ key: 'openai-codex/gpt-5.6-luna', provider: 'openai-codex', id: 'gpt-5.6-luna', name: 'Luna GPT-5.6', reasoning: true, input: ['text', 'image'], contextWindow: 400_000, maxTokens: 128_000, availableThinkingLevels: ['low', 'medium', 'high'], fastModeSupported: false, available: true }],
-    providers: [{ id: 'openai-codex', name: 'OpenAI Codex', authMethod: 'external', configured: true, authLabel: 'Credentials managed by the omp CLI', modelCount: 1, availableModelCount: 1, enabled: true }],
+    providers: [{ id: 'openai-codex', name: 'OpenAI Codex', authMethod: 'external', configured: true, authLabel: 'Credentials managed by the pi CLI', modelCount: 1, availableModelCount: 1, enabled: true }],
   }
 
   it('waits for persisted settings before loading a provider catalog', async () => {
@@ -511,7 +507,7 @@ describe('provider catalog per harness', () => {
     const thirdFetch = deferred<PrimeModelCatalog>()
     const catalogMock = vi.fn()
       .mockResolvedValueOnce(primeCatalog)
-      .mockResolvedValueOnce(ompCatalog)
+      .mockResolvedValueOnce(piCatalog)
       .mockImplementationOnce(() => thirdFetch.promise)
     const bridge = {
       providers: { catalog: catalogMock, onAuthEvent: vi.fn().mockReturnValue(() => undefined) },
@@ -530,9 +526,9 @@ describe('provider catalog per harness', () => {
     act(() => state.changeModel('openai-codex/gpt-5.6'))
     expect(state.model).toBe('openai-codex/gpt-5.6')
 
-    await act(async () => { root.render(<CatalogProbe harness="omp" />); await Promise.resolve() })
-    expect(catalogMock).toHaveBeenNthCalledWith(2, false, 'omp')
-    expect(state.catalog).toBe(ompCatalog)
+    await act(async () => { root.render(<CatalogProbe harness="pi" />); await Promise.resolve() })
+    expect(catalogMock).toHaveBeenNthCalledWith(2, false, 'pi')
+    expect(state.catalog).toBe(piCatalog)
     expect(state.model).toBe('openai-codex/gpt-5.6-luna')
     expect(state.fast).toBe(false)
 
@@ -767,15 +763,15 @@ describe('harness settings surfaces', () => {
     expect(container.querySelector('h1')?.textContent).toBe('Harness')
   })
 
-  it('keeps Harness settings universal while leaving only providers harness-specific', async () => {
+  it('offers only Prime and Pi as harness settings and omits retired OMP controls', async () => {
     const onUpdate = vi.fn()
     const onRefreshHarnesses = vi.fn(async () => undefined)
     const primeSettings: AppSettings = { ...DEFAULT_SETTINGS, activeHarness: 'prime' }
     await act(async () => { root.render(<AgentSettings settings={primeSettings} meta={meta} onUpdate={onUpdate} onRefreshHarnesses={onRefreshHarnesses} />) })
     expect(container.textContent).toContain('Default harness')
-    expect(container.textContent).toContain('OMP approval mode')
+    expect(container.textContent).not.toContain('OMP')
     expect(container.textContent).toContain('Prime Agent is ready')
-    expect(container.textContent).toContain('OMP not detected')
+    expect(container.textContent).toContain('Pi not detected')
     expect([...container.querySelectorAll<HTMLSelectElement>('select')[0].options].map((option) => option.textContent)).toEqual(['Prime Work'])
 
     const refresh = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent?.includes('Refresh harnesses'))!
@@ -784,24 +780,15 @@ describe('harness settings surfaces', () => {
 
     await act(async () => { root.render(<AgentSettings settings={primeSettings} meta={allDetectedMeta} onUpdate={onUpdate} onRefreshHarnesses={onRefreshHarnesses} />) })
     const harnessSelect = container.querySelector<HTMLSelectElement>('select')!
-    await select(harnessSelect!, 'omp')
-    expect(onUpdate).toHaveBeenCalledWith({ activeHarness: 'omp' })
+    await select(harnessSelect!, 'pi')
+    expect(onUpdate).toHaveBeenCalledWith({ activeHarness: 'pi' })
 
     const piSettings: AppSettings = { ...DEFAULT_SETTINGS, activeHarness: 'pi' }
     await act(async () => { root.render(<AgentSettings settings={piSettings} meta={allDetectedMeta} onUpdate={onUpdate} onRefreshHarnesses={onRefreshHarnesses} />) })
-    expect(container.textContent).toContain('OMP approval mode')
+    expect(container.textContent).not.toContain('OMP')
     const selects = [...container.querySelectorAll<HTMLSelectElement>('select')]
-    expect(selects).toHaveLength(2)
-    const approvalSelect = selects[1]
-    expect([...approvalSelect.options].map((option) => option.textContent)).toEqual([
-      'Inherit omp config',
-      'Always ask',
-      'Prompt for exec only (write)',
-      'YOLO (never prompt)',
-    ])
-    await select(approvalSelect, 'write')
-    expect(onUpdate).toHaveBeenCalledWith({ ompApprovalMode: 'write' })
-    expect([...selects[0].options].map((option) => option.textContent)).toEqual(['OMP Work', 'Prime Work', 'Pi Work'])
+    expect(selects).toHaveLength(1)
+    expect([...selects[0].options].map((option) => option.textContent)).toEqual(['Prime Work', 'Pi Work'])
   })
 
   it('renders a harness discovery problem in its runtime card', async () => {
@@ -822,31 +809,6 @@ describe('harness settings surfaces', () => {
     const piCard = [...container.querySelectorAll('.runtime-card')].find((card) => card.textContent?.includes('Pi not detected'))
     expect(piCard?.querySelector('small')?.getAttribute('title')).toBe('/Users/you/.local/bin/pi: exited with code 1: Node.js is too old')
     expect(container.textContent).toContain('/Users/you/.local/bin/pi: exited with code 1: Node.js is too old')
-  })
-
-  it('renders OMP provider toggles while keeping credentials CLI-owned', async () => {
-    const catalog: PrimeModelCatalog = {
-      primeVersion: '17.2.11', refreshedAt: '2026-08-06T00:00:00.000Z',
-      models: [{ key: 'openai-codex/gpt-5.6-luna', provider: 'openai-codex', id: 'gpt-5.6-luna', name: 'Luna GPT-5.6', reasoning: true, input: ['text'], contextWindow: 400_000, maxTokens: 128_000, availableThinkingLevels: ['low', 'high'], fastModeSupported: false, available: true }],
-      providers: [
-        { id: 'openai-codex', name: 'OpenAI Codex', authMethod: 'external', configured: true, authLabel: 'Credentials managed by the omp CLI', modelCount: 1, availableModelCount: 1, enabled: true },
-        { id: 'anthropic', name: 'Anthropic', authMethod: 'external', configured: true, modelCount: 0, availableModelCount: 0, enabled: true },
-      ],
-    }
-    const noopAsync = async () => undefined
-    await act(async () => {
-      root.render(<ProviderSettings harness="omp" catalog={catalog} onRefresh={noopAsync} onSaveApiKey={noopAsync} onLogout={noopAsync} onSetEnabled={noopAsync} onSetAllEnabled={noopAsync} onSetAllDisabled={noopAsync} onSetModelEnabled={noopAsync} onStartOAuth={noopAsync} onOpenDocs={() => undefined} />)
-    })
-
-    expect(container.textContent).toContain('OMP catalogue')
-    expect(container.textContent).toContain('Credentials managed by the omp CLI')
-    expect(container.querySelectorAll('input[type="checkbox"]')).toHaveLength(2)
-    const buttonLabels = [...container.querySelectorAll('button')].map((button) => button.textContent ?? '')
-    expect(buttonLabels.some((text) => text.includes('Hide all'))).toBe(true)
-    expect(buttonLabels.some((text) => text.includes('Credential setup'))).toBe(true)
-    for (const label of ['Connect', 'Reconnect', 'Add key', 'Replace key', 'Disable all', 'Enable all']) {
-      expect(buttonLabels.some((text) => text.includes(label))).toBe(false)
-    }
   })
 
   it('renders Pi provider visibility toggles while keeping credentials CLI-owned', async () => {

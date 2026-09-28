@@ -311,18 +311,6 @@ describe('provider runtime mutations', () => {
     expect(hook.value.fast).toBe(false)
   })
 
-  it('routes OMP provider visibility to the OMP desktop-settings bucket', async () => {
-    const next = { ...catalog, providers: catalog.providers.map((provider) => provider.id === 'anthropic' ? { ...provider, enabled: true } : provider) }
-    const setEnabled = vi.fn().mockResolvedValue(next)
-    const setDisabled = vi.fn().mockResolvedValue(next)
-    const hook = await mountCatalogHook({ command: vi.fn(), harness: 'omp', setEnabled, setDisabled })
-
-    await act(async () => { await hook.value.setEnabled('anthropic', true) })
-    expect(setEnabled).toHaveBeenCalledWith('anthropic', true, 'omp')
-    await act(async () => { await hook.value.setAllEnabled() })
-    expect(setDisabled).toHaveBeenCalledWith([], 'omp')
-  })
-
   it('routes Pi provider visibility to the Pi desktop-settings bucket', async () => {
     const next = { ...catalog, providers: catalog.providers.map((provider) => provider.id === 'anthropic' ? { ...provider, enabled: true } : provider) }
     const setEnabled = vi.fn().mockResolvedValue(next)

@@ -10,16 +10,8 @@ export type WorkspaceView = 'session' | 'activity' | 'projects' | 'scheduled' | 
 export type InspectorTab = 'summary' | 'development' | 'team-division' | 'team-workflow' | 'changes' | 'browser' | 'files'
 export type SessionStatus = 'idle' | 'running' | 'waiting' | 'complete' | 'failed' | 'unknown'
 
-export const HARNESS_IDS = ['omp', 'prime', 'pi'] as const
+export const HARNESS_IDS = ['prime', 'pi'] as const
 export type HarnessId = (typeof HARNESS_IDS)[number]
-
-/**
- * OMP tool-approval preference. 'inherit' defers to OMP's own
- * `~/.omp/agent/config.yml`; the other values are passed to the omp CLI as
- * `--approval-mode` when starting an OMP runtime.
- */
-export const OMP_APPROVAL_MODES = ['inherit', 'always-ask', 'write', 'yolo'] as const
-export type OmpApprovalMode = (typeof OMP_APPROVAL_MODES)[number]
 
 export interface HarnessStatus {
   path: string | null
@@ -976,20 +968,14 @@ export interface AppSettings {
   disabledProviders: string[]
   /** Models hidden from Prime Work's Prime model picker, stored as provider/model keys. */
   disabledModels: string[]
-  /** Providers hidden from Prime Work's OMP model picker; OMP config is untouched. */
-  ompDisabledProviders: string[]
-  /** Models hidden from Prime Work's OMP model picker; OMP config is untouched. */
-  ompDisabledModels: string[]
   /** Providers hidden from Prime Work's pi model picker; pi config is untouched. */
   piDisabledProviders: string[]
   /** Models hidden from Prime Work's pi model picker; pi config is untouched. */
   piDisabledModels: string[]
   /** Last usable model selected in each harness; blank falls back to the first usable catalog model. */
   lastSelectedModels: Record<HarnessId, string>
-  /** Harness whose workspace the renderer shows; new installs default to 'omp'. */
+  /** Harness whose workspace the renderer shows; new installs default to Pi Work. */
   activeHarness: HarnessId
-  /** OMP tool-approval override; 'inherit' leaves OMP's own config in charge. */
-  ompApprovalMode: OmpApprovalMode
   /** Desktop companion shown above the workspace. */
   petEnabled: boolean
   /** Built-in or discovered pet selection id. */

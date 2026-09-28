@@ -12,24 +12,17 @@ export interface ExtensionInjection {
 const injectionsByHarness = {
   prime: [
     { capability: 'browser', filename: 'prime-work-browser.ts', environmentVariable: 'PRIME_WORK_BROWSER_EXTENSION_PATH' },
-    { capability: 'askUser', filename: 'omp-work-ask-user.ts', environmentVariable: 'PRIME_WORK_ASK_USER_EXTENSION_PATH' },
-    { capability: 'collaboration', filename: 'omp-work-collaboration.ts', environmentVariable: 'GOOEYPI_COLLABORATION_EXTENSION_PATH' },
-    { capability: 'enterprise', filename: 'gooeypi-enterprise.ts', environmentVariable: 'GOOEYPI_ENTERPRISE_EXTENSION_PATH' },
-  ],
-  omp: [
-    { capability: 'schedule', filename: 'omp-work-schedules.ts', environmentVariable: 'PRIME_WORK_SCHEDULE_EXTENSION_PATH' },
-    { capability: 'browser', filename: 'omp-work-browser.ts', environmentVariable: 'PRIME_WORK_BROWSER_EXTENSION_PATH' },
-    { capability: 'askUser', filename: 'omp-work-ask-user.ts', environmentVariable: 'PRIME_WORK_ASK_USER_EXTENSION_PATH' },
-    { capability: 'collaboration', filename: 'omp-work-collaboration.ts', environmentVariable: 'GOOEYPI_COLLABORATION_EXTENSION_PATH' },
+    { capability: 'askUser', filename: 'gooeypi-work-ask-user.ts', environmentVariable: 'PRIME_WORK_ASK_USER_EXTENSION_PATH' },
+    { capability: 'collaboration', filename: 'gooeypi-work-collaboration.ts', environmentVariable: 'GOOEYPI_COLLABORATION_EXTENSION_PATH' },
     { capability: 'enterprise', filename: 'gooeypi-enterprise.ts', environmentVariable: 'GOOEYPI_ENTERPRISE_EXTENSION_PATH' },
   ],
   pi: [
     { capability: 'piFastMode', filename: 'pi-work-fast-mode.ts', environmentVariable: 'GOOEYPI_PI_FAST_MODE_EXTENSION_PATH' },
     { capability: 'teamDevelopment', filename: 'gooeypi-team-development.ts', environmentVariable: 'GOOEYPI_TEAM_DEVELOPMENT_EXTENSION_PATH' },
-    { capability: 'schedule', filename: 'omp-work-schedules.ts', environmentVariable: 'PRIME_WORK_SCHEDULE_EXTENSION_PATH' },
-    { capability: 'browser', filename: 'omp-work-browser.ts', environmentVariable: 'PRIME_WORK_BROWSER_EXTENSION_PATH' },
-    { capability: 'askUser', filename: 'omp-work-ask-user.ts', environmentVariable: 'PRIME_WORK_ASK_USER_EXTENSION_PATH' },
-    { capability: 'collaboration', filename: 'omp-work-collaboration.ts', environmentVariable: 'GOOEYPI_COLLABORATION_EXTENSION_PATH' },
+    { capability: 'schedule', filename: 'gooeypi-work-schedules.ts', environmentVariable: 'PRIME_WORK_SCHEDULE_EXTENSION_PATH' },
+    { capability: 'browser', filename: 'gooeypi-work-browser.ts', environmentVariable: 'PRIME_WORK_BROWSER_EXTENSION_PATH' },
+    { capability: 'askUser', filename: 'gooeypi-work-ask-user.ts', environmentVariable: 'PRIME_WORK_ASK_USER_EXTENSION_PATH' },
+    { capability: 'collaboration', filename: 'gooeypi-work-collaboration.ts', environmentVariable: 'GOOEYPI_COLLABORATION_EXTENSION_PATH' },
     { capability: 'enterprise', filename: 'gooeypi-enterprise.ts', environmentVariable: 'GOOEYPI_ENTERPRISE_EXTENSION_PATH' },
   ],
 } as const satisfies Readonly<Record<HarnessId, readonly ExtensionInjection[]>>

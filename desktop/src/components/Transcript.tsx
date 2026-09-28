@@ -5,7 +5,7 @@ import { ChangesCard } from './ChangesCard'
 import { ErrorBoundary } from './ErrorBoundary'
 import { MarkdownText } from './MarkdownText'
 import { HARNESS_SHORT_NAMES } from '@/lib/harness'
-import { OmpMark, PiMark, PrimeMark } from './ui'
+import { PiMark, PrimeMark } from './ui'
 import { ActivityMessage, AgentMessage, AssistantMessage, GoalMessage, SteerReadMarker, UserMessage } from './transcript/messages'
 import { useTranscriptScroll } from './transcript/scroll'
 import { LiveElapsed, ThinkingDots, WorkDisclosure } from './transcript/timeline'
@@ -58,7 +58,7 @@ interface TranscriptProps {
 }
 
 
-const ASSISTANT_MARKS = { omp: OmpMark, prime: PrimeMark, pi: PiMark } satisfies Record<HarnessId, unknown>
+const ASSISTANT_MARKS = { prime: PrimeMark, pi: PiMark } satisfies Record<HarnessId, unknown>
 function AssistantMark({ harness, size = 24 }: { harness: HarnessId; size?: number }) {
   const Mark = ASSISTANT_MARKS[harness]
   return <Mark size={size} />

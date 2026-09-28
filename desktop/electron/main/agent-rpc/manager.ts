@@ -12,7 +12,7 @@ import type { WorkspaceUseLease, WorkspaceUseOwner } from '../repository-use-gat
 
 /**
  * Structural slice of the provider catalog the manager needs; PrimeProviderService
- * satisfies it today and a future OMP model catalog can be injected in its place.
+ * satisfies it for the supported harnesses.
  */
 export interface ProviderCatalog {
   requireAvailableModel(rawKey: unknown, disabledProviders?: ReadonlySet<string>, disabledModels?: ReadonlySet<string>): Promise<PrimeModelDescriptor>
@@ -48,8 +48,6 @@ export class AgentRpcManager {
     private readonly providers?: ProviderCatalog,
     private readonly disabledProviders: () => ReadonlySet<string> = () => new Set(),
     private readonly adapter: HarnessRpcAdapter = PRIME_RPC_ADAPTER,
-    /** Approval-mode override consumed only by harness arg builders that support it (OMP). */
-    private readonly approvalMode: () => string | undefined = () => undefined,
   ) {}
 
   setEventSink(sink: (envelope: PrimeEventEnvelope) => void): void { this.eventSink = sink }
@@ -159,7 +157,6 @@ export class AgentRpcManager {
         providerId: selectedModel?.provider,
         modelId,
         thinking,
-        approvalMode: this.approvalMode(),
         environment: runtimeEnvironment,
       })
       const bindReportedSession = (info: RuntimeInfo): void => {
@@ -282,15 +279,14 @@ export class AgentRpcManager {
     }
     const response = await runtime.command(translated)
     if (command.type === 'steer' || command.type === 'follow_up') {
-      // OMP reports only queuedMessageCount, while Prime reports the full
-      // scheduler snapshot. Refresh after admission so both shapes reach the
-      // renderer before a queued row can appear to vanish.
+      // Refresh the Prime scheduler snapshot after admission so a queued row
+      // cannot appear to vanish from the renderer.
       try {
         const state = await runtime.command({ type: 'get_state' })
         const explicitActions = isRecord(state.data) ? parseSessionActionSnapshot(state.data.sessionActions) : null
         const sessionActions = explicitActions ?? runtime.snapshot().sessionActions
         // Zero without an active-turn marker is not proof that a steer was read.
-        if (explicitActions || (this.adapter.id === 'omp' && sessionActions && sessionActions.queuedCount > 0)) {
+        if (explicitActions) {
           return { ...response, sessionActions }
         }
       } catch { /* action events remain the fallback */ }

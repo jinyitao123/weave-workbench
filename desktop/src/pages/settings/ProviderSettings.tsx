@@ -6,7 +6,7 @@ import { HARNESS_AGENT_NAMES } from '@/lib/harness'
 import { Modal } from '@/components/ui'
 
 interface ProviderSettingsProps {
-  /** Active harness. OMP and Pi credentials stay CLI-owned; visibility toggles only affect GooeyPi. */
+  /** Active harness. Pi credentials stay CLI-owned; visibility toggles only affect GooeyPi. */
   harness?: HarnessId
   catalog: PrimeModelCatalog | null
   onRefresh(): Promise<void>
@@ -35,7 +35,7 @@ function activeFirst<T extends { enabled?: boolean }>(items: readonly T[]): T[] 
 }
 
 export function ProviderSettings({ harness = 'prime', catalog, onRefresh, onSaveApiKey, onLogout, onSetEnabled, onSetAllEnabled, onSetAllDisabled, onSetModelEnabled, onStartOAuth, onOpenDocs }: ProviderSettingsProps) {
-  // OMP and Pi own their credentials in their CLIs; GooeyPi only toggles visibility.
+  // Pi owns credentials in its CLI; GooeyPi only toggles visibility.
   const externalAuth = harness !== 'prime'
   const agentName = HARNESS_AGENT_NAMES[harness]
   const [view, setView] = useState<'providers' | 'models'>('providers')
@@ -167,7 +167,6 @@ export function ProviderSettings({ harness = 'prime', catalog, onRefresh, onSave
 }
 
 const PROVIDERS_PAGE_INTROS: Record<HarnessId, string> = {
-  omp: 'Choose which OMP providers and models appear in GooeyPi. These visibility settings do not change OMP itself; credentials remain managed by OMP. You may need to log in to or out of providers in the OMP CLI before they appear on this screen.',
   pi: 'Choose which Pi providers and models appear in GooeyPi. These visibility settings do not change Pi itself; Pi provider authentication is managed by the pi CLI. You may need to log in to or out of providers in the Pi CLI before they appear on this screen.',
   prime: 'Connect accounts, choose which providers and their models appear in GooeyPi, and browse every model Prime Agent supports. You may need to log in to or out of providers in the Prime Agent CLI before they appear on this screen.',
 }

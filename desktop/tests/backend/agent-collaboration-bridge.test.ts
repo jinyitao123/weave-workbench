@@ -125,9 +125,9 @@ async function fixture(
   const emptySessions = service([])
   const emptyManager = manager()
   const bridge = new AgentCollaborationBridge({
-    extensionPath: '/app/extensions/omp-work-collaboration.ts',
-    sessions: { prime: primeSessions, omp: emptySessions, pi: emptySessions },
-    agents: { prime: primeManager as unknown as AgentRpcManager, omp: emptyManager as unknown as AgentRpcManager, pi: emptyManager as unknown as AgentRpcManager },
+    extensionPath: '/app/extensions/gooeypi-work-collaboration.ts',
+    sessions: { prime: primeSessions, pi: emptySessions },
+    agents: { prime: primeManager as unknown as AgentRpcManager, pi: emptyManager as unknown as AgentRpcManager },
     catalogs: {
       prime: {
         catalog: vi.fn(async (_force = false, disabled: ReadonlySet<string> = new Set(), disabledModels: ReadonlySet<string> = new Set()) => ({
@@ -149,11 +149,10 @@ async function fixture(
           }],
         })),
       },
-      omp: { catalog: vi.fn(async () => ({ primeVersion: 'test', refreshedAt: '', providers: [], models: [] })) },
       pi: { catalog: vi.fn(async () => ({ primeVersion: 'test', refreshedAt: '', providers: [], models: [] })) },
     } as unknown as ConstructorParameters<typeof AgentCollaborationBridge>[0]['catalogs'],
-    disabledProviders: { prime: () => new Set(['hidden']), omp: () => new Set(), pi: () => new Set() },
-    disabledModels: { prime: () => new Set(['openai-codex/desktop-hidden']), omp: () => new Set(), pi: () => new Set() },
+    disabledProviders: { prime: () => new Set(['hidden']), pi: () => new Set() },
+    disabledModels: { prime: () => new Set(['openai-codex/desktop-hidden']), pi: () => new Set() },
     ...(waitClock ? { waitClock } : {}),
   })
   await bridge.start()
@@ -195,7 +194,7 @@ describe('AgentCollaborationBridge', () => {
 
   it('lists and reads only same-project peers through bounded snapshots', async () => {
     const { call, environment } = await fixture()
-    expect(environment.GOOEYPI_COLLABORATION_EXTENSION_PATH).toBe('/app/extensions/omp-work-collaboration.ts')
+    expect(environment.GOOEYPI_COLLABORATION_EXTENSION_PATH).toBe('/app/extensions/gooeypi-work-collaboration.ts')
     const listed = await call('list')
     expect(listed.status).toBe(200)
     expect(listed.body.result).toEqual([expect.objectContaining({ id: target.id, title: 'API owner', live: true })])

@@ -86,7 +86,7 @@ function expectReleasedLegacyReaderHasNoAuthority(path: string): void {
 }
 
 describe('Windows desktop-state compatibility protocol', () => {
-  it('publishes a fresh v4 state without attempting directory fsync or legacy retirement', async () => {
+  it('publishes a fresh current state without attempting directory fsync or legacy retirement', async () => {
     const directory = makeDirectory()
     const currentPath = join(directory, CURRENT_DESKTOP_STATE_FILENAME)
     const legacyPath = join(directory, LEGACY_DESKTOP_STATE_FILENAME)
@@ -101,13 +101,48 @@ describe('Windows desktop-state compatibility protocol', () => {
       'file-sync', 'publish-v4',
       'file-sync', 'publish-tombstone',
     ])
-    expect(JSON.parse(readFileSync(currentPath, 'utf8'))).toMatchObject({ version: 5, projects: [] })
+    expect(JSON.parse(readFileSync(currentPath, 'utf8'))).toMatchObject({ version: 6, projects: [] })
     expect(expectCompletedTombstone(legacyPath)).toMatchObject({ backupFile: null, reason: 'fresh' })
     expectReleasedLegacyReaderHasNoAuthority(legacyPath)
 
     await store.update((state) => { state.archivedSessions.push('/sessions/fresh.jsonl') })
     expect(store.snapshot().archivedSessions).toEqual(['/sessions/fresh.jsonl'])
     expect(JSON.parse(readFileSync(currentPath, 'utf8')).archivedSessions).toEqual(['/sessions/fresh.jsonl'])
+  })
+
+  it('persists the Pi migration of a v5 current file on Windows while protecting legacy authority', async () => {
+    const directory = makeDirectory()
+    const currentPath = join(directory, CURRENT_DESKTOP_STATE_FILENAME)
+    const legacyPath = join(directory, LEGACY_DESKTOP_STATE_FILENAME)
+    const now = '2029-01-01T00:00:00.000Z'
+    writeFileSync(currentPath, JSON.stringify({
+      version: 5,
+      projects: [{
+        id: 'legacy-omp-project', harness: 'omp', name: 'Archived OMP project', path: '/legacy/omp',
+        folders: ['/legacy/omp'], primaryFolder: '/legacy/omp', pinned: true, createdAt: now, lastOpenedAt: now,
+      }],
+      settings: { ...defaultSettings(), activeHarness: 'omp', enabledHarnesses: ['omp'] },
+      archivedSessions: ['/legacy/omp/session.jsonl'],
+      dismissedProjectPaths: [],
+      schedules: [],
+      scheduleOwnerships: [],
+    }))
+    const events: string[] = []
+    const store = new JsonStateStore(currentPath, windowsFileSystem(directory, events), legacyPath, 'win32')
+
+    await store.ready()
+
+    expect(events).toEqual(['file-sync', 'publish-tombstone', 'file-sync', 'publish-v4'])
+    expect(store.snapshot().version).toBe(6)
+    expect(store.snapshot().settings.activeHarness).toBe('pi')
+    expect(store.snapshot().projects).toMatchObject([{ id: 'legacy-omp-project', harness: 'omp', pinned: true }])
+    expect(JSON.parse(readFileSync(currentPath, 'utf8'))).toMatchObject({
+      version: 6,
+      settings: { activeHarness: 'pi' },
+      projects: [{ id: 'legacy-omp-project', harness: 'omp' }],
+      archivedSessions: ['/legacy/omp/session.jsonl'],
+    })
+    expect(expectCompletedTombstone(legacyPath)).toMatchObject({ backupFile: null, reason: 'fresh' })
   })
 
   it('backs up legacy bytes, leaves a zero-authority tombstone, and quarantines downgrade writes on restart', async () => {

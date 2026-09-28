@@ -50,9 +50,7 @@ interface Services {
   browser: AgentBrowserService
   voice: VoiceService
   pets: PetService
-  /** OMP-harness counterparts; always constructed, even when the omp CLI is absent. */
-  omp: HarnessServices
-  /** Pi-harness counterparts; always constructed, even when the pi CLI is absent. */
+  /** Pi Work counterparts; always constructed, even when the pi CLI is absent. */
   pi: HarnessServices
   /** Applies the persisted interface scale to every live app renderer. */
   applyInterfaceZoom?(scale: number): void
@@ -69,7 +67,7 @@ interface HarnessServices {
 /** Strict enum gate for the untrusted optional harness argument; absence means 'prime'. */
 function requireHarness(value: unknown): HarnessId {
   if (value === undefined) return 'prime'
-  if (value === 'prime' || value === 'omp' || value === 'pi') return value
+  if (value === 'prime' || value === 'pi') return value
   throw new TypeError('Invalid harness')
 }
 
@@ -166,10 +164,10 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     eventChannels.push(channel)
   }
 
-  const projectServices: Record<HarnessId, ProjectService> = { prime: services.projects, omp: services.omp.projects, pi: services.pi.projects }
-  const sessionServices: Record<HarnessId, SessionService> = { prime: services.sessions, omp: services.omp.sessions, pi: services.pi.sessions }
-  const agentManagers: Record<HarnessId, AgentRpcManager> = { prime: services.agents, omp: services.omp.agents, pi: services.pi.agents }
-  const pluginServices: Record<HarnessId, PluginService> = { prime: services.plugins, omp: services.omp.plugins, pi: services.pi.plugins }
+  const projectServices: Record<HarnessId, ProjectService> = { prime: services.projects, pi: services.pi.projects }
+  const sessionServices: Record<HarnessId, SessionService> = { prime: services.sessions, pi: services.pi.sessions }
+  const agentManagers: Record<HarnessId, AgentRpcManager> = { prime: services.agents, pi: services.pi.agents }
+  const pluginServices: Record<HarnessId, PluginService> = { prime: services.plugins, pi: services.pi.plugins }
   const projectsFor = (harness: HarnessId): ProjectService => projectServices[harness]
   const checkoutsFor = (harness: HarnessId): CheckoutService => services.checkouts[harness]
   const sessionsFor = (harness: HarnessId): SessionService => sessionServices[harness]
@@ -179,7 +177,7 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   // Prime manager so requireRuntime keeps its exact not-found semantics.
   const agentsForRuntime = (runtimeId: unknown): AgentRpcManager => {
     if (typeof runtimeId === 'string') {
-      for (const manager of [services.omp.agents, services.pi.agents]) if (manager.has(runtimeId)) return manager
+      if (services.pi.agents.has(runtimeId)) return services.pi.agents
     }
     return services.agents
   }
@@ -194,16 +192,15 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
       await services.sessions.requireSessionPath(filePath)
       return { harness: 'prime', service: services.sessions }
     } catch (primeError) {
-      for (const harness of ['omp', 'pi'] as const) {
+      for (const harness of ['pi'] as const) {
         try { await sessionServices[harness].requireSessionPath(filePath) } catch { continue }
         return { harness, service: sessionServices[harness] }
       }
       throw primeError
     }
   }
-  /** OMP and pi credentials stay CLI-owned; desktop-only visibility is routed separately below. */
+  /** Pi credentials stay CLI-owned; Prime authentication is managed by the app. */
   const cliOwnedProviderAuth: Partial<Record<HarnessId, string>> = {
-    omp: 'OMP provider authentication is managed by the omp CLI',
     pi: 'Pi provider authentication is managed by the pi CLI',
   }
   const requirePrimeProviderAuth = (harness: unknown): void => {
@@ -235,9 +232,6 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
       () => services.projects.authorizePath(requested),
       () => services.sessions.requireSessionPath(requested),
       () => services.plugins.authorizeReveal(requested),
-      () => services.omp.projects.authorizePath(requested),
-      () => services.omp.sessions.requireSessionPath(requested),
-      () => services.omp.plugins.authorizeReveal(requested),
       () => services.pi.projects.authorizePath(requested),
       () => services.pi.sessions.requireSessionPath(requested),
       () => services.pi.plugins.authorizeReveal(requested),
@@ -332,7 +326,7 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   handle('sessions:read', async (_event, filePath) => (await sessionsForPath(filePath)).service.read(filePath))
   handle('sessions:follow-up', async (_event, filePath, message, intent) => {
     const routed = await sessionsForPath(filePath)
-    // Daemon-socket follow-up is Prime-only; an OMP or pi session answers
+    // Daemon-socket follow-up is Prime-only; a Pi session answers
     // exactly like an inactive Prime session instead of a new error shape.
     if (routed.harness !== 'prime') return false
     return routed.service.followUp(filePath, message, intent)
@@ -371,17 +365,16 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     return manager.command(id, command)
   })
   handle('agent:stop', (_event, runtimeId) => agentsForRuntime(runtimeId).stop(runtimeId))
-  handle('agent:list', () => [...services.agents.list(), ...services.omp.agents.list(), ...services.pi.agents.list()])
+  handle('agent:list', () => [...services.agents.list(), ...services.pi.agents.list()])
 
   const providerCatalog = (force = false) => services.providers.catalog(force, new Set(services.settings.get().disabledProviders), new Set(services.settings.get().disabledModels))
-  const ompProviderCatalog = (force = false) => services.omp.catalog.catalog(force, new Set(services.settings.get().ompDisabledProviders), new Set(services.settings.get().ompDisabledModels))
   const piProviderCatalog = (force = false) => services.pi.catalog.catalog(force, new Set(services.settings.get().piDisabledProviders), new Set(services.settings.get().piDisabledModels))
   const providerCatalogs: Record<HarnessId, (force?: boolean) => ReturnType<ModelCatalogProvider['catalog']>> = {
-    prime: providerCatalog, omp: ompProviderCatalog, pi: piProviderCatalog,
+    prime: providerCatalog, pi: piProviderCatalog,
   }
   /** Desktop-owned provider/model visibility settings keys per harness. */
-  const disabledProvidersKeys = { prime: 'disabledProviders', omp: 'ompDisabledProviders', pi: 'piDisabledProviders' } as const
-  const disabledModelsKeys = { prime: 'disabledModels', omp: 'ompDisabledModels', pi: 'piDisabledModels' } as const
+  const disabledProvidersKeys = { prime: 'disabledProviders', pi: 'piDisabledProviders' } as const
+  const disabledModelsKeys = { prime: 'disabledModels', pi: 'piDisabledModels' } as const
   handle('providers:catalog', (_event, force, harness) => providerCatalogs[requireHarness(harness)](force === true))
   handle('providers:save-api-key', async (_event, providerId, apiKey, harness) => {
     requirePrimeProviderAuth(harness)
@@ -510,7 +503,6 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     if (settings.askUserEnabled !== previous.askUserEnabled || settings.browserEnabled !== previous.browserEnabled || settings.computerUseEnabled !== previous.computerUseEnabled) {
       await Promise.all([
         services.agents.requestRuntimeEnvironmentRefresh(),
-        services.omp.agents.requestRuntimeEnvironmentRefresh(),
         services.pi.agents.requestRuntimeEnvironmentRefresh(),
       ])
     }
@@ -546,7 +538,6 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     }
   }
   const unsubscribeSessionChanges = services.sessions.onDidChange(forwardSessionChange)
-  const unsubscribeOmpSessionChanges = services.omp.sessions.onDidChange(forwardSessionChange)
   const unsubscribePiSessionChanges = services.pi.sessions.onDidChange(forwardSessionChange)
   const scheduleSubscription = services.schedules.onDidChange((change) => {
     for (const [id, contents] of authorized) {
@@ -591,7 +582,6 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
       if (activeIpcRegistration === registration) activeIpcRegistration = null
       authorized.clear()
       unsubscribeSessionChanges()
-      unsubscribeOmpSessionChanges()
       unsubscribePiSessionChanges()
       if (typeof unsubscribeScheduleChanges === 'function') unsubscribeScheduleChanges()
       if (typeof unsubscribeBrowserChanges === 'function') unsubscribeBrowserChanges()

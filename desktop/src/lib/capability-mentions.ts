@@ -47,10 +47,10 @@ export function findCapabilityMentions(value: string, skills: readonly SkillReco
 
 function routingInstruction(mention: CapabilityMention): string {
   const token = mention.text
-  if (mention.skill.id === 'prime-work-browser' || mention.skill.id === 'omp-work-browser') {
+  if (mention.skill.id === 'prime-work-browser' || mention.skill.id === 'gooeypi-work-browser') {
     return `${token}: use GooeyPi's in-app Browser capability and its own browser tools. Do not substitute Chrome, an external browser, or another connected browser tool.`
   }
-  if (mention.skill.id === 'prime-work-schedules' || mention.skill.id === 'omp-work-schedules') {
+  if (mention.skill.id === 'prime-work-schedules' || mention.skill.id === 'gooeypi-work-schedules') {
     return `${token}: use GooeyPi's Scheduled tasks capability and its own schedule tools.`
   }
   return `${token}: use the enabled GooeyPi ${mention.skill.kind} with the exact catalog id ${JSON.stringify(mention.skill.id)}. Do not substitute a similarly named capability.`

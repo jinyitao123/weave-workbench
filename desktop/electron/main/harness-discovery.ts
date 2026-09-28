@@ -49,7 +49,6 @@ function spawnFailure(error: unknown): HarnessProbeFailure {
 }
 
 const emptyStatuses = (): Record<HarnessId, HarnessStatus> => ({
-  omp: { path: null, version: null },
   prime: { path: null, version: null },
   pi: { path: null, version: null },
 })

@@ -266,7 +266,7 @@ export function validateMcpConnection(value: unknown, harness: HarnessId = 'prim
   if (!isRecord(value)) throw new TypeError('MCP connection must be an object')
   if (isNetworkMcpDefinition(value)) throw new TypeError(NETWORK_MCP_UNAVAILABLE_DETAIL)
   const name = requireString(value.name, 'MCP server name', { min: 1, max: 64, trim: true })
-  // Prime keeps its historical looser charset; OMP and pi mcp.json share the
+  // Prime keeps its historical looser charset; Pi mcp.json uses the
   // stricter native map-key charset.
   const validName = harness === 'prime' ? /^[A-Za-z0-9][A-Za-z0-9._ -]*$/.test(name) : isAppManageableLocalMcpKey(name)
   if (!validName || ['__proto__', 'prototype', 'constructor'].includes(name)) throw new TypeError('MCP server name contains unsupported characters')
@@ -386,7 +386,7 @@ export async function updateMcpSettings(
   options: { agentName?: string; harness?: HarnessId; schema?: string; successMessage?: string; includeType?: boolean } = {},
 ): Promise<ProcessOutcome> {
   if (isNetworkMcpDefinition(input)) throw new TypeError(NETWORK_MCP_UNAVAILABLE_DETAIL)
-  if (options.harness !== 'omp' && options.harness !== 'pi') throw new TypeError(PRIME_MCP_MANAGEMENT_UNAVAILABLE_DETAIL)
+  if (options.harness !== 'pi') throw new TypeError(PRIME_MCP_MANAGEMENT_UNAVAILABLE_DETAIL)
   if (input.type !== 'stdio') throw new TypeError(NETWORK_MCP_UNAVAILABLE_DETAIL)
   const agentName = options.agentName ?? 'Prime Agent'
   const settingsPath = typeof target === 'string' ? target : target.path
@@ -408,9 +408,7 @@ export async function updateMcpSettings(
       settings.mcpServers = { ...currentServers, [input.name]: config }
       if (options.schema && settings.$schema === undefined) settings.$schema = options.schema
       if (await writeSettingsAtomically(settingsPath, settings, snapshot.fingerprint, snapshot.source, fingerprint, verify)) {
-        return { ok: true, output: options.successMessage ?? (agentName === 'OMP'
-          ? `Saved MCP server definition “${input.name}”. Start a new OMP session to load it.`
-          : `Saved MCP server definition “${input.name}”. Start a new ${agentName} session to load it.`) }
+        return { ok: true, output: options.successMessage ?? `Saved MCP server definition “${input.name}”. Start a new ${agentName} session to load it.` }
       }
     }
     throw new Error(`${agentName} settings changed repeatedly; no MCP configuration was overwritten`)
@@ -425,7 +423,7 @@ export async function updateMcpState(
   fingerprint: FingerprintSettings = settingsFingerprint,
   options: { agentName?: string; harness?: HarnessId } = {},
 ): Promise<ProcessOutcome> {
-  if (options.harness !== 'omp' && options.harness !== 'pi') {
+  if (options.harness !== 'pi') {
     return { ok: false, reason: 'blocked', output: PRIME_MCP_MANAGEMENT_UNAVAILABLE_DETAIL }
   }
   const agentName = options.agentName ?? 'Prime Agent'

@@ -1,4 +1,4 @@
-import type { AutomationScheduleRecord, ScheduleRunRecord } from '../../../src/types/api'
+import type { ScheduleRunRecord } from '../../../src/types/api'
 
 export const MAX_RUNS_PER_TASK = 50
 export const MAX_GLOBAL_RUNS = 2_000
@@ -28,7 +28,9 @@ function oldestFirst(left: IndexedRun, right: IndexedRun): number {
     || left.runIndex - right.runIndex
 }
 
-function removeRunIndexes(task: AutomationScheduleRecord, indexes: Set<number>): void {
+interface ScheduleRunHistory { runs: ScheduleRunRecord[] }
+
+function removeRunIndexes(task: ScheduleRunHistory, indexes: Set<number>): void {
   if (indexes.size === 0) return
   task.runs = task.runs.filter((_run, index) => !indexes.has(index))
 }
@@ -43,7 +45,7 @@ function removeRunIndexes(task: AutomationScheduleRecord, indexes: Set<number>):
  * permitted temporary overflow is when active records alone exceed a budget;
  * later status transitions normalize the state again.
  */
-export function normalizeScheduleRunHistory(schedules: AutomationScheduleRecord[]): void {
+export function normalizeScheduleRunHistory(schedules: ScheduleRunHistory[]): void {
   for (const [scheduleIndex, task] of schedules.entries()) {
     const activeCount = task.runs.filter(isActive).length
     const terminalBudget = Math.max(0, MAX_RUNS_PER_TASK - activeCount)

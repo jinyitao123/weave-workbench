@@ -35,7 +35,6 @@ const meta: AppMeta = {
   homeDir: '/home/test',
   harnesses: {
     prime: { path: '/usr/bin/prime', version: 'test' },
-    omp: { path: null, version: null },
     pi: { path: null, version: null },
   },
 }

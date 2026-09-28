@@ -1,18 +1,17 @@
 /**
- * OMP Work questionnaire tool.
+ * GooeyPi questionnaire tool.
  *
- * Loaded explicitly for every OMP and base pi runtime started by the desktop
- * app. The extension is self-contained because packaged OMP imports it
+ * Loaded explicitly for every Prime Agent and Pi runtime started by the desktop
+ * app. The extension is self-contained because packaged the app loads it
  * directly from app resources. In RPC mode, the marker option lets Prime Work
  * combine the individual select requests into one multi-question modal.
  *
- * Schema builders come from the injected `pi.typebox` shim when the host
- * provides one (OMP); base pi injects no shim, so builders resolve from the
- * `typebox` package via the host's extension loader. The import uses a
+ * Schema builders resolve from the host's extension API or the `typebox`
+ * package via its extension loader. The import uses a
  * runtime specifier inside try/catch so neither host hard-fails at load.
  */
 
-interface OmpSchemaOptions {
+interface HostTypeboxOptions {
   description?: string
   minLength?: number
   maxLength?: number
@@ -20,10 +19,10 @@ interface OmpSchemaOptions {
   maxItems?: number
 }
 
-interface OmpTypebox {
-  Object(properties: Record<string, unknown>, options?: OmpSchemaOptions): unknown
-  String(options?: OmpSchemaOptions): unknown
-  Array(items: unknown, options?: OmpSchemaOptions): unknown
+interface HostTypebox {
+  Object(properties: Record<string, unknown>, options?: HostTypeboxOptions): unknown
+  String(options?: HostTypeboxOptions): unknown
+  Array(items: unknown, options?: HostTypeboxOptions): unknown
 }
 
 interface AskQuestion {
@@ -37,19 +36,19 @@ interface EncodedAnswer {
   context?: string
 }
 
-interface OmpExtensionContext {
+interface ExtensionContext {
   hasUI: boolean
   ui: {
     select(title: string, options: string[], settings?: { signal?: AbortSignal }): Promise<string | undefined>
   }
 }
 
-interface OmpToolResult {
+interface ToolResult {
   content: Array<{ type: 'text'; text: string }>
   details: Record<string, unknown>
 }
 
-interface OmpToolDefinition<Params> {
+interface ToolDefinition<Params> {
   name: string
   label: string
   description: string
@@ -60,13 +59,13 @@ interface OmpToolDefinition<Params> {
     params: Params,
     signal: AbortSignal | undefined,
     onUpdate: unknown,
-    context: OmpExtensionContext,
-  ): Promise<OmpToolResult>
+    context: ExtensionContext,
+  ): Promise<ToolResult>
 }
 
-export interface OmpExtensionApi {
-  typebox?: { Type: OmpTypebox }
-  registerTool<Params>(tool: OmpToolDefinition<Params>): void
+export interface WorkExtensionApi {
+  typebox?: { Type: HostTypebox }
+  registerTool<Params>(tool: ToolDefinition<Params>): void
 }
 
 async function importHostModule(specifier: string): Promise<Record<string, unknown> | undefined> {
@@ -77,8 +76,8 @@ async function importHostModule(specifier: string): Promise<Record<string, unkno
   }
 }
 
-async function resolveHostTypebox(): Promise<OmpTypebox> {
-  const hostType = (await importHostModule('typebox'))?.Type as OmpTypebox | undefined
+async function resolveHostTypebox(): Promise<HostTypebox> {
+  const hostType = (await importHostModule('typebox'))?.Type as HostTypebox | undefined
   if (hostType) {
     return {
       Object: (properties, options) => hostType.Object(properties, options),
@@ -172,8 +171,8 @@ function groupId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
 }
 
-export default function (pi: OmpExtensionApi): void | Promise<void> {
-  // OMP injects a TypeBox shim and calls the factory without awaiting it, so
+export default function (pi: WorkExtensionApi): void | Promise<void> {
+  // the host provides a TypeBox shim and calls the factory without awaiting it, so
   // that path must stay fully synchronous; base pi awaits the factory, so the
   // fallback may resolve builders asynchronously before registering.
   const injected = pi.typebox?.Type
@@ -184,7 +183,7 @@ export default function (pi: OmpExtensionApi): void | Promise<void> {
   return resolveHostTypebox().then((hostType) => { registerTools(pi, hostType) })
 }
 
-function registerTools(pi: OmpExtensionApi, Type: OmpTypebox): void {
+function registerTools(pi: WorkExtensionApi, Type: HostTypebox): void {
   const question = Type.Object({
     question: Type.String({ description: 'The question to ask the user', minLength: 1, maxLength: MAX_QUESTION_LENGTH }),
     options: Type.Array(Type.String({ minLength: 1, maxLength: MAX_OPTION_LENGTH }), {

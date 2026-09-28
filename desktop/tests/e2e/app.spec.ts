@@ -123,7 +123,7 @@ function processIsAlive(pid: number): boolean {
   }
 }
 
-function createHermeticFixture(activeSession = false, accountScope: string): { userData: string; home: string; project: string; ompProject: string; piProject: string; executable: string; ompExecutable: string; piExecutable: string; cuaExecutable: string; sessionFile: string } {
+function createHermeticFixture(activeSession = false, accountScope: string, currentStateWithoutHarness = false): { userData: string; home: string; project: string; piProject: string; executable: string; piExecutable: string; cuaExecutable: string; sessionFile: string; ompSessionFile: string } {
   fixtureRoot = mkdtempSync(join(tmpdir(), 'prime-work-e2e-'))
   const userData = join(fixtureRoot, 'user-data')
   const home = join(fixtureRoot, 'home')
@@ -201,7 +201,7 @@ function createHermeticFixture(activeSession = false, accountScope: string): { u
   writeFileSync(piSessionFile, [
     JSON.stringify({ type: 'session', version: 3, id: '019fdf24-bbbb-7000-8000-000000000002', timestamp: '2026-03-01T00:00:00.000Z', cwd: canonicalPiProject }),
     JSON.stringify({ type: 'session_info', id: 'pi-info', parentId: null, timestamp: '2026-03-01T00:00:00.500Z', name: 'Pi hermetic fixture' }),
-    JSON.stringify({ type: 'message', id: 'pi-user', parentId: 'pi-info', timestamp: '2026-03-01T00:00:01.000Z', message: { role: 'user', content: [{ type: 'text', text: 'Pi hermetic fixture' }], timestamp: 1777341601000 } }),
+    JSON.stringify({ type: 'message', id: 'pi-user', parentId: 'pi-info', timestamp: '2026-03-01T00:00:01.000Z', message: { role: 'user', content: [{ type: 'text', text: `Pi hermetic fixture\n${ISSUE_131_LONG_TOKEN}` }], timestamp: 1777341601000 } }),
     JSON.stringify({ type: 'message', id: 'pi-assistant', parentId: 'pi-user', timestamp: '2026-03-01T00:00:02.000Z', message: { role: 'assistant', content: [{ type: 'text', text: 'Pi fixture reply.' }] } }),
     '',
   ].join('\n'))
@@ -244,8 +244,7 @@ function createHermeticFixture(activeSession = false, accountScope: string): { u
       birthtimeNs: info.birthtimeNs > 0n ? info.birthtimeNs.toString() : undefined,
     }
   }
-  writeFileSync(join(userData, LEGACY_DESKTOP_STATE_FILENAME), JSON.stringify({
-    version: 1,
+  const initialState = {
     projects: [{
       id: 'multi-folder-project', name: 'Multi-folder fixture', path: canonicalProject,
       folders: [canonicalProject, canonicalSecondary], primaryFolder: canonicalProject,
@@ -261,10 +260,18 @@ function createHermeticFixture(activeSession = false, accountScope: string): { u
       harness: 'pi', accountScope, pinned: false, createdAt: '2025-01-01T00:00:00.000Z', lastOpenedAt: '2026-01-01T00:00:00.000Z',
       folderIdentities: { [canonicalPiProject]: identity(canonicalPiProject) },
     }],
-    settings: { activeHarness: 'prime', browserHome: 'about:blank', telemetry: true, locale: 'en' },
+    settings: currentStateWithoutHarness
+      ? { browserHome: 'about:blank', telemetry: true, locale: 'en' }
+      : { activeHarness: 'prime', browserHome: 'about:blank', telemetry: true, locale: 'en' },
     archivedSessions: [],
     dismissedProjectPaths: [],
-  }))
+    schedules: [],
+    scheduleOwnerships: [],
+  }
+  writeFileSync(
+    join(userData, currentStateWithoutHarness ? CURRENT_DESKTOP_STATE_FILENAME : LEGACY_DESKTOP_STATE_FILENAME),
+    JSON.stringify({ version: currentStateWithoutHarness ? 6 : 1, ...initialState }),
+  )
 
   const daemonExecutable = join(fixtureRoot, 'prime-agent-daemon-fixture.cjs')
   writeFileSync(daemonExecutable, `#!/usr/bin/env node
@@ -444,69 +451,6 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
 })
 `)
   chmodSync(executable, 0o755)
-  const ompExecutable = join(fixtureRoot, 'omp-fixture.cjs')
-  writeFileSync(ompExecutable, `#!/usr/bin/env node
-const fs = require('node:fs')
-const readline = require('node:readline')
-const args = process.argv.slice(2)
-if (args.includes('--version')) { process.stdout.write('omp/17.2.11\\n'); process.exit(0) }
-if (args[0] === 'models' && args.includes('--json')) {
-  process.stdout.write(JSON.stringify({ models: [
-    { provider: 'anthropic', id: 'claude-fixture', name: 'Claude Fixture', contextWindow: 200000, maxTokens: 8192, reasoning: true, thinking: ['low', 'high'], input: ['text'] },
-    { provider: 'openai-codex', id: 'gpt-fixture', name: 'GPT Fixture', contextWindow: 200000, maxTokens: 8192, reasoning: true, thinking: ['low', 'high'], input: ['text'] },
-  ] })); process.exit(0)
-}
-if (!args.includes('--mode') || args[args.indexOf('--mode') + 1] !== 'rpc') process.exit(2)
-fs.writeFileSync(${JSON.stringify(join(fixtureRoot, 'omp-runtime-args.json'))}, JSON.stringify(args))
-const send = (value) => process.stdout.write(JSON.stringify(value) + '\\n')
-const resumeIndex = args.indexOf('--resume')
-const sessionFile = resumeIndex >= 0 ? args[resumeIndex + 1] : ${JSON.stringify(ompSessionFile)}
-let negotiated = false
-let pendingPrompt
-let answers = {}
-send({ type: 'ready', protocolVersion: 1, supportedProtocolVersions: [1, 2] })
-readline.createInterface({ input: process.stdin }).on('line', (line) => {
-  const command = JSON.parse(line)
-  if (command.type === 'negotiate_protocol') {
-    negotiated = true
-    send({ id: command.id, type: 'response', command: command.type, success: true, data: { protocolVersion: 2 } })
-  } else if (!negotiated) {
-    send({ id: command.id, type: 'response', command: command.type, success: false, error: 'Protocol was not negotiated' })
-  } else if (command.type === 'get_state') {
-    send({ id: command.id, type: 'response', command: command.type, success: true, data: {
-      sessionId: '019fdf24-aaaa-7000-8000-000000000001', sessionFile, isStreaming: false, thinkingLevel: 'medium',
-      model: { provider: 'openai-codex', id: 'gpt-fixture', name: 'GPT Fixture' },
-      contextUsage: { tokens: 1000, contextWindow: 200000, percent: 0.5 },
-    } })
-  } else if (command.type === 'get_session_stats') {
-    send({ id: command.id, type: 'response', command: command.type, success: true, data: { contextUsage: { tokens: 1000, contextWindow: 200000, percent: 0.5 } } })
-  } else if (command.type === 'prompt' || command.type === 'follow_up') {
-    pendingPrompt = command
-    answers = {}
-    send({ type: 'agent_start' })
-    send({ id: command.id, type: 'response', command: command.type, success: true, data: { agentInvoked: true } })
-    send({ type: 'tool_execution_start', toolCallId: 'omp-ask-2', toolName: 'ask_user', args: { questions: [
-      { question: 'Which OMP release channel?', options: ['Stable', 'Beta'] },
-      { question: 'What should OMP optimize for?', options: ['Speed', 'Safety'] },
-    ] } })
-    send({ type: 'extension_ui_request', id: 'omp-fixture-question-1', method: 'select', title: 'Which OMP release channel?', options: ['__prime_ask_user__omp-fixture-group:0:2', 'Stable', 'Beta', 'Other (type your own answer)'] })
-    send({ type: 'extension_ui_request', id: 'omp-fixture-question-2', method: 'select', title: 'What should OMP optimize for?', options: ['__prime_ask_user__omp-fixture-group:1:2', 'Speed', 'Safety', 'Other (type your own answer)'] })
-  } else if (command.type === 'extension_ui_response') {
-    answers[command.id] = command.value
-    send({ id: command.id, type: 'response', command: command.type, success: true, data: {} })
-    if (pendingPrompt && Object.keys(answers).length === 2) {
-      fs.writeFileSync(${JSON.stringify(join(fixtureRoot, 'omp-questionnaire-values.json'))}, JSON.stringify(answers))
-      pendingPrompt = undefined
-      send({ type: 'tool_execution_end', toolCallId: 'omp-ask-2', toolName: 'ask_user', result: { values: answers } })
-      send({ type: 'message_update', assistantMessageEvent: { type: 'text_delta', delta: 'The OMP questionnaire answers are ready.' } })
-      send({ type: 'agent_end', isTerminal: true })
-    }
-  } else if (command.id) {
-    send({ id: command.id, type: 'response', command: command.type, success: true, data: {} })
-  }
-})
-`)
-  chmodSync(ompExecutable, 0o755)
   const piExecutable = join(fixtureRoot, 'pi-fixture.cjs')
   writeFileSync(piExecutable, `#!/usr/bin/env node
 const fs = require('node:fs')
@@ -585,10 +529,10 @@ if (process.argv.includes('--version')) { process.stdout.write('cua-driver 0.19.
 process.exit(2)
 `)
   chmodSync(cuaExecutable, 0o755)
-  return { userData, home, project, ompProject, piProject, executable, ompExecutable, piExecutable, cuaExecutable, sessionFile: realpathSync(sessionFile) }
+  return { userData, home, project, piProject, executable, piExecutable, cuaExecutable, sessionFile: realpathSync(sessionFile), ompSessionFile }
 }
 
-function hermeticEnvironment(home: string, executable: string, ompExecutable: string, piExecutable: string, cuaExecutable: string, enterpriseOrigin: string, restrictPath = false): NodeJS.ProcessEnv {
+function hermeticEnvironment(home: string, executable: string, piExecutable: string, cuaExecutable: string, enterpriseOrigin: string, restrictPath = false): NodeJS.ProcessEnv {
   let path = process.env.PATH
   if (restrictPath) {
     const bin = join(fixtureRoot, 'bin')
@@ -606,7 +550,6 @@ function hermeticEnvironment(home: string, executable: string, ompExecutable: st
     NO_COLOR: '1',
     PRIME_WORK_E2E_HIDE_WINDOWS: '1',
     PRIME_AGENT_BINARY: executable,
-    OMP_BINARY: ompExecutable,
     PI_BINARY: piExecutable,
     CUA_DRIVER_PATH: cuaExecutable,
     WORKBENCH_FORGE_URL: enterpriseOrigin,
@@ -624,8 +567,9 @@ test.describe('Prime Work desktop smoke', () => {
     app = undefined
     const activeSession = testInfo.title === 'defers a reply to a session that is active outside Prime Work'
       || testInfo.title === 'reflects an external JSONL append without reselecting the live session'
-    const liveInstall = testInfo.title === 'adds and connects to a harness installed while the app is open'
+    const liveInstall = testInfo.title === 'adds and connects to Pi installed while the app is open'
     const noHarnesses = testInfo.title === 'opens Harness settings from the no-harness recovery prompt'
+    const currentStateWithoutHarness = testInfo.title === 'opens Pi Work by default, keeps retired OMP history unaliased, and creates a Pi session'
     const authenticatedMcp = testInfo.title === 'shows built-in Prime MCPs without inspecting or changing authorization'
     let startupError: unknown
     const enterpriseOrigin = await startHermeticEnterpriseServer()
@@ -633,16 +577,16 @@ test.describe('Prime Work desktop smoke', () => {
       const accountScope = createHash('sha256').update(JSON.stringify([
         enterpriseOrigin, enterpriseOrigin, 'e2e-organization', 'forge-e2e-user', 'weave-e2e-user',
       ])).digest('hex')
-      const fixture = createHermeticFixture(activeSession, accountScope)
+      const fixture = createHermeticFixture(activeSession, accountScope, currentStateWithoutHarness)
       if (authenticatedMcp) writeFileSync(join(fixture.home, '.prime', 'agent', 'auth.json'), JSON.stringify({ 'mcp:notion': { type: 'oauth', access: 'fixture-token', refresh: 'fixture-refresh', expires: Date.now() + 3_600_000 } }))
       currentFixture = fixture
       fixtureSessionFile = fixture.sessionFile
-      if (liveInstall) renameSync(fixture.ompExecutable, `${fixture.ompExecutable}.pending`)
+      if (liveInstall) renameSync(fixture.piExecutable, `${fixture.piExecutable}.pending`)
       if (noHarnesses) {
-        for (const executable of [fixture.executable, fixture.ompExecutable, fixture.piExecutable]) renameSync(executable, `${executable}.pending`)
+        for (const executable of [fixture.executable, fixture.piExecutable]) renameSync(executable, `${executable}.pending`)
       }
       try {
-        const environment = hermeticEnvironment(fixture.home, fixture.executable, fixture.ompExecutable, fixture.piExecutable, fixture.cuaExecutable, enterpriseOrigin, liveInstall || noHarnesses)
+        const environment = hermeticEnvironment(fixture.home, fixture.executable, fixture.piExecutable, fixture.cuaExecutable, enterpriseOrigin, liveInstall || noHarnesses)
         if (testInfo.title === 'Command-Q backgrounds the window and menu-bar Open restores it') environment.PRIME_WORK_E2E_HIDE_WINDOWS = '0'
         app = await electron.launch({
           args: ['.', `--user-data-dir=${fixture.userData}`],
@@ -682,6 +626,43 @@ test.describe('Prime Work desktop smoke', () => {
     fixtureSessionFile = ''
     await stopHermeticEnterpriseServer()
     currentFixture = undefined
+  })
+
+  test('opens Pi Work by default, keeps retired OMP history unaliased, and creates a Pi session', async () => {
+    const piBrand = page.getByRole('button', { name: 'Weave Workbench — Pi Work' })
+    await expect(piBrand).toBeVisible()
+    await expect(page.locator('.session-row__title').filter({ hasText: 'Pi hermetic fixture' })).toBeVisible()
+    await expect(page.locator('.session-row__title').filter({ hasText: 'OMP hermetic fixture' })).toHaveCount(0)
+
+    await piBrand.click()
+    const harnessMenu = page.getByRole('menu', { name: 'Harness' })
+    await expect(harnessMenu.getByRole('menuitemradio', { name: /OMP Work/ })).toHaveCount(0)
+    await expect(harnessMenu.getByRole('menuitemradio', { name: /Pi Work/ })).toBeVisible()
+    await page.keyboard.press('Escape')
+
+    const persistedState = JSON.parse(readFileSync(join(fixtureRoot, 'user-data', CURRENT_DESKTOP_STATE_FILENAME), 'utf8')) as {
+      projects: Array<{ id: string; harness: string; name: string }>
+      settings: { activeHarness: string }
+    }
+    expect(persistedState.settings.activeHarness).toBe('pi')
+    expect(persistedState.projects.find(({ id }) => id === 'omp-project')).toMatchObject({
+      harness: 'omp',
+      name: 'OMP fixture project',
+    })
+    expect(readFileSync(currentFixture!.ompSessionFile, 'utf8')).toContain('OMP hermetic fixture')
+
+    await page.locator('.session-row__title').filter({ hasText: 'Pi hermetic fixture' }).click()
+    await page.locator('.sidebar__primary button[title^="开始新工作"]').click()
+    const composer = page.getByRole('combobox', { name: 'Message Pi' })
+    await expect(composer).toBeVisible()
+    await composer.fill('Create a new Pi session from the default workspace')
+    await composer.press('Enter')
+
+    const promptPath = join(fixtureRoot, 'pi-prompt-args.json')
+    await expect.poll(() => existsSync(promptPath)).toBe(true)
+    expect(JSON.parse(readFileSync(promptPath, 'utf8'))).toMatchObject({
+      message: 'Create a new Pi session from the default workspace',
+    })
   })
 
   test('steers the active turn with Ctrl+Enter', async () => {
@@ -994,7 +975,7 @@ test.describe('Prime Work desktop smoke', () => {
     app = await electron.launch({
       args: ['.', `--user-data-dir=${currentFixture.userData}`],
       cwd: process.cwd(),
-      env: hermeticEnvironment(currentFixture.home, currentFixture.executable, currentFixture.ompExecutable, currentFixture.piExecutable, currentFixture.cuaExecutable, enterpriseFixtureOrigin, false) as Record<string, string>,
+      env: hermeticEnvironment(currentFixture.home, currentFixture.executable, currentFixture.piExecutable, currentFixture.cuaExecutable, enterpriseFixtureOrigin, false) as Record<string, string>,
       timeout: 20_000,
     })
     app.context().on('page', attachDiagnostics)
@@ -1010,42 +991,6 @@ test.describe('Prime Work desktop smoke', () => {
     await expect(realtimePet.getByRole('button', { name: /GooeyPi, draggable GooeyPi pet/ })).toBeVisible()
     await expect(realtimePet.locator('.pet-sprite img')).toBeVisible()
     await expect(page.locator('.voice-orb')).toHaveCount(0)
-  })
-
-  test('switches to OMP Work and lists the OMP session catalog, then returns to Prime', async () => {
-    await page.getByRole('button', { name: 'Weave Workbench — Prime Work' }).click()
-    await page.getByRole('menuitemradio', { name: /OMP Work/ }).click()
-    const ompBrand = page.getByRole('button', { name: 'Weave Workbench — OMP Work' })
-    await expect(ompBrand).toBeVisible()
-    await expect(page.locator('.sidebar__brand .omp-mark')).toBeVisible()
-    await expect(page.locator('.session-row__title').filter({ hasText: 'OMP hermetic fixture' })).toBeVisible()
-    await expect(page.locator('.session-row__title').filter({ hasText: 'Hermetic desktop fixture' })).toHaveCount(0)
-    const primaryNavigation = page.getByRole('navigation', { name: 'Primary' })
-    await expect(primaryNavigation).toContainText('开始工作')
-    await expect(primaryNavigation).toContainText('搜索')
-    await expect(primaryNavigation).toContainText('My tasks')
-    await expect(primaryNavigation).not.toContainText('Scheduled')
-    await expect(primaryNavigation).not.toContainText('Capabilities')
-    await page.locator('.session-row__title').filter({ hasText: 'OMP hermetic fixture' }).click()
-    await expect(page.getByRole('main').getByText('OMP fixture reply.')).toBeVisible()
-    await ompBrand.click()
-    await page.getByRole('menuitemradio', { name: /Prime Work/ }).click()
-    await expect(page.getByRole('button', { name: 'Weave Workbench — Prime Work' })).toBeVisible()
-    await expect(page.locator('.session-row__title').filter({ hasText: 'Hermetic desktop fixture' })).toBeVisible()
-  })
-
-  test('wraps an unbroken user-message token inside its chat bubble', async () => {
-    await page.getByRole('button', { name: 'Weave Workbench — Prime Work' }).click()
-    await page.getByRole('menuitemradio', { name: /OMP Work/ }).click()
-    await page.locator('.session-row__title').filter({ hasText: 'OMP hermetic fixture' }).click()
-
-    const bubble = page.locator('.user-bubble').filter({ hasText: ISSUE_131_LONG_TOKEN })
-    await expect(bubble).toBeVisible()
-    const dimensions = await bubble.evaluate((element) => ({
-      clientWidth: element.clientWidth,
-      scrollWidth: element.scrollWidth,
-    }))
-    expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth)
   })
 
   test('switches to Pi Work and lists the pi session catalog, then returns to Prime', async () => {
@@ -1070,119 +1015,40 @@ test.describe('Prime Work desktop smoke', () => {
     await expect(page.locator('.session-row__title').filter({ hasText: 'Hermetic desktop fixture' })).toBeVisible()
   })
 
+  test('wraps an unbroken user-message token inside a Pi Work chat bubble', async () => {
+    await page.getByRole('button', { name: 'Weave Workbench — Prime Work' }).click()
+    await page.getByRole('menuitemradio', { name: /Pi Work/ }).click()
+    await page.locator('.session-row__title').filter({ hasText: 'Pi hermetic fixture' }).click()
+
+    const bubble = page.locator('.user-bubble').filter({ hasText: ISSUE_131_LONG_TOKEN })
+    await expect(bubble).toBeVisible()
+    const dimensions = await bubble.evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth }))
+    expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth)
+  })
+
   test('closes realtime voice before switching harnesses', async () => {
     await page.locator('.title-toolbar').getByRole('button', { name: 'Open realtime voice' }).click()
     const petSurface = page.locator('.desktop-pet')
     await expect(petSurface.getByRole('button', { name: 'Mute realtime voice' })).toBeVisible()
     await expect(page.locator('.voice-orb')).toHaveCount(0)
     await page.getByRole('button', { name: 'Weave Workbench — Prime Work' }).click()
-    await page.getByRole('menuitemradio', { name: /OMP Work/ }).click()
+    await page.getByRole('menuitemradio', { name: /Pi Work/ }).click()
     await expect(petSurface.getByRole('button', { name: 'Mute realtime voice' })).toHaveCount(0)
     await expect(petSurface.getByRole('button', { name: 'Open realtime voice' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Weave Workbench — OMP Work' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Weave Workbench — Pi Work' })).toBeVisible()
   })
 
-  test('searches and filters the custom model picker by provider', async () => {
-    await page.getByRole('button', { name: 'Weave Workbench — Prime Work' }).click()
-    await page.getByRole('menuitemradio', { name: /OMP Work/ }).click()
-    await page.locator('.session-row__title').filter({ hasText: 'OMP hermetic fixture' }).click()
-
-    const picker = page.locator('.model-picker')
-    await picker.locator('.model-picker__trigger').click()
-    const search = picker.getByRole('combobox', { name: 'Search models' })
-    await expect(search).toBeFocused()
-    await picker.locator('.model-picker__providers').getByRole('button', { name: 'anthropic', exact: true }).click()
-    await expect(picker.getByRole('option', { name: /Claude Fixture/ })).toHaveCount(1)
-    await expect(picker.getByRole('option', { name: /GPT Fixture/ })).toHaveCount(0)
-
-    await search.fill('gpt')
-    await expect(picker.getByText('No models match this search.')).toBeVisible()
-    await picker.locator('.model-picker__providers').getByRole('button', { name: 'All', exact: true }).click()
-    await expect(picker.getByRole('option', { name: /GPT Fixture/ })).toHaveCount(1)
-  })
-
-  test('persists a desktop-only OMP provider toggle and removes its models from the picker', async () => {
-    await page.getByRole('button', { name: 'Weave Workbench — Prime Work' }).click()
-    await page.getByRole('menuitemradio', { name: /OMP Work/ }).click()
-    await page.locator('.sidebar__footer button').filter({ hasText: 'Settings' }).click()
-    await page.getByRole('button', { name: 'Providers', exact: true }).click()
-    const voiceModelsBefore = await page.evaluate(async () => JSON.parse((await window.prime.voice.executeTool({ name: 'list_models', arguments: {} }, 'omp')).output) as { models: Array<{ name: string }> })
-    expect(voiceModelsBefore.models.map((model) => model.name).sort()).toEqual(['Claude Fixture', 'GPT Fixture'])
-    const anthropic = page.getByRole('checkbox', { name: 'Show anthropic provider' })
-    await expect(anthropic).toBeChecked()
-    await page.getByTitle('Hide provider in OMP').filter({ has: anthropic }).click()
-    await expect(anthropic).not.toBeChecked()
-    await expect.poll(() => JSON.parse(readFileSync(join(fixtureRoot, 'user-data', CURRENT_DESKTOP_STATE_FILENAME), 'utf8')).settings.ompDisabledProviders).toEqual(['anthropic'])
-    const voiceModelsAfter = await page.evaluate(async () => JSON.parse((await window.prime.voice.executeTool({ name: 'list_models', arguments: {} }, 'omp')).output) as { models: Array<{ name: string }> })
-    expect(voiceModelsAfter.models.map((model) => model.name)).toEqual(['GPT Fixture'])
-
-    await page.locator('.session-row__title').filter({ hasText: 'OMP hermetic fixture' }).click()
-    const modelPicker = page.locator('.model-picker')
-    await modelPicker.locator('.model-picker__trigger').click()
-    await expect(modelPicker.getByRole('option', { name: /GPT Fixture/ })).toHaveCount(1)
-    await expect(modelPicker.getByRole('option', { name: /Claude Fixture/ })).toHaveCount(0)
-  })
-
-  test('persists an OMP model toggle and removes only that model from every picker', async () => {
-    await page.getByRole('button', { name: 'Weave Workbench — Prime Work' }).click()
-    await page.getByRole('menuitemradio', { name: /OMP Work/ }).click()
-    await page.locator('.sidebar__footer button').filter({ hasText: 'Settings' }).click()
-    await page.getByRole('button', { name: 'Providers', exact: true }).click()
-    await page.getByRole('tab', { name: /Models/ }).click()
-
-    const toggle = page.getByRole('checkbox', { name: 'Show GPT Fixture model' })
-    const groupHeader = page.locator('.provider-model-group__heading[aria-controls="provider-models-openai-codex"]')
-    await expect(groupHeader).toHaveAttribute('aria-expanded', 'true')
-    await groupHeader.click()
-    await expect(groupHeader).toHaveAttribute('aria-expanded', 'false')
-    await expect(toggle).toBeHidden()
-    await groupHeader.click()
-    await expect(groupHeader).toHaveAttribute('aria-expanded', 'true')
-    await expect(toggle).toBeVisible()
-    await expect(toggle).toBeChecked()
-    const row = page.locator('.provider-model-row').filter({ has: toggle })
-    await expect(row.locator('.provider-model-row__capabilities')).toBeVisible()
-    await expect(row.locator('.provider-model-row__toggle')).toBeVisible()
-    await row.locator('.provider-model-row__toggle').click()
-    await expect(toggle).not.toBeChecked()
-    await expect.poll(() => JSON.parse(readFileSync(join(fixtureRoot, 'user-data', CURRENT_DESKTOP_STATE_FILENAME), 'utf8')).settings.ompDisabledModels).toEqual(['openai-codex/gpt-fixture'])
-    await expect.poll(() => JSON.parse(readFileSync(join(fixtureRoot, 'user-data', CURRENT_DESKTOP_STATE_FILENAME), 'utf8')).settings.ompDisabledProviders).toEqual(['openai-codex'])
-    const groups = page.locator('.provider-model-group')
-    await expect(groups.nth(0)).toContainText('Claude Fixture')
-    await expect(groups.nth(1)).toContainText('GPT Fixture')
-
-    const voiceModels = await page.evaluate(async () => JSON.parse((await window.prime.voice.executeTool({ name: 'list_models', arguments: {} }, 'omp')).output) as { models: Array<{ name: string }> })
-    expect(voiceModels.models.map((model) => model.name)).toEqual(['Claude Fixture'])
-    await page.locator('.session-row__title').filter({ hasText: 'OMP hermetic fixture' }).click()
-    const modelPicker = page.locator('.model-picker')
-    await modelPicker.locator('.model-picker__trigger').click()
-    await expect(modelPicker.getByRole('option', { name: /GPT Fixture/ })).toHaveCount(0)
-    await expect(modelPicker.getByRole('option', { name: /Claude Fixture/ })).toHaveCount(1)
-
-    await page.locator('.sidebar__footer button').filter({ hasText: 'Settings' }).click()
-    await page.getByRole('button', { name: 'Providers', exact: true }).click()
-    await page.getByRole('tab', { name: /Models/ }).click()
-    const hiddenToggle = page.getByRole('checkbox', { name: 'Show GPT Fixture model' })
-    await page.locator('.provider-model-row').filter({ has: hiddenToggle }).locator('.provider-model-row__toggle').click()
-    await expect(hiddenToggle).toBeChecked()
-    await expect.poll(() => JSON.parse(readFileSync(join(fixtureRoot, 'user-data', CURRENT_DESKTOP_STATE_FILENAME), 'utf8')).settings.ompDisabledModels).toEqual([])
-    await expect.poll(() => JSON.parse(readFileSync(join(fixtureRoot, 'user-data', CURRENT_DESKTOP_STATE_FILENAME), 'utf8')).settings.ompDisabledProviders).toEqual([])
-    await page.getByRole('tab', { name: /Providers/ }).click()
-    await expect(page.getByRole('checkbox', { name: 'Show openai-codex provider' })).toBeChecked()
-  })
-
-  test('keeps Harness settings shared when changing the default while providers follow the active harness', async () => {
+  test('keeps Harness settings scoped to Prime and Pi', async () => {
     await page.locator('.sidebar__footer button').filter({ hasText: 'Settings' }).click()
     await page.getByRole('button', { name: 'Harness', exact: true }).click()
-    await expect(page.getByText('OMP approval mode', { exact: true })).toBeVisible()
+    await expect(page.getByText('OMP approval mode', { exact: true })).toHaveCount(0)
     await expect(page.getByLabel('Prime Agent executable override')).toBeVisible()
-    await expect(page.getByLabel('OMP executable override')).toBeVisible()
     await expect(page.getByLabel('Pi executable override')).toBeVisible()
 
     const selects = page.locator('.settings-content select')
     await selects.nth(0).selectOption('pi')
     await expect(page.getByRole('button', { name: 'Weave Workbench — Pi Work' })).toBeVisible()
-    await expect(page.getByText('OMP approval mode', { exact: true })).toBeVisible()
+    await expect(page.getByText('OMP approval mode', { exact: true })).toHaveCount(0)
 
     await page.getByRole('button', { name: 'Providers', exact: true }).click()
     await expect(page.getByText('Pi catalogue', { exact: true })).toBeVisible()
@@ -1197,39 +1063,38 @@ test.describe('Prime Work desktop smoke', () => {
     await refresh.click()
     await expect(refresh).toBeEnabled()
     await expect(page.getByText('Prime Agent is ready', { exact: true })).toBeVisible()
-    await expect(page.getByText('OMP is ready', { exact: true })).toBeVisible()
     await expect(page.getByText('Pi is ready', { exact: true })).toBeVisible()
+    await expect(page.getByText('OMP is ready', { exact: true })).toHaveCount(0)
 
     const result = await page.evaluate(() => window.prime.app.refreshHarnesses())
     expect(result.meta.harnesses.prime.path).toBeTruthy()
-    expect(result.meta.harnesses.omp.path).toBeTruthy()
     expect(result.meta.harnesses.pi.path).toBeTruthy()
+    expect(result.meta.harnesses).not.toHaveProperty('omp')
 
     await page.getByRole('button', { name: /Weave Workbench — .*Work/ }).click()
-    await expect(page.getByRole('menuitemradio')).toHaveCount(3)
+    await expect(page.getByRole('menuitemradio')).toHaveCount(2)
   })
 
-  test('adds and connects to a harness installed while the app is open', async () => {
+  test('adds and connects to Pi installed while the app is open', async () => {
     await page.getByRole('button', { name: 'Weave Workbench — Prime Work' }).click()
-    await expect(page.getByRole('menuitemradio', { name: /OMP Work/ })).toHaveCount(0)
+    await expect(page.getByRole('menuitemradio', { name: /Pi Work/ })).toHaveCount(0)
     await page.keyboard.press('Escape')
 
-    const ompExecutable = join(fixtureRoot, 'omp-fixture.cjs')
-    renameSync(`${ompExecutable}.pending`, ompExecutable)
+    const piExecutable = join(fixtureRoot, 'pi-fixture.cjs')
+    renameSync(`${piExecutable}.pending`, piExecutable)
     await page.locator('.sidebar__footer button').filter({ hasText: 'Settings' }).click()
     await page.getByRole('button', { name: 'Harness', exact: true }).click()
-    await expect(page.getByText('OMP not detected', { exact: true })).toBeVisible()
+    await expect(page.getByText('Pi not detected', { exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Refresh harnesses' }).click()
-    await expect(page.getByText('OMP is ready', { exact: true })).toBeVisible()
+    await expect(page.getByText('Pi is ready', { exact: true })).toBeVisible()
 
     await page.getByRole('button', { name: 'Weave Workbench — Prime Work' }).click()
-    await page.getByRole('menuitemradio', { name: /OMP Work/ }).click()
-    await page.locator('.session-row__title').filter({ hasText: 'OMP hermetic fixture' }).click()
-    await expect(page.locator('.model-picker__trigger')).toHaveAccessibleName('Model: Claude Fixture')
-    const composer = page.getByRole('combobox', { name: 'Message OMP' })
+    await page.getByRole('menuitemradio', { name: /Pi Work/ }).click()
+    await page.locator('.session-row__title').filter({ hasText: 'Pi hermetic fixture' }).click()
+    const composer = page.getByRole('combobox', { name: 'Message Pi' })
     await composer.fill('Connect to the newly installed harness')
     await composer.press('Enter')
-    await expect.poll(() => existsSync(join(fixtureRoot, 'omp-runtime-args.json'))).toBe(true)
+    await expect.poll(() => existsSync(join(fixtureRoot, 'pi-runtime-args.json'))).toBe(true)
   })
 
   test('opens Harness settings from the no-harness recovery prompt', async () => {
@@ -1951,7 +1816,7 @@ test.describe('Prime Work desktop smoke', () => {
       message: 'Ask me two questions',
     })
     const runtimeArgs = JSON.parse(readFileSync(join(fixtureRoot, 'prime-runtime-args.json'), 'utf8')) as string[]
-    expect(runtimeArgs).toContain(join(process.cwd(), 'assets', 'extensions', 'omp-work-ask-user.ts'))
+    expect(runtimeArgs).toContain(join(process.cwd(), 'assets', 'extensions', 'gooeypi-work-ask-user.ts'))
     const worked = page.locator('.work-disclosure__button')
     await expect(worked).toContainText(/^Worked for /)
     await expect(worked).toHaveAttribute('aria-expanded', 'false')
@@ -1966,40 +1831,6 @@ test.describe('Prime Work desktop smoke', () => {
     await expect(completedRow).not.toHaveClass(/has-attention/)
     await expect(page.getByRole('status', { name: 'A session turn ended or needs attention' })).toHaveCount(0)
     await completedRow.locator('.session-row').click()
-  })
-
-  test('injects ask_user into OMP and answers its grouped questionnaire in the app', async () => {
-    await page.evaluate(() => window.prime.settings.update({ askUserEnabled: true }))
-    await page.getByRole('button', { name: 'Weave Workbench — Prime Work' }).click()
-    await page.getByRole('menuitemradio', { name: /OMP Work/ }).click()
-    await page.locator('.session-row__title').filter({ hasText: 'OMP hermetic fixture' }).click()
-    await expect(page.locator('.model-picker__trigger')).toHaveAccessibleName('Model: Claude Fixture')
-
-    const composer = page.getByRole('combobox', { name: 'Message OMP' })
-    await composer.fill('Ask me two OMP questions')
-    await composer.press('Enter')
-
-    const dialog = page.getByRole('dialog', { name: 'Answer 2 questions' })
-    await expect(dialog).toBeVisible()
-    await expect(dialog).toContainText('Which OMP release channel?')
-    await dialog.getByRole('textbox', { name: 'Additional context' }).fill('OMP app verification')
-    await dialog.getByRole('option', { name: 'Beta' }).click()
-    await expect(dialog).toContainText('What should OMP optimize for?')
-    await dialog.getByRole('option', { name: 'Safety' }).click()
-    await dialog.getByRole('button', { name: 'Submit answers', exact: true }).click()
-    await expect(dialog).toHaveCount(0)
-
-    const valuesPath = join(fixtureRoot, 'omp-questionnaire-values.json')
-    await expect.poll(() => existsSync(valuesPath)).toBe(true)
-    expect(JSON.parse(readFileSync(valuesPath, 'utf8'))).toEqual({
-      'omp-fixture-question-1': JSON.stringify({ answer: 'Beta', answerSource: 'option', context: 'OMP app verification' }),
-      'omp-fixture-question-2': JSON.stringify({ answer: 'Safety', answerSource: 'option' }),
-    })
-    const runtimeArgs = JSON.parse(readFileSync(join(fixtureRoot, 'omp-runtime-args.json'), 'utf8')) as string[]
-    const injectedExtensions = runtimeArgs.flatMap((value, index) => value === '--extension' ? [runtimeArgs[index + 1]] : [])
-    expect(injectedExtensions).toContain(join(process.cwd(), 'assets', 'extensions', 'omp-work-ask-user.ts'))
-    await expect(page.locator('.app-shell')).toHaveAttribute('data-ready', 'true')
-    await expect(page.getByText(/OMP RPC exited|Request failed/)).toHaveCount(0)
   })
 
   test('injects ask_user into Pi and answers its grouped questionnaire in the app', async () => {
@@ -2031,7 +1862,7 @@ test.describe('Prime Work desktop smoke', () => {
     })
     const runtime = JSON.parse(readFileSync(join(fixtureRoot, 'pi-runtime-args.json'), 'utf8')) as { args: string[]; cwd: string }
     const injectedExtensions = runtime.args.flatMap((value, index) => value === '--extension' ? [runtime.args[index + 1]] : [])
-    expect(injectedExtensions).toContain(join(process.cwd(), 'assets', 'extensions', 'omp-work-ask-user.ts'))
+    expect(injectedExtensions).toContain(join(process.cwd(), 'assets', 'extensions', 'gooeypi-work-ask-user.ts'))
     expect(runtime.args).not.toContain('--cwd')
     if (!currentFixture) throw new Error('Missing hermetic fixture')
     expect(runtime.cwd).toBe(realpathSync(currentFixture.piProject))

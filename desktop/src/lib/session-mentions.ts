@@ -79,7 +79,7 @@ export function routedSessionReferences(block: string | undefined): RoutedSessio
   const references: RoutedSessionReference[] = []
   const seen = new Set<string>()
   for (const line of block.split('\n').slice(0, 100)) {
-    const match = /^- ("(?:\\.|[^"\\])*"): (prime|omp|pi) session UUID ([a-zA-Z0-9][a-zA-Z0-9._:-]{0,127})\./.exec(line)
+    const match = /^- ("(?:\\.|[^"\\])*"): (prime|pi) session UUID ([a-zA-Z0-9][a-zA-Z0-9._:-]{0,127})\./.exec(line)
     if (!match) continue
     let label: unknown
     try { label = JSON.parse(match[1]) } catch { continue }

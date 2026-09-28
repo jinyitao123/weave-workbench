@@ -1,6 +1,6 @@
 import { session } from 'electron'
 import { isAbsolute } from 'node:path'
-import { BROWSER_PARTITION, HARNESS_IDS, INTERFACE_FONT_SCALES, PROJECT_SORT_MODES, type AppSettings, type ProjectSortMode } from '../../src/types/api'
+import { BROWSER_PARTITION, HARNESS_IDS, INTERFACE_FONT_SCALES, PROJECT_SORT_MODES, type AppSettings, type HarnessId, type ProjectSortMode } from '../../src/types/api'
 import type { JsonStateStore } from './store'
 import { isRecord, rejectUnknownKeys, requireBoolean, requireInteger, requireSelfHostedVoiceUrl, requireString, requireWebUrl } from './validation'
 
@@ -76,8 +76,8 @@ export class SettingsService {
       enabledHarnesses: (value) => {
         if (!Array.isArray(value) || value.length > HARNESS_IDS.length) throw new TypeError('enabledHarnesses must be a bounded array')
         const enabled = [...new Set(value.map((entry, index) => {
-          if (entry !== 'prime' && entry !== 'omp' && entry !== 'pi') throw new TypeError(`enabledHarnesses[${index}] is invalid`)
-          return entry
+          if (!HARNESS_IDS.includes(entry as HarnessId)) throw new TypeError(`enabledHarnesses[${index}] is invalid`)
+          return entry as HarnessId
         }))]
         if (!enabled.length) throw new TypeError('At least one harness must be enabled')
         return enabled
@@ -85,12 +85,8 @@ export class SettingsService {
       browserHome: (value) => requireWebUrl(value),
       terminalShell: (value) => this.validateShell(value),
       activeHarness: (value) => {
-        if (value !== 'prime' && value !== 'omp' && value !== 'pi') throw new TypeError('Invalid harness')
-        return value
-      },
-      ompApprovalMode: (value) => {
-        if (value !== 'inherit' && value !== 'always-ask' && value !== 'write' && value !== 'yolo') throw new TypeError('Invalid OMP approval mode')
-        return value
+        if (!HARNESS_IDS.includes(value as HarnessId)) throw new TypeError('Invalid harness')
+        return value as HarnessId
       },
       petEnabled: (value) => requireBoolean(value, 'petEnabled'),
       petId: (value) => {
@@ -129,15 +125,6 @@ export class SettingsService {
         }))]
       },
       disabledModels: (value) => this.disabledModels(value, 'disabledModels'),
-      ompDisabledProviders: (value) => {
-        if (!Array.isArray(value) || value.length > 256) throw new TypeError('ompDisabledProviders must be a bounded array')
-        return [...new Set(value.map((entry, index) => {
-          const id = requireString(entry, `ompDisabledProviders[${index}]`, { min: 1, max: 128, trim: true })
-          if (!/^[a-z0-9][a-z0-9._-]{0,127}$/i.test(id)) throw new TypeError(`ompDisabledProviders[${index}] is not a valid provider ID`)
-          return id
-        }))]
-      },
-      ompDisabledModels: (value) => this.disabledModels(value, 'ompDisabledModels'),
       piDisabledProviders: (value) => {
         if (!Array.isArray(value) || value.length > 256) throw new TypeError('piDisabledProviders must be a bounded array')
         return [...new Set(value.map((entry, index) => {

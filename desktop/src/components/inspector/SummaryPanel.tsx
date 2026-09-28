@@ -6,9 +6,9 @@ import { formatSessionCost, formatSessionTokens } from '@/lib/format-cost'
 import { MarkdownText } from '../MarkdownText'
 
 interface SummaryPanelProps {
-  /** Active harness agent name ("Prime Agent" / "OMP"). */
+  /** Active harness agent name. */
   agentName?: string
-  /** Short harness name for working copy ("Prime" / "OMP"). */
+  /** Short harness name for working copy. */
   shortName?: string
   project?: ProjectRecord
   runtime?: RuntimeInfo | null

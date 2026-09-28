@@ -95,10 +95,10 @@ describe('safety-critical coverage inventory', () => {
     expect(shippedExtensions).toEqual([
       'assets/extensions/gooeypi-enterprise.ts',
       'assets/extensions/gooeypi-team-development.ts',
-      'assets/extensions/omp-work-ask-user.ts',
-      'assets/extensions/omp-work-browser.ts',
-      'assets/extensions/omp-work-collaboration.ts',
-      'assets/extensions/omp-work-schedules.ts',
+      'assets/extensions/gooeypi-work-ask-user.ts',
+      'assets/extensions/gooeypi-work-browser.ts',
+      'assets/extensions/gooeypi-work-collaboration.ts',
+      'assets/extensions/gooeypi-work-schedules.ts',
       'assets/extensions/pi-work-fast-mode.ts',
       'assets/extensions/prime-work-browser.ts',
     ])

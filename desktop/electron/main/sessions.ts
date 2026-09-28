@@ -66,7 +66,7 @@ export interface SessionServiceOptions {
   watchDirectory?: SessionWatchFactory
   /**
    * File-level rename fallback for harnesses whose CLI does not expose a
-   * `rename` subcommand (OMP, pi). Called when no live runtime is available
+   * `rename` subcommand (Pi). Called when no live runtime is available
    * to accept `set_session_name` and no CLI fallback exists.
    */
   renameFile?: (filePath: string, title: string) => boolean
@@ -383,7 +383,7 @@ export class SessionService {
         return true
       }
       const primeAgentPath = resolveExecutable(this.primeAgentPath)
-      // OMP/pi services are constructed with a null CLI path (electron/main/index.ts).
+      // Pi services are constructed with a null CLI path (electron/main/index.ts).
       if (!primeAgentPath) {
         const renamed = this.renameFile?.(safePath, safeTitle) ?? false
         this.assertRootGeneration(operation.generation)
@@ -482,7 +482,7 @@ export class SessionService {
   }
 
   /**
-   * Pi and OMP keep JSONL files exactly one bucket below the session root, so
+   * Pi keeps JSONL files exactly one bucket below the session root, so
    * watch a bounded set of real child directories and feed their root-relative
    * names through the same containment checks as root events. Using this on
    * every platform keeps behavior identical where recursive `fs.watch` is not

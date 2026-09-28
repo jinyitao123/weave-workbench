@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AgentBrowserBridge } from '../../electron/main/browser/agent-bridge'
 import type { AgentBrowserService } from '../../electron/main/browser/agent-service'
-import type { OmpExtensionApi } from '../../assets/extensions/omp-work-browser'
+import type { WorkExtensionApi } from '../../assets/extensions/gooeypi-work-browser'
 
 interface RegisteredTool {
   name: string
@@ -31,7 +31,7 @@ function fakePi() {
     },
     registerTool: (tool: RegisteredTool) => { tools.push(tool) },
   }
-  return { tools, pi: pi as unknown as OmpExtensionApi }
+  return { tools, pi: pi as unknown as WorkExtensionApi }
 }
 
 async function loadExtension(environment: NodeJS.ProcessEnv) {
@@ -40,7 +40,7 @@ async function loadExtension(environment: NodeJS.ProcessEnv) {
   else vi.stubEnv('PRIME_WORK_BROWSER_URL', undefined as unknown as string)
   if (environment.PRIME_WORK_BROWSER_TOKEN !== undefined) vi.stubEnv('PRIME_WORK_BROWSER_TOKEN', environment.PRIME_WORK_BROWSER_TOKEN)
   else vi.stubEnv('PRIME_WORK_BROWSER_TOKEN', undefined as unknown as string)
-  const module = await import('../../assets/extensions/omp-work-browser')
+  const module = await import('../../assets/extensions/gooeypi-work-browser')
   return module.default
 }
 
@@ -76,7 +76,7 @@ afterEach(async () => {
 async function fixture() {
   const { calls, service } = fakeService()
   const terminals = { readActive: vi.fn(() => ({ label: 'zsh 1', cwd: '/project', content: '$ npm test\npassed', truncated: false })) }
-  const bridge = new AgentBrowserBridge({ service, terminals, extensionPath: '/app/extensions/omp-work-browser.ts', skillPath: '/app/skills/prime-work-browser' })
+  const bridge = new AgentBrowserBridge({ service, terminals, extensionPath: '/app/extensions/gooeypi-work-browser.ts', skillPath: '/app/skills/prime-work-browser' })
   await bridge.start()
   bridges.push(bridge)
   const environment = bridge.environmentFor({ cwd: '/project', sessionPath: '/sessions/one.jsonl' })
@@ -91,7 +91,7 @@ async function fixture() {
   return { bridge, calls, terminals, environment, tools, tool }
 }
 
-describe('omp-work-browser extension', () => {
+describe('gooeypi-work-browser extension', () => {
   it('registers no tools when the broker environment is missing', async () => {
     const factory = await loadExtension({})
     const { tools, pi } = fakePi()

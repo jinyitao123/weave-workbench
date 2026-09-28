@@ -103,11 +103,11 @@ describe('PluginService discovery', () => {
     expect(JSON.parse(readFileSync(join(projectAgentDir, 'settings.json'), 'utf8')).mcpServers).not.toHaveProperty('null-shape')
   })
 
-  it.each(['prime', 'omp', 'pi'] as const)('does not let saturated %s package discovery hide user or project MCP rows', async (harness) => {
+  it.each(['prime', 'pi'] as const)('does not let saturated %s package discovery hide user or project MCP rows', async (harness) => {
     const root = temp()
     const agentDir = join(root, 'agent')
     const project = join(root, 'project')
-    const projectAgentDir = join(project, harness === 'prime' ? '.prime' : harness === 'omp' ? '.omp' : '.pi', ...(harness === 'prime' ? ['agent'] : []))
+    const projectAgentDir = join(project, harness === 'prime' ? '.prime' : '.pi', ...(harness === 'prime' ? ['agent'] : []))
     mkdirSync(agentDir)
     mkdirSync(projectAgentDir, { recursive: true })
     const packages = Array.from({ length: 2_500 }, (_, index) => `npm:catalog-saturation-${index}`)
@@ -138,13 +138,12 @@ describe('PluginService discovery', () => {
 
   it.each([
     ['prime', 'user'], ['prime', 'project'],
-    ['omp', 'user'], ['omp', 'project'],
     ['pi', 'user'], ['pi', 'project'],
   ] as const)('bounds %s %s MCP discovery independently and reports the exact truncated file', async (harness, scope) => {
     const root = temp()
     const agentDir = join(root, 'agent')
     const project = join(root, 'project')
-    const projectAgentDir = join(project, harness === 'prime' ? '.prime' : harness === 'omp' ? '.omp' : '.pi', ...(harness === 'prime' ? ['agent'] : []))
+    const projectAgentDir = join(project, harness === 'prime' ? '.prime' : '.pi', ...(harness === 'prime' ? ['agent'] : []))
     mkdirSync(agentDir)
     mkdirSync(projectAgentDir, { recursive: true })
     if (harness === 'pi') writeFileSync(join(agentDir, 'settings.json'), JSON.stringify({ packages: ['npm:pi-mcp-adapter'] }))
@@ -166,7 +165,7 @@ describe('PluginService discovery', () => {
     })
   })
 
-  it('ignores stray OMP settings.json MCP entries so actions identify only mcp.json definitions', async () => {
+  it('ignores stray settings.json MCP entries so actions identify only mcp.json definitions', async () => {
     const root = temp()
     const agentDir = join(root, 'agent')
     mkdirSync(agentDir)
@@ -178,7 +177,7 @@ describe('PluginService discovery', () => {
     writeFileSync(mcpPath, JSON.stringify({ mcpServers: {
       docs: { type: 'stdio', command: 'mcp-native' },
     } }))
-    const service = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'omp' })
+    const service = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'pi' })
 
     const records = (await service.list()).skills.filter((item) => item.kind === 'mcp' && item.name === 'docs')
 
@@ -591,12 +590,12 @@ describe('PluginService MCP connections', () => {
       settingsPath,
       { name: 'remote', scope: 'user', type: 'sse', url: 'https://mcp.example/sse' } as never,
       undefined,
-      { harness: 'omp', agentName: 'OMP' },
+      { harness: 'pi', agentName: 'Pi' },
     )).rejects.toThrow(/managed outside GooeyPi/)
     expect(existsSync(settingsPath)).toBe(false)
   })
 
-  it('rejects state changes at the low-level writer unless the caller identifies OMP or Pi', async () => {
+  it('rejects Prime Agent MCP state changes at the low-level writer', async () => {
     const root = temp()
     const settingsPath = join(root, 'settings.json')
     const original = JSON.stringify({ mcpServers: { local: { type: 'stdio', command: 'mcp-local', enabled: true } } })
@@ -607,7 +606,7 @@ describe('PluginService MCP connections', () => {
     expect(readFileSync(settingsPath, 'utf8')).toBe(original)
   })
 
-  it.each(['prime', 'omp', 'pi'] as const)('rejects every %s network MCP transport before touching settings', async (harness) => {
+  it.each(['prime', 'pi'] as const)('rejects every %s network MCP transport before touching settings', async (harness) => {
     const root = temp()
     const agentDir = join(root, 'agent')
     mkdirSync(agentDir)
@@ -629,7 +628,8 @@ describe('PluginService MCP connections', () => {
     }
   })
 
-  it.each(['omp', 'pi'] as const)('retains local stdio create and state management for %s', async (harness) => {
+  it('retains local stdio create and state management for Pi', async () => {
+    const harness = 'pi' as const
     const root = temp()
     const agentDir = join(root, 'agent')
     mkdirSync(agentDir)
@@ -644,7 +644,8 @@ describe('PluginService MCP connections', () => {
     expect(config.mcpServers.files).toMatchObject({ command: 'mcp-files', args: ['--root', '/tmp'], enabled: true })
   })
 
-  it.each(['omp', 'pi'] as const)('marks unaddressable local %s MCP keys non-actionable while retaining bounded cleanup identity', async (harness) => {
+  it('marks unaddressable local Pi MCP keys non-actionable while retaining bounded cleanup identity', async () => {
+    const harness = 'pi' as const
     const root = temp()
     const agentDir = join(root, 'agent')
     mkdirSync(agentDir)
@@ -834,7 +835,6 @@ describe('PluginService MCP connections', () => {
 
   it.each([
     ['prime', { type: 'http', url: 'https://mcp.example/mcp', enabled: true }],
-    ['omp', { type: 'sse', url: 'https://mcp.example/sse', enabled: true }],
     ['pi', { url: 'https://mcp.example/mcp', enabled: true }],
   ] as const)('keeps an externally configured %s network server visible but non-actionable', async (harness, definition) => {
     const root = temp()
@@ -890,7 +890,7 @@ describe('PluginService MCP connections', () => {
     await expect(service.connectMcp({ name: 'remote', scope: 'user', type: 'http', url: 'https://mcp.example/mcp' }))
       .rejects.toThrow('managed outside GooeyPi')
     await expect(service.connectMcp({ name: 'local', scope: 'user', type: 'stdio', command: 'npx' }))
-      .rejects.toThrow('only manages local stdio MCP definitions for OMP and Pi')
+      .rejects.toThrow('Prime Agent MCP servers are managed outside GooeyPi')
     expect(existsSync(join(agentDir, 'settings.json'))).toBe(false)
   })
 
@@ -968,15 +968,17 @@ describe('PluginService MCP connections', () => {
     expect(settings.gooeypiDisabledPackages).toBeUndefined()
   })
 
-  it('connects an OMP stdio MCP server at project scope', async () => {
+  it('connects a Pi stdio MCP server at project scope', async () => {
     const root = temp()
     const agentDir = join(root, 'agent')
     const project = join(root, 'project')
+    mkdirSync(agentDir, { recursive: true })
     mkdirSync(project)
+    writeFileSync(join(agentDir, 'settings.json'), JSON.stringify({ packages: ['npm:pi-mcp-adapter'] }))
     const service = new PluginService(null, async (path) => {
       expect(path).toBe(project)
       return resolve(path)
-    }, { agentDir, harness: 'omp' })
+    }, { agentDir, harness: 'pi' })
 
     const response = await service.connectMcp({
       name: 'project-files',
@@ -987,8 +989,8 @@ describe('PluginService MCP connections', () => {
     })
 
     expect(response.ok).toBe(true)
-    const settings = JSON.parse(readFileSync(join(project, '.omp', 'mcp.json'), 'utf8'))
-    expect(settings.mcpServers['project-files']).toEqual({ type: 'stdio', command: 'mcp-project-files', enabled: true })
+    const settings = JSON.parse(readFileSync(join(project, '.pi', 'mcp.json'), 'utf8'))
+    expect(settings.mcpServers['project-files']).toEqual({ command: 'mcp-project-files', enabled: true })
     expect((await service.list(project)).skills.find((item) => item.name === 'project-files')).toMatchObject({ kind: 'mcp', location: 'project' })
   })
 
@@ -997,9 +999,10 @@ describe('PluginService MCP connections', () => {
     const agentDir = join(root, 'agent')
     const project = join(root, 'project')
     const outside = join(root, 'outside')
-    mkdirSync(project); mkdirSync(outside)
-    symlinkSync(outside, join(project, '.omp'))
-    const service = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'omp' })
+    mkdirSync(agentDir, { recursive: true }); mkdirSync(project); mkdirSync(outside)
+    writeFileSync(join(agentDir, 'settings.json'), JSON.stringify({ packages: ['npm:pi-mcp-adapter'] }))
+    symlinkSync(outside, join(project, '.pi'))
+    const service = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'pi' })
 
     await expect(service.connectMcp({
       name: 'escaped', scope: 'project', projectPath: project, type: 'stdio', command: 'mcp-local',
@@ -1011,14 +1014,15 @@ describe('PluginService MCP connections', () => {
     const root = temp()
     const agentDir = join(root, 'agent')
     const project = join(root, 'project')
-    const projectAgentDir = join(project, '.omp')
-    const displacedAgentDir = join(project, '.omp-original')
+    const projectAgentDir = join(project, '.pi')
+    const displacedAgentDir = join(project, '.pi-original')
     const outside = join(root, 'outside')
     mkdirSync(agentDir); mkdirSync(projectAgentDir, { recursive: true }); mkdirSync(outside)
+    writeFileSync(join(agentDir, 'settings.json'), JSON.stringify({ packages: ['npm:pi-mcp-adapter'] }))
     const settingsPath = join(projectAgentDir, 'mcp.json')
     writeFileSync(settingsPath, JSON.stringify({ defaultModel: 'test/model' }))
     writeFileSync(join(outside, 'mcp.json'), JSON.stringify({ outside: 'unchanged' }))
-    const service = new PluginService(null, async (path) => realpathSync(path), { agentDir, harness: 'omp' })
+    const service = new PluginService(null, async (path) => realpathSync(path), { agentDir, harness: 'pi' })
     const internal = service as unknown as { settingsFingerprint(path: string): Promise<string> }
     const original = internal.settingsFingerprint.bind(service)
     let substituted = false
@@ -1049,11 +1053,14 @@ describe('PluginService MCP connections', () => {
 
   it('rechecks the pinned project directory before reading a definition-removal snapshot', async () => {
     const root = temp()
-    const projectAgentDir = join(root, 'project', '.omp')
-    const displacedAgentDir = join(root, 'project', '.omp-original')
+    const agentDir = join(root, 'agent')
+    const projectAgentDir = join(root, 'project', '.pi')
+    const displacedAgentDir = join(root, 'project', '.pi-original')
     const outside = join(root, 'outside')
+    mkdirSync(agentDir, { recursive: true })
     mkdirSync(projectAgentDir, { recursive: true })
     mkdirSync(outside)
+    writeFileSync(join(agentDir, 'settings.json'), JSON.stringify({ packages: ['npm:pi-mcp-adapter'] }))
     const settingsPath = join(projectAgentDir, 'mcp.json')
     writeFileSync(settingsPath, JSON.stringify({ mcpServers: { other: { type: 'stdio', command: 'mcp-other' } } }))
     writeFileSync(join(outside, 'mcp.json'), JSON.stringify({ outside: 'unchanged', mcpServers: {} }))
@@ -1085,8 +1092,9 @@ describe('PluginService MCP connections', () => {
     const root = temp()
     const agentDir = join(root, 'agent')
     mkdirSync(agentDir)
+    writeFileSync(join(agentDir, 'settings.json'), JSON.stringify({ packages: ['npm:pi-mcp-adapter'] }))
     writeFileSync(join(agentDir, 'mcp.json'), JSON.stringify({ mcpServers: { existing: { type: 'stdio', command: 'safe' } } }))
-    const service = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'omp' })
+    const service = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'pi' })
 
     await expect(service.connectMcp({ name: 'secret', scope: 'user', type: 'http', url: 'https://token@example.test/mcp' })).rejects.toThrow(/managed outside GooeyPi/)
     const duplicate = await service.connectMcp({ name: 'existing', scope: 'user', type: 'stdio', command: 'other' })
@@ -1098,9 +1106,10 @@ describe('PluginService MCP connections', () => {
     const root = temp()
     const agentDir = join(root, 'agent')
     mkdirSync(agentDir)
+    writeFileSync(join(agentDir, 'settings.json'), JSON.stringify({ packages: ['npm:pi-mcp-adapter'] }))
     writeFileSync(join(agentDir, 'mcp.json'), JSON.stringify({ marker: 'kept' }))
-    const first = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'omp' })
-    const second = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'omp' })
+    const first = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'pi' })
+    const second = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'pi' })
 
     const responses = await Promise.all([
       first.connectMcp({ name: 'first', scope: 'user', type: 'stdio', command: 'mcp-first' }),
@@ -1118,6 +1127,7 @@ describe('PluginService MCP connections', () => {
     const root = temp()
     const agentDir = join(root, 'agent')
     mkdirSync(agentDir)
+    writeFileSync(join(agentDir, 'settings.json'), JSON.stringify({ packages: ['npm:pi-mcp-adapter'] }))
     const settingsPath = join(agentDir, 'mcp.json')
     writeFileSync(settingsPath, JSON.stringify({ marker: 'kept' }))
     const exited = spawn(process.execPath, ['-e', 'process.exit(0)'])
@@ -1135,7 +1145,7 @@ describe('PluginService MCP connections', () => {
       token: 'exited-test-owner',
       createdAt: Date.now() - 1_000,
     }))
-    const service = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'omp' })
+    const service = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'pi' })
 
     const response = await service.connectMcp({ name: 'after-crash', scope: 'user', type: 'stdio', command: 'mcp-after-crash' })
 
@@ -1148,9 +1158,10 @@ describe('PluginService MCP connections', () => {
     const root = temp()
     const agentDir = join(root, 'agent')
     mkdirSync(agentDir)
+    writeFileSync(join(agentDir, 'settings.json'), JSON.stringify({ packages: ['npm:pi-mcp-adapter'] }))
     const settingsPath = join(agentDir, 'mcp.json')
     writeFileSync(settingsPath, JSON.stringify({ marker: 'kept' }))
-    const service = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'omp' })
+    const service = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'pi' })
     const internal = service as unknown as { settingsFingerprint(path: string): Promise<string> }
     const original = internal.settingsFingerprint.bind(service)
     let injected = false
@@ -1172,9 +1183,10 @@ describe('PluginService MCP connections', () => {
     const root = temp()
     const agentDir = join(root, 'agent')
     mkdirSync(agentDir)
+    writeFileSync(join(agentDir, 'settings.json'), JSON.stringify({ packages: ['npm:pi-mcp-adapter'] }))
     const settingsPath = join(agentDir, 'mcp.json')
     writeFileSync(settingsPath, JSON.stringify({ marker: 'kept' }))
-    const service = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'omp' })
+    const service = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'pi' })
     const internal = service as unknown as { settingsFingerprint(path: string): Promise<string> }
     const original = internal.settingsFingerprint.bind(service)
     let conflicts = 0
@@ -1197,9 +1209,10 @@ describe('PluginService MCP connections', () => {
     const root = temp()
     const agentDir = join(root, 'agent')
     mkdirSync(agentDir)
+    writeFileSync(join(agentDir, 'settings.json'), JSON.stringify({ packages: ['npm:pi-mcp-adapter'] }))
     const settingsPath = join(agentDir, 'mcp.json')
     writeFileSync(settingsPath, JSON.stringify({ marker: 'kept' }))
-    const service = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'omp' })
+    const service = new PluginService(null, async (path) => resolve(path), { agentDir, harness: 'pi' })
     const internal = service as unknown as { settingsFingerprint(path: string): Promise<string> }
     const original = internal.settingsFingerprint.bind(service)
     let externalRevision = 0
@@ -1235,123 +1248,6 @@ describe('PluginService MCP connections', () => {
     expect(JSON.parse(readFileSync(capture, 'utf8'))).toEqual({ args: ['package', 'install', '--local', realpathSync(extension)], cwd: realpathSync(project) })
   })
 
-})
-
-describe('PluginService OMP parity', () => {
-  it('discovers OMP-native user, project, MCP, and installed plugin surfaces', async () => {
-    const root = temp()
-    const agentDir = join(root, '.omp', 'agent')
-    const userSkill = join(root, '.omp', 'skills', 'user-skill', 'SKILL.md')
-    const userPackage = join(root, '.omp', 'plugins', 'node_modules', 'user-plugin')
-    const packageSkill = join(userPackage, 'skills', 'package-skill', 'SKILL.md')
-    const project = join(root, 'project')
-    const projectSkill = join(project, '.omp', 'skills', 'project-skill', 'SKILL.md')
-    const projectPackage = join(project, '.omp', 'plugins', 'node_modules', 'project-plugin')
-    mkdirSync(agentDir, { recursive: true })
-    mkdirSync(resolve(userSkill, '..'), { recursive: true })
-    mkdirSync(resolve(packageSkill, '..'), { recursive: true })
-    mkdirSync(resolve(projectSkill, '..'), { recursive: true })
-    mkdirSync(projectPackage, { recursive: true })
-    writeFileSync(userSkill, '---\nname: OMP user skill\n---\nUser workflow')
-    writeFileSync(packageSkill, '---\nname: Plugin skill\n---\nInstalled workflow')
-    writeFileSync(join(userPackage, 'package.json'), JSON.stringify({ name: 'user-plugin', description: 'User OMP plugin', omp: {} }))
-    writeFileSync(projectSkill, '---\nname: OMP project skill\n---\nProject workflow')
-    writeFileSync(join(projectPackage, 'package.json'), JSON.stringify({ name: 'project-plugin', description: 'Project OMP plugin', pi: {} }))
-    writeFileSync(join(project, '.omp', 'plugins', 'omp-plugins.lock.json'), JSON.stringify({ plugins: { 'project-plugin': { enabled: false, enabledFeatures: null, version: '1.0.0' } }, settings: {} }))
-    const transitive = join(root, '.omp', 'plugins', 'node_modules', 'transitive-only')
-    mkdirSync(transitive)
-    writeFileSync(join(transitive, 'package.json'), JSON.stringify({ name: 'transitive-only' }))
-    const marketplace = join(root, '.omp', 'plugins', 'node_modules', 'marketplace-plugin')
-    mkdirSync(marketplace)
-    writeFileSync(join(marketplace, 'package.json'), JSON.stringify({ name: 'marketplace-plugin', description: 'Marketplace plugin' }))
-    writeFileSync(join(root, '.omp', 'plugins', 'omp-plugins.lock.json'), JSON.stringify({ plugins: { 'marketplace-plugin': { enabled: true, enabledFeatures: null, version: '1.0.0' } }, settings: {} }))
-    writeFileSync(join(agentDir, 'mcp.json'), JSON.stringify({ mcpServers: { docs: { type: 'http', url: 'https://docs.example/mcp' } } }))
-    mkdirSync(join(project, '.omp'), { recursive: true })
-    writeFileSync(join(project, '.omp', 'mcp.json'), JSON.stringify({ mcpServers: { files: { type: 'stdio', command: 'npx' } } }))
-    const service = new PluginService(null, async (path) => realpathSync(path), { agentDir, harness: 'omp' })
-
-    const catalog = await service.list(project)
-
-    expect(catalog.skills).toContainEqual(expect.objectContaining({ name: 'OMP user skill', kind: 'skill', location: 'user' }))
-    expect(catalog.skills).toContainEqual(expect.objectContaining({ name: 'OMP project skill', kind: 'skill', location: 'project' }))
-    expect(catalog.skills).toContainEqual(expect.objectContaining({ name: 'Plugin skill', kind: 'skill', location: 'user' }))
-    expect(catalog.skills).toContainEqual(expect.objectContaining({ name: 'user-plugin', kind: 'package', location: 'user' }))
-    expect(catalog.skills).toContainEqual(expect.objectContaining({ name: 'project-plugin', kind: 'package', location: 'project', enabled: false }))
-    expect(catalog.skills).toContainEqual(expect.objectContaining({ name: 'marketplace-plugin', kind: 'package', location: 'user', enabled: true }))
-    expect(catalog.skills.some((item) => item.name === 'transitive-only')).toBe(false)
-    expect(catalog.skills).toContainEqual(expect.objectContaining({
-      name: 'docs', kind: 'mcp', location: 'user',
-      availability: { available: false, detail: expect.stringContaining('managed outside GooeyPi') },
-    }))
-    expect(catalog.skills).toContainEqual(expect.objectContaining({ name: 'files', kind: 'mcp', location: 'project' }))
-  })
-
-  it('writes only local stdio definitions to native OMP mcp.json files at both scopes', async () => {
-    const root = temp()
-    const agentDir = join(root, '.omp', 'agent')
-    const project = join(root, 'project')
-    mkdirSync(agentDir, { recursive: true })
-    mkdirSync(project)
-    const service = new PluginService(null, async (path) => realpathSync(path), { agentDir, harness: 'omp' })
-
-    await expect(service.connectMcp({ name: 'docs:remote', scope: 'user', type: 'http', url: 'https://docs.example/mcp', auth: 'oauth' }))
-      .rejects.toThrow(/managed outside GooeyPi/)
-    await expect(service.connectMcp({ name: 'stream', scope: 'user', type: 'sse', url: 'https://docs.example/sse' } as never))
-      .rejects.toThrow(/managed outside GooeyPi/)
-    const user = await service.connectMcp({ name: 'local', scope: 'user', type: 'stdio', command: 'mcp-local' })
-    const projectResult = await service.connectMcp({ name: 'files', scope: 'project', projectPath: project, type: 'stdio', command: 'npx', args: ['-y', 'server'] })
-    await expect(service.connectMcp({ name: 'invalid name', scope: 'user', type: 'stdio', command: 'npx' })).rejects.toThrow(/unsupported characters/)
-
-    expect(user).toMatchObject({ ok: true, output: expect.stringContaining('new OMP session') })
-    expect(projectResult.ok).toBe(true)
-    const userConfig = JSON.parse(readFileSync(join(agentDir, 'mcp.json'), 'utf8'))
-    const projectConfig = JSON.parse(readFileSync(join(project, '.omp', 'mcp.json'), 'utf8'))
-    expect(userConfig.$schema).toContain('can1357/oh-my-pi')
-    expect(userConfig.mcpServers).toEqual({ local: { type: 'stdio', command: 'mcp-local', enabled: true } })
-    expect(projectConfig.mcpServers.files).toEqual({ type: 'stdio', command: 'npx', args: ['-y', 'server'], enabled: true })
-    expect(existsSync(join(project, '.prime'))).toBe(false)
-  })
-
-  it('installs through the native omp plugin command with validated argv', async () => {
-    const root = temp()
-    const agentDir = join(root, '.omp', 'agent')
-    const executable = join(root, 'omp.cjs')
-    const capture = join(root, 'argv.json')
-    mkdirSync(agentDir, { recursive: true })
-    writeFileSync(executable, `#!/usr/bin/env node\nrequire('node:fs').writeFileSync(${JSON.stringify(capture)}, JSON.stringify(process.argv.slice(2))); process.stdout.write('{"ok":true}\\n')\n`)
-    chmodSync(executable, 0o755)
-    const service = new PluginService(executable, async (path) => resolve(path), { agentDir, harness: 'omp' })
-
-    const result = await service.install('npm:@scope/example-plugin')
-
-    expect(result.ok).toBe(true)
-    expect(JSON.parse(readFileSync(capture, 'utf8'))).toEqual(['plugin', 'install', '@scope/example-plugin', '--json'])
-
-    await service.install('code-review@official')
-    expect(JSON.parse(readFileSync(capture, 'utf8'))).toEqual(['plugin', 'install', 'code-review@official', '--json'])
-  })
-
-  it('installs standalone OMP extensions through native user and project extension directories', async () => {
-    const root = temp()
-    const agentDir = join(root, '.omp', 'agent')
-    const project = join(root, 'project')
-    const source = join(root, 'clock.ts')
-    mkdirSync(agentDir, { recursive: true })
-    mkdirSync(project)
-    writeFileSync(source, 'export default () => undefined\n')
-    const service = new PluginService(null, async (path) => realpathSync(path), { agentDir, harness: 'omp' })
-
-    const user = await service.installExtension({ source, scope: 'user' })
-    const local = await service.installExtension({ source, scope: 'project', projectPath: project })
-    const duplicate = await service.installExtension({ source, scope: 'user' })
-
-    expect(user).toMatchObject({ ok: true, output: expect.stringContaining('clock.ts') })
-    expect(local.ok).toBe(true)
-    expect(readFileSync(join(agentDir, 'extensions', 'clock.ts'), 'utf8')).toContain('export default')
-    expect(readFileSync(join(project, '.omp', 'extensions', 'clock.ts'), 'utf8')).toContain('export default')
-    expect(duplicate).toMatchObject({ ok: false, reason: 'blocked' })
-    await expect(service.installExtension({ source: join(root, 'missing.ts'), scope: 'user' })).rejects.toThrow(/does not exist/)
-  })
 })
 
 describe('PluginService Pi parity', () => {

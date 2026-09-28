@@ -23,8 +23,8 @@ import type { TranscriptFileReader } from './transcript'
 
 /**
  * Pi session JSONL v3 layout under `~/.pi/agent/sessions/<bucket>/`:
- * - Line 1 is the `{"type":"session","version":3,...}` header (no OMP-style
- *   title slot); everything after it is append-only entries with `id`/`parentId`
+ * - Line 1 is the `{"type":"session","version":3,...}` header; everything
+ *   after it is append-only entries with `id`/`parentId`
  *   forming a branch tree. The project path comes from the header `cwd` —
  *   decoding the bucket directory name is lossy for paths containing dashes.
  * - The display name rides `session_info` entries (`name`); the latest one in
@@ -32,8 +32,7 @@ import type { TranscriptFileReader } from './transcript'
  * - File names are `<ISO timestamp with dashes>_<uuid>.jsonl`; ordering derives
  *   from the name prefix, not UUIDv7 bits.
  *
- * Everything except the display-name and `model_change` record shapes is shared
- * with OMP through `./bucketed`.
+ * Tree parsing and model-change handling use the shared `./bucketed` helpers.
  */
 export function piSessionRoot(): string {
   return join(homedir(), '.pi', 'agent', 'sessions')
@@ -73,8 +72,7 @@ export function isPiSessionPath(root: string, path: string): boolean {
 
 const piMetadataParser = createBucketedMetadataParser((state, value) => {
   if (value.type === 'model_change') {
-    // Pi records split `provider` + `modelId` fields (Prime's shape), unlike
-    // OMP's single `provider/id` string.
+    // Pi records split the provider and model id into separate fields.
     if (typeof value.modelId === 'string') state.model = value.modelId
     if (typeof value.provider === 'string') state.provider = value.provider
   } else if (value.type === 'session_info' && typeof value.name === 'string') {

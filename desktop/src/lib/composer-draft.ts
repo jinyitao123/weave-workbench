@@ -20,7 +20,7 @@ function emptyDraft(snapshot: ComposerDraftSnapshot): boolean {
   return !snapshot.text && !snapshot.attachments?.length
 }
 
-const harnesses = new Set<HarnessId>(['prime', 'omp', 'pi'])
+const harnesses = new Set<HarnessId>(['prime', 'pi'])
 function isMaterialReference(value: unknown): value is WorkspaceMaterialReference {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false
   const item = value as Partial<WorkspaceMaterialReference>

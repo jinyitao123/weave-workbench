@@ -11,8 +11,8 @@ import { discoverPlugins } from './plugins/catalog'
 import { readAtMost } from './plugins/file-io'
 import { acquireSettingsLock, prepareProjectSettingsPath, removeMcpDefinition, settingsFingerprint, updateMcpSettings, updateMcpState, updatePackageState, validateCapabilityMutation, validateMcpConnection, validateMcpStateInput } from './plugins/mcp'
 import type { ProjectSettingsPath } from './plugins/mcp'
-import { executeOmpPluginAction, executeOmpPluginInstall, executePackageInstall, executePackageRemove, executePiPluginInstall, executePiPluginRemove, validatePackageSource } from './plugins/package-execution'
-import { installOmpExtension, validateExtensionInstallInput } from './plugins/extension-installation'
+import { executePackageInstall, executePackageRemove, executePiPluginInstall, executePiPluginRemove, validatePackageSource } from './plugins/package-execution'
+import { validateExtensionInstallInput } from './plugins/extension-installation'
 
 type PluginDiscovery = typeof discoverPlugins
 
@@ -181,24 +181,20 @@ export class PluginService {
   async install(sourceValue: unknown): Promise<ProcessOutcome> {
     const agentPath = resolveExecutable(this.agentPath)
     if (!agentPath) return { ok: false, reason: 'blocked', output: `${HARNESSES[this.harness].agentName} executable was not found` }
-    const source = validatePackageSource(sourceValue, { allowOmpMarketplaceTarget: this.harness === 'omp' })
-    // Pi and Prime record installed sources in the agent settings.json; OMP
-    // tracks installs through its plugin lock file.
-    const settingsPath = this.harness === 'omp' ? join(this.agentDir, '..', 'plugins', 'omp-plugins.lock.json') : join(this.agentDir, 'settings.json')
+    const source = validatePackageSource(sourceValue)
+    const settingsPath = join(this.agentDir, 'settings.json')
     const install = async (): Promise<ProcessOutcome> => {
       // Prime and Pi own the settings.json lock while their package commands are
       // running. Taking that same lock here makes the child fail or deadlock
       // against GooeyPi. Keep a separate app coordination lock so multiple
       // GooeyPi windows serialize package mutations while the CLI remains free
       // to protect its own settings file.
-      const lockPath = this.harness === 'omp' ? settingsPath : `${settingsPath}.gooeypi`
+      const lockPath = `${settingsPath}.gooeypi`
       const release = await acquireSettingsLock(lockPath)
       try {
-        return this.harness === 'omp'
-          ? await executeOmpPluginInstall(agentPath, source)
-          : this.harness === 'pi'
-            ? await executePiPluginInstall(agentPath, source)
-            : await executePackageInstall(agentPath, source)
+        return this.harness === 'pi'
+          ? await executePiPluginInstall(agentPath, source)
+          : await executePackageInstall(agentPath, source)
       } finally {
         await release()
       }
@@ -216,13 +212,11 @@ export class PluginService {
       ? await this.authorizeProject(input.projectPath!)
       : undefined
     if (safeProjectPath) this.lastProjectPath = safeProjectPath
-    if (this.harness === 'omp') return await installOmpExtension(input, this.agentDir, safeProjectPath)
-
     const agentPath = resolveExecutable(this.agentPath)
     if (!agentPath) return { ok: false, reason: 'blocked', output: `${HARNESSES[this.harness].agentName} executable was not found` }
     const projectSettings = safeProjectPath
       ? await prepareProjectSettingsPath(safeProjectPath, {
-          segments: this.harness === 'prime' ? ['.prime', 'agent'] : ['.pi'],
+        segments: this.harness === 'prime' ? ['.prime', 'agent'] : ['.pi'],
           filename: 'settings.json',
         })
       : undefined
@@ -278,17 +272,13 @@ export class PluginService {
       const projectPath = await this.authorizeProject(requireString(input.projectPath, 'projectPath', { min: 1, max: 4096 }))
       this.lastProjectPath = projectPath
       settingsTarget = await prepareProjectSettingsPath(projectPath, {
-        segments: [this.harness === 'omp' ? '.omp' : '.pi'], filename: 'mcp.json',
+        segments: ['.pi'], filename: 'mcp.json',
       })
     } else {
       settingsTarget = join(this.agentDir, 'mcp.json')
     }
 
-    const options = this.harness === 'omp' ? {
-      agentName: 'OMP',
-      harness: this.harness,
-      schema: 'https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json',
-    } : {
+    const options = {
       agentName: 'Pi',
       harness: this.harness,
       includeType: false,
@@ -323,7 +313,7 @@ export class PluginService {
       const projectPath = await this.authorizeProject(requireString(input.projectPath, 'projectPath', { min: 1, max: 4096 }))
       this.lastProjectPath = projectPath
       settingsTarget = await prepareProjectSettingsPath(projectPath, {
-        segments: [this.harness === 'omp' ? '.omp' : '.pi'], filename: 'mcp.json',
+        segments: ['.pi'], filename: 'mcp.json',
       })
     } else {
       settingsTarget = join(this.agentDir, 'mcp.json')
@@ -364,7 +354,7 @@ export class PluginService {
     const projectSettings = safeProjectPath
       ? await prepareProjectSettingsPath(safeProjectPath, this.harness === 'prime'
           ? undefined
-          : { segments: [this.harness === 'omp' ? '.omp' : '.pi'], filename: input.kind === 'mcp' ? 'mcp.json' : 'settings.json' })
+          : { segments: ['.pi'], filename: input.kind === 'mcp' ? 'mcp.json' : 'settings.json' })
       : undefined
     const settingsPath = projectSettings?.path ?? join(this.agentDir, input.kind === 'mcp' && this.harness !== 'prime' ? 'mcp.json' : 'settings.json')
     const agentName = HARNESSES[this.harness].agentName
@@ -380,11 +370,6 @@ export class PluginService {
           return await removeMcpDefinition(projectSettings ?? settingsPath, input, (path) => this.settingsFingerprint(path), { agentName })
         }
 
-        if (this.harness === 'omp') {
-          const agentPath = resolveExecutable(this.agentPath)
-          if (!agentPath) return { ok: false, reason: 'blocked', output: `${agentName} executable was not found` }
-          return await executeOmpPluginAction(agentPath, input.action === 'remove' ? 'uninstall' : input.action, input.source!, input.scope === 'project')
-        }
         if (input.action !== 'remove') return await updatePackageState(projectSettings ?? settingsPath, input, (path) => this.settingsFingerprint(path), { agentName })
         const agentPath = resolveExecutable(this.agentPath)
         if (!agentPath) return { ok: false, reason: 'blocked', output: `${agentName} executable was not found` }

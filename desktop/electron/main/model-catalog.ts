@@ -12,8 +12,7 @@ import type { PrimeProviderService } from './providers'
  * - The `providers:catalog` IPC handler calls `catalog(force, disabledProviders, disabledModels)`.
  *
  * Auth mutations (API keys, logout, OAuth flows) are intentionally excluded:
- * the manager never touches them and they are Prime-specific — OMP
- * authentication is owned by the omp CLI itself.
+ * the manager never touches them and they are Prime-specific.
  */
 export interface ModelCatalogProvider extends ProviderCatalog {
   catalog(force?: boolean, disabledProviders?: ReadonlySet<string>, disabledModels?: ReadonlySet<string>): Promise<PrimeModelCatalog>

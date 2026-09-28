@@ -16,9 +16,9 @@ export interface InspectorProps {
   activeTab: InspectorTab
   onTabChange(tab: InspectorTab): void
   onClose(): void
-  /** Active harness agent name ("Prime Agent" / "OMP"). */
+  /** Active harness agent name. */
   agentName?: string
-  /** Short harness name for working copy ("Prime" / "OMP"). */
+  /** Short harness name for working copy. */
   shortName?: string
   project?: ProjectRecord
   cwd?: string

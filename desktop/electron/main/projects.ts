@@ -93,7 +93,7 @@ interface FolderIdentityRefresh {
 }
 
 interface PersistedAuthorizationContext {
-  project: PersistedProject
+  project: PersistedProject & { harness: HarnessId }
   folders: Set<string>
   primaryGranted: boolean
 }
@@ -176,7 +176,7 @@ function isSameFolderIdentity(expected: FolderIdentity, current: FolderIdentity,
 /**
  * One ProjectService instance exists per harness. Instances share the one
  * desktop state store but each sees, creates, and authorizes only records of
- * its own harness: a grant made for Prime never authorizes an OMP runtime's
+ * its own harness: a grant made for Prime never authorizes a Pi runtime's
  * cwd and vice versa. Dismissed inferred-project paths remain shared, matching
  * the single dismissedProjectPaths list in persisted state.
  */
@@ -224,8 +224,8 @@ export class ProjectService {
   }
 
   /** Persisted projects visible to this instance: its harness and active account scope only. */
-  private ownProjects(projects: readonly PersistedProject[], scope = this.accountScope): PersistedProject[] {
-    return projects.filter((project) => project.harness === this.harness && project.accountScope === scope)
+  private ownProjects(projects: readonly PersistedProject[], scope = this.accountScope): Array<PersistedProject & { harness: HarnessId }> {
+    return projects.filter((project): project is PersistedProject & { harness: HarnessId } => project.harness === this.harness && project.accountScope === scope)
   }
 
   private async captureFolderIdentity(pathValue: string): Promise<{ path: string; identity: FolderIdentity }> {
@@ -674,7 +674,7 @@ export class ProjectService {
     if (await this.isBroadRoot(path)) throw new TypeError('Broad filesystem roots cannot be added as projects')
     this.removalRoots.delete(path)
     const now = new Date().toISOString()
-    const project = await this.store.update((state): PersistedProject => {
+    const project = await this.store.update((state): PersistedProject & { harness: HarnessId } => {
       this.assertScopeRevision(scopeRevision)
       state.dismissedProjectPaths = state.dismissedProjectPaths.filter((item) => resolve(item) !== path)
       const existing = this.ownProjects(state.projects, scope).find((item) => resolve(item.path) === path || item.folders.some((folder) => resolve(folder) === path))
@@ -683,7 +683,7 @@ export class ProjectService {
         existing.folderIdentities = { ...existing.folderIdentities, [path]: identity }
         return existing
       }
-      const created: PersistedProject = {
+      const created: PersistedProject & { harness: HarnessId } = {
         id: randomUUID(),
         harness: this.harness,
         accountScope: scope,
@@ -729,7 +729,7 @@ export class ProjectService {
       if (parentId) break
     }
     if (!parentId) throw new TypeError('worktree parent project is not an authorized grant')
-    const project = await this.store.update((state): PersistedProject => {
+    const project = await this.store.update((state): PersistedProject & { harness: HarnessId } => {
       this.assertScopeRevision(scopeRevision)
       state.dismissedProjectPaths = state.dismissedProjectPaths.filter((item) => resolve(item) !== path)
       const own = this.ownProjects(state.projects, scope)
@@ -798,9 +798,9 @@ export class ProjectService {
     const { path, identity } = await this.captureFolderIdentity(requested)
     const granted = await this.grantProjectFolder(path, identity, undefined, scope, scopeRevision)
     const grantRevision = this.accountScopeRevision
-    const project = await this.store.update((state): PersistedProject => {
+    const project = await this.store.update((state): PersistedProject & { harness: HarnessId } => {
       this.assertScopeRevision(grantRevision)
-      const current = state.projects.find((item) => item.id === granted.id && item.harness === this.harness && item.accountScope === scope)
+      const current = this.ownProjects(state.projects, scope).find((item) => item.id === granted.id)
       if (!current) throw new Error('Personal workspace grant disappeared while it was being initialized')
       current.purpose = 'personal'
       current.name = '我的工作'

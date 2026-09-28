@@ -114,7 +114,7 @@ async function fixture(objectName = 'forge_sales_contract') {
   const sessions = { read: vi.fn(async () => transcript) }
   const storageDirectory = join(cwd, 'secure-intents')
   const bridge = new AgentEnterpriseBridge({
-    service, sessions: { prime: sessions, omp: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts',
+    service, sessions: { prime: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts',
     storage: { directory: storageDirectory, codec: { available: () => true, encrypt: (value) => Buffer.from(value), decrypt: (value) => value.toString('utf8') } },
   })
   await bridge.start(); bridges.push(bridge)
@@ -370,7 +370,7 @@ describe('employee-bound material handoff', () => {
     }
     const sessions = { read: vi.fn(async () => transcript) }
     sessions.read.mockRejectedValueOnce(Object.assign(new Error('session file not created'), { code: 'ENOENT' }))
-    const bridge = new AgentEnterpriseBridge({ service, sessions: { prime: sessions, omp: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts' })
+    const bridge = new AgentEnterpriseBridge({ service, sessions: { prime: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts' })
     await bridge.start(); bridges.push(bridge)
     const environment = bridge.environmentFor({ cwd, harness: 'pi' })
     bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, '/sessions/future.jsonl', 'new-runtime')
@@ -404,7 +404,7 @@ describe('employee-bound material handoff', () => {
       submitApprovalRevision: vi.fn(async () => ({ status: 404, body: {} })), getApprovalRevisionReceipt: vi.fn(async () => ({ status: 404, body: {} })),
     }
     const sessions = { read: vi.fn(async () => transcript) }
-    const bridge = new AgentEnterpriseBridge({ service, sessions: { prime: sessions, omp: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts' })
+    const bridge = new AgentEnterpriseBridge({ service, sessions: { prime: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts' })
     await bridge.start(); bridges.push(bridge)
     const environment = bridge.environmentFor({ cwd, harness: 'pi' })
     bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, undefined, 'new-runtime')
@@ -470,7 +470,7 @@ describe('employee-bound material handoff', () => {
       submitApprovalRevision: vi.fn(async () => ({ status: 404, body: {} })), getApprovalRevisionReceipt: vi.fn(async () => ({ status: 404, body: {} })),
     }
     const sessions = { read: vi.fn(async () => transcript) }
-    const bridge = new AgentEnterpriseBridge({ service, sessions: { prime: sessions, omp: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts' })
+    const bridge = new AgentEnterpriseBridge({ service, sessions: { prime: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts' })
     await bridge.start(); bridges.push(bridge)
     const environment = bridge.environmentFor({ cwd, harness: 'pi' })
     bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, undefined, 'pending-runtime')
@@ -515,7 +515,7 @@ describe('employee-bound material handoff', () => {
       submitApprovalRevision: vi.fn(async () => ({ status: 404, body: {} })), getApprovalRevisionReceipt: vi.fn(async () => ({ status: 404, body: {} })),
     }
     const sessions = { read: vi.fn(async () => transcript) }
-    const bridge = new AgentEnterpriseBridge({ service, sessions: { prime: sessions, omp: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts' })
+    const bridge = new AgentEnterpriseBridge({ service, sessions: { prime: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts' })
     await bridge.start(); bridges.push(bridge)
     const environment = bridge.environmentFor({ cwd, harness: 'pi' })
     bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, undefined, 'ambiguous-runtime')
