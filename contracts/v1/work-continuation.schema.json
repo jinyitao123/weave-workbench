@@ -37,11 +37,48 @@
             "required": ["type", "id", "name", "bytes", "sha256"],
             "properties": {
               "type": { "const": "forge-file" },
+              "materialId": { "type": "string", "pattern": "^[0-9a-f]{24}$" },
+              "mediaType": {
+                "enum": [
+                  "text/plain",
+                  "text/markdown",
+                  "text/csv",
+                  "application/json",
+                  "application/pdf",
+                  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                ]
+              },
+              "sourceKind": { "enum": ["owner", "approval"] },
+              "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
               "id": { "type": "string", "minLength": 1, "maxLength": 128 },
               "name": { "type": "string", "minLength": 1, "maxLength": 255 },
-              "bytes": { "type": "integer", "minimum": 1, "maximum": 700000 },
+              "bytes": { "type": "integer", "minimum": 1, "maximum": 2097152 },
               "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
-            }
+            },
+            "allOf": [
+              {
+                "if": { "required": ["mediaType"], "properties": { "mediaType": { "enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] } } },
+                "then": { "required": ["materialId", "sourceKind"] }
+              },
+              {
+                "if": { "required": ["sourceKind"], "properties": { "sourceKind": { "const": "approval" } } },
+                "then": {
+                  "required": ["requestId"],
+                  "properties": { "mediaType": { "enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] } }
+                }
+              },
+              {
+                "if": { "required": ["sourceKind"], "properties": { "sourceKind": { "const": "owner" } } },
+                "then": {
+                  "not": { "required": ["requestId"] },
+                  "properties": { "mediaType": { "enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] } }
+                }
+              },
+              {
+                "if": { "required": ["requestId"] },
+                "then": { "required": ["sourceKind"] }
+              }
+            ]
           }
         },
         "source_messages": {
