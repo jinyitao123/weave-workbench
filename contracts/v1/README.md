@@ -134,6 +134,10 @@
 
 `team-run-event.schema.json` 是平台自动连接团队运行与员工收件箱的写入契约。调用者固定为 Weave 服务，不是团队成员或模型工具；Forge 以部署级服务凭据验证调用方，并把 `assigneeAccountId` 作为现有 ObjectStack 账号解析，不能由模型猜测接收人。事件只承载运行结果、失败、取消或需要补充的摘要及返回桌面的定位信息，不执行合同提交、审批或其他业务动作。
 
+团队需要给员工明确列出缺项时，开发者在同一工作流声明可选的 `result_protocol: "workbench_result_v1"`，并把最终交付来源节点的 `output` 与工作流 `output_contract` 配为 [team-run-result](team-run-result.schema.json) 对应的 `type: "json"` 与同一 `schema`。未声明的旧团队继续交付原有文本。Weave 必须用发布时冻结的图定义和现有 `NodeDeliver` 校验结果；`disposition` 只取 `complete` 或 `needs_input`，`summary` 去空白后为 1–1000 字符，`missing_items` 最多 8 项、每项去空白后 1–200 字符；`needs_input` 至少有一项缺项，`complete` 必须为空。模型正文或文件中的相似文字不能改变分类。
+
+`needs_input` 表示**本轮团队检查已结束，等待原员工补材料再发起关联的新轮次**；Weave 运行仍以真实终态 `succeeded` 记录，不新增运行状态或内部人工等待节点。经校验的分类及缺项随同一次最终交付物保存，原有终态 outbox 对同一运行只生成一条 `revision_required` 消息；员工打开后由本人权限读取原固定输入、材料、父工作与结构化缺项，不从通知正文猜测。`complete` 仍生成普通 `result`。若本轮存在失败或结果未知的 Forge 业务动作，动作事实优先展示并要求核对，不得因团队给出 `complete` 或 `needs_input` 就宣称业务完成或自动重放。正式审批退回仍由 Forge 原生业务事项办理，不使用这个团队结果分类。
+
 - 身份：Weave 从发起时已经绑定的 Forge 外部身份冻结接收账号和组织；运行结束后不得改用当前登录用户或共享管理员账号。
 - 幂等：`eventId` 与 `source.idempotencyKey` 由准确运行和终态生成。相同键重复投递返回原通知；相同键更换内容返回冲突。
 - 交付：Weave 先将待投递事件写入自己的系统事件 outbox，再异步调用 `POST /api/v1/apps/forge/weave-events/team-runs`。Forge 接入 ObjectStack `messaging.emit`，由其原生通知 outbox 完成收件箱写入、重试和去重。

@@ -20,6 +20,7 @@
 - `approval-context`：Workbench 按当前 Forge 身份读取单个原生审批的受限快照、退回版本与材料；修订材料由 Forge 领域动作校验并经 ObjectStack 原生守卫重提，不开放桌面直接重提。
 - `approval-revision`：退回事项的新主件与附件引用、来源版本和幂等键；Forge 插件固定材料并调用受守卫的原生重提，回执区分准备完成、已进入下一轮和恢复状态未知。
 - `team-run-event`：Weave 将团队运行终态交给 Forge 原生收件箱的系统事件。
+- `team-run-result`：可选的团队检查结果结构；本轮完成或要求员工补充材料由冻结输出契约验证，正式业务状态仍以 Forge 为准。
 - `team-run-notification-source`：员工点击原生收件箱中的 Weave 团队消息时，按当前身份读取这条消息已保存的来源引用，用于打开原工作。
 - `delivery-receipt`：业务结果、证据、用量和独立核验结果。
 - `execution-control`：重试、超时、额度、取消和未知结果核对。

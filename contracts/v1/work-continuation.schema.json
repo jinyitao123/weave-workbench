@@ -150,7 +150,15 @@
             "title": { "type": "string", "minLength": 1, "maxLength": 300 },
             "content_type": { "type": "string", "minLength": 1, "maxLength": 160 },
             "content": { "type": "string", "maxLength": 100000 },
-            "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+            "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "disposition": { "enum": ["complete", "needs_input"] },
+            "summary": { "type": "string", "minLength": 1, "maxLength": 1000 },
+            "missing_items": { "type": "array", "maxItems": 8, "items": { "type": "string", "minLength": 1, "maxLength": 200 } }
+          },
+          "dependentRequired": {
+            "disposition": ["summary", "missing_items"],
+            "summary": ["disposition", "missing_items"],
+            "missing_items": ["disposition", "summary"]
           }
         }
       }
