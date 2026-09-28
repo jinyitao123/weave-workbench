@@ -29,6 +29,7 @@ const id=ctx.recordId||(ctx.record&&ctx.record.id),offset=ctx.record,actor=ctx.s
 
 export const SalesInvoicePartialRedReverse = defineAction({
   name: 'sales_invoice_partial_red_reverse', label: '按数量红冲', objectName: 'forge_sales_invoice', icon: 'receipt-text',
+  requiredPermissions: ['forge_finance_reviewer'],
   locations: [...locations], order: 35, visible: `(record.status == 'issued' || record.status == 'partially_red_reversed') && (record.invoice_type == 'normal' || record.invoice_type == null)`, refreshAfter: true,
   description: '当前仅支持单明细、未收款且未确认收入的蓝字发票按数量生成红字发票。', successMessage: '销项发票数量红冲已登记',
   params: [{ field: 'code', objectOverride: 'forge_sales_invoice', required: true }, { field: 'invoice_on', objectOverride: 'forge_sales_invoice', required: true }, { field: 'quantity', objectOverride: 'forge_sales_invoice_line', required: true }, { field: 'reversal_reason', objectOverride: 'forge_sales_invoice', required: true }],

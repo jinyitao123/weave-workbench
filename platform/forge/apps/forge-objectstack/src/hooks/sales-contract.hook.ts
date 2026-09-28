@@ -21,20 +21,28 @@ for (const field of ['signed_on', 'starts_on', 'ends_on']) {
 
 /**
  * A contract line may only reference a currently selectable SKU. This hook
- * protects every insert path, including the custom contract form's Data API
- * writes and quotation-to-contract conversion.
+ * protects every material insert path, including the custom contract form's
+ * Data API writes and quotation-to-contract conversion. Service lines are
+ * first-class contractual scope and must never carry a stock SKU.
  */
 export const SalesContractLineSkuGuard = defineHook({
   name: 'sales_contract_line_sku_guard',
   object: 'forge_sales_contract_line',
   events: ['beforeInsert'],
   priority: 100,
-  description: '新建合同物料明细时，拒绝停用或不可用的物料规格。',
+  description: '合同物料行只接受当前组织内可用 SKU；服务项目必须保持无 SKU。',
   body: {
     language: 'js',
     capabilities: ['api.read'],
     source: `
 const skuId = String(ctx.input.sku_id || '').trim();
+const lineType = String(ctx.input.line_type || 'material');
+if (lineType === 'service') {
+  if (skuId) throw new Error('服务项目不能关联物料规格');
+  if (!String(ctx.input.name || '').trim() || !(Number(ctx.input.quantity_limit) > 0)) throw new Error('服务项目必须填写名称和数量');
+  return;
+}
+if (lineType !== 'material') throw new Error('合同明细类型无效');
 if (!skuId) throw new Error('合同物料必须选择可用的物料规格');
 const organizationId = String(
   (ctx.user && ctx.user.organizationId) ||

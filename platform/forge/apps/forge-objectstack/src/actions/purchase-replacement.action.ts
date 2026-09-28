@@ -4,6 +4,7 @@ const locations = ['record_header', 'record_more'] as const;
 
 export const PurchaseOrderCreateReplacement = defineAction({
   name:'purchase_order_create_replacement',label:'新建换货补货',objectName:'forge_purchase_order',icon:'repeat-2',locations:[...locations],order:56,
+  requiredPermissions: ['forge_procurement_operator'],
   visible:`record.status == 'approved' || record.status == 'partially_arrived' || record.status == 'arrived' || record.status == 'completed'`,refreshAfter:true,
   params:[{field:'code',objectOverride:'forge_purchase_return',required:true},{field:'order_line_id',objectOverride:'forge_purchase_return_line',required:true},{field:'warehouse_id',objectOverride:'forge_purchase_return',required:true},{field:'requested_quantity',objectOverride:'forge_purchase_return_line',required:true},{field:'return_on',objectOverride:'forge_purchase_return',required:true},{field:'expected_replenishment_on',objectOverride:'forge_purchase_return',required:true},{field:'reason',objectOverride:'forge_purchase_return',required:true},{field:'return_address',objectOverride:'forge_purchase_return'},{field:'contact_name',objectOverride:'forge_purchase_return'},{field:'contact_phone',objectOverride:'forge_purchase_return'},{field:'remarks',objectOverride:'forge_purchase_return'}],
   onSuccess:{navigate:'/_console/apps/com.inoforge.forge.supply-chain/page_purchase_return?return=${result.id}'},

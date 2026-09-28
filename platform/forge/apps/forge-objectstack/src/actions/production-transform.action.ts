@@ -4,6 +4,7 @@ const locations = ['record_header', 'record_more'] as const;
 
 export const BomCreateDisassembly = defineAction({
   name: 'bom_create_disassembly', label: '新建拆解单', objectName: 'forge_bom', icon: 'unplug', locations: [...locations], order: 70,
+  requiredPermissions: ['forge_production_operator'],
   visible: `record.status == 'active'`, refreshAfter: true, description: '按生效 BOM 保存拆解草稿或提交确认，并记录每项回收、报废分配。', successMessage: '拆解单已保存',
   params: [
     { name: 'mode', label: '办理方式', type: 'select', required: true, options: [{ value: 'draft', label: '保存草稿' }, { value: 'submit', label: '确认拆解' }] },
@@ -43,6 +44,7 @@ let ledgerIndex=1;for(const item of prepared){const recovered=Number(item.line.r
 
 export const BomCreateReplacement = defineAction({
   name: 'bom_create_replacement', label: '新建换件单', objectName: 'forge_bom', icon: 'replace', locations: [...locations], order: 80,
+  requiredPermissions: ['forge_production_operator'],
   visible: `record.status == 'active'`, refreshAfter: true, description: '按 BOM 定位旧件，保存换件草稿或提交确认，并记录新件与旧件去向。', successMessage: '换件单已保存',
   params: [
     { name: 'mode', label: '办理方式', type: 'select', required: true, options: [{ value: 'draft', label: '保存草稿' }, { value: 'submit', label: '确认换件' }] },

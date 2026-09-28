@@ -1,9 +1,9 @@
 import { defineFlow } from '@objectstack/spec/automation';
 
-export const SalesContractApprovalFlow = defineFlow({
-  name: 'sales_contract_approval',
-  label: '销售合同复核',
-  description: '合同提交后按岗位找到复核员工，审批完成后更新合同并通知发起人。',
+const contractApprovalFlow = (legal: boolean) => defineFlow({
+  name: legal ? 'sales_contract_legal_approval' : 'sales_contract_approval',
+  label: legal ? '非标销售合同复核' : '销售合同复核',
+  description: '合同提交后按岗位找到交付、商务及所需的法务复核员工，审批完成后更新合同并通知发起人。',
   type: 'record_change',
   status: 'active',
   runAs: 'system',
@@ -17,18 +17,21 @@ export const SalesContractApprovalFlow = defineFlow({
       config: {
         objectName: 'forge_sales_contract',
         triggerType: 'record-after-update',
-        condition: "record.status == 'pending_approval' && previous.status == 'draft'",
+        condition: legal
+          ? "record.status == 'pending_approval' && previous.status == 'draft' && record.requires_legal_review == true"
+          : "record.status == 'pending_approval' && previous.status == 'draft' && record.requires_legal_review != true",
       },
       position: { x: 80, y: 160 },
     },
     {
       id: 'contract_review',
       type: 'approval',
-      label: '交付与商务会签',
+      label: legal ? '交付、商务与法务会签' : '交付与商务会签',
       config: {
         approvers: [
           { type: 'position', value: 'contract_delivery_reviewer', group: 'delivery' },
           { type: 'position', value: 'contract_commercial_reviewer', group: 'commercial' },
+          ...(legal ? [{ type: 'position' as const, value: 'contract_legal_reviewer', group: 'legal' }] : []),
         ],
         behavior: 'per_group',
         lockRecord: true,
@@ -55,7 +58,7 @@ export const SalesContractApprovalFlow = defineFlow({
       config: {
         recipients: ['{record.created_by}'],
         title: '合同 {record.code} 已复核通过',
-        message: '合同已进入执行中，可以继续创建销售订单。',
+        message: '内部审批已通过。取得客户签署版后，请登记签署日期和凭证，再创建销售订单。',
         topic: 'sales.contract.approved',
         severity: 'info',
         sourceObject: 'forge_sales_contract',
@@ -113,3 +116,6 @@ export const SalesContractApprovalFlow = defineFlow({
     { id: 'rejected_to_end', source: 'notify_rejected', target: 'rejected_end' },
   ],
 });
+
+export const SalesContractApprovalFlow = contractApprovalFlow(false);
+export const SalesContractLegalApprovalFlow = contractApprovalFlow(true);

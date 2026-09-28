@@ -26,6 +26,21 @@ export const salesQuotationDraftPermission = definePermissionSet({
     forge_material_sku: organizationRead,
     forge_material: organizationRead,
     forge_unit: organizationRead,
+    sys_file: ownRead,
+  },
+});
+
+/** Quote review is a native approval-center responsibility, separate from quote entry and contract review. */
+export const salesQuotationReviewerPermission = definePermissionSet({
+  name: 'sales_quotation_reviewer',
+  label: '销售报价审批',
+  description: '在 ObjectStack 原生审批中心办理已冻结版本的销售报价；不创建报价、不修改明细或代替客户确认。',
+  systemPermissions: ['sales_quotation_reviewer'],
+  fields: salesQuotationCostFieldMask,
+  objects: {
+    forge_quotation: organizationRead,
+    forge_quotation_line: organizationRead,
+    forge_customer: organizationRead,
   },
 });
 

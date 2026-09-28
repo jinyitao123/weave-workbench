@@ -37,7 +37,9 @@ const objects = [
   }),
   simpleObject('forge_sales_contract_line', {
     name: Field.text({ label: 'Line name', required: true }),
-    sku_id: Field.text({ label: 'SKU', required: true }),
+    line_type: Field.text({ label: 'Line type', defaultValue: 'material' }),
+    sku_id: Field.text({ label: 'SKU' }),
+    quantity_limit: Field.number({ label: 'Quantity', min: 0.0001 }),
   }),
 ];
 
@@ -73,8 +75,8 @@ test('ObjectStack 17.3 beforeInsert rejects disabled, cross-organization, and un
     positions: [], permissions: [], systemPermissions: [],
   };
   const insertFixture = (object, values) => engine.insert(object, values, { context: systemContext });
-  const insertLine = (id, skuId, context = salesContext) => engine.insert('forge_sales_contract_line', {
-    id, name: '合同物料', sku_id: skuId,
+  const insertLine = (id, skuId, context = salesContext, lineType = 'material') => engine.insert('forge_sales_contract_line', {
+    id, name: lineType === 'service' ? '视觉联调服务' : '合同物料', line_type: lineType, sku_id: skuId || null, quantity_limit: 1,
   }, { context });
 
   await insertFixture('forge_unit', { id: 'unit-sales', status: 'active', organization_id: 'org-sales' });
@@ -85,15 +87,19 @@ test('ObjectStack 17.3 beforeInsert rejects disabled, cross-organization, and un
 
   const saved = await insertLine('line-enabled', 'sku-enabled');
   assert.equal(saved.id, 'line-enabled', 'same-organization enabled SKU can be saved through ObjectQL');
+  const service = await insertLine('line-service', null, salesContext, 'service');
+  assert.equal(service.id, 'line-service', 'a named service row with quantity is saved without an inventory SKU');
 
   await assert.rejects(insertLine('line-disabled', 'sku-disabled'), /已停用/);
   await assert.rejects(insertLine('line-cross-org', 'sku-other-org'), /不属于当前组织/);
+  await assert.rejects(insertLine('line-service-with-sku', 'sku-enabled', salesContext, 'service'), /服务项目不能关联物料规格/);
+  await assert.rejects(insertLine('line-unknown-type', 'sku-enabled', salesContext, 'unexpected'), /合同明细类型无效/);
   await assert.rejects(insertLine('line-unscoped', 'sku-enabled', {
     userId: 'sales-user', positions: [], permissions: [], systemPermissions: [],
   }), /无法确认当前销售组织/);
 
   const savedLines = await engine.find('forge_sales_contract_line', { where: {}, context: systemContext });
-  assert.deepEqual(savedLines.map((line) => line.id), ['line-enabled'], 'rejected writes leave no contract line behind');
+  assert.deepEqual(savedLines.map((line) => line.id).sort(), ['line-enabled', 'line-service'], 'rejected writes leave no invalid contract lines behind');
 });
 
 test('native contract form may clear unconfirmed signing and effective dates', async (t) => {

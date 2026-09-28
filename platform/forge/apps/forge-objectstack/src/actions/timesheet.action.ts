@@ -4,6 +4,7 @@ const locations = ['record_header', 'record_more'] as const;
 
 export const ProjectRecordTimesheet = defineAction({
   name: 'project_record_timesheet', label: '填报项目工时', objectName: 'forge_project', icon: 'clock-3', locations: [...locations], order: 100,
+  requiredPermissions: ['forge_project_work_member'],
   visible: `record.status != 'settled' && record.status != 'terminated' && record.status != 'archived'`, refreshAfter: true,
   params: [
     { field: 'code', objectOverride: 'forge_project_timesheet', required: true }, { field: 'worker_id', objectOverride: 'forge_project_timesheet', required: true },

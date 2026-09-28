@@ -5,4 +5,5 @@ set -eu
 # before widening legacy lease columns and returning its claims to pending.
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 node "$SCRIPT_DIR/notification-lease-preflight.mjs"
+node "$SCRIPT_DIR/sales-line-sku-preflight.mjs"
 exec "$@"

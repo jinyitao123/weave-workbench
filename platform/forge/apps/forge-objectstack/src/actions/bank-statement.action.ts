@@ -4,6 +4,7 @@ const locations = ['record_header', 'record_more'] as const;
 
 export const FundAccountStageBankStatement = defineAction({
   name: 'fund_account_stage_bank_statement', label: '导入银行 CSV', objectName: 'forge_fund_account', icon: 'file-up',
+  requiredPermissions: ['forge_finance_reviewer'],
   locations: [...locations], order: 35, visible: `record.status == 'active' && record.account_type == 'bank'`, refreshAfter: true,
   description: '暂存银行对账文件，逐行校验并识别同账户重复参考号。暂存不会改变账户余额。',
   params: [

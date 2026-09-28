@@ -4,6 +4,7 @@ const locations = ['record_header', 'record_more'] as const;
 
 export const ProjectCreateCommissioning = defineAction({
   name: 'project_create_commissioning', label: '新建集成调试', objectName: 'forge_project', icon: 'wrench', locations: [...locations], order: 70,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'in_progress'`, refreshAfter: true, description: '从已完工组装单建立逐项调试记录。', successMessage: '集成调试记录已建立',
   params: [
     { field: 'assembly_id', objectOverride: 'forge_commissioning_record', required: true }, { field: 'equipment_code', objectOverride: 'forge_commissioning_record', required: true },
@@ -20,6 +21,7 @@ const all=await ctx.api.object('forge_commissioning_record').find({where:{}}),ye
 
 export const CommissioningReview = defineAction({
   name: 'commissioning_review', label: '确认调试结果', objectName: 'forge_commissioning_record', icon: 'badge-check', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'pending_review' || record.status == 'failed'`, refreshAfter: true, description: '复核每项结果；存在未通过项时保留为未通过，全部通过后才进入交付准备。', successMessage: '调试结果已确认',
   params: [{ name: 'results_json', label: '复核结果', type: 'textarea', required: true }, { name: 'conclusion', label: '调试结论', type: 'textarea', required: true }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
@@ -29,6 +31,7 @@ const id=ctx.recordId||(ctx.record&&ctx.record.id),record=ctx.record,actor=ctx.s
 
 export const ProjectCreateDeliveryPackage = defineAction({
   name: 'project_create_delivery_package', label: '新建交付包', objectName: 'forge_project', icon: 'package-check', locations: [...locations], order: 71,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'in_progress'`, refreshAfter: true, description: '按已通过调试记录整理本次客户交付资料。', successMessage: '交付包已建立',
   params: [
     { field: 'commissioning_id', objectOverride: 'forge_delivery_package', required: true }, { field: 'revision', objectOverride: 'forge_delivery_package', required: true },
@@ -43,6 +46,7 @@ const projectId=ctx.recordId||(ctx.record&&ctx.record.id),project=ctx.record;if(
 
 export const DeliveryItemSetEvidence = defineAction({
   name: 'delivery_item_set_evidence', label: '登记交付资料', objectName: 'forge_delivery_package_item', icon: 'file-check', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'missing'`, refreshAfter: true, successMessage: '交付资料已登记',
   params: [{ field: 'version', objectOverride: 'forge_delivery_package_item', required: true }, { field: 'evidence_ref', objectOverride: 'forge_delivery_package_item', required: true }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
@@ -52,6 +56,7 @@ const id=ctx.recordId||(ctx.record&&ctx.record.id),item=ctx.record;if(ctx.record
 
 export const DeliveryPackageSubmit = defineAction({
   name: 'delivery_package_submit', label: '提交客户验收', objectName: 'forge_delivery_package', icon: 'send', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'draft'`, refreshAfter: true, successMessage: '交付包已提交客户验收',
   params: [{ name: 'submission_note', label: '提交说明', type: 'textarea', required: true }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
@@ -61,6 +66,7 @@ const id=ctx.recordId||(ctx.record&&ctx.record.id),pack=ctx.record;if(ctx.record
 
 export const ProjectCreateCustomerAcceptance = defineAction({
   name: 'project_create_customer_acceptance', label: '新建客户验收', objectName: 'forge_project', icon: 'clipboard-check', locations: [...locations], order: 72,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'in_progress'`, refreshAfter: true, description: '从已齐交付包建立逐项客户验收记录。', successMessage: '客户验收单已建立',
   params: [
     { field: 'package_id', objectOverride: 'forge_customer_acceptance', required: true }, { field: 'acceptance_method', objectOverride: 'forge_customer_acceptance', required: true },
@@ -76,6 +82,7 @@ const projectId=ctx.recordId||(ctx.record&&ctx.record.id),project=ctx.record;if(
 
 export const CustomerAcceptanceSubmit = defineAction({
   name: 'customer_acceptance_submit', label: '提交验收结论', objectName: 'forge_customer_acceptance', icon: 'send', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'pending_review'`, refreshAfter: true, successMessage: '验收结论已提交',
   params: [{ name: 'conclusion', label: '验收结论', type: 'textarea', required: true }, { name: 'rectification_due_on', label: '整改期限', type: 'date' }, { name: 'rectification_owner_id', label: '整改负责人', type: 'user' }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
@@ -85,6 +92,7 @@ const id=ctx.recordId||(ctx.record&&ctx.record.id),acceptance=ctx.record;if(ctx.
 
 export const AcceptanceRectificationClose = defineAction({
   name: 'acceptance_rectification_close', label: '登记整改完成', objectName: 'forge_acceptance_rectification', icon: 'circle-check', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'open'`, refreshAfter: true, successMessage: '整改已关闭，等待复验',
   params: [{ field: 'corrective_action', objectOverride: 'forge_acceptance_rectification', required: true }, { field: 'closure_evidence_ref', objectOverride: 'forge_acceptance_rectification', required: true }, { field: 'verified_by', objectOverride: 'forge_acceptance_rectification', required: true }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
@@ -94,6 +102,7 @@ const id=ctx.recordId||(ctx.record&&ctx.record.id),item=ctx.record;if(ctx.record
 
 export const CustomerAcceptanceItemRetest = defineAction({
   name: 'customer_acceptance_item_retest', label: '登记复验通过', objectName: 'forge_customer_acceptance_item', icon: 'refresh-cw', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.result == 'failed'`, refreshAfter: true, successMessage: '复验结果已登记',
   params: [{ name: 'observation', label: '复验记录', type: 'textarea', required: true }, { name: 'evidence_ref', label: '复验证据编号/文件引用', type: 'text', required: true }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
@@ -103,6 +112,7 @@ const id=ctx.recordId||(ctx.record&&ctx.record.id),item=ctx.record;if(ctx.record
 
 export const CustomerAcceptanceConfirm = defineAction({
   name: 'customer_acceptance_confirm', label: '客户确认验收', objectName: 'forge_customer_acceptance', icon: 'badge-check', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_project_manager'],
   visible: `record.status == 'awaiting_confirmation'`, refreshAfter: true, successMessage: '客户验收已确认，项目进入已完工',
   params: [{ field: 'signed_evidence_ref', objectOverride: 'forge_customer_acceptance', required: true }, { field: 'customer_comment', objectOverride: 'forge_customer_acceptance', required: true }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `

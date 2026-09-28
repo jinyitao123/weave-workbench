@@ -4,6 +4,7 @@ const locations = ['record_header', 'record_more'] as const;
 
 export const SalesOrderCreateRevenueRecognition = defineAction({
   name: 'sales_order_create_revenue_recognition', label: '生成收入确认单', objectName: 'forge_sales_order', icon: 'badge-dollar-sign',
+  requiredPermissions: ['forge_finance_reviewer'],
   locations: [...locations], order: 70, visible: `record.status == 'active' || record.status == 'partially_shipped' || record.status == 'shipped' || record.status == 'completed'`, refreshAfter: true,
   description: '按订单配置的收入确认方式，从已出库或已开票业务凭据生成待审核确认单。', successMessage: '收入确认单已生成',
   params: [

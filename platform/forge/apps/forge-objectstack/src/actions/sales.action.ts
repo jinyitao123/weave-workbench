@@ -1,4 +1,5 @@
 import { defineAction } from '@objectstack/spec';
+import { hasExactQuotationLineSet } from './sales-contract-source-set.js';
 
 const locations = ['record_header', 'record_more'] as const;
 
@@ -232,7 +233,7 @@ return await ctx.api.transaction(async () => {
     code, name, customer_id: customerId, contact_id: contactId,
     quotation_type_id: quotationTypeId, issuer_id: issuerId,
     quotation_date: quotationDate, valid_until: validUntil,
-    payment_method: 'bank_transfer', payment_term: getText('payment_term', '付款条件', false, 255),
+    payment_method: null, payment_method_confirmed: false, payment_term: getText('payment_term', '付款条件', false, 255),
     business_terms: getText('business_terms', '商务条款', false, 4000),
     quotation_terms: getText('quotation_terms', '报价条款', false, 4000),
     remarks: getText('remarks', '备注', false, 4000),
@@ -399,31 +400,133 @@ try {
 
 export const QuotationSubmit = defineAction({
   name: 'quotation_submit', label: '提交审批', objectName: 'forge_quotation', icon: 'send', locations: [...locations], order: 10,
-  visible: `record.status == 'draft'`, confirmText: '提交后报价将进入审批，是否继续？', refreshAfter: true,
-  successMessage: '报价已提交审批', body: statusBody('forge_quotation', 'draft', 'pending_approval'),
+  requiredPermissions: ['sales_quotation_draft_create'],
+  visible: `record.status == 'draft'`, confirmText: '提交核价版本后，报价明细将锁定并进入 ObjectStack 审批中心。是否继续？', refreshAfter: true,
+  successMessage: '报价已提交原生审批',
+  body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
+const id = ctx.recordId || (ctx.record && ctx.record.id);
+const actor = String(ctx.session && ctx.session.userId || '').trim();
+const organizationId = String(ctx.session && ctx.session.organizationId || '').trim();
+if (ctx.recordLoadDenied === true || !id || !ctx.record) throw new Error('当前报价不存在或不可访问');
+if (!actor || !organizationId) throw new Error('无法确认当前销售员工和组织');
+return await ctx.api.transaction(async () => {
+  const quote = await ctx.api.object('forge_quotation').findOne({ where: { id } });
+  if (!quote || quote.status !== 'draft') throw new Error('仅本人草稿报价可以提交审批');
+  if (quote.responsible_id !== actor) throw new Error('只有报价负责人可以提交本报价');
+  if (quote.valid_until && String(quote.valid_until).slice(0, 10) < new Date().toISOString().slice(0, 10)) throw new Error('报价已过有效期，请更新有效期后再提交');
+  const customer = await ctx.api.object('forge_customer').findOne({ where: { id: quote.customer_id } });
+  if (!customer || String(customer.organization_id || '') !== organizationId || customer.owner_id !== actor) throw new Error('报价客户不存在或不属于当前负责员工');
+  const issuer = await ctx.api.object('forge_quotation_issuer').findOne({ where: { id: quote.issuer_id } });
+  if (!issuer || String(issuer.organization_id || '') !== organizationId) throw new Error('报价主体不存在或不属于当前组织');
+  if (quote.contact_id) {
+    const contact = await ctx.api.object('forge_contact').findOne({ where: { id: quote.contact_id } });
+    if (!contact || contact.customer_id !== quote.customer_id || contact.owner_id !== actor || contact.employment_status !== 'active') throw new Error('报价联系人不存在或已不可用');
+  }
+  const lines = await ctx.api.object('forge_quotation_line').find({ where: { quotation_id: id } });
+  if (lines.length < 1 || lines.length > 100) throw new Error('报价至少需要一条明细，且最多支持100条');
+  let subtotal = 0, total = 0, tax = 0;
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index], quantity = Number(line.quantity), price = Number(line.taxed_unit_price), rate = Number(line.tax_rate), discount = Number(line.discount_rate);
+    if (!(quantity > 0) || !Number.isFinite(quantity) || !Number.isFinite(price) || price < 0 || !Number.isFinite(rate) || rate < 0 || rate > 100 || !Number.isFinite(discount) || discount < 0 || discount > 100) throw new Error('第' + (index + 1) + '条报价明细数量、价格、税率或折扣无效');
+    if (line.line_type === 'service') {
+      if (!line.name || line.sku_id) throw new Error('第' + (index + 1) + '条服务项目必须有名称且不能关联物料规格');
+    } else if (line.line_type === 'material') {
+      if (!line.sku_id) throw new Error('第' + (index + 1) + '条物料明细缺少规格');
+      const sku = await ctx.api.object('forge_material_sku').findOne({ where: { id: line.sku_id } });
+      if (!sku || String(sku.organization_id || '') !== organizationId || sku.enabled === false) throw new Error('第' + (index + 1) + '条物料规格不存在、已停用或不属于当前组织');
+      const material = await ctx.api.object('forge_material').findOne({ where: { id: sku.material_id } });
+      const unit = material && material.unit_id ? await ctx.api.object('forge_unit').findOne({ where: { id: material.unit_id } }) : null;
+      if (!material || String(material.organization_id || '') !== organizationId || material.status === 'inactive' || !unit || String(unit.organization_id || '') !== organizationId || unit.status === 'inactive') throw new Error('第' + (index + 1) + '条物料或计量单位不可用');
+    } else throw new Error('第' + (index + 1) + '条报价明细类型无效');
+    const lineTotal = Math.round((quantity * price * (1 - discount / 100) + Number.EPSILON) * 10000) / 10000;
+    subtotal += quantity * price;
+    total += lineTotal;
+    tax += rate > 0 ? lineTotal - lineTotal / (1 + rate / 100) : 0;
+    await ctx.api.object('forge_quotation_line').update({ id: line.id, taxed_subtotal: lineTotal });
+  }
+  const round4 = value => Math.round((value + Number.EPSILON) * 10000) / 10000;
+  const version = Number(quote.pricing_version || 0);
+  if (!Number.isInteger(version) || version < 0) throw new Error('报价核价版本无效');
+  const now = Date.now();
+  const reviewerAssignments = await ctx.api.object('sys_user_position').find({ where: { position: 'sales_quotation_reviewer' } });
+  const activeReviewers = reviewerAssignments.filter(item => {
+    const from = item.valid_from ? Date.parse(item.valid_from) : Number.NEGATIVE_INFINITY;
+    const until = item.valid_until ? Date.parse(item.valid_until) : Number.POSITIVE_INFINITY;
+    return from <= now && now < until;
+  });
+  if (!activeReviewers.length) throw new Error('未配置销售报价审批岗，请先在系统设置中分配实际审批人');
+  const totals = { item_count: lines.length, subtotal: round4(subtotal), discount_amount: round4(subtotal - total), tax_amount: round4(tax), total_amount: round4(total) };
+  const submittedAt = new Date().toISOString();
+  await ctx.api.object('forge_quotation').update({ id, ...totals, submitted_pricing_version: version, submitted_at: submittedAt, submitted_by: actor, status: 'pending_approval' });
+  return { id, ...totals, submitted_pricing_version: version, submitted_at: submittedAt, status: 'pending_approval' };
 });
-
-export const QuotationApprove = defineAction({
-  name: 'quotation_approve', label: '同意', objectName: 'forge_quotation', icon: 'circle-check', locations: [...locations], order: 10,
-  visible: `record.status == 'pending_approval'`, confirmText: '确认同意这份报价？', refreshAfter: true,
-  successMessage: '报价审批通过', body: statusBody('forge_quotation', 'pending_approval', 'approved'),
+` },
 });
 
 export const QuotationSend = defineAction({
-  name: 'quotation_send', label: '发送给客户', objectName: 'forge_quotation', icon: 'mail', locations: [...locations], order: 10,
-  visible: `record.status == 'approved'`, confirmText: '确认报价已发送给客户？', refreshAfter: true,
-  successMessage: '报价已标记为已发送', body: statusBody('forge_quotation', 'approved', 'sent'),
+  name: 'quotation_send', label: '登记报价已发送', objectName: 'forge_quotation', icon: 'mail', locations: [...locations], order: 10,
+  requiredPermissions: ['sales_quotation_draft_create'],
+  visible: `record.status == 'approved'`, refreshAfter: true,
+  description: '请确认报价已实际发送给客户，并上传发送凭证和送达说明。此动作只登记发送，不会替你发送邮件或消息。', successMessage: '客户发送凭证已归档',
+  params: [
+    { field: 'sent_evidence_attachment', objectOverride: 'forge_quotation', required: true },
+    { field: 'sent_evidence_note', objectOverride: 'forge_quotation', required: true },
+  ],
+  body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
+const id = ctx.recordId || (ctx.record && ctx.record.id), actor = String(ctx.session && ctx.session.userId || '').trim();
+if (ctx.recordLoadDenied === true || !id || !actor) throw new Error('当前报价不存在或无法识别操作员工');
+const note = String(ctx.input.sent_evidence_note || '').trim();
+const raw = ctx.input.sent_evidence_attachment, fileId = String(typeof raw === 'string' ? raw : raw && (raw.id || raw[0] && raw[0].id) || '').trim();
+if (!note || note.length > 2000 || !fileId) throw new Error('请上传发送回执并填写渠道、时间或送达说明');
+const file = await ctx.api.object('sys_file').findOne({ where: { id: fileId } });
+if (!file || file.status !== 'committed' || file.owner_id !== actor) throw new Error('发送凭证尚未上传完成或不属于当前员工');
+return await ctx.api.transaction(async () => {
+  const quote = await ctx.api.object('forge_quotation').findOne({ where: { id } });
+  if (!quote || quote.status !== 'approved' || quote.responsible_id !== actor) throw new Error('只有报价负责人可以登记已审批报价的实际发送');
+  const version = Number(quote.pricing_version || 0);
+  if (Number(quote.submitted_pricing_version) !== version) throw new Error('报价核价版本与审批版本不一致，请重新核价并提交审批');
+  const sentAt = new Date().toISOString();
+  await ctx.api.object('forge_quotation').update({ id, status: 'sent', sent_evidence_attachment: fileId,
+    sent_evidence_note: note, sent_at: sentAt, sent_by: actor, sent_pricing_version: version });
+  return { id, status: 'sent', sent_at: sentAt, sent_pricing_version: version };
+});
+` },
 });
 
 export const QuotationAccept = defineAction({
-  name: 'quotation_accept', label: '标记客户接受', objectName: 'forge_quotation', icon: 'handshake', locations: [...locations], order: 10,
-  visible: `record.status == 'sent'`, confirmText: '确认客户已经接受这份报价？', refreshAfter: true,
-  successMessage: '报价已成交', body: statusBody('forge_quotation', 'sent', 'accepted'),
+  name: 'quotation_accept', label: '记录客户接受', objectName: 'forge_quotation', icon: 'handshake', locations: [...locations], order: 10,
+  requiredPermissions: ['sales_quotation_draft_create'],
+  visible: `record.status == 'sent'`, refreshAfter: true,
+  description: '仅在客户实际接受后上传凭证；请确认凭证对应本次已发送的报价版本。无客户凭证时不得调用。', successMessage: '客户接受凭证已归档，接受的报价版本已锁定',
+  params: [
+    { field: 'customer_acceptance_evidence_attachment', objectOverride: 'forge_quotation', required: true },
+    { field: 'customer_acceptance_note', objectOverride: 'forge_quotation', required: true },
+  ],
+  body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
+const id = ctx.recordId || (ctx.record && ctx.record.id), actor = String(ctx.session && ctx.session.userId || '').trim();
+if (ctx.recordLoadDenied === true || !id || !actor) throw new Error('当前报价不存在或无法识别操作员工');
+const note = String(ctx.input.customer_acceptance_note || '').trim();
+const raw = ctx.input.customer_acceptance_evidence_attachment, fileId = String(typeof raw === 'string' ? raw : raw && (raw.id || raw[0] && raw[0].id) || '').trim();
+if (!note || note.length > 2000 || !fileId) throw new Error('请上传客户接受凭证并填写联系人、时间或接受说明');
+const file = await ctx.api.object('sys_file').findOne({ where: { id: fileId } });
+if (!file || file.status !== 'committed' || file.owner_id !== actor) throw new Error('客户接受凭证尚未上传完成或不属于当前员工');
+return await ctx.api.transaction(async () => {
+  const quote = await ctx.api.object('forge_quotation').findOne({ where: { id } });
+  if (!quote || quote.status !== 'sent' || quote.responsible_id !== actor) throw new Error('只有报价负责人可以登记本人已发送报价的客户接受结果');
+  const version = Number(quote.pricing_version || 0);
+  if (Number(quote.sent_pricing_version) !== version) throw new Error('客户接受凭证必须对应当前报价核价版本');
+  const acceptedAt = new Date().toISOString();
+  await ctx.api.object('forge_quotation').update({ id, status: 'accepted', customer_acceptance_evidence_attachment: fileId,
+    customer_acceptance_note: note, accepted_at: acceptedAt, accepted_by: actor, accepted_pricing_version: version });
+  return { id, status: 'accepted', accepted_at: acceptedAt, accepted_pricing_version: version };
+});
+` },
 });
 
 export const QuotationConvertToContract = defineAction({
   name: 'quotation_convert_to_contract', label: '转为合同', objectName: 'forge_quotation', icon: 'scroll-text',
   locations: [...locations], order: 20, visible: `record.status == 'accepted'`, refreshAfter: true,
+  requiredPermissions: ['sales_contract_operator'],
   description: '用已接受报价建立一份同客户、同价格和同数量的框架合同。', successMessage: '合同与合同明细已创建',
   params: [
     { field: 'contract_type_id', objectOverride: 'forge_sales_contract', required: true },
@@ -439,26 +542,28 @@ const id = ctx.recordId || (ctx.record && ctx.record.id);
 const quote = ctx.record;
 if (ctx.recordLoadDenied === true || !id || !quote) throw new Error('当前报价不存在或不可访问');
 if (quote.status !== 'accepted') throw new Error('仅已接受报价可以转为合同');
+if (!quote.customer_acceptance_evidence_attachment || Number(quote.accepted_pricing_version) !== Number(quote.pricing_version || 0)) throw new Error('报价缺少当前核价版本的客户接受凭证');
 const existing = await ctx.api.object('forge_sales_contract').find({ where: { quotation_id: id } });
 if (existing.length) throw new Error('该报价已转换为合同');
 const lines = await ctx.api.object('forge_quotation_line').find({ where: { quotation_id: id } });
 if (!lines.length) throw new Error('报价至少需要一条明细');
+return await ctx.api.transaction(async () => {
 let contractId = null;
 {
   const created = await ctx.api.object('forge_sales_contract').insert({
     name: ctx.input.name, code: ctx.input.code, contract_type_id: ctx.input.contract_type_id,
     customer_id: quote.customer_id, contact_id: quote.contact_id || null, quotation_id: id,
-    signed_on: ctx.input.starts_on, starts_on: ctx.input.starts_on, ends_on: ctx.input.ends_on,
+    signed_on: null, starts_on: ctx.input.starts_on, ends_on: ctx.input.ends_on,
     responsible_id: quote.responsible_id, total_amount: Number(quote.total_amount || 0),
     has_order_amount_limit: true, order_amount_limit: Number(quote.total_amount || 0),
     outside_item_requires_approval: true, revenue_trigger: 'shipment',
-    business_terms: quote.business_terms || null, remarks: '由报价 ' + quote.code + ' 转换生成',
+    payment_term: quote.payment_term || null, business_terms: quote.business_terms || null, remarks: '由报价 ' + quote.code + ' 转换生成',
   });
   contractId = typeof created === 'string' ? created : created && (created.id || (created.record && created.record.id));
   if (!contractId) throw new Error('合同创建后未返回记录ID');
   for (const line of lines) {
     await ctx.api.object('forge_sales_contract_line').insert({
-      name: line.name, contract_id: contractId, quotation_line_id: line.id, sku_id: line.sku_id,
+      name: line.name, contract_id: contractId, line_type: line.line_type || 'material', quotation_line_id: line.id, sku_id: line.sku_id || null,
       item_code: line.item_code || null, model: line.model || null, specification: line.specification || null,
       unit_name: line.unit_name || null, quantity_limit: Number(line.quantity || 0), ordered_quantity: 0,
       taxed_unit_price: Number(line.taxed_unit_price || 0), tax_rate: Number(line.tax_rate || 0),
@@ -468,8 +573,170 @@ let contractId = null;
   }
 }
 return { id: contractId, quotation_id: id, line_count: lines.length };
+});
 `,
   },
+});
+
+export const SalesContractDraftCreate = defineAction({
+  name: 'sales_contract_draft_create', label: '保存合同草稿', objectName: 'forge_sales_contract', icon: 'file-plus-2',
+  requiredPermissions: ['sales_contract_operator'],
+  params: [
+    { name: 'header_json', label: '合同信息', type: 'text', required: true },
+    { name: 'lines_json', label: '物料与服务明细', type: 'text', required: true },
+    { name: 'fees_json', label: '附加费用', type: 'text' },
+  ],
+  body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
+const hasExactQuotationLineSet = ${hasExactQuotationLineSet.toString()};
+const actor = String(ctx.session && ctx.session.userId || '').trim();
+const organizationId = String(ctx.session && ctx.session.organizationId || '').trim();
+if (!actor || !organizationId) throw new Error('无法确认当前员工和组织，请重新登录后重试');
+const parse = (value, label, fallback) => {
+  try { return value == null || value === '' ? fallback : JSON.parse(String(value)); }
+  catch { throw new Error(label + '格式无效'); }
+};
+const header = parse(ctx.input && ctx.input.header_json, '合同信息', null);
+const requestedLines = parse(ctx.input && ctx.input.lines_json, '合同明细', null);
+const requestedFees = parse(ctx.input && ctx.input.fees_json, '附加费用', []);
+if (!header || typeof header !== 'object' || Array.isArray(header)) throw new Error('合同信息无效');
+if (!Array.isArray(requestedLines) || requestedLines.length < 1 || requestedLines.length > 100) throw new Error('合同至少需要一条明细，且最多支持100条');
+if (!Array.isArray(requestedFees) || requestedFees.length > 50) throw new Error('附加费用最多支持50项');
+const text = (value, label, required, max = 255) => {
+  const result = String(value == null ? '' : value).trim();
+  if (required && !result) throw new Error(label + '不能为空');
+  if (result.length > max) throw new Error(label + '长度不能超过' + max + '个字符');
+  return result || null;
+};
+const round4 = value => Math.round((value + Number.EPSILON) * 10000) / 10000;
+const number = (value, label, min, max) => {
+  if (value === '' || value === null || value === undefined) throw new Error(label + '不能为空');
+  const result = Number(value);
+  if (!Number.isFinite(result) || result < min || result > max || round4(result) !== result) throw new Error(label + '无效，最多支持四位小数');
+  return result;
+};
+const belongs = row => row && String(row.organization_id || '') === organizationId;
+const customerId = text(header.customer_id, '客户', true, 128);
+const contractTypeId = text(header.contract_type_id, '合同类型', true, 128);
+const contractCode = text(header.code, '合同编号', true, 100);
+const contractName = text(header.name, '合同名称', true, 255);
+const quoteId = text(header.quotation_id, '来源报价', false, 128);
+if (String(header.responsible_id || actor) !== actor) throw new Error('合同负责人必须是当前员工');
+if (header.signed_on && !/^\\d{4}-\\d{2}-\\d{2}$/.test(String(header.signed_on))) throw new Error('合同签订日期格式无效');
+if (header.starts_on && !/^\\d{4}-\\d{2}-\\d{2}$/.test(String(header.starts_on))) throw new Error('合同生效日期格式无效');
+if (header.ends_on && !/^\\d{4}-\\d{2}-\\d{2}$/.test(String(header.ends_on))) throw new Error('合同到期日期格式无效');
+if (header.starts_on && header.ends_on && header.ends_on < header.starts_on) throw new Error('合同到期日期不得早于生效日期');
+const customer = await ctx.api.object('forge_customer').findOne({ where: { id: customerId } });
+if (!belongs(customer) || customer.owner_id !== actor) throw new Error('只能为本人负责的客户创建合同');
+const contractType = await ctx.api.object('forge_contract_type').findOne({ where: { id: contractTypeId } });
+if (!belongs(contractType) || contractType.status === 'inactive') throw new Error('合同类型不存在、已停用或不属于当前组织');
+if (header.contact_id) {
+  const contact = await ctx.api.object('forge_contact').findOne({ where: { id: String(header.contact_id) } });
+  if (!belongs(contact) || contact.customer_id !== customerId || contact.owner_id !== actor || contact.employment_status === 'inactive') throw new Error('所选联系人不属于当前客户或已不可用');
+}
+let quote = null;
+if (quoteId) {
+  quote = await ctx.api.object('forge_quotation').findOne({ where: { id: quoteId } });
+  if (!belongs(quote) || quote.customer_id !== customerId || quote.responsible_id !== actor) throw new Error('来源报价不属于当前客户或当前员工');
+}
+const quoteLines = quoteId ? await ctx.api.object('forge_quotation_line').find({ where: { quotation_id: quoteId } }) : [];
+const quoteLinesById = new Map(quoteLines.map(line => [line.id, line]));
+const lines = [];
+for (let index = 0; index < requestedLines.length; index += 1) {
+  const input = requestedLines[index];
+  if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('第' + (index + 1) + '条明细格式无效');
+  const type = String(input.line_type || 'material');
+  if (!['material', 'service'].includes(type)) throw new Error('第' + (index + 1) + '条明细类型无效');
+  const sourceId = text(input.quotation_line_id, '来源报价明细', false, 128);
+  let source = null;
+  if (sourceId) {
+    source = quoteLinesById.get(sourceId);
+    if (!quote || !source) throw new Error('第' + (index + 1) + '条来源明细不属于所选报价');
+  }
+  const lineType = source ? source.line_type : type;
+  if (source && type !== source.line_type) throw new Error('第' + (index + 1) + '条明细类型与来源报价不一致');
+  const quantity = source ? Number(source.quantity) : number(input.quantity_limit, '第' + (index + 1) + '条数量', 0.0001, 1000000000);
+  const unitPrice = source ? Number(source.taxed_unit_price) : number(input.taxed_unit_price, '第' + (index + 1) + '条含税单价', 0, 1000000000000);
+  const taxRate = source ? Number(source.tax_rate) : number(input.tax_rate, '第' + (index + 1) + '条税率', 0, 100);
+  const discountRate = source ? Number(source.discount_rate) : number(input.discount_rate, '第' + (index + 1) + '条折扣率', 0, 100);
+  const skuId = source ? (source.sku_id || null) : text(input.sku_id, '物料规格', false, 128);
+  const name = text(source ? source.name : input.name, '第' + (index + 1) + '条名称', true);
+  const sameText = (left, right) => String(left || '') === String(right || '');
+  let sku = null, material = null, unit = null;
+  if (lineType === 'material') {
+    if (!skuId) throw new Error('第' + (index + 1) + '条物料明细必须选择规格');
+    sku = await ctx.api.object('forge_material_sku').findOne({ where: { id: skuId } });
+    if (!belongs(sku) || sku.enabled === false) throw new Error('第' + (index + 1) + '条物料规格不存在、已停用或不属于当前组织');
+    material = await ctx.api.object('forge_material').findOne({ where: { id: sku.material_id } });
+    if (!belongs(material) || material.status === 'inactive') throw new Error('第' + (index + 1) + '条物料不存在、已停用或不属于当前组织');
+    unit = material.unit_id ? await ctx.api.object('forge_unit').findOne({ where: { id: material.unit_id } }) : null;
+    if (!belongs(unit) || unit.status === 'inactive') throw new Error('第' + (index + 1) + '条物料计量单位不可用');
+  } else if (skuId) throw new Error('服务项目不能关联物料规格');
+  const lineQuantity = number(quantity, '第' + (index + 1) + '条数量', 0.0001, 1000000000);
+  const linePrice = number(unitPrice, '第' + (index + 1) + '条含税单价', 0, 1000000000000);
+  const lineTax = number(taxRate, '第' + (index + 1) + '条税率', 0, 100);
+  const lineDiscount = number(discountRate, '第' + (index + 1) + '条折扣率', 0, 100);
+  if (source && (Number(input.quantity_limit) !== lineQuantity || Number(input.taxed_unit_price) !== linePrice || Number(input.tax_rate) !== lineTax || Number(input.discount_rate) !== lineDiscount || !sameText(input.name, source.name) || !sameText(input.sku_id, source.sku_id) || !sameText(input.item_code, source.item_code) || !sameText(input.model, source.model) || !sameText(input.specification, source.specification) || !sameText(input.unit_name, source.unit_name) || !sameText(input.remarks, source.remarks))) throw new Error('第' + (index + 1) + '条来源报价明细的名称、规格、数量和价税必须保持原值');
+  const subtotal = round4(lineQuantity * linePrice * (1 - lineDiscount / 100));
+  lines.push({ name, line_type: lineType, quotation_line_id: sourceId, sku_id: skuId,
+    item_code: source ? source.item_code || null : material && material.code || null,
+    model: source ? source.model || null : material && material.model || null,
+    specification: source ? source.specification || null : sku && sku.name || null,
+    unit_name: source ? source.unit_name || null : unit && unit.name || null,
+    quantity_limit: lineQuantity, ordered_quantity: 0, taxed_unit_price: linePrice, tax_rate: lineTax,
+    discount_rate: lineDiscount, taxed_subtotal: subtotal, remarks: source ? source.remarks || null : text(input.remarks, '备注', false, 1000) });
+}
+if (quoteId && !hasExactQuotationLineSet(quoteLines, lines)) throw new Error('来源报价的每条明细都必须完整带入合同');
+const fees = requestedFees.map((fee, index) => {
+  if (!fee || typeof fee !== 'object') throw new Error('第' + (index + 1) + '项附加费用格式无效');
+  const amount = number(fee.total_amount, '第' + (index + 1) + '项费用金额', 0.0001, 1000000000000);
+  const occurredOn = text(fee.occurred_on, '第' + (index + 1) + '项费用日期', true, 10);
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(occurredOn)) throw new Error('第' + (index + 1) + '项费用日期格式无效');
+  const bearing = String(fee.bearing_type || 'customer');
+  if (!['customer', 'company'].includes(bearing)) throw new Error('第' + (index + 1) + '项费用承担方无效');
+  return { fee_item: text(fee.fee_item, '第' + (index + 1) + '项费用名称', true), bearing_type: bearing, occurred_on: occurredOn, total_amount: amount };
+});
+const signatureSource = JSON.stringify({ header: { ...header, responsible_id: actor }, lines, fees });
+const hash = value => { let a = 2166136261, b = 2246822519; for (let i = 0; i < value.length; i++) { const c = value.charCodeAt(i); a = Math.imul(a ^ c, 16777619) >>> 0; b = Math.imul(b ^ c, 3266489917) >>> 0; } return a.toString(16).padStart(8, '0') + b.toString(16).padStart(8, '0'); };
+const signature = hash(signatureSource);
+return await ctx.api.transaction(async () => {
+  const existing = await ctx.api.object('forge_sales_contract').findOne({ where: { code: contractCode } });
+  if (existing) {
+    if (existing.owner_id === actor && existing.status === 'draft' && existing.draft_request_signature === signature) return { id: existing.id, code: contractCode, status: 'draft', repeated: true };
+    throw new Error('合同编号已存在，请刷新合同列表后重试');
+  }
+  const subtotal = round4(lines.reduce((sum, line) => sum + line.taxed_subtotal, 0));
+  const feeTotal = round4(fees.reduce((sum, fee) => sum + fee.total_amount, 0));
+  const total = round4(subtotal + feeTotal);
+  const contract = await ctx.api.object('forge_sales_contract').insert({
+    name: contractName, code: contractCode, customer_po_number: text(header.customer_po_number, '客户单号', false),
+    contract_type_id: contractTypeId, customer_id: customerId, contact_id: header.contact_id || null,
+    quotation_id: quoteId, project_name: text(header.project_name, '关联项目', false), company_account_id: header.company_account_id || null,
+    delivery_address: text(header.delivery_address, '收货地址', false), delivery_contact: text(header.delivery_contact, '收货人', false), delivery_phone: text(header.delivery_phone, '收货联系电话', false),
+    signed_on: null, signed_evidence_attachment: null, signed_evidence_note: null,
+    signed_recorded_by: null, signed_recorded_at: null, starts_on: header.starts_on || null, ends_on: header.ends_on || null,
+    owner_id: actor, responsible_id: actor, collaborator_ids: header.collaborator_ids || [], total_amount: total,
+    has_order_amount_limit: Boolean(header.has_order_amount_limit), order_amount_limit: header.has_order_amount_limit ? number(header.order_amount_limit, '累计下单金额上限', 0.0001, 1000000000000) : 0,
+    allow_affiliate_orders: Boolean(header.allow_affiliate_orders), affiliate_company_names: header.allow_affiliate_orders ? text(header.affiliate_company_names, '关联公司', false, 2000) : null,
+    outside_item_requires_approval: header.outside_item_requires_approval !== false, all_orders_require_approval: Boolean(header.all_orders_require_approval),
+    revenue_trigger: header.revenue_trigger || 'shipment', ordered_count: 0, ordered_amount: 0, invoiced_amount: 0, shipped_amount: 0, collected_amount: 0,
+    status: 'draft', payment_term: text(header.payment_term, '付款条件', false, 2000), delivery_cycle_days: header.delivery_cycle_days === '' ? null : Number(header.delivery_cycle_days || 0),
+    warranty_months: header.warranty_months === '' ? null : Number(header.warranty_months || 0), business_terms: text(header.business_terms, '商务条款', false, 8000),
+    requires_legal_review: header.requires_legal_review === true,
+    attachment_ids: Array.isArray(header.attachment_ids) ? header.attachment_ids : [], attachment_note: text(header.attachment_note, '附件说明', false, 2000),
+    draft_request_signature: signature, remarks: text(header.remarks, '备注', false, 4000),
+  });
+  const contractId = typeof contract === 'string' ? contract : contract && (contract.id || contract.record && contract.record.id);
+  if (!contractId) throw new Error('合同创建后未返回记录ID');
+  for (const line of lines) await ctx.api.object('forge_sales_contract_line').insert({ ...line, contract_id: contractId });
+  for (let index = 0; index < fees.length; index++) {
+    const fee = fees[index];
+    await ctx.api.object('forge_sales_additional_fee').insert({ name: fee.fee_item + ' ' + contractCode, code: contractCode + '-F' + String(index + 1).padStart(2, '0'),
+      source_type: 'sales_contract', contract_id: contractId, customer_id: customerId, bearing_type: fee.bearing_type, fee_item: fee.fee_item,
+      occurred_on: fee.occurred_on, total_amount: fee.total_amount, document_status: 'draft', finance_status: fee.bearing_type === 'customer' ? 'pending_invoice' : 'pending_payment', responsible_id: actor });
+  }
+  return { id: contractId, code: contractCode, status: 'draft', line_count: lines.length, total_amount: total };
+});
+` },
 });
 
 export const ContractSubmit = defineAction({
@@ -485,15 +752,21 @@ const record = ctx.record;
 if (!record || record.status !== 'draft') throw new Error('合同状态已变化，请刷新后重试');
 if (record.quotation_id) {
   const quote = await ctx.api.object('forge_quotation').findOne({ where: { id: record.quotation_id } });
-  if (!quote || quote.status !== 'accepted') throw new Error('来源报价需为已接受状态');
+  if (!quote || quote.status !== 'accepted' || !quote.customer_acceptance_evidence_attachment || Number(quote.accepted_pricing_version) !== Number(quote.pricing_version || 0)) throw new Error('来源报价需有当前核价版本的客户接受凭证');
 }
+if (!String(record.payment_term || '').trim()) throw new Error('提交合同前必须明确付款条件');
 const lines = await ctx.api.object('forge_sales_contract_line').find({ where: { contract_id: id } });
-if (!lines.length) throw new Error('合同至少需要一条物料明细');
+if (!lines.length) throw new Error('合同至少需要一条物料或服务明细');
 const organizationId = String(ctx.session && ctx.session.organizationId || '');
 if (!organizationId) throw new Error('无法确认当前销售组织，请重新登录后再试');
 const belongsToOrganization = row => row && String(row.organization_id || '') === organizationId;
 for (let index = 0; index < lines.length; index += 1) {
   const line = lines[index];
+  if (line.line_type === 'service') {
+    if (!line.name || !(Number(line.quantity_limit) > 0) || line.sku_id) throw new Error('第' + (index + 1) + '条服务明细必须有名称和数量，且不能关联物料规格');
+    continue;
+  }
+  if (line.line_type !== 'material' || !line.sku_id) throw new Error('第' + (index + 1) + '条合同明细类型无效或缺少物料规格');
   const sku = await ctx.api.object('forge_material_sku').findOne({ where: { id: line.sku_id } });
   if (!belongsToOrganization(sku) || sku.enabled === false) throw new Error('第' + (index + 1) + '条合同明细的物料规格不存在、已停用或不属于当前组织');
   const material = await ctx.api.object('forge_material').findOne({ where: { id: sku.material_id } });
@@ -501,10 +774,12 @@ for (let index = 0; index < lines.length; index += 1) {
   const unit = material.unit_id ? await ctx.api.object('forge_unit').findOne({ where: { id: material.unit_id } }) : null;
   if (!belongsToOrganization(unit) || unit.status === 'inactive') throw new Error('第' + (index + 1) + '条合同明细的计量单位不可用');
 }
-const now = Date.now();
+const now = Date.now(), actor = ctx.session && ctx.session.userId;
+if (!actor) throw new Error('无法识别当前提交人');
 const reviewerPositions = [
   ['contract_delivery_reviewer', '合同交付复核岗'],
   ['contract_commercial_reviewer', '合同商务复核岗'],
+  ...(record.requires_legal_review ? [['contract_legal_reviewer', '非标合同法务复核岗']] : []),
 ];
 const reviewerUsers = [];
 for (const [position, label] of reviewerPositions) {
@@ -518,12 +793,55 @@ for (const [position, label] of reviewerPositions) {
   if (active.length > 1) throw new Error(label + '当前有多名员工，请先明确本次合同的复核负责人');
   reviewerUsers.push(active[0].user_id);
 }
-if (reviewerUsers[0] === reviewerUsers[1]) throw new Error('交付复核与商务复核必须由不同员工承担');
+if (new Set(reviewerUsers).size !== reviewerUsers.length || reviewerUsers.includes(actor)) throw new Error('合同提交人与各复核岗位必须由不同员工承担');
 const total = Math.round(lines.reduce((sum, line) => sum + Number(line.taxed_subtotal || 0), 0) * 10000) / 10000;
 await ctx.api.object('forge_sales_contract').update({ id, total_amount: total, status: 'pending_approval' });
 return { id, total_amount: total, status: 'pending_approval', routed: true };
 `,
   },
+});
+
+export const ContractRegisterSignature = defineAction({
+  name: 'contract_register_signature', label: '登记客户签署', objectName: 'forge_sales_contract', icon: 'signature',
+  locations: [...locations], order: 30, refreshAfter: true,
+  requiredPermissions: ['contract_signature_registrar'],
+  visible: `record.status == 'active' && record.signed_on == null`,
+  description: '内部合同审批通过后，上传客户签署版本并登记实际签订日期；此动作不替代签署本身。',
+  successMessage: '客户签署凭证已归档，合同可以进入订单办理',
+  params: [
+    { field: 'signed_on', objectOverride: 'forge_sales_contract', required: true },
+    { field: 'signed_evidence_attachment', objectOverride: 'forge_sales_contract', required: true },
+    { field: 'signed_evidence_note', objectOverride: 'forge_sales_contract', required: true },
+  ],
+  body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
+const id = ctx.recordId || (ctx.record && ctx.record.id);
+const actor = String(ctx.session && ctx.session.userId || '').trim();
+if (ctx.recordLoadDenied === true || !id || !ctx.record) throw new Error('当前合同不存在或不可访问');
+if (!actor) throw new Error('无法识别当前签署登记员工');
+const signedOn = String(ctx.input.signed_on || '').trim();
+const note = String(ctx.input.signed_evidence_note || '').trim();
+const rawFile = ctx.input.signed_evidence_attachment, firstFile = Array.isArray(rawFile) ? rawFile[0] : rawFile;
+const fileId = String(typeof firstFile === 'string' ? firstFile : firstFile && firstFile.id || '').trim();
+if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(signedOn) || Number.isNaN(Date.parse(signedOn + 'T00:00:00Z'))) throw new Error('请填写有效的实际签订日期');
+if (!note || note.length > 2000) throw new Error('请填写签署来源或文件说明');
+if (!fileId) throw new Error('请上传客户签署版合同凭证');
+const file = await ctx.api.object('sys_file').findOne({ where: { id: fileId } });
+if (!file || file.status !== 'committed' || file.owner_id !== actor) throw new Error('签署凭证尚未上传完成或不属于当前员工');
+return await ctx.api.transaction(async () => {
+  const current = await ctx.api.object('forge_sales_contract').findOne({ where: { id } });
+  if (!current || current.status !== 'active') throw new Error('合同必须先完成内部审批');
+  if (current.responsible_id === actor) throw new Error('合同负责人不能代替独立登记人归档签署凭证');
+  const storedFile = Array.isArray(current.signed_evidence_attachment) ? current.signed_evidence_attachment[0] : current.signed_evidence_attachment;
+  const storedFileId = String(typeof storedFile === 'string' ? storedFile : storedFile && storedFile.id || '').trim();
+  if (current.signed_on || storedFileId) {
+    if (String(current.signed_on) === signedOn && storedFileId === fileId && current.signed_evidence_note === note) return { id, signed_on: signedOn, repeated: true };
+    throw new Error('合同已登记签署凭证；请按修订流程处理，不要覆盖历史签署材料');
+  }
+  await ctx.api.object('forge_sales_contract').update({ id, signed_on: signedOn, signed_evidence_attachment: fileId,
+    signed_evidence_note: note, signed_recorded_by: actor, signed_recorded_at: new Date().toISOString() });
+  return { id, signed_on: signedOn, signed_evidence_attachment: fileId, repeated: false };
+});
+` },
 });
 
 export const ContractSubmitFrozenMaterial = defineAction({
@@ -576,7 +894,7 @@ if (file.owner_id && file.owner_id !== actor) throw new Error('本次合同文�
 if (file.name !== materialName) throw new Error('合同文件名称与冻结材料不一致');
 if (record.quotation_id) {
   const quote = await ctx.api.object('forge_quotation').findOne({ where: { id: record.quotation_id } });
-  if (!quote || quote.status !== 'accepted') throw new Error('来源报价需为已接受状态');
+  if (!quote || quote.status !== 'accepted' || !quote.customer_acceptance_evidence_attachment || Number(quote.accepted_pricing_version) !== Number(quote.pricing_version || 0)) throw new Error('来源报价需有当前核价版本的客户接受凭证');
 }
 const lines = await ctx.api.object('forge_sales_contract_line').find({ where: { contract_id: id } });
 if (!lines.length) throw new Error('合同至少需要一条物料明细');
@@ -584,6 +902,7 @@ const nowMs = Date.now();
 const reviewerPositions = [
   ['contract_delivery_reviewer', '合同交付复核岗'],
   ['contract_commercial_reviewer', '合同商务复核岗'],
+  ...(record.requires_legal_review ? [['contract_legal_reviewer', '非标合同法务复核岗']] : []),
 ];
 const reviewerUsers = [];
 for (const [position, label] of reviewerPositions) {
@@ -597,7 +916,7 @@ for (const [position, label] of reviewerPositions) {
   if (active.length > 1) throw new Error(label + '当前有多名员工，请先明确本次合同的复核负责人');
   reviewerUsers.push(active[0].user_id);
 }
-if (reviewerUsers[0] === reviewerUsers[1]) throw new Error('交付复核与商务复核必须由不同员工承担');
+if (new Set(reviewerUsers).size !== reviewerUsers.length || reviewerUsers.includes(actor)) throw new Error('合同提交人与各复核岗位必须由不同员工承担');
 const total = Math.round(lines.reduce((sum, line) => sum + Number(line.taxed_subtotal || 0), 0) * 10000) / 10000;
 const submittedAt = new Date().toISOString();
 let outcome;
@@ -713,7 +1032,8 @@ return { id, revision_request_id: latest.id, attachment_count: files.length, att
 
 export const SalesOrderSubmit = defineAction({
   name: 'sales_order_submit', label: '提交审批', objectName: 'forge_sales_order', icon: 'send', locations: [...locations], order: 10,
-  visible: `record.status == 'draft'`, confirmText: '提交前将校验合同额度和物料数量，是否继续？', refreshAfter: true,
+  visible: `record.status == 'draft'`, confirmText: '提交前将校验合同额度和明细数量，是否继续？', refreshAfter: true,
+  requiredPermissions: ['sales_order_operator'],
   successMessage: '销售订单已提交审批',
   body: {
     language: 'js', capabilities: ['api.read', 'api.write'], source: `
@@ -721,13 +1041,15 @@ const id = ctx.recordId || (ctx.record && ctx.record.id);
 if (ctx.recordLoadDenied === true || !id) throw new Error('当前订单不存在或不可访问');
 const record = ctx.record;
 if (!record || record.status !== 'draft') throw new Error('订单状态已变化，请刷新后重试');
+if (!record.payment_term || !String(record.payment_term).trim() || !record.payment_method || !record.planned_delivery_on) throw new Error('提交订单前必须明确付款条件、付款方式和计划交货日期');
 const lines = await ctx.api.object('forge_sales_order_line').find({ where: { order_id: id } });
-if (!lines.length) throw new Error('订单至少需要一条物料明细');
+if (!lines.length) throw new Error('订单至少需要一条物料或服务明细');
+if (lines.some(line => line.line_type === 'service' ? Boolean(line.sku_id) : line.line_type !== 'material' || !line.sku_id)) throw new Error('订单明细的物料/服务类型与规格关联不一致');
 const total = Math.round(lines.reduce((sum, line) => sum + Number(line.taxed_subtotal || 0), 0) * 10000) / 10000;
 if (record.source_type === 'contract') {
   if (!record.contract_id) throw new Error('关联合同订单必须选择合同');
   const contract = await ctx.api.object('forge_sales_contract').findOne({ where: { id: record.contract_id } });
-  if (!contract || contract.status !== 'active') throw new Error('关联合同需为执行中状态');
+  if (!contract || contract.status !== 'active' || !contract.signed_on || !contract.signed_evidence_attachment) throw new Error('关联合同需完成内部审批并归档客户签署凭证');
   if (contract.has_order_amount_limit && Number(contract.ordered_amount || 0) + total > Number(contract.order_amount_limit || 0)) {
     throw new Error('订单金额超过合同剩余额度');
   }
@@ -736,10 +1058,15 @@ if (record.source_type === 'contract') {
   for (const line of lines) {
     const contractLine = limits.get(line.contract_line_id);
     if (!contractLine) throw new Error('订单明细必须来自当前合同清单');
+    if (line.line_type !== contractLine.line_type || (line.line_type === 'service' && (line.sku_id || contractLine.sku_id)) || (line.line_type === 'material' && (!line.sku_id || line.sku_id !== contractLine.sku_id))) throw new Error('订单明细物料/服务类型或规格与合同不一致');
     if (Number(contractLine.ordered_quantity || 0) + Number(line.quantity || 0) > Number(contractLine.quantity_limit || 0)) {
       throw new Error('订单物料数量超过合同剩余数量');
     }
   }
+}
+if (record.quotation_id) {
+  const quote = await ctx.api.object('forge_quotation').findOne({ where: { id: record.quotation_id } });
+  if (!quote || quote.status !== 'accepted' || !quote.customer_acceptance_evidence_attachment || Number(quote.accepted_pricing_version) !== Number(quote.pricing_version || 0)) throw new Error('来源报价需有当前核价版本的客户接受凭证');
 }
 await ctx.api.object('forge_sales_order').update({ id, total_amount: total, status: 'pending_approval' });
 return { id, total_amount: total, status: 'pending_approval' };
@@ -750,6 +1077,7 @@ return { id, total_amount: total, status: 'pending_approval' };
 export const SalesOrderApprove = defineAction({
   name: 'sales_order_approve', label: '同意', objectName: 'forge_sales_order', icon: 'circle-check', locations: [...locations], order: 10,
   visible: `record.status == 'pending_approval'`, confirmText: '确认同意并开始执行这张订单？', refreshAfter: true,
+  requiredPermissions: ['sales_order_reviewer'],
   successMessage: '订单审批通过，合同执行进度已更新',
   body: {
     language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
@@ -787,8 +1115,10 @@ return { id, status: 'active', contract_id: record.contract_id || null };
 export const SalesOrderCreateShipment = defineAction({
   name: 'sales_order_create_shipment', label: '创建发货单', objectName: 'forge_sales_order', icon: 'package-check',
   locations: [...locations], order: 20, visible: `record.status == 'active' || record.status == 'partially_shipped'`, refreshAfter: true,
-  description: '从执行中订单创建一张分批发货计划；建单不会改变库存或已发货数量。', successMessage: '发货单与发货明细已创建',
+  requiredPermissions: ['sales_order_fulfillment_operator'],
+  description: '从执行中订单的单条物料明细创建分批发货计划；服务行保留在订单和项目交付范围内，不进入库存或发货单。', successMessage: '物料发货计划已创建',
   params: [
+    { field: 'order_line_id', objectOverride: 'forge_sales_order_line', required: true },
     { field: 'code', objectOverride: 'forge_sales_shipment', required: true },
     { field: 'shipment_on', objectOverride: 'forge_sales_shipment', required: true },
     { field: 'recipient', objectOverride: 'forge_sales_shipment', required: true },
@@ -799,55 +1129,59 @@ export const SalesOrderCreateShipment = defineAction({
   ],
   onSuccess: { navigate: '/_console/apps/com.inoforge.forge.sales/forge_sales_shipment/record/${result.id}' },
   body: {
-    language: 'js', capabilities: ['api.read', 'api.write'], source: `
+    language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id);
-const order = ctx.record;
-if (ctx.recordLoadDenied === true || !id || !order) throw new Error('当前订单不存在或不可访问');
-if (!['active', 'partially_shipped'].includes(order.status)) throw new Error('仅执行中或部分发货订单可以创建发货单');
-const orderLines = await ctx.api.object('forge_sales_order_line').find({ where: { order_id: id } });
-if (orderLines.length !== 1) throw new Error('当前切片仅支持单条物料明细订单分批建单');
-const orderLine = orderLines[0];
-const requested = Number(ctx.input.quantity || 0);
-if (!(requested > 0)) throw new Error('本次发货数量必须大于0');
-const existingLines = await ctx.api.object('forge_sales_shipment_line').find({ where: { order_line_id: orderLine.id } });
-let plannedQuantity = 0, plannedAmount = 0;
-const activeShipmentIds = new Set();
-for (const line of existingLines) {
-  const shipment = await ctx.api.object('forge_sales_shipment').findOne({ where: { id: line.shipment_id } });
-  if (!shipment || shipment.status === 'cancelled') continue;
-  plannedQuantity += Number(line.quantity || 0);
-  plannedAmount += Number(line.taxed_subtotal || 0);
-  activeShipmentIds.add(shipment.id);
-}
-const remaining = Number(orderLine.quantity || 0) - plannedQuantity;
-if (requested > remaining) throw new Error('本次发货数量超过订单未建单数量');
-const round4 = value => Math.round((value + Number.EPSILON) * 10000) / 10000;
-const lineUnitAmount = round4(Number(orderLine.taxed_subtotal || 0) / Number(orderLine.quantity || 1));
-const lineAmount = round4(lineUnitAmount * requested);
-let shipmentId = null;
-const created = await ctx.api.object('forge_sales_shipment').insert({
+if (ctx.recordLoadDenied === true || !id || !ctx.record) throw new Error('当前订单不存在或不可访问');
+return await ctx.api.transaction(async () => {
+  const order = await ctx.api.object('forge_sales_order').findOne({ where: { id } });
+  if (!order || !['active', 'partially_shipped'].includes(order.status)) throw new Error('仅执行中或部分发货订单可以创建发货单');
+  const orderLines = await ctx.api.object('forge_sales_order_line').find({ where: { order_id: id } });
+  const orderLine = orderLines.find(line => line.id === ctx.input.order_line_id);
+  if (!orderLine || orderLine.order_id !== id) throw new Error('请选择当前订单中的物料明细');
+  if (orderLine.line_type !== 'material' || !orderLine.sku_id) throw new Error('服务项目不进入库存或发货单，请选择订单中的物料行');
+  const requested = Number(ctx.input.quantity || 0);
+  if (!(requested > 0)) throw new Error('本次发货数量必须大于0');
+  const shipmentLines = await ctx.api.object('forge_sales_shipment_line').find({ where: { order_id: id } });
+  let plannedQuantity = 0, plannedAmount = 0, orderPlannedAmount = 0;
+  const activeShipmentIds = new Set();
+  for (const line of shipmentLines) {
+    const shipment = await ctx.api.object('forge_sales_shipment').findOne({ where: { id: line.shipment_id } });
+    if (!shipment || shipment.status === 'cancelled') continue;
+    orderPlannedAmount += Number(line.taxed_subtotal || 0);
+    activeShipmentIds.add(shipment.id);
+    if (line.order_line_id === orderLine.id) {
+      plannedQuantity += Number(line.quantity || 0);
+      plannedAmount += Number(line.taxed_subtotal || 0);
+    }
+  }
+  const remaining = Number(orderLine.quantity || 0) - plannedQuantity;
+  if (requested > remaining) throw new Error('本次发货数量超过该物料行未建单数量');
+  const round4 = value => Math.round((value + Number.EPSILON) * 10000) / 10000;
+  const unitAmount = round4(Number(orderLine.taxed_subtotal || 0) / Number(orderLine.quantity || 1));
+  const lineAmount = round4(unitAmount * requested);
+  const created = await ctx.api.object('forge_sales_shipment').insert({
     name: order.code + ' 发货 ' + ctx.input.code, code: ctx.input.code, customer_id: order.customer_id,
     contact_id: order.contact_id || null, shipment_on: ctx.input.shipment_on,
     recipient: ctx.input.recipient, recipient_phone: ctx.input.recipient_phone || null,
     delivery_address: ctx.input.delivery_address, total_amount: lineAmount, total_quantity: requested,
     outbound_quantity: 0, outbound_count: 0, responsible_id: order.responsible_id,
     remarks: ctx.input.remarks || ('由销售订单 ' + order.code + ' 创建'),
-});
-
-shipmentId = typeof created === 'string' ? created : created && (created.id || (created.record && created.record.id));
-if (!shipmentId) throw new Error('发货单创建后未返回记录ID');
-await ctx.api.object('forge_sales_shipment_line').insert({
+  });
+  const shipmentId = typeof created === 'string' ? created : created && (created.id || (created.record && created.record.id));
+  if (!shipmentId) throw new Error('发货单创建后未返回记录ID');
+  await ctx.api.object('forge_sales_shipment_line').insert({
     name: orderLine.name, shipment_id: shipmentId, order_id: id, order_line_id: orderLine.id,
     sku_id: orderLine.sku_id, item_code: orderLine.item_code || null, model: orderLine.model || null,
     specification: orderLine.specification || null, unit_name: orderLine.unit_name || null,
-    quantity: requested, outbound_quantity: 0, taxed_unit_price: lineUnitAmount,
+    quantity: requested, outbound_quantity: 0, taxed_unit_price: unitAmount,
     taxed_subtotal: lineAmount, remarks: orderLine.remarks || null,
+  });
+  await ctx.api.object('forge_sales_order').update({ id,
+    shipment_count: activeShipmentIds.size + 1, planned_shipment_amount: round4(orderPlannedAmount + lineAmount)
+  });
+  return { id: shipmentId, order_id: id, order_line_id: orderLine.id, quantity: requested,
+    total_amount: lineAmount, planned_amount: round4(plannedAmount + lineAmount), remaining_quantity: round4(remaining - requested) };
 });
-
-await ctx.api.object('forge_sales_order').update({ id,
-  shipment_count: activeShipmentIds.size + 1, planned_shipment_amount: round4(plannedAmount + lineAmount)
-});
-return { id: shipmentId, order_id: id, quantity: requested, total_amount: lineAmount, remaining_quantity: round4(remaining - requested) };
 `,
   },
 });
@@ -895,14 +1229,15 @@ return { id: outboundId, shipment_id: id, quantity, status: nextStatus };
 
 export const ContractConvertToSalesOrder = defineAction({
   name: 'contract_convert_to_sales_order', label: '创建销售订单', objectName: 'forge_sales_contract', icon: 'clipboard-list',
-  locations: [...locations], order: 20, visible: `record.status == 'active'`, refreshAfter: true,
+  locations: [...locations], order: 20, visible: `record.status == 'active' && record.signed_on != null`, refreshAfter: true,
+  requiredPermissions: ['sales_order_operator'],
   description: '按合同当前未下单数量建立销售订单。', successMessage: '销售订单与订单明细已创建',
   params: [
     { field: 'code', objectOverride: 'forge_sales_order', required: true },
     { field: 'name', objectOverride: 'forge_sales_order', required: true },
     { field: 'planned_delivery_on', objectOverride: 'forge_sales_order', required: true },
     { field: 'payment_term', objectOverride: 'forge_sales_order', required: true },
-    { field: 'payment_method', objectOverride: 'forge_sales_order', required: true, defaultValue: 'bank_transfer' },
+    { field: 'payment_method', objectOverride: 'forge_sales_order', required: true },
     { field: 'delivery_address', objectOverride: 'forge_sales_order' },
   ],
   onSuccess: { navigate: '/_console/apps/com.inoforge.forge.sales/forge_sales_order/record/${result.id}' },
@@ -911,36 +1246,47 @@ export const ContractConvertToSalesOrder = defineAction({
 const id = ctx.recordId || (ctx.record && ctx.record.id);
 const contract = ctx.record;
 if (ctx.recordLoadDenied === true || !id || !contract) throw new Error('当前合同不存在或不可访问');
-if (contract.status !== 'active') throw new Error('仅执行中合同可以创建销售订单');
-const existing = await ctx.api.object('forge_sales_order').find({ where: { contract_id: id } });
-if (existing.some(order => order.status !== 'cancelled')) throw new Error('该合同已有未取消的销售订单');
-const lines = await ctx.api.object('forge_sales_contract_line').find({ where: { contract_id: id } });
-const remaining = lines.map(line => ({ line, quantity: Number(line.quantity_limit || 0) - Number(line.ordered_quantity || 0) }))
-  .filter(item => item.quantity > 0);
-if (!remaining.length) throw new Error('合同没有可下单的剩余数量');
-const round4 = value => Math.round((value + Number.EPSILON) * 10000) / 10000;
-let orderId = null;
-let total = 0;
-for (const item of remaining) total += Number(item.line.taxed_subtotal || 0) * item.quantity / Number(item.line.quantity_limit || 1);
-total = round4(total);
-{
+if (contract.status !== 'active' || !contract.signed_on || !contract.signed_evidence_attachment) throw new Error('仅完成内部审批并归档客户签署凭证的合同可以创建销售订单');
+if (!ctx.input.payment_term || !String(ctx.input.payment_term).trim() || !ctx.input.payment_method) throw new Error('创建订单前必须明确付款条件和付款方式');
+const actor = String(ctx.session && ctx.session.userId || '').trim();
+if (!actor) throw new Error('无法识别当前订单经办人');
+const requestedCode = String(ctx.input.code || '').trim();
+return await ctx.api.transaction(async () => {
+  const currentContract = await ctx.api.object('forge_sales_contract').findOne({ where: { id } });
+  if (!currentContract || currentContract.status !== 'active' || !currentContract.signed_on || !currentContract.signed_evidence_attachment) throw new Error('仅完成内部审批并归档客户签署凭证的合同可以创建销售订单');
+  const prior = requestedCode ? await ctx.api.object('forge_sales_order').findOne({ where: { code: requestedCode } }) : null;
+  if (prior) {
+    if (prior.contract_id === id && prior.responsible_id === actor && prior.status === 'draft') return { id: prior.id, contract_id: id, repeated: true };
+    throw new Error('订单编号已存在，请更换编号后重试');
+  }
+  const existing = await ctx.api.object('forge_sales_order').find({ where: { contract_id: id } });
+  if (existing.some(order => order.status !== 'cancelled')) throw new Error('该合同已有未取消的销售订单；请先完成或取消现有订单');
+  const lines = await ctx.api.object('forge_sales_contract_line').find({ where: { contract_id: id } });
+  if (lines.some(line => line.line_type === 'service' ? Boolean(line.sku_id) : line.line_type !== 'material' || !line.sku_id)) throw new Error('合同明细的物料/服务类型与规格关联不一致');
+  const remaining = lines.map(line => ({ line, quantity: Number(line.quantity_limit || 0) - Number(line.ordered_quantity || 0) }))
+    .filter(item => item.quantity > 0);
+  if (!remaining.length) throw new Error('合同没有可下单的剩余数量');
+  const round4 = value => Math.round((value + Number.EPSILON) * 10000) / 10000;
+  let total = 0;
+  for (const item of remaining) total += Number(item.line.taxed_subtotal || 0) * item.quantity / Number(item.line.quantity_limit || 1);
+  total = round4(total);
   const created = await ctx.api.object('forge_sales_order').insert({
-    name: ctx.input.name, code: ctx.input.code, source_type: 'contract', customer_id: contract.customer_id,
-    contact_id: contract.contact_id || null, contract_id: id, quotation_id: contract.quotation_id || null,
-    planned_delivery_on: ctx.input.planned_delivery_on, responsible_id: contract.responsible_id,
-    payment_term: ctx.input.payment_term, payment_method: ctx.input.payment_method,
-    revenue_trigger: contract.revenue_trigger || 'shipment', total_amount: total,
-    delivery_address: ctx.input.delivery_address || null, remarks: '由合同 ' + contract.code + ' 转换生成',
+    name: ctx.input.name, code: requestedCode, source_type: 'contract', customer_id: currentContract.customer_id,
+    contact_id: currentContract.contact_id || null, contract_id: id, quotation_id: currentContract.quotation_id || null,
+    planned_delivery_on: ctx.input.planned_delivery_on, responsible_id: actor,
+    payment_term: String(ctx.input.payment_term).trim(), payment_method: ctx.input.payment_method,
+    revenue_trigger: currentContract.revenue_trigger || 'shipment', total_amount: total,
+    delivery_address: ctx.input.delivery_address || null, remarks: '由合同 ' + currentContract.code + ' 转换生成',
   });
-  orderId = typeof created === 'string' ? created : created && (created.id || (created.record && created.record.id));
+  const orderId = typeof created === 'string' ? created : created && (created.id || (created.record && created.record.id));
   if (!orderId) throw new Error('订单创建后未返回记录ID');
   for (const item of remaining) {
     const line = item.line;
     const lineTotal = round4(Number(line.taxed_subtotal || 0) * item.quantity / Number(line.quantity_limit || 1));
     const rate = Number(line.tax_rate || 0) / 100;
     await ctx.api.object('forge_sales_order_line').insert({
-      name: line.name, order_id: orderId, contract_line_id: line.id, quotation_line_id: line.quotation_line_id || null,
-      sku_id: line.sku_id, item_code: line.item_code || null, model: line.model || null,
+      name: line.name, order_id: orderId, line_type: line.line_type || 'material', contract_line_id: line.id, quotation_line_id: line.quotation_line_id || null,
+      sku_id: line.sku_id || null, item_code: line.item_code || null, model: line.model || null,
       specification: line.specification || null, unit_name: line.unit_name || null, quantity: item.quantity,
       shipped_quantity: 0, invoiced_quantity: 0, taxed_unit_price: Number(line.taxed_unit_price || 0),
       untaxed_unit_price: rate > 0 ? round4(Number(line.taxed_unit_price || 0) / (1 + rate)) : Number(line.taxed_unit_price || 0),
@@ -948,8 +1294,8 @@ total = round4(total);
       taxed_subtotal: lineTotal, planned_delivery_on: ctx.input.planned_delivery_on, remarks: line.remarks || null,
     });
   }
-}
-return { id: orderId, contract_id: id, line_count: remaining.length, total_amount: total };
+  return { id: orderId, contract_id: id, line_count: remaining.length, total_amount: total };
+});
 `,
   },
 });
@@ -970,8 +1316,36 @@ return { id, status: '${to}' };
 `,
 });
 
+export const ServiceOrderCreate = defineAction({
+  name: 'service_order_create', label: '创建服务工单', objectName: 'forge_service_order', icon: 'file-plus-2',
+  locations: [], refreshAfter: true, requiredPermissions: ['forge_service_operator'],
+  params: [{ name: 'draft_json', label: '服务工单内容', type: 'textarea', required: true }],
+  body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
+const actor=ctx.session&&ctx.session.userId,organizationId=String((ctx.session&&ctx.session.organizationId)||(ctx.user&&ctx.user.organizationId)||'');
+if(!actor||!organizationId)throw new Error('无法确认当前服务员工及组织');
+let draft;try{draft=JSON.parse(String(ctx.input.draft_json||''))}catch{throw new Error('服务工单格式无效')}
+if(!draft||typeof draft!=='object'||Array.isArray(draft))throw new Error('服务工单格式无效');
+const name=String(draft.name||'').trim(),code=String(draft.code||'').trim();
+if(!name||!code||!draft.customer_id||!draft.sales_order_id)throw new Error('请填写工单标题、编号、客户和来源订单');
+if(!['onsite','remote','return_repair'].includes(draft.service_mode)||!['low','medium','high','urgent'].includes(draft.urgency))throw new Error('服务方式或紧急度无效');
+const customer=await ctx.api.object('forge_customer').findOne({where:{id:draft.customer_id}});
+const order=await ctx.api.object('forge_sales_order').findOne({where:{id:draft.sales_order_id}});
+if(!customer||!order||String(customer.organization_id||'')!==organizationId||String(order.organization_id||'')!==organizationId||order.customer_id!==customer.id)throw new Error('客户与来源订单不匹配或不可访问');
+if(draft.contract_id&&order.contract_id!==draft.contract_id)throw new Error('关联合同与来源订单不匹配');
+let contact=null;if(draft.contact_id){contact=await ctx.api.object('forge_contact').findOne({where:{id:draft.contact_id}});if(!contact||contact.customer_id!==customer.id||String(contact.organization_id||'')!==organizationId)throw new Error('联系人不属于当前客户')}
+const fields=['service_address','service_object','service_type','region','warranty_starts_on','warranty_ends_on','warranty_status','responsibility_type','quotation_handling','fault_symptom','impact_scope','expected_visit_on','remarks'];
+const payload={name,code,owner_id:actor,customer_id:customer.id,contact_id:contact&&contact.id||null,contact_phone:String(draft.contact_phone||contact&&contact.phone||''),sales_order_id:order.id,contract_id:order.contract_id||null,service_mode:draft.service_mode,urgency:draft.urgency,status:'pending_acceptance',next_step:'受理',submitted_at:new Date().toISOString(),responsible_id:actor};
+for(const field of fields)if(draft[field]!==undefined&&draft[field]!==null)payload[field]=String(draft[field]).trim();
+const saved=await ctx.api.object('forge_service_order').insert(payload);
+const id=typeof saved==='string'?saved:saved&&(saved.id||(saved.record&&saved.record.id));
+if(!id)throw new Error('服务工单创建后未返回记录');
+return{id,status:'pending_acceptance'};
+` },
+});
+
 export const ServiceOrderAccept = defineAction({
   name: 'service_order_accept', label: '受理', objectName: 'forge_service_order', icon: 'circle-check', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_service_operator'],
   visible: `record.status == 'pending_acceptance'`, confirmText: '确认受理该服务工单并进入派工？', refreshAfter: true,
   successMessage: '服务工单已受理，等待派工',
   body: serviceOrderTransitionBody('pending_acceptance', 'pending_dispatch', `patch.accepted_at = now; patch.next_step = '派工';`),
@@ -979,6 +1353,7 @@ export const ServiceOrderAccept = defineAction({
 
 export const ServiceOrderDispatch = defineAction({
   name: 'service_order_dispatch', label: '派工', objectName: 'forge_service_order', icon: 'route', locations: [...locations], order: 20,
+  requiredPermissions: ['forge_service_operator'],
   visible: `record.status == 'pending_dispatch'`, refreshAfter: true,
   successMessage: '服务工单已派工，等待工程师接单',
   params: [
@@ -1001,6 +1376,7 @@ patch.next_step = '工程师接单';
 
 export const ServiceOrderEngineerAccept = defineAction({
   name: 'service_order_engineer_accept', label: '工程师接单', objectName: 'forge_service_order', icon: 'wrench', locations: [...locations], order: 30,
+  requiredPermissions: ['forge_service_operator'],
   visible: `record.status == 'pending_receive'`, confirmText: '确认工程师已接单并开始服务？', refreshAfter: true,
   successMessage: '工程师已接单，工单进入服务中',
   body: serviceOrderTransitionBody('pending_receive', 'in_progress', `patch.received_at = now; patch.next_step = '处理记录 / 到场签到 / 提交服务结果';`),
@@ -1141,6 +1517,7 @@ return { id, status: 'claimed', customer_id: customerId };
 
 export const ServiceOrderComplete = defineAction({
   name: 'service_order_complete', label: '提交服务结果', objectName: 'forge_service_order', icon: 'check-circle', locations: [...locations], order: 40,
+  requiredPermissions: ['forge_service_operator'],
   visible: `record.status == 'in_progress'`, refreshAfter: true,
   successMessage: '服务工单已完工，可继续生成报价、结算或质保卡',
   params: [
@@ -1169,6 +1546,7 @@ patch.next_step = '服务报价 / 服务结算 / 质保卡';
 
 export const ServiceOrderCreateQuotation = defineAction({
   name: 'service_order_create_quotation', label: '生成服务报价', objectName: 'forge_service_order', icon: 'file-text', locations: [...locations], order: 50,
+  requiredPermissions: ['forge_service_operator'],
   visible: `record.status == 'completed'`, refreshAfter: true,
   successMessage: '服务报价单已生成',
   params: [
@@ -1185,7 +1563,7 @@ const actor = ctx.session && ctx.session.userId;
 const existing = await ctx.api.object('forge_service_quotation').find({ where: { service_order_id: id } });
 if (existing.length) throw new Error('该服务工单已生成服务报价');
 const code = 'SQ-' + new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);
-const created = await ctx.api.object('forge_service_quotation').insert({ name: order.name + ' - 服务报价', code, service_order_id: id, order_code: order.code, customer_id: order.customer_id, contact_id: order.contact_id || null, total_amount: amount, status: 'draft', valid_until: ctx.input.valid_until, responsible_id: order.responsible_id || actor || null, remarks: order.service_result || order.remarks || null });
+const created = await ctx.api.object('forge_service_quotation').insert({ name: order.name + ' - 服务报价', code, owner_id:actor, service_order_id: id, order_code: order.code, customer_id: order.customer_id, contact_id: order.contact_id || null, total_amount: amount, status: 'draft', valid_until: ctx.input.valid_until, responsible_id: order.responsible_id || actor || null, remarks: order.service_result || order.remarks || null });
 const quotationId = typeof created === 'string' ? created : created && (created.id || (created.record && created.record.id));
 await ctx.api.object('forge_service_order').update({ id, quotation_code: code, quotation_handling: '已生成服务报价', next_step: '客户确认服务报价' });
 return { id: quotationId, code, service_order_id: id };
@@ -1194,6 +1572,7 @@ return { id: quotationId, code, service_order_id: id };
 
 export const ServiceOrderCreateSettlement = defineAction({
   name: 'service_order_create_settlement', label: '生成服务结算', objectName: 'forge_service_order', icon: 'receipt-text', locations: [...locations], order: 55,
+  requiredPermissions: ['forge_service_operator'],
   visible: `record.status == 'completed'`, refreshAfter: true,
   successMessage: '服务结算单已生成',
   params: [{ field: 'total_amount', objectOverride: 'forge_service_settlement', required: true }],
@@ -1206,7 +1585,7 @@ const actor = ctx.session && ctx.session.userId;
 const existing = await ctx.api.object('forge_service_settlement').find({ where: { service_order_id: id } });
 if (existing.length) throw new Error('该服务工单已生成服务结算');
 const code = 'SS-' + new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);
-const created = await ctx.api.object('forge_service_settlement').insert({ name: order.name + ' - 服务结算', code, service_order_id: id, quotation_id: null, order_code: order.code, customer_id: order.customer_id, contact_id: order.contact_id || null, total_amount: amount, status: 'draft', responsible_id: order.responsible_id || actor || null, remarks: order.service_result || order.remarks || null });
+const created = await ctx.api.object('forge_service_settlement').insert({ name: order.name + ' - 服务结算', code, owner_id:actor, service_order_id: id, quotation_id: null, order_code: order.code, customer_id: order.customer_id, contact_id: order.contact_id || null, total_amount: amount, status: 'draft', responsible_id: order.responsible_id || actor || null, remarks: order.service_result || order.remarks || null });
 const settlementId = typeof created === 'string' ? created : created && (created.id || (created.record && created.record.id));
 await ctx.api.object('forge_service_order').update({ id, settlement_code: code, next_step: '服务结算确认 / 财务应收' });
 return { id: settlementId, code, service_order_id: id };
@@ -1215,6 +1594,7 @@ return { id: settlementId, code, service_order_id: id };
 
 export const ServiceQuotationConfirm = defineAction({
   name: 'service_quotation_confirm', label: '客户确认', objectName: 'forge_service_quotation', icon: 'circle-check', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_service_operator'],
   visible: `record.status == 'draft' || record.status == 'pending_confirmation'`, confirmText: '确认客户已接受这份服务报价？', refreshAfter: true,
   successMessage: '服务报价已确认',
   body: { language: 'js', capabilities: ['api.write'], source: `
@@ -1228,6 +1608,7 @@ return { id, status: 'confirmed' };
 
 export const ServiceQuotationCreateSettlement = defineAction({
   name: 'service_quotation_create_settlement', label: '转服务结算', objectName: 'forge_service_quotation', icon: 'receipt-text', locations: [...locations], order: 20,
+  requiredPermissions: ['forge_service_operator'],
   visible: `record.status == 'confirmed'`, refreshAfter: true,
   successMessage: '服务结算单已生成',
   body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
@@ -1238,7 +1619,7 @@ const existing = await ctx.api.object('forge_service_settlement').find({ where: 
 if (existing.length) throw new Error('该服务报价已生成服务结算');
 const actor = ctx.session && ctx.session.userId;
 const code = 'SS-' + new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);
-const created = await ctx.api.object('forge_service_settlement').insert({ name: quote.name.replace('服务报价','服务结算'), code, service_order_id: quote.service_order_id || null, quotation_id: id, order_code: quote.order_code, customer_id: quote.customer_id, contact_id: quote.contact_id || null, total_amount: Number(quote.total_amount || 0), status: 'draft', responsible_id: quote.responsible_id || actor || null, remarks: quote.remarks || null });
+const created = await ctx.api.object('forge_service_settlement').insert({ name: quote.name.replace('服务报价','服务结算'), code, owner_id:actor, service_order_id: quote.service_order_id || null, quotation_id: id, order_code: quote.order_code, customer_id: quote.customer_id, contact_id: quote.contact_id || null, total_amount: Number(quote.total_amount || 0), status: 'draft', responsible_id: quote.responsible_id || actor || null, remarks: quote.remarks || null });
 const settlementId = typeof created === 'string' ? created : created && (created.id || (created.record && created.record.id));
 await ctx.api.object('forge_service_quotation').update({ id, status: 'settlement_created' });
 if (quote.service_order_id) await ctx.api.object('forge_service_order').update({ id: quote.service_order_id, settlement_code: code, next_step: '服务结算确认' });
@@ -1248,6 +1629,7 @@ return { id: settlementId, code, quotation_id: id };
 
 export const ServiceSettlementConfirm = defineAction({
   name: 'service_settlement_confirm', label: '确认结算', objectName: 'forge_service_settlement', icon: 'circle-check', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_service_operator'],
   visible: `record.status == 'draft' || record.status == 'customer_confirming'`, confirmText: '确认服务结算金额并进入财务应收？', refreshAfter: true,
   successMessage: '服务结算已确认',
   body: { language: 'js', capabilities: ['api.write'], source: `
@@ -1261,6 +1643,7 @@ return { id, status: 'confirmed' };
 
 export const ServiceSettlementCreateReceivable = defineAction({
   name: 'service_settlement_create_receivable', label: '生成应收', objectName: 'forge_service_settlement', icon: 'wallet-cards', locations: [...locations], order: 20,
+  requiredPermissions: ['forge_service_operator'],
   visible: `record.status == 'confirmed'`, refreshAfter: true,
   successMessage: '服务应收已生成',
   params: [{ field: 'due_on', objectOverride: 'forge_accounts_receivable', required: true }],
@@ -1284,16 +1667,18 @@ return { id, receivable_code: code };
 
 export const ServiceOrderCreateWarranty = defineAction({
   name: 'service_order_create_warranty', label: '生成质保卡', objectName: 'forge_service_order', icon: 'shield-check', locations: [...locations], order: 60,
+  requiredPermissions: ['forge_service_operator'],
   visible: `record.status == 'completed'`, refreshAfter: true,
   successMessage: '质保卡已生成',
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id); const order = ctx.record;
 if (ctx.recordLoadDenied === true || !id || !order) throw new Error('当前服务工单不存在或不可访问');
 if (order.status !== 'completed') throw new Error('仅已完工服务工单可以生成质保卡');
+const actor=ctx.session&&ctx.session.userId;if(!actor)throw new Error('无法识别当前服务员工');
 const existing = await ctx.api.object('forge_warranty_card').find({ where: { service_order_id: id } });
 if (existing.length) throw new Error('该服务工单已生成质保卡');
 const code = 'WC-' + new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);
-await ctx.api.object('forge_warranty_card').insert({ name: order.service_object || order.name, code, service_order_id: id, sales_order_id: order.sales_order_id || null, customer_id: order.customer_id, product_sn: order.service_object || order.name, scope: '整机/整单服务', starts_on: order.warranty_starts_on || new Date().toISOString().slice(0,10), ends_on: order.warranty_ends_on || null, status: 'active', responsible_party: '供应商', remarks: order.service_result || null });
+await ctx.api.object('forge_warranty_card').insert({ name: order.service_object || order.name, code, owner_id:actor, service_order_id: id, sales_order_id: order.sales_order_id || null, customer_id: order.customer_id, product_sn: order.service_object || order.name, scope: '整机/整单服务', starts_on: order.warranty_starts_on || new Date().toISOString().slice(0,10), ends_on: order.warranty_ends_on || null, status: 'active', responsible_party: '供应商', remarks: order.service_result || null });
 await ctx.api.object('forge_service_order').update({ id, warranty_code: code });
 return { id, warranty_code: code };
 ` },

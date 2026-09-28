@@ -4,6 +4,7 @@ const locations = ['record_header', 'record_more'] as const;
 
 export const PurchaseOrderRequestPrepayment = defineAction({
   name: 'purchase_order_request_prepayment', label: '发起预付款申请', objectName: 'forge_purchase_order', icon: 'send-horizontal', locations: [...locations], order: 55,
+  requiredPermissions: ['forge_procurement_operator'],
   visible: `record.status == 'approved' || record.status == 'partially_arrived' || record.status == 'arrived' || record.status == 'completed'`, refreshAfter: true,
   params: [
     { field: 'code', objectOverride: 'forge_payment_task', required: true }, { field: 'requested_amount', objectOverride: 'forge_payment_task', required: true },
