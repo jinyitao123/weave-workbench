@@ -33,7 +33,7 @@
 - `README.md`、`AGENTS.md`、`CLAUDE.md`（仅兼容入口）、`CONTRIBUTING.md`、`SECURITY.md`、`LICENSE.md`、`SKILL.md` 等工具约定入口保留原名；不通过新增例外逃避中文命名。目录和代码、schema、配置文件不在中文重命名范围。
 - `docs/README.md` 是总文档索引，按主题指出唯一主文档和职责；子目录 `README.md` 只导航和说明范围，不承载另一套重复方案。阅读者无需比较日期来判断入口。
 - `platform/` 中的锁定上游副本、`desktop/vendor/` 的第三方来源说明和外部工具约定文件遵循来源仓规则，不为本仓整理直接改动；组件内部变更回源码主仓后同步。普通本地凭据不复制或纳入 Git；唯一例外是用户明确要求在私有仓库管理的 [OTC 演示账号主册](scenarios/演示账号与ObjectStack配置.md)，仅记录开发联调和演示账号，不记录生产凭据或模型密钥。
-- OTC 测试和演示账号统一维护在 `scenarios/演示账号与ObjectStack配置.md`，由 Git 跟踪；原 `scenarios/sales-contract-handoff/test-accounts.md` 仅作为被忽略的本机兼容入口指向同一文件。Agent 可按用户指定的测试场景使用其中已生效的凭据登录，不在对话、命令输出或验收记录中回显；标注“远端未创建”的账号不得冒充已可登录。需要重置/更改现有账号密码时由用户在 Forge 登录/账号页面输入并提交，Agent 不代设或代提交新密码。
+- OTC 测试和演示账号统一维护在 `scenarios/演示账号与ObjectStack配置.md`，由 Git 跟踪；原 `scenarios/sales-contract-handoff/test-accounts.md` 是 Git 跟踪的兼容符号链接，指向同一份主册。Agent 可按用户指定的测试场景使用其中已生效的凭据登录，不在对话、命令输出或验收记录中回显；标注“远端未创建”的账号不得冒充已可登录。需要重置/更改现有账号密码时由用户在 Forge 登录/账号页面输入并提交，Agent 不代设或代提交新密码。
 
 ### 新建、合并与删除
 

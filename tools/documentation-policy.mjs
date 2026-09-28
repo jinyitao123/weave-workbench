@@ -4,7 +4,8 @@ const specialNames = new Set([
   'README.md', 'AGENTS.md', 'CLAUDE.md', 'CONTRIBUTING.md', 'SECURITY.md', 'LICENSE.md', 'SKILL.md',
 ])
 
-// Local credentials are intentionally outside the managed documentation set.
+// This compatibility symlink points to the tracked Chinese account document,
+// which is checked under its canonical path below.
 export const localOnlyDocuments = new Set(['scenarios/sales-contract-handoff/test-accounts.md'])
 
 export function validateDocumentPaths(paths) {
