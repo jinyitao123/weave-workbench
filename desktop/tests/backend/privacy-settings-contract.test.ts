@@ -16,8 +16,10 @@ const HARNESS_TELEMETRY_CASES = HARNESS_IDS.flatMap((harness) => (
   TELEMETRY_VALUES.map((telemetry) => ({ harness, telemetry }))
 )) satisfies Array<{ harness: HarnessId; telemetry: boolean }>
 const temporaryDirectories: string[] = []
+const stores: JsonStateStore[] = []
 
-afterEach(() => {
+afterEach(async () => {
+  await Promise.all(stores.splice(0).map((store) => store.beginShutdown()))
   for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true })
 })
 
@@ -25,6 +27,12 @@ function temporaryStatePath(): string {
   const directory = mkdtempSync(join(tmpdir(), 'gooeypi-privacy-settings-'))
   temporaryDirectories.push(directory)
   return join(directory, 'state.json')
+}
+
+function trackedStore(path: string): JsonStateStore {
+  const store = new JsonStateStore(path)
+  stores.push(store)
+  return store
 }
 
 function sourceFiles(directory: string): string[] {
@@ -44,26 +52,26 @@ describe('legacy telemetry compatibility contract', () => {
     const statePath = temporaryStatePath()
     writeFileSync(statePath, JSON.stringify({ version: 4, settings: { activeHarness: harness } }))
 
-    expect(new JsonStateStore(statePath).snapshot().settings).toMatchObject({ activeHarness: harness, telemetry: false })
+    expect(trackedStore(statePath).snapshot().settings).toMatchObject({ activeHarness: harness, telemetry: false })
   })
 
   it.each(HARNESS_TELEMETRY_CASES)('parses telemetry=$telemetry for selected agent $harness', ({ harness, telemetry }) => {
     const statePath = temporaryStatePath()
     writeFileSync(statePath, JSON.stringify({ version: 4, settings: { activeHarness: harness, telemetry } }))
 
-    expect(new JsonStateStore(statePath).snapshot().settings).toMatchObject({ activeHarness: harness, telemetry })
+    expect(trackedStore(statePath).snapshot().settings).toMatchObject({ activeHarness: harness, telemetry })
   })
 
   it.each(HARNESS_TELEMETRY_CASES)('durably persists telemetry=$telemetry for selected agent $harness', async ({ harness, telemetry }) => {
     const statePath = temporaryStatePath()
-    const store = new JsonStateStore(statePath)
+    const store = trackedStore(statePath)
     const settings = new SettingsService(store, () => '/bin/zsh')
     await settings.update({ activeHarness: harness, telemetry })
     await store.beginShutdown()
 
     const persisted = JSON.parse(readFileSync(statePath, 'utf8')) as { settings: { activeHarness: HarnessId; telemetry: boolean } }
     expect(persisted.settings).toMatchObject({ activeHarness: harness, telemetry })
-    expect(new JsonStateStore(statePath).snapshot().settings).toMatchObject({ activeHarness: harness, telemetry })
+    expect(trackedStore(statePath).snapshot().settings).toMatchObject({ activeHarness: harness, telemetry })
   })
 
   it('matches the reviewed direct telemetry source-reference allowlist', () => {

@@ -2,7 +2,6 @@ import { teamWorkspaceRequest } from './enterprise/team-workspace'
 import type { TeamWorkspaceCommand } from '../../src/types/team-workspace'
 import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkReadStatus, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource, WorkspaceMaterialMimeType } from '../../src/types/api'
 import { extractOriginalMaterialText, freezeApprovalOriginalMaterial, normalizeFrozenMaterial, validateFrozenMaterial, MAX_WORKSPACE_EXTRACTION_BYTES, MAX_WORKSPACE_MATERIAL_BYTES, type FrozenApprovalOriginalMaterial, type FrozenMaterial, type MaterialExtraction } from './enterprise/materials'
-import { readFile, unlink, writeFile } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 import { submissionUUID } from './enterprise/handoff-store'
 import { teamCatalog, teamChoices, type TeamSummary } from './enterprise/team-catalog'
@@ -15,12 +14,6 @@ const REQUEST_TIMEOUT_MS = 8_000
 interface EnterpriseServiceOptions {
   fetch?: typeof fetch
   environment?: NodeJS.ProcessEnv
-  sessionPath?: string
-  sessionCodec?: {
-    available(): boolean
-    encrypt(value: string): Buffer
-    decrypt(value: Buffer): string
-  }
 }
 
 type EnterpriseAuthProvider = 'forge' | 'weave'
@@ -508,13 +501,9 @@ export class EnterpriseService {
   private readonly fetch: typeof fetch
   private readonly forgeUrl: URL
   private readonly weaveUrl: URL
-  private readonly sessionPath?: string
-  private readonly sessionCodec?: EnterpriseServiceOptions['sessionCodec']
   private readonly businessReader: ForgeBusinessReader
-  private loaded = false
   private authGeneration = 0
   private loginAttempt = 0
-  private persistenceQueue: Promise<void> = Promise.resolve()
   private session?: EnterpriseSession
   private weaveToken?: string
   private forgeToken?: string
@@ -526,8 +515,6 @@ export class EnterpriseService {
     this.fetch = options.fetch ?? fetch
     this.forgeUrl = environmentUrl(this.environment.WORKBENCH_FORGE_URL, DEFAULT_FORGE_URL, 'Forge')
     this.weaveUrl = environmentUrl(this.environment.WORKBENCH_WEAVE_URL, DEFAULT_WEAVE_URL, 'Weave')
-    this.sessionPath = options.sessionPath
-    this.sessionCodec = options.sessionCodec
     this.businessReader = new ForgeBusinessReader(
       (name, args, generation) => this.forgeMcpTool(name, args, generation),
       (objectName, generation) => this.forgeObjectMetadata(objectName, generation),
@@ -557,52 +544,6 @@ export class EnterpriseService {
     }
   }
 
-  private async load(): Promise<void> {
-    if (this.loaded) return
-    this.loaded = true
-    const generation = this.authGeneration
-    if (!this.sessionPath || !this.sessionCodec?.available()) return
-    try {
-      const saved = record(JSON.parse(await readFile(this.sessionPath, 'utf8')))
-      const projection = record(saved?.session) as EnterpriseSession | undefined
-      if (saved?.version !== 3 || typeof saved.expiresAt !== 'number' || projection?.status !== 'signed-in' || !enterprisePermissions(projection.permissions)) return
-      if (generation !== this.authGeneration) return
-      if (saved.expiresAt <= Date.now()) { await this.clearPersisted(generation); return }
-      const encryptedWeaveToken = saved.weaveToken
-      if (typeof encryptedWeaveToken !== 'string') return
-      const weaveToken = this.sessionCodec.decrypt(Buffer.from(encryptedWeaveToken, 'base64'))
-      const forgeToken = typeof saved.forgeToken === 'string' ? this.sessionCodec.decrypt(Buffer.from(saved.forgeToken, 'base64')) : undefined
-      if (generation !== this.authGeneration) return
-      this.weaveToken = weaveToken
-      this.forgeToken = forgeToken
-      this.expiresAt = saved.expiresAt
-      this.session = { ...projection, storage: 'encrypted' }
-    } catch { /* missing, malformed, or undecryptable sessions start signed out */ }
-  }
-
-  private queuePersistence(operation: () => Promise<void>): Promise<void> {
-    const next = this.persistenceQueue.then(operation, operation)
-    this.persistenceQueue = next.catch(() => undefined)
-    return next
-  }
-
-  private async persist(generation: number): Promise<void> {
-    if (!this.sessionPath || !this.sessionCodec?.available()) return
-    await this.queuePersistence(async () => {
-      if (generation !== this.authGeneration || !this.session || !this.weaveToken) return
-      const saved = JSON.stringify({ version: 3, expiresAt: this.expiresAt, weaveToken: this.sessionCodec!.encrypt(this.weaveToken).toString('base64'), ...(this.forgeToken ? { forgeToken: this.sessionCodec!.encrypt(this.forgeToken).toString('base64') } : {}), session: { ...this.session, storage: 'encrypted' } })
-      await writeFile(this.sessionPath!, saved, { encoding: 'utf8', mode: 0o600 })
-      if (generation === this.authGeneration && this.session) this.session = { ...this.session, storage: 'encrypted' }
-    })
-  }
-
-  private async clearPersisted(generation: number): Promise<void> {
-    if (!this.sessionPath) return
-    await this.queuePersistence(async () => {
-      if (generation === this.authGeneration) await unlink(this.sessionPath!).catch(() => undefined)
-    })
-  }
-
   private clearSessionState(): void {
     this.weaveToken = undefined
     this.forgeToken = undefined
@@ -625,7 +566,6 @@ export class EnterpriseService {
   }
 
   private async authenticatedFetch(input: URL | RequestInfo, provider: EnterpriseAuthProvider, init: RequestInit = {}, expectedGeneration = this.authGeneration): Promise<{ response: Response; snapshot: EnterpriseAuthSnapshot }> {
-    await this.load()
     this.assertAuthGeneration(expectedGeneration)
     if ((this.weaveToken || this.forgeToken) && this.expiresAt <= Date.now()) await this.signOut()
     const token = this.currentToken(provider)
@@ -649,7 +589,6 @@ export class EnterpriseService {
   }
 
   async getSession(): Promise<EnterpriseSession> {
-    await this.load()
     if (this.session && this.expiresAt <= Date.now()) await this.signOut()
     return structuredClone(this.session ?? this.signedOut())
   }
@@ -665,7 +604,6 @@ export class EnterpriseService {
   }
 
   async authorizationHeaders(): Promise<Headers> {
-    await this.load()
     if ((this.weaveToken || this.forgeToken) && this.expiresAt <= Date.now()) await this.signOut()
     if (!this.weaveToken) throw new Error('请先登录')
     return new Headers({ Authorization: `Bearer ${this.weaveToken}` })
@@ -675,11 +613,9 @@ export class EnterpriseService {
     const normalizedEmail = email.trim()
     if (!normalizedEmail || !password) throw new Error('请输入账号和密码')
     const attempt = ++this.loginAttempt
-    await this.load()
     if (attempt !== this.loginAttempt) throw new Error('账号已切换，旧登录请求已取消')
     const generation = ++this.authGeneration
     this.clearSessionState()
-    await this.clearPersisted(generation)
     await this.notifySessionScopeChanged(this.signedOut(), 'sign-in-start')
     try {
       const signedIn = await this.fetch(new URL('/api/v1/auth/sign-in/email', this.forgeUrl), {
@@ -730,7 +666,6 @@ export class EnterpriseService {
         organization: { id: organization.id, name: typeof organization.name === 'string' && organization.name.trim() ? organization.name : organization.id },
         permissions,
       }
-      await this.persist(generation)
       this.assertLoginCurrent(generation, attempt)
       await this.notifySessionScopeChanged(this.session, 'signed-in')
       this.assertLoginCurrent(generation, attempt)
@@ -740,7 +675,6 @@ export class EnterpriseService {
     } catch (error) {
       if (generation !== this.authGeneration || attempt !== this.loginAttempt) throw new Error('账号已切换，旧登录请求已取消')
       this.clearSessionState()
-      await this.clearPersisted(generation).catch(() => undefined)
       await this.notifySessionScopeChanged(this.signedOut(), 'signed-out').catch(() => undefined)
       if (error instanceof Error && !['fetch failed', 'The operation was aborted due to timeout'].includes(error.message)) throw error
       throw new Error('企业服务暂时无法连接')
@@ -749,9 +683,8 @@ export class EnterpriseService {
 
   async signOut(): Promise<EnterpriseSession> {
     this.loginAttempt++
-    const generation = ++this.authGeneration
+    this.authGeneration++
     this.clearSessionState()
-    await this.clearPersisted(generation).catch(() => undefined)
     await this.notifySessionScopeChanged(this.signedOut(), 'signed-out')
     return this.signedOut()
   }
@@ -936,7 +869,6 @@ export class EnterpriseService {
   async stageWorkMaterials(materials: FrozenMaterial[], assertCurrent: () => Promise<void>): Promise<EnterpriseWorkResource[]> {
     if (!materials.length) return []
     const generation = this.authGeneration
-    await this.load()
     this.assertAuthGeneration(generation)
     if ((this.weaveToken || this.forgeToken) && this.expiresAt <= Date.now()) await this.signOut()
     if (!this.forgeToken) throw new Error('请重新登录以上传工作材料')

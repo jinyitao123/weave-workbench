@@ -186,7 +186,6 @@ describe('workspace runtime abort ownership', () => {
 describe('workspace MCP command policy', () => {
   it.each([
     ['prime', '/mcp login notion', 'Prime Agent', 'notion'],
-    ['omp', '/mcp reauth docs', 'OMP', 'docs'],
     ['pi', '/mcp-auth files', 'Pi', 'files'],
   ] as const)('does not forward %s remote-auth commands to the harness', async (harness, prompt, agentName, server) => {
     const agentStart = vi.fn()

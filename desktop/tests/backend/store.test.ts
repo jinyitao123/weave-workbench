@@ -71,15 +71,21 @@ describe('JsonStateStore', () => {
     await second.beginShutdown()
   })
 
-  it('defaults, persists, and validates the project sort mode', () => {
+  it('defaults, persists, and validates the project sort mode', async () => {
     const dir = makeDirectory()
     const path = join(dir, 'state.json')
     const settings = { ...defaultSettings(), projectSortMode: 'alphabetical' as const }
     writeFileSync(path, JSON.stringify({ version: 4, projects: [], settings, archivedSessions: [], dismissedProjectPaths: [], schedules: [] }))
-    expect(new JsonStateStore(path).getSettings().projectSortMode).toBe('alphabetical')
+    const first = new JsonStateStore(path)
+    await first.ready()
+    expect(first.getSettings().projectSortMode).toBe('alphabetical')
+    await first.beginShutdown()
 
     writeFileSync(path, JSON.stringify({ version: 4, projects: [], settings: { ...settings, projectSortMode: 'invalid' }, archivedSessions: [], dismissedProjectPaths: [], schedules: [] }))
-    expect(new JsonStateStore(path).getSettings().projectSortMode).toBe('recent')
+    const second = new JsonStateStore(path)
+    await second.ready()
+    expect(second.getSettings().projectSortMode).toBe('recent')
+    await second.beginShutdown()
   })
 
   it('serializes concurrent updates without losing data', async () => {
@@ -121,15 +127,21 @@ describe('JsonStateStore', () => {
     await second.beginShutdown()
   })
 
-  it('defaults missing or invalid checkout strategies to worktrees', () => {
+  it('defaults missing or invalid checkout strategies to worktrees', async () => {
     const dir = makeDirectory()
     const path = join(dir, 'state.json')
     const settings = { ...defaultSettings(), checkoutStrategy: 'branch' as const }
     writeFileSync(path, JSON.stringify({ version: 4, projects: [], settings, archivedSessions: [], dismissedProjectPaths: [], schedules: [] }))
-    expect(new JsonStateStore(path).snapshot().settings.checkoutStrategy).toBe('branch')
+    const first = new JsonStateStore(path)
+    await first.ready()
+    expect(first.snapshot().settings.checkoutStrategy).toBe('branch')
+    await first.beginShutdown()
 
     writeFileSync(path, JSON.stringify({ version: 4, projects: [], settings: { ...settings, checkoutStrategy: 'folders' }, archivedSessions: [], dismissedProjectPaths: [], schedules: [] }))
-    expect(new JsonStateStore(path).snapshot().settings.checkoutStrategy).toBe('worktree')
+    const second = new JsonStateStore(path)
+    await second.ready()
+    expect(second.snapshot().settings.checkoutStrategy).toBe('worktree')
+    await second.beginShutdown()
   })
 
   it('keeps supported interface font scales and resets values outside the bounded choices', async () => {
@@ -469,7 +481,7 @@ describe('JsonStateStore', () => {
     expect(persisted.schedules[0]).toMatchObject({ harness: 'omp', status: 'paused', runs: [{ id: 'legacy-omp-run' }] })
   })
 
-  it('keeps valid harness fields and drops projects with hostile harnesses', () => {
+  it('keeps valid harness fields and drops projects with hostile harnesses', async () => {
     const dir = makeDirectory()
     const path = join(dir, 'state.json')
     writeFileSync(path, JSON.stringify({
@@ -483,8 +495,11 @@ describe('JsonStateStore', () => {
       dismissedProjectPaths: [],
       schedules: [],
     }))
-    const kept = new JsonStateStore(path).snapshot()
+    const keptStore = new JsonStateStore(path)
+    await keptStore.ready()
+    const kept = keptStore.snapshot()
     expect(kept.projects.map((project) => project.harness)).toEqual(['omp'])
+    await keptStore.beginShutdown()
     expect(kept.settings.activeHarness).toBe('pi')
 
     writeFileSync(path, JSON.stringify({
@@ -495,7 +510,10 @@ describe('JsonStateStore', () => {
       dismissedProjectPaths: [],
       schedules: [],
     }))
-    expect(new JsonStateStore(path).snapshot().settings.activeHarness).toBe('prime')
+    const primeStore = new JsonStateStore(path)
+    await primeStore.ready()
+    expect(primeStore.snapshot().settings.activeHarness).toBe('prime')
+    await primeStore.beginShutdown()
 
     writeFileSync(path, JSON.stringify({
       version: 3,
@@ -505,8 +523,11 @@ describe('JsonStateStore', () => {
       dismissedProjectPaths: [],
       schedules: [],
     }))
-    const reset = new JsonStateStore(path).snapshot()
+    const resetStore = new JsonStateStore(path)
+    await resetStore.ready()
+    const reset = resetStore.snapshot()
     expect(reset.settings.activeHarness).toBe('pi')
+    await resetStore.beginShutdown()
   })
 
   it('accepts the pi harness for projects and the active workspace', () => {

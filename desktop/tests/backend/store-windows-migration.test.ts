@@ -79,10 +79,12 @@ function expectCompletedTombstone(path: string): { backupFile: string | null; re
   return tombstone.gooeyPiV4Migration
 }
 
-function expectReleasedLegacyReaderHasNoAuthority(path: string): void {
+async function expectReleasedLegacyReaderHasNoAuthority(path: string): Promise<void> {
   const legacyReader = new JsonStateStore(path)
+  await legacyReader.ready()
   expect(legacyReader.snapshot().projects).toEqual([])
   expect(legacyReader.snapshot().schedules).toEqual([])
+  await legacyReader.beginShutdown()
 }
 
 describe('Windows desktop-state compatibility protocol', () => {
@@ -103,7 +105,7 @@ describe('Windows desktop-state compatibility protocol', () => {
     ])
     expect(JSON.parse(readFileSync(currentPath, 'utf8'))).toMatchObject({ version: 6, projects: [] })
     expect(expectCompletedTombstone(legacyPath)).toMatchObject({ backupFile: null, reason: 'fresh' })
-    expectReleasedLegacyReaderHasNoAuthority(legacyPath)
+    await expectReleasedLegacyReaderHasNoAuthority(legacyPath)
 
     await store.update((state) => { state.archivedSessions.push('/sessions/fresh.jsonl') })
     expect(store.snapshot().archivedSessions).toEqual(['/sessions/fresh.jsonl'])
@@ -162,7 +164,7 @@ describe('Windows desktop-state compatibility protocol', () => {
     expect(initialTombstone.reason).toBe('migration')
     expect(initialTombstone.backupFile).toMatch(new RegExp(`^${LEGACY_DESKTOP_STATE_FILENAME.replace('.', '\\.')}\\.migrated-v4-`))
     expect(readFileSync(join(directory, initialTombstone.backupFile!), 'utf8')).toBe(originalLegacy)
-    expectReleasedLegacyReaderHasNoAuthority(legacyPath)
+    await expectReleasedLegacyReaderHasNoAuthority(legacyPath)
 
     await migrated.update((state) => { state.archivedSessions.push('/sessions/v4-only.jsonl') })
     await migrated.beginShutdown()
@@ -180,7 +182,7 @@ describe('Windows desktop-state compatibility protocol', () => {
     const quarantineTombstone = expectCompletedTombstone(legacyPath)
     expect(quarantineTombstone.reason).toBe('quarantine')
     expect(readFileSync(join(directory, quarantineTombstone.backupFile!), 'utf8')).toBe(downgradedLegacy)
-    expectReleasedLegacyReaderHasNoAuthority(legacyPath)
+    await expectReleasedLegacyReaderHasNoAuthority(legacyPath)
 
     await reopened.update((state) => { state.archivedSessions.push('/sessions/after-restart.jsonl') })
     expect(reopened.snapshot().archivedSessions).toEqual(['/sessions/v4-only.jsonl', '/sessions/after-restart.jsonl'])

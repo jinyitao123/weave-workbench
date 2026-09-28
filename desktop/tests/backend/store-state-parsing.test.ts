@@ -6,20 +6,26 @@ import { defaultSettings, JsonStateStore } from '../../electron/main/store'
 import type { DesktopState } from '../../electron/main/store'
 
 const dirs: string[] = []
-afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }) })
+const stores: JsonStateStore[] = []
+afterEach(async () => {
+  await Promise.all(stores.splice(0).map((store) => store.beginShutdown()))
+  for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true })
+})
 
 function loadState(value: unknown): DesktopState {
   const dir = mkdtempSync(join(tmpdir(), 'gooeypi-store-parse-'))
   dirs.push(dir)
   const path = join(dir, 'state.json')
   writeFileSync(path, JSON.stringify(value))
-  return new JsonStateStore(path).snapshot()
+  const store = new JsonStateStore(path)
+  stores.push(store)
+  return store.snapshot()
 }
 
 const validSchedule = {
   schemaVersion: 1,
   id: 'schedule-1',
-  harness: 'omp',
+  harness: 'pi',
   revision: 2,
   title: 'Nightly triage',
   prompt: 'Review open issues',
@@ -237,7 +243,7 @@ describe('persisted settings parsing', () => {
     expect(settings.piDisabledModels).toEqual(['openai/gpt-5'])
   })
 
-  it('keeps valid per-harness model preferences and clears malformed entries', () => {
+  it('keeps model preferences for active harnesses and clears malformed entries', () => {
     const { settings } = loadState({
       version: 4,
       settings: {
@@ -250,7 +256,6 @@ describe('persisted settings parsing', () => {
     })
     expect(settings.lastSelectedModels).toEqual({
       prime: 'openai-codex/gpt-5.6-sol',
-      omp: '',
       pi: 'anthropic/claude-sonnet-4',
     })
   })
@@ -260,7 +265,7 @@ describe('persisted schedule parsing', () => {
   it('keeps a well-formed schedule and drops an unknown harness', () => {
     const { schedules } = loadState({ version: 3, schedules: [validSchedule, { ...validSchedule, id: 'schedule-2', harness: 'unknown' }] })
     expect(schedules).toHaveLength(1)
-    expect(schedules[0]).toMatchObject({ id: 'schedule-1', harness: 'omp', revision: 2, runs: [] })
+    expect(schedules[0]).toMatchObject({ id: 'schedule-1', harness: 'pi', revision: 2, runs: [] })
   })
 
   it('migrates an absent version 2 schedule harness to Prime', () => {
@@ -283,7 +288,7 @@ describe('persisted schedule parsing', () => {
       schedules: [missingHarness, { ...validSchedule, id: 'unknown-schedule', harness: 'future-harness' }, validSchedule],
     })
 
-    expect(schedules.map(({ id, harness }) => ({ id, harness }))).toEqual([{ id: 'schedule-1', harness: 'omp' }])
+    expect(schedules.map(({ id, harness }) => ({ id, harness }))).toEqual([{ id: 'schedule-1', harness: 'pi' }])
   })
 
   it('drops schedules with an unusable envelope, status, or authorship', () => {
