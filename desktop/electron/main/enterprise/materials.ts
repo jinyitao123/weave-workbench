@@ -291,6 +291,7 @@ async function extractDocx(bytes: Buffer, sourceSha256: string, maximum: number)
   let embeddedImageCount = 0
   const result = await mammoth.convertToHtml({ buffer: bytes }, {
     externalFileAccess: false,
+    styleMap: ["p[style-name='Title'] => h1:fresh"],
     convertImage: mammoth.images.imgElement(async () => {
       embeddedImageCount += 1
       return { src: '', alt: '嵌入图像未提取' }

@@ -113,9 +113,10 @@ async function fixture(objectName = 'forge_sales_contract') {
   const transcript: TranscriptMessage[] = []
   const sessions = { read: vi.fn(async () => transcript) }
   const storageDirectory = join(cwd, 'secure-intents')
+  let handoffStorageAvailable = true
   const bridge = new AgentEnterpriseBridge({
     service, sessions: { prime: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts',
-    storage: { directory: storageDirectory, codec: { available: () => true, encrypt: (value) => Buffer.from(value), decrypt: (value) => value.toString('utf8') } },
+    storage: { directory: storageDirectory, codec: { available: () => handoffStorageAvailable, encrypt: (value) => Buffer.from(value), decrypt: (value) => value.toString('utf8') } },
   })
   await bridge.start(); bridges.push(bridge)
   const environment = bridge.environmentFor({ cwd, sessionPath: '/sessions/current.jsonl', harness: 'pi' })
@@ -160,7 +161,7 @@ async function fixture(objectName = 'forge_sales_contract') {
     return { directory, objectRef, found, recordKey }
   }
   await input(appendWorkspaceMaterialContext('这版给他们看看', [materialReference]), 'employee-turn-1')
-  return { call, callWithTurn, input, discover, findRecord, openReturned, service, bridge, environment, materials, cwd, transcript, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, businessCandidate, businessSnapshot }
+  return { call, callWithTurn, input, discover, findRecord, openReturned, service, bridge, environment, materials, cwd, transcript, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, businessCandidate, businessSnapshot, setHandoffStorageAvailable: (available: boolean) => { handoffStorageAvailable = available } }
 }
 
 describe('employee-bound material handoff', () => {
@@ -981,6 +982,18 @@ describe('employee-bound material handoff', () => {
     const second = f.service.submitWork.mock.calls[1][2] as unknown as { sourceMessages: unknown }
     expect(first.sourceMessages).toEqual(second.sourceMessages)
     expect((await f.call('submit', { ...params, goal: '修改目标' })).body.error).toContain('已冻结')
+  })
+  it('stops a current employee intent before material upload or team dispatch when secure storage is unavailable', async () => {
+    const f = await fixture(), params = await f.discover()
+    expect(await f.service.accountKey()).toBe('employee-a')
+    f.setHandoffStorageAvailable(false)
+
+    const failed = await f.call('submit', params)
+    expect(failed.body.error).toContain('安全存储不可用')
+    expect(failed.body.error).toContain('重启 GooeyPi')
+    expect(failed.body.error).toContain('不会上传材料或创建团队运行')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
   })
   it('reports a definite Weave registration rejection without telling Pi to recover an accepted run', async () => {
     const f = await fixture(), params = await f.discover()

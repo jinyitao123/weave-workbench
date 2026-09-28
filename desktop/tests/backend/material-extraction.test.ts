@@ -7,6 +7,7 @@ import { digest } from '../../electron/main/enterprise/handoff-store'
 import { executionText, freezeMaterials, type FrozenMaterial } from '../../electron/main/enterprise/materials'
 
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), '../fixtures/materials')
+const contractDocx = join(dirname(fileURLToPath(import.meta.url)), '../../../scenarios/sales-contract-handoff/materials/合同样例.docx')
 const scratch: string[] = []
 afterEach(async () => { await Promise.all(scratch.splice(0).map((path) => rm(path, { recursive: true, force: true }))) })
 
@@ -71,5 +72,23 @@ describe('frozen original document materials', () => {
     const taskMaterial = (JSON.parse(task) as { materials: Array<Record<string, unknown>> }).materials[0]!
     expect(taskMaterial).toMatchObject({ sha256: material.sha256, extraction: { sha256: material.extraction.sha256, sourceSha256: material.sha256, content: material.extraction.content } })
     expect(task).not.toContain(material.bytesBase64)
+  })
+
+  it('preserves the standard Word Title paragraph in the current contract DOCX', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'workbench-contract-material-'))
+    scratch.push(root)
+    const directory = join(root, '材料', '附件')
+    await mkdir(directory, { recursive: true })
+    const source = await readFile(contractDocx)
+    const rawText = await (await import('mammoth')).extractRawText({ buffer: source })
+    const title = rawText.value.split('\n').map((line) => line.trim()).find(Boolean)
+    expect(title).toBeTruthy()
+
+    const relativePath = '材料/附件/合同样例.docx'
+    await writeFile(join(root, relativePath), source)
+    const [material] = await freezeMaterials(root, [{ path: relativePath, sha256: digest(source) }])
+    expect(material).toBeDefined()
+    expectSourceBytes(material!, source)
+    expect(material!.extraction.content).toContain(title!)
   })
 })
