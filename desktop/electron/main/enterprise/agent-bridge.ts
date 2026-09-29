@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import { approvalContextView, WorkRegistrationRejectedError, type ApprovalRevisionSubmission, type EnterpriseService, type EnterpriseWorkContinuationContext } from '../enterprise'
-import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseWorkChoice, EnterpriseWorkContinuationContextView, EnterpriseWorkItem, EnterpriseWorkResource, TranscriptMessage, WorkspaceMaterialPromptReference } from '../../../src/types/api'
+import { approvalContextView, WorkRegistrationRejectedError, type ApprovalRevisionSubmission, type EnterpriseBusinessNotificationContext, type EnterpriseService, type EnterpriseWorkContinuationContext } from '../enterprise'
+import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseBusinessNotificationContextView, EnterpriseWorkChoice, EnterpriseWorkContinuationContextView, EnterpriseWorkItem, EnterpriseWorkResource, TranscriptMessage, WorkspaceMaterialPromptReference } from '../../../src/types/api'
 import { CapabilityBridge, type CapabilityClaim } from '../lib/capability-bridge'
 import { canonicalSessionPath } from '../session-paths'
 import { rejectUnknownKeys, requireString } from '../validation'
@@ -15,7 +15,7 @@ interface EnterpriseSessionReader {
   read(filePath: unknown): Promise<TranscriptMessage[]>
 }
 export interface AgentEnterpriseBridgeOptions {
-  service: Pick<EnterpriseService, 'accountKey' | 'getApprovalContext' | 'getWorkNotificationSource' | 'getWorkContinuationContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'getBusinessObjectDirectory' | 'findBusinessRecords' | 'readBusinessRecord' | 'stageWorkMaterials' | 'submitWork' | 'submitApprovalRevision' | 'getApprovalRevisionReceipt'>
+  service: Pick<EnterpriseService, 'accountKey' | 'getApprovalContext' | 'getWorkNotificationSource' | 'getBusinessNotificationContext' | 'getWorkContinuationContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'getBusinessObjectDirectory' | 'findBusinessRecords' | 'readBusinessRecord' | 'stageWorkMaterials' | 'submitWork' | 'submitApprovalRevision' | 'getApprovalRevisionReceipt'>
   sessions: Record<'prime' | 'pi', EnterpriseSessionReader>
   extensionPath: string
   storage?: HandoffStorage
@@ -45,6 +45,7 @@ interface EmployeeTurn {
   baseline: Set<string>
   authorizedMaterials: WorkspaceMaterialPromptReference[]
   openingWorkContinuation?: boolean
+  businessNotification?: BoundBusinessNotificationContext
   approvalContext?: BoundApprovalContext
   enterpriseReadOnly?: boolean
   pendingSessionPrompts?: string[]
@@ -73,13 +74,23 @@ interface ApprovalReviewSessionMetadata {
   sourceMaterialVersion: string
   returnVersion?: string
 }
-interface PendingWorkContinuation {
+interface PendingWeaveWorkContinuation {
+  kind: 'weave'
   accountKey: string
   context: EnterpriseWorkContinuationContext
   fingerprint: string
   createdAt: number
 }
-interface BoundWorkContinuation extends PendingWorkContinuation { sessionPath: string }
+interface PendingBusinessWorkContinuation {
+  kind: 'business'
+  accountKey: string
+  context: EnterpriseBusinessNotificationContext
+  fingerprint: string
+  createdAt: number
+}
+type PendingWorkContinuation = PendingWeaveWorkContinuation | PendingBusinessWorkContinuation
+interface BoundWorkContinuation extends PendingWeaveWorkContinuation { sessionPath: string }
+interface BoundBusinessNotificationContext extends PendingBusinessWorkContinuation { sessionPath: string }
 interface ScopedBusinessObject { objectName: string; label: string; handoffKey: string; accountKey: string; turnKey: string; directoryComplete: boolean }
 interface ScopedBusinessRecord extends BusinessRecordCandidate {
   handoffKey: string
@@ -170,6 +181,44 @@ function approvalReviewSessionMetadata(accountKey: string, sessionPath: string, 
 }
 function workContinuationFingerprint(context: EnterpriseWorkContinuationContext): string {
   return digest(JSON.stringify({ source: context.source, input: context.input, finalResult: context.run.finalResult ?? null, actionOutcomes: context.run.actionOutcomes ?? null }))
+}
+function businessNotificationFingerprint(context: EnterpriseBusinessNotificationContext): string {
+  const { capturedAt: _capturedAt, ...snapshot } = context.record.snapshot
+  return digest(JSON.stringify({
+    notificationID: context.notificationID, source: context.source, materialStatus: context.materialStatus,
+    materialReferences: context.materialReferences,
+    candidate: context.record.candidate, snapshot,
+    materials: context.materials.map(({ sourceKind, requestId, fileId, name, mediaType, bytes, sha256, extraction }) => ({
+      sourceKind, requestId, fileId, name, mediaType, bytes, sha256,
+      content: extraction.content, status: extraction.status, coverage: extraction.coverage, limitations: extraction.limitations,
+    })),
+  }))
+}
+function businessNotificationContextView(context: EnterpriseBusinessNotificationContext): EnterpriseBusinessNotificationContextView {
+  const snapshot = context.record.snapshot
+  return {
+    kind: 'business', currentReadAt: context.currentReadAt, materialStatus: context.materialStatus,
+    record: {
+      objectLabel: snapshot.objectLabel, name: context.record.candidate.name,
+      ...(context.record.candidate.code ? { code: context.record.candidate.code } : {}),
+      ...(context.record.candidate.status ? { status: context.record.candidate.status } : {}),
+      ...(context.record.candidate.owner ? { owner: context.record.candidate.owner } : {}),
+      fields: snapshot.record.map((field) => ({ label: field.label, value: field.value })),
+      relations: snapshot.relations.map(({ recordIds: _recordIds, ...relation }) => ({
+        ...relation, records: relation.records.map((row) => row.map((field) => ({ label: field.label, value: field.value }))),
+      })),
+      completeness: snapshot.completeness, pricingDetailCompleteness: snapshot.pricingDetailCompleteness,
+      ...(snapshot.expectedDetailCount !== undefined ? { expectedDetailCount: snapshot.expectedDetailCount } : {}),
+      completenessNotes: [...snapshot.completenessNotes],
+    },
+    materials: context.materials.map(({ name, mediaType, bytes, extraction }) => ({
+      name, mediaType, bytes, verified: true,
+      extraction: {
+        status: extraction.status, content: extraction.content,
+        coverage: { ...extraction.coverage }, limitations: [...extraction.limitations],
+      },
+    })),
+  }
 }
 function reuseMaterialsFromContinuation(bound: BoundWorkContinuation | undefined, rawNames: unknown, accountKey: string): ReusedMaterial[] {
   if (rawNames === undefined) return []
@@ -379,16 +428,33 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       createdAt: Date.now(), sessionPath,
     }
   }
+  async pinWorkContinuationContext(item: Pick<EnterpriseWorkItem, 'id' | 'notificationType' | 'workReference' | 'runReference' | 'sessionReference'> & { source: 'weave' }): Promise<{ handle: string; context: Extract<EnterpriseWorkContinuationContextView, { kind: 'weave' }> }>
+  async pinWorkContinuationContext(item: Pick<EnterpriseWorkItem, 'id' | 'notificationType' | 'workReference' | 'runReference' | 'sessionReference'> & { source: 'forge' }): Promise<{ handle: string; context: EnterpriseBusinessNotificationContextView }>
   async pinWorkContinuationContext(item: Pick<EnterpriseWorkItem, 'id' | 'source' | 'notificationType' | 'workReference' | 'runReference' | 'sessionReference'>): Promise<{ handle: string; context: EnterpriseWorkContinuationContextView }> {
-    if (item?.source !== 'weave' || !item.id) throw new Error('当前消息不是可续接的团队工作')
+    if (!item?.id) throw new Error('工作消息无效，请刷新工作列表')
     const accountBefore = await this.options.service.accountKey()
+    if (item.source === 'forge') {
+      const context = await this.options.service.getBusinessNotificationContext(item.id)
+      if (context.notificationID !== item.id || context.kind !== 'business') throw new Error('Forge 业务结果来源与当前消息不匹配')
+      const accountAfter = await this.options.service.accountKey()
+      if (accountBefore !== accountAfter) throw new Error('当前账号已变化，请重新打开业务结果消息')
+      const now = Date.now()
+      for (const [handle, pending] of this.pendingWorkContinuations) if (now - pending.createdAt > 10 * 60_000) this.pendingWorkContinuations.delete(handle)
+      const handle = randomUUID()
+      this.pendingWorkContinuations.set(handle, {
+        kind: 'business', accountKey: accountAfter, context,
+        fingerprint: businessNotificationFingerprint(context), createdAt: now,
+      })
+      return { handle, context: businessNotificationContextView(context) }
+    }
+    if (item.source !== 'weave') throw new Error('当前消息不是可续接的工作结果')
     let references = { workReference: item.workReference ?? '', runReference: item.runReference ?? '', sessionReference: item.sessionReference ?? '' }
     const hasAllReferences = Boolean(references.workReference && references.runReference && references.sessionReference)
     if (!hasAllReferences) {
       const teamRunType = /^weave\.team_run\.(result|failure|revision_required|cancelled)$/.exec(item.notificationType ?? '')
       if (!teamRunType) throw new Error('工作消息缺少原工作引用，桌面无法安全继续')
       const source = await this.options.service.getWorkNotificationSource(item.id)
-      if (source.notificationID !== item.id || source.kind !== teamRunType[1]
+      if (source.kind === 'business' || source.notificationID !== item.id || source.kind !== teamRunType[1]
         || item.workReference && item.workReference !== source.source.workReference
         || item.runReference && item.runReference !== source.source.runReference
         || item.sessionReference && item.sessionReference !== source.source.sessionReference) {
@@ -412,10 +478,11 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     for (const [handle, pending] of this.pendingWorkContinuations) if (now - pending.createdAt > 10 * 60_000) this.pendingWorkContinuations.delete(handle)
     const handle = randomUUID()
     const fingerprint = workContinuationFingerprint(context)
-    this.pendingWorkContinuations.set(handle, { accountKey: accountAfter, context, fingerprint, createdAt: now })
+    this.pendingWorkContinuations.set(handle, { kind: 'weave', accountKey: accountAfter, context, fingerprint, createdAt: now })
     return {
       handle,
       context: {
+        kind: 'weave',
         task: context.input.task,
         runStatus: context.run.status,
         materials,
@@ -581,12 +648,16 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         this.pendingWorkContinuations.delete(workHandle)
         throw new Error('团队工作上下文已过期，请重新打开工作消息')
       }
+      if (pendingWorkContinuation.kind === 'business' && !this.newSessionTokens.has(token)) {
+        throw new Error('Forge 业务结果须在独立的新会话中打开')
+      }
     }
     const requiresApprovalContextBind = Boolean(pendingApprovalContext || previousApprovalContext)
     if (requiresApprovalContextBind) this.pendingApprovalContextBinds.set(token, marker)
     let approvalReviewSessionDetected = false
     try {
       let activeWorkContinuation: BoundWorkContinuation | undefined
+      let activeBusinessNotification: BoundBusinessNotificationContext | undefined
       const accountKey = await this.options.service.accountKey()
       let activeApprovalContext = previousApprovalContext
       if (pendingApprovalContext) {
@@ -617,17 +688,27 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       }
       if (pendingWorkContinuation) {
         if (pendingWorkContinuation.accountKey !== accountKey) throw new Error('当前账号已变化，团队工作不能继续')
-        const source = pendingWorkContinuation.context.source
-        const currentContext = await this.options.service.getWorkContinuationContext({
-          workReference: source.inputRevisionID, runReference: source.runID, sessionReference: source.workbenchSessionID,
-        })
-        if (workContinuationFingerprint(currentContext) !== pendingWorkContinuation.fingerprint
-          || await this.options.service.accountKey() !== accountKey) {
-          throw new Error('团队工作或固定材料版本已变化，请刷新工作消息后重新继续')
+        if (pendingWorkContinuation.kind === 'weave') {
+          const source = pendingWorkContinuation.context.source
+          const currentContext = await this.options.service.getWorkContinuationContext({
+            workReference: source.inputRevisionID, runReference: source.runID, sessionReference: source.workbenchSessionID,
+          })
+          if (workContinuationFingerprint(currentContext) !== pendingWorkContinuation.fingerprint
+            || await this.options.service.accountKey() !== accountKey) {
+            throw new Error('团队工作或固定材料版本已变化，请刷新工作消息后重新继续')
+          }
+          pendingWorkContinuation.context.run.status = currentContext.run.status
+          if (!claim.sessionPath) throw new Error('团队工作上下文未绑定到当前 Pi 会话')
+          activeWorkContinuation = { ...pendingWorkContinuation, sessionPath: claim.sessionPath }
+        } else {
+          const currentContext = await this.options.service.getBusinessNotificationContext(pendingWorkContinuation.context.notificationID)
+          if (businessNotificationFingerprint(currentContext) !== pendingWorkContinuation.fingerprint
+            || await this.options.service.accountKey() !== accountKey) {
+            throw new Error('Forge 当前记录或材料版本已变化，请刷新工作消息后重新打开')
+          }
+          if (!claim.sessionPath) throw new Error('Forge 业务结果上下文未绑定到当前 Pi 会话')
+          activeBusinessNotification = { ...pendingWorkContinuation, context: currentContext, sessionPath: claim.sessionPath }
         }
-        pendingWorkContinuation.context.run.status = currentContext.run.status
-        if (!claim.sessionPath) throw new Error('团队工作上下文未绑定到当前 Pi 会话')
-        activeWorkContinuation = { ...pendingWorkContinuation, sessionPath: claim.sessionPath }
       } else if (!pendingApprovalContext && !activeApprovalContext && previousWorkLineage && previousWorkLineage.accountKey === accountKey
         && previousWorkLineage.sessionPath === claim.sessionPath) {
         activeWorkContinuation = previousWorkLineage
@@ -649,6 +730,9 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       if (pendingApprovalContext?.purpose === 'review'
         && (messages.some((message) => message.role === 'user') || !value.message.includes(APPROVAL_REVIEW_SESSION_MARKER))) {
         throw new Error('审批辅助必须在没有其他事项历史的新会话中打开')
+      }
+      if (pendingWorkContinuation?.kind === 'business' && (value.type !== 'prompt' || messages.some((message) => message.role === 'user'))) {
+        throw new Error('Forge 业务结果必须在没有其他事项历史的新会话中打开')
       }
       if (!pendingApprovalContext && !previousApprovalContext && claim.sessionPath) {
         const restored = await this.restoreApprovalReviewSession(accountKey, claim.sessionPath)
@@ -707,11 +791,16 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           await assertEmployeeInputCurrent()
           assertEmployeeInputMarkersCurrent()
         }
-        if (pendingWorkContinuation) {
+        if (pendingWorkContinuation?.kind === 'weave') {
           if (!claim.sessionPath || this.claimForToken(token) !== claim) throw new Error('团队工作上下文已失效，请重新打开工作消息')
           boundWorkContinuation = activeWorkContinuation
           if (!boundWorkContinuation) throw new Error('团队工作上下文已失效，请重新打开工作消息')
           this.workLineages.set(token, boundWorkContinuation)
+          this.pendingWorkContinuations.delete(workHandle!)
+        } else if (pendingWorkContinuation?.kind === 'business') {
+          if (!claim.sessionPath || this.claimForToken(token) !== claim || !activeBusinessNotification) throw new Error('Forge 业务结果上下文已失效，请重新打开消息')
+          this.workContinuations.delete(token)
+          this.workLineages.delete(token)
           this.pendingWorkContinuations.delete(workHandle!)
         } else if (pendingApprovalContext) {
           this.workLineages.delete(token)
@@ -734,7 +823,8 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           ...(activeApprovalContext ? { approvalContext: activeApprovalContext, ...(activeApprovalContext.purpose === 'review' ? { enterpriseReadOnly: true } : {}) } : {}),
           ...(pendingSessionPrompts ? { pendingSessionPrompts } : {}),
           ...(boundWorkContinuation ? { workContinuation: boundWorkContinuation } : {}),
-          ...(pendingWorkContinuation ? { openingWorkContinuation: true } : {}),
+          ...(pendingWorkContinuation?.kind === 'weave' ? { openingWorkContinuation: true } : {}),
+          ...(activeBusinessNotification ? { businessNotification: activeBusinessNotification } : {}),
         })
       } else if (pendingApprovalContext || previousApprovalContext || approvalReviewSessionDetected || pendingWorkContinuation) {
         throw new Error('员工轮次已变化，退回事项不能继续')
@@ -778,6 +868,15 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       }
       if (bound.purpose === 'review' && method !== 'activate') {
         throw new Error('当前审批辅助会话只能使用已固定的审批快照，不能读取或办理其他企业事项')
+      }
+    }
+    if (turn.businessNotification) {
+      const bound = turn.businessNotification
+      if (bound.sessionPath !== claim.sessionPath || bound.accountKey !== accountKey) {
+        throw new Error('业务结果消息与当前员工会话不匹配，请重新打开消息')
+      }
+      if (method !== 'activate') {
+        throw new Error('打开业务结果消息只允许查看本次核验的记录与材料；请在新消息中明确提出后续需求')
       }
     }
     if (turn.workContinuation && (this.workContinuations.get(claim.token) !== turn.workContinuation || this.workLineages.get(claim.token) !== turn.workContinuation)) {
@@ -1534,7 +1633,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
               && this.claimForToken(claim.token) === claim
               && await this.options.service.accountKey() === turn.accountKey) {
               const nextLineage: BoundWorkContinuation = {
-                accountKey: turn.accountKey, context: nextContext,
+                kind: 'weave', accountKey: turn.accountKey, context: nextContext,
                 fingerprint: workContinuationFingerprint(nextContext), createdAt: Date.now(), sessionPath: claim.sessionPath,
               }
               this.workLineages.set(claim.token, nextLineage)

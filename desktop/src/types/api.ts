@@ -395,8 +395,9 @@ export interface EnterpriseWorkItem {
   reviewScope?: 'whole_team' | 'affected_members' | 'human_step'
 }
 
-/** Renderer-safe subset used only after the main process validates the exact Weave run context. */
-export interface EnterpriseWorkContinuationContextView {
+/** Renderer-safe subset after the main process validates a native notification source. */
+export interface EnterpriseWeaveWorkContinuationContextView {
+  kind: 'weave'
   task: string
   runStatus: 'queued' | 'running' | 'parked' | 'cancel_requested' | 'succeeded' | 'failed' | 'cancelled' | 'abandoned'
   materials: Array<{
@@ -419,6 +420,37 @@ export interface EnterpriseWorkContinuationContextView {
   }
   actionOutcomes?: Array<{ actionName: string; objectName: string; status: 'succeeded' | 'failed' | 'unknown'; summary: string }>
 }
+
+export interface EnterpriseBusinessNotificationContextView {
+  kind: 'business'
+  currentReadAt: string
+  materialStatus: 'available' | 'none' | 'unavailable'
+  record: {
+    objectLabel: string
+    name: string
+    code?: string
+    status?: string
+    owner?: string
+    fields: Array<{ label: string; value: unknown }>
+    relations: Array<{
+      label: string
+      direction: 'related' | 'reference'
+      records: Array<Array<{ label: string; value: unknown }>>
+      returnedCount: number
+      limit: number
+      complete: boolean
+      requiredForCalculation?: boolean
+      expectedCount?: number
+    }>
+    completeness: 'complete' | 'partial' | 'truncated' | 'incomplete'
+    pricingDetailCompleteness: 'complete' | 'incomplete' | 'unknown'
+    expectedDetailCount?: number
+    completenessNotes: string[]
+  }
+  materials: NonNullable<EnterpriseApprovalContextView['originalFiles']>
+}
+
+export type EnterpriseWorkContinuationContextView = EnterpriseWeaveWorkContinuationContextView | EnterpriseBusinessNotificationContextView
 
 export interface EnterpriseWorkOverview {
   loadedAt: string

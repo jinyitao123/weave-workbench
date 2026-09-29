@@ -6,7 +6,7 @@ import { AgentEnterpriseBridge } from '../../electron/main/enterprise/agent-brid
 import { digest, HandoffStore, submissionUUID } from '../../electron/main/enterprise/handoff-store'
 import { freezeApprovalOriginalMaterial, freezeMaterials, normalizeFrozenMaterial, type FrozenMaterial } from '../../electron/main/enterprise/materials'
 import type { EnterpriseApprovalContext, TranscriptMessage } from '../../src/types/api'
-import { WorkRegistrationRejectedError, type EnterpriseWorkContinuationContext, type EnterpriseWorkNotificationSource } from '../../electron/main/enterprise'
+import { WorkRegistrationRejectedError, type EnterpriseBusinessNotificationContext, type EnterpriseWorkContinuationContext, type EnterpriseWorkNotificationSource } from '../../electron/main/enterprise'
 import { ForgeBusinessReadError, type BusinessRecordSnapshot } from '../../electron/main/enterprise/business-records'
 import { appendWorkspaceMaterialContext } from '../../src/lib/workspace-material-attachments'
 import { APPROVAL_REVIEW_SESSION_MARKER } from '../../src/lib/approval-review'
@@ -28,6 +28,43 @@ function workContinuationContext(): EnterpriseWorkContinuationContext {
       materials: [], sourceMessages: [{ messageID: 'employee-message', eventSeq: 1, sha256: digest('员工原始要求') }],
     },
     run: { status: 'succeeded' as const, finalResult: { id: 'deliverable-1', title: '交付检查意见', contentType: 'text/markdown', content: finalResult, sha256: digest(finalResult) } },
+  }
+}
+function businessNotificationContext(notificationID: string, options: { recordId?: string; materialStatus?: 'available' | 'none' | 'unavailable'; content?: string } = {}): EnterpriseBusinessNotificationContext {
+  const sourceBytes = Buffer.from('%PDF-current-contract')
+  const content = options.content ?? '当前批准合同原件内容。'
+  const sha256 = digest(sourceBytes)
+  const material = {
+    sourceKind: 'approval' as const, requestId: 'approval-current', fileId: 'approval-file-current',
+    name: '当前批准合同.pdf', mediaType: 'application/pdf' as const, bytes: sourceBytes.length, sha256,
+    extraction: {
+      status: 'complete' as const, mediaType: 'text/plain; charset=utf-8' as const,
+      bytes: Buffer.byteLength(content), sha256: digest(content), sourceSha256: sha256, content,
+      extractor: 'pdfjs-dist' as const, coverage: { pdfPageCount: 1, pdfTextPageCount: 1 }, limitations: [],
+    },
+  }
+  const candidate = {
+    objectName: 'forge_sales_contract', objectLabel: '销售合同', recordId: options.recordId ?? 'contract-current',
+    name: '设备验收合同', code: 'C-100', status: '内部复核通过', recordVersion: 'v2',
+  }
+  return {
+    kind: 'business', notificationID,
+    source: { system: 'forge', objectName: candidate.objectName, recordId: candidate.recordId },
+    materialStatus: options.materialStatus ?? 'available',
+    materialReferences: options.materialStatus === 'none' || options.materialStatus === 'unavailable' ? [] : [{
+      sourceKind: 'approval' as const, requestId: 'approval-current', fileId: 'approval-file-current',
+      name: '当前批准合同.pdf', mediaType: 'application/pdf' as const, bytes: sourceBytes.length, sha256,
+    }],
+    record: {
+      candidate,
+      snapshot: {
+        version: 1, capturedAt: '2026-09-30T01:00:00Z', objectLabel: '销售合同',
+        record: [{ label: '合同名称', value: candidate.name }, { label: '状态', value: candidate.status }],
+        relations: [], completeness: 'complete', pricingDetailCompleteness: 'unknown', completenessNotes: [],
+      },
+    },
+    currentReadAt: '2026-09-30T01:00:00Z',
+    materials: options.materialStatus === 'none' || options.materialStatus === 'unavailable' ? [] : [material],
   }
 }
 async function fixture(objectName = 'forge_sales_contract', configureStorage = true) {
@@ -70,6 +107,7 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
       context.source.workbenchSessionID = references.sessionReference
       return context
     }),
+    getBusinessNotificationContext: vi.fn(async (notificationID: string) => businessNotificationContext(notificationID, { recordId: businessCandidate.recordId })),
     getWorkNotificationSource: vi.fn(async (notificationID: string): Promise<EnterpriseWorkNotificationSource> => ({
       version: '1', notificationID, kind: 'revision_required',
       source: { system: 'weave' as const, workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' },
@@ -180,6 +218,17 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
     turnKey = active.body.result?.turn_key as string
     return { context: binding.context, turnKey, path: sessionPath, runtimeId }
   }
+  const openBusinessResult = async (notificationID = 'business-notice') => {
+    const binding = await bridge.pinWorkContinuationContext({ id: notificationID, source: 'forge' as const })
+    if (binding.context.kind !== 'business') throw new Error('test fixture did not return a business notification context')
+    startNewSession(`business-${notificationID}`)
+    const prompt = '请只读查看当前业务结果。'
+    await bridge.employeeCommand(runtimeId, { type: 'prompt', message: prompt }, undefined, binding.handle)
+    activeTranscript.push(user(`opened-${notificationID}`, prompt))
+    const active = await call('activate', { prompt })
+    turnKey = active.body.result?.turn_key as string
+    return { context: binding.context, turnKey, path: sessionPath, runtimeId }
+  }
   const discover = async () => {
     const search = await call('search', { work_summary: '复核合同' })
     const teams = search.body.result.teams as Array<{ team_key: string }>
@@ -197,7 +246,7 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
     return { directory, objectRef, found, recordKey }
   }
   await input(appendWorkspaceMaterialContext('这版给他们看看', [materialReference]), 'employee-turn-1')
-  return { call, callWithTurn, input, getTurnKey: () => turnKey, relogin, startNewSession, discover, findRecord, openReturned, openApprovalReview, service, bridge, get environment() { return environment }, get runtimeId() { return runtimeId }, get sessionPath() { return sessionPath }, get transcript() { return activeTranscript }, transcripts, materials, cwd, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, businessCandidate, businessSnapshot, sessions }
+  return { call, callWithTurn, input, getTurnKey: () => turnKey, relogin, startNewSession, discover, findRecord, openReturned, openApprovalReview, openBusinessResult, service, bridge, get environment() { return environment }, get runtimeId() { return runtimeId }, get sessionPath() { return sessionPath }, get transcript() { return activeTranscript }, transcripts, materials, cwd, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, businessCandidate, businessSnapshot, sessions }
 }
 
 async function openNeedsInputContinuation(f: Awaited<ReturnType<typeof fixture>>, context: EnterpriseWorkContinuationContext, id: string) {
@@ -234,6 +283,59 @@ describe('employee-bound material handoff', () => {
     await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: prompt }, undefined, binding.handle)
     f.transcript.push(user('continued-work', prompt))
     await expect(f.call('activate', { prompt })).resolves.toMatchObject({ body: { result: { turn_key: expect.any(String) } } })
+  })
+
+  it('pins Forge business results to the current authorized record and keeps unavailable materials distinct', async () => {
+    const f = await fixture()
+    const binding = await f.bridge.pinWorkContinuationContext({ id: 'business-notice-1', source: 'forge' })
+    expect(f.service.getBusinessNotificationContext).toHaveBeenCalledWith('business-notice-1')
+    expect(binding.context).toMatchObject({
+      kind: 'business', materialStatus: 'available',
+      record: { name: '设备验收合同', status: '内部复核通过' },
+      materials: [{ name: '当前批准合同.pdf', verified: true, extraction: { content: '当前批准合同原件内容。' } }],
+    })
+    expect(binding.context.kind === 'business' && binding.context.record.fields).toEqual(expect.arrayContaining([{ label: '合同名称', value: '设备验收合同' }]))
+    expect(JSON.stringify(binding.context)).not.toContain('contract-current')
+    expect(JSON.stringify(binding.context)).not.toContain('approval-file-current')
+
+    f.service.getBusinessNotificationContext.mockResolvedValueOnce(businessNotificationContext('business-unavailable', { materialStatus: 'unavailable' }))
+    const unavailable = await f.bridge.pinWorkContinuationContext({ id: 'business-unavailable', source: 'forge' })
+    expect(unavailable.context).toMatchObject({ kind: 'business', materialStatus: 'unavailable', materials: [] })
+  })
+
+  it('opens a Forge business result as read-only, then lets a later employee message use normal tools', async () => {
+    const f = await fixture()
+    const opened = await f.openBusinessResult()
+    expect(opened.context).toMatchObject({ kind: 'business', record: { name: '设备验收合同' } })
+    for (const method of ['search', 'submit', 'revision_submit', 'recover', 'list_business_objects']) {
+      const result = await f.call(method)
+      expect(result.status, `${method} should be blocked on initial message open`).toBe(409)
+      expect(result.body.error).toContain('只允许查看本次核验')
+    }
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+    expect(f.service.submitApprovalRevision).not.toHaveBeenCalled()
+
+    await f.input('我有新的工作要求，请按当前权限重新查找相关记录。', 'business-new-employee-request')
+    const search = await f.call('search', { work_summary: '设备验收合同' })
+    expect(search.status).toBe(200)
+    expect(search.body.result.teams).toEqual(expect.arrayContaining([expect.objectContaining({ name: '合同团队' })]))
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+
+  it('rejects a business result handle when the current record or account changes before it binds', async () => {
+    const f = await fixture()
+    const binding = await f.bridge.pinWorkContinuationContext({ id: 'business-stale-record', source: 'forge' })
+    const session = f.startNewSession('business-stale-record')
+    f.service.getBusinessNotificationContext.mockResolvedValueOnce(businessNotificationContext('business-stale-record', { recordId: 'contract-replaced' }))
+    await expect(f.bridge.employeeCommand(session.runtimeId, { type: 'prompt', message: '查看当前业务结果' }, undefined, binding.handle))
+      .rejects.toThrow('Forge 当前记录或材料版本已变化')
+
+    const other = await fixture()
+    const otherBinding = await other.bridge.pinWorkContinuationContext({ id: 'business-other-account', source: 'forge' })
+    const otherSession = other.startNewSession('business-other-account')
+    other.service.accountKey.mockResolvedValue('employee-b')
+    await expect(other.bridge.employeeCommand(otherSession.runtimeId, { type: 'prompt', message: '查看当前业务结果' }, undefined, otherBinding.handle))
+      .rejects.toThrow('当前账号已变化')
   })
 
   it('passes validated team disposition and missing items into the Pi continuation context', async () => {
@@ -462,7 +564,7 @@ describe('employee-bound material handoff', () => {
     const cwd = await mkdtemp(join(tmpdir(), 'handoff-future-session-')); directories.push(cwd)
     const transcript: TranscriptMessage[] = []
     const service = {
-      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()),
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getBusinessNotificationContext: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()),
       getTeamCatalog: vi.fn(async () => [{ id: 'team-lead', name: '线索分析团队', objective: '整理线索事实' }]),
       getTeamChoices: vi.fn(async () => []), getBusinessCapabilities: vi.fn(async () => []),
       getBusinessObjectDirectory: vi.fn(async () => ({ objects: [], complete: true, totalCount: 0 })),
@@ -498,7 +600,7 @@ describe('employee-bound material handoff', () => {
     const cwd = await mkdtemp(join(tmpdir(), 'handoff-race-')); directories.push(cwd)
     const transcript: TranscriptMessage[] = []
     const service = {
-      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()), getTeamCatalog: vi.fn(async () => [{ id: 'team-lead', name: '线索分析团队', objective: '整理线索并返回依据和待确认项' }]), getTeamChoices: vi.fn(async () => []),
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getBusinessNotificationContext: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()), getTeamCatalog: vi.fn(async () => [{ id: 'team-lead', name: '线索分析团队', objective: '整理线索并返回依据和待确认项' }]), getTeamChoices: vi.fn(async () => []),
       getBusinessCapabilities: vi.fn(async () => []),
       getBusinessObjectDirectory: vi.fn(async () => ({ objects: [], complete: true, totalCount: 0 })),
       findBusinessRecords: vi.fn(async () => ({ records: [], offset: 0, limit: 20, hasMore: false, complete: true })),
@@ -566,7 +668,7 @@ describe('employee-bound material handoff', () => {
     const cwd = await mkdtemp(join(tmpdir(), 'handoff-pending-invalidate-')); directories.push(cwd)
     const transcript: TranscriptMessage[] = []
     const service = {
-      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getBusinessNotificationContext: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
       getBusinessCapabilities: vi.fn(async () => []), getBusinessObjectDirectory: vi.fn(async () => ({ objects: [], complete: true, totalCount: 0 })),
       findBusinessRecords: vi.fn(async () => ({ records: [], offset: 0, limit: 20, hasMore: false, complete: true })), readBusinessRecord: vi.fn(async () => { throw new Error('not used in this fixture') }),
       stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),
@@ -611,7 +713,7 @@ describe('employee-bound material handoff', () => {
     const cwd = await mkdtemp(join(tmpdir(), 'handoff-new-session-ambiguous-')); directories.push(cwd)
     const transcript: TranscriptMessage[] = []
     const service = {
-      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getBusinessNotificationContext: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
       getBusinessCapabilities: vi.fn(async () => []), getBusinessObjectDirectory: vi.fn(async () => ({ objects: [], complete: true, totalCount: 0 })),
       findBusinessRecords: vi.fn(async () => ({ records: [], offset: 0, limit: 20, hasMore: false, complete: true })), readBusinessRecord: vi.fn(async () => { throw new Error('not used in this fixture') }),
       stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),

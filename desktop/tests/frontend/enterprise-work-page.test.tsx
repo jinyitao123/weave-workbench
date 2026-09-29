@@ -83,6 +83,21 @@ it('keeps a native Weave team-run notification openable when its source is resol
   expect(continueWork).toHaveBeenCalledWith(item)
 })
 
+it('opens a typed Forge result message through the source resolver without inferring a record from its text', async () => {
+  const item = { ...overview.items[0]!, source: 'forge' as const, kind: 'result' as const, notificationType: 'sales.contract.approved' }
+  await act(async () => root.render(<EnterpriseWorkPage
+    overview={{ ...overview, items: [item], reads: { ...overview.reads, notifications: { status: 'loaded' } } }}
+    loading={false} error="" onRefresh={refresh}
+    onComplete={vi.fn(async () => undefined)} onInspect={vi.fn(async () => ({ title: '', step: '', fields: [], files: [] }))}
+    onAssist={assistPi} onContinue={continueWork}
+  />))
+
+  const continueButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '交给 Pi 查看')
+  expect(continueButton?.disabled).toBe(false)
+  await act(async () => continueButton?.click())
+  expect(continueWork).toHaveBeenCalledWith(item)
+})
+
 it('lets a reviewer send the verified approval snapshot and files to Pi for read-only analysis', async () => {
   const context: EnterpriseApprovalContextView = {
     title: '合同交付复核', step: '交付与商务会签',
