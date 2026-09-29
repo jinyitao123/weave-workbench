@@ -41,7 +41,6 @@
     },
     "files": {
       "type": "array",
-      "maxItems": 11,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -58,7 +57,6 @@
     },
     "originalFiles": {
       "type": "array",
-      "maxItems": 11,
       "description": "Only files frozen to this approval request; every item uses sourceKind=approval and requestId equal to the containing requestId.",
       "items": { "$ref": "#/$defs/approvalOriginalMaterial" }
     }
