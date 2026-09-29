@@ -18,7 +18,7 @@ interface EnterpriseServiceOptions {
 
 type EnterpriseAuthProvider = 'forge' | 'weave'
 interface EnterpriseAuthSnapshot { generation: number; provider: EnterpriseAuthProvider; token: string }
-export interface ApprovalRevisionFileReference { fileId: string; name: string; sha256: string }
+export interface ApprovalRevisionFileReference { fileId: string; name: string; sha256: string; mediaType?: WorkspaceMaterialMimeType; bytes?: number }
 export interface ApprovalRevisionSubmission {
   returnVersion: string
   sourceMaterialVersion: string
