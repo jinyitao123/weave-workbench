@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { ForgeBusinessReadError, ForgeBusinessReader } from '../../electron/main/enterprise/business-records'
 
-type Field = { name: string; type: string; label: string; reference?: string; required?: boolean }
+type Field = { name: string; type: string; label: string; reference?: string; required?: boolean; options?: Array<string | { value: string | number | boolean; label: string }> }
 type ToolCall = { name: string; args: Record<string, unknown> }
 
 const rootFields: Field[] = [
@@ -87,6 +87,26 @@ function readerFixture(options: { lineCount?: number; deniedLineQuery?: boolean;
 }
 
 describe('native Forge business record reads', () => {
+  it('uses the native option label for a current select value without hardcoding business status meanings', async () => {
+    const fields: Field[] = [
+      { name: 'id', type: 'text', label: 'ID' },
+      { name: 'name', type: 'text', label: '合同名称' },
+      { name: 'status', type: 'select', label: '状态', options: [
+        { value: 'active', label: '内部复核通过' }, { value: 'draft', label: '草稿' },
+      ] },
+    ]
+    const reader = new ForgeBusinessReader(async (name) => {
+      if (name === 'list_objects') return { objects: [{ name: 'forge_sales_contract', label: '销售合同' }], totalCount: 1 }
+      if (name === 'get_record') return { id: 'contract-internal-id', name: '待复核合同', status: 'active' }
+      throw new Error(`unexpected ${name}`)
+    }, async (objectName) => metadata(objectName, '销售合同', fields))
+
+    const read = await reader.readRecord('forge_sales_contract', 'contract-internal-id', 1)
+    expect(read.candidate.status).toBe('内部复核通过')
+    expect(read.snapshot.record).toContainEqual({ label: '状态', value: '内部复核通过' })
+    expect(JSON.stringify(read.snapshot)).not.toContain('active')
+  })
+
   it('keeps a line item material code distinct from its authorized SKU code', async () => {
     const contractFields: Field[] = [
       { name: 'id', type: 'text', label: 'ID' },

@@ -31,11 +31,38 @@ export class WorkRegistrationRejectedError extends Error {}
 class WeaveHttpError extends Error {
   constructor(message: string, readonly status: number) { super(message) }
 }
-export interface EnterpriseWorkNotificationSource {
+export interface EnterpriseWeaveWorkNotificationSource {
   version: '1'
   notificationID: string
   kind: 'result' | 'failure' | 'revision_required' | 'cancelled'
   source: { system: 'weave'; workReference: string; runReference: string; sessionReference: string }
+}
+export interface EnterpriseBusinessWorkNotificationSource {
+  version: '1'
+  notificationID: string
+  kind: 'business'
+  source: { system: 'forge'; objectName: string; recordId: string }
+  materialStatus: 'available' | 'none' | 'unavailable'
+  originalFiles: Array<{
+    sourceKind: 'owner' | 'approval'
+    requestId?: string
+    fileId: string
+    name: string
+    mediaType: 'application/pdf' | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    bytes: number
+    sha256: string
+  }>
+}
+export type EnterpriseWorkNotificationSource = EnterpriseWeaveWorkNotificationSource | EnterpriseBusinessWorkNotificationSource
+export interface EnterpriseBusinessNotificationContext {
+  kind: 'business'
+  notificationID: string
+  source: EnterpriseBusinessWorkNotificationSource['source']
+  materialStatus: EnterpriseBusinessWorkNotificationSource['materialStatus']
+  materialReferences: EnterpriseBusinessWorkNotificationSource['originalFiles']
+  record: BusinessRecordRead
+  currentReadAt: string
+  materials: Array<EnterpriseBusinessWorkNotificationSource['originalFiles'][number] & { extraction: MaterialExtraction }>
 }
 export interface EnterpriseWorkContinuationContext {
   version: '1'
@@ -905,7 +932,7 @@ export class EnterpriseService {
     bytes: number,
     sha256: string,
     generation: number,
-    sourceLabel: '审批' | '原工作',
+    sourceLabel: '审批' | '原工作' | '业务结果',
   ): Promise<Buffer> {
     const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.forgeUrl), 'forge', {
       headers: { Accept: mediaType, 'Accept-Encoding': 'identity', 'If-Match': `"${sha256}"` },
@@ -1676,7 +1703,7 @@ export class EnterpriseService {
       if (cached) return cached
       try {
         const verified = await this.getWorkNotificationSource(item.id)
-        if (item.notificationType !== `weave.team_run.${verified.kind}`) return undefined
+        if (verified.kind === 'business' || item.notificationType !== `weave.team_run.${verified.kind}`) return undefined
         const source = { workReference: verified.source.workReference, runReference: verified.source.runReference, sessionReference: verified.source.sessionReference }
         sources.set(item.id, source)
         return source
@@ -1771,25 +1798,128 @@ export class EnterpriseService {
     return context
   }
 
-  async getWorkNotificationSource(notificationIDValue: string): Promise<EnterpriseWorkNotificationSource> {
-    const { session, generation } = await this.sessionSnapshot()
-    if (session.status !== 'signed-in') throw new Error('请先登录')
-    const notificationID = boundedIdentity(notificationIDValue, 128)
-    if (!notificationID) throw new Error('工作消息无效，请刷新工作列表')
+  private async readWorkNotificationSource(notificationID: string, generation: number): Promise<EnterpriseWorkNotificationSource> {
     const raw = record(await this.forgeJSON(`/api/v1/workbench/notifications/${encodeURIComponent(notificationID)}/source`, generation, '工作消息来源'))
     const source = record(raw?.source)
     const responseNotificationID = boundedIdentity(raw?.notificationId, 128)
     const kind = boundedIdentity(raw?.kind, 64)
+    if (raw?.version !== '1' || responseNotificationID !== notificationID) throw new Error('工作消息来源与当前消息不匹配，请刷新工作列表')
+    if (kind === 'business') {
+      const objectName = boundedIdentity(source?.objectName, 128)
+      const recordId = boundedIdentity(source?.recordId, 128)
+      const materialStatus = raw?.materialStatus
+      if (source?.system !== 'forge' || !objectName || !/^[a-z][a-z0-9_]{1,127}$/.test(objectName)
+        || !recordId || !['available', 'none', 'unavailable'].includes(String(materialStatus))
+        || !Array.isArray(raw.originalFiles)) {
+        throw new Error('Forge 业务结果来源格式无效，请刷新工作消息')
+      }
+      if (Object.keys(raw).some((key) => !['version', 'notificationId', 'kind', 'source', 'materialStatus', 'originalFiles'].includes(key))
+        || Object.keys(source).some((key) => !['system', 'objectName', 'recordId'].includes(key))) {
+        throw new Error('Forge 业务结果来源包含未识别字段')
+      }
+      const seenFiles = new Set<string>()
+      const originalFiles = raw.originalFiles.map((entry) => {
+        const file = record(entry)
+        const sourceKind = file?.sourceKind
+        const requestId = boundedIdentity(file?.requestId, 128)
+        const fileId = boundedIdentity(file?.fileId, 128)
+        const name = boundedIdentity(file?.name, 255)
+        const mediaType = file?.mediaType
+        const bytes = numberValue(file?.bytes)
+        const sha256 = typeof file?.sha256 === 'string' ? file.sha256 : undefined
+        if (!file || Object.keys(file).some((key) => !['sourceKind', 'requestId', 'fileId', 'name', 'mediaType', 'bytes', 'sha256'].includes(key))
+          || sourceKind !== 'owner' && sourceKind !== 'approval'
+          || sourceKind === 'approval' && !requestId || sourceKind === 'owner' && file.requestId !== undefined
+          || !fileId || seenFiles.has(fileId) || !name
+          || mediaType !== 'application/pdf' && mediaType !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          || !Number.isInteger(bytes) || bytes! < 1 || bytes! > MAX_WORKSPACE_MATERIAL_BYTES
+          || !sha256 || !/^[0-9a-f]{64}$/.test(sha256)) {
+          throw new Error('Forge 业务结果材料来源或冻结版本无效')
+        }
+        seenFiles.add(fileId)
+        return {
+          sourceKind, ...(requestId ? { requestId } : {}), fileId, name,
+          mediaType, bytes: bytes!, sha256,
+        }
+      })
+      if (materialStatus === 'available' && originalFiles.length === 0 || materialStatus === 'none' && originalFiles.length !== 0) {
+        throw new Error('Forge 业务结果材料状态与来源清单不一致')
+      }
+      this.assertAuthGeneration(generation)
+      return {
+        version: '1', notificationID, kind: 'business',
+        source: { system: 'forge', objectName, recordId },
+        materialStatus: materialStatus as EnterpriseBusinessWorkNotificationSource['materialStatus'],
+        originalFiles: originalFiles as EnterpriseBusinessWorkNotificationSource['originalFiles'],
+      }
+    }
     const workReference = boundedIdentity(source?.workReference, 512)
     const runReference = boundedIdentity(source?.runReference, 512)
     const sessionReference = boundedIdentity(source?.sessionReference, 512)
-    if (raw?.version !== '1' || responseNotificationID !== notificationID
-      || kind !== 'result' && kind !== 'failure' && kind !== 'revision_required' && kind !== 'cancelled'
-      || source?.system !== 'weave' || !workReference || !runReference || !sessionReference) {
+    if (kind !== 'result' && kind !== 'failure' && kind !== 'revision_required' && kind !== 'cancelled'
+      || source?.system !== 'weave' || !workReference || !runReference || !sessionReference
+      || Object.keys(raw).some((key) => !['version', 'notificationId', 'kind', 'source'].includes(key))
+      || Object.keys(source).some((key) => !['system', 'workReference', 'runReference', 'sessionReference'].includes(key))) {
       throw new Error('工作消息来源与当前消息不匹配，请刷新工作列表')
     }
     this.assertAuthGeneration(generation)
     return { version: '1', notificationID, kind, source: { system: 'weave', workReference, runReference, sessionReference } }
+  }
+
+  async getWorkNotificationSource(notificationIDValue: string): Promise<EnterpriseWorkNotificationSource> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    const notificationID = boundedIdentity(notificationIDValue, 128)
+    if (!notificationID) throw new Error('工作消息无效，请刷新工作消息')
+    return this.readWorkNotificationSource(notificationID, generation)
+  }
+
+  async getBusinessNotificationContext(notificationIDValue: string): Promise<EnterpriseBusinessNotificationContext> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    const notificationID = boundedIdentity(notificationIDValue, 128)
+    if (!notificationID) throw new Error('业务结果消息无效，请刷新工作列表')
+    const initialSource = await this.readWorkNotificationSource(notificationID, generation)
+    if (initialSource.kind !== 'business') throw new Error('当前 Forge 消息不是可续接的业务结果')
+    const accountBefore = await this.accountKey(generation)
+    const recordBefore = await this.readBusinessRecord(initialSource.source.objectName, initialSource.source.recordId)
+    if (recordBefore.candidate.objectName !== initialSource.source.objectName || recordBefore.candidate.recordId !== initialSource.source.recordId) {
+      throw new Error('Forge 当前业务记录与消息来源不匹配')
+    }
+    let totalBytes = 0
+    let totalExtractedBytes = 0
+    const materials: EnterpriseBusinessNotificationContext['materials'] = []
+    if (initialSource.materialStatus === 'available') {
+      for (const expected of initialSource.originalFiles) {
+        const originalPath = expected.sourceKind === 'owner'
+          ? `/api/v1/workbench/materials/${encodeURIComponent(expected.fileId)}/original`
+          : `/api/v1/approvals/requests/${encodeURIComponent(expected.requestId!)}/workbench-history/files/${encodeURIComponent(expected.fileId)}/original`
+        const sourceBytes = await this.readOriginalMaterialBytes(originalPath, expected.mediaType, expected.bytes, expected.sha256, generation, '业务结果')
+        totalBytes += sourceBytes.length
+        if (totalBytes > CONTINUATION_TOTAL_BYTES) throw new Error('业务结果材料总量超出桌面读取限制')
+        const remainingExtractionBytes = MAX_WORKSPACE_EXTRACTION_BYTES - totalExtractedBytes
+        if (remainingExtractionBytes < 1) throw new Error('业务结果材料提取文本总量超出桌面读取限制')
+        const extraction = await extractOriginalMaterialText(expected.mediaType, sourceBytes, expected.sha256, remainingExtractionBytes)
+        totalExtractedBytes += extraction.bytes
+        materials.push({ ...expected, extraction })
+      }
+    }
+    const latestSource = await this.readWorkNotificationSource(notificationID, generation)
+    if (JSON.stringify(latestSource) !== JSON.stringify(initialSource)) throw new Error('Forge 业务结果来源或材料版本已变化，请刷新工作消息')
+    const recordAfter = await this.readBusinessRecord(initialSource.source.objectName, initialSource.source.recordId)
+    const { capturedAt: _beforeReadAt, ...recordBeforeSnapshot } = recordBefore.snapshot
+    const { capturedAt: _afterReadAt, ...recordAfterSnapshot } = recordAfter.snapshot
+    if (JSON.stringify(recordBefore.candidate) !== JSON.stringify(recordAfter.candidate)
+      || JSON.stringify(recordBeforeSnapshot) !== JSON.stringify(recordAfterSnapshot)
+      || await this.accountKey(generation) !== accountBefore) {
+      throw new Error('Forge 当前业务记录或员工账号已变化，请重新打开工作消息')
+    }
+    this.assertAuthGeneration(generation)
+    return {
+      kind: 'business', notificationID, source: initialSource.source,
+      materialStatus: initialSource.materialStatus, materialReferences: structuredClone(initialSource.originalFiles), record: recordAfter,
+      currentReadAt: new Date().toISOString(), materials,
+    }
   }
 
   async getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContext> {
