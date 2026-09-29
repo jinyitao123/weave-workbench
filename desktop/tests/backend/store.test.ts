@@ -530,7 +530,7 @@ describe('JsonStateStore', () => {
     await resetStore.beginShutdown()
   })
 
-  it('accepts the pi harness for projects and the active workspace', () => {
+  it('accepts the pi harness for projects and the active workspace', async () => {
     const dir = makeDirectory()
     const path = join(dir, 'state.json')
     writeFileSync(path, JSON.stringify({
@@ -544,10 +544,13 @@ describe('JsonStateStore', () => {
       dismissedProjectPaths: [],
       schedules: [],
     }))
-    const state = new JsonStateStore(path).snapshot()
+    const store = new JsonStateStore(path)
+    await store.ready()
+    const state = store.snapshot()
     expect(state.version).toBe(6)
     expect(state.projects.map((project) => project.harness)).toEqual(['pi'])
     expect(state.settings.activeHarness).toBe('pi')
+    await store.beginShutdown()
   })
 
   it('bounds piDisabledProviders and defaults the field when absent', async () => {
