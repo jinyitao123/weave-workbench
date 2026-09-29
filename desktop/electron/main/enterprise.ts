@@ -795,7 +795,7 @@ export class EnterpriseService {
     sourceLabel: '审批' | '原工作',
   ): Promise<Buffer> {
     const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.forgeUrl), 'forge', {
-      headers: { Accept: mediaType, 'Accept-Encoding': 'identity', 'If-Match': sha256 },
+      headers: { Accept: mediaType, 'Accept-Encoding': 'identity', 'If-Match': `"${sha256}"` },
       redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     }, generation)
     if (response.status === 401) {
