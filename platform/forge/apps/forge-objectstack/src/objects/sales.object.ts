@@ -103,7 +103,7 @@ export const SalesContract = master('forge_sales_contract', '框架销售合同'
   revenue_trigger: revenueTrigger(), ordered_count: Field.number({ label: '下单笔数', min: 0, scale: 0, defaultValue: 0 }),
   ordered_amount: nonNegativeMoney('已下单金额'), invoiced_amount: nonNegativeMoney('已开票金额'),
   shipped_amount: nonNegativeMoney('已发货金额'), collected_amount: nonNegativeMoney('已回款金额'),
-  status: { ...choice('合同状态', ['草稿', '待审批', '执行中', '已完成', '已终止', '已驳回'], '草稿'), readonly: true },
+  status: { ...choice('合同状态', ['草稿', '待审批', '内部复核通过', '已完成', '已终止', '已驳回'], '草稿'), readonly: true },
   payment_term: text('付款条件'), delivery_cycle_days: Field.number({ label: '交货周期（天）', min: 0, scale: 0, defaultValue: 21 }),
   warranty_months: Field.number({ label: '质保期（月）', min: 0, scale: 0 }), business_terms: Field.textarea({ label: '合同条款' }),
   requires_legal_review: Field.boolean({ label: '非标条款需要法务复核', defaultValue: false }),
