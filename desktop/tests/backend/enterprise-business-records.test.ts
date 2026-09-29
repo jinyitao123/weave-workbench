@@ -167,6 +167,57 @@ describe('native Forge business record reads', () => {
     expect(f.calls.filter((call) => call.name === 'query_records').every((call) => call.args.objectName !== 'customer')).toBe(true)
   })
 
+  it('returns every matching record from a native page before advancing its offset', async () => {
+    const fields = [
+      { name: 'id', type: 'text', label: 'ID' },
+      { name: 'name', type: 'text', label: '名称' },
+    ]
+    const reader = new ForgeBusinessReader(async (name, args) => {
+      if (name === 'list_objects') return { objects: [{ name: 'sales_lead', label: '销售线索' }], totalCount: 1 }
+      if (name === 'describe_object') return { name: 'sales_lead', fields }
+      if (name === 'query_records') {
+        const offset = Number(args.offset)
+        return {
+          records: Array.from({ length: Math.max(0, Math.min(50, 75 - offset)) }, (_, index) => ({
+            id: `lead-${offset + index + 1}`, name: `客户需求 ${offset + index + 1}`,
+          })),
+          totalCount: 75,
+        }
+      }
+      throw new Error(`unexpected ${name}`)
+    }, async () => ({ name: 'sales_lead', fields }))
+    const first = await reader.findRecords('sales_lead', '客户需求', 0, 50, 1)
+    const second = await reader.findRecords('sales_lead', '客户需求', 50, 50, 1)
+    expect(first).toMatchObject({ offset: 0, limit: 50, hasMore: true })
+    expect(second).toMatchObject({ offset: 50, limit: 50, hasMore: false })
+    expect([...first.records, ...second.records].map((record) => record.name)).toEqual(
+      Array.from({ length: 75 }, (_, index) => `客户需求 ${index + 1}`),
+    )
+  })
+
+  it('keeps the first truncation flag for a long field and nested collection', async () => {
+    const fields = [
+      { name: 'id', type: 'text', label: 'ID' },
+      { name: 'name', type: 'text', label: '名称' },
+      { name: 'terms', type: 'text', label: '合同条款' },
+      { name: 'items', type: 'text', label: '项目清单' },
+    ]
+    const reader = new ForgeBusinessReader(async (name) => {
+      if (name === 'list_objects') return { objects: [{ name: 'sales_contract', label: '销售合同' }], totalCount: 1 }
+      if (name === 'get_record') return {
+        id: 'contract-1', name: '测试合同', terms: 'A'.repeat(8_001), items: Array.from({ length: 21 }, (_, index) => index),
+      }
+      throw new Error(`unexpected ${name}`)
+    }, async () => ({ name: 'sales_contract', fields }))
+    const read = await reader.readRecord('sales_contract', 'contract-1', 1)
+    expect(read.snapshot.completeness).toBe('truncated')
+    expect(read.snapshot.completenessNotes.join(' ')).toContain('主记录字段已按安全读取上限截断')
+    expect(read.snapshot.record).toEqual(expect.arrayContaining([
+      { label: '合同条款', value: 'A'.repeat(8_000) },
+      { label: '项目清单', value: Array.from({ length: 20 }, (_, index) => index) },
+    ]))
+  })
+
   it('does not report no matches when RLS/FLS omits every searchable display field', async () => {
     const f = readerFixture({ hideSearchFields: true })
     const page = await f.reader.findRecords('sales_quote', 'Q-240', 0, 20, 1)

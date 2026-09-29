@@ -308,13 +308,15 @@ function snapshotFields(fields: BusinessField[], rowValue: unknown): { values: B
   const row = object(rowValue)
   if (!row) return { values: [], truncated: true }
   const selected = displayFields(fields)
+  let truncated = fields.filter(canExposeField).length > selected.length
   const values = selected.flatMap((field): BusinessRecordFieldValue[] => {
     if (row[field.name] === undefined) return []
     const safe = safeJsonValue(row[field.name])
+    truncated ||= safe.truncated
     if (safe.value === undefined) return []
     return [{ label: field.label, value: safe.value }]
   })
-  return { values, truncated: fields.filter(canExposeField).length > selected.length || values.some((entry) => safeJsonValue(entry.value).truncated) }
+  return { values, truncated }
 }
 
 function relationTarget(field: BusinessField): string | undefined {
@@ -470,7 +472,7 @@ export class ForgeBusinessReader {
     }))
     const hasMore = queryHasMore(result, pageOffset, limit)
     return {
-      records: matches.slice(0, 20).map(({ item }) => item), offset: pageOffset, limit,
+      records: matches.map(({ item }) => item), offset: pageOffset, limit,
       hasMore,
       complete: directory.complete && !hasMore && !positiveButUndisplayable && !noSearchFieldsReturned,
       ...(positiveButUndisplayable || noSearchFieldsReturned ? { warning: '记录数据查询已获准，但当前账号可读字段不足以安全识别并展示所有匹配记录' } : {}),
