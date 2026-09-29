@@ -4,9 +4,11 @@ import { isFileIdToken } from '@objectstack/spec/data';
 import type { ApprovalActionRow, ApprovalRequestRow, IApprovalService, IHttpRequest, IHttpResponse, IHttpServer, IStorageService } from '@objectstack/spec/contracts';
 import type { ExecutionContext } from '@objectstack/spec/kernel';
 import type { IObjectQLEngine } from '@objectstack/spec/contracts';
+import { CONTRACT_OBJECT, resolveRetainedContractMaterial } from './contract-material-holder.js';
 
 const ROUTE = '/api/v1/approvals/requests/:requestId/workbench-context';
 const ORIGINAL_ROUTE = '/api/v1/approvals/requests/:requestId/workbench-context/files/:fileId/original';
+const HISTORY_ORIGINAL_ROUTE = '/api/v1/approvals/requests/:requestId/workbench-history/files/:fileId/original';
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
 const MAX_TOTAL_FILE_BYTES = 8 * 1024 * 1024;
 const MAX_FILES = 11;
@@ -21,6 +23,7 @@ const ORIGINAL_MEDIA_TYPES = new Set([
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]);
+const HISTORICAL_DECISION_ACTIONS = new Set(['approve', 'reject']);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SYSTEM_CONTEXT: ExecutionContext = { isSystem: true, positions: [], permissions: [] };
 
@@ -423,6 +426,22 @@ function returnedApprovalSupersededByResubmit(actions: ApprovalActionRow[]): boo
   return latestResubmitIndex > latestReturnIndex;
 }
 
+function historicalApprovalParticipant(
+  request: ApprovalRequestRow,
+  actions: ApprovalActionRow[],
+  actorId: string,
+): boolean {
+  if (request.submitter_id === actorId) return true;
+  // Approve/reject support privileged override, so only rows with an explicit
+  // non-override marker prove a real approver. Native sendBack (revise) has no
+  // override path and checks the actor against the pending slate before writing.
+  // An unacted approver or a legacy decision without an override marker is not
+  // inferred from current roles or positions.
+  return actions.some((action) => action.actor_id === actorId && (
+    action.action === 'revise' || HISTORICAL_DECISION_ACTIONS.has(action.action) && action.via_override === false
+  ));
+}
+
 async function authorizedApprovalRequest(
   approvals: IApprovalService,
   requestId: string,
@@ -603,6 +622,22 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
             throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
           }
 
+          if (file.status === 'deleted') {
+            const retained = await resolveRetainedContractMaterial(engine, {
+              contractId: request.record_id,
+              fileId,
+              sha256: snapshotFile.sha256,
+              organizationId: request.organization_id,
+              submitterId: request.submitter_id,
+              context: SYSTEM_CONTEXT,
+            });
+            if (!retained || retained.submitterId !== request.submitter_id || retained.contractId !== request.record_id ||
+                retained.name !== file.name || retained.mediaType !== String(file.mime_type).toLowerCase() ||
+                retained.bytes !== Number(file.size) || snapshotFile.name && snapshotFile.name !== retained.name) {
+              throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+            }
+          }
+
           const key = boundedText(file.key, 2048);
           const name = boundedText(file.name, 255);
           const size = Number(file.size);
@@ -645,6 +680,133 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
             return;
           }
           ctx.logger.error('[approval-workbench-context] failed to read a scoped binary original');
+          await sendError(res, 503, 'APPROVAL_CONTEXT_UNAVAILABLE', 'Approval context is unavailable.');
+        }
+      });
+
+      server.get(HISTORY_ORIGINAL_ROUTE, async (req, res) => {
+        res.header('Cache-Control', 'private, no-store');
+        res.header('X-Content-Type-Options', 'nosniff');
+        const executionContext = await resolveContext({ req: { raw: { headers: headersForSession(req.headers) } } });
+        if (!executionContext?.userId) {
+          await sendError(res, 401, 'UNAUTHENTICATED', 'A valid Forge session is required.');
+          return;
+        }
+        const requestId = boundedText(req.params?.requestId, 128);
+        const fileId = boundedText(req.params?.fileId, 128);
+        if (!requestId || !fileId || !isFileIdToken(fileId)) {
+          await sendError(res, 404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+          return;
+        }
+        const expected = expectedSha256(req.headers);
+        if (!expected) {
+          await sendError(res, 428, 'APPROVAL_MATERIAL_HASH_REQUIRED', 'The frozen material SHA-256 is required.');
+          return;
+        }
+
+        const approvals = readService<IApprovalService>(ctx, 'approvals');
+        const engine = readService<IObjectQLEngine>(ctx, 'objectql');
+        const storage = readService<IStorageService>(ctx, 'storage');
+        if (!approvals || !engine || !storage) {
+          await sendError(res, 503, 'APPROVAL_CONTEXT_UNAVAILABLE', 'Approval context is unavailable.');
+          return;
+        }
+
+        try {
+          // This path is for completed or superseded round snapshots. It deliberately
+          // does not reuse authorizedApprovalRequest(), whose 409 protects current
+          // workbench continuation after a returned request is resubmitted.
+          const request = await approvals.getRequest(requestId, executionContext);
+          if (!request || request.id !== requestId || request.object_name !== CONTRACT_OBJECT) {
+            throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+          }
+          const actorOrganizationId = executionContext.tenantId || executionContext.organizationId;
+          if (!actorOrganizationId || !request.organization_id || request.organization_id !== actorOrganizationId) {
+            throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+          }
+          const actions = await approvals.listActions(requestId, executionContext);
+          if (!historicalApprovalParticipant(request, actions, executionContext.userId)) {
+            throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+          }
+          if (!request.record_id || !request.submitter_id || !isRecord(request.payload)) {
+            throw new ContextFailure(422, 'APPROVAL_CONTEXT_INVALID', 'The approval source is unavailable.');
+          }
+
+          const allowedFiles = snapshotFiles(request.payload, fileFieldNames(engine, request.object_name));
+          const snapshotFile = allowedFiles.get(fileId);
+          if (!snapshotFile) throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+          if (!snapshotFile.sha256) {
+            throw new ContextFailure(422, 'APPROVAL_MATERIAL_HASH_UNAVAILABLE', 'The approval material has no frozen SHA-256 value.');
+          }
+          if (snapshotFile.sha256 !== expected) {
+            throw new ContextFailure(409, 'APPROVAL_MATERIAL_HASH_MISMATCH', 'The requested SHA-256 does not match this approval snapshot.');
+          }
+
+          // The frozen round snapshot and immutable ledger+sys_attachment holder
+          // must independently agree. Never consult the live contract fields here:
+          // they point at the newest version and cannot identify an old round.
+          const retained = await resolveRetainedContractMaterial(engine, {
+            contractId: request.record_id,
+            fileId,
+            sha256: snapshotFile.sha256,
+            organizationId: request.organization_id,
+            submitterId: request.submitter_id,
+            context: SYSTEM_CONTEXT,
+          });
+          if (!retained || retained.submitterId !== request.submitter_id || retained.contractId !== request.record_id) {
+            throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+          }
+          if (snapshotFile.name && snapshotFile.name !== retained.name) {
+            throw new ContextFailure(409, 'APPROVAL_MATERIAL_HASH_MISMATCH', 'The retained material name does not match this approval snapshot.');
+          }
+
+          const file = await engine.findOne('sys_file', { where: { id: fileId } }, { context: SYSTEM_CONTEXT }) as FileRow | null;
+          if (!file || file.owner_id !== request.submitter_id || file.organization_id !== request.organization_id ||
+              !['user', 'attachments'].includes(String(file.scope)) || file.acl !== 'private' ||
+              !['committed', 'deleted'].includes(String(file.status))) {
+            throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+          }
+
+          const key = boundedText(file.key, 2048);
+          const name = boundedText(file.name, 255);
+          const size = Number(file.size);
+          const mediaType = typeof file.mime_type === 'string' ? file.mime_type.toLowerCase() : '';
+          if (!key || !name || !Number.isSafeInteger(size) || size < 1 ||
+              name !== retained.name || mediaType !== retained.mediaType || size !== retained.bytes) {
+            throw new ContextFailure(422, 'APPROVAL_MATERIAL_INVALID', 'The retained approval material metadata is invalid.');
+          }
+          if (size > MAX_FILE_BYTES) {
+            throw new ContextFailure(413, 'APPROVAL_MATERIAL_TOO_LARGE', 'The original approval material exceeds the 2 MiB limit.');
+          }
+          if (!ORIGINAL_MEDIA_TYPES.has(mediaType)) {
+            throw new ContextFailure(415, 'APPROVAL_MATERIAL_UNSUPPORTED_TYPE', 'Only PDF and DOCX approval originals can be downloaded.');
+          }
+
+          const bytes = await storage.download(key);
+          if (bytes.length !== size || bytes.length > MAX_FILE_BYTES || !hasOriginalSignature(bytes, mediaType, name)) {
+            throw new ContextFailure(422, 'APPROVAL_MATERIAL_INVALID', 'The original approval material failed MIME or size validation.');
+          }
+          const digest = await sha256(bytes);
+          if (digest !== snapshotFile.sha256 || digest !== expected || digest !== retained.sha256) {
+            throw new ContextFailure(409, 'APPROVAL_MATERIAL_HASH_MISMATCH', 'The original approval material does not match its frozen SHA-256.');
+          }
+
+          res.header('Content-Type', mediaType);
+          res.header('Content-Length', String(bytes.length));
+          res.header('Content-Disposition', contentDisposition(name));
+          res.header('ETag', `"${digest}"`);
+          res.header('X-Content-SHA256', digest);
+          await res.status(200).send(bytes);
+          ctx.logger.info('[approval-workbench-context] historical original bytes read', {
+            userId: executionContext.userId, organizationId: actorOrganizationId,
+            requestId, fileId, mediaType, bytes: bytes.length, sha256: digest,
+          });
+        } catch (error) {
+          if (error instanceof ContextFailure) {
+            await sendError(res, error.status, error.code, error.message);
+            return;
+          }
+          ctx.logger.error('[approval-workbench-context] failed to read a retained historical original');
           await sendError(res, 503, 'APPROVAL_CONTEXT_UNAVAILABLE', 'Approval context is unavailable.');
         }
       });
