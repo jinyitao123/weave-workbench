@@ -4,6 +4,7 @@ import { makeExecutionContextResolver } from '@objectstack/plugin-hono-server';
 import type { IApprovalService, IHttpRequest, IHttpResponse, IHttpServer, IObjectQLEngine, IStorageService } from '@objectstack/spec/contracts';
 import type { ExecutionContext } from '@objectstack/spec/kernel';
 import type { ResubmitMaterialVerificationInput } from './approval-resubmit-guard.plugin.js';
+import { retainContractMaterialFiles } from './contract-material-holder.js';
 
 const CONTRACT_OBJECT = 'forge_sales_contract';
 const LEDGER_OBJECT = 'forge_sales_contract_revision_material';
@@ -393,6 +394,8 @@ export class ContractRevisionMaterialService {
     if (requestOrganizationId && sessionOrganizationId && requestOrganizationId !== sessionOrganizationId) {
       throw new Error('REVISION_NOT_AVAILABLE: returned approval belongs to another organization');
     }
+    const organizationId = requestOrganizationId ?? sessionOrganizationId;
+    if (!organizationId) throw new Error('REVISION_NOT_AVAILABLE: returned approval organization is unavailable');
     if (!requestOrganizationId && [input.primary, ...input.attachments]
       .some((file) => file.mediaType && OFFICE_MEDIA_TYPES.has(file.mediaType))) {
       throw new Error('REVISION_MATERIAL_UNAVAILABLE: Office originals require an organization-scoped approval');
@@ -406,7 +409,7 @@ export class ContractRevisionMaterialService {
     const current = await this.engine.findOne(CONTRACT_OBJECT, { where: { id: request.record_id } }, { context: SYSTEM_CONTEXT });
     if (!current || current.status !== 'pending_approval') throw new Error('REVISION_STALE: contract state has changed');
     const [primary, ...attachments] = await verifyFiles(this.engine, this.storage, actorId, request.record_id,
-      requestOrganizationId ?? sessionOrganizationId,
+      organizationId,
       [input.primary, ...input.attachments]);
     const manifest = { primary, attachments };
     const newVersionDigest = await digest(canonicalJson(manifest));
@@ -427,7 +430,6 @@ export class ContractRevisionMaterialService {
     };
 
     try {
-      const organizationId = requestOrganizationId ?? sessionOrganizationId;
       return await this.engine.transaction(async (transactionContext) => {
         const scoped = { context: transactionContext };
         const approval = await this.engine.findOne('sys_approval_request', { where: { id: input.requestId } }, scoped);
@@ -454,6 +456,17 @@ export class ContractRevisionMaterialService {
           primary_media_type: primary.mediaType ?? null, primary_bytes: primary.mediaType ? primary.bytes : null,
           attachment_manifest: JSON.stringify(attachments), submitted_by: actorId, submitted_at: savedAt,
         }, scoped);
+        await retainContractMaterialFiles(this.engine, {
+          parentObject: LEDGER_OBJECT,
+          parentId: bindingId,
+          submitterId: actorId,
+          files: [primary, ...attachments].map((file) => ({
+            fileId: file.fileId, name: file.name,
+            mediaType: file.mediaType ?? 'text/plain; charset=utf-8',
+            bytes: file.bytes, sha256: file.sha256,
+          })),
+          context: transactionContext,
+        });
         await this.engine.update(CONTRACT_OBJECT, {
           id: request.record_id,
           submitted_material_id: primary.fileId,
