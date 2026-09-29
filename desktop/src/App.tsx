@@ -13,6 +13,7 @@ import { detectRendererPlatform } from '@/lib/platform-shortcuts'
 import { activityNotificationSignature, readClearedActivity, readClearedAttention, sessionCompanionNotificationSignature } from '@/app/session-attention'
 import { errorMessage } from '@/lib/errors'
 import { openApprovalReviewInPi } from '@/lib/approval-review'
+import { businessNotificationPrompt } from '@/lib/business-notification'
 import { I18nProvider } from '@/lib/i18n'
 import { openExternalUrl, revealPath } from '@/lib/desktop-actions'
 import { createSingleFlightAdmission, findProjectForSession, gitStatusForWorkspace, shouldRefreshGitOnSessionTransition, workspaceCwd } from '@/lib/workspace'
@@ -36,7 +37,7 @@ import { useStableCallback } from '@/hooks/useStableCallback'
 import { useToast } from '@/hooks/useToast'
 import { useWorkspaceActions } from '@/hooks/useWorkspaceActions'
 import { useWorkspaceRuntime } from '@/hooks/useWorkspaceRuntime'
-import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseApprovalContextView, type EnterpriseDevelopmentOverview, type EnterpriseHumanTask, type EnterpriseSession, type EnterpriseWorkContinuationContextView, type EnterpriseWorkItem, type EnterpriseWorkOverview, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceMaterialReference, type WorkspaceView } from '@/types/api'
+import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseApprovalContextView, type EnterpriseBusinessNotificationContextView, type EnterpriseDevelopmentOverview, type EnterpriseHumanTask, type EnterpriseSession, type EnterpriseWorkContinuationContextView, type EnterpriseWorkItem, type EnterpriseWorkOverview, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceMaterialReference, type WorkspaceView } from '@/types/api'
 
 const Transcript = lazy(() => import('@/components/Transcript').then((module) => ({ default: module.Transcript })))
 const Inspector = lazy(() => import('@/components/Inspector').then((module) => ({ default: module.Inspector })))
@@ -529,7 +530,8 @@ export default function App() {
     let returnedApprovalContextHandle: string | undefined
     let workContinuationContextHandle: string | undefined
     let currentContext = context
-    let teamContext: EnterpriseWorkContinuationContextView | undefined
+    let teamContext: Extract<EnterpriseWorkContinuationContextView, { kind: 'weave' }> | undefined
+    let businessContext: EnterpriseBusinessNotificationContextView | undefined
     if (item.source === 'forge' && item.kind === 'revision_required') {
       try {
         if (!context || !enterpriseBridge) throw new Error('请从“我的工作”重新打开本人退回的审批事项')
@@ -551,14 +553,41 @@ export default function App() {
           ...(item.runReference ? { runReference: item.runReference } : {}),
           ...(item.sessionReference ? { sessionReference: item.sessionReference } : {}),
         })
+        if (binding.context.kind !== 'weave') throw new Error('团队工作来源与当前消息不匹配，请刷新工作消息')
         workContinuationContextHandle = binding.handle
         teamContext = binding.context
       } catch (error) {
         setToast(errorMessage(error))
         return
       }
+    } else if (item.source === 'forge' && item.kind === 'result') {
+      try {
+        if (!enterpriseBridge) throw new Error('业务结果续接能力暂不可用')
+        const binding = await enterpriseBridge.pinWorkContinuationContext({ id: item.id, source: 'forge', notificationType: item.notificationType })
+        if (binding.context.kind !== 'business') throw new Error('Forge 消息来源与当前业务结果不匹配')
+        workContinuationContextHandle = binding.handle
+        businessContext = binding.context
+      } catch (error) {
+        setToast(errorMessage(error))
+        return
+      }
     } else {
       setToast('这条 Forge 消息没有可核验的续接上下文，请在 Forge 查看原事项')
+      return
+    }
+    if (businessContext) {
+      const details = businessNotificationPrompt(item, businessContext)
+      if (!newSession(undefined, { preserveComposerDraft: true })) {
+        setToast('无法创建独立会话，请保留当前草稿后重试')
+        return
+      }
+      const openedWorkspace = workspace.workspaceRef.current
+      if (!openedWorkspace.project || openedWorkspace.session || openedWorkspace.sessionFile) {
+        setToast('未能切换到新的工作会话，请从工作消息重新打开')
+        return
+      }
+      workspace.queuePrompt(details, 'queue', undefined, undefined, undefined, workContinuationContextHandle)
+      setToast('已打开本次业务结果，可与 Pi 核对。')
       return
     }
     const reason = currentContext?.returnReason ?? item.returnReason
