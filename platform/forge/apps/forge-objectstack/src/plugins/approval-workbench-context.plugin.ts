@@ -11,7 +11,6 @@ const ORIGINAL_ROUTE = '/api/v1/approvals/requests/:requestId/workbench-context/
 const HISTORY_ORIGINAL_ROUTE = '/api/v1/approvals/requests/:requestId/workbench-history/files/:fileId/original';
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
 const MAX_TOTAL_FILE_BYTES = 8 * 1024 * 1024;
-const MAX_FILES = 11;
 const MAX_FIELDS = 64;
 const MAX_FIELD_VALUE = 4_000;
 const FILE_FIELD_TYPES = new Set(['file']);
@@ -186,10 +185,6 @@ function snapshotFiles(payload: unknown, fields: Set<string>): Map<string, Snaps
       result.set(id, names);
     }
   }
-  if (result.size > MAX_FILES) {
-    throw new ContextFailure(422, 'APPROVAL_CONTEXT_TOO_LARGE', 'The approval contains too many text materials.');
-  }
-
   const digests = new Map<string, { sha256: string; name?: string }>();
   const primaryIds = fileIdsFromValue(payload.submitted_material_id);
   const primarySha = typeof payload.submitted_material_sha256 === 'string' ? payload.submitted_material_sha256.toLowerCase() : '';
