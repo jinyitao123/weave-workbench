@@ -43,7 +43,7 @@ const contractApprovalFlow = (legal: boolean) => defineFlow({
     {
       id: 'activate_contract',
       type: 'update_record',
-      label: '合同生效',
+      label: '记录内部复核通过',
       config: {
         objectName: 'forge_sales_contract',
         filter: { id: '{record.id}' },
