@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { SqlDriver } from '@objectstack/driver-sql';
 import { ObjectQL } from '@objectstack/objectql';
+import { ApprovalService, SysApprovalAction, SysApprovalApprover, SysApprovalRequest } from '@objectstack/plugin-approvals';
 import { Field, ObjectSchema } from '@objectstack/spec/data';
 import { ContractType, SalesContract, SalesContractRevisionMaterial, SalesContractSubmission } from '../src/objects/sales.object.ts';
 import { ApprovalWorkbenchContextPlugin } from '../src/plugins/approval-workbench-context.plugin.ts';
@@ -37,6 +38,10 @@ function simpleObject(name, fields) {
   });
 }
 
+function nativeObject(name, fields) {
+  return ObjectSchema.create({ name, label: name, fields, enable: { apiEnabled: true } });
+}
+
 function fixtureObjects() {
   const TestContractType = ObjectSchema.create({
     ...ContractType,
@@ -58,10 +63,18 @@ function fixtureObjects() {
     TestContractType,
     simpleObject('forge_customer', { name: Field.text({ label: 'Name', required: true }) }),
     simpleObject('sys_user', { name: Field.text({ label: 'Name' }), email: Field.email({ label: 'Email' }) }),
+    simpleObject('sys_organization', { name: Field.text({ label: 'Name' }) }),
     simpleObject('sys_member', { user_id: Field.text({ label: 'User ID' }), role: Field.text({ label: 'Role' }) }),
-    simpleObject('sys_user_position', { user_id: Field.text({ label: 'User ID' }), position_id: Field.text({ label: 'Position ID' }) }),
+    simpleObject('sys_user_position', {
+      user_id: Field.text({ label: 'User ID' }),
+      position_id: Field.text({ label: 'Position ID' }),
+      position: Field.text({ label: 'Position' }),
+    }),
     simpleObject('sys_user_permission_set', { user_id: Field.text({ label: 'User ID' }), permission_set_id: Field.text({ label: 'Permission Set ID' }) }),
     simpleObject('sys_position', { name: Field.text({ label: 'Position Name' }) }),
+    nativeObject('sys_approval_request', SysApprovalRequest.fields),
+    nativeObject('sys_approval_action', SysApprovalAction.fields),
+    nativeObject('sys_approval_approver', SysApprovalApprover.fields),
     TestSystemFile,
     SysAttachment,
     TestSalesContract,
@@ -70,53 +83,45 @@ function fixtureObjects() {
   ];
 }
 
-function approvalRequest(ids, material) {
-  return {
-    id: ids.request,
-    organization_id: ids.organization,
-    process_name: 'flow:contract_approval',
-    object_name: CONTRACT_OBJECT,
-    record_id: ids.contract,
-    submitter_id: ids.submitter,
-    status: 'returned',
-    current_step: 'review',
-    step_label: '合同复核',
-    record_title: '历史版本合同',
-    object_label: '销售合同',
-    payload: {
-      submitted_material_id: material.fileId,
-      submitted_material_name: material.name,
-      submitted_material_sha256: material.sha256,
-      attachment_ids: [],
-      submitted_attachment_manifest: '[]',
-    },
-    pending_approvers: [ids.unactedApprover],
-  };
-}
-
-function approvalServices(request, ids, actions) {
+function observedNativeApprovalService(engine) {
   const calls = { getRequest: [], listActions: [], decisions: 0 };
+  const service = new ApprovalService({
+    engine,
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+  });
+  const getRequest = service.getRequest.bind(service);
+  const listActions = service.listActions.bind(service);
+  const decide = service.decide.bind(service);
+  service.getRequest = async (requestId, context) => {
+    const result = await getRequest(requestId, context);
+    calls.getRequest.push({
+      requestId,
+      userId: context.userId,
+      organizationId: context.tenantId || context.organizationId,
+      positions: [...(context.positions ?? [])],
+      isSystem: context.isSystem === true,
+      resultId: result?.id ?? null,
+    });
+    return result;
+  };
+  service.listActions = async (requestId, context) => {
+    const result = await listActions(requestId, context);
+    calls.listActions.push({
+      requestId,
+      userId: context.userId,
+      organizationId: context.tenantId || context.organizationId,
+      isSystem: context.isSystem === true,
+      actions: result.map(({ action, actor_id, via_override }) => ({ action, actor_id, via_override })),
+    });
+    return result;
+  };
+  service.decide = async (...args) => {
+    calls.decisions += 1;
+    return decide(...args);
+  };
   return {
     calls,
-    service: {
-      async getRequest(requestId, context) {
-        calls.getRequest.push({ requestId, userId: context.userId, organizationId: context.tenantId || context.organizationId });
-        if (requestId !== request.id) return null;
-        return {
-          ...request,
-          viewer: {
-            can_act: false,
-            is_submitter: context.userId === ids.submitter,
-            can_override: context.userId === ids.admin,
-          },
-        };
-      },
-      async listActions(requestId, context) {
-        calls.listActions.push({ requestId, userId: context.userId, organizationId: context.tenantId || context.organizationId });
-        return requestId === request.id ? actions : [];
-      },
-      async decide() { calls.decisions += 1; throw new Error('history reads must not decide approvals'); },
-    },
+    service,
   };
 }
 
@@ -230,7 +235,7 @@ test('historical approval and owner routes read deleted contract originals only 
 
   const ids = {
     organization: id(), customer: id(), type: id(), submitter: id(), reviewer: id(),
-    unactedApprover: id(), admin: id(), contract: id(), submission: id(), request: `history-${id()}`,
+    unactedApprover: id(), admin: id(), contract: id(), submission: id(), request: id(),
     oldFile: id(), currentFile: id(),
   };
   const tenantContext = { ...SYSTEM, tenantId: ids.organization };
@@ -252,7 +257,21 @@ test('historical approval and owner routes read deleted contract originals only 
       organization_id: ids.organization,
     }, { context: tenantContext });
   }
-  await engine.insert('sys_user', { id: ids.submitter, name: 'Submitter', email: `${ids.submitter}@example.invalid`, organization_id: ids.organization }, { context: tenantContext });
+  await engine.insert('sys_organization', { id: ids.organization, name: 'History fixture organization' }, { context: SYSTEM });
+  for (const [userId, name] of [
+    [ids.submitter, 'Submitter'],
+    [ids.reviewer, 'Historical reviewer'],
+    [ids.unactedApprover, 'Unacted approver'],
+    [ids.admin, 'Override actor'],
+  ]) {
+    await engine.insert('sys_user', {
+      id: userId, name, email: `${userId}@example.invalid`, organization_id: ids.organization,
+    }, { context: tenantContext });
+    await engine.insert('sys_member', {
+      id: id(), user_id: userId, organization_id: ids.organization,
+      role: userId === ids.admin ? 'admin' : 'member',
+    }, { context: SYSTEM });
+  }
   await engine.insert('forge_customer', { id: ids.customer, name: 'Customer', organization_id: ids.organization }, { context: tenantContext });
   await engine.insert('forge_contract_type', { id: ids.type, name: 'Sales Contract', organization_id: ids.organization }, { context: tenantContext });
   await engine.insert(CONTRACT_OBJECT, {
@@ -295,12 +314,79 @@ test('historical approval and owner routes read deleted contract originals only 
   assert.ok(holder, 'the real native sys_attachment row retains this immutable submission version');
   assert.equal(await storage.exists(deleted.key), true, 'the local blob remains available before the native holder GC grace window expires');
 
-  const frozenRequest = approvalRequest(ids, { fileId: ids.oldFile, name: 'R1合同.pdf', sha256: oldDigest });
-  const actions = [
-    { id: id(), request_id: ids.request, action: 'revise', actor_id: ids.reviewer },
-    { id: id(), request_id: ids.request, action: 'resubmit', actor_id: ids.submitter, via_override: false },
-  ];
-  const approvalHarness = approvalServices(frozenRequest, ids, actions);
+  const frozenPayload = {
+    submitted_material_id: ids.oldFile,
+    submitted_material_name: 'R1合同.pdf',
+    submitted_material_sha256: oldDigest,
+    attachment_ids: [],
+    submitted_attachment_manifest: '[]',
+  };
+  const requestCreatedAt = '2026-09-29T07:00:00.000Z';
+  await engine.insert('sys_approval_request', {
+    id: ids.request,
+    organization_id: ids.organization,
+    process_name: 'flow:contract_approval',
+    object_name: CONTRACT_OBJECT,
+    record_id: ids.contract,
+    submitter_id: ids.submitter,
+    status: 'returned',
+    current_step: 'contract_review',
+    current_step_index: 1,
+    pending_approvers: '',
+    payload_json: JSON.stringify(frozenPayload),
+    flow_run_id: `run-${id()}`,
+    flow_node_id: 'contract_review',
+    node_config_json: JSON.stringify({ __flowLabel: '合同审批', __nodeLabel: '合同复核' }),
+    created_at: requestCreatedAt,
+    updated_at: requestCreatedAt,
+    completed_at: requestCreatedAt,
+  }, { context: tenantContext });
+  const overrideAction = {
+    id: id(), request_id: ids.request, organization_id: ids.organization,
+    step_name: 'manager_review', step_index: 0, action: 'approve', actor_id: ids.admin,
+    via_override: true, created_at: '2026-09-29T07:01:00.000Z',
+  };
+  const reviseAction = {
+    id: id(), request_id: ids.request, organization_id: ids.organization,
+    step_name: 'contract_review', step_index: 1, action: 'revise', actor_id: ids.reviewer,
+    comment: '请修订合同', created_at: '2026-09-29T07:02:00.000Z',
+  };
+  const resubmitAction = {
+    id: id(), request_id: ids.request, organization_id: ids.organization,
+    step_name: 'contract_review', step_index: 1, action: 'resubmit', actor_id: ids.submitter,
+    created_at: '2026-09-29T07:03:00.000Z',
+  };
+  await engine.insert('sys_approval_action', overrideAction, { context: SYSTEM });
+  await engine.insert('sys_approval_action', reviseAction, { context: SYSTEM });
+  const approvalHarness = observedNativeApprovalService(engine);
+  assert.ok(approvalHarness.service instanceof ApprovalService, 'the history routes use the native ApprovalService implementation');
+
+  const reviewerContext = { userId: ids.reviewer, tenantId: ids.organization, positions: [], permissions: [] };
+  const nativeRequest = await approvalHarness.service.getRequest(ids.request, reviewerContext);
+  assert.equal(nativeRequest?.id, ids.request, 'native ApprovalService exposes this round to its recorded revise actor');
+  assert.equal(nativeRequest?.payload?.submitted_material_id, ids.oldFile, 'native payload projection retains the frozen file reference');
+  assert.equal(nativeRequest?.payload?.submitted_material_sha256, oldDigest, 'native payload projection retains the frozen SHA');
+  const nativeActions = await approvalHarness.service.listActions(ids.request, reviewerContext);
+  assert.equal(nativeActions.find((action) => action.id === overrideAction.id)?.via_override, true,
+    'native action projection preserves the admin override marker');
+  assert.equal(nativeActions.find((action) => action.id === reviseAction.id)?.via_override, undefined,
+    'native revise action is recorded without an override field because sendBack has no override path');
+  const nativeOverrideActorRequest = await approvalHarness.service.getRequest(ids.request, {
+    userId: ids.admin, tenantId: ids.organization, positions: [], permissions: [],
+  });
+  assert.equal(nativeOverrideActorRequest?.id, ids.request, 'native request visibility includes a recorded override actor');
+  assert.equal((await approvalHarness.service.listActions(ids.request, {
+    userId: ids.admin, tenantId: ids.organization, positions: [], permissions: [],
+  })).find((action) => action.actor_id === ids.admin)?.via_override, true,
+  'native listActions keeps the override marker for the actor who used the admin path');
+  assert.equal(await approvalHarness.service.getRequest(ids.request, {
+    userId: ids.unactedApprover, tenantId: ids.organization, positions: [], permissions: [],
+  }), null, 'native ApprovalService does not expose this completed round to an unacted approver');
+  assert.equal(await engine.find('sys_approval_approver', { where: { request_id: ids.request }, context: SYSTEM }).then((rows) => rows.length), 0,
+    'a completed returned request has no current pending-approver index rows');
+  approvalHarness.calls.getRequest.length = 0;
+  approvalHarness.calls.listActions.length = 0;
+
   const work = harness({ engine, storage, approvals: approvalHarness.service, ids });
   await work.start();
 
@@ -309,7 +395,8 @@ test('historical approval and owner routes read deleted contract originals only 
   assert.deepEqual(original.raw, oldBytes);
   assert.deepEqual(approvalHarness.calls.getRequest[0], {
     requestId: ids.request, userId: ids.reviewer, organizationId: ids.organization,
-  }, 'the native ApprovalService receives the Bearer-derived employee and organization');
+    positions: ['org_member', 'everyone'], isSystem: false, resultId: ids.request,
+  }, 'the native ApprovalService receives the Bearer-derived employee, org, and non-system context');
   assert.equal(original.headers['content-type'], ORIGINAL_MEDIA_TYPE);
   assert.equal(original.headers['content-length'], String(oldBytes.length));
   assert.equal(original.headers.etag, `"${oldDigest}"`);
@@ -322,20 +409,31 @@ test('historical approval and owner routes read deleted contract originals only 
   assert.deepEqual(submitterOriginal.raw, oldBytes);
   assert.equal((await work.callHistory('reviewer-token', ids.oldFile, 'f'.repeat(64))).status, 409,
     'If-Match must equal the SHA frozen in this approval round');
-  assert.equal((await work.callHistory('unacted-reviewer-token', ids.oldFile, oldDigest)).status, 404,
+  const unactedRead = await work.callHistory('unacted-reviewer-token', ids.oldFile, oldDigest);
+  assert.equal(unactedRead.status, 404,
     'current or previously unacted approver slots do not prove historical participation');
-  assert.equal((await work.callHistory('admin-token', ids.oldFile, oldDigest)).status, 404,
+  const unactedServiceRead = [...approvalHarness.calls.getRequest].reverse().find((call) => call.userId === ids.unactedApprover);
+  assert.equal(unactedServiceRead?.resultId, null, 'native getRequest denies the unacted employee before file lookup');
+  assert.equal(approvalHarness.calls.listActions.some((call) => call.userId === ids.unactedApprover), false,
+    'native listActions is not queried for a request the employee cannot see');
+  const adminRead = await work.callHistory('admin-token', ids.oldFile, oldDigest);
+  assert.equal(adminRead.status, 404,
     'an admin override capability does not grant historical material access');
+  const adminServiceRead = [...approvalHarness.calls.getRequest].reverse().find((call) => call.userId === ids.admin);
+  assert.equal(adminServiceRead?.resultId, ids.request, 'native getRequest can expose a request to its recorded override actor');
+  assert.ok(adminServiceRead?.positions.includes('org_admin'), 'the Bearer-resolved caller is currently an organization admin');
+  const adminServiceActions = [...approvalHarness.calls.listActions].reverse().find((call) => call.userId === ids.admin)?.actions;
+  assert.equal(adminServiceActions?.find((action) => action.actor_id === ids.admin)?.via_override, true,
+    'the route receives the native override marker and still refuses history bytes');
   assert.equal((await work.callHistory('other-org-token', ids.oldFile, oldDigest)).status, 404,
     'the approval must belong to the Bearer session organization');
   assert.equal((await work.callHistory('reviewer-token', ids.currentFile, currentDigest)).status, 404,
     'a live contract file absent from this round snapshot cannot be guessed as historical material');
 
-  const resubmitAction = actions.pop();
   const currentRoundOriginal = await work.callCurrentOriginal('submitter-token', ids.oldFile, oldDigest);
   assert.equal(currentRoundOriginal.status, 200, 'a not-yet-resubmitted current approval can read a deleted original through its valid holder');
   assert.deepEqual(currentRoundOriginal.raw, oldBytes);
-  actions.push(resubmitAction);
+  await engine.insert('sys_approval_action', resubmitAction, { context: SYSTEM });
   const currentContext = await work.callCurrentContext('submitter-token');
   assert.equal(currentContext.status, 409, 'the current continuation context remains stale after the request was resubmitted');
   const currentOriginalAfterResubmit = await work.callCurrentOriginal('submitter-token', ids.oldFile, oldDigest);
@@ -360,10 +458,9 @@ test('historical approval and owner routes read deleted contract originals only 
   const mismatchedHolder = await work.callHistory('reviewer-token', ids.oldFile, oldDigest);
   assert.equal(mismatchedHolder.status, 404, 'a holder row that disagrees with the immutable version ledger is not valid authority');
   assert.equal(storageReads.length, storageReadsBeforeMismatch, 'invalid holder metadata is rejected before reading the blob');
-  const resubmit = actions.pop();
+  await engine.delete('sys_approval_action', { where: { id: resubmitAction.id } }, { context: SYSTEM });
   assert.equal((await work.callCurrentOriginal('submitter-token', ids.oldFile, oldDigest)).status, 404,
     'the current approval route also refuses a deleted original whose native holder no longer matches');
   assert.equal((await work.callOwnerOriginal('submitter-token', ids.oldFile, oldDigest)).status, 404,
     'the owner route refuses a deleted original after its valid holder is removed');
-  actions.push(resubmit);
 });

@@ -523,3 +523,27 @@ test('committed Markdown contract materials are readable as plain text', async (
   ]);
   assert.deepEqual(result.body.files.map((file) => file.content), ['合同正文 A', '技术说明 A']);
 });
+
+test('approval context returns more than eleven small files while respecting the aggregate byte limit', async () => {
+  const harness = createHarness();
+  await harness.start();
+  const attachments = Array.from({ length: 11 }, (_, index) => textFile(
+    `file-many-${index + 1}`,
+    `key-many-${index + 1}`,
+    `技术附件-${index + 1}.txt`,
+    CONTRACT_A,
+    'attachment_ids',
+    `附件正文 ${index + 1}`,
+  ));
+  attachments.forEach((file) => harness.addFile(file));
+  harness.changePayload('approval-A', contextPayload(harness.fixtureFiles.materialA, attachments));
+
+  const result = await harness.call('approval-A', 'reviewer-token');
+  assert.equal(result.status, 200);
+  assert.equal(result.body.files.length, 12, 'the primary and eleven attachments are returned without a count-only cap');
+  assert.ok(result.body.files.reduce((total, file) => total + file.bytes, 0) < 8 * 1024 * 1024);
+  assert.equal(result.downloadedKeys.length, 12);
+  assert.deepEqual(result.body.files.map((file) => file.fileId), [
+    'file-main-A', ...attachments.map((file) => file.id),
+  ]);
+});
