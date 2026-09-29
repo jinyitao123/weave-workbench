@@ -291,6 +291,10 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     if (!services.enterpriseBridge) throw new Error('桌面退回事项能力暂不可用')
     return services.enterpriseBridge.pinReturnedApprovalContext(requireString(approvalId, 'approvalId', { min: 1, max: 128 }))
   })
+  handle('enterprise:pin-approval-review-context', (_event, approvalId) => {
+    if (!services.enterpriseBridge) throw new Error('桌面审批辅助能力暂不可用')
+    return services.enterpriseBridge.pinApprovalReviewContext(requireString(approvalId, 'approvalId', { min: 1, max: 128 }))
+  })
   handle('enterprise:pin-work-continuation-context', (_event, rawItem) => {
     if (!services.enterpriseBridge) throw new Error('桌面团队续接能力暂不可用')
     const item = requireRecord(rawItem, 'item')
@@ -354,14 +358,16 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     const id = requireString(runtimeId, 'runtimeId', { min: 1, max: 256 })
     const manager = agentsForRuntime(id)
     const delivery = deliveryContext === undefined ? undefined : requireRecord(deliveryContext, 'deliveryContext')
-    if (delivery) rejectUnknownKeys(delivery, ['returnedApprovalContextHandle', 'workContinuationContextHandle'], 'deliveryContext')
+    if (delivery) rejectUnknownKeys(delivery, ['returnedApprovalContextHandle', 'approvalReviewContextHandle', 'workContinuationContextHandle'], 'deliveryContext')
     const approvalContextHandle = delivery?.returnedApprovalContextHandle
+    const approvalReviewContextHandle = delivery?.approvalReviewContextHandle
     const workContinuationContextHandle = delivery?.workContinuationContextHandle
     if (approvalContextHandle !== undefined && typeof approvalContextHandle !== 'string') throw new TypeError('deliveryContext.returnedApprovalContextHandle must be a string')
+    if (approvalReviewContextHandle !== undefined && typeof approvalReviewContextHandle !== 'string') throw new TypeError('deliveryContext.approvalReviewContextHandle must be a string')
     if (workContinuationContextHandle !== undefined && typeof workContinuationContextHandle !== 'string') throw new TypeError('deliveryContext.workContinuationContextHandle must be a string')
     const current = manager.list().find((runtime) => runtime.runtimeId === id)
     if (current?.sessionFile) services.enterpriseBridge?.bindRuntimeSession(id, current.sessionFile)
-    await services.enterpriseBridge?.employeeCommand(id, command, approvalContextHandle, workContinuationContextHandle)
+    await services.enterpriseBridge?.employeeCommand(id, command, approvalContextHandle, workContinuationContextHandle, approvalReviewContextHandle)
     return manager.command(id, command)
   })
   handle('agent:stop', (_event, runtimeId) => agentsForRuntime(runtimeId).stop(runtimeId))

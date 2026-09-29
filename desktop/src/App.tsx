@@ -12,6 +12,7 @@ import { createAppKeydownHandler } from '@/lib/app-shortcuts'
 import { detectRendererPlatform } from '@/lib/platform-shortcuts'
 import { activityNotificationSignature, readClearedActivity, readClearedAttention, sessionCompanionNotificationSignature } from '@/app/session-attention'
 import { errorMessage } from '@/lib/errors'
+import { openApprovalReviewInPi } from '@/lib/approval-review'
 import { I18nProvider } from '@/lib/i18n'
 import { openExternalUrl, revealPath } from '@/lib/desktop-actions'
 import { createSingleFlightAdmission, findProjectForSession, gitStatusForWorkspace, shouldRefreshGitOnSessionTransition, workspaceCwd } from '@/lib/workspace'
@@ -521,30 +522,9 @@ export default function App() {
     },
     clearSessionAttention, reportError,
   })
-  const assistEnterpriseTaskInPi = useCallback(async (task: EnterpriseHumanTask, context: EnterpriseApprovalContextView) => {
-    const originalFiles = context.originalFiles ?? []
-    if (task.source !== 'forge' || (!context.files.length && !originalFiles.length)
-      || context.files.some((file) => !file.verified || !file.content)
-      || originalFiles.some((file) => !file.verified || !file.extraction.content)) {
-      throw new Error('审批材料尚未完整核验，不能交给 Pi 分析')
-    }
-    const fields = context.fields.map((field) => `- ${field.label}：${field.value}`).join('\n')
-    const files = context.files.map((file) => `## ${file.name}\n${file.content}`).join('\n\n')
-    const originals = originalFiles.map((file) => `## ${file.name}（原件已校验，${file.bytes} 字节，提取状态：${file.extraction.status}）\n${file.extraction.content}`).join('\n\n')
-    const materialInstruction = originalFiles.length
-      ? '下面是 Forge 按当前账号审批权限读取并核验过的记录字段、已绑定文本文件和 PDF/DOCX 原件提取文本。请帮我只读核对合同交付范围、验收与商务风险，逐项引用文件原文，区分已知、冲突、待补和待确认，并给出建议退回或同意的理由。'
-      : '下面是 Forge 按当前账号审批权限读取并核验过的记录字段和已绑定文件。请帮我只读核对合同交付范围、验收与商务风险，逐项引用文件原文，区分已知、冲突、待补和待确认，并给出建议退回或同意的理由。'
-    const prompt = [
-      `我本人收到一项待处理的 Forge 审批：${context.title}。审批环节：${context.step}。`,
-      materialInstruction,
-      '请只提供分析建议，不调用团队交接、Forge 写入、审批或其他工具；最终决定由我在待办中提交。',
-      fields ? `Forge 业务字段：\n${fields}` : '',
-      files,
-      originals ? `已核验审批原件（部分提取须保留未读内容限制）：\n${originals}` : '',
-    ].filter(Boolean).join('\n\n')
-    await sendPrompt(prompt)
-    setToast('已将本人获准的审批材料交给 Pi 协助核对；审批意见仍由你提交。')
-  }, [sendPrompt, setToast])
+  const assistEnterpriseTaskInPi = useCallback(async (task: EnterpriseHumanTask) => {
+    await openApprovalReviewInPi(task, { enterprise: enterpriseBridge, newSession, workspace, setToast })
+  }, [enterpriseBridge, newSession, setToast, workspace])
   const continueEnterpriseWork = useCallback(async (item: EnterpriseWorkItem, context?: EnterpriseApprovalContextView) => {
     let returnedApprovalContextHandle: string | undefined
     let workContinuationContextHandle: string | undefined
@@ -920,7 +900,7 @@ export default function App() {
     const next = queuedMessages[0]
     if (next.flushAttemptFailed) return
     queuedFlushRef.current = true
-    void sendPrompt(next.text, [], 'queue', next.id, next.returnedApprovalContextHandle, undefined, next.workContinuationContextHandle)
+    void sendPrompt(next.text, [], 'queue', next.id, next.returnedApprovalContextHandle, undefined, next.workContinuationContextHandle, next.approvalReviewContextHandle)
       .finally(() => { queuedFlushRef.current = false })
   }, [bridge, busy, externalSessionRunning, queuedMessages, sendPrompt, submitting])
 
