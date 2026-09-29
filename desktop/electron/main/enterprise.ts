@@ -385,7 +385,7 @@ function parseWorkContinuationContext(value: unknown): EnterpriseWorkContinuatio
     || createHash('sha256').update(task, 'utf8').digest('hex') !== taskSHA256
     || !teamID || !workflowID || !Number.isInteger(workflowVersion) || workflowVersion! < 1
     || !run || !status || !CONTINUATION_RUN_STATUSES.has(status)
-    || !Array.isArray(input?.materials) || input.materials.length > 8
+    || !Array.isArray(input?.materials)
     || !Array.isArray(input?.source_messages) || input.source_messages.length < 1 || input.source_messages.length > 256) {
     throw new Error('团队工作上下文不完整或摘要校验失败，请刷新工作消息')
   }

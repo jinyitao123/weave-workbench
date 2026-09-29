@@ -87,6 +87,10 @@ const expectedRegistrations: Record<string, Registration[]> = {
     { kind: 'tool', name: 'gooeypi_team_development_propose_new' },
     { kind: 'tool', name: 'gooeypi_team_development_context' },
     { kind: 'tool', name: 'gooeypi_team_development_propose' },
+    { kind: 'tool', name: 'gooeypi_team_development_save' },
+    { kind: 'tool', name: 'gooeypi_team_development_trial' },
+    { kind: 'tool', name: 'gooeypi_team_development_trial_status' },
+    { kind: 'tool', name: 'gooeypi_team_development_update_team' },
   ],
   'gooeypi-work-schedules.ts': [
     ...['scheduled_tasks_list', 'scheduled_task_create_once', 'scheduled_task_create_recurring', 'scheduled_task_update', 'scheduled_task_manage'].map((name) => ({ kind: 'tool' as const, name })),
@@ -186,11 +190,18 @@ describe('shipped extension contracts', () => {
     await tools.get('gooeypi_team_development_context')!.execute('context', {})
     const proposed = await tools.get('gooeypi_team_development_propose')!.execute('propose', { operations_json: '[{"kind":"member","member":"整理员","duty":"按模块分类"}]' })
     expect(proposed.content[0]?.text).toContain('提案已生成')
-    expect(requests.map(({ body }) => body.method)).toEqual(['list', 'open', 'propose_new_team', 'context', 'propose'])
+    const saved = await tools.get('gooeypi_team_development_save')!.execute('save', { operations_json: '[{"kind":"member","member":"整理员","duty":"按模块分类"}]' })
+    expect(saved.content[0]?.text).toContain('save')
+    await tools.get('gooeypi_team_development_trial')!.execute('hidden-tool-call-id', { workflow_name: '分类流程', input: '测试材料' })
+    await tools.get('gooeypi_team_development_trial_status')!.execute('status', {})
+    await tools.get('gooeypi_team_development_update_team')!.execute('publish', {})
+    expect(requests.map(({ body }) => body.method)).toEqual(['list', 'open', 'propose_new_team', 'context', 'propose', 'save', 'trial', 'trial_status', 'update_team'])
     expect(requests[4]?.body.params).toEqual({ operations: [{ kind: 'member', member: '整理员', duty: '按模块分类' }] })
+    expect(requests[6]?.body.params).toEqual({ workflow_name: '分类流程', input: '测试材料' })
+    expect(JSON.stringify(requests)).not.toContain('hidden-tool-call-id')
     for (const request of requests) expect(new Headers(request.options?.headers).get('authorization')).toBe('Bearer inert-test-token')
     await expect(tools.get('gooeypi_team_development_propose')!.execute('invalid', { operations_json: '{' })).rejects.toThrow('不是有效 JSON 数组')
-    expect(requests).toHaveLength(5)
+    expect(requests).toHaveLength(9)
     rejectNext = true
     await expect(tools.get('gooeypi_team_development_open')!.execute('stale', { team_name: '反馈分类团队' })).rejects.toThrow('团队草稿版本已变化')
   })

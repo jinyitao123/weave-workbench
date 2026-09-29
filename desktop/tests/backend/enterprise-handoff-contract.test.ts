@@ -84,6 +84,45 @@ describe('Weave handoff admission contract', () => {
     expect(f.calls.some((call) => call.path.endsWith('/dispatch'))).toBe(false)
     expect(f.runs.size).toBe(0)
   })
+  it('replays one new continuation input with the exact reused and newly staged resources', async () => {
+    const f = await fixture(); f.drop()
+    const continuation = {
+      workbenchSessionID: 'workbench-employee-session',
+      inputRevisionID: '10000000-0000-4000-8000-000000000001',
+      runID: 'run-needs-input', teamID: choice.teamId,
+    }
+    const reused = {
+      type: 'forge-file' as const, sourceKind: 'owner' as const,
+      materialId: 'aaaaaaaaaaaaaaaaaaaaaaaa', id: 'forge-original-docx', name: '合同样例.docx',
+      mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' as const,
+      bytes: 1200, sha256: hash('frozen-docx'),
+    }
+    const added = {
+      type: 'forge-file' as const, sourceKind: 'owner' as const,
+      materialId: 'bbbbbbbbbbbbbbbbbbbbbbbb', id: 'forge-new-pdf', name: '补充材料.pdf',
+      mediaType: 'application/pdf' as const, bytes: 900, sha256: hash('new-pdf'),
+    }
+    const source = {
+      ...f.source, idempotencySeed: 'session:current-needs-input-message:team',
+      continuation, resources: [reused, added],
+    }
+    await expect(f.service.submitWork(choice, '按原 DOCX 和新 PDF 补充检查', source)).rejects.toThrow('response lost')
+    const receipt = await f.service.submitWork(choice, '按原 DOCX 和新 PDF 补充检查', source)
+    expect(receipt.repeated).toBe(true)
+    expect(f.runs.size).toBe(1)
+    const registrations = f.calls.filter((call) => call.path.endsWith('dispatch-inputs'))
+    expect(registrations).toHaveLength(2)
+    expect(registrations[0]?.body).toEqual(registrations[1]?.body)
+    expect(registrations[0]?.body).toMatchObject({
+      expected_revision_id: continuation.inputRevisionID,
+      revision_context: { parent_input_revision_id: continuation.inputRevisionID, parent_run_id: continuation.runID },
+      resources: [reused, added],
+    })
+    expect(registrations[0]?.body.registration_id).not.toBe(continuation.inputRevisionID)
+    const dispatches = f.calls.filter((call) => call.path.endsWith('/dispatch'))
+    expect(dispatches).toHaveLength(2)
+    expect(dispatches[0]?.body.client_request_id).toBe(dispatches[1]?.body.client_request_id)
+  })
   it('does not dispatch after a changed employee request or logout during registration', async () => {
     for (const mode of ['change', 'logout']) {
       const f = await fixture()

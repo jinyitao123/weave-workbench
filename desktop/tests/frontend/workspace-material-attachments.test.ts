@@ -35,4 +35,20 @@ describe('workspace material prompt references', () => {
     expect(() => appendWorkspaceMaterialContext('Read this file.', [{ ...attachment, path: '../outside.md' }]))
       .toThrow(/do not belong to the current workspace/)
   })
+
+  it('preserves more than eight small file references without removing aggregate byte limits', () => {
+    const attachments = Array.from({ length: 9 }, (_, index) => ({
+      ...attachment,
+      name: `source-${index + 1}.md`,
+      path: `材料/附件/opaque/source-${index + 1}.md`,
+    }))
+    const text = appendWorkspaceMaterialContext('Review these files.', attachments)
+    expect(splitWorkspaceMaterialContext(text).attachments).toHaveLength(9)
+
+    const oversizedTotal = Array.from({ length: 5 }, (_, index) => ({
+      ...attachments[index]!, bytes: 2 * 1024 * 1024,
+    }))
+    expect(() => appendWorkspaceMaterialContext('Review these files.', oversizedTotal))
+      .toThrow('Workspace materials exceed the 8 MiB total size limit.')
+  })
 })

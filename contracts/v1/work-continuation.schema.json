@@ -30,7 +30,7 @@
         "workflow_version": { "type": "integer", "minimum": 1 },
         "materials": {
           "type": "array",
-          "maxItems": 8,
+          "description": "Frozen material references subject to the per-file, aggregate-byte, extraction-text, and task-size budgets; no file-count ceiling is imposed.",
           "items": {
             "type": "object",
             "additionalProperties": false,

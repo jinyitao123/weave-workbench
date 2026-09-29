@@ -33,8 +33,10 @@ function isWorkspaceMaterialPromptReference(value: unknown): value is WorkspaceM
 /** Adds path-and-digest references for the agent. File contents stay on disk. */
 export function appendWorkspaceMaterialContext(text: string, attachments: readonly WorkspaceMaterialReference[]): string {
   if (!attachments.length) return text
-  if (attachments.length > 8 || attachments.reduce((sum, item) => sum + item.bytes, 0) > MAX_TOTAL_MATERIAL_BYTES
-    || new Set(attachments.map((item) => item.path)).size !== attachments.length
+  if (attachments.reduce((sum, item) => sum + item.bytes, 0) > MAX_TOTAL_MATERIAL_BYTES) {
+    throw new TypeError('Workspace materials exceed the 8 MiB total size limit.')
+  }
+  if (new Set(attachments.map((item) => item.path)).size !== attachments.length
     || !attachments.every(isWorkspaceMaterialPromptReference)) {
     throw new TypeError('Workspace materials do not belong to the current workspace or exceed the handoff limits.')
   }
@@ -60,7 +62,7 @@ export function splitWorkspaceMaterialContext(text: string): WorkspaceMaterialCo
   if (jsonStart < 0) return { text, attachments: [] }
   try {
     const parsed: unknown = JSON.parse(payload.slice(jsonStart + 1))
-    if (!Array.isArray(parsed) || parsed.length < 1 || parsed.length > 8 || !parsed.every(isWorkspaceMaterialPromptReference)) return { text, attachments: [] }
+    if (!Array.isArray(parsed) || parsed.length < 1 || !parsed.every(isWorkspaceMaterialPromptReference)) return { text, attachments: [] }
     const visible = `${text.slice(0, start)}${text.slice(end + CLOSE.length)}`.trimEnd()
     return { text: visible, attachments: parsed }
   } catch {

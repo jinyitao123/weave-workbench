@@ -13,10 +13,10 @@ const MIB = 1024 * KIB
  * bundle-size creep still fails the release build.
  */
 export const BUNDLE_SIZE_BUDGETS = Object.freeze({
-  // 2026-09-28: source-bound approval and continuation reads add 9,975 bytes
-  // over the 783,451-byte PDF/DOCX build. The current main bundle is 793,426
-  // bytes; 776 KiB is the next 8 KiB boundary above that measured size.
-  mainBytes: 776 * KIB,
+  // 2026-09-29: scoped Pi team development and explicit frozen-material reuse
+  // raise the main bundle from 793,521 to 801,155 bytes. 784 KiB is the next
+  // 8 KiB boundary above the measured size.
+  mainBytes: 784 * KIB,
   preloadBytes: 16 * KIB,
   initialRendererBytes: 1280 * KIB,
   largestRendererChunkBytes: 600 * KIB,
