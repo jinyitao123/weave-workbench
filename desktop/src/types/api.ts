@@ -232,7 +232,7 @@ export interface EnterpriseBusinessCapabilityBinding {
   capabilityId: string
   parameters: Array<{
     name: string
-    source: 'materials.single.id' | 'materials.single.name' | 'materials.single.sha256' | 'materials.manifest_json'
+    source: 'materials.single.id' | 'materials.single.name' | 'materials.single.sha256' | 'materials.manifest_json' | 'materials.ids'
   }>
 }
 

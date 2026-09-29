@@ -22,34 +22,22 @@ const sections: Array<{ value: Section; label: string }> = [
 const engines = [{ value: 'loom', label: 'Weave 内置运行时' }, { value: 'codex', label: 'Codex' }, { value: 'claude', label: 'Claude' }, { value: 'opencode', label: 'OpenCode' }]
 const materialBindingSources: Array<{ value: '' | EnterpriseBusinessCapabilityBinding['parameters'][number]['source']; label: string }> = [
   { value: '', label: '由成员填写' },
-  { value: 'materials.single.id', label: '本次唯一文件 · 标识' },
-  { value: 'materials.single.name', label: '本次唯一文件 · 名称' },
-  { value: 'materials.single.sha256', label: '本次唯一文件 · 摘要' },
-  { value: 'materials.manifest_json', label: '本次全部文件 · 有序清单' },
+  { value: 'materials.single.id', label: '本次唯一文件（仅一件材料时）' },
+  { value: 'materials.single.name', label: '本次唯一文件名称（文本参数）' },
+  { value: 'materials.single.sha256', label: '本次唯一文件摘要（文本参数）' },
+  { value: 'materials.manifest_json', label: '本次材料清单（用于文本参数）' },
 ]
 
 function parameterSourceOptions(parameter: BusinessParameter, current?: BindingSource) {
   const options = parameter.type === 'string'
     ? materialBindingSources
-    : parameter.type === 'file' && !parameter.multiple
-      ? materialBindingSources.filter((item) => item.value === '' || item.value === 'materials.single.id')
-      : [{ value: '' as const, label: parameter.type === 'file' ? '暂不支持文件列表参数' : '由成员填写' }]
+    : parameter.type === 'file' && parameter.multiple
+      ? [{ value: '' as const, label: '请选择文件来源' }, { value: 'materials.ids' as const, label: '本次提交的全部文件' }]
+      : parameter.type === 'file'
+        ? [{ value: '' as const, label: '由 Pi 从本次材料中选择一份' }, { value: 'materials.single.id' as const, label: '绑定本次唯一文件（仅一件材料时）' }]
+        : [{ value: '' as const, label: '不绑定材料来源' }]
   if (current && !options.some((item) => item.value === current)) return [...options, { value: current, label: '当前映射与参数类型不兼容' }]
   return options
-}
-
-function singleFileParameters(parameters: BusinessParameter[]): Array<{ name: string; source: BindingSource }> | undefined {
-  const file = parameters.find((parameter) => /(?:^|_)file_id$/.test(parameter.name) && (parameter.type === 'string' || parameter.type === 'file') && !parameter.multiple)
-  if (!file) return undefined
-  const prefix = file.name.replace(/(?:^|_)file_id$/, '')
-  const name = parameters.find((parameter) => [prefix ? `${prefix}_name` : 'file_name', prefix ? `${prefix}_file_name` : 'name'].includes(parameter.name) && parameter.type === 'string')
-  const digest = parameters.find((parameter) => [prefix ? `${prefix}_sha256` : 'file_sha256', prefix ? `${prefix}_file_sha256` : 'sha256'].includes(parameter.name) && parameter.type === 'string')
-  if (!name || !digest) return undefined
-  return [
-    { name: file.name, source: 'materials.single.id' },
-    { name: name.name, source: 'materials.single.name' },
-    { name: digest.name, source: 'materials.single.sha256' },
-  ]
 }
 
 function capabilityImpact(capability: BusinessCapability): string {
@@ -70,7 +58,6 @@ export function MemberInspector({ draft, runtimes, models, businessCapabilities,
   const [capabilityPickerOpen, setCapabilityPickerOpen] = useState(false)
   const [capabilitySearch, setCapabilitySearch] = useState('')
   const [expandedCapability, setExpandedCapability] = useState('')
-  const [individualFileMapping, setIndividualFileMapping] = useState('')
   const config = draft.configuration
   const relationship = draft.relationship
   const setConfig = <K extends keyof typeof config>(key: K, value: typeof config[K]) => onChange({ ...draft, configuration: { ...config, [key]: value } })
@@ -105,15 +92,10 @@ export function MemberInspector({ draft, runtimes, models, businessCapabilities,
     const selected = config.businessCapabilityIds.includes(id)
     const capability = businessCapabilities?.capabilities.find((item) => item.id === id)
     if (!selected && capability?.status === 'unavailable') return
-    const fileParameters = !selected && capability ? singleFileParameters(capability.params ?? []) : undefined
     onChange({ ...draft, configuration: {
       ...config,
       businessCapabilityIds: selected ? config.businessCapabilityIds.filter((value) => value !== id) : [...config.businessCapabilityIds, id],
-      businessCapabilityBindings: selected
-        ? config.businessCapabilityBindings.filter((binding) => binding.capabilityId !== id)
-        : fileParameters
-          ? [...config.businessCapabilityBindings.filter((binding) => binding.capabilityId !== id), { capabilityId: id, parameters: fileParameters }]
-          : config.businessCapabilityBindings,
+      businessCapabilityBindings: selected ? config.businessCapabilityBindings.filter((binding) => binding.capabilityId !== id) : config.businessCapabilityBindings,
     } })
     setExpandedCapability(selected ? '' : id)
     if (!selected) setCapabilityPickerOpen(false)
@@ -182,18 +164,27 @@ export function MemberInspector({ draft, runtimes, models, businessCapabilities,
             const capability = businessCapabilities?.capabilities.find((item) => item.id === id)
             if (!capability) return <li key={id} className="member-capability-assigned"><div className="member-capability-assigned__summary"><strong>已绑定的业务动作暂不可读取</strong><button type="button" className="button" onClick={() => toggleBusinessCapability(id)}>移除</button></div></li>
             const bindings = config.businessCapabilityBindings.find((binding) => binding.capabilityId === id)
-            const fileParameters = singleFileParameters(capability.params ?? [])
             const mappedSource = (name: string) => bindings?.parameters.find((item) => item.name === name)?.source
-            const fileMode = fileParameters?.every((item) => mappedSource(item.name) === item.source) ? 'single' : fileParameters?.every((item) => !mappedSource(item.name)) ? 'member' : 'individual'
-            const selectedFileMode = individualFileMapping === id ? 'individual' : fileMode
-            const parameters = (capability.params ?? []).filter((parameter) => selectedFileMode === 'individual' || !fileParameters?.some((item) => item.name === parameter.name))
+            const parameters = capability.params ?? []
+            const missingFileListBindings = parameters.filter((parameter) => parameter.type === 'file' && parameter.multiple && mappedSource(parameter.name) !== 'materials.ids')
             const expanded = expandedCapability === id
             return <li key={id} className="member-capability-assigned">
               <div className="member-capability-assigned__summary"><span><strong>{configurationLabel(capability.name, '业务动作')}</strong><small>{capabilityImpact(capability)}{capability.requiresEmployeeIntent ? ' · 需本轮员工授权' : ''}</small></span><div className="member-capability-assigned__actions">{capability.params?.length ? <button type="button" className="button" aria-expanded={expanded} onClick={() => setExpandedCapability(expanded ? '' : id)}>{expanded ? '收起配置' : '配置输入'}</button> : null}<button type="button" className="button" aria-label={'移除' + configurationLabel(capability.name, '业务动作')} onClick={() => toggleBusinessCapability(id)}>移除</button></div></div>
               {capability.status === 'unavailable' ? <p className="member-inspector__error" role="alert">{capability.unavailableReason ?? '该业务动作当前不可用'}。移除后才能更新团队。</p> : null}
+              {missingFileListBindings.length ? <p className="member-inspector__error" role="alert">多文件参数须绑定“本次提交的全部文件”；未配置时运行会被拒绝。</p> : null}
               {expanded ? <div className="member-capability-parameters"><p>{capability.description}</p>
-                {fileParameters ? <><ProductSelect label={configurationLabel(capability.name, '业务动作') + '文件来源'} value={selectedFileMode ?? 'member'} options={[{ value: 'single', label: '本次唯一文件（系统注入）' }, { value: 'member', label: '由成员填写' }, { value: 'individual', label: '分别设置接口字段' }]} onChange={(mode) => { if (mode === 'individual') { setIndividualFileMapping(id); return }; setIndividualFileMapping(''); setBusinessCapabilitySources(id, fileParameters.map((item) => ({ name: item.name, source: mode === 'single' ? item.source : '' }))) }}/>{selectedFileMode === 'single' ? <small>文件标识、名称和摘要来自同一份冻结文件；有多份材料时，此来源不可用。</small> : selectedFileMode === 'member' ? <small className="member-capability-caution">文件参数尚未绑定本次材料，成员需要自行提供。</small> : null}</> : null}
-                {parameters.map((parameter) => { const source = mappedSource(parameter.name); return <div className="member-capability-parameter" key={parameter.name}><span><strong>{configurationLabel(parameter.label, parameter.name)}</strong><small>{parameter.name}</small></span><ProductSelect label={(parameter.label || parameter.name) + '来源'} value={source ?? ''} options={parameterSourceOptions(parameter, source)} onChange={(value) => setBusinessCapabilityParamSource(id, parameter.name, value)}/></div> })}
+                {parameters.map((parameter) => {
+                  const source = mappedSource(parameter.name)
+                  const nativeFile = parameter.type === 'file'
+                  return <div className="member-capability-parameter" key={parameter.name}>
+                    <span><strong>{configurationLabel(parameter.label, parameter.name)}{parameter.required ? ' · 必填' : ''}</strong><small>{parameter.name}</small></span>
+                    {nativeFile && !parameter.multiple ? <><ProductSelect label={`${parameter.label || parameter.name}来源`} value={source ?? ''} options={parameterSourceOptions(parameter, source)} onChange={(value) => setBusinessCapabilityParamSource(id, parameter.name, value)}/><small>默认由 Pi 从本次材料中选择一份；清单外文件不可选。绑定唯一文件来源时，本轮必须恰有一件材料。</small></>
+                      : nativeFile ? <ProductSelect label={`${parameter.label || parameter.name}来源`} value={source ?? ''} options={parameterSourceOptions(parameter, source)} onChange={(value) => setBusinessCapabilityParamSource(id, parameter.name, value)}/>
+                        : parameter.type === 'string' ? <ProductSelect label={`${parameter.label || parameter.name}来源`} value={source ?? ''} options={parameterSourceOptions(parameter, source)} onChange={(value) => setBusinessCapabilityParamSource(id, parameter.name, value)}/>
+                          : parameter.type === 'number' || parameter.type === 'boolean' || parameter.type === 'array' ? <small>由执行成员根据动作要求填写</small>
+                            : <small>参数类型无法确认，不能配置材料来源</small>}
+                  </div>
+                })}
               </div> : null}
             </li>
           })}</ul> : <p className="member-resource-empty">当前成员没有配置业务动作。</p>}

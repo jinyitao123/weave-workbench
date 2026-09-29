@@ -231,12 +231,12 @@ function assertReturnedApproval(context: EnterpriseApprovalContext, requestId?: 
     || !context.businessObject?.objectName || context.businessObject.objectName.length > 160
     || !context.businessObject.recordId || context.businessObject.recordId.length > 128
     || (context.businessObject.recordName !== undefined && context.businessObject.recordName.length > 300)
-    || typeof context.returnReason !== 'string' || !Array.isArray(context.files) || context.files.length > 11
+    || typeof context.returnReason !== 'string' || !Array.isArray(context.files)
     || context.files.some((file) => !file.fileId || file.fileId.length > 128 || !file.name || file.name.length > 255 || file.mediaType !== 'text/plain; charset=utf-8'
       || !Number.isInteger(file.bytes) || file.bytes < 0 || file.bytes > 2 * 1024 * 1024
       || !/^[0-9a-f]{64}$/.test(file.sha256) || file.verified !== true
       || Buffer.byteLength(file.content, 'utf8') !== file.bytes || digest(Buffer.from(file.content, 'utf8')) !== file.sha256)
-    || context.originalFiles !== undefined && (!Array.isArray(context.originalFiles) || context.originalFiles.length > 11
+    || context.originalFiles !== undefined && (!Array.isArray(context.originalFiles)
       || context.originalFiles.some((file) => file.sourceKind !== 'approval' || file.requestId !== context.requestId))) {
     throw new Error('当前退回事项或材料版本不完整，请刷新待办')
   }

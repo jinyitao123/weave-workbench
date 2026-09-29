@@ -184,6 +184,21 @@ function stringList(value: unknown): string[] {
 }
 
 const BUSINESS_CAPABILITY_SCALAR_TYPES = new Set(['string', 'text', 'textarea', 'email', 'url', 'date', 'datetime', 'number', 'integer', 'currency', 'boolean', 'file', 'select', 'enum', 'picklist'])
+const BUSINESS_ACTION_METADATA_MAX_BYTES = 4 * 1024 * 1024
+
+interface BusinessActionObjectMetadata {
+  name: string
+  actions: unknown[]
+  fields: Record<string, unknown>
+}
+
+interface ResolvedBusinessActionParameter {
+  name: string
+  type: string
+  multiple: boolean
+  enum: string[]
+  usesObjectOverride: boolean
+}
 
 function businessCapabilityUnavailableReason(value: unknown): string | undefined {
   if (value === undefined || value === null) return undefined
@@ -218,7 +233,105 @@ function businessCapabilityParams(value: unknown): NonNullable<EnterpriseBusines
   }) : []
 }
 
-const materialBindingSources = ['materials.single.id', 'materials.single.name', 'materials.single.sha256', 'materials.manifest_json'] as const
+function businessActionObjectMetadata(value: unknown, expectedName: string): BusinessActionObjectMetadata {
+  const envelope = record(value), item = record(envelope?.item)
+  if (envelope?.type !== 'object' || envelope.name !== expectedName || item?.name !== expectedName || !Array.isArray(item.actions)) {
+    throw new Error(`Forge 对象 ${expectedName} 的原生动作声明无效`)
+  }
+  const fields = record(item.fields) ?? {}
+  return { name: expectedName, actions: item.actions, fields }
+}
+
+function objectStackBusinessActionType(type: string): string {
+  switch (type) {
+    case 'number': case 'currency': case 'percent': case 'rating': case 'slider': case 'autonumber': return 'number'
+    case 'boolean': case 'toggle': return 'boolean'
+    case 'multiselect': case 'checkboxes': case 'tags': return 'array'
+    default: return 'string'
+  }
+}
+
+function businessActionEnumValues(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((option) => typeof option === 'string' ? [option] : textValue(record(option)?.value) ? [textValue(record(option)?.value)!] : [])
+}
+
+function resolveBusinessActionParameters(
+  summaryAction: Record<string, unknown>,
+  declaration: Record<string, unknown>,
+  objectName: string,
+  objectMetadataByName: Map<string, BusinessActionObjectMetadata>,
+): NonNullable<EnterpriseBusinessCapability['params']> {
+  const summaryParams = summaryAction.params === undefined || summaryAction.params === null ? [] : summaryAction.params
+  const declaredParams = declaration.params === undefined || declaration.params === null ? [] : declaration.params
+  if (!Array.isArray(summaryParams) || !Array.isArray(declaredParams)) throw new Error('Forge 业务动作参数声明不是列表')
+
+  const resolved = new Map<string, ResolvedBusinessActionParameter>()
+  for (const raw of declaredParams) {
+    const parameter = record(raw)
+    if (!parameter) throw new Error('Forge 原生参数声明无效')
+    const fieldName = textValue(parameter.field)
+    const name = textValue(parameter.name) ?? fieldName
+    if (!name) continue
+    if (resolved.has(name)) throw new Error(`Forge 原生参数 ${name} 重复`)
+    if (parameter.required !== undefined && parameter.required !== null && typeof parameter.required !== 'boolean'
+      || parameter.multiple !== undefined && parameter.multiple !== null && typeof parameter.multiple !== 'boolean') {
+      throw new Error(`Forge 原生参数 ${name} 的 required 或 multiple 无效`)
+    }
+
+    let field: Record<string, unknown> | undefined
+    let usesObjectOverride = false
+    if (fieldName) {
+      const overrideName = textValue(parameter.objectOverride)
+      let fieldObject = objectMetadataByName.get(objectName)
+      if (overrideName) {
+        fieldObject = objectMetadataByName.get(overrideName)
+        if (!fieldObject || fieldObject.name !== overrideName) throw new Error(`Forge 参数 ${name} 引用的对象字段不可读取`)
+        usesObjectOverride = true
+      }
+      field = record(fieldObject?.fields[fieldName])
+      if (!field) throw new Error(`Forge 参数 ${name} 引用的字段不可读取`)
+    }
+    const type = textValue(parameter.type)?.trim() || textValue(field?.type)?.trim()
+    if (!type) throw new Error(`Forge 原生参数 ${name} 没有可确认的类型`)
+    const fieldMultiple = typeof field?.multiple === 'boolean' ? field.multiple : false
+    const multiple = typeof parameter.multiple === 'boolean' ? parameter.multiple : fieldMultiple
+    const parameterOptions = parameter.options
+    const options = parameterOptions === undefined || parameterOptions === null ? field?.options : parameterOptions
+    resolved.set(name, { name, type, multiple, enum: businessActionEnumValues(options), usesObjectOverride })
+  }
+  if (resolved.size !== summaryParams.length) throw new Error('Forge 原生参数声明与员工可调用动作不一致')
+
+  const seenSummary = new Set<string>()
+  const normalizedSummary = businessCapabilityParams(summaryParams)
+  if (normalizedSummary.length !== summaryParams.length) throw new Error('Forge 员工可调用动作参数摘要无效')
+  return summaryParams.flatMap((raw, index) => {
+    const summary = record(raw), name = textValue(summary?.name) ?? textValue(summary?.field)
+    const summaryType = textValue(summary?.type)
+    if (!summary || !name || !summaryType || typeof summary.required !== 'boolean' || seenSummary.has(name)) {
+      throw new Error('Forge 员工可调用动作参数摘要缺少唯一名称、类型或必填状态')
+    }
+    seenSummary.add(name)
+    const parameter = resolved.get(name)
+    if (!parameter) throw new Error(`Forge 原生声明缺少员工可调用参数 ${name}`)
+    const expectedSummaryType = objectStackBusinessActionType(parameter.type)
+    if (summaryType !== expectedSummaryType && !parameter.usesObjectOverride) {
+      throw new Error(`Forge 员工参数 ${name} 与原生声明类型不一致`)
+    }
+    const normalizedType: NonNullable<EnterpriseBusinessCapability['params']>[number]['type'] = parameter.type === 'file'
+      ? 'file'
+      : objectStackBusinessActionType(parameter.type) as 'string' | 'number' | 'boolean' | 'array'
+    const normalized = normalizedSummary[index]!
+    return [{
+      ...normalized,
+      type: normalizedType,
+      multiple: parameter.multiple,
+      ...(parameter.enum.length ? { enum: parameter.enum } : {}),
+    }]
+  })
+}
+
+const materialBindingSources = ['materials.single.id', 'materials.single.name', 'materials.single.sha256', 'materials.manifest_json', 'materials.ids'] as const
 
 function businessCapabilityBindings(value: unknown): EnterpriseBusinessCapabilityBinding[] {
   if (!Array.isArray(value)) return []
@@ -1003,6 +1116,40 @@ export class EnterpriseService {
     return { version: '1', provider: { id: 'forge', name: 'Forge 业务环境', status: 'available' }, capabilities, refreshedAt: new Date().toISOString() }
   }
 
+  private async readBusinessActionObjectMetadata(objectName: string, generation: number): Promise<BusinessActionObjectMetadata> {
+    if (!objectName || objectName !== objectName.trim()) throw new Error('Forge 对象名无效，无法读取原生动作声明')
+    const { response, snapshot } = await this.authenticatedFetch(
+      new URL(`/api/v1/meta/objects/${encodeURIComponent(objectName)}`, this.forgeUrl), 'forge',
+      { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }, generation,
+    )
+    if (response.status === 401) {
+      await response.body?.cancel()
+      await this.signOutIfCurrent(snapshot)
+      throw new Error('登录已失效，请重新登录')
+    }
+    if (response.status === 403) {
+      await response.body?.cancel()
+      throw new Error(`当前账号没有读取 Forge 对象 ${objectName} 原生动作声明的权限`)
+    }
+    if (!response.ok) {
+      await response.body?.cancel()
+      throw new Error(`Forge 对象 ${objectName} 原生动作声明读取失败（${response.status}）`)
+    }
+    const declaredLength = Number(response.headers.get('content-length'))
+    if (Number.isFinite(declaredLength) && declaredLength > BUSINESS_ACTION_METADATA_MAX_BYTES) {
+      await response.body?.cancel()
+      throw new Error(`Forge 对象 ${objectName} 原生动作声明超过读取限制`)
+    }
+    const body = await response.text()
+    this.assertCurrentAuth(snapshot)
+    if (Buffer.byteLength(body, 'utf8') > BUSINESS_ACTION_METADATA_MAX_BYTES) throw new Error(`Forge 对象 ${objectName} 原生动作声明超过读取限制`)
+    let value: unknown
+    try { value = JSON.parse(body) }
+    catch { throw new Error(`Forge 对象 ${objectName} 原生动作声明格式无效`) }
+    this.assertCurrentAuth(snapshot)
+    return businessActionObjectMetadata(value, objectName)
+  }
+
   async getBusinessCapabilities(allowedIds?: string[]): Promise<EnterpriseBusinessCapability[]> {
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
@@ -1027,20 +1174,70 @@ export class EnterpriseService {
     const text = content.map((item) => textValue(record(item)?.text)).find(Boolean)
     const payload = text ? record(JSON.parse(text)) : undefined
     const actions = Array.isArray(payload?.actions) ? payload.actions : []
-    const allow = allowedIds ? new Set(allowedIds) : undefined
-    const capabilities = actions.flatMap((value): EnterpriseBusinessCapability[] => {
+    if (!Array.isArray(payload?.actions)) throw new Error('Forge 员工业务动作目录格式无效')
+    const visible = new Map<string, { id: string; key: string; objectName: string; actionName: string; action: Record<string, unknown> }>()
+    for (const value of actions) {
       const action = record(value), actionName = textValue(action?.name), objectName = textValue(action?.objectName)
-      if (!actionName || !objectName) return []
-      const id = `forge:action:${objectName}.${actionName}`
-      if (allow && !allow.has(id)) return []
-      if (businessCapabilityUnavailableReason(action?.params)) return []
-      return [{
+      if (!action || !actionName || actionName !== actionName.trim() || !objectName || objectName !== objectName.trim()) {
+        throw new Error('Forge 员工业务动作目录包含无效对象或动作')
+      }
+      const key = `${objectName}.${actionName}`
+      if (visible.has(key)) throw new Error(`Forge 员工业务动作目录重复包含 ${key}`)
+      visible.set(key, { id: `forge:action:${key}`, key, objectName, actionName, action })
+    }
+    const visibleById = new Map([...visible.values()].map((action) => [action.id, action]))
+    const requestedIds = allowedIds ?? [...visibleById.keys()]
+    if (new Set(requestedIds).size !== requestedIds.length) throw new Error('团队配置的 Forge 业务动作不能重复')
+    const selected = requestedIds.map((id) => {
+      const match = visibleById.get(id)
+      if (!match) throw new Error(`当前员工没有调用 Forge 业务动作 ${id} 的权限`)
+      return { ...match }
+    })
+    const objectMetadataByName = new Map<string, BusinessActionObjectMetadata>()
+    const objectNames = [...new Set(selected.map((item) => item.objectName))].sort()
+    for (const objectName of objectNames) {
+      objectMetadataByName.set(objectName, await this.readBusinessActionObjectMetadata(objectName, generation))
+    }
+    const selectedDeclarations = new Map<string, Record<string, unknown>>()
+    const overrideNames = new Set<string>()
+    for (const item of selected) {
+      const object = objectMetadataByName.get(item.objectName)!
+      let declaration: Record<string, unknown> | undefined
+      for (const rawDeclaration of object.actions) {
+        const candidate = record(rawDeclaration)
+        if (candidate?.name !== item.actionName) continue
+        if (declaration) throw new Error(`Forge 对象 ${item.objectName} 中动作 ${item.actionName} 的原生声明重复`)
+        declaration = candidate
+      }
+      if (!declaration) throw new Error(`Forge 对象 ${item.objectName} 中缺少动作 ${item.actionName} 的原生声明`)
+      const params = declaration.params === undefined || declaration.params === null ? [] : declaration.params
+      if (!Array.isArray(params)) throw new Error(`Forge 动作 ${item.actionName} 的原生参数声明无效`)
+      for (const rawParam of params) {
+        const parameter = record(rawParam)
+        const field = textValue(parameter?.field)
+        const override = textValue(parameter?.objectOverride)
+        if (parameter?.objectOverride !== undefined && parameter.objectOverride !== null && (!override || override !== override.trim())) {
+          throw new Error(`Forge 动作 ${item.actionName} 的对象字段引用无效`)
+        }
+        if (field && override) overrideNames.add(override)
+      }
+      selectedDeclarations.set(item.key, declaration)
+    }
+    for (const objectName of [...overrideNames].filter((name) => !objectMetadataByName.has(name)).sort()) {
+      objectMetadataByName.set(objectName, await this.readBusinessActionObjectMetadata(objectName, generation))
+    }
+    const capabilities = selected.map(({ id, key, objectName, actionName, action }) => {
+      const params = resolveBusinessActionParameters(action, selectedDeclarations.get(key)!, objectName, objectMetadataByName)
+      const unavailableReason = businessCapabilityUnavailableReason(params)
+      if (unavailableReason) throw new Error(`Forge 业务动作 ${id} 的参数暂不可安全绑定：${unavailableReason}`)
+      return {
         id,
-        name: textValue(action?.label) ?? textValue(action?.description) ?? actionName,
-        description: textValue(action?.description) ?? textValue(action?.label) ?? actionName,
-        effect: 'write', resourceType: objectName, requiresEmployeeIntent: true, status: 'available', requiresRecord: action?.requiresRecord !== false,
-        actionName, objectName, requiresConfirmation: action?.requiresConfirmation === true, params: businessCapabilityParams(action?.params),
-      }]
+        name: textValue(action.label) ?? textValue(action.description) ?? actionName,
+        description: textValue(action.description) ?? textValue(action.label) ?? actionName,
+        effect: 'write' as const, resourceType: objectName, requiresEmployeeIntent: true, status: 'available' as const,
+        requiresRecord: action.requiresRecord !== false,
+        actionName, objectName, requiresConfirmation: action.requiresConfirmation === true, params,
+      }
     })
     this.assertCurrentAuth(snapshot)
     return capabilities
@@ -1540,7 +1737,7 @@ export class EnterpriseService {
       if (expected.mediaType && isContinuationOriginalType(expected.mediaType)) {
         const originalPath = expected.sourceKind === 'owner'
           ? `/api/v1/workbench/materials/${encodeURIComponent(expected.id)}/original`
-          : `/api/v1/approvals/requests/${encodeURIComponent(expected.requestId!)}/workbench-context/files/${encodeURIComponent(expected.id)}/original`
+          : `/api/v1/approvals/requests/${encodeURIComponent(expected.requestId!)}/workbench-history/files/${encodeURIComponent(expected.id)}/original`
         const sourceBytes = await this.readOriginalMaterialBytes(
           originalPath, expected.mediaType, expected.bytes, expected.sha256, generation, '原工作',
         )
@@ -1672,7 +1869,7 @@ export class EnterpriseService {
       || (isSubmitter && (!returnVersion || returnVersion.length > 128))) {
       throw new Error('这项审批已无法由当前员工处理，请刷新待办')
     }
-    if (!Array.isArray(approval.fields) || approval.fields.length > 64 || !Array.isArray(approval.files) || approval.files.length > 11) {
+    if (!Array.isArray(approval.fields) || approval.fields.length > 64 || !Array.isArray(approval.files)) {
       throw new Error('Forge 审批上下文格式无效')
     }
     const fields = approval.fields.flatMap((value) => {
@@ -1698,7 +1895,7 @@ export class EnterpriseService {
     })
     let originalFiles: FrozenApprovalOriginalMaterial[] | undefined
     if (approval.originalFiles !== undefined) {
-      if (!Array.isArray(approval.originalFiles) || approval.originalFiles.length > 11) throw new Error('Forge 审批上下文格式无效')
+      if (!Array.isArray(approval.originalFiles)) throw new Error('Forge 审批上下文格式无效')
       const seenIds = new Set<string>()
       let totalOriginalBytes = 0
       let totalExtractedBytes = 0
