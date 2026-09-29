@@ -12,32 +12,71 @@ function fixture() {
   const document: TeamDefinition = { name: '合同团队', objective: '复核合同', members: [lead, worker], workflows: [{ id: 'flow', name: '合同复核', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
   const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [{
     id: 'submit', name: '提交指定合同版本', description: '提交员工授权版本', effect: 'write', resourceType: 'contract', requiresEmployeeIntent: true, status: 'available', params: [
-      { name: 'material_file_id', type: 'string' }, { name: 'material_name', type: 'string' }, { name: 'material_sha256', type: 'string' },
+      { name: 'primary_file_id', type: 'file', required: true },
+      { name: 'material_file_ids', type: 'file', multiple: true, required: true },
+      { name: 'material_summary', type: 'string' },
     ],
   }] }
   return { document, catalog }
 }
 
-it('adds a member, binds one file atomically, and inserts a step without changing the source draft', () => {
+it('adds a member, explicitly binds the native multi-file parameter, and inserts a step without changing the source draft', () => {
   const { document, catalog } = fixture()
   const result = applyTeamDevelopmentOperations(document, [
     { kind: 'member_add', ref: 'submitter', name: '合同提交员', duty: '在员工授权后提交合同' },
-    { kind: 'capability', member: 'submitter', capability: 'submit', selected: true, fileSource: 'single' },
+    { kind: 'capability', member: 'submitter', capability: 'submit', selected: true, parameterSources: [{ name: 'material_file_ids', source: 'materials.ids' }] },
     { kind: 'step_add', flow: 'flow', after: 'work', member: 'submitter', name: '提交冻结版本', requirement: '只提交本次授权的冻结版本' },
   ], catalog)
   expect(document.members).toHaveLength(2)
   expect(document.workflows[0]?.graph_definition.nodes).toHaveLength(3)
   const submitter = result.document.members.find((member) => member.configuration.displayName === '合同提交员')!
   expect(submitter.configuration.businessCapabilityBindings).toEqual([{ capabilityId: 'submit', parameters: [
-    { name: 'material_file_id', source: 'materials.single.id' },
-    { name: 'material_name', source: 'materials.single.name' },
-    { name: 'material_sha256', source: 'materials.single.sha256' },
+    { name: 'material_file_ids', source: 'materials.ids' },
   ] }])
   const graph = result.document.workflows[0]!.graph_definition
   const step = graph.nodes.find((node) => node.label === '提交冻结版本')!
   expect(step.config?.agent_id).toBe(submitter.id)
   expect(graph.edges.some((edge) => edge.from_node_id === 'work' && edge.to_node_id === step.id)).toBe(true)
   expect(graph.edges.some((edge) => edge.from_node_id === step.id && edge.to_node_id === 'deliver')).toBe(true)
+})
+
+it('fails closed on missing or mismatched native file bindings while keeping the legacy manifest text-only', () => {
+  const { document, catalog } = fixture()
+  const action = { kind: 'capability' as const, member: document.members[1]!.id, capability: 'submit', selected: true }
+  expect(() => applyTeamDevelopmentOperations(document, [action], catalog)).toThrow('多文件参数 material_file_ids 必须绑定')
+  expect(() => applyTeamDevelopmentOperations(document, [{
+    ...action, parameterSources: [
+      { name: 'primary_file_id', source: 'materials.single.name' },
+      { name: 'material_file_ids', source: 'materials.ids' },
+    ],
+  }], catalog)).toThrow('材料来源与原生类型不匹配')
+  const exactSingle = applyTeamDevelopmentOperations(document, [{
+    ...action, parameterSources: [
+      { name: 'primary_file_id', source: 'materials.single.id' },
+      { name: 'material_file_ids', source: 'materials.ids' },
+    ],
+  }], catalog)
+  expect(exactSingle.document.members[1]!.configuration.businessCapabilityBindings).toEqual([{ capabilityId: 'submit', parameters: [
+    { name: 'primary_file_id', source: 'materials.single.id' },
+    { name: 'material_file_ids', source: 'materials.ids' },
+  ] }])
+  expect(() => applyTeamDevelopmentOperations(document, [{
+    ...action, parameterSources: [
+      { name: 'material_file_ids', source: 'materials.manifest_json' },
+    ],
+  }], catalog)).toThrow('材料来源与原生类型不匹配')
+  expect(() => applyTeamDevelopmentOperations(document, [{ ...action, fileSource: 'single' }], catalog)).toThrow('旧版文件来源提案不可用')
+
+  const textOnlyCatalog: EnterpriseBusinessCapabilityCatalog = {
+    ...catalog,
+    capabilities: [{ ...catalog.capabilities[0]!, params: [{ name: 'material_manifest', type: 'string' }] }],
+  }
+  const mapped = applyTeamDevelopmentOperations(document, [{
+    ...action, parameterSources: [{ name: 'material_manifest', source: 'materials.manifest_json' }],
+  }], textOnlyCatalog)
+  expect(mapped.document.members[1]!.configuration.businessCapabilityBindings).toEqual([{ capabilityId: 'submit', parameters: [
+    { name: 'material_manifest', source: 'materials.manifest_json' },
+  ] }])
 })
 
 it('rejects invented business actions and references before producing a proposal', () => {
