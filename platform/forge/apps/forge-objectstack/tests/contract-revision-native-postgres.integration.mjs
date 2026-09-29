@@ -51,6 +51,8 @@ function fixtureObjects() {
       mime_type: Field.text({ label: 'MIME type' }),
       size: Field.number({ label: 'Size' }),
       status: Field.text({ label: 'Status' }),
+      scope: Field.text({ label: 'Scope' }),
+      acl: Field.text({ label: 'ACL' }),
       owner_id: Field.text({ label: 'Owner' }),
       ref_object: Field.text({ label: 'Object' }),
       ref_id: Field.text({ label: 'Record' }),
@@ -77,15 +79,17 @@ function routeServer() {
   };
 }
 
-async function invoke(routes, method, path, params, body, token = 'sales-token') {
+async function invoke(routes, method, path, params, body, token = 'sales-token', extraHeaders = {}) {
   const handler = routes.get(`${method} ${path}`);
   assert.ok(handler, `${method} ${path} is mounted`);
   let status = 200;
   let response;
+  const responseHeaders = {};
   const res = {
     status(value) { status = value; return this; },
-    header() { return this; },
+    header(name, value) { responseHeaders[name] = value; return this; },
     json(value) { response = value; return this; },
+    send(value) { response = Buffer.from(value); return this; },
     end() { return this; },
   };
   await handler({
@@ -94,9 +98,9 @@ async function invoke(routes, method, path, params, body, token = 'sales-token')
     params,
     query: {},
     body,
-    headers: { authorization: `Bearer ${token}` },
+    headers: { authorization: `Bearer ${token}`, ...extraHeaders },
   }, res);
-  return { status, body: response };
+  return { status, body: response, headers: responseHeaders };
 }
 
 function executionContext(userId, organizationId) {
@@ -212,23 +216,25 @@ test('native ObjectStack 17.3 contract revision uses PostgreSQL, preserves the o
 
   const oldPrimaryBytes = Buffer.from('synthetic old contract content', 'utf8');
   const oldAttachmentBytes = Buffer.from('synthetic old attachment content', 'utf8');
-  const newPrimaryBytes = Buffer.from('synthetic revised contract content', 'utf8');
-  const newAttachmentBytes = Buffer.from('synthetic revised attachment content', 'utf8');
+  const newPrimaryBytes = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.from('synthetic revised DOCX original')]);
+  const newAttachmentBytes = Buffer.from('%PDF-1.7\nsynthetic revised PDF original');
   const fileRows = [
-    [ids.oldPrimary, 'old-primary-key', 'contract-original.txt', oldPrimaryBytes],
-    [ids.oldAttachment, 'old-attachment-key', 'attachment-original.txt', oldAttachmentBytes],
-    [ids.newPrimary, 'new-primary-key', 'contract-revised.txt', newPrimaryBytes],
-    [ids.newAttachment, 'new-attachment-key', 'attachment-revised.txt', newAttachmentBytes],
+    [ids.oldPrimary, 'old-primary-key', 'contract-original.txt', oldPrimaryBytes, 'text/plain'],
+    [ids.oldAttachment, 'old-attachment-key', 'attachment-original.txt', oldAttachmentBytes, 'text/plain'],
+    [ids.newPrimary, 'new-primary-key', 'contract-revised.docx', newPrimaryBytes, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+    [ids.newAttachment, 'new-attachment-key', 'attachment-revised.pdf', newAttachmentBytes, 'application/pdf'],
   ];
-  for (const [fileId, key, name, bytes] of fileRows) {
+  for (const [fileId, key, name, bytes, mediaType] of fileRows) {
     content.set(key, bytes);
     await insert('sys_file', {
       id: fileId,
       key,
       name,
-      mime_type: 'text/plain',
+      mime_type: mediaType,
       size: bytes.length,
       status: 'committed',
+      scope: 'attachments',
+      acl: 'private',
       owner_id: ids.submitter,
       ref_object: 'forge_sales_contract',
       ref_id: ids.contract,
@@ -314,8 +320,13 @@ test('native ObjectStack 17.3 contract revision uses PostgreSQL, preserves the o
       .findLast((action) => action.action === 'revise').id,
     sourceMaterialVersion: firstSnapshotVersion,
     idempotencyKey: id(),
-    primary: { fileId: ids.newPrimary, name: 'contract-revised.txt', sha256: sha256(newPrimaryBytes) },
-    attachments: [{ fileId: ids.newAttachment, name: 'attachment-revised.txt', sha256: sha256(newAttachmentBytes) }],
+    primary: {
+      fileId: ids.newPrimary, name: 'contract-revised.docx',
+      mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      bytes: newPrimaryBytes.length, sha256: sha256(newPrimaryBytes),
+    },
+    attachments: [{ fileId: ids.newAttachment, name: 'attachment-revised.pdf',
+      mediaType: 'application/pdf', bytes: newAttachmentBytes.length, sha256: sha256(newAttachmentBytes) }],
   };
 
   const unauthorized = await invoke(routes.routes, 'POST', revisionPath, { requestId: firstRequest.id }, body, 'foreign-token');
@@ -378,8 +389,25 @@ test('native ObjectStack 17.3 contract revision uses PostgreSQL, preserves the o
 
   const secondReviewerContext = await invoke(routes.routes, 'GET', contextPath, { requestId: secondRequest.id }, undefined, 'delivery-token');
   assert.equal(secondReviewerContext.status, 200);
-  assert.deepEqual(secondReviewerContext.body.files.map((file) => file.fileId).sort(), [ids.newPrimary, ids.newAttachment].sort());
+  assert.deepEqual(secondReviewerContext.body.originalFiles.map((file) => file.fileId).sort(), [ids.newPrimary, ids.newAttachment].sort());
+  for (const file of secondReviewerContext.body.originalFiles) {
+    assert.equal(file.sourceKind, 'approval');
+    assert.equal(file.requestId, secondRequest.id);
+  }
   assert.equal(secondReviewerContext.body.sourceMaterialVersion, await approvalPayloadVersion(secondSnapshot));
+
+  const originalPath = '/api/v1/approvals/requests/:requestId/workbench-context/files/:fileId/original';
+  for (const [fileId, bytes] of [[ids.newPrimary, newPrimaryBytes], [ids.newAttachment, newAttachmentBytes]]) {
+    const original = await invoke(routes.routes, 'GET', originalPath,
+      { requestId: secondRequest.id, fileId }, undefined, 'delivery-token', { 'if-match': `"${sha256(bytes)}"` });
+    assert.equal(original.status, 200, 'the native approver can read the new Office original');
+    assert.deepEqual(original.body, bytes, 'approval original retrieval returns the exact bytes that were revised');
+    assert.equal(original.headers['X-Content-SHA256'], sha256(bytes));
+  }
+  const unrelatedOriginal = await invoke(routes.routes, 'GET', originalPath,
+    { requestId: secondRequest.id, fileId: ids.newPrimary }, undefined, 'foreign-token',
+    { 'if-match': `"${sha256(newPrimaryBytes)}"` });
+  assert.equal(unrelatedOriginal.status, 404, 'an unrelated employee cannot read the revised Office original');
 
   const resubmitActions = await engine.find('sys_approval_action', {
     where: { request_id: firstRequest.id, action: 'resubmit' }, limit: 10,
@@ -403,9 +431,9 @@ test('native ObjectStack 17.3 contract revision uses PostgreSQL, preserves the o
       'native returned request and real approval_revise suspension',
       'authenticated submitter and current reviewer approval context',
       'unauthorized employee, stale snapshot, and direct REST resubmit rejected',
-      'new main file and attachment passed the Forge material guard',
+      'DOCX primary and PDF attachment passed Forge MIME, byte, organization, and SHA checks',
       'native resubmit back-edge opened one new approval round',
-      'original snapshot retained and new round snapshot verified',
+      'original snapshot retained and new round Office originals read back through approval context',
       'same request replay did not duplicate the native resubmit action',
       'lost resume acknowledgement reconciled from PostgreSQL readback',
     ],

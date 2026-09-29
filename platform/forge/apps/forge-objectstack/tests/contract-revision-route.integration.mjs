@@ -15,15 +15,18 @@ async function fixture({ failAfterAction = false, failBeforeAction = false } = {
   const contract = { id: contractId, code: 'HT-A', status: 'pending_approval', submitted_material_id: 'old-file' };
   const request = { id: requestId, object_name: 'forge_sales_contract', record_id: contractId,
     submitter_id: 'sales-A', status: 'returned', viewer: { is_submitter: true },
-    flow_run_id: 'run-A', created_at: '2026-09-23T10:00:00.000Z', payload: { name: '原合同' } };
+    flow_run_id: 'run-A', flow_node_id: 'contract_review', node_config_json: JSON.stringify({ __round: 1 }),
+    created_at: '2026-09-23T10:00:00.000Z', payload: { name: '原合同' } };
   const actions = [{ id: 'return-action-A', action: 'revise' }];
   const requests = [request];
   const ledger = new Map();
   const engine = {
     async find(name, query) {
       if (name === 'sys_file') return query.where.id.$in.includes(fileId) ? [file] : [];
-      if (name === 'sys_approval_request') return requests.filter((row) =>
-        row.flow_run_id === query.where.flow_run_id && row.record_id === query.where.record_id);
+      if (name === 'sys_approval_request') {
+        if (query.where.id) return requests.filter((row) => row.id === query.where.id);
+        return requests.filter((row) => row.flow_run_id === query.where.flow_run_id && row.record_id === query.where.record_id);
+      }
       return [];
     },
     async findOne(name, query) {
@@ -57,7 +60,7 @@ async function fixture({ failAfterAction = false, failBeforeAction = false } = {
       actions.push({ id: 'resubmit-action-A', action: 'resubmit' });
       if (failAfterAction) throw new Error('resume failed after approval action');
       requests.push({ id: 'approval-round-2', object_name: 'forge_sales_contract', record_id: contractId,
-        flow_run_id: 'run-A', created_at: '2026-09-23T10:01:00.000Z' });
+        flow_run_id: 'run-A', flow_node_id: 'contract_review', created_at: '2026-09-23T10:01:00.000Z' });
       return { request, resumed: true };
     },
   };
@@ -103,7 +106,7 @@ test('employee revision updates the contract then resumes the original approval 
   const f = await fixture();
   const route = '/api/v1/approvals/requests/:requestId/workbench-revision';
   const first = await f.call('POST', route, { requestId });
-  assert.equal(first.status, 200);
+  assert.equal(first.status, 200, JSON.stringify(first.body));
   assert.equal(first.body.state, 'resumed');
   assert.equal(f.contract.submitted_material_id, fileId);
   assert.equal(f.ledger.size, 1);
@@ -138,4 +141,26 @@ test('a failure before the native action reports not submitted and does not sile
   assert.equal(repeated.status, 202);
   assert.equal(repeated.body.state, 'prepared');
   assert.equal(f.resubmitCalls, 1);
+});
+
+test('unsupported MIME and oversized Office references fail before native resubmit', async () => {
+  const route = '/api/v1/approvals/requests/:requestId/workbench-revision';
+  const unsupported = await fixture();
+  const unsupportedResult = await unsupported.call('POST', route, { requestId }, {
+    ...unsupported.body,
+    primary: { ...unsupported.body.primary, mediaType: 'image/png', bytes: 12 },
+  });
+  assert.equal(unsupportedResult.status, 415);
+  assert.equal(unsupported.resubmitCalls, 0);
+
+  const oversized = await fixture();
+  const oversizedResult = await oversized.call('POST', route, { requestId }, {
+    ...oversized.body,
+    primary: {
+      ...oversized.body.primary,
+      mediaType: 'application/pdf', bytes: 2 * 1024 * 1024 + 1,
+    },
+  });
+  assert.equal(oversizedResult.status, 413);
+  assert.equal(oversized.resubmitCalls, 0);
 });
