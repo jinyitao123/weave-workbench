@@ -45,6 +45,13 @@ interface EmployeeTurn {
   messageId?: string
   workContinuation?: BoundWorkContinuation
 }
+interface BoundRecoveryAuthorization {
+  claimToken: string
+  recoveryKey: string
+  accountKey: string
+  sessionKey: string
+  turnKey: string
+}
 interface PendingReturnedApproval {
   accountKey: string
   context: EnterpriseApprovalContext
@@ -207,6 +214,8 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   private readonly pendingFirstPrompts = new Set<string>()
   private readonly newSessionTokens = new Set<string>()
   private readonly turns = new Map<string, EmployeeTurn>()
+  /** Ephemeral, current-turn-only consent handles for resuming frozen handoffs. */
+  private readonly recoveryAuthorizations = new Map<string, BoundRecoveryAuthorization>()
   private readonly sessionBindingWaiters = new Map<string, Set<() => void>>()
   private readonly inputs = new Map<string, symbol>()
   private readonly inFlight = new Map<string, Promise<unknown>>()
@@ -225,6 +234,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   }
   protected onClaimRevoked(claim: CapabilityClaim): void {
     this.teams.delete(claim.token); this.handoffs.delete(claim.token); this.businessActions.delete(claim.token); this.businessObjects.delete(claim.token); this.businessRecords.delete(claim.token); this.turns.delete(claim.token); this.inputs.delete(claim.token); this.returnedApprovals.delete(claim.token); this.workContinuations.delete(claim.token); this.workLineages.delete(claim.token)
+    this.invalidateRecoveryAuthorizations(claim.token)
     this.pendingFirstPrompts.delete(claim.token)
     this.newSessionTokens.delete(claim.token)
     this.notifySessionBinding(claim.token)
@@ -368,6 +378,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     this.pendingRuntimeTokens.delete(runtimeId)
     this.pendingFirstPrompts.delete(token)
     this.inputs.set(token, Symbol())
+    this.invalidateRecoveryAuthorizations(token)
     this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessObjects.delete(token); this.businessRecords.delete(token); this.workContinuations.delete(token)
     this.notifySessionBinding(token)
   }
@@ -376,6 +387,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     this.turns.clear(); this.inputs.clear(); this.teams.clear(); this.handoffs.clear(); this.businessActions.clear(); this.businessObjects.clear(); this.businessRecords.clear()
     this.pendingReturnedApprovals.clear(); this.returnedApprovals.clear()
     this.pendingWorkContinuations.clear(); this.workContinuations.clear(); this.workLineages.clear()
+    this.recoveryAuthorizations.clear()
   }
   /** Called only by the trusted desktop input path, before forwarding to the runtime. */
   async employeeCommand(runtimeId: unknown, command: unknown, returnedApprovalContextHandle?: unknown, workContinuationContextHandle?: unknown): Promise<void> {
@@ -394,6 +406,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const previousWorkLineage = this.workLineages.get(token)
     const marker = Symbol()
     this.inputs.set(token, marker)
+    this.invalidateRecoveryAuthorizations(token)
     this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessObjects.delete(token); this.businessRecords.delete(token); this.workContinuations.delete(token)
     this.notifySessionBinding(token)
     const claim = this.claimForToken(token)
@@ -549,11 +562,32 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (method === 'read_business_record') return this.readBusinessRecord(claim, params, turn)
     if (method === 'submit') return this.submit(claim, params, turn)
     if (method === 'revision_submit') return this.submitReturnedRevision(claim, params, turn)
+    if (method === 'inspect_recovery') return this.inspectRecovery(claim, params, turn)
     if (method === 'recover') {
-      const recoveryKey = requireString(params.recovery_key, 'recovery_key', { min: 64, max: 64 })
-      const intent = await this.store.recover<FrozenHandoffIntent>(recoveryKey)
-      if (intent.accountKey !== turn.accountKey || intent.sessionKey !== digest(claim.sessionPath!).slice(0, 24)) throw new Error('该交接不属于当前员工与会话')
-      if (!intent.employeeMessageId || intent.employeeMessageId !== turn.messageId) throw new Error('员工要求已变化，旧交接不能恢复')
+      rejectUnknownKeys(params, ['turn_key', 'recovery_key', 'resume_key'], 'handoff recovery')
+      const hasRecoveryKey = typeof params.recovery_key === 'string'
+      const hasResumeKey = typeof params.resume_key === 'string'
+      if (hasRecoveryKey === hasResumeKey) throw new Error('请使用原交接凭据，或使用当前轮次检查后返回的恢复凭据')
+      let recoveryKey: string
+      let intent: FrozenHandoffIntent
+      if (hasResumeKey) {
+        const resumeKey = requireString(params.resume_key, 'resume_key', { min: 32, max: 64 })
+        const authorization = this.recoveryAuthorizations.get(resumeKey)
+        if (!authorization || authorization.claimToken !== claim.token || authorization.turnKey !== turn.key
+          || authorization.accountKey !== turn.accountKey || authorization.sessionKey !== digest(claim.sessionPath!).slice(0, 24)) {
+          throw new Error('本轮恢复授权已失效，请重新检查原冻结交接')
+        }
+        this.recoveryAuthorizations.delete(resumeKey)
+        recoveryKey = authorization.recoveryKey
+        intent = await this.store.recover<FrozenHandoffIntent>(recoveryKey)
+        this.assertRecoveryIntentScope(intent, claim, turn)
+        await this.assertFrozenSourceMessages(intent, claim)
+      } else {
+        recoveryKey = requireString(params.recovery_key, 'recovery_key', { min: 64, max: 64 })
+        intent = await this.store.recover<FrozenHandoffIntent>(recoveryKey)
+        this.assertRecoveryIntentScope(intent, claim, turn)
+        if (!intent.employeeMessageId || intent.employeeMessageId !== turn.messageId) throw new Error('员工要求已变化，旧交接不能继续；请先检查原冻结交接')
+      }
       return this.prepareDelivery(claim, turn, intent, recoveryKey)
     }
     throw new TypeError(`Unsupported enterprise method ${method}`)
@@ -698,6 +732,74 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (!authorization || authorization.text !== turn.prompt || turn.baseline.has(authorization.message.id) || (turn.messageId && turn.messageId !== authorization.message.id)) throw new Error('当前员工输入尚未进入原会话，或员工要求已经变化')
     turn.messageId = authorization.message.id
     return messages.filter((entry) => entry.eventSeq <= authorization.eventSeq && entry.text).slice(-50).map(({ message, eventSeq, text }) => ({ messageId: message.id, eventSeq, sha256: digest(text) }))
+  }
+  private invalidateRecoveryAuthorizations(claimToken: string): void {
+    for (const [key, authorization] of this.recoveryAuthorizations) {
+      if (authorization.claimToken === claimToken) this.recoveryAuthorizations.delete(key)
+    }
+  }
+  private assertRecoveryIntentScope(intent: FrozenHandoffIntent, claim: CapabilityClaim, turn: EmployeeTurn): void {
+    if (intent.accountKey !== turn.accountKey || intent.sessionKey !== digest(claim.sessionPath!).slice(0, 24)) {
+      throw new Error('该交接不属于当前员工与会话')
+    }
+  }
+  private async assertFrozenSourceMessages(intent: FrozenHandoffIntent, claim: CapabilityClaim): Promise<void> {
+    const sourceMessages = intent.sourceMessages
+    if (!Array.isArray(sourceMessages) || sourceMessages.length === 0) {
+      throw new Error('原员工消息不在冻结记录中，旧交接不能恢复')
+    }
+    const employeeSource = sourceMessages.find((message) => message.messageId === intent.employeeMessageId)
+    if (!employeeSource) throw new Error('原员工消息不在冻结记录中，旧交接不能恢复')
+    const transcript = await this.options.sessions[claim.harness!].read(claim.sessionPath!)
+    const currentById = new Map(transcript.map((message, eventSeq) => [message.id, { message, eventSeq }]))
+    for (const source of sourceMessages) {
+      const current = currentById.get(source.messageId)
+      if (!current || current.eventSeq !== source.eventSeq || digest(messageText(current.message)) !== source.sha256) {
+        throw new Error(source.messageId === intent.employeeMessageId
+          ? '原员工消息已修改或不存在，旧冻结交接不能恢复'
+          : '冻结交接依据的原会话内容已变化，旧交接不能恢复')
+      }
+      if (source.messageId === intent.employeeMessageId && current.message.role !== 'user') {
+        throw new Error('原员工消息已修改或不存在，旧冻结交接不能恢复')
+      }
+    }
+  }
+  private async inspectRecovery(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn): Promise<unknown> {
+    rejectUnknownKeys(params, ['turn_key', 'recovery_key'], 'handoff recovery inspection')
+    const recoveryKey = requireString(params.recovery_key, 'recovery_key', { min: 64, max: 64 })
+    const intent = await this.store.recover<FrozenHandoffIntent>(recoveryKey)
+    this.assertRecoveryIntentScope(intent, claim, turn)
+    await this.assertFrozenSourceMessages(intent, claim)
+    let frozenTask: { goal?: unknown }
+    try { frozenTask = JSON.parse(intent.task) as { goal?: unknown } }
+    catch { throw new Error('原冻结交接目标无法读取，恢复已停止') }
+    if (typeof frozenTask.goal !== 'string') throw new Error('原冻结交接目标无法核对，恢复已停止')
+    const materials = normalizeFrozenMaterials(intent.materials).map((material) => ({
+      name: material.name, media_type: material.mediaType, bytes: material.bytes, sha256: material.sha256,
+      extraction_status: material.extraction.status,
+      limitations: [...material.extraction.limitations],
+    }))
+    await this.evidence(claim, turn)
+    const resumeKey = randomUUID().replaceAll('-', '')
+    this.recoveryAuthorizations.set(resumeKey, {
+      claimToken: claim.token, recoveryKey, accountKey: turn.accountKey,
+      sessionKey: digest(claim.sessionPath!).slice(0, 24), turnKey: turn.key,
+    })
+    return {
+      status: 'inspection_only', resume_key: resumeKey,
+      target: { goal: frozenTask.goal, team: intent.choice.teamName, workflow: intent.choice.workflowName },
+      ...(intent.businessContext ? { business_record: {
+        name: intent.businessContext.name,
+        ...(intent.businessContext.code ? { code: intent.businessContext.code } : {}),
+        ...(intent.businessContext.recordVersion ? { version: intent.businessContext.recordVersion } : {}),
+      } } : {}),
+      materials,
+      action_scope: {
+        authorized_business_capability_ids: [...intent.authorizedBusinessCapabilityIds],
+        requires_explicit_employee_reauthorization: intent.authorizedBusinessCapabilityIds.length > 0,
+      },
+      message: '以上是原冻结目标、材料和动作范围；这次检查没有上传材料或登记工作。恢复前须根据员工当前消息确认其同意继续这一准确范围。',
+    }
   }
   private async assertWorkContinuationCurrent(claim: CapabilityClaim, turn: EmployeeTurn): Promise<void> {
     const bound = turn.workContinuation
