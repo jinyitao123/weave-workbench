@@ -38,6 +38,25 @@ async function invoke(object, action, id, params = {}) {
   return api.request(`/actions/${object}/${action}/${id}`, 'POST', { params });
 }
 
+async function uploadContractPdf() {
+  const fileName = `合同转换-${stamp}.pdf`;
+  const bytes = Buffer.from(`%PDF-1.7\n${fileName}`);
+  const pending = await api.request('/storage/upload/presigned', 'POST', {
+    filename: fileName, mimeType: 'application/pdf', size: bytes.length, scope: 'attachments',
+  });
+  assert.ok(pending.status >= 200 && pending.status < 300, `presign contract material: ${JSON.stringify(pending.value)}`);
+  const descriptor = pending.value?.data || pending.value;
+  const origin = new URL(process.env.FORGE_URL || 'http://localhost:4310').origin;
+  const uploaded = await fetch(new URL(descriptor.uploadUrl, origin), {
+    method: descriptor.method || 'PUT', headers: descriptor.headers || {}, body: bytes,
+  });
+  assert.ok(uploaded.ok, `upload contract material: HTTP ${uploaded.status}`);
+  const complete = await api.request('/storage/upload/complete', 'POST', { fileId: descriptor.fileId });
+  assert.ok(complete.status >= 200 && complete.status < 300, `complete contract material: ${JSON.stringify(complete.value)}`);
+  const completed = complete.value?.data || complete.value;
+  return completed.fileId || descriptor.fileId;
+}
+
 function actionResult(response) {
   return response.value?.result ?? response.value?.data?.result ?? response.value?.data ?? response.value;
 }
@@ -109,11 +128,14 @@ await test('rejects repeated quotation conversion without creating another contr
 });
 
 await test('approves the generated contract and converts all remaining quantity into one order', async () => {
-  for (const action of ['contract_submit', 'contract_approve']) {
-    const response = await invoke('forge_sales_contract', action, ids.contract);
-    assert.equal(response.status, 200, `${action}: ${JSON.stringify(response.value)}`);
-  }
-  const response = await invoke('forge_sales_contract', 'contract_convert_to_sales_order', ids.contract, {
+  ids.contractFile = await uploadContractPdf();
+  let response = await invoke('forge_sales_contract', 'contract_submit_material_package', ids.contract, {
+    primary_file_id: ids.contractFile, material_file_ids: [ids.contractFile],
+  });
+  assert.equal(response.status, 200, `contract_submit_material_package: ${JSON.stringify(response.value)}`);
+  response = await invoke('forge_sales_contract', 'contract_approve', ids.contract);
+  assert.equal(response.status, 200, `contract_approve: ${JSON.stringify(response.value)}`);
+  response = await invoke('forge_sales_contract', 'contract_convert_to_sales_order', ids.contract, {
     code: 'SO-CONVERT-' + stamp + '-001', name: '一键转换验收销售订单', planned_delivery_on: '2026-10-09',
     payment_term: '订单生效后30天内付款', payment_method: 'bank_transfer', delivery_address: '苏州市工业园区澄岳路9号',
   });

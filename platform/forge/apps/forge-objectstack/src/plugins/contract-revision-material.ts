@@ -5,11 +5,11 @@ import type { IApprovalService, IHttpRequest, IHttpResponse, IHttpServer, IObjec
 import type { ExecutionContext } from '@objectstack/spec/kernel';
 import type { ResubmitMaterialVerificationInput } from './approval-resubmit-guard.plugin.js';
 import { retainContractMaterialFiles } from './contract-material-holder.js';
+import { CONTRACT_MATERIAL_LIMITS, verifyContractMaterialFiles } from './contract-material-files.js';
 
 const CONTRACT_OBJECT = 'forge_sales_contract';
 const LEDGER_OBJECT = 'forge_sales_contract_revision_material';
-const MAX_FILE_BYTES = 2 * 1024 * 1024;
-const MAX_TOTAL_BYTES = 8 * 1024 * 1024;
+const MAX_FILE_BYTES = CONTRACT_MATERIAL_LIMITS.maxFileBytes;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SHA256 = /^[0-9a-f]{64}$/;
 const TEXT_MEDIA_TYPES = new Set(['text/plain', 'text/plain; charset=utf-8']);
@@ -123,19 +123,6 @@ function normalizedMediaType(value: string): string {
   throw new Error('REVISION_MATERIAL_UNSUPPORTED_TYPE: material MIME type is not supported');
 }
 
-function hasOriginalSignature(bytes: Uint8Array, mediaType: string, name: string): boolean {
-  const lowerName = name.toLowerCase();
-  if (mediaType === 'application/pdf') {
-    return lowerName.endsWith('.pdf') && bytes.byteLength >= 5 &&
-      String.fromCharCode(...bytes.subarray(0, 5)) === '%PDF-';
-  }
-  if (mediaType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-    return lowerName.endsWith('.docx') && bytes.byteLength >= 4 &&
-      bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04;
-  }
-  return false;
-}
-
 function requestHeaders(headers: IHttpRequest['headers']): Headers {
   const result = new Headers();
   for (const [name, value] of Object.entries(headers ?? {})) {
@@ -209,7 +196,7 @@ export function parseContractRevisionMaterialInput(value: unknown): ContractRevi
   const sourceMaterialVersion = text(input?.sourceMaterialVersion, 64)?.toLowerCase();
   const idempotencyKey = text(input?.idempotencyKey, 64);
   if (!requestId || !returnVersion || !sourceMaterialVersion || !SHA256.test(sourceMaterialVersion) ||
-      !idempotencyKey || !UUID.test(idempotencyKey) || !Array.isArray(input?.attachments) || input.attachments.length > 10) {
+      !idempotencyKey || !UUID.test(idempotencyKey) || !Array.isArray(input?.attachments)) {
     throw new Error('REVISION_MATERIAL_INVALID: revision identity or attachments are invalid');
   }
   const primary = parseFile(input.primary);
@@ -224,61 +211,15 @@ async function verifyFiles(
   organizationId: string | undefined,
   files: RevisionFileReference[],
 ): Promise<VerifiedFile[]> {
-  const rows = await engine.find('sys_file', {
-    where: { id: { $in: files.map((file) => file.fileId) } },
-    fields: ['id', 'key', 'name', 'mime_type', 'size', 'status', 'scope', 'acl', 'owner_id', 'organization_id', 'ref_object', 'ref_id'],
-    limit: files.length,
-  }, { context: SYSTEM_CONTEXT });
-  const byId = new Map((rows ?? []).map((row) => [String(row.id), row]));
-  const verified: VerifiedFile[] = [];
-  let total = 0;
-  for (const expected of files) {
-    const file = byId.get(expected.fileId);
-    const hasReference = file && (file.ref_object != null || file.ref_id != null);
-    if (file && Number.isInteger(file.size) && file.size > MAX_FILE_BYTES) {
-      throw new Error('REVISION_MATERIAL_TOO_LARGE: a material exceeds the per-file limit');
-    }
-    if (!file || file.status !== 'committed' || file.owner_id !== actorId ||
-      file.name !== expected.name ||
-      typeof file.key !== 'string' || !Number.isInteger(file.size) || file.size < 0 || file.size > MAX_FILE_BYTES ||
-      (file.organization_id != null && organizationId && file.organization_id !== organizationId) ||
-      hasReference && (file.ref_object !== CONTRACT_OBJECT || String(file.ref_id ?? '') !== contractId)) {
-      throw new Error('REVISION_MATERIAL_UNAVAILABLE: a file is unavailable to this employee and contract');
-    }
-    const storedMediaType = normalizedMediaType(String(file.mime_type ?? ''));
-    if (!expected.mediaType && OFFICE_MEDIA_TYPES.has(storedMediaType)) {
-      throw new Error('REVISION_MATERIAL_INVALID: Office originals require explicit MIME and byte metadata');
-    }
-    if (expected.mediaType && normalizedMediaType(expected.mediaType) !== storedMediaType) {
-      throw new Error('REVISION_MATERIAL_MISMATCH: declared MIME type differs from the stored file');
-    }
-    if (OFFICE_MEDIA_TYPES.has(storedMediaType) &&
-      (!organizationId || file.organization_id !== organizationId || file.scope !== 'attachments' || file.acl !== 'private')) {
-      throw new Error('REVISION_MATERIAL_UNAVAILABLE: an Office original must belong to the approval organization');
-    }
-    if (expected.bytes !== undefined && expected.bytes !== file.size) {
-      throw new Error('REVISION_MATERIAL_MISMATCH: declared byte count differs from the stored file');
-    }
-    const bytes = await storage.download(file.key);
-    if (bytes.length !== file.size || bytes.length > MAX_FILE_BYTES || await digest(bytes) !== expected.sha256) {
-      throw new Error('REVISION_MATERIAL_MISMATCH: file bytes differ from the frozen material');
-    }
-    if (OFFICE_MEDIA_TYPES.has(storedMediaType)) {
-      if (!hasOriginalSignature(bytes, storedMediaType, expected.name)) {
-        throw new Error('REVISION_MATERIAL_INVALID: Office original signature or file extension is invalid');
-      }
-    } else {
-      try { new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
-      catch { throw new Error('REVISION_MATERIAL_INVALID: text file is not valid UTF-8'); }
-    }
-    total += bytes.length;
-    if (total > MAX_TOTAL_BYTES) throw new Error('REVISION_MATERIAL_TOO_LARGE: material bundle exceeds the limit');
-    verified.push({
-      fileId: expected.fileId, name: expected.name, sha256: expected.sha256, bytes: bytes.length,
-      ...(expected.mediaType ? { mediaType: storedMediaType } : {}),
-    });
-  }
-  return verified;
+  const verified = await verifyContractMaterialFiles({
+    engine, storage, actorId, contractId, organizationId, files,
+    requireExpectedOfficeMetadata: true, requireOrganization: false,
+    errorPrefix: 'REVISION_MATERIAL', context: SYSTEM_CONTEXT,
+  });
+  return verified.map((file, index) => ({
+    fileId: file.fileId, name: file.name, sha256: file.sha256, bytes: file.bytes,
+    ...(files[index].mediaType ? { mediaType: file.mediaType } : {}),
+  }));
 }
 
 export class ContractRevisionMaterialService {
@@ -321,7 +262,7 @@ export class ContractRevisionMaterialService {
       }
       const primary = parseFile(primaryInput);
       const rawAttachments: unknown = JSON.parse(String(row.attachment_manifest ?? ''));
-      if (!Array.isArray(rawAttachments) || rawAttachments.length > 10) return false;
+      if (!Array.isArray(rawAttachments)) return false;
       const attachments = rawAttachments.map((file) => parseFile(file, { allowLegacyStoredBytesOnly: true }));
       const requestOrganizationId = text(request.organization_id, 128);
       const sessionOrganizationId = text(context.tenantId, 128);

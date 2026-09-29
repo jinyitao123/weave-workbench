@@ -21,10 +21,10 @@ function captureBodyConfigSource() {
 import { defineAction, defineStack } from '@objectstack/spec';
 import { Field, ObjectSchema } from '@objectstack/spec/data';
 import { MCPServerPlugin } from '@objectstack/mcp';
-import { SalesLeadConvertToOpportunity, QuotationAdjustLinePrice } from ${salesActionModule};
+import { ContractSubmitMaterialPackage, SalesLeadConvertToOpportunity, QuotationAdjustLinePrice } from ${salesActionModule};
 
 const captureAction = action => {
-  const { visible: _visible, ...declared } = action;
+  const { visible: _visible, target: _target, ...declared } = action;
   return {
     ...declared,
     requiredPermissions: [],
@@ -32,24 +32,7 @@ const captureAction = action => {
   };
 };
 
-const contractMaterialPackage = defineAction({
-  name: 'contract_submit_material_package',
-  label: '提交指定合同材料包',
-  objectName: 'forge_sales_contract',
-  locations: ['record_more'],
-  requiredPermissions: [],
-  ai: {
-    exposed: true,
-    description: '仅接收本轮冻结的主合同正文和全部材料文件，供隔离运行时验证注册Action的原生文件参数声明、单值及多值行为。',
-    category: 'action',
-    requiresConfirmation: false,
-  },
-  params: [
-    { name: 'primary_file_id', label: '合同正文', type: 'file', required: true },
-    { name: 'material_file_ids', label: '本轮材料集合', type: 'file', multiple: true, required: true },
-  ],
-  body: { language: 'js', capabilities: [], source: 'return { received: ctx.input };' },
-});
+const contractMaterialPackage = captureAction(ContractSubmitMaterialPackage);
 
 const objects = [
   ObjectSchema.create({ name: 'forge_sales_contract', label: '测试合同', sharingModel: 'private', fields: { name: Field.text({ required: true }) }, actions: [contractMaterialPackage], enable: { apiEnabled: true } }),
