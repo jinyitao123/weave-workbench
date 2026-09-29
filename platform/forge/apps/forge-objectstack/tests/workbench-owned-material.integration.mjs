@@ -19,13 +19,19 @@ function fixture() {
   const storageReads = [];
   const auditEntries = [];
   const storedBytes = new Map([[file.key, Buffer.from(bytes)]]);
+  const boundRecord = {
+    id: 'contract-a', owner_id: 'employee-a', organization_id: 'org-a',
+    submitted_material_id: FILE_ID,
+  };
   const routes = new Map();
   let ready;
   const server = { get(path, handler) { routes.set(path, handler); } };
   const engine = {
-    async findOne(objectName, query) {
-      assert.equal(objectName, 'sys_file');
-      return query.where.id === FILE_ID ? file : null;
+    async findOne(objectName, query, options) {
+      if (objectName === 'sys_file') return query.where.id === FILE_ID ? file : null;
+      assert.equal(objectName, 'forge_sales_contract');
+      return query.where.id === boundRecord.id && options?.context?.userId === boundRecord.owner_id
+        ? boundRecord : null;
     },
     async find() { return []; },
   };
@@ -54,7 +60,7 @@ function fixture() {
   };
   new WorkbenchOwnedMaterialPlugin().init(context);
   return {
-    file, bytes, storageReads, auditEntries,
+    file, bytes, boundRecord, storageReads, auditEntries,
     store(key, value) { storedBytes.set(key, Buffer.from(value)); },
     async call(token, extraHeaders = {}) {
       await ready();
@@ -185,6 +191,32 @@ test('original route rejects files bound through a reference field even when oth
   assert.equal(result.status, 404);
   assert.equal(result.body.error.code, 'MATERIAL_NOT_FOUND');
   assert.deepEqual(work.storageReads, []);
+});
+
+test('owner can reopen an original after its exact version is bound to an accessible business record', async () => {
+  const work = fixture();
+  const bytes = Buffer.from('%PDF-1.7\nfixture-original-bytes');
+  Object.assign(work.file, {
+    key: 'private/original.pdf', name: '客户合同.pdf', mime_type: 'application/pdf',
+    size: bytes.length, scope: 'attachments', ref_object: 'forge_sales_contract',
+    ref_id: work.boundRecord.id, ref_field: 'submitted_material_id',
+  });
+  work.boundRecord.submitted_material_id = JSON.stringify(FILE_ID);
+  work.store(work.file.key, bytes);
+  const digest = createHash('sha256').update(bytes).digest('hex');
+
+  assert.equal((await work.callOriginal('other-token', digest)).status, 404);
+  assert.deepEqual(work.storageReads, []);
+  const owned = await work.callOriginal('employee-token', digest);
+  assert.equal(owned.status, 200);
+  assert.deepEqual(owned.raw, bytes);
+
+  work.boundRecord.submitted_material_id = 'another-file';
+  assert.equal((await work.callOriginal('employee-token', digest)).status, 404);
+  work.boundRecord.submitted_material_id = FILE_ID;
+  work.boundRecord.organization_id = 'other-org';
+  assert.equal((await work.callOriginal('employee-token', digest)).status, 404);
+  assert.deepEqual(work.storageReads, ['private/original.pdf']);
 });
 
 test('DOCX MIME and file signature must agree and the two MiB original limit is enforced', async () => {

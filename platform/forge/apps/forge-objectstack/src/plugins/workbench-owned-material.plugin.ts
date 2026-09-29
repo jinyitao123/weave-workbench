@@ -62,6 +62,36 @@ function contentDisposition(name: string): string {
   return `attachment; filename="${fallback}"; filename*=UTF-8''${encoded}`;
 }
 
+function referencedFileId(value: unknown): string | undefined {
+  if (typeof value === 'object' && value !== null && 'id' in value) return nonempty(value.id, 128);
+  if (typeof value !== 'string') return undefined;
+  const text = value.trim();
+  if (UUID.test(text)) return text;
+  if (!text.startsWith('"')) return undefined;
+  try {
+    const decoded: unknown = JSON.parse(text);
+    return typeof decoded === 'string' && UUID.test(decoded) ? decoded : undefined;
+  } catch { return undefined; }
+}
+
+async function ownerCanReadBoundOriginal(
+  engine: IObjectQLEngine, file: Record<string, unknown>, actor: ExecutionContext, organizationId: string,
+): Promise<boolean> {
+  const references = [file.ref_object, file.ref_id, file.ref_field];
+  if (references.every((value) => value == null)) return true;
+  const objectName = nonempty(file.ref_object, 128);
+  const recordId = nonempty(file.ref_id, 128);
+  const fieldName = nonempty(file.ref_field, 128);
+  if (!objectName || !/^forge_[a-z][a-z0-9_]*$/.test(objectName) || !recordId || !fieldName ||
+      !/^[a-z][a-z0-9_]*$/.test(fieldName)) return false;
+  try {
+    // Read with the employee's native ObjectStack context, never the system context.
+    const record = await engine.findOne(objectName, { where: { id: recordId } }, { context: actor });
+    return !!record && record.id === recordId && record.owner_id === actor.userId &&
+      record.organization_id === organizationId && referencedFileId(record[fieldName]) === file.id;
+  } catch { return false; }
+}
+
 async function sendError(response: IHttpResponse, status: number, code: string): Promise<void> {
   response.header('Cache-Control', 'private, no-store');
   await response.status(status).json({ error: { code } });
@@ -155,10 +185,13 @@ export class WorkbenchOwnedMaterialPlugin implements Plugin {
         try {
           const file = await engine.findOne('sys_file', { where: { id: fileId } }, { context: SYSTEM_CONTEXT });
           if (!file || file.status !== 'committed' || !['user', 'attachments'].includes(String(file.scope)) || file.acl !== 'private' ||
-              file.owner_id !== actor.userId || file.ref_object != null || file.ref_id != null || file.ref_field != null) {
+              file.owner_id !== actor.userId) {
             return sendError(response, 404, 'MATERIAL_NOT_FOUND');
           }
           if (!actorOrganizationId || file.organization_id !== actorOrganizationId) {
+            return sendError(response, 404, 'MATERIAL_NOT_FOUND');
+          }
+          if (!await ownerCanReadBoundOriginal(engine, file, actor, actorOrganizationId)) {
             return sendError(response, 404, 'MATERIAL_NOT_FOUND');
           }
           const key = nonempty(file.key, 2048), name = nonempty(file.name, 255);
