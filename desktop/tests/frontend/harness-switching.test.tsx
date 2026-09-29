@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, type ReactNode } from 'react'
+import { act, useState, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Sidebar } from '../../src/components/Sidebar'
@@ -286,6 +286,77 @@ describe('bootstrap harness switching', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe('bootstrap account scope switching', () => {
+  it('keeps the previous local catalog hidden until the signed-in account catalog resolves', async () => {
+    const accountProjects = deferred<ProjectRecord[]>()
+    const accountSessions = deferred<SessionRecord[]>()
+    const accountSession: SessionRecord = { ...primeSession, id: 'employee-session', title: 'Employee session', filePath: '/employee/current.jsonl' }
+    let accountScopeActive = false
+    const bridge = {
+      projects: { list: vi.fn(() => accountScopeActive ? accountProjects.promise : Promise.resolve([primeProject])) },
+      sessions: {
+        list: vi.fn(() => accountScopeActive ? accountSessions.promise : Promise.resolve([primeSession])),
+        onChanged: () => () => undefined,
+      },
+      agent: { list: async () => [] },
+      app: { getMeta: async () => meta },
+      schedules: { list: async () => [] },
+    } as unknown as PrimeWorkApi
+    const workspaceRef = { current: { generation: 0 } as { generation: number; project?: ProjectRecord; session?: SessionRecord; cwd?: string; sessionFile?: string } }
+    const activateWorkspace = (project?: ProjectRecord, session?: SessionRecord) => {
+      const generation = workspaceRef.current.generation + 1
+      workspaceRef.current = { generation, project, session, cwd: project?.primaryFolder, sessionFile: session?.filePath }
+      return generation
+    }
+    const runtimeSessionsRef = { current: new Map<string, string>() }
+    const setSchedules = vi.fn()
+    const setScheduleError = vi.fn()
+    const reportError = vi.fn()
+    const attachRuntime = vi.fn()
+
+    function BootstrapProbe({ accountScope }: { accountScope?: string }) {
+      const [projects, setProjects] = useState<ProjectRecord[]>([])
+      const [sessions, setSessions] = useState<SessionRecord[]>([])
+      const { catalogReady } = useBootstrap({
+        bridge,
+        harness: 'prime',
+        accountScope,
+        setProjects,
+        setSessions,
+        setSchedules,
+        setScheduleError,
+        runtimeSessionsRef,
+        workspaceRef,
+        activateWorkspace,
+        attachRuntime,
+        reportError,
+      })
+      return <div>{catalogReady ? sessions.map((session) => session.title).join(', ') : 'workspace loading'}</div>
+    }
+
+    await act(async () => {
+      root.render(<BootstrapProbe />)
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    expect(container.textContent).toContain('Prime session')
+
+    accountScopeActive = true
+    await act(async () => { root.render(<BootstrapProbe accountScope="organization:employee" />) })
+    expect(container.textContent).toBe('workspace loading')
+    expect(container.textContent).not.toContain('Prime session')
+
+    await act(async () => {
+      accountProjects.resolve([primeProject])
+      accountSessions.resolve([accountSession])
+      await Promise.all([accountProjects.promise, accountSessions.promise])
+      await Promise.resolve()
+    })
+    expect(container.textContent).toContain('Employee session')
+    expect(container.textContent).not.toContain('Prime session')
   })
 })
 
