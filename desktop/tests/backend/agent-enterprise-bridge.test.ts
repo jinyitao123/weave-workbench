@@ -326,6 +326,41 @@ describe('employee-bound material handoff', () => {
     }, authorizedBusinessCapabilityIds: [] })
   })
 
+  it('restarts the latest failed read-only work with its frozen Office originals without reuploading them', async () => {
+    const f = await fixture()
+    const originals = await Promise.all([
+      readFile(new URL('../../../scenarios/sales-contract-handoff/materials/合同样例.docx', import.meta.url)),
+      readFile(new URL('../../../scenarios/sales-contract-handoff/materials/技术协议样例.pdf', import.meta.url)),
+    ])
+    const paths = ['材料/附件/合同样例.docx', '材料/附件/技术协议样例.pdf']
+    for (let index = 0; index < paths.length; index++) await writeFile(join(f.cwd, paths[index]!), originals[index]!)
+    const frozen = await freezeMaterials(f.cwd, paths.map((path, index) => ({ path, sha256: digest(originals[index]!) })))
+    const context = workContinuationContext()
+    context.run.status = 'failed'
+    context.run.finalResult = undefined
+    context.input.materials = frozen.map((material, index) => ({
+      id: `forge-original-${index}`, materialId: material.materialId, sourceKind: 'owner',
+      name: material.name, mediaType: material.mediaType, bytes: material.bytes, sha256: material.sha256,
+      content: material.extraction.content, extraction: material.extraction,
+    }))
+    f.service.getWorkContinuationContext.mockImplementation(async (references) => ({
+      ...structuredClone(context),
+      source: { inputRevisionID: references.workReference, runID: references.runReference, workbenchSessionID: references.sessionReference },
+    }))
+    await openNeedsInputContinuation(f, context, 'notice-failed-originals')
+    await f.input('请沿用刚才失败运行中已冻结的这两份原件，重新交原团队只读检查；不要上传副本。', 'failed-originals-retry')
+    const discovered = await f.discover()
+    const result = await f.call('submit', {
+      ...discovered, materials: [], reuse_material_names: frozen.map((material) => material.name), business_actions: [],
+    })
+    expect(result.body.result.status).toBe('accepted')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitWork.mock.calls[0]?.[2]).toMatchObject({
+      continuation: { inputRevisionID: context.source.inputRevisionID, runID: context.source.runID, restartAfterFailedRun: true },
+      resources: context.input.materials.map(({ id, materialId, name, sha256 }) => ({ id, materialId, name, sha256 })),
+    })
+  })
+
   it('refuses a different team when describing a linked continuation', async () => {
     const f = await fixture()
     const binding = await f.bridge.pinWorkContinuationContext({ id: 'notice-team-change', source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' })

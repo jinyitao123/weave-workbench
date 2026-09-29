@@ -1769,7 +1769,7 @@ export class EnterpriseService {
     } catch (error) {
       if (error instanceof WeaveHttpError && error.status === 409) {
         throw new WorkRegistrationRejectedError(source?.continuation
-          ? '原工作输入版本已变化或没有可修订的交付结果，请刷新工作消息后继续'
+          ? '原工作已有更新输入，或交付结果不可修订；请打开最新团队结果消息继续，旧事项不能覆盖后来的工作'
           : '本次固定交接与已登记内容冲突，请核对当前员工要求后重新发起')
       }
       throw error
