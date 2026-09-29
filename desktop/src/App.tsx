@@ -608,9 +608,9 @@ export default function App() {
       '你打开的是上一条团队工作失败消息。该运行已经结束，不能通过旧交接凭据恢复执行；不要查找历史会话或调用交接恢复工具。',
       historicalRunBoundary,
       `原工作目标：${originalGoal}`,
-      teamContext.materials.length ? `上次材料：${teamContext.materials.map((material) => `《${material.name}》`).join('、')}。这些是旧运行的材料，不能当作本轮重新交接的文件授权。` : '',
+      teamContext.materials.length ? `上次固定材料：${teamContext.materials.map((material) => `《${material.name}》`).join('、')}。打开消息只授权查看；员工在新消息明确允许后，桌面才能核验并复用这些准确版本。` : '',
       item.summary ? `失败提示：${item.summary}` : '',
-      '先向员工说明这次没有团队结论，也不能由运行失败推断 Forge 业务状态。若员工仍要团队检查，请等待员工在新消息中重新附上当前材料并明确要求，再按新输入交给原团队；只读检查不自动提交正式业务动作。',
+      '先向员工说明这次没有团队结论，也不能由运行失败推断 Forge 业务状态。若员工仍要只读检查，等待其在新消息中明确授权复用上次固定材料或附上新版材料，再按新输入交给原团队；不用要求重复上传未改变的原件。若上次有业务动作结果，先核对 Forge 回执，不能盲目重试。',
     ].filter(Boolean).join('\n\n') : unresolvedBusinessAction && teamContext ? [
       '你打开的是上一条团队结果消息。团队流程已结束，但其中的 Forge 业务动作失败或结果未知；打开消息只授权查看，不是员工再次授权执行。不要从历史会话查恢复凭据，也不要在本轮重新交接或重放业务动作。',
       historicalRunBoundary,
