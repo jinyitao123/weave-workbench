@@ -164,11 +164,19 @@
 
 Workbench Host 只在原提交员工打开 `returned` 事项、Pi 根据其明确意图准备好新版本后调用 Forge 修订业务动作。Host 在首次网络发送前原子冻结当前账号、Pi 实际处理的员工轮次、`requestId`、`returnVersion`、`sourceMaterialVersion`、`businessObject`、完整主件与附件字节及各自 SHA-256、允许动作和 UUID 幂等键；断线恢复只读该包，不能重新采样变化的文件或会话。账号切换、员工说“先等等”、事项状态变化或新一轮退回使尚未提交的旧意图失效。模型不得提供操作者 ID、记录 ID、审批状态或自行选择文件 ID。
 
+桌面修订工具保留旧文本调用：`body` 是本轮确认的修订正文，Host 将其按 UTF-8 固定为 `修订正文.md` 主件，`materials` 继续表示员工本轮选定的附件。新版可用 `primary_material: { path, sha256 }` 指定一份本地正文原件；它与 `body` 必须恰有一个出现。Host 必须按当前员工轮次冻结该准确文件的原始字节并核对 SHA-256，再用现有 Forge 文件上传能力上传；Pi 不得构造 Forge `fileId`、MIME 或长度。选择 PDF/DOCX 时，Host 递交原件字节，不把解析文本或模型改写内容当作该主件。未选正文、两种正文同时出现、选定文件摘要变化或账号/事项轮次变化时，在调用 Forge 前停止。
+
 Forge 从当前员工会话和原生审批请求重新取得操作者及业务对象，核对该员工为最新退回请求的原提交人、本次 `returnVersion` 仍是最新退回动作、源快照未变、全部新文件已提交且字节/摘要/归属相符。Forge 的领域规则决定主件、附件及字段如何形成新材料版本；合同只是其中一种规则。相同幂等键与同一冻结包返回同一回执，换内容返回冲突；同一退回轮次不能并发绑定两个版本。明确的 `pending`、`committed`、`unknown` 回执要能按幂等键核对，未知结果先查询再决定是否恢复，不盲目重放业务写入。
 
 ObjectStack 原生 ApprovalService 的所有 resubmit 入口必须在写审批动作前校验 Forge 产生的材料绑定；没有绑定、绑定过期、材料已变化或原提交人不符时拒绝，原审批状态和流程保持不变。绑定消费与审批动作写入须在同一数据库事务中确定结果。原生自动化恢复是事务后的另一阶段，须沿已有流程运行回执按同一幂等键核对并可安全续跑；数据库提交成功但恢复结果未知时不能写成“未提交”，也不能盲目执行第二次审批动作。恢复后下一轮审批请求读取新材料快照，旧轮次快照及意见保留。桌面不能调用原生 resubmit 路由绕过业务校验；Forge 不另建审批状态机或调度器。网络取消只停止尚未提交的本地准备或等待；若业务动作已提交，必须核对回执，取消 Weave 运行不撤销 Forge 结果。审计记录账号、组织、原请求与新请求、业务对象、源与新材料摘要、幂等键、动作结果及时间，不记录合同正文或长期凭据。**上述递交接口与原生守卫仍在实现中，不能把本契约当成已部署能力。**
 
-当前候选的准确接口为 `POST /api/v1/approvals/requests/{requestId}/workbench-revision`，请求体遵守 `approval-revision.schema.json`：`returnVersion`、`sourceMaterialVersion`、UUID `idempotencyKey`、一份 `primary` 和至多十份 `attachments`，每份只携 Forge `fileId`、名称及 SHA-256。Host 必须先用原有 Forge 文件上传能力传递已冻结的真实字节；Forge 从会话取员工、从原生请求取业务对象，重新下载文件核对归属、长度、UTF-8 和 SHA，单件不超过 2 MiB、总量不超过 8 MiB。`GET /api/v1/approvals/requests/{requestId}/workbench-revision/{idempotencyKey}` 只读核对原员工的回执。`resumed` 表示已观察到下一轮请求；`prepared` 表示新材料已固定但原生动作尚未确认；`resume_unknown` 表示动作已写但下一轮未观察到。只有 `resumed` 可向员工称为递交成功；其余状态不得自动重放原生动作。
+当前候选的准确接口为 `POST /api/v1/approvals/requests/{requestId}/workbench-revision`，请求体遵守 `approval-revision.schema.json`：`returnVersion`、`sourceMaterialVersion`、UUID `idempotencyKey`、一份 `primary` 和至多十份 `attachments`。每份引用都含 Forge `fileId`、名称和 SHA-256；兼容旧调用时可省略 `mediaType` 与 `bytes`，此时 Forge 仅按 UTF-8 文本校验。新调用必须把 `mediaType` 与 `bytes` 成对提交；PDF/DOCX 主件或附件必须提供这两个字段，MIME 限为 `application/pdf`、`application/vnd.openxmlformats-officedocument.wordprocessingml.document`，长度须大于 0。文本 MIME 仅接受 `text/plain` 或 `text/plain; charset=utf-8`。
+
+`mediaType` 和 `bytes` 是对已上传 Forge 文件的预期值，不是内容来源或授权凭据。Forge 从当前员工会话、原生审批请求及 ObjectStack `sys_file` 元数据确定员工、组织、业务对象、文件所有人、归属和存储键；随后用原有 ObjectStack Storage 下载实际字节，核对声明 MIME 与已存 MIME、名称扩展名和文件签名、声明长度与元数据长度、实际字节长度及 SHA-256。PDF 必须以 `%PDF-` 开始；DOCX 必须使用 `.docx` 名称并具备 ZIP 文件签名；文本仍须通过严格 UTF-8 解码。每份不超过 2 MiB、整包不超过 8 MiB。Office 文件还须属于当前审批组织，并使用 `scope=attachments`、`acl=private`，使下一轮审批上下文能够按原件权限读取。Office 文件的 MIME 或字节元数据缺失/不匹配、原始字节或摘要不符、文件不属于当前员工/组织或绑定到别的合同，均失败关闭；请求不接受 Base64、存储键、任意 `userId`、合同记录 ID 或审批处理人。
+
+`GET /api/v1/approvals/requests/{requestId}/workbench-revision/{idempotencyKey}` 只读核对原员工的回执。`resumed` 表示已观察到下一轮原生请求；`prepared` 表示新材料已固定但原生动作尚未确认；`resume_unknown` 表示动作已写但下一轮未观察到。相同请求键、身份、退回版本与准确文件清单返回原绑定；同键换文件、换摘要或换元数据报 `409`；请求或退回版本过期报 `409`，非原提交人或不可见请求报 `404`，存储 MIME 不支持报 `415`，字节/摘要/签名不一致报 `422`，单件或整包超限报 `413`，服务不可用报 `503`。`newVersionDigest` 覆盖按原顺序排列的主件及附件引用、已验证 MIME、实际字节数和 SHA-256。只有 `resumed` 可向员工称为递交成功；其余状态不得自动重放原生动作。
+
+原生审批服务创建下一轮请求后，Forge 应将已绑定的新主件与附件冻结到该请求快照。PDF/DOCX 仅以 `originalFiles` 元数据返回；小李、小陈等当前合法处理人仍通过 approval context 核对本轮 `requestId`、冻结 SHA，并调用受保护的原件读取路由获取字节。下一轮上下文必须指向新材料，而旧请求仍保持旧版本和原意见。
 
 当前候选中同键同材料重试返回原绑定，换材料报 `409`；账号无权或事项不存在返回 `404`，过期轮次 `409`，文件校验失败 `422`，输入超限 `413`，服务暂不可用 `503`。这条接口由 Forge 插件填补原生能力缺口；Weave 团队正常的 Forge 业务动作继续通过 ObjectStack MCP `run_action`，不为续办另造团队调度。**限制：** 当前插件的准备记录与原生审批动作尚不能作为一个跨自动化恢复的原子操作；首次调用若在动作前失败，回执保留 `prepared` 且不会自动重试；多进程同时递交和真实数据库恢复尚未验收，C06 不能关闭。文件上传回执丢失时可能留孤立文件，仍由 N01 处理。
 
