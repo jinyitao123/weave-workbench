@@ -140,8 +140,14 @@ export function useBootstrap({
 }: UseBootstrapOptions) {
   const [meta, setMeta] = useState<AppMeta | null>(null)
   const [initialized, setInitialized] = useState(!bridge)
+  const [loadedCatalogContext, setLoadedCatalogContext] = useState<{ harness: HarnessId; accountScope?: string } | null>(null)
   const previousHarnessRef = useRef(harness)
   const previousAccountScopeRef = useRef(accountScope)
+  // This comparison is synchronous with the render, unlike the reset in the
+  // effect below. Consumers can hide the previous account's catalog before
+  // the new scoped IPC reads have completed.
+  const catalogReady = !bridge || (loadedCatalogContext?.harness === harness
+    && loadedCatalogContext.accountScope === accountScope)
 
   const refreshHarnesses = useCallback(async () => {
     if (!bridge) return null
@@ -221,6 +227,7 @@ export function useBootstrap({
         const selected = selectStartupWorkspace(nextProjects, nextSessions, [])
         selectedGeneration = activateWorkspace(selected.project, selected.session)
       }
+      setLoadedCatalogContext({ harness, accountScope })
       setInitialized(true)
 
       // Runtime discovery is intentionally not on the critical path. It may
@@ -299,5 +306,5 @@ export function useBootstrap({
     }
   }, [accountScope, bridge, harness, initialized, ready, reportError, sessionHasOpenExtensionUi, setSessions, workspaceRef])
 
-  return { meta, initialized, refreshHarnesses }
+  return { meta, initialized, catalogReady, refreshHarnesses }
 }

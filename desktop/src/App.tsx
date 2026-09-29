@@ -343,12 +343,13 @@ export default function App() {
   const enterpriseWorkspaceScope = enterpriseSession?.status === 'signed-in'
     ? `${enterpriseSession.organization?.id ?? ''}:${enterpriseSession.user?.weaveUserId ?? enterpriseSession.user?.id ?? ''}`
     : undefined
-  const { meta, initialized, refreshHarnesses } = useBootstrap({
+  const { meta, initialized, catalogReady, refreshHarnesses } = useBootstrap({
     bridge, ready: settingsState.initialized, harness: activeHarness, accountScope: enterpriseWorkspaceScope, setProjects, setSessions, setSchedules, setScheduleError,
     runtimeSessionsRef: workspace.runtimeSessionsRef, workspaceRef: workspace.workspaceRef,
     activateWorkspace: workspace.activateWorkspace, attachRuntime: workspace.attachRuntime,
     sessionHasOpenExtensionUi: extension.hasOpenRequestForSession, onHarnessSwitch, onAccountSwitch, reportError,
   })
+  const workspaceInitialized = initialized && catalogReady
   const platform = meta?.platform ?? detectRendererPlatform()
   const detectedHarnesses = useMemo(
     () => meta ? HARNESS_IDS.filter((harness) => Boolean(meta.harnesses[harness].path)) : [],
@@ -506,7 +507,7 @@ export default function App() {
     createSchedule, updateSchedule, mutateSchedule, manageHeartbeat, openScheduledSession,
     openBrowser, openChanges,
   } = useWorkspaceActions({
-    bridge, initialized, projects, sessions, activeProject,
+    bridge, initialized: workspaceInitialized, projects, sessions, activeProject,
     workspace, settingsState, layout, provider, pluginSkills,
     submissionAdmissionRef, gitRequestRef, demoTimerRef,
     setProjects, setSessions, setGitSnapshot, setView, setPaletteOpen, setToast, setSubmitting,
@@ -956,12 +957,13 @@ export default function App() {
         setBrowserGeneration((value) => value + 1)
       }} onOpenDocs={() => openExternal(HARNESS_PROVIDER_DOCS[activeHarness])} /> : null
 
+  if (enterpriseBridge && enterpriseSession?.status === 'signed-in' && !catalogReady) return <I18nProvider preference={settingsState.settings.locale}><LoadingPanel label="workspace" /></I18nProvider>
   if (enterpriseBridge && enterpriseSession?.status !== 'signed-in') return <I18nProvider preference={settingsState.settings.locale}><Suspense fallback={<LoadingPanel label="account" />}><AccountPage session={enterpriseSession} onSignIn={signIn} /></Suspense></I18nProvider>
 
   const teamEditorVisible = view === 'session' && activeHarness === 'pi' && inspectorVisible && canDevelop && ['team-division', 'team-workflow', 'development'].includes(settingsState.inspectorTab)
-  return <I18nProvider preference={settingsState.settings.locale}><div className={`app-shell${teamEditorVisible ? ' app-shell--team-editor-active' : ''}`} aria-busy={!initialized} data-platform={platform} data-ready={initialized ? 'true' : 'false'}>
-    {sidebarVisible && initialized ? <Sidebar projects={projects} sessions={sessions} clearedAttention={clearedAttention} activeProjectId={activeProject?.id} activeSessionId={workspace.activeSessionId} activeView={view} activeHarness={activeHarness} harnesses={meta?.harnesses ?? null} updateState={appUpdates.state} onUpdateAction={appUpdates.act} onSelectHarness={selectHarness} projectSortMode={settingsState.settings.projectSortMode} {...sidebarActions} overlay={layout.compactLayout} platform={platform} /> : null}
-    {sidebarVisible && initialized ? <button type="button" className="panel-scrim panel-scrim--sidebar" aria-label="Close sidebar" onClick={toggleSidebar} /> : null}
+  return <I18nProvider preference={settingsState.settings.locale}><div className={`app-shell${teamEditorVisible ? ' app-shell--team-editor-active' : ''}`} aria-busy={!workspaceInitialized} data-platform={platform} data-ready={workspaceInitialized ? 'true' : 'false'}>
+    {sidebarVisible && workspaceInitialized ? <Sidebar projects={projects} sessions={sessions} clearedAttention={clearedAttention} activeProjectId={activeProject?.id} activeSessionId={workspace.activeSessionId} activeView={view} activeHarness={activeHarness} harnesses={meta?.harnesses ?? null} updateState={appUpdates.state} onUpdateAction={appUpdates.act} onSelectHarness={selectHarness} projectSortMode={settingsState.settings.projectSortMode} {...sidebarActions} overlay={layout.compactLayout} platform={platform} /> : null}
+    {sidebarVisible && workspaceInitialized ? <button type="button" className="panel-scrim panel-scrim--sidebar" aria-label="Close sidebar" onClick={toggleSidebar} /> : null}
     <div className="workbench" inert={layout.compactLayout && sidebarVisible ? true : undefined}>
       <TitleToolbar project={view === 'session' ? activeProject : undefined} gitBranch={git.branch} view={view} productName={HARNESS_PRODUCT_NAMES[activeHarness]} sidebarOpen={sidebarVisible} inspectorOpen={inspectorVisible} terminalOpen={terminalOpen} voiceOpen={voiceOrbOpen} activeProjectScriptKind={activeProjectScriptKind(activeProjectScriptRun, activeProject?.id)} onRunProjectScript={startProjectScript} onStopProjectScript={stopProjectScript} onSaveProjectScripts={saveProjectScripts} onToggleSidebar={toggleSidebar} onToggleInspector={toggleInspector} onToggleTerminal={toggleTerminal} onToggleVoice={toggleVoice} onOpenBrowser={openBrowser} platform={platform} />
       <div className="workbench__content">{view === 'session' ? <div ref={layout.workspaceRowRef} className="session-workspace" style={{ '--inspector-width': `${layout.inspectorWidth}px`, '--terminal-height': `${layout.terminalHeight}px` } as CSSProperties}>
