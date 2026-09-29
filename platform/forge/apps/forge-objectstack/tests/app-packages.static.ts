@@ -228,9 +228,9 @@ const salesPageNames = new Set(salesPages.map((page) => page.name));
 assert.ok(salesPageNames.has('page_sales_contract_workspace'));
 assert.ok(salesPageNames.has('page_sales_contract_create'));
 const salesContractPage = salesPages.find((page) => page.name === 'page_sales_contract_create');
-assert.ok(salesContractPage?.source?.includes('/actions/forge_sales_contract/contract_submit/'));
+assert.ok(salesContractPage?.source?.includes('/actions/forge_sales_contract/contract_submit_material_package/'));
 assert.ok(rootActions.some(
-  (action) => action.objectName === 'forge_sales_contract' && action.name === 'contract_submit',
+  (action) => action.objectName === 'forge_sales_contract' && action.name === 'contract_submit_material_package',
 ), 'the sales Page must resolve its Action from the canonical forge package');
 
 const salesPermissionSets = values<{
@@ -285,5 +285,5 @@ console.log(JSON.stringify({
     counts[setting.resolution] = (counts[setting.resolution] ?? 0) + 1;
     return counts;
   }, {}),
-  crossPackageAction: 'forge_sales_contract.contract_submit',
+  crossPackageAction: 'forge_sales_contract.contract_submit_material_package',
 }));

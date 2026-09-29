@@ -13,10 +13,13 @@ import { SalesContractApprovalFlow } from '../src/flows/sales-contract-approval.
 import { ApprovalResubmitGuardPlugin } from '../src/plugins/approval-resubmit-guard.plugin.ts';
 import { ApprovalWorkbenchContextPlugin } from '../src/plugins/approval-workbench-context.plugin.ts';
 import { ContractRevisionMaterialPlugin, approvalPayloadVersion } from '../src/plugins/contract-revision-material.ts';
+const platformObjectsPath = '../node_modules/.pnpm/@objectstack+platform-objects@17.3.0/node_modules/@objectstack/platform-objects/dist/index.mjs';
+const { SysAttachment } = await import(platformObjectsPath);
 
 const DATABASE = 'forge_contract_test';
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.FORGE_NATIVE_PG_APPROVAL_PORT || 55439);
+const DB_USER = process.env.FORGE_NATIVE_PG_APPROVAL_USER || 'postgres';
 assert.ok(Number.isInteger(PORT) && PORT > 0 && PORT < 65536, 'FORGE_NATIVE_PG_APPROVAL_PORT must be a valid local PostgreSQL port');
 const SYSTEM = { isSystem: true, positions: [], permissions: [] };
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
@@ -59,6 +62,7 @@ function fixtureObjects() {
       ref_field: Field.text({ label: 'Field' }),
       organization_id: Field.text({ label: 'Organization' }),
     }),
+    SysAttachment,
     simpleObject('sys_automation_run', SysAutomationRun.fields),
     simpleObject('sys_flow_dispatch', SysFlowDispatch.fields),
     SalesContract,
@@ -113,7 +117,7 @@ test('native ObjectStack 17.3 contract revision uses PostgreSQL, preserves the o
   const engine = new ObjectQL();
   const driver = new SqlDriver({
     client: 'pg',
-    connection: { host: HOST, port: PORT, database: DATABASE },
+    connection: { host: HOST, port: PORT, database: DATABASE, user: DB_USER },
   });
   const objects = fixtureObjects();
   for (const object of objects) engine.registerObject(object);

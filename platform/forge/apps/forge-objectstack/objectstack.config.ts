@@ -8,6 +8,7 @@ import { RecordChangeTriggerPlugin } from '@objectstack/trigger-record-change';
 import { ApprovalWorkbenchContextPlugin } from './src/plugins/approval-workbench-context.plugin.js';
 import { ApprovalResubmitGuardPlugin } from './src/plugins/approval-resubmit-guard.plugin.js';
 import { ContractRevisionMaterialPlugin } from './src/plugins/contract-revision-material.js';
+import { ContractMaterialSubmissionPlugin } from './src/plugins/contract-material-submission.plugin.js';
 import { WeaveRunEventPlugin } from './src/plugins/weave-run-event.plugin.js';
 import { WorkbenchOwnedMaterialPlugin } from './src/plugins/workbench-owned-material.plugin.js';
 import { ProjectMemberSharingPlugin } from './src/plugins/project-member-sharing.plugin.js';
@@ -37,6 +38,7 @@ export default defineStack({
     new WorkbenchOwnedMaterialPlugin(),
     new ApprovalWorkbenchContextPlugin(),
     new ContractRevisionMaterialPlugin(),
+    new ContractMaterialSubmissionPlugin(),
     sharedForgeCorePlugin,
     ...forgeApplicationPlugins,
     new ProjectMemberSharingPlugin(),

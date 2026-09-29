@@ -1,6 +1,7 @@
 import { connect } from './api-client.mjs';
 
 const api = await connect(process.env.FORGE_URL || 'http://localhost:3001');
+const forgeOrigin = new URL(process.env.FORGE_URL || 'http://localhost:3001').origin;
 const projectCode = process.env.PROJECT_CODE || 'PRJ-2026-002';
 
 async function list(object) {
@@ -28,6 +29,24 @@ async function invoke(object, action, id, params = {}) {
   return response.value.result || response.value.data?.result || response.value.data || response.value;
 }
 
+async function uploadContractPdf() {
+  const filename = '合同转换对照正文.pdf';
+  const bytes = Buffer.from('%PDF-1.7\nForge project comparison contract');
+  const pending = await api.request('/storage/upload/presigned', 'POST', {
+    filename, mimeType: 'application/pdf', size: bytes.length, scope: 'attachments',
+  });
+  if (pending.status < 200 || pending.status >= 300) throw new Error(`合同正文上传授权失败：${JSON.stringify(pending.value)}`);
+  const descriptor = pending.value?.data || pending.value;
+  const uploaded = await fetch(new URL(descriptor.uploadUrl, forgeOrigin), {
+    method: descriptor.method || 'PUT', headers: descriptor.headers || {}, body: bytes,
+  });
+  if (!uploaded.ok) throw new Error(`合同正文上传失败：HTTP ${uploaded.status}`);
+  const complete = await api.request('/storage/upload/complete', 'POST', { fileId: descriptor.fileId });
+  if (complete.status < 200 || complete.status >= 300) throw new Error(`合同正文提交失败：${JSON.stringify(complete.value)}`);
+  const result = complete.value?.data || complete.value;
+  return result.fileId || descriptor.fileId;
+}
+
 const project = await one('forge_project', { code: projectCode });
 if (!project) throw new Error(`未找到项目 ${projectCode}`);
 const userId = project.manager_id;
@@ -41,11 +60,14 @@ if (!contract) {
   const contractId = await create('forge_sales_contract', {
     name: '800型柔性线控制柜设备销售框架合同', code: contractCode, contract_type_id: contractType.id,
     customer_id: project.customer_id, project_name: project.name, signed_on: '2026-09-09', starts_on: '2026-09-09', ends_on: '2026-12-31',
-    responsible_id: userId, total_amount: 243200, revenue_trigger: 'shipment', payment_term: '验收后30天', delivery_cycle_days: 90, warranty_months: 12,
+    responsible_id: api.userId, total_amount: 243200, revenue_trigger: 'shipment', payment_term: '验收后30天', delivery_cycle_days: 90, warranty_months: 12,
   });
   contract = { id: contractId, code: contractCode };
   const lineId = await create('forge_sales_contract_line', { name: '800型柔性线控制柜', contract_id: contractId, sku_id: sku.id, item_code: sku.code || 'CAB-800', model: 'CAB-800', specification: '项目定制', unit_name: '台', quantity_limit: 2, ordered_quantity: 0, taxed_unit_price: 121600, tax_rate: 13, discount_rate: 0, taxed_subtotal: 243200 });
-  await invoke('forge_sales_contract', 'contract_submit', contractId);
+  const primaryFileId = await uploadContractPdf();
+  await invoke('forge_sales_contract', 'contract_submit_material_package', contractId, {
+    primary_file_id: primaryFileId, material_file_ids: [primaryFileId],
+  });
   await invoke('forge_sales_contract', 'contract_approve', contractId);
   const orderId = await create('forge_sales_order', { name: '800型柔性线控制柜项目订单', code: 'SO-OEM-20260909-001', source_type: 'contract', customer_id: project.customer_id, contract_id: contractId, project_name: project.name, planned_delivery_on: '2026-12-20', responsible_id: userId, payment_term: '验收后30天', payment_method: 'bank_transfer', revenue_trigger: 'manual', total_amount: 243200, delivery_address: '项目现场', delivery_contact: '项目联系人' });
   await create('forge_sales_order_line', { name: '800型柔性线控制柜', order_id: orderId, contract_line_id: lineId, sku_id: sku.id, item_code: sku.code || 'CAB-800', model: 'CAB-800', specification: '项目定制', unit_name: '台', quantity: 2, shipped_quantity: 0, invoiced_quantity: 0, taxed_unit_price: 121600, untaxed_unit_price: 107610.62, tax_rate: 13, discount_rate: 0, taxed_subtotal: 243200, planned_delivery_on: '2026-12-20' });

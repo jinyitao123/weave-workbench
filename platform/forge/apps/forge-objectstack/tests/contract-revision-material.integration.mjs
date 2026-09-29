@@ -34,6 +34,7 @@ async function harness() {
   ]);
   for (const file of files.values()) file.size = file.bytes.length;
   const ledger = new Map();
+  const nativeAttachments = [];
   const actions = [{ id: 'return-action-A', action: 'revise', comment: '请修改验收条款' }];
   const relatedRequests = [request];
   const contract = { id: contractId, status: 'pending_approval', code: 'HT-A', submitted_material_id: 'old-file' };
@@ -70,6 +71,10 @@ async function harness() {
         if (query.where.approval_request_id) return ledger.get(query.where.approval_request_id) ?? null;
         if (query.where.idempotency_key) return [...ledger.values()].find((row) => row.idempotency_key === query.where.idempotency_key) ?? null;
       }
+      if (name === 'sys_attachment') {
+        return nativeAttachments.find((row) => row.parent_object === query.where.parent_object &&
+          row.parent_id === query.where.parent_id && row.file_id === query.where.file_id) ?? null;
+      }
       return null;
     },
     async transaction(callback, _context, options) {
@@ -77,6 +82,10 @@ async function harness() {
       return callback({ isSystem: true }, { owned: true });
     },
     async insert(name, row) {
+      if (name === 'sys_attachment') {
+        nativeAttachments.push(structuredClone(row));
+        return row;
+      }
       assert.equal(name, 'forge_sales_contract_revision_material');
       if (ledger.has(row.approval_request_id)) throw new Error('unique approval key');
       ledger.set(row.approval_request_id, structuredClone(row));
