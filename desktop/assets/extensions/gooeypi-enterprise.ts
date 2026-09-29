@@ -206,31 +206,16 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
     async execute(_id, params) { return result(await turnCall('submit', params)) },
   })
   pi.registerTool<{ recovery_key: string }>({
-    name: 'gooeypi_enterprise_work_inspect_recovery',
-    label: '查看原冻结交接',
-    description: '只读展示原冻结交接的目标、材料摘要和动作范围，并为当前员工轮次生成临时恢复凭据；不会上传材料或登记工作。',
-    promptGuidelines: [
-      '只有员工当前要求核对同一条冻结交接时才调用；recovery_key 必须来自该原交接的结果。此工具只检查，不代表员工已经同意恢复。',
-      '检查结果会准确列出原目标、团队、流程、材料和业务动作范围。根据员工当前完整消息判断是否明确同意继续这一相同范围；不得按“继续”“恢复”等关键词单独判断。',
-      '若员工取消、要求修改范围、只询问状态或态度含糊，不得调用恢复工具。若动作范围非空，员工必须在本轮明确同意相同业务动作；只同意只读核对不能授权额外动作。',
-      '材料摘要来自本机原冻结包；继续时无需重新选择、读取或上传这些材料。不能创建另一份工作来绕过未知结果。',
-    ],
-    parameters: Type.Object({ recovery_key: Type.String({ minLength: 64, maxLength: 64, description: '原交接结果中的恢复凭据' }) }),
-    async execute(_id, params) { return result(await turnCall('inspect_recovery', params)) },
-  })
-  pi.registerTool<{ recovery_key?: string; resume_key?: string }>({
     name: 'gooeypi_enterprise_work_recover',
     label: '核对原交接',
-    description: '按原交接凭据继续同一冻结工作。原员工轮次可使用 recovery_key；新员工轮次必须先检查原冻结范围，再用检查结果中的 resume_key。不会读取新文件、创建新的请求编号或另登记工作。',
+    description: '按原交接结果中的内部恢复凭据核对或继续同一冻结工作。员工明确说“核对刚才那次交接”即可调用；不会重新读取文件或另登记工作。',
     promptGuidelines: [
-      '原员工轮次只能使用 recovery_key，且须与原提交消息对应；新员工轮次只能使用当前轮次检查工具返回的 resume_key，不能直接重放旧 recovery_key。',
-      '只有员工当前明确同意继续检查结果中显示的同一目标、材料及业务动作范围时才调用。员工取消、更新要求或材料、只询问状态、态度含糊时不得调用。动作范围非空时必须明确同意相同业务动作。',
-      '恢复会重用已冻结材料、资源引用和幂等标识；不得重新选择、读取或上传文件。unknown 表示接单结果仍待核对；恢复结果仍未知时不能改用提交工具创建另一份工作。团队已接单后不要调用本工具轮询处理结果。',
+      'recovery_key 只从原交接结果读取，属于工具内部的请求关联值；绝不向员工展示、朗读或要求员工复制。员工重新登录后，如其当前消息明确要求核对或继续同一冻结交接（例如“核对刚才那次交接”），可直接使用原 recovery_key；结合完整消息判断，不按单个关键词触发。',
+      '员工取消交接、改变目标或材料时，不得继续旧请求。原业务动作范围保持冻结，不得扩展或修改；Forge 会重新校验当前权限，不需要员工再次确认技术凭据或逐项复述原动作。',
+      'Host 会核对原员工授权消息仍存在且内容未变，并验证账号、会话和当前轮次。恢复复用冻结材料、已保存资源引用和原幂等标识；不要求重新附加、读取或上传文件。',
+      'unknown 表示原接单结果仍待核对，不能改用提交工具另建工作来绕过。已经接单后，不调用本工具查询运行进度；请从新工作消息核对进展。',
     ],
-    parameters: Type.Object({
-      recovery_key: Type.Optional(Type.String({ minLength: 64, maxLength: 64, description: '只用于原员工轮次的原提交恢复凭据' })),
-      resume_key: Type.Optional(Type.String({ minLength: 32, maxLength: 64, description: '新员工轮次检查原冻结范围后返回、仅绑定本轮的恢复凭据' })),
-    }),
+    parameters: Type.Object({ recovery_key: Type.String({ minLength: 64, maxLength: 64, description: '原交接结果中的内部恢复凭据，不由员工提供' }) }),
     async execute(_id, params) { return result(await turnCall('recover', params)) },
   })
   pi.registerTool<{ employee_request: string; body: string; materials: Array<{ path: string; sha256: string }> }>({
