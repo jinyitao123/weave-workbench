@@ -125,6 +125,7 @@ it('saves a controlled draft, reconciles an uncertain write, runs an idempotent 
           completeness: { stages: 'partial', member_inputs: 'partial', member_outputs: 'partial', member_tool_activity: 'complete', deliverables: 'complete' },
           members: [{ name: '审核员', status: 'finished', stages: [{
             name: '费用核对', status: 'completed', inputs: [{ source: 'run_input', summary: '输入摘要' }],
+            outputs: [{ kind: 'result', content: '逐项核对完成', content_type: 'text/markdown', content_bytes: 21, truncated: false }],
             tools: [{ name: '计算工具', status: 'tool_completed', input: '{"amount":10}', output: '{"total":10}' }],
           }] }],
           outputs: [{ id: 'private-deliverable-id', node_id: worker.id, title: '核对结论', content: '金额一致' }],
@@ -173,6 +174,8 @@ it('saves a controlled draft, reconciles an uncertain write, runs an idempotent 
   const text = JSON.stringify(status.result)
   expect(text).toContain('固定输入')
   expect(text).toContain('输入摘要')
+  expect(text).toContain('逐项核对完成')
+  expect(text).toContain('Weave 实际保存的该步骤输出')
   expect(text).toContain('actual_input')
   expect(text).toContain('金额一致')
   expect(text).toContain('活动记录不完整')

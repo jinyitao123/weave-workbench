@@ -39,6 +39,7 @@ interface DevelopmentActivity {
     name?: string; status?: string
     stages?: Array<{
       name?: string; status?: string; inputs?: Array<{ source?: string; summary?: string }>
+      outputs?: Array<{ kind?: string; path?: string; content?: string; content_type?: string; content_bytes?: number; truncated?: boolean }>
       tools?: Array<{ name?: string; status?: string; input?: string; output?: string }>
       failure_reason?: string
     }>
@@ -472,6 +473,14 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
           source: item.source === 'run_input' ? '本次试跑输入' : item.source === 'node_output' ? '前序步骤输出' : '其他来源',
           ...(item.summary ? { summary: item.summary } : {}),
           evidence: 'Weave 记录的输入摘要；不是完整原始步骤输入。',
+        })),
+        outputs: (stage.outputs ?? []).map((item) => ({
+          kind: item.kind === 'artifact' ? '步骤文件' : '步骤结果',
+          ...(item.path ? { name: item.path } : {}),
+          content: item.content ?? '',
+          ...(item.content_bytes !== undefined ? { original_bytes: item.content_bytes } : {}),
+          truncated: item.truncated === true,
+          evidence: item.truncated ? 'Weave 仅保留了该步骤输出的截断内容，不能视为完整原文。' : 'Weave 实际保存的该步骤输出。',
         })),
         tools: (stage.tools ?? []).map((tool) => ({
           name: tool.name ?? '工具调用', status: messageStatus(tool.status),
