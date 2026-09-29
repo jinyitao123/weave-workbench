@@ -12,6 +12,10 @@ const MAX_TOTAL_BYTES = 8 * 1024 * 1024;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SHA256 = /^[0-9a-f]{64}$/;
 const TEXT_MEDIA_TYPES = new Set(['text/plain', 'text/plain; charset=utf-8']);
+const OFFICE_MEDIA_TYPES = new Set([
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
 const SYSTEM_CONTEXT: ExecutionContext = { isSystem: true, positions: [], permissions: [] };
 export const CONTRACT_REVISION_MATERIAL_SERVICE = 'forge.contract.revision.material';
 const REVISION_ROUTE = '/api/v1/approvals/requests/:requestId/workbench-revision';
@@ -21,6 +25,8 @@ export interface RevisionFileReference {
   fileId: string;
   name: string;
   sha256: string;
+  mediaType?: string;
+  bytes?: number;
 }
 
 export interface ContractRevisionMaterialInput {
@@ -109,6 +115,26 @@ function text(value: unknown, max: number): string | undefined {
   return result && result.length <= max && !result.includes('\0') ? result : undefined;
 }
 
+function normalizedMediaType(value: string): string {
+  const mediaType = value.trim().toLowerCase();
+  if (TEXT_MEDIA_TYPES.has(mediaType)) return 'text/plain; charset=utf-8';
+  if (OFFICE_MEDIA_TYPES.has(mediaType)) return mediaType;
+  throw new Error('REVISION_MATERIAL_UNSUPPORTED_TYPE: material MIME type is not supported');
+}
+
+function hasOriginalSignature(bytes: Uint8Array, mediaType: string, name: string): boolean {
+  const lowerName = name.toLowerCase();
+  if (mediaType === 'application/pdf') {
+    return lowerName.endsWith('.pdf') && bytes.byteLength >= 5 &&
+      String.fromCharCode(...bytes.subarray(0, 5)) === '%PDF-';
+  }
+  if (mediaType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    return lowerName.endsWith('.docx') && bytes.byteLength >= 4 &&
+      bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04;
+  }
+  return false;
+}
+
 function requestHeaders(headers: IHttpRequest['headers']): Headers {
   const result = new Headers();
   for (const [name, value] of Object.entries(headers ?? {})) {
@@ -143,7 +169,7 @@ export async function approvalPayloadVersion(value: unknown): Promise<string> {
   return digest(canonicalJson(value));
 }
 
-function parseFile(value: unknown): RevisionFileReference {
+function parseFile(value: unknown, options: { allowLegacyStoredBytesOnly?: boolean } = {}): RevisionFileReference {
   const input = record(value);
   const fileId = text(input?.fileId, 128);
   const name = text(input?.name, 255);
@@ -151,7 +177,28 @@ function parseFile(value: unknown): RevisionFileReference {
   if (!fileId || !isFileIdToken(fileId) || !name || !sha256 || !SHA256.test(sha256)) {
     throw new Error('REVISION_MATERIAL_INVALID: a file reference is incomplete');
   }
-  return { fileId, name, sha256 };
+  const hasMediaType = input && Object.hasOwn(input, 'mediaType');
+  const hasBytes = input && Object.hasOwn(input, 'bytes');
+  if (hasMediaType !== hasBytes && !(options.allowLegacyStoredBytesOnly && !hasMediaType && hasBytes)) {
+    throw new Error('REVISION_MATERIAL_INVALID: mediaType and bytes must be supplied together');
+  }
+  if (!hasMediaType && !hasBytes) return { fileId, name, sha256 };
+  const mediaType = hasMediaType ? normalizedMediaType(text(input?.mediaType, 128) ?? '') : undefined;
+  const byteCount = input?.bytes;
+  if (hasBytes && (!Number.isSafeInteger(byteCount) || Number(byteCount) < 0)) {
+    throw new Error('REVISION_MATERIAL_INVALID: material byte count is invalid');
+  }
+  if (hasBytes && Number(byteCount) > MAX_FILE_BYTES) {
+    throw new Error('REVISION_MATERIAL_TOO_LARGE: a material exceeds the per-file limit');
+  }
+  if (mediaType && OFFICE_MEDIA_TYPES.has(mediaType) && hasBytes && Number(byteCount) < 1) {
+    throw new Error('REVISION_MATERIAL_INVALID: an Office original cannot be empty');
+  }
+  return {
+    fileId, name, sha256,
+    ...(mediaType ? { mediaType } : {}),
+    ...(hasBytes ? { bytes: Number(byteCount) } : {}),
+  };
 }
 
 export function parseContractRevisionMaterialInput(value: unknown): ContractRevisionMaterialInput {
@@ -165,7 +212,7 @@ export function parseContractRevisionMaterialInput(value: unknown): ContractRevi
     throw new Error('REVISION_MATERIAL_INVALID: revision identity or attachments are invalid');
   }
   const primary = parseFile(input.primary);
-  const attachments = input.attachments.map(parseFile);
+  const attachments = input.attachments.map((file) => parseFile(file));
   const ids = [primary, ...attachments].map((file) => file.fileId);
   if (new Set(ids).size !== ids.length) throw new Error('REVISION_MATERIAL_INVALID: duplicate file reference');
   return { requestId, returnVersion, sourceMaterialVersion, idempotencyKey, primary, attachments };
@@ -173,11 +220,12 @@ export function parseContractRevisionMaterialInput(value: unknown): ContractRevi
 
 async function verifyFiles(
   engine: IObjectQLEngine, storage: IStorageService, actorId: string, contractId: string,
+  organizationId: string | undefined,
   files: RevisionFileReference[],
 ): Promise<VerifiedFile[]> {
   const rows = await engine.find('sys_file', {
     where: { id: { $in: files.map((file) => file.fileId) } },
-    fields: ['id', 'key', 'name', 'mime_type', 'size', 'status', 'owner_id', 'ref_object', 'ref_id'],
+    fields: ['id', 'key', 'name', 'mime_type', 'size', 'status', 'scope', 'acl', 'owner_id', 'organization_id', 'ref_object', 'ref_id'],
     limit: files.length,
   }, { context: SYSTEM_CONTEXT });
   const byId = new Map((rows ?? []).map((row) => [String(row.id), row]));
@@ -186,21 +234,48 @@ async function verifyFiles(
   for (const expected of files) {
     const file = byId.get(expected.fileId);
     const hasReference = file && (file.ref_object != null || file.ref_id != null);
+    if (file && Number.isInteger(file.size) && file.size > MAX_FILE_BYTES) {
+      throw new Error('REVISION_MATERIAL_TOO_LARGE: a material exceeds the per-file limit');
+    }
     if (!file || file.status !== 'committed' || file.owner_id !== actorId ||
-      file.name !== expected.name || !TEXT_MEDIA_TYPES.has(String(file.mime_type)) ||
+      file.name !== expected.name ||
       typeof file.key !== 'string' || !Number.isInteger(file.size) || file.size < 0 || file.size > MAX_FILE_BYTES ||
+      (file.organization_id != null && organizationId && file.organization_id !== organizationId) ||
       hasReference && (file.ref_object !== CONTRACT_OBJECT || String(file.ref_id ?? '') !== contractId)) {
       throw new Error('REVISION_MATERIAL_UNAVAILABLE: a file is unavailable to this employee and contract');
+    }
+    const storedMediaType = normalizedMediaType(String(file.mime_type ?? ''));
+    if (!expected.mediaType && OFFICE_MEDIA_TYPES.has(storedMediaType)) {
+      throw new Error('REVISION_MATERIAL_INVALID: Office originals require explicit MIME and byte metadata');
+    }
+    if (expected.mediaType && normalizedMediaType(expected.mediaType) !== storedMediaType) {
+      throw new Error('REVISION_MATERIAL_MISMATCH: declared MIME type differs from the stored file');
+    }
+    if (OFFICE_MEDIA_TYPES.has(storedMediaType) &&
+      (!organizationId || file.organization_id !== organizationId || file.scope !== 'attachments' || file.acl !== 'private')) {
+      throw new Error('REVISION_MATERIAL_UNAVAILABLE: an Office original must belong to the approval organization');
+    }
+    if (expected.bytes !== undefined && expected.bytes !== file.size) {
+      throw new Error('REVISION_MATERIAL_MISMATCH: declared byte count differs from the stored file');
     }
     const bytes = await storage.download(file.key);
     if (bytes.length !== file.size || bytes.length > MAX_FILE_BYTES || await digest(bytes) !== expected.sha256) {
       throw new Error('REVISION_MATERIAL_MISMATCH: file bytes differ from the frozen material');
     }
-    try { new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
-    catch { throw new Error('REVISION_MATERIAL_INVALID: text file is not valid UTF-8'); }
+    if (OFFICE_MEDIA_TYPES.has(storedMediaType)) {
+      if (!hasOriginalSignature(bytes, storedMediaType, expected.name)) {
+        throw new Error('REVISION_MATERIAL_INVALID: Office original signature or file extension is invalid');
+      }
+    } else {
+      try { new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
+      catch { throw new Error('REVISION_MATERIAL_INVALID: text file is not valid UTF-8'); }
+    }
     total += bytes.length;
     if (total > MAX_TOTAL_BYTES) throw new Error('REVISION_MATERIAL_TOO_LARGE: material bundle exceeds the limit');
-    verified.push({ ...expected, bytes: bytes.length });
+    verified.push({
+      fileId: expected.fileId, name: expected.name, sha256: expected.sha256, bytes: bytes.length,
+      ...(expected.mediaType ? { mediaType: storedMediaType } : {}),
+    });
   }
   return verified;
 }
@@ -238,11 +313,21 @@ export class ContractRevisionMaterialService {
           row.submitted_by !== actorId || row.return_version !== materialBinding.returnVersion ||
           row.source_material_version !== materialBinding.sourceMaterialVersion ||
           row.new_version_digest !== materialBinding.newVersionDigest || row.idempotency_key !== idempotencyKey) return false;
-      const primary = parseFile({ fileId: row.primary_file_id, name: row.primary_name, sha256: row.primary_sha256 });
+      const primaryInput: JsonRecord = { fileId: row.primary_file_id, name: row.primary_name, sha256: row.primary_sha256 };
+      if (text(row.primary_media_type, 128)) {
+        primaryInput.mediaType = row.primary_media_type;
+        primaryInput.bytes = row.primary_bytes;
+      }
+      const primary = parseFile(primaryInput);
       const rawAttachments: unknown = JSON.parse(String(row.attachment_manifest ?? ''));
       if (!Array.isArray(rawAttachments) || rawAttachments.length > 10) return false;
-      const attachments = rawAttachments.map(parseFile);
-      const verified = await verifyFiles(this.engine, this.storage, actorId, request.record_id, [primary, ...attachments]);
+      const attachments = rawAttachments.map((file) => parseFile(file, { allowLegacyStoredBytesOnly: true }));
+      const requestOrganizationId = text(request.organization_id, 128);
+      const sessionOrganizationId = text(context.tenantId, 128);
+      if (requestOrganizationId && sessionOrganizationId && requestOrganizationId !== sessionOrganizationId) return false;
+      if (!requestOrganizationId && [primary, ...attachments].some((file) => file.mediaType && OFFICE_MEDIA_TYPES.has(file.mediaType))) return false;
+      const verified = await verifyFiles(this.engine, this.storage, actorId, request.record_id,
+        requestOrganizationId ?? sessionOrganizationId, [primary, ...attachments]);
       const [verifiedPrimary, ...verifiedAttachments] = verified;
       return await digest(canonicalJson({ primary: verifiedPrimary, attachments: verifiedAttachments })) === materialBinding.newVersionDigest;
     } catch {
@@ -303,6 +388,15 @@ export class ContractRevisionMaterialService {
         request.submitter_id !== actorId || request.object_name !== CONTRACT_OBJECT || !request.record_id || !record(request.payload)) {
       throw new Error('REVISION_NOT_AVAILABLE: returned approval is not assigned to this employee');
     }
+    const requestOrganizationId = text(request.organization_id, 128);
+    const sessionOrganizationId = text(context.tenantId, 128);
+    if (requestOrganizationId && sessionOrganizationId && requestOrganizationId !== sessionOrganizationId) {
+      throw new Error('REVISION_NOT_AVAILABLE: returned approval belongs to another organization');
+    }
+    if (!requestOrganizationId && [input.primary, ...input.attachments]
+      .some((file) => file.mediaType && OFFICE_MEDIA_TYPES.has(file.mediaType))) {
+      throw new Error('REVISION_MATERIAL_UNAVAILABLE: Office originals require an organization-scoped approval');
+    }
     const actions = await this.approvals.listActions(input.requestId, context);
     const latestReturn = [...actions].reverse().find((action) => action.action === 'revise');
     if (!latestReturn || latestReturn.id !== input.returnVersion ||
@@ -312,6 +406,7 @@ export class ContractRevisionMaterialService {
     const current = await this.engine.findOne(CONTRACT_OBJECT, { where: { id: request.record_id } }, { context: SYSTEM_CONTEXT });
     if (!current || current.status !== 'pending_approval') throw new Error('REVISION_STALE: contract state has changed');
     const [primary, ...attachments] = await verifyFiles(this.engine, this.storage, actorId, request.record_id,
+      requestOrganizationId ?? sessionOrganizationId,
       [input.primary, ...input.attachments]);
     const manifest = { primary, attachments };
     const newVersionDigest = await digest(canonicalJson(manifest));
@@ -332,7 +427,7 @@ export class ContractRevisionMaterialService {
     };
 
     try {
-      const organizationId = text(context.tenantId, 128) ?? text(request.organization_id, 128);
+      const organizationId = requestOrganizationId ?? sessionOrganizationId;
       return await this.engine.transaction(async (transactionContext) => {
         const scoped = { context: transactionContext };
         const approval = await this.engine.findOne('sys_approval_request', { where: { id: input.requestId } }, scoped);
@@ -356,6 +451,7 @@ export class ContractRevisionMaterialService {
           return_version: input.returnVersion, source_material_version: input.sourceMaterialVersion,
           new_version_digest: newVersionDigest, idempotency_key: input.idempotencyKey,
           primary_file_id: primary.fileId, primary_name: primary.name, primary_sha256: primary.sha256,
+          primary_media_type: primary.mediaType ?? null, primary_bytes: primary.mediaType ? primary.bytes : null,
           attachment_manifest: JSON.stringify(attachments), submitted_by: actorId, submitted_at: savedAt,
         }, scoped);
         await this.engine.update(CONTRACT_OBJECT, {
@@ -462,6 +558,8 @@ export class ContractRevisionMaterialPlugin implements Plugin {
           if (message.startsWith('REVISION_CONFLICT')) return respond(res, 409, 'REVISION_CONFLICT', 'Another material version is bound to this return.');
           if (message.startsWith('REVISION_STALE')) return respond(res, 409, 'REVISION_STALE', 'The returned approval has changed.');
           if (message.startsWith('REVISION_NOT_AVAILABLE')) return respond(res, 404, 'REVISION_NOT_AVAILABLE', 'This return is not available.');
+          if (message.startsWith('REVISION_MATERIAL_TOO_LARGE')) return respond(res, 413, 'REVISION_MATERIAL_TOO_LARGE', 'The revision material exceeds the size limit.');
+          if (message.startsWith('REVISION_MATERIAL_UNSUPPORTED_TYPE')) return respond(res, 415, 'REVISION_MATERIAL_UNSUPPORTED_TYPE', 'The revision material type is not supported.');
           if (message.startsWith('REVISION_MATERIAL_')) return respond(res, 422, 'REVISION_MATERIAL_INVALID', 'The material could not be verified.');
           ctx.logger.error('[contract-revision] material preparation failed');
           return respond(res, 503, 'REVISION_UNAVAILABLE', 'Revision preparation is unavailable.');

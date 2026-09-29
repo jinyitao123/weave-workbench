@@ -161,6 +161,8 @@ export const SalesContractRevisionMaterial = ObjectSchema.create({
     primary_file_id: Field.text({ label: '新主件引用', ...required, maxLength: 128 }),
     primary_name: Field.text({ label: '新主件名称', ...required, maxLength: 255 }),
     primary_sha256: Field.text({ label: '新主件摘要', ...required, maxLength: 64 }),
+    primary_media_type: Field.text({ label: '新主件媒体类型', maxLength: 128 }),
+    primary_bytes: Field.number({ label: '新主件字节数', min: 0, scale: 0 }),
     attachment_manifest: Field.textarea({ label: '新附件清单', ...required }),
     submitted_by: Field.user({ label: '修订员工', ...required }),
     submitted_at: Field.datetime({ label: '固定时间', ...required }),
