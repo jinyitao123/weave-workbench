@@ -205,16 +205,18 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
     try { await workspace.reconcileRuntime(generation) }
     catch (error) { if (workspace.workspaceRef.current.generation === generation) reportError(error) }
   }
-  const newSession = (requestedProject?: ProjectRecord) => {
+  const newSession = (requestedProject?: ProjectRecord, options: { preserveComposerDraft?: boolean } = {}): boolean => {
     const { bridge, initialized, layout, settingsState, activeProject, workspace, setView, setPaletteOpen } = getDeps()
-    if (!initialized) return
+    if (!initialized) return false
     const project = newSessionProject(requestedProject, workspace.workspaceRef.current.project, activeProject)
-    if (!project) return
+    if (!project) return false
     if (layout.compactLayout) { layout.setSmallestSidebarAllowed(false); settingsState.setSidebarOpen(false) }
-    clearComposerDraft(`${project.id}:new`)
-    workspace.activateWorkspace(project)
+    if (!options.preserveComposerDraft) clearComposerDraft(`${project.id}:new`)
+    const generation = workspace.activateWorkspace(project)
     if (!bridge) workspace.setMessages([])
     setView('session'); setPaletteOpen(false)
+    const current = workspace.workspaceRef.current
+    return current.generation === generation && current.project?.id === project.id && !current.session && !current.sessionFile
   }
   const navigate = (nextView: WorkspaceView) => {
     const { layout, settingsState, setView, setPaletteOpen } = getDeps()
@@ -288,6 +290,7 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
     returnedApprovalContextHandle?: string,
     textAttachments: WorkspaceMaterialReference[] = [],
     workContinuationContextHandle?: string,
+    approvalReviewContextHandle?: string,
   ) => {
     const { bridge, sessions, workspace, provider, settingsState, submissionAdmissionRef, demoTimerRef, setSessions, setSubmitting, setView, setToast, reportError } = getDeps()
     const commandHarness = workspace.workspaceRef?.current?.project?.harness ?? settingsState.settings.activeHarness
@@ -383,7 +386,7 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
       let userMessageAppended = false
       const followUpExternalSession = async (sessionFile: string): Promise<boolean> => {
         if (!bridge) return false
-        if (returnedApprovalContextHandle || workContinuationContextHandle) throw new Error('无法把企业工作上下文绑定到桌面以外的运行会话')
+        if (returnedApprovalContextHandle || workContinuationContextHandle || approvalReviewContextHandle) throw new Error('无法把企业工作上下文绑定到桌面以外的运行会话')
         // The daemon owns the message once accepted; queuing it locally as
         // well would deliver it a second time via the idle flush.
         return bridge.sessions.followUp(sessionFile, promptToDeliver, intent)
@@ -395,7 +398,10 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
         if (workContinuationContextHandle && (intent !== 'queue' || images.length > 0 || textAttachments.length > 0 || compactCommand)) {
           throw new Error('团队工作上下文只能绑定到新的桌面工作轮次')
         }
-        if (returnedApprovalContextHandle && workContinuationContextHandle) throw new Error('当前工作提示不能同时绑定两项企业上下文')
+        if (approvalReviewContextHandle && (intent !== 'queue' || images.length > 0 || textAttachments.length > 0 || compactCommand)) {
+          throw new Error('审批辅助上下文只能绑定到新的桌面工作轮次')
+        }
+        if ([returnedApprovalContextHandle, workContinuationContextHandle, approvalReviewContextHandle].filter(Boolean).length > 1) throw new Error('当前工作提示不能同时绑定多项企业上下文')
         if (!admitted.project || !admitted.cwd) { reportError('Add a project before starting a session.'); return }
         // The harness comes from the workspace's own project, never global
         // settings: a prompt landing between a harness switch and the
@@ -553,9 +559,10 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
             message: promptToDeliver,
             streamingBehavior: streamingBehaviorForIntent(intent),
             ...(images.length ? { images } : {}),
-          }, returnedApprovalContextHandle || workContinuationContextHandle ? {
+          }, returnedApprovalContextHandle || workContinuationContextHandle || approvalReviewContextHandle ? {
             ...(returnedApprovalContextHandle ? { returnedApprovalContextHandle } : {}),
             ...(workContinuationContextHandle ? { workContinuationContextHandle } : {}),
+            ...(approvalReviewContextHandle ? { approvalReviewContextHandle } : {}),
           } : undefined)
           completeQueuedFlush()
           if (startedRuntime && startedSessionNeedsTitle) {
