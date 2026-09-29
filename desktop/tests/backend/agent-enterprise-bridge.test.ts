@@ -3,12 +3,13 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AgentEnterpriseBridge } from '../../electron/main/enterprise/agent-bridge'
-import { digest, submissionUUID } from '../../electron/main/enterprise/handoff-store'
+import { digest, HandoffStore, submissionUUID } from '../../electron/main/enterprise/handoff-store'
 import { freezeApprovalOriginalMaterial, freezeMaterials, normalizeFrozenMaterial, type FrozenMaterial } from '../../electron/main/enterprise/materials'
 import type { EnterpriseApprovalContext, TranscriptMessage } from '../../src/types/api'
 import { WorkRegistrationRejectedError, type EnterpriseWorkContinuationContext, type EnterpriseWorkNotificationSource } from '../../electron/main/enterprise'
 import { ForgeBusinessReadError, type BusinessRecordSnapshot } from '../../electron/main/enterprise/business-records'
 import { appendWorkspaceMaterialContext } from '../../src/lib/workspace-material-attachments'
+import { APPROVAL_REVIEW_SESSION_MARKER } from '../../src/lib/approval-review'
 
 const bridges: AgentEnterpriseBridge[] = [], directories: string[] = []
 afterEach(async () => {
@@ -111,15 +112,18 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
       return receipt?.requestId === requestId ? { status: 200, body: { data: receipt } } : { status: 404, body: {} }
     }),
   }
-  const transcript: TranscriptMessage[] = []
-  const sessions = { read: vi.fn(async () => transcript) }
+  let activeTranscript: TranscriptMessage[] = []
+  let sessionPath = '/sessions/current.jsonl'
+  let runtimeId = 'runtime'
+  let sessionSequence = 0
+  const transcripts = new Map<string, TranscriptMessage[]>([[sessionPath, activeTranscript]])
+  const sessions = { read: vi.fn(async (filePath: unknown) => transcripts.get(String(filePath)) ?? []) }
   const storageDirectory = join(cwd, 'secure-intents')
   const bridge = new AgentEnterpriseBridge({
     service, sessions: { prime: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts',
     ...(configureStorage ? { storage: { directory: storageDirectory } } : {}),
   })
   await bridge.start(); bridges.push(bridge)
-  let sessionPath = '/sessions/current.jsonl'
   let environment = bridge.environmentFor({ cwd, sessionPath, harness: 'pi' })
   bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, sessionPath, 'runtime')
   let turnKey = ''
@@ -129,15 +133,28 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
   }
   const call = (method: string, params: Record<string, unknown> = {}) => callWithTurn(method, params)
   const input = async (text: string, id: string) => {
-    await bridge.employeeCommand('runtime', { type: 'prompt', message: text })
-    transcript.push(user(id, text))
+    await bridge.employeeCommand(runtimeId, { type: 'prompt', message: text })
+    activeTranscript.push(user(id, text))
     const active = await call('activate', { prompt: text }); turnKey = active.body.result?.turn_key as string
     return turnKey
+  }
+  const startNewSession = (name: string) => {
+    sessionSequence += 1
+    sessionPath = `/sessions/${name}-${sessionSequence}.jsonl`
+    activeTranscript = []
+    transcripts.set(sessionPath, activeTranscript)
+    runtimeId = `runtime-${name}-${sessionSequence}`
+    environment = bridge.environmentFor({ cwd, harness: 'pi' })
+    bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, sessionPath, runtimeId)
+    turnKey = ''
+    return { path: sessionPath, runtimeId }
   }
   const relogin = async (options: { accountKey?: string; sessionPath?: string } = {}) => {
     bridge.invalidateAccount()
     if (options.accountKey) service.accountKey.mockResolvedValue(options.accountKey)
     sessionPath = options.sessionPath ?? sessionPath
+    activeTranscript = transcripts.get(sessionPath) ?? []
+    transcripts.set(sessionPath, activeTranscript)
     environment = bridge.environmentFor({ cwd, sessionPath, harness: 'pi' })
     bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, sessionPath, 'runtime')
   }
@@ -145,12 +162,23 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
     const context = contexts.get(requestId)
     if (!context?.returnVersion) throw new Error('test fixture has no returned context')
     const binding = await bridge.pinReturnedApprovalContext(requestId)
+    startNewSession(`returned-${requestId}`)
     const text = `打开退回审批 ${requestId}`
-    await bridge.employeeCommand('runtime', { type: 'prompt', message: text }, binding.handle)
-    transcript.push(user(`opened-${requestId}`, text))
+    await bridge.employeeCommand(runtimeId, { type: 'prompt', message: text }, binding.handle)
+    activeTranscript.push(user(`opened-${requestId}`, text))
     const active = await call('activate', { prompt: text })
     turnKey = active.body.result?.turn_key as string
     return { context: binding.context, turnKey }
+  }
+  const openApprovalReview = async (requestId = 'approval-1') => {
+    const binding = await bridge.pinApprovalReviewContext(requestId)
+    startNewSession(`review-${requestId}`)
+    const text = `请只读复核「${binding.context.title}」\n\n${APPROVAL_REVIEW_SESSION_MARKER}`
+    await bridge.employeeCommand(runtimeId, { type: 'prompt', message: text }, undefined, undefined, binding.handle)
+    activeTranscript.push(user(`reviewed-${requestId}`, text))
+    const active = await call('activate', { prompt: text })
+    turnKey = active.body.result?.turn_key as string
+    return { context: binding.context, turnKey, path: sessionPath, runtimeId }
   }
   const discover = async () => {
     const search = await call('search', { work_summary: '复核合同' })
@@ -169,7 +197,7 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
     return { directory, objectRef, found, recordKey }
   }
   await input(appendWorkspaceMaterialContext('这版给他们看看', [materialReference]), 'employee-turn-1')
-  return { call, callWithTurn, input, getTurnKey: () => turnKey, relogin, discover, findRecord, openReturned, service, bridge, environment, materials, cwd, transcript, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, businessCandidate, businessSnapshot }
+  return { call, callWithTurn, input, getTurnKey: () => turnKey, relogin, startNewSession, discover, findRecord, openReturned, openApprovalReview, service, bridge, get environment() { return environment }, get runtimeId() { return runtimeId }, get sessionPath() { return sessionPath }, get transcript() { return activeTranscript }, transcripts, materials, cwd, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, businessCandidate, businessSnapshot, sessions }
 }
 
 async function openNeedsInputContinuation(f: Awaited<ReturnType<typeof fixture>>, context: EnterpriseWorkContinuationContext, id: string) {
@@ -183,7 +211,7 @@ async function openNeedsInputContinuation(f: Awaited<ReturnType<typeof fixture>>
   const source = { workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' }
   const binding = await f.bridge.pinWorkContinuationContext({ id, source: 'weave', ...source })
   const prompt = `继续原工作\n${binding.context.materials.map((item) => `《${item.name}》`).join('、')}`
-  await f.bridge.employeeCommand('runtime', { type: 'prompt', message: prompt }, undefined, binding.handle)
+  await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: prompt }, undefined, binding.handle)
   f.transcript.push(user(`opened-${id}`, prompt))
   const activated = await f.call('activate', { prompt })
   expect(activated.status, JSON.stringify(activated.body)).toBe(200)
@@ -203,7 +231,7 @@ describe('employee-bound material handoff', () => {
     })
     await expect(f.bridge.pinWorkContinuationContext({ ...item, id: 'notice-wrong-kind' })).rejects.toThrow('Forge 工作消息来源与当前通知不匹配')
     const prompt = `继续原工作\n${binding.context.task}`
-    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: prompt }, undefined, binding.handle)
+    await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: prompt }, undefined, binding.handle)
     f.transcript.push(user('continued-work', prompt))
     await expect(f.call('activate', { prompt })).resolves.toMatchObject({ body: { result: { turn_key: expect.any(String) } } })
   })
@@ -245,7 +273,7 @@ describe('employee-bound material handoff', () => {
     const binding = await f.bridge.pinWorkContinuationContext(item)
     expect(f.service.getWorkNotificationSource).not.toHaveBeenCalled()
     const openedPrompt = `继续原团队工作\n${binding.context.task}`
-    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: openedPrompt }, undefined, binding.handle)
+    await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: openedPrompt }, undefined, binding.handle)
     f.transcript.push(user('continued-work-open', openedPrompt))
     const opened = await f.call('activate', { prompt: openedPrompt })
     expect(opened.body.result.turn_key).toBeTypeOf('string')
@@ -303,7 +331,7 @@ describe('employee-bound material handoff', () => {
     const binding = await f.bridge.pinWorkContinuationContext({ id: 'failed-work', source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' })
     const reference = { projectId: 'project-test', harness: 'pi' as const, workspacePath: f.cwd, name: '合同.md', path: '材料/附件/合同.md', sha256: digest(f.content), bytes: Buffer.byteLength(f.content), mimeType: 'text/markdown' as const }
     const openingPrompt = '查看上次失败的团队结果。'
-    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: openingPrompt }, undefined, binding.handle)
+    await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: openingPrompt }, undefined, binding.handle)
     f.transcript.push(user('failed-run-opening', openingPrompt))
     const activated = await f.call('activate', { prompt: openingPrompt })
     expect(activated.status, JSON.stringify(activated.body)).toBe(200)
@@ -365,7 +393,7 @@ describe('employee-bound material handoff', () => {
     const f = await fixture()
     const binding = await f.bridge.pinWorkContinuationContext({ id: 'notice-team-change', source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' })
     const prompt = '继续原合同工作'
-    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: prompt }, undefined, binding.handle)
+    await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: prompt }, undefined, binding.handle)
     f.transcript.push(user('continued-work-team-check', prompt))
     const active = await f.call('activate', { prompt })
     const turnKey = active.body.result.turn_key as string
@@ -391,14 +419,14 @@ describe('employee-bound material handoff', () => {
     statusChanged.run.status = 'running'
     f.service.getWorkContinuationContext.mockResolvedValueOnce(opened).mockResolvedValueOnce(statusChanged)
     const binding = await f.bridge.pinWorkContinuationContext(item)
-    await expect(f.bridge.employeeCommand('runtime', { type: 'prompt', message: '继续原工作' }, undefined, binding.handle)).resolves.toBeUndefined()
+    await expect(f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: '继续原工作' }, undefined, binding.handle)).resolves.toBeUndefined()
 
     const current = workContinuationContext(), changedResult = workContinuationContext()
     const newerResult = '团队重新核对后的不同结论。'
     changedResult.run.finalResult = { ...changedResult.run.finalResult!, content: newerResult, sha256: digest(newerResult) }
     f.service.getWorkContinuationContext.mockResolvedValueOnce(current).mockResolvedValueOnce(changedResult)
     const resultBinding = await f.bridge.pinWorkContinuationContext(item)
-    await expect(f.bridge.employeeCommand('runtime', { type: 'prompt', message: '按新结果继续' }, undefined, resultBinding.handle)).rejects.toThrow('团队工作或固定材料版本已变化')
+    await expect(f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: '按新结果继续' }, undefined, resultBinding.handle)).rejects.toThrow('团队工作或固定材料版本已变化')
   })
 
   it('invalidates a continuation if Weave action facts change after they were pinned', async () => {
@@ -409,7 +437,7 @@ describe('employee-bound material handoff', () => {
     changed.run.actionOutcomes = [{ nodeID: 'review', callID: 'call-1', actionName: 'submit_contract', objectName: 'sales_contract', status: 'unknown', summary: '结果未知。' }]
     f.service.getWorkContinuationContext.mockResolvedValueOnce(pinned).mockResolvedValueOnce(changed)
     const binding = await f.bridge.pinWorkContinuationContext(item)
-    await expect(f.bridge.employeeCommand('runtime', { type: 'prompt', message: '继续核实原动作' }, undefined, binding.handle)).rejects.toThrow('团队工作或固定材料版本已变化')
+    await expect(f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: '继续核实原动作' }, undefined, binding.handle)).rejects.toThrow('团队工作或固定材料版本已变化')
   })
 
   it('fails closed when an original Forge file needs the restricted owner-only reader', async () => {
@@ -568,7 +596,7 @@ describe('employee-bound material handoff', () => {
   it('does not treat an old same-text message in a restored session as a new authorization', async () => {
     const f = await fixture()
     const sameText = '这版给他们看看'
-    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: sameText })
+    await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: sameText })
     const activation = await f.call('activate', { prompt: sameText })
     expect(activation.status).toBe(200)
     const turnKey = activation.body.result?.turn_key as string
@@ -930,6 +958,134 @@ describe('employee-bound material handoff', () => {
     expect(await pending).toMatchObject({ status: 409, body: { error: expect.stringContaining('员工轮次') } })
     expect(f.service.submitWork).not.toHaveBeenCalled()
   })
+  it('binds approval review sessions to one employee, request, business record, and current material round', async () => {
+    const f = await fixture()
+    const first = await f.openApprovalReview('approval-1')
+    const second = await f.openApprovalReview('approval-2')
+    expect(second.path).not.toBe(first.path)
+    const saved = await Promise.all((await readdir(f.storageDirectory)).map(async (file) => {
+      const record = JSON.parse(await readFile(join(f.storageDirectory, file), 'utf8')) as { value: Record<string, unknown> }
+      return record.value
+    }))
+    expect(saved).toEqual(expect.arrayContaining([
+      expect.objectContaining({ purpose: 'review', accountKey: 'employee-a', requestId: 'approval-1', objectName: 'forge_sales_contract', recordId: 'contract-1' }),
+      expect.objectContaining({ purpose: 'review', accountKey: 'employee-a', requestId: 'approval-2', objectName: 'forge_sales_contract', recordId: 'contract-2' }),
+    ]))
+    expect(first.context.title).toBe('测试合同')
+    expect(second.context.title).toBe('测试合同')
+  })
+  it('keeps review read-only after follow-up and rejects every enterprise action or other-record read', async () => {
+    const f = await fixture()
+    await f.openApprovalReview()
+    await f.input('补充核对本次审批字段里的缺失信息。', 'review-follow-up')
+
+    for (const method of ['submit', 'revision_submit', 'recover', 'search', 'list_business_objects']) {
+      const result = await f.call(method)
+      expect(result.status, `${method} should be rejected`).toBe(409)
+      expect(result.body.error).toMatch(/只读|只能使用已固定的审批快照/)
+    }
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+    expect(f.service.submitApprovalRevision).not.toHaveBeenCalled()
+    expect(f.service.getApprovalRevisionReceipt).not.toHaveBeenCalled()
+    expect(f.service.getBusinessObjectDirectory).not.toHaveBeenCalled()
+  })
+  it('requires reopening review when its source account or current approval round changes', async () => {
+    const f = await fixture()
+    await f.openApprovalReview()
+    f.service.accountKey.mockResolvedValue('employee-b')
+    await expect(f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: '继续核对当前审批' }))
+      .rejects.toThrow('与当前账号或事项不匹配')
+    f.service.accountKey.mockResolvedValue('employee-a')
+
+    const changed = f.contexts.get('approval-1')!
+    f.contexts.set('approval-1', { ...changed, title: '更新后的审批事项', returnVersion: 'revise-2', sourceMaterialVersion: digest('round-2') })
+    await expect(f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: '继续核对当前审批' }))
+      .rejects.toThrow('审批事项或材料快照已变化')
+    const reopened = await f.openApprovalReview('approval-1')
+    expect(reopened.context.title).toBe('更新后的审批事项')
+    expect(f.service.submitApprovalRevision).not.toHaveBeenCalled()
+  })
+  it('restores persisted review mode after runtime restart and fails closed when its binding is missing', async () => {
+    const f = await fixture()
+    const opened = await f.openApprovalReview()
+    const restarted = new AgentEnterpriseBridge({
+      service: f.service,
+      sessions: { prime: f.sessions, pi: f.sessions },
+      extensionPath: '/extensions/enterprise.ts',
+      storage: { directory: f.storageDirectory },
+    })
+    await restarted.start()
+    bridges.push(restarted)
+    let environment = restarted.environmentFor({ cwd: f.cwd, sessionPath: opened.path, harness: 'pi' })
+    restarted.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, opened.path, 'runtime-review-restarted')
+    const resumedPrompt = '继续核对这次审批的已固定材料。'
+    await restarted.employeeCommand('runtime-review-restarted', { type: 'prompt', message: resumedPrompt })
+    const resumed = await fetch(environment.GOOEYPI_ENTERPRISE_URL!, {
+      method: 'POST', headers: { Authorization: `Bearer ${environment.GOOEYPI_ENTERPRISE_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'activate', params: { prompt: resumedPrompt } }),
+    })
+    const resumedBody = await resumed.json() as { result: { turn_key: string } }
+    const blocked = await fetch(environment.GOOEYPI_ENTERPRISE_URL!, {
+      method: 'POST', headers: { Authorization: `Bearer ${environment.GOOEYPI_ENTERPRISE_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'submit', params: { turn_key: resumedBody.result.turn_key } }),
+    })
+    expect(blocked.status).toBe(409)
+    expect((await blocked.json()).error).toContain('只读核对')
+
+    for (const file of await readdir(f.storageDirectory)) await rm(join(f.storageDirectory, file), { force: true })
+    const missingBindingBridge = new AgentEnterpriseBridge({
+      service: f.service,
+      sessions: { prime: f.sessions, pi: f.sessions },
+      extensionPath: '/extensions/enterprise.ts',
+      storage: { directory: f.storageDirectory },
+    })
+    await missingBindingBridge.start()
+    bridges.push(missingBindingBridge)
+    environment = missingBindingBridge.environmentFor({ cwd: f.cwd, sessionPath: opened.path, harness: 'pi' })
+    missingBindingBridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, opened.path, 'runtime-review-missing-binding')
+    await expect(missingBindingBridge.employeeCommand('runtime-review-missing-binding', { type: 'prompt', message: '继续核对' }))
+      .rejects.toThrow('审批辅助会话绑定已丢失')
+  })
+  it('does not let delayed review persistence overwrite a newer account session turn', async () => {
+    const f = await fixture()
+    const binding = await f.bridge.pinApprovalReviewContext('approval-1')
+    const oldSession = f.startNewSession('review-delayed-old')
+    const oldRuntimeId = oldSession.runtimeId
+    const oldPrompt = `请只读复核「${binding.context.title}」\n\n${APPROVAL_REVIEW_SESSION_MARKER}`
+    let releasePersistence!: () => void
+    let reportPersistenceStarted!: () => void
+    const persistenceStarted = new Promise<void>((resolve) => { reportPersistenceStarted = resolve })
+    const persistenceGate = new Promise<void>((resolve) => { releasePersistence = resolve })
+    const originalCheckpoint = HandoffStore.prototype.checkpoint
+    const checkpoint = vi.spyOn(HandoffStore.prototype, 'checkpoint').mockImplementationOnce(async function<T>(this: HandoffStore, key: string, fingerprint: string, value: T) {
+      reportPersistenceStarted()
+      await persistenceGate
+      return originalCheckpoint.call(this, key, fingerprint, value)
+    })
+    const oldOpen = f.bridge.employeeCommand(oldRuntimeId, { type: 'prompt', message: oldPrompt }, undefined, undefined, binding.handle)
+    await persistenceStarted
+    await expect(f.bridge.employeeCommand(oldRuntimeId, { type: 'prompt', message: '覆盖旧审批轮次' }))
+      .rejects.toThrow('审批事项正在新会话中打开')
+
+    f.bridge.invalidateAccount()
+    f.service.accountKey.mockResolvedValue('employee-b')
+    const latest = await f.bridge.pinApprovalReviewContext('approval-2')
+    f.startNewSession('review-delayed-new')
+    const latestPrompt = `请只读复核「${latest.context.title}」\n\n${APPROVAL_REVIEW_SESSION_MARKER}`
+    await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: latestPrompt }, undefined, undefined, latest.handle)
+    f.transcript.push(user('latest-review-round', latestPrompt))
+    const activated = await f.call('activate', { prompt: latestPrompt })
+    const latestTurnKey = activated.body.result.turn_key as string
+
+    releasePersistence()
+    await expect(oldOpen).rejects.toThrow('员工账号或轮次已变化')
+    const stillReadOnly = await f.callWithTurn('submit', {}, latestTurnKey)
+    expect(stillReadOnly.status).toBe(409)
+    expect(stillReadOnly.body.error).toContain('只读核对')
+    expect(checkpoint).toHaveBeenCalledTimes(2)
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+    checkpoint.mockRestore()
+  })
   it('freezes a returned approval revision package for the opened account, request, and employee round', async () => {
     const f = await fixture()
     const opened = await f.openReturned()
@@ -1054,14 +1210,16 @@ describe('employee-bound material handoff', () => {
     const f = await fixture()
     const opened = f.contexts.get('approval-1')!
     const binding = await f.bridge.pinReturnedApprovalContext('approval-1')
+    f.startNewSession('return-version-change')
     f.contexts.set('approval-1', { ...opened, returnVersion: 'revise-2' })
-    await expect(f.bridge.employeeCommand('runtime', { type: 'prompt', message: '打开退回审批 approval-1' }, binding.handle))
+    await expect(f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: '打开退回审批 approval-1' }, binding.handle))
       .rejects.toThrow('退回意见或材料版本已变化')
 
     const other = await fixture()
     const otherBinding = await other.bridge.pinReturnedApprovalContext('approval-1')
+    other.startNewSession('return-account-change')
     other.service.accountKey.mockResolvedValue('employee-b')
-    await expect(other.bridge.employeeCommand('runtime', { type: 'prompt', message: '打开退回审批 approval-1' }, otherBinding.handle))
+    await expect(other.bridge.employeeCommand(other.runtimeId, { type: 'prompt', message: '打开退回审批 approval-1' }, otherBinding.handle))
       .rejects.toThrow('当前账号已变化')
   })
   it('retries an identical frozen revision package without rereading changed local bytes and rejects changed material', async () => {
@@ -1177,12 +1335,9 @@ describe('employee-bound material handoff', () => {
     expect(oldRound.status).toBe(409)
     expect(oldRound.body.error).toContain('员工要求已变化')
 
-    const secondHandle = await f.bridge.pinReturnedApprovalContext('approval-2')
+    await f.openReturned('approval-2')
     const secondPrompt = '打开退回审批 approval-2'
-    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: secondPrompt }, secondHandle.handle)
-    f.transcript.push(user('opened-approval-2', secondPrompt))
-    const active = await f.call('activate', { prompt: secondPrompt })
-    const secondTurnKey = active.body.result.turn_key as string
+    const secondTurnKey = f.getTurnKey()
     const changedApproval = await f.callWithTurn('revision_submit', params, secondTurnKey)
     expect(changedApproval.status).toBe(409)
     expect(changedApproval.body.error).toContain('员工本轮要求已变化')
@@ -1215,7 +1370,7 @@ describe('employee-bound material handoff', () => {
   })
   it('invalidates the old turn before a later employee steer is written to the transcript', async () => {
     const f = await fixture(), params = await f.discover()
-    await f.bridge.employeeCommand('runtime', { type: 'steer', message: '先等等' })
+    await f.bridge.employeeCommand(f.runtimeId, { type: 'steer', message: '先等等' })
     expect((await f.call('submit', params)).status).toBe(409)
     expect(f.service.submitWork).not.toHaveBeenCalled()
   })

@@ -77,6 +77,7 @@ const api: PrimeWorkApi = {
     getWorkOverview: () => invoke('enterprise:get-work-overview'),
     getApprovalContext: (approvalId) => invoke('enterprise:get-approval-context', approvalId),
     pinReturnedApprovalContext: (approvalId) => invoke('enterprise:pin-returned-approval-context', approvalId),
+    pinApprovalReviewContext: (approvalId) => invoke('enterprise:pin-approval-review-context', approvalId),
     pinWorkContinuationContext: (item) => invoke('enterprise:pin-work-continuation-context', item),
     submitWork: (choice, goal) => invoke('enterprise:submit-work', choice, goal),
     completeHumanTask: (task, payload) => invoke('enterprise:complete-human-task', task, payload),

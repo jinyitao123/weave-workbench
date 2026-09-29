@@ -3,7 +3,8 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { EnterpriseWorkPage } from '../../src/pages/EnterpriseWorkPage'
-import type { EnterpriseApprovalContextView, EnterpriseWorkOverview } from '../../src/types/api'
+import { APPROVAL_REVIEW_SESSION_MARKER, openApprovalReviewInPi } from '../../src/lib/approval-review'
+import type { EnterpriseApprovalContextView, EnterpriseWorkOverview, ProjectRecord, SessionRecord } from '../../src/types/api'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -100,5 +101,69 @@ it('lets a reviewer send the verified approval snapshot and files to Pi for read
   const assistButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '让 Pi 协助复核')
   expect(assistButton?.disabled).toBe(false)
   await act(async () => assistButton?.click())
-  expect(assistPi).toHaveBeenCalledWith(overview.tasks[0], context)
+  expect(assistPi).toHaveBeenCalledWith(overview.tasks[0])
+})
+
+it('opens the clicked Forge approval in a fresh renderer session and queues only its pinned snapshot', async () => {
+  const context: EnterpriseApprovalContextView = {
+    title: '本轮审批', step: '交付会签', returnReason: '补充验收范围',
+    fields: [{ label: '版本', value: 'R2' }],
+    files: [{ name: 'R2合同.docx', content: 'R2 原文', verified: true }],
+  }
+  const enterprise = { pinApprovalReviewContext: vi.fn(async () => ({ handle: 'review-context-handle', context })) }
+  const workspaceRef = { current: { project: { id: 'project' } as ProjectRecord, session: undefined as SessionRecord | undefined, sessionFile: undefined as string | undefined } }
+  const queuePrompt = vi.fn()
+  const workspace = { workspaceRef, queuePrompt } as unknown as Parameters<typeof openApprovalReviewInPi>[1]['workspace']
+  const newSession = vi.fn((_project?: ProjectRecord, _options?: { preserveComposerDraft?: boolean }) => true)
+  const setToast = vi.fn()
+  const onAssist = vi.fn((task) => openApprovalReviewInPi(task, { enterprise, newSession, workspace, setToast }))
+  const inspect = vi.fn(async () => context)
+
+  await act(async () => root.render(<EnterpriseWorkPage
+    overview={{ ...overview, items: [], reads: { ...overview.reads, weaveTasks: { status: 'loaded' }, notifications: { status: 'loaded' } } }}
+    loading={false} error="" onRefresh={refresh}
+    onComplete={vi.fn(async () => undefined)} onInspect={inspect} onAssist={onAssist} onContinue={continueWork}
+  />))
+  const viewMaterials = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '查看材料')
+  await act(async () => viewMaterials?.click())
+  const assistButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '让 Pi 协助复核')
+  await act(async () => assistButton?.click())
+
+  expect(enterprise.pinApprovalReviewContext).toHaveBeenCalledWith('approval-1')
+  expect(newSession).toHaveBeenCalledWith(undefined, { preserveComposerDraft: true })
+  expect(queuePrompt).toHaveBeenCalledOnce()
+  const [prompt, intent, , , , , contextHandle] = queuePrompt.mock.calls[0] as unknown as [string, string, unknown, unknown, unknown, unknown, string]
+  expect(intent).toBe('queue')
+  expect(contextHandle).toBe('review-context-handle')
+  expect(prompt).toContain('R2 原文')
+  expect(prompt).toContain('历史聊天不作为当前事实')
+  expect(prompt).toContain(APPROVAL_REVIEW_SESSION_MARKER)
+  expect(setToast).toHaveBeenCalledWith('已打开本次审批材料，可继续和 Pi 核对。')
+})
+
+it('keeps the approval on the work page when a fresh renderer session cannot be opened', async () => {
+  const context: EnterpriseApprovalContextView = {
+    title: '本轮审批', step: '交付会签', fields: [],
+    files: [{ name: 'R2合同.docx', content: 'R2 原文', verified: true }],
+  }
+  const enterprise = { pinApprovalReviewContext: vi.fn(async () => ({ handle: 'review-context-handle', context })) }
+  const workspace = {
+    workspaceRef: { current: { project: { id: 'project' } as ProjectRecord, session: undefined as SessionRecord | undefined, sessionFile: undefined as string | undefined } },
+    queuePrompt: vi.fn(),
+  } as unknown as Parameters<typeof openApprovalReviewInPi>[1]['workspace']
+  const newSession = vi.fn(() => false)
+  const onAssist = (task: (typeof overview.tasks)[number]) => openApprovalReviewInPi(task, { enterprise, newSession, workspace, setToast: vi.fn() })
+
+  await act(async () => root.render(<EnterpriseWorkPage
+    overview={{ ...overview, items: [], reads: { ...overview.reads, weaveTasks: { status: 'loaded' }, notifications: { status: 'loaded' } } }}
+    loading={false} error="" onRefresh={refresh}
+    onComplete={vi.fn(async () => undefined)} onInspect={vi.fn(async () => context)} onAssist={onAssist} onContinue={continueWork}
+  />))
+  const viewMaterials = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '查看材料')
+  await act(async () => viewMaterials?.click())
+  const assistButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '让 Pi 协助复核')
+  await act(async () => assistButton?.click())
+
+  expect(workspace.queuePrompt).not.toHaveBeenCalled()
+  expect(container.querySelector('[role="alert"]')?.textContent).toContain('无法创建独立审批辅助会话')
 })

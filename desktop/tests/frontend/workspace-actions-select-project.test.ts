@@ -98,4 +98,31 @@ describe('selectProject workspace resume', () => {
     expect(readComposerDraft('project:new')).toBeNull()
     expect(activateWorkspace).toHaveBeenCalledWith(project)
   })
+
+  it('preserves the unsent project draft when opening an isolated approval session', () => {
+    saveComposerDraft('project:new', { text: '这段还没发出去' })
+    const workspaceRef = { current: { project: project as ProjectRecord | undefined, session: undefined as SessionRecord | undefined, generation: 1 } }
+    const activateWorkspace = vi.fn((selected?: ProjectRecord) => {
+      workspaceRef.current = { project: selected, session: undefined, generation: 2 }
+      return 2
+    })
+    const actions = createWorkspaceActions(() => ({
+      bridge: null,
+      initialized: true,
+      activeProject: project,
+      layout: { compactLayout: false, setSmallestSidebarAllowed: vi.fn() },
+      settingsState: { setSidebarOpen: vi.fn() },
+      workspace: {
+        workspaceRef,
+        activateWorkspace,
+        setMessages: vi.fn(),
+      },
+      setView: vi.fn(),
+      setPaletteOpen: vi.fn(),
+    } as unknown as WorkspaceActionsDeps))
+
+    expect(actions.newSession(undefined, { preserveComposerDraft: true })).toBe(true)
+    expect(readComposerDraft('project:new')).toEqual({ text: '这段还没发出去' })
+    expect(activateWorkspace).toHaveBeenCalledWith(project)
+  })
 })
