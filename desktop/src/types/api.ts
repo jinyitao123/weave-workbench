@@ -910,6 +910,8 @@ export interface QueuedPrompt {
   flushAttemptFailed?: boolean
   /** Opaque main-process context binding for a returned approval continuation. */
   returnedApprovalContextHandle?: string
+  /** Opaque main-process context binding for read-only assistance on one current approval. */
+  approvalReviewContextHandle?: string
   /** Opaque main-process binding for a Weave-owned work continuation. */
   workContinuationContextHandle?: string
 }
@@ -1243,6 +1245,7 @@ export interface PrimeWorkApi {
     getWorkOverview(): Promise<EnterpriseWorkOverview>
     getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContextView>
     pinReturnedApprovalContext(approvalId: string): Promise<{ handle: string; context: EnterpriseApprovalContextView }>
+    pinApprovalReviewContext(approvalId: string): Promise<{ handle: string; context: EnterpriseApprovalContextView }>
     pinWorkContinuationContext(item: Pick<EnterpriseWorkItem, 'id' | 'source' | 'notificationType' | 'workReference' | 'runReference' | 'sessionReference'>): Promise<{ handle: string; context: EnterpriseWorkContinuationContextView }>
     submitWork(choice: EnterpriseWorkChoice, goal: string): Promise<EnterpriseWorkReceipt>
     completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }>
@@ -1272,7 +1275,7 @@ export interface PrimeWorkApi {
   }
   agent: {
     start(options: { cwd: string; sessionPath?: string; model?: string; thinking?: string; fast?: boolean; harness?: HarnessId }): Promise<RuntimeInfo>
-    command(runtimeId: string, command: Record<string, unknown>, deliveryContext?: { returnedApprovalContextHandle?: string; workContinuationContextHandle?: string }): Promise<Record<string, unknown>>
+    command(runtimeId: string, command: Record<string, unknown>, deliveryContext?: { returnedApprovalContextHandle?: string; approvalReviewContextHandle?: string; workContinuationContextHandle?: string }): Promise<Record<string, unknown>>
     stop(runtimeId: string): Promise<boolean>
     list(): Promise<RuntimeInfo[]>
     onEvent(callback: (envelope: PrimeEventEnvelope) => void): () => void
