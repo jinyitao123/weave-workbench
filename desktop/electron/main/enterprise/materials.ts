@@ -314,7 +314,12 @@ async function extractDocx(bytes: Buffer, sourceSha256: string, maximum: number)
   const paragraphCount = [...result.value.matchAll(/<(?:p|h[1-6])\b/gi)].length
   const tableCount = [...result.value.matchAll(/<table\b/gi)].length
   const tableCellCount = [...result.value.matchAll(/<(?:td|th)\b/gi)].length
-  const unsupportedWarnings = result.messages.filter((message) => message.type === 'warning' || message.type === 'error').length
+  // Mammoth preserves the paragraph text when it falls back from an unknown
+  // style to a plain paragraph. A style warning is not omitted source content.
+  const unsupportedWarnings = result.messages.filter((message) =>
+    (message.type === 'warning' || message.type === 'error')
+    && !/^Unrecognised paragraph style:/.test(message.message),
+  ).length
   const omittedHeadersFooters = [...archive.entries].filter((entry) => /^word\/(?:header|footer)\d+\.xml$/i.test(entry)).length
   const omittedContentCount = embeddedImageCount + unsupportedWarnings + omittedHeadersFooters
   const limitations: MaterialExtraction['limitations'] = []

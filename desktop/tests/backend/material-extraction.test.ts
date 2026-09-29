@@ -74,6 +74,18 @@ describe('frozen original document materials', () => {
     expect(task).not.toContain(material.bytesBase64)
   })
 
+  it('treats unknown paragraph styles as readable when Mammoth retains their text', async () => {
+    const { source, material } = await freezeFixture('sample-custom-paragraph-styles.docx', '自定义样式合同.docx')
+    expectSourceBytes(material, source)
+    expect(material.extraction).toMatchObject({
+      status: 'complete', extractor: 'mammoth',
+      coverage: { docxParagraphCount: 2, docxOmittedContentCount: 0 },
+      limitations: [],
+    })
+    expect(material.extraction.content).toContain('员工指定的合同正文可读取。')
+    expect(material.extraction.content).toContain('交付期限为二十个日历日。')
+  })
+
   it('preserves the standard Word Title paragraph in the current contract DOCX', async () => {
     const root = await mkdtemp(join(tmpdir(), 'workbench-contract-material-'))
     scratch.push(root)
