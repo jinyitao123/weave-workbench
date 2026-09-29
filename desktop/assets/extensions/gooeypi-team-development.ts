@@ -102,8 +102,8 @@ export default async function (pi: ExtensionApi): Promise<void> {
   })
   pi.registerTool({
     name: 'gooeypi_team_development_trial_status', label: '读取试跑步骤与结果',
-    description: '读取当前 Pi 会话最近一次隔离试跑，包含固定输入全文、逐步输入摘要、Weave 实际记录的工具输入输出、交付结果和轨迹完整性。不会返回内部运行标识。',
-    promptGuidelines: ['试跑开始或重试后读取本工具。活动缺失或完整性为 partial/unavailable 时，明确说明实际轨迹未完整取得；摘要不是原始输入。'],
+    description: '读取当前 Pi 会话最近一次隔离试跑，包含固定输入全文、逐步输入摘要与实际步骤输出、工具输入输出、最终结果和轨迹完整性。不会返回内部运行标识。',
+    promptGuidelines: ['试跑开始或重试后读取本工具。逐步 inputs 是摘要，outputs 是 Weave 实际保存的步骤结果；输出标为 truncated 或活动完整性为 partial/unavailable 时，明确说明相应内容不完整，不能只凭最终结果声称全程通过。'],
     parameters: Type.Object({}),
     async execute() { return result(await call('trial_status')) },
   })
