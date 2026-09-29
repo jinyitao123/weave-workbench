@@ -147,9 +147,10 @@ function reuseMaterialsFromContinuation(bound: BoundWorkContinuation | undefined
     throw new Error('复用材料选择无效，请从当前工作中选择已冻结文件名')
   }
   if (!rawNames.length) return []
-  if (!bound || bound.accountKey !== accountKey || bound.context.run.status !== 'succeeded'
-    || bound.context.run.finalResult?.disposition !== 'needs_input') {
-    throw new Error('只有当前员工打开的“需要补充”工作可以复用原冻结材料')
+  const needsInput = bound?.context.run.status === 'succeeded' && bound.context.run.finalResult?.disposition === 'needs_input'
+  const failedReadOnly = bound?.context.run.status === 'failed' && !bound.context.run.actionOutcomes?.length
+  if (!bound || bound.accountKey !== accountKey || !needsInput && !failedReadOnly) {
+    throw new Error('只有当前员工打开的“需要补充”或无业务动作的失败工作可以复用原冻结材料')
   }
   const names = rawNames.map((name) => {
     const normalized = name.trim()
