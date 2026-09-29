@@ -13,10 +13,10 @@ const MIB = 1024 * KIB
  * bundle-size creep still fails the release build.
  */
 export const BUNDLE_SIZE_BUDGETS = Object.freeze({
-  // 2026-09-29: scoped Pi development, frozen-material reuse, and native
-  // notification lineage checks raised the measured main bundle to 803,488
-  // bytes. 792 KiB is the next 8 KiB boundary above that measurement.
-  mainBytes: 792 * KIB,
+  // 2026-09-30: approval-session binding, native parameter metadata, and
+  // business-result continuation raised the measured main bundle to 831,526
+  // bytes. 816 KiB is the next 8 KiB boundary above that measurement.
+  mainBytes: 816 * KIB,
   preloadBytes: 16 * KIB,
   initialRendererBytes: 1280 * KIB,
   largestRendererChunkBytes: 600 * KIB,
