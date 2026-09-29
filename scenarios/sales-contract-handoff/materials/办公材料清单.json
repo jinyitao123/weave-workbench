@@ -27,5 +27,24 @@
     "交付期限：合同 20 个日历日，技术协议 15 个日历日",
     "连续运行验收：合同 24 小时，技术协议 72 小时"
   ],
-  "pdfPages": 1
+  "pdfPages": 1,
+  "officeRevisionTest": {
+    "contractCode": "MVP1-C-OFFICE-20260929-001",
+    "status": "prepared_not_dispatched",
+    "sourceNote": "从本目录合同与技术协议样例派生；合同编号和物料编码改为新草稿实际值，20/15 天与 24/72 小时差异保留",
+    "materials": [
+      {
+        "file": "合同办公原件交接测试.docx",
+        "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "bytes": 37617,
+        "sha256": "ae720ee58e390157ca9c1fd972f857627f188ab1016ff4eb0a516cb6e917c803"
+      },
+      {
+        "file": "技术协议办公原件交接测试.pdf",
+        "mediaType": "application/pdf",
+        "bytes": 79168,
+        "sha256": "f602a008bb08238d812cbb39831f0f0c1aef10533a081e46c4a279d61196a0a5"
+      }
+    ]
+  }
 }
