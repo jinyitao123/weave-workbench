@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://workbench.inocube.local/contracts/v1/approval-revision.schema.json",
   "title": "Returned Approval Material Revision",
-  "description": "Workbench submits exact Forge file references for the current returned native approval. Actor and business record are derived on the server.",
+  "description": "Workbench submits exact Forge file references for the current returned native approval. Actor and business record are derived on the server. Legacy references without mediaType/bytes are UTF-8 text only; Office originals must declare both fields.",
   "type": "object",
   "additionalProperties": false,
   "required": ["returnVersion", "sourceMaterialVersion", "idempotencyKey", "primary", "attachments"],
@@ -21,8 +21,35 @@
       "properties": {
         "fileId": { "type": "string", "minLength": 1, "maxLength": 128 },
         "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "mediaType": {
+          "enum": [
+            "text/plain",
+            "text/plain; charset=utf-8",
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          ]
+        },
+        "bytes": { "type": "integer", "minimum": 0, "maximum": 2097152 },
         "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
-      }
+      },
+      "allOf": [
+        { "if": { "required": ["mediaType"] }, "then": { "required": ["bytes"] } },
+        { "if": { "required": ["bytes"] }, "then": { "required": ["mediaType"] } },
+        {
+          "if": {
+            "required": ["mediaType"],
+            "properties": {
+              "mediaType": {
+                "enum": [
+                  "application/pdf",
+                  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                ]
+              }
+            }
+          },
+          "then": { "properties": { "bytes": { "minimum": 1 } } }
+        }
+      ]
     },
     "receipt": {
       "type": "object",
