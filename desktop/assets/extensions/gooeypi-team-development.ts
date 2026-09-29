@@ -55,7 +55,7 @@ export default async function (pi: ExtensionApi): Promise<void> {
     promptGuidelines: [
       '仅在开发者只要求查看方案或先预览改动时使用。若开发者明确要求实际修改团队草稿，使用“修改并保存团队草稿”。以准确名称打开团队后再提出最小修改。不要编辑本地文件、调用员工交接能力或编造业务动作。',
       'member/flow/step/capability 引用使用草稿和动作目录返回的准确名称；新成员先用 member_add 的 ref 创建，后续操作可用该 ref。同名对象需要开发者先在侧栏区分。',
-      '示例：[{"kind":"member","member":"合同条款检查员","duty":"新职责"},{"kind":"capability","member":"合同提交员","capability":"提交指定合同版本","selected":true,"fileSource":"single"}]。fileSource 仅在动作声明单文件标识、名称、摘要三项时用 single，否则选 member。',
+      '配置业务动作的材料来源时，使用 parameterSources 按接口参数逐项映射；只使用当前目录返回的准确参数名。原生单值 file 参数默认由 Pi 从本轮可用材料中选择；如开发者明确绑定唯一文件，只有本轮恰有一件材料时才映射 materials.single.id，不映射文件名称或摘要。原生 multiple file 参数必须映射到 materials.ids，例如 {"kind":"capability","member":"材料提交员","capability":"提交材料包","selected":true,"parameterSources":[{"name":"primary_file_id","source":"materials.single.id"},{"name":"material_file_ids","source":"materials.ids"}]}。materials.ids 表示本次提交的全部文件；不得把 file/multiple 参数当作成员自由填写，也不得根据参数名猜测材料来源。materials.manifest_json 只用于文本参数。',
       '新增串行步骤可由负责人或执行成员负责；新增并行分支只能选择执行成员。并行分支必须由单个成员直接进入汇合，不能在分支内部再插串行步骤。要在并行检查后增加后续工作，把 after 指向“并行分工”步骤，平台会将新步骤放到汇合之后。使用 {kind:"step_add",flow:"合同复核流程",after:"并行分工",member:"合同协调员",name:"汇总检查结果",requirement:"汇总分支结论和原文依据",placement:"serial"}。不要猜测步骤或成员名称。',
       '修改已有步骤的处理指令或交付要求，使用 {kind:"step",flow:"合同复核流程",step:"理解任务",requirement:"保留原文后的完整新指令"}。必须提供 step 和 requirement；没有 instruction、target 或 step_ref 字段。负责人步骤的 requirement 写入处理指令，成员步骤写入交付要求。',
       '控制每步可见内容用 step_input，source 只能是 run_input 或 node_output；后一种必须提供 from 前序步骤名称，selected 表示添加或移除。技能正文用 skill 操作。删除成员或步骤先处理流程引用。',
