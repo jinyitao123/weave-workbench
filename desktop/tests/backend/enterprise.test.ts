@@ -414,6 +414,40 @@ describe('EnterpriseService', () => {
     await expect(service.validateDevelopmentWorkflow('flow-1', 2)).resolves.toEqual({ valid: false, issues: [{ code: 'workflow_route_missing', message: 'route missing', nodeId: 'review' }] })
   })
 
+  it('removes a superseded team request from pending work while keeping its historical message', async () => {
+    const notice = (id: string, kind: string, createdAt: string) => ({
+      id, type: `weave.team_run.${kind}`, title: `合同检查${kind}`, body: '团队结果', createdAt, read: false,
+    })
+    const sourceById: Record<string, { kind: string; workReference: string; sessionReference: string }> = {
+      old: { kind: 'revision_required', workReference: 'revision-1', sessionReference: 'contract-work' },
+      new: { kind: 'result', workReference: 'revision-2', sessionReference: 'contract-work' },
+      other: { kind: 'revision_required', workReference: 'revision-3', sessionReference: 'another-work' },
+    }
+    const fetchMock = workOverviewFetch((url) => {
+      if (url.includes('/v1/teams?status=active')) return Response.json([])
+      if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
+      if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
+      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [] })
+      if (url.endsWith('/api/v1/notifications?limit=200')) return Response.json({ data: { notifications: [
+        notice('old', 'revision_required', '2026-09-29T02:18:00Z'),
+        notice('new', 'result', '2026-09-29T05:09:00Z'),
+        notice('other', 'revision_required', '2026-09-29T02:18:00Z'),
+      ] } })
+      const sourceId = /^http:\/\/forge\/api\/v1\/workbench\/notifications\/([^/]+)\/source$/.exec(url)?.[1]
+      if (sourceId && sourceById[sourceId]) return Response.json({
+        version: '1', notificationId: sourceId, kind: sourceById[sourceId].kind,
+        source: { system: 'weave', ...sourceById[sourceId], runReference: `run-${sourceId}` },
+      })
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('sales@example.test', 'secret')
+    const overview = await service.getWorkOverview()
+    expect(overview.items.find((item) => item.id === 'old')).toMatchObject({ actionable: false, status: 'completed', read: false })
+    expect(overview.items.find((item) => item.id === 'new')).toMatchObject({ kind: 'result', sessionReference: 'contract-work' })
+    expect(overview.items.find((item) => item.id === 'other')).toMatchObject({ actionable: true, status: 'pending' })
+  })
+
   it('submits a bound work request and completes a human task without exposing the token', async () => {
     const calls: Array<{ url: string; body?: Record<string, unknown> }> = []
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
