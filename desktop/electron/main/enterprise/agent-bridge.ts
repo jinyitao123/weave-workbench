@@ -97,10 +97,11 @@ interface FrozenRevisionIntent {
   businessObject: EnterpriseApprovalContext['businessObject']
   returnReason: string
   sourceFiles: FrozenRevisionSourceFile[]
-  body: { name: string; content: string; bytes: number; sha256: string; bytesBase64: string }
+  body?: { name: string; content: string; bytes: number; sha256: string; bytesBase64: string }
+  primaryMaterial?: FrozenRevisionFile
   materials: Array<FrozenRevisionFile | LegacyFrozenRevisionFile>
 }
-interface ReturnedRevisionFileReference { fileId: string; name: string; sha256: string }
+interface ReturnedRevisionFileReference { fileId: string; name: string; sha256: string; mediaType?: FrozenMaterial['mediaType']; bytes?: number }
 interface ReturnedRevisionReceipt {
   requestId: string
   bindingId: string
@@ -955,31 +956,36 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     return this.prepareDelivery(claim, turn, intent, digest(identity))
   }
   private async submitReturnedRevision(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn): Promise<unknown> {
-    rejectUnknownKeys(params, ['turn_key', 'employee_request', 'body', 'materials'], 'revision')
+    rejectUnknownKeys(params, ['turn_key', 'employee_request', 'body', 'primary_material', 'materials'], 'revision')
     const bound = this.returnedApprovals.get(claim.token)
     if (!bound || bound.sessionPath !== claim.sessionPath || bound.accountKey !== turn.accountKey) {
       throw new Error('请从“我的工作”重新打开本人退回的审批事项')
     }
     const employeeRequest = requireString(params.employee_request, 'employee_request', { min: 1, max: 20_000, trim: false })
     if (employeeRequest !== turn.prompt) throw new Error('员工本轮要求已变化，旧修订意图不能继续')
-    const body = requireString(params.body, 'body', { min: 1, max: 2 * 1024 * 1024, trim: false })
-    if (!body.trim() || body.includes('\0')) throw new Error('修订正文为空或无法安全保存')
-    const bodyBytes = Buffer.from(body, 'utf8')
-    if (bodyBytes.length > 2 * 1024 * 1024) throw new Error('修订正文超出固定材料大小限制')
+    const hasBody = params.body !== undefined, hasPrimaryMaterial = params.primary_material !== undefined
+    if (hasBody === hasPrimaryMaterial) throw new Error('请在文本修订正文与本轮指定的原件主件之间选择一种')
+    const body = hasBody ? requireString(params.body, 'body', { min: 1, max: 2 * 1024 * 1024, trim: false }) : undefined
+    if (body !== undefined && (!body.trim() || body.includes('\0'))) throw new Error('修订正文为空或无法安全保存')
+    const bodyBytes = body === undefined ? undefined : Buffer.from(body, 'utf8')
+    if (bodyBytes && bodyBytes.length > 2 * 1024 * 1024) throw new Error('修订正文超出固定材料大小限制')
     if (!Array.isArray(params.materials) || params.materials.length > REVISION_MATERIAL_LIMITS.maxFiles) {
       throw new Error('修订材料清单无效，请按当前要求重新整理')
     }
     const selections = params.materials.length ? materialSelection(params.materials, REVISION_MATERIAL_LIMITS) : []
+    const primarySelection = hasPrimaryMaterial ? materialSelection([params.primary_material], REVISION_MATERIAL_LIMITS)[0] : undefined
+    if (primarySelection && selections.some((selection) => selection.path === primarySelection.path)) throw new Error('修订主件不能同时作为附件')
     const sourceMessages = await this.evidence(claim, turn)
     const employeeMessageId = turn.messageId
     if (!employeeMessageId) throw new Error('无法核对当前员工轮次，请重新发送本轮要求')
     const sessionKey = digest(claim.sessionPath).slice(0, 24)
     const employeeRequestSha256 = digest(Buffer.from(employeeRequest, 'utf8'))
     const employeeRoundId = digest(JSON.stringify([bound.accountKey, sessionKey, employeeMessageId, employeeRequestSha256]))
-    const bodySha256 = digest(bodyBytes)
+    const bodySha256 = bodyBytes ? digest(bodyBytes) : undefined
     const identity = `${bound.accountKey}:returned-revision:${bound.context.requestId}:${bound.context.returnVersion}:${employeeRoundId}`
     const fingerprint = digest(JSON.stringify({
       context: bound.fingerprint, employeeRoundId, bodySha256,
+      ...(primarySelection ? { primaryMaterial: primarySelection } : {}),
       materials: selections.map((selection) => ({ path: selection.path, sha256: selection.sha256 })),
     }))
     if (!this.options.storage?.directory) throw new Error('本地交接存储目录未配置，无法固定修订材料包')
@@ -991,8 +997,15 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         if (returnedApprovalFingerprint(latest) !== bound.fingerprint) {
           throw new Error('退回意见、业务对象或原材料版本已变化，请刷新待办后重新处理')
         }
-        const frozen = await freezeMaterials(claim.cwd, selections, REVISION_MATERIAL_LIMITS)
-        if (bodyBytes.length + frozen.reduce((total, file) => total + file.bytes, 0) > 8 * 1024 * 1024) {
+        const selected = primarySelection ? [primarySelection, ...selections] : selections
+        const frozen = await freezeMaterials(claim.cwd, selected, { ...REVISION_MATERIAL_LIMITS, maxFiles: 11 })
+        const primaryMaterial = primarySelection ? frozen[0] : undefined
+        const attachments = primaryMaterial ? frozen.slice(1) : frozen
+        if (primaryMaterial && primaryMaterial.mediaType !== 'application/pdf'
+          && primaryMaterial.mediaType !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+          throw new Error('修订主件原件必须是本轮指定的 PDF 或 DOCX 文件')
+        }
+        if ((bodyBytes?.length ?? 0) + frozen.reduce((total, file) => total + file.bytes, 0) > 8 * 1024 * 1024) {
           throw new Error('修订正文和附件总量超出 Forge 固定材料限制')
         }
         await this.evidence(claim, turn)
@@ -1019,8 +1032,10 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           returnVersion: latest.returnVersion, sourceMaterialVersion: latest.sourceMaterialVersion,
           idempotencyKey: submissionUUID(employeeRoundId),
           businessObject: structuredClone(latest.businessObject), returnReason: latest.returnReason,
-          sourceFiles, body: { name: '修订正文.md', content: body, bytes: bodyBytes.length, sha256: bodySha256, bytesBase64: bodyBytes.toString('base64') },
-          materials: frozen.map(revisionFile),
+          sourceFiles,
+          ...(body !== undefined && bodyBytes && bodySha256 ? { body: { name: '修订正文.md', content: body, bytes: bodyBytes.length, sha256: bodySha256, bytesBase64: bodyBytes.toString('base64') } } : {}),
+          ...(primaryMaterial ? { primaryMaterial: revisionFile(primaryMaterial) } : {}),
+          materials: attachments.map(revisionFile),
         }
       })
     } catch (error) {
@@ -1047,7 +1062,9 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       intentFingerprint, idempotencyKey: intent.idempotencyKey, requestId: intent.requestId,
       returnVersion: intent.returnVersion, sourceMaterialVersion: intent.sourceMaterialVersion,
     }))
-    const publicFiles = [{ name: intent.body.name }, ...intent.materials.map(({ name }) => ({ name }))]
+    const primary = intent.primaryMaterial ?? intent.body
+    if (!primary) throw new Error('固定修订材料缺少正文主件')
+    const publicFiles = [{ name: primary.name }, ...intent.materials.map(({ name }) => ({ name }))]
     const assertCurrent = async () => {
       await this.evidence(claim, turn)
       if (await this.options.service.accountKey() !== intent.accountKey
@@ -1134,9 +1151,11 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     let references: { primary: ReturnedRevisionFileReference; attachments: ReturnedRevisionFileReference[] }
     if (progress?.phase === 'uploaded' && progress.primary && Array.isArray(progress.attachments)) {
       references = { primary: progress.primary, attachments: progress.attachments }
-      const expected = [intent.body, ...intent.materials]
+      const expected = [primary, ...intent.materials]
       const actual = [references.primary, ...references.attachments]
-      if (actual.length !== expected.length || actual.some((file, index) => file.name !== expected[index]!.name || file.sha256 !== expected[index]!.sha256 || !file.fileId)) {
+      if (actual.length !== expected.length || actual.some((file, index) => file.name !== expected[index]!.name || file.sha256 !== expected[index]!.sha256 || !file.fileId
+        || ('mediaType' in expected[index]! && expected[index]!.mediaType !== undefined
+          && (file.mediaType !== expected[index]!.mediaType || file.bytes !== expected[index]!.bytes)))) {
         throw new Error('上传回执与原固定材料包不一致；桌面不会重新上传')
       }
     } else if (!progress) {
@@ -1145,12 +1164,13 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         version: 1, phase: 'upload_started', idempotencyKey: intent.idempotencyKey,
       })
       try {
-        const bodyBytes = Buffer.from(intent.body.bytesBase64, 'base64')
-        if (bodyBytes.toString('base64') !== intent.body.bytesBase64 || bodyBytes.length !== intent.body.bytes || digest(bodyBytes) !== intent.body.sha256) {
+        const bodyBytes = intent.body ? Buffer.from(intent.body.bytesBase64, 'base64') : undefined
+        if (intent.body && (!bodyBytes || bodyBytes.toString('base64') !== intent.body.bytesBase64
+          || bodyBytes.length !== intent.body.bytes || digest(bodyBytes) !== intent.body.sha256)) {
           throw new Error('本地固定修订正文无法通过字节摘要校验，请勿重新读取文件')
         }
         const uploadMaterials = [
-          makeFrozenTextMaterial(intent.body.name, bodyBytes),
+          intent.primaryMaterial ? restoreRevisionMaterial(intent.primaryMaterial) : makeFrozenTextMaterial(intent.body!.name, bodyBytes!),
           ...intent.materials.map(restoreRevisionMaterial),
         ]
         const uploaded = uploadMaterials.length ? await this.options.service.stageWorkMaterials(uploadMaterials, assertCurrent) : []
@@ -1158,10 +1178,12 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           || file.name !== uploadMaterials[index]!.name || file.bytes !== uploadMaterials[index]!.bytes || file.sha256 !== uploadMaterials[index]!.sha256 || !file.id)) {
           throw new Error('Forge 上传回执与固定材料包不一致')
         }
-        references = {
-          primary: { fileId: uploaded[0]!.id, name: uploaded[0]!.name, sha256: uploaded[0]!.sha256 },
-          attachments: uploaded.slice(1).map((file) => ({ fileId: file.id, name: file.name, sha256: file.sha256 })),
-        }
+        const revisionReference = (file: EnterpriseWorkResource): ReturnedRevisionFileReference => ({
+          fileId: file.id, name: file.name, sha256: file.sha256,
+          ...(file.mediaType === 'application/pdf' || file.mediaType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            ? { mediaType: file.mediaType, bytes: file.bytes } : {}),
+        })
+        references = { primary: revisionReference(uploaded[0]!), attachments: uploaded.slice(1).map(revisionReference) }
         progress = await this.store.checkpoint(progressKey, progressFingerprint, {
           version: 1, phase: 'uploaded', idempotencyKey: intent.idempotencyKey,
           primary: references.primary, attachments: references.attachments,

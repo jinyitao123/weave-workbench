@@ -982,6 +982,41 @@ describe('employee-bound material handoff', () => {
     expect(stored.value.idempotencyKey).toBe(submissionUUID(stored.value.employeeRoundId))
     expect(stored.value.sourceMessages.find((message) => message.messageId === 'employee-revision-1')?.sha256).toBe(digest(employeeRequest))
   })
+
+  it('submits an exact DOCX primary and PDF attachment without replacing the original bytes with markdown', async () => {
+    const f = await fixture()
+    await f.openReturned()
+    const primaryPath = '材料/附件/合同修订原件.docx'
+    const attachmentPath = '材料/附件/技术协议修订原件.pdf'
+    const primaryBytes = await readFile(new URL('../../../scenarios/sales-contract-handoff/materials/合同样例.docx', import.meta.url))
+    const attachmentBytes = await readFile(new URL('../../../scenarios/sales-contract-handoff/materials/技术协议样例.pdf', import.meta.url))
+    await writeFile(join(f.cwd, primaryPath), primaryBytes)
+    await writeFile(join(f.cwd, attachmentPath), attachmentBytes)
+    const employeeRequest = '按退回意见递交这份 DOCX 主件和 PDF 技术附件，继续原审批'
+    await f.input(employeeRequest, 'employee-office-revision')
+    const primary = { path: primaryPath, sha256: digest(primaryBytes) }
+    const materials = [{ path: attachmentPath, sha256: digest(attachmentBytes) }]
+    const conflict = await f.call('revision_submit', { employee_request: employeeRequest, body: '另一份正文', primary_material: primary, materials })
+    expect(conflict.status).toBe(409)
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    const result = await f.call('revision_submit', { employee_request: employeeRequest, primary_material: primary, materials })
+    expect(result.body.result).toMatchObject({ status: 'resumed', submitted: true })
+    const repeated = await f.call('revision_submit', { employee_request: employeeRequest, primary_material: primary, materials })
+    expect(repeated.body.result).toMatchObject({ status: 'resumed', submitted: true })
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
+    const uploaded = f.service.stageWorkMaterials.mock.calls[0]?.[0]
+    expect(uploaded).toHaveLength(2)
+    expect(uploaded?.map((file) => file.name)).toEqual(['合同修订原件.docx', '技术协议修订原件.pdf'])
+    expect(Buffer.from(uploaded![0]!.bytesBase64, 'base64')).toEqual(primaryBytes)
+    expect(Buffer.from(uploaded![1]!.bytesBase64, 'base64')).toEqual(attachmentBytes)
+    const submitted = f.service.submitApprovalRevision.mock.calls[0]?.[1]
+    expect(submitted).toMatchObject({
+      primary: { name: '合同修订原件.docx', sha256: digest(primaryBytes), bytes: primaryBytes.length,
+        mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+      attachments: [{ name: '技术协议修订原件.pdf', sha256: digest(attachmentBytes), bytes: attachmentBytes.length, mediaType: 'application/pdf' }],
+    })
+    expect(JSON.stringify(submitted)).not.toContain('修订正文.md')
+  })
   it('freezes approval PDF source identity with its exact bytes in the same returned revision intent', async () => {
     const f = await fixture()
     const source = await readFile(new URL('../fixtures/materials/sample-two-page.pdf', import.meta.url))

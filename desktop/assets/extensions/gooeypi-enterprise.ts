@@ -219,26 +219,30 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
     parameters: Type.Object({ recovery_key: Type.String({ minLength: 64, maxLength: 64, description: '原交接结果中的内部恢复凭据，不由员工提供' }) }),
     async execute(_id, params) { return result(await turnCall('recover', params)) },
   })
-  pi.registerTool<{ employee_request: string; body: string; materials: Array<{ path: string; sha256: string }> }>({
+  pi.registerTool<{ employee_request: string; body?: string; primary_material?: { path: string; sha256: string }; materials: Array<{ path: string; sha256: string }> }>({
     name: 'gooeypi_approval_revision_submit',
     label: '递交审批修订材料',
-    description: '为当前已打开的 Forge 退回事项冻结准确正文和附件，通过 Forge 受控修订能力递交，并按回执报告真实状态。',
+    description: '为当前已打开的 Forge 退回事项冻结准确文本正文或 PDF/DOCX 主件及附件，通过 Forge 受控修订能力递交，并按回执报告真实状态。',
     promptGuidelines: [
       '只处理桌面“我的工作”刚打开并交给本会话的本人退回事项；不能自行选择或猜测另一条审批。',
       '只有当前员工明确要求递交修订材料时才调用。员工仅在讨论、查看、修改草稿、要求建议、说稍后再办或表达含糊时，不得调用。不要重复要求已经清楚的员工确认。',
-      'employee_request 必须逐字提供本轮员工提出递交要求的原文；body 必须是本轮最终修订正文的准确内容，不补写员工未授权的事实。',
-      '正文固定为主件；materials 只列出员工本轮指定的实际附件路径和读取前核对的 SHA-256。没有附件时传空数组。',
+      'employee_request 必须逐字提供本轮员工提出递交要求的原文。body 与 primary_material 恰选一种：旧文本修订用准确正文 body；员工指定 PDF/DOCX 原件主件时用本轮确定路径与 SHA-256 的 primary_material，不把提取文本改写成原件。不要补写员工未授权的事实。',
+      '主件之外的 materials 只列出员工本轮指定的实际附件路径和读取前核对的 SHA-256；没有附件时传空数组。不得把同一主件再列为附件。',
       '只有返回状态 resumed 才能告诉员工已递交并进入下一轮。prepared 表示 Forge 已固定材料但原审批继续尚未确认；resume_unknown 表示当前结果未知。upload_unknown、unavailable 或 rejected 表示流程受阻。除 resumed 外都不能声称递交成功。',
-      '同一员工轮次失败或结果未知后只能使用完全相同正文和附件再次调用；Host 只查询同一回执，不会重新上传或重提。若正文、附件、账号、事项或员工轮次变化，停止旧意图并要求员工从当前退回事项重新开始。',
+      '同一员工轮次失败或结果未知后只能使用完全相同主件和附件再次调用；Host 只查询同一回执，不会重新上传或重提。若主件、附件、账号、事项或员工轮次变化，停止旧意图并要求员工从当前退回事项重新开始。',
       '用中文自然说明状态，不读出状态编码、UUID、SHA-256 或内部标识。绝不调用原生 /resubmit 或其他审批状态接口；不得自行提交 requestId、recordId 或 fileId。',
     ],
     parameters: Type.Object({
       employee_request: Type.String({ minLength: 1, maxLength: 20_000, description: '员工本轮明确要求递交修订材料的原文' }),
-      body: Type.String({ minLength: 1, maxLength: 2 * 1024 * 1024, description: '本轮准备递交的准确修订正文' }),
+      body: Type.Optional(Type.String({ minLength: 1, maxLength: 2 * 1024 * 1024, description: '旧文本路径的准确修订正文，与 primary_material 二选一' })),
+      primary_material: Type.Optional(Type.Object({
+        path: Type.String({ minLength: 1, description: '员工本轮指定的 PDF/DOCX 正文原件路径' }),
+        sha256: Type.String({ minLength: 64, maxLength: 64, description: '该原件当前字节的 SHA-256' }),
+      }, { description: '办公原件主件，与 body 二选一' })),
       materials: Type.Array(Type.Object({
         path: Type.String({ minLength: 1, description: '当前工作目录中的修订材料路径' }),
         sha256: Type.String({ minLength: 64, maxLength: 64, description: '本轮修订文件的 SHA-256' }),
-      }), { maxItems: 10, description: '本轮员工指定的实际修订附件；正文作为主件固定' }),
+      }), { maxItems: 10, description: '本轮员工指定的实际修订附件；正文主件另由 body 或 primary_material 固定' }),
     }),
     async execute(_id, params) { return result(await turnCall('revision_submit', params as Record<string, unknown>)) },
   })
