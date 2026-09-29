@@ -118,8 +118,9 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
     ...(configureStorage ? { storage: { directory: storageDirectory } } : {}),
   })
   await bridge.start(); bridges.push(bridge)
-  const environment = bridge.environmentFor({ cwd, sessionPath: '/sessions/current.jsonl', harness: 'pi' })
-  bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, '/sessions/current.jsonl', 'runtime')
+  let sessionPath = '/sessions/current.jsonl'
+  let environment = bridge.environmentFor({ cwd, sessionPath, harness: 'pi' })
+  bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, sessionPath, 'runtime')
   let turnKey = ''
   const callWithTurn = async (method: string, params: Record<string, unknown> = {}, requestTurnKey = turnKey) => {
     const response = await fetch(environment.GOOEYPI_ENTERPRISE_URL!, { method: 'POST', headers: { Authorization: `Bearer ${environment.GOOEYPI_ENTERPRISE_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ method, params: { turn_key: requestTurnKey, ...params } }) })
@@ -131,6 +132,13 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
     transcript.push(user(id, text))
     const active = await call('activate', { prompt: text }); turnKey = active.body.result?.turn_key as string
     return turnKey
+  }
+  const relogin = async (options: { accountKey?: string; sessionPath?: string } = {}) => {
+    bridge.invalidateAccount()
+    if (options.accountKey) service.accountKey.mockResolvedValue(options.accountKey)
+    sessionPath = options.sessionPath ?? sessionPath
+    environment = bridge.environmentFor({ cwd, sessionPath, harness: 'pi' })
+    bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, sessionPath, 'runtime')
   }
   const openReturned = async (requestId = 'approval-1') => {
     const context = contexts.get(requestId)
@@ -160,7 +168,7 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
     return { directory, objectRef, found, recordKey }
   }
   await input(appendWorkspaceMaterialContext('这版给他们看看', [materialReference]), 'employee-turn-1')
-  return { call, callWithTurn, input, discover, findRecord, openReturned, service, bridge, environment, materials, cwd, transcript, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, businessCandidate, businessSnapshot }
+  return { call, callWithTurn, input, relogin, discover, findRecord, openReturned, service, bridge, environment, materials, cwd, transcript, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, businessCandidate, businessSnapshot }
 }
 
 describe('employee-bound material handoff', () => {
@@ -1062,6 +1070,121 @@ describe('employee-bound material handoff', () => {
     await f.input('恢复原交接', 'other-account-turn')
     expect((await f.call('recover', { recovery_key: recoveryKey })).body.error).toContain('不属于当前员工')
     expect(f.service.submitWork).toHaveBeenCalledTimes(2)
+  })
+  it('re-authorizes the same frozen request after re-login without new attachments or material reads', async () => {
+    const f = await fixture(), params = await f.discover()
+    f.service.stageWorkMaterials.mockRejectedValueOnce(new Error('upload interrupted'))
+    const first = await f.call('submit', params)
+    expect(first.body.result.status).toBe('unknown')
+    const recoveryKey = first.body.result.recovery_key as string
+    await writeFile(join(f.cwd, '材料', '附件', '合同.md'), 'later draft')
+
+    await f.relogin()
+    await f.input('继续核对同一冻结合同只读请求', 'employee-relogin-round-2')
+    const inspected = await f.call('inspect_recovery', { recovery_key: recoveryKey })
+    expect(inspected.body.result).toMatchObject({
+      status: 'inspection_only',
+      target: { goal: '复核这版合同', team: '合同团队', workflow: '合同复核' },
+      materials: [{ name: '合同.md', sha256: digest(f.content) }],
+      action_scope: { authorized_business_capability_ids: [], requires_explicit_employee_reauthorization: false },
+    })
+    const resumeKey = inspected.body.result.resume_key as string
+    expect(resumeKey).toMatch(/^[0-9a-f]{32}$/)
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+
+    const directReplay = await f.call('recover', { recovery_key: recoveryKey })
+    expect(directReplay.status).toBe(409)
+    expect(directReplay.body.error).toContain('旧交接不能继续')
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
+
+    const resumed = await f.call('recover', { resume_key: resumeKey })
+    expect(resumed.body.result.status).toBe('accepted')
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledTimes(2)
+    expect(f.service.stageWorkMaterials.mock.calls[1]?.[0][0]?.extraction.content).toBe(f.content)
+    expect(f.service.submitWork).toHaveBeenCalledOnce()
+    expect(f.service.submitWork.mock.calls[0]?.[2]).toMatchObject({
+      idempotencySeed: `${digest('/sessions/current.jsonl').slice(0, 24)}:employee-turn-1:${params.handoff_key}`,
+      authorizedBusinessCapabilityIds: [],
+    })
+  })
+  it('only inspects a prior non-empty action scope until the employee re-authorizes it in the new turn', async () => {
+    const f = await fixture()
+    const reference = {
+      projectId: 'project-test', harness: 'pi' as const, workspacePath: f.cwd, name: '合同.md',
+      path: '材料/附件/合同.md', sha256: digest(f.content), bytes: Buffer.byteLength(f.content), mimeType: 'text/markdown' as const,
+    }
+    await f.input(appendWorkspaceMaterialContext('请将这份合同提交审批。', [reference]), 'employee-write-request')
+    const params = await f.discover()
+    const { recordKey } = await f.findRecord(params.handoff_key, 'TEST-100 设备交接验收合同')
+    f.service.stageWorkMaterials.mockRejectedValueOnce(new Error('upload interrupted'))
+    const first = await f.call('submit', {
+      ...params, business_record_key: recordKey, business_actions: [params.available_actions[0]!.action_key],
+    })
+    const recoveryKey = first.body.result.recovery_key as string
+    expect(first.body.result.status).toBe('unknown')
+
+    await f.relogin()
+    await f.input('我只想核对同一冻结请求的状态', 'employee-status-only')
+    const inspected = await f.call('inspect_recovery', { recovery_key: recoveryKey })
+    expect(inspected.body.result.action_scope).toEqual({
+      authorized_business_capability_ids: [f.businessCapabilityId],
+      requires_explicit_employee_reauthorization: true,
+    })
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+  it('invalidates a current-turn resume key when the employee updates or cancels the request', async () => {
+    const f = await fixture(), params = await f.discover()
+    f.service.stageWorkMaterials.mockRejectedValueOnce(new Error('upload interrupted'))
+    const first = await f.call('submit', params)
+    const recoveryKey = first.body.result.recovery_key as string
+    await f.relogin()
+    await f.input('请继续检查这条冻结请求', 'employee-recovery-round-2')
+    const inspected = await f.call('inspect_recovery', { recovery_key: recoveryKey })
+    const resumeKey = inspected.body.result.resume_key as string
+
+    await f.input('取消恢复，先不要继续', 'employee-cancel-recovery')
+    const staleResume = await f.call('recover', { resume_key: resumeKey })
+    expect(staleResume.status).toBe(409)
+    expect(staleResume.body.error).toContain('恢复授权已失效')
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+  it('rejects cross-turn recovery when the original employee message hash changes', async () => {
+    const f = await fixture(), params = await f.discover()
+    f.service.stageWorkMaterials.mockRejectedValueOnce(new Error('upload interrupted'))
+    const first = await f.call('submit', params)
+    const recoveryKey = first.body.result.recovery_key as string
+    await f.relogin()
+    await f.input('继续核对原请求', 'employee-recovery-round-2')
+    f.transcript[0] = user('employee-turn-1', '改过的原始请求')
+
+    const inspected = await f.call('inspect_recovery', { recovery_key: recoveryKey })
+    expect(inspected.status).toBe(409)
+    expect(inspected.body.error).toContain('原员工消息已修改或不存在')
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+  it('rejects re-authorizing a frozen handoff under a different session or account', async () => {
+    const f = await fixture(), params = await f.discover()
+    f.service.stageWorkMaterials.mockRejectedValueOnce(new Error('upload interrupted'))
+    const first = await f.call('submit', params)
+    const recoveryKey = first.body.result.recovery_key as string
+
+    await f.relogin({ sessionPath: '/sessions/other.jsonl' })
+    await f.input('继续检查原冻结请求', 'employee-other-session')
+    const otherSession = await f.call('inspect_recovery', { recovery_key: recoveryKey })
+    expect(otherSession.status).toBe(409)
+    expect(otherSession.body.error).toContain('不属于当前员工与会话')
+
+    await f.relogin({ accountKey: 'employee-b', sessionPath: '/sessions/current.jsonl' })
+    await f.input('继续检查原冻结请求', 'employee-other-account')
+    const otherAccount = await f.call('inspect_recovery', { recovery_key: recoveryKey })
+    expect(otherAccount.status).toBe(409)
+    expect(otherAccount.body.error).toContain('不属于当前员工与会话')
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
   })
 
   it('coalesces concurrent identical submissions', async () => {

@@ -79,7 +79,7 @@ const expectedRegistrations: Record<string, Registration[]> = {
   ],
   'gooeypi-enterprise.ts': [
     { kind: 'event', name: 'before_agent_start' },
-    ...['gooeypi_enterprise_team_search', 'gooeypi_enterprise_team_describe', 'gooeypi_enterprise_business_objects', 'gooeypi_enterprise_business_record_find', 'gooeypi_enterprise_business_record_read', 'gooeypi_enterprise_work_submit', 'gooeypi_enterprise_work_recover', 'gooeypi_approval_revision_submit'].map((name) => ({ kind: 'tool' as const, name })),
+    ...['gooeypi_enterprise_team_search', 'gooeypi_enterprise_team_describe', 'gooeypi_enterprise_business_objects', 'gooeypi_enterprise_business_record_find', 'gooeypi_enterprise_business_record_read', 'gooeypi_enterprise_work_submit', 'gooeypi_enterprise_work_inspect_recovery', 'gooeypi_enterprise_work_recover', 'gooeypi_approval_revision_submit'].map((name) => ({ kind: 'tool' as const, name })),
   ],
   'gooeypi-team-development.ts': [
     { kind: 'tool', name: 'gooeypi_team_development_list' },
@@ -217,6 +217,41 @@ describe('shipped extension contracts', () => {
     expect(requests.map(({ body }) => body.method)).toEqual(['activate', 'search'])
     expect(requests[1]?.body.params).toEqual({ work_summary: '核对报价明细', turn_key: 'employee-turn' })
     expect(new Headers(requests[0]?.options?.headers).get('authorization')).toBe('Bearer inert-test-token')
+  })
+
+  it('inspects a frozen handoff before sending the current-turn resume key', async () => {
+    const requests: Array<{ body: Record<string, unknown> }> = []
+    vi.stubGlobal('fetch', vi.fn(async (_input: string | URL | Request, options?: RequestInit) => {
+      const body = JSON.parse(String(options?.body)) as Record<string, unknown>
+      requests.push({ body })
+      const result = body.method === 'activate' ? { turn_key: 'employee-turn' }
+        : body.method === 'inspect_recovery' ? { status: 'inspection_only', resume_key: 'current-turn-resume-key', target: { goal: '只读核对', team: '合同团队' } }
+          : { status: 'accepted' }
+      return Response.json({ ok: true, result })
+    }))
+    const injection = EXTENSION_INJECTIONS.pi.find((candidate) => candidate.filename === 'gooeypi-enterprise.ts')!
+    const fixture = piHost()
+    const factory = await loadExtension(injection, true)
+    await factory(fixture.api)
+    const tools = new Map((fixture.tools as Array<{
+      name: string
+      promptGuidelines?: string[]
+      execute(id: string, params: Record<string, unknown>): Promise<{ content: Array<{ text: string }> }>
+    }>).map((tool) => [tool.name, tool]))
+    const inspect = tools.get('gooeypi_enterprise_work_inspect_recovery')!
+    const recover = tools.get('gooeypi_enterprise_work_recover')!
+
+    await expect(inspect.execute('inspect-before-turn', { recovery_key: 'a'.repeat(64) })).rejects.toThrow('当前没有已绑定的员工轮次')
+    await fixture.handlers?.get('before_agent_start')?.({ prompt: '继续核对同一冻结请求。' })
+    const inspected = await inspect.execute('inspect', { recovery_key: 'a'.repeat(64) })
+    expect(inspected.content[0]?.text).toContain('inspection_only')
+    expect(inspect.promptGuidelines?.join('\n')).toContain('不得按“继续”“恢复”等关键词单独判断')
+    expect(inspect.promptGuidelines?.join('\n')).toContain('不能创建另一份工作来绕过未知结果')
+    await recover.execute('recover', { resume_key: 'current-turn-resume-key' })
+
+    expect(requests.map(({ body }) => body.method)).toEqual(['activate', 'inspect_recovery', 'recover'])
+    expect(requests[1]?.body.params).toEqual({ recovery_key: 'a'.repeat(64), turn_key: 'employee-turn' })
+    expect(requests[2]?.body.params).toEqual({ resume_key: 'current-turn-resume-key', turn_key: 'employee-turn' })
   })
 
   it('keeps tool registrations namespaced', () => {
