@@ -73,7 +73,7 @@ describe('Weave handoff admission contract', () => {
       runID: 'run-parent', teamID: choice.teamId,
     }
 
-    await expect(f.service.submitWork(choice, '按补充材料继续复核', { ...f.source, continuation })).rejects.toThrow('原工作输入版本已变化')
+    await expect(f.service.submitWork(choice, '按补充材料继续复核', { ...f.source, continuation })).rejects.toThrow('旧事项不能覆盖后来的工作')
     const registration = f.calls.find((call) => call.path.endsWith('dispatch-inputs'))?.body
     expect(registration).toMatchObject({
       workbench_session_id: continuation.workbenchSessionID,
