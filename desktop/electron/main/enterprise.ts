@@ -1433,7 +1433,8 @@ export class EnterpriseService {
     const notificationList = record(notificationEnvelope?.data) ?? notificationEnvelope
     const items = (Array.isArray(notificationList?.notifications) ? notificationList.notifications : []).flatMap((value): EnterpriseWorkItem[] => {
       const notification = record(value), data = record(notification?.data), continuation = record(data?.continuation), material = record(data?.material)
-      const source = record(data?.source) ?? record(notification?.source)
+      const eventSource = record(data?.weaveEvent) ?? record(record(notification?.payload)?.weaveEvent)
+      const source = record(data?.source) ?? eventSource ?? record(notification?.source)
       const id = textValue(notification?.id), title = textValue(notification?.title), createdAt = textValue(notification?.createdAt) ?? textValue(notification?.created_at)
       if (!id || !title || !createdAt) return []
       const requestedKind = textValue(data?.kind)
@@ -1469,11 +1470,47 @@ export class EnterpriseService {
         ...(reviewScope === 'whole_team' || reviewScope === 'affected_members' || reviewScope === 'human_step' ? { reviewScope } : {}),
       }]
     }).filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index)
+    const sources = new Map<string, { workReference: string; runReference: string; sessionReference: string }>()
+    const sourceFor = async (item: EnterpriseWorkItem) => {
+      if (item.workReference && item.runReference && item.sessionReference) return {
+        workReference: item.workReference, runReference: item.runReference, sessionReference: item.sessionReference,
+      }
+      const cached = sources.get(item.id)
+      if (cached) return cached
+      try {
+        const verified = await this.getWorkNotificationSource(item.id)
+        if (item.notificationType !== `weave.team_run.${verified.kind}`) return undefined
+        const source = { workReference: verified.source.workReference, runReference: verified.source.runReference, sessionReference: verified.source.sessionReference }
+        sources.set(item.id, source)
+        return source
+      } catch { return undefined }
+    }
+    const superseded = new Set<string>()
+    for (const pending of items) {
+      if (pending.source !== 'weave' || pending.kind !== 'revision_required' || !pending.actionable
+        || !/^weave\.team_run\.revision_required$/.test(pending.notificationType ?? '')) continue
+      const parent = await sourceFor(pending)
+      if (!parent) continue
+      const later = items.filter((item) => item.source === 'weave' && item.id !== pending.id
+        && /^weave\.team_run\.(result|failure|revision_required|cancelled)$/.test(item.notificationType ?? '')
+        && Date.parse(item.createdAt) > Date.parse(pending.createdAt)).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+      for (const item of later) {
+        const next = await sourceFor(item)
+        if (next?.sessionReference === parent.sessionReference && next.workReference !== parent.workReference) {
+          superseded.add(pending.id)
+          break
+        }
+      }
+    }
+    const projectedItems = items.map((item) => ({
+      ...item, ...(sources.get(item.id) ?? {}),
+      ...(superseded.has(item.id) ? { actionable: false, status: 'completed' as const } : {}),
+    }))
     const runList = record(runsRead.value)
     this.assertAuthGeneration(generation)
     const readStatus = (error?: string): EnterpriseWorkReadStatus => error ? { status: 'failed', error } : { status: 'loaded' }
     return {
-      loadedAt: new Date().toISOString(), choices, tasks, items,
+      loadedAt: new Date().toISOString(), choices, tasks, items: projectedItems,
       runs: (Array.isArray(runList?.runs) ? runList.runs : []).flatMap((run) => runObservation(run) ?? []),
       reads: {
         runs: readStatus(runsRead.error), teamChoices: readStatus(teamChoicesError),
