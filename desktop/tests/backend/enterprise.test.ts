@@ -817,8 +817,8 @@ describe('EnterpriseService', () => {
     ])
     expect(context.input.materials[0]?.content).toContain('PDF PAGE 1: byte exact original.')
     expect(context.input.materials[1]?.content).toContain('DOCX 第一段：原件字节保持不变。')
-    expect(calls.find((call) => call.url.endsWith('/owner-pdf/original'))?.headers.get('if-match')).toBe(ownerMaterial.sha256)
-    expect(calls.find((call) => call.url.endsWith('/approval-docx/original'))?.headers.get('if-match')).toBe(approvalMaterial.sha256)
+    expect(calls.find((call) => call.url.endsWith('/owner-pdf/original'))?.headers.get('if-match')).toBe(`"${ownerMaterial.sha256}"`)
+    expect(calls.find((call) => call.url.endsWith('/approval-docx/original'))?.headers.get('if-match')).toBe(`"${approvalMaterial.sha256}"`)
     expect(calls.some((call) => call.url === 'http://forge/api/v1/workbench/materials/owner-pdf')).toBe(false)
     expect(calls.some((call) => call.url === 'http://forge/api/v1/workbench/materials/approval-docx')).toBe(false)
 
@@ -928,7 +928,7 @@ describe('EnterpriseService', () => {
     })
     expect(Buffer.from(context.originalFiles![0]!.bytesBase64, 'base64')).toEqual(source)
     const originalCall = calls.find((call) => call.url.endsWith('/files/approval-file-pdf/original'))!
-    expect(originalCall.headers.get('if-match')).toBe(sha256)
+    expect(originalCall.headers.get('if-match')).toBe(`"${sha256}"`)
     const view = approvalContextView(context)
     expect(view.originalFiles?.[0]).toMatchObject({ name: '验收附件.pdf', bytes: source.length, verified: true })
     expect(view.originalFiles?.[0]).not.toHaveProperty('fileId')
