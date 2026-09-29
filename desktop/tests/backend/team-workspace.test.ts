@@ -18,10 +18,15 @@ it('keeps workflow input bindings and structured output schemas unchanged across
   expect(body.document.members[0].configuration).not.toHaveProperty('business_capability_bindings')
   expect(body.document.workflows[0].graph_definition).toEqual(graph)
 
-  result.document.members[0].configuration.businessCapabilityBindings = [{ capabilityId: 'forge:action:example.submit', parameters: [{ name: 'material_file_id', source: 'materials.single.id' }] }]
+  result.document.members[0].configuration.businessCapabilityBindings = [{ capabilityId: 'forge:action:example.submit', parameters: [
+    { name: 'material_file_id', source: 'materials.single.id' },
+    { name: 'material_file_ids', source: 'materials.ids' },
+  ] }]
   await teamWorkspaceRequest({ action: 'save', teamId: 'team', revision: 2, document: result.document }, read, write)
   const boundBody = (write.mock.calls as unknown as Array<[string, string, unknown]>)[1][2]
-  expect(boundBody).toMatchObject({ document: { members: [{ configuration: { business_capability_bindings: [{ capability_id: 'forge:action:example.submit', parameters: [{ name: 'material_file_id', source: 'materials.single.id' }] }] } }] } })
+  expect(boundBody).toMatchObject({ document: { members: [{ configuration: { business_capability_bindings: [{ capability_id: 'forge:action:example.submit', parameters: [
+    { name: 'material_file_id', source: 'materials.single.id' }, { name: 'material_file_ids', source: 'materials.ids' },
+  ] }] } }] } })
 })
 
 it('freezes Forge action definitions into a development trial request', async () => {

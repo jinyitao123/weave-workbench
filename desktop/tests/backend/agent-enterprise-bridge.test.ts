@@ -1005,6 +1005,20 @@ describe('employee-bound material handoff', () => {
     expect(reopened.context.title).toBe('更新后的审批事项')
     expect(f.service.submitApprovalRevision).not.toHaveBeenCalled()
   })
+  it('accepts more than eleven individually verified returned approval files', async () => {
+    const f = await fixture()
+    const current = f.contexts.get('approval-1')!
+    const files = Array.from({ length: 12 }, (_, index) => {
+      const content = `第 ${index + 1} 份已提交材料\n`
+      return { fileId: `approval-file-${index + 1}`, name: `材料${index + 1}.txt`, mediaType: 'text/plain; charset=utf-8' as const,
+        bytes: Buffer.byteLength(content), sha256: digest(content), content, verified: true }
+    })
+    f.contexts.set('approval-1', { ...current, files })
+
+    const opened = await f.openReturned('approval-1')
+    expect(opened.context.files).toHaveLength(12)
+    expect(opened.context.files[11]?.content).toBe('第 12 份已提交材料\n')
+  })
   it('restores persisted review mode after runtime restart and fails closed when its binding is missing', async () => {
     const f = await fixture()
     const opened = await f.openApprovalReview()
