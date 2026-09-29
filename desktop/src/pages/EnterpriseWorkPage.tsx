@@ -15,7 +15,7 @@ interface EnterpriseWorkPageProps {
 
 const statusCopy = (status: string) => ({ parked: '等待处理', queued: '排队中', running: '处理中', success: '已完成', succeeded: '已完成', completed: '已完成', failed: '失败', cancelled: '已取消' })[status] ?? readableName(status, '状态更新中')
 const itemSourceCopy = (item: EnterpriseWorkItem) => item.source === 'weave' ? '团队执行消息' : 'Forge 业务通知'
-const canContinueItem = (item: EnterpriseWorkItem) => item.source === 'weave' && (
+const canContinueItem = (item: EnterpriseWorkItem) => item.source === 'forge' && item.kind === 'result' && Boolean(item.notificationType) || item.source === 'weave' && (
   Boolean(item.workReference && item.runReference && item.sessionReference)
   || /^weave\.team_run\.(result|failure|revision_required|cancelled)$/.test(item.notificationType ?? '')
 )
