@@ -358,6 +358,58 @@ describe('bootstrap account scope switching', () => {
     expect(container.textContent).toContain('Employee session')
     expect(container.textContent).not.toContain('Prime session')
   })
+
+  it('does not restore the old account catalog when the new account load fails', async () => {
+    const newProjects = deferred<ProjectRecord[]>()
+    const newSessions = deferred<SessionRecord[]>()
+    const failure = new Error('new account unavailable')
+    let switched = false
+    const bridge = {
+      projects: { list: () => switched ? newProjects.promise : Promise.resolve([primeProject]) },
+      sessions: { list: () => switched ? newSessions.promise : Promise.resolve([primeSession]), onChanged: () => () => undefined },
+      agent: { list: () => switched ? Promise.reject(failure) : Promise.resolve([]) },
+      app: { getMeta: () => switched ? Promise.reject(failure) : Promise.resolve(meta) },
+      schedules: { list: () => switched ? Promise.reject(failure) : Promise.resolve([]) },
+    } as unknown as PrimeWorkApi
+    const workspaceRef = { current: { generation: 0 } as { generation: number; project?: ProjectRecord; session?: SessionRecord; cwd?: string; sessionFile?: string } }
+    const runtimeSessionsRef = { current: new Map<string, string>() }
+    const reportError = vi.fn()
+    const setScheduleError = vi.fn()
+    const setSchedules = vi.fn()
+    const attachRuntime = vi.fn()
+    const activateWorkspace = (project?: ProjectRecord, session?: SessionRecord) => {
+      const generation = workspaceRef.current.generation + 1
+      workspaceRef.current = { generation, project, session, cwd: project?.primaryFolder, sessionFile: session?.filePath }
+      return generation
+    }
+    function BootstrapProbe({ accountScope }: { accountScope?: string }) {
+      const [projects, setProjects] = useState<ProjectRecord[]>([])
+      const [sessions, setSessions] = useState<SessionRecord[]>([])
+      const { catalogReady } = useBootstrap({
+        bridge, accountScope, setProjects, setSessions, setSchedules, setScheduleError,
+        runtimeSessionsRef, workspaceRef, activateWorkspace, attachRuntime, reportError,
+      })
+      return <div>{catalogReady ? `${projects.length} projects; ${sessions.map((session) => session.title).join(', ')}` : 'workspace loading'}</div>
+    }
+
+    await act(async () => { root.render(<BootstrapProbe />); await Promise.resolve(); await Promise.resolve() })
+    expect(container.textContent).toContain('Prime session')
+
+    switched = true
+    await act(async () => { root.render(<BootstrapProbe accountScope="organization:employee" />) })
+    expect(container.textContent).toBe('workspace loading')
+    expect(container.textContent).not.toContain('Prime session')
+
+    await act(async () => {
+      newProjects.reject(failure)
+      newSessions.reject(failure)
+      await Promise.allSettled([newProjects.promise, newSessions.promise])
+      await Promise.resolve()
+    })
+    expect(container.textContent).toBe('0 projects; ')
+    expect(reportError).toHaveBeenCalledWith(failure)
+    expect(setScheduleError).toHaveBeenCalledWith('new account unavailable')
+  })
 })
 
 describe('inactive harness event isolation', () => {

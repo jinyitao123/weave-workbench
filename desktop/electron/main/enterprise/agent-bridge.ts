@@ -5,7 +5,7 @@ import { CapabilityBridge, type CapabilityClaim } from '../lib/capability-bridge
 import { canonicalSessionPath } from '../session-paths'
 import { rejectUnknownKeys, requireString } from '../validation'
 import { digest, HandoffStore, submissionUUID, type HandoffStorage } from './handoff-store'
-import { executionText, freezeMaterials, makeFrozenTextMaterial, materialSelection, normalizeFrozenMaterial, normalizeFrozenMaterials, validateFrozenApprovalOriginalMaterial, validateFrozenMaterial, type FrozenMaterial, type MaterialLimits } from './materials'
+import { executionText, freezeMaterials, makeFrozenTextMaterial, materialSelection, normalizeFrozenMaterial, normalizeFrozenMaterials, validateFrozenApprovalOriginalMaterial, validateFrozenMaterial, type FrozenMaterial, type MaterialLimits, type ReusedMaterial } from './materials'
 import { searchTeams, type TeamSummary } from './team-catalog'
 import { splitWorkspaceMaterialContext } from '../../../src/lib/workspace-material-attachments'
 import { businessReadErrorResult, type BusinessObjectDirectory, type BusinessRecordCandidate, type BusinessRecordRead, type BusinessRecordSearchPage, type BusinessRecordSnapshot } from './business-records'
@@ -21,7 +21,10 @@ export interface AgentEnterpriseBridgeOptions {
 }
 interface FrozenHandoffIntent {
   task: string
+  /** Materials attached in this employee turn; only these are uploaded during staging. */
   materials: FrozenMaterial[]
+  /** Exact existing Forge references selected from the current needs_input parent input. */
+  reusedMaterials?: ReusedMaterial[]
   authorizedBusinessCapabilityIds: string[]
   sourceMessages: Array<{ messageId: string; eventSeq: number; sha256: string }>
   employeeMessageId: string
@@ -115,7 +118,7 @@ interface ReturnedRevisionProgress {
   receipt?: ReturnedRevisionReceipt
   message?: string
 }
-const REVISION_MATERIAL_LIMITS: MaterialLimits = { maxFiles: 10, maxFileBytes: 2 * 1024 * 1024, maxTotalBytes: 8 * 1024 * 1024, maxTotalExtractedBytes: 700_000 }
+const REVISION_MATERIAL_LIMITS: MaterialLimits & { maxFiles: number } = { maxFiles: 10, maxFileBytes: 2 * 1024 * 1024, maxTotalBytes: 8 * 1024 * 1024, maxTotalExtractedBytes: 700_000 }
 function messageText(message: TranscriptMessage): string {
   return message.parts.flatMap((part) => part.type === 'text' || part.type === 'agentMessage' ? [part.text] : []).join('\n').trim()
 }
@@ -137,6 +140,56 @@ function returnedApprovalFingerprint(context: EnterpriseApprovalContext): string
 }
 function workContinuationFingerprint(context: EnterpriseWorkContinuationContext): string {
   return digest(JSON.stringify({ source: context.source, input: context.input, finalResult: context.run.finalResult ?? null, actionOutcomes: context.run.actionOutcomes ?? null }))
+}
+function reuseMaterialsFromContinuation(bound: BoundWorkContinuation | undefined, rawNames: unknown, accountKey: string): ReusedMaterial[] {
+  if (rawNames === undefined) return []
+  if (!Array.isArray(rawNames) || rawNames.some((name) => typeof name !== 'string')) {
+    throw new Error('复用材料选择无效，请从当前工作中选择已冻结文件名')
+  }
+  if (!rawNames.length) return []
+  if (!bound || bound.accountKey !== accountKey || bound.context.run.status !== 'succeeded'
+    || bound.context.run.finalResult?.disposition !== 'needs_input') {
+    throw new Error('只有当前员工打开的“需要补充”工作可以复用原冻结材料')
+  }
+  const names = rawNames.map((name) => {
+    const normalized = name.trim()
+    if (!normalized || normalized.length > 255 || normalized !== name || normalized.includes('\0')) {
+      throw new Error('复用材料必须使用当前工作显示的完整文件名')
+    }
+    return normalized
+  })
+  if (new Set(names).size !== names.length) throw new Error('同一冻结材料不能重复选择')
+  const selected = names.map((name) => {
+    const matches = bound.context.input.materials.filter((material) => material.name === name)
+    if (matches.length !== 1) throw new Error(matches.length
+      ? `原工作中有多份同名材料“${name}”，无法安全判断要复用哪一份`
+      : `原工作中没有唯一匹配的冻结材料“${name}”`)
+    const material = matches[0]!
+    if (!material.content || !material.mediaType || !material.materialId || !material.sha256
+      || !material.bytes || !material.id) throw new Error(`原工作材料“${name}”缺少经核验的固定引用`)
+    if (material.mediaType === 'application/pdf' || material.mediaType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      if (!material.sourceKind || material.sourceKind === 'approval' && !material.requestId
+        || material.sourceKind === 'owner' && material.requestId !== undefined) {
+        throw new Error(`原工作材料“${name}”的受控来源与冻结引用不匹配`)
+      }
+    } else if (material.sourceKind !== undefined || material.requestId !== undefined) {
+      throw new Error(`原工作材料“${name}”的来源字段不匹配`)
+    }
+    return {
+      type: 'forge-file' as const,
+      id: material.id,
+      materialId: material.materialId,
+      ...(material.sourceKind ? { sourceKind: material.sourceKind } : {}),
+      ...(material.requestId ? { requestId: material.requestId } : {}),
+      name: material.name,
+      mediaType: material.mediaType as ReusedMaterial['mediaType'],
+      bytes: material.bytes,
+      sha256: material.sha256,
+      content: material.content,
+      ...(material.extraction ? { extraction: structuredClone(material.extraction) } : {}),
+    }
+  })
+  return selected
 }
 function assertReturnedApproval(context: EnterpriseApprovalContext, requestId?: string): asserts context is EnterpriseApprovalContext & {
   status: 'returned'; viewer: 'original_submitter'; returnVersion: string; returnReason: string
@@ -704,6 +757,25 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (intent.accountKey !== turn.accountKey || intent.sessionKey !== digest(claim.sessionPath!).slice(0, 24)) {
       throw new Error('该交接不属于当前员工与会话')
     }
+    if (intent.reusedMaterials?.length) {
+      const continuation = turn.workContinuation?.context
+      const parent = intent.continuation
+      if (!continuation || !parent || parent.workbenchSessionID !== continuation.source.workbenchSessionID
+        || parent.inputRevisionID !== continuation.source.inputRevisionID || parent.runID !== continuation.source.runID
+        || parent.teamID !== continuation.input.teamID || intent.choice.teamId !== parent.teamID
+        || continuation.run.status !== 'succeeded' || continuation.run.finalResult?.disposition !== 'needs_input') {
+        throw new Error('复用材料恢复请求与当前需要补充事项不匹配')
+      }
+      for (const reused of intent.reusedMaterials) {
+        const matches = continuation.input.materials.filter((material) => material.id === reused.id
+          && material.materialId === reused.materialId && material.name === reused.name
+          && material.mediaType === reused.mediaType && material.bytes === reused.bytes
+          && material.sha256 === reused.sha256 && material.sourceKind === reused.sourceKind
+          && material.requestId === reused.requestId && material.content === reused.content
+          && JSON.stringify(material.extraction ?? null) === JSON.stringify(reused.extraction ?? null))
+        if (matches.length !== 1) throw new Error('复用材料恢复请求的文件版本或来源已变化')
+      }
+    }
   }
   private async assertFrozenSourceMessages(intent: FrozenHandoffIntent, claim: CapabilityClaim): Promise<void> {
     const sourceMessages = intent.sourceMessages
@@ -795,6 +867,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       if (!action) throw new Error('业务动作不属于本轮查看的团队能力')
       return action.id
     }).sort()
+    const reusedMaterials = reuseMaterialsFromContinuation(workContinuation, params.reuse_material_names, turn.accountKey)
     const businessRecordKey = typeof params.business_record_key === 'string' ? params.business_record_key.trim() : ''
     const selectedBusinessContext = businessRecordKey ? this.businessRecords.get(claim.token)?.get(businessRecordKey) : undefined
     if (businessRecordKey && !selectedBusinessContext) throw new Error('业务记录选择已失效，请按当前工作重新查找')
@@ -817,7 +890,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (selections.some((item) => !authorizedMaterialKeys.has(`${item.path}\u0000${item.sha256}`))) {
       throw new Error('只能交接本轮消息中实际附加的材料；如需复用旧文件，请先在本轮重新附加并核对版本')
     }
-    if (selections.length === 0 && !businessContext) throw new Error('没有本次授权的文件或已读取的业务记录，无法交接')
+    if (selections.length === 0 && reusedMaterials.length === 0 && !businessContext) throw new Error('没有本次授权的文件、已授权复用的原材料或已读取的业务记录，无法交接')
     for (const actionKey of actionKeys) {
       const action = actionMap.get(actionKey)!
       if (action.requiresRecord !== false && (!businessContext || businessContext.objectName !== action.resourceType)) throw new Error('请先按当前工作查找并绑定该动作所需的业务记录')
@@ -853,15 +926,20 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       })),
       key, authorizedBusinessCapabilityIds, businessContext, businessSnapshot: businessSnapshot ?? null,
       continuation: workContinuation?.context.source,
+      reusedMaterials: reusedMaterials.map(({ id, materialId, sourceKind, requestId, name, mediaType, bytes, sha256 }) => ({ id, materialId, sourceKind, requestId, name, mediaType, bytes, sha256 })),
     }))
     const intent = await this.store.freeze<FrozenHandoffIntent>(identity, fingerprint, async () => {
       const current = await this.options.service.getTeamChoices({ id: choice.teamId, name: choice.teamName })
       if (!current.some((item) => handoffKey(item) === key)) throw new Error('承接流程版本已经变化，请重新查找')
       const materials = await freezeMaterials(claim.cwd, selections)
-      const task = executionText(goal, materials, businessSnapshot)
+      if (materials.some((material) => reusedMaterials.some((reused) => reused.materialId === material.materialId))) {
+        throw new Error('本轮附件与复用的原材料是同一文件版本，请只选择一种来源')
+      }
+      const task = executionText(goal, materials, businessSnapshot, reusedMaterials)
       await this.evidence(claim, turn)
+      await this.assertWorkContinuationCurrent(claim, turn)
       return {
-        task, materials, authorizedBusinessCapabilityIds, sourceMessages, employeeMessageId, choice,
+        task, materials, reusedMaterials, authorizedBusinessCapabilityIds, sourceMessages, employeeMessageId, choice,
         accountKey: turn.accountKey, idempotencySeed, sessionKey,
         ...(businessContext ? { businessContext } : {}),
         ...(businessSnapshot ? { businessSnapshot } : {}),
@@ -1148,16 +1226,39 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   private async prepareDelivery(claim: CapabilityClaim, turn: EmployeeTurn, intent: FrozenHandoffIntent, recoveryKey: string): Promise<unknown> {
     try {
       const materials = normalizeFrozenMaterials(intent.materials)
-      const resourcesFingerprint = digest(JSON.stringify(materials.map(({ name, bytes, sha256, sourceKind }) => ({ name, bytes, sha256, sourceKind }))))
+      const reusedMaterials = intent.reusedMaterials ?? []
+      const reusedResources: EnterpriseWorkResource[] = reusedMaterials.map(({ id, materialId, sourceKind, requestId, name, mediaType, bytes, sha256 }) => ({
+        type: 'forge-file', id, materialId, name, mediaType, bytes, sha256,
+        ...(sourceKind ? { sourceKind } : {}), ...(requestId ? { requestId } : {}),
+      }))
+      if (new Set(reusedResources.map(({ id }) => id)).size !== reusedResources.length
+        || new Set(reusedResources.map(({ materialId }) => materialId)).size !== reusedResources.length
+        || materials.some((material) => reusedResources.some((resource) => resource.materialId === material.materialId))) {
+        throw new Error('复用材料清单包含重复或冲突的固定引用')
+      }
+      const resourcesFingerprint = digest(JSON.stringify({
+        parent: intent.continuation ?? null,
+        reusedResources: reusedResources.map(({ id, materialId, sourceKind, requestId, name, mediaType, bytes, sha256 }) => ({ id, materialId, sourceKind, requestId, name, mediaType, bytes, sha256 })),
+        newMaterials: materials.map(({ name, bytes, sha256, sourceKind, materialId }) => ({ name, bytes, sha256, sourceKind, materialId })),
+      }))
       const frozen = await this.store.freeze<FrozenHandoff>(`${intent.accountKey}:${intent.idempotencySeed}:resources`, resourcesFingerprint, async () => {
-        const resources = materials.length
-          ? await this.options.service.stageWorkMaterials(materials, async () => { await this.evidence(claim, turn) })
+        const stagedResources = materials.length
+          ? await this.options.service.stageWorkMaterials(materials, async () => {
+              await this.evidence(claim, turn)
+              await this.assertWorkContinuationCurrent(claim, turn)
+            })
           : []
         await this.evidence(claim, turn)
-        return { ...intent, materials, resources }
+        return { ...intent, materials, reusedMaterials, resources: [...reusedResources, ...stagedResources] }
       })
-      if (frozen.resources.length !== materials.length || frozen.resources.some((resource, index) => {
-        const material = materials[index]!
+      if (frozen.resources.length !== reusedResources.length + materials.length || frozen.resources.some((resource, index) => {
+        if (index < reusedResources.length) {
+          const expected = reusedResources[index]!
+          return resource.type !== 'forge-file' || resource.id !== expected.id || resource.materialId !== expected.materialId
+            || resource.name !== expected.name || resource.mediaType !== expected.mediaType || resource.bytes !== expected.bytes
+            || resource.sha256 !== expected.sha256 || resource.sourceKind !== expected.sourceKind || resource.requestId !== expected.requestId
+        }
+        const material = materials[index - reusedResources.length]!
         return resource.type !== 'forge-file' || !resource.id || resource.name !== material.name
           || resource.bytes !== material.bytes || resource.sha256 !== material.sha256
           || (resource.mediaType !== undefined && resource.mediaType !== material.mediaType)
@@ -1165,10 +1266,10 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           || resource.requestId !== undefined
           || (resource.materialId !== undefined && resource.materialId !== material.materialId)
       })) throw new Error('Forge 文件引用与本地固定材料清单不一致')
-      const resources = frozen.resources.map((resource, index) => ({
-        ...resource, materialId: materials[index]!.materialId, mediaType: materials[index]!.mediaType,
-      }))
-      return this.deliver(claim, turn, { ...frozen, materials, resources }, recoveryKey)
+      const resources = frozen.resources.map((resource, index) => index < reusedResources.length
+        ? resource
+        : { ...resource, materialId: materials[index - reusedResources.length]!.materialId, mediaType: materials[index - reusedResources.length]!.mediaType })
+      return this.deliver(claim, turn, { ...frozen, materials, reusedMaterials, resources }, recoveryKey)
     } catch (error) {
       return {
         status: 'unknown', recovery_key: recoveryKey,
@@ -1229,7 +1330,10 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         status: 'accepted', team: frozen.choice.teamName, workflow: frozen.choice.workflowName,
         repeated: receipt.repeated, recovery_key: recoveryKey,
         ...(continuationLinked === false ? { next_step: '团队已在原工作下接单。后续继续时请从新工作消息打开，以核对最新版本。' } : {}),
-        materials: frozen.materials.map(({ name, bytes, sha256 }) => ({ name, bytes, sha256 })),
+        materials: [
+          ...(frozen.reusedMaterials ?? []).map(({ name }) => ({ name })),
+          ...frozen.materials.map(({ name }) => ({ name })),
+        ],
         receipt,
       }
     }).catch((error: unknown) => error instanceof WorkRegistrationRejectedError ? {

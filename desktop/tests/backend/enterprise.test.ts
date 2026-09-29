@@ -699,6 +699,50 @@ describe('EnterpriseService', () => {
     await expect(service.getWorkContinuationContext({ ...references, sessionReference: 'another-session' })).rejects.toThrow('工作消息与原团队工作不匹配')
   })
 
+  it('reads more than eight small frozen material references within the byte budgets', async () => {
+    const task = '按固定输入继续核对。'
+    const sha256 = (value: string) => createHash('sha256').update(value, 'utf8').digest('hex')
+    const files = Array.from({ length: 9 }, (_, index) => {
+      const content = `第 ${index + 1} 份小材料`
+      const name = `附件-${index + 1}.txt`
+      const id = `forge-text-${index + 1}`
+      return {
+        id, name, mediaType: 'text/plain', bytes: Buffer.byteLength(content), sha256: sha256(content),
+        materialId: digest(JSON.stringify([name, 'text/plain', sha256(content)])).slice(0, 24), content,
+      }
+    })
+    const payload = {
+      version: '1',
+      source: { input_revision_id: '10000000-0000-4000-8000-000000000001', run_id: 'run-nine-files', workbench_session_id: 'workbench-session-nine-files' },
+      input: {
+        task, task_sha256: sha256(task), team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 2,
+        materials: files.map(({ id, name, mediaType, bytes, sha256: hash, materialId }) => ({
+          type: 'forge-file', id, name, mediaType, bytes, sha256: hash, materialId,
+        })),
+        source_messages: [{ message_id: 'employee-message', event_seq: 1, sha256: sha256('员工要求') }],
+      },
+      run: { status: 'succeeded' },
+    }
+    const fetchMock = workOverviewFetch((url) => {
+      if (url.endsWith('/workbench-context')) return Response.json(payload)
+      const file = files.find((item) => url.endsWith(`/api/v1/workbench/materials/${item.id}`))
+      if (file) return Response.json({
+        version: '1', fileId: file.id, name: file.name, mediaType: 'text/plain; charset=utf-8',
+        bytes: file.bytes, sha256: file.sha256, content: file.content,
+      })
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('employee@example.test', 'secret')
+
+    const continuation = await service.getWorkContinuationContext({
+      workReference: payload.source.input_revision_id, runReference: payload.source.run_id,
+      sessionReference: payload.source.workbench_session_id,
+    })
+    expect(continuation.input.materials).toHaveLength(9)
+    expect(continuation.input.materials.map(({ name }) => name)).toEqual(files.map(({ name }) => name))
+  })
+
   it('reads a missing Weave source only through the current Forge-owned notification endpoint', async () => {
     let body: Record<string, unknown> = {
       version: '1', notificationId: 'native-notice-1', kind: 'revision_required',

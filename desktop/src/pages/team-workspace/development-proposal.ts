@@ -206,7 +206,7 @@ export function applyTeamDevelopmentOperations(base: TeamDefinition, raw: unknow
         const actor = operation.member === undefined ? undefined : member(operation.member)
         const parallelBranchWorker = isParallelBranchWorker(target.graph_definition, stepId)
         if (actor && (!['lead', 'worker'].includes(current.type) || !actor.relationship.enabled || parallelBranchWorker && actor.configuration.role !== 'worker')) throw new Error('该步骤不能分配给所选成员')
-        if (!name && !requirement && !actor) throw new Error('步骤修改缺少目标字段')
+        if (!name && !requirement && !actor) throw new Error('步骤修改需要 name、requirement 或 member；修改处理指令请填写 requirement')
         target.graph_definition = { ...target.graph_definition, nodes: target.graph_definition.nodes.map((node) => node.id === stepId ? {
           ...node, ...(name ? { label: name } : {}), ...(actor ? { type: actor.configuration.role === 'avatar' ? 'lead' : 'worker' } : {}), config: actor?.configuration.role === 'avatar' ? {
             instruction: requirement ?? String(current.config?.instruction ?? current.config?.result_requirement ?? actor.configuration.systemPrompt),

@@ -16,9 +16,9 @@ import type { TeamDefinition, TeamDevelopmentProposalResult, TeamWorkspaceBridge
 
 const pendingDrafts = new Map<string, { revision: number; document: TeamDefinition }>()
 
-export function TeamDevelopmentWorkspace({ teamId, accountId, runtime, enterprise, overview, catalog, catalogError, proposal, bindRequested, view, onBound, onClearProposal, onDirtyChange, onError, onPublish }: {
+export function TeamDevelopmentWorkspace({ teamId, accountId, runtime, enterprise, overview, catalog, catalogError, proposal, bindRequested, refreshVersion, view, onBound, onClearProposal, onDirtyChange, onError, onPublish }: {
   teamId: string; accountId: string; runtime?: RuntimeInfo | null; enterprise: PrimeWorkApi['enterprise']; overview?: EnterpriseDevelopmentOverview
-  catalog?: EnterpriseBusinessCapabilityCatalog; catalogError: string; proposal?: TeamDevelopmentProposalResult; bindRequested: boolean; view: 'division' | 'workflow'
+  catalog?: EnterpriseBusinessCapabilityCatalog; catalogError: string; proposal?: TeamDevelopmentProposalResult; bindRequested: boolean; refreshVersion?: number; view: 'division' | 'workflow'
   onBound(): void; onClearProposal(): void; onDirtyChange(dirty: boolean): void; onError(message: string): void; onPublish(): void
 }) {
   const bridge = useCallback<TeamWorkspaceBridge>((command) => enterprise.teamWorkspace({ ...command, accountId }), [enterprise, accountId])
@@ -40,6 +40,8 @@ export function TeamDevelopmentWorkspace({ teamId, accountId, runtime, enterpris
   const [flowDescription, setFlowDescription] = useState('')
   const [stepForm, setStepForm] = useState<{ placement: 'serial' | 'parallel'; after: string; member: string; name: string; requirement: string }>()
   const [working, setWorking] = useState(false)
+
+  useEffect(() => { if ((refreshVersion ?? 0) > 0 && !dirty) void workspace.load() }, [refreshVersion])
 
   useEffect(() => {
     if (!draft || restored.current) return

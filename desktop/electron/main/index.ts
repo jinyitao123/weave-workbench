@@ -35,7 +35,7 @@ import { AgentBrowserService } from './browser/agent-service'
 import { AgentCollaborationBridge } from './collaboration/agent-bridge'
 import { AgentEnterpriseBridge } from './enterprise/agent-bridge'
 import { TeamDevelopmentAgentBridge } from './development/agent-bridge'
-import type { TeamDevelopmentContextInput, TeamWorkspace } from '../../src/types/team-workspace'
+import type { TeamDevelopmentContextInput, TeamWorkspace, TeamWorkspaceCommand } from '../../src/types/team-workspace'
 import { configureGooeyPiAgentMessageSigning, loadOrCreateGooeyPiAgentMessageKey } from './collaboration/message-envelope'
 import { extensionInjection, resolveExtensionPath, type ExtensionCapability } from './extension-manifest'
 import { SessionService } from './sessions'
@@ -897,6 +897,7 @@ async function bootstrap(): Promise<void> {
     developer: async () => { const session = await enterprise.getSession(); if (session.status !== 'signed-in' || !session.permissions?.includes('teams:develop') || !session.user?.id) throw new Error('当前账号没有团队开发权限'); return { accountId: session.user.id } },
     teams: async () => (await enterprise.getDevelopmentOverview()).teams.filter((team) => team.status !== 'archived').map((team) => ({ id: team.id, name: team.name, objective: team.objective })),
     team: (teamId, accountId) => enterprise.teamWorkspace({ action: 'get', teamId, accountId }) as Promise<TeamWorkspace>,
+    workspace: (command: TeamWorkspaceCommand) => enterprise.teamWorkspace(command),
     catalog: () => enterprise.getBusinessCapabilityCatalog(),
     extensionPath: teamDevelopmentExtensionPath,
     storage: {

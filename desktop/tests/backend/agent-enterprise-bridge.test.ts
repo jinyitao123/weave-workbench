@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AgentEnterpriseBridge } from '../../electron/main/enterprise/agent-bridge'
 import { digest, submissionUUID } from '../../electron/main/enterprise/handoff-store'
-import { freezeApprovalOriginalMaterial, normalizeFrozenMaterial, type FrozenMaterial } from '../../electron/main/enterprise/materials'
+import { freezeApprovalOriginalMaterial, freezeMaterials, normalizeFrozenMaterial, type FrozenMaterial } from '../../electron/main/enterprise/materials'
 import type { EnterpriseApprovalContext, TranscriptMessage } from '../../src/types/api'
 import { WorkRegistrationRejectedError, type EnterpriseWorkContinuationContext, type EnterpriseWorkNotificationSource } from '../../electron/main/enterprise'
 import { ForgeBusinessReadError, type BusinessRecordSnapshot } from '../../electron/main/enterprise/business-records'
@@ -170,6 +170,24 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
   }
   await input(appendWorkspaceMaterialContext('这版给他们看看', [materialReference]), 'employee-turn-1')
   return { call, callWithTurn, input, getTurnKey: () => turnKey, relogin, discover, findRecord, openReturned, service, bridge, environment, materials, cwd, transcript, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, businessCandidate, businessSnapshot }
+}
+
+async function openNeedsInputContinuation(f: Awaited<ReturnType<typeof fixture>>, context: EnterpriseWorkContinuationContext, id: string) {
+  f.service.getWorkContinuationContext.mockImplementation(async (references) => {
+    const current = structuredClone(context)
+    current.source.inputRevisionID = references.workReference
+    current.source.runID = references.runReference
+    current.source.workbenchSessionID = references.sessionReference
+    return current
+  })
+  const source = { workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' }
+  const binding = await f.bridge.pinWorkContinuationContext({ id, source: 'weave', ...source })
+  const prompt = `继续原工作\n${binding.context.materials.map((item) => `《${item.name}》`).join('、')}`
+  await f.bridge.employeeCommand('runtime', { type: 'prompt', message: prompt }, undefined, binding.handle)
+  f.transcript.push(user(`opened-${id}`, prompt))
+  const activated = await f.call('activate', { prompt })
+  expect(activated.status, JSON.stringify(activated.body)).toBe(200)
+  return source
 }
 
 describe('employee-bound material handoff', () => {
@@ -606,6 +624,210 @@ describe('employee-bound material handoff', () => {
     const resources = f.service.submitWork.mock.calls[0]![2]!.resources
     expect(resources![0]).toMatchObject({ sourceKind: 'owner', name: '验收附件.pdf', bytes: source.length, sha256: digest(source) })
     expect(resources![0]).not.toHaveProperty('requestId')
+  })
+  it('accepts more than eight small files under the existing byte and extraction budgets', async () => {
+    const f = await fixture()
+    const references = Array.from({ length: 9 }, (_, index) => {
+      const path = `材料/附件/补充-${index + 1}.md`
+      const content = `补充材料 ${index + 1}`
+      return { path, content, sha256: digest(content) }
+    })
+    await Promise.all(references.map(({ path, content }) => writeFile(join(f.cwd, path), content)))
+    const attachments = references.map(({ path, content, sha256 }) => ({
+      projectId: 'project-test', harness: 'pi' as const, workspacePath: f.cwd,
+      name: path.split('/').at(-1)!, path, sha256, bytes: Buffer.byteLength(content), mimeType: 'text/markdown' as const,
+    }))
+    await f.input(appendWorkspaceMaterialContext('请把这九份补充材料交给合同团队检查。', attachments), 'employee-nine-small-files')
+    const discovered = await f.discover()
+    const submitted = await f.call('submit', {
+      ...discovered,
+      materials: references.map(({ path, sha256 }) => ({ path, sha256 })),
+    })
+
+    expect(submitted.status).toBe(200)
+    expect(submitted.body.result.status).toBe('accepted')
+    expect(f.service.stageWorkMaterials.mock.calls[0]?.[0]).toHaveLength(9)
+    const request = f.service.submitWork.mock.calls[0]
+    expect(request?.[2]?.resources).toHaveLength(9)
+    expect((JSON.parse(request![1]) as { materials: unknown[] }).materials).toHaveLength(9)
+  })
+  it('reuses one exact parent DOCX with a new PDF, stages only the new attachment, and recovers the same fixed input', async () => {
+    const f = await fixture()
+    const docxPath = '材料/附件/合同样例.docx'
+    const docxSource = await readFile(new URL('../../../scenarios/sales-contract-handoff/materials/合同样例.docx', import.meta.url))
+    await writeFile(join(f.cwd, docxPath), docxSource)
+    const [docx] = await freezeMaterials(f.cwd, [{ path: docxPath, sha256: digest(docxSource) }])
+    if (!docx) throw new Error('DOCX fixture did not freeze')
+    const parentContext = workContinuationContext()
+    parentContext.run.finalResult = {
+      ...parentContext.run.finalResult!, disposition: 'needs_input',
+      summary: '还缺一份补充材料。', missingItems: ['补充 PDF'],
+    }
+    parentContext.input.materials.push({
+      id: 'forge-original-docx', materialId: docx.materialId, sourceKind: 'owner',
+      name: docx.name, mediaType: docx.mediaType, bytes: docx.bytes, sha256: docx.sha256,
+      content: docx.extraction.content, extraction: docx.extraction,
+    })
+    const source = await openNeedsInputContinuation(f, parentContext, 'notice-needs-input-docx')
+
+    const pdfSource = await readFile(new URL('../fixtures/materials/sample-two-page.pdf', import.meta.url))
+    const pdfPath = '材料/附件/补充材料.pdf'
+    await writeFile(join(f.cwd, pdfPath), pdfSource)
+    const pdfReference = {
+      projectId: 'project-test', harness: 'pi' as const, workspacePath: f.cwd,
+      name: '补充材料.pdf', path: pdfPath, sha256: digest(pdfSource), bytes: pdfSource.length, mimeType: 'application/pdf' as const,
+    }
+    const employeePrompt = appendWorkspaceMaterialContext(
+      '请把补充 PDF 交给原合同团队，并明确复用这份已冻结的合同样例 DOCX。', [pdfReference],
+    )
+    await f.input(employeePrompt, 'employee-needs-input-pdf')
+    const discovered = await f.discover()
+    f.service.submitWork.mockRejectedValueOnce(new Error('dispatch response lost after server acceptance'))
+    const submitted = await f.call('submit', {
+      ...discovered,
+      goal: '结合已冻结的合同样例和本轮补充 PDF 重新检查缺项。',
+      materials: [{ path: pdfPath, sha256: digest(pdfSource) }],
+      reuse_material_names: [docx.name],
+    })
+    expect(submitted.body.result.status).toBe('unknown')
+    const recoveryKey = submitted.body.result.recovery_key as string
+    const recovered = await f.call('recover', { recovery_key: recoveryKey })
+    expect(recovered.body.result.status).toBe('accepted')
+
+    expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
+    const staged = f.service.stageWorkMaterials.mock.calls[0]?.[0]
+    expect(staged).toHaveLength(1)
+    expect(staged?.[0]).toMatchObject({ name: '补充材料.pdf', sourceKind: 'owner', sha256: digest(pdfSource) })
+    const [firstCall, retryCall] = f.service.submitWork.mock.calls
+    expect(firstCall?.[2]?.idempotencySeed).toContain('employee-needs-input-pdf')
+    expect(firstCall?.[2]?.idempotencySeed).toBe(retryCall?.[2]?.idempotencySeed)
+    expect(firstCall?.[2]?.resources).toEqual(retryCall?.[2]?.resources)
+    expect(firstCall?.[2]?.continuation).toEqual({
+      workbenchSessionID: source.sessionReference, inputRevisionID: source.workReference,
+      runID: source.runReference, teamID: 'team-contract',
+    })
+    expect(firstCall?.[2]?.resources).toMatchObject([
+      { id: 'forge-original-docx', materialId: docx.materialId, name: docx.name, sourceKind: 'owner', sha256: docx.sha256 },
+      { name: '补充材料.pdf', sourceKind: 'owner', sha256: digest(pdfSource) },
+    ])
+    const task = JSON.parse(firstCall![1]) as { materials: Array<Record<string, unknown>> }
+    expect(task.materials.map(({ name }) => name)).toEqual([docx.name, '补充材料.pdf'])
+    expect(task.materials[0]).toMatchObject({ sha256: docx.sha256, extraction: { sourceSha256: docx.sha256, content: docx.extraction.content } })
+    expect(task.materials[1]).toMatchObject({ sha256: digest(pdfSource), extraction: { sourceSha256: digest(pdfSource) } })
+    expect(JSON.stringify(firstCall?.[2]?.resources)).not.toContain(docx.bytesBase64)
+    expect(recovered.body.result.materials).toEqual([{ name: docx.name }, { name: '补充材料.pdf' }])
+  })
+  it('rejects ambiguous, stale, and wrong-source reuse before staging any new attachment', async () => {
+    const f = await fixture()
+    const docxPath = '材料/附件/合同样例.docx'
+    const docxSource = await readFile(new URL('../../../scenarios/sales-contract-handoff/materials/合同样例.docx', import.meta.url))
+    await writeFile(join(f.cwd, docxPath), docxSource)
+    const [docx] = await freezeMaterials(f.cwd, [{ path: docxPath, sha256: digest(docxSource) }])
+    if (!docx) throw new Error('DOCX fixture did not freeze')
+    const parentContext = workContinuationContext()
+    parentContext.run.finalResult = { ...parentContext.run.finalResult!, disposition: 'needs_input', summary: '缺件', missingItems: ['PDF'] }
+    parentContext.input.materials.push({
+      id: 'forge-original-docx', materialId: docx.materialId, sourceKind: 'owner', name: docx.name,
+      mediaType: docx.mediaType, bytes: docx.bytes, sha256: docx.sha256,
+      content: docx.extraction.content, extraction: docx.extraction,
+    })
+    const duplicate = {
+      ...parentContext.input.materials[0]!, id: 'another-forge-original-docx',
+      sha256: digest('different original'), materialId: digest('different material').slice(0, 24),
+    }
+    parentContext.input.materials.push(duplicate)
+    await openNeedsInputContinuation(f, parentContext, 'notice-needs-input-ambiguous')
+
+    const pdfSource = await readFile(new URL('../fixtures/materials/sample-two-page.pdf', import.meta.url))
+    const pdfPath = '材料/附件/补充材料.pdf'
+    await writeFile(join(f.cwd, pdfPath), pdfSource)
+    const reference = {
+      projectId: 'project-test', harness: 'pi' as const, workspacePath: f.cwd,
+      name: '补充材料.pdf', path: pdfPath, sha256: digest(pdfSource), bytes: pdfSource.length, mimeType: 'application/pdf' as const,
+    }
+    await f.input(appendWorkspaceMaterialContext('请补交 PDF。', [reference]), 'employee-needs-input-ambiguous')
+    const discovered = await f.discover()
+    const ambiguous = await f.call('submit', {
+      ...discovered, materials: [{ path: pdfPath, sha256: digest(pdfSource) }], reuse_material_names: [docx.name],
+    })
+    expect(ambiguous.status).toBe(409)
+    expect(ambiguous.body.error).toContain('多份同名材料')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+
+    const changedContext = structuredClone(parentContext)
+    changedContext.input.materials[0]!.sha256 = digest('a changed frozen source')
+    f.service.getWorkContinuationContext.mockImplementation(async (references) => {
+      const context = structuredClone(changedContext)
+      context.source.inputRevisionID = references.workReference
+      context.source.runID = references.runReference
+      context.source.workbenchSessionID = references.sessionReference
+      return context
+    })
+    const stale = await f.call('submit', { ...discovered, materials: [{ path: pdfPath, sha256: digest(pdfSource) }] })
+    expect(stale.status).toBe(409)
+    expect(stale.body.error).toContain('已变化')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+
+    const g = await fixture()
+    const wrongSourceContext = workContinuationContext()
+    wrongSourceContext.run.finalResult = { ...wrongSourceContext.run.finalResult!, disposition: 'needs_input', summary: '缺件', missingItems: ['PDF'] }
+    wrongSourceContext.input.materials.push({
+      id: 'forge-approval-docx', materialId: docx.materialId, sourceKind: 'approval',
+      name: docx.name, mediaType: docx.mediaType, bytes: docx.bytes, sha256: docx.sha256,
+      content: docx.extraction.content, extraction: docx.extraction,
+    })
+    await openNeedsInputContinuation(g, wrongSourceContext, 'notice-needs-input-wrong-source')
+    const wrongSourcePdfPath = '材料/附件/补充材料.pdf'
+    const wrongSourceReference = { ...reference, path: wrongSourcePdfPath }
+    await writeFile(join(g.cwd, wrongSourcePdfPath), pdfSource)
+    await g.input(appendWorkspaceMaterialContext('请补交 PDF，并复用原合同文件。', [wrongSourceReference]), 'employee-needs-input-wrong-source')
+    const wrongSourceParams = await g.discover()
+    const wrongSource = await g.call('submit', {
+      ...wrongSourceParams, materials: [{ path: wrongSourcePdfPath, sha256: digest(pdfSource) }], reuse_material_names: [docx.name],
+    })
+    expect(wrongSource.status).toBe(409)
+    expect(wrongSource.body.error).toContain('受控来源')
+    expect(g.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(g.service.submitWork).not.toHaveBeenCalled()
+  })
+  it('allows ten small materials across a needs_input continuation when byte budgets permit', async () => {
+    const f = await fixture()
+    const parentContext = workContinuationContext()
+    parentContext.run.finalResult = { ...parentContext.run.finalResult!, disposition: 'needs_input', summary: '缺件', missingItems: ['补充材料'] }
+    const names = Array.from({ length: 9 }, (_, index) => `冻结材料${index + 1}.txt`)
+    for (const [index, name] of names.entries()) {
+      const content = `原输入材料 ${index + 1}`
+      const sha256 = digest(content)
+      parentContext.input.materials.push({
+        id: `forge-text-${index + 1}`,
+        materialId: digest(JSON.stringify([name, 'text/plain', sha256])).slice(0, 24),
+        name, mediaType: 'text/plain', bytes: Buffer.byteLength(content), sha256, content,
+      })
+    }
+    await openNeedsInputContinuation(f, parentContext, 'notice-needs-input-eight-materials')
+    const newMaterialPath = '材料/附件/第九份.md'
+    const newMaterialContent = '第九份补充材料'
+    const newMaterialHash = digest(newMaterialContent)
+    await writeFile(join(f.cwd, newMaterialPath), newMaterialContent)
+    const reference = {
+      projectId: 'project-test', harness: 'pi' as const, workspacePath: f.cwd,
+      name: '第九份.md', path: newMaterialPath, sha256: newMaterialHash, bytes: Buffer.byteLength(newMaterialContent), mimeType: 'text/markdown' as const,
+    }
+    await f.input(appendWorkspaceMaterialContext('补交这一份材料，并复用当前事项的九份冻结材料。', [reference]), 'employee-needs-input-nine-materials')
+    const discovered = await f.discover()
+    const submitted = await f.call('submit', {
+      ...discovered,
+      materials: [{ path: newMaterialPath, sha256: newMaterialHash }],
+      reuse_material_names: names,
+    })
+    expect(submitted.status).toBe(200)
+    expect(submitted.body.result.status).toBe('accepted')
+    expect(f.service.stageWorkMaterials.mock.calls[0]?.[0]).toHaveLength(1)
+    const request = f.service.submitWork.mock.calls[0]
+    expect(request?.[2]?.resources).toHaveLength(10)
+    expect((JSON.parse(request![1]) as { materials: unknown[] }).materials).toHaveLength(10)
   })
   it('authorizes only the business action selected for the current employee intent', async () => {
     const f = await fixture(), params = await f.discover()
