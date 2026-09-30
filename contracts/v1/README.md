@@ -15,7 +15,7 @@
 - 下游成员只接收当前父运行内已确认的动作事实，可以描述其他节点已完成的动作，无需拥有该动作的写权限。平台指令须区分本节点和整个父运行。前序模型文本仍按工作数据处理，不能伪造工具回执。
 - 员工续办接口在 `run.action_outcomes` 返回该运行的事实投影；字段为 `node_id`、`call_id`、`action_name`、`object_name`、可选 `record_id`、`status`、`summary`。summary 由平台根据已知动作名称及状态构成，不使用模型文本、不包含内部标识或原始错误。内部保存可以包含受限的原生结果数据，但不得保存凭据、请求头或模型私有思考。
 - 原生收件箱继续使用现有 team-run-event：有业务动作时 summary 以动作事实生成，运行失败仍保留此前已经完成的动作；具体分析由员工打开原工作读取。没有动作事实时只称团队分析完成，不能称业务写入完成。未知结果不自动重放；取消不会删除已完成事实。
-- action_outcomes 缺省表示该接口未提供动作事实，不是确认“未执行”。桌面保留原运行状态、独立显示/传给 Pi 的业务事实，不从模型段落猜测状态。
+- 新版在成功读取平台活动后始终返回 `action_outcomes`；空数组明确表示本轮未记录 Forge 业务动作调用。活动存储或读取失败时返回错误，不能伪装成空数组。缺省字段仅兼容旧接口，表示未提供动作事实。最终汇总输入、终态消息和桌面续接都明确展示该平台事实，并放在可能被截断的模型摘要之前；工具返回成功只证明调用回执，不证明正式业务状态。桌面保留团队运行状态，独立显示/传给 Pi 动作回执，不从模型段落猜测状态。
 
 ### 原生只读记录连接
 
@@ -193,7 +193,7 @@ Forge 从当前员工会话和原生审批请求重新取得操作者及业务�
 
 ObjectStack 原生 ApprovalService 的所有 resubmit 入口必须在写审批动作前校验 Forge 产生的材料绑定；没有绑定、绑定过期、材料已变化或原提交人不符时拒绝，原审批状态和流程保持不变。绑定消费与审批动作写入须在同一数据库事务中确定结果。原生自动化恢复是事务后的另一阶段，须沿已有流程运行回执按同一幂等键核对并可安全续跑；数据库提交成功但恢复结果未知时不能写成“未提交”，也不能盲目执行第二次审批动作。恢复后下一轮审批请求读取新材料快照，旧轮次快照及意见保留。桌面不能调用原生 resubmit 路由绕过业务校验；Forge 不另建审批状态机或调度器。网络取消只停止尚未提交的本地准备或等待；若业务动作已提交，必须核对回执，取消 Weave 运行不撤销 Forge 结果。审计记录账号、组织、原请求与新请求、业务对象、源与新材料摘要、幂等键、动作结果及时间，不记录合同正文或长期凭据。**上述递交接口与原生守卫仍在实现中，不能把本契约当成已部署能力。**
 
-当前候选的准确接口为 `POST /api/v1/approvals/requests/{requestId}/workbench-revision`，请求体遵守 `approval-revision.schema.json`：`returnVersion`、`sourceMaterialVersion`、UUID `idempotencyKey`、一份 `primary` 和至多十份 `attachments`。每份引用都含 Forge `fileId`、名称和 SHA-256；兼容旧调用时可省略 `mediaType` 与 `bytes`，此时 Forge 仅按 UTF-8 文本校验。新调用必须把 `mediaType` 与 `bytes` 成对提交；PDF/DOCX 主件或附件必须提供这两个字段，MIME 限为 `application/pdf`、`application/vnd.openxmlformats-officedocument.wordprocessingml.document`，长度须大于 0。文本 MIME 仅接受 `text/plain` 或 `text/plain; charset=utf-8`。
+当前候选的准确接口为 `POST /api/v1/approvals/requests/{requestId}/workbench-revision`，请求体遵守 `approval-revision.schema.json`：`returnVersion`、`sourceMaterialVersion`、UUID `idempotencyKey`、一份 `primary` 和本轮员工明确选定的 `attachments`（不设文件份数上限）。每份引用都含 Forge `fileId`、名称和 SHA-256；兼容旧调用时可省略 `mediaType` 与 `bytes`，此时 Forge 仅按 UTF-8 文本校验。新调用必须把 `mediaType` 与 `bytes` 成对提交；PDF/DOCX 主件或附件必须提供这两个字段，MIME 限为 `application/pdf`、`application/vnd.openxmlformats-officedocument.wordprocessingml.document`，长度须大于 0。文本 MIME 仅接受 `text/plain` 或 `text/plain; charset=utf-8`。
 
 `mediaType` 和 `bytes` 是对已上传 Forge 文件的预期值，不是内容来源或授权凭据。Forge 从当前员工会话、原生审批请求及 ObjectStack `sys_file` 元数据确定员工、组织、业务对象、文件所有人、归属和存储键；随后用原有 ObjectStack Storage 下载实际字节，核对声明 MIME 与已存 MIME、名称扩展名和文件签名、声明长度与元数据长度、实际字节长度及 SHA-256。PDF 必须以 `%PDF-` 开始；DOCX 必须使用 `.docx` 名称并具备 ZIP 文件签名；文本仍须通过严格 UTF-8 解码。每份不超过 2 MiB、整包不超过 8 MiB。Office 文件还须属于当前审批组织，并使用 `scope=attachments`、`acl=private`，使下一轮审批上下文能够按原件权限读取。Office 文件的 MIME 或字节元数据缺失/不匹配、原始字节或摘要不符、文件不属于当前员工/组织或绑定到别的合同，均失败关闭；请求不接受 Base64、存储键、任意 `userId`、合同记录 ID 或审批处理人。
 
