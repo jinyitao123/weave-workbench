@@ -7,8 +7,8 @@ import { submissionUUID } from './enterprise/handoff-store'
 import { teamCatalog, teamChoices, type TeamSummary } from './enterprise/team-catalog'
 import { ForgeBusinessReadError, ForgeBusinessReader, type BusinessObjectDirectory, type BusinessRecordRead, type BusinessRecordSearchPage } from './enterprise/business-records'
 
-const DEFAULT_FORGE_URL = 'http://124.223.189.112'
-const DEFAULT_WEAVE_URL = 'http://124.223.189.112:8080'
+const DEFAULT_FORGE_URL = 'https://mqttdev.online'
+const DEFAULT_WEAVE_URL = 'https://mqttdev.online'
 const REQUEST_TIMEOUT_MS = 8_000
 
 interface EnterpriseServiceOptions {
