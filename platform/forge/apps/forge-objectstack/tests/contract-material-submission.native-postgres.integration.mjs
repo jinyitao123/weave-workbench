@@ -30,6 +30,8 @@ const serviceStoragePath = '../node_modules/.pnpm/@objectstack+service-storage@1
 const platformObjectsPath = '../node_modules/.pnpm/@objectstack+platform-objects@17.3.0/node_modules/@objectstack/platform-objects/dist/index.mjs';
 const { LocalStorageAdapter, SystemFile } = await import(serviceStoragePath);
 const { SysAttachment } = await import(platformObjectsPath);
+const auditPluginPath = '../node_modules/.pnpm/@objectstack+plugin-audit@17.3.0/node_modules/@objectstack/plugin-audit/dist/index.mjs';
+const { installAuditWriters } = await import(auditPluginPath);
 
 function simpleObject(name, fields) {
   return ObjectSchema.create({ name, label: name, fields: { ...fields, organization_id: Field.text({ label: 'Organization' }) }, enable: { apiEnabled: true } });
@@ -66,6 +68,15 @@ function makeObjects() {
     simpleObject('sys_member', { user_id: Field.text({ label: 'User' }), role: Field.text({ label: 'Role' }) }),
     simpleObject('sys_user_permission_set', { user_id: Field.text({ label: 'User' }), permission_set_id: Field.text({ label: 'Permission set' }) }),
     simpleObject('sys_organization', { name: Field.text({ label: 'Name' }) }),
+    // AuditPlugin installs its real attachment gate alongside writers; provision the writer tables for a clean native transaction.
+    simpleObject('sys_audit_log', {
+      action: Field.text({}), user_id: Field.text({}), object_name: Field.text({}), record_id: Field.text({}),
+      old_value: Field.text({}), new_value: Field.text({}), tenant_id: Field.text({}), actor: Field.text({}),
+    }),
+    simpleObject('sys_activity', {
+      type: Field.text({}), timestamp: Field.datetime({}), summary: Field.text({}), actor_id: Field.text({}),
+      object_name: Field.text({}), record_id: Field.text({}), record_label: Field.text({}), metadata: Field.text({}),
+    }),
     simpleObject('sys_approval_request', SysApprovalRequest.fields),
     simpleObject('sys_approval_action', SysApprovalAction.fields),
     simpleObject('sys_approval_approver', SysApprovalApprover.fields),
@@ -133,11 +144,17 @@ test('registered package action creates one native approval request for the sale
   const engine = new ObjectQL();
   const driver = new SqlDriver({ client: 'pg', connection: { host: HOST, port: PORT, database: DATABASE, user: DB_USER } });
   const objects = makeObjects();
+  assert.equal(SalesContractSubmission.enable.files, true, 'the immutable first-submission ledger must advertise native attachment support');
+  assert.equal(SalesContractRevisionMaterial.enable.files, true, 'the immutable revision ledger must advertise native attachment support');
   for (const object of objects) engine.registerObject(object);
   engine.registerDriver(driver, true);
   await engine.init();
   await driver.initObjects(objects);
+  // Install the same ObjectStack attachment-capability hook loaded by AuditPlugin at runtime.
+  installAuditWriters(engine, 'com.objectstack.audit');
   t.after(async () => { await driver.disconnect(); rmSync(storageRoot, { recursive: true, force: true }); });
+  assert.equal(engine.getObject('forge_sales_contract_submission')?.enable?.files, true);
+  assert.equal(engine.getObject('forge_sales_contract_revision_material')?.enable?.files, true);
 
   const manifest = { register() {} };
   const basePlugin = {
@@ -206,6 +223,12 @@ test('registered package action creates one native approval request for the sale
     line_type: 'service', quantity_limit: 1, taxed_subtotal: 1200, sku_id: null, organization_id: ORG,
   }, { context });
 
+  await assert.rejects(engine.insert('sys_attachment', {
+    id: randomUUID(), parent_object: 'forge_sales_contract', parent_id: contractId,
+    file_id: randomUUID(), file_name: 'disabled.txt', mime_type: 'text/plain', size: 1,
+    uploaded_by: ACTOR,
+  }, { context }), (error) => error?.code === 'FILES_DISABLED');
+
   const callerContext = { isSystem: false, userId: ACTOR, tenantId: ORG, positions: [], permissions: ['sales_contract_operator'] };
   const callerRecord = await engine.findOne('forge_sales_contract', { where: { id: contractId } }, { context: callerContext });
   assert.ok(callerRecord, 'the invoking employee can read the submitted contract before the handler uses its trusted engine');
@@ -219,10 +242,46 @@ test('registered package action creates one native approval request for the sale
     },
     engine: {},
   };
+
+  const nativeInsert = engine.insert;
+  let injectAttachmentFailure = true;
+  engine.insert = async (objectName, data, options) => {
+    if (injectAttachmentFailure && objectName === 'sys_attachment' && data?.file_id === attachmentId) {
+      injectAttachmentFailure = false;
+      throw new Error('simulated native attachment insert failure');
+    }
+    return nativeInsert.call(engine, objectName, data, options);
+  };
+  try {
+    await assert.rejects(engine.executeAction('forge_sales_contract', CONTRACT_MATERIAL_SUBMISSION_TARGET, actionContext), /simulated native attachment insert failure/);
+  } finally {
+    engine.insert = nativeInsert;
+  }
+
+  assert.equal((await engine.find('forge_sales_contract_submission', { where: { contract_id: contractId }, fields: ['id'], limit: 10 }, { context })).length, 0,
+    'a failed attachment write rolls back the immutable submission ledger');
+  assert.equal((await engine.find('sys_attachment', {
+    where: { parent_object: 'forge_sales_contract_submission', file_id: { $in: [primaryId, attachmentId] } },
+    fields: ['id'], limit: 10,
+  }, { context })).length, 0, 'a failed attachment write rolls back any earlier native holder link');
+  const unsubmittedContract = await engine.findOne('forge_sales_contract', { where: { id: contractId } }, { context });
+  assert.equal(unsubmittedContract.status, 'draft', 'a failed attachment write leaves the contract in draft');
+  assert.ok(!unsubmittedContract.submitted_material_id, 'a failed attachment write leaves the submitted material unset');
+  assert.equal((await engine.find('sys_approval_request', {
+    where: { object_name: 'forge_sales_contract', record_id: contractId }, fields: ['id'], limit: 10,
+  }, { context })).length, 0, 'a failed first submission creates no native approval request');
+
   const first = await engine.executeAction('forge_sales_contract', CONTRACT_MATERIAL_SUBMISSION_TARGET, actionContext);
   assert.equal(first.status, 'pending_approval');
   assert.equal(first.material_file_id, primaryId);
   assert.deepEqual(new Set(first.material_file_ids), new Set([primaryId, attachmentId]));
+  const savedSubmission = await engine.findOne('forge_sales_contract_submission', { where: { contract_id: contractId } }, { context });
+  assert.ok(savedSubmission);
+  const retainedFiles = await engine.find('sys_attachment', {
+    where: { parent_object: 'forge_sales_contract_submission', parent_id: savedSubmission.id },
+    fields: ['file_id'], limit: 10,
+  }, { context });
+  assert.deepEqual(new Set(retainedFiles.map((row) => row.file_id)), new Set([primaryId, attachmentId]));
 
   const approvalRows = async () => engine.find('sys_approval_request', {
     where: { object_name: 'forge_sales_contract', record_id: contractId }, fields: ['id', 'submitter_id', 'status', 'organization_id'], limit: 10,

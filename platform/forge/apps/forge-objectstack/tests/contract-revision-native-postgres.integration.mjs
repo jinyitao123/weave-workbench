@@ -15,6 +15,8 @@ import { ApprovalWorkbenchContextPlugin } from '../src/plugins/approval-workbenc
 import { ContractRevisionMaterialPlugin, approvalPayloadVersion } from '../src/plugins/contract-revision-material.ts';
 const platformObjectsPath = '../node_modules/.pnpm/@objectstack+platform-objects@17.3.0/node_modules/@objectstack/platform-objects/dist/index.mjs';
 const { SysAttachment } = await import(platformObjectsPath);
+const auditPluginPath = '../node_modules/.pnpm/@objectstack+plugin-audit@17.3.0/node_modules/@objectstack/plugin-audit/dist/index.mjs';
+const { installAuditWriters } = await import(auditPluginPath);
 
 const DATABASE = 'forge_contract_test';
 const HOST = '127.0.0.1';
@@ -40,6 +42,17 @@ function fixtureObjects() {
     simpleObject('forge_customer', { name: Field.text({ label: 'Name', required: true }) }),
     simpleObject('sys_user', { name: Field.text({ label: 'Name' }), email: Field.email({ label: 'Email' }) }),
     simpleObject('sys_organization', { name: Field.text({ label: 'Name' }) }),
+    // The real AuditPlugin setup also writes audit/activity rows; keep those writes inside the PostgreSQL fixture transaction.
+    simpleObject('sys_audit_log', {
+      action: Field.text({}), user_id: Field.text({}), object_name: Field.text({}), record_id: Field.text({}),
+      old_value: Field.text({}), new_value: Field.text({}), tenant_id: Field.text({}), actor: Field.text({}),
+      organization_id: Field.text({}),
+    }),
+    simpleObject('sys_activity', {
+      type: Field.text({}), timestamp: Field.datetime({}), summary: Field.text({}), actor_id: Field.text({}),
+      object_name: Field.text({}), record_id: Field.text({}), record_label: Field.text({}), metadata: Field.text({}),
+      organization_id: Field.text({}),
+    }),
     simpleObject('sys_member', { user_id: Field.text({}), organization_id: Field.text({}), role: Field.text({}) }),
     simpleObject('sys_position', { name: Field.text({}) }),
     simpleObject('sys_user_position', { user_id: Field.text({}), position: Field.text({}), organization_id: Field.text({}) }),
@@ -120,10 +133,14 @@ test('native ObjectStack 17.3 contract revision uses PostgreSQL, preserves the o
     connection: { host: HOST, port: PORT, database: DATABASE, user: DB_USER },
   });
   const objects = fixtureObjects();
+  assert.equal(SalesContractRevisionMaterial.enable.files, true, 'the immutable revision ledger must advertise native attachment support');
   for (const object of objects) engine.registerObject(object);
   engine.registerDriver(driver, true);
   await engine.init();
   await driver.initObjects(objects);
+  // Install the same ObjectStack attachment-capability hook loaded by AuditPlugin at runtime.
+  installAuditWriters(engine, 'com.objectstack.audit');
+  assert.equal(engine.getObject('forge_sales_contract_revision_material')?.enable?.files, true);
 
   const ids = {
     contract: id(),
@@ -372,6 +389,16 @@ test('native ObjectStack 17.3 contract revision uses PostgreSQL, preserves the o
   const replay = await invoke(routes.routes, 'POST', revisionPath, { requestId: firstRequest.id }, body, 'sales-token');
   assert.equal(replay.status, 200);
   assert.equal(replay.body.state, 'resumed');
+
+  const revisionBindings = await engine.find('forge_sales_contract_revision_material', {
+    where: { approval_request_id: firstRequest.id }, fields: ['id'], limit: 1,
+  }, { context: SYSTEM });
+  assert.equal(revisionBindings.length, 1);
+  const revisionFiles = await engine.find('sys_attachment', {
+    where: { parent_object: 'forge_sales_contract_revision_material', parent_id: revisionBindings[0].id },
+    fields: ['file_id'], limit: 10,
+  }, { context: SYSTEM });
+  assert.deepEqual(new Set(revisionFiles.map((row) => row.file_id)), new Set([ids.newPrimary, ids.newAttachment]));
 
   const requests = await engine.find('sys_approval_request', {
     where: { flow_run_id: started.runId, object_name: 'forge_sales_contract', record_id: ids.contract },
