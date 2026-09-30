@@ -33,6 +33,7 @@
     "acceptance:master-data": "node tests/master-data.integration.mjs",
     "acceptance:sales": "node tests/sales-foundation.integration.mjs",
     "acceptance:sales-contract-access": "node tests/sales-contract-access.static.mjs && node --experimental-strip-types --test tests/sales-contract-sku-guard.test.mjs",
+    "acceptance:sales-opportunity-owner-projection": "node --import tsx --test tests/sales-opportunity-owner-projection.static.mjs",
     "acceptance:sales-contract-source-set": "node --import tsx --test tests/sales-contract-draft-source-set.test.mjs",
     "acceptance:sales-schema-preflight": "node --test scripts/schema/sales-line-sku-preflight.test.mjs",
     "acceptance:sales-workflow": "node tests/sales-workflow.integration.mjs",
