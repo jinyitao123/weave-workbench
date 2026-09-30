@@ -189,6 +189,8 @@ it('opens the clicked Forge approval in a fresh renderer session and queues only
   expect(contextHandle).toBe('review-context-handle')
   expect(prompt).toContain('R2 原文')
   expect(prompt).toContain('历史聊天不作为当前事实')
+  expect(prompt).toContain('当前打开只授权只读核对')
+  expect(prompt).toContain('不等于审批流程完成')
   expect(prompt).toContain(APPROVAL_REVIEW_SESSION_MARKER)
   expect(setToast).toHaveBeenCalledWith('已打开本次审批材料，可继续和 Pi 核对。')
 })

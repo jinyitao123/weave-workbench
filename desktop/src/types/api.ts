@@ -301,6 +301,24 @@ export interface EnterpriseHumanTask {
   materialLabel?: string
 }
 
+export interface EnterpriseApprovalAction {
+  semantic?: string
+  label: string
+  description: string
+  execution: {
+    tool: 'run_action'
+    actionName: string
+    objectName: string
+    recordId: string
+    params: {
+      approvalRequestId: string
+      itemVersion: string
+      sourceMaterialVersion: string
+    }
+  }
+  inputs: Array<{ name: string; type: 'string'; label: string; required: boolean }>
+}
+
 export interface EnterpriseApprovalContext {
   requestId: string
   status: 'pending' | 'returned'
@@ -312,6 +330,7 @@ export interface EnterpriseApprovalContext {
   returnVersion?: string
   returnReason?: string
   fields: Array<{ label: string; value: string }>
+  availableActions?: EnterpriseApprovalAction[]
   files: Array<{ fileId: string; name: string; mediaType: 'text/plain; charset=utf-8'; bytes: number; sha256: string; content: string; verified: boolean }>
   originalFiles?: Array<{
     sourceKind: 'approval'
