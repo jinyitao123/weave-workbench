@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import test from 'node:test';
 import { ApprovalWorkbenchContextPlugin } from '../src/plugins/approval-workbench-context.plugin.ts';
 import { approvalPayloadVersion } from '../src/plugins/contract-revision-material.ts';
+import { SalesContract } from '../src/objects/sales.object.ts';
 
 const CONTRACT_OBJECT = 'forge_sales_contract';
 const CONTRACT_A = 'contract-A';
@@ -28,7 +29,7 @@ function approval({ id, recordId, status = 'pending', approver, submitter, paylo
     payload_labels: {
       name: '合同名称', code: '合同编号', customer_id: '客户', submitted_material_name: '提交版本名称',
     },
-    payload_display: { customer_id: '客户甲' },
+    payload_display: { customer_id: '客户甲', status: '旧审批状态', unknown_status: '已审批' },
     approver,
   };
 }
@@ -37,6 +38,7 @@ function contextPayload(material, extraFiles = []) {
   const manifest = extraFiles.map((file) => ({ file_id: file.id, name: file.name, sha256: sha256(file.bytes) }));
   return {
     name: '设备验收合同', code: 'HT-2026-001', customer_id: 'customer-private-id',
+    status: 'pending_approval', unknown_status: 'pending_legal', draft_request_signature: '0123456789abcdef',
     submitted_material_id: material.id,
     submitted_material_name: material.name,
     submitted_material_sha256: sha256(material.bytes),
@@ -114,15 +116,8 @@ function createHarness() {
     getObject(objectName) {
       if (objectName !== CONTRACT_OBJECT) return undefined;
       return { fields: {
-        name: { type: 'text', label: '合同名称' },
-        code: { type: 'text', label: '合同编号' },
-        customer_id: { type: 'lookup', label: '客户' },
-        submitted_material_id: { type: 'file', label: '提交材料' },
-        submitted_material_name: { type: 'text', label: '提交版本名称' },
-        submitted_material_sha256: { type: 'text', label: '提交版本摘要' },
-        attachment_ids: { type: 'file', label: '合同附件' },
-        submitted_attachment_manifest: { type: 'textarea', label: '本次提交附件清单' },
-        submitted_attachment_revision_request_id: { type: 'text', label: '修订轮次' },
+        ...SalesContract.fields,
+        unknown_status: { type: 'select', label: '未知状态', options: [{ value: 'draft', label: '草稿' }] },
       } };
     },
   };
@@ -247,8 +242,12 @@ test('pending approver receives only this request snapshot and verified text byt
     { label: '合同名称', value: '设备验收合同' },
     { label: '合同编号', value: 'HT-2026-001' },
     { label: '客户', value: '客户甲' },
+    { label: '合同状态', value: '待审批' },
+    { label: '未知状态', value: '未知（原值：pending_legal）' },
     { label: '提交版本名称', value: '合同正文.txt' },
   ]);
+  assert.equal(JSON.stringify(result.body.fields).includes('0123456789abcdef'), false,
+    'metadata-hidden technical signatures are excluded from approval fields');
   assert.equal(result.body.revisionReady, undefined);
   assert.deepEqual(result.body.files.map(({ name, content, sha256, bytes }) => ({ name, content, sha256, bytes })), [
     { name: '合同正文.txt', content: '合同正文 A', sha256: sha256(harness.fixtureFiles.materialA.bytes), bytes: harness.fixtureFiles.materialA.bytes.length },
