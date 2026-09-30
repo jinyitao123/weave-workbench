@@ -3,7 +3,24 @@ import { ProductSelect, ProductTextArea } from '@/components/ui'
 import type { EnterpriseBusinessCapabilityCatalog } from '@/types/api'
 import type { TeamWorkspace, TeamWorkspaceBridge } from '@/types/team-workspace'
 export const runLabel = (status: string) => ({ submitting: '等待接单', queued: '排队中', running: '执行中', succeeded: '团队运行完成', failed: '团队运行失败', cancelled: '团队运行已取消', blocked: '等待处理', pending: '等待执行', completed: '步骤完成', tool_started: '工具调用中', tool_completed: '工具调用完成', tool_failed: '工具调用失败' }[status] ?? '等待更新')
-type Activity = { status: string; members: Array<{ name: string; status: string; runtime?: { model?: string; configured_model?: string }; stages: Array<{ name: string; status: string; inputs: Array<{ source: string; summary?: string }>; tools: Array<{ name: string; status: string; input?: string; output?: string }>; failure_reason?: string }> }>; outputs: Array<{ title: string; content?: string }> }
+type Activity = { status: string; completeness?: { member_tool_activity?: string }; members: Array<{ name: string; status: string; runtime?: { model?: string; configured_model?: string }; stages: Array<{ name: string; status: string; inputs: Array<{ source: string; summary?: string }>; tools?: Array<{ name: string; status: string; input?: string; output?: string }> | null; tool_calls?: number; failure_reason?: string }> }>; outputs: Array<{ title: string; content?: string }> }
+
+function toolActivityEvidence(activity?: Activity): 'incomplete' | 'empty' | 'recorded' {
+  if (activity?.completeness?.member_tool_activity !== 'complete' || !Array.isArray(activity.members) || activity.members.length === 0) return 'incomplete'
+  const stages = activity.members.flatMap((member) => Array.isArray(member.stages) ? member.stages : [])
+  if (!stages.length) return 'incomplete'
+  let hasCalls = false
+  for (const stage of stages) {
+    if (stage.tools !== null && !Array.isArray(stage.tools)) return 'incomplete'
+    if (stage.tool_calls !== undefined && (!Number.isInteger(stage.tool_calls) || stage.tool_calls < 0)) return 'incomplete'
+    const tools = stage.tools ?? []
+    const completedTools = tools.filter((tool) => tool.status === 'ok' || tool.status === 'error').length
+    if (tools.length === 0 && (stage.tool_calls ?? 0) > 0
+      || (stage.status === 'completed' || stage.status === 'failed') && (stage.tool_calls ?? 0) !== completedTools) return 'incomplete'
+    if (tools.length > 0 || (stage.tool_calls ?? 0) > 0) hasCalls = true
+  }
+  return hasCalls ? 'recorded' : 'empty'
+}
 export function TrialPanel({ teamId, initialFlowId, draft, businessCapabilities, bridge, flush, refresh }: { initialFlowId?: string; teamId: string; draft: TeamWorkspace; businessCapabilities?: EnterpriseBusinessCapabilityCatalog; bridge: TeamWorkspaceBridge; flush(): Promise<TeamWorkspace | undefined>; refresh(): Promise<void> }) {
   const [flow, setFlow] = useState(initialFlowId ?? draft.document.workflows[0]?.id ?? '')
   const [input, setInput] = useState('')
@@ -44,9 +61,7 @@ export function TrialPanel({ teamId, initialFlowId, draft, businessCapabilities,
     return () => { disposed = true; clearTimeout(timer) }
     // Polling is tied to this receipt, not to every refreshed overview object.
   }, [bridge, teamId, trial?.request_id, trial?.run_id])
-  const activityStages = activity?.members.flatMap((member) => Array.isArray(member.stages) ? member.stages : []) ?? []
-  const toolEvidenceComplete = Boolean(activity?.members.length && activityStages.length && activityStages.every((stage) => Array.isArray(stage.tools)))
-  const activityHasTools = activityStages.some((stage) => (stage.tools?.length ?? 0) > 0)
+  const toolEvidence = toolActivityEvidence(activity)
   const submit = async () => {
     if (submitting.current) return
     submitting.current = true
@@ -81,10 +96,9 @@ export function TrialPanel({ teamId, initialFlowId, draft, businessCapabilities,
         {activityReadState === 'loading' ? <p className="tw-muted">正在读取活动记录…</p>
           : activityReadState === 'failed' ? <p role="alert">活动记录暂时无法读取。下面的团队摘要不能证明业务已提交。</p>
             : activityReadState === 'unavailable' ? <p className="tw-muted">当前没有可读取的工具调用记录。团队摘要不能证明业务已提交。</p>
-              : !toolEvidenceComplete ? <p className="tw-muted">活动记录未提供完整工具清单。团队摘要不能证明业务已提交。</p>
-                : !activityHasTools
-                ? <p>本次未记录工具调用，没有业务工具回执；不能据此认定已提交。</p>
-                : <p className="tw-muted">请查看各成员步骤下方的工具调用记录。运行完成本身不代表业务动作成功。</p>}
+              : toolEvidence === 'empty' ? <p>平台完整活动记录显示本次调用次数为 0；不能据此认定已提交。</p>
+                : toolEvidence === 'incomplete' ? <p className="tw-muted">活动记录未证明工具调用清单完整。团队摘要不能证明业务已提交。</p>
+                  : <p className="tw-muted">请查看各成员步骤下方的工具调用记录。运行完成本身不代表业务动作成功。</p>}
       </div>
       {activity?.outputs?.map((output, i) => <div key={i} className="tw-card"><h3>团队摘要 · {output.title || '运行输出'}</h3><pre className="tw-result">{output.content || '没有返回可显示的内容'}</pre><p className="tw-muted">这是团队运行文本，不是业务办理回执。</p></div>)}
       {runOutput && !activity?.outputs?.some((output) => output.content === runOutput) && <div className="tw-card"><h3>团队摘要</h3><pre className="tw-result">{runOutput}</pre><p className="tw-muted">这是团队运行文本，不是业务办理回执。</p></div>}

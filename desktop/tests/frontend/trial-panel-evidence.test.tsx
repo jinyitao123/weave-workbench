@@ -32,7 +32,7 @@ afterEach(async () => {
   container.remove()
 })
 
-function renderPanel(activityResult: { status: string; members: Array<{ name: string; status: string; stages: Array<{ name: string; status: string; inputs: Array<{ source: string }>; tools: Array<{ name: string; status: string }> }> }>; outputs: Array<{ title: string; content: string }> } | Error) {
+function renderPanel(activityResult: { status: string; completeness?: { member_tool_activity?: string }; members: Array<{ name: string; status: string; stages: Array<{ name: string; status: string; inputs: Array<{ source: string }>; tools?: Array<{ name: string; status: string }> | null; tool_calls?: number }> }>; outputs: Array<{ title: string; content: string }> } | Error) {
   const snapshot = draft()
   const bridge: TeamWorkspaceBridge = async <T,>(command: TeamWorkspaceCommand) => {
     if (command.action === 'activity') {
@@ -45,18 +45,31 @@ function renderPanel(activityResult: { status: string; members: Array<{ name: st
   return act(async () => root.render(<TrialPanel teamId="team-1" draft={snapshot} bridge={bridge} flush={async () => snapshot} refresh={vi.fn(async () => undefined)}/>))
 }
 
-it('shows a model submission claim beside an explicit empty tool record', async () => {
+it('uses tools:null as zero calls only when Weave marks tool activity complete', async () => {
   await renderPanel({
     status: 'succeeded',
-    members: [{ name: 'Worker', status: 'succeeded', stages: [{ name: 'Submit', status: 'completed', inputs: [], tools: [] }] }],
+    completeness: { member_tool_activity: 'complete' },
+    members: [{ name: 'Worker', status: 'succeeded', stages: [{ name: 'Submit', status: 'completed', inputs: [], tools: null }] }],
     outputs: [{ title: 'Final summary', content: '已提交至业务系统' }],
   })
 
   expect(container.textContent).toContain('团队摘要')
   expect(container.textContent).toContain('已提交至业务系统')
-  expect(container.textContent).toContain('本次未记录工具调用')
+  expect(container.textContent).toContain('平台完整活动记录显示本次调用次数为 0')
   expect(container.textContent).toContain('不能据此认定已提交')
   expect(container.textContent).toContain('团队运行完成')
+})
+
+it('does not treat tools:[] as zero calls when Weave marks tool activity partial', async () => {
+  await renderPanel({
+    status: 'succeeded',
+    completeness: { member_tool_activity: 'partial' },
+    members: [{ name: 'Worker', status: 'succeeded', stages: [{ name: 'Submit', status: 'completed', inputs: [], tools: [] }] }],
+    outputs: [{ title: 'Final summary', content: '已提交至业务系统' }],
+  })
+
+  expect(container.textContent).toContain('活动记录未证明工具调用清单完整')
+  expect(container.textContent).not.toContain('平台完整活动记录显示本次调用次数为 0')
 })
 
 it('does not silently present the model summary as verified when activity cannot be read', async () => {
