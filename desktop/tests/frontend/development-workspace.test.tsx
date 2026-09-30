@@ -256,7 +256,7 @@ it('prevents duplicate trial submission and names tool completion states', async
   const start = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '开始调试')!
   await act(async () => { start.click(); start.click() })
   expect(call.mock.calls.filter(([command]) => command.action === 'trial')).toHaveLength(1)
-  expect(runLabel('tool_started')).toBe('执行中')
-  expect(runLabel('tool_completed')).toBe('已完成')
-  expect(runLabel('tool_failed')).toBe('失败')
+  expect(runLabel('tool_started')).toBe('工具调用中')
+  expect(runLabel('tool_completed')).toBe('工具调用完成')
+  expect(runLabel('tool_failed')).toBe('工具调用失败')
 })
