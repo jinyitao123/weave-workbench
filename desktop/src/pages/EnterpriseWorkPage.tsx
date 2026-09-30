@@ -21,7 +21,7 @@ const canContinueItem = (item: EnterpriseWorkItem) => item.source === 'forge' &&
 )
 const itemSummary = (item: EnterpriseWorkItem) => {
   if (item.source === 'weave') {
-    if (item.summary) return `团队文本摘要（非业务回执）：${item.summary}。是否办理以平台动作回执和 Forge 当前记录为准。`
+    if (item.summary) return `运行消息摘要：${item.summary}`
     return item.kind === 'failure' ? '团队运行失败，业务结果需要在 Forge 核对。' : item.kind === 'cancelled' ? '团队运行已取消；Forge 业务状态需单独核对。' : '团队运行已返回结果，业务是否完成需单独核对。'
   }
   return item.summary ?? (item.kind === 'failure' ? '业务处理失败，请打开原事项查看。' : '业务状态有更新，请打开原事项核对。')
