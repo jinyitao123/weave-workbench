@@ -54,7 +54,7 @@
 ### W1 部署先关（小改动，可回退）
 
 1. 124 Weave 环境设 `WEAVE_METATEAM_ENABLED=false`。
-2. Compose 不再启动 `workbench` 与 `workbench-gateway` 服务，保留数据目录。
+2. Compose 不再启动 `workbench` 与 `workbench-gateway` 服务，保留数据目录。仅改 Compose 不够：`scripts/deploy-main.sh` 按名称构建、启动这两个服务，`deployment-state.py verify` 还把网关可达作为部署成功条件，所以部署脚本也须跟随开关。`weave-next` 已用 `server.env` 中的 `WEAVE_WEB_WORKBENCH`（默认关）统一控制构建、启动、存储准备和验证。
 3. 在 `internal/app/api/server.go` 的路由注册处加一个部署开关，关闭时不注册以下接口：团队模板、`internal/team-build-runs` 与 `team-build-runs`、团队评测、`/v1/auth/login`、`/v1/auth/register`。开关默认值按 124 的需要设定，并写进部署文档。
 4. 元团队已写入的数据保留，不删除。
 
