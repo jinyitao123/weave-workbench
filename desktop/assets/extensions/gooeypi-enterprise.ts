@@ -189,7 +189,7 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
       'goal 要概括需要团队继续完成的工作和预期结果，不要加入员工没有表达的业务事实。',
       'business_actions 只能使用本轮团队承接能力返回的 action_key。员工只是要求查看、分析或给建议时必须传空数组；只有员工已明确授权对应业务动作时才选择该动作。不要因为团队具备某项能力就自动授权。',
       '员工要求团队处理已有 Forge 记录时，先查当前员工对象目录、按业务名称或编号查找，再读取所选记录；提交时只传本轮返回的 business_record_key。Host 会把其已读取的快照直接固定到工作输入，不要从工具返回文本重填或改写快照。',
-      'materials 只能列出本轮员工消息实际附加的新文件，并使用本轮附件元数据中的路径和 SHA-256。从当前“需要补充”事项，或没有业务动作结果的最新只读失败运行消息打开 Pi，且员工本轮明确授权复用原冻结材料时，才把当前上下文中显示的完整文件名放入 reuse_material_names；Host 只会在该运行的冻结材料清单中精确匹配唯一同名项，再绑定真实文件引用、摘要和来源。旧事项已有后续运行时，须打开最新运行消息继续；不要让员工重复上传原件。不要传旧文件路径、fileId、哈希或从工作目录寻找旧文件；同名候选不唯一时向员工询问，不猜选。没有明确复用授权时留空。纯业务记录分析应先按本轮记录键读取并绑定 Forge 快照，此时 materials 与 reuse_material_names 可为空；没有已读业务记录且没有本轮附件或明确复用材料时不得提交。',
+      'materials 只能列出本轮员工消息实际附加的新文件，并使用本轮附件元数据中的路径和 SHA-256。从当前“需要补充”事项，或成功只读检查（结果为“完成”或“需要补充”）、失败只读运行的最新工作消息打开 Pi，且Host已核验平台业务动作回执明确为零条、员工本轮明确授权复用原冻结材料时，才把当前上下文中显示的完整文件名放入 reuse_material_names；回执缺失、未知或已记录任何业务动作时都不得复用，也不得借复用原件盲目重放。Host 只会在该运行的冻结材料清单中精确匹配唯一同名项，再绑定真实文件引用、摘要和来源。旧事项已有后续运行时，须打开最新运行消息继续；不要让员工重复上传原件。不要传旧文件路径、fileId、哈希或从工作目录寻找旧文件；同名候选不唯一时向员工询问，不猜选。没有明确复用授权时留空。纯业务记录分析应先按本轮记录键读取并绑定 Forge 快照，此时 materials 与 reuse_material_names 可为空；没有已读业务记录且没有本轮附件或明确复用材料时不得提交。',
       '员工说先等等或改变要求后停止旧交接。unknown 是网络或回执结果待核对，只能用原恢复凭据继续同一固定请求；rejected 是 Weave 已明确拒绝登记且未创建团队运行，应刷新原工作后按员工当前要求重新提交，不调用恢复工具。accepted 仅代表服务接单，不能声称团队已经处理完成；接单后结束本轮，不轮询团队结果。向员工用“已接单”“结果待核对”“本次未接单”等中文报告，不展示内部状态编码、标识或哈希。',
       '本工具只交给 Weave 团队，不代表 Forge 业务状态已经提交或审批通过。',
     ],
@@ -202,7 +202,7 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
         path: Type.String({ minLength: 1, description: '当前工作目录中的材料文件路径' }),
         sha256: Type.String({ minLength: 64, maxLength: 64, description: '读取员工指定版本时核对的文件 SHA-256' }),
       })),
-      reuse_material_names: Type.Optional(Type.Array(Type.String({ minLength: 1, maxLength: 255 }), { description: '员工本轮明确授权复用的当前补材料或无业务动作失败运行中的完整文件名；Host 在冻结 allowlist 中唯一匹配' })),
+      reuse_material_names: Type.Optional(Type.Array(Type.String({ minLength: 1, maxLength: 255 }), { description: '员工明确授权复用的已结束只读工作中唯一的原冻结文件名；Host 要求当前员工权限、平台动作回执明确为空且冻结清单唯一匹配' })),
     }),
     async execute(_id, params) { return result(await turnCall('submit', params)) },
   })
