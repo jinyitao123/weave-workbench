@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AgentEnterpriseBridge } from '../../electron/main/enterprise/agent-bridge'
 import { digest, HandoffStore, submissionUUID } from '../../electron/main/enterprise/handoff-store'
-import { freezeApprovalOriginalMaterial, freezeMaterials, normalizeFrozenMaterial, type FrozenMaterial } from '../../electron/main/enterprise/materials'
+import { freezeApprovalOriginalMaterial, freezeMaterials, makeFrozenTextMaterial, normalizeFrozenMaterial, type FrozenMaterial } from '../../electron/main/enterprise/materials'
 import type { EnterpriseApprovalContext, TranscriptMessage } from '../../src/types/api'
 import { WorkRegistrationRejectedError, type EnterpriseBusinessNotificationContext, type EnterpriseWorkContinuationContext, type EnterpriseWorkNotificationSource } from '../../electron/main/enterprise'
 import { ForgeBusinessReadError, type BusinessRecordSnapshot } from '../../electron/main/enterprise/business-records'
@@ -27,7 +27,35 @@ function workContinuationContext(): EnterpriseWorkContinuationContext {
       task, taskSHA256: digest(task), teamID: 'team-contract', workflowID: 'workflow-review', workflowVersion: 3,
       materials: [], sourceMessages: [{ messageID: 'employee-message', eventSeq: 1, sha256: digest('员工原始要求') }],
     },
-    run: { status: 'succeeded' as const, finalResult: { id: 'deliverable-1', title: '交付检查意见', contentType: 'text/markdown', content: finalResult, sha256: digest(finalResult) } },
+    run: { status: 'succeeded' as const, finalResult: { id: 'deliverable-1', title: '交付检查意见', contentType: 'text/markdown', content: finalResult, sha256: digest(finalResult) }, actionOutcomes: [] },
+  }
+}
+function continuationTextMaterial(id: string, name: string, content: string): EnterpriseWorkContinuationContext['input']['materials'][number] {
+  const frozen = makeFrozenTextMaterial(name, Buffer.from(content, 'utf8'))
+  return {
+    id, materialId: frozen.materialId, name: frozen.name, mediaType: frozen.mediaType,
+    bytes: frozen.bytes, sha256: frozen.sha256, content: frozen.extraction.content, extraction: frozen.extraction,
+  }
+}
+function completedReadOnlyContext(): EnterpriseWorkContinuationContext {
+  const context = workContinuationContext()
+  context.run.finalResult = { ...context.run.finalResult!, disposition: 'complete', summary: '只读检查完成。', missingItems: [] }
+  context.run.actionOutcomes = []
+  context.input.materials = ['原件甲.md', '原件乙.md'].map((name, index) => continuationTextMaterial(`frozen-original-${index + 1}`, name, `本轮固定原件 ${index + 1}`))
+  return context
+}
+async function prepareCompletedReadOnlySubmit(f: Awaited<ReturnType<typeof fixture>>, context: EnterpriseWorkContinuationContext, id: string) {
+  await openWorkContinuation(f, context, id)
+  await f.input('我明确授权沿用这两份已固定原件，并由本轮查看的业务动作提交。', `employee-${id}-submit`)
+  const discovered = await f.discover()
+  const actionKey = discovered.available_actions[0]?.action_key
+  if (!actionKey) throw new Error('fixture did not return a current business action')
+  const { recordKey } = await f.findRecord(discovered.handoff_key, 'TEST-100 设备交接验收合同')
+  const read = await f.call('read_business_record', { handoff_key: discovered.handoff_key, record_key: recordKey })
+  if (read.status !== 200) throw new Error('fixture did not read the current business record')
+  return {
+    ...discovered, goal: '使用两份固定原件完成当前员工明确授权的业务提交。', business_record_key: recordKey,
+    business_actions: [actionKey], materials: [], reuse_material_names: context.input.materials.map((material) => material.name),
   }
 }
 function businessNotificationContext(notificationID: string, options: { recordId?: string; materialStatus?: 'available' | 'none' | 'unavailable'; content?: string } = {}): EnterpriseBusinessNotificationContext {
@@ -130,6 +158,7 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
       idempotencySeed?: string
       continuation?: { inputRevisionID: string; runID: string }
       resources?: Array<{ sourceKind?: string; requestId?: string; name: string; bytes: number; sha256: string }>
+      authorizedBusinessCapabilityIds?: string[]
     }) => {
       await source?.assertCurrent()
       if (source?.continuation) {
@@ -249,7 +278,7 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
   return { call, callWithTurn, input, getTurnKey: () => turnKey, relogin, startNewSession, discover, findRecord, openReturned, openApprovalReview, openBusinessResult, service, bridge, get environment() { return environment }, get runtimeId() { return runtimeId }, get sessionPath() { return sessionPath }, get transcript() { return activeTranscript }, transcripts, materials, cwd, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, businessCandidate, businessSnapshot, sessions }
 }
 
-async function openNeedsInputContinuation(f: Awaited<ReturnType<typeof fixture>>, context: EnterpriseWorkContinuationContext, id: string) {
+async function openWorkContinuation(f: Awaited<ReturnType<typeof fixture>>, context: EnterpriseWorkContinuationContext, id: string) {
   f.service.getWorkContinuationContext.mockImplementation(async (references) => {
     const current = structuredClone(context)
     current.source.inputRevisionID = references.workReference
@@ -265,6 +294,24 @@ async function openNeedsInputContinuation(f: Awaited<ReturnType<typeof fixture>>
   const activated = await f.call('activate', { prompt })
   expect(activated.status, JSON.stringify(activated.body)).toBe(200)
   return source
+}
+async function openNeedsInputContinuation(f: Awaited<ReturnType<typeof fixture>>, context: EnterpriseWorkContinuationContext, id: string) {
+  return openWorkContinuation(f, context, id)
+}
+async function freezeOfficeOriginals(f: Awaited<ReturnType<typeof fixture>>, context: EnterpriseWorkContinuationContext) {
+  const originals = await Promise.all([
+    readFile(new URL('../../../scenarios/sales-contract-handoff/materials/合同样例.docx', import.meta.url)),
+    readFile(new URL('../../../scenarios/sales-contract-handoff/materials/技术协议样例.pdf', import.meta.url)),
+  ])
+  const paths = ['材料/附件/合同样例.docx', '材料/附件/技术协议样例.pdf']
+  for (let index = 0; index < paths.length; index++) await writeFile(join(f.cwd, paths[index]!), originals[index]!)
+  const frozen = await freezeMaterials(f.cwd, paths.map((path, index) => ({ path, sha256: digest(originals[index]!) })))
+  context.input.materials = frozen.map((material, index) => ({
+    id: `forge-read-only-original-${index}`, materialId: material.materialId, sourceKind: 'owner',
+    name: material.name, mediaType: material.mediaType, bytes: material.bytes, sha256: material.sha256,
+    content: material.extraction.content, extraction: material.extraction,
+  }))
+  return frozen
 }
 
 describe('employee-bound material handoff', () => {
@@ -365,6 +412,9 @@ describe('employee-bound material handoff', () => {
     }])
     expect(JSON.stringify(binding.context.actionOutcomes)).not.toContain('contract-internal-1')
 
+    const missingContext = workContinuationContext()
+    delete missingContext.run.actionOutcomes
+    f.service.getWorkContinuationContext.mockResolvedValueOnce(missingContext)
     const missing = await f.bridge.pinWorkContinuationContext({ id: 'notice-no-action-outcomes', source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' })
     expect(missing.context).not.toHaveProperty('actionOutcomes')
   })
@@ -882,6 +932,90 @@ describe('employee-bound material handoff', () => {
     expect(JSON.stringify(firstCall?.[2]?.resources)).not.toContain(docx.bytesBase64)
     expect(recovered.body.result.materials).toEqual([{ name: docx.name }, { name: '补充材料.pdf' }])
   })
+  it('reuses two exact materials from a completed read-only check after a new employee authorization', async () => {
+    const f = await fixture()
+    const parent = completedReadOnlyContext()
+    await freezeOfficeOriginals(f, parent)
+    const params = await prepareCompletedReadOnlySubmit(f, parent, 'completed-readonly-approve')
+    const submitted = await f.call('submit', params)
+
+    expect(submitted.status).toBe(200)
+    expect(submitted.body.result.status).toBe('accepted')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    const [choice, taskText, delivery] = f.service.submitWork.mock.calls[0]!
+    expect(choice).toMatchObject({ teamId: 'team-contract', workflowId: 'workflow-review', version: 3 })
+    expect(delivery).toMatchObject({
+      authorizedBusinessCapabilityIds: [f.businessCapabilityId],
+      continuation: { workbenchSessionID: 'workbench-session-1', inputRevisionID: 'input-1', runID: 'run-1', teamID: 'team-contract' },
+    })
+    expect(delivery).toBeDefined()
+    expect(delivery!.continuation).not.toHaveProperty('restartAfterFailedRun')
+    expect(delivery!.resources).toEqual(parent.input.materials.map(({ id, materialId, name, mediaType, bytes, sha256 }) => ({
+      type: 'forge-file', id, materialId, sourceKind: 'owner', name, mediaType, bytes, sha256,
+    })))
+    expect((JSON.parse(taskText) as { materials: Array<{ name: string }> }).materials.map(({ name }) => name))
+      .toEqual(parent.input.materials.map(({ name }) => name))
+  })
+
+  it('refuses completed read-only material reuse when the action receipt is missing, nonempty, or unknown', async () => {
+    const variants: Array<{ label: string; outcomes?: EnterpriseWorkContinuationContext['run']['actionOutcomes'] }> = [
+      { label: 'missing' },
+      { label: 'already-succeeded', outcomes: [{ nodeID: 'review', callID: 'call-1', actionName: 'submit', objectName: 'record', status: 'succeeded', summary: '已执行' }] },
+      { label: 'unknown', outcomes: [{ nodeID: 'review', callID: 'call-1', actionName: 'submit', objectName: 'record', status: 'unknown', summary: '结果未知' }] },
+    ]
+    for (const variant of variants) {
+      const f = await fixture()
+      const parent = completedReadOnlyContext()
+      if (variant.outcomes === undefined) delete parent.run.actionOutcomes
+      else parent.run.actionOutcomes = variant.outcomes
+      parent.input.materials = [continuationTextMaterial('frozen-parent-file', '检查原件.md', '已冻结的检查材料。')]
+      await openWorkContinuation(f, parent, `completed-reuse-${variant.label}`)
+      await f.input('我明确授权提交，但不要在动作回执缺失、已有动作或未知时复用旧材料。', `employee-${variant.label}`)
+      const discovered = await f.discover()
+      const rejected = await f.call('submit', {
+        ...discovered, materials: [], reuse_material_names: ['检查原件.md'], business_actions: [],
+      })
+
+      expect(rejected.status, variant.label).toBe(409)
+      expect(rejected.body.error, variant.label).toContain('不允许复用原材料')
+      expect(f.service.stageWorkMaterials, variant.label).not.toHaveBeenCalled()
+      expect(f.service.submitWork, variant.label).not.toHaveBeenCalled()
+    }
+  })
+
+  it('rejects a completed continuation when Weave says the expected parent head has advanced', async () => {
+    const f = await fixture()
+    const parent = completedReadOnlyContext()
+    parent.input.materials = [continuationTextMaterial('frozen-parent-file', '检查原件.md', '已冻结的检查材料。')]
+    const params = await prepareCompletedReadOnlySubmit(f, parent, 'completed-stale-head')
+    f.service.submitWork.mockRejectedValueOnce(new WorkRegistrationRejectedError('parent revision advanced'))
+
+    const rejected = await f.call('submit', params)
+
+    expect(rejected.body.result, JSON.stringify(rejected.body)).toMatchObject({ status: 'rejected', submitted: false })
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitWork).toHaveBeenCalledOnce()
+  })
+
+  it('recovers the same frozen completed-check handoff after an unknown receipt', async () => {
+    const f = await fixture()
+    const parent = completedReadOnlyContext()
+    await freezeOfficeOriginals(f, parent)
+    const params = await prepareCompletedReadOnlySubmit(f, parent, 'completed-readonly-recovery')
+    f.service.submitWork.mockRejectedValueOnce(new Error('dispatch response lost after server acceptance'))
+
+    const first = await f.call('submit', params)
+    expect(first.body.result.status).toBe('unknown')
+    const recovered = await f.call('recover', { recovery_key: first.body.result.recovery_key as string })
+
+    expect(recovered.body.result.status).toBe('accepted')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    const [firstCall, retryCall] = f.service.submitWork.mock.calls
+    expect(firstCall?.[2]?.idempotencySeed).toBe(retryCall?.[2]?.idempotencySeed)
+    expect(firstCall?.[2]?.resources).toEqual(retryCall?.[2]?.resources)
+    expect(firstCall?.[2]?.authorizedBusinessCapabilityIds).toEqual([f.businessCapabilityId])
+  })
+
   it('rejects ambiguous, stale, and wrong-source reuse before staging any new attachment', async () => {
     const f = await fixture()
     const docxPath = '材料/附件/合同样例.docx'

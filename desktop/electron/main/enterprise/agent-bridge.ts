@@ -24,7 +24,7 @@ interface FrozenHandoffIntent {
   task: string
   /** Materials attached in this employee turn; only these are uploaded during staging. */
   materials: FrozenMaterial[]
-  /** Exact existing Forge references selected from the current needs_input parent input. */
+  /** Exact existing Forge references selected from an eligible read-only parent input. */
   reusedMaterials?: ReusedMaterial[]
   authorizedBusinessCapabilityIds: string[]
   sourceMessages: Array<{ messageId: string; eventSeq: number; sha256: string }>
@@ -182,6 +182,12 @@ function approvalReviewSessionMetadata(accountKey: string, sessionPath: string, 
 function workContinuationFingerprint(context: EnterpriseWorkContinuationContext): string {
   return digest(JSON.stringify({ source: context.source, input: context.input, finalResult: context.run.finalResult ?? null, actionOutcomes: context.run.actionOutcomes ?? null }))
 }
+function isReusableReadOnlyContinuation(context: EnterpriseWorkContinuationContext | undefined): boolean {
+  const run = context?.run
+  if (!run || !Array.isArray(run.actionOutcomes) || run.actionOutcomes.length !== 0) return false
+  if (run.status === 'failed') return true
+  return run.status === 'succeeded' && (run.finalResult?.disposition === 'needs_input' || run.finalResult?.disposition === 'complete')
+}
 function businessNotificationFingerprint(context: EnterpriseBusinessNotificationContext): string {
   const { capturedAt: _capturedAt, ...snapshot } = context.record.snapshot
   return digest(JSON.stringify({
@@ -226,10 +232,8 @@ function reuseMaterialsFromContinuation(bound: BoundWorkContinuation | undefined
     throw new Error('复用材料选择无效，请从当前工作中选择已冻结文件名')
   }
   if (!rawNames.length) return []
-  const needsInput = bound?.context.run.status === 'succeeded' && bound.context.run.finalResult?.disposition === 'needs_input'
-  const failedReadOnly = bound?.context.run.status === 'failed' && !bound.context.run.actionOutcomes?.length
-  if (!bound || bound.accountKey !== accountKey || !needsInput && !failedReadOnly) {
-    throw new Error('只有当前员工打开的“需要补充”或无业务动作的失败工作可以复用原冻结材料')
+  if (!bound || bound.accountKey !== accountKey || !isReusableReadOnlyContinuation(bound.context)) {
+    throw new Error('只有当前员工打开且平台明确记录未执行业务动作的已结束只读工作，才可复用原冻结材料')
   }
   const names = rawNames.map((name) => {
     const normalized = name.trim()
@@ -1058,8 +1062,8 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       if (!continuation || !parent || parent.workbenchSessionID !== continuation.source.workbenchSessionID
         || parent.inputRevisionID !== continuation.source.inputRevisionID || parent.runID !== continuation.source.runID
         || parent.teamID !== continuation.input.teamID || intent.choice.teamId !== parent.teamID
-        || continuation.run.status !== 'succeeded' || continuation.run.finalResult?.disposition !== 'needs_input') {
-        throw new Error('复用材料恢复请求与当前需要补充事项不匹配')
+        || !isReusableReadOnlyContinuation(continuation)) {
+        throw new Error('复用材料恢复请求与当前只读工作不匹配')
       }
       for (const reused of intent.reusedMaterials) {
         const matches = continuation.input.materials.filter((material) => material.id === reused.id
@@ -1093,7 +1097,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       }
     }
   }
-  private async assertWorkContinuationCurrent(claim: CapabilityClaim, turn: EmployeeTurn): Promise<void> {
+  private async assertWorkContinuationCurrent(claim: CapabilityClaim, turn: EmployeeTurn, requireReusableMaterials = false): Promise<void> {
     const bound = turn.workContinuation
     if (!bound) return
     if (this.workContinuations.get(claim.token) !== bound || this.workLineages.get(claim.token) !== bound
@@ -1107,6 +1111,9 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     })
     if (workContinuationFingerprint(current) !== bound.fingerprint) throw new Error('原工作输入、材料版本或团队结果已变化，请刷新工作消息')
     bound.context.run.status = current.run.status
+    if (requireReusableMaterials && !isReusableReadOnlyContinuation(bound.context)) {
+      throw new Error('当前团队运行状态或平台动作回执不允许复用原材料，请刷新工作消息')
+    }
   }
   private async search(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn) {
     const summary = requireString(params.work_summary, 'work_summary', { min: 1, max: 4_000, trim: true })
@@ -1162,6 +1169,9 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       if (!action) throw new Error('业务动作不属于本轮查看的团队能力')
       return action.id
     }).sort()
+    if (Array.isArray(params.reuse_material_names) && params.reuse_material_names.length > 0) {
+      await this.assertWorkContinuationCurrent(claim, turn, true)
+    }
     const reusedMaterials = reuseMaterialsFromContinuation(workContinuation, params.reuse_material_names, turn.accountKey)
     const businessRecordKey = typeof params.business_record_key === 'string' ? params.business_record_key.trim() : ''
     const selectedBusinessContext = businessRecordKey ? this.businessRecords.get(claim.token)?.get(businessRecordKey) : undefined
@@ -1208,7 +1218,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       }
     }
     const sourceMessages = await this.evidence(claim, turn)
-    await this.assertWorkContinuationCurrent(claim, turn)
+    await this.assertWorkContinuationCurrent(claim, turn, reusedMaterials.length > 0)
     const employeeMessageId = turn.messageId
     if (!employeeMessageId) throw new Error('无法确认当前员工授权消息')
     const sessionKey = digest(claim.sessionPath!).slice(0, 24)
@@ -1232,7 +1242,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       }
       const task = executionText(goal, materials, businessSnapshot, reusedMaterials)
       await this.evidence(claim, turn)
-      await this.assertWorkContinuationCurrent(claim, turn)
+      await this.assertWorkContinuationCurrent(claim, turn, reusedMaterials.length > 0)
       return {
         task, materials, reusedMaterials, authorizedBusinessCapabilityIds, sourceMessages, employeeMessageId, choice,
         accountKey: turn.accountKey, idempotencySeed, sessionKey,
@@ -1563,7 +1573,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         const stagedResources = materials.length
           ? await this.options.service.stageWorkMaterials(materials, async () => {
               await this.evidence(claim, turn)
-              await this.assertWorkContinuationCurrent(claim, turn)
+              await this.assertWorkContinuationCurrent(claim, turn, reusedMaterials.length > 0)
             })
           : []
         await this.evidence(claim, turn)
@@ -1598,7 +1608,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   }
   private async deliver(claim: CapabilityClaim, turn: EmployeeTurn, frozen: FrozenHandoff, recoveryKey: string): Promise<unknown> {
     await this.evidence(claim, turn)
-    await this.assertWorkContinuationCurrent(claim, turn)
+    await this.assertWorkContinuationCurrent(claim, turn, (frozen.reusedMaterials?.length ?? 0) > 0)
     const restartAfterFailedRun = frozen.continuation && turn.workContinuation?.context.run.status === 'failed'
       && frozen.authorizedBusinessCapabilityIds.length === 0
     const pending = this.inFlight.get(recoveryKey)
