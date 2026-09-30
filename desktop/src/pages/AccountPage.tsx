@@ -32,7 +32,7 @@ export function AccountPage({ session, onSignIn }: AccountPageProps) {
         {error ? <p className="account-error" role="alert">{error}</p> : null}
         <button type="submit" className="account-submit" disabled={busy || !email.trim() || !password}>{busy ? <><LoaderCircle className="spin" size={15}/>正在登录</> : <>继续<ArrowRight size={15}/></>}</button>
       </form>
-      <small>{session?.environment.origin || '正在读取企业环境'}{session && !session.environment.secure ? ' · 内网 HTTP' : ''}</small>
+      <small>{session?.environment.origin || '正在读取企业环境'}{session && !session.environment.secure ? ' · HTTP连接' : ''}</small>
     </section>
   </main>
 }

@@ -47,7 +47,7 @@ export function EnterpriseAccountSettings({ session, onSignIn, onSignOut }: Ente
         <button type="submit" className="button button--primary" disabled={busy || !email.trim() || !password}>{busy ? <><LoaderCircle className="spin" size={13}/>正在登录</> : <>登录<ArrowRight size={13}/></>}</button>
       </form>}
       {error ? <p className="settings-error" role="alert">{error}</p> : null}
-      <p className="enterprise-account-origin">{session?.environment.origin || '正在读取 Forge 环境'}{session && !session.environment.secure ? ' · 内网 HTTP' : ''}</p>
+      <p className="enterprise-account-origin">{session?.environment.origin || '正在读取 Forge 环境'}{session && !session.environment.secure ? ' · HTTP连接' : ''}</p>
     </section>
   </div>
 }
