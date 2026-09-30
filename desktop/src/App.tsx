@@ -257,6 +257,9 @@ export default function App() {
     bridge, harness: activeHarness, initialProject, initialSession, sessions,
     initialMessages: bridge ? [] : SAMPLE_TRANSCRIPT, reportError,
   })
+  useEffect(() => {
+    setTeamActionReceipt((current) => current?.generation === workspace.workspaceGeneration ? current : undefined)
+  }, [workspace.workspaceGeneration])
   const syncProviderRuntime = useCallback(async (runtimeId: string) => {
     if (!bridge) return
     const generation = workspace.workspaceRef.current.generation

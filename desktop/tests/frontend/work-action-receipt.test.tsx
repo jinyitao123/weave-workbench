@@ -23,25 +23,28 @@ afterEach(async () => {
 it('keeps an empty action receipt separate from a model summary that claims submission', async () => {
   await act(async () => root.render(<WorkActionReceipt outcomes={[]}/>))
 
-  expect(container.textContent).toContain('本次没有记录业务动作回执')
+  expect(container.textContent).toContain('平台记录本次调用次数为 0')
   expect(container.textContent).toContain('不能根据团队摘要认定已提交')
 })
 
 it('shows successful, failed, and unknown platform action outcomes without promoting unknown to success', async () => {
   await act(async () => root.render(<WorkActionReceipt outcomes={[
-    { actionName: 'submit', objectName: 'record', status: 'succeeded', summary: '提交已确认' },
-    { actionName: 'update', objectName: 'record', status: 'failed', summary: '更新失败' },
-    { actionName: 'resume', objectName: 'record', status: 'unknown', summary: '结果未知' },
+    { actionName: 'submit', objectName: 'record', status: 'succeeded', summary: '平台记录：业务动作“线索转商机”已确认完成。' },
+    { actionName: 'update', objectName: 'record', status: 'failed', summary: '平台记录：业务动作“调整客户信息”返回失败。' },
+    { actionName: 'resume', objectName: 'record', status: 'unknown', summary: '平台记录：业务动作“合同提交”结果未知，请先核对业务记录。' },
+    { actionName: 'forge_contract.submit_r2', objectName: 'forge_contract', status: 'succeeded', summary: '平台记录：业务动作“forge_contract.submit_r2”已确认完成。' },
   ]}/>))
 
-  expect(container.textContent).toContain('Forge 已确认成功')
-  expect(container.textContent).toContain('Forge 已确认失败')
-  expect(container.textContent).toContain('结果未知，不能视为成功')
+  expect(container.textContent).toContain('线索转商机：工具调用返回成功')
+  expect(container.textContent).toContain('调整客户信息：工具调用返回失败')
+  expect(container.textContent).toContain('合同提交：调用结果未知，需核对业务记录')
+  expect(container.textContent).toContain('业务工具调用：工具调用返回成功')
+  expect(container.textContent).not.toContain('forge_contract.submit_r2')
 })
 
 it('states when the work message carries no action receipt', async () => {
   await act(async () => root.render(<WorkActionReceipt/>))
 
-  expect(container.textContent).toContain('没有附带业务动作回执')
-  expect(container.textContent).toContain('团队摘要不能证明业务已提交')
+  expect(container.textContent).toContain('未取得业务动作回执')
+  expect(container.textContent).toContain('不能根据团队摘要认定已提交')
 })
