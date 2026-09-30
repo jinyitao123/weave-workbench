@@ -137,6 +137,10 @@
 .work-receipt small { overflow: hidden; margin-top: 2px; font-size: 8.5px; white-space: nowrap; text-overflow: ellipsis; }
 .work-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 13px; }
 .work-panel { min-height: 230px; overflow: hidden; }
+.work-action-receipt { margin: 0 12px 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-raised); color: var(--text-secondary); font-size: 11px; line-height: 1.55; }
+.work-action-receipt strong { color: var(--text); font-size: 11px; font-weight: 600; }
+.work-action-receipt p { margin: 5px 0 0; }
+.work-action-receipt ul { margin: 5px 0 0; padding-left: 18px; }
 .work-panel-heading { height: 45px; display: flex; align-items: center; gap: 7px; padding: 0 13px; border-bottom: 1px solid var(--border); color: var(--text-secondary); }
 .work-panel-heading h2 { flex: 1; color: var(--text); }
 .work-panel-heading span { min-width: 20px; padding: 2px 5px; border-radius: 6px; background: var(--surface-hover); text-align: center; font-size: 9px; }
