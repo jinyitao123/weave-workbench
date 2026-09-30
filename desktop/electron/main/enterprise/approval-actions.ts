@@ -51,6 +51,26 @@ function nativeActionErrorDetails(value: unknown): { code?: string; rejected: bo
   return { ...(code ? { code } : {}), rejected: code !== undefined && KNOWN_NATIVE_ACTION_REJECTION_CODES.has(code) }
 }
 
+function nativeActionResult(value: unknown, args: NativeMcpActionArguments): NativeMcpActionAttempt | undefined {
+  const envelope = record(value)
+  if (!envelope || !('ok' in envelope || 'action' in envelope || 'objectName' in envelope)) return undefined
+  if (envelope.action !== args.actionName || envelope.objectName !== args.objectName || envelope.recordId !== args.recordId) {
+    return { status: 'unknown', message: 'Forge 原生动作回执与本次动作绑定不匹配。' }
+  }
+  if (envelope.ok !== true) {
+    const error = nativeActionErrorDetails(envelope)
+    return {
+      status: error.rejected ? 'rejected' : 'unknown',
+      ...(error.code ? { code: error.code } : {}),
+      message: error.rejected ? 'Forge 原生动作明确拒绝。' : 'Forge 原生动作返回了待核对结果。',
+    }
+  }
+  const receipt = record(envelope.result)
+  return receipt
+    ? { status: 'returned', result: receipt }
+    : { status: 'unknown', message: 'Forge 原生动作没有返回可核对回执。' }
+}
+
 export async function callNativeMcpRunAction(
   args: NativeMcpActionArguments, assertCurrent: () => Promise<void>, transport: NativeMcpActionTransport,
 ): Promise<NativeMcpActionAttempt> {
@@ -107,10 +127,15 @@ export async function callNativeMcpRunAction(
       message: actionError.rejected ? 'Forge 原生动作明确拒绝。' : 'Forge 原生动作返回了待核对错误。',
     }
   }
-  if (result.structuredContent !== undefined) return { status: 'returned', result: result.structuredContent }
+  if (result.structuredContent !== undefined) {
+    return nativeActionResult(result.structuredContent, args) ?? { status: 'returned', result: result.structuredContent }
+  }
   const resultText = Array.isArray(result.content) ? result.content.map((item) => text(record(item)?.text, 100_000)).find(Boolean) : undefined
   if (!resultText) return { status: 'unknown', message: 'Forge 原生动作没有返回可核对回执。' }
-  try { return { status: 'returned', result: JSON.parse(resultText) as unknown } }
+  try {
+    const parsedResult: unknown = JSON.parse(resultText)
+    return nativeActionResult(parsedResult, args) ?? { status: 'returned', result: parsedResult }
+  }
   catch { return { status: 'unknown', message: 'Forge 原生动作回执格式无法核对。' } }
 }
 
