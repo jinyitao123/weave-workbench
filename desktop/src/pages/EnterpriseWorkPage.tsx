@@ -19,9 +19,13 @@ const canContinueItem = (item: EnterpriseWorkItem) => item.source === 'forge' &&
   Boolean(item.workReference && item.runReference && item.sessionReference)
   || /^weave\.team_run\.(result|failure|revision_required|cancelled)$/.test(item.notificationType ?? '')
 )
-const itemSummary = (item: EnterpriseWorkItem) => item.summary ?? (item.source === 'weave'
-  ? item.kind === 'failure' ? '团队运行失败，业务结果需要在 Forge 核对。' : item.kind === 'cancelled' ? '团队运行已取消；Forge 业务状态需单独核对。' : '团队运行已返回结果，业务是否完成需单独核对。'
-  : item.kind === 'failure' ? '业务处理失败，请打开原事项查看。' : '业务状态有更新，请打开原事项核对。')
+const itemSummary = (item: EnterpriseWorkItem) => {
+  if (item.source === 'weave') {
+    if (item.summary) return `团队文本摘要（非业务回执）：${item.summary}。是否办理以平台动作回执和 Forge 当前记录为准。`
+    return item.kind === 'failure' ? '团队运行失败，业务结果需要在 Forge 核对。' : item.kind === 'cancelled' ? '团队运行已取消；Forge 业务状态需单独核对。' : '团队运行已返回结果，业务是否完成需单独核对。'
+  }
+  return item.summary ?? (item.kind === 'failure' ? '业务处理失败，请打开原事项查看。' : '业务状态有更新，请打开原事项核对。')
+}
 const formatTime = (value?: string) => value ? new Date(value).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '团队协作记录'
 const internalIdentifier = /[0-9a-f]{8}-[0-9a-f-]{27,}/i
 const readableName = (value?: string, fallback = '团队协作') => value?.trim() && !internalIdentifier.test(value.trim())

@@ -83,6 +83,19 @@ it('keeps a native Weave team-run notification openable when its source is resol
   expect(continueWork).toHaveBeenCalledWith(item)
 })
 
+it('labels a Weave notification body as team text rather than an authoritative business receipt', async () => {
+  const item = { ...overview.items[0]!, source: 'weave' as const, notificationType: 'weave.team_run.result', summary: '已提交至业务系统' }
+  await act(async () => root.render(<EnterpriseWorkPage
+    overview={{ ...overview, items: [item], reads: { ...overview.reads, notifications: { status: 'loaded' } } }}
+    loading={false} error="" onRefresh={refresh}
+    onComplete={vi.fn(async () => undefined)} onInspect={vi.fn(async () => ({ title: '', step: '', fields: [], files: [] }))}
+    onAssist={assistPi} onContinue={continueWork}
+  />))
+
+  expect(container.textContent).toContain('团队文本摘要（非业务回执）：已提交至业务系统')
+  expect(container.textContent).toContain('以平台动作回执和 Forge 当前记录为准')
+})
+
 it('opens a typed Forge result message through the source resolver without inferring a record from its text', async () => {
   const item = { ...overview.items[0]!, source: 'forge' as const, kind: 'result' as const, notificationType: 'sales.contract.approved' }
   await act(async () => root.render(<EnterpriseWorkPage
