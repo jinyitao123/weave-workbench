@@ -1696,20 +1696,21 @@ export class EnterpriseService {
     }).filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index)
     const sources = new Map<string, { workReference: string; runReference: string; sessionReference: string }>()
     const sourceFor = async (item: EnterpriseWorkItem) => {
-      if (item.workReference && item.runReference && item.sessionReference) return {
-        workReference: item.workReference, runReference: item.runReference, sessionReference: item.sessionReference,
-      }
       const cached = sources.get(item.id)
       if (cached) return cached
       try {
-        const verified = await this.getWorkNotificationSource(item.id)
-        if (verified.kind === 'business' || item.notificationType !== `weave.team_run.${verified.kind}`) return undefined
+        const verified = await this.readWorkNotificationSource(item.id, generation)
+        if (verified.kind === 'business' || item.notificationType !== `weave.team_run.${verified.kind}`
+          || item.workReference && item.workReference !== verified.source.workReference
+          || item.runReference && item.runReference !== verified.source.runReference
+          || item.sessionReference && item.sessionReference !== verified.source.sessionReference) return undefined
         const source = { workReference: verified.source.workReference, runReference: verified.source.runReference, sessionReference: verified.source.sessionReference }
         sources.set(item.id, source)
         return source
       } catch { return undefined }
     }
     const superseded = new Set<string>()
+    const hasSucceededAction = new Set<string>()
     for (const pending of items) {
       if (pending.source !== 'weave' || pending.kind !== 'revision_required' || !pending.actionable
         || !/^weave\.team_run\.revision_required$/.test(pending.notificationType ?? '')) continue
@@ -1725,10 +1726,22 @@ export class EnterpriseService {
           break
         }
       }
+      if (superseded.has(pending.id)) continue
+      try {
+        const context = await this.readWorkContinuationMetadata(parent, generation)
+        if (context.run.status === 'succeeded' && context.run.finalResult?.disposition === 'needs_input'
+          && context.run.actionOutcomes?.some((outcome) => outcome.status === 'succeeded')) hasSucceededAction.add(pending.id)
+      } catch {
+        // A missing or unreadable action receipt must never be treated as a successful business action.
+      }
     }
     const projectedItems = items.map((item) => ({
       ...item, ...(sources.get(item.id) ?? {}),
-      ...(superseded.has(item.id) ? { actionable: false, status: 'completed' as const } : {}),
+      ...(hasSucceededAction.has(item.id) ? {
+        title: '团队结果与业务回执',
+        summary: 'Forge 业务动作已确认成功。团队列出的缺项是检查意见，后续办理事项以 Forge 当前正式事项为准。',
+      } : {}),
+      ...(superseded.has(item.id) || hasSucceededAction.has(item.id) ? { actionable: false, status: 'completed' as const } : {}),
     }))
     const runList = record(runsRead.value)
     this.assertAuthGeneration(generation)
@@ -1745,9 +1758,9 @@ export class EnterpriseService {
     }
   }
 
-  async getWorkContinuationContext(references: { workReference: string; runReference: string; sessionReference: string }): Promise<EnterpriseWorkContinuationContext> {
-    const { session, generation } = await this.sessionSnapshot()
-    if (session.status !== 'signed-in') throw new Error('请先登录')
+  private async readWorkContinuationMetadata(
+    references: { workReference: string; runReference: string; sessionReference: string }, generation: number,
+  ): Promise<EnterpriseWorkContinuationContext> {
     const workReference = boundedIdentity(references?.workReference, 512)
     const runReference = boundedIdentity(references?.runReference, 512)
     const sessionReference = boundedIdentity(references?.sessionReference, 512)
@@ -1756,6 +1769,14 @@ export class EnterpriseService {
     if (context.source.inputRevisionID !== workReference || context.source.runID !== runReference || context.source.workbenchSessionID !== sessionReference) {
       throw new Error('工作消息与原团队工作不匹配，请刷新工作消息')
     }
+    this.assertAuthGeneration(generation)
+    return context
+  }
+
+  async getWorkContinuationContext(references: { workReference: string; runReference: string; sessionReference: string }): Promise<EnterpriseWorkContinuationContext> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    const context = await this.readWorkContinuationMetadata(references, generation)
     const accountBeforeMaterials = await this.accountKey(generation)
     let totalBytes = 0
     let totalExtractedBytes = 0

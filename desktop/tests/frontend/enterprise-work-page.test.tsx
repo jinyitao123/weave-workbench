@@ -83,6 +83,30 @@ it('keeps a native Weave team-run notification openable when its source is resol
   expect(continueWork).toHaveBeenCalledWith(item)
 })
 
+it('keeps a resolved needs-input notice in work messages and lets the employee open it in Pi', async () => {
+  const item = {
+    ...overview.items[0]!, id: 'notice-needs-input', kind: 'revision_required' as const, title: '团队结果与业务回执', status: 'completed' as const,
+    actionable: false, source: 'weave' as const, notificationType: 'weave.team_run.revision_required',
+    workReference: '550e8400-e29b-41d4-a716-446655440101', runReference: 'run-succeeded', sessionReference: 'work-session-1',
+    summary: 'Forge 业务动作已确认成功。团队列出的缺项是检查意见，后续办理事项以 Forge 当前正式事项为准。',
+  }
+  await act(async () => root.render(<EnterpriseWorkPage
+    overview={{ ...overview, tasks: [], items: [item], reads: { ...overview.reads, weaveTasks: { status: 'loaded' }, notifications: { status: 'loaded' } } }}
+    loading={false} error="" onRefresh={refresh}
+    onComplete={vi.fn(async () => undefined)} onInspect={vi.fn(async () => ({ title: '', step: '', fields: [], files: [] }))}
+    onAssist={assistPi} onContinue={continueWork}
+  />))
+
+  expect(container.textContent).toContain('工作消息')
+  expect(container.textContent).toContain('团队结果与业务回执')
+  expect(container.textContent).toContain('缺项是检查意见')
+  expect(container.textContent).not.toContain('团队需要补充')
+  const continueButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '交给 Pi 查看')
+  expect(continueButton?.disabled).toBe(false)
+  await act(async () => continueButton?.click())
+  expect(continueWork).toHaveBeenCalledWith(item)
+})
+
 it('labels a Weave notification body as a run message summary', async () => {
   const item = { ...overview.items[0]!, source: 'weave' as const, notificationType: 'weave.team_run.result', summary: '已提交至业务系统' }
   await act(async () => root.render(<EnterpriseWorkPage

@@ -385,17 +385,24 @@ describe('employee-bound material handoff', () => {
       .rejects.toThrow('当前账号已变化')
   })
 
-  it('passes validated team disposition and missing items into the Pi continuation context', async () => {
+  it('passes team missing-item opinions and a successful Forge action into the Pi continuation context', async () => {
     const f = await fixture()
     const context = workContinuationContext()
     context.run.finalResult = {
       ...context.run.finalResult!, disposition: 'needs_input', summary: '合同还缺验收日期。', missingItems: ['验收日期'],
     }
+    context.run.actionOutcomes = [{
+      nodeID: 'submit', callID: 'call-submit', actionName: 'contract_submit', objectName: 'sales_contract',
+      status: 'succeeded', summary: 'Forge 已确认提交成功。',
+    }]
     f.service.getWorkContinuationContext.mockResolvedValueOnce(context)
     const binding = await f.bridge.pinWorkContinuationContext({
       id: 'notice-needs-input', source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1',
     })
     expect(binding.context.finalResult).toMatchObject({ disposition: 'needs_input', summary: '合同还缺验收日期。', missingItems: ['验收日期'] })
+    expect(binding.context.actionOutcomes).toEqual([{
+      actionName: 'contract_submit', objectName: 'sales_contract', status: 'succeeded', summary: 'Forge 已确认提交成功。',
+    }])
   })
 
   it('passes trusted Weave action outcomes to Pi without exposing the bound record id', async () => {
