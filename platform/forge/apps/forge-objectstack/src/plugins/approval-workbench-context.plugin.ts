@@ -4,7 +4,13 @@ import { isFileIdToken } from '@objectstack/spec/data';
 import type { ApprovalActionRow, ApprovalRequestRow, IApprovalService, IHttpRequest, IHttpResponse, IHttpServer, IStorageService } from '@objectstack/spec/contracts';
 import type { ExecutionContext } from '@objectstack/spec/kernel';
 import type { IObjectQLEngine } from '@objectstack/spec/contracts';
+import type { ActionHandlerContext } from '@objectstack/spec/ui';
+import {
+  CONTRACT_APPROVAL_MCP_APPROVE_TARGET,
+  CONTRACT_APPROVAL_MCP_SEND_BACK_TARGET,
+} from '../actions/approval-workbench.action.js';
 import { CONTRACT_OBJECT, resolveRetainedContractMaterial } from './contract-material-holder.js';
+import { approvalPayloadVersion } from './contract-revision-material.js';
 
 const ROUTE = '/api/v1/approvals/requests/:requestId/workbench-context';
 const ORIGINAL_ROUTE = '/api/v1/approvals/requests/:requestId/workbench-context/files/:fileId/original';
@@ -66,6 +72,17 @@ interface OriginalFileReference {
   sha256: string;
 }
 
+type ApprovalMcpDecision = 'approve' | 'revise';
+type ApprovalMcpParams = Record<string, unknown> & {
+  approvalRequestId?: unknown;
+  itemVersion?: unknown;
+  sourceMaterialVersion?: unknown;
+  comment?: unknown;
+  recordId?: unknown;
+  objectName?: unknown;
+};
+type ApprovalMcpHandlerContext = ActionHandlerContext<ApprovalMcpParams> & { recordLoadDenied?: boolean };
+
 class ContextFailure extends Error {
   readonly status: number;
   readonly code: string;
@@ -74,6 +91,13 @@ class ContextFailure extends Error {
     super(message);
     this.status = status;
     this.code = code;
+  }
+}
+
+class ApprovalActionFailure extends ContextFailure {
+  constructor(status: number, code: string, message: string) {
+    super(status, code, message);
+    this.message = `${code}: ${message}`;
   }
 }
 
@@ -175,6 +199,13 @@ function canonicalJson(value: unknown): string {
     .map((key) => `${JSON.stringify(key)}:${canonicalJson((value as JsonRecord)[key])}`).join(',')}}`;
 }
 
+function selectOptionLabel(value: unknown, options: unknown): string | undefined {
+  if (!Array.isArray(options)) return undefined;
+  const option = options.find((candidate) => isRecord(candidate) && candidate.value === value &&
+    typeof candidate.label === 'string' && candidate.label.trim());
+  return isRecord(option) && typeof option.label === 'string' ? option.label.trim() : undefined;
+}
+
 function snapshotFiles(payload: unknown, fields: Set<string>): Map<string, SnapshotFile> {
   const result = new Map<string, Set<string>>();
   if (!isRecord(payload)) return new Map();
@@ -243,10 +274,17 @@ function snapshotFiles(payload: unknown, fields: Set<string>): Map<string, Snaps
 function humanFieldValue(
   name: string,
   value: unknown,
-  schemaField: { type?: string; label?: string; system?: boolean; internal?: boolean } | undefined,
+  schemaField: { type?: string; label?: string; system?: boolean; internal?: boolean; hidden?: boolean; options?: unknown } | undefined,
   payloadDisplay: JsonRecord,
 ): string | undefined {
-  if (!schemaField || schemaField.system || schemaField.internal || FILE_FIELD_TYPES.has(schemaField.type ?? '')) return undefined;
+  if (!schemaField || schemaField.hidden || schemaField.system || schemaField.internal || FILE_FIELD_TYPES.has(schemaField.type ?? '')) return undefined;
+  if (schemaField.type === 'select') {
+    const optionLabel = selectOptionLabel(value, schemaField.options);
+    if (optionLabel) return optionLabel;
+    if (typeof value === 'string' && value.trim()) return `未知（原值：${value.trim()}）`;
+    if (typeof value === 'number' && Number.isFinite(value)) return `未知（原值：${String(value)}）`;
+    return undefined;
+  }
   const display = payloadDisplay[name];
   if (typeof display === 'string' && display.trim()) return display.trim();
   if (/(^id$|_id$|_sha256$|_manifest$|_request_id$)/i.test(name)) return undefined;
@@ -437,6 +475,250 @@ function historicalApprovalParticipant(
   ));
 }
 
+function nativeApprovalActionContext(actionContext: ApprovalMcpHandlerContext): ExecutionContext {
+  const userId = boundedText(actionContext.user?.id, 128);
+  const sessionUserId = boundedText(actionContext.session?.userId, 128);
+  if (!userId || sessionUserId !== userId) {
+    throw new ApprovalActionFailure(401, 'UNAUTHENTICATED', 'A current authenticated employee session is required.');
+  }
+  const sessionOrganizationId = boundedText(actionContext.session?.organizationId, 128);
+  const userOrganizationId = boundedText(actionContext.user?.organizationId, 128);
+  if (sessionOrganizationId && userOrganizationId && sessionOrganizationId !== userOrganizationId) {
+    throw new ApprovalActionFailure(401, 'UNAUTHENTICATED', 'The authenticated employee organization is inconsistent.');
+  }
+  const organizationId = sessionOrganizationId ?? userOrganizationId;
+  const positions = Array.isArray(actionContext.session?.positions)
+    ? actionContext.session.positions.filter((item): item is string => typeof item === 'string')
+    : [];
+  return {
+    userId,
+    ...(organizationId ? { tenantId: organizationId } : {}),
+    positions,
+    permissions: [],
+    systemPermissions: [],
+    isSystem: false,
+  };
+}
+
+async function approvalItemVersion(request: ApprovalRequestRow, actions: ApprovalActionRow[]): Promise<string> {
+  const state = {
+    id: request.id,
+    status: request.status,
+    process: request.process_name,
+    objectName: request.object_name,
+    recordId: request.record_id,
+    organizationId: request.organization_id ?? null,
+    flowRunId: request.flow_run_id ?? null,
+    flowNodeId: request.flow_node_id ?? null,
+    currentStep: request.current_step ?? null,
+    currentStepIndex: request.current_step_index ?? null,
+    round: request.round ?? 1,
+    pendingApprovers: [...(request.pending_approvers ?? [])].map(String).sort(),
+    actions: [...actions].sort((left, right) =>
+      String(left.created_at ?? '').localeCompare(String(right.created_at ?? '')) || left.id.localeCompare(right.id),
+    ).map((action) => ({
+      id: action.id,
+      action: action.action,
+      actorId: action.actor_id ?? null,
+      comment: action.comment ?? null,
+      createdAt: action.created_at ?? null,
+      stepName: action.step_name ?? null,
+      stepIndex: action.step_index ?? null,
+    })),
+  };
+  return `v1-${await sha256(new TextEncoder().encode(canonicalJson(state)))}`;
+}
+
+function observedNativeAction(
+  request: ApprovalRequestRow,
+  actions: ApprovalActionRow[],
+  actorId: string,
+  decision: ApprovalMcpDecision,
+  comment: string,
+  itemVersion: string,
+  sourceMaterialVersion: string,
+): JsonRecord | undefined {
+  const nativeAction = decision === 'approve' ? 'approve' : 'revise';
+  const matching = actions.filter((action) => action.actor_id === actorId &&
+    action.action === nativeAction && action.comment === comment);
+  if (!matching.length) return undefined;
+  return {
+    status: 'history_observed',
+    decision: 'unknown',
+    requestId: request.id,
+    recordId: request.record_id,
+    itemVersion,
+    sourceMaterialVersion,
+    observedStatus: request.status,
+    history: matching.map((action) => ({
+      action: action.action,
+      actorId: action.actor_id,
+      comment: action.comment ?? '',
+      ...(action.created_at ? { createdAt: action.created_at } : {}),
+    })),
+  };
+}
+
+async function withApprovalRequestLock<T>(
+  engine: IObjectQLEngine,
+  context: ExecutionContext,
+  requestId: string,
+  operation: () => Promise<T>,
+): Promise<T> {
+  if (typeof engine.transaction !== 'function' || typeof engine.execute !== 'function') {
+    throw new ApprovalActionFailure(503, 'APPROVAL_ACTION_UNAVAILABLE', 'The approval action lock is unavailable.');
+  }
+  return engine.transaction(async (trxContext: { transaction?: unknown }, info: { owned?: boolean }) => {
+    if (info?.owned !== true || trxContext?.transaction == null) {
+      throw new ApprovalActionFailure(503, 'APPROVAL_ACTION_UNAVAILABLE', 'A PostgreSQL transaction is required for this approval action.');
+    }
+    await engine.execute?.('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))', {
+      args: [requestId],
+      object: 'sys_approval_request',
+      transaction: trxContext.transaction,
+    });
+    return operation();
+  }, context, { require: true });
+}
+
+async function executeNativeApprovalAction(
+  engine: IObjectQLEngine,
+  approvals: IApprovalService,
+  actionContext: ApprovalMcpHandlerContext,
+  decision: ApprovalMcpDecision,
+): Promise<JsonRecord> {
+  const params = actionContext.params;
+  if (Object.hasOwn(params, 'actorId')) {
+    throw new ApprovalActionFailure(400, 'APPROVAL_ACTION_INVALID', 'The acting employee comes from the authenticated session.');
+  }
+  const allowedParams = new Set(['approvalRequestId', 'itemVersion', 'sourceMaterialVersion', 'comment', 'recordId', 'objectName']);
+  if (Object.keys(params).some((key) => !allowedParams.has(key))) {
+    throw new ApprovalActionFailure(400, 'APPROVAL_ACTION_INVALID', 'The approval action contains unsupported parameters.');
+  }
+  const requestId = boundedText(params.approvalRequestId, 128);
+  const suppliedItemVersion = boundedText(params.itemVersion, 128);
+  const suppliedMaterialVersion = boundedText(params.sourceMaterialVersion, 128)?.toLowerCase();
+  const comment = boundedText(params.comment, 4_000);
+  const objectName = boundedText(params.objectName, 160);
+  const parameterRecordId = boundedText(params.recordId, 128);
+  const loadedRecordId = boundedText(actionContext.record?.id, 128);
+  if (parameterRecordId && loadedRecordId && parameterRecordId !== loadedRecordId) {
+    throw new ApprovalActionFailure(404, 'APPROVAL_ACTION_BINDING_MISMATCH', 'The approval action is not bound to this contract record.');
+  }
+  const recordId = parameterRecordId ?? loadedRecordId;
+  if (!requestId || !suppliedItemVersion || !suppliedMaterialVersion || !/^[0-9a-f]{64}$/.test(suppliedMaterialVersion) || !comment) {
+    throw new ApprovalActionFailure(400, 'APPROVAL_ACTION_INVALID', 'The approval request, versions, and a non-empty comment are required.');
+  }
+  if (objectName !== CONTRACT_OBJECT || !recordId) {
+    throw new ApprovalActionFailure(404, 'APPROVAL_ACTION_BINDING_MISMATCH', 'The approval action is not bound to this contract record.');
+  }
+  const context = nativeApprovalActionContext(actionContext);
+  const actorId = context.userId!;
+  return withApprovalRequestLock(engine, context, requestId, async () => {
+    const request = await approvals.getRequest(requestId, context);
+    if (!request || request.id !== requestId) {
+      throw new ApprovalActionFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+    }
+    if (request.object_name !== CONTRACT_OBJECT || request.record_id !== recordId ||
+      (request.organization_id && request.organization_id !== context.tenantId)) {
+      throw new ApprovalActionFailure(404, 'APPROVAL_ACTION_BINDING_MISMATCH', 'The approval action is not bound to this contract record.');
+    }
+    const actions = await approvals.listActions(request.id, context);
+    const sourceMaterialVersion = await approvalPayloadVersion(request.payload);
+    if (sourceMaterialVersion !== suppliedMaterialVersion) {
+      throw new ApprovalActionFailure(409, 'APPROVAL_ACTION_STALE', 'The approval materials changed after this action was offered.');
+    }
+    const observed = observedNativeAction(request, actions, actorId, decision, comment, suppliedItemVersion, suppliedMaterialVersion);
+    if (observed) return observed;
+    if (request.status !== 'pending' || request.viewer?.can_act !== true) {
+      throw new ApprovalActionFailure(409, 'APPROVAL_ACTION_FORBIDDEN', 'This employee can no longer act on the current approval request.');
+    }
+    const currentItemVersion = await approvalItemVersion(request, actions);
+    if (currentItemVersion !== suppliedItemVersion) {
+      throw new ApprovalActionFailure(409, 'APPROVAL_ACTION_STALE', 'The approval item changed after this action was offered.');
+    }
+    if (actions.some((action) => action.actor_id === actorId && (action.action === 'approve' || action.action === 'revise'))) {
+      throw new ApprovalActionFailure(409, 'APPROVAL_ACTION_CONFLICT', 'This employee has already recorded an approval decision for this request.');
+    }
+    try {
+      if (decision === 'approve') {
+        const result = await approvals.decide(requestId, { actorId, decision: 'approve', comment }, context);
+        return {
+          decision: result.decision,
+          status: result.request.status,
+          requestId,
+          recordId,
+          itemVersion: suppliedItemVersion,
+          sourceMaterialVersion,
+          resumed: result.resumed === true,
+          autoRejected: false,
+          alreadyApplied: false,
+        };
+      }
+      const result = await approvals.sendBack(requestId, { actorId, comment }, context);
+      const autoRejected = result.autoRejected === true;
+      return {
+        decision: autoRejected ? 'reject' : 'revise',
+        status: result.request.status,
+        requestId,
+        recordId,
+        itemVersion: suppliedItemVersion,
+        sourceMaterialVersion,
+        resumed: result.resumed === true,
+        autoRejected,
+        alreadyApplied: false,
+      };
+    } catch (error) {
+      if (error instanceof ApprovalActionFailure) throw error;
+      const message = error instanceof Error ? error.message : String(error);
+      if (/^FORBIDDEN:/.test(message)) {
+        throw new ApprovalActionFailure(403, 'APPROVAL_ACTION_FORBIDDEN', 'The authenticated employee is not an allowed current approver.');
+      }
+      if (/^(INVALID_STATE|REQUEST_NOT_FOUND):/.test(message)) {
+        throw new ApprovalActionFailure(409, 'APPROVAL_ACTION_STALE', 'The native approval request changed before this action could be applied.');
+      }
+      if (/^VALIDATION_FAILED:/.test(message)) {
+        throw new ApprovalActionFailure(400, 'APPROVAL_ACTION_INVALID', 'The native approval service rejected this action input.');
+      }
+      throw new ApprovalActionFailure(503, 'APPROVAL_ACTION_IN_DOUBT', 'The approval result could not be confirmed. Read the native request and action history before continuing.');
+    }
+  });
+}
+
+function currentApprovalActions(
+  request: ApprovalRequestRow,
+  viewer: 'current_approver' | 'original_submitter',
+  itemVersion: string,
+  sourceMaterialVersion: string,
+): JsonRecord[] {
+  if (request.object_name !== CONTRACT_OBJECT || viewer !== 'current_approver' ||
+    request.status !== 'pending' || request.viewer?.can_act !== true || !request.record_id) return [];
+  const execution = (actionName: string) => ({
+    tool: 'run_action',
+    actionName,
+    objectName: CONTRACT_OBJECT,
+    recordId: request.record_id,
+    params: { approvalRequestId: request.id, itemVersion, sourceMaterialVersion },
+  });
+  const inputs = [{ name: 'comment', type: 'string', label: '办理意见', required: true }];
+  return [
+    {
+      semantic: 'approve',
+      label: '同意审批事项',
+      description: '将当前员工的意见记录到原生审批动作，并由原生审批服务决定是否推进流程。',
+      execution: execution('contract_approval_mcp_approve'),
+      inputs,
+    },
+    {
+      semantic: 'revise',
+      label: '退回修改审批事项',
+      description: '将当前员工的退回意见记录到原生审批动作，并沿原生修订分支继续。',
+      execution: execution('contract_approval_mcp_send_back'),
+      inputs,
+    },
+  ];
+}
+
 async function authorizedApprovalRequest(
   approvals: IApprovalService,
   requestId: string,
@@ -457,7 +739,7 @@ async function authorizedApprovalRequest(
   } else {
     throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
   }
-  const actions = request.status === 'returned' ? await approvals.listActions(request.id, executionContext) : [];
+  const actions = await approvals.listActions(request.id, executionContext);
   if (request.status === 'returned' && returnedApprovalSupersededByResubmit(actions)) {
     throw new ContextFailure(409, 'APPROVAL_CONTEXT_STALE', 'This returned approval has already been resubmitted.');
   }
@@ -477,6 +759,18 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
 
   init(ctx: PluginContext): void {
     ctx.hook('kernel:ready', () => {
+      const actionEngine = readService<IObjectQLEngine>(ctx, 'objectql');
+      const actionApprovals = readService<IApprovalService>(ctx, 'approvals');
+      if (actionEngine && actionApprovals && typeof actionEngine.registerAction === 'function') {
+        actionEngine.registerAction(CONTRACT_OBJECT, CONTRACT_APPROVAL_MCP_APPROVE_TARGET,
+          (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'approve'),
+          'forge.approval-workbench');
+        actionEngine.registerAction(CONTRACT_OBJECT, CONTRACT_APPROVAL_MCP_SEND_BACK_TARGET,
+          (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'revise'),
+          'forge.approval-workbench');
+      } else if (!actionEngine || !actionApprovals) {
+        ctx.logger.error('[approval-workbench-context] ObjectQL or native approvals service unavailable; MCP actions were not registered');
+      }
       const server = readService<IHttpServer>(ctx, 'http.server') ?? readService<IHttpServer>(ctx, 'http-server');
       if (!server) {
         ctx.logger.error('[approval-workbench-context] HTTP service unavailable; route was not mounted');
@@ -524,6 +818,7 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
             throw new ContextFailure(422, 'APPROVAL_CONTEXT_INVALID', 'The approval source is unavailable.');
           }
           const sourceMaterialVersion = await sha256(new TextEncoder().encode(canonicalJson(request.payload)));
+          const itemVersion = await approvalItemVersion(request, actions);
           const latest = request.status === 'returned' ? latestReturn(actions) : undefined;
           if (request.status === 'returned' && !latest) {
             throw new ContextFailure(422, 'APPROVAL_CONTEXT_INVALID', 'The return decision is unavailable.');
@@ -541,6 +836,7 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
             },
             sourceMaterialVersion,
             ...(latest ?? {}),
+            availableActions: currentApprovalActions(request, viewer, itemVersion, sourceMaterialVersion),
             fields: projectFields(request, engine),
             files: snapshotMaterials.files,
             originalFiles: snapshotMaterials.originalFiles,

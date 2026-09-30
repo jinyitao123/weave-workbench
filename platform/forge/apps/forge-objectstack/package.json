@@ -21,6 +21,7 @@
     "validate": "objectstack validate",
     "typecheck": "tsc --noEmit",
     "acceptance:approval-workbench-context": "node --experimental-strip-types --test tests/approval-workbench-context.integration.mjs",
+    "acceptance:approval-workbench-mcp-native": "FORGE_APPROVAL_MCP_PG_TEST=1 node --test tests/approval-workbench-mcp.native-runtime.integration.mjs",
     "acceptance:console-controls": "node tests/console-controls.static.mjs",
     "acceptance:approval-resubmit-guard": "node --experimental-strip-types tests/approval-resubmit-guard.integration.mjs",
     "acceptance:contract-revision-native-lifecycle": "tsx --test tests/contract-revision-native-lifecycle.integration.mjs",

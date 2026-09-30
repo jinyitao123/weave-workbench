@@ -111,9 +111,9 @@ export const SalesContract = master('forge_sales_contract', '框架销售合同'
   draft_request_signature: Field.text({ label: '草稿请求摘要', maxLength: 32, hidden: true, readonly: true }),
   submitted_material_id: Field.file({ label: '本次提交版本', readonly: true }),
   submitted_material_name: Field.text({ label: '提交版本名称', readonly: true, maxLength: 255 }),
-  submitted_material_sha256: Field.text({ label: '提交版本摘要', readonly: true, maxLength: 64 }),
-  submitted_attachment_manifest: Field.textarea({ label: '本次提交附件清单', readonly: true }),
-  submitted_attachment_revision_request_id: Field.text({ label: '附件修订轮次', readonly: true, maxLength: 80 }),
+  submitted_material_sha256: Field.text({ label: '提交版本摘要', readonly: true, maxLength: 64, hidden: true }),
+  submitted_attachment_manifest: Field.textarea({ label: '本次提交附件清单', readonly: true, hidden: true }),
+  submitted_attachment_revision_request_id: Field.text({ label: '附件修订轮次', readonly: true, maxLength: 80, hidden: true }),
   submitted_at: Field.datetime({ label: '提交时间', readonly: true }),
   remarks: remarks(),
 }, ['code', 'customer_po_number', 'name', 'contract_type_id', 'customer_id', 'total_amount', 'ordered_amount', 'status', 'signed_on', 'responsible_id']);
