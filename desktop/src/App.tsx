@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import type { CSSProperties } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { TitleToolbar } from '@/components/TitleToolbar'
+import { WorkActionReceipt } from '@/components/WorkActionReceipt'
 import type { ProjectScriptKind } from '@/components/ProjectRunControl'
 import { ChangesCard } from '@/components/ChangesCard'
 import { Composer } from '@/components/Composer'
@@ -14,6 +15,7 @@ import { activityNotificationSignature, readClearedActivity, readClearedAttentio
 import { errorMessage } from '@/lib/errors'
 import { openApprovalReviewInPi } from '@/lib/approval-review'
 import { businessNotificationPrompt } from '@/lib/business-notification'
+import { teamRunContinuationBoundary } from '@/lib/team-work-continuation'
 import { I18nProvider } from '@/lib/i18n'
 import { openExternalUrl, revealPath } from '@/lib/desktop-actions'
 import { createSingleFlightAdmission, findProjectForSession, gitStatusForWorkspace, shouldRefreshGitOnSessionTransition, workspaceCwd } from '@/lib/workspace'
@@ -68,6 +70,7 @@ const HARNESS_PROVIDER_DOCS: Record<HarnessId, string> = {
 }
 const LoadingPanel = ({ label }: { label: string }) => <div className="empty-state" role="status">Loading {label}…</div>
 const TerminalLoadingPanel = () => <div className="terminal-drawer terminal-drawer--loading" role="status">Loading terminal…</div>
+type TeamActionOutcomes = NonNullable<Extract<EnterpriseWorkContinuationContextView, { kind: 'weave' }>['actionOutcomes']>
 
 interface TerminalSessionMount {
   id: string
@@ -122,6 +125,7 @@ export default function App() {
   const [workOverview, setWorkOverview] = useState<EnterpriseWorkOverview>()
   const [workLoading, setWorkLoading] = useState(false)
   const [workError, setWorkError] = useState('')
+  const [teamActionReceipt, setTeamActionReceipt] = useState<{ generation: number; outcomes?: TeamActionOutcomes }>()
   const enterpriseSessionRevisionRef = useRef(0)
   const [enterpriseSession, setEnterpriseSession] = useState<EnterpriseSession | undefined>(() => enterpriseBridge ? undefined : ({
     version: '1', status: 'signed-in', environment: { origin: 'http://localhost', secure: false }, storage: 'session-only',
@@ -332,6 +336,7 @@ export default function App() {
   const onAccountSwitch = useCallback(() => {
     setDevelopmentOverview(undefined); setDevelopmentError(''); setDevelopmentLoading(false)
     setWorkOverview(undefined); setWorkError(''); setWorkLoading(false)
+    setTeamActionReceipt(undefined)
     setScheduleFocusId(null)
     setTerminalSelection(undefined)
     setTerminalSessions([])
@@ -610,9 +615,7 @@ export default function App() {
       : teamContext?.finalResult?.disposition === 'complete'
         ? `Weave 本轮结构化结果分类：团队检查已完成。该分类只表示团队检查结果，不表示 Forge 业务已完成。${teamContext.finalResult.summary ? `\n团队摘要：${teamContext.finalResult.summary}` : ''}`
         : ''
-    const historicalRunBoundary = teamContext
-      ? `这条工作消息形成于 ${new Date(item.createdAt).toLocaleString('zh-CN')}，记录的是当时这一次团队运行。Forge 当前业务记录可能已被之后的团队运行或员工操作改变；请把本次运行回执与当前业务状态分别说明，不能仅凭当前值把变化归因于本次动作。`
-      : ''
+    const historicalRunBoundary = teamContext ? teamRunContinuationBoundary(item.createdAt) : ''
     const details = failedTeamWork && teamContext ? [
       '你打开的是上一条团队工作失败消息。该运行已经结束，不能通过旧交接凭据恢复执行；不要查找历史会话或调用交接恢复工具。',
       historicalRunBoundary,
@@ -655,7 +658,10 @@ export default function App() {
       item.returnTarget ? `修改完成后返回位置：${item.returnTarget}` : '', item.reviewScope ? `复核范围：${item.reviewScope}` : '',
       '先理解退回事项、最新退回原因和原提交材料，和我一起完成修改。只有员工明确要求递交修订材料时，才调用退回修订工具；该工具固定本轮正文和员工指定附件，再通过 Forge 受控修订能力递交。只有 resumed 表示原审批已进入下一轮；prepared 和 resume_unknown 都不能声称成功。unavailable、upload_unknown 或 rejected 时说明具体阻塞。结果未知时只查询同一回执，不重新读取文件或重提。绝不调用原生审批重提或其他审批状态接口。',
     ].filter(Boolean).join('\n')
-    newSession()
+    const openedNewSession = newSession()
+    if (openedNewSession && teamContext) {
+      setTeamActionReceipt({ generation: workspace.workspaceRef.current.generation, outcomes: teamContext.actionOutcomes })
+    }
     workspace.queuePrompt(details, 'queue', undefined, undefined, returnedApprovalContextHandle, workContinuationContextHandle)
   }, [enterpriseBridge, newSession, setToast, workspace])
   const openTerminalLink = useCallback((url: string, external: boolean) => {
@@ -978,6 +984,7 @@ export default function App() {
       <div className="workbench__content">{view === 'session' ? <div ref={layout.workspaceRowRef} className="session-workspace" style={{ '--inspector-width': `${layout.inspectorWidth}px`, '--terminal-height': `${layout.terminalHeight}px` } as CSSProperties}>
         <div ref={layout.sessionWorkspaceRef} className="conversation-column">
           <main className="conversation-pane">
+            {teamActionReceipt?.generation === workspace.workspaceGeneration ? <WorkActionReceipt outcomes={teamActionReceipt.outcomes}/> : null}
             <Suspense fallback={<LoadingPanel label="conversation" />}><Transcript key={workspace.activeSessionId ?? 'new-session'} messages={workspace.messages} git={git} harness={activeHarness} personalWorkspace={activeProject?.purpose === 'personal'} loading={workspace.loadingSession} active={busy || activeSession?.status === 'running'} showReasoning={settingsState.settings.showReasoningSummaries} showTools={settingsState.settings.showToolCalls} onOpenChanges={openChanges} onSuggestion={(prompt) => { void sendPrompt(prompt).catch(() => undefined) }} onOpenMaterials={activeProject?.materialsFolder ? openMaterialsFolder : undefined} onChooseWorkspace={() => { void addProject() }} suggestionsDisabled={!activeProject || workspace.loadingSession || submitting} showPinnedChanges={false} bottomDockHasChanges={Boolean(git.files.length && settingsState.settings.showFileChangesPopup && !changesCardDismissed)} queuedMessageCount={queuedMessages.length} onOpenSessionReference={(sessionId, harness) => { const session = sessions.find((candidate) => candidate.id === sessionId && candidate.harness === harness && !candidate.archived && candidate.depth === 0); if (session) void selectSession(session); else setToast('That referenced session is archived or no longer available.') }} /></Suspense>
             <div className="conversation-bottom-dock">
               {git.files.length && settingsState.settings.showFileChangesPopup && !changesCardDismissed ? <ChangesCard git={git} onOpenChanges={openChanges} onClose={() => setChangesCardDismissed(true)} /> : null}
