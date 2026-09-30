@@ -219,6 +219,35 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
     parameters: Type.Object({ recovery_key: Type.String({ minLength: 64, maxLength: 64, description: '原交接结果中的内部恢复凭据，不由员工提供' }) }),
     async execute(_id, params) { return result(await turnCall('recover', params)) },
   })
+  pi.registerTool({
+    name: 'gooeypi_enterprise_current_item_actions',
+    label: '读取当前事项动作目录',
+    description: '读取 Forge 为当前已打开审批事项提供的原生可办理动作说明和输入字段。只返回该事项当前可用目录，不开放其他业务对象或动作。',
+    promptGuidelines: [
+      '只在当前会话由“我的工作”打开了本人审批事项时调用；action_ref 只能来自本轮本事项最近一次目录结果。',
+      '打开审批辅助本身只授权查看；只有之后员工的新消息明确要求办理当前事项，才可调用执行工具。不得把历史聊天、团队结果或旧意见当成本轮授权。',
+      '动作名称、对象、目标、版本和其余固定参数由 Forge 当前事项目录提供；不要编造或覆盖。',
+    ],
+    parameters: Type.Object({}),
+    async execute(_id) { return result(await turnCall('list_current_item_actions', {})) },
+  })
+  pi.registerTool<{ action_ref: string; comment: string }>({
+    name: 'gooeypi_enterprise_current_item_action',
+    label: '办理当前事项动作',
+    description: '在员工当前明确办理意见下，执行当前审批事项动作目录中的一项 Forge 原生 MCP 动作，并返回真实动作回执。',
+    promptGuidelines: [
+      '只接受员工本轮新消息明确要求办理的当前审批事项；不能从打开只读复核会话、旧聊天或旧待办推断授权。',
+      'action_ref 必须来自本轮同一当前事项动作目录。只填写员工本轮明确给出的comment，不改写业务对象、动作名称、记录目标、版本或其他动作参数。',
+      '每个员工轮次只调用一次。动作成功只代表 Forge 返回了该动作回执；不得据此宣称整条审批流程已完成。依回执中的当前状态、resumed、autoRejected 和 alreadyApplied 分别说明。',
+      '结果未知时先读取当前事项和 Forge 原生动作历史；Host 未确认前不得重新执行或换用其他工具。',
+      '不调用团队交接、审批修订或其他业务对象工具；办理后保留 Forge 已记录的原生意见。',
+    ],
+    parameters: Type.Object({
+      action_ref: Type.String({ minLength: 1, maxLength: 64, description: '当前员工轮次中 Forge 当前事项动作目录返回的序号' }),
+      comment: Type.String({ minLength: 1, maxLength: 4_000, description: '员工本轮明确提供并由当前动作输入声明要求的意见' }),
+    }),
+    async execute(_id, params) { return result(await turnCall('run_current_item_action', params)) },
+  })
   pi.registerTool<{ employee_request: string; body?: string; primary_material?: { path: string; sha256: string }; materials: Array<{ path: string; sha256: string }> }>({
     name: 'gooeypi_approval_revision_submit',
     label: '递交审批修订材料',

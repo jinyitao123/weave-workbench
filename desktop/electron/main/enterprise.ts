@@ -2,6 +2,7 @@ import { teamWorkspaceRequest } from './enterprise/team-workspace'
 import type { TeamWorkspaceCommand } from '../../src/types/team-workspace'
 import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkReadStatus, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource, WorkspaceMaterialMimeType } from '../../src/types/api'
 import { extractOriginalMaterialText, freezeApprovalOriginalMaterial, normalizeFrozenMaterial, validateFrozenMaterial, MAX_WORKSPACE_EXTRACTION_BYTES, MAX_WORKSPACE_MATERIAL_BYTES, type FrozenApprovalOriginalMaterial, type FrozenMaterial, type MaterialExtraction } from './enterprise/materials'
+import { parseCurrentApprovalActions } from './enterprise/approval-actions'
 import { createHash, randomUUID } from 'node:crypto'
 import { submissionUUID } from './enterprise/handoff-store'
 import { teamCatalog, teamChoices, type TeamSummary } from './enterprise/team-catalog'
@@ -27,6 +28,18 @@ export interface ApprovalRevisionSubmission {
   attachments: ApprovalRevisionFileReference[]
 }
 export interface ForgeHttpResult { status: number; body: unknown }
+export interface NativeMcpActionAttempt {
+  status: 'returned' | 'rejected' | 'unknown'
+  result?: unknown
+  code?: string
+  message?: string
+}
+export interface NativeMcpActionArguments {
+  actionName: string
+  objectName: string
+  recordId: string
+  params: Record<string, string>
+}
 export class WorkRegistrationRejectedError extends Error {}
 class WeaveHttpError extends Error {
   constructor(message: string, readonly status: number) { super(message) }
@@ -382,6 +395,24 @@ function parseMcpResponse(value: string): unknown {
   const data = trimmed.split(/\r?\n/).filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trim()).find((line) => line && line !== '[DONE]')
   if (!data) throw new Error('Forge 返回了无法识别的业务能力')
   return JSON.parse(data)
+}
+
+const KNOWN_NATIVE_ACTION_REJECTION_CODES = new Set([
+  'UNAUTHENTICATED', 'APPROVAL_CONTEXT_NOT_FOUND', 'APPROVAL_ACTION_BINDING_MISMATCH',
+  'APPROVAL_ACTION_INVALID', 'APPROVAL_ACTION_FORBIDDEN', 'APPROVAL_ACTION_STALE', 'APPROVAL_ACTION_UNAVAILABLE',
+])
+function nativeActionErrorDetails(value: unknown): { code?: string; rejected: boolean } {
+  const envelope = record(value), result = record(envelope?.result)
+  const structured = record(result?.structuredContent)
+  const text = Array.isArray(result?.content) ? result.content.map((item) => textValue(record(item)?.text)).find(Boolean) : undefined
+  let textPayload: Record<string, unknown> | undefined
+  if (text) { try { textPayload = record(JSON.parse(text)) } catch { /* Non-JSON MCP error text has no stable code. */ } }
+  const candidates = [record(envelope?.error), record(result?.error), record(structured?.error), structured,
+    record(textPayload?.error), textPayload]
+  const error = candidates.find((candidate) => candidate?.code !== undefined)
+  const rawCode = error?.code
+  const code = typeof rawCode === 'string' ? rawCode : typeof rawCode === 'number' ? String(rawCode) : undefined
+  return { ...(code ? { code } : {}), rejected: code !== undefined && KNOWN_NATIVE_ACTION_REJECTION_CODES.has(code) }
 }
 
 function memberAgentConfiguration(value: Record<string, unknown>, agentName: string): EnterpriseTeamMemberAgentConfiguration {
@@ -893,6 +924,86 @@ export class EnterpriseService {
     if (!text) throw new ForgeBusinessReadError('failed', 'Forge 原生读取工具没有返回数据')
     try { return JSON.parse(text) as unknown }
     catch { return text }
+  }
+
+  async runNativeMcpAction(
+    args: NativeMcpActionArguments, assertCurrent: () => Promise<void>,
+  ): Promise<NativeMcpActionAttempt> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in' || !this.forgeToken) throw new Error('请先登录以办理当前 Forge 事项')
+    await assertCurrent()
+    const body = JSON.stringify({
+      jsonrpc: '2.0', id: `current-item-action-${randomUUID()}`, method: 'tools/call',
+      params: { name: 'run_action', arguments: args },
+    })
+    let response: Response
+    let snapshot: EnterpriseAuthSnapshot
+    try {
+      ({ response, snapshot } = await this.authenticatedFetch(new URL('/api/v1/mcp', this.forgeUrl), 'forge', {
+        method: 'POST', headers: { Accept: 'application/json, text/event-stream', 'Content-Type': 'application/json' },
+        body, redirect: 'error', signal: AbortSignal.timeout(15_000),
+      }, generation))
+    } catch {
+      this.assertAuthGeneration(generation)
+      return { status: 'unknown', message: 'Forge 没有返回原生动作回执。' }
+    }
+    let raw: string
+    try { raw = await response.text() }
+    catch { return { status: 'unknown', message: 'Forge 原生动作回执无法读取。' } }
+    try { this.assertCurrentAuth(snapshot); await assertCurrent() }
+    catch { return { status: 'unknown', message: '员工账号或当前事项在动作期间发生变化，结果待核对。' } }
+    let parsed: unknown
+    try { parsed = parseMcpResponse(raw) } catch { parsed = undefined }
+    const responseError = nativeActionErrorDetails(parsed)
+    if (response.status === 401) {
+      await this.signOutIfCurrent(snapshot)
+      return { status: 'rejected', code: 'UNAUTHENTICATED', message: 'Forge 登录已失效，本次动作未取得执行回执。' }
+    }
+    if (response.status === 403) {
+      if (!responseError.code || responseError.rejected) return {
+        status: 'rejected', code: responseError.code ?? 'APPROVAL_ACTION_FORBIDDEN', message: 'Forge 拒绝了当前员工执行该动作。',
+      }
+      return { status: 'unknown', code: responseError.code, message: 'Forge 原生动作返回了待核对错误。' }
+    }
+    if (!response.ok) return {
+      status: responseError.rejected ? 'rejected' : 'unknown',
+      ...(responseError.code ? { code: responseError.code } : {}),
+      message: responseError.rejected ? 'Forge 原生动作明确拒绝。' : `Forge 原生动作服务返回 ${response.status}，结果待核对。`,
+    }
+    const envelope = record(parsed)
+    if (!envelope) return { status: 'unknown', message: 'Forge 原生动作没有返回可核对回执。' }
+    if (record(envelope.error)) return {
+      status: responseError.rejected ? 'rejected' : 'unknown',
+      ...(responseError.code ? { code: responseError.code } : {}),
+      message: responseError.rejected ? 'Forge 原生动作明确拒绝。' : 'Forge 原生动作返回了待核对错误。',
+    }
+    const result = record(envelope.result)
+    if (!result) return { status: 'unknown', message: 'Forge 原生动作没有返回可核对回执。' }
+    if (result.isError === true) {
+      const actionError = nativeActionErrorDetails({ result })
+      return {
+        status: actionError.rejected ? 'rejected' : 'unknown',
+        ...(actionError.code ? { code: actionError.code } : {}),
+        message: actionError.rejected ? 'Forge 原生动作明确拒绝。' : 'Forge 原生动作返回了待核对错误。',
+      }
+    }
+    if (result.structuredContent !== undefined) return { status: 'returned', result: result.structuredContent }
+    const text = Array.isArray(result.content) ? result.content.map((item) => textValue(record(item)?.text)).find(Boolean) : undefined
+    if (!text) return { status: 'unknown', message: 'Forge 原生动作没有返回可核对回执。' }
+    try { return { status: 'returned', result: JSON.parse(text) as unknown } }
+    catch { return { status: 'unknown', message: 'Forge 原生动作回执格式无法核对。' } }
+  }
+
+  async getApprovalActionHistory(requestIdValue: string): Promise<unknown[]> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录以核对 Forge 审批动作历史')
+    const requestId = boundedIdentity(requestIdValue, 128)
+    if (!requestId) throw new Error('Forge 审批事项引用无效')
+    const raw = await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(requestId)}/actions`, generation, '审批动作历史')
+    const envelope = record(raw), actions = Array.isArray(raw) ? raw : Array.isArray(envelope?.data) ? envelope.data : undefined
+    if (!actions) throw new Error('Forge 审批动作历史格式无效')
+    this.assertAuthGeneration(generation)
+    return actions
   }
 
   private async forgeObjectMetadata(objectName: string, expectedGeneration: number): Promise<unknown> {
@@ -2089,11 +2200,15 @@ export class EnterpriseService {
       || (returnReason !== undefined && (typeof returnReason !== 'string' || returnReason.length > 4000))) {
       throw new Error('Forge 审批上下文格式无效')
     }
+    const availableActions = parseCurrentApprovalActions(approval.availableActions, {
+      requestId: approvalId, businessObject: { objectName, recordId }, sourceMaterialVersion,
+    })
     return {
       requestId: approvalId, status: isSubmitter ? 'returned' : 'pending', viewer: isSubmitter ? 'original_submitter' : 'current_approver',
       title, step, businessObject: { objectName, recordId, ...(recordName ? { recordName } : {}) }, sourceMaterialVersion,
       ...(isSubmitter ? { returnVersion, returnReason: returnReason as string } : {}),
-      fields, files, ...(originalFiles ? { originalFiles } : {}),
+      fields, ...(availableActions !== undefined ? { availableActions } : {}),
+      files, ...(originalFiles ? { originalFiles } : {}),
     }
   }
 

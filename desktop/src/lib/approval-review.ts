@@ -40,7 +40,7 @@ export async function openApprovalReviewInPi(
     fields ? `Forge 业务字段：\n${fields}` : '',
     files,
     originals ? `已核验审批原件（部分提取须保留未读内容限制）：\n${originals}` : '',
-    '请整理复核意见和疑点建议；最终意见由我在待办中提交。',
+    '当前打开只授权只读核对。请整理复核意见和疑点；不要把本次打开当作办理授权。之后只有我在新消息明确要求办理当前事项时，才读取当前Forge动作目录并按该条目办理。原生动作回执只说明该项动作结果，不等于审批流程完成；结果未知时先读取当前事项和原生动作历史，不重试。',
     APPROVAL_REVIEW_SESSION_MARKER,
   ].filter(Boolean).join('\n\n')
   if (!options.newSession(undefined, { preserveComposerDraft: true })) throw new Error('无法创建独立审批辅助会话，请保留当前草稿后重试')

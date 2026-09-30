@@ -94,6 +94,69 @@ describe('EnterpriseService', () => {
     await expect(service.authorizationHeaders()).rejects.toThrow('请先登录')
   })
 
+  it('invokes only the generic Forge MCP run_action tool and preserves the native receipt', async () => {
+    const args = {
+      actionName: 'action_from_current_item_metadata', objectName: 'forge_case_record', recordId: 'record-current',
+      params: { approvalRequestId: 'request-current', itemVersion: 'item-version-current', sourceMaterialVersion: 'a'.repeat(64), comment: '员工本轮意见' },
+    }
+    const receipt = {
+      decision: 'approve', status: 'pending', requestId: 'request-current', recordId: 'record-current',
+      itemVersion: 'item-version-current', sourceMaterialVersion: 'a'.repeat(64),
+      resumed: false, autoRejected: false, alreadyApplied: false,
+    }
+    const calls: Array<{ url: string; authorization?: string; body?: Record<string, unknown> }> = []
+    const fetchMock = workOverviewFetch((url, init) => {
+      if (url === 'http://forge/api/v1/mcp') {
+        const body = JSON.parse(String(init?.body)) as Record<string, unknown>
+        calls.push({ url, authorization: new Headers(init?.headers).get('Authorization') ?? undefined, body })
+        return Response.json({ jsonrpc: '2.0', id: 'current-item-action', result: { structuredContent: receipt } })
+      }
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('reviewer@example.test', 'secret')
+    const currentAssertions = vi.fn(async () => undefined)
+
+    await expect(service.runNativeMcpAction(args, currentAssertions)).resolves.toEqual({ status: 'returned', result: receipt })
+    expect(currentAssertions).toHaveBeenCalledTimes(2)
+    expect(calls).toEqual([{
+      url: 'http://forge/api/v1/mcp', authorization: 'Bearer forge-token-reviewer@example.test',
+      body: expect.objectContaining({ method: 'tools/call', params: { name: 'run_action', arguments: args } }),
+    }])
+  })
+
+  it('keeps ambiguous MCP errors unknown and preserves explicit native rejection codes', async () => {
+    const responses = [
+      Response.json({ jsonrpc: '2.0', id: 'action-1', result: { isError: true, structuredContent: { code: 'APPROVAL_ACTION_IN_DOUBT' } } }),
+      Response.json({ jsonrpc: '2.0', id: 'action-2', result: { isError: true, structuredContent: { code: 'APPROVAL_ACTION_STALE' } } }),
+    ]
+    const fetchMock = workOverviewFetch((url) => url === 'http://forge/api/v1/mcp' ? responses.shift() : undefined)
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('reviewer@example.test', 'secret')
+    const args = { actionName: 'metadata_action', objectName: 'forge_case_record', recordId: 'record-1', params: { approvalRequestId: 'request-1', itemVersion: 'round-1', sourceMaterialVersion: 'b'.repeat(64), comment: '意见' } }
+    const assertCurrent = async () => undefined
+
+    await expect(service.runNativeMcpAction(args, assertCurrent)).resolves.toMatchObject({ status: 'unknown', code: 'APPROVAL_ACTION_IN_DOUBT' })
+    await expect(service.runNativeMcpAction(args, assertCurrent)).resolves.toMatchObject({ status: 'rejected', code: 'APPROVAL_ACTION_STALE' })
+  })
+
+  it('reads native approval action history through the existing request route', async () => {
+    const actions = [{ id: 'history-1', request_id: 'request-current', action: 'approve', actor_id: 'reviewer', comment: '当前意见', created_at: '2026-09-30T08:00:00Z' }]
+    const calls: Array<{ url: string; authorization?: string }> = []
+    const fetchMock = workOverviewFetch((url, init) => {
+      if (url.endsWith('/api/v1/approvals/requests/request-current/actions')) {
+        calls.push({ url, authorization: new Headers(init?.headers).get('Authorization') ?? undefined })
+        return Response.json({ data: actions })
+      }
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('reviewer@example.test', 'secret')
+
+    await expect(service.getApprovalActionHistory('request-current')).resolves.toEqual(actions)
+    expect(calls).toEqual([{ url: 'http://forge/api/v1/approvals/requests/request-current/actions', authorization: 'Bearer forge-token-reviewer@example.test' }])
+  })
+
   it('discards an old account 401 without signing out the account that replaced it', async () => {
     const oldUnauthorized = deferred<Response>(), oldSuccess = deferred<Response>()
     const unauthorizedStarted = deferred<void>(), successStarted = deferred<void>()
@@ -1215,6 +1278,9 @@ describe('EnterpriseService', () => {
     const digest = createHash('sha256').update(original).digest('hex')
     const attachment = '# 技术协议\n验收标准\n'
     const attachmentDigest = createHash('sha256').update(attachment).digest('hex')
+    const sourceMaterialVersion = createHash('sha256').update('source-v1').digest('hex')
+    let actionRecordId = 'contract-1'
+    let actionInputName = 'comment'
     let fileContent = original
     const calls: string[] = []
     const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
@@ -1224,7 +1290,12 @@ describe('EnterpriseService', () => {
       if (url.endsWith('/api/v1/approvals/requests/approval-1/workbench-context')) return Response.json({
         version: '1', requestId: 'approval-1', status: 'pending', viewer: 'current_approver',
         title: '设备验收合同', step: '交付复核', fields: [{ label: '合同名称', value: '设备验收合同' }],
-        businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1', recordName: '设备验收合同' }, sourceMaterialVersion: createHash('sha256').update('source-v1').digest('hex'),
+        businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1', recordName: '设备验收合同' }, sourceMaterialVersion,
+        availableActions: [{
+          semantic: 'opaque server hint', label: '当前可办理事项', description: '办理当前员工可执行的事项。',
+          execution: { tool: 'run_action', actionName: 'forge_action_from_metadata', objectName: 'forge_sales_contract', recordId: actionRecordId, params: { approvalRequestId: 'approval-1', itemVersion: 'native-item-round-3', sourceMaterialVersion } },
+          inputs: [{ name: actionInputName, type: 'string', label: '办理意见', required: true }],
+        }],
         files: [
           { fileId: 'approval-file-1', name: '合同.md', mediaType: 'text/plain; charset=utf-8', bytes: Buffer.byteLength(fileContent), sha256: digest, content: fileContent },
           { fileId: 'approval-file-2', name: '技术协议.md', mediaType: 'text/plain; charset=utf-8', bytes: Buffer.byteLength(attachment), sha256: attachmentDigest, content: attachment },
@@ -1242,12 +1313,18 @@ describe('EnterpriseService', () => {
     await service.signIn('reviewer@example.test', 'secret')
 
     const context = await service.getApprovalContext('approval-1')
-    expect(context).toMatchObject({ requestId: 'approval-1', status: 'pending', viewer: 'current_approver', title: '设备验收合同', step: '交付复核', businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1' }, sourceMaterialVersion: createHash('sha256').update('source-v1').digest('hex'), fields: [{ label: '合同名称', value: '设备验收合同' }], files: [{ fileId: 'approval-file-1', name: '合同.md', content: original, sha256: digest, verified: true }, { fileId: 'approval-file-2', name: '技术协议.md', content: attachment, sha256: attachmentDigest, verified: true }] })
+    expect(context).toMatchObject({ requestId: 'approval-1', status: 'pending', viewer: 'current_approver', title: '设备验收合同', step: '交付复核', businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1' }, sourceMaterialVersion, availableActions: [{ execution: { tool: 'run_action', actionName: 'forge_action_from_metadata', recordId: 'contract-1', params: { approvalRequestId: 'approval-1', itemVersion: 'native-item-round-3', sourceMaterialVersion } }, inputs: [{ name: 'comment', type: 'string', required: true }] }], fields: [{ label: '合同名称', value: '设备验收合同' }], files: [{ fileId: 'approval-file-1', name: '合同.md', content: original, sha256: digest, verified: true }, { fileId: 'approval-file-2', name: '技术协议.md', content: attachment, sha256: attachmentDigest, verified: true }] })
+    actionRecordId = 'different-record'
+    await expect(service.getApprovalContext('approval-1')).rejects.toThrow('当前事项动作与本人打开的事项不匹配')
+    actionRecordId = 'contract-1'
+    actionInputName = 'approvalRequestId'
+    await expect(service.getApprovalContext('approval-1')).rejects.toThrow('动作输入声明暂不支持')
+    actionInputName = 'comment'
     const returnedContext = await service.getApprovalContext('approval-2')
     expect(returnedContext).toMatchObject({ requestId: 'approval-2', status: 'returned', viewer: 'original_submitter', title: '设备验收合同', step: '销售修改', returnReason: '请补齐附件', returnVersion: 'revise-1', businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1' }, sourceMaterialVersion: createHash('sha256').update('source-v1').digest('hex'), files: [] })
     expect(returnedContext).not.toHaveProperty('revisionReady')
     expect(calls.filter((url) => url.includes('/api/v1/data/') || /\/api\/v1\/storage\/files\/[^/]+\/url/.test(url))).toEqual([])
-    expect(calls.filter((url) => url.includes('/workbench-context'))).toHaveLength(2)
+    expect(calls.filter((url) => url.includes('/workbench-context'))).toHaveLength(4)
     fileContent = '# 另一份合同\n'
     await expect(service.getApprovalContext('approval-1')).rejects.toThrow('审批文件与提交版本不一致')
   })
