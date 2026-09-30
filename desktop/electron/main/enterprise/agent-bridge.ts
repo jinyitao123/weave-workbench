@@ -92,9 +92,8 @@ interface PendingBusinessWorkContinuation {
 type PendingWorkContinuation = PendingWeaveWorkContinuation | PendingBusinessWorkContinuation
 interface BoundWorkContinuation extends PendingWeaveWorkContinuation { sessionPath: string }
 interface BoundBusinessNotificationContext extends PendingBusinessWorkContinuation { sessionPath: string }
-interface ScopedBusinessObject { objectName: string; label: string; handoffKey: string; accountKey: string; turnKey: string; directoryComplete: boolean }
+interface ScopedBusinessObject { objectName: string; label: string; accountKey: string; turnKey: string; directoryComplete: boolean }
 interface ScopedBusinessRecord extends BusinessRecordCandidate {
-  handoffKey: string
   accountKey: string
   turnKey: string
   snapshot?: BusinessRecordSnapshot
@@ -935,8 +934,6 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   }
   private async listBusinessObjects(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn) {
     rejectUnknownKeys(params, ['turn_key', 'handoff_key'], 'business object directory')
-    const key = requireString(params.handoff_key, 'handoff_key', { min: 1, max: 128, trim: true })
-    if (!this.handoffs.get(claim.token)?.has(key)) throw new Error('请先查看团队的承接能力')
     let directory: BusinessObjectDirectory
     try { directory = await this.options.service.getBusinessObjectDirectory() }
     catch (error) {
@@ -950,7 +947,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const objects = new Map<string, ScopedBusinessObject>()
     const presented = visible.map((item) => {
       const objectRef = randomUUID().replaceAll('-', '')
-      objects.set(objectRef, { ...item, handoffKey: key, accountKey: turn.accountKey, turnKey: turn.key, directoryComplete: directory.complete })
+      objects.set(objectRef, { ...item, accountKey: turn.accountKey, turnKey: turn.key, directoryComplete: directory.complete })
       return { object_ref: objectRef, name: item.label }
     })
     this.businessObjects.set(claim.token, objects)
@@ -964,16 +961,14 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   }
   private async findBusinessRecord(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn) {
     rejectUnknownKeys(params, ['turn_key', 'handoff_key', 'object_ref', 'work_summary', 'offset', 'limit'], 'business record search')
-    const key = requireString(params.handoff_key, 'handoff_key', { min: 1, max: 128, trim: true })
     const objectRef = requireString(params.object_ref, 'object_ref', { min: 32, max: 64, trim: true })
     const summary = requireString(params.work_summary, 'work_summary', { min: 1, max: 4_000, trim: true })
     const offset = params.offset === undefined ? 0 : params.offset
     const limit = params.limit === undefined ? 20 : params.limit
     if (!Number.isInteger(offset) || (offset as number) < 0 || (offset as number) > 10_000
       || !Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 50) throw new Error('业务记录分页参数无效')
-    if (!this.handoffs.get(claim.token)?.has(key)) throw new Error('请先查看团队的承接能力')
     const object = this.businessObjects.get(claim.token)?.get(objectRef)
-    if (!object || object.handoffKey !== key || object.turnKey !== turn.key || object.accountKey !== turn.accountKey) throw new Error('业务对象引用已失效，请按当前员工轮次重新读取对象目录')
+    if (!object || object.turnKey !== turn.key || object.accountKey !== turn.accountKey) throw new Error('业务对象引用已失效，请按当前员工轮次重新读取对象目录')
     const boundRecord = turn.workContinuation?.context.input.businessRecord
     if (boundRecord && object.objectName !== boundRecord.objectName) throw new Error('原工作只能继续使用已绑定的业务对象')
     let records: BusinessRecordSearchPage['records']
@@ -994,7 +989,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       const recordKey = randomUUID().replaceAll('-', '')
       const bound = 'candidate' in page ? page : undefined
       mapped.set(recordKey, {
-        ...item, handoffKey: key, accountKey: turn.accountKey, turnKey: turn.key,
+        ...item, accountKey: turn.accountKey, turnKey: turn.key,
         ...(bound ? { snapshot: bound.snapshot } : {}),
       })
       return {
@@ -1031,11 +1026,9 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   }
   private async readBusinessRecord(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn) {
     rejectUnknownKeys(params, ['turn_key', 'handoff_key', 'record_key'], 'business record read')
-    const key = requireString(params.handoff_key, 'handoff_key', { min: 1, max: 128, trim: true })
     const recordKey = requireString(params.record_key, 'record_key', { min: 32, max: 64, trim: true })
-    if (!this.handoffs.get(claim.token)?.has(key)) throw new Error('请先查看团队的承接能力')
     const selected = this.businessRecords.get(claim.token)?.get(recordKey)
-    if (!selected || selected.handoffKey !== key || selected.turnKey !== turn.key || selected.accountKey !== turn.accountKey) throw new Error('业务记录选择已失效，请按当前员工轮次重新查找')
+    if (!selected || selected.turnKey !== turn.key || selected.accountKey !== turn.accountKey) throw new Error('业务记录选择已失效，请按当前员工轮次重新查找')
     const boundRecord = turn.workContinuation?.context.input.businessRecord
     if (boundRecord && (selected.objectName !== boundRecord.objectName || selected.recordId !== boundRecord.recordID)) throw new Error('原工作只能继续使用已绑定的业务记录')
     let read: BusinessRecordRead
@@ -1198,7 +1191,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const businessRecordKey = typeof params.business_record_key === 'string' ? params.business_record_key.trim() : ''
     const selectedBusinessContext = businessRecordKey ? this.businessRecords.get(claim.token)?.get(businessRecordKey) : undefined
     if (businessRecordKey && !selectedBusinessContext) throw new Error('业务记录选择已失效，请按当前工作重新查找')
-    if (selectedBusinessContext && (selectedBusinessContext.handoffKey !== key || selectedBusinessContext.turnKey !== turn.key || selectedBusinessContext.accountKey !== turn.accountKey)) {
+    if (selectedBusinessContext && (selectedBusinessContext.turnKey !== turn.key || selectedBusinessContext.accountKey !== turn.accountKey)) {
       throw new Error('业务记录选择不属于当前员工轮次，请重新查找')
     }
     const boundRecord = workContinuation?.context.input.businessRecord
