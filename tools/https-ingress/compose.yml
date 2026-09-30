@@ -1,0 +1,27 @@
+services:
+  ingress:
+    image: caddy:2-alpine@sha256:6aeddd44c3078b0f9a35206472a11420648a79c184603ef95957d0a20044cb2b
+    restart: unless-stopped
+    environment:
+      WORKBENCH_PUBLIC_HOST: ${WORKBENCH_PUBLIC_HOST:?Set the public DNS hostname}
+    ports:
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - certificates:/data
+      - configuration:/config
+    networks:
+      - forge
+      - weave
+
+networks:
+  forge:
+    external: true
+    name: ${FORGE_DOCKER_NETWORK:-inoforge_default}
+  weave:
+    external: true
+    name: ${WEAVE_DOCKER_NETWORK:-weave-main_default}
+
+volumes:
+  certificates:
+  configuration:
