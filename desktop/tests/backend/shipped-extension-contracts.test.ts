@@ -230,6 +230,52 @@ describe('shipped extension contracts', () => {
     expect(new Headers(requests[0]?.options?.headers).get('authorization')).toBe('Bearer inert-test-token')
   })
 
+  it('registers Forge record reads without a team handoff key', async () => {
+    const requests: Array<{ body: Record<string, unknown> }> = []
+    const objectRef = 'a'.repeat(32), recordKey = 'b'.repeat(32)
+    vi.stubGlobal('fetch', vi.fn(async (_input: string | URL | Request, options?: RequestInit) => {
+      const body = JSON.parse(String(options?.body)) as Record<string, unknown>
+      requests.push({ body })
+      const result = body.method === 'activate' ? { turn_key: 'employee-turn' }
+        : body.method === 'list_business_objects' ? { status: 'complete', objects: [{ object_ref: objectRef, name: '销售合同' }] }
+          : body.method === 'find_business_record' ? { status: 'candidate', records: [{ record_key: recordKey, name: '测试合同' }] }
+            : { status: 'read', record_key: recordKey, complete: true }
+      return Response.json({ ok: true, result })
+    }))
+    const injection = EXTENSION_INJECTIONS.pi.find((candidate) => candidate.filename === 'gooeypi-enterprise.ts')!
+    const fixture = piHost()
+    const factory = await loadExtension(injection, true)
+    await factory(fixture.api)
+    const tools = new Map((fixture.tools as Array<{
+      name: string
+      parameters: unknown
+      execute(id: string, params: Record<string, unknown>): Promise<{ content: Array<{ text: string }> }>
+    }>).map((tool) => [tool.name, tool]))
+    const directoryTool = tools.get('gooeypi_enterprise_business_objects')!
+    const findTool = tools.get('gooeypi_enterprise_business_record_find')!
+    const readTool = tools.get('gooeypi_enterprise_business_record_read')!
+    await fixture.handlers?.get('before_agent_start')?.({ prompt: '只读核对这条业务记录。' })
+
+    const directory = JSON.parse((await directoryTool.execute('directory', {})).content[0]!.text) as { objects: Array<{ object_ref: string }> }
+    const found = JSON.parse((await findTool.execute('find', { object_ref: objectRef, work_summary: '测试合同' })).content[0]!.text) as { records: Array<{ record_key: string }> }
+    await readTool.execute('read', { record_key: recordKey })
+
+    const directorySchema = directoryTool.parameters as { properties?: Record<string, unknown>; required?: string[] }
+    const findSchema = findTool.parameters as { properties?: Record<string, unknown>; required?: string[] }
+    const readSchema = readTool.parameters as { properties?: Record<string, unknown>; required?: string[] }
+    expect(directorySchema.properties).toEqual({})
+    expect(findSchema.properties).not.toHaveProperty('handoff_key')
+    expect(readSchema.properties).not.toHaveProperty('handoff_key')
+    expect(directory.objects[0]?.object_ref).toBe(objectRef)
+    expect(found.records[0]?.record_key).toBe(recordKey)
+    expect(requests.map(({ body }) => body.method)).toEqual(['activate', 'list_business_objects', 'find_business_record', 'read_business_record'])
+    expect(requests.slice(1).map(({ body }) => body.params)).toEqual([
+      { turn_key: 'employee-turn' },
+      { object_ref: objectRef, work_summary: '测试合同', turn_key: 'employee-turn' },
+      { record_key: recordKey, turn_key: 'employee-turn' },
+    ])
+  })
+
   it('uses the original recovery key only after the employee explicitly continues the frozen handoff', async () => {
     const requests: Array<{ body: Record<string, unknown> }> = []
     vi.stubGlobal('fetch', vi.fn(async (_input: string | URL | Request, options?: RequestInit) => {

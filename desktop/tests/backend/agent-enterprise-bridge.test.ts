@@ -64,8 +64,8 @@ async function prepareCompletedReadOnlySubmit(f: Awaited<ReturnType<typeof fixtu
   const discovered = await f.discover()
   const actionKey = discovered.available_actions[0]?.action_key
   if (!actionKey) throw new Error('fixture did not return a current business action')
-  const { recordKey } = await f.findRecord(discovered.handoff_key, 'TEST-100 设备交接验收合同')
-  const read = await f.call('read_business_record', { handoff_key: discovered.handoff_key, record_key: recordKey })
+  const { recordKey } = await f.findRecord('TEST-100 设备交接验收合同')
+  const read = await f.call('read_business_record', { record_key: recordKey })
   if (read.status !== 200) throw new Error('fixture did not read the current business record')
   return {
     ...discovered, goal: '使用两份固定原件完成当前员工明确授权的业务提交。', business_record_key: recordKey,
@@ -286,17 +286,17 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
     const capabilities = describe.body.result.capabilities as Array<{ handoff_key: string; business_actions: Array<{ action_key: string }> }>
     return { handoff_key: capabilities[0].handoff_key, business_actions: [], goal: '复核这版合同', materials, available_actions: capabilities[0].business_actions }
   }
-  const findRecord = async (handoffKey: string, workSummary: string) => {
-    const directory = await call('list_business_objects', { handoff_key: handoffKey })
+  const findRecord = async (workSummary: string) => {
+    const directory = await call('list_business_objects')
     const objectRef = (directory.body.result.objects as Array<{ object_ref: string }>)[0]?.object_ref
     if (!objectRef) throw new Error('fixture did not return a business object')
-    const found = await call('find_business_record', { handoff_key: handoffKey, object_ref: objectRef, work_summary: workSummary })
+    const found = await call('find_business_record', { object_ref: objectRef, work_summary: workSummary })
     const recordKey = (found.body.result.records as Array<{ record_key: string }>)[0]?.record_key
     if (!recordKey) throw new Error('fixture did not return a business record')
     return { directory, objectRef, found, recordKey }
   }
   await input(appendWorkspaceMaterialContext('这版给他们看看', [materialReference]), 'employee-turn-1')
-  return { call, callWithTurn, input, getTurnKey: () => turnKey, relogin, startNewSession, discover, findRecord, openReturned, openApprovalReview, openBusinessResult, service, bridge, get environment() { return environment }, get runtimeId() { return runtimeId }, get sessionPath() { return sessionPath }, get transcript() { return activeTranscript }, transcripts, materials, cwd, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, approvalActions, businessCandidate, businessSnapshot, sessions }
+  return { call, callWithTurn, input, getTurnKey: () => turnKey, setTurnKey: (value: string) => { turnKey = value }, relogin, startNewSession, discover, findRecord, openReturned, openApprovalReview, openBusinessResult, service, bridge, get environment() { return environment }, get runtimeId() { return runtimeId }, get sessionPath() { return sessionPath }, get transcript() { return activeTranscript }, transcripts, materials, cwd, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, approvalActions, businessCandidate, businessSnapshot, sessions }
 }
 
 async function openWorkContinuation(f: Awaited<ReturnType<typeof fixture>>, context: EnterpriseWorkContinuationContext, id: string) {
@@ -314,6 +314,7 @@ async function openWorkContinuation(f: Awaited<ReturnType<typeof fixture>>, cont
   f.transcript.push(user(`opened-${id}`, prompt))
   const activated = await f.call('activate', { prompt })
   expect(activated.status, JSON.stringify(activated.body)).toBe(200)
+  f.setTurnKey(activated.body.result.turn_key as string)
   return source
 }
 async function openNeedsInputContinuation(f: Awaited<ReturnType<typeof fixture>>, context: EnterpriseWorkContinuationContext, id: string) {
@@ -375,7 +376,7 @@ describe('employee-bound material handoff', () => {
     const f = await fixture()
     const opened = await f.openBusinessResult()
     expect(opened.context).toMatchObject({ kind: 'business', record: { name: '设备验收合同' } })
-    for (const method of ['search', 'submit', 'revision_submit', 'recover', 'list_business_objects']) {
+    for (const method of ['search', 'submit', 'revision_submit', 'recover', 'list_business_objects', 'find_business_record', 'read_business_record']) {
       const result = await f.call(method)
       expect(result.status, `${method} should be blocked on initial message open`).toBe(409)
       expect(result.body.error).toContain('只允许查看本次核验')
@@ -1163,12 +1164,12 @@ describe('employee-bound material handoff', () => {
   it('authorizes only the business action selected for the current employee intent', async () => {
     const f = await fixture(), params = await f.discover()
     const actionKey = params.available_actions[0].action_key
-    const { directory, found, recordKey } = await f.findRecord(params.handoff_key, 'TEST-100 设备交接验收合同')
+    const { directory, found, recordKey } = await f.findRecord('TEST-100 设备交接验收合同')
     expect(directory.body.result).toMatchObject({ status: 'complete', directory_complete: true })
     expect(found.body.result).toMatchObject({ status: 'candidate', selection_required: true, has_more: false, complete: true })
     expect(found.body.result.records).toEqual([{ record_key: recordKey, name: 'TEST-100 设备交接验收合同', object: '销售合同', code: 'SC-TEST-001', status: '草稿', owner: '销售人员', record_version: 'v7' }])
     expect(JSON.stringify(found.body.result.records)).not.toContain('contract-1')
-    const detail = await f.call('read_business_record', { handoff_key: params.handoff_key, record_key: recordKey })
+    const detail = await f.call('read_business_record', { record_key: recordKey })
     expect(detail.body.result).toMatchObject({
       status: 'read', record_key: recordKey, complete: true,
       snapshot: { record: expect.arrayContaining([expect.objectContaining({ label: '合同名称' })]), completeness: 'complete' },
@@ -1184,30 +1185,57 @@ describe('employee-bound material handoff', () => {
     expect(f.service.readBusinessRecord).toHaveBeenCalledOnce()
   })
 
-  it('finds readable records with no team write action and does not infer data permission from the object directory', async () => {
+  it('reads current Forge records without a team lookup and does not grant write capability', async () => {
     const f = await fixture()
-    f.service.getBusinessCapabilities.mockResolvedValueOnce([])
-    const params = await f.discover()
-    expect(params.available_actions).toEqual([])
-    const { directory, found } = await f.findRecord(params.handoff_key, 'TEST-100 设备交接验收合同')
+    expect((await f.call('list_business_objects', { handoff_key: 'legacy-untrusted-key' })).status).toBe(200)
+    const { directory, found, recordKey } = await f.findRecord('TEST-100 设备交接验收合同')
     expect(directory.body.result.objects).toHaveLength(1)
     expect(f.service.findBusinessRecords).toHaveBeenCalledWith('forge_sales_contract', 'TEST-100 设备交接验收合同', 0, 20)
     expect(found.body.result.status).toBe('candidate')
+    expect(f.service.getTeamCatalog).not.toHaveBeenCalled()
+    expect(f.service.getTeamChoices).not.toHaveBeenCalled()
+    expect(f.service.getBusinessCapabilities).not.toHaveBeenCalled()
+
+    const unauthorizedWrite = await f.call('submit', {
+      handoff_key: 'not-discovered', goal: '提交当前业务记录', business_actions: [], materials: [], business_record_key: recordKey,
+    })
+    expect(unauthorizedWrite.status).toBe(409)
+    expect(unauthorizedWrite.body.error).toContain('请先查看团队的承接能力')
+    expect(f.service.submitWork).not.toHaveBeenCalled()
 
     f.service.findBusinessRecords.mockRejectedValueOnce(new ForgeBusinessReadError('forbidden', 'permission denied'))
     const denied = await f.call('find_business_record', {
-      handoff_key: params.handoff_key, object_ref: (directory.body.result.objects as Array<{ object_ref: string }>)[0]!.object_ref,
+      object_ref: (directory.body.result.objects as Array<{ object_ref: string }>)[0]!.object_ref,
       work_summary: 'TEST-100 设备交接验收合同',
     })
     expect(denied.body.result).toMatchObject({ status: 'forbidden', records: [] })
     expect(await f.service.accountKey()).toBe('employee-a')
   })
 
+  it('rejects a business record from the wrong object for a team action', async () => {
+    const f = await fixture()
+    const quoteCandidate = { ...f.businessCandidate, objectName: 'forge_quote', objectLabel: '销售报价' }
+    f.service.getBusinessObjectDirectory.mockResolvedValueOnce({
+      objects: [{ objectName: 'forge_quote', label: '销售报价' }], complete: true, totalCount: 1,
+    })
+    f.service.findBusinessRecords.mockResolvedValueOnce({
+      records: [quoteCandidate], offset: 0, limit: 20, hasMore: false, complete: true,
+    })
+    const { recordKey } = await f.findRecord('TEST-100 设备交接验收合同')
+    const params = await f.discover()
+    const rejected = await f.call('submit', {
+      ...params, materials: [], business_actions: [params.available_actions[0]!.action_key], business_record_key: recordKey,
+    })
+    expect(rejected.status).toBe(409)
+    expect(rejected.body.error).toContain('绑定该动作所需的业务记录')
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+
   it('discards an object directory result that arrives after the employee changes turns', async () => {
-    const f = await fixture(), params = await f.discover()
+    const f = await fixture()
     let release!: (value: { objects: Array<{ objectName: string; label: string }>; complete: boolean; totalCount: number }) => void
     f.service.getBusinessObjectDirectory.mockImplementationOnce(() => new Promise((resolve) => { release = resolve }))
-    const pending = f.call('list_business_objects', { handoff_key: params.handoff_key })
+    const pending = f.call('list_business_objects')
     await vi.waitFor(() => expect(release).toBeTypeOf('function'))
     await f.input('改查另一份业务记录', 'employee-turn-after-directory')
     release({ objects: [{ objectName: 'forge_sales_contract', label: '销售合同' }], complete: true, totalCount: 1 })
@@ -1215,16 +1243,65 @@ describe('employee-bound material handoff', () => {
   })
 
   it('discards a selected-record read that arrives after the employee changes turns', async () => {
-    const f = await fixture(), params = await f.discover()
-    const { recordKey } = await f.findRecord(params.handoff_key, 'TEST-100 设备交接验收合同')
+    const f = await fixture()
+    const { recordKey } = await f.findRecord('TEST-100 设备交接验收合同')
     let release!: (value: { candidate: typeof f.businessCandidate; snapshot: BusinessRecordSnapshot }) => void
     f.service.readBusinessRecord.mockImplementationOnce(() => new Promise((resolve) => { release = resolve }))
-    const pending = f.call('read_business_record', { handoff_key: params.handoff_key, record_key: recordKey })
+    const pending = f.call('read_business_record', { record_key: recordKey })
     await vi.waitFor(() => expect(release).toBeTypeOf('function'))
     await f.input('改成查另一份记录', 'employee-turn-after-record-read')
     release({ candidate: f.businessCandidate, snapshot: f.businessSnapshot })
     expect(await pending).toMatchObject({ status: 409, body: { error: expect.stringContaining('员工轮次') } })
     expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+  it('rejects a record key after the employee account changes', async () => {
+    const f = await fixture()
+    const { recordKey } = await f.findRecord('TEST-100 设备交接验收合同')
+    await f.relogin({ accountKey: 'employee-b' })
+    await f.input('请核对当前员工可见的业务记录。', 'employee-b-read')
+    const result = await f.call('read_business_record', { record_key: recordKey })
+    expect(result.status).toBe(409)
+    expect(result.body.error).toMatch(/当前员工轮次|员工账号|业务记录选择已失效/)
+    expect(f.service.readBusinessRecord).not.toHaveBeenCalled()
+  })
+  it('reads a bound record in a Weave result before team lookup and permits only a later authorized matching action', async () => {
+    const f = await fixture()
+    const context = workContinuationContext()
+    context.input.businessRecord = { objectName: 'forge_sales_contract', recordID: 'contract-1', recordVersion: 'v7' }
+    context.input.materials = [continuationTextMaterial('bound-original', '合同原件.md', '本轮固定合同材料')]
+    await openWorkContinuation(f, context, 'notice-bound-record')
+    f.service.getBusinessObjectDirectory.mockResolvedValueOnce({
+      objects: [
+        { objectName: 'forge_sales_contract', label: '销售合同' },
+        { objectName: 'forge_quote', label: '销售报价' },
+      ], complete: true, totalCount: 2,
+    })
+    const directory = await f.call('list_business_objects')
+    expect(directory.body.result.objects).toEqual([{ object_ref: expect.any(String), name: '销售合同' }])
+    const objectRef = (directory.body.result.objects as Array<{ object_ref: string }>)[0]!.object_ref
+    const found = await f.call('find_business_record', { object_ref: objectRef, work_summary: '合同' })
+    expect(found.body.result.records).toEqual([expect.objectContaining({ name: f.businessCandidate.name })])
+    expect(f.service.readBusinessRecord).toHaveBeenCalledWith('forge_sales_contract', 'contract-1')
+    expect(f.service.getTeamCatalog).not.toHaveBeenCalled()
+
+    const staleRecordKey = (found.body.result.records as Array<{ record_key: string }>)[0]!.record_key
+    await f.input('我明确授权当前团队用已声明的合同动作提交这条记录。', 'employee-authorized-followup')
+    const params = await f.discover()
+    const staleWrite = await f.call('submit', {
+      ...params, materials: [], business_actions: [params.available_actions[0]!.action_key], business_record_key: staleRecordKey,
+    })
+    expect(staleWrite.status).toBe(409)
+    expect(staleWrite.body.error).toMatch(/不属于当前员工轮次|业务记录选择已失效/)
+
+    const current = await f.findRecord('合同')
+    const submitted = await f.call('submit', {
+      ...params, materials: [], business_actions: [params.available_actions[0]!.action_key], business_record_key: current.recordKey,
+    })
+    expect(submitted.status).toBe(200)
+    expect(f.service.submitWork.mock.calls[0]?.[2]).toMatchObject({
+      authorizedBusinessCapabilityIds: [f.businessCapabilityId],
+      businessContext: { objectName: 'forge_sales_contract', recordId: 'contract-1', recordVersion: 'v7' },
+    })
   })
   it('binds approval review sessions to one employee, request, business record, and current material round', async () => {
     const f = await fixture()
@@ -1247,7 +1324,7 @@ describe('employee-bound material handoff', () => {
     await f.openApprovalReview()
     await f.input('补充核对本次审批字段里的缺失信息。', 'review-follow-up')
 
-    for (const method of ['submit', 'revision_submit', 'recover', 'search', 'list_business_objects']) {
+    for (const method of ['submit', 'revision_submit', 'recover', 'search', 'list_business_objects', 'find_business_record', 'read_business_record']) {
       const result = await f.call(method)
       expect(result.status, `${method} should be rejected`).toBe(409)
       expect(result.body.error).toMatch(/只读|只能使用已固定的审批快照/)
@@ -1256,6 +1333,8 @@ describe('employee-bound material handoff', () => {
     expect(f.service.submitApprovalRevision).not.toHaveBeenCalled()
     expect(f.service.getApprovalRevisionReceipt).not.toHaveBeenCalled()
     expect(f.service.getBusinessObjectDirectory).not.toHaveBeenCalled()
+    expect(f.service.findBusinessRecords).not.toHaveBeenCalled()
+    expect(f.service.readBusinessRecord).not.toHaveBeenCalled()
   })
   it('executes only a Forge-described current item action after a later employee turn', async () => {
     const f = await fixture('forge_custom_record')
@@ -2051,7 +2130,7 @@ describe('employee-bound material handoff', () => {
     const business_actions = [params.available_actions[0].action_key]
     expect((await f.call('submit', { ...params, business_actions })).body.error).toContain('绑定该动作所需的业务记录')
     expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
-    const { recordKey } = await f.findRecord(params.handoff_key, 'TEST-100')
+    const { recordKey } = await f.findRecord('TEST-100')
     expect((await f.call('submit', { ...params, materials: [], business_actions, business_record_key: recordKey })).body.result.status).toBe('accepted')
     expect(f.service.submitWork.mock.calls[0][2]).toMatchObject({ businessContext: { objectName: 'forge_quote', recordId: 'contract-1', recordVersion: 'v7' } })
     expect(JSON.parse(f.service.submitWork.mock.calls[0][1]).businessSnapshot).toEqual(f.businessSnapshot)
