@@ -470,11 +470,11 @@ describe('EnterpriseService', () => {
 
     await expect(service.getStatus()).resolves.toEqual([
       expect.objectContaining({ id: 'forge-development', url: 'http://124.223.189.112', available: true, secure: false }),
-      expect.objectContaining({ id: 'weave-development', url: 'https://mqttdev.online', available: true, secure: true }),
+      expect.objectContaining({ id: 'weave-development', url: 'http://124.223.189.112:8080', available: true, secure: false }),
     ])
     expect(requests).toEqual([
       'http://124.223.189.112/api/v1/health',
-      'https://mqttdev.online/v1/health',
+      'http://124.223.189.112:8080/v1/health',
     ])
   })
 
