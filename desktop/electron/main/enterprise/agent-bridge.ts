@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import { approvalContextView, WorkRegistrationRejectedError, type ApprovalRevisionSubmission, type EnterpriseBusinessNotificationContext, type EnterpriseService, type EnterpriseWorkContinuationContext, type NativeMcpActionArguments, type NativeMcpActionAttempt } from '../enterprise'
-import type { EnterpriseApprovalAction, EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseBusinessNotificationContextView, EnterpriseWorkChoice, EnterpriseWorkContinuationContextView, EnterpriseWorkItem, EnterpriseWorkResource, TranscriptMessage, WorkspaceMaterialPromptReference } from '../../../src/types/api'
+import { approvalContextView, WorkRegistrationRejectedError, type ApprovalRevisionSubmission, type EnterpriseBusinessNotificationContext, type EnterpriseService, type EnterpriseWorkContinuationContext } from '../enterprise'
+import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseBusinessNotificationContextView, EnterpriseWorkChoice, EnterpriseWorkContinuationContextView, EnterpriseWorkItem, EnterpriseWorkResource, TranscriptMessage, WorkspaceMaterialPromptReference } from '../../../src/types/api'
 import { CapabilityBridge, type CapabilityClaim } from '../lib/capability-bridge'
 import { canonicalSessionPath } from '../session-paths'
 import { rejectUnknownKeys, requireString } from '../validation'
@@ -10,7 +10,7 @@ import { searchTeams, type TeamSummary } from './team-catalog'
 import { splitWorkspaceMaterialContext } from '../../../src/lib/workspace-material-attachments'
 import { APPROVAL_REVIEW_SESSION_MARKER } from '../../../src/lib/approval-review'
 import { businessReadErrorResult, type BusinessObjectDirectory, type BusinessRecordCandidate, type BusinessRecordRead, type BusinessRecordSearchPage, type BusinessRecordSnapshot } from './business-records'
-import { parseCurrentItemActionObservation, parseCurrentItemActionReceipt, type CurrentItemActionObservation } from './approval-actions'
+import type { BoundCurrentItemAction, CurrentItemActionAttempt } from './current-item-actions'
 
 interface EnterpriseSessionReader {
   read(filePath: unknown): Promise<TranscriptMessage[]>
@@ -63,33 +63,6 @@ interface PendingApprovalContext {
 }
 interface BoundApprovalContext extends PendingApprovalContext { sessionPath: string }
 type BoundReturnedApproval = BoundApprovalContext & { purpose: 'revision' }
-interface BoundCurrentItemAction {
-  action: EnterpriseApprovalAction
-  accountKey: string
-  requestId: string
-  sessionPath: string
-  turnKey: string
-  messageId: string
-  contextFingerprint: string
-  baselineHistoryIds: string[]
-}
-interface CurrentItemActionAttempt {
-  status: NativeMcpActionAttempt['status']
-  actionFingerprint: string
-  commentDigest: string
-  nativeObservation?: CurrentItemActionObservation
-  code?: string
-  result?: unknown
-  message?: string
-  baselineHistoryIds: string[]
-}
-interface ApprovalHistoryRow {
-  id: string
-  requestId: string
-  action: string
-  actorId: string
-  comment: string
-}
 interface ApprovalReviewSessionMetadata {
   version: 1
   purpose: 'review'
@@ -185,22 +158,6 @@ function materialsAuthorizedForTurn(prompt: string): WorkspaceMaterialPromptRefe
   // exact employee message. Mentioning an older filename or path is not a new
   // authorization; reuse requires selecting the file again in the current turn.
   return splitWorkspaceMaterialContext(prompt).attachments
-}
-function objectRecord(value: unknown): Record<string, unknown> | undefined {
-  return value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined
-}
-function boundedText(value: unknown, maxLength: number): string | undefined {
-  return typeof value === 'string' && value.length > 0 && value.length <= maxLength && value.trim() === value && !value.includes('\0') ? value : undefined
-}
-function approvalHistoryRow(value: unknown): ApprovalHistoryRow | undefined {
-  const row = objectRecord(value)
-  const id = boundedText(row?.id, 128), requestId = boundedText(row?.request_id, 128)
-  const action = boundedText(row?.action, 128), actorId = boundedText(row?.actor_id, 128)
-  const comment = typeof row?.comment === 'string' ? row.comment : undefined
-  return id && requestId && action && actorId && comment !== undefined ? { id, requestId, action, actorId, comment } : undefined
-}
-function approvalHistoryId(value: unknown): string | undefined {
-  return boundedText(objectRecord(value)?.id, 128)
 }
 function handoffKey(choice: EnterpriseWorkChoice): string { return digest(JSON.stringify([choice.teamId, choice.workflowId, choice.version])).slice(0, 24) }
 function returnedApprovalFingerprint(context: EnterpriseApprovalContext): string {
@@ -951,8 +908,14 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (params.turn_key !== turn.key) throw new Error('员工要求已变化，旧交接不能继续')
     if (!claim.sessionPath) await this.waitForSessionBinding(claim, turn)
     await this.evidence(claim, turn)
-    if (method === 'list_current_item_actions') return this.listCurrentItemActions(claim, params, turn)
-    if (method === 'run_current_item_action') return this.runCurrentItemAction(claim, params, turn, approvalContextChanged)
+    if (method === 'list_current_item_actions' || method === 'run_current_item_action') {
+      const { dispatchCurrentItemAction } = await import('./current-item-actions')
+      return dispatchCurrentItemAction(method, params, {
+        service: this.options.service, claim, turn, contextChanged: approvalContextChanged,
+        references: this.currentItemActionRefs, attempts: this.currentItemActionAttempts,
+        turns: this.turns, bindings: this.approvalContexts,
+      })
+    }
     if (method === 'search') return this.search(claim, params, turn)
     if (method === 'describe') return this.describe(claim, params, turn)
     if (method === 'list_business_objects') return this.listBusinessObjects(claim, params, turn)
@@ -969,244 +932,6 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       return this.prepareDelivery(claim, turn, intent, recoveryKey)
     }
     throw new TypeError(`Unsupported enterprise method ${method}`)
-  }
-  private requireCurrentApprovalReview(claim: CapabilityClaim, turn: EmployeeTurn): BoundApprovalContext {
-    const bound = turn.approvalContext
-    if (bound?.purpose !== 'review' || turn.enterpriseReadOnly !== true
-      || !claim.sessionPath || bound.sessionPath !== claim.sessionPath
-      || this.approvalContexts.get(claim.token) !== bound || bound.accountKey !== turn.accountKey) {
-      throw new Error('请从本人“我的工作”重新打开当前审批事项')
-    }
-    return bound
-  }
-  private async assertCurrentApprovalActionTurn(
-    claim: CapabilityClaim, turn: EmployeeTurn, bound: BoundApprovalContext,
-    reference?: BoundCurrentItemAction,
-  ): Promise<void> {
-    if (this.turns.get(claim.token) !== turn || this.claimForToken(claim.token) !== claim
-      || this.approvalContexts.get(claim.token) !== bound || bound.sessionPath !== claim.sessionPath
-      || bound.accountKey !== turn.accountKey
-      || reference && (reference.accountKey !== turn.accountKey || reference.sessionPath !== claim.sessionPath
-        || reference.turnKey !== turn.key || reference.contextFingerprint !== bound.fingerprint
-        || reference.messageId !== turn.messageId)) {
-      throw new Error('员工账号、会话或本轮意见已变化，请重新打开当前事项')
-    }
-    if (await this.options.service.accountKey() !== turn.accountKey) throw new Error('员工账号已变化，请重新打开当前事项')
-  }
-  private async listCurrentItemActions(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn) {
-    rejectUnknownKeys(params, ['turn_key'], 'current item action directory')
-    const bound = this.requireCurrentApprovalReview(claim, turn)
-    if (!turn.messageId) throw new Error('当前员工轮次尚未进入 Pi 会话，请重试读取动作目录')
-    await this.assertCurrentApprovalActionTurn(claim, turn, bound)
-    const currentContext = await this.options.service.getApprovalContext(bound.context.requestId)
-    assertApprovalReviewContext(currentContext, bound.context.requestId)
-    if (returnedApprovalFingerprint(currentContext) !== bound.fingerprint) {
-      throw new Error('审批事项或动作目录已变化，请刷新“我的工作”并重新打开事项')
-    }
-    const session = await this.options.service.getSession()
-    if (session.status !== 'signed-in' || !session.user?.id || await this.options.service.accountKey() !== turn.accountKey) {
-      throw new Error('员工账号已变化，请重新打开当前事项')
-    }
-    const history = await this.options.service.getApprovalActionHistory(bound.context.requestId)
-    await this.assertCurrentApprovalActionTurn(claim, turn, bound)
-    const baselineHistoryIds = history.flatMap((entry) => approvalHistoryId(entry) ?? [])
-    const actions = currentContext.availableActions ?? []
-    const references = new Map<string, BoundCurrentItemAction>()
-    const presented = actions.map((action, index) => {
-      const actionRef = String(index + 1)
-      references.set(actionRef, {
-        action, accountKey: turn.accountKey, requestId: bound.context.requestId,
-        sessionPath: claim.sessionPath!, turnKey: turn.key, messageId: turn.messageId!,
-        contextFingerprint: bound.fingerprint, baselineHistoryIds,
-      })
-      return {
-        action_ref: actionRef, label: action.label, description: action.description,
-        inputs: action.inputs.map(({ label, required }) => ({ label, required })),
-      }
-    })
-    this.currentItemActionRefs.set(claim.token, references)
-    return currentContext.availableActions === undefined
-      ? { status: 'unavailable', actions: [], message: 'Forge 没有提供当前事项的动作目录。' }
-      : presented.length ? { status: 'available', actions: presented }
-        : { status: 'none', actions: [], message: 'Forge 当前没有可办理动作。' }
-  }
-  private async reconcileCurrentItemAction(
-    claim: CapabilityClaim, turn: EmployeeTurn, bound: BoundApprovalContext,
-    reference: BoundCurrentItemAction, comment: string, attempt: CurrentItemActionAttempt,
-  ): Promise<Record<string, unknown>> {
-    let currentContext: EnterpriseApprovalContext | undefined
-    try {
-      const current = await this.options.service.getApprovalContext(reference.requestId)
-      assertApprovalReviewContext(current, reference.requestId)
-      currentContext = current
-    } catch { /* Approval history may remain readable after the current item changes state. */ }
-    let history: unknown[]
-    try { history = await this.options.service.getApprovalActionHistory(reference.requestId) }
-    catch {
-      return {
-        outcome: 'unknown', message: 'Forge 当前事项和动作历史暂时无法核对；没有重发动作。请刷新本人待办后继续。',
-      }
-    }
-    const session = await this.options.service.getSession()
-    if (session.status !== 'signed-in' || !session.user?.id
-      || await this.options.service.accountKey() !== turn.accountKey) {
-      return { outcome: 'unknown', message: '员工账号已变化，原生动作结果待该员工重新核对；没有重发动作。' }
-    }
-    const knownIds = new Set(reference.baselineHistoryIds)
-    const matched = history.map(approvalHistoryRow).find((row) => row
-      && row.requestId === reference.requestId && row.actorId === session.user!.id
-      && row.comment === comment && !knownIds.has(row.id))
-    const observed = attempt.nativeObservation?.history.find((row) => row.actorId === session.user!.id && row.comment === comment)
-    await this.assertCurrentApprovalActionTurn(claim, turn, bound, reference)
-    if (matched || observed) {
-      const currentAction = currentContext?.availableActions?.find((action) => (
-        action.execution.actionName === reference.action.execution.actionName
-        && action.execution.objectName === reference.action.execution.objectName
-        && action.execution.recordId === reference.action.execution.recordId
-      ))
-      const currentItemVersionMatches = currentAction?.execution.params.itemVersion === reference.action.execution.params.itemVersion
-      attempt.status = 'unknown'
-      attempt.result = {
-        outcome: 'unknown', nativeStatus: 'history_observed', decision: 'unknown',
-        nativeAction: matched?.action ?? observed?.action, comment: matched?.comment ?? observed?.comment,
-        observedStatus: attempt.nativeObservation?.observedStatus,
-        currentItemStatus: currentContext?.status,
-        currentItemVersionMatches,
-        returnReason: currentContext?.returnReason,
-        message: 'Forge 原生动作历史出现了当前员工意见，但没有原生回执确认它对应所选动作；结果仍未知，且没有重发。请核对当前事项状态。',
-      }
-      return attempt.result as Record<string, unknown>
-    }
-    return {
-      outcome: 'unknown',
-      ...(currentContext ? { currentItemStatus: currentContext.status, returnReason: currentContext.returnReason } : {}),
-      ...(attempt.code ? { errorCode: attempt.code } : {}),
-      message: '已读取 Forge 当前事项和原生动作历史，但没有确认本轮动作结果；没有重发动作。请刷新本人待办后继续。',
-    }
-  }
-  private async runCurrentItemAction(
-    claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn, contextChanged: boolean,
-  ): Promise<Record<string, unknown>> {
-    rejectUnknownKeys(params, ['turn_key', 'action_ref', 'comment'], 'current item action')
-    const actionRef = requireString(params.action_ref, 'action_ref', { min: 1, max: 64, trim: true })
-    const comment = requireString(params.comment, 'comment', { min: 1, max: 4000, trim: false })
-    if (!comment.trim() || comment.includes('\0')) throw new Error('请提供本轮明确的办理意见')
-    const bound = this.requireCurrentApprovalReview(claim, turn)
-    if (turn.prompt.includes(APPROVAL_REVIEW_SESSION_MARKER) || turn.pendingSessionPrompts?.some((prompt) => prompt.includes(APPROVAL_REVIEW_SESSION_MARKER))) {
-      throw new Error('打开审批材料只授权只读核对；请在后续员工消息中明确办理当前事项')
-    }
-    const reference = this.currentItemActionRefs.get(claim.token)?.get(actionRef)
-    if (!reference || reference.requestId !== bound.context.requestId) throw new Error('动作目录已过期，请在当前员工轮次重新读取')
-    await this.assertCurrentApprovalActionTurn(claim, turn, bound, reference)
-    const attemptKey = digest(JSON.stringify([bound.accountKey, reference.sessionPath, reference.requestId, turn.messageId]))
-    const actionFingerprint = digest(JSON.stringify(reference.action)), commentDigest = digest(comment)
-    const attempts = this.currentItemActionAttempts.get(claim.token) ?? new Map<string, CurrentItemActionAttempt>()
-    this.currentItemActionAttempts.set(claim.token, attempts)
-    const previousAttempt = attempts.get(attemptKey)
-    if (previousAttempt) {
-      if (previousAttempt.actionFingerprint !== actionFingerprint || previousAttempt.commentDigest !== commentDigest) {
-        throw new Error('本轮员工意见已用于另一项办理请求；请在新的员工消息中明确办理当前事项')
-      }
-      if (previousAttempt.status === 'unknown') return this.reconcileCurrentItemAction(claim, turn, bound, reference, comment, previousAttempt)
-      return previousAttempt.result as Record<string, unknown>
-    }
-    if (contextChanged) {
-      const staleAttempt: CurrentItemActionAttempt = {
-        status: 'unknown', actionFingerprint, commentDigest, baselineHistoryIds: reference.baselineHistoryIds,
-        message: '审批事项或动作目录在本轮办理前发生变化。',
-      }
-      attempts.set(attemptKey, staleAttempt)
-      return this.reconcileCurrentItemAction(claim, turn, bound, reference, comment, staleAttempt)
-    }
-    let currentContext: EnterpriseApprovalContext
-    try {
-      currentContext = await this.options.service.getApprovalContext(bound.context.requestId)
-      assertApprovalReviewContext(currentContext, bound.context.requestId)
-    } catch {
-      const unavailableAttempt: CurrentItemActionAttempt = {
-        status: 'unknown', actionFingerprint, commentDigest, baselineHistoryIds: reference.baselineHistoryIds,
-        message: '发送前无法重新核对 Forge 当前事项。',
-      }
-      attempts.set(attemptKey, unavailableAttempt)
-      return this.reconcileCurrentItemAction(claim, turn, bound, reference, comment, unavailableAttempt)
-    }
-    await this.assertCurrentApprovalActionTurn(claim, turn, bound, reference)
-    if (returnedApprovalFingerprint(currentContext) !== reference.contextFingerprint || !currentContext.availableActions?.some((action) => (
-      digest(JSON.stringify(action)) === digest(JSON.stringify(reference.action))
-    ))) {
-      const staleAttempt: CurrentItemActionAttempt = {
-        status: 'unknown', actionFingerprint, commentDigest, baselineHistoryIds: reference.baselineHistoryIds,
-        message: '审批事项或动作目录已变化。',
-      }
-      attempts.set(attemptKey, staleAttempt)
-      return this.reconcileCurrentItemAction(claim, turn, bound, reference, comment, staleAttempt)
-    }
-    const session = await this.options.service.getSession()
-    if (session.status !== 'signed-in' || !session.user?.id) throw new Error('请先登录以办理当前 Forge 事项')
-    const latestHistory = await this.options.service.getApprovalActionHistory(bound.context.requestId)
-    const knownIds = new Set(reference.baselineHistoryIds)
-    const alreadyRecorded = latestHistory.map(approvalHistoryRow).find((row) => row
-      && row.requestId === reference.requestId && row.actorId === session.user!.id
-      && row.comment === comment && !knownIds.has(row.id))
-    if (alreadyRecorded) {
-      const prior: CurrentItemActionAttempt = {
-        status: 'unknown', actionFingerprint, commentDigest, baselineHistoryIds: reference.baselineHistoryIds,
-        result: {
-          outcome: 'unknown', nativeStatus: 'history_observed', decision: 'unknown', nativeAction: alreadyRecorded.action, comment: alreadyRecorded.comment,
-          currentItemStatus: currentContext.status, returnReason: currentContext.returnReason,
-          message: 'Forge 原生动作历史出现了当前员工意见，但没有原生回执确认它对应所选动作；结果仍未知，且没有重发。请核对当前事项状态。',
-        },
-      }
-      attempts.set(attemptKey, prior)
-      return prior.result as Record<string, unknown>
-    }
-    await this.assertCurrentApprovalActionTurn(claim, turn, bound, reference)
-    const action = reference.action
-    const input = action.inputs[0]
-    const actionArgs: NativeMcpActionArguments = {
-      actionName: action.execution.actionName,
-      objectName: action.execution.objectName,
-      recordId: action.execution.recordId,
-      params: { ...action.execution.params, [input.name]: comment },
-    }
-    const pendingAttempt: CurrentItemActionAttempt = {
-      status: 'unknown', actionFingerprint, commentDigest, baselineHistoryIds: reference.baselineHistoryIds,
-    }
-    attempts.set(attemptKey, pendingAttempt)
-    const result = await this.options.service.runNativeMcpAction(actionArgs, async () => {
-      await this.assertCurrentApprovalActionTurn(claim, turn, bound, reference)
-    })
-    pendingAttempt.status = result.status
-    pendingAttempt.code = result.code
-    pendingAttempt.message = result.message
-    if (result.status === 'rejected') {
-      pendingAttempt.result = {
-        outcome: 'rejected', ...(result.code ? { errorCode: result.code } : {}),
-        message: result.message ?? 'Forge 明确拒绝了当前事项动作。',
-      }
-      return pendingAttempt.result as Record<string, unknown>
-    }
-    if (result.status === 'returned') {
-      const observation = parseCurrentItemActionObservation(result.result, action)
-      if (observation) {
-        pendingAttempt.status = 'unknown'
-        pendingAttempt.nativeObservation = observation
-        pendingAttempt.message = 'Forge返回原生history_observed；它不确认所选动作回执。'
-        return this.reconcileCurrentItemAction(claim, turn, bound, reference, comment, pendingAttempt)
-      }
-      const receipt = parseCurrentItemActionReceipt(result.result, action)
-      if (receipt) {
-        pendingAttempt.result = {
-          outcome: 'returned', decision: receipt.decision, status: receipt.status,
-          resumed: receipt.resumed, autoRejected: receipt.autoRejected, alreadyApplied: receipt.alreadyApplied,
-          message: 'Forge 已返回当前事项的原生动作回执。该回执说明本次动作结果，不自动表示整个审批流程已完成。',
-        }
-        return pendingAttempt.result as Record<string, unknown>
-      }
-      pendingAttempt.status = 'unknown'
-      pendingAttempt.message = 'Forge 返回了与当前事项或版本不匹配的动作回执。'
-    }
-    return this.reconcileCurrentItemAction(claim, turn, bound, reference, comment, pendingAttempt)
   }
   private async listBusinessObjects(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn) {
     rejectUnknownKeys(params, ['turn_key', 'handoff_key'], 'business object directory')
