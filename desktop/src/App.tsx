@@ -15,7 +15,7 @@ import { activityNotificationSignature, readClearedActivity, readClearedAttentio
 import { errorMessage } from '@/lib/errors'
 import { openApprovalReviewInPi } from '@/lib/approval-review'
 import { businessNotificationPrompt } from '@/lib/business-notification'
-import { teamRunContinuationBoundary } from '@/lib/team-work-continuation'
+import { teamContinuationResultNotice, teamRunContinuationBoundary } from '@/lib/team-work-continuation'
 import { I18nProvider } from '@/lib/i18n'
 import { openExternalUrl, revealPath } from '@/lib/desktop-actions'
 import { createSingleFlightAdmission, findProjectForSession, gitStatusForWorkspace, shouldRefreshGitOnSessionTransition, workspaceCwd } from '@/lib/workspace'
@@ -609,15 +609,7 @@ export default function App() {
     const failedTeamWork = teamContext?.runStatus === 'failed' && !teamContext.finalResult
     const teamStateLabel = teamContext ? ({ queued: '已接单，等待执行', running: '处理中', parked: '等待处理', cancel_requested: '正在停止', succeeded: '已完成', failed: '失败', cancelled: '已停止', abandoned: '已结束' }[teamContext.runStatus]) : ''
     const unresolvedBusinessAction = teamContext?.actionOutcomes?.some((outcome) => outcome.status !== 'succeeded')
-    const structuredResultNotice = teamContext?.finalResult?.disposition === 'needs_input'
-      ? [
-          'Weave 本轮结构化结果分类：需要员工补充。此分类来自已核验的原工作上下文，不是从通知文案推断。',
-          teamContext.finalResult.summary ? `团队摘要：${teamContext.finalResult.summary}` : '',
-          `本轮需要补充的内容：${teamContext.finalResult.missingItems?.length ? teamContext.finalResult.missingItems.map((entry) => `- ${entry}`).join('\n') : '平台没有提供具体缺项。'}`,
-        ].filter(Boolean).join('\n')
-      : teamContext?.finalResult?.disposition === 'complete'
-        ? `Weave 本轮结构化结果分类：团队检查已完成。该分类只表示团队检查结果，不表示 Forge 业务已完成。${teamContext.finalResult.summary ? `\n团队摘要：${teamContext.finalResult.summary}` : ''}`
-        : ''
+    const structuredResultNotice = teamContinuationResultNotice(teamContext?.runStatus, teamContext?.finalResult, teamContext?.actionOutcomes)
     const historicalRunBoundary = teamContext ? teamRunContinuationBoundary(item.createdAt) : ''
     const details = failedTeamWork && teamContext ? [
       '你打开的是上一条团队工作失败消息。该运行已经结束，不能通过旧交接凭据恢复执行；不要查找历史会话或调用交接恢复工具。',
