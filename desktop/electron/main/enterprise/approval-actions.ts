@@ -1,4 +1,6 @@
+import { randomUUID } from 'node:crypto'
 import type { EnterpriseApprovalAction, EnterpriseApprovalContext } from '../../../src/types/api'
+import type { NativeMcpActionArguments, NativeMcpActionAttempt } from '../enterprise'
 
 const RESERVED_ACTION_INPUTS = new Set(['actionName', 'approvalRequestId', 'itemVersion', 'sourceMaterialVersion', 'actorId', 'objectName', 'recordId'])
 
@@ -13,6 +15,103 @@ function text(value: unknown, maximum: number): string | undefined {
 
 function onlyKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
   return Object.keys(value).every((key) => keys.includes(key))
+}
+
+function parseMcpResponse(value: string): unknown {
+  const trimmed = value.trim()
+  if (!trimmed) throw new Error('Forge 没有返回业务能力')
+  if (trimmed.startsWith('{')) return JSON.parse(trimmed)
+  const data = trimmed.split(/\r?\n/).filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trim()).find((line) => line && line !== '[DONE]')
+  if (!data) throw new Error('Forge 返回了无法识别的业务能力')
+  return JSON.parse(data)
+}
+
+interface NativeMcpActionTransport {
+  fetch(init: RequestInit): Promise<{ response: Response; snapshot: unknown }>
+  assertCurrentAuth(snapshot: unknown): void
+  signOutIfCurrent(snapshot: unknown): Promise<void>
+  assertAuthGeneration(): void
+}
+
+const KNOWN_NATIVE_ACTION_REJECTION_CODES = new Set([
+  'UNAUTHENTICATED', 'APPROVAL_CONTEXT_NOT_FOUND', 'APPROVAL_ACTION_BINDING_MISMATCH',
+  'APPROVAL_ACTION_INVALID', 'APPROVAL_ACTION_FORBIDDEN', 'APPROVAL_ACTION_STALE', 'APPROVAL_ACTION_UNAVAILABLE',
+])
+function nativeActionErrorDetails(value: unknown): { code?: string; rejected: boolean } {
+  const envelope = record(value), result = record(envelope?.result)
+  const structured = record(result?.structuredContent)
+  const textValue = Array.isArray(result?.content) ? result.content.map((item) => text(record(item)?.text, 100_000)).find(Boolean) : undefined
+  let textPayload: Record<string, unknown> | undefined
+  if (textValue) { try { textPayload = record(JSON.parse(textValue)) } catch { /* Non-JSON MCP error text has no stable code. */ } }
+  const candidates = [record(envelope?.error), record(result?.error), record(structured?.error), structured,
+    record(textPayload?.error), textPayload]
+  const error = candidates.find((candidate) => candidate?.code !== undefined)
+  const rawCode = error?.code
+  const code = typeof rawCode === 'string' ? rawCode : typeof rawCode === 'number' ? String(rawCode) : undefined
+  return { ...(code ? { code } : {}), rejected: code !== undefined && KNOWN_NATIVE_ACTION_REJECTION_CODES.has(code) }
+}
+
+export async function callNativeMcpRunAction(
+  args: NativeMcpActionArguments, assertCurrent: () => Promise<void>, transport: NativeMcpActionTransport,
+): Promise<NativeMcpActionAttempt> {
+  await assertCurrent()
+  let response: Response
+  let snapshot: unknown
+  try {
+    ({ response, snapshot } = await transport.fetch({
+      method: 'POST', headers: { Accept: 'application/json, text/event-stream', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: `current-item-action-${randomUUID()}`, method: 'tools/call', params: { name: 'run_action', arguments: args } }),
+      redirect: 'error', signal: AbortSignal.timeout(15_000),
+    }))
+  } catch {
+    try { transport.assertAuthGeneration() } catch { return { status: 'unknown', message: '员工账号变化，Forge动作结果待核对。' } }
+    return { status: 'unknown', message: 'Forge 没有返回原生动作回执。' }
+  }
+  let raw: string
+  try { raw = await response.text() }
+  catch { return { status: 'unknown', message: 'Forge 原生动作回执无法读取。' } }
+  try { transport.assertCurrentAuth(snapshot); await assertCurrent() }
+  catch { return { status: 'unknown', message: '员工账号或当前事项在动作期间发生变化，结果待核对。' } }
+  let parsed: unknown
+  try { parsed = parseMcpResponse(raw) } catch { parsed = undefined }
+  const responseError = nativeActionErrorDetails(parsed)
+  if (response.status === 401) {
+    await transport.signOutIfCurrent(snapshot)
+    return { status: 'rejected', code: 'UNAUTHENTICATED', message: 'Forge 登录已失效，本次动作未取得执行回执。' }
+  }
+  if (response.status === 403) {
+    if (!responseError.code || responseError.rejected) return {
+      status: 'rejected', code: responseError.code ?? 'APPROVAL_ACTION_FORBIDDEN', message: 'Forge 拒绝了当前员工执行该动作。',
+    }
+    return { status: 'unknown', code: responseError.code, message: 'Forge 原生动作返回了待核对错误。' }
+  }
+  if (!response.ok) return {
+    status: responseError.rejected ? 'rejected' : 'unknown',
+    ...(responseError.code ? { code: responseError.code } : {}),
+    message: responseError.rejected ? 'Forge 原生动作明确拒绝。' : `Forge 原生动作服务返回 ${response.status}，结果待核对。`,
+  }
+  const envelope = record(parsed)
+  if (!envelope) return { status: 'unknown', message: 'Forge 原生动作没有返回可核对回执。' }
+  if (record(envelope.error)) return {
+    status: responseError.rejected ? 'rejected' : 'unknown',
+    ...(responseError.code ? { code: responseError.code } : {}),
+    message: responseError.rejected ? 'Forge 原生动作明确拒绝。' : 'Forge 原生动作返回了待核对错误。',
+  }
+  const result = record(envelope.result)
+  if (!result) return { status: 'unknown', message: 'Forge 原生动作没有返回可核对回执。' }
+  if (result.isError === true) {
+    const actionError = nativeActionErrorDetails({ result })
+    return {
+      status: actionError.rejected ? 'rejected' : 'unknown',
+      ...(actionError.code ? { code: actionError.code } : {}),
+      message: actionError.rejected ? 'Forge 原生动作明确拒绝。' : 'Forge 原生动作返回了待核对错误。',
+    }
+  }
+  if (result.structuredContent !== undefined) return { status: 'returned', result: result.structuredContent }
+  const resultText = Array.isArray(result.content) ? result.content.map((item) => text(record(item)?.text, 100_000)).find(Boolean) : undefined
+  if (!resultText) return { status: 'unknown', message: 'Forge 原生动作没有返回可核对回执。' }
+  try { return { status: 'returned', result: JSON.parse(resultText) as unknown } }
+  catch { return { status: 'unknown', message: 'Forge 原生动作回执格式无法核对。' } }
 }
 
 export function parseCurrentApprovalActions(
