@@ -124,6 +124,10 @@
       "required": ["status"],
       "properties": {
         "status": { "enum": ["queued", "running", "parked", "cancel_requested", "succeeded", "failed", "cancelled", "abandoned"] },
+        "business_result": {
+          "enum": ["completed", "needs_input", "action_failed", "action_unknown"],
+          "description": "Server-computed run-level business result; absent when the run has none. Failed or unknown actions outrank the team's own completed or needs_input."
+        },
         "action_outcomes": {
           "type": "array", "maxItems": 100,
           "description": "Platform-recorded Forge action outcomes; absent is not proof that no action ran.",

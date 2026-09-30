@@ -112,8 +112,8 @@
 
 | 项 | 做法 | 位置 |
 | --- | --- | --- |
-| 运行级业务结果 | 服务端统一计算“完成 / 需补充 / 动作失败 / 动作结果未知”，续办上下文与员工事件都用它；桌面不再各自推导 | `internal/kernel/teamrun`、`internal/app/api/workbench_context.go`、`employee_run_events.go` |
-| 开发试跑与正式运行共用记录器 | 合并记录路径，用模式区分；增加契约测试，让同一流程分别走两条路径，比对落库的交付分类与中间步骤输出 | `internal/app/api/team_development_runs.go` 及交付记录 |
+| 运行级业务结果 | 服务端统一计算“完成 / 需补充 / 动作失败 / 动作结果未知”，续办上下文与员工事件都用它；桌面不再各自推导。**已在 `weave-next` 分支完成服务端与契约；桌面改为显示 `run.business_result` 尚未做（总仓待办）** | `internal/kernel/teamrun/business_result.go`、`workbench_context.go`、`employee_run_events.go` |
+| 开发试跑与正式运行共用记录器 | **更正（2026-09-30）：** 两条路径在准入之后已共用同一任务与记录路径，分歧只在准入：试跑准入原先不冻结交付契约。已让两条准入共用契约推导并让试跑同样冻结；整链比对仍待做 | `internal/kernel/publicationservice/service.go`、`published_run.go` |
 | 永久投递失败 | `permanent_failure` 在运维 CLI 可列出、可在修复配置后重投；出现时写告警日志 | `internal/app/api/employee_run_events.go:328` |
 | 资源条数 | 登记接口与运行时使用同一上限，并同步契约；在接单前拒绝，不在运行时才失败 | `dispatch_input.go:198`、`businessaction/runtime.go:318` |
 | 死代码 | 删除不检查租约的 `Complete`、`Fail` | `internal/kernel/taskqueue/store.go:395`、`:432` |
@@ -135,6 +135,16 @@
 - 所有 Loom 调用经成员执行器端口（`loomadapter` / `runtimeprotocol`）。用 depguard 规则限定只有端口和 Loom 适配包能引用 `github.com/jinyitao123/loom`，由机器强制执行。
 - 核对 Weave `memory`、`skills` 与 Loom `memstore`、`skilltool` 是否重复；这一项还没核对。
 
+**2026-09-30 进展与核对（`weave-next` 分支 `rework/weave-platform-scope`）：**
+
+- **已做：引用边界的机器检查。** 新增 `tools/loomimports`，随 `make depguard` 运行：统计各包直接引用 Loom 执行接口（`loom`、`stdlib`、`pgstore`、`provider/*`，不含共享词汇 `contract`）的文件数，基线为当前状态（33 个包、84 个文件）。新增引用的包、新增引用种类、文件数增加都会失败，移除后必须同步降低基线。原方案写的“只有端口和适配包能引用 Loom”现在不可能一步到位，因为 30 多个包已经直接引用，所以做成只减不增的检查，不是禁令。
+- **已核对，无需合并：** ① Weave `memory`（向量语义记忆服务，依赖 PostgreSQL 与嵌入）与 Loom `memstore`（键值存储）是两回事，没有重叠；Weave `compiler/frozen_skills.go`（枚举冻结技能引用做依赖清单）与 Loom `stdlib/skilltool.go`（把技能当工具派发）在不同层，没有重叠。② `app/api` 里唯一的 `loom.NewGraph` 在 `runs.go`，只是为读取检查点历史而构造空图，不是构图，所以“app/api 不再构建图”实际已成立。③ 构图点共 7 处：`compiler`（1）、`declarative`（3）、`teamcompiler`（2）、`app/api/runs.go`（1，只读历史）；`teamcompiler` 服务的是团队互动装配，不是冻结流程的执行路径，是否与其余重复要在 W7 删除团队模板与建队之后再判断。
+- **有意没做，原因如下：**
+  1. **日志重放的重建逻辑移交 Loom。** `loomruntime/member_journal.go` 的 `operation()` 同时做位置寻址、输入摘要冲突、工具结果未知、丢失的模型响应重试计数、用量恢复和父运行事务围栏。把前三项抽成 Loom 的通用日志需要先设计围栏与用量的回调接口，否则会把 Weave 特有语义带进 Loom；这是对恢复核心的改写，而 W3 的矩阵目前只覆盖 Loom 一侧的契约，Weave 侧的真实运行数据（W2 的导出）还没拿到。应先用 W2 的回放在 124 的真实数据上跑一遍，确认现有实现的行为，再决定抽取范围。
+  2. **提供方能力档案。** Loom 的 `WithThinkingControl` 已经承载“该提供方不能在工具历史里回放推理内容，所以带工具时关闭思考”这一能力，Weave `runtime_host_factory.go` 只是按 `system/deepseek` 这个冻结提供方标识选择它。把标识判断挪走需要在冻结绑定里增加提供方声明字段，属于契约变更，收益只是删掉一处三行判断，暂不做；改 Loom 只为此再同步一次 `third_party/loom` 也不值得。
+  3. **循环内预算。** Loom 已有迭代上限与按模型轮次的切片控制（`ToolLoopControl`）；Weave `member_budget.go` 的令牌与费用累计依赖 Weave 的用量记账与跨成员额度，不是通用机制，不移交。
+  4. **唯一终态事件。** 这是 W6 的前提，见 W6 探查；在 W6 落地前不单独动。
+
 **验收：**
 
 - W3 回归在收口前后都通过，W2 复现包中的运行回放结果不变。
@@ -145,6 +155,27 @@
 ### W6 终态、谱系与用量合并（先探查，MVP1 验收后实施）
 
 先写一份探查结论，补进本页：列出 `weave_run_terminal_markers`、`weave_workflow_member_runs`、`weave_run_attempt_leases`、`weave_team_run_activity_events` 和用量累计的全部写入方、写入时机和一致性依赖。目标是每次成员尝试只有一个写入方写一条终态，和任务完成放在同一事务提交；谱系在查询时推导，不再重建和修补（`terminal_v3_lineage_rebuild.go`、`terminal_lineage_repair.go`）。W2、W3 就绪且 W8 提供唯一终态事件之前，不动这部分代码。
+
+**2026-09-30 探查结论（只读，未改代码）：**
+
+写入方一览（生产代码，均在 `weave-next`）：
+
+| 表 | 写入位置 | 说明 |
+| --- | --- | --- |
+| `weave_run_terminal_markers` | `loomruntime/terminal_marker_store.go` 中的 `ApplyTerminalMarkerTransition` 是唯一写入入口（一次插入、一次更新）；调用方共四处：正常终态协调 `normal_terminal_coordinator.go:328`、谱系修补 `terminal_lineage_repair.go:227`、团队运行终态 `teamrun/executor_terminal.go:562`，以及经 `terminal_sink.go` 的两种汇（单调汇、谱系汇）走同一入口 | 迁移校验 `ValidateTerminalMarkerTransition`（约 120 行）及一组等价与只差成本位的比较函数，负责保证单调、防倒退 |
+| `weave_workflow_member_runs` | `loomruntime/member_run.go`（插入、写父代际、写成员结果）、`member_checkpoint.go`（写检查点序号） | 成员结果与终态标记不在同一处提交：`member_run.go` 的 `BeforeLock` 回调在终态提交事务里写结果，这一点已经是同一事务 |
+| `weave_run_attempt_leases` | `attempt_lease_store.go`（登记、心跳、关闭、对账）与 `frozen_attempt.go`（冻结尝试的登记与更新） | 两个文件各有一套插入与更新 |
+| `weave_team_run_activity_events` | `teamrun/activity.go` 单一 `Record` | 已经是单写入方 |
+| 用量累计 | `loomruntime` 的用量累加器（`usage_*.go`）在检查点里保存，终态时由 `TerminalUsage` 带入标记 | 每个成员一个累加器，团队汇总在终态标记里 |
+
+规模：`loomruntime` 中终态与生命周期相关的文件合计约 9,800 行（`run_registry.go` 1,620、`normal_terminal_coordinator.go` 796、`run_lifecycle_reader.go` 758、`terminal_attribution.go` 706、`terminal_v3.go` 646、`attempt_lease_lifecycle.go` 621、`run_lifecycle.go` 620、`terminal_marker_store.go` 613、`terminal_sink.go` 526、`terminal_v3_lineage.go` 436、`attempt_heartbeat.go` 436、`attempt_lease_store.go` 419、`frozen_attempt.go` 416、`a4_admission_receipt.go` 379、`terminal_lineage_repair.go` 296、`terminal_v3_lineage_rebuild.go` 275、`terminal_v3_assembler.go` 227）。
+
+结论：
+
+1. 终态标记与活动事件其实已经各有单一写入入口，问题不在“多个写入方”，而在**同一个终态有三条不同的产生路径**（成员正常终态、团队运行终态、谱系修补）各自组装候选、各自过同一套迁移校验，并且**谱系是先写后修补**：这里的谱系指用量沿父子关系的逐级汇总，每条终态记录只有本运行独占的用量，祖先记录里含子孙的用量由 `AssembleTerminalLineage` 在写入时汇总，汇总与实际不一致时由重建与修补程序（`terminal_v3_lineage_rebuild.go`、`terminal_lineage_repair.go` 共约 570 行）重新汇总。原方案“谱系在查询时推导”的方向成立：含子孙的用量可以在读取时由各运行的独占用量与父子边（`parent_run_id`、`aggregation_parent_run_id`）求和得出，不需要存储后再修补；但这只是读代码得出的设计判断，没有在真实数据上验证过汇总是否总能一致。
+2. 但这是对恢复与对账核心的改写，涉及标记的迁移校验、`a4` 准入回执、心跳与租约生命周期，牵涉面约 9,800 行；`terminal_marker_store.go` 中大量的等价与倒退判断正是历史上各种半写状态留下的。在没有 W2 的真实运行数据和 124 上的对照之前，删除这些校验会失去对已存在数据的保护。
+3. 建议的实施顺序（MVP1 验收后）：先在 124 用 `weave ops replay-run` 与终态标记读取，统计标记里 `lineage_state` 与 `audit_state` 的分布，确认有多少行依赖修补；再做“查询时推导谱系”的只读实现与现有存储并行对比，一致后才删除重建与修补；最后才合并三条终态产生路径，前提是 Loom 的 `Terminalizer` 对每次成员运行只发一个终态事件（W8 第 4 项）。这三步每一步都可以独立回退。
+4. **本批不动这部分代码**，与原方案一致。
 
 ### W7 删除下线代码与重新分仓（MVP1 验收后）
 
