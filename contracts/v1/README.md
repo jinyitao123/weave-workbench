@@ -238,10 +238,10 @@ ObjectStack 原生 ApprovalService 的所有 resubmit 入口必须在写审批�
 
 当前事项办理通过 Forge 选择性开放的原生 MCP `run_action`，复用 ObjectStack 原生审批服务，不直接暴露系统对象写入、不新增审批或通知体系。首批覆盖原生同意与退回修改；业务对象上开放哪些动作由 Forge 配置，桌面不根据人物、合同或审批节点写分支。
 
-- Forge 的当前事项上下文可返回 `availableActions`：每项含 `label`、`description`、`execution`（固定 `tool: run_action`、`actionName`、`objectName`、`recordId` 和 `params`）、`inputs`（员工可填写的字段定义）及 `version`。固定参数含原生 `approvalRequestId`、`itemVersion`、`sourceMaterialVersion`；本批员工输入为意见 `comment`。未获当前办理权时返回空目录。`itemVersion` 来自原生状态、当前节点/轮次、待处理人员和动作历史，不能仅用材料摘要代替事项版本。
+- Forge 的当前事项上下文可返回 `availableActions`：每项含 `label`、`description`、`execution`（固定 `tool: run_action`、`actionName`、`objectName`、`recordId` 和 `params`）及 `inputs`（员工可填写的字段定义）。固定参数含原生 `approvalRequestId`、`itemVersion`、`sourceMaterialVersion`；本批员工输入为意见 `comment`。未获当前办理权时返回空目录。`itemVersion` 来自原生状态、当前节点/轮次、待处理人员和动作历史，不能仅用材料摘要代替事项版本。
 - Host 从已绑定事项读取并固定目录；Pi 只引用当前目录项并填写声明字段，不提供操作者、对象、记录、请求、版本或工具地址。账号、员工实际消息与轮次、目录指纹留在 Host。发送前重读事项并匹配；换账号、改变要求或事项版本变化使旧调用失效。
 - Forge 动作处理器从认证用户及会话重建非 system 的业务调用上下文，不向原生服务传递 MCP 脚本的 system 提升身份。重新核对事项与记录关系、材料和事项版本、当前处理资格；原生服务决定通过、退回、最大修订次数导致的拒绝及下一事项。
-- 相同请求的重复办理以原生动作历史核对，不新建第二套回执账本。服务端必须以跨实例有效的原生事务/记录锁保护版本核对与执行；内存锁不能宣称并发安全。同一员工、原版本和相同意见已实际生效时返回原生重复结果，不再写意见；意见不同或其他人/轮次已改变事项时明确冲突。
+- 相同请求的重复办理以原生动作历史核对，不新建第二套回执账本。本批 Forge MCP 连接入口以当前 PostgreSQL 事务的 advisory lock 串行同一原生请求，锁内核对版本、历史并调用原生服务；多实例共用同一数据库时生效，不新增表。内存锁不能宣称并发安全。直接原生 REST 未经过此连接入口，其并发保障尚未验证，不宣称所有审批入口均已补齐。同一员工、原版本和相同意见已实际生效时返回原生重复结果，不再写意见；意见不同或其他人/轮次已改变事项时明确冲突。
 - 结果未知先读取原生事项及动作历史，不盲目重放。返回真实决策、原生状态及是否重复；办理成功与整个审批完成分别表达。账号失效、越权、陈旧版本、意见无效及服务不可用分别保留既有认证、权限、冲突、校验和可恢复错误，不显示为暂无事项。
 
 ### 本次对象绑定与续办的共同约束
