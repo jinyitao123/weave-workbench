@@ -27,6 +27,11 @@
 | 成员恢复通过重放日志中的模型与工具响应重建工具循环；09-26、09-29 两次真实失败都在恢复阶段 | `internal/kernel/loomruntime/member_run.go:316`；[合同场景](../../scenarios/sales-contract-handoff/合同场景设计.md) |
 | 业务动作防重放按模型生成的 `tool_call_id` 精确匹配；按能力加记录的匹配只拦截结果未知的调用 | `internal/kernel/teamrun/activity.go:253` |
 | 没有把失败运行从 124 导出到本地复现的工具 | `scripts/`、`tools/`、`cmd/` 中未见 |
+| 已决定下线的功能约 4 万行 Go（`build/teamforge`、`build/teambuild`、`app/teamconstruction`、`build/teameval` 及建队、评测、模板、掼蛋接口等）；网页 Workbench 的 TypeScript 工作区排除 `node_modules` 后约 67.6 万行，可能含上游带入的包或生成代码，未逐一区分 | 各目录行数统计 |
+| 28 个 Weave 包直接引用 Loom，其中 HTTP 层 29 个文件直接使用 `loom.State`、`contract.LLM`、`stdlib.AgentSpec`、`pgstore.PGStore`；设计上的 Loom 执行端口 `loomadapter` 只有 64 行 | `internal/app/api`、`internal/kernel/loomadapter` |
+| Loom 图在 5 处分别构建：`compiler`、`declarative`（两处）、`teamcompiler`、`app/api/runs.go` | 同名文件中的 `NewGraph` 调用 |
+| DeepSeek “工具历史无法重放 `reasoning_content`、须关闭思考模式”的规则写在 Weave 流程包，按提供方 ID 字符串判断；Loom 自带的 `provider/deepseek` 未使用 | Weave 提交 `b2bafac7`，`internal/kernel/workflow/runtime_host_factory.go` |
+| 预算逻辑散在 Weave 7 个包约 30 个文件；Loom 有 60 行的循环内预算与恢复测试 | `third_party/loom/stdlib/budget.go`；Weave `loomruntime`、`teamrun`、`app/api` 等 |
 
 ## 工作包
 
@@ -107,9 +112,33 @@
 | 资源条数 | 登记接口与运行时使用同一上限，并同步契约；在接单前拒绝，不在运行时才失败 | `dispatch_input.go:198`、`businessaction/runtime.go:318` |
 | 死代码 | 删除不检查租约的 `Complete`、`Fail` | `internal/kernel/taskqueue/store.go:395`、`:432` |
 
+### W8 Loom 边界收口（W3 之后、W6 之前）
+
+**原则：** 团队编排留在 Weave。Loom 内核是单跳、串行、确定性的，不承担团队并行派发、汇合和跨进程租约。单个成员的循环、检查点、重放和终态以 Loom 为准。Loom 与 Codex、Claude 等执行器站在同一个成员执行器端口后面：Weave 下发冻结的成员定义、输入、工具与预算，收回一个终态、产物、用量和恢复句柄。
+
+**移交给 Loom**（通用机制，不带业务词汇，符合 Loom AGENTS.md 的分层规则）：
+
+1. **日志重放的重建逻辑：** 由 Loom 在 `stdlib.ExecutionJournal` 契约内完成；Weave 只实现日志存储接口，像 `pgstore` 那样。`loomruntime/member_journal.go` 与 `member_run.go` 中的重建部分删除。
+2. **提供方能力档案：** 由 Loom 提供方声明“工具历史中能否重放推理内容”等特性，并据此处理思考模式；删除 Weave `runtime_host_factory.go` 中按提供方 ID 字符串的判断。
+3. **循环内预算：** 步数与 token 上限由 Loom 执行，到上限时停在检查点。跨成员、跨组织的额度预留与记账留在 Weave，收进一个包。
+4. **唯一终态事件：** 每次成员运行由 Loom 的 `Terminalizer` 只发一个终态事件，Weave 只记录一次；这是 W6 的前提。
+
+**Weave 内部收口：**
+
+- 规格编译只留一条路径：冻结的团队定义 → `stdlib.AgentSpec` → Loom 编译。合并 `compiler`、`declarative`、`teamcompiler` 中重复的图构建；`app/api` 不再构建图或直接操作会话。
+- 所有 Loom 调用经成员执行器端口（`loomadapter` / `runtimeprotocol`）。用 depguard 规则限定只有端口和 Loom 适配包能引用 `github.com/jinyitao123/loom`，由机器强制执行。
+- 核对 Weave `memory`、`skills` 与 Loom `memstore`、`skilltool` 是否重复；这一项还没核对。
+
+**验收：**
+
+- W3 回归在收口前后都通过，W2 复现包中的运行回放结果不变。
+- depguard 在引用越界时失败。
+- 桌面创建、试跑、发布团队与员工交接在 124 实走不受影响。
+- 同一流程中，一个 Loom 成员加一个 Codex 或 Claude 成员能经同一端口完成。
+
 ### W6 终态、谱系与用量合并（先探查，MVP1 验收后实施）
 
-先写一份探查结论，补进本页：列出 `weave_run_terminal_markers`、`weave_workflow_member_runs`、`weave_run_attempt_leases`、`weave_team_run_activity_events` 和用量累计的全部写入方、写入时机和一致性依赖。目标是每次成员尝试只有一个写入方写一条终态，和任务完成放在同一事务提交；谱系在查询时推导，不再重建和修补（`terminal_v3_lineage_rebuild.go`、`terminal_lineage_repair.go`）。W2、W3 就绪之前不动这部分代码。
+先写一份探查结论，补进本页：列出 `weave_run_terminal_markers`、`weave_workflow_member_runs`、`weave_run_attempt_leases`、`weave_team_run_activity_events` 和用量累计的全部写入方、写入时机和一致性依赖。目标是每次成员尝试只有一个写入方写一条终态，和任务完成放在同一事务提交；谱系在查询时推导，不再重建和修补（`terminal_v3_lineage_rebuild.go`、`terminal_lineage_repair.go`）。W2、W3 就绪且 W8 提供唯一终态事件之前，不动这部分代码。
 
 ### W7 删除下线代码与重新分仓（MVP1 验收后）
 
@@ -123,12 +152,13 @@
 
 ```text
 W0 ─┬─ W1
-    └─ W2 ── W3
-          └─ W4 ── W5 ── MVP1 验收 ── W6 ── W7
+    └─ W2 ─┬─ W3 ── W8 ──┐
+           └─ W4 ── W5 ──┴─ MVP1 验收 ── W6 ── W7
 ```
 
 - W0、W1 可以立即开始；W1 只改部署和路由注册，不影响执行路径。
 - W2 是 W3、W4 以及之后所有运行时改动的验证前提。
+- W8 在 W3 回归就绪后开始，W6 依赖 W8 提供的唯一终态事件。W8 中“Weave 内部收口”的去重可以与 W4、W5 并行，但移交给 Loom 的部分须等 W3。
 - 跨组件的委托问题（C15、C16）和 Forge、桌面侧问题（C18–C24）按问题清单单独排期；W4 与 C21 的幂等键方案需要一起评审。
 
 ## 执行环境
