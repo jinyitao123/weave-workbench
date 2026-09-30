@@ -141,7 +141,7 @@ export const SalesContractSubmission = ObjectSchema.create({
   },
   listViews: { all: { label: '全部记录', type: 'grid', columns: ['name', 'contract_id', 'material_name', 'submitted_by', 'submitted_at'] } },
   indexes: [{ fields: ['contract_id'], unique: 'organization' }],
-  enable: { apiEnabled: false, searchable: false, trackHistory: true, files: false, feeds: false, activities: false },
+  enable: { apiEnabled: false, searchable: false, trackHistory: true, files: true, feeds: false, activities: false },
 });
 
 // One immutable material choice per returned native approval request. The
@@ -177,7 +177,7 @@ export const SalesContractRevisionMaterial = ObjectSchema.create({
     { fields: ['approval_request_id'], unique: 'organization' },
     { fields: ['idempotency_key'], unique: 'organization' },
   ],
-  enable: { apiEnabled: false, searchable: false, trackHistory: true, files: false, feeds: false, activities: false },
+  enable: { apiEnabled: false, searchable: false, trackHistory: true, files: true, feeds: false, activities: false },
 });
 
 export const SalesContractLine = master('forge_sales_contract_line', '合同物料/服务明细', 'list', {
