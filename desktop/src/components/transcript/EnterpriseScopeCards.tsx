@@ -7,7 +7,8 @@ const record = (value: unknown): Record<string, unknown> | undefined => value &&
 const label = (value: unknown): value is string => typeof value === 'string' && Boolean(value.trim()) && value.length <= 300 && !internalID.test(value)
 
 function scopeReceipt(part: MessagePart, toolName?: string): EnterpriseTaskScopeDisplay | undefined {
-  if (part.type !== 'toolResult' || part.isError || part.streaming || !hostTools.has(toolName ?? part.name ?? '') || part.text.length > 200_000) return undefined
+  if (!part || part.type !== 'toolResult' || part.isError || part.streaming || typeof part.text !== 'string'
+    || !hostTools.has(toolName ?? part.name ?? '') || part.text.length > 200_000) return undefined
   try {
     const result = record(JSON.parse(part.text)), scope = record(result?.scope_display), receipt = record(result?.receipt)
     if (result?.status !== 'accepted' || scope?.version !== '1' || scope.source !== 'workbench-host'
@@ -21,6 +22,7 @@ function scopeReceipt(part: MessagePart, toolName?: string): EnterpriseTaskScope
 
 /** Only native Host tool receipts become cards; narrative JSON cannot create an authorization display. */
 export function enterpriseScopeProjection(message: TranscriptMessage): { message: TranscriptMessage; scopes: EnterpriseTaskScopeDisplay[] } {
+  if (!Array.isArray(message.parts)) return { message, scopes: [] }
   const scopes = new Map<string, EnterpriseTaskScopeDisplay>(), hidden = new Set<number>()
   message.parts.forEach((part, index) => {
     const previous = message.parts[index - 1]
