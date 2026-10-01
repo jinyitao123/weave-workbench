@@ -54,6 +54,9 @@ importers:
       '@objectstack/trigger-record-change':
         specifier: 17.3.0
         version: 17.3.0
+      jose:
+        specifier: 6.2.12
+        version: 6.2.12
       pg:
         specifier: ^8.23.0
         version: 8.23.0

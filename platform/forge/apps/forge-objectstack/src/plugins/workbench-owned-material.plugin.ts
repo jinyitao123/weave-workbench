@@ -3,6 +3,7 @@ import { makeExecutionContextResolver } from '@objectstack/plugin-hono-server';
 import type { IHttpRequest, IHttpResponse, IHttpServer, IObjectQLEngine, IStorageService } from '@objectstack/spec/contracts';
 import type { ExecutionContext } from '@objectstack/spec/kernel';
 import { resolveRetainedContractMaterialForOwner } from './contract-material-holder.js';
+import { currentNativeActor, TaskConnectionFailure } from './native-task-auth.js';
 
 const ROUTE = '/api/v1/workbench/materials/:fileId';
 const ORIGINAL_ROUTE = '/api/v1/workbench/materials/:fileId/original';
@@ -113,6 +114,56 @@ async function sha256(bytes: Uint8Array): Promise<string> {
  * routes remain restricted to private files owned by the current employee.
  * Approval participants use the separate request-snapshot context.
  */
+
+export class OwnedOriginalFailure extends Error {
+  constructor(readonly status: number, readonly code: string) { super(code); }
+}
+
+/** Shared by the employee route and the scoped task connection. */
+export async function readOwnedOriginal(engine: IObjectQLEngine, storage: IStorageService, actor: ExecutionContext, fileId: string, expected: string) {
+  const actorOrganizationId = actor.tenantId;
+  if (!actor.userId || !actorOrganizationId) throw new OwnedOriginalFailure(401, 'UNAUTHENTICATED');
+  const file = await engine.findOne('sys_file', { where: { id: fileId } }, { context: SYSTEM_CONTEXT });
+  if (!file || !['committed', 'deleted'].includes(String(file.status)) || !['user', 'attachments'].includes(String(file.scope)) || file.acl !== 'private' ||
+      file.owner_id !== actor.userId) {
+    throw new OwnedOriginalFailure(404, 'MATERIAL_NOT_FOUND');
+  }
+  if (!actorOrganizationId || file.organization_id !== actorOrganizationId) {
+    throw new OwnedOriginalFailure(404, 'MATERIAL_NOT_FOUND');
+  }
+  const retained = await resolveRetainedContractMaterialForOwner(engine, {
+    fileId,
+    sha256: expected,
+    organizationId: actorOrganizationId,
+    ownerId: actor.userId,
+    context: SYSTEM_CONTEXT,
+  });
+  const retainedMatches = retained && retained.submitterId === actor.userId && retained.fileId === fileId &&
+    retained.name === file.name && retained.mediaType === String(file.mime_type).toLowerCase() &&
+    retained.bytes === Number(file.size) && retained.sha256 === expected;
+  const allowedOriginal = !!retainedMatches || file.status === 'committed' &&
+    await ownerCanReadBoundOriginal(engine, file, actor, actorOrganizationId);
+  if (!allowedOriginal) {
+    throw new OwnedOriginalFailure(404, 'MATERIAL_NOT_FOUND');
+  }
+  const key = nonempty(file.key, 2048), name = nonempty(file.name, 255);
+  const size = Number(file.size);
+  const mediaType = nonempty(file.mime_type, 160)?.toLowerCase();
+  if (!key || !name || !Number.isSafeInteger(size) || size < 1) throw new OwnedOriginalFailure(422, 'MATERIAL_INVALID');
+  if (size > MAX_ORIGINAL_BYTES) throw new OwnedOriginalFailure(413, 'MATERIAL_TOO_LARGE');
+  if (!mediaType || !ORIGINAL_MEDIA_TYPES.has(mediaType)) throw new OwnedOriginalFailure(415, 'MATERIAL_UNSUPPORTED');
+
+  const downloaded = await storage.download(key);
+  const bytes = downloaded instanceof Uint8Array ? downloaded : new Uint8Array(downloaded);
+  if (bytes.byteLength !== size || bytes.byteLength > MAX_ORIGINAL_BYTES || !hasOriginalSignature(bytes, mediaType, name)) {
+    throw new OwnedOriginalFailure(422, 'MATERIAL_INVALID');
+  }
+  const digest = await sha256(bytes);
+  if (digest !== expected) throw new OwnedOriginalFailure(409, 'MATERIAL_SHA_MISMATCH');
+
+  return { fileId, name, mediaType, bytes, sha256: digest };
+}
+
 export class WorkbenchOwnedMaterialPlugin implements Plugin {
   name = 'com.inocube.forge.workbench-owned-material';
   version = '1.0.0';
@@ -137,12 +188,13 @@ export class WorkbenchOwnedMaterialPlugin implements Plugin {
         const storage = service<IStorageService>(context, 'storage');
         if (!engine || !storage) return sendError(response, 503, 'MATERIAL_UNAVAILABLE');
         try {
+          await currentNativeActor(context, actor.userId, actor.tenantId ?? '');
           const file = await engine.findOne('sys_file', { where: { id: fileId } }, { context: SYSTEM_CONTEXT });
           if (!file || file.status !== 'committed' || !['user', 'attachments'].includes(String(file.scope)) || file.acl !== 'private' ||
-              file.owner_id !== actor.userId || file.ref_object || file.ref_id) {
+              file.owner_id !== actor.userId || file.ref_object || file.ref_id || file.ref_field) {
             return sendError(response, 404, 'MATERIAL_NOT_FOUND');
           }
-          if (file.organization_id && actor.organizationId && file.organization_id !== actor.organizationId) {
+          if (!actor.tenantId || file.organization_id !== actor.tenantId) {
             return sendError(response, 404, 'MATERIAL_NOT_FOUND');
           }
           const key = nonempty(file.key, 2048), name = nonempty(file.name, 255);
@@ -150,7 +202,7 @@ export class WorkbenchOwnedMaterialPlugin implements Plugin {
           const mediaType = nonempty(file.mime_type, 160)?.toLowerCase();
           if (!key || !name || !Number.isSafeInteger(size) || size < 1) return sendError(response, 422, 'MATERIAL_INVALID');
           if (size > MAX_TEXT_BYTES) return sendError(response, 413, 'MATERIAL_TOO_LARGE');
-          if (!mediaType || !/^(text\/plain|text\/markdown)(;\s*charset=utf-8)?$/.test(mediaType)) {
+          if (!mediaType || !/^(text\/plain|text\/markdown|text\/csv|application\/json)(;\s*charset=utf-8)?$/.test(mediaType)) {
             return sendError(response, 415, 'MATERIAL_UNSUPPORTED');
           }
           const downloaded = await storage.download(key);
@@ -163,7 +215,8 @@ export class WorkbenchOwnedMaterialPlugin implements Plugin {
           await response.status(200).json({
             version: '1', fileId, name, mediaType, bytes: size, sha256: await sha256(bytes), content,
           });
-        } catch {
+        } catch (error) {
+          if (error instanceof TaskConnectionFailure) return sendError(response, error.status, error.code);
           context.logger.error('[workbench-owned-material] failed to read an owned text material');
           await sendError(response, 503, 'MATERIAL_UNAVAILABLE');
         }
@@ -184,44 +237,9 @@ export class WorkbenchOwnedMaterialPlugin implements Plugin {
         const storage = service<IStorageService>(context, 'storage');
         if (!engine || !storage) return sendError(response, 503, 'MATERIAL_UNAVAILABLE');
         try {
-          const file = await engine.findOne('sys_file', { where: { id: fileId } }, { context: SYSTEM_CONTEXT });
-          if (!file || !['committed', 'deleted'].includes(String(file.status)) || !['user', 'attachments'].includes(String(file.scope)) || file.acl !== 'private' ||
-              file.owner_id !== actor.userId) {
-            return sendError(response, 404, 'MATERIAL_NOT_FOUND');
-          }
-          if (!actorOrganizationId || file.organization_id !== actorOrganizationId) {
-            return sendError(response, 404, 'MATERIAL_NOT_FOUND');
-          }
-          const retained = await resolveRetainedContractMaterialForOwner(engine, {
-            fileId,
-            sha256: expected,
-            organizationId: actorOrganizationId,
-            ownerId: actor.userId,
-            context: SYSTEM_CONTEXT,
-          });
-          const retainedMatches = retained && retained.submitterId === actor.userId && retained.fileId === fileId &&
-            retained.name === file.name && retained.mediaType === String(file.mime_type).toLowerCase() &&
-            retained.bytes === Number(file.size) && retained.sha256 === expected;
-          const allowedOriginal = !!retainedMatches || file.status === 'committed' &&
-            await ownerCanReadBoundOriginal(engine, file, actor, actorOrganizationId);
-          if (!allowedOriginal) {
-            return sendError(response, 404, 'MATERIAL_NOT_FOUND');
-          }
-          const key = nonempty(file.key, 2048), name = nonempty(file.name, 255);
-          const size = Number(file.size);
-          const mediaType = nonempty(file.mime_type, 160)?.toLowerCase();
-          if (!key || !name || !Number.isSafeInteger(size) || size < 1) return sendError(response, 422, 'MATERIAL_INVALID');
-          if (size > MAX_ORIGINAL_BYTES) return sendError(response, 413, 'MATERIAL_TOO_LARGE');
-          if (!mediaType || !ORIGINAL_MEDIA_TYPES.has(mediaType)) return sendError(response, 415, 'MATERIAL_UNSUPPORTED');
-
-          const downloaded = await storage.download(key);
-          const bytes = downloaded instanceof Uint8Array ? downloaded : new Uint8Array(downloaded);
-          if (bytes.byteLength !== size || bytes.byteLength > MAX_ORIGINAL_BYTES || !hasOriginalSignature(bytes, mediaType, name)) {
-            return sendError(response, 422, 'MATERIAL_INVALID');
-          }
-          const digest = await sha256(bytes);
-          if (digest !== expected) return sendError(response, 409, 'MATERIAL_SHA_MISMATCH');
-
+          await currentNativeActor(context, actor.userId, actor.tenantId ?? '');
+          const original = await readOwnedOriginal(engine, storage, actor, fileId, expected);
+          const { name, mediaType, bytes, sha256: digest } = original;
           response.header('Content-Type', mediaType);
           response.header('Content-Length', String(bytes.byteLength));
           response.header('Content-Disposition', contentDisposition(name));
@@ -232,7 +250,8 @@ export class WorkbenchOwnedMaterialPlugin implements Plugin {
             userId: actor.userId, organizationId: actorOrganizationId, fileId,
             mediaType, bytes: bytes.byteLength, sha256: digest,
           });
-        } catch {
+        } catch (error) {
+          if (error instanceof OwnedOriginalFailure || error instanceof TaskConnectionFailure) return sendError(response, error.status, error.code);
           context.logger.error('[workbench-owned-material] failed to read an owned binary original');
           await sendError(response, 503, 'MATERIAL_UNAVAILABLE');
         }
