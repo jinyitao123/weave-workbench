@@ -307,7 +307,9 @@ ObjectStack 原生 ApprovalService 的所有 resubmit 入口必须在写审批�
 8. `DELETE /api/v1/apps/forge/task-delegations/:grantId`撤销授权：任务令牌只可撤销自身，reason为`run_terminal`；员工会话只可撤销同员工、同原生组织的授权，reason为`employee_cancel`。返回`{version:"1",grant_id,revoked:true,reason}`；同授权重复200，保留第一次撤销原因。Weave在运行终态提交后持久登记撤销需求，沿现有后台连接清理入口退避重试；Host以精确原run上下文取得grant_id，直接用本人Forge会话确认employee_cancel撤销后，再仅携WeaveJWT发送原run的stop；无委托或开发运行仍走原stop。撤销未确认不能宣称已取消。员工取消不回滚已有业务效果。
 9. 原生 `POST /api/v1/auth/sign-out` 负责主动退出吊销桌面会话；已交接任务继续，不把退出当作员工取消；Host先捕获旧账号会话再调用，退出始终清本地，迟到结果不得影响新登录账号。200（或原会话已明确失效）记确认，网络/服务故障标远端吊销未确认并给必要提示；普通401清理不再触发另一次登出请求。
 
-错误保持分层：401任务token无效/已过期/员工已停用；403当前业务范围、原生组织资格或权限拒绝；409发行内容冲突、输入内容冲突或授权代际冲突。发送前的授权拒绝附 `error.no_effect=true`、`error.phase="authorization"` 及原生错误码；自动续办只接受明确过期、授权撤销或代际替换的401证明，403组织/业务权限拒绝及未知错误不能因重新授权而重发；发送后的网络不确定不能使用此标志。审计只记原生主体/组织、授权与输入身份、范围摘要、发行/续期/拒绝/退出时间和结果，不记录员工会话、task token、材料正文或模型私有思考。
+错误保持分层：401任务token无效/已过期/员工已停用；403当前业务范围、原生组织资格或权限拒绝；409发行内容冲突、输入内容冲突或授权代际冲突。发送前的授权拒绝附 `error.no_effect=true`、`error.phase="authorization"` 及原生错误码；自动续办只接受明确过期或可续授权的代际替换401证明；员工取消返回403 `FORGE_TASK_CANCELLED`，账号禁用返回401 `FORGE_TASK_SUBJECT_INACTIVE`，两者保存首次拒绝证明且同输入重新发行返回409 `FORGE_TASK_REVOCATION_FINAL`，不能续授权、stage_retry或走失败边绕过，403组织/业务权限拒绝及未知错误不能因重新授权而重发；发送后的网络不确定不能使用此标志。审计只记原生主体/组织、授权与输入身份、范围摘要、发行/续期/拒绝/退出时间和结果，不记录员工会话、task token、材料正文或模型私有思考。
+
+Weave对Forge投递人工等待及终态事件时，组织取固定输入登记的Forge原生组织，受理员工取可信原生账号；不能用Weave workspace充当Forge组织，也不能猜测处理人。旧只读输入仅在同账号外部绑定唯一且可验证时补足组织。
 
 工作上下文 `source.input_status=current|superseded|closed` 和可选 `superseded_by_input_revision_id` 由同workspace/user且准确root/parent工作链的已接受输入确定。只有确认同工作链取代关系时，桌面才退出旧needs_input待办投影；同会话的无关新工作、closed状态或读取失败不证明已办。原通知、原动作事实及Forge业务状态不修改。
 

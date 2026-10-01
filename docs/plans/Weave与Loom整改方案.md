@@ -79,7 +79,7 @@
 
 **验收：** 09-29 合同场景第二次运行（Loom 恢复工具消息时失败）能在本地以相同错误复现；导出文件中找不到任何凭据字段。
 
-**当前实现：** 主线已提供运维CLI `export-run` / `import-run` / `replay-run` 和首段日志回放；不开放HTTP。当前候选补齐冻结图、FK父记录与能力调用版本引用，保留凭据引用但剔除密文、令牌及摘要；导入通过可延迟FK校验完成，不关闭trigger，多成员日志段沿原入口快照使用真实Loom循环只读重建。真实PG及race定向检查通过，候选仍待源仓合入与总仓锁定；实现细节以源仓治理记录为准。
+**当前实现：** 主线已提供运维CLI `export-run` / `import-run` / `replay-run` 和首段日志回放；不开放HTTP。当前主线补齐冻结图、FK父记录与能力调用版本引用，保留凭据引用但剔除密文、令牌及摘要；导入通过可延迟FK校验完成，不关闭trigger，多成员日志段沿原入口快照使用真实Loom循环只读重建。真实PG及race定向检查通过，已随源仓PR13合入 `3bc90a6e` 并同步总仓版本锁；实现细节以源仓治理记录为准。
 
 **真实失败取证：** 09-29第二次失败的原始运行没有成员请求journal和旧leaf checkpoint，三份冻结配置的原始摘要可验证。完整V2私有复现包259948字节、SHA-256 `389ac5f0e213ac64117b41207ed9ada34a7f8475c1320cfad85adf92fb3ed1a1`；离线回放明确退出3 `evidence_unavailable`，原因 `reasoning_content_provider_rejection_without_saved_request`，网络调用/业务写入均为0。员工正文仅保存在权限0700的本机私有取证目录，文件0600，未进入Git或对话。不能精确重建当时提供方400请求，W2真实失败复现验收仍未满足，W3真实提供方录制及W8核心迁移不能以该缺证运行作已通过依据。当前验证与部署入口见[项目状态](../项目状态.md)。
 
@@ -98,7 +98,7 @@
 
 **尚未做（本条仍未完成）：** ① 用 DeepSeek 与 OpenAI 两种格式的真实录制响应，需要 W2 导出；本测试只用脚本化模型和 OpenAI 兼容格式校验器，没有覆盖 DeepSeek 的推理内容回传，`contract.Message` 目前也没有该字段。② 额度暂停矩阵现已在 Loom `d1f1c15` 完成并通过三平台 CI，真实提供方录制仍待补。③ 并行只读工具在日志未串行化时（`SerializeWhenActive=false`）的重放顺序，按序号寻址的日志会因此出现分歧，宿主必须串行化，该要求已补入 `ExecutionJournal` 契约说明；深层收口仍属 W8。④ 三平台 CI 已在 2026-09-30 及整合 PR 完成；Loom PR #3 合入 `5478e5f`。该分支只加测试和契约注释，未改 Loom 运行实现，因此 `weave-next/third_party/loom` 不需要更新。
 
-**主线CI更正：** 候选`d1f1c15`三平台运行36799680803成功；合入`5478e5f`后的主线36799836817中Linux/macOS/Linux race通过，Windows `TestReadWriteDispatch_ReadOnlyParallel`用墙钟32.3425ms超过25ms失败。当前按并发进入barrier替代机器时间阈值修复；不能把候选成功写成该主线三平台全部通过，真实提供方录制仍待补。
+**主线CI更正：** 候选`d1f1c15`三平台运行36799680803成功；合入`5478e5f`后的主线36799836817中Linux/macOS/Linux race通过，Windows `TestReadWriteDispatch_ReadOnlyParallel`用墙钟32.3425ms超过25ms失败。PR4已用三工具并发进入的屏障替代机器时间阈值，串行变体会明确失败；候选三平台与Linux race [36879528359](https://github.com/jinyitao123/loom/actions/runs/36879528359)、合入 `9128e3c4` 后的主线 [36881235264](https://github.com/jinyitao123/loom/actions/runs/36881235264)全部通过。运行实现未变，不为测试修复更新Weave内嵌Loom；真实提供方录制仍待补。
 
 **验收：** 在已知有缺陷的 Loom 提交上，对应用例失败；在当前提交上通过；W2 复现的失败在修复后本地回放通过。
 
