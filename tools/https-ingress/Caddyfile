@@ -1,0 +1,31 @@
+{
+	auto_https disable_redirects
+	servers {
+		protocols h1 h2
+	}
+}
+
+https://{$WORKBENCH_PUBLIC_HOST} {
+	# Port 80 continues to serve the existing Forge endpoint. Certificate
+	# issuance and renewal use the TLS-ALPN challenge on port 443.
+	tls {
+		issuer acme {
+			disable_http_challenge
+		}
+	}
+	encode zstd gzip
+
+	@weave path /v1 /v1/*
+	handle @weave {
+		reverse_proxy weave:8080 {
+			flush_interval -1
+		}
+	}
+	handle {
+		# Connect directly so HTTPS forwarding headers reach Forge without
+		# the existing HTTP proxy replacing them with its own scheme.
+		reverse_proxy app:8080 {
+			flush_interval -1
+		}
+	}
+}
