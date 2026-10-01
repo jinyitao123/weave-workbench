@@ -79,6 +79,17 @@ it('fails closed on missing or mismatched native file bindings while keeping the
   ] }])
 })
 
+it.each(['idempotency_key', 'idempotencyKey'])('rejects a Pi material mapping for system-owned %s before producing a proposal', (name) => {
+  const { document, catalog } = fixture()
+  catalog.capabilities[0]!.params!.push({ name, type: 'string', required: true })
+  const action = { kind: 'capability', member: document.members[1]!.id, capability: 'submit', selected: true }
+  expect(() => applyTeamDevelopmentOperations(document, [{ ...action, parameterSources: [
+    { name: 'material_file_ids', source: 'materials.ids' }, { name, source: 'materials.single.sha256' },
+  ] }], catalog)).toThrow('系统托管的防重复提交参数不能绑定材料')
+  const valid = applyTeamDevelopmentOperations(document, [{ ...action, parameterSources: [{ name: 'material_file_ids', source: 'materials.ids' }] }], catalog)
+  expect(valid.document.members[1]!.configuration.businessCapabilityBindings).toEqual([{ capabilityId: 'submit', parameters: [{ name: 'material_file_ids', source: 'materials.ids' }] }])
+})
+
 it('rejects invented business actions and references before producing a proposal', () => {
   const { document, catalog } = fixture()
   expect(() => applyTeamDevelopmentOperations(document, [{ kind: 'capability', member: document.members[1]!.id, capability: 'unknown', selected: true }], catalog)).toThrow('不在当前可绑定目录')
