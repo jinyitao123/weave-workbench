@@ -10,7 +10,7 @@ const SOURCE_PATH = '/api/v1/workbench/notifications/:notificationId/source';
 const EVENT_SECRET_ENV = 'FORGE_WEAVE_EVENT_SECRET';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const NATIVE_NOTIFICATION_ID = /^[A-Za-z0-9_-]{12,128}$/;
-const EVENT_KINDS = new Set(['result', 'failure', 'revision_required', 'cancelled']);
+const EVENT_KINDS = new Set(['result', 'failure', 'revision_required', 'cancelled', 'human_review']);
 const SYSTEM_CONTEXT: ExecutionContext = { isSystem: true, positions: [], permissions: [] };
 
 function sessionHeaders(headers: IHttpRequest['headers']): Headers {
@@ -46,7 +46,7 @@ function eventPayload(value: unknown): Record<string, unknown> | null {
 interface TeamRunEvent {
   version: '1';
   eventId: string;
-  kind: 'result' | 'failure' | 'revision_required' | 'cancelled';
+  kind: 'result' | 'failure' | 'revision_required' | 'cancelled' | 'human_review';
   organizationId: string;
   assigneeAccountId: string;
   title: string;
@@ -58,6 +58,7 @@ interface TeamRunEvent {
     runReference: string;
     sessionReference: string;
     idempotencyKey: string;
+    interactionReference?: string;
   };
 }
 
@@ -85,15 +86,32 @@ function parseTeamRunEvent(value: unknown): TeamRunEvent | null {
   const runReference = boundedString(sourceRecord.runReference, 512);
   const sessionReference = boundedString(sourceRecord.sessionReference, 512);
   const idempotencyKey = boundedString(sourceRecord.idempotencyKey, 256);
+  const interactionReference = sourceRecord.interactionReference === undefined ? undefined : boundedString(sourceRecord.interactionReference, 512);
   if (event.version !== '1' || !eventId || !UUID.test(eventId) || !kind || !EVENT_KINDS.has(kind) ||
       !organizationId || !assigneeAccountId || !title || !summary || !occurredAt ||
       !Number.isFinite(Date.parse(occurredAt)) || event.actionUrl !== undefined && !actionUrl ||
-      !workReference || !runReference || !sessionReference || !idempotencyKey) return null;
+      !workReference || !runReference || !sessionReference || !idempotencyKey ||
+      sourceRecord.interactionReference !== undefined && !interactionReference ||
+      (kind === 'human_review') !== !!interactionReference) return null;
   return {
     version: '1', eventId, kind: kind as TeamRunEvent['kind'], organizationId,
     assigneeAccountId, title, summary, occurredAt, ...(actionUrl ? { actionUrl } : {}),
-    source: { workReference, runReference, sessionReference, idempotencyKey },
+    source: { workReference, runReference, sessionReference, idempotencyKey, ...(interactionReference ? { interactionReference } : {}) },
   };
+}
+
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson((value as Record<string, unknown>)[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
+/** SHA-256 of the canonical event; the same idempotency key with another digest is a conflict. */
+async function eventDigest(event: TeamRunEvent): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonicalJson(event)));
+  return Array.from(new Uint8Array(digest), (part) => part.toString(16).padStart(2, '0')).join('');
 }
 
 async function authorized(headers: Record<string, string | string[]>, expected: string): Promise<boolean> {
@@ -111,7 +129,7 @@ async function authorized(headers: Record<string, string | string[]>, expected: 
 
 function severity(kind: TeamRunEvent['kind']): 'info' | 'warning' | 'critical' {
   if (kind === 'failure') return 'critical';
-  if (kind === 'revision_required' || kind === 'cancelled') return 'warning';
+  if (kind === 'revision_required' || kind === 'cancelled' || kind === 'human_review') return 'warning';
   return 'info';
 }
 
@@ -200,14 +218,16 @@ export class WeaveRunEventPlugin implements Plugin {
           const workReference = boundedString(event?.workReference, 512);
           const runReference = boundedString(event?.runReference, 512);
           const sessionReference = boundedString(event?.sessionReference, 512);
+          const interactionReference = boundedString(event?.interactionReference, 512);
           if (event?.version !== '1' || !kind || !EVENT_KINDS.has(kind) ||
               notice.topic !== `weave.team_run.${kind}` ||
-              !workReference || !runReference || !sessionReference) {
+              !workReference || !runReference || !sessionReference ||
+              (kind === 'human_review') !== !!interactionReference) {
             return sourceError(res, 404, 'TEAM_MESSAGE_NOT_FOUND');
           }
           await res.status(200).json({
             version: '1', notificationId, kind,
-            source: { system: 'weave', workReference, runReference, sessionReference },
+            source: { system: 'weave', workReference, runReference, sessionReference, ...(interactionReference ? { interactionReference } : {}) },
           });
         } catch {
           ctx.logger.error('[weave-run-events] failed to read an owned team message source');
@@ -229,6 +249,27 @@ export class WeaveRunEventPlugin implements Plugin {
           await res.status(400).json({ error: { code: 'INVALID_TEAM_RUN_EVENT', message: 'Team run event is invalid' } });
           return;
         }
+        let engine: IObjectQLEngine | null = null;
+        try { engine = ctx.getService<IObjectQLEngine>('objectql'); } catch { /* unavailable */ }
+        if (!engine) {
+          await res.status(503).json({ error: { code: 'WEAVE_EVENT_INGRESS_UNAVAILABLE', message: 'Team run event ingress is unavailable' } });
+          return;
+        }
+        try {
+          // The assignee must be a real member of the stated organization.
+          const member = await engine.findOne('sys_member', {
+            where: { user_id: event.assigneeAccountId, organization_id: event.organizationId }, fields: ['id'],
+          }, { context: SYSTEM_CONTEXT });
+          if (!member) {
+            await res.status(422).json({ error: { code: 'TEAM_RUN_ASSIGNEE_NOT_FOUND', message: 'Team run event assignee is not a member of the organization' } });
+            return;
+          }
+        } catch (error) {
+          ctx.logger.error('[weave-run-events] assignee lookup failed', error instanceof Error ? error : new Error(String(error)));
+          await res.status(503).json({ error: { code: 'WEAVE_EVENT_INGRESS_UNAVAILABLE', message: 'Team run event ingress is unavailable' } });
+          return;
+        }
+        const digest = await eventDigest(event);
         const topic = `weave.team_run.${event.kind}`;
         const input: EmitInput = {
           topic,
@@ -249,11 +290,24 @@ export class WeaveRunEventPlugin implements Plugin {
               workReference: event.source.workReference,
               runReference: event.source.runReference,
               sessionReference: event.source.sessionReference,
+              ...(event.source.interactionReference ? { interactionReference: event.source.interactionReference } : {}),
+              digest,
             },
           },
         };
         try {
           const result = await messaging.emit(input);
+          if (result.deduped) {
+            const original = await engine.findOne('sys_notification', {
+              where: { id: result.notificationId }, fields: ['id', 'payload'],
+            }, { context: SYSTEM_CONTEXT });
+            const stored = boundedString(eventPayload(eventPayload(original?.payload)?.weaveEvent)?.digest, 64);
+            // Notifications written before digests existed cannot be compared and stay accepted.
+            if (stored && stored !== digest) {
+              await res.status(409).json({ error: { code: 'TEAM_RUN_EVENT_CONFLICT', message: 'The same team run event key arrived with different content' } });
+              return;
+            }
+          }
           await res.status(result.deduped ? 200 : 202).json({
             eventId: event.eventId,
             notificationId: result.notificationId,
