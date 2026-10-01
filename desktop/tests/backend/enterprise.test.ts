@@ -157,6 +157,56 @@ describe('EnterpriseService', () => {
     expect(calls).toEqual([{ url: 'http://forge/api/v1/approvals/requests/request-current/actions', authorization: 'Bearer forge-token-reviewer@example.test' }])
   })
 
+  it.each([401, 403])('separates Forge item denial from session invalidation for HTTP %i', async (status) => {
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: workOverviewFetch((url) => {
+      if (url.endsWith('/api/v1/approvals/requests/denied/actions')) return Response.json({}, { status })
+      if (url.endsWith('/v1/teams?status=active')) return Response.json([])
+      return undefined
+    }) })
+    await service.signIn('employee@example.test', 'secret')
+    await expect(service.getApprovalActionHistory('denied')).rejects.toThrow(status === 401 ? '登录已失效' : '当前账号没有读取审批动作历史的权限')
+    expect((await service.getSession()).status).toBe(status === 401 ? 'signed-out' : 'signed-in')
+    if (status === 403) await expect(service.getTeamCatalog()).resolves.toEqual([])
+  })
+
+  it('keeps concurrent allowed reads and the employee session when another Forge or Weave item is forbidden', async () => {
+    const denied = deferred<Response>(), allowed = deferred<Response>()
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: workOverviewFetch((url) => {
+      if (url.endsWith('/api/v1/approvals/requests/denied/actions')) return denied.promise
+      if (url.endsWith('/api/v1/approvals/requests/allowed/actions')) return allowed.promise
+      if (url.endsWith('/v1/teams?status=active')) return Response.json({}, { status: 403 })
+      return undefined
+    }) })
+    await service.signIn('employee@example.test', 'secret')
+    const deniedRead = service.getApprovalActionHistory('denied'), allowedRead = service.getApprovalActionHistory('allowed')
+    const expectedDenial = expect(deniedRead).rejects.toThrow('当前账号没有读取审批动作历史的权限')
+    denied.resolve(Response.json({}, { status: 403 })); await expectedDenial
+    allowed.resolve(Response.json({ data: [{ action: 'approve', comment: '本人可读意见' }] }))
+    await expect(allowedRead).resolves.toEqual([{ action: 'approve', comment: '本人可读意见' }])
+    await expect(service.getTeamCatalog()).rejects.toThrow('当前账号没有读取该团队信息的权限')
+    expect((await service.getSession()).status).toBe('signed-in')
+    expect((await service.authorizationHeaders()).get('Authorization')).toBe('Bearer weave-token-employee@example.test')
+  })
+
+  it.each(['forge', 'weave'])('discards delayed %s 403 after an account switch without touching the replacement session', async (provider) => {
+    const old = deferred<Response>(), started = deferred<void>()
+    const fetchMock = workOverviewFetch((url, init) => {
+      const token = new Headers(init?.headers).get('Authorization')
+      const endpoint = provider === 'forge' ? '/api/v1/approvals/requests/request/actions' : '/v1/teams?status=active'
+      if (url.endsWith(endpoint) && token?.endsWith('-alice@example.test')) { started.resolve(); return old.promise }
+      if (url.endsWith(endpoint)) return Response.json(provider === 'forge' ? { data: [] } : [])
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('alice@example.test', 'secret')
+    const read = provider === 'forge' ? () => service.getApprovalActionHistory('request') : () => service.getTeamCatalog()
+    const previous = read(), rejected = expect(previous).rejects.toThrow('账号已切换')
+    await started.promise; await service.signIn('bob@example.test', 'secret')
+    old.resolve(Response.json({}, { status: 403 })); await rejected
+    expect((await service.getSession()).user?.email).toBe('bob@example.test')
+    await expect(read()).resolves.toEqual([])
+  })
+
   it('discards an old account 401 without signing out the account that replaced it', async () => {
     const oldUnauthorized = deferred<Response>(), oldSuccess = deferred<Response>()
     const unauthorizedStarted = deferred<void>(), successStarted = deferred<void>()
@@ -614,7 +664,7 @@ describe('EnterpriseService', () => {
     await expect(service.validateDevelopmentWorkflow('flow-1', 2)).resolves.toEqual({ valid: false, issues: [{ code: 'workflow_route_missing', message: 'route missing', nodeId: 'review' }] })
   })
 
-  it('removes a superseded team request from pending work while keeping its historical message', async () => {
+  it('does not infer that an older pending team request is handled from a later notification in the same session', async () => {
     const notice = (id: string, kind: string, createdAt: string) => ({
       id, type: `weave.team_run.${kind}`, title: `合同检查${kind}`, body: '团队结果', createdAt, read: false,
     })
@@ -646,9 +696,73 @@ describe('EnterpriseService', () => {
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
     await service.signIn('sales@example.test', 'secret')
     const overview = await service.getWorkOverview()
-    expect(overview.items.find((item) => item.id === 'old')).toMatchObject({ actionable: false, status: 'completed', read: false })
-    expect(overview.items.find((item) => item.id === 'new')).toMatchObject({ kind: 'result', sessionReference: 'contract-work' })
+    expect(overview.items.find((item) => item.id === 'old')).toMatchObject({ actionable: true, status: 'pending', read: false })
+    expect(overview.items.find((item) => item.id === 'new')).toMatchObject({ kind: 'result' })
     expect(overview.items.find((item) => item.id === 'other')).toMatchObject({ actionable: true, status: 'pending' })
+  })
+
+  it('reads all 123 native approval requests using limit/offset and total without losing older pending items', async () => {
+    const requests = Array.from({ length: 123 }, (_, index) => ({ id: `approval-${index}`, status: 'pending', updated_at: '2026-10-01T00:00:00Z', viewer: { can_act: true }, record_title: `审批事项${index}` }))
+    const offsets: number[] = []
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: workOverviewFetch((url) => {
+      const parsed = new URL(url)
+      if (parsed.pathname === '/api/v1/approvals/requests') {
+        const offset = Number(parsed.searchParams.get('offset') ?? 0); offsets.push(offset)
+        expect(parsed.searchParams.get('limit')).toBe('50')
+        return Response.json({ data: requests.slice(offset, offset + 50), total: requests.length })
+      }
+      if (url.includes('/v1/teams?')) return Response.json([])
+      if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
+      if (url.includes('/v1/human-tasks?')) return Response.json({ tasks: [] })
+      if (url.includes('/api/v1/notifications?')) return Response.json({ notifications: [] })
+      return undefined
+    }) })
+    await service.signIn('employee@example.test', 'secret')
+    const overview = await service.getWorkOverview()
+    expect(offsets).toEqual([0, 50, 100])
+    expect(overview.tasks).toHaveLength(123)
+    expect(overview.tasks.at(-1)?.title).toBe('审批事项122 · 业务审批')
+    expect(overview.reads.forgeApprovals.status).toBe('loaded')
+  })
+
+  it('reports a forbidden approval page without logging out or discarding other readable work data', async () => {
+    const first = Array.from({ length: 50 }, (_, index) => ({ id: `approval-${index}`, status: 'pending', updated_at: '2026-10-01T00:00:00Z', viewer: { can_act: true } }))
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: workOverviewFetch((url) => {
+      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ data: first, total: 51 })
+      if (url.endsWith('/api/v1/approvals/requests?limit=50&offset=50')) return Response.json({}, { status: 403 })
+      if (url.includes('/v1/teams?')) return Response.json([])
+      if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
+      if (url.includes('/v1/human-tasks?')) return Response.json({ tasks: [] })
+      if (url.includes('/api/v1/notifications?')) return Response.json({ notifications: [{ id: 'readable-notice', type: 'result', title: '本人可读消息', createdAt: '2026-10-01T00:00:00Z' }] })
+      return undefined
+    }) })
+    await service.signIn('employee@example.test', 'secret')
+    const overview = await service.getWorkOverview()
+    expect(overview.reads.forgeApprovals).toMatchObject({ status: 'failed', error: '当前账号没有读取审批事项的权限' })
+    expect(overview.items[0]?.title).toBe('本人可读消息')
+    expect(overview.reads.notifications.status).toBe('loaded')
+    expect((await service.getSession()).status).toBe('signed-in')
+  })
+
+  it('discards an entire paged approval overview when its employee account changes between pages', async () => {
+    const waiting = deferred<Response>(), started = deferred<void>()
+    const requests = Array.from({ length: 50 }, (_, index) => ({ id: `alice-approval-${index}`, status: 'pending', updated_at: '2026-10-01T00:00:00Z', viewer: { can_act: true } }))
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: workOverviewFetch((url, init) => {
+      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json(new Headers(init?.headers).get('Authorization')?.endsWith('-alice@example.test') ? { data: requests, total: 51 } : { data: [], total: 0 })
+      if (url.endsWith('/api/v1/approvals/requests?limit=50&offset=50')) { started.resolve(); return waiting.promise }
+      if (url.includes('/v1/teams?')) return Response.json([])
+      if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
+      if (url.includes('/v1/human-tasks?')) return Response.json({ tasks: [] })
+      if (url.includes('/api/v1/notifications?')) return Response.json({ notifications: [] })
+      return undefined
+    }) })
+    await service.signIn('alice@example.test', 'secret')
+    const overview = service.getWorkOverview(), discarded = expect(overview).rejects.toThrow('账号已切换')
+    await started.promise; await service.signIn('bob@example.test', 'secret')
+    waiting.resolve(Response.json({ data: [{ ...requests[0]!, id: 'alice-oldest' }], total: 51 }))
+    await discarded
+    expect((await service.getSession()).user?.email).toBe('bob@example.test')
+    expect((await service.getWorkOverview()).tasks).toEqual([])
   })
 
   it('moves needs-input notices to messages only for a current-account, exact Weave success receipt', async () => {
