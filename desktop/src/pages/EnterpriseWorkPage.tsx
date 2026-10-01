@@ -1,4 +1,5 @@
 import { Bell, ClipboardCheck, RefreshCw, TimerReset } from 'lucide-react'
+import { WORKBENCH_RUN_CONTINUATION_TYPE } from '@/lib/team-work-continuation'
 import { useState } from 'react'
 import type { EnterpriseApprovalContextView, EnterpriseHumanTask, EnterpriseRunObservation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReadStatus } from '@/types/api'
 
@@ -11,19 +12,23 @@ interface EnterpriseWorkPageProps {
   onInspect(task: EnterpriseHumanTask): Promise<EnterpriseApprovalContextView>
   onAssist(task: EnterpriseHumanTask): Promise<void>
   onContinue(item: EnterpriseWorkItem, context?: EnterpriseApprovalContextView): void | Promise<void>
+  onCancel?(run: EnterpriseRunObservation): Promise<void>
 }
 
-const statusCopy = (status: string) => ({ parked: '等待处理', queued: '排队中', running: '处理中', success: '已完成', succeeded: '已完成', completed: '已完成', failed: '失败', cancelled: '已取消' })[status] ?? readableName(status, '状态更新中')
-const itemSourceCopy = (item: EnterpriseWorkItem) => item.source === 'weave' ? '团队执行消息' : 'Forge 业务通知'
-const canContinueItem = (item: EnterpriseWorkItem) => item.source === 'forge' && item.kind === 'result' && Boolean(item.notificationType) || item.source === 'weave' && (
+const statusCopy = (status: string) => ({ parked: '等待处理', queued: '排队中', running: '处理中', cancel_requested: '取消中', success: '已完成', succeeded: '已完成', completed: '已完成', failed: '失败', cancelled: '已取消' })[status] ?? readableName(status, '状态更新中')
+const itemSourceCopy = (item: EnterpriseWorkItem) => item.source === 'weave' ? '团队执行消息' : item.kind === 'notification' ? 'Forge 通知' : 'Forge 业务通知'
+const itemActionCopy = (item: EnterpriseWorkItem) => item.kind === 'human_review' ? '团队等待人工处理' : item.kind === 'revision_required' ? '团队需要补充' : 'Forge 业务退回'
+const canContinueItem = (item: EnterpriseWorkItem) => item.source === 'forge' && (item.kind === 'result' || item.kind === 'notification') && Boolean(item.notificationType) || item.source === 'weave' && (
   Boolean(item.workReference && item.runReference && item.sessionReference)
   || /^weave\.team_run\.(result|failure|revision_required|cancelled)$/.test(item.notificationType ?? '')
 )
 const itemSummary = (item: EnterpriseWorkItem) => {
   if (item.source === 'weave') {
     if (item.summary) return `运行消息摘要：${item.summary}`
+    if (item.kind === 'human_review') return '团队工作等待员工处理。'
     return item.kind === 'failure' ? '团队运行失败，业务结果需要在 Forge 核对。' : item.kind === 'cancelled' ? '团队运行已取消；Forge 业务状态需单独核对。' : '团队运行已返回结果，业务是否完成需单独核对。'
   }
+  if (item.kind === 'notification') return item.summary ?? '打开后核对可信消息来源。'
   return item.summary ?? (item.kind === 'failure' ? '业务处理失败，请打开原事项查看。' : '业务状态有更新，请打开原事项核对。')
 }
 const formatTime = (value?: string) => value ? new Date(value).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '团队协作记录'
@@ -41,12 +46,13 @@ function ReadIssue({ label, status, onRetry }: { label: string; status?: Enterpr
   return <p className="development-inline-error" role="alert">{label}暂时不可用：{status.error ?? '服务暂时不可用'} <button type="button" className="button" onClick={onRetry}>重试读取</button></p>
 }
 
-export function EnterpriseWorkPage({ overview, loading, error, onRefresh, onComplete, onInspect, onAssist, onContinue }: EnterpriseWorkPageProps) {
+export function EnterpriseWorkPage({ overview, loading, error, onRefresh, onComplete, onInspect, onAssist, onContinue, onCancel }: EnterpriseWorkPageProps) {
   const [comments, setComments] = useState<Record<string, string>>({})
   const [busyTask, setBusyTask] = useState('')
   const [contexts, setContexts] = useState<Record<string, EnterpriseApprovalContextView>>({})
   const [contextErrors, setContextErrors] = useState<Record<string, string>>({})
   const [busyContext, setBusyContext] = useState('')
+  const [busyRun, setBusyRun] = useState('')
   const inspect = (task: EnterpriseHumanTask) => {
     setBusyContext(task.interactionId)
     setContextErrors((current) => ({ ...current, [task.interactionId]: '' }))
@@ -63,7 +69,7 @@ export function EnterpriseWorkPage({ overview, loading, error, onRefresh, onComp
           <ReadIssue label="团队人工步骤" status={overview.reads.weaveTasks} onRetry={onRefresh}/>
           <ReadIssue label="业务审批" status={overview.reads.forgeApprovals} onRetry={onRefresh}/>
           <ReadIssue label="工作通知" status={overview.reads.notifications} onRetry={onRefresh}/>
-      {overview?.items.filter((item) => item.actionable && item.status !== 'completed' && item.status !== 'cancelled').map((item) => <article key={item.id}><header><span><strong>{item.title}</strong><small>{item.source === 'weave' ? '团队需要补充' : 'Forge 业务退回'} · {formatTime(item.createdAt)}</small></span><i>待处理</i></header><p>{item.returnReason ?? item.instructions ?? item.summary}</p>{item.materialLabel ? <small>材料：{item.materialLabel}</small> : null}<div><button type="button" className="button button--primary" disabled={!canContinueItem(item)} onClick={() => { void onContinue(item) }}>交给 Pi 继续</button>{!canContinueItem(item) ? <small>请从本人业务事项或完整的团队消息打开原工作。</small> : null}</div></article>)}
+      {overview?.items.filter((item) => item.actionable && item.status !== 'completed' && item.status !== 'cancelled').map((item) => <article key={item.id}><header><span><strong>{item.title}</strong><small>{item.source === 'weave' ? itemActionCopy(item) : 'Forge 业务退回'} · {formatTime(item.createdAt)}</small></span><i>待处理</i></header><p>{item.returnReason ?? item.instructions ?? item.summary}</p>{item.materialLabel ? <small>材料：{item.materialLabel}</small> : null}<div><button type="button" className="button button--primary" disabled={!canContinueItem(item)} onClick={() => { void onContinue(item) }}>交给 Pi 继续</button>{!canContinueItem(item) ? <small>请从本人业务事项或完整的团队消息打开原工作。</small> : null}</div></article>)}
           {overview?.tasks.length ? <div className="work-task-list">{overview.tasks.map((task) => <article key={task.interactionId}><header><span><strong>{task.title}</strong><small>{task.source === 'forge' ? '业务审批' : '团队人工步骤'} · {formatTime(task.updatedAt)}</small></span><i>待处理</i></header><p>{task.instructions}</p>{task.materialLabel ? <small>材料：{task.materialLabel}</small> : null}{task.source === 'forge' ? <><button type="button" className="button" disabled={busyContext === task.interactionId} onClick={() => inspect(task)}>{busyContext === task.interactionId ? '正在读取…' : contexts[task.interactionId] ? '重新读取材料' : '查看材料'}</button>{contexts[task.interactionId] ? <button type="button" className="button" disabled={busyContext === task.interactionId} onClick={() => { setBusyContext(task.interactionId); void onAssist(task).catch((failure) => setContextErrors((current) => ({ ...current, [task.interactionId]: failure instanceof Error ? failure.message : '无法交给 Pi 核对' }))).finally(() => setBusyContext('')) }}>让 Pi 协助复核</button> : null}{contextErrors[task.interactionId] ? <p role="alert">{contextErrors[task.interactionId]}</p> : null}{contexts[task.interactionId] ? <section className="work-approval-context"><h3>{contexts[task.interactionId].title}</h3><small>{contexts[task.interactionId].step}</small><dl>{contexts[task.interactionId].fields.map((field) => <div key={field.label}><dt>{field.label}</dt><dd>{field.value}</dd></div>)}</dl>{contexts[task.interactionId].files.map((file) => <div key={file.name}><strong>{file.name}</strong><small>已核对提交版本</small><pre>{file.content}</pre></div>)}{contexts[task.interactionId].originalFiles?.map((file, index) => <div key={`${file.name}:${index}`}><strong>{file.name}</strong><small>PDF/DOCX 原件 · {file.bytes} 字节 · 已核验 · {file.extraction.status === 'complete' ? '文本提取完整' : file.extraction.status === 'partial' ? '部分内容未提取' : '未提取到可读文本'}</small><pre>{file.extraction.content}</pre>{file.extraction.limitations.length ? <small>提取结果有内容缺口，请在 Forge 查看完整原件。</small> : null}</div>)}<p>此处仅列出本审批已绑定且可读取的文件。</p></section> : null}</> : null}{task.mode !== 'revision' ? <textarea className="work-input-surface" rows={2} placeholder="补充处理意见（可选）" value={comments[task.interactionId] ?? ''} onChange={(event) => setComments((current) => ({ ...current, [task.interactionId]: event.target.value }))}/> : null}<div>{task.mode === 'revision' ? <button type="button" className="button button--primary" onClick={() => { setBusyContext(task.interactionId); void onInspect(task).then((context) => onContinue({ id: task.interactionId, kind: 'revision_required', title: task.title, instructions: task.instructions, status: 'pending', actionable: true, read: false, source: 'forge', createdAt: task.updatedAt, materialLabel: task.materialLabel, returnReason: context.returnReason }, context)).catch((failure) => setContextErrors((current) => ({ ...current, [task.interactionId]: failure instanceof Error ? failure.message : '材料读取失败' }))).finally(() => setBusyContext('')) }}>交给 Pi 继续</button> : <><button type="button" className="button" disabled={busyTask === task.interactionId} onClick={() => { setBusyTask(task.interactionId); void onComplete(task, 'rejected', comments[task.interactionId] ?? '').finally(() => setBusyTask('')) }}>{task.source === 'forge' ? '退回修改' : '退回'}</button><button type="button" className="button button--primary" disabled={busyTask === task.interactionId || (task.source === 'forge' && !contexts[task.interactionId])} onClick={() => { setBusyTask(task.interactionId); void onComplete(task, 'approved', comments[task.interactionId] ?? '').finally(() => setBusyTask('')) }}>{task.source === 'forge' ? '同意' : '确认接收'}</button></>}</div></article>)}</div> : null}
           {!overview.tasks.length && !overview.items.some((item) => item.actionable && item.status !== 'completed' && item.status !== 'cancelled') && overview.reads.weaveTasks.status === 'loaded' && overview.reads.forgeApprovals.status === 'loaded' && overview.reads.notifications.status === 'loaded' ? <div className="work-empty">当前没有待处理事项。</div> : null}
         </>}
@@ -73,7 +79,7 @@ export function EnterpriseWorkPage({ overview, loading, error, onRefresh, onComp
           <ReadIssue label="工作进度" status={overview.reads.runs} onRetry={onRefresh}/>
           {overview.runs.length ? <div className="work-run-list">{overview.runs.map((run) => {
           const choice = runChoice(run, overview.choices)
-          return <article key={run.id}><span><strong>{choice?.workflowName ?? readableName(run.step || run.agent)}</strong><small>{choice ? `${choice.teamName} · ${formatTime(run.startedAt)}` : formatTime(run.startedAt)}</small></span><i className={`is-${run.status}`}>团队执行 · {statusCopy(run.status)}</i></article>
+          return <article key={run.id}><span><strong>{choice?.workflowName ?? readableName(run.step || run.agent)}</strong><small>{choice ? `${choice.teamName} · ${formatTime(run.startedAt)}` : formatTime(run.startedAt)}</small></span><div className="work-message-actions"><i className={`is-${run.status}`}>团队执行 · {statusCopy(run.status)}</i>{run.status === 'parked' ? <button type="button" className="button" onClick={() => onContinue({ id: run.id, source: 'weave', notificationType: WORKBENCH_RUN_CONTINUATION_TYPE, kind: 'result', title: choice?.workflowName ?? readableName(run.step || run.agent), status: 'unknown', actionable: false, read: true, createdAt: run.startedAt ?? overview.loadedAt })}>继续原工作</button> : null}{onCancel && ['queued', 'running', 'parked', 'cancel_requested'].includes(run.status) ? <button type="button" className="button" disabled={busyRun === run.id} onClick={() => { setBusyRun(run.id); void onCancel(run).catch(() => undefined).finally(() => setBusyRun('')) }}>{busyRun === run.id ? '正在核对…' : run.status === 'cancel_requested' ? '核对取消' : '取消工作'}</button> : null}</div></article>
           })}</div> : overview.reads.runs.status === 'loaded' ? <div className="work-empty">你还没有通过 Workbench 发起工作。</div> : null}
           <ReadIssue label="团队目录" status={overview.reads.teamChoices} onRetry={onRefresh}/>
         </>}

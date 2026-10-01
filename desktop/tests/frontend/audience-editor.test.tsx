@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { AudienceEditor } from '../../src/pages/team-workspace/AudienceEditor'
+import { Modal, ProductField } from '../../src/components/ui'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -18,6 +19,21 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount())
   container.remove()
+  vi.unstubAllGlobals()
+})
+
+it('keeps the employee in the audience editor when a modal initial-focus frame arrives late', async () => {
+  let focusFrame: FrameRequestCallback | undefined
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { focusFrame = callback; return 1 })
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  await act(async () => root.render(<Modal title="团队资料" onClose={vi.fn()}><ProductField autoFocus label="团队名称" value="合同团队" onChange={() => {}}/><AudienceEditor value={[]} onChange={vi.fn()}/></Modal>))
+  const edit = document.querySelector<HTMLButtonElement>('[aria-label="编辑可用人群内容"]')!
+  await act(async () => edit.click())
+  const textarea = document.querySelector<HTMLTextAreaElement>('textarea')!
+  expect(document.activeElement).toBe(textarea)
+  await act(async () => focusFrame?.(0))
+  expect(document.activeElement).toBe(textarea)
+  expect(document.querySelector('textarea')).toBe(textarea)
 })
 
 function type(textarea: HTMLTextAreaElement, value: string) {

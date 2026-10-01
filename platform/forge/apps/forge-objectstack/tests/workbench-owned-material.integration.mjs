@@ -28,12 +28,13 @@ function fixture() {
   const server = { get(path, handler) { routes.set(path, handler); } };
   const engine = {
     async findOne(objectName, query, options) {
+      if (objectName === 'sys_user') return {id:query.where.id,banned:false};
       if (objectName === 'sys_file') return query.where.id === FILE_ID ? file : null;
       assert.equal(objectName, 'forge_sales_contract');
       return query.where.id === boundRecord.id && options?.context?.userId === boundRecord.owner_id
         ? boundRecord : null;
     },
-    async find() { return []; },
+    async find(objectName,query) { return objectName==='sys_member' ? [{user_id:query.where.user_id,organization_id:'org-a',role:'member'}] : []; },
   };
   const storage = {
     async download(key) {
@@ -244,4 +245,23 @@ test('DOCX MIME and file signature must agree and the two MiB original limit is 
   const invalid = await work.callOriginal('employee-token', digest);
   assert.equal(invalid.status, 422);
   assert.equal(invalid.body.error.code, 'MATERIAL_INVALID');
+});
+
+
+test('CSV and JSON text retain exact MIME and bytes while invalid UTF-8, foreign organizations and bound fields remain refused', async () => {
+  for (const [mediaType, name, content] of [['text/csv', '金额.csv', '名称,金额\n样板,1200\n'], ['application/json', '任务.json', '{"金额":1200}']]) {
+    const work = fixture();
+    const bytes = Buffer.from(content);
+    Object.assign(work.file, {mime_type: mediaType, name, size: bytes.length});
+    work.store(work.file.key, bytes);
+    const response = await work.call('employee-token');
+    assert.equal(response.status, 200); assert.equal(response.body.mediaType, mediaType);
+    assert.equal(response.body.content, content); assert.equal(response.body.sha256, createHash('sha256').update(bytes).digest('hex'));
+    work.file.organization_id = 'another-org';
+    assert.equal((await work.call('employee-token')).status, 404);
+    work.file.organization_id = 'org-a'; work.file.ref_field = 'attachment';
+    assert.equal((await work.call('employee-token')).status, 404);
+    work.file.ref_field = null; work.file.size = 1; work.store(work.file.key, Buffer.from([255]));
+    assert.equal((await work.call('employee-token')).status, 422);
+  }
 });

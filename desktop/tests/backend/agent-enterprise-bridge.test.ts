@@ -16,6 +16,7 @@ afterEach(async () => {
   await Promise.all(bridges.splice(0).map((bridge) => bridge.stop()))
   await Promise.all(directories.splice(0).map((path) => rm(path, { recursive: true, force: true })))
 })
+function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>((done) => { resolve = done }); return { promise, resolve } }
 function user(id: string, text: string): TranscriptMessage { return { id, role: 'user', parts: [{ type: 'text', text }] } }
 function forgeSession(id = 'employee-a'): EnterpriseSession {
   return {
@@ -174,6 +175,8 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
         materialId: item.materialId, id: `file-${index + 1}`, name: item.name, mediaType: item.mediaType, bytes: item.bytes, sha256: item.sha256,
       }
     })),
+    getRunContinuationReferences: vi.fn(async (runID: string) => ({ workReference: 'input-1', runReference: runID, sessionReference: 'workbench-session-1' })),
+    renewWorkAuthorization: vi.fn(async (_intent: unknown, observer: { assertCurrent(): Promise<void> }) => { await observer.assertCurrent(); return { status: 'resumed' as const, authorizationRenewed: true, message: '已续授权并恢复原工作。' } }),
     submitWork: vi.fn(async (_choice: unknown, _goal: string, source?: {
       assertCurrent(): Promise<void>
       idempotencySeed?: string
@@ -644,6 +647,7 @@ describe('employee-bound material handoff', () => {
     expect(result.body.result.status).toBe('accepted')
     // The Host, not the model, states what the team may do.
     expect(result.body.result.allowed_scope).toBe('本次只交给团队查看和分析，不允许业务写入；2 份材料')
+    expect(result.body.result.scope_display).toMatchObject({ version: '1', source: 'workbench-host', reads: ['本次员工工作内容', '合同样例.docx', '技术协议样例.pdf'], writes: [] })
     expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
     expect(f.service.submitWork.mock.calls[0]?.[2]).toMatchObject({
       continuation: { inputRevisionID: context.source.inputRevisionID, runID: context.source.runID, restartAfterFailedRun: true },
@@ -1109,6 +1113,50 @@ describe('employee-bound material handoff', () => {
     expect(rejected.body.result, JSON.stringify(rejected.body)).toMatchObject({ status: 'rejected', submitted: false })
     expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
     expect(f.service.submitWork).toHaveBeenCalledOnce()
+  })
+
+  it('renews the same opened work only after a new explicit employee turn and persists intent without tokens', async () => {
+    const f = await fixture(), context = completedReadOnlyContext()
+    context.run.status = 'parked'
+    context.run.authorization = { status: 'renewal_required', canRenew: true, generation: 1, retryNodeID: 'submit', scope: {
+      input_revision_id: 'input-1', registration_id: '550e8400-e29b-41d4-a716-446655440901', task_sha256: context.input.taskSHA256,
+      workflow_id: context.input.workflowID, workflow_version: context.input.workflowVersion, allowed_actions: [], resources: [],
+    } }
+    f.service.getWorkContinuationContext.mockResolvedValue(structuredClone(context))
+    const binding = await f.bridge.pinWorkContinuationContext({ id: context.source.runID, source: 'weave', notificationType: 'weave.workbench_run' })
+    const openPrompt = '只读打开原工作并核对授权状态。'
+    await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: openPrompt }, undefined, binding.handle)
+    f.transcript.push(user('opened-parked-original', openPrompt))
+    const activated = await f.call('activate', { prompt: openPrompt }); f.setTurnKey(activated.body.result.turn_key as string)
+    expect(f.service.getRunContinuationReferences).toHaveBeenCalledWith(context.source.runID)
+    const opened = await f.call('authorization_renew', { employee_request: '打开原工作' })
+    expect(opened.status).toBe(409)
+    expect(f.service.renewWorkAuthorization).not.toHaveBeenCalled()
+    const request = '继续原工作，材料和业务范围都保持原来这次授权。'
+    await f.input(request, 'employee-renew-original')
+    const replacement = await f.call('submit', await f.discover())
+    expect(replacement.status).toBe(409)
+    expect(replacement.body.error).toContain('不能用新交接或新输入替代')
+    const wrong = await f.call('authorization_renew', { employee_request: '旧消息的要求' })
+    expect(wrong.status).toBe(409)
+    const waiting = deferred<{ status: 'resumed'; authorizationRenewed: boolean; message: string }>(), started = deferred<void>()
+    f.service.renewWorkAuthorization.mockImplementationOnce(async (_intent, observer) => { await observer.assertCurrent(); started.resolve(); return waiting.promise })
+    const dispatched = vi.spyOn(f.bridge as unknown as { dispatch(method: string, ...args: unknown[]): Promise<unknown> }, 'dispatch')
+    const firstRenewal = f.call('authorization_renew', { employee_request: request }); await started.promise
+    const duplicateRenewal = f.call('authorization_renew', { employee_request: request })
+    await vi.waitFor(() => expect(dispatched.mock.calls.filter(([method]) => method === 'authorization_renew')).toHaveLength(2))
+    waiting.resolve({ status: 'resumed', authorizationRenewed: true, message: '已续授权并恢复原工作。' })
+    const renewed = await firstRenewal
+    expect((await duplicateRenewal).body.result).toEqual(renewed.body.result)
+    expect(f.service.renewWorkAuthorization).toHaveBeenCalledOnce()
+    expect(renewed.body.result).toMatchObject({ status: 'resumed', authorizationRenewed: true })
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+    expect(f.service.renewWorkAuthorization.mock.calls[0]?.[0]).toMatchObject({ source: context.source, expectedGeneration: 1, scope: context.run.authorization.scope })
+    const saved = await Promise.all((await readdir(f.storageDirectory)).map((file) => readFile(join(f.storageDirectory, file), 'utf8')))
+    expect(saved.join('')).toContain('retryRequestID')
+    expect(saved.join('')).toContain('requestID')
+    expect(saved.join('')).not.toContain('access_token')
   })
 
   it('preserves an old absent-business-result fingerprint and recovers the original frozen handoff', async () => {

@@ -1,5 +1,5 @@
 import { Plus, Trash2, Upload } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { isSystemManagedBusinessParameter } from '@/pages/team-workspace/member'
 import { EditableText } from '@/pages/team-workspace/EditableText'
 import { Modal, ProductField, ProductSelect, ProductSwitch, ProductTextArea } from '@/components/ui'
@@ -15,19 +15,18 @@ export function configurationLabel(value: string | undefined, fallback: string):
   return value
 }
 
-type Section = 'role' | 'instructions' | 'execution' | 'resources'
-const sections: Array<{ value: Section; label: string }> = [
-  { value: 'role', label: '职责' }, { value: 'instructions', label: '指令' },
-  { value: 'execution', label: '执行' }, { value: 'resources', label: '能力' },
-]
 const engines = [{ value: 'loom', label: 'Weave 内置运行时' }, { value: 'codex', label: 'Codex' }, { value: 'claude', label: 'Claude' }, { value: 'opencode', label: 'OpenCode' }]
 const materialBindingSources: Array<{ value: '' | EnterpriseBusinessCapabilityBinding['parameters'][number]['source']; label: string }> = [
   { value: '', label: '由成员填写' },
   { value: 'materials.single.id', label: '本次唯一文件（仅一件材料时）' },
-  { value: 'materials.single.name', label: '本次唯一文件名称（文本参数）' },
-  { value: 'materials.single.sha256', label: '本次唯一文件摘要（文本参数）' },
-  { value: 'materials.manifest_json', label: '本次材料清单（用于文本参数）' },
+  { value: 'materials.single.name', label: '本次唯一文件的名称' },
+  { value: 'materials.single.sha256', label: '本次唯一文件的摘要' },
+  { value: 'materials.manifest_json', label: '本次材料清单' },
 ]
+
+function MemberSection({ title, children }: { title: string; children: ReactNode }) {
+  return <section className="member-section" aria-label={title}><h3 className="member-section__title">{title}</h3>{children}</section>
+}
 
 function parameterSourceOptions(parameter: BusinessParameter, current?: BindingSource) {
   const options = parameter.type === 'string'
@@ -37,7 +36,7 @@ function parameterSourceOptions(parameter: BusinessParameter, current?: BindingS
       : parameter.type === 'file'
         ? [{ value: '' as const, label: '由 Pi 从本次材料中选择一份' }, { value: 'materials.single.id' as const, label: '绑定本次唯一文件（仅一件材料时）' }]
         : [{ value: '' as const, label: '不绑定材料来源' }]
-  if (current && !options.some((item) => item.value === current)) return [...options, { value: current, label: '当前映射与参数类型不兼容' }]
+  if (current && !options.some((item) => item.value === current)) return [...options, { value: current, label: '当前来源不适用于此输入' }]
   return options
 }
 
@@ -53,7 +52,6 @@ export function MemberInspector({ draft, runtimes, models, businessCapabilities,
   businessCapabilityError?: string
   onChange(draft: EnterpriseTeamMemberConfigDraft): void
 }) {
-  const [section, setSection] = useState<Section>('role')
   const [skillEditor, setSkillEditor] = useState<{ index: number; value: EnterpriseTeamMemberSkill }>()
   const [skillError, setSkillError] = useState('')
   const [capabilityPickerOpen, setCapabilityPickerOpen] = useState(false)
@@ -132,19 +130,17 @@ export function MemberInspector({ draft, runtimes, models, businessCapabilities,
   }
 
   return <>
-    <nav className="member-inspector__tabs" aria-label="成员配置分类">{sections.map((item) => <button type="button" key={item.value} aria-pressed={section === item.value} className={section === item.value ? 'is-active' : ''} onClick={() => { setSection(item.value) }}>{item.label}</button>)}</nav>
     <div className="member-inspector__body">
-      {section === 'role' ? <div className="tw-member-definition">
+      <MemberSection title="职责">
         <EditableText label="成员名称" value={config.displayName} multiline={false} placeholder="例如：问题分类员" onChange={(value) => setConfig('displayName', value)}/>
         <EditableText label="团队职责" value={relationship.duty} placeholder="例如：将用户反馈按产品模块分类，找出重复问题，并保留原始反馈依据。" onChange={(value) => setRelationship('duty', value)}/>
         <EditableText label="交付要求" value={relationship.resultRequirement} placeholder="例如：返回分类清单，每项包含问题摘要、所属模块和原文依据。" onChange={(value) => setRelationship('resultRequirement', value)}/>
         <details className="tw-member-advanced"><summary>参与条件与协作设置</summary><EditableText label="何时参与" value={relationship.whenToUse} placeholder="例如：任务涉及用户反馈分类时参与。" onChange={(value) => setRelationship('whenToUse', value)}/><EditableText label="协作上下文" value={relationship.contextInstruction} placeholder="例如：保留其他成员已标记的不确定事项，交给负责人确认。" onChange={(value) => setRelationship('contextInstruction', value)}/>{config.role !== 'avatar' && <ProductSwitch label="参与团队协作" checked={relationship.enabled} onChange={(value) => setRelationship('enabled', value)}/>}</details>
-      </div> : null}
+      </MemberSection>
 
-      {section === 'instructions' ? <div className="tw-member-definition"><EditableText label="工作方法" value={config.systemPrompt} placeholder="例如：先读完整输入，再按模块分类；无法确定归属时单独列出，不猜测缺失事实。" onChange={(value) => setConfig('systemPrompt', value)}/><details className="tw-member-advanced"><summary>结构化输出格式</summary><EditableText label="输出格式" value={config.outputSchema} placeholder="JSON Schema；没有程序对接要求时可留空。" onChange={(value) => setConfig('outputSchema', value)}/></details></div> : null}
+      <MemberSection title="指令"><EditableText label="工作方法" value={config.systemPrompt} placeholder="例如：先读完整输入，再按模块分类；无法确定归属时单独列出，不猜测缺失事实。" onChange={(value) => setConfig('systemPrompt', value)}/><details className="tw-member-advanced"><summary>结构化输出格式</summary><EditableText label="输出格式" value={config.outputSchema} placeholder="没有程序对接要求时可留空" onChange={(value) => setConfig('outputSchema', value)}/></details></MemberSection>
 
-      {section === 'execution' ? <section className="member-config-card">
-        <header><div><h4>运行方式</h4></div></header>
+      <MemberSection title="运行方式">
         {<div className="member-config-form">
           <div className="product-field"><span><strong>执行引擎</strong></span><ProductSelect label="执行引擎" value={config.engine} options={engineOptions} onChange={setEngine}/></div>
           {config.engine === 'loom' ? <><div className="product-field"><span><strong>模型</strong></span><ProductSelect label="模型" value={config.model} options={modelOptions} disabled={!models.length} onChange={(value) => setConfig('model', value)}/></div>{!modelReady ? <p className="member-inspector__error" role="alert">组织尚未配置可用模型</p> : null}</> : null}
@@ -154,12 +150,11 @@ export function MemberInspector({ draft, runtimes, models, businessCapabilities,
           {config.memoryEnabled ? <ProductSelect label="记忆范围" value={config.memoryScope} options={[{ value: 'tenant', label: '团队空间' }, { value: 'user', label: '当前员工' }, { value: 'session', label: '当前会话' }]} onChange={(value) => setConfig('memoryScope', value)}/> : null}
           <div className="member-limit-grid"><ProductField label="总令牌上限" type="number" min={0} value={config.maxTokens} onChange={(event) => setConfig('maxTokens', Number(event.target.value))}/><ProductField label="单次输出上限" type="number" min={0} value={config.maxOutputTokens} onChange={(event) => setConfig('maxOutputTokens', Number(event.target.value))}/><ProductField label="步骤上限" type="number" min={0} value={config.stepBudget} onChange={(event) => setConfig('stepBudget', Number(event.target.value))}/><ProductField label="成本上限（美元）" type="number" min={0} step="0.01" value={config.maxCostUsd} onChange={(event) => setConfig('maxCostUsd', Number(event.target.value))}/></div>
           </details></div>}
+      </MemberSection>
 
-      </section> : null}
-
-      {section === 'resources' ? <>
+      <MemberSection title="能力">
         <section className="member-resource-group member-business-actions">
-          <div className="member-resource-toolbar"><div><h4>业务动作 <span className="member-resource-count">{config.businessCapabilityIds.length}</span></h4><small>由 Forge 提供；实际调用仍按发起员工的本次授权校验</small></div><button type="button" className="button" onClick={() => { setCapabilitySearch(''); setCapabilityPickerOpen(true) }}><Plus size={12}/>添加业务动作</button></div>
+          <div className="member-resource-toolbar"><h4>业务动作 <span className="member-resource-count">{config.businessCapabilityIds.length}</span></h4><button type="button" className="button" onClick={() => { setCapabilitySearch(''); setCapabilityPickerOpen(true) }}><Plus size={12}/>添加业务动作</button></div>
           {businessCapabilityError ? <p role="alert" className="member-inspector__error">{businessCapabilityError}</p> : null}
           {config.businessCapabilityIds.length ? <ul className="member-capability-list">{config.businessCapabilityIds.map((id) => {
             const capability = businessCapabilities?.capabilities.find((item) => item.id === id)
@@ -180,9 +175,8 @@ export function MemberInspector({ draft, runtimes, models, businessCapabilities,
                   const source = mappedSource(parameter.name)
                   const nativeFile = parameter.type === 'file'
                   return <div className="member-capability-parameter" key={parameter.name}>
-                    <span><strong>{configurationLabel(parameter.label, parameter.name)}{parameter.required ? ' · 必填' : ''}</strong><small>{parameter.name}</small></span>
-                    {nativeFile && !parameter.multiple ? <><ProductSelect label={`${parameter.label || parameter.name}来源`} value={source ?? ''} options={parameterSourceOptions(parameter, source)} onChange={(value) => setBusinessCapabilityParamSource(id, parameter.name, value)}/><small>默认由 Pi 从本次材料中选择一份；清单外文件不可选。绑定唯一文件来源时，本轮必须恰有一件材料。</small></>
-                      : nativeFile ? <ProductSelect label={`${parameter.label || parameter.name}来源`} value={source ?? ''} options={parameterSourceOptions(parameter, source)} onChange={(value) => setBusinessCapabilityParamSource(id, parameter.name, value)}/>
+                    <span><strong>{configurationLabel(parameter.label, parameter.name)}{parameter.required ? ' · 必填' : ''}</strong></span>
+                    {nativeFile ? <ProductSelect label={`${parameter.label || parameter.name}来源`} value={source ?? ''} options={parameterSourceOptions(parameter, source)} onChange={(value) => setBusinessCapabilityParamSource(id, parameter.name, value)}/>
                         : parameter.type === 'string' ? <ProductSelect label={`${parameter.label || parameter.name}来源`} value={source ?? ''} options={parameterSourceOptions(parameter, source)} onChange={(value) => setBusinessCapabilityParamSource(id, parameter.name, value)}/>
                           : parameter.type === 'number' || parameter.type === 'boolean' || parameter.type === 'array' ? <small>由执行成员根据动作要求填写</small>
                             : <small>参数类型无法确认，不能配置材料来源</small>}
@@ -193,9 +187,9 @@ export function MemberInspector({ draft, runtimes, models, businessCapabilities,
           })}</ul> : <p className="member-resource-empty">当前成员没有配置业务动作。</p>}
         </section>
         <section className="member-resource-group"><div className="member-resource-toolbar"><h4>技能 <span className="member-resource-count">{config.skills.length + config.skillNames.length}</span></h4><span><label className="button member-skill-upload"><Upload size={12}/>上传<input type="file" accept=".md,.txt,text/markdown,text/plain" onChange={(event) => { void uploadSkill(event.target.files?.[0]); event.target.value = '' }}/></label><button type="button" className="button" onClick={() => openSkill()}><Plus size={12}/>新建技能</button></span></div>{config.skills.length ? <ul className="member-skill-list">{config.skills.map((skill, index) => <li key={skill.name + '-' + index}><button type="button" onClick={() => openSkill(index, skill)}><strong>{configurationLabel(skill.name, '未命名技能')}</strong><small>{configurationLabel(skill.description, '成员工作方法')}</small></button><button type="button" aria-label={'移除' + configurationLabel(skill.name, '技能')} onClick={() => setConfig('skills', config.skills.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={12}/></button></li>)}</ul> : !config.skillNames.length ? <p className="member-resource-empty">当前成员没有配置技能。</p> : null}{config.skillNames.length ? <div className="member-resource-readonly"><small>现有版本绑定</small>{config.skillNames.map((name, index) => <span key={name + '-' + index}>{configurationLabel(name, '已绑定技能')}</span>)}</div> : null}</section>
-        <section className="member-resource-group"><div className="member-resource-toolbar"><h4>其他工具（MCP） <span className="member-resource-count">{config.mcpServerIds.length}</span></h4></div>{config.mcpServerIds.length ? <ul>{config.mcpServerIds.map((name, index) => <li key={name + '-' + index}>{configurationLabel(name, '已绑定工具服务')}</li>)}</ul> : <p className="member-resource-empty">当前没有可分配的工具服务，连接由组织管理。</p>}</section>
+        <section className="member-resource-group"><div className="member-resource-toolbar"><h4>其他工具（MCP） <span className="member-resource-count">{config.mcpServerIds.length}</span></h4></div>{config.mcpServerIds.length ? <ul>{config.mcpServerIds.map((name, index) => <li key={name + '-' + index}>{configurationLabel(name, '已绑定工具服务')}</li>)}</ul> : <p className="member-resource-empty">暂无可分配的工具服务</p>}</section>
         {(['permissionAllow', 'permissionAsk', 'permissionDeny'] as const).filter((key) => config[key].length).map((key) => <section className="member-resource-group" key={key}><h4>{permissionNames[key]}</h4><ul>{config[key].map((name, index) => <li key={name + '-' + index}>{configurationLabel(name, '已配置调用规则')}</li>)}</ul></section>)}
-      </> : null}
+      </MemberSection>
     </div>
     {capabilityPickerOpen ? <Modal title="添加业务动作" onClose={() => setCapabilityPickerOpen(false)} footer={<button type="button" className="button" onClick={() => setCapabilityPickerOpen(false)}>关闭</button>}><div className="member-capability-picker">
       <ProductField autoFocus label="搜索业务动作" value={capabilitySearch} onChange={(event) => setCapabilitySearch(event.target.value)}/>

@@ -9,8 +9,7 @@ status:
 	@node tools/project-status.mjs
 
 branch-check:
-	@git fetch --prune --quiet origin
-	@node tools/project-status.mjs --check-branches
+	@node tools/project-status.mjs --fetch-branches
 
 component-check:
 	@node tools/project-status.mjs --check-components

@@ -2,70 +2,166 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://workbench.inocube.local/contracts/v1/task-delegation.schema.json",
   "title": "Weave Task Delegation",
-  "description": "The auditable projection of a Forge-issued task delegation. Forge issues delegationId and the task credential and enforces its scope at execution; Weave keeps only an encrypted, opaque credential reference. Lifetime follows the run, capped by deployment policy. Credentials and token bodies remain outside this contract.",
+  "description": "Unpublished abstract audit projection, not a Forge issuance/current response or a Weave storage DTO. Concrete Forge scope wire fields are defined in $defs.scope; credentials are not part of this audit projection.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "delegationId", "issuer", "credentialRef", "subject", "actor", "taskId", "inputRevisionId", "workflow", "actions", "resources", "issuedAt", "expiresAt", "status", "correlationId"],
+  "required": [
+    "version",
+    "delegationId",
+    "credentialRef",
+    "subject",
+    "actor",
+    "taskId",
+    "inputRevisionId",
+    "workflow",
+    "actions",
+    "resources",
+    "issuedAt",
+    "expiresAt",
+    "status",
+    "correlationId"
+  ],
   "properties": {
-    "version": { "const": "1" },
-    "delegationId": { "type": "string", "minLength": 1, "maxLength": 128, "description": "Issued by Forge and identical in Forge and Weave records." },
-    "issuer": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:\\S{1,240}$" },
-    "credentialRef": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "version": {"const": "1"},
+    "delegationId": {"type": "string", "minLength": 1, "maxLength": 128},
+    "credentialRef": {"type": "string", "minLength": 1, "maxLength": 256},
     "subject": {
       "type": "object",
       "additionalProperties": false,
       "required": ["id"],
-      "properties": {
-        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "organizationId": { "type": "string", "minLength": 1, "maxLength": 128 }
-      }
+      "properties": {"id": {"type": "string", "minLength": 1, "maxLength": 128}, "organizationId": {"type": "string", "minLength": 1, "maxLength": 128}}
     },
     "actor": {
       "type": "object",
       "additionalProperties": false,
       "required": ["type", "id"],
-      "properties": {
-        "type": { "enum": ["team", "agent"] },
-        "id": { "type": "string", "minLength": 1, "maxLength": 128 }
-      }
+      "properties": {"type": {"enum": ["team", "agent"]}, "id": {"type": "string", "minLength": 1, "maxLength": 128}}
     },
-    "taskId": { "type": "string", "minLength": 1, "maxLength": 128 },
-    "inputRevisionId": { "type": "string", "format": "uuid" },
+    "taskId": {"type": "string", "minLength": 1, "maxLength": 128},
+    "inputRevisionId": {"type": "string", "format": "uuid"},
     "workflow": {
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "version"],
-      "properties": {
-        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "version": { "type": "integer", "minimum": 1 }
-      }
+      "properties": {"id": {"type": "string", "minLength": 1, "maxLength": 128}, "version": {"type": "integer", "minimum": 1}}
     },
-    "actions": { "type": "array", "maxItems": 32, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 160 } },
+    "actions": {"type": "array", "maxItems": 32, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 160}},
     "resources": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 32,
+      "maxItems": 12,
       "uniqueItems": true,
       "items": {
         "type": "object",
         "additionalProperties": false,
         "required": ["type", "id", "sha256"],
         "properties": {
-          "type": { "type": "string", "minLength": 1, "maxLength": 128 },
-          "id": { "type": "string", "minLength": 1, "maxLength": 128 },
-          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-          "name": { "type": "string", "minLength": 1, "maxLength": 255 },
-          "bytes": { "type": "integer", "minimum": 1, "maximum": 700000 },
-          "object_name": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,127}$" }
+          "type": {"type": "string", "minLength": 1, "maxLength": 128},
+          "id": {"type": "string", "minLength": 1, "maxLength": 128},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "name": {"type": "string", "minLength": 1, "maxLength": 255},
+          "bytes": {"type": "integer", "minimum": 1, "maximum": 2097152},
+          "object_name": {"type": "string", "pattern": "^[a-z][a-z0-9_]{1,127}$"},
+          "sourceKind": {"enum": ["owner", "approval"]},
+          "requestId": {"type": "string", "minLength": 1, "maxLength": 128},
+          "materialId": {"type": "string", "pattern": "^[0-9a-f]{24}$"},
+          "mediaType": {
+            "enum": [
+              "text/plain",
+              "text/markdown",
+              "text/csv",
+              "application/json",
+              "application/pdf",
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            ]
+          }
         },
-        "allOf": [{ "if": { "properties": { "type": { "const": "forge-record" } } }, "then": { "required": ["object_name"] } }]
+        "allOf": [{"if": {"properties": {"type": {"const": "forge-record"}}}, "then": {"required": ["object_name"]}}]
       }
     },
-    "issuedAt": { "type": "string", "format": "date-time" },
-    "expiresAt": { "type": "string", "format": "date-time" },
-    "status": { "enum": ["active", "revoked", "expired"] },
-    "revokedAt": { "type": "string", "format": "date-time" },
-    "revocationReason": { "enum": ["run_terminal", "employee_cancel", "account_disabled", "superseded"] },
-    "correlationId": { "type": "string", "minLength": 1, "maxLength": 128 }
+    "issuedAt": {"type": "string", "format": "date-time"},
+    "expiresAt": {"type": "string", "format": "date-time"},
+    "status": {"enum": ["active", "revoked", "expired"]},
+    "revokedAt": {"type": "string", "format": "date-time"},
+    "correlationId": {"type": "string", "minLength": 1, "maxLength": 128}
+  },
+  "$defs": {
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_revision_id", "registration_id", "task_sha256", "workflow_id", "workflow_version", "allowed_actions", "resources"],
+      "properties": {
+        "input_revision_id": {"type": "string", "format": "uuid"},
+        "registration_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "task_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "workflow_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "workflow_version": {"type": "integer", "minimum": 1},
+        "allowed_actions": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^forge:action:forge_[a-z0-9_]+\\.[A-Za-z_][A-Za-z0-9_]*$"}
+        },
+        "resources": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "id", "name", "bytes", "sha256"],
+            "properties": {
+              "type": {"const": "forge-file"},
+              "materialId": {"type": "string", "pattern": "^[0-9a-f]{24}$"},
+              "mediaType": {
+                "enum": [
+                  "text/plain",
+                  "text/markdown",
+                  "text/csv",
+                  "application/json",
+                  "application/pdf",
+                  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                ]
+              },
+              "sourceKind": {"enum": ["owner", "approval"]},
+              "requestId": {"type": "string", "minLength": 1, "maxLength": 128},
+              "id": {"type": "string", "minLength": 1, "maxLength": 128},
+              "name": {"type": "string", "minLength": 1, "maxLength": 255},
+              "bytes": {"type": "integer", "minimum": 1, "maximum": 2097152},
+              "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            },
+            "allOf": [
+              {
+                "if": {
+                  "required": ["mediaType"],
+                  "properties": {"mediaType": {"enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]}}
+                },
+                "then": {"required": ["materialId", "sourceKind"]}
+              },
+              {
+                "if": {"required": ["sourceKind"], "properties": {"sourceKind": {"const": "approval"}}},
+                "then": {
+                  "required": ["requestId"],
+                  "properties": {"mediaType": {"enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]}}
+                }
+              },
+              {
+                "if": {"required": ["sourceKind"], "properties": {"sourceKind": {"const": "owner"}}},
+                "then": {
+                  "not": {"required": ["requestId"]},
+                  "properties": {"mediaType": {"enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]}}
+                }
+              },
+              {"if": {"required": ["requestId"]}, "then": {"required": ["sourceKind"]}}
+            ]
+          }
+        },
+        "business_record": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["object_name", "record_id"],
+          "properties": {"object_name": {"type": "string", "pattern": "^forge_[a-z0-9_]+$"}, "record_id": {"type": "string", "minLength": 1, "maxLength": 128}}
+        }
+      }
+    }
   }
 }

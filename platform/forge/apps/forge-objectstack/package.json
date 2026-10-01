@@ -20,10 +20,10 @@
     "postbuild": "node tests/navigation-linkage.static.mjs && node tests/authenticated-page-fetch.static.mjs && node --import tsx tests/project-center-source-parse.mjs && node --import tsx tests/sales-contract-page-source-parse.mjs",
     "validate": "objectstack validate",
     "typecheck": "tsc --noEmit",
-    "acceptance:approval-workbench-context": "node --experimental-strip-types --test tests/approval-workbench-context.integration.mjs",
+    "acceptance:approval-workbench-context": "node --import tsx --test tests/approval-workbench-context.integration.mjs",
+    "acceptance:task-connection-native": "FORGE_TASK_CONNECTION_PG_TEST=1 node --import tsx --test tests/task-connection.native-runtime.integration.mjs",
     "acceptance:approval-workbench-mcp-native": "FORGE_APPROVAL_MCP_PG_TEST=1 node --test tests/approval-workbench-mcp.native-runtime.integration.mjs",
     "acceptance:console-controls": "node tests/console-controls.static.mjs",
-    "acceptance:task-delegation-native": "FORGE_TASK_DELEGATION_PG_TEST=1 node --test tests/task-delegation.native-postgres.integration.mjs",
     "acceptance:approval-resubmit-guard": "node --experimental-strip-types tests/approval-resubmit-guard.integration.mjs",
     "acceptance:contract-revision-native-lifecycle": "tsx --test tests/contract-revision-native-lifecycle.integration.mjs",
     "acceptance:contract-material-holder": "node --import tsx --test tests/contract-material-holder.native-postgres.integration.mjs",
@@ -256,7 +256,8 @@
     "@objectstack/service-messaging": "17.3.0",
     "@objectstack/spec": "17.3.0",
     "@objectstack/trigger-record-change": "17.3.0",
-    "pg": "^8.23.0"
+    "pg": "^8.23.0",
+    "jose": "6.2.12"
   },
   "devDependencies": {
     "@objectstack/cli": "17.3.0",

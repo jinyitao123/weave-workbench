@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { copyFileSync, readdirSync, rmSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { copyFileSync, existsSync, readdirSync, rmSync } from 'node:fs'
+import { isAbsolute, relative, resolve } from 'node:path'
 import { assertSupportedToolchain, runCommand, validateReleaseCredentials, validateWindowsReleaseCredentials, withoutReleaseCredentials } from './lib.mjs'
 
 const args = new Set(process.argv.slice(2))
@@ -14,6 +14,7 @@ const skipVerify = args.has('--skip-verify')
 const platformIndex = process.argv.indexOf('--platform')
 const platform = platformIndex === -1 ? undefined : process.argv[platformIndex + 1]
 const archIndex = process.argv.indexOf('--arch')
+const outputIndex = process.argv.indexOf('--output-directory')
 const platformHosts = { mac: 'darwin', linux: 'linux', win: 'win32' }
 const nativeArchitectures = { arm64: 'arm64', x64: 'x64' }
 if (isPublic === isQa) {
@@ -42,20 +43,28 @@ function run(command, commandArgs, env = process.env) {
 
 try {
   assertSupportedToolchain()
+  if (outputIndex !== -1 && platform !== 'mac') throw new Error('--output-directory currently supports macOS packaging only')
+  const releaseRoot = resolve('release')
+  const output = outputIndex === -1 ? resolve('release', platform, arch) : resolve(process.argv[outputIndex + 1] ?? '')
+  const outputRelative = relative(releaseRoot, output)
+  if (!outputRelative || outputRelative === '..' || outputRelative.startsWith(`..${process.platform === 'win32' ? '\\' : '/'}`) || isAbsolute(outputRelative))
+    throw new Error('Output directory must be inside release/')
+  if (outputIndex !== -1 && (!process.argv[outputIndex + 1] || process.argv[outputIndex + 1].startsWith('--'))) throw new Error('--output-directory requires a directory inside release/')
+  if (outputIndex !== -1 && existsSync(output)) throw new Error('Requested output directory already exists; existing QA artifacts are preserved')
   if (process.platform !== platformHosts[platform]) throw new Error(`${platform} packaging must run natively on ${platformHosts[platform]}`)
   if (isPublic && platform === 'mac') validateReleaseCredentials(process.env)
   if (isPublic && platform === 'win') validateWindowsReleaseCredentials(process.env)
   const verifyScript = skipVerify ? 'build:bundle' : platform === 'mac' ? 'release:verify' : 'release:verify:package'
   run('npm', ['run', verifyScript], withoutReleaseCredentials(process.env))
-  if (!dryRun) rmSync(resolve('release', platform, arch), { recursive: true, force: true })
+  if (!dryRun && outputIndex === -1) rmSync(output, { recursive: true, force: true })
 
-  const builderArgs = [`--${platform}`, `--${arch}`, '--publish', 'never', `--config.directories.output=release/${platform}/${arch}`]
+  const builderArgs = [`--${platform}`, `--${arch}`, '--publish', 'never', `--config.directories.output=${output}`]
   if (isPublic && platform === 'win') builderArgs.push('--config.forceCodeSigning=true')
   const builderEnv = isQa ? { ...process.env, CSC_IDENTITY_AUTO_DISCOVERY: 'false' } : process.env
   if (isQa && platform === 'mac') builderArgs.push('--config.mac.identity=null', '--config.mac.notarize=false')
-  run('electron-builder', builderArgs, builderEnv)
+  run('node', ['scripts/release/electron-builder.mjs', ...builderArgs], builderEnv)
   if (platform === 'win' && !dryRun) {
-    const outputDirectory = resolve('release', platform, arch)
+    const outputDirectory = output
     const appx = readdirSync(outputDirectory).find((name) => name.endsWith('.appx'))
     if (!appx) throw new Error('Windows AppX/MSIX package was not produced')
     copyFileSync(resolve(outputDirectory, appx), resolve(outputDirectory, appx.replace(/\.appx$/, '.msix')))
@@ -63,7 +72,7 @@ try {
   if (platform === 'mac') {
     run(
       'node',
-      ['scripts/release/verify-package.mjs', '--mode', isPublic ? 'public' : 'qa', '--arch', arch, '--release-directory', resolve('release', platform, arch)],
+      ['scripts/release/verify-package.mjs', '--mode', isPublic ? 'public' : 'qa', '--arch', arch, '--release-directory', output],
       withoutReleaseCredentials(process.env, ['RELEASE_SIGNING_TEAM_ID']),
     )
   } else {

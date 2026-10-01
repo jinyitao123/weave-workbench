@@ -1,9 +1,7 @@
-import { createHash } from 'node:crypto'
-import type { EnterpriseHumanTask, EnterpriseWorkItem, EnterpriseWorkResource } from '../../../src/types/api'
+import type { EnterpriseHumanTask, EnterpriseWorkItem } from '../../../src/types/api'
 
-// Parsers for the server projections behind "我的工作" and the Forge task
-// delegation (weave-workbench decision 002). They validate shape only; the
-// servers own the meaning (current input, business result, approval work).
+// Parsers for server projections behind "我的工作". They validate shape;
+// the servers own the meaning of current input, business result, and approvals.
 
 function record(value: unknown): Record<string, unknown> | undefined {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined
@@ -15,9 +13,16 @@ function text(value: unknown): string | undefined {
 
 export interface WorkbenchRunLookup {
   runId: string
+  inputRevisionID: string
+  workbenchSessionID: string
   status: string
   isCurrent: boolean
   businessResult?: 'completed' | 'needs_input' | 'action_failed' | 'action_unknown'
+}
+
+export interface WorkbenchRunLookupResponse {
+  runs: WorkbenchRunLookup[]
+  missing: string[]
 }
 
 export interface ApprovalWorkItem {
@@ -25,95 +30,81 @@ export interface ApprovalWorkItem {
   mode: 'approval' | 'revision'
   title: string
   updatedAt: string
+  processLabel?: string
+  stepLabel?: string
   returnReason?: string
   materialLabel?: string
 }
 
 export function parseApprovalWorkPage(value: unknown): { items: ApprovalWorkItem[]; nextCursor?: string } {
   const body = record(value)
-  if (body?.version !== '1' || !Array.isArray(body.items)) throw new Error('Forge 返回了无法识别的审批事项')
+  const nextCursor = body?.nextCursor
+  if (body?.version !== '1' || !Array.isArray(body.items) || body.items.length > 100
+    || nextCursor !== undefined && nextCursor !== null && (typeof nextCursor !== 'string' || !nextCursor || nextCursor.length > 8192)) {
+    throw new Error('Forge 返回了无法识别的审批事项')
+  }
   const items = body.items.map((entry): ApprovalWorkItem => {
     const item = record(entry)
     const requestId = text(item?.requestId), mode = item?.mode, title = text(item?.title), updatedAt = text(item?.updatedAt)
-    if (!requestId || (mode !== 'approval' && mode !== 'revision') || !title || !updatedAt) throw new Error('Forge 返回了无法识别的审批事项')
+    if (!requestId || requestId.length > 128 || requestId.trim() !== requestId || (mode !== 'approval' && mode !== 'revision')
+      || !title || title.length > 300 || !updatedAt || !Number.isFinite(Date.parse(updatedAt))) throw new Error('Forge 返回了无法识别的审批事项')
     return { requestId, mode, title, updatedAt,
+      ...(text(item?.processLabel) ? { processLabel: text(item?.processLabel) } : {}),
+      ...(text(item?.stepLabel) ? { stepLabel: text(item?.stepLabel) } : {}),
       ...(text(item?.returnReason) ? { returnReason: text(item?.returnReason) } : {}),
       ...(text(item?.materialLabel) ? { materialLabel: text(item?.materialLabel) } : {}) }
   })
-  return { items, ...(text(body.nextCursor) ? { nextCursor: text(body.nextCursor) } : {}) }
+  return { items, ...(typeof nextCursor === 'string' ? { nextCursor } : {}) }
 }
 
-export function parseRunLookup(value: unknown): WorkbenchRunLookup[] {
+export function parseRunLookup(value: unknown): WorkbenchRunLookupResponse {
   const body = record(value)
-  if (body?.version !== '1' || !Array.isArray(body.runs)) throw new Error('Weave 返回了无法识别的团队运行状态')
-  return body.runs.map((entry): WorkbenchRunLookup => {
+  if (body?.version !== '1' || !Array.isArray(body.runs) || !Array.isArray(body.missing)) throw new Error('Weave 返回了无法识别的团队运行状态')
+  const runs = body.runs.map((entry): WorkbenchRunLookup => {
     const run = record(entry)
-    const runId = text(run?.runId), status = text(run?.status), businessResult = text(run?.businessResult)
-    if (!runId || !status || typeof run?.isCurrent !== 'boolean' || !record(run.actionCounts)) throw new Error('Weave 返回了无法识别的团队运行状态')
-    return { runId, status, isCurrent: run.isCurrent,
+    const runId = text(run?.runId), inputRevisionID = text(run?.inputRevisionId), workbenchSessionID = text(run?.workbenchSessionId)
+    const status = text(run?.status), businessResult = text(run?.businessResult), counts = record(run?.actionCounts)
+    const validBusinessResult = businessResult === undefined || businessResult === 'completed' || businessResult === 'needs_input'
+      || businessResult === 'action_failed' || businessResult === 'action_unknown'
+    if (!runId || runId.length > 512 || runId.trim() !== runId || !inputRevisionID || inputRevisionID.length > 128 || inputRevisionID.trim() !== inputRevisionID
+      || !workbenchSessionID || workbenchSessionID.length > 256 || workbenchSessionID.trim() !== workbenchSessionID
+      || !status || !['queued', 'running', 'parked', 'cancel_requested', 'succeeded', 'failed', 'cancelled', 'abandoned'].includes(status)
+      || typeof run?.isCurrent !== 'boolean' || !counts || !validBusinessResult
+      || Object.keys(counts).some((key) => !['succeeded', 'failed', 'unknown'].includes(key))
+      || ['succeeded', 'failed', 'unknown'].some((key) => !Number.isSafeInteger(counts[key]) || (counts[key] as number) < 0)) {
+      throw new Error('Weave 返回了无法识别的团队运行状态')
+    }
+    return { runId, inputRevisionID, workbenchSessionID, status, isCurrent: run.isCurrent,
       ...(businessResult === 'completed' || businessResult === 'needs_input' || businessResult === 'action_failed' || businessResult === 'action_unknown' ? { businessResult } : {}) }
   })
+  const missing = body.missing.map((entry) => {
+    if (typeof entry !== 'string' || !entry || entry.trim() !== entry || entry.length > 512) throw new Error('Weave 返回了无法识别的团队运行状态')
+    return entry
+  })
+  if (new Set(runs.map((run) => run.runId)).size !== runs.length || new Set(missing).size !== missing.length
+    || runs.some((run) => missing.includes(run.runId))) throw new Error('Weave 返回了重复的团队运行状态')
+  return { runs, missing }
 }
 
 /** A Weave human step named by an inbox message, or undefined when the run now waits on another interaction. */
-export function parseWeaveHumanTask(value: unknown, runId: string, interactionId: string): EnterpriseHumanTask | undefined {
+export function parseWeaveHumanTask(value: unknown, references: { runId: string; interactionId: string; workReference: string; sessionReference: string }): EnterpriseHumanTask | undefined {
   const task = record(value)
+  const { runId, interactionId, workReference, sessionReference } = references
   if (text(task?.interaction_id) !== interactionId || text(task?.run_id) !== runId) return undefined
+  if (task?.input_revision_id !== workReference || task?.workbench_session_id !== sessionReference) throw new Error('团队人工事项与原工作来源不一致')
   const teamId = text(task?.team_id), workflowId = text(task?.workflow_id)
   const workflowVersion = typeof task?.workflow_version === 'number' && Number.isInteger(task.workflow_version) ? task.workflow_version : undefined
   const title = text(task?.title), instructions = text(task?.instructions), updatedAt = text(task?.updated_at)
-  if (!teamId || !workflowId || !workflowVersion || !title || !instructions || !updatedAt) return undefined
-  return { interactionId, runId, teamId, workflowId, workflowVersion, title, instructions, updatedAt, source: 'weave', mode: 'human_step',
+  if (!teamId || !workflowId || workflowVersion === undefined || workflowVersion < 1 || !title || !instructions
+    || !updatedAt || !Number.isFinite(Date.parse(updatedAt))) throw new Error('团队人工事项格式无效，请刷新工作消息')
+  return { interactionId, runId, inputRevisionID: workReference, workbenchSessionID: sessionReference, teamId, workflowId, workflowVersion, title, instructions, updatedAt, source: 'weave', mode: 'human_step',
     ...(text(task?.audience_ref) ? { audience: text(task?.audience_ref) } : {}) }
 }
 
-export type TaskDelegationScope =
-  | { kind: 'none' }
-  | { kind: 'invalid-action' }
-  | { kind: 'too-many-files' }
-  | { kind: 'scoped'; body: Record<string, unknown> }
-
-/** The Forge task-delegation request for one frozen Weave registration. */
-export function taskDelegationRequest(
-  workId: string, registrationBody: unknown,
-  source: { resources: EnterpriseWorkResource[]; businessContext?: { objectName: string; recordId: string }; authorizedBusinessCapabilityIds: string[] } | undefined,
-): TaskDelegationScope {
-  const actions: Array<{ objectName: string; actionName: string }> = []
-  for (const id of source?.authorizedBusinessCapabilityIds ?? []) {
-    const match = /^forge:action:([a-z][a-z0-9_]{1,127})\.(.{1,128})$/.exec(id)
-    if (!match) return { kind: 'invalid-action' }
-    actions.push({ objectName: match[1]!, actionName: match[2]! })
-  }
-  const files = (source?.resources ?? []).map((resource) => ({
-    fileId: resource.id, sha256: resource.sha256, sourceKind: resource.sourceKind ?? 'owner',
-    ...(resource.sourceKind === 'approval' && resource.requestId ? { requestId: resource.requestId } : {}),
-  }))
-  const scopedRecord = source?.businessContext ? { objectName: source.businessContext.objectName, recordId: source.businessContext.recordId } : undefined
-  if (!actions.length && !files.length && !scopedRecord) return { kind: 'none' }
-  if (files.length > 10) return { kind: 'too-many-files' }
-  return { kind: 'scoped', body: {
-    version: '1', idempotencyKey: workId,
-    inputDigest: createHash('sha256').update(JSON.stringify(registrationBody)).digest('hex'),
-    actions, ...(scopedRecord ? { record: scopedRecord } : {}), files,
-  } }
-}
-
-/** Headers that carry the task credential to Weave; the credential is never stored or logged. */
-export function taskDelegationHeaders(value: unknown): Record<string, string> | undefined {
-  const result = record(value)
-  const credential = text(result?.credential), delegationId = text(result?.delegationId), expiresAt = text(result?.expiresAt)
-  if (result?.version !== '1' || !credential || !delegationId || !expiresAt || !Number.isFinite(Date.parse(expiresAt))) return undefined
-  return {
-    'X-Weave-Forge-Authorization': `Bearer ${credential}`,
-    'X-Weave-Forge-Delegation-Id': delegationId,
-    'X-Weave-Forge-Delegation-Expires': expiresAt,
-  }
-}
-
 /**
- * Native inbox rows as work items. Kinds come only from the exact native topic
- * or an explicit data kind; words inside a type are never read as a failure or
- * a task, and inline message data never becomes a continuation reference.
+ * Native inbox rows as work items. Weave kinds come only from exact native
+ * topics. Other inbox entries stay generic until Forge's trusted source
+ * endpoint identifies them.
  */
 export function inboxWorkItems(rawNotifications: unknown[]): EnterpriseWorkItem[] {
   return rawNotifications.flatMap((value): EnterpriseWorkItem[] => {
@@ -121,13 +112,11 @@ export function inboxWorkItems(rawNotifications: unknown[]): EnterpriseWorkItem[
     const id = text(notification?.id), title = text(notification?.title), createdAt = text(notification?.createdAt) ?? text(notification?.created_at)
     if (!id || !title || !createdAt) return []
     const notificationType = text(notification?.type) ?? ''
-    const weaveKind = /^weave\.team_run\.(result|failure|revision_required|cancelled|human_review)$/.exec(notificationType)?.[1] as EnterpriseWorkItem['kind'] | undefined
-    const requestedKind = text(data?.kind)
-    const kind: EnterpriseWorkItem['kind'] = weaveKind
-      ?? (requestedKind === 'revision_required' || requestedKind === 'human_review' || requestedKind === 'failure' || requestedKind === 'result' || requestedKind === 'cancelled' ? requestedKind : 'result')
+    const weaveKind = /^weave\.team_run\.(result|failure|revision_required|cancelled|human_review)$/.exec(notificationType)?.[1] as Exclude<EnterpriseWorkItem['kind'], 'notification'> | undefined
+    const kind: EnterpriseWorkItem['kind'] = weaveKind ?? 'notification'
     const actionable = kind === 'revision_required' || kind === 'human_review'
     const displayTitle = /[0-9a-f]{8}-[0-9a-f-]{27,}/i.test(title)
-      ? kind === 'failure' ? '团队处理失败' : kind === 'revision_required' ? '团队工作需要修改' : kind === 'human_review' ? '团队工作等待处理' : '团队工作已完成'
+      ? kind === 'failure' ? '团队处理失败' : kind === 'revision_required' ? '团队工作需要修改' : kind === 'human_review' ? '团队工作等待处理' : kind === 'notification' ? '工作通知' : kind === 'cancelled' ? '团队工作已取消' : '团队工作已完成'
       : title
     const statusValue = text(data?.status)
     const status: EnterpriseWorkItem['status'] = statusValue === 'pending' || statusValue === 'in_progress' || statusValue === 'completed' || statusValue === 'cancelled'
@@ -136,7 +125,7 @@ export function inboxWorkItems(rawNotifications: unknown[]): EnterpriseWorkItem[
     const reviewScope = text(continuation?.reviewScope)
     return [{
       id, kind, title: displayTitle, status, actionable, read: notification?.read === true,
-      source: weaveKind || text(data?.source) === 'weave' || text(record(data?.source)?.system) === 'weave' ? 'weave' : 'forge',
+      source: weaveKind ? 'weave' : 'forge',
       notificationType, createdAt,
       ...(text(notification?.body) ? { summary: text(notification?.body) } : {}),
       ...(text(data?.instructions) ? { instructions: text(data?.instructions) } : {}),

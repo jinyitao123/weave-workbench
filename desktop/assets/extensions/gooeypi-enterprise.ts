@@ -188,7 +188,7 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
       'materials 只能列出本轮员工消息实际附加的新文件，并使用本轮附件元数据中的路径和 SHA-256。从当前“需要补充”事项，或成功只读检查（结果为“完成”或“需要补充”）、失败只读运行的最新工作消息打开 Pi，且Host已核验平台业务动作回执明确为零条、员工本轮明确授权复用原冻结材料时，才把当前上下文中显示的完整文件名放入 reuse_material_names；回执缺失、未知或已记录任何业务动作时都不得复用，也不得借复用原件盲目重放。Host 只会在该运行的冻结材料清单中精确匹配唯一同名项，再绑定真实文件引用、摘要和来源。旧事项已有后续运行时，须打开最新运行消息继续；不要让员工重复上传原件。不要传旧文件路径、fileId、哈希或从工作目录寻找旧文件；同名候选不唯一时向员工询问，不猜选。没有明确复用授权时留空。纯业务记录分析应先按本轮记录键读取并绑定 Forge 快照，此时 materials 与 reuse_material_names 可为空；没有已读业务记录且没有本轮附件或明确复用材料时不得提交。',
       '员工说先等等或改变要求后停止旧交接。unknown 是网络或回执结果待核对，只能用原恢复凭据继续同一固定请求；rejected 是 Weave 已明确拒绝登记且未创建团队运行，应刷新原工作后按员工当前要求重新提交，不调用恢复工具。accepted 仅代表服务接单，不能声称团队已经处理完成；接单后结束本轮，不轮询团队结果。向员工用“已接单”“结果待核对”“本次未接单”等中文报告，不展示内部状态编码、标识或哈希。',
       '本工具只交给 Weave 团队，不代表 Forge 业务状态已经提交或审批通过。',
-      '接单回执中的 allowed_scope 是桌面按本次固定请求生成的授权范围，向员工原样转述，不改写、不增减。',
+      'Host 会在当前会话直接展示本次固定请求的查看与写入范围，员工可从该卡片取消原工作；不要重新生成或扩大授权范围。',
     ],
     parameters: Type.Object({
       handoff_key: Type.String({ minLength: 1, maxLength: 128, description: '团队承接能力查看返回的交接键' }),
@@ -216,6 +216,19 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
     parameters: Type.Object({ recovery_key: Type.String({ minLength: 64, maxLength: 64, description: '原交接结果中的内部恢复凭据，不由员工提供' }) }),
     async execute(_id, params) { return result(await turnCall('recover', params)) },
   })
+  pi.registerTool<{ employee_request: string }>({
+    name: 'gooeypi_enterprise_work_authorization_renew',
+    label: '继续原工作授权',
+    description: '员工明确要求继续当前已打开的原工作，且平台确认授权过期和无副作用等待时，为相同输入与范围续授权并恢复原等待位置。',
+    promptGuidelines: [
+      '打开通知仅授权查看；只在员工随后新消息明确要求继续原工作时调用，employee_request逐字使用本轮员工消息。',
+      '材料、动作、业务记录、原输入和操作位置由Host固定；不填写内部标识，不重新上传或创建新输入。',
+      'unknown表示续授权或恢复回执待核对，不能重发业务动作或改用新交接绕过；平台未确认无副作用的旧失败/未知动作只能只读核对。',
+    ],
+    parameters: Type.Object({ employee_request: Type.String({ minLength: 1, maxLength: 20_000, description: '当前员工明确要求继续原工作的完整原话' }) }),
+    async execute(_id, params) { return result(await turnCall('authorization_renew', params)) },
+  })
+
   pi.registerTool({
     name: 'gooeypi_enterprise_current_item_actions',
     label: '读取当前事项动作目录',
