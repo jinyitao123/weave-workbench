@@ -286,19 +286,19 @@ ObjectStack 原生 ApprovalService 的所有 resubmit 入口必须在写审批�
 
 1. Host 先保存本轮固定意图并上传选定材料。`POST /v1/workbench/dispatch-inputs/prepare` 携当前 Weave 身份和固定登记请求，只读返回 `input_revision_id`：已有同内容登记沿用原值；新登记按受认证的workspace/user/registration_id稳定派生，不接单、不写任务队列。同登记更换内容409，越权404，不返回别人登记。
 2. Host 用员工原生 Forge 会话调用 `POST /api/v1/apps/forge/task-delegations`。请求含 `request_id`（发行幂等键）与 `scope`，scope含准确 `input_revision_id`、`registration_id`、`task_sha256`、`workflow_id`、`workflow_version`、`allowed_actions`、`resources` 和可选 `business_record`；资源沿用固定输入的原生文件/记录引用结构。员工与组织由原生会话取得，不能从请求指定。Forge验证现有权限、所选记录与材料，绑定父会话，使用原生auth的server-only签名能力发行；同键同范围返回同一授权记录，同键换范围409，续期用新的持久请求键。
-3. 响应 `version=1`、`token_type=forge_task`、`access_token`、`grant_id`、`generation`、`issued_at`、`expires_at`、`scope_sha256`、`scope`、`subject`（id/organization_id）及 `issuer`。有效期最多30分钟且不超过父会话。token只在Host进程与Weave加密委托内使用，不暴露员工；签名audience为Forge任务连接，通用CRUD、原生MCP、auth和其他发行入口不接受该token。
-4. Weave登记沿已有API提交固定输入及准确input_revision_id，专用 `X-Weave-Forge-Authorization` 只接上述任务token。`GET /api/v1/apps/forge/task-delegations/current` 用该token返回在线有效性、上述可信身份/范围/代际与实际时间；Weave与本次账号、输入、图版本、资源和动作逐项核对，不在本地伪造有效期。
-5. 成员仅通过 `POST /api/v1/apps/forge/task-delegations/mcp` 调用原生MCP能力。 `GET /api/v1/apps/forge/task-delegations/objects/:objectName` 复用原生具名对象元数据，保留fields与完整动作params，仅返回本次record/allowed_actions对象及所选动作，用于补足MCP摘要丢失的原生file类型；任务token不能改走通用/meta。Forge连接校验token、授权记录代际、父原生会话仍有效及当前原生权限，再调用原生MCP桥；只暴露声明动作及范围内只读元数据/记录，拒绝通用CRUD、范围外动作/记录/材料和再次发行。`GET /api/v1/apps/forge/task-delegations/files/:fileId/original` 只服务scope内准确来源的文件，核对原生权限、长度及摘要，复用现有原件持有规则。父会话吊销、授权撤销或过期后每次调用都拒绝。
+3. 响应 `version="1"`、`token_type=forge_task`、`access_token`、`grant_id`、`generation`、`issued_at`、`expires_at`、`scope_sha256`、`scope`、`subject`（id/organization_id）及 `issuer`。有效期最多30分钟且不超过父会话。token只在Host进程与Weave加密委托内使用，不暴露员工；签名audience为Forge任务连接，通用CRUD、原生MCP、auth和其他发行入口不接受该token。
+4. Weave登记沿已有API提交固定输入及准确input_revision_id，专用 `X-Weave-Forge-Authorization` 只接上述任务token。`GET /api/v1/apps/forge/task-delegations/current` 用该token返回 `version="1"`、`active=true` 和在线有效性、上述可信身份/范围/代际与实际时间；Weave与本次账号、输入、图版本、资源和动作逐项核对，不在本地伪造有效期。
+5. 成员仅通过 `POST /api/v1/apps/forge/task-delegations/mcp` 调用原生MCP能力。 `GET /api/v1/apps/forge/task-delegations/objects/:objectName` 复用原生具名对象元数据，保留fields与完整动作params，仅返回本次record/allowed_actions对象及所选动作，用于补足MCP摘要丢失的原生file类型；任务token不能改走通用/meta。Forge连接校验token、授权记录代际、父原生会话仍有效、绑定组织仍有有效原生成员资格及当前原生权限，再调用原生MCP桥；只暴露声明动作及范围内只读元数据/记录，拒绝通用CRUD、范围外动作/记录/材料和再次发行。`GET /api/v1/apps/forge/task-delegations/files/:fileId/original` 只服务scope内准确来源的文件，核对原生权限、长度及摘要，复用现有原件持有规则。父会话吊销、授权撤销或过期后每次调用都拒绝。
 6. 工作上下文提供 `run.authorization`，包含 `status=active|renewal_required|not_applicable` 和必要可读原因，不带token。只有确认尚未发送的授权拒绝才标记 `authorization_expired`/`no_effect` 并沿现有parked runtime等待，保留操作位置与检查点；已开始或未知效果继续只读核对，不因续期而重发。
-7. 原员工从该工作打开续授权。`POST /v1/workbench/dispatch-inputs/:id/authorization` 接新任务token和 `expected_generation`（并发围栏）；仅替换同账号、同原输入和完全同范围的授权，保留输入/运行/操作身份。过期或旧代际409，越权404。随后只在有无副作用证明的授权等待上沿现有stage_retry恢复；没有证明的旧终态运行明确拒绝安全自动续办，不伪改终态、不创建新输入掩盖失败。
+7. 原员工从该工作打开续授权。`POST /v1/workbench/dispatch-inputs/:id/authorization` 接新任务token和 `expected_generation`（并发围栏）；仅替换同账号、同原输入和完全同范围的授权，保留输入/运行/操作身份。过期或旧代际409，越权404。随后只在有无副作用证明的授权等待上沿现有stage_retry恢复；没有证明的旧终态运行明确拒绝安全自动续办，不伪改终态、不创建新输入掩盖失败。授权更新完成但stage_retry尚未排队时，原parked运行返回 `status=active, can_renew=true`；该组合表示原无副作用等待仍可恢复，不是新授权到期。客户端必须能读回该状态并以原run、输入和retry_node_id恢复，不能因active而丢弃原恢复证明。
 8. 原生 `POST /api/v1/auth/sign-out` 负责主动退出吊销；Host先捕获旧账号会话再调用，退出始终清本地，迟到结果不得影响新登录账号。200（或原会话已明确失效）记确认，网络/服务故障标远端吊销未确认并给必要提示；普通401清理不再触发另一次登出请求。
 
-错误保持分层：401任务token无效/已过期/父会话已失效；403当前业务范围或权限拒绝；409发行内容冲突、输入内容冲突或授权代际冲突。发送前的授权拒绝附明确无副作用标志；发送后的网络不确定不能使用此标志。审计只记原生主体/组织、授权与输入身份、范围摘要、发行/续期/拒绝/退出时间和结果，不记录员工会话、task token、材料正文或模型私有思考。
+错误保持分层：401任务token无效/已过期/父会话已失效；403当前业务范围、原生组织资格或权限拒绝；409发行内容冲突、输入内容冲突或授权代际冲突。发送前的授权拒绝附 `error.no_effect=true`、`error.phase="authorization"` 及原生错误码；自动续办只接受明确过期、父会话撤销、授权撤销或代际替换的401证明，403组织/业务权限拒绝及未知错误不能因重新授权而重发；发送后的网络不确定不能使用此标志。审计只记原生主体/组织、授权与输入身份、范围摘要、发行/续期/拒绝/退出时间和结果，不记录员工会话、task token、材料正文或模型私有思考。
 
 工作上下文 `source.input_status=current|superseded|closed` 和可选 `superseded_by_input_revision_id` 由同workspace/user且准确root/parent工作链的已接受输入确定。只有确认同工作链取代关系时，桌面才退出旧needs_input待办投影；同会话的无关新工作、closed状态或读取失败不证明已办。原通知、原动作事实及Forge业务状态不修改。
 
 ## 原生本人收件箱分页连接
 
-ObjectStack 17.3原生notifications只能返回最多200行，未接受offset/cursor；审批原生limit/offset+total已可分页。本轮只为该已核实缺口增加 `GET /api/v1/apps/forge/workbench/inbox`，复用sys_inbox_message和sys_notification_receipt，身份取原生当前员工，不接受目标user/org，不另存通知或待办。
+ObjectStack 17.3原生notifications只能返回最多200行，未接受offset/cursor；审批原生limit/offset+total已可分页。本轮只为该已核实缺口增加 `GET /api/v1/apps/forge/workbench/inbox`，复用sys_inbox_message和sys_notification_receipt，身份取原生当前员工并实时核验绑定组织的有效成员资格，不接受目标user/org，不另存通知或待办。
 
-请求 `limit`（1–200，默认100）及可选 `cursor`。返回 `version=1`、`notifications`（id/type/title/body/read/actionUrl/createdAt，与原生投影相同）、`next_cursor`（结束时null）、`has_more`；按created_at与id稳定降序进行keyset分页，游标绑定账号、组织和第一页边界，拒绝跨账号/组织复用及损坏游标。只读原生收件箱；read状态由同本人、同notification、inbox channel的原生receipt决定。页失败或无法证明完整时保留可见部分和来源错误，不能宣称完整或空待办。
+请求 `limit`（1–200，默认100）及可选 `cursor`。返回 `version="1"`、`notifications`（id/type/title/body/read/actionUrl/createdAt，与原生投影相同）、`next_cursor`（结束时null）、`has_more`；按created_at与id稳定降序进行keyset分页，游标绑定账号、组织和第一页边界，拒绝跨账号/组织复用及损坏游标。只读原生收件箱；read状态由同本人、同notification、inbox channel的原生receipt决定。页失败或无法证明完整时保留可见部分和来源错误，不能宣称完整或空待办。
