@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { access, readFile, readdir, stat } from 'node:fs/promises'
 import { dirname, relative, resolve } from 'node:path'
 import { repositoryRoot, validateLock } from './project-status.mjs'
-import { localOnlyDocuments, validateDocumentPaths } from './documentation-policy.mjs'
+import { localOnlyDocuments, validateDocumentPaths, validateStatusPage } from './documentation-policy.mjs'
 
 process.chdir(repositoryRoot)
 const trackedPaths = new Set(execFileSync('git', ['ls-files', '--cached', '-z'], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).split('\0').filter(Boolean))
@@ -33,6 +33,7 @@ const required = [
 await Promise.all(required.map((path) => access(path)))
 const lock = JSON.parse(await readFile('components.lock.json', 'utf8'))
 validateLock(lock)
+validateStatusPage(await readFile('docs/项目状态.md', 'utf8'), Object.values(lock.components).map(item => item.revision))
 
 async function markdownFiles(directory) {
   const files = []

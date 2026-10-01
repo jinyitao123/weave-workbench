@@ -8,6 +8,43 @@ const specialNames = new Set([
 // which is checked under its canonical path below.
 export const localOnlyDocuments = new Set(['scenarios/sales-contract-handoff/test-accounts.md'])
 
+export const statusSections = ['现在做到哪', '谁在做什么', '卡在哪', '下一步']
+export const statusLimits = { lines: 150, paragraph: 300 }
+
+// The status page is the hand-off entry, so it stays short and current: evidence lives in
+// acceptance and environment documents, versions in components.lock.json, history in Git.
+export function validateStatusPage(content, lockRevisions = []) {
+  const lines = content.split('\n')
+  if (lines.length > statusLimits.lines) throw new Error(`状态页超过 ${statusLimits.lines} 行: ${lines.length}`)
+  const sections = []
+  for (const [index, line] of lines.entries()) {
+    const heading = /^(#{1,6})\s+(.+)$/.exec(line)
+    if (heading && /历史|旧/.test(heading[2])) throw new Error(`状态页不保留历史章节: 第 ${index + 1} 行 ${line}`)
+    if (heading?.[1] === '##') sections.push(heading[2].trim())
+    const visible = line.replace(/\]\([^)]*\)/g, ']')
+    if (visible.length > statusLimits.paragraph) {
+      throw new Error(`状态页单段超过 ${statusLimits.paragraph} 字: 第 ${index + 1} 行（${visible.length} 字）`)
+    }
+    for (const [token] of line.matchAll(/(?<![0-9A-Za-z])[0-9a-f]{7,40}(?![0-9A-Za-z])/g)) {
+      if (!/\d/.test(token) || !/[a-f]/.test(token)) continue
+      if (!lockRevisions.some(revision => revision.startsWith(token))) {
+        throw new Error(`状态页不手写版本号，以 components.lock.json 为准: 第 ${index + 1} 行 ${token}`)
+      }
+    }
+  }
+  if (sections.join('|') !== statusSections.join('|')) {
+    throw new Error(`状态页只保留四个栏目「${statusSections.join('、')}」，当前为「${sections.join('、')}」`)
+  }
+}
+
+// Returns the part of the status page that registers active write tasks and branches.
+export function statusRegistry(content) {
+  const start = content.indexOf(`## ${statusSections[1]}`)
+  if (start < 0) return ''
+  const end = content.indexOf('\n## ', start + 1)
+  return content.slice(start, end < 0 ? undefined : end)
+}
+
 export function validateDocumentPaths(paths) {
   const recordIds = new Set()
   for (const path of paths) {
