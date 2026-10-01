@@ -1,4 +1,5 @@
 import { Bell, ClipboardCheck, RefreshCw, TimerReset } from 'lucide-react'
+import { WORKBENCH_RUN_CONTINUATION_TYPE } from '@/lib/team-work-continuation'
 import { useState } from 'react'
 import type { EnterpriseApprovalContextView, EnterpriseHumanTask, EnterpriseRunObservation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReadStatus } from '@/types/api'
 
@@ -72,7 +73,7 @@ export function EnterpriseWorkPage({ overview, loading, error, onRefresh, onComp
           <ReadIssue label="工作进度" status={overview.reads.runs} onRetry={onRefresh}/>
           {overview.runs.length ? <div className="work-run-list">{overview.runs.map((run) => {
           const choice = runChoice(run, overview.choices)
-          return <article key={run.id}><span><strong>{choice?.workflowName ?? readableName(run.step || run.agent)}</strong><small>{choice ? `${choice.teamName} · ${formatTime(run.startedAt)}` : formatTime(run.startedAt)}</small></span><i className={`is-${run.status}`}>团队执行 · {statusCopy(run.status)}</i></article>
+          return <article key={run.id}><span><strong>{choice?.workflowName ?? readableName(run.step || run.agent)}</strong><small>{choice ? `${choice.teamName} · ${formatTime(run.startedAt)}` : formatTime(run.startedAt)}</small></span><div className="work-message-actions"><i className={`is-${run.status}`}>团队执行 · {statusCopy(run.status)}</i>{run.status === 'parked' ? <button type="button" className="button" onClick={() => onContinue({ id: run.id, source: 'weave', notificationType: WORKBENCH_RUN_CONTINUATION_TYPE, kind: 'result', title: choice?.workflowName ?? readableName(run.step || run.agent), status: 'unknown', actionable: false, read: true, createdAt: run.startedAt ?? overview.loadedAt })}>继续原工作</button> : null}</div></article>
           })}</div> : overview.reads.runs.status === 'loaded' ? <div className="work-empty">你还没有通过 Workbench 发起工作。</div> : null}
           <ReadIssue label="团队目录" status={overview.reads.teamChoices} onRetry={onRefresh}/>
         </>}

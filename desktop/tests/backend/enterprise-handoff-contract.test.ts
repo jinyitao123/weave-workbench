@@ -1,3 +1,5 @@
+import { delegationResponse, fixedSource } from './task-delegation-fixture'
+import type { ForgeTaskScope } from '../../electron/main/enterprise/task-handoff'
 import { createHash } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import { EnterpriseService } from '../../electron/main/enterprise'
@@ -13,10 +15,13 @@ async function fixture() {
   const calls: { path: string; body: Record<string, unknown> }[] = []
   const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
     const path = new URL(String(input)).pathname
-    if (path === '/api/v1/auth/sign-in/email') return Response.json({ token: 'forge', user: { id: 'employee' } })
+    if (path === '/api/v1/auth/sign-in/email') return Response.json({ token: 'forge', user: { id: 'employee' }, session: { activeOrganizationId: 'forge-org' } })
     if (path === '/v1/auth/external/exchange') return Response.json({ token: 'weave', subject: { id: 'bound', externalId: 'employee' }, organization: { id: 'org' }, permissions: ['teams:use'] })
+    if (path === '/api/v1/auth/sign-out') return Response.json({ success: true })
     const body = JSON.parse(String(init?.body)) as Record<string, unknown>
     calls.push({ path, body })
+    if (path === '/v1/workbench/dispatch-inputs/prepare') return Response.json({ input_revision_id: body.registration_id })
+    if (path === '/api/v1/apps/forge/task-delegations') return Response.json(delegationResponse(body.scope as ForgeTaskScope, 'employee'))
     if (path === '/v1/workbench/dispatch-inputs') {
       // Mirror service admission constraints, not an unconditional success stub.
       expect(String(body.registration_id)).toMatch(uuid)
@@ -44,7 +49,7 @@ async function fixture() {
   const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
   await service.signIn('employee@example.test', 'test')
   let current = true
-  const source = { idempotencySeed: 'session:employee-message:team', sessionKey: 'session', sourceMessages: [{ messageId: 'employee-message', eventSeq: 2, sha256: hash('这版给他们看看') }], accountKey: await service.accountKey(), resources: [{ type: 'forge-file' as const, id: 'file-contract-v1', name: '合同.md', bytes: 12, sha256: hash('合同正文') }], authorizedBusinessCapabilityIds: [], assertCurrent: async () => { if (!current) throw new Error('员工已改变要求') } }
+  const source = { fixDelegationIntent: fixedSource(await service.accountKey()).fixDelegationIntent, idempotencySeed: 'session:employee-message:team', sessionKey: 'session', sourceMessages: [{ messageId: 'employee-message', eventSeq: 2, sha256: hash('这版给他们看看') }], accountKey: await service.accountKey(), resources: [{ type: 'forge-file' as const, id: 'file-contract-v1', name: '合同.md', bytes: 12, sha256: hash('合同正文') }], authorizedBusinessCapabilityIds: [], assertCurrent: async () => { if (!current) throw new Error('员工已改变要求') } }
   return { service, source, registrations, runs, calls, drop: () => { dropDispatchResponse = true }, wrongDigest: () => { mismatchDigest = true }, rejectContinuation: () => { rejectContinuation = true }, changeDuringRegistration: () => { afterRegistration = async () => { current = false } }, logoutDuringRegistration: () => { afterRegistration = async () => { await service.signOut() } } }
 }
 describe('Weave handoff admission contract', () => {

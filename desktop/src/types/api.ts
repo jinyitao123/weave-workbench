@@ -420,6 +420,8 @@ export interface EnterpriseWeaveWorkContinuationContextView {
   task: string
   runStatus: 'queued' | 'running' | 'parked' | 'cancel_requested' | 'succeeded' | 'failed' | 'cancelled' | 'abandoned'
   businessResult?: 'completed' | 'needs_input' | 'action_failed' | 'action_unknown'
+  inputStatus?: 'current' | 'superseded' | 'closed'
+  authorization?: { status: 'active' | 'renewal_required' | 'not_applicable'; reason?: string; canRenew: boolean }
   materials: Array<{
     name: string
     bytes: number

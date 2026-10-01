@@ -1,3 +1,4 @@
+export const WORKBENCH_RUN_CONTINUATION_TYPE = 'weave.workbench_run'
 import type { EnterpriseWeaveWorkContinuationContextView } from '../types/api'
 
 export const TEAM_RECORD_SOURCE_BOUNDARY_NOTE = '业务记录字段只证明系统当前记载了这些值，不自动等于客户确认；没有客户一手材料时，应说“记录载明”或“待核实”。'
@@ -9,6 +10,10 @@ export function teamRunContinuationBoundary(createdAt: string): string {
 
 /** Server business results take precedence over the model's check opinion. */
 export function teamRunResultNotice(context: EnterpriseWeaveWorkContinuationContextView): string {
+  if (context.inputStatus === 'superseded') return '平台已确认同一工作有后续输入取代本次输入。请从最新工作消息继续，旧检查意见只作历史参考；这不表示 Forge 业务已完成。'
+  if (context.authorization?.status === 'renewal_required') return context.authorization.canRenew
+    ? '这项工作原授权已过期，平台确认仍在无业务副作用的等待位置。只有员工在新消息明确要求继续原工作后，才调用续授权工具；保持原输入、材料和业务范围，不重新交接或重放未知动作。'
+    : '这项工作原授权已过期。平台没有确认可安全恢复，先只读核对原业务回执；不能续授权重放或另建输入掩盖旧失败。'
   const result = context.finalResult
   const businessResult = context.businessResult
   if (businessResult === 'action_failed' || businessResult === 'action_unknown') {
