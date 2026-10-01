@@ -1,9 +1,57 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
-import { EnterpriseService } from '../../electron/main/enterprise'
+import { EnterpriseService, type NativeMcpActionArguments } from '../../electron/main/enterprise'
+import { parseCurrentItemActionReceipt } from '../../electron/main/enterprise/approval-actions'
+import type { EnterpriseApprovalAction } from '../../src/types/api'
 
 function mcpToolResult(value: unknown) {
   return Response.json({ jsonrpc: '2.0', id: 'test', result: { content: [{ type: 'text', text: JSON.stringify(value) }] } })
+}
+
+const nativeActionArgs = {
+  actionName: 'sales_contract_send_back', objectName: 'forge_sales_contract', recordId: 'contract-1',
+  params: {
+    approvalRequestId: 'approval-1', itemVersion: 'item-round-1', sourceMaterialVersion: 'a'.repeat(64),
+    comment: '按本轮员工意见退回。',
+  },
+} satisfies NativeMcpActionArguments
+
+const nativeActionReceipt = {
+  decision: 'revise', status: 'returned', requestId: 'approval-1', recordId: 'contract-1',
+  itemVersion: 'item-round-1', sourceMaterialVersion: 'a'.repeat(64),
+  resumed: false, autoRejected: false, alreadyApplied: false,
+}
+
+const selectedNativeAction = {
+  label: '退回当前审批', description: '按员工意见退回。',
+  execution: {
+    tool: 'run_action', actionName: nativeActionArgs.actionName,
+    objectName: nativeActionArgs.objectName, recordId: nativeActionArgs.recordId,
+    params: {
+      approvalRequestId: nativeActionArgs.params.approvalRequestId,
+      itemVersion: nativeActionArgs.params.itemVersion,
+      sourceMaterialVersion: nativeActionArgs.params.sourceMaterialVersion,
+    },
+  },
+  inputs: [{ name: 'comment', type: 'string', label: '办理意见', required: true }],
+} satisfies EnterpriseApprovalAction
+
+async function nativeActionFixture(mcpResponse: Response | Error) {
+  const calls: string[] = []
+  const fetch = vi.fn(async (input: URL | RequestInfo) => {
+    const path = new URL(String(input)).pathname
+    calls.push(path)
+    if (path === '/api/v1/auth/sign-in/email') return Response.json({ token: 'forge-token', user: { id: 'employee' } })
+    if (path === '/v1/auth/external/exchange') return Response.json({ token: 'weave-token', subject: { id: 'employee' }, organization: { id: 'org' }, permissions: ['teams:use'] })
+    if (path === '/api/v1/mcp') {
+      if (mcpResponse instanceof Error) throw mcpResponse
+      return mcpResponse
+    }
+    throw new Error(`unexpected request ${path}`)
+  }) as typeof globalThis.fetch
+  const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge.test', WORKBENCH_WEAVE_URL: 'http://weave.test' }, fetch })
+  await service.signIn('employee@example.test', 'test-password')
+  return { service, calls }
 }
 
 async function serviceFixture(queryStatus = 200) {
@@ -111,5 +159,46 @@ describe('Forge native MCP object reads', () => {
     await expect(service.getWorkContinuationContext({
       workReference: '10000000-0000-4000-8000-000000000001', runReference: 'run-1', sessionReference: 'workbench-1',
     })).rejects.toThrow('团队业务动作事实不完整')
+  })
+})
+
+describe('Forge native MCP action receipt envelope', () => {
+  it('unwraps the bound ActionEnvelope from MCP content text and preserves strict receipt version checks', async () => {
+    const envelope = {
+      action: nativeActionArgs.actionName, objectName: nativeActionArgs.objectName, ok: true,
+      recordId: nativeActionArgs.recordId, result: nativeActionReceipt,
+    }
+    const f = await nativeActionFixture(mcpToolResult(envelope))
+
+    const attempt = await f.service.runNativeMcpAction(nativeActionArgs, async () => {})
+
+    expect(attempt).toEqual({ status: 'returned', result: nativeActionReceipt })
+    expect(parseCurrentItemActionReceipt(attempt.result, selectedNativeAction)).toEqual(nativeActionReceipt)
+    expect(parseCurrentItemActionReceipt({ ...nativeActionReceipt, itemVersion: 'item-round-2' }, selectedNativeAction)).toBeUndefined()
+    expect(parseCurrentItemActionReceipt({ ...nativeActionReceipt, sourceMaterialVersion: 'b'.repeat(64) }, selectedNativeAction)).toBeUndefined()
+    expect(f.calls.filter((path) => path === '/api/v1/mcp')).toHaveLength(1)
+  })
+
+  it.each(['action', 'objectName', 'recordId', 'ok'] as const)('keeps a mismatched ActionEnvelope %s unknown', async (field) => {
+    const envelope: Record<string, unknown> = {
+      action: nativeActionArgs.actionName, objectName: nativeActionArgs.objectName, ok: true,
+      recordId: nativeActionArgs.recordId, result: nativeActionReceipt,
+    }
+    envelope[field] = field === 'ok' ? false : 'another-action'
+    const f = await nativeActionFixture(mcpToolResult(envelope))
+
+    const attempt = await f.service.runNativeMcpAction(nativeActionArgs, async () => {})
+
+    expect(attempt.status).toBe('unknown')
+    expect(f.calls.filter((path) => path === '/api/v1/mcp')).toHaveLength(1)
+  })
+
+  it('keeps a transport exception unknown and does not retry the native action POST', async () => {
+    const f = await nativeActionFixture(new Error('simulated response loss'))
+
+    const attempt = await f.service.runNativeMcpAction(nativeActionArgs, async () => {})
+
+    expect(attempt.status).toBe('unknown')
+    expect(f.calls.filter((path) => path === '/api/v1/mcp')).toHaveLength(1)
   })
 })

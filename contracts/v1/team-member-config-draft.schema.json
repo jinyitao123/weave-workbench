@@ -65,7 +65,8 @@
             "materials.single.id",
             "materials.single.name",
             "materials.single.sha256",
-            "materials.manifest_json"
+            "materials.manifest_json",
+            "materials.ids"
           ]
         }
       }

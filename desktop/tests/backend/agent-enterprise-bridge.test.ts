@@ -3,12 +3,13 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AgentEnterpriseBridge } from '../../electron/main/enterprise/agent-bridge'
-import { digest, submissionUUID } from '../../electron/main/enterprise/handoff-store'
-import { freezeApprovalOriginalMaterial, freezeMaterials, normalizeFrozenMaterial, type FrozenMaterial } from '../../electron/main/enterprise/materials'
-import type { EnterpriseApprovalContext, TranscriptMessage } from '../../src/types/api'
-import { WorkRegistrationRejectedError, type EnterpriseWorkContinuationContext, type EnterpriseWorkNotificationSource } from '../../electron/main/enterprise'
+import { digest, HandoffStore, submissionUUID } from '../../electron/main/enterprise/handoff-store'
+import { freezeApprovalOriginalMaterial, freezeMaterials, makeFrozenTextMaterial, normalizeFrozenMaterial, type FrozenMaterial } from '../../electron/main/enterprise/materials'
+import type { EnterpriseApprovalAction, EnterpriseApprovalContext, EnterpriseSession, TranscriptMessage } from '../../src/types/api'
+import { WorkRegistrationRejectedError, type EnterpriseBusinessNotificationContext, type EnterpriseWorkContinuationContext, type EnterpriseWorkNotificationSource, type NativeMcpActionArguments, type NativeMcpActionAttempt } from '../../electron/main/enterprise'
 import { ForgeBusinessReadError, type BusinessRecordSnapshot } from '../../electron/main/enterprise/business-records'
 import { appendWorkspaceMaterialContext } from '../../src/lib/workspace-material-attachments'
+import { APPROVAL_REVIEW_SESSION_MARKER } from '../../src/lib/approval-review'
 
 const bridges: AgentEnterpriseBridge[] = [], directories: string[] = []
 afterEach(async () => {
@@ -16,6 +17,20 @@ afterEach(async () => {
   await Promise.all(directories.splice(0).map((path) => rm(path, { recursive: true, force: true })))
 })
 function user(id: string, text: string): TranscriptMessage { return { id, role: 'user', parts: [{ type: 'text', text }] } }
+function forgeSession(id = 'employee-a'): EnterpriseSession {
+  return {
+    version: '1', status: 'signed-in', environment: { origin: 'https://forge.example.test', secure: true }, storage: 'session-only',
+    user: { id, weaveUserId: `weave-${id}`, name: id, email: `${id}@example.test` },
+    organization: { id: 'organization-a', name: '组织甲' }, permissions: ['teams:use'],
+  }
+}
+function currentItemActionServiceStubs() {
+  return {
+    getSession: vi.fn(async () => forgeSession()),
+    getApprovalActionHistory: vi.fn(async () => [] as unknown[]),
+    runNativeMcpAction: vi.fn(async (_args: NativeMcpActionArguments, _assertCurrent: () => Promise<void>): Promise<NativeMcpActionAttempt> => ({ status: 'unknown' })),
+  }
+}
 function workContinuationContext(): EnterpriseWorkContinuationContext {
   const task = '请按客户确认的技术协议继续检查交付范围。'
   const finalResult = '团队检查发现验收期限仍需确认。'
@@ -26,7 +41,72 @@ function workContinuationContext(): EnterpriseWorkContinuationContext {
       task, taskSHA256: digest(task), teamID: 'team-contract', workflowID: 'workflow-review', workflowVersion: 3,
       materials: [], sourceMessages: [{ messageID: 'employee-message', eventSeq: 1, sha256: digest('员工原始要求') }],
     },
-    run: { status: 'succeeded' as const, finalResult: { id: 'deliverable-1', title: '交付检查意见', contentType: 'text/markdown', content: finalResult, sha256: digest(finalResult) } },
+    run: { status: 'succeeded' as const, finalResult: { id: 'deliverable-1', title: '交付检查意见', contentType: 'text/markdown', content: finalResult, sha256: digest(finalResult) }, actionOutcomes: [] },
+  }
+}
+function continuationTextMaterial(id: string, name: string, content: string): EnterpriseWorkContinuationContext['input']['materials'][number] {
+  const frozen = makeFrozenTextMaterial(name, Buffer.from(content, 'utf8'))
+  return {
+    id, materialId: frozen.materialId, name: frozen.name, mediaType: frozen.mediaType,
+    bytes: frozen.bytes, sha256: frozen.sha256, content: frozen.extraction.content, extraction: frozen.extraction,
+  }
+}
+function completedReadOnlyContext(): EnterpriseWorkContinuationContext {
+  const context = workContinuationContext()
+  context.run.finalResult = { ...context.run.finalResult!, disposition: 'complete', summary: '只读检查完成。', missingItems: [] }
+  context.run.actionOutcomes = []
+  context.input.materials = ['原件甲.md', '原件乙.md'].map((name, index) => continuationTextMaterial(`frozen-original-${index + 1}`, name, `本轮固定原件 ${index + 1}`))
+  return context
+}
+async function prepareCompletedReadOnlySubmit(f: Awaited<ReturnType<typeof fixture>>, context: EnterpriseWorkContinuationContext, id: string) {
+  await openWorkContinuation(f, context, id)
+  await f.input('我明确授权沿用这两份已固定原件，并由本轮查看的业务动作提交。', `employee-${id}-submit`)
+  const discovered = await f.discover()
+  const actionKey = discovered.available_actions[0]?.action_key
+  if (!actionKey) throw new Error('fixture did not return a current business action')
+  const { recordKey } = await f.findRecord('TEST-100 设备交接验收合同')
+  const read = await f.call('read_business_record', { record_key: recordKey })
+  if (read.status !== 200) throw new Error('fixture did not read the current business record')
+  return {
+    ...discovered, goal: '使用两份固定原件完成当前员工明确授权的业务提交。', business_record_key: recordKey,
+    business_actions: [actionKey], materials: [], reuse_material_names: context.input.materials.map((material) => material.name),
+  }
+}
+function businessNotificationContext(notificationID: string, options: { recordId?: string; materialStatus?: 'available' | 'none' | 'unavailable'; content?: string } = {}): EnterpriseBusinessNotificationContext {
+  const sourceBytes = Buffer.from('%PDF-current-contract')
+  const content = options.content ?? '当前批准合同原件内容。'
+  const sha256 = digest(sourceBytes)
+  const material = {
+    sourceKind: 'approval' as const, requestId: 'approval-current', fileId: 'approval-file-current',
+    name: '当前批准合同.pdf', mediaType: 'application/pdf' as const, bytes: sourceBytes.length, sha256,
+    extraction: {
+      status: 'complete' as const, mediaType: 'text/plain; charset=utf-8' as const,
+      bytes: Buffer.byteLength(content), sha256: digest(content), sourceSha256: sha256, content,
+      extractor: 'pdfjs-dist' as const, coverage: { pdfPageCount: 1, pdfTextPageCount: 1 }, limitations: [],
+    },
+  }
+  const candidate = {
+    objectName: 'forge_sales_contract', objectLabel: '销售合同', recordId: options.recordId ?? 'contract-current',
+    name: '设备验收合同', code: 'C-100', status: '内部复核通过', recordVersion: 'v2',
+  }
+  return {
+    kind: 'business', notificationID,
+    source: { system: 'forge', objectName: candidate.objectName, recordId: candidate.recordId },
+    materialStatus: options.materialStatus ?? 'available',
+    materialReferences: options.materialStatus === 'none' || options.materialStatus === 'unavailable' ? [] : [{
+      sourceKind: 'approval' as const, requestId: 'approval-current', fileId: 'approval-file-current',
+      name: '当前批准合同.pdf', mediaType: 'application/pdf' as const, bytes: sourceBytes.length, sha256,
+    }],
+    record: {
+      candidate,
+      snapshot: {
+        version: 1, capturedAt: '2026-09-30T01:00:00Z', objectLabel: '销售合同',
+        record: [{ label: '合同名称', value: candidate.name }, { label: '状态', value: candidate.status }],
+        relations: [], completeness: 'complete', pricingDetailCompleteness: 'unknown', completenessNotes: [],
+      },
+    },
+    currentReadAt: '2026-09-30T01:00:00Z',
+    materials: options.materialStatus === 'none' || options.materialStatus === 'unavailable' ? [] : [material],
   }
 }
 async function fixture(objectName = 'forge_sales_contract', configureStorage = true) {
@@ -45,6 +125,7 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
     files: [{ fileId: `source-file-${requestId}`, name: '原合同.md', mediaType: 'text/plain; charset=utf-8', bytes: Buffer.byteLength(sourceContent), sha256: digest(sourceContent), content: sourceContent, verified: true }],
   })
   const contexts = new Map([['approval-1', approvalContext('approval-1', 'revise-1', 'contract-1')], ['approval-2', approvalContext('approval-2', 'revise-2', 'contract-2')]])
+  const approvalActions: unknown[] = []
   const revisionReceipts = new Map<string, Record<string, unknown>>()
   const businessCapabilityId = `forge:action:${objectName}.submit`
   const choice = { teamId: 'team-contract', teamName: '合同团队', teamObjective: '复核合同并完成交接', workflowId: 'workflow-review', workflowName: '合同复核', workflowDescription: '接合同全文，检查金额和交期，交付复核意见', businessCapabilityIds: [businessCapabilityId], version: 3 }
@@ -57,10 +138,16 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
   let continuationSequence = 1
   const service = {
     accountKey: vi.fn(async () => 'employee-a'),
+    getSession: vi.fn(async () => forgeSession()),
     getApprovalContext: vi.fn(async (requestId: string) => {
       const context = contexts.get(requestId)
       if (!context) throw new Error('这项审批已无法由当前员工处理，请刷新待办')
       return structuredClone(context)
+    }),
+    getApprovalActionHistory: vi.fn(async () => structuredClone(approvalActions)),
+    runNativeMcpAction: vi.fn(async (_args: NativeMcpActionArguments, assertCurrent: () => Promise<void>): Promise<NativeMcpActionAttempt> => {
+      await assertCurrent()
+      return { status: 'unknown' as const, code: 'IN_DOUBT', message: 'Forge 原生动作结果待核对。' }
     }),
     getWorkContinuationContext: vi.fn(async (references: { workReference: string; runReference: string; sessionReference: string }) => {
       const context = workContinuationContext()
@@ -69,6 +156,7 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
       context.source.workbenchSessionID = references.sessionReference
       return context
     }),
+    getBusinessNotificationContext: vi.fn(async (notificationID: string) => businessNotificationContext(notificationID, { recordId: businessCandidate.recordId })),
     getWorkNotificationSource: vi.fn(async (notificationID: string): Promise<EnterpriseWorkNotificationSource> => ({
       version: '1', notificationID, kind: 'revision_required',
       source: { system: 'weave' as const, workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' },
@@ -91,6 +179,7 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
       idempotencySeed?: string
       continuation?: { inputRevisionID: string; runID: string }
       resources?: Array<{ sourceKind?: string; requestId?: string; name: string; bytes: number; sha256: string }>
+      authorizedBusinessCapabilityIds?: string[]
     }) => {
       await source?.assertCurrent()
       if (source?.continuation) {
@@ -111,15 +200,18 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
       return receipt?.requestId === requestId ? { status: 200, body: { data: receipt } } : { status: 404, body: {} }
     }),
   }
-  const transcript: TranscriptMessage[] = []
-  const sessions = { read: vi.fn(async () => transcript) }
+  let activeTranscript: TranscriptMessage[] = []
+  let sessionPath = '/sessions/current.jsonl'
+  let runtimeId = 'runtime'
+  let sessionSequence = 0
+  const transcripts = new Map<string, TranscriptMessage[]>([[sessionPath, activeTranscript]])
+  const sessions = { read: vi.fn(async (filePath: unknown) => transcripts.get(String(filePath)) ?? []) }
   const storageDirectory = join(cwd, 'secure-intents')
   const bridge = new AgentEnterpriseBridge({
     service, sessions: { prime: sessions, pi: sessions }, extensionPath: '/extensions/enterprise.ts',
     ...(configureStorage ? { storage: { directory: storageDirectory } } : {}),
   })
   await bridge.start(); bridges.push(bridge)
-  let sessionPath = '/sessions/current.jsonl'
   let environment = bridge.environmentFor({ cwd, sessionPath, harness: 'pi' })
   bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, sessionPath, 'runtime')
   let turnKey = ''
@@ -129,15 +221,28 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
   }
   const call = (method: string, params: Record<string, unknown> = {}) => callWithTurn(method, params)
   const input = async (text: string, id: string) => {
-    await bridge.employeeCommand('runtime', { type: 'prompt', message: text })
-    transcript.push(user(id, text))
+    await bridge.employeeCommand(runtimeId, { type: 'prompt', message: text })
+    activeTranscript.push(user(id, text))
     const active = await call('activate', { prompt: text }); turnKey = active.body.result?.turn_key as string
     return turnKey
+  }
+  const startNewSession = (name: string) => {
+    sessionSequence += 1
+    sessionPath = `/sessions/${name}-${sessionSequence}.jsonl`
+    activeTranscript = []
+    transcripts.set(sessionPath, activeTranscript)
+    runtimeId = `runtime-${name}-${sessionSequence}`
+    environment = bridge.environmentFor({ cwd, harness: 'pi' })
+    bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, sessionPath, runtimeId)
+    turnKey = ''
+    return { path: sessionPath, runtimeId }
   }
   const relogin = async (options: { accountKey?: string; sessionPath?: string } = {}) => {
     bridge.invalidateAccount()
     if (options.accountKey) service.accountKey.mockResolvedValue(options.accountKey)
     sessionPath = options.sessionPath ?? sessionPath
+    activeTranscript = transcripts.get(sessionPath) ?? []
+    transcripts.set(sessionPath, activeTranscript)
     environment = bridge.environmentFor({ cwd, sessionPath, harness: 'pi' })
     bridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, sessionPath, 'runtime')
   }
@@ -145,12 +250,34 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
     const context = contexts.get(requestId)
     if (!context?.returnVersion) throw new Error('test fixture has no returned context')
     const binding = await bridge.pinReturnedApprovalContext(requestId)
+    startNewSession(`returned-${requestId}`)
     const text = `打开退回审批 ${requestId}`
-    await bridge.employeeCommand('runtime', { type: 'prompt', message: text }, binding.handle)
-    transcript.push(user(`opened-${requestId}`, text))
+    await bridge.employeeCommand(runtimeId, { type: 'prompt', message: text }, binding.handle)
+    activeTranscript.push(user(`opened-${requestId}`, text))
     const active = await call('activate', { prompt: text })
     turnKey = active.body.result?.turn_key as string
     return { context: binding.context, turnKey }
+  }
+  const openApprovalReview = async (requestId = 'approval-1') => {
+    const binding = await bridge.pinApprovalReviewContext(requestId)
+    startNewSession(`review-${requestId}`)
+    const text = `请只读复核「${binding.context.title}」\n\n${APPROVAL_REVIEW_SESSION_MARKER}`
+    await bridge.employeeCommand(runtimeId, { type: 'prompt', message: text }, undefined, undefined, binding.handle)
+    activeTranscript.push(user(`reviewed-${requestId}`, text))
+    const active = await call('activate', { prompt: text })
+    turnKey = active.body.result?.turn_key as string
+    return { context: binding.context, turnKey, path: sessionPath, runtimeId }
+  }
+  const openBusinessResult = async (notificationID = 'business-notice') => {
+    const binding = await bridge.pinWorkContinuationContext({ id: notificationID, source: 'forge' as const })
+    if (binding.context.kind !== 'business') throw new Error('test fixture did not return a business notification context')
+    startNewSession(`business-${notificationID}`)
+    const prompt = '请只读查看当前业务结果。'
+    await bridge.employeeCommand(runtimeId, { type: 'prompt', message: prompt }, undefined, binding.handle)
+    activeTranscript.push(user(`opened-${notificationID}`, prompt))
+    const active = await call('activate', { prompt })
+    turnKey = active.body.result?.turn_key as string
+    return { context: binding.context, turnKey, path: sessionPath, runtimeId }
   }
   const discover = async () => {
     const search = await call('search', { work_summary: '复核合同' })
@@ -159,20 +286,20 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
     const capabilities = describe.body.result.capabilities as Array<{ handoff_key: string; business_actions: Array<{ action_key: string }> }>
     return { handoff_key: capabilities[0].handoff_key, business_actions: [], goal: '复核这版合同', materials, available_actions: capabilities[0].business_actions }
   }
-  const findRecord = async (handoffKey: string, workSummary: string) => {
-    const directory = await call('list_business_objects', { handoff_key: handoffKey })
+  const findRecord = async (workSummary: string) => {
+    const directory = await call('list_business_objects')
     const objectRef = (directory.body.result.objects as Array<{ object_ref: string }>)[0]?.object_ref
     if (!objectRef) throw new Error('fixture did not return a business object')
-    const found = await call('find_business_record', { handoff_key: handoffKey, object_ref: objectRef, work_summary: workSummary })
+    const found = await call('find_business_record', { object_ref: objectRef, work_summary: workSummary })
     const recordKey = (found.body.result.records as Array<{ record_key: string }>)[0]?.record_key
     if (!recordKey) throw new Error('fixture did not return a business record')
     return { directory, objectRef, found, recordKey }
   }
   await input(appendWorkspaceMaterialContext('这版给他们看看', [materialReference]), 'employee-turn-1')
-  return { call, callWithTurn, input, getTurnKey: () => turnKey, relogin, discover, findRecord, openReturned, service, bridge, environment, materials, cwd, transcript, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, businessCandidate, businessSnapshot }
+  return { call, callWithTurn, input, getTurnKey: () => turnKey, setTurnKey: (value: string) => { turnKey = value }, relogin, startNewSession, discover, findRecord, openReturned, openApprovalReview, openBusinessResult, service, bridge, get environment() { return environment }, get runtimeId() { return runtimeId }, get sessionPath() { return sessionPath }, get transcript() { return activeTranscript }, transcripts, materials, cwd, content, businessCapabilityId, contexts, storageDirectory, revisionReceipts, approvalActions, businessCandidate, businessSnapshot, sessions }
 }
 
-async function openNeedsInputContinuation(f: Awaited<ReturnType<typeof fixture>>, context: EnterpriseWorkContinuationContext, id: string) {
+async function openWorkContinuation(f: Awaited<ReturnType<typeof fixture>>, context: EnterpriseWorkContinuationContext, id: string) {
   f.service.getWorkContinuationContext.mockImplementation(async (references) => {
     const current = structuredClone(context)
     current.source.inputRevisionID = references.workReference
@@ -183,11 +310,30 @@ async function openNeedsInputContinuation(f: Awaited<ReturnType<typeof fixture>>
   const source = { workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' }
   const binding = await f.bridge.pinWorkContinuationContext({ id, source: 'weave', ...source })
   const prompt = `继续原工作\n${binding.context.materials.map((item) => `《${item.name}》`).join('、')}`
-  await f.bridge.employeeCommand('runtime', { type: 'prompt', message: prompt }, undefined, binding.handle)
+  await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: prompt }, undefined, binding.handle)
   f.transcript.push(user(`opened-${id}`, prompt))
   const activated = await f.call('activate', { prompt })
   expect(activated.status, JSON.stringify(activated.body)).toBe(200)
+  f.setTurnKey(activated.body.result.turn_key as string)
   return source
+}
+async function openNeedsInputContinuation(f: Awaited<ReturnType<typeof fixture>>, context: EnterpriseWorkContinuationContext, id: string) {
+  return openWorkContinuation(f, context, id)
+}
+async function freezeOfficeOriginals(f: Awaited<ReturnType<typeof fixture>>, context: EnterpriseWorkContinuationContext) {
+  const originals = await Promise.all([
+    readFile(new URL('../../../scenarios/sales-contract-handoff/materials/合同样例.docx', import.meta.url)),
+    readFile(new URL('../../../scenarios/sales-contract-handoff/materials/技术协议样例.pdf', import.meta.url)),
+  ])
+  const paths = ['材料/附件/合同样例.docx', '材料/附件/技术协议样例.pdf']
+  for (let index = 0; index < paths.length; index++) await writeFile(join(f.cwd, paths[index]!), originals[index]!)
+  const frozen = await freezeMaterials(f.cwd, paths.map((path, index) => ({ path, sha256: digest(originals[index]!) })))
+  context.input.materials = frozen.map((material, index) => ({
+    id: `forge-read-only-original-${index}`, materialId: material.materialId, sourceKind: 'owner',
+    name: material.name, mediaType: material.mediaType, bytes: material.bytes, sha256: material.sha256,
+    content: material.extraction.content, extraction: material.extraction,
+  }))
+  return frozen
 }
 
 describe('employee-bound material handoff', () => {
@@ -203,22 +349,82 @@ describe('employee-bound material handoff', () => {
     })
     await expect(f.bridge.pinWorkContinuationContext({ ...item, id: 'notice-wrong-kind' })).rejects.toThrow('Forge 工作消息来源与当前通知不匹配')
     const prompt = `继续原工作\n${binding.context.task}`
-    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: prompt }, undefined, binding.handle)
+    await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: prompt }, undefined, binding.handle)
     f.transcript.push(user('continued-work', prompt))
     await expect(f.call('activate', { prompt })).resolves.toMatchObject({ body: { result: { turn_key: expect.any(String) } } })
   })
 
-  it('passes validated team disposition and missing items into the Pi continuation context', async () => {
+  it('pins Forge business results to the current authorized record and keeps unavailable materials distinct', async () => {
+    const f = await fixture()
+    const binding = await f.bridge.pinWorkContinuationContext({ id: 'business-notice-1', source: 'forge' })
+    expect(f.service.getBusinessNotificationContext).toHaveBeenCalledWith('business-notice-1')
+    expect(binding.context).toMatchObject({
+      kind: 'business', materialStatus: 'available',
+      record: { name: '设备验收合同', status: '内部复核通过' },
+      materials: [{ name: '当前批准合同.pdf', verified: true, extraction: { content: '当前批准合同原件内容。' } }],
+    })
+    expect(binding.context.kind === 'business' && binding.context.record.fields).toEqual(expect.arrayContaining([{ label: '合同名称', value: '设备验收合同' }]))
+    expect(JSON.stringify(binding.context)).not.toContain('contract-current')
+    expect(JSON.stringify(binding.context)).not.toContain('approval-file-current')
+
+    f.service.getBusinessNotificationContext.mockResolvedValueOnce(businessNotificationContext('business-unavailable', { materialStatus: 'unavailable' }))
+    const unavailable = await f.bridge.pinWorkContinuationContext({ id: 'business-unavailable', source: 'forge' })
+    expect(unavailable.context).toMatchObject({ kind: 'business', materialStatus: 'unavailable', materials: [] })
+  })
+
+  it('opens a Forge business result as read-only, then lets a later employee message use normal tools', async () => {
+    const f = await fixture()
+    const opened = await f.openBusinessResult()
+    expect(opened.context).toMatchObject({ kind: 'business', record: { name: '设备验收合同' } })
+    for (const method of ['search', 'submit', 'revision_submit', 'recover', 'list_business_objects', 'find_business_record', 'read_business_record']) {
+      const result = await f.call(method)
+      expect(result.status, `${method} should be blocked on initial message open`).toBe(409)
+      expect(result.body.error).toContain('只允许查看本次核验')
+    }
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+    expect(f.service.submitApprovalRevision).not.toHaveBeenCalled()
+
+    await f.input('我有新的工作要求，请按当前权限重新查找相关记录。', 'business-new-employee-request')
+    const search = await f.call('search', { work_summary: '设备验收合同' })
+    expect(search.status).toBe(200)
+    expect(search.body.result.teams).toEqual(expect.arrayContaining([expect.objectContaining({ name: '合同团队' })]))
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+
+  it('rejects a business result handle when the current record or account changes before it binds', async () => {
+    const f = await fixture()
+    const binding = await f.bridge.pinWorkContinuationContext({ id: 'business-stale-record', source: 'forge' })
+    const session = f.startNewSession('business-stale-record')
+    f.service.getBusinessNotificationContext.mockResolvedValueOnce(businessNotificationContext('business-stale-record', { recordId: 'contract-replaced' }))
+    await expect(f.bridge.employeeCommand(session.runtimeId, { type: 'prompt', message: '查看当前业务结果' }, undefined, binding.handle))
+      .rejects.toThrow('Forge 当前记录或材料版本已变化')
+
+    const other = await fixture()
+    const otherBinding = await other.bridge.pinWorkContinuationContext({ id: 'business-other-account', source: 'forge' })
+    const otherSession = other.startNewSession('business-other-account')
+    other.service.accountKey.mockResolvedValue('employee-b')
+    await expect(other.bridge.employeeCommand(otherSession.runtimeId, { type: 'prompt', message: '查看当前业务结果' }, undefined, otherBinding.handle))
+      .rejects.toThrow('当前账号已变化')
+  })
+
+  it('passes team missing-item opinions and a successful Forge action into the Pi continuation context', async () => {
     const f = await fixture()
     const context = workContinuationContext()
     context.run.finalResult = {
       ...context.run.finalResult!, disposition: 'needs_input', summary: '合同还缺验收日期。', missingItems: ['验收日期'],
     }
+    context.run.actionOutcomes = [{
+      nodeID: 'submit', callID: 'call-submit', actionName: 'contract_submit', objectName: 'sales_contract',
+      status: 'succeeded', summary: 'Forge 已确认提交成功。',
+    }]
     f.service.getWorkContinuationContext.mockResolvedValueOnce(context)
     const binding = await f.bridge.pinWorkContinuationContext({
       id: 'notice-needs-input', source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1',
     })
     expect(binding.context.finalResult).toMatchObject({ disposition: 'needs_input', summary: '合同还缺验收日期。', missingItems: ['验收日期'] })
+    expect(binding.context.actionOutcomes).toEqual([{
+      actionName: 'contract_submit', objectName: 'sales_contract', status: 'succeeded', summary: 'Forge 已确认提交成功。',
+    }])
   })
 
   it('passes trusted Weave action outcomes to Pi without exposing the bound record id', async () => {
@@ -235,6 +441,9 @@ describe('employee-bound material handoff', () => {
     }])
     expect(JSON.stringify(binding.context.actionOutcomes)).not.toContain('contract-internal-1')
 
+    const missingContext = workContinuationContext()
+    delete missingContext.run.actionOutcomes
+    f.service.getWorkContinuationContext.mockResolvedValueOnce(missingContext)
     const missing = await f.bridge.pinWorkContinuationContext({ id: 'notice-no-action-outcomes', source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' })
     expect(missing.context).not.toHaveProperty('actionOutcomes')
   })
@@ -245,7 +454,7 @@ describe('employee-bound material handoff', () => {
     const binding = await f.bridge.pinWorkContinuationContext(item)
     expect(f.service.getWorkNotificationSource).not.toHaveBeenCalled()
     const openedPrompt = `继续原团队工作\n${binding.context.task}`
-    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: openedPrompt }, undefined, binding.handle)
+    await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: openedPrompt }, undefined, binding.handle)
     f.transcript.push(user('continued-work-open', openedPrompt))
     const opened = await f.call('activate', { prompt: openedPrompt })
     expect(opened.body.result.turn_key).toBeTypeOf('string')
@@ -303,7 +512,7 @@ describe('employee-bound material handoff', () => {
     const binding = await f.bridge.pinWorkContinuationContext({ id: 'failed-work', source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' })
     const reference = { projectId: 'project-test', harness: 'pi' as const, workspacePath: f.cwd, name: '合同.md', path: '材料/附件/合同.md', sha256: digest(f.content), bytes: Buffer.byteLength(f.content), mimeType: 'text/markdown' as const }
     const openingPrompt = '查看上次失败的团队结果。'
-    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: openingPrompt }, undefined, binding.handle)
+    await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: openingPrompt }, undefined, binding.handle)
     f.transcript.push(user('failed-run-opening', openingPrompt))
     const activated = await f.call('activate', { prompt: openingPrompt })
     expect(activated.status, JSON.stringify(activated.body)).toBe(200)
@@ -365,7 +574,7 @@ describe('employee-bound material handoff', () => {
     const f = await fixture()
     const binding = await f.bridge.pinWorkContinuationContext({ id: 'notice-team-change', source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' })
     const prompt = '继续原合同工作'
-    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: prompt }, undefined, binding.handle)
+    await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: prompt }, undefined, binding.handle)
     f.transcript.push(user('continued-work-team-check', prompt))
     const active = await f.call('activate', { prompt })
     const turnKey = active.body.result.turn_key as string
@@ -391,14 +600,14 @@ describe('employee-bound material handoff', () => {
     statusChanged.run.status = 'running'
     f.service.getWorkContinuationContext.mockResolvedValueOnce(opened).mockResolvedValueOnce(statusChanged)
     const binding = await f.bridge.pinWorkContinuationContext(item)
-    await expect(f.bridge.employeeCommand('runtime', { type: 'prompt', message: '继续原工作' }, undefined, binding.handle)).resolves.toBeUndefined()
+    await expect(f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: '继续原工作' }, undefined, binding.handle)).resolves.toBeUndefined()
 
     const current = workContinuationContext(), changedResult = workContinuationContext()
     const newerResult = '团队重新核对后的不同结论。'
     changedResult.run.finalResult = { ...changedResult.run.finalResult!, content: newerResult, sha256: digest(newerResult) }
     f.service.getWorkContinuationContext.mockResolvedValueOnce(current).mockResolvedValueOnce(changedResult)
     const resultBinding = await f.bridge.pinWorkContinuationContext(item)
-    await expect(f.bridge.employeeCommand('runtime', { type: 'prompt', message: '按新结果继续' }, undefined, resultBinding.handle)).rejects.toThrow('团队工作或固定材料版本已变化')
+    await expect(f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: '按新结果继续' }, undefined, resultBinding.handle)).rejects.toThrow('团队工作或固定材料版本已变化')
   })
 
   it('invalidates a continuation if Weave action facts change after they were pinned', async () => {
@@ -409,7 +618,7 @@ describe('employee-bound material handoff', () => {
     changed.run.actionOutcomes = [{ nodeID: 'review', callID: 'call-1', actionName: 'submit_contract', objectName: 'sales_contract', status: 'unknown', summary: '结果未知。' }]
     f.service.getWorkContinuationContext.mockResolvedValueOnce(pinned).mockResolvedValueOnce(changed)
     const binding = await f.bridge.pinWorkContinuationContext(item)
-    await expect(f.bridge.employeeCommand('runtime', { type: 'prompt', message: '继续核实原动作' }, undefined, binding.handle)).rejects.toThrow('团队工作或固定材料版本已变化')
+    await expect(f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: '继续核实原动作' }, undefined, binding.handle)).rejects.toThrow('团队工作或固定材料版本已变化')
   })
 
   it('fails closed when an original Forge file needs the restricted owner-only reader', async () => {
@@ -434,7 +643,8 @@ describe('employee-bound material handoff', () => {
     const cwd = await mkdtemp(join(tmpdir(), 'handoff-future-session-')); directories.push(cwd)
     const transcript: TranscriptMessage[] = []
     const service = {
-      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()),
+      ...currentItemActionServiceStubs(),
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getBusinessNotificationContext: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()),
       getTeamCatalog: vi.fn(async () => [{ id: 'team-lead', name: '线索分析团队', objective: '整理线索事实' }]),
       getTeamChoices: vi.fn(async () => []), getBusinessCapabilities: vi.fn(async () => []),
       getBusinessObjectDirectory: vi.fn(async () => ({ objects: [], complete: true, totalCount: 0 })),
@@ -470,7 +680,8 @@ describe('employee-bound material handoff', () => {
     const cwd = await mkdtemp(join(tmpdir(), 'handoff-race-')); directories.push(cwd)
     const transcript: TranscriptMessage[] = []
     const service = {
-      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()), getTeamCatalog: vi.fn(async () => [{ id: 'team-lead', name: '线索分析团队', objective: '整理线索并返回依据和待确认项' }]), getTeamChoices: vi.fn(async () => []),
+      ...currentItemActionServiceStubs(),
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getBusinessNotificationContext: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()), getTeamCatalog: vi.fn(async () => [{ id: 'team-lead', name: '线索分析团队', objective: '整理线索并返回依据和待确认项' }]), getTeamChoices: vi.fn(async () => []),
       getBusinessCapabilities: vi.fn(async () => []),
       getBusinessObjectDirectory: vi.fn(async () => ({ objects: [], complete: true, totalCount: 0 })),
       findBusinessRecords: vi.fn(async () => ({ records: [], offset: 0, limit: 20, hasMore: false, complete: true })),
@@ -538,7 +749,8 @@ describe('employee-bound material handoff', () => {
     const cwd = await mkdtemp(join(tmpdir(), 'handoff-pending-invalidate-')); directories.push(cwd)
     const transcript: TranscriptMessage[] = []
     const service = {
-      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
+      ...currentItemActionServiceStubs(),
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getBusinessNotificationContext: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
       getBusinessCapabilities: vi.fn(async () => []), getBusinessObjectDirectory: vi.fn(async () => ({ objects: [], complete: true, totalCount: 0 })),
       findBusinessRecords: vi.fn(async () => ({ records: [], offset: 0, limit: 20, hasMore: false, complete: true })), readBusinessRecord: vi.fn(async () => { throw new Error('not used in this fixture') }),
       stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),
@@ -568,7 +780,7 @@ describe('employee-bound material handoff', () => {
   it('does not treat an old same-text message in a restored session as a new authorization', async () => {
     const f = await fixture()
     const sameText = '这版给他们看看'
-    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: sameText })
+    await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: sameText })
     const activation = await f.call('activate', { prompt: sameText })
     expect(activation.status).toBe(200)
     const turnKey = activation.body.result?.turn_key as string
@@ -583,7 +795,8 @@ describe('employee-bound material handoff', () => {
     const cwd = await mkdtemp(join(tmpdir(), 'handoff-new-session-ambiguous-')); directories.push(cwd)
     const transcript: TranscriptMessage[] = []
     const service = {
-      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
+      ...currentItemActionServiceStubs(),
+      accountKey: vi.fn(async () => 'employee-a'), getApprovalContext: vi.fn(), getWorkNotificationSource: vi.fn(), getBusinessNotificationContext: vi.fn(), getWorkContinuationContext: vi.fn(async () => workContinuationContext()), getTeamCatalog: vi.fn(async () => []), getTeamChoices: vi.fn(async () => []),
       getBusinessCapabilities: vi.fn(async () => []), getBusinessObjectDirectory: vi.fn(async () => ({ objects: [], complete: true, totalCount: 0 })),
       findBusinessRecords: vi.fn(async () => ({ records: [], offset: 0, limit: 20, hasMore: false, complete: true })), readBusinessRecord: vi.fn(async () => { throw new Error('not used in this fixture') }),
       stageWorkMaterials: vi.fn(async () => []), submitWork: vi.fn(),
@@ -752,6 +965,90 @@ describe('employee-bound material handoff', () => {
     expect(JSON.stringify(firstCall?.[2]?.resources)).not.toContain(docx.bytesBase64)
     expect(recovered.body.result.materials).toEqual([{ name: docx.name }, { name: '补充材料.pdf' }])
   })
+  it('reuses two exact materials from a completed read-only check after a new employee authorization', async () => {
+    const f = await fixture()
+    const parent = completedReadOnlyContext()
+    await freezeOfficeOriginals(f, parent)
+    const params = await prepareCompletedReadOnlySubmit(f, parent, 'completed-readonly-approve')
+    const submitted = await f.call('submit', params)
+
+    expect(submitted.status).toBe(200)
+    expect(submitted.body.result.status).toBe('accepted')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    const [choice, taskText, delivery] = f.service.submitWork.mock.calls[0]!
+    expect(choice).toMatchObject({ teamId: 'team-contract', workflowId: 'workflow-review', version: 3 })
+    expect(delivery).toMatchObject({
+      authorizedBusinessCapabilityIds: [f.businessCapabilityId],
+      continuation: { workbenchSessionID: 'workbench-session-1', inputRevisionID: 'input-1', runID: 'run-1', teamID: 'team-contract' },
+    })
+    expect(delivery).toBeDefined()
+    expect(delivery!.continuation).not.toHaveProperty('restartAfterFailedRun')
+    expect(delivery!.resources).toEqual(parent.input.materials.map(({ id, materialId, name, mediaType, bytes, sha256 }) => ({
+      type: 'forge-file', id, materialId, sourceKind: 'owner', name, mediaType, bytes, sha256,
+    })))
+    expect((JSON.parse(taskText) as { materials: Array<{ name: string }> }).materials.map(({ name }) => name))
+      .toEqual(parent.input.materials.map(({ name }) => name))
+  })
+
+  it('refuses completed read-only material reuse when the action receipt is missing, nonempty, or unknown', async () => {
+    const variants: Array<{ label: string; outcomes?: EnterpriseWorkContinuationContext['run']['actionOutcomes'] }> = [
+      { label: 'missing' },
+      { label: 'already-succeeded', outcomes: [{ nodeID: 'review', callID: 'call-1', actionName: 'submit', objectName: 'record', status: 'succeeded', summary: '已执行' }] },
+      { label: 'unknown', outcomes: [{ nodeID: 'review', callID: 'call-1', actionName: 'submit', objectName: 'record', status: 'unknown', summary: '结果未知' }] },
+    ]
+    for (const variant of variants) {
+      const f = await fixture()
+      const parent = completedReadOnlyContext()
+      if (variant.outcomes === undefined) delete parent.run.actionOutcomes
+      else parent.run.actionOutcomes = variant.outcomes
+      parent.input.materials = [continuationTextMaterial('frozen-parent-file', '检查原件.md', '已冻结的检查材料。')]
+      await openWorkContinuation(f, parent, `completed-reuse-${variant.label}`)
+      await f.input('我明确授权提交，但不要在动作回执缺失、已有动作或未知时复用旧材料。', `employee-${variant.label}`)
+      const discovered = await f.discover()
+      const rejected = await f.call('submit', {
+        ...discovered, materials: [], reuse_material_names: ['检查原件.md'], business_actions: [],
+      })
+
+      expect(rejected.status, variant.label).toBe(409)
+      expect(rejected.body.error, variant.label).toContain('不允许复用原材料')
+      expect(f.service.stageWorkMaterials, variant.label).not.toHaveBeenCalled()
+      expect(f.service.submitWork, variant.label).not.toHaveBeenCalled()
+    }
+  })
+
+  it('rejects a completed continuation when Weave says the expected parent head has advanced', async () => {
+    const f = await fixture()
+    const parent = completedReadOnlyContext()
+    parent.input.materials = [continuationTextMaterial('frozen-parent-file', '检查原件.md', '已冻结的检查材料。')]
+    const params = await prepareCompletedReadOnlySubmit(f, parent, 'completed-stale-head')
+    f.service.submitWork.mockRejectedValueOnce(new WorkRegistrationRejectedError('parent revision advanced'))
+
+    const rejected = await f.call('submit', params)
+
+    expect(rejected.body.result, JSON.stringify(rejected.body)).toMatchObject({ status: 'rejected', submitted: false })
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitWork).toHaveBeenCalledOnce()
+  })
+
+  it('recovers the same frozen completed-check handoff after an unknown receipt', async () => {
+    const f = await fixture()
+    const parent = completedReadOnlyContext()
+    await freezeOfficeOriginals(f, parent)
+    const params = await prepareCompletedReadOnlySubmit(f, parent, 'completed-readonly-recovery')
+    f.service.submitWork.mockRejectedValueOnce(new Error('dispatch response lost after server acceptance'))
+
+    const first = await f.call('submit', params)
+    expect(first.body.result.status).toBe('unknown')
+    const recovered = await f.call('recover', { recovery_key: first.body.result.recovery_key as string })
+
+    expect(recovered.body.result.status).toBe('accepted')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    const [firstCall, retryCall] = f.service.submitWork.mock.calls
+    expect(firstCall?.[2]?.idempotencySeed).toBe(retryCall?.[2]?.idempotencySeed)
+    expect(firstCall?.[2]?.resources).toEqual(retryCall?.[2]?.resources)
+    expect(firstCall?.[2]?.authorizedBusinessCapabilityIds).toEqual([f.businessCapabilityId])
+  })
+
   it('rejects ambiguous, stale, and wrong-source reuse before staging any new attachment', async () => {
     const f = await fixture()
     const docxPath = '材料/附件/合同样例.docx'
@@ -867,12 +1164,12 @@ describe('employee-bound material handoff', () => {
   it('authorizes only the business action selected for the current employee intent', async () => {
     const f = await fixture(), params = await f.discover()
     const actionKey = params.available_actions[0].action_key
-    const { directory, found, recordKey } = await f.findRecord(params.handoff_key, 'TEST-100 设备交接验收合同')
+    const { directory, found, recordKey } = await f.findRecord('TEST-100 设备交接验收合同')
     expect(directory.body.result).toMatchObject({ status: 'complete', directory_complete: true })
     expect(found.body.result).toMatchObject({ status: 'candidate', selection_required: true, has_more: false, complete: true })
     expect(found.body.result.records).toEqual([{ record_key: recordKey, name: 'TEST-100 设备交接验收合同', object: '销售合同', code: 'SC-TEST-001', status: '草稿', owner: '销售人员', record_version: 'v7' }])
     expect(JSON.stringify(found.body.result.records)).not.toContain('contract-1')
-    const detail = await f.call('read_business_record', { handoff_key: params.handoff_key, record_key: recordKey })
+    const detail = await f.call('read_business_record', { record_key: recordKey })
     expect(detail.body.result).toMatchObject({
       status: 'read', record_key: recordKey, complete: true,
       snapshot: { record: expect.arrayContaining([expect.objectContaining({ label: '合同名称' })]), completeness: 'complete' },
@@ -888,30 +1185,57 @@ describe('employee-bound material handoff', () => {
     expect(f.service.readBusinessRecord).toHaveBeenCalledOnce()
   })
 
-  it('finds readable records with no team write action and does not infer data permission from the object directory', async () => {
+  it('reads current Forge records without a team lookup and does not grant write capability', async () => {
     const f = await fixture()
-    f.service.getBusinessCapabilities.mockResolvedValueOnce([])
-    const params = await f.discover()
-    expect(params.available_actions).toEqual([])
-    const { directory, found } = await f.findRecord(params.handoff_key, 'TEST-100 设备交接验收合同')
+    expect((await f.call('list_business_objects', { handoff_key: 'legacy-untrusted-key' })).status).toBe(200)
+    const { directory, found, recordKey } = await f.findRecord('TEST-100 设备交接验收合同')
     expect(directory.body.result.objects).toHaveLength(1)
     expect(f.service.findBusinessRecords).toHaveBeenCalledWith('forge_sales_contract', 'TEST-100 设备交接验收合同', 0, 20)
     expect(found.body.result.status).toBe('candidate')
+    expect(f.service.getTeamCatalog).not.toHaveBeenCalled()
+    expect(f.service.getTeamChoices).not.toHaveBeenCalled()
+    expect(f.service.getBusinessCapabilities).not.toHaveBeenCalled()
+
+    const unauthorizedWrite = await f.call('submit', {
+      handoff_key: 'not-discovered', goal: '提交当前业务记录', business_actions: [], materials: [], business_record_key: recordKey,
+    })
+    expect(unauthorizedWrite.status).toBe(409)
+    expect(unauthorizedWrite.body.error).toContain('请先查看团队的承接能力')
+    expect(f.service.submitWork).not.toHaveBeenCalled()
 
     f.service.findBusinessRecords.mockRejectedValueOnce(new ForgeBusinessReadError('forbidden', 'permission denied'))
     const denied = await f.call('find_business_record', {
-      handoff_key: params.handoff_key, object_ref: (directory.body.result.objects as Array<{ object_ref: string }>)[0]!.object_ref,
+      object_ref: (directory.body.result.objects as Array<{ object_ref: string }>)[0]!.object_ref,
       work_summary: 'TEST-100 设备交接验收合同',
     })
     expect(denied.body.result).toMatchObject({ status: 'forbidden', records: [] })
     expect(await f.service.accountKey()).toBe('employee-a')
   })
 
+  it('rejects a business record from the wrong object for a team action', async () => {
+    const f = await fixture()
+    const quoteCandidate = { ...f.businessCandidate, objectName: 'forge_quote', objectLabel: '销售报价' }
+    f.service.getBusinessObjectDirectory.mockResolvedValueOnce({
+      objects: [{ objectName: 'forge_quote', label: '销售报价' }], complete: true, totalCount: 1,
+    })
+    f.service.findBusinessRecords.mockResolvedValueOnce({
+      records: [quoteCandidate], offset: 0, limit: 20, hasMore: false, complete: true,
+    })
+    const { recordKey } = await f.findRecord('TEST-100 设备交接验收合同')
+    const params = await f.discover()
+    const rejected = await f.call('submit', {
+      ...params, materials: [], business_actions: [params.available_actions[0]!.action_key], business_record_key: recordKey,
+    })
+    expect(rejected.status).toBe(409)
+    expect(rejected.body.error).toContain('绑定该动作所需的业务记录')
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+
   it('discards an object directory result that arrives after the employee changes turns', async () => {
-    const f = await fixture(), params = await f.discover()
+    const f = await fixture()
     let release!: (value: { objects: Array<{ objectName: string; label: string }>; complete: boolean; totalCount: number }) => void
     f.service.getBusinessObjectDirectory.mockImplementationOnce(() => new Promise((resolve) => { release = resolve }))
-    const pending = f.call('list_business_objects', { handoff_key: params.handoff_key })
+    const pending = f.call('list_business_objects')
     await vi.waitFor(() => expect(release).toBeTypeOf('function'))
     await f.input('改查另一份业务记录', 'employee-turn-after-directory')
     release({ objects: [{ objectName: 'forge_sales_contract', label: '销售合同' }], complete: true, totalCount: 1 })
@@ -919,16 +1243,375 @@ describe('employee-bound material handoff', () => {
   })
 
   it('discards a selected-record read that arrives after the employee changes turns', async () => {
-    const f = await fixture(), params = await f.discover()
-    const { recordKey } = await f.findRecord(params.handoff_key, 'TEST-100 设备交接验收合同')
+    const f = await fixture()
+    const { recordKey } = await f.findRecord('TEST-100 设备交接验收合同')
     let release!: (value: { candidate: typeof f.businessCandidate; snapshot: BusinessRecordSnapshot }) => void
     f.service.readBusinessRecord.mockImplementationOnce(() => new Promise((resolve) => { release = resolve }))
-    const pending = f.call('read_business_record', { handoff_key: params.handoff_key, record_key: recordKey })
+    const pending = f.call('read_business_record', { record_key: recordKey })
     await vi.waitFor(() => expect(release).toBeTypeOf('function'))
     await f.input('改成查另一份记录', 'employee-turn-after-record-read')
     release({ candidate: f.businessCandidate, snapshot: f.businessSnapshot })
     expect(await pending).toMatchObject({ status: 409, body: { error: expect.stringContaining('员工轮次') } })
     expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+  it('rejects a record key after the employee account changes', async () => {
+    const f = await fixture()
+    const { recordKey } = await f.findRecord('TEST-100 设备交接验收合同')
+    await f.relogin({ accountKey: 'employee-b' })
+    await f.input('请核对当前员工可见的业务记录。', 'employee-b-read')
+    const result = await f.call('read_business_record', { record_key: recordKey })
+    expect(result.status).toBe(409)
+    expect(result.body.error).toMatch(/当前员工轮次|员工账号|业务记录选择已失效/)
+    expect(f.service.readBusinessRecord).not.toHaveBeenCalled()
+  })
+  it('reads a bound record in a Weave result before team lookup and permits only a later authorized matching action', async () => {
+    const f = await fixture()
+    const context = workContinuationContext()
+    context.input.businessRecord = { objectName: 'forge_sales_contract', recordID: 'contract-1', recordVersion: 'v7' }
+    context.input.materials = [continuationTextMaterial('bound-original', '合同原件.md', '本轮固定合同材料')]
+    await openWorkContinuation(f, context, 'notice-bound-record')
+    f.service.getBusinessObjectDirectory.mockResolvedValueOnce({
+      objects: [
+        { objectName: 'forge_sales_contract', label: '销售合同' },
+        { objectName: 'forge_quote', label: '销售报价' },
+      ], complete: true, totalCount: 2,
+    })
+    const directory = await f.call('list_business_objects')
+    expect(directory.body.result.objects).toEqual([{ object_ref: expect.any(String), name: '销售合同' }])
+    const objectRef = (directory.body.result.objects as Array<{ object_ref: string }>)[0]!.object_ref
+    const found = await f.call('find_business_record', { object_ref: objectRef, work_summary: '合同' })
+    expect(found.body.result.records).toEqual([expect.objectContaining({ name: f.businessCandidate.name })])
+    expect(f.service.readBusinessRecord).toHaveBeenCalledWith('forge_sales_contract', 'contract-1')
+    expect(f.service.getTeamCatalog).not.toHaveBeenCalled()
+
+    const staleRecordKey = (found.body.result.records as Array<{ record_key: string }>)[0]!.record_key
+    await f.input('我明确授权当前团队用已声明的合同动作提交这条记录。', 'employee-authorized-followup')
+    const params = await f.discover()
+    const staleWrite = await f.call('submit', {
+      ...params, materials: [], business_actions: [params.available_actions[0]!.action_key], business_record_key: staleRecordKey,
+    })
+    expect(staleWrite.status).toBe(409)
+    expect(staleWrite.body.error).toMatch(/不属于当前员工轮次|业务记录选择已失效/)
+
+    const current = await f.findRecord('合同')
+    const submitted = await f.call('submit', {
+      ...params, materials: [], business_actions: [params.available_actions[0]!.action_key], business_record_key: current.recordKey,
+    })
+    expect(submitted.status).toBe(200)
+    expect(f.service.submitWork.mock.calls[0]?.[2]).toMatchObject({
+      authorizedBusinessCapabilityIds: [f.businessCapabilityId],
+      businessContext: { objectName: 'forge_sales_contract', recordId: 'contract-1', recordVersion: 'v7' },
+    })
+  })
+  it('binds approval review sessions to one employee, request, business record, and current material round', async () => {
+    const f = await fixture()
+    const first = await f.openApprovalReview('approval-1')
+    const second = await f.openApprovalReview('approval-2')
+    expect(second.path).not.toBe(first.path)
+    const saved = await Promise.all((await readdir(f.storageDirectory)).map(async (file) => {
+      const record = JSON.parse(await readFile(join(f.storageDirectory, file), 'utf8')) as { value: Record<string, unknown> }
+      return record.value
+    }))
+    expect(saved).toEqual(expect.arrayContaining([
+      expect.objectContaining({ purpose: 'review', accountKey: 'employee-a', requestId: 'approval-1', objectName: 'forge_sales_contract', recordId: 'contract-1' }),
+      expect.objectContaining({ purpose: 'review', accountKey: 'employee-a', requestId: 'approval-2', objectName: 'forge_sales_contract', recordId: 'contract-2' }),
+    ]))
+    expect(first.context.title).toBe('测试合同')
+    expect(second.context.title).toBe('测试合同')
+  })
+  it('keeps review read-only after follow-up and rejects every enterprise action or other-record read', async () => {
+    const f = await fixture()
+    await f.openApprovalReview()
+    await f.input('补充核对本次审批字段里的缺失信息。', 'review-follow-up')
+
+    for (const method of ['submit', 'revision_submit', 'recover', 'search', 'list_business_objects', 'find_business_record', 'read_business_record']) {
+      const result = await f.call(method)
+      expect(result.status, `${method} should be rejected`).toBe(409)
+      expect(result.body.error).toMatch(/只读|只能使用已固定的审批快照/)
+    }
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+    expect(f.service.submitApprovalRevision).not.toHaveBeenCalled()
+    expect(f.service.getApprovalRevisionReceipt).not.toHaveBeenCalled()
+    expect(f.service.getBusinessObjectDirectory).not.toHaveBeenCalled()
+    expect(f.service.findBusinessRecords).not.toHaveBeenCalled()
+    expect(f.service.readBusinessRecord).not.toHaveBeenCalled()
+  })
+  it('executes only a Forge-described current item action after a later employee turn', async () => {
+    const f = await fixture('forge_custom_record')
+    const original = f.contexts.get('approval-1')!
+    const { returnVersion: _returnVersion, returnReason: _returnReason, ...pendingBase } = original
+    const pending: EnterpriseApprovalContext = {
+      ...pendingBase, status: 'pending', viewer: 'current_approver', sourceMaterialVersion: digest('pending-source-version'),
+    }
+    const action: EnterpriseApprovalAction = {
+      semantic: 'server-description-only', label: 'Forge 返回的可办理事项', description: '按当前事项办理并附上员工意见。',
+      execution: {
+        tool: 'run_action', actionName: 'server_defined_action_47', objectName: 'forge_custom_record', recordId: 'contract-1',
+        params: { approvalRequestId: 'approval-1', itemVersion: 'native-item-round-47', sourceMaterialVersion: pending.sourceMaterialVersion },
+      },
+      inputs: [{ name: 'comment', type: 'string', label: '办理意见', required: true }],
+    }
+    pending.availableActions = [action]
+    f.contexts.set('approval-1', pending)
+    await f.openApprovalReview('approval-1')
+
+    const openingDirectory = await f.call('list_current_item_actions')
+    expect(openingDirectory.status).toBe(200)
+    expect(openingDirectory.body.result.actions).toMatchObject([{ label: action.label, description: action.description }])
+    expect(JSON.stringify(openingDirectory.body.result.actions)).not.toContain('server_defined_action_47')
+    const openingAction = (openingDirectory.body.result.actions as Array<{ action_ref: string }>)[0]!
+    await expect(f.call('run_current_item_action', { action_ref: openingAction.action_ref, comment: '先只读核对' }))
+      .resolves.toMatchObject({ status: 409, body: { error: expect.stringContaining('只授权只读') } })
+
+    const employeeComment = '按当前业务材料确认办理。'
+    await f.input(`请办理当前事项，意见是：${employeeComment}`, 'employee-current-approval-opinion')
+    const directory = await f.call('list_current_item_actions')
+    const presented = directory.body.result.actions as Array<{ action_ref: string; label: string }>
+    expect(presented).toHaveLength(1)
+    const receipt = {
+      decision: 'approve', status: 'pending', requestId: 'approval-1', recordId: 'contract-1',
+      itemVersion: 'native-item-round-47', sourceMaterialVersion: pending.sourceMaterialVersion,
+      resumed: false, autoRejected: false, alreadyApplied: false,
+    }
+    f.service.runNativeMcpAction.mockResolvedValueOnce({ status: 'returned', result: receipt })
+
+    const result = await f.call('run_current_item_action', { action_ref: presented[0]!.action_ref, comment: employeeComment })
+    expect(result).toMatchObject({ status: 200, body: { result: {
+      outcome: 'returned', decision: 'approve', status: 'pending', resumed: false, autoRejected: false, alreadyApplied: false,
+    } } })
+    expect(JSON.stringify(result.body.result)).not.toContain('approval-1')
+    expect(JSON.stringify(result.body.result)).not.toContain('contract-1')
+    expect(JSON.stringify(result.body.result)).not.toContain('native-item-round-47')
+    expect(f.service.runNativeMcpAction).toHaveBeenCalledOnce()
+    expect(f.service.runNativeMcpAction.mock.calls[0]?.[0]).toEqual({
+      actionName: 'server_defined_action_47', objectName: 'forge_custom_record', recordId: 'contract-1',
+      params: { approvalRequestId: 'approval-1', itemVersion: 'native-item-round-47', sourceMaterialVersion: pending.sourceMaterialVersion, comment: employeeComment },
+    })
+    await expect(f.call('run_current_item_action', { action_ref: presented[0]!.action_ref, comment: '另一个不同意见' }))
+      .resolves.toMatchObject({ status: 409, body: { error: expect.stringContaining('本轮员工意见已用于另一项办理请求') } })
+    const token = f.environment.GOOEYPI_ENTERPRISE_TOKEN!
+    const turns = (f.bridge as unknown as { turns: Map<string, { enterpriseReadOnly?: boolean }> }).turns
+    expect(turns.get(token)?.enterpriseReadOnly).toBe(true)
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+    expect(f.service.submitApprovalRevision).not.toHaveBeenCalled()
+  })
+  it('checks native approval history after an unknown action result and never retries the same turn blindly', async () => {
+    const f = await fixture()
+    const original = f.contexts.get('approval-1')!
+    const { returnVersion: _returnVersion, returnReason: _returnReason, ...pendingBase } = original
+    const pending: EnterpriseApprovalContext = { ...pendingBase, status: 'pending', viewer: 'current_approver' }
+    pending.availableActions = [{
+      semantic: 'uninterpreted', label: '当前可办事项', description: 'Forge 提供的当前动作说明。',
+      execution: {
+        tool: 'run_action', actionName: 'descriptor_action_alpha', objectName: 'forge_sales_contract', recordId: 'contract-1',
+        params: { approvalRequestId: 'approval-1', itemVersion: 'item-round-1', sourceMaterialVersion: pending.sourceMaterialVersion },
+      },
+      inputs: [{ name: 'comment', type: 'string', label: '办理意见', required: true }],
+    }]
+    f.contexts.set('approval-1', pending)
+    await f.openApprovalReview()
+    await f.input('请按当前事项办理，意见：同意进入下一步。', 'employee-approval-opinion-unknown')
+    const directory = await f.call('list_current_item_actions')
+    const actionRef = (directory.body.result.actions as Array<{ action_ref: string }>)[0]!.action_ref
+    const comment = '同意进入下一步。'
+    f.service.runNativeMcpAction.mockImplementationOnce(async (_args, assertCurrent) => {
+      await assertCurrent()
+      f.approvalActions.push({ id: 'native-action-1', request_id: 'approval-1', action: 'approve', actor_id: 'employee-a', comment, created_at: '2026-09-30T08:00:00Z' })
+      return { status: 'unknown', code: 'APPROVAL_ACTION_IN_DOUBT', message: 'MCP回执丢失' }
+    })
+
+    const first = await f.call('run_current_item_action', { action_ref: actionRef, comment })
+    expect(first).toMatchObject({ status: 200, body: { result: { outcome: 'unknown', nativeStatus: 'history_observed', decision: 'unknown', nativeAction: 'approve', currentItemStatus: 'pending' } } })
+    const repeated = await f.call('run_current_item_action', { action_ref: actionRef, comment })
+    expect(repeated.body.result).toMatchObject({ outcome: 'unknown', nativeStatus: 'history_observed', decision: 'unknown' })
+    expect(f.service.runNativeMcpAction).toHaveBeenCalledOnce()
+    expect(f.service.getApprovalActionHistory).toHaveBeenCalled()
+  })
+  it('returns unknown after reading unchanged native context and history without repeating the action', async () => {
+    const f = await fixture()
+    const original = f.contexts.get('approval-1')!
+    const { returnVersion: _returnVersion, returnReason: _returnReason, ...pendingBase } = original
+    const pending: EnterpriseApprovalContext = { ...pendingBase, status: 'pending', viewer: 'current_approver' }
+    pending.availableActions = [{
+      label: 'Forge当前动作', description: '目录提供的动作说明。',
+      execution: {
+        tool: 'run_action', actionName: 'descriptor_action_beta', objectName: 'forge_sales_contract', recordId: 'contract-1',
+        params: { approvalRequestId: 'approval-1', itemVersion: 'item-round-2', sourceMaterialVersion: pending.sourceMaterialVersion },
+      },
+      inputs: [{ name: 'comment', type: 'string', label: '办理意见', required: true }],
+    }]
+    f.contexts.set('approval-1', pending)
+    await f.openApprovalReview()
+    await f.input('按当前事项办理，意见：已核对。', 'employee-approval-opinion-unresolved')
+    const directory = await f.call('list_current_item_actions')
+    const actionRef = (directory.body.result.actions as Array<{ action_ref: string }>)[0]!.action_ref
+    f.service.runNativeMcpAction.mockResolvedValueOnce({ status: 'returned', result: {
+      decision: 'unknown', status: 'history_observed', observedStatus: 'pending', requestId: 'approval-1', recordId: 'contract-1',
+      itemVersion: 'item-round-2', sourceMaterialVersion: pending.sourceMaterialVersion,
+      history: [{ action: 'revise', actorId: 'employee-a', comment: '已核对。' }],
+    } })
+
+    const first = await f.call('run_current_item_action', { action_ref: actionRef, comment: '已核对。' })
+    expect(first.body.result).toMatchObject({ outcome: 'unknown', nativeStatus: 'history_observed', decision: 'unknown', nativeAction: 'revise', currentItemVersionMatches: true })
+    const repeated = await f.call('run_current_item_action', { action_ref: actionRef, comment: '已核对。' })
+    expect(repeated.body.result).toMatchObject({ outcome: 'unknown' })
+    expect(f.service.runNativeMcpAction).toHaveBeenCalledOnce()
+    expect(f.approvalActions).toEqual([])
+  })
+  it('does not execute a stale action reference or cross an employee account change', async () => {
+    const f = await fixture()
+    const original = f.contexts.get('approval-1')!
+    const { returnVersion: _returnVersion, returnReason: _returnReason, ...pendingBase } = original
+    const firstSourceVersion = digest('approval-source-before')
+    const first: EnterpriseApprovalContext = { ...pendingBase, status: 'pending', viewer: 'current_approver', sourceMaterialVersion: firstSourceVersion }
+    const action = (sourceMaterialVersion: string, itemVersion: string): EnterpriseApprovalAction => ({
+      label: '当前可办理事项', description: 'Forge 返回的动态动作描述。',
+      execution: { tool: 'run_action', actionName: 'metadata_action', objectName: 'forge_sales_contract', recordId: 'contract-1', params: { approvalRequestId: 'approval-1', itemVersion, sourceMaterialVersion } },
+      inputs: [{ name: 'comment', type: 'string', label: '办理意见', required: true }],
+    })
+    first.availableActions = [action(firstSourceVersion, 'item-round-1')]
+    f.contexts.set('approval-1', first)
+    await f.openApprovalReview()
+    await f.input('办理当前事项，意见：核对通过。', 'employee-opinion-before-stale')
+    const directory = await f.call('list_current_item_actions')
+    const actionRef = (directory.body.result.actions as Array<{ action_ref: string }>)[0]!.action_ref
+
+    const changedSourceVersion = digest('approval-source-after')
+    f.contexts.set('approval-1', { ...first, sourceMaterialVersion: changedSourceVersion, availableActions: [action(changedSourceVersion, 'item-round-2')] })
+    const stale = await f.call('run_current_item_action', { action_ref: actionRef, comment: '核对通过。' })
+    expect(stale).toMatchObject({ status: 200, body: { result: { outcome: 'unknown' } } })
+    expect(f.service.runNativeMcpAction).not.toHaveBeenCalled()
+
+    const g = await fixture()
+    const current = g.contexts.get('approval-1')!
+    const { returnVersion: _returnVersion2, returnReason: _returnReason2, ...currentBase } = current
+    const currentSource = digest('approval-source-account')
+    const accountAction: EnterpriseApprovalAction = {
+      label: '账户隔离动作', description: '当前账户事项动作。',
+      execution: { tool: 'run_action', actionName: 'account_bound_action', objectName: 'forge_sales_contract', recordId: 'contract-1', params: { approvalRequestId: 'approval-1', itemVersion: 'item-account-round', sourceMaterialVersion: currentSource } },
+      inputs: [{ name: 'comment', type: 'string', label: '办理意见', required: true }],
+    }
+    g.contexts.set('approval-1', { ...currentBase, status: 'pending', viewer: 'current_approver', sourceMaterialVersion: currentSource, availableActions: [accountAction] })
+    await g.openApprovalReview()
+    await g.input('办理当前事项，意见：核对通过。', 'employee-opinion-account-change')
+    const accountDirectory = await g.call('list_current_item_actions')
+    const accountActionRef = (accountDirectory.body.result.actions as Array<{ action_ref: string }>)[0]!.action_ref
+    g.service.accountKey.mockResolvedValue('employee-b')
+    g.service.getSession.mockResolvedValue(forgeSession('employee-b'))
+    const crossAccount = await g.call('run_current_item_action', { action_ref: accountActionRef, comment: '核对通过。' })
+    expect(crossAccount).toMatchObject({ status: 409, body: { error: expect.stringContaining('员工轮次或账号') } })
+    expect(g.service.runNativeMcpAction).not.toHaveBeenCalled()
+  })
+  it('requires reopening review when its source account or current approval round changes', async () => {
+    const f = await fixture()
+    await f.openApprovalReview()
+    f.service.accountKey.mockResolvedValue('employee-b')
+    await expect(f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: '继续核对当前审批' }))
+      .rejects.toThrow('与当前账号或事项不匹配')
+    f.service.accountKey.mockResolvedValue('employee-a')
+
+    const changed = f.contexts.get('approval-1')!
+    f.contexts.set('approval-1', { ...changed, title: '更新后的审批事项', returnVersion: 'revise-2', sourceMaterialVersion: digest('round-2') })
+    await expect(f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: '继续核对当前审批' }))
+      .rejects.toThrow('审批事项或材料快照已变化')
+    const reopened = await f.openApprovalReview('approval-1')
+    expect(reopened.context.title).toBe('更新后的审批事项')
+    expect(f.service.submitApprovalRevision).not.toHaveBeenCalled()
+  })
+  it('accepts more than eleven individually verified returned approval files', async () => {
+    const f = await fixture()
+    const current = f.contexts.get('approval-1')!
+    const files = Array.from({ length: 12 }, (_, index) => {
+      const content = `第 ${index + 1} 份已提交材料\n`
+      return { fileId: `approval-file-${index + 1}`, name: `材料${index + 1}.txt`, mediaType: 'text/plain; charset=utf-8' as const,
+        bytes: Buffer.byteLength(content), sha256: digest(content), content, verified: true }
+    })
+    f.contexts.set('approval-1', { ...current, files })
+
+    const opened = await f.openReturned('approval-1')
+    expect(opened.context.files).toHaveLength(12)
+    expect(opened.context.files[11]?.content).toBe('第 12 份已提交材料\n')
+  })
+  it('restores persisted review mode after runtime restart and fails closed when its binding is missing', async () => {
+    const f = await fixture()
+    const opened = await f.openApprovalReview()
+    const restarted = new AgentEnterpriseBridge({
+      service: f.service,
+      sessions: { prime: f.sessions, pi: f.sessions },
+      extensionPath: '/extensions/enterprise.ts',
+      storage: { directory: f.storageDirectory },
+    })
+    await restarted.start()
+    bridges.push(restarted)
+    let environment = restarted.environmentFor({ cwd: f.cwd, sessionPath: opened.path, harness: 'pi' })
+    restarted.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, opened.path, 'runtime-review-restarted')
+    const resumedPrompt = '继续核对这次审批的已固定材料。'
+    await restarted.employeeCommand('runtime-review-restarted', { type: 'prompt', message: resumedPrompt })
+    const resumed = await fetch(environment.GOOEYPI_ENTERPRISE_URL!, {
+      method: 'POST', headers: { Authorization: `Bearer ${environment.GOOEYPI_ENTERPRISE_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'activate', params: { prompt: resumedPrompt } }),
+    })
+    const resumedBody = await resumed.json() as { result: { turn_key: string } }
+    const blocked = await fetch(environment.GOOEYPI_ENTERPRISE_URL!, {
+      method: 'POST', headers: { Authorization: `Bearer ${environment.GOOEYPI_ENTERPRISE_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'submit', params: { turn_key: resumedBody.result.turn_key } }),
+    })
+    expect(blocked.status).toBe(409)
+    expect((await blocked.json()).error).toContain('只读核对')
+
+    for (const file of await readdir(f.storageDirectory)) await rm(join(f.storageDirectory, file), { force: true })
+    const missingBindingBridge = new AgentEnterpriseBridge({
+      service: f.service,
+      sessions: { prime: f.sessions, pi: f.sessions },
+      extensionPath: '/extensions/enterprise.ts',
+      storage: { directory: f.storageDirectory },
+    })
+    await missingBindingBridge.start()
+    bridges.push(missingBindingBridge)
+    environment = missingBindingBridge.environmentFor({ cwd: f.cwd, sessionPath: opened.path, harness: 'pi' })
+    missingBindingBridge.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, opened.path, 'runtime-review-missing-binding')
+    await expect(missingBindingBridge.employeeCommand('runtime-review-missing-binding', { type: 'prompt', message: '继续核对' }))
+      .rejects.toThrow('审批辅助会话绑定已丢失')
+  })
+  it('does not let delayed review persistence overwrite a newer account session turn', async () => {
+    const f = await fixture()
+    const binding = await f.bridge.pinApprovalReviewContext('approval-1')
+    const oldSession = f.startNewSession('review-delayed-old')
+    const oldRuntimeId = oldSession.runtimeId
+    const oldPrompt = `请只读复核「${binding.context.title}」\n\n${APPROVAL_REVIEW_SESSION_MARKER}`
+    let releasePersistence!: () => void
+    let reportPersistenceStarted!: () => void
+    const persistenceStarted = new Promise<void>((resolve) => { reportPersistenceStarted = resolve })
+    const persistenceGate = new Promise<void>((resolve) => { releasePersistence = resolve })
+    const originalCheckpoint = HandoffStore.prototype.checkpoint
+    const checkpoint = vi.spyOn(HandoffStore.prototype, 'checkpoint').mockImplementationOnce(async function<T>(this: HandoffStore, key: string, fingerprint: string, value: T) {
+      reportPersistenceStarted()
+      await persistenceGate
+      return originalCheckpoint.call(this, key, fingerprint, value)
+    })
+    const oldOpen = f.bridge.employeeCommand(oldRuntimeId, { type: 'prompt', message: oldPrompt }, undefined, undefined, binding.handle)
+    await persistenceStarted
+    await expect(f.bridge.employeeCommand(oldRuntimeId, { type: 'prompt', message: '覆盖旧审批轮次' }))
+      .rejects.toThrow('审批事项正在新会话中打开')
+
+    f.bridge.invalidateAccount()
+    f.service.accountKey.mockResolvedValue('employee-b')
+    const latest = await f.bridge.pinApprovalReviewContext('approval-2')
+    f.startNewSession('review-delayed-new')
+    const latestPrompt = `请只读复核「${latest.context.title}」\n\n${APPROVAL_REVIEW_SESSION_MARKER}`
+    await f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: latestPrompt }, undefined, undefined, latest.handle)
+    f.transcript.push(user('latest-review-round', latestPrompt))
+    const activated = await f.call('activate', { prompt: latestPrompt })
+    const latestTurnKey = activated.body.result.turn_key as string
+
+    releasePersistence()
+    await expect(oldOpen).rejects.toThrow('员工账号或轮次已变化')
+    const stillReadOnly = await f.callWithTurn('submit', {}, latestTurnKey)
+    expect(stillReadOnly.status).toBe(409)
+    expect(stillReadOnly.body.error).toContain('只读核对')
+    expect(checkpoint).toHaveBeenCalledTimes(2)
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+    checkpoint.mockRestore()
   })
   it('freezes a returned approval revision package for the opened account, request, and employee round', async () => {
     const f = await fixture()
@@ -1054,14 +1737,16 @@ describe('employee-bound material handoff', () => {
     const f = await fixture()
     const opened = f.contexts.get('approval-1')!
     const binding = await f.bridge.pinReturnedApprovalContext('approval-1')
+    f.startNewSession('return-version-change')
     f.contexts.set('approval-1', { ...opened, returnVersion: 'revise-2' })
-    await expect(f.bridge.employeeCommand('runtime', { type: 'prompt', message: '打开退回审批 approval-1' }, binding.handle))
+    await expect(f.bridge.employeeCommand(f.runtimeId, { type: 'prompt', message: '打开退回审批 approval-1' }, binding.handle))
       .rejects.toThrow('退回意见或材料版本已变化')
 
     const other = await fixture()
     const otherBinding = await other.bridge.pinReturnedApprovalContext('approval-1')
+    other.startNewSession('return-account-change')
     other.service.accountKey.mockResolvedValue('employee-b')
-    await expect(other.bridge.employeeCommand('runtime', { type: 'prompt', message: '打开退回审批 approval-1' }, otherBinding.handle))
+    await expect(other.bridge.employeeCommand(other.runtimeId, { type: 'prompt', message: '打开退回审批 approval-1' }, otherBinding.handle))
       .rejects.toThrow('当前账号已变化')
   })
   it('retries an identical frozen revision package without rereading changed local bytes and rejects changed material', async () => {
@@ -1177,12 +1862,9 @@ describe('employee-bound material handoff', () => {
     expect(oldRound.status).toBe(409)
     expect(oldRound.body.error).toContain('员工要求已变化')
 
-    const secondHandle = await f.bridge.pinReturnedApprovalContext('approval-2')
+    await f.openReturned('approval-2')
     const secondPrompt = '打开退回审批 approval-2'
-    await f.bridge.employeeCommand('runtime', { type: 'prompt', message: secondPrompt }, secondHandle.handle)
-    f.transcript.push(user('opened-approval-2', secondPrompt))
-    const active = await f.call('activate', { prompt: secondPrompt })
-    const secondTurnKey = active.body.result.turn_key as string
+    const secondTurnKey = f.getTurnKey()
     const changedApproval = await f.callWithTurn('revision_submit', params, secondTurnKey)
     expect(changedApproval.status).toBe(409)
     expect(changedApproval.body.error).toContain('员工本轮要求已变化')
@@ -1215,7 +1897,7 @@ describe('employee-bound material handoff', () => {
   })
   it('invalidates the old turn before a later employee steer is written to the transcript', async () => {
     const f = await fixture(), params = await f.discover()
-    await f.bridge.employeeCommand('runtime', { type: 'steer', message: '先等等' })
+    await f.bridge.employeeCommand(f.runtimeId, { type: 'steer', message: '先等等' })
     expect((await f.call('submit', params)).status).toBe(409)
     expect(f.service.submitWork).not.toHaveBeenCalled()
   })
@@ -1448,7 +2130,7 @@ describe('employee-bound material handoff', () => {
     const business_actions = [params.available_actions[0].action_key]
     expect((await f.call('submit', { ...params, business_actions })).body.error).toContain('绑定该动作所需的业务记录')
     expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
-    const { recordKey } = await f.findRecord(params.handoff_key, 'TEST-100')
+    const { recordKey } = await f.findRecord('TEST-100')
     expect((await f.call('submit', { ...params, materials: [], business_actions, business_record_key: recordKey })).body.result.status).toBe('accepted')
     expect(f.service.submitWork.mock.calls[0][2]).toMatchObject({ businessContext: { objectName: 'forge_quote', recordId: 'contract-1', recordVersion: 'v7' } })
     expect(JSON.parse(f.service.submitWork.mock.calls[0][1]).businessSnapshot).toEqual(f.businessSnapshot)

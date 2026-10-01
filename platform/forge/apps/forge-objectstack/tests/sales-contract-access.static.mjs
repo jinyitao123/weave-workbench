@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
-const [navigationText, settingsPermissions, salesContractPermissions, salesQuotationPermissions, settingsMigration, materialPage, contractPage, salesActions, materialObject, contractLineHook] = await Promise.all([
+const [navigationText, settingsPermissions, salesContractPermissions, salesQuotationPermissions, settingsMigration, materialPage, contractPage, salesActions, submissionDomain, materialObject, contractLineHook] = await Promise.all([
   read('../src/apps/application-navigation.json'),
   read('../src/permissions/application-settings.permission.ts'),
   read('../src/permissions/sales-contract.permission.ts'),
@@ -11,6 +11,7 @@ const [navigationText, settingsPermissions, salesContractPermissions, salesQuota
   read('../src/pages/material-workspace.page.ts'),
   read('../src/pages/sales-contract-create.page.ts'),
   read('../src/actions/sales.action.ts'),
+  read('../src/plugins/contract-material-submission.ts'),
   read('../src/objects/material.object.ts'),
   read('../src/hooks/sales-contract.hook.ts'),
 ]);
@@ -86,18 +87,32 @@ assert.match(contractPage, /bundleLines\.some\(item=>!selectableSkus\.some\(sku=
 
 const contractSubmit = salesActions.slice(
   salesActions.indexOf('export const ContractSubmit = defineAction'),
-  salesActions.indexOf('export const ContractSubmitFrozenMaterial'),
+  salesActions.indexOf('export const ContractSubmitMaterialPackage'),
+);
+const contractPackageSubmit = salesActions.slice(
+  salesActions.indexOf('export const ContractSubmitMaterialPackage = defineAction'),
+  salesActions.indexOf('export const ContractRegisterSignature'),
 );
 const contractDraftCreate = salesActions.slice(
   salesActions.indexOf("export const SalesContractDraftCreate = defineAction"),
   salesActions.indexOf('export const ContractSubmit = defineAction'),
 );
 assert.match(contractDraftCreate, /const contract = await ctx\.api\.object\('forge_sales_contract'\)\.insert\([\s\S]*?owner_id: actor,[\s\S]*?responsible_id: actor/);
-assert.match(contractSubmit, /if \(!organizationId\) throw new Error/);
-assert.match(contractSubmit, /sku\.enabled === false/);
-assert.match(contractSubmit, /material\.status === 'inactive'/);
-assert.match(contractSubmit, /unit\.status === 'inactive'/);
-assert.match(contractSubmit, /line\.line_type === 'service'[\s\S]*?服务明细必须有名称和数量/);
+assert.match(contractSubmit, /visible: false/);
+assert.match(contractSubmit, /target: CONTRACT_SUBMISSION_RECEIPT_TARGET/);
+assert.match(contractPackageSubmit, /name: 'contract_submit_material_package'/);
+assert.match(contractPackageSubmit, /requiredPermissions: \['sales_contract_operator'\]/);
+assert.match(contractPackageSubmit, /name: 'primary_file_id',[\s\S]*?type: 'file', required: true/);
+assert.match(contractPackageSubmit, /name: 'material_file_ids',[\s\S]*?type: 'file', multiple: true, required: true/);
+assert.match(contractPackageSubmit, /target: CONTRACT_MATERIAL_SUBMISSION_TARGET/);
+assert.match(submissionDomain, /context\.recordLoadDenied === true/);
+assert.match(submissionDomain, /actorId !== sessionActorId/);
+assert.match(submissionDomain, /record\.responsible_id !== actorId/);
+assert.match(submissionDomain, /record\.organization_id !== organizationId/);
+assert.match(submissionDomain, /sku\.enabled === false/);
+assert.match(submissionDomain, /material\.status === 'inactive'/);
+assert.match(submissionDomain, /unit\.status === 'inactive'/);
+assert.match(submissionDomain, /line\.line_type === 'service'[\s\S]*?服务明细必须有名称和数量/);
 assert.match(contractLineHook, /lineType === 'service'[\s\S]*?服务项目不能关联物料规格[\s\S]*?if \(lineType !== 'material'\)/);
 
 console.log('PASS sales contract navigation, own-record scope, SKU read/write boundary, and availability guards');

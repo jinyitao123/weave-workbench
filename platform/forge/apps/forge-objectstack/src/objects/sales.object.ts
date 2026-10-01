@@ -111,9 +111,9 @@ export const SalesContract = master('forge_sales_contract', '框架销售合同'
   draft_request_signature: Field.text({ label: '草稿请求摘要', maxLength: 32, hidden: true, readonly: true }),
   submitted_material_id: Field.file({ label: '本次提交版本', readonly: true }),
   submitted_material_name: Field.text({ label: '提交版本名称', readonly: true, maxLength: 255 }),
-  submitted_material_sha256: Field.text({ label: '提交版本摘要', readonly: true, maxLength: 64 }),
-  submitted_attachment_manifest: Field.textarea({ label: '本次提交附件清单', readonly: true }),
-  submitted_attachment_revision_request_id: Field.text({ label: '附件修订轮次', readonly: true, maxLength: 80 }),
+  submitted_material_sha256: Field.text({ label: '提交版本摘要', readonly: true, maxLength: 64, hidden: true }),
+  submitted_attachment_manifest: Field.textarea({ label: '本次提交附件清单', readonly: true, hidden: true }),
+  submitted_attachment_revision_request_id: Field.text({ label: '附件修订轮次', readonly: true, maxLength: 80, hidden: true }),
   submitted_at: Field.datetime({ label: '提交时间', readonly: true }),
   remarks: remarks(),
 }, ['code', 'customer_po_number', 'name', 'contract_type_id', 'customer_id', 'total_amount', 'ordered_amount', 'status', 'signed_on', 'responsible_id']);
@@ -133,12 +133,15 @@ export const SalesContractSubmission = ObjectSchema.create({
     material_file_id: Field.text({ label: '材料引用', ...required, maxLength: 64 }),
     material_name: Field.text({ label: '材料名称', ...required, maxLength: 255 }),
     material_sha256: Field.text({ label: '材料摘要', ...required, maxLength: 64 }),
+    material_manifest: Field.textarea({ label: '提交材料清单', readonly: true }),
+    package_sha256: Field.text({ label: '提交包摘要', maxLength: 64, hidden: true, readonly: true }),
+    organization_id: Field.text({ label: '组织范围', maxLength: 128, hidden: true, readonly: true }),
     submitted_by: Field.user({ label: '提交人', ...required }),
     submitted_at: Field.datetime({ label: '提交时间', ...required }),
   },
   listViews: { all: { label: '全部记录', type: 'grid', columns: ['name', 'contract_id', 'material_name', 'submitted_by', 'submitted_at'] } },
   indexes: [{ fields: ['contract_id'], unique: 'organization' }],
-  enable: { apiEnabled: false, searchable: false, trackHistory: true, files: false, feeds: false, activities: false },
+  enable: { apiEnabled: false, searchable: false, trackHistory: true, files: true, feeds: false, activities: false },
 });
 
 // One immutable material choice per returned native approval request. The
@@ -164,6 +167,7 @@ export const SalesContractRevisionMaterial = ObjectSchema.create({
     primary_media_type: Field.text({ label: '新主件媒体类型', maxLength: 128 }),
     primary_bytes: Field.number({ label: '新主件字节数', min: 0, scale: 0 }),
     attachment_manifest: Field.textarea({ label: '新附件清单', ...required }),
+    organization_id: Field.text({ label: '组织范围', maxLength: 128, hidden: true, readonly: true }),
     submitted_by: Field.user({ label: '修订员工', ...required }),
     submitted_at: Field.datetime({ label: '固定时间', ...required }),
     consumed_at: Field.datetime({ label: '审批消费时间', readonly: true }),
@@ -173,7 +177,7 @@ export const SalesContractRevisionMaterial = ObjectSchema.create({
     { fields: ['approval_request_id'], unique: 'organization' },
     { fields: ['idempotency_key'], unique: 'organization' },
   ],
-  enable: { apiEnabled: false, searchable: false, trackHistory: true, files: false, feeds: false, activities: false },
+  enable: { apiEnabled: false, searchable: false, trackHistory: true, files: true, feeds: false, activities: false },
 });
 
 export const SalesContractLine = master('forge_sales_contract_line', '合同物料/服务明细', 'list', {

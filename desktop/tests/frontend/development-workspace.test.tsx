@@ -97,7 +97,7 @@ it('marks an array action unavailable, keeps a selected one removable, and block
   expect(container.querySelector('.member-capability-assigned')).toBeNull()
   expect(container.textContent).toContain('当前成员没有配置业务动作')
 })
-it('keeps unassigned actions in the picker and binds one file to its three declared parameters', async () => {
+it('keeps unassigned actions in the picker and requires a valid binding for native multiple files', async () => {
   const actionId = 'forge:action:sales_contract.ContractSubmit'
   getBusinessCapabilityCatalog.mockResolvedValueOnce({
     version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '',
@@ -105,9 +105,8 @@ it('keeps unassigned actions in the picker and binds one file to its three decla
       { id: actionId, name: '提交指定合同版本', description: '提交冻结合同文件', effect: 'write', resourceType: 'sales_contract',
         requiresEmployeeIntent: true, status: 'available', actionName: 'ContractSubmit', objectName: 'sales_contract',
         requiresRecord: true, params: [
-          { name: 'material_file_id', label: '合同文件', type: 'string', required: true },
-          { name: 'material_name', label: '文件名称', type: 'string', required: true },
-          { name: 'material_sha256', label: '文件 SHA-256', type: 'string', required: true },
+          { name: 'primary_file_id', label: '主文件', type: 'file', required: true },
+          { name: 'material_file_ids', label: '全部材料', type: 'file', multiple: true, required: true },
         ] },
       { id: 'forge:action:sales_lead.convert', name: '转为商机', description: '转换已授权线索', effect: 'write',
         resourceType: 'sales_lead', requiresEmployeeIntent: true, status: 'available', actionName: 'convert',
@@ -123,16 +122,14 @@ it('keeps unassigned actions in the picker and binds one file to its three decla
   await click('添加到成员')
   expect(container.textContent).toContain('提交指定合同版本')
   expect(container.textContent).not.toContain('转为商机')
-  expect(container.textContent).toContain('本次唯一文件（系统注入）')
+  expect(container.textContent).toContain('多文件参数须绑定“本次提交的全部文件”')
+  expect(container.textContent).toContain('默认由 Pi 从本次材料中选择一份；清单外文件不可选。')
+  await chooseProductOption('全部材料来源', '本次提交的全部文件')
   await saveSoon()
   expect(remote.document.members[1]!.configuration.businessCapabilityBindings).toEqual([{
-    capabilityId: actionId, parameters: [
-      { name: 'material_file_id', source: 'materials.single.id' },
-      { name: 'material_name', source: 'materials.single.name' },
-      { name: 'material_sha256', source: 'materials.single.sha256' },
-    ],
+    capabilityId: actionId, parameters: [{ name: 'material_file_ids', source: 'materials.ids' }],
   }])
-  await chooseProductOption('提交指定合同版本文件来源', '由成员填写')
+  await chooseProductOption('全部材料来源', '请选择文件来源')
   await saveSoon()
   expect(remote.document.members[1]!.configuration.businessCapabilityBindings).toEqual([])
 })
@@ -259,7 +256,7 @@ it('prevents duplicate trial submission and names tool completion states', async
   const start = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '开始调试')!
   await act(async () => { start.click(); start.click() })
   expect(call.mock.calls.filter(([command]) => command.action === 'trial')).toHaveLength(1)
-  expect(runLabel('tool_started')).toBe('执行中')
-  expect(runLabel('tool_completed')).toBe('已完成')
-  expect(runLabel('tool_failed')).toBe('失败')
+  expect(runLabel('tool_started')).toBe('工具调用中')
+  expect(runLabel('tool_completed')).toBe('工具调用完成')
+  expect(runLabel('tool_failed')).toBe('工具调用失败')
 })

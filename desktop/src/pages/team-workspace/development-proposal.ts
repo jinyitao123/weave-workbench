@@ -1,4 +1,4 @@
-import type { EnterpriseBusinessCapabilityCatalog } from '../../types/api'
+import type { EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityCatalog } from '../../types/api'
 import type { TeamDefinition } from '../../types/team-workspace'
 import { addParallelBranch, bindings, configureWorkflowResultProtocol, initialGraph, insertStep, isParallelBranchWorker, originalBinding, predecessors, removeStep, validateWorkflowResultProtocol, WORKBENCH_RESULT_PROTOCOL } from './graph'
 import { newMember } from './member'
@@ -9,7 +9,7 @@ export type TeamDevelopmentOperation =
   | { kind: 'member'; member: string; name?: string; duty?: string; instruction?: string; resultRequirement?: string; whenToUse?: string; contextInstruction?: string; enabled?: boolean; outputSchema?: string }
   | { kind: 'member_remove'; member: string }
   | { kind: 'skill'; member: string; name: string; selected: boolean; description?: string; body?: string; alwaysActive?: boolean }
-  | { kind: 'capability'; member: string; capability: string; selected: boolean; fileSource?: 'single' | 'member' }
+  | { kind: 'capability'; member: string; capability: string; selected: boolean; parameterSources?: EnterpriseBusinessCapabilityBinding['parameters'] }
   | { kind: 'flow_add'; name: string; description: string; member: string }
   | { kind: 'flow'; flow: string; name?: string; description?: string }
   | { kind: 'step_add'; flow: string; after: string; member: string; name: string; requirement: string; placement?: 'serial' | 'parallel' }
@@ -34,18 +34,36 @@ function optional(value: unknown, label: string, max = 2000): string | undefined
   return value === undefined ? undefined : string(value, label, max)
 }
 
-function singleFileMapping(params: NonNullable<EnterpriseBusinessCapabilityCatalog['capabilities'][number]['params']>) {
-  const file = params.find((param) => /(?:^|_)file_id$/.test(param.name) && !param.multiple && (param.type === 'file' || param.type === 'string'))
-  if (!file) return undefined
-  const prefix = file.name.replace(/(?:^|_)file_id$/, '')
-  const name = params.find((param) => [prefix ? `${prefix}_name` : 'file_name', prefix ? `${prefix}_file_name` : 'name'].includes(param.name) && param.type === 'string')
-  const digest = params.find((param) => [prefix ? `${prefix}_sha256` : 'file_sha256', prefix ? `${prefix}_file_sha256` : 'sha256'].includes(param.name) && param.type === 'string')
-  if (!name || !digest) return undefined
-  return [
-    { name: file.name, source: 'materials.single.id' as const },
-    { name: name.name, source: 'materials.single.name' as const },
-    { name: digest.name, source: 'materials.single.sha256' as const },
-  ]
+function capabilityParameterSources(
+  capability: EnterpriseBusinessCapabilityCatalog['capabilities'][number],
+  raw: unknown,
+): EnterpriseBusinessCapabilityBinding['parameters'] {
+  const supplied = raw === undefined ? [] : raw
+  if (!Array.isArray(supplied)) throw new Error('业务参数材料来源映射格式无效')
+  const declared = new Map((capability.params ?? []).map((parameter) => [parameter.name, parameter]))
+  const mappings = new Map<string, EnterpriseBusinessCapabilityBinding['parameters'][number]['source']>()
+  for (const value of supplied) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('业务参数材料来源映射格式无效')
+    const mapping = value as Record<string, unknown>
+    if (typeof mapping.name !== 'string' || typeof mapping.source !== 'string' || mappings.has(mapping.name)) throw new Error('业务参数材料来源映射缺少唯一参数或来源')
+    const parameter = declared.get(mapping.name)
+    if (!parameter) throw new Error('材料来源映射引用了当前动作中不存在的参数')
+    const source = mapping.source as EnterpriseBusinessCapabilityBinding['parameters'][number]['source']
+    const nativeFile = parameter.type === 'file'
+    const valid = nativeFile
+      ? parameter.multiple === true ? source === 'materials.ids' : source === 'materials.single.id'
+      : parameter.type === 'string' && source !== 'materials.ids'
+    if (!valid || !['materials.single.id', 'materials.single.name', 'materials.single.sha256', 'materials.manifest_json', 'materials.ids'].includes(source)) {
+      throw new Error(`参数 ${mapping.name} 的材料来源与原生类型不匹配`)
+    }
+    mappings.set(mapping.name, source)
+  }
+  for (const parameter of capability.params ?? []) {
+    if (parameter.type === 'file' && parameter.multiple === true && mappings.get(parameter.name) !== 'materials.ids') {
+      throw new Error(`多文件参数 ${parameter.name} 必须绑定本轮完整文件集合`)
+    }
+  }
+  return [...mappings].map(([name, source]) => ({ name, source }))
 }
 
 export function applyTeamDevelopmentOperations(base: TeamDefinition, raw: unknown, catalog: EnterpriseBusinessCapabilityCatalog): TeamDevelopmentProposal {
@@ -143,14 +161,12 @@ export function applyTeamDevelopmentOperations(base: TeamDefinition, raw: unknow
         const capability = catalog.capabilities.find((item) => item.id === id)
         if (capability?.status !== 'available') throw new Error('业务动作不在当前可绑定目录中')
         if (typeof operation.selected !== 'boolean') throw new Error('业务动作须明确选择添加或移除')
+        if (Object.hasOwn(operation, 'fileSource')) throw new Error('旧版文件来源提案不可用，请按原生参数类型重新配置')
+        const parameterSources = operation.selected ? capabilityParameterSources(capability, operation.parameterSources) : []
         if (operation.selected && !target.configuration.businessCapabilityIds.includes(id)) target.configuration.businessCapabilityIds.push(id)
         if (!operation.selected) target.configuration.businessCapabilityIds = target.configuration.businessCapabilityIds.filter((value) => value !== id)
         target.configuration.businessCapabilityBindings = target.configuration.businessCapabilityBindings.filter((binding) => binding.capabilityId !== id)
-        if (operation.selected && operation.fileSource === 'single') {
-          const parameters = singleFileMapping(capability.params ?? [])
-          if (!parameters) throw new Error('该业务动作没有可一次绑定的文件标识、名称与摘要')
-          target.configuration.businessCapabilityBindings.push({ capabilityId: id, parameters })
-        } else if (operation.fileSource && operation.fileSource !== 'member') throw new Error('文件来源选择无效')
+        if (operation.selected && parameterSources.length) target.configuration.businessCapabilityBindings.push({ capabilityId: id, parameters: parameterSources })
         changes.push(`${operation.selected ? '添加' : '移除'}业务动作：${target.configuration.displayName} · ${capability.name}`)
         break
       }

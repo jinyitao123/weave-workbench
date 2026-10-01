@@ -2,6 +2,7 @@ import type { Plugin, PluginContext } from '@objectstack/core';
 import { makeExecutionContextResolver } from '@objectstack/plugin-hono-server';
 import type { IHttpRequest, IHttpResponse, IHttpServer, IObjectQLEngine, IStorageService } from '@objectstack/spec/contracts';
 import type { ExecutionContext } from '@objectstack/spec/kernel';
+import { resolveRetainedContractMaterialForOwner } from './contract-material-holder.js';
 
 const ROUTE = '/api/v1/workbench/materials/:fileId';
 const ORIGINAL_ROUTE = '/api/v1/workbench/materials/:fileId/original';
@@ -184,14 +185,26 @@ export class WorkbenchOwnedMaterialPlugin implements Plugin {
         if (!engine || !storage) return sendError(response, 503, 'MATERIAL_UNAVAILABLE');
         try {
           const file = await engine.findOne('sys_file', { where: { id: fileId } }, { context: SYSTEM_CONTEXT });
-          if (!file || file.status !== 'committed' || !['user', 'attachments'].includes(String(file.scope)) || file.acl !== 'private' ||
+          if (!file || !['committed', 'deleted'].includes(String(file.status)) || !['user', 'attachments'].includes(String(file.scope)) || file.acl !== 'private' ||
               file.owner_id !== actor.userId) {
             return sendError(response, 404, 'MATERIAL_NOT_FOUND');
           }
           if (!actorOrganizationId || file.organization_id !== actorOrganizationId) {
             return sendError(response, 404, 'MATERIAL_NOT_FOUND');
           }
-          if (!await ownerCanReadBoundOriginal(engine, file, actor, actorOrganizationId)) {
+          const retained = await resolveRetainedContractMaterialForOwner(engine, {
+            fileId,
+            sha256: expected,
+            organizationId: actorOrganizationId,
+            ownerId: actor.userId,
+            context: SYSTEM_CONTEXT,
+          });
+          const retainedMatches = retained && retained.submitterId === actor.userId && retained.fileId === fileId &&
+            retained.name === file.name && retained.mediaType === String(file.mime_type).toLowerCase() &&
+            retained.bytes === Number(file.size) && retained.sha256 === expected;
+          const allowedOriginal = !!retainedMatches || file.status === 'committed' &&
+            await ownerCanReadBoundOriginal(engine, file, actor, actorOrganizationId);
+          if (!allowedOriginal) {
             return sendError(response, 404, 'MATERIAL_NOT_FOUND');
           }
           const key = nonempty(file.key, 2048), name = nonempty(file.name, 255);

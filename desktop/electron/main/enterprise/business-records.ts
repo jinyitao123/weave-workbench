@@ -139,6 +139,28 @@ interface BusinessField {
   label: string
   type: string
   reference?: string
+  options?: Array<{ value: string | number | boolean; label: string }>
+}
+
+function nativeFieldOptions(value: unknown): Array<{ value: string | number | boolean; label: string }> {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((raw): Array<{ value: string | number | boolean; label: string }> => {
+    if (typeof raw === 'string' || typeof raw === 'number' || typeof raw === 'boolean') return [{ value: raw, label: String(raw) }]
+    const option = object(raw), optionValue = option?.value
+    if (typeof optionValue !== 'string' && typeof optionValue !== 'number' && typeof optionValue !== 'boolean') return []
+    const label = text(option?.label) ?? text(option?.name) ?? String(optionValue)
+    return [{ value: optionValue, label: label.slice(0, 500) }]
+  })
+}
+
+function nativeFieldValue(field: BusinessField, rawValue: unknown): unknown {
+  if (!field.options?.length) return rawValue
+  if (Array.isArray(rawValue)) return rawValue.map((value) => nativeFieldValue(field, value))
+  const raw = object(rawValue)
+  const value = raw && Object.hasOwn(raw, 'value') ? raw.value : rawValue
+  const option = field.options.find((item) => Object.is(item.value, value)
+    || ['string', 'number', 'boolean'].includes(typeof item.value) && ['string', 'number', 'boolean'].includes(typeof value) && String(item.value) === String(value))
+  return option?.label ?? rawValue
 }
 
 function definitionFields(definition: unknown): BusinessField[] {
@@ -151,7 +173,8 @@ function definitionFields(definition: unknown): BusinessField[] {
     const field = object(raw), name = text(field?.name) ?? text(field?.field) ?? key
     if (!field || !name || !FIELD_NAME.test(name)) return []
     const type = (text(field.type) ?? 'string').toLowerCase()
-    return [{ name, label: text(field.label) ?? name, type, ...(text(field.reference) ? { reference: text(field.reference) } : {}) }]
+    const options = nativeFieldOptions(field.options ?? field.enum)
+    return [{ name, label: text(field.label) ?? name, type, ...(text(field.reference) ? { reference: text(field.reference) } : {}), ...(options.length ? { options } : {}) }]
   })
 }
 
@@ -212,10 +235,10 @@ function candidateFromRow(objectSummary: BusinessObjectSummary, fields: Business
     ?? pickField(fields, /(?:状态|审批结果)/)
   const ownerField = readableOwnerField(fields)
   const versionField = pickVersionField(fields)
-  const name = nameField ? stringValue(row[nameField.name]) : undefined
-  const code = codeField ? stringValue(row[codeField.name]) : undefined
-  const status = statusField ? stringValue(row[statusField.name]) : undefined
-  const owner = ownerField ? stringValue(row[ownerField.name]) : undefined
+  const name = nameField ? stringValue(nativeFieldValue(nameField, row[nameField.name])) : undefined
+  const code = codeField ? stringValue(nativeFieldValue(codeField, row[codeField.name])) : undefined
+  const status = statusField ? stringValue(nativeFieldValue(statusField, row[statusField.name])) : undefined
+  const owner = ownerField ? stringValue(nativeFieldValue(ownerField, row[ownerField.name])) : undefined
   if (!name && !code) return undefined
   const candidate: BusinessRecordCandidate = {
     objectName: objectSummary.objectName, objectLabel: objectSummary.label, recordId: id,
@@ -259,7 +282,7 @@ function searchScore(summary: string, fields: BusinessField[], rowValue: unknown
   if (!row) return 0
   const terms = searchTerms(summary)
   if (!terms.length) return 0
-  const values = fields.map((field) => stringValue(row[field.name])?.toLowerCase()).filter((value): value is string => Boolean(value))
+  const values = fields.map((field) => stringValue(nativeFieldValue(field, row[field.name]))?.toLowerCase()).filter((value): value is string => Boolean(value))
   return terms.reduce((score, term) => score + (values.some((value) => value.includes(term)) ? Math.max(2, term.length) : 0), 0)
 }
 
@@ -311,7 +334,7 @@ function snapshotFields(fields: BusinessField[], rowValue: unknown): { values: B
   let truncated = fields.filter(canExposeField).length > selected.length
   const values = selected.flatMap((field): BusinessRecordFieldValue[] => {
     if (row[field.name] === undefined) return []
-    const safe = safeJsonValue(row[field.name])
+    const safe = safeJsonValue(nativeFieldValue(field, row[field.name]))
     truncated ||= safe.truncated
     if (safe.value === undefined) return []
     return [{ label: field.label, value: safe.value }]
