@@ -3,6 +3,7 @@ import { makeExecutionContextResolver } from '@objectstack/plugin-hono-server';
 import type { IHttpRequest, IHttpResponse, IHttpServer, IObjectQLEngine } from '@objectstack/spec/contracts';
 import type { ExecutionContext } from '@objectstack/spec/kernel';
 import type { EmitInput, MessagingService } from '@objectstack/service-messaging';
+import { CONTRACT_OBJECT, projectCurrentContractBusinessNotificationMaterials } from './contract-business-notification-material.js';
 
 const EVENT_PATH = '/api/v1/apps/forge/weave-events/team-runs';
 const SOURCE_PATH = '/api/v1/workbench/notifications/:notificationId/source';
@@ -24,6 +25,15 @@ function sessionHeaders(headers: IHttpRequest['headers']): Headers {
 async function sourceError(response: IHttpResponse, status: number, code: string): Promise<void> {
   response.header('Cache-Control', 'no-store');
   await response.status(status).json({ error: { code } });
+}
+
+function isExplicitlyUnreadableRecord(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const value = error as { code?: unknown; status?: unknown; statusCode?: unknown; httpStatus?: unknown };
+  const status = Number(value.status ?? value.statusCode ?? value.httpStatus);
+  if (status === 403 || status === 404) return true;
+  const code = typeof value.code === 'string' ? value.code.toUpperCase() : '';
+  return code === 'PERMISSION_DENIED' || code === 'FORBIDDEN' || code === 'RECORD_NOT_FOUND' || code === 'NOT_FOUND';
 }
 
 function eventPayload(value: unknown): Record<string, unknown> | null {
@@ -140,18 +150,50 @@ export class WeaveRunEventPlugin implements Plugin {
           }, { context: SYSTEM_CONTEXT });
           if (!inbox.length || inbox.some((row) => row.user_id !== actor.userId ||
               row.notification_id !== notificationId ||
-              !boundedString(row.topic, 128)?.startsWith('weave.team_run.') ||
+              !boundedString(row.topic, 128) ||
               row.topic !== inbox[0].topic ||
               row.organization_id !== inbox[0].organization_id)) {
             return sourceError(res, 404, 'TEAM_MESSAGE_NOT_FOUND');
           }
           const notice = await engine.findOne('sys_notification', {
             where: { id: notificationId },
-            fields: ['id', 'topic', 'organization_id', 'payload'],
+            fields: ['id', 'topic', 'organization_id', 'payload', 'source_object', 'source_id'],
           }, { context: SYSTEM_CONTEXT });
           if (!notice || notice.id !== notificationId || notice.topic !== inbox[0].topic ||
               notice.organization_id !== inbox[0].organization_id) {
             return sourceError(res, 404, 'TEAM_MESSAGE_NOT_FOUND');
+          }
+          if (!String(notice.topic).startsWith('weave.team_run.')) {
+            const organizationId = boundedString(actor.tenantId ?? actor.organizationId, 128);
+            const objectName = boundedString(notice.source_object, 128);
+            const recordId = boundedString(notice.source_id, 128);
+            if (!organizationId || inbox[0].organization_id !== organizationId ||
+                notice.organization_id !== organizationId || !objectName ||
+                !objectName.startsWith('forge_') || !/^[a-z][a-z0-9_]{1,127}$/.test(objectName) || !recordId) {
+              return sourceError(res, 404, 'TEAM_MESSAGE_NOT_FOUND');
+            }
+            let sourceRecord: Record<string, unknown> | null;
+            try {
+              sourceRecord = await engine.findOne(objectName, { where: { id: recordId } }, { context: actor }) as Record<string, unknown> | null;
+            } catch (error) {
+              // ObjectQL applies the employee's own sharing rules here. Do not
+              // turn a hidden business record into an existence oracle.
+              if (isExplicitlyUnreadableRecord(error)) return sourceError(res, 404, 'TEAM_MESSAGE_NOT_FOUND');
+              throw error;
+            }
+            if (!sourceRecord || sourceRecord.id !== recordId ||
+                sourceRecord.organization_id != null && sourceRecord.organization_id !== organizationId) {
+              return sourceError(res, 404, 'TEAM_MESSAGE_NOT_FOUND');
+            }
+            const materials = objectName === CONTRACT_OBJECT
+              ? await projectCurrentContractBusinessNotificationMaterials(engine, { contract: sourceRecord, actor, organizationId })
+              : { materialStatus: 'unavailable' as const, originalFiles: [] };
+            await res.status(200).json({
+              version: '1', notificationId, kind: 'business',
+              source: { system: 'forge', objectName, recordId },
+              ...materials,
+            });
+            return;
           }
           const event = eventPayload(eventPayload(notice.payload)?.weaveEvent);
           const kind = boundedString(event?.kind, 64);

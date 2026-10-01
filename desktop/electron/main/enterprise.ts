@@ -7,8 +7,8 @@ import { submissionUUID } from './enterprise/handoff-store'
 import { teamCatalog, teamChoices, type TeamSummary } from './enterprise/team-catalog'
 import { ForgeBusinessReadError, ForgeBusinessReader, type BusinessObjectDirectory, type BusinessRecordRead, type BusinessRecordSearchPage } from './enterprise/business-records'
 
-const DEFAULT_FORGE_URL = 'https://mqttdev.online'
-const DEFAULT_WEAVE_URL = 'https://mqttdev.online'
+const DEFAULT_FORGE_URL = 'http://124.223.189.112'
+const DEFAULT_WEAVE_URL = 'http://124.223.189.112:8080'
 const REQUEST_TIMEOUT_MS = 8_000
 
 interface EnterpriseServiceOptions {
@@ -27,15 +27,54 @@ export interface ApprovalRevisionSubmission {
   attachments: ApprovalRevisionFileReference[]
 }
 export interface ForgeHttpResult { status: number; body: unknown }
+export interface NativeMcpActionAttempt {
+  status: 'returned' | 'rejected' | 'unknown'
+  result?: unknown
+  code?: string
+  message?: string
+}
+export interface NativeMcpActionArguments {
+  actionName: string
+  objectName: string
+  recordId: string
+  params: Record<string, string>
+}
 export class WorkRegistrationRejectedError extends Error {}
 class WeaveHttpError extends Error {
   constructor(message: string, readonly status: number) { super(message) }
 }
-export interface EnterpriseWorkNotificationSource {
+export interface EnterpriseWeaveWorkNotificationSource {
   version: '1'
   notificationID: string
   kind: 'result' | 'failure' | 'revision_required' | 'cancelled'
   source: { system: 'weave'; workReference: string; runReference: string; sessionReference: string }
+}
+export interface EnterpriseBusinessWorkNotificationSource {
+  version: '1'
+  notificationID: string
+  kind: 'business'
+  source: { system: 'forge'; objectName: string; recordId: string }
+  materialStatus: 'available' | 'none' | 'unavailable'
+  originalFiles: Array<{
+    sourceKind: 'owner' | 'approval'
+    requestId?: string
+    fileId: string
+    name: string
+    mediaType: 'application/pdf' | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    bytes: number
+    sha256: string
+  }>
+}
+export type EnterpriseWorkNotificationSource = EnterpriseWeaveWorkNotificationSource | EnterpriseBusinessWorkNotificationSource
+export interface EnterpriseBusinessNotificationContext {
+  kind: 'business'
+  notificationID: string
+  source: EnterpriseBusinessWorkNotificationSource['source']
+  materialStatus: EnterpriseBusinessWorkNotificationSource['materialStatus']
+  materialReferences: EnterpriseBusinessWorkNotificationSource['originalFiles']
+  record: BusinessRecordRead
+  currentReadAt: string
+  materials: Array<EnterpriseBusinessWorkNotificationSource['originalFiles'][number] & { extraction: MaterialExtraction }>
 }
 export interface EnterpriseWorkContinuationContext {
   version: '1'
@@ -184,6 +223,21 @@ function stringList(value: unknown): string[] {
 }
 
 const BUSINESS_CAPABILITY_SCALAR_TYPES = new Set(['string', 'text', 'textarea', 'email', 'url', 'date', 'datetime', 'number', 'integer', 'currency', 'boolean', 'file', 'select', 'enum', 'picklist'])
+const BUSINESS_ACTION_METADATA_MAX_BYTES = 4 * 1024 * 1024
+
+interface BusinessActionObjectMetadata {
+  name: string
+  actions: unknown[]
+  fields: Record<string, unknown>
+}
+
+interface ResolvedBusinessActionParameter {
+  name: string
+  type: string
+  multiple: boolean
+  enum: string[]
+  usesObjectOverride: boolean
+}
 
 function businessCapabilityUnavailableReason(value: unknown): string | undefined {
   if (value === undefined || value === null) return undefined
@@ -218,7 +272,105 @@ function businessCapabilityParams(value: unknown): NonNullable<EnterpriseBusines
   }) : []
 }
 
-const materialBindingSources = ['materials.single.id', 'materials.single.name', 'materials.single.sha256', 'materials.manifest_json'] as const
+function businessActionObjectMetadata(value: unknown, expectedName: string): BusinessActionObjectMetadata {
+  const envelope = record(value), item = record(envelope?.item)
+  if (envelope?.type !== 'object' || envelope.name !== expectedName || item?.name !== expectedName || !Array.isArray(item.actions)) {
+    throw new Error(`Forge 对象 ${expectedName} 的原生动作声明无效`)
+  }
+  const fields = record(item.fields) ?? {}
+  return { name: expectedName, actions: item.actions, fields }
+}
+
+function objectStackBusinessActionType(type: string): string {
+  switch (type) {
+    case 'number': case 'currency': case 'percent': case 'rating': case 'slider': case 'autonumber': return 'number'
+    case 'boolean': case 'toggle': return 'boolean'
+    case 'multiselect': case 'checkboxes': case 'tags': return 'array'
+    default: return 'string'
+  }
+}
+
+function businessActionEnumValues(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((option) => typeof option === 'string' ? [option] : textValue(record(option)?.value) ? [textValue(record(option)?.value)!] : [])
+}
+
+function resolveBusinessActionParameters(
+  summaryAction: Record<string, unknown>,
+  declaration: Record<string, unknown>,
+  objectName: string,
+  objectMetadataByName: Map<string, BusinessActionObjectMetadata>,
+): NonNullable<EnterpriseBusinessCapability['params']> {
+  const summaryParams = summaryAction.params === undefined || summaryAction.params === null ? [] : summaryAction.params
+  const declaredParams = declaration.params === undefined || declaration.params === null ? [] : declaration.params
+  if (!Array.isArray(summaryParams) || !Array.isArray(declaredParams)) throw new Error('Forge 业务动作参数声明不是列表')
+
+  const resolved = new Map<string, ResolvedBusinessActionParameter>()
+  for (const raw of declaredParams) {
+    const parameter = record(raw)
+    if (!parameter) throw new Error('Forge 原生参数声明无效')
+    const fieldName = textValue(parameter.field)
+    const name = textValue(parameter.name) ?? fieldName
+    if (!name) continue
+    if (resolved.has(name)) throw new Error(`Forge 原生参数 ${name} 重复`)
+    if (parameter.required !== undefined && parameter.required !== null && typeof parameter.required !== 'boolean'
+      || parameter.multiple !== undefined && parameter.multiple !== null && typeof parameter.multiple !== 'boolean') {
+      throw new Error(`Forge 原生参数 ${name} 的 required 或 multiple 无效`)
+    }
+
+    let field: Record<string, unknown> | undefined
+    let usesObjectOverride = false
+    if (fieldName) {
+      const overrideName = textValue(parameter.objectOverride)
+      let fieldObject = objectMetadataByName.get(objectName)
+      if (overrideName) {
+        fieldObject = objectMetadataByName.get(overrideName)
+        if (!fieldObject || fieldObject.name !== overrideName) throw new Error(`Forge 参数 ${name} 引用的对象字段不可读取`)
+        usesObjectOverride = true
+      }
+      field = record(fieldObject?.fields[fieldName])
+      if (!field) throw new Error(`Forge 参数 ${name} 引用的字段不可读取`)
+    }
+    const type = textValue(parameter.type)?.trim() || textValue(field?.type)?.trim()
+    if (!type) throw new Error(`Forge 原生参数 ${name} 没有可确认的类型`)
+    const fieldMultiple = typeof field?.multiple === 'boolean' ? field.multiple : false
+    const multiple = typeof parameter.multiple === 'boolean' ? parameter.multiple : fieldMultiple
+    const parameterOptions = parameter.options
+    const options = parameterOptions === undefined || parameterOptions === null ? field?.options : parameterOptions
+    resolved.set(name, { name, type, multiple, enum: businessActionEnumValues(options), usesObjectOverride })
+  }
+  if (resolved.size !== summaryParams.length) throw new Error('Forge 原生参数声明与员工可调用动作不一致')
+
+  const seenSummary = new Set<string>()
+  const normalizedSummary = businessCapabilityParams(summaryParams)
+  if (normalizedSummary.length !== summaryParams.length) throw new Error('Forge 员工可调用动作参数摘要无效')
+  return summaryParams.flatMap((raw, index) => {
+    const summary = record(raw), name = textValue(summary?.name) ?? textValue(summary?.field)
+    const summaryType = textValue(summary?.type)
+    if (!summary || !name || !summaryType || typeof summary.required !== 'boolean' || seenSummary.has(name)) {
+      throw new Error('Forge 员工可调用动作参数摘要缺少唯一名称、类型或必填状态')
+    }
+    seenSummary.add(name)
+    const parameter = resolved.get(name)
+    if (!parameter) throw new Error(`Forge 原生声明缺少员工可调用参数 ${name}`)
+    const expectedSummaryType = objectStackBusinessActionType(parameter.type)
+    if (summaryType !== expectedSummaryType && !parameter.usesObjectOverride) {
+      throw new Error(`Forge 员工参数 ${name} 与原生声明类型不一致`)
+    }
+    const normalizedType: NonNullable<EnterpriseBusinessCapability['params']>[number]['type'] = parameter.type === 'file'
+      ? 'file'
+      : objectStackBusinessActionType(parameter.type) as 'string' | 'number' | 'boolean' | 'array'
+    const normalized = normalizedSummary[index]!
+    return [{
+      ...normalized,
+      type: normalizedType,
+      multiple: parameter.multiple,
+      ...(parameter.enum.length ? { enum: parameter.enum } : {}),
+    }]
+  })
+}
+
+const materialBindingSources = ['materials.single.id', 'materials.single.name', 'materials.single.sha256', 'materials.manifest_json', 'materials.ids'] as const
 
 function businessCapabilityBindings(value: unknown): EnterpriseBusinessCapabilityBinding[] {
   if (!Array.isArray(value)) return []
@@ -318,6 +470,7 @@ function workflowGraph(value: unknown): Pick<EnterpriseWorkflowObservation, 'nod
   }) : []
   return { nodes, edges }
 }
+
 
 function workflowDefinition(value: unknown): EnterpriseWorkflowGraphDefinition | undefined {
   const graph = record(value)
@@ -755,6 +908,33 @@ export class EnterpriseService {
     catch { return text }
   }
 
+  async runNativeMcpAction(
+    args: NativeMcpActionArguments, assertCurrent: () => Promise<void>,
+  ): Promise<NativeMcpActionAttempt> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in' || !this.forgeToken) throw new Error('请先登录以办理当前 Forge 事项')
+    const { callNativeMcpRunAction } = await import('./enterprise/approval-actions')
+    const endpoint = new URL('/api/v1/mcp', this.forgeUrl)
+    return callNativeMcpRunAction(args, assertCurrent, {
+      fetch: (init) => this.authenticatedFetch(endpoint, 'forge', init, generation),
+      assertCurrentAuth: (snapshot) => this.assertCurrentAuth(snapshot as EnterpriseAuthSnapshot),
+      signOutIfCurrent: (snapshot) => this.signOutIfCurrent(snapshot as EnterpriseAuthSnapshot),
+      assertAuthGeneration: () => this.assertAuthGeneration(generation),
+    })
+  }
+
+  async getApprovalActionHistory(requestIdValue: string): Promise<unknown[]> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录以核对 Forge 审批动作历史')
+    const requestId = boundedIdentity(requestIdValue, 128)
+    if (!requestId) throw new Error('Forge 审批事项引用无效')
+    const raw = await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(requestId)}/actions`, generation, '审批动作历史')
+    const envelope = record(raw), actions = Array.isArray(raw) ? raw : Array.isArray(envelope?.data) ? envelope.data : undefined
+    if (!actions) throw new Error('Forge 审批动作历史格式无效')
+    this.assertAuthGeneration(generation)
+    return actions
+  }
+
   private async forgeObjectMetadata(objectName: string, expectedGeneration: number): Promise<unknown> {
     if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务元数据')
     const { response, snapshot } = await this.authenticatedFetch(
@@ -792,7 +972,7 @@ export class EnterpriseService {
     bytes: number,
     sha256: string,
     generation: number,
-    sourceLabel: '审批' | '原工作',
+    sourceLabel: '审批' | '原工作' | '业务结果',
   ): Promise<Buffer> {
     const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.forgeUrl), 'forge', {
       headers: { Accept: mediaType, 'Accept-Encoding': 'identity', 'If-Match': `"${sha256}"` },
@@ -1003,6 +1183,40 @@ export class EnterpriseService {
     return { version: '1', provider: { id: 'forge', name: 'Forge 业务环境', status: 'available' }, capabilities, refreshedAt: new Date().toISOString() }
   }
 
+  private async readBusinessActionObjectMetadata(objectName: string, generation: number): Promise<BusinessActionObjectMetadata> {
+    if (!objectName || objectName !== objectName.trim()) throw new Error('Forge 对象名无效，无法读取原生动作声明')
+    const { response, snapshot } = await this.authenticatedFetch(
+      new URL(`/api/v1/meta/objects/${encodeURIComponent(objectName)}`, this.forgeUrl), 'forge',
+      { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }, generation,
+    )
+    if (response.status === 401) {
+      await response.body?.cancel()
+      await this.signOutIfCurrent(snapshot)
+      throw new Error('登录已失效，请重新登录')
+    }
+    if (response.status === 403) {
+      await response.body?.cancel()
+      throw new Error(`当前账号没有读取 Forge 对象 ${objectName} 原生动作声明的权限`)
+    }
+    if (!response.ok) {
+      await response.body?.cancel()
+      throw new Error(`Forge 对象 ${objectName} 原生动作声明读取失败（${response.status}）`)
+    }
+    const declaredLength = Number(response.headers.get('content-length'))
+    if (Number.isFinite(declaredLength) && declaredLength > BUSINESS_ACTION_METADATA_MAX_BYTES) {
+      await response.body?.cancel()
+      throw new Error(`Forge 对象 ${objectName} 原生动作声明超过读取限制`)
+    }
+    const body = await response.text()
+    this.assertCurrentAuth(snapshot)
+    if (Buffer.byteLength(body, 'utf8') > BUSINESS_ACTION_METADATA_MAX_BYTES) throw new Error(`Forge 对象 ${objectName} 原生动作声明超过读取限制`)
+    let value: unknown
+    try { value = JSON.parse(body) }
+    catch { throw new Error(`Forge 对象 ${objectName} 原生动作声明格式无效`) }
+    this.assertCurrentAuth(snapshot)
+    return businessActionObjectMetadata(value, objectName)
+  }
+
   async getBusinessCapabilities(allowedIds?: string[]): Promise<EnterpriseBusinessCapability[]> {
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
@@ -1027,20 +1241,70 @@ export class EnterpriseService {
     const text = content.map((item) => textValue(record(item)?.text)).find(Boolean)
     const payload = text ? record(JSON.parse(text)) : undefined
     const actions = Array.isArray(payload?.actions) ? payload.actions : []
-    const allow = allowedIds ? new Set(allowedIds) : undefined
-    const capabilities = actions.flatMap((value): EnterpriseBusinessCapability[] => {
+    if (!Array.isArray(payload?.actions)) throw new Error('Forge 员工业务动作目录格式无效')
+    const visible = new Map<string, { id: string; key: string; objectName: string; actionName: string; action: Record<string, unknown> }>()
+    for (const value of actions) {
       const action = record(value), actionName = textValue(action?.name), objectName = textValue(action?.objectName)
-      if (!actionName || !objectName) return []
-      const id = `forge:action:${objectName}.${actionName}`
-      if (allow && !allow.has(id)) return []
-      if (businessCapabilityUnavailableReason(action?.params)) return []
-      return [{
+      if (!action || !actionName || actionName !== actionName.trim() || !objectName || objectName !== objectName.trim()) {
+        throw new Error('Forge 员工业务动作目录包含无效对象或动作')
+      }
+      const key = `${objectName}.${actionName}`
+      if (visible.has(key)) throw new Error(`Forge 员工业务动作目录重复包含 ${key}`)
+      visible.set(key, { id: `forge:action:${key}`, key, objectName, actionName, action })
+    }
+    const visibleById = new Map([...visible.values()].map((action) => [action.id, action]))
+    const requestedIds = allowedIds ?? [...visibleById.keys()]
+    if (new Set(requestedIds).size !== requestedIds.length) throw new Error('团队配置的 Forge 业务动作不能重复')
+    const selected = requestedIds.map((id) => {
+      const match = visibleById.get(id)
+      if (!match) throw new Error(`当前员工没有调用 Forge 业务动作 ${id} 的权限`)
+      return { ...match }
+    })
+    const objectMetadataByName = new Map<string, BusinessActionObjectMetadata>()
+    const objectNames = [...new Set(selected.map((item) => item.objectName))].sort()
+    for (const objectName of objectNames) {
+      objectMetadataByName.set(objectName, await this.readBusinessActionObjectMetadata(objectName, generation))
+    }
+    const selectedDeclarations = new Map<string, Record<string, unknown>>()
+    const overrideNames = new Set<string>()
+    for (const item of selected) {
+      const object = objectMetadataByName.get(item.objectName)!
+      let declaration: Record<string, unknown> | undefined
+      for (const rawDeclaration of object.actions) {
+        const candidate = record(rawDeclaration)
+        if (candidate?.name !== item.actionName) continue
+        if (declaration) throw new Error(`Forge 对象 ${item.objectName} 中动作 ${item.actionName} 的原生声明重复`)
+        declaration = candidate
+      }
+      if (!declaration) throw new Error(`Forge 对象 ${item.objectName} 中缺少动作 ${item.actionName} 的原生声明`)
+      const params = declaration.params === undefined || declaration.params === null ? [] : declaration.params
+      if (!Array.isArray(params)) throw new Error(`Forge 动作 ${item.actionName} 的原生参数声明无效`)
+      for (const rawParam of params) {
+        const parameter = record(rawParam)
+        const field = textValue(parameter?.field)
+        const override = textValue(parameter?.objectOverride)
+        if (parameter?.objectOverride !== undefined && parameter.objectOverride !== null && (!override || override !== override.trim())) {
+          throw new Error(`Forge 动作 ${item.actionName} 的对象字段引用无效`)
+        }
+        if (field && override) overrideNames.add(override)
+      }
+      selectedDeclarations.set(item.key, declaration)
+    }
+    for (const objectName of [...overrideNames].filter((name) => !objectMetadataByName.has(name)).sort()) {
+      objectMetadataByName.set(objectName, await this.readBusinessActionObjectMetadata(objectName, generation))
+    }
+    const capabilities = selected.map(({ id, key, objectName, actionName, action }) => {
+      const params = resolveBusinessActionParameters(action, selectedDeclarations.get(key)!, objectName, objectMetadataByName)
+      const unavailableReason = businessCapabilityUnavailableReason(params)
+      if (unavailableReason) throw new Error(`Forge 业务动作 ${id} 的参数暂不可安全绑定：${unavailableReason}`)
+      return {
         id,
-        name: textValue(action?.label) ?? textValue(action?.description) ?? actionName,
-        description: textValue(action?.description) ?? textValue(action?.label) ?? actionName,
-        effect: 'write', resourceType: objectName, requiresEmployeeIntent: true, status: 'available', requiresRecord: action?.requiresRecord !== false,
-        actionName, objectName, requiresConfirmation: action?.requiresConfirmation === true, params: businessCapabilityParams(action?.params),
-      }]
+        name: textValue(action.label) ?? textValue(action.description) ?? actionName,
+        description: textValue(action.description) ?? textValue(action.label) ?? actionName,
+        effect: 'write' as const, resourceType: objectName, requiresEmployeeIntent: true, status: 'available' as const,
+        requiresRecord: action.requiresRecord !== false,
+        actionName, objectName, requiresConfirmation: action.requiresConfirmation === true, params,
+      }
     })
     this.assertCurrentAuth(snapshot)
     return capabilities
@@ -1472,20 +1736,21 @@ export class EnterpriseService {
     }).filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index)
     const sources = new Map<string, { workReference: string; runReference: string; sessionReference: string }>()
     const sourceFor = async (item: EnterpriseWorkItem) => {
-      if (item.workReference && item.runReference && item.sessionReference) return {
-        workReference: item.workReference, runReference: item.runReference, sessionReference: item.sessionReference,
-      }
       const cached = sources.get(item.id)
       if (cached) return cached
       try {
-        const verified = await this.getWorkNotificationSource(item.id)
-        if (item.notificationType !== `weave.team_run.${verified.kind}`) return undefined
+        const verified = await this.readWorkNotificationSource(item.id, generation)
+        if (verified.kind === 'business' || item.notificationType !== `weave.team_run.${verified.kind}`
+          || item.workReference && item.workReference !== verified.source.workReference
+          || item.runReference && item.runReference !== verified.source.runReference
+          || item.sessionReference && item.sessionReference !== verified.source.sessionReference) return undefined
         const source = { workReference: verified.source.workReference, runReference: verified.source.runReference, sessionReference: verified.source.sessionReference }
         sources.set(item.id, source)
         return source
       } catch { return undefined }
     }
     const superseded = new Set<string>()
+    const hasSucceededAction = new Set<string>()
     for (const pending of items) {
       if (pending.source !== 'weave' || pending.kind !== 'revision_required' || !pending.actionable
         || !/^weave\.team_run\.revision_required$/.test(pending.notificationType ?? '')) continue
@@ -1501,10 +1766,22 @@ export class EnterpriseService {
           break
         }
       }
+      if (superseded.has(pending.id)) continue
+      try {
+        const context = await this.readWorkContinuationMetadata(parent, generation)
+        if (context.run.status === 'succeeded' && context.run.finalResult?.disposition === 'needs_input'
+          && context.run.actionOutcomes?.some((outcome) => outcome.status === 'succeeded')) hasSucceededAction.add(pending.id)
+      } catch {
+        // A missing or unreadable action receipt must never be treated as a successful business action.
+      }
     }
     const projectedItems = items.map((item) => ({
       ...item, ...(sources.get(item.id) ?? {}),
-      ...(superseded.has(item.id) ? { actionable: false, status: 'completed' as const } : {}),
+      ...(hasSucceededAction.has(item.id) ? {
+        title: '团队结果与业务回执',
+        summary: 'Forge 业务动作已确认成功。团队列出的缺项是检查意见，后续办理事项以 Forge 当前正式事项为准。',
+      } : {}),
+      ...(superseded.has(item.id) || hasSucceededAction.has(item.id) ? { actionable: false, status: 'completed' as const } : {}),
     }))
     const runList = record(runsRead.value)
     this.assertAuthGeneration(generation)
@@ -1521,9 +1798,9 @@ export class EnterpriseService {
     }
   }
 
-  async getWorkContinuationContext(references: { workReference: string; runReference: string; sessionReference: string }): Promise<EnterpriseWorkContinuationContext> {
-    const { session, generation } = await this.sessionSnapshot()
-    if (session.status !== 'signed-in') throw new Error('请先登录')
+  private async readWorkContinuationMetadata(
+    references: { workReference: string; runReference: string; sessionReference: string }, generation: number,
+  ): Promise<EnterpriseWorkContinuationContext> {
     const workReference = boundedIdentity(references?.workReference, 512)
     const runReference = boundedIdentity(references?.runReference, 512)
     const sessionReference = boundedIdentity(references?.sessionReference, 512)
@@ -1532,6 +1809,14 @@ export class EnterpriseService {
     if (context.source.inputRevisionID !== workReference || context.source.runID !== runReference || context.source.workbenchSessionID !== sessionReference) {
       throw new Error('工作消息与原团队工作不匹配，请刷新工作消息')
     }
+    this.assertAuthGeneration(generation)
+    return context
+  }
+
+  async getWorkContinuationContext(references: { workReference: string; runReference: string; sessionReference: string }): Promise<EnterpriseWorkContinuationContext> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    const context = await this.readWorkContinuationMetadata(references, generation)
     const accountBeforeMaterials = await this.accountKey(generation)
     let totalBytes = 0
     let totalExtractedBytes = 0
@@ -1540,7 +1825,7 @@ export class EnterpriseService {
       if (expected.mediaType && isContinuationOriginalType(expected.mediaType)) {
         const originalPath = expected.sourceKind === 'owner'
           ? `/api/v1/workbench/materials/${encodeURIComponent(expected.id)}/original`
-          : `/api/v1/approvals/requests/${encodeURIComponent(expected.requestId!)}/workbench-context/files/${encodeURIComponent(expected.id)}/original`
+          : `/api/v1/approvals/requests/${encodeURIComponent(expected.requestId!)}/workbench-history/files/${encodeURIComponent(expected.id)}/original`
         const sourceBytes = await this.readOriginalMaterialBytes(
           originalPath, expected.mediaType, expected.bytes, expected.sha256, generation, '原工作',
         )
@@ -1574,25 +1859,128 @@ export class EnterpriseService {
     return context
   }
 
-  async getWorkNotificationSource(notificationIDValue: string): Promise<EnterpriseWorkNotificationSource> {
-    const { session, generation } = await this.sessionSnapshot()
-    if (session.status !== 'signed-in') throw new Error('请先登录')
-    const notificationID = boundedIdentity(notificationIDValue, 128)
-    if (!notificationID) throw new Error('工作消息无效，请刷新工作列表')
+  private async readWorkNotificationSource(notificationID: string, generation: number): Promise<EnterpriseWorkNotificationSource> {
     const raw = record(await this.forgeJSON(`/api/v1/workbench/notifications/${encodeURIComponent(notificationID)}/source`, generation, '工作消息来源'))
     const source = record(raw?.source)
     const responseNotificationID = boundedIdentity(raw?.notificationId, 128)
     const kind = boundedIdentity(raw?.kind, 64)
+    if (raw?.version !== '1' || responseNotificationID !== notificationID) throw new Error('工作消息来源与当前消息不匹配，请刷新工作列表')
+    if (kind === 'business') {
+      const objectName = boundedIdentity(source?.objectName, 128)
+      const recordId = boundedIdentity(source?.recordId, 128)
+      const materialStatus = raw?.materialStatus
+      if (source?.system !== 'forge' || !objectName || !/^[a-z][a-z0-9_]{1,127}$/.test(objectName)
+        || !recordId || !['available', 'none', 'unavailable'].includes(String(materialStatus))
+        || !Array.isArray(raw.originalFiles)) {
+        throw new Error('Forge 业务结果来源格式无效，请刷新工作消息')
+      }
+      if (Object.keys(raw).some((key) => !['version', 'notificationId', 'kind', 'source', 'materialStatus', 'originalFiles'].includes(key))
+        || Object.keys(source).some((key) => !['system', 'objectName', 'recordId'].includes(key))) {
+        throw new Error('Forge 业务结果来源包含未识别字段')
+      }
+      const seenFiles = new Set<string>()
+      const originalFiles = raw.originalFiles.map((entry) => {
+        const file = record(entry)
+        const sourceKind = file?.sourceKind
+        const requestId = boundedIdentity(file?.requestId, 128)
+        const fileId = boundedIdentity(file?.fileId, 128)
+        const name = boundedIdentity(file?.name, 255)
+        const mediaType = file?.mediaType
+        const bytes = numberValue(file?.bytes)
+        const sha256 = typeof file?.sha256 === 'string' ? file.sha256 : undefined
+        if (!file || Object.keys(file).some((key) => !['sourceKind', 'requestId', 'fileId', 'name', 'mediaType', 'bytes', 'sha256'].includes(key))
+          || sourceKind !== 'owner' && sourceKind !== 'approval'
+          || sourceKind === 'approval' && !requestId || sourceKind === 'owner' && file.requestId !== undefined
+          || !fileId || seenFiles.has(fileId) || !name
+          || mediaType !== 'application/pdf' && mediaType !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          || !Number.isInteger(bytes) || bytes! < 1 || bytes! > MAX_WORKSPACE_MATERIAL_BYTES
+          || !sha256 || !/^[0-9a-f]{64}$/.test(sha256)) {
+          throw new Error('Forge 业务结果材料来源或冻结版本无效')
+        }
+        seenFiles.add(fileId)
+        return {
+          sourceKind, ...(requestId ? { requestId } : {}), fileId, name,
+          mediaType, bytes: bytes!, sha256,
+        }
+      })
+      if (materialStatus === 'available' && originalFiles.length === 0 || materialStatus === 'none' && originalFiles.length !== 0) {
+        throw new Error('Forge 业务结果材料状态与来源清单不一致')
+      }
+      this.assertAuthGeneration(generation)
+      return {
+        version: '1', notificationID, kind: 'business',
+        source: { system: 'forge', objectName, recordId },
+        materialStatus: materialStatus as EnterpriseBusinessWorkNotificationSource['materialStatus'],
+        originalFiles: originalFiles as EnterpriseBusinessWorkNotificationSource['originalFiles'],
+      }
+    }
     const workReference = boundedIdentity(source?.workReference, 512)
     const runReference = boundedIdentity(source?.runReference, 512)
     const sessionReference = boundedIdentity(source?.sessionReference, 512)
-    if (raw?.version !== '1' || responseNotificationID !== notificationID
-      || kind !== 'result' && kind !== 'failure' && kind !== 'revision_required' && kind !== 'cancelled'
-      || source?.system !== 'weave' || !workReference || !runReference || !sessionReference) {
+    if (kind !== 'result' && kind !== 'failure' && kind !== 'revision_required' && kind !== 'cancelled'
+      || source?.system !== 'weave' || !workReference || !runReference || !sessionReference
+      || Object.keys(raw).some((key) => !['version', 'notificationId', 'kind', 'source'].includes(key))
+      || Object.keys(source).some((key) => !['system', 'workReference', 'runReference', 'sessionReference'].includes(key))) {
       throw new Error('工作消息来源与当前消息不匹配，请刷新工作列表')
     }
     this.assertAuthGeneration(generation)
     return { version: '1', notificationID, kind, source: { system: 'weave', workReference, runReference, sessionReference } }
+  }
+
+  async getWorkNotificationSource(notificationIDValue: string): Promise<EnterpriseWorkNotificationSource> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    const notificationID = boundedIdentity(notificationIDValue, 128)
+    if (!notificationID) throw new Error('工作消息无效，请刷新工作消息')
+    return this.readWorkNotificationSource(notificationID, generation)
+  }
+
+  async getBusinessNotificationContext(notificationIDValue: string): Promise<EnterpriseBusinessNotificationContext> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    const notificationID = boundedIdentity(notificationIDValue, 128)
+    if (!notificationID) throw new Error('业务结果消息无效，请刷新工作列表')
+    const initialSource = await this.readWorkNotificationSource(notificationID, generation)
+    if (initialSource.kind !== 'business') throw new Error('当前 Forge 消息不是可续接的业务结果')
+    const accountBefore = await this.accountKey(generation)
+    const recordBefore = await this.readBusinessRecord(initialSource.source.objectName, initialSource.source.recordId)
+    if (recordBefore.candidate.objectName !== initialSource.source.objectName || recordBefore.candidate.recordId !== initialSource.source.recordId) {
+      throw new Error('Forge 当前业务记录与消息来源不匹配')
+    }
+    let totalBytes = 0
+    let totalExtractedBytes = 0
+    const materials: EnterpriseBusinessNotificationContext['materials'] = []
+    if (initialSource.materialStatus === 'available') {
+      for (const expected of initialSource.originalFiles) {
+        const originalPath = expected.sourceKind === 'owner'
+          ? `/api/v1/workbench/materials/${encodeURIComponent(expected.fileId)}/original`
+          : `/api/v1/approvals/requests/${encodeURIComponent(expected.requestId!)}/workbench-history/files/${encodeURIComponent(expected.fileId)}/original`
+        const sourceBytes = await this.readOriginalMaterialBytes(originalPath, expected.mediaType, expected.bytes, expected.sha256, generation, '业务结果')
+        totalBytes += sourceBytes.length
+        if (totalBytes > CONTINUATION_TOTAL_BYTES) throw new Error('业务结果材料总量超出桌面读取限制')
+        const remainingExtractionBytes = MAX_WORKSPACE_EXTRACTION_BYTES - totalExtractedBytes
+        if (remainingExtractionBytes < 1) throw new Error('业务结果材料提取文本总量超出桌面读取限制')
+        const extraction = await extractOriginalMaterialText(expected.mediaType, sourceBytes, expected.sha256, remainingExtractionBytes)
+        totalExtractedBytes += extraction.bytes
+        materials.push({ ...expected, extraction })
+      }
+    }
+    const latestSource = await this.readWorkNotificationSource(notificationID, generation)
+    if (JSON.stringify(latestSource) !== JSON.stringify(initialSource)) throw new Error('Forge 业务结果来源或材料版本已变化，请刷新工作消息')
+    const recordAfter = await this.readBusinessRecord(initialSource.source.objectName, initialSource.source.recordId)
+    const { capturedAt: _beforeReadAt, ...recordBeforeSnapshot } = recordBefore.snapshot
+    const { capturedAt: _afterReadAt, ...recordAfterSnapshot } = recordAfter.snapshot
+    if (JSON.stringify(recordBefore.candidate) !== JSON.stringify(recordAfter.candidate)
+      || JSON.stringify(recordBeforeSnapshot) !== JSON.stringify(recordAfterSnapshot)
+      || await this.accountKey(generation) !== accountBefore) {
+      throw new Error('Forge 当前业务记录或员工账号已变化，请重新打开工作消息')
+    }
+    this.assertAuthGeneration(generation)
+    return {
+      kind: 'business', notificationID, source: initialSource.source,
+      materialStatus: initialSource.materialStatus, materialReferences: structuredClone(initialSource.originalFiles), record: recordAfter,
+      currentReadAt: new Date().toISOString(), materials,
+    }
   }
 
   async getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContext> {
@@ -1672,7 +2060,7 @@ export class EnterpriseService {
       || (isSubmitter && (!returnVersion || returnVersion.length > 128))) {
       throw new Error('这项审批已无法由当前员工处理，请刷新待办')
     }
-    if (!Array.isArray(approval.fields) || approval.fields.length > 64 || !Array.isArray(approval.files) || approval.files.length > 11) {
+    if (!Array.isArray(approval.fields) || approval.fields.length > 64 || !Array.isArray(approval.files)) {
       throw new Error('Forge 审批上下文格式无效')
     }
     const fields = approval.fields.flatMap((value) => {
@@ -1698,7 +2086,7 @@ export class EnterpriseService {
     })
     let originalFiles: FrozenApprovalOriginalMaterial[] | undefined
     if (approval.originalFiles !== undefined) {
-      if (!Array.isArray(approval.originalFiles) || approval.originalFiles.length > 11) throw new Error('Forge 审批上下文格式无效')
+      if (!Array.isArray(approval.originalFiles)) throw new Error('Forge 审批上下文格式无效')
       const seenIds = new Set<string>()
       let totalOriginalBytes = 0
       let totalExtractedBytes = 0
@@ -1741,11 +2129,16 @@ export class EnterpriseService {
       || (returnReason !== undefined && (typeof returnReason !== 'string' || returnReason.length > 4000))) {
       throw new Error('Forge 审批上下文格式无效')
     }
+    const { parseCurrentApprovalActions } = await import('./enterprise/approval-actions')
+    const availableActions = parseCurrentApprovalActions(approval.availableActions, {
+      requestId: approvalId, businessObject: { objectName, recordId }, sourceMaterialVersion,
+    })
     return {
       requestId: approvalId, status: isSubmitter ? 'returned' : 'pending', viewer: isSubmitter ? 'original_submitter' : 'current_approver',
       title, step, businessObject: { objectName, recordId, ...(recordName ? { recordName } : {}) }, sourceMaterialVersion,
       ...(isSubmitter ? { returnVersion, returnReason: returnReason as string } : {}),
-      fields, files, ...(originalFiles ? { originalFiles } : {}),
+      fields, ...(availableActions !== undefined ? { availableActions } : {}),
+      files, ...(originalFiles ? { originalFiles } : {}),
     }
   }
 

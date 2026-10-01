@@ -11,7 +11,7 @@
     "sourceMaterialVersion": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "idempotencyKey": { "type": "string", "format": "uuid" },
     "primary": { "$ref": "#/$defs/file" },
-    "attachments": { "type": "array", "maxItems": 10, "items": { "$ref": "#/$defs/file" } }
+    "attachments": { "type": "array", "items": { "$ref": "#/$defs/file" } }
   },
   "$defs": {
     "file": {

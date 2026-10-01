@@ -13,10 +13,10 @@ const MIB = 1024 * KIB
  * bundle-size creep still fails the release build.
  */
 export const BUNDLE_SIZE_BUDGETS = Object.freeze({
-  // 2026-09-29: scoped Pi development, frozen-material reuse, and native
-  // notification lineage checks raised the measured main bundle to 803,488
-  // bytes. 792 KiB is the next 8 KiB boundary above that measurement.
-  mainBytes: 792 * KIB,
+  // 2026-09-30: approval-session binding, native parameter metadata, and
+  // business-result continuation raised the measured main bundle to 831,526
+  // bytes. 816 KiB is the next 8 KiB boundary above that measurement.
+  mainBytes: 816 * KIB,
   preloadBytes: 16 * KIB,
   initialRendererBytes: 1280 * KIB,
   largestRendererChunkBytes: 600 * KIB,
@@ -35,7 +35,10 @@ export const BUNDLE_SIZE_BUDGETS = Object.freeze({
  * download-size creep still fails the release build.
  */
 export const PACKAGE_SIZE_BUDGETS = Object.freeze({
-  asarBytes: 125 * MIB,
+  // 2026-09-30: PDF/DOCX extraction dependencies from 6d8b538f added
+  // 66,518,296 packaged dependency bytes; app.asar now measures 196,431,056
+  // bytes. 190 MiB is the next 5 MiB boundary above that measurement.
+  asarBytes: 190 * MIB,
   appBytes: 480 * MIB,
   dmgBytes: 190 * MIB,
   zipBytes: 185 * MIB,

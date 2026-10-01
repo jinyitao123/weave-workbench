@@ -106,6 +106,7 @@ const INVOKE_CASES: Array<[domain: string, method: string, channel: string, args
   ['enterprise', 'getWorkOverview', 'enterprise:get-work-overview', []],
   ['enterprise', 'getApprovalContext', 'enterprise:get-approval-context', ['approval']],
   ['enterprise', 'pinReturnedApprovalContext', 'enterprise:pin-returned-approval-context', ['approval']],
+  ['enterprise', 'pinApprovalReviewContext', 'enterprise:pin-approval-review-context', ['approval']],
   ['enterprise', 'pinWorkContinuationContext', 'enterprise:pin-work-continuation-context', [{ id: 'message' }]],
   ['enterprise', 'submitWork', 'enterprise:submit-work', [{ teamId: 'team' }, '只读分析']],
   ['enterprise', 'completeHumanTask', 'enterprise:complete-human-task', [{ interactionId: 'task' }, { decision: 'approved' }]],

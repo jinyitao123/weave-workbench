@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import type { CSSProperties } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { TitleToolbar } from '@/components/TitleToolbar'
+import { WorkActionReceipt } from '@/components/WorkActionReceipt'
 import type { ProjectScriptKind } from '@/components/ProjectRunControl'
 import { ChangesCard } from '@/components/ChangesCard'
 import { Composer } from '@/components/Composer'
@@ -12,6 +13,9 @@ import { createAppKeydownHandler } from '@/lib/app-shortcuts'
 import { detectRendererPlatform } from '@/lib/platform-shortcuts'
 import { activityNotificationSignature, readClearedActivity, readClearedAttention, sessionCompanionNotificationSignature } from '@/app/session-attention'
 import { errorMessage } from '@/lib/errors'
+import { openApprovalReviewInPi } from '@/lib/approval-review'
+import { businessNotificationPrompt } from '@/lib/business-notification'
+import { teamRunContinuationBoundary } from '@/lib/team-work-continuation'
 import { I18nProvider } from '@/lib/i18n'
 import { openExternalUrl, revealPath } from '@/lib/desktop-actions'
 import { createSingleFlightAdmission, findProjectForSession, gitStatusForWorkspace, shouldRefreshGitOnSessionTransition, workspaceCwd } from '@/lib/workspace'
@@ -35,7 +39,7 @@ import { useStableCallback } from '@/hooks/useStableCallback'
 import { useToast } from '@/hooks/useToast'
 import { useWorkspaceActions } from '@/hooks/useWorkspaceActions'
 import { useWorkspaceRuntime } from '@/hooks/useWorkspaceRuntime'
-import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseApprovalContextView, type EnterpriseDevelopmentOverview, type EnterpriseHumanTask, type EnterpriseSession, type EnterpriseWorkContinuationContextView, type EnterpriseWorkItem, type EnterpriseWorkOverview, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceMaterialReference, type WorkspaceView } from '@/types/api'
+import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseApprovalContextView, type EnterpriseBusinessNotificationContextView, type EnterpriseDevelopmentOverview, type EnterpriseHumanTask, type EnterpriseSession, type EnterpriseWorkContinuationContextView, type EnterpriseWorkItem, type EnterpriseWorkOverview, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceMaterialReference, type WorkspaceView } from '@/types/api'
 
 const Transcript = lazy(() => import('@/components/Transcript').then((module) => ({ default: module.Transcript })))
 const Inspector = lazy(() => import('@/components/Inspector').then((module) => ({ default: module.Inspector })))
@@ -66,6 +70,7 @@ const HARNESS_PROVIDER_DOCS: Record<HarnessId, string> = {
 }
 const LoadingPanel = ({ label }: { label: string }) => <div className="empty-state" role="status">Loading {label}…</div>
 const TerminalLoadingPanel = () => <div className="terminal-drawer terminal-drawer--loading" role="status">Loading terminal…</div>
+type TeamActionOutcomes = NonNullable<Extract<EnterpriseWorkContinuationContextView, { kind: 'weave' }>['actionOutcomes']>
 
 interface TerminalSessionMount {
   id: string
@@ -120,6 +125,7 @@ export default function App() {
   const [workOverview, setWorkOverview] = useState<EnterpriseWorkOverview>()
   const [workLoading, setWorkLoading] = useState(false)
   const [workError, setWorkError] = useState('')
+  const [teamActionReceipt, setTeamActionReceipt] = useState<{ generation: number; outcomes?: TeamActionOutcomes }>()
   const enterpriseSessionRevisionRef = useRef(0)
   const [enterpriseSession, setEnterpriseSession] = useState<EnterpriseSession | undefined>(() => enterpriseBridge ? undefined : ({
     version: '1', status: 'signed-in', environment: { origin: 'http://localhost', secure: false }, storage: 'session-only',
@@ -251,6 +257,9 @@ export default function App() {
     bridge, harness: activeHarness, initialProject, initialSession, sessions,
     initialMessages: bridge ? [] : SAMPLE_TRANSCRIPT, reportError,
   })
+  useEffect(() => {
+    setTeamActionReceipt((current) => current?.generation === workspace.workspaceGeneration ? current : undefined)
+  }, [workspace.workspaceGeneration])
   const syncProviderRuntime = useCallback(async (runtimeId: string) => {
     if (!bridge) return
     const generation = workspace.workspaceRef.current.generation
@@ -330,6 +339,7 @@ export default function App() {
   const onAccountSwitch = useCallback(() => {
     setDevelopmentOverview(undefined); setDevelopmentError(''); setDevelopmentLoading(false)
     setWorkOverview(undefined); setWorkError(''); setWorkLoading(false)
+    setTeamActionReceipt(undefined)
     setScheduleFocusId(null)
     setTerminalSelection(undefined)
     setTerminalSessions([])
@@ -521,35 +531,15 @@ export default function App() {
     },
     clearSessionAttention, reportError,
   })
-  const assistEnterpriseTaskInPi = useCallback(async (task: EnterpriseHumanTask, context: EnterpriseApprovalContextView) => {
-    const originalFiles = context.originalFiles ?? []
-    if (task.source !== 'forge' || (!context.files.length && !originalFiles.length)
-      || context.files.some((file) => !file.verified || !file.content)
-      || originalFiles.some((file) => !file.verified || !file.extraction.content)) {
-      throw new Error('审批材料尚未完整核验，不能交给 Pi 分析')
-    }
-    const fields = context.fields.map((field) => `- ${field.label}：${field.value}`).join('\n')
-    const files = context.files.map((file) => `## ${file.name}\n${file.content}`).join('\n\n')
-    const originals = originalFiles.map((file) => `## ${file.name}（原件已校验，${file.bytes} 字节，提取状态：${file.extraction.status}）\n${file.extraction.content}`).join('\n\n')
-    const materialInstruction = originalFiles.length
-      ? '下面是 Forge 按当前账号审批权限读取并核验过的记录字段、已绑定文本文件和 PDF/DOCX 原件提取文本。请帮我只读核对合同交付范围、验收与商务风险，逐项引用文件原文，区分已知、冲突、待补和待确认，并给出建议退回或同意的理由。'
-      : '下面是 Forge 按当前账号审批权限读取并核验过的记录字段和已绑定文件。请帮我只读核对合同交付范围、验收与商务风险，逐项引用文件原文，区分已知、冲突、待补和待确认，并给出建议退回或同意的理由。'
-    const prompt = [
-      `我本人收到一项待处理的 Forge 审批：${context.title}。审批环节：${context.step}。`,
-      materialInstruction,
-      '请只提供分析建议，不调用团队交接、Forge 写入、审批或其他工具；最终决定由我在待办中提交。',
-      fields ? `Forge 业务字段：\n${fields}` : '',
-      files,
-      originals ? `已核验审批原件（部分提取须保留未读内容限制）：\n${originals}` : '',
-    ].filter(Boolean).join('\n\n')
-    await sendPrompt(prompt)
-    setToast('已将本人获准的审批材料交给 Pi 协助核对；审批意见仍由你提交。')
-  }, [sendPrompt, setToast])
+  const assistEnterpriseTaskInPi = useCallback(async (task: EnterpriseHumanTask) => {
+    await openApprovalReviewInPi(task, { enterprise: enterpriseBridge, newSession, workspace, setToast })
+  }, [enterpriseBridge, newSession, setToast, workspace])
   const continueEnterpriseWork = useCallback(async (item: EnterpriseWorkItem, context?: EnterpriseApprovalContextView) => {
     let returnedApprovalContextHandle: string | undefined
     let workContinuationContextHandle: string | undefined
     let currentContext = context
-    let teamContext: EnterpriseWorkContinuationContextView | undefined
+    let teamContext: Extract<EnterpriseWorkContinuationContextView, { kind: 'weave' }> | undefined
+    let businessContext: EnterpriseBusinessNotificationContextView | undefined
     if (item.source === 'forge' && item.kind === 'revision_required') {
       try {
         if (!context || !enterpriseBridge) throw new Error('请从“我的工作”重新打开本人退回的审批事项')
@@ -571,14 +561,41 @@ export default function App() {
           ...(item.runReference ? { runReference: item.runReference } : {}),
           ...(item.sessionReference ? { sessionReference: item.sessionReference } : {}),
         })
+        if (binding.context.kind !== 'weave') throw new Error('团队工作来源与当前消息不匹配，请刷新工作消息')
         workContinuationContextHandle = binding.handle
         teamContext = binding.context
       } catch (error) {
         setToast(errorMessage(error))
         return
       }
+    } else if (item.source === 'forge' && item.kind === 'result') {
+      try {
+        if (!enterpriseBridge) throw new Error('业务结果续接能力暂不可用')
+        const binding = await enterpriseBridge.pinWorkContinuationContext({ id: item.id, source: 'forge', notificationType: item.notificationType })
+        if (binding.context.kind !== 'business') throw new Error('Forge 消息来源与当前业务结果不匹配')
+        workContinuationContextHandle = binding.handle
+        businessContext = binding.context
+      } catch (error) {
+        setToast(errorMessage(error))
+        return
+      }
     } else {
       setToast('这条 Forge 消息没有可核验的续接上下文，请在 Forge 查看原事项')
+      return
+    }
+    if (businessContext) {
+      const details = businessNotificationPrompt(item, businessContext)
+      if (!newSession(undefined, { preserveComposerDraft: true })) {
+        setToast('无法创建独立会话，请保留当前草稿后重试')
+        return
+      }
+      const openedWorkspace = workspace.workspaceRef.current
+      if (!openedWorkspace.project || openedWorkspace.session || openedWorkspace.sessionFile) {
+        setToast('未能切换到新的工作会话，请从工作消息重新打开')
+        return
+      }
+      workspace.queuePrompt(details, 'queue', undefined, undefined, undefined, workContinuationContextHandle)
+      setToast('已打开本次业务结果，可与 Pi 核对。')
       return
     }
     const reason = currentContext?.returnReason ?? item.returnReason
@@ -592,18 +609,19 @@ export default function App() {
     const failedTeamWork = teamContext?.runStatus === 'failed' && !teamContext.finalResult
     const teamStateLabel = teamContext ? ({ queued: '已接单，等待执行', running: '处理中', parked: '等待处理', cancel_requested: '正在停止', succeeded: '已完成', failed: '失败', cancelled: '已停止', abandoned: '已结束' }[teamContext.runStatus]) : ''
     const unresolvedBusinessAction = teamContext?.actionOutcomes?.some((outcome) => outcome.status !== 'succeeded')
+    const hasSucceededBusinessAction = teamContext?.runStatus === 'succeeded' && teamContext.actionOutcomes?.some((outcome) => outcome.status === 'succeeded')
     const structuredResultNotice = teamContext?.finalResult?.disposition === 'needs_input'
       ? [
-          'Weave 本轮结构化结果分类：需要员工补充。此分类来自已核验的原工作上下文，不是从通知文案推断。',
+          hasSucceededBusinessAction
+            ? 'Weave 本轮结构化结果列出的缺项是团队意见，供员工参考。本运行已有 Forge 确认成功的业务动作，这些意见不构成团队补材料待办，也不要求重跑团队；后续办理事项以 Forge 当前正式事项为准。'
+            : 'Weave 本轮结构化结果分类：需要员工补充。此分类来自已核验的原工作上下文，不是从通知文案推断。',
           teamContext.finalResult.summary ? `团队摘要：${teamContext.finalResult.summary}` : '',
-          `本轮需要补充的内容：${teamContext.finalResult.missingItems?.length ? teamContext.finalResult.missingItems.map((entry) => `- ${entry}`).join('\n') : '平台没有提供具体缺项。'}`,
+          `${hasSucceededBusinessAction ? '团队列出的缺项意见（供参考）' : '本轮需要补充的内容'}：${teamContext.finalResult.missingItems?.length ? teamContext.finalResult.missingItems.map((entry) => `- ${entry}`).join('\n') : '平台没有提供具体缺项。'}`,
         ].filter(Boolean).join('\n')
       : teamContext?.finalResult?.disposition === 'complete'
         ? `Weave 本轮结构化结果分类：团队检查已完成。该分类只表示团队检查结果，不表示 Forge 业务已完成。${teamContext.finalResult.summary ? `\n团队摘要：${teamContext.finalResult.summary}` : ''}`
         : ''
-    const historicalRunBoundary = teamContext
-      ? `这条工作消息形成于 ${new Date(item.createdAt).toLocaleString('zh-CN')}，记录的是当时这一次团队运行。Forge 当前业务记录可能已被之后的团队运行或员工操作改变；请把本次运行回执与当前业务状态分别说明，不能仅凭当前值把变化归因于本次动作。`
-      : ''
+    const historicalRunBoundary = teamContext ? teamRunContinuationBoundary(item.createdAt) : ''
     const details = failedTeamWork && teamContext ? [
       '你打开的是上一条团队工作失败消息。该运行已经结束，不能通过旧交接凭据恢复执行；不要查找历史会话或调用交接恢复工具。',
       historicalRunBoundary,
@@ -646,7 +664,10 @@ export default function App() {
       item.returnTarget ? `修改完成后返回位置：${item.returnTarget}` : '', item.reviewScope ? `复核范围：${item.reviewScope}` : '',
       '先理解退回事项、最新退回原因和原提交材料，和我一起完成修改。只有员工明确要求递交修订材料时，才调用退回修订工具；该工具固定本轮正文和员工指定附件，再通过 Forge 受控修订能力递交。只有 resumed 表示原审批已进入下一轮；prepared 和 resume_unknown 都不能声称成功。unavailable、upload_unknown 或 rejected 时说明具体阻塞。结果未知时只查询同一回执，不重新读取文件或重提。绝不调用原生审批重提或其他审批状态接口。',
     ].filter(Boolean).join('\n')
-    newSession()
+    const openedNewSession = newSession()
+    if (openedNewSession && teamContext) {
+      setTeamActionReceipt({ generation: workspace.workspaceRef.current.generation, outcomes: teamContext.actionOutcomes })
+    }
     workspace.queuePrompt(details, 'queue', undefined, undefined, returnedApprovalContextHandle, workContinuationContextHandle)
   }, [enterpriseBridge, newSession, setToast, workspace])
   const openTerminalLink = useCallback((url: string, external: boolean) => {
@@ -920,7 +941,7 @@ export default function App() {
     const next = queuedMessages[0]
     if (next.flushAttemptFailed) return
     queuedFlushRef.current = true
-    void sendPrompt(next.text, [], 'queue', next.id, next.returnedApprovalContextHandle, undefined, next.workContinuationContextHandle)
+    void sendPrompt(next.text, [], 'queue', next.id, next.returnedApprovalContextHandle, undefined, next.workContinuationContextHandle, next.approvalReviewContextHandle)
       .finally(() => { queuedFlushRef.current = false })
   }, [bridge, busy, externalSessionRunning, queuedMessages, sendPrompt, submitting])
 
@@ -969,6 +990,7 @@ export default function App() {
       <div className="workbench__content">{view === 'session' ? <div ref={layout.workspaceRowRef} className="session-workspace" style={{ '--inspector-width': `${layout.inspectorWidth}px`, '--terminal-height': `${layout.terminalHeight}px` } as CSSProperties}>
         <div ref={layout.sessionWorkspaceRef} className="conversation-column">
           <main className="conversation-pane">
+            {teamActionReceipt?.generation === workspace.workspaceGeneration ? <WorkActionReceipt outcomes={teamActionReceipt.outcomes}/> : null}
             <Suspense fallback={<LoadingPanel label="conversation" />}><Transcript key={workspace.activeSessionId ?? 'new-session'} messages={workspace.messages} git={git} harness={activeHarness} personalWorkspace={activeProject?.purpose === 'personal'} loading={workspace.loadingSession} active={busy || activeSession?.status === 'running'} showReasoning={settingsState.settings.showReasoningSummaries} showTools={settingsState.settings.showToolCalls} onOpenChanges={openChanges} onSuggestion={(prompt) => { void sendPrompt(prompt).catch(() => undefined) }} onOpenMaterials={activeProject?.materialsFolder ? openMaterialsFolder : undefined} onChooseWorkspace={() => { void addProject() }} suggestionsDisabled={!activeProject || workspace.loadingSession || submitting} showPinnedChanges={false} bottomDockHasChanges={Boolean(git.files.length && settingsState.settings.showFileChangesPopup && !changesCardDismissed)} queuedMessageCount={queuedMessages.length} onOpenSessionReference={(sessionId, harness) => { const session = sessions.find((candidate) => candidate.id === sessionId && candidate.harness === harness && !candidate.archived && candidate.depth === 0); if (session) void selectSession(session); else setToast('That referenced session is archived or no longer available.') }} /></Suspense>
             <div className="conversation-bottom-dock">
               {git.files.length && settingsState.settings.showFileChangesPopup && !changesCardDismissed ? <ChangesCard git={git} onOpenChanges={openChanges} onClose={() => setChangesCardDismissed(true)} /> : null}

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { freezeMaterials, makeFrozenTextMaterial } from '../../electron/main/enterprise/materials'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { approvalContextView, EnterpriseService, WorkRegistrationRejectedError } from '../../electron/main/enterprise'
+import type { BusinessRecordRead } from '../../electron/main/enterprise/business-records'
 import { digest } from '../../electron/main/enterprise/handoff-store'
 import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -28,6 +29,34 @@ function workOverviewFetch(route: (url: string, init?: RequestInit) => Response 
     }
     return await route(url, init) ?? Response.json({}, { status: 404 })
   }) as typeof fetch
+}
+
+function teamRunMetadata(
+  source: { workReference: string; runReference: string; sessionReference: string },
+  options: { actionOutcomes?: Array<Record<string, unknown>>; omitActionOutcomes?: boolean } = {},
+) {
+  const task = '按员工授权提交合同材料。'
+  const result = '团队意见：验收日期待确认。'
+  return {
+    version: '1',
+    source: { input_revision_id: source.workReference, run_id: source.runReference, workbench_session_id: source.sessionReference },
+    input: {
+      task, task_sha256: digest(task), team_id: 'team-contract', workflow_id: 'workflow-review', workflow_version: 1,
+      materials: [{
+        type: 'forge-file', id: 'original-contract', name: '合同原件.pdf', bytes: 12, sha256: digest('pdf-original'),
+        materialId: '0123456789abcdef01234567', mediaType: 'application/pdf', sourceKind: 'owner',
+      }],
+      source_messages: [{ message_id: 'employee-message', event_seq: 1, sha256: digest('员工原始要求') }],
+    },
+    run: {
+      status: 'succeeded',
+      final_result: {
+        id: 'deliverable-contract-review', title: '合同检查意见', content_type: 'text/markdown', content: result,
+        sha256: digest(result), disposition: 'needs_input', summary: '验收日期待确认。', missing_items: ['验收日期'],
+      },
+      ...(!options.omitActionOutcomes ? { action_outcomes: options.actionOutcomes ?? [] } : {}),
+    },
+  }
 }
 
 describe('EnterpriseService', () => {
@@ -63,6 +92,69 @@ describe('EnterpriseService', () => {
     await expect(service.signOut()).resolves.toMatchObject({ status: 'signed-out' })
     expect(scopeChanges.at(-1)).toMatchObject({ status: 'signed-out', phase: 'signed-out' })
     await expect(service.authorizationHeaders()).rejects.toThrow('请先登录')
+  })
+
+  it('invokes only the generic Forge MCP run_action tool and preserves the native receipt', async () => {
+    const args = {
+      actionName: 'action_from_current_item_metadata', objectName: 'forge_case_record', recordId: 'record-current',
+      params: { approvalRequestId: 'request-current', itemVersion: 'item-version-current', sourceMaterialVersion: 'a'.repeat(64), comment: '员工本轮意见' },
+    }
+    const receipt = {
+      decision: 'approve', status: 'pending', requestId: 'request-current', recordId: 'record-current',
+      itemVersion: 'item-version-current', sourceMaterialVersion: 'a'.repeat(64),
+      resumed: false, autoRejected: false, alreadyApplied: false,
+    }
+    const calls: Array<{ url: string; authorization?: string; body?: Record<string, unknown> }> = []
+    const fetchMock = workOverviewFetch((url, init) => {
+      if (url === 'http://forge/api/v1/mcp') {
+        const body = JSON.parse(String(init?.body)) as Record<string, unknown>
+        calls.push({ url, authorization: new Headers(init?.headers).get('Authorization') ?? undefined, body })
+        return Response.json({ jsonrpc: '2.0', id: 'current-item-action', result: { structuredContent: receipt } })
+      }
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('reviewer@example.test', 'secret')
+    const currentAssertions = vi.fn(async () => undefined)
+
+    await expect(service.runNativeMcpAction(args, currentAssertions)).resolves.toEqual({ status: 'returned', result: receipt })
+    expect(currentAssertions).toHaveBeenCalledTimes(2)
+    expect(calls).toEqual([{
+      url: 'http://forge/api/v1/mcp', authorization: 'Bearer forge-token-reviewer@example.test',
+      body: expect.objectContaining({ method: 'tools/call', params: { name: 'run_action', arguments: args } }),
+    }])
+  })
+
+  it('keeps ambiguous MCP errors unknown and preserves explicit native rejection codes', async () => {
+    const responses = [
+      Response.json({ jsonrpc: '2.0', id: 'action-1', result: { isError: true, structuredContent: { code: 'APPROVAL_ACTION_IN_DOUBT' } } }),
+      Response.json({ jsonrpc: '2.0', id: 'action-2', result: { isError: true, structuredContent: { code: 'APPROVAL_ACTION_STALE' } } }),
+    ]
+    const fetchMock = workOverviewFetch((url) => url === 'http://forge/api/v1/mcp' ? responses.shift() : undefined)
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('reviewer@example.test', 'secret')
+    const args = { actionName: 'metadata_action', objectName: 'forge_case_record', recordId: 'record-1', params: { approvalRequestId: 'request-1', itemVersion: 'round-1', sourceMaterialVersion: 'b'.repeat(64), comment: '意见' } }
+    const assertCurrent = async () => undefined
+
+    await expect(service.runNativeMcpAction(args, assertCurrent)).resolves.toMatchObject({ status: 'unknown', code: 'APPROVAL_ACTION_IN_DOUBT' })
+    await expect(service.runNativeMcpAction(args, assertCurrent)).resolves.toMatchObject({ status: 'rejected', code: 'APPROVAL_ACTION_STALE' })
+  })
+
+  it('reads native approval action history through the existing request route', async () => {
+    const actions = [{ id: 'history-1', request_id: 'request-current', action: 'approve', actor_id: 'reviewer', comment: '当前意见', created_at: '2026-09-30T08:00:00Z' }]
+    const calls: Array<{ url: string; authorization?: string }> = []
+    const fetchMock = workOverviewFetch((url, init) => {
+      if (url.endsWith('/api/v1/approvals/requests/request-current/actions')) {
+        calls.push({ url, authorization: new Headers(init?.headers).get('Authorization') ?? undefined })
+        return Response.json({ data: actions })
+      }
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('reviewer@example.test', 'secret')
+
+    await expect(service.getApprovalActionHistory('request-current')).resolves.toEqual(actions)
+    expect(calls).toEqual([{ url: 'http://forge/api/v1/approvals/requests/request-current/actions', authorization: 'Bearer forge-token-reviewer@example.test' }])
   })
 
   it('discards an old account 401 without signing out the account that replaced it', async () => {
@@ -210,14 +302,23 @@ describe('EnterpriseService', () => {
     })
   })
 
-  it('does not return array or unknown-structure actions in the employee-authorizable Forge directory', async () => {
+  it('fails closed when employee action metadata contains unsupported array or object parameters', async () => {
     const actions = [
-      { name: 'UpdateQuoteLines', objectName: 'forge_quote', label: '调整报价明细', description: '按要求调整报价明细', params: [{ name: 'lines', type: 'array' }] },
-      { name: 'UpdateQuoteObject', objectName: 'forge_quote', label: '更新报价结构', description: '按要求更新报价结构', params: [{ name: 'value', type: 'object' }] },
-      { name: 'ReadQuote', objectName: 'forge_quote', label: '读取报价', description: '读取报价', params: [{ name: 'quote_id', type: 'text' }] },
+      { name: 'UpdateQuoteLines', objectName: 'forge_quote', label: '调整报价明细', description: '按要求调整报价明细', params: [{ name: 'lines', type: 'array', required: true }] },
+      { name: 'UpdateQuoteObject', objectName: 'forge_quote', label: '更新报价结构', description: '按要求更新报价结构', params: [{ name: 'value', type: 'string', required: true }] },
+      { name: 'ReadQuote', objectName: 'forge_quote', label: '读取报价', description: '读取报价', params: [{ name: 'quote_id', type: 'string', required: true }] },
     ]
+    const metadata = {
+      type: 'object', name: 'forge_quote', sortability: {},
+      item: { name: 'forge_quote', fields: {}, actions: [
+        { name: 'UpdateQuoteLines', params: [{ name: 'lines', type: 'multiselect', multiple: true, required: true }] },
+        { name: 'UpdateQuoteObject', params: [{ name: 'value', type: 'object', required: true }] },
+        { name: 'ReadQuote', params: [{ name: 'quote_id', type: 'text', required: true }] },
+      ] },
+    }
     const fetchMock = workOverviewFetch((url) => {
       if (url.endsWith('/api/v1/mcp')) return Response.json({ jsonrpc: '2.0', id: 'business-capability-catalog', result: { content: [{ type: 'text', text: JSON.stringify({ actions }) }] } })
+      if (url.endsWith('/api/v1/meta/objects/forge_quote')) return Response.json(metadata)
       return undefined
     })
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
@@ -227,7 +328,88 @@ describe('EnterpriseService', () => {
       'forge:action:forge_quote.UpdateQuoteLines',
       'forge:action:forge_quote.UpdateQuoteObject',
       'forge:action:forge_quote.ReadQuote',
-    ])).resolves.toMatchObject([{ id: 'forge:action:forge_quote.ReadQuote', status: 'available' }])
+    ])).rejects.toThrow('参数暂不可安全绑定')
+  })
+
+  it('restores file cardinality and objectOverride types only for employee-visible actions', async () => {
+    const actions = [
+      { name: 'contract_submit_material_package', objectName: 'forge_sales_contract', description: '提交材料集合', requiresRecord: true, params: [
+        { name: 'primary_file_id', type: 'string', required: true },
+        { name: 'material_file_ids', type: 'string', required: true },
+      ] },
+      { name: 'sales_lead_convert_to_opportunity', objectName: 'forge_sales_lead', description: '转为商机', requiresRecord: true, params: [
+        { name: 'amount', type: 'string', required: false },
+        { name: 'expected_close_on', type: 'string', required: false },
+        { name: 'account_ref', type: 'string', required: false },
+      ] },
+      { name: 'unselected_contract_action', objectName: 'forge_sales_contract', description: '未选择动作', requiresRecord: true, params: [{ name: 'id', type: 'string', required: true }] },
+    ]
+    const objectMetadata = (name: string, objectActions: unknown[], fields: Record<string, unknown> = {}) => ({
+      type: 'object', name, sortability: {}, item: { name, actions: objectActions, fields },
+    })
+    const calls: Array<{ url: string; method?: string; auth?: string }> = []
+    const fetchMock = workOverviewFetch((url, init) => {
+      calls.push({ url, method: init?.method, auth: new Headers(init?.headers).get('Authorization') ?? undefined })
+      if (url.endsWith('/api/v1/mcp')) return Response.json({ jsonrpc: '2.0', id: 'business-capability-catalog', result: { content: [{ type: 'text', text: JSON.stringify({ actions }) }] } })
+      if (url.endsWith('/api/v1/meta/objects/forge_sales_contract')) return Response.json(objectMetadata('forge_sales_contract', [
+        { name: 'contract_submit_material_package', params: [
+          { name: 'primary_file_id', type: 'file', multiple: false, required: true },
+          { name: 'material_file_ids', type: 'file', multiple: true, required: true },
+        ] },
+        { name: 'unselected_contract_action', params: [{ name: 'id', type: 'text', required: true }] },
+      ]))
+      if (url.endsWith('/api/v1/meta/objects/forge_sales_lead')) return Response.json(objectMetadata('forge_sales_lead', [
+        { name: 'sales_lead_convert_to_opportunity', params: [
+          { field: 'amount', objectOverride: 'forge_sales_opportunity', required: false },
+          { field: 'expected_close_on', objectOverride: 'forge_sales_opportunity', required: false },
+          { name: 'account_ref', type: 'reference', required: false },
+        ] },
+      ]))
+      if (url.endsWith('/api/v1/meta/objects/forge_sales_opportunity')) return Response.json(objectMetadata('forge_sales_opportunity', [], {
+        amount: { type: 'currency' }, expected_close_on: { type: 'date' },
+      }))
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('employee@example.test', 'secret')
+
+    const catalog = await service.getBusinessCapabilities([
+      'forge:action:forge_sales_contract.contract_submit_material_package',
+      'forge:action:forge_sales_lead.sales_lead_convert_to_opportunity',
+    ])
+    expect(catalog).toMatchObject([
+      { id: 'forge:action:forge_sales_contract.contract_submit_material_package', params: [
+        { name: 'primary_file_id', type: 'file', multiple: false, required: true },
+        { name: 'material_file_ids', type: 'file', multiple: true, required: true },
+      ] },
+      { id: 'forge:action:forge_sales_lead.sales_lead_convert_to_opportunity', params: [
+        { name: 'amount', type: 'number', required: false },
+        { name: 'expected_close_on', type: 'string', required: false },
+        { name: 'account_ref', type: 'string', required: false },
+      ] },
+    ])
+    expect(catalog.map((action) => action.id)).not.toContain('forge:action:forge_sales_contract.unselected_contract_action')
+    expect(calls.filter((call) => call.url.includes('/api/v1/meta/objects/'))).toEqual([
+      expect.objectContaining({ url: 'http://forge/api/v1/meta/objects/forge_sales_contract', auth: 'Bearer forge-token-employee@example.test' }),
+      expect.objectContaining({ url: 'http://forge/api/v1/meta/objects/forge_sales_lead', auth: 'Bearer forge-token-employee@example.test' }),
+      expect.objectContaining({ url: 'http://forge/api/v1/meta/objects/forge_sales_opportunity', auth: 'Bearer forge-token-employee@example.test' }),
+    ])
+    expect(calls.some((call) => call.url.endsWith('/api/v1/meta/actions'))).toBe(false)
+  })
+
+  it('does not degrade denied native employee metadata to the string summary or sign out', async () => {
+    const actions = [{ name: 'contract_submit_material_package', objectName: 'forge_sales_contract', params: [{ name: 'material_file_ids', type: 'string', required: true }] }]
+    const fetchMock = workOverviewFetch((url) => {
+      if (url.endsWith('/api/v1/mcp')) return Response.json({ jsonrpc: '2.0', id: 'business-capability-catalog', result: { content: [{ type: 'text', text: JSON.stringify({ actions }) }] } })
+      if (url.endsWith('/api/v1/meta/objects/forge_sales_contract')) return Response.json({ error: 'forbidden' }, { status: 403 })
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('employee@example.test', 'secret')
+
+    await expect(service.getBusinessCapabilities(['forge:action:forge_sales_contract.contract_submit_material_package']))
+      .rejects.toThrow('没有读取 Forge 对象 forge_sales_contract 原生动作声明的权限')
+    await expect(service.getSession()).resolves.toMatchObject({ status: 'signed-in' })
   })
 
   it('keeps the enterprise session when Forge denies one capability catalog', async () => {
@@ -278,6 +460,24 @@ describe('EnterpriseService', () => {
     expect(fetchMock.mock.calls.every((call) => !new Headers(call[1]?.headers).has('Authorization'))).toBe(true)
   })
 
+  it('uses separate Forge and Weave default origins', async () => {
+    const requests: string[] = []
+    const fetchMock = vi.fn(async (input: URL) => {
+      requests.push(input.toString())
+      return Response.json({ status: 'ready' }, { status: 200 })
+    }) as typeof fetch
+    const service = new EnterpriseService({ environment: {}, fetch: fetchMock })
+
+    await expect(service.getStatus()).resolves.toEqual([
+      expect.objectContaining({ id: 'forge-development', url: 'http://124.223.189.112', available: true, secure: false }),
+      expect.objectContaining({ id: 'weave-development', url: 'http://124.223.189.112:8080', available: true, secure: false }),
+    ])
+    expect(requests).toEqual([
+      'http://124.223.189.112/api/v1/health',
+      'http://124.223.189.112:8080/v1/health',
+    ])
+  })
+
   it('loads only the remote team catalog before selecting a draft', async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
@@ -307,7 +507,7 @@ describe('EnterpriseService', () => {
       updated_at: '2026-09-21T10:00:00Z', configuration: {
         display_name: revision ? '合同复核员' : '审核员', role: 'worker', engine: 'pi', runtime_id: 'local-pi', model: 'default',
         system_prompt: '检查合同', skill_names: ['contract-review'], mcp_server_ids: ['forge'], permission_allow: ['contract.read'],
-        business_capability_ids: ['forge:action:sales_contract.ContractSubmit'], business_capability_bindings: [{ capability_id: 'forge:action:sales_contract.ContractSubmit', parameters: [{ name: 'material_file_id', source: 'materials.single.id' }] }],
+        business_capability_ids: ['forge:action:sales_contract.ContractSubmit'], business_capability_bindings: [{ capability_id: 'forge:action:sales_contract.ContractSubmit', parameters: [{ name: 'material_file_ids', source: 'materials.ids' }] }],
         memory_enabled: true, memory_scope: 'tenant', max_tokens: 12000, output_schema: { type: 'object' },
       }, relationship: { duty: '复核合同', when_to_use: '合同提交后', allowed_kinds: ['handoff'], default_kind: 'handoff', enabled: true },
     })
@@ -321,11 +521,11 @@ describe('EnterpriseService', () => {
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
     await service.signIn('admin@example.test', 'secret')
     const draft = await service.getTeamMemberConfigDraft('team-1', 'worker-1')
-    expect(draft).toMatchObject({ agentName: 'reviewer', revision: 0, configuration: { engine: 'pi', outputSchema: expect.stringContaining('object'), businessCapabilityBindings: [{ capabilityId: 'forge:action:sales_contract.ContractSubmit', parameters: [{ name: 'material_file_id', source: 'materials.single.id' }] }] }, relationship: { duty: '复核合同' } })
+    expect(draft).toMatchObject({ agentName: 'reviewer', revision: 0, configuration: { engine: 'pi', outputSchema: expect.stringContaining('object'), businessCapabilityBindings: [{ capabilityId: 'forge:action:sales_contract.ContractSubmit', parameters: [{ name: 'material_file_ids', source: 'materials.ids' }] }] }, relationship: { duty: '复核合同' } })
     draft.configuration.displayName = '合同复核员'
     const saved = await service.saveTeamMemberConfigDraft(draft)
     expect(saved).toMatchObject({ revision: 1, configuration: { displayName: '合同复核员' } })
-    expect(requests.at(-1)).toMatchObject({ method: 'PUT', body: { revision: 0, configuration: { display_name: '合同复核员', business_capability_bindings: [{ capability_id: 'forge:action:sales_contract.ContractSubmit', parameters: [{ name: 'material_file_id', source: 'materials.single.id' }] }] } } })
+    expect(requests.at(-1)).toMatchObject({ method: 'PUT', body: { revision: 0, configuration: { display_name: '合同复核员', business_capability_bindings: [{ capability_id: 'forge:action:sales_contract.ContractSubmit', parameters: [{ name: 'material_file_ids', source: 'materials.ids' }] }] } } })
     const applied = await service.applyTeamMemberConfigDraft('team-1', 'worker-1', 1)
     expect(applied.revision).toBe(0)
     expect(requests.at(-1)).toEqual({ method: 'POST', body: { revision: 1 } })
@@ -434,10 +634,13 @@ describe('EnterpriseService', () => {
         notice('other', 'revision_required', '2026-09-29T02:18:00Z'),
       ] } })
       const sourceId = /^http:\/\/forge\/api\/v1\/workbench\/notifications\/([^/]+)\/source$/.exec(url)?.[1]
-      if (sourceId && sourceById[sourceId]) return Response.json({
-        version: '1', notificationId: sourceId, kind: sourceById[sourceId].kind,
-        source: { system: 'weave', ...sourceById[sourceId], runReference: `run-${sourceId}` },
-      })
+      if (sourceId && sourceById[sourceId]) {
+        const { kind, ...references } = sourceById[sourceId]
+        return Response.json({
+          version: '1', notificationId: sourceId, kind,
+          source: { system: 'weave', ...references, runReference: `run-${sourceId}` },
+        })
+      }
       return undefined
     })
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
@@ -446,6 +649,101 @@ describe('EnterpriseService', () => {
     expect(overview.items.find((item) => item.id === 'old')).toMatchObject({ actionable: false, status: 'completed', read: false })
     expect(overview.items.find((item) => item.id === 'new')).toMatchObject({ kind: 'result', sessionReference: 'contract-work' })
     expect(overview.items.find((item) => item.id === 'other')).toMatchObject({ actionable: true, status: 'pending' })
+  })
+
+  it('moves needs-input notices to messages only for a current-account, exact Weave success receipt', async () => {
+    const entries = [
+      { id: 'succeeded', workReference: '550e8400-e29b-41d4-a716-446655440101', runReference: 'run-succeeded', sessionReference: 'work-session-succeeded', outcomes: [{ node_id: 'submit', call_id: 'call-succeeded', action_name: 'contract_submit', object_name: 'sales_contract', status: 'succeeded', summary: 'Forge 确认提交成功。' }] },
+      { id: 'no-action', workReference: '550e8400-e29b-41d4-a716-446655440102', runReference: 'run-no-action', sessionReference: 'work-session-no-action', outcomes: [] },
+      { id: 'unknown', workReference: '550e8400-e29b-41d4-a716-446655440103', runReference: 'run-unknown', sessionReference: 'work-session-unknown', outcomes: [{ node_id: 'submit', call_id: 'call-unknown', action_name: 'contract_submit', object_name: 'sales_contract', status: 'unknown', summary: 'Forge 结果待核对。' }] },
+      { id: 'missing-receipt', workReference: '550e8400-e29b-41d4-a716-446655440104', runReference: 'run-missing', sessionReference: 'work-session-missing', omitActionOutcomes: true },
+      { id: 'unreadable', workReference: '550e8400-e29b-41d4-a716-446655440105', runReference: 'run-unreadable', sessionReference: 'work-session-unreadable', readFails: true },
+      { id: 'mismatched-source', workReference: '550e8400-e29b-41d4-a716-446655440106', runReference: 'run-source-match', sessionReference: 'work-session-mismatch', outcomes: [{ node_id: 'submit', call_id: 'call-mismatch', action_name: 'contract_submit', object_name: 'sales_contract', status: 'succeeded', summary: 'Forge 确认提交成功。' }], inlineSource: { system: 'weave', workReference: '550e8400-e29b-41d4-a716-446655440199', runReference: 'run-unrelated', sessionReference: 'work-session-mismatch' } },
+    ]
+    const forgeSourceAuth: Array<string | null> = []
+    const weaveContextAuth: Array<string | null> = []
+    const calls: string[] = []
+    const fetchMock = workOverviewFetch((url, init) => {
+      calls.push(url)
+      if (url.includes('/v1/teams?status=active')) return Response.json([])
+      if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
+      if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
+      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [] })
+      if (url.endsWith('/api/v1/notifications?limit=200')) return Response.json({ notifications: entries.map((entry) => ({
+        id: entry.id, type: 'weave.team_run.revision_required', title: '合同检查', body: '补充事项供参考', read: false, createdAt: '2026-09-30T02:00:00Z',
+        ...(entry.inlineSource ? { data: { source: entry.inlineSource } } : {}),
+      })) })
+      const sourceID = /^http:\/\/forge\/api\/v1\/workbench\/notifications\/([^/]+)\/source$/.exec(url)?.[1]
+      if (sourceID) {
+        forgeSourceAuth.push(new Headers(init?.headers).get('Authorization'))
+        const entry = entries.find(({ id }) => id === sourceID)
+        if (!entry) return Response.json({}, { status: 404 })
+        return Response.json({ version: '1', notificationId: entry.id, kind: 'revision_required', source: {
+          system: 'weave', workReference: entry.workReference, runReference: entry.runReference, sessionReference: entry.sessionReference,
+        } })
+      }
+      const runID = /^http:\/\/weave\/v1\/runs\/([^/]+)\/workbench-context$/.exec(url)?.[1]
+      if (runID) {
+        weaveContextAuth.push(new Headers(init?.headers).get('Authorization'))
+        const entry = entries.find(({ runReference }) => runReference === runID)
+        if (entry?.readFails) return Response.json({}, { status: 503 })
+        if (entry) return Response.json(teamRunMetadata(entry, {
+          ...(entry.outcomes ? { actionOutcomes: entry.outcomes } : {}),
+          ...(entry.omitActionOutcomes ? { omitActionOutcomes: true } : {}),
+        }))
+      }
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('sales@example.test', 'secret')
+
+    const overview = await service.getWorkOverview()
+    expect(overview.items.find((item) => item.id === 'succeeded')).toMatchObject({
+      actionable: false, status: 'completed', read: false, runReference: 'run-succeeded', title: '团队结果与业务回执',
+      summary: expect.stringContaining('后续办理事项以 Forge 当前正式事项为准'),
+    })
+    for (const id of ['no-action', 'unknown', 'missing-receipt', 'unreadable', 'mismatched-source']) {
+      expect(overview.items.find((item) => item.id === id)).toMatchObject({ actionable: true, status: 'pending' })
+    }
+    expect(overview.items.find((item) => item.id === 'succeeded')).toMatchObject({ kind: 'revision_required', notificationType: 'weave.team_run.revision_required' })
+    expect(forgeSourceAuth.every((authorization) => authorization === 'Bearer forge-token-sales@example.test')).toBe(true)
+    expect(weaveContextAuth.every((authorization) => authorization === 'Bearer weave-token-sales@example.test')).toBe(true)
+    expect(calls.some((url) => url.includes('/original') || url.includes('/workbench/materials/'))).toBe(false)
+    expect(calls).not.toContain('http://weave/v1/runs/run-unrelated/workbench-context')
+  })
+
+  it('does not reuse a successful action receipt across employee accounts', async () => {
+    const source = { workReference: '550e8400-e29b-41d4-a716-446655440201', runReference: 'run-shared-notice', sessionReference: 'work-session-shared' }
+    const contextAuthors: string[] = []
+    const fetchMock = workOverviewFetch((url, init) => {
+      if (url.includes('/v1/teams?status=active')) return Response.json([])
+      if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
+      if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
+      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [] })
+      if (url.endsWith('/api/v1/notifications?limit=200')) return Response.json({ notifications: [
+        { id: 'same-notice', type: 'weave.team_run.revision_required', title: '合同检查', body: '团队意见', read: false, createdAt: '2026-09-30T02:00:00Z' },
+      ] })
+      if (url.endsWith('/api/v1/workbench/notifications/same-notice/source')) return Response.json({
+        version: '1', notificationId: 'same-notice', kind: 'revision_required', source: { system: 'weave', ...source },
+      })
+      if (url.endsWith(`/v1/runs/${source.runReference}/workbench-context`)) {
+        const authorization = new Headers(init?.headers).get('Authorization') ?? ''
+        contextAuthors.push(authorization)
+        return Response.json(teamRunMetadata(source, authorization === 'Bearer weave-token-alice@example.test' ? {
+          actionOutcomes: [{ node_id: 'submit', call_id: 'call-alice', action_name: 'contract_submit', object_name: 'sales_contract', status: 'succeeded', summary: 'Forge 确认提交成功。' }],
+        } : { actionOutcomes: [] }))
+      }
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+
+    await service.signIn('alice@example.test', 'secret')
+    const alice = await service.getWorkOverview()
+    expect(alice.items[0]).toMatchObject({ actionable: false, status: 'completed' })
+    await service.signIn('bob@example.test', 'secret')
+    const bob = await service.getWorkOverview()
+    expect(bob.items[0]).toMatchObject({ actionable: true, status: 'pending' })
+    expect(contextAuthors).toEqual(['Bearer weave-token-alice@example.test', 'Bearer weave-token-bob@example.test'])
   })
 
   it('submits a bound work request and completes a human task without exposing the token', async () => {
@@ -801,6 +1099,61 @@ describe('EnterpriseService', () => {
     await expect(service.getWorkNotificationSource('native-notice-1')).rejects.toThrow('工作消息来源与当前消息不匹配')
   })
 
+  it('reads a Forge business result by native source, current record, and its authorized historical originals', async () => {
+    const sourceBytes = await readFile(new URL('../fixtures/materials/sample-two-page.pdf', import.meta.url))
+    const sha256 = createHash('sha256').update(sourceBytes).digest('hex')
+    let materialStatus: 'available' | 'none' | 'unavailable' = 'available'
+    const calls: string[] = []
+    const sourceResponse = () => Response.json({
+      version: '1', notificationId: 'business-notice', kind: 'business',
+      source: { system: 'forge', objectName: 'forge_sales_contract', recordId: 'contract-current' },
+      materialStatus,
+      originalFiles: materialStatus === 'available' ? [{
+        sourceKind: 'approval', requestId: 'approval-history-1', fileId: 'history-file-1', name: '当前批准合同.pdf',
+        mediaType: 'application/pdf', bytes: sourceBytes.length, sha256,
+      }] : [],
+    })
+    const fetchMock = workOverviewFetch((url, init) => {
+      calls.push(url)
+      if (url.endsWith('/api/v1/workbench/notifications/business-notice/source')) return sourceResponse()
+      if (url.endsWith('/api/v1/approvals/requests/approval-history-1/workbench-history/files/history-file-1/original')) {
+        expect(new Headers(init?.headers).get('if-match')).toBe(`"${sha256}"`)
+        return new Response(Uint8Array.from(sourceBytes), { status: 200, headers: {
+          'Content-Type': 'application/pdf', 'Content-Length': String(sourceBytes.length), ETag: `"${sha256}"`,
+          'X-Content-SHA256': sha256, 'Cache-Control': 'private, no-store',
+        } })
+      }
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('employee@example.test', 'secret')
+    const record: BusinessRecordRead = {
+      candidate: { objectName: 'forge_sales_contract', objectLabel: '销售合同', recordId: 'contract-current', name: '设备验收合同', code: 'C-100', status: '内部复核通过' },
+      snapshot: {
+        version: 1, capturedAt: '2026-09-30T01:00:00Z', objectLabel: '销售合同',
+        record: [{ label: '合同名称', value: '设备验收合同' }, { label: '状态', value: '内部复核通过' }],
+        relations: [], completeness: 'complete', pricingDetailCompleteness: 'unknown', completenessNotes: [],
+      },
+    }
+    const readCurrentRecord = vi.spyOn(service, 'readBusinessRecord').mockResolvedValue(record)
+
+    const context = await service.getBusinessNotificationContext('business-notice')
+    expect(context).toMatchObject({
+      kind: 'business', notificationID: 'business-notice', source: { system: 'forge', objectName: 'forge_sales_contract', recordId: 'contract-current' },
+      materialStatus: 'available', record: { candidate: { status: '内部复核通过' } },
+      materials: [{ sourceKind: 'approval', requestId: 'approval-history-1', name: '当前批准合同.pdf', extraction: { sourceSha256: sha256 } }],
+    })
+    expect(readCurrentRecord).toHaveBeenCalledWith('forge_sales_contract', 'contract-current')
+    expect(calls.filter((url) => url.includes('/workbench-history/files/'))).toHaveLength(1)
+    expect(calls.some((url) => url.includes('/workbench-context/files/'))).toBe(false)
+
+    materialStatus = 'unavailable'
+    calls.length = 0
+    const unavailable = await service.getBusinessNotificationContext('business-notice')
+    expect(unavailable).toMatchObject({ materialStatus: 'unavailable', materials: [] })
+    expect(calls.some((url) => url.includes('/files/'))).toBe(false)
+  })
+
   it('reads original work files through the owner-only Forge route and verifies the Weave material tuple', async () => {
     const task = '检查这份原工作材料。', content = '原工作材料正文\n'
     const sha256 = (value: string) => createHash('sha256').update(value, 'utf8').digest('hex')
@@ -851,18 +1204,18 @@ describe('EnterpriseService', () => {
       type: 'forge-file', materialId: digest('owner-material').slice(0, 24), sourceKind: 'owner',
       id: 'owner-pdf', name: 'owner.pdf', mediaType: 'application/pdf', bytes: ownerBytes.length, sha256: sha256(ownerBytes),
     }
-    const approvalMaterial = {
-      type: 'forge-file', materialId: digest('approval-material').slice(0, 24), sourceKind: 'approval', requestId: 'approval-source-1',
-      id: 'approval-docx', name: 'approval.docx', mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    const approvalMaterials = Array.from({ length: 11 }, (_, index) => ({
+      type: 'forge-file', materialId: digest(`approval-material-${index}`).slice(0, 24), sourceKind: 'approval', requestId: 'approval-source-1',
+      id: `approval-docx-${index + 1}`, name: `approval-${index + 1}.docx`, mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       bytes: approvalBytes.length, sha256: sha256(approvalBytes),
-    }
+    }))
     const shaOfTask = sha256(task)
     const payload = {
       version: '1',
       source: { input_revision_id: '10000000-0000-4000-8000-000000000001', run_id: 'run-originals', workbench_session_id: 'workbench-session-originals' },
       input: {
         task, task_sha256: shaOfTask, team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 2,
-        materials: [ownerMaterial, approvalMaterial],
+        materials: [ownerMaterial, ...approvalMaterials],
         source_messages: [{ message_id: 'employee-message', event_seq: 1, sha256: sha256('员工要求') }],
       },
       run: { status: 'succeeded' },
@@ -879,8 +1232,9 @@ describe('EnterpriseService', () => {
       if (url.endsWith('/api/v1/workbench/materials/owner-pdf/original')) return denyOwner
         ? Response.json({ error: { code: 'WORKBENCH_MATERIAL_NOT_FOUND' } }, { status: 404 })
         : response(ownerBytes, 'application/pdf', ownerMaterial.sha256)
-      if (url.endsWith('/api/v1/approvals/requests/approval-source-1/workbench-context/files/approval-docx/original')) {
-        return response(approvalBytes, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', approvalMaterial.sha256)
+      if (url.startsWith('http://forge/api/v1/approvals/requests/approval-source-1/workbench-history/files/')) {
+        const material = approvalMaterials.find((item) => url.endsWith(`/workbench-history/files/${item.id}/original`))
+        if (material) return response(approvalBytes, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', material.sha256)
       }
       return undefined
     })
@@ -889,14 +1243,21 @@ describe('EnterpriseService', () => {
     const references = { workReference: payload.source.input_revision_id, runReference: 'run-originals', sessionReference: 'workbench-session-originals' }
 
     const context = await service.getWorkContinuationContext(references)
-    expect(context.input.materials).toMatchObject([
-      { materialId: ownerMaterial.materialId, sourceKind: 'owner', mediaType: 'application/pdf', sha256: ownerMaterial.sha256, extraction: { sourceSha256: ownerMaterial.sha256, status: 'partial' } },
-      { materialId: approvalMaterial.materialId, sourceKind: 'approval', requestId: 'approval-source-1', mediaType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', sha256: approvalMaterial.sha256, extraction: { sourceSha256: approvalMaterial.sha256, status: 'complete' } },
-    ])
+    expect(context.input.materials).toHaveLength(12)
+    expect(context.input.materials[0]).toMatchObject({ materialId: ownerMaterial.materialId, sourceKind: 'owner', mediaType: 'application/pdf', sha256: ownerMaterial.sha256, extraction: { sourceSha256: ownerMaterial.sha256, status: 'partial' } })
+    expect(context.input.materials.slice(1)).toHaveLength(11)
+    expect(context.input.materials.slice(1).every((material, index) => material.materialId === approvalMaterials[index]?.materialId
+      && material.sourceKind === 'approval' && material.requestId === 'approval-source-1'
+      && material.extraction?.sourceSha256 === approvalMaterials[index]?.sha256 && material.extraction.status === 'complete')).toBe(true)
     expect(context.input.materials[0]?.content).toContain('PDF PAGE 1: byte exact original.')
     expect(context.input.materials[1]?.content).toContain('DOCX 第一段：原件字节保持不变。')
     expect(calls.find((call) => call.url.endsWith('/owner-pdf/original'))?.headers.get('if-match')).toBe(`"${ownerMaterial.sha256}"`)
-    expect(calls.find((call) => call.url.endsWith('/approval-docx/original'))?.headers.get('if-match')).toBe(`"${approvalMaterial.sha256}"`)
+    for (const material of approvalMaterials) {
+      const call = calls.find((item) => item.url.endsWith(`/workbench-history/files/${material.id}/original`))
+      expect(call?.headers.get('if-match')).toBe(`"${material.sha256}"`)
+    }
+    expect(calls.filter((call) => call.url.includes('/workbench-history/files/'))).toHaveLength(11)
+    expect(calls.some((call) => call.url.includes('/workbench-context/files/') && call.url.endsWith('/original'))).toBe(false)
     expect(calls.some((call) => call.url === 'http://forge/api/v1/workbench/materials/owner-pdf')).toBe(false)
     expect(calls.some((call) => call.url === 'http://forge/api/v1/workbench/materials/approval-docx')).toBe(false)
 
@@ -935,6 +1296,9 @@ describe('EnterpriseService', () => {
     const digest = createHash('sha256').update(original).digest('hex')
     const attachment = '# 技术协议\n验收标准\n'
     const attachmentDigest = createHash('sha256').update(attachment).digest('hex')
+    const sourceMaterialVersion = createHash('sha256').update('source-v1').digest('hex')
+    let actionRecordId = 'contract-1'
+    let actionInputName = 'comment'
     let fileContent = original
     const calls: string[] = []
     const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
@@ -944,7 +1308,12 @@ describe('EnterpriseService', () => {
       if (url.endsWith('/api/v1/approvals/requests/approval-1/workbench-context')) return Response.json({
         version: '1', requestId: 'approval-1', status: 'pending', viewer: 'current_approver',
         title: '设备验收合同', step: '交付复核', fields: [{ label: '合同名称', value: '设备验收合同' }],
-        businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1', recordName: '设备验收合同' }, sourceMaterialVersion: createHash('sha256').update('source-v1').digest('hex'),
+        businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1', recordName: '设备验收合同' }, sourceMaterialVersion,
+        availableActions: [{
+          semantic: 'opaque server hint', label: '当前可办理事项', description: '办理当前员工可执行的事项。',
+          execution: { tool: 'run_action', actionName: 'forge_action_from_metadata', objectName: 'forge_sales_contract', recordId: actionRecordId, params: { approvalRequestId: 'approval-1', itemVersion: 'native-item-round-3', sourceMaterialVersion } },
+          inputs: [{ name: actionInputName, type: 'string', label: '办理意见', required: true }],
+        }],
         files: [
           { fileId: 'approval-file-1', name: '合同.md', mediaType: 'text/plain; charset=utf-8', bytes: Buffer.byteLength(fileContent), sha256: digest, content: fileContent },
           { fileId: 'approval-file-2', name: '技术协议.md', mediaType: 'text/plain; charset=utf-8', bytes: Buffer.byteLength(attachment), sha256: attachmentDigest, content: attachment },
@@ -962,24 +1331,35 @@ describe('EnterpriseService', () => {
     await service.signIn('reviewer@example.test', 'secret')
 
     const context = await service.getApprovalContext('approval-1')
-    expect(context).toMatchObject({ requestId: 'approval-1', status: 'pending', viewer: 'current_approver', title: '设备验收合同', step: '交付复核', businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1' }, sourceMaterialVersion: createHash('sha256').update('source-v1').digest('hex'), fields: [{ label: '合同名称', value: '设备验收合同' }], files: [{ fileId: 'approval-file-1', name: '合同.md', content: original, sha256: digest, verified: true }, { fileId: 'approval-file-2', name: '技术协议.md', content: attachment, sha256: attachmentDigest, verified: true }] })
+    expect(context).toMatchObject({ requestId: 'approval-1', status: 'pending', viewer: 'current_approver', title: '设备验收合同', step: '交付复核', businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1' }, sourceMaterialVersion, availableActions: [{ execution: { tool: 'run_action', actionName: 'forge_action_from_metadata', recordId: 'contract-1', params: { approvalRequestId: 'approval-1', itemVersion: 'native-item-round-3', sourceMaterialVersion } }, inputs: [{ name: 'comment', type: 'string', required: true }] }], fields: [{ label: '合同名称', value: '设备验收合同' }], files: [{ fileId: 'approval-file-1', name: '合同.md', content: original, sha256: digest, verified: true }, { fileId: 'approval-file-2', name: '技术协议.md', content: attachment, sha256: attachmentDigest, verified: true }] })
+    actionRecordId = 'different-record'
+    await expect(service.getApprovalContext('approval-1')).rejects.toThrow('当前事项动作与本人打开的事项不匹配')
+    actionRecordId = 'contract-1'
+    actionInputName = 'approvalRequestId'
+    await expect(service.getApprovalContext('approval-1')).rejects.toThrow('动作输入声明暂不支持')
+    actionInputName = 'comment'
     const returnedContext = await service.getApprovalContext('approval-2')
     expect(returnedContext).toMatchObject({ requestId: 'approval-2', status: 'returned', viewer: 'original_submitter', title: '设备验收合同', step: '销售修改', returnReason: '请补齐附件', returnVersion: 'revise-1', businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1' }, sourceMaterialVersion: createHash('sha256').update('source-v1').digest('hex'), files: [] })
     expect(returnedContext).not.toHaveProperty('revisionReady')
     expect(calls.filter((url) => url.includes('/api/v1/data/') || /\/api\/v1\/storage\/files\/[^/]+\/url/.test(url))).toEqual([])
-    expect(calls.filter((url) => url.includes('/workbench-context'))).toHaveLength(2)
+    expect(calls.filter((url) => url.includes('/workbench-context'))).toHaveLength(4)
     fileContent = '# 另一份合同\n'
     await expect(service.getApprovalContext('approval-1')).rejects.toThrow('审批文件与提交版本不一致')
   })
 
-  it('reads approval originals only through the request-bound route and freezes exact PDF bytes with the approval source', async () => {
+  it('reads more than 11 approval originals only through the current request-bound route', async () => {
     const source = await readFile(new URL('../fixtures/materials/sample-two-page.pdf', import.meta.url))
     const sha256 = createHash('sha256').update(source).digest('hex')
+    const originalMaterials = Array.from({ length: 12 }, (_, index) => ({
+      sourceKind: 'approval', requestId: 'approval-pdf', fileId: `approval-file-pdf-${index + 1}`,
+      name: `验收附件${index + 1}.pdf`, mediaType: 'application/pdf', bytes: source.length, sha256,
+    }))
     const calls: Array<{ url: string; headers: Headers }> = []
-    let originalResponse: Response = new Response(source, { status: 200, headers: {
+    let originalResponseStatus = 200
+    const originalResponse = () => originalResponseStatus === 200 ? new Response(source, { status: 200, headers: {
       'Content-Type': 'application/pdf', 'Content-Length': String(source.length),
       'X-Content-SHA256': sha256, ETag: `"${sha256}"`, 'Cache-Control': 'private, no-store',
-    } })
+    } }) : new Response(null, { status: originalResponseStatus })
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input), headers = new Headers(init?.headers)
       calls.push({ url, headers })
@@ -990,30 +1370,31 @@ describe('EnterpriseService', () => {
         title: '验收合同', step: '复核', fields: [], files: [],
         businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-pdf' },
         sourceMaterialVersion: createHash('sha256').update('source-pdf-v1').digest('hex'),
-        originalFiles: [{ sourceKind: 'approval', requestId: 'approval-pdf', fileId: 'approval-file-pdf', name: '验收附件.pdf', mediaType: 'application/pdf', bytes: source.length, sha256 }],
+        originalFiles: originalMaterials,
       })
-      if (url.endsWith('/api/v1/approvals/requests/approval-pdf/workbench-context/files/approval-file-pdf/original')) return originalResponse
+      if (originalMaterials.some((file) => url.endsWith(`/api/v1/approvals/requests/approval-pdf/workbench-context/files/${file.fileId}/original`))) return originalResponse()
       return Response.json({}, { status: 404 })
     }) as typeof fetch
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
     await service.signIn('approver@example.test', 'secret')
 
     const context = await service.getApprovalContext('approval-pdf')
+    expect(context.originalFiles).toHaveLength(12)
     expect(context.originalFiles?.[0]).toMatchObject({
-      sourceKind: 'approval', requestId: 'approval-pdf', fileId: 'approval-file-pdf',
-      name: '验收附件.pdf', mediaType: 'application/pdf', bytes: source.length, sha256,
+      sourceKind: 'approval', requestId: 'approval-pdf', fileId: 'approval-file-pdf-1',
+      name: '验收附件1.pdf', mediaType: 'application/pdf', bytes: source.length, sha256,
       extraction: { sourceSha256: sha256, status: 'partial' },
     })
     expect(Buffer.from(context.originalFiles![0]!.bytesBase64, 'base64')).toEqual(source)
-    const originalCall = calls.find((call) => call.url.endsWith('/files/approval-file-pdf/original'))!
+    const originalCall = calls.find((call) => call.url.endsWith('/files/approval-file-pdf-1/original'))!
     expect(originalCall.headers.get('if-match')).toBe(`"${sha256}"`)
     const view = approvalContextView(context)
-    expect(view.originalFiles?.[0]).toMatchObject({ name: '验收附件.pdf', bytes: source.length, verified: true })
+    expect(view.originalFiles?.[0]).toMatchObject({ name: '验收附件1.pdf', bytes: source.length, verified: true })
     expect(view.originalFiles?.[0]).not.toHaveProperty('fileId')
     expect(view.originalFiles?.[0]).not.toHaveProperty('requestId')
     expect(view.originalFiles?.[0]).not.toHaveProperty('bytesBase64')
 
-    originalResponse = new Response(null, { status: 404 })
+    originalResponseStatus = 404
     await expect(service.getApprovalContext('approval-pdf')).rejects.toThrow('审批原件不属于当前员工或冻结材料')
     expect(calls.filter((call) => call.url.includes('/api/v1/workbench/materials/'))).toEqual([])
   })

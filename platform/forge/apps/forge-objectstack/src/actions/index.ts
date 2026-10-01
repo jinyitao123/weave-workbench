@@ -1,4 +1,5 @@
 export * from './sales.action.js';
+export { ContractApprovalMcpApprove, ContractApprovalMcpSendBack } from './approval-workbench.action.js';
 export * from './procurement.action.js';
 export * from './production-procurement-handoff.action.js';
 export * from './inventory.action.js';

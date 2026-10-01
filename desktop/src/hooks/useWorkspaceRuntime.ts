@@ -392,8 +392,8 @@ export function useWorkspaceRuntime({
     return true
   }, [])
 
-  const queuePrompt = useCallback((text: string, intent: PromptDeliveryIntent, parts?: MessagePart[], timestamp = Date.now(), returnedApprovalContextHandle?: string, workContinuationContextHandle?: string): string => {
-    const queued: QueuedPrompt = { id: nextQueuedPromptId(), text, intent, timestamp, ...(parts ? { parts } : {}), ...(returnedApprovalContextHandle ? { returnedApprovalContextHandle } : {}), ...(workContinuationContextHandle ? { workContinuationContextHandle } : {}) }
+  const queuePrompt = useCallback((text: string, intent: PromptDeliveryIntent, parts?: MessagePart[], timestamp = Date.now(), returnedApprovalContextHandle?: string, workContinuationContextHandle?: string, approvalReviewContextHandle?: string): string => {
+    const queued: QueuedPrompt = { id: nextQueuedPromptId(), text, intent, timestamp, ...(parts ? { parts } : {}), ...(returnedApprovalContextHandle ? { returnedApprovalContextHandle } : {}), ...(workContinuationContextHandle ? { workContinuationContextHandle } : {}), ...(approvalReviewContextHandle ? { approvalReviewContextHandle } : {}) }
     const next = [...pendingQueuedPromptsRef.current, queued]
     pendingQueuedPromptsRef.current = next
     const owner = activeQueuedPromptOwnerRef.current
