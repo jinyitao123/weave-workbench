@@ -6,7 +6,7 @@ import { MemberInspector } from '@/components/development/MemberInspector'
 import type { PrimeWorkApi, EnterpriseBusinessCapabilityCatalog, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus } from '@/types/api'
 import type { TeamDefinition, TeamWorkspaceBridge } from '@/types/team-workspace'
 import { useTeamDraft } from './team-workspace/useTeamDraft'
-import { newMember } from './team-workspace/member'
+import { isSystemManagedBusinessParameter, newMember } from './team-workspace/member'
 import { StepInspector } from './team-workspace/StepInspector'
 import { FlowCanvas, ObjectMenu } from './team-workspace/TeamCanvas'
 import { EditableText } from './team-workspace/EditableText'
@@ -74,6 +74,7 @@ function TeamEditor({ teamId, initialView, teams, overview, businessCapabilities
   const step = flow?.graph_definition.nodes.find((n) => n.id === stepId) ?? flow?.graph_definition.nodes[0]
   const selectedBusinessCapabilityIds = [...new Set(doc.members.flatMap((item) => item.configuration.businessCapabilityIds))]
   const unavailableBusinessCapabilities = selectedBusinessCapabilityIds.flatMap((id) => {
+    if (doc.members.some((member) => member.configuration.businessCapabilityBindings.some((binding) => binding.capabilityId === id && binding.parameters.some((parameter) => isSystemManagedBusinessParameter(parameter.name))))) return [{ id, reason: '系统托管的防重复提交参数不能绑定材料，请移除旧映射。' }]
     const capability = businessCapabilities?.capabilities.find((item) => item.id === id)
     if (!capability) return [{ id, reason: businessCapabilityError || 'Forge 业务能力目录尚未读取，当前不能更新团队。' }]
     return capability.status === 'unavailable'

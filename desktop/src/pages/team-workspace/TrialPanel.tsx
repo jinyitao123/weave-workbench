@@ -1,3 +1,4 @@
+import { isSystemManagedBusinessParameter } from './member'
 import { useEffect, useRef, useState } from 'react'
 import { ProductSelect, ProductTextArea } from '@/components/ui'
 import type { EnterpriseBusinessCapabilityCatalog } from '@/types/api'
@@ -68,6 +69,7 @@ export function TrialPanel({ teamId, initialFlowId, draft, businessCapabilities,
     setBusy(true); setError('')
     try {
       const saved = await flush(); if (!saved) return
+      if (saved.document.members.some((member) => member.configuration.businessCapabilityBindings.some((binding) => member.configuration.businessCapabilityIds.includes(binding.capabilityId) && binding.parameters.some((parameter) => isSystemManagedBusinessParameter(parameter.name))))) throw new Error('系统托管的防重复提交参数不能绑定材料，请到成员能力中移除旧映射后再调试')
       const selectedIds = new Set(saved.document.members.flatMap((member) => member.configuration.businessCapabilityIds))
       const catalog = businessCapabilities?.capabilities ?? []
       const unavailable = [...selectedIds].map((id) => catalog.find((action) => action.id === id)).find((action) => !action || action.status !== 'available')
