@@ -8,7 +8,7 @@
 
 - `enterprise-session`：桌面可见的登录身份、身份来源、组织环境和安全存储状态。
 - `account-binding`：Forge 登录主体与 Weave 用户、组织之间的稳定绑定。
-- `task-delegation`：一次任务获准使用的动作、资源、有效期和撤销状态。
+- `task-delegation`：尚未发布的抽象审计投影，不作为Forge发行/current回包或Weave数据库DTO；其`$defs.scope`定义本批Forge固定任务范围，供工作续办机器契约引用。具体调用顺序及身份/错误约束见v1的受限任务授权章节。
 - `identity`：工作请求中的设备会话和 Weave 短期任务委托。
 - `work-request`：桌面递交的目标、材料、范围和期望交付。
 - `business-action`：Weave 调用 Forge 业务动作的输入、幂等与权限上下文。

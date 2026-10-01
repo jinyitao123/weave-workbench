@@ -7,15 +7,17 @@
   "additionalProperties": false,
   "required": ["version", "source", "input", "run"],
   "properties": {
-    "version": { "const": "1" },
+    "version": {"const": "1"},
     "source": {
       "type": "object",
       "additionalProperties": false,
       "required": ["input_revision_id", "run_id", "workbench_session_id"],
       "properties": {
-        "input_revision_id": { "type": "string", "format": "uuid" },
-        "run_id": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "workbench_session_id": { "type": "string", "minLength": 1, "maxLength": 256 }
+        "input_revision_id": {"type": "string", "format": "uuid"},
+        "run_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "workbench_session_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "input_status": {"enum": ["current", "superseded", "closed"]},
+        "superseded_by_input_revision_id": {"type": "string", "format": "uuid"}
       }
     },
     "input": {
@@ -23,21 +25,21 @@
       "additionalProperties": false,
       "required": ["task", "task_sha256", "team_id", "workflow_id", "workflow_version", "materials", "source_messages"],
       "properties": {
-        "task": { "type": "string", "minLength": 1, "maxLength": 1048576 },
-        "task_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-        "team_id": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "workflow_id": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "workflow_version": { "type": "integer", "minimum": 1 },
+        "task": {"type": "string", "minLength": 1, "maxLength": 1048576},
+        "task_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "team_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "workflow_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "workflow_version": {"type": "integer", "minimum": 1},
         "materials": {
           "type": "array",
-          "description": "Frozen material references subject to the per-file, aggregate-byte, extraction-text, and task-size budgets; no file-count ceiling is imposed.",
+          "description": "Frozen references: at most ten files, two MiB per file and eight MiB in aggregate. Material bodies remain outside this response.",
           "items": {
             "type": "object",
             "additionalProperties": false,
             "required": ["type", "id", "name", "bytes", "sha256"],
             "properties": {
-              "type": { "const": "forge-file" },
-              "materialId": { "type": "string", "pattern": "^[0-9a-f]{24}$" },
+              "type": {"const": "forge-file"},
+              "materialId": {"type": "string", "pattern": "^[0-9a-f]{24}$"},
               "mediaType": {
                 "enum": [
                   "text/plain",
@@ -48,38 +50,39 @@
                   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 ]
               },
-              "sourceKind": { "enum": ["owner", "approval"] },
-              "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
-              "id": { "type": "string", "minLength": 1, "maxLength": 128 },
-              "name": { "type": "string", "minLength": 1, "maxLength": 255 },
-              "bytes": { "type": "integer", "minimum": 1, "maximum": 2097152 },
-              "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+              "sourceKind": {"enum": ["owner", "approval"]},
+              "requestId": {"type": "string", "minLength": 1, "maxLength": 128},
+              "id": {"type": "string", "minLength": 1, "maxLength": 128},
+              "name": {"type": "string", "minLength": 1, "maxLength": 255},
+              "bytes": {"type": "integer", "minimum": 1, "maximum": 2097152},
+              "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
             },
             "allOf": [
               {
-                "if": { "required": ["mediaType"], "properties": { "mediaType": { "enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] } } },
-                "then": { "required": ["materialId", "sourceKind"] }
+                "if": {
+                  "required": ["mediaType"],
+                  "properties": {"mediaType": {"enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]}}
+                },
+                "then": {"required": ["materialId", "sourceKind"]}
               },
               {
-                "if": { "required": ["sourceKind"], "properties": { "sourceKind": { "const": "approval" } } },
+                "if": {"required": ["sourceKind"], "properties": {"sourceKind": {"const": "approval"}}},
                 "then": {
                   "required": ["requestId"],
-                  "properties": { "mediaType": { "enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] } }
+                  "properties": {"mediaType": {"enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]}}
                 }
               },
               {
-                "if": { "required": ["sourceKind"], "properties": { "sourceKind": { "const": "owner" } } },
+                "if": {"required": ["sourceKind"], "properties": {"sourceKind": {"const": "owner"}}},
                 "then": {
-                  "not": { "required": ["requestId"] },
-                  "properties": { "mediaType": { "enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] } }
+                  "not": {"required": ["requestId"]},
+                  "properties": {"mediaType": {"enum": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]}}
                 }
               },
-              {
-                "if": { "required": ["requestId"] },
-                "then": { "required": ["sourceKind"] }
-              }
+              {"if": {"required": ["requestId"]}, "then": {"required": ["sourceKind"]}}
             ]
-          }
+          },
+          "maxItems": 10
         },
         "source_messages": {
           "type": "array",
@@ -90,9 +93,9 @@
             "additionalProperties": false,
             "required": ["message_id", "event_seq", "sha256"],
             "properties": {
-              "message_id": { "type": "string", "minLength": 1, "maxLength": 256 },
-              "event_seq": { "type": "integer", "minimum": 0 },
-              "sha256": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$" }
+              "message_id": {"type": "string", "minLength": 1, "maxLength": 256},
+              "event_seq": {"type": "integer", "minimum": 0},
+              "sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"}
             }
           }
         },
@@ -100,22 +103,20 @@
           "type": "object",
           "additionalProperties": false,
           "required": ["object_name", "record_id"],
-          "properties": {
-            "object_name": { "type": "string", "minLength": 1, "maxLength": 128 },
-            "record_id": { "type": "string", "minLength": 1, "maxLength": 128 },
-            "record_version": { "type": "string", "minLength": 1, "maxLength": 128 }
-          }
+          "properties": {"object_name": {"type": "string", "minLength": 1, "maxLength": 128}, "record_id": {"type": "string", "minLength": 1, "maxLength": 128}}
         },
         "parent": {
           "type": "object",
           "additionalProperties": false,
           "required": ["root_input_revision_id"],
           "properties": {
-            "root_input_revision_id": { "type": "string", "format": "uuid" },
-            "parent_input_revision_id": { "type": "string", "format": "uuid" },
-            "parent_run_id": { "type": "string", "minLength": 1, "maxLength": 128 }
+            "root_input_revision_id": {"type": "string", "format": "uuid"},
+            "parent_input_revision_id": {"type": "string", "format": "uuid"},
+            "parent_run_id": {"type": "string", "minLength": 1, "maxLength": 128}
           }
-        }
+        },
+        "registration_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "authorized_business_capability_ids": {"type": "array", "maxItems": 32, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 160}}
       }
     },
     "run": {
@@ -123,25 +124,27 @@
       "additionalProperties": false,
       "required": ["status"],
       "properties": {
-        "status": { "enum": ["queued", "running", "parked", "cancel_requested", "succeeded", "failed", "cancelled", "abandoned"] },
+        "status": {"enum": ["queued", "running", "parked", "cancel_requested", "succeeded", "failed", "cancelled", "abandoned"]},
         "business_result": {
           "enum": ["completed", "needs_input", "action_failed", "action_unknown"],
           "description": "Server-computed run-level business result; absent when the run has none. Failed or unknown actions outrank the team's own completed or needs_input."
         },
         "action_outcomes": {
-          "type": "array", "maxItems": 100,
+          "type": "array",
+          "maxItems": 100,
           "description": "Platform-recorded Forge action outcomes; absent is not proof that no action ran.",
           "items": {
-            "type": "object", "additionalProperties": false,
+            "type": "object",
+            "additionalProperties": false,
             "required": ["node_id", "call_id", "action_name", "object_name", "status", "summary"],
             "properties": {
-              "node_id": { "type": "string", "minLength": 1, "maxLength": 128 },
-              "call_id": { "type": "string", "minLength": 1, "maxLength": 256 },
-              "action_name": { "type": "string", "minLength": 1, "maxLength": 128 },
-              "object_name": { "type": "string", "minLength": 1, "maxLength": 128 },
-              "record_id": { "type": "string", "minLength": 1, "maxLength": 128 },
-              "status": { "enum": ["succeeded", "failed", "unknown"] },
-              "summary": { "type": "string", "minLength": 1, "maxLength": 500 }
+              "node_id": {"type": "string", "minLength": 1, "maxLength": 128},
+              "call_id": {"type": "string", "minLength": 1, "maxLength": 256},
+              "action_name": {"type": "string", "minLength": 1, "maxLength": 128},
+              "object_name": {"type": "string", "minLength": 1, "maxLength": 128},
+              "record_id": {"type": "string", "minLength": 1, "maxLength": 128},
+              "status": {"enum": ["succeeded", "failed", "unknown"]},
+              "summary": {"type": "string", "minLength": 1, "maxLength": 500}
             }
           }
         },
@@ -150,22 +153,54 @@
           "additionalProperties": false,
           "required": ["id", "title", "content_type", "content", "sha256"],
           "properties": {
-            "id": { "type": "string", "minLength": 1, "maxLength": 128 },
-            "title": { "type": "string", "minLength": 1, "maxLength": 300 },
-            "content_type": { "type": "string", "minLength": 1, "maxLength": 160 },
-            "content": { "type": "string", "maxLength": 100000 },
-            "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-            "disposition": { "enum": ["complete", "needs_input"] },
-            "summary": { "type": "string", "minLength": 1, "maxLength": 1000 },
-            "missing_items": { "type": "array", "maxItems": 8, "items": { "type": "string", "minLength": 1, "maxLength": 200 } }
+            "id": {"type": "string", "minLength": 1, "maxLength": 128},
+            "title": {"type": "string", "minLength": 1, "maxLength": 300},
+            "content_type": {"type": "string", "minLength": 1, "maxLength": 160},
+            "content": {"type": "string", "maxLength": 100000},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "disposition": {"enum": ["complete", "needs_input"]},
+            "summary": {"type": "string", "minLength": 1, "maxLength": 1000},
+            "missing_items": {"type": "array", "maxItems": 8, "items": {"type": "string", "minLength": 1, "maxLength": 200}}
           },
-          "dependentRequired": {
-            "disposition": ["summary", "missing_items"],
-            "summary": ["disposition", "missing_items"],
-            "missing_items": ["disposition", "summary"]
-          }
+          "dependentRequired": {"disposition": ["summary", "missing_items"], "summary": ["disposition", "missing_items"], "missing_items": ["disposition", "summary"]}
+        },
+        "authorization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "can_renew"],
+          "properties": {
+            "status": {"enum": ["active", "renewal_required", "not_applicable"]},
+            "reason": {"type": "string", "minLength": 1, "maxLength": 1000},
+            "generation": {"type": "integer", "minimum": 1},
+            "expires_at": {"type": "string", "format": "date-time"},
+            "scope": {"$ref": "task-delegation.schema.json#/$defs/scope"},
+            "can_renew": {"type": "boolean"},
+            "retry_node_id": {"type": "string", "minLength": 1, "maxLength": 128}
+          },
+          "allOf": [
+            {
+              "if": {"properties": {"can_renew": {"const": true}}, "required": ["can_renew"]},
+              "then": {"required": ["scope", "retry_node_id", "generation"], "properties": {"status": {"enum": ["active", "renewal_required"]}}}
+            }
+          ]
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "run": {"properties": {"authorization": {"properties": {"can_renew": {"const": true}}, "required": ["can_renew"]}}, "required": ["authorization"]}
+        },
+        "required": ["run"]
+      },
+      "then": {
+        "properties": {
+          "run": {"properties": {"status": {"const": "parked"}}},
+          "source": {"properties": {"input_status": {"const": "current"}}, "required": ["input_status"]}
+        }
+      }
+    }
+  ]
 }
