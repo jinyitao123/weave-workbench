@@ -11,6 +11,8 @@ import { ContractRevisionMaterialPlugin } from './src/plugins/contract-revision-
 import { ContractMaterialSubmissionPlugin } from './src/plugins/contract-material-submission.plugin.js';
 import { WeaveRunEventPlugin } from './src/plugins/weave-run-event.plugin.js';
 import { WorkbenchOwnedMaterialPlugin } from './src/plugins/workbench-owned-material.plugin.js';
+import { TaskDelegationPlugin } from './src/plugins/task-delegation.plugin.js';
+import { ApprovalWorkListPlugin } from './src/plugins/approval-work-list.plugin.js';
 import { ProjectMemberSharingPlugin } from './src/plugins/project-member-sharing.plugin.js';
 import { ServiceOrderReferenceSharingPlugin } from './src/plugins/service-order-reference-sharing.plugin.js';
 import { forgeApplicationPlugins } from './src/apps/index.js';
@@ -36,6 +38,8 @@ export default defineStack({
     new MCPServerPlugin(),
     new WeaveRunEventPlugin(),
     new WorkbenchOwnedMaterialPlugin(),
+    new TaskDelegationPlugin(),
+    new ApprovalWorkListPlugin(),
     new ApprovalWorkbenchContextPlugin(),
     new ContractRevisionMaterialPlugin(),
     new ContractMaterialSubmissionPlugin(),
