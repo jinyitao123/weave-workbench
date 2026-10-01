@@ -24,3 +24,4 @@ export * from './administration.object.js';
 export * from './management-profit-report.object.js';
 export * from './report-settings.object.js';
 export * from './business-setting.object.js';
+export * from './task-delegation.object.js';
