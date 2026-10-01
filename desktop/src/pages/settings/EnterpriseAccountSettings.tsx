@@ -46,7 +46,7 @@ export function EnterpriseAccountSettings({ session, onSignIn, onSignOut }: Ente
         <label><span>密码</span><input type="password" name="password" value={password} autoComplete="current-password" placeholder="输入密码" onChange={(event) => setPassword(event.target.value)} /></label>
         <button type="submit" className="button button--primary" disabled={busy || !email.trim() || !password}>{busy ? <><LoaderCircle className="spin" size={13}/>正在登录</> : <>登录<ArrowRight size={13}/></>}</button>
       </form>}
-      {error ? <p className="settings-error" role="alert">{error}</p> : null}
+      {error || session?.message ? <p className="settings-error" role="alert">{error || session?.message}</p> : null}
       <p className="enterprise-account-origin">{session?.environment.origin || '正在读取 Forge 环境'}{session && !session.environment.secure ? ' · HTTP连接' : ''}</p>
     </section>
   </div>

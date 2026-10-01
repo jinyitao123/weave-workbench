@@ -16,6 +16,8 @@ let currentFixture: ReturnType<typeof createHermeticFixture> | undefined
 let actionableErrors: string[] = []
 let enterpriseFixtureServer: Server | undefined
 let enterpriseFixtureOrigin = ''
+let parkedRunFixture = false
+let parkedRunRequests: string[] = []
 
 const ISSUE_131_LONG_TOKEN = 'ReProductSkuController.getProductPoolDetail,ReProductSkuController.getProductPoolPriceWave'
 
@@ -52,9 +54,19 @@ async function closeHermeticApp(target: ElectronApplication | undefined): Promis
   await closeEvent
 }
 
+function parkedRunContext() {
+  const task = '核对原合同材料', hash = createHash('sha256').update(task).digest('hex')
+  const inputID = '550e8400-e29b-41d4-a716-446655441000', registrationID = '550e8400-e29b-41d4-a716-446655441001'
+  const scope = { input_revision_id: inputID, registration_id: registrationID, task_sha256: hash, workflow_id: 'workflow-original', workflow_version: 1, allowed_actions: [], resources: [] }
+  return { version: '1', source: { input_revision_id: inputID, run_id: 'run-550e8400-e29b-41d4-a716-446655441002', workbench_session_id: 'original-session', input_status: 'current' },
+    input: { registration_id: registrationID, authorized_business_capability_ids: [], task, task_sha256: hash, team_id: 'team-original', workflow_id: 'workflow-original', workflow_version: 1, materials: [], source_messages: [{ message_id: 'employee-original', event_seq: 1, sha256: createHash('sha256').update('原要求').digest('hex') }] },
+    run: { status: 'parked', action_outcomes: [], authorization: { status: 'renewal_required', generation: 1, expires_at: '2026-09-01T00:00:00Z', reason: '原工作授权已过期', can_renew: true, retry_node_id: 'review', scope } } }
+}
+
 async function startHermeticEnterpriseServer(): Promise<string> {
   const server = createServer((request, response) => {
     const path = new URL(request.url ?? '/', 'http://127.0.0.1').pathname
+    if (parkedRunFixture) parkedRunRequests.push(`${request.method} ${path}`)
     const send = (body: unknown, status = 200) => {
       response.writeHead(status, { 'content-type': 'application/json' })
       response.end(JSON.stringify(body))
@@ -64,9 +76,10 @@ async function startHermeticEnterpriseServer(): Promise<string> {
     } else if (path === '/v1/auth/external/exchange') {
       send({ token: 'weave-e2e-session', subject: { id: 'weave-e2e-user', externalId: 'forge-e2e-user', name: 'Hermetic Employee', email: 'e2e@example.test' }, organization: { id: 'e2e-organization', name: 'Hermetic Organization' }, permissions: ['teams:use'], expiresIn: 3600 })
     } else if (path === '/v1/teams') send({ teams: [] })
-    else if (path === '/v1/runs') send({ runs: [] })
+    else if (path === '/v1/runs') send({ runs: parkedRunFixture ? [{ run_id: parkedRunContext().source.run_id, status: 'parked', step: '合同处理', started_at: '2026-10-01T00:00:00Z' }] : [] })
+    else if (parkedRunFixture && path === `/v1/runs/${parkedRunContext().source.run_id}/workbench-context`) send(parkedRunContext())
     else if (path === '/v1/human-tasks') send({ tasks: [] })
-    else if (path === '/api/v1/notifications') send({ notifications: [] })
+    else if (path === '/api/v1/apps/forge/workbench/inbox') send({ version: '1', notifications: [], next_cursor: null, has_more: false })
     else if (path === '/api/v1/approvals/requests') send({ requests: [] })
     else send({})
   })
@@ -362,6 +375,7 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
     setTimeout(() => send({ type: 'response', id: command.id, command: command.type, success: true, data: {} }), 500)
   } else if (command.type === 'prompt' || command.type === 'follow_up') {
     pendingPrompt = command
+    if (typeof command.message === 'string' && command.message.includes('这项工作原授权已过期')) fs.writeFileSync(${JSON.stringify(join(fixtureRoot, 'authorization-prompt.json'))}, JSON.stringify(command))
     if (typeof command.message === 'string' && command.message.includes('barrier turn')) {
       fs.writeFileSync(${JSON.stringify(join(fixtureRoot, 'prompt-args.json'))}, JSON.stringify(command))
       fs.writeFileSync(barrierStarted, 'ready')
@@ -565,6 +579,8 @@ test.describe('Prime Work desktop smoke', () => {
   // biome-ignore lint/correctness/noEmptyPattern: Playwright derives fixture usage from this destructuring pattern
   test.beforeEach(async ({}, testInfo) => {
     actionableErrors = []
+    parkedRunFixture = testInfo.title === 'opens a parked original work from its normal row without issuing authorization on view'
+    parkedRunRequests = []
     app = undefined
     const activeSession = testInfo.title === 'defers a reply to a session that is active outside Prime Work'
       || testInfo.title === 'reflects an external JSONL append without reselecting the live session'
@@ -1176,6 +1192,22 @@ test.describe('Prime Work desktop smoke', () => {
     await expect(page.getByRole('heading', { name: '待我处理' })).toBeVisible()
     await expect(page.getByRole('heading', { name: '我发起的工作' })).toBeVisible()
     await expect(page.getByText('当前没有待处理事项')).toBeVisible()
+  })
+
+  test('opens a parked original work from its normal row without issuing authorization on view', async () => {
+    await page.getByRole('button', { name: 'My tasks', exact: true }).click()
+    await expect(page.getByRole('heading', { name: '我发起的工作' })).toBeVisible()
+    await expect(page.getByText('合同处理', { exact: true })).toBeVisible()
+    await expect(page.locator('.enterprise-work-page')).not.toContainText(parkedRunContext().source.run_id)
+    await page.getByRole('button', { name: '继续原工作', exact: true }).click()
+    const promptPath = join(fixtureRoot, 'authorization-prompt.json')
+    await expect.poll(() => existsSync(promptPath)).toBe(true)
+    const prompt = JSON.parse(readFileSync(promptPath, 'utf8')) as { message: string }
+    expect(prompt.message).toContain('这项工作原授权已过期')
+    expect(prompt.message).toContain('只有员工在新消息明确要求继续原工作后')
+    expect(prompt.message).not.toContain(parkedRunContext().source.run_id)
+    expect(parkedRunRequests.filter((request) => request.endsWith('/workbench-context')).length).toBeGreaterThanOrEqual(2)
+    expect(parkedRunRequests.some((request) => request.startsWith('POST ') && !request.includes('/auth/'))).toBe(false)
   })
 
   test('keeps an archived conversation out of My Work', async () => {

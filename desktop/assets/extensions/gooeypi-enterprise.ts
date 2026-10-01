@@ -215,6 +215,19 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
     parameters: Type.Object({ recovery_key: Type.String({ minLength: 64, maxLength: 64, description: '原交接结果中的内部恢复凭据，不由员工提供' }) }),
     async execute(_id, params) { return result(await turnCall('recover', params)) },
   })
+  pi.registerTool<{ employee_request: string }>({
+    name: 'gooeypi_enterprise_work_authorization_renew',
+    label: '继续原工作授权',
+    description: '员工明确要求继续当前已打开的原工作，且平台确认授权过期和无副作用等待时，为相同输入与范围续授权并恢复原等待位置。',
+    promptGuidelines: [
+      '打开通知仅授权查看；只在员工随后新消息明确要求继续原工作时调用，employee_request逐字使用本轮员工消息。',
+      '材料、动作、业务记录、原输入和操作位置由Host固定；不填写内部标识，不重新上传或创建新输入。',
+      'unknown表示续授权或恢复回执待核对，不能重发业务动作或改用新交接绕过；平台未确认无副作用的旧失败/未知动作只能只读核对。',
+    ],
+    parameters: Type.Object({ employee_request: Type.String({ minLength: 1, maxLength: 20_000, description: '当前员工明确要求继续原工作的完整原话' }) }),
+    async execute(_id, params) { return result(await turnCall('authorization_renew', params)) },
+  })
+
   pi.registerTool({
     name: 'gooeypi_enterprise_current_item_actions',
     label: '读取当前事项动作目录',

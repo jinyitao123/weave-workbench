@@ -221,3 +221,16 @@ it('keeps the approval on the work page when a fresh renderer session cannot be 
   expect(workspace.queuePrompt).not.toHaveBeenCalled()
   expect(container.querySelector('[role="alert"]')?.textContent).toContain('无法创建独立审批辅助会话')
 })
+
+it('opens a parked original run from the normal work row without displaying its internal identifier or creating a notification', async () => {
+  const runID = 'run-550e8400-e29b-41d4-a716-446655440999'
+  await act(async () => root.render(<EnterpriseWorkPage
+    overview={{ ...overview, items: [], tasks: [], runs: [{ ...overview.runs[0]!, id: runID, status: 'parked', step: '合同处理' }] }} loading={false} error="" onRefresh={refresh}
+    onComplete={vi.fn(async () => undefined)} onInspect={vi.fn(async () => ({ title: '', step: '', fields: [], files: [] }))} onAssist={assistPi} onContinue={continueWork}
+  />))
+  expect(container.textContent).not.toContain(runID)
+  const open = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '继续原工作')!
+  await act(async () => open.click())
+  expect(continueWork).toHaveBeenCalledWith(expect.objectContaining({ id: runID, source: 'weave', notificationType: 'weave.workbench_run', actionable: false }))
+  expect(container.querySelectorAll('.work-task-list article')).toHaveLength(0)
+})

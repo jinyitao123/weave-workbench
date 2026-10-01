@@ -15,7 +15,7 @@ import { activityNotificationSignature, readClearedActivity, readClearedAttentio
 import { errorMessage } from '@/lib/errors'
 import { openApprovalReviewInPi } from '@/lib/approval-review'
 import { businessNotificationPrompt } from '@/lib/business-notification'
-import { teamRunContinuationBoundary, teamRunResultNotice } from '@/lib/team-work-continuation'
+import { teamRunContinuationBoundary, teamRunResultNotice, WORKBENCH_RUN_CONTINUATION_TYPE } from '@/lib/team-work-continuation'
 import { I18nProvider } from '@/lib/i18n'
 import { openExternalUrl, revealPath } from '@/lib/desktop-actions'
 import { createSingleFlightAdmission, findProjectForSession, gitStatusForWorkspace, shouldRefreshGitOnSessionTransition, workspaceCwd } from '@/lib/workspace'
@@ -612,7 +612,7 @@ export default function App() {
       ? teamContext.businessResult === 'action_failed' || teamContext.businessResult === 'action_unknown'
       : teamContext?.actionOutcomes?.some((outcome) => outcome.status !== 'succeeded')
     const structuredResultNotice = teamContext ? teamRunResultNotice(teamContext) : ''
-    const historicalRunBoundary = teamContext ? teamRunContinuationBoundary(item.createdAt) : ''
+    const historicalRunBoundary = teamContext ? item.notificationType === WORKBENCH_RUN_CONTINUATION_TYPE ? '本次读取的是当前员工原有的团队运行。打开仅授权查看，不重新交接或执行；本轮运行状态与 Forge 当前业务状态分别说明。' : teamRunContinuationBoundary(item.createdAt) : ''
     const details = failedTeamWork && teamContext ? [
       '你打开的是上一条团队工作失败消息。该运行已经结束，不能通过旧交接凭据恢复执行；不要查找历史会话或调用交接恢复工具。',
       historicalRunBoundary,

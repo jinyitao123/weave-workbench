@@ -1,3 +1,4 @@
+import { WORKBENCH_RUN_CONTINUATION_TYPE } from '../../../src/lib/team-work-continuation'
 import { randomUUID } from 'node:crypto'
 import { approvalContextView, WorkRegistrationRejectedError, type ApprovalRevisionSubmission, type EnterpriseBusinessNotificationContext, type EnterpriseService, type EnterpriseWorkContinuationContext } from '../enterprise'
 import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseBusinessNotificationContextView, EnterpriseWorkChoice, EnterpriseWorkContinuationContextView, EnterpriseWorkItem, EnterpriseWorkResource, TranscriptMessage, WorkspaceMaterialPromptReference } from '../../../src/types/api'
@@ -16,7 +17,7 @@ interface EnterpriseSessionReader {
   read(filePath: unknown): Promise<TranscriptMessage[]>
 }
 export interface AgentEnterpriseBridgeOptions {
-  service: Pick<EnterpriseService, 'accountKey' | 'getSession' | 'getApprovalContext' | 'getApprovalActionHistory' | 'runNativeMcpAction' | 'getWorkNotificationSource' | 'getBusinessNotificationContext' | 'getWorkContinuationContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'getBusinessObjectDirectory' | 'findBusinessRecords' | 'readBusinessRecord' | 'stageWorkMaterials' | 'submitWork' | 'submitApprovalRevision' | 'getApprovalRevisionReceipt'>
+  service: Pick<EnterpriseService, 'accountKey' | 'getSession' | 'getApprovalContext' | 'getApprovalActionHistory' | 'runNativeMcpAction' | 'getWorkNotificationSource' | 'getBusinessNotificationContext' | 'getWorkContinuationContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'getBusinessObjectDirectory' | 'findBusinessRecords' | 'readBusinessRecord' | 'stageWorkMaterials' | 'submitWork' | 'submitApprovalRevision' | 'getApprovalRevisionReceipt'> & Partial<Pick<EnterpriseService, 'renewWorkAuthorization' | 'getRunContinuationReferences'>>
   sessions: Record<'prime' | 'pi', EnterpriseSessionReader>
   extensionPath: string
   storage?: HandoffStorage
@@ -187,6 +188,7 @@ function workContinuationFingerprint(context: EnterpriseWorkContinuationContext)
   return digest(JSON.stringify({ source: context.source, input: context.input, finalResult: context.run.finalResult ?? null, actionOutcomes: context.run.actionOutcomes ?? null, ...(context.run.businessResult !== undefined ? { businessResult: context.run.businessResult } : {}) }))
 }
 function isReusableReadOnlyContinuation(context: EnterpriseWorkContinuationContext | undefined): boolean {
+  if (context?.source.inputStatus === 'superseded') return false
   const run = context?.run
   if (!run || run.businessResult === 'action_failed' || run.businessResult === 'action_unknown' || !Array.isArray(run.actionOutcomes) || run.actionOutcomes.length !== 0) return false
   if (run.status === 'failed') return true
@@ -461,6 +463,11 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     }
     if (item.source !== 'weave') throw new Error('当前消息不是可续接的工作结果')
     let references = { workReference: item.workReference ?? '', runReference: item.runReference ?? '', sessionReference: item.sessionReference ?? '' }
+    if (item.notificationType === WORKBENCH_RUN_CONTINUATION_TYPE) {
+      if (!this.options.service.getRunContinuationReferences) throw new Error('当前平台尚未接通原运行续办，请刷新工作列表')
+      references = await this.options.service.getRunContinuationReferences(item.id)
+      if (references.runReference !== item.id) throw new Error('原运行来源不匹配，请刷新工作列表')
+    }
     const hasAllReferences = Boolean(references.workReference && references.runReference && references.sessionReference)
     if (!hasAllReferences) {
       const teamRunType = /^weave\.team_run\.(result|failure|revision_required|cancelled)$/.exec(item.notificationType ?? '')
@@ -497,6 +504,8 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         kind: 'weave',
         task: context.input.task,
         runStatus: context.run.status,
+        ...(context.run.authorization ? { authorization: { status: context.run.authorization.status, canRenew: context.run.authorization.canRenew, ...(context.run.authorization.reason ? { reason: context.run.authorization.reason } : {}) } } : {}),
+        ...(context.source.inputStatus ? { inputStatus: context.source.inputStatus } : {}),
         ...(context.run.businessResult ? { businessResult: context.run.businessResult } : {}),
         materials,
         ...(context.run.finalResult ? { finalResult: {
@@ -886,7 +895,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       if (await this.options.service.accountKey() !== accountKey) {
         throw new Error('审批事项或当前员工账号已变化，请重新打开本人待办')
       }
-      if (bound.purpose === 'review' && ['submit', 'revision_submit', 'recover'].includes(method)) {
+      if (bound.purpose === 'review' && ['submit', 'revision_submit', 'recover', 'authorization_renew'].includes(method)) {
         throw new Error('当前审批辅助会话只允许只读核对，企业交接、审批修订和恢复工具不可用')
       }
       if (bound.purpose === 'review' && !['activate', 'list_current_item_actions', 'run_current_item_action'].includes(method)) {
@@ -927,6 +936,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (method === 'find_business_record') return this.findBusinessRecord(claim, params, turn)
     if (method === 'read_business_record') return this.readBusinessRecord(claim, params, turn)
     if (method === 'submit') return this.submit(claim, params, turn)
+    if (method === 'authorization_renew') return this.renewAuthorization(claim, params, turn)
     if (method === 'revision_submit') return this.submitReturnedRevision(claim, params, turn)
     if (method === 'recover') {
       rejectUnknownKeys(params, ['turn_key', 'recovery_key'], 'handoff recovery')
@@ -1173,6 +1183,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   }
   private async submit(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn): Promise<unknown> {
     if (turn.openingWorkContinuation) throw new Error('打开工作消息只授权查看已有结果；请等待员工在新消息中明确提出后续工作')
+    if (turn.workContinuation?.context.run.authorization?.status === 'renewal_required') throw new Error('原工作正在等待授权更新，不能用新交接或新输入替代；可安全续办时请继续原工作授权，否则先核对原业务回执')
     const key = requireString(params.handoff_key, 'handoff_key', { min: 1, max: 128, trim: true })
     const goal = requireString(params.goal, 'goal', { min: 1, max: 20_000, trim: true })
     if (!Array.isArray(params.business_actions) || params.business_actions.length > 32 || params.business_actions.some((value) => typeof value !== 'string')) throw new Error('本次业务动作范围无效')
@@ -1279,6 +1290,24 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       }
     })
     return this.prepareDelivery(claim, turn, intent, digest(identity))
+  }
+  private async renewAuthorization(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn): Promise<unknown> {
+    rejectUnknownKeys(params, ['turn_key', 'employee_request'], 'work authorization renewal')
+    if (params.employee_request !== turn.prompt) throw new Error('续授权必须使用本轮员工明确要求，不能代入旧消息')
+    const key = `renew:${claim.token}:${turn.key}`
+    const pending = this.inFlight.get(key)
+    if (pending) return pending
+    const bound = turn.workContinuation
+    const operation = (async () => {
+      const { renewFromEmployeeTurn } = await import('./authorization-renewal-bridge')
+      return renewFromEmployeeTurn(params, {
+        opening: Boolean(turn.openingWorkContinuation), prompt: turn.prompt, accountKey: turn.accountKey, context: bound?.context,
+        store: this.store, renew: this.options.service.renewWorkAuthorization?.bind(this.options.service),
+        assertCurrent: async () => { await this.evidence(claim, turn); if (bound && this.workContinuations.get(claim.token) !== bound) throw new Error('工作上下文已失效，请重新打开原工作消息'); return turn.messageId },
+      })
+    })()
+    this.inFlight.set(key, operation)
+    try { return await operation } finally { this.inFlight.delete(key) }
   }
   private async submitReturnedRevision(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn): Promise<unknown> {
     rejectUnknownKeys(params, ['turn_key', 'employee_request', 'body', 'primary_material', 'materials'], 'revision')
@@ -1640,6 +1669,12 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const operation = this.options.service.submitWork(frozen.choice, frozen.task, {
       idempotencySeed: frozen.idempotencySeed, sessionKey: frozen.sessionKey, sourceMessages: frozen.sourceMessages, accountKey: frozen.accountKey,
       resources: frozen.resources,
+      fixDelegationIntent: async (inputRevisionID, scope) => {
+        const fingerprint = digest(JSON.stringify(scope))
+        const intent = await this.store.freeze(`${frozen.accountKey}:${frozen.idempotencySeed}:task-authorization`, fingerprint, async () => ({ inputRevisionID, requestID: randomUUID() }))
+        await this.evidence(claim, turn)
+        return intent
+      },
       businessContext: frozen.businessContext,
       continuation: frozen.continuation ? { ...frozen.continuation, ...(restartAfterFailedRun ? { restartAfterFailedRun: true } : {}) } : undefined,
       authorizedBusinessCapabilityIds: frozen.authorizedBusinessCapabilityIds,

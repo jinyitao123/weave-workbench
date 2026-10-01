@@ -1,3 +1,4 @@
+import { canonicalJSON, type ForgeTaskScope } from './task-handoff'
 import { createHash } from 'node:crypto'
 import type { EnterpriseWorkContinuationContext } from '../enterprise'
 import type { WorkspaceMaterialMimeType } from '../../../src/types/api'
@@ -33,6 +34,16 @@ export function parseWorkContinuationContext(value: unknown): EnterpriseWorkCont
   const inputRevisionID = boundedIdentity(source?.input_revision_id, 128)
   const runID = boundedIdentity(source?.run_id, 128)
   const workbenchSessionID = boundedIdentity(source?.workbench_session_id, 256)
+  const inputStatus = source?.input_status as EnterpriseWorkContinuationContext['source']['inputStatus']
+  const supersededByInputRevisionID = source?.superseded_by_input_revision_id === undefined ? undefined : boundedIdentity(source.superseded_by_input_revision_id, 128)
+  if (inputStatus !== undefined && !['current', 'superseded', 'closed'].includes(inputStatus)
+    || source?.superseded_by_input_revision_id !== undefined && (!supersededByInputRevisionID || !CONTINUATION_UUID.test(supersededByInputRevisionID))
+    || inputStatus === 'superseded' && (!supersededByInputRevisionID || supersededByInputRevisionID === inputRevisionID)
+    || supersededByInputRevisionID !== undefined && inputStatus !== 'superseded') throw new Error('原工作取代关系格式无效，请刷新工作消息')
+  const registrationID = input?.registration_id === undefined ? undefined : boundedIdentity(input.registration_id, 128)
+  const authorizedBusinessCapabilityIDs = input?.authorized_business_capability_ids as string[] | undefined
+  if (input?.registration_id !== undefined && (!registrationID || !CONTINUATION_UUID.test(registrationID))
+    || authorizedBusinessCapabilityIDs !== undefined && (!Array.isArray(authorizedBusinessCapabilityIDs) || authorizedBusinessCapabilityIDs.length > 32 || authorizedBusinessCapabilityIDs.some((value) => typeof value !== 'string' || !value || value.length > 256))) throw new Error('原固定输入授权声明无效，请刷新工作消息')
   const task = typeof input?.task === 'string' ? input.task : undefined
   const taskSHA256 = typeof input?.task_sha256 === 'string' ? input.task_sha256 : undefined
   const teamID = boundedIdentity(input?.team_id, 128)
@@ -107,6 +118,31 @@ export function parseWorkContinuationContext(value: unknown): EnterpriseWorkCont
       || parentRunID !== undefined && !parentRunID) throw new Error('团队原工作关联不完整，请刷新工作消息')
     parent = { rootInputRevisionID, ...(parentInputRevisionID ? { parentInputRevisionID } : {}), ...(parentRunID ? { parentRunID } : {}) }
   }
+  let authorization: EnterpriseWorkContinuationContext['run']['authorization']
+  if (run.authorization !== undefined) {
+    const auth = record(run.authorization)
+    const authStatus = auth?.status, reason = auth?.reason === undefined ? undefined : boundedIdentity(auth.reason, 1000)
+    const generation = auth?.generation, expiresAt = auth?.expires_at
+    const retryNodeID = auth?.retry_node_id === undefined ? undefined : boundedIdentity(auth.retry_node_id, 128)
+    const scope = record(auth?.scope)
+    if (!auth || !['active', 'renewal_required', 'not_applicable'].includes(authStatus as string) || typeof auth.can_renew !== 'boolean'
+      || auth.reason !== undefined && !reason || generation !== undefined && (!Number.isSafeInteger(generation) || (generation as number) < 1)
+      || expiresAt !== undefined && (typeof expiresAt !== 'string' || !Number.isFinite(Date.parse(expiresAt)))
+      || auth.retry_node_id !== undefined && !retryNodeID) throw new Error('工作授权状态格式无效，请刷新工作消息')
+    if (scope) {
+      const expectedResources = materials.map(({ id, name, bytes, sha256, materialId, mediaType, sourceKind, requestId }) => ({ type: 'forge-file', id, name, bytes, sha256, ...(materialId ? { materialId } : {}), ...(mediaType ? { mediaType } : {}), ...(sourceKind ? { sourceKind } : {}), ...(requestId ? { requestId } : {}) }))
+      const expectedRecord = businessRecord ? { object_name: businessRecord.objectName, record_id: businessRecord.recordID, ...(businessRecord.recordVersion ? { record_version: businessRecord.recordVersion } : {}) } : undefined
+      if (Object.keys(scope).some((key) => !['input_revision_id', 'registration_id', 'task_sha256', 'workflow_id', 'workflow_version', 'allowed_actions', 'resources', 'business_record'].includes(key))
+        || scope.input_revision_id !== inputRevisionID || !registrationID || scope.registration_id !== registrationID || !authorizedBusinessCapabilityIDs
+        || canonicalJSON(scope.allowed_actions) !== canonicalJSON(authorizedBusinessCapabilityIDs)
+        || scope.task_sha256 !== taskSHA256 || scope.workflow_id !== workflowID || scope.workflow_version !== workflowVersion
+        || !Array.isArray(scope.allowed_actions) || scope.allowed_actions.length > 32 || scope.allowed_actions.some((value) => typeof value !== 'string' || !value || value.length > 256)
+        || new Set(scope.allowed_actions).size !== scope.allowed_actions.length || canonicalJSON(scope.resources) !== canonicalJSON(expectedResources)
+        || canonicalJSON(scope.business_record) !== canonicalJSON(expectedRecord)) throw new Error('工作授权范围与原固定输入不一致，请刷新工作消息')
+    }
+    if (auth.can_renew && (authStatus !== 'renewal_required' || inputStatus !== 'current' || status !== 'parked' || !generation || !scope || !retryNodeID)) throw new Error('工作缺少可安全续授权的等待状态，请核对原业务回执')
+    authorization = { status: authStatus as NonNullable<typeof authorization>['status'], canRenew: auth.can_renew, ...(reason ? { reason } : {}), ...(generation ? { generation: generation as number } : {}), ...(expiresAt ? { expiresAt: expiresAt as string } : {}), ...(scope ? { scope: scope as unknown as ForgeTaskScope } : {}), ...(retryNodeID ? { retryNodeID } : {}) }
+  }
   let finalResult: EnterpriseWorkContinuationContext['run']['finalResult']
   if (run.final_result !== undefined) {
     const result = record(run.final_result), id = boundedIdentity(result?.id, 128), title = boundedIdentity(result?.title, 300)
@@ -153,9 +189,9 @@ export function parseWorkContinuationContext(value: unknown): EnterpriseWorkCont
   }
   return {
     version: '1',
-    source: { inputRevisionID, runID, workbenchSessionID },
-    input: { task, taskSHA256, teamID, workflowID, workflowVersion: workflowVersion!, materials, sourceMessages, ...(businessRecord ? { businessRecord } : {}), ...(parent ? { parent } : {}) },
-    run: { status: status as EnterpriseWorkContinuationContext['run']['status'], ...(businessResult ? { businessResult } : {}), ...(finalResult ? { finalResult } : {}), ...(actionOutcomes !== undefined ? { actionOutcomes } : {}) },
+    source: { inputRevisionID, runID, workbenchSessionID, ...(inputStatus ? { inputStatus } : {}), ...(supersededByInputRevisionID ? { supersededByInputRevisionID } : {}) },
+    input: { ...(registrationID ? { registrationID } : {}), ...(authorizedBusinessCapabilityIDs ? { authorizedBusinessCapabilityIDs } : {}), task, taskSHA256, teamID, workflowID, workflowVersion: workflowVersion!, materials, sourceMessages, ...(businessRecord ? { businessRecord } : {}), ...(parent ? { parent } : {}) },
+    run: { status: status as EnterpriseWorkContinuationContext['run']['status'], ...(authorization ? { authorization } : {}), ...(businessResult ? { businessResult } : {}), ...(finalResult ? { finalResult } : {}), ...(actionOutcomes !== undefined ? { actionOutcomes } : {}) },
   }
 }
 

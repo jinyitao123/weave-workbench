@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest'
-import { readApprovalPages } from '../../electron/main/enterprise/inbox-pages'
+import { readApprovalPages, readInboxPages } from '../../electron/main/enterprise/inbox-pages'
 
 function requests(start: number, count: number) {
   return Array.from({ length: count }, (_, index) => ({ id: `approval-${start + index}`, status: 'pending' }))
@@ -32,6 +32,34 @@ it.each([
   { next: { unexpected: [] }, error: '分页格式无效' },
 ])('refuses incomplete or changed native approval pages: $error', async ({ next, error }) => {
   const read = vi.fn().mockResolvedValueOnce({ data: requests(0, 50), total: 51 }).mockResolvedValueOnce(next)
-  await expect(readApprovalPages(read)).rejects.toThrow(error)
+  await expect(readApprovalPages(read)).resolves.toMatchObject({ error: expect.stringContaining(error), data: expect.any(Array) })
   expect(read).toHaveBeenCalledTimes(2)
+})
+
+function notices(start: number, count: number) { return Array.from({ length: count }, (_, index) => ({ id: `notice-${start + index}`, title: `本人消息${start + index}` })) }
+
+it('reads more than 200 native inbox notices through the frozen keyset protocol and deduplicates exact repeated rows', async () => {
+  const read = vi.fn().mockResolvedValueOnce({ version: '1', notifications: notices(0, 100), next_cursor: 'bound/first', has_more: true })
+    .mockResolvedValueOnce({ version: '1', notifications: notices(99, 100), next_cursor: 'bound/second', has_more: true })
+    .mockResolvedValueOnce({ version: '1', notifications: notices(199, 52), next_cursor: null, has_more: false })
+  const result = await readInboxPages(read)
+  expect(result.notifications).toHaveLength(251)
+  expect(result.error).toBeUndefined()
+  expect(read.mock.calls.map(([path]) => path)).toEqual(['/api/v1/apps/forge/workbench/inbox?limit=100', '/api/v1/apps/forge/workbench/inbox?limit=100&cursor=bound%2Ffirst', '/api/v1/apps/forge/workbench/inbox?limit=100&cursor=bound%2Fsecond'])
+})
+
+it.each([
+  { page: { version: '1', notifications: notices(100, 1), next_cursor: 'first', has_more: true }, error: '没有继续前进' },
+  { page: { version: '1', notifications: notices(100, 1), next_cursor: 'unexpected', has_more: false }, error: '格式无效' },
+  { page: { version: '1', notifications: [], next_cursor: 'second', has_more: true }, error: '没有继续前进' },
+])('keeps already visible inbox notices when the next page is incomplete: $error', async ({ page, error }) => {
+  const read = vi.fn().mockResolvedValueOnce({ version: '1', notifications: notices(0, 100), next_cursor: 'first', has_more: true }).mockResolvedValueOnce(page)
+  const result = await readInboxPages(read)
+  expect(result.notifications.length).toBeGreaterThanOrEqual(100)
+  expect(result.error).toContain(error)
+})
+
+it('keeps visible inbox notices and the read error when a subsequent request fails', async () => {
+  const read = vi.fn().mockResolvedValueOnce({ version: '1', notifications: notices(0, 100), next_cursor: 'first', has_more: true }).mockRejectedValueOnce(new Error('当前账号没有读取通知的权限'))
+  expect(await readInboxPages(read)).toMatchObject({ notifications: expect.any(Array), error: '当前账号没有读取通知的权限' })
 })

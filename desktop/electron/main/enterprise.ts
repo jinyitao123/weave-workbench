@@ -1,9 +1,11 @@
+import type { FrozenAuthorizationRenewal, RenewalObserver, AuthorizationRenewalResult } from './enterprise/task-renewal'
+import type { ForgeTaskScope } from './enterprise/task-handoff'
+import type { FixedWorkSource } from './enterprise/task-handoff'
 import { teamWorkspaceRequest } from './enterprise/team-workspace'
 import type { TeamWorkspaceCommand } from '../../src/types/team-workspace'
-import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseRunObservation, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkReadStatus, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkItem, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource, WorkspaceMaterialMimeType } from '../../src/types/api'
+import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityCatalog, EnterpriseCreateTeamInput, EnterpriseCreateTeamMemberInput, EnterpriseCreateTeamResult, EnterpriseCreateWorkflowInput, EnterpriseCreateWorkflowResult, EnterpriseDevelopmentOverview, EnterpriseEnvironmentStatus, EnterpriseHumanTask, EnterprisePermission, EnterpriseSession, EnterpriseTeamMember, EnterpriseTeamMemberAgentConfiguration, EnterpriseTeamMemberConfigDraft, EnterpriseTeamMemberMutationResult, EnterpriseTeamMemberRelationshipConfiguration, EnterpriseTeamObservation, EnterpriseUpdateTeamInput, EnterpriseUpdateWorkflowDraftInput, EnterpriseUpdateWorkflowDraftResult, EnterpriseWorkflowGraphDefinition, EnterpriseWorkflowObservation, EnterpriseWorkflowValidation, EnterpriseWorkChoice, EnterpriseWorkOverview, EnterpriseWorkReceipt, EnterpriseWorkResource, WorkspaceMaterialMimeType } from '../../src/types/api'
 import { extractOriginalMaterialText, freezeApprovalOriginalMaterial, normalizeFrozenMaterial, validateFrozenMaterial, MAX_WORKSPACE_EXTRACTION_BYTES, MAX_WORKSPACE_MATERIAL_BYTES, type FrozenApprovalOriginalMaterial, type FrozenMaterial, type MaterialExtraction } from './enterprise/materials'
 import { createHash, randomUUID } from 'node:crypto'
-import { submissionUUID } from './enterprise/handoff-store'
 import { teamCatalog, teamChoices, type TeamSummary } from './enterprise/team-catalog'
 import { ForgeBusinessReadError, ForgeBusinessReader, type BusinessObjectDirectory, type BusinessRecordRead, type BusinessRecordSearchPage } from './enterprise/business-records'
 
@@ -78,8 +80,10 @@ export interface EnterpriseBusinessNotificationContext {
 }
 export interface EnterpriseWorkContinuationContext {
   version: '1'
-  source: { inputRevisionID: string; runID: string; workbenchSessionID: string }
+  source: { inputRevisionID: string; runID: string; workbenchSessionID: string; inputStatus?: 'current' | 'superseded' | 'closed'; supersededByInputRevisionID?: string }
   input: {
+    registrationID?: string
+    authorizedBusinessCapabilityIDs?: string[]
     task: string
     taskSHA256: string
     teamID: string
@@ -102,6 +106,7 @@ export interface EnterpriseWorkContinuationContext {
     parent?: { rootInputRevisionID: string; parentInputRevisionID?: string; parentRunID?: string }
   }
   run: {
+    authorization?: { status: 'active' | 'renewal_required' | 'not_applicable'; reason?: string; generation?: number; expiresAt?: string; scope?: ForgeTaskScope; canRenew: boolean; retryNodeID?: string }
     status: 'queued' | 'running' | 'parked' | 'cancel_requested' | 'succeeded' | 'failed' | 'cancelled' | 'abandoned'
     businessResult?: 'completed' | 'needs_input' | 'action_failed' | 'action_unknown'
     finalResult?: {
@@ -143,16 +148,6 @@ function textValue(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined
 }
 
-function approvalReturnSupersededByResubmit(actions: unknown[]): boolean {
-  let latestReturnIndex = -1
-  let latestResubmitIndex = -1
-  actions.forEach((value, index) => {
-    const action = record(value)?.action
-    if (action === 'revise') latestReturnIndex = index
-    if (action === 'resubmit') latestResubmitIndex = index
-  })
-  return latestResubmitIndex > latestReturnIndex
-}
 
 export function approvalContextView(context: EnterpriseApprovalContext): EnterpriseApprovalContextView {
   return {
@@ -488,18 +483,6 @@ function workflowDefinition(value: unknown): EnterpriseWorkflowGraphDefinition |
   return { ...graph, schema_version: 1, entry_node_id: textValue(graph.entry_node_id)!, nodes, edges }
 }
 
-function runObservation(value: unknown): EnterpriseRunObservation | undefined {
-  const source = record(value)
-  const id = textValue(source?.run_id)
-  const status = textValue(source?.status)
-  if (!id || !status) return undefined
-  return {
-    id, status, durationMs: Math.max(0, numberValue(source?.duration_ms) ?? 0), tokensIn: Math.max(0, numberValue(source?.tokens_in) ?? 0),
-    tokensOut: Math.max(0, numberValue(source?.tokens_out) ?? 0), costUsd: Math.max(0, numberValue(source?.cost_usd) ?? 0),
-    ...(textValue(source?.agent) ? { agent: textValue(source?.agent) } : {}), ...(textValue(source?.step) ? { step: textValue(source?.step) } : {}),
-    ...(textValue(source?.started_at) ? { startedAt: textValue(source?.started_at) } : {}),
-  }
-}
 
 const CONTINUATION_TOTAL_BYTES = 8 * 1024 * 1024
 const CONTINUATION_TEXT_TYPES = new Set(['text/plain', 'text/plain; charset=utf-8'])
@@ -524,6 +507,7 @@ export class EnterpriseService {
   private session?: EnterpriseSession
   private weaveToken?: string
   private forgeToken?: string
+  private nativeForgeIdentity?: { id: string; organizationID?: string }
   private expiresAt = 0
   private sessionScopeChangeHandler?: (session: EnterpriseSession, generation: number, phase: 'sign-in-start' | 'signed-in' | 'signed-out') => Promise<void>
 
@@ -564,6 +548,7 @@ export class EnterpriseService {
   private clearSessionState(): void {
     this.weaveToken = undefined
     this.forgeToken = undefined
+    this.nativeForgeIdentity = undefined
     this.session = undefined
     this.expiresAt = 0
   }
@@ -584,7 +569,7 @@ export class EnterpriseService {
 
   private async authenticatedFetch(input: URL | RequestInfo, provider: EnterpriseAuthProvider, init: RequestInit = {}, expectedGeneration = this.authGeneration): Promise<{ response: Response; snapshot: EnterpriseAuthSnapshot }> {
     this.assertAuthGeneration(expectedGeneration)
-    if ((this.weaveToken || this.forgeToken) && this.expiresAt <= Date.now()) await this.signOut()
+    if ((this.weaveToken || this.forgeToken) && this.expiresAt <= Date.now()) await this.clearLocalSession()
     const token = this.currentToken(provider)
     if (!token) throw new Error('请先登录')
     const snapshot = { generation: this.authGeneration, provider, token }
@@ -598,7 +583,7 @@ export class EnterpriseService {
 
   private async signOutIfCurrent(snapshot: EnterpriseAuthSnapshot): Promise<void> {
     try { this.assertCurrentAuth(snapshot) } catch { return }
-    await this.signOut()
+    await this.clearLocalSession()
   }
 
   private async assertResponseAuthorized(response: Response, snapshot: EnterpriseAuthSnapshot, forbiddenMessage: string): Promise<void> {
@@ -617,7 +602,7 @@ export class EnterpriseService {
   }
 
   async getSession(): Promise<EnterpriseSession> {
-    if (this.session && this.expiresAt <= Date.now()) await this.signOut()
+    if (this.session?.status === 'signed-in' && this.expiresAt <= Date.now()) await this.clearLocalSession()
     return structuredClone(this.session ?? this.signedOut())
   }
 
@@ -632,7 +617,7 @@ export class EnterpriseService {
   }
 
   async authorizationHeaders(): Promise<Headers> {
-    if ((this.weaveToken || this.forgeToken) && this.expiresAt <= Date.now()) await this.signOut()
+    if ((this.weaveToken || this.forgeToken) && this.expiresAt <= Date.now()) await this.clearLocalSession()
     if (!this.weaveToken) throw new Error('请先登录')
     return new Headers({ Authorization: `Bearer ${this.weaveToken}` })
   }
@@ -680,6 +665,7 @@ export class EnterpriseService {
       }
       this.weaveToken = weave.token
       this.forgeToken = forge.token
+      this.nativeForgeIdentity = { id: forgeUser.id, organizationID: textValue(record(forge.session)?.activeOrganizationId) ?? textValue(forgeUser.organizationId) }
       this.expiresAt = Date.now() + (typeof weave.expiresIn === 'number' && weave.expiresIn > 0 ? Math.min(weave.expiresIn, 8 * 60 * 60) : 8 * 60 * 60) * 1000
       this.session = {
         version: '1', status: 'signed-in',
@@ -709,12 +695,31 @@ export class EnterpriseService {
     }
   }
 
-  async signOut(): Promise<EnterpriseSession> {
+  private async clearLocalSession(): Promise<EnterpriseSession> {
     this.loginAttempt++
     this.authGeneration++
     this.clearSessionState()
     await this.notifySessionScopeChanged(this.signedOut(), 'signed-out')
     return this.signedOut()
+  }
+
+  async signOut(): Promise<EnterpriseSession> {
+    const token = this.forgeToken
+    const generation = this.authGeneration + 1
+    await this.clearLocalSession()
+    if (!token) return this.signedOut()
+    let confirmed = false
+    try {
+      const response = await this.fetch(new URL('/api/v1/auth/sign-out', this.forgeUrl), {
+        method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: '{}', redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      })
+      confirmed = response.status === 200 || response.status === 401
+      await response.body?.cancel()
+    } catch { /* Local sign-out is complete; a failed request cannot confirm remote revocation. */ }
+    if (generation !== this.authGeneration) return this.getSession()
+    this.session = this.signedOut(confirmed ? undefined : '已退出此设备，但远端会话吊销尚未确认；请在 Forge 核对账号会话。')
+    return structuredClone(this.session)
   }
 
   private async weaveJSON(path: string, expectedGeneration = this.authGeneration): Promise<unknown> {
@@ -922,7 +927,7 @@ export class EnterpriseService {
     if (!materials.length) return []
     const generation = this.authGeneration
     this.assertAuthGeneration(generation)
-    if ((this.weaveToken || this.forgeToken) && this.expiresAt <= Date.now()) await this.signOut()
+    if ((this.weaveToken || this.forgeToken) && this.expiresAt <= Date.now()) await this.clearLocalSession()
     if (!this.forgeToken) throw new Error('请重新登录以上传工作材料')
     const resources: EnterpriseWorkResource[] = []
     for (const rawMaterial of materials) {
@@ -1452,10 +1457,14 @@ export class EnterpriseService {
     }, expectedGeneration)
     const result = await response.json().catch(() => undefined)
     this.assertCurrentAuth(snapshot)
+    const code = textValue(record(result)?.code) ?? textValue(record(record(result)?.error)?.code)
+    if ([401, 403, 409].includes(response.status) && code && ['business_delegation_required', 'business_delegation_invalid', 'business_delegation_expired', 'business_delegation_identity_mismatch', 'business_delegation_scope_mismatch', 'business_delegation_generation_conflict'].includes(code)) {
+      throw new WeaveHttpError(code === 'business_delegation_expired' ? '原工作任务授权已过期，请核对原输入并续授权；不要另建工作或重放未知动作' : '原工作任务授权无效、范围不符或已变化，请核对原工作授权；当前员工账号仍保持登录', response.status, code)
+    }
     await this.assertResponseAuthorized(response, snapshot, '当前账号没有执行该团队请求的权限')
     if (!response.ok) {
       const error = textValue(record(result)?.error) ?? textValue(record(result)?.message) ?? `Weave 请求失败（${response.status}）`
-      throw new WeaveHttpError(error, response.status, textValue(record(result)?.code) ?? textValue(record(record(result)?.error)?.code))
+      throw new WeaveHttpError(error, response.status, code)
     }
     return { status: response.status, body: result }
   }
@@ -1493,174 +1502,14 @@ export class EnterpriseService {
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     const projectID = await this.workProjectID(generation)
-    const read = async <T>(operation: () => Promise<T>): Promise<{ value?: T; error?: string }> => {
-      try { return { value: await operation() } }
-      catch (error) { return { error: error instanceof Error ? error.message : '读取失败' } }
-    }
-    const [teamsRead, runsRead, weaveTasksRead, notificationsRead, approvalsRead] = await Promise.all([
-      read(() => this.getTeamCatalog(generation)),
-      read(() => this.weaveJSON(`/v1/runs?project_id=${encodeURIComponent(projectID)}&limit=50`, generation)),
-      read(() => this.weaveJSON('/v1/human-tasks?limit=50', generation)),
-      read(() => this.forgeJSON('/api/v1/notifications?limit=200', generation, '通知')),
-      read(async () => {
-        const { readApprovalPages } = await import('./enterprise/inbox-pages')
-        return readApprovalPages((path) => this.forgeJSON(path, generation, '审批事项'))
-      }),
-    ])
-    const choices: EnterpriseWorkChoice[] = []
-    let teamChoicesError = teamsRead.error
-    if (teamsRead.value) {
-      const workflowReads = await Promise.all(teamsRead.value.map((team) => read(() => this.getTeamChoices(team, generation))))
-      for (const result of workflowReads) {
-        if (result.value) choices.push(...result.value)
-        else if (result.error) teamChoicesError ??= result.error
-      }
-    }
-    const taskList = record(weaveTasksRead.value)
-    const tasks = (Array.isArray(taskList?.tasks) ? taskList.tasks : []).flatMap((value): EnterpriseHumanTask[] => {
-      const task = record(value)
-      const interactionId = textValue(task?.interaction_id), runId = textValue(task?.run_id), teamId = textValue(task?.team_id)
-      const workflowId = textValue(task?.workflow_id), title = textValue(task?.title), instructions = textValue(task?.instructions), updatedAt = textValue(task?.updated_at)
-      const workflowVersion = numberValue(task?.workflow_version)
-      if (!interactionId || !runId || !teamId || !workflowId || !workflowVersion || !title || !instructions || !updatedAt) return []
-      return [{ interactionId, runId, teamId, workflowId, workflowVersion, title, instructions, updatedAt, ...(textValue(task?.audience_ref) ? { audience: textValue(task?.audience_ref) } : {}) }]
+    const { readEmployeeWorkOverview } = await import('./enterprise/work-overview')
+    return readEmployeeWorkOverview(projectID, {
+      getTeamCatalog: () => this.getTeamCatalog(generation), getTeamChoices: (team) => this.getTeamChoices(team, generation),
+      weaveJSON: (path) => this.weaveJSON(path, generation), forgeJSON: (path, label) => this.forgeJSON(path, generation, label),
+      readWorkNotificationSource: (id) => this.readWorkNotificationSource(id, generation),
+      readWorkContinuationMetadata: (references) => this.readWorkContinuationMetadata(references, generation),
+      assertCurrent: () => this.assertAuthGeneration(generation),
     })
-    const rawApprovals = approvalsRead.value
-    const approvalEnvelope = record(rawApprovals)
-    const approvalValues = Array.isArray(rawApprovals) ? rawApprovals
-      : Array.isArray(approvalEnvelope?.requests) ? approvalEnvelope.requests
-        : Array.isArray(approvalEnvelope?.data) ? approvalEnvelope.data : []
-    const approvalDetailsErrors: string[] = []
-    for (const value of approvalValues) {
-      const approval = record(value), viewer = record(approval?.viewer), payload = record(approval?.payload)
-      const id = textValue(approval?.id), status = textValue(approval?.status), updatedAt = textValue(approval?.updated_at) ?? textValue(approval?.created_at)
-      const canDecide = status === 'pending' && viewer?.can_act === true
-      const canResubmit = status === 'returned' && viewer?.is_submitter === true
-      if (!id || !updatedAt || (!canDecide && !canResubmit)) continue
-      let returnReason: string | undefined
-      if (canResubmit) {
-        try {
-          const actionEnvelope = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(id)}/actions`, generation, '审批意见'))
-          const actions = Array.isArray(actionEnvelope?.data) ? actionEnvelope.data : []
-          if (approvalReturnSupersededByResubmit(actions)) continue
-          const latestRevision = [...actions].reverse().map(record).find((action) => action?.action === 'revise')
-          returnReason = textValue(latestRevision?.comment)
-        } catch (error) {
-          approvalDetailsErrors.push(error instanceof Error ? error.message : '审批意见读取失败')
-        }
-      }
-      const processName = textValue(approval?.process_label) ?? textValue(approval?.process_name) ?? '业务审批'
-      const stepName = textValue(approval?.step_label) ?? textValue(approval?.current_step)
-      const recordTitle = textValue(approval?.record_title)
-      tasks.push({
-        interactionId: id, runId: `forge:${canResubmit ? 'revision' : 'approval'}:${id}`,
-        teamId: 'forge', workflowId: 'business-approval', workflowVersion: 1,
-        title: canResubmit ? `${recordTitle ?? processName}需要修改` : (recordTitle ? `${recordTitle} · ${stepName ?? processName}` : stepName ?? processName),
-        instructions: canResubmit ? returnReason ? `退回原因：${returnReason}` : '请根据审批意见协助员工修改业务材料。' : '请核对业务材料并给出审批意见。',
-        updatedAt, source: 'forge', mode: canResubmit ? 'revision' : 'approval',
-        ...(textValue(payload?.submitted_material_name) ?? textValue(approval?.object_label) ? { materialLabel: textValue(payload?.submitted_material_name) ?? textValue(approval?.object_label) } : {}),
-      })
-    }
-    const notificationEnvelope = record(notificationsRead.value)
-    const notificationList = record(notificationEnvelope?.data) ?? notificationEnvelope
-    const items = (Array.isArray(notificationList?.notifications) ? notificationList.notifications : []).flatMap((value): EnterpriseWorkItem[] => {
-      const notification = record(value), data = record(notification?.data), continuation = record(data?.continuation), material = record(data?.material)
-      const eventSource = record(data?.weaveEvent) ?? record(record(notification?.payload)?.weaveEvent)
-      const source = record(data?.source) ?? eventSource ?? record(notification?.source)
-      const id = textValue(notification?.id), title = textValue(notification?.title), createdAt = textValue(notification?.createdAt) ?? textValue(notification?.created_at)
-      if (!id || !title || !createdAt) return []
-      const requestedKind = textValue(data?.kind)
-      const notificationType = textValue(notification?.type) ?? ''
-      const nativeTeamRunKind = /^weave\.team_run\.(result|failure|revision_required|cancelled)$/.exec(notificationType)?.[1]
-      const kind: EnterpriseWorkItem['kind'] = requestedKind === 'revision_required' || requestedKind === 'human_review' || requestedKind === 'failure' || requestedKind === 'result' || requestedKind === 'cancelled'
-        ? requestedKind : nativeTeamRunKind === 'revision_required' ? 'revision_required'
-          : nativeTeamRunKind === 'failure' ? 'failure'
-            : nativeTeamRunKind === 'cancelled' ? 'cancelled'
-              : notificationType.includes('revision_required') ? 'revision_required' : notificationType.includes('failure') || notificationType.includes('error') ? 'failure' : 'result'
-      const actionable = kind === 'revision_required' || kind === 'human_review'
-      const displayTitle = /[0-9a-f]{8}-[0-9a-f-]{27,}/i.test(title)
-        ? kind === 'failure' ? '团队处理失败' : kind === 'revision_required' ? '团队工作需要修改' : kind === 'human_review' ? '需要人工处理' : '团队工作已完成'
-        : title
-      const statusValue = textValue(data?.status)
-      const status: EnterpriseWorkItem['status'] = statusValue === 'pending' || statusValue === 'in_progress' || statusValue === 'completed' || statusValue === 'cancelled'
-        ? statusValue : actionable ? 'pending' : 'unknown'
-      const returnTarget = textValue(continuation?.returnTarget)
-      const reviewScope = textValue(continuation?.reviewScope)
-      return [{
-        id, kind, title: displayTitle, status, actionable, read: notification?.read === true,
-        source: (textValue(source?.system) ?? textValue(data?.source)) === 'weave' || notificationType.startsWith('weave.') ? 'weave' : 'forge',
-        notificationType, createdAt,
-        ...(textValue(notification?.body) ? { summary: textValue(notification?.body) } : {}),
-        ...(textValue(data?.instructions) ? { instructions: textValue(data?.instructions) } : {}),
-        ...(textValue(notification?.actionUrl) ?? textValue(notification?.action_url) ? { actionUrl: textValue(notification?.actionUrl) ?? textValue(notification?.action_url) } : {}),
-        ...(textValue(source?.workReference) ?? textValue(data?.workReference) ? { workReference: textValue(source?.workReference) ?? textValue(data?.workReference) } : {}),
-        ...(textValue(source?.runReference) ?? textValue(data?.runReference) ? { runReference: textValue(source?.runReference) ?? textValue(data?.runReference) } : {}),
-        ...(textValue(source?.sessionReference) ?? textValue(data?.sessionReference) ? { sessionReference: textValue(source?.sessionReference) ?? textValue(data?.sessionReference) } : {}),
-        ...(textValue(material?.label) ? { materialLabel: textValue(material?.label) } : {}),
-        ...(textValue(continuation?.reason) ? { returnReason: textValue(continuation?.reason) } : {}),
-        ...(returnTarget === 'origin_review' || returnTarget === 'team' || returnTarget === 'member' || returnTarget === 'human_step' ? { returnTarget } : {}),
-        ...(reviewScope === 'whole_team' || reviewScope === 'affected_members' || reviewScope === 'human_step' ? { reviewScope } : {}),
-      }]
-    }).filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index)
-    const sources = new Map<string, { workReference: string; runReference: string; sessionReference: string }>()
-    const sourceFor = async (item: EnterpriseWorkItem) => {
-      const cached = sources.get(item.id)
-      if (cached) return cached
-      try {
-        const verified = await this.readWorkNotificationSource(item.id, generation)
-        if (verified.kind === 'business' || item.notificationType !== `weave.team_run.${verified.kind}`
-          || item.workReference && item.workReference !== verified.source.workReference
-          || item.runReference && item.runReference !== verified.source.runReference
-          || item.sessionReference && item.sessionReference !== verified.source.sessionReference) return undefined
-        const source = { workReference: verified.source.workReference, runReference: verified.source.runReference, sessionReference: verified.source.sessionReference }
-        sources.set(item.id, source)
-        return source
-      } catch { return undefined }
-    }
-    const hasSucceededAction = new Set<string>()
-    const businessResults = new Map<string, NonNullable<EnterpriseWorkContinuationContext['run']['businessResult']>>()
-    for (const pending of items) {
-      if (pending.source !== 'weave' || pending.kind !== 'revision_required' || !pending.actionable
-        || !/^weave\.team_run\.revision_required$/.test(pending.notificationType ?? '')) continue
-      const parent = await sourceFor(pending)
-      if (!parent) continue
-      try {
-        const context = await this.readWorkContinuationMetadata(parent, generation)
-        if (context.run.businessResult) businessResults.set(pending.id, context.run.businessResult)
-        if (!context.run.businessResult && context.run.status === 'succeeded' && context.run.finalResult?.disposition === 'needs_input'
-          && context.run.actionOutcomes?.some((outcome) => outcome.status === 'succeeded')) hasSucceededAction.add(pending.id)
-      } catch {
-        // A missing or unreadable action receipt must never be treated as a successful business action.
-      }
-    }
-    const projectedItems = items.map((item) => ({
-      ...item, ...(sources.get(item.id) ?? {}),
-      ...(hasSucceededAction.has(item.id) ? {
-        title: '团队结果与业务回执',
-        summary: 'Forge 业务动作已确认成功。团队列出的缺项是检查意见，后续办理事项以 Forge 当前正式事项为准。',
-      } : {}),
-      ...(businessResults.get(item.id) === 'completed' ? {
-        title: '团队结果与业务回执', summary: '本轮团队工作已完成。后续办理事项和审批状态以 Forge 当前正式事项为准。',
-      } : businessResults.get(item.id) === 'action_failed' ? {
-        title: '业务动作失败', summary: '本轮业务动作失败，请核对 Forge 回执和当前业务状态；不要重放原请求。',
-      } : businessResults.get(item.id) === 'action_unknown' ? {
-        title: '业务动作结果待核对', summary: '本轮业务动作结果未知，请先核对 Forge 回执；不要重放原请求。',
-      } : {}),
-      ...(hasSucceededAction.has(item.id) || businessResults.has(item.id) && businessResults.get(item.id) !== 'needs_input' ? { actionable: false, status: 'completed' as const } : {}),
-    }))
-    const runList = record(runsRead.value)
-    this.assertAuthGeneration(generation)
-    const readStatus = (error?: string): EnterpriseWorkReadStatus => error ? { status: 'failed', error } : { status: 'loaded' }
-    return {
-      loadedAt: new Date().toISOString(), choices, tasks, items: projectedItems,
-      runs: (Array.isArray(runList?.runs) ? runList.runs : []).flatMap((run) => runObservation(run) ?? []),
-      reads: {
-        runs: readStatus(runsRead.error), teamChoices: readStatus(teamChoicesError),
-        weaveTasks: readStatus(weaveTasksRead.error),
-        forgeApprovals: readStatus(approvalsRead.error ?? (approvalDetailsErrors.length ? [...new Set(approvalDetailsErrors)].join('；') : undefined)),
-        notifications: readStatus(notificationsRead.error),
-      },
-    }
   }
 
   private async readWorkContinuationMetadata(
@@ -1677,6 +1526,18 @@ export class EnterpriseService {
     }
     this.assertAuthGeneration(generation)
     return context
+  }
+
+  async getRunContinuationReferences(runIDValue: string): Promise<{ workReference: string; runReference: string; sessionReference: string }> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    const runID = boundedIdentity(runIDValue, 128)
+    if (!runID) throw new Error('原工作无效，请刷新工作列表')
+    const { parseWorkContinuationContext } = await import('./enterprise/work-continuation')
+    const context = parseWorkContinuationContext(await this.weaveJSON(`/v1/runs/${encodeURIComponent(runID)}/workbench-context`, generation))
+    if (context.source.runID !== runID || context.run.status !== 'parked') throw new Error('原运行状态已变化，请刷新工作列表后继续')
+    this.assertAuthGeneration(generation)
+    return { workReference: context.source.inputRevisionID, runReference: context.source.runID, sessionReference: context.source.workbenchSessionID }
   }
 
   async getWorkContinuationContext(references: { workReference: string; runReference: string; sessionReference: string }): Promise<EnterpriseWorkContinuationContext> {
@@ -2008,79 +1869,59 @@ export class EnterpriseService {
     }
   }
 
-  async submitWork(choice: EnterpriseWorkChoice, goal: string, source?: {
-    idempotencySeed: string
-    sessionKey: string
-    sourceMessages: Array<{ messageId: string; eventSeq: number; sha256: string }>
-    accountKey: string
-    resources: EnterpriseWorkResource[]
-    businessContext?: { objectName: string; recordId: string; recordVersion?: string }
-    continuation?: { workbenchSessionID: string; inputRevisionID: string; runID: string; teamID: string; restartAfterFailedRun?: boolean }
-    authorizedBusinessCapabilityIds: string[]
-    assertCurrent(): Promise<void>
-  }): Promise<EnterpriseWorkReceipt> {
-    const normalized = goal.trim()
-    if (!normalized || !choice?.teamId || !choice.workflowId || !Number.isInteger(choice.version) || choice.version < 1) throw new Error('工作内容或团队流程无效')
+  private async nativeTaskIdentity(generation: number): Promise<{ id: string; organizationID: string }> {
+    const identity = this.nativeForgeIdentity
+    if (!identity) throw new Error('原生员工身份不可用，请重新登录')
+    if (identity.organizationID) return { id: identity.id, organizationID: identity.organizationID }
+    const current = record(await this.forgeJSON('/api/v1/auth/get-session', generation, '账号会话'))
+    const user = record(current?.user), session = record(current?.session)
+    const organizationID = textValue(session?.activeOrganizationId) ?? textValue(user?.organizationId)
+    this.assertAuthGeneration(generation)
+    if (user?.id !== identity.id || !organizationID) throw new Error('无法核对当前员工的原生组织，请在 Forge 核对账号会话')
+    this.nativeForgeIdentity = { id: identity.id, organizationID }
+    return { id: identity.id, organizationID }
+  }
+
+  async submitWork(choice: EnterpriseWorkChoice, goal: string, source?: FixedWorkSource): Promise<EnterpriseWorkReceipt> {
+    const task = goal.trim()
+    if (!task || !choice?.teamId || !choice.workflowId || !Number.isInteger(choice.version) || choice.version < 1) throw new Error('工作内容或团队流程无效')
+    if (!source?.fixDelegationIntent) throw new Error('请从当前员工会话交接固定工作材料，直接交接入口不可用')
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    if (source?.continuation && (!source.continuation.workbenchSessionID || !source.continuation.inputRevisionID || !source.continuation.runID
-      || source.continuation.teamID !== choice.teamId)) throw new Error('原工作续版引用与当前团队不匹配')
-    if (source?.continuation?.restartAfterFailedRun && source.authorizedBusinessCapabilityIds.length) {
-      throw new Error('失败工作有业务动作时，请先核对 Forge 结果再继续')
-    }
+    if (source.continuation && (!source.continuation.workbenchSessionID || !source.continuation.inputRevisionID || !source.continuation.runID || source.continuation.teamID !== choice.teamId)) throw new Error('原工作续版引用与当前团队不匹配')
+    if (source.continuation?.restartAfterFailedRun && source.authorizedBusinessCapabilityIds.length) throw new Error('失败工作有业务动作时，请先核对 Forge 结果再继续')
     const assertCurrent = async () => {
       this.assertAuthGeneration(generation)
-      if (source) {
-        if (await this.accountKey(generation) !== source.accountKey) throw new Error('当前账号已变化，本次交接已失效')
-        await source.assertCurrent()
-      }
+      if (await this.accountKey(generation) !== source.accountKey) throw new Error('当前账号已变化，本次交接已失效')
+      await source.assertCurrent()
     }
     await assertCurrent()
     const projectID = await this.workProjectID(generation)
-    const workId = source
-      ? submissionUUID(`${source.accountKey}:${source.idempotencySeed}`)
-      : randomUUID()
-    const workbenchSessionID = source?.continuation?.workbenchSessionID ?? (source ? `${projectID}-${source.sessionKey}-${workId}` : `${projectID}-${workId}`)
-    let registered: { status: number; body: unknown }
-    try {
-      registered = await this.weaveRequest('/v1/workbench/dispatch-inputs', 'POST', {
-        registration_id: workId, workbench_session_id: workbenchSessionID,
-        ...(source?.continuation ? {
-          expected_revision_id: source.continuation.inputRevisionID,
-          ...(source.continuation.restartAfterFailedRun ? {} : {
-            revision_context: { parent_input_revision_id: source.continuation.inputRevisionID, parent_run_id: source.continuation.runID },
-          }),
-        } : {}),
-        team_id: choice.teamId, workflow_id: choice.workflowId,
-        workflow_version: choice.version, project_id: projectID, task: normalized,
-        resources: source?.resources,
-        ...(source?.businessContext ? { business_record: {
-          object_name: source.businessContext.objectName, record_id: source.businessContext.recordId,
-          ...(source.businessContext.recordVersion ? { record_version: source.businessContext.recordVersion } : {}),
-        } } : {}),
-        authorized_business_capability_ids: source?.authorizedBusinessCapabilityIds ?? [],
-        source_messages: source?.sourceMessages.map((message) => ({ message_id: message.messageId, event_seq: message.eventSeq, sha256: message.sha256 }))
-          ?? [{ message_id: workId, event_seq: 0, sha256: createHash('sha256').update(normalized).digest('hex') }],
-      }, assertCurrent, this.forgeToken ? { 'X-Weave-Forge-Authorization': `Bearer ${this.forgeToken}` } : undefined, generation)
-    } catch (error) {
-      if (error instanceof WeaveHttpError && error.status === 409) {
-        throw new WorkRegistrationRejectedError(error.code === 'dispatch_input_too_many_resources'
-          ? '团队交接最多允许 10 份材料，新文件和明确复用的原材料合计已超限；本次未接单，请减少材料后重新发起'
-          : source?.continuation
-          ? '原工作已有更新输入，或交付结果不可修订；请打开最新团队结果消息继续，旧事项不能覆盖后来的工作'
-          : '本次固定交接与已登记内容冲突，请核对当前员工要求后重新发起')
-      }
-      throw error
+    const { fixedWorkHandoff } = await import('./enterprise/task-handoff')
+    return fixedWorkHandoff(choice, task, source, {
+      projectID, issuer: this.forgeUrl.origin, assertCurrent,
+      nativeIdentity: () => this.nativeTaskIdentity(generation),
+      forge: (path, body) => this.forgeRequest(path, body, generation),
+      weave: (path, body, taskToken) => this.weaveRequest(path, 'POST', body, assertCurrent, taskToken ? { 'X-Weave-Forge-Authorization': `Bearer ${taskToken}` } : undefined, generation),
+    })
+  }
+
+  async renewWorkAuthorization(intent: FrozenAuthorizationRenewal, observer: RenewalObserver): Promise<AuthorizationRenewalResult> {
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    const assertCurrent = async () => {
+      this.assertAuthGeneration(generation)
+      if (await this.accountKey(generation) !== intent.accountKey) throw new Error('当前账号已变化，原工作不能续授权')
+      await observer.assertCurrent()
     }
-    const registration = record(registered.body)
-    const inputRevisionID = textValue(registration?.input_revision_id), clientRequestID = textValue(registration?.client_request_id)
-    if (!inputRevisionID || !clientRequestID || registration?.task_sha256 !== createHash('sha256').update(normalized).digest('hex')) throw new Error('Weave 输入回执与本次固定材料不一致，结果待核对')
-    const dispatched = await this.weaveRequest(`/v1/teams/${encodeURIComponent(choice.teamId)}/dispatch`, 'POST', { input_revision_id: inputRevisionID, client_request_id: clientRequestID }, assertCurrent, undefined, generation)
-    const result = record(dispatched.body)
-    const runId = textValue(result?.run_id), taskId = textValue(result?.task_id), workflowId = textValue(result?.workflow_id)
-    const workflowVersion = numberValue(result?.workflow_version)
-    if (!runId || !taskId || workflowId !== choice.workflowId || workflowVersion !== choice.version) throw new Error('Weave 没有返回匹配的接单回执，结果待核对')
-    return { workId, runId, taskId, workflowId, workflowVersion, inputRevisionId: inputRevisionID, clientRequestId: clientRequestID, taskSha256: registration.task_sha256 as string, repeated: dispatched.status === 200 }
+    await assertCurrent()
+    const { renewFixedAuthorization } = await import('./enterprise/task-renewal')
+    return renewFixedAuthorization(intent, {
+      projectID: await this.workProjectID(generation), issuer: this.forgeUrl.origin, assertCurrent,
+      nativeIdentity: () => this.nativeTaskIdentity(generation),
+      forge: (path, body) => this.forgeRequest(path, body, generation),
+      weave: (path, body, token) => this.weaveRequest(path, 'POST', body, assertCurrent, token ? { 'X-Weave-Forge-Authorization': `Bearer ${token}` } : undefined, generation),
+    }, () => this.readWorkContinuationMetadata({ workReference: intent.source.inputRevisionID, runReference: intent.source.runID, sessionReference: intent.source.workbenchSessionID }, generation), observer)
   }
 
   async completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }> {

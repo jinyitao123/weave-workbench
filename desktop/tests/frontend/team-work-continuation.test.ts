@@ -32,3 +32,9 @@ it('keeps needs-input and absent-field compatibility', () => {
   expect(teamRunResultNotice(modelNeedsInput)).toContain('本轮需要补充的内容')
   expect(teamRunResultNotice({ ...modelNeedsInput, actionOutcomes: [{ actionName: '提交', objectName: '合同', status: 'succeeded', summary: '已提交' }] })).toContain('不构成团队补材料待办')
 })
+
+it('explains authorization expiry through the original-work tool only when the platform proves safe continuation', () => {
+  expect(teamRunResultNotice({ ...modelNeedsInput, runStatus: 'parked', inputStatus: 'current', authorization: { status: 'renewal_required', canRenew: true } })).toContain('保持原输入、材料和业务范围')
+  expect(teamRunResultNotice({ ...modelNeedsInput, authorization: { status: 'renewal_required', canRenew: false } })).toContain('不能续授权重放或另建输入掩盖旧失败')
+  expect(teamRunResultNotice({ ...modelNeedsInput, inputStatus: 'superseded', authorization: { status: 'renewal_required', canRenew: true } })).toContain('最新工作消息')
+})
