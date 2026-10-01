@@ -1492,6 +1492,49 @@ describe('EnterpriseService', () => {
     await expect(service.getWorkContinuationContext(references)).rejects.toThrow('原工作材料读取失败（404）')
   })
 
+  it.each([
+    { label: 'CSV', name: '合同清单.csv', inputMediaType: 'text/csv', responseMediaType: 'text/csv; charset=utf-8', content: '编号,名称\n001,合同' },
+    { label: 'JSON', name: '合同数据.json', inputMediaType: 'application/json', responseMediaType: 'application/json; charset=utf-8', content: '{"contract":"北辰"}' },
+    { label: 'Markdown', name: '合同说明.md', inputMediaType: 'text/markdown', responseMediaType: 'text/markdown', content: '# 合同说明\n正文' },
+  ])('reads original work $label through the owner-only Forge route', async ({ name, inputMediaType, responseMediaType, content }) => {
+    const task = '继续读取原工作中的文本材料。'
+    const sha256 = (value: string) => createHash('sha256').update(value, 'utf8').digest('hex')
+    const material = {
+      type: 'forge-file', id: '10000000-0000-4000-8000-000000000002', name,
+      mediaType: inputMediaType, bytes: Buffer.byteLength(content), sha256: sha256(content),
+    }
+    const payload = {
+      version: '1',
+      source: { input_revision_id: '10000000-0000-4000-8000-000000000001', run_id: 'run-text-original', workbench_session_id: 'workbench-session-text-original' },
+      input: {
+        task, task_sha256: sha256(task), team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 2,
+        materials: [material], source_messages: [{ message_id: 'employee-message', event_seq: 1, sha256: sha256('员工原始要求') }],
+      },
+      run: { status: 'succeeded' },
+    }
+    const calls: Array<{ url: string; auth?: string }> = []
+    const fetchMock = workOverviewFetch((url, init) => {
+      calls.push({ url, auth: new Headers(init?.headers).get('Authorization') ?? undefined })
+      if (url.endsWith('/workbench-context')) return Response.json(payload)
+      if (url.endsWith(`/api/v1/workbench/materials/${material.id}`)) return Response.json({
+        version: '1', fileId: material.id, name, mediaType: responseMediaType,
+        bytes: material.bytes, sha256: material.sha256, content,
+      })
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('employee@example.test', 'secret')
+    const references = { workReference: payload.source.input_revision_id, runReference: 'run-text-original', sessionReference: 'workbench-session-text-original' }
+
+    await expect(service.getWorkContinuationContext(references)).resolves.toMatchObject({
+      input: { materials: [{ id: material.id, name, mediaType: inputMediaType, bytes: material.bytes, sha256: material.sha256, content }] },
+    })
+    expect(calls).toMatchObject([
+      { url: 'http://weave/v1/runs/run-text-original/workbench-context', auth: 'Bearer weave-token-employee@example.test' },
+      { url: `http://forge/api/v1/workbench/materials/${material.id}`, auth: 'Bearer forge-token-employee@example.test' },
+    ])
+  })
+
   it('continues PDF and DOCX using only their frozen owner or approval source route', async () => {
     const task = '复核原工作中冻结的二进制材料。'
     const ownerBytes = await readFile(new URL('../fixtures/materials/sample-two-page.pdf', import.meta.url))

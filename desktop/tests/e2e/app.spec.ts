@@ -1,3 +1,6 @@
+import { newMember } from '../../src/pages/team-workspace/member'
+import { initialGraph } from '../../src/pages/team-workspace/graph'
+import type { TeamWorkspace, TeamDefinition } from '../../src/types/team-workspace'
 import { test, expect, _electron as electron, type ElectronApplication, type Page } from '@playwright/test'
 import { createServer, type Server } from 'node:http'
 import { createHash } from 'node:crypto'
@@ -16,6 +19,9 @@ let currentFixture: ReturnType<typeof createHermeticFixture> | undefined
 let actionableErrors: string[] = []
 let enterpriseFixtureServer: Server | undefined
 let enterpriseFixtureOrigin = ''
+let teamSidebarFixture = false
+let sidebarWorkspace: TeamWorkspace | undefined
+let sidebarSaves: Array<Record<string, unknown>> = []
 let parkedRunFixture = false
 let parkedRunRequests: string[] = []
 
@@ -54,6 +60,20 @@ async function closeHermeticApp(target: ElectronApplication | undefined): Promis
   await closeEvent
 }
 
+const sidebarActionID = 'forge:action:sales_contract.ContractSubmit'
+function createSidebarWorkspace(): TeamWorkspace {
+  const lead = newMember('fixture-model'), worker = newMember('fixture-model')
+  lead.configuration = { ...lead.configuration, role: 'avatar', displayName: '团队负责人' }
+  worker.configuration.displayName = '合同审核员'
+  worker.configuration.businessCapabilityIds = [sidebarActionID]
+  worker.configuration.businessCapabilityBindings = [{ capabilityId: sidebarActionID, parameters: [
+    { name: 'idempotency_key', source: 'materials.single.sha256' }, { name: 'idempotencyKey', source: 'materials.manifest_json' }, { name: 'material_file_ids', source: 'materials.ids' },
+  ] }]
+  return { revision: 1, published_revision: 1, publishing_revision: 0, prepared_revision: 0, updated_at: '',
+    document: { name: '合同团队', objective: '核对合同原件并提交授权版本', members: [lead, worker], workflows: [{ id: 'flow-ui', name: '合同审核', description: '核对原材料', trigger_config: {}, graph_definition: initialGraph(worker) }] },
+    trials: [{ request_id: 'trial-ui', revision: 1, workflow_id: 'flow-ui', run_id: 'run-ui-trial', status: 'succeeded', created_at: '2026-10-01T00:00:00Z' }] }
+}
+
 function parkedRunContext() {
   const task = '核对原合同材料', hash = createHash('sha256').update(task).digest('hex')
   const inputID = '550e8400-e29b-41d4-a716-446655441000', registrationID = '550e8400-e29b-41d4-a716-446655441001'
@@ -74,7 +94,19 @@ async function startHermeticEnterpriseServer(): Promise<string> {
     if (path === '/api/v1/auth/sign-in/email') {
       send({ token: 'forge-e2e-session', user: { id: 'forge-e2e-user', name: 'Hermetic Employee', email: 'e2e@example.test' } })
     } else if (path === '/v1/auth/external/exchange') {
-      send({ token: 'weave-e2e-session', subject: { id: 'weave-e2e-user', externalId: 'forge-e2e-user', name: 'Hermetic Employee', email: 'e2e@example.test' }, organization: { id: 'e2e-organization', name: 'Hermetic Organization' }, permissions: ['teams:use'], expiresIn: 3600 })
+      send({ token: 'weave-e2e-session', subject: { id: 'weave-e2e-user', externalId: 'forge-e2e-user', name: 'Hermetic Employee', email: 'e2e@example.test' }, organization: { id: 'e2e-organization', name: 'Hermetic Organization' }, permissions: teamSidebarFixture ? ['teams:use', 'teams:develop'] : ['teams:use'], expiresIn: 3600 })
+    } else if (teamSidebarFixture && path === '/v1/teams') send([{ team: { id: 'team-ui', name: '合同团队', display_name: '合同团队', status: 'active', updated_at: '2026-10-01T00:00:00Z' }, workers: [] }])
+    else if (teamSidebarFixture && path === '/v1/runtimes') send({ runtimes: [] })
+    else if (teamSidebarFixture && path === '/v1/development/model-catalog') send({ models: ['fixture-model'] })
+    else if (teamSidebarFixture && path === '/api/v1/meta/actions') send({ data: { items: [{ name: 'ContractSubmit', objectName: 'sales_contract', label: '提交合同', ai: { exposed: true }, params: [
+      { name: 'idempotency_key', label: '防重复提交参数', type: 'string', required: true }, { name: 'idempotencyKey', label: '备用防重复提交参数', type: 'string' }, { name: 'material_file_ids', label: '全部材料', type: 'file', multiple: true, required: true },
+    ] }] } })
+    else if (teamSidebarFixture && path === '/v1/teams/team-ui/development') {
+      if (request.method === 'PUT') {
+        let bytes = ''
+        request.on('data', (chunk) => { bytes += chunk.toString() })
+        request.on('end', () => { const body = JSON.parse(bytes) as Record<string, unknown>; sidebarSaves.push(body); sidebarWorkspace = { ...sidebarWorkspace!, revision: sidebarWorkspace!.revision + 1, document: body.document as TeamDefinition }; send(sidebarWorkspace) })
+      } else send(sidebarWorkspace)
     } else if (path === '/v1/teams') send({ teams: [] })
     else if (path === '/v1/runs') send({ runs: parkedRunFixture ? [{ run_id: parkedRunContext().source.run_id, status: 'parked', step: '合同处理', started_at: '2026-10-01T00:00:00Z' }] : [] })
     else if (parkedRunFixture && path === `/v1/runs/${parkedRunContext().source.run_id}/workbench-context`) send(parkedRunContext())
@@ -579,6 +611,9 @@ test.describe('Prime Work desktop smoke', () => {
   // biome-ignore lint/correctness/noEmptyPattern: Playwright derives fixture usage from this destructuring pattern
   test.beforeEach(async ({}, testInfo) => {
     actionableErrors = []
+    teamSidebarFixture = testInfo.title === 'protects managed task keys through normal clicks in the new team sidebar'
+    sidebarWorkspace = teamSidebarFixture ? createSidebarWorkspace() : undefined
+    sidebarSaves = []
     parkedRunFixture = testInfo.title === 'opens a parked original work from its normal row without issuing authorization on view'
     parkedRunRequests = []
     app = undefined
@@ -1192,6 +1227,34 @@ test.describe('Prime Work desktop smoke', () => {
     await expect(page.getByRole('heading', { name: '待我处理' })).toBeVisible()
     await expect(page.getByRole('heading', { name: '我发起的工作' })).toBeVisible()
     await expect(page.getByText('当前没有待处理事项')).toBeVisible()
+  })
+
+  test('protects managed task keys through normal clicks in the new team sidebar', async () => {
+    await page.getByRole('button', { name: 'Weave Workbench — Prime Work' }).click()
+    await page.getByRole('menuitemradio', { name: /Pi Work/ }).click()
+    await page.locator('.session-row__title').filter({ hasText: 'Pi hermetic fixture' }).click()
+    if (!await page.locator('.inspector').count()) await page.getByRole('button', { name: 'Toggle inspector' }).click()
+    await page.getByRole('tab', { name: '团队分工', exact: true }).click()
+    await expect(page.locator('.team-panel')).toContainText('合同团队')
+    await page.locator('.team-member-list button').filter({ hasText: '合同审核员' }).click()
+    await expect(page.getByRole('heading', { name: '合同审核员', exact: true })).toBeFocused()
+    await expect(page.getByRole('region', { name: '能力' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '更新团队', exact: true })).toBeDisabled()
+    await expect(page.getByRole('button', { name: '更新团队', exact: true })).toHaveAttribute('title', '有需要移除的旧参数映射')
+    await expect(page.locator('.team-panel')).toContainText('系统托管的防重复提交参数不能绑定材料')
+    await page.getByRole('button', { name: '配置输入', exact: true }).click()
+    await expect(page.getByRole('button', { name: '全部材料来源', exact: true })).toBeVisible()
+    await expect(page.locator('.team-panel')).not.toContainText('idempotency')
+    await page.getByRole('button', { name: '移除系统参数映射', exact: true }).click()
+    await page.getByRole('button', { name: '保存草稿', exact: true }).click()
+    await expect.poll(() => sidebarSaves.length).toBe(1)
+    const saved = sidebarSaves[0]!.document as { members: Array<{ configuration: { business_capability_bindings?: Array<{ capability_id: string; parameters: Array<{ name: string; source: string }> }> } }> }
+    const mappings = saved.members.flatMap((member) => member.configuration.business_capability_bindings ?? [])
+    expect(mappings).toEqual([{ capability_id: sidebarActionID, parameters: [{ name: 'material_file_ids', source: 'materials.ids' }] }])
+    await expect(page.locator('.team-panel')).not.toContainText('系统托管的防重复提交参数不能绑定材料')
+    await page.getByRole('tab', { name: '工作流', exact: true }).click()
+    await expect(page.locator('.workflow-graph')).toBeVisible()
+    await expect(page.getByRole('button', { name: '更新团队', exact: true })).toBeDisabled()
   })
 
   test('opens a parked original work from its normal row without issuing authorization on view', async () => {
