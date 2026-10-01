@@ -601,6 +601,17 @@ export class EnterpriseService {
     await this.signOut()
   }
 
+  private async assertResponseAuthorized(response: Response, snapshot: EnterpriseAuthSnapshot, forbiddenMessage: string): Promise<void> {
+    if (response.status !== 401 && response.status !== 403) return
+    if (!response.bodyUsed) await response.body?.cancel()
+    this.assertCurrentAuth(snapshot)
+    if (response.status === 401) {
+      await this.signOutIfCurrent(snapshot)
+      throw new Error('登录已失效，请重新登录')
+    }
+    throw new Error(forbiddenMessage)
+  }
+
   private assertLoginCurrent(generation: number, attempt: number): void {
     if (generation !== this.authGeneration || attempt !== this.loginAttempt) throw new Error('账号已切换，旧登录请求已取消')
   }
@@ -708,11 +719,7 @@ export class EnterpriseService {
 
   private async weaveJSON(path: string, expectedGeneration = this.authGeneration): Promise<unknown> {
     const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.weaveUrl), 'weave', { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }, expectedGeneration)
-    if (response.status === 401 || response.status === 403) {
-      await response.body?.cancel()
-      await this.signOutIfCurrent(snapshot)
-      throw new Error('登录已失效，请重新登录')
-    }
+    await this.assertResponseAuthorized(response, snapshot, '当前账号没有读取该团队信息的权限')
     if (!response.ok) {
       await response.body?.cancel()
       throw new Error(`团队信息读取失败（${response.status}）`)
@@ -724,11 +731,7 @@ export class EnterpriseService {
 
   private async forgeJSON(path: string, expectedGeneration = this.authGeneration, resourceLabel = '工作事项'): Promise<unknown> {
     const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.forgeUrl), 'forge', { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }, expectedGeneration)
-    if (response.status === 401 || response.status === 403) {
-      await response.body?.cancel()
-      await this.signOutIfCurrent(snapshot)
-      throw new Error('登录已失效，请重新登录')
-    }
+    await this.assertResponseAuthorized(response, snapshot, `当前账号没有读取${resourceLabel}的权限`)
     if (!response.ok) {
       await response.body?.cancel()
       throw new Error(`${resourceLabel}读取失败（${response.status}）`)
@@ -825,7 +828,7 @@ export class EnterpriseService {
     }, expectedGeneration)
     const result = await response.json().catch(() => undefined)
     this.assertCurrentAuth(snapshot)
-    if (response.status === 401 || response.status === 403) { await this.signOutIfCurrent(snapshot); throw new Error('登录已失效，请重新登录') }
+    await this.assertResponseAuthorized(response, snapshot, '当前账号没有办理该工作事项的权限')
     if (!response.ok) throw new Error(textValue(record(result)?.message) ?? textValue(record(result)?.error) ?? `Forge 工作事项处理失败（${response.status}）`)
     return { status: response.status, body: result }
   }
@@ -846,6 +849,11 @@ export class EnterpriseService {
       await response.body?.cancel()
       await this.signOutIfCurrent(snapshot)
       throw new Error('登录已失效，请重新登录')
+    }
+    if (response.status === 403) {
+      await response.body?.cancel()
+      this.assertCurrentAuth(snapshot)
+      throw new Error(`当前账号没有读取该${sourceLabel}原件的权限`)
     }
     if (response.status === 404) {
       await response.body?.cancel()
@@ -891,7 +899,7 @@ export class EnterpriseService {
     )
     const result = await response.json().catch(() => undefined)
     this.assertCurrentAuth(snapshot)
-    if (response.status === 401 || response.status === 403) { await this.signOutIfCurrent(snapshot); throw new Error('登录已失效，请重新登录') }
+    await this.assertResponseAuthorized(response, snapshot, '当前账号没有递交该审批修订的权限')
     return { status: response.status, body: result }
   }
 
@@ -906,7 +914,7 @@ export class EnterpriseService {
     )
     const result = await response.json().catch(() => undefined)
     this.assertCurrentAuth(snapshot)
-    if (response.status === 401 || response.status === 403) { await this.signOutIfCurrent(snapshot); throw new Error('登录已失效，请重新登录') }
+    await this.assertResponseAuthorized(response, snapshot, '当前账号没有读取该审批修订回执的权限')
     return { status: response.status, body: result }
   }
 
@@ -1444,10 +1452,7 @@ export class EnterpriseService {
     }, expectedGeneration)
     const result = await response.json().catch(() => undefined)
     this.assertCurrentAuth(snapshot)
-    if (response.status === 401 || response.status === 403) {
-      await this.signOutIfCurrent(snapshot)
-      throw new Error('登录已失效，请重新登录')
-    }
+    await this.assertResponseAuthorized(response, snapshot, '当前账号没有执行该团队请求的权限')
     if (!response.ok) {
       const error = textValue(record(result)?.error) ?? textValue(record(result)?.message) ?? `Weave 请求失败（${response.status}）`
       throw new WeaveHttpError(error, response.status, textValue(record(result)?.code) ?? textValue(record(record(result)?.error)?.code))
@@ -1457,11 +1462,7 @@ export class EnterpriseService {
 
   private async deleteWeaveResource(path: string, expectedGeneration = this.authGeneration): Promise<void> {
     const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.weaveUrl), 'weave', { method: 'DELETE', redirect: 'error', signal: AbortSignal.timeout(8_000) }, expectedGeneration)
-    if (response.status === 401 || response.status === 403) {
-      await response.body?.cancel()
-      await this.signOutIfCurrent(snapshot)
-      throw new Error('登录已失效，请重新登录')
-    }
+    await this.assertResponseAuthorized(response, snapshot, '当前账号没有删除该团队配置的权限')
     if (!response.ok) { await response.body?.cancel(); throw new Error(`Weave 删除失败（${response.status}）`) }
     await response.body?.cancel()
     this.assertCurrentAuth(snapshot)
@@ -1501,7 +1502,10 @@ export class EnterpriseService {
       read(() => this.weaveJSON(`/v1/runs?project_id=${encodeURIComponent(projectID)}&limit=50`, generation)),
       read(() => this.weaveJSON('/v1/human-tasks?limit=50', generation)),
       read(() => this.forgeJSON('/api/v1/notifications?limit=200', generation, '通知')),
-      read(() => this.forgeJSON('/api/v1/approvals/requests?limit=50', generation, '审批事项')),
+      read(async () => {
+        const { readApprovalPages } = await import('./enterprise/inbox-pages')
+        return readApprovalPages((path) => this.forgeJSON(path, generation, '审批事项'))
+      }),
     ])
     const choices: EnterpriseWorkChoice[] = []
     let teamChoicesError = teamsRead.error
@@ -1613,7 +1617,6 @@ export class EnterpriseService {
         return source
       } catch { return undefined }
     }
-    const superseded = new Set<string>()
     const hasSucceededAction = new Set<string>()
     const businessResults = new Map<string, NonNullable<EnterpriseWorkContinuationContext['run']['businessResult']>>()
     for (const pending of items) {
@@ -1621,17 +1624,6 @@ export class EnterpriseService {
         || !/^weave\.team_run\.revision_required$/.test(pending.notificationType ?? '')) continue
       const parent = await sourceFor(pending)
       if (!parent) continue
-      const later = items.filter((item) => item.source === 'weave' && item.id !== pending.id
-        && /^weave\.team_run\.(result|failure|revision_required|cancelled)$/.test(item.notificationType ?? '')
-        && Date.parse(item.createdAt) > Date.parse(pending.createdAt)).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
-      for (const item of later) {
-        const next = await sourceFor(item)
-        if (next?.sessionReference === parent.sessionReference && next.workReference !== parent.workReference) {
-          superseded.add(pending.id)
-          break
-        }
-      }
-      if (superseded.has(pending.id)) continue
       try {
         const context = await this.readWorkContinuationMetadata(parent, generation)
         if (context.run.businessResult) businessResults.set(pending.id, context.run.businessResult)
@@ -1654,7 +1646,7 @@ export class EnterpriseService {
       } : businessResults.get(item.id) === 'action_unknown' ? {
         title: '业务动作结果待核对', summary: '本轮业务动作结果未知，请先核对 Forge 回执；不要重放原请求。',
       } : {}),
-      ...(superseded.has(item.id) || hasSucceededAction.has(item.id) || businessResults.has(item.id) && businessResults.get(item.id) !== 'needs_input' ? { actionable: false, status: 'completed' as const } : {}),
+      ...(hasSucceededAction.has(item.id) || businessResults.has(item.id) && businessResults.get(item.id) !== 'needs_input' ? { actionable: false, status: 'completed' as const } : {}),
     }))
     const runList = record(runsRead.value)
     this.assertAuthGeneration(generation)
