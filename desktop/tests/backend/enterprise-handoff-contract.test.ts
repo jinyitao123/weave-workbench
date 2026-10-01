@@ -7,6 +7,7 @@ const hash = (text: string) => createHash('sha256').update(text).digest('hex')
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 async function fixture() {
   const registrations = new Map<string, string>(), heads = new Set<string>(), runs = new Map<string, string>()
+  const delegations = new Map<string, { digest: string; rotation: number }>()
   let dropDispatchResponse = false, mismatchDigest = false
   let rejectContinuation = false
   let afterRegistration = async () => {}
@@ -14,10 +15,24 @@ async function fixture() {
   const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
     const path = new URL(String(input)).pathname
     if (path === '/api/v1/auth/sign-in/email') return Response.json({ token: 'forge', user: { id: 'employee' } })
-    if (path === '/v1/auth/external/exchange') return Response.json({ token: 'weave', subject: { id: 'bound', externalId: 'employee' }, organization: { id: 'org' }, permissions: ['teams:use'] })
+    if (path === '/v1/auth/external/exchange') return Response.json({ token: 'weave', subject: { id: 'bound', externalId: 'employee' }, organization: { id: 'org' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
     const body = JSON.parse(String(init?.body)) as Record<string, unknown>
     calls.push({ path, body })
+    if (path === '/api/v1/auth/sign-out') return Response.json({ success: true })
+    if (path === '/api/v1/workbench/task-delegations') {
+      // Mirror Forge: a retry of the same frozen input rotates the credential,
+      // another input under the same key is a conflict.
+      expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer forge')
+      const key = String(body.idempotencyKey), previous = delegations.get(key)
+      if (previous && previous.digest !== body.inputDigest) return Response.json({ error: { code: 'DELEGATION_CONFLICT' } }, { status: 409 })
+      const rotation = (previous?.rotation ?? 0) + 1
+      delegations.set(key, { digest: String(body.inputDigest), rotation })
+      return Response.json({ version: '1', delegationId: `delegation-${key}`, issuer: 'forge:test-deployment', credential: `task-${key}-${rotation}`, expiresAt: '2026-10-02T00:00:00.000Z', deduplicated: !!previous }, { status: previous ? 200 : 201 })
+    }
     if (path === '/v1/workbench/dispatch-inputs') {
+      const delegation = new Headers(init?.headers).get('X-Weave-Forge-Authorization')
+      expect(delegation).toMatch(/^Bearer task-/)
+      expect(new Headers(init?.headers).get('X-Weave-Forge-Delegation-Id')).toBe(`delegation-${String(body.registration_id)}`)
       // Mirror service admission constraints, not an unconditional success stub.
       expect(String(body.registration_id)).toMatch(uuid)
       expect(Buffer.byteLength(String(body.task))).toBeLessThanOrEqual(1 << 20)
@@ -140,7 +155,9 @@ describe('Weave handoff admission contract', () => {
     const f = await fixture()
     const source = { ...f.source, businessContext: { objectName: 'forge_quote', recordId: 'quote-a', recordVersion: 'revision-7' } }
     await f.service.submitWork(choice, '核对报价', source)
-    expect(f.calls[0].body.business_record).toEqual({ object_name: 'forge_quote', record_id: 'quote-a', record_version: 'revision-7' })
+    expect(f.calls.find((call) => call.path.endsWith('dispatch-inputs'))?.body.business_record).toEqual({ object_name: 'forge_quote', record_id: 'quote-a', record_version: 'revision-7' })
+    // Forge scopes the delegation to the same record.
+    expect(f.calls.find((call) => call.path.endsWith('task-delegations'))?.body.record).toEqual({ objectName: 'forge_quote', recordId: 'quote-a' })
     await expect(f.service.submitWork(choice, '核对报价', { ...source, businessContext: { ...source.businessContext, recordId: 'quote-b' } })).rejects.toThrow('已登记内容冲突')
     expect(f.runs.size).toBe(1)
   })

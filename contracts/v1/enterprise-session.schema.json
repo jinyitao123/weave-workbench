@@ -25,7 +25,7 @@
       "required": ["kind"],
       "properties": {
         "kind": { "const": "forge-account" },
-        "issuer": { "type": "string", "format": "uri", "maxLength": 2048 }
+        "issuer": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:\\S{1,240}$", "description": "Stable identity source from the Weave exchange result; never derived from the desktop's Forge address." }
       }
     },
     "user": {
