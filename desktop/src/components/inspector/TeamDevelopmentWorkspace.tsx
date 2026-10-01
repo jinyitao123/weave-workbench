@@ -13,6 +13,7 @@ import type { TeamDefinition, TeamDevelopmentProposalResult, TeamWorkspace, Team
 
 const pendingDrafts = new Map<string, { revision: number; document: TeamDefinition }>()
 type Member = TeamDefinition['members'][number]
+function focusAfterRender(target: () => HTMLElement | null) { requestAnimationFrame(() => target()?.focus()) }
 const memberRole = (item: Member) => item.configuration.role === 'avatar' ? '负责人' : item.configuration.role === 'worker' ? '执行成员' : '成员'
 
 /** Why the team cannot be updated yet; empty when it can. Mirrors the publish rule below. */
@@ -36,6 +37,7 @@ export function TeamDevelopmentWorkspace({ teamId, accountId, runtime, enterpris
   const pendingKey = `${accountId}:${teamId}`
   const restored = useRef(false)
   const stepPanel = useRef<HTMLElement>(null)
+  const memberHeading = useRef<HTMLHeadingElement>(null)
   const revealStep = useRef(false)
   const [mode, setMode] = useState<'edit' | 'trial'>('edit')
   const [teamInfo, setTeamInfo] = useState<{ name: string; objective: string }>()
@@ -90,7 +92,9 @@ export function TeamDevelopmentWorkspace({ teamId, accountId, runtime, enterpris
     if (proposal.revision !== draft.revision || JSON.stringify(proposal.baseDocument) !== JSON.stringify(doc)) { onError('草稿已变化，请在 Pi 主会话中重新生成修改'); return }
     editDocument(proposal.document); onClearProposal(); onError('')
   }
-  const openMember = (id: string) => { setMemberId(id); setMemberOpen(true) }
+  // Opening details moves focus to them; going back returns it to the same row.
+  const openMember = (id: string) => { setMemberId(id); setMemberOpen(true); focusAfterRender(() => memberHeading.current) }
+  const closeMember = () => { setMemberOpen(false); focusAfterRender(() => memberHeading.current?.closest('.team-division')?.querySelector<HTMLElement>(`[data-member-id="${member?.id}"]`) ?? null) }
   const addMember = () => { const next = newMember(overview?.models[0] ?? ''); next.configuration.displayName = memberName.trim(); next.configuration.systemPrompt = memberDuty.trim(); next.relationship.duty = memberDuty.trim(); editDocument({ ...doc, members: [...doc.members, next] }); openMember(next.id); setCreateMemberOpen(false); setMemberName(''); setMemberDuty('') }
   const deleteMember = () => { if (!member || member.configuration.role === 'avatar') return; if (doc.members.filter((item) => item.configuration.role === 'worker').length <= 1) { onError('团队至少保留一位负责人和一位执行成员'); return }; if (doc.workflows.some((item) => item.graph_definition.nodes.some((node) => node.config?.agent_id === member.id))) { onError('该成员仍被流程步骤使用，请先调整流程中的执行成员'); return }; editDocument({ ...doc, members: doc.members.filter((item) => item.id !== member.id) }); setMemberId(''); setMemberOpen(false); onError('') }
   const addFlow = () => { const worker = doc.members.find((item) => item.configuration.role === 'worker' && item.relationship.enabled); if (!worker) { onError('请先添加并启用一位执行成员'); return }; editDocument({ ...doc, workflows: [{ id: crypto.randomUUID(), name: flowName.trim(), description: flowDescription.trim(), trigger_config: { schema_version: 1, type: 'conversation_explicit', config: {} }, graph_definition: initialGraph(worker) }] }); setFlowName(''); setFlowDescription(''); setCreateFlowOpen(false); onError('') }
@@ -122,13 +126,13 @@ export function TeamDevelopmentWorkspace({ teamId, accountId, runtime, enterpris
   const stepActions = flow && step ? [...(step.type === 'parallel' ? [{ label: '改为依次执行', run: serialize }] : []), ...(['worker', 'lead'].includes(step.type) && step.id !== flow.graph_definition.entry_node_id ? [{ label: '删除步骤', danger: true, confirm: `删除步骤“${step.label || stepTypeLabel(step.type)}”？`, run: deleteStep }] : [])] : []
 
   const division = <div className="team-division" data-pane={memberOpen ? 'detail' : 'list'}>
+    <section className="team-panel__card team-panel__team-info" aria-label="团队资料">
+      <div><small>团队目标</small><p>{doc.objective || '尚未填写'}</p></div>
+      <button type="button" className="button" onClick={() => setTeamInfo({ name: doc.name, objective: doc.objective })}>编辑</button>
+    </section>
     <div className="team-division__list">
-      <section className="team-panel__card team-panel__team-info" aria-label="团队资料">
-        <div><small>团队目标</small><p>{doc.objective || '尚未填写'}</p></div>
-        <button type="button" className="button" onClick={() => setTeamInfo({ name: doc.name, objective: doc.objective })}>编辑</button>
-      </section>
       <div className="team-panel__section-head"><h3>成员 <span>{doc.members.length}</span></h3><button type="button" className="button" onClick={() => setCreateMemberOpen(true)}><Plus size={13}/>添加成员</button></div>
-      <ul className="team-member-list" aria-label="团队成员">{doc.members.map((item, index) => <li key={item.id}><button type="button" aria-current={member?.id === item.id ? 'true' : undefined} className={memberId ? item.id === memberId ? 'is-selected' : '' : index === 0 ? 'is-default' : ''} onClick={() => openMember(item.id)}>
+      <ul className="team-member-list" aria-label="团队成员">{doc.members.map((item, index) => <li key={item.id}><button type="button" data-member-id={item.id} aria-current={member?.id === item.id ? 'true' : undefined} className={memberId ? item.id === memberId ? 'is-selected' : '' : index === 0 ? 'is-default' : ''} onClick={() => openMember(item.id)}>
         <span className="team-member-list__avatar"><Bot size={14}/></span>
         <span className="team-member-list__text"><span><strong>{item.configuration.displayName}</strong><em>{memberRole(item)}{item.relationship.enabled ? '' : ' · 已停用'}</em></span><small>{item.relationship.duty || '尚未填写职责'}</small></span>
         <ChevronRight className="team-member-list__chevron" size={14}/>
@@ -137,8 +141,8 @@ export function TeamDevelopmentWorkspace({ teamId, accountId, runtime, enterpris
     <section className="team-division__detail" aria-label={member ? `${member.configuration.displayName}配置` : '成员配置'}>
       {member ? <>
         <header className="team-panel__detail-head">
-          <button type="button" className="team-panel__back" onClick={() => setMemberOpen(false)}><ChevronLeft size={14}/>成员</button>
-          <div><h3>{member.configuration.displayName}</h3><small>{memberRole(member)}{member.relationship.enabled ? '' : ' · 已停用'}</small></div>
+          <button type="button" className="team-panel__back" onClick={closeMember}><ChevronLeft size={14}/>成员</button>
+          <div><h3 ref={memberHeading} tabIndex={-1}>{member.configuration.displayName}</h3><small>{memberRole(member)}{member.relationship.enabled ? '' : ' · 已停用'}</small></div>
           <ObjectMenu label="成员" actions={member.configuration.role === 'avatar' ? [] : [{ label: '移出团队', danger: true, confirm: `把“${member.configuration.displayName}”移出团队？`, run: deleteMember }]}/>
         </header>
         <MemberInspector key={member.id} draft={{ version: '1', teamId, agentId: member.id, agentName: member.configuration.displayName, baseAgentVersion: 1, revision: draft.revision, updatedAt: draft.updated_at, configuration: member.configuration, relationship: member.relationship }} runtimes={overview?.runtimes ?? []} models={overview?.models ?? []} businessCapabilities={catalog} businessCapabilityError={catalogError} onChange={(next) => editDocument({ ...doc, members: doc.members.map((item) => item.id === member.id ? { ...item, configuration: next.configuration, relationship: next.relationship } : item) })}/>

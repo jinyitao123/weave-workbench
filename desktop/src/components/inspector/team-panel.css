@@ -65,7 +65,8 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
-.team-panel__section-head { display: flex; align-items: center; justify-content: space-between; margin: var(--space-4) 0 var(--space-2); }
+.team-panel__section-head { display: flex; align-items: center; justify-content: space-between; margin: var(--space-1) 0 var(--space-2); }
+.team-division__detail h3:focus:not(:focus-visible) { outline: none; }
 .team-panel__section-head h3 span { margin-left: var(--space-1); color: var(--text-tertiary); font-weight: 400; }
 .team-panel__detail-head { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
 .team-panel__detail-head > div:first-of-type { flex: 1; min-width: 0; }
@@ -90,9 +91,11 @@
 /* ---------- 团队分工: list → detail, side by side when wide ---------- */
 .team-division { display: grid; gap: var(--space-3); }
 .team-division[data-pane="list"] .team-division__detail,
-.team-division[data-pane="detail"] .team-division__list { display: none; }
+.team-division[data-pane="detail"] .team-division__list,
+.team-division[data-pane="detail"] .team-panel__team-info { display: none; }
 @container (min-width: 600px) {
   .team-division { grid-template-columns: 220px minmax(0, 1fr); align-items: start; }
+  .team-division[data-pane] .team-panel__team-info { display: flex; grid-column: 1 / -1; }
   .team-division[data-pane] .team-division__list,
   .team-division[data-pane] .team-division__detail { display: block; }
   .team-division .team-panel__back, .team-member-list__chevron { display: none; }
