@@ -65,13 +65,13 @@
 
 ## 任务委托签发与撤销
 
-依据[决策 002](../../docs/decisions/002-任务委托身份来源与员工入口收敛.md)。**状态：目标契约，实施前先验证 ObjectStack 17.3 能否签发独立会话并在 MCP 与动作上下文中识别；验证结论补入决策 002，未验证前不得宣称已接通。**
+依据[决策 002](../../docs/decisions/002-任务委托身份来源与员工入口收敛.md)。**状态：目标契约。** 2026-10-01 已验证 ObjectStack 17.3 插件可签发独立会话、在 MCP 前按令牌拦截、在数据写入钩子中识别令牌并原生撤销（详见决策 002）；尚未实现，不得宣称已接通。
 
 - 调用者与身份：Workbench Host 以员工本人 Forge 桌面会话调用 `POST /api/v1/workbench/task-delegations`，请求与响应遵守 [task-delegation-request](task-delegation-request.schema.json)。Forge 从会话取得员工与组织，不接受调用方传入员工、组织或角色。
 - 校验：每个 `actions` 项必须在员工当前 MCP `list_actions` 允许列表内；`record` 必须是员工当前可见记录；每个 `files` 项按其 `sourceKind` 走既有本人原件或审批快照授权并核对 SHA-256。任一不成立返回 `403 delegation_scope_denied` 或 `422 delegation_scope_invalid`，不签发部分范围。
 - 签发：Forge 为同一员工创建独立于桌面会话的任务凭据，并保存委托范围（委托标识、员工、组织、动作、记录、文件、到期、撤销时间与原因）。到期时间为部署上限（默认 24 小时，部署可调低），Weave 在运行终态撤销，因此实际有效期跟随运行。
 - 幂等：`idempotencyKey` 复用本次固定输入登记的请求 UUID。同键同 `inputDigest` 返回原委托（`deduplicated=true`，凭据重新返回给同一员工）；同键不同摘要返回 `409 delegation_conflict`。
-- 执行强制：Forge 在 MCP `run_action`、`list_actions` 与 Workbench 材料读取入口识别任务凭据：动作、记录或文件不在本委托范围内一律拒绝（`403`），已撤销或过期返回 `401`。Weave 的调用前收窄不替代这一检查；员工业务权限与业务状态仍按原规则校验。任务凭据除 `GET /api/v1/auth/me/permissions`（供 Weave 核对身份）外，不能调用登录、账号、委托签发或通用写入入口。
+- 执行强制：任务凭据是 Forge 为同一员工签发的独立原生会话。Forge 以三道守卫强制范围：入口守卫只放行身份核对、MCP、对象元数据、Workbench 材料读取与本委托撤销路径；动作守卫核对每次动作的对象、动作与记录在委托范围内；数据守卫拒绝获准动作之外的一切写入（含 MCP `create_record`、`update_record`、`delete_record`）。范围外一律 `403`，已撤销或过期返回 `401`。已知限制：Forge 暂不能阻止任务凭据经 MCP 通用读取工具读取员工本人可见的数据，Weave 只向成员暴露 `list_actions`、`run_action`。Weave 的调用前收窄不替代这一检查；员工业务权限与业务状态仍按原规则校验。任务凭据除 `GET /api/v1/auth/me/permissions`（供 Weave 核对身份）外，不能调用登录、账号、委托签发或通用写入入口。
 - 撤销：`DELETE /api/v1/workbench/task-delegations/{delegationId}`，请求体 `{ "reason": "run_terminal" | "employee_cancel" }`。Weave 在运行进入终态后使用该任务凭据自身撤销（不另设服务密钥）；员工取消工作时 Host 以本人会话撤销。重复撤销返回 `204`，不改变首次撤销原因。Forge 账号停用时其全部任务凭据失效。撤销失败由 Weave 持久记录并退避重试，与终态事件投递相互独立；重试期间凭据仍受到期时间约束。
 - Weave 侧：`weave_task_business_delegations` 保存 Forge `delegationId`、`issuer` 与加密凭据，删除固定 30 分钟期限；以 Forge 返回的 `expiresAt` 为准，撤销后写 `revoked_at`。旧行为（直接保存员工桌面会话）不保留兼容，124 开发数据清空重建。
 - 取消与回滚：撤销只阻止后续调用，不回滚已发生的业务动作；已发生动作按 Forge 撤销规则处理。

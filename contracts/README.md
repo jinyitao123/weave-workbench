@@ -11,7 +11,7 @@
 | `enterprise-session` | 桌面可见的登录身份、身份来源、组织环境和会话保存方式 | 待修订：稳定 `issuer`（决策 002） |
 | `account-binding` | Forge 登录主体与 Weave 用户、组织之间的稳定绑定 | 待修订：稳定 `issuer`（决策 002） |
 | `task-delegation` | 一次任务获准使用的动作、资源、有效期和撤销状态 | 待修订：当前 Weave 保存员工桌面会话、固定 30 分钟、无撤销；改为 Forge 签发（决策 002） |
-| `task-delegation-request` | Host 向 Forge 申请任务委托的请求与回执 | 目标：先验证 ObjectStack 原生能力 |
+| `task-delegation-request` | Host 向 Forge 申请任务委托的请求与回执 | 目标：原生能力已验证（决策 002），待实现 |
 | `work-request` | 桌面递交的目标、材料、范围和期望交付，含 `identity` 定义 | 已实现（映射到 Weave 固定输入登记与派发） |
 | `agent-team-handoff` | Host 保存在本地私有目录的固定交接包 | 已实现 |
 | `business-capability-catalog` | 开发中心可分配给成员的 Forge 业务能力及参数说明 | 已实现 |
