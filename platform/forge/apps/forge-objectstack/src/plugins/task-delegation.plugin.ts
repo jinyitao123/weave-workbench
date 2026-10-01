@@ -1,315 +1,262 @@
 import type { Plugin, PluginContext } from '@objectstack/core';
-import { makeExecutionContextResolver } from '@objectstack/plugin-hono-server';
-import type { IHttpRequest, IHttpResponse, IHttpServer, IObjectQLEngine } from '@objectstack/spec/contracts';
+import type { IObjectQLEngine, IHttpRequest, IHttpResponse, IHttpServer } from '@objectstack/spec/contracts';
 import type { ExecutionContext } from '@objectstack/spec/kernel';
-import * as actionDeclarations from '../actions/index.js';
-import {
-  TASK_DELEGATION_OBJECT, DelegationRegistry, actionAllowed, bearerToken, decodeScope, delegableActions, encodeScope,
-  entryAllowed, isLive, maxLifetimeMs, parseIssueRequest, sameScope, sha256Hex,
-  type ActiveDelegation, type IssueRequest,
-} from './task-delegation.js';
+import { SYSTEM_READ, TaskConnectionFailure, canonicalJSON, currentNativeActor, digest, headersFor,
+  nativeEmployee, nonempty, service, taskAudience, taskIdentityIssuer, taskLifetimeMs, verifyNativeConnection, type NativeAuthService } from './native-task-auth.js';
+import { TaskMcpAdapter } from './task-mcp-bridge.js';
+import { actionKey, parseTaskScope, readTaskResource, type TaskScope } from './task-delegation-scope.js';
 
-const ISSUE_ROUTE = '/api/v1/workbench/task-delegations';
-const REVOKE_ROUTE = '/api/v1/workbench/task-delegations/:delegationId';
-const IDENTITY_ROUTE = '/api/v1/workbench/identity-source';
-const ISSUER_ENV = 'FORGE_IDENTITY_ISSUER';
-const MAX_HOURS_ENV = 'FORGE_TASK_DELEGATION_MAX_HOURS';
-const ISSUER = /^[A-Za-z][A-Za-z0-9+.-]*:\S{1,240}$/;
-const SYSTEM_CONTEXT: ExecutionContext = { isSystem: true, positions: [], permissions: [] };
-const WRITE_EVENTS = ['beforeInsert', 'beforeUpdate', 'beforeDelete'] as const;
-
+const ROOT = '/api/v1/apps/forge/task-delegations';
+const OBJECT = 'forge_task_delegation';
 type Row = Record<string, unknown>;
-interface AuthContextLike {
-  internalAdapter: {
-    createSession(userId: string, dontRememberMe?: boolean, override?: Row): Promise<{ id: string; token: string } | null>;
-    deleteSession(token: string): Promise<void>;
-  };
-  adapter: { delete(input: { model: string; where: Array<{ field: string; value: unknown }> }): Promise<void> };
-}
-interface AsyncStore<T> { run<R>(store: T, callback: () => R): R; getStore(): T | undefined }
 
-function env(name: string): string | undefined {
-  return (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.[name];
-}
+export class TaskDelegationService {
+  readonly mcp: TaskMcpAdapter;
+  constructor(readonly context: PluginContext) { this.mcp = new TaskMcpAdapter(context); }
 
-// Node's AsyncLocalStorage, reached without a type dependency on @types/node.
-function asyncStore<T>(): AsyncStore<T> {
-  const process = (globalThis as { process?: { getBuiltinModule?: (name: string) => unknown } }).process;
-  const module = process?.getBuiltinModule?.('node:async_hooks') as { AsyncLocalStorage?: new () => AsyncStore<T> } | undefined;
-  if (!module?.AsyncLocalStorage) throw new Error('AsyncLocalStorage is required for task delegation guards');
-  return new module.AsyncLocalStorage();
-}
+  private engine() { return service<IObjectQLEngine>(this.context, 'objectql'); }
+  private auth() { return service<NativeAuthService>(this.context, 'auth'); }
 
-function service<T>(context: PluginContext, name: string): T | undefined {
-  try { return context.getService<T>(name); } catch { return undefined; }
-}
-
-function sessionHeaders(headers: IHttpRequest['headers']): Headers {
-  const result = new Headers();
-  for (const [name, value] of Object.entries(headers ?? {})) {
-    if (Array.isArray(value)) for (const item of value) result.append(name, item);
-    else if (typeof value === 'string') result.set(name, value);
+  private async latest(key: string): Promise<Row | undefined> {
+    const rows = await this.engine().find(OBJECT, { where: { grant_key: key }, orderBy: [{ field: 'generation', order: 'desc' }], limit: 1 }, { context: SYSTEM_READ });
+    return rows[0];
   }
-  return result;
-}
 
-async function sendError(response: IHttpResponse, status: number, code: string): Promise<void> {
-  response.header('Cache-Control', 'private, no-store');
-  await response.status(status).json({ error: { code } });
-}
-
-function timestamp(value: unknown): number {
-  const result = value instanceof Date ? value.getTime() : typeof value === 'string' || typeof value === 'number' ? new Date(value).getTime() : NaN;
-  return Number.isFinite(result) ? result : 0;
-}
-
-function activeFromRow(row: Row | null | undefined): ActiveDelegation | null {
-  if (!row) return null;
-  const scope = decodeScope(row.scope_json);
-  const delegationId = typeof row.delegation_id === 'string' ? row.delegation_id : '';
-  const organizationId = typeof row.organization_id === 'string' ? row.organization_id : '';
-  const employeeId = typeof row.employee_id === 'string' ? row.employee_id : '';
-  // A row that cannot be read back exactly is treated as a revoked credential.
-  if (!scope || !delegationId || !organizationId || !employeeId) {
-    return { delegationId: delegationId || 'invalid', organizationId, employeeId, actions: [], files: [], expiresAt: 0, revoked: true };
+  private scope(row: Row): TaskScope {
+    if (typeof row.scope_json !== 'string') throw new TaskConnectionFailure(503, 'FORGE_TASK_GRANT_INVALID', '任务授权记录不可核对');
+    return parseTaskScope(JSON.parse(row.scope_json));
   }
-  return { delegationId, organizationId, employeeId, ...scope, expiresAt: timestamp(row.expires_at), revoked: row.revoked_at != null };
+
+  private async response(row: Row) {
+    const auth = this.auth(), api = await auth.getApi();
+    const issuer = new URL(auth.getAuthIssuer()).origin;
+    const scope = this.scope(row), generation = Number(row.generation);
+    const issued = Math.floor(Date.parse(String(row.issued_at)) / 1000), expires = Math.floor(Date.parse(String(row.expires_at)) / 1000);
+    if (!Number.isSafeInteger(generation) || generation < 1 || !Number.isFinite(issued) || !Number.isFinite(expires)) {
+      throw new TaskConnectionFailure(503, 'FORGE_TASK_GRANT_INVALID', '任务授权记录不可核对');
+    }
+    const identityIssuer = taskIdentityIssuer();
+    const payload = { kind: 'forge_task_v1', iss: identityIssuer, aud: taskAudience(identityIssuer),
+      sub: String(row.user_id), organization_id: String(row.organization_id), parent_session_id: String(row.source_session_id),
+      jti: String(row.id), grant_id: String(row.grant_key), generation, scope_sha256: String(row.scope_sha256), iat: issued, exp: expires };
+    const signed = await api.signJWT({ body: { payload } });
+    return { version: '1', token_type: 'forge_task', access_token: signed.token, grant_id: String(row.grant_key), generation,
+      issued_at: new Date(issued * 1000).toISOString(), expires_at: new Date(expires * 1000).toISOString(),
+      scope_sha256: String(row.scope_sha256), scope, subject: { id: String(row.user_id), organization_id: String(row.organization_id) }, issuer, identity_issuer: identityIssuer };
+  }
+
+  async issue(request: IHttpRequest) {
+    const caller = await nativeEmployee(this.context, request);
+    const body = request.body as { request_id?: unknown; scope?: unknown; expected_generation?: unknown } | undefined;
+    const requestId = nonempty(body?.request_id, 256);
+    if (!requestId) throw new TaskConnectionFailure(400, 'FORGE_TASK_REQUEST_INVALID', '任务授权请求无效');
+    const scope = parseTaskScope(body?.scope);
+    const scopeJSON = canonicalJSON(scope);
+    if (new TextEncoder().encode(scopeJSON).length > 64 * 1024) throw new TaskConnectionFailure(400, 'FORGE_TASK_SCOPE_INVALID', '任务授权范围超限');
+    const scopeHash = await digest(scopeJSON);
+    const key = await digest(canonicalJSON([caller.userId, caller.organizationId, scope.input_revision_id]));
+    // A handed-off task survives the desktop login. A retried original issuance
+    // reuses the grant even when the employee has since logged in again.
+    const requestHash = await digest(canonicalJSON([caller.userId, caller.organizationId, requestId]));
+    const actor = caller.actor;
+    const available = await this.mcp.actions(actor);
+    if (scope.allowed_actions.some((action) => !available.some((definition) => actionKey(definition) === action))) {
+      throw new TaskConnectionFailure(403, 'FORGE_TASK_ACTION_FORBIDDEN', '当前员工不能执行所选业务动作');
+    }
+    if (scope.business_record) {
+      const bridge = await this.mcp.bridge(actor, scope);
+      const record = await bridge.get(scope.business_record.object_name, scope.business_record.record_id);
+      if (!record) throw new TaskConnectionFailure(404, 'FORGE_TASK_RECORD_NOT_FOUND', '当前业务记录不可读取');
+    }
+    for (const resource of scope.resources) await readTaskResource(this.context, actor, resource);
+    const existing = await this.engine().findOne(OBJECT, { where: { request_hash: requestHash } }, { context: SYSTEM_READ });
+    if (existing) {
+      if (existing.scope_sha256 !== scopeHash || existing.grant_key !== key || existing.user_id !== caller.userId || existing.organization_id !== caller.organizationId) {
+        throw new TaskConnectionFailure(409, 'FORGE_TASK_REQUEST_CONFLICT', '同一授权请求不能更换范围');
+      }
+      return this.response(existing);
+    }
+    const previous = await this.latest(key);
+    if (previous && previous.scope_sha256 !== scopeHash) throw new TaskConnectionFailure(409, 'FORGE_TASK_SCOPE_CONFLICT', '原输入的授权范围不能更换');
+    if (previous?.revoked_at && ['employee_cancel', 'subject_inactive'].includes(String(previous.revocation_reason))) {
+      throw new TaskConnectionFailure(409, 'FORGE_TASK_REVOCATION_FINAL', '原工作授权已终止，请从新的工作输入开始');
+    }
+    const oldGeneration = previous ? Number(previous.generation) : 0;
+    if (body?.expected_generation !== undefined && body.expected_generation !== oldGeneration) {
+      throw new TaskConnectionFailure(409, 'FORGE_TASK_GENERATION_CONFLICT', '任务授权已有更新，请重新核对');
+    }
+    const issuedAt = Math.floor(Date.now() / 1000) * 1000;
+    const expiresAt = issuedAt + taskLifetimeMs();
+    if (expiresAt <= issuedAt) throw new TaskConnectionFailure(503, 'FORGE_TASK_LIFETIME_INVALID', '任务有效期配置无效');
+    let row: Row;
+    try {
+      row = await this.engine().insert(OBJECT, { name: '任务授权', request_hash: requestHash, grant_key: key, scope_sha256: scopeHash,
+        scope_json: scopeJSON, user_id: caller.userId, organization_id: caller.organizationId, source_session_id: caller.sessionId,
+        input_revision_id: scope.input_revision_id, generation: oldGeneration + 1,
+        issued_at: new Date(issuedAt).toISOString(), expires_at: new Date(expiresAt).toISOString() }, { context: SYSTEM_READ }) as Row;
+    } catch {
+      // Both unique indexes are the transaction boundary. A concurrent same
+      // request replays; a different renewal must not mint a duplicate generation.
+      const raced = await this.engine().findOne(OBJECT, { where: { request_hash: requestHash } }, { context: SYSTEM_READ });
+      if (raced && raced.grant_key === key && raced.scope_sha256 === scopeHash && raced.user_id === caller.userId && raced.organization_id === caller.organizationId) return this.response(raced);
+      const winner = await this.latest(key);
+      if (winner && Number(winner.generation) > oldGeneration) throw new TaskConnectionFailure(409, 'FORGE_TASK_GENERATION_CONFLICT', '任务授权已有更新，请重新核对');
+      throw new TaskConnectionFailure(503, 'FORGE_TASK_STORE_UNAVAILABLE', '任务授权暂未确认，请沿原请求核对');
+    }
+    return this.response(row);
+  }
+
+  async current(request: IHttpRequest) {
+    const auth = this.auth(), api = await auth.getApi();
+    const authorization = headersFor(request).get('authorization') ?? '';
+    const token = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
+    const identityIssuer = taskIdentityIssuer(), audience = taskAudience(identityIssuer);
+    const claim = token ? await verifyNativeConnection(api, token, identityIssuer, audience) : null;
+    if (!claim || claim.kind !== 'forge_task_v1' || claim.aud !== audience || !nonempty(claim.jti) || !nonempty(claim.sub) || !nonempty(claim.organization_id)) {
+      throw new TaskConnectionFailure(401, 'FORGE_TASK_DELEGATION_INVALID', '本次任务授权已失效，请重新授权');
+    }
+    const row = await this.engine().findOne(OBJECT, { where: { id: claim.jti } }, { context: SYSTEM_READ });
+    if (!row || row.user_id !== claim.sub || row.organization_id !== claim.organization_id ||
+        row.grant_key !== claim.grant_id || Number(row.generation) !== claim.generation || row.scope_sha256 !== claim.scope_sha256 ||
+        row.source_session_id !== claim.parent_session_id || Date.parse(String(row.expires_at)) <= Date.now()) {
+      throw new TaskConnectionFailure(401, 'FORGE_TASK_DELEGATION_REVOKED', '本次任务授权已失效，请重新授权');
+    }
+    if (row.revoked_at) {
+      if (row.revocation_reason === 'subject_inactive') throw new TaskConnectionFailure(401, 'FORGE_TASK_SUBJECT_INACTIVE', '原任务因员工停用已失效');
+      if (row.revocation_reason === 'employee_cancel') throw new TaskConnectionFailure(403, 'FORGE_TASK_CANCELLED', '原工作已由员工取消');
+      throw new TaskConnectionFailure(401, 'FORGE_TASK_DELEGATION_REVOKED', '本次任务授权已撤销');
+    }
+    const latest = await this.latest(String(row.grant_key));
+    if (!latest || latest.id !== row.id) throw new TaskConnectionFailure(401, 'FORGE_TASK_DELEGATION_REPLACED', '本次任务授权已有更新');
+    const scope = this.scope(row);
+    if (await digest(canonicalJSON(scope)) !== row.scope_sha256) throw new TaskConnectionFailure(503, 'FORGE_TASK_GRANT_INVALID', '任务授权记录不可核对');
+    const actor = await currentNativeActor(this.context, String(row.user_id), String(row.organization_id));
+    actor.principalKind = 'agent';
+    actor.onBehalfOf = { userId: String(row.user_id), principalKind: 'human' };
+    actor.oauthScopes = ['data:read', 'actions:execute'];
+    actor.traceId = `forge-task:${String(row.grant_key)}`;
+    return { row, scope, actor, issuer: new URL(auth.getAuthIssuer()).origin, identityIssuer };
+  }
+
+  async revoke(request: IHttpRequest) {
+    const grantID = nonempty(request.params?.grantId, 64);
+    if (!grantID || !/^[a-f0-9]{64}$/.test(grantID)) throw new TaskConnectionFailure(404, 'FORGE_TASK_GRANT_NOT_FOUND', '任务授权不存在');
+    const auth = this.auth(), api = await auth.getApi(), identityIssuer = taskIdentityIssuer();
+    const authorization = headersFor(request).get('authorization') ?? '';
+    const token = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
+    const claim = token ? await verifyNativeConnection(api, token, identityIssuer, taskAudience(identityIssuer)) : null;
+    const row = await this.latest(grantID);
+    let reason: string;
+    if (claim?.kind === 'forge_task_v1') {
+      if (claim.grant_id !== grantID || !row || row.id !== claim.jti || Number(row.generation) !== claim.generation ||
+          row.user_id !== claim.sub || row.organization_id !== claim.organization_id || row.scope_sha256 !== claim.scope_sha256) {
+        throw new TaskConnectionFailure(403, 'FORGE_TASK_SCOPE_FORBIDDEN', '任务只能撤销自身授权');
+      }
+      reason = 'run_terminal';
+    } else {
+      const employee = await nativeEmployee(this.context, request);
+      if (!row || row.user_id !== employee.userId || row.organization_id !== employee.organizationId) {
+        throw new TaskConnectionFailure(404, 'FORGE_TASK_GRANT_NOT_FOUND', '任务授权不存在');
+      }
+      reason = 'employee_cancel';
+    }
+    const body = request.body as { reason?: unknown } | undefined;
+    if (body?.reason !== undefined && body.reason !== reason) throw new TaskConnectionFailure(403, 'FORGE_TASK_SCOPE_FORBIDDEN', '撤销原因与调用者不符');
+    if (!row!.revoked_at) await this.engine().update(OBJECT, { revoked_at: new Date().toISOString(), revocation_reason: reason },
+      { multi: true, where: { id: row!.id, revoked_at: { $null: true } }, context: SYSTEM_READ });
+    const revoked = await this.engine().findOne(OBJECT, { where: { id: row!.id } }, { context: SYSTEM_READ });
+    if (!revoked?.revoked_at) throw new TaskConnectionFailure(503, 'FORGE_TASK_REVOCATION_UNCONFIRMED', '任务授权撤销尚未确认');
+    return { version: '1', grant_id: grantID, revoked: true, reason: String(revoked.revocation_reason ?? reason) };
+  }
 }
 
-/**
- * Decision 002: Forge issues a task delegation as a separate native session
- * for the same employee and enforces its scope with three guards. Verified on
- * ObjectStack 17.3: `server.use` runs before native routes, write hooks see
- * the caller's bearer, and deleting the session revokes it natively.
- */
+function fail(response: IHttpResponse, error: unknown, noEffect: boolean) {
+  const known = error instanceof TaskConnectionFailure || error instanceof Error && 'status' in error && 'code' in error;
+  const status = known ? Number((error as TaskConnectionFailure).status) : 503;
+  const code = known ? String((error as TaskConnectionFailure).code) : 'FORGE_TASK_SERVICE_UNAVAILABLE';
+  return response.status(status).json({ error: { code, message: known ? String((error as Error).message) : '任务连接暂不可用',
+    ...(noEffect ? { no_effect: true, phase: 'authorization' } : {}) } });
+}
+
 export class TaskDelegationPlugin implements Plugin {
   name = 'com.inocube.forge.task-delegation';
-  version = '1.0.0';
-  type = 'standard' as const;
-
+  version = '1.0.0'; type = 'standard' as const;
+  dependencies = ['com.objectstack.auth', 'com.objectstack.mcp'];
   init(context: PluginContext): void {
     context.hook('kernel:ready', () => {
-      const server = service<IHttpServer>(context, 'http.server') ?? service<IHttpServer>(context, 'http-server');
+      const server = service<IHttpServer>(context, 'http.server'), tasks = new TaskDelegationService(context);
       const engine = service<IObjectQLEngine>(context, 'objectql');
-      if (!server || !engine) {
-        context.logger.error('[task-delegation] HTTP or data service unavailable; delegations are disabled');
-        return;
-      }
-      const resolveContext = makeExecutionContextResolver(context);
-      const declared = delegableActions(Object.values(actionDeclarations));
-      const insideAction = asyncStore<{ delegationId: string }>();
-      const registry = new DelegationRegistry(async (tokenSha256) => activeFromRow(
-        await engine.findOne(TASK_DELEGATION_OBJECT, { where: { token_sha256: tokenSha256 } }, { context: SYSTEM_CONTEXT }) as Row | null,
-      ));
-      const authContext = async (): Promise<AuthContextLike> => {
-        const manager = service<{ getAuthInstance(): Promise<{ $context: Promise<AuthContextLike> }> }>(context, 'auth');
-        if (!manager) throw new Error('auth service unavailable');
-        return (await manager.getAuthInstance()).$context;
-      };
-      const delegationFor = async (token: string | undefined): Promise<ActiveDelegation | null> =>
-        token ? registry.lookup(await sha256Hex(token)) : null;
-
-      // Guard 1: a task credential reaches only the paths it needs.
-      server.use(async (request, response, next) => {
-        let delegation: ActiveDelegation | null;
-        try { delegation = await delegationFor(bearerToken(request.headers)); }
-        catch {
-          context.logger.error('[task-delegation] delegation lookup failed; request refused');
-          return sendError(response, 503, 'TASK_DELEGATION_UNAVAILABLE');
-        }
-        if (!delegation) return next();
-        if (!isLive(delegation, Date.now())) return sendError(response, 401, 'TASK_DELEGATION_INACTIVE');
-        if (!entryAllowed(delegation, request.method, request.path)) return sendError(response, 403, 'TASK_DELEGATION_SCOPE');
-        return next();
-      });
-
-      // Guard 2: every business action a task credential triggers must be in scope.
-      const actionEngine = engine as unknown as {
-        executeAction(objectName: string, key: string, ctx: Row): Promise<unknown>;
-        listRegisteredActions(): Array<{ objectName: string; actionName: string }>;
-      };
-      const originalExecute = actionEngine.executeAction.bind(engine);
-      const registered = (objectName: string, key: string) =>
-        actionEngine.listRegisteredActions().some((entry) => entry.objectName === objectName && entry.actionName === key);
-      actionEngine.executeAction = async (objectName, key, actionContext) => {
-        const executionContext = actionContext?.executionContext as { accessToken?: unknown } | undefined;
-        const token = typeof executionContext?.accessToken === 'string' ? executionContext.accessToken : undefined;
-        const delegation = await delegationFor(token);
-        if (!delegation) return originalExecute(objectName, key, actionContext);
-        // The runtime probes [object, 'global', '*'] keys in turn; an absent
-        // registration must keep failing as "not registered" so it moves on.
-        if (!registered(objectName, key)) return originalExecute(objectName, key, actionContext);
-        const params = actionContext?.params as { recordId?: unknown } | undefined;
-        const recordId = typeof params?.recordId === 'string' && params.recordId ? params.recordId : undefined;
-        if (!isLive(delegation, Date.now()) || !actionAllowed(delegation, declared, objectName, key, recordId)) {
-          throw Object.assign(new Error('TASK_DELEGATION_SCOPE: this action is outside the delegated task'), { status: 403, code: 'TASK_DELEGATION_SCOPE' });
-        }
-        return insideAction.run({ delegationId: delegation.delegationId }, () => originalExecute(objectName, key, actionContext));
-      };
-
-      // Guard 3: outside a delegated action, a task credential writes nothing
-      // (this closes MCP create_record / update_record / delete_record).
-      for (const event of WRITE_EVENTS) {
-        engine.registerHook(event, async (hook: { session?: { accessToken?: unknown } }) => {
-          const token = typeof hook?.session?.accessToken === 'string' ? hook.session.accessToken : undefined;
-          const delegation = await delegationFor(token);
-          if (!delegation) return;
-          if (insideAction.getStore()?.delegationId === delegation.delegationId && isLive(delegation, Date.now())) return;
-          throw Object.assign(new Error('TASK_DELEGATION_SCOPE: task credentials cannot write outside a delegated action'), { status: 403, code: 'TASK_DELEGATION_SCOPE' });
-        }, { priority: 1, packageId: 'com.inocube.forge.task-delegation' });
-      }
-
-      server.get(IDENTITY_ROUTE, async (_request, response) => {
-        const issuer = env(ISSUER_ENV)?.trim();
-        if (!issuer || !ISSUER.test(issuer)) return sendError(response, 503, 'IDENTITY_SOURCE_UNCONFIGURED');
+      // Native Auth ban-user updates sys_user through these same public hooks.
+      // Unbanning must not revive authority issued before the account was banned.
+      engine.registerHook('afterUpdate', async (hook: {
+        input?: { id?: string; data?: Row }; previous?: Row; result?: Row; transaction?: ExecutionContext['transaction'];
+      }) => {
+        if (hook.previous?.banned === true || hook.input?.data?.banned !== true && hook.result?.banned !== true) return;
+        const id = nonempty(hook.input?.id ?? hook.previous?.id ?? hook.result?.id);
+        if (!id) throw new TaskConnectionFailure(503, 'FORGE_TASK_REVOCATION_UNCONFIRMED', '员工任务授权撤销尚未确认');
+        const auditContext = { ...SYSTEM_READ, ...(hook.transaction ? { transaction: hook.transaction } : {}) };
+        const user = await engine.findOne('sys_user', { where: { id }, fields: ['id', 'banned'] }, { context: auditContext });
+        if (user?.banned !== true) return;
+        await engine.update(OBJECT, { revoked_at: new Date().toISOString(), revocation_reason: 'subject_inactive' },
+          { multi: true, where: { user_id: id, revoked_at: { $null: true } }, context: auditContext });
+      }, { object: 'sys_user', packageId: this.name });
+      server.get('/api/v1/workbench/identity-source', async (_request, response) => {
         response.header('Cache-Control', 'no-store');
-        await response.status(200).json({ version: '1', issuer });
+        try { await response.status(200).json({ version: '1', issuer: taskIdentityIssuer() }); }
+        catch (error) { await fail(response, error, true); }
       });
-
-      server.post(ISSUE_ROUTE, async (request, response) => {
+      server.post(ROOT, async (request, response) => {
         response.header('Cache-Control', 'private, no-store');
-        const actor = await resolveContext({ req: { raw: { headers: sessionHeaders(request.headers) } } }) as ExecutionContext | undefined;
-        if (!actor?.userId || !actor.tenantId) return sendError(response, 401, 'UNAUTHENTICATED');
-        const issuer = env(ISSUER_ENV)?.trim();
-        if (!issuer || !ISSUER.test(issuer)) return sendError(response, 503, 'IDENTITY_SOURCE_UNCONFIGURED');
-        try {
-          if (await delegationFor(bearerToken(request.headers))) return sendError(response, 403, 'TASK_DELEGATION_SCOPE');
-        } catch { return sendError(response, 503, 'TASK_DELEGATION_UNAVAILABLE'); }
-        const parsed = parseIssueRequest(request.body);
-        if (!parsed.ok) return sendError(response, 422, parsed.code);
-        const input = parsed.value;
-        try {
-          const scopeError = await this.verifyScope(engine, declared, actor, input);
-          if (scopeError) return sendError(response, scopeError.status, scopeError.code);
-          const result = await this.issue(engine, await authContext(), registry, actor, input);
-          if ('error' in result) return sendError(response, result.status, result.error);
-          context.logger.info('[task-delegation] issued', { delegationId: result.delegationId, deduplicated: result.deduplicated });
-          await response.status(result.deduplicated ? 200 : 201).json({
-            version: '1', delegationId: result.delegationId, issuer, credential: result.token,
-            expiresAt: new Date(result.expiresAt).toISOString(), deduplicated: result.deduplicated,
-          });
-        } catch {
-          context.logger.error('[task-delegation] issue failed');
-          await sendError(response, 503, 'TASK_DELEGATION_UNAVAILABLE');
-        }
+        try { await response.status(200).json(await tasks.issue(request)); }
+        catch (error) { await fail(response, error, true); }
       });
-
-      server.delete(REVOKE_ROUTE, async (request, response) => {
+      server.get(`${ROOT}/current`, async (request, response) => {
         response.header('Cache-Control', 'private, no-store');
-        const delegationId = typeof request.params?.delegationId === 'string' ? request.params.delegationId : '';
-        const token = bearerToken(request.headers);
-        const reasonValue = (request.body as { reason?: unknown } | undefined)?.reason;
         try {
-          const own = await delegationFor(token);
-          let row: Row | null;
-          let reason: 'run_terminal' | 'employee_cancel';
-          if (own) {
-            // A task credential may revoke only itself, when its run ended.
-            if (own.delegationId !== delegationId) return sendError(response, 403, 'TASK_DELEGATION_SCOPE');
-            reason = 'run_terminal';
-            row = await engine.findOne(TASK_DELEGATION_OBJECT, { where: { delegation_id: delegationId, organization_id: own.organizationId } }, { context: SYSTEM_CONTEXT }) as Row | null;
-          } else {
-            const actor = await resolveContext({ req: { raw: { headers: sessionHeaders(request.headers) } } }) as ExecutionContext | undefined;
-            if (!actor?.userId || !actor.tenantId) return sendError(response, 401, 'UNAUTHENTICATED');
-            reason = 'employee_cancel';
-            row = await engine.findOne(TASK_DELEGATION_OBJECT, { where: { delegation_id: delegationId, organization_id: actor.tenantId, employee_id: actor.userId } }, { context: SYSTEM_CONTEXT }) as Row | null;
-          }
-          if (reasonValue !== undefined && reasonValue !== reason) return sendError(response, 422, 'DELEGATION_REQUEST_INVALID');
-          if (!row) return sendError(response, 404, 'TASK_DELEGATION_NOT_FOUND');
-          await this.revoke(engine, await authContext(), registry, row, reason, own ? token : undefined);
-          await response.status(200).json({ version: '1', delegationId, revoked: true });
-        } catch {
-          context.logger.error('[task-delegation] revoke failed');
-          await sendError(response, 503, 'TASK_DELEGATION_UNAVAILABLE');
-        }
+          const { row, scope, issuer, identityIssuer } = await tasks.current(request);
+          await response.status(200).json({ version: '1', active: true, token_type: 'forge_task', grant_id: row.grant_key,
+            generation: Number(row.generation), issuer, identity_issuer: identityIssuer, scope_sha256: row.scope_sha256, scope,
+            subject: { id: row.user_id, organization_id: row.organization_id }, issued_at: row.issued_at, expires_at: row.expires_at });
+        } catch (error) { await fail(response, error, true); }
+      });
+      server.delete(`${ROOT}/:grantId`, async (request, response) => {
+        response.header('Cache-Control', 'private, no-store');
+        try { await response.status(200).json(await tasks.revoke(request)); }
+        catch (error) { await fail(response, error, false); }
+      });
+      server.get(`${ROOT}/objects/:objectName`, async (request, response) => {
+        response.header('Cache-Control', 'private, no-store');
+        try {
+          const { actor, scope } = await tasks.current(request);
+          await response.status(200).json(await tasks.mcp.objectMetadata(actor, scope, String(request.params?.objectName)));
+        } catch (error) { await fail(response, error, true); }
+      });
+      server.get(`${ROOT}/files/:fileId/original`, async (request, response) => {
+        response.header('Cache-Control', 'private, no-store');
+        try {
+          const { actor, scope } = await tasks.current(request);
+          const resource = scope.resources.find((entry) => entry.id === request.params?.fileId);
+          if (!resource) throw new TaskConnectionFailure(403, 'FORGE_TASK_SCOPE_FORBIDDEN', '材料不在本次授权范围');
+          const original = await readTaskResource(context, actor, resource);
+          response.header('Content-Type', original.mediaType); response.header('Content-Length', String(original.bytes.byteLength));
+          response.header('X-Content-SHA256', original.sha256); response.header('ETag', `"${original.sha256}"`);
+          await response.status(200).send(original.bytes);
+        } catch (error) { await fail(response, error, true); }
+      });
+      server.post(`${ROOT}/mcp`, async (request, response) => {
+        let authorized = false;
+        response.header('Cache-Control', 'private, no-store');
+        try {
+          const { actor, scope, issuer } = await tasks.current(request);
+          const webRequest = new Request(new URL(`${ROOT}/mcp`, issuer), { method: 'POST', headers: headersFor(request), body: JSON.stringify(request.body) });
+          // Once the native MCP bridge is invoked an exception is not proof of
+          // no effect. Only connection validation before this line can say so.
+          authorized = true;
+          const result = await tasks.mcp.handle(webRequest, request.body, actor, scope);
+          result.headers.forEach((value, name) => response.header(name, value));
+          await response.status(result.status).send(new Uint8Array(await result.arrayBuffer()));
+        } catch (error) { await fail(response, error, !authorized); }
       });
     });
-  }
-
-  private async verifyScope(
-    engine: IObjectQLEngine, declared: ReturnType<typeof delegableActions>, actor: ExecutionContext, input: IssueRequest,
-  ): Promise<{ status: number; code: string } | undefined> {
-    for (const action of input.actions) {
-      if (!declared.has(`${action.objectName}:${action.actionName}`)) return { status: 422, code: 'DELEGATION_SCOPE_INVALID' };
-    }
-    if (input.record) {
-      // The employee must see the record with their own native context.
-      const found = await engine.findOne(input.record.objectName, { where: { id: input.record.recordId } }, { context: actor }).catch(() => null);
-      if (!found) return { status: 403, code: 'DELEGATION_SCOPE_DENIED' };
-    }
-    for (const file of input.files) {
-      const row = await engine.findOne('sys_file', { where: { id: file.fileId } }, { context: SYSTEM_CONTEXT }) as Row | null;
-      if (!row || row.status !== 'committed' || (row.organization_id && row.organization_id !== actor.tenantId)) {
-        return { status: 403, code: 'DELEGATION_SCOPE_DENIED' };
-      }
-      // Approval files are authorized per read by the approval snapshot routes;
-      // owner files must belong to the employee now.
-      if (file.sourceKind === 'owner' && row.owner_id !== actor.userId) return { status: 403, code: 'DELEGATION_SCOPE_DENIED' };
-    }
-    return undefined;
-  }
-
-  private async issue(
-    engine: IObjectQLEngine, auth: AuthContextLike, registry: DelegationRegistry, actor: ExecutionContext, input: IssueRequest,
-  ): Promise<{ delegationId: string; token: string; expiresAt: number; deduplicated: boolean } | { status: number; error: string }> {
-    const organizationId = String(actor.tenantId), employeeId = String(actor.userId);
-    const existing = await engine.findOne(TASK_DELEGATION_OBJECT, {
-      where: { idempotency_key: input.idempotencyKey, organization_id: organizationId },
-    }, { context: SYSTEM_CONTEXT }) as Row | null;
-    if (existing) {
-      const scope = decodeScope(existing.scope_json);
-      if (existing.employee_id !== employeeId || existing.input_digest !== input.inputDigest || !scope || !sameScope(scope, input)) {
-        return { status: 409, error: 'DELEGATION_CONFLICT' };
-      }
-      if (existing.revoked_at != null || timestamp(existing.expires_at) <= Date.now()) return { status: 409, error: 'DELEGATION_INACTIVE' };
-      // The plaintext credential is never stored, so a retried issue rotates
-      // it: a new session replaces the old one, which stops working at once.
-      const expiresAt = timestamp(existing.expires_at);
-      const session = await auth.internalAdapter.createSession(employeeId, false, {
-        activeOrganizationId: organizationId, expiresAt: new Date(expiresAt), userAgent: 'forge-task-delegation',
-      });
-      if (!session?.token) throw new Error('session not created');
-      const tokenSha256 = await sha256Hex(session.token);
-      await engine.update(TASK_DELEGATION_OBJECT, { id: existing.id, session_id: session.id, token_sha256: tokenSha256 }, { context: SYSTEM_CONTEXT });
-      await auth.adapter.delete({ model: 'session', where: [{ field: 'id', value: existing.session_id }] });
-      registry.forget(String(existing.token_sha256));
-      const delegationId = String(existing.delegation_id);
-      registry.remember(tokenSha256, { delegationId, organizationId, employeeId, ...input, expiresAt, revoked: false });
-      return { delegationId, token: session.token, expiresAt, deduplicated: true };
-    }
-    const issuedAt = Date.now();
-    const expiresAt = issuedAt + maxLifetimeMs(env(MAX_HOURS_ENV));
-    const delegationId = crypto.randomUUID();
-    const session = await auth.internalAdapter.createSession(employeeId, false, {
-      activeOrganizationId: organizationId, expiresAt: new Date(expiresAt), userAgent: 'forge-task-delegation',
-    });
-    if (!session?.token) throw new Error('session not created');
-    const tokenSha256 = await sha256Hex(session.token);
-    try {
-      await engine.insert(TASK_DELEGATION_OBJECT, {
-        name: `团队任务委托 ${new Date(issuedAt).toISOString().slice(0, 16).replace('T', ' ')}`,
-        delegation_id: delegationId, organization_id: organizationId, employee_id: employeeId,
-        session_id: session.id, token_sha256: tokenSha256, idempotency_key: input.idempotencyKey, input_digest: input.inputDigest,
-        scope_json: encodeScope(input), issued_at: new Date(issuedAt), expires_at: new Date(expiresAt),
-      }, { context: SYSTEM_CONTEXT });
-    } catch (error) {
-      // Never leave a usable session without its scope record.
-      await auth.internalAdapter.deleteSession(session.token).catch(() => undefined);
-      throw error;
-    }
-    registry.remember(tokenSha256, { delegationId, organizationId, employeeId, ...input, expiresAt, revoked: false });
-    return { delegationId, token: session.token, expiresAt, deduplicated: false };
-  }
-
-  private async revoke(
-    engine: IObjectQLEngine, auth: AuthContextLike, registry: DelegationRegistry, row: Row,
-    reason: 'run_terminal' | 'employee_cancel', token: string | undefined,
-  ): Promise<void> {
-    if (row.revoked_at == null) {
-      await engine.update(TASK_DELEGATION_OBJECT, { id: row.id, revoked_at: new Date(), revocation_reason: reason }, { context: SYSTEM_CONTEXT });
-    }
-    if (token) await auth.internalAdapter.deleteSession(token);
-    else await auth.adapter.delete({ model: 'session', where: [{ field: 'id', value: row.session_id }] });
-    registry.forget(String(row.token_sha256));
   }
 }

@@ -751,6 +751,86 @@ async function sendError(res: IHttpResponse, status: number, code: string, messa
   await res.status(status).json({ error: { code, message } });
 }
 
+
+/** The same native participant/snapshot checks serve both read doors. */
+export async function readApprovalOriginal(approvals: IApprovalService, engine: IObjectQLEngine, storage: IStorageService, actor: ExecutionContext, requestId: string, fileId: string, expected: string) {
+  const { request } = await authorizedApprovalRequest(approvals, requestId, actor);
+  const actorOrganizationId = actor.tenantId;
+  if (!request.organization_id || !actorOrganizationId || request.organization_id !== actorOrganizationId) {
+    throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+  }
+  const allowedFiles = snapshotFiles(request.payload, fileFieldNames(engine, request.object_name));
+  const snapshotFile = allowedFiles.get(fileId);
+  if (!snapshotFile) throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+  if (!snapshotFile.sha256) {
+    throw new ContextFailure(422, 'APPROVAL_MATERIAL_HASH_UNAVAILABLE', 'The approval material has no frozen SHA-256 value.');
+  }
+  if (snapshotFile.sha256 !== expected) {
+    throw new ContextFailure(409, 'APPROVAL_MATERIAL_HASH_MISMATCH', 'The requested SHA-256 does not match this approval snapshot.');
+  }
+
+  const rows = await engine.find('sys_file', {
+    where: { id: fileId },
+    fields: ['id', 'key', 'name', 'mime_type', 'size', 'status', 'scope', 'acl', 'owner_id', 'organization_id', 'ref_object', 'ref_id', 'ref_field'],
+    limit: 1,
+  }, { context: SYSTEM_CONTEXT });
+  const file = rows?.[0] as FileRow | undefined;
+  const fieldMatches = file && typeof file.ref_field === 'string' && snapshotFile.fields.has(file.ref_field);
+  const hasOwner = file && (file.ref_object != null || file.ref_id != null || file.ref_field != null);
+  const recordMatches = file && (!hasOwner || file.ref_object === request.object_name &&
+    String(file.ref_id ?? '') === request.record_id && fieldMatches);
+  const organizationMatches = file && file.organization_id === request.organization_id;
+  if (!file || !request.submitter_id || file.owner_id !== request.submitter_id ||
+      !['user', 'attachments'].includes(String(file.scope)) || file.acl !== 'private' || !recordMatches || !organizationMatches ||
+      !['committed', 'deleted'].includes(String(file.status))) {
+    throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+  }
+
+  if (file.status === 'deleted') {
+    const retained = await resolveRetainedContractMaterial(engine, {
+      contractId: request.record_id,
+      fileId,
+      sha256: snapshotFile.sha256,
+      organizationId: request.organization_id,
+      submitterId: request.submitter_id,
+      context: SYSTEM_CONTEXT,
+    });
+    if (!retained || retained.submitterId !== request.submitter_id || retained.contractId !== request.record_id ||
+        retained.name !== file.name || retained.mediaType !== String(file.mime_type).toLowerCase() ||
+        retained.bytes !== Number(file.size) || snapshotFile.name && snapshotFile.name !== retained.name) {
+      throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
+    }
+  }
+
+  const key = boundedText(file.key, 2048);
+  const name = boundedText(file.name, 255);
+  const size = Number(file.size);
+  const mediaType = typeof file.mime_type === 'string' ? file.mime_type.toLowerCase() : '';
+  if (!key || !name || !Number.isSafeInteger(size) || size < 1) {
+    throw new ContextFailure(422, 'APPROVAL_MATERIAL_INVALID', 'The approval material metadata is invalid.');
+  }
+  if (size > MAX_FILE_BYTES) {
+    throw new ContextFailure(413, 'APPROVAL_MATERIAL_TOO_LARGE', 'The original approval material exceeds the 2 MiB limit.');
+  }
+  if (!ORIGINAL_MEDIA_TYPES.has(mediaType)) {
+    throw new ContextFailure(415, 'APPROVAL_MATERIAL_UNSUPPORTED_TYPE', 'Only PDF and DOCX approval originals can be downloaded.');
+  }
+  if (snapshotFile.name && snapshotFile.name !== name) {
+    throw new ContextFailure(409, 'APPROVAL_MATERIAL_HASH_MISMATCH', 'The approval material name does not match its frozen snapshot.');
+  }
+
+  const bytes = await storage.download(key);
+  if (bytes.length !== size || bytes.length > MAX_FILE_BYTES || !hasOriginalSignature(bytes, mediaType, name)) {
+    throw new ContextFailure(422, 'APPROVAL_MATERIAL_INVALID', 'The original approval material failed MIME or size validation.');
+  }
+  const digest = await sha256(bytes);
+  if (digest !== snapshotFile.sha256 || digest !== expected) {
+    throw new ContextFailure(409, 'APPROVAL_MATERIAL_HASH_MISMATCH', 'The original approval material does not match its frozen SHA-256.');
+  }
+
+  return { fileId, name, mediaType, bytes, sha256: digest };
+}
+
 export class ApprovalWorkbenchContextPlugin implements Plugin {
   name = 'com.inocube.forge.approval-workbench-context';
   version = '1.0.0';
@@ -881,80 +961,9 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
         }
 
         try {
-          const { request } = await authorizedApprovalRequest(approvals, requestId, executionContext);
-          const actorOrganizationId = executionContext.tenantId || executionContext.organizationId;
-          if (!request.organization_id || !actorOrganizationId || request.organization_id !== actorOrganizationId) {
-            throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
-          }
-          const allowedFiles = snapshotFiles(request.payload, fileFieldNames(engine, request.object_name));
-          const snapshotFile = allowedFiles.get(fileId);
-          if (!snapshotFile) throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
-          if (!snapshotFile.sha256) {
-            throw new ContextFailure(422, 'APPROVAL_MATERIAL_HASH_UNAVAILABLE', 'The approval material has no frozen SHA-256 value.');
-          }
-          if (snapshotFile.sha256 !== expected) {
-            throw new ContextFailure(409, 'APPROVAL_MATERIAL_HASH_MISMATCH', 'The requested SHA-256 does not match this approval snapshot.');
-          }
-
-          const rows = await engine.find('sys_file', {
-            where: { id: fileId },
-            fields: ['id', 'key', 'name', 'mime_type', 'size', 'status', 'scope', 'acl', 'owner_id', 'organization_id', 'ref_object', 'ref_id', 'ref_field'],
-            limit: 1,
-          }, { context: SYSTEM_CONTEXT });
-          const file = rows?.[0] as FileRow | undefined;
-          const fieldMatches = file && typeof file.ref_field === 'string' && snapshotFile.fields.has(file.ref_field);
-          const hasOwner = file && (file.ref_object != null || file.ref_id != null || file.ref_field != null);
-          const recordMatches = file && (!hasOwner || file.ref_object === request.object_name &&
-            String(file.ref_id ?? '') === request.record_id && fieldMatches);
-          const organizationMatches = file && file.organization_id === request.organization_id;
-          if (!file || !request.submitter_id || file.owner_id !== request.submitter_id ||
-              !['user', 'attachments'].includes(String(file.scope)) || file.acl !== 'private' || !recordMatches || !organizationMatches ||
-              !['committed', 'deleted'].includes(String(file.status))) {
-            throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
-          }
-
-          if (file.status === 'deleted') {
-            const retained = await resolveRetainedContractMaterial(engine, {
-              contractId: request.record_id,
-              fileId,
-              sha256: snapshotFile.sha256,
-              organizationId: request.organization_id,
-              submitterId: request.submitter_id,
-              context: SYSTEM_CONTEXT,
-            });
-            if (!retained || retained.submitterId !== request.submitter_id || retained.contractId !== request.record_id ||
-                retained.name !== file.name || retained.mediaType !== String(file.mime_type).toLowerCase() ||
-                retained.bytes !== Number(file.size) || snapshotFile.name && snapshotFile.name !== retained.name) {
-              throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
-            }
-          }
-
-          const key = boundedText(file.key, 2048);
-          const name = boundedText(file.name, 255);
-          const size = Number(file.size);
-          const mediaType = typeof file.mime_type === 'string' ? file.mime_type.toLowerCase() : '';
-          if (!key || !name || !Number.isSafeInteger(size) || size < 1) {
-            throw new ContextFailure(422, 'APPROVAL_MATERIAL_INVALID', 'The approval material metadata is invalid.');
-          }
-          if (size > MAX_FILE_BYTES) {
-            throw new ContextFailure(413, 'APPROVAL_MATERIAL_TOO_LARGE', 'The original approval material exceeds the 2 MiB limit.');
-          }
-          if (!ORIGINAL_MEDIA_TYPES.has(mediaType)) {
-            throw new ContextFailure(415, 'APPROVAL_MATERIAL_UNSUPPORTED_TYPE', 'Only PDF and DOCX approval originals can be downloaded.');
-          }
-          if (snapshotFile.name && snapshotFile.name !== name) {
-            throw new ContextFailure(409, 'APPROVAL_MATERIAL_HASH_MISMATCH', 'The approval material name does not match its frozen snapshot.');
-          }
-
-          const bytes = await storage.download(key);
-          if (bytes.length !== size || bytes.length > MAX_FILE_BYTES || !hasOriginalSignature(bytes, mediaType, name)) {
-            throw new ContextFailure(422, 'APPROVAL_MATERIAL_INVALID', 'The original approval material failed MIME or size validation.');
-          }
-          const digest = await sha256(bytes);
-          if (digest !== snapshotFile.sha256 || digest !== expected) {
-            throw new ContextFailure(409, 'APPROVAL_MATERIAL_HASH_MISMATCH', 'The original approval material does not match its frozen SHA-256.');
-          }
-
+          const actorOrganizationId = executionContext.tenantId;
+          const original = await readApprovalOriginal(approvals, engine, storage, executionContext, requestId, fileId, expected);
+          const { name, mediaType, bytes, sha256: digest } = original;
           res.header('Content-Type', mediaType);
           res.header('Content-Length', String(bytes.length));
           res.header('Content-Disposition', contentDisposition(name));
