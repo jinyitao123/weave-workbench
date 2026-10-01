@@ -419,6 +419,7 @@ export interface EnterpriseWeaveWorkContinuationContextView {
   kind: 'weave'
   task: string
   runStatus: 'queued' | 'running' | 'parked' | 'cancel_requested' | 'succeeded' | 'failed' | 'cancelled' | 'abandoned'
+  businessResult?: 'completed' | 'needs_input' | 'action_failed' | 'action_unknown'
   materials: Array<{
     name: string
     bytes: number

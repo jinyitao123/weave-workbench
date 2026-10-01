@@ -1,7 +1,7 @@
 import type { EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityCatalog } from '../../types/api'
 import type { TeamDefinition } from '../../types/team-workspace'
 import { addParallelBranch, bindings, configureWorkflowResultProtocol, initialGraph, insertStep, isParallelBranchWorker, originalBinding, predecessors, removeStep, validateWorkflowResultProtocol, WORKBENCH_RESULT_PROTOCOL } from './graph'
-import { newMember } from './member'
+import { isSystemManagedBusinessParameter, newMember } from './member'
 
 export type TeamDevelopmentOperation =
   | { kind: 'team'; name?: string; objective?: string }
@@ -46,6 +46,7 @@ function capabilityParameterSources(
     if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('业务参数材料来源映射格式无效')
     const mapping = value as Record<string, unknown>
     if (typeof mapping.name !== 'string' || typeof mapping.source !== 'string' || mappings.has(mapping.name)) throw new Error('业务参数材料来源映射缺少唯一参数或来源')
+    if (isSystemManagedBusinessParameter(mapping.name)) throw new Error('系统托管的防重复提交参数不能绑定材料，请移除该映射')
     const parameter = declared.get(mapping.name)
     if (!parameter) throw new Error('材料来源映射引用了当前动作中不存在的参数')
     const source = mapping.source as EnterpriseBusinessCapabilityBinding['parameters'][number]['source']
@@ -59,7 +60,7 @@ function capabilityParameterSources(
     mappings.set(mapping.name, source)
   }
   for (const parameter of capability.params ?? []) {
-    if (parameter.type === 'file' && parameter.multiple === true && mappings.get(parameter.name) !== 'materials.ids') {
+    if (!isSystemManagedBusinessParameter(parameter.name) && parameter.type === 'file' && parameter.multiple === true && mappings.get(parameter.name) !== 'materials.ids') {
       throw new Error(`多文件参数 ${parameter.name} 必须绑定本轮完整文件集合`)
     }
   }

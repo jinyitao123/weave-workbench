@@ -712,6 +712,31 @@ describe('EnterpriseService', () => {
     expect(calls).not.toContain('http://weave/v1/runs/run-unrelated/workbench-context')
   })
 
+  it.each(['completed', 'needs_input', 'action_failed', 'action_unknown'] as const)('projects server business result %s over a model needs-input notice', async (businessResult) => {
+    const source = { workReference: '550e8400-e29b-41d4-a716-446655440300', runReference: 'run-business-result', sessionReference: 'work-business-result' }
+    const fetchMock = workOverviewFetch((url) => {
+      if (url.includes('/v1/teams?status=active')) return Response.json([])
+      if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
+      if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
+      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [] })
+      if (url.endsWith('/api/v1/notifications?limit=200')) return Response.json({ notifications: [{ id: 'server-result', type: 'weave.team_run.revision_required', title: '合同检查', createdAt: '2026-09-30T02:00:00Z' }] })
+      if (url.endsWith('/api/v1/workbench/notifications/server-result/source')) return Response.json({ version: '1', notificationId: 'server-result', kind: 'revision_required', source: { system: 'weave', ...source } })
+      if (url.endsWith(`/v1/runs/${source.runReference}/workbench-context`)) {
+        const metadata = teamRunMetadata(source, { actionOutcomes: [{ node_id: 'submit', call_id: 'call-submit', action_name: 'submit', object_name: 'contract', status: 'succeeded', summary: '已提交' }] })
+        return Response.json({ ...metadata, run: { ...metadata.run, business_result: businessResult } })
+      }
+      return undefined
+    })
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+    await service.signIn('employee@example.test', 'secret')
+    const item = (await service.getWorkOverview()).items[0]!
+    expect(item.actionable).toBe(businessResult === 'needs_input')
+    expect(item.status).toBe(businessResult === 'needs_input' ? 'pending' : 'completed')
+    if (businessResult === 'completed') expect(item.summary).toContain('审批状态以 Forge 当前正式事项为准')
+    if (businessResult === 'action_failed') expect(item.summary).toContain('业务动作失败')
+    if (businessResult === 'action_unknown') expect(item.summary).toContain('结果未知')
+  })
+
   it('does not reuse a successful action receipt across employee accounts', async () => {
     const source = { workReference: '550e8400-e29b-41d4-a716-446655440201', runReference: 'run-shared-notice', sessionReference: 'work-session-shared' }
     const contextAuthors: string[] = []
@@ -835,6 +860,18 @@ describe('EnterpriseService', () => {
       assertCurrent: async () => {},
     }
     await expect(service.submitWork({ teamId: 'team-1', teamName: '团队', workflowId: 'flow-1', workflowName: '流程', businessCapabilityIds: [], version: 1 }, '重新检查', source)).rejects.toBeInstanceOf(WorkRegistrationRejectedError)
+    expect(dispatched).toBe(false)
+  })
+
+  it.each([{ code: 'dispatch_input_too_many_resources' }, { error: { code: 'dispatch_input_too_many_resources' } }])('recognizes a resource-count rejection without dispatching: %j', async (body) => {
+    let dispatched = false
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: workOverviewFetch((url) => {
+      if (url.endsWith('/v1/workbench/dispatch-inputs')) return Response.json(body, { status: 409 })
+      if (url.includes('/dispatch')) dispatched = true
+      return undefined
+    }) })
+    await service.signIn('employee@example.test', 'secret')
+    await expect(service.submitWork({ teamId: 'team-1', teamName: '团队', workflowId: 'flow-1', workflowName: '流程', businessCapabilityIds: [], version: 1 }, '检查材料')).rejects.toThrow('最多允许 10 份材料')
     expect(dispatched).toBe(false)
   })
 
@@ -1010,6 +1047,15 @@ describe('EnterpriseService', () => {
     expect(calls).toHaveLength(1)
     expect(calls[0]?.url).toBe('http://weave/v1/runs/run-1/workbench-context')
     expect(calls[0]?.headers.get('Authorization')).toBe('Bearer weave-token-employee@example.test')
+
+    for (const businessResult of ['completed', 'needs_input', 'action_failed', 'action_unknown']) {
+      Object.assign(payload.run, { business_result: businessResult })
+      await expect(service.getWorkContinuationContext(references)).resolves.toMatchObject({ run: { businessResult, finalResult: { disposition: 'needs_input' } } })
+    }
+    Object.assign(payload.run, { business_result: 'invalid' })
+    await expect(service.getWorkContinuationContext(references)).rejects.toThrow('团队业务结果格式无效')
+    Object.assign(payload.run, { business_result: undefined })
+    expect((await service.getWorkContinuationContext(references)).run.businessResult).toBeUndefined()
 
     const originalFinalResult = structuredClone(payload.run.final_result)
     payload.run.final_result.summary = '🧭'.repeat(1000)

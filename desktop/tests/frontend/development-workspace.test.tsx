@@ -133,6 +133,56 @@ it('keeps unassigned actions in the picker and requires a valid binding for nati
   await saveSoon()
   expect(remote.document.members[1]!.configuration.businessCapabilityBindings).toEqual([])
 })
+it('excludes both system idempotency parameters from the business material selectors', async () => {
+  const actionId = 'forge:action:sales_contract.ContractSubmit'
+  remote.document.members[1]!.configuration.businessCapabilityIds = [actionId]
+  getBusinessCapabilityCatalog.mockResolvedValueOnce({
+    version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [{
+      id: actionId, name: '提交合同', description: '提交本轮材料', effect: 'write', resourceType: 'sales_contract', requiresEmployeeIntent: true, status: 'available', actionName: 'ContractSubmit', objectName: 'sales_contract', params: [
+        { name: 'idempotency_key', label: '防重复提交参数', type: 'string', required: true },
+        { name: 'idempotencyKey', label: '备用防重复提交参数', type: 'string' },
+        { name: 'material_summary', label: '材料摘要', type: 'string' },
+      ],
+    }],
+  })
+  await open(); await selectMember('审核员'); await click('能力'); await click('配置输入')
+  expect(container.textContent).not.toContain('idempotency')
+  expect(container.querySelector('[aria-label="防重复提交参数来源"]')).toBeNull()
+  expect(container.querySelector('[aria-label="备用防重复提交参数来源"]')).toBeNull()
+  await chooseProductOption('材料摘要来源', '本次材料清单')
+  await saveSoon()
+  expect(remote.document.members[1]!.configuration.businessCapabilityBindings).toEqual([{ capabilityId: actionId, parameters: [{ name: 'material_summary', source: 'materials.manifest_json' }] }])
+})
+
+it('requires removal of old system mappings before update or trial and preserves valid material mappings', async () => {
+  const actionId = 'forge:action:sales_contract.ContractSubmit', worker = remote.document.members[1]!
+  worker.configuration.businessCapabilityIds = [actionId]
+  worker.configuration.businessCapabilityBindings = [{ capabilityId: actionId, parameters: [
+    { name: 'idempotency_key', source: 'materials.single.sha256' },
+    { name: 'idempotencyKey', source: 'materials.manifest_json' },
+    { name: 'material_summary', source: 'materials.manifest_json' },
+  ] }]
+  remote.published_document = structuredClone(remote.document)
+  remote.published_document.members[1]!.configuration.businessCapabilityBindings = []
+  remote.trials = [{ request_id: 'old-success', revision: 1, workflow_id: 'flow', run_id: 'old-run', status: 'succeeded', created_at: '' }]
+  getBusinessCapabilityCatalog.mockResolvedValueOnce({
+    version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [{
+      id: actionId, name: '提交合同', description: '提交本轮材料', effect: 'write', resourceType: 'sales_contract', requiresEmployeeIntent: true, status: 'available', actionName: 'ContractSubmit', objectName: 'sales_contract', params: [{ name: 'material_summary', label: '材料摘要', type: 'string' }],
+    }],
+  })
+  await open(); await selectMember('审核员'); await click('能力')
+  expect(container.textContent).toContain('系统托管的防重复提交参数不能绑定材料，请移除旧映射')
+  expect(container.textContent).not.toContain('idempotency')
+  await act(async () => container.querySelector<HTMLButtonElement>('.tw-change-note')!.click())
+  expect([...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '更新团队')?.disabled).toBe(true)
+  await click('工作流程'); await click('调试此流程'); await edit('测试输入', '核对当前材料'); await click('开始调试')
+  expect(container.textContent).toContain('移除旧映射后再调试')
+  expect(call.mock.calls.some(([command]) => command.action === 'trial')).toBe(false)
+  await click('团队分工'); await selectMember('审核员'); await click('能力'); await click('移除系统参数映射'); await saveSoon()
+  expect(remote.document.members[1]!.configuration.businessCapabilityBindings).toEqual([{ capabilityId: actionId, parameters: [{ name: 'material_summary', source: 'materials.manifest_json' }] }])
+  expect(container.textContent).not.toContain('系统托管的防重复提交参数不能绑定材料')
+})
+
 it('blocks removal of referenced members and keeps the desktop on one visible flow', async () => {
   await open(); await selectMember('审核员'); await click('成员操作'); await click('移出团队')
   expect(container.textContent).toContain('仍被以下步骤使用')
