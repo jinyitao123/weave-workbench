@@ -642,6 +642,8 @@ describe('employee-bound material handoff', () => {
       ...discovered, materials: [], reuse_material_names: frozen.map((material) => material.name), business_actions: [],
     })
     expect(result.body.result.status).toBe('accepted')
+    // The Host, not the model, states what the team may do.
+    expect(result.body.result.allowed_scope).toBe('本次只交给团队查看和分析，不允许业务写入；2 份材料')
     expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
     expect(f.service.submitWork.mock.calls[0]?.[2]).toMatchObject({
       continuation: { inputRevisionID: context.source.inputRevisionID, runID: context.source.runID, restartAfterFailedRun: true },

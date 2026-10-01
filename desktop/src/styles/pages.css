@@ -144,6 +144,7 @@
 .work-panel-heading { height: 45px; display: flex; align-items: center; gap: 7px; padding: 0 13px; border-bottom: 1px solid var(--border); color: var(--text-secondary); }
 .work-panel-heading h2 { flex: 1; color: var(--text); }
 .work-panel-heading span { min-width: 20px; padding: 2px 5px; border-radius: 6px; background: var(--surface-hover); text-align: center; font-size: 9px; }
+.work-read-note { margin: 8px 0; padding: 9px 11px; border-radius: 8px; color: var(--text-secondary); background: var(--surface-subtle); font-size: 10.5px; }
 .work-empty { min-height: 145px; display: grid; place-items: center; padding: 20px; color: var(--text-tertiary); font-size: 10px; text-align: center; }
 .work-task-list, .work-run-list { display: grid; }
 .work-task-list article { padding: 12px 13px; border-bottom: 1px solid var(--border); }
