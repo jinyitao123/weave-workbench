@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Plus, RefreshCw } from 'lucide-react'
-import { ProductField, ProductSelect, ProductTextArea } from '@/components/ui'
+import { Plus, RefreshCw, X } from 'lucide-react'
+import { IconButton, Modal, ProductField, ProductSelect, ProductTextArea } from '@/components/ui'
 import { TeamDevelopmentWorkspace } from './TeamDevelopmentWorkspace'
 import type { EnterpriseBusinessCapabilityCatalog, EnterpriseDevelopmentOverview, PrimeWorkApi, RuntimeInfo } from '@/types/api'
 import type { TeamDevelopmentProposalResult } from '@/types/team-workspace'
-import './team-development.css'
+import './team-panel.css'
 
 interface Props {
   enterprise: PrimeWorkApi['enterprise']
@@ -72,11 +72,28 @@ export function TeamDevelopmentInspector({ enterprise, agent, accountId, runtime
     } catch (cause) { setError(cause instanceof Error ? cause.message : '创建团队失败') }
     finally { setCreateBusy(false) }
   }
+  const openCreate = () => { setNewName(''); setNewObjective(''); setCreating(true) }
+  const selectTeam = (id: string) => {
+    if (dirtyRef.current) { setError('请先保存或放弃当前团队的修改'); return }
+    setTeamId(id); setProposal(undefined); setBindRequested(Boolean(runtime?.runtimeId && !runtime.isStreaming))
+  }
 
-  return <div className="team-development-inspector">
-    {createProposal && <section className="team-development-inspector__proposal"><strong>Pi 建议新建团队</strong><p>{createProposal.name}</p><small>{createProposal.objective}</small><button type="button" className="button button--primary" disabled={createBusy} onClick={() => void createTeam(createProposal.name, createProposal.objective)}>创建团队</button></section>}
-    {creating && <section className="team-development-inspector__create"><ProductField label="团队名称" value={newName} maxLength={80} onChange={(event) => setNewName(event.target.value)}/><ProductTextArea label="团队目标" rows={4} value={newObjective} onChange={(event) => setNewObjective(event.target.value)}/><span><button type="button" className="button" onClick={() => setCreating(false)}>取消</button><button type="button" className="button button--primary" disabled={createBusy || !newName.trim() || !newObjective.trim()} onClick={() => void createTeam(newName, newObjective)}>创建团队</button></span></section>}
-    {teams.length ? <><div className="team-development-inspector__team-context"><ProductSelect className="team-development-inspector__team-select" label="团队" value={selected} options={teams.map((team) => ({ value: team.id, label: team.name }))} onChange={(id) => { if (dirtyRef.current) { setError('请先保存或放弃当前团队的修改'); return }; setTeamId(id); setProposal(undefined); setBindRequested(Boolean(runtime?.runtimeId && !runtime.isStreaming)) }}/><button type="button" className="button team-development-inspector__context-action" aria-label="新建团队" title="新建团队" onClick={() => setCreating(true)}><Plus size={15}/></button><button type="button" className="button team-development-inspector__context-action" aria-label="刷新团队" title="刷新团队" onClick={onRefresh} disabled={loading}><RefreshCw size={14}/></button></div><TeamDevelopmentWorkspace key={`${accountId}:${selected}`} teamId={selected} accountId={accountId} runtime={runtime} enterprise={enterprise} overview={overview} catalog={catalog} catalogError={catalogError} proposal={proposal} bindRequested={bindRequested} refreshVersion={remoteRefresh} view={view} onBound={() => { setBindRequested(false); void refreshAgentState() }} onClearProposal={() => setProposal(undefined)} onDirtyChange={(value) => { dirtyRef.current = value }} onError={setError} onPublish={() => { onRefresh(); void refreshAgentState() }}/></> : <div className="team-development-inspector__empty"><p>{loading ? '正在读取团队…' : '当前没有可开发的团队。'}</p><button type="button" className="button" onClick={() => setCreating(true)}><Plus size={13}/>新建团队</button></div>}
-    {error && <p className="team-development-inspector__error" role="alert">{error}</p>}
+  return <div className="team-panel">
+    {teams.length ? <div className="team-panel__context">
+      <ProductSelect className="team-panel__team-select" label="团队" value={selected} options={teams.map((team) => ({ value: team.id, label: team.name }))} onChange={selectTeam}/>
+      <IconButton label="新建团队" onClick={openCreate}><Plus size={15}/></IconButton>
+      <IconButton label="刷新团队" onClick={onRefresh} disabled={loading}><RefreshCw size={14}/></IconButton>
+    </div> : null}
+    {error && <div className="team-panel__alert" role="alert"><p>{error}</p><IconButton size="small" label="关闭提示" onClick={() => setError('')}><X size={13}/></IconButton></div>}
+    {createProposal && <section className="team-panel__suggestion" aria-label="Pi 建议新建团队">
+      <strong>Pi 建议新建团队</strong>
+      <p>{createProposal.name}</p>
+      <small>{createProposal.objective}</small>
+      <div className="team-panel__suggestion-actions"><button type="button" className="button" onClick={() => setCreateProposal(undefined)}>忽略</button><button type="button" className="button button--primary" disabled={createBusy} onClick={() => void createTeam(createProposal.name, createProposal.objective)}>创建团队</button></div>
+    </section>}
+    {teams.length
+      ? <TeamDevelopmentWorkspace key={`${accountId}:${selected}`} teamId={selected} accountId={accountId} runtime={runtime} enterprise={enterprise} overview={overview} catalog={catalog} catalogError={catalogError} proposal={proposal} bindRequested={bindRequested} refreshVersion={remoteRefresh} view={view} onBound={() => { setBindRequested(false); void refreshAgentState() }} onClearProposal={() => setProposal(undefined)} onDirtyChange={(value) => { dirtyRef.current = value }} onError={setError} onPublish={() => { onRefresh(); void refreshAgentState() }}/>
+      : <div className="team-panel__empty"><p>{loading ? '正在读取团队…' : '还没有可开发的团队'}</p>{loading ? null : <button type="button" className="button button--primary" onClick={openCreate}><Plus size={13}/>新建团队</button>}</div>}
+    {creating && <Modal title="新建团队" onClose={() => setCreating(false)} footer={<><button type="button" className="button" onClick={() => setCreating(false)}>取消</button><button type="button" className="button button--primary" disabled={createBusy || !newName.trim() || !newObjective.trim()} onClick={() => void createTeam(newName, newObjective)}>创建团队</button></>}><div className="tw-form"><ProductField autoFocus label="团队名称" value={newName} maxLength={80} onChange={(event) => setNewName(event.target.value)}/><ProductTextArea label="团队目标" rows={4} value={newObjective} onChange={(event) => setNewObjective(event.target.value)}/></div></Modal>}
   </div>
 }
