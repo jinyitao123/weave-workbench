@@ -2,13 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://workbench.inocube.local/contracts/v1/task-delegation.schema.json",
   "title": "Weave Task Delegation",
-  "description": "The auditable projection of a short-lived task authorization. The credential reference is opaque; credentials and signed token bodies remain outside this contract.",
+  "description": "The auditable projection of a Forge-issued task delegation. Forge issues delegationId and the task credential and enforces its scope at execution; Weave keeps only an encrypted, opaque credential reference. Lifetime follows the run, capped by deployment policy. Credentials and token bodies remain outside this contract.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "delegationId", "credentialRef", "subject", "actor", "taskId", "inputRevisionId", "workflow", "actions", "resources", "issuedAt", "expiresAt", "status", "correlationId"],
+  "required": ["version", "delegationId", "issuer", "credentialRef", "subject", "actor", "taskId", "inputRevisionId", "workflow", "actions", "resources", "issuedAt", "expiresAt", "status", "correlationId"],
   "properties": {
     "version": { "const": "1" },
-    "delegationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "delegationId": { "type": "string", "minLength": 1, "maxLength": 128, "description": "Issued by Forge and identical in Forge and Weave records." },
+    "issuer": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:\\S{1,240}$" },
     "credentialRef": { "type": "string", "minLength": 1, "maxLength": 256 },
     "subject": {
       "type": "object",
@@ -64,6 +65,7 @@
     "expiresAt": { "type": "string", "format": "date-time" },
     "status": { "enum": ["active", "revoked", "expired"] },
     "revokedAt": { "type": "string", "format": "date-time" },
+    "revocationReason": { "enum": ["run_terminal", "employee_cancel", "account_disabled", "superseded"] },
     "correlationId": { "type": "string", "minLength": 1, "maxLength": 128 }
   }
 }

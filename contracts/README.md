@@ -2,32 +2,39 @@
 
 本目录是桌面、Weave 与 Forge 之间定义的唯一来源。
 
-当前 `v1/` 的 Schema 是契约草稿，尚不代表三方已实现和验收。身份与执行控制的响应、错误和取消细节需要随对应功能补齐。组件仓引用本仓的契约版本与提交，不另维护一份互相漂移的副本。
+组件仓引用本仓的契约版本与提交，不另维护一份互相漂移的副本。契约落地前必须补齐调用者、身份、输入、输出、错误、版本、幂等、取消和审计字段。
 
-第一批契约包括：
+状态含义：**目标**＝已定方向、尚未实现；**草稿**＝未被任何组件采用；**已实现**＝组件代码中存在对应实现，只代表组件可用，场景是否通过以[项目状态](../docs/项目状态.md)为准；**待修订**＝已实现但须按所注决策调整。状态核对于 2026-10-01（总仓 `90c87fc5`、Weave `5a47d405`、Forge `eb90f556`）。
 
-- `enterprise-session`：桌面可见的登录身份、身份来源、组织环境和安全存储状态。
-- `account-binding`：Forge 登录主体与 Weave 用户、组织之间的稳定绑定。
-- `task-delegation`：一次任务获准使用的动作、资源、有效期和撤销状态。
-- `identity`：工作请求中的设备会话和 Weave 短期任务委托。
-- `work-request`：桌面递交的目标、材料、范围和期望交付。
-- `business-action`：Weave 调用 Forge 业务动作的输入、幂等与权限上下文。
-- `business-capability-catalog`：开发中心可分配给团队成员的 Forge 业务能力及动作参数说明，不暴露 MCP 工具或凭据；参数来源映射保存在成员配置草稿并随发布版本冻结。
-- `task-notification`：Forge 或 Weave 向指定员工创建的待办。
-- `work-continuation`：员工从原生收件箱打开一条 Weave 团队运行消息时，按确切运行读取原输入、固定材料和真实结果，继续原工作；它只读取已有状态，不成为第二套待办。
-- `owned-text-material`：原文件所有人用 Forge 当前登录身份取回自己上传的未绑定文本原件，校验字节后继续工作；审批参与者仍由审批上下文读取其获准快照。
-- `owned-original-material`：Workbench 可展示的 PDF/DOCX 原件元数据引用；原始字节只由 Forge owner 或原生审批快照授权路由提供，不放进 JSON、任务正文或模型输入。
-- `approval-context`：Workbench 按当前 Forge 身份读取单个原生审批的受限快照、退回版本与材料；修订材料由 Forge 领域动作校验并经 ObjectStack 原生守卫重提，不开放桌面直接重提。
-- `approval-revision`：退回事项的新主件与附件引用、来源版本和幂等键；Forge 插件固定材料并调用受守卫的原生重提，回执区分准备完成、已进入下一轮和恢复状态未知。
-- `team-run-event`：Weave 将团队运行终态交给 Forge 原生收件箱的系统事件。
-- `team-run-result`：可选的团队检查结果结构；本轮完成或要求员工补充材料由冻结输出契约验证，正式业务状态仍以 Forge 为准。
-- `team-run-notification-source`：员工点击原生收件箱中的 Weave 团队消息时，按当前身份读取这条消息已保存的来源引用，用于打开原工作。
-- `delivery-receipt`：业务结果、证据、用量和独立核验结果。
-- `execution-control`：重试、超时、额度、取消和未知结果核对。
-- `development-observation`：开发中心读取团队定义、准确版本和归属运行的只读投影。
-- `team-member-config-draft`：开发中心按团队成员保存、刷新后可读回且不影响正式运行的配置草稿，包含 Forge 动作参数到本次固定材料来源的显式映射。
+| 契约 | 内容 | 状态 |
+| --- | --- | --- |
+| `enterprise-session` | 桌面可见的登录身份、身份来源、组织环境和会话保存方式 | 待修订：稳定 `issuer`（决策 002）；Forge、Weave、桌面已在各自分支实现，未合入未部署 |
+| `account-binding` | Forge 登录主体与 Weave 用户、组织之间的稳定绑定 | 待修订：稳定 `issuer`（决策 002）；Weave 分支 `codex/forge-task-delegation` 已实现，未合入未部署 |
+| `task-delegation` | 一次任务获准使用的动作、资源、有效期和撤销状态 | 待修订（决策 002）：Forge 签发、Weave 接收与终态撤销、桌面申请已在各自分支实现，未合入未部署 |
+| `task-delegation-request` | Host 向 Forge 申请任务委托的请求与回执 | Forge、Weave、桌面已在各自分支实现，未合入未部署 |
+| `work-request` | 桌面递交的目标、材料、范围和期望交付，含 `identity` 定义 | 已实现（映射到 Weave 固定输入登记与派发） |
+| `agent-team-handoff` | Host 保存在本地私有目录的固定交接包 | 已实现 |
+| `business-capability-catalog` | 开发中心可分配给成员的 Forge 业务能力及参数说明 | 已实现 |
+| `business-action` | Weave 调用 Forge 业务动作的输入与权限上下文 | 草稿：未采用，实际走 Forge 原生 MCP `run_action` |
+| `delivery-receipt` | 业务结果、证据、用量和独立核验结果 | 草稿：未采用 |
+| `task-notification` | 员工工作事项的桌面展示投影 | 草稿：由“员工工作投影”取代方向，待收敛 |
+| `work-continuation` | 从 Weave 团队运行消息按确切运行继续原工作 | 已实现 |
+| `work-run-lookup` | 批量读取本人运行的当前性与业务结果 | Weave 分支 `codex/forge-task-delegation` 与桌面已实现，未合入未部署 |
+| `owned-text-material` | 原文件所有人读取本人未绑定文本原件 | 已实现 |
+| `owned-original-material` | PDF/DOCX 原件元数据引用 | 已实现 |
+| `approval-context` | 按当前身份读取单个原生审批的受限快照与材料 | 已实现 |
+| `approval-work-list` | 本人可办理与被退回审批的只读分页投影 | Forge 分支与桌面已实现，未合入未部署 |
+| `approval-revision` | 退回事项的新材料递交与回执核对 | 已实现；R2 递交未在桌面验收 |
+| `team-run-event` | Weave 运行事件进入 Forge 原生收件箱 | 待修订（决策 002）：内容摘要冲突、接收人校验、`human_review` 接收与来源投影Forge、Weave、桌面已在各自分支实现，未合入未部署 |
+| `team-run-result` | 团队检查结果的可选结构 | 已实现 |
+| `team-run-notification-source` | 按当前身份读取 Weave 团队消息的来源引用 | 已实现 |
+| `business-notification-source` | 按当前身份读取 Forge 业务消息的来源与材料 | 已实现 |
+| `development-observation` | 开发中心读取团队、版本和运行的只读投影 | 已实现 |
+| `team-member-config-draft` | 按成员保存的配置草稿 | 已实现 |
+| `team-create`、`team-management`、`workflow-management` | 团队新建、资料与成员、流程草稿与发布 | 已实现 |
+| [团队工作区契约](v1/团队工作区契约.md) | 团队开发草稿、试跑与发布 | 待修订（决策 002）：`audience` 团队可用范围已在 Weave 分支与桌面实现，未合入未部署 |
 
-契约落地前必须补齐调用者、身份、输入、输出、错误、版本、幂等、取消和审计字段。
+重试、超时、额度、取消和未知结果核对没有独立 schema，规则写在 [v1 说明](v1/README.md) 各节。
 
 ## 团队运行消息继续原工作
 

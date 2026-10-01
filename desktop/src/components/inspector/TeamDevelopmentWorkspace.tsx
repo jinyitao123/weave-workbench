@@ -4,6 +4,7 @@ import '@/styles/team-workspace.css'
 import { MemberInspector } from '@/components/development/MemberInspector'
 import { Modal, ProductField, ProductSelect, ProductTextArea } from '@/components/ui'
 import { EditableText } from '@/pages/team-workspace/EditableText'
+import { AudienceEditor } from '@/pages/team-workspace/AudienceEditor'
 import { FlowCanvas, ObjectMenu } from '@/pages/team-workspace/TeamCanvas'
 import { StepInspector } from '@/pages/team-workspace/StepInspector'
 import { TrialPanel } from '@/pages/team-workspace/TrialPanel'
@@ -98,7 +99,7 @@ export function TeamDevelopmentWorkspace({ teamId, accountId, runtime, enterpris
     {proposal && section === 'workspace' && <section className="team-development-inspector__proposal"><strong>Pi 提出的修改</strong><ul>{proposal.changes.map((item, index) => <li key={index}>{item}</li>)}</ul><button type="button" className="button button--primary" onClick={applyProposal}><Check size={13}/>应用到草稿</button></section>}
     {section === 'trial' && flow ? <section className="team-development-inspector__trial"><button type="button" className="team-development-inspector__back" onClick={() => setSection('workspace')}><ChevronLeft size={14}/>返回工作流程</button><TrialPanel key={flow.id} initialFlowId={flow.id} teamId={teamId} draft={draft} businessCapabilities={catalog} bridge={bridge} flush={async () => { if (dirty) throw new Error('请先保存草稿，再调试流程'); return draft }} refresh={workspace.refreshTrials}/></section> : view === 'division' ? <section className="team-development-inspector__division">
       <header className="team-development-workspace__team-summary"><div><small>团队目标</small><p title={doc.objective}>{doc.objective || '尚未填写团队目标'}</p></div><button type="button" className="button" aria-expanded={teamInfoOpen} aria-controls="team-development-team-info" onClick={() => setTeamInfoOpen((open) => !open)}>{teamInfoOpen ? '收起资料' : '团队资料'}</button></header>
-      {teamInfoOpen && <div id="team-development-team-info" className="team-development-workspace__team-info"><EditableText label="团队名称" value={doc.name} multiline={false} onChange={(name) => editDocument({ ...doc, name })}/><EditableText label="团队目标" value={doc.objective} onChange={(objective) => editDocument({ ...doc, objective })}/></div>}
+      {teamInfoOpen && <div id="team-development-team-info" className="team-development-workspace__team-info"><EditableText label="团队名称" value={doc.name} multiline={false} onChange={(name) => editDocument({ ...doc, name })}/><EditableText label="团队目标" value={doc.objective} onChange={(objective) => editDocument({ ...doc, objective })}/><AudienceEditor value={doc.audience ?? []} onChange={(audience) => editDocument({ ...doc, audience })}/></div>}
       <div className="team-development-workspace__member-layout">
         <aside className="team-development-workspace__member-list" aria-label="团队成员">
           <div className="team-development-workspace__member-list-heading"><h4>成员 <span>{doc.members.length}</span></h4><button type="button" className="button" onClick={() => setCreateMemberOpen(true)}><Plus size={13}/>添加</button></div>

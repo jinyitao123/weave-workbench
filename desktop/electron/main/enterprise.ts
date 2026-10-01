@@ -5,11 +5,15 @@ import { extractOriginalMaterialText, freezeApprovalOriginalMaterial, normalizeF
 import { createHash, randomUUID } from 'node:crypto'
 import { submissionUUID } from './enterprise/handoff-store'
 import { teamCatalog, teamChoices, type TeamSummary } from './enterprise/team-catalog'
+import { inboxWorkItems, parseApprovalWorkPage, parseRunLookup, parseWeaveHumanTask, taskDelegationHeaders, taskDelegationRequest, type ApprovalWorkItem, type WorkbenchRunLookup } from './enterprise/work-sources'
 import { ForgeBusinessReadError, ForgeBusinessReader, type BusinessObjectDirectory, type BusinessRecordRead, type BusinessRecordSearchPage } from './enterprise/business-records'
 
 const DEFAULT_FORGE_URL = 'http://124.223.189.112'
 const DEFAULT_WEAVE_URL = 'http://124.223.189.112:8080'
 const REQUEST_TIMEOUT_MS = 8_000
+// Native inbox window (no cursor exists); approval pages of 100 up to 500 items.
+const NOTIFICATION_WINDOW = 200
+const APPROVAL_PAGE_LIMIT = 5
 
 interface EnterpriseServiceOptions {
   fetch?: typeof fetch
@@ -46,9 +50,10 @@ class WeaveHttpError extends Error {
 export interface EnterpriseWeaveWorkNotificationSource {
   version: '1'
   notificationID: string
-  kind: 'result' | 'failure' | 'revision_required' | 'cancelled'
-  source: { system: 'weave'; workReference: string; runReference: string; sessionReference: string }
+  kind: 'result' | 'failure' | 'revision_required' | 'cancelled' | 'human_review'
+  source: { system: 'weave'; workReference: string; runReference: string; sessionReference: string; interactionReference?: string }
 }
+type WeaveNotificationReferences = EnterpriseWeaveWorkNotificationSource['source']
 export interface EnterpriseBusinessWorkNotificationSource {
   version: '1'
   notificationID: string
@@ -141,17 +146,6 @@ function enterprisePermissions(value: unknown): EnterprisePermission[] | undefin
 
 function textValue(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined
-}
-
-function approvalReturnSupersededByResubmit(actions: unknown[]): boolean {
-  let latestReturnIndex = -1
-  let latestResubmitIndex = -1
-  actions.forEach((value, index) => {
-    const action = record(value)?.action
-    if (action === 'revise') latestReturnIndex = index
-    if (action === 'resubmit') latestResubmitIndex = index
-  })
-  return latestResubmitIndex > latestReturnIndex
 }
 
 export function approvalContextView(context: EnterpriseApprovalContext): EnterpriseApprovalContextView {
@@ -664,7 +658,9 @@ export class EnterpriseService {
       const subject = record(weave?.subject)
       const organization = record(weave?.organization)
       const permissions = enterprisePermissions(weave?.permissions)
-      if (typeof weave?.token !== 'string' || typeof subject?.id !== 'string' || typeof organization?.id !== 'string' || !permissions) {
+      const issuer = textValue(weave?.issuer)
+      if (typeof weave?.token !== 'string' || typeof subject?.id !== 'string' || typeof organization?.id !== 'string' || !permissions
+        || !issuer || !/^[A-Za-z][A-Za-z0-9+.-]*:\S{1,240}$/.test(issuer)) {
         throw new Error('Weave 返回了无法识别的账号绑定结果')
       }
       this.weaveToken = weave.token
@@ -673,7 +669,7 @@ export class EnterpriseService {
       this.session = {
         version: '1', status: 'signed-in',
         environment: { origin: this.forgeUrl.origin, secure: this.forgeUrl.protocol === 'https:' }, storage: 'session-only',
-        identitySource: { kind: 'forge-account', issuer: this.forgeUrl.origin },
+        identitySource: { kind: 'forge-account', issuer },
         user: {
           id: typeof subject.externalId === 'string' ? subject.externalId : forgeUser.id,
           weaveUserId: subject.id,
@@ -699,11 +695,26 @@ export class EnterpriseService {
   }
 
   async signOut(): Promise<EnterpriseSession> {
+    const forgeToken = this.forgeToken
     this.loginAttempt++
     this.authGeneration++
     this.clearSessionState()
+    if (forgeToken) await this.endForgeSession(forgeToken)
     await this.notifySessionScopeChanged(this.signedOut(), 'signed-out')
     return this.signedOut()
+  }
+
+  // Ends the employee's own Forge desktop session. Task delegations already
+  // issued for submitted work are separate sessions and stay valid until their
+  // runs end (decision 002). Failure here must not keep the desktop signed in.
+  private async endForgeSession(token: string): Promise<void> {
+    try {
+      const response = await this.fetch(new URL('/api/v1/auth/sign-out', this.forgeUrl), {
+        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Origin: this.forgeUrl.origin, Referer: `${this.forgeUrl.origin}/` },
+        body: '{}', redirect: 'error', signal: AbortSignal.timeout(5_000),
+      })
+      await response.body?.cancel()
+    } catch { /* the local session is already gone */ }
   }
 
   private async weaveJSON(path: string, expectedGeneration = this.authGeneration): Promise<unknown> {
@@ -966,7 +977,7 @@ export class EnterpriseService {
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有开发中心权限')
     const [rawTeams, rawRuntimes, rawModels] = await Promise.all([
-      this.weaveJSON('/v1/teams?include=roster,summary&status=all', generation),
+      this.weaveJSON('/v1/teams?include=roster,summary&status=all&purpose=development', generation),
       this.weaveJSON('/v1/runtimes', generation),
       this.weaveJSON('/v1/development/model-catalog', generation),
     ])
@@ -1444,6 +1455,9 @@ export class EnterpriseService {
     }, expectedGeneration)
     const result = await response.json().catch(() => undefined)
     this.assertCurrentAuth(snapshot)
+    if (response.status === 403 && textValue(record(result)?.code) === 'team_not_available') {
+      throw new WeaveHttpError('这个团队不对当前账号开放', 403, 'team_not_available')
+    }
     if (response.status === 401 || response.status === 403) {
       await this.signOutIfCurrent(snapshot)
       throw new Error('登录已失效，请重新登录')
@@ -1496,12 +1510,16 @@ export class EnterpriseService {
       try { return { value: await operation() } }
       catch (error) { return { error: error instanceof Error ? error.message : '读取失败' } }
     }
-    const [teamsRead, runsRead, weaveTasksRead, notificationsRead, approvalsRead] = await Promise.all([
+    // The native inbox lists at most a window with no cursor, so the two kinds
+    // of team messages that ask the employee to act are read by type and can
+    // never fall out of the general window (decision 002).
+    const [teamsRead, runsRead, notificationsRead, revisionRead, humanReviewRead, approvalsRead] = await Promise.all([
       read(() => this.getTeamCatalog(generation)),
       read(() => this.weaveJSON(`/v1/runs?project_id=${encodeURIComponent(projectID)}&limit=50`, generation)),
-      read(() => this.weaveJSON('/v1/human-tasks?limit=50', generation)),
-      read(() => this.forgeJSON('/api/v1/notifications?limit=200', generation, '通知')),
-      read(() => this.forgeJSON('/api/v1/approvals/requests?limit=50', generation, '审批事项')),
+      read(() => this.readNotificationWindow(generation)),
+      read(() => this.readNotificationWindow(generation, 'weave.team_run.revision_required')),
+      read(() => this.readNotificationWindow(generation, 'weave.team_run.human_review')),
+      read(() => this.readApprovalWorkList(generation)),
     ])
     const choices: EnterpriseWorkChoice[] = []
     let teamChoicesError = teamsRead.error
@@ -1512,163 +1530,114 @@ export class EnterpriseService {
         else if (result.error) teamChoicesError ??= result.error
       }
     }
-    const taskList = record(weaveTasksRead.value)
-    const tasks = (Array.isArray(taskList?.tasks) ? taskList.tasks : []).flatMap((value): EnterpriseHumanTask[] => {
-      const task = record(value)
-      const interactionId = textValue(task?.interaction_id), runId = textValue(task?.run_id), teamId = textValue(task?.team_id)
-      const workflowId = textValue(task?.workflow_id), title = textValue(task?.title), instructions = textValue(task?.instructions), updatedAt = textValue(task?.updated_at)
-      const workflowVersion = numberValue(task?.workflow_version)
-      if (!interactionId || !runId || !teamId || !workflowId || !workflowVersion || !title || !instructions || !updatedAt) return []
-      return [{ interactionId, runId, teamId, workflowId, workflowVersion, title, instructions, updatedAt, ...(textValue(task?.audience_ref) ? { audience: textValue(task?.audience_ref) } : {}) }]
-    })
-    const rawApprovals = approvalsRead.value
-    const approvalEnvelope = record(rawApprovals)
-    const approvalValues = Array.isArray(rawApprovals) ? rawApprovals
-      : Array.isArray(approvalEnvelope?.requests) ? approvalEnvelope.requests
-        : Array.isArray(approvalEnvelope?.data) ? approvalEnvelope.data : []
-    const approvalDetailsErrors: string[] = []
-    for (const value of approvalValues) {
-      const approval = record(value), viewer = record(approval?.viewer), payload = record(approval?.payload)
-      const id = textValue(approval?.id), status = textValue(approval?.status), updatedAt = textValue(approval?.updated_at) ?? textValue(approval?.created_at)
-      const canDecide = status === 'pending' && viewer?.can_act === true
-      const canResubmit = status === 'returned' && viewer?.is_submitter === true
-      if (!id || !updatedAt || (!canDecide && !canResubmit)) continue
-      let returnReason: string | undefined
-      if (canResubmit) {
-        try {
-          const actionEnvelope = record(await this.forgeJSON(`/api/v1/approvals/requests/${encodeURIComponent(id)}/actions`, generation, '审批意见'))
-          const actions = Array.isArray(actionEnvelope?.data) ? actionEnvelope.data : []
-          if (approvalReturnSupersededByResubmit(actions)) continue
-          const latestRevision = [...actions].reverse().map(record).find((action) => action?.action === 'revise')
-          returnReason = textValue(latestRevision?.comment)
-        } catch (error) {
-          approvalDetailsErrors.push(error instanceof Error ? error.message : '审批意见读取失败')
-        }
-      }
-      const processName = textValue(approval?.process_label) ?? textValue(approval?.process_name) ?? '业务审批'
-      const stepName = textValue(approval?.step_label) ?? textValue(approval?.current_step)
-      const recordTitle = textValue(approval?.record_title)
-      tasks.push({
-        interactionId: id, runId: `forge:${canResubmit ? 'revision' : 'approval'}:${id}`,
-        teamId: 'forge', workflowId: 'business-approval', workflowVersion: 1,
-        title: canResubmit ? `${recordTitle ?? processName}需要修改` : (recordTitle ? `${recordTitle} · ${stepName ?? processName}` : stepName ?? processName),
-        instructions: canResubmit ? returnReason ? `退回原因：${returnReason}` : '请根据审批意见协助员工修改业务材料。' : '请核对业务材料并给出审批意见。',
-        updatedAt, source: 'forge', mode: canResubmit ? 'revision' : 'approval',
-        ...(textValue(payload?.submitted_material_name) ?? textValue(approval?.object_label) ? { materialLabel: textValue(payload?.submitted_material_name) ?? textValue(approval?.object_label) } : {}),
-      })
-    }
-    const notificationEnvelope = record(notificationsRead.value)
-    const notificationList = record(notificationEnvelope?.data) ?? notificationEnvelope
-    const items = (Array.isArray(notificationList?.notifications) ? notificationList.notifications : []).flatMap((value): EnterpriseWorkItem[] => {
-      const notification = record(value), data = record(notification?.data), continuation = record(data?.continuation), material = record(data?.material)
-      const eventSource = record(data?.weaveEvent) ?? record(record(notification?.payload)?.weaveEvent)
-      const source = record(data?.source) ?? eventSource ?? record(notification?.source)
-      const id = textValue(notification?.id), title = textValue(notification?.title), createdAt = textValue(notification?.createdAt) ?? textValue(notification?.created_at)
-      if (!id || !title || !createdAt) return []
-      const requestedKind = textValue(data?.kind)
-      const notificationType = textValue(notification?.type) ?? ''
-      const nativeTeamRunKind = /^weave\.team_run\.(result|failure|revision_required|cancelled)$/.exec(notificationType)?.[1]
-      const kind: EnterpriseWorkItem['kind'] = requestedKind === 'revision_required' || requestedKind === 'human_review' || requestedKind === 'failure' || requestedKind === 'result' || requestedKind === 'cancelled'
-        ? requestedKind : nativeTeamRunKind === 'revision_required' ? 'revision_required'
-          : nativeTeamRunKind === 'failure' ? 'failure'
-            : nativeTeamRunKind === 'cancelled' ? 'cancelled'
-              : notificationType.includes('revision_required') ? 'revision_required' : notificationType.includes('failure') || notificationType.includes('error') ? 'failure' : 'result'
-      const actionable = kind === 'revision_required' || kind === 'human_review'
-      const displayTitle = /[0-9a-f]{8}-[0-9a-f-]{27,}/i.test(title)
-        ? kind === 'failure' ? '团队处理失败' : kind === 'revision_required' ? '团队工作需要修改' : kind === 'human_review' ? '需要人工处理' : '团队工作已完成'
-        : title
-      const statusValue = textValue(data?.status)
-      const status: EnterpriseWorkItem['status'] = statusValue === 'pending' || statusValue === 'in_progress' || statusValue === 'completed' || statusValue === 'cancelled'
-        ? statusValue : actionable ? 'pending' : 'unknown'
-      const returnTarget = textValue(continuation?.returnTarget)
-      const reviewScope = textValue(continuation?.reviewScope)
-      return [{
-        id, kind, title: displayTitle, status, actionable, read: notification?.read === true,
-        source: (textValue(source?.system) ?? textValue(data?.source)) === 'weave' || notificationType.startsWith('weave.') ? 'weave' : 'forge',
-        notificationType, createdAt,
-        ...(textValue(notification?.body) ? { summary: textValue(notification?.body) } : {}),
-        ...(textValue(data?.instructions) ? { instructions: textValue(data?.instructions) } : {}),
-        ...(textValue(notification?.actionUrl) ?? textValue(notification?.action_url) ? { actionUrl: textValue(notification?.actionUrl) ?? textValue(notification?.action_url) } : {}),
-        ...(textValue(source?.workReference) ?? textValue(data?.workReference) ? { workReference: textValue(source?.workReference) ?? textValue(data?.workReference) } : {}),
-        ...(textValue(source?.runReference) ?? textValue(data?.runReference) ? { runReference: textValue(source?.runReference) ?? textValue(data?.runReference) } : {}),
-        ...(textValue(source?.sessionReference) ?? textValue(data?.sessionReference) ? { sessionReference: textValue(source?.sessionReference) ?? textValue(data?.sessionReference) } : {}),
-        ...(textValue(material?.label) ? { materialLabel: textValue(material?.label) } : {}),
-        ...(textValue(continuation?.reason) ? { returnReason: textValue(continuation?.reason) } : {}),
-        ...(returnTarget === 'origin_review' || returnTarget === 'team' || returnTarget === 'member' || returnTarget === 'human_step' ? { returnTarget } : {}),
-        ...(reviewScope === 'whole_team' || reviewScope === 'affected_members' || reviewScope === 'human_step' ? { reviewScope } : {}),
-      }]
-    }).filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index)
-    const sources = new Map<string, { workReference: string; runReference: string; sessionReference: string }>()
-    const sourceFor = async (item: EnterpriseWorkItem) => {
-      const cached = sources.get(item.id)
-      if (cached) return cached
+    const tasks: EnterpriseHumanTask[] = (approvalsRead.value?.items ?? []).map((item) => ({
+      interactionId: item.requestId, runId: `forge:${item.mode}:${item.requestId}`,
+      teamId: 'forge', workflowId: 'business-approval', workflowVersion: 1, title: item.title,
+      instructions: item.mode === 'revision'
+        ? item.returnReason ? `退回原因：${item.returnReason}` : '请根据审批意见协助员工修改业务材料。'
+        : '请核对业务材料并给出审批意见。',
+      updatedAt: item.updatedAt, source: 'forge' as const, mode: item.mode,
+      ...(item.materialLabel ? { materialLabel: item.materialLabel } : {}),
+    }))
+    const rawNotifications = [
+      ...(notificationsRead.value?.notifications ?? []), ...(revisionRead.value?.notifications ?? []), ...(humanReviewRead.value?.notifications ?? []),
+    ]
+    const items = inboxWorkItems(rawNotifications)
+
+    // Only messages that ask the employee to act need their exact Weave
+    // references; Weave then answers for all of them in one lookup.
+    const sources = new Map<string, WeaveNotificationReferences>()
+    await Promise.all(items.filter((item) => item.source === 'weave' && item.actionable).map(async (item) => {
       try {
         const verified = await this.readWorkNotificationSource(item.id, generation)
-        if (verified.kind === 'business' || item.notificationType !== `weave.team_run.${verified.kind}`
-          || item.workReference && item.workReference !== verified.source.workReference
-          || item.runReference && item.runReference !== verified.source.runReference
-          || item.sessionReference && item.sessionReference !== verified.source.sessionReference) return undefined
-        const source = { workReference: verified.source.workReference, runReference: verified.source.runReference, sessionReference: verified.source.sessionReference }
-        sources.set(item.id, source)
-        return source
-      } catch { return undefined }
-    }
-    const superseded = new Set<string>()
-    const hasSucceededAction = new Set<string>()
-    const businessResults = new Map<string, NonNullable<EnterpriseWorkContinuationContext['run']['businessResult']>>()
-    for (const pending of items) {
-      if (pending.source !== 'weave' || pending.kind !== 'revision_required' || !pending.actionable
-        || !/^weave\.team_run\.revision_required$/.test(pending.notificationType ?? '')) continue
-      const parent = await sourceFor(pending)
-      if (!parent) continue
-      const later = items.filter((item) => item.source === 'weave' && item.id !== pending.id
-        && /^weave\.team_run\.(result|failure|revision_required|cancelled)$/.test(item.notificationType ?? '')
-        && Date.parse(item.createdAt) > Date.parse(pending.createdAt)).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
-      for (const item of later) {
-        const next = await sourceFor(item)
-        if (next?.sessionReference === parent.sessionReference && next.workReference !== parent.workReference) {
-          superseded.add(pending.id)
-          break
-        }
-      }
-      if (superseded.has(pending.id)) continue
-      try {
-        const context = await this.readWorkContinuationMetadata(parent, generation)
-        if (context.run.businessResult) businessResults.set(pending.id, context.run.businessResult)
-        if (!context.run.businessResult && context.run.status === 'succeeded' && context.run.finalResult?.disposition === 'needs_input'
-          && context.run.actionOutcomes?.some((outcome) => outcome.status === 'succeeded')) hasSucceededAction.add(pending.id)
-      } catch {
-        // A missing or unreadable action receipt must never be treated as a successful business action.
-      }
-    }
-    const projectedItems = items.map((item) => ({
-      ...item, ...(sources.get(item.id) ?? {}),
-      ...(hasSucceededAction.has(item.id) ? {
-        title: '团队结果与业务回执',
-        summary: 'Forge 业务动作已确认成功。团队列出的缺项是检查意见，后续办理事项以 Forge 当前正式事项为准。',
-      } : {}),
-      ...(businessResults.get(item.id) === 'completed' ? {
-        title: '团队结果与业务回执', summary: '本轮团队工作已完成。后续办理事项和审批状态以 Forge 当前正式事项为准。',
-      } : businessResults.get(item.id) === 'action_failed' ? {
-        title: '业务动作失败', summary: '本轮业务动作失败，请核对 Forge 回执和当前业务状态；不要重放原请求。',
-      } : businessResults.get(item.id) === 'action_unknown' ? {
-        title: '业务动作结果待核对', summary: '本轮业务动作结果未知，请先核对 Forge 回执；不要重放原请求。',
-      } : {}),
-      ...(superseded.has(item.id) || hasSucceededAction.has(item.id) || businessResults.has(item.id) && businessResults.get(item.id) !== 'needs_input' ? { actionable: false, status: 'completed' as const } : {}),
+        if (verified.kind !== 'business' && item.notificationType === `weave.team_run.${verified.kind}`) sources.set(item.id, verified.source)
+      } catch { /* an unreadable source leaves the message without a continuation */ }
     }))
+    const runRefs = [...new Set([...sources.values()].map((source) => source.runReference))]
+    let lookupError: string | undefined
+    const lookups = new Map<string, WorkbenchRunLookup>()
+    try { for (const run of await this.lookupWorkbenchRuns(runRefs, generation)) lookups.set(run.runId, run) }
+    catch (error) { lookupError = error instanceof Error ? error.message : '团队运行状态读取失败' }
+    let humanReviewError = humanReviewRead.error
+    const projectedItems: EnterpriseWorkItem[] = []
+    for (const item of items) {
+      const references = sources.get(item.id)
+      const run = references ? lookups.get(references.runReference) : undefined
+      const base: EnterpriseWorkItem = { ...item, ...(references ? { workReference: references.workReference, runReference: references.runReference, sessionReference: references.sessionReference } : {}) }
+      if (item.kind === 'human_review' && item.actionable) {
+        if (run?.status === 'parked' && references?.interactionReference) {
+          try {
+            const task = await this.readWeaveHumanTask(references.runReference, references.interactionReference, generation)
+            // The waiting step becomes a to-do; its message is not shown twice.
+            if (task) { tasks.push(task); continue }
+          } catch (error) { humanReviewError ??= error instanceof Error ? error.message : '团队人工步骤读取失败' }
+        }
+        // The wait is over (or cannot be confirmed): the message stays as history.
+        projectedItems.push(run && run.status !== 'parked' ? { ...base, actionable: false, status: 'completed' } : base)
+        continue
+      }
+      if (item.kind !== 'revision_required' || !run) { projectedItems.push(base); continue }
+      const result = run.businessResult
+      projectedItems.push({
+        ...base,
+        ...(result === 'completed' ? { title: '团队结果与业务回执', summary: '本轮团队工作已完成。后续办理事项和审批状态以 Forge 当前正式事项为准。' }
+          : result === 'action_failed' ? { title: '业务动作失败', summary: '本轮业务动作失败，请核对 Forge 回执和当前业务状态；不要重放原请求。' }
+            : result === 'action_unknown' ? { title: '业务动作结果待核对', summary: '本轮业务动作结果未知，请先核对 Forge 回执；不要重放原请求。' } : {}),
+        // A later input in the same work, or a business result other than
+        // "needs input", closes this message as a to-do.
+        ...(!run.isCurrent || (result && result !== 'needs_input') ? { actionable: false, status: 'completed' as const } : {}),
+      })
+    }
     const runList = record(runsRead.value)
     this.assertAuthGeneration(generation)
-    const readStatus = (error?: string): EnterpriseWorkReadStatus => error ? { status: 'failed', error } : { status: 'loaded' }
+    const readStatus = (error?: string, truncated?: boolean): EnterpriseWorkReadStatus =>
+      error ? { status: 'failed', error } : { status: 'loaded', ...(truncated ? { truncated } : {}) }
     return {
       loadedAt: new Date().toISOString(), choices, tasks, items: projectedItems,
       runs: (Array.isArray(runList?.runs) ? runList.runs : []).flatMap((run) => runObservation(run) ?? []),
       reads: {
         runs: readStatus(runsRead.error), teamChoices: readStatus(teamChoicesError),
-        weaveTasks: readStatus(weaveTasksRead.error),
-        forgeApprovals: readStatus(approvalsRead.error ?? (approvalDetailsErrors.length ? [...new Set(approvalDetailsErrors)].join('；') : undefined)),
-        notifications: readStatus(notificationsRead.error),
+        weaveTasks: readStatus(humanReviewError ?? lookupError),
+        forgeApprovals: readStatus(approvalsRead.error, approvalsRead.value?.truncated),
+        notifications: readStatus(notificationsRead.error ?? revisionRead.error ?? lookupError,
+          notificationsRead.value?.truncated || revisionRead.value?.truncated || humanReviewRead.value?.truncated),
       },
     }
+  }
+
+  private async readNotificationWindow(generation: number, type?: string): Promise<{ notifications: unknown[]; truncated: boolean }> {
+    const query = new URLSearchParams({ limit: String(NOTIFICATION_WINDOW) })
+    if (type) query.set('type', type)
+    const envelope = record(await this.forgeJSON(`/api/v1/notifications?${query}`, generation, '通知'))
+    const list = record(envelope?.data) ?? envelope
+    const notifications = Array.isArray(list?.notifications) ? list.notifications : []
+    return { notifications, truncated: notifications.length >= NOTIFICATION_WINDOW }
+  }
+
+  private async readApprovalWorkList(generation: number): Promise<{ items: ApprovalWorkItem[]; truncated: boolean }> {
+    const items: ApprovalWorkItem[] = []
+    let cursor: string | undefined
+    for (let page = 0; page < APPROVAL_PAGE_LIMIT; page++) {
+      const query = new URLSearchParams({ limit: '100', ...(cursor ? { cursor } : {}) })
+      const parsed = parseApprovalWorkPage(await this.forgeJSON(`/api/v1/workbench/approvals?${query}`, generation, '审批事项'))
+      items.push(...parsed.items)
+      cursor = parsed.nextCursor
+      if (!cursor) return { items, truncated: false }
+    }
+    return { items, truncated: true }
+  }
+
+  private async lookupWorkbenchRuns(runIds: string[], generation: number): Promise<WorkbenchRunLookup[]> {
+    const result: WorkbenchRunLookup[] = []
+    for (let start = 0; start < runIds.length; start += 100) {
+      const response = await this.weaveRequest('/v1/workbench/runs/lookup', 'POST', { version: '1', runIds: runIds.slice(start, start + 100) }, undefined, undefined, generation)
+      result.push(...parseRunLookup(response.body))
+    }
+    return result
+  }
+
+  private async readWeaveHumanTask(runId: string, interactionId: string, generation: number): Promise<EnterpriseHumanTask | undefined> {
+    return parseWeaveHumanTask(await this.weaveJSON(`/v1/human-tasks/${encodeURIComponent(runId)}`, generation), runId, interactionId)
   }
 
   private async readWorkContinuationMetadata(
@@ -1791,14 +1760,16 @@ export class EnterpriseService {
     const workReference = boundedIdentity(source?.workReference, 512)
     const runReference = boundedIdentity(source?.runReference, 512)
     const sessionReference = boundedIdentity(source?.sessionReference, 512)
-    if (kind !== 'result' && kind !== 'failure' && kind !== 'revision_required' && kind !== 'cancelled'
+    const interactionReference = boundedIdentity(source?.interactionReference, 512)
+    if (kind !== 'result' && kind !== 'failure' && kind !== 'revision_required' && kind !== 'cancelled' && kind !== 'human_review'
       || source?.system !== 'weave' || !workReference || !runReference || !sessionReference
+      || (kind === 'human_review') !== !!interactionReference
       || Object.keys(raw).some((key) => !['version', 'notificationId', 'kind', 'source'].includes(key))
-      || Object.keys(source).some((key) => !['system', 'workReference', 'runReference', 'sessionReference'].includes(key))) {
+      || Object.keys(source).some((key) => !['system', 'workReference', 'runReference', 'sessionReference', 'interactionReference'].includes(key))) {
       throw new Error('工作消息来源与当前消息不匹配，请刷新工作列表')
     }
     this.assertAuthGeneration(generation)
-    return { version: '1', notificationID, kind, source: { system: 'weave', workReference, runReference, sessionReference } }
+    return { version: '1', notificationID, kind, source: { system: 'weave', workReference, runReference, sessionReference, ...(interactionReference ? { interactionReference } : {}) } }
   }
 
   async getWorkNotificationSource(notificationIDValue: string): Promise<EnterpriseWorkNotificationSource> {
@@ -2049,9 +2020,7 @@ export class EnterpriseService {
       ? submissionUUID(`${source.accountKey}:${source.idempotencySeed}`)
       : randomUUID()
     const workbenchSessionID = source?.continuation?.workbenchSessionID ?? (source ? `${projectID}-${source.sessionKey}-${workId}` : `${projectID}-${workId}`)
-    let registered: { status: number; body: unknown }
-    try {
-      registered = await this.weaveRequest('/v1/workbench/dispatch-inputs', 'POST', {
+    const registrationBody = {
         registration_id: workId, workbench_session_id: workbenchSessionID,
         ...(source?.continuation ? {
           expected_revision_id: source.continuation.inputRevisionID,
@@ -2069,7 +2038,13 @@ export class EnterpriseService {
         authorized_business_capability_ids: source?.authorizedBusinessCapabilityIds ?? [],
         source_messages: source?.sourceMessages.map((message) => ({ message_id: message.messageId, event_seq: message.eventSeq, sha256: message.sha256 }))
           ?? [{ message_id: workId, event_seq: 0, sha256: createHash('sha256').update(normalized).digest('hex') }],
-      }, assertCurrent, this.forgeToken ? { 'X-Weave-Forge-Authorization': `Bearer ${this.forgeToken}` } : undefined, generation)
+    }
+    // Decision 002: Weave receives a Forge-issued task delegation scoped to this
+    // input, never the employee's own Forge session.
+    const delegationHeaders = await this.taskDelegationHeaders(workId, registrationBody, source, assertCurrent, generation)
+    let registered: { status: number; body: unknown }
+    try {
+      registered = await this.weaveRequest('/v1/workbench/dispatch-inputs', 'POST', registrationBody, assertCurrent, delegationHeaders, generation)
     } catch (error) {
       if (error instanceof WeaveHttpError && error.status === 409) {
         throw new WorkRegistrationRejectedError(error.code === 'dispatch_input_too_many_resources'
@@ -2089,6 +2064,41 @@ export class EnterpriseService {
     const workflowVersion = numberValue(result?.workflow_version)
     if (!runId || !taskId || workflowId !== choice.workflowId || workflowVersion !== choice.version) throw new Error('Weave 没有返回匹配的接单回执，结果待核对')
     return { workId, runId, taskId, workflowId, workflowVersion, inputRevisionId: inputRevisionID, clientRequestId: clientRequestID, taskSha256: registration.task_sha256 as string, repeated: dispatched.status === 200 }
+  }
+
+  private async taskDelegationHeaders(
+    workId: string, registrationBody: unknown,
+    source: { resources: EnterpriseWorkResource[]; businessContext?: { objectName: string; recordId: string }; authorizedBusinessCapabilityIds: string[] } | undefined,
+    assertCurrent: () => Promise<void>, generation: number,
+  ): Promise<Record<string, string> | undefined> {
+    const scope = taskDelegationRequest(workId, registrationBody, source)
+    if (scope.kind === 'none') return undefined
+    if (scope.kind === 'invalid-action') throw new WorkRegistrationRejectedError('本次工作选择的业务动作无法识别，本次未接单')
+    if (scope.kind === 'too-many-files') {
+      throw new WorkRegistrationRejectedError('团队交接最多允许 10 份材料，新文件和明确复用的原材料合计已超限；本次未接单，请减少材料后重新发起')
+    }
+    if (!this.forgeToken) throw new Error('请重新登录后再交给团队')
+    this.assertAuthGeneration(generation)
+    await assertCurrent()
+    const { response, snapshot } = await this.authenticatedFetch(new URL('/api/v1/workbench/task-delegations', this.forgeUrl), 'forge', {
+      method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(scope.body), redirect: 'error', signal: AbortSignal.timeout(15_000),
+    }, generation)
+    const result = await response.json().catch(() => undefined)
+    this.assertCurrentAuth(snapshot)
+    const code = textValue(record(record(result)?.error)?.code)
+    if (response.status === 401) { await this.signOutIfCurrent(snapshot); throw new Error('登录已失效，请重新登录') }
+    if (response.status === 403) throw new WorkRegistrationRejectedError('本次工作涉及的业务记录或材料当前账号无权交给团队，本次未接单')
+    if (response.status === 409) {
+      throw new WorkRegistrationRejectedError(code === 'DELEGATION_INACTIVE'
+        ? '这次交接的授权已撤销或过期，本次未接单；请重新发起工作'
+        : '本次固定交接与已登记内容冲突，请核对当前员工要求后重新发起')
+    }
+    if (response.status === 422) throw new WorkRegistrationRejectedError('本次工作选择的业务动作或材料不能交给团队办理，本次未接单')
+    if (!response.ok) throw new Error(`Forge 任务授权暂时不可用（${response.status}），尚未交给团队；稍后核对同一次交接即可`)
+    const headers = taskDelegationHeaders(result)
+    if (!headers) throw new Error('Forge 返回了无法识别的任务授权，尚未交给团队')
+    return headers
   }
 
   async completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }> {
