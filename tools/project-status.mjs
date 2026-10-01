@@ -57,12 +57,19 @@ export function inspectRepository(root) {
 
 // Every remote branch that is not yet in the mainline must have an owner row on the status page.
 // Uses local remote-tracking refs; run `git fetch --prune` first for a current view.
-export function findUnregisteredBranches(root, mainline = 'origin/main') {
+export function repositoryRemote(root) {
+  const remotes = git(root, 'remote').split('\n').filter(Boolean)
+  return remotes.includes('origin') ? 'origin' : (remotes[0] || 'origin')
+}
+
+export function findUnregisteredBranches(root, mainline) {
+  const remote = mainline?.includes('/') ? mainline.slice(0, mainline.indexOf('/')) : repositoryRemote(root)
+  mainline ||= `${remote}/main`
   let refs
   try {
-    refs = git(root, 'for-each-ref', '--format=%(refname:lstrip=3)', '--no-merged', mainline, 'refs/remotes/origin')
+    refs = git(root, 'for-each-ref', '--format=%(refname:lstrip=3)', '--no-merged', mainline, `refs/remotes/${remote}`)
   } catch {
-    return { error: `无法读取 ${mainline}；先执行 git fetch --prune origin。`, branches: [] }
+    return { error: `无法读取 ${mainline}；先执行 git fetch --prune ${remote}。`, branches: [] }
   }
   const registry = statusRegistry(readFileSync(resolve(root, 'docs/项目状态.md'), 'utf8'))
   const branches = refs.split('\n').filter(name => name && name !== 'HEAD' && !registry.includes(`\`${name}\``))
@@ -75,14 +82,15 @@ export function checkReadiness(report, release = false) {
 
 function main() {
   const mode = process.argv[2] || '--status'
-  if (!['--status', '--check-components', '--check-release', '--check-branches'].includes(mode) || process.argv.length > 3) {
-    throw new Error('Usage: node tools/project-status.mjs [--status|--check-components|--check-release|--check-branches]')
+  if (!['--status', '--check-components', '--check-release', '--check-branches', '--fetch-branches'].includes(mode) || process.argv.length > 3) {
+    throw new Error('Usage: node tools/project-status.mjs [--status|--check-components|--check-release|--check-branches|--fetch-branches]')
   }
+  if (mode === '--fetch-branches') git(repositoryRoot, 'fetch', '--prune', '--quiet', '--', repositoryRemote(repositoryRoot))
   const unregistered = findUnregisteredBranches(repositoryRoot)
   const branchReport = unregistered.error || (unregistered.branches.length
     ? `未登记的未合入分支（在状态页「谁在做什么」登记，或合入后删除）:\n${unregistered.branches.join('\n')}`
     : '未合入分支均已登记')
-  if (mode === '--check-branches') {
+  if (mode === '--check-branches' || mode === '--fetch-branches') {
     console.log(branchReport)
     if (unregistered.error || unregistered.branches.length) process.exitCode = 1
     return

@@ -94,3 +94,17 @@ test('unmerged remote branches must be registered in the status page owner secti
   assert.deepEqual(findUnregisteredBranches(f.root).branches, [])
   assert.match(findUnregisteredBranches(f.root, 'origin/missing').error, /git fetch/)
 })
+
+test('branch registry uses the configured remote when its name is not origin', t => {
+  const f = fixture(t)
+  mkdirSync(join(f.root, 'docs'))
+  f.git('remote', 'add', 'published-workbench', 'https://example.invalid/product.git')
+  f.git('update-ref', 'refs/remotes/published-workbench/main', 'HEAD')
+  f.write('feature.txt', 'UI feature\n')
+  f.commit()
+  f.git('update-ref', 'refs/remotes/published-workbench/ui/team-sidebar', 'HEAD')
+  f.write('docs/项目状态.md', '## 谁在做什么\n| UI | `ui/team-sidebar` | 验证后合入 |\n## 卡在哪\n')
+  assert.deepEqual(findUnregisteredBranches(f.root), { error: '', branches: [] })
+  f.write('docs/项目状态.md', '## 谁在做什么\n## 卡在哪\n')
+  assert.deepEqual(findUnregisteredBranches(f.root).branches, ['ui/team-sidebar'])
+})
