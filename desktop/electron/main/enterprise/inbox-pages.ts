@@ -1,3 +1,32 @@
+import { parseApprovalWorkPage, type ApprovalWorkItem } from './work-sources'
+
+/** Employee approval projection. Follow its account-scoped cursor until exhaustion. */
+export async function readApprovalWorkPages(read: (path: string) => Promise<unknown>): Promise<{ items: ApprovalWorkItem[]; error?: string }> {
+  const found = new Map<string, ApprovalWorkItem>()
+  const cursors = new Set<string>()
+  let cursor: string | undefined
+  try {
+    for (;;) {
+      const query = new URLSearchParams({ limit: '100', ...(cursor ? { cursor } : {}) })
+      const page = parseApprovalWorkPage(await read(`/api/v1/workbench/approvals?${query}`))
+      const previousCount = found.size
+      for (const item of page.items) {
+        const previous = found.get(item.requestId)
+        if (previous && JSON.stringify(previous) !== JSON.stringify(item)) throw new Error('审批事项在读取期间已变化，请刷新后重试')
+        found.set(item.requestId, item)
+      }
+      if (!page.nextCursor) return { items: [...found.values()] }
+      if (page.nextCursor.length > 8192 || cursors.has(page.nextCursor) || found.size === previousCount) {
+        throw new Error('审批事项分页没有继续前进，当前列表不完整，请刷新后重试')
+      }
+      cursors.add(page.nextCursor)
+      cursor = page.nextCursor
+    }
+  } catch (error) {
+    return { items: [...found.values()], error: message(error) }
+  }
+}
+
 /** ObjectStack 17.3 approval listing uses limit/offset and optional total. */
 export async function readApprovalPages(read: (path: string) => Promise<unknown>): Promise<{ data: unknown[]; error?: string }> {
   const limit = 50

@@ -29,6 +29,7 @@ export interface FixedWorkSource {
 export interface DelegationTransport {
   projectID: string
   issuer: string
+  identityIssuer: string
   nativeIdentity(): Promise<{ id: string; organizationID: string }>
   forge(path: string, body: unknown): Promise<{ status: number; body: unknown }>
   weave(path: string, body: unknown, taskToken?: string): Promise<{ status: number; body: unknown }>
@@ -44,18 +45,20 @@ export function canonicalJSON(value: unknown): string {
     : item !== null && typeof item === 'object' ? Object.fromEntries(Object.entries(item).filter(([, val]) => val !== undefined).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([key, val]) => [key, sort(val)])) : item
   return JSON.stringify(sort(value))
 }
-export async function issueTaskToken(transport: DelegationTransport, requestID: string, scope: ForgeTaskScope): Promise<{ token: string; generation: number; expiresAt: string }> {
+export async function issueTaskToken(transport: DelegationTransport, requestID: string, scope: ForgeTaskScope, expectedGeneration?: number): Promise<{ token: string; generation: number; expiresAt: string }> {
   await transport.assertCurrent()
   const identity = await transport.nativeIdentity()
-  const { body } = await transport.forge('/api/v1/apps/forge/task-delegations', { request_id: requestID, scope })
+  const { body } = await transport.forge('/api/v1/apps/forge/task-delegations', { request_id: requestID, scope, ...(expectedGeneration !== undefined ? { expected_generation: expectedGeneration } : {}) })
   await transport.assertCurrent()
   const result = object(body), subject = object(result?.subject)
   const issued = typeof result?.issued_at === 'string' ? Date.parse(result.issued_at) : NaN
   const expires = typeof result?.expires_at === 'string' ? Date.parse(result.expires_at) : NaN
   if (result?.version !== '1' || result.token_type !== 'forge_task' || typeof result.access_token !== 'string' || !result.access_token
     || typeof result.grant_id !== 'string' || !result.grant_id || !Number.isSafeInteger(result.generation) || (result.generation as number) < 1
-    || !Number.isFinite(issued) || !Number.isFinite(expires) || expires <= Date.now() || expires <= issued || expires - issued > 30 * 60_000
-    || issued > Date.now() + 30_000 || result.issuer !== transport.issuer || subject?.id !== identity.id || subject.organization_id !== identity.organizationID
+    || !Number.isFinite(issued) || !Number.isFinite(expires) || expires <= Date.now() || expires <= issued || expires - issued > 24 * 60 * 60_000
+    || issued > Date.now() + 30_000 || result.issuer !== transport.issuer || result.identity_issuer !== transport.identityIssuer
+    || subject?.id !== identity.id || subject.organization_id !== identity.organizationID
+    || expectedGeneration !== undefined && result.generation !== expectedGeneration + 1
     || result.scope_sha256 !== taskScopeSHA256(scope) || canonicalJSON(result.scope) !== canonicalJSON(scope)) {
     throw new WorkRegistrationRejectedError('Forge 返回的任务授权与当前员工、组织或固定工作范围不一致，已停止交接')
   }

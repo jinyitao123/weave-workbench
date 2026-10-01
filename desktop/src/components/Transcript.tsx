@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { LoaderCircle } from 'lucide-react'
-import type { GitStatus, HarnessId, TranscriptMessage } from '@/types/api'
+import type { EnterpriseWorkCancellationResult, GitStatus, HarnessId, TranscriptMessage } from '@/types/api'
 import { ChangesCard } from './ChangesCard'
 import { ErrorBoundary } from './ErrorBoundary'
 import { MarkdownText } from './MarkdownText'
@@ -9,6 +9,7 @@ import { PiMark, PrimeMark } from './ui'
 import { ActivityMessage, AgentMessage, AssistantMessage, GoalMessage, SteerReadMarker, UserMessage } from './transcript/messages'
 import { useTranscriptScroll } from './transcript/scroll'
 import { LiveElapsed, ThinkingDots, WorkDisclosure } from './transcript/timeline'
+import { enterpriseScopeProjection, EnterpriseScopeCards } from './transcript/EnterpriseScopeCards'
 
 export { classifyTool, formatWorkedDuration } from './transcript/timeline'
 export { tokenizeSyntax } from './transcript/syntax'
@@ -55,6 +56,7 @@ interface TranscriptProps {
   bottomDockHasChanges?: boolean
   queuedMessageCount?: number
   onOpenSessionReference?(sessionId: string, harness: HarnessId): void
+  onCancelWork?(runId: string): Promise<EnterpriseWorkCancellationResult>
 }
 
 
@@ -83,9 +85,10 @@ function ActiveAssistantMessage({ message, harness, showReasoning, showTools }: 
 
 
 
-export function Transcript({ messages, git, harness = 'prime', personalWorkspace = false, loading, active = false, showReasoning = true, showTools = true, onOpenChanges, onSuggestion, onOpenMaterials, onChooseWorkspace, suggestionsDisabled, showPinnedChanges = true, bottomDockHasChanges = false, queuedMessageCount = 0, onOpenSessionReference }: TranscriptProps) {
+export function Transcript({ messages, git, harness = 'prime', personalWorkspace = false, loading, active = false, showReasoning = true, showTools = true, onOpenChanges, onSuggestion, onOpenMaterials, onChooseWorkspace, suggestionsDisabled, showPinnedChanges = true, bottomDockHasChanges = false, queuedMessageCount = 0, onOpenSessionReference, onCancelWork }: TranscriptProps) {
   const groupedMessages = useMemo(() => coalesceAssistantTurns(messages), [messages])
   const { announcement, hiddenCount, scrollRef, showEarlier, updatePinnedState, visibleMessages } = useTranscriptScroll(groupedMessages, harness)
+  const scopedMessages = useMemo(() => visibleMessages.map(enterpriseScopeProjection), [visibleMessages])
   const activeAssistantId = useMemo(() => active && groupedMessages.at(-1)?.role === 'assistant' ? groupedMessages.at(-1)?.id : undefined, [active, groupedMessages])
   const transcriptClasses = [
     'transcript',
@@ -117,7 +120,7 @@ export function Transcript({ messages, git, harness = 'prime', personalWorkspace
           </>}</div>
         </div> : null}
         {hiddenCount > 0 ? <button type="button" className="transcript__show-earlier" onClick={showEarlier}>Show {Math.min(250, hiddenCount)} earlier messages</button> : null}
-        {visibleMessages.map((message) => <ErrorBoundary key={message.id} fallback={<div className="message message--render-failure" role="note">This message could not be displayed.</div>}>
+        {scopedMessages.map(({ message, scopes }) => <ErrorBoundary key={message.id} fallback={<div className="message message--render-failure" role="note">This message could not be displayed.</div>}>
           {message.kind === 'steer-read-marker' ? <SteerReadMarker message={message} />
             : message.role === 'user' ? <UserMessage message={message} onOpenSessionReference={onOpenSessionReference} />
             : message.role === 'assistant' ? message.streaming || message.id === activeAssistantId
@@ -127,6 +130,7 @@ export function Transcript({ messages, git, harness = 'prime', personalWorkspace
             : message.role === 'goal' ? <GoalMessage message={message} />
             : message.role === 'tool' || message.role === 'system' ? <ActivityMessage message={message} harness={harness} />
             : <div className={`message message--${message.role}`}>{message.parts.map((part, partIndex) => part.type === 'text' ? <span key={partIndex}>{part.text}</span> : null)}</div>}
+          <EnterpriseScopeCards scopes={scopes} onCancelWork={onCancelWork} />
         </ErrorBoundary>)}
         {active && !activeAssistantId ? <article className="message message--assistant transcript-active-placeholder" aria-live="polite">
           <div className="assistant-mark"><AssistantMark harness={harness} /></div><div className="streaming-state"><ThinkingDots /> {HARNESS_SHORT_NAMES[harness]} is working</div>

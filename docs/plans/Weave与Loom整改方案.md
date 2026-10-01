@@ -98,6 +98,8 @@
 
 **尚未做（本条仍未完成）：** ① 用 DeepSeek 与 OpenAI 两种格式的真实录制响应，需要 W2 导出；本测试只用脚本化模型和 OpenAI 兼容格式校验器，没有覆盖 DeepSeek 的推理内容回传，`contract.Message` 目前也没有该字段。② 额度暂停矩阵现已在 Loom `d1f1c15` 完成并通过三平台 CI，真实提供方录制仍待补。③ 并行只读工具在日志未串行化时（`SerializeWhenActive=false`）的重放顺序，按序号寻址的日志会因此出现分歧，宿主必须串行化，该要求已补入 `ExecutionJournal` 契约说明；深层收口仍属 W8。④ 三平台 CI 已在 2026-09-30 及整合 PR 完成；Loom PR #3 合入 `5478e5f`。该分支只加测试和契约注释，未改 Loom 运行实现，因此 `weave-next/third_party/loom` 不需要更新。
 
+**主线CI更正：** 候选`d1f1c15`三平台运行36799680803成功；合入`5478e5f`后的主线36799836817中Linux/macOS/Linux race通过，Windows `TestReadWriteDispatch_ReadOnlyParallel`用墙钟32.3425ms超过25ms失败。当前按并发进入barrier替代机器时间阈值修复；不能把候选成功写成该主线三平台全部通过，真实提供方录制仍待补。
+
 **验收：** 在已知有缺陷的 Loom 提交上，对应用例失败；在当前提交上通过；W2 复现的失败在修复后本地回放通过。
 
 ### W4 业务动作按持久操作身份防重放

@@ -122,16 +122,17 @@ export function parseWorkContinuationContext(value: unknown): EnterpriseWorkCont
   if (run.authorization !== undefined) {
     const auth = record(run.authorization)
     const authStatus = auth?.status, reason = auth?.reason === undefined ? undefined : boundedIdentity(auth.reason, 1000)
+    const grantID = auth?.grant_id === undefined ? undefined : boundedIdentity(auth.grant_id, 128)
     const generation = auth?.generation, expiresAt = auth?.expires_at
     const retryNodeID = auth?.retry_node_id === undefined ? undefined : boundedIdentity(auth.retry_node_id, 128)
     const scope = record(auth?.scope)
     if (!auth || !['active', 'renewal_required', 'not_applicable'].includes(authStatus as string) || typeof auth.can_renew !== 'boolean'
       || auth.reason !== undefined && !reason || generation !== undefined && (!Number.isSafeInteger(generation) || (generation as number) < 1)
       || expiresAt !== undefined && (typeof expiresAt !== 'string' || !Number.isFinite(Date.parse(expiresAt)))
-      || auth.retry_node_id !== undefined && !retryNodeID) throw new Error('工作授权状态格式无效，请刷新工作消息')
+      || auth.retry_node_id !== undefined && !retryNodeID || auth.grant_id !== undefined && !grantID) throw new Error('工作授权状态格式无效，请刷新工作消息')
     if (scope) {
       const expectedResources = materials.map(({ id, name, bytes, sha256, materialId, mediaType, sourceKind, requestId }) => ({ type: 'forge-file', id, name, bytes, sha256, ...(materialId ? { materialId } : {}), ...(mediaType ? { mediaType } : {}), ...(sourceKind ? { sourceKind } : {}), ...(requestId ? { requestId } : {}) }))
-      const expectedRecord = businessRecord ? { object_name: businessRecord.objectName, record_id: businessRecord.recordID, ...(businessRecord.recordVersion ? { record_version: businessRecord.recordVersion } : {}) } : undefined
+      const expectedRecord = businessRecord ? { object_name: businessRecord.objectName, record_id: businessRecord.recordID } : undefined
       if (Object.keys(scope).some((key) => !['input_revision_id', 'registration_id', 'task_sha256', 'workflow_id', 'workflow_version', 'allowed_actions', 'resources', 'business_record'].includes(key))
         || scope.input_revision_id !== inputRevisionID || !registrationID || scope.registration_id !== registrationID || !authorizedBusinessCapabilityIDs
         || canonicalJSON(scope.allowed_actions) !== canonicalJSON(authorizedBusinessCapabilityIDs)
@@ -141,7 +142,7 @@ export function parseWorkContinuationContext(value: unknown): EnterpriseWorkCont
         || canonicalJSON(scope.business_record) !== canonicalJSON(expectedRecord)) throw new Error('工作授权范围与原固定输入不一致，请刷新工作消息')
     }
     if (auth.can_renew && (!['renewal_required', 'active'].includes(authStatus as string) || inputStatus !== 'current' || status !== 'parked' || !generation || !scope || !retryNodeID)) throw new Error('工作缺少可安全续授权的等待状态，请核对原业务回执')
-    authorization = { status: authStatus as NonNullable<typeof authorization>['status'], canRenew: auth.can_renew, ...(reason ? { reason } : {}), ...(generation ? { generation: generation as number } : {}), ...(expiresAt ? { expiresAt: expiresAt as string } : {}), ...(scope ? { scope: scope as unknown as ForgeTaskScope } : {}), ...(retryNodeID ? { retryNodeID } : {}) }
+    authorization = { status: authStatus as NonNullable<typeof authorization>['status'], canRenew: auth.can_renew, ...(grantID ? { grantID } : {}), ...(reason ? { reason } : {}), ...(generation ? { generation: generation as number } : {}), ...(expiresAt ? { expiresAt: expiresAt as string } : {}), ...(scope ? { scope: scope as unknown as ForgeTaskScope } : {}), ...(retryNodeID ? { retryNodeID } : {}) }
   }
   let finalResult: EnterpriseWorkContinuationContext['run']['finalResult']
   if (run.final_result !== undefined) {

@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest'
-import { readApprovalPages, readInboxPages } from '../../electron/main/enterprise/inbox-pages'
+import { readApprovalPages, readApprovalWorkPages, readInboxPages } from '../../electron/main/enterprise/inbox-pages'
 
 function requests(start: number, count: number) {
   return Array.from({ length: count }, (_, index) => ({ id: `approval-${start + index}`, status: 'pending' }))
@@ -62,4 +62,14 @@ it.each([
 it('keeps visible inbox notices and the read error when a subsequent request fails', async () => {
   const read = vi.fn().mockResolvedValueOnce({ version: '1', notifications: notices(0, 100), next_cursor: 'first', has_more: true }).mockRejectedValueOnce(new Error('当前账号没有读取通知的权限'))
   expect(await readInboxPages(read)).toMatchObject({ notifications: expect.any(Array), error: '当前账号没有读取通知的权限' })
+})
+
+it('keeps current approval return reasons from all cursor pages and reports an unchanged cursor as incomplete', async () => {
+  const item = { requestId: 'returned-approval', mode: 'revision', title: '合同需要修改', updatedAt: '2026-10-01T00:00:00Z', returnReason: '第二轮仍需补附件' }
+  const read = vi.fn().mockResolvedValueOnce({ version: '1', items: [item], nextCursor: 'next' })
+    .mockResolvedValueOnce({ version: '1', items: [{ ...item, requestId: 'another' }], nextCursor: 'next' })
+  const result = await readApprovalWorkPages(read)
+  expect(result.items[0]?.returnReason).toBe('第二轮仍需补附件')
+  expect(result.error).toContain('分页没有继续前进')
+  expect(read.mock.calls.map(([path]) => path)).toEqual(['/api/v1/workbench/approvals?limit=100', '/api/v1/workbench/approvals?limit=100&cursor=next'])
 })

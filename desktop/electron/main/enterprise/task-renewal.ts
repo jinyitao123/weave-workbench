@@ -30,20 +30,20 @@ export async function renewFixedAuthorization(intent: FrozenAuthorizationRenewal
   const current = await read()
   const auth = current.run.authorization
   if (current.source.inputRevisionID !== intent.source.inputRevisionID || current.source.runID !== intent.source.runID
-    || current.source.workbenchSessionID !== intent.source.workbenchSessionID || current.source.inputStatus === 'superseded'
+    || current.source.workbenchSessionID !== intent.source.workbenchSessionID || current.source.inputStatus !== 'current'
     || !auth?.scope || canonicalJSON(auth.scope) !== canonicalJSON(intent.scope)) throw new Error('原工作输入或授权范围已变化，请刷新工作消息')
   if (progress?.phase === 'retry_started') return {
     status: 'unknown', authorizationRenewed: auth.status === 'active' && auth.generation === progress.generation,
     message: '原输入续授权请求已处理，但恢复执行回执尚未确认。桌面只读取当前状态，没有重发业务动作或另建工作；请从工作消息核对平台结果。',
   }
   const alreadyAuthorized = progress?.generation !== undefined && auth.status === 'active' && auth.generation === progress.generation
-  if (!alreadyAuthorized && (current.run.status !== 'parked' || auth.status !== 'renewal_required' || !auth.canRenew
+  if (!alreadyAuthorized && (current.run.status !== 'parked' || !['renewal_required', 'active'].includes(auth.status) || !auth.canRenew
     || auth.generation !== intent.expectedGeneration || auth.retryNodeID !== intent.retryNodeID)) {
     throw new Error('平台未确认原运行可无副作用续办，请先核对原业务回执；不能续授权重放或另建工作')
   }
   if (!alreadyAuthorized) {
     await observer.checkpoint({ phase: 'issue_started' })
-    const grant = await issueTaskToken(transport, intent.requestID, intent.scope)
+    const grant = await issueTaskToken(transport, intent.requestID, intent.scope, intent.expectedGeneration)
     progress = { phase: 'authorization_started', generation: grant.generation, expiresAt: grant.expiresAt }
     await observer.checkpoint(progress)
     try {

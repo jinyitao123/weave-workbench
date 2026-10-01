@@ -3,6 +3,8 @@ import type { EnterpriseBusinessCapability, EnterpriseTeamMemberAgentConfigurati
 export interface TeamDefinition {
   name: string
   objective: string
+  /** Forge permission sets that may use the team; empty means the whole organization. */
+  audience?: string[]
   members: Array<{ id: string; configuration: EnterpriseTeamMemberAgentConfiguration; relationship: EnterpriseTeamMemberRelationshipConfiguration }>
   workflows: Array<{ id: string; name: string; description: string; graph_definition: EnterpriseWorkflowGraphDefinition; trigger_config: Record<string, unknown> }>
 }

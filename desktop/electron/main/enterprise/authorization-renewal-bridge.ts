@@ -20,7 +20,7 @@ export async function renewFromEmployeeTurn(params: Record<string, unknown>, acc
   const messageID = await access.assertCurrent()
   if (!messageID) throw new Error('无法核对当前员工续授权要求，请从原工作重新打开')
   const authorization = access.context.run.authorization
-  if (!authorization?.canRenew || authorization.status !== 'renewal_required' || !authorization.scope || !authorization.generation || !authorization.retryNodeID) throw new Error('平台没有确认这项工作可安全续授权，请先核对原业务回执')
+  if (!authorization?.canRenew || !['renewal_required', 'active'].includes(authorization.status) || !authorization.scope || !authorization.generation || !authorization.retryNodeID) throw new Error('平台没有确认这项工作可安全续授权，请先核对原业务回执')
   if (!access.renew) throw new Error('当前平台尚未接通原工作续授权，请保留原工作并核对回执')
   const source = access.context.source
   const key = `${access.accountKey}:${source.inputRevisionID}:${source.runID}:${messageID}:renew-authorization`

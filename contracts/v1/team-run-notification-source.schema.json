@@ -9,7 +9,7 @@
   "properties": {
     "version": { "const": "1" },
     "notificationId": { "type": "string", "minLength": 1, "maxLength": 128 },
-    "kind": { "enum": ["result", "failure", "revision_required", "cancelled"] },
+    "kind": { "enum": ["result", "failure", "revision_required", "cancelled", "human_review"] },
     "source": {
       "type": "object",
       "additionalProperties": false,
@@ -18,7 +18,8 @@
         "system": { "const": "weave" },
         "workReference": { "type": "string", "minLength": 1, "maxLength": 512 },
         "runReference": { "type": "string", "minLength": 1, "maxLength": 512 },
-        "sessionReference": { "type": "string", "minLength": 1, "maxLength": 512 }
+        "sessionReference": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "interactionReference": { "type": "string", "minLength": 1, "maxLength": 512, "description": "Present only for human_review." }
       }
     }
   }

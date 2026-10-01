@@ -98,6 +98,23 @@ export interface EnterpriseRunObservation {
   costUsd: number
 }
 
+export interface EnterpriseWorkCancellationResult {
+  runId: string
+  status: 'cancel_requested' | 'cancelled' | 'completed' | 'unknown'
+  authorizationRevoked: boolean
+  message: string
+}
+
+export interface EnterpriseTaskScopeDisplay {
+  version: '1'
+  source: 'workbench-host'
+  runReference: string
+  team: string
+  workflow: string
+  reads: string[]
+  writes: string[]
+}
+
 export interface EnterpriseTeamObservation {
   id: string
   name: string
@@ -289,6 +306,9 @@ export interface EnterpriseWorkChoice {
 export interface EnterpriseHumanTask {
   interactionId: string
   runId: string
+  /** Present only for a Weave task projected from the current native inbox source. */
+  inputRevisionID?: string
+  workbenchSessionID?: string
   teamId: string
   workflowId: string
   workflowVersion: number
@@ -394,7 +414,7 @@ export interface EnterpriseApprovalContextView {
 
 export interface EnterpriseWorkItem {
   id: string
-  kind: 'result' | 'failure' | 'revision_required' | 'human_review' | 'cancelled'
+  kind: 'notification' | 'result' | 'failure' | 'revision_required' | 'human_review' | 'cancelled'
   notificationType?: string
   title: string
   summary?: string
@@ -492,6 +512,8 @@ export interface EnterpriseWorkOverview {
 export interface EnterpriseWorkReadStatus {
   status: 'loaded' | 'failed'
   error?: string
+  /** The source holds more items than this refresh could show. */
+  truncated?: boolean
 }
 
 export interface EnterpriseWorkReceipt {
@@ -1297,12 +1319,13 @@ export interface PrimeWorkApi {
     saveTeamMemberConfigDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft>
     applyTeamMemberConfigDraft(teamId: string, agentId: string, revision: number): Promise<EnterpriseTeamMemberConfigDraft>
     getWorkOverview(): Promise<EnterpriseWorkOverview>
+    cancelWork(runId: string): Promise<EnterpriseWorkCancellationResult>
     getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContextView>
     pinReturnedApprovalContext(approvalId: string): Promise<{ handle: string; context: EnterpriseApprovalContextView }>
     pinApprovalReviewContext(approvalId: string): Promise<{ handle: string; context: EnterpriseApprovalContextView }>
     pinWorkContinuationContext(item: Pick<EnterpriseWorkItem, 'id' | 'source' | 'notificationType' | 'workReference' | 'runReference' | 'sessionReference'>): Promise<{ handle: string; context: EnterpriseWorkContinuationContextView }>
     submitWork(choice: EnterpriseWorkChoice, goal: string): Promise<EnterpriseWorkReceipt>
-    completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }>
+    completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId' | 'inputRevisionID' | 'workbenchSessionID'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }>
   }
   projects: {
     list(harness?: HarnessId): Promise<ProjectRecord[]>

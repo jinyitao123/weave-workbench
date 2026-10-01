@@ -1,5 +1,6 @@
 import { WORKBENCH_RUN_CONTINUATION_TYPE } from '../../../src/lib/team-work-continuation'
 import { randomUUID } from 'node:crypto'
+import { taskScopeDisplay } from './scope-display'
 import { approvalContextView, WorkRegistrationRejectedError, type ApprovalRevisionSubmission, type EnterpriseBusinessNotificationContext, type EnterpriseService, type EnterpriseWorkContinuationContext } from '../enterprise'
 import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, EnterpriseBusinessCapability, EnterpriseBusinessNotificationContextView, EnterpriseWorkChoice, EnterpriseWorkContinuationContextView, EnterpriseWorkItem, EnterpriseWorkResource, TranscriptMessage, WorkspaceMaterialPromptReference } from '../../../src/types/api'
 import { CapabilityBridge, type CapabilityClaim } from '../lib/capability-bridge'
@@ -1713,8 +1714,18 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           }
         }
       }
+      // The scope line is written by the Host from the frozen request, not by
+      // the model, so the employee sees exactly what the team may do (C30).
+      const actionLabels = new Map([...(this.businessActions.get(claim.token)?.get(handoffKey(frozen.choice))?.values() ?? [])].map((action) => [action.id, action.name]))
+      const materialCount = (frozen.reusedMaterials?.length ?? 0) + frozen.materials.length
+      const allowedScope = (frozen.authorizedBusinessCapabilityIds.length
+        ? `本次允许团队执行：${frozen.authorizedBusinessCapabilityIds.map((id) => actionLabels.get(id) ?? '已选业务动作').join('、')}`
+        : '本次只交给团队查看和分析，不允许业务写入')
+        + (frozen.businessContext ? `；业务记录：${frozen.businessContext.name}` : '') + (materialCount ? `；${materialCount} 份材料` : '')
       return {
         status: 'accepted', team: frozen.choice.teamName, workflow: frozen.choice.workflowName,
+        allowed_scope: allowedScope,
+        scope_display: taskScopeDisplay(frozen, receipt.runId, actionLabels),
         repeated: receipt.repeated, recovery_key: recoveryKey,
         ...(continuationLinked === false ? { next_step: '团队已在原工作下接单。后续继续时请从新工作消息打开，以核对最新版本。' } : {}),
         materials: [
