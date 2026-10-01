@@ -22,6 +22,8 @@ export const TaskDelegation = ObjectSchema.create({
     source_session_id: { type: 'text', required: true, maxLength: 128 },
     input_revision_id: { type: 'text', required: true, maxLength: 128 },
     generation: { type: 'number', required: true },
+    // Existing rows are confirmed. New issuances explicitly start pending.
+    issuance_pending: { type: 'boolean', defaultValue: false },
     issued_at: { type: 'datetime', required: true },
     expires_at: { type: 'datetime', required: true },
     revoked_at: { type: 'datetime' },

@@ -49,6 +49,54 @@ const bundle = {...sharedForgeCoreBundle, objects:[...sharedForgeCoreBundle.obje
 stack.plugins = stack.plugins.map(plugin => plugin === sharedForgeCorePlugin ? new AppPlugin(bundle) : plugin);
 stack.plugins.push({ name:'test.task-connection-bootstrap', init(ctx) { ctx.hook('kernel:ready',()=>{
   const server=ctx.getService('http.server'), engine=ctx.getService('objectql'), messaging=ctx.getService('messaging');
+  const barriers=new Map();
+  const auth=ctx.getService('auth'),nativeGetApi=auth.getApi.bind(auth),sessionCalls=new Map();
+  auth.getApi=async()=>{
+    const api=await nativeGetApi();
+    return new Proxy(api,{get(target,name){
+      if(name!=='getSession')return Reflect.get(target,name,target);
+      return async(args)=>{
+        const marker=args.headers?.get('x-task-test-issuance');
+        if(marker){
+          const count=(sessionCalls.get(marker)??0)+1;sessionCalls.set(marker,count);
+          const barrier=barriers.get(marker);
+          if(count===(marker.startsWith('renew:')?2:3)&&barrier){barrier.entered=true;await barrier.wait;}
+        }
+        return api.getSession(args);
+      };
+    }});
+  };
+  const nativeTransaction=engine.transaction.bind(engine);
+  engine.transaction=(callback,base,options)=>nativeTransaction(async(...args)=>{
+    const result=await callback(...args),barrier=barriers.get('commit:'+result?.input_revision_id);
+    if(barrier){barrier.entered=true;await barrier.wait;}
+    return result;
+  },base,options);
+  engine.registerHook('beforeInsert',async hook=>{
+    const barrier=barriers.get(hook.input?.data?.input_revision_id);
+    if(barrier){barrier.entered=true;await barrier.wait;}
+  },{object:'forge_task_delegation',packageId:'test.task-connection-bootstrap'});
+  engine.registerHook('afterUpdate',async hook=>{
+    if(hook.input?.data?.banned!==true&&hook.result?.banned!==true)return;
+    const id=hook.input?.id??hook.previous?.id??hook.result?.id;
+    const barrier=barriers.get('ban:'+id);
+    if(barrier){barrier.entered=true;await barrier.wait;}
+  },{object:'sys_user',priority:0,packageId:'test.task-connection-bootstrap'});
+  server.post('/api/v1/__test/task-grant-barrier',async(req,res)=>{
+    if(req.headers.authorization!=='Bearer ${launcher}')return res.status(403).json({error:'test launcher refused'});
+    const {operation,inputId,generation}=req.body;
+    if(operation==='arm'){
+      let release;const wait=new Promise(resolve=>{release=resolve;});
+      barriers.set(inputId,{entered:false,wait,release});return res.status(200).json({ok:true});
+    }
+    const barrier=barriers.get(inputId);
+    if(operation==='release'){barriers.delete(inputId);barrier?.release();return res.status(200).json({ok:true});}
+    if(operation==='credential'){
+      const row=await engine.findOne('forge_task_delegation',{where:{input_revision_id:inputId,generation}},{context:{isSystem:true,positions:[],permissions:[]}});
+      return res.status(200).json(await new TaskDelegationService(ctx)['response'](row));
+    }
+    return res.status(200).json({entered:barrier?.entered===true});
+  });
   engine.registerAction('${OBJECT}','TaskProbeTouch',async input=>{
     const context=input.executionContext;
     const row=await engine.findOne('${OBJECT}',{where:{id:input.params.recordId}},{context});
@@ -101,13 +149,20 @@ export default stack;
       headers: { 'Content-Type': 'application/json', Origin: origin }, body: JSON.stringify({email,password}) });
     const loginData = await login.json(); assert.equal(login.status, 200);
     const bearer = loginData.token; assert.equal(typeof bearer, 'string'); secrets.push(bearer);
-    async function request(url, method='GET', body, token=bearer) {
+    async function request(url, method='GET', body, token=bearer, extraHeaders={}) {
       const response=await fetch(origin+url,{method,headers:{Authorization:'Bearer '+token,Origin:origin,
-        Accept:'application/json, text/event-stream',...(body===undefined?{}:{'Content-Type':'application/json'})},
+        Accept:'application/json, text/event-stream',...extraHeaders,...(body===undefined?{}:{'Content-Type':'application/json'})},
         ...(body===undefined?{}:{body:JSON.stringify(body)})});
       const text=await response.text(); const lines=text.split(/\r?\n/).filter(line=>line.startsWith('data:')).map(line=>line.slice(5).trim()).filter(Boolean);
       const payload=lines.length?lines.at(-1):text;
       return {status:response.status,value:payload?JSON.parse(payload):null};
+    }
+    const barrierPath='/api/v1/__test/task-grant-barrier';
+    async function barrier(operation,inputId,generation){return request(barrierPath,'POST',{operation,inputId,generation},launcher);}
+    async function waitForBarrier(inputId){
+      const deadline=Date.now()+10000;
+      while(Date.now()<deadline){if((await barrier('status',inputId)).value.entered)return;await new Promise(resolve=>setTimeout(resolve,25));}
+      throw new Error('native beforeInsert barrier was not reached');
     }
     const identitySource=await request('/api/v1/workbench/identity-source');
     assert.equal(identitySource.status,200);assert.equal(identitySource.value.issuer,'forge:task-test-'+suffix);
@@ -212,6 +267,24 @@ export default stack;
     assert.equal(expiredParent.status,200,'desktop session expiry must not interrupt a handed-off task');
     await db.query('UPDATE sys_session SET expires_at=$2 WHERE id=$1',[session.session.id,parent.expires_at]);
     assert.equal((await request(ROOT+'/current','GET',undefined,renewed.value.access_token)).status,200);
+    const cancelRaceScope={...scope,input_revision_id:randomUUID(),allowed_actions:[],resources:[]};delete cancelRaceScope.business_record;
+    const cancelRaceRequest=randomUUID();
+    const cancelRaceGrant=await request(ROOT,'POST',{request_id:cancelRaceRequest,scope:cancelRaceScope});
+    assert.equal(cancelRaceGrant.status,200);secrets.push(cancelRaceGrant.value.access_token);
+    await barrier('arm',cancelRaceScope.input_revision_id);
+    const cancelRaceRenewal=request(ROOT,'POST',{request_id:randomUUID(),scope:cancelRaceScope,expected_generation:1});
+    try{
+      await waitForBarrier(cancelRaceScope.input_revision_id);
+      const cancel=await request(ROOT+'/'+cancelRaceGrant.value.grant_id,'DELETE',{reason:'employee_cancel'});
+      assert.equal(cancel.status,200);assert.equal(cancel.value.reason,'employee_cancel');
+    }finally{await barrier('release',cancelRaceScope.input_revision_id);}
+    const cancelRaceReply=await cancelRaceRenewal;if(cancelRaceReply.value?.access_token)secrets.push(cancelRaceReply.value.access_token);
+    assert.equal(cancelRaceReply.status,409,'cancel confirmed before insert must prevent a usable renewed grant');
+    assert.equal((await request(ROOT,'POST',{request_id:cancelRaceRequest,scope:cancelRaceScope})).status,409,'issuance replay cannot revive a cancelled original input');
+    await db.query('UPDATE forge_task_delegation SET revoked_at=NULL,revocation_reason=NULL,issuance_pending=false WHERE grant_key=$1 AND generation=2',[cancelRaceGrant.value.grant_id]);
+    const unfinished=await barrier('credential',cancelRaceScope.input_revision_id,2);assert.equal(unfinished.status,200);secrets.push(unfinished.value.access_token);
+    const unfinishedCurrent=await request(ROOT+'/current','GET',undefined,unfinished.value.access_token);
+    assert.equal(unfinishedCurrent.status,403,'durable older cancellation must block an unmarked newer row');assert.equal(unfinishedCurrent.value.error.code,'FORGE_TASK_CANCELLED');
     await db.query('DELETE FROM sys_member WHERE user_id=$1 AND organization_id=$2',[session.user.id,session.session.activeOrganizationId]);
     await deniedWithoutMembership();
     for(const row of memberRows){const columns=Object.keys(row);await db.query('INSERT INTO sys_member ('+columns.map(name=>'"'+name+'"').join(',')+') VALUES ('+columns.map((_,index)=>'$'+(index+1)).join(',')+')',columns.map(name=>row[name]));}
@@ -232,10 +305,15 @@ export default stack;
     const targetScope={...scope,input_revision_id:randomUUID(),allowed_actions:[],resources:[]};delete targetScope.business_record;
     const targetGrant=await request(ROOT,'POST',{request_id:randomUUID(),scope:targetScope},targetToken);
     assert.equal(targetGrant.status,200,'native employee empty-scope grant: '+String(targetGrant.value?.error?.code));secrets.push(targetGrant.value.access_token);
+    await barrier('arm',targetScope.input_revision_id);
+    const targetRenewal=request(ROOT,'POST',{request_id:randomUUID(),scope:targetScope,expected_generation:1},targetToken);
+    await waitForBarrier(targetScope.input_revision_id);
     assert.equal((await request('/api/v1/auth/admin/ban-user','POST',{userId:targetId,banReason:'独立任务撤销验证'})).status,200);
     const banned=(await request(ROOT+'/current','GET',undefined,targetGrant.value.access_token));
     assert.equal(banned.status,401);assert.equal(banned.value.error.code,'FORGE_TASK_SUBJECT_INACTIVE');
     assert.equal((await request('/api/v1/auth/admin/unban-user','POST',{userId:targetId})).status,200);
+    await barrier('release',targetScope.input_revision_id);
+    assert.equal((await targetRenewal).status,409,'ban then unban before renewal insert cannot revive the original grant');
     const stillRevoked=await request(ROOT+'/current','GET',undefined,targetGrant.value.access_token);
     assert.equal(stillRevoked.status,401);assert.equal(stillRevoked.value.error.code,'FORGE_TASK_SUBJECT_INACTIVE','unban cannot revive the original grant');
     const cleanup=await request(ROOT+'/'+targetGrant.value.grant_id,'DELETE',{reason:'run_terminal'},targetGrant.value.access_token);
@@ -243,6 +321,58 @@ export default stack;
     const restartedLogin=await request('/api/v1/auth/sign-in/email','POST',{email:targetEmail,password:changedPassword});
     assert.equal(restartedLogin.status,200);const restartedToken=restartedLogin.value.token;secrets.push(restartedToken);
     assert.equal((await request(ROOT,'POST',{request_id:randomUUID(),scope:targetScope},restartedToken)).status,409,'a new login must not resurrect the disabled original input');
+    const firstRaceScope={...targetScope,input_revision_id:randomUUID()};
+    const firstRaceRequest=randomUUID();
+    await barrier('arm',firstRaceScope.input_revision_id);
+    const firstIssuance=request(ROOT,'POST',{request_id:firstRaceRequest,scope:firstRaceScope},restartedToken);
+    await waitForBarrier(firstRaceScope.input_revision_id);
+    assert.equal((await request('/api/v1/auth/admin/ban-user','POST',{userId:targetId,banReason:'首次发行竞争验证'})).status,200);
+    assert.equal((await request('/api/v1/auth/admin/unban-user','POST',{userId:targetId})).status,200);
+    await barrier('release',firstRaceScope.input_revision_id);
+    assert.equal((await firstIssuance).status,401,'first issuance must not survive ban deleting its original employee session');
+    const firstRaceRows=await db.query('SELECT count(*)::int AS count FROM forge_task_delegation WHERE input_revision_id=$1',[firstRaceScope.input_revision_id]);
+    assert.equal(firstRaceRows.rows[0].count,0,'aborted first issuance must roll back its row and request key');
+    const freshLogin=await request('/api/v1/auth/sign-in/email','POST',{email:targetEmail,password:changedPassword});
+    assert.equal(freshLogin.status,200);const freshToken=freshLogin.value.token;secrets.push(freshToken);
+    const firstRetry=await request(ROOT,'POST',{request_id:firstRaceRequest,scope:firstRaceScope},freshToken);
+    assert.equal(firstRetry.status,200,'fresh login can retry the original rolled-back first issuance nonce');secrets.push(firstRetry.value.access_token);
+    assert.equal(firstRetry.value.generation,1);assert.equal((await request(ROOT+'/current','GET',undefined,firstRetry.value.access_token)).status,200);
+    const banBarrier='ban:'+targetId;await barrier('arm',banBarrier);
+    const delayedBan=request('/api/v1/auth/admin/ban-user','POST',{userId:targetId,banReason:'停用事件与启用竞争验证'});
+    try{await waitForBarrier(banBarrier);assert.equal((await request('/api/v1/auth/admin/unban-user','POST',{userId:targetId})).status,200);}
+    finally{await barrier('release',banBarrier);}
+    assert.equal((await delayedBan).status,200);
+    const delayedBanCurrent=await request(ROOT+'/current','GET',undefined,firstRetry.value.access_token);
+    assert.equal(delayedBanCurrent.status,401,'a later unban cannot erase the native ban event before its revocation hook runs');assert.equal(delayedBanCurrent.value.error.code,'FORGE_TASK_SUBJECT_INACTIVE');
+    const commitLogin=await request('/api/v1/auth/sign-in/email','POST',{email:targetEmail,password:changedPassword});
+    assert.equal(commitLogin.status,200);const commitToken=commitLogin.value.token;secrets.push(commitToken);
+    const commitScope={...targetScope,input_revision_id:randomUUID()},commitRequest=randomUUID(),commitBarrier='commit:'+commitScope.input_revision_id;
+    await barrier('arm',commitBarrier);
+    const commitIssuance=request(ROOT,'POST',{request_id:commitRequest,scope:commitScope},commitToken);
+    try{
+      await waitForBarrier(commitBarrier);
+      assert.equal((await request('/api/v1/auth/admin/ban-user','POST',{userId:targetId,banReason:'复验后提交前竞争验证'})).status,200);
+      assert.equal((await request('/api/v1/auth/admin/unban-user','POST',{userId:targetId})).status,200);
+    }finally{await barrier('release',commitBarrier);}
+    const commitReply=await commitIssuance;if(commitReply.value?.access_token)secrets.push(commitReply.value.access_token);
+    assert.equal(commitReply.status,401,'post-validation ban/unban before commit must prevent signing a first task token');
+    const committedRows=await db.query('SELECT revoked_at,revocation_reason FROM forge_task_delegation WHERE input_revision_id=$1',[commitScope.input_revision_id]);
+    assert.equal(committedRows.rows.length,1,'postcommit rejection retains the failed issuance nonce');
+    assert.ok(committedRows.rows[0].revoked_at);assert.equal(committedRows.rows[0].revocation_reason,'issuance_aborted');
+    const abandoned=await barrier('credential',commitScope.input_revision_id,1);assert.equal(abandoned.status,200);secrets.push(abandoned.value.access_token);
+    assert.equal((await request(ROOT+'/current','GET',undefined,abandoned.value.access_token)).status,401,'a signed test credential cannot activate the failed committed scope');
+    const afterCommitLogin=await request('/api/v1/auth/sign-in/email','POST',{email:targetEmail,password:changedPassword});
+    assert.equal(afterCommitLogin.status,200);const afterCommitToken=afterCommitLogin.value.token;secrets.push(afterCommitToken);
+    assert.equal((await request(ROOT,'POST',{request_id:commitRequest,scope:commitScope},afterCommitToken)).status,409);
+    const retriedCommit=await request(ROOT,'POST',{request_id:randomUUID(),scope:commitScope,expected_generation:0},afterCommitToken);
+    assert.equal(retriedCommit.status,200,'fresh authorization may replace an aborted unconfirmed candidate');secrets.push(retriedCommit.value.access_token);
+    assert.equal(retriedCommit.value.generation,2);
+    const newWork=await request(ROOT,'POST',{request_id:randomUUID(),scope:{...commitScope,input_revision_id:randomUUID()}},afterCommitToken);
+    assert.equal(newWork.status,200,'a new work input is allowed after fresh native login');secrets.push(newWork.value.access_token);
+    const terminalScope={...cancelRaceScope,input_revision_id:randomUUID()};const terminalRequest=randomUUID();
+    const terminalGrant=await request(ROOT,'POST',{request_id:terminalRequest,scope:terminalScope});assert.equal(terminalGrant.status,200);secrets.push(terminalGrant.value.access_token);
+    assert.equal((await request(ROOT+'/'+terminalGrant.value.grant_id,'DELETE',{reason:'run_terminal'},terminalGrant.value.access_token)).status,200);
+    assert.equal((await request(ROOT,'POST',{request_id:randomUUID(),scope:terminalScope,expected_generation:1})).status,409,'a terminal original input cannot obtain a new generation');
     const cancelGrant=await request(ROOT,'POST',{request_id:randomUUID(),scope:{...scope,input_revision_id:randomUUID()}});
     assert.equal(cancelGrant.status,200);secrets.push(cancelGrant.value.access_token);
     const cancellations=await Promise.all([
@@ -254,7 +384,41 @@ export default stack;
     assert.equal(cancelled.status,cancellations[0].value.reason==='employee_cancel'?403:401);
     assert.equal((await request(ROOT+'/'+renewed.value.grant_id,'DELETE',{reason:'employee_cancel'},renewed.value.access_token)).status,403);
     assert.equal((await request(ROOT+'/'+'f'.repeat(64),'DELETE',{reason:'run_terminal'},renewed.value.access_token)).status,403);
+    const terminalRaceScope={...cancelRaceScope,input_revision_id:randomUUID()};
+    const terminalRaceGrant=await request(ROOT,'POST',{request_id:randomUUID(),scope:terminalRaceScope});assert.equal(terminalRaceGrant.status,200);secrets.push(terminalRaceGrant.value.access_token);
+    const terminalRaceMarker='renew:'+terminalRaceScope.input_revision_id;await barrier('arm',terminalRaceMarker);
+    const terminalRaceRenewal=request(ROOT,'POST',{request_id:randomUUID(),scope:terminalRaceScope,expected_generation:1},bearer,{'x-task-test-issuance':terminalRaceMarker});
+    await waitForBarrier(terminalRaceMarker);
+    assert.equal((await request(ROOT+'/current','GET',undefined,terminalRaceGrant.value.access_token)).status,200,'a committed pending candidate cannot replace the confirmed authority');
+    const terminalRaceStop=await request(ROOT+'/'+terminalRaceGrant.value.grant_id,'DELETE',{reason:'run_terminal'},terminalRaceGrant.value.access_token);
+    assert.equal(terminalRaceStop.status,200,'confirmed original task can self-revoke while a newer candidate is pending');
+    await barrier('release',terminalRaceMarker);assert.equal((await terminalRaceRenewal).status,409);
+    assert.equal((await request(ROOT+'/current','GET',undefined,terminalRaceGrant.value.access_token)).status,401);
+    const logoutRenewScope={...cancelRaceScope,input_revision_id:randomUUID()};
+    const logoutRenewGrant=await request(ROOT,'POST',{request_id:randomUUID(),scope:logoutRenewScope});assert.equal(logoutRenewGrant.status,200);secrets.push(logoutRenewGrant.value.access_token);
+    await barrier('arm',logoutRenewScope.input_revision_id);
+    const logoutRenewRequest=randomUUID(),logoutRenewal=request(ROOT,'POST',{request_id:logoutRenewRequest,scope:logoutRenewScope,expected_generation:1});
+    await waitForBarrier(logoutRenewScope.input_revision_id);
+    assert.equal((await request(ROOT+'/current','GET',undefined,logoutRenewGrant.value.access_token)).status,200,'pending renewal cannot replace the handed-off authority');
+    const lateScope={...cancelRaceScope,input_revision_id:randomUUID()},lateRequest=randomUUID(),lateMarker='caller:'+lateScope.input_revision_id;
+    await barrier('arm',lateMarker);
+    const lateOriginal=request(ROOT,'POST',{request_id:lateRequest,scope:lateScope},bearer,{'x-task-test-issuance':lateMarker});
+    await waitForBarrier(lateMarker);
+    const pendingCredential=await barrier('credential',lateScope.input_revision_id,1);assert.equal(pendingCredential.status,200);secrets.push(pendingCredential.value.access_token);
+    assert.equal((await request(ROOT+'/current','GET',undefined,pendingCredential.value.access_token)).status,401,'unconfirmed issuance cannot execute');
+    const handedOff=await request(ROOT,'POST',{request_id:lateRequest,scope:lateScope});assert.equal(handedOff.status,200);secrets.push(handedOff.value.access_token);
     const logout=await request('/api/v1/auth/sign-out','POST',{});assert.equal(logout.status,200);
+    await barrier('release',logoutRenewScope.input_revision_id);
+    assert.equal((await logoutRenewal).status,401);
+    assert.equal((await request(ROOT+'/current','GET',undefined,logoutRenewGrant.value.access_token)).status,200,'aborted renewal and logout cannot close the handed-off old authority');
+    await barrier('release',lateMarker);
+    assert.equal((await lateOriginal).status,401,'late original issuer rejects its logged-out caller');
+    assert.equal((await request(ROOT+'/current','GET',undefined,handedOff.value.access_token)).status,200,'late issuer abort cannot revoke a row already handed off by the same-nonce replay');
+    const adminAgain=await request('/api/v1/auth/sign-in/email','POST',{email,password});assert.equal(adminAgain.status,200);const adminAgainToken=adminAgain.value.token;secrets.push(adminAgainToken);
+    assert.equal((await request(ROOT,'POST',{request_id:logoutRenewRequest,scope:logoutRenewScope},adminAgainToken)).status,409,'aborted candidate nonce stays closed');
+    const renewedAgain=await request(ROOT,'POST',{request_id:randomUUID(),scope:logoutRenewScope,expected_generation:1},adminAgainToken);
+    assert.equal(renewedAgain.status,200);assert.equal(renewedAgain.value.generation,3,'allocation skips retained aborted generation while expected generation uses authority');secrets.push(renewedAgain.value.access_token);
+    assert.equal((await request(ROOT+'/current','GET',undefined,renewedAgain.value.access_token)).status,200);
     assert.equal((await request(ROOT+'/current','GET',undefined,renewed.value.access_token)).status,200,'logout must not revoke handed-off work');
     const revoked=await request(ROOT+'/'+renewed.value.grant_id,'DELETE',{reason:'run_terminal'},renewed.value.access_token);
     assert.equal(revoked.status,200);assert.equal(revoked.value.revoked,true);assert.equal(revoked.value.reason,'run_terminal');
