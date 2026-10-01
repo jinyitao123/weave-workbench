@@ -8,7 +8,7 @@
   "required": ["version", "issuer", "subject", "organizationId", "weaveUserId", "status", "createdAt", "lastLoginAt"],
   "properties": {
     "version": { "const": "1" },
-    "issuer": { "type": "string", "format": "uri", "maxLength": 2048 },
+    "issuer": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:\\S{1,240}$", "description": "Deployment-level stable identity source returned by Forge, not a network address. Changing the Forge access URL must not change it." },
     "subject": { "type": "string", "minLength": 1, "maxLength": 256 },
     "organizationId": { "type": "string", "minLength": 1, "maxLength": 128 },
     "weaveUserId": { "type": "string", "minLength": 1, "maxLength": 128 },
