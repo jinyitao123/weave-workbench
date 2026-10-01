@@ -59,7 +59,7 @@
 - 保存方式：桌面登录令牌仅保留到本次进程结束，不调用系统钥匙串、不落盘；重开桌面后重新登录。交接记录不含令牌或密码，按账号保存在本地用户私有目录（0700）和文件（0600），固定材料与幂等信息在网络写入前原子落盘。旧加密记录保留，不自动触发钥匙串解密；命中旧记录时要求核对原工作，不能当作新请求重发。
 - 传输：Workbench 按部署配置连接 HTTP 或 HTTPS，账号投影中的 `environment.secure` 明确标识当前连接方式；客户内网可直接使用 HTTP。
 - Weave 委托：Workbench Host 先按下文“任务委托签发与撤销”向 Forge 申请任务委托，再只在固定输入登记请求的专用请求头中提交 Forge 签发的任务凭据；不得提交员工桌面会话。Weave 验证任务凭据属于当前 Weave 用户的稳定绑定后，将其加密保存为不透明引用，并冻结准确输入版本、已发布工作流版本、本次员工意图允许的动作和任务正文摘要。团队发布能力只是上限；本次动作必须是其子集，空列表表示只处理材料、不允许业务写动作。凭据正文不进入任务、模型上下文、回执或审计记录；运行时只能在当前任务租约内解析引用并调用本次冻结动作。
-- 身份来源：Forge 的 `GET /api/v1/auth/me/permissions` 返回部署级稳定 `issuer`（如 `forge:<部署标识>`），Weave 以它建立和查找账号绑定；Forge 网络地址只用于连接，不参与绑定键。Weave 交换结果返回同一 `issuer`，桌面会话投影直接采用。
+- 身份来源：Forge 以部署环境变量 `FORGE_IDENTITY_ISSUER` 配置部署级稳定标识（如 `forge:<部署标识>`），经 `GET /api/v1/workbench/identity-source` 返回 `{ version: "1", issuer }`（无需登录，未配置返回 `503 IDENTITY_SOURCE_UNCONFIGURED`）。Weave 以该 `issuer` 建立和查找账号绑定，读取失败时不签发会话；Forge 网络地址只用于连接，不参与绑定键。Weave 交换结果返回同一 `issuer`，桌面会话投影直接采用。
 - 失效：Forge 返回 401 或 403 时，桌面清除本地会话并回到未登录。退出登录时 Host 先调用 Forge 登出接口注销桌面会话，再清除本地会话；退出不撤销已递交工作的任务委托。
 - 审计：登录、退出和委托签发记录主体、组织、设备会话、时间和结果，不记录密码与令牌正文。
 
@@ -68,11 +68,11 @@
 依据[决策 002](../../docs/decisions/002-任务委托身份来源与员工入口收敛.md)。**状态：目标契约。** 2026-10-01 已验证 ObjectStack 17.3 插件可签发独立会话、在 MCP 前按令牌拦截、在数据写入钩子中识别令牌并原生撤销（详见决策 002）；尚未实现，不得宣称已接通。
 
 - 调用者与身份：Workbench Host 以员工本人 Forge 桌面会话调用 `POST /api/v1/workbench/task-delegations`，请求与响应遵守 [task-delegation-request](task-delegation-request.schema.json)。Forge 从会话取得员工与组织，不接受调用方传入员工、组织或角色。
-- 校验：每个 `actions` 项必须在员工当前 MCP `list_actions` 允许列表内；`record` 必须是员工当前可见记录；每个 `files` 项按其 `sourceKind` 走既有本人原件或审批快照授权并核对 SHA-256。任一不成立返回 `403 delegation_scope_denied` 或 `422 delegation_scope_invalid`，不签发部分范围。
-- 签发：Forge 为同一员工创建独立于桌面会话的任务凭据，并保存委托范围（委托标识、员工、组织、动作、记录、文件、到期、撤销时间与原因）。到期时间为部署上限（默认 24 小时，部署可调低），Weave 在运行终态撤销，因此实际有效期跟随运行。
-- 幂等：`idempotencyKey` 复用本次固定输入登记的请求 UUID。同键同 `inputDigest` 返回原委托（`deduplicated=true`，凭据重新返回给同一员工）；同键不同摘要返回 `409 delegation_conflict`。
+- 校验：每个 `actions` 项必须是 Forge 声明且开放给智能体的非流程型动作，否则 `422 DELEGATION_SCOPE_INVALID`；员工是否有权执行在每次实际执行时由原生权限检查，签发不预判。`record` 必须是员工以本人权限可读的记录；`owner` 文件必须是员工本人同组织已提交文件，`approval` 文件须存在于同组织，读取时仍由审批快照路由按参与关系授权。记录或文件不成立返回 `403 DELEGATION_SCOPE_DENIED`，不签发部分范围。任务凭据本身不能申请委托（`403`）。
+- 签发：Forge 为同一员工创建独立于桌面会话的原生会话作为任务凭据，台账 `forge_task_delegation` 只保存凭据 SHA-256 与范围（委托标识、员工、组织、动作、记录、文件、到期、撤销时间与原因）。到期时间为部署上限（`FORGE_TASK_DELEGATION_MAX_HOURS`，默认且最大 24 小时），Weave 在运行终态撤销，因此实际有效期跟随运行。首次签发返回 `201`。
+- 幂等：`idempotencyKey` 复用本次固定输入登记的请求 UUID。同键、同员工、同 `inputDigest` 与同范围时返回 `200`、`deduplicated=true` 和**轮换后的新凭据**：Forge 不保存凭据明文，因此重试会以新会话替换旧会话，旧凭据立即失效；Weave 以最新一次登记覆盖保存。同键内容不同返回 `409 DELEGATION_CONFLICT`；已撤销或过期的委托不重新签发，返回 `409 DELEGATION_INACTIVE`。
 - 执行强制：任务凭据是 Forge 为同一员工签发的独立原生会话。Forge 以三道守卫强制范围：入口守卫只放行身份核对、MCP、对象元数据、Workbench 材料读取与本委托撤销路径；动作守卫核对每次动作的对象、动作与记录在委托范围内；数据守卫拒绝获准动作之外的一切写入（含 MCP `create_record`、`update_record`、`delete_record`）。范围外一律 `403`，已撤销或过期返回 `401`。已知限制：Forge 暂不能阻止任务凭据经 MCP 通用读取工具读取员工本人可见的数据，Weave 只向成员暴露 `list_actions`、`run_action`。Weave 的调用前收窄不替代这一检查；员工业务权限与业务状态仍按原规则校验。任务凭据除 `GET /api/v1/auth/me/permissions`（供 Weave 核对身份）外，不能调用登录、账号、委托签发或通用写入入口。
-- 撤销：`DELETE /api/v1/workbench/task-delegations/{delegationId}`，请求体 `{ "reason": "run_terminal" | "employee_cancel" }`。Weave 在运行进入终态后使用该任务凭据自身撤销（不另设服务密钥）；员工取消工作时 Host 以本人会话撤销。重复撤销返回 `204`，不改变首次撤销原因。Forge 账号停用时其全部任务凭据失效。撤销失败由 Weave 持久记录并退避重试，与终态事件投递相互独立；重试期间凭据仍受到期时间约束。
+- 撤销：`DELETE /api/v1/workbench/task-delegations/{delegationId}`，请求体可选 `{ "reason": "run_terminal" | "employee_cancel" }`，必须与调用者一致。Weave 在运行进入终态后使用该任务凭据自身撤销（原因为 `run_terminal`，不另设服务密钥）；员工取消工作时 Host 以本人会话撤销（`employee_cancel`），其他员工得到 `404`。成功返回 `200 { version, delegationId, revoked: true }`，重复撤销同样成功且不改变首次撤销原因。Forge 账号停用时其全部任务凭据失效。撤销失败由 Weave 持久记录并退避重试，与终态事件投递相互独立；重试期间凭据仍受到期时间约束。
 - Weave 侧：`weave_task_business_delegations` 保存 Forge `delegationId`、`issuer` 与加密凭据，删除固定 30 分钟期限；以 Forge 返回的 `expiresAt` 为准，撤销后写 `revoked_at`。旧行为（直接保存员工桌面会话）不保留兼容，124 开发数据清空重建。
 - 取消与回滚：撤销只阻止后续调用，不回滚已发生的业务动作；已发生动作按 Forge 撤销规则处理。
 - 审计：Forge 记录签发、拒绝、使用与撤销的员工、组织、委托标识、动作、对象、文件摘要、原因和时间；不记录凭据正文。
@@ -181,10 +181,10 @@
 `needs_input` 表示**尚未形成正式业务结果的团队检查已结束，等待原员工补材料再发起关联的新轮次**；Weave 运行仍以真实终态 `succeeded` 记录，不新增运行状态或内部人工等待节点。经校验的分类及缺项随同一次最终交付物保存，原有终态 outbox 对同一运行只生成一条 `revision_required` 消息；员工打开后由本人权限读取原固定输入、材料、父工作与结构化缺项，不从通知正文猜测。`complete` 仍生成普通 `result`。若本轮存在失败或结果未知的 Forge 业务动作，动作事实优先展示并要求核对，不得因团队给出 `complete` 或 `needs_input` 就宣称业务完成或自动重放。正式审批退回仍由 Forge 原生业务事项办理，不使用这个团队结果分类。 若本次运行已有权威记录的成功 Forge 业务动作，团队的 `needs_input` 和缺项仅作为检查意见交付；终态事件使用现有 `result`，桌面不再从它产生团队补材料待办。下一步正式业务事项由 Forge 决定。旧通知保持原生记录不变，桌面只在按当前账号、准确来源引用读回的动作事实明确包含成功时抑制该补材料投影；读取失败或事实缺失不得当成成功。消息打开后仍分开说明动作回执、团队意见与当前 Forge 状态，不要求员工重复提交已进入正式流程的材料。
 
 - 身份：Weave 从发起时已经绑定的 Forge 外部身份冻结接收账号和组织；运行结束后不得改用当前登录用户或共享管理员账号。
-- 幂等：`eventId` 与 `source.idempotencyKey` 由准确运行和终态（人工步骤为准确交互）生成。Forge 按对象键递归排序后的规范 JSON 计算事件内容 SHA-256，随原生通知保存在 `payload.weaveEvent.digest`；相同键相同摘要返回原通知，相同键不同摘要返回 `409 TEAM_RUN_EVENT_CONFLICT`。
+- 幂等：`eventId` 与 `source.idempotencyKey` 由准确运行和终态（人工步骤为准确交互）生成。Forge 按对象键递归排序后的规范 JSON 计算事件内容 SHA-256，随原生通知保存在 `payload.weaveEvent.digest`；相同键相同摘要返回原通知，相同键不同摘要返回 `409 TEAM_RUN_EVENT_CONFLICT`；摘要功能上线前写入、没有摘要的原生通知无法比较，按重复接受。接收账号不是事件组织成员时返回 `422 TEAM_RUN_ASSIGNEE_NOT_FOUND`。
 - 人工步骤：Weave 团队流程的人工节点进入等待时，生成 `kind=human_review` 事件，接收人固定为发起该工作的员工（Weave 不解析其他业务处理人；需要其他员工处理时走 Forge 原生审批），`source.interactionReference` 指向等待中的交互。员工从原生收件箱打开后，桌面按三引用与交互引用向 Weave 读取并办理；桌面不再直接读取 `/v1/human-tasks` 列表。交互已办完或已取消时，后续读取返回 `409`，消息保留为历史。
 - 交付：Weave 先将待投递事件写入自己的系统事件 outbox，再异步调用 `POST /api/v1/apps/forge/weave-events/team-runs`。Forge 接入 ObjectStack `messaging.emit`，由其原生通知 outbox 完成收件箱写入、重试和去重。
-- 失败与恢复：网络失败、`429` 和 `5xx` 留在 Weave outbox 并退避重试；`400`、`401`、`403`、`409` 和接收账号不存在属于永久错误，保留失败记录供运维恢复，不伪装成员工待办。Weave 重启扫描未完成事件，也会为尚未生成事件的已终态 Workbench 运行补建事件。
+- 失败与恢复：网络失败、`429` 和 `5xx` 留在 Weave outbox 并退避重试；`400`、`401`、`403`、`409`、`422`（含接收账号不存在）属于永久错误，保留失败记录供运维恢复，不伪装成员工待办。Weave 重启扫描未完成事件，也会为尚未生成事件的已终态 Workbench 运行补建事件。
 - 取消：运行尚未终结时不发送完成通知；终态事件一经 Forge 接收不删除。后续恢复或重跑产生新的运行和新事件，并通过工作引用保持上下文关系。
 - 审计：两端记录事件、运行、工作、组织、目标账号、尝试次数和最终交付状态；不记录服务凭据、员工密码、Forge 会话或合同正文。
 

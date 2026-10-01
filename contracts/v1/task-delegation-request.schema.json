@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://workbench.inocube.local/contracts/v1/task-delegation-request.schema.json",
   "title": "Forge Task Delegation Issue",
-  "description": "Workbench Host asks Forge, with the employee's own session, to issue a task delegation for one frozen work input. Forge verifies every action, record and file against the employee's current access, issues a task credential separate from the desktop session, and enforces this scope at execution.",
+  "description": "Workbench Host asks Forge, with the employee's own session, to issue a task delegation for one frozen work input. Forge checks that actions are declared, AI-exposed, non-flow actions and that the record and files are available to the employee, issues a task credential separate from the desktop session, and enforces this scope at execution. A deduplicated retry rotates the credential.",
   "oneOf": [
     { "$ref": "#/$defs/request" },
     { "$ref": "#/$defs/response" }
