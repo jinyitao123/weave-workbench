@@ -94,7 +94,7 @@ async function startHermeticEnterpriseServer(): Promise<string> {
     if (path === '/api/v1/auth/sign-in/email') {
       send({ token: 'forge-e2e-session', user: { id: 'forge-e2e-user', name: 'Hermetic Employee', email: 'e2e@example.test' } })
     } else if (path === '/v1/auth/external/exchange') {
-      send({ token: 'weave-e2e-session', subject: { id: 'weave-e2e-user', externalId: 'forge-e2e-user', name: 'Hermetic Employee', email: 'e2e@example.test' }, organization: { id: 'e2e-organization', name: 'Hermetic Organization' }, permissions: teamSidebarFixture ? ['teams:use', 'teams:develop'] : ['teams:use'], expiresIn: 3600 })
+      send({ token: 'weave-e2e-session', issuer: 'forge:hermetic-e2e-deployment', subject: { id: 'weave-e2e-user', externalId: 'forge-e2e-user', name: 'Hermetic Employee', email: 'e2e@example.test' }, organization: { id: 'e2e-organization', name: 'Hermetic Organization' }, permissions: teamSidebarFixture ? ['teams:use', 'teams:develop'] : ['teams:use'], expiresIn: 3600 })
     } else if (teamSidebarFixture && path === '/v1/teams') send([{ team: { id: 'team-ui', name: '合同团队', display_name: '合同团队', status: 'active', updated_at: '2026-10-01T00:00:00Z' }, workers: [] }])
     else if (teamSidebarFixture && path === '/v1/runtimes') send({ runtimes: [] })
     else if (teamSidebarFixture && path === '/v1/development/model-catalog') send({ models: ['fixture-model'] })
@@ -112,7 +112,7 @@ async function startHermeticEnterpriseServer(): Promise<string> {
     else if (parkedRunFixture && path === `/v1/runs/${parkedRunContext().source.run_id}/workbench-context`) send(parkedRunContext())
     else if (path === '/v1/human-tasks') send({ tasks: [] })
     else if (path === '/api/v1/apps/forge/workbench/inbox') send({ version: '1', notifications: [], next_cursor: null, has_more: false })
-    else if (path === '/api/v1/approvals/requests') send({ requests: [] })
+    else if (path === '/api/v1/workbench/approvals') send({ version: '1', items: [] })
     else send({})
   })
   await new Promise<void>((resolve, reject) => {
