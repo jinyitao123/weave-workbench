@@ -566,6 +566,28 @@
         "lines_added": 113,
         "production_lines_added": 18
       }
+    },
+    {
+      "date": "2026-10-01",
+      "reason": "Real HTTP retired-entry acceptance: replace only synthetic Echo group NotFound registrations, preserving real protected and wildcard handlers; include disabled/default, private, method, wildcard and real PostgreSQL login/register regression coverage. Exact measured app limits without added packages or dependencies.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "app": {
+        "previous_lines": 84106,
+        "previous_production_lines": 62272,
+        "lines_added": 223,
+        "production_lines_added": 11
+      }
+    },
+    {
+      "date": "2026-10-01",
+      "reason": "Native Forge error-marker safety: require a nonempty error string or an explicit textual message/code object without a valid ok marker; retain unknown target protection for boolean, numeric, array and opaque error fields, with original failure-receipt replay regressions. Initial budget check failed at the already-full main baseline; authorize exactly +135 kernel lines and +21 production lines, with no spare allowance or package/dependency growth.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 97546,
+        "previous_production_lines": 81506,
+        "lines_added": 135,
+        "production_lines_added": 21
+      }
     }
   ],
   "migration_targets": {
@@ -603,8 +625,8 @@
     ]
   },
   "kernel": {
-    "lines": 97546,
-    "production_lines": 81506,
+    "lines": 97681,
+    "production_lines": 81527,
     "packages": 49,
     "external_dependencies": 5,
     "allowed_dependencies": [
@@ -628,8 +650,8 @@
     ]
   },
   "app": {
-    "lines": 84106,
-    "production_lines": 62272,
+    "lines": 84329,
+    "production_lines": 62283,
     "packages": 30,
     "external_dependencies": 7,
     "allowed_dependencies": [
