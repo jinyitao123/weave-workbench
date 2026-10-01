@@ -27,6 +27,7 @@ async function fixture() {
   let issuePause: { started: ReturnType<typeof deferred<void>>; response: ReturnType<typeof deferred<Response>> } | undefined
   let rejectionCode: string | undefined
   let terminalAfterAuthorization = false
+  let renewedContextCanRenew = false
   const task = '按原材料继续当前合同工作'
   const scope: ForgeTaskScope = { input_revision_id: inputID, registration_id: registrationID, task_sha256: digest(task), workflow_id: 'workflow', workflow_version: 1, allowed_actions: ['forge:action:contract.submit'], resources: [] }
   const context = {
@@ -69,7 +70,7 @@ async function fixture() {
       const issue = calls.filter((call) => call.path === '/api/v1/apps/forge/task-delegations').at(-1)!
       expect(issue.body?.scope).toEqual(scope)
       if (terminalAfterAuthorization) context.run.status = 'failed'
-      context.run.authorization = { ...context.run.authorization, status: 'active', can_renew: false, generation: 2, expires_at: expiresAt }
+      context.run.authorization = { ...context.run.authorization, status: 'active', can_renew: renewedContextCanRenew, generation: 2, expires_at: expiresAt }
       return Response.json({ input_revision_id: inputID, generation: 2, expires_at: expiresAt, status: 'active' })
     }
     if (path === '/v1/runs/run-original/stages/submit/retry') {
@@ -84,7 +85,7 @@ async function fixture() {
     fixDelegationIntent: async (preparedID, frozenScope) => store.freeze('grant-intent', digest(JSON.stringify(frozenScope)), async () => ({ inputRevisionID: preparedID, requestID })) }
   const renewal: FrozenAuthorizationRenewal = { accountKey: await service.accountKey(), source: { inputRevisionID: inputID, runID: 'run-original', workbenchSessionID: 'session-original' }, expectedGeneration: 1, scope: structuredClone(scope), retryNodeID: 'submit', requestID, retryRequestID: registrationID }
   const observer = { assertCurrent: async () => {}, readProgress: async () => (await store.inspect<RenewalProgress>('renewal-progress'))?.value, checkpoint: async (progress: RenewalProgress) => { await store.checkpoint('renewal-progress', digest(JSON.stringify(renewal)), progress) } }
-  return { service, calls, source, scope, renewal, observer, store, directory, context, get issuedScope() { return issuedScope }, tamper: (next: typeof tamper) => { tamper = next }, loseDispatch: () => { loseDispatchReceipt = true }, loseStage: () => { loseStageReceipt = true }, conflict: () => { authorizationConflict = true }, rejectTask: (code: string) => { rejectionCode = code }, closeAfterAuthorization: () => { terminalAfterAuthorization = true }, pauseIssue: () => { issuePause = { started: deferred<void>(), response: deferred<Response>() }; return issuePause } }
+  return { service, calls, source, scope, renewal, observer, store, directory, context, get issuedScope() { return issuedScope }, tamper: (next: typeof tamper) => { tamper = next }, loseDispatch: () => { loseDispatchReceipt = true }, loseStage: () => { loseStageReceipt = true }, conflict: () => { authorizationConflict = true }, rejectTask: (code: string) => { rejectionCode = code }, closeAfterAuthorization: () => { terminalAfterAuthorization = true }, keepRenewableAfterAuthorization: () => { renewedContextCanRenew = true }, pauseIssue: () => { issuePause = { started: deferred<void>(), response: deferred<Response>() }; return issuePause } }
 }
 
 it('prepares, persists issuer intent, and sends only the scoped task token to Weave, using native identity rather than workspace', async () => {
@@ -132,10 +133,13 @@ it('keeps CAS authorization conflicts explicit and does not retry a stage or cre
   expect(f.calls.some((call) => call.path.includes('/prepare') || call.path === '/v1/workbench/dispatch-inputs')).toBe(false)
 })
 
-it('renews only the original scope/input and accepts only a precise preserved-stage receipt', async () => {
+it('parses the active renewable context after renewal and queues retry for the original input', async () => {
   const f = await fixture()
+  f.keepRenewableAfterAuthorization()
   expect(await f.service.renewWorkAuthorization(f.renewal, f.observer)).toMatchObject({ status: 'resumed', authorizationRenewed: true })
+  expect(f.context.run.authorization).toMatchObject({ status: 'active', can_renew: true, generation: 2, retry_node_id: 'submit' })
   expect(f.calls.filter((call) => call.path.includes('/stages/'))).toHaveLength(1)
+  expect(f.calls.find((call) => call.path.includes('/stages/'))?.path).toBe('/v1/runs/run-original/stages/submit/retry')
   expect(f.calls.filter((call) => call.path === '/api/v1/apps/forge/task-delegations')[0]?.body?.scope).toEqual(f.renewal.scope)
   expect(f.calls.some((call) => call.path.includes('/prepare') || call.path === '/v1/workbench/dispatch-inputs')).toBe(false)
   expect(await f.service.renewWorkAuthorization(f.renewal, f.observer)).toMatchObject({ status: 'resumed' })

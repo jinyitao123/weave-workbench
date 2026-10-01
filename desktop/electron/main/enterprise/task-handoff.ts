@@ -11,7 +11,7 @@ export interface ForgeTaskScope {
   workflow_version: number
   allowed_actions: string[]
   resources: EnterpriseWorkResource[]
-  business_record?: { object_name: string; record_id: string; record_version?: string }
+  business_record?: { object_name: string; record_id: string }
 }
 export interface DelegationIntent { inputRevisionID: string; requestID: string }
 export interface FixedWorkSource {
@@ -71,7 +71,7 @@ export async function fixedWorkHandoff(choice: EnterpriseWorkChoice, task: strin
       ...(source.continuation.restartAfterFailedRun ? {} : { revision_context: { parent_input_revision_id: source.continuation.inputRevisionID, parent_run_id: source.continuation.runID } }) } : {}),
     team_id: choice.teamId, workflow_id: choice.workflowId, workflow_version: choice.version, project_id: transport.projectID, task,
     resources: source.resources,
-    ...(source.businessContext ? { business_record: { object_name: source.businessContext.objectName, record_id: source.businessContext.recordId, ...(source.businessContext.recordVersion ? { record_version: source.businessContext.recordVersion } : {}) } } : {}),
+    ...(source.businessContext ? { business_record: { object_name: source.businessContext.objectName, record_id: source.businessContext.recordId } } : {}),
     authorized_business_capability_ids: source.authorizedBusinessCapabilityIds,
     source_messages: source.sourceMessages.map(({ messageId, eventSeq, sha256 }) => ({ message_id: messageId, event_seq: eventSeq, sha256 })),
   }

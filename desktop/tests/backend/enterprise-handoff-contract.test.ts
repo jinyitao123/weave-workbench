@@ -1,5 +1,5 @@
 import { delegationResponse, fixedSource } from './task-delegation-fixture'
-import type { ForgeTaskScope } from '../../electron/main/enterprise/task-handoff'
+import { taskScopeSHA256, type ForgeTaskScope } from '../../electron/main/enterprise/task-handoff'
 import { createHash } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import { EnterpriseService } from '../../electron/main/enterprise'
@@ -13,6 +13,7 @@ async function fixture() {
   let rejectContinuation = false
   let afterRegistration = async () => {}
   const calls: { path: string; body: Record<string, unknown> }[] = []
+  const delegationGrants: ReturnType<typeof delegationResponse>[] = []
   const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
     const path = new URL(String(input)).pathname
     if (path === '/api/v1/auth/sign-in/email') return Response.json({ token: 'forge', user: { id: 'employee' }, session: { activeOrganizationId: 'forge-org' } })
@@ -21,7 +22,11 @@ async function fixture() {
     const body = JSON.parse(String(init?.body)) as Record<string, unknown>
     calls.push({ path, body })
     if (path === '/v1/workbench/dispatch-inputs/prepare') return Response.json({ input_revision_id: body.registration_id })
-    if (path === '/api/v1/apps/forge/task-delegations') return Response.json(delegationResponse(body.scope as ForgeTaskScope, 'employee'))
+    if (path === '/api/v1/apps/forge/task-delegations') {
+      const grant = delegationResponse(body.scope as ForgeTaskScope, 'employee')
+      delegationGrants.push(grant)
+      return Response.json(grant)
+    }
     if (path === '/v1/workbench/dispatch-inputs') {
       // Mirror service admission constraints, not an unconditional success stub.
       expect(String(body.registration_id)).toMatch(uuid)
@@ -50,7 +55,7 @@ async function fixture() {
   await service.signIn('employee@example.test', 'test')
   let current = true
   const source = { fixDelegationIntent: fixedSource(await service.accountKey()).fixDelegationIntent, idempotencySeed: 'session:employee-message:team', sessionKey: 'session', sourceMessages: [{ messageId: 'employee-message', eventSeq: 2, sha256: hash('这版给他们看看') }], accountKey: await service.accountKey(), resources: [{ type: 'forge-file' as const, id: 'file-contract-v1', name: '合同.md', bytes: 12, sha256: hash('合同正文') }], authorizedBusinessCapabilityIds: [], assertCurrent: async () => { if (!current) throw new Error('员工已改变要求') } }
-  return { service, source, registrations, runs, calls, drop: () => { dropDispatchResponse = true }, wrongDigest: () => { mismatchDigest = true }, rejectContinuation: () => { rejectContinuation = true }, changeDuringRegistration: () => { afterRegistration = async () => { current = false } }, logoutDuringRegistration: () => { afterRegistration = async () => { await service.signOut() } } }
+  return { service, source, registrations, runs, calls, delegationGrants, drop: () => { dropDispatchResponse = true }, wrongDigest: () => { mismatchDigest = true }, rejectContinuation: () => { rejectContinuation = true }, changeDuringRegistration: () => { afterRegistration = async () => { current = false } }, logoutDuringRegistration: () => { afterRegistration = async () => { await service.signOut() } } }
 }
 describe('Weave handoff admission contract', () => {
   it('recovers a lost dispatch response with the identical UUID and body, producing one run', async () => {
@@ -145,7 +150,18 @@ describe('Weave handoff admission contract', () => {
     const f = await fixture()
     const source = { ...f.source, businessContext: { objectName: 'forge_quote', recordId: 'quote-a', recordVersion: 'revision-7' } }
     await f.service.submitWork(choice, '核对报价', source)
-    expect(f.calls[0].body.business_record).toEqual({ object_name: 'forge_quote', record_id: 'quote-a', record_version: 'revision-7' })
+    const prepared = f.calls.find((call) => call.path.endsWith('/v1/workbench/dispatch-inputs/prepare'))?.body
+    const grantRequest = f.calls.find((call) => call.path.endsWith('/api/v1/apps/forge/task-delegations'))?.body
+    const registration = f.calls.find((call) => call.path === '/v1/workbench/dispatch-inputs')?.body
+    const scope = grantRequest?.scope as ForgeTaskScope
+    const grant = f.delegationGrants[0]!
+    const record = { object_name: 'forge_quote', record_id: 'quote-a' }
+    expect(prepared?.business_record).toEqual(record)
+    expect(registration?.business_record).toEqual(record)
+    expect(scope.business_record).toEqual(record)
+    expect(grant.scope_sha256).toBe(taskScopeSHA256(scope))
+    expect(grant.scope).toEqual(scope)
+    expect(scope.business_record).toEqual(prepared?.business_record)
     await expect(f.service.submitWork(choice, '核对报价', { ...source, businessContext: { ...source.businessContext, recordId: 'quote-b' } })).rejects.toThrow('已登记内容冲突')
     expect(f.runs.size).toBe(1)
   })

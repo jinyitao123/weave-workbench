@@ -140,7 +140,7 @@ export function parseWorkContinuationContext(value: unknown): EnterpriseWorkCont
         || new Set(scope.allowed_actions).size !== scope.allowed_actions.length || canonicalJSON(scope.resources) !== canonicalJSON(expectedResources)
         || canonicalJSON(scope.business_record) !== canonicalJSON(expectedRecord)) throw new Error('工作授权范围与原固定输入不一致，请刷新工作消息')
     }
-    if (auth.can_renew && (authStatus !== 'renewal_required' || inputStatus !== 'current' || status !== 'parked' || !generation || !scope || !retryNodeID)) throw new Error('工作缺少可安全续授权的等待状态，请核对原业务回执')
+    if (auth.can_renew && (!['renewal_required', 'active'].includes(authStatus as string) || inputStatus !== 'current' || status !== 'parked' || !generation || !scope || !retryNodeID)) throw new Error('工作缺少可安全续授权的等待状态，请核对原业务回执')
     authorization = { status: authStatus as NonNullable<typeof authorization>['status'], canRenew: auth.can_renew, ...(reason ? { reason } : {}), ...(generation ? { generation: generation as number } : {}), ...(expiresAt ? { expiresAt: expiresAt as string } : {}), ...(scope ? { scope: scope as unknown as ForgeTaskScope } : {}), ...(retryNodeID ? { retryNodeID } : {}) }
   }
   let finalResult: EnterpriseWorkContinuationContext['run']['finalResult']
@@ -194,4 +194,3 @@ export function parseWorkContinuationContext(value: unknown): EnterpriseWorkCont
     run: { status: status as EnterpriseWorkContinuationContext['run']['status'], ...(authorization ? { authorization } : {}), ...(businessResult ? { businessResult } : {}), ...(finalResult ? { finalResult } : {}), ...(actionOutcomes !== undefined ? { actionOutcomes } : {}) },
   }
 }
-

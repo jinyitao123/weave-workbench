@@ -485,7 +485,15 @@ function workflowDefinition(value: unknown): EnterpriseWorkflowGraphDefinition |
 
 
 const CONTINUATION_TOTAL_BYTES = 8 * 1024 * 1024
-const CONTINUATION_TEXT_TYPES = new Set(['text/plain', 'text/plain; charset=utf-8'])
+const CONTINUATION_TEXT_TYPES = new Set([
+  'text/plain', 'text/plain; charset=utf-8',
+  'text/markdown', 'text/markdown; charset=utf-8',
+  'text/csv', 'text/csv; charset=utf-8',
+  'application/json', 'application/json; charset=utf-8',
+])
+function continuationTextType(value: string): WorkspaceMaterialMimeType {
+  return value.replace(/; charset=utf-8$/i, '').toLowerCase() as WorkspaceMaterialMimeType
+}
 function isContinuationOriginalType(value: WorkspaceMaterialMimeType | 'text/plain; charset=utf-8'): value is 'application/pdf' | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' {
   return value === 'application/pdf' || value === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 }
@@ -1570,6 +1578,7 @@ export class EnterpriseService {
         const sha256 = typeof raw?.sha256 === 'string' ? raw.sha256 : undefined
         const content = typeof raw?.content === 'string' ? raw.content : undefined
         if (raw?.version !== '1' || fileId !== expected.id || name !== expected.name || !mediaType || !CONTINUATION_TEXT_TYPES.has(mediaType)
+          || expected.mediaType !== undefined && continuationTextType(mediaType) !== continuationTextType(expected.mediaType)
           || !Number.isInteger(bytes) || bytes !== expected.bytes || !sha256 || sha256 !== expected.sha256 || !content || content.includes('\0')
           || Buffer.byteLength(content, 'utf8') !== bytes || createHash('sha256').update(content, 'utf8').digest('hex') !== sha256) {
           throw new Error('原工作材料与固定输入不一致，桌面不会继续')
@@ -1577,7 +1586,7 @@ export class EnterpriseService {
         totalBytes += bytes!
         totalExtractedBytes += bytes!
         if (totalBytes > CONTINUATION_TOTAL_BYTES || totalExtractedBytes > MAX_WORKSPACE_EXTRACTION_BYTES) throw new Error('原工作材料总量超出桌面读取限制')
-        materials.push({ ...expected, mediaType: expected.mediaType ?? 'text/plain', content })
+        materials.push({ ...expected, mediaType: expected.mediaType ?? continuationTextType(mediaType), content })
       }
     }
     if (await this.accountKey(generation) !== accountBeforeMaterials) throw new Error('当前账号已变化，原工作材料不能继续使用')
