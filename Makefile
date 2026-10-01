@@ -1,4 +1,4 @@
-.PHONY: check status component-check release-check desktop-check weave-check forge-check
+.PHONY: check status branch-check component-check release-check desktop-check weave-check forge-check
 
 check:
 	@node tools/check-layout.mjs
@@ -7,6 +7,10 @@ check:
 
 status:
 	@node tools/project-status.mjs
+
+branch-check:
+	@git fetch --prune --quiet origin
+	@node tools/project-status.mjs --check-branches
 
 component-check:
 	@node tools/project-status.mjs --check-components

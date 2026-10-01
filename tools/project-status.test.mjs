@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { checkReadiness, inspectRepository, validateLock } from './project-status.mjs'
+import { checkReadiness, findUnregisteredBranches, inspectRepository, validateLock } from './project-status.mjs'
 
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'workbench-status-'))
@@ -77,4 +77,20 @@ test('missing source objects fail closed; incorrect paths cannot bypass source c
   assert.match(report.components[0].error, /无法比较来源树/)
   f.lock.components.weave.importPath = 'desktop'
   assert.throws(() => validateLock(f.lock), /Invalid revision or importPath/)
+})
+
+test('unmerged remote branches must be registered in the status page owner section', t => {
+  const f = fixture(t)
+  mkdirSync(join(f.root, 'docs'))
+  const status = who => `## 现在做到哪\n\n## 谁在做什么\n${who}\n\n## 卡在哪\n\n## 下一步\n\`codex/later\`\n`
+  f.git('update-ref', 'refs/remotes/origin/main', 'HEAD')
+  f.git('update-ref', 'refs/remotes/origin/merged', 'HEAD')
+  f.write('feature.txt', 'feature\n')
+  f.commit()
+  for (const name of ['codex/active', 'codex/later']) f.git('update-ref', `refs/remotes/origin/${name}`, 'HEAD')
+  f.write('docs/项目状态.md', status('| 本会话 | `codex/active` | 合入 |'))
+  assert.deepEqual(findUnregisteredBranches(f.root), { error: '', branches: ['codex/later'] })
+  f.write('docs/项目状态.md', status('| 本会话 | `codex/active` | 合入 |\n| 待认领 | `codex/later` | 确认后删除 |'))
+  assert.deepEqual(findUnregisteredBranches(f.root).branches, [])
+  assert.match(findUnregisteredBranches(f.root, 'origin/missing').error, /git fetch/)
 })
