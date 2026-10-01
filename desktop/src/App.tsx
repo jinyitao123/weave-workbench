@@ -15,7 +15,7 @@ import { activityNotificationSignature, readClearedActivity, readClearedAttentio
 import { errorMessage } from '@/lib/errors'
 import { openApprovalReviewInPi } from '@/lib/approval-review'
 import { businessNotificationPrompt } from '@/lib/business-notification'
-import { teamRunContinuationBoundary, teamRunResultNotice } from '@/lib/team-work-continuation'
+import { teamRunContinuationBoundary, teamRunResultNotice, WORKBENCH_RUN_CONTINUATION_TYPE } from '@/lib/team-work-continuation'
 import { I18nProvider } from '@/lib/i18n'
 import { openExternalUrl, revealPath } from '@/lib/desktop-actions'
 import { createSingleFlightAdmission, findProjectForSession, gitStatusForWorkspace, shouldRefreshGitOnSessionTransition, workspaceCwd } from '@/lib/workspace'
@@ -196,6 +196,19 @@ export default function App() {
     try { await enterpriseBridge.completeHumanTask(task, { decision, comment }); if (enterpriseSessionRevisionRef.current === sessionRevision) setTimeout(refreshWorkOverview, 700) }
     catch (error) { if (enterpriseSessionRevisionRef.current === sessionRevision) { setWorkError(errorMessage(error)); reportError(error) }; throw error }
     finally { if (enterpriseSessionRevisionRef.current === sessionRevision) setWorkLoading(false) }
+  }, [enterpriseBridge, refreshWorkOverview, reportError])
+  const cancelEnterpriseWorkById = useCallback(async (runId: string) => {
+    if (!enterpriseBridge) throw new Error('企业工作暂时不可用')
+    const sessionRevision = enterpriseSessionRevisionRef.current
+    try {
+      const result = await enterpriseBridge.cancelWork(runId)
+      if (enterpriseSessionRevisionRef.current !== sessionRevision) throw new Error('账号已切换，取消回执已丢弃')
+      setToast(result.message); refreshWorkOverview()
+      return result
+    } catch (error) {
+      if (enterpriseSessionRevisionRef.current === sessionRevision) { setWorkError(errorMessage(error)); reportError(error) }
+      throw error
+    }
   }, [enterpriseBridge, refreshWorkOverview, reportError])
   const inspectEnterpriseTask = useCallback(async (task: EnterpriseHumanTask) => {
     if (!enterpriseBridge || task.source !== 'forge') throw new Error('当前事项没有业务审批材料')
@@ -568,7 +581,7 @@ export default function App() {
         setToast(errorMessage(error))
         return
       }
-    } else if (item.source === 'forge' && item.kind === 'result') {
+    } else if (item.source === 'forge' && (item.kind === 'result' || item.kind === 'notification')) {
       try {
         if (!enterpriseBridge) throw new Error('业务结果续接能力暂不可用')
         const binding = await enterpriseBridge.pinWorkContinuationContext({ id: item.id, source: 'forge', notificationType: item.notificationType })
@@ -612,7 +625,7 @@ export default function App() {
       ? teamContext.businessResult === 'action_failed' || teamContext.businessResult === 'action_unknown'
       : teamContext?.actionOutcomes?.some((outcome) => outcome.status !== 'succeeded')
     const structuredResultNotice = teamContext ? teamRunResultNotice(teamContext) : ''
-    const historicalRunBoundary = teamContext ? teamRunContinuationBoundary(item.createdAt) : ''
+    const historicalRunBoundary = teamContext ? item.notificationType === WORKBENCH_RUN_CONTINUATION_TYPE ? '本次读取的是当前员工原有的团队运行。打开仅授权查看，不重新交接或执行；本轮运行状态与 Forge 当前业务状态分别说明。' : teamRunContinuationBoundary(item.createdAt) : ''
     const details = failedTeamWork && teamContext ? [
       '你打开的是上一条团队工作失败消息。该运行已经结束，不能通过旧交接凭据恢复执行；不要查找历史会话或调用交接恢复工具。',
       historicalRunBoundary,
@@ -959,7 +972,7 @@ export default function App() {
   }, [enterpriseBridge, refreshWorkOverview, view, workError, workLoading, workOverview])
 
   const page = view === 'projects' ? <ProjectsPage projects={projects} sortMode={settingsState.settings.projectSortMode} onAdd={() => void addProject()} onOpen={selectProject} onRemove={(project) => void removeProject(project)} onTogglePin={(project) => void togglePinProject(project)} />
-    : view === 'activity' && enterpriseBridge ? <EnterpriseWorkPage overview={workOverview} loading={workLoading} error={workError} onRefresh={refreshWorkOverview} onComplete={completeEnterpriseTask} onInspect={inspectEnterpriseTask} onAssist={assistEnterpriseTaskInPi} onContinue={continueEnterpriseWork} />
+    : view === 'activity' && enterpriseBridge ? <EnterpriseWorkPage overview={workOverview} loading={workLoading} error={workError} onRefresh={refreshWorkOverview} onComplete={completeEnterpriseTask} onInspect={inspectEnterpriseTask} onAssist={assistEnterpriseTaskInPi} onContinue={continueEnterpriseWork} onCancel={async (run) => { await cancelEnterpriseWorkById(run.id) }} />
     : view === 'activity' ? <ActivityPage sessions={sessions} projects={projects} clearedActivity={clearedActivity} onOpen={selectSession} onClear={clearActivity} />
     : view === 'scheduled' ? <ScheduledPage harness={activeHarness} schedules={schedules} nativeHeartbeats={activeHarness === 'prime' ? heartbeats : []} projects={projects} sessions={sessions} models={provider.catalog?.models ?? EMPTY_MODELS} lastSelectedModel={provider.model} error={scheduleError} initialProjectId={activeProject?.id} initialSessionId={activeSession?.id} selectedScheduleId={scheduleFocusId} onCreate={createSchedule} onUpdate={updateSchedule} onPause={(id: string) => mutateSchedule(() => bridge!.schedules.pause(id))} onResume={(id: string) => mutateSchedule(() => bridge!.schedules.resume(id))} onDelete={(id: string) => mutateSchedule(() => bridge!.schedules.delete(id))} onRunNow={(id: string) => mutateSchedule(() => bridge!.schedules.runNow(id))} onPreview={async (timing: ScheduleTiming) => bridge ? bridge.schedules.preview(timing, 3) : { timing, occurrences: [] }} onOpenSession={openScheduledSession} onManageHeartbeat={manageHeartbeat} />
     : view === 'plugins' ? <PluginsPage harness={activeHarness} skills={pluginSkills.skills} warnings={pluginSkills.warnings} loading={pluginSkills.loading} activeProjectPath={activeProject?.primaryFolder} askUserEnabled={settingsState.settings.askUserEnabled} onSetAskUserEnabled={(enabled) => settingsState.updateSettings({ askUserEnabled: enabled })} browserEnabled={settingsState.settings.browserEnabled} onSetBrowserEnabled={(enabled) => settingsState.updateSettings({ browserEnabled: enabled })} computerUseEnabled={settingsState.settings.computerUseEnabled} onSetComputerUseEnabled={(enabled) => settingsState.updateSettings({ computerUseEnabled: enabled })} onOpenExternal={openExternal} onRefresh={pluginSkills.refresh} onInstall={installSkill} onInstallExtension={installExtension} onSetMcpSupport={setMcpSupport} onConnectMcp={connectMcp} onSetMcpEnabled={setMcpEnabled} onMutateCapability={mutateCapability} />
@@ -982,7 +995,7 @@ export default function App() {
         <div ref={layout.sessionWorkspaceRef} className="conversation-column">
           <main className="conversation-pane">
             {teamActionReceipt?.generation === workspace.workspaceGeneration ? <WorkActionReceipt outcomes={teamActionReceipt.outcomes}/> : null}
-            <Suspense fallback={<LoadingPanel label="conversation" />}><Transcript key={workspace.activeSessionId ?? 'new-session'} messages={workspace.messages} git={git} harness={activeHarness} personalWorkspace={activeProject?.purpose === 'personal'} loading={workspace.loadingSession} active={busy || activeSession?.status === 'running'} showReasoning={settingsState.settings.showReasoningSummaries} showTools={settingsState.settings.showToolCalls} onOpenChanges={openChanges} onSuggestion={(prompt) => { void sendPrompt(prompt).catch(() => undefined) }} onOpenMaterials={activeProject?.materialsFolder ? openMaterialsFolder : undefined} onChooseWorkspace={() => { void addProject() }} suggestionsDisabled={!activeProject || workspace.loadingSession || submitting} showPinnedChanges={false} bottomDockHasChanges={Boolean(git.files.length && settingsState.settings.showFileChangesPopup && !changesCardDismissed)} queuedMessageCount={queuedMessages.length} onOpenSessionReference={(sessionId, harness) => { const session = sessions.find((candidate) => candidate.id === sessionId && candidate.harness === harness && !candidate.archived && candidate.depth === 0); if (session) void selectSession(session); else setToast('That referenced session is archived or no longer available.') }} /></Suspense>
+            <Suspense fallback={<LoadingPanel label="conversation" />}><Transcript key={workspace.activeSessionId ?? 'new-session'} messages={workspace.messages} git={git} harness={activeHarness} personalWorkspace={activeProject?.purpose === 'personal'} loading={workspace.loadingSession} active={busy || activeSession?.status === 'running'} showReasoning={settingsState.settings.showReasoningSummaries} showTools={settingsState.settings.showToolCalls} onOpenChanges={openChanges} onCancelWork={enterpriseBridge ? cancelEnterpriseWorkById : undefined} onSuggestion={(prompt) => { void sendPrompt(prompt).catch(() => undefined) }} onOpenMaterials={activeProject?.materialsFolder ? openMaterialsFolder : undefined} onChooseWorkspace={() => { void addProject() }} suggestionsDisabled={!activeProject || workspace.loadingSession || submitting} showPinnedChanges={false} bottomDockHasChanges={Boolean(git.files.length && settingsState.settings.showFileChangesPopup && !changesCardDismissed)} queuedMessageCount={queuedMessages.length} onOpenSessionReference={(sessionId, harness) => { const session = sessions.find((candidate) => candidate.id === sessionId && candidate.harness === harness && !candidate.archived && candidate.depth === 0); if (session) void selectSession(session); else setToast('That referenced session is archived or no longer available.') }} /></Suspense>
             <div className="conversation-bottom-dock">
               {git.files.length && settingsState.settings.showFileChangesPopup && !changesCardDismissed ? <ChangesCard git={git} onOpenChanges={openChanges} onClose={() => setChangesCardDismissed(true)} /> : null}
               <Composer key={workspace.activeSessionId ? `${activeProject?.id ?? 'no-project'}:${workspace.activeSessionId}` : `${activeProject?.id ?? 'no-project'}:new:${workspace.workspaceGeneration}`} draftKey={workspace.activeSessionId ? `${activeProject?.id ?? 'no-project'}:${workspace.activeSessionId}` : `${activeProject?.id ?? 'no-project'}:new`} busy={busy} submitting={submitting} loading={workspace.loadingSession} disabled={!activeProject} messageEnterAction={settingsState.settings.messageEnterAction} voice={bridge?.voice} transcriptionProvider={settingsState.settings.voiceTranscriptionProvider} model={provider.model} effort={provider.effort} modelsByProvider={provider.modelsByProvider} providers={provider.catalog?.providers ?? EMPTY_PROVIDERS} reasoningLevels={provider.reasoningLevels} fast={provider.fast} fastSupported={provider.selectedModel?.fastModeSupported ?? false} fastAvailable={workspace.runtime?.fastModeAvailable !== false} checkoutCatalog={checkoutCatalog} checkoutLabel={git.branch ?? activeProject?.gitBranch ?? activeProject?.name} checkoutsLoading={checkoutsLoading} onExecuteCheckout={bridge && activeProject && !activeProject.inferred ? executeCheckout : undefined} agentName={HARNESS_AGENT_NAMES[activeHarness]} shortName={HARNESS_SHORT_NAMES[activeHarness]} harness={activeHarness} workspaceProjectId={activeProject?.id} personalWorkspace={activeProject?.purpose === 'personal'} imageInputSupported={Boolean(provider.selectedModel?.input.includes('image'))} contextUsage={workspace.runtime?.contextUsage} sessionUsage={workspace.runtime?.sessionUsage} executingModel={workspace.runtime?.executingModel} skills={pluginSkills.skills} sessions={mentionableSessions} annotations={browserAnnotations.annotations} terminalSelection={terminalSelection} getTerminalContext={getTerminalContext} queuedMessages={queuedMessages} onDeleteQueuedMessage={removeQueuedMessage} onEditQueuedMessage={removeQueuedMessage} sendSignal={browserAnnotations.sendSignal} onModelChange={provider.changeModel} onEffortChange={provider.changeEffort} onFastChange={provider.changeFast} onSend={(prompt, images, intent, textAttachments) => sendPrompt(prompt, images, intent, undefined, undefined, textAttachments)} onImportTextFile={importComposerTextFile} onStop={stopRuntime} onRemoveAnnotation={browserAnnotations.remove} onClearAnnotations={browserAnnotations.clear} onClearTerminalSelection={clearTerminalSelection} />

@@ -4,6 +4,8 @@ import { MessagingServicePlugin } from '@objectstack/service-messaging';
 import { ApprovalsServicePlugin } from '@objectstack/plugin-approvals';
 import { SharingServicePlugin } from '@objectstack/plugin-sharing';
 import { MCPServerPlugin } from '@objectstack/mcp';
+import { TaskDelegationPlugin } from './src/plugins/task-delegation.plugin.js';
+import { WorkbenchInboxPlugin } from './src/plugins/workbench-inbox.plugin.js';
 import { RecordChangeTriggerPlugin } from '@objectstack/trigger-record-change';
 import { ApprovalWorkbenchContextPlugin } from './src/plugins/approval-workbench-context.plugin.js';
 import { ApprovalResubmitGuardPlugin } from './src/plugins/approval-resubmit-guard.plugin.js';
@@ -11,7 +13,6 @@ import { ContractRevisionMaterialPlugin } from './src/plugins/contract-revision-
 import { ContractMaterialSubmissionPlugin } from './src/plugins/contract-material-submission.plugin.js';
 import { WeaveRunEventPlugin } from './src/plugins/weave-run-event.plugin.js';
 import { WorkbenchOwnedMaterialPlugin } from './src/plugins/workbench-owned-material.plugin.js';
-import { TaskDelegationPlugin } from './src/plugins/task-delegation.plugin.js';
 import { ApprovalWorkListPlugin } from './src/plugins/approval-work-list.plugin.js';
 import { ProjectMemberSharingPlugin } from './src/plugins/project-member-sharing.plugin.js';
 import { ServiceOrderReferenceSharingPlugin } from './src/plugins/service-order-reference-sharing.plugin.js';
@@ -36,9 +37,10 @@ export default defineStack({
     }),
     new RecordChangeTriggerPlugin(),
     new MCPServerPlugin(),
+    new WorkbenchInboxPlugin(),
+    new TaskDelegationPlugin(),
     new WeaveRunEventPlugin(),
     new WorkbenchOwnedMaterialPlugin(),
-    new TaskDelegationPlugin(),
     new ApprovalWorkListPlugin(),
     new ApprovalWorkbenchContextPlugin(),
     new ContractRevisionMaterialPlugin(),

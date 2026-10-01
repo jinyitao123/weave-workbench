@@ -222,17 +222,27 @@ it('keeps the approval on the work page when a fresh renderer session cannot be 
   expect(container.querySelector('[role="alert"]')?.textContent).toContain('无法创建独立审批辅助会话')
 })
 
-it('says when a source has more work than one refresh shows', async () => {
-  const truncated: EnterpriseWorkOverview = {
-    ...overview,
-    reads: { ...overview.reads, weaveTasks: { status: 'loaded' }, forgeApprovals: { status: 'loaded', truncated: true }, notifications: { status: 'loaded' } },
-  }
+it('opens a parked original run from the normal work row without displaying its internal identifier or creating a notification', async () => {
+  const runID = 'run-550e8400-e29b-41d4-a716-446655440999'
   await act(async () => root.render(<EnterpriseWorkPage
-    overview={truncated} loading={false} error="" onRefresh={refresh}
-    onComplete={vi.fn(async () => undefined)} onInspect={vi.fn(async () => ({ title: '', step: '', fields: [], files: [] }))}
-    onAssist={assistPi}
-    onContinue={continueWork}
+    overview={{ ...overview, items: [], tasks: [], runs: [{ ...overview.runs[0]!, id: runID, status: 'parked', step: '合同处理' }] }} loading={false} error="" onRefresh={refresh}
+    onComplete={vi.fn(async () => undefined)} onInspect={vi.fn(async () => ({ title: '', step: '', fields: [], files: [] }))} onAssist={assistPi} onContinue={continueWork}
   />))
-  expect(container.textContent).toContain('业务审批较多，当前只显示最近一部分。')
-  expect(container.textContent).not.toContain('工作通知较多')
+  expect(container.textContent).not.toContain(runID)
+  const open = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === '继续原工作')!
+  await act(async () => open.click())
+  expect(continueWork).toHaveBeenCalledWith(expect.objectContaining({ id: runID, source: 'weave', notificationType: 'weave.workbench_run', actionable: false }))
+  expect(container.querySelectorAll('.work-task-list article')).toHaveLength(0)
+})
+
+it('cancels the clicked original work row and labels a pending stop without claiming it is already cancelled', async () => {
+  const cancel = vi.fn(async () => undefined)
+  const current = { ...overview.runs[0]!, status: 'cancel_requested' }
+  await act(async () => root.render(<EnterpriseWorkPage overview={{ ...overview, items: [], tasks: [], runs: [current] }} loading={false} error="" onRefresh={refresh}
+    onComplete={vi.fn(async () => undefined)} onInspect={vi.fn(async () => ({ title: '', step: '', fields: [], files: [] }))} onAssist={assistPi} onContinue={continueWork} onCancel={cancel} />))
+  expect(container.textContent).toContain('取消中')
+  expect(container.textContent).not.toContain('已取消')
+  const button = [...container.querySelectorAll<HTMLButtonElement>('button')].find((item) => item.textContent === '核对取消')!
+  await act(async () => button.click())
+  expect(cancel).toHaveBeenCalledWith(current)
 })

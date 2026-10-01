@@ -17,6 +17,7 @@ import {
   requireReleaseArtifacts,
 } from './lib.mjs'
 import { assertPackageSizeBudgets, collectPackageSizeMetrics, describeSizeMetrics } from './size-budgets.mjs'
+import { verifyRuntimeModules } from './verify-runtime-modules.mjs'
 
 export const QA_PACKAGE_SCOPE_NOTICE = 'Local QA verification is engineering-only. Package checks do not establish employee handoff or business acceptance.'
 
@@ -142,6 +143,8 @@ async function verifyApp({ app, artifact, mode, expectedTeam, expectedAppId }) {
     run('xcrun', ['stapler', 'validate', app])
     run('spctl', ['--assess', '--type', 'execute', '--verbose=4', app])
   }
+
+  verifyRuntimeModules({ asar })
 
   return { app, asar }
 }

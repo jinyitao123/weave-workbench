@@ -1,73 +1,112 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://workbench.inocube.local/contracts/v1/task-delegation-request.schema.json",
-  "title": "Forge Task Delegation Issue",
-  "description": "Workbench Host asks Forge, with the employee's own session, to issue a task delegation for one frozen work input. Forge checks that actions are declared, AI-exposed, non-flow actions and that the record and files are available to the employee, issues a task credential separate from the desktop session, and enforces this scope at execution. A deduplicated retry rotates the credential.",
+  "title": "Forge Scoped Task Authorization Issuance",
+  "description": "Host issuance and response wire. Employee/native organization comes from the authenticated session; task credentials never enter model context or audit bodies.",
   "oneOf": [
-    { "$ref": "#/$defs/request" },
-    { "$ref": "#/$defs/response" }
-  ],
-  "$defs": {
-    "request": {
+    {
       "type": "object",
       "additionalProperties": false,
-      "required": ["version", "idempotencyKey", "inputDigest", "actions", "files"],
+      "required": [
+        "request_id",
+        "scope"
+      ],
       "properties": {
-        "version": { "const": "1" },
-        "idempotencyKey": { "type": "string", "format": "uuid", "description": "The frozen dispatch-input request id; retries reuse it." },
-        "inputDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "Digest of the frozen dispatch-input registration body; same key with another digest is a conflict." },
-        "actions": {
-          "type": "array", "maxItems": 32, "uniqueItems": true,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["objectName", "actionName"],
-            "properties": {
-              "objectName": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,127}$" },
-              "actionName": { "type": "string", "minLength": 1, "maxLength": 128 }
-            }
-          }
+        "request_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
         },
-        "record": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["objectName", "recordId"],
-          "properties": {
-            "objectName": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,127}$" },
-            "recordId": { "type": "string", "minLength": 1, "maxLength": 128 }
-          }
+        "scope": {
+          "$ref": "task-delegation.schema.json#/$defs/scope"
         },
-        "files": {
-          "type": "array", "maxItems": 10, "uniqueItems": true,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["fileId", "sha256", "sourceKind"],
-            "properties": {
-              "fileId": { "type": "string", "minLength": 1, "maxLength": 128 },
-              "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-              "sourceKind": { "enum": ["owner", "approval"] },
-              "requestId": { "type": "string", "minLength": 1, "maxLength": 128 }
-            },
-            "allOf": [
-              { "if": { "properties": { "sourceKind": { "const": "approval" } } }, "then": { "required": ["requestId"] }, "else": { "not": { "required": ["requestId"] } } }
-            ]
-          }
+        "expected_generation": {
+          "type": "integer",
+          "minimum": 0
         }
       }
     },
-    "response": {
+    {
       "type": "object",
       "additionalProperties": false,
-      "required": ["version", "delegationId", "issuer", "credential", "expiresAt", "deduplicated"],
+      "required": [
+        "version",
+        "token_type",
+        "access_token",
+        "grant_id",
+        "generation",
+        "issued_at",
+        "expires_at",
+        "scope_sha256",
+        "scope",
+        "subject",
+        "issuer",
+        "identity_issuer"
+      ],
       "properties": {
-        "version": { "const": "1" },
-        "delegationId": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "issuer": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:\\S{1,240}$" },
-        "credential": { "type": "string", "minLength": 16, "maxLength": 4096, "description": "Task credential. Host passes it only in the Weave dispatch-input header and never logs, persists, or exposes it to the renderer or model." },
-        "expiresAt": { "type": "string", "format": "date-time" },
-        "deduplicated": { "type": "boolean" }
+        "version": {
+          "const": "1"
+        },
+        "token_type": {
+          "const": "forge_task"
+        },
+        "access_token": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 65536
+        },
+        "grant_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "issued_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "scope_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "scope": {
+          "$ref": "task-delegation.schema.json#/$defs/scope"
+        },
+        "subject": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "organization_id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "organization_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        },
+        "issuer": {
+          "type": "string",
+          "format": "uri"
+        },
+        "identity_issuer": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:\\S{1,240}$"
+        }
       }
     }
-  }
+  ]
 }

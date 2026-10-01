@@ -75,6 +75,7 @@ const api: PrimeWorkApi = {
     saveTeamMemberConfigDraft: (draft) => invoke('enterprise:save-team-member-config-draft', draft),
     applyTeamMemberConfigDraft: (teamId, agentId, revision) => invoke('enterprise:apply-team-member-config-draft', teamId, agentId, revision),
     getWorkOverview: () => invoke('enterprise:get-work-overview'),
+    cancelWork: (runId) => invoke('enterprise:cancel-work', runId),
     getApprovalContext: (approvalId) => invoke('enterprise:get-approval-context', approvalId),
     pinReturnedApprovalContext: (approvalId) => invoke('enterprise:pin-returned-approval-context', approvalId),
     pinApprovalReviewContext: (approvalId) => invoke('enterprise:pin-approval-review-context', approvalId),
