@@ -15,6 +15,19 @@
 
 :root {
   color-scheme: light;
+  /* Shared type, shape and spacing scale; themes only change colours. */
+  --font-xs: 11px;
+  --font-sm: 12px;
+  --font-md: 13px;
+  --font-lg: 15px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
   --canvas: #ffffff;
   --sidebar: #f3f3f1;
   --surface-subtle: #f7f7f5;
