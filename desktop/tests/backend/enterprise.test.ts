@@ -27,7 +27,7 @@ function workOverviewFetch(route: (url: string, init?: RequestInit) => Response 
     }
     if (url.endsWith('/v1/auth/external/exchange')) {
       const email = new Headers(init?.headers).get('Authorization')?.replace('Bearer forge-token-', '') ?? 'unknown'
-      return Response.json({ token: `weave-token-${email}`, subject: { id: `weave-${email}`, externalId: email, email, name: email }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      return Response.json({ token: `weave-token-${email}`, subject: { id: `weave-${email}`, externalId: email, email, name: email }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
     }
     const routed = await route(url, init)
     if (routed) return routed
@@ -44,32 +44,10 @@ function notificationResponse(value: { success?: boolean; notifications?: unknow
   return Response.json({ version: '1', notifications: value.notifications ?? value.data?.notifications ?? [], next_cursor: null, has_more: false }, init)
 }
 
-function teamRunMetadata(
-  source: { workReference: string; runReference: string; sessionReference: string },
-  options: { actionOutcomes?: Array<Record<string, unknown>>; omitActionOutcomes?: boolean } = {},
-) {
-  const task = '按员工授权提交合同材料。'
-  const result = '团队意见：验收日期待确认。'
-  return {
-    version: '1',
-    source: { input_revision_id: source.workReference, run_id: source.runReference, workbench_session_id: source.sessionReference },
-    input: {
-      task, task_sha256: digest(task), team_id: 'team-contract', workflow_id: 'workflow-review', workflow_version: 1,
-      materials: [{
-        type: 'forge-file', id: 'original-contract', name: '合同原件.pdf', bytes: 12, sha256: digest('pdf-original'),
-        materialId: '0123456789abcdef01234567', mediaType: 'application/pdf', sourceKind: 'owner',
-      }],
-      source_messages: [{ message_id: 'employee-message', event_seq: 1, sha256: digest('员工原始要求') }],
-    },
-    run: {
-      status: 'succeeded',
-      final_result: {
-        id: 'deliverable-contract-review', title: '合同检查意见', content_type: 'text/markdown', content: result,
-        sha256: digest(result), disposition: 'needs_input', summary: '验收日期待确认。', missing_items: ['验收日期'],
-      },
-      ...(!options.omitActionOutcomes ? { action_outcomes: options.actionOutcomes ?? [] } : {}),
-    },
-  }
+function runLookup(source: { workReference: string; runReference: string; sessionReference: string },
+  businessResult: 'completed' | 'needs_input' | 'action_failed' | 'action_unknown' | undefined = 'needs_input', isCurrent = true, status = 'succeeded') {
+  return { runId: source.runReference, inputRevisionId: source.workReference, workbenchSessionId: source.sessionReference, status,
+    isCurrent, ...(businessResult ? { businessResult } : {}), actionCounts: { succeeded: businessResult === 'completed' ? 1 : 0, failed: 0, unknown: 0 } }
 }
 
 describe('EnterpriseService', () => {
@@ -82,7 +60,7 @@ describe('EnterpriseService', () => {
       }
       if (url === 'http://weave.example.test/v1/auth/external/exchange') {
         expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer forge-secret-token')
-        return Response.json({ token: 'weave-secret-token', subject: { id: 'weave-1', externalId: 'forge-1', email: 'developer@example.test', name: 'Developer' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
+        return Response.json({ token: 'weave-secret-token', subject: { id: 'weave-1', externalId: 'forge-1', email: 'developer@example.test', name: 'Developer' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use', 'teams:develop'] })
       }
       return Response.json({}, { status: 404 })
     }) as typeof fetch
@@ -93,7 +71,7 @@ describe('EnterpriseService', () => {
     service.setSessionScopeChangeHandler(async (changed, generation, phase) => { scopeChanges.push({ status: changed.status, generation, phase }) })
 
     const session = await service.signIn(' developer@example.test ', 'secret')
-    expect(session).toMatchObject({ status: 'signed-in', storage: 'session-only', user: { id: 'forge-1', email: 'developer@example.test' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
+    expect(session).toMatchObject({ status: 'signed-in', storage: 'session-only', user: { id: 'forge-1', email: 'developer@example.test' }, organization: { id: 'default' }, identitySource: { kind: 'forge-account', issuer: 'forge:test-deployment' }, permissions: ['teams:use', 'teams:develop'] })
     expect(JSON.stringify(session)).not.toContain('secret-token')
     expect(service.accountKeyForSession(session)).toBe(await service.accountKey())
     expect(scopeChanges.map(({ status, phase }) => [status, phase])).toEqual([['signed-out', 'sign-in-start'], ['signed-in', 'signed-in']])
@@ -281,7 +259,7 @@ describe('EnterpriseService', () => {
       }
       if (url.endsWith('/v1/auth/external/exchange')) {
         const email = new Headers(init?.headers).get('Authorization')?.replace('Bearer forge-token-', '') ?? 'unknown'
-        return Response.json({ token: `weave-token-${email}`, subject: { id: `weave-${email}`, externalId: email, email, name: email }, organization: { id: 'default' }, permissions: ['teams:use'] })
+        return Response.json({ token: `weave-token-${email}`, subject: { id: `weave-${email}`, externalId: email, email, name: email }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
       }
       if (url.endsWith('/v1/teams?status=active') && new Headers(init?.headers).get('Authorization') === 'Bearer weave-token-a@example.test') {
         oldReadCount++
@@ -318,7 +296,7 @@ describe('EnterpriseService', () => {
       if (url.endsWith('/v1/auth/external/exchange')) {
         const email = new Headers(init?.headers).get('Authorization')?.replace('Bearer forge-token-', '') ?? 'unknown'
         if (email === 'a@example.test') { started.resolve(); return delayedExchange.promise }
-        return Response.json({ token: `weave-token-${email}`, subject: { id: `weave-${email}`, externalId: email, email, name: email }, organization: { id: 'default' }, permissions: ['teams:use'] })
+        return Response.json({ token: `weave-token-${email}`, subject: { id: `weave-${email}`, externalId: email, email, name: email }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
       }
       return Response.json({}, { status: 404 })
     }) as typeof fetch
@@ -326,7 +304,7 @@ describe('EnterpriseService', () => {
     const earlierLogin = service.signIn('a@example.test', 'secret')
     await started.promise
     await service.signIn('b@example.test', 'secret')
-    delayedExchange.resolve(Response.json({ token: 'weave-token-a@example.test', subject: { id: 'weave-a', externalId: 'a@example.test', email: 'a@example.test', name: 'A' }, organization: { id: 'default' }, permissions: ['teams:use'] }))
+    delayedExchange.resolve(Response.json({ token: 'weave-token-a@example.test', subject: { id: 'weave-a', externalId: 'a@example.test', email: 'a@example.test', name: 'A' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] }))
 
     await expect(earlierLogin).rejects.toThrow('账号已切换')
     await expect(service.getSession()).resolves.toMatchObject({ status: 'signed-in', user: { id: 'b@example.test' } })
@@ -360,7 +338,7 @@ describe('EnterpriseService', () => {
     }
     const fetcher = (async (input: URL | RequestInfo) => String(input).includes('sign-in')
       ? Response.json({ token: 'forge-secret', user: { id: 'forge-1', email: 'member@example.test', name: 'Member' }, session: { activeOrganizationId: 'forge-org' } })
-      : Response.json({ token: 'weave-secret', expiresIn: 3600, subject: { id: 'weave-1', externalId: 'forge-1', email: 'member@example.test', name: 'Member' }, organization: { id: 'default' }, permissions: ['teams:use'] })) as typeof fetch
+      : Response.json({ token: 'weave-secret', expiresIn: 3600, subject: { id: 'weave-1', externalId: 'forge-1', email: 'member@example.test', name: 'Member' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })) as typeof fetch
     const legacyOptions = Object.assign(
       { environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetcher },
       { sessionPath, sessionCodec: codec },
@@ -388,7 +366,7 @@ describe('EnterpriseService', () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use', 'teams:develop'] })
       if (url.endsWith('/api/v1/meta/actions')) {
         expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer forge-token')
         expect(init?.method).toBeUndefined()
@@ -528,7 +506,7 @@ describe('EnterpriseService', () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use', 'teams:develop'] })
       if (url.endsWith('/api/v1/meta/actions')) return Response.json({}, { status: 403 })
       return Response.json({}, { status: 404 })
     }) as typeof fetch
@@ -544,7 +522,7 @@ describe('EnterpriseService', () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use', 'teams:develop'] })
       if (url.endsWith('/api/v1/meta/actions')) return Response.json({ error: { code: 'PASSWORD_EXPIRED', message: 'expired' } }, { status: 403 })
       return Response.json({}, { status: 404 })
     }) as typeof fetch
@@ -594,7 +572,7 @@ describe('EnterpriseService', () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'admin@example.test', name: 'Admin' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop', 'teams:admin'] })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use', 'teams:develop', 'teams:admin'] })
       expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer weave-token')
       if (url.endsWith('/v1/runtimes')) return Response.json({ runtimes: [{ id: 'runtime-local', name: '本机运行时', engines: ['codex'], health_status: 'healthy', online: true }] })
       if (url.endsWith('/v1/development/model-catalog')) return Response.json({ models: ['qwen3:0.6b'] })
@@ -626,7 +604,7 @@ describe('EnterpriseService', () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'admin@example.test', name: 'Admin' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use', 'teams:develop'] })
       requests.push({ method: init?.method ?? 'GET', ...(init?.body ? { body: JSON.parse(String(init.body)) as Record<string, unknown> } : {}) })
       return Response.json(response(init?.method === 'PUT' ? 1 : 0))
     }) as typeof fetch
@@ -649,7 +627,7 @@ describe('EnterpriseService', () => {
       const url = String(input), method = init?.method ?? 'GET'
       const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test', name: 'Developer' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use', 'teams:develop'] })
       calls.push({ url, method, body })
       if (url.endsWith('/v1/agents') && body?.role === 'avatar') return Response.json({ id: 'lead-1', ...body }, { status: 201 })
       if (url.endsWith('/v1/agents') && body?.role === 'worker') return Response.json({ id: 'worker-1', ...body }, { status: 201 })
@@ -670,7 +648,7 @@ describe('EnterpriseService', () => {
       const url = new URL(String(input)), method = init?.method ?? 'GET'
       const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined
       if (url.pathname.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test' } })
-      if (url.pathname.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
+      if (url.pathname.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use', 'teams:develop'] })
       calls.push({ path: url.pathname, method, body })
       if (url.pathname === '/v1/agents') return Response.json({ id: 'worker-2', name: body?.name }, { status: 201 })
       if (method === 'DELETE') return new Response(null, { status: 204 })
@@ -696,7 +674,7 @@ describe('EnterpriseService', () => {
       const url = String(input), method = init?.method ?? 'GET'
       const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test', name: 'Developer' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use', 'teams:develop'] })
       calls.push({ url, method, body })
       if (url.endsWith('/members/lead-1/config-draft')) return Response.json({ version: '1', team_id: 'team-1', agent_id: 'lead-1', agent_name: 'lead', base_agent_version: 2, revision: 0, updated_at: '2026-09-21T00:00:00Z', configuration: { display_name: '负责人', role: 'avatar', engine: 'loom', system_prompt: '理解任务' }, relationship: {} })
       if (url.endsWith('/members/worker-1/config-draft')) return Response.json({ version: '1', team_id: 'team-1', agent_id: 'worker-1', agent_name: 'worker', base_agent_version: 3, revision: 0, updated_at: '2026-09-21T00:00:00Z', configuration: { display_name: '执行成员', role: 'worker', engine: 'loom' }, relationship: { result_requirement: '返回成果', enabled: true } })
@@ -715,7 +693,7 @@ describe('EnterpriseService', () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test', name: 'Developer' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use', 'teams:develop'] })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use', 'teams:develop'] })
       expect(init?.method).toBe('POST')
       expect(JSON.parse(String(init?.body))).toEqual({})
       return Response.json({ valid: false, issues: [{ phase: 4, path: '/nodes/0', node_id: 'review', code: 'workflow_route_missing', message: 'route missing', occurrence: 1 }] })
@@ -735,11 +713,11 @@ describe('EnterpriseService', () => {
       new: { kind: 'result', workReference: 'revision-2', sessionReference: 'contract-work' },
       other: { kind: 'revision_required', workReference: 'revision-3', sessionReference: 'another-work' },
     }
-    const fetchMock = workOverviewFetch((url) => {
+    const fetchMock = workOverviewFetch((url, init) => {
       if (url.includes('/v1/teams?status=active')) return Response.json([])
       if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
-      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [] })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ data: { notifications: [
         notice('old', 'revision_required', '2026-09-29T02:18:00Z'),
         notice('new', 'result', '2026-09-29T05:09:00Z'),
@@ -753,6 +731,10 @@ describe('EnterpriseService', () => {
           source: { system: 'weave', ...references, runReference: `run-${sourceId}` },
         })
       }
+      if (url.endsWith('/v1/workbench/runs/lookup')) {
+        const ids = (JSON.parse(String(init?.body)) as { runIds: string[] }).runIds
+        return Response.json({ version: '1', runs: ids.map((id) => { const entry = sourceById[id.replace('run-', '')]!; return runLookup({ ...entry, runReference: id }) }), missing: [] })
+      }
       return undefined
     })
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
@@ -763,35 +745,36 @@ describe('EnterpriseService', () => {
     expect(overview.items.find((item) => item.id === 'other')).toMatchObject({ actionable: true, status: 'pending' })
   })
 
-  it('reads all 123 native approval requests using limit/offset and total without losing older pending items', async () => {
-    const requests = Array.from({ length: 123 }, (_, index) => ({ id: `approval-${index}`, status: 'pending', updated_at: '2026-10-01T00:00:00Z', viewer: { can_act: true }, record_title: `审批事项${index}` }))
-    const offsets: number[] = []
+
+  it('reads all 623 approval projection items beyond the old cap without losing older pending items', async () => {
+    const items = Array.from({ length: 623 }, (_, index) => ({ requestId: `approval-${index}`, mode: 'approval', updatedAt: '2026-10-01T00:00:00Z', title: `审批事项${index}` }))
+    const cursors: string[] = []
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: workOverviewFetch((url) => {
       const parsed = new URL(url)
-      if (parsed.pathname === '/api/v1/approvals/requests') {
-        const offset = Number(parsed.searchParams.get('offset') ?? 0); offsets.push(offset)
-        expect(parsed.searchParams.get('limit')).toBe('50')
-        return Response.json({ data: requests.slice(offset, offset + 50), total: requests.length })
+      if (parsed.pathname === '/api/v1/workbench/approvals') {
+        const cursor = parsed.searchParams.get('cursor') ?? '0'; cursors.push(cursor)
+        const offset = Number(cursor)
+        expect(parsed.searchParams.get('limit')).toBe('100')
+        return Response.json({ version: '1', items: items.slice(offset, offset + 100), ...(offset + 100 < items.length ? { nextCursor: String(offset + 100) } : {}) })
       }
       if (url.includes('/v1/teams?')) return Response.json([])
       if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
-      if (url.includes('/v1/human-tasks?')) return Response.json({ tasks: [] })
       if (url.includes('/api/v1/apps/forge/workbench/inbox?')) return notificationResponse({ notifications: [] })
       return undefined
     }) })
     await service.signIn('employee@example.test', 'secret')
     const overview = await service.getWorkOverview()
-    expect(offsets).toEqual([0, 50, 100])
-    expect(overview.tasks).toHaveLength(123)
-    expect(overview.tasks.at(-1)?.title).toBe('审批事项122 · 业务审批')
+    expect(cursors).toEqual(['0', '100', '200', '300', '400', '500', '600'])
+    expect(overview.tasks).toHaveLength(623)
+    expect(overview.tasks.at(-1)?.title).toBe('审批事项622')
     expect(overview.reads.forgeApprovals.status).toBe('loaded')
   })
 
   it('reports a forbidden approval page without logging out or discarding other readable work data', async () => {
-    const first = Array.from({ length: 50 }, (_, index) => ({ id: `approval-${index}`, status: 'pending', updated_at: '2026-10-01T00:00:00Z', viewer: { can_act: true } }))
+    const first = Array.from({ length: 100 }, (_, index) => ({ requestId: `approval-${index}`, mode: 'approval', title: '审批事项', updatedAt: '2026-10-01T00:00:00Z' }))
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: workOverviewFetch((url) => {
-      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ data: first, total: 51 })
-      if (url.endsWith('/api/v1/approvals/requests?limit=50&offset=50')) return Response.json({}, { status: 403 })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: first, nextCursor: 'next' })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&cursor=next')) return Response.json({}, { status: 403 })
       if (url.includes('/v1/teams?')) return Response.json([])
       if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
       if (url.includes('/v1/human-tasks?')) return Response.json({ tasks: [] })
@@ -808,10 +791,10 @@ describe('EnterpriseService', () => {
 
   it('discards an entire paged approval overview when its employee account changes between pages', async () => {
     const waiting = deferred<Response>(), started = deferred<void>()
-    const requests = Array.from({ length: 50 }, (_, index) => ({ id: `alice-approval-${index}`, status: 'pending', updated_at: '2026-10-01T00:00:00Z', viewer: { can_act: true } }))
+    const requests = Array.from({ length: 100 }, (_, index) => ({ requestId: `alice-approval-${index}`, mode: 'approval', title: 'Alice 审批事项', updatedAt: '2026-10-01T00:00:00Z' }))
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: workOverviewFetch((url, init) => {
-      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json(new Headers(init?.headers).get('Authorization')?.endsWith('-alice@example.test') ? { data: requests, total: 51 } : { data: [], total: 0 })
-      if (url.endsWith('/api/v1/approvals/requests?limit=50&offset=50')) { started.resolve(); return waiting.promise }
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json(new Headers(init?.headers).get('Authorization')?.endsWith('-alice@example.test') ? { version: '1', items: requests, nextCursor: 'next' } : { version: '1', items: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&cursor=next')) { started.resolve(); return waiting.promise }
       if (url.includes('/v1/teams?')) return Response.json([])
       if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
       if (url.includes('/v1/human-tasks?')) return Response.json({ tasks: [] })
@@ -821,7 +804,7 @@ describe('EnterpriseService', () => {
     await service.signIn('alice@example.test', 'secret')
     const overview = service.getWorkOverview(), discarded = expect(overview).rejects.toThrow('账号已切换')
     await started.promise; await service.signIn('bob@example.test', 'secret')
-    waiting.resolve(Response.json({ data: [{ ...requests[0]!, id: 'alice-oldest' }], total: 51 }))
+    waiting.resolve(Response.json({ version: '1', items: [{ ...requests[0]!, requestId: 'alice-oldest' }] }))
     await discarded
     expect((await service.getSession()).user?.email).toBe('bob@example.test')
     expect((await service.getWorkOverview()).tasks).toEqual([])
@@ -840,7 +823,7 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/teams?')) return Response.json([])
       if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
       if (url.includes('/v1/human-tasks?')) return Response.json({ tasks: [] })
-      if (url.includes('/api/v1/approvals/requests?')) return Response.json({ data: [], total: 0 })
+      if (url.includes('/api/v1/workbench/approvals?')) return Response.json({ version: '1', items: [] })
       return undefined
     }) })
     await service.signIn('employee@example.test', 'secret')
@@ -860,13 +843,10 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/teams?')) return Response.json([])
       if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
       if (url.includes('/v1/human-tasks?')) return Response.json({ tasks: [] })
-      if (url.includes('/api/v1/approvals/requests?')) return Response.json({ data: [], total: 0 })
+      if (url.includes('/api/v1/workbench/approvals?')) return Response.json({ version: '1', items: [] })
       if (url.includes('/api/v1/apps/forge/workbench/inbox?')) return notificationResponse({ notifications: [{ id: 'old-authority', type: 'weave.team_run.revision_required', title: '待补材料', createdAt: '2026-10-01T00:00:00Z' }] })
       if (url.endsWith('/api/v1/workbench/notifications/old-authority/source')) return Response.json({ version: '1', notificationId: 'old-authority', kind: 'revision_required', source: { system: 'weave', ...source } })
-      if (url.endsWith('/workbench-context')) {
-        const metadata = teamRunMetadata(source)
-        return Response.json({ ...metadata, source: { ...metadata.source, input_status: inputStatus, ...(inputStatus === 'superseded' ? { superseded_by_input_revision_id: '550e8400-e29b-41d4-a716-446655440401' } : {}) } })
-      }
+      if (url.endsWith('/v1/workbench/runs/lookup')) return Response.json({ version: '1', runs: [runLookup(source, 'needs_input', inputStatus !== 'superseded')], missing: [] })
       return undefined
     }) })
     await service.signIn('employee@example.test', 'secret')
@@ -887,7 +867,7 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/teams?')) return Response.json([])
       if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
       if (url.includes('/v1/human-tasks?')) return Response.json({ tasks: [] })
-      if (url.includes('/api/v1/approvals/requests?')) return Response.json({ data: [], total: 0 })
+      if (url.includes('/api/v1/workbench/approvals?')) return Response.json({ version: '1', items: [] })
       return undefined
     }) })
     await service.signIn('alice@example.test', 'secret')
@@ -899,65 +879,48 @@ describe('EnterpriseService', () => {
     expect((await service.getSession()).user?.email).toBe('bob@example.test')
   })
 
-  it('moves needs-input notices to messages only for a current-account, exact Weave success receipt', async () => {
+
+  it('projects exact run lookup results and disables unresolved notices without reading original files', async () => {
     const entries = [
-      { id: 'succeeded', workReference: '550e8400-e29b-41d4-a716-446655440101', runReference: 'run-succeeded', sessionReference: 'work-session-succeeded', outcomes: [{ node_id: 'submit', call_id: 'call-succeeded', action_name: 'contract_submit', object_name: 'sales_contract', status: 'succeeded', summary: 'Forge 确认提交成功。' }] },
-      { id: 'no-action', workReference: '550e8400-e29b-41d4-a716-446655440102', runReference: 'run-no-action', sessionReference: 'work-session-no-action', outcomes: [] },
-      { id: 'unknown', workReference: '550e8400-e29b-41d4-a716-446655440103', runReference: 'run-unknown', sessionReference: 'work-session-unknown', outcomes: [{ node_id: 'submit', call_id: 'call-unknown', action_name: 'contract_submit', object_name: 'sales_contract', status: 'unknown', summary: 'Forge 结果待核对。' }] },
-      { id: 'missing-receipt', workReference: '550e8400-e29b-41d4-a716-446655440104', runReference: 'run-missing', sessionReference: 'work-session-missing', omitActionOutcomes: true },
-      { id: 'unreadable', workReference: '550e8400-e29b-41d4-a716-446655440105', runReference: 'run-unreadable', sessionReference: 'work-session-unreadable', readFails: true },
-      { id: 'mismatched-source', workReference: '550e8400-e29b-41d4-a716-446655440106', runReference: 'run-source-match', sessionReference: 'work-session-mismatch', outcomes: [{ node_id: 'submit', call_id: 'call-mismatch', action_name: 'contract_submit', object_name: 'sales_contract', status: 'succeeded', summary: 'Forge 确认提交成功。' }], inlineSource: { system: 'weave', workReference: '550e8400-e29b-41d4-a716-446655440199', runReference: 'run-unrelated', sessionReference: 'work-session-mismatch' } },
-    ]
-    const forgeSourceAuth: Array<string | null> = []
-    const weaveContextAuth: Array<string | null> = []
-    const calls: string[] = []
+      { id: 'succeeded', workReference: 'input-completed', runReference: 'run-completed', sessionReference: 'work-completed', result: 'completed' },
+      { id: 'no-action', workReference: 'input-needs', runReference: 'run-needs', sessionReference: 'work-needs', result: 'needs_input' },
+      { id: 'unknown', workReference: 'input-unknown', runReference: 'run-unknown', sessionReference: 'work-unknown', result: 'action_unknown' },
+      { id: 'missing', workReference: 'input-missing', runReference: 'run-missing', sessionReference: 'work-missing', result: undefined },
+      { id: 'mismatched', workReference: 'input-mismatch', runReference: 'run-mismatch', sessionReference: 'work-mismatch', result: 'completed' },
+    ] as const
+    const calls: string[] = [], sourceAuth: Array<string | null> = [], lookupAuth: Array<string | null> = []
     const fetchMock = workOverviewFetch((url, init) => {
       calls.push(url)
-      if (url.includes('/v1/teams?status=active')) return Response.json([])
+      if (url.includes('/v1/teams?')) return Response.json([])
       if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
-      if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
-      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [] })
-      if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ notifications: entries.map((entry) => ({
-        id: entry.id, type: 'weave.team_run.revision_required', title: '合同检查', body: '补充事项供参考', read: false, createdAt: '2026-09-30T02:00:00Z',
-        ...(entry.inlineSource ? { data: { source: entry.inlineSource } } : {}),
+      if (url.includes('/api/v1/workbench/approvals?')) return Response.json({ version: '1', items: [] })
+      if (url.includes('/api/v1/apps/forge/workbench/inbox?')) return notificationResponse({ notifications: entries.map((entry) => ({
+        id: entry.id, type: 'weave.team_run.revision_required', title: '合同检查', read: false, createdAt: '2026-10-01T00:00:00Z',
+        data: { source: { system: 'weave', workReference: 'forged-input', runReference: 'run-unrelated', sessionReference: 'forged-session' } },
       })) })
-      const sourceID = /^http:\/\/forge\/api\/v1\/workbench\/notifications\/([^/]+)\/source$/.exec(url)?.[1]
-      if (sourceID) {
-        forgeSourceAuth.push(new Headers(init?.headers).get('Authorization'))
-        const entry = entries.find(({ id }) => id === sourceID)
-        if (!entry) return Response.json({}, { status: 404 })
-        return Response.json({ version: '1', notificationId: entry.id, kind: 'revision_required', source: {
-          system: 'weave', workReference: entry.workReference, runReference: entry.runReference, sessionReference: entry.sessionReference,
-        } })
+      const id = new URL(url).pathname.match(/notifications\/([^/]+)\/source$/)?.[1]
+      if (id) {
+        sourceAuth.push(new Headers(init?.headers).get('Authorization'))
+        const entry = entries.find((item) => item.id === id)!
+        return Response.json({ version: '1', notificationId: id, kind: 'revision_required', source: { system: 'weave', workReference: entry.workReference, runReference: entry.runReference, sessionReference: entry.sessionReference } })
       }
-      const runID = /^http:\/\/weave\/v1\/runs\/([^/]+)\/workbench-context$/.exec(url)?.[1]
-      if (runID) {
-        weaveContextAuth.push(new Headers(init?.headers).get('Authorization'))
-        const entry = entries.find(({ runReference }) => runReference === runID)
-        if (entry?.readFails) return Response.json({}, { status: 503 })
-        if (entry) return Response.json(teamRunMetadata(entry, {
-          ...(entry.outcomes ? { actionOutcomes: entry.outcomes } : {}),
-          ...(entry.omitActionOutcomes ? { omitActionOutcomes: true } : {}),
-        }))
+      if (url.endsWith('/v1/workbench/runs/lookup')) {
+        lookupAuth.push(new Headers(init?.headers).get('Authorization'))
+        expect(JSON.parse(String(init?.body))).toEqual({ version: '1', runIds: entries.map((item) => item.runReference) })
+        return Response.json({ version: '1', runs: entries.filter((entry) => entry.id !== 'missing').map((entry) => runLookup({ ...entry, ...(entry.id === 'mismatched' ? { workReference: 'different-input' } : {}) }, entry.result)), missing: ['run-missing'] })
       }
       return undefined
     })
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
     await service.signIn('sales@example.test', 'secret')
-
     const overview = await service.getWorkOverview()
-    expect(overview.items.find((item) => item.id === 'succeeded')).toMatchObject({
-      actionable: false, status: 'completed', read: false, runReference: 'run-succeeded', title: '团队结果与业务回执',
-      summary: expect.stringContaining('后续办理事项以 Forge 当前正式事项为准'),
-    })
-    for (const id of ['no-action', 'unknown', 'missing-receipt', 'unreadable', 'mismatched-source']) {
-      expect(overview.items.find((item) => item.id === id)).toMatchObject({ actionable: true, status: 'pending' })
-    }
-    expect(overview.items.find((item) => item.id === 'succeeded')).toMatchObject({ kind: 'revision_required', notificationType: 'weave.team_run.revision_required' })
-    expect(forgeSourceAuth.every((authorization) => authorization === 'Bearer forge-token-sales@example.test')).toBe(true)
-    expect(weaveContextAuth.every((authorization) => authorization === 'Bearer weave-token-sales@example.test')).toBe(true)
-    expect(calls.some((url) => url.includes('/original') || url.includes('/workbench/materials/'))).toBe(false)
-    expect(calls).not.toContain('http://weave/v1/runs/run-unrelated/workbench-context')
+    expect(overview.items.find((item) => item.id === 'succeeded')).toMatchObject({ actionable: false, status: 'completed', read: false, runReference: 'run-completed', title: '团队结果与业务回执', summary: expect.stringContaining('Forge 当前正式事项为准') })
+    expect(overview.items.find((item) => item.id === 'no-action')).toMatchObject({ actionable: true, status: 'pending' })
+    expect(overview.items.find((item) => item.id === 'unknown')).toMatchObject({ actionable: false, status: 'completed', title: '业务动作结果待核对' })
+    for (const id of ['missing', 'mismatched']) expect(overview.items.find((item) => item.id === id)).toMatchObject({ actionable: false, status: 'unknown' })
+    expect(sourceAuth).toEqual(entries.map(() => 'Bearer forge-token-sales@example.test'))
+    expect(lookupAuth).toEqual(['Bearer weave-token-sales@example.test'])
+    expect(calls.some((url) => url.includes('/original') || url.includes('/workbench/materials/') || url.includes('/workbench-context') || url.includes('run-unrelated'))).toBe(false)
   })
 
   it.each(['completed', 'needs_input', 'action_failed', 'action_unknown'] as const)('projects server business result %s over a model needs-input notice', async (businessResult) => {
@@ -966,13 +929,10 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/teams?status=active')) return Response.json([])
       if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
-      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [] })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ notifications: [{ id: 'server-result', type: 'weave.team_run.revision_required', title: '合同检查', createdAt: '2026-09-30T02:00:00Z' }] })
       if (url.endsWith('/api/v1/workbench/notifications/server-result/source')) return Response.json({ version: '1', notificationId: 'server-result', kind: 'revision_required', source: { system: 'weave', ...source } })
-      if (url.endsWith(`/v1/runs/${source.runReference}/workbench-context`)) {
-        const metadata = teamRunMetadata(source, { actionOutcomes: [{ node_id: 'submit', call_id: 'call-submit', action_name: 'submit', object_name: 'contract', status: 'succeeded', summary: '已提交' }] })
-        return Response.json({ ...metadata, run: { ...metadata.run, business_result: businessResult } })
-      }
+      if (url.endsWith('/v1/workbench/runs/lookup')) return Response.json({ version: '1', runs: [runLookup(source, businessResult)], missing: [] })
       return undefined
     })
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
@@ -992,19 +952,17 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/teams?status=active')) return Response.json([])
       if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
-      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [] })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ notifications: [
         { id: 'same-notice', type: 'weave.team_run.revision_required', title: '合同检查', body: '团队意见', read: false, createdAt: '2026-09-30T02:00:00Z' },
       ] })
       if (url.endsWith('/api/v1/workbench/notifications/same-notice/source')) return Response.json({
         version: '1', notificationId: 'same-notice', kind: 'revision_required', source: { system: 'weave', ...source },
       })
-      if (url.endsWith(`/v1/runs/${source.runReference}/workbench-context`)) {
+      if (url.endsWith('/v1/workbench/runs/lookup')) {
         const authorization = new Headers(init?.headers).get('Authorization') ?? ''
         contextAuthors.push(authorization)
-        return Response.json(teamRunMetadata(source, authorization === 'Bearer weave-token-alice@example.test' ? {
-          actionOutcomes: [{ node_id: 'submit', call_id: 'call-alice', action_name: 'contract_submit', object_name: 'sales_contract', status: 'succeeded', summary: 'Forge 确认提交成功。' }],
-        } : { actionOutcomes: [] }))
+        return Response.json({ version: '1', runs: [runLookup(source, authorization === 'Bearer weave-token-alice@example.test' ? 'completed' : 'needs_input')], missing: [] })
       }
       return undefined
     })
@@ -1019,24 +977,31 @@ describe('EnterpriseService', () => {
     expect(contextAuthors).toEqual(['Bearer weave-token-alice@example.test', 'Bearer weave-token-bob@example.test'])
   })
 
-  it('submits a bound work request and completes a human task without exposing the token', async () => {
+  it('submits bound work and completes only the exact human task opened from the native inbox', async () => {
     const calls: Array<{ url: string; body?: Record<string, unknown> }> = []
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
       const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined
       calls.push({ url, body })
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'member@example.test', name: 'Member' }, session: { activeOrganizationId: 'forge-org' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
       if (url.includes('/v1/teams?status=active')) return Response.json([{ id: 'team-1', display_name: '合同团队' }])
       if (url.endsWith('/v1/teams/team-1/workflows')) return Response.json({ workflows: [{ id: 'flow-1', name: '合同复核', published_version: 1 }] })
       if (url.includes('/v1/runs?project_id=workbench-weave-1&limit=50')) return Response.json({ runs: [{ run_id: 'run-1', status: 'running' }] })
-      if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [{ interaction_id: 'human-1', run_id: 'run-1', team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 1, title: '复核', instructions: '确认', updated_at: '2026-09-21T00:00:00Z' }] })
+      if (url.endsWith('/v1/workbench/runs/lookup')) return Response.json({ version: '1', runs: [runLookup({ workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' }, undefined, true, 'parked')], missing: [] })
+      if (url.includes('/v1/human-tasks/run-1?')) {
+        const query = new URL(url).searchParams
+        expect(Object.fromEntries(query)).toEqual({ input_revision_id: 'input-1', workbench_session_id: 'workbench-session-1', interaction_id: 'human-1' })
+        return Response.json({ interaction_id: 'human-1', run_id: 'run-1', input_revision_id: 'input-1', workbench_session_id: 'workbench-session-1', team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 1, title: '复核', instructions: '确认', updated_at: '2026-09-21T00:00:00Z' })
+      }
+      if (url.endsWith('/api/v1/workbench/notifications/notice-human/source')) return Response.json({ version: '1', notificationId: 'notice-human', kind: 'human_review', source: { system: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1', interactionReference: 'human-1' } })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ success: true, data: { notifications: [
         { id: 'notice-1', type: 'work.revision', title: '材料需要修改', body: '请补充交付日期', read: false, createdAt: '2026-09-21T01:00:00Z', data: { kind: 'revision_required', source: { system: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' }, status: 'pending', instructions: '补充交付日期后重新提交', material: { label: '当前材料' }, continuation: { reason: '缺少交付日期', returnTarget: 'origin_review', reviewScope: 'affected_members' } } },
         { id: 'notice-native', type: 'weave.team_run.result', title: '合同检查结果', body: '已有团队结果', read: false, createdAt: '2026-09-21T02:00:00Z' },
+        { id: 'notice-human', type: 'weave.team_run.human_review', title: '待我复核', read: false, createdAt: '2026-09-21T03:00:00Z' },
         { id: 'notice-1', type: 'work.revision', title: '材料需要修改', body: '重复投递不应重复显示', read: false, createdAt: '2026-09-21T01:01:00Z' },
       ] } })
-      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [] })
       if (url.endsWith('/v1/workbench/dispatch-inputs/prepare')) return Response.json({ input_revision_id: body?.registration_id })
       if (url.endsWith('/api/v1/apps/forge/task-delegations')) return Response.json(delegationResponse(body?.scope as ForgeTaskScope, 'forge-1'))
       if (url.endsWith('/v1/workbench/dispatch-inputs')) {
@@ -1055,12 +1020,14 @@ describe('EnterpriseService', () => {
     const overview = await service.getWorkOverview()
     expect(overview.items).toHaveLength(2)
     expect(overview).toMatchObject({ choices: [{ teamId: 'team-1', workflowId: 'flow-1', version: 1 }], tasks: [{ interactionId: 'human-1' }], items: [
-      { id: 'notice-1', kind: 'revision_required', actionable: true, source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1', returnTarget: 'origin_review', reviewScope: 'affected_members' },
+      { id: 'notice-1', kind: 'notification', actionable: false, source: 'forge', returnTarget: 'origin_review', reviewScope: 'affected_members' },
       { id: 'notice-native', kind: 'result', source: 'weave', notificationType: 'weave.team_run.result', status: 'unknown' },
-    ], runs: [{ id: 'run-1' }], reads: { runs: { status: 'loaded' }, teamChoices: { status: 'loaded' }, weaveTasks: { status: 'loaded' }, forgeApprovals: { status: 'loaded' }, notifications: { status: 'failed', error: expect.stringContaining('通知在读取期间已变化') } } })
+    ], runs: [{ id: 'run-1' }], reads: { runs: { status: 'loaded' }, teamChoices: { status: 'loaded' }, weaveTasks: { status: 'failed' }, forgeApprovals: { status: 'loaded' }, notifications: { status: 'failed', error: expect.stringContaining('通知在读取期间已变化') } } })
     await expect(service.submitWork(overview.choices[0], '提交合同')).rejects.toThrow('直接交接入口不可用')
     await expect(service.submitWork(overview.choices[0], '提交合同', fixedSource(await service.accountKey()))).resolves.toMatchObject({ runId: 'run-2', workflowVersion: 1 })
     await expect(service.completeHumanTask(overview.tasks[0], { decision: 'approved' })).resolves.toEqual({ runId: 'run-1', repeated: false })
+    expect(calls.find((call) => call.url.endsWith('/human-tasks/run-1/complete'))?.body).toMatchObject({ interaction_id: 'human-1', input_revision_id: 'input-1', workbench_session_id: 'workbench-session-1' })
+    expect(calls.some((call) => call.url.includes('/human-tasks?'))).toBe(false)
     const registration = calls.find((call) => call.url.endsWith('/v1/workbench/dispatch-inputs'))?.body
     expect(registration).toMatchObject({ team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 1, project_id: 'workbench-weave-1', task: '提交合同' })
     expect(String(registration?.workbench_session_id)).toMatch(/^workbench-weave-1-/)
@@ -1133,14 +1100,14 @@ describe('EnterpriseService', () => {
       const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined
       calls.push({ url, method, body })
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'sales-1', email: 'sales@example.test', name: 'Sales' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-sales-1', externalId: 'sales-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-sales-1', externalId: 'sales-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
       if (url.includes('/v1/teams?status=active')) return Response.json([])
       if (url.includes('/v1/runs?project_id=')) return Response.json({ runs: [] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ notifications: [] })
-      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [
-        { id: 'approval-1', process_name: '销售合同复核', current_step: '财务复核', object_name: '销售合同', status: 'pending', updated_at: '2026-09-22T08:00:00Z', viewer: { can_act: true } },
-        { id: 'approval-2', process_name: '销售合同复核', object_name: '销售合同', status: 'returned', updated_at: '2026-09-22T09:00:00Z', viewer: { is_submitter: true } },
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [
+        { requestId: 'approval-1', title: '销售合同复核 · 财务复核', mode: 'approval', updatedAt: '2026-09-22T08:00:00Z', stepLabel: '财务复核' },
+        { requestId: 'approval-2', title: '销售合同需要修改', mode: 'revision', updatedAt: '2026-09-22T09:00:00Z', returnReason: '请补齐附件' },
       ] })
       if (url.endsWith('/api/v1/approvals/requests/approval-2/actions')) return Response.json({ data: [{ action: 'submit' }, { action: 'revise', comment: '请补齐附件' }] })
       if (url.endsWith('/api/v1/approvals/requests/approval-1/revise')) return Response.json({ status: 'returned' })
@@ -1160,41 +1127,31 @@ describe('EnterpriseService', () => {
     expect(calls.some((call) => call.url.endsWith('/approval-2/resubmit'))).toBe(false)
   })
 
-  it('hides a returned approval task after its native resubmission, but keeps a later return actionable', async () => {
-    let actions: Array<{ action: string; comment?: string }> = [
-      { action: 'submit' },
-      { action: 'revise', comment: '第一轮请补充附件' },
-      { action: 'resubmit' },
-    ]
+
+  it('follows Forge current approval projection and preserves its latest return reason', async () => {
+    let returned = false
     const fetchMock = workOverviewFetch((url) => {
-      if (url.endsWith('/v1/teams?status=active')) return Response.json({ teams: [] })
-      if (url.includes('/v1/runs?project_id=')) return Response.json({ runs: [] })
-      if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
-      if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ notifications: [] })
-      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [
-        { id: 'approval-returned', process_name: '销售合同复核', record_title: '测试合同', object_name: 'forge_sales_contract', status: 'returned', updated_at: '2026-09-26T09:00:00Z', viewer: { is_submitter: true } },
-      ] })
-      if (url.endsWith('/api/v1/approvals/requests/approval-returned/actions')) return Response.json({ data: actions })
+      if (url.includes('/v1/teams?')) return Response.json([])
+      if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
+      if (url.includes('/api/v1/apps/forge/workbench/inbox?')) return notificationResponse({ notifications: [] })
+      if (url.includes('/api/v1/workbench/approvals?')) return Response.json({ version: '1', items: returned ? [{ requestId: 'approval-returned', title: '测试合同需要修改', mode: 'revision', updatedAt: '2026-10-01T00:00:00Z', returnReason: '第二轮仍需补材料' }] : [] })
       return undefined
     })
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
     await service.signIn('sales@example.test', 'secret')
-
     await expect(service.getWorkOverview()).resolves.toMatchObject({ tasks: [] })
-
-    actions = [...actions, { action: 'submit' }, { action: 'revise', comment: '第二轮仍需补材料' }]
-    await expect(service.getWorkOverview()).resolves.toMatchObject({
-      tasks: [{ interactionId: 'approval-returned', mode: 'revision', instructions: '退回原因：第二轮仍需补材料' }],
-    })
+    returned = true
+    await expect(service.getWorkOverview()).resolves.toMatchObject({ tasks: [{ interactionId: 'approval-returned', mode: 'revision', instructions: '退回原因：第二轮仍需补材料' }] })
+    expect(vi.mocked(fetchMock).mock.calls.some(([input]) => String(input).includes('/approvals/requests/'))).toBe(false)
   })
 
-  it('keeps Weave runs and tasks visible when Forge approvals and notifications fail', async () => {
+  it('keeps run progress visible but cannot expose human tasks while the native inbox is unavailable', async () => {
     const fetchMock = workOverviewFetch((url) => {
       if (url.endsWith('/v1/teams?status=active')) return Response.json({ teams: [] })
       if (url.includes('/v1/runs?project_id=')) return Response.json({ runs: [{ run_id: 'run-weave', status: 'running' }] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [{ interaction_id: 'task-weave', run_id: 'run-weave', team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 1, title: '团队检查', instructions: '补充产品范围', updated_at: '2026-09-23T01:00:00Z' }] })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return Response.json({}, { status: 503 })
-      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({}, { status: 404 })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({}, { status: 404 })
       return undefined
     })
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
@@ -1202,17 +1159,17 @@ describe('EnterpriseService', () => {
 
     const overview = await service.getWorkOverview()
     expect(overview.runs).toMatchObject([{ id: 'run-weave' }])
-    expect(overview.tasks).toMatchObject([{ interactionId: 'task-weave' }])
-    expect(overview.reads).toMatchObject({ runs: { status: 'loaded' }, weaveTasks: { status: 'loaded' }, forgeApprovals: { status: 'failed', error: expect.stringContaining('404') }, notifications: { status: 'failed', error: expect.stringContaining('503') } })
+    expect(overview.tasks).toEqual([])
+    expect(vi.mocked(fetchMock).mock.calls.some(([input]) => String(input).includes('/v1/human-tasks?'))).toBe(false)
+    expect(overview.reads).toMatchObject({ runs: { status: 'loaded' }, weaveTasks: { status: 'failed' }, forgeApprovals: { status: 'failed', error: expect.stringContaining('404') }, notifications: { status: 'failed', error: expect.stringContaining('503') } })
   })
 
   it('keeps the signed-in employee’s Forge approval visible when Weave reads fail', async () => {
     const fetchMock = workOverviewFetch((url) => {
       if (url.startsWith('http://weave/')) return Response.json({}, { status: 503 })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ notifications: [{ id: 'notice-forge', type: 'business.result', title: '业务结果', read: false, createdAt: '2026-09-23T01:00:00Z' }] })
-      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [
-        { id: 'approval-own', process_name: '合同复核', current_step: '交付复核', record_title: '当前员工合同', status: 'pending', updated_at: '2026-09-23T01:00:00Z', viewer: { can_act: true } },
-        { id: 'approval-other', process_name: '合同复核', status: 'pending', updated_at: '2026-09-23T01:00:00Z', viewer: { can_act: false } },
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [
+        { requestId: 'approval-own', title: '当前员工合同 · 交付复核', mode: 'approval', updatedAt: '2026-09-23T01:00:00Z' },
       ] })
       return undefined
     })
@@ -1223,7 +1180,7 @@ describe('EnterpriseService', () => {
     expect(overview.tasks).toMatchObject([{ interactionId: 'approval-own', title: '当前员工合同 · 交付复核', source: 'forge', mode: 'approval' }])
     expect(overview.tasks.some((task) => task.interactionId === 'approval-other')).toBe(false)
     expect(overview.items).toMatchObject([{ id: 'notice-forge' }])
-    expect(overview.reads).toMatchObject({ runs: { status: 'failed' }, teamChoices: { status: 'failed' }, weaveTasks: { status: 'failed' }, forgeApprovals: { status: 'loaded' }, notifications: { status: 'loaded' } })
+    expect(overview.reads).toMatchObject({ runs: { status: 'failed' }, teamChoices: { status: 'failed' }, weaveTasks: { status: 'loaded' }, forgeApprovals: { status: 'loaded' }, notifications: { status: 'loaded' } })
   })
 
   it('clears a source error after a refresh reads that source successfully', async () => {
@@ -1233,7 +1190,7 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/runs?project_id=')) return Response.json({ runs: [] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return forgeAvailable ? notificationResponse({ notifications: [{ id: 'notice-recovered', type: 'business.result', title: '恢复后的消息', read: false, createdAt: '2026-09-23T01:00:00Z' }] }) : Response.json({}, { status: 503 })
-      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [] })
       return undefined
     })
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
@@ -1256,7 +1213,7 @@ describe('EnterpriseService', () => {
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ notifications: [
         { id: 'notice-read', type: 'business.result', title: '合同状态更新', read: true, createdAt: '2026-09-24T01:00:00Z' },
       ] })
-      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [] })
       return undefined
     })
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
@@ -1617,7 +1574,7 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/runs?project_id=')) return Response.json({ runs: [] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ notifications: [] })
-      if (url.endsWith('/api/v1/approvals/requests?limit=50')) return Response.json({ requests: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [] })
       return undefined
     })
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
@@ -1644,7 +1601,7 @@ describe('EnterpriseService', () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
       const url = String(input); calls.push(url)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'reviewer-1' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-reviewer-1', externalId: 'reviewer-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-reviewer-1', externalId: 'reviewer-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
       if (url.endsWith('/api/v1/approvals/requests/approval-1/workbench-context')) return Response.json({
         version: '1', requestId: 'approval-1', status: 'pending', viewer: 'current_approver',
         title: '设备验收合同', step: '交付复核', fields: [{ label: '合同名称', value: '设备验收合同' }],
@@ -1704,7 +1661,7 @@ describe('EnterpriseService', () => {
       const url = String(input), headers = new Headers(init?.headers)
       calls.push({ url, headers })
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'approver-1' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-approver-1', externalId: 'approver-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-approver-1', externalId: 'approver-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
       if (url.endsWith('/api/v1/approvals/requests/approval-pdf/workbench-context')) return Response.json({
         version: '1', requestId: 'approval-pdf', status: 'pending', viewer: 'current_approver',
         title: '验收合同', step: '复核', fields: [], files: [],
@@ -1753,7 +1710,7 @@ describe('EnterpriseService', () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
       const url = String(input); calls.push(url)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'reviewer-1' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-reviewer-1', externalId: 'reviewer-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-reviewer-1', externalId: 'reviewer-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
       if (url.endsWith('/api/v1/approvals/requests/approval-1/workbench-context')) return Response.json({ error: { code, detail: secret } }, { status })
       return Response.json({}, { status: 404 })
     }) as typeof fetch
@@ -1777,7 +1734,7 @@ describe('EnterpriseService', () => {
       }
       if (url.endsWith('/v1/auth/external/exchange')) {
         const account = new Headers(init?.headers).get('Authorization')?.replace('Bearer forge-token-', '') ?? 'unknown'
-        return Promise.resolve(Response.json({ token: `weave-token-${account}`, subject: { id: `weave-${account}`, externalId: account }, organization: { id: 'default' }, permissions: ['teams:use'] }))
+        return Promise.resolve(Response.json({ token: `weave-token-${account}`, subject: { id: `weave-${account}`, externalId: account }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] }))
       }
       if (url.endsWith('/api/v1/approvals/requests/approval-1/workbench-context')) {
         contextRequest.resolve(undefined)
@@ -1806,7 +1763,7 @@ describe('EnterpriseService', () => {
       }
       if (url.endsWith('/v1/auth/external/exchange')) {
         const account = new Headers(init?.headers).get('Authorization')?.replace('Bearer forge-token-', '') ?? 'unknown'
-        return Promise.resolve(Response.json({ token: `weave-token-${account}`, subject: { id: `weave-${account}`, externalId: account }, organization: { id: 'default' }, permissions: ['teams:use'] }))
+        return Promise.resolve(Response.json({ token: `weave-token-${account}`, subject: { id: `weave-${account}`, externalId: account }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] }))
       }
       if (url.endsWith('/api/v1/approvals/requests/approval-1/workbench-context')) {
         contextRequest.resolve(undefined)
@@ -1830,7 +1787,7 @@ describe('EnterpriseService', () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'sales-1' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'sales-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'sales-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
       if (url.endsWith('/api/v1/storage/upload/presigned')) {
         uploads.push(JSON.parse(String(init?.body)) as Record<string, unknown>)
         return Response.json({ data: { fileId: 'file-1', uploadUrl: '/upload/file-1', method: 'PUT', headers: { 'Content-Type': 'text/markdown' } } })
@@ -1859,7 +1816,7 @@ describe('EnterpriseService', () => {
       const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
         const url = String(input)
         if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'sales-1' } })
-        if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'sales-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
+        if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'sales-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
         if (url.endsWith('/api/v1/storage/upload/presigned')) {
           uploads.push(JSON.parse(String(init?.body)) as Record<string, unknown>)
           return Response.json({ data: { fileId: 'pdf-file-1', uploadUrl: '/upload/pdf-file-1', method: 'PUT', headers: { 'Content-Type': 'application/pdf' } } })
@@ -1889,7 +1846,7 @@ describe('EnterpriseService', () => {
       const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined
       calls.push({ url, method, body })
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'sales-1' } })
-      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-sales-1', externalId: 'sales-1' }, organization: { id: 'default' }, permissions: ['teams:use'] })
+      if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-sales-1', externalId: 'sales-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
       if (url.endsWith('/api/v1/approvals/requests/approval-2/workbench-revision')) return Response.json({ data: receipt })
       if (url.endsWith(`/api/v1/approvals/requests/approval-2/workbench-revision/${idempotencyKey}`)) return Response.json({ data: receipt })
       return Response.json({}, { status: 404 })

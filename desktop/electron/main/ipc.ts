@@ -98,9 +98,11 @@ function requireEnterpriseWorkChoice(value: unknown): EnterpriseWorkChoice {
   }
 }
 
-function requireEnterpriseHumanTask(value: unknown): Pick<EnterpriseHumanTask, 'runId' | 'interactionId'> {
+function requireEnterpriseHumanTask(value: unknown): Pick<EnterpriseHumanTask, 'runId' | 'interactionId' | 'inputRevisionID' | 'workbenchSessionID'> {
   const source = requireRecord(value, 'task')
-  return { runId: requireString(source.runId, 'runId', { min: 1, max: 256 }), interactionId: requireString(source.interactionId, 'interactionId', { min: 1, max: 256 }) }
+  return { runId: requireString(source.runId, 'runId', { min: 1, max: 256 }), interactionId: requireString(source.interactionId, 'interactionId', { min: 1, max: 256 }),
+    ...(source.inputRevisionID !== undefined ? { inputRevisionID: requireString(source.inputRevisionID, 'inputRevisionID', { min: 1, max: 128 }) } : {}),
+    ...(source.workbenchSessionID !== undefined ? { workbenchSessionID: requireString(source.workbenchSessionID, 'workbenchSessionID', { min: 1, max: 256 }) } : {}) }
 }
 
 type IpcEvent = IpcMainInvokeEvent | IpcMainEvent
@@ -286,6 +288,7 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   handle('enterprise:save-team-member-config-draft', (_event, draft) => services.enterprise.saveTeamMemberConfigDraft(requireRecord(draft, 'draft') as unknown as import('../../src/types/api').EnterpriseTeamMemberConfigDraft))
   handle('enterprise:apply-team-member-config-draft', (_event, teamId, agentId, revision) => services.enterprise.applyTeamMemberConfigDraft(requireString(teamId, 'teamId', { min: 1, max: 160 }), requireString(agentId, 'agentId', { min: 1, max: 160 }), requireInteger(revision, 'revision', 1, 1_000_000)))
   handle('enterprise:get-work-overview', () => services.enterprise.getWorkOverview())
+  handle('enterprise:cancel-work', (_event, runId) => services.enterprise.cancelWork(requireString(runId, 'runId', { min: 1, max: 128 })))
   handle('enterprise:get-approval-context', async (_event, approvalId) => approvalContextView(await services.enterprise.getApprovalContext(requireString(approvalId, 'approvalId', { min: 1, max: 128 }))))
   handle('enterprise:pin-returned-approval-context', (_event, approvalId) => {
     if (!services.enterpriseBridge) throw new Error('桌面退回事项能力暂不可用')

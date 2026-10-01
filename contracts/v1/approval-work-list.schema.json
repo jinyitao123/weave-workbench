@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/approval-work-list.schema.json",
+  "title": "Forge Workbench Approval Work List",
+  "description": "Read-only, paged projection of the current employee's native approval items: pending items the employee can decide and returned items the employee originally submitted and has not resubmitted. Forge derives it from the native ApprovalsService and action history; it stores nothing and is not a second to-do system.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "items"],
+  "properties": {
+    "version": { "const": "1" },
+    "items": {
+      "type": "array", "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["requestId", "mode", "title", "updatedAt"],
+        "properties": {
+          "requestId": { "type": "string", "minLength": 1, "maxLength": 128, "description": "Internal reference for follow-up calls; never displayed." },
+          "mode": { "enum": ["approval", "revision"] },
+          "title": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "processLabel": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "stepLabel": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "materialLabel": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "returnReason": { "type": "string", "minLength": 1, "maxLength": 4000, "description": "Latest revise comment; present only for revision items." },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "nextCursor": { "type": "string", "minLength": 1, "maxLength": 512, "description": "Absent when the list is complete." }
+  }
+}

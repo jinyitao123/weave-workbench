@@ -164,6 +164,9 @@ export function useFocusTrap<T extends HTMLElement>(active: boolean, onEscape?: 
     previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     const container = containerRef.current
     const focusInitial = () => {
+      // A child may have already focused itself, or the employee may have
+      // entered an editor before this frame. Keep that focus inside the modal.
+      if (document.activeElement !== container && container.contains(document.activeElement)) return
       const preferred = container.querySelector<HTMLElement>('[autofocus]')
       const first = preferred ?? container.querySelector<HTMLElement>(focusableSelector)
       first?.focus()

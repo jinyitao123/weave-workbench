@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/task-delegation-request.schema.json",
+  "title": "Forge Scoped Task Authorization Issuance",
+  "description": "Host issuance and response wire. Employee/native organization comes from the authenticated session; task credentials never enter model context or audit bodies.",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "scope"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "scope": {
+          "$ref": "task-delegation.schema.json#/$defs/scope"
+        },
+        "expected_generation": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "token_type",
+        "access_token",
+        "grant_id",
+        "generation",
+        "issued_at",
+        "expires_at",
+        "scope_sha256",
+        "scope",
+        "subject",
+        "issuer",
+        "identity_issuer"
+      ],
+      "properties": {
+        "version": {
+          "const": "1"
+        },
+        "token_type": {
+          "const": "forge_task"
+        },
+        "access_token": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 65536
+        },
+        "grant_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "issued_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "scope_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "scope": {
+          "$ref": "task-delegation.schema.json#/$defs/scope"
+        },
+        "subject": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "organization_id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "organization_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        },
+        "issuer": {
+          "type": "string",
+          "format": "uri"
+        },
+        "identity_issuer": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:\\S{1,240}$"
+        }
+      }
+    }
+  ]
+}

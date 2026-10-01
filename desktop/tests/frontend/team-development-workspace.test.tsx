@@ -61,11 +61,14 @@ it('edits team details and a member, then saves one remote draft', async () => {
   expect(container.querySelector('.team-member-list')).not.toBeNull()
   expect(container.querySelector('textarea')).toBeNull()
   await click('编辑')
-  await edit('团队目标', '逐条核对原文'); await click('确定')
+  await edit('团队目标', '逐条核对原文')
+  await click('编辑可用人群内容'); await edit('可用人群', 'sales_employee\ndelivery_reviewer\nsales_employee')
+  await click('确定')
   await selectMember('审核员'); await click('编辑团队职责内容'); await edit('团队职责', '检查付款条款')
   await save()
   expect(remote.document.members[1]!.relationship.duty).toBe('检查付款条款')
   expect(remote.document.objective).toBe('逐条核对原文')
+  expect(remote.document.audience).toEqual(['sales_employee', 'delivery_reviewer'])
 })
 
 it('opens the workflow view on the flow canvas', async () => {

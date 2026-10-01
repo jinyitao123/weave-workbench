@@ -234,3 +234,15 @@ it('opens a parked original run from the normal work row without displaying its 
   expect(continueWork).toHaveBeenCalledWith(expect.objectContaining({ id: runID, source: 'weave', notificationType: 'weave.workbench_run', actionable: false }))
   expect(container.querySelectorAll('.work-task-list article')).toHaveLength(0)
 })
+
+it('cancels the clicked original work row and labels a pending stop without claiming it is already cancelled', async () => {
+  const cancel = vi.fn(async () => undefined)
+  const current = { ...overview.runs[0]!, status: 'cancel_requested' }
+  await act(async () => root.render(<EnterpriseWorkPage overview={{ ...overview, items: [], tasks: [], runs: [current] }} loading={false} error="" onRefresh={refresh}
+    onComplete={vi.fn(async () => undefined)} onInspect={vi.fn(async () => ({ title: '', step: '', fields: [], files: [] }))} onAssist={assistPi} onContinue={continueWork} onCancel={cancel} />))
+  expect(container.textContent).toContain('取消中')
+  expect(container.textContent).not.toContain('已取消')
+  const button = [...container.querySelectorAll<HTMLButtonElement>('button')].find((item) => item.textContent === '核对取消')!
+  await act(async () => button.click())
+  expect(cancel).toHaveBeenCalledWith(current)
+})

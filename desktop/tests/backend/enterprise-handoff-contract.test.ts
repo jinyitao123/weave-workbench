@@ -17,7 +17,7 @@ async function fixture() {
   const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
     const path = new URL(String(input)).pathname
     if (path === '/api/v1/auth/sign-in/email') return Response.json({ token: 'forge', user: { id: 'employee' }, session: { activeOrganizationId: 'forge-org' } })
-    if (path === '/v1/auth/external/exchange') return Response.json({ token: 'weave', subject: { id: 'bound', externalId: 'employee' }, organization: { id: 'org' }, permissions: ['teams:use'] })
+    if (path === '/v1/auth/external/exchange') return Response.json({ token: 'weave', subject: { id: 'bound', externalId: 'employee' }, organization: { id: 'org' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
     if (path === '/api/v1/auth/sign-out') return Response.json({ success: true })
     const body = JSON.parse(String(init?.body)) as Record<string, unknown>
     calls.push({ path, body })

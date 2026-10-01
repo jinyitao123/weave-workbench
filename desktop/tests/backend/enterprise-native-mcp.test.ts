@@ -42,7 +42,7 @@ async function nativeActionFixture(mcpResponse: Response | Error) {
     const path = new URL(String(input)).pathname
     calls.push(path)
     if (path === '/api/v1/auth/sign-in/email') return Response.json({ token: 'forge-token', user: { id: 'employee' } })
-    if (path === '/v1/auth/external/exchange') return Response.json({ token: 'weave-token', subject: { id: 'employee' }, organization: { id: 'org' }, permissions: ['teams:use'] })
+    if (path === '/v1/auth/external/exchange') return Response.json({ token: 'weave-token', subject: { id: 'employee' }, organization: { id: 'org' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
     if (path === '/api/v1/mcp') {
       if (mcpResponse instanceof Error) throw mcpResponse
       return mcpResponse
@@ -62,7 +62,7 @@ async function serviceFixture(queryStatus = 200) {
     if (typeof init?.body === 'string') body = JSON.parse(init.body) as Record<string, unknown>
     calls.push({ path, authorization: new Headers(init?.headers).get('Authorization') ?? undefined, body })
     if (path === '/api/v1/auth/sign-in/email') return Response.json({ token: 'forge-token', user: { id: 'employee' } })
-    if (path === '/v1/auth/external/exchange') return Response.json({ token: 'weave-token', subject: { id: 'employee' }, organization: { id: 'org' }, permissions: ['teams:use'] })
+    if (path === '/v1/auth/external/exchange') return Response.json({ token: 'weave-token', subject: { id: 'employee' }, organization: { id: 'org' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
     if (path === '/api/v1/meta/object/sales_quote') return Response.json({
       type: 'object', name: 'sales_quote', item: { name: 'sales_quote', label: '销售报价', fields: [
         { name: 'id', type: 'text', label: 'ID' }, { name: 'name', type: 'text', label: '报价名称' },
@@ -100,7 +100,7 @@ async function continuationFixture(actionOutcomes?: unknown) {
   const fetch = vi.fn(async (input: URL | RequestInfo) => {
     const path = new URL(String(input)).pathname
     if (path === '/api/v1/auth/sign-in/email') return Response.json({ token: 'forge-token', user: { id: 'employee' } })
-    if (path === '/v1/auth/external/exchange') return Response.json({ token: 'weave-token', subject: { id: 'weave-user', externalId: 'employee' }, organization: { id: 'org' }, permissions: ['teams:use'] })
+    if (path === '/v1/auth/external/exchange') return Response.json({ token: 'weave-token', subject: { id: 'weave-user', externalId: 'employee' }, organization: { id: 'org' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
     if (path === '/v1/runs/run-1/workbench-context') return Response.json(workContext)
     throw new Error(`unexpected request ${path}`)
   }) as typeof globalThis.fetch

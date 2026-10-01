@@ -40,7 +40,7 @@ async function fixture() {
     const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined
     calls.push({ path, body, headers })
     if (path === '/api/v1/auth/sign-in/email') return Response.json({ token: 'native-employee-session', user: { id: String(body?.email) } })
-    if (path === '/v1/auth/external/exchange') return Response.json({ token: 'weave-session', subject: { id: 'weave-bound', externalId: 'employee@example.test' }, organization: { id: 'workspace-not-native-org' }, permissions: ['teams:use'] })
+    if (path === '/v1/auth/external/exchange') return Response.json({ token: 'weave-session', subject: { id: 'weave-bound', externalId: 'employee@example.test' }, organization: { id: 'workspace-not-native-org' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
     if (path === '/api/v1/auth/get-session') return Response.json({ user: { id: 'employee@example.test' }, session: { activeOrganizationId: 'native-org' } })
     if (path === '/v1/workbench/dispatch-inputs/prepare') return Response.json({ input_revision_id: inputID })
     if (path === '/api/v1/apps/forge/task-delegations') {
@@ -69,6 +69,7 @@ async function fixture() {
       // Use the exact issued response timestamps for the authorization receipt.
       const issue = calls.filter((call) => call.path === '/api/v1/apps/forge/task-delegations').at(-1)!
       expect(issue.body?.scope).toEqual(scope)
+      expect(issue.body?.expected_generation).toBe(1)
       if (terminalAfterAuthorization) context.run.status = 'failed'
       context.run.authorization = { ...context.run.authorization, status: 'active', can_renew: renewedContextCanRenew, generation: 2, expires_at: expiresAt }
       return Response.json({ input_revision_id: inputID, generation: 2, expires_at: expiresAt, status: 'active' })
@@ -103,11 +104,24 @@ it('prepares, persists issuer intent, and sends only the scoped task token to We
   expect(saved.join('')).not.toContain('native-employee-session')
 })
 
-it.each(['scope', 'organization', 'issuer'] as const)('rejects an issued token with mismatched %s before registering or dispatching', async (field) => {
+it.each(['scope', 'organization', 'issuer', 'identity_issuer'] as const)('rejects an issued token with mismatched %s before registering or dispatching', async (field) => {
   const f = await fixture()
-  f.tamper((grant) => field === 'scope' ? { ...grant, scope: { ...grant.scope, allowed_actions: [] } } : field === 'organization' ? { ...grant, subject: { ...grant.subject, organization_id: 'workspace-not-native-org' } } : { ...grant, issuer: 'http://unknown-alias' })
+  f.tamper((grant) => field === 'scope' ? { ...grant, scope: { ...grant.scope, allowed_actions: [] } }
+    : field === 'organization' ? { ...grant, subject: { ...grant.subject, organization_id: 'workspace-not-native-org' } }
+      : field === 'identity_issuer' ? { ...grant, identity_issuer: 'forge:another-deployment' } : { ...grant, issuer: 'http://unknown-alias' })
   await expect(f.service.submitWork(choice, '固定合同正文', f.source)).rejects.toThrow('任务授权与当前员工、组织或固定工作范围不一致')
   expect(f.calls.some((call) => call.path === '/v1/workbench/dispatch-inputs')).toBe(false)
+})
+
+it('accepts a 24-hour task grant and rejects a longer issuer expiry', async () => {
+  const valid = await fixture()
+  valid.tamper((grant) => ({ ...grant, expires_at: new Date(Date.parse(grant.issued_at) + 24 * 60 * 60_000).toISOString() }))
+  await expect(valid.service.submitWork(choice, '固定合同正文', valid.source)).resolves.toMatchObject({ inputRevisionId: inputID })
+
+  const invalid = await fixture()
+  invalid.tamper((grant) => ({ ...grant, expires_at: new Date(Date.parse(grant.issued_at) + 24 * 60 * 60_000 + 1).toISOString() }))
+  await expect(invalid.service.submitWork(choice, '固定合同正文', invalid.source)).rejects.toThrow('任务授权与当前员工、组织或固定工作范围不一致')
+  expect(invalid.calls.some((call) => call.path === '/v1/workbench/dispatch-inputs')).toBe(false)
 })
 
 it('recovers a lost dispatch using the identical input and persisted issuer request, without broadening the scope', async () => {

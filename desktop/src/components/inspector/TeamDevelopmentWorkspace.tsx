@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Bot, Check, ChevronLeft, ChevronRight, GitBranch, Plus } from 'lucide-react'
 import { MemberInspector } from '@/components/development/MemberInspector'
 import { Modal, ProductField, ProductSelect, ProductTextArea, Segmented } from '@/components/ui'
+import { AudienceEditor } from '@/pages/team-workspace/AudienceEditor'
 import { FlowCanvas, ObjectMenu, stepTypeLabel } from '@/pages/team-workspace/TeamCanvas'
 import { StepInspector } from '@/pages/team-workspace/StepInspector'
 import { TrialPanel } from '@/pages/team-workspace/TrialPanel'
@@ -40,7 +41,7 @@ export function TeamDevelopmentWorkspace({ teamId, accountId, runtime, enterpris
   const memberHeading = useRef<HTMLHeadingElement>(null)
   const revealStep = useRef(false)
   const [mode, setMode] = useState<'edit' | 'trial'>('edit')
-  const [teamInfo, setTeamInfo] = useState<{ name: string; objective: string }>()
+  const [teamInfo, setTeamInfo] = useState<{ name: string; objective: string; audience: string[] }>()
   const [flowInfo, setFlowInfo] = useState<{ name: string; description: string }>()
   const [memberId, setMemberId] = useState('')
   const [memberOpen, setMemberOpen] = useState(false)
@@ -128,7 +129,7 @@ export function TeamDevelopmentWorkspace({ teamId, accountId, runtime, enterpris
   const division = <div className="team-division" data-pane={memberOpen ? 'detail' : 'list'}>
     <section className="team-panel__card team-panel__team-info" aria-label="团队资料">
       <div><small>团队目标</small><p>{doc.objective || '尚未填写'}</p></div>
-      <button type="button" className="button" onClick={() => setTeamInfo({ name: doc.name, objective: doc.objective })}>编辑</button>
+      <button type="button" className="button" onClick={() => setTeamInfo({ name: doc.name, objective: doc.objective, audience: doc.audience ?? [] })}>编辑</button>
     </section>
     <div className="team-division__list">
       <div className="team-panel__section-head"><h3>成员 <span>{doc.members.length}</span></h3><button type="button" className="button" onClick={() => setCreateMemberOpen(true)}><Plus size={13}/>添加成员</button></div>
@@ -187,7 +188,7 @@ export function TeamDevelopmentWorkspace({ teamId, accountId, runtime, enterpris
         ? <><button type="button" className="button" disabled={busy} onClick={() => setDiscardOpen(true)}>放弃修改</button><button type="button" className="button button--primary" disabled={busy} onClick={() => void save()}>保存草稿</button></>
         : <button type="button" className="button button--primary" disabled={busy || Boolean(blocker)} title={blocker || undefined} onClick={() => void publish()}>更新团队</button>}</div>
     </footer>
-    {teamInfo && <Modal title="团队资料" onClose={() => setTeamInfo(undefined)} footer={<><button type="button" className="button" onClick={() => setTeamInfo(undefined)}>取消</button><button type="button" className="button button--primary" disabled={!teamInfo.name.trim()} onClick={() => { editDocument({ ...doc, name: teamInfo.name.trim(), objective: teamInfo.objective.trim() }); setTeamInfo(undefined) }}>确定</button></>}><div className="tw-form"><ProductField autoFocus label="团队名称" value={teamInfo.name} maxLength={80} onChange={(event) => setTeamInfo({ ...teamInfo, name: event.target.value })}/><ProductTextArea label="团队目标" rows={4} value={teamInfo.objective} onChange={(event) => setTeamInfo({ ...teamInfo, objective: event.target.value })}/></div></Modal>}
+    {teamInfo && <Modal title="团队资料" onClose={() => setTeamInfo(undefined)} footer={<><button type="button" className="button" onClick={() => setTeamInfo(undefined)}>取消</button><button type="button" className="button button--primary" disabled={!teamInfo.name.trim()} onClick={() => { editDocument({ ...doc, name: teamInfo.name.trim(), objective: teamInfo.objective.trim(), audience: teamInfo.audience }); setTeamInfo(undefined) }}>确定</button></>}><div className="tw-form"><ProductField autoFocus label="团队名称" value={teamInfo.name} maxLength={80} onChange={(event) => setTeamInfo({ ...teamInfo, name: event.target.value })}/><ProductTextArea label="团队目标" rows={4} value={teamInfo.objective} onChange={(event) => setTeamInfo({ ...teamInfo, objective: event.target.value })}/><AudienceEditor value={teamInfo.audience} onChange={(audience) => setTeamInfo({ ...teamInfo, audience })}/></div></Modal>}
     {flowInfo && flow && <Modal title="流程资料" onClose={() => setFlowInfo(undefined)} footer={<><button type="button" className="button" onClick={() => setFlowInfo(undefined)}>取消</button><button type="button" className="button button--primary" disabled={!flowInfo.name.trim()} onClick={() => { editFlow((item) => ({ ...item, name: flowInfo.name.trim(), description: flowInfo.description.trim() })); setFlowInfo(undefined) }}>确定</button></>}><div className="tw-form"><ProductField autoFocus label="流程名称" value={flowInfo.name} maxLength={80} onChange={(event) => setFlowInfo({ ...flowInfo, name: event.target.value })}/><ProductTextArea label="流程说明" rows={4} value={flowInfo.description} onChange={(event) => setFlowInfo({ ...flowInfo, description: event.target.value })}/></div></Modal>}
     {discardOpen && <Modal title="放弃修改" onClose={() => setDiscardOpen(false)} footer={<><button type="button" className="button" onClick={() => setDiscardOpen(false)}>取消</button><button type="button" className="button button--danger" onClick={() => { setDiscardOpen(false); workspace.discard() }}>放弃修改</button></>}><p>未保存的修改将会丢失。</p></Modal>}
     {createMemberOpen && <Modal title="添加成员" onClose={() => setCreateMemberOpen(false)} footer={<><button type="button" className="button" onClick={() => setCreateMemberOpen(false)}>取消</button><button type="button" className="button button--primary" disabled={!memberName.trim() || !memberDuty.trim()} onClick={addMember}>添加成员</button></>}><div className="tw-form"><ProductField autoFocus label="成员名称" value={memberName} maxLength={80} onChange={(event) => setMemberName(event.target.value)}/><ProductTextArea label="成员职责" value={memberDuty} rows={4} onChange={(event) => setMemberDuty(event.target.value)}/></div></Modal>}
