@@ -221,3 +221,18 @@ it('keeps the approval on the work page when a fresh renderer session cannot be 
   expect(workspace.queuePrompt).not.toHaveBeenCalled()
   expect(container.querySelector('[role="alert"]')?.textContent).toContain('无法创建独立审批辅助会话')
 })
+
+it('says when a source has more work than one refresh shows', async () => {
+  const truncated: EnterpriseWorkOverview = {
+    ...overview,
+    reads: { ...overview.reads, weaveTasks: { status: 'loaded' }, forgeApprovals: { status: 'loaded', truncated: true }, notifications: { status: 'loaded' } },
+  }
+  await act(async () => root.render(<EnterpriseWorkPage
+    overview={truncated} loading={false} error="" onRefresh={refresh}
+    onComplete={vi.fn(async () => undefined)} onInspect={vi.fn(async () => ({ title: '', step: '', fields: [], files: [] }))}
+    onAssist={assistPi}
+    onContinue={continueWork}
+  />))
+  expect(container.textContent).toContain('业务审批较多，当前只显示最近一部分。')
+  expect(container.textContent).not.toContain('工作通知较多')
+})

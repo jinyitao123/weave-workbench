@@ -36,6 +36,7 @@ const runChoice = (run: EnterpriseRunObservation, choices: EnterpriseWorkChoice[
 ))
 
 function ReadIssue({ label, status, onRetry }: { label: string; status?: EnterpriseWorkReadStatus; onRetry(): void }) {
+  if (status?.status === 'loaded' && status.truncated) return <p className="work-read-note" role="status">{label}较多，当前只显示最近一部分。</p>
   if (status?.status !== 'failed') return null
   return <p className="development-inline-error" role="alert">{label}暂时不可用：{status.error ?? '服务暂时不可用'} <button type="button" className="button" onClick={onRetry}>重试读取</button></p>
 }

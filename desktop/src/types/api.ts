@@ -490,6 +490,8 @@ export interface EnterpriseWorkOverview {
 export interface EnterpriseWorkReadStatus {
   status: 'loaded' | 'failed'
   error?: string
+  /** The source holds more items than this refresh could show. */
+  truncated?: boolean
 }
 
 export interface EnterpriseWorkReceipt {

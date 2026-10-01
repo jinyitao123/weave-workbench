@@ -58,7 +58,7 @@
 - 业务权限：Forge 对每次业务动作继续执行自身权限判断。团队产品权限不能扩大 Forge 数据和流程权限。
 - 保存方式：桌面登录令牌仅保留到本次进程结束，不调用系统钥匙串、不落盘；重开桌面后重新登录。交接记录不含令牌或密码，按账号保存在本地用户私有目录（0700）和文件（0600），固定材料与幂等信息在网络写入前原子落盘。旧加密记录保留，不自动触发钥匙串解密；命中旧记录时要求核对原工作，不能当作新请求重发。
 - 传输：Workbench 按部署配置连接 HTTP 或 HTTPS，账号投影中的 `environment.secure` 明确标识当前连接方式；客户内网可直接使用 HTTP。
-- Weave 委托：Workbench Host 先按下文“任务委托签发与撤销”向 Forge 申请任务委托，再只在固定输入登记请求的专用请求头中提交 Forge 签发的任务凭据；不得提交员工桌面会话。Weave 验证任务凭据属于当前 Weave 用户的稳定绑定后，将其加密保存为不透明引用，并冻结准确输入版本、已发布工作流版本、本次员工意图允许的动作和任务正文摘要。团队发布能力只是上限；本次动作必须是其子集，空列表表示只处理材料、不允许业务写动作。凭据正文不进入任务、模型上下文、回执或审计记录；运行时只能在当前任务租约内解析引用并调用本次冻结动作。
+- Weave 委托：Workbench Host 先按下文“任务委托签发与撤销”向 Forge 申请任务委托，再只在固定输入登记请求的专用请求头中提交 Forge 签发的任务凭据；不得提交员工桌面会话。Weave 验证任务凭据属于当前 Weave 用户的稳定绑定后，将其加密保存为不透明引用，并冻结准确输入版本、已发布工作流版本、本次员工意图允许的动作和任务正文摘要。任务凭据经三个请求头传递：`X-Weave-Forge-Authorization: Bearer <凭据>`、`X-Weave-Forge-Delegation-Id`（Forge 委托标识，凭据轮换时不变）、`X-Weave-Forge-Delegation-Expires`（Forge 到期时间，RFC 3339）；本次没有动作、材料和记录时不申请委托也不发送这些头。团队发布能力只是上限；本次动作必须是其子集，空列表表示只处理材料、不允许业务写动作。凭据正文不进入任务、模型上下文、回执或审计记录；运行时只能在当前任务租约内解析引用并调用本次冻结动作。
 - 身份来源：Forge 以部署环境变量 `FORGE_IDENTITY_ISSUER` 配置部署级稳定标识（如 `forge:<部署标识>`），经 `GET /api/v1/workbench/identity-source` 返回 `{ version: "1", issuer }`（无需登录，未配置返回 `503 IDENTITY_SOURCE_UNCONFIGURED`）。Weave 以该 `issuer` 建立和查找账号绑定，读取失败时不签发会话；Forge 网络地址只用于连接，不参与绑定键。Weave 交换结果返回同一 `issuer`，桌面会话投影直接采用。
 - 失效：Forge 返回 401 或 403 时，桌面清除本地会话并回到未登录。退出登录时 Host 先调用 Forge 登出接口注销桌面会话，再清除本地会话；退出不撤销已递交工作的任务委托。
 - 审计：登录、退出和委托签发记录主体、组织、设备会话、时间和结果，不记录密码与令牌正文。
@@ -195,7 +195,7 @@
 - 消息种类：只按原生通知 topic 精确识别 `weave.team_run.(result|failure|revision_required|cancelled|human_review)`；Forge 业务消息按 `GET /api/v1/workbench/notifications/{id}/source` 返回的 `kind` 识别。其他 topic 显示为普通通知，不判定为失败或待办。
 - 运行投影：Workbench Host 收集当前页 Weave 消息的 `runReference`，调用 Weave `POST /v1/workbench/runs/lookup`（[work-run-lookup](work-run-lookup.schema.json)，每次至多 100 个）。Weave 按 `workbenchRunAccess` 同一归属规则只返回本人运行；`isCurrent=false` 表示同一工作会话已有更新的输入，桌面据此把旧“需要补充”消息显示为已被后续工作取代；`businessResult` 与动作计数决定显示文案。不存在或非本人的运行列入 `missing`，桌面保留原消息但不提供续办。读取失败时整页标为读取失败，不当作“无动作”。
 - 审批投影：Forge 插件 `GET /api/v1/workbench/approvals?cursor=&limit=`（[approval-work-list](approval-work-list.schema.json)，`limit` 默认 50、最大 100）从原生 ApprovalsService 与动作历史只读投影本人可办理的 `pending` 事项和本人提交且尚未重提的 `returned` 事项，附最新退回意见。不新增存储，不替代原生审批办理路由。
-- 分页：通知与审批均按游标读到末页；单次刷新的总量上限由 Host 配置（默认各 500 条），超出时界面明确提示仍有未显示事项，不静默截断。
+- 读取窗口：审批投影按游标读，每次刷新至多 5 页、500 条。ObjectStack 17.3 原生收件箱只支持条数上限与按类型过滤、没有游标，因此 Host 另按 topic 单独读取 `weave.team_run.revision_required` 与 `weave.team_run.human_review`（各 200 条），可办理消息不会被普通通知挤出窗口；任何来源读满窗口时在该来源状态上标记 `truncated`，界面明确提示仍有未显示事项，不静默截断。
 - 错误：各来源分别报告 `loaded` / `failed`；401 使会话失效，其余错误不影响其他来源展示。
 - 审计：只读，无幂等键；不记录消息正文或材料内容。
 
