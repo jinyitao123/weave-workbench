@@ -337,6 +337,85 @@ async function freezeOfficeOriginals(f: Awaited<ReturnType<typeof fixture>>, con
 }
 
 describe('employee-bound material handoff', () => {
+  it.each([{ newCount: 11, reuseCount: 0 }, { newCount: 1, reuseCount: 10 }, { newCount: 6, reuseCount: 5 }])('rejects $newCount new plus $reuseCount reused files before upload and registration', async ({ newCount, reuseCount }) => {
+    const f = await fixture()
+    const parent = completedReadOnlyContext()
+    parent.input.materials = Array.from({ length: reuseCount }, (_, index) => continuationTextMaterial(`parent-${index}`, `原材料${index}.md`, `固定材料${index}`))
+    if (reuseCount) await openWorkContinuation(f, parent, `notice-count-${newCount}-${reuseCount}`)
+    const attachments = await Promise.all(Array.from({ length: newCount }, async (_, index) => {
+      const path = `材料/附件/新材料${index}.md`, content = `员工新材料${index}`
+      await writeFile(join(f.cwd, path), content)
+      return { projectId: 'project-test', harness: 'pi' as const, workspacePath: f.cwd, name: `新材料${index}.md`, path, sha256: digest(content), bytes: Buffer.byteLength(content), mimeType: 'text/markdown' as const }
+    }))
+    await f.input(appendWorkspaceMaterialContext('交给原团队检查，明确允许复用所选原材料。', attachments), 'employee-count')
+    const params = await f.discover()
+    const rejected = await f.call('submit', { ...params, materials: attachments.map(({ path, sha256 }) => ({ path, sha256 })), reuse_material_names: parent.input.materials.map(({ name }) => name) })
+    expect(rejected.status).toBe(409)
+    expect(rejected.body.error).toContain('最多允许 10 份材料')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+
+  it('rejects a legacy eleven-file frozen intent on recovery before any upload or registration', async () => {
+    const f = await fixture(), params = await f.discover()
+    f.service.stageWorkMaterials.mockRejectedValueOnce(new Error('upload interrupted'))
+    const first = await f.call('submit', params)
+    const recoveryKey = first.body.result.recovery_key as string
+    const savedPath = join(f.storageDirectory, `${recoveryKey}.json`)
+    const saved = JSON.parse(await readFile(savedPath, 'utf8')) as { value: { materials: FrozenMaterial[] } }
+    saved.value.materials = Array.from({ length: 11 }, (_, index) => makeFrozenTextMaterial(`旧材料${index}.md`, Buffer.from(`旧材料${index}`)))
+    await writeFile(savedPath, JSON.stringify(saved))
+    f.service.stageWorkMaterials.mockClear()
+    const restarted = new AgentEnterpriseBridge({ service: f.service, sessions: { prime: f.sessions, pi: f.sessions }, extensionPath: '/extensions/enterprise.ts', storage: { directory: f.storageDirectory } })
+    await restarted.start(); bridges.push(restarted)
+    const environment = restarted.environmentFor({ cwd: f.cwd, sessionPath: f.sessionPath, harness: 'pi' })
+    restarted.bindSession(environment.GOOEYPI_ENTERPRISE_TOKEN, f.sessionPath, 'restart-count')
+    const prompt = f.transcript[0]!.parts.filter((part) => part.type === 'text').map((part) => part.text).join('\n')
+    await restarted.employeeCommand('restart-count', { type: 'prompt', message: prompt })
+    f.transcript.push(user('employee-recovery-count', prompt))
+    const call = async (method: string, request: Record<string, unknown>) => {
+      const response = await fetch(environment.GOOEYPI_ENTERPRISE_URL!, { method: 'POST', headers: { Authorization: `Bearer ${environment.GOOEYPI_ENTERPRISE_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ method, params: request }) })
+      return await response.json() as { result: Record<string, unknown> }
+    }
+    const active = await call('activate', { prompt })
+    const recovered = await call('recover', { turn_key: active.result.turn_key, recovery_key: recoveryKey })
+    expect(recovered.result, JSON.stringify(recovered)).toMatchObject({ status: 'rejected', submitted: false })
+    expect(recovered.result.message).toContain('最多允许 10 份材料')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+
+  it('accepts exactly ten combined new and explicitly reused files', async () => {
+    const f = await fixture(), parent = completedReadOnlyContext()
+    parent.input.materials = Array.from({ length: 9 }, (_, index) => continuationTextMaterial(`parent-${index}`, `原材料${index}.md`, `固定材料${index}`))
+    await openWorkContinuation(f, parent, 'notice-count-ten')
+    const path = f.materials[0]!.path
+    await f.input(appendWorkspaceMaterialContext('复用九份原材料，并交接本轮附件。', [{ projectId: 'project-test', harness: 'pi', workspacePath: f.cwd, name: '测试材料.md', path, sha256: digest(f.content), bytes: Buffer.byteLength(f.content), mimeType: 'text/markdown' }]), 'employee-count-ten')
+    const accepted = await f.call('submit', { ...await f.discover(), reuse_material_names: parent.input.materials.map(({ name }) => name) })
+    expect(accepted.body.result.status).toBe('accepted')
+    expect(f.service.stageWorkMaterials.mock.calls[0]?.[0]).toHaveLength(1)
+    expect(f.service.submitWork.mock.calls[0]?.[2]?.resources).toHaveLength(10)
+  })
+
+  it.each(['completed', 'needs_input', 'action_failed', 'action_unknown'] as const)('passes server business result %s to Pi independently of the model opinion', async (businessResult) => {
+    const f = await fixture(), context = completedReadOnlyContext()
+    context.run.businessResult = businessResult
+    context.run.finalResult = { ...context.run.finalResult!, disposition: 'needs_input', summary: '模型仍建议补件', missingItems: ['日期'] }
+    f.service.getWorkContinuationContext.mockResolvedValueOnce(context)
+    const binding = await f.bridge.pinWorkContinuationContext({ id: `business-result-${businessResult}`, source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' })
+    expect(binding.context).toMatchObject({ businessResult, finalResult: { disposition: 'needs_input' } })
+    if (businessResult === 'action_failed' || businessResult === 'action_unknown') {
+      context.input.materials = [continuationTextMaterial('frozen-failed-file', '原材料.md', '原材料')]
+      await openWorkContinuation(f, context, `no-replay-${businessResult}`)
+      await f.input('补交原材料再试一次。', 'employee-retry-failed')
+      const refused = await f.call('submit', { ...await f.discover(), materials: [], reuse_material_names: ['原材料.md'] })
+      expect(refused.status).toBe(409)
+      expect(refused.body.error).toContain('不允许复用原材料')
+      expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+      expect(f.service.submitWork).not.toHaveBeenCalled()
+    }
+  })
+
   it('reads and binds the exact Weave work context before opening a Pi continuation', async () => {
     const f = await fixture()
     const item = { id: 'notice-1', source: 'weave' as const, notificationType: 'weave.team_run.revision_required' }
@@ -1028,6 +1107,47 @@ describe('employee-bound material handoff', () => {
     expect(rejected.body.result, JSON.stringify(rejected.body)).toMatchObject({ status: 'rejected', submitted: false })
     expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
     expect(f.service.submitWork).toHaveBeenCalledOnce()
+  })
+
+  it('preserves an old absent-business-result fingerprint and recovers the original frozen handoff', async () => {
+    const f = await fixture(), parent = completedReadOnlyContext()
+    parent.input.materials = [continuationTextMaterial('legacy-fixed-file', '旧版固定材料.md', '旧服务已核验的固定材料')]
+    const params = await prepareCompletedReadOnlySubmit(f, parent, 'legacy-fingerprint-recovery')
+    const bindings = (f.bridge as unknown as { workContinuations: Map<string, { context: EnterpriseWorkContinuationContext; fingerprint: string }> }).workContinuations
+    const bound = bindings.get(f.environment.GOOEYPI_ENTERPRISE_TOKEN!)!
+    expect(bound.context.run.businessResult).toBeUndefined()
+    const legacyFingerprint = digest(JSON.stringify({ source: bound.context.source, input: bound.context.input, finalResult: bound.context.run.finalResult ?? null, actionOutcomes: bound.context.run.actionOutcomes ?? null }))
+    expect(bound.fingerprint).toBe(legacyFingerprint)
+    // Emulate a continuation pinned before the new result field existed.
+    bound.fingerprint = legacyFingerprint
+    f.service.submitWork.mockRejectedValueOnce(new Error('dispatch response lost'))
+    const first = await f.call('submit', params)
+    expect(first.body.result.status).toBe('unknown')
+    const recoveryKey = first.body.result.recovery_key as string
+    const persisted = JSON.parse(await readFile(join(f.storageDirectory, `${recoveryKey}.json`), 'utf8')) as { value: { task: string; reusedMaterials: Array<{ name: string }> } }
+    expect(persisted.value.reusedMaterials).toMatchObject([{ name: '旧版固定材料.md' }])
+    const recovered = await f.call('recover', { recovery_key: recoveryKey })
+    expect(recovered.body.result.status, JSON.stringify(recovered.body)).toBe('accepted')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    const [original, retry] = f.service.submitWork.mock.calls
+    expect(original?.[1]).toBe(persisted.value.task)
+    expect(retry?.[1]).toBe(original?.[1])
+    expect(retry?.[2]?.idempotencySeed).toBe(original?.[2]?.idempotencySeed)
+    expect(retry?.[2]?.resources).toEqual(original?.[2]?.resources)
+  })
+
+  it('rejects old frozen continuation recovery when the server explicitly adds a business result', async () => {
+    const f = await fixture(), parent = completedReadOnlyContext()
+    parent.input.materials = [continuationTextMaterial('fixed-result-file', '固定材料.md', '本轮固定材料')]
+    const params = await prepareCompletedReadOnlySubmit(f, parent, 'new-business-result-fingerprint')
+    f.service.submitWork.mockRejectedValueOnce(new Error('dispatch response lost'))
+    const first = await f.call('submit', params)
+    expect(first.body.result.status).toBe('unknown')
+    parent.run.businessResult = 'completed'
+    const recovered = await f.call('recover', { recovery_key: first.body.result.recovery_key as string })
+    expect(recovered.body.error).toContain('团队结果已变化')
+    expect(f.service.submitWork).toHaveBeenCalledOnce()
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
   })
 
   it('recovers the same frozen completed-check handoff after an unknown receipt', async () => {

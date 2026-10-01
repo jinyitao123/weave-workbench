@@ -149,6 +149,9 @@ interface ReturnedRevisionProgress {
   message?: string
 }
 const REVISION_MATERIAL_LIMITS: MaterialLimits & { maxFiles: number } = { maxFiles: 10, maxFileBytes: 2 * 1024 * 1024, maxTotalBytes: 8 * 1024 * 1024, maxTotalExtractedBytes: 700_000 }
+function assertHandoffMaterialCount(newCount: number, reusedCount: number): void {
+  if (newCount + reusedCount > 10) throw new WorkRegistrationRejectedError('团队交接最多允许 10 份材料，新文件和明确复用的原材料合计已超限；请减少材料后重新发起')
+}
 function messageText(message: TranscriptMessage): string {
   return message.parts.flatMap((part) => part.type === 'text' || part.type === 'agentMessage' ? [part.text] : []).join('\n').trim()
 }
@@ -181,13 +184,15 @@ function approvalReviewSessionMetadata(accountKey: string, sessionPath: string, 
   }
 }
 function workContinuationFingerprint(context: EnterpriseWorkContinuationContext): string {
-  return digest(JSON.stringify({ source: context.source, input: context.input, finalResult: context.run.finalResult ?? null, actionOutcomes: context.run.actionOutcomes ?? null }))
+  return digest(JSON.stringify({ source: context.source, input: context.input, finalResult: context.run.finalResult ?? null, actionOutcomes: context.run.actionOutcomes ?? null, ...(context.run.businessResult !== undefined ? { businessResult: context.run.businessResult } : {}) }))
 }
 function isReusableReadOnlyContinuation(context: EnterpriseWorkContinuationContext | undefined): boolean {
   const run = context?.run
-  if (!run || !Array.isArray(run.actionOutcomes) || run.actionOutcomes.length !== 0) return false
+  if (!run || run.businessResult === 'action_failed' || run.businessResult === 'action_unknown' || !Array.isArray(run.actionOutcomes) || run.actionOutcomes.length !== 0) return false
   if (run.status === 'failed') return true
-  return run.status === 'succeeded' && (run.finalResult?.disposition === 'needs_input' || run.finalResult?.disposition === 'complete')
+  return run.status === 'succeeded' && (run.businessResult !== undefined
+    ? run.businessResult === 'needs_input' || run.businessResult === 'completed'
+    : run.finalResult?.disposition === 'needs_input' || run.finalResult?.disposition === 'complete')
 }
 function businessNotificationFingerprint(context: EnterpriseBusinessNotificationContext): string {
   const { capturedAt: _capturedAt, ...snapshot } = context.record.snapshot
@@ -492,6 +497,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         kind: 'weave',
         task: context.input.task,
         runStatus: context.run.status,
+        ...(context.run.businessResult ? { businessResult: context.run.businessResult } : {}),
         materials,
         ...(context.run.finalResult ? { finalResult: {
           title: context.run.finalResult.title, contentType: context.run.finalResult.contentType, content: context.run.finalResult.content,
@@ -1188,6 +1194,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       await this.assertWorkContinuationCurrent(claim, turn, true)
     }
     const reusedMaterials = reuseMaterialsFromContinuation(workContinuation, params.reuse_material_names, turn.accountKey)
+    assertHandoffMaterialCount(selections.length, reusedMaterials.length)
     const businessRecordKey = typeof params.business_record_key === 'string' ? params.business_record_key.trim() : ''
     const selectedBusinessContext = businessRecordKey ? this.businessRecords.get(claim.token)?.get(businessRecordKey) : undefined
     if (businessRecordKey && !selectedBusinessContext) throw new Error('业务记录选择已失效，请按当前工作重新查找')
@@ -1570,6 +1577,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     try {
       const materials = normalizeFrozenMaterials(intent.materials)
       const reusedMaterials = intent.reusedMaterials ?? []
+      assertHandoffMaterialCount(materials.length, reusedMaterials.length)
       const reusedResources: EnterpriseWorkResource[] = reusedMaterials.map(({ id, materialId, sourceKind, requestId, name, mediaType, bytes, sha256 }) => ({
         type: 'forge-file', id, materialId, name, mediaType, bytes, sha256,
         ...(sourceKind ? { sourceKind } : {}), ...(requestId ? { requestId } : {}),
@@ -1614,6 +1622,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         : { ...resource, materialId: materials[index - reusedResources.length]!.materialId, mediaType: materials[index - reusedResources.length]!.mediaType })
       return this.deliver(claim, turn, { ...frozen, materials, reusedMaterials, resources }, recoveryKey)
     } catch (error) {
+      if (error instanceof WorkRegistrationRejectedError) return { status: 'rejected', submitted: false, message: error.message }
       return {
         status: 'unknown', recovery_key: recoveryKey,
         message: error instanceof Error ? error.message : '材料交付结果待核对',
