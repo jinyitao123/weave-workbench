@@ -189,6 +189,18 @@ describe('harness-aware IPC routing', () => {
     expect(harness.services.pi.agents.stop).toHaveBeenCalledWith('pi-runtime')
   })
 
+  it('passes captured employee input only to the Host and never adds it to the runtime command', async () => {
+    const employeeCommand = vi.fn(async () => undefined)
+    Object.assign(harness.services, { enterpriseBridge: { employeeCommand } })
+    const command = { type: 'prompt', message: '完整运行提示' }
+    const employeeInput = { text: '员工原文', materials: [] }
+    await harness.invoke('agent:command', 'pi-runtime', command, { employeeInput })
+    expect(employeeCommand).toHaveBeenCalledWith('pi-runtime', command, undefined, undefined, undefined, employeeInput)
+    expect(harness.services.pi.agents.command).toHaveBeenCalledWith('pi-runtime', command)
+    await expect(harness.invoke('agent:command', 'pi-runtime', { type: 'abort' }, { employeeInput })).rejects.toThrow('Employee input only belongs')
+    expect(employeeCommand).toHaveBeenCalledOnce()
+  })
+
   it('concatenates all managers for agent:list', () => {
     expect(harness.invoke('agent:list')).toEqual([
       { runtimeId: 'prime-runtime', harness: 'prime' },

@@ -223,8 +223,8 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
     return { status: response.status, body: await response.json() as { ok: boolean; result: Record<string, unknown>; error?: string } }
   }
   const call = (method: string, params: Record<string, unknown> = {}) => callWithTurn(method, params)
-  const input = async (text: string, id: string) => {
-    await bridge.employeeCommand(runtimeId, { type: 'prompt', message: text })
+  const input = async (text: string, id: string, employeeInput?: import('../../src/types/api').EmployeePromptInput) => {
+    await bridge.employeeCommand(runtimeId, { type: 'prompt', message: text }, undefined, undefined, undefined, employeeInput)
     activeTranscript.push(user(id, text))
     const active = await call('activate', { prompt: text }); turnKey = active.body.result?.turn_key as string
     return turnKey
@@ -1133,12 +1133,15 @@ describe('employee-bound material handoff', () => {
     expect(opened.status).toBe(409)
     expect(f.service.renewWorkAuthorization).not.toHaveBeenCalled()
     const request = '继续原工作，材料和业务范围都保持原来这次授权。'
-    await f.input(request, 'employee-renew-original')
+    const attached: import('../../src/types/api').WorkspaceMaterialReference = { projectId: 'project-test', harness: 'pi', workspacePath: f.cwd, name: '合同.md', path: '材料/附件/合同.md', sha256: digest(f.content), bytes: Buffer.byteLength(f.content), mimeType: 'text/markdown' }
+    const runtimePrompt = appendWorkspaceMaterialContext(request, [attached])
+    await f.input(runtimePrompt, 'employee-renew-original', { text: request, materials: [attached] })
     const replacement = await f.call('submit', await f.discover())
     expect(replacement.status).toBe(409)
     expect(replacement.body.error).toContain('不能用新交接或新输入替代')
     const wrong = await f.call('authorization_renew', { employee_request: '旧消息的要求' })
     expect(wrong.status).toBe(409)
+    expect((await f.call('authorization_renew', { employee_request: runtimePrompt })).status).toBe(409)
     const waiting = deferred<{ status: 'resumed'; authorizationRenewed: boolean; message: string }>(), started = deferred<void>()
     f.service.renewWorkAuthorization.mockImplementationOnce(async (_intent, observer) => { await observer.assertCurrent(); started.resolve(); return waiting.promise })
     const dispatched = vi.spyOn(f.bridge as unknown as { dispatch(method: string, ...args: unknown[]): Promise<unknown> }, 'dispatch')
@@ -1865,6 +1868,32 @@ describe('employee-bound material handoff', () => {
     expect(stored.value.sourceMessages.find((message) => message.messageId === 'employee-revision-1')?.sha256).toBe(digest(employeeRequest))
   })
 
+  it('keeps full decorated session evidence even when a captured original employee request matches', async () => {
+    const f = await fixture()
+    await f.openReturned()
+    const text = '明确要求递交本轮修订附件'
+    const material: import('../../src/types/api').WorkspaceMaterialReference = { projectId: 'project-test', harness: 'pi', workspacePath: f.cwd, name: '合同.md', path: '材料/附件/合同.md', sha256: digest(f.content), bytes: Buffer.byteLength(f.content), mimeType: 'text/markdown' }
+    const full = appendWorkspaceMaterialContext(text, [material])
+    await f.input(full, 'employee-full-evidence', { text, materials: [material] })
+    f.transcript.at(-1)!.parts = [{ type: 'text', text }]
+    const result = await f.call('revision_submit', { employee_request: text, body: '修订测试正文', materials: f.materials })
+    expect(result.status).toBe(409)
+    expect(result.body.error).toContain('员工输入尚未进入原会话')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitApprovalRevision).not.toHaveBeenCalled()
+  })
+  it('rejects selected file metadata whose captured length differs from the frozen bytes before upload', async () => {
+    const f = await fixture()
+    await f.openReturned()
+    const text = '请递交本轮选定材料'
+    const material: import('../../src/types/api').WorkspaceMaterialReference = { projectId: 'project-test', harness: 'pi', workspacePath: f.cwd, name: '合同.md', path: '材料/附件/合同.md', sha256: digest(f.content), bytes: Buffer.byteLength(f.content) + 1, mimeType: 'text/markdown' }
+    await f.input(appendWorkspaceMaterialContext(text, [material]), 'employee-length-mismatch', { text, materials: [material] })
+    const result = await f.call('revision_submit', { employee_request: text, body: '修订测试正文', materials: f.materials })
+    expect(result.status).toBe(409)
+    expect(JSON.stringify(result.body)).toContain('字节长度或文件类型')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitApprovalRevision).not.toHaveBeenCalled()
+  })
   it('submits an exact DOCX primary and PDF attachment without replacing the original bytes with markdown', async () => {
     const f = await fixture()
     await f.openReturned()
@@ -1875,9 +1904,28 @@ describe('employee-bound material handoff', () => {
     await writeFile(join(f.cwd, primaryPath), primaryBytes)
     await writeFile(join(f.cwd, attachmentPath), attachmentBytes)
     const employeeRequest = '按退回意见递交这份 DOCX 主件和 PDF 技术附件，继续原审批'
-    await f.input(employeeRequest, 'employee-office-revision')
+    const attachments: import('../../src/types/api').WorkspaceMaterialReference[] = [
+      { projectId: 'project-test', harness: 'pi', workspacePath: f.cwd, name: '合同修订原件.docx', path: primaryPath, sha256: digest(primaryBytes), bytes: primaryBytes.length, mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+      { projectId: 'project-test', harness: 'pi', workspacePath: f.cwd, name: '技术协议修订原件.pdf', path: attachmentPath, sha256: digest(attachmentBytes), bytes: attachmentBytes.length, mimeType: 'application/pdf' },
+    ]
+    const runtimePrompt = appendWorkspaceMaterialContext(employeeRequest, attachments)
+    await f.input(runtimePrompt, 'employee-office-revision', { text: employeeRequest, materials: attachments })
     const primary = { path: primaryPath, sha256: digest(primaryBytes) }
     const materials = [{ path: attachmentPath, sha256: digest(attachmentBytes) }]
+    const unselectedPath = '材料/附件/未选第三份材料.md', unselectedContent = '第三份真实存在的测试文件，不属于本轮选件'
+    await writeFile(join(f.cwd, unselectedPath), unselectedContent)
+    const extraFile = await f.call('revision_submit', { employee_request: employeeRequest, primary_material: primary, materials: [...materials, { path: unselectedPath, sha256: digest(unselectedContent) }] })
+    expect(extraFile.status).toBe(409)
+    expect(extraFile.body.error).toContain('本轮由员工实际选定')
+    const wrongHash = await f.call('revision_submit', { employee_request: employeeRequest, primary_material: { ...primary, sha256: digest('另一个版本') }, materials })
+    expect(wrongHash.status).toBe(409)
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitApprovalRevision).not.toHaveBeenCalled()
+    const wrongRequest = await f.call('revision_submit', { employee_request: `${employeeRequest}（另一条要求）`, primary_material: primary, materials })
+    expect(wrongRequest.status).toBe(409)
+    const decoratedRequest = await f.call('revision_submit', { employee_request: runtimePrompt, primary_material: primary, materials })
+    expect(decoratedRequest.status).toBe(409)
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
     const conflict = await f.call('revision_submit', { employee_request: employeeRequest, body: '另一份正文', primary_material: primary, materials })
     expect(conflict.status).toBe(409)
     expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
@@ -1885,6 +1933,10 @@ describe('employee-bound material handoff', () => {
     expect(result.body.result).toMatchObject({ status: 'resumed', submitted: true })
     const repeated = await f.call('revision_submit', { employee_request: employeeRequest, primary_material: primary, materials })
     expect(repeated.body.result).toMatchObject({ status: 'resumed', submitted: true })
+    const intents = await Promise.all((await readdir(f.storageDirectory)).map(async (file) => JSON.parse(await readFile(join(f.storageDirectory, file), 'utf8')) as { value: Record<string, unknown> }))
+    expect(intents.find((entry) => entry.value.employeeRequest === employeeRequest)?.value).toMatchObject({
+      sourceMessages: expect.arrayContaining([expect.objectContaining({ messageId: 'employee-office-revision', sha256: digest(runtimePrompt) })]),
+    })
     expect(f.service.stageWorkMaterials).toHaveBeenCalledOnce()
     const uploaded = f.service.stageWorkMaterials.mock.calls[0]?.[0]
     expect(uploaded).toHaveLength(2)

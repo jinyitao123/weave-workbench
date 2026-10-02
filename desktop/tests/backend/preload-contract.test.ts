@@ -41,6 +41,7 @@ const INVOKE_CASES: Array<[domain: string, method: string, channel: string, args
   ['sessions', 'archive', 'sessions:archive', ['/session.jsonl', true]],
   ['agent', 'start', 'agent:start', [{ cwd: '/repo' }]],
   ['agent', 'command', 'agent:command', ['runtime', { type: 'abort' }, undefined]],
+  ['agent', 'command', 'agent:command', ['runtime', { type: 'prompt', message: 'full runtime input' }, { employeeInput: { text: 'employee input', materials: [] } }]],
   ['agent', 'stop', 'agent:stop', ['runtime']],
   ['agent', 'list', 'agent:list', []],
   ['providers', 'catalog', 'providers:catalog', [true, 'omp']],
