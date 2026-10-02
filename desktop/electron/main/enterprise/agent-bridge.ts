@@ -48,6 +48,7 @@ interface EmployeeTurn {
   baseline: Set<string>
   authorizedMaterials: WorkspaceMaterialPromptReference[]
   openingWorkContinuation?: boolean
+  openingReturnedApproval?: boolean
   businessNotification?: BoundBusinessNotificationContext
   approvalContext?: BoundApprovalContext
   enterpriseReadOnly?: boolean
@@ -847,6 +848,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           ...(pendingSessionPrompts ? { pendingSessionPrompts } : {}),
           ...(boundWorkContinuation ? { workContinuation: boundWorkContinuation } : {}),
           ...(pendingWorkContinuation?.kind === 'weave' ? { openingWorkContinuation: true } : {}),
+          ...(pendingApprovalContext?.purpose === 'revision' ? { openingReturnedApproval: true } : {}),
           ...(activeBusinessNotification ? { businessNotification: activeBusinessNotification } : {}),
         })
       } else if (pendingApprovalContext || previousApprovalContext || approvalReviewSessionDetected || pendingWorkContinuation) {
@@ -1320,6 +1322,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const bound = approvalContext as BoundReturnedApproval
     const employeeRequest = requireString(params.employee_request, 'employee_request', { min: 1, max: 20_000, trim: false })
     if (employeeRequest !== turn.prompt) throw new Error('员工本轮要求已变化，旧修订意图不能继续')
+    if (turn.openingReturnedApproval) throw new Error('打开退回事项只授权查看与整理材料；请等待员工在后续消息明确要求递交修订材料')
     const hasBody = params.body !== undefined, hasPrimaryMaterial = params.primary_material !== undefined
     if (hasBody === hasPrimaryMaterial) throw new Error('请在文本修订正文与本轮指定的原件主件之间选择一种')
     const body = hasBody ? requireString(params.body, 'body', { min: 1, max: 2 * 1024 * 1024, trim: false }) : undefined
