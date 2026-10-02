@@ -18,6 +18,7 @@ export interface WorkbenchRunLookup {
   status: string
   isCurrent: boolean
   businessResult?: 'completed' | 'needs_input' | 'action_failed' | 'action_unknown'
+  actionCounts?: { succeeded: number; failed: number; unknown: number }
 }
 
 export interface WorkbenchRunLookupResponse {
@@ -75,6 +76,7 @@ export function parseRunLookup(value: unknown): WorkbenchRunLookupResponse {
       throw new Error('Weave 返回了无法识别的团队运行状态')
     }
     return { runId, inputRevisionID, workbenchSessionID, status, isCurrent: run.isCurrent,
+      actionCounts: { succeeded: counts.succeeded as number, failed: counts.failed as number, unknown: counts.unknown as number },
       ...(businessResult === 'completed' || businessResult === 'needs_input' || businessResult === 'action_failed' || businessResult === 'action_unknown' ? { businessResult } : {}) }
   })
   const missing = body.missing.map((entry) => {

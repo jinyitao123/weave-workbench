@@ -1,0 +1,105 @@
+import { createHash } from 'node:crypto'
+import { expect, it, vi } from 'vitest'
+import { workRunDetails } from '../../electron/main/enterprise/work-run-details'
+import { EnterpriseService } from '../../electron/main/enterprise'
+
+const hash = (text: string) => createHash('sha256').update(text).digest('hex')
+const input = '550e8400-e29b-41d4-a716-446655440000'
+const owned = { runId: 'run', inputRevisionID: input, workbenchSessionID: 'session', status: 'failed', isCurrent: true, actionCounts: { succeeded: 0, failed: 0, unknown: 0 } }
+function context() { return { version: '1', source: { run_id: 'run', input_revision_id: input, workbench_session_id: 'session' }, input: {
+  team_id: 'team', workflow_id: 'workflow', workflow_version: 1, task: '检查材料', task_sha256: hash('检查材料'),
+  materials: [{ type: 'forge-file', id: 'file', name: '合同材料.pdf', bytes: 2048, sha256: hash('file'), mediaType: 'application/pdf', materialId: '012345678901234567890123', sourceKind: 'owner' }],
+  source_messages: [{ message_id: 'message', event_seq: 1, sha256: hash('source') }],
+}, run: { status: 'failed' } } }
+function activity() { return { run_id: 'run', status: 'failed', created_at: '2026-10-02T10:00:00Z', finished_at: '2026-10-02T10:01:00Z', observed_at: '2026-10-02T10:01:01Z', completeness: { members: 'complete', activity_events: 'complete' }, members: [{ name: '材料检查员', status: 'failed', runtime: { configured_endpoint: 'private', auth_mode: 'secret' }, stages: [{ name: '核对材料', status: 'failed', duration_ms: 60000, node_id: input, failure_class: 'validation', failure_reason: 'workflow_field_unknown $.task' }] }] } }
+
+it('projects real members, timing, materials and zero action records without runtime internals or raw errors', () => {
+  const details = workRunDetails(owned, activity(), context())
+  expect(details).toMatchObject({ status: 'failed', acceptedAt: '2026-10-02T10:00:00Z', finishedAt: '2026-10-02T10:01:00Z', activityComplete: true,
+    members: [{ name: '材料检查员', status: 'failed', stages: [{ name: '核对材料', status: 'failed', durationMs: 60000 }] }],
+    materials: [{ name: '合同材料.pdf', format: 'PDF', bytes: 2048 }], actionCounts: { succeeded: 0, failed: 0, unknown: 0 } })
+  expect(details.explanation).toContain('步骤结果未通过要求，尚未形成有效结论')
+  for (const hidden of [input, 'workflow_field_unknown', '$.task', 'configured_endpoint', 'secret', 'workbench_session_id']) expect(JSON.stringify(details)).not.toContain(hidden)
+})
+
+it('does not invent names, statuses, missing times or action counts from missing or unsafe fields', () => {
+  const raw = activity()
+  raw.members[0].name = input
+  raw.members[0].stages[0].name = '/Users/private/work/file'
+  raw.members[0].stages[0].status = 'unrecognized_state'
+  const details = workRunDetails({ ...owned, actionCounts: undefined }, { ...raw, created_at: undefined, finished_at: undefined, completeness: {} }, context())
+  expect(details).toMatchObject({ members: [{ name: '团队成员 1', stages: [{ name: '执行步骤 1', status: 'not_recorded' }] }], activityComplete: false })
+  expect(details.acceptedAt).toBeUndefined()
+  expect(details.finishedAt).toBeUndefined()
+  expect(details.actionCounts).toBeUndefined()
+  expect(JSON.stringify(details)).not.toContain('/Users')
+})
+
+it('keeps result summaries and missing requirements only after native context validation', () => {
+  const ctx = { ...context(), run: { status: 'succeeded', business_result: 'needs_input', final_result: { id: 'result', title: '材料检查结果', content_type: 'text/plain', content: '请补充期限', sha256: hash('请补充期限'), disposition: 'needs_input', summary: '缺少交付期限', missing_items: ['请补充交付期限'] } } }
+  expect(workRunDetails({ ...owned, status: 'succeeded' }, { ...activity(), status: 'succeeded' }, ctx).result).toEqual({ title: '材料检查结果', summary: '缺少交付期限', missingItems: ['请补充交付期限'] })
+  expect(() => workRunDetails(owned, { ...activity(), run_id: 'other' }, context())).toThrow('正在更新')
+  expect(() => workRunDetails(owned, { ...activity(), status: 'running' }, context())).toThrow('正在更新')
+  expect(() => workRunDetails({ ...owned, workbenchSessionID: 'other' }, activity(), context())).toThrow('正在更新')
+})
+
+it.each(['付款30%/30%/40%，交付20天/72小时。', '由销售/商务核对付款比例，Delivery/Acceptance 分别确认。'])('keeps ordinary business slash text: %s', (summary) => {
+  const ctx = { ...context(), run: { status: 'succeeded', final_result: { id: 'result', title: '合同检查', content_type: 'text/plain', content: summary, sha256: hash(summary), disposition: 'complete', summary, missing_items: [] } } }
+  expect(workRunDetails({ ...owned, status: 'succeeded' }, { ...activity(), status: 'succeeded' }, ctx).result?.summary).toBe(summary)
+})
+
+it.each(['请读取 /Users/private/work/contract.pdf', '原件保存在（/var/tmp/contract.pdf）', '请读取 C:\\private\\contract.pdf', '附件位置：reports/contract.pdf'])('does not publish internal file paths: %s', (summary) => {
+  const ctx = { ...context(), run: { status: 'succeeded', final_result: { id: 'result', title: '合同检查', content_type: 'text/plain', content: summary, sha256: hash(summary), disposition: 'complete', summary, missing_items: [] } } }
+  expect(workRunDetails({ ...owned, status: 'succeeded' }, { ...activity(), status: 'succeeded' }, ctx).result).toBeUndefined()
+})
+
+it.each([
+  ['verification', 'workflow_field_unknown', '步骤结果未通过要求'],
+  ['schema', 'schema mismatch', '步骤结果未通过要求'],
+  ['configuration', 'configuration was rejected', '流程配置未通过检查'],
+  ['unrecognized', 'configuration schema validation connection unavailable', '本次团队执行未完成'],
+])('uses declared failure class %s without assigning causes from raw prose', (failureClass, reason, expected) => {
+  const raw = activity()
+  raw.members[0].stages[0].failure_class = failureClass
+  raw.members[0].stages[0].failure_reason = reason
+  expect(workRunDetails(owned, raw, context()).explanation).toContain(expected)
+})
+
+it.each([undefined, null, {}, [null], [{ name: '检查员', status: 'running' }]])('does not call missing or malformed member records complete: %j', (members) => {
+  expect(workRunDetails(owned, { ...activity(), members }, context()).activityComplete).toBe(false)
+})
+
+it('refuses an unowned detail lookup before requesting activity or context', async () => {
+  const paths: string[] = []
+  const fetchMock = vi.fn(async (value: URL | RequestInfo) => {
+    const path = new URL(String(value)).pathname; paths.push(path)
+    if (path.endsWith('/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'employee' } })
+    if (path.endsWith('/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-employee', externalId: 'employee' }, organization: { id: 'workspace' }, issuer: 'forge:deployment', permissions: ['teams:use'] })
+    return Response.json({ version: '1', runs: [], missing: ['other-run'] })
+  }) as typeof fetch
+  const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+  await service.signIn('employee@example.test', 'secret')
+  await expect(service.getWorkRunDetails('other-run')).rejects.toThrow('当前账号无法读取')
+  expect(paths.filter((path) => path.includes('/runs/'))).toEqual(['/v1/workbench/runs/lookup'])
+})
+
+it('reads owned activity and fixed context with the current session and returns only the safe projection', async () => {
+  const calls: string[] = []
+  const fetchMock = vi.fn(async (value: URL | RequestInfo, init?: RequestInit) => {
+    const path = new URL(String(value)).pathname
+    if (path.endsWith('/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'employee' } })
+    if (path.endsWith('/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-employee', externalId: 'employee' }, organization: { id: 'workspace' }, issuer: 'forge:deployment', permissions: ['teams:use'] })
+    calls.push(path)
+    expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer weave-token')
+    if (path.endsWith('/lookup')) return Response.json({ version: '1', runs: [{ runId: 'run', inputRevisionId: input, workbenchSessionId: 'session', status: 'failed', isCurrent: true, actionCounts: owned.actionCounts }], missing: [] })
+    if (path.endsWith('/activity')) return Response.json(activity())
+    if (path.endsWith('/workbench-context')) return Response.json(context())
+    throw new Error('Unexpected request')
+  }) as typeof fetch
+  const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+  await expect(service.getWorkRunDetails('run')).rejects.toThrow('请先登录')
+  await service.signIn('employee@example.test', 'secret')
+  await expect(service.getWorkRunDetails('run')).resolves.toMatchObject({ runId: 'run', status: 'failed', materials: [{ name: '合同材料.pdf' }], actionCounts: owned.actionCounts })
+  expect(calls).toEqual(['/v1/workbench/runs/lookup', '/v1/runs/run/activity', '/v1/runs/run/workbench-context'])
+  await expect(service.getWorkRunDetails(' run ')).rejects.toThrow('范围无效')
+})

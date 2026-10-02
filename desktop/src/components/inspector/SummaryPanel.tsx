@@ -1,9 +1,9 @@
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { CalendarClock, Check, HeartPulse, LoaderCircle } from 'lucide-react'
 import type { AutomationScheduleRecord, GitStatus, NativeHeartbeatRecord, ProjectRecord, RuntimeInfo, TranscriptMessage } from '@/types/api'
 import { useEnterpriseRunStates } from '@/hooks/useEnterpriseRunStates'
 import { EnterpriseScopeCards, enterpriseScopeProjection } from '../transcript/EnterpriseScopeCards'
-import type { EnterpriseWorkCancellationResult, EnterpriseWorkRunStates } from '@/types/api'
+import type { EnterpriseWorkCancellationResult, EnterpriseWorkRunDetails, EnterpriseWorkRunStates } from '@/types/api'
 import { MarkdownText } from '../MarkdownText'
 import { formatRelative } from '@/lib/data'
 
@@ -12,6 +12,8 @@ export interface EnterpriseSummaryWork {
   sessionKey: string
   read(runIds: string[]): Promise<EnterpriseWorkRunStates>
   cancel(runId: string): Promise<EnterpriseWorkCancellationResult>
+  readDetails?(runId: string): Promise<EnterpriseWorkRunDetails>
+  openWork?(): void
 }
 
 interface SummaryPanelProps {
@@ -57,7 +59,9 @@ export function summarizeTranscript(messages: TranscriptMessage[]): TranscriptSu
 export const SummaryPanel = memo(function SummaryPanel({ shortName = 'Prime', runtime, messages, teamWork, automations, heartbeats, onOpenAutomation }: SummaryPanelProps) {
   const { lastText } = useMemo(() => summarizeTranscript(messages), [messages])
   const scopes = useMemo(() => [...new Map(messages.flatMap((message) => enterpriseScopeProjection(message).scopes).map((scope) => [scope.runReference, scope])).values()], [messages])
-  const runStates = useEnterpriseRunStates(scopes.map((scope) => scope.runReference), teamWork?.accountScope, teamWork?.read)
+  const [selectedRun, setSelectedRun] = useState<string>()
+  const expandedRun = selectedRun && scopes.some((scope) => scope.runReference === selectedRun) ? selectedRun : scopes.at(-1)?.runReference
+  const runStates = useEnterpriseRunStates(scopes.map((scope) => scope.runReference), teamWork?.accountScope, teamWork?.read, expandedRun, teamWork?.readDetails)
   const active = Boolean(runtime?.isStreaming || runtime?.isCompacting)
   return (
     <div className="inspector-scroll scroll-area summary-panel">
@@ -66,7 +70,7 @@ export const SummaryPanel = memo(function SummaryPanel({ shortName = 'Prime', ru
         <h2>工作摘要</h2>
         <MarkdownText text={lastText !== undefined ? lastText.slice(0, 220) : '暂无工作摘要'} />
       </section>
-      <EnterpriseScopeCards scopes={scopes} states={runStates.views} onCancelWork={teamWork?.cancel} onRefresh={runStates.refresh} />
+      <EnterpriseScopeCards scopes={[...scopes].reverse()} states={runStates.views} onCancelWork={teamWork?.cancel} onRefresh={runStates.refresh} expandedRun={expandedRun} onSelectRun={setSelectedRun} onOpenWork={teamWork?.openWork} />
       {automations.length || heartbeats.length ? <section className="summary-section"><h3>Automations</h3><div className="summary-automation-list">
         {automations.slice(0, 2).map((task) => <button type="button" key={task.id} onClick={() => onOpenAutomation(task.id)}>
           <span className="summary-automation-icon"><CalendarClock size={14}/></span><span><strong>{task.title}</strong><small>{task.status}{task.nextRunAt ? ` · Next ${formatRelative(task.nextRunAt)}` : ''}</small></span>

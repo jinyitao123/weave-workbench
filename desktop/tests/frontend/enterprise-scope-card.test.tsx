@@ -6,7 +6,7 @@ import { Transcript } from '../../src/components/Transcript'
 import { SummaryPanel } from '../../src/components/inspector/SummaryPanel'
 import { enterpriseRunDisplay } from '../../src/components/transcript/enterprise-run-display'
 import { EnterpriseScopeCards, enterpriseScopeProjection } from '../../src/components/transcript/EnterpriseScopeCards'
-import type { EnterpriseTaskScopeDisplay, EnterpriseWorkCancellationResult, TranscriptMessage } from '../../src/types/api'
+import type { EnterpriseTaskScopeDisplay, EnterpriseWorkCancellationResult, EnterpriseWorkRunDetails, TranscriptMessage } from '../../src/types/api'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let root: Root, container: HTMLDivElement
@@ -31,7 +31,8 @@ it('displays the exact Host scope independently of folded or hidden tools and hi
   await act(async () => root.render(<SummaryPanel messages={messages} git={{ isRepo: false, files: [] }} automations={[]} heartbeats={[]} onOpenAutomation={vi.fn()} teamWork={{ accountScope: 'employee', sessionKey: 'session', read, cancel: onCancel }} />))
   for (const label of ['Workspace', 'Progress', 'Context', 'Session context', 'Cost', 'Tokens', 'Working directory']) expect(container.textContent).not.toContain(label)
   expect(container.querySelector('[aria-label="本次团队授权"]')?.textContent).toContain('提交销售合同')
-  expect(container.textContent).toContain('本次员工工作内容、客户合同、合同.pdf')
+  expect(container.textContent).toContain('本次员工工作内容、客户合同')
+  expect(container.querySelector('.enterprise-materials')?.textContent).toContain('合同.pdf')
   expect(container.textContent).not.toContain(runId)
   expect(container.textContent).not.toContain('internal-recovery-key')
   expect(container.textContent).not.toContain('inputRevisionId')
@@ -62,8 +63,8 @@ it('keeps unknown cancellation open for the same run and only claims cancellatio
   expect(container.querySelector('button')?.disabled).toBe(false)
   await act(async () => container.querySelector<HTMLButtonElement>('button')!.click())
   expect(onCancel.mock.calls).toEqual([[runId], [runId]])
-  expect(container.querySelector('button')?.textContent).toBe('已取消')
-  expect(container.querySelector('button')?.disabled).toBe(true)
+  expect(container.querySelector('.enterprise-scope-status')?.textContent).toBe('已取消')
+  expect(container.querySelector('.enterprise-scope-cancel')).toBeNull()
 })
 
 it('deduplicates repeated native receipts for one original run without rendering their hidden input identifiers', async () => {
@@ -100,4 +101,20 @@ it('stops busy animation on a failed status refresh and keeps the last known sta
   expect(enterpriseRunDisplay({ run: running, stale: true })).toMatchObject({ label: '状态未更新', detail: '上次状态：团队执行中', animate: false })
   expect(enterpriseRunDisplay({ run: { ...running, isCurrent: false } })).toMatchObject({ detail: '已有后续工作', animate: false })
   expect(enterpriseRunDisplay({ run: { ...running, businessResult: 'action_unknown' } })).toMatchObject({ label: '团队执行中', detail: '业务回执待核对', animate: true })
+})
+
+it('shows verified execution facts and an available next action after failure instead of a disabled dead end', async () => {
+  const openWork = vi.fn()
+  const details: EnterpriseWorkRunDetails = { runId, status: 'failed', acceptedAt: '2026-10-02T10:00:00Z', finishedAt: '2026-10-02T10:01:00Z',
+    members: [{ name: '材料检查员', status: 'completed', stages: [{ name: '检查合同材料', status: 'completed', durationMs: 12000 }] }], activityComplete: false,
+    materials: [{ name: '合同.pdf', format: 'PDF', bytes: 2048 }], explanation: '团队未能完成本次执行，尚未形成有效结论。', authorizationRequired: false,
+    actionCounts: { succeeded: 0, failed: 0, unknown: 0 } }
+  await act(async () => root.render(<EnterpriseScopeCards scopes={[{ ...display, writes: [] }]} states={{ [runId]: { run: { runId, status: 'failed', isCurrent: true }, details } }} onOpenWork={openWork} onCancelWork={vi.fn()} />))
+  for (const value of ['总耗时 1 分 0 秒', '材料检查员', '执行完成', '合同.pdf', '2 KB', '业务动作记录0 条', '只读分析', '仅显示已读取的执行记录']) expect(container.textContent).toContain(value)
+  expect(container.textContent).not.toContain('审批通过')
+  expect(container.querySelector('.enterprise-scope-cancel')).toBeNull()
+  const next = container.querySelector<HTMLButtonElement>('.enterprise-work-action')!
+  expect(next.disabled).toBe(false)
+  await act(async () => next.click())
+  expect(openWork).toHaveBeenCalledOnce()
 })

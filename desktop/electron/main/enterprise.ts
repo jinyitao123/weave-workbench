@@ -1536,6 +1536,22 @@ export class EnterpriseService {
     return { runs: result.runs.map(({ runId, status, isCurrent, businessResult }) => ({ runId, status: status as import('../../src/types/api').EnterpriseWorkRunState['status'], isCurrent, ...(businessResult ? { businessResult } : {}) })), missing: result.missing }
   }
 
+  async getWorkRunDetails(runIdValue: string): Promise<import('../../src/types/api').EnterpriseWorkRunDetails> {
+    const runId = boundedIdentity(runIdValue, 128)
+    if (!runId) throw new Error('工作查询范围无效')
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    const owned = (await this.lookupWorkbenchRuns([runId], generation)).runs.find((run) => run.runId === runId)
+    if (!owned) throw new Error('当前账号无法读取这项工作')
+    const [activity, context] = await Promise.all([
+      this.weaveJSON(`/v1/runs/${encodeURIComponent(runId)}/activity`, generation),
+      this.weaveJSON(`/v1/runs/${encodeURIComponent(runId)}/workbench-context`, generation),
+    ])
+    const { workRunDetails } = await import('./enterprise/work-run-details')
+    this.assertAuthGeneration(generation)
+    return workRunDetails(owned, activity, context)
+  }
+
   private async lookupWorkbenchRuns(runIds: string[], generation: number): Promise<import('./enterprise/work-sources').WorkbenchRunLookupResponse> {
     const { parseRunLookup } = await import('./enterprise/work-sources')
     const runs: import('./enterprise/work-sources').WorkbenchRunLookup[] = [], missing: string[] = []

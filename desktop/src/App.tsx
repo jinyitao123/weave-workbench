@@ -370,8 +370,10 @@ export default function App() {
     accountScope: enterpriseWorkspaceScope,
     sessionKey: workspace.activeSessionId ?? `new:${workspace.workspaceGeneration}`,
     read: enterpriseBridge.getWorkRunStates,
+    readDetails: enterpriseBridge.getWorkRunDetails,
     cancel: cancelEnterpriseWorkById,
-  } : undefined, [enterpriseWorkspaceScope, enterpriseBridge, workspace.activeSessionId, workspace.workspaceGeneration, cancelEnterpriseWorkById])
+    openWork: () => { setView('activity'); refreshWorkOverview() },
+  } : undefined, [enterpriseWorkspaceScope, enterpriseBridge, workspace.activeSessionId, workspace.workspaceGeneration, cancelEnterpriseWorkById, refreshWorkOverview])
   const { meta, initialized, catalogReady, refreshHarnesses } = useBootstrap({
     bridge, ready: settingsState.initialized, harness: activeHarness, accountScope: enterpriseWorkspaceScope, setProjects, setSessions, setSchedules, setScheduleError,
     runtimeSessionsRef: workspace.runtimeSessionsRef, workspaceRef: workspace.workspaceRef,

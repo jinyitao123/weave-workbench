@@ -106,6 +106,7 @@ const INVOKE_CASES: Array<[domain: string, method: string, channel: string, args
   ['enterprise', 'applyTeamMemberConfigDraft', 'enterprise:apply-team-member-config-draft', ['team', 'member', 1]],
   ['enterprise', 'getWorkOverview', 'enterprise:get-work-overview', []],
   ['enterprise', 'getWorkRunStates', 'enterprise:get-work-run-states', [['run-current', 'run-previous']]],
+  ['enterprise', 'getWorkRunDetails', 'enterprise:get-work-run-details', ['run-current']],
   ['enterprise', 'cancelWork', 'enterprise:cancel-work', ['run-original']],
   ['enterprise', 'getApprovalContext', 'enterprise:get-approval-context', ['approval']],
   ['enterprise', 'pinReturnedApprovalContext', 'enterprise:pin-returned-approval-context', ['approval']],

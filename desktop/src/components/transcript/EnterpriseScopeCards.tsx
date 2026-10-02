@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Check, CircleAlert, Clock3, Layers3, Pause, Square } from 'lucide-react'
+import { ArrowUpRight, Check, ChevronDown, CircleAlert, Clock3, Layers3, Pause, Square } from 'lucide-react'
 import type { EnterpriseTaskScopeDisplay, EnterpriseWorkCancellationResult, MessagePart, TranscriptMessage } from '@/types/api'
 import type { EnterpriseRunView } from '@/hooks/useEnterpriseRunStates'
 import { enterpriseRunDisplay } from './enterprise-run-display'
+import { RunExecutionDetails, RunExecutionTime, RunMaterials } from './RunExecutionDetails'
 
 const hostTools = new Set(['gooeypi_enterprise_work_submit', 'gooeypi_enterprise_work_recover'])
 const internalID = /[0-9a-f]{8}-[0-9a-f-]{27,}|^forge:action:/i
@@ -37,11 +38,14 @@ export function enterpriseScopeProjection(message: TranscriptMessage): { message
   return { message: hidden.size ? { ...message, parts: message.parts.filter((_part, index) => !hidden.has(index)) } : message, scopes: [...scopes.values()] }
 }
 
-export function EnterpriseScopeCards({ scopes, states = {}, onCancelWork, onRefresh }: {
+export function EnterpriseScopeCards({ scopes, states = {}, onCancelWork, onRefresh, expandedRun, onSelectRun, onOpenWork }: {
   scopes: EnterpriseTaskScopeDisplay[]
   states?: Record<string, EnterpriseRunView>
   onCancelWork?(runId: string): Promise<EnterpriseWorkCancellationResult>
   onRefresh?(): void
+  expandedRun?: string
+  onSelectRun?(id: string): void
+  onOpenWork?(): void
 }) {
   const [busy, setBusy] = useState('')
   const [results, setResults] = useState<Record<string, EnterpriseWorkCancellationResult>>({})
@@ -49,20 +53,28 @@ export function EnterpriseScopeCards({ scopes, states = {}, onCancelWork, onRefr
   if (!scopes.length) return null
   return <div className="enterprise-scope-cards">{scopes.map((scope) => {
     const result = results[scope.runReference]
-    const display = enterpriseRunDisplay(states[scope.runReference], result)
+    const view = states[scope.runReference]
+    const display = enterpriseRunDisplay(view, result)
+    const expanded = !onSelectRun || expandedRun === scope.runReference
+    const details = view?.details?.status === view?.run?.status && !view?.detailStale ? view?.details : undefined
     const Icon = display.state === 'succeeded' ? Check : ['failed', 'unavailable'].includes(display.state) ? CircleAlert : ['parked', 'needs_input'].includes(display.state) ? Pause : ['cancelled', 'abandoned', 'ended'].includes(display.state) ? Square : display.state === 'queued' ? Clock3 : Layers3
-    return <section className={`enterprise-scope-card is-${display.state}${display.animate ? ' is-animating' : ''}`} aria-label="本次团队授权" key={scope.runReference}>
+    return <section className={`enterprise-scope-card is-${display.state}${display.animate ? ' is-animating' : ''}${expanded ? ' is-expanded' : ' is-collapsed'}`} aria-label="本次团队授权" key={scope.runReference}>
       <div className="enterprise-scope-light" aria-hidden="true" />
       <header><div className="enterprise-scope-heading"><span className="enterprise-scope-emblem" aria-hidden="true"><Icon size={18} strokeWidth={1.7} /></span><div><strong>{scope.team}</strong><span className="enterprise-scope-workflow">{scope.workflow}</span></div></div><span className="enterprise-scope-status" role="status" aria-live="polite" aria-atomic="true"><i aria-hidden="true" />{display.label}</span></header>
+      {!expanded ? <button type="button" className="enterprise-expand" onClick={() => onSelectRun?.(scope.runReference)}>查看执行详情<ChevronDown size={13} aria-hidden="true" /></button> : <>
+      <RunExecutionTime details={details} />
       <div className="enterprise-scope-track" aria-hidden="true"><span /></div>
-      <dl><div><dt>可查看</dt><dd>{scope.reads.join('、')}</dd></div><div><dt>可写入</dt><dd>{scope.writes.length ? scope.writes.join('、') : '只读分析'}</dd></div></dl>
+      <RunExecutionDetails view={view} />
+      <RunMaterials scope={scope} details={details} />
       <footer>{display.detail ? <p className="enterprise-scope-detail">{display.detail}</p> : <span />}
-      {onCancelWork ? <button type="button" className="button enterprise-scope-cancel" disabled={busy === scope.runReference || display.ended} onClick={() => {
+      <div className="enterprise-scope-actions">{onOpenWork ? <button type="button" className="button enterprise-work-action" onClick={onOpenWork}>查看我的工作<ArrowUpRight size={13} aria-hidden="true" /></button> : null}
+      {onCancelWork && !display.ended ? <button type="button" className="button enterprise-scope-cancel" disabled={busy === scope.runReference} onClick={() => {
         setBusy(scope.runReference); setErrors((current) => ({ ...current, [scope.runReference]: '' }))
         void onCancelWork(scope.runReference).then((value) => setResults((current) => ({ ...current, [scope.runReference]: value })))
           .catch(() => setErrors((current) => ({ ...current, [scope.runReference]: '取消结果待核对，请重试核对' })))
           .finally(() => { setBusy(''); onRefresh?.() })
-      }}>{busy === scope.runReference ? '正在核对…' : result?.status === 'cancelled' ? '已取消' : display.ended ? '工作已结束' : result ? '核对取消' : '取消工作'}</button> : null}</footer>
+      }}>{busy === scope.runReference ? '正在核对…' : result ? '核对取消' : '取消工作'}</button> : null}</div></footer>
+      </>}
       {result && (!display.ended || result.status === 'completed' || result.status === 'cancelled') ? <p role="status">{result.message}</p> : null}
       {errors[scope.runReference] ? <p role="alert">{errors[scope.runReference]}</p> : null}
     </section>
