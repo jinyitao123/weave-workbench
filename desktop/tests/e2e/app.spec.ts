@@ -1186,7 +1186,7 @@ test.describe('Prime Work desktop smoke', () => {
     await expect(page.getByRole('alert')).toHaveCount(0)
   })
 
-  test('keeps thread order stable and mutes acknowledged failure indicators', async () => {
+  test('keeps thread order stable and mutes acknowledged local failures without enterprise task badges', async () => {
     const titles = page.locator('.session-row__title')
     await expect(titles.nth(0)).toHaveText('Hermetic desktop fixture')
     await expect(titles.nth(1)).toHaveText('Primary workspace fixture')
@@ -1199,7 +1199,7 @@ test.describe('Prime Work desktop smoke', () => {
     const primaryRow = page.locator('.session-row-wrap').filter({ hasText: 'Primary workspace fixture' })
     await expect(primaryRow).toHaveClass(/has-attention/)
     const activityCount = page.locator('.sidebar__primary button[title="My tasks"] .nav-count')
-    await expect(activityCount).toHaveText('1')
+    await expect(activityCount).toHaveCount(0)
     await expect(titles.nth(0)).toHaveText('Hermetic desktop fixture')
     const attentionColor = await primaryRow.evaluate((node) => getComputedStyle(node).backgroundColor.match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [])
     expect(attentionColor.length).toBeGreaterThanOrEqual(3)
@@ -1273,7 +1273,7 @@ test.describe('Prime Work desktop smoke', () => {
     expect(parkedRunRequests.some((request) => request.startsWith('POST ') && !request.includes('/auth/'))).toBe(false)
   })
 
-  test('keeps an archived conversation out of My Work', async () => {
+  test('keeps an archived conversation out of My Work without counting local failures as enterprise tasks', async () => {
     const primaryFile = join(fixtureSessionFile, '..', 'primary.jsonl')
     appendFileSync(primaryFile, `${JSON.stringify({
       type: 'message', id: 'primary-archive-failure', parentId: 'primary-message', timestamp: '2027-01-01T00:00:00.000Z',
@@ -1283,7 +1283,7 @@ test.describe('Prime Work desktop smoke', () => {
     const primaryRow = page.locator('.session-row-wrap').filter({ hasText: 'Primary workspace fixture' })
     await expect(primaryRow).toHaveClass(/has-attention/)
     const activityCount = page.locator('.sidebar__primary button[title="My tasks"] .nav-count')
-    await expect(activityCount).toHaveText('1')
+    await expect(activityCount).toHaveCount(0)
 
     await primaryRow.getByTitle('Archive Primary workspace fixture').click()
     await primaryRow.getByTitle('Confirm archive Primary workspace fixture').click()
