@@ -92,11 +92,15 @@
 - 同一轮多个并行 `tool_calls`、额度暂停后恢复、结果未知（`ErrJournalOutcomeUnknown`）时停止且不重复执行。
 - 每个用例分别使用 DeepSeek 与 OpenAI 两种格式的真实录制响应。
 
-录制数据来自 W2 的导出，并去掉业务正文。Loom CI 在三平台运行这些用例。完成后更新 `weave-next/third_party/loom` 与其 `UPSTREAM` 记录。
+录制优先使用可验证的W2日志；历史wire缺失时，可用明确标注的纯合成对话实际调用供应方补协议/恢复矩阵，但不替代旧失败精确复现。Loom CI三平台只离线回放脱敏fixture。只有运行实现或共享契约发生变化时才更新 `weave-next/third_party/loom` 与 `UPSTREAM`，纯测试/录制不更新依赖。
 
 **恢复矩阵实现（初始提交 `53614ec`，后随 Loom PR #3 合入 `5478e5f`）：** `stdlib/recovery_matrix_test.go` 用独立写成的、按序号寻址的持久日志，把整个 ToolLoop 从头重放，并在六个日志操作（三次模型、三次工具，含一轮两个并行 `tool_calls`）的每个边界各中断一次：起始记录之前、起始记录之后、副作用之后响应之前、响应记录之后。每个用例断言：每个工具副作用恰好发生一次；副作用已发生而无响应的操作报告为 `ErrJournalOutcomeUnknown`，重放三次仍不再执行，直到宿主核对后才继续；每次发给模型的历史都通过一个独立的 OpenAI 兼容格式校验器（未闭合的 `tool_calls`、孤立的工具消息、重复调用编号、非法参数都会被拒，并有自测）；最终输出与不中断的运行一致；重放输入与记录不符时立即报告分歧。另有“宿主反复崩溃仍能收敛”的用例。共 24 个边界用例加 3 个整体用例；用变异验证过：让核对步骤把已执行的工具当作未执行，用例会失败。**结论：** 在这套契约下 Loom 本身未发现缺陷，09-26 与 09-29 的失败因此更可能出在宿主（Weave）如何记录与恢复，而不在 Loom 的重放实现。
 
-**尚未做（本条仍未完成）：** ① 用 DeepSeek 与 OpenAI 两种格式的真实录制响应，需要 W2 导出；本测试只用脚本化模型和 OpenAI 兼容格式校验器，没有覆盖 DeepSeek 的推理内容回传，`contract.Message` 目前也没有该字段。② 额度暂停矩阵现已在 Loom `d1f1c15` 完成并通过三平台 CI，真实提供方录制仍待补。③ 并行只读工具在日志未串行化时（`SerializeWhenActive=false`）的重放顺序，按序号寻址的日志会因此出现分歧，宿主必须串行化，该要求已补入 `ExecutionJournal` 契约说明；深层收口仍属 W8。④ 三平台 CI 已在 2026-09-30 及整合 PR 完成；Loom PR #3 合入 `5478e5f`。该分支只加测试和契约注释，未改 Loom 运行实现，因此 `weave-next/third_party/loom` 不需要更新。
+**尚未做（本条仍未完成）：** ① DeepSeek当前非thinking工具profile已有实际合成录制与矩阵（见下方）；OpenAI真实录制缺API密钥，旧W2失败wire仍缺失。thinking连续性未实现，`contract.Message`仍不携带该字段，新录制不能补造旧请求。② 额度暂停矩阵现已在 Loom `d1f1c15` 完成并通过三平台 CI，真实提供方录制仍待补。③ 并行只读工具在日志未串行化时（`SerializeWhenActive=false`）的重放顺序，按序号寻址的日志会因此出现分歧，宿主必须串行化，该要求已补入 `ExecutionJournal` 契约说明；深层收口仍属 W8。④ 三平台 CI 已在 2026-09-30 及整合 PR 完成；Loom PR #3 合入 `5478e5f`。该分支只加测试和契约注释，未改 Loom 运行实现，因此 `weave-next/third_party/loom` 不需要更新。
+
+**真实提供方录制进展（2026-10-02）：** Loom PR5已将官方DeepSeek最小合成工具对话录制合入main `3dbc7efa28c616e225aca8c401618a26b9a189fa`，来源 `edef0561`；候选三平台推送/PR CI [36947818368](https://github.com/jinyitao123/loom/actions/runs/36947818368)、[36947889760](https://github.com/jinyitao123/loom/actions/runs/36947889760)全部通过；主线三平台及Linux race [36948215224](https://github.com/jinyitao123/loom/actions/runs/36948215224)也已通过。本地build/test/vet/CLI-race、恢复race、格式及内核/API守卫通过，本机golangci-lint不可用。三轮真实200响应按2→1→0工具批次经原适配器离线回放，48边界覆盖6操作×4崩溃点×普通/每轮额度暂停，未知结果连续3次不重发，错误核对/丢工具消息反例明确失败。提供方录制暴露测试宿主以可变错误检查点作为journal段身份的问题，现冻结slice入口；仅宿主/测试/合成录制脚本/脱敏fixture改变，runtime/contract/provider/CLI/kernel不变，不为此更新Weave依赖。
+
+thinking首轮实际包含非空续传与两个工具调用，推理正文只留脱敏占位、长度及摘要；保留与故意省略续传的本次新合成请求都实际200，未制造400。官方协议仍要求带工具时回传连续性字段，不能据这份200推广thinking恢复支持。OpenAI API密钥缺失，真实OpenAI录制、thinking连续性、09-29原wire缺证仍未完成，W3只完成DeepSeek当前非thinking工具profile的这部分；上述是loopback/内存持久宿主机制证据，不替代真实PG/process-fault或员工业务验收。数据无员工内容、凭据、Authorization或推理正文。独立只读审查通过。
 
 **主线CI更正：** 候选`d1f1c15`三平台运行36799680803成功；合入`5478e5f`后的主线36799836817中Linux/macOS/Linux race通过，Windows `TestReadWriteDispatch_ReadOnlyParallel`用墙钟32.3425ms超过25ms失败。PR4已用三工具并发进入的屏障替代机器时间阈值，串行变体会明确失败；候选三平台与Linux race [36879528359](https://github.com/jinyitao123/loom/actions/runs/36879528359)、合入 `9128e3c4` 后的主线 [36881235264](https://github.com/jinyitao123/loom/actions/runs/36881235264)全部通过。运行实现未变，不为测试修复更新Weave内嵌Loom；真实提供方录制仍待补。
 
