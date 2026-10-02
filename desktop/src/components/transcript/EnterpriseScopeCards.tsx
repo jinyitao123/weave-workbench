@@ -1,5 +1,8 @@
 import { useState } from 'react'
+import { Check, CircleAlert, Clock3, Layers3, Pause, Square } from 'lucide-react'
 import type { EnterpriseTaskScopeDisplay, EnterpriseWorkCancellationResult, MessagePart, TranscriptMessage } from '@/types/api'
+import type { EnterpriseRunView } from '@/hooks/useEnterpriseRunStates'
+import { enterpriseRunDisplay } from './enterprise-run-display'
 
 const hostTools = new Set(['gooeypi_enterprise_work_submit', 'gooeypi_enterprise_work_recover'])
 const internalID = /[0-9a-f]{8}-[0-9a-f-]{27,}|^forge:action:/i
@@ -34,9 +37,11 @@ export function enterpriseScopeProjection(message: TranscriptMessage): { message
   return { message: hidden.size ? { ...message, parts: message.parts.filter((_part, index) => !hidden.has(index)) } : message, scopes: [...scopes.values()] }
 }
 
-export function EnterpriseScopeCards({ scopes, onCancelWork }: {
+export function EnterpriseScopeCards({ scopes, states = {}, onCancelWork, onRefresh }: {
   scopes: EnterpriseTaskScopeDisplay[]
+  states?: Record<string, EnterpriseRunView>
   onCancelWork?(runId: string): Promise<EnterpriseWorkCancellationResult>
+  onRefresh?(): void
 }) {
   const [busy, setBusy] = useState('')
   const [results, setResults] = useState<Record<string, EnterpriseWorkCancellationResult>>({})
@@ -44,17 +49,21 @@ export function EnterpriseScopeCards({ scopes, onCancelWork }: {
   if (!scopes.length) return null
   return <div className="enterprise-scope-cards">{scopes.map((scope) => {
     const result = results[scope.runReference]
-    const ended = result?.status === 'cancelled' || result?.status === 'completed'
-    return <section className="enterprise-scope-card" aria-label="本次团队授权" key={scope.runReference}>
-      <header><strong>{scope.team} · {scope.workflow}</strong><span>已接单</span></header>
+    const display = enterpriseRunDisplay(states[scope.runReference], result)
+    const Icon = display.state === 'succeeded' ? Check : ['failed', 'unavailable'].includes(display.state) ? CircleAlert : ['parked', 'needs_input'].includes(display.state) ? Pause : ['cancelled', 'abandoned', 'ended'].includes(display.state) ? Square : display.state === 'queued' ? Clock3 : Layers3
+    return <section className={`enterprise-scope-card is-${display.state}${display.animate ? ' is-animating' : ''}`} aria-label="本次团队授权" key={scope.runReference}>
+      <div className="enterprise-scope-light" aria-hidden="true" />
+      <header><div className="enterprise-scope-heading"><span className="enterprise-scope-emblem" aria-hidden="true"><Icon size={18} strokeWidth={1.7} /></span><div><strong>{scope.team}</strong><span className="enterprise-scope-workflow">{scope.workflow}</span></div></div><span className="enterprise-scope-status" role="status" aria-live="polite" aria-atomic="true"><i aria-hidden="true" />{display.label}</span></header>
+      <div className="enterprise-scope-track" aria-hidden="true"><span /></div>
       <dl><div><dt>可查看</dt><dd>{scope.reads.join('、')}</dd></div><div><dt>可写入</dt><dd>{scope.writes.length ? scope.writes.join('、') : '只读分析'}</dd></div></dl>
-      {onCancelWork ? <button type="button" className="button" disabled={busy === scope.runReference || ended} onClick={() => {
+      <footer>{display.detail ? <p className="enterprise-scope-detail">{display.detail}</p> : <span />}
+      {onCancelWork ? <button type="button" className="button enterprise-scope-cancel" disabled={busy === scope.runReference || display.ended} onClick={() => {
         setBusy(scope.runReference); setErrors((current) => ({ ...current, [scope.runReference]: '' }))
         void onCancelWork(scope.runReference).then((value) => setResults((current) => ({ ...current, [scope.runReference]: value })))
-          .catch((error) => setErrors((current) => ({ ...current, [scope.runReference]: error instanceof Error ? error.message : '取消结果待核对' })))
-          .finally(() => setBusy(''))
-      }}>{busy === scope.runReference ? '正在核对…' : result?.status === 'cancelled' ? '已取消' : result?.status === 'completed' ? '工作已结束' : result ? '核对取消' : '取消工作'}</button> : null}
-      {result ? <p role="status">{result.message}</p> : null}
+          .catch(() => setErrors((current) => ({ ...current, [scope.runReference]: '取消结果待核对，请重试核对' })))
+          .finally(() => { setBusy(''); onRefresh?.() })
+      }}>{busy === scope.runReference ? '正在核对…' : result?.status === 'cancelled' ? '已取消' : display.ended ? '工作已结束' : result ? '核对取消' : '取消工作'}</button> : null}</footer>
+      {result && (!display.ended || result.status === 'completed' || result.status === 'cancelled') ? <p role="status">{result.message}</p> : null}
       {errors[scope.runReference] ? <p role="alert">{errors[scope.runReference]}</p> : null}
     </section>
   })}</div>

@@ -1526,6 +1526,16 @@ export class EnterpriseService {
     })
   }
 
+  async getWorkRunStates(runIds: string[]): Promise<import('../../src/types/api').EnterpriseWorkRunStates> {
+    if (!Array.isArray(runIds) || runIds.length > 1000 || runIds.some((id) => !boundedIdentity(id, 128))) throw new Error('工作查询范围无效')
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    // The server lookup requires workspace + employee ownership of each bound
+    // run; generation checks reject responses from a previous desktop account.
+    const result = await this.lookupWorkbenchRuns([...new Set(runIds)], generation)
+    return { runs: result.runs.map(({ runId, status, isCurrent, businessResult }) => ({ runId, status: status as import('../../src/types/api').EnterpriseWorkRunState['status'], isCurrent, ...(businessResult ? { businessResult } : {}) })), missing: result.missing }
+  }
+
   private async lookupWorkbenchRuns(runIds: string[], generation: number): Promise<import('./enterprise/work-sources').WorkbenchRunLookupResponse> {
     const { parseRunLookup } = await import('./enterprise/work-sources')
     const runs: import('./enterprise/work-sources').WorkbenchRunLookup[] = [], missing: string[] = []

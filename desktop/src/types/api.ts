@@ -105,6 +105,19 @@ export interface EnterpriseWorkCancellationResult {
   message: string
 }
 
+/** Account-scoped Weave projection; this is execution state, not Forge approval. */
+export interface EnterpriseWorkRunState {
+  runId: string
+  status: 'queued' | 'running' | 'parked' | 'cancel_requested' | 'succeeded' | 'failed' | 'cancelled' | 'abandoned'
+  isCurrent: boolean
+  businessResult?: 'completed' | 'needs_input' | 'action_failed' | 'action_unknown'
+}
+
+export interface EnterpriseWorkRunStates {
+  runs: EnterpriseWorkRunState[]
+  missing: string[]
+}
+
 export interface EnterpriseTaskScopeDisplay {
   version: '1'
   source: 'workbench-host'
@@ -1326,6 +1339,7 @@ export interface PrimeWorkApi {
     saveTeamMemberConfigDraft(draft: EnterpriseTeamMemberConfigDraft): Promise<EnterpriseTeamMemberConfigDraft>
     applyTeamMemberConfigDraft(teamId: string, agentId: string, revision: number): Promise<EnterpriseTeamMemberConfigDraft>
     getWorkOverview(): Promise<EnterpriseWorkOverview>
+    getWorkRunStates(runIds: string[]): Promise<EnterpriseWorkRunStates>
     cancelWork(runId: string): Promise<EnterpriseWorkCancellationResult>
     getApprovalContext(approvalId: string): Promise<EnterpriseApprovalContextView>
     pinReturnedApprovalContext(approvalId: string): Promise<{ handle: string; context: EnterpriseApprovalContextView }>

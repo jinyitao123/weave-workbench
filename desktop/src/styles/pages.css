@@ -335,13 +335,3 @@
 .product-switch > i > b { width: 13px; height: 13px; display: block; border-radius: 50%; background: var(--surface-raised); box-shadow: 0 1px 3px color-mix(in srgb, #000 18%, transparent); transition: transform 120ms ease-out; }
 .product-switch.is-checked > i { background: var(--prime); }
 .product-switch.is-checked > i > b { transform: translateX(13px); }
-
-.enterprise-scope-cards { margin: 0 0 18px 38px; }
-.enterprise-scope-card { padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-raised); }
-.enterprise-scope-card + .enterprise-scope-card { margin-top: 10px; }
-.enterprise-scope-card header { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
-.enterprise-scope-card header span, .enterprise-scope-card dt { color: var(--text-secondary); font-size: 12px; }
-.enterprise-scope-card dl { margin: 12px 0; display: grid; gap: 8px; }
-.enterprise-scope-card dl > div { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; }
-.enterprise-scope-card dd { margin: 0; font-size: 13px; overflow-wrap: anywhere; }
-.enterprise-scope-card p { margin: 10px 0 0; font-size: 12px; color: var(--text-secondary); }
