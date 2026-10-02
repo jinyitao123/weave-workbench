@@ -17,6 +17,7 @@
     "console94:smoke": "node tests/console94-resolve-smoke.mjs",
     "console94:cli-smoke": "node tests/console94-cli-server-smoke.mjs",
     "test:console94": "node --test tests/console94-packaging.test.mjs",
+    "test:api-client": "node --test tests/api-client.test.mjs",
     "postbuild": "node tests/navigation-linkage.static.mjs && node tests/authenticated-page-fetch.static.mjs && node --import tsx tests/project-center-source-parse.mjs && node --import tsx tests/sales-contract-page-source-parse.mjs",
     "validate": "objectstack validate",
     "typecheck": "tsc --noEmit",

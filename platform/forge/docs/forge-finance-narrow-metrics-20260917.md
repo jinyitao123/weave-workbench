@@ -1,11 +1,13 @@
 # 财务窄屏指标区整改合同（2026-09-17）
 
+> 公开副本已对真实运维主机、端口、本机绝对路径及查询值脱敏；原始日期、来源 SHA、结论与失败事实保持原记录。原件/摘要仅在本机私下保全。
+
 ## 批次和范围
 
 - 总目标：财务全部页面精修与业务验收；本批只处理补充要求第 4 条“窄屏不得重叠挤压、压缩指标占位，让用户尽早看到主工作区”。
 - 本批页面：`page_bank_flow`、`page_receivables_payables`、`page_invoice_overview`、`page_output_invoices`、`page_invoice_adjustments`。
-- 分支与工作树：`codex/finance-page-polish2`；`/Users/jinyitao/Developer/.inoForge-worktrees/finance-page-polish2`。
-- 独立环境：`http://localhost:4461`；`file:.objectstack/finance-page-polish2.sqlite`。
+- 分支与工作树：`codex/finance-page-polish2`；`〔本机路径已脱敏〕`。
+- 独立环境：`〔联调主机/端口已脱敏〕`；`file:.objectstack/finance-page-polish2.sqlite`。
 - 实现提交：`a08bc26`。规则与视觉基线继承 `docs/forge-page-delivery-standard.md`、`docs/forge-page-polish-baseline.md`。
 - 共享文件：本批不修改 `objectstack.config.ts`、`product-ui.ts`、`src/pages/index.ts`、`package.json`；`tests/page-polish.manifest.json` 仅增加本批 5 个页面的 `review_required` 记录，由集成负责人确认。
 

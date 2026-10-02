@@ -42,6 +42,7 @@
 
 - [RISEMAP 参考资料使用规范](risemap-replication-spec.md)、[跨模块业务旅程](risemap/journeys.md)。
 - [三类业务定义](business-model.md)、[客户会议纪要提炼](customer-meeting-20260907-findings.md)、[正式版本要求](first-release.md)。
+- 客户会议原始转写与来源校验文件已退出公开跟踪；公开分析保留匿名化业务内容、日期与原件 SHA，并标注公开副本已脱敏。原件只在本机私下保全，不在仓库或脚本中引用。
 - [references](references/)：原始截图、DOM、采集步骤及来源；[evidence](evidence/)：验收图像等证据；[standard-test-data](standard-test-data/)：对照材料。均按需读取，不因体积或数量批量删除。
 - 正式要求、页面合同和验收证据继续保留原路径。日期较早不自动意味着失效，证据需与对应实现版本一起判断。
 
