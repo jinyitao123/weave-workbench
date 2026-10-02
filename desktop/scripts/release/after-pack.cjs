@@ -6,8 +6,12 @@ function executablePath(context, platform = process.platform) {
   const { productFilename } = packager.appInfo
   if (platform === 'darwin') return join(appOutDir, `${productFilename}.app`, 'Contents', 'MacOS', productFilename)
   if (platform === 'win32') return join(appOutDir, `${productFilename}.exe`)
-  // app-builder-lib's LinuxPackager names the binary after the lowercased sanitized name unless executableName overrides it.
-  return join(appOutDir, packager.appInfo.sanitizedName.toLowerCase())
+  // LinuxPackager exposes the final name after merging platform and global
+  // configuration and applying electron-builder's filename sanitization.
+  if (typeof packager.executableName !== 'string' || !packager.executableName) {
+    throw new Error('Linux packager did not expose its final executable name')
+  }
+  return join(appOutDir, packager.executableName)
 }
 
 exports.executablePath = executablePath

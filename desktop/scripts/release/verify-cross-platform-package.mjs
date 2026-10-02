@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process'
 import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { join, relative, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { listPackage } from '@electron/asar'
 import { assertAsarLayout, assertPackagedExtensions } from './lib.mjs'
+
+const { sanitizeFileName } = createRequire(import.meta.url)('builder-util/out/filename')
 
 function requireOption(value, label, allowed) {
   if (!value || !allowed.includes(value)) throw new Error(`${label} must be one of: ${allowed.join(', ')}`)
@@ -29,15 +32,24 @@ export function findUnpackedDirectory(outputDirectory, target) {
   return matches[0]
 }
 
-const { build: buildConfiguration } = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'))
+const packageManifest = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'))
+const { build: buildConfiguration } = packageManifest
 
 /**
- * The packaged binary inside an unpacked application directory. electron-builder
- * names the Windows executable after `build.productName` and the Linux one
- * after its lowercased form, so package.json stays the only inventory of it.
+ * The packaged binary inside an unpacked application directory. Match
+ * electron-builder's platform-specific executableName override before its
+ * global executableName so verification and the smoke launcher inspect the
+ * same binary that the platform packager creates.
  */
-export function packagedExecutablePath(unpackedDirectory, target) {
-  const executableName = buildConfiguration.executableName ?? buildConfiguration.productName
+export function packagedExecutablePath(unpackedDirectory, target, configuration = buildConfiguration) {
+  const platformConfiguration = target === 'win' ? configuration.win : configuration.linux
+  const configuredExecutableName = platformConfiguration?.executableName ?? configuration.executableName
+  const executableName =
+    configuredExecutableName != null
+      ? sanitizeFileName(configuredExecutableName)
+      : target === 'win'
+        ? sanitizeFileName(configuration.productName ?? packageManifest.productName ?? packageManifest.name)
+        : sanitizeFileName(packageManifest.name).toLowerCase()
   const name = target === 'win' ? `${executableName}.exe` : executableName
   const path = join(unpackedDirectory, name)
   if (!existsSync(path) || !lstatSync(path).isFile()) throw new Error(`Packaged ${target} application is missing its executable: ${path}`)

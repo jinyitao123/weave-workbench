@@ -19,7 +19,7 @@ const PACKAGE_HELP: Record<HarnessId, string> = {
   prime: 'Install a Prime package containing extensions, skills, prompts, or themes with Prime Agent’s package manager.',
   pi: 'Install a Pi package containing extensions, skills, prompts, or themes with Pi’s package manager.',
 }
-const GITHUB_ISSUES_URL = 'https://github.com/am-will/gooey-pi/issues/new'
+const GITHUB_ISSUES_URL = 'https://github.com/jinyitao123/weave-workbench/issues/new'
 
 function capabilityDetailId(skill: SkillRecord): string {
   return `capability-detail-${skill.id.replace(/[^A-Za-z0-9_-]/g, '-').slice(0, 128)}`

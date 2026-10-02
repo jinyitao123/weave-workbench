@@ -39,6 +39,13 @@ test('accepts a short status page with the four fixed sections and lock-backed v
   assert.doesNotThrow(() => validateStatusPage(statusPage({ now: 'Weave 锁定 5a47d405，见[锁](../a.md)。' }), [revision]))
 })
 
+test('accepts CRLF status pages and extracts only the active registry', () => {
+  const content = statusPage({ who: '`codex/hygiene`', next: '`codex/other`' }).replaceAll('\n', '\r\n')
+  assert.doesNotThrow(() => validateStatusPage(content))
+  assert.match(statusRegistry(content), /codex\/hygiene/)
+  assert.doesNotMatch(statusRegistry(content), /codex\/other/)
+})
+
 test('rejects long, historical, unstructured or version-carrying status pages', () => {
   for (const [content, pattern] of [
     [statusPage() + '\n'.repeat(statusLimits.lines), /行/],

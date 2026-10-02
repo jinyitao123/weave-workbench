@@ -187,7 +187,13 @@ export function useFocusTrap<T extends HTMLElement>(active: boolean, onEscape?: 
       cancelAnimationFrame(frame)
       document.removeEventListener('keydown', onKeyDown, true)
       const restore = previousFocus.current
-      requestAnimationFrame(() => { if (restore?.isConnected) restore.focus() })
+      requestAnimationFrame(() => {
+        if (!restore?.isConnected) return
+        const focused = document.activeElement
+        // A later user action or overlay owns its new focus; do not close its editor.
+        if (focused && focused !== document.body && focused !== document.documentElement && !container.contains(focused)) return
+        restore.focus()
+      })
     }
   }, [active])
   return containerRef
