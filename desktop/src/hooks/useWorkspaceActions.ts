@@ -9,7 +9,7 @@ import { parseSessionActionSnapshot, streamingBehaviorForIntent } from '@/lib/se
 import { appendWorkspaceMaterialContext } from '@/lib/workspace-material-attachments'
 import type { DEFAULT_SETTINGS } from '@/lib/data'
 import { type createSingleFlightAdmission, findProjectForSession, findRuntimeForWorkspace, newSessionProject, projectContainsPath, workspaceCwd } from '@/lib/workspace'
-import type { CapabilityMutationInput, ExtensionInstallInput, GitStatus, HarnessId, McpConnectionInput, McpStateInput, PrimeWorkApi, ProjectRecord, ProjectSortMode, PromptDeliveryIntent, PromptImage, ScheduleInput, SchedulePatch, SessionRecord, TranscriptMessage, WorkspaceMaterialReference, WorkspaceView } from '@/types/api'
+import type { CapabilityMutationInput, EmployeePromptInput, ExtensionInstallInput, GitStatus, HarnessId, McpConnectionInput, McpStateInput, PrimeWorkApi, ProjectRecord, ProjectSortMode, PromptDeliveryIntent, PromptImage, ScheduleInput, SchedulePatch, SessionRecord, TranscriptMessage, WorkspaceMaterialReference, WorkspaceView } from '@/types/api'
 import type { useAppSettings } from '@/hooks/useAppSettings'
 import type { usePanelLayout } from '@/hooks/usePanelLayout'
 import type { usePluginSkills } from '@/hooks/usePluginSkills'
@@ -291,15 +291,25 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
     textAttachments: WorkspaceMaterialReference[] = [],
     workContinuationContextHandle?: string,
     approvalReviewContextHandle?: string,
+    queuedEmployeeInput?: EmployeePromptInput,
   ) => {
     const { bridge, sessions, workspace, provider, settingsState, submissionAdmissionRef, demoTimerRef, setSessions, setSubmitting, setView, setToast, reportError } = getDeps()
     const commandHarness = workspace.workspaceRef?.current?.project?.harness ?? settingsState.settings.activeHarness
     const currentWorkspaceProject = workspace.workspaceRef.current.project
     const currentWorkspaceCwd = workspace.workspaceRef.current.cwd
-    if (textAttachments.some((attachment) => attachment.projectId !== currentWorkspaceProject?.id || attachment.harness !== currentWorkspaceProject.harness || attachment.workspacePath !== currentWorkspaceCwd)) {
+    const selectedMaterials = queuedEmployeeInput?.materials ?? textAttachments
+    if (selectedMaterials.some((attachment) => attachment.projectId !== currentWorkspaceProject?.id || attachment.harness !== currentWorkspaceProject.harness || attachment.workspacePath !== currentWorkspaceCwd)) {
       throw new Error('A text attachment belongs to a different workspace. Reattach it before sending.')
     }
-    const promptToDeliver = appendWorkspaceMaterialContext(prompt, textAttachments)
+    const employeeInput = queuedEmployeeInput ?? (textAttachments.length ? { text: prompt, materials: structuredClone(textAttachments) } : undefined)
+    if (queuedEmployeeInput && appendWorkspaceMaterialContext(queuedEmployeeInput.text, queuedEmployeeInput.materials) !== prompt) throw new Error('Queued employee input or attached materials changed before delivery.')
+    const promptToDeliver = queuedEmployeeInput ? prompt : appendWorkspaceMaterialContext(prompt, textAttachments)
+    const deliveryContext = returnedApprovalContextHandle || workContinuationContextHandle || approvalReviewContextHandle || employeeInput ? {
+      ...(returnedApprovalContextHandle ? { returnedApprovalContextHandle } : {}),
+      ...(workContinuationContextHandle ? { workContinuationContextHandle } : {}),
+      ...(approvalReviewContextHandle ? { approvalReviewContextHandle } : {}),
+      ...(employeeInput ? { employeeInput } : {}),
+    } : undefined
     const compactCommand = parseCompactCommand(prompt)
     const mcpCommand = parseMcpCommand(prompt, commandHarness)
     if (mcpCommand?.type === 'open' && images.length === 0 && textAttachments.length === 0) {
@@ -343,18 +353,21 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
         return
       }
       if (intent === 'queue' && images.length === 0) {
-        if (!queuedFlushPromptId) workspace.queuePrompt(promptToDeliver, intent)
+        if (!queuedFlushPromptId) {
+          if (employeeInput) workspace.queuePrompt(promptToDeliver, intent, undefined, undefined, returnedApprovalContextHandle, workContinuationContextHandle, approvalReviewContextHandle, employeeInput)
+          else workspace.queuePrompt(promptToDeliver, intent)
+        }
         return
       }
       if (intent === 'steer') {
         const sentAt = Date.now()
-        const pendingSteerId = workspace.queuePrompt(promptToDeliver, intent, [{ type: 'text', text: promptToDeliver }, ...images], sentAt)
+        const pendingSteerId = workspace.queuePrompt(promptToDeliver, intent, [{ type: 'text', text: promptToDeliver }, ...images], sentAt, undefined, undefined, undefined, employeeInput)
         if (currentWorkspace.sessionFile) {
           const sentAtIso = new Date(sentAt).toISOString()
           setSessions((items) => items.map((session) => session.filePath === currentWorkspace.sessionFile ? { ...session, lastUserMessageAt: sentAtIso } : session))
         }
         try {
-          const response = await bridge.agent.command(currentRuntime.runtimeId, { type: 'steer', message: promptToDeliver, ...(images.length ? { images } : {}) })
+          const response = await bridge.agent.command(currentRuntime.runtimeId, { type: 'steer', message: promptToDeliver, ...(images.length ? { images } : {}) }, deliveryContext)
           workspace.acceptSteer(pendingSteerId)
           const actions = parseSessionActionSnapshot(response.sessionActions)
           if (actions) workspace.acknowledgeSteer(pendingSteerId, actions)
@@ -461,7 +474,9 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
         }
         if ((intent === 'queue' || compactCommand) && images.length === 0 && textAttachments.length === 0 && (activeRuntime?.isStreaming || selectedSession?.status === 'running')) {
           if (activeRuntime) await bridge.enterprise.invalidateHandoff(activeRuntime.runtimeId)
-          if (!queuedFlushPromptId) queuedPromptId = workspace.queuePrompt(promptToDeliver, compactCommand ? 'queue' : intent)
+          if (!queuedFlushPromptId) queuedPromptId = employeeInput
+            ? workspace.queuePrompt(promptToDeliver, compactCommand ? 'queue' : intent, undefined, undefined, returnedApprovalContextHandle, workContinuationContextHandle, approvalReviewContextHandle, employeeInput)
+            : workspace.queuePrompt(promptToDeliver, compactCommand ? 'queue' : intent)
           if (compactCommand && intent === 'steer') setToast('Compaction will run when the current turn finishes.')
           return
         }
@@ -536,8 +551,8 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
         } else if (activeRuntime.isStreaming) {
           // Follow-ups are daemon-owned. Steers get a renderer-only pending
           // row so pickup can move them into history without redelivery.
-          if (intent === 'steer') queuedPromptId = workspace.queuePrompt(prompt, intent, userMessage.parts, sentAt)
-          const response = await bridge.agent.command(activeRuntime.runtimeId, { type: intent === 'steer' ? 'steer' : 'follow_up', message: promptToDeliver, ...(images.length ? { images } : {}) })
+          if (intent === 'steer') queuedPromptId = workspace.queuePrompt(promptToDeliver, intent, userMessage.parts, sentAt, undefined, undefined, undefined, employeeInput)
+          const response = await bridge.agent.command(activeRuntime.runtimeId, { type: intent === 'steer' ? 'steer' : 'follow_up', message: promptToDeliver, ...(images.length ? { images } : {}) }, deliveryContext)
           const actions = parseSessionActionSnapshot(response.sessionActions)
           if (actions) {
             workspace.setRuntime((current) => current?.runtimeId === activeRuntime.runtimeId
@@ -559,11 +574,7 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
             message: promptToDeliver,
             streamingBehavior: streamingBehaviorForIntent(intent),
             ...(images.length ? { images } : {}),
-          }, returnedApprovalContextHandle || workContinuationContextHandle || approvalReviewContextHandle ? {
-            ...(returnedApprovalContextHandle ? { returnedApprovalContextHandle } : {}),
-            ...(workContinuationContextHandle ? { workContinuationContextHandle } : {}),
-            ...(approvalReviewContextHandle ? { approvalReviewContextHandle } : {}),
-          } : undefined)
+          }, deliveryContext)
           completeQueuedFlush()
           if (startedRuntime && startedSessionNeedsTitle) {
             void titleStartedSession({

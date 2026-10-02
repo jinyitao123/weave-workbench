@@ -361,7 +361,7 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     const id = requireString(runtimeId, 'runtimeId', { min: 1, max: 256 })
     const manager = agentsForRuntime(id)
     const delivery = deliveryContext === undefined ? undefined : requireRecord(deliveryContext, 'deliveryContext')
-    if (delivery) rejectUnknownKeys(delivery, ['returnedApprovalContextHandle', 'approvalReviewContextHandle', 'workContinuationContextHandle'], 'deliveryContext')
+    if (delivery) rejectUnknownKeys(delivery, ['returnedApprovalContextHandle', 'approvalReviewContextHandle', 'workContinuationContextHandle', 'employeeInput'], 'deliveryContext')
     const approvalContextHandle = delivery?.returnedApprovalContextHandle
     const approvalReviewContextHandle = delivery?.approvalReviewContextHandle
     const workContinuationContextHandle = delivery?.workContinuationContextHandle
@@ -370,7 +370,8 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     if (workContinuationContextHandle !== undefined && typeof workContinuationContextHandle !== 'string') throw new TypeError('deliveryContext.workContinuationContextHandle must be a string')
     const current = manager.list().find((runtime) => runtime.runtimeId === id)
     if (current?.sessionFile) services.enterpriseBridge?.bindRuntimeSession(id, current.sessionFile)
-    await services.enterpriseBridge?.employeeCommand(id, command, approvalContextHandle, workContinuationContextHandle, approvalReviewContextHandle)
+    if (delivery?.employeeInput !== undefined && !['prompt', 'steer', 'follow_up'].includes(requireRecord(command, 'command').type as string)) throw new TypeError('Employee input only belongs to an employee message')
+    await services.enterpriseBridge?.employeeCommand(id, command, approvalContextHandle, workContinuationContextHandle, approvalReviewContextHandle, delivery?.employeeInput)
     return manager.command(id, command)
   })
   handle('agent:stop', (_event, runtimeId) => agentsForRuntime(runtimeId).stop(runtimeId))

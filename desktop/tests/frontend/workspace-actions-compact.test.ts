@@ -79,7 +79,7 @@ function fixture({ runtime: configuredRuntime = null, sessionStatus = 'idle', ow
       ? { runtimeId: configuredRuntime.runtimeId, generation: 1 }
       : null as { runtimeId: string; generation: number } | null,
   }
-  const command = vi.fn(async (_runtimeId: string, _command: Record<string, unknown>) => ({}))
+  const command = vi.fn(async (_runtimeId: string, _command: Record<string, unknown>, _delivery?: unknown) => ({}))
   const start = vi.fn(async () => ({ ...runtime('started-runtime'), sessionFile: currentSession?.filePath }))
   const followUp = vi.fn(async () => true)
   const listSessions = vi.fn(async () => currentSession ? [currentSession] : [])
@@ -302,6 +302,22 @@ describe('workspace text attachment prompt binding', () => {
     expect(command.message).toContain('材料/附件/opaque/source.md')
     expect(command.message).toContain(attachment.sha256)
     expect(userMessage?.parts.find((part) => part.type === 'text')?.text).toBe(command.message)
+    expect(f.command.mock.calls[0]?.[2]).toEqual({ employeeInput: { text: '请阅读这个文件', materials: [attachment] } })
+  })
+
+  it('retains captured employee text and selected files through an idle queue flush without decorating twice', async () => {
+    const active = runtime('queued-runtime', true)
+    const f = fixture({ runtime: active, ownsStreaming: true })
+    const raw = '请递交本轮附件'
+    await f.actions.sendPrompt(raw, [], 'queue', undefined, undefined, [attachment])
+    const queued = f.queuePrompt.mock.calls[0]!
+    const full = queued[0] as string, input = queued[7] as import('../../src/types/api').EmployeePromptInput
+    expect(input).toEqual({ text: raw, materials: [attachment] })
+    active.isStreaming = false
+    await f.actions.sendPrompt(full, [], 'queue', 'queued-input', undefined, [], undefined, undefined, input)
+    expect(f.command.mock.calls[0]?.[1].message).toBe(full)
+    expect(f.command.mock.calls[0]?.[2]).toEqual({ employeeInput: input })
+    expect(full.match(/gooeypi-workspace-materials:v1/g)).toHaveLength(1)
   })
 
   it('rejects a file reference after the active project changes', async () => {
