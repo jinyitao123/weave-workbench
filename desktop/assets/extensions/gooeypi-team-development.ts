@@ -21,6 +21,12 @@ async function call(method: string, params: Record<string, unknown> = {}) {
 
 function result(value: unknown) { return { content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }], details: {} } }
 
+const operationGuidance = [
+  '新增成员完整操作为 {kind:"member_add",ref:"new_worker",name:"材料协调员",duty:"整理本次材料并保留原文依据"}；ref、name、duty 均必填。ref 只供同一组后续操作引用。新增成员默认是 worker、使用 loom，模型沿用当前草稿首个 worker 的模型；业务动作和技能默认空，不自动复制其他成员的授权。',
+  '修改已有步骤执行者使用 {kind:"step",flow:"流程准确名称",step:"步骤准确名称",member:"成员准确名称或本组新增ref"}；可附 requirement 更新工作要求。选择负责人会变为 lead，选择执行成员会变为 worker；节点 id、edges、inputs 和声明输出保持原值。无需删除重建步骤。',
+  '操作接口以本工具说明和 gooeypi_team_development_context 返回内容为准；不要扫描环境、历史会话或本机源码猜参数。缺少引用先读取上下文，不编造操作名或字段。',
+]
+
 export default async function (pi: ExtensionApi): Promise<void> {
   if (!url || !token) return
   const Type = pi.typebox?.Type ?? ((await import('typebox')) as { Type: Typebox }).Type
@@ -53,6 +59,7 @@ export default async function (pi: ExtensionApi): Promise<void> {
     name: 'gooeypi_team_development_propose', label: '提出团队修改',
     description: '向 Pi 主会话右侧的团队开发面板提交结构化修改提案。传入 JSON 数组字符串；此操作只生成待预览候选，不应用、不保存、不发布。支持团队、成员、技能、业务动作、流程步骤、步骤输入、交付来源、结果分类和汇合条件的受控修改。',
     promptGuidelines: [
+      ...operationGuidance,
       '仅在开发者只要求查看方案或先预览改动时使用。若开发者明确要求实际修改团队草稿，使用“修改并保存团队草稿”。以准确名称打开团队后再提出最小修改。不要编辑本地文件、调用员工交接能力或编造业务动作。',
       'member/flow/step/capability 引用使用草稿和动作目录返回的准确名称；新成员先用 member_add 的 ref 创建，后续操作可用该 ref。同名对象需要开发者先在侧栏区分。',
       '配置业务动作的材料来源时，使用 parameterSources 按接口参数逐项映射；只使用当前目录返回的准确参数名。原生单值 file 参数默认由 Pi 从本轮可用材料中选择；如开发者明确绑定唯一文件，只有本轮恰有一件材料时才映射 materials.single.id，不映射文件名称或摘要。原生 multiple file 参数必须映射到 materials.ids，例如 {"kind":"capability","member":"材料提交员","capability":"提交材料包","selected":true,"parameterSources":[{"name":"primary_file_id","source":"materials.single.id"},{"name":"material_file_ids","source":"materials.ids"}]}。materials.ids 表示本次提交的全部文件；不得把 file/multiple 参数当作成员自由填写，也不得根据参数名猜测材料来源。materials.manifest_json 只用于文本参数。',
@@ -73,6 +80,7 @@ export default async function (pi: ExtensionApi): Promise<void> {
     name: 'gooeypi_team_development_save', label: '修改并保存团队草稿',
     description: '按受控修改操作直接更新当前已打开团队的未发布草稿。只在开发者明确要求修改时使用；如果只要建议，使用“提出团队修改”。保存草稿不会更新当前生效团队。',
     promptGuidelines: [
+      ...operationGuidance,
       '先用团队列表和准确名称打开目标，再读取当前上下文。用户明确要求修改时，可以直接提交最小 operations JSON 数组并保存，无须先走待审提案。',
       '只引用上下文中的团队成员、流程、步骤和业务动作；不得填内部 ID、绕过受控 operation 或自行编造动作。添加后续操作时使用本轮返回的准确业务名称。',
       '修改已有负责人步骤的处理指令：{kind:"step",flow:"合同复核流程",step:"理解任务",requirement:"保留原文后的完整新指令"}。执行成员步骤也用 requirement 更新工作要求；不要使用 instruction、target 或 step_ref。',

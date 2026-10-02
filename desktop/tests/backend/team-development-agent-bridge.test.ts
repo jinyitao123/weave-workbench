@@ -1,8 +1,9 @@
 import { afterEach, expect, it } from 'vitest'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { TeamDevelopmentAgentBridge } from '../../electron/main/development/agent-bridge'
+import { teamWorkspaceRequest } from '../../electron/main/enterprise/team-workspace'
 import { newMember } from '../../src/pages/team-workspace/member'
 import { initialGraph } from '../../src/pages/team-workspace/graph'
 import type { EnterpriseBusinessCapabilityCatalog } from '../../src/types/api'
@@ -15,6 +16,103 @@ afterEach(async () => { await bridge?.stop(); bridge = undefined; for (const pat
 function workspace(document: TeamDefinition, revision = 4): TeamWorkspace {
   return { revision, published_revision: revision - 1, publishing_revision: 0, prepared_revision: 0, document: structuredClone(document), updated_at: '', trials: [] }
 }
+
+async function savedWireWorkspace(document: TeamDefinition, revision: number): Promise<TeamWorkspace> {
+  return await teamWorkspaceRequest({ action: 'save', teamId: 'team', revision: revision - 1, document }, async () => undefined, async (_path, _method, body) => {
+    const wire = structuredClone((body as { document: { members: Array<{ configuration: Record<string, unknown> }> } }).document)
+    // The real Go response materializes omitted optional fields and the omitted
+    // empty binding slice. Exercise the actual desktop wire decoder, not an echo.
+    for (const member of wire.members) {
+      member.configuration.tool_loop_control ??= null
+      member.configuration.max_tool_repeats ??= 0
+      member.configuration.business_capability_bindings ??= null
+    }
+    return { body: { ...workspace(document, revision), document: wire } }
+  }) as TeamWorkspace
+}
+
+async function normalizedSaveFixture(loseResponse = false) {
+  const directory = mkdtempSync(join(tmpdir(), 'team-normalized-save-')); tempDirectories.push(directory)
+  const lead = newMember('deepseek-flash'), worker = newMember('deepseek-flash')
+  lead.configuration.role = 'avatar'; worker.configuration.displayName = '审核员'
+  for (const member of [lead, worker]) { delete member.configuration.toolLoopControl; delete member.configuration.maxToolRepeats }
+  const document: TeamDefinition = { name: '合同团队', objective: '复核合同', members: [lead, worker], workflows: [{ id: 'flow', name: '复核流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
+  let remote = await savedWireWorkspace(document, 4), readUnavailable = false, writes = 0
+  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [], refreshedAt: '' }
+  const options = {
+    accountKey: async () => 'developer-1', developer: async () => ({ accountId: 'developer-1' }), teams: async () => [{ id: 'team', name: '合同团队' }],
+    team: async () => { if (readUnavailable) throw new Error('readback unavailable'); return structuredClone(remote) },
+    workspace: async (command: TeamWorkspaceCommand) => {
+      if (command.action !== 'save') throw new Error('unexpected command')
+      expect(command.revision).toBe(remote.revision)
+      writes++
+      remote = { ...await savedWireWorkspace(command.document, remote.revision + 1), published_revision: remote.published_revision, prepared_revision: remote.prepared_revision }
+      if (loseResponse) { readUnavailable = true; throw new Error('save response unavailable') }
+      return structuredClone(remote)
+    },
+    catalog: async () => catalog, extensionPath: '/app/team-development.ts', storage: { directory },
+  }
+  let env: NodeJS.ProcessEnv
+  const start = async () => {
+    bridge = new TeamDevelopmentAgentBridge(options); await bridge.start()
+    env = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
+    bridge.bindRuntime(env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
+  }
+  await start()
+  await bridge!.bindContext('runtime', { teamId: 'team', revision: 4, document, catalog }, 'developer-1')
+  const operations = [{ kind: 'member_add', ref: 'coordinator', name: '材料协调员', duty: '核对材料原文' }, { kind: 'step', flow: '复核流程', step: '理解任务', member: 'coordinator' }]
+  const save = async () => {
+    const response = await fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method: 'save', params: { operations } }) })
+    return response.json() as Promise<{ ok: boolean; error?: string }>
+  }
+  return { document, save, remote: () => remote, writes: () => writes, async restartWithLegacyPendingSave() {
+    await bridge!.stop()
+    const file = join(directory, readdirSync(directory).find((name) => name.endsWith('.json'))!)
+    const checkpoint = JSON.parse(readFileSync(file, 'utf8'))
+    // Reproduce a pending save produced by the previous desktop release.
+    for (const doc of [checkpoint.value.context.document, checkpoint.value.context.proposal.document, checkpoint.value.context.pendingSave.baseDocument, checkpoint.value.context.pendingSave.proposal.document]) {
+      for (const member of doc.members) { delete member.configuration.toolLoopControl; delete member.configuration.maxToolRepeats }
+    }
+    writeFileSync(file, JSON.stringify(checkpoint))
+    readUnavailable = false
+    await start()
+  } }
+}
+
+it('accepts a real normalized save receipt with null empty bindings and retains graph structure', async () => {
+  const fixture = await normalizedSaveFixture()
+  expect((await fixture.save()).ok).toBe(true)
+  const saved = fixture.remote(), added = saved.document.members[2]!
+  expect(added.configuration).toMatchObject({ displayName: '材料协调员', role: 'worker', engine: 'loom', model: 'deepseek-flash', toolLoopControl: null, maxToolRepeats: 0, businessCapabilityBindings: [] })
+  expect(saved.revision).toBe(5)
+  expect(saved.published_revision).toBe(3)
+  expect(fixture.writes()).toBe(1)
+  expect(saved.document.workflows[0].graph_definition.nodes[0]).toMatchObject({ ...fixture.document.workflows[0].graph_definition.nodes[0], type: 'worker', config: { kind: 'consult', agent_id: added.id, agent_version: 1 } })
+  expect(saved.document.workflows[0].graph_definition.edges).toEqual(fixture.document.workflows[0].graph_definition.edges)
+  expect((await bridge!.getState('runtime')).proposal).toBeUndefined()
+})
+
+it.each(['none', 'business', 'node-version', 'loop-control', 'max-repeats'] as const)('recovers a legacy pending normalized save without another write, unless %s changed', async (change) => {
+  const fixture = await normalizedSaveFixture(true)
+  expect((await fixture.save()).ok).toBe(false)
+  await fixture.restartWithLegacyPendingSave()
+  const remote = fixture.remote()
+  if (change === 'business') remote.document.members[2]!.relationship.duty = '另一位开发者的业务要求'
+  if (change === 'node-version') remote.document.workflows[0].graph_definition.nodes[0].config!.agent_version = 2
+  if (change === 'loop-control') remote.document.members[2]!.configuration.toolLoopControl = { sliceRounds: 3, initialTotalRounds: 12 }
+  if (change === 'max-repeats') remote.document.members[2]!.configuration.maxToolRepeats = 2
+  const result = await fixture.save()
+  expect(result.ok).toBe(change === 'none')
+  expect(fixture.writes()).toBe(1)
+  expect(remote.document.members).toHaveLength(3)
+  if (change === 'none') {
+    expect((await bridge!.getState('runtime')).proposal).toBeUndefined()
+    expect((await bridge!.getState('runtime')).revision).toBe(5)
+  } else {
+    expect(result.error).toContain('团队草稿已变化')
+    expect((await bridge!.getState('runtime')).proposal).toBeDefined()
+  }
+})
 
 it('binds Pi to one developer draft and returns a proposal without saving it', async () => {
   let account = 'developer-1'

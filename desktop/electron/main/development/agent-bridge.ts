@@ -62,7 +62,16 @@ function canonical(value: unknown): unknown {
 }
 
 function sameDocument(left: TeamDefinition, right: TeamDefinition): boolean {
-  return JSON.stringify(canonical(left)) === JSON.stringify(canonical(right))
+  // Weave's typed configuration writes these two omitted optional fields as
+  // null/0. Normalize only those declared defaults, including persisted older
+  // pending saves; all business fields, graph bindings and versions still match.
+  const comparable = (document: TeamDefinition) => ({ ...document, members: document.members.map((member) => ({
+    ...member, configuration: { ...member.configuration,
+      toolLoopControl: member.configuration.toolLoopControl === undefined ? null : member.configuration.toolLoopControl,
+      maxToolRepeats: member.configuration.maxToolRepeats === undefined ? 0 : member.configuration.maxToolRepeats,
+    },
+  })) })
+  return JSON.stringify(canonical(comparable(left))) === JSON.stringify(canonical(comparable(right)))
 }
 
 function digest(value: unknown): string {
