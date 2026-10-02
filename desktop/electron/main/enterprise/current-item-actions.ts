@@ -109,8 +109,9 @@ function currentItemContextFingerprint(context: EnterpriseApprovalContext): stri
   }))
 }
 
-export function createCurrentItemActionRuntime(source: CurrentItemActionRuntimeSource): CurrentItemActionRuntime {
-  if (source.bound.purpose !== 'review' || source.turn.enterpriseReadOnly !== true
+export function createCurrentItemActionRuntime(source: CurrentItemActionRuntimeSource, access: 'review-action' | 'read-directory' = 'review-action'): CurrentItemActionRuntime {
+  const returnedDirectory = access === 'read-directory' && source.bound.purpose === 'revision'
+  if (!returnedDirectory && (source.bound.purpose !== 'review' || source.turn.enterpriseReadOnly !== true)
     || !source.claim.sessionPath || source.bound.sessionPath !== source.claim.sessionPath
     || source.bound.accountKey !== source.turn.accountKey) {
     throw new Error('请从本人“我的工作”重新打开当前审批事项')
@@ -140,6 +141,9 @@ export async function dispatchCurrentItemAction(
 ): Promise<unknown> {
   const bound = source.turn.approvalContext
   if (!bound) throw new Error('请从本人“我的工作”重新打开当前审批事项')
+  if (bound.purpose === 'revision' && method === 'run_current_item_action') {
+    throw new Error('当前是本人退回修改事项，不能执行审批复核动作；修订递交须使用专用修订工具并取得员工本轮明确要求')
+  }
   const refs = source.references.get(source.claim.token) ?? new Map<string, BoundCurrentItemAction>()
   const attempts = source.attempts.get(source.claim.token) ?? new Map<string, CurrentItemActionAttempt>()
   source.references.set(source.claim.token, refs)
@@ -148,7 +152,7 @@ export async function dispatchCurrentItemAction(
     service: source.service, claim: source.claim, turn: source.turn, bound, refs, attempts, contextChanged: source.contextChanged,
     getCurrentTurn: () => source.turns.get(source.claim.token),
     getCurrentBinding: () => source.bindings.get(source.claim.token),
-  })
+  }, method === 'list_current_item_actions' ? 'read-directory' : 'review-action')
   return method === 'list_current_item_actions'
     ? listCurrentItemActions(params, runtime)
     : runCurrentItemAction(params, runtime)
@@ -156,7 +160,7 @@ export async function dispatchCurrentItemAction(
 
 export async function listCurrentItemActions(params: Record<string, unknown>, runtime: CurrentItemActionRuntime) {
   rejectUnknownKeys(params, ['turn_key'], 'current item action directory')
-  if (runtime.bound.purpose !== 'review' || runtime.turn.enterpriseReadOnly !== true
+  if (runtime.bound.purpose !== 'revision' && (runtime.bound.purpose !== 'review' || runtime.turn.enterpriseReadOnly !== true)
     || !runtime.claim.sessionPath || runtime.bound.sessionPath !== runtime.claim.sessionPath
     || !runtime.turn.messageId) {
     throw new Error('请从本人“我的工作”重新打开当前审批事项')
@@ -166,6 +170,18 @@ export async function listCurrentItemActions(params: Record<string, unknown>, ru
   const session = await runtime.service.getSession()
   if (session.status !== 'signed-in' || !session.user?.id || await runtime.service.accountKey() !== runtime.turn.accountKey) {
     throw new Error('员工账号已变化，请重新打开当前事项')
+  }
+  if (runtime.bound.purpose === 'revision') {
+    if (currentContext.status !== 'returned' || currentContext.viewer !== 'original_submitter' || !currentContext.returnVersion) {
+      throw new Error('当前退回事项已变化，请从本人“我的工作”重新打开')
+    }
+    await runtime.assertCurrent()
+    runtime.refs.clear()
+    return {
+      actions: [],
+      revision_submission: { tool: 'gooeypi_approval_revision_submit', requires_employee_request: true },
+      message: '当前会话已绑定本人退回修改事项。打开只授权查看与整理材料；员工在后续消息明确要求递交时，使用专用修订工具沿原事项继续。',
+    }
   }
   const history = await runtime.service.getApprovalActionHistory(runtime.bound.context.requestId)
   await runtime.assertCurrent()

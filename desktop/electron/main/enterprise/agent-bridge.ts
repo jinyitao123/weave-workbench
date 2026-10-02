@@ -9,7 +9,6 @@ import { rejectUnknownKeys, requireString } from '../validation'
 import { digest, HandoffStore, submissionUUID, type HandoffStorage } from './handoff-store'
 import { executionText, freezeMaterials, makeFrozenTextMaterial, materialSelection, normalizeFrozenMaterial, normalizeFrozenMaterials, validateFrozenApprovalOriginalMaterial, validateFrozenMaterial, type FrozenMaterial, type MaterialLimits, type ReusedMaterial } from './materials'
 import { searchTeams, type TeamSummary } from './team-catalog'
-import { splitWorkspaceMaterialContext } from '../../../src/lib/workspace-material-attachments'
 import { APPROVAL_REVIEW_SESSION_MARKER } from '../../../src/lib/approval-review'
 import { businessReadErrorResult, type BusinessObjectDirectory, type BusinessRecordCandidate, type BusinessRecordRead, type BusinessRecordSearchPage, type BusinessRecordSnapshot } from './business-records'
 import type { BoundCurrentItemAction, CurrentItemActionAttempt } from './current-item-actions'
@@ -44,10 +43,13 @@ interface FrozenHandoff extends FrozenHandoffIntent { resources: EnterpriseWorkR
 interface EmployeeTurn {
   key: string
   prompt: string
+  employeePrompt: string
+  capturedEmployeeInput?: boolean
   accountKey: string
   baseline: Set<string>
   authorizedMaterials: WorkspaceMaterialPromptReference[]
   openingWorkContinuation?: boolean
+  openingReturnedApproval?: boolean
   businessNotification?: BoundBusinessNotificationContext
   approvalContext?: BoundApprovalContext
   enterpriseReadOnly?: boolean
@@ -156,12 +158,6 @@ function assertHandoffMaterialCount(newCount: number, reusedCount: number): void
 }
 function messageText(message: TranscriptMessage): string {
   return message.parts.flatMap((part) => part.type === 'text' || part.type === 'agentMessage' ? [part.text] : []).join('\n').trim()
-}
-function materialsAuthorizedForTurn(prompt: string): WorkspaceMaterialPromptReference[] {
-  // The hidden attachment envelope is produced by the desktop picker for this
-  // exact employee message. Mentioning an older filename or path is not a new
-  // authorization; reuse requires selecting the file again in the current turn.
-  return splitWorkspaceMaterialContext(prompt).attachments
 }
 function handoffKey(choice: EnterpriseWorkChoice): string { return digest(JSON.stringify([choice.teamId, choice.workflowId, choice.version])).slice(0, 24) }
 function returnedApprovalFingerprint(context: EnterpriseApprovalContext): string {
@@ -604,7 +600,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     this.pendingWorkContinuations.clear(); this.workContinuations.clear(); this.workLineages.clear()
   }
   /** Called only by the trusted desktop input path, before forwarding to the runtime. */
-  async employeeCommand(runtimeId: unknown, command: unknown, returnedApprovalContextHandle?: unknown, workContinuationContextHandle?: unknown, approvalReviewContextHandle?: unknown): Promise<void> {
+  async employeeCommand(runtimeId: unknown, command: unknown, returnedApprovalContextHandle?: unknown, workContinuationContextHandle?: unknown, approvalReviewContextHandle?: unknown, employeeInput?: unknown): Promise<void> {
     const value = command as { type?: string; message?: string } | null
     if (!value || !['prompt', 'steer', 'follow_up', 'abort', 'compact'].includes(value.type ?? '')) {
       if (returnedApprovalContextHandle !== undefined || workContinuationContextHandle !== undefined || approvalReviewContextHandle !== undefined) throw new Error('企业工作上下文只能绑定到桌面工作提示')
@@ -630,6 +626,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       return
     }
     const pathPending = !claim.sessionPath
+    const capturedInput = (await import('./employee-input')).captureEmployeeInput(value.message, employeeInput, claim)
     if (pathPending && (value.type !== 'prompt' || !this.pendingFirstPrompts.has(token))) {
       if (returnedApprovalContextHandle !== undefined || workContinuationContextHandle !== undefined || approvalReviewContextHandle !== undefined) throw new Error('企业工作上下文未绑定到当前桌面会话')
       return
@@ -840,13 +837,15 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         this.newSessionTokens.delete(token)
         if (activeApprovalContext) this.approvalContexts.set(token, activeApprovalContext)
         this.turns.set(token, {
-          key: randomUUID(), prompt: value.message.trim(), accountKey,
+          key: randomUUID(), prompt: value.message.trim(), employeePrompt: capturedInput.text, accountKey,
+          ...(employeeInput !== undefined ? { capturedEmployeeInput: true } : {}),
           baseline: new Set(messages.filter((message) => message.role === 'user').map((message) => message.id)),
-          authorizedMaterials: materialsAuthorizedForTurn(value.message),
+          authorizedMaterials: capturedInput.materials ?? [],
           ...(activeApprovalContext ? { approvalContext: activeApprovalContext, ...(activeApprovalContext.purpose === 'review' ? { enterpriseReadOnly: true } : {}) } : {}),
           ...(pendingSessionPrompts ? { pendingSessionPrompts } : {}),
           ...(boundWorkContinuation ? { workContinuation: boundWorkContinuation } : {}),
           ...(pendingWorkContinuation?.kind === 'weave' ? { openingWorkContinuation: true } : {}),
+          ...(pendingApprovalContext?.purpose === 'revision' ? { openingReturnedApproval: true } : {}),
           ...(activeBusinessNotification ? { businessNotification: activeBusinessNotification } : {}),
         })
       } else if (pendingApprovalContext || previousApprovalContext || approvalReviewSessionDetected || pendingWorkContinuation) {
@@ -1294,7 +1293,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   }
   private async renewAuthorization(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn): Promise<unknown> {
     rejectUnknownKeys(params, ['turn_key', 'employee_request'], 'work authorization renewal')
-    if (params.employee_request !== turn.prompt) throw new Error('续授权必须使用本轮员工明确要求，不能代入旧消息')
+    if (params.employee_request !== turn.employeePrompt) throw new Error('续授权必须使用本轮员工明确要求，不能代入旧消息')
     const key = `renew:${claim.token}:${turn.key}`
     const pending = this.inFlight.get(key)
     if (pending) return pending
@@ -1302,7 +1301,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const operation = (async () => {
       const { renewFromEmployeeTurn } = await import('./authorization-renewal-bridge')
       return renewFromEmployeeTurn(params, {
-        opening: Boolean(turn.openingWorkContinuation), prompt: turn.prompt, accountKey: turn.accountKey, context: bound?.context,
+        opening: Boolean(turn.openingWorkContinuation), prompt: turn.employeePrompt, accountKey: turn.accountKey, context: bound?.context,
         store: this.store, renew: this.options.service.renewWorkAuthorization?.bind(this.options.service),
         assertCurrent: async () => { await this.evidence(claim, turn); if (bound && this.workContinuations.get(claim.token) !== bound) throw new Error('工作上下文已失效，请重新打开原工作消息'); return turn.messageId },
       })
@@ -1319,7 +1318,8 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     }
     const bound = approvalContext as BoundReturnedApproval
     const employeeRequest = requireString(params.employee_request, 'employee_request', { min: 1, max: 20_000, trim: false })
-    if (employeeRequest !== turn.prompt) throw new Error('员工本轮要求已变化，旧修订意图不能继续')
+    if (employeeRequest !== turn.employeePrompt) throw new Error('员工本轮要求已变化，旧修订意图不能继续')
+    if (turn.openingReturnedApproval) throw new Error('打开退回事项只授权查看与整理材料；请等待员工在后续消息明确要求递交修订材料')
     const hasBody = params.body !== undefined, hasPrimaryMaterial = params.primary_material !== undefined
     if (hasBody === hasPrimaryMaterial) throw new Error('请在文本修订正文与本轮指定的原件主件之间选择一种')
     const body = hasBody ? requireString(params.body, 'body', { min: 1, max: 2 * 1024 * 1024, trim: false }) : undefined
@@ -1332,6 +1332,11 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     const selections = params.materials.length ? materialSelection(params.materials, REVISION_MATERIAL_LIMITS) : []
     const primarySelection = hasPrimaryMaterial ? materialSelection([params.primary_material], REVISION_MATERIAL_LIMITS)[0] : undefined
     if (primarySelection && selections.some((selection) => selection.path === primarySelection.path)) throw new Error('修订主件不能同时作为附件')
+    const selected = primarySelection ? [primarySelection, ...selections] : selections
+    const capturedMaterials = turn.capturedEmployeeInput ? new Map(turn.authorizedMaterials.map((material) => [material.path, material])) : undefined
+    if (capturedMaterials && selected.some((material) => capturedMaterials.get(material.path)?.sha256 !== material.sha256)) {
+      throw new Error('只能递交本轮由员工实际选定且版本已核对的修订主件和附件')
+    }
     const sourceMessages = await this.evidence(claim, turn)
     const employeeMessageId = turn.messageId
     if (!employeeMessageId) throw new Error('无法核对当前员工轮次，请重新发送本轮要求')
@@ -1354,8 +1359,11 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         if (returnedApprovalFingerprint(latest) !== bound.fingerprint) {
           throw new Error('退回意见、业务对象或原材料版本已变化，请刷新待办后重新处理')
         }
-        const selected = primarySelection ? [primarySelection, ...selections] : selections
         const frozen = await freezeMaterials(claim.cwd, selected, { ...REVISION_MATERIAL_LIMITS, maxFiles: 11 })
+        if (capturedMaterials && frozen.some((material, index) => {
+          const captured = capturedMaterials.get(selected[index]!.path)!
+          return material.bytes !== captured.bytes || material.mediaType !== captured.mimeType
+        })) throw new Error('修订材料字节长度或文件类型与本轮员工选件不一致，未上传材料')
         const primaryMaterial = primarySelection ? frozen[0] : undefined
         const attachments = primaryMaterial ? frozen.slice(1) : frozen
         if (primaryMaterial && primaryMaterial.mediaType !== 'application/pdf'
