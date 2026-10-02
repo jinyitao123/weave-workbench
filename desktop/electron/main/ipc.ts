@@ -304,7 +304,12 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     if (!services.enterpriseBridge) throw new Error('桌面团队续接能力暂不可用')
     const item = requireRecord(rawItem, 'item')
     rejectUnknownKeys(item, ['id', 'source', 'notificationType', 'workReference', 'runReference', 'sessionReference'], 'item')
-    if (item.source !== 'weave') throw new TypeError('item.source must be weave')
+    if (item.source === 'forge') return services.enterpriseBridge.pinWorkContinuationContext({
+      id: requireString(item.id, 'item.id', { min: 1, max: 128 }),
+      source: 'forge',
+      ...(item.notificationType !== undefined ? { notificationType: requireString(item.notificationType, 'item.notificationType', { min: 1, max: 128 }) } : {}),
+    })
+    if (item.source !== 'weave') throw new TypeError('item.source must be weave or forge')
     return services.enterpriseBridge.pinWorkContinuationContext({
       id: requireString(item.id, 'item.id', { min: 1, max: 128 }),
       source: 'weave',
