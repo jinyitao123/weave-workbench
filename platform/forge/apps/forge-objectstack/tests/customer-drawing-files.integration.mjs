@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { connect } from '../scripts/api-client.mjs';
+import { connect, requireTestPassword } from '../scripts/api-client.mjs';
 
 const endpoint = process.env.FORGE_URL || 'http://localhost:4384';
 const database = process.env.FORGE_DB || '.objectstack/otc-customer-drawing-files.sqlite';
@@ -26,7 +26,7 @@ async function read(object, id) {
 
 const loginResponse = await fetch(`${endpoint}/api/v1/auth/sign-in/email`, {
   method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin },
-  body: JSON.stringify({ email: process.env.FORGE_TEST_EMAIL || 'admin@objectos.ai', password: process.env.FORGE_TEST_PASSWORD || 'admin123' }),
+  body: JSON.stringify({ email: process.env.FORGE_TEST_EMAIL || 'admin@objectos.ai', password: requireTestPassword() }),
 });
 assert.equal(loginResponse.status, 200);
 const cookie = loginResponse.headers.getSetCookie().map(value => value.split(';')[0]).join('; ');

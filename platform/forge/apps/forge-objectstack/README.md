@@ -1,6 +1,6 @@
 # Forge ObjectStack
 
-当前这里仍集中注册一个 Forge 应用，七应用及各自设置的拆分尚待实施；包含业务对象、动作、运行时 hooks 和 Console 页面。入口为 [objectstack.config.ts](objectstack.config.ts)，依赖版本和可执行命令以 [package.json](package.json) 为准；不在说明中手工维护容易过时的对象、字段或页面总数。
+当前这里通过 [objectstack.config.ts](objectstack.config.ts) 注册共享核心插件和 [七个应用包](src/apps/index.ts)。七应用的业务、页面、权限、设置与持久化仍须逐项按合同验收；注册完成不表示各应用功能已完整或通过验收。依赖版本和可执行命令以 [package.json](package.json) 为准；不在说明中手工维护容易过时的对象、字段或页面总数。
 
 业务范围、质量要求与当前资料入口见[项目首页](../../README.md)、[项目规则](../../AGENTS.md)和[文档索引](../../docs/README.md)。
 
@@ -16,7 +16,7 @@ pnpm dev
 
 先为当前任务选择未占用的独立端口与独立 SQLite，再启动开发服务；实际 Console/API 地址和持久库位置以启动配置及日志为准。不要照抄旧报告的端口或数据库路径，也不要为验证文档修改重启正在使用的服务。
 
-`pnpm dev` 是 package.json 定义的开发入口，不代表已有环境已启动、已登录或数据已准备。登录使用当前测试环境配置，本文件不维护账号密码。验收脚本须显式设置指向本任务环境的 `FORGE_URL`，不得借用主线环境证明分支通过。
+`pnpm dev` 是 package.json 定义的开发入口，不代表已有环境已启动、已登录或数据已准备。登录使用当前测试环境配置，本文件不维护账号密码。API 验收脚本须在本机环境显式设置 `FORGE_TEST_PASSWORD`，未提供时会拒绝登录；同时显式设置指向本任务环境的 `FORGE_URL`，不得借用主线环境证明分支通过。API 客户端入口回归运行 `pnpm test:api-client`。
 
 ## 代码入口
 

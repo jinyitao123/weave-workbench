@@ -7,6 +7,7 @@ import path from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { Client } from 'pg';
+import { requireTestPassword } from '../scripts/api-client.mjs';
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL || '';
@@ -25,7 +26,7 @@ const authSecret = randomBytes(32).toString('hex');
 const secretKey = randomBytes(32).toString('hex');
 const weaveSecret = randomBytes(32).toString('hex');
 const adminEmail = 'admin@objectos.ai';
-const adminPassword = 'admin123';
+const adminPassword = requireTestPassword();
 const basePermissionPassword = `Lead-${randomBytes(18).toString('hex')}!`;
 const portProbe = createServer();
 let port;

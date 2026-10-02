@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
-import { connect } from '../scripts/api-client.mjs';
+import { connect, requireTestPassword } from '../scripts/api-client.mjs';
 const path = '.objectstack/acceptance/customer-drawing-files-report.json';
 const report = JSON.parse(await readFile(path, 'utf8'));
 assert.equal(report.passed, true);
 const endpoint = process.env.FORGE_URL || 'http://localhost:4384';
 const api = await connect(endpoint);
-const login = await fetch(`${endpoint}/api/v1/auth/sign-in/email`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: new URL(endpoint).origin }, body: JSON.stringify({ email: process.env.FORGE_TEST_EMAIL || 'admin@objectos.ai', password: process.env.FORGE_TEST_PASSWORD || 'admin123' }) });
+const login = await fetch(`${endpoint}/api/v1/auth/sign-in/email`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: new URL(endpoint).origin }, body: JSON.stringify({ email: process.env.FORGE_TEST_EMAIL || 'admin@objectos.ai', password: requireTestPassword() }) });
 assert.equal(login.status, 200);
 const cookie = login.headers.getSetCookie().map(value => value.split(';')[0]).join('; ');
 const expectedApiBytes = {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
-import { connect } from '../scripts/api-client.mjs';
+import { connect, requireTestPassword } from '../scripts/api-client.mjs';
 
 const endpoint = process.env.FORGE_URL || 'http://localhost:4486';
 const database = process.env.FORGE_DB || '.objectstack/data/objectstack.db';
@@ -22,12 +22,12 @@ async function ensureUser(name, email) {
   const origin = new URL(endpoint).origin;
   const login = await fetch(`${endpoint}/api/v1/auth/sign-in/email`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin },
-    body: JSON.stringify({ email: process.env.FORGE_TEST_EMAIL || 'admin@objectos.ai', password: process.env.FORGE_TEST_PASSWORD || 'admin123' }),
+    body: JSON.stringify({ email: process.env.FORGE_TEST_EMAIL || 'admin@objectos.ai', password: requireTestPassword() }),
   });
   const cookie = login.headers.getSetCookie().map((value) => value.split(';')[0]).join('; ');
   const made = await fetch(`${endpoint}/api/v1/auth/admin/create-user`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin, cookie },
-    body: JSON.stringify({ name, email, password: process.env.FORGE_FIXTURE_PASSWORD || process.env.FORGE_TEST_PASSWORD || 'admin123', role: 'user' }),
+    body: JSON.stringify({ name, email, password: requireTestPassword(), role: 'user' }),
   });
   assert.equal(made.status, 200, `fixture user ${name} could not be created`);
   user = (await records('sys_user')).find((row) => row.email === email);
