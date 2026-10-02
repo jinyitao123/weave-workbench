@@ -945,7 +945,7 @@ export default function App() {
     const next = queuedMessages[0]
     if (next.flushAttemptFailed) return
     queuedFlushRef.current = true
-    void sendPrompt(next.text, [], 'queue', next.id, next.returnedApprovalContextHandle, undefined, next.workContinuationContextHandle, next.approvalReviewContextHandle)
+    void sendPrompt(next.text, [], 'queue', next.id, next.returnedApprovalContextHandle, undefined, next.workContinuationContextHandle, next.approvalReviewContextHandle, next.employeeInput)
       .finally(() => { queuedFlushRef.current = false })
   }, [bridge, busy, externalSessionRunning, queuedMessages, sendPrompt, submitting])
 

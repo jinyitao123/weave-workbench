@@ -605,6 +605,12 @@ export interface WorkspaceMaterialReference {
 
 export type WorkspaceMaterialPromptReference = Pick<WorkspaceMaterialReference, 'name' | 'path' | 'sha256' | 'bytes' | 'mimeType'>
 
+/** Captured only by the trusted desktop input path; never a runtime/model argument. */
+export interface EmployeePromptInput {
+  text: string
+  materials: WorkspaceMaterialReference[]
+}
+
 export interface SessionRecord {
   id: string
   /** Agent harness that owns this session; populated by the owning session service. */
@@ -990,6 +996,7 @@ export interface QueuedPrompt {
   approvalReviewContextHandle?: string
   /** Opaque main-process binding for a Weave-owned work continuation. */
   workContinuationContextHandle?: string
+  employeeInput?: EmployeePromptInput
 }
 
 export interface SessionActionSnapshot {
@@ -1352,7 +1359,7 @@ export interface PrimeWorkApi {
   }
   agent: {
     start(options: { cwd: string; sessionPath?: string; model?: string; thinking?: string; fast?: boolean; harness?: HarnessId }): Promise<RuntimeInfo>
-    command(runtimeId: string, command: Record<string, unknown>, deliveryContext?: { returnedApprovalContextHandle?: string; approvalReviewContextHandle?: string; workContinuationContextHandle?: string }): Promise<Record<string, unknown>>
+    command(runtimeId: string, command: Record<string, unknown>, deliveryContext?: { returnedApprovalContextHandle?: string; approvalReviewContextHandle?: string; workContinuationContextHandle?: string; employeeInput?: EmployeePromptInput }): Promise<Record<string, unknown>>
     stop(runtimeId: string): Promise<boolean>
     list(): Promise<RuntimeInfo[]>
     onEvent(callback: (envelope: PrimeEventEnvelope) => void): () => void
