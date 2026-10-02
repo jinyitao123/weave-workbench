@@ -1,5 +1,11 @@
 .enterprise-scope-cards { margin: 0 0 18px; }
-.summary-hero + .enterprise-scope-cards { margin-top: 20px; }
+.summary-conversation { margin-top: 16px; border: 1px solid var(--border); border-radius: 9px; }
+.summary-conversation > summary { display: flex; align-items: center; justify-content: space-between; padding: 11px 13px; list-style: none; color: var(--text-secondary); font-size: 11px; cursor: pointer; }
+.summary-conversation > summary::-webkit-details-marker { display: none; }
+.summary-conversation > summary:focus-visible { outline: 2px solid var(--prime); outline-offset: 2px; border-radius: 8px; }
+.summary-conversation[open] > summary > svg { transform: rotate(180deg); }
+.summary-conversation .summary-hero { padding: 0 13px 13px; border-bottom: 0; }
+.summary-conversation .summary-hero .prose { margin-top: 9px; }
 .enterprise-summary-link { display: inline-flex; align-items: center; gap: 14px; margin: 0 0 18px 38px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-raised); color: var(--text-secondary); font-size: 12px; cursor: pointer; }
 .enterprise-summary-link:hover { color: var(--text); border-color: var(--text-secondary); }
 .enterprise-summary-link:focus-visible { outline: 2px solid var(--prime); outline-offset: 3px; }

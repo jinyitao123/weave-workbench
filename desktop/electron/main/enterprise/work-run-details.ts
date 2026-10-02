@@ -9,6 +9,39 @@ const internal = /[0-9a-f]{8}-[0-9a-f-]{27,}|\b[0-9a-f]{24,}\b|https?:\/\/|(?:^|
 function prose(value: unknown, max = 500): string | undefined {
   return typeof value === 'string' && value.trim() && value.length <= max && !internal.test(value) && !value.includes('\\') && !Array.from(value).some((char) => char.charCodeAt(0) < 32 && ![9, 10, 13].includes(char.charCodeAt(0))) ? value.trim() : undefined
 }
+function readableSummary(value: string | undefined): { text: string; excerpt: boolean } | undefined {
+  if (!value) return undefined
+  if (prose(value, 2000)) return { text: value, excerpt: false }
+  // Never remove words or clauses within a sentence. If a rejected sentence
+  // limits preceding text, discard that context too; dependent follow-ups and
+  // forward-scoped conditions cannot become standalone business conclusions.
+  const dependent = /^(?:[\s“"'（(]*)(?:因此|所以|故|这|该|上述|以上|对此|其|即|否则|但|然而|不过|同时|而且|由此|thus\b|therefore\b|this\b|it\b|these\b|however\b|but\b)/i
+  const limitation = /不|未|无|仅|只|除非|否则|前提|限制|条件|须|需要|仍|待核|\b(?:not|only|unless|except|however|pending|rejected|cancelled)\b/i
+  const segmenter = new Intl.Segmenter('zh-CN', { granularity: 'sentence' })
+  const retained: string[] = []
+  let gap = false, blocked = false
+  for (const paragraph of value.split(/\n\s*\n/)) {
+    if (blocked) break
+    const sentences: string[] = []
+    for (const { segment } of segmenter.segment(paragraph)) {
+      const sentence = segment.trim()
+      if (!sentence) continue
+      if (!prose(sentence, 2000)) {
+        sentences.length = 0
+        if (limitation.test(sentence) || dependent.test(sentence)) retained.length = 0
+        gap = true
+        if (/以下|下列|如下|下文|后文|\bthe following\b/i.test(sentence)) { blocked = true; break }
+        continue
+      }
+      if (gap && dependent.test(sentence) || /[：:]$/.test(sentence)) continue
+      sentences.push(sentence)
+      gap = false
+    }
+    if (sentences.length) retained.push(sentences.join(''))
+  }
+  const text = retained.join('\n\n')
+  return prose(text, 2000) ? { text, excerpt: true } : undefined
+}
 function filename(value: string): string | undefined {
   return value.trim() && value.length <= 255 && !value.includes('/') && !value.includes('\\')
     && !/[0-9a-f]{8}-[0-9a-f-]{27,}|\b[0-9a-f]{24,}\b/i.test(value)
@@ -42,7 +75,7 @@ export function workRunDetails(owned: WorkbenchRunLookup, rawActivity: unknown, 
     return [{ name: prose(member.name, 200) ?? `团队成员 ${index + 1}`, status: state(member.status), stages }]
   })
   const final = context.run.finalResult
-  const summary = prose(final?.summary, 1000)
+  const summary = readableSummary(final?.summary)
   const missingItems = (final?.missingItems ?? []).flatMap((item) => prose(item, 200) ? [prose(item, 200)!] : [])
   // Expired grants can remain on terminal runs. Only the current parked input
   // with server-confirmed renewal eligibility can actually continue this run.
@@ -61,6 +94,7 @@ export function workRunDetails(owned: WorkbenchRunLookup, rawActivity: unknown, 
   else if (context.run.status === 'succeeded' && context.run.businessResult !== 'needs_input') explanation = '团队执行已完成；正式业务结果以业务系统中的记录为准。'
   else if (context.run.businessResult === 'needs_input') explanation = '本次检查需要补充材料或说明，补齐后可从原工作继续。'
   else if (context.run.status === 'parked') explanation = '团队正在等待处理，请从“我的工作”查看具体事项。'
+  if (summary?.excerpt) explanation += `${explanation ? ' ' : ''}这里只展示部分检查意见；完整结果请从“我的工作”的原工作消息查看。`
   return {
     runId: owned.runId, status: context.run.status,
     acceptedAt: time(activity.created_at), finishedAt: time(activity.finished_at), observedAt: time(activity.observed_at),
@@ -68,7 +102,7 @@ export function workRunDetails(owned: WorkbenchRunLookup, rawActivity: unknown, 
     materials: context.input.materials.map((item, index) => ({ name: filename(item.name) ?? `材料 ${index + 1}`,
       format: item.mediaType === 'application/pdf' ? 'PDF' : item.mediaType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? 'DOCX'
         : item.mediaType === 'text/markdown' ? 'MD' : item.mediaType === 'text/csv' ? 'CSV' : item.mediaType === 'application/json' ? 'JSON' : 'TXT', bytes: item.bytes })),
-    ...(summary ? { result: { title: prose(final?.title, 300) ?? '团队结果', summary, missingItems } } : {}),
+    ...(summary ? { result: { title: summary.excerpt ? '检查意见摘录' : prose(final?.title, 300) ?? '团队结果', summary: summary.text, missingItems } } : {}),
     explanation, authorizationRequired, ...(owned.actionCounts ? { actionCounts: owned.actionCounts } : {}),
   }
 }

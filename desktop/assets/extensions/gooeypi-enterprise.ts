@@ -120,6 +120,7 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
       'team_key 只能来自本会话最近一次团队查找；不要编造或跨会话沿用。',
       '只查看最可能适合的候选；信息不足时先向员工询问业务事实，不要依次展开所有团队。',
       '接什么、需要什么、交付什么以团队目标和流程说明为准；缺少关键业务信息时询问员工，不要求填写结构化配置。',
+      'business_actions 只列 Forge 业务写入能力，不是团队全部工作类型。团队目标或流程支持核对、分析时，可按只读范围交接，不需要独立的 Forge 分析动作。员工已明确要求按当前材料检查缺项时，不因已知缺件重复确认；把缺项和停止条件写入目标，业务动作仍传空范围。',
     ],
     parameters: Type.Object({
       team_key: Type.String({ minLength: 1, maxLength: 128, description: '团队查找返回的候选键' }),

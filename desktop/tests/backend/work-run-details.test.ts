@@ -53,6 +53,35 @@ it.each(['请读取 /Users/private/work/contract.pdf', '原件保存在（/var/t
   expect(workRunDetails({ ...owned, status: 'succeeded' }, { ...activity(), status: 'succeeded' }, ctx).result).toBeUndefined()
 })
 
+function summaryDetails(summary: string) {
+  const ctx = { ...context(), run: { status: 'succeeded', final_result: { id: 'result', title: '检查结果', content_type: 'text/plain', content: summary, sha256: hash(summary), disposition: 'complete', summary, missing_items: [] } } }
+  return workRunDetails({ ...owned, status: 'succeeded' }, { ...activity(), status: 'succeeded' }, ctx)
+}
+
+it('keeps complete readable sentences as an explicitly partial excerpt without rewriting their caveats', () => {
+  const first = '未执行 internal_operation，本轮没有写入业务。'
+  const business = '付款比例记录为30%/30%/40%，尚未取得客户确认。交付20天/72小时之间仍有差异，不能据此确认最终期限。'
+  const details = summaryDetails(first + business)
+  expect(details.result).toEqual({ title: '检查意见摘录', summary: business, missingItems: [] })
+  expect(details.explanation).toContain('完整结果请从“我的工作”的原工作消息查看')
+  expect(details.status).toBe('succeeded')
+  expect(details.actionCounts).toEqual(owned.actionCounts)
+})
+
+it('does not retain a positive conclusion after dropping its limiting sentence', () => {
+  const details = summaryDetails('付款条件已经确认。但仅在 internal_operation 完成后成立。交付期限仍待确认。')
+  expect(details.result?.summary).toBe('交付期限仍待确认。')
+  expect(summaryDetails('以下结论仅在 internal_operation 完成后成立。付款条件已经确认。').result).toBeUndefined()
+  expect(summaryDetails('internal_operation 结果不可用。因此付款已经确认。交付期限尚待确认。').result?.summary).toBe('交付期限尚待确认。')
+})
+
+it('preserves a complete safe summary verbatim instead of labeling it an excerpt', () => {
+  const summary = '付款比例仍待客户确认。\n\n交付期限为20天/72小时，尚有差异。'
+  const details = summaryDetails(summary)
+  expect(details.result).toEqual({ title: '检查结果', summary, missingItems: [] })
+  expect(details.explanation).not.toContain('部分检查意见')
+})
+
 it.each([
   ['verification', 'workflow_field_unknown', '步骤结果未通过要求'],
   ['schema', 'schema mismatch', '步骤结果未通过要求'],

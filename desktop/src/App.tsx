@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Sidebar } from '@/components/Sidebar'
+import { enterprisePendingWorkCount } from '@/lib/enterprise-work-count'
 import { TitleToolbar } from '@/components/TitleToolbar'
 import { WorkActionReceipt } from '@/components/WorkActionReceipt'
 import type { ProjectScriptKind } from '@/components/ProjectRunControl'
@@ -127,11 +128,14 @@ export default function App() {
   const [workError, setWorkError] = useState('')
   const [teamActionReceipt, setTeamActionReceipt] = useState<{ generation: number; outcomes?: TeamActionOutcomes }>()
   const enterpriseSessionRevisionRef = useRef(0)
+  const [enterpriseSessionRevision, setEnterpriseSessionRevision] = useState(0)
+  const workOverviewRequestRef = useRef<{ sessionRevision: number } | null>(null)
   const [enterpriseSession, setEnterpriseSession] = useState<EnterpriseSession | undefined>(() => enterpriseBridge ? undefined : ({
     version: '1', status: 'signed-in', environment: { origin: 'http://localhost', secure: false }, storage: 'session-only',
     identitySource: { kind: 'forge-account', issuer: 'http://localhost' }, user: { id: 'preview', weaveUserId: 'preview-weave', name: 'Preview', email: 'preview@example.test' },
     organization: { id: 'preview', name: 'Preview' }, permissions: ['teams:use', 'teams:develop', 'teams:admin'],
   }))
+  const enterpriseSessionRef = useRef(enterpriseSession)
   const { toast, setToast } = useToast()
   const [changesCardDismissed, setChangesCardDismissed] = useState(false)
   const submissionAdmissionRef = useRef(createSingleFlightAdmission())
@@ -149,7 +153,11 @@ export default function App() {
     setToast(errorMessage(error))
   }, [])
   const publishEnterpriseSession = useCallback((session: EnterpriseSession) => {
-    enterpriseSessionRevisionRef.current++
+    const revision = ++enterpriseSessionRevisionRef.current
+    enterpriseSessionRef.current = session
+    workOverviewRequestRef.current = null
+    setEnterpriseSessionRevision(revision)
+    setWorkOverview(undefined); setWorkLoading(false); setWorkError('')
     setEnterpriseSession(session)
   }, [])
   useEffect(() => {
@@ -180,15 +188,19 @@ export default function App() {
     publishEnterpriseSession(await enterpriseBridge.signOut())
   }, [enterpriseBridge, publishEnterpriseSession])
   const refreshWorkOverview = useCallback(() => {
-    if (!enterpriseBridge || workLoading) return
+    if (!enterpriseBridge || enterpriseSessionRef.current?.status !== 'signed-in') return
     const sessionRevision = enterpriseSessionRevisionRef.current
+    if (workOverviewRequestRef.current?.sessionRevision === sessionRevision) return
+    const request = { sessionRevision }
+    workOverviewRequestRef.current = request
+    const isCurrent = () => enterpriseSessionRevisionRef.current === sessionRevision && workOverviewRequestRef.current === request
     setWorkLoading(true); setWorkError('')
     void enterpriseBridge.getWorkOverview().then((overview) => {
-      if (enterpriseSessionRevisionRef.current === sessionRevision) setWorkOverview(overview)
+      if (isCurrent()) setWorkOverview(overview)
     }).catch((error) => {
-      if (enterpriseSessionRevisionRef.current === sessionRevision) { setWorkError(errorMessage(error)); reportError(error) }
-    }).finally(() => { if (enterpriseSessionRevisionRef.current === sessionRevision) setWorkLoading(false) })
-  }, [enterpriseBridge, reportError, workLoading])
+      if (isCurrent()) { setWorkError(errorMessage(error)); reportError(error) }
+    }).finally(() => { if (isCurrent()) { workOverviewRequestRef.current = null; setWorkLoading(false) } })
+  }, [enterpriseBridge, reportError])
   const completeEnterpriseTask = useCallback(async (task: EnterpriseHumanTask, decision: 'approved' | 'rejected', comment: string) => {
     if (!enterpriseBridge) return
     const sessionRevision = enterpriseSessionRevisionRef.current
@@ -351,7 +363,8 @@ export default function App() {
   }, [])
   const onAccountSwitch = useCallback(() => {
     setDevelopmentOverview(undefined); setDevelopmentError(''); setDevelopmentLoading(false)
-    setWorkOverview(undefined); setWorkError(''); setWorkLoading(false)
+    // publishEnterpriseSession already reset the overview for this identity.
+    // A later catalog bootstrap must not erase its fresh account-scoped read.
     setTeamActionReceipt(undefined)
     setScheduleFocusId(null)
     setTerminalSelection(undefined)
@@ -372,8 +385,8 @@ export default function App() {
     read: enterpriseBridge.getWorkRunStates,
     readDetails: enterpriseBridge.getWorkRunDetails,
     cancel: cancelEnterpriseWorkById,
-    openWork: () => { setView('activity'); refreshWorkOverview() },
-  } : undefined, [enterpriseWorkspaceScope, enterpriseBridge, workspace.activeSessionId, workspace.workspaceGeneration, cancelEnterpriseWorkById, refreshWorkOverview])
+    openWork: () => setView('activity'),
+  } : undefined, [enterpriseWorkspaceScope, enterpriseBridge, workspace.activeSessionId, workspace.workspaceGeneration, cancelEnterpriseWorkById])
   const { meta, initialized, catalogReady, refreshHarnesses } = useBootstrap({
     bridge, ready: settingsState.initialized, harness: activeHarness, accountScope: enterpriseWorkspaceScope, setProjects, setSessions, setSchedules, setScheduleError,
     runtimeSessionsRef: workspace.runtimeSessionsRef, workspaceRef: workspace.workspaceRef,
@@ -975,9 +988,26 @@ export default function App() {
     if (activeHarness !== 'pi' && ['team-division', 'team-workflow', 'development'].includes(settingsState.inspectorTab)) settingsState.selectInspectorTab('summary')
     else if (activeHarness === 'pi' && settingsState.inspectorTab === 'development') settingsState.selectInspectorTab('team-division')
   }, [activeHarness, settingsState.inspectorTab, settingsState.selectInspectorTab])
+  useEffect(() => { refreshWorkOverview() }, [enterpriseSessionRevision, refreshWorkOverview])
+  useEffect(() => { if (view === 'activity') refreshWorkOverview() }, [refreshWorkOverview, view])
   useEffect(() => {
-    if (view === 'activity' && enterpriseBridge && !workOverview && !workLoading && !workError) refreshWorkOverview()
-  }, [enterpriseBridge, refreshWorkOverview, view, workError, workLoading, workOverview])
+    let foreground = document.visibilityState !== 'hidden' && document.hasFocus()
+    const resume = () => {
+      if (document.visibilityState === 'hidden' || foreground) return
+      foreground = true
+      refreshWorkOverview()
+    }
+    const blur = () => { foreground = false }
+    const visibility = () => { if (document.visibilityState === 'hidden') blur(); else resume() }
+    window.addEventListener('focus', resume)
+    window.addEventListener('blur', blur)
+    document.addEventListener('visibilitychange', visibility)
+    return () => {
+      window.removeEventListener('focus', resume)
+      window.removeEventListener('blur', blur)
+      document.removeEventListener('visibilitychange', visibility)
+    }
+  }, [refreshWorkOverview])
 
   const page = view === 'projects' ? <ProjectsPage projects={projects} sortMode={settingsState.settings.projectSortMode} onAdd={() => void addProject()} onOpen={selectProject} onRemove={(project) => void removeProject(project)} onTogglePin={(project) => void togglePinProject(project)} />
     : view === 'activity' && enterpriseBridge ? <EnterpriseWorkPage overview={workOverview} loading={workLoading} error={workError} onRefresh={refreshWorkOverview} onComplete={completeEnterpriseTask} onInspect={inspectEnterpriseTask} onAssist={assistEnterpriseTaskInPi} onContinue={continueEnterpriseWork} onCancel={async (run) => { await cancelEnterpriseWorkById(run.id) }} />
@@ -995,7 +1025,7 @@ export default function App() {
 
   const teamEditorVisible = view === 'session' && activeHarness === 'pi' && inspectorVisible && canDevelop && ['team-division', 'team-workflow', 'development'].includes(settingsState.inspectorTab)
   return <I18nProvider preference={settingsState.settings.locale}><div className={`app-shell${teamEditorVisible ? ' app-shell--team-editor-active' : ''}`} aria-busy={!workspaceInitialized} data-platform={platform} data-ready={workspaceInitialized ? 'true' : 'false'}>
-    {sidebarVisible && workspaceInitialized ? <Sidebar projects={projects} sessions={sessions} clearedAttention={clearedAttention} activeProjectId={activeProject?.id} activeSessionId={workspace.activeSessionId} activeView={view} activeHarness={activeHarness} harnesses={meta?.harnesses ?? null} updateState={appUpdates.state} onUpdateAction={appUpdates.act} onSelectHarness={selectHarness} projectSortMode={settingsState.settings.projectSortMode} {...sidebarActions} overlay={layout.compactLayout} platform={platform} /> : null}
+    {sidebarVisible && workspaceInitialized ? <Sidebar projects={projects} sessions={sessions} clearedAttention={clearedAttention} enterpriseMode={Boolean(enterpriseBridge)} pendingWorkCount={enterprisePendingWorkCount(workOverview, workLoading || Boolean(workError))} activeProjectId={activeProject?.id} activeSessionId={workspace.activeSessionId} activeView={view} activeHarness={activeHarness} harnesses={meta?.harnesses ?? null} updateState={appUpdates.state} onUpdateAction={appUpdates.act} onSelectHarness={selectHarness} projectSortMode={settingsState.settings.projectSortMode} {...sidebarActions} overlay={layout.compactLayout} platform={platform} /> : null}
     {sidebarVisible && workspaceInitialized ? <button type="button" className="panel-scrim panel-scrim--sidebar" aria-label="Close sidebar" onClick={toggleSidebar} /> : null}
     <div className="workbench" inert={layout.compactLayout && sidebarVisible ? true : undefined}>
       <TitleToolbar project={view === 'session' ? activeProject : undefined} gitBranch={git.branch} view={view} productName={HARNESS_PRODUCT_NAMES[activeHarness]} sidebarOpen={sidebarVisible} inspectorOpen={inspectorVisible} terminalOpen={terminalOpen} voiceOpen={voiceOrbOpen} activeProjectScriptKind={activeProjectScriptKind(activeProjectScriptRun, activeProject?.id)} onRunProjectScript={startProjectScript} onStopProjectScript={stopProjectScript} onSaveProjectScripts={saveProjectScripts} onToggleSidebar={toggleSidebar} onToggleInspector={toggleInspector} onToggleTerminal={toggleTerminal} onToggleVoice={toggleVoice} onOpenBrowser={openBrowser} platform={platform} />

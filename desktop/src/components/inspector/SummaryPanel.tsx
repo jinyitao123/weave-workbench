@@ -1,5 +1,5 @@
 import { memo, useMemo, useState } from 'react'
-import { CalendarClock, Check, HeartPulse, LoaderCircle } from 'lucide-react'
+import { CalendarClock, Check, ChevronDown, HeartPulse, LoaderCircle } from 'lucide-react'
 import type { AutomationScheduleRecord, GitStatus, NativeHeartbeatRecord, ProjectRecord, RuntimeInfo, TranscriptMessage } from '@/types/api'
 import { useEnterpriseRunStates } from '@/hooks/useEnterpriseRunStates'
 import { EnterpriseScopeCards, enterpriseScopeProjection } from '../transcript/EnterpriseScopeCards'
@@ -63,14 +63,15 @@ export const SummaryPanel = memo(function SummaryPanel({ shortName = 'Prime', ru
   const expandedRun = selectedRun && scopes.some((scope) => scope.runReference === selectedRun) ? selectedRun : scopes.at(-1)?.runReference
   const runStates = useEnterpriseRunStates(scopes.map((scope) => scope.runReference), teamWork?.accountScope, teamWork?.read, expandedRun, teamWork?.readDetails)
   const active = Boolean(runtime?.isStreaming || runtime?.isCompacting)
+  const conversationSummary = <section className="summary-hero">
+    <span className={`run-state ${active ? 'is-running' : ''}`}>{active ? <LoaderCircle className="spin" size={13} /> : <Check size={13} />}{active ? `${shortName} 正在处理` : '已就绪'}</span>
+    {!scopes.length ? <h2>工作摘要</h2> : null}
+    <MarkdownText text={lastText !== undefined ? lastText.slice(0, 220) : '暂无工作摘要'} />
+  </section>
   return (
     <div className="inspector-scroll scroll-area summary-panel">
-      <section className="summary-hero">
-        <span className={`run-state ${active ? 'is-running' : ''}`}>{active ? <LoaderCircle className="spin" size={13} /> : <Check size={13} />}{active ? `${shortName} 正在处理` : '已就绪'}</span>
-        <h2>工作摘要</h2>
-        <MarkdownText text={lastText !== undefined ? lastText.slice(0, 220) : '暂无工作摘要'} />
-      </section>
       <EnterpriseScopeCards scopes={[...scopes].reverse()} states={runStates.views} onCancelWork={teamWork?.cancel} onRefresh={runStates.refresh} expandedRun={expandedRun} onSelectRun={setSelectedRun} onOpenWork={teamWork?.openWork} />
+      {scopes.length ? <details className="summary-conversation"><summary>会话摘要<ChevronDown size={13} aria-hidden="true" /></summary>{conversationSummary}</details> : conversationSummary}
       {automations.length || heartbeats.length ? <section className="summary-section"><h3>Automations</h3><div className="summary-automation-list">
         {automations.slice(0, 2).map((task) => <button type="button" key={task.id} onClick={() => onOpenAutomation(task.id)}>
           <span className="summary-automation-icon"><CalendarClock size={14}/></span><span><strong>{task.title}</strong><small>{task.status}{task.nextRunAt ? ` · Next ${formatRelative(task.nextRunAt)}` : ''}</small></span>
