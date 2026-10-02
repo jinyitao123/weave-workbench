@@ -10,13 +10,57 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    working-directory: desktop
+
 concurrency:
   group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.event_name == 'push' && format('push-{0}', github.sha) || format('dispatch-{0}', github.run_id) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  desktop-path-filter:
+    name: Desktop path filter
+    runs-on: ubuntu-22.04
+    outputs:
+      run: ${{ steps.filter.outputs.run }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - id: filter
+        shell: bash
+        working-directory: .
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == 'workflow_dispatch' ]]; then
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$EVENT_NAME" == 'pull_request' ]]; then
+            base="$PR_BASE_SHA"
+            head="$PR_HEAD_SHA"
+          else
+            base="$PUSH_BEFORE_SHA"
+            head="$CURRENT_SHA"
+          fi
+          if [[ "$base" =~ ^0+$ ]]; then
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$base" "$head" -- desktop .github/workflows/desktop-*.yml; then
+            echo 'run=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+          fi
+
   production-audit:
     name: Production dependency audit
+    needs: desktop-path-filter
+    if: needs.desktop-path-filter.outputs.run == 'true'
     runs-on: ubuntu-latest
     steps:
       # pull_request defaults to a synthetic merge ref; audit the immutable PR
@@ -26,21 +70,25 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version-file: .nvmrc
+          node-version-file: desktop/.nvmrc
           cache: npm
+          cache-dependency-path: desktop/package-lock.json
       - run: npm run toolchain:bootstrap
       - run: npm run release:preflight:toolchain
       - name: Apply named production dependency audit exceptions
         run: npm run audit:production
 
   quality:
+    needs: desktop-path-filter
+    if: needs.desktop-path-filter.outputs.run == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version-file: .nvmrc
+          node-version-file: desktop/.nvmrc
           cache: npm
+          cache-dependency-path: desktop/package-lock.json
       - run: npm run toolchain:bootstrap
       - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -51,7 +99,7 @@ jobs:
             ~/.cache/electron-builder
             ~/AppData/Local/electron/Cache
             ~/AppData/Local/electron-builder/Cache
-          key: electron-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: electron-${{ runner.os }}-${{ hashFiles('desktop/package-lock.json') }}
       - run: npm ci
       - run: npm run release:preflight:toolchain
       - run: npm run typecheck
@@ -62,17 +110,20 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: coverage
-          path: coverage/
+          path: desktop/coverage/
           if-no-files-found: error
 
   hermetic-e2e:
+    needs: desktop-path-filter
+    if: needs.desktop-path-filter.outputs.run == 'true'
     runs-on: macos-14
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version-file: .nvmrc
+          node-version-file: desktop/.nvmrc
           cache: npm
+          cache-dependency-path: desktop/package-lock.json
       - run: npm run toolchain:bootstrap
       - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -83,7 +134,7 @@ jobs:
             ~/.cache/electron-builder
             ~/AppData/Local/electron/Cache
             ~/AppData/Local/electron-builder/Cache
-          key: electron-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: electron-${{ runner.os }}-${{ hashFiles('desktop/package-lock.json') }}
       - run: npm ci
       - run: npm run release:preflight:toolchain
       - run: npm run build:bundle
@@ -92,30 +143,34 @@ jobs:
         if: failure()
         with:
           name: playwright-results
-          path: test-results/
+          path: desktop/test-results/
           if-no-files-found: error
 
   windows-state-migration:
+    needs: desktop-path-filter
+    if: needs.desktop-path-filter.outputs.run == 'true'
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version-file: .nvmrc
+          node-version-file: desktop/.nvmrc
           cache: npm
+          cache-dependency-path: desktop/package-lock.json
       - run: npm run toolchain:bootstrap
       - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: |
             ~/AppData/Local/electron/Cache
             ~/AppData/Local/electron-builder/Cache
-          key: electron-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: electron-${{ runner.os }}-${{ hashFiles('desktop/package-lock.json') }}
       - run: npm ci
       - run: npm run release:preflight:toolchain
       - run: npm exec -- vitest run tests/backend/store-windows-migration.test.ts
 
   packaging-smoke:
-    if: github.event_name == 'pull_request'
+    needs: desktop-path-filter
+    if: github.event_name == 'pull_request' && needs.desktop-path-filter.outputs.run == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -137,8 +192,9 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version-file: .nvmrc
+          node-version-file: desktop/.nvmrc
           cache: npm
+          cache-dependency-path: desktop/package-lock.json
       - run: npm run toolchain:bootstrap
       - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -149,7 +205,7 @@ jobs:
             ~/.cache/electron-builder
             ~/AppData/Local/electron/Cache
             ~/AppData/Local/electron-builder/Cache
-          key: electron-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: electron-${{ runner.os }}-${{ hashFiles('desktop/package-lock.json') }}
       - run: npm ci
       - run: npm run release:preflight:toolchain
       - run: npm run build:bundle
@@ -171,11 +227,12 @@ jobs:
         if: failure() && matrix.target != 'mac'
         with:
           name: packaged-smoke-diagnostics-${{ matrix.target }}-${{ matrix.arch }}
-          path: release/${{ matrix.target }}/${{ matrix.arch }}/packaged-smoke-diagnostics.log
+          path: desktop/release/${{ matrix.target }}/${{ matrix.arch }}/packaged-smoke-diagnostics.log
           if-no-files-found: error
 
   local-qa-package:
-    if: github.event_name == 'workflow_dispatch'
+    needs: desktop-path-filter
+    if: github.event_name == 'workflow_dispatch' && needs.desktop-path-filter.outputs.run == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -185,31 +242,32 @@ jobs:
             artifact: gooeypi-local-qa-macos
             # Installers only: never upload the unpacked application directory.
             path: |
-              release/mac/**/*.dmg
-              release/mac/**/*.zip
+              desktop/release/mac/**/*.dmg
+              desktop/release/mac/**/*.zip
           - runner: ubuntu-22.04
             package: npm run package:linux:local-qa
             artifact: gooeypi-local-qa-linux
             path: |
-              release/linux/**/*.AppImage
-              release/linux/**/*.deb
-              release/linux/**/*.rpm
-              release/linux/**/*.pacman
+              desktop/release/linux/**/*.AppImage
+              desktop/release/linux/**/*.deb
+              desktop/release/linux/**/*.rpm
+              desktop/release/linux/**/*.pacman
           - runner: windows-2022
             package: npm run package:win:local-qa
             artifact: gooeypi-local-qa-windows
             path: |
-              release/win/**/*.exe
-              release/win/**/*.zip
-              release/win/**/*.appx
-              release/win/**/*.msix
+              desktop/release/win/**/*.exe
+              desktop/release/win/**/*.zip
+              desktop/release/win/**/*.appx
+              desktop/release/win/**/*.msix
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version-file: .nvmrc
+          node-version-file: desktop/.nvmrc
           cache: npm
+          cache-dependency-path: desktop/package-lock.json
       - run: npm run toolchain:bootstrap
       - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -220,7 +278,7 @@ jobs:
             ~/.cache/electron-builder
             ~/AppData/Local/electron/Cache
             ~/AppData/Local/electron-builder/Cache
-          key: electron-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: electron-${{ runner.os }}-${{ hashFiles('desktop/package-lock.json') }}
       - run: npm ci
       - run: npm run release:preflight:toolchain
       - run: ${{ matrix.package }}

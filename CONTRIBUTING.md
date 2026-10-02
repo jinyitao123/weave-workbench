@@ -46,4 +46,4 @@ make forge-check      # Forge 类型检查与校验
 
 ## 许可证
 
-向本仓提交的内容按所在目录的许可证授权：`desktop/` 为 MIT，其余默认为 [Apache-2.0](LICENSE)，详见 [NOTICE](NOTICE)。
+向本仓提交的内容按所在目录的许可证授权：`desktop/` 与 `platform/weave/` 保留 MIT，其余默认使用 [Apache-2.0](LICENSE)，子目录已有许可证时以其为准，详见 [NOTICE](NOTICE)。

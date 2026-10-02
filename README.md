@@ -47,7 +47,7 @@ flowchart LR
 - 销售在桌面交接合同材料，团队触发 Forge 正式审批，交付负责人在自己的桌面退回；
 - 线索转商机、报价调整两个场景的主路径。
 
-仍未通过或未验证：合同的完整修改重提与最终状态读回、回执丢失后的重复调用、并发旧版本等边界路径。逐项结论与证据见[项目状态](docs/项目状态.md)、[MVP1 阶段说明](docs/plans/MVP1阶段说明.md)和[问题清单](docs/plans/问题清单.md)。
+合同修订材料已重新进入第二轮审批；双方正式意见、最终状态与成果读回仍未完成，回执丢失后的重复调用、并发旧版本等边界路径仍待验证。逐项结论与证据见[项目状态](docs/项目状态.md)、[MVP1 阶段说明](docs/plans/MVP1阶段说明.md)和[问题清单](docs/plans/问题清单.md)。
 
 ## 仓库结构
 
@@ -82,7 +82,7 @@ npm install
 npm run dev
 ```
 
-桌面默认连接项目维护者的联调环境；连接自己部署的 Forge 与 Weave 时，用环境变量 `WORKBENCH_FORGE_URL`、`WORKBENCH_WEAVE_URL` 指定地址。构建与测试说明见[桌面文档](desktop/README.md)，Weave 与 Forge 的启动方式见各自目录下的 README。
+桌面默认连接本机 Forge（`http://127.0.0.1:3000`）与 Weave（`http://127.0.0.1:8080`），不会自动连接维护者的联调主机。连接组织部署时，由部署人员在启动环境中用环境变量 `WORKBENCH_FORGE_URL`、`WORKBENCH_WEAVE_URL` 指定地址。构建与测试说明见[桌面文档](desktop/README.md)，Weave 与 Forge 的启动方式见各自目录下的 README。
 
 组件检查：`make desktop-check`、`make weave-check`、`make forge-check`。
 

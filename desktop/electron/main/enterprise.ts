@@ -10,8 +10,8 @@ import { teamCatalog, teamChoices, type TeamSummary } from './enterprise/team-ca
 import { ForgeBusinessReadError, ForgeBusinessReader, type BusinessObjectDirectory, type BusinessRecordRead, type BusinessRecordSearchPage } from './enterprise/business-records'
 import { EmployeeWorkCanceller } from './enterprise/task-cancellation'
 
-const DEFAULT_FORGE_URL = 'http://124.223.189.112'
-const DEFAULT_WEAVE_URL = 'http://124.223.189.112:8080'
+const DEFAULT_FORGE_URL = 'http://127.0.0.1:3000'
+const DEFAULT_WEAVE_URL = 'http://127.0.0.1:8080'
 const REQUEST_TIMEOUT_MS = 8_000
 
 interface EnterpriseServiceOptions {
