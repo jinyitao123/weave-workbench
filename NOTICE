@@ -1,0 +1,29 @@
+Weave Workbench
+Copyright 2026 Weave Workbench contributors
+
+This repository is licensed under the Apache License, Version 2.0 (see LICENSE),
+except where a subdirectory carries its own license file. It combines the
+following components; each keeps its own copyright and license terms.
+
+desktop/
+  Adapted from GooeyPi (https://github.com/am-will/gooey-pi)
+  Copyright (c) 2026 GooeyPi contributors
+  MIT License - see desktop/LICENSE
+  Vendored Prime Agent packages: see desktop/vendor/ and
+  desktop/docs/参考来源与授权说明.md
+
+platform/weave/
+  Weave (https://github.com/jinyitao123/weave-next)
+  Copyright (c) 2026 jinyitao123
+  MIT License - see platform/weave/LICENSE
+  Third-party notices: platform/weave/THIRD_PARTY_NOTICES.md
+
+platform/forge/
+  Forge (https://github.com/jinyitao123/inoForge)
+  Copyright 2026 Weave Workbench contributors
+  Covered by the repository license (Apache-2.0) unless the source
+  repository states otherwise.
+
+Pi, Prime Agent, ObjectStack and other third-party names are trademarks or
+projects of their respective owners and are referenced only to describe
+compatibility.

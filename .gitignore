@@ -7,3 +7,8 @@ release/
 .build/
 coverage/
 *.log
+.claude/
+.env
+.env.*
+!.env.example
+*.local.md

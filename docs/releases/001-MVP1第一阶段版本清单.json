@@ -196,7 +196,7 @@
   },
   "runtimeObservation": {
     "observedAt": "2026-09-23T02:16:42Z",
-    "host": "124.223.189.112",
+    "host": "<联调主机>",
     "mode": "read_only_docker_inspect_and_dependency_versions",
     "weave": {
       "sourceCommit": "a5893a0d1b119438a10ecd639f8eb923528dfd3a",

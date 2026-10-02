@@ -10,7 +10,7 @@ const load = createRequire(import.meta.url)('js-yaml').load as (source: string) 
 const validationPath = resolve('docs/测试与验收说明.md')
 const validation = readFileSync(validationPath, 'utf8')
 const packageManifest = JSON.parse(readFileSync(resolve('package.json'), 'utf8')) as { scripts: Record<string, string> }
-const workflowsPath = resolve('.github/workflows')
+const workflowsPath = resolve('../.github/workflows')
 
 function record(value: unknown): RecordValue {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as RecordValue) : {}
@@ -47,19 +47,21 @@ function workflowJobs(path: string): RecordValue {
 
 function dispatchOnly(job: RecordValue): boolean {
   const condition = typeof job.if === 'string' ? job.if.trim() : ''
-  return /^github\.event_name\s*==\s*['"]workflow_dispatch['"]$/.test(condition)
+  return /github\.event_name\s*==\s*['"]workflow_dispatch['"]/.test(condition)
+    && !/github\.event_name\s*==\s*['"]pull_request['"]/.test(condition)
 }
 
 function matrixContexts(jobId: string, job: RecordValue): string[] {
+  const contextName = typeof job.name === 'string' ? job.name : jobId
   const matrix = record(record(job.strategy).matrix)
   const include = matrix.include
-  if (!Array.isArray(include)) return [jobId]
+  if (!Array.isArray(include)) return [contextName]
 
   return include.map((entry) => {
     const values = Object.values(record(entry))
       .filter((value) => value !== '' && value !== null && value !== undefined)
       .map(String)
-    return values.length > 0 ? `${jobId} (${values.join(', ')})` : jobId
+    return values.length > 0 ? `${contextName} (${values.join(', ')})` : contextName
   })
 }
 
@@ -90,8 +92,8 @@ describe('validation guide structure', () => {
   })
 
   test('keeps CI and release job tables equal to their workflow job ids', () => {
-    const ciJobs = workflowJobs(resolve('.github/workflows/ci.yml'))
-    const releaseJobs = workflowJobs(resolve('.github/workflows/release.yml'))
+    const ciJobs = workflowJobs(resolve('../.github/workflows/desktop-ci.yml'))
+    const releaseJobs = workflowJobs(resolve('../.github/workflows/desktop-release.yml'))
     const ciTable = firstTableRows(section(validation, 'Pull-request and branch CI')).map(([job]) => job.replaceAll('`', ''))
     const releaseTable = firstTableRows(section(validation, 'Public release validation')).map(([job]) => job.replaceAll('`', ''))
 
@@ -100,7 +102,7 @@ describe('validation guide structure', () => {
   })
 
   test('documents the scheduled audit workflow contract', () => {
-    const audit = workflow(resolve('.github/workflows/audit.yml'))
+    const audit = workflow(resolve('../.github/workflows/desktop-audit.yml'))
     const triggers = record(audit.on)
     expect(triggers).toHaveProperty('schedule')
     expect(triggers).toHaveProperty('workflow_dispatch')
@@ -109,7 +111,7 @@ describe('validation guide structure', () => {
 
   test('links every workflow file from the guide', () => {
     const linkedTargets = new Set(localMarkdownTargets(validationPath, validation))
-    const workflowFiles = readdirSync(workflowsPath).map((name) => resolve(workflowsPath, name))
+    const workflowFiles = readdirSync(workflowsPath).filter((name) => name.startsWith('desktop-')).map((name) => resolve(workflowsPath, name))
 
     for (const workflowFile of workflowFiles) {
       expect(linkedTargets, `workflow is not linked from the guide: ${workflowFile}`).toContain(workflowFile)
@@ -117,8 +119,8 @@ describe('validation guide structure', () => {
   })
 
   test('derives protected-main required checks and manual exclusions from CI', () => {
-    const ciJobs = workflowJobs(resolve('.github/workflows/ci.yml'))
-    const protectedSection = section(validation, 'Protected `main` validation contract')
+    const ciJobs = workflowJobs(resolve('../.github/workflows/desktop-ci.yml'))
+    const protectedSection = section(validation, 'Recommended `main` branch protection target')
     const requiredChecks = [...protectedSection.matchAll(/^- `([^`]+)`$/gm)].map((match) => match[1])
     const exclusion = protectedSection.match(/^Do not require (.+?):/m)
     expect(exclusion).not.toBeNull()

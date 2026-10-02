@@ -1,34 +1,34 @@
 # OTC 演示账号与 ObjectStack 配置主册
 
-2026-10-02 核对：本主册23个开发联调账号在124原生账号表均存在且未禁用；该只读核对不验证密码或权限。当前密码沿用本机既有联调记录，本轮未轮换线上密码。销售小王、交付负责人小李、商务财务小陈、团队开发者小周已有对应正常桌面登录证据；其他账号本轮未逐一登录，不能将账号存在写成登录与业务权限验收通过。具体场景及环境证据分别见场景主文档和环境说明。
+2026-10-02 收尾核对：23个开发联调账号均通过本人当前凭据调用原生密码修改接口完成轮换，逐一确认新密码登录返回200、旧密码登录返回401、旧Forge会话已失效，并注销本轮验证会话。密码只保存在被Git忽略的本机 `scenarios/演示账号密码.local.md`（权限0600），不在对话或跟踪文档回显。该结果仅证明密码轮换与认证，不代表23个岗位的业务权限已经逐一验收，也不声称既有Weave会话或任务委托全部撤销；业务证据仍见对应场景与环境说明。
 
-## 账号与密码
+## 账号
 
-| 人员 | Forge 登录账号 | 密码 |
-| --- | --- | --- |
-| 系统管理员 | admin@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 销售小王 | sales.wang@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 交付负责人小李 | delivery.li@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 商务财务小陈 | business.chen@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 团队开发者小周 | developer.zhou@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 解决方案小孙 | solution.sun@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| PMO小刘 | pmo.liu@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 报价复核小赵 | pricing.zhao@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 法务小何 | legal.he@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 合同签署归档小胡 | signature.hu@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 订单复核小吴 | order.wu@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 物料资料小高 | material.gao@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 采购经办小张 | procurement.zhang@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 采购主管小宋 | procurement.review.song@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 生产经办小黄 | production.huang@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 生产主管小邵 | production.review.shao@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 仓库发货小马 | warehouse.ma@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 仓储主管小杜 | warehouse.review.du@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 质检小罗 | quality.luo@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 现场交付小徐 | field.xu@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 应收回款小林 | finance.lin@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 财务复核小唐 | finance.review.tang@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
-| 售后小钱 | service.qian@inoforge.local | [ROTATED-CREDENTIAL-REMOVED] |
+| 人员 | Forge 登录账号 |
+| --- | --- |
+| 系统管理员 | admin@inoforge.local |
+| 销售小王 | sales.wang@inoforge.local |
+| 交付负责人小李 | delivery.li@inoforge.local |
+| 商务财务小陈 | business.chen@inoforge.local |
+| 团队开发者小周 | developer.zhou@inoforge.local |
+| 解决方案小孙 | solution.sun@inoforge.local |
+| PMO小刘 | pmo.liu@inoforge.local |
+| 报价复核小赵 | pricing.zhao@inoforge.local |
+| 法务小何 | legal.he@inoforge.local |
+| 合同签署归档小胡 | signature.hu@inoforge.local |
+| 订单复核小吴 | order.wu@inoforge.local |
+| 物料资料小高 | material.gao@inoforge.local |
+| 采购经办小张 | procurement.zhang@inoforge.local |
+| 采购主管小宋 | procurement.review.song@inoforge.local |
+| 生产经办小黄 | production.huang@inoforge.local |
+| 生产主管小邵 | production.review.shao@inoforge.local |
+| 仓库发货小马 | warehouse.ma@inoforge.local |
+| 仓储主管小杜 | warehouse.review.du@inoforge.local |
+| 质检小罗 | quality.luo@inoforge.local |
+| 现场交付小徐 | field.xu@inoforge.local |
+| 应收回款小林 | finance.lin@inoforge.local |
+| 财务复核小唐 | finance.review.tang@inoforge.local |
+| 售后小钱 | service.qian@inoforge.local |
 
 ## 岗位、角色、权限集与业务边界
 

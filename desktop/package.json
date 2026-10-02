@@ -6,10 +6,9 @@
   "main": "out/main/index.js",
   "desktopName": "weave-workbench.desktop",
   "author": {
-    "name": "Weave Workbench contributors",
-    "email": "42459108+am-will@users.noreply.github.com"
+    "name": "Weave Workbench contributors"
   },
-  "homepage": "https://github.com/jinyitao123/weave-next",
+  "homepage": "https://github.com/jinyitao123/weave-workbench",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -58,6 +57,7 @@
     "@earendil-works/pi-agent-core": "file:vendor/prime-agent-core-0.7.0.tgz",
     "@earendil-works/pi-ai": "$prime-agent-ai",
     "@earendil-works/pi-tui": "file:vendor/prime-agent-tui-0.7.0.tgz",
+    "basic-ftp": "6.2.1",
     "extract-zip": "npm:@electron-internal/extract-zip@1.0.5"
   },
   "devDependencies": {

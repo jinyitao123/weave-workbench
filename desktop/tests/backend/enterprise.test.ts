@@ -550,7 +550,7 @@ describe('EnterpriseService', () => {
     expect(fetchMock.mock.calls.every((call) => !new Headers(call[1]?.headers).has('Authorization'))).toBe(true)
   })
 
-  it('uses separate Forge and Weave default origins', async () => {
+  it('keeps unconfigured Forge and Weave requests on separate loopback origins', async () => {
     const requests: string[] = []
     const fetchMock = vi.fn(async (input: URL) => {
       requests.push(input.toString())
@@ -559,12 +559,12 @@ describe('EnterpriseService', () => {
     const service = new EnterpriseService({ environment: {}, fetch: fetchMock })
 
     await expect(service.getStatus()).resolves.toEqual([
-      expect.objectContaining({ id: 'forge-development', url: 'http://124.223.189.112', available: true, secure: false }),
-      expect.objectContaining({ id: 'weave-development', url: 'http://124.223.189.112:8080', available: true, secure: false }),
+      expect.objectContaining({ id: 'forge-development', url: 'http://127.0.0.1:3000', available: true, secure: false }),
+      expect.objectContaining({ id: 'weave-development', url: 'http://127.0.0.1:8080', available: true, secure: false }),
     ])
     expect(requests).toEqual([
-      'http://124.223.189.112/api/v1/health',
-      'http://124.223.189.112:8080/v1/health',
+      'http://127.0.0.1:3000/api/v1/health',
+      'http://127.0.0.1:8080/v1/health',
     ])
   })
 
