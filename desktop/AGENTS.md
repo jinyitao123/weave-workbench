@@ -37,16 +37,3 @@ xvfb-run -a npm run test:e2e:hermetic # build + hermetic Electron e2e
 Some xterm/PTY-driven e2e cases in `tests/e2e/app.spec.ts` are timing-sensitive
 under headless `xvfb` and can fail where they pass on the macOS CI runner that
 owns the `hermetic-e2e` gate.
-
-## pstack
-
-This repository vendors [pstack](https://github.com/cursor/plugins/tree/main/pstack) under `.agents/skills/pstack/` so Cloud Agents can run `/poteto-mode` and the rest of the skill set. Subagents live in `.cursor/agents/`. Per-role model overrides live in `.cursor/rules/pstack-models.mdc`.
-
-pstack skills read `~/.cursor/rules/pstack-models.mdc`. Cloud Agents do not inherit that user-level path. If it is missing, copy the workspace rule before running a pstack skill:
-
-```
-mkdir -p ~/.cursor/rules
-cp .cursor/rules/pstack-models.mdc ~/.cursor/rules/pstack-models.mdc
-```
-
-Re-run `/setup-pstack` to change role models. Only write Task `model` slugs that are available in the current session.

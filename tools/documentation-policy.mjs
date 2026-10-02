@@ -4,17 +4,13 @@ const specialNames = new Set([
   'README.md', 'AGENTS.md', 'CLAUDE.md', 'CONTRIBUTING.md', 'SECURITY.md', 'LICENSE.md', 'SKILL.md',
 ])
 
-// This compatibility symlink points to the tracked Chinese account document,
-// which is checked under its canonical path below.
-export const localOnlyDocuments = new Set(['scenarios/sales-contract-handoff/test-accounts.md'])
-
 export const statusSections = ['现在做到哪', '谁在做什么', '卡在哪', '下一步']
 export const statusLimits = { lines: 150, paragraph: 300 }
 
 // The status page is the hand-off entry, so it stays short and current: evidence lives in
 // acceptance and environment documents, versions in components.lock.json, history in Git.
 export function validateStatusPage(content, lockRevisions = []) {
-  const lines = content.split('\n')
+  const lines = content.split(/\r?\n/)
   if (lines.length > statusLimits.lines) throw new Error(`状态页超过 ${statusLimits.lines} 行: ${lines.length}`)
   const sections = []
   for (const [index, line] of lines.entries()) {

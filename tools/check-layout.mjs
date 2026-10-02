@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { access, readFile, readdir, stat } from 'node:fs/promises'
 import { dirname, relative, resolve } from 'node:path'
 import { repositoryRoot, validateLock } from './project-status.mjs'
-import { localOnlyDocuments, validateDocumentPaths, validateStatusPage } from './documentation-policy.mjs'
+import { validateDocumentPaths, validateStatusPage } from './documentation-policy.mjs'
 
 process.chdir(repositoryRoot)
 const trackedPaths = new Set(execFileSync('git', ['ls-files', '--cached', '-z'], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).split('\0').filter(Boolean))
@@ -48,7 +48,7 @@ const rootDocuments = (await readdir('.', { withFileTypes: true }))
   .filter(entry => entry.isFile() && entry.name.endsWith('.md')).map(entry => entry.name)
 const documents = [...rootDocuments, 'desktop/README.md', 'desktop/AGENTS.md', 'desktop/CONTRIBUTING.md',
   ...await markdownFiles('docs'), ...await markdownFiles('contracts'), ...await markdownFiles('scenarios'),
-  ...await markdownFiles('desktop/docs')].filter(path => !localOnlyDocuments.has(path))
+  ...await markdownFiles('desktop/docs')]
 validateDocumentPaths(documents)
 for (const file of documents) {
   const content = (await readFile(file, 'utf8')).replace(/```[\s\S]*?```/g, '')

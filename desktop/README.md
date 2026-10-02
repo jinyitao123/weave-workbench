@@ -1,8 +1,8 @@
-# GooeyPi
+# Weave Workbench Desktop
 
-GooeyPi is a desktop workspace for [Pi](https://pi.dev/) and [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent). It gives both coding agents the same interface on macOS, Linux, and Windows while each harness keeps ownership of its models, logins, and saved sessions.
+The desktop client of [Weave Workbench](../README.md). Employees do daily work in local folders, hand materials to Weave agent teams, and handle the tasks assigned to them; developers configure teams and test business actions. Authoritative business state stays in Forge, and execution state stays in Weave — this app only presents them.
 
-<img width="2234" height="1332" alt="GooeyPi desktop workspace" src="https://github.com/user-attachments/assets/864ff0e1-71cc-49da-955f-f226710ef890" />
+This directory is a product adaptation of [GooeyPi](https://github.com/am-will/gooey-pi) (MIT), a desktop workspace for [Pi](https://pi.dev/) and [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent). The harness, session, project, terminal, browser, and capability features described below come from that base and are kept.
 
 ## Two harnesses, one workspace
 
@@ -83,24 +83,12 @@ Ask User and computer control are off by default. You can enable, disable, or re
 
 1. Install Pi, Prime Agent, or both.
 2. Sign in or configure a model provider through each harness's own CLI.
-3. Download GooeyPi from [GitHub Releases](https://github.com/am-will/gooey-pi/releases), or run it from source.
+3. Run it from source (see below) or build a local package.
 4. Add a project folder and start a session.
 
 GooeyPi checks common install locations automatically. If a harness is missing, open **Settings → Harness** to refresh detection or choose its executable.
 
-GitHub Releases provides a DMG and ZIP for macOS, common Linux package formats plus AppImage, and a Windows installer and ZIP.
-
 Harness provider credentials stay with the harness. Optional voice keys are encrypted with the operating system's secure storage, and local `whisper.cpp` dictation needs no API key.
-
-## Star History
-
-<a href="https://www.star-history.com/?repos=am-will%2Fgooey-pi&type=date&legend=top-left">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=am-will/gooey-pi&type=date&theme=dark&legend=top-left&sealed_token=Gyqf4f7-dQQMVcOLDzasYvuEMUjpCSlTbbitvVvzi1dyMJRIttzqLWN-D1cijN9r-TqFj2A-ibdETPCeMHGsKGYRJrAzd9VflC7tpdapc0tRiSBi6qrSJQ" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=am-will/gooey-pi&type=date&legend=top-left&sealed_token=Gyqf4f7-dQQMVcOLDzasYvuEMUjpCSlTbbitvVvzi1dyMJRIttzqLWN-D1cijN9r-TqFj2A-ibdETPCeMHGsKGYRJrAzd9VflC7tpdapc0tRiSBi6qrSJQ" />
-    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=am-will/gooey-pi&type=date&legend=top-left&sealed_token=Gyqf4f7-dQQMVcOLDzasYvuEMUjpCSlTbbitvVvzi1dyMJRIttzqLWN-D1cijN9r-TqFj2A-ibdETPCeMHGsKGYRJrAzd9VflC7tpdapc0tRiSBi6qrSJQ" />
-  </picture>
-</a>
 
 ## Run from source
 
@@ -189,4 +177,4 @@ Build packages on their target operating system so native dependencies match the
 
 ## License
 
-GooeyPi is released under the permissive [MIT License](LICENSE). See the [license text](LICENSE) for details.
+This directory is released under the [MIT License](LICENSE), inherited from GooeyPi (Copyright (c) 2026 GooeyPi contributors). The repository as a whole is Apache-2.0; see [NOTICE](../NOTICE).

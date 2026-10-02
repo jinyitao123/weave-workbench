@@ -8,7 +8,7 @@
 
 - 启动失败的直接原因是合并后出现两组重复的数据库升级编号：`0135` 与 `0136`。Weave 在执行任何升级前即拒绝启动。
 - 独立 Weave 源码提交 `e8ece267985e6b0a94fac386b9ac7ac45a58d790` 将两份游戏决策升级顺延为 `0165`、`0166`，并增加真实升级集合的唯一性检查，以及全新数据库、已执行至 `0164` 数据库的升级回归。
-- 部署前数据库备份保存在服务器 `/home/ubuntu/weave-mvp1-backups/20260921-migration-startup-e8ece267/database.sql`。
+- 部署前数据库备份保存在服务器 `<服务器>/weave-mvp1-backups/20260921-migration-startup-e8ece267/database.sql`。
 - 已删除并重建 `weave-main` 的数据库卷和工作区卷，使用镜像 `weave-platform:mvp1-e8ece267` 重建服务。Forge 容器和数据未改动。
 - 新库执行 158 个升级，`0165`、`0166` 已登记；Weave 容器状态为 `healthy`，重启次数为 0，`/v1/ready` 返回 `ready`。
 - 以真实 Forge 开发账号从桌面重新登录，Weave 自动新建绑定。恢复管理员角色后，桌面开发中心显示 Weave 可用并读取到空团队状态。
