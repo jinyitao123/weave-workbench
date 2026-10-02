@@ -60,6 +60,14 @@ it('keeps unknown native topics generic despite forged kind and Weave references
   expect(items.some((item) => item.workReference || item.runReference || item.sessionReference)).toBe(false)
 })
 
+it('keeps execution diagnostics out of employee failure messages without inventing action results', () => {
+  const [item] = inboxWorkItems([{ id: 'failure-notice', title: '团队处理失败', type: 'weave.team_run.failure', createdAt: updatedAt,
+    body: 'team_run_node_output_invalid: node step-550e8400-e29b-41d4-a716-446655440000 failed at /Users/private/work' }])
+  expect(item.summary).toContain('核对结果及业务动作回执')
+  expect(item.summary).not.toMatch(/team_run|550e8400|\/Users|0条|成功/)
+  expect(item).toMatchObject({ kind: 'failure', source: 'weave', actionable: false })
+})
+
 it.each([
   { runs: [lookup('run'), lookup('run')], missing: [] },
   { runs: [lookup('run')], missing: ['run'] },

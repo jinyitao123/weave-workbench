@@ -10,6 +10,7 @@ import { WorkRegistrationRejectedError, type EnterpriseBusinessNotificationConte
 import { ForgeBusinessReadError, type BusinessRecordSnapshot } from '../../electron/main/enterprise/business-records'
 import { appendWorkspaceMaterialContext } from '../../src/lib/workspace-material-attachments'
 import { APPROVAL_REVIEW_SESSION_MARKER } from '../../src/lib/approval-review'
+import { fixedWorkHandoff, taskScopeSHA256, type FixedWorkSource, type ForgeTaskScope } from '../../electron/main/enterprise/task-handoff'
 
 const bridges: AgentEnterpriseBridge[] = [], directories: string[] = []
 afterEach(async () => {
@@ -655,6 +656,177 @@ describe('employee-bound material handoff', () => {
     })
   })
 
+  it('asks to reopen the original work when a historical chat has lost its trusted binding', async () => {
+    const f = await fixture(), parent = workContinuationContext()
+    parent.run.status = 'failed'
+    parent.run.finalResult = undefined
+    parent.input.materials = [continuationTextMaterial('original-file', '原材料.md', '已冻结的材料')]
+    await openWorkContinuation(f, parent, 'failed-before-relogin')
+    await f.relogin()
+    await f.input('请复用原材料，重新交原团队只读检查。', 'reuse-after-relogin')
+    const rejected = await f.call('submit', { ...await f.discover(), materials: [], business_actions: [], reuse_material_names: ['原材料.md'] })
+
+    expect(rejected.status).toBe(409)
+    expect(rejected.body.error).toContain('当前会话没有绑定原工作')
+    expect(rejected.body.error).toContain('从“我的工作”重新打开原工作消息')
+    expect(rejected.body.error).not.toContain('正常结束')
+    expect(rejected.body.error).not.toContain('业务动作回执')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+
+  it.each(['failed', 'needs_input', 'completed', 'completed-new-action'] as const)('creates a separate input and task grant after an expired read-only %s source', async (outcome) => {
+    const f = await fixture(), parent = completedReadOnlyContext()
+    parent.source.inputStatus = 'current'
+    parent.input.authorizedBusinessCapabilityIDs = []
+    parent.input.registrationID = '550e8400-e29b-41d4-a716-446655440101'
+    parent.run.authorization = { status: 'renewal_required', canRenew: false, grantID: 'old-terminal-grant', generation: 1 }
+    if (outcome === 'failed') {
+      parent.run.status = 'failed'
+      parent.run.finalResult = undefined
+    } else {
+      parent.run.businessResult = outcome === 'needs_input' ? 'needs_input' : 'completed'
+      parent.run.finalResult = { ...parent.run.finalResult!, disposition: outcome === 'needs_input' ? 'needs_input' : 'complete', missingItems: outcome === 'needs_input' ? ['补充说明'] : [] }
+    }
+    const params = outcome === 'completed-new-action'
+      ? await prepareCompletedReadOnlySubmit(f, parent, `expired-${outcome}`)
+      : await (async () => {
+        await openWorkContinuation(f, parent, `expired-${outcome}`)
+        await f.input('明确复用原材料，按新输入交原团队只读检查，不恢复旧运行。', `employee-new-${outcome}`)
+        return { ...await f.discover(), materials: [], reuse_material_names: parent.input.materials.map(({ name }) => name) }
+      })()
+    const newInputID = '550e8400-e29b-41d4-a716-446655440202'
+    const grants: Array<{ request_id: string; scope: ForgeTaskScope; expected_generation?: number }> = []
+    const registrations: Array<Record<string, unknown>> = []
+    const tokens: Array<string | undefined> = []
+    f.service.submitWork.mockImplementation(async (choice, task, rawSource) => {
+      const source = rawSource as FixedWorkSource
+      return fixedWorkHandoff(choice as Parameters<typeof fixedWorkHandoff>[0], task, source, {
+        projectID: 'project-test', issuer: 'https://forge.example.test', identityIssuer: 'https://identity.example.test',
+        nativeIdentity: async () => ({ id: 'employee-a', organizationID: 'organization-a' }),
+        assertCurrent: source.assertCurrent,
+        forge: async (path, body) => {
+          expect(path).toBe('/api/v1/apps/forge/task-delegations')
+          const grant = body as typeof grants[number]
+          grants.push(grant)
+          return { status: 200, body: {
+            version: '1', token_type: 'forge_task', access_token: 'synthetic-new-task-token', grant_id: 'new-grant', generation: 1,
+            issued_at: new Date().toISOString(), expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+            issuer: 'https://forge.example.test', identity_issuer: 'https://identity.example.test',
+            subject: { id: 'employee-a', organization_id: 'organization-a' }, scope: grant.scope, scope_sha256: taskScopeSHA256(grant.scope),
+          } }
+        },
+        weave: async (path, body, token) => {
+          const request = body as Record<string, unknown>
+          if (path === '/v1/workbench/dispatch-inputs/prepare') {
+            expect(request.expected_revision_id).toBe(parent.source.inputRevisionID)
+            expect(request.workbench_session_id).toBe(parent.source.workbenchSessionID)
+            expect(request.registration_id).not.toBe(parent.input.registrationID)
+            if (outcome === 'failed') expect(request).not.toHaveProperty('revision_context')
+            else expect(request.revision_context).toEqual({ parent_input_revision_id: parent.source.inputRevisionID, parent_run_id: parent.source.runID })
+            return { status: 200, body: { input_revision_id: newInputID } }
+          }
+          if (path === '/v1/workbench/dispatch-inputs') {
+            registrations.push(request); tokens.push(token)
+            return { status: 200, body: { input_revision_id: newInputID, client_request_id: 'new-client-request', task_sha256: digest(task) } }
+          }
+          expect(path).toBe('/v1/teams/team-contract/dispatch')
+          expect(request.input_revision_id).toBe(newInputID)
+          return { status: 201, body: { run_id: 'new-run', task_id: 'new-task', workflow_id: 'workflow-review', workflow_version: 3 } }
+        },
+      })
+    })
+
+    const submitted = await f.call('submit', params)
+    expect(submitted.body.result.status, JSON.stringify(submitted.body)).toBe('accepted')
+    expect(f.service.renewWorkAuthorization).not.toHaveBeenCalled()
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(grants).toHaveLength(1)
+    expect(grants[0]!.request_id).toMatch(/^[0-9a-f-]{36}$/)
+    expect(grants[0]!.request_id).not.toBe(parent.input.registrationID)
+    expect(grants[0]!).not.toHaveProperty('expected_generation')
+    expect(grants[0]!.scope.input_revision_id).toBe(newInputID)
+    expect(grants[0]!.scope.input_revision_id).not.toBe(parent.source.inputRevisionID)
+    expect(grants[0]!.scope.allowed_actions).toEqual(outcome === 'completed-new-action' ? [f.businessCapabilityId] : [])
+    expect(grants[0]!.scope.resources).toHaveLength(parent.input.materials.length)
+    expect(registrations).toHaveLength(1)
+    expect(tokens).toEqual(['synthetic-new-task-token'])
+    const saved = await Promise.all((await readdir(f.storageDirectory)).map((file) => readFile(join(f.storageDirectory, file), 'utf8')))
+    expect(saved.join('')).toContain(grants[0]!.request_id)
+    expect(saved.join('')).not.toContain('synthetic-new-task-token')
+    expect(saved.join('')).not.toContain('old-terminal-grant')
+  })
+
+  it.each(['parked', 'parked-active', 'running', 'cancelled', 'abandoned', 'closed', 'superseded', 'closed-no-authorization', 'superseded-no-authorization', 'missing-input-status', 'missing-scope', 'write-scope', 'missing-outcomes', 'unknown-action', 'successful-action', 'failed-new-action'] as const)('refuses a new input from an ineligible %s source', async (reason) => {
+    const f = await fixture(), parent = completedReadOnlyContext()
+    parent.source.inputStatus = 'current'
+    parent.input.authorizedBusinessCapabilityIDs = []
+    parent.run.authorization = { status: 'renewal_required', canRenew: false }
+    if (reason === 'parked' || reason === 'parked-active') {
+      parent.run.status = 'parked'
+      parent.run.authorization = { status: reason === 'parked-active' ? 'active' : 'renewal_required', canRenew: true }
+    } else if (reason === 'running' || reason === 'cancelled' || reason === 'abandoned') parent.run.status = reason
+    else if (reason === 'closed' || reason === 'superseded') parent.source.inputStatus = reason
+    else if (reason === 'closed-no-authorization' || reason === 'superseded-no-authorization') {
+      parent.source.inputStatus = reason === 'closed-no-authorization' ? 'closed' : 'superseded'
+      delete parent.run.authorization
+    }
+    else if (reason === 'missing-input-status') delete parent.source.inputStatus
+    else if (reason === 'missing-scope') delete parent.input.authorizedBusinessCapabilityIDs
+    else if (reason === 'write-scope') parent.input.authorizedBusinessCapabilityIDs = [f.businessCapabilityId]
+    else if (reason === 'missing-outcomes') delete parent.run.actionOutcomes
+    else if (reason === 'unknown-action' || reason === 'successful-action') parent.run.actionOutcomes = [{ nodeID: 'node', callID: 'call', actionName: 'submit', objectName: 'record', status: reason === 'unknown-action' ? 'unknown' : 'succeeded', summary: '平台动作回执' }]
+    else if (reason === 'failed-new-action') { parent.run.status = 'failed'; parent.run.finalResult = undefined }
+    await openWorkContinuation(f, parent, `ineligible-${reason}`)
+    const newAttachmentsOnly = reason === 'closed-no-authorization' || reason === 'superseded-no-authorization'
+    const prompt = newAttachmentsOnly ? appendWorkspaceMaterialContext('请按新消息交接这份新附件。', [{ projectId: 'project-test', harness: 'pi', workspacePath: f.cwd, name: '合同.md', path: '材料/附件/合同.md', sha256: digest(f.content), bytes: Buffer.byteLength(f.content), mimeType: 'text/markdown' }]) : '请按新消息交接原材料。'
+    await f.input(prompt, `employee-ineligible-${reason}`)
+    const discovered = await f.discover()
+    const rejected = await f.call('submit', { ...discovered, materials: newAttachmentsOnly ? discovered.materials : [], reuse_material_names: newAttachmentsOnly ? [] : parent.input.materials.map(({ name }) => name), business_actions: reason === 'failed-new-action' ? [discovered.available_actions[0]!.action_key] : [] })
+    expect(rejected.status, JSON.stringify(rejected.body)).toBe(409)
+    if (newAttachmentsOnly) expect(rejected.body.error).toContain('不能沿旧事项创建新输入')
+    expect(f.service.renewWorkAuthorization).not.toHaveBeenCalled()
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+
+  it('refreshes authorization before deciding whether a newly expired source can create an input', async () => {
+    const f = await fixture(), parent = completedReadOnlyContext()
+    parent.run.status = 'parked'
+    parent.run.authorization = { status: 'active', canRenew: false }
+    await openWorkContinuation(f, parent, 'authorization-before-refresh')
+    await f.input('请按新输入交接这项工作。', 'employee-before-auth-change')
+    const params = await f.discover()
+    parent.run.authorization = { status: 'renewal_required', canRenew: true }
+    const rejected = await f.call('submit', params)
+    expect(rejected.status).toBe(409)
+    expect(rejected.body.error).toContain('不能用新交接或新输入替代')
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+
+  it('rechecks terminal source eligibility before fixing a new task grant intent', async () => {
+    const f = await fixture(), parent = completedReadOnlyContext()
+    parent.source.inputStatus = 'current'
+    parent.input.authorizedBusinessCapabilityIDs = []
+    parent.run.authorization = { status: 'renewal_required', canRenew: false }
+    await openWorkContinuation(f, parent, 'before-new-grant')
+    await f.input('明确复用原材料，按新输入只读检查。', 'employee-before-new-grant')
+    f.service.submitWork.mockImplementation(async (_choice, _task, rawSource) => {
+      const source = rawSource as FixedWorkSource
+      parent.run.status = 'parked'
+      parent.run.authorization = { status: 'active', canRenew: true }
+      await source.fixDelegationIntent('550e8400-e29b-41d4-a716-446655440202', {} as ForgeTaskScope)
+      throw new Error('new grant intent must not be created')
+    })
+    const rejected = await f.call('submit', { ...await f.discover(), materials: [], reuse_material_names: parent.input.materials.map(({ name }) => name) })
+    expect(rejected.body.result.status).not.toBe('accepted')
+    expect(rejected.body.result.message).toContain('不能用新交接或新输入替代')
+    const saved = await Promise.all((await readdir(f.storageDirectory)).map((file) => readFile(join(f.storageDirectory, file), 'utf8')))
+    expect(saved.join('')).not.toContain('requestID')
+    expect(f.service.renewWorkAuthorization).not.toHaveBeenCalled()
+  })
+
   it('refuses a different team when describing a linked continuation', async () => {
     const f = await fixture()
     const binding = await f.bridge.pinWorkContinuationContext({ id: 'notice-team-change', source: 'weave', workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' })
@@ -1096,6 +1268,7 @@ describe('employee-bound material handoff', () => {
 
       expect(rejected.status, variant.label).toBe(409)
       expect(rejected.body.error, variant.label).toContain('不允许复用原材料')
+      expect(rejected.body.error, variant.label).not.toContain('没有绑定原工作')
       expect(f.service.stageWorkMaterials, variant.label).not.toHaveBeenCalled()
       expect(f.service.submitWork, variant.label).not.toHaveBeenCalled()
     }
@@ -2167,7 +2340,10 @@ describe('employee-bound material handoff', () => {
   it('rejects another account and revokes runtime credentials when the account session changes', async () => {
     const f = await fixture(), params = await f.discover()
     f.service.accountKey.mockResolvedValue('employee-b')
-    expect((await f.call('submit', params)).status).toBe(409)
+    const wrongAccount = await f.call('submit', params)
+    expect(wrongAccount.status).toBe(409)
+    expect(wrongAccount.body.error).toContain('账号已变化')
+    expect(wrongAccount.body.error).not.toContain('没有绑定原工作')
     f.service.accountKey.mockResolvedValue('employee-a')
     f.bridge.invalidateAccount()
     expect((await f.call('submit', params)).status).toBe(401)

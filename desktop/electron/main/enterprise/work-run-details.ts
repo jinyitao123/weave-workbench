@@ -44,7 +44,10 @@ export function workRunDetails(owned: WorkbenchRunLookup, rawActivity: unknown, 
   const final = context.run.finalResult
   const summary = prose(final?.summary, 1000)
   const missingItems = (final?.missingItems ?? []).flatMap((item) => prose(item, 200) ? [prose(item, 200)!] : [])
-  const authorizationRequired = context.run.authorization?.status === 'renewal_required'
+  // Expired grants can remain on terminal runs. Only the current parked input
+  // with server-confirmed renewal eligibility can actually continue this run.
+  const authorizationRequired = owned.isCurrent && context.run.status === 'parked' && context.source.inputStatus === 'current'
+    && context.run.authorization?.status === 'renewal_required' && context.run.authorization.canRenew === true
   let explanation = ''
   if (authorizationRequired) explanation = '继续执行需要更新本次工作的授权，请从“我的工作”核对后办理。'
   else if (context.run.businessResult === 'action_failed') explanation = '业务动作未成功，正式业务状态仍需在业务系统中核对。'

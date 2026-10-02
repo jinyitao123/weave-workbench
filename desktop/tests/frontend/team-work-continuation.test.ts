@@ -35,6 +35,32 @@ it('keeps needs-input and absent-field compatibility', () => {
 
 it('explains authorization expiry through the original-work tool only when the platform proves safe continuation', () => {
   expect(teamRunResultNotice({ ...modelNeedsInput, runStatus: 'parked', inputStatus: 'current', authorization: { status: 'renewal_required', canRenew: true } })).toContain('保持原输入、材料和业务范围')
-  expect(teamRunResultNotice({ ...modelNeedsInput, authorization: { status: 'renewal_required', canRenew: false } })).toContain('不能续授权重放或另建输入掩盖旧失败')
+  expect(teamRunResultNotice({ ...modelNeedsInput, authorization: { status: 'renewal_required', canRenew: false } })).toContain('本轮需要补充的内容')
   expect(teamRunResultNotice({ ...modelNeedsInput, inputStatus: 'superseded', authorization: { status: 'renewal_required', canRenew: true } })).toContain('最新工作消息')
+})
+
+it.each(['failed', 'cancelled', 'succeeded', 'abandoned'] as const)('keeps the original read-only result guidance for terminal %s despite an expired grant', (runStatus) => {
+  const base = { ...modelNeedsInput, runStatus, actionOutcomes: [] }
+  expect(teamRunResultNotice({ ...base, authorization: { status: 'renewal_required', canRenew: false } })).toBe(teamRunResultNotice(base))
+  const completed = { ...base, businessResult: 'completed' as const }
+  expect(teamRunResultNotice({ ...completed, authorization: { status: 'renewal_required', canRenew: false } })).toBe(teamRunResultNotice(completed))
+})
+
+it.each(['action_failed', 'action_unknown'] as const)('preserves %s safeguards after terminal authorization expiry', (businessResult) => {
+  const notice = teamRunResultNotice({ ...modelNeedsInput, runStatus: 'failed', businessResult, authorization: { status: 'renewal_required', canRenew: false } })
+  expect(notice).toContain('不要补件重跑或重放原业务动作')
+  expect(notice).not.toContain('续授权')
+  expect(notice).not.toContain('本轮需要补充的内容')
+})
+
+it('keeps unknown legacy action receipts protected when the server business-result field is absent', () => {
+  const notice = teamRunResultNotice({ ...modelNeedsInput, runStatus: 'failed', actionOutcomes: [{ actionName: '提交', objectName: '合同', status: 'unknown', summary: '回执未确认' }], authorization: { status: 'renewal_required', canRenew: false } })
+  expect(notice).toContain('平台尚未确认本轮业务动作结果')
+  expect(notice).not.toContain('本轮需要补充的内容')
+})
+
+it('does not suggest renewing closed input or prioritize renewal over unknown actions', () => {
+  const expired = { ...modelNeedsInput, runStatus: 'parked' as const, inputStatus: 'current' as const, authorization: { status: 'renewal_required' as const, canRenew: true } }
+  expect(teamRunResultNotice({ ...expired, inputStatus: 'closed' })).not.toContain('续授权工具')
+  expect(teamRunResultNotice({ ...expired, businessResult: 'action_unknown' })).toContain('不要补件重跑或重放原业务动作')
 })

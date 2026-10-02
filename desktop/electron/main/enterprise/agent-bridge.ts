@@ -185,13 +185,27 @@ function workContinuationFingerprint(context: EnterpriseWorkContinuationContext)
   return digest(JSON.stringify({ source: context.source, input: context.input, finalResult: context.run.finalResult ?? null, actionOutcomes: context.run.actionOutcomes ?? null, ...(context.run.businessResult !== undefined ? { businessResult: context.run.businessResult } : {}) }))
 }
 function isReusableReadOnlyContinuation(context: EnterpriseWorkContinuationContext | undefined): boolean {
-  if (context?.source.inputStatus === 'superseded') return false
+  if (context?.source.inputStatus === 'superseded' || context?.source.inputStatus === 'closed') return false
   const run = context?.run
   if (!run || run.businessResult === 'action_failed' || run.businessResult === 'action_unknown' || !Array.isArray(run.actionOutcomes) || run.actionOutcomes.length !== 0) return false
   if (run.status === 'failed') return true
   return run.status === 'succeeded' && (run.businessResult !== undefined
     ? run.businessResult === 'needs_input' || run.businessResult === 'completed'
     : run.finalResult?.disposition === 'needs_input' || run.finalResult?.disposition === 'complete')
+}
+function assertContinuationSubmissionAuthorization(context: EnterpriseWorkContinuationContext): void {
+  if (context.source.inputStatus === 'closed' || context.source.inputStatus === 'superseded') {
+    throw new Error('原工作输入已关闭或已被更新输入取代，请从“我的工作”打开最新消息，不能沿旧事项创建新输入')
+  }
+  const authorization = context.run.authorization
+  if (authorization?.status !== 'renewal_required' && !authorization?.canRenew) return
+  // A terminal read-only source can supply verified materials to a new input.
+  // Its revoked grant is never renewed: submitWork issues a separate grant for
+  // the new employee message, input and explicitly selected action scope.
+  if (context.source.inputStatus === 'current'
+    && Array.isArray(context.input.authorizedBusinessCapabilityIDs) && context.input.authorizedBusinessCapabilityIDs.length === 0
+    && isReusableReadOnlyContinuation(context)) return
+  throw new Error('原工作正在等待授权更新，不能用新交接或新输入替代；可安全续办时请继续原工作授权，否则先核对原业务回执')
 }
 function businessNotificationFingerprint(context: EnterpriseBusinessNotificationContext): string {
   const { capturedAt: _capturedAt, ...snapshot } = context.record.snapshot
@@ -237,9 +251,9 @@ function reuseMaterialsFromContinuation(bound: BoundWorkContinuation | undefined
     throw new Error('复用材料选择无效，请从当前工作中选择已冻结文件名')
   }
   if (!rawNames.length) return []
-  if (!bound || bound.accountKey !== accountKey || !isReusableReadOnlyContinuation(bound.context)) {
-    throw new Error('只有当前员工打开且平台明确记录未执行业务动作的已结束只读工作，才可复用原冻结材料')
-  }
+  if (!bound) throw new Error('当前会话没有绑定原工作。请从“我的工作”重新打开原工作消息，再明确授权复用材料；仅打开历史聊天不能恢复材料授权。')
+  if (bound.accountKey !== accountKey) throw new Error('原工作不属于当前登录账号，请使用原员工账号从“我的工作”重新打开原消息。')
+  if (!isReusableReadOnlyContinuation(bound.context)) throw new Error('原工作状态或平台业务动作回执不满足只读材料复用条件，请从“我的工作”刷新原消息并核对回执。')
   const names = rawNames.map((name) => {
     const normalized = name.trim()
     if (!normalized || normalized.length > 255 || normalized !== name || normalized.includes('\0')) {
@@ -1142,6 +1156,8 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     })
     if (workContinuationFingerprint(current) !== bound.fingerprint) throw new Error('原工作输入、材料版本或团队结果已变化，请刷新工作消息')
     bound.context.run.status = current.run.status
+    bound.context.run.authorization = current.run.authorization ? structuredClone(current.run.authorization) : undefined
+    assertContinuationSubmissionAuthorization(bound.context)
     if (requireReusableMaterials && !isReusableReadOnlyContinuation(bound.context)) {
       throw new Error('当前团队运行状态或平台动作回执不允许复用原材料，请刷新工作消息')
     }
@@ -1183,12 +1199,15 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   }
   private async submit(claim: CapabilityClaim, params: Record<string, unknown>, turn: EmployeeTurn): Promise<unknown> {
     if (turn.openingWorkContinuation) throw new Error('打开工作消息只授权查看已有结果；请等待员工在新消息中明确提出后续工作')
-    if (turn.workContinuation?.context.run.authorization?.status === 'renewal_required') throw new Error('原工作正在等待授权更新，不能用新交接或新输入替代；可安全续办时请继续原工作授权，否则先核对原业务回执')
+    await this.assertWorkContinuationCurrent(claim, turn)
     const key = requireString(params.handoff_key, 'handoff_key', { min: 1, max: 128, trim: true })
     const goal = requireString(params.goal, 'goal', { min: 1, max: 20_000, trim: true })
     if (!Array.isArray(params.business_actions) || params.business_actions.length > 32 || params.business_actions.some((value) => typeof value !== 'string')) throw new Error('本次业务动作范围无效')
     const actionKeys = params.business_actions as string[]
     if (new Set(actionKeys).size !== actionKeys.length) throw new Error('本次业务动作不能重复')
+    if (turn.workContinuation?.context.run.status === 'failed' && !turn.workContinuation.context.run.finalResult && actionKeys.length > 0) {
+      throw new Error('原失败运行没有团队交付结果，只能按新授权重新进行只读检查；不能沿用旧运行直接执行业务动作')
+    }
     const selections = params.materials === undefined ? [] : materialSelection(params.materials, undefined, true)
     const choice = this.handoffs.get(claim.token)?.get(key)
     if (!choice) throw new Error('请先查看团队的承接能力，并使用本轮返回的交接项')
@@ -1679,6 +1698,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       idempotencySeed: frozen.idempotencySeed, sessionKey: frozen.sessionKey, sourceMessages: frozen.sourceMessages, accountKey: frozen.accountKey,
       resources: frozen.resources,
       fixDelegationIntent: async (inputRevisionID, scope) => {
+        await this.assertWorkContinuationCurrent(claim, turn, (frozen.reusedMaterials?.length ?? 0) > 0)
         const fingerprint = digest(JSON.stringify(scope))
         const intent = await this.store.freeze(`${frozen.accountKey}:${frozen.idempotencySeed}:task-authorization`, fingerprint, async () => ({ inputRevisionID, requestID: randomUUID() }))
         await this.evidence(claim, turn)

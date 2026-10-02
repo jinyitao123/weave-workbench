@@ -129,7 +129,9 @@ export function inboxWorkItems(rawNotifications: unknown[]): EnterpriseWorkItem[
       id, kind, title: displayTitle, status, actionable, read: notification?.read === true,
       source: weaveKind ? 'weave' : 'forge',
       notificationType, createdAt,
-      ...(text(notification?.body) ? { summary: text(notification?.body) } : {}),
+      ...(kind === 'failure'
+        ? { summary: '本次团队执行未完成，请打开工作记录核对结果及业务动作回执。' }
+        : text(notification?.body) ? { summary: text(notification?.body) } : {}),
       ...(text(data?.instructions) ? { instructions: text(data?.instructions) } : {}),
       ...(text(notification?.actionUrl) ?? text(notification?.action_url) ? { actionUrl: text(notification?.actionUrl) ?? text(notification?.action_url) } : {}),
       ...(text(material?.label) ? { materialLabel: text(material?.label) } : {}),

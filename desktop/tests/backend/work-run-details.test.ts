@@ -69,6 +69,36 @@ it.each([undefined, null, {}, [null], [{ name: '检查员', status: 'running' }]
   expect(workRunDetails(owned, { ...activity(), members }, context()).activityComplete).toBe(false)
 })
 
+it.each([
+  ['failed', '步骤结果未通过要求'],
+  ['cancelled', '本次团队执行已停止'],
+  ['succeeded', '团队执行已完成'],
+  ['abandoned', ''],
+  ['parked', '团队正在等待处理'],
+] as const)('does not suggest renewal for a non-renewable %s run', (status, expected) => {
+  const ctx = { ...context(), run: { status, authorization: { status: 'renewal_required', can_renew: false } } }
+  const details = workRunDetails({ ...owned, status }, { ...activity(), status }, ctx)
+  expect(details.authorizationRequired).toBe(false)
+  expect(details.explanation).not.toContain('更新本次工作的授权')
+  if (expected) expect(details.explanation).toContain(expected)
+})
+
+it('suggests renewal only for the current parked input with a validated renewable scope', () => {
+  const base = context()
+  const ctx = { ...base, source: { ...base.source, input_status: 'current' },
+    input: { ...base.input, registration_id: input, authorized_business_capability_ids: [] },
+    run: { status: 'parked', authorization: { status: 'renewal_required', can_renew: true, generation: 1, retry_node_id: 'retry-node',
+      scope: { input_revision_id: input, registration_id: input, task_sha256: base.input.task_sha256,
+        workflow_id: base.input.workflow_id, workflow_version: base.input.workflow_version, allowed_actions: [], resources: base.input.materials } } } }
+  const details = workRunDetails({ ...owned, status: 'parked' }, { ...activity(), status: 'parked' }, ctx)
+  expect(details.authorizationRequired).toBe(true)
+  expect(details.explanation).toContain('继续执行需要更新本次工作的授权')
+  expect(workRunDetails({ ...owned, status: 'parked', isCurrent: false }, { ...activity(), status: 'parked' }, ctx).authorizationRequired).toBe(false)
+  expect(workRunDetails({ ...owned, status: 'parked' }, { ...activity(), status: 'parked' }, {
+    ...ctx, run: { ...ctx.run, authorization: { ...ctx.run.authorization, status: 'active' } },
+  }).authorizationRequired).toBe(false)
+})
+
 it('refuses an unowned detail lookup before requesting activity or context', async () => {
   const paths: string[] = []
   const fetchMock = vi.fn(async (value: URL | RequestInfo) => {
