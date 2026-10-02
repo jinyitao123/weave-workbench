@@ -3,6 +3,7 @@ import type { EnterpriseBusinessCapability, EnterpriseBusinessCapabilityCatalog 
 import type { TeamDefinition, TeamWorkspace, TeamWorkspaceCommand } from '../../../src/types/team-workspace'
 import { applyTeamDevelopmentOperations, type TeamDevelopmentProposal } from '../../../src/pages/team-workspace/development-proposal'
 import { WORKBENCH_RESULT_PROTOCOL } from '../../../src/pages/team-workspace/graph'
+import { businessCompletionRequirement, requireBusinessCompletionBindings } from '../../../src/pages/team-workspace/business-completion'
 import { CapabilityBridge, type CapabilityClaim, type CapabilityScope } from '../lib/capability-bridge'
 import { HandoffStore, type HandoffStorage } from '../enterprise/handoff-store'
 
@@ -62,7 +63,16 @@ function canonical(value: unknown): unknown {
 }
 
 function sameDocument(left: TeamDefinition, right: TeamDefinition): boolean {
-  return JSON.stringify(canonical(left)) === JSON.stringify(canonical(right))
+  // Weave's typed configuration writes these two omitted optional fields as
+  // null/0. Normalize only those declared defaults, including persisted older
+  // pending saves; all business fields, graph bindings and versions still match.
+  const comparable = (document: TeamDefinition) => ({ ...document, members: document.members.map((member) => ({
+    ...member, configuration: { ...member.configuration,
+      toolLoopControl: member.configuration.toolLoopControl === undefined ? null : member.configuration.toolLoopControl,
+      maxToolRepeats: member.configuration.maxToolRepeats === undefined ? 0 : member.configuration.maxToolRepeats,
+    },
+  })) })
+  return JSON.stringify(canonical(comparable(left))) === JSON.stringify(canonical(comparable(right)))
 }
 
 function digest(value: unknown): string {
@@ -240,8 +250,10 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
         })),
         workflows: workflows.map((flow) => {
           const stepName = (id: unknown) => flow.graph_definition.nodes.find((node) => node.id === id)?.label ?? '未命名步骤'
+          const completion = businessCompletionRequirement(flow)
           return {
             name: flow.name, description: flow.description,
+            ...(completion ? { businessCompletion: { actions: completion.capabilities.map(capabilityName), whenAuthorized: true, allowNeedsInput: completion.allowNeedsInput } } : {}),
             resultProtocol: flow.graph_definition.result_protocol === WORKBENCH_RESULT_PROTOCOL ? '可要求补充材料' : '普通结果',
             steps: flow.graph_definition.nodes.map((node) => ({
               name: node.label || '未命名步骤', type: ({ lead: '负责人处理', worker: '成员执行', parallel: '并行分工', join: '汇合结果', deliver: '交付结果' } as Record<string, string>)[node.type] ?? '流程步骤',
@@ -296,6 +308,17 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
         const found = context.catalog.capabilities.filter((action) => action.name === item.capability)
         if (found.length !== 1) throw new Error(`业务动作“${item.capability}”不存在或名称重复`)
         item.capability = found[0]!.id
+      }
+      if (item.kind === 'business_completion') {
+        const target = flow(value.flow)
+        if (!target || !Array.isArray(item.capabilities) || item.capabilities.length < 1 || item.capabilities.length > 16) throw new Error('完成检查须指定流程及 1 至 16 个准确业务动作名称')
+        const ids = item.capabilities.map((name) => {
+          if (typeof name !== 'string') throw new Error('完成检查须使用当前目录返回的准确业务动作名称')
+          const found = context.catalog.capabilities.filter((action) => action.name === name)
+          if (found.length !== 1) throw new Error(`业务动作“${name}”不存在或名称重复`)
+          return found[0].id
+        })
+        item.capabilities = requireBusinessCompletionBindings(context.document, target, ids, context.catalog)
       }
       return item
     })

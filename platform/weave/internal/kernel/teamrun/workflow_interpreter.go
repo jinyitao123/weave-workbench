@@ -22,6 +22,7 @@ import (
 	"github.com/jinyitao123/weave/internal/base/execution"
 	"github.com/jinyitao123/weave/internal/base/fileartifact"
 	"github.com/jinyitao123/weave/internal/base/frozen"
+	"github.com/jinyitao123/weave/internal/kernel/compiler"
 	"github.com/jinyitao123/weave/internal/kernel/fanout"
 	"github.com/jinyitao123/weave/internal/kernel/loomruntime"
 	"github.com/jinyitao123/weave/internal/kernel/workflow"
@@ -84,6 +85,7 @@ type serialMachineStart struct {
 	LoadObservedEvents       func(context.Context, machine.Node, string) []workflow.RuntimeCLIEvent
 	LoadActionOutcomes       func(context.Context) ([]BusinessActionOutcomeV1, error)
 	WithActionOutcomeContext func(context.Context) context.Context
+	FinalCompletionContext   func(context.Context) (context.Context, error)
 	Corrections              []CorrectionDirectiveV1
 }
 
@@ -334,6 +336,13 @@ func runSerialMachine(
 				}
 				actionOutcomes = loadedActionOutcomes
 			}
+			if workbenchResultPromptRequired(graph, node.ID) && start.FinalCompletionContext != nil {
+				var checkErr error
+				nodeCtx, checkErr = start.FinalCompletionContext(nodeCtx)
+				if checkErr != nil {
+					return fail(checkErr)
+				}
+			}
 			output, nodeUsage, err := runAgentNode(nodeCtx, node, payload, entries, runInput, outputs, start.Corrections, correctionContext, actionOutcomes, start.WithActionOutcomeContext, workbenchResultPromptRequired(graph, node.ID))
 			if durable {
 				if nodeUsage.MemberRunID != "" {
@@ -499,6 +508,7 @@ func runSerialMachine(
 					start.RecordActivity(ctx, "member_failed", node, memberID, memberVersion, map[string]any{
 						"duration_ms": time.Since(startedAt).Milliseconds(), "error_code": string(executionErrorCode(err)),
 						"failure_class": failure.Class, "failure_reason": failure.Reason, "retryable": retryable, "authorization_required": failure.AuthorizationRequired,
+						"output_validation": nodeOutputViolation(err),
 					})
 				}
 				if routed {
@@ -1543,6 +1553,11 @@ func runAgentNode(
 	workbenchResultOutput bool,
 ) (any, nodeUsageReport, error) {
 	ctx = execution.WithNodeID(ctx, node.ID)
+	var nodeSchema json.RawMessage
+	if node.Output != nil && node.Output.Type == machine.ValueJSON {
+		nodeSchema = node.Output.Schema
+	}
+	ctx = compiler.WithNodeOutputSchema(ctx, nodeSchema)
 	var (
 		agentID      string
 		agentVersion int64
@@ -1752,6 +1767,13 @@ func runAgentNode(
 		return nil, usage, executionError(ErrorCodeExecutionUnrecoverable, usageErr)
 	}
 	if err != nil {
+		var violation *compiler.NodeOutputViolation
+		if isCompletionCheckError(err) {
+			return nil, usage, executionError(ErrorCodeNodeOutputInvalid, err)
+		}
+		if errors.As(err, &violation) {
+			return nil, usage, executionError(ErrorCodeNodeOutputInvalid, violation)
+		}
 		return nil, usage, executionError(ErrorCodeExecutionUnrecoverable, err)
 	}
 	if result == nil {
@@ -1974,11 +1996,21 @@ func validateAgentNodeOutput(node machine.Node, output any) error {
 			fmt.Errorf("node %q output cannot be encoded: %w", node.ID, err),
 		)
 	}
-	if _, problems := machine.ValidateRuntimeInput(node.Output.Schema, encoded); len(problems) != 0 {
+	if violation := compiler.ValidateNodeOutput(node.Output.Schema, encoded); violation != nil {
 		return executionError(
 			ErrorCodeNodeOutputInvalid,
-			fmt.Errorf("node %q output violates contract: %s", node.ID, problems[0].Code),
+			fmt.Errorf("node %q: %w", node.ID, violation),
 		)
+	}
+	return nil
+}
+
+// Only bounded field paths and content fingerprints enter the existing run
+// activity ledger; model output and employee materials never enter errors.
+func nodeOutputViolation(err error) *compiler.NodeOutputViolation {
+	var violation *compiler.NodeOutputViolation
+	if errors.As(err, &violation) {
+		return violation
 	}
 	return nil
 }

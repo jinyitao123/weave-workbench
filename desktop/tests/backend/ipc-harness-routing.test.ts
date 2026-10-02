@@ -208,6 +208,38 @@ describe('harness-aware IPC routing', () => {
     ])
   })
 
+  it('passes Forge business notifications through the existing read-only Host context binding', async () => {
+    const binding = { handle: 'business-context', context: { kind: 'business', materialStatus: 'available', materials: [{ name: '合同正文.docx' }, { name: '技术协议.pdf' }] } }
+    const pinWorkContinuationContext = vi.fn(async () => binding)
+    Object.assign(harness.services, { enterpriseBridge: { pinWorkContinuationContext } })
+    const item = { id: 'business-notice', source: 'forge', notificationType: 'forge.business.completed' }
+    await expect(harness.invoke('enterprise:pin-work-continuation-context', item)).resolves.toBe(binding)
+    expect(pinWorkContinuationContext).toHaveBeenCalledExactlyOnceWith(item)
+  })
+
+  it('preserves Weave continuation references and rejects unknown sources or injected business authority', async () => {
+    const pinWorkContinuationContext = vi.fn(async () => ({ handle: 'team-context' }))
+    Object.assign(harness.services, { enterpriseBridge: { pinWorkContinuationContext } })
+    const item = { id: 'team-notice', source: 'weave', notificationType: 'weave.team_run.result', workReference: 'input-1', runReference: 'run-1', sessionReference: 'session-1' }
+    await harness.invoke('enterprise:pin-work-continuation-context', item)
+    expect(pinWorkContinuationContext).toHaveBeenCalledExactlyOnceWith(item)
+    for (const invalid of [
+      { id: 'business-notice', source: 'unknown' },
+      { id: 'business-notice' },
+      { id: '', source: 'forge' },
+      { id: 'business-notice', source: 'forge', recordId: 'another-contract' },
+      { id: 'business-notice', source: 'forge', authorizedBusinessCapabilityIDs: ['approve'] },
+    ]) expect(() => harness.invoke('enterprise:pin-work-continuation-context', invalid)).toThrow()
+    expect(pinWorkContinuationContext).toHaveBeenCalledOnce()
+  })
+
+  it.each(['请先登录', '业务记录不可见', '当前 Forge 消息不是可续接的业务结果'])('propagates business context refusal without a fallback: %s', async (message) => {
+    const pinWorkContinuationContext = vi.fn(async () => { throw new Error(message) })
+    Object.assign(harness.services, { enterpriseBridge: { pinWorkContinuationContext } })
+    await expect(harness.invoke('enterprise:pin-work-continuation-context', { id: 'business-notice', source: 'forge' })).rejects.toThrow(message)
+    expect(pinWorkContinuationContext).toHaveBeenCalledExactlyOnceWith({ id: 'business-notice', source: 'forge' })
+  })
+
   it('routes sessions:list and projects channels by the harness argument, defaulting to prime', async () => {
     await expect(harness.invoke('sessions:list', undefined, false)).resolves.toEqual(['prime-sessions'])
     await expect(harness.invoke('sessions:list', undefined, false, 'pi')).resolves.toEqual(['pi-sessions'])

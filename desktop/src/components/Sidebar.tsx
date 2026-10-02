@@ -42,6 +42,8 @@ export interface SidebarProps {
   activeHarness?: HarnessId
   harnesses?: AppMeta['harnesses'] | null
   clearedAttention?: Record<string, string>
+  enterpriseMode?: boolean
+  pendingWorkCount?: number
   updateState?: AppUpdateState
   onUpdateAction?(): void | Promise<void>
   onSelectHarness?(harness: HarnessId): void
@@ -182,7 +184,7 @@ async function copySessionUuid(id: string): Promise<void> {
   if (!copied) throw new Error('Copy is unavailable')
 }
 
-function SidebarView({ projects, sessions, activeProjectId, activeSessionId, activeView, activeHarness = 'pi', harnesses, clearedAttention = {}, updateState = { phase: 'unsupported' }, onUpdateAction, onSelectHarness, onSelectProject, onSelectSession, onNavigate, onNewSession, onRemoveProject, projectSortMode = 'recent', onSetProjectSortMode = () => undefined, onTogglePinProject = () => undefined, onClose, onOpenPalette, onRenameSession, onArchiveSession, overlay = false, platform = 'darwin' }: SidebarProps) {
+function SidebarView({ projects, sessions, activeProjectId, activeSessionId, activeView, activeHarness = 'pi', harnesses, clearedAttention = {}, enterpriseMode = false, pendingWorkCount, updateState = { phase: 'unsupported' }, onUpdateAction, onSelectHarness, onSelectProject, onSelectSession, onNavigate, onNewSession, onRemoveProject, projectSortMode = 'recent', onSetProjectSortMode = () => undefined, onTogglePinProject = () => undefined, onClose, onOpenPalette, onRenameSession, onArchiveSession, overlay = false, platform = 'darwin' }: SidebarProps) {
   const { t } = useI18n()
   const [query, setQuery] = useState('')
   const [harnessMenuOpen, setHarnessMenuOpen] = useState(false)
@@ -203,6 +205,7 @@ function SidebarView({ projects, sessions, activeProjectId, activeSessionId, act
     return Boolean(signature && !signatureCleared(signature, clearedAttention[session.id], session.unread))
   }
   const unreadCount = activeSessions.reduce((count, session) => count + Number(needsAttention(session)), 0)
+  const activityCount = enterpriseMode ? pendingWorkCount : unreadCount
   const newSessionShortcut = shortcutLabel(platform, ['Primary', 'N'])
   const sidebarShortcut = shortcutLabel(platform, ['Primary', 'B'])
   const commandsShortcut = shortcutLabel(platform, ['Primary', 'K'])
@@ -305,7 +308,7 @@ function SidebarView({ projects, sessions, activeProjectId, activeSessionId, act
             {query ? <button type="button" title="Clear search" aria-label="Clear search" onClick={() => setQuery('')}>×</button> : null}
           </div>
         ) : null}
-        <button type="button" title={t('nav.activity')} className={activeView === 'activity' ? 'is-active' : ''} onClick={() => onNavigate('activity')}><Bell size={15} /><span>{t('nav.activity')}</span>{unreadCount ? <span className="nav-count">{unreadCount}</span> : null}</button>
+        <button type="button" title={t('nav.activity')} className={activeView === 'activity' ? 'is-active' : ''} onClick={() => onNavigate('activity')}><Bell size={15} /><span>{t('nav.activity')}</span>{activityCount ? <span className="nav-count">{activityCount}</span> : null}</button>
       </nav>
 
       <div className="sidebar__scroll scroll-area">
@@ -401,6 +404,8 @@ export function areSidebarPropsEqual(previous: SidebarProps, next: SidebarProps)
     && previous.activeHarness === next.activeHarness
     && previous.harnesses === next.harnesses
     && previous.clearedAttention === next.clearedAttention
+    && previous.enterpriseMode === next.enterpriseMode
+    && previous.pendingWorkCount === next.pendingWorkCount
     && previous.updateState === next.updateState
     && previous.onUpdateAction === next.onUpdateAction
     && previous.onSelectHarness === next.onSelectHarness

@@ -13,10 +13,9 @@ const MIB = 1024 * KIB
  * bundle-size creep still fails the release build.
  */
 export const BUNDLE_SIZE_BUDGETS = Object.freeze({
-  // 2026-09-30: approval-session binding, native parameter metadata, and
-  // business-result continuation raised the measured main bundle to 831,526
-  // bytes. 816 KiB is the next 8 KiB boundary above that measurement.
-  mainBytes: 816 * KIB,
+  // 2026-10-03: zero-action needs-input follow-up checks measure 844,133
+  // bytes. No dependencies added. 832 KiB is the next 8 KiB boundary.
+  mainBytes: 832 * KIB,
   preloadBytes: 16 * KIB,
   initialRendererBytes: 1280 * KIB,
   largestRendererChunkBytes: 600 * KIB,

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { LoaderCircle } from 'lucide-react'
-import type { EnterpriseWorkCancellationResult, GitStatus, HarnessId, TranscriptMessage } from '@/types/api'
+import type { GitStatus, HarnessId, TranscriptMessage } from '@/types/api'
 import { ChangesCard } from './ChangesCard'
 import { ErrorBoundary } from './ErrorBoundary'
 import { MarkdownText } from './MarkdownText'
@@ -9,7 +9,7 @@ import { PiMark, PrimeMark } from './ui'
 import { ActivityMessage, AgentMessage, AssistantMessage, GoalMessage, SteerReadMarker, UserMessage } from './transcript/messages'
 import { useTranscriptScroll } from './transcript/scroll'
 import { LiveElapsed, ThinkingDots, WorkDisclosure } from './transcript/timeline'
-import { enterpriseScopeProjection, EnterpriseScopeCards } from './transcript/EnterpriseScopeCards'
+import { enterpriseScopeProjection } from './transcript/EnterpriseScopeCards'
 
 export { classifyTool, formatWorkedDuration } from './transcript/timeline'
 export { tokenizeSyntax } from './transcript/syntax'
@@ -56,7 +56,7 @@ interface TranscriptProps {
   bottomDockHasChanges?: boolean
   queuedMessageCount?: number
   onOpenSessionReference?(sessionId: string, harness: HarnessId): void
-  onCancelWork?(runId: string): Promise<EnterpriseWorkCancellationResult>
+  onShowTeamSummary?(): void
 }
 
 
@@ -85,7 +85,7 @@ function ActiveAssistantMessage({ message, harness, showReasoning, showTools }: 
 
 
 
-export function Transcript({ messages, git, harness = 'prime', personalWorkspace = false, loading, active = false, showReasoning = true, showTools = true, onOpenChanges, onSuggestion, onOpenMaterials, onChooseWorkspace, suggestionsDisabled, showPinnedChanges = true, bottomDockHasChanges = false, queuedMessageCount = 0, onOpenSessionReference, onCancelWork }: TranscriptProps) {
+export function Transcript({ messages, git, harness = 'prime', personalWorkspace = false, loading, active = false, showReasoning = true, showTools = true, onOpenChanges, onSuggestion, onOpenMaterials, onChooseWorkspace, suggestionsDisabled, showPinnedChanges = true, bottomDockHasChanges = false, queuedMessageCount = 0, onOpenSessionReference, onShowTeamSummary }: TranscriptProps) {
   const groupedMessages = useMemo(() => coalesceAssistantTurns(messages), [messages])
   const { announcement, hiddenCount, scrollRef, showEarlier, updatePinnedState, visibleMessages } = useTranscriptScroll(groupedMessages, harness)
   const scopedMessages = useMemo(() => visibleMessages.map(enterpriseScopeProjection), [visibleMessages])
@@ -130,7 +130,7 @@ export function Transcript({ messages, git, harness = 'prime', personalWorkspace
             : message.role === 'goal' ? <GoalMessage message={message} />
             : message.role === 'tool' || message.role === 'system' ? <ActivityMessage message={message} harness={harness} />
             : <div className={`message message--${message.role}`}>{message.parts.map((part, partIndex) => part.type === 'text' ? <span key={partIndex}>{part.text}</span> : null)}</div>}
-          <EnterpriseScopeCards scopes={scopes} onCancelWork={onCancelWork} />
+          {scopes.length && onShowTeamSummary ? <button type="button" className="enterprise-summary-link" onClick={onShowTeamSummary}>查看团队状态<span aria-hidden="true">↗</span></button> : null}
         </ErrorBoundary>)}
         {active && !activeAssistantId ? <article className="message message--assistant transcript-active-placeholder" aria-live="polite">
           <div className="assistant-mark"><AssistantMark harness={harness} /></div><div className="streaming-state"><ThinkingDots /> {HARNESS_SHORT_NAMES[harness]} is working</div>

@@ -11,15 +11,18 @@ export function teamRunContinuationBoundary(createdAt: string): string {
 /** Server business results take precedence over the model's check opinion. */
 export function teamRunResultNotice(context: EnterpriseWeaveWorkContinuationContextView): string {
   if (context.inputStatus === 'superseded') return '平台已确认同一工作有后续输入取代本次输入。请从最新工作消息继续，旧检查意见只作历史参考；这不表示 Forge 业务已完成。'
-  if (context.authorization?.status === 'renewal_required') return context.authorization.canRenew
-    ? '这项工作原授权已过期，平台确认仍在无业务副作用的等待位置。只有员工在新消息明确要求继续原工作后，才调用续授权工具；保持原输入、材料和业务范围，不重新交接或重放未知动作。'
-    : '这项工作原授权已过期。平台没有确认可安全恢复，先只读核对原业务回执；不能续授权重放或另建输入掩盖旧失败。'
   const result = context.finalResult
   const businessResult = context.businessResult
+    ?? (context.actionOutcomes?.some((outcome) => outcome.status === 'failed') ? 'action_failed'
+      : context.actionOutcomes?.some((outcome) => outcome.status === 'unknown') ? 'action_unknown' : undefined)
   if (businessResult === 'action_failed' || businessResult === 'action_unknown') {
     return businessResult === 'action_failed'
       ? '平台确认本轮业务动作失败。请先核对 Forge 回执和当前业务状态，不要补件重跑或重放原业务动作。'
       : '平台尚未确认本轮业务动作结果。请先核对 Forge 回执和当前业务状态，不要补件重跑或重放原业务动作。'
+  }
+  if (context.runStatus === 'parked' && context.inputStatus === 'current'
+    && context.authorization?.status === 'renewal_required' && context.authorization.canRenew === true) {
+    return '这项工作原授权已过期，平台确认仍在无业务副作用的等待位置。只有员工在新消息明确要求继续原工作后，才调用续授权工具；保持原输入、材料和业务范围，不重新交接或重放未知动作。'
   }
   const hasSucceededAction = businessResult === undefined && context.runStatus === 'succeeded'
     && context.actionOutcomes?.some((outcome) => outcome.status === 'succeeded')

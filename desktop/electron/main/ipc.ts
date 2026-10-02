@@ -288,6 +288,8 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   handle('enterprise:save-team-member-config-draft', (_event, draft) => services.enterprise.saveTeamMemberConfigDraft(requireRecord(draft, 'draft') as unknown as import('../../src/types/api').EnterpriseTeamMemberConfigDraft))
   handle('enterprise:apply-team-member-config-draft', (_event, teamId, agentId, revision) => services.enterprise.applyTeamMemberConfigDraft(requireString(teamId, 'teamId', { min: 1, max: 160 }), requireString(agentId, 'agentId', { min: 1, max: 160 }), requireInteger(revision, 'revision', 1, 1_000_000)))
   handle('enterprise:get-work-overview', () => services.enterprise.getWorkOverview())
+  handle('enterprise:get-work-run-states', (_event, runIds) => services.enterprise.getWorkRunStates(runIds as string[]))
+  handle('enterprise:get-work-run-details', (_event, runId) => services.enterprise.getWorkRunDetails(requireString(runId, 'runId', { min: 1, max: 128 })))
   handle('enterprise:cancel-work', (_event, runId) => services.enterprise.cancelWork(requireString(runId, 'runId', { min: 1, max: 128 })))
   handle('enterprise:get-approval-context', async (_event, approvalId) => approvalContextView(await services.enterprise.getApprovalContext(requireString(approvalId, 'approvalId', { min: 1, max: 128 }))))
   handle('enterprise:pin-returned-approval-context', (_event, approvalId) => {
@@ -302,7 +304,12 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     if (!services.enterpriseBridge) throw new Error('桌面团队续接能力暂不可用')
     const item = requireRecord(rawItem, 'item')
     rejectUnknownKeys(item, ['id', 'source', 'notificationType', 'workReference', 'runReference', 'sessionReference'], 'item')
-    if (item.source !== 'weave') throw new TypeError('item.source must be weave')
+    if (item.source === 'forge') return services.enterpriseBridge.pinWorkContinuationContext({
+      id: requireString(item.id, 'item.id', { min: 1, max: 128 }),
+      source: 'forge',
+      ...(item.notificationType !== undefined ? { notificationType: requireString(item.notificationType, 'item.notificationType', { min: 1, max: 128 }) } : {}),
+    })
+    if (item.source !== 'weave') throw new TypeError('item.source must be weave or forge')
     return services.enterpriseBridge.pinWorkContinuationContext({
       id: requireString(item.id, 'item.id', { min: 1, max: 128 }),
       source: 'weave',

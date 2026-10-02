@@ -1,11 +1,23 @@
-import { memo, useMemo } from 'react'
-import { CalendarClock, Check, CircleDot, GitBranch, HeartPulse, LoaderCircle } from 'lucide-react'
+import { memo, useMemo, useState } from 'react'
+import { CalendarClock, Check, ChevronDown, HeartPulse, LoaderCircle } from 'lucide-react'
 import type { AutomationScheduleRecord, GitStatus, NativeHeartbeatRecord, ProjectRecord, RuntimeInfo, TranscriptMessage } from '@/types/api'
-import { formatRelative } from '@/lib/data'
-import { formatSessionCost, formatSessionTokens } from '@/lib/format-cost'
+import { useEnterpriseRunStates } from '@/hooks/useEnterpriseRunStates'
+import { EnterpriseScopeCards, enterpriseScopeProjection } from '../transcript/EnterpriseScopeCards'
+import type { EnterpriseWorkCancellationResult, EnterpriseWorkRunDetails, EnterpriseWorkRunStates } from '@/types/api'
 import { MarkdownText } from '../MarkdownText'
+import { formatRelative } from '@/lib/data'
+
+export interface EnterpriseSummaryWork {
+  accountScope: string
+  sessionKey: string
+  read(runIds: string[]): Promise<EnterpriseWorkRunStates>
+  cancel(runId: string): Promise<EnterpriseWorkCancellationResult>
+  readDetails?(runId: string): Promise<EnterpriseWorkRunDetails>
+  openWork?(): void
+}
 
 interface SummaryPanelProps {
+  teamWork?: EnterpriseSummaryWork
   /** Active harness agent name. */
   agentName?: string
   /** Short harness name for working copy. */
@@ -44,20 +56,22 @@ export function summarizeTranscript(messages: TranscriptMessage[]): TranscriptSu
   return { toolCount, lastText }
 }
 
-export const SummaryPanel = memo(function SummaryPanel({ agentName = 'Prime Agent', shortName = 'Prime', project, runtime, messages, git, automations, heartbeats, onOpenAutomation }: SummaryPanelProps) {
-  const { toolCount, lastText } = useMemo(() => summarizeTranscript(messages), [messages])
+export const SummaryPanel = memo(function SummaryPanel({ shortName = 'Prime', runtime, messages, teamWork, automations, heartbeats, onOpenAutomation }: SummaryPanelProps) {
+  const { lastText } = useMemo(() => summarizeTranscript(messages), [messages])
+  const scopes = useMemo(() => [...new Map(messages.flatMap((message) => enterpriseScopeProjection(message).scopes).map((scope) => [scope.runReference, scope])).values()], [messages])
+  const [selectedRun, setSelectedRun] = useState<string>()
+  const expandedRun = selectedRun && scopes.some((scope) => scope.runReference === selectedRun) ? selectedRun : scopes.at(-1)?.runReference
+  const runStates = useEnterpriseRunStates(scopes.map((scope) => scope.runReference), teamWork?.accountScope, teamWork?.read, expandedRun, teamWork?.readDetails)
   const active = Boolean(runtime?.isStreaming || runtime?.isCompacting)
-  const sessionCost = formatSessionCost(runtime?.sessionUsage)
-  const sessionTokens = formatSessionTokens(runtime?.sessionUsage)
+  const conversationSummary = <section className="summary-hero">
+    <span className={`run-state ${active ? 'is-running' : ''}`}>{active ? <LoaderCircle className="spin" size={13} /> : <Check size={13} />}{active ? `${shortName} 正在处理` : '已就绪'}</span>
+    {!scopes.length ? <h2>工作摘要</h2> : null}
+    <MarkdownText text={lastText !== undefined ? lastText.slice(0, 220) : '暂无工作摘要'} />
+  </section>
   return (
     <div className="inspector-scroll scroll-area summary-panel">
-      <section className="summary-hero">
-        <span className={`run-state ${active ? 'is-running' : ''}`}>{active ? <LoaderCircle className="spin" size={13} /> : <Check size={13} />}{runtime?.isCompacting ? 'Compacting context' : active ? `${shortName} is working` : 'Ready'}</span>
-        <h2>{runtime?.isCompacting ? 'Compacting the session context' : active ? 'Working through the request' : 'Session overview'}</h2>
-        <MarkdownText text={lastText !== undefined ? lastText.slice(0, 220) : 'Start a conversation to see a compact summary of the work here.'} />
-      </section>
-      <section className="summary-section"><h3>Workspace</h3><dl className="detail-list"><div><dt>Project</dt><dd>{project?.name ?? 'No project'}</dd></div><div><dt>Branch</dt><dd><GitBranch size={12} />{git.branch ?? project?.gitBranch ?? '—'}</dd></div><div><dt>Environment</dt><dd>Local</dd></div><div><dt>Working directory</dt><dd title={project?.primaryFolder} className="mono truncate">{project?.primaryFolder ?? '—'}</dd></div></dl></section>
-      <section className="summary-section"><h3>Progress</h3><div className="progress-list"><div><Check size={13} /><span>Loaded project context</span></div><div><Check size={13} /><span>{toolCount} tool {toolCount === 1 ? 'call' : 'calls'} recorded</span></div><div className={git.files.length ? 'is-current' : ''}><CircleDot size={13} /><span>{git.files.length ? `${git.files.length} files ready to review` : git.isRepo ? 'No uncommitted changes' : 'Git repository not detected'}</span></div></div></section>
+      <EnterpriseScopeCards scopes={[...scopes].reverse()} states={runStates.views} onCancelWork={teamWork?.cancel} onRefresh={runStates.refresh} expandedRun={expandedRun} onSelectRun={setSelectedRun} onOpenWork={teamWork?.openWork} />
+      {scopes.length ? <details className="summary-conversation"><summary>会话摘要<ChevronDown size={13} aria-hidden="true" /></summary>{conversationSummary}</details> : conversationSummary}
       {automations.length || heartbeats.length ? <section className="summary-section"><h3>Automations</h3><div className="summary-automation-list">
         {automations.slice(0, 2).map((task) => <button type="button" key={task.id} onClick={() => onOpenAutomation(task.id)}>
           <span className="summary-automation-icon"><CalendarClock size={14}/></span><span><strong>{task.title}</strong><small>{task.status}{task.nextRunAt ? ` · Next ${formatRelative(task.nextRunAt)}` : ''}</small></span>
@@ -67,8 +81,6 @@ export const SummaryPanel = memo(function SummaryPanel({ agentName = 'Prime Agen
         </button>)}
         {automations.length + heartbeats.length > 2 ? <button type="button" className="summary-automation-more" onClick={() => onOpenAutomation(automations[0]?.id ?? heartbeats[0]!.id)}>View all {automations.length + heartbeats.length} automations</button> : null}
       </div></section> : null}
-      <section className="summary-section"><h3>Context</h3><div className="context-meter"><div><span>Session context</span><span>Managed</span></div><small>{agentName} monitors and compacts context when needed.</small></div>
-        {sessionCost !== null ? <dl className="detail-list summary-cost"><div><dt>Cost</dt><dd title={sessionTokens ?? undefined}>{sessionCost}</dd></div>{sessionTokens ? <div><dt>Tokens</dt><dd className="mono truncate" title={sessionTokens}>{sessionTokens}</dd></div> : null}</dl> : null}</section>
     </div>
   )
 })

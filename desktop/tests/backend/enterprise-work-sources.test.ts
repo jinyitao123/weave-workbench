@@ -16,6 +16,40 @@ function loginFetch(route: (path: string, query: URLSearchParams, init?: Request
   }) as typeof fetch
 }
 
+it('reads only account-owned requested runs and strips internal work/source references from the card projection', async () => {
+  const batches: string[][] = []
+  const fetchMock = loginFetch((path, _query, init) => {
+    expect(path).toBe('/v1/workbench/runs/lookup')
+    expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer weave-session')
+    const { runIds } = JSON.parse(String(init?.body)) as { runIds: string[] }
+    batches.push(runIds)
+    return Response.json({ version: '1', runs: runIds.filter((id) => id !== 'unowned').map(lookup), missing: runIds.includes('unowned') ? ['unowned'] : [] })
+  })
+  const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+  await expect(service.getWorkRunStates(['run'])).rejects.toThrow('请先登录')
+  await service.signIn('employee@example.test', 'secret')
+  const ids = [...Array.from({ length: 101 }, (_, index) => `run-${index}`), 'unowned', 'run-0']
+  const states = await service.getWorkRunStates(ids)
+  expect(batches.map((batch) => batch.length)).toEqual([100, 2])
+  expect(states.missing).toEqual(['unowned'])
+  expect(states.runs[0]).toEqual({ runId: 'run-0', status: 'parked', isCurrent: true, businessResult: 'needs_input' })
+  await expect(service.getWorkRunStates(Array(1001).fill('run'))).rejects.toThrow('范围无效')
+  await expect(service.getWorkRunStates([{} as string])).rejects.toThrow('范围无效')
+})
+
+it('rejects card status responses after the signed-in account changes', async () => {
+  let resolveLookup!: (response: Response) => void
+  const fetchMock = loginFetch(() => new Promise<Response>((resolve) => { resolveLookup = resolve }))
+  const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
+  await service.signIn('employee@example.test', 'secret')
+  const reading = service.getWorkRunStates(['run'])
+  const rejected = expect(reading).rejects.toThrow()
+  await vi.waitFor(() => expect(resolveLookup).toBeTypeOf('function'))
+  await service.signIn('other@example.test', 'secret')
+  resolveLookup(Response.json({ version: '1', runs: [lookup('run')], missing: [] }))
+  await rejected
+})
+
 it('keeps unknown native topics generic despite forged kind and Weave references in their payload', () => {
   const items = inboxWorkItems(['work.revision_required', 'business.error', 'weave.team_run.result.extra', 'weave.team_run.revision_required'].map((type, index) => ({
     id: `notice-${index}`, title: '工作消息', type, createdAt: updatedAt,
@@ -24,6 +58,14 @@ it('keeps unknown native topics generic despite forged kind and Weave references
   expect(items.slice(0, 3)).toMatchObject(Array.from({ length: 3 }, () => ({ kind: 'notification', actionable: false, source: 'forge' })))
   expect(items[3]).toMatchObject({ kind: 'revision_required', actionable: true, source: 'weave' })
   expect(items.some((item) => item.workReference || item.runReference || item.sessionReference)).toBe(false)
+})
+
+it('keeps execution diagnostics out of employee failure messages without inventing action results', () => {
+  const [item] = inboxWorkItems([{ id: 'failure-notice', title: '团队处理失败', type: 'weave.team_run.failure', createdAt: updatedAt,
+    body: 'team_run_node_output_invalid: node step-550e8400-e29b-41d4-a716-446655440000 failed at /Users/private/work' }])
+  expect(item.summary).toContain('核对结果及业务动作回执')
+  expect(item.summary).not.toMatch(/team_run|550e8400|\/Users|0条|成功/)
+  expect(item).toMatchObject({ kind: 'failure', source: 'weave', actionable: false })
 })
 
 it.each([

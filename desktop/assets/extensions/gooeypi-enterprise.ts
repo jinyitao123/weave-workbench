@@ -120,6 +120,7 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
       'team_key 只能来自本会话最近一次团队查找；不要编造或跨会话沿用。',
       '只查看最可能适合的候选；信息不足时先向员工询问业务事实，不要依次展开所有团队。',
       '接什么、需要什么、交付什么以团队目标和流程说明为准；缺少关键业务信息时询问员工，不要求填写结构化配置。',
+      'business_actions 只列 Forge 业务写入能力，不是团队全部工作类型。团队目标或流程支持核对、分析时，可按只读范围交接，不需要独立的 Forge 分析动作。员工已明确要求按当前材料检查缺项时，不因已知缺件重复确认；把缺项和停止条件写入目标，业务动作仍传空范围。',
     ],
     parameters: Type.Object({
       team_key: Type.String({ minLength: 1, maxLength: 128, description: '团队查找返回的候选键' }),
@@ -199,7 +200,7 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
         path: Type.String({ minLength: 1, description: '当前工作目录中的材料文件路径' }),
         sha256: Type.String({ minLength: 64, maxLength: 64, description: '读取员工指定版本时核对的文件 SHA-256' }),
       })),
-      reuse_material_names: Type.Optional(Type.Array(Type.String({ minLength: 1, maxLength: 255 }), { description: '员工明确授权复用的已结束只读工作中唯一的原冻结文件名；Host 要求当前员工权限、平台动作回执明确为空且冻结清单唯一匹配' })),
+      reuse_material_names: Type.Optional(Type.Array(Type.String({ minLength: 1, maxLength: 255 }), { description: '直接复制当前上下文中原冻结材料的 name，不添加《》、引号或其他修饰；仅限员工明确授权且Host核验动作回执为零的成功缺件结果或已结束只读工作。成功缺件结果的原授权可非空，但本轮须新输入、新授权，不能续旧授权或重放旧运行；Host核验当前员工、最新来源及唯一文件版本' })),
     }),
     async execute(_id, params) { return result(await turnCall('submit', params)) },
   })

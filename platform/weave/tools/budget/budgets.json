@@ -611,6 +611,52 @@
         "lines_added": 1735,
         "production_lines_added": 1018
       }
+    },
+    {
+      "date": "2026-10-02",
+      "source_commit": "452f83c5799bc12f60b3d771d7a62c573a2e5116",
+      "reason": "Reviewed contract-path repair: bind each frozen node output schema to the existing Loom completion verifier and provider mode, compose the opt-in trailing tool-protocol guard, and preserve bounded output-validation metadata. The first remote Go CI passed all Go/PostgreSQL tests and then exposed the missing budget registration. Exactly 156 production lines and 415 regression lines are accounted for by this commit, with no spare allowance, new packages, external dependencies, or changes to checking logic and original migration targets.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 99002,
+        "previous_production_lines": 82171,
+        "lines_added": 571,
+        "production_lines_added": 156
+      }
+    },
+    {
+      "date": "2026-10-02",
+      "reason": "Route business-only standard Loom publications through the existing durable v2 member contract; reject unsupported legacy/custom/CLI factories and parallel business members before effects. Add a real PostgreSQL publication-to-loader-to-MemberRunner-to-Forge action regression and retain immutable legacy ABI rejection. Exact measured increases only; no new packages, dependencies, journal, execution loop, or spare budget.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 99573,
+        "previous_production_lines": 82327,
+        "lines_added": 95,
+        "production_lines_added": 42
+      },
+      "app": {
+        "previous_lines": 87209,
+        "previous_production_lines": 64038,
+        "lines_added": 316,
+        "production_lines_added": 3
+      }
+    },
+    {
+      "date": "2026-10-03",
+      "reason": "Opt-in declared business receipt completion checks reuse the existing delivery contract, tool loop, durable facts and publication path; add provider-leaf JSON compatibility only under exact local schema verification and propagate stream failure facts. Include real PostgreSQL admission-to-effects and trial-receipt crash-window regressions. Exact measured increases only; no new packages, dependencies, queues, execution loops, relaxed checks or spare budget.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 99668,
+        "previous_production_lines": 82369,
+        "lines_added": 1546,
+        "production_lines_added": 684
+      },
+      "app": {
+        "previous_lines": 87525,
+        "previous_production_lines": 64041,
+        "lines_added": 683,
+        "production_lines_added": 147
+      }
     }
   ],
   "migration_targets": {
@@ -648,8 +694,8 @@
     ]
   },
   "kernel": {
-    "lines": 99002,
-    "production_lines": 82171,
+    "lines": 101214,
+    "production_lines": 83053,
     "packages": 49,
     "external_dependencies": 5,
     "allowed_dependencies": [
@@ -673,8 +719,8 @@
     ]
   },
   "app": {
-    "lines": 87209,
-    "production_lines": 64038,
+    "lines": 88208,
+    "production_lines": 64188,
     "packages": 30,
     "external_dependencies": 7,
     "allowed_dependencies": [

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Sidebar } from '@/components/Sidebar'
+import { enterprisePendingWorkCount } from '@/lib/enterprise-work-count'
 import { TitleToolbar } from '@/components/TitleToolbar'
 import { WorkActionReceipt } from '@/components/WorkActionReceipt'
 import type { ProjectScriptKind } from '@/components/ProjectRunControl'
@@ -127,11 +128,14 @@ export default function App() {
   const [workError, setWorkError] = useState('')
   const [teamActionReceipt, setTeamActionReceipt] = useState<{ generation: number; outcomes?: TeamActionOutcomes }>()
   const enterpriseSessionRevisionRef = useRef(0)
+  const [enterpriseSessionRevision, setEnterpriseSessionRevision] = useState(0)
+  const workOverviewRequestRef = useRef<{ sessionRevision: number } | null>(null)
   const [enterpriseSession, setEnterpriseSession] = useState<EnterpriseSession | undefined>(() => enterpriseBridge ? undefined : ({
     version: '1', status: 'signed-in', environment: { origin: 'http://localhost', secure: false }, storage: 'session-only',
     identitySource: { kind: 'forge-account', issuer: 'http://localhost' }, user: { id: 'preview', weaveUserId: 'preview-weave', name: 'Preview', email: 'preview@example.test' },
     organization: { id: 'preview', name: 'Preview' }, permissions: ['teams:use', 'teams:develop', 'teams:admin'],
   }))
+  const enterpriseSessionRef = useRef(enterpriseSession)
   const { toast, setToast } = useToast()
   const [changesCardDismissed, setChangesCardDismissed] = useState(false)
   const submissionAdmissionRef = useRef(createSingleFlightAdmission())
@@ -149,7 +153,11 @@ export default function App() {
     setToast(errorMessage(error))
   }, [])
   const publishEnterpriseSession = useCallback((session: EnterpriseSession) => {
-    enterpriseSessionRevisionRef.current++
+    const revision = ++enterpriseSessionRevisionRef.current
+    enterpriseSessionRef.current = session
+    workOverviewRequestRef.current = null
+    setEnterpriseSessionRevision(revision)
+    setWorkOverview(undefined); setWorkLoading(false); setWorkError('')
     setEnterpriseSession(session)
   }, [])
   useEffect(() => {
@@ -180,15 +188,19 @@ export default function App() {
     publishEnterpriseSession(await enterpriseBridge.signOut())
   }, [enterpriseBridge, publishEnterpriseSession])
   const refreshWorkOverview = useCallback(() => {
-    if (!enterpriseBridge || workLoading) return
+    if (!enterpriseBridge || enterpriseSessionRef.current?.status !== 'signed-in') return
     const sessionRevision = enterpriseSessionRevisionRef.current
+    if (workOverviewRequestRef.current?.sessionRevision === sessionRevision) return
+    const request = { sessionRevision }
+    workOverviewRequestRef.current = request
+    const isCurrent = () => enterpriseSessionRevisionRef.current === sessionRevision && workOverviewRequestRef.current === request
     setWorkLoading(true); setWorkError('')
     void enterpriseBridge.getWorkOverview().then((overview) => {
-      if (enterpriseSessionRevisionRef.current === sessionRevision) setWorkOverview(overview)
+      if (isCurrent()) setWorkOverview(overview)
     }).catch((error) => {
-      if (enterpriseSessionRevisionRef.current === sessionRevision) { setWorkError(errorMessage(error)); reportError(error) }
-    }).finally(() => { if (enterpriseSessionRevisionRef.current === sessionRevision) setWorkLoading(false) })
-  }, [enterpriseBridge, reportError, workLoading])
+      if (isCurrent()) { setWorkError(errorMessage(error)); reportError(error) }
+    }).finally(() => { if (isCurrent()) { workOverviewRequestRef.current = null; setWorkLoading(false) } })
+  }, [enterpriseBridge, reportError])
   const completeEnterpriseTask = useCallback(async (task: EnterpriseHumanTask, decision: 'approved' | 'rejected', comment: string) => {
     if (!enterpriseBridge) return
     const sessionRevision = enterpriseSessionRevisionRef.current
@@ -351,7 +363,8 @@ export default function App() {
   }, [])
   const onAccountSwitch = useCallback(() => {
     setDevelopmentOverview(undefined); setDevelopmentError(''); setDevelopmentLoading(false)
-    setWorkOverview(undefined); setWorkError(''); setWorkLoading(false)
+    // publishEnterpriseSession already reset the overview for this identity.
+    // A later catalog bootstrap must not erase its fresh account-scoped read.
     setTeamActionReceipt(undefined)
     setScheduleFocusId(null)
     setTerminalSelection(undefined)
@@ -366,6 +379,14 @@ export default function App() {
   const enterpriseWorkspaceScope = enterpriseSession?.status === 'signed-in'
     ? `${enterpriseSession.organization?.id ?? ''}:${enterpriseSession.user?.weaveUserId ?? enterpriseSession.user?.id ?? ''}`
     : undefined
+  const enterpriseSummaryWork = useMemo(() => enterpriseWorkspaceScope && enterpriseBridge ? {
+    accountScope: enterpriseWorkspaceScope,
+    sessionKey: workspace.activeSessionId ?? `new:${workspace.workspaceGeneration}`,
+    read: enterpriseBridge.getWorkRunStates,
+    readDetails: enterpriseBridge.getWorkRunDetails,
+    cancel: cancelEnterpriseWorkById,
+    openWork: () => setView('activity'),
+  } : undefined, [enterpriseWorkspaceScope, enterpriseBridge, workspace.activeSessionId, workspace.workspaceGeneration, cancelEnterpriseWorkById])
   const { meta, initialized, catalogReady, refreshHarnesses } = useBootstrap({
     bridge, ready: settingsState.initialized, harness: activeHarness, accountScope: enterpriseWorkspaceScope, setProjects, setSessions, setSchedules, setScheduleError,
     runtimeSessionsRef: workspace.runtimeSessionsRef, workspaceRef: workspace.workspaceRef,
@@ -631,7 +652,7 @@ export default function App() {
       historicalRunBoundary,
       `原工作目标：${originalGoal}`,
       teamContext.materials.length ? `上次固定材料：${teamContext.materials.map((material) => `《${material.name}》`).join('、')}。打开消息只授权查看；员工在新消息明确允许后，桌面才能核验并复用这些准确版本。` : '',
-      item.summary ? `失败提示：${item.summary}` : '',
+      '失败提示：本次团队执行未完成。具体业务动作以平台回执为准，请先核对工作记录；不能把执行失败归因于员工材料。',
       '先向员工说明这次没有团队结论，也不能由运行失败推断 Forge 业务状态。若员工仍要只读检查，等待其在新消息中明确授权复用上次固定材料或附上新版材料，再按新输入交给原团队；不用要求重复上传未改变的原件。若上次有业务动作结果，先核对 Forge 回执，不能盲目重试。',
     ].filter(Boolean).join('\n\n') : unresolvedBusinessAction && teamContext ? [
       '你打开的是上一条团队结果消息。团队流程已结束，但其中的 Forge 业务动作失败或结果未知；打开消息只授权查看，不是员工再次授权执行。不要从历史会话查恢复凭据，也不要在本轮重新交接或重放业务动作。',
@@ -967,9 +988,26 @@ export default function App() {
     if (activeHarness !== 'pi' && ['team-division', 'team-workflow', 'development'].includes(settingsState.inspectorTab)) settingsState.selectInspectorTab('summary')
     else if (activeHarness === 'pi' && settingsState.inspectorTab === 'development') settingsState.selectInspectorTab('team-division')
   }, [activeHarness, settingsState.inspectorTab, settingsState.selectInspectorTab])
+  useEffect(() => { refreshWorkOverview() }, [enterpriseSessionRevision, refreshWorkOverview])
+  useEffect(() => { if (view === 'activity') refreshWorkOverview() }, [refreshWorkOverview, view])
   useEffect(() => {
-    if (view === 'activity' && enterpriseBridge && !workOverview && !workLoading && !workError) refreshWorkOverview()
-  }, [enterpriseBridge, refreshWorkOverview, view, workError, workLoading, workOverview])
+    let foreground = document.visibilityState !== 'hidden' && document.hasFocus()
+    const resume = () => {
+      if (document.visibilityState === 'hidden' || foreground) return
+      foreground = true
+      refreshWorkOverview()
+    }
+    const blur = () => { foreground = false }
+    const visibility = () => { if (document.visibilityState === 'hidden') blur(); else resume() }
+    window.addEventListener('focus', resume)
+    window.addEventListener('blur', blur)
+    document.addEventListener('visibilitychange', visibility)
+    return () => {
+      window.removeEventListener('focus', resume)
+      window.removeEventListener('blur', blur)
+      document.removeEventListener('visibilitychange', visibility)
+    }
+  }, [refreshWorkOverview])
 
   const page = view === 'projects' ? <ProjectsPage projects={projects} sortMode={settingsState.settings.projectSortMode} onAdd={() => void addProject()} onOpen={selectProject} onRemove={(project) => void removeProject(project)} onTogglePin={(project) => void togglePinProject(project)} />
     : view === 'activity' && enterpriseBridge ? <EnterpriseWorkPage overview={workOverview} loading={workLoading} error={workError} onRefresh={refreshWorkOverview} onComplete={completeEnterpriseTask} onInspect={inspectEnterpriseTask} onAssist={assistEnterpriseTaskInPi} onContinue={continueEnterpriseWork} onCancel={async (run) => { await cancelEnterpriseWorkById(run.id) }} />
@@ -987,7 +1025,7 @@ export default function App() {
 
   const teamEditorVisible = view === 'session' && activeHarness === 'pi' && inspectorVisible && canDevelop && ['team-division', 'team-workflow', 'development'].includes(settingsState.inspectorTab)
   return <I18nProvider preference={settingsState.settings.locale}><div className={`app-shell${teamEditorVisible ? ' app-shell--team-editor-active' : ''}`} aria-busy={!workspaceInitialized} data-platform={platform} data-ready={workspaceInitialized ? 'true' : 'false'}>
-    {sidebarVisible && workspaceInitialized ? <Sidebar projects={projects} sessions={sessions} clearedAttention={clearedAttention} activeProjectId={activeProject?.id} activeSessionId={workspace.activeSessionId} activeView={view} activeHarness={activeHarness} harnesses={meta?.harnesses ?? null} updateState={appUpdates.state} onUpdateAction={appUpdates.act} onSelectHarness={selectHarness} projectSortMode={settingsState.settings.projectSortMode} {...sidebarActions} overlay={layout.compactLayout} platform={platform} /> : null}
+    {sidebarVisible && workspaceInitialized ? <Sidebar projects={projects} sessions={sessions} clearedAttention={clearedAttention} enterpriseMode={Boolean(enterpriseBridge)} pendingWorkCount={enterprisePendingWorkCount(workOverview, workLoading || Boolean(workError))} activeProjectId={activeProject?.id} activeSessionId={workspace.activeSessionId} activeView={view} activeHarness={activeHarness} harnesses={meta?.harnesses ?? null} updateState={appUpdates.state} onUpdateAction={appUpdates.act} onSelectHarness={selectHarness} projectSortMode={settingsState.settings.projectSortMode} {...sidebarActions} overlay={layout.compactLayout} platform={platform} /> : null}
     {sidebarVisible && workspaceInitialized ? <button type="button" className="panel-scrim panel-scrim--sidebar" aria-label="Close sidebar" onClick={toggleSidebar} /> : null}
     <div className="workbench" inert={layout.compactLayout && sidebarVisible ? true : undefined}>
       <TitleToolbar project={view === 'session' ? activeProject : undefined} gitBranch={git.branch} view={view} productName={HARNESS_PRODUCT_NAMES[activeHarness]} sidebarOpen={sidebarVisible} inspectorOpen={inspectorVisible} terminalOpen={terminalOpen} voiceOpen={voiceOrbOpen} activeProjectScriptKind={activeProjectScriptKind(activeProjectScriptRun, activeProject?.id)} onRunProjectScript={startProjectScript} onStopProjectScript={stopProjectScript} onSaveProjectScripts={saveProjectScripts} onToggleSidebar={toggleSidebar} onToggleInspector={toggleInspector} onToggleTerminal={toggleTerminal} onToggleVoice={toggleVoice} onOpenBrowser={openBrowser} platform={platform} />
@@ -995,7 +1033,7 @@ export default function App() {
         <div ref={layout.sessionWorkspaceRef} className="conversation-column">
           <main className="conversation-pane">
             {teamActionReceipt?.generation === workspace.workspaceGeneration ? <WorkActionReceipt outcomes={teamActionReceipt.outcomes}/> : null}
-            <Suspense fallback={<LoadingPanel label="conversation" />}><Transcript key={workspace.activeSessionId ?? 'new-session'} messages={workspace.messages} git={git} harness={activeHarness} personalWorkspace={activeProject?.purpose === 'personal'} loading={workspace.loadingSession} active={busy || activeSession?.status === 'running'} showReasoning={settingsState.settings.showReasoningSummaries} showTools={settingsState.settings.showToolCalls} onOpenChanges={openChanges} onCancelWork={enterpriseBridge ? cancelEnterpriseWorkById : undefined} onSuggestion={(prompt) => { void sendPrompt(prompt).catch(() => undefined) }} onOpenMaterials={activeProject?.materialsFolder ? openMaterialsFolder : undefined} onChooseWorkspace={() => { void addProject() }} suggestionsDisabled={!activeProject || workspace.loadingSession || submitting} showPinnedChanges={false} bottomDockHasChanges={Boolean(git.files.length && settingsState.settings.showFileChangesPopup && !changesCardDismissed)} queuedMessageCount={queuedMessages.length} onOpenSessionReference={(sessionId, harness) => { const session = sessions.find((candidate) => candidate.id === sessionId && candidate.harness === harness && !candidate.archived && candidate.depth === 0); if (session) void selectSession(session); else setToast('That referenced session is archived or no longer available.') }} /></Suspense>
+            <Suspense fallback={<LoadingPanel label="conversation" />}><Transcript key={`${enterpriseWorkspaceScope ?? 'signed-out'}:${workspace.activeSessionId ?? 'new-session'}`} messages={workspace.messages} git={git} harness={activeHarness} personalWorkspace={activeProject?.purpose === 'personal'} loading={workspace.loadingSession} active={busy || activeSession?.status === 'running'} showReasoning={settingsState.settings.showReasoningSummaries} showTools={settingsState.settings.showToolCalls} onOpenChanges={openChanges} onShowTeamSummary={() => { settingsState.selectInspectorTab('summary'); if (!inspectorVisible) toggleInspector() }} onSuggestion={(prompt) => { void sendPrompt(prompt).catch(() => undefined) }} onOpenMaterials={activeProject?.materialsFolder ? openMaterialsFolder : undefined} onChooseWorkspace={() => { void addProject() }} suggestionsDisabled={!activeProject || workspace.loadingSession || submitting} showPinnedChanges={false} bottomDockHasChanges={Boolean(git.files.length && settingsState.settings.showFileChangesPopup && !changesCardDismissed)} queuedMessageCount={queuedMessages.length} onOpenSessionReference={(sessionId, harness) => { const session = sessions.find((candidate) => candidate.id === sessionId && candidate.harness === harness && !candidate.archived && candidate.depth === 0); if (session) void selectSession(session); else setToast('That referenced session is archived or no longer available.') }} /></Suspense>
             <div className="conversation-bottom-dock">
               {git.files.length && settingsState.settings.showFileChangesPopup && !changesCardDismissed ? <ChangesCard git={git} onOpenChanges={openChanges} onClose={() => setChangesCardDismissed(true)} /> : null}
               <Composer key={workspace.activeSessionId ? `${activeProject?.id ?? 'no-project'}:${workspace.activeSessionId}` : `${activeProject?.id ?? 'no-project'}:new:${workspace.workspaceGeneration}`} draftKey={workspace.activeSessionId ? `${activeProject?.id ?? 'no-project'}:${workspace.activeSessionId}` : `${activeProject?.id ?? 'no-project'}:new`} busy={busy} submitting={submitting} loading={workspace.loadingSession} disabled={!activeProject} messageEnterAction={settingsState.settings.messageEnterAction} voice={bridge?.voice} transcriptionProvider={settingsState.settings.voiceTranscriptionProvider} model={provider.model} effort={provider.effort} modelsByProvider={provider.modelsByProvider} providers={provider.catalog?.providers ?? EMPTY_PROVIDERS} reasoningLevels={provider.reasoningLevels} fast={provider.fast} fastSupported={provider.selectedModel?.fastModeSupported ?? false} fastAvailable={workspace.runtime?.fastModeAvailable !== false} checkoutCatalog={checkoutCatalog} checkoutLabel={git.branch ?? activeProject?.gitBranch ?? activeProject?.name} checkoutsLoading={checkoutsLoading} onExecuteCheckout={bridge && activeProject && !activeProject.inferred ? executeCheckout : undefined} agentName={HARNESS_AGENT_NAMES[activeHarness]} shortName={HARNESS_SHORT_NAMES[activeHarness]} harness={activeHarness} workspaceProjectId={activeProject?.id} personalWorkspace={activeProject?.purpose === 'personal'} imageInputSupported={Boolean(provider.selectedModel?.input.includes('image'))} contextUsage={workspace.runtime?.contextUsage} sessionUsage={workspace.runtime?.sessionUsage} executingModel={workspace.runtime?.executingModel} skills={pluginSkills.skills} sessions={mentionableSessions} annotations={browserAnnotations.annotations} terminalSelection={terminalSelection} getTerminalContext={getTerminalContext} queuedMessages={queuedMessages} onDeleteQueuedMessage={removeQueuedMessage} onEditQueuedMessage={removeQueuedMessage} sendSignal={browserAnnotations.sendSignal} onModelChange={provider.changeModel} onEffortChange={provider.changeEffort} onFastChange={provider.changeFast} onSend={(prompt, images, intent, textAttachments) => sendPrompt(prompt, images, intent, undefined, undefined, textAttachments)} onImportTextFile={importComposerTextFile} onStop={stopRuntime} onRemoveAnnotation={browserAnnotations.remove} onClearAnnotations={browserAnnotations.clear} onClearTerminalSelection={clearTerminalSelection} />
@@ -1004,7 +1042,7 @@ export default function App() {
           {terminalSessions.map((terminal) => <Suspense key={terminal.id} fallback={terminal.id === activeTerminalSession?.id ? <TerminalLoadingPanel /> : null}><TerminalDrawer ref={(handle) => { if (handle) terminalDrawerRefs.current.set(terminal.id, handle); else terminalDrawerRefs.current.delete(terminal.id) }} visible={terminal.id === activeTerminalSession?.id} cwd={terminal.cwd} sessionPath={terminal.sessionPath} shell={settingsState.settings.terminalShell} initialCommand={terminal.initialCommand} height={layout.terminalHeight} minHeight={TERMINAL_MIN} maxHeight={layout.terminalMax} defaultHeight={TERMINAL_DEFAULT} onHeightChange={layout.setTerminalHeight} onClose={() => closeTerminal(terminal.id)} onError={reportError} onInitialCommandConsumed={() => setTerminalSessions((current) => current.map((item) => item.id === terminal.id ? { ...item, initialCommand: undefined } : item))} onOpenLink={openTerminalLink} onReady={() => setTerminalDrawerRevision((revision) => revision + 1)} onSelectionChange={(selection) => { if (terminal.id === activeTerminalSession?.id) setTerminalSelection(selection) }} /></Suspense>)}
         </div>
           {inspectorVisible ? <ResizeHandle orientation="vertical" label="Resize inspector" value={layout.inspectorWidth} min={INSPECTOR_MIN} max={layout.inspectorMax} defaultValue={INSPECTOR_DEFAULT} onChange={layout.setInspectorWidth} /> : null}
-          {inspectorVisible ? <Suspense fallback={<LoadingPanel label="inspector" />}><Inspector key={`inspector-${browserGeneration}`} activeTab={settingsState.inspectorTab} onTabChange={settingsState.selectInspectorTab} onClose={toggleInspector} agentName={HARNESS_AGENT_NAMES[activeHarness]} shortName={HARNESS_SHORT_NAMES[activeHarness]} project={activeProject} cwd={activeCwd} runtime={workspace.runtime} messages={settingsState.inspectorTab === 'summary' ? workspace.messages : EMPTY_MESSAGES} git={git} automations={inspectorAutomations} heartbeats={inspectorHeartbeats} onOpenAutomation={openAutomation} browserHome={settingsState.settings.browserHome} browserNavigationRequest={browserNavigationRequest} onBrowserNavigationRequestHandled={handleBrowserNavigationRequest} browserAnnotations={browserAnnotations} agentBrowserTabs={activeAgentTabs} activeAgentTabId={activeAgentTabId} agentPreviewSelected={agentPreviewSelected} onSelectAgentTab={selectAgentTab} onCloseAgentTab={agentBrowser.close} onShowBrowserPreview={showBrowserPreview} onAgentSlotRect={setAgentSlotRect} agentSessionKey={activeRuntimeSessionFile ?? activeSessionFilePath} onPreviewContext={previewContext} previewPointerEvent={agentBrowser.pointerEvent?.tabId === 'preview' ? agentBrowser.pointerEvent : null} onNavigateAgentTab={navigateAgentTab} onRefreshGit={refreshGit} onOpenExternal={openExternal} onRevealPath={revealInFileManager} onGrantProject={grantActiveProject} teamDevelopment={activeHarness === 'pi' && canDevelop && enterpriseBridge && bridge && enterpriseSession?.user?.id ? { enterprise: enterpriseBridge, agent: bridge.agent, accountId: enterpriseSession.user.id, overview: developmentOverview, loading: developmentLoading, onRefresh: refreshDevelopmentOverview } : undefined} overlay={layout.compactLayout} platform={platform} /></Suspense> : null}
+          {inspectorVisible ? <Suspense fallback={<LoadingPanel label="inspector" />}><Inspector key={`inspector-${browserGeneration}`} teamWork={enterpriseSummaryWork} activeTab={settingsState.inspectorTab} onTabChange={settingsState.selectInspectorTab} onClose={toggleInspector} agentName={HARNESS_AGENT_NAMES[activeHarness]} shortName={HARNESS_SHORT_NAMES[activeHarness]} project={activeProject} cwd={activeCwd} runtime={workspace.runtime} messages={settingsState.inspectorTab === 'summary' ? workspace.messages : EMPTY_MESSAGES} git={git} automations={inspectorAutomations} heartbeats={inspectorHeartbeats} onOpenAutomation={openAutomation} browserHome={settingsState.settings.browserHome} browserNavigationRequest={browserNavigationRequest} onBrowserNavigationRequestHandled={handleBrowserNavigationRequest} browserAnnotations={browserAnnotations} agentBrowserTabs={activeAgentTabs} activeAgentTabId={activeAgentTabId} agentPreviewSelected={agentPreviewSelected} onSelectAgentTab={selectAgentTab} onCloseAgentTab={agentBrowser.close} onShowBrowserPreview={showBrowserPreview} onAgentSlotRect={setAgentSlotRect} agentSessionKey={activeRuntimeSessionFile ?? activeSessionFilePath} onPreviewContext={previewContext} previewPointerEvent={agentBrowser.pointerEvent?.tabId === 'preview' ? agentBrowser.pointerEvent : null} onNavigateAgentTab={navigateAgentTab} onRefreshGit={refreshGit} onOpenExternal={openExternal} onRevealPath={revealInFileManager} onGrantProject={grantActiveProject} teamDevelopment={activeHarness === 'pi' && canDevelop && enterpriseBridge && bridge && enterpriseSession?.user?.id ? { enterprise: enterpriseBridge, agent: bridge.agent, accountId: enterpriseSession.user.id, overview: developmentOverview, loading: developmentLoading, onRefresh: refreshDevelopmentOverview } : undefined} overlay={layout.compactLayout} platform={platform} /></Suspense> : null}
           {inspectorVisible ? <button type="button" className="panel-scrim panel-scrim--inspector" aria-label="Close inspector" onClick={toggleInspector} /> : null}
       </div> : <Suspense fallback={<LoadingPanel label={view} />}>{page}</Suspense>}</div>
     </div>

@@ -2,6 +2,7 @@ import type { EnterpriseBusinessCapabilityBinding, EnterpriseBusinessCapabilityC
 import type { TeamDefinition } from '../../types/team-workspace'
 import { addParallelBranch, bindings, configureWorkflowResultProtocol, initialGraph, insertStep, isParallelBranchWorker, originalBinding, predecessors, removeStep, validateWorkflowResultProtocol, WORKBENCH_RESULT_PROTOCOL } from './graph'
 import { isSystemManagedBusinessParameter, newMember } from './member'
+import { businessCompletionRequirement, configureBusinessCompletion, requireBusinessCompletionBindings, requireBusinessCompletionOutput } from './business-completion'
 
 export type TeamDevelopmentOperation =
   | { kind: 'team'; name?: string; objective?: string }
@@ -18,6 +19,7 @@ export type TeamDevelopmentOperation =
   | { kind: 'step_input'; flow: string; step: string; source: 'run_input' | 'node_output'; from?: string; selected: boolean }
   | { kind: 'delivery'; flow: string; from: string }
   | { kind: 'result_protocol'; flow: string; enabled: boolean; from?: string }
+  | { kind: 'business_completion'; flow: string; capabilities: string[]; allowNeedsInput: boolean }
   | { kind: 'join'; flow: string; step: string; policy: 'all_success' | 'fail_fast' | 'quorum' | 'deadline'; successCount?: number; deadlineSeconds?: number }
 
 export interface TeamDevelopmentProposal {
@@ -284,6 +286,12 @@ export function applyTeamDevelopmentOperations(base: TeamDefinition, raw: unknow
         changes.push(`${operation.enabled ? '启用' : '关闭'}团队结果分类：${target.name}`)
         break
       }
+      case 'business_completion': {
+        const target = flow(operation.flow)
+        target.graph_definition = configureBusinessCompletion(document, target, operation.capabilities, operation.allowNeedsInput, catalog)
+        changes.push(`设置业务动作回执完成检查：${target.name}`)
+        break
+      }
       case 'join': {
         const target = flow(operation.flow)
         const stepId = string(operation.step, '汇合步骤', 128)
@@ -306,6 +314,11 @@ export function applyTeamDevelopmentOperations(base: TeamDefinition, raw: unknow
   for (const workflow of document.workflows) {
     const issue = validateWorkflowResultProtocol(workflow)
     if (issue) throw new Error(`流程“${workflow.name || '未命名流程'}”：${issue}`)
+    const completion = businessCompletionRequirement(workflow)
+    if (completion) {
+      requireBusinessCompletionBindings(document, workflow, completion.capabilities, catalog)
+      requireBusinessCompletionOutput(workflow)
+    }
   }
   return { document, changes }
 }

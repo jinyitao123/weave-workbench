@@ -18,6 +18,7 @@ export interface WorkbenchRunLookup {
   status: string
   isCurrent: boolean
   businessResult?: 'completed' | 'needs_input' | 'action_failed' | 'action_unknown'
+  actionCounts?: { succeeded: number; failed: number; unknown: number }
 }
 
 export interface WorkbenchRunLookupResponse {
@@ -75,6 +76,7 @@ export function parseRunLookup(value: unknown): WorkbenchRunLookupResponse {
       throw new Error('Weave 返回了无法识别的团队运行状态')
     }
     return { runId, inputRevisionID, workbenchSessionID, status, isCurrent: run.isCurrent,
+      actionCounts: { succeeded: counts.succeeded as number, failed: counts.failed as number, unknown: counts.unknown as number },
       ...(businessResult === 'completed' || businessResult === 'needs_input' || businessResult === 'action_failed' || businessResult === 'action_unknown' ? { businessResult } : {}) }
   })
   const missing = body.missing.map((entry) => {
@@ -127,7 +129,9 @@ export function inboxWorkItems(rawNotifications: unknown[]): EnterpriseWorkItem[
       id, kind, title: displayTitle, status, actionable, read: notification?.read === true,
       source: weaveKind ? 'weave' : 'forge',
       notificationType, createdAt,
-      ...(text(notification?.body) ? { summary: text(notification?.body) } : {}),
+      ...(kind === 'failure'
+        ? { summary: '本次团队执行未完成，请打开工作记录核对结果及业务动作回执。' }
+        : text(notification?.body) ? { summary: text(notification?.body) } : {}),
       ...(text(data?.instructions) ? { instructions: text(data?.instructions) } : {}),
       ...(text(notification?.actionUrl) ?? text(notification?.action_url) ? { actionUrl: text(notification?.actionUrl) ?? text(notification?.action_url) } : {}),
       ...(text(material?.label) ? { materialLabel: text(material?.label) } : {}),
