@@ -1,5 +1,7 @@
 # Forge OTC 顺序业务走查台账
 
+> 公开副本已对真实运维主机、端口、本机绝对路径及查询值脱敏；原始日期、来源 SHA、结论与失败事实保持原记录。原件/摘要仅在本机私下保全。
+
 更新于 2026-09-28。以下原有 OEM 控制柜各阶段记录保留其当时的材料、环境和验收口径，不追改历史结论。当前新增走查以 Forge 业务目标和正常页面实际办理为准；RISEMAP 仅作页面与流程参考，具体规则不自动推广为客户无关要求。当前阶段覆盖与缺口见本页最新的“销售到项目业务走查”表。
 
 ## 2026-09-28 销售到项目收束批次（当前）
@@ -24,7 +26,7 @@
 
 | 步骤 | Forge 页面与实际结果 | 状态与角色 | 截图证据 | 缺口 | 下一步 |
 | --- | --- | --- | --- | --- | --- |
-| 环境与角色盘点 | 本机没有正在监听的 Forge HTTP 服务；当前浏览器使用 `http://124.223.189.112/` 的远程开发联调 Forge。`GET /api/v1/health` 返回 HTTP 200、ObjectStack `17.3.0`。总仓《开发联调环境》记录 124 为开发联调环境、Forge 来源提交 `a2e274899aabb6b6e90e0269fcb9139829014493`，与本仓当前 checkout 一致；该文档列出数据卷 `inoforge_pgdata`、`inoforge_uploads`。当前登录资料为 `sales.wang@inoforge.local`，页面显示销售小王。 | 已盘点；本轮业务由销售角色办理 | 本线程 CUA 截图：销售应用导航、线索、客户、商机、报价页 | 远端 Docker socket 只读盘点受权限拒绝；本轮未直接核对当前容器挂载或数据库引擎。健康端点不证明业务验收。 | 继续在同一销售账号完成报价与合同；订单和项目岗位另行核对。 |
+| 环境与角色盘点 | 本机没有正在监听的 Forge HTTP 服务；当前浏览器使用 `〔联调主机/端口已脱敏〕` 的远程开发联调 Forge。`GET /api/v1/health` 返回 HTTP 200、ObjectStack `17.3.0`。总仓《开发联调环境》记录 124 为开发联调环境、Forge 来源提交 `a2e274899aabb6b6e90e0269fcb9139829014493`，与本仓当前 checkout 一致；该文档列出数据卷 `inoforge_pgdata`、`inoforge_uploads`。当前登录资料为 `sales.wang@inoforge.local`，页面显示销售小王。 | 已盘点；本轮业务由销售角色办理 | 本线程 CUA 截图：销售应用导航、线索、客户、商机、报价页 | 远端 Docker socket 只读盘点受权限拒绝；本轮未直接核对当前容器挂载或数据库引擎。健康端点不证明业务验收。 | 继续在同一销售账号完成报价与合同；订单和项目岗位另行核对。 |
 | 1. 新建线索 | `销售 → CRM客户管理 → 线索管理` 创建 `QL-WALK-20260927-001`，公司“澄曦智能装备（销售到项目测试）”、联系人“测试联系人”、来源“销售到项目走查测试”，负责人销售小王。需求说明明确预算、采购时间、验收指标未确认。新建后页面先提示成功但列表与计数未刷新；手动点击刷新后列表读回“新线索”，负责人和来源正确。列表预估金额显示 `¥0`，不能解释为客户预算。 | Forge 页面已实际创建并列表读回；销售小王 | 本线程 CUA 截图：新建线索表单、提交确认、刷新后线索列表 | 保存成功后列表显示旧数据，需要人工刷新才读到新记录；线索列表把未提供金额显示为 `¥0`。 | 进入该行“转化”，检查客户与商机关系。 |
 | 2. 线索转客户与商机 | 在上述线索行使用“转化”，表单提交 ¥2,300 作为销售内部估算，预计成交日期留空。系统提示已转客户与商机；手动刷新后线索为“已转化”。客户管理页独立读回唯一测试客户、负责人销售小王；商机管理页独立读回同一客户、联系人“测试联系人”、来源与需求说明、¥2,300、阶段“需求确认”、日期空白、负责人销售小王。 | Forge 页面动作与客户、商机后续页面读回均完成 | 本线程 CUA 截图：转化确认、线索转化状态、客户管理、商机管理 | 转化表单展示“商机名称”可编辑，但页面动作未提交该值，结果中的商机名由动作硬编码为“公司名 + 项目商机”；代码位置为[页面转化动作](../apps/forge-objectstack/src/pages/sales-crm-service-pages.page.ts#L122)及[服务端名称生成](../apps/forge-objectstack/src/actions/sales.action.ts#L1079)。转化后客户账期默认显示 30 天，业务未确认。客户表单联系人总数为 0；销售报价联系人选择器只有“不指定联系人”。报价页没有商机选择或正式关系字段。上述字段与关系不作为已确认业务规则。 | 创建仅限走查的标准销售报价；不补造联系人职位、决策权重或联系方式。 |
 | 3. 销售报价草稿 | `销售 → CRM客户管理 → 销售报价` 创建 `QT-20260927-173736345745`，客户为本次测试客户，报价类型“标准销售报价”，报价主体“MVP1测试主体”，日期 `2026-09-27`，有效期 `2026-10-27`。明细为测试设备 `MVP1-EQA-SKU-20260924` 2 台 × ¥1,000，以及“视觉联调服务（走查测试）”1 项 × ¥300；总额 ¥2,300、税额 ¥264.60。报价备注关联线索号并声明测试用途、成本未提供、联系人档案缺失。保存后曾在详情页读回；本轮切换项目/供应链应用后再从销售菜单打开报价列表，重新读回该单、客户、金额和草稿状态。 | 页面创建、详情显示与跨应用返回后的列表重开读回均完成 | 本线程 CUA 截图：报价表单、两条明细和 ¥2,300 总额、已保存详情、重开列表行 | 报价详情显示“付款方式：银行转账”，尽管付款条件为空且未确认该规则；成本分析不可用。联系人为空、没有商机关系字段。详情页未提供提交审批、发送或标记客户接受动作，当前只能停在草稿；未发送客户，也未声称客户接受。 | 核对合同正常入口能否承接报价单；未确认的付款方式和客户接受状态不得当成业务事实。 |
@@ -465,24 +467,24 @@ Forge 定向验收覆盖以下行为：
 ### 阶段 31A 委外退料控件可用性与页面对照复核（2026-09-14）
 
 - RISEMAP 当前事实：已在内置浏览器打开 `https://risemap.cn/subcontract/returns`。页面标题为“委外退料”，说明为“集中管理委外余料、工程变更及错发物料的退回和入库记录”；顶部动作包含“新建退料单”“导出”“导出记录”；筛选包含状态、供应商、退料原因；列表列为退料单号、供应商、关联委外订单、退料日期、物料概况、退料结果、操作；当前 RISEMAP 无可办理数据。
-- Forge 当前表现：已在内置浏览器打开 `http://localhost:4321/_console/apps/forge/page/page_subcontract_return_workspace`。页面首屏对齐 RISEMAP 的标题、说明、三项指标、顶部动作、筛选入口和列表结构；本地可写扩展保留退料原因列，并展示当前 SQLite 中的草稿和待入库退料单。
+- Forge 当前表现：已在内置浏览器打开 `〔联调主机/端口已脱敏〕/_console/apps/forge/page/page_subcontract_return_workspace`。页面首屏对齐 RISEMAP 的标题、说明、三项指标、顶部动作、筛选入口和列表结构；本地可写扩展保留退料原因列，并展示当前 SQLite 中的草稿和待入库退料单。
 - 控件与人类使用习惯修正：顶部保留业务用户期望的“新建退料单 / 导出 / 导出记录”，移除无业务必要的刷新主动作；状态、供应商、退料原因从静态说明改为可用筛选；导出按钮生成当前筛选结果 CSV；导出记录弹窗回显本页最近导出的文件、时间和记录数；退料单默认日期和导出文件名使用本地日期，避免 UTC 日期错位。
 - 关键动作可用性：确认退料和确认入库均使用 Forge 标准二次确认弹窗，弹窗说明当前动作的业务影响。确认退料说明只生成待入库单且不扣减委外库存；确认入库说明将扣减供应商侧在外余量、增加累计退料并写入库存流水，且不可撤回。浏览器复核确认没有原生 JS 弹窗。
 - 技术文案清理：页面底部“material_return 库存流水”改为“退料入库流水”；停服回读断言同步改为业务语言。
 - 验收证据：`docs/references/risemap-capture/live/20260914-subcontract-return-usability/risemap-subcontract-return.png`、`forge-subcontract-return.png`、`risemap-subcontract-return.txt`、`forge-subcontract-return.txt`。
-- 已通过检查：`FORGE_URL=http://localhost:4321 pnpm --dir apps/forge-objectstack acceptance:subcontract-return`、`acceptance:subcontract-return-browser-readback`、`acceptance:subcontract-return-restart`、`pnpm --dir apps/forge-objectstack typecheck`、`acceptance:page-control-usability`、`acceptance:supply-production-control-usability`、`pnpm --dir apps/forge-objectstack validate`、`pnpm --dir apps/forge-objectstack build`。
+- 已通过检查：`FORGE_URL=〔联调主机/端口已脱敏〕 pnpm --dir apps/forge-objectstack acceptance:subcontract-return`、`acceptance:subcontract-return-browser-readback`、`acceptance:subcontract-return-restart`、`pnpm --dir apps/forge-objectstack typecheck`、`acceptance:page-control-usability`、`acceptance:supply-production-control-usability`、`pnpm --dir apps/forge-objectstack validate`、`pnpm --dir apps/forge-objectstack build`。
 - 边界：RISEMAP 当前页面无可办理退料数据，因此本轮证明 RISEMAP 当前页面结构与 Forge 页面/控件可用性对照，以及 Forge 当前库退料业务链闭环；不把 Forge 本地写入冒充 RISEMAP 线上写入。
 
 ### 阶段 31B 委外对账控件可用性与页面对照复核（2026-09-14）
 
 - RISEMAP 当前事实：已在内置浏览器打开 `https://risemap.cn/subcontract/reconciliation`。页面标题为“委外对账”，说明为“集中管理加工费、补料费用、损耗扣款及应付生成进度”；页签为“待对账池”“对账单”；指标包含可对账金额、待对账供应商、待对账订单、待对账回厂批次；待对账池支持按供应商、委外订单和回厂批次查看，搜索供应商，列表列为供应商、订单数、涉及委外订单、回厂单数、待对账金额、操作；当前 RISEMAP 无可办理数据。
-- Forge 当前表现：已在内置浏览器打开 `http://localhost:4321/_console/apps/forge/page/page_subcontract_reconciliation`。页面首屏对齐 RISEMAP 的标题、说明、页签、指标、分组按钮、搜索和待对账池列；本地可写执行区保留“暂不可对账”表，用业务状态和阻断原因解释为什么不能进入对账。
+- Forge 当前表现：已在内置浏览器打开 `〔联调主机/端口已脱敏〕/_console/apps/forge/page/page_subcontract_reconciliation`。页面首屏对齐 RISEMAP 的标题、说明、页签、指标、分组按钮、搜索和待对账池列；本地可写执行区保留“暂不可对账”表，用业务状态和阻断原因解释为什么不能进入对账。
 - 控件与人类使用习惯修正：生成表单不再提前堆在待对账池上方，而是在用户选中供应商、订单或回厂批次后出现“本次生成”区；已选行的按钮从“加入本次对账”切换为“移出本次对账”；一次对账限制同一供应商，并在控件上给出原因，避免用户误以为按钮失效。
 - 关键动作可用性：内置浏览器已验证选择待对账供应商、填写对账单号、通过页面内日期弹层选择账期后，点击“生成对账单”会先出现标准二次确认弹窗，说明来源明细将被占用且不能重复生成有效对账。没有出现浏览器原生 `alert/confirm/prompt`。
 - 后续流转可用性：内置浏览器实际办理当前库中的 `REC-MULTI-ORDER-004B`，从“待确认”点击“确认锁定”进入二次确认，确认后页面回读为“已确认”并出现“生成应付”；再次点击“生成应付”进入二次确认，确认后回填 `AP-REC-MULTI-ORDER-004B`，状态回读为“已生成应付”。
 - 技术文案清理：暂不可对账列表中的 `stocked`、`draft`、`ncr_resolved` 等内部状态改为“已入库”“草稿”“不良已处置”等业务文案；页面不再把内部对象状态暴露给业务用户。
 - 验收证据：`docs/references/risemap-capture/live/20260914-subcontract-reconciliation-usability/risemap-subcontract-reconciliation.png`、`forge-subcontract-reconciliation.png`、`risemap-subcontract-reconciliation.txt`、`forge-subcontract-reconciliation.txt`。
-- 已通过检查：`FORGE_URL=http://localhost:4321 pnpm --dir apps/forge-objectstack acceptance:subcontract-reconciliation-blocks`、`acceptance:subcontract-reconciliation-restart`、`pnpm --dir apps/forge-objectstack typecheck`、`acceptance:page-control-usability`、`acceptance:supply-production-control-usability`、`pnpm --dir apps/forge-objectstack validate`、`pnpm --dir apps/forge-objectstack build`。
+- 已通过检查：`FORGE_URL=〔联调主机/端口已脱敏〕 pnpm --dir apps/forge-objectstack acceptance:subcontract-reconciliation-blocks`、`acceptance:subcontract-reconciliation-restart`、`pnpm --dir apps/forge-objectstack typecheck`、`acceptance:page-control-usability`、`acceptance:supply-production-control-usability`、`pnpm --dir apps/forge-objectstack validate`、`pnpm --dir apps/forge-objectstack build`。
 - 边界：RISEMAP 当前页面无可办理对账数据，因此本轮证明 RISEMAP 当前页面结构与 Forge 页面/控件可用性对照，以及 Forge 当前库对账阻断、确认锁定、生成应付和回读；不把 Forge 本地写入冒充 RISEMAP 线上写入。
 
 ### 阶段 31C 委外供应商入口与控件可用性复核（2026-09-14）
@@ -493,7 +495,7 @@ Forge 定向验收覆盖以下行为：
 - 关键动作可用性：已在内置浏览器验证“查看委外订单”不再停留在供应商页内部切换视图，而是跳转到 `page_subcontract_workspace?q=锐联钣金委外厂`，顶部页面名变为“委外订单”，并带出该供应商相关订单列表。该动作证明按钮不是空按钮，也不会造成 URL 与页面职责不一致。
 - 本地可写扩展：Forge 仍保留“开通委外”能力；只有已启用且已审批的供应商才显示开通按钮，不能开通的供应商显示业务原因“需先完成供应商启用与审批”，不再给业务用户一个灰掉但无解释的按钮。
 - 验收证据：`docs/references/risemap-capture/live/20260914-subcontract-suppliers-usability/risemap-subcontract-suppliers.png`、`forge-subcontract-suppliers.png`、`risemap-subcontract-suppliers.txt`、`forge-subcontract-suppliers.txt`。
-- 已通过检查：`pnpm --dir apps/forge-objectstack typecheck`、`FORGE_URL=http://localhost:4321 pnpm --dir apps/forge-objectstack acceptance:page-control-usability`、`FORGE_URL=http://localhost:4321 pnpm --dir apps/forge-objectstack acceptance:supply-production-control-usability`、`pnpm --dir apps/forge-objectstack validate`、`pnpm --dir apps/forge-objectstack build`。
+- 已通过检查：`pnpm --dir apps/forge-objectstack typecheck`、`FORGE_URL=〔联调主机/端口已脱敏〕 pnpm --dir apps/forge-objectstack acceptance:page-control-usability`、`FORGE_URL=〔联调主机/端口已脱敏〕 pnpm --dir apps/forge-objectstack acceptance:supply-production-control-usability`、`pnpm --dir apps/forge-objectstack validate`、`pnpm --dir apps/forge-objectstack build`。
 - 边界：RISEMAP 当前页面无可办理供应商数据，因此本轮证明 RISEMAP 当前页面结构与 Forge 入口/控件可用性对照；不把 Forge 本地委外档案和订单数据冒充 RISEMAP 线上写入。
 
 ### 阶段 31D 委外厂库存控件可用性与页面对照复核（2026-09-14）
@@ -541,7 +543,7 @@ Forge 定向验收覆盖以下行为：
 ### 阶段 32A 采购订单与收票承接控件可用性对照复核（2026-09-14）
 
 - RISEMAP 当前事实：已在内置浏览器打开 `https://risemap.cn/purchase/orders`。页面位于“供应链 / 采购管理 / 采购订单”，说明为“正式采购订单下达、跟踪到货状态、应付与发票管理”；首屏包含“下一步操作：到货通知”、页签“订单列表 / 订单明细”、动作“新建采购单、导入/导出、付款申请、收票登记、刷新”、我的筛选方案、搜索、范围/状态/供应商/开票/入库/付款筛选、合计金额，以及采购订单长表列。当前 RISEMAP 有 `PO-2026-0001` 一条已审核订单，采购员为金一涛。
-- Forge 当前表现：已在内置浏览器打开 `http://localhost:4321/_console/apps/forge/page/page_purchase_order_workspace`。页面按 RISEMAP 采购订单首屏重排为标题说明、主动作、下一步操作、订单列表/订单明细、筛选方案、业务筛选、合计金额和采购订单长表列；`Dev Admin` 按同一业务用户与 RISEMAP 的金一涛对照，不作为差异。
+- Forge 当前表现：已在内置浏览器打开 `〔联调主机/端口已脱敏〕/_console/apps/forge/page/page_purchase_order_workspace`。页面按 RISEMAP 采购订单首屏重排为标题说明、主动作、下一步操作、订单列表/订单明细、筛选方案、业务筛选、合计金额和采购订单长表列；`Dev Admin` 按同一业务用户与 RISEMAP 的金一涛对照，不作为差异。
 - 控件与人类使用习惯修正：订单列表不再只展示 8 个基础列，补齐供应商单号、关联内容、仓库、付款条件、币种、付款方式、结算日期、备注、应付产生方式、采购员、已申请金额、开票/入库/付款进度、退货、采购原因、下单/创建/更新时间和操作；订单明细切换真实展开物料行；搜索无结果后显示空状态和“清空筛选”；导出按当前视图生成业务 CSV 并显示页面内反馈；待审核订单显示“待审核生成通知”，不提供误导性到货按钮。
 - 真实承接修正：`付款申请` 跳转到付款管理页；`到货登记` 从订单或到货通知进入可办理到货登记；`收票登记` 进入采购发票承接页；已入库单详情继续提供“登记采购发票”标准弹窗。弹窗包含登记编号、发票号码、开票日期、应付日期和备注，提交后调用现有进项发票动作。
 - 已验证交互：内置浏览器已验证订单/明细页签、搜索无结果、清空筛选、保存筛选方案、导出反馈、订单详情跳转、详情中的物料/到货通知页签、到货登记承接、付款申请承接、采购入库详情的发票登记弹窗。登记 `PI-PIN-2026-0001 / INV-PIN-2026-0001` 后，页面回显进项发票金额 `¥6,800.00`、状态“正常”，且无浏览器原生 `alert/confirm/prompt`。
@@ -549,7 +551,7 @@ Forge 定向验收覆盖以下行为：
 
 ### 阶段 32B 采购入库、收票与付款承接控件可用性修正（2026-09-14）
 
-本轮按“页面控件不仅对齐 RISEMAP，还必须符合实际产品布局并真实可用”的要求复核采购链。实时打开并核对了 RISEMAP `https://risemap.cn/purchase/orders` 与 Forge `http://localhost:4321/_console/apps/forge/page/page_purchase_inbound_workspace?id=8qZ5Ps9iAn8_rPlB`、`http://localhost:4321/_console/apps/forge/page/page_purchase_payment`。
+本轮按“页面控件不仅对齐 RISEMAP，还必须符合实际产品布局并真实可用”的要求复核采购链。实时打开并核对了 RISEMAP `https://risemap.cn/purchase/orders` 与 Forge `〔联调主机/端口已脱敏〕/_console/apps/forge/page/page_purchase_inbound_workspace〔查询参数已脱敏〕`、`〔联调主机/端口已脱敏〕/_console/apps/forge/page/page_purchase_payment`。
 
 RISEMAP 当前事实仍以采购订单页为基线：供应链下的采购订单页包含下一步操作“到货通知”，并在同一列表承载新建采购单、导入/导出、付款申请、收票登记、筛选方案、状态/供应商/开票/入库/付款筛选，以及订单号、供应商、关联内容、期望到货日期、付款条件、币种、付款方式、应付产生方式、采购员、订单金额、开票/入库/付款进度、状态、下单日期等列。`金一涛` 与 Forge `Dev Admin` 按同一业务用户对照。
 
@@ -587,7 +589,7 @@ Forge 当前库验收：采购订单到到货通知通过 `acceptance:procuremen
 
 ### 2026-09-14 供应链核心链优先收敛：采购退换货列结构与二次确认
 
-本轮按“核心业务优先、指南和看板暂缓”的范围推进，实时打开并核对了 RISEMAP 当前 `https://risemap.cn/purchase/returns` 与 Forge `http://localhost:4321/_console/apps/forge/page/page_purchase_return`。RISEMAP 当前采购退换货首屏确认包含类型筛选“全部 / 退货退款 / 换货补货”，列表列为“退货单号、关联订单、供应商、处理方式、换货进度、预计补货日期、退货原因、物料数、退款 / 参考货值、状态、退货日期、操作”。当前 RISEMAP 账号该页无可办理数据，因此此处只作为页面结构与入口事实，不写成 RISEMAP 远端完整业务办理通过。
+本轮按“核心业务优先、指南和看板暂缓”的范围推进，实时打开并核对了 RISEMAP 当前 `https://risemap.cn/purchase/returns` 与 Forge `〔联调主机/端口已脱敏〕/_console/apps/forge/page/page_purchase_return`。RISEMAP 当前采购退换货首屏确认包含类型筛选“全部 / 退货退款 / 换货补货”，列表列为“退货单号、关联订单、供应商、处理方式、换货进度、预计补货日期、退货原因、物料数、退款 / 参考货值、状态、退货日期、操作”。当前 RISEMAP 账号该页无可办理数据，因此此处只作为页面结构与入口事实，不写成 RISEMAP 远端完整业务办理通过。
 
 Forge 本轮把采购退换货列表调成同一列结构，并把“保存草稿 / 提交退货申请 / 提交换货申请 / 财务审批通过 / 驳回 / 仓库确认退回 / 完成退货出库 / 登记供应商退款 / 登记供应商补货 / 完成补货检验 / 完成补货入库”统一走标准确认弹窗。浏览器实测点击“提交退货申请”出现页面内确认弹窗“确认提交退货申请”，未触发浏览器原生弹窗；随后取消，没有推进该草稿状态。
 
@@ -613,7 +615,7 @@ Forge `page_production_material_workspace` 已重新打开并留存证据，确�
 
 ### 2026-09-14 生产领料入口可用性修正
 
-- RISEMAP 实时对照：`https://risemap.cn/production/requisitions` 的“新建领料单”进入 `https://risemap.cn/production/requisition/new?type=领料`，页面明确要求先选择“待领料”组装单，再进入组装单办理；无可办理数据时显示空态和“前往组装单”。
+- RISEMAP 实时对照：`https://risemap.cn/production/requisitions` 的“新建领料单”进入 `https://risemap.cn/production/requisition/new`，页面明确要求先选择“待领料”组装单，再进入组装单办理；无可办理数据时显示空态和“前往组装单”。
 - Forge 原问题：`page_production_material_workspace` 列表中的“新建领料单”直接跳转组装单列表，入口语义与实际动作不一致，无法从该入口开始领料办理。
 - 本轮处理：增加 `?new=1` 选择页，读取 `forge_assembly_order.status=waiting_pick`，展示组装单号、成品、BOM、计划数量、计划完工、状态和“前往组装单”；无数据时展示“暂无可办理的组装单”，列表入口保留“新建领料单”并进入该选择页。状态值在页面显示为“待领料”。
 - 同一业务用户对照：RISEMAP“金一涛”和 Forge“Dev Admin”作为同一业务用户处理，名称差异不计为缺口。
@@ -621,7 +623,7 @@ Forge `page_production_material_workspace` 已重新打开并留存证据，确�
 
 ### 2026-09-14 生产领料单页面可用性与样式修正
 
-- 本轮实时打开并核对 RISEMAP：`https://risemap.cn/production/requisitions`、`https://risemap.cn/production/requisition/new?type=领料`；Forge：`http://localhost:4321/_console/apps/forge/page/page_production_material_workspace`。
+- 本轮实时打开并核对 RISEMAP：`https://risemap.cn/production/requisitions`、`https://risemap.cn/production/requisition/new`；Forge：`〔联调主机/端口已脱敏〕/_console/apps/forge/page/page_production_material_workspace`。
 - 修正 Forge 领料单列表缺少可执行导出动作的问题，增加当前筛选结果 CSV 导出并保留“批量导入与任务记录待接入生产数据任务”的业务说明；不添加无承接的“导入/导出任务”假按钮。
 - 修正本轮新增导出逻辑在 React 页面源中的转义问题，并通过内置浏览器确认页面可渲染；调整工具栏按钮不换行，避免“新建/导出/刷新”被挤压成断行。
 - RISEMAP 当前仍为 0 条领料单，Forge 为本地演示数据；两侧数据量差异仍是待同材料复核项，`金一涛` 与 `Dev Admin` 按同一业务用户处理。
@@ -629,7 +631,7 @@ Forge `page_production_material_workspace` 已重新打开并留存证据，确�
 ## 2026-09-14 生产物料单、图纸管理与委外管理复核
 
 - 本轮在内置浏览器实时打开并核对 RISEMAP `https://risemap.cn/production/requisitions`。当前页面包含领料单标题、指标卡、全部/审批中/已确认/已驳回/已作废筛选、新建领料单、导出、导入/导出任务、刷新、类型筛选及领料单号/类型/成品/来源单/物料种类/数量/金额/经手人/日期/操作列；当前账号无远端业务行。
-- Forge 对应页面为 `http://localhost:4321/_console/apps/forge/page/page_production_material_workspace`。本轮使用 `MAT-2026-0001` 作为同一业务材料办理：编辑 `RM-HMI-700` 数量 2→1，保存后总数量 10→9；打开标准二次确认弹窗，填写作废原因并确认，单据及 4 条明细均回读为“已作废”。
+- Forge 对应页面为 `〔联调主机/端口已脱敏〕/_console/apps/forge/page/page_production_material_workspace`。本轮使用 `MAT-2026-0001` 作为同一业务材料办理：编辑 `RM-HMI-700` 数量 2→1，保存后总数量 10→9；打开标准二次确认弹窗，填写作废原因并确认，单据及 4 条明细均回读为“已作废”。
 - 已增加 Forge 物料单编辑和作废 Action，编辑仅限审批中，作废仅限审批中/已驳回；已通过停服重启从同一 SQLite 回读状态、数量和明细。
 - 本轮在内置浏览器实时打开并核对 RISEMAP `https://risemap.cn/drawing/overview`。当前图纸总览包含图号档案、版本/评审/发布/变更/发放/客户图纸等入口，首屏指标和快捷动作齐全但当前数据为空。Forge `page_drawing_workspace` 已呈现对应九个业务页签、指标、搜索、新建图号、版本、评审、发布、变更和业务关联动作；Forge 当前有本地图纸数据，数量与 RISEMAP 空基线不同，暂记为同材料待复核，不宣称远端闭环。
 - RISEMAP 委外订单当前页面为 `https://risemap.cn/subcontract/orders`，包含进行中/待审核/逾期未完工/待对账金额指标、新建/导出/导入/任务入口、范围/状态/供应商筛选及订单号/供应商/关联/付款条件/加工费/发料进度/回厂进度/对账进度/交期/操作列，当前账号无远端业务行。Forge `page_subcontract_workspace` 已具备委外订单、看板、供应商和执行上下文，当前为本地业务样本，不能替代 RISEMAP 同材料办理证据。
@@ -718,7 +720,7 @@ Forge 原图纸工作台的“发放记录”只有已有记录列表，没有�
 ## 2026-09-14 图纸变更与变更后版本闭环
 
 - RISEMAP 当前事实：内置浏览器实时打开 `https://risemap.cn/drawing/changes`。页面职责为管理图纸变更申请、审批、执行和关闭；当前列包含变更单号、图号、图纸名称、原版本、新版本、变更类型、变更等级、是否紧急、状态、申请人、申请时间、审批时间和操作。当前账号无可办理记录。
-- Forge 页面：内置浏览器打开 `http://localhost:4321/_console/apps/forge/page/page_drawing_workspace`，使用图号 `DW-RM-CAB-800` 创建变更单 `DC-1789360480571`，提交审批并批准，状态从草稿依次进入待处理、实施中。
+- Forge 页面：内置浏览器打开 `〔联调主机/端口已脱敏〕/_console/apps/forge/page/page_drawing_workspace`，使用图号 `DW-RM-CAB-800` 创建变更单 `DC-1789360480571`，提交审批并批准，状态从草稿依次进入待处理、实施中。
 - 异常阻断：首次执行“完成变更”时，系统明确阻断并显示“完成变更前必须关联变更后版本”。
 - 本轮修复：为实施中且尚未关联新版本的变更单增加“关联变更后版本”动作。动作仅允许选择同一图号、不同于原版本、且状态至少为已评审通过的版本；关联成功后页面才显示“完成变更”。
 - 同材料页面链路：页面上传 `DW-RM-CAB-800 V1.2`，提交评审并通过，审批意见为“尺寸变更已核对，BOM与装配要求一致”；随后把 V1.2 关联到 `DC-1789360480571`，页面显示 `V1.1 → V1.2`，再经二次确认完成变更，最终状态为已完成。
@@ -730,11 +732,11 @@ Forge 原图纸工作台的“发放记录”只有已有记录列表，没有�
 ## 2026-09-14 领料单编辑、作废、分页与重复单清理
 
 - RISEMAP 当前事实：内置浏览器实时打开 `https://risemap.cn/production/requisitions`。页面仍包含领料单、物料种类、物料数量、净领用金额指标，全部/审批中/已确认/已驳回/已作废状态页签，新建领料单、导出、导入/导出任务、刷新和类型筛选；列表列为领料单号、类型、成品、来源单、物料种类、数量、金额、经手人、日期和操作，使用每页 20 条的分页。当前账号为 0 条记录，远端只作为实时页面结构和空态证据。
-- Forge 页面：内置浏览器打开 `http://localhost:4321/_console/apps/forge/page/page_production_material_workspace` 及两张待审批单详情。删除“批量导入与任务记录待接入生产数据任务”工程占位文案，不以假按钮替代；22 条领料单改为真实分页，第一页 20 条、第二页 2 条，上一页/下一页状态与页码回读正确。
+- Forge 页面：内置浏览器打开 `〔联调主机/端口已脱敏〕/_console/apps/forge/page/page_production_material_workspace` 及两张待审批单详情。删除“批量导入与任务记录待接入生产数据任务”工程占位文案，不以假按钮替代；22 条领料单改为真实分页，第一页 20 条、第二页 2 条，上一页/下一页状态与页码回读正确。
 - 正常编辑与作废路径：`MAT-2026-0002`（ID `jBLsol4Oa8muOSQ1`，来源 `ASM-2026-0003`）在过账前进入编辑，将 `RM-PSU-24V10A` 数量 4 改为 3，并保存备注“P2领料编辑验收：开关电源本次领用调整为3件”；页面回读总数量 10→9。随后打开标准二次确认弹窗，显示单号、来源组装单、作废影响和必填原因，确认后单据及四条明细均为 `voided`，不产生库存变化。
 - 异常阻断与数据清理：`MAT-2026-0011`（ID `bgfrHttbMgA8P_ey`）是 `ASM-2026-0006` 已由 `MAT-2026-0010` 完成领料后残留的重复待审批单。尝试编辑时服务端阻断并显示“领料数量超过BOM剩余需求”，未绕过来源约束；该重复单随后通过标准二次确认作废，原因明确记录已确认领料单号，避免重复领用。
 - 已确认链回读：`MAT-2026-0010`（ID `Qugz72_DEe8w1dkR`）保持 `confirmed`，数量 10、金额 `1015.5612`；四条库存明细分别回读变动前后数量，来源 `ASM-2026-0006` 保持 `assembling`、已领数量 10、材料成本 `1015.5612`。
-- 持久化与页面回读：完整停止 4356 服务，并从同一 `apps/forge-objectstack/.objectstack/data/objectstack.db` 重启。重启后 API 回读两张作废单、编辑后的数量与备注、已确认领料单及来源组装单状态一致；内置浏览器在 `http://localhost:4356/_console/apps/forge/page/page_production_material_workspace?id=jBLsol4Oa8muOSQ1` 回读 `MAT-2026-0002` 为已作废、总数量 9、`RM-PSU-24V10A` 数量 3，页面只保留“返回组装单”，不再显示编辑、确认或作废动作。
+- 持久化与页面回读：完整停止 4356 服务，并从同一 `apps/forge-objectstack/.objectstack/data/objectstack.db` 重启。重启后 API 回读两张作废单、编辑后的数量与备注、已确认领料单及来源组装单状态一致；内置浏览器在 `〔联调主机/端口已脱敏〕/_console/apps/forge/page/page_production_material_workspace〔查询参数已脱敏〕` 回读 `MAT-2026-0002` 为已作废、总数量 9、`RM-PSU-24V10A` 数量 3，页面只保留“返回组装单”，不再显示编辑、确认或作废动作。
 - 工程门禁：`pnpm typecheck`、`pnpm validate`、`pnpm build` 通过。仍有项目既存的 113 条 ADR-0065 `className` 警告，本轮没有新增构建阻断。
 - 证据边界：本轮完成 Forge 领料单过账前编辑、BOM 剩余需求阻断、作废二次确认、重复单清理、分页和同库重启回读；RISEMAP 当前账号无同材料数据，远端写入与结果对照仍标为待数据条件复核。补料和退料需要继续使用同一组装材料分别完成过账、库存流向和异常限制验收。
 
@@ -757,7 +759,7 @@ RISEMAP 侧仍有明确证据缺口：手动锁库实际提交时要求“锁库
 
 ## 2026-09-14 生产组装草稿安全补充
 
-- 本轮实时打开 RISEMAP `https://risemap.cn/production/assembly`、`https://risemap.cn/production/assembly/new`，以及 Forge `http://localhost:4356/_console/apps/forge/page/page_production_assembly_workspace` 的列表、新建、详情、编辑和取消弹窗。
+- 本轮实时打开 RISEMAP `https://risemap.cn/production/assembly`、`https://risemap.cn/production/assembly/new`，以及 Forge `〔联调主机/端口已脱敏〕/_console/apps/forge/page/page_production_assembly_workspace` 的列表、新建、详情、编辑和取消弹窗。
 - Forge `ASM-2026-0045` 已在内置浏览器完成草稿数量 `2 → 3`、四行 BOM 需求重算、空取消原因阻断和填写原因后的取消。完整停服重启后仍为“已取消”，且不再提供编辑、取消或下达入口。
 - 新增和取消二次确认统一使用业务语言，只展示单据、物料、仓库、数量、日期、原因、状态与库存影响，不展示对象、Action、参数和内部记录标识。
 - API 草稿安全四组、同库重启回读、页面可见语言检查及三项工程门禁通过。RISEMAP 当前无组装单可执行同记录取消，远端审批和取消规则仍待同材料复核。

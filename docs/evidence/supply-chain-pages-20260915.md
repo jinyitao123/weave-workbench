@@ -1,12 +1,14 @@
 # 供应链页面快速交付记录
 
+> 公开副本已对真实运维主机、端口、本机绝对路径及查询值脱敏；原始日期、来源 SHA、结论与失败事实保持原记录。原件/摘要仅在本机私下保全。
+
 日期：2026-09-15
 
 分支：`codex/supply-chain-next`
 
-独立工作树：`/Users/jinyitao/Developer/inoForge-supply-chain-pages`
+独立工作树：`〔本机路径已脱敏〕`
 
-独立运行：`http://localhost:4386`
+独立运行：`〔联调主机/端口已脱敏〕`
 
 独立 SQLite：`apps/forge-objectstack/.objectstack/acceptance/supply-chain-pages.sqlite`
 
