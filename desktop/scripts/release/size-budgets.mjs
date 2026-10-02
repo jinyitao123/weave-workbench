@@ -14,7 +14,7 @@ const MIB = 1024 * KIB
  */
 export const BUNDLE_SIZE_BUDGETS = Object.freeze({
   // 2026-10-02: owned execution details and terminal read-only follow-up
-  // authorization checks measure 836,787 bytes (1,350 above the rich-details
+  // authorization checks measure 836,948 bytes (1,511 above the rich-details
   // build). No dependencies added. 824 KiB is the next 8 KiB boundary.
   mainBytes: 824 * KIB,
   preloadBytes: 16 * KIB,
