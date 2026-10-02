@@ -675,13 +675,20 @@ describe('employee-bound material handoff', () => {
     expect(f.service.submitWork).not.toHaveBeenCalled()
   })
 
-  it.each(['failed', 'needs_input', 'completed', 'completed-new-action', 'needs_input-new-action-attachments', 'completed-new-action-attachments'] as const)('creates a separate input and task grant after a terminal read-only %s source', async (outcome) => {
+  it.each(['failed', 'needs_input', 'completed', 'completed-new-action', 'needs_input-new-action-attachments', 'completed-new-action-attachments', 'needs_input-prior-write-new-action', 'needs_input-prior-write-readonly'] as const)('creates a separate input and task grant after an eligible terminal %s source', async (outcome) => {
     const f = await fixture(), parent = completedReadOnlyContext()
     const newAttachmentsOnly = outcome.endsWith('-attachments')
     const newBusinessAction = outcome.includes('-new-action')
     const needsInput = outcome.startsWith('needs_input')
+    const priorWriteScope = outcome.includes('prior-write')
     parent.source.inputStatus = 'current'
-    parent.input.authorizedBusinessCapabilityIDs = []
+    parent.input.authorizedBusinessCapabilityIDs = priorWriteScope ? [f.businessCapabilityId] : []
+    if (priorWriteScope) {
+      parent.input.workflowVersion = 9
+      const choices = await f.service.getTeamChoices()
+      choices[0]!.version = 10
+      await freezeOfficeOriginals(f, parent)
+    }
     parent.input.registrationID = '550e8400-e29b-41d4-a716-446655440101'
     parent.run.authorization = { status: newAttachmentsOnly ? 'active' : 'renewal_required', canRenew: false, grantID: 'old-terminal-grant', generation: 1 }
     if (outcome === 'failed') {
@@ -714,6 +721,8 @@ describe('employee-bound material handoff', () => {
     const tokens: Array<string | undefined> = []
     f.service.submitWork.mockImplementation(async (choice, task, rawSource) => {
       const source = rawSource as FixedWorkSource
+      const selected = choice as Parameters<typeof fixedWorkHandoff>[0]
+      expect(selected.version).toBe(priorWriteScope ? 10 : 3)
       return fixedWorkHandoff(choice as Parameters<typeof fixedWorkHandoff>[0], task, source, {
         projectID: 'project-test', issuer: 'https://forge.example.test', identityIssuer: 'https://identity.example.test',
         nativeIdentity: async () => ({ id: 'employee-a', organizationID: 'organization-a' }),
@@ -735,6 +744,7 @@ describe('employee-bound material handoff', () => {
             expect(request.expected_revision_id).toBe(parent.source.inputRevisionID)
             expect(request.workbench_session_id).toBe(parent.source.workbenchSessionID)
             expect(request.registration_id).not.toBe(parent.input.registrationID)
+            expect(request.workflow_version).toBe(selected.version)
             if (outcome === 'failed') expect(request).not.toHaveProperty('revision_context')
             else expect(request.revision_context).toEqual({ parent_input_revision_id: parent.source.inputRevisionID, parent_run_id: parent.source.runID })
             return { status: 200, body: { input_revision_id: newInputID } }
@@ -745,7 +755,7 @@ describe('employee-bound material handoff', () => {
           }
           expect(path).toBe('/v1/teams/team-contract/dispatch')
           expect(request.input_revision_id).toBe(newInputID)
-          return { status: 201, body: { run_id: 'new-run', task_id: 'new-task', workflow_id: 'workflow-review', workflow_version: 3 } }
+          return { status: 201, body: { run_id: 'new-run', task_id: 'new-task', workflow_id: 'workflow-review', workflow_version: selected.version } }
         },
       })
     })
@@ -762,6 +772,12 @@ describe('employee-bound material handoff', () => {
     expect(grants[0]!.scope.input_revision_id).toBe(newInputID)
     expect(grants[0]!.scope.input_revision_id).not.toBe(parent.source.inputRevisionID)
     expect(grants[0]!.scope.allowed_actions).toEqual(newBusinessAction ? [f.businessCapabilityId] : [])
+    expect(grants[0]!.scope.workflow_version).toBe(priorWriteScope ? 10 : 3)
+    if (priorWriteScope) {
+      expect(parent.input.workflowVersion).toBe(9)
+      expect(parent.run.authorization).toMatchObject({ status: 'renewal_required', canRenew: false, grantID: 'old-terminal-grant' })
+      expect(parent.run.actionOutcomes).toEqual([])
+    }
     if (newAttachmentsOnly) {
       expect(grants[0]!.scope.resources.map(({ name, sha256, bytes }) => ({ name, sha256, bytes }))).toEqual(freshReferences.map(({ name, sha256, bytes }) => ({ name, sha256, bytes })))
       expect(grants[0]!.scope.resources.some(({ id }) => parent.input.materials.some((material) => material.id === id))).toBe(false)
@@ -772,6 +788,48 @@ describe('employee-bound material handoff', () => {
     expect(saved.join('')).toContain(grants[0]!.request_id)
     expect(saved.join('')).not.toContain('synthetic-new-task-token')
     expect(saved.join('')).not.toContain('old-terminal-grant')
+  })
+
+  it.each(['missing-outcomes', 'unknown-outcome', 'failed-no-effect', 'successful-outcome', 'failed-run', 'completed-run', 'cancelled', 'closed', 'superseded', 'missing-scope', 'missing-result'] as const)('does not relax prior write-scope protection for %s', async (reason) => {
+    const f = await fixture(), parent = completedReadOnlyContext()
+    parent.input.authorizedBusinessCapabilityIDs = [f.businessCapabilityId]
+    parent.run.businessResult = 'needs_input'
+    parent.run.finalResult = { ...parent.run.finalResult!, disposition: 'needs_input', missingItems: ['补充说明'] }
+    parent.run.authorization = { status: 'renewal_required', canRenew: false }
+    if (reason === 'missing-outcomes') delete parent.run.actionOutcomes
+    else if (reason === 'unknown-outcome' || reason === 'failed-no-effect' || reason === 'successful-outcome') {
+      const receipt = { nodeID: 'node', callID: 'call', actionName: '提交', objectName: 'contract', status: reason === 'unknown-outcome' ? 'unknown' as const : reason === 'successful-outcome' ? 'succeeded' as const : 'failed' as const, summary: '平台已有动作记录', noEffect: reason === 'failed-no-effect' }
+      parent.run.actionOutcomes = [receipt]
+    } else if (reason === 'failed-run' || reason === 'cancelled') { parent.run.status = reason === 'failed-run' ? 'failed' : 'cancelled'; delete parent.run.businessResult }
+    else if (reason === 'completed-run') { parent.run.businessResult = 'completed'; parent.run.finalResult = { ...parent.run.finalResult!, disposition: 'complete', missingItems: [] } }
+    else if (reason === 'closed' || reason === 'superseded') parent.source.inputStatus = reason
+    else if (reason === 'missing-scope') delete parent.input.authorizedBusinessCapabilityIDs
+    else if (reason === 'missing-result') delete parent.run.finalResult
+    const params = await prepareCompletedReadOnlySubmit(f, parent, `prior-write-${reason}`)
+    expect((await f.call('submit', params)).status).toBe(409)
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.renewWorkAuthorization).not.toHaveBeenCalled()
+  })
+
+  it.each(['source', 'parent-result', 'latest-version'] as const)('rechecks %s before accepting a fresh needs-input continuation', async (changed) => {
+    const f = await fixture(), parent = completedReadOnlyContext()
+    parent.input.authorizedBusinessCapabilityIDs = [f.businessCapabilityId]
+    parent.input.workflowVersion = 9
+    parent.run.businessResult = 'needs_input'
+    parent.run.finalResult = { ...parent.run.finalResult!, disposition: 'needs_input', missingItems: ['补充说明'] }
+    parent.run.authorization = { status: 'renewal_required', canRenew: false }
+    const choices = await f.service.getTeamChoices()
+    choices[0]!.version = 10
+    const params = await prepareCompletedReadOnlySubmit(f, parent, `needs-input-changed-${changed}`)
+    if (changed === 'source') f.service.getWorkContinuationContext.mockResolvedValueOnce({ ...parent, source: { ...parent.source, runID: 'different-run' } })
+    if (changed === 'parent-result') parent.run.actionOutcomes = [{ nodeID: 'node', callID: 'call', actionName: '提交', objectName: 'contract', status: 'unknown', summary: '新发现未确认动作' }]
+    if (changed === 'latest-version') choices[0]!.version = 11
+    const result = await f.call('submit', params)
+    expect(result.status).toBe(409)
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.renewWorkAuthorization).not.toHaveBeenCalled()
   })
 
   it.each(['parked', 'parked-active', 'running', 'cancelled', 'abandoned', 'closed', 'superseded', 'closed-no-authorization', 'superseded-no-authorization', 'missing-input-status', 'missing-scope', 'write-scope', 'missing-outcomes', 'unknown-action', 'successful-action', 'failed-new-action'] as const)('refuses a new input from an ineligible %s source', async (reason) => {

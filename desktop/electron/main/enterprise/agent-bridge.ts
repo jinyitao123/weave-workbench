@@ -26,7 +26,7 @@ interface FrozenHandoffIntent {
   task: string
   /** Materials attached in this employee turn; only these are uploaded during staging. */
   materials: FrozenMaterial[]
-  /** Exact existing Forge references selected from an eligible read-only parent input. */
+  /** Exact Forge references selected from an eligible zero-action terminal input. */
   reusedMaterials?: ReusedMaterial[]
   authorizedBusinessCapabilityIds: string[]
   sourceMessages: Array<{ messageId: string; eventSeq: number; sha256: string }>
@@ -197,13 +197,20 @@ function assertContinuationSubmissionAuthorization(context: EnterpriseWorkContin
   if (context.source.inputStatus === 'closed' || context.source.inputStatus === 'superseded') {
     throw new Error('原工作输入已关闭或已被更新输入取代，请从“我的工作”打开最新消息，不能沿旧事项创建新输入')
   }
-  // A terminal read-only source can supply verified materials to a new input.
+  // A terminal read-only source, or an authoritative needs-input result with
+  // no recorded action, can supply verified materials to a new input.
   // This source check is independent of the old grant's lifetime or whether
   // files are reused. submitWork issues a separate grant for the new message,
   // input and explicitly selected action scope; it never renews the old grant.
-  if (context.source.inputStatus === 'current'
-    && Array.isArray(context.input.authorizedBusinessCapabilityIDs) && context.input.authorizedBusinessCapabilityIDs.length === 0
-    && isReusableReadOnlyContinuation(context)) return
+  const scope = context.input.authorizedBusinessCapabilityIDs
+  const scopeReadable = Array.isArray(scope) && scope.length <= 32
+    && scope.every((id) => typeof id === 'string' && id.length > 0 && id.length <= 256 && id.trim() === id)
+  const needsNewInput = context.run.status === 'succeeded' && context.run.businessResult === 'needs_input'
+    && context.run.finalResult?.disposition === 'needs_input'
+    && Array.isArray(context.run.finalResult.missingItems) && context.run.finalResult.missingItems.length > 0
+    && context.run.authorization?.canRenew !== true
+  if (context.source.inputStatus === 'current' && scopeReadable
+    && (scope.length === 0 || needsNewInput) && isReusableReadOnlyContinuation(context)) return
   if (context.run.authorization?.status === 'renewal_required' || context.run.authorization?.canRenew) {
     throw new Error('原工作正在等待授权更新，不能用新交接或新输入替代；可安全续办时请继续原工作授权，否则先核对原业务回执')
   }

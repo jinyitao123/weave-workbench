@@ -200,7 +200,7 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
         path: Type.String({ minLength: 1, description: '当前工作目录中的材料文件路径' }),
         sha256: Type.String({ minLength: 64, maxLength: 64, description: '读取员工指定版本时核对的文件 SHA-256' }),
       })),
-      reuse_material_names: Type.Optional(Type.Array(Type.String({ minLength: 1, maxLength: 255 }), { description: '直接复制当前上下文中原冻结材料的 name，不添加《》、引号或其他修饰；仅限员工明确授权复用的已结束只读工作，Host 核验当前员工权限、明确为空的业务动作回执与唯一文件版本' })),
+      reuse_material_names: Type.Optional(Type.Array(Type.String({ minLength: 1, maxLength: 255 }), { description: '直接复制当前上下文中原冻结材料的 name，不添加《》、引号或其他修饰；仅限员工明确授权且Host核验动作回执为零的成功缺件结果或已结束只读工作。成功缺件结果的原授权可非空，但本轮须新输入、新授权，不能续旧授权或重放旧运行；Host核验当前员工、最新来源及唯一文件版本' })),
     }),
     async execute(_id, params) { return result(await turnCall('submit', params)) },
   })
