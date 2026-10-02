@@ -61,6 +61,7 @@ import {
   expectedArtifactExtensions,
   expectedAuthenticodeSigner,
   expectedNativeFiles,
+  packagedExecutablePath,
   nativeRuntimeDirectory,
   zeroMqAddonPattern,
 } from '../scripts/release/verify-cross-platform-package.mjs'
@@ -866,6 +867,19 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
     expect(ciWorkflow).not.toMatch(/path: release\/(mac|linux|win)\/\s*$/m)
   })
 
+  test('uploads packaged smoke diagnostics only when the failed launch wrote its log', () => {
+    type WorkflowJob = { steps?: Array<{ uses?: string; if?: string; with?: Record<string, unknown> }> }
+    type Workflow = { jobs: Record<string, WorkflowJob> }
+    const ci = load(readFileSync('../.github/workflows/desktop-ci.yml', 'utf8')) as Workflow
+    const release = load(readFileSync('../.github/workflows/desktop-release.yml', 'utf8')) as Workflow
+    const uploadCondition = (job: WorkflowJob) => job.steps?.find((step) => step.uses?.startsWith('actions/upload-artifact@') && String(step.with?.name).includes('packaged-smoke-diagnostics'))?.if
+
+    expect(uploadCondition(ci.jobs['packaging-smoke'])).toContain('failure()')
+    expect(uploadCondition(ci.jobs['packaging-smoke'])).toContain('hashFiles(')
+    expect(uploadCondition(release.jobs['package-linux'])).toContain('hashFiles(')
+    expect(uploadCondition(release.jobs['package-windows'])).toContain('hashFiles(')
+  })
+
   test('publishes one verified GitHub Release only after a manual request selects an existing version tag', () => {
     const workflow = readFileSync('../.github/workflows/desktop-release.yml', 'utf8')
     const parsed = load(workflow) as {
@@ -1540,13 +1554,35 @@ describe('post-package verification helpers', () => {
 describe('cross-platform packaging repair', () => {
   const fixtureContext = {
     appOutDir: join('/tmp', 'app-out'),
-    packager: { appInfo: { productFilename: 'Prime Work', sanitizedName: 'Prime-Work' } },
+    packager: { appInfo: { productFilename: 'Prime Work', sanitizedName: 'Prime-Work' }, executableName: 'builder-selected-linux-name' },
   }
 
   test('computes the hardened executable path per platform', () => {
     expect(executablePath(fixtureContext, 'darwin')).toBe(join('/tmp', 'app-out', 'Prime Work.app', 'Contents', 'MacOS', 'Prime Work'))
     expect(executablePath(fixtureContext, 'win32')).toBe(join('/tmp', 'app-out', 'Prime Work.exe'))
-    expect(executablePath(fixtureContext, 'linux')).toBe(join('/tmp', 'app-out', 'prime-work'))
+    expect(executablePath(fixtureContext, 'linux')).toBe(join('/tmp', 'app-out', 'builder-selected-linux-name'))
+  })
+
+  test('resolves platform executableName overrides and the Linux package-name fallback', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'gooeypi-executable-name-'))
+    const configuration = {
+      executableName: 'global-executable',
+      productName: 'Weave Workbench',
+      linux: { executableName: 'linux-platform-executable' },
+      win: { executableName: 'windows-platform-executable' },
+    }
+    try {
+      writeFileSync(join(directory, 'linux-platform-executable'), 'linux')
+      writeFileSync(join(directory, 'windows-platform-executable.exe'), 'windows')
+      writeFileSync(join(directory, 'weave-workbench-desktop'), 'linux fallback')
+
+      // The smoke launcher calls this resolver directly, so it uses these same names.
+      expect(packagedExecutablePath(directory, 'linux', configuration)).toBe(join(directory, 'linux-platform-executable'))
+      expect(packagedExecutablePath(directory, 'win', configuration)).toBe(join(directory, 'windows-platform-executable.exe'))
+      expect(packagedExecutablePath(directory, 'linux', { productName: 'Different Product Name' })).toBe(join(directory, 'weave-workbench-desktop'))
+    } finally {
+      rmSync(directory, { recursive: true, force: true })
+    }
   })
 
   function globMatchExists(directory: string, segments: string[]): boolean {

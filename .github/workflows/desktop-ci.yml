@@ -224,7 +224,7 @@ jobs:
         if: matrix.target != 'mac'
         run: node scripts/release/smoke-packaged-app.mjs --platform ${{ matrix.target }} --arch ${{ matrix.arch }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: failure() && matrix.target != 'mac'
+        if: failure() && matrix.target != 'mac' && hashFiles(format('desktop/release/{0}/{1}/packaged-smoke-diagnostics.log', matrix.target, matrix.arch)) != ''
         with:
           name: packaged-smoke-diagnostics-${{ matrix.target }}-${{ matrix.arch }}
           path: desktop/release/${{ matrix.target }}/${{ matrix.arch }}/packaged-smoke-diagnostics.log

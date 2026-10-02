@@ -2,6 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { EditableText } from '../../src/pages/team-workspace/EditableText'
 import { AudienceEditor } from '../../src/pages/team-workspace/AudienceEditor'
 import { Modal, ProductField } from '../../src/components/ui'
 
@@ -53,4 +54,32 @@ it('edits team audience one permission set per line without losing the line bein
   expect(textarea.value).toBe('sales_employee\n')
   await act(async () => type(textarea, 'sales_employee\ndelivery_reviewer\nsales_employee'))
   expect(onChange).toHaveBeenLastCalledWith(['sales_employee', 'delivery_reviewer'])
+})
+
+it.each([false, true])('restores modal focus only if the employee has not moved to another editor (moved=%s)', async (moved) => {
+  const frames = new Map<number, FrameRequestCallback>()
+  let nextFrame = 0
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { frames.set(++nextFrame, callback); return nextFrame })
+  vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id))
+  const flushFrames = async () => {
+    const pending = [...frames.values()]; frames.clear()
+    await act(async () => { for (const callback of pending) callback(0) })
+  }
+  const trigger = document.createElement('button'); trigger.textContent = '编辑团队资料'
+  // Keep the opener outside React's root so its connected state is realistic.
+  document.body.append(trigger); trigger.focus()
+  try {
+    await act(async () => root.render(<Modal title="团队资料" onClose={vi.fn()}><button type="button">确定</button></Modal>))
+    await flushFrames()
+    expect(document.querySelector('[role="dialog"]')?.contains(document.activeElement)).toBe(true)
+    await act(async () => root.render(<EditableText label="团队职责" value="检查原文" onChange={vi.fn()}/>))
+    if (moved) await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="编辑团队职责内容"]')!.click())
+    const editor = container.querySelector('textarea')
+    if (moved) expect(document.activeElement).toBe(editor)
+    await flushFrames()
+    if (moved) {
+      expect(document.activeElement).toBe(editor)
+      expect(container.querySelector('textarea')).toBe(editor)
+    } else expect(document.activeElement).toBe(trigger)
+  } finally { trigger.remove() }
 })

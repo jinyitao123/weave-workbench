@@ -239,7 +239,7 @@ jobs:
       - name: Launch the packaged application
         run: node scripts/release/smoke-packaged-app.mjs --platform linux --arch ${{ matrix.arch }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: failure()
+        if: failure() && hashFiles(format('desktop/release/linux/{0}/packaged-smoke-diagnostics.log', matrix.arch)) != ''
         with:
           name: packaged-smoke-diagnostics-linux-${{ matrix.arch }}
           path: desktop/release/linux/${{ matrix.arch }}/packaged-smoke-diagnostics.log
@@ -293,7 +293,7 @@ jobs:
       - name: Launch the packaged application
         run: node scripts/release/smoke-packaged-app.mjs --platform win --arch x64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: failure()
+        if: failure() && hashFiles('desktop/release/win/x64/packaged-smoke-diagnostics.log') != ''
         with:
           name: packaged-smoke-diagnostics-win-x64
           path: desktop/release/win/x64/packaged-smoke-diagnostics.log
