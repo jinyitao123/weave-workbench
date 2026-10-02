@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    working-directory: desktop
+
 jobs:
   audit:
     runs-on: ubuntu-latest
@@ -19,8 +23,9 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version-file: .nvmrc
+          node-version-file: desktop/.nvmrc
           cache: npm
+          cache-dependency-path: desktop/package-lock.json
       - run: npm run toolchain:bootstrap
       - run: npm run release:preflight:toolchain
       - name: Audit production dependencies for high and critical advisories

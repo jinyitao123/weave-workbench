@@ -7,6 +7,8 @@ import { validateDocumentPaths, validateStatusPage } from './documentation-polic
 process.chdir(repositoryRoot)
 const trackedPaths = new Set(execFileSync('git', ['ls-files', '--cached', '-z'], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).split('\0').filter(Boolean))
 
+const ignoredPaths = new Set(execFileSync('git', ['ls-files', '--others', '--ignored', '--exclude-standard', '-z', '--', '*.md'], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).split('\0').filter(Boolean))
+
 const required = [
   'AGENTS.md',
   'docs/README.md',
@@ -40,12 +42,12 @@ async function markdownFiles(directory) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const path = `${directory}/${entry.name}`
     if (entry.isDirectory()) files.push(...await markdownFiles(path))
-    else if (entry.name.endsWith('.md')) files.push(path)
+    else if (entry.name.endsWith('.md') && !ignoredPaths.has(path)) files.push(path)
   }
   return files
 }
 const rootDocuments = (await readdir('.', { withFileTypes: true }))
-  .filter(entry => entry.isFile() && entry.name.endsWith('.md')).map(entry => entry.name)
+  .filter(entry => entry.isFile() && entry.name.endsWith('.md') && !ignoredPaths.has(entry.name)).map(entry => entry.name)
 const documents = [...rootDocuments, 'desktop/README.md', 'desktop/AGENTS.md', 'desktop/CONTRIBUTING.md',
   ...await markdownFiles('docs'), ...await markdownFiles('contracts'), ...await markdownFiles('scenarios'),
   ...await markdownFiles('desktop/docs')]

@@ -357,7 +357,7 @@ describe('PluginsPage bundled capability controls', () => {
     expect(addMcp.textContent).toContain('Enable Pi MCP Adapter first')
     expect(dialog.textContent).toContain('Not every third-party package, plugin, or extension will work in GooeyPi')
     await act(async () => { [...dialog.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === 'create a GitHub issue')!.click() })
-    expect(openExternal).toHaveBeenCalledWith('https://github.com/am-will/gooey-pi/issues/new')
+    expect(openExternal).toHaveBeenCalledWith('https://github.com/jinyitao123/weave-workbench/issues/new')
 
     await act(async () => { [...dialog.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent?.includes('Add Package'))!.click() })
     expect(dialog.textContent).not.toContain('Not every third-party')
