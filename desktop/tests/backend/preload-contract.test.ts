@@ -105,6 +105,7 @@ const INVOKE_CASES: Array<[domain: string, method: string, channel: string, args
   ['enterprise', 'saveTeamMemberConfigDraft', 'enterprise:save-team-member-config-draft', [{ teamId: 'team', agentId: 'member', revision: 1 }]],
   ['enterprise', 'applyTeamMemberConfigDraft', 'enterprise:apply-team-member-config-draft', ['team', 'member', 1]],
   ['enterprise', 'getWorkOverview', 'enterprise:get-work-overview', []],
+  ['enterprise', 'getWorkRunStates', 'enterprise:get-work-run-states', [['run-current', 'run-previous']]],
   ['enterprise', 'cancelWork', 'enterprise:cancel-work', ['run-original']],
   ['enterprise', 'getApprovalContext', 'enterprise:get-approval-context', ['approval']],
   ['enterprise', 'pinReturnedApprovalContext', 'enterprise:pin-returned-approval-context', ['approval']],
@@ -183,6 +184,23 @@ describe('preload bridge contract', () => {
     const api = electronMocks.api as BridgeApi
     await api[domain][method](...args)
     expect(electronMocks.ipcRenderer.invoke).toHaveBeenCalledWith(channel, ...args)
+  })
+
+  it('forwards the complete run lookup batch and returns its read-only projection without mutation or side effects', async () => {
+    const api = electronMocks.api as BridgeApi
+    const runIds = Object.freeze(['run-current', 'run-missing', 'run-current'])
+    const projection = Object.freeze({
+      runs: Object.freeze([Object.freeze({ runId: 'run-current', status: 'failed', isCurrent: true, businessResult: 'action_failed' })]),
+      missing: Object.freeze(['run-missing']),
+    })
+    electronMocks.ipcRenderer.invoke.mockResolvedValueOnce(projection)
+
+    await expect(api.enterprise.getWorkRunStates(runIds)).resolves.toBe(projection)
+
+    expect(electronMocks.ipcRenderer.invoke).toHaveBeenCalledExactlyOnceWith('enterprise:get-work-run-states', runIds)
+    expect(electronMocks.ipcRenderer.invoke.mock.calls[0]?.[1]).toBe(runIds)
+    expect(electronMocks.ipcRenderer.send).not.toHaveBeenCalled()
+    expect(electronMocks.ipcRenderer.on).not.toHaveBeenCalled()
   })
 
   it.each([
