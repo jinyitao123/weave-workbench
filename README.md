@@ -1,32 +1,99 @@
 # Weave Workbench
 
-Weave Workbench 是桌面工作助手、智能体团队与 Forge 业务系统的统一产品仓库。
+[![Product repository checks](https://github.com/jinyitao123/weave-workbench/actions/workflows/project-check.yml/badge.svg)](https://github.com/jinyitao123/weave-workbench/actions/workflows/project-check.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-全部文档入口见[文档索引](docs/README.md)，长期维护规则见 [AGENTS.md](AGENTS.md#文档管理所有-agent-与开发任务必须遵守)。
+**让员工在桌面上把日常工作交给智能体团队，业务结果仍由企业系统负责。**
 
-新会话从[项目状态](docs/项目状态.md)开始，执行 `make status` 核对现场。主方案见[产品架构](docs/architecture/系统架构设计.md)，协作方式见[工程管理](docs/engineering/README.md)。Weave 和 inoForge 保留独立源码主仓，本仓按确定版本组合交付，见[同步与发布](docs/architecture/开发与发布方式.md)。
+员工在桌面端整理材料、提交工作、办理待办；智能体团队按已发布的流程协作执行；业务数据、权限、审批和最终状态始终留在业务系统里，可被独立读回和审计。
 
-第一版产品目标见[MVP1 验收方案](docs/plans/MVP1阶段说明.md)，具体推进顺序见[MVP1 落地步骤](docs/plans/MVP1阶段说明.md#落地步骤)。
+> **English summary.** Weave Workbench is the product monorepo that combines a desktop client (an Electron app adapted from [GooeyPi](https://github.com/am-will/gooey-pi)), [Weave](https://github.com/jinyitao123/weave-next) (agent-team orchestration, execution and recovery) and [Forge](https://github.com/jinyitao123/inoForge) (business apps on ObjectStack: objects, actions, permissions, approvals). Employees hand work to agent teams from the desktop; teams act only through business actions that Forge explicitly exposes; the outcome is written back to Forge and can be verified there independently. The project is a pilot: the first end-to-end scenario (sales contract hand-off between employees) is only partly verified, see [Status](#项目状态--status). Documentation is mostly in Chinese.
 
-当前阶段成果见[MVP1 第一阶段版本说明](docs/releases/001-MVP1第一阶段里程碑.md)：已保全真实交接、提交审批和人工退回，完整修改重提仍未通过。新增[场景索引](scenarios/README.md)、[共性问题与客户规则分类](docs/plans/问题清单.md)及[仓库分支收束方案](docs/engineering/仓库与分支收束.md)。
+## 它解决什么问题
 
-用户在桌面端完成日常工作并提交材料，Weave 负责组织智能体、派发任务和保障执行，Forge 负责业务数据、流程、权限和最终业务结果。这个仓库负责把三者组合成一个可以发布、验证和持续演进的产品。
+- **员工不必懂智能体。** 打开桌面即可在“我的工作”里放材料、看成果；也可以选择任意本地文件夹作为工作空间，明确允许助手读取和修改的范围。
+- **工作能交给团队，关掉窗口也不丢。** 需要多人或多角色协作时，桌面把目标、冻结的材料版本和授权范围递交给 Weave；Weave 持久保存任务、调度执行、重试、取消和恢复。
+- **智能体只能做被允许的业务动作。** Forge 只把挑选过的业务动作开放给团队，权限判断仍在 Forge；不暴露通用的数据写入能力。
+- **接力到真人时不靠猜。** 下一步由 Forge 根据正式业务状态确定岗位和具体账号，待办进入该员工的原生收件箱；对方离线也不丢，登录后在自己的桌面办理。
+- **“完成”可以被核对。** 桌面显示的完成状态必须能追溯到 Forge 或 Weave 的权威记录，模型自述、健康检查和单次工具调用都不算业务通过。
 
-桌面端首次启动会提供“我的工作”，其中包含用户可直接看到的“材料”和“成果”文件夹。用户也可以选择任意本地文件夹作为工作空间，明确允许桌面助手读取和修改的范围。
+## 工作方式
 
-## 目录
+```mermaid
+flowchart LR
+    U[员工] --> D[桌面客户端]
+    D -->|目标、冻结材料、任务委托| W[Weave 智能体团队]
+    W -->|调用开放的业务动作| F[Forge 业务应用]
+    W -->|运行事件| N[原生收件箱]
+    F -->|业务事项与通知| N
+    N --> D2[责任员工的桌面]
+    D2 -->|办理、提交新版本| F
+```
 
-- `desktop/`：基于 GooeyPi 改造的 macOS 与 Windows 桌面产品。
-- `platform/weave/`：智能体建队、协作、执行、恢复与额度治理。
-- `platform/forge/`：ObjectStack 上的业务应用、业务动作和业务权限。
-- `contracts/`：身份、材料、任务、动作、结果和审计契约。
-- `scenarios/`：跨组件的真人业务验收场景。
-- `docs/architecture/`：当前有效的产品和架构设计。
-- `docs/environments/`：固定联调环境、部署边界和当前状态。
-- `tools/`：本地联调、版本锁定、打包和发布工具。
+| 组件 | 负责 | 权威状态 |
+| --- | --- | --- |
+| 桌面（`desktop/`） | 本地工作空间、材料递交、进度与待办呈现、团队开发入口、安全会话 | 个人草稿与本地交互 |
+| Weave（`platform/weave/`） | 团队与流程、协作调度、重试、额度、取消、恢复 | 企业任务的执行状态 |
+| Forge（`platform/forge/`） | 账号、业务对象、流程、权限、审批、业务待办 | 登录身份与正式业务结果 |
 
-## 当前第一条业务闭环
+桌面不另建调度器，Weave 不复制业务流程和权限，Forge 不重做智能体执行循环。完整设计见[系统架构设计](docs/architecture/系统架构设计.md)，身份与权限见[接入与权限边界](docs/architecture/接入与权限边界.md)。
 
-员工在桌面端提交销售合同材料，桌面助手将材料交给 Weave 的销售团队。团队从 Forge 读取可用业务能力，完成合同识别、校验、登记和提交，并向另一名员工创建待办。第二名员工在自己的桌面端处理待办，最终结果回写 Forge，并由发起人和审计者分别确认。
+## 项目状态 / Status
 
-任何健康检查、模型自述、单个工具调用或阶段完成都不能单独算作业务验收通过。
+**试点阶段（MVP1），尚未达到通用可用。** 请不要把它当作成熟的生产系统。
+
+已经在真实环境中走通并由 Forge 页面独立读回：
+
+- 销售在桌面交接合同材料，团队触发 Forge 正式审批，交付负责人在自己的桌面退回；
+- 线索转商机、报价调整两个场景的主路径。
+
+仍未通过或未验证：合同的完整修改重提与最终状态读回、回执丢失后的重复调用、并发旧版本等边界路径。逐项结论与证据见[项目状态](docs/项目状态.md)、[MVP1 阶段说明](docs/plans/MVP1阶段说明.md)和[问题清单](docs/plans/问题清单.md)。
+
+## 仓库结构
+
+| 路径 | 内容 |
+| --- | --- |
+| `desktop/` | Electron 桌面客户端，基于 GooeyPi 改造，支持 macOS 与 Windows |
+| `platform/weave/` | Weave 的锁定版本集成副本，源码主仓为 [weave-next](https://github.com/jinyitao123/weave-next) |
+| `platform/forge/` | Forge 的锁定版本集成副本，源码主仓为 [inoForge](https://github.com/jinyitao123/inoForge) |
+| `contracts/` | 跨组件契约：身份、材料、任务、动作、结果、审计，见[契约索引](contracts/README.md) |
+| `scenarios/` | 跨组件的真人业务验收场景，见[场景索引](scenarios/README.md) |
+| `docs/` | 架构、计划、环境、决策与验收记录，入口见[文档索引](docs/README.md) |
+| `tools/` | 版本锁定、状态核对、文档与布局检查 |
+| `components.lock.json` | 三个组件的来源仓库与锁定提交 |
+
+两个平台组件保持独立源码主仓与发布节奏，本仓按确定版本组合交付；同步方式见[开发与发布方式](docs/architecture/开发与发布方式.md)。
+
+## 快速开始
+
+只运行仓库检查（需要 Node.js 24）：
+
+```sh
+make check      # 文档、布局、版本锁与状态页
+make status     # 当前分支、提交与组件版本偏差
+```
+
+运行桌面客户端（需要 Node.js 24.15+、npm 12+）：
+
+```sh
+cd desktop
+npm run toolchain:bootstrap
+npm install
+npm run dev
+```
+
+桌面默认连接项目维护者的联调环境；连接自己部署的 Forge 与 Weave 时，用环境变量 `WORKBENCH_FORGE_URL`、`WORKBENCH_WEAVE_URL` 指定地址。构建与测试说明见[桌面文档](desktop/README.md)，Weave 与 Forge 的启动方式见各自目录下的 README。
+
+组件检查：`make desktop-check`、`make weave-check`、`make forge-check`。
+
+## 参与和反馈
+
+- 提交 Issue 或 Pull Request 前请阅读[贡献指南](CONTRIBUTING.md)。
+- 发现安全问题请按[安全政策](SECURITY.md)私下报告，不要公开提交。
+- 仓库规则、文档管理与验收要求见 [AGENTS.md](AGENTS.md)；接手进行中的工作从[项目状态](docs/项目状态.md)开始。
+
+## 许可证与致谢
+
+本仓以 [Apache-2.0](LICENSE) 授权，`desktop/` 与 `platform/weave/` 保留各自的 MIT 许可证，详见 [NOTICE](NOTICE)。
+
+桌面客户端基于 [GooeyPi](https://github.com/am-will/gooey-pi)，并使用 [Pi](https://pi.dev/) 与 [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent)；业务平台构建在 ObjectStack 之上。
