@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { TeamDevelopmentAgentBridge } from '../../electron/main/development/agent-bridge'
 import { teamWorkspaceRequest } from '../../electron/main/enterprise/team-workspace'
 import { newMember } from '../../src/pages/team-workspace/member'
-import { initialGraph } from '../../src/pages/team-workspace/graph'
+import { configureWorkflowResultProtocol, initialGraph } from '../../src/pages/team-workspace/graph'
 import type { EnterpriseBusinessCapabilityCatalog } from '../../src/types/api'
 import type { TeamDefinition, TeamWorkspace, TeamWorkspaceCommand } from '../../src/types/team-workspace'
 
@@ -112,6 +112,55 @@ it.each(['none', 'business', 'node-version', 'loop-control', 'max-repeats'] as c
     expect(result.error).toContain('团队草稿已变化')
     expect((await bridge!.getState('runtime')).proposal).toBeDefined()
   }
+})
+
+it('resolves bound completion actions by name and confirms a serialized wire save without exposing identifiers in context', async () => {
+  const lead = newMember('deepseek-flash'), worker = newMember('deepseek-flash')
+  lead.configuration.role = 'avatar'; worker.configuration.displayName = '审核员'
+  const capabilityID = 'forge:action:contracts.submit'
+  worker.configuration.businessCapabilityIds = [capabilityID]
+  const document: TeamDefinition = { name: '合同团队', objective: '复核合同', members: [lead, worker], workflows: [{ id: 'flow', name: '复核流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
+  document.workflows[0] = configureWorkflowResultProtocol(document.workflows[0], true)
+  const originalContract = { version: 1, coverage: 'incomplete', output: structuredClone(document.workflows[0].graph_definition.output_contract), required_artifacts: [{ id: 'report', path: 'report.txt' }], limitations: ['审批结果独立核对'] }
+  document.workflows[0].graph_definition.delivery_contract = originalContract
+  const action = { id: capabilityID, name: '提交指定版本', description: '提交材料', effect: 'write' as const, resourceType: 'contract', requiresEmployeeIntent: true, status: 'available' as const }
+  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [action, { ...action, id: 'forge:action:contracts.archive', name: '归档合同' }] }
+  let remote = await savedWireWorkspace(document, 4), writes = 0
+  bridge = new TeamDevelopmentAgentBridge({
+    accountKey: async () => 'developer-1', developer: async () => ({ accountId: 'developer-1' }), teams: async () => [{ id: 'team', name: '合同团队' }],
+    team: async () => structuredClone(remote),
+    workspace: async (command) => {
+      if (command.action !== 'save') throw new Error('unexpected write')
+      expect(command.revision).toBe(4)
+      writes++
+      remote = { ...await savedWireWorkspace(command.document, 5), published_revision: 3 }
+      // GraphDefinition is json.RawMessage in Weave's development draft;
+      // ordinary JSON storage preserves DeliveryContract keys and schemas.
+      return JSON.parse(JSON.stringify(remote))
+    },
+    catalog: async () => catalog, extensionPath: '/app/team-development.ts',
+  })
+  await bridge.start()
+  const env = bridge.environmentFor({ cwd: '/work', harness: 'pi' })
+  bridge.bindRuntime(env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime')
+  const call = async (method: string, params: Record<string, unknown> = {}) => {
+    const response = await fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method, params }) })
+    return response.json() as Promise<{ ok: boolean; result?: Record<string, unknown>; error?: string }>
+  }
+  await call('open', { team_name: '合同团队' })
+  const operation = { kind: 'business_completion', flow: '复核流程', capabilities: ['提交指定版本'], allowNeedsInput: true }
+  for (const capabilities of [['不存在的动作'], [capabilityID], ['归档合同'], ['提交指定版本', '提交指定版本']]) {
+    expect((await call('save', { operations: [{ ...operation, capabilities }] })).ok).toBe(false)
+  }
+  expect(writes).toBe(0)
+  expect((await call('save', { operations: [operation] })).ok).toBe(true)
+  expect(writes).toBe(1)
+  expect(remote.published_revision).toBe(3)
+  expect(remote.document.workflows[0].graph_definition.delivery_contract).toMatchObject({ ...originalContract, external_effects_check_id: 'business-action-receipts', required_checks: [{ parameters: { required_capability_ids: [capabilityID], when_authorized: true, allow_needs_input: true } }] })
+  expect((await bridge.getState('runtime')).proposal).toBeUndefined()
+  const context = (await call('context')).result
+  expect(context).toMatchObject({ team: { workflows: [{ businessCompletion: { actions: ['提交指定版本'], whenAuthorized: true, allowNeedsInput: true } }] } })
+  expect(JSON.stringify(context)).not.toContain(capabilityID)
 })
 
 it('binds Pi to one developer draft and returns a proposal without saving it', async () => {

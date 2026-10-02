@@ -1,7 +1,8 @@
 import { expect, it } from 'vitest'
 import { newMember } from '../../src/pages/team-workspace/member'
-import { initialGraph } from '../../src/pages/team-workspace/graph'
+import { configureWorkflowResultProtocol, initialGraph } from '../../src/pages/team-workspace/graph'
 import { applyTeamDevelopmentOperations } from '../../src/pages/team-workspace/development-proposal'
+import { businessCompletionRequirement } from '../../src/pages/team-workspace/business-completion'
 import type { EnterpriseBusinessCapabilityCatalog } from '../../src/types/api'
 import type { TeamDefinition } from '../../src/types/team-workspace'
 
@@ -19,6 +20,88 @@ function fixture() {
   }] }
   return { document, catalog }
 }
+
+function completionFixture() {
+  const value = fixture()
+  value.document.workflows[0] = configureWorkflowResultProtocol(value.document.workflows[0], true)
+  value.document.members[1].configuration.businessCapabilityIds = ['submit']
+  return value
+}
+
+it('adds and updates receipt completion checks while preserving delivery fields and existing business permissions', () => {
+  const { document, catalog } = completionFixture()
+  const output = structuredClone(document.workflows[0].graph_definition.output_contract)
+  const prior = { version: 1, coverage: 'incomplete', output, required_artifacts: [{ id: 'report', path: 'report.json', content_type: 'application/json' }],
+    required_checks: [{ id: 'result-shape', title: '存在结果分类', verifier_id: 'weave.deterministic', verifier_version: 'v1', parameters: { actual: { source: 'output', path: '/disposition' }, operator: 'equals', expected: { source: 'literal', value: 'complete' } } }], limitations: ['客户确认须独立核对'], external_effects: 'none' }
+  document.workflows[0].graph_definition.delivery_contract = prior
+  const operation = { kind: 'business_completion', flow: 'flow', capabilities: ['submit'], allowNeedsInput: true }
+  const proposed = applyTeamDevelopmentOperations(document, [operation], catalog).document
+  const contract = proposed.workflows[0].graph_definition.delivery_contract as typeof prior & { external_effects_check_id: string }
+  expect(contract).toMatchObject({ version: 1, coverage: 'incomplete', output, required_artifacts: prior.required_artifacts, limitations: prior.limitations, external_effects: 'required', external_effects_check_id: 'business-action-receipts' })
+  expect(contract.required_checks[0]).toEqual(prior.required_checks[0])
+  expect(contract.required_checks[1]).toMatchObject({ id: 'business-action-receipts', verifier_id: 'weave.business-action-receipts', verifier_version: 'v1', parameters: { required_capability_ids: ['submit'], when_authorized: true, allow_needs_input: true } })
+  expect(proposed.members).toEqual(document.members)
+  expect(document.workflows[0].graph_definition.delivery_contract).toEqual(prior)
+  const updated = applyTeamDevelopmentOperations(proposed, [{ ...operation, allowNeedsInput: false }], catalog).document
+  expect((updated.workflows[0].graph_definition.delivery_contract as { required_checks: unknown[] }).required_checks).toHaveLength(2)
+  expect(businessCompletionRequirement(updated.workflows[0])).toEqual({ capabilities: ['submit'], allowNeedsInput: false })
+})
+
+it.each(['unbound', 'disabled', 'outside-flow', 'duplicate', 'missing', 'too-many'] as const)('rejects %s completion requirements without granting or moving actions', (mode) => {
+  const { document, catalog } = completionFixture()
+  document.members[1].configuration.businessCapabilityIds = mode === 'unbound' ? [] : ['submit']
+  if (mode === 'disabled') document.members[1].relationship.enabled = false
+  if (mode === 'outside-flow') document.workflows[0].graph_definition.nodes = document.workflows[0].graph_definition.nodes.filter((node) => node.type !== 'worker')
+  const capabilities = mode === 'duplicate' ? ['submit', 'submit'] : mode === 'missing' ? ['not-in-catalog'] : mode === 'too-many' ? Array.from({ length: 17 }, (_, index) => `action-${index}`) : ['submit']
+  expect(() => applyTeamDevelopmentOperations(document, [{ kind: 'business_completion', flow: 'flow', capabilities, allowNeedsInput: true }], catalog)).toThrow()
+  expect(document.workflows[0].graph_definition.delivery_contract).toBeUndefined()
+})
+
+it('refuses a different external-effects check or a conflicting output schema instead of replacing it', () => {
+  const { document, catalog } = completionFixture()
+  document.members[1].configuration.businessCapabilityIds = ['submit']
+  const prior = { version: 1, coverage: 'explicit', output: { type: 'text' }, required_checks: [{ id: 'existing-effects', verifier_id: 'other.effects', verifier_version: 'v1' }], external_effects: 'required', external_effects_check_id: 'existing-effects' }
+  document.workflows[0].graph_definition.delivery_contract = prior
+  const operation = { kind: 'business_completion', flow: 'flow', capabilities: ['submit'], allowNeedsInput: true }
+  expect(() => applyTeamDevelopmentOperations(document, [operation], catalog)).toThrow('另一项外部业务效果检查')
+  expect(document.workflows[0].graph_definition.delivery_contract).toEqual(prior)
+  document.workflows[0].graph_definition.delivery_contract = { version: 1, coverage: 'incomplete', output: { type: 'json', schema: { type: 'object' } } }
+  expect(() => applyTeamDevelopmentOperations(document, [operation], catalog)).toThrow('输出格式不一致')
+})
+
+it('does not leave a configured completion check referring to an action removed later in the batch', () => {
+  const { document, catalog } = completionFixture()
+  document.members[1].configuration.businessCapabilityIds = ['submit']
+  expect(() => applyTeamDevelopmentOperations(document, [
+    { kind: 'business_completion', flow: 'flow', capabilities: ['submit'], allowNeedsInput: true },
+    { kind: 'capability', member: document.members[1].id, capability: 'submit', selected: false },
+  ], catalog)).toThrow('尚未绑定')
+  expect(() => applyTeamDevelopmentOperations(document, [
+    { kind: 'business_completion', flow: 'flow', capabilities: ['submit'], allowNeedsInput: true },
+    { kind: 'result_protocol', flow: 'flow', enabled: false },
+  ], catalog)).toThrow('结果分类')
+})
+
+it('requires the result protocol and rejects unknown or malformed existing receipt-check parameters', () => {
+  const plain = fixture()
+  plain.document.members[1].configuration.businessCapabilityIds = ['submit']
+  const operation = { kind: 'business_completion', flow: 'flow', capabilities: ['submit'], allowNeedsInput: true }
+  expect(() => applyTeamDevelopmentOperations(plain.document, [operation], plain.catalog)).toThrow('须先启用')
+  const { document, catalog } = completionFixture()
+  const valid = applyTeamDevelopmentOperations(document, [operation], catalog).document
+  for (const parameters of [
+    { required_capability_ids: ['submit'], when_authorized: true, allow_needs_input: true, unexpected: true },
+    { required_capability_ids: ['submit'], when_authorized: false, allow_needs_input: true },
+    { required_capability_ids: [], when_authorized: true, allow_needs_input: true },
+  ]) {
+    const malformed = structuredClone(valid)
+    const contract = malformed.workflows[0].graph_definition.delivery_contract as { required_checks: Array<{ parameters: unknown }> }
+    contract.required_checks[0].parameters = parameters
+    expect(() => businessCompletionRequirement(malformed.workflows[0])).toThrow('参数或引用无效')
+    expect(() => applyTeamDevelopmentOperations(malformed, [operation], catalog)).toThrow('参数或引用无效')
+    expect(() => applyTeamDevelopmentOperations(malformed, [{ kind: 'team', objective: '修改说明' }], catalog)).toThrow('参数或引用无效')
+  }
+})
 
 it('adds a member, explicitly binds the native multi-file parameter, and inserts a step without changing the source draft', () => {
   const { document, catalog } = fixture()

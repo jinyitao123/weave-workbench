@@ -22,6 +22,7 @@ async function call(method: string, params: Record<string, unknown> = {}) {
 function result(value: unknown) { return { content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }], details: {} } }
 
 const operationGuidance = [
+  '业务动作回执完成检查使用 {kind:"business_completion",flow:"准确流程名称",capabilities:["准确业务动作名称"],allowNeedsInput:true}。capabilities 必须是当前目录中 1 至 16 个不重复的名称，且动作已绑定到该流程的已启用成员；未绑定时先用既有动作绑定操作并保存。流程须已启用合法的“可要求补充材料”结果分类；本操作不会自动改变输出格式。本操作不授予动作、不替员工授权。只要求声明动作与本轮员工授权的交集；allowNeedsInput 明确是否允许无业务效果的合法缺件结果交还员工。只沿既有草稿保存、试跑与发布生效；已有其他业务效果检查时会拒绝，不能替换它。',
   '新增成员完整操作为 {kind:"member_add",ref:"new_worker",name:"材料协调员",duty:"整理本次材料并保留原文依据"}；ref、name、duty 均必填。ref 只供同一组后续操作引用。新增成员默认是 worker、使用 loom，模型沿用当前草稿首个 worker 的模型；业务动作和技能默认空，不自动复制其他成员的授权。',
   '修改已有步骤执行者使用 {kind:"step",flow:"流程准确名称",step:"步骤准确名称",member:"成员准确名称或本组新增ref"}；可附 requirement 更新工作要求。选择负责人会变为 lead，选择执行成员会变为 worker；节点 id、edges、inputs 和声明输出保持原值。无需删除重建步骤。',
   '操作接口以本工具说明和 gooeypi_team_development_context 返回内容为准；不要扫描环境、历史会话或本机源码猜参数。缺少引用先读取上下文，不编造操作名或字段。',

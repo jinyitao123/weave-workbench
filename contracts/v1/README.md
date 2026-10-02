@@ -176,7 +176,7 @@
 
 ### 业务动作回执完成检查
 
-开发者可在已有 `graph.delivery_contract.required_checks` 中声明 `verifier_id: "weave.business-action-receipts"`、`verifier_version: "v1"` 的只读检查，并将同一检查ID写入 `external_effects_check_id`。参数为 `required_capability_ids`（1至16个不重复且已给流程成员绑定的能力）、`when_authorized: true`、`allow_needs_input`（布尔值）。检查只要求声明列表与本轮冻结授权范围的交集；其他获准动作不会自动变成必做动作。未配置此检查的流程保留现有语义，不从模型摘要推断完成要求。
+开发者可在已有 `graph.delivery_contract.required_checks` 中声明 `verifier_id: "weave.business-action-receipts"`、`verifier_version: "v1"` 的只读检查，并将同一检查ID写入 `external_effects_check_id`。参数为 `required_capability_ids`（1至16个不重复且已给流程成员绑定的能力）、`when_authorized: true`、`allow_needs_input`（布尔值）。本版检查要求已启用 `workbench_result_v1` 及其合法三字段输出，绑定最终交付来源成员；桌面、发布与加载均须校验，不静默改写原输出。检查只要求声明列表与本轮冻结授权范围的交集；其他获准动作不会自动变成必做动作。未配置此检查的流程保留现有语义，不从模型摘要推断完成要求。
 
 - 调用者是Weave现有成员完成校验与交付验证器。身份、run、冻结input、能力及受保护业务记录均取可信运行上下文，不接受模型提供的回执或记录替代。每次候选完成时重新读取同运行的权威动作事实，沿既有持久操作身份去重；不得用其他输入、记录或运行的成功回执抵数。
 - 声明动作本轮未获授权时不要求写入。获授权且最终结果为 `complete` 时，每项要求必须有匹配成功回执；缺调用只能通过既有Loom完成校验返回纠正反馈，不由校验器执行或重放业务动作。`allow_needs_input=true` 时，合法缺件结果且尚无业务效果可交还员工；此结果不证明任何业务效果完成。
