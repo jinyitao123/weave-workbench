@@ -4,10 +4,10 @@ Forge 面向制造企业提供供应链、销售、生产、项目、行政、�
 
 ## 当前仓库与交付状态
 
-- 当前源码仍在 [apps/forge-objectstack](apps/forge-objectstack/README.md) 集中注册一个 Forge 应用；七应用拆分为已确定设计，尚未实施。
+- 当前源码通过共享核心插件和 [七个应用包注册表](apps/forge-objectstack/src/apps/index.ts) 注册供应链、销售、生产、项目、行政、财务与报表应用。注册完成不代表各应用的业务、页面、权限和持久化已逐项验收。
 - 已有对象、动作、页面和验证脚本；入口存在、接口可调用、历史检查通过均不等于当前功能可交付。
 - [页面清单](apps/forge-objectstack/tests/page-polish.manifest.json)保留待复核状态，缺失与不通功能须按实际业务结果核查。旧双侧像素门禁向新准则的迁移尚待实现。
-- 应用划分、各应用设置、缺口修复与性能总体方案由产品总仓 `weave-workbench/docs/architecture/Forge应用与性能设计.md` 维护，本仓交付实现与证据。
+- 跨组件总体架构以产品总仓 `weave-workbench/docs/architecture/系统架构设计.md` 为准；本仓的应用包与注册以 [src/apps/index.ts](apps/forge-objectstack/src/apps/index.ts) 和逐页业务合同为准，本仓交付实现与证据。
 
 ## 开始工作
 
@@ -29,3 +29,9 @@ Forge 面向制造企业提供供应链、销售、生产、项目、行政、�
 - [三类业务定义](docs/business-model.md)
 - [客户业务材料](docs/customer-meeting-20260907-findings.md)
 - [历史归档](docs/archive/README.md)
+
+## License
+
+Copyright 2026 Weave Workbench contributors.
+
+This source repository is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE). Third-party dependencies and incorporated works retain their respective licenses, copyrights, and attribution notices.

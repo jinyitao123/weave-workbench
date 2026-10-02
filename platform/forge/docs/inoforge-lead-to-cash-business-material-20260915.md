@@ -1,5 +1,7 @@
 # InoForge 线索到回款完整业务材料
 
+> 公开副本已对真实运维主机、端口、本机绝对路径及查询值脱敏；原始日期、来源 SHA、结论与失败事实保持原记录。原件/摘要仅在本机私下保全。
+
 更新日期 2026 年 9 月 15 日
 
 案例编号 `LTC-HC-20260915-A`
@@ -278,7 +280,7 @@ RISEMAP 对照按业务阶段定向进行。公开资料和 RISEMAP 页面用于
 
 ## 来源
 
-- [汇川技术 2023 年年度报告](https://basic.10jqka.com.cn/ajax/usaph/pubDetail/10c512d117bf3d22_translation)
-- [汇川技术工业自动化产品](https://www.inovance.com/portal/product/index.html)
-- [汇川技术行业解决方案](https://www.inovance.com/portal/solution/index.html)
-- [汇川技术软件与数字化产品](https://www.inovance.com/portal/product/index/type/9.html)
+- 汇川技术 2023 年年度报告（目标端点已脱敏）
+- 汇川技术工业自动化产品（目标端点已脱敏）
+- 汇川技术行业解决方案（目标端点已脱敏）
+- 汇川技术软件与数字化产品（目标端点已脱敏）
