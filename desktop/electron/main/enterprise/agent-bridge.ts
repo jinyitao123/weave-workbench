@@ -197,15 +197,17 @@ function assertContinuationSubmissionAuthorization(context: EnterpriseWorkContin
   if (context.source.inputStatus === 'closed' || context.source.inputStatus === 'superseded') {
     throw new Error('原工作输入已关闭或已被更新输入取代，请从“我的工作”打开最新消息，不能沿旧事项创建新输入')
   }
-  const authorization = context.run.authorization
-  if (authorization?.status !== 'renewal_required' && !authorization?.canRenew) return
   // A terminal read-only source can supply verified materials to a new input.
-  // Its revoked grant is never renewed: submitWork issues a separate grant for
-  // the new employee message, input and explicitly selected action scope.
+  // This source check is independent of the old grant's lifetime or whether
+  // files are reused. submitWork issues a separate grant for the new message,
+  // input and explicitly selected action scope; it never renews the old grant.
   if (context.source.inputStatus === 'current'
     && Array.isArray(context.input.authorizedBusinessCapabilityIDs) && context.input.authorizedBusinessCapabilityIDs.length === 0
     && isReusableReadOnlyContinuation(context)) return
-  throw new Error('原工作正在等待授权更新，不能用新交接或新输入替代；可安全续办时请继续原工作授权，否则先核对原业务回执')
+  if (context.run.authorization?.status === 'renewal_required' || context.run.authorization?.canRenew) {
+    throw new Error('原工作正在等待授权更新，不能用新交接或新输入替代；可安全续办时请继续原工作授权，否则先核对原业务回执')
+  }
+  throw new Error('当前团队运行状态、原授权范围或平台动作回执不允许复用原材料或创建新输入，请刷新工作消息并核对原结果')
 }
 function businessNotificationFingerprint(context: EnterpriseBusinessNotificationContext): string {
   const { capturedAt: _capturedAt, ...snapshot } = context.record.snapshot
