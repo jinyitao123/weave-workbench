@@ -13,6 +13,7 @@ import {
 import { CONTRACT_OBJECT, resolveRetainedContractMaterial } from './contract-material-holder.js';
 import { approvalPayloadVersion } from './contract-revision-material.js';
 import { applySalesOrderApproval } from './sales-order-domain.js';
+import { matchesOrderApprovalSnapshot } from './sales-order-readiness.js';
 
 const ROUTE = '/api/v1/approvals/requests/:requestId/workbench-context';
 const ORIGINAL_ROUTE = '/api/v1/approvals/requests/:requestId/workbench-context/files/:fileId/original';
@@ -567,11 +568,12 @@ async function withApprovalRequestLock<T>(
   context: ExecutionContext,
   requestId: string,
   operation: () => Promise<T>,
+  preserveOrderDecision?: () => Promise<boolean>,
 ): Promise<T> {
   if (typeof engine.transaction !== 'function' || typeof engine.execute !== 'function') {
     throw new ApprovalActionFailure(503, 'APPROVAL_ACTION_UNAVAILABLE', 'The approval action lock is unavailable.');
   }
-  return engine.transaction(async (trxContext: { transaction?: unknown }, info: { owned?: boolean }) => {
+  const result = await engine.transaction(async (trxContext: { transaction?: unknown }, info: { owned?: boolean }) => {
     if (info?.owned !== true || trxContext?.transaction == null) {
       throw new ApprovalActionFailure(503, 'APPROVAL_ACTION_UNAVAILABLE', 'A PostgreSQL transaction is required for this approval action.');
     }
@@ -580,8 +582,16 @@ async function withApprovalRequestLock<T>(
       object: 'sys_approval_request',
       transaction: trxContext.transaction,
     });
-    return operation();
+    try { return { value: await operation() }; }
+    catch (error) {
+      // Domain effects have their own savepoint. Commit the durable native
+      // decision under this lock before reporting its unconfirmed business result.
+      if (preserveOrderDecision && error instanceof ApprovalActionFailure && error.code === 'APPROVAL_ACTION_IN_DOUBT' && await preserveOrderDecision()) return { error };
+      throw error;
+    }
   }, context, { require: true });
+  if ('error' in result) throw result.error;
+  return result.value;
 }
 
 async function executeNativeApprovalAction(
@@ -638,11 +648,11 @@ async function executeNativeApprovalAction(
     }
     const observed = observedNativeAction(request, actions, actorId, decision, comment, suppliedItemVersion, suppliedMaterialVersion);
     if (observed) {
-      if (decision === 'recall' && request.status === 'recalled') {
+      if (objectName === 'forge_sales_order' && ['approved', 'rejected', 'recalled'].includes(String(request.status))) {
         // The native action may have committed before its business cleanup or
-        // reply failed. Reconcile the durable result, never recall a second time.
+        // reply failed. Reconcile the durable result, never decide a second time.
         try { await applySalesOrderApproval(engine, recordId, context.tenantId!); }
-        catch { throw new ApprovalActionFailure(503, 'APPROVAL_ACTION_IN_DOUBT', '审批已撤回，订单取消结果待核对，请从订单事项继续核对原结果。'); }
+        catch { throw new ApprovalActionFailure(503, 'APPROVAL_ACTION_IN_DOUBT', '原生决定已保存，订单结果待核对，请从订单事项继续核对原结果。'); }
       }
       return observed;
     }
@@ -670,6 +680,13 @@ async function executeNativeApprovalAction(
       }
       if (decision === 'approve' || decision === 'reject') {
         const result = await approvals.decide(requestId, { actorId, decision, comment }, context);
+        let businessStatus: string | undefined;
+        if (objectName === 'forge_sales_order') {
+          const order = await engine.findOne('forge_sales_order', { where: { id: recordId, organization_id: context.tenantId } }, { context: { ...context, isSystem: true } });
+          const expected = result.request.status === 'approved' ? 'active' : result.request.status === 'rejected' ? 'cancelled' : undefined;
+          if (!expected || order?.status !== expected || order.approval_outcome !== result.request.status) throw new ApprovalActionFailure(503, 'APPROVAL_ACTION_IN_DOUBT', '原生决定已保存，订单结果待核对，请从订单事项继续核对原结果。');
+          businessStatus = expected;
+        }
         return {
           decision: result.decision,
           status: result.request.status,
@@ -680,6 +697,7 @@ async function executeNativeApprovalAction(
           resumed: result.resumed === true,
           autoRejected: false,
           alreadyApplied: false,
+          ...(businessStatus ? { businessStatus } : {}),
         };
       }
       const result = await approvals.sendBack(requestId, { actorId, comment }, context);
@@ -709,7 +727,18 @@ async function executeNativeApprovalAction(
       }
       throw new ApprovalActionFailure(503, 'APPROVAL_ACTION_IN_DOUBT', 'The approval result could not be confirmed. Read the native request and action history before continuing.');
     }
-  });
+  }, objectName === 'forge_sales_order' ? async () => {
+    // Do not commit an incomplete native write or a preflight lost-run refusal.
+    const durable = await approvals.getRequest(requestId, context);
+    const expectedStatus = decision === 'approve' ? 'approved' : decision === 'reject' ? 'rejected' : 'recalled';
+    if (!durable || durable.object_name !== objectName || durable.record_id !== recordId || durable.organization_id !== context.tenantId
+      || durable.status !== expectedStatus
+      || await approvalPayloadVersion(durable.payload) !== suppliedMaterialVersion) return false;
+    const order = await engine.findOne('forge_sales_order', { where: { id: recordId, organization_id: context.tenantId } }, { context: { ...context, isSystem: true } });
+    if (!order || !matchesOrderApprovalSnapshot({ submitter_id: durable.submitter_id, payload: durable.payload }, order)) return false;
+    const recorded = await approvals.listActions(requestId, context);
+    return recorded.filter(action => action.actor_id === actorId && action.action === decision && action.comment === comment).length === 1;
+  } : undefined);
 }
 
 function currentApprovalActions(
