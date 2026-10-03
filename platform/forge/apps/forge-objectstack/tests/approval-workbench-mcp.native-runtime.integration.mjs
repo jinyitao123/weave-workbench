@@ -325,6 +325,25 @@ export default stack;
 
   const sendBackContractId = await createContract('send-back');
   const sendBackRequestId = await openApproval(sendBackContractId);
+  // Transport fixture only: an order-shaped native request with the same
+  // genuine pending slate. Unsupported verbs must stop before any flow/write.
+  const orderRequestId = `areq_order_toolbar_${suffix}`;
+  const pendingFixture = (await databaseClient.query('SELECT * FROM sys_approval_request WHERE id = $1', [sendBackRequestId])).rows[0];
+  const orderFixture = { ...pendingFixture, id: orderRequestId, object_name: 'forge_sales_order', record_id: randomUUID() };
+  await databaseClient.query('INSERT INTO sys_approval_request SELECT (json_populate_record(NULL::sys_approval_request, $1::json)).*', [JSON.stringify(orderFixture)]);
+  for (const [verb, body] of [
+    ['reassign', { to: unrelated.userId, comment: '不应转签订单' }],
+    ['revise', { comment: '不应退回订单' }],
+    ['request-info', { comment: '不应新增补充通知' }],
+  ]) {
+    const refused = await delivery.request(`/approvals/requests/${orderRequestId}/${verb}`, 'POST', body);
+    assert.equal(refused.status, 400, `${verb} returns a business refusal instead of HTTP 500`);
+    assert.match(JSON.stringify(refused.value), /仅支持同意或拒绝/);
+  }
+  const afterToolbar = (await databaseClient.query('SELECT * FROM sys_approval_request WHERE id = $1', [orderRequestId])).rows[0];
+  assert.equal(afterToolbar.status, 'pending');
+  assert.deepEqual(afterToolbar.pending_approvers, pendingFixture.pending_approvers);
+  assert.equal((await databaseClient.query('SELECT id FROM sys_approval_action WHERE request_id = $1', [orderRequestId])).rows.length, 0);
   const list = mcpData(await delivery.callMcpTool('list_actions'));
   assert.ok(list?.actions?.some((action) => action.name === APPROVE_ACTION));
   assert.ok(list?.actions?.some((action) => action.name === SEND_BACK_ACTION));

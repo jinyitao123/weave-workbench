@@ -104,6 +104,22 @@ test('sales order native actions and approval preserve role, payment and atomic 
   }
   assert.ok(request); assert.equal(request.submitter_id, operator);
   const approvals = kernel.getService('approvals');
+  const reviewContext = { userId: reviewer, tenantId: org, permissions: [], positions: [] };
+  const auditBefore = await approvals.listActions(request.id, reviewContext);
+  const pendingBefore = (await read('sys_approval_request', request.id)).pending_approvers;
+  await assert.rejects(approvals.reassign(request.id, { actorId: reviewer, to: operator, comment: '不应改派订单' }, reviewContext), /仅支持同意或拒绝/);
+  await assert.rejects(approvals.sendBack(request.id, { actorId: reviewer, comment: '不应退回订单' }, reviewContext), /仅支持同意或拒绝/);
+  await assert.rejects(approvals.requestInfo(request.id, { actorId: reviewer, comment: '不应新增退回补充' }, reviewContext), /仅支持同意或拒绝/);
+  const visibleRequest = approvals.getRequest;
+  approvals.getRequest = async () => null;
+  try {
+    await assert.rejects(approvals.reassign(request.id, { actorId: reviewer, to: operator }, reviewContext), /仅支持同意或拒绝/);
+    await assert.rejects(approvals.requestInfo(request.id, { actorId: reviewer, comment: '隐藏投影不能绕过守卫' }, reviewContext), /仅支持同意或拒绝/);
+    await assert.rejects(approvals.decide(request.id, { actorId: operator, decision: 'approve', comment: '隐藏投影不能自审' }, { ...reviewContext, userId: operator }), /独立员工/);
+  } finally { approvals.getRequest = visibleRequest; }
+  assert.deepEqual((await read('sys_approval_request', request.id)).pending_approvers, pendingBefore);
+  assert.deepEqual(await approvals.listActions(request.id, reviewContext), auditBefore, 'unsupported toolbar operations leave no audit or routing effects');
+  assert.equal((await read('forge_sales_order', created.id)).status, 'pending_approval');
   await assert.rejects(approvals.decide(request.id, { actorId: operator, decision: 'approve', comment: '自审' }, { userId: operator, tenantId: org, permissions: [], positions: [] }), /独立员工/);
   const nativeUpdate = engine.update;
   let inject = true;
