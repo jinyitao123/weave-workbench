@@ -223,7 +223,7 @@ it('opens assigned business work by its authoritative record and leaves ambiguou
   const onOpenBusiness = vi.fn(async () => undefined)
   await act(async () => root.render(<EnterpriseWorkPage
     overview={{ ...overview, tasks: [], items: [], businessWork: [
-      { workKey: 'a'.repeat(64), kind: 'contract_signature', title: '登记签署', record, recordVersion: '1', updatedAt: '2026-10-03T00:00:00Z', assignment: 'assigned' },
+      { workKey: 'a'.repeat(64), kind: 'contract_signature', title: '登记签署：当前合同', record, recordVersion: '1', updatedAt: '2026-10-03T00:00:00Z', assignment: 'assigned' },
       { workKey: 'b'.repeat(64), kind: 'sales_order_submission', title: '提交订单', record, recordVersion: '1', updatedAt: '2026-10-03T00:00:00Z', assignment: 'needs_assignment', assignmentReason: 'multiple_eligible_employees' },
     ] }} loading={false} error="" onRefresh={refresh} onComplete={vi.fn(async () => undefined)}
     onInspect={vi.fn(async () => ({ title: '', step: '', fields: [], files: [] }))} onAssist={vi.fn(async () => undefined)} onContinue={continueWork} onOpenBusiness={onOpenBusiness}
@@ -234,6 +234,9 @@ it('opens assigned business work by its authoritative record and leaves ambiguou
   expect(onOpenBusiness).toHaveBeenCalledExactlyOnceWith(record)
   expect(container.textContent).toContain('有多位符合条件的员工')
   expect(container.textContent).not.toContain('contract-current')
+  const workRows = container.querySelectorAll('.work-task')
+  expect(workRows[0].querySelectorAll('p')).toHaveLength(0)
+  expect(workRows[1].querySelector('p')?.textContent).toBe('当前合同')
 })
 
 it('keeps the approval on the work page when a fresh renderer session cannot be opened', async () => {

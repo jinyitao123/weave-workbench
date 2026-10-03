@@ -2,6 +2,7 @@ import type { EnterpriseService } from '../enterprise'
 import type { EmployeeBusinessRecord, EmployeeBusinessSelection } from '../../../src/types/employee-business'
 import { digest } from './handoff-store'
 import { canonicalBusinessJSON } from './employee-business-contract'
+import { businessDisplayValue } from './business-record-presentation'
 
 export interface PendingEmployeeBusinessContext {
   accountKey: string; selection: EmployeeBusinessSelection; contextVersion: string; recordVersion: string
@@ -18,8 +19,9 @@ export async function prepareEmployeeBusinessOpen(service: Access, record: Emplo
   const context = await service.getEmployeeBusinessContext(selection)
   const read = await service.readBusinessRecord(record.objectName, record.recordId)
   if (read.candidate.objectName !== record.objectName || read.candidate.recordId !== record.recordId || await service.accountKey() !== accountKey) throw new Error('员工账号或业务来源已变化，请重新打开')
-  const fields = read.snapshot.record.map((field) => `- ${field.label}：${typeof field.value === 'string' ? field.value : JSON.stringify(field.value)}`).join('\n')
-  const prompt = `当前本人业务事项：${context.record.label}\n\n当前记录字段：\n${fields}\n\n读取完整性：${read.snapshot.completeness}。${read.snapshot.completenessNotes.join('；')}\n\n本次打开仅授权只读查看与整理，不执行业务动作、不交给团队。只有员工之后新消息明确要求办理，才读取当前事项动作目录，并按声明参数与本轮选定原件办理。来源由Host固定，不从标题或历史聊天推断。`
+  const fields = read.presentation?.record.map((field) => `- ${field.label}：${field.value}`).join('\n')
+  const notes = read.presentation?.notes ?? ['业务信息暂未展开，请重新读取。']
+  const prompt = `当前本人业务事项：${businessDisplayValue(context.record.label) ?? '当前业务事项'}\n\n当前业务信息（摘录）：\n${fields || '暂无可展示的已填写业务信息。'}\n\n读取情况：${notes.join(' ')}关联明细和原件未在此展开。\n\n请先只读查看与整理；如需办理业务或交给团队，我会在新的消息中明确提出。`
   const pending: PendingEmployeeBusinessContext = { accountKey, selection: { record: context.record, source: context.source }, contextVersion: context.contextVersion, recordVersion: context.recordVersion, snapshotDigest: snapshotDigest(read), promptDigest: digest(prompt), createdAt: Date.now() }
   return { pending, prompt }
 }

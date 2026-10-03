@@ -7,7 +7,8 @@ import type { EnterpriseApprovalContext, EnterpriseApprovalContextView, Enterpri
 import { extractOriginalMaterialText, freezeApprovalOriginalMaterial, normalizeFrozenMaterial, validateFrozenMaterial, MAX_WORKSPACE_EXTRACTION_BYTES, MAX_WORKSPACE_MATERIAL_BYTES, type FrozenApprovalOriginalMaterial, type FrozenMaterial, type MaterialExtraction } from './enterprise/materials'
 import { createHash, randomUUID } from 'node:crypto'
 import { teamCatalog, teamChoices, type TeamSummary } from './enterprise/team-catalog'
-import { ForgeBusinessReadError, ForgeBusinessReader, type BusinessObjectDirectory, type BusinessRecordRead, type BusinessRecordSearchPage } from './enterprise/business-records'
+import type { ForgeBusinessReader, BusinessObjectDirectory, BusinessRecordRead, BusinessRecordSearchPage } from './enterprise/business-records'
+import { ForgeBusinessReadError } from './enterprise/business-read-error'
 import { EmployeeWorkCanceller } from './enterprise/task-cancellation'
 import type { EmployeeBusinessRequest, EmployeeBusinessSelection } from '../../src/types/employee-business'
 import type { ApprovalUiAttempt } from './enterprise/approval-ui-actions'
@@ -515,7 +516,7 @@ export class EnterpriseService {
   private readonly fetch: typeof fetch
   private readonly forgeUrl: URL
   private readonly weaveUrl: URL
-  private readonly businessReader: ForgeBusinessReader
+  private readonly businessReader: () => Promise<ForgeBusinessReader>
   private authGeneration = 0
   private loginAttempt = 0
   private session?: EnterpriseSession
@@ -531,10 +532,11 @@ export class EnterpriseService {
     this.fetch = options.fetch ?? fetch
     this.forgeUrl = environmentUrl(this.environment.WORKBENCH_FORGE_URL, DEFAULT_FORGE_URL, 'Forge')
     this.weaveUrl = environmentUrl(this.environment.WORKBENCH_WEAVE_URL, DEFAULT_WEAVE_URL, 'Weave')
-    this.businessReader = new ForgeBusinessReader(
+    let businessReader: Promise<ForgeBusinessReader> | undefined
+    this.businessReader = () => businessReader ??= import('./enterprise/business-records').then(({ ForgeBusinessReader }) => new ForgeBusinessReader(
       (name, args, generation) => this.forgeMcpTool(name, args, generation),
       (objectName, generation) => this.forgeObjectMetadata(objectName, generation),
-    )
+    ))
   }
 
   setSessionScopeChangeHandler(handler: (session: EnterpriseSession, generation: number, phase: 'sign-in-start' | 'signed-in' | 'signed-out') => Promise<void>): void {
@@ -1234,7 +1236,7 @@ export class EnterpriseService {
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务记录')
-    const directory = await this.businessReader.listObjects(generation)
+    const directory = await (await this.businessReader()).listObjects(generation)
     this.assertAuthGeneration(generation)
     return directory
   }
@@ -1243,7 +1245,7 @@ export class EnterpriseService {
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务记录')
-    const result = await this.businessReader.findRecords(objectName, workSummary, offset, limit, generation)
+    const result = await (await this.businessReader()).findRecords(objectName, workSummary, offset, limit, generation)
     this.assertAuthGeneration(generation)
     return result
   }
@@ -1252,7 +1254,7 @@ export class EnterpriseService {
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务记录')
-    const result = await this.businessReader.readRecord(objectName, recordId, generation)
+    const result = await (await this.businessReader()).readRecord(objectName, recordId, generation)
     this.assertAuthGeneration(generation)
     return result
   }

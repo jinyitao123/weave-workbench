@@ -10,6 +10,7 @@ import { WorkRegistrationRejectedError, type EnterpriseBusinessNotificationConte
 import type { EmployeeBusinessContext, EmployeeBusinessRequest, EmployeeBusinessSelection } from '../../src/types/employee-business'
 import { employeeBusinessRequestDigest } from '../../electron/main/enterprise/employee-business-contract'
 import { ForgeBusinessReadError, type BusinessRecordSnapshot } from '../../electron/main/enterprise/business-records'
+import { presentBusinessRecord } from '../../electron/main/enterprise/business-record-presentation'
 import { appendWorkspaceMaterialContext } from '../../src/lib/workspace-material-attachments'
 import { APPROVAL_REVIEW_SESSION_MARKER } from '../../src/lib/approval-review'
 import { fixedWorkHandoff, taskScopeSHA256, type FixedWorkSource, type ForgeTaskScope } from '../../electron/main/enterprise/task-handoff'
@@ -93,6 +94,11 @@ function businessNotificationContext(notificationID: string, options: { recordId
     objectName: 'forge_sales_contract', objectLabel: '销售合同', recordId: options.recordId ?? 'contract-current',
     name: '设备验收合同', code: 'C-100', status: '内部复核通过', recordVersion: 'v2',
   }
+  const snapshot: BusinessRecordSnapshot = {
+    version: 1, capturedAt: '2026-09-30T01:00:00Z', objectLabel: '销售合同',
+    record: [{ label: '合同名称', value: candidate.name }, { label: '状态', value: candidate.status }],
+    relations: [], completeness: 'complete', pricingDetailCompleteness: 'unknown', completenessNotes: [],
+  }
   return {
     kind: 'business', notificationID,
     source: { system: 'forge', objectName: candidate.objectName, recordId: candidate.recordId },
@@ -103,11 +109,7 @@ function businessNotificationContext(notificationID: string, options: { recordId
     }],
     record: {
       candidate,
-      snapshot: {
-        version: 1, capturedAt: '2026-09-30T01:00:00Z', objectLabel: '销售合同',
-        record: [{ label: '合同名称', value: candidate.name }, { label: '状态', value: candidate.status }],
-        relations: [], completeness: 'complete', pricingDetailCompleteness: 'unknown', completenessNotes: [],
-      },
+      snapshot, presentation: presentBusinessRecord(snapshot, [{ name: 'name', label: '合同名称', type: 'text' }, { name: 'status', label: '状态', type: 'text' }]),
     },
     currentReadAt: '2026-09-30T01:00:00Z',
     materials: options.materialStatus === 'none' || options.materialStatus === 'unavailable' ? [] : [material],
@@ -461,6 +463,29 @@ describe('employee-bound material handoff', () => {
     f.service.getBusinessNotificationContext.mockResolvedValueOnce(businessNotificationContext('business-unavailable', { materialStatus: 'unavailable' }))
     const unavailable = await f.bridge.pinWorkContinuationContext({ id: 'business-unavailable', source: 'forge' })
     expect(unavailable.context).toMatchObject({ kind: 'business', materialStatus: 'unavailable', materials: [] })
+  })
+
+  it('projects a Forge result excerpt without exposing hidden relation data or weakening its full snapshot fence', async () => {
+    const f = await fixture()
+    const source = businessNotificationContext('business-hidden-fields')
+    const hidden = 'a'.repeat(64), uuid = '10000000-0000-4000-8000-000000000001'
+    source.record.snapshot.record.push({ label: '隐藏核价版本', value: 12 }, { label: '材料数据', value: JSON.stringify({ file_id: uuid }) })
+    source.record.snapshot.relations.push({ label: '订单明细', direction: 'related', records: [[{ label: '物料名称', value: '设备 A' }, { label: '原件摘要', value: hidden }]], recordIds: [uuid], returnedCount: 1, limit: 12, complete: false })
+    source.record.snapshot.completeness = 'partial'
+    source.record.presentation = presentBusinessRecord(source.record.snapshot, [
+      { name: 'name', label: '合同名称', type: 'text' }, { name: 'status', label: '状态', type: 'text' },
+      { name: 'pricing_version', label: '隐藏核价版本', type: 'number', hidden: true }, { name: 'extra', label: '材料数据', type: 'text' },
+    ], [{ label: '订单明细', direction: 'related', fields: [{ name: 'name', label: '物料名称', type: 'text' }, { name: 'sha256', label: '原件摘要', type: 'text' }] }])
+    f.service.getBusinessNotificationContext.mockResolvedValueOnce(source)
+    const binding = await f.bridge.pinWorkContinuationContext({ id: source.notificationID, source: 'forge' })
+    expect(binding.context).toMatchObject({ kind: 'business', record: { completeness: 'partial', relations: [{ complete: false, records: [[{ label: '物料名称', value: '设备 A' }]] }], completenessNotes: expect.arrayContaining([expect.stringContaining('未能完整读取')]) } })
+    for (const value of ['隐藏核价版本', '材料数据', '原件摘要', hidden, uuid]) expect(JSON.stringify(binding.context)).not.toContain(value)
+    const changed = structuredClone(source)
+    changed.record.snapshot.record[2].value = 13
+    f.service.getBusinessNotificationContext.mockResolvedValueOnce(changed)
+    const session = f.startNewSession('business-hidden-fence')
+    await expect(f.bridge.employeeCommand(session.runtimeId, { type: 'prompt', message: '只读查看当前业务结果' }, undefined, binding.handle)).rejects.toThrow('Forge 当前记录或材料版本已变化')
+    expect(f.service.executeEmployeeBusinessAction).not.toHaveBeenCalled()
   })
 
   it('opens a Forge business result as read-only, then lets a later employee message use normal tools', async () => {

@@ -10,7 +10,8 @@ import { digest, HandoffStore, submissionUUID, type HandoffStorage } from './han
 import { executionText, freezeMaterials, makeFrozenTextMaterial, materialSelection, normalizeFrozenMaterial, normalizeFrozenMaterials, validateFrozenApprovalOriginalMaterial, validateFrozenMaterial, type FrozenMaterial, type MaterialLimits, type ReusedMaterial } from './materials'
 import { searchTeams, type TeamSummary } from './team-catalog'
 import { APPROVAL_REVIEW_SESSION_MARKER } from '../../../src/lib/approval-review'
-import { businessReadErrorResult, type BusinessObjectDirectory, type BusinessRecordCandidate, type BusinessRecordRead, type BusinessRecordSearchPage, type BusinessRecordSnapshot } from './business-records'
+import type { BusinessObjectDirectory, BusinessRecordCandidate, BusinessRecordRead, BusinessRecordSearchPage, BusinessRecordSnapshot } from './business-records'
+import { businessReadErrorResult } from './business-read-error'
 import type { BoundCurrentItemAction, CurrentItemActionAttempt } from './current-item-actions'
 import type { EmployeeBusinessActions } from './employee-business-actions'
 import type { PendingEmployeeBusinessContext } from './employee-business-open'
@@ -232,25 +233,24 @@ function businessNotificationFingerprint(context: EnterpriseBusinessNotification
     })),
   }))
 }
-function businessNotificationContextView(context: EnterpriseBusinessNotificationContext): EnterpriseBusinessNotificationContextView {
+async function businessNotificationContextView(context: EnterpriseBusinessNotificationContext): Promise<EnterpriseBusinessNotificationContextView> {
+  const { businessDisplayValue } = await import('./business-record-presentation')
   const snapshot = context.record.snapshot
+  const presentation = context.record.presentation
+  const name = businessDisplayValue(context.record.candidate.name) ?? '业务记录'
+  const code = businessDisplayValue(context.record.candidate.code), status = businessDisplayValue(context.record.candidate.status), owner = businessDisplayValue(context.record.candidate.owner)
   return {
     kind: 'business', currentReadAt: context.currentReadAt, materialStatus: context.materialStatus,
     record: {
-      objectLabel: snapshot.objectLabel, name: context.record.candidate.name,
-      ...(context.record.candidate.code ? { code: context.record.candidate.code } : {}),
-      ...(context.record.candidate.status ? { status: context.record.candidate.status } : {}),
-      ...(context.record.candidate.owner ? { owner: context.record.candidate.owner } : {}),
-      fields: snapshot.record.map((field) => ({ label: field.label, value: field.value })),
-      relations: snapshot.relations.map(({ recordIds: _recordIds, ...relation }) => ({
-        ...relation, records: relation.records.map((row) => row.map((field) => ({ label: field.label, value: field.value }))),
-      })),
+      objectLabel: businessDisplayValue(snapshot.objectLabel) ?? '业务事项', name,
+      ...(code ? { code } : {}), ...(status ? { status } : {}), ...(owner ? { owner } : {}),
+      fields: presentation?.record ?? [], relations: presentation?.relations ?? [],
       completeness: snapshot.completeness, pricingDetailCompleteness: snapshot.pricingDetailCompleteness,
       ...(snapshot.expectedDetailCount !== undefined ? { expectedDetailCount: snapshot.expectedDetailCount } : {}),
-      completenessNotes: [...snapshot.completenessNotes],
+      completenessNotes: presentation?.notes ?? ['业务信息暂未展开，请重新读取。'],
     },
-    materials: context.materials.map(({ name, mediaType, bytes, extraction }) => ({
-      name, mediaType, bytes, verified: true,
+    materials: context.materials.map(({ name: fileName, mediaType, bytes, extraction }, index) => ({
+      name: businessDisplayValue(fileName) ?? `${name}原件${index + 1}.${mediaType === 'application/pdf' ? 'pdf' : 'docx'}`, mediaType, bytes, verified: true,
       extraction: {
         status: extraction.status, content: extraction.content,
         coverage: { ...extraction.coverage }, limitations: [...extraction.limitations],
@@ -499,6 +499,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (item.source === 'forge') {
       const context = await this.options.service.getBusinessNotificationContext(item.id)
       if (context.notificationID !== item.id || context.kind !== 'business') throw new Error('Forge 业务结果来源与当前消息不匹配')
+      const view = await businessNotificationContextView(context)
       const accountAfter = await this.options.service.accountKey()
       if (accountBefore !== accountAfter) throw new Error('当前账号已变化，请重新打开业务结果消息')
       const now = Date.now()
@@ -508,7 +509,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         kind: 'business', accountKey: accountAfter, context,
         fingerprint: businessNotificationFingerprint(context), createdAt: now,
       })
-      return { handle, context: businessNotificationContextView(context) }
+      return { handle, context: view }
     }
     if (item.source !== 'weave') throw new Error('当前消息不是可续接的工作结果')
     let references = { workReference: item.workReference ?? '', runReference: item.runReference ?? '', sessionReference: item.sessionReference ?? '' }

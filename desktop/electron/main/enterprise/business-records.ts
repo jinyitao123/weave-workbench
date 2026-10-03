@@ -1,4 +1,7 @@
 import { createHash } from 'node:crypto'
+import { ForgeBusinessReadError } from './business-read-error'
+import type { BusinessRecordPresentation } from './business-record-presentation'
+export { ForgeBusinessReadError, businessReadErrorResult } from './business-read-error'
 
 type JsonRecord = Record<string, unknown>
 
@@ -66,13 +69,7 @@ export interface BusinessRecordSnapshot {
 export interface BusinessRecordRead {
   candidate: BusinessRecordCandidate
   snapshot: BusinessRecordSnapshot
-}
-
-export class ForgeBusinessReadError extends Error {
-  constructor(readonly kind: 'forbidden' | 'not_found' | 'failed', message: string) {
-    super(message)
-    this.name = 'ForgeBusinessReadError'
-  }
+  presentation?: BusinessRecordPresentation
 }
 
 const OBJECT_NAME = /^[a-z][a-z0-9_]{1,127}$/
@@ -138,6 +135,8 @@ interface BusinessField {
   name: string
   label: string
   type: string
+  hidden?: boolean
+  system?: boolean
   reference?: string
   options?: Array<{ value: string | number | boolean; label: string }>
 }
@@ -174,7 +173,7 @@ function definitionFields(definition: unknown): BusinessField[] {
     if (!field || !name || !FIELD_NAME.test(name)) return []
     const type = (text(field.type) ?? 'string').toLowerCase()
     const options = nativeFieldOptions(field.options ?? field.enum)
-    return [{ name, label: text(field.label) ?? name, type, ...(text(field.reference) ? { reference: text(field.reference) } : {}), ...(options.length ? { options } : {}) }]
+    return [{ name, label: text(field.label) ?? name, type, hidden: field.hidden === true, system: field.system === true, ...(text(field.reference) ? { reference: text(field.reference) } : {}), ...(options.length ? { options } : {}) }]
   })
 }
 
@@ -720,15 +719,13 @@ export class ForgeBusinessReader {
     if (Buffer.byteLength(JSON.stringify(snapshot), 'utf8') > 220_000) {
       throw new ForgeBusinessReadError('failed', '所选记录及关联明细超出桌面固定输入上限')
     }
-    return { candidate, snapshot }
+    const { presentBusinessRecord } = await import('./business-record-presentation')
+    const presentation = presentBusinessRecord(snapshot, rootFields, plans.map((plan) => ({
+      label: relationLabel(plan.summary, plan.field), direction: plan.direction,
+      fields: [...plan.fields, { name: 'sku_code', label: '物料规格编码', type: 'text' }, { name: 'sku_name', label: '物料规格名称', type: 'text' }],
+    })))
+    return { candidate, snapshot, presentation }
   }
-}
-
-export function businessReadErrorResult(error: unknown): { status: 'forbidden' | 'not_found' | 'failed'; message: string } {
-  if (error instanceof ForgeBusinessReadError) {
-    return { status: error.kind, message: error.message }
-  }
-  return { status: 'failed', message: 'Forge 业务记录读取失败，请刷新后重试' }
 }
 
 export function opaqueBusinessReference(seed: unknown): string {
