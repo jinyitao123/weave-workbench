@@ -43,6 +43,9 @@ export const salesOrderReviewerPermission = definePermissionSet({
   objects: {
     forge_sales_order: { allowRead: true, allowEdit: true, readScope: 'org' as const, writeScope: 'org' as const },
     forge_sales_order_line: organizationRead,
+    forge_sales_contract: organizationRead,
+    forge_sales_contract_line: organizationRead,
+    forge_customer: organizationRead,
   },
 });
 

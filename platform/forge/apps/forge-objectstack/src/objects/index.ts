@@ -27,3 +27,4 @@ export * from './business-setting.object.js';
 
 export { TaskDelegation } from './task-delegation.object.js';
 export * from './task-delegation.object.js';
+export * from './employee-business-action.object.js';

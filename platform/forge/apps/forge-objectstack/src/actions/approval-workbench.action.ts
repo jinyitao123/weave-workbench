@@ -43,3 +43,22 @@ export const ContractApprovalMcpSendBack = defineAction({
   },
   params: nativeApprovalInputs,
 });
+
+export const ORDER_APPROVAL_MCP_APPROVE_TARGET = 'orderApprovalMcpApprove';
+export const ORDER_APPROVAL_MCP_REJECT_TARGET = 'orderApprovalMcpReject';
+export const OrderApprovalMcpApprove = defineAction({
+  name: 'order_approval_mcp_approve', label: '同意订单复核', objectName: 'forge_sales_order',
+  target: ORDER_APPROVAL_MCP_APPROVE_TARGET, locations: ['record_header'], visible: false,
+  requiredPermissions: ['sales_order_reviewer'],
+  ai: { exposed: true, category: 'action', requiresConfirmation: true,
+    description: '已分配的独立订单复核员工对准确原生审批请求和冻结版本发表同意意见，由原生审批推进并原子应用订单状态及合同累计。' },
+  params: nativeApprovalInputs,
+});
+export const OrderApprovalMcpReject = defineAction({
+  name: 'order_approval_mcp_reject', label: '拒绝订单复核', objectName: 'forge_sales_order',
+  target: ORDER_APPROVAL_MCP_REJECT_TARGET, locations: ['record_header'], visible: false,
+  requiredPermissions: ['sales_order_reviewer'],
+  ai: { exposed: true, category: 'action', requiresConfirmation: true,
+    description: '已分配的独立订单复核员工对准确原生审批请求记录拒绝意见，原生流程取消未通过订单，保留原因且不增加合同下单累计。' },
+  params: nativeApprovalInputs,
+});

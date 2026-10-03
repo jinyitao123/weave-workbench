@@ -3,6 +3,7 @@ import { HttpDispatcher } from '@objectstack/runtime';
 import type { ExecutionContext } from '@objectstack/spec/kernel';
 import { TaskConnectionFailure, service } from './native-task-auth.js';
 import { actionKey, allowedObjectNames, type TaskScope } from './task-delegation-scope.js';
+import { businessActionPolicy, isTeamDelegableAction, projectBusinessActionPolicy } from './business-action-policy.js';
 
 type Action = Record<string, unknown>;
 type NativeBridge = {
@@ -24,7 +25,11 @@ export class TaskMcpAdapter {
     return this.sdk.buildMcpBridge({ request: { method: 'POST', url: '/api/v1/mcp', headers: {} }, executionContext: actor }) as NativeBridge;
   }
 
-  async actions(actor: ExecutionContext): Promise<Action[]> { return this.native(actor).listActions(); }
+  // This is the task-channel catalogue even while issuance still has a human
+  // actor. A verified on-behalf-of identity does not delegate personal actions.
+  async actions(actor: ExecutionContext): Promise<Action[]> {
+    return (await this.native(actor).listActions()).filter(isTeamDelegableAction).map(projectBusinessActionPolicy);
+  }
 
   async objectMetadata(actor: ExecutionContext, scope: TaskScope, name: string): Promise<Record<string, unknown>> {
     if (!allowedObjectNames(scope).has(name)) throw new TaskConnectionFailure(403, 'FORGE_TASK_SCOPE_FORBIDDEN', '该对象不在本次授权范围');
@@ -32,7 +37,8 @@ export class TaskMcpAdapter {
     const item = body.item as Record<string, unknown>;
     if (Array.isArray(item.actions)) {
       return { ...body, item: { ...item, actions: item.actions.filter((action: Action) =>
-        scope.allowed_actions.includes(`forge:action:${name}.${String(action.name)}`)) } };
+        businessActionPolicy(name, String(action.name)).executionMode === 'team_delegable'
+        && scope.allowed_actions.includes(`forge:action:${name}.${String(action.name)}`)) } };
     }
     return body;
   }
@@ -52,7 +58,8 @@ export class TaskMcpAdapter {
 
   async bridge(actor: ExecutionContext, scope: TaskScope): Promise<NativeBridge> {
     const native = this.native(actor);
-    const available = (await native.listActions()).filter((action) => scope.allowed_actions.includes(actionKey(action)));
+    const available = (await native.listActions()).filter(isTeamDelegableAction)
+      .filter((action) => scope.allowed_actions.includes(actionKey(action))).map(projectBusinessActionPolicy);
     if (scope.allowed_actions.some((key) => !available.some((action) => actionKey(action) === key))) {
       throw new TaskConnectionFailure(403, 'FORGE_TASK_ACTION_FORBIDDEN', '本次业务动作权限已不可用');
     }
@@ -76,6 +83,10 @@ export class TaskMcpAdapter {
       },
       listActions: async () => available,
       runAction: async (name, input) => {
+        if (typeof input.objectName !== 'string'
+          || businessActionPolicy(input.objectName, name).executionMode !== 'team_delegable') {
+          throw new TaskConnectionFailure(403, 'FORGE_TASK_EMPLOYEE_ACTION_FORBIDDEN', '该业务动作必须由员工本人办理');
+        }
         const action = available.find((candidate) => candidate.name === name && candidate.objectName === input.objectName);
         if (!action) throw new TaskConnectionFailure(403, 'FORGE_TASK_ACTION_FORBIDDEN', '该动作不在本次授权范围');
         const requiresRecord = action.requiresRecord !== false;

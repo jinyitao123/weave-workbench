@@ -1,3 +1,4 @@
+import { CONTRACT_PREPAYMENT_TARGET, PREPAYMENT_CONFIRM_TARGET, PREPAYMENT_REFUND_TARGET } from '../plugins/sales-order-domain.js';
 import { defineAction } from '@objectstack/spec';
 
 const locations = ['record_header', 'record_more'] as const;
@@ -22,7 +23,10 @@ export const CustomerPrepaymentConfirm = defineAction({
   name: 'customer_prepayment_confirm', label: '确认预收款', objectName: 'forge_customer_prepayment', icon: 'badge-check', locations: [...locations], order: 20,
   visible: `record.status == 'pending_confirmation'`, refreshAfter: true,
   params: [{ field: 'confirmation_comment', objectOverride: 'forge_customer_prepayment', required: true }],
-  body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `const id=ctx.recordId||(ctx.record&&ctx.record.id),prepayment=ctx.record,actor=ctx.session&&ctx.session.userId,comment=String(ctx.input.confirmation_comment||'').trim();if(ctx.recordLoadDenied===true||!id||!prepayment)throw new Error('客户预收款不存在或不可访问');if(!actor)throw new Error('无法识别当前确认人');if(!comment)throw new Error('确认意见不能为空');if(prepayment.status!=='pending_confirmation')throw new Error('仅待确认预收款可以确认');const receipt=await ctx.api.object('forge_cash_receipt').findOne({where:{id:prepayment.receipt_id}});if(!receipt||receipt.status!=='pending_review'||Number(receipt.amount||0)!==Number(prepayment.original_amount||0))throw new Error('预收款关联到账流水状态或金额异常');const now=new Date().toISOString();await ctx.api.object('forge_cash_receipt').update({id:receipt.id,allocated_amount:Number(receipt.amount||0),unallocated_amount:0,status:'allocated'});await ctx.api.object('forge_customer_prepayment').update({id,status:'active',confirmed_by:actor,confirmed_at:now,confirmation_comment:comment});return{id,receipt_id:receipt.id,status:'active',balance_amount:Number(prepayment.balance_amount||0)};` },
+  requiredPermissions: ['forge_finance_reviewer'],
+  ai: { exposed: true, category: 'action', requiresConfirmation: false,
+    description: '已分配的财务复核员工核对实际到账流水及原件后独立确认预收款，禁止登记人自审，并以同一事务同步到账流水和预收可用状态。' },
+  target: PREPAYMENT_CONFIRM_TARGET,
 });
 
 export const CustomerPrepaymentOffsetReceivable = defineAction({
@@ -48,9 +52,8 @@ export const CustomerPrepaymentRequestRefund = defineAction({
     { field: 'remarks', objectOverride: 'forge_customer_refund' },
   ],
   onSuccess: { navigate: '/_console/apps/com.inoforge.forge.finance/page_supplier_refund?tab=customer&refund=${result.id}' },
-  body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
-const id=ctx.recordId||(ctx.record&&ctx.record.id),prepayment=ctx.record,actor=ctx.session&&ctx.session.userId,reason=String(ctx.input.reason||'').trim();if(ctx.recordLoadDenied===true||!id||!prepayment)throw new Error('客户预收款不存在或不可访问');if(!actor)throw new Error('无法识别当前申请人');if(!reason)throw new Error('退款原因不能为空');if(!['active','partially_used'].includes(prepayment.status)||!(Number(prepayment.balance_amount)>0))throw new Error('当前预收款没有可退款余额');const amount=Number(ctx.input.requested_amount||0);if(!(amount>0))throw new Error('申请退款金额必须大于0');const refunds=await ctx.api.object('forge_customer_refund').find({where:{prepayment_id:id}}),reserved=refunds.filter(x=>['pending_review','approved','pending_writeoff'].includes(x.document_status)).reduce((sum,x)=>sum+Number(x.requested_amount||0),0),available=Math.round((Number(prepayment.balance_amount||0)-reserved+Number.EPSILON)*10000)/10000;if(amount>available)throw new Error('申请退款金额超过预收款可退款余额');const created=await ctx.api.object('forge_customer_refund').insert({name:prepayment.code+' 客户退款',code:ctx.input.code,prepayment_id:id,order_id:prepayment.order_id,contract_id:prepayment.contract_id||null,customer_id:prepayment.customer_id,currency:'cny',requested_amount:amount,actual_amount:0,refund_method:ctx.input.refund_method||'bank_transfer',application_on:ctx.input.application_on,reason,document_status:'pending_review',finance_status:'pending',payment_status:'pending',writeoff_status:'pending',account_id:null,bank_reference:null,applicant_id:actor,approver_id:null,approved_at:null,approval_comment:null,reviewer_id:null,reviewed_at:null,review_comment:null,responsible_id:prepayment.responsible_id,remarks:ctx.input.remarks||null}),refundId=typeof created==='string'?created:created&&(created.id||(created.record&&created.record.id));if(!refundId)throw new Error('客户退款申请创建后未返回ID');return{id:refundId,prepayment_id:id,requested_amount:amount,status:'pending_review',available_after:Math.round((available-amount+Number.EPSILON)*10000)/10000};
-` },
+  requiredPermissions: ['forge_finance_receivables_operator'],
+  target: PREPAYMENT_REFUND_TARGET,
 });
 
 export const CustomerRefundApprove = defineAction({
@@ -86,4 +89,23 @@ export const CustomerRefundApproveWriteoff = defineAction({
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const id=ctx.recordId||(ctx.record&&ctx.record.id),refund=ctx.record,actor=ctx.session&&ctx.session.userId,comment=String(ctx.input.review_comment||'').trim();if(ctx.recordLoadDenied===true||!id||!refund)throw new Error('客户退款不存在或不可访问');if(!actor)throw new Error('无法识别当前核销人');if(!comment)throw new Error('核销意见不能为空');if(refund.document_status!=='pending_writeoff'||refund.payment_status!=='paid'||refund.writeoff_status!=='pending')throw new Error('仅已付款且待核销的退款可以审核');const prepayment=await ctx.api.object('forge_customer_prepayment').findOne({where:{id:refund.prepayment_id}}),amount=Number(refund.actual_amount||0);if(!prepayment||!(amount>0)||amount>Number(prepayment.balance_amount||0)+0.0001)throw new Error('预收款余额不足以核销退款');const round4=v=>Math.round((v+Number.EPSILON)*10000)/10000,nextBalance=round4(Number(prepayment.balance_amount||0)-amount),refunded=round4(Number(prepayment.refunded_amount||0)+amount),nextStatus=nextBalance>0?'partially_used':(Number(prepayment.offset_amount||0)>0?'settled':'refunded'),now=new Date().toISOString();await ctx.api.object('forge_customer_prepayment').update({id:prepayment.id,refunded_amount:refunded,balance_amount:nextBalance,status:nextStatus});await ctx.api.object('forge_customer_refund').update({id,document_status:'completed',writeoff_status:'approved',reviewer_id:actor,reviewed_at:now,review_comment:comment});return{id,status:'completed',prepayment_id:prepayment.id,amount,prepayment_balance:nextBalance};
 ` },
+});
+
+export const ContractRegisterCustomerPrepayment = defineAction({
+  name: 'contract_register_customer_prepayment', label: '登记合同预收款', objectName: 'forge_sales_contract',
+  icon: 'landmark', locations: [...locations], refreshAfter: true,
+  visible: "record.status == 'active' && record.signed_on != null",
+  requiredPermissions: ['forge_finance_receivables_operator'],
+  ai: { exposed: true, category: 'action', requiresConfirmation: false,
+    description: '财务登记员工根据已签署合同登记真实到账日期、金额、公司账户和本轮凭证，生成待独立确认的预收款与到账流水，登记不代表已确认可下单。' },
+  params: [
+    { field: 'code', objectOverride: 'forge_cash_receipt', required: true },
+    { field: 'account_id', objectOverride: 'forge_cash_receipt', required: true },
+    { field: 'received_on', objectOverride: 'forge_cash_receipt', required: true },
+    { field: 'payment_method', objectOverride: 'forge_cash_receipt', required: true },
+    { field: 'amount', objectOverride: 'forge_cash_receipt', required: true },
+    { field: 'counterpart_reference', objectOverride: 'forge_cash_receipt', required: true },
+    { field: 'receipt_evidence_attachment', objectOverride: 'forge_customer_prepayment', required: true },
+  ], target: CONTRACT_PREPAYMENT_TARGET,
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.finance/forge_customer_prepayment/record/${result.id}' },
 });

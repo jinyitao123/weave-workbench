@@ -241,7 +241,9 @@
     "acceptance:drawing-archive-ledger": "node tests/drawing-archive-ledger-ui-readback.mjs",
     "acceptance:production-assembly-group": "node tests/production-assembly-group-ui-readback.mjs",
     "acceptance:drawing-group": "node tests/drawing-group-ui-readback.mjs",
-    "acceptance:subcontract-group": "node tests/subcontract-group-ui-readback.mjs"
+    "acceptance:subcontract-group": "node tests/subcontract-group-ui-readback.mjs",
+    "acceptance:sales-order-native": "FORGE_SALES_ORDER_PG_TEST=1 node --import tsx --test tests/sales-order-domain.native-postgres.integration.mjs",
+    "acceptance:employee-business-native": "FORGE_EMPLOYEE_BUSINESS_PG_TEST=1 node --test tests/employee-business.native-runtime.integration.mjs"
   },
   "dependencies": {
     "@objectstack/connector-mcp": "17.3.0",
