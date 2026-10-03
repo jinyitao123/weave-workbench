@@ -15,7 +15,8 @@ function fixture(semantic = 'reject', objectName = 'forge_sales_order', viewer: 
   }
   const result = { decision: semantic, status: semantic === 'recall' ? 'recalled' : semantic === 'reject' ? 'rejected' : semantic === 'revise' ? 'returned' : 'approved',
     requestId: context.requestId, recordId: context.businessObject.recordId, itemVersion: 'item-before', sourceMaterialVersion: context.sourceMaterialVersion,
-    ...(semantic === 'recall' ? { businessStatus: 'cancelled' } : {}),
+    ...(semantic === 'recall' || semantic === 'reject' && objectName === 'forge_sales_order' ? { businessStatus: 'cancelled' }
+      : semantic === 'approve' && objectName === 'forge_sales_order' ? { businessStatus: 'active' } : {}),
     resumed: true, autoRejected: false, alreadyApplied: false }
   const service = { getApprovalContext: vi.fn(async () => structuredClone(context)), runNativeMcpAction: vi.fn(async () => ({ status: 'returned' as const, result })) }
   const view = approvalUiChoices(context)
