@@ -410,3 +410,5 @@ ObjectStack 17.3原生notifications只能返回最多200行，未接受offset/cu
 发起人的订单上下文为 `status=pending/viewer=original_submitter`，只暴露 `semantic=recall`，仍绑定当前审批请求、记录、原件版本和原生事项版本。执行要求当前认证账号确为原提交人、组织一致、请求仍未决定，以及本轮明确撤回原因；调用原生 `ApprovalService.recall`，不直接写订单状态。成功回执必须同时为 `decision=recall/status=recalled/businessStatus=cancelled`，取消订单、解除预收绑定与保留原流水由同一领域应用完成。
 
 原生撤回已持久化但流程恢复失败时，Forge 根据同组织、同提交人、同冻结订单摘要的原生结论幂等核对领域结果；清理失败返回 `IN_DOUBT`，本人原有“核对并完成订单”事项继续提供恢复。`resumed` 如实保留流程恢复结果，不能替代业务结果。重复核对已有历史与业务结果，返回 `history_observed/decision=unknown`，不声称精确回执重放。审批并发、旧版本或结果未知时先核对原生历史，不能换动作或重发。
+
+同一规则覆盖订单的原生同意与拒绝：即使挂起流程丢失、订单尚未镜像 `approval_outcome`，也只从同组织、同提交人、同冻结摘要且唯一的原生终态恢复，不能重放审批决定。订单同意成功回执须同时为 `decision=approve/status=approved/businessStatus=active`，拒绝须同时为 `decision=reject/status=rejected/businessStatus=cancelled`；未确认业务终态不向员工声称办理完成。领域应用失败保留原生决定及预收绑定、合同累计的原子状态，返回 `IN_DOUBT`，经办人继续通过原有订单核对事项恢复。恢复不得重新登记或退款，不创建第二套结果来源；多条、版本不匹配或非终态原生请求不可恢复。本段是待实现、待验收的收窄契约，具体证据见销售订单场景主文档。
