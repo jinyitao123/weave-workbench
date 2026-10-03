@@ -179,6 +179,31 @@ describe('Forge native MCP action receipt envelope', () => {
     expect(f.calls.filter((path) => path === '/api/v1/mcp')).toHaveLength(1)
   })
 
+  it('accepts only a recalled receipt bound to the curated order-recall action', () => {
+    const recallAction: EnterpriseApprovalAction = {
+      ...selectedNativeAction,
+      semantic: 'recall',
+      execution: {
+        ...selectedNativeAction.execution,
+        actionName: 'order_approval_mcp_recall', objectName: 'forge_sales_order', recordId: 'order-1',
+        params: { approvalRequestId: 'approval-1', itemVersion: 'item-round-1', sourceMaterialVersion: 'a'.repeat(64) },
+      },
+    }
+    const receipt = {
+      decision: 'recall', status: 'recalled', requestId: 'approval-1', recordId: 'order-1',
+      itemVersion: 'item-round-1', sourceMaterialVersion: 'a'.repeat(64), businessStatus: 'cancelled', resumed: false, autoRejected: false, alreadyApplied: false,
+    }
+    expect(parseCurrentItemActionReceipt(receipt, recallAction)).toEqual(receipt)
+    expect(parseCurrentItemActionReceipt({ ...receipt, status: 'cancelled' }, recallAction)).toBeUndefined()
+    expect(parseCurrentItemActionReceipt({ ...receipt, decision: 'reject', status: 'rejected' }, recallAction)).toBeUndefined()
+    const recalledOnly: Record<string, unknown> = { ...receipt }
+    delete recalledOnly.businessStatus
+    expect(parseCurrentItemActionReceipt(recalledOnly, recallAction)).toBeUndefined()
+    expect(parseCurrentItemActionReceipt({ ...receipt, businessStatus: 'pending_approval' }, recallAction)).toBeUndefined()
+    expect(parseCurrentItemActionReceipt(receipt, { ...recallAction, semantic: 'approve' })).toBeUndefined()
+    expect(parseCurrentItemActionReceipt(receipt, { ...recallAction, execution: { ...recallAction.execution, actionName: 'another_recall' } })).toBeUndefined()
+  })
+
   it.each(['action', 'objectName', 'recordId', 'ok'] as const)('keeps a mismatched ActionEnvelope %s unknown', async (field) => {
     const envelope: Record<string, unknown> = {
       action: nativeActionArgs.actionName, objectName: nativeActionArgs.objectName, ok: true,

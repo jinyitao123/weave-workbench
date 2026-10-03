@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { EnterpriseWorkPage } from '../../src/pages/EnterpriseWorkPage'
 import { APPROVAL_REVIEW_SESSION_MARKER, openApprovalReviewInPi } from '../../src/lib/approval-review'
-import type { EnterpriseApprovalContextView, EnterpriseWorkOverview, ProjectRecord, SessionRecord } from '../../src/types/api'
+import type { EnterpriseApprovalContextView, EnterpriseHumanTask, EnterpriseWorkOverview, ProjectRecord, SessionRecord } from '../../src/types/api'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -61,6 +61,41 @@ it.each([['reject', '拒绝订单'], ['revise', '退回修改']])('renders and s
   await act(async () => button(label)?.click())
   expect(complete).toHaveBeenCalledExactlyOnceWith(overview.tasks[0], actionRef, '本人明确意见', actionVersion)
   expect(container.textContent).not.toContain(actionRef)
+})
+
+it('shows submitted orders separately and sends only the viewed recall action with its reason', async () => {
+  const task: EnterpriseHumanTask = {
+    interactionId: 'submitted-order-1', runId: 'forge:submitted:submitted-order-1', teamId: 'forge', workflowId: 'business-approval', workflowVersion: 1,
+    title: '合成销售订单', instructions: '你发起的销售订单仍在审批中。查看当前冻结版本后，可填写原因撤回申请。',
+    updatedAt: overview.loadedAt, source: 'forge', mode: 'submitted',
+  }
+  const context: EnterpriseApprovalContextView = {
+    title: '合成销售订单', step: '订单复核', fields: [{ label: '订单金额', value: '¥20,000' }], files: [],
+    actionVersion: 'd'.repeat(64),
+    actions: [{ actionRef: 'c'.repeat(64), semantic: 'recall', label: '撤回订单审批' }],
+  }
+  const complete = vi.fn(async () => undefined)
+  await act(async () => root.render(<EnterpriseWorkPage overview={{ ...overview, tasks: [], submittedApprovals: [task], items: [], reads: {
+    runs: { status: 'loaded' }, teamChoices: { status: 'loaded' }, weaveTasks: { status: 'loaded' }, forgeApprovals: { status: 'loaded' }, notifications: { status: 'loaded' },
+  } }} loading={false} error="" onRefresh={refresh}
+    onComplete={complete} onInspect={vi.fn(async () => context)} onAssist={assistPi} onContinue={continueWork} />))
+  const button = (text: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find((item) => item.textContent === text)
+  expect(container.textContent).toContain('我发起的审批')
+  expect(container.textContent).toContain('审批中')
+  expect(container.textContent).not.toContain('待处理</i>')
+  const pendingHeading = [...container.querySelectorAll('.work-panel-heading')].find((element) => element.querySelector('h2')?.textContent === '待我处理')
+  expect(pendingHeading?.querySelector('span')?.textContent).toBe('0')
+  await act(async () => button('查看冻结版本')?.click())
+  expect(container.textContent).toContain('¥20,000')
+  const reason = container.querySelector<HTMLTextAreaElement>('textarea[aria-label="撤回原因"]')!
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(reason, '合成撤回验证')
+    reason.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  expect(button('撤回订单审批')?.disabled).toBe(false)
+  await act(async () => button('撤回订单审批')?.click())
+  expect(complete).toHaveBeenCalledExactlyOnceWith(task, 'c'.repeat(64), '合成撤回验证', 'd'.repeat(64))
+  expect(assistPi).not.toHaveBeenCalled()
 })
 
 it('shows available work beside source-specific errors and offers retry without claiming the inbox is empty', async () => {

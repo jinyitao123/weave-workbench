@@ -77,6 +77,17 @@ it('counts native pending tasks but excludes completed and cancelled actionable 
   expect(countFor('待我处理')).toBe('2')
 })
 
+it('keeps submitted approvals separate from the pending badge and work count', async () => {
+  const submitted = { interactionId: 'submitted-order', runId: 'forge:submitted:submitted-order', teamId: 'forge', workflowId: 'business-approval', workflowVersion: 1,
+    title: '合成销售订单', instructions: '审批中', updatedAt: resultOnly.loadedAt, source: 'forge' as const, mode: 'submitted' as const }
+  const overview: EnterpriseWorkOverview = { ...resultOnly, submittedApprovals: [submitted] }
+  expect(enterprisePendingWorkCount(overview)).toBe(0)
+  await renderWork(overview)
+  expect(badge()).toBeUndefined()
+  expect(countFor('待我处理')).toBe('0')
+  expect(countFor('我发起的审批')).toBe('1')
+})
+
 it('removes an old definite count while refreshing, after failure, or when account data is cleared', async () => {
   await renderWork(needsInput)
   expect(badge()).toBe('1')

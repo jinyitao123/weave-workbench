@@ -57,12 +57,26 @@ export function useAgentEvents({
     }
     const unsubscribe = bridge.agent.onEvent(({ runtimeId, event }) => {
       const type = typeof event.type === 'string' ? event.type : ''
+      const workspace = workspaceRef.current
+      const runtimeOwner = runtimeOwnerRef.current
       const sessionFile = runtimeSessionsRef.current.get(runtimeId)
-        ?? (runtimeIdRef.current === runtimeId ? workspaceRef.current.sessionFile : undefined)
-      if (sessionFile) {
+        ?? (runtimeIdRef.current === runtimeId ? workspace.sessionFile : undefined)
+      // A replaced runtime may still emit its terminal event while shutting
+      // down. Let background runtimes update their own sessions, but do not
+      // let an older runtime overwrite lifecycle state for the file now owned
+      // by the current runtime in this workspace generation.
+      const supersededOwnerOfActiveSession = Boolean(
+        sessionFile
+        && sessionFile === workspace.sessionFile
+        && runtimeOwner
+        && runtimeOwner.generation === workspace.generation
+        && runtimeOwner.runtimeId === runtimeIdRef.current
+        && runtimeOwner.runtimeId !== runtimeId,
+      )
+      if (sessionFile && !supersededOwnerOfActiveSession) {
         runtimeSessionsRef.current.set(runtimeId, sessionFile)
         if (sessionLifecycleChange(event)) {
-          const visible = activeSessionVisible && workspaceRef.current.sessionFile === sessionFile
+          const visible = activeSessionVisible && workspace.sessionFile === sessionFile
           setSessions((items) => items.map((session) => session.filePath === sessionFile
             ? applySessionLifecycleEvent(session, event, visible)
             : session))

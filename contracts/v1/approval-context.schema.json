@@ -321,7 +321,10 @@
       "then": {
         "properties": {
           "viewer": {
-            "const": "current_approver"
+            "enum": [
+              "current_approver",
+              "original_submitter"
+            ]
           }
         }
       }
@@ -345,6 +348,39 @@
           },
           "availableActions": {
             "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "pending"
+          },
+          "viewer": {
+            "const": "original_submitter"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "businessObject": {
+            "properties": {
+              "objectName": {
+                "const": "forge_sales_order"
+              }
+            }
+          },
+          "availableActions": {
+            "maxItems": 1,
+            "items": {
+              "properties": {
+                "semantic": {
+                  "const": "recall"
+                }
+              }
+            }
           }
         }
       }

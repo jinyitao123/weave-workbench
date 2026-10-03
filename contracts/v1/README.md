@@ -400,3 +400,11 @@ Weave对Forge投递人工等待及终态事件时，组织取固定输入登记�
 ObjectStack 17.3原生notifications只能返回最多200行，未接受offset/cursor；审批原生limit/offset+total已可分页。本轮只为该已核实缺口增加 `GET /api/v1/apps/forge/workbench/inbox`，复用sys_inbox_message和sys_notification_receipt，身份取原生当前员工并实时核验绑定组织的有效成员资格，不接受目标user/org，不另存通知或待办。
 
 请求 `limit`（1–200，默认100）及可选 `cursor`。返回 `version="1"`、`notifications`（id/type/title/body/read/actionUrl/createdAt，与原生投影相同）、`next_cursor`（结束时null）、`has_more`；按created_at与id稳定降序进行keyset分页，游标绑定账号、组织和第一页边界，拒绝跨账号/组织复用及损坏游标。只读原生收件箱；read状态由同本人、同notification、inbox channel的原生receipt决定。页失败或无法证明完整时保留可见部分和来源错误，不能宣称完整或空待办。
+
+### 订单发起人查看与原生撤回
+
+审批投影客户端通过 `includeSubmitted=1` 明确请求当前账号提交、仍待审批的销售订单，列表 `mode=submitted`。它只复用原生审批请求和 `viewer.is_submitter`，不保存平行事项；桌面放在“我发起的审批”，不计入“待我处理”。旧客户端未声明该参数时继续只读 `approval/revision`。
+
+发起人的订单上下文为 `status=pending/viewer=original_submitter`，只暴露 `semantic=recall`，仍绑定当前审批请求、记录、原件版本和原生事项版本。执行要求当前认证账号确为原提交人、组织一致、请求仍未决定，以及本轮明确撤回原因；调用原生 `ApprovalService.recall`，不直接写订单状态。成功回执必须同时为 `decision=recall/status=recalled/businessStatus=cancelled`，取消订单、解除预收绑定与保留原流水由同一领域应用完成。
+
+原生撤回已持久化但流程恢复失败时，Forge 根据同组织、同提交人、同冻结订单摘要的原生结论幂等核对领域结果；清理失败返回 `IN_DOUBT`，本人原有“核对并完成订单”事项继续提供恢复。`resumed` 如实保留流程恢复结果，不能替代业务结果。重复核对已有历史与业务结果，返回 `history_observed/decision=unknown`，不声称精确回执重放。审批并发、旧版本或结果未知时先核对原生历史，不能换动作或重发。
