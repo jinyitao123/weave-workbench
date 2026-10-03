@@ -2,7 +2,19 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://workbench.inocube.local/contracts/v1/team-run-result.schema.json",
   "title": "Workbench structured team inspection result",
-  "description": "Optional final output shape for a team that can finish this run by requesting more employee input. This result is not a Forge business approval or a new TeamRun terminal state.",
+  "description": "Normalized final Workbench result including semantic bounds. For frozen workflow node declarations, extract $defs.frozen_node_shape rather than passing advanced validation keywords to the executable fixed-schema parser. This result is not a Forge business approval or a new TeamRun terminal state.",
+  "$defs": {
+    "frozen_node_shape": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["disposition", "summary", "missing_items"],
+      "properties": {
+        "disposition": { "type": "string", "enum": ["complete", "needs_input"] },
+        "summary": { "type": "string" },
+        "missing_items": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  },
   "type": "object",
   "additionalProperties": false,
   "required": [

@@ -201,9 +201,9 @@
 
 `team-run-event.schema.json` 是平台自动连接团队运行与员工收件箱的写入契约。调用者固定为 Weave 服务，不是团队成员或模型工具；Forge 以部署级服务凭据验证调用方，并把 `assigneeAccountId` 作为现有 ObjectStack 账号解析，不能由模型猜测接收人。事件只承载运行结果、失败、取消、需要补充或人工步骤的摘要及返回桌面的定位信息，不执行合同提交、审批或其他业务动作。
 
-团队需要给员工明确列出缺项时，开发者在同一工作流声明可选的 `result_protocol: "workbench_result_v1"`，并把最终交付来源节点的 `output` 与工作流 `output_contract` 配为 [team-run-result](team-run-result.schema.json) 对应的 `type: "json"` 与同一 `schema`。未声明的旧团队继续交付原有文本。Weave 必须用发布时冻结的图定义和现有 `NodeDeliver` 校验结果；`disposition` 只取 `complete` 或 `needs_input`，`summary` 去空白后为 1–1000 个 Unicode 字符，`missing_items` 最多 8 项、每项去空白后 1–200 个 Unicode 字符；`needs_input` 至少有一项缺项，`complete` 必须为空。模型正文或文件中的相似文字不能改变分类。
+团队需要给员工明确列出缺项时，开发者在同一工作流声明可选的 `result_protocol: "workbench_result_v1"`，并把最终交付来源节点的 `output` 与工作流 `output_contract` 配为 `type: "json"`，其 `schema` 均取 [team-run-result](team-run-result.schema.json) 的 `$defs.frozen_node_shape` 基础形状并保持一致；该文件顶层是最终规范化结果的完整校验，不直接传入固定执行schema解析器。未声明的旧团队继续交付原有文本。Weave 必须用发布时冻结的图定义和现有 `NodeDeliver` 校验结果；`disposition` 只取 `complete` 或 `needs_input`，`summary` 去空白后为 1–1000 个 Unicode 字符，`missing_items` 最多 8 项、每项去空白后 1–200 个 Unicode 字符；`needs_input` 至少有一项缺项，`complete` 必须为空。模型正文或文件中的相似文字不能改变分类。
 
-本协议的语义长度、枚举及缺项约束须同时进入实际成员的有效输出契约与最终校验；旧冻结 schema 缺少限制时，叠加本协议原有约束，不改写已发布记录、不放宽其更严格规则。最终文本不合约时，只能沿已有有界结构化输出校正机制修正文案，校正轮不得再次调用业务工具；已经成功的业务回执保留原事实。超限等诊断只记录有界字段路径、约束与观测长度，不记录全文、不静默截断。该约定是本轮修复目标，是否实现及真实通过另见场景与环境证据。
+固定执行schema仍只表达既有三字段形状；`minLength/maxLength/pattern/if/then` 等完整约束通过协议派生到provider可见输出契约及本地Normalize校验，不改冻结声明。旧冻结 schema 缺少限制时，叠加本协议原有约束，不改写已发布记录、不放宽其更严格规则。最终文本不合约时，只能沿已有有界结构化输出校正机制修正文案，校正轮不得再次调用业务工具；已经成功的业务回执保留原事实。超限等诊断只记录有界字段路径、约束与观测长度，不记录全文、不静默截断。该约定是本轮修复目标，是否实现及真实通过另见场景与环境证据。
 
 `needs_input` 表示**尚未形成正式业务结果的团队检查已结束，等待原员工补材料再发起关联的新轮次**；Weave 运行仍以真实终态 `succeeded` 记录，不新增运行状态或内部人工等待节点。经校验的分类及缺项随同一次最终交付物保存，原有终态 outbox 对同一运行只生成一条 `revision_required` 消息；员工打开后由本人权限读取原固定输入、材料、父工作与结构化缺项，不从通知正文猜测。`complete` 仍生成普通 `result`。若本轮存在失败或结果未知的 Forge 业务动作，动作事实优先展示并要求核对，不得因团队给出 `complete` 或 `needs_input` 就宣称业务完成或自动重放。正式审批退回仍由 Forge 原生业务事项办理，不使用这个团队结果分类。 若本次运行已有权威记录的成功 Forge 业务动作，团队的 `needs_input` 和缺项仅作为检查意见交付；终态事件使用现有 `result`，桌面不再从它产生团队补材料待办。下一步正式业务事项由 Forge 决定。旧通知保持原生记录不变，桌面只在按当前账号、准确来源引用读回的动作事实明确包含成功时抑制该补材料投影；读取失败或事实缺失不得当成成功。消息打开后仍分开说明动作回执、团队意见与当前 Forge 状态，不要求员工重复提交已进入正式流程的材料。
 
