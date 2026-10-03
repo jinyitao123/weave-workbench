@@ -75,7 +75,7 @@ test('sales order native actions and approval preserve role, payment and atomic 
   const customer = randomUUID(), type = randomUUID(), contract = randomUUID(), line = randomUUID(), account = randomUUID();
   await insert('forge_customer', { id: customer, name: '合成客户' }); await insert('forge_contract_type', { id: type, name: '测试类型' });
   await insert('forge_fund_account', { id: account, name: '合成账户', status: 'active', current_balance: 0 });
-  await insert('forge_sales_contract', { id: contract, name: '合成合同', code: `TEST-${contract}`, contract_type_id: type, customer_id: customer, responsible_id: sales, owner_id: sales, total_amount: 20000, status: 'active' });
+  await insert('forge_sales_contract', { id: contract, name: '合成合同', code: `TEST-${contract}`, contract_type_id: type, customer_id: customer, responsible_id: sales, owner_id: sales, delivery_address: '合成测试工位，仅内部验证', total_amount: 20000, status: 'active' });
   await insert('forge_sales_contract_line', { id: line, contract_id: contract, name: '交付服务', line_type: 'service', quantity_limit: 20, taxed_unit_price: 1000, taxed_subtotal: 20000 });
   async function action(actor, object, id, target, params = {}) {
     return engine.executeAction(object, target, { record: await read(object, id), recordLoadDenied: false,
@@ -100,6 +100,8 @@ test('sales order native actions and approval preserve role, payment and atomic 
   await assert.rejects(action(finance, 'forge_customer_prepayment', prepay.id, PREPAYMENT_CONFIRM_TARGET, { confirmation_comment: '本人确认' }), /岗位|独立/);
   await action(financeReviewer, 'forge_customer_prepayment', prepay.id, PREPAYMENT_CONFIRM_TARGET, { confirmation_comment: '合成凭证与金额核对一致' });
   const created = await action(operator, 'forge_sales_contract', contract, CONTRACT_ORDER_TARGET, orderInput);
+  assert.equal((await read('forge_sales_order', created.id)).delivery_address, '合成测试工位，仅内部验证', 'omitted address inherits the authoritative contract');
+  await assert.rejects(action(operator, 'forge_sales_contract', contract, CONTRACT_ORDER_TARGET, { ...orderInput, delivery_address: '不同测试工位' }), /CONFLICT/);
   assert.equal((await action(operator, 'forge_sales_contract', contract, CONTRACT_ORDER_TARGET, orderInput)).id, created.id);
   assert.equal((await read('forge_customer_prepayment', prepay.id)).order_id, created.id);
   const existing = await engine.find('forge_sales_order_line', { where: { order_id: created.id } }, { context: system });
@@ -163,7 +165,8 @@ test('sales order native actions and approval preserve role, payment and atomic 
   await action(signature,'forge_sales_contract',rejectedContract,SIGNATURE_TARGET,{...signInput,signed_evidence_attachment:await material(signature,'合成拒绝签署.pdf')});
   const secondPrepay=await action(finance,'forge_sales_contract',rejectedContract,CONTRACT_PREPAYMENT_TARGET,{...prepayInput,code:`RC-${rejectedContract}`,counterpart_reference:`TEST-${rejectedContract}`,receipt_evidence_attachment:await material(finance,'合成拒绝到账.pdf')});
   await action(financeReviewer,'forge_customer_prepayment',secondPrepay.id,PREPAYMENT_CONFIRM_TARGET,{confirmation_comment:'仅内部合成凭证核对'});
-  const secondOrder=await action(operator,'forge_sales_contract',rejectedContract,CONTRACT_ORDER_TARGET,{...orderInput,code:`SO-${rejectedContract}`});
+  const secondOrder=await action(operator,'forge_sales_contract',rejectedContract,CONTRACT_ORDER_TARGET,{...orderInput,code:`SO-${rejectedContract}`,delivery_address:'本轮明确指定的拒绝测试工位'});
+  assert.equal((await read('forge_sales_order',secondOrder.id)).delivery_address,'本轮明确指定的拒绝测试工位','explicit address is retained');
   await action(operator,'forge_sales_order',secondOrder.id,ORDER_SUBMIT_TARGET);
   const secondRequest=await engine.findOne('sys_approval_request',{where:{record_id:secondOrder.id,organization_id:org}},{context:system});
   assert.ok(secondRequest);
