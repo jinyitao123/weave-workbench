@@ -71,5 +71,16 @@ it('keeps current approval return reasons from all cursor pages and reports an u
   const result = await readApprovalWorkPages(read)
   expect(result.items[0]?.returnReason).toBe('第二轮仍需补附件')
   expect(result.error).toContain('分页没有继续前进')
-  expect(read.mock.calls.map(([path]) => path)).toEqual(['/api/v1/workbench/approvals?limit=100', '/api/v1/workbench/approvals?limit=100&cursor=next'])
+  expect(read.mock.calls.map(([path]) => path)).toEqual([
+    '/api/v1/workbench/approvals?limit=100&includeSubmitted=1',
+    '/api/v1/workbench/approvals?limit=100&includeSubmitted=1&cursor=next',
+  ])
+})
+
+it('opts in to the submitted native-order scope and accepts its strict mode', async () => {
+  const submitted = { requestId: 'submitted-order', mode: 'submitted', title: '合成订单', updatedAt: '2026-10-03T00:00:00Z' }
+  const read = vi.fn().mockResolvedValue({ version: '1', items: [submitted] })
+  const result = await readApprovalWorkPages(read)
+  expect(result).toEqual({ items: [submitted] })
+  expect(read).toHaveBeenCalledWith('/api/v1/workbench/approvals?limit=100&includeSubmitted=1')
 })

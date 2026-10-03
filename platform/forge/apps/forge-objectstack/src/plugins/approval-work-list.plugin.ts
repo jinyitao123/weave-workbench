@@ -7,13 +7,13 @@ const ROUTE = '/api/v1/workbench/approvals';
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
 
-type Phase = 'pending' | 'returned';
+type Phase = 'pending' | 'returned' | 'submitted';
 interface Cursor { phase: Phase; offset: number }
 type Row = Record<string, unknown> & { id: string; status: string };
 
 interface WorkItem {
   requestId: string;
-  mode: 'approval' | 'revision';
+  mode: 'approval' | 'revision' | 'submitted';
   title: string;
   processLabel?: string;
   stepLabel?: string;
@@ -54,8 +54,8 @@ export function decodeCursor(value: string | undefined): Cursor | undefined | nu
   if (value === undefined) return undefined;
   try {
     const parsed = JSON.parse(atob(value.replace(/-/g, '+').replace(/_/g, '/'))) as Partial<Cursor>;
-    if ((parsed.phase === 'pending' || parsed.phase === 'returned') && Number.isSafeInteger(parsed.offset) && parsed.offset! >= 0) {
-      return { phase: parsed.phase, offset: parsed.offset! };
+    if (['pending', 'returned', 'submitted'].includes(String(parsed.phase)) && Number.isSafeInteger(parsed.offset) && parsed.offset! >= 0) {
+      return { phase: parsed.phase as Phase, offset: parsed.offset! };
     }
   } catch { /* invalid cursor */ }
   return null;
@@ -126,13 +126,17 @@ export class ApprovalWorkListPlugin implements Plugin {
         if (!actor?.userId) return sendError(response, 401, 'UNAUTHENTICATED');
         const cursor = decodeCursor(queryValue(request.query?.cursor));
         if (cursor === null) return sendError(response, 400, 'APPROVAL_LIST_CURSOR_INVALID');
+        const includeSubmittedText = queryValue(request.query?.includeSubmitted);
+        if (includeSubmittedText !== undefined && includeSubmittedText !== '1') return sendError(response, 400, 'APPROVAL_LIST_QUERY_INVALID');
+        const includeSubmitted = includeSubmittedText === '1';
+        if (cursor?.phase === 'submitted' && !includeSubmitted) return sendError(response, 400, 'APPROVAL_LIST_CURSOR_INVALID');
         const limitText = queryValue(request.query?.limit);
         const limit = limitText === undefined ? DEFAULT_LIMIT : Number(limitText);
         if (!Number.isSafeInteger(limit) || limit < 1 || limit > MAX_LIMIT) return sendError(response, 400, 'APPROVAL_LIST_LIMIT_INVALID');
         const approvals = service<IApprovalService>(context, 'approvals');
         if (!approvals) return sendError(response, 503, 'APPROVAL_LIST_UNAVAILABLE');
         try {
-          const page = await this.page(approvals, actor, cursor ?? { phase: 'pending', offset: 0 }, limit);
+          const page = await this.page(approvals, actor, cursor ?? { phase: 'pending', offset: 0 }, limit, includeSubmitted);
           await response.status(200).json({ version: '1', items: page.items, ...(page.next ? { nextCursor: encodeCursor(page.next) } : {}) });
         } catch {
           context.logger.error('[approval-work-list] native approval read failed');
@@ -142,7 +146,7 @@ export class ApprovalWorkListPlugin implements Plugin {
     });
   }
 
-  private async page(approvals: IApprovalService, actor: ExecutionContext, cursor: Cursor, limit: number): Promise<{ items: WorkItem[]; next?: Cursor }> {
+  private async page(approvals: IApprovalService, actor: ExecutionContext, cursor: Cursor, limit: number, includeSubmitted: boolean): Promise<{ items: WorkItem[]; next?: Cursor }> {
     const userId = String(actor.userId);
     const items: WorkItem[] = [];
     let phase = cursor.phase;
@@ -151,25 +155,31 @@ export class ApprovalWorkListPlugin implements Plugin {
       const want = limit - items.length;
       const rows = (phase === 'pending'
         ? await approvals.listRequests({ status: 'pending', approverId: userId, limit: want, offset }, actor)
-        : await approvals.listRequests({ status: 'returned', submitterId: userId, limit: want, offset }, actor)) as unknown as Row[];
+        : phase === 'returned'
+          ? await approvals.listRequests({ status: 'returned', submitterId: userId, limit: want, offset }, actor)
+          : await approvals.listRequests({ object: 'forge_sales_order', status: 'pending', submitterId: userId, limit: want, offset }, actor)) as unknown as Row[];
       for (const row of rows) {
         const viewer = row.viewer as { can_act?: unknown; is_submitter?: unknown } | undefined;
         if (phase === 'pending') {
           if (viewer?.can_act !== true) continue;
           const item = workItem(row, 'approval');
           if (item) items.push(item);
-        } else {
+        } else if (phase === 'returned') {
           if (viewer?.is_submitter !== true) continue;
           const open = latestOpenReturn(await approvals.listActions(row.id, actor) as unknown as Array<Record<string, unknown>>);
           if (!open) continue;
           const item = workItem(row, 'revision', text(open.comment, 4000));
           if (item) items.push(item);
+        } else {
+          if (row.object_name !== 'forge_sales_order' || row.status !== 'pending' || row.submitter_id !== userId || viewer?.is_submitter !== true) continue;
+          const item = workItem(row, 'submitted');
+          if (item) items.push(item);
         }
       }
       offset += rows.length;
       if (rows.length < want) {
-        if (phase === 'returned') return { items };
-        phase = 'returned';
+        if (phase === 'submitted' || phase === 'returned' && !includeSubmitted) return { items };
+        phase = phase === 'pending' ? 'returned' : 'submitted';
         offset = 0;
       }
     }

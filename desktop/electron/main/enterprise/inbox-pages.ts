@@ -7,7 +7,7 @@ export async function readApprovalWorkPages(read: (path: string) => Promise<unkn
   let cursor: string | undefined
   try {
     for (;;) {
-      const query = new URLSearchParams({ limit: '100', ...(cursor ? { cursor } : {}) })
+      const query = new URLSearchParams({ limit: '100', includeSubmitted: '1', ...(cursor ? { cursor } : {}) })
       const page = parseApprovalWorkPage(await read(`/api/v1/workbench/approvals?${query}`))
       const previousCount = found.size
       for (const item of page.items) {

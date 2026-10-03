@@ -87,6 +87,8 @@ function createHarness() {
     payload: { name: '没有冻结摘要的合同', submitted_material_id: materialA.id }, title: '没有冻结摘要的合同',
   });
   const requests = new Map([[pendingA.id, pendingA], [pendingLegacyAttachment.id, pendingLegacyAttachment], [pendingB.id, pendingB], [pendingPdf.id, pendingPdf], [returned.id, returned], [noFrozenDigest.id, noFrozenDigest]]);
+  requests.set('approval-order', { ...pendingA, id: 'approval-order', object_name: 'forge_sales_order',
+    record_id: 'order-A', submitter_id: 'sales-returned', payload: { name: '合成订单', code: 'TEST-ORDER' } });
   const sessions = new Map([
     ['reviewer-token', { user: { id: 'reviewer-A' }, session: { activeOrganizationId: 'org-A' } }],
     ['reviewer-b-token', { user: { id: 'reviewer-B' }, session: { activeOrganizationId: 'org-A' } }],
@@ -225,6 +227,22 @@ function createHarness() {
     get fixtureFiles() { return { materialA, attachmentA, duplicateMainAttachment, materialB, materialPdf }; },
   };
 }
+
+test('only the original order submitter receives pending recall context; approver keeps decisions and contract submitter stays denied', async () => {
+  const harness = createHarness();
+  await harness.start();
+  const own = await harness.call('approval-order', 'sales-token');
+  assert.equal(own.status, 200);
+  assert.equal(own.body.viewer, 'original_submitter');
+  assert.equal(own.body.status, 'pending');
+  assert.deepEqual(own.body.availableActions.map(action => [action.semantic, action.execution.actionName]), [['recall', 'order_approval_mcp_recall']]);
+  const reviewer = await harness.call('approval-order', 'reviewer-token');
+  assert.equal(reviewer.status, 200);
+  assert.equal(reviewer.body.viewer, 'current_approver');
+  assert.deepEqual(reviewer.body.availableActions.map(action => action.semantic), ['approve', 'reject']);
+  assert.equal((await harness.call('approval-order', 'reviewer-b-token')).status, 404);
+  assert.equal((await harness.call('approval-PDF', 'submitter-pdf-token')).status, 404);
+});
 
 test('pending approver receives only this request snapshot and verified text bytes', async () => {
   const harness = createHarness();

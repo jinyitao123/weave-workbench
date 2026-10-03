@@ -1909,11 +1909,13 @@ export class EnterpriseService {
     this.assertCurrentAuth(snapshot)
     const approval = record(rawContext)
     const isReviewer = approval?.status === 'pending' && approval.viewer === 'current_approver'
-    const isSubmitter = approval?.status === 'returned' && approval.viewer === 'original_submitter'
     const title = textValue(approval?.title), step = textValue(approval?.step)
     const businessObject = record(approval?.businessObject)
     const objectName = textValue(businessObject?.objectName), recordId = textValue(businessObject?.recordId)
     const recordName = textValue(businessObject?.recordName)
+    const isReturnedSubmitter = approval?.status === 'returned' && approval.viewer === 'original_submitter'
+    const isSubmittedOrder = approval?.status === 'pending' && approval.viewer === 'original_submitter' && objectName === 'forge_sales_order'
+    const isSubmitter = isReturnedSubmitter || isSubmittedOrder
     const sourceMaterialVersion = textValue(approval?.sourceMaterialVersion)
     const returnVersion = textValue(approval?.returnVersion)
     if (approval?.version !== '1' || approval.requestId !== approvalId || (!isReviewer && !isSubmitter)
@@ -1921,7 +1923,8 @@ export class EnterpriseService {
       || !objectName || objectName.length > 160 || !recordId || recordId.length > 128
       || (recordName !== undefined && recordName.length > 300)
       || !sourceMaterialVersion || !/^[0-9a-f]{64}$/.test(sourceMaterialVersion)
-      || (isSubmitter && (!returnVersion || returnVersion.length > 128))) {
+      || (isReturnedSubmitter && (!returnVersion || returnVersion.length > 128))
+      || (isSubmittedOrder && returnVersion !== undefined)) {
       throw new Error('这项审批已无法由当前员工处理，请刷新待办')
     }
     if (!Array.isArray(approval.fields) || approval.fields.length > 64 || !Array.isArray(approval.files)) {
@@ -1989,7 +1992,7 @@ export class EnterpriseService {
       }
     }
     const returnReason = approval.returnReason
-    if ((isSubmitter && typeof returnReason !== 'string')
+    if ((isReturnedSubmitter && typeof returnReason !== 'string')
       || (returnReason !== undefined && (typeof returnReason !== 'string' || returnReason.length > 4000))) {
       throw new Error('Forge 审批上下文格式无效')
     }
@@ -1997,10 +2000,18 @@ export class EnterpriseService {
     const availableActions = parseCurrentApprovalActions(approval.availableActions, {
       requestId: approvalId, businessObject: { objectName, recordId }, sourceMaterialVersion,
     })
+    if (isSubmittedOrder && (availableActions?.length !== 1
+      || availableActions[0]?.semantic !== 'recall'
+      || availableActions[0]?.execution.actionName !== 'order_approval_mcp_recall')) {
+      throw new Error('Forge 发起人审批动作目录无效，请刷新后重试')
+    }
+    if (isReviewer && availableActions?.some((action) => action.semantic === 'recall')) {
+      throw new Error('Forge 当前审批人动作目录无效，请刷新后重试')
+    }
     return {
-      requestId: approvalId, status: isSubmitter ? 'returned' : 'pending', viewer: isSubmitter ? 'original_submitter' : 'current_approver',
+      requestId: approvalId, status: isReturnedSubmitter ? 'returned' : 'pending', viewer: isSubmitter ? 'original_submitter' : 'current_approver',
       title, step, businessObject: { objectName, recordId, ...(recordName ? { recordName } : {}) }, sourceMaterialVersion,
-      ...(isSubmitter ? { returnVersion, returnReason: returnReason as string } : {}),
+      ...(isReturnedSubmitter ? { returnVersion, returnReason: returnReason as string } : {}),
       fields, ...(availableActions !== undefined ? { availableActions } : {}),
       files, ...(originalFiles ? { originalFiles } : {}),
     }
@@ -2069,7 +2080,7 @@ export class EnterpriseService {
     if (!textValue(task?.runId) || !textValue(task?.interactionId) || !record(payload)) throw new Error('待办信息无效')
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    const forgeMatch = /^forge:(approval|revision):(.+)$/.exec(task.runId)
+    const forgeMatch = /^forge:(approval|revision|submitted):(.+)$/.exec(task.runId)
     if (forgeMatch) {
       if (forgeMatch[2] !== task.interactionId) throw new Error('审批事项已变化，请刷新后重试')
       if (forgeMatch[1] === 'revision') throw new Error('Forge 修订材料递交业务动作尚未接通，审批事项未递交')

@@ -28,7 +28,7 @@ export interface WorkbenchRunLookupResponse {
 
 export interface ApprovalWorkItem {
   requestId: string
-  mode: 'approval' | 'revision'
+  mode: 'approval' | 'revision' | 'submitted'
   title: string
   updatedAt: string
   processLabel?: string
@@ -47,7 +47,7 @@ export function parseApprovalWorkPage(value: unknown): { items: ApprovalWorkItem
   const items = body.items.map((entry): ApprovalWorkItem => {
     const item = record(entry)
     const requestId = text(item?.requestId), mode = item?.mode, title = text(item?.title), updatedAt = text(item?.updatedAt)
-    if (!requestId || requestId.length > 128 || requestId.trim() !== requestId || (mode !== 'approval' && mode !== 'revision')
+    if (!requestId || requestId.length > 128 || requestId.trim() !== requestId || (mode !== 'approval' && mode !== 'revision' && mode !== 'submitted')
       || !title || title.length > 300 || !updatedAt || !Number.isFinite(Date.parse(updatedAt))) throw new Error('Forge 返回了无法识别的审批事项')
     return { requestId, mode, title, updatedAt,
       ...(text(item?.processLabel) ? { processLabel: text(item?.processLabel) } : {}),

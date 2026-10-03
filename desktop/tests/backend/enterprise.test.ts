@@ -733,7 +733,7 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/teams?status=active')) return Response.json([])
       if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
-      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&includeSubmitted=1')) return Response.json({ version: '1', items: [] })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ data: { notifications: [
         notice('old', 'revision_required', '2026-09-29T02:18:00Z'),
         notice('new', 'result', '2026-09-29T05:09:00Z'),
@@ -789,8 +789,8 @@ describe('EnterpriseService', () => {
   it('reports a forbidden approval page without logging out or discarding other readable work data', async () => {
     const first = Array.from({ length: 100 }, (_, index) => ({ requestId: `approval-${index}`, mode: 'approval', title: '审批事项', updatedAt: '2026-10-01T00:00:00Z' }))
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: workOverviewFetch((url) => {
-      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: first, nextCursor: 'next' })
-      if (url.endsWith('/api/v1/workbench/approvals?limit=100&cursor=next')) return Response.json({}, { status: 403 })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&includeSubmitted=1')) return Response.json({ version: '1', items: first, nextCursor: 'next' })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&includeSubmitted=1&cursor=next')) return Response.json({}, { status: 403 })
       if (url.includes('/v1/teams?')) return Response.json([])
       if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
       if (url.includes('/v1/human-tasks?')) return Response.json({ tasks: [] })
@@ -809,8 +809,8 @@ describe('EnterpriseService', () => {
     const waiting = deferred<Response>(), started = deferred<void>()
     const requests = Array.from({ length: 100 }, (_, index) => ({ requestId: `alice-approval-${index}`, mode: 'approval', title: 'Alice 审批事项', updatedAt: '2026-10-01T00:00:00Z' }))
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: workOverviewFetch((url, init) => {
-      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json(new Headers(init?.headers).get('Authorization')?.endsWith('-alice@example.test') ? { version: '1', items: requests, nextCursor: 'next' } : { version: '1', items: [] })
-      if (url.endsWith('/api/v1/workbench/approvals?limit=100&cursor=next')) { started.resolve(); return waiting.promise }
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&includeSubmitted=1')) return Response.json(new Headers(init?.headers).get('Authorization')?.endsWith('-alice@example.test') ? { version: '1', items: requests, nextCursor: 'next' } : { version: '1', items: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&includeSubmitted=1&cursor=next')) { started.resolve(); return waiting.promise }
       if (url.includes('/v1/teams?')) return Response.json([])
       if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
       if (url.includes('/v1/human-tasks?')) return Response.json({ tasks: [] })
@@ -945,7 +945,7 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/teams?status=active')) return Response.json([])
       if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
-      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&includeSubmitted=1')) return Response.json({ version: '1', items: [] })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ notifications: [{ id: 'server-result', type: 'weave.team_run.revision_required', title: '合同检查', createdAt: '2026-09-30T02:00:00Z' }] })
       if (url.endsWith('/api/v1/workbench/notifications/server-result/source')) return Response.json({ version: '1', notificationId: 'server-result', kind: 'revision_required', source: { system: 'weave', ...source } })
       if (url.endsWith('/v1/workbench/runs/lookup')) return Response.json({ version: '1', runs: [runLookup(source, businessResult)], missing: [] })
@@ -968,7 +968,7 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/teams?status=active')) return Response.json([])
       if (url.includes('/v1/runs?')) return Response.json({ runs: [] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
-      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&includeSubmitted=1')) return Response.json({ version: '1', items: [] })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ notifications: [
         { id: 'same-notice', type: 'weave.team_run.revision_required', title: '合同检查', body: '团队意见', read: false, createdAt: '2026-09-30T02:00:00Z' },
       ] })
@@ -1017,7 +1017,7 @@ describe('EnterpriseService', () => {
         { id: 'notice-human', type: 'weave.team_run.human_review', title: '待我复核', read: false, createdAt: '2026-09-21T03:00:00Z' },
         { id: 'notice-1', type: 'work.revision', title: '材料需要修改', body: '重复投递不应重复显示', read: false, createdAt: '2026-09-21T01:01:00Z' },
       ] } })
-      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&includeSubmitted=1')) return Response.json({ version: '1', items: [] })
       if (url.endsWith('/v1/workbench/dispatch-inputs/prepare')) return Response.json({ input_revision_id: body?.registration_id })
       if (url.endsWith('/api/v1/apps/forge/task-delegations')) return Response.json(delegationResponse(body?.scope as ForgeTaskScope, 'forge-1'))
       if (url.endsWith('/v1/workbench/dispatch-inputs')) {
@@ -1121,7 +1121,7 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/runs?project_id=')) return Response.json({ runs: [] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ notifications: [] })
-      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&includeSubmitted=1')) return Response.json({ version: '1', items: [
         { requestId: 'approval-1', title: '销售合同复核 · 财务复核', mode: 'approval', updatedAt: '2026-09-22T08:00:00Z', stepLabel: '财务复核' },
         { requestId: 'approval-2', title: '销售合同需要修改', mode: 'revision', updatedAt: '2026-09-22T09:00:00Z', returnReason: '请补齐附件' },
       ] })
@@ -1167,7 +1167,7 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/runs?project_id=')) return Response.json({ runs: [{ run_id: 'run-weave', status: 'running' }] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [{ interaction_id: 'task-weave', run_id: 'run-weave', team_id: 'team-1', workflow_id: 'flow-1', workflow_version: 1, title: '团队检查', instructions: '补充产品范围', updated_at: '2026-09-23T01:00:00Z' }] })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return Response.json({}, { status: 503 })
-      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({}, { status: 404 })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&includeSubmitted=1')) return Response.json({}, { status: 404 })
       return undefined
     })
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
@@ -1184,7 +1184,7 @@ describe('EnterpriseService', () => {
     const fetchMock = workOverviewFetch((url) => {
       if (url.startsWith('http://weave/')) return Response.json({}, { status: 503 })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ notifications: [{ id: 'notice-forge', type: 'business.result', title: '业务结果', read: false, createdAt: '2026-09-23T01:00:00Z' }] })
-      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&includeSubmitted=1')) return Response.json({ version: '1', items: [
         { requestId: 'approval-own', title: '当前员工合同 · 交付复核', mode: 'approval', updatedAt: '2026-09-23T01:00:00Z' },
       ] })
       return undefined
@@ -1206,7 +1206,7 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/runs?project_id=')) return Response.json({ runs: [] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return forgeAvailable ? notificationResponse({ notifications: [{ id: 'notice-recovered', type: 'business.result', title: '恢复后的消息', read: false, createdAt: '2026-09-23T01:00:00Z' }] }) : Response.json({}, { status: 503 })
-      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&includeSubmitted=1')) return Response.json({ version: '1', items: [] })
       return undefined
     })
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
@@ -1229,7 +1229,7 @@ describe('EnterpriseService', () => {
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ notifications: [
         { id: 'notice-read', type: 'business.result', title: '合同状态更新', read: true, createdAt: '2026-09-24T01:00:00Z' },
       ] })
-      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&includeSubmitted=1')) return Response.json({ version: '1', items: [] })
       return undefined
     })
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
@@ -1590,7 +1590,7 @@ describe('EnterpriseService', () => {
       if (url.includes('/v1/runs?project_id=')) return Response.json({ runs: [] })
       if (url.endsWith('/v1/human-tasks?limit=50')) return Response.json({ tasks: [] })
       if (url.endsWith('/api/v1/apps/forge/workbench/inbox?limit=100')) return notificationResponse({ notifications: [] })
-      if (url.endsWith('/api/v1/workbench/approvals?limit=100')) return Response.json({ version: '1', items: [] })
+      if (url.endsWith('/api/v1/workbench/approvals?limit=100&includeSubmitted=1')) return Response.json({ version: '1', items: [] })
       return undefined
     })
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
@@ -1613,6 +1613,15 @@ describe('EnterpriseService', () => {
     let actionRecordId = 'contract-1'
     let actionInputName = 'comment'
     let fileContent = original
+    const orderRecallAction = {
+      semantic: 'recall', label: '撤回订单审批', description: '撤回本人提交且仍待审批的销售订单。',
+      execution: { tool: 'run_action', actionName: 'order_approval_mcp_recall', objectName: 'forge_sales_order', recordId: 'order-1', params: { approvalRequestId: 'approval-3', itemVersion: 'native-order-item-1', sourceMaterialVersion } },
+      inputs: [{ name: 'comment', type: 'string', label: '撤回原因', required: true }],
+    }
+    const orderApproveAction = {
+      ...orderRecallAction, semantic: 'approve', label: '同意订单复核',
+      execution: { ...orderRecallAction.execution, actionName: 'order_approval_mcp_approve', params: { ...orderRecallAction.execution.params, approvalRequestId: 'approval-5' } },
+    }
     const calls: string[] = []
     const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
       const url = String(input); calls.push(url)
@@ -1638,6 +1647,24 @@ describe('EnterpriseService', () => {
         businessObject: { objectName: 'forge_sales_contract', recordId: 'contract-1', recordName: '设备验收合同' }, sourceMaterialVersion: createHash('sha256').update('source-v1').digest('hex'),
         fields: [{ label: '合同名称', value: '设备验收合同' }], files: [],
       })
+      if (url.endsWith('/api/v1/approvals/requests/approval-3/workbench-context')) return Response.json({
+        version: '1', requestId: 'approval-3', status: 'pending', viewer: 'original_submitter',
+        title: '合成销售订单', step: '订单复核', fields: [{ label: '订单金额', value: '¥20,000' }],
+        businessObject: { objectName: 'forge_sales_order', recordId: 'order-1', recordName: '合成销售订单' }, sourceMaterialVersion,
+        availableActions: [orderRecallAction], files: [],
+      })
+      if (url.endsWith('/api/v1/approvals/requests/approval-4/workbench-context')) return Response.json({
+        version: '1', requestId: 'approval-4', status: 'pending', viewer: 'current_approver',
+        title: '合成销售订单', step: '订单复核', fields: [],
+        businessObject: { objectName: 'forge_sales_order', recordId: 'order-1' }, sourceMaterialVersion,
+        availableActions: [{ ...orderRecallAction, execution: { ...orderRecallAction.execution, params: { ...orderRecallAction.execution.params, approvalRequestId: 'approval-4' } } }], files: [],
+      })
+      if (url.endsWith('/api/v1/approvals/requests/approval-5/workbench-context')) return Response.json({
+        version: '1', requestId: 'approval-5', status: 'pending', viewer: 'original_submitter',
+        title: '合成销售订单', step: '订单复核', fields: [],
+        businessObject: { objectName: 'forge_sales_order', recordId: 'order-1' }, sourceMaterialVersion,
+        availableActions: [orderApproveAction], files: [],
+      })
       return Response.json({}, { status: 404 })
     }) as typeof fetch
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge.example.test', WORKBENCH_WEAVE_URL: 'http://weave.example.test' }, fetch: fetchMock })
@@ -1656,6 +1683,11 @@ describe('EnterpriseService', () => {
     expect(returnedContext).not.toHaveProperty('revisionReady')
     expect(calls.filter((url) => url.includes('/api/v1/data/') || /\/api\/v1\/storage\/files\/[^/]+\/url/.test(url))).toEqual([])
     expect(calls.filter((url) => url.includes('/workbench-context'))).toHaveLength(4)
+    const submittedOrder = await service.getApprovalContext('approval-3')
+    expect(submittedOrder).toMatchObject({ requestId: 'approval-3', status: 'pending', viewer: 'original_submitter', businessObject: { objectName: 'forge_sales_order', recordId: 'order-1' }, availableActions: [{ semantic: 'recall', execution: { actionName: 'order_approval_mcp_recall' } }] })
+    expect(approvalContextView(submittedOrder).actions).toMatchObject([{ semantic: 'recall', label: '撤回订单审批' }])
+    await expect(service.getApprovalContext('approval-4')).rejects.toThrow('审批人动作目录无效')
+    await expect(service.getApprovalContext('approval-5')).rejects.toThrow('发起人审批动作目录无效')
     fileContent = '# 另一份合同\n'
     await expect(service.getApprovalContext('approval-1')).rejects.toThrow('审批文件与提交版本不一致')
   })

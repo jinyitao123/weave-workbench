@@ -84,6 +84,36 @@ export function EnterpriseWorkPage({ overview, loading, error, onRefresh, onComp
           </article>)}
           {pendingCount === 0 && !overview?.businessWork?.length ? <div className="work-empty">当前没有待处理事项。</div> : null}
         </>}
+        {overview?.submittedApprovals?.length ? <section className="work-submitted-approvals">
+          <div className="work-panel-heading"><ClipboardCheck size={15}/><h2>我发起的审批</h2><span>{overview.submittedApprovals.length}</span></div>
+          <div className="work-task-list">{overview.submittedApprovals.map((task) => {
+            const context = contexts[task.interactionId]
+            const recall = context?.actions?.find((action) => action.semantic === 'recall')
+            return <article key={task.interactionId}>
+              <header><span><strong>{task.title}</strong><small>销售订单审批 · {formatTime(task.updatedAt)}</small></span><i>审批中</i></header>
+              <p>{task.instructions}</p>
+              {task.materialLabel ? <small>材料：{task.materialLabel}</small> : null}
+              <button type="button" className="button" disabled={busyContext === task.interactionId} onClick={() => inspect(task)}>
+                {busyContext === task.interactionId ? '正在读取…' : context ? '重新读取冻结版本' : '查看冻结版本'}
+              </button>
+              {contextErrors[task.interactionId] ? <p role="alert">{contextErrors[task.interactionId]}</p> : null}
+              {context ? <section className="work-approval-context">
+                <h3>{context.title}</h3><small>{context.step}</small>
+                <dl>{context.fields.map((field) => <div key={field.label}><dt>{field.label}</dt><dd>{field.value}</dd></div>)}</dl>
+                {context.files.map((file) => <div key={file.name}><strong>{file.name}</strong><small>已核对提交版本</small><pre>{file.content}</pre></div>)}
+                {context.originalFiles?.map((file, index) => <div key={`${file.name}:${index}`}><strong>{file.name}</strong><small>PDF/DOCX 原件 · {file.bytes} 字节 · 已核验 · {file.extraction.status === 'complete' ? '文本提取完整' : file.extraction.status === 'partial' ? '部分内容未提取' : '未提取到可读文本'}</small><pre>{file.extraction.content}</pre>{file.extraction.limitations.length ? <small>提取结果有内容缺口，请在 Forge 查看完整原件。</small> : null}</div>)}
+                <p>此处仅列出本审批已绑定且可读取的冻结材料。</p>
+              </section> : null}
+              <textarea className="work-input-surface" rows={2} aria-label="撤回原因" placeholder="填写撤回原因" value={comments[task.interactionId] ?? ''} onChange={(event) => setComments((current) => ({ ...current, [task.interactionId]: event.target.value }))}/>
+              {recall ? <button type="button" className="button button--primary" disabled={busyTask === task.interactionId || !context?.actionVersion || !comments[task.interactionId]?.trim()} onClick={() => {
+                setBusyTask(task.interactionId)
+                void onComplete(task, recall.actionRef, comments[task.interactionId] ?? '', context?.actionVersion).catch((failure) => setContextErrors((current) => ({
+                  ...current, [task.interactionId]: failure instanceof Error ? failure.message : '审批办理结果待核对',
+                }))).finally(() => setBusyTask(''))
+              }}>{busyTask === task.interactionId ? '正在核对…' : recall.label}</button> : null}
+            </article>
+          })}</div>
+        </section> : null}
       </section>
       <section className="work-panel"><div className="work-panel-heading"><TimerReset size={15}/><h2>我发起的工作</h2><span>{overview?.runs.length ?? 0}</span></div>
         {!overview && loading ? <div className="work-empty">正在读取进度…</div> : !overview ? <div className="work-empty">进度暂时无法读取。</div> : <>

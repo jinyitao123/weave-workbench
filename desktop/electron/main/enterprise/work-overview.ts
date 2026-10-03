@@ -44,16 +44,20 @@ export async function readEmployeeWorkOverview(projectID: string, access: WorkOv
     }
   }
   const approvals = approvalsRead.value?.items ?? []
-  const tasks: EnterpriseHumanTask[] = approvals.map((approval) => ({
+  const toApprovalTask = (approval: (typeof approvals)[number]): EnterpriseHumanTask => ({
     interactionId: approval.requestId, runId: `forge:${approval.mode}:${approval.requestId}`,
     teamId: 'forge', workflowId: 'business-approval', workflowVersion: 1,
     title: approval.title,
-    instructions: approval.mode === 'revision'
+    instructions: approval.mode === 'submitted'
+      ? '你发起的销售订单仍在审批中。查看当前冻结版本后，可填写原因撤回申请。'
+      : approval.mode === 'revision'
       ? approval.returnReason ? `退回原因：${approval.returnReason}` : '请根据审批意见协助员工修改业务材料。'
       : `请核对${approval.stepLabel ?? approval.processLabel ?? '业务材料'}并给出审批意见。`,
     updatedAt: approval.updatedAt, source: 'forge', mode: approval.mode,
     ...(approval.materialLabel ? { materialLabel: approval.materialLabel } : {}),
-  }))
+  })
+  const tasks = approvals.filter((approval) => approval.mode !== 'submitted').map(toApprovalTask)
+  const submittedApprovals = approvals.filter((approval) => approval.mode === 'submitted').map(toApprovalTask)
   const notificationPage = notificationsRead.value
   const items = inboxWorkItems(notificationPage?.notifications ?? [])
   const weaveActionItems = items.filter((item) => item.source === 'weave' && item.actionable)
@@ -156,7 +160,7 @@ export async function readEmployeeWorkOverview(projectID: string, access: WorkOv
   access.assertCurrent()
   const readStatus = (error?: string): EnterpriseWorkReadStatus => error ? { status: 'failed', error } : { status: 'loaded' }
   return {
-    loadedAt: new Date().toISOString(), choices, tasks, businessWork: businessRead.value?.items ?? [],
+    loadedAt: new Date().toISOString(), choices, tasks, submittedApprovals, businessWork: businessRead.value?.items ?? [],
     items: items.filter((item) => !consumedHumanReview.has(item.id)).map((item) => projectedById.get(item.id) ?? item),
     runs: (Array.isArray(runList?.runs) ? runList.runs : []).flatMap((run) => runObservation(run) ?? []),
     reads: {

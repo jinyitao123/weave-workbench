@@ -46,6 +46,7 @@ export const ContractApprovalMcpSendBack = defineAction({
 
 export const ORDER_APPROVAL_MCP_APPROVE_TARGET = 'orderApprovalMcpApprove';
 export const ORDER_APPROVAL_MCP_REJECT_TARGET = 'orderApprovalMcpReject';
+export const ORDER_APPROVAL_MCP_RECALL_TARGET = 'orderApprovalMcpRecall';
 export const OrderApprovalMcpApprove = defineAction({
   name: 'order_approval_mcp_approve', label: '同意订单复核', objectName: 'forge_sales_order',
   target: ORDER_APPROVAL_MCP_APPROVE_TARGET, locations: ['record_header'], visible: false,
@@ -60,5 +61,14 @@ export const OrderApprovalMcpReject = defineAction({
   requiredPermissions: ['sales_order_reviewer'],
   ai: { exposed: true, category: 'action', requiresConfirmation: true,
     description: '已分配的独立订单复核员工对准确原生审批请求记录拒绝意见，原生流程取消未通过订单，保留原因且不增加合同下单累计。' },
+  params: nativeApprovalInputs,
+});
+
+export const OrderApprovalMcpRecall = defineAction({
+  name: 'order_approval_mcp_recall', label: '撤回订单审批', objectName: 'forge_sales_order',
+  target: ORDER_APPROVAL_MCP_RECALL_TARGET, locations: ['record_header'], visible: false,
+  requiredPermissions: ['sales_order_operator'],
+  ai: { exposed: true, category: 'action', requiresConfirmation: true,
+    description: '订单审批的本人发起人在仍待审批且冻结版本未变化时填写撤回原因，通过原生审批取消本订单并释放预收绑定，保留原审批及财务台账。' },
   params: nativeApprovalInputs,
 });

@@ -11,13 +11,13 @@ function row(id, status, extra = {}) {
   };
 }
 
-function harness({ pending = [], returned = [], actions = {} } = {}) {
+function harness({ pending = [], returned = [], submitted = [], actions = {} } = {}) {
   const routes = new Map();
   const calls = [];
   const approvals = {
     async listRequests(filter, context) {
       calls.push({ filter, user: context.userId });
-      const source = filter.status === 'pending' ? pending : returned;
+      const source = filter.submitterId && filter.status === 'pending' ? submitted : filter.status === 'pending' ? pending : returned;
       return source.slice(filter.offset ?? 0, (filter.offset ?? 0) + filter.limit);
     },
     async listActions(id) { return actions[id] ?? []; },
@@ -98,4 +98,25 @@ test('cursor and return helpers are strict', () => {
   assert.equal(decodeCursor(encodeCursor({ phase: 'other', offset: 1 })), null);
   assert.equal(latestOpenReturn([{ action: 'revise' }, { action: 'resubmit' }]), undefined);
   assert.equal(latestOpenReturn([{ action: 'resubmit' }, { action: 'revise', comment: 'x' }])?.comment, 'x');
+});
+
+test('submitted orders are opt-in, paged and bound to the authenticated original submitter', async () => {
+  const ownOrder = (id, extra = {}) => row(id, 'pending', {
+    ...submitter, object_name: 'forge_sales_order', submitter_id: 'employee-a', ...extra,
+  });
+  const h = harness({ submitted: [
+    ownOrder('s1'), ownOrder('foreign', { submitter_id: 'employee-b' }),
+    ownOrder('contract', { object_name: 'forge_sales_contract' }), ownOrder('finished', { status: 'approved' }),
+    ownOrder('s2'),
+  ] });
+  assert.deepEqual((await h.get()).body.items, [], 'legacy callers never receive new submitted modes');
+  assert.ok(!h.calls.some(call => call.filter.status === 'pending' && call.filter.submitterId));
+  const first = await h.get({ includeSubmitted: '1', limit: '1' });
+  assert.deepEqual(first.body.items.map(item => [item.requestId, item.mode]), [['s1', 'submitted']]);
+  assert.equal((await h.get({ cursor: first.body.nextCursor })).status, 400, 'new cursor cannot widen a legacy request');
+  const second = await h.get({ includeSubmitted: '1', limit: '1', cursor: first.body.nextCursor });
+  assert.deepEqual(second.body.items.map(item => item.requestId), ['s2']);
+  assert.ok(h.calls.filter(call => call.filter.status === 'pending' && call.filter.submitterId).every(call =>
+    call.filter.object === 'forge_sales_order' && call.filter.submitterId === call.user));
+  assert.equal((await h.get({ includeSubmitted: 'true' })).status, 400);
 });

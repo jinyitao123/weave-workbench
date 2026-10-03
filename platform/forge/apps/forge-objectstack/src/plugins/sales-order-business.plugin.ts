@@ -58,7 +58,14 @@ export class SalesOrderBusinessPlugin implements Plugin {
         if (!order || order.submitted_by === actorId || order.review_owner_id !== actorId
           || !(await effectivePositionUsers(engine, organizationId, 'sales_order_reviewer', { context: system })).includes(actorId)) throw new Error('FORBIDDEN: 当前员工不是本订单有效复核人');
       }
-      return native.decide(id, input, context);
+      const result = await native.decide(id, input, context);
+      if (request.object_name === 'forge_sales_order' && ['approved', 'rejected'].includes(String(result.request.status))) {
+        // Normal REST and Workbench share the durable native decision. A lost
+        // flow must not leave a successful decision with a pending order.
+        try { await applySalesOrderApproval(engine, String(request.record_id), context.tenantId!); }
+        catch { throw new Error('APPROVAL_ACTION_IN_DOUBT: 原生决定已保存，订单结果待核对，请从订单事项继续核对原结果'); }
+      }
+      return result;
     };
     ctx.replaceService('approvals', new Proxy(native, {
       get(target, property, receiver) {
@@ -87,6 +94,7 @@ export class SalesOrderBusinessPlugin implements Plugin {
         // active status before the atomic domain update has succeeded.
         if (!['approved', 'rejected'].includes(String(change.approval_outcome))) return;
         const row = { ...businessRow(hook.previous), ...change, ...businessRow(hook.result) };
+        if (row.status === 'active' && row.approval_outcome === 'approved' || row.status === 'cancelled' && row.approval_outcome === 'rejected') return;
         const recordId = String(row.id || input.id || ''), org = String(row.organization_id || hook.session?.organizationId || '');
         if (!recordId || !org) throw new Error('订单审批结果缺少准确业务来源');
         await applySalesOrderApproval(engine, recordId, org);

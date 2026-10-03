@@ -3,6 +3,27 @@ import type { ExecutionContext } from '@objectstack/spec/kernel';
 import { canonicalJSON, digest, TaskConnectionFailure } from './native-task-auth.js';
 
 export type OrderRow = Record<string, unknown>;
+
+export function matchesOrderApprovalSnapshot(request: OrderRow, order: OrderRow): boolean {
+  if (!order.submitted_order_digest || request.submitter_id !== order.submitted_by) return false;
+  try {
+    const payload = request.payload ?? (typeof request.payload_json === 'string' ? JSON.parse(request.payload_json) : request.payload_json);
+    return payload !== null && typeof payload === 'object' && !Array.isArray(payload) &&
+      (payload as OrderRow).submitted_order_digest === order.submitted_order_digest;
+  } catch { return false; }
+}
+
+/** A native decision may outlive its suspended flow. This is a read projection,
+ * not a second outcome: only the exact original snapshot makes it actionable. */
+export async function completedOrderApproval(engine: IObjectQLEngine, order: OrderRow, context: ExecutionContext): Promise<'approved' | 'rejected' | 'recalled' | undefined> {
+  if (order.status !== 'pending_approval' || !order.organization_id || context.tenantId !== order.organization_id || !order.submitted_by) return undefined;
+  const rows = await engine.find('sys_approval_request', { where: {
+    object_name: 'forge_sales_order', record_id: order.id, organization_id: order.organization_id,
+    submitter_id: order.submitted_by, status: { $in: ['pending', 'approved', 'rejected', 'recalled'] },
+  }, limit: 2 }, { context });
+  return rows.length === 1 && ['approved', 'rejected', 'recalled'].includes(String(rows[0].status)) && matchesOrderApprovalSnapshot(rows[0], order)
+    ? rows[0].status as 'approved' | 'rejected' | 'recalled' : undefined;
+}
 export const roundedMoney = (value: number): number => Math.round((value + Number.EPSILON) * 10000) / 10000;
 export function moneyValue(value: unknown, label: string): number {
   const number = Number(value);

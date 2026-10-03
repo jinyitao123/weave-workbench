@@ -1,8 +1,16 @@
 import { expect, it, vi } from 'vitest'
 import { EnterpriseService } from '../../electron/main/enterprise'
-import { inboxWorkItems, parseRunLookup } from '../../electron/main/enterprise/work-sources'
+import { inboxWorkItems, parseApprovalWorkPage, parseRunLookup } from '../../electron/main/enterprise/work-sources'
 
 const updatedAt = '2026-10-01T00:00:00Z'
+
+it('accepts only the submitted approval list mode', () => {
+  expect(parseApprovalWorkPage({ version: '1', items: [{ requestId: 'approval-1', mode: 'submitted', title: '订单复核', updatedAt }] }))
+    .toMatchObject({ items: [{ requestId: 'approval-1', mode: 'submitted' }] })
+  expect(() => parseApprovalWorkPage({ version: '1', items: [{ requestId: 'approval-1', mode: 'recall', title: '订单复核', updatedAt }] }))
+    .toThrow('无法识别的审批事项')
+})
+
 function lookup(runId: string) { return { runId, inputRevisionId: `input-${runId}`, workbenchSessionId: `session-${runId}`, status: 'parked', isCurrent: true, businessResult: 'needs_input', actionCounts: { succeeded: 0, failed: 0, unknown: 0 } } }
 function loginFetch(route: (path: string, query: URLSearchParams, init?: RequestInit) => Response | Promise<Response>) {
   return vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
