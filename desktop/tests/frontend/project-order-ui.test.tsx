@@ -163,6 +163,8 @@ beforeEach(() => {
 })
 
 afterEach(async () => {
+  // Resolve React.lazy resources while the root is live, before Vitest closes its worker RPC.
+  await act(async () => { await vi.dynamicImportSettled() })
   await act(async () => root.unmount())
   container.remove()
   Object.defineProperty(window, 'prime', { configurable: true, value: undefined })
