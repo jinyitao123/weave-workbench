@@ -12,6 +12,10 @@ import { SalesContract, SalesContractLine, SalesOrder, SalesOrderLine } from '..
 import { CustomerPrepayment } from '../src/objects/finance.object.ts';
 import { SalesOrderBusinessPlugin } from '../src/plugins/sales-order-business.plugin.ts';
 import { SalesOrderApprovalFlow } from '../src/flows/sales-order-approval.flow.ts';
+import { ApprovalWorkbenchContextPlugin } from '../src/plugins/approval-workbench-context.plugin.ts';
+import { ORDER_APPROVAL_MCP_RECALL_TARGET } from '../src/actions/approval-workbench.action.ts';
+import { businessActionPolicy } from '../src/plugins/business-action-policy.ts';
+import { recalledOrderApproval } from '../src/plugins/sales-order-readiness.ts';
 import { SIGNATURE_TARGET, ORDER_CONDITIONS_TARGET, CONTRACT_ORDER_TARGET, ORDER_SUBMIT_TARGET, CONTRACT_PREPAYMENT_TARGET, PREPAYMENT_CONFIRM_TARGET, ORDER_APPLY_APPROVAL_TARGET } from '../src/plugins/sales-order-domain.ts';
 
 const { SystemFile, installFileReferenceHooks } = await import('../node_modules/.pnpm/@objectstack+service-storage@17.3.0/node_modules/@objectstack/service-storage/dist/index.js');
@@ -32,6 +36,7 @@ test('sales order native actions and approval preserve role, payment and atomic 
     simple('sys_user_position', { user_id: Field.text({}), position: Field.text({}), valid_from: Field.datetime({}), valid_until: Field.datetime({}) }),
     simple('sys_member', { user_id: Field.text({}) }),
     simple('sys_user_permission_set', { user_id: Field.text({}), permission_set_id: Field.text({}) }),
+    simple('sys_position_permission_set', { position_id: Field.text({}), permission_set_id: Field.text({}) }),
     simple('sys_organization', {}), simple('forge_customer', {}), simple('forge_contract_type', {}),
     simple('forge_quotation', { status: Field.text({}), customer_acceptance_evidence_attachment: Field.text({}), accepted_pricing_version: Field.number({}), pricing_version: Field.number({}) }),
     simple('forge_fund_account', { status: Field.text({}), current_balance: Field.number({}), opening_balance: Field.number({}) }),
@@ -46,13 +51,18 @@ test('sales order native actions and approval preserve role, payment and atomic 
   t.after(() => driver.disconnect());
   const files = new Map(), storage = { async download(key) { if (!files.has(key)) throw new Error('file absent'); return files.get(key); } };
   installFileReferenceHooks(engine, () => storage, { warn() {}, error() {}, info() {} });
+  const routes = new Map();
   const base = { name: 'com.objectstack.engine.objectql', version: '1.0.0', type: 'standard', init(ctx) {
     ctx.registerService('objectql', engine); ctx.registerService('data', engine); ctx.registerService('storage', storage); ctx.registerService('manifest', { register() {} });
-    ctx.registerService('http.server', { get() {}, post() {}, put() {}, patch() {}, delete() {} });
+    ctx.registerService('http.server', { get(path, handler) { routes.set(path, handler); }, post() {}, put() {}, patch() {}, delete() {} });
+    ctx.registerService('auth', { api: { async getSession({ headers }) {
+      const actor = headers.get('authorization')?.slice(7);
+      return actor ? { user: { id: actor }, session: { activeOrganizationId: org } } : null;
+    } } });
     ctx.registerService('notification', { async send() {} });
   } };
   const kernel = new LiteKernel({ logger: { level: 'error' } });
-  kernel.use(base).use(new AutomationServicePlugin({ suspendedRunStore: 'memory' })).use(new ApprovalsServicePlugin({ disableAutoHooks: true })).use(new SalesOrderBusinessPlugin()).use(new RecordChangeTriggerPlugin());
+  kernel.use(base).use(new AutomationServicePlugin({ suspendedRunStore: 'memory' })).use(new ApprovalsServicePlugin({ disableAutoHooks: true })).use(new SalesOrderBusinessPlugin()).use(new ApprovalWorkbenchContextPlugin()).use(new RecordChangeTriggerPlugin());
   await kernel.bootstrap(); t.after(() => kernel.shutdown());
   kernel.getService('automation').registerFlow(SalesOrderApprovalFlow.name, SalesOrderApprovalFlow);
   const insert = (object, row) => engine.insert(object, { id: randomUUID(), organization_id: org, ...row }, { context: system });
@@ -161,11 +171,85 @@ test('sales order native actions and approval preserve role, payment and atomic 
   await action(operator,'forge_sales_order',replacement.id,ORDER_SUBMIT_TARGET);
   const recallRequest=await engine.findOne('sys_approval_request',{where:{record_id:replacement.id,organization_id:org}},{context:system});
   assert.ok(recallRequest);
-  await approvals.recall(recallRequest.id,{actorId:operator,reason:'合成原生撤回验证'},{userId:operator,tenantId:org,permissions:[],positions:[]});
+  let recallContext, recallHttpStatus = 200;
+  await routes.get('/api/v1/approvals/requests/:requestId/workbench-context')({
+    params: { requestId: recallRequest.id }, headers: { authorization: `Bearer ${operator}` },
+  }, { header() {}, status(value) { recallHttpStatus = value; return this; }, json(body) { recallContext = body; } });
+  assert.equal(recallHttpStatus, 200);
+  assert.equal(recallContext.viewer, 'original_submitter');
+  const offeredRecall = recallContext.availableActions[0];
+  assert.equal(offeredRecall.execution.actionName, 'order_approval_mcp_recall');
+  assert.deepEqual(businessActionPolicy('forge_sales_order', 'order_approval_mcp_recall'), { effect: 'write', executionMode: 'employee_only' });
+  const recallInput = { ...offeredRecall.execution.params, comment: '合成原生撤回验证' };
+  await assert.rejects(action(reviewer, 'forge_sales_order', replacement.id, ORDER_APPROVAL_MCP_RECALL_TARGET, recallInput), /APPROVAL_ACTION_FORBIDDEN/);
+  await assert.rejects(action(operator, 'forge_sales_order', replacement.id, ORDER_APPROVAL_MCP_RECALL_TARGET, { ...recallInput, itemVersion: 'v1-stale' }), /APPROVAL_ACTION_STALE/);
+  const recallResult = await action(operator, 'forge_sales_order', replacement.id, ORDER_APPROVAL_MCP_RECALL_TARGET, recallInput);
+  assert.equal(recallResult.decision, 'recall');
+  assert.equal(recallResult.status, 'recalled');
+  const recallHistory = await action(operator, 'forge_sales_order', replacement.id, ORDER_APPROVAL_MCP_RECALL_TARGET, recallInput);
+  assert.equal(recallHistory.status, 'history_observed');
+  assert.equal(recallHistory.decision, 'unknown', 'a repeated request observes history without claiming exact receipt replay');
+  const recalls = (await approvals.listActions(recallRequest.id, { userId: operator, tenantId: org, permissions: [], positions: [] })).filter(row => row.action === 'recall');
+  assert.equal(recalls.length, 1);
+  assert.equal(recalls[0].comment, recallInput.comment);
   assert.equal((await read('sys_approval_request',recallRequest.id)).status,'recalled');
   assert.equal((await read('forge_sales_order',replacement.id)).status,'cancelled');
   assert.equal((await read('forge_sales_order',replacement.id)).approval_outcome,'recalled');
   assert.equal((await read('forge_customer_prepayment',secondPrepay.id)).order_id,null);
   await action(operator,'forge_sales_order',replacement.id,ORDER_APPLY_APPROVAL_TARGET);
+
+  async function lostRunOrder(code) {
+    const order = await action(operator, 'forge_sales_contract', rejectedContract, CONTRACT_ORDER_TARGET, { ...orderInput, code: `${code}-${rejectedContract}` });
+    await action(operator, 'forge_sales_order', order.id, ORDER_SUBMIT_TARGET);
+    const request = await engine.findOne('sys_approval_request', { where: { record_id: order.id, organization_id: org } }, { context: system });
+    // Deliberate isolated PG fault: the durable approval survives its lost run.
+    await engine.update('sys_approval_request', { id: request.id, flow_run_id: `lost-${randomUUID()}` }, { context: system });
+    let context;
+    await routes.get('/api/v1/approvals/requests/:requestId/workbench-context')({ params: { requestId: request.id }, headers: { authorization: `Bearer ${operator}` } },
+      { header() {}, status() { return this; }, json(value) { context = value; } });
+    assert.equal(context.viewer, 'original_submitter');
+    return { order, request, params: { ...context.availableActions[0].execution.params, comment: '隔离数据库流程丢失恢复验证' } };
+  }
+  const lost = await lostRunOrder('LOST');
+  const lostResult = await action(operator, 'forge_sales_order', lost.order.id, ORDER_APPROVAL_MCP_RECALL_TARGET, lost.params);
+  assert.equal(lostResult.resumed, false, 'a lost native flow is reported accurately');
+  assert.equal(lostResult.businessStatus, 'cancelled', 'durable recall still reconciles the business result');
+  assert.equal((await read('forge_sales_order', lost.order.id)).approval_outcome, 'recalled');
+  assert.equal((await read('forge_customer_prepayment', secondPrepay.id)).order_id, null);
+
+  const interrupted = await lostRunOrder('INTERRUPTED');
+  // A native request can already be durable before Workbench reconnects.
+  // Lose the run through the real service, then fail its reconciliation.
+  const durableRecall = await approvals.recall(interrupted.request.id, { actorId: operator, comment: interrupted.params.comment },
+    { userId: operator, tenantId: org, permissions: [], positions: [] });
+  assert.equal(durableRecall.request.status, 'recalled');
+  assert.equal(durableRecall.resumed, false);
+  const updateBeforeFault = engine.update;
+  let cleanupFault = true;
+  engine.update = async function(object, data, opts) {
+    if (cleanupFault && object === 'forge_customer_prepayment' && data.order_id === null) {
+      cleanupFault = false; throw new Error('injected recall cleanup failure');
+    }
+    return updateBeforeFault.call(this, object, data, opts);
+  };
+  try {
+    await assert.rejects(action(operator, 'forge_sales_order', interrupted.order.id, ORDER_APPROVAL_MCP_RECALL_TARGET, interrupted.params), /APPROVAL_ACTION_IN_DOUBT/);
+  } finally { engine.update = updateBeforeFault; }
+  assert.equal(cleanupFault, false);
+  assert.equal((await read('sys_approval_request', interrupted.request.id)).status, 'recalled');
+  const hung = await read('forge_sales_order', interrupted.order.id);
+  assert.equal(hung.status, 'pending_approval');
+  assert.equal((await read('forge_customer_prepayment', secondPrepay.id)).order_id, interrupted.order.id, 'failed cleanup is atomic');
+  assert.equal(await recalledOrderApproval(engine, hung, system), true, 'the original employee has a visible native-result recovery');
+  assert.equal(await recalledOrderApproval(engine, { ...hung, submitted_order_digest: 'unrelated-version' }, system), false);
+  assert.equal(await recalledOrderApproval(engine, hung, { ...system, tenantId: randomUUID() }), false);
+  await action(operator, 'forge_sales_order', interrupted.order.id, ORDER_APPLY_APPROVAL_TARGET);
+  const observedAfterRecovery = await action(operator, 'forge_sales_order', interrupted.order.id, ORDER_APPROVAL_MCP_RECALL_TARGET, interrupted.params);
+  assert.equal(observedAfterRecovery.status, 'history_observed');
+  assert.equal((await read('forge_sales_order', interrupted.order.id)).status, 'cancelled');
+  assert.equal((await read('forge_customer_prepayment', secondPrepay.id)).order_id, null);
+  assert.equal(Number((await read('forge_sales_contract', rejectedContract)).ordered_amount), 0);
+  assert.equal(Number((await read('forge_fund_account', account)).current_balance), 12000, 'recalls neither refund nor duplicate funds');
+  assert.equal((await approvals.listActions(interrupted.request.id, { userId: operator, tenantId: org, permissions: [], positions: [] })).filter(row => row.action === 'recall').length, 1);
 
 });

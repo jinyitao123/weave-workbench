@@ -1,4 +1,4 @@
-import { ORDER_APPROVAL_MCP_APPROVE_TARGET, ORDER_APPROVAL_MCP_REJECT_TARGET } from '../actions/approval-workbench.action.js';
+import { ORDER_APPROVAL_MCP_APPROVE_TARGET, ORDER_APPROVAL_MCP_REJECT_TARGET, ORDER_APPROVAL_MCP_RECALL_TARGET } from '../actions/approval-workbench.action.js';
 import type { Plugin, PluginContext } from '@objectstack/core';
 import { makeExecutionContextResolver } from '@objectstack/plugin-hono-server';
 import { isFileIdToken } from '@objectstack/spec/data';
@@ -12,6 +12,7 @@ import {
 } from '../actions/approval-workbench.action.js';
 import { CONTRACT_OBJECT, resolveRetainedContractMaterial } from './contract-material-holder.js';
 import { approvalPayloadVersion } from './contract-revision-material.js';
+import { applySalesOrderApproval } from './sales-order-domain.js';
 
 const ROUTE = '/api/v1/approvals/requests/:requestId/workbench-context';
 const ORIGINAL_ROUTE = '/api/v1/approvals/requests/:requestId/workbench-context/files/:fileId/original';
@@ -74,7 +75,7 @@ interface OriginalFileReference {
 }
 
 const EMPLOYEE_APPROVAL_OBJECTS = new Set([CONTRACT_OBJECT, 'forge_sales_order']);
-type ApprovalMcpDecision = 'approve' | 'revise' | 'reject';
+type ApprovalMcpDecision = 'approve' | 'revise' | 'reject' | 'recall';
 type ApprovalMcpParams = Record<string, unknown> & {
   approvalRequestId?: unknown;
   itemVersion?: unknown;
@@ -625,25 +626,48 @@ async function executeNativeApprovalAction(
       (request.organization_id && request.organization_id !== context.tenantId)) {
       throw new ApprovalActionFailure(404, 'APPROVAL_ACTION_BINDING_MISMATCH', 'The approval action is not bound to this contract record.');
     }
+    const recallingOwnOrder = request.object_name === 'forge_sales_order' &&
+      request.submitter_id === actorId && request.viewer?.is_submitter === true;
+    if (decision === 'recall' && (!recallingOwnOrder || !context.tenantId || !request.organization_id || request.organization_id !== context.tenantId)) {
+      throw new ApprovalActionFailure(403, 'APPROVAL_ACTION_FORBIDDEN', '只有订单审批的本人发起人可以撤回。');
+    }
     const actions = await approvals.listActions(request.id, context);
     const sourceMaterialVersion = await approvalPayloadVersion(request.payload);
     if (sourceMaterialVersion !== suppliedMaterialVersion) {
       throw new ApprovalActionFailure(409, 'APPROVAL_ACTION_STALE', 'The approval materials changed after this action was offered.');
     }
     const observed = observedNativeAction(request, actions, actorId, decision, comment, suppliedItemVersion, suppliedMaterialVersion);
-    if (observed) return observed;
-    if (request.status !== 'pending' || request.viewer?.can_act !== true) {
+    if (observed) {
+      if (decision === 'recall' && request.status === 'recalled') {
+        // The native action may have committed before its business cleanup or
+        // reply failed. Reconcile the durable result, never recall a second time.
+        try { await applySalesOrderApproval(engine, recordId, context.tenantId!); }
+        catch { throw new ApprovalActionFailure(503, 'APPROVAL_ACTION_IN_DOUBT', '审批已撤回，订单取消结果待核对，请从订单事项继续核对原结果。'); }
+      }
+      return observed;
+    }
+    if (request.status !== 'pending' || (decision !== 'recall' && request.viewer?.can_act !== true)) {
       throw new ApprovalActionFailure(409, 'APPROVAL_ACTION_FORBIDDEN', 'This employee can no longer act on the current approval request.');
     }
     const currentItemVersion = await approvalItemVersion(request, actions);
     if (currentItemVersion !== suppliedItemVersion) {
       throw new ApprovalActionFailure(409, 'APPROVAL_ACTION_STALE', 'The approval item changed after this action was offered.');
     }
-    if (actions.some((action) => action.actor_id === actorId && ['approve', 'revise', 'reject'].includes(action.action))) {
+    if (actions.some((action) => action.actor_id === actorId && ['approve', 'revise', 'reject', 'recall'].includes(action.action))) {
       throw new ApprovalActionFailure(409, 'APPROVAL_ACTION_CONFLICT', 'This employee has already recorded an approval decision for this request.');
     }
     try {
       if (request.object_name === 'forge_sales_order' && decision === 'revise' || request.object_name === CONTRACT_OBJECT && decision === 'reject') throw new ApprovalActionFailure(400, 'APPROVAL_ACTION_INVALID', '当前流程不支持该办理动作');
+      if (decision === 'recall') {
+        const result = await approvals.recall(requestId, { actorId, comment }, context);
+        await applySalesOrderApproval(engine, recordId, context.tenantId!);
+        return {
+          decision: 'recall', status: result.request.status, requestId, recordId,
+          itemVersion: suppliedItemVersion, sourceMaterialVersion,
+          resumed: result.resumed === true, autoRejected: false, alreadyApplied: false,
+          businessStatus: 'cancelled',
+        };
+      }
       if (decision === 'approve' || decision === 'reject') {
         const result = await approvals.decide(requestId, { actorId, decision, comment }, context);
         return {
@@ -694,8 +718,7 @@ function currentApprovalActions(
   itemVersion: string,
   sourceMaterialVersion: string,
 ): JsonRecord[] {
-  if (!EMPLOYEE_APPROVAL_OBJECTS.has(request.object_name) || viewer !== 'current_approver' ||
-    request.status !== 'pending' || request.viewer?.can_act !== true || !request.record_id) return [];
+  if (!EMPLOYEE_APPROVAL_OBJECTS.has(request.object_name) || request.status !== 'pending' || !request.record_id) return [];
   const execution = (actionName: string) => ({
     tool: 'run_action',
     actionName,
@@ -704,6 +727,16 @@ function currentApprovalActions(
     params: { approvalRequestId: request.id, itemVersion, sourceMaterialVersion },
   });
   const inputs = [{ name: 'comment', type: 'string', label: '办理意见', required: true }];
+  if (viewer === 'original_submitter') {
+    if (request.object_name !== 'forge_sales_order' || request.viewer?.is_submitter !== true) return [];
+    return [{
+      semantic: 'recall', label: '撤回订单审批',
+      description: '撤回本人发起的待审批订单，取消订单并释放预收绑定，保留审批记录与财务台账。',
+      execution: execution('order_approval_mcp_recall'),
+      inputs: [{ name: 'comment', type: 'string', label: '撤回原因', required: true }],
+    }];
+  }
+  if (request.viewer?.can_act !== true) return [];
   return [
     {
       semantic: 'approve',
@@ -735,7 +768,10 @@ async function authorizedApprovalRequest(
   if (!request) throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
   if (request.id !== requestId) throw new ContextFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
   let viewer: 'current_approver' | 'original_submitter';
-  if (request.status === 'pending' && request.viewer?.can_act === true) {
+  if (request.status === 'pending' && request.object_name === 'forge_sales_order' &&
+    request.viewer?.is_submitter === true && request.submitter_id === executionContext.userId) {
+    viewer = 'original_submitter';
+  } else if (request.status === 'pending' && request.viewer?.can_act === true) {
     viewer = 'current_approver';
   } else if (request.status === 'returned' && request.viewer?.is_submitter === true) {
     viewer = 'original_submitter';
@@ -849,6 +885,8 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
           (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'approve'), 'forge.approval-workbench');
         actionEngine.registerAction('forge_sales_order', ORDER_APPROVAL_MCP_REJECT_TARGET,
           (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'reject'), 'forge.approval-workbench');
+        actionEngine.registerAction('forge_sales_order', ORDER_APPROVAL_MCP_RECALL_TARGET,
+          (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'recall'), 'forge.approval-workbench');
         actionEngine.registerAction(CONTRACT_OBJECT, CONTRACT_APPROVAL_MCP_APPROVE_TARGET,
           (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'approve'),
           'forge.approval-workbench');

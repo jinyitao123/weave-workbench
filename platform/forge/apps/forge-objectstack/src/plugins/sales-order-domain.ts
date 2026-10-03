@@ -3,7 +3,7 @@ import type { ActionHandlerContext } from '@objectstack/spec/ui';
 import type { ExecutionContext } from '@objectstack/spec/kernel';
 import { businessContext, businessDriver, lockBusinessRow } from './business-transaction.js';
 import { requireUniquePositionUser, effectivePositionUsers } from './business-position-resolution.js';
-import { assertContractOrderReady, calendarDate, moneyValue, requiredPrepayment, roundedMoney, salesOrderDigest, type OrderRow } from './sales-order-readiness.js';
+import { assertContractOrderReady, calendarDate, moneyValue, requiredPrepayment, roundedMoney, salesOrderDigest, matchesOrderApprovalSnapshot, type OrderRow } from './sales-order-readiness.js';
 import { digest, nonempty, TaskConnectionFailure } from './native-task-auth.js';
 
 type Handler = ActionHandlerContext<Record<string, unknown>> & { recordLoadDenied?: boolean };
@@ -280,12 +280,19 @@ export async function applySalesOrderApproval(engine: IObjectQLEngine, recordId:
     await lockBusinessRow(engine, 'forge_sales_order', recordId, organizationId, transaction);
     const order = await get(engine, 'forge_sales_order', recordId, organizationId, transaction);
     if (order.status === 'active' && order.approval_outcome === 'approved' || order.status === 'cancelled' && ['rejected', 'recalled'].includes(String(order.approval_outcome))) return;
-    if (order.status !== 'pending_approval' || !['approved', 'rejected'].includes(String(order.approval_outcome))) throw new Error('订单没有可应用的原生审批结论');
+    if (order.status !== 'pending_approval' || !['pending', 'approved', 'rejected', 'recalled'].includes(String(order.approval_outcome))) throw new Error('订单没有可应用的原生审批结论');
     const requests = await engine.find('sys_approval_request', { where: { object_name: 'forge_sales_order', record_id: recordId, organization_id: organizationId }, limit: 101 }, { context: transaction });
     if (requests.length > 100) throw new Error('原生审批记录不可完整核对');
-    const request = requests.find(r => (r.status === order.approval_outcome || order.approval_outcome === 'rejected' && r.status === 'recalled') && r.submitter_id === order.submitted_by);
-    if (!request) throw new Error('订单原生审批结论尚不可核验');
-    if (order.approval_outcome === 'rejected') {
+    // Recall is durable even when the suspended run was lost. Recover from
+    // that exact native snapshot, without replaying the native decision or
+    // relying on the flow's mirrored outcome having been written.
+    const matching = requests.filter(r => (
+      r.status === order.approval_outcome || order.approval_outcome === 'rejected' && r.status === 'recalled' ||
+      order.approval_outcome === 'pending' && r.status === 'recalled'
+    ) && matchesOrderApprovalSnapshot(r, order));
+    if (matching.length !== 1) throw new Error('订单原生审批结论尚不可唯一核验');
+    const request = matching[0];
+    if (['rejected', 'recalled'].includes(String(request.status))) {
       const prepayments = await engine.find('forge_customer_prepayment', { where: { order_id: recordId, organization_id: organizationId }, limit: 1001 }, { context: transaction });
       if (prepayments.length > 1000) throw new Error('订单预收款关联不可完整核对');
       for (const row of prepayments) {
