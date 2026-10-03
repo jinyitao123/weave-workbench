@@ -96,11 +96,12 @@ export async function registerContractSignature(engine: IObjectQLEngine, storage
 export async function createSalesOrder(engine: IObjectQLEngine, ctx: Handler) {
   const who = caller(ctx), code = text(ctx.params.code, '订单编号', 100), name = text(ctx.params.name, '订单名称', 255);
   const planned = calendarDate(ctx.params.planned_delivery_on, '计划交货日期'), term = text(ctx.params.payment_term, '付款条件', 255);
-  const method = text(ctx.params.payment_method, '付款方式', 80), address = String(ctx.params.delivery_address ?? '');
+  const method = text(ctx.params.payment_method, '付款方式', 80);
   businessDriver(engine, ['forge_sales_contract', 'forge_sales_order', 'forge_sales_order_line', 'forge_customer_prepayment']);
   return engine.transaction(async transaction => {
     await lockBusinessRow(engine, 'forge_sales_contract', who.recordId, who.organizationId, transaction);
     const contract = await get(engine, 'forge_sales_contract', who.recordId, who.organizationId, transaction);
+    const address = String(ctx.params.delivery_address ?? contract.delivery_address ?? '');
     await requirePosition(engine, who.organizationId, 'sales_order_operator', who.actorId, transaction);
     const prior = await engine.findOne('forge_sales_order', { where: { code, organization_id: who.organizationId } }, { context: transaction });
     if (prior) {
