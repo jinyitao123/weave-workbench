@@ -243,17 +243,23 @@ export function parseCurrentItemActionReceipt(value: unknown, action: Enterprise
   const requestId = text(result?.requestId, 128), recordId = text(result?.recordId, 128)
   const nativeItemVersion = text(result?.itemVersion, 128), sourceMaterialVersion = text(result?.sourceMaterialVersion, 64)
   const isRecall = action.semantic === 'recall'
+  const isSalesOrder = action.execution.objectName === 'forge_sales_order'
   if (!result || !decision || decision !== 'approve' && decision !== 'revise' && decision !== 'reject' && decision !== 'recall'
     || status === 'history_observed' || !status || requestId !== action.execution.params.approvalRequestId
     || recordId !== action.execution.recordId || nativeItemVersion !== action.execution.params.itemVersion
     || sourceMaterialVersion !== action.execution.params.sourceMaterialVersion
+    || isSalesOrder && !businessStatus
+    || isSalesOrder && action.semantic === 'approve' && decision !== 'approve'
+    || isSalesOrder && action.semantic === 'reject' && decision !== 'reject'
+    || isSalesOrder && decision === 'approve' && (status !== 'approved' || businessStatus !== 'active')
+    || isSalesOrder && decision === 'reject' && (status !== 'rejected' || businessStatus !== 'cancelled')
     || isRecall && (decision !== 'recall' || status !== 'recalled' || businessStatus !== 'cancelled' || action.execution.actionName !== 'order_approval_mcp_recall' || action.execution.objectName !== 'forge_sales_order')
     || !isRecall && decision === 'recall'
     || typeof result.resumed !== 'boolean' || typeof result.autoRejected !== 'boolean' || typeof result.alreadyApplied !== 'boolean') {
     return undefined
   }
   return {
-    decision, status, ...(isRecall ? { businessStatus } : {}), requestId, recordId, itemVersion: nativeItemVersion!, sourceMaterialVersion,
+    decision, status, ...(isSalesOrder ? { businessStatus } : {}), requestId, recordId, itemVersion: nativeItemVersion!, sourceMaterialVersion,
     resumed: result.resumed, autoRejected: result.autoRejected, alreadyApplied: result.alreadyApplied,
   }
 }

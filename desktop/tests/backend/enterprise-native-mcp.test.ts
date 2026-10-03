@@ -36,6 +36,31 @@ const selectedNativeAction = {
   inputs: [{ name: 'comment', type: 'string', label: '办理意见', required: true }],
 } satisfies EnterpriseApprovalAction
 
+type SalesOrderDecision = 'approve' | 'reject'
+
+function salesOrderApprovalAction(semantic: SalesOrderDecision): EnterpriseApprovalAction {
+  return {
+    ...selectedNativeAction,
+    semantic,
+    execution: {
+      ...selectedNativeAction.execution,
+      actionName: semantic === 'approve' ? 'order_approval_mcp_approve' : 'order_approval_mcp_reject',
+      objectName: 'forge_sales_order', recordId: 'order-1',
+      params: { approvalRequestId: 'approval-order-1', itemVersion: 'order-item-1', sourceMaterialVersion: 'b'.repeat(64) },
+    },
+  }
+}
+
+function salesOrderApprovalReceipt(semantic: SalesOrderDecision): Record<string, unknown> {
+  return {
+    decision: semantic,
+    status: semantic === 'approve' ? 'approved' : 'rejected',
+    businessStatus: semantic === 'approve' ? 'active' : 'cancelled',
+    requestId: 'approval-order-1', recordId: 'order-1', itemVersion: 'order-item-1', sourceMaterialVersion: 'b'.repeat(64),
+    resumed: false, autoRejected: false, alreadyApplied: false,
+  }
+}
+
 async function nativeActionFixture(mcpResponse: Response | Error) {
   const calls: string[] = []
   const fetch = vi.fn(async (input: URL | RequestInfo) => {
@@ -177,6 +202,51 @@ describe('Forge native MCP action receipt envelope', () => {
     expect(parseCurrentItemActionReceipt({ ...nativeActionReceipt, itemVersion: 'item-round-2' }, selectedNativeAction)).toBeUndefined()
     expect(parseCurrentItemActionReceipt({ ...nativeActionReceipt, sourceMaterialVersion: 'b'.repeat(64) }, selectedNativeAction)).toBeUndefined()
     expect(f.calls.filter((path) => path === '/api/v1/mcp')).toHaveLength(1)
+  })
+
+  it.each(['approve', 'reject'] as const)('requires the native terminal status and business status for sales-order %s', (semantic) => {
+    const action = salesOrderApprovalAction(semantic)
+    const receipt = salesOrderApprovalReceipt(semantic)
+    const parsed = parseCurrentItemActionReceipt(receipt, action)
+
+    expect(parsed).toEqual(receipt)
+    expect(parsed?.resumed).toBe(false)
+  })
+
+  it.each([
+    ['approval without businessStatus', 'approve', { businessStatus: undefined, resumed: true }],
+    ['approval with a nonterminal businessStatus', 'approve', { businessStatus: 'cancelled' }],
+    ['approval with a nonterminal native status', 'approve', { status: 'pending', resumed: true }],
+    ['approval with a reject decision', 'approve', { decision: 'reject', status: 'rejected', businessStatus: 'cancelled' }],
+    ['rejection without businessStatus', 'reject', { businessStatus: undefined, resumed: true }],
+    ['rejection with a nonterminal businessStatus', 'reject', { businessStatus: 'active' }],
+    ['rejection with a nonterminal native status', 'reject', { status: 'pending' }],
+    ['rejection with an approve decision', 'reject', { decision: 'approve', status: 'approved', businessStatus: 'active' }],
+  ] as const)('does not accept a sales-order receipt with %s', (_case, semantic, changes) => {
+    expect(parseCurrentItemActionReceipt(
+      { ...salesOrderApprovalReceipt(semantic), ...changes }, salesOrderApprovalAction(semantic),
+    )).toBeUndefined()
+  })
+
+  it('requires sales-order decision states even when the selected directory action has no semantic label', () => {
+    const action = { ...salesOrderApprovalAction('approve'), semantic: undefined }
+    expect(parseCurrentItemActionReceipt(
+      { ...salesOrderApprovalReceipt('approve'), status: 'pending' }, action,
+    )).toBeUndefined()
+  })
+
+  it.each(['requestId', 'recordId', 'itemVersion', 'sourceMaterialVersion'] as const)(
+    'keeps sales-order approval receipts bound to the selected %s', (field) => {
+      const receipt = salesOrderApprovalReceipt('approve')
+      receipt[field] = 'another-version'
+      expect(parseCurrentItemActionReceipt(receipt, salesOrderApprovalAction('approve'))).toBeUndefined()
+    },
+  )
+
+  it('preserves the existing sales-contract receipt shape without businessStatus', () => {
+    const receipt = parseCurrentItemActionReceipt({ ...nativeActionReceipt, businessStatus: 'active' }, selectedNativeAction)
+    expect(receipt).toEqual(nativeActionReceipt)
+    expect(receipt).not.toHaveProperty('businessStatus')
   })
 
   it('accepts only a recalled receipt bound to the curated order-recall action', () => {
