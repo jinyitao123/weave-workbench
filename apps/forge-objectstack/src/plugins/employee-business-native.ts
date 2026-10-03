@@ -4,7 +4,7 @@ import type { ExecutionContext } from '@objectstack/spec/kernel';
 import type { IObjectQLEngine } from '@objectstack/spec/contracts';
 import { businessActionPolicy } from './business-action-policy.js';
 import { canonicalJSON, digest, TaskConnectionFailure } from './native-task-auth.js';
-import { recalledOrderApproval } from './sales-order-readiness.js';
+import { completedOrderApproval } from './sales-order-readiness.js';
 import { businessContext } from './business-transaction.js';
 
 export type BusinessRow = Record<string, unknown>;
@@ -112,10 +112,10 @@ export class EmployeeNativeActions {
 
   async employeeActions(objectName: string, record?: BusinessRow): Promise<EmployeeAction[]> {
     let relevantRecord = record;
-    if (objectName === 'forge_sales_order' && record?.status === 'pending_approval' && record.responsible_id === this.actor.userId &&
-      !['approved', 'rejected'].includes(String(record.approval_outcome)) && this.actor.tenantId &&
-      await recalledOrderApproval(this.context.getService<IObjectQLEngine>('objectql'), record, businessContext(this.actor.userId!, this.actor.tenantId))) {
-      relevantRecord = { ...record, approval_outcome: 'recalled' };
+    if (objectName === 'forge_sales_order' && record?.status === 'pending_approval' && record.responsible_id === this.actor.userId && this.actor.tenantId) {
+      const outcome = await completedOrderApproval(this.context.getService<IObjectQLEngine>('objectql'), record, businessContext(this.actor.userId!, this.actor.tenantId));
+      // A mirrored field alone is not authority for offering recovery.
+      relevantRecord = { ...record, approval_outcome: outcome ?? 'pending' };
     }
     const native = (await this.bridge.listActions()).filter(a => a.objectName === objectName
       && businessActionPolicy(objectName, String(a.name)).executionMode === 'employee_only'
