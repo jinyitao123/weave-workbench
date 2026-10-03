@@ -406,12 +406,13 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
 
   constructor(private readonly options: AgentEnterpriseBridgeOptions) { super(); this.store = new HandoffStore(options.storage) }
   private employeeBusinessActions(): Promise<EmployeeBusinessActions> {
-    return this.employeeBusiness ??= import('./employee-business-actions').then(({ EmployeeBusinessActions }) => new EmployeeBusinessActions({
+    this.employeeBusiness ??= import('./employee-business-actions').then(({ EmployeeBusinessActions }) => new EmployeeBusinessActions({
       getEmployeeBusinessContext: (selection) => { if (!this.options.service.getEmployeeBusinessContext) throw new Error('本人业务动作暂不可用'); return this.options.service.getEmployeeBusinessContext(selection) },
       executeEmployeeBusinessAction: (request) => { if (!this.options.service.executeEmployeeBusinessAction) throw new Error('本人业务动作暂不可用'); return this.options.service.executeEmployeeBusinessAction(request) },
       getEmployeeBusinessOperation: (key) => { if (!this.options.service.getEmployeeBusinessOperation) throw new Error('本人业务回执暂不可用'); return this.options.service.getEmployeeBusinessOperation(key) },
       stageWorkMaterials: (materials, assertCurrent) => this.options.service.stageWorkMaterials(materials, assertCurrent),
     }, this.store))
+    return this.employeeBusiness
   }
   protected environmentEntries(url: string, token: string): NodeJS.ProcessEnv {
     return { GOOEYPI_ENTERPRISE_URL: url, GOOEYPI_ENTERPRISE_TOKEN: token, GOOEYPI_ENTERPRISE_EXTENSION_PATH: this.options.extensionPath }
