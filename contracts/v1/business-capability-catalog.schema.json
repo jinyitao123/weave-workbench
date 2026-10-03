@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://workbench.inocube.local/contracts/v1/business-capability-catalog.schema.json",
-  "title": "Developer Business Capability Catalog",
-  "description": "Developer-visible business capabilities projected from an authenticated Forge environment. Forge action identity and input constraints may be frozen for isolated trials; MCP server names, generic tool names and credentials are excluded.",
+  "title": "Forge Business Capability Catalog",
+  "description": "Read-only GET /api/v1/workbench/business-actions/catalog response for authenticated employees and authorized team developers. Forge projects effect and executionMode from one server-owned policy. Visibility grants metadata access only, not record access, execution permission or task delegation. MCP server names, generic tool names and credentials are excluded.",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "provider", "capabilities", "refreshedAt"],
@@ -29,6 +29,11 @@
           "name": { "type": "string", "minLength": 1, "maxLength": 80 },
           "description": { "type": "string", "minLength": 1, "maxLength": 240 },
           "effect": { "enum": ["read", "write"] },
+          "executionMode": {
+            "enum": ["employee_only", "team_delegable"],
+            "default": "team_delegable",
+            "description": "Caller eligibility, independent of effect. An omitted legacy value means team_delegable; employee_only capabilities cannot be assigned to teams or included in task delegations. Forge enforces its current server-owned policy at issuance, discovery and execution."
+          },
           "resourceType": { "type": "string", "minLength": 1, "maxLength": 128 },
           "requiresEmployeeIntent": { "type": "boolean", "default": false },
           "status": { "enum": ["available", "unavailable"] },

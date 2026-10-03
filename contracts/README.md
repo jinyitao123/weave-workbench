@@ -14,7 +14,8 @@
 | `task-delegation-request` | Host 向 Forge 申请任务委托的请求与回执 | Forge、Weave、桌面已在各自分支实现，未合入未部署 |
 | `work-request` | 桌面递交的目标、材料、范围和期望交付，含 `identity` 定义 | 已实现（映射到 Weave 固定输入登记与派发） |
 | `agent-team-handoff` | Host 保存在本地私有目录的固定交接包 | 已实现 |
-| `business-capability-catalog` | 开发中心可分配给成员的 Forge 业务能力及参数说明 | 已实现 |
+| `business-capability-catalog` | Forge 只读动作目录，统一副作用与个人／团队执行范围；Host 和开发中心复用 | 已有目录；新增 `business-actions/catalog` 连接及策略字段为待评审草稿 |
+| [员工本人业务动作](v1/README.md#员工本人业务动作)、[employee-business-action](v1/employee-business-action.schema.json) | 当前员工受控上下文、一次原生动作及本人幂等回执；目录区分 `employee_only` 与 `team_delegable` | 待评审草稿；本轮尚未确认实现、部署或验收 |
 | `business-action` | Weave 调用 Forge 业务动作的输入与权限上下文 | 草稿：未采用，实际走 Forge 原生 MCP `run_action` |
 | `delivery-receipt` | 业务结果、证据、用量和独立核验结果 | 草稿：未采用 |
 | `task-notification` | 员工工作事项的桌面展示投影 | 草稿：由“员工工作投影”取代方向，待收敛 |
@@ -24,6 +25,7 @@
 | `owned-original-material` | PDF/DOCX 原件元数据引用 | 已实现 |
 | `approval-context` | 按当前身份读取单个原生审批的受限快照与材料 | 已实现 |
 | `approval-work-list` | 本人可办理与被退回审批的只读分页投影 | Forge 分支与桌面已实现，未合入未部署 |
+| [本人非审批业务事项](v1/README.md#本人非审批业务事项)、[business-work-list](v1/business-work-list.schema.json) | 由现有业务状态与有效任职派生的本人事项；无独立任务状态 | 待评审草稿；未作为已部署或业务验收证据 |
 | `approval-revision` | 退回事项的新材料递交与回执核对 | 已实现；R2 递交未在桌面验收 |
 | `team-run-event` | Weave 运行事件进入 Forge 原生收件箱 | 待修订（决策 002）：内容摘要冲突、接收人校验、`human_review` 接收与来源投影Forge、Weave、桌面已在各自分支实现，未合入未部署 |
 | `team-run-result` | 团队检查结果的可选结构 | 已实现 |

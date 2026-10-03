@@ -162,7 +162,7 @@ export function applyTeamDevelopmentOperations(base: TeamDefinition, raw: unknow
         const target = member(operation.member)
         const id = string(operation.capability, '业务动作', 256)
         const capability = catalog.capabilities.find((item) => item.id === id)
-        if (capability?.status !== 'available') throw new Error('业务动作不在当前可绑定目录中')
+        if (capability?.status !== 'available' || capability.executionMode === 'employee_only') throw new Error('业务动作不在当前可绑定目录中')
         if (typeof operation.selected !== 'boolean') throw new Error('业务动作须明确选择添加或移除')
         if (Object.hasOwn(operation, 'fileSource')) throw new Error('旧版文件来源提案不可用，请按原生参数类型重新配置')
         const parameterSources = operation.selected ? capabilityParameterSources(capability, operation.parameterSources) : []

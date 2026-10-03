@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/business-work-list.schema.json",
+  "title": "Current Employee Non-Approval Business Work",
+  "description": "Read-only GET /api/v1/workbench/business-work response. Items are computed from existing authoritative business records and valid native employee assignments, never stored as a parallel task lifecycle. An item is neither a write authorization nor a substitute for native record access.",
+  "type": "object", "additionalProperties": false,
+  "required": ["version", "items", "readStatus", "observedAt"],
+  "properties": {
+    "version": { "const": "1" },
+    "items": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/item" } },
+    "readStatus": { "enum": ["complete", "partial"] },
+    "observedAt": { "type": "string", "format": "date-time" },
+    "nextCursor": { "type": "string", "minLength": 1, "maxLength": 8192, "description": "Opaque ObjectStack-native JWT-signed pagination cursor, valid for 15 minutes and bound to the current employee, organization, source and original record position. Not a task state or write authorization." },
+    "sourceErrors": {
+      "type": "array", "minItems": 1, "maxItems": 6,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["kind", "code"],
+        "properties": {
+          "kind": { "$ref": "#/$defs/kind" },
+          "code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,95}$" }
+        }
+      }
+    }
+  },
+  "allOf": [
+    { "if": { "properties": { "readStatus": { "const": "partial" } } }, "then": { "required": ["sourceErrors"] } },
+    { "if": { "properties": { "readStatus": { "const": "complete" } } }, "then": { "not": { "required": ["sourceErrors"] } } }
+  ],
+  "$defs": {
+    "kind": { "enum": ["contract_signature", "contract_order_conditions", "contract_prepayment", "prepayment_confirmation", "sales_order_creation", "sales_order_submission"] },
+    "query": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "cursor": { "type": "string", "minLength": 1, "maxLength": 8192, "description": "Return the issued cursor unchanged; cross-identity reuse and expired or invalid signatures are rejected." },
+        "limit": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 }
+      }
+    },
+    "item": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workKey", "kind", "title", "record", "recordVersion", "updatedAt", "assignment"],
+      "properties": {
+        "workKey": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "Stable digest of organization, source object, record and business step for UI deduplication; not a stored task ID or authority. Record changes are represented by recordVersion." },
+        "kind": { "$ref": "#/$defs/kind" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "record": {
+          "type": "object", "additionalProperties": false,
+          "required": ["objectName", "recordId", "label"],
+          "properties": {
+            "objectName": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,127}$" },
+            "recordId": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "label": { "type": "string", "minLength": 1, "maxLength": 300 }
+          }
+        },
+        "recordVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "assignment": { "enum": ["assigned", "needs_assignment"] },
+        "assignmentReason": { "enum": ["no_eligible_employee", "multiple_eligible_employees"] }
+      },
+      "allOf": [
+        { "if": { "properties": { "assignment": { "const": "needs_assignment" } } }, "then": { "required": ["assignmentReason"] } },
+        { "if": { "properties": { "assignment": { "const": "assigned" } } }, "then": { "not": { "required": ["assignmentReason"] } } }
+      ]
+    }
+  }
+}

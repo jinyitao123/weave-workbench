@@ -201,11 +201,11 @@ export default function App() {
       if (isCurrent()) { setWorkError(errorMessage(error)); reportError(error) }
     }).finally(() => { if (isCurrent()) { workOverviewRequestRef.current = null; setWorkLoading(false) } })
   }, [enterpriseBridge, reportError])
-  const completeEnterpriseTask = useCallback(async (task: EnterpriseHumanTask, decision: 'approved' | 'rejected', comment: string) => {
+  const completeEnterpriseTask = useCallback(async (task: EnterpriseHumanTask, decision: string, comment: string, actionVersion?: string) => {
     if (!enterpriseBridge) return
     const sessionRevision = enterpriseSessionRevisionRef.current
     setWorkLoading(true); setWorkError('')
-    try { await enterpriseBridge.completeHumanTask(task, { decision, comment }); if (enterpriseSessionRevisionRef.current === sessionRevision) setTimeout(refreshWorkOverview, 700) }
+    try { await enterpriseBridge.completeHumanTask(task, task.source === 'forge' ? { actionRef: decision, actionVersion, comment } : { decision, comment }); if (enterpriseSessionRevisionRef.current === sessionRevision) setTimeout(refreshWorkOverview, 700) }
     catch (error) { if (enterpriseSessionRevisionRef.current === sessionRevision) { setWorkError(errorMessage(error)); reportError(error) }; throw error }
     finally { if (enterpriseSessionRevisionRef.current === sessionRevision) setWorkLoading(false) }
   }, [enterpriseBridge, refreshWorkOverview, reportError])
@@ -567,6 +567,15 @@ export default function App() {
   })
   const assistEnterpriseTaskInPi = useCallback(async (task: EnterpriseHumanTask) => {
     await openApprovalReviewInPi(task, { enterprise: enterpriseBridge, newSession, workspace, setToast })
+  }, [enterpriseBridge, newSession, setToast, workspace])
+  const openEmployeeBusiness = useCallback(async (record: import('@/types/employee-business').EmployeeBusinessRecord) => {
+    if (!enterpriseBridge) throw new Error('本人业务事项暂不可用')
+    const binding = await enterpriseBridge.pinEmployeeBusinessContext(record)
+    if (!newSession(undefined, { preserveComposerDraft: true })) throw new Error('无法创建独立会话，请保留当前草稿后重试')
+    const opened = workspace.workspaceRef.current
+    if (!opened.project || opened.session || opened.sessionFile) throw new Error('未能切换到新的业务会话，请重新打开')
+    workspace.queuePrompt(binding.prompt, 'queue', undefined, undefined, undefined, binding.handle)
+    setToast('已打开本人业务事项，可与 Pi 核对。')
   }, [enterpriseBridge, newSession, setToast, workspace])
   const continueEnterpriseWork = useCallback(async (item: EnterpriseWorkItem, context?: EnterpriseApprovalContextView) => {
     let returnedApprovalContextHandle: string | undefined
@@ -1010,7 +1019,7 @@ export default function App() {
   }, [refreshWorkOverview])
 
   const page = view === 'projects' ? <ProjectsPage projects={projects} sortMode={settingsState.settings.projectSortMode} onAdd={() => void addProject()} onOpen={selectProject} onRemove={(project) => void removeProject(project)} onTogglePin={(project) => void togglePinProject(project)} />
-    : view === 'activity' && enterpriseBridge ? <EnterpriseWorkPage overview={workOverview} loading={workLoading} error={workError} onRefresh={refreshWorkOverview} onComplete={completeEnterpriseTask} onInspect={inspectEnterpriseTask} onAssist={assistEnterpriseTaskInPi} onContinue={continueEnterpriseWork} onCancel={async (run) => { await cancelEnterpriseWorkById(run.id) }} />
+    : view === 'activity' && enterpriseBridge ? <EnterpriseWorkPage overview={workOverview} loading={workLoading} error={workError} onRefresh={refreshWorkOverview} onComplete={completeEnterpriseTask} onInspect={inspectEnterpriseTask} onAssist={assistEnterpriseTaskInPi} onContinue={continueEnterpriseWork} onOpenBusiness={openEmployeeBusiness} onCancel={async (run) => { await cancelEnterpriseWorkById(run.id) }} />
     : view === 'activity' ? <ActivityPage sessions={sessions} projects={projects} clearedActivity={clearedActivity} onOpen={selectSession} onClear={clearActivity} />
     : view === 'scheduled' ? <ScheduledPage harness={activeHarness} schedules={schedules} nativeHeartbeats={activeHarness === 'prime' ? heartbeats : []} projects={projects} sessions={sessions} models={provider.catalog?.models ?? EMPTY_MODELS} lastSelectedModel={provider.model} error={scheduleError} initialProjectId={activeProject?.id} initialSessionId={activeSession?.id} selectedScheduleId={scheduleFocusId} onCreate={createSchedule} onUpdate={updateSchedule} onPause={(id: string) => mutateSchedule(() => bridge!.schedules.pause(id))} onResume={(id: string) => mutateSchedule(() => bridge!.schedules.resume(id))} onDelete={(id: string) => mutateSchedule(() => bridge!.schedules.delete(id))} onRunNow={(id: string) => mutateSchedule(() => bridge!.schedules.runNow(id))} onPreview={async (timing: ScheduleTiming) => bridge ? bridge.schedules.preview(timing, 3) : { timing, occurrences: [] }} onOpenSession={openScheduledSession} onManageHeartbeat={manageHeartbeat} />
     : view === 'plugins' ? <PluginsPage harness={activeHarness} skills={pluginSkills.skills} warnings={pluginSkills.warnings} loading={pluginSkills.loading} activeProjectPath={activeProject?.primaryFolder} askUserEnabled={settingsState.settings.askUserEnabled} onSetAskUserEnabled={(enabled) => settingsState.updateSettings({ askUserEnabled: enabled })} browserEnabled={settingsState.settings.browserEnabled} onSetBrowserEnabled={(enabled) => settingsState.updateSettings({ browserEnabled: enabled })} computerUseEnabled={settingsState.settings.computerUseEnabled} onSetComputerUseEnabled={(enabled) => settingsState.updateSettings({ computerUseEnabled: enabled })} onOpenExternal={openExternal} onRefresh={pluginSkills.refresh} onInstall={installSkill} onInstallExtension={installExtension} onSetMcpSupport={setMcpSupport} onConnectMcp={connectMcp} onSetMcpEnabled={setMcpEnabled} onMutateCapability={mutateCapability} />

@@ -3,6 +3,7 @@
  * webview attribute must match the main process's will-attach-webview gate
  * exactly, or webview attach is silently blocked.
  */
+import type { EmployeeBusinessRecord, EmployeeBusinessWork } from './employee-business'
 export const BROWSER_PARTITION = 'prime-work-browser'
 
 export type ThemeMode = 'system' | 'light' | 'dark'
@@ -262,6 +263,7 @@ export interface EnterpriseBusinessCapability {
   name: string
   description: string
   effect: 'read' | 'write'
+  executionMode?: 'employee_only' | 'team_delegable'
   resourceType: string
   requiresEmployeeIntent: boolean
   status: 'available' | 'unavailable'
@@ -413,6 +415,8 @@ export interface EnterpriseApprovalContext {
 
 /** Renderer-safe approval projection. Native object and file identifiers stay in the main process. */
 export interface EnterpriseApprovalContextView {
+  actionVersion?: string
+  actions?: Array<{ actionRef: string; semantic: string; label: string }>
   title: string
   step: string
   returnReason?: string
@@ -523,6 +527,7 @@ export interface EnterpriseBusinessNotificationContextView {
 export type EnterpriseWorkContinuationContextView = EnterpriseWeaveWorkContinuationContextView | EnterpriseBusinessNotificationContextView
 
 export interface EnterpriseWorkOverview {
+  businessWork?: EmployeeBusinessWork[]
   loadedAt: string
   choices: EnterpriseWorkChoice[]
   tasks: EnterpriseHumanTask[]
@@ -533,6 +538,7 @@ export interface EnterpriseWorkOverview {
     teamChoices: EnterpriseWorkReadStatus
     weaveTasks: EnterpriseWorkReadStatus
     forgeApprovals: EnterpriseWorkReadStatus
+    businessWork?: EnterpriseWorkReadStatus
     notifications: EnterpriseWorkReadStatus
   }
 }
@@ -1361,6 +1367,7 @@ export interface PrimeWorkApi {
     pinReturnedApprovalContext(approvalId: string): Promise<{ handle: string; context: EnterpriseApprovalContextView }>
     pinApprovalReviewContext(approvalId: string): Promise<{ handle: string; context: EnterpriseApprovalContextView }>
     pinWorkContinuationContext(item: Pick<EnterpriseWorkItem, 'id' | 'source' | 'notificationType' | 'workReference' | 'runReference' | 'sessionReference'>): Promise<{ handle: string; context: EnterpriseWorkContinuationContextView }>
+    pinEmployeeBusinessContext(record: EmployeeBusinessRecord): Promise<{ handle: string; prompt: string }>
     submitWork(choice: EnterpriseWorkChoice, goal: string): Promise<EnterpriseWorkReceipt>
     completeHumanTask(task: Pick<EnterpriseHumanTask, 'runId' | 'interactionId' | 'inputRevisionID' | 'workbenchSessionID'>, payload: Record<string, unknown>): Promise<{ runId: string; repeated: boolean }>
   }

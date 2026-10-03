@@ -12,12 +12,15 @@ import { searchTeams, type TeamSummary } from './team-catalog'
 import { APPROVAL_REVIEW_SESSION_MARKER } from '../../../src/lib/approval-review'
 import { businessReadErrorResult, type BusinessObjectDirectory, type BusinessRecordCandidate, type BusinessRecordRead, type BusinessRecordSearchPage, type BusinessRecordSnapshot } from './business-records'
 import type { BoundCurrentItemAction, CurrentItemActionAttempt } from './current-item-actions'
+import type { EmployeeBusinessActions } from './employee-business-actions'
+import type { PendingEmployeeBusinessContext } from './employee-business-open'
+import type { EmployeeBusinessRecord } from '../../../src/types/employee-business'
 
 interface EnterpriseSessionReader {
   read(filePath: unknown): Promise<TranscriptMessage[]>
 }
 export interface AgentEnterpriseBridgeOptions {
-  service: Pick<EnterpriseService, 'accountKey' | 'getSession' | 'getApprovalContext' | 'getApprovalActionHistory' | 'runNativeMcpAction' | 'getWorkNotificationSource' | 'getBusinessNotificationContext' | 'getWorkContinuationContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'getBusinessObjectDirectory' | 'findBusinessRecords' | 'readBusinessRecord' | 'stageWorkMaterials' | 'submitWork' | 'submitApprovalRevision' | 'getApprovalRevisionReceipt'> & Partial<Pick<EnterpriseService, 'renewWorkAuthorization' | 'getRunContinuationReferences'>>
+  service: Pick<EnterpriseService, 'accountKey' | 'getSession' | 'getApprovalContext' | 'getApprovalActionHistory' | 'runNativeMcpAction' | 'getWorkNotificationSource' | 'getBusinessNotificationContext' | 'getWorkContinuationContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'getBusinessObjectDirectory' | 'findBusinessRecords' | 'readBusinessRecord' | 'stageWorkMaterials' | 'submitWork' | 'submitApprovalRevision' | 'getApprovalRevisionReceipt'> & Partial<Pick<EnterpriseService, 'renewWorkAuthorization' | 'getRunContinuationReferences' | 'getEmployeeBusinessContext' | 'executeEmployeeBusinessAction' | 'getEmployeeBusinessOperation'>>
   sessions: Record<'prime' | 'pi', EnterpriseSessionReader>
   extensionPath: string
   storage?: HandoffStorage
@@ -50,6 +53,7 @@ interface EmployeeTurn {
   authorizedMaterials: WorkspaceMaterialPromptReference[]
   openingWorkContinuation?: boolean
   openingReturnedApproval?: boolean
+  openingEmployeeBusiness?: boolean
   businessNotification?: BoundBusinessNotificationContext
   approvalContext?: BoundApprovalContext
   enterpriseReadOnly?: boolean
@@ -393,12 +397,22 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   private readonly currentItemActionRefs = new Map<string, Map<string, BoundCurrentItemAction>>()
   private readonly currentItemActionAttempts = new Map<string, Map<string, CurrentItemActionAttempt>>()
   private readonly pendingWorkContinuations = new Map<string, PendingWorkContinuation>()
+  private readonly pendingEmployeeBusiness = new Map<string, PendingEmployeeBusinessContext>()
   /** Source lineage survives employee prompts in this Pi session; it grants no write capabilities. */
   private readonly workLineages = new Map<string, BoundWorkContinuation>()
   private readonly workContinuations = new Map<string, BoundWorkContinuation>()
   private readonly store: HandoffStore
+  private employeeBusiness?: Promise<EmployeeBusinessActions>
 
   constructor(private readonly options: AgentEnterpriseBridgeOptions) { super(); this.store = new HandoffStore(options.storage) }
+  private employeeBusinessActions(): Promise<EmployeeBusinessActions> {
+    return this.employeeBusiness ??= import('./employee-business-actions').then(({ EmployeeBusinessActions }) => new EmployeeBusinessActions({
+      getEmployeeBusinessContext: (selection) => { if (!this.options.service.getEmployeeBusinessContext) throw new Error('本人业务动作暂不可用'); return this.options.service.getEmployeeBusinessContext(selection) },
+      executeEmployeeBusinessAction: (request) => { if (!this.options.service.executeEmployeeBusinessAction) throw new Error('本人业务动作暂不可用'); return this.options.service.executeEmployeeBusinessAction(request) },
+      getEmployeeBusinessOperation: (key) => { if (!this.options.service.getEmployeeBusinessOperation) throw new Error('本人业务回执暂不可用'); return this.options.service.getEmployeeBusinessOperation(key) },
+      stageWorkMaterials: (materials, assertCurrent) => this.options.service.stageWorkMaterials(materials, assertCurrent),
+    }, this.store))
+  }
   protected environmentEntries(url: string, token: string): NodeJS.ProcessEnv {
     return { GOOEYPI_ENTERPRISE_URL: url, GOOEYPI_ENTERPRISE_TOKEN: token, GOOEYPI_ENTERPRISE_EXTENSION_PATH: this.options.extensionPath }
   }
@@ -413,6 +427,20 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   async pinReturnedApprovalContext(requestId: string): Promise<{ handle: string; context: EnterpriseApprovalContextView }> {
     if (!requestId || requestId.length > 128) throw new Error('退回事项上下文无效，请刷新待办')
     return this.pinApprovalContext(requestId, 'revision')
+  }
+  async pinEmployeeBusinessContext(record: EmployeeBusinessRecord) {
+    const { prepareEmployeeBusinessOpen } = await import('./employee-business-open')
+    const { pending, prompt } = await prepareEmployeeBusinessOpen(this.employeeBusinessAccess(), record)
+    for (const [key, value] of this.pendingEmployeeBusiness) if (Date.now() - value.createdAt > 10 * 60_000) this.pendingEmployeeBusiness.delete(key)
+    const handle = randomUUID(); this.pendingEmployeeBusiness.set(handle, pending)
+    return { handle, prompt }
+  }
+  private employeeBusinessAccess() {
+    return {
+      accountKey: () => this.options.service.accountKey(),
+      getEmployeeBusinessContext: (selection: import('../../../src/types/employee-business').EmployeeBusinessSelection) => { if (!this.options.service.getEmployeeBusinessContext) throw new Error('本人业务动作暂不可用'); return this.options.service.getEmployeeBusinessContext(selection) },
+      readBusinessRecord: (objectName: string, recordId: string) => this.options.service.readBusinessRecord(objectName, recordId),
+    }
   }
   async pinApprovalReviewContext(requestId: string): Promise<{ handle: string; context: EnterpriseApprovalContextView }> {
     if (!requestId || requestId.length > 128) throw new Error('审批事项上下文无效，请刷新待办')
@@ -620,6 +648,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     this.revokeAllClaims()
     this.turns.clear(); this.inputs.clear(); this.pendingApprovalContextBinds.clear(); this.teams.clear(); this.handoffs.clear(); this.businessActions.clear(); this.businessObjects.clear(); this.businessRecords.clear(); this.currentItemActionRefs.clear(); this.currentItemActionAttempts.clear()
     this.pendingApprovalContexts.clear(); this.approvalContexts.clear()
+    this.pendingEmployeeBusiness.clear()
     this.pendingWorkContinuations.clear(); this.workContinuations.clear(); this.workLineages.clear()
   }
   /** Called only by the trusted desktop input path, before forwarding to the runtime. */
@@ -663,6 +692,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     let pendingApprovalContext: PendingApprovalContext | undefined
     let approvalContextHandle: string | undefined
     let pendingWorkContinuation: PendingWorkContinuation | undefined
+    let pendingEmployeeBusiness: PendingEmployeeBusinessContext | undefined
     let workHandle: string | undefined
     const suppliedApprovalHandle = returnedApprovalContextHandle ?? approvalReviewContextHandle
     if (suppliedApprovalHandle !== undefined) {
@@ -686,12 +716,13 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         throw new Error('团队工作上下文与当前会话不匹配')
       }
       workHandle = workContinuationContextHandle
+      pendingEmployeeBusiness = this.pendingEmployeeBusiness.get(workHandle)
       pendingWorkContinuation = this.pendingWorkContinuations.get(workHandle)
-      if (!pendingWorkContinuation || Date.now() - pendingWorkContinuation.createdAt > 10 * 60_000) {
+      if ((!pendingWorkContinuation && !pendingEmployeeBusiness) || Date.now() - (pendingWorkContinuation ?? pendingEmployeeBusiness)!.createdAt > 10 * 60_000) {
         this.pendingWorkContinuations.delete(workHandle)
         throw new Error('团队工作上下文已过期，请重新打开工作消息')
       }
-      if (pendingWorkContinuation.kind === 'business' && !this.newSessionTokens.has(token)) {
+      if ((pendingEmployeeBusiness || pendingWorkContinuation?.kind === 'business') && !this.newSessionTokens.has(token)) {
         throw new Error('Forge 业务结果须在独立的新会话中打开')
       }
     }
@@ -702,6 +733,10 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       let activeWorkContinuation: BoundWorkContinuation | undefined
       let activeBusinessNotification: BoundBusinessNotificationContext | undefined
       const accountKey = await this.options.service.accountKey()
+      if (pendingEmployeeBusiness) {
+        const { verifyEmployeeBusinessOpen } = await import('./employee-business-open')
+        await verifyEmployeeBusinessOpen(this.employeeBusinessAccess(), pendingEmployeeBusiness, value.message)
+      }
       let activeApprovalContext = previousApprovalContext
       if (pendingApprovalContext) {
         if (pendingApprovalContext.accountKey !== accountKey) throw new Error('当前账号已变化，不能打开该审批上下文')
@@ -842,6 +877,10 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           this.pendingWorkContinuations.delete(workHandle!)
         } else if (pendingWorkContinuation?.kind === 'business') {
           if (!claim.sessionPath || this.claimForToken(token) !== claim || !activeBusinessNotification) throw new Error('Forge 业务结果上下文已失效，请重新打开消息')
+          await (await this.employeeBusinessActions()).bind(accountKey, claim.sessionPath, {
+            record: { objectName: activeBusinessNotification.context.source.objectName, recordId: activeBusinessNotification.context.source.recordId, label: activeBusinessNotification.context.record.candidate.name },
+            source: { kind: 'business_notification', reference: activeBusinessNotification.context.notificationID },
+          })
           this.workContinuations.delete(token)
           this.workLineages.delete(token)
           this.pendingWorkContinuations.delete(workHandle!)
@@ -857,6 +896,11 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           this.workContinuations.set(token, boundWorkContinuation)
         }
         this.pendingFirstPrompts.delete(token)
+        if (pendingEmployeeBusiness) {
+          if (!claim.sessionPath || this.claimForToken(token) !== claim) throw new Error('本人业务事项会话已失效')
+          await (await this.employeeBusinessActions()).bind(accountKey, claim.sessionPath, pendingEmployeeBusiness.selection)
+          this.pendingEmployeeBusiness.delete(workHandle!)
+        }
         this.newSessionTokens.delete(token)
         if (activeApprovalContext) this.approvalContexts.set(token, activeApprovalContext)
         this.turns.set(token, {
@@ -870,11 +914,13 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           ...(pendingWorkContinuation?.kind === 'weave' ? { openingWorkContinuation: true } : {}),
           ...(pendingApprovalContext?.purpose === 'revision' ? { openingReturnedApproval: true } : {}),
           ...(activeBusinessNotification ? { businessNotification: activeBusinessNotification } : {}),
+          ...(pendingEmployeeBusiness ? { openingEmployeeBusiness: true } : {}),
         })
       } else if (pendingApprovalContext || previousApprovalContext || approvalReviewSessionDetected || pendingWorkContinuation) {
         throw new Error('员工轮次已变化，退回事项不能继续')
       }
     } catch (error) {
+      if (pendingEmployeeBusiness) { this.pendingEmployeeBusiness.delete(workHandle!); throw error }
       if (pendingApprovalContext) {
         if (approvalContextHandle) this.pendingApprovalContexts.delete(approvalContextHandle)
         throw error
@@ -934,6 +980,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         throw new Error('打开业务结果消息只允许查看本次核验的记录与材料；请在新消息中明确提出后续需求')
       }
     }
+    if (turn.openingEmployeeBusiness && method !== 'activate') throw new Error('打开本人业务事项只授权查看，请在新消息中明确办理')
     if (turn.workContinuation && (this.workContinuations.get(claim.token) !== turn.workContinuation || this.workLineages.get(claim.token) !== turn.workContinuation)) {
       throw new Error('团队工作上下文已失效，请重新打开工作消息')
     }
@@ -946,6 +993,16 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (!claim.sessionPath) await this.waitForSessionBinding(claim, turn)
     await this.evidence(claim, turn)
     if (method === 'list_current_item_actions' || method === 'run_current_item_action') {
+      if (!turn.approvalContext) {
+        if (turn.workContinuation) throw new Error('团队续办会话不能改为本人业务办理，请从当前业务事项打开')
+        const current = {
+          accountKey: turn.accountKey, sessionPath: claim.sessionPath!, messageId: turn.messageId!, employeePrompt: turn.employeePrompt,
+          cwd: claim.cwd, materials: turn.authorizedMaterials, readOnly: Boolean(turn.businessNotification || turn.openingWorkContinuation),
+          assertCurrent: async () => { await this.evidence(claim, turn) },
+        }
+        if (method === 'list_current_item_actions') { rejectUnknownKeys(params, ['turn_key'], 'current item actions'); return (await this.employeeBusinessActions()).list(current) }
+        return (await this.employeeBusinessActions()).run(current, params)
+      }
       const { dispatchCurrentItemAction } = await import('./current-item-actions')
       return dispatchCurrentItemAction(method, params, {
         service: this.options.service, claim, turn, contextChanged: approvalContextChanged,
@@ -1080,6 +1137,9 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (read.candidate.objectName !== selected.objectName || read.candidate.recordId !== selected.recordId) throw new Error('Forge 返回的业务记录与选择不一致')
     const updated = { ...selected, ...read.candidate, snapshot: read.snapshot }
     this.businessRecords.get(claim.token)?.set(recordKey, updated)
+    if (!turn.workContinuation) await (await this.employeeBusinessActions()).bind(turn.accountKey, claim.sessionPath!, {
+      record: { objectName: updated.objectName, recordId: updated.recordId, label: updated.name }, source: { kind: 'record' },
+    })
     return {
       status: 'read', record_key: recordKey, name: updated.name, object: updated.objectLabel,
       ...(updated.code ? { code: updated.code } : {}), ...(updated.status ? { business_status: updated.status } : {}),

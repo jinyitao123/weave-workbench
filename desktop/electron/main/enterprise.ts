@@ -9,6 +9,9 @@ import { createHash, randomUUID } from 'node:crypto'
 import { teamCatalog, teamChoices, type TeamSummary } from './enterprise/team-catalog'
 import { ForgeBusinessReadError, ForgeBusinessReader, type BusinessObjectDirectory, type BusinessRecordRead, type BusinessRecordSearchPage } from './enterprise/business-records'
 import { EmployeeWorkCanceller } from './enterprise/task-cancellation'
+import type { EmployeeBusinessRequest, EmployeeBusinessSelection } from '../../src/types/employee-business'
+import type { ApprovalUiAttempt } from './enterprise/approval-ui-actions'
+import { approvalUiChoices } from './enterprise/approval-context-binding'
 
 const DEFAULT_FORGE_URL = 'http://127.0.0.1:3000'
 const DEFAULT_WEAVE_URL = 'http://127.0.0.1:8080'
@@ -152,6 +155,7 @@ function textValue(value: unknown): string | undefined {
 
 export function approvalContextView(context: EnterpriseApprovalContext): EnterpriseApprovalContextView {
   return {
+    ...approvalUiChoices(context),
     title: context.title,
     step: context.step,
     ...(context.returnReason !== undefined ? { returnReason: context.returnReason } : {}),
@@ -506,6 +510,7 @@ function boundedIdentity(value: unknown, maxLength: number): string | undefined 
 
 /** Read-only environment visibility. Account binding is reintroduced through the MVP1 contract. */
 export class EnterpriseService {
+  private readonly approvalUiAttempts = new Map<string, ApprovalUiAttempt>()
   private readonly environment: NodeJS.ProcessEnv
   private readonly fetch: typeof fetch
   private readonly forgeUrl: URL
@@ -757,6 +762,39 @@ export class EnterpriseService {
     const result = await response.json()
     this.assertCurrentAuth(snapshot)
     return result
+  }
+
+  async getEmployeeBusinessContext(selection: EmployeeBusinessSelection) {
+    const { parseEmployeeBusinessContext } = await import('./enterprise/employee-business-contract')
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    const query = new URLSearchParams({ objectName: selection.record.objectName, recordId: selection.record.recordId, sourceKind: selection.source.kind })
+    if (selection.source.reference) query.set('sourceRef', selection.source.reference)
+    const context = parseEmployeeBusinessContext(await this.forgeJSON(`/api/v1/workbench/business-actions/context?${query}`, generation, '本人业务动作'))
+    if (context.record.objectName !== selection.record.objectName || context.record.recordId !== selection.record.recordId
+      || context.source.kind !== selection.source.kind || context.source.reference !== selection.source.reference) throw new Error('当前业务来源与所选记录不一致')
+    return context
+  }
+
+  async executeEmployeeBusinessAction(request: EmployeeBusinessRequest) {
+    const { parseEmployeeBusinessOperation } = await import('./enterprise/employee-business-contract')
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    const { response, snapshot } = await this.authenticatedFetch(new URL('/api/v1/workbench/business-actions/execute', this.forgeUrl), 'forge', {
+      method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify(request),
+      redirect: 'error', signal: AbortSignal.timeout(30_000),
+    }, generation)
+    await this.assertResponseAuthorized(response, snapshot, '当前账号不能办理该业务动作')
+    const body = await response.json()
+    this.assertCurrentAuth(snapshot)
+    return parseEmployeeBusinessOperation(body)
+  }
+
+  async getEmployeeBusinessOperation(opKey: string) {
+    const { parseEmployeeBusinessOperation } = await import('./enterprise/employee-business-contract')
+    const { session, generation } = await this.sessionSnapshot()
+    if (session.status !== 'signed-in') throw new Error('请先登录')
+    return parseEmployeeBusinessOperation(await this.forgeJSON(`/api/v1/workbench/business-actions/operations/${encodeURIComponent(opKey)}`, generation, '本人业务回执'))
   }
 
   private async forgeMcpTool(
@@ -1032,45 +1070,32 @@ export class EnterpriseService {
     return { version: '1', loadedAt: new Date().toISOString(), teams, runtimes, models }
   }
 
+  private async readBusinessCapabilityPolicy(generation = this.authGeneration): Promise<EnterpriseBusinessCapabilityCatalog> {
+    const { parseCapabilityPolicy } = await import('./enterprise/capability-policy')
+    const { response, snapshot } = await this.authenticatedFetch(new URL('/api/v1/workbench/business-actions/catalog', this.forgeUrl), 'forge', {
+      headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    }, generation)
+    if (response.status === 403) {
+      const denied = record(await response.json().catch(() => undefined))
+      this.assertCurrentAuth(snapshot)
+      if (record(denied?.error)?.code === 'PASSWORD_EXPIRED') throw new Error('Forge 账号密码已过期，请更新密码后重新登录')
+      throw new Error('当前账号没有读取 Forge 业务能力的权限')
+    }
+    await this.assertResponseAuthorized(response, snapshot, '当前账号没有读取 Forge 业务能力的权限')
+    if (!response.ok) { await response.body?.cancel(); throw new Error('业务能力目录暂时无法读取') }
+    const raw = await response.json(); this.assertCurrentAuth(snapshot)
+    return parseCapabilityPolicy(raw)
+  }
+
   async getBusinessCapabilityCatalog(): Promise<EnterpriseBusinessCapabilityCatalog> {
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
     if (!session.permissions?.includes('teams:develop')) throw new Error('当前账号没有开发中心权限')
-    if (!this.forgeToken) throw new Error('请重新登录以读取 Forge 业务能力')
-    const { response, snapshot } = await this.authenticatedFetch(new URL('/api/v1/meta/actions', this.forgeUrl), 'forge', {
-      headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(15_000),
-    }, generation)
-    if (response.status === 401) { await response.body?.cancel(); await this.signOutIfCurrent(snapshot); throw new Error('登录已失效，请重新登录') }
-    if (response.status === 403) {
-      const denied = record(await response.json().catch(() => undefined)), detail = record(denied?.error)
-      this.assertCurrentAuth(snapshot)
-      if (textValue(detail?.code) === 'PASSWORD_EXPIRED') throw new Error('Forge 账号密码已过期，请更新密码后重新登录')
-      throw new Error('当前账号没有读取 Forge 业务能力的权限')
-    }
-    if (!response.ok) { await response.body?.cancel(); throw new Error(`Forge 业务能力读取失败（${response.status}）`) }
-    const raw = await response.json()
-    this.assertCurrentAuth(snapshot)
-    const envelope = record(raw)
-    const data = record(envelope?.data) ?? envelope
-    const actions = Array.isArray(raw) ? raw : Array.isArray(data?.items) ? data.items : []
-    const capabilities = actions.flatMap((value): EnterpriseBusinessCapability[] => {
-      const action = record(value), ai = record(action?.ai)
-      const actionName = textValue(action?.name), objectName = textValue(action?.objectName) ?? textValue(action?.object)
-      if (ai?.exposed !== true || !actionName || !objectName || objectName.startsWith('sys_')) return []
-      const params = businessCapabilityParams(action?.params)
-      const unavailableReason = businessCapabilityUnavailableReason(action?.params)
-      return [{
-        id: `forge:action:${objectName}.${actionName}`,
-        name: textValue(action?.label) ?? textValue(ai?.description) ?? actionName,
-        description: textValue(ai?.description) ?? textValue(action?.label) ?? actionName,
-        effect: 'write', resourceType: objectName, requiresEmployeeIntent: true, status: unavailableReason ? 'unavailable' : 'available',
-        ...(unavailableReason ? { unavailableReason } : {}),
-        actionName, objectName, requiresRecord: action?.requiresRecord !== false,
-        requiresConfirmation: ai?.requiresConfirmation === true, params,
-      }]
-    })
-    this.assertCurrentAuth(snapshot)
-    return { version: '1', provider: { id: 'forge', name: 'Forge 业务环境', status: 'available' }, capabilities, refreshedAt: new Date().toISOString() }
+    const catalog = await this.readBusinessCapabilityPolicy(generation)
+    return { ...catalog, capabilities: catalog.capabilities.filter((item) => item.executionMode !== 'employee_only').map((item) => {
+      const reason = businessCapabilityUnavailableReason(item.params)
+      return reason ? { ...item, status: 'unavailable' as const, unavailableReason: reason } : item
+    }) }
   }
 
   private async readBusinessActionObjectMetadata(objectName: string, generation: number): Promise<BusinessActionObjectMetadata> {
@@ -1107,6 +1132,7 @@ export class EnterpriseService {
     return businessActionObjectMetadata(value, objectName)
   }
 
+
   async getBusinessCapabilities(allowedIds?: string[]): Promise<EnterpriseBusinessCapability[]> {
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
@@ -1117,6 +1143,7 @@ export class EnterpriseService {
       body: JSON.stringify({ jsonrpc: '2.0', id: 'business-capability-catalog', method: 'tools/call', params: { name: 'list_actions', arguments: {} } }),
       redirect: 'error', signal: AbortSignal.timeout(15_000),
     }, generation)
+    const policy = await this.readBusinessCapabilityPolicy(generation)
     const raw = await response.text()
     this.assertCurrentAuth(snapshot)
     if (response.status === 401) {
@@ -1147,6 +1174,8 @@ export class EnterpriseService {
     if (new Set(requestedIds).size !== requestedIds.length) throw new Error('团队配置的 Forge 业务动作不能重复')
     const selected = requestedIds.map((id) => {
       const match = visibleById.get(id)
+      const eligibility = policy.capabilities.find((item) => item.id === id)
+      if (!eligibility || eligibility.executionMode === 'employee_only' || eligibility.status !== 'available') throw new Error('该业务动作仅限员工本人办理或当前不可委托团队')
       if (!match) throw new Error(`当前员工没有调用 Forge 业务动作 ${id} 的权限`)
       return { ...match }
     })
@@ -1184,6 +1213,7 @@ export class EnterpriseService {
       objectMetadataByName.set(objectName, await this.readBusinessActionObjectMetadata(objectName, generation))
     }
     const capabilities = selected.map(({ id, key, objectName, actionName, action }) => {
+      const eligibility = policy.capabilities.find((item) => item.id === id)!
       const params = resolveBusinessActionParameters(action, selectedDeclarations.get(key)!, objectName, objectMetadataByName)
       const unavailableReason = businessCapabilityUnavailableReason(params)
       if (unavailableReason) throw new Error(`Forge 业务动作 ${id} 的参数暂不可安全绑定：${unavailableReason}`)
@@ -1191,7 +1221,7 @@ export class EnterpriseService {
         id,
         name: textValue(action.label) ?? textValue(action.description) ?? actionName,
         description: textValue(action.description) ?? textValue(action.label) ?? actionName,
-        effect: 'write' as const, resourceType: objectName, requiresEmployeeIntent: true, status: 'available' as const,
+        effect: eligibility.effect, executionMode: eligibility.executionMode ?? 'team_delegable', resourceType: objectName, requiresEmployeeIntent: eligibility.requiresEmployeeIntent ?? eligibility.effect === 'write', status: 'available' as const,
         requiresRecord: action.requiresRecord !== false,
         actionName, objectName, requiresConfirmation: action.requiresConfirmation === true, params,
       }
@@ -2041,11 +2071,9 @@ export class EnterpriseService {
     if (forgeMatch) {
       if (forgeMatch[2] !== task.interactionId) throw new Error('审批事项已变化，请刷新后重试')
       if (forgeMatch[1] === 'revision') throw new Error('Forge 修订材料递交业务动作尚未接通，审批事项未递交')
-      const decision = textValue(payload.decision)
-      const operation = decision === 'rejected' ? 'revise' : decision === 'approved' ? 'approve' : ''
-      if (!operation) throw new Error('请选择审批处理方式')
-      await this.forgeRequest(`/api/v1/approvals/requests/${encodeURIComponent(task.interactionId)}/${operation}`, { comment: textValue(payload.comment) ?? '' }, generation)
-      return { runId: task.runId, repeated: false }
+      const accountKey = await this.accountKey(generation)
+      const { completeViewedApproval } = await import('./enterprise/approval-ui-actions')
+      return completeViewedApproval(this, task.interactionId, task.runId, accountKey, payload, this.approvalUiAttempts, () => this.assertAuthGeneration(generation))
     }
     const workReference = boundedIdentity(task.inputRevisionID, 128), sessionReference = boundedIdentity(task.workbenchSessionID, 256)
     if (!workReference || !sessionReference) throw new Error('团队人工事项缺少原工作来源，请从工作消息重新打开')

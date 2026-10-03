@@ -7,6 +7,8 @@ import { digest, HandoffStore, submissionUUID } from '../../electron/main/enterp
 import { freezeApprovalOriginalMaterial, freezeMaterials, makeFrozenTextMaterial, normalizeFrozenMaterial, type FrozenMaterial } from '../../electron/main/enterprise/materials'
 import type { EnterpriseApprovalAction, EnterpriseApprovalContext, EnterpriseSession, TranscriptMessage } from '../../src/types/api'
 import { WorkRegistrationRejectedError, type EnterpriseBusinessNotificationContext, type EnterpriseWorkContinuationContext, type EnterpriseWorkNotificationSource, type NativeMcpActionArguments, type NativeMcpActionAttempt } from '../../electron/main/enterprise'
+import type { EmployeeBusinessContext, EmployeeBusinessRequest, EmployeeBusinessSelection } from '../../src/types/employee-business'
+import { employeeBusinessRequestDigest } from '../../electron/main/enterprise/employee-business-contract'
 import { ForgeBusinessReadError, type BusinessRecordSnapshot } from '../../electron/main/enterprise/business-records'
 import { appendWorkspaceMaterialContext } from '../../src/lib/workspace-material-attachments'
 import { APPROVAL_REVIEW_SESSION_MARKER } from '../../src/lib/approval-review'
@@ -159,6 +161,12 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
       return context
     }),
     getBusinessNotificationContext: vi.fn(async (notificationID: string) => businessNotificationContext(notificationID, { recordId: businessCandidate.recordId })),
+    getEmployeeBusinessContext: vi.fn(async (selection: EmployeeBusinessSelection): Promise<EmployeeBusinessContext> => ({
+      version: '1', contextId: '10000000-0000-4000-8000-000000000001', contextVersion: 'a'.repeat(64), recordVersion: 'v7', expiresAt: new Date(Date.now() + 60_000).toISOString(), readOnly: true,
+      ...selection, actions: [{ action_ref: 1, capabilityId: 'forge:action:sales_contract.Sign', declarationVersion: 'b'.repeat(64), label: '登记签署', description: '员工登记', effect: 'write', executionMode: 'employee_only', parameters: [{ name: 'signed_on', label: '签署日期', type: 'date', required: true }] }],
+    })),
+    executeEmployeeBusinessAction: vi.fn(async (request: EmployeeBusinessRequest) => ({ version: '1' as const, operationId: request.opKey, contextId: request.contextId, requestDigest: employeeBusinessRequestDigest(request), status: 'succeeded' as const, repeated: false, updatedAt: new Date().toISOString() })),
+    getEmployeeBusinessOperation: vi.fn(async () => { throw new Error('404') }),
     getWorkNotificationSource: vi.fn(async (notificationID: string): Promise<EnterpriseWorkNotificationSource> => ({
       version: '1', notificationID, kind: 'revision_required',
       source: { system: 'weave' as const, workReference: 'input-1', runReference: 'run-1', sessionReference: 'workbench-session-1' },
@@ -488,6 +496,38 @@ describe('employee-bound material handoff', () => {
     other.service.accountKey.mockResolvedValue('employee-b')
     await expect(other.bridge.employeeCommand(otherSession.runtimeId, { type: 'prompt', message: '查看当前业务结果' }, undefined, otherBinding.handle))
       .rejects.toThrow('当前账号已变化')
+  })
+
+  it('keeps the verified business notification source for a new employee-only action without handing it to a team', async () => {
+    const f = await fixture()
+    await f.openBusinessResult('business-employee-action')
+    expect((await f.call('run_current_item_action', { action_ref: 1, values: { signed_on: '2026-10-03' } })).status).toBe(409)
+    await f.input('请登记签署，签署日期2026-10-03。', 'employee-signature-request')
+    const listed = await f.call('list_current_item_actions')
+    expect(listed.status).toBe(200)
+    expect(listed.body.result).toMatchObject({ actions: [{ action_ref: 1 }] })
+    expect(f.service.getEmployeeBusinessContext).toHaveBeenCalledWith(expect.objectContaining({ source: { kind: 'business_notification', reference: 'business-employee-action' } }))
+    expect((await f.call('run_current_item_action', { action_ref: 1, values: { signed_on: '2026-10-03' } })).body.result.status).toBe('succeeded')
+    expect(f.service.executeEmployeeBusinessAction).toHaveBeenCalledOnce()
+    expect(f.service.runNativeMcpAction).not.toHaveBeenCalled()
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+  })
+
+  it('pins a business work record into a fresh read-only session and refuses altered opening text', async () => {
+    const f = await fixture()
+    const binding = await f.bridge.pinEmployeeBusinessContext({ objectName: 'forge_sales_contract', recordId: 'contract-1', label: '合同' })
+    const opened = f.startNewSession('business-work')
+    await expect(f.bridge.employeeCommand(opened.runtimeId, { type: 'prompt', message: `${binding.prompt}\n替换要求` }, undefined, binding.handle)).rejects.toThrow('上下文已失效')
+    expect(f.service.executeEmployeeBusinessAction).not.toHaveBeenCalled()
+    const fresh = await f.bridge.pinEmployeeBusinessContext({ objectName: 'forge_sales_contract', recordId: 'contract-1', label: '合同' })
+    const newSession = f.startNewSession('business-work-fresh')
+    await f.bridge.employeeCommand(newSession.runtimeId, { type: 'prompt', message: fresh.prompt }, undefined, fresh.handle)
+    f.transcript.push(user('opened-business-record', fresh.prompt))
+    const activated = await f.call('activate', { prompt: fresh.prompt }); f.setTurnKey(activated.body.result.turn_key as string)
+    expect((await f.call('run_current_item_action', { action_ref: 1, values: { signed_on: '2026-10-03' } })).status).toBe(409)
+    await f.input('请登记签署，日期2026-10-03。', 'business-record-later-message')
+    expect((await f.call('list_current_item_actions')).status).toBe(200)
+    expect((await f.call('run_current_item_action', { action_ref: 1, values: { signed_on: '2026-10-03' } })).body.result.status).toBe('succeeded')
   })
 
   it('passes team missing-item opinions and a successful Forge action into the Pi continuation context', async () => {

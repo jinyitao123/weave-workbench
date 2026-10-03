@@ -5,6 +5,7 @@ import type { EnterpriseService, NativeMcpActionArguments, NativeMcpActionAttemp
 import { parseCurrentItemActionObservation, parseCurrentItemActionReceipt } from './approval-actions'
 import { APPROVAL_REVIEW_SESSION_MARKER } from '../../../src/lib/approval-review'
 import { digest } from './handoff-store'
+import { currentItemContextFingerprint } from './approval-context-binding'
 
 export interface CurrentItemActionTurn {
   key: string
@@ -98,16 +99,6 @@ function approvalHistoryId(value: unknown): string | undefined {
   return boundedText(objectRecord(value)?.id, 128)
 }
 
-function currentItemContextFingerprint(context: EnterpriseApprovalContext): string {
-  return digest(JSON.stringify({
-    requestId: context.requestId, status: context.status, viewer: context.viewer, title: context.title, step: context.step,
-    businessObject: context.businessObject, sourceMaterialVersion: context.sourceMaterialVersion,
-    availableActions: context.availableActions ?? null,
-    returnVersion: context.returnVersion, returnReason: context.returnReason, fields: context.fields,
-    files: context.files.map(({ fileId, name, mediaType, bytes, sha256 }) => ({ fileId, name, mediaType, bytes, sha256 })),
-    originalFiles: context.originalFiles?.map(({ sourceKind, requestId, fileId, name, mediaType, bytes, sha256 }) => ({ sourceKind, requestId, fileId, name, mediaType, bytes, sha256 })),
-  }))
-}
 
 export function createCurrentItemActionRuntime(source: CurrentItemActionRuntimeSource, access: 'review-action' | 'read-directory' = 'review-action'): CurrentItemActionRuntime {
   const returnedDirectory = access === 'read-directory' && source.bound.purpose === 'revision'

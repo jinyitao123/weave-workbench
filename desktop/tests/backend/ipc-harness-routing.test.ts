@@ -217,6 +217,17 @@ describe('harness-aware IPC routing', () => {
     expect(pinWorkContinuationContext).toHaveBeenCalledExactlyOnceWith(item)
   })
 
+  it('opens employee business records only through the Host binding and rejects injected authority', async () => {
+    const binding = { handle: 'employee-context', prompt: '只读当前记录' }
+    const pinEmployeeBusinessContext = vi.fn(async () => binding)
+    Object.assign(harness.services, { enterpriseBridge: { pinEmployeeBusinessContext } })
+    const record = { objectName: 'forge_sales_contract', recordId: 'contract-1', label: '合同' }
+    await expect(harness.invoke('enterprise:pin-employee-business-context', record)).resolves.toBe(binding)
+    expect(pinEmployeeBusinessContext).toHaveBeenCalledExactlyOnceWith(record)
+    expect(() => harness.invoke('enterprise:pin-employee-business-context', { ...record, actorId: 'another-user' })).toThrow()
+    expect(pinEmployeeBusinessContext).toHaveBeenCalledOnce()
+  })
+
   it('preserves Weave continuation references and rejects unknown sources or injected business authority', async () => {
     const pinWorkContinuationContext = vi.fn(async () => ({ handle: 'team-context' }))
     Object.assign(harness.services, { enterpriseBridge: { pinWorkContinuationContext } })

@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench.inocube.local/contracts/v1/employee-business-action.schema.json",
+  "title": "Current Employee Business Action",
+  "description": "Host-to-Forge execute request. Identity comes from a live employee session. Context, action reference, source, current employee message, exact files and operation key are bound by Host; models use only modelInvocation. Context discovery and operation lookup do not authorize a write.",
+  "$ref": "#/$defs/executeRequest",
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "parameterName": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,127}$" },
+    "actionRef": { "type": "integer", "minimum": 1, "maximum": 64 },
+    "scalar": {
+      "oneOf": [
+        { "type": "string", "maxLength": 4000 },
+        { "type": "number" },
+        { "type": "boolean" }
+      ]
+    },
+    "values": {
+      "type": "object", "maxProperties": 32,
+      "propertyNames": { "$ref": "#/$defs/parameterName" },
+      "additionalProperties": { "$ref": "#/$defs/scalar" },
+      "description": "Only scalar business parameters declared by the selected action are allowed. Reserved identity, record, version, source, file and idempotency fields are rejected even if scalar. No object, array, generic patch or undeclared parameter is accepted."
+    },
+    "modelInvocation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["action_ref", "values"],
+      "properties": {
+        "action_ref": { "$ref": "#/$defs/actionRef" },
+        "values": { "$ref": "#/$defs/values" }
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["record", "business_notification", "approval"] },
+        "reference": { "$ref": "#/$defs/id" }
+      },
+      "allOf": [
+        { "if": { "properties": { "kind": { "enum": ["business_notification", "approval"] } } }, "then": { "required": ["reference"] } },
+        { "if": { "properties": { "kind": { "const": "record" } } }, "then": { "not": { "required": ["reference"] } } }
+      ]
+    },
+    "contextQuery": {
+      "type": "object", "additionalProperties": false,
+      "required": ["objectName", "recordId"],
+      "properties": {
+        "objectName": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,127}$" },
+        "recordId": { "$ref": "#/$defs/id" },
+        "sourceKind": { "enum": ["record", "business_notification", "approval"], "default": "record" },
+        "sourceRef": { "$ref": "#/$defs/id" }
+      },
+      "allOf": [
+        { "if": { "required": ["sourceKind"], "properties": { "sourceKind": { "enum": ["business_notification", "approval"] } } }, "then": { "required": ["sourceRef"] } },
+        { "if": { "required": ["sourceRef"] }, "then": { "required": ["sourceKind"], "properties": { "sourceKind": { "enum": ["business_notification", "approval"] } } } }
+      ]
+    },
+    "recordReference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["objectName", "recordId", "label"],
+      "properties": {
+        "objectName": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,127}$" },
+        "recordId": { "$ref": "#/$defs/id" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 300 }
+      }
+    },
+    "parameter": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "label", "type", "required"],
+      "properties": {
+        "name": { "$ref": "#/$defs/parameterName" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "type": { "enum": ["string", "number", "boolean", "date", "file"] },
+        "required": { "type": "boolean" },
+        "description": { "type": "string", "maxLength": 1000 },
+        "enum": { "type": "array", "minItems": 1, "maxItems": 100, "uniqueItems": true, "items": { "$ref": "#/$defs/scalar" } },
+        "enumLabels": {
+          "type": "array", "minItems": 1, "maxItems": 100, "uniqueItems": true,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["value", "label"],
+            "properties": {
+              "value": { "$ref": "#/$defs/scalar" },
+              "label": { "type": "string", "minLength": 1, "maxLength": 160 }
+            }
+          },
+          "description": "Preserve native option labels and values. Values must be unique and cover enum exactly, with scalar types preserved; Host and Forge enforce this cross-field invariant. Duplicate labels are allowed but cannot authorize a value by label alone. Included in declarationVersion."
+        },
+        "minimum": { "type": "number" }, "maximum": { "type": "number" },
+        "maxLength": { "type": "integer", "minimum": 1, "maximum": 4000 }
+      },
+      "dependentRequired": { "enumLabels": ["enum"] },
+      "description": "A bounded projection of the native declaration, including field-backed types. Date values must be valid YYYY-MM-DD strings. File parameters are single-file Host bindings and are never model values. Unsupported native declarations make the action unavailable; they are not weakened to strings."
+    },
+    "action": {
+      "type": "object", "additionalProperties": false,
+      "required": ["action_ref", "capabilityId", "declarationVersion", "label", "description", "effect", "executionMode", "parameters"],
+      "properties": {
+        "action_ref": { "$ref": "#/$defs/actionRef" },
+        "capabilityId": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "declarationVersion": { "$ref": "#/$defs/sha256" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "description": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "effect": { "enum": ["read", "write"] },
+        "executionMode": { "const": "employee_only" },
+        "parameters": { "type": "array", "maxItems": 32, "items": { "$ref": "#/$defs/parameter" } }
+      }
+    },
+    "context": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "contextId", "contextVersion", "recordVersion", "expiresAt", "readOnly", "record", "source", "actions"],
+      "properties": {
+        "version": { "const": "1" },
+        "contextId": { "type": "string", "format": "uuid" },
+        "contextVersion": { "$ref": "#/$defs/sha256" },
+        "recordVersion": { "$ref": "#/$defs/id", "description": "Reliable server-derived record version; the context digest binds it. Not a claim that all native actions support compare-and-swap." },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "readOnly": { "const": true },
+        "record": { "$ref": "#/$defs/recordReference" },
+        "source": { "$ref": "#/$defs/source" },
+        "actions": { "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/action" } }
+      }
+    },
+    "employeeMessage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sessionId", "messageId", "sha256"],
+      "properties": {
+        "sessionId": { "$ref": "#/$defs/id" },
+        "messageId": { "$ref": "#/$defs/id" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      },
+      "description": "Host's reference to the exact new employee message. It is not a bearer credential or proof invented by the model. Host verifies the message and current account before sending; Forge derives identity from the employee session."
+    },
+    "fileBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["parameter", "fileId", "name", "mediaType", "bytes", "sha256"],
+      "properties": {
+        "parameter": { "$ref": "#/$defs/parameterName" },
+        "fileId": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "mediaType": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "bytes": { "type": "integer", "minimum": 1, "maximum": 2097152 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "executeRequest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "contextId", "contextVersion", "opKey", "employeeMessage", "action_ref", "values"],
+      "properties": {
+        "version": { "const": "1" },
+        "contextId": { "type": "string", "format": "uuid" },
+        "contextVersion": { "$ref": "#/$defs/sha256" },
+        "opKey": { "type": "string", "format": "uuid" },
+        "employeeMessage": { "$ref": "#/$defs/employeeMessage" },
+        "action_ref": { "$ref": "#/$defs/actionRef" },
+        "values": { "$ref": "#/$defs/values" },
+        "file": { "oneOf": [{ "$ref": "#/$defs/fileBinding" }, { "type": "null" }], "description": "Omitted and null both mean no file binding and canonicalize to null for requestDigest." }
+      }
+    },
+    "operation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "operationId", "contextId", "requestDigest", "status", "repeated", "updatedAt"],
+      "properties": {
+        "version": { "const": "1" },
+        "operationId": { "type": "string", "format": "uuid", "description": "Equals the Host-bound opKey, scoped to the authenticated employee and organization; known before dispatch so a lost response can be queried." },
+        "contextId": { "type": "string", "format": "uuid" },
+        "requestDigest": { "$ref": "#/$defs/sha256", "description": "SHA-256 of the canonical full execute request with omitted file represented as null. Recursively sort object keys by JavaScript UTF-16 ordering; preserve array order and JSON.stringify scalar encoding; reject non-finite numbers and undefined. contextVersion cryptographically binds the server-side actor, organization, source, record version and action policy." },
+        "status": { "enum": ["in_progress", "succeeded", "failed", "unknown"] },
+        "repeated": { "type": "boolean" },
+        "noEffect": { "type": "boolean", "description": "True requires authoritative server evidence that native execution never started or its entire business transaction rolled back. HTTP failure, timeout and cancellation alone are not such proof." },
+        "code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,95}$" },
+        "summary": { "type": "string", "maxLength": 1000 },
+        "recordReferences": { "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/recordReference" } },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "allOf": [
+        { "if": { "properties": { "status": { "enum": ["unknown", "in_progress"] } } }, "then": { "properties": { "noEffect": { "const": false } } } },
+        { "if": { "properties": { "status": { "enum": ["unknown", "in_progress", "failed"] } } }, "then": { "not": { "required": ["recordReferences"] } } }
+      ]
+    }
+  }
+}
