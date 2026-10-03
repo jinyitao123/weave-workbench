@@ -98,9 +98,9 @@ async function startHermeticEnterpriseServer(): Promise<string> {
     } else if (teamSidebarFixture && path === '/v1/teams') send([{ team: { id: 'team-ui', name: '合同团队', display_name: '合同团队', status: 'active', updated_at: '2026-10-01T00:00:00Z' }, workers: [] }])
     else if (teamSidebarFixture && path === '/v1/runtimes') send({ runtimes: [] })
     else if (teamSidebarFixture && path === '/v1/development/model-catalog') send({ models: ['fixture-model'] })
-    else if (teamSidebarFixture && path === '/api/v1/meta/actions') send({ data: { items: [{ name: 'ContractSubmit', objectName: 'sales_contract', label: '提交合同', ai: { exposed: true }, params: [
+    else if (path === '/api/v1/workbench/business-actions/catalog') send({ version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '2026-10-01T00:00:00Z', capabilities: teamSidebarFixture ? [{ id: sidebarActionID, name: '提交合同', description: '提交本轮合同材料', objectName: 'sales_contract', actionName: 'ContractSubmit', resourceType: 'sales_contract', effect: 'write', executionMode: 'team_delegable', status: 'available', requiresRecord: true, requiresEmployeeIntent: true, params: [
       { name: 'idempotency_key', label: '防重复提交参数', type: 'string', required: true }, { name: 'idempotencyKey', label: '备用防重复提交参数', type: 'string' }, { name: 'material_file_ids', label: '全部材料', type: 'file', multiple: true, required: true },
-    ] }] } })
+    ] }] : [] })
     else if (teamSidebarFixture && path === '/v1/teams/team-ui/development') {
       if (request.method === 'PUT') {
         let bytes = ''
@@ -113,6 +113,7 @@ async function startHermeticEnterpriseServer(): Promise<string> {
     else if (path === '/v1/human-tasks') send({ tasks: [] })
     else if (path === '/api/v1/apps/forge/workbench/inbox') send({ version: '1', notifications: [], next_cursor: null, has_more: false })
     else if (path === '/api/v1/workbench/approvals') send({ version: '1', items: [] })
+    else if (path === '/api/v1/workbench/business-work') send({ version: '1', items: [], readStatus: 'complete', observedAt: '2026-10-01T00:00:00Z' })
     else send({})
   })
   await new Promise<void>((resolve, reject) => {

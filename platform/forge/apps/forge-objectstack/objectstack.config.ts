@@ -5,6 +5,8 @@ import { ApprovalsServicePlugin } from '@objectstack/plugin-approvals';
 import { SharingServicePlugin } from '@objectstack/plugin-sharing';
 import { MCPServerPlugin } from '@objectstack/mcp';
 import { TaskDelegationPlugin } from './src/plugins/task-delegation.plugin.js';
+import { SalesOrderBusinessPlugin } from './src/plugins/sales-order-business.plugin.js';
+import { EmployeeBusinessActionPlugin } from './src/plugins/employee-business-action.plugin.js';
 import { WorkbenchInboxPlugin } from './src/plugins/workbench-inbox.plugin.js';
 import { RecordChangeTriggerPlugin } from '@objectstack/trigger-record-change';
 import { ApprovalWorkbenchContextPlugin } from './src/plugins/approval-workbench-context.plugin.js';
@@ -29,16 +31,18 @@ export default defineStack({
   plugins: [
     new AutomationServicePlugin(),
     new MessagingServicePlugin(),
-    new ApprovalsServicePlugin({ recordReaderVisibleObjects: ['forge_sales_contract'] }),
+    new ApprovalsServicePlugin({ recordReaderVisibleObjects: ['forge_sales_contract', 'forge_sales_order'] }),
     new SharingServicePlugin(),
     new ApprovalResubmitGuardPlugin({
       requiredMaterialObjects: ['forge_sales_contract'],
       verifierServiceName: 'forge.contract.revision.material',
     }),
+    new SalesOrderBusinessPlugin(),
     new RecordChangeTriggerPlugin(),
     new MCPServerPlugin(),
     new WorkbenchInboxPlugin(),
     new TaskDelegationPlugin(),
+    new EmployeeBusinessActionPlugin(),
     new WeaveRunEventPlugin(),
     new WorkbenchOwnedMaterialPlugin(),
     new ApprovalWorkListPlugin(),

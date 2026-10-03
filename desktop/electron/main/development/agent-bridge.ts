@@ -407,7 +407,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
     const ids = new Set(context.document.members.flatMap((member) => member.configuration.businessCapabilityIds))
     return [...ids].map((id) => {
       const action = context.catalog.capabilities.find((candidate) => candidate.id === id)
-      if (!action || action.status !== 'available' || !action.actionName || !action.objectName) throw new Error(action?.unavailableReason ?? '团队选择了暂不可用的 Forge 业务动作，请先修正团队草稿')
+      if (!action || action.executionMode === 'employee_only' || action.status !== 'available' || !action.actionName || !action.objectName) throw new Error(action?.unavailableReason ?? '团队选择了暂不可用的 Forge 业务动作，请先修正团队草稿')
       return action
     })
   }

@@ -1,3 +1,4 @@
+import { ORDER_APPROVAL_MCP_APPROVE_TARGET, ORDER_APPROVAL_MCP_REJECT_TARGET } from '../actions/approval-workbench.action.js';
 import type { Plugin, PluginContext } from '@objectstack/core';
 import { makeExecutionContextResolver } from '@objectstack/plugin-hono-server';
 import { isFileIdToken } from '@objectstack/spec/data';
@@ -72,7 +73,8 @@ interface OriginalFileReference {
   sha256: string;
 }
 
-type ApprovalMcpDecision = 'approve' | 'revise';
+const EMPLOYEE_APPROVAL_OBJECTS = new Set([CONTRACT_OBJECT, 'forge_sales_order']);
+type ApprovalMcpDecision = 'approve' | 'revise' | 'reject';
 type ApprovalMcpParams = Record<string, unknown> & {
   approvalRequestId?: unknown;
   itemVersion?: unknown;
@@ -538,7 +540,7 @@ function observedNativeAction(
   itemVersion: string,
   sourceMaterialVersion: string,
 ): JsonRecord | undefined {
-  const nativeAction = decision === 'approve' ? 'approve' : 'revise';
+  const nativeAction = decision;
   const matching = actions.filter((action) => action.actor_id === actorId &&
     action.action === nativeAction && action.comment === comment);
   if (!matching.length) return undefined;
@@ -609,7 +611,7 @@ async function executeNativeApprovalAction(
   if (!requestId || !suppliedItemVersion || !suppliedMaterialVersion || !/^[0-9a-f]{64}$/.test(suppliedMaterialVersion) || !comment) {
     throw new ApprovalActionFailure(400, 'APPROVAL_ACTION_INVALID', 'The approval request, versions, and a non-empty comment are required.');
   }
-  if (objectName !== CONTRACT_OBJECT || !recordId) {
+  if (!objectName || !EMPLOYEE_APPROVAL_OBJECTS.has(objectName) || !recordId) {
     throw new ApprovalActionFailure(404, 'APPROVAL_ACTION_BINDING_MISMATCH', 'The approval action is not bound to this contract record.');
   }
   const context = nativeApprovalActionContext(actionContext);
@@ -619,7 +621,7 @@ async function executeNativeApprovalAction(
     if (!request || request.id !== requestId) {
       throw new ApprovalActionFailure(404, 'APPROVAL_CONTEXT_NOT_FOUND', 'Approval context not found.');
     }
-    if (request.object_name !== CONTRACT_OBJECT || request.record_id !== recordId ||
+    if (request.object_name !== objectName || request.record_id !== recordId ||
       (request.organization_id && request.organization_id !== context.tenantId)) {
       throw new ApprovalActionFailure(404, 'APPROVAL_ACTION_BINDING_MISMATCH', 'The approval action is not bound to this contract record.');
     }
@@ -637,12 +639,13 @@ async function executeNativeApprovalAction(
     if (currentItemVersion !== suppliedItemVersion) {
       throw new ApprovalActionFailure(409, 'APPROVAL_ACTION_STALE', 'The approval item changed after this action was offered.');
     }
-    if (actions.some((action) => action.actor_id === actorId && (action.action === 'approve' || action.action === 'revise'))) {
+    if (actions.some((action) => action.actor_id === actorId && ['approve', 'revise', 'reject'].includes(action.action))) {
       throw new ApprovalActionFailure(409, 'APPROVAL_ACTION_CONFLICT', 'This employee has already recorded an approval decision for this request.');
     }
     try {
-      if (decision === 'approve') {
-        const result = await approvals.decide(requestId, { actorId, decision: 'approve', comment }, context);
+      if (request.object_name === 'forge_sales_order' && decision === 'revise' || request.object_name === CONTRACT_OBJECT && decision === 'reject') throw new ApprovalActionFailure(400, 'APPROVAL_ACTION_INVALID', '当前流程不支持该办理动作');
+      if (decision === 'approve' || decision === 'reject') {
+        const result = await approvals.decide(requestId, { actorId, decision, comment }, context);
         return {
           decision: result.decision,
           status: result.request.status,
@@ -691,12 +694,12 @@ function currentApprovalActions(
   itemVersion: string,
   sourceMaterialVersion: string,
 ): JsonRecord[] {
-  if (request.object_name !== CONTRACT_OBJECT || viewer !== 'current_approver' ||
+  if (!EMPLOYEE_APPROVAL_OBJECTS.has(request.object_name) || viewer !== 'current_approver' ||
     request.status !== 'pending' || request.viewer?.can_act !== true || !request.record_id) return [];
   const execution = (actionName: string) => ({
     tool: 'run_action',
     actionName,
-    objectName: CONTRACT_OBJECT,
+    objectName: request.object_name,
     recordId: request.record_id,
     params: { approvalRequestId: request.id, itemVersion, sourceMaterialVersion },
   });
@@ -706,14 +709,14 @@ function currentApprovalActions(
       semantic: 'approve',
       label: '同意审批事项',
       description: '将当前员工的意见记录到原生审批动作，并由原生审批服务决定是否推进流程。',
-      execution: execution('contract_approval_mcp_approve'),
+      execution: execution(request.object_name === CONTRACT_OBJECT ? 'contract_approval_mcp_approve' : 'order_approval_mcp_approve'),
       inputs,
     },
     {
-      semantic: 'revise',
-      label: '退回修改审批事项',
-      description: '将当前员工的退回意见记录到原生审批动作，并沿原生修订分支继续。',
-      execution: execution('contract_approval_mcp_send_back'),
+      semantic: request.object_name === CONTRACT_OBJECT ? 'revise' : 'reject',
+      label: request.object_name === CONTRACT_OBJECT ? '退回修改审批事项' : '拒绝订单复核',
+      description: request.object_name === CONTRACT_OBJECT ? '将当前员工的退回意见记录到原生审批动作，并沿原生修订分支继续。' : '记录拒绝意见并由原生审批取消本订单，保留正式处理依据。',
+      execution: execution(request.object_name === CONTRACT_OBJECT ? 'contract_approval_mcp_send_back' : 'order_approval_mcp_reject'),
       inputs,
     },
   ];
@@ -842,6 +845,10 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
       const actionEngine = readService<IObjectQLEngine>(ctx, 'objectql');
       const actionApprovals = readService<IApprovalService>(ctx, 'approvals');
       if (actionEngine && actionApprovals && typeof actionEngine.registerAction === 'function') {
+        actionEngine.registerAction('forge_sales_order', ORDER_APPROVAL_MCP_APPROVE_TARGET,
+          (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'approve'), 'forge.approval-workbench');
+        actionEngine.registerAction('forge_sales_order', ORDER_APPROVAL_MCP_REJECT_TARGET,
+          (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'reject'), 'forge.approval-workbench');
         actionEngine.registerAction(CONTRACT_OBJECT, CONTRACT_APPROVAL_MCP_APPROVE_TARGET,
           (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'approve'),
           'forge.approval-workbench');

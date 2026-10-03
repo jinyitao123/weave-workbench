@@ -101,3 +101,12 @@ node tests/deploy-transport.mjs
 ```sh
 FORGE_SOURCE_REVISION="$(git rev-parse HEAD)" sudo --preserve-env=FORGE_SOURCE_REVISION ./scripts/deploy.sh
 ```
+
+
+### 员工本人销售订单办理
+
+销售订单阶段复用员工本人身份、原生岗位、业务 Action 和原生审批。合同负责人先确认结构化下单付款条件，独立签署归档后登记并复核必要预收款，再创建与审批订单。`employee_only` 动作在任务委托签发、目录和调用三处均不可交给团队；桌面接口提供版本绑定和原操作回执，本人事项只投影业务记录。
+
+原生审批决定与业务结果分别记录。订单生效、合同累计及拒绝后的预收关联释放在同一事务中应用；中断时通过“核对并完成订单”读取原审批结论并补全同一业务结果。`sales-order-preflight.mjs` 在发布启动前仅放宽旧预收／退款表的订单引用，不更改原关系或金额；对象校验继续要求合同或订单来源。
+
+本批专门检查为 `acceptance:sales-order-native`、`acceptance:employee-business-native` 和 `tests/sales-order-preflight.native-postgres.test.mjs`，必须指向隔离本机 PostgreSQL。组件检查不代表桌面跨员工业务验收；完整范围和部署证据由产品总仓的销售订单场景及环境说明维护。

@@ -235,27 +235,30 @@ function registerTools(pi: ExtensionApi, Type: HostTypebox): void {
     label: '读取当前事项动作目录',
     description: '读取 Forge 为当前已打开审批事项提供的原生可办理动作说明和输入字段。只返回该事项当前可用目录，不开放其他业务对象或动作。',
     promptGuidelines: [
-      '只在当前会话由“我的工作”打开了本人审批事项时调用；action_ref 只能来自本轮本事项最近一次目录结果。',
+      '在本人审批事项、本人业务事项、业务通知或已读取的准确业务记录上调用；action_ref 只能来自本轮本事项最近一次目录结果。签署登记、合同转订单等本人动作不交给团队。',
       '打开审批辅助本身只授权查看；只有之后员工的新消息明确要求办理当前事项，才可调用执行工具。不得把历史聊天、团队结果或旧意见当成本轮授权。',
       '动作名称、对象、目标、版本和其余固定参数由 Forge 当前事项目录提供；不要编造或覆盖。',
     ],
     parameters: Type.Object({}),
     async execute(_id) { return result(await turnCall('list_current_item_actions', {})) },
   })
-  pi.registerTool<{ action_ref: string; comment: string }>({
+  pi.registerTool<{ action_ref: string | number; comment?: string; values?: Record<string, string | number | boolean> }>({
     name: 'gooeypi_enterprise_current_item_action',
     label: '办理当前事项动作',
-    description: '在员工当前明确办理意见下，执行当前审批事项动作目录中的一项 Forge 原生 MCP 动作，并返回真实动作回执。',
+    description: '按员工本轮明确要求办理当前事项。原生审批填写comment；本人业务动作填写目录声明的values，由Host绑定来源与原件，并返回Forge真实回执。',
     promptGuidelines: [
       '只接受员工本轮新消息明确要求办理的当前审批事项；不能从打开只读复核会话、旧聊天或旧待办推断授权。',
       'action_ref 必须来自本轮同一当前事项动作目录。只填写员工本轮明确给出的comment，不改写业务对象、动作名称、记录目标、版本或其他动作参数。',
       '每个员工轮次只调用一次。动作成功只代表 Forge 返回了该动作回执；不得据此宣称整条审批流程已完成。依回执中的当前状态、resumed、autoRejected 和 alreadyApplied 分别说明。',
       '结果未知时先读取当前事项和 Forge 原生动作历史；Host 未确认前不得重新执行或换用其他工具。',
       '不调用团队交接、审批修订或其他业务对象工具；办理后保留 Forge 已记录的原生意见。',
+      '本人业务动作的action_ref使用目录返回的整数，values只填声明的标量，日期用员工明确给出的YYYY-MM-DD；关键值必须忠实于本轮原话，不自行编造编号、日期或付款方式。枚举按enumLabels中唯一准确的业务标签对应原生value，不能猜别名、回译或把否定和条件当作选择，不要求员工输入内部枚举码。文件字段不放values，只用本条消息员工实际选定的一份原件。不能提供账号、对象、记录、版本或幂等键。',
+      '本人业务动作结果未知时，只重新读取当前事项动作目录核对原操作，不重发、不换新操作。没有绑定业务记录时，先用已有业务目录查找并读取准确记录，不要求选择团队。',
     ],
     parameters: Type.Object({
-      action_ref: Type.String({ minLength: 1, maxLength: 64, description: '当前员工轮次中 Forge 当前事项动作目录返回的序号' }),
-      comment: Type.String({ minLength: 1, maxLength: 4_000, description: '员工本轮明确提供并由当前动作输入声明要求的意见' }),
+      action_ref: { anyOf: [{ type: 'string', minLength: 1, maxLength: 64 }, { type: 'integer', minimum: 1, maximum: 64 }], description: '使用当前目录返回的原始序号类型' },
+      comment: Type.Optional(Type.String({ minLength: 1, maxLength: 4_000, description: '仅原生审批使用的员工本轮意见' })),
+      values: Type.Optional({ type: 'object', maxProperties: 32, additionalProperties: { anyOf: [{ type: 'string', maxLength: 4000 }, { type: 'number' }, { type: 'boolean' }] }, description: '仅本人业务动作使用，字段必须来自本轮目录；原生审批不填写' }),
     }),
     async execute(_id, params) { return result(await turnCall('run_current_item_action', params)) },
   })

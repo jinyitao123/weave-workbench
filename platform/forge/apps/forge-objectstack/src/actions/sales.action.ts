@@ -1,3 +1,4 @@
+import { SIGNATURE_TARGET, ORDER_CONDITIONS_TARGET, CONTRACT_ORDER_TARGET, ORDER_SUBMIT_TARGET, ORDER_APPLY_APPROVAL_TARGET } from '../plugins/sales-order-domain.js';
 import { defineAction } from '@objectstack/spec';
 import { hasExactQuotationLineSet } from './sales-contract-source-set.js';
 import { CONTRACT_MATERIAL_SUBMISSION_TARGET, CONTRACT_REVISION_ATTACHMENT_RETIRED_TARGET, CONTRACT_SUBMISSION_RECEIPT_TARGET } from '../plugins/contract-material-submission.js';
@@ -772,41 +773,14 @@ export const ContractRegisterSignature = defineAction({
   requiredPermissions: ['contract_signature_registrar'],
   visible: `record.status == 'active' && record.signed_on == null`,
   description: '内部合同审批通过后，上传客户签署版本并登记实际签订日期；此动作不替代签署本身。',
-  successMessage: '客户签署凭证已归档，合同可以进入订单办理',
+  successMessage: '客户签署凭证已归档',
   params: [
     { field: 'signed_on', objectOverride: 'forge_sales_contract', required: true },
     { field: 'signed_evidence_attachment', objectOverride: 'forge_sales_contract', required: true },
     { field: 'signed_evidence_note', objectOverride: 'forge_sales_contract', required: true },
   ],
-  body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
-const id = ctx.recordId || (ctx.record && ctx.record.id);
-const actor = String(ctx.session && ctx.session.userId || '').trim();
-if (ctx.recordLoadDenied === true || !id || !ctx.record) throw new Error('当前合同不存在或不可访问');
-if (!actor) throw new Error('无法识别当前签署登记员工');
-const signedOn = String(ctx.input.signed_on || '').trim();
-const note = String(ctx.input.signed_evidence_note || '').trim();
-const rawFile = ctx.input.signed_evidence_attachment, firstFile = Array.isArray(rawFile) ? rawFile[0] : rawFile;
-const fileId = String(typeof firstFile === 'string' ? firstFile : firstFile && firstFile.id || '').trim();
-if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(signedOn) || Number.isNaN(Date.parse(signedOn + 'T00:00:00Z'))) throw new Error('请填写有效的实际签订日期');
-if (!note || note.length > 2000) throw new Error('请填写签署来源或文件说明');
-if (!fileId) throw new Error('请上传客户签署版合同凭证');
-const file = await ctx.api.object('sys_file').findOne({ where: { id: fileId } });
-if (!file || file.status !== 'committed' || file.owner_id !== actor) throw new Error('签署凭证尚未上传完成或不属于当前员工');
-return await ctx.api.transaction(async () => {
-  const current = await ctx.api.object('forge_sales_contract').findOne({ where: { id } });
-  if (!current || current.status !== 'active') throw new Error('合同必须先完成内部审批');
-  if (current.responsible_id === actor) throw new Error('合同负责人不能代替独立登记人归档签署凭证');
-  const storedFile = Array.isArray(current.signed_evidence_attachment) ? current.signed_evidence_attachment[0] : current.signed_evidence_attachment;
-  const storedFileId = String(typeof storedFile === 'string' ? storedFile : storedFile && storedFile.id || '').trim();
-  if (current.signed_on || storedFileId) {
-    if (String(current.signed_on) === signedOn && storedFileId === fileId && current.signed_evidence_note === note) return { id, signed_on: signedOn, repeated: true };
-    throw new Error('合同已登记签署凭证；请按修订流程处理，不要覆盖历史签署材料');
-  }
-  await ctx.api.object('forge_sales_contract').update({ id, signed_on: signedOn, signed_evidence_attachment: fileId,
-    signed_evidence_note: note, signed_recorded_by: actor, signed_recorded_at: new Date().toISOString() });
-  return { id, signed_on: signedOn, signed_evidence_attachment: fileId, repeated: false };
-});
-` },
+  ai: { exposed: true, description: '由独立签署登记员工归档本轮客户签署原件及实际签订日期，重新校验合同内部复核结果与当前身份，不代替真实客户签署。', category: 'action', requiresConfirmation: false },
+  target: SIGNATURE_TARGET,
 });
 
 export const ContractSubmitFrozenMaterial = defineAction({
@@ -840,81 +814,15 @@ export const SalesOrderSubmit = defineAction({
   visible: `record.status == 'draft'`, confirmText: '提交前将校验合同额度和明细数量，是否继续？', refreshAfter: true,
   requiredPermissions: ['sales_order_operator'],
   successMessage: '销售订单已提交审批',
-  body: {
-    language: 'js', capabilities: ['api.read', 'api.write'], source: `
-const id = ctx.recordId || (ctx.record && ctx.record.id);
-if (ctx.recordLoadDenied === true || !id) throw new Error('当前订单不存在或不可访问');
-const record = ctx.record;
-if (!record || record.status !== 'draft') throw new Error('订单状态已变化，请刷新后重试');
-if (!record.payment_term || !String(record.payment_term).trim() || !record.payment_method || !record.planned_delivery_on) throw new Error('提交订单前必须明确付款条件、付款方式和计划交货日期');
-const lines = await ctx.api.object('forge_sales_order_line').find({ where: { order_id: id } });
-if (!lines.length) throw new Error('订单至少需要一条物料或服务明细');
-if (lines.some(line => line.line_type === 'service' ? Boolean(line.sku_id) : line.line_type !== 'material' || !line.sku_id)) throw new Error('订单明细的物料/服务类型与规格关联不一致');
-const total = Math.round(lines.reduce((sum, line) => sum + Number(line.taxed_subtotal || 0), 0) * 10000) / 10000;
-if (record.source_type === 'contract') {
-  if (!record.contract_id) throw new Error('关联合同订单必须选择合同');
-  const contract = await ctx.api.object('forge_sales_contract').findOne({ where: { id: record.contract_id } });
-  if (!contract || contract.status !== 'active' || !contract.signed_on || !contract.signed_evidence_attachment) throw new Error('关联合同需完成内部审批并归档客户签署凭证');
-  if (contract.has_order_amount_limit && Number(contract.ordered_amount || 0) + total > Number(contract.order_amount_limit || 0)) {
-    throw new Error('订单金额超过合同剩余额度');
-  }
-  const contractLines = await ctx.api.object('forge_sales_contract_line').find({ where: { contract_id: record.contract_id } });
-  const limits = new Map(contractLines.map(line => [line.id, line]));
-  for (const line of lines) {
-    const contractLine = limits.get(line.contract_line_id);
-    if (!contractLine) throw new Error('订单明细必须来自当前合同清单');
-    if (line.line_type !== contractLine.line_type || (line.line_type === 'service' && (line.sku_id || contractLine.sku_id)) || (line.line_type === 'material' && (!line.sku_id || line.sku_id !== contractLine.sku_id))) throw new Error('订单明细物料/服务类型或规格与合同不一致');
-    if (Number(contractLine.ordered_quantity || 0) + Number(line.quantity || 0) > Number(contractLine.quantity_limit || 0)) {
-      throw new Error('订单物料数量超过合同剩余数量');
-    }
-  }
-}
-if (record.quotation_id) {
-  const quote = await ctx.api.object('forge_quotation').findOne({ where: { id: record.quotation_id } });
-  if (!quote || quote.status !== 'accepted' || !quote.customer_acceptance_evidence_attachment || Number(quote.accepted_pricing_version) !== Number(quote.pricing_version || 0)) throw new Error('来源报价需有当前核价版本的客户接受凭证');
-}
-await ctx.api.object('forge_sales_order').update({ id, total_amount: total, status: 'pending_approval' });
-return { id, total_amount: total, status: 'pending_approval' };
-`,
-  },
+  ai: { exposed: true, description: '订单经办员工提交本人草稿订单，校验合同来源和预付款条件并冻结本次明细，交给原生审批中的独立订单复核人办理。', category: 'action', requiresConfirmation: false },
+  target: ORDER_SUBMIT_TARGET,
 });
 
 export const SalesOrderApprove = defineAction({
-  name: 'sales_order_approve', label: '同意', objectName: 'forge_sales_order', icon: 'circle-check', locations: [...locations], order: 10,
-  visible: `record.status == 'pending_approval'`, confirmText: '确认同意并开始执行这张订单？', refreshAfter: true,
+  name: 'sales_order_approve', label: '办理订单审批', objectName: 'forge_sales_order',
+  icon: 'circle-check', locations: [...locations], visible: "record.status == 'pending_approval'",
   requiredPermissions: ['sales_order_reviewer'],
-  successMessage: '订单审批通过，合同执行进度已更新',
-  body: {
-    language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
-const id = ctx.recordId || (ctx.record && ctx.record.id);
-if (ctx.recordLoadDenied === true || !id) throw new Error('当前订单不存在或不可访问');
-const record = ctx.record;
-if (!record || record.status !== 'pending_approval') throw new Error('订单状态已变化，请刷新后重试');
-{
-  await ctx.api.object('forge_sales_order').update({ id, status: 'active' });
-  if (!record.contract_id) return;
-  const orders = await ctx.api.object('forge_sales_order').find({ where: { contract_id: record.contract_id } });
-  const activeOrders = orders.filter(order => ['approved', 'active', 'partially_shipped', 'shipped', 'completed'].includes(order.status));
-  const orderedAmount = Math.round(activeOrders.reduce((sum, order) => sum + Number(order.total_amount || 0), 0) * 10000) / 10000;
-  const quantities = new Map();
-  for (const order of activeOrders) {
-    const orderLines = await ctx.api.object('forge_sales_order_line').find({ where: { order_id: order.id } });
-    for (const line of orderLines) {
-      if (!line.contract_line_id) continue;
-      quantities.set(line.contract_line_id, Number(quantities.get(line.contract_line_id) || 0) + Number(line.quantity || 0));
-    }
-  }
-  const contractLines = await ctx.api.object('forge_sales_contract_line').find({ where: { contract_id: record.contract_id } });
-  for (const line of contractLines) {
-    await ctx.api.object('forge_sales_contract_line').update({ id: line.id, ordered_quantity: Number(quantities.get(line.id) || 0) });
-  }
-  await ctx.api.object('forge_sales_contract').update({ id: record.contract_id,
-    ordered_count: activeOrders.length, ordered_amount: orderedAmount, status: 'active'
-  });
-}
-return { id, status: 'active', contract_id: record.contract_id || null };
-`,
-  },
+  type: 'url', target: '/_console/approvals',
 });
 
 export const SalesOrderCreateShipment = defineAction({
@@ -1046,63 +954,8 @@ export const ContractConvertToSalesOrder = defineAction({
     { field: 'delivery_address', objectOverride: 'forge_sales_order' },
   ],
   onSuccess: { navigate: '/_console/apps/com.inoforge.forge.sales/forge_sales_order/record/${result.id}' },
-  body: {
-    language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
-const id = ctx.recordId || (ctx.record && ctx.record.id);
-const contract = ctx.record;
-if (ctx.recordLoadDenied === true || !id || !contract) throw new Error('当前合同不存在或不可访问');
-if (contract.status !== 'active' || !contract.signed_on || !contract.signed_evidence_attachment) throw new Error('仅完成内部审批并归档客户签署凭证的合同可以创建销售订单');
-if (!ctx.input.payment_term || !String(ctx.input.payment_term).trim() || !ctx.input.payment_method) throw new Error('创建订单前必须明确付款条件和付款方式');
-const actor = String(ctx.session && ctx.session.userId || '').trim();
-if (!actor) throw new Error('无法识别当前订单经办人');
-const requestedCode = String(ctx.input.code || '').trim();
-return await ctx.api.transaction(async () => {
-  const currentContract = await ctx.api.object('forge_sales_contract').findOne({ where: { id } });
-  if (!currentContract || currentContract.status !== 'active' || !currentContract.signed_on || !currentContract.signed_evidence_attachment) throw new Error('仅完成内部审批并归档客户签署凭证的合同可以创建销售订单');
-  const prior = requestedCode ? await ctx.api.object('forge_sales_order').findOne({ where: { code: requestedCode } }) : null;
-  if (prior) {
-    if (prior.contract_id === id && prior.responsible_id === actor && prior.status === 'draft') return { id: prior.id, contract_id: id, repeated: true };
-    throw new Error('订单编号已存在，请更换编号后重试');
-  }
-  const existing = await ctx.api.object('forge_sales_order').find({ where: { contract_id: id } });
-  if (existing.some(order => order.status !== 'cancelled')) throw new Error('该合同已有未取消的销售订单；请先完成或取消现有订单');
-  const lines = await ctx.api.object('forge_sales_contract_line').find({ where: { contract_id: id } });
-  if (lines.some(line => line.line_type === 'service' ? Boolean(line.sku_id) : line.line_type !== 'material' || !line.sku_id)) throw new Error('合同明细的物料/服务类型与规格关联不一致');
-  const remaining = lines.map(line => ({ line, quantity: Number(line.quantity_limit || 0) - Number(line.ordered_quantity || 0) }))
-    .filter(item => item.quantity > 0);
-  if (!remaining.length) throw new Error('合同没有可下单的剩余数量');
-  const round4 = value => Math.round((value + Number.EPSILON) * 10000) / 10000;
-  let total = 0;
-  for (const item of remaining) total += Number(item.line.taxed_subtotal || 0) * item.quantity / Number(item.line.quantity_limit || 1);
-  total = round4(total);
-  const created = await ctx.api.object('forge_sales_order').insert({
-    name: ctx.input.name, code: requestedCode, source_type: 'contract', customer_id: currentContract.customer_id,
-    contact_id: currentContract.contact_id || null, contract_id: id, quotation_id: currentContract.quotation_id || null,
-    planned_delivery_on: ctx.input.planned_delivery_on, responsible_id: actor,
-    payment_term: String(ctx.input.payment_term).trim(), payment_method: ctx.input.payment_method,
-    revenue_trigger: currentContract.revenue_trigger || 'shipment', total_amount: total,
-    delivery_address: ctx.input.delivery_address || null, remarks: '由合同 ' + currentContract.code + ' 转换生成',
-  });
-  const orderId = typeof created === 'string' ? created : created && (created.id || (created.record && created.record.id));
-  if (!orderId) throw new Error('订单创建后未返回记录ID');
-  for (const item of remaining) {
-    const line = item.line;
-    const lineTotal = round4(Number(line.taxed_subtotal || 0) * item.quantity / Number(line.quantity_limit || 1));
-    const rate = Number(line.tax_rate || 0) / 100;
-    await ctx.api.object('forge_sales_order_line').insert({
-      name: line.name, order_id: orderId, line_type: line.line_type || 'material', contract_line_id: line.id, quotation_line_id: line.quotation_line_id || null,
-      sku_id: line.sku_id || null, item_code: line.item_code || null, model: line.model || null,
-      specification: line.specification || null, unit_name: line.unit_name || null, quantity: item.quantity,
-      shipped_quantity: 0, invoiced_quantity: 0, taxed_unit_price: Number(line.taxed_unit_price || 0),
-      untaxed_unit_price: rate > 0 ? round4(Number(line.taxed_unit_price || 0) / (1 + rate)) : Number(line.taxed_unit_price || 0),
-      tax_rate: Number(line.tax_rate || 0), discount_rate: Number(line.discount_rate || 0),
-      taxed_subtotal: lineTotal, planned_delivery_on: ctx.input.planned_delivery_on, remarks: line.remarks || null,
-    });
-  }
-  return { id: orderId, contract_id: id, line_count: remaining.length, total_amount: total };
-});
-`,
-  },
+  ai: { exposed: true, description: '订单经办员工按已签署合同的剩余明细创建本人订单，重新核验约定预付款已独立确认、来源数量和金额，不自动审批订单。', category: 'action', requiresConfirmation: false },
+  target: CONTRACT_ORDER_TARGET,
 });
 
 const serviceOrderTransitionBody = (from: string, to: string, extraSource = '') => ({
@@ -1176,6 +1029,7 @@ const engineers = users
   .filter(user => user.name)
   .sort((left, right) => left.name.localeCompare(right.name));
 `;
+
 
 export const ServiceOrderDispatchEngineers = defineAction({
   name: 'service_order_dispatch_engineers', label: '查询可派服务工程师', objectName: 'forge_service_order', icon: 'users',
@@ -1685,4 +1539,27 @@ await ctx.api.object('forge_goodwill_order').update({ id, status: 'completed', s
 return { id, status: 'completed', completed_at: now };
 `,
   },
+});
+
+export const ContractSetOrderConditions = defineAction({
+  name: 'contract_set_order_conditions', label: '确认下单条件', objectName: 'forge_sales_contract',
+  icon: 'clipboard-check', locations: [...locations], refreshAfter: true,
+  requiredPermissions: ['sales_contract_operator'], visible: "record.status == 'active' && record.signed_on == null",
+  ai: { exposed: true, category: 'action', requiresConfirmation: false,
+    description: '合同负责人根据已内部复核通过的合同原文明确是否先收预付款及金额，签署归档后不允许覆盖；不从自由文本或模型推断付款条件。' },
+  params: [
+    { name: 'order_payment_requirement', label: '下单付款条件', type: 'select', required: true,
+      options: [{ value: 'none', label: '无需预付款' }, { value: 'prepayment', label: '先确认预付款' }] },
+    { field: 'order_prepayment_amount', objectOverride: 'forge_sales_contract' },
+  ], target: ORDER_CONDITIONS_TARGET,
+});
+
+export const SalesOrderApplyCompletedApproval = defineAction({
+  name: 'sales_order_apply_completed_approval', label: '核对并完成订单', objectName: 'forge_sales_order',
+  icon: 'clipboard-check', locations: ['record_header', 'record_more'], refreshAfter: true,
+  requiredPermissions: ['sales_order_operator'],
+  visible: "record.status == 'pending_approval' && (record.approval_outcome == 'approved' || record.approval_outcome == 'rejected')",
+  ai: { exposed: true, category: 'action', requiresConfirmation: false,
+    description: '订单原生审批已有正式结论但业务状态更新中断时，由本人经办人核对同一审批及提交版本，原子补全原订单和合同累计，不新建审批或重作意见。' },
+  target: ORDER_APPLY_APPROVAL_TARGET,
 });

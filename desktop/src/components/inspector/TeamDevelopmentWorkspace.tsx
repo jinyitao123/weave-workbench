@@ -14,7 +14,15 @@ import type { TeamDefinition, TeamDevelopmentProposalResult, TeamWorkspace, Team
 
 const pendingDrafts = new Map<string, { revision: number; document: TeamDefinition }>()
 type Member = TeamDefinition['members'][number]
-function focusAfterRender(target: () => HTMLElement | null) { requestAnimationFrame(() => target()?.focus()) }
+function focusAfterRender(target: () => HTMLElement | null) {
+  const previousFocus = document.activeElement
+  requestAnimationFrame(() => {
+    const focused = document.activeElement
+    // A newer employee interaction owns its focus, including an opened inline editor.
+    if (focused && focused !== document.body && focused !== document.documentElement && focused !== previousFocus) return
+    target()?.focus()
+  })
+}
 const memberRole = (item: Member) => item.configuration.role === 'avatar' ? '负责人' : item.configuration.role === 'worker' ? '执行成员' : '成员'
 
 /** Why the team cannot be updated yet; empty when it can. Mirrors the publish rule below. */

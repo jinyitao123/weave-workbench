@@ -112,6 +112,7 @@ const INVOKE_CASES: Array<[domain: string, method: string, channel: string, args
   ['enterprise', 'pinReturnedApprovalContext', 'enterprise:pin-returned-approval-context', ['approval']],
   ['enterprise', 'pinApprovalReviewContext', 'enterprise:pin-approval-review-context', ['approval']],
   ['enterprise', 'pinWorkContinuationContext', 'enterprise:pin-work-continuation-context', [{ id: 'message' }]],
+  ['enterprise', 'pinEmployeeBusinessContext', 'enterprise:pin-employee-business-context', [{ objectName: 'sales_contract', recordId: 'contract', label: '合同' }]],
   ['enterprise', 'submitWork', 'enterprise:submit-work', [{ teamId: 'team' }, '只读分析']],
   ['enterprise', 'completeHumanTask', 'enterprise:complete-human-task', [{ runId: 'run-original', interactionId: 'task', inputRevisionID: 'input-original', workbenchSessionID: 'session-original' }, { decision: 'approved' }]],
   ['projects', 'importTextMaterial', 'projects:import-text-material', ['project', '/workspace/material.md', 'material.md', new Uint8Array([1]), 'pi']],

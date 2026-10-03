@@ -6,6 +6,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { approvalContextView, EnterpriseService, WorkRegistrationRejectedError } from '../../electron/main/enterprise'
 import type { BusinessRecordRead } from '../../electron/main/enterprise/business-records'
 import { digest } from '../../electron/main/enterprise/handoff-store'
+import { employeeBusinessRequestDigest } from '../../electron/main/enterprise/employee-business-contract'
+import type { EmployeeBusinessRequest } from '../../src/types/employee-business'
 import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -51,6 +53,27 @@ function runLookup(source: { workReference: string; runReference: string; sessio
 }
 
 describe('EnterpriseService', () => {
+  it('uses the employee session for current context, execution and operation lookup without creating a team grant', async () => {
+    const calls: string[] = []
+    const record = { objectName: 'forge_sales_contract', recordId: 'contract-1', label: '合同' }
+    const context = { version: '1', contextId: '10000000-0000-4000-8000-000000000001', contextVersion: 'a'.repeat(64), recordVersion: '1', expiresAt: new Date(Date.now() + 60_000).toISOString(), readOnly: true, record, source: { kind: 'record' as const }, actions: [] }
+    const request: EmployeeBusinessRequest = { version: '1', contextId: context.contextId, contextVersion: context.contextVersion, opKey: '20000000-0000-4000-8000-000000000002', employeeMessage: { sessionId: 'session', messageId: 'message', sha256: 'b'.repeat(64) }, action_ref: 1, values: {} }
+    const operation = { version: '1', operationId: request.opKey, contextId: context.contextId, requestDigest: employeeBusinessRequestDigest(request), status: 'succeeded', repeated: false, updatedAt: new Date().toISOString() }
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: workOverviewFetch((url, init) => {
+      calls.push(url)
+      if (!url.includes('/business-actions/')) return undefined
+      expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer forge-token-employee@example.test')
+      if (url.includes('/context?')) { expect(url).toContain('objectName=forge_sales_contract&recordId=contract-1&sourceKind=record'); return Response.json(context) }
+      if (url.endsWith('/execute')) { expect(JSON.parse(String(init?.body))).toEqual(request); return Response.json(operation) }
+      if (url.endsWith(`/operations/${request.opKey}`)) { expect(init?.method).toBeUndefined(); return Response.json(operation) }
+      return undefined
+    }) })
+    await service.signIn('employee@example.test', 'secret')
+    expect(await service.getEmployeeBusinessContext({ record, source: { kind: 'record' } })).toEqual(context)
+    expect(await service.executeEmployeeBusinessAction(request)).toEqual(operation)
+    expect(await service.getEmployeeBusinessOperation(request.opKey)).toEqual(operation)
+    expect(calls.some((url) => url.includes('/task-delegations') || url.includes('/dispatch-inputs'))).toBe(false)
+  })
   it('uses one Forge login to create a session-only Weave binding', async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
@@ -362,34 +385,24 @@ describe('EnterpriseService', () => {
     } finally { await rm(directory, { recursive: true, force: true }) }
   })
 
-  it('projects Forge actions into developer-facing business capabilities', async () => {
+  it('filters employee-only actions from the canonical developer catalog', async () => {
+    const capabilities = [
+      { id: 'forge:action:sales_contract.ContractSubmit', name: '提交销售合同', description: '提交合同', effect: 'write', executionMode: 'team_delegable', resourceType: 'sales_contract', status: 'available', params: [{ name: 'attachments', type: 'file', multiple: true }] },
+      { id: 'forge:action:sales_contract.RegisterSignature', name: '登记签署', description: '本人登记', effect: 'write', executionMode: 'employee_only', resourceType: 'sales_contract', status: 'available' },
+    ]
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test' } })
       if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use', 'teams:develop'] })
-      if (url.endsWith('/api/v1/meta/actions')) {
+      if (url.endsWith('/api/v1/workbench/business-actions/catalog')) {
         expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer forge-token')
-        expect(init?.method).toBeUndefined()
-        return Response.json({ data: { items: [
-          { name: 'ContractSubmit', objectName: 'sales_contract', label: '提交销售合同', ai: { exposed: true, description: '校验后提交合同' }, params: [{ name: 'material_file_id', label: '合同文件', type: 'text', required: true }, { name: 'attachments', label: '附件', type: 'file', multiple: true }], requiredPermissions: ['sales_contract_operator'] },
-          { name: 'UpdateQuoteLines', objectName: 'forge_quote', label: '调整报价明细', ai: { exposed: true, description: '按要求调整报价明细' }, params: [{ name: 'lines', label: '明细', type: 'array', required: true }] },
-          { name: 'UpdateQuoteObject', objectName: 'forge_quote', label: '更新报价结构', ai: { exposed: true, description: '按要求更新报价结构' }, params: [{ name: 'value', label: '结构', type: 'object', required: true }] },
-          { name: 'InternalOnly', objectName: 'sales_contract', label: '内部动作', ai: { exposed: false } },
-        ] } })
+        return Response.json({ version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities, refreshedAt: new Date().toISOString() })
       }
       return Response.json({}, { status: 404 })
     }) as typeof fetch
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
     await service.signIn('developer@example.test', 'secret')
-
-    await expect(service.getBusinessCapabilityCatalog()).resolves.toMatchObject({
-      provider: { name: 'Forge 业务环境', status: 'available' },
-      capabilities: [
-        { id: 'forge:action:sales_contract.ContractSubmit', name: '提交销售合同', effect: 'write', requiresEmployeeIntent: true, status: 'available', actionName: 'ContractSubmit', objectName: 'sales_contract', requiresRecord: true, params: [{ name: 'material_file_id', label: '合同文件', type: 'string', required: true }, { name: 'attachments', label: '附件', type: 'file', multiple: true }] },
-        { id: 'forge:action:forge_quote.UpdateQuoteLines', status: 'unavailable', unavailableReason: '数组缺少条目结构，当前不能绑定/执行', params: [{ name: 'lines', label: '明细', type: 'array', required: true }] },
-        { id: 'forge:action:forge_quote.UpdateQuoteObject', status: 'unavailable', unavailableReason: '业务参数结构暂不支持，当前不能绑定/执行', params: [{ name: 'value', label: '结构', type: 'unsupported', required: true }] },
-      ],
-    })
+    expect((await service.getBusinessCapabilityCatalog()).capabilities).toEqual([capabilities[0]])
   })
 
   it('fails closed when employee action metadata contains unsupported array or object parameters', async () => {
@@ -407,6 +420,7 @@ describe('EnterpriseService', () => {
       ] },
     }
     const fetchMock = workOverviewFetch((url) => {
+      if (url.endsWith('/api/v1/workbench/business-actions/catalog')) return Response.json({ version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: actions.map((a) => ({ id: `forge:action:${a.objectName}.${a.name}`, name: a.name, description: a.name, resourceType: a.objectName, status: 'available', effect: 'write', executionMode: 'team_delegable' })), refreshedAt: new Date().toISOString() })
       if (url.endsWith('/api/v1/mcp')) return Response.json({ jsonrpc: '2.0', id: 'business-capability-catalog', result: { content: [{ type: 'text', text: JSON.stringify({ actions }) }] } })
       if (url.endsWith('/api/v1/meta/objects/forge_quote')) return Response.json(metadata)
       return undefined
@@ -440,6 +454,7 @@ describe('EnterpriseService', () => {
     const calls: Array<{ url: string; method?: string; auth?: string }> = []
     const fetchMock = workOverviewFetch((url, init) => {
       calls.push({ url, method: init?.method, auth: new Headers(init?.headers).get('Authorization') ?? undefined })
+      if (url.endsWith('/api/v1/workbench/business-actions/catalog')) return Response.json({ version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: actions.map((a) => ({ id: `forge:action:${a.objectName}.${a.name}`, name: a.name, description: a.name, resourceType: a.objectName, status: 'available', effect: 'write', executionMode: 'team_delegable' })), refreshedAt: new Date().toISOString() })
       if (url.endsWith('/api/v1/mcp')) return Response.json({ jsonrpc: '2.0', id: 'business-capability-catalog', result: { content: [{ type: 'text', text: JSON.stringify({ actions }) }] } })
       if (url.endsWith('/api/v1/meta/objects/forge_sales_contract')) return Response.json(objectMetadata('forge_sales_contract', [
         { name: 'contract_submit_material_package', params: [
@@ -490,6 +505,7 @@ describe('EnterpriseService', () => {
   it('does not degrade denied native employee metadata to the string summary or sign out', async () => {
     const actions = [{ name: 'contract_submit_material_package', objectName: 'forge_sales_contract', params: [{ name: 'material_file_ids', type: 'string', required: true }] }]
     const fetchMock = workOverviewFetch((url) => {
+      if (url.endsWith('/api/v1/workbench/business-actions/catalog')) return Response.json({ version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: actions.map((a) => ({ id: `forge:action:${a.objectName}.${a.name}`, name: a.name, description: a.name, resourceType: a.objectName, status: 'available', effect: 'write', executionMode: 'team_delegable' })), refreshedAt: new Date().toISOString() })
       if (url.endsWith('/api/v1/mcp')) return Response.json({ jsonrpc: '2.0', id: 'business-capability-catalog', result: { content: [{ type: 'text', text: JSON.stringify({ actions }) }] } })
       if (url.endsWith('/api/v1/meta/objects/forge_sales_contract')) return Response.json({ error: 'forbidden' }, { status: 403 })
       return undefined
@@ -507,7 +523,7 @@ describe('EnterpriseService', () => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test' } })
       if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use', 'teams:develop'] })
-      if (url.endsWith('/api/v1/meta/actions')) return Response.json({}, { status: 403 })
+      if (url.endsWith('/api/v1/workbench/business-actions/catalog')) return Response.json({}, { status: 403 })
       return Response.json({}, { status: 404 })
     }) as typeof fetch
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
@@ -523,7 +539,7 @@ describe('EnterpriseService', () => {
       const url = String(input)
       if (url.endsWith('/api/v1/auth/sign-in/email')) return Response.json({ token: 'forge-token', user: { id: 'forge-1', email: 'developer@example.test' } })
       if (url.endsWith('/v1/auth/external/exchange')) return Response.json({ token: 'weave-token', subject: { id: 'weave-1', externalId: 'forge-1' }, organization: { id: 'default' }, issuer: 'forge:test-deployment', permissions: ['teams:use', 'teams:develop'] })
-      if (url.endsWith('/api/v1/meta/actions')) return Response.json({ error: { code: 'PASSWORD_EXPIRED', message: 'expired' } }, { status: 403 })
+      if (url.endsWith('/api/v1/workbench/business-actions/catalog')) return Response.json({ error: { code: 'PASSWORD_EXPIRED', message: 'expired' } }, { status: 403 })
       return Response.json({}, { status: 404 })
     }) as typeof fetch
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
@@ -1093,7 +1109,7 @@ describe('EnterpriseService', () => {
     expect(dispatched).toBe(false)
   })
 
-  it('loads native Forge approvals, routes reviewer decisions, and blocks native resubmit', async () => {
+  it('loads native Forge approvals and refuses unversioned legacy decisions or native resubmit', async () => {
     const calls: Array<{ url: string; method: string; body?: Record<string, unknown> }> = []
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const url = String(input), method = init?.method ?? 'GET'
@@ -1121,9 +1137,9 @@ describe('EnterpriseService', () => {
       { interactionId: 'approval-1', runId: 'forge:approval:approval-1', source: 'forge', mode: 'approval' },
       { interactionId: 'approval-2', runId: 'forge:revision:approval-2', source: 'forge', mode: 'revision', instructions: '退回原因：请补齐附件' },
     ])
-    await service.completeHumanTask(overview.tasks[0], { decision: 'rejected', comment: '请补充付款条件' })
+    await expect(service.completeHumanTask(overview.tasks[0], { decision: 'rejected', comment: '请补充付款条件' })).rejects.toThrow()
     await expect(service.completeHumanTask(overview.tasks[1], { decision: 'approved', comment: '已补充' })).rejects.toThrow('Forge 修订材料递交业务动作尚未接通')
-    expect(calls.find((call) => call.url.endsWith('/approval-1/revise'))).toMatchObject({ method: 'POST', body: { comment: '请补充付款条件' } })
+    expect(calls.some((call) => call.url.endsWith('/approval-1/revise'))).toBe(false)
     expect(calls.some((call) => call.url.endsWith('/approval-2/resubmit'))).toBe(false)
   })
 

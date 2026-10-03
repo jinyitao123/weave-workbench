@@ -18,7 +18,7 @@ export async function readEmployeeWorkOverview(projectID: string, access: WorkOv
     try { return { value: await operation() } }
     catch (error) { return { error: error instanceof Error ? error.message : '读取失败' } }
   }
-  const [teamsRead, runsRead, notificationsRead, approvalsRead] = await Promise.all([
+  const [teamsRead, runsRead, notificationsRead, approvalsRead, businessRead] = await Promise.all([
     read(() => access.getTeamCatalog()),
     read(() => access.weaveJSON(`/v1/runs?project_id=${encodeURIComponent(projectID)}&limit=50`)),
     read(async () => {
@@ -28,6 +28,10 @@ export async function readEmployeeWorkOverview(projectID: string, access: WorkOv
     read(async () => {
       const { readApprovalWorkPages } = await import('./inbox-pages')
       return readApprovalWorkPages((path) => access.forgeJSON(path, '审批事项'))
+    }),
+    read(async () => {
+      const { readBusinessWork } = await import('./business-work')
+      return readBusinessWork((path) => access.forgeJSON(path, '本人业务事项'))
     }),
   ])
   const choices: EnterpriseWorkChoice[] = []
@@ -152,13 +156,14 @@ export async function readEmployeeWorkOverview(projectID: string, access: WorkOv
   access.assertCurrent()
   const readStatus = (error?: string): EnterpriseWorkReadStatus => error ? { status: 'failed', error } : { status: 'loaded' }
   return {
-    loadedAt: new Date().toISOString(), choices, tasks,
+    loadedAt: new Date().toISOString(), choices, tasks, businessWork: businessRead.value?.items ?? [],
     items: items.filter((item) => !consumedHumanReview.has(item.id)).map((item) => projectedById.get(item.id) ?? item),
     runs: (Array.isArray(runList?.runs) ? runList.runs : []).flatMap((run) => runObservation(run) ?? []),
     reads: {
       runs: readStatus(runsRead.error), teamChoices: readStatus(teamChoicesError),
       weaveTasks: readStatus(notificationsRead.error ?? notificationsRead.value?.error ?? lookupError ?? (humanTasksError.length ? [...new Set(humanTasksError)].join('；') : undefined)),
       forgeApprovals: readStatus(approvalsRead.error ?? approvalsRead.value?.error),
+      businessWork: readStatus(businessRead.error ?? businessRead.value?.error),
       notifications: readStatus(notificationsRead.error ?? notificationsRead.value?.error ?? (sourceErrors.length ? [...new Set(sourceErrors)].join('；') : undefined)),
     },
   }

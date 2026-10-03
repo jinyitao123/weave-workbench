@@ -33,6 +33,10 @@ describe('Forge business notification prompt', () => {
     expect(prompt).toContain('当前合同正文原文')
     expect(prompt).toContain('不提交业务动作、不发起团队工作')
     expect(prompt).toContain('之后的新消息中明确提出新的工作要求')
+    expect(prompt).toContain('当前账号可见范围内的业务信息已读取')
+    expect(prompt).toContain('部分页面、图片或文档内容未能提取')
+    expect(prompt).not.toContain('page-without-text')
+    expect(prompt).not.toContain('：complete')
     expect(prompt).not.toContain('notificationId')
     expect(prompt).not.toContain('recordId')
   })
@@ -46,5 +50,17 @@ describe('Forge business notification prompt', () => {
 
   it('clearly distinguishes a confirmed absence of business materials', () => {
     expect(businessNotificationPrompt(item, context('none'))).toContain('Forge 确认当前没有可读取的业务材料')
+  })
+
+  it('keeps a partial result readable without serializing opaque values or structured field contents', () => {
+    const current = context('available')
+    current.record.completeness = 'partial'
+    current.record.fields.push({ label: '需要法务复核', value: false }, { label: '附件数据', value: { file_id: 'private-reference' } }, { label: '材料说明', value: '{"file_id":"private-reference"}' }, { label: '参考', value: '10000000-0000-4000-8000-000000000001' })
+    const prompt = businessNotificationPrompt(item, current)
+    expect(prompt).toContain('需要法务复核：否')
+    expect(prompt).toContain('部分关联信息未能完整读取')
+    expect(prompt).not.toContain('private-reference')
+    expect(prompt).not.toContain('10000000-0000-4000-8000-000000000001')
+    expect(prompt).not.toContain('：partial')
   })
 })

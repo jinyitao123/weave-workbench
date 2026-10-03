@@ -71,6 +71,27 @@ it('edits team details and a member, then saves one remote draft', async () => {
   expect(remote.document.audience).toEqual(['sales_employee', 'delivery_reviewer'])
 })
 
+it.each([false, true])('keeps newer editor focus when delayed member-navigation focus arrives (editing=%s)', async (editing) => {
+  const frames = new Map<number, FrameRequestCallback>()
+  let nextFrame = 0
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { frames.set(++nextFrame, callback); return nextFrame })
+  vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id))
+  try {
+    await open(); await selectMember('审核员')
+    if (editing) await click('编辑团队职责内容')
+    const editor = container.querySelector<HTMLTextAreaElement>('.tw-editable.is-editing textarea')
+    if (editing) expect(document.activeElement).toBe(editor)
+    const pending = [...frames.values()]; frames.clear()
+    await act(async () => { for (const callback of pending) callback(0) })
+    if (editing) {
+      expect(container.querySelector('.tw-editable.is-editing textarea')).toBe(editor)
+      expect(document.activeElement).toBe(editor)
+      await edit('团队职责', '检查付款条款'); await save()
+      expect(remote.document.members[1]!.relationship.duty).toBe('检查付款条款')
+    } else expect(document.activeElement).toBe(container.querySelector('.team-panel__detail-head h3'))
+  } finally { vi.unstubAllGlobals() }
+})
+
 it('opens the workflow view on the flow canvas', async () => {
   await open('workflow')
   expect(container.querySelector('.workflow-graph')).not.toBeNull()

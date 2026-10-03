@@ -1,4 +1,4 @@
-import { Field } from '@objectstack/spec/data';
+import { Field, ObjectSchema } from '@objectstack/spec/data';
 import { master, text, code, reference, owner, remarks, required } from '../model.js';
 
 const amount = (label: string) => Field.currency({ label, precision: 18, scale: 4, min: 0 });
@@ -199,9 +199,9 @@ export const CollectionReversalLog = master('forge_collection_reversal_log', '�
   occurred_at: Field.datetime({ label: '操作时间', ...required, readonly: true }), operator_id: Field.user({ label: '操作人', ...required, readonly: true }),
 }, ['receipt_id', 'allocation_id', 'action', 'amount', 'reason', 'operator_id', 'occurred_at']);
 
-export const CustomerPrepayment = master('forge_customer_prepayment', '客户预收款', 'landmark', {
+export const CustomerPrepayment = ObjectSchema.create({ ...master('forge_customer_prepayment', '客户预收款', 'landmark', {
   name: text('预收款名称', true), code: code('预收款编号'), customer_id: { ...reference('forge_customer', '客户', true), relatedList: false },
-  order_id: reference('forge_sales_order', '销售订单', true), contract_id: reference('forge_sales_contract', '销售合同'),
+  order_id: reference('forge_sales_order', '销售订单'), contract_id: reference('forge_sales_contract', '销售合同'),
   receipt_id: reference('forge_cash_receipt', '收款流水', true), original_amount: amount('预收金额'),
   offset_amount: { ...amount('已冲抵金额'), readonly: true }, refunded_amount: { ...amount('已退款金额'), readonly: true },
   balance_amount: { ...amount('预收款余额'), readonly: true }, status: { ...Field.select([
@@ -209,9 +209,16 @@ export const CustomerPrepayment = master('forge_customer_prepayment', '客户预
     { value: 'partially_used', label: '部分使用' }, { value: 'settled', label: '已结清' },
     { value: 'refunded', label: '已退款' },
   ], { label: '预收款状态', defaultValue: 'pending_confirmation' }), readonly: true },
+  registered_by: Field.user({ label: '登记人', readonly: true }),
+  confirmation_reviewer_id: Field.user({ label: '财务确认人', readonly: true }),
+  receipt_evidence_attachment: Field.file({ label: '到账凭证', readonly: true }),
+  receipt_evidence_sha256: Field.text({ label: '到账原件摘要', maxLength: 64, readonly: true, hidden: true }),
   confirmed_by: Field.user({ label: '确认人', readonly: true }), confirmed_at: Field.datetime({ label: '确认时间', readonly: true }),
   confirmation_comment: Field.textarea({ label: '确认意见', readonly: true }), responsible_id: owner(true), remarks: remarks(),
-}, ['code', 'customer_id', 'order_id', 'receipt_id', 'original_amount', 'offset_amount', 'refunded_amount', 'balance_amount', 'status']);
+}, ['code', 'customer_id', 'order_id', 'receipt_id', 'original_amount', 'offset_amount', 'refunded_amount', 'balance_amount', 'status']), validations: [{ name: 'contract_or_order_required', type: 'script',
+  condition: { dialect: 'cel', source: 'isBlank(record.order_id) && isBlank(record.contract_id)' },
+  message: '预收及退款记录必须关联原合同或销售订单',
+}] });
 
 export const CustomerPrepaymentOffset = master('forge_customer_prepayment_offset', '预收款冲抵', 'badge-check', {
   name: text('冲抵名称', true), code: code('冲抵编号'), prepayment_id: reference('forge_customer_prepayment', '客户预收款', true),
@@ -226,9 +233,9 @@ export const CustomerPrepaymentOffset = master('forge_customer_prepayment_offset
   reversal_reason: Field.textarea({ label: '撤回原因', readonly: true }),
 }, ['code', 'prepayment_id', 'receivable_id', 'customer_id', 'order_id', 'amount', 'offset_on', 'status', 'reversed_by', 'reversed_at', 'reversal_reason']);
 
-export const CustomerRefund = master('forge_customer_refund', '客户退款', 'undo-2', {
+export const CustomerRefund = ObjectSchema.create({ ...master('forge_customer_refund', '客户退款', 'undo-2', {
   name: text('退款名称', true), code: code('申请单号'), prepayment_id: reference('forge_customer_prepayment', '客户预收款', true),
-  order_id: reference('forge_sales_order', '关联销售订单', true), contract_id: reference('forge_sales_contract', '关联合同'),
+  order_id: reference('forge_sales_order', '关联销售订单'), contract_id: reference('forge_sales_contract', '关联合同'),
   customer_id: { ...reference('forge_customer', '客户', true), relatedList: false },
   currency: Field.select([{ value: 'cny', label: '人民币' }, { value: 'usd', label: '美元' }, { value: 'eur', label: '欧元' }], { label: '币种', defaultValue: 'cny' }),
   requested_amount: amount('申请退款金额'), actual_amount: { ...amount('实退金额'), readonly: true },
@@ -244,7 +251,10 @@ export const CustomerRefund = master('forge_customer_refund', '客户退款', 'u
   approver_id: Field.user({ label: '审批人', readonly: true }), approved_at: Field.datetime({ label: '审批时间', readonly: true }), approval_comment: Field.textarea({ label: '审批意见', readonly: true }),
   reviewer_id: Field.user({ label: '核销人', readonly: true }), reviewed_at: Field.datetime({ label: '核销时间', readonly: true }), review_comment: Field.textarea({ label: '核销意见', readonly: true }),
   responsible_id: owner(true), remarks: remarks(),
-}, ['code', 'contract_id', 'order_id', 'customer_id', 'currency', 'actual_amount', 'refund_method', 'document_status', 'finance_status', 'payment_status', 'writeoff_status', 'application_on']);
+}, ['code', 'contract_id', 'order_id', 'customer_id', 'currency', 'actual_amount', 'refund_method', 'document_status', 'finance_status', 'payment_status', 'writeoff_status', 'application_on']), validations: [{ name: 'contract_or_order_required', type: 'script',
+  condition: { dialect: 'cel', source: 'isBlank(record.order_id) && isBlank(record.contract_id)' },
+  message: '预收及退款记录必须关联原合同或销售订单',
+}] });
 
 export const ProjectSettlement = master('forge_project_settlement', '项目结算', 'chart-no-axes-combined', {
   name: text('结算名称', true), code: code('结算编号'), project_id: reference('forge_project', '项目', true),

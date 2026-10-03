@@ -319,6 +319,16 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
       ...(item.sessionReference !== undefined ? { sessionReference: requireString(item.sessionReference, 'item.sessionReference', { min: 1, max: 512 }) } : {}),
     })
   })
+  handle('enterprise:pin-employee-business-context', (_event, value) => {
+    if (!services.enterpriseBridge) throw new Error('本人业务事项暂不可用')
+    const record = requireRecord(value, 'record')
+    rejectUnknownKeys(record, ['objectName', 'recordId', 'label'], 'record')
+    return services.enterpriseBridge.pinEmployeeBusinessContext({
+      objectName: requireString(record.objectName, 'objectName', { min: 1, max: 128 }),
+      recordId: requireString(record.recordId, 'recordId', { min: 1, max: 128 }),
+      label: requireString(record.label, 'label', { min: 1, max: 300 }),
+    })
+  })
   handle('enterprise:submit-work', (_event, choice, goal) => services.enterprise.submitWork(requireEnterpriseWorkChoice(choice), requireString(goal, 'goal', { min: 1, max: 20_000 })))
   handle('enterprise:complete-human-task', (_event, task, payload) => services.enterprise.completeHumanTask(requireEnterpriseHumanTask(task), requireRecord(payload, 'payload')))
 

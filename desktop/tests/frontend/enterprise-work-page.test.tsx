@@ -40,6 +40,29 @@ afterEach(async () => {
   container.remove()
 })
 
+it.each([['reject', '拒绝订单'], ['revise', '退回修改']])('renders and submits the server-declared %s action with the viewed version', async (semantic, label) => {
+  const actionRef = 'c'.repeat(64), actionVersion = 'd'.repeat(64)
+  const context: EnterpriseApprovalContextView = { title: '当前审批', step: '复核', fields: [], files: [], actionVersion,
+    actions: [{ actionRef, semantic, label }] }
+  const complete = vi.fn(async () => undefined)
+  await act(async () => root.render(<EnterpriseWorkPage overview={{ ...overview, items: [] }} loading={false} error="" onRefresh={refresh}
+    onComplete={complete} onInspect={vi.fn(async () => context)} onAssist={assistPi} onContinue={continueWork} />))
+  const button = (text: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find((item) => item.textContent === text)
+  expect(button(label)).toBeUndefined()
+  await act(async () => button('查看材料')?.click())
+  expect(button(label)?.disabled).toBe(true)
+  if (semantic === 'reject') expect(button('退回修改')).toBeUndefined()
+  const textarea = container.querySelector('textarea')!
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(textarea, '本人明确意见')
+    textarea.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  expect(button(label)?.disabled).toBe(false)
+  await act(async () => button(label)?.click())
+  expect(complete).toHaveBeenCalledExactlyOnceWith(overview.tasks[0], actionRef, '本人明确意见', actionVersion)
+  expect(container.textContent).not.toContain(actionRef)
+})
+
 it('shows available work beside source-specific errors and offers retry without claiming the inbox is empty', async () => {
   await act(async () => root.render(<EnterpriseWorkPage
     overview={overview} loading={false} error="" onRefresh={refresh}
@@ -193,6 +216,27 @@ it('opens the clicked Forge approval in a fresh renderer session and queues only
   expect(prompt).toContain('不等于审批流程完成')
   expect(prompt).toContain(APPROVAL_REVIEW_SESSION_MARKER)
   expect(setToast).toHaveBeenCalledWith('已打开本次审批材料，可继续和 Pi 核对。')
+})
+
+it('opens assigned business work by its authoritative record and leaves ambiguous assignment non-actionable', async () => {
+  const record = { objectName: 'forge_sales_contract', recordId: 'contract-current', label: '当前合同' }
+  const onOpenBusiness = vi.fn(async () => undefined)
+  await act(async () => root.render(<EnterpriseWorkPage
+    overview={{ ...overview, tasks: [], items: [], businessWork: [
+      { workKey: 'a'.repeat(64), kind: 'contract_signature', title: '登记签署：当前合同', record, recordVersion: '1', updatedAt: '2026-10-03T00:00:00Z', assignment: 'assigned' },
+      { workKey: 'b'.repeat(64), kind: 'sales_order_submission', title: '提交订单', record, recordVersion: '1', updatedAt: '2026-10-03T00:00:00Z', assignment: 'needs_assignment', assignmentReason: 'multiple_eligible_employees' },
+    ] }} loading={false} error="" onRefresh={refresh} onComplete={vi.fn(async () => undefined)}
+    onInspect={vi.fn(async () => ({ title: '', step: '', fields: [], files: [] }))} onAssist={vi.fn(async () => undefined)} onContinue={continueWork} onOpenBusiness={onOpenBusiness}
+  />))
+  const buttons = [...container.querySelectorAll<HTMLButtonElement>('button')].filter((button) => button.textContent === '交给 Pi 查看')
+  expect(buttons).toHaveLength(1)
+  await act(async () => buttons[0].click())
+  expect(onOpenBusiness).toHaveBeenCalledExactlyOnceWith(record)
+  expect(container.textContent).toContain('有多位符合条件的员工')
+  expect(container.textContent).not.toContain('contract-current')
+  const workRows = container.querySelectorAll('.work-task')
+  expect(workRows[0].querySelectorAll('p')).toHaveLength(0)
+  expect(workRows[1].querySelector('p')?.textContent).toBe('当前合同')
 })
 
 it('keeps the approval on the work page when a fresh renderer session cannot be opened', async () => {

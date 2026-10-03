@@ -10,6 +10,13 @@ import type { EnterpriseWorkOverview } from '../../src/types/api'
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const noop = () => undefined
+
+it('counts assigned business work only when its authoritative projection is complete', () => {
+  const item = { workKey: 'a'.repeat(64), kind: 'contract_signature' as const, title: '登记签署', record: { objectName: 'forge_sales_contract', recordId: 'contract', label: '合同' }, recordVersion: '1', updatedAt: '2026-10-03T00:00:00Z', assignment: 'assigned' as const }
+  const current = { ...resultOnly, businessWork: [item, { ...item, workKey: 'b'.repeat(64), assignment: 'needs_assignment' as const, assignmentReason: 'multiple_eligible_employees' as const }], reads: { ...resultOnly.reads, businessWork: { status: 'loaded' as const } } }
+  expect(enterprisePendingWorkCount(current)).toBe(1)
+  expect(enterprisePendingWorkCount({ ...current, reads: { ...current.reads, businessWork: { status: 'failed' } } })).toBeUndefined()
+})
 const sidebarProps: SidebarProps = {
   projects: [{ id: 'project', harness: 'pi', name: 'My work', path: '/project', folders: ['/project'], primaryFolder: '/project', pinned: false, createdAt: '2026-10-02T00:00:00Z', lastOpenedAt: '2026-10-02T00:00:00Z', sessionCount: 1 }],
   sessions: [{ id: 'chat', harness: 'pi', filePath: '/session.jsonl', projectPath: '/project', title: 'Local completed chat', createdAt: '2026-10-02T00:00:00Z', updatedAt: '2026-10-02T00:00:00Z', status: 'complete', unread: true, depth: 0 }],
