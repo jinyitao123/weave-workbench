@@ -130,6 +130,11 @@ test('sales order native actions and approval preserve role, payment and atomic 
   assert.deepEqual((await read('sys_approval_request', request.id)).pending_approvers, pendingBefore);
   assert.deepEqual(await approvals.listActions(request.id, reviewContext), auditBefore, 'unsupported toolbar operations leave no audit or routing effects');
   assert.equal((await read('forge_sales_order', created.id)).status, 'pending_approval');
+  await assert.rejects(action(operator, 'forge_sales_order', created.id, ORDER_APPLY_APPROVAL_TARGET), /原生审批结论/,
+    'observing a native pending request cannot activate an order before its independent decision');
+  assert.equal((await read('forge_sales_order', created.id)).status, 'pending_approval');
+  assert.equal(Number((await read('forge_sales_contract', contract)).ordered_amount), 0);
+  assert.equal(Number((await read('forge_sales_contract_line', line)).ordered_quantity), 0);
   await assert.rejects(approvals.decide(request.id, { actorId: operator, decision: 'approve', comment: '自审' }, { userId: operator, tenantId: org, permissions: [], positions: [] }), /独立员工/);
   const nativeUpdate = engine.update;
   let inject = true;

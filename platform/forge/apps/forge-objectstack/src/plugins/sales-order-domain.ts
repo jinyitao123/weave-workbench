@@ -286,7 +286,7 @@ export async function applySalesOrderApproval(engine: IObjectQLEngine, recordId:
     // Recall is durable even when the suspended run was lost. Recover from
     // that exact native snapshot, without replaying the native decision or
     // relying on the flow's mirrored outcome having been written.
-    const matching = requests.filter(r => (
+    const matching = requests.filter(r => ['approved', 'rejected', 'recalled'].includes(String(r.status)) && (
       r.status === order.approval_outcome || order.approval_outcome === 'rejected' && r.status === 'recalled' ||
       order.approval_outcome === 'pending' && r.status === 'recalled'
     ) && matchesOrderApprovalSnapshot(r, order));

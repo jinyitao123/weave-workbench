@@ -53,6 +53,7 @@ const forgePageRoutePackageByName: Record<string, string> = {
   "page_production_shortage_workspace": "com.inoforge.forge.production",
   "page_production_supply_workspace": "com.inoforge.forge.production",
   "page_project_center": "com.inoforge.forge.project",
+  "page_project_member_editor": "com.inoforge.forge.project",
   "page_project_expense_cost": "com.inoforge.forge.project",
   "page_project_task_workspace": "com.inoforge.forge.project",
   "page_project_timesheet_cost": "com.inoforge.forge.project",
@@ -76,6 +77,12 @@ const forgePageRoutePackageByName: Record<string, string> = {
   "page_sales_follow_ups": "com.inoforge.forge.sales",
   "page_sales_invoice_request": "com.inoforge.forge.sales",
   "page_sales_leads": "com.inoforge.forge.sales",
+  "page_sales_lead_pools": "com.inoforge.forge.sales",
+  "page_sales_gross_profit": "com.inoforge.forge.sales",
+  "page_customer_price_lists": "com.inoforge.forge.sales",
+  "page_customer_price_list_new": "com.inoforge.forge.sales",
+  "page_repair_pool": "com.inoforge.forge.sales",
+  "page_service_part_requests": "com.inoforge.forge.sales",
   "page_sales_opportunities": "com.inoforge.forge.sales",
   "page_sales_order_create": "com.inoforge.forge.sales",
   "page_sales_order_workspace": "com.inoforge.forge.sales",
@@ -206,8 +213,41 @@ const forgeLocalDate=value=>{const p=forgeLocalParts(value);return p?p.date:Stri
 const forgeLocalDateTime=value=>{const p=forgeLocalParts(value);return p?p.time:String(value==null?'':value).replace('T',' ').slice(0,16)};
 const forgeRoutePackageIds=${JSON.stringify(forgeRoutePackageIds)};const forgePageRoutePackageIndexByName=${JSON.stringify(forgePageRoutePackageIndexByName)};const forgePageHref=(pageName,query='')=>{const packageId=forgeRoutePackageIds[forgePageRoutePackageIndexByName[pageName]];if(!packageId)return null;const search=String(query||'');return '/_console/apps/'+packageId+'/'+pageName+(search?(search.startsWith('?')?search:'?'+search):'')};const forgeObjectRoutePackageIndexByName=${JSON.stringify(forgeObjectRoutePackageIndexByName)};const forgeObjectHref=(objectName,suffix='')=>{const packageId=forgeRoutePackageIds[forgeObjectRoutePackageIndexByName[objectName]];if(!packageId)return null;return '/_console/apps/'+packageId+'/'+objectName+String(suffix||'')};
 const forgeBase=(typeof location!=='undefined'?location.pathname.split('/').slice(0,4).join('/'):'');
+function ForgeNavigate(href,options){
+ if(!href)return;
+ const url=new URL(String(href),location.href);
+ if(!['http:','https:'].includes(url.protocol)||url.origin!==location.origin)throw new Error('只能打开当前应用内的链接');
+ const path=url.pathname+url.search+url.hash,routerPath=path.replace(/^\\/_console(?=\\/|$)/,'')||'/';
+ if(typeof navigate==='function')navigate(routerPath,options);
+ else window.location.href=path;
+}
 async function ForgeApiResponse(adapter,path,options={}){const raw=String(adapter?.baseUrl||''),base=raw.endsWith('/')?raw.slice(0,-1):raw,transport=adapter?.fetchImpl||fetch,headers=new Headers(options.headers||{});for(const [name,value] of Object.entries(adapter?.getAuthHeaders?.()||{}))headers.set(name,value);return transport(base+'/api/v1'+path,{credentials:'include',...options,headers})}
-async function ForgeApiRequest(adapter,path,options={}){const headers={'Content-Type':'application/json',...(adapter?.getAuthHeaders?.()||{}),...(options.headers||{})},raw=String(adapter?.baseUrl||''),base=raw.endsWith('/')?raw.slice(0,-1):raw,transport=adapter?.fetchImpl||fetch,response=await transport(base+'/api/v1'+path,{credentials:'include',...options,headers}),payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error((typeof payload.error==='string'?payload.error:payload.error?.message)||(Array.isArray(payload.fields)&&payload.fields.length?payload.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||payload.message||'请求失败');return payload}
+async function ForgeApiRequest(adapter,path,options={}){const headers={'Content-Type':'application/json',...(adapter?.getAuthHeaders?.()||{}),...(options.headers||{})},raw=String(adapter?.baseUrl||''),base=raw.endsWith('/')?raw.slice(0,-1):raw,transport=adapter?.fetchImpl||fetch,response=await transport(base+'/api/v1'+path,{credentials:'include',...options,headers}),payload=await response.json().catch(()=>({}));if(!response.ok){const error=new Error((typeof payload.error==='string'?payload.error:payload.error?.message)||(Array.isArray(payload.fields)&&payload.fields.length?payload.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||payload.message||'请求失败');error.status=response.status;throw error}return payload}
+async function ForgeReadAllRecords(adapter,objectName,options={}){
+ const records=[],seen=new Set(),size=100,limit=Number.isSafeInteger(options.limit)&&options.limit>0?options.limit:20000,label=options.label||'列表';
+ for(let skip=0;skip<=limit;){
+  const query=new URLSearchParams({$top:String(size),$skip:String(skip),$count:'true',$orderby:options.orderBy||'id asc'});
+  if(options.fields)query.set('$select',Array.isArray(options.fields)?options.fields.join(','):options.fields);
+  if(options.filter&&Object.keys(options.filter).length)query.set('$filter',JSON.stringify(options.filter));
+  const response=await ForgeApiRequest(adapter,'/data/'+encodeURIComponent(objectName)+'?'+query.toString()),payload=response?.data?.records?response.data:response,batch=payload?.records;
+  if(!Array.isArray(batch))throw new Error(label+'响应不完整，请刷新重试');
+  const rawTotal=payload.totalCount??payload.count??payload.total??payload['@odata.count'],total=rawTotal!==null&&rawTotal!==undefined&&rawTotal!==''&&Number.isSafeInteger(Number(rawTotal))&&Number(rawTotal)>=0?Number(rawTotal):null;
+  if(total!==null&&total>limit)throw new Error(label+'超过可读取上限，请缩小范围');
+  for(const record of batch){const id=String(record?.id||'');if(!id||seen.has(id))throw new Error(label+'在分页期间发生变化，请重新读取');seen.add(id);records.push(record)}
+  if(records.length>limit||total!==null&&records.length>total)throw new Error(label+'分页结果不完整，请重新读取');
+  if(total!==null&&records.length===total)return records;
+  if(!batch.length){if(total!==null&&records.length<total)throw new Error(label+'未读取完整，请重试');return records}
+  skip+=batch.length;
+ }
+ throw new Error(label+'超过可读取上限，请缩小范围');
+}
+async function ForgeOrganizationBusinessDate(adapter){
+ let result=await ForgeApiRequest(adapter,'/actions/global/organization_business_date_query',{method:'POST',body:JSON.stringify({params:{}})});
+ for(let depth=0;depth<5&&result&&typeof result==='object';depth++){if(result.result!==undefined){result=result.result;continue}if(result.data!==undefined){result=result.data;continue}break}
+ const date=String(result?.business_date||''),instant=new Date(date+'T00:00:00.000Z');
+ if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||Number.isNaN(instant.getTime())||instant.toISOString().slice(0,10)!==date)throw new Error('组织业务日期读取失败，请刷新重试');
+ return date;
+}
 function ForgeHeroArt({name='blueprint'}){const a={fill:'none',stroke:'currentColor',strokeWidth:1.2,strokeLinecap:'round',strokeLinejoin:'round'};if(name==='flow')return <svg viewBox="0 0 220 120" {...a}><rect x="12" y="42" width="46" height="34" rx="5"/><rect x="86" y="16" width="46" height="34" rx="5"/><rect x="86" y="68" width="46" height="34" rx="5"/><rect x="162" y="44" width="46" height="34" rx="5"/><path d="M58 59h28M132 33h30M132 85h30"/></svg>;if(name==='boxes')return <svg viewBox="0 0 220 120" {...a}><path d="M26 70l30-14 30 14v24l-30 14-30-14z"/><path d="M26 70l30 14 30-14M56 84v24"/><path d="M112 40l26-12 26 12v22l-26 12-26-12z"/><path d="M112 40l26 12 26-12M138 52v22"/><path d="M152 92h48"/></svg>;if(name==='alert')return <svg viewBox="0 0 220 120" {...a}><path d="M62 98a30 30 0 0 1 60 0z"/><path d="M92 62V28M92 62l22 22"/><path d="M142 32l16 28h-32z"/><path d="M178 32l16 28h-32z"/></svg>;if(name==='gauge')return <svg viewBox="0 0 220 120" {...a}><path d="M40 92a70 70 0 0 1 140 0"/><path d="M110 92L80 58"/><path d="M150 62l20-14M60 62l-20-14"/></svg>;return <svg viewBox="0 0 220 120" {...a}><rect x="26" y="24" width="86" height="66" rx="6"/><path d="M40 42h58M40 56h58M40 70h36"/><circle cx="152" cy="38" r="6"/><circle cx="184" cy="54" r="6"/><circle cx="158" cy="80" r="6"/><path d="M112 42h34M112 60h56M112 78h34"/></svg>}
 function forgeMetricIcon(name){const d={orders:'M4 6h16M4 12h16M4 18h10',clock:'M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18',box:'M3 8l9-4 9 4v8l-9 4-9-4zM3 8l9 4 9-4M12 12v8',money:'M4 7h16M12 4v16M8 11h8M8 15h8',alert:'M12 4l8.5 15h-17zM12 10v4.5M12 17.5h.01',recycle:'M7 9L4 15h6zM17 9l3 6h-6zM10 20h4l-2-3z',swap:'M4 9h12l-3-3M20 15H8l3 3',gauge:'M5 17a7 7 0 1 1 14 0M12 14l3.5-3',calendar:'M4 7h16v13H4zM8 4v5M16 4v5M4 12h16',chart:'M4 20h16M7 17v-5M12 17V8M17 17v-7',stack:'M12 4l8 4-8 4-8-4zM4 13l8 4 8-4'}[name];return d?<svg className="fp-metric-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d}/></svg>:null}
 function ForgeMetricStrip({items=[]}){return <div className="fp-metric-strip">{items.map(item=><div className={'fp-metric-card'+(item.tone?' tone-'+item.tone:'')} key={item.label}><span className="fp-metric-label">{forgeMetricIcon(item.icon)}<span>{item.label}</span></span><strong>{item.value}</strong></div>)}</div>}
