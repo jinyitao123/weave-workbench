@@ -4,7 +4,12 @@ import { ProductSelect, ProductTextArea } from '@/components/ui'
 import type { EnterpriseBusinessCapabilityCatalog } from '@/types/api'
 import type { TeamWorkspace, TeamWorkspaceBridge } from '@/types/team-workspace'
 export const runLabel = (status: string) => ({ submitting: '等待接单', queued: '排队中', running: '执行中', succeeded: '团队运行完成', failed: '团队运行失败', cancelled: '团队运行已取消', blocked: '等待处理', pending: '等待执行', completed: '步骤完成', tool_started: '工具调用中', tool_completed: '工具调用完成', tool_failed: '工具调用失败' }[status] ?? '等待更新')
-type Activity = { status: string; completeness?: { member_tool_activity?: string }; members: Array<{ name: string; status: string; runtime?: { model?: string; configured_model?: string }; stages: Array<{ name: string; status: string; inputs: Array<{ source: string; summary?: string }>; tools?: Array<{ name: string; status: string; input?: string; output?: string }> | null; tool_calls?: number; failure_reason?: string }> }>; outputs: Array<{ title: string; content?: string }> }
+const toolRunLabel = (status: string, completedAt?: string) => {
+  if (status === 'tool_completed' || status === 'tool_failed') return runLabel(status)
+  if (!completedAt) return '工具调用中'
+  return ({ ok: '工具调用完成', error: '工具调用失败' }[status] ?? runLabel(status))
+}
+type Activity = { status: string; completeness?: { member_tool_activity?: string }; members: Array<{ name: string; status: string; runtime?: { model?: string; configured_model?: string }; stages: Array<{ name: string; status: string; inputs: Array<{ source: string; summary?: string }>; tools?: Array<{ name: string; status: string; completed_at?: string; input?: string; output?: string }> | null; tool_calls?: number; failure_reason?: string }> }>; outputs: Array<{ title: string; content?: string }> }
 
 function toolActivityEvidence(activity?: Activity): 'incomplete' | 'empty' | 'recorded' {
   if (activity?.completeness?.member_tool_activity !== 'complete' || !Array.isArray(activity.members) || activity.members.length === 0) return 'incomplete'
@@ -15,7 +20,7 @@ function toolActivityEvidence(activity?: Activity): 'incomplete' | 'empty' | 're
     if (stage.tools !== null && !Array.isArray(stage.tools)) return 'incomplete'
     if (stage.tool_calls !== undefined && (!Number.isInteger(stage.tool_calls) || stage.tool_calls < 0)) return 'incomplete'
     const tools = stage.tools ?? []
-    const completedTools = tools.filter((tool) => tool.status === 'ok' || tool.status === 'error').length
+    const completedTools = tools.filter((tool) => tool.status === 'tool_completed' || tool.status === 'tool_failed' || Boolean(tool.completed_at) && (tool.status === 'ok' || tool.status === 'error')).length
     if (tools.length === 0 && (stage.tool_calls ?? 0) > 0
       || (stage.status === 'completed' || stage.status === 'failed') && (stage.tool_calls ?? 0) !== completedTools) return 'incomplete'
     if (tools.length > 0 || (stage.tool_calls ?? 0) > 0) hasCalls = true
@@ -92,9 +97,15 @@ export function TrialPanel({ teamId, initialFlowId, draft, businessCapabilities,
     {error && <p role="alert">{error}</p>}
     {draft.trials.length > 0 && <><h3>调试记录</h3><div className="tw-trials">{draft.trials.map((t) => <button type="button" key={t.request_id} className={selected === t.request_id ? 'is-active' : ''} onClick={() => setSelected(t.request_id)}><strong>{draft.document.workflows.find((f) => f.id === t.workflow_id)?.name ?? '历史流程'}</strong><span>{runLabel(t.request_id === selected ? activity?.status ?? runStatus ?? t.status : t.status)} · {t.revision === draft.revision ? '当前草稿' : '较早草稿'} · {new Date(t.created_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span></button>)}</div></>}
     {trial && <div className="tw-form"><details><summary>本次固定输入</summary><pre className="tw-result">{frozenInput || '正在读取'}</pre></details>
-      {activity?.members?.map((member, index) => <div className="tw-card tw-form" key={index}><div className="tw-section-title"><h4>{member.name}</h4><span>{runLabel(member.status)}</span></div><small className="tw-muted">{member.runtime?.model || member.runtime?.configured_model || '模型尚未上报'}</small>{member.stages.map((stage, i) => <div key={i}><strong>{stage.name} · {runLabel(stage.status)}</strong><p>输入：{stage.inputs.map((b) => b.source === 'run_input' ? '任务输入' : '前序结果').join('、') || '尚未上报'}</p>{stage.failure_reason && <p role="alert">{stage.failure_reason}</p>}{stage.inputs.some((b) => b.summary) && <details><summary>运行输入摘要</summary>{stage.inputs.map((b, j) => <pre className="tw-result" key={j}>{b.summary}</pre>)}</details>}{stage.tools?.map((tool, j) => <details key={j}><summary>{tool.name} · {runLabel(tool.status)}</summary><pre className="tw-result">{tool.input}\n{tool.output}</pre></details>)}</div>)}</div>)}
+      {activity?.members?.map((member, index) => <div className="tw-card tw-form" key={index}><div className="tw-section-title"><h4>{member.name}</h4><span>{runLabel(member.status)}</span></div><small className="tw-muted">{member.runtime?.model || member.runtime?.configured_model || '模型尚未上报'}</small>{member.stages.map((stage, i) => <div key={i}><strong>{stage.name} · {runLabel(stage.status)}</strong><p>输入：{stage.inputs.map((b) => b.source === 'run_input' ? '任务输入' : '前序结果').join('、') || '尚未上报'}</p>{stage.failure_reason && <p role="alert">{stage.failure_reason}</p>}{stage.inputs.some((b) => b.summary) && <details><summary>运行输入摘要</summary>{stage.inputs.map((b, j) => <pre className="tw-result" key={j}>{b.summary}</pre>)}</details>}{stage.tools?.map((tool, j) => {
+        const input = tool.input?.trim()
+        const output = tool.output?.trim()
+        const missingDetails = !input && !output ? '此调试记录未保存调用参数和模拟回执' : !input ? '此调试记录未保存调用参数' : !output ? '此调试记录未保存模拟回执' : ''
+        return <details key={j}><summary>{tool.name} · {toolRunLabel(tool.status, tool.completed_at)}</summary>{input && <><h5>调用参数</h5><pre className="tw-result">{input}</pre></>}{output && <><h5>工具返回</h5><pre className="tw-result">{output}</pre></>}{missingDetails && <p className="tw-muted">{missingDetails}</p>}</details>
+      })}</div>)}</div>)}
       <div className="tw-card tw-form" role="status">
-        <h3>实际工具调用记录</h3>
+        <h3>调试工具调用记录</h3>
+        <p className="tw-muted">开发调试中的 Forge 业务动作是模拟调用，不会访问 Forge 或写入业务数据。团队运行完成不代表实际业务动作成功。</p>
         {activityReadState === 'loading' ? <p className="tw-muted">正在读取活动记录…</p>
           : activityReadState === 'failed' ? <p role="alert">活动记录暂时无法读取。下面的团队摘要不能证明业务已提交。</p>
             : activityReadState === 'unavailable' ? <p className="tw-muted">当前没有可读取的工具调用记录。团队摘要不能证明业务已提交。</p>
