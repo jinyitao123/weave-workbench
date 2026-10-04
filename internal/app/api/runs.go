@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jinyitao123/loom"
 	"github.com/jinyitao123/weave/internal/base/deliverable"
+	"github.com/jinyitao123/weave/internal/base/execution"
 	"github.com/jinyitao123/weave/internal/base/frozen"
 	"github.com/jinyitao123/weave/internal/base/snapshot"
 	"github.com/jinyitao123/weave/internal/kernel/engine"
@@ -120,6 +121,20 @@ func (s *Server) handleListRuns(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": "conversation_id cannot be combined with team selector parameters"})
 		}
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid_team_selector"})
+	}
+	if strings.HasPrefix(projectID, "workbench-") {
+		if teamAware || conversationID != "" || owningTeamID != "" {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "workbench_project_cannot_be_combined_with_run_selectors"})
+		}
+		userID := getUserID(c)
+		if userID == "" || projectID != workbenchProjectID(userID) {
+			return c.JSON(http.StatusForbidden, map[string]string{"error": "workbench_project_identity_mismatch"})
+		}
+		runs, total, err := s.listWorkbenchRuns(c.Request().Context(), tenant, userID, projectID, limit, offset)
+		if err != nil {
+			return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "run_filter_unavailable"})
+		}
+		return c.JSON(http.StatusOK, RunListResponse{Runs: runs, Total: total, Limit: limit, Offset: offset})
 	}
 	if teamAware {
 		if conversationID != "" {
@@ -323,8 +338,20 @@ func (s *Server) handleGetRun(c echo.Context) error {
 	if selectorErr != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid_team_selector"})
 	}
+	workbenchRun, owned, workbenchBound, accessErr := s.workbenchRunAccess(c.Request().Context(), tenant, getUserID(c), runID)
+	if accessErr != nil {
+		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "run_read_unavailable"})
+	}
+	if workbenchBound && !owned {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "run not found"})
+	}
 	if teamAware {
 		return s.handleTeamAwareLeg(c, selector)
+	}
+	if workbenchBound {
+		summary := s.workbenchRunSummary(c.Request().Context(), tenant, workbenchRun)
+		run := workbenchRunDetail(s, c.Request().Context(), tenant, summary)
+		return c.JSON(http.StatusOK, run)
 	}
 	ns := "audit:" + tenant
 
@@ -433,26 +460,28 @@ type runActivityMemberBudgetPause struct {
 }
 
 type runActivityMemberStage struct {
-	BudgetPause            *runActivityMemberBudgetPause `json:"budget_pause,omitempty"`
-	MemberRunID            string                        `json:"member_run_id,omitempty"`
-	CheckpointSavedAt      *time.Time                    `json:"checkpoint_saved_at,omitempty"`
-	CurrentTaskID          string                        `json:"current_task_id,omitempty"`
-	PublicUpdates          []runActivityPublicUpdate     `json:"public_updates,omitempty"`
-	PublicUpdatesTruncated bool                          `json:"public_updates_truncated,omitempty"`
-	PublicUpdatesState     string                        `json:"public_updates_state,omitempty"`
-	NodeID                 string                        `json:"node_id"`
-	Name                   string                        `json:"name"`
-	Status                 string                        `json:"status"`
-	Inputs                 []runActivityMemberInputRef   `json:"inputs"`
-	OutputRefs             []string                      `json:"output_refs"`
-	StartedAt              *time.Time                    `json:"started_at,omitempty"`
-	CompletedAt            *time.Time                    `json:"completed_at,omitempty"`
-	DurationMs             int64                         `json:"duration_ms,omitempty"`
-	ToolCalls              int                           `json:"tool_calls,omitempty"`
-	Tools                  []runActivityTool             `json:"tools"`
-	FailureClass           string                        `json:"failure_class,omitempty"`
-	FailureReason          string                        `json:"failure_reason,omitempty"`
-	Retryable              bool                          `json:"retryable,omitempty"`
+	BudgetPause            *runActivityMemberBudgetPause     `json:"budget_pause,omitempty"`
+	MemberRunID            string                            `json:"member_run_id,omitempty"`
+	CheckpointSavedAt      *time.Time                        `json:"checkpoint_saved_at,omitempty"`
+	CurrentTaskID          string                            `json:"current_task_id,omitempty"`
+	PublicUpdates          []runActivityPublicUpdate         `json:"public_updates,omitempty"`
+	PublicUpdatesTruncated bool                              `json:"public_updates_truncated,omitempty"`
+	PublicUpdatesState     string                            `json:"public_updates_state,omitempty"`
+	NodeID                 string                            `json:"node_id"`
+	Name                   string                            `json:"name"`
+	Status                 string                            `json:"status"`
+	Inputs                 []runActivityMemberInputRef       `json:"inputs"`
+	OutputRefs             []string                          `json:"output_refs"`
+	Outputs                []developmentTrialStageOutputView `json:"outputs,omitempty"`
+	StartedAt              *time.Time                        `json:"started_at,omitempty"`
+	CompletedAt            *time.Time                        `json:"completed_at,omitempty"`
+	DurationMs             int64                             `json:"duration_ms,omitempty"`
+	ToolCalls              int                               `json:"tool_calls,omitempty"`
+	Tools                  []runActivityTool                 `json:"tools"`
+	FailureClass           string                            `json:"failure_class,omitempty"`
+	FailureReason          string                            `json:"failure_reason,omitempty"`
+	AuthorizationRequired  *execution.AuthorizationRefusal   `json:"authorization_required,omitempty"`
+	Retryable              bool                              `json:"retryable,omitempty"`
 }
 
 type runActivityTool struct {
@@ -477,9 +506,10 @@ type runActivityRuntime struct {
 }
 
 type runActivityStage struct {
-	NodeID string `json:"node_id"`
-	Name   string `json:"name"`
-	Status string `json:"status"`
+	NodeID  string                            `json:"node_id"`
+	Name    string                            `json:"name"`
+	Status  string                            `json:"status"`
+	Outputs []developmentTrialStageOutputView `json:"outputs,omitempty"`
 }
 
 type runActivityDeliverableRef struct {
@@ -795,17 +825,18 @@ func applyRunActivityEvents(members []runActivityMember, events []teamrun.Activi
 		}
 		stage := &members[index].Stages[stageIndex]
 		var detail struct {
-			DurationMs    int64             `json:"duration_ms"`
-			ToolCalls     int               `json:"tool_calls"`
-			ToolName      string            `json:"tool_name"`
-			ToolCallID    string            `json:"tool_call_id"`
-			Status        string            `json:"status"`
-			Input         string            `json:"input"`
-			Output        string            `json:"output"`
-			InputSummary  map[string]string `json:"input_summary"`
-			FailureClass  string            `json:"failure_class"`
-			FailureReason string            `json:"failure_reason"`
-			Retryable     bool              `json:"retryable"`
+			DurationMs            int64                           `json:"duration_ms"`
+			ToolCalls             int                             `json:"tool_calls"`
+			ToolName              string                          `json:"tool_name"`
+			ToolCallID            string                          `json:"tool_call_id"`
+			Status                string                          `json:"status"`
+			Input                 string                          `json:"input"`
+			Output                string                          `json:"output"`
+			InputSummary          map[string]string               `json:"input_summary"`
+			FailureClass          string                          `json:"failure_class"`
+			FailureReason         string                          `json:"failure_reason"`
+			Retryable             bool                            `json:"retryable"`
+			AuthorizationRequired *execution.AuthorizationRefusal `json:"authorization_required"`
 		}
 		_ = json.Unmarshal(event.Detail, &detail)
 		// A long tool trace can outlive the window containing member_started.
@@ -818,6 +849,7 @@ func applyRunActivityEvents(members []runActivityMember, events []teamrun.Activi
 			stage.CompletedAt = nil
 			stage.FailureClass, stage.FailureReason = "", ""
 			stage.Retryable = false
+			stage.AuthorizationRequired = nil
 			stage.Status, members[index].Status = "running", "running"
 		}
 		switch event.Kind {
@@ -831,6 +863,7 @@ func applyRunActivityEvents(members []runActivityMember, events []teamrun.Activi
 			stage.FailureClass = ""
 			stage.FailureReason = ""
 			stage.Retryable = false
+			stage.AuthorizationRequired = nil
 			stage.Status = "running"
 			members[index].Status = "running"
 			for inputIndex := range stage.Inputs {
@@ -844,6 +877,7 @@ func applyRunActivityEvents(members []runActivityMember, events []teamrun.Activi
 			stage.Status = "completed"
 			stage.FailureClass, stage.FailureReason = "", ""
 			stage.Retryable = false
+			stage.AuthorizationRequired = nil
 		case "member_failed":
 			occurred := event.OccurredAt
 			stage.CompletedAt = &occurred
@@ -852,6 +886,7 @@ func applyRunActivityEvents(members []runActivityMember, events []teamrun.Activi
 			stage.FailureClass = detail.FailureClass
 			stage.FailureReason = detail.FailureReason
 			stage.Retryable = detail.Retryable
+			stage.AuthorizationRequired = detail.AuthorizationRequired
 			members[index].Status = "failed"
 		case "tool_started":
 			occurred := event.OccurredAt
@@ -965,6 +1000,7 @@ func runActivityCurrentStages(members []runActivityMember, recorded []runActivit
 		for _, stage := range member.Stages {
 			current := runActivityStage{NodeID: stage.NodeID, Name: stage.Name, Status: stage.Status}
 			if index, exists := byNode[stage.NodeID]; exists {
+				current.Outputs = stages[index].Outputs
 				stages[index] = current
 			} else {
 				byNode[stage.NodeID] = len(stages)
@@ -1021,7 +1057,7 @@ func refineRunActivityCompleteness(
 				inputsComplete = false
 				toolsComplete = false
 			}
-			if stage.Status == "completed" && len(stage.OutputRefs) == 0 {
+			if stage.Status == "completed" && !runActivityStageHasOutput(stage) {
 				outputsComplete = false
 			}
 			completedTools := 0
@@ -1059,6 +1095,21 @@ func refineRunActivityCompleteness(
 	}
 }
 
+func runActivityStageHasOutput(stage runActivityMemberStage) bool {
+	if len(stage.OutputRefs) > 0 {
+		return true
+	}
+	if len(stage.Outputs) == 0 {
+		return false
+	}
+	for _, output := range stage.Outputs {
+		if output.Truncated || output.ContentBytes == 0 {
+			return false
+		}
+	}
+	return true
+}
+
 func latestRunActivityStage(members []runActivityMember, fallback []runActivityStage) string {
 	var latestName string
 	var latestAt time.Time
@@ -1088,15 +1139,40 @@ func latestRunActivityStage(members []runActivityMember, fallback []runActivityS
 // handleGetRunActivity is the small exact-run read contract used by
 // Workbench. It intentionally returns persisted execution facts only.
 func (s *Server) handleGetRunActivity(c echo.Context) error {
+	workbenchRun, owned, workbenchBound, accessErr := s.workbenchRunAccess(
+		c.Request().Context(), getTenant(c), getUserID(c), c.Param("id"),
+	)
+	if accessErr != nil {
+		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "run_read_unavailable"})
+	}
+	if workbenchBound && !owned {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "run_not_found"})
+	}
 	if s.teamRunCancel == nil || s.teamRunCancel.Runs == nil {
 		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "team_run_unavailable"})
 	}
 	run, err := s.teamRunCancel.Runs.Get(c.Request().Context(), getTenant(c), c.Param("id"))
 	if errors.Is(err, teamrun.ErrTeamRunIdentityMismatch) {
+		if workbenchBound && owned {
+			return c.JSON(http.StatusOK, workbenchRunActivitySummary(workbenchRun))
+		}
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "run_not_found"})
 	}
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "run_read_failed"})
+	}
+	var developmentTrial *developmentTrialRun
+	if run.SourceKind == teamrun.SourceAPI {
+		trial, found, trialErr := developmentTrialForRun(c.Request().Context(), s.GetPool(), getTenant(c), run.RunID)
+		if trialErr != nil {
+			return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "run_read_unavailable"})
+		}
+		if found {
+			if trial.ActorID != getUserID(c) {
+				return c.JSON(http.StatusNotFound, map[string]string{"error": "run_not_found"})
+			}
+			developmentTrial = &trial
+		}
 	}
 	completeness := map[string]string{
 		"run": "complete", "stages": "unavailable", "members": "unavailable",
@@ -1106,10 +1182,12 @@ func (s *Server) handleGetRunActivity(c echo.Context) error {
 	}
 	members := []runActivityMember{}
 	runtimes := []runActivityRuntime{}
+	candidateContentHash := ""
 	if s.Snapshots != nil {
 		if frozen, snapshotErr := s.Snapshots.GetByRunID(c.Request().Context(), getTenant(c), run.RunSnapshotID); snapshotErr == nil {
 			members, completeness["members"] = runActivityMembers(frozen.TeamWorkerSnapshot, run.Status)
 			runtimes, completeness["runtimes"] = runActivityRuntimes(frozen.RuntimeAssignment, run.CurrentExecutorID, run.Status)
+			candidateContentHash = frozen.CandidateContentHash
 		}
 	}
 	if len(runtimes) == 0 && run.CurrentExecutorID != nil {
@@ -1154,9 +1232,15 @@ func (s *Server) handleGetRunActivity(c echo.Context) error {
 		completeness["stages"] = "partial"
 	}
 	if s.Workflow != nil && run.WorkflowID != "" && run.WorkflowVersion > 0 {
-		if artifact, artifactErr := s.WorkflowArtifacts.GetArtifact(
+		artifact, artifactErr := s.WorkflowArtifacts.GetArtifact(
 			c.Request().Context(), getTenant(c), run.WorkflowID, run.WorkflowVersion,
-		); artifactErr == nil {
+		)
+		if artifactErr != nil && candidateContentHash != "" {
+			artifact, artifactErr = s.WorkflowArtifacts.GetCandidateArtifact(
+				c.Request().Context(), getTenant(c), run.WorkflowID, run.WorkflowVersion, candidateContentHash,
+			)
+		}
+		if artifactErr == nil {
 			payload, payloadErr := frozen.DecodeArtifactEnvelopeV1(frozen.ArtifactEnvelopeV1{
 				WorkspaceID: artifact.WorkspaceID, WorkflowID: artifact.WorkflowID,
 				WorkflowVersion:           artifact.WorkflowVersion,
@@ -1183,6 +1267,19 @@ func (s *Server) handleGetRunActivity(c echo.Context) error {
 			}
 		}
 	}
+	trialOutputsPartial := false
+	if developmentTrial != nil {
+		trialOutputs, partial, outputErr := listDevelopmentTrialStageOutputs(
+			c.Request().Context(), s.GetPool(), *developmentTrial, run.RunID,
+		)
+		if outputErr != nil {
+			return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "run_read_unavailable"})
+		}
+		stages, trialOutputsPartial = projectDevelopmentTrialStageOutputs(members, stages, trialOutputs, partial)
+		if len(trialOutputs) > 0 {
+			completeness["stages"] = "partial"
+		}
+	}
 	activityEvents := []teamrun.ActivityEvent{}
 	if s.teamRunActivities != nil {
 		if items, activityErr := s.teamRunActivities.List(c.Request().Context(), getTenant(c), run.RunID, 501); activityErr == nil {
@@ -1204,6 +1301,10 @@ func (s *Server) handleGetRunActivity(c echo.Context) error {
 	summarizeRunActivityMembers(members)
 	if completeness["activity_events"] != "unavailable" {
 		refineRunActivityCompleteness(completeness, members, run.Status)
+	}
+	if trialOutputsPartial {
+		completeness["member_outputs"] = "partial"
+		completeness["stages"] = "partial"
 	}
 	corrections := []teamrun.Correction{}
 	if s.teamRunCorrections != nil {
@@ -1270,6 +1371,13 @@ func (s *Server) handleGetRunActivity(c echo.Context) error {
 func (s *Server) handleStopRun(c echo.Context) error {
 	if s.teamRunCancel == nil {
 		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "team_run_cancel_unavailable"})
+	}
+	_, owned, bound, accessErr := s.workbenchRunAccess(c.Request().Context(), getTenant(c), getUserID(c), c.Param("id"))
+	if accessErr != nil {
+		return c.JSON(http.StatusServiceUnavailable, map[string]string{"error": "run_stop_authorization_unavailable"})
+	}
+	if (bound && !owned) || (!bound && !humanTaskDeveloperAccess(c)) {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "run_not_found"})
 	}
 	var request stopRunRequest
 	if c.Request().Body != nil {

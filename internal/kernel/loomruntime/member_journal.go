@@ -18,14 +18,15 @@ import (
 var ErrMemberOutcomeUnknown = execution.ErrMemberOutcomeUnknown
 
 type memberOperation struct {
-	Kind              string          `json:"kind"`
-	Input             json.RawMessage `json:"input"`
-	InputHash         string          `json:"input_hash"`
-	Response          json.RawMessage `json:"response,omitempty"`
-	Usage             json.RawMessage `json:"usage,omitempty"`
-	AttemptGeneration int64           `json:"attempt_generation"`
-	Attempts          int64           `json:"attempts"`
-	UsageIncomplete   bool            `json:"usage_incomplete,omitempty"`
+	AuthorizationRefusal *execution.AuthorizationRefusal `json:"authorization_refusal,omitempty"`
+	Kind                 string                          `json:"kind"`
+	Input                json.RawMessage                 `json:"input"`
+	InputHash            string                          `json:"input_hash"`
+	Response             json.RawMessage                 `json:"response,omitempty"`
+	Usage                json.RawMessage                 `json:"usage,omitempty"`
+	AttemptGeneration    int64                           `json:"attempt_generation"`
+	Attempts             int64                           `json:"attempts"`
+	UsageIncomplete      bool                            `json:"usage_incomplete,omitempty"`
 }
 
 // InstallFrozenMemberJournal is applied after InstallFrozenUsageTracking, so
@@ -40,7 +41,7 @@ func InstallFrozenMemberJournal(opts compiler.FrozenBuildOpts) compiler.FrozenBu
 		}
 		return stdlib.NewJournaledLLM(inner, journal)
 	}
-	opts.Tools = stdlib.NewJournaledToolDispatcher(opts.Tools, journal, stdlib.JournaledToolOpts{SerializeWhenActive: true})
+	opts.Tools = stdlib.NewJournaledToolDispatcher(memberOperationTools{inner: opts.Tools}, journal, stdlib.JournaledToolOpts{SerializeWhenActive: true})
 	opts.Hooks.BeforeStepHooks = append([]loom.StepHook{memberBeforeStep}, opts.Hooks.BeforeStepHooks...)
 	opts.Hooks.AfterStepHooks = append(opts.Hooks.AfterStepHooks, memberAfterStep)
 	return opts
@@ -136,7 +137,7 @@ func memberBeforeStep(ctx context.Context, step string, state loom.State) error 
 	if err != nil {
 		return err
 	}
-	defer func() { _ = tx.Rollback(ctx) }()
+	defer tx.Rollback(ctx)
 	if err := member.guardTx(ctx, tx); err != nil {
 		return err
 	}
@@ -183,7 +184,8 @@ func memberAfterStep(ctx context.Context, _ string, state loom.State) error {
 func (member *memberExecution) operation(ctx context.Context, kind string, input any, perform func() (any, error)) (responseData json.RawMessage, operationErr error) {
 	effectStarted, receiptCommitted := false, false
 	defer func() {
-		if kind == "tool" && effectStarted && !receiptCommitted && operationErr != nil {
+		_, noEffect := execution.AuthorizationRefusalFromError(operationErr)
+		if kind == "tool" && effectStarted && !receiptCommitted && operationErr != nil && !noEffect {
 			operationErr = errors.Join(ErrMemberOutcomeUnknown, operationErr)
 		}
 	}()
@@ -208,7 +210,9 @@ func (member *memberExecution) operation(ctx context.Context, kind string, input
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = tx.Rollback(ctx) }()
+	// Capture this transaction now. The response phase opens another one;
+	// cancellation can make that later BeginTx return a nil transaction.
+	defer tx.Rollback(ctx)
 	if err := member.guardTx(ctx, tx); err != nil {
 		return nil, err
 	}
@@ -233,19 +237,62 @@ func (member *memberExecution) operation(ctx context.Context, kind string, input
 			}
 			return op.Response, nil
 		}
-		if kind != "model" {
-			return nil, fmt.Errorf("%w: %s", ErrMemberOutcomeUnknown, key)
+		if kind == "tool" && op.AuthorizationRefusal != nil && op.AuthorizationRefusal.Valid() {
+			if op.AttemptGeneration >= member.lease.AttemptGeneration {
+				return nil, ErrMemberBusy
+			}
+			if !op.AuthorizationRefusal.Renewable() {
+				return nil, execution.AuthorizationRefusalError(*op.AuthorizationRefusal, errors.New("Forge denied this operation; restore the employee's authorization before starting new work"))
+			}
+			allowed, authErr := execution.CanRetryAuthorization(ctx, *op.AuthorizationRefusal)
+			if authErr != nil {
+				return nil, authErr
+			}
+			if !allowed {
+				return nil, execution.AuthorizationRefusalError(*op.AuthorizationRefusal, errors.New("same-input authorization renewal is required"))
+			}
+			op.AuthorizationRefusal = nil
+			op.AttemptGeneration = member.lease.AttemptGeneration
+		} else if kind != "model" {
+			// A business receipt may have committed just before the process died
+			// without saving this journal response. Reconcile only that trusted
+			// receipt; ordinary tools and unknown effects remain stopped.
+			recovered, confirmed, reconcileErr := execution.ReconcileOperation(ctx, key, raw)
+			if reconcileErr != nil {
+				return nil, errors.Join(ErrMemberOutcomeUnknown, reconcileErr)
+			}
+			if !confirmed || len(recovered) == 0 || !json.Valid(recovered) {
+				return nil, fmt.Errorf("%w: %s", ErrMemberOutcomeUnknown, key)
+			}
+			op.Response = recovered
+			op.UsageIncomplete = true
+			encoded, err := json.Marshal(op)
+			if err != nil {
+				return nil, err
+			}
+			if err := member.runner.store.PutValueTx(ctx, tx, ns, key, encoded); err != nil {
+				return nil, err
+			}
+			if err := tx.Commit(ctx); err != nil {
+				return nil, err
+			}
+			if err := member.restoreOperationUsage(ctx, op); err != nil {
+				return nil, err
+			}
+			return op.Response, nil
 		}
-		if op.AttemptGeneration >= member.lease.AttemptGeneration {
-			return nil, ErrMemberBusy
+		if kind == "model" {
+			if op.AttemptGeneration >= member.lease.AttemptGeneration {
+				return nil, ErrMemberBusy
+			}
+			// A lost model response is safe to request again, but its unreported
+			// spend cannot be silently called zero. Preserve that gap on the run.
+			op.Attempts++
+			if op.Attempts > 8 {
+				return nil, errors.New("member model recovery attempt budget exhausted")
+			}
+			op.AttemptGeneration, op.UsageIncomplete = member.lease.AttemptGeneration, true
 		}
-		// A lost model response is safe to request again, but its unreported
-		// spend cannot be silently called zero. Preserve that gap on the run.
-		op.Attempts++
-		if op.Attempts > 8 {
-			return nil, errors.New("member model recovery attempt budget exhausted")
-		}
-		op.AttemptGeneration, op.UsageIncomplete = member.lease.AttemptGeneration, true
 	}
 	if present {
 		if err := member.restoreOperationUsage(ctx, op); err != nil {
@@ -284,7 +331,11 @@ func (member *memberExecution) operation(ctx context.Context, kind string, input
 	effectStarted = true
 	response, performErr := perform()
 	if performErr != nil && kind == "tool" {
-		performErr = errors.Join(ErrMemberOutcomeUnknown, performErr)
+		if proof, trusted := execution.AuthorizationRefusalFromError(performErr); trusted {
+			op.AuthorizationRefusal = &proof
+		} else {
+			performErr = errors.Join(ErrMemberOutcomeUnknown, performErr)
+		}
 	}
 	if performErr == nil {
 		op.Response, err = json.Marshal(response)
@@ -311,7 +362,7 @@ func (member *memberExecution) operation(ctx context.Context, kind string, input
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = tx.Rollback(ctx) }()
+	defer tx.Rollback(ctx)
 	if err := member.guardTx(ctx, tx); err != nil {
 		return nil, err
 	}
@@ -355,4 +406,23 @@ func (member *memberExecution) restoreOperationUsage(ctx context.Context, op mem
 		member.state["__member_usage_incomplete"] = true
 	}
 	return nil
+}
+
+// memberOperationTools is invoked only after the journal has durably reserved
+// the operation. Its cursor is serialized by the journaled tool loop.
+type memberOperationTools struct{ inner contract.ToolDispatcher }
+
+func (tools memberOperationTools) ListTools(ctx context.Context) ([]contract.ToolDef, error) {
+	return tools.inner.ListTools(ctx)
+}
+
+func (tools memberOperationTools) Dispatch(ctx context.Context, call contract.ToolCall) (*contract.ToolResult, error) {
+	if member, active := ctx.Value(memberExecutionKey{}).(*memberExecution); active {
+		if member.segment == "" || member.cursor < 1 {
+			return nil, errors.New("member tool operation has no durable journal slot")
+		}
+		slot := fmt.Sprintf("%s/%s/%012d", member.runID, member.segment, member.cursor)
+		ctx = execution.WithOperationID(ctx, slot)
+	}
+	return tools.inner.Dispatch(ctx, call)
 }

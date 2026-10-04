@@ -2,6 +2,7 @@ package workflowcatalog
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -91,6 +92,19 @@ func (b *CandidateBuilder) buildResolvedCandidateTx(ctx context.Context, tx pgx.
 	if err != nil {
 		return nil, nil, machine.ValidationContext{}, err
 	}
+	// Developer candidates carry a server-validated roster and staged member
+	// versions. Published versions always use the live authorization roster.
+	if draft.Draft.Status == workflowdef.VersionStatusDraft {
+		var raw []byte
+		err := tx.QueryRow(ctx, `SELECT team_read FROM weave_team_development_candidates WHERE workspace_id=$1 AND workflow_id=$2 AND workflow_version=$3 AND team_id=$4`, input.WorkspaceID, input.WorkflowID, input.WorkflowVersion, team.TeamID).Scan(&raw)
+		if err == nil {
+			if err = json.Unmarshal(raw, team); err != nil {
+				return nil, nil, machine.ValidationContext{}, err
+			}
+		} else if !errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil, machine.ValidationContext{}, err
+		}
+	}
 	if fixedLead != nil {
 		if fixedLead.AgentID != team.LeadAvatarID {
 			return nil, nil, machine.ValidationContext{}, errors.New("frozen team lead authorization changed")
@@ -99,7 +113,11 @@ func (b *CandidateBuilder) buildResolvedCandidateTx(ctx context.Context, tx pgx.
 	}
 	lead := machine.AgentVersionKey{AgentID: team.LeadAvatarID, AgentVersion: team.LeadAvatarVersion}
 	referenced := machine.ReferencedBundles(lead, graph)
-	scope := workflowdef.CandidateCredentialScope{WorkspaceID: input.WorkspaceID, TeamID: team.TeamID, Lead: lead}
+	scope := workflowdef.CandidateCredentialScope{
+		WorkspaceID: input.WorkspaceID, TeamID: team.TeamID,
+		WorkflowID: input.WorkflowID, WorkflowVersion: input.WorkflowVersion,
+		Lead: lead,
+	}
 	for _, reference := range referenced {
 		scope.Agents = append(scope.Agents, reference.Key)
 	}
@@ -125,6 +143,9 @@ func (b *CandidateBuilder) buildResolvedCandidateTx(ctx context.Context, tx pgx.
 		)
 		if resolveErr != nil {
 			return nil, nil, machine.ValidationContext{}, resolveErr
+		}
+		if reference.ParallelBranch && (len(record.BusinessCapabilityIDs) > 0 || len(record.BusinessCapabilityBindings) > 0) {
+			return nil, nil, machine.ValidationContext{}, fmt.Errorf("%w: business actions require serial durable member execution", compiler.ErrFactoryCompileFailed)
 		}
 		key, selectErr := b.descriptors.SelectAgentFactoryKey(*record)
 		if selectErr != nil {
@@ -155,14 +176,14 @@ func (b *CandidateBuilder) buildResolvedCandidateTx(ctx context.Context, tx pgx.
 	}
 
 	freezeResolver, err := freezer.BeginFreeze(ctx, tx, input.WorkspaceID, freezer.Sources{
-		Agents: b.agents, Skills: b.skills, Providers: b.credentials, Delivery: b.delivery,
+		Agents: developmentRosterReader{PublicationAgentReader: b.agents, team: team}, Skills: b.skills, Providers: b.credentials, Delivery: b.delivery,
 	})
 	if err != nil {
 		return nil, nil, machine.ValidationContext{}, err
 	}
 	workers, err := freezeResolver.ResolveTeamWorkersForShare(ctx, team.TeamID)
 	if err != nil {
-		return nil, nil, machine.ValidationContext{}, err
+		return nil, nil, machine.ValidationContext{}, fmt.Errorf("freeze team roster: %w", err)
 	}
 	for index := range 计划 {
 		usage := freezer.AgentUsageWorker
@@ -172,7 +193,7 @@ func (b *CandidateBuilder) buildResolvedCandidateTx(ctx context.Context, tx pgx.
 		if _, err := freezeResolver.ResolveAgentVersion(
 			ctx, 计划[index].self, usage, 计划[index].key, 计划[index].factoryInput,
 		); err != nil {
-			return nil, nil, machine.ValidationContext{}, err
+			return nil, nil, machine.ValidationContext{}, fmt.Errorf("freeze agent %q: %w", 计划[index].record.Name, err)
 		}
 	}
 
@@ -204,13 +225,13 @@ func (b *CandidateBuilder) buildResolvedCandidateTx(ctx context.Context, tx pgx.
 			ctx, *resolved.Agent, freezeResolver,
 		)
 		if err != nil {
-			return nil, nil, machine.ValidationContext{}, err
+			return nil, nil, machine.ValidationContext{}, fmt.Errorf("enumerate dependencies for agent %q: %w", plan.record.Name, err)
 		}
 		perAgentManifest, offlineResolver, err := freezer.ResolveManifest(
 			ctx, enumerated, freezeResolver,
 		)
 		if err != nil {
-			return nil, nil, machine.ValidationContext{}, err
+			return nil, nil, machine.ValidationContext{}, fmt.Errorf("resolve dependencies for agent %q: %w", plan.record.Name, err)
 		}
 		bundle, err := buildCandidateBundle(*resolved.Agent, plan.key, perAgentManifest, freezeResolver)
 		if err != nil {
@@ -248,7 +269,7 @@ func (b *CandidateBuilder) buildResolvedCandidateTx(ctx context.Context, tx pgx.
 		SchemaVersion: frozen.FrozenSchemaVersion, Dependencies: allEnumerated,
 	}, freezeResolver)
 	if err != nil {
-		return nil, nil, machine.ValidationContext{}, err
+		return nil, nil, machine.ValidationContext{}, fmt.Errorf("resolve workflow dependency manifest: %w", err)
 	}
 
 	deliveryTargets, references := b.resolveCandidateReferences(ctx, tx, input.WorkspaceID, trigger)

@@ -19,16 +19,26 @@ func (s *Store) EnsureManagedRegistration(ctx context.Context, workspaceID, id, 
 	if workspaceID == "" || id == "" || !strings.HasPrefix(token, tokenPrefix) || len(token) < 40 {
 		return nil, errors.New("invalid managed runtime registration")
 	}
-	_, err := s.pool.Exec(ctx, `INSERT INTO weave_runtimes(id,workspace_id,name,engines,token_hash,functional_revision,enabled,created_at,updated_at)
- VALUES($1,$2,$3,'[]',$4,1,true,$5,$5) ON CONFLICT(id) DO NOTHING`, id, workspaceID, name, hashToken(token), s.now())
+	// The embedded Host identity normally survives restarts on disk. If an old
+	// deployment did not persist that directory, reclaim the reserved managed
+	// runtime name and rotate its token instead of making the whole Server fail
+	// to start on the active-name uniqueness constraint.
+	runtime, err := scanRuntime(s.pool.QueryRow(ctx, `
+		INSERT INTO weave_runtimes(
+			id,workspace_id,name,engines,token_hash,functional_revision,enabled,created_at,updated_at
+		) VALUES($1,$2,$3,'[]',$4,1,true,$5,$5)
+		ON CONFLICT (workspace_id,name) WHERE deleted_at IS NULL
+		DO UPDATE SET
+			token_hash=EXCLUDED.token_hash,
+			enabled=true,
+			revoked_at=NULL,
+			updated_at=EXCLUDED.updated_at
+		RETURNING `+runtimeColumns,
+		id, workspaceID, name, hashToken(token), s.now()))
 	if err != nil {
 		return nil, err
 	}
-	runtime, err := s.ValidateToken(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-	if runtime.ID != id || runtime.WorkspaceID != workspaceID {
+	if runtime.WorkspaceID != workspaceID || runtime.Name != name {
 		return nil, errors.New("managed runtime identity does not match persisted registration")
 	}
 	return runtime, nil

@@ -18,9 +18,11 @@ type Config struct {
 	LogLevel    string // "debug", "info", "warn", "error"
 
 	// Auth settings.
-	DevMode   bool   // WEAVE_DEV_MODE — enables /v1/auth/token (no-credential token endpoint)
-	AdminUser string // WEAVE_ADMIN_USER — seed admin username on startup
-	AdminPass string // WEAVE_ADMIN_PASS — seed admin password on startup
+	DevMode               bool   // WEAVE_DEV_MODE — enables /v1/auth/token (no-credential token endpoint)
+	AdminUser             string // WEAVE_ADMIN_USER — seed admin username on startup
+	AdminPass             string // WEAVE_ADMIN_PASS — seed admin password on startup
+	ForgeSessionURL       string // WEAVE_FORGE_SESSION_URL — Forge endpoint that resolves the signed-in account
+	ForgeDefaultWorkspace string // WEAVE_FORGE_DEFAULT_WORKSPACE — fallback workspace when Forge has no organization claim
 
 	// CORS settings.
 	CORSOrigins string // CORS_ORIGINS — comma-separated allowed origins; "*" for dev (default when DevMode)
@@ -56,7 +58,14 @@ type Config struct {
 
 	// Optional built-in meta-team conversation guide. Disabling it preserves
 	// stored assets and history while freezing all new runs.
-	MetaTeamEnabled bool // WEAVE_METATEAM_ENABLED, default true
+	MetaTeamEnabled bool // WEAVE_METATEAM_ENABLED, default false (retired)
+
+	// Retired capabilities. The supported client is the GooeyPi desktop with Forge,
+	// which never calls team templates, team evaluation, team-build runs or Weave
+	// local accounts. Load() defaults both flags to true; the zero value keeps every
+	// route registered so tests and embedders opt in explicitly.
+	RetireLegacyPlatformAPIs bool // WEAVE_RETIRE_LEGACY_PLATFORM_APIS, default true
+	DisableLocalLogin        bool // WEAVE_DISABLE_LOCAL_LOGIN, default true
 }
 
 // Load reads configuration from environment variables.
@@ -102,7 +111,15 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	metaTeamEnabled, err := boolEnv("WEAVE_METATEAM_ENABLED", true)
+	metaTeamEnabled, err := boolEnv("WEAVE_METATEAM_ENABLED", false)
+	if err != nil {
+		return nil, err
+	}
+	retireLegacyPlatformAPIs, err := boolEnv("WEAVE_RETIRE_LEGACY_PLATFORM_APIS", true)
+	if err != nil {
+		return nil, err
+	}
+	disableLocalLogin, err := boolEnv("WEAVE_DISABLE_LOCAL_LOGIN", true)
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +163,8 @@ func Load() (*Config, error) {
 		DevMode:                  devMode,
 		AdminUser:                os.Getenv("WEAVE_ADMIN_USER"),
 		AdminPass:                os.Getenv("WEAVE_ADMIN_PASS"),
+		ForgeSessionURL:          strings.TrimSpace(os.Getenv("WEAVE_FORGE_SESSION_URL")),
+		ForgeDefaultWorkspace:    strings.TrimSpace(os.Getenv("WEAVE_FORGE_DEFAULT_WORKSPACE")),
 		CORSOrigins:              corsOrigins,
 		MCPBoundaryBase:          envOr("WEAVE_MCP_BOUNDARY_BASE", "http://127.0.0.1:"+port),
 		WorkspacesRoot:           workspacesRoot,
@@ -167,6 +186,8 @@ func Load() (*Config, error) {
 		HealthWarningSlowRate:    healthWarningSlowRate,
 		HealthSlowRunSeconds:     healthSlowRunSeconds,
 		MetaTeamEnabled:          metaTeamEnabled,
+		RetireLegacyPlatformAPIs: retireLegacyPlatformAPIs,
+		DisableLocalLogin:        disableLocalLogin,
 	}
 
 	if cfg.DatabaseURL == "" {

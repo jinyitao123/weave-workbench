@@ -7,6 +7,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+
+	"github.com/jinyitao123/weave/internal/base/execution"
 )
 
 func TestHumanResumeQueuesContinuationAdvancesCheckpointAndBindsDigest(t *testing.T) {
@@ -31,6 +33,10 @@ func TestHumanResumeQueuesContinuationAdvancesCheckpointAndBindsDigest(t *testin
 	}
 	h.assertTask(t, sourceTaskID, "completed", "run-human-resume", "")
 	h.assertRun(t, "run-human-resume", StatusParked, nil)
+	parkedRun, err := (&PGStore{Transactions: h.pool}).Get(context.Background(), "workspace-1", "run-human-resume")
+	if err != nil {
+		t.Fatalf("read parked question identity: %v", err)
+	}
 
 	payload := json.RawMessage(`{"decision":"approve"}`)
 	digest := sha256.Sum256(payload)
@@ -39,7 +45,8 @@ func TestHumanResumeQueuesContinuationAdvancesCheckpointAndBindsDigest(t *testin
 		Now: func() time.Time { return h.now.Add(time.Second) },
 	}
 	request := CompleteHumanWaitRequest{
-		WorkspaceID: "workspace-1", RunID: "run-human-resume", Payload: payload, PayloadDigest: digest[:],
+		WorkspaceID: "workspace-1", RunID: "run-human-resume", InteractionID: HumanInteractionID(parkedRun),
+		Payload: payload, PayloadDigest: digest[:],
 		IdempotencyKey: "approve-once", Actor: "user-1", OccurredAt: h.now.Add(time.Second),
 	}
 	completed, err := service.Complete(context.Background(), request)
@@ -85,6 +92,48 @@ func TestHumanResumeQueuesContinuationAdvancesCheckpointAndBindsDigest(t *testin
 	h.assertRun(t, "run-human-resume", StatusSucceeded, nil)
 }
 
+func TestHumanResumeReviewerDoesNotReplaceFrozenExecutionSubject(t *testing.T) {
+	h := newProcessNextHarness(t)
+	h.runtime.executeResult = RuntimeResult{Status: RuntimeParked, Park: &RuntimePark{
+		NodeID: "review", CompletedOutputs: map[string]json.RawMessage{}, WaitKind: WaitHuman, UsageComplete: true,
+		WaitDetail: json.RawMessage(`{"schema_version":1,"wait_type":"human","node_id":"review","success_node_id":"deliver","resume_schema":{"type":"object"},"task":{"title":"复核","instructions":"确认"}}`),
+	}}
+	h.enqueueWorkflowTask(t, "run-cross-reviewer")
+	if processed, err := h.executor.ProcessNext(context.Background(), "worker-park"); err != nil || !processed {
+		t.Fatalf("park run: processed=%v error=%v", processed, err)
+	}
+	parkedRun, err := (&PGStore{Transactions: h.pool}).Get(context.Background(), "workspace-1", "run-cross-reviewer")
+	if err != nil {
+		t.Fatalf("read parked reviewer question identity: %v", err)
+	}
+	payload := json.RawMessage(`{"decision":"approved"}`)
+	digest := sha256.Sum256(payload)
+	service := &HumanResumeService{Transactions: h.pool, Runs: NewPGStore(), Checkpoints: NewPGCheckpointStore(), Tasks: h.tasks}
+	reviewer, err := execution.BindSubject(context.Background(), execution.Subject{WorkspaceID: "workspace-1", UserID: "reviewer-2"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	accepted, err := service.Complete(reviewer, CompleteHumanWaitRequest{
+		WorkspaceID: "workspace-1", RunID: "run-cross-reviewer", InteractionID: HumanInteractionID(parkedRun),
+		Payload: payload, PayloadDigest: digest[:],
+		IdempotencyKey: "reviewer-accept", Actor: "reviewer-2", OccurredAt: h.now.Add(time.Second),
+	})
+	if err != nil || accepted.Idempotent {
+		t.Fatalf("cross-reviewer complete: result=%#v error=%v", accepted, err)
+	}
+	var actorSubject []byte
+	if err := h.pool.QueryRow(context.Background(), `SELECT actor_subject FROM weave_task_queue WHERE id=$1`, accepted.TaskID).Scan(&actorSubject); err != nil {
+		t.Fatal(err)
+	}
+	var subject execution.Subject
+	if err := json.Unmarshal(actorSubject, &subject); err != nil {
+		t.Fatal(err)
+	}
+	if subject.UserID != "user-1" {
+		t.Fatalf("continuation subject=%+v, want original user-1", subject)
+	}
+}
+
 func TestHumanTimeoutQueuesContinuationAndAdvancesTimeoutEdge(t *testing.T) {
 	h := newProcessNextHarness(t)
 	parkHumanRunForTimeout(t, h, "run-human-timeout")
@@ -118,6 +167,10 @@ func TestHumanTimeoutQueuesContinuationAndAdvancesTimeoutEdge(t *testing.T) {
 func TestHumanCompleteAndTimeoutOnlyOneCASWins(t *testing.T) {
 	h := newProcessNextHarness(t)
 	parkHumanRunForTimeout(t, h, "run-human-race")
+	parkedRun, err := (&PGStore{Transactions: h.pool}).Get(context.Background(), "workspace-1", "run-human-race")
+	if err != nil {
+		t.Fatalf("read parked race question identity: %v", err)
+	}
 	payload := json.RawMessage(`{"decision":"approve"}`)
 	digest := sha256.Sum256(payload)
 	service := &HumanResumeService{
@@ -137,7 +190,8 @@ func TestHumanCompleteAndTimeoutOnlyOneCASWins(t *testing.T) {
 	go func() {
 		<-start
 		_, err := service.Complete(context.Background(), CompleteHumanWaitRequest{
-			WorkspaceID: "workspace-1", RunID: "run-human-race", Payload: payload, PayloadDigest: digest[:],
+			WorkspaceID: "workspace-1", RunID: "run-human-race", InteractionID: HumanInteractionID(parkedRun),
+			Payload: payload, PayloadDigest: digest[:],
 			IdempotencyKey: "race-complete", Actor: "user-1", OccurredAt: h.now.Add(time.Second),
 		})
 		completeResult <- err

@@ -180,7 +180,7 @@ func main() {
 	// Create LLM router (providers configured via API at runtime).
 	defaultModel := os.Getenv("DEFAULT_MODEL")
 	if defaultModel == "" {
-		defaultModel = "deepseek-v4-flash"
+		defaultModel = "deepseek-flash"
 	}
 	router := llmrouter.New(defaultModel)
 
@@ -211,7 +211,7 @@ func main() {
 			Name:                     "DeepSeek",
 			BaseURL:                  "https://api.deepseek.com",
 			APIKey:                   key,
-			Models:                   []string{"deepseek-v4-flash", "deepseek-v4-pro"},
+			Models:                   []string{"deepseek-flash", "deepseek-v4-pro"},
 			JSONObjectMode:           true, // DeepSeek doesn't support json_schema, use json_object
 			ThinkingDefaultMode:      thinkingMode,
 			ThinkingDisableWithTools: true,
@@ -289,7 +289,6 @@ func main() {
 		if srv.TeamBuild != nil && srv.Registry != nil && srv.Workflow != nil {
 			srv.TeamBuild.SetBaselineSources(srv.OrgStore, srv.Registry, srv.Workflow, srv.WorkflowArtifacts)
 		}
-		designseed.EnsureDesignStudio(srv.Registry, srv.OrgStore, "default")
 		if err := metateam.EnsureMetaTeamIfEnabled(
 			context.Background(), srv.Registry, srv.OrgStore, "default", cfg.MetaTeamEnabled,
 		); err != nil {
@@ -575,6 +574,9 @@ func main() {
 func dispatchEarlyCommand(args []string, stdout, stderr io.Writer) (bool, int) {
 	if len(args) > 0 && args[0] == "bootstrap" {
 		return true, runBootstrapCommand(args[1:], stdout, stderr)
+	}
+	if len(args) > 0 && args[0] == "ops" {
+		return true, runOpsCommand(args[1:], stdout, stderr)
 	}
 	return cli.Dispatch(args, stdout, stderr)
 }

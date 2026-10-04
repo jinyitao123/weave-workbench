@@ -10,7 +10,10 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jinyitao123/loom/contract"
+	"github.com/jinyitao123/weave/internal/base/execution"
 	"github.com/jinyitao123/weave/internal/base/fileartifact"
+	"github.com/jinyitao123/weave/internal/kernel/businessaction"
 	"log/slog"
 	"math"
 	"sort"
@@ -19,6 +22,7 @@ import (
 
 	"github.com/jinyitao123/weave/internal/base/deliverable"
 	"github.com/jinyitao123/weave/internal/base/frozen"
+	"github.com/jinyitao123/weave/internal/kernel/deliverycheck"
 	"github.com/jinyitao123/weave/internal/kernel/loomruntime"
 	"github.com/jinyitao123/weave/internal/kernel/taskqueue"
 	"github.com/jinyitao123/weave/internal/kernel/workflow"
@@ -233,10 +237,12 @@ type WorkflowOutputRecorder interface {
 }
 
 type WorkflowSerialRuntime struct {
-	Members     *loomruntime.MemberRunner
-	Artifacts   ArtifactReader
-	Loader      *workflow.RuntimeLoader
-	HostFactory workflow.RuntimeHostFactory
+	BusinessReceiptReader deliverycheck.BusinessReceiptReader
+	AuthorizationRetry    execution.AuthorizationRetryAuthorizer
+	Members               *loomruntime.MemberRunner
+	Artifacts             ArtifactReader
+	Loader                *workflow.RuntimeLoader
+	HostFactory           workflow.RuntimeHostFactory
 	// HostFactoryForSnapshot optionally replaces HostFactory when the run
 	// consumes a frozen candidate snapshot. It receives the snapshot's build
 	// run ID and candidate content hash so a test harness can bind a scripted
@@ -286,6 +292,110 @@ func (r *WorkflowSerialRuntime) toolObserver(run TeamRun) workflow.RuntimeToolOb
 		}); err != nil {
 			slog.Warn("team run tool activity record failed", "run_id", run.RunID, "node_id", scope.NodeID, "error", err)
 		}
+	}
+}
+
+func (r *WorkflowSerialRuntime) withBusinessActionOutcomeContext(ctx context.Context, run TeamRun) context.Context {
+	if r.AuthorizationRetry != nil {
+		ctx = execution.WithAuthorizationRetryAuthorizer(ctx, r.AuthorizationRetry)
+	}
+	if reconciler, ok := r.Activities.(BusinessActionOperationReconciler); ok {
+		ctx = execution.WithOperationReconciler(ctx, func(eventCtx context.Context, slot string, inputRaw json.RawMessage) (json.RawMessage, bool, error) {
+			scope, exists := eventCtx.Value(runtimeActivityScopeKey{}).(runtimeActivityScope)
+			if !exists || scope.NodeID == "" || scope.MemberID == "" || execution.InvocationID(eventCtx) == "" {
+				return nil, false, errors.New("business action reconciliation has no active workflow scope")
+			}
+			decision, err := reconciler.ReconcileBusinessActionOperation(eventCtx, BusinessActionOperationReconcileCheck{
+				WorkspaceID: run.WorkspaceID, RunID: run.RunID, NodeID: scope.NodeID, MemberID: scope.MemberID,
+				InvocationID: execution.InvocationID(eventCtx), OperationSlot: slot,
+			})
+			if err != nil {
+				return nil, false, err
+			}
+			if !decision.Blocked || !decision.SameOperation || (decision.Status != "succeeded" && decision.Status != "failed") {
+				return nil, false, nil
+			}
+			cached := businessaction.SanitizeActionOutcomeResult(decision.Result)
+			if cached == nil || businessaction.ValidateActionOutcomeResultStatus(cached, decision.Status) != nil {
+				return nil, false, nil
+			}
+			// The journal already checked this input's persisted hash. Its call
+			// supplies only response correlation, never business lookup scope.
+			var call contract.ToolCall
+			if json.Unmarshal(inputRaw, &call) != nil || call.ID == "" || call.Name == "" || len([]rune(call.ID)) > 256 || len([]rune(call.Name)) > 256 {
+				return nil, false, errors.New("business action reconciliation tool input is invalid")
+			}
+			cached.CallID, cached.ToolName = call.ID, call.Name
+			if decision.Status == "failed" {
+				cached.IsError = true
+			}
+			raw, err := json.Marshal(cached)
+			return raw, err == nil, err
+		})
+	}
+	store, ok := r.Activities.(BusinessActionActivityStore)
+	if !ok {
+		return ctx
+	}
+	ctx = businessaction.WithActionOutcomeRecorder(ctx, func(eventCtx context.Context, outcome businessaction.ActionOutcomeEvent) error {
+		scope, exists := eventCtx.Value(runtimeActivityScopeKey{}).(runtimeActivityScope)
+		if !exists || scope.NodeID == "" || scope.MemberID == "" ||
+			outcome.InvocationID == "" || outcome.InvocationID != execution.InvocationID(eventCtx) || outcome.CallID == "" {
+			return errors.New("Forge action outcome does not match the active workflow invocation")
+		}
+		if len(outcome.OperationSlot) > MaxBusinessActionOperationSlotBytes || len([]rune(scope.NodeID)) > 128 || len([]rune(outcome.CallID)) > 256 || len([]rune(outcome.ObjectName)) > 128 || len([]rune(outcome.RecordID)) > 128 {
+			return errors.New("Forge action outcome exceeds the continuation contract limits")
+		}
+		if outcome.Phase != "started" && outcome.Phase != "result" {
+			return errors.New("Forge action outcome phase is invalid")
+		}
+		if outcome.Phase == "result" && outcome.Status != businessaction.ActionOutcomeStatusSucceeded &&
+			outcome.Status != businessaction.ActionOutcomeStatusFailed && outcome.Status != businessaction.ActionOutcomeStatusUnknown {
+			return errors.New("Forge action outcome status is invalid")
+		}
+		detail, err := json.Marshal(outcome)
+		if err != nil {
+			return fmt.Errorf("encode Forge action outcome: %w", err)
+		}
+		kind := "business_action_started"
+		if outcome.Phase == "result" {
+			kind = "business_action_result"
+		}
+		eventID := uuid.NewSHA1(uuid.NameSpaceOID, []byte(strings.Join([]string{
+			run.RunID, scope.NodeID, scope.MemberID, outcome.InputRevisionID, outcome.InvocationID, outcome.OperationID, outcome.CallID, outcome.Phase,
+		}, "\x1f"))).String()
+		return store.RecordBusinessActionEvent(eventCtx, ActivityEvent{
+			WorkspaceID: run.WorkspaceID, RunID: run.RunID, EventID: eventID, Kind: kind,
+			NodeID: scope.NodeID, MemberID: scope.MemberID, MemberVersion: scope.MemberVersion,
+			Detail: detail, OccurredAt: r.now().UTC(),
+		})
+	})
+	ctx = businessaction.WithActionOutcomeGuard(ctx, func(eventCtx context.Context, outcome businessaction.ActionOutcomeEvent) (businessaction.ActionOutcomeReplay, error) {
+		decision, err := store.CheckBusinessActionReplay(eventCtx, BusinessActionReplayCheck{
+			WorkspaceID: run.WorkspaceID, RunID: run.RunID, NodeID: execution.NodeID(eventCtx),
+			InvocationID: outcome.InvocationID, CallID: outcome.CallID, OperationID: outcome.OperationID, InputRevisionID: outcome.InputRevisionID,
+			CapabilityID: outcome.CapabilityID, RecordID: outcome.RecordID, ParamsSHA256: outcome.ParamsSHA256,
+		})
+		if err != nil {
+			return businessaction.ActionOutcomeReplay{}, err
+		}
+		return businessaction.ActionOutcomeReplay{Blocked: decision.Blocked, Status: decision.Status,
+			SameOperation: decision.SameOperation, Result: decision.Result}, nil
+	})
+	return ctx
+}
+
+func (r *WorkflowSerialRuntime) actionOutcomesLoader(run TeamRun) func(context.Context) ([]BusinessActionOutcomeV1, error) {
+	store, ok := r.Activities.(BusinessActionActivityStore)
+	if !ok {
+		return nil
+	}
+	return func(ctx context.Context) ([]BusinessActionOutcomeV1, error) {
+		events, err := store.ListBusinessActionEvents(ctx, run.WorkspaceID, run.RunID)
+		if err != nil {
+			return nil, err
+		}
+		return ProjectBusinessActionOutcomes(events)
 	}
 }
 
@@ -467,6 +577,9 @@ func (r *WorkflowSerialRuntime) Execute(
 			CheckCorrection:          r.correctionBoundary(run, prepared.graph, prepared.payload),
 			RecordActivity:           r.activityRecorder(run),
 			LoadObservedEvents:       r.observedEventLoader(run),
+			LoadActionOutcomes:       r.actionOutcomesLoader(run),
+			FinalCompletionContext:   r.completionContext(run, prepared.graph),
+			WithActionOutcomeContext: func(ctx context.Context) context.Context { return r.withBusinessActionOutcomeContext(ctx, run) },
 		},
 	)
 	return runtimeResultFromSerial(result, prepared.payload, nil)
@@ -528,6 +641,9 @@ func (r *WorkflowSerialRuntime) ResumeCheckpoint(
 			CheckCorrection:          r.correctionBoundary(run, prepared.graph, prepared.payload),
 			RecordActivity:           r.activityRecorder(run),
 			LoadObservedEvents:       r.observedEventLoader(run),
+			LoadActionOutcomes:       r.actionOutcomesLoader(run),
+			FinalCompletionContext:   r.completionContext(run, prepared.graph),
+			WithActionOutcomeContext: func(ctx context.Context) context.Context { return r.withBusinessActionOutcomeContext(ctx, run) },
 			Corrections:              append([]CorrectionDirectiveV1(nil), checkpoint.Corrections...),
 		},
 	)
@@ -762,7 +878,12 @@ func (r *WorkflowSerialRuntime) loadFrozenGraph(
 			fmt.Errorf("decode frozen graph: %s", report.Issues[0].Code),
 		)
 	}
+	if err := machine.ValidateBusinessReceiptGraph(graph, payload); err != nil {
+		return loadedWorkflowGraph{}, executionError(ErrorCodeRuntimeIncompatible, err)
+	}
 	return loadedWorkflowGraph{
+		// The bound artifact's output protocol and declared action subset have
+		// already been checked before any runtime hosts or tools are installed.
 		payload: payload, graph: graph, envelope: envelope,
 		sourceRef: sourceRef, candidateHash: candidateHash,
 	}, nil

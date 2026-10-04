@@ -12,8 +12,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jinyitao123/weave/internal/base/storeext"
-	"github.com/jinyitao123/weave/internal/kernel/taskqueue"
 	"github.com/jinyitao123/weave/internal/kernel/loomruntime"
+	"github.com/jinyitao123/weave/internal/kernel/taskqueue"
 )
 
 const frozenAttemptLeaseTTL = 120 * time.Second
@@ -220,6 +220,13 @@ func frozenTerminalCandidate(
 		ToolCalls:    usage.ToolCalls,
 	}
 	var usageCompletePtr *bool
+	// A started request can fail before its provider returns a usage receipt.
+	// Preserve that partial measurement as an incomplete terminal instead of
+	// letting terminal validation replace the original execution error.
+	if usageCoverage != nil && (!usageCoverage.HasTokens || !usageCoverage.HasCost) && usageIncompleteReason == "" {
+		usageComplete = false
+		usageIncompleteReason = UsageIncompleteReasonAttemptLost
+	}
 	// The reason is the discriminator: callers that never set the annotation
 	// carry zero false/empty and must produce a usage-complete entry.
 	if !usageComplete && usageIncompleteReason != "" {
@@ -344,6 +351,12 @@ func (e *Executor) commitFrozenNormalTerminal(
 			return err
 		}
 	}
+	if markerPresent && marker.Phase == loomruntime.TerminalMarkerPhaseYielded {
+		carryForwardYieldedUsage(&candidate, marker)
+		if err := loomruntime.ValidateTerminalV3(candidate); err != nil {
+			return fmt.Errorf("validate frozen terminal after yielded usage carry-forward: %w", err)
+		}
+	}
 	if err := coordinator.CommitNormalTerminal(
 		ctx,
 		loomruntime.NormalTerminalCommit{
@@ -354,6 +367,46 @@ func (e *Executor) commitFrozenNormalTerminal(
 		return fmt.Errorf("commit frozen normal terminal: %w", err)
 	}
 	return nil
+}
+
+// carryForwardYieldedUsage preserves usage that was already durably observed
+// before a workflow parked. A resumed runtime may finish without replaying the
+// earlier model calls into its in-memory result; the final terminal must never
+// erase those confirmed facts. The transition validator remains fail-closed
+// for every other identity and lifecycle mismatch.
+func carryForwardYieldedUsage(candidate *loomruntime.TerminalEntryV3, marker loomruntime.TerminalMarkerV1) {
+	if candidate == nil {
+		return
+	}
+	previous := loomruntime.TerminalUsage{
+		InputTokens:  int(marker.UsageInputTokens),
+		OutputTokens: int(marker.UsageOutputTokens),
+		CostUSD:      marker.UsageCostUSD,
+		ToolCalls:    int(marker.UsageToolCalls),
+	}
+	current := candidate.SelfExclusive
+	carried := current
+	if previous.InputTokens > carried.InputTokens {
+		carried.InputTokens = previous.InputTokens
+	}
+	if previous.OutputTokens > carried.OutputTokens {
+		carried.OutputTokens = previous.OutputTokens
+	}
+	if previous.CostUSD > carried.CostUSD {
+		carried.CostUSD = previous.CostUSD
+	}
+	if previous.ToolCalls > carried.ToolCalls {
+		carried.ToolCalls = previous.ToolCalls
+	}
+	candidate.SelfExclusive = carried
+	candidate.TokensIn = carried.InputTokens
+	candidate.TokensOut = carried.OutputTokens
+	candidate.CostUSD = carried.CostUSD
+	candidate.ToolCalls = carried.ToolCalls
+	candidate.SubtreeTotal.InputTokens += carried.InputTokens - current.InputTokens
+	candidate.SubtreeTotal.OutputTokens += carried.OutputTokens - current.OutputTokens
+	candidate.SubtreeTotal.CostUSD += carried.CostUSD - current.CostUSD
+	candidate.SubtreeTotal.ToolCalls += carried.ToolCalls - current.ToolCalls
 }
 
 func (e *Executor) frozenTerminalConversationID(

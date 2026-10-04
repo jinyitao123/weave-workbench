@@ -8,9 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jinyitao123/weave/internal/base/execution"
 	"github.com/jinyitao123/weave/internal/kernel/taskqueue"
 )
 
@@ -81,8 +83,8 @@ func HumanInteractionID(run TeamRun) string {
 }
 
 type CompleteHumanWaitRequest struct {
-	// InteractionID is optional for legacy tool callers. Product forms bind
-	// their answer to the exact question returned by the inbox/detail API.
+	// InteractionID binds the answer to the exact question returned by the
+	// inbox/detail API.
 	InteractionID string
 	// ValidatePayload runs against the locked current question after replay
 	// and identity checks. The app supplies schema policy without an upward import.
@@ -119,7 +121,7 @@ func (s *HumanResumeService) Complete(
 	}
 	if req.WorkspaceID == "" || req.RunID == "" || req.IdempotencyKey == "" || req.Actor == "" ||
 		len(req.Payload) == 0 || len(req.Payload) > HumanResumePayloadMaxBytes || !json.Valid(req.Payload) ||
-		len(req.PayloadDigest) != sha256.Size || len(req.InteractionID) > 256 {
+		len(req.PayloadDigest) != sha256.Size || strings.TrimSpace(req.InteractionID) == "" || len(req.InteractionID) > 256 {
 		return CompleteHumanWaitResult{}, errors.New("human resume request is invalid")
 	}
 	digest := sha256.Sum256(req.Payload)
@@ -166,7 +168,7 @@ func (s *HumanResumeService) Complete(
 	if locked.Status != StatusParked {
 		return CompleteHumanWaitResult{}, ErrTeamRunStateConflict
 	}
-	if req.InteractionID != "" && req.InteractionID != HumanInteractionID(locked) {
+	if req.InteractionID != HumanInteractionID(locked) {
 		return CompleteHumanWaitResult{}, ErrTeamRunResumeStale
 	}
 	if locked.WaitKind == nil || *locked.WaitKind != WaitHuman || locked.CheckpointRef == nil ||
@@ -224,7 +226,10 @@ func (s *HumanResumeService) Complete(
 	if err != nil {
 		return CompleteHumanWaitResult{}, err
 	}
-	if err := s.Tasks.EnqueueTx(ctx, tx, &taskqueue.Task{
+	// The reviewer is the transition actor, while the continuation must retain
+	// the immutable execution subject frozen in RunSnapshotID. Mask the request
+	// subject only for task admission so taskqueue inherits from that snapshot.
+	if err := s.Tasks.EnqueueTx(execution.WithoutAuthenticatedSubject(ctx), tx, &taskqueue.Task{
 		ID: taskID, WorkspaceID: resumed.WorkspaceID, ProjectID: resumed.ProjectID,
 		IdentityKind: taskqueue.IdentityTeamWorkflow, IdentitySchemaVersion: 2,
 		WorkflowID: resumed.WorkflowID, WorkflowVersion: resumed.WorkflowVersion,

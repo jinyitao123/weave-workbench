@@ -38,8 +38,24 @@ func (f RuntimeHostFactoryFunc) Build(
 	return f(ctx, bundle, resolver)
 }
 
+// RuntimeHostFactoryWithLLM preserves host decorators when a providerless Loom
+// bundle receives its inference implementation from the runtime assignment.
+type RuntimeHostFactoryWithLLM interface {
+	BuildWithLLM(context.Context, frozen.FrozenExecutionBundle, RuntimeCredentialResolver, contract.LLM) (compiler.FrozenBuildOpts, io.Closer, error)
+}
+
+type runtimeHostFactory struct{}
+
+func (runtimeHostFactory) Build(ctx context.Context, bundle frozen.FrozenExecutionBundle, resolver RuntimeCredentialResolver) (compiler.FrozenBuildOpts, io.Closer, error) {
+	return buildRuntimeHosts(ctx, bundle, resolver)
+}
+
+func (runtimeHostFactory) BuildWithLLM(ctx context.Context, bundle frozen.FrozenExecutionBundle, resolver RuntimeCredentialResolver, llm contract.LLM) (compiler.FrozenBuildOpts, io.Closer, error) {
+	return buildRuntimeHostsWithLLM(ctx, bundle, resolver, newRuntimeMCPTransport, llm)
+}
+
 func NewRuntimeHostFactory() RuntimeHostFactory {
-	return RuntimeHostFactoryFunc(buildRuntimeHosts)
+	return runtimeHostFactory{}
 }
 
 // RuntimeToolEvent is the secret-free observable envelope for one frozen
@@ -61,24 +77,68 @@ func ObserveRuntimeTools(inner RuntimeHostFactory, observer RuntimeToolObserver)
 	if inner == nil || observer == nil {
 		return inner
 	}
-	return RuntimeHostFactoryFunc(func(ctx context.Context, bundle frozen.FrozenExecutionBundle, resolver RuntimeCredentialResolver) (compiler.FrozenBuildOpts, io.Closer, error) {
-		opts, closer, err := inner.Build(ctx, bundle, resolver)
-		if err != nil {
-			return opts, closer, err
+	observed := observedRuntimeHostFactory{inner: inner, observer: observer}
+	if withLLM, ok := inner.(RuntimeHostFactoryWithLLM); ok {
+		return observedRuntimeHostFactoryWithLLM{
+			observedRuntimeHostFactory: observed,
+			innerWithLLM:               withLLM,
 		}
-		opts.Hooks.ToolHooks = append(opts.Hooks.ToolHooks, contract.ToolHook{
-			Pre: func(ctx context.Context, call contract.ToolCall) (contract.ToolCall, error) {
-				observer(ctx, RuntimeToolEvent{Kind: "tool_started", Tool: call.Name, CallID: call.ID})
-				return call, nil
-			},
-			Post: func(ctx context.Context, call contract.ToolCall, result *contract.ToolResult) error {
-				observer(ctx, RuntimeToolEvent{Kind: "tool_completed", Tool: call.Name, CallID: call.ID,
-					ResultError: result != nil && result.IsError})
-				return nil
-			},
-		})
-		return opts, closer, nil
+	}
+	return observed
+}
+
+type observedRuntimeHostFactory struct {
+	inner    RuntimeHostFactory
+	observer RuntimeToolObserver
+}
+
+func (f observedRuntimeHostFactory) Build(
+	ctx context.Context,
+	bundle frozen.FrozenExecutionBundle,
+	resolver RuntimeCredentialResolver,
+) (compiler.FrozenBuildOpts, io.Closer, error) {
+	opts, closer, err := f.inner.Build(ctx, bundle, resolver)
+	return f.observe(opts, closer, err)
+}
+
+func (f observedRuntimeHostFactory) observe(
+	opts compiler.FrozenBuildOpts,
+	closer io.Closer,
+	err error,
+) (compiler.FrozenBuildOpts, io.Closer, error) {
+	if err != nil {
+		return opts, closer, err
+	}
+	opts.Hooks.ToolHooks = append(opts.Hooks.ToolHooks, contract.ToolHook{
+		Pre: func(ctx context.Context, call contract.ToolCall) (contract.ToolCall, error) {
+			f.observer(ctx, RuntimeToolEvent{Kind: "tool_started", Tool: call.Name, CallID: call.ID})
+			return call, nil
+		},
+		Post: func(ctx context.Context, call contract.ToolCall, result *contract.ToolResult) error {
+			f.observer(ctx, RuntimeToolEvent{Kind: "tool_completed", Tool: call.Name, CallID: call.ID,
+				ResultError: result != nil && result.IsError})
+			return nil
+		},
 	})
+	return opts, closer, nil
+}
+
+// Keep BuildWithLLM conditional on the wrapped factory's original capability.
+// RuntimeLoader uses this interface to preserve host decorators when it supplies
+// inference for providerless Loom members.
+type observedRuntimeHostFactoryWithLLM struct {
+	observedRuntimeHostFactory
+	innerWithLLM RuntimeHostFactoryWithLLM
+}
+
+func (f observedRuntimeHostFactoryWithLLM) BuildWithLLM(
+	ctx context.Context,
+	bundle frozen.FrozenExecutionBundle,
+	resolver RuntimeCredentialResolver,
+	llm contract.LLM,
+) (compiler.FrozenBuildOpts, io.Closer, error) {
+	opts, closer, err := f.innerWithLLM.BuildWithLLM(ctx, bundle, resolver, llm)
+	return f.observe(opts, closer, err)
 }
 
 func buildRuntimeHosts(
@@ -159,11 +219,19 @@ func buildRuntimeHostsWithLLM(
 			if err != nil {
 				return compiler.FrozenBuildOpts{}, nil, err
 			}
-			router.RegisterProvider(llmrouter.ProviderConfig{
+			provider := llmrouter.ProviderConfig{
 				ID:      fmt.Sprintf("%d#%s#%s", index, binding.ProviderID, binding.ModelID),
 				BaseURL: binding.BaseURL, APIKey: string(material.Value()),
 				Models: []string{binding.ModelID}, JSONObjectMode: binding.JSONObjectMode,
-			})
+			}
+			// This frozen system provider is DeepSeek's OpenAI-compatible endpoint.
+			// Tool histories cannot replay reasoning_content yet, so all member
+			// requests must use its non-thinking mode, including the first turn.
+			if binding.ProviderID == "system/deepseek" && binding.CredentialRef.ServiceID == "system-provider:deepseek" {
+				provider.ThinkingDefaultMode = "disabled"
+				provider.ThinkingDisableWithTools = true
+			}
+			router.RegisterProvider(provider)
 			if index != 0 {
 				fallbackModelIDs = append(fallbackModelIDs, binding.ModelID)
 			}
@@ -244,7 +312,9 @@ func (l *runtimeStreamingLLM) Chat(
 	if l == nil || l.inner == nil {
 		return nil, errors.New("workflow streaming LLM is unavailable")
 	}
-	stream, err := l.inner.Stream(ctx, request)
+	streamCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	stream, err := l.inner.Stream(streamCtx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -254,10 +324,30 @@ func (l *runtimeStreamingLLM) Chat(
 	var content strings.Builder
 	var toolCalls []contract.ToolCall
 	var usage contract.Usage
+	var stopReason string
 	done := false
-	for chunk := range stream {
+	received := false
+readStream:
+	for {
+		var chunk contract.StreamChunk
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case next, open := <-stream:
+			if !open {
+				break readStream
+			}
+			chunk = next
+		}
+		received = true
+		if chunk.Err != nil {
+			return nil, fmt.Errorf("workflow model stream failed: %w", chunk.Err)
+		}
 		content.WriteString(chunk.Content)
 		toolCalls = append(toolCalls, chunk.ToolCalls...)
+		if chunk.FinishReason != "" {
+			stopReason = chunk.FinishReason
+		}
 		if chunk.Usage != nil {
 			usage = *chunk.Usage
 		}
@@ -265,10 +355,16 @@ func (l *runtimeStreamingLLM) Chat(
 			done = true
 		}
 	}
-	if !done && content.Len() == 0 && len(toolCalls) == 0 && usage == (contract.Usage{}) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if !done && !received {
 		response, chatErr := l.inner.Chat(ctx, request)
 		if chatErr != nil {
 			return nil, fmt.Errorf("workflow model stream ended before done and chat fallback failed: %w", chatErr)
+		}
+		if err := ctx.Err(); err != nil {
+			return nil, err
 		}
 		if response == nil ||
 			(response.Content == "" && len(response.ToolCalls) == 0 && response.Usage == (contract.Usage{})) {
@@ -276,10 +372,14 @@ func (l *runtimeStreamingLLM) Chat(
 		}
 		return response, nil
 	}
+	if !done {
+		return nil, errors.New("workflow model stream ended before done")
+	}
 	return &contract.ChatResponse{
-		Content:   content.String(),
-		ToolCalls: toolCalls,
-		Usage:     usage,
+		Content:    content.String(),
+		ToolCalls:  toolCalls,
+		Usage:      usage,
+		StopReason: stopReason,
 	}, nil
 }
 

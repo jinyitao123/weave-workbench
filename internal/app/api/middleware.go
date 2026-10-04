@@ -14,6 +14,7 @@ import (
 
 const (
 	authSourceContextKey     = "auth_source"
+	identitySourceContextKey = "identity_source"
 	scopesContextKey         = "scopes"
 	apiKeyIDContextKey       = "api_key_id"
 	workbenchActorContextKey = "workbench_actor_id"
@@ -23,10 +24,25 @@ const (
 
 // Claims holds the JWT claims for Weave authentication.
 type Claims struct {
-	TenantID string   `json:"tenant_id"`
-	UserID   string   `json:"user_id"`
-	Roles    []string `json:"roles"`
+	TenantID       string   `json:"tenant_id"`
+	UserID         string   `json:"user_id"`
+	Roles          []string `json:"roles"`
+	IdentitySource string   `json:"identity_source,omitempty"`
+	// PermissionSets are the Forge permission sets verified at exchange; they
+	// decide which teams the employee may use (decision 002).
+	PermissionSets []string `json:"permission_sets,omitempty"`
 	jwt.RegisteredClaims
+}
+
+// authenticatedRouteGroup authenticates registered routes, including real
+// wildcard handlers. Echo Group.Use also wraps two synthetic RouteNotFound
+// handlers in its middleware; replace only those special 404 registrations so
+// missing routes do not demand credentials. HTTP method handlers stay intact.
+func authenticatedRouteGroup(e *echo.Echo, prefix string, middleware ...echo.MiddlewareFunc) *echo.Group {
+	group := e.Group(prefix, middleware...)
+	e.RouteNotFound(prefix, echo.NotFoundHandler)
+	e.RouteNotFound(prefix+"/*", echo.NotFoundHandler)
+	return group
 }
 
 // AuthMiddleware validates JWT tokens or API keys and extracts tenant/user info.
@@ -80,6 +96,10 @@ func AuthMiddleware(jwtSecret string, keyStoreGetter func() *apikeys.Store, user
 			c.Set("user_id", user.ID)
 			c.Set("roles", []string{user.Role})
 			c.Set(authSourceContextKey, authSourceJWT)
+			c.Set(identitySourceContextKey, claims.IdentitySource)
+			if claims.IdentitySource == "forge" {
+				c.Set(forgePermissionSetsContextKey, append([]string(nil), claims.PermissionSets...))
+			}
 			setExecutionSubject(c, execution.Subject{WorkspaceID: user.TenantID, UserID: user.ID})
 
 			return next(c)
@@ -176,6 +196,10 @@ func bindDelegatedUser(c echo.Context, jwtSecret string, userStoreGetter func() 
 	setExecutionSubject(c, subject)
 	c.Set("user_id", user.ID)
 	c.Set("roles", []string{user.Role})
+	c.Set(identitySourceContextKey, claims.IdentitySource)
+	if claims.IdentitySource == "forge" {
+		c.Set(forgePermissionSetsContextKey, append([]string(nil), claims.PermissionSets...))
+	}
 	c.Set(workbenchActorContextKey, subject.Digest())
 	return nil
 }
@@ -194,6 +218,17 @@ func resolveJWTUser(ctx context.Context, userStoreGetter func() *users.Store, cl
 	user, err := us.GetByID(ctx, claims.TenantID, claims.UserID)
 	if err != nil || user.Disabled {
 		return nil, false
+	}
+	// Forge is the authority for externally bound product access. The local
+	// user row keeps the stable account binding, but must not override the
+	// access level verified when this Weave session was issued.
+	if claims.IdentitySource == "forge" {
+		switch role := firstClaimRole(claims.Roles); role {
+		case "member", "developer", "admin":
+			user.Role = role
+		default:
+			return nil, false
+		}
 	}
 	return user, true
 }

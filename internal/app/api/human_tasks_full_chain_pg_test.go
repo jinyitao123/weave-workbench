@@ -200,7 +200,7 @@ func TestHumanFinalReviewSampleRealPGFullChain(t *testing.T) {
 
 	reader := &teamrun.HumanTaskReader{Pool: pool}
 	resume := &teamrun.HumanResumeService{Transactions: pool, Runs: runs, Checkpoints: checkpoints, Tasks: tasks}
-	server := &Server{OrgStore: kernelbindings.NewOrganization(pool), teamRunHumanTasks: reader, teamRunHumanResume: resume}
+	server := &Server{Store: teamDispatchPoolStore{pool: pool}, OrgStore: kernelbindings.NewOrganization(pool), teamRunHumanTasks: reader, teamRunHumanResume: resume}
 	listRecorder := httptest.NewRecorder()
 	listContext := humanTaskAPIContext(http.MethodGet, "/v1/human-tasks", "", listRecorder, workspaceID, userID)
 	if err := server.handleListHumanTasks(listContext); err != nil || listRecorder.Code != http.StatusOK {
@@ -261,8 +261,14 @@ func TestHumanFinalReviewSampleRealPGFullChain(t *testing.T) {
 		t.Fatalf("chapter page status=%d headers=%v body_bytes=%d", page.Code, page.Header(), page.Body.Len())
 	}
 
-	invalid := completeHumanTaskThroughAPI(t, server, workspaceID, userID, runID,
-		`{"payload":{"decision":"maybe","comments":"invalid"},"idempotency_key":"m3-invalid"}`)
+	invalidBody, err := json.Marshal(completeHumanTaskRequest{
+		InteractionID: question.InteractionID, Payload: json.RawMessage(`{"decision":"maybe","comments":"invalid"}`),
+		IdempotencyKey: "m3-invalid",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	invalid := completeHumanTaskThroughAPI(t, server, workspaceID, userID, runID, string(invalidBody))
 	if invalid.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("invalid resume payload status=%d body=%s", invalid.Code, invalid.Body.String())
 	}
@@ -272,6 +278,20 @@ func TestHumanFinalReviewSampleRealPGFullChain(t *testing.T) {
 		t.Fatal(err)
 	}
 	validBody := string(validJSON)
+	var tasksBeforeMissing int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM weave_task_queue WHERE workspace_id=$1`, workspaceID).Scan(&tasksBeforeMissing); err != nil {
+		t.Fatal(err)
+	}
+	missingInteraction := completeHumanTaskThroughAPI(t, server, workspaceID, userID, runID,
+		`{"payload":{"decision":"approve","comments":"missing identity"},"idempotency_key":"m3-missing-interaction"}`)
+	if missingInteraction.Code != http.StatusBadRequest {
+		t.Fatalf("missing interaction identity status=%d body=%s", missingInteraction.Code, missingInteraction.Body.String())
+	}
+	assertHumanRunStatus(t, ctx, pool, runs, workspaceID, runID, teamrun.StatusParked)
+	var tasksAfterMissing int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM weave_task_queue WHERE workspace_id=$1`, workspaceID).Scan(&tasksAfterMissing); err != nil || tasksAfterMissing != tasksBeforeMissing {
+		t.Fatalf("missing interaction identity changed queue: before=%d after=%d error=%v", tasksBeforeMissing, tasksAfterMissing, err)
+	}
 	stale := completeHumanTaskThroughAPI(t, server, workspaceID, userID, runID,
 		`{"payload":{"decision":"approve","comments":"old question"},"idempotency_key":"m3-stale","interaction_id":"human_old_question"}`)
 	if stale.Code != http.StatusConflict {
@@ -316,8 +336,15 @@ func TestHumanFinalReviewSampleRealPGFullChain(t *testing.T) {
 	if completed.Code != http.StatusAccepted {
 		t.Fatalf("complete human task status=%d body=%s", completed.Code, completed.Body.String())
 	}
-	conflict := completeHumanTaskThroughAPI(t, server, workspaceID, userID, runID,
-		`{"payload":{"decision":"reject","comments":"changed"},"idempotency_key":"m3-complete"}`)
+	conflictJSON, err := json.Marshal(completeHumanTaskRequest{
+		InteractionID:  question.InteractionID,
+		Payload:        json.RawMessage(`{"decision":"reject","comments":"changed"}`),
+		IdempotencyKey: "m3-complete",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	conflict := completeHumanTaskThroughAPI(t, server, workspaceID, userID, runID, string(conflictJSON))
 	if conflict.Code != http.StatusConflict {
 		t.Fatalf("same key different payload status=%d body=%s", conflict.Code, conflict.Body.String())
 	}
@@ -397,6 +424,7 @@ func humanTaskAPIContext(method, path, body string, recorder *httptest.ResponseR
 	ctx := echo.New().NewContext(request, recorder)
 	ctx.Set("tenant", workspaceID)
 	ctx.Set("user_id", userID)
+	ctx.Set("roles", []string{"developer"})
 	return ctx
 }
 

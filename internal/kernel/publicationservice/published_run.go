@@ -11,6 +11,7 @@ import (
 	"github.com/jinyitao123/weave/internal/base/execution"
 	"github.com/jinyitao123/weave/internal/base/frozen"
 	"github.com/jinyitao123/weave/internal/base/snapshot"
+	"github.com/jinyitao123/weave/internal/kernel/deliverycheck"
 	"github.com/jinyitao123/weave/internal/kernel/publication"
 	"github.com/jinyitao123/weave/internal/kernel/taskqueue"
 	"github.com/jinyitao123/weave/internal/kernel/workflow"
@@ -18,6 +19,26 @@ import (
 )
 
 var _ publication.PublishedService = (*Service)(nil)
+
+// runDeliveryContract is the delivery contract a run freezes at admission. A
+// published run and a developer trial derive it the same way, so a trial meets
+// the same delivery checks the published team will: the caller's contract when
+// given, else the graph's own, else the explicit "incomplete" default, always
+// carrying the graph's output requirement.
+func runDeliveryContract(graph machine.GraphDefinition, requested *deliverable.DeliveryContract) (*deliverable.DeliveryContract, error) {
+	contract := &deliverable.DeliveryContract{Version: 1, Coverage: "incomplete", Limitations: []string{"explicit_user_delivery_scope_missing"}}
+	if graph.DeliveryContract != nil {
+		contract = deliverable.CloneDeliveryContract(graph.DeliveryContract)
+	}
+	if requested != nil {
+		contract = deliverable.CloneDeliveryContract(requested)
+	}
+	contract.Output = deliverable.OutputRequirement{Type: string(graph.OutputContract.Type), Schema: graph.OutputContract.Schema}
+	if err := deliverable.ValidateDeliveryContract(contract); err != nil {
+		return nil, err
+	}
+	return contract, nil
+}
 
 type PublishedAuthority interface {
 	AuthorizePublished(context.Context, publication.PublishedRunRequest, frozen.ArtifactEnvelopeV1) error
@@ -80,15 +101,14 @@ func (s *Service) AdmitPublished(ctx context.Context, request publication.Publis
 	if report != nil && len(report.Issues) > 0 {
 		return publication.AdmissionReceipt{}, errors.New("frozen published graph is invalid")
 	}
-	contract := &deliverable.DeliveryContract{Version: 1, Coverage: "incomplete", Limitations: []string{"explicit_user_delivery_scope_missing"}}
-	if graph.DeliveryContract != nil {
-		contract = deliverable.CloneDeliveryContract(graph.DeliveryContract)
+	if err := machine.ValidateBusinessReceiptGraph(graph, payload); err != nil {
+		return publication.AdmissionReceipt{}, err
 	}
-	if request.DeliveryContract != nil {
-		contract = deliverable.CloneDeliveryContract(request.DeliveryContract)
+	contract, err := runDeliveryContract(graph, request.DeliveryContract)
+	if err != nil {
+		return publication.AdmissionReceipt{}, err
 	}
-	contract.Output = deliverable.OutputRequirement{Type: string(graph.OutputContract.Type), Schema: graph.OutputContract.Schema}
-	if err = deliverable.ValidateDeliveryContract(contract); err != nil {
+	if err := validateBusinessCompletionOverride(graph.DeliveryContract, contract); err != nil {
 		return publication.AdmissionReceipt{}, err
 	}
 	tx, err := s.begin(ctx, request.Revision.WorkspaceID, request.RequestID)
@@ -218,4 +238,28 @@ func loadPublishedReceipt(ctx context.Context, tx pgx.Tx, request publication.Pu
 		return nil, false, err
 	}
 	return &receipt, false, nil
+}
+
+// The author-declared check cannot be added or removed by a per-run free-text
+// contract; desktop authors configure it on the published graph.
+func validateBusinessCompletionOverride(published, requested *deliverable.DeliveryContract) error {
+	a, err := deliverycheck.BusinessReceiptCheck(published)
+	if err != nil {
+		return err
+	}
+	b, err := deliverycheck.BusinessReceiptCheck(requested)
+	if err != nil {
+		return err
+	}
+	if (a == nil) != (b == nil) {
+		return errors.New("business completion check requires the published author declaration")
+	}
+	if a != nil {
+		x, _ := json.Marshal(a)
+		y, _ := json.Marshal(b)
+		if string(x) != string(y) {
+			return errors.New("published business completion check cannot be overridden")
+		}
+	}
+	return nil
 }

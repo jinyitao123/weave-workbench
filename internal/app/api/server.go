@@ -22,6 +22,7 @@ import (
 	appcapabilities "github.com/jinyitao123/weave/internal/app/capabilities"
 	"github.com/jinyitao123/weave/internal/app/chatrequest"
 	"github.com/jinyitao123/weave/internal/app/conversation"
+	"github.com/jinyitao123/weave/internal/app/deliveryverify"
 	"github.com/jinyitao123/weave/internal/app/ownermem"
 	"github.com/jinyitao123/weave/internal/app/projects"
 	"github.com/jinyitao123/weave/internal/app/teamconstruction"
@@ -33,6 +34,7 @@ import (
 	"github.com/jinyitao123/weave/internal/build/teambuild"
 	"github.com/jinyitao123/weave/internal/build/teamforge"
 	"github.com/jinyitao123/weave/internal/kernel/audit"
+	"github.com/jinyitao123/weave/internal/kernel/businessaction"
 	"github.com/jinyitao123/weave/internal/kernel/compiler"
 	"github.com/jinyitao123/weave/internal/kernel/config"
 	"github.com/jinyitao123/weave/internal/kernel/credentials"
@@ -52,6 +54,7 @@ import (
 	"github.com/jinyitao123/weave/internal/kernel/runtimellm"
 	"github.com/jinyitao123/weave/internal/kernel/runtimes"
 	"github.com/jinyitao123/weave/internal/kernel/schedule"
+	"github.com/jinyitao123/weave/internal/kernel/secret"
 	importskills "github.com/jinyitao123/weave/internal/kernel/skills"
 	"github.com/jinyitao123/weave/internal/kernel/taskqueue"
 	"github.com/jinyitao123/weave/internal/kernel/teamcompiler"
@@ -71,6 +74,8 @@ type Server struct {
 	TeamAssembler             teamcompiler.TeamInteractionAssembler // optional test seam; nil uses the production assembler
 	Models                    *llmrouter.Resolver
 	Config                    *config.Config
+	ExternalIdentity          ExternalIdentityVerifier
+	ExternalIdentityBinder    externalIdentityBinder
 	Embedders                 *memory.EmbedderResolver // nil if PG pool unavailable — resolves workspace-scoped memory services
 	StoreExt                  *storeext.PGExt          // nil if Store is not PGStore
 	Fanout                    *fanout.Store            // nil if PG pool unavailable
@@ -117,6 +122,7 @@ type Server struct {
 	SystemProviders           credentials.SystemProviderSource
 	MCPRegistry               *mcpregistry.Store     // nil if WEAVE_SECRET_KEY is not configured
 	MCPResolver               mcphost.AccessResolver // optional override; defaults to MCPRegistry-backed resolver
+	BusinessDelegations       *businessaction.Store  // task-scoped Forge identity and action boundary
 	Conversations             *conversation.Store    // nil if PG pool unavailable
 	OwnerMem                  OwnerMemoryStore       // nil if PG pool unavailable
 	sessionExecutionWorkers   *sessionExecutionWorkers
@@ -130,6 +136,8 @@ type Server struct {
 	teamRunActivities         *teamrun.PGActivityStore
 	workflowFanoutReconciler  *fanout.WorkflowReconcilerWorker
 	workflowHealthWorkers     *workflowHealthWorkers
+	employeeRunEventWorker    *employeeRunEventWorker
+	taskDelegationRevoker     *taskDelegationRevoker
 }
 
 func (s *Server) engineExecutor() executionport.RemoteEngineExecutor { return s.RemoteExec }
@@ -224,15 +232,16 @@ func NewServer(cfg *config.Config, store loom.Store, models *llmrouter.Resolver)
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: corsOrigins,
 		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders: []string{"Authorization", "Content-Type"},
+		AllowHeaders: []string{"Authorization", "Content-Type", forgeDelegationHeader},
 	}))
 
 	s := &Server{
-		Echo:     e,
-		Store:    store,
-		Registry: agentRegistry,
-		Models:   models,
-		Config:   cfg,
+		Echo:             e,
+		Store:            store,
+		Registry:         agentRegistry,
+		Models:           models,
+		Config:           cfg,
+		ExternalIdentity: NewForgeSessionVerifier(cfg.ForgeSessionURL, cfg.ForgeDefaultWorkspace, nil),
 	}
 
 	// Initialize platform store extensions if PGStore is available.
@@ -305,7 +314,10 @@ func (s *Server) registerRoutes() {
 	s.Echo.GET("/install.ps1", s.handleInstallScript)
 	s.Echo.GET("/v1/downloads/runtime/:os/:arch", s.handleDownloadRuntime)
 	s.Echo.POST("/v1/auth/token", s.handleIssueToken)
-	s.Echo.POST("/v1/auth/login", s.handleLogin)
+	if !s.Config.DisableLocalLogin {
+		s.Echo.POST("/v1/auth/login", s.handleLogin)
+	}
+	s.Echo.POST("/v1/auth/external/exchange", s.handleExternalIdentityExchange)
 	s.Echo.Any("/v1/mcp-boundary/:tenant/:agent/:idx", s.handleMCPBoundary)
 	s.Echo.Any("/v1/mcp-gateway/:workspace/:agent/:serverID", s.handleMCPGateway)
 
@@ -314,11 +326,15 @@ func (s *Server) registerRoutes() {
 	userStoreGetter := func() *users.Store { return s.UserStore }
 
 	// Register endpoint — uses optional auth (first user bootstrap needs no auth, subsequent need admin).
-	s.Echo.POST("/v1/auth/register", s.handleRegister,
-		OptionalAuthMiddleware(s.Config.JWTSecret, keyStoreGetter, userStoreGetter), RequireScope("admin"))
+	// It is not registered when local login is disabled, so an empty user table
+	// can never be claimed through HTTP; `weave bootstrap` creates the operator.
+	if !s.Config.DisableLocalLogin {
+		s.Echo.POST("/v1/auth/register", s.handleRegister,
+			OptionalAuthMiddleware(s.Config.JWTSecret, keyStoreGetter, userStoreGetter), RequireScope("admin"))
+	}
 
 	// Authenticated endpoints.
-	auth := s.Echo.Group("/v1", AuthMiddleware(s.Config.JWTSecret, keyStoreGetter, userStoreGetter))
+	auth := authenticatedRouteGroup(s.Echo, "/v1", AuthMiddleware(s.Config.JWTSecret, keyStoreGetter, userStoreGetter))
 	adminScope := RequireScope("admin")
 	agentsScope := RequireScope("agents")
 	chatScope := RequireScope("chat")
@@ -334,7 +350,7 @@ func (s *Server) registerRoutes() {
 
 	// Developer capability contract endpoints. Execution is admitted here;
 	// runtime scheduling is intentionally a separate follow-up integration.
-	capabilityAPI := s.Echo.Group("/v1", s.capabilityAuthentication())
+	capabilityAPI := authenticatedRouteGroup(s.Echo, "/v1", s.capabilityAuthentication())
 	capabilityAPI.POST("/capabilities/drafts", s.handleSaveCapabilityDraft, requireCapabilityAccess("manage"))
 	capabilityAPI.GET("/capabilities/drafts", s.handleListCapabilityDrafts, requireCapabilityAccess("manage"))
 	capabilityAPI.POST("/capabilities/generate", s.handleGenerateCapability, requireCapabilityAccess("manage"))
@@ -371,47 +387,50 @@ func (s *Server) registerRoutes() {
 	auth.GET("/deliverables/:id", s.handleGetFinalDeliverable, chatScope)
 	auth.GET("/deliverables/:id/content", s.handleDownloadFinalDeliverable, chatScope)
 	auth.GET("/teams", s.handleListTeams, orgScope)
-	auth.POST("/teams", s.handleCreateTeam, RequireRole("admin"), orgScope)
-	auth.POST("/teams:from-template", s.handleCreateTeamFromTemplate, RequireRole("admin"), orgScope)
-	auth.POST("/teams/:id/evaluations", s.handleEvaluateTeam, RequireRole("admin"), orgScope)
-	auth.GET("/team-templates/samples", s.handleListTeamTemplateSamples, orgScope)
+	auth.POST("/teams", s.handleCreateTeam, RequireAnyRole("developer", "admin"), orgScope)
+	if !s.Config.RetireLegacyPlatformAPIs {
+		s.registerRetiredTeamConstructionRoutes(auth, orgScope)
+	}
 	auth.GET("/teams/:id", s.handleGetTeam, orgScope)
+	auth.GET("/teams/:id/members/:agent/config-draft", s.handleGetTeamMemberConfigDraft, RequireAnyRole("developer", "admin", "owner"), orgScope)
+	auth.PUT("/teams/:id/members/:agent/config-draft", s.handlePutTeamMemberConfigDraft, RequireAnyRole("developer", "admin", "owner"), orgScope)
+	auth.POST("/teams/:id/members/:agent/config-draft/apply", s.handleApplyTeamMemberConfigDraft, RequireAnyRole("developer", "admin", "owner"), orgScope)
+	auth.GET("/teams/:id/development", s.handleGetTeamDevelopment, RequireAnyRole("developer", "admin", "owner"), orgScope)
+	auth.PUT("/teams/:id/development", s.handleSaveTeamDevelopment, RequireAnyRole("developer", "admin", "owner"), orgScope)
+	auth.POST("/teams/:id/development/trials", s.handleTrialTeamDevelopment, RequireAnyRole("developer", "admin", "owner"), orgScope)
+	auth.POST("/teams/:id/development/publish", s.handlePublishTeamDevelopment, RequireAnyRole("developer", "admin", "owner"), orgScope)
+	auth.GET("/teams/:id/development/trials/:request/input", s.handleDevelopmentTrialInput, RequireAnyRole("developer", "admin", "owner"), orgScope)
+	auth.DELETE("/teams/:id/development/team", s.handleArchiveDevelopmentTeam, RequireAnyRole("developer", "admin", "owner"), orgScope)
+	auth.GET("/development/model-catalog", s.handleDevelopmentModelCatalog, RequireAnyRole("developer", "admin", "owner"), orgScope)
 	auth.GET("/teams/:id/dispatch-rules", s.handleGetTeamDispatchRules, orgScope)
 	auth.PUT("/teams/:id/dispatch-rules", s.handlePutTeamDispatchRules, RequireAnyRole("admin", "owner"), orgScope)
 	auth.POST("/teams/:id/dispatch", s.handleDispatchTeam, orgScope, chatScope)
+	auth.PUT("/decision-bindings/:key_id", s.handleBindDecision, RequireRole("admin"), adminScope)
+	auth.POST("/decisions", s.handleAdmitDecision, RequireScope("decisions"))
+	auth.GET("/decisions/:decision_id", s.handleReadDecision, RequireScope("decisions"))
+	auth.POST("/decisions:cancel", s.handleCancelDecision, RequireScope("decisions"))
+	auth.POST("/workbench/dispatch-inputs/prepare", s.handlePrepareDispatchInput, orgScope, chatScope)
+	auth.POST("/workbench/dispatch-inputs/:input_revision_id/authorization", s.handleRenewDispatchAuthorization, orgScope, chatScope)
 	auth.POST("/workbench/dispatch-inputs", s.handleRegisterDispatchInput, orgScope, chatScope)
 	auth.POST("/workbench/dispatch-inputs/:input_revision_id/reconcile", s.handleReconcileDispatchInput, orgScope, chatScope)
 	auth.PUT("/teams/:id/roster", s.handleUpdateTeamRoster, RequireAnyRole("admin", "owner"), orgScope)
 	auth.GET("/teams/:id/workers/:worker/revocation-impact", s.handleGetTeamWorkerRevocationImpact, orgScope)
 	auth.PUT("/teams/:id", s.handleRenameTeam, RequireRole("admin"), orgScope)
+	auth.PUT("/teams/:id/profile", s.handleUpdateTeamProfile, RequireAnyRole("developer", "admin", "owner"), orgScope)
+	auth.POST("/teams/:id/workers", s.handleCreateTeamWorker, RequireAnyRole("developer", "admin", "owner"), orgScope)
+	auth.DELETE("/teams/:id/workers/:worker", s.handleDeleteTeamWorker, RequireAnyRole("developer", "admin", "owner"), orgScope)
 	auth.DELETE("/teams/:id", s.handleDeleteTeam, RequireRole("admin"), orgScope)
-	auth.POST("/teams/:id/workflows", s.handleCreateWorkflow, RequireAnyRole("admin", "owner"), orgScope)
+	auth.POST("/teams/:id/workflows", s.handleCreateWorkflow, RequireAnyRole("developer", "admin", "owner"), orgScope)
 	auth.GET("/teams/:id/workflows", s.handleListTeamWorkflows, orgScope)
 	auth.GET("/workflows/:id", s.handleGetWorkflow, orgScope)
 	auth.GET("/workflows/:id/versions/:version", s.handleGetWorkflowVersion, orgScope)
-	auth.POST("/workflows/:id/drafts", s.handleCreateWorkflowDraft, RequireAnyRole("admin", "owner"), orgScope)
-	auth.PUT("/workflows/:id/versions/:version", s.handleUpdateWorkflowDraft, RequireAnyRole("admin", "owner"), orgScope)
-	auth.POST("/workflows/:id/versions/:version/publish", s.handlePublishWorkflowVersion, RequireAnyRole("admin", "owner"), orgScope)
-	auth.POST("/internal/team-build-runs", s.handleCreateTeamBuildRun, RequireRole("admin"), orgScope)
-	auth.GET("/internal/team-build-runs", s.handleListBuildRuns, orgScope)
-	auth.PUT("/team-build-runs/:id/blueprint", s.handlePlanTeamBlueprint, RequireRole("admin"), orgScope)
-	auth.PUT("/internal/team-build-runs/:id/drafts", s.handleUpdateTeamBuildRunDrafts, RequireRole("admin"), orgScope)
-	auth.POST("/internal/team-build-runs/:id/authorize", s.handleAuthorizeBuildRun, RequireRole("admin"), orgScope)
-	auth.POST("/internal/team-build-runs/:id/submit", s.handleSubmitBuildRun, RequireRole("admin"), orgScope)
-	auth.POST("/internal/team-build-runs/:id/execute", s.handleExecuteTeamBuildRun, RequireRole("admin"), orgScope)
-	auth.POST("/internal/team-build-runs/:id/cancel", s.handleCancelBuildRun, RequireRole("admin"), orgScope)
-	auth.POST("/internal/team-build-runs/:id/rollback", s.handleRollbackBuildRun, RequireRole("admin"), orgScope)
-	auth.GET("/internal/team-build-runs/:id/progress", s.handleGetBuildRunProgress, orgScope)
-	auth.GET("/internal/team-build-runs/:id/rounds", s.handleListBuildRunRounds, orgScope)
-	auth.GET("/internal/team-build-runs/:id/rounds/:n/report", s.handleGetBuildRunRoundReport, orgScope)
-	auth.GET("/internal/team-build-runs/:id/usage", s.handleGetBuildRunUsage, orgScope)
-	auth.GET("/internal/team-build-runs/:id", s.handleGetBuildRun, orgScope)
-	auth.POST("/internal/team-build-runs/candidate-runs", s.handleCandidateTestRun, RequireRole("admin"), orgScope)
-	auth.POST("/internal/team-build-runs/publish", s.handleCandidatePublish, RequireRole("admin"), orgScope)
+	auth.POST("/workflows/:id/drafts", s.handleCreateWorkflowDraft, RequireAnyRole("developer", "admin", "owner"), orgScope)
+	auth.PUT("/workflows/:id/versions/:version", s.handleUpdateWorkflowDraft, RequireAnyRole("developer", "admin", "owner"), orgScope)
+	auth.POST("/workflows/:id/versions/:version/publish", s.handlePublishWorkflowVersion, RequireAnyRole("developer", "admin", "owner"), orgScope)
 	auth.POST("/workflows/:id/versions/:version/validate", s.handleValidateWorkflowVersion, orgScope)
 	auth.PUT("/workflows/:id/versions/:version/admission", s.handlePutWorkflowAdmission, RequireAnyRole("admin", "owner"), orgScope)
 	auth.GET("/workflows/:id/versions/:version/admission/audit", s.handleListWorkflowAdmissionAudit, RequireAnyRole("admin", "owner"), orgScope)
-	auth.DELETE("/workflows/:id", s.handleArchiveWorkflow, RequireAnyRole("admin", "owner"), orgScope)
+	auth.DELETE("/workflows/:id", s.handleArchiveWorkflow, RequireAnyRole("developer", "admin", "owner"), orgScope)
 	auth.GET("/workflows/:id/versions/:version/dependencies", s.handleGetWorkflowVersionDependencies, orgScope)
 	auth.GET("/workflows/:id/versions/:version/admission", s.handleGetWorkflowVersionAdmission, orgScope)
 
@@ -432,7 +451,7 @@ func (s *Server) registerRoutes() {
 	auth.POST("/runtimes", s.handleCreateRuntime, RequireAnyRole("admin", "owner"), orgScope)
 	auth.PUT("/runtimes/:id", s.handleRenameRuntime, RequireAnyRole("admin", "owner"), orgScope)
 	auth.DELETE("/runtimes/:id", s.handleDeleteRuntime, RequireAnyRole("admin", "owner"), orgScope)
-	runtimeAPI := s.Echo.Group("/v1/runtime", s.runtimeAuthMiddleware())
+	runtimeAPI := authenticatedRouteGroup(s.Echo, "/v1/runtime", s.runtimeAuthMiddleware())
 	runtimeAPI.POST("/hello", s.handleRuntimeHello)
 	runtimeAPI.POST("/heartbeat", s.handleRuntimeHeartbeat)
 	runtimeAPI.POST("/claim", s.handleRuntimeClaim)
@@ -506,6 +525,8 @@ func (s *Server) registerRoutes() {
 
 	// Runs.
 	auth.GET("/runs", s.handleListRuns, runsScope)
+	auth.GET("/runs/:id/workbench-context", s.handleGetWorkbenchRunContext, runsScope)
+	auth.POST("/workbench/runs/lookup", s.handleLookupWorkbenchRuns, runsScope)
 	auth.GET("/runs/:id", s.handleGetRun, runsScope)
 	auth.GET("/runs/:id/activity", s.handleGetRunActivity, runsScope)
 	auth.GET("/runs/:id/delivery", s.handleGetRunDelivery, runsScope)
@@ -572,6 +593,10 @@ func (s *Server) Start() error {
 		s.workflowHealthWorkers.Start()
 		defer s.workflowHealthWorkers.Stop()
 	}
+	if s.employeeRunEventWorker != nil {
+		s.employeeRunEventWorker.Start()
+		defer s.employeeRunEventWorker.Stop()
+	}
 	return s.Echo.Start(":" + s.Config.Port)
 }
 
@@ -625,6 +650,8 @@ func (s *Server) ConfigureTeamRunWorkers() {
 	if pool == nil || s.Tasks == nil || s.Snapshots == nil || s.Workflow == nil {
 		return
 	}
+	s.employeeRunEventWorker = newEmployeeRunEventWorker(pool)
+	s.taskDelegationRevoker = newTaskDelegationRevoker(pool)
 	runStore := teamrun.NewPGStore()
 	runStore.Transactions = pool
 	checkpointStore := teamrun.NewPGCheckpointStore()
@@ -636,12 +663,31 @@ func (s *Server) ConfigureTeamRunWorkers() {
 		Runs:         runStore,
 		Tasks:        s.Tasks,
 	}
+	var businessDelegations *businessaction.Store
+	if key, keyErr := secret.KeyFromEnv(); keyErr == nil {
+		businessDelegations = businessaction.NewStore(pool, s.Tasks, key)
+		for index := range key {
+			key[index] = 0
+		}
+	}
+	materialReads := businessDelegations
+	if materialReads == nil {
+		materialReads = businessaction.NewStore(pool, s.Tasks, nil)
+	}
+	s.BusinessDelegations = businessDelegations
 	runtime := &teamrun.WorkflowSerialRuntime{
+		BusinessReceiptReader: deliveryverify.BusinessReceiptReader(pool),
+		AuthorizationRetry: func(ctx context.Context, proof execution.AuthorizationRefusal) (bool, error) {
+			if businessDelegations == nil {
+				return false, nil
+			}
+			return businessDelegations.CanRetryAuthorization(ctx, proof)
+		},
 		Artifacts: s.WorkflowArtifacts,
 		Loader: &workflow.RuntimeLoader{
 			Registry: s.Descriptors, CLIExecutor: s.teamRunCLIExecutor(),
 		},
-		HostFactory: workflow.NewRuntimeHostFactory(),
+		HostFactory: businessaction.Factory{Inner: workflow.NewRuntimeHostFactory(), Store: businessDelegations, MaterialStore: materialReads},
 		CredentialResolvers: func(
 			workspaceID string,
 		) (workflow.RuntimeCredentialResolver, error) {
@@ -669,7 +715,7 @@ func (s *Server) ConfigureTeamRunWorkers() {
 		Checkpoints:    checkpointStore,
 		Tasks:          s.Tasks,
 		Snapshots:      s.Snapshots,
-		OutputRecorder: s.Deliverables,
+		OutputRecorder: &developmentTrialWorkflowOutputRecorder{pool: pool, fallback: s.Deliverables},
 		Corrections:    correctionStore,
 		Activities:     activityStore,
 	}

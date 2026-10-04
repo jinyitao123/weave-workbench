@@ -20,9 +20,10 @@ import (
 	"github.com/jinyitao123/loom/contract"
 	"github.com/jinyitao123/weave/internal/base/deliverable"
 	"github.com/jinyitao123/weave/internal/base/execution"
-	"github.com/jinyitao123/weave/internal/kernel/fanout"
 	"github.com/jinyitao123/weave/internal/base/fileartifact"
 	"github.com/jinyitao123/weave/internal/base/frozen"
+	"github.com/jinyitao123/weave/internal/kernel/compiler"
+	"github.com/jinyitao123/weave/internal/kernel/fanout"
 	"github.com/jinyitao123/weave/internal/kernel/loomruntime"
 	"github.com/jinyitao123/weave/internal/kernel/workflow"
 	"github.com/jinyitao123/weave/internal/kernel/workflow/machine"
@@ -76,12 +77,15 @@ type serialMachineStart struct {
 	LoadArtifacts            func(context.Context, []string) ([]deliverable.WorkflowArtifact, error)
 	LoadArtifactObservations func(context.Context, []string) ([]deliverable.SourceObservation, error)
 	RecordCheckpoint         func(context.Context, WorkflowCheckpointV1) error
-	RecordDelivery           func(context.Context, string, string, string, any, []deliverable.WorkflowArtifact, []deliverable.SourceObservation, *deliverable.OutputSelection) error
+	RecordDelivery           func(context.Context, string, string, string, any, []deliverable.WorkflowArtifact, []deliverable.SourceObservation, *deliverable.OutputSelection, json.RawMessage) error
 	RecordOutput             func(context.Context, machine.Node, any, bool) error
 	RecordArtifact           func(context.Context, machine.Node, deliverable.WorkflowArtifact, bool) error
 	CheckCorrection          func(context.Context, string, map[string]any) (*CorrectionWaitDetailV1, error)
 	RecordActivity           func(context.Context, string, machine.Node, string, int64, map[string]any)
 	LoadObservedEvents       func(context.Context, machine.Node, string) []workflow.RuntimeCLIEvent
+	LoadActionOutcomes       func(context.Context) ([]BusinessActionOutcomeV1, error)
+	WithActionOutcomeContext func(context.Context) context.Context
+	FinalCompletionContext   func(context.Context) (context.Context, error)
 	Corrections              []CorrectionDirectiveV1
 }
 
@@ -124,6 +128,8 @@ type nodeUsageReport struct {
 	MemberRunID           string
 	MemberReceipts        []loomruntime.ConfirmedUsageReceipt
 	MemberUsageIncomplete bool
+	CLIExecution          bool   // Distinguishes an unmeasured CLI attempt from an in-process node with no receipt.
+	UsageIncompleteReason string // Preserves why this node's physical usage cannot be fully confirmed.
 	Totals                loomruntime.UsageTotals
 	Coverage              loomruntime.UsageCoverage
 	CLIAttempts           []workflow.RuntimeCLIUsageAttempt
@@ -322,7 +328,22 @@ func runSerialMachine(
 			if correctionErr != nil {
 				return fail(executionError(ErrorCodeSnapshotUnavailable, correctionErr))
 			}
-			output, nodeUsage, err := runAgentNode(nodeCtx, node, payload, entries, runInput, outputs, start.Corrections, correctionContext)
+			var actionOutcomes []BusinessActionOutcomeV1
+			if start.LoadActionOutcomes != nil {
+				loadedActionOutcomes, loadErr := start.LoadActionOutcomes(nodeCtx)
+				if loadErr != nil {
+					return fail(executionError(ErrorCodeSnapshotUnavailable, fmt.Errorf("load platform business action outcomes: %w", loadErr)))
+				}
+				actionOutcomes = loadedActionOutcomes
+			}
+			if workbenchResultPromptRequired(graph, node.ID) && start.FinalCompletionContext != nil {
+				var checkErr error
+				nodeCtx, checkErr = start.FinalCompletionContext(nodeCtx)
+				if checkErr != nil {
+					return fail(checkErr)
+				}
+			}
+			output, nodeUsage, err := runAgentNode(nodeCtx, node, payload, entries, runInput, outputs, start.Corrections, correctionContext, actionOutcomes, start.WithActionOutcomeContext, workbenchResultPromptRequired(graph, node.ID))
 			if durable {
 				if nodeUsage.MemberRunID != "" {
 					teamID, workflowID, version, snapshotID := start.Run.TeamID, start.Run.WorkflowID, start.Run.WorkflowVersion, start.Run.RunSnapshotID
@@ -344,6 +365,49 @@ func runSerialMachine(
 				}
 				if nodeUsage.MemberUsageIncomplete {
 					usageComplete, usageIncompleteReason = false, "member_model_response_lost"
+				}
+			} else if len(nodeUsage.MemberReceipts) > 0 {
+				// Preserve each confirmed Loom attempt instead of collapsing partial
+				// usage into one synthetic receipt. A later unreported attempt can
+				// make coverage incomplete while earlier attempts still have real
+				// token counts; combining those values with HasTokens=false would
+				// reject the entire business run.
+				for _, receipt := range nodeUsage.MemberReceipts {
+					attemptID := nodePhysicalUsageAttemptID(callID, receipt.AttemptID, 0)
+					if usageErr := usage.StartAttempt(callID, attemptID); usageErr != nil {
+						return fail(executionError(ErrorCodeExecutionUnrecoverable, usageErr))
+					}
+					if usageErr := usage.ConfirmAttemptWithMetadata(callID, attemptID, receipt.Usage, receipt.ToolCalls, receipt.Metadata); usageErr != nil {
+						return fail(executionError(ErrorCodeExecutionUnrecoverable, usageErr))
+					}
+				}
+				if !nodeUsage.Coverage.HasTokens || !nodeUsage.Coverage.HasCost {
+					usageComplete = false
+					if usageIncompleteReason == "" {
+						usageIncompleteReason = UsageIncompleteReasonAttemptLost
+					}
+				}
+			} else if nodeUsage.CLIExecution {
+				for index, physical := range nodeUsage.CLIAttempts {
+					attemptID := nodePhysicalUsageAttemptID(callID, physical.AttemptID, index)
+					if startErr := usage.StartAttempt(callID, attemptID); startErr != nil {
+						return fail(executionError(ErrorCodeExecutionUnrecoverable, startErr))
+					}
+					if confirmErr := usage.ConfirmAttemptWithMetadata(callID, attemptID, contract.Usage{
+						InputTokens: physical.InputTokens, OutputTokens: physical.OutputTokens, CostUSD: physical.CostUSD,
+					}, physical.ToolCalls, loomruntime.UsageAttemptMetadata{
+						HasTokens: physical.HasTokens, HasCost: physical.HasCost, Source: physical.Source,
+					}); confirmErr != nil {
+						return fail(executionError(ErrorCodeExecutionUnrecoverable, confirmErr))
+					}
+				}
+			} else if nodeUsage.UsageIncompleteReason != "" {
+				attemptID := nodeUsageAttemptID(callID)
+				if startErr := usage.StartAttempt(callID, attemptID); startErr != nil {
+					return fail(executionError(ErrorCodeExecutionUnrecoverable, startErr))
+				}
+				if confirmErr := usage.ConfirmAttemptWithMetadata(callID, attemptID, contract.Usage{}, 0, loomruntime.UsageAttemptMetadata{}); confirmErr != nil {
+					return fail(executionError(ErrorCodeExecutionUnrecoverable, confirmErr))
 				}
 			} else if len(nodeUsage.CLIAttempts) == 0 {
 				attemptID := nodeUsageAttemptID(callID)
@@ -376,7 +440,11 @@ func runSerialMachine(
 			// A CLI runtime agent has no usage receipt: the candidate run
 			// executes it normally, records zero measured usage, and marks
 			// the result usage-incomplete instead of failing closed.
-			if len(nodeUsage.CLIAttempts) > 0 && (!nodeUsage.Coverage.HasTokens || !nodeUsage.Coverage.HasCost) && usageIncompleteReason == "" {
+			if nodeUsage.UsageIncompleteReason != "" && usageIncompleteReason == "" {
+				usageComplete = false
+				usageIncompleteReason = nodeUsage.UsageIncompleteReason
+			}
+			if nodeUsage.CLIExecution && (!nodeUsage.Coverage.HasTokens || !nodeUsage.Coverage.HasCost) && usageIncompleteReason == "" {
 				usageComplete = false
 				usageIncompleteReason = UsageIncompleteReasonCLINode
 				if nodeUsage.Coverage.HasTokens || nodeUsage.Coverage.HasCost {
@@ -431,11 +499,16 @@ func runSerialMachine(
 					routed = false
 				}
 				failure := ClassifyFailure(err)
+				if failure.AuthorizationRequired != nil || failure.AuthorizationDenied {
+					routed = false
+				}
 				retryable := !routed && failure.Class == FailureClassInfrastructure && failure.Retryable
+				renewalRequired := !routed && !recoveryBlocked && failure.AuthorizationRequired != nil
 				if start.RecordActivity != nil {
 					start.RecordActivity(ctx, "member_failed", node, memberID, memberVersion, map[string]any{
 						"duration_ms": time.Since(startedAt).Milliseconds(), "error_code": string(executionErrorCode(err)),
-						"failure_class": failure.Class, "failure_reason": failure.Reason, "retryable": retryable,
+						"failure_class": failure.Class, "failure_reason": failure.Reason, "retryable": retryable, "authorization_required": failure.AuthorizationRequired,
+						"output_validation": nodeOutputViolation(err),
 					})
 				}
 				if routed {
@@ -443,10 +516,10 @@ func runSerialMachine(
 					current = next
 					continue
 				}
-				if retryable || recoveryBlocked {
+				if retryable || recoveryBlocked || renewalRequired {
 					detail, encodeErr := json.Marshal(RuntimeWaitDetailV1{
 						SchemaVersion: 1, WaitType: "runtime", NodeID: node.ID,
-						RecoveryBlocked: recoveryBlocked,
+						RecoveryBlocked: recoveryBlocked, AuthorizationRequired: failure.AuthorizationRequired,
 					})
 					if encodeErr != nil {
 						return fail(executionError(ErrorCodeExecutionUnrecoverable, encodeErr))
@@ -695,6 +768,19 @@ func runSerialMachine(
 					fmt.Errorf("deliver output violates contract: %s", problems[0].Code),
 				))
 			}
+			var resultMetadata json.RawMessage
+			switch graph.ResultProtocol {
+			case "":
+			case machine.ResultProtocolWorkbenchV1:
+				result, normalized, normalizeErr := machine.NormalizeWorkbenchResultV1(encoded)
+				if normalizeErr != nil {
+					return fail(executionError(ErrorCodeOutputInvalid, normalizeErr))
+				}
+				output, encoded = result, normalized
+				resultMetadata = machine.EncodeWorkbenchResultMetadataV1(result)
+			default:
+				return fail(executionError(ErrorCodeRuntimeIncompatible, fmt.Errorf("unsupported result protocol %q", graph.ResultProtocol)))
+			}
 			var artifacts []deliverable.WorkflowArtifact
 			var observations []deliverable.SourceObservation
 			var selection *deliverable.OutputSelection
@@ -717,7 +803,7 @@ func runSerialMachine(
 				selection = &deliverable.OutputSelection{Kind: string(config.Result.Source), ValueDigest: digest}
 			}
 			if start.RecordDelivery != nil {
-				if err := start.RecordDelivery(ctx, node.ID, node.Label, string(node.Type), output, artifacts, observations, selection); err != nil {
+				if err := start.RecordDelivery(ctx, node.ID, node.Label, string(node.Type), output, artifacts, observations, selection, resultMetadata); err != nil {
 					return fail(executionError(ErrorCodeDeliveryUnavailable, err))
 				}
 			} else {
@@ -1462,8 +1548,19 @@ func runAgentNode(
 	outputs map[string]any,
 	corrections []CorrectionDirectiveV1,
 	frozenCorrectionContext string,
+	actionOutcomes []BusinessActionOutcomeV1,
+	withActionOutcomeContext func(context.Context) context.Context,
+	workbenchResultOutput bool,
 ) (any, nodeUsageReport, error) {
 	ctx = execution.WithNodeID(ctx, node.ID)
+	var nodeSchema json.RawMessage
+	if node.Output != nil && node.Output.Type == machine.ValueJSON {
+		nodeSchema = node.Output.Schema
+	}
+	ctx = compiler.WithNodeOutputSchema(ctx, nodeSchema)
+	if workbenchResultOutput {
+		ctx = compiler.WithWorkbenchResultOutput(ctx)
+	}
 	var (
 		agentID      string
 		agentVersion int64
@@ -1514,6 +1611,11 @@ func runAgentNode(
 		return nil, nodeUsageReport{}, executionError(ErrorCodeExecutionUnrecoverable, err)
 	}
 	prompt := instruction + "\n\nInputs:\n" + string(encodedInputs)
+	prompt = withWorkbenchResultInstruction(prompt, workbenchResultOutput)
+	prompt, err = appendPlatformBusinessActionFacts(prompt, actionOutcomes, workbenchResultOutput)
+	if err != nil {
+		return nil, nodeUsageReport{}, executionError(ErrorCodeExecutionUnrecoverable, fmt.Errorf("encode platform business action facts: %w", err))
+	}
 	for _, correction := range corrections {
 		if correctionAppliesToNode(correction, node, payload) {
 			prompt += "\n\nConfirmed user correction (apply to this execution):\n" + correction.Instruction
@@ -1558,7 +1660,11 @@ func runAgentNode(
 		}
 		usage, usageErr := runtimeCLIUsageReport(outcome.result)
 		if usageErr != nil {
-			return nil, nodeUsageReport{}, executionError(ErrorCodeExecutionUnrecoverable, usageErr)
+			if outcome.err != nil {
+				return nil, usage, executionError(ErrorCodeExecutionUnrecoverable,
+					fmt.Errorf("%w (usage accounting also failed: %v)", outcome.err, usageErr))
+			}
+			return nil, usage, executionError(ErrorCodeExecutionUnrecoverable, usageErr)
 		}
 		if timeout := timeoutErr(); timeout != nil {
 			return nil, usage, timeout
@@ -1599,6 +1705,9 @@ func runAgentNode(
 	execCtx = context.WithValue(execCtx, runtimeActivityScopeKey{}, runtimeActivityScope{
 		NodeID: node.ID, MemberID: agentID, MemberVersion: agentVersion,
 	})
+	if withActionOutcomeContext != nil {
+		execCtx = withActionOutcomeContext(execCtx)
+	}
 	// Pre-bind the usage scope so hook-less frozen descriptors still confirm
 	// usage into graph state; descriptors that install before-step hooks
 	// rebind to the real step name on their first step.
@@ -1631,7 +1740,7 @@ func runAgentNode(
 						ParentGeneration: int64(member.Run.Generation), Bundle: *entry.Bundle, ResumeGrantID: member.Active.ResumeGrantID,
 						ArtifactHash: member.ArtifactHash, Graph: entry.Graph, Input: graphState,
 						Attribution: attribution, ParentGuard: member.Guard,
-						RetryableFailure: func(err error) bool { return ClassifyFailure(err).Retryable },
+						RetryableFailure: func(err error) bool { f := ClassifyFailure(err); return f.Retryable || f.AuthorizationRequired != nil },
 					})
 				}
 			}
@@ -1652,12 +1761,22 @@ func runAgentNode(
 	result, err := graphResult.result, graphResult.err
 	usage, usageErr := frozenNodeUsage(result)
 	if usageErr != nil {
-		return nil, nodeUsageReport{}, executionError(
-			ErrorCodeExecutionUnrecoverable,
-			fmt.Errorf("read frozen graph usage for node %q: %w", node.ID, usageErr),
-		)
+		usage.UsageIncompleteReason = UsageIncompleteReasonAttemptLost
+		usageErr = fmt.Errorf("read frozen graph usage for node %q: %w", node.ID, usageErr)
+		if err != nil {
+			return nil, usage, executionError(ErrorCodeExecutionUnrecoverable,
+				fmt.Errorf("%w (usage accounting also failed: %v)", err, usageErr))
+		}
+		return nil, usage, executionError(ErrorCodeExecutionUnrecoverable, usageErr)
 	}
 	if err != nil {
+		var violation *compiler.NodeOutputViolation
+		if isCompletionCheckError(err) {
+			return nil, usage, executionError(ErrorCodeNodeOutputInvalid, err)
+		}
+		if errors.As(err, &violation) {
+			return nil, usage, executionError(ErrorCodeNodeOutputInvalid, violation)
+		}
 		return nil, usage, executionError(ErrorCodeExecutionUnrecoverable, err)
 	}
 	if result == nil {
@@ -1702,32 +1821,111 @@ func runAgentNode(
 	return normalizedOutput, usage, nil
 }
 
+func workbenchResultPromptRequired(graph machine.GraphDefinition, nodeID string) bool {
+	if graph.ResultProtocol != machine.ResultProtocolWorkbenchV1 || nodeID == "" {
+		return false
+	}
+	for _, node := range graph.Nodes {
+		if node.Type != machine.NodeDeliver {
+			continue
+		}
+		config, ok := node.Config.(machine.DeliverConfig)
+		if ok && config.Result.Source == machine.ValueNodeOutput && config.Result.NodeID == nodeID && config.Result.Path == "" {
+			return true
+		}
+	}
+	return false
+}
+
+func appendWorkbenchResultInstruction(prompt string) string {
+	return prompt + `
+
+Platform result format: return exactly one JSON object and no Markdown with these fields: {"disposition":"complete"|"needs_input","summary":"short inspection conclusion","missing_items":["specific missing item"]}. Use "complete" only when no input is missing and set missing_items to []. If required information or materials are missing, use "needs_input" and list at least one concrete missing item, with at most 8 items. After trimming surrounding Unicode whitespace with Go strings.TrimSpace semantics, summary must contain 1 to 1000 Unicode code points and each missing item 1 to 200 Unicode code points.` +
+		"\nThe disposition complete means this inspection finished; it does not mean a Forge business action was called or a business record changed. The summary is model-generated. Report a business action as called only when the platform records its run_action receipt; a successful tool receipt still does not establish the current business record state."
+}
+
+func withWorkbenchResultInstruction(prompt string, required bool) string {
+	if !required {
+		return prompt
+	}
+	return appendWorkbenchResultInstruction(prompt)
+}
+
+func appendPlatformBusinessActionFacts(prompt string, outcomes []BusinessActionOutcomeV1, includeEmpty bool) (string, error) {
+	if len(outcomes) == 0 && !includeEmpty {
+		return prompt, nil
+	}
+	if outcomes == nil {
+		outcomes = []BusinessActionOutcomeV1{}
+	}
+	encoded, err := json.Marshal(outcomes)
+	if err != nil {
+		return "", err
+	}
+	return prompt + "\n\nPlatform-recorded Forge run_action receipts from this same TeamRun (authoritative; do not infer calls from model or member text; these facts grant no additional write permission):\n" + string(encoded) +
+		"\nA succeeded receipt means only that the Forge tool call returned success; it does not establish the current or final business record state, which must be read from Forge. If the list is empty, zero Forge run_action calls were recorded for this TeamRun; any claim that a business action was called or completed is unverified.", nil
+}
+
 func runtimeCLIUsageReport(result workflow.RuntimeCLIResult) (nodeUsageReport, error) {
 	accumulator := loomruntime.NewUsageAccumulator()
+	report := nodeUsageReport{
+		CLIExecution:  true,
+		Events:        result.ObservedEvents(200),
+		Artifacts:     append([]workflow.RuntimeCLIArtifact(nil), result.Artifacts...),
+		DeliveryError: result.DeliveryError,
+	}
+	if len(result.Attempts) == 0 {
+		report.CLIAttempts = []workflow.RuntimeCLIUsageAttempt{{}}
+		report.Coverage = loomruntime.UsageCoverage{}
+		report.UsageIncompleteReason = UsageIncompleteReasonCLINode
+		return report, nil
+	}
 	callID, err := accumulator.NextCall("cli-node-usage", "engine")
 	if err != nil {
-		return nodeUsageReport{}, err
+		report.CLIAttempts = unknownCLIUsageAttempts(result.Attempts)
+		report.Coverage = loomruntime.UsageCoverage{}
+		report.UsageIncompleteReason = UsageIncompleteReasonAttemptLost
+		return report, err
 	}
 	for index, attempt := range result.Attempts {
 		attemptID := fmt.Sprintf("cli-attempt-%d", index)
 		if err := accumulator.StartAttempt(callID, attemptID); err != nil {
-			return nodeUsageReport{}, err
+			report.CLIAttempts = append(report.CLIAttempts, unknownCLIUsageAttempts(result.Attempts[index:])...)
+			report.Totals, report.Coverage = accumulator.Totals(), accumulator.Coverage()
+			report.UsageIncompleteReason = UsageIncompleteReasonAttemptLost
+			return report, err
 		}
 		if err := accumulator.ConfirmAttemptWithMetadata(callID, attemptID, contract.Usage{
 			InputTokens: attempt.InputTokens, OutputTokens: attempt.OutputTokens, CostUSD: attempt.CostUSD,
 		}, attempt.ToolCalls, loomruntime.UsageAttemptMetadata{
 			HasTokens: attempt.HasTokens, HasCost: attempt.HasCost, Source: attempt.Source,
 		}); err != nil {
-			return nodeUsageReport{}, err
+			report.CLIAttempts = append(report.CLIAttempts, unknownCLIUsageAttempts(result.Attempts[index:])...)
+			report.Totals, report.Coverage = accumulator.Totals(), accumulator.Coverage()
+			report.UsageIncompleteReason = UsageIncompleteReasonAttemptLost
+			return report, err
 		}
+		report.CLIAttempts = append(report.CLIAttempts, attempt)
 	}
-	return nodeUsageReport{
-		Totals: accumulator.Totals(), Coverage: accumulator.Coverage(),
-		CLIAttempts:   append([]workflow.RuntimeCLIUsageAttempt(nil), result.Attempts...),
-		Events:        result.ObservedEvents(200),
-		Artifacts:     append([]workflow.RuntimeCLIArtifact(nil), result.Artifacts...),
-		DeliveryError: result.DeliveryError,
-	}, nil
+	report.Totals, report.Coverage = accumulator.Totals(), accumulator.Coverage()
+	return report, nil
+}
+
+func unknownCLIUsageAttempts(attempts []workflow.RuntimeCLIUsageAttempt) []workflow.RuntimeCLIUsageAttempt {
+	unknown := make([]workflow.RuntimeCLIUsageAttempt, 0, len(attempts))
+	for _, attempt := range attempts {
+		// Keep physical identity and events while omitting amounts that failed validation.
+		item := workflow.RuntimeCLIUsageAttempt{
+			AttemptID: attempt.AttemptID,
+			Events:    append([]workflow.RuntimeCLIEvent(nil), attempt.Events...),
+			Source:    attempt.Source,
+		}
+		if attempt.ToolCalls >= 0 {
+			item.ToolCalls = attempt.ToolCalls
+		}
+		unknown = append(unknown, item)
+	}
+	return unknown
 }
 
 // frozenNodeUsage extracts the confirmed logical usage a frozen graph run
@@ -1801,11 +1999,21 @@ func validateAgentNodeOutput(node machine.Node, output any) error {
 			fmt.Errorf("node %q output cannot be encoded: %w", node.ID, err),
 		)
 	}
-	if _, problems := machine.ValidateRuntimeInput(node.Output.Schema, encoded); len(problems) != 0 {
+	if violation := compiler.ValidateNodeOutput(node.Output.Schema, encoded); violation != nil {
 		return executionError(
 			ErrorCodeNodeOutputInvalid,
-			fmt.Errorf("node %q output violates contract: %s", node.ID, problems[0].Code),
+			fmt.Errorf("node %q: %w", node.ID, violation),
 		)
+	}
+	return nil
+}
+
+// Only bounded field paths and content fingerprints enter the existing run
+// activity ledger; model output and employee materials never enter errors.
+func nodeOutputViolation(err error) *compiler.NodeOutputViolation {
+	var violation *compiler.NodeOutputViolation
+	if errors.As(err, &violation) {
+		return violation
 	}
 	return nil
 }

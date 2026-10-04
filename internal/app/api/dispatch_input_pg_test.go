@@ -18,10 +18,11 @@ import (
 
 func dispatchInputRegistrationFixture(session, task, previous string) dispatchInputRegistration {
 	seq := int64(0)
+	actions := []string{}
 	return dispatchInputRegistration{
 		RegistrationID: uuid.NewString(), WorkbenchSessionID: session, ExpectedRevisionID: previous,
 		SourceMessages: []dispatchInputSourceMessage{{MessageID: "user-" + uuid.NewString(), EventSeq: &seq, SHA256: dispatchInputDigest([]byte(task))}},
-		Task:           task, TeamID: "team",
+		Task:           task, TeamID: "team", AuthorizedBusinessCapabilityIDs: &actions,
 	}
 }
 
@@ -47,6 +48,138 @@ func registerInputForTest(server *Server, request dispatchInputRegistration) (*h
 	}
 	c, recorder := dispatchInputTestContext(body, "/v1/workbench/dispatch-inputs", "ws", "user")
 	return recorder, server.handleRegisterDispatchInput(c)
+}
+
+func TestDispatchInputFreezesAndRefreshesEmployeeForgeDelegationRealPG(t *testing.T) {
+	t.Setenv("WEAVE_SECRET_KEY_FILE", "")
+	t.Setenv("WEAVE_SECRET_KEY", strings.Repeat("11", 32))
+	server, pool, registration, authority := nativeTaskRegistrationFixture(t)
+	version := 1
+	authorized := []string{"forge:action:sales_contract.ContractSubmit"}
+	authority.add(t, "first-token", "native-user", "native-org", 1, scopeForRegistration(registration))
+	authority.add(t, "refreshed-token", "native-user", "native-org", 2, scopeForRegistration(registration))
+	register := func(token string) (*httptest.ResponseRecorder, dispatchInputReceipt) {
+		t.Helper()
+		body, _ := json.Marshal(registration)
+		c, recorder := dispatchInputTestContext(body, "/v1/workbench/dispatch-inputs", "ws", "user")
+		if token != "" {
+			setTestForgeTaskDelegation(c.Request().Header, token)
+		}
+		if err := server.handleRegisterDispatchInput(c); err != nil {
+			t.Fatal(err)
+		}
+		var receipt dispatchInputReceipt
+		if recorder.Code < 300 {
+			if err := json.Unmarshal(recorder.Body.Bytes(), &receipt); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return recorder, receipt
+	}
+	created, receipt := register("first-token")
+	if created.Code != http.StatusCreated {
+		t.Fatalf("create status=%d body=%s", created.Code, created.Body.String())
+	}
+	var ciphertext string
+	var actions []byte
+	var generation int
+	if err := pool.QueryRow(t.Context(), `SELECT credential_ciphertext,allowed_actions,refresh_generation
+		FROM weave_task_business_delegations WHERE workspace_id='ws' AND input_revision_id=$1`, receipt.InputRevisionID).Scan(&ciphertext, &actions, &generation); err != nil {
+		t.Fatal(err)
+	}
+	if ciphertext == "first-token" || strings.Contains(ciphertext, "first-token") || generation != 1 || !strings.Contains(string(actions), "ContractSubmit") {
+		t.Fatalf("delegation was not frozen safely: ciphertext=%q actions=%s generation=%d", ciphertext, actions, generation)
+	}
+	replayed, replayReceipt := register("refreshed-token")
+	if replayed.Code != http.StatusOK || replayReceipt != receipt {
+		t.Fatalf("replay status=%d receipt=%+v want=%+v", replayed.Code, replayReceipt, receipt)
+	}
+	if err := pool.QueryRow(t.Context(), `SELECT refresh_generation FROM weave_task_business_delegations
+		WHERE workspace_id='ws' AND input_revision_id=$1`, receipt.InputRevisionID).Scan(&generation); err != nil || generation != 2 {
+		t.Fatalf("refresh generation=%d err=%v", generation, err)
+	}
+	var resources []byte
+	if err := pool.QueryRow(t.Context(), `SELECT resources FROM weave_task_business_delegations WHERE workspace_id='ws' AND input_revision_id=$1`, receipt.InputRevisionID).Scan(&resources); err != nil {
+		t.Fatal(err)
+	}
+	var stored []map[string]any
+	if err := json.Unmarshal(resources, &stored); err != nil || len(stored) != 2 || stored[1]["type"] != "forge-record" || stored[1]["id"] != "record-a" || stored[1]["object_name"] != "sales_contract" {
+		t.Fatalf("resources=%s err=%v", resources, err)
+	}
+	registration.BusinessRecord.RecordID = "record-b"
+	conflict, _ := register("refreshed-token")
+	if conflict.Code != http.StatusConflict || !strings.Contains(conflict.Body.String(), "input_registration_conflict") {
+		t.Fatalf("changed record: status=%d body=%s", conflict.Code, conflict.Body.String())
+	}
+	if err := pool.QueryRow(t.Context(), `SELECT refresh_generation FROM weave_task_business_delegations WHERE workspace_id='ws' AND input_revision_id=$1`, receipt.InputRevisionID).Scan(&generation); err != nil || generation != 2 {
+		t.Fatalf("conflicting input altered delegation: generation=%d err=%v", generation, err)
+	}
+	missing := dispatchInputRegistrationFixture("forge-session-missing", "提交另一份合同", "")
+	missing.WorkflowID, missing.WorkflowVersion = "flow", &version
+	missing.AuthorizedBusinessCapabilityIDs = &authorized
+	body, _ := json.Marshal(missing)
+	c, recorder := dispatchInputTestContext(body, "/v1/workbench/dispatch-inputs", "ws", "user")
+	if err := server.handleRegisterDispatchInput(c); err != nil || recorder.Code != http.StatusUnauthorized || !strings.Contains(recorder.Body.String(), "business_delegation_required") {
+		t.Fatalf("missing delegation status=%d body=%s err=%v", recorder.Code, recorder.Body.String(), err)
+	}
+}
+
+func TestDispatchInputFreezesForgeMaterialWithoutGrantingBusinessActionRealPG(t *testing.T) {
+	t.Setenv("WEAVE_SECRET_KEY_FILE", "")
+	t.Setenv("WEAVE_SECRET_KEY", strings.Repeat("22", 32))
+	content := []byte("frozen review material")
+	server, pool, registration, authority := nativeTaskRegistrationFixture(t)
+	emptyActions := []string{}
+	registration.AuthorizedBusinessCapabilityIDs = &emptyActions
+	registration.BusinessRecord = nil
+	for index := 0; index < 9; index++ {
+		registration.Resources = append(registration.Resources, dispatchInputResource{
+			Type: "forge-file", ID: uuid.NewString(), Name: fmt.Sprintf("review-%d.md", index+1), MediaType: "text/markdown",
+			Bytes: int64(len(content)), SHA256: dispatchInputDigest(content),
+		})
+	}
+	for _, resource := range registration.Resources {
+		authority.files[resource.ID] = content
+	}
+	authority.add(t, "review-token", "native-user", "native-org", 1, scopeForRegistration(registration))
+	body, _ := json.Marshal(registration)
+	c, recorder := dispatchInputTestContext(body, "/v1/workbench/dispatch-inputs", "ws", "user")
+	setTestForgeTaskDelegation(c.Request().Header, "review-token")
+	if err := server.handleRegisterDispatchInput(c); err != nil || recorder.Code != http.StatusCreated {
+		t.Fatalf("register status=%d body=%s err=%v", recorder.Code, recorder.Body.String(), err)
+	}
+	var receipt dispatchInputReceipt
+	if err := json.Unmarshal(recorder.Body.Bytes(), &receipt); err != nil {
+		t.Fatal(err)
+	}
+	var actions []byte
+	if err := pool.QueryRow(t.Context(), `SELECT allowed_actions FROM weave_task_business_delegations
+		WHERE workspace_id='ws' AND input_revision_id=$1`, receipt.InputRevisionID).Scan(&actions); err != nil {
+		t.Fatal(err)
+	}
+	if string(actions) != "[]" {
+		t.Fatalf("review-only delegation granted non-empty actions: %s", actions)
+	}
+	var frozenResources []map[string]any
+	var frozenResourceJSON []byte
+	if err := pool.QueryRow(t.Context(), `SELECT resources FROM weave_task_business_delegations WHERE workspace_id='ws' AND input_revision_id=$1`, receipt.InputRevisionID).Scan(&frozenResourceJSON); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(frozenResourceJSON, &frozenResources); err != nil {
+		t.Fatalf("decode frozen resources: %v", err)
+	}
+	fileCount, dispatchInputCount := 0, 0
+	for _, resource := range frozenResources {
+		switch resource["type"] {
+		case "forge-file":
+			fileCount++
+		case "dispatch-input":
+			dispatchInputCount++
+		}
+	}
+	if fileCount != 9 || dispatchInputCount != 1 {
+		t.Fatalf("nine-file admission stored %d forge files and %d dispatch-input records; resources=%#v", fileCount, dispatchInputCount, frozenResources)
+	}
 }
 
 func boundDispatchForTest(server *Server, body map[string]any, userID string) (*httptest.ResponseRecorder, error) {
@@ -109,6 +242,10 @@ func TestBoundDispatchInputProvenanceAndAtomicAdmissionRealPG(t *testing.T) {
 
 	firstRequest := dispatchInputRegistrationFixture("session", "VBR-52 original task", "")
 	first := register(firstRequest, http.StatusCreated, "")
+	persistedFirst, err := server.loadDispatchInput(ctx, "ws", "user", first.InputRevisionID)
+	if err != nil || persistedFirst.ExecutionTask != firstRequest.Task {
+		t.Fatalf("plain-text input projection changed a non-material task: executionTask=%q err=%v", persistedFirst.ExecutionTask, err)
+	}
 	if replay := register(firstRequest, http.StatusOK, ""); replay != first {
 		t.Fatalf("registration replay changed identity: %+v != %+v", replay, first)
 	}
@@ -124,6 +261,8 @@ func TestBoundDispatchInputProvenanceAndAtomicAdmissionRealPG(t *testing.T) {
 	invalid = dispatchInputRegistrationFixture("invalid", "task", "")
 	invalid.Mode = "free_collab"
 	register(invalid, http.StatusBadRequest, "dispatch_input_mode_unsupported")
+	invalid = dispatchInputRegistrationFixture("invalid-empty", "", "")
+	register(invalid, http.StatusBadRequest, "dispatch_input_request_invalid")
 
 	// Freeze this resolved request before another registration wins. Calling the
 	// admission function later simulates a head replacement after route resolution.
@@ -133,6 +272,7 @@ func TestBoundDispatchInputProvenanceAndAtomicAdmissionRealPG(t *testing.T) {
 	}
 	secondText := " \n我是 Nora 的助理，为 INV-440 准备状态。\n保留“引号”与最后换行。\n"
 	secondRequest := dispatchInputRegistrationFixture("session", secondText, first.InputRevisionID)
+	secondRequest.ProjectID = "workbench-user"
 	second := register(secondRequest, http.StatusCreated, "")
 	if second.TaskSHA256 != dispatchInputDigest([]byte(secondText)) || second.ClientRequestID == first.ClientRequestID {
 		t.Fatal("new input did not freeze exact text with an independent request key")
@@ -170,6 +310,9 @@ func TestBoundDispatchInputProvenanceAndAtomicAdmissionRealPG(t *testing.T) {
 	secondRun := dispatch(map[string]any{"input_revision_id": second.InputRevisionID}, "user", http.StatusCreated, "")
 	if secondRun.ClientRequestID != second.ClientRequestID || secondRun.InputRevisionID != second.InputRevisionID {
 		t.Fatalf("dispatch receipt lost input identity: %+v", secondRun)
+	}
+	if secondRun.ProjectID == "" || secondRun.ProjectID == secondRequest.ProjectID {
+		t.Fatalf("legacy Workbench project was not resolved to a server-owned project: %+v", secondRun)
 	}
 	task, err := server.Tasks.Get(ctx, "ws", secondRun.TaskID)
 	var storedTask string

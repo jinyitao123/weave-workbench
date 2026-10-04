@@ -21,6 +21,7 @@ import (
 	"github.com/jinyitao123/weave/internal/kernel/loomruntime"
 	"github.com/jinyitao123/weave/internal/kernel/registry"
 	"github.com/jinyitao123/weave/internal/kernel/runtimellm"
+	"github.com/jinyitao123/weave/internal/kernel/workflow/machine"
 )
 
 type RuntimeCredentialResolver interface {
@@ -294,6 +295,27 @@ func (l *RuntimeLoader) Load(
 	if err != nil {
 		return nil, err
 	}
+	businessMembers := make(map[machine.AgentVersionKey]bool)
+	for _, bundle := range payload.Bundles {
+		if err := compiler.ValidateFrozenBusinessActionFactory(bundle); err != nil {
+			return nil, err
+		}
+		if len(bundle.Agent.BusinessCapabilityIDs) > 0 || len(bundle.Agent.BusinessCapabilityBindings) > 0 {
+			businessMembers[machine.AgentVersionKey{AgentID: bundle.Agent.AgentID, AgentVersion: bundle.Agent.AgentVersion}] = true
+		}
+	}
+	if len(businessMembers) > 0 {
+		graph, report := machine.DecodeGraphDefinitionV1(payload.GraphDefinition)
+		if report != nil {
+			return nil, runtimeHostUnsupportedError("business action graph is invalid")
+		}
+		lead := machine.AgentVersionKey{AgentID: payload.Team.LeadAgentID, AgentVersion: payload.Team.LeadAgentVersion}
+		for _, reference := range machine.ExecutionBundles(lead, graph) {
+			if reference.ParallelBranch && businessMembers[reference.Key] {
+				return nil, runtimeHostUnsupportedError("business actions require serial durable member execution")
+			}
+		}
+	}
 	ctx = withPublishedServiceCredentialAuthorization(ctx, payload)
 
 	if len(payload.DeliveryTargets) > 0 {
@@ -425,13 +447,17 @@ func (l *RuntimeLoader) Load(
 				cleanup()
 				return nil, runtimeErr
 			}
-			opts, closer, buildErr = buildRuntimeHostsWithLLM(
-				ctx,
-				bundle,
-				credentialResolver,
-				newRuntimeMCPTransport,
-				runtimeLLM,
-			)
+			if withLLM, ok := factory.(RuntimeHostFactoryWithLLM); ok {
+				opts, closer, buildErr = withLLM.BuildWithLLM(ctx, bundle, credentialResolver, runtimeLLM)
+			} else {
+				opts, closer, buildErr = buildRuntimeHostsWithLLM(
+					ctx,
+					bundle,
+					credentialResolver,
+					newRuntimeMCPTransport,
+					runtimeLLM,
+				)
+			}
 		} else {
 			opts, closer, buildErr = factory.Build(ctx, bundle, credentialResolver)
 		}

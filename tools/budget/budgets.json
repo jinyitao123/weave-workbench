@@ -222,6 +222,492 @@
         "previous_external_dependencies": 7,
         "external_dependencies": 7
       }
+    },
+    {
+      "date": "2026-09-25",
+      "source_commit": "7269740e8b4a548f7be7eec41d7012442b766ea2",
+      "reason": "Reconcile the hard ceilings to exact measurements after the post-2026-09-10 mainline layer migration and accepted Workbench capability, identity, team-configuration, frozen-input, and result-delivery work. A clean archive of 1010ff already exceeded the old kernel/app ceilings; the current 34-line net test-fixture change adds no production lines, packages, or dependencies. No spare allowance is added; original migration targets and dependency allowlists remain unchanged, and the outstanding migration debt is not retired.",
+      "record": "docs/治理/2026-09-25-四带预算登记复核.md",
+      "base": {
+        "previous_lines": 27547,
+        "previous_production_lines": 22985,
+        "lines_removed": 19411,
+        "production_lines_removed": 16311,
+        "previous_packages": 12,
+        "packages": 9,
+        "previous_external_dependencies": 4,
+        "external_dependencies": 4
+      },
+      "kernel": {
+        "previous_lines": 67338,
+        "previous_production_lines": 62474,
+        "lines_added": 24095,
+        "production_lines_added": 16245,
+        "previous_packages": 33,
+        "packages": 49,
+        "previous_external_dependencies": 5,
+        "external_dependencies": 5
+      },
+      "build": {
+        "previous_lines": 37251,
+        "previous_production_lines": 34796,
+        "lines_removed": 5804,
+        "production_lines_removed": 5745,
+        "previous_packages": 7,
+        "packages": 6,
+        "previous_external_dependencies": 4,
+        "external_dependencies": 4
+      },
+      "app": {
+        "previous_lines": 46415,
+        "previous_production_lines": 36695,
+        "lines_added": 34199,
+        "production_lines_added": 24307,
+        "previous_packages": 18,
+        "packages": 30,
+        "previous_external_dependencies": 7,
+        "external_dependencies": 7
+      }
+    },
+    {
+      "date": "2026-09-28",
+      "source_commit": "518162a023437ff7ca894c2a41513e32d7a2596c",
+      "reason": "Add a Loom-only read tool for bounded UTF-8 chunks from the current frozen Workbench extraction, bind reads to the exact input revision, run, delegated materialId and source SHA-256, and keep extraction bodies out of the initial execution prompt while preserving original input facts. Exact measured ceilings with no spare allowance; package/dependency limits and original migration targets remain unchanged. Forge binary reads remain unavailable until their protected endpoint is integrated.",
+      "kernel": {
+        "previous_lines": 91433,
+        "previous_production_lines": 78719,
+        "lines_added": 1008,
+        "production_lines_added": 715
+      },
+      "app": {
+        "previous_lines": 80642,
+        "previous_production_lines": 61013,
+        "lines_added": 335,
+        "production_lines_added": 61
+      }
+    },
+    {
+      "date": "2026-09-28",
+      "source_commit": "ceb70d3e4b216af83bf553b8469d7fa0a48787f5",
+      "reason": "Add exact-source PDF/DOCX original-byte verification on owner or approval Forge routes, bound to the current run's encrypted employee delegation, sourceKind, approval requestId, If-Match SHA-256, MIME and length. Original bytes are discarded after verification; model-readable content remains the frozen desktop extraction, with partial/unavailable status preserved. Exact measured ceilings with no spare allowance; package/dependency limits and original migration targets remain unchanged.",
+      "kernel": {
+        "previous_lines": 92441,
+        "previous_production_lines": 79434,
+        "lines_added": 344,
+        "production_lines_added": 177
+      },
+      "app": {
+        "previous_lines": 80977,
+        "previous_production_lines": 61074,
+        "lines_added": 314,
+        "production_lines_added": 58
+      }
+    },
+    {
+      "date": "2026-09-28",
+      "source_commit": "f9350a99fc2d4cf85b06c7f13c5ed7f6a37ae9f3",
+      "reason": "Add the optional frozen Workbench team-result contract, verified delivery classification, one native employee result or revision-required event, and owner continuation readback with exact-output consistency checks. Exact measured ceilings with no spare allowance; package/dependency limits and original migration targets remain unchanged.",
+      "record": "https://github.com/jinyitao123/weave-workbench/blob/94b39a10/contracts/v1/README.md",
+      "base": {
+        "previous_lines": 8136,
+        "previous_production_lines": 6674,
+        "lines_added": 55,
+        "production_lines_added": 9
+      },
+      "kernel": {
+        "previous_lines": 92785,
+        "previous_production_lines": 79611,
+        "lines_added": 450,
+        "production_lines_added": 232
+      },
+      "build": {
+        "previous_lines": 31447,
+        "previous_production_lines": 29051,
+        "lines_added": 35,
+        "production_lines_added": 6
+      },
+      "app": {
+        "previous_lines": 81291,
+        "previous_production_lines": 61132,
+        "lines_added": 134,
+        "production_lines_added": 69
+      }
+    },
+    {
+      "date": "2026-09-29",
+      "source_commit": "ad0329a416ad16cce6c8bc1aac4855407bd184df",
+      "reason": "Repair the development-stage recorder decorator dropping the existing verified-delivery interface in production assembly. Preserve final result metadata and verification fences, keep trial outputs developer-scoped, and exercise the same decorator in the real PostgreSQL CLI/Loom delivery matrix. Exact 30 production and 43 regression lines; no package, dependency, or spare allowance growth.",
+      "app": {
+        "previous_lines": 82646,
+        "previous_production_lines": 61625,
+        "lines_added": 73,
+        "production_lines_added": 30
+      }
+    },
+    {
+      "date": "2026-09-29",
+      "source_commit": "15497e6c3a608093045a81e0e0cdd11528b6a595",
+      "reason": "Bind the already-frozen system DeepSeek model identity to the current non-thinking tool-loop wire profile at actual member runtime construction. Regression covers a real frozen host sending tools with high effort and preserves unrelated provider wire behavior. Exact measured ceilings; no package, dependency, or spare allowance growth.",
+      "kernel": {
+        "previous_lines": 93286,
+        "previous_production_lines": 79843,
+        "lines_added": 71,
+        "production_lines_added": 8
+      }
+    },
+    {
+      "date": "2026-09-29",
+      "source_commit": "6415d24ec819768e0eeea2e6d2c225ce705cb1ef",
+      "reason": "Preserve ObjectStack native Action file type and cardinality from same-employee object metadata, intersect metadata by the existing list_actions allowlist, and reject unresolved or masked declarations. Freeze typed single-file selection and explicitly bound multi-file ID injection while preserving existing non-file action mappings. Add production-consumer route, allowlist, objectOverride, missing-metadata, permission-denial, and regression coverage. Exact measured limits; no package, dependency, or spare allowance growth.",
+      "base": {
+        "previous_lines": 8191,
+        "previous_production_lines": 6683,
+        "lines_added": 1,
+        "production_lines_added": 1
+      },
+      "kernel": {
+        "previous_lines": 93357,
+        "previous_production_lines": 79851,
+        "lines_added": 916,
+        "production_lines_added": 546
+      }
+    },
+    {
+      "date": "2026-09-30",
+      "reason": "Make zero Forge action receipts explicit in the existing finalizer prompt, terminal event, and Workbench continuation, while describing non-empty receipts only as tool-call responses. Add the empty-activity/model-claim regression and preserve the receipt fact before terminal-summary truncation. Exact measured limits with no spare allowance; package and dependency limits unchanged.",
+      "kernel": {
+        "previous_lines": 94273,
+        "previous_production_lines": 80397,
+        "lines_added": 30,
+        "production_lines_added": 5
+      },
+      "app": {
+        "previous_lines": 82719,
+        "previous_production_lines": 61655,
+        "lines_added": 63,
+        "production_lines_added": 3
+      }
+    },
+    {
+      "date": "2026-09-30",
+      "reason": "W1 retire-first switches: two config flags parsed in Load(), the team template / evaluation / team-build route registrations moved into one function behind RetireLegacyPlatformAPIs, local login and registration behind DisableLocalLogin, and route regression tests. Exact measured limits with no spare allowance; package and dependency limits unchanged.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 94303,
+        "previous_production_lines": 80402,
+        "lines_added": 58,
+        "production_lines_added": 17
+      },
+      "app": {
+        "previous_lines": 82782,
+        "previous_production_lines": 61658,
+        "lines_added": 135,
+        "production_lines_added": 23
+      }
+    },
+    {
+      "date": "2026-09-30",
+      "reason": "W4 content-based replay protection: a request digest (params_sha256) on the action receipt, a third replay-guard rule for an earlier success of the identical request, the guard call reshaped into a check/decision pair, and real-PostgreSQL, dispatcher and receipt round-trip tests. Exact measured limits with no spare allowance; package and dependency limits unchanged.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 94361,
+        "previous_production_lines": 80419,
+        "lines_added": 396,
+        "production_lines_added": 48
+      }
+    },
+    {
+      "date": "2026-09-30",
+      "reason": "W5 correctness fixes: delete the unfenced task Complete/Fail, add the operator-only permanent-failure list and redeliver for employee run events, a shared registration and runtime file limit, and an expiry sentinel with its failure classification, with real-PostgreSQL and unit tests. Exact measured limits with no spare allowance; package and dependency limits unchanged.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "base": {
+        "previous_lines": 8192,
+        "previous_production_lines": 6684,
+        "lines_added": 10,
+        "production_lines_added": 10
+      },
+      "kernel": {
+        "previous_lines": 94757,
+        "previous_production_lines": 80467,
+        "lines_added": 91,
+        "production_lines_added": -7
+      },
+      "app": {
+        "previous_lines": 82917,
+        "previous_production_lines": 61681,
+        "lines_added": 301,
+        "production_lines_added": 91
+      }
+    },
+    {
+      "date": "2026-09-30",
+      "reason": "Review fixes for W1/W4/W5: keep the MCP guard's cause and tell the member when authorization expired mid-call, and add tests for both. Exact measured limits with no spare allowance; package and dependency limits unchanged.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 94848,
+        "previous_production_lines": 80460,
+        "lines_added": 121,
+        "production_lines_added": 7
+      },
+      "app": {
+        "previous_lines": 83218,
+        "previous_production_lines": 61772,
+        "lines_added": 3,
+        "production_lines_added": 3
+      }
+    },
+    {
+      "date": "2026-09-30",
+      "reason": "W2 run reproduction kit: operator-only export-run/import-run for one run's stored state (redaction, canary-tested); adds no runtime path, HTTP route or scheduler.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "app": {
+        "previous_lines": 83221,
+        "previous_production_lines": 61775,
+        "lines_added": 624,
+        "production_lines_added": 387
+      }
+    },
+    {
+      "date": "2026-09-30",
+      "reason": "W2 replay: read-only member journal replay (weave ops replay-run) with recorded responses; adds no execution path, route or write.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 94969,
+        "previous_production_lines": 80467,
+        "lines_added": 523,
+        "production_lines_added": 364
+      }
+    },
+    {
+      "date": "2026-09-30",
+      "reason": "W5 run-level business result (shared count and classification, trial contract freeze) and W2 replay follow-ups; no new route, scheduler or execution path.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 95492,
+        "previous_production_lines": 80831,
+        "lines_added": 338,
+        "production_lines_added": 171
+      },
+      "app": {
+        "previous_lines": 83845,
+        "previous_production_lines": 62162,
+        "lines_added": 86,
+        "production_lines_added": 83
+      }
+    },
+    {
+      "date": "2026-09-30",
+      "reason": "Use the successful Forge action receipt to keep a needs_input terminal notification as a result and describe the model's missing-item list as an opinion; preserve revision_required when there is no successful action. Add real PostgreSQL receipt-combination and single-delivery regression coverage. Exact measured limits with no spare allowance; package and dependency limits unchanged.",
+      "app": {
+        "previous_lines": 82782,
+        "previous_production_lines": 61658,
+        "lines_added": 61,
+        "production_lines_added": 9
+      }
+    },
+    {
+      "date": "2026-10-01",
+      "reason": "Integrate current main success-receipt precedence with W5 classification and its regression. Combined measured app limits include the main receipt tests and wording; no dependency or package growth allowance.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 95830,
+        "previous_production_lines": 81002,
+        "lines_added": 1,
+        "production_lines_added": 0
+      },
+      "app": {
+        "previous_lines": 83931,
+        "previous_production_lines": 62245,
+        "lines_added": 62,
+        "production_lines_added": 9
+      }
+    },
+    {
+      "date": "2026-10-01",
+      "reason": "Keep content-only successful-write replay protection explicitly opt-in until logical operation identity is defined, with real-PG default-path regression. Exact measured limits without spare allowance.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 95831,
+        "previous_production_lines": 81002,
+        "lines_added": 18,
+        "production_lines_added": 6
+      }
+    },
+    {
+      "date": "2026-10-01",
+      "reason": "Complete W4 with server-owned durable operation slots, injected Forge idempotency, atomic activity reservation and original receipt recovery, including the native-receipt/member-journal crash window and null-status protection. Real PostgreSQL, HTTP MCP and member recovery regressions account for test growth; no new packages or dependencies.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "base": {
+        "previous_lines": 8202,
+        "previous_production_lines": 6694,
+        "lines_added": 64,
+        "production_lines_added": 42
+      },
+      "kernel": {
+        "previous_lines": 95849,
+        "previous_production_lines": 81008,
+        "lines_added": 1615,
+        "production_lines_added": 490
+      }
+    },
+    {
+      "date": "2026-10-01",
+      "reason": "Align employee events with the shared business-result classifier, count distinct durable operations even with reused model call IDs, and cover provider private-reasoning and credential-header receipt aliases. Actual post-integration limits; no packages or dependencies added.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 97464,
+        "previous_production_lines": 81498,
+        "lines_added": 82,
+        "production_lines_added": 8
+      },
+      "app": {
+        "previous_lines": 83993,
+        "previous_production_lines": 62254,
+        "lines_added": 113,
+        "production_lines_added": 18
+      }
+    },
+    {
+      "date": "2026-10-01",
+      "reason": "Real HTTP retired-entry acceptance: replace only synthetic Echo group NotFound registrations, preserving real protected and wildcard handlers; include disabled/default, private, method, wildcard and real PostgreSQL login/register regression coverage. Exact measured app limits without added packages or dependencies.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "app": {
+        "previous_lines": 84106,
+        "previous_production_lines": 62272,
+        "lines_added": 223,
+        "production_lines_added": 11
+      }
+    },
+    {
+      "date": "2026-10-01",
+      "reason": "Native Forge error-marker safety: require a nonempty error string or an explicit textual message/code object without a valid ok marker; retain unknown target protection for boolean, numeric, array and opaque error fields, with original failure-receipt replay regressions. Initial budget check failed at the already-full main baseline; authorize exactly +135 kernel lines and +21 production lines, with no spare allowance or package/dependency growth.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 97546,
+        "previous_production_lines": 81506,
+        "lines_added": 135,
+        "production_lines_added": 21
+      }
+    },
+    {
+      "date": "2026-10-01",
+      "reason": "Integrate strict Forge purpose-bound task JWTs with the accepted independent 24-hour lifecycle, stable identity/native organization freezing, same-input no-effect renewal and nonrenewable denial recovery, native inbox ownership/human and stop fencing, and complete frozen-dependency replay. Real PostgreSQL/HTTP MCP and upgrade regressions account for growth. Exact measured ceilings after the first guard failures; no spare allowance, packages or dependencies added. Existing migration targets remain debt. A verified API-key delegated employee retains identity and permission-set claims so the operator transport cannot bypass team audience. Expiry sweeping does not permanently revoke a current live input waiting for proven same-input renewal; terminal, cancellation and disabled-account revocations remain final.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "base": {
+        "previous_lines": 8266,
+        "previous_production_lines": 6736,
+        "lines_added": 252,
+        "production_lines_added": 126
+      },
+      "kernel": {
+        "previous_lines": 97682,
+        "previous_production_lines": 81528,
+        "lines_added": 1320,
+        "production_lines_added": 643
+      },
+      "app": {
+        "previous_lines": 85474,
+        "previous_production_lines": 63020,
+        "lines_added": 1735,
+        "production_lines_added": 1018
+      }
+    },
+    {
+      "date": "2026-10-02",
+      "source_commit": "452f83c5799bc12f60b3d771d7a62c573a2e5116",
+      "reason": "Reviewed contract-path repair: bind each frozen node output schema to the existing Loom completion verifier and provider mode, compose the opt-in trailing tool-protocol guard, and preserve bounded output-validation metadata. The first remote Go CI passed all Go/PostgreSQL tests and then exposed the missing budget registration. Exactly 156 production lines and 415 regression lines are accounted for by this commit, with no spare allowance, new packages, external dependencies, or changes to checking logic and original migration targets.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 99002,
+        "previous_production_lines": 82171,
+        "lines_added": 571,
+        "production_lines_added": 156
+      }
+    },
+    {
+      "date": "2026-10-02",
+      "reason": "Route business-only standard Loom publications through the existing durable v2 member contract; reject unsupported legacy/custom/CLI factories and parallel business members before effects. Add a real PostgreSQL publication-to-loader-to-MemberRunner-to-Forge action regression and retain immutable legacy ABI rejection. Exact measured increases only; no new packages, dependencies, journal, execution loop, or spare budget.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 99573,
+        "previous_production_lines": 82327,
+        "lines_added": 95,
+        "production_lines_added": 42
+      },
+      "app": {
+        "previous_lines": 87209,
+        "previous_production_lines": 64038,
+        "lines_added": 316,
+        "production_lines_added": 3
+      }
+    },
+    {
+      "date": "2026-10-03",
+      "reason": "Opt-in declared business receipt completion checks reuse the existing delivery contract, tool loop, durable facts and publication path; add provider-leaf JSON compatibility only under exact local schema verification and propagate stream failure facts. Include real PostgreSQL admission-to-effects and trial-receipt crash-window regressions. Exact measured increases only; no new packages, dependencies, queues, execution loops, relaxed checks or spare budget.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 99668,
+        "previous_production_lines": 82369,
+        "lines_added": 1546,
+        "production_lines_added": 684
+      },
+      "app": {
+        "previous_lines": 87525,
+        "previous_production_lines": 64041,
+        "lines_added": 683,
+        "production_lines_added": 147
+      }
+    },
+    {
+      "date": "2026-10-03",
+      "reason": "Register the repository owner's exact 30-line app regression-test allowance for PR #18 generic bounded decisions. Production lines remain capped at 64,188; packages, dependencies and original migration targets are unchanged.",
+      "record": "https://github.com/jinyitao123/weave-next/pull/18",
+      "app": {
+        "previous_lines": 88208,
+        "previous_production_lines": 64188,
+        "lines_added": 30,
+        "production_lines_added": 0
+      }
+    },
+    {
+      "date": "2026-10-03",
+      "source_commit": "e3da73e124a6121bbfb22c3e8f435a138199dec1",
+      "reason": "Reviewed Workbench result semantic limits and bounded final-text correction after a real 1033-codepoint result exceeded the existing 1000-codepoint protocol. Preserve the frozen local schema, enrich the provider-facing contract, reuse the existing Loom completion loop and block tool replay during correction including PostgreSQL checkpoints across four distinct processes. Replace the superseded same-process store test with the stronger subprocess test. Exact measured kernel growth only: 133 production and 726 test lines, no new packages, dependencies, loops, queues, spare allowance or changed original migration targets.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 101214,
+        "previous_production_lines": 83053,
+        "lines_added": 859,
+        "production_lines_added": 133
+      }
+    },
+    {
+      "date": "2026-10-04",
+      "reason": "Reviewed exact growth for current parked-fanout material reads and preservation of the conditional runtime-host BuildWithLLM capability. Reuse the current claimed task, parent wait, fanout intent/group/leg, yielded marker and original frozen input delegation; no new scope, queue, retry loop or terminal authority. PostgreSQL regressions activate and claim both actual fanout legs, reject isolated invalid scope and lease states, and preserve ordinary running reads. Exact kernel growth: 232 production and 595 test lines, no spare allowance, new packages or external dependencies; original migration targets unchanged.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 102073,
+        "previous_production_lines": 83186,
+        "lines_added": 827,
+        "production_lines_added": 232
+      }
+    },
+    {
+      "date": "2026-10-05",
+      "reason": "Register only the measured source and regression growth for the Forge business-action dispatch repair: normalize empty params objects and return definite local pre-dispatch rejection without weakening started/unknown fail-closed handling. Regressions cover mixed v2 business/v1 read-only publication, required-amount correction with exactly one Forge effect, caller identity, unreserved success, and unknown outcomes. Exact measured ceilings; no new packages or dependencies, execution loop, or queue, no spare allowance; original migration targets unchanged.",
+      "record": "docs/架构/2026-08-27-预算闸设计.md",
+      "kernel": {
+        "previous_lines": 102900,
+        "previous_production_lines": 83418,
+        "lines_added": 120,
+        "production_lines_added": 17
+      },
+      "app": {
+        "previous_lines": 88238,
+        "previous_production_lines": 64188,
+        "lines_added": 132,
+        "production_lines_added": 0
+      }
     }
   ],
   "migration_targets": {
@@ -247,9 +733,9 @@
     }
   },
   "base": {
-    "lines": 27547,
-    "production_lines": 22985,
-    "packages": 12,
+    "lines": 8518,
+    "production_lines": 6862,
+    "packages": 9,
     "external_dependencies": 4,
     "allowed_dependencies": [
       "github.com/google/uuid",
@@ -259,9 +745,9 @@
     ]
   },
   "kernel": {
-    "lines": 67338,
-    "production_lines": 62474,
-    "packages": 33,
+    "lines": 103020,
+    "production_lines": 83435,
+    "packages": 49,
     "external_dependencies": 5,
     "allowed_dependencies": [
       "github.com/google/uuid",
@@ -272,9 +758,9 @@
     ]
   },
   "build": {
-    "lines": 37251,
-    "production_lines": 34796,
-    "packages": 7,
+    "lines": 31482,
+    "production_lines": 29057,
+    "packages": 6,
     "external_dependencies": 4,
     "allowed_dependencies": [
       "github.com/google/uuid",
@@ -284,9 +770,9 @@
     ]
   },
   "app": {
-    "lines": 46415,
-    "production_lines": 36695,
-    "packages": 18,
+    "lines": 88370,
+    "production_lines": 64188,
+    "packages": 30,
     "external_dependencies": 7,
     "allowed_dependencies": [
       "github.com/golang-jwt/jwt/v5",

@@ -2,7 +2,13 @@ package users
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/binary"
+	"encoding/hex"
+	"errors"
 	"fmt"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -124,6 +130,170 @@ func (s *Store) GetByUsername(ctx context.Context, tenantID, username string) (*
 		return nil, fmt.Errorf("user %q not found", username)
 	}
 	return &u, nil
+}
+
+// BindExternal returns the existing Weave user for one trusted external
+// identity or creates a disabled-password compatibility row on first login.
+// Product access for Forge-bound sessions comes from the verified Forge
+// permission claim; this row supplies only stable binding and disabled state.
+func (s *Store) BindExternal(ctx context.Context, issuer, subject, tenantID, email, displayName string) (*User, error) {
+	return s.bindExternal(ctx, issuer, "", subject, tenantID, email, displayName, "")
+}
+
+// BindExternalInOrganization is called only after a trusted native session
+// proves this subject and active organization. It never changes workspace or
+// user identity when filling an old, previously empty organization binding.
+func (s *Store) BindExternalInOrganization(ctx context.Context, issuer, subject, tenantID, email, displayName, nativeOrganization string) (*User, error) {
+	if strings.TrimSpace(nativeOrganization) == "" {
+		return nil, errors.New("native organization is required")
+	}
+	return s.bindExternal(ctx, issuer, "", subject, tenantID, email, displayName, nativeOrganization)
+}
+
+// BindExternalInOrganizationFromOrigin safely upgrades the unique legacy
+// address-bound row for this already-verified native subject. If ownership is
+// ambiguous or the native organization differs, it refuses to create a second
+// employee account.
+func (s *Store) BindExternalInOrganizationFromOrigin(ctx context.Context, issuer, origin, subject, tenantID, email, displayName, nativeOrganization string) (*User, error) {
+	if strings.TrimSpace(nativeOrganization) == "" || strings.TrimSpace(origin) == "" {
+		return nil, errors.New("native organization and Forge origin are required")
+	}
+	return s.bindExternal(ctx, issuer, origin, subject, tenantID, email, displayName, nativeOrganization)
+}
+
+func (s *Store) bindExternal(ctx context.Context, issuer, legacyOrigin, subject, tenantID, email, displayName, nativeOrganization string) (*User, error) {
+	issuer = strings.TrimSpace(issuer)
+	subject = strings.TrimSpace(subject)
+	tenantID = strings.TrimSpace(tenantID)
+	if issuer == "" || subject == "" || tenantID == "" {
+		return nil, fmt.Errorf("external identity is incomplete")
+	}
+	digest := sha256.Sum256([]byte(issuer + "\x00" + subject + "\x00" + tenantID))
+	lockKey := int64(binary.BigEndian.Uint64(digest[:8]))
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("bind external identity: %w", err)
+	}
+	defer tx.Rollback(ctx)
+	if nativeOrganization != "" {
+		orgDigest := sha256.Sum256([]byte(issuer + "\x00" + tenantID))
+		if _, err = tx.Exec(ctx, `SELECT pg_advisory_xact_lock($1)`, int64(binary.BigEndian.Uint64(orgDigest[:8]))); err != nil {
+			return nil, err
+		}
+		var mismatch bool
+		if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM weave_external_identities WHERE issuer=$1 AND workspace_id=$2 AND native_organization<>'' AND native_organization<>$3)`, issuer, tenantID, nativeOrganization).Scan(&mismatch); err != nil {
+			return nil, err
+		}
+		if mismatch {
+			return nil, errors.New("native organization differs from workspace binding")
+		}
+	}
+	if _, err = tx.Exec(ctx, `SELECT pg_advisory_xact_lock($1)`, lockKey); err != nil {
+		return nil, fmt.Errorf("bind external identity: %w", err)
+	}
+	var user User
+	err = tx.QueryRow(ctx, `SELECT u.id,u.tenant_id,u.username,u.display_name,u.role,u.disabled,u.created_at,u.updated_at
+		FROM weave_external_identities e JOIN weave_users u ON u.id=e.user_id AND u.tenant_id=e.workspace_id
+		WHERE e.issuer=$1 AND e.subject=$2 AND e.workspace_id=$3`, issuer, subject, tenantID).
+		Scan(&user.ID, &user.TenantID, &user.Username, &user.DisplayName, &user.Role, &user.Disabled, &user.CreatedAt, &user.UpdatedAt)
+	if err == nil {
+		if user.Disabled {
+			return nil, fmt.Errorf("external user is disabled")
+		}
+		if _, err = tx.Exec(ctx, `UPDATE weave_external_identities SET last_login_at=NOW(),native_organization=CASE WHEN $4<>'' THEN $4 ELSE native_organization END WHERE issuer=$1 AND subject=$2 AND workspace_id=$3`, issuer, subject, tenantID, nativeOrganization); err != nil {
+			return nil, fmt.Errorf("bind external identity: %w", err)
+		}
+		if err = tx.Commit(ctx); err != nil {
+			return nil, fmt.Errorf("bind external identity: %w", err)
+		}
+		return &user, nil
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("bind external identity: %w", err)
+	}
+	if legacyOrigin != "" && nativeOrganization != "" {
+		upgradeDigest := sha256.Sum256([]byte("external-identity-stable-upgrade\x00" + subject + "\x00" + tenantID))
+		if _, err = tx.Exec(ctx, `SELECT pg_advisory_xact_lock($1)`, int64(binary.BigEndian.Uint64(upgradeDigest[:8]))); err != nil {
+			return nil, fmt.Errorf("lock external identity upgrade: %w", err)
+		}
+		rows, queryErr := tx.Query(ctx, `SELECT e.issuer,e.native_organization,
+			u.id,u.tenant_id,u.username,u.display_name,u.role,u.disabled,u.created_at,u.updated_at
+			FROM weave_external_identities e JOIN weave_users u ON u.id=e.user_id AND u.tenant_id=e.workspace_id
+			WHERE e.subject=$1 AND e.workspace_id=$2 ORDER BY e.issuer FOR UPDATE OF e,u`, subject, tenantID)
+		if queryErr != nil {
+			return nil, fmt.Errorf("find legacy external identity: %w", queryErr)
+		}
+		type legacyIdentity struct {
+			issuer, nativeOrganization string
+			user                       User
+		}
+		var legacy []legacyIdentity
+		for rows.Next() {
+			var item legacyIdentity
+			if scanErr := rows.Scan(&item.issuer, &item.nativeOrganization, &item.user.ID, &item.user.TenantID,
+				&item.user.Username, &item.user.DisplayName, &item.user.Role, &item.user.Disabled,
+				&item.user.CreatedAt, &item.user.UpdatedAt); scanErr != nil {
+				rows.Close()
+				return nil, scanErr
+			}
+			legacy = append(legacy, item)
+		}
+		if rowsErr := rows.Err(); rowsErr != nil {
+			rows.Close()
+			return nil, rowsErr
+		}
+		rows.Close()
+		if len(legacy) > 1 {
+			return nil, errors.New("legacy external identity source is ambiguous; no account was created")
+		}
+		if len(legacy) == 1 {
+			item := legacy[0]
+			legacyURL, parseErr := url.Parse(item.issuer)
+			if parseErr != nil || legacyURL.Host == "" || (legacyURL.Scheme != "http" && legacyURL.Scheme != "https") || legacyURL.User != nil {
+				return nil, errors.New("existing stable external identity differs; no account was created")
+			}
+			if item.nativeOrganization != "" && item.nativeOrganization != nativeOrganization {
+				return nil, errors.New("legacy native organization differs from the verified identity")
+			}
+			if item.user.Disabled {
+				return nil, errors.New("external user is disabled")
+			}
+			if _, err = tx.Exec(ctx, `UPDATE weave_external_identities SET issuer=$4,native_organization=$5,last_login_at=NOW()
+				WHERE issuer=$1 AND subject=$2 AND workspace_id=$3`, item.issuer, subject, tenantID, issuer, nativeOrganization); err != nil {
+				return nil, fmt.Errorf("upgrade stable external identity: %w", err)
+			}
+			if err = tx.Commit(ctx); err != nil {
+				return nil, fmt.Errorf("upgrade stable external identity: %w", err)
+			}
+			return &item.user, nil
+		}
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO weave_workspaces(id,slug,name) VALUES($1,$1,$1) ON CONFLICT(id) DO NOTHING`, tenantID); err != nil {
+		return nil, fmt.Errorf("bind external identity: %w", err)
+	}
+	userID := "ext_" + hex.EncodeToString(digest[:16])
+	username := "forge:" + hex.EncodeToString(digest[:12])
+	if strings.TrimSpace(displayName) == "" {
+		displayName = strings.TrimSpace(email)
+	}
+	if strings.TrimSpace(displayName) == "" {
+		displayName = username
+	}
+	now := time.Now()
+	if _, err = tx.Exec(ctx, `INSERT INTO weave_users(id,tenant_id,username,password,display_name,role,created_at,updated_at)
+		VALUES($1,$2,$3,'!', $4,'member',$5,$5)`, userID, tenantID, username, displayName, now); err != nil {
+		return nil, fmt.Errorf("bind external identity: %w", err)
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO weave_members(workspace_id,user_id,role) VALUES($1,$2,'member')`, tenantID, userID); err != nil {
+		return nil, fmt.Errorf("bind external identity: %w", err)
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO weave_external_identities(issuer,subject,workspace_id,user_id,native_organization) VALUES($1,$2,$3,$4,$5)`, issuer, subject, tenantID, userID, nativeOrganization); err != nil {
+		return nil, fmt.Errorf("bind external identity: %w", err)
+	}
+	if err = tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("bind external identity: %w", err)
+	}
+	return s.GetByID(ctx, tenantID, userID)
 }
 
 // List returns all users for a tenant.

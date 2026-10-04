@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/jinyitao123/weave/internal/base/execution"
+	"github.com/jinyitao123/weave/internal/kernel/businessaction"
 	"strings"
 )
 
@@ -19,19 +20,35 @@ const (
 )
 
 type FailureSummary struct {
-	Class     FailureClass
-	Retryable bool
-	Reason    string
+	AuthorizationRequired *execution.AuthorizationRefusal
+	AuthorizationDenied   bool
+	Class                 FailureClass
+	Retryable             bool
+	Reason                string
 }
 
 // ClassifyFailure returns a stable user-facing class without exposing the
 // engine's raw diagnostic text.
 func ClassifyFailure(err error) FailureSummary {
+	if isCompletionCheckError(err) {
+		return FailureSummary{Class: FailureClassVerification, Reason: "the declared business completion check did not pass"}
+	}
 	if err == nil {
 		return FailureSummary{}
 	}
 	if errors.Is(err, execution.ErrMemberOutcomeUnknown) {
 		return FailureSummary{Class: FailureClassInfrastructure, Reason: "tool outcome requires reconciliation before continuing"}
+	}
+	if proof, trusted := execution.AuthorizationRefusalFromError(err); trusted {
+		if proof.Renewable() {
+			return FailureSummary{Class: FailureClassInfrastructure, AuthorizationRequired: &proof, Reason: "authorization expired before dispatch; the original employee must renew the same input before continuing"}
+		}
+		return FailureSummary{Class: FailureClassInfrastructure, AuthorizationDenied: true, Reason: "Forge denied this task because the employee's Forge authorization is no longer active"}
+	}
+	if errors.Is(err, businessaction.ErrDelegationExpired) {
+		// Not retryable: the same expired authorization would fail again.
+		return FailureSummary{Class: FailureClassInfrastructure,
+			Reason: "the employee's authorization for this work expired before the stage could act; resubmit it from the original work to continue"}
 	}
 	if errors.Is(err, context.Canceled) || executionErrorCode(err) == ErrorCodeCancelled {
 		return FailureSummary{Class: FailureClassCancelled, Reason: "execution was stopped"}

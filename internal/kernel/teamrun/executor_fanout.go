@@ -311,9 +311,19 @@ func (r *WorkflowSerialRuntime) ExecuteFanoutLeg(
 	if retry.Generation > 0 {
 		invocationID += fmt.Sprintf("/retry-%d", retry.Generation)
 	}
+	var actionOutcomes []BusinessActionOutcomeV1
+	if load := r.actionOutcomesLoader(parent); load != nil {
+		actionOutcomes, err = load(ctx)
+		if err != nil {
+			return nil, executionError(ErrorCodeSnapshotUnavailable, fmt.Errorf("load platform business action outcomes: %w", err))
+		}
+	}
 	inputCtx := execution.WithAttemptLineage(execution.WithInputTaskIDs(ctx, nodeInputTaskIDs(branch, checkpoint.ArtifactTaskIDs)), rootID, "")
 	output, nodeUsage, err := runAgentNode(
-		execution.WithInvocationID(inputCtx, invocationID), branch, loaded.payload, entries, runInput, outputs, checkpoint.Corrections, "",
+		execution.WithInvocationID(inputCtx, invocationID), branch, loaded.payload, entries, runInput, outputs,
+		checkpoint.Corrections, "", actionOutcomes,
+		func(ctx context.Context) context.Context { return r.withBusinessActionOutcomeContext(ctx, parent) },
+		workbenchResultPromptRequired(loaded.graph, branch.ID),
 	)
 	if err != nil {
 		if recordErr := r.recordWorkflowArtifacts(ctx, parent, workflowArtifactOwner{
@@ -326,6 +336,7 @@ func (r *WorkflowSerialRuntime) ExecuteFanoutLeg(
 			recordActivity(ctx, "member_failed", branch, memberID, memberVersion, map[string]any{
 				"duration_ms": time.Since(startedAt).Milliseconds(), "error_code": string(executionErrorCode(err)),
 				"failure_class": failure.Class, "failure_reason": failure.Reason, "retryable": failure.Retryable,
+				"output_validation": nodeOutputViolation(err),
 			})
 		}
 		return nil, err

@@ -109,6 +109,14 @@ func TestServeUsesSharedProtocolForInitializeListAndCall(t *testing.T) {
 				t.Fatalf("team_create contract does not expose the structured business path: %s / %s", schema, description)
 			}
 		}
+		if tool["name"] == "human_task_complete" {
+			schema, _ := json.Marshal(tool["inputSchema"])
+			if !bytes.Contains(schema, []byte(`"interaction_id"`)) ||
+				!bytes.Contains(schema, []byte(`"required":["run_id","interaction_id","payload","idempotency_key"]`)) ||
+				!strings.Contains(description, "exact interaction_id returned for the current question") {
+				t.Fatalf("human_task_complete does not bind completion to a required interaction: %s / %s", schema, description)
+			}
+		}
 	}
 	if !reflect.DeepEqual(gotNames, wantNames) {
 		t.Fatalf("tool names = %#v", gotNames)
@@ -120,6 +128,63 @@ func TestServeUsesSharedProtocolForInitializeListAndCall(t *testing.T) {
 	parseError := responses[3]["error"].(map[string]any)
 	if parseError["code"] != float64(-32700) {
 		t.Fatalf("parse error = %#v", parseError)
+	}
+}
+
+func TestHumanTaskToolDescriptionsUseWorkspaceMembershipBoundary(t *testing.T) {
+	for _, tool := range toolDefinitions {
+		if !strings.HasPrefix(tool.Name, "human_task_") {
+			continue
+		}
+		if !strings.Contains(tool.Description, "current workspace membership") ||
+			strings.Contains(tool.Description, "workspace_member role") ||
+			strings.Contains(tool.Description, "runs scope") ||
+			strings.Contains(tool.Description, "run access") {
+			t.Errorf("%s description does not match the enforced workspace membership check: %s", tool.Name, tool.Description)
+		}
+	}
+}
+
+func TestHumanTaskCompleteRequiresAndForwardsInteractionID(t *testing.T) {
+	calls := 0
+	api := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		calls++
+		if request.Method != http.MethodPost || request.URL.Path != "/v1/human-tasks/run-1/complete" {
+			t.Fatalf("request = %s %s", request.Method, request.URL.Path)
+		}
+		var body struct {
+			InteractionID  string            `json:"interaction_id"`
+			Payload        map[string]string `json:"payload"`
+			IdempotencyKey string            `json:"idempotency_key"`
+		}
+		if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
+			t.Fatal(err)
+		}
+		if body.InteractionID != "human-current" || body.Payload["decision"] != "approve" || body.IdempotencyKey != "complete-1" {
+			t.Fatalf("completion request body = %#v", body)
+		}
+		response.Header().Set("Content-Type", "application/json")
+		response.WriteHeader(http.StatusAccepted)
+		_, _ = response.Write([]byte(`{"run_id":"run-1","status":"queued","idempotent":false}`))
+	}))
+	defer api.Close()
+
+	input := `{"jsonrpc":"2.0","id":"complete","method":"tools/call","params":{"name":"human_task_complete","arguments":{"run_id":"run-1","interaction_id":"human-current","payload":{"decision":"approve"},"idempotency_key":"complete-1"},"_meta":{"weave_user_authorization":"Bearer user-jwt"}}}` + "\n"
+	var output bytes.Buffer
+	if err := Serve(context.Background(), strings.NewReader(input), &output, mcpClient(t, api.URL)); err != nil {
+		t.Fatal(err)
+	}
+	responses := decodeResponses(t, output.String())
+	completionText := responses[0]["result"].(map[string]any)["content"].([]any)[0].(map[string]any)["text"].(string)
+	if calls != 1 || !strings.Contains(completionText, `"status":"queued"`) {
+		t.Fatalf("completion was not forwarded: calls=%d output=%s", calls, output.String())
+	}
+
+	missing, err := NewToolDispatcher(mcpClient(t, api.URL)).Dispatch(context.Background(), structToolCall(
+		"human_task_complete", `{"run_id":"run-1","payload":{"decision":"approve"},"idempotency_key":"missing-interaction"}`,
+	))
+	if err != nil || missing == nil || !missing.IsError || missing.Content != `{"error":"invalid_arguments"}` || calls != 1 {
+		t.Fatalf("completion without interaction_id was not rejected before HTTP: result=%#v calls=%d err=%v", missing, calls, err)
 	}
 }
 
@@ -291,6 +356,7 @@ func TestTeamCreateRendersStructuredBusinessDefinition(t *testing.T) {
 	api := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		var body struct {
 			YAML            string          `json:"yaml"`
+			Sample          string          `json:"sample"`
 			DeclarativeSpec json.RawMessage `json:"declarative_spec"`
 		}
 		if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
@@ -312,6 +378,9 @@ func TestTeamCreateRendersStructuredBusinessDefinition(t *testing.T) {
 			compiled.Template.TemplateParameters.FinalizerRef != "finalizer" {
 			t.Fatalf("compiled template = %#v", compiled.Template)
 		}
+		if body.Sample != "" {
+			t.Fatalf("redundant sample was forwarded with structured definition: %q", body.Sample)
+		}
 		if len(body.DeclarativeSpec) != 0 {
 			t.Fatalf("unexpected declarative spec = %s", body.DeclarativeSpec)
 		}
@@ -320,7 +389,7 @@ func TestTeamCreateRendersStructuredBusinessDefinition(t *testing.T) {
 	}))
 	defer api.Close()
 	result, err := NewToolDispatcher(mcpClient(t, api.URL)).Dispatch(context.Background(), structToolCall(
-		"team_create", `{"idempotency_key":"018f5f5a-c73c-7e31-8f4a-9b36797553a2","definition":{"display_name":"日冕研究团队","purpose":"形成决策研究","lead_instruction":"组织研究","lead":{"display_name":"负责人","responsibilities":["组织"],"capabilities":["delegation"],"result_requirement":"统筹交付"},"researchers":[{"display_name":"研究员","responsibilities":["研究"],"capabilities":["research"],"result_requirement":"提供资料"},{"display_name":"分析员","responsibilities":["分析"],"capabilities":["analysis"],"result_requirement":"交叉验证"}],"finalizer":{"display_name":"总装员","responsibilities":["交付"],"capabilities":["writing"],"result_requirement":"综合交付"},"success_criteria":["可追溯"],"max_cost_usd":3}}`,
+		"team_create", `{"idempotency_key":"018f5f5a-c73c-7e31-8f4a-9b36797553a2","sample":"descriptive-label","definition":{"display_name":"日冕研究团队","purpose":"形成决策研究","lead_instruction":"组织研究","lead":{"display_name":"负责人","responsibilities":["组织"],"capabilities":["delegation"],"result_requirement":"统筹交付"},"researchers":[{"display_name":"研究员","responsibilities":["研究"],"capabilities":["research"],"result_requirement":"提供资料"},{"display_name":"分析员","responsibilities":["分析"],"capabilities":["analysis"],"result_requirement":"交叉验证"}],"finalizer":{"display_name":"总装员","responsibilities":["交付"],"capabilities":["writing"],"result_requirement":"综合交付"},"success_criteria":["可追溯"],"max_cost_usd":3}}`,
 	))
 	if err != nil || result.IsError || !strings.Contains(result.Content, "build-structured") {
 		t.Fatalf("result = %#v err = %v", result, err)

@@ -42,7 +42,7 @@ func newTeamDispatchTestServer(t *testing.T) (*Server, *pgxpool.Pool) {
 	return newTeamDispatchTestServerWithGraph(t, json.RawMessage(`{"schema_version":1,"entry_node_id":"deliver","input_contract":{"type":"text"},"output_contract":{"type":"text"},"nodes":[{"id":"deliver","type":"deliver","config":{"result":{"source":"run_input","path":""}}}],"edges":[]}`))
 }
 
-func newTeamDispatchTestServerWithGraph(t *testing.T, graph json.RawMessage) (*Server, *pgxpool.Pool) {
+func newTeamDispatchTestServerWithGraph(t *testing.T, graph json.RawMessage, bundles ...frozen.FrozenExecutionBundle) (*Server, *pgxpool.Pool) {
 	t.Helper()
 	ctx := context.Background()
 	pool := testutil.PostgresPool(t)
@@ -59,7 +59,7 @@ func newTeamDispatchTestServerWithGraph(t *testing.T, graph json.RawMessage) (*S
 	artifact := frozen.ArtifactPayloadV1{
 		SchemaVersion: 1, TriggerConfig: trigger, GraphDefinition: graph,
 		Team:    frozen.ArtifactTeamV1{WorkspaceID: "ws", TeamID: "team", LeadAgentID: "lead", LeadAgentVersion: 1, LeadAgentContentHash: strings.Repeat("a", 64)},
-		Bundles: []frozen.FrozenExecutionBundle{}, DeliveryTargets: []frozen.FrozenDeliveryTarget{},
+		Bundles: bundles, DeliveryTargets: []frozen.FrozenDeliveryTarget{},
 	}
 	digest, err := frozen.ComputeArtifactContentHash(frozen.ArtifactEnvelopeHashInputV1{
 		WorkspaceID: "ws", WorkflowID: "flow", WorkflowVersion: 1, ArtifactSchemaVersion: 1,
@@ -91,7 +91,7 @@ func newTeamDispatchTestServerWithGraph(t *testing.T, graph json.RawMessage) (*S
 		t.Fatal(err)
 	}
 	server := &Server{Store: teamDispatchPoolStore{pool: pool}, OrgStore: orgstore.NewStore(pool), Registry: agentcatalog.New(pool),
-		Workflow: workflowcatalog.New(pool, nil, workflow.NewArtifactStore(pool, nil)), WorkflowArtifacts: workflow.NewArtifactStore(pool, nil), Deliverables: deliveryverify.NewStore(pool), ScheduleTransactions: pool, Snapshots: snapshot.NewStore(pool), Tasks: taskqueue.New(pool, nil, time.Minute)}
+		Workflow: workflowcatalog.New(pool, nil, workflow.NewArtifactStore(pool, nil)), WorkflowArtifacts: workflow.NewArtifactStore(pool, nil), Deliverables: deliveryverify.NewStore(pool), ScheduleTransactions: pool, Snapshots: snapshot.NewStore(pool), Tasks: taskqueue.New(pool, nil, time.Minute), Projects: projects.New(pool, nil)}
 	server.KernelPublication = openAPIKernelPublication(t, ctx, pool, teamconstruction.NewPublicationAuthority(pool, nil))
 	return server, pool
 }
@@ -135,17 +135,17 @@ func TestTeamWorkflowDispatchKeepsInputIdentityAndAdmissionRealPG(t *testing.T) 
 	if err != nil || json.Unmarshal(task.Payload, &taskText) != nil || taskText != input.Task || task.RunSnapshotID != first.RunID {
 		t.Fatalf("task lost original input or run identity: %+v %v", task, err)
 	}
-	// A Workbench request may name a conversation while omitting its project.
-	// Admission derives the project, and an identical replay must keep that identity.
+	// A Workbench conversation is bound to its owning project, and an identical
+	// replay must keep that identity.
 	if _, err := pool.Exec(ctx, `
  INSERT INTO weave_projects(id,workspace_id,avatar_id,name,team_id) VALUES('project','ws','lead','Project','team');
  INSERT INTO weave_conversations(id,workspace_id,agent_id,user_id,project_id) VALUES('conversation','ws','lead','user','project');
  `); err != nil {
 		t.Fatal(err)
 	}
-	server.Projects = projects.New(pool, nil)
 	conversationInput := input
 	conversationInput.ConversationID = "conversation"
+	conversationInput.ProjectID = "project"
 	conversationInput.ClientRequestID = "00000000-0000-0000-0000-000000000003"
 	attributed := dispatch(conversationInput, http.StatusCreated)
 	if attributed.ProjectID != "project" {
