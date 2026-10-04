@@ -106,6 +106,7 @@ export const SalesQuotationDraftCreate = defineAction({
     { name: 'name', label: '报价名称', type: 'text', required: true },
     { name: 'customer_id', label: '客户', type: 'text', required: true },
     { name: 'contact_id', label: '联系人', type: 'text' },
+    { name: 'opportunity_id', label: '来源商机', type: 'text' },
     { name: 'quotation_type_id', label: '报价类型', type: 'text', required: true },
     { name: 'issuer_id', label: '报价主体', type: 'text', required: true },
     { name: 'quotation_date', label: '报价日期', type: 'text', required: true },
@@ -132,6 +133,7 @@ const code = getText('code', '报价单号', true, 100);
 const name = getText('name', '报价名称', true, 255);
 const customerId = getText('customer_id', '客户', true, 128);
 const contactId = getText('contact_id', '联系人', false, 128);
+const opportunityId = getText('opportunity_id', '来源商机', false, 128);
 const quotationTypeId = getText('quotation_type_id', '报价类型', true, 128);
 const issuerId = getText('issuer_id', '报价主体', true, 128);
 const quotationDate = getText('quotation_date', '报价日期', true, 10);
@@ -156,6 +158,7 @@ const quotationObject = ctx.api.object('forge_quotation');
 const lineObject = ctx.api.object('forge_quotation_line');
 const customerObject = ctx.api.object('forge_customer');
 const contactObject = ctx.api.object('forge_contact');
+const opportunityObject = ctx.api.object('forge_sales_opportunity');
 const typeObject = ctx.api.object('forge_quotation_type');
 const issuerObject = ctx.api.object('forge_quotation_issuer');
 const skuObject = ctx.api.object('forge_material_sku');
@@ -166,6 +169,17 @@ return await ctx.api.transaction(async () => {
   if (duplicate) throw new Error('报价单号已存在，请刷新报价列表后重试');
   const customer = await customerObject.findOne({ where: { id: customerId } });
   if (!orgRecord(customer) || !ownedByActor(customer)) throw new Error('只能为本人拥有的客户创建报价');
+  let opportunity = null;
+  if (opportunityId) {
+    opportunity = await opportunityObject.findOne({
+      where: { id: opportunityId, organization_id: organizationId },
+      fields: ['id', 'organization_id', 'customer_id', 'name', 'owner_id', 'responsible_id'],
+    });
+    if (!orgRecord(opportunity) || opportunity.customer_id !== customerId
+      || !ownedByActor(opportunity) || String(opportunity.responsible_id || '') !== actor) {
+      throw new Error('所选来源商机不存在、无权访问或与当前客户不匹配，请刷新后重试');
+    }
+  }
   const quotationType = await typeObject.findOne({ where: { id: quotationTypeId } });
   if (!orgRecord(quotationType) || quotationType.status === 'inactive') throw new Error('所选报价类型不存在、已停用或不属于当前组织');
   const issuer = await issuerObject.findOne({ where: { id: issuerId } });
@@ -233,6 +247,8 @@ return await ctx.api.transaction(async () => {
   };
   const created = await quotationObject.insert({
     code, name, customer_id: customerId, contact_id: contactId,
+    opportunity_id: opportunity ? opportunity.id : null,
+    opportunity_name: opportunity ? String(opportunity.name || '').trim() : null,
     quotation_type_id: quotationTypeId, issuer_id: issuerId,
     quotation_date: quotationDate, valid_until: validUntil,
     payment_method: null, payment_method_confirmed: false, payment_term: getText('payment_term', '付款条件', false, 255),

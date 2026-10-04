@@ -13,7 +13,11 @@ const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ROOT = '/api/v1/apps/forge/task-delegations';
 const OBJECT = 'forge_task_probe_record';
 const TARGET_OBJECT = 'forge_task_probe_target_record';
+const OUT_OF_SCOPE_OBJECT = 'forge_task_probe_untasked_target';
+const MISSING_FIELD_OBJECT = 'forge_task_probe_missing_field_target';
 const KEY = `forge:action:${OBJECT}.task_probe_touch`;
+const MISSING_FIELD_KEY = `forge:action:${OBJECT}.task_probe_missing_field`;
+const EMPLOYEE_ONLY_KEY = 'forge:action:forge_sales_contract.contract_register_signature';
 
 test('native auth signing, scoped MCP, session revocation, and native inbox keyset stay authoritative', {
   skip: process.env.FORGE_TASK_CONNECTION_PG_TEST !== '1', timeout: 240_000,
@@ -41,11 +45,30 @@ import { currentNativeActor } from ${JSON.stringify(path.join(APP, 'src/plugins/
 import { TaskDelegationService } from ${JSON.stringify(path.join(APP, 'src/plugins/task-delegation.plugin.ts'))};
 const object = ObjectSchema.create({ name:'${OBJECT}', label:'任务验证记录', sharingModel:'private', fields:{
   name:{type:'text',required:true}, counter:{type:'number',defaultValue:0}, attachment:{type:'file'}, owner_id:{type:'text'}, organization_id:{type:'text'} } });
-const target = ObjectSchema.create({name:'${TARGET_OBJECT}',label:'动作字段验证',sharingModel:'private',fields:{name:{type:'text'},attachment:{type:'file'}}});
+const target = ObjectSchema.create({name:'${TARGET_OBJECT}',label:'动作字段验证',sharingModel:'private',fields:{
+  name:{type:'text',required:true,minLength:3,description:'不得出现在任务字段投影中'},
+  attachment:{type:'file',maxSize:4096},
+  secret_value:{type:'text',description:'未被任何任务动作引用的字段'}
+}});
+const otherTarget = ObjectSchema.create({name:'${OUT_OF_SCOPE_OBJECT}',label:'未选动作字段',sharingModel:'private',fields:{secret_value:{type:'text'}}});
+const missingFieldTarget = ObjectSchema.create({name:'${MISSING_FIELD_OBJECT}',label:'缺失字段验证',sharingModel:'private',fields:{present_value:{type:'text'}}});
 const action = defineAction({ name:'task_probe_touch', label:'验证动作', objectName:'${OBJECT}', type:'script', locations:['record_header'], target:'TaskProbeTouch',
   visible:false, ai:{exposed:true,category:'action',description:'Only increments the authenticated caller-bound isolated task fixture record for native delegation regression validation.'}, params:[{field:'name',objectOverride:'${TARGET_OBJECT}',label:'动作目标名称',required:false},{field:'attachment',objectOverride:'${TARGET_OBJECT}',label:'任务材料',required:false}] });
-object.actions=[action];
-const bundle = {...sharedForgeCoreBundle, objects:[...sharedForgeCoreBundle.objects,object,target], actions:[...sharedForgeCoreBundle.actions,action]};
+const otherAction = defineAction({ name:'task_probe_other', label:'未选择动作', objectName:'${OBJECT}', type:'script', locations:['record_header'], target:'TaskProbeOther',
+  visible:false, ai:{exposed:true,category:'action',description:'Fixture action that is deliberately outside the issued task scope.'}, params:[{field:'secret_value',objectOverride:'${OUT_OF_SCOPE_OBJECT}'}] });
+const missingFieldAction = defineAction({ name:'task_probe_missing_field', label:'缺失字段动作', objectName:'${OBJECT}', type:'script', locations:['record_header'], target:'TaskProbeMissingField',
+  visible:false, ai:{exposed:true,category:'action',description:'Fixture action whose referenced native field is absent.'}, params:[{field:'absent_value',objectOverride:'${MISSING_FIELD_OBJECT}'}] });
+const employeeOnlyAction = defineAction({ name:'contract_register_signature', label:'员工本人办理', objectName:'forge_sales_contract', type:'script', locations:['record_header'], target:'EmployeeOnlyMetadataProbe',
+  visible:false, ai:{exposed:true,category:'action',description:'Test-only employee action to verify team delegation filtering.'},
+  params:[{field:'secret_value',objectOverride:'${TARGET_OBJECT}'}] });
+const objectActions=[action,otherAction,missingFieldAction];
+object.actions=objectActions;
+const baseContract=sharedForgeCoreBundle.objects.find(candidate=>candidate.name==='forge_sales_contract');
+const contract={...baseContract,actions:[...(baseContract.actions??[]).filter(candidate=>candidate.name!=='contract_register_signature'),employeeOnlyAction]};
+const bundle = {...sharedForgeCoreBundle,
+  objects:[...sharedForgeCoreBundle.objects.filter(candidate=>candidate.name!=='forge_sales_contract'),contract,object,target,otherTarget,missingFieldTarget],
+  actions:[...sharedForgeCoreBundle.actions.filter(candidate=>!(candidate.objectName==='forge_sales_contract'&&candidate.name==='contract_register_signature')),
+    employeeOnlyAction,...objectActions]};
 stack.plugins = stack.plugins.map(plugin => plugin === sharedForgeCorePlugin ? new AppPlugin(bundle) : plugin);
 stack.plugins.push({ name:'test.task-connection-bootstrap', init(ctx) { ctx.hook('kernel:ready',()=>{
   const server=ctx.getService('http.server'), engine=ctx.getService('objectql'), messaging=ctx.getService('messaging');
@@ -103,6 +126,8 @@ stack.plugins.push({ name:'test.task-connection-bootstrap', init(ctx) { ctx.hook
     await engine.update('${OBJECT}',{id:row.id,counter:Number(row.counter??0)+1},{context});
     return {ok:true,counter:Number(row.counter??0)+1};
   });
+  engine.registerAction('${OBJECT}','TaskProbeOther',async()=>({ok:true}));
+  engine.registerAction('${OBJECT}','TaskProbeMissingField',async()=>({ok:true}));
   server.post('/api/v1/__test/task-member',async(req,res)=>{
     if(req.headers.authorization!=='Bearer ${launcher}')return res.status(403).json({error:'test launcher refused'});
     const {userId,organizationId,sessionId}=req.body;
@@ -121,7 +146,15 @@ stack.plugins.push({ name:'test.task-connection-bootstrap', init(ctx) { ctx.hook
     for(let n=0;n<223;n++)await messaging.emit({topic:'task.connection.test',audience:userId,organizationId,
       dedupKey:'${suffix}:'+n,channels:['inbox'],payload:{title:'分页验证'+n,body:'独立本地测试'}});
     const actor=await currentNativeActor(ctx,userId,organizationId);
-    return res.status(200).json({recordIds:records.map(row=>row.id), actions:(await new TaskDelegationService(ctx).mcp.actions(actor)).map(a=>({name:a.name,objectName:a.objectName})), permissions:actor.permissions, positions:actor.positions});
+    const mcp=new TaskDelegationService(ctx).mcp;
+    const nativeActionKeys=(await mcp['native'](actor).listActions()).map(a=>'forge:action:'+a.objectName+'.'+a.name);
+    return res.status(200).json({recordIds:records.map(row=>row.id), actions:(await mcp.actions(actor)).map(a=>({name:a.name,objectName:a.objectName})), nativeActionKeys, permissions:actor.permissions, positions:actor.positions});
+  });
+  server.post('/api/v1/__test/task-object-metadata',async(req,res)=>{
+    if(req.headers.authorization!=='Bearer ${launcher}')return res.status(403).json({error:'test launcher refused'});
+    const actor=await currentNativeActor(ctx,req.body.userId,req.body.organizationId);
+    try{return res.status(200).json(await new TaskDelegationService(ctx).mcp.objectMetadata(actor,req.body.scope,req.body.name));}
+    catch(error){return res.status(Number(error?.status??503)).json({error:{code:String(error?.code??'FORGE_TASK_METADATA_UNAVAILABLE')}});}
   });
 }); } });
 export default stack;
@@ -186,6 +219,16 @@ export default stack;
     const scope={input_revision_id:randomUUID(),registration_id:randomUUID(),task_sha256:'a'.repeat(64),workflow_id:randomUUID(),workflow_version:1,
       allowed_actions:[KEY],resources,business_record:{object_name:OBJECT,record_id:setup.value.recordIds[0]}};
     assert.ok(setup.value.actions.some(a=>a.name==='task_probe_touch'),JSON.stringify({actions:setup.value.actions,permissions:setup.value.permissions,positions:setup.value.positions}));
+    assert.ok(setup.value.actions.some(a=>a.name==='task_probe_other'));
+    assert.ok(setup.value.actions.some(a=>a.name==='task_probe_missing_field'));
+    assert.ok(setup.value.nativeActionKeys.includes(EMPLOYEE_ONLY_KEY),'the employee-only action must still be current in the native runtime');
+    assert.ok(!setup.value.actions.some(a=>a.name==='contract_register_signature'),'employee-only action must not enter the delegated catalogue');
+    const employeeOnlyScope={...scope,input_revision_id:randomUUID(),allowed_actions:[EMPLOYEE_ONLY_KEY]};
+    assert.equal((await request(ROOT,'POST',{request_id:randomUUID(),scope:employeeOnlyScope})).status,403,'employee-only actions cannot be issued to a task');
+    const employeeOnlyMetadata=await request('/api/v1/__test/task-object-metadata','POST',{
+      userId:session.user.id,organizationId:session.session.activeOrganizationId,name:TARGET_OBJECT,scope:employeeOnlyScope,
+    },launcher);
+    assert.equal(employeeOnlyMetadata.status,403,'employee-only actions cannot authorize cross-object parameter metadata');
     const requestId=randomUUID();
     const firstRacing=await Promise.all(Array.from({length:6},()=>request(ROOT,'POST',{request_id:requestId,scope})));
     const first=firstRacing[0];
@@ -220,14 +263,42 @@ export default stack;
     const actionReply=await rpc('tools/call',{name:'run_action',arguments:{actionName:'task_probe_touch',objectName:OBJECT,recordId:scope.business_record.record_id,params:{name:'可信动作字段'}}});
     assert.equal(actionReply.status,200,JSON.stringify(actionReply.value)); assert.ok(actionReply.value.result && actionReply.value.result.isError!==true,JSON.stringify(actionReply.value));
     const wrongFile=await rpc('tools/call',{name:'run_action',arguments:{actionName:'task_probe_touch',objectName:OBJECT,recordId:scope.business_record.record_id,params:{attachment:randomUUID()}}});assert.ok(wrongFile.status===403 || wrongFile.value.result?.isError,'field-backed file reference outside scope must be rejected');
-    assert.equal((await request(ROOT+'/objects/'+TARGET_OBJECT,'GET',undefined,token)).status,403,'internal action field lookup must not expose target metadata');
+    const parameterMetadata=await request(ROOT+'/objects/'+TARGET_OBJECT,'GET',undefined,token);
+    assert.equal(parameterMetadata.status,200,'declared cross-object action fields must expose their native input contract');
+    assert.equal(parameterMetadata.value.type,'object');
+    assert.equal(parameterMetadata.value.name,TARGET_OBJECT);
+    assert.deepEqual(Object.keys(parameterMetadata.value.item).sort(),['fields','name']);
+    assert.deepEqual(Object.keys(parameterMetadata.value.item.fields).sort(),['attachment','name']);
+    assert.deepEqual(parameterMetadata.value.item.fields.name,{type:'text',required:true,minLength:3,multiple:false});
+    assert.deepEqual(parameterMetadata.value.item.fields.attachment,{type:'file',required:false,maxSize:4096,multiple:false});
+    assert.equal(parameterMetadata.value.item.fields.secret_value,undefined,'unreferenced fields must stay hidden');
+    assert.equal((await request(ROOT+'/objects/forge_task_probe_unrelated_object','GET',undefined,token)).status,403,'undeclared objects must stay outside the grant');
+    assert.equal((await request(ROOT+'/objects/'+OUT_OF_SCOPE_OBJECT,'GET',undefined,token)).status,403,'an action outside this task cannot authorize metadata');
+    const broadenedMetadata=await request(ROOT+'/objects/'+TARGET_OBJECT+'?fields=secret_value','GET',undefined,token);
+    assert.equal(broadenedMetadata.status,200);
+    assert.deepEqual(Object.keys(broadenedMetadata.value.item.fields).sort(),['attachment','name'],'client query parameters cannot expand the declared field set');
+    const sourceMetadata=await request(ROOT+'/objects/'+OBJECT,'GET',undefined,token);
+    assert.equal(sourceMetadata.status,200,'existing authorized-object metadata remains available');
+    assert.ok(sourceMetadata.value.item.fields.counter);
+    assert.deepEqual(sourceMetadata.value.item.actions.map(action=>action.name),['task_probe_touch']);
+    const objectListing=await rpc('tools/call',{name:'list_objects',arguments:{}});
+    assert.equal(objectListing.status,200);
+    assert.ok(!JSON.stringify(objectListing.value.result).includes(TARGET_OBJECT),'referenced metadata must not make the target a task object');
     const targetRead=await rpc('tools/call',{name:'get_record',arguments:{objectName:TARGET_OBJECT,recordId:randomUUID()}});
     assert.ok(targetRead.status===403 || targetRead.value.result?.isError,'action field target records stay outside the grant');
+    const targetQuery=await rpc('tools/call',{name:'query_records',arguments:{objectName:TARGET_OBJECT,query:{}}});
+    assert.ok(targetQuery.status===403 || targetQuery.value.result?.isError,'referenced metadata must not authorize target record queries');
     const targetDescription=await rpc('tools/call',{name:'describe_object',arguments:{objectName:TARGET_OBJECT}});
     assert.ok(targetDescription.status===403 || targetDescription.value.result?.isError,'action field target is not a public task object');
     assert.equal((await rpc('tools/call',{name:'create_record',arguments:{objectName:OBJECT,data:{name:'绕过尝试'}}})).status,403);
     const other=await rpc('tools/call',{name:'get_record',arguments:{objectName:OBJECT,recordId:setup.value.recordIds[1]}});
     assert.ok(other.status===403 || other.value.result?.isError,'outside-record read must be refused');
+    const missingFieldScope={...scope,input_revision_id:randomUUID(),allowed_actions:[MISSING_FIELD_KEY]};
+    const missingFieldGrant=await request(ROOT,'POST',{request_id:randomUUID(),scope:missingFieldScope});
+    assert.equal(missingFieldGrant.status,200,missingFieldGrant.value?.error?.code);
+    secrets.push(missingFieldGrant.value.access_token);
+    const missingFieldMetadata=await request(ROOT+'/objects/'+MISSING_FIELD_OBJECT,'GET',undefined,missingFieldGrant.value.access_token);
+    assert.equal(missingFieldMetadata.status,503,'a declaration that references a missing native field must fail closed');
     const renewRacing=await Promise.all(Array.from({length:2},()=>request(ROOT,'POST',{request_id:randomUUID(),scope,expected_generation:1})));
     assert.deepEqual(renewRacing.map(response=>response.status).sort(),[200,409]);
     const renewed=renewRacing.find(response=>response.status===200);secrets.push(renewed.value.access_token);

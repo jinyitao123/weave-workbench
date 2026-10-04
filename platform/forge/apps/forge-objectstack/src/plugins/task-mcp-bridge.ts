@@ -6,6 +6,11 @@ import { actionKey, allowedObjectNames, type TaskScope } from './task-delegation
 import { businessActionPolicy, isTeamDelegableAction, projectBusinessActionPolicy } from './business-action-policy.js';
 
 type Action = Record<string, unknown>;
+const FIELD_PARAMETER_CONTRACT_KEYS = [
+  'requiredWhen', 'min', 'max', 'minLength', 'maxLength', 'precision', 'scale', 'valueDomain',
+  'accept', 'maxSize', 'multiple',
+] as const;
+
 type NativeBridge = {
   listObjects(): Promise<Action[]>; describeObject(name: string): Promise<unknown>;
   query(object: string, query: Record<string, unknown>): Promise<unknown>;
@@ -32,7 +37,28 @@ export class TaskMcpAdapter {
   }
 
   async objectMetadata(actor: ExecutionContext, scope: TaskScope, name: string): Promise<Record<string, unknown>> {
-    if (!allowedObjectNames(scope).has(name)) throw new TaskConnectionFailure(403, 'FORGE_TASK_SCOPE_FORBIDDEN', '该对象不在本次授权范围');
+    if (!allowedObjectNames(scope).has(name)) {
+      const fields = await this.declaredDependencyFields(actor, scope, name);
+      if (fields.size === 0) throw new TaskConnectionFailure(403, 'FORGE_TASK_SCOPE_FORBIDDEN', '该对象不在本次授权范围');
+      const body = await this.nativeObjectMetadata(actor, name);
+      const item = body.item as Action;
+      const nativeFields = item.fields as Record<string, unknown> | undefined;
+      if (!nativeFields || typeof nativeFields !== 'object' || Array.isArray(nativeFields)) {
+        throw new TaskConnectionFailure(503, 'FORGE_TASK_METADATA_UNAVAILABLE', '当前字段参数不可核验');
+      }
+      const projected: Record<string, unknown> = {};
+      for (const fieldName of fields) {
+        const field = nativeFields[fieldName];
+        if (!field || typeof field !== 'object' || Array.isArray(field)) {
+          throw new TaskConnectionFailure(503, 'FORGE_TASK_METADATA_UNAVAILABLE', '当前字段参数不可核验');
+        }
+        projected[fieldName] = this.projectParameterField(field as Action);
+      }
+      // Do not expose the referenced object's actions, other fields, or any
+      // surrounding business metadata. This projection is only for parameters
+      // explicitly declared by a current, scoped business action.
+      return { type: 'object', name, item: { name, fields: projected } };
+    }
     const body = await this.nativeObjectMetadata(actor, name);
     const item = body.item as Record<string, unknown>;
     if (Array.isArray(item.actions)) {
@@ -41,6 +67,62 @@ export class TaskMcpAdapter {
         && scope.allowed_actions.includes(`forge:action:${name}.${String(action.name)}`)) } };
     }
     return body;
+  }
+
+  private async declaredDependencyFields(actor: ExecutionContext, scope: TaskScope, targetName: string): Promise<Set<string>> {
+    const scopedActions = (await this.native(actor).listActions())
+      .filter(isTeamDelegableAction)
+      .filter((action) => scope.allowed_actions.includes(actionKey(action)));
+    const metadataByObject = new Map<string, Record<string, unknown>>();
+    const fields = new Set<string>();
+    for (const action of scopedActions) {
+      const sourceName = String(action.objectName);
+      if (sourceName === targetName) continue;
+      let source = metadataByObject.get(sourceName);
+      if (!source) {
+        source = await this.nativeObjectMetadata(actor, sourceName);
+        metadataByObject.set(sourceName, source);
+      }
+      const item = source.item as Action;
+      if (!Array.isArray(item.actions)) {
+        throw new TaskConnectionFailure(503, 'FORGE_TASK_METADATA_UNAVAILABLE', '当前动作参数不可核验');
+      }
+      const definition = (item.actions as Action[]).find((candidate) => candidate.name === action.name);
+      if (!definition) throw new TaskConnectionFailure(503, 'FORGE_TASK_METADATA_UNAVAILABLE', '当前动作参数不可核验');
+      if (definition.params === undefined) continue;
+      if (!Array.isArray(definition.params)) throw new TaskConnectionFailure(503, 'FORGE_TASK_METADATA_UNAVAILABLE', '当前动作参数不可核验');
+      for (const parameter of definition.params as Action[]) {
+        if (parameter.objectOverride !== targetName || typeof parameter.field !== 'string') continue;
+        if (!/^[a-z_][a-z0-9_]*$/.test(parameter.field)) {
+          throw new TaskConnectionFailure(503, 'FORGE_TASK_METADATA_UNAVAILABLE', '当前字段参数不可核验');
+        }
+        fields.add(parameter.field);
+      }
+    }
+    return fields;
+  }
+
+  private projectParameterField(field: Action): Record<string, unknown> {
+    if (typeof field.type !== 'string' || !field.type || typeof field.required !== 'boolean') {
+      throw new TaskConnectionFailure(503, 'FORGE_TASK_METADATA_UNAVAILABLE', '当前字段参数不可核验');
+    }
+    const projected: Record<string, unknown> = { type: field.type, required: field.required };
+    for (const key of FIELD_PARAMETER_CONTRACT_KEYS) {
+      if (Object.hasOwn(field, key)) projected[key] = field[key];
+    }
+    if (Object.hasOwn(field, 'options')) {
+      if (!Array.isArray(field.options)) throw new TaskConnectionFailure(503, 'FORGE_TASK_METADATA_UNAVAILABLE', '当前字段参数不可核验');
+      projected.options = field.options.map((option) => {
+        if (!option || typeof option !== 'object' || Array.isArray(option) ||
+            typeof (option as Action).label !== 'string' || typeof (option as Action).value !== 'string') {
+          throw new TaskConnectionFailure(503, 'FORGE_TASK_METADATA_UNAVAILABLE', '当前字段参数不可核验');
+        }
+        const nativeOption = option as Action;
+        return Object.fromEntries(['label', 'value', 'visibleWhen']
+          .filter((key) => Object.hasOwn(nativeOption, key)).map((key) => [key, nativeOption[key]]));
+      });
+    }
+    return projected;
   }
 
   private async nativeObjectMetadata(actor: ExecutionContext, name: string): Promise<Record<string, unknown>> {

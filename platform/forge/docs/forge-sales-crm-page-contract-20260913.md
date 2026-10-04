@@ -24,6 +24,8 @@
 
 Forge 已把 CRM 分组内 8 个入口从对象表或目录页统一为业务页面，按 RISEMAP 当前首屏展示标题、说明、负责人/状态范围、筛选入口、表头、分页和空态。客户、联系人、销售报价读取既有业务对象；客户物料对照、商机、线索、跟进、公海客户新增轻量对象用于承载后续同材料办理结果。
 
+销售报价草稿可选关联来源商机。报价页通过当前会话和既有 ObjectStack 数据查询读取当前员工可访问的商机，只为所选客户显示记录所有者与负责人均为当前员工的候选项，不代办他人负责的商机；来源列表通过服务端分页完整读取。切换客户会清除来源选择。草稿仍走 `sales_quotation_draft_create`，服务端重新读取商机并核对组织、客户、记录所有者和负责人后，保存原生 `opportunity_id` 与服务端取得的来源名称。没有可读商机时仍可直接报价。历史 `opportunity_name` 文本不迁移、不回填，详情继续显示可读名称；正式合同保留来源报价引用，销售订单继续沿合同引用报价。
+
 ## 证据材料
 
 - RISEMAP：`docs/references/risemap-capture/live/20260913-sales-full/risemap-sales-客户管理.*`、`risemap-sales-联系人管理.*`、`risemap-sales-销售报价.*`、`risemap-sales-客户物料对照.*`、`risemap-sales-商机管理.*`、`risemap-sales-线索管理.*`、`risemap-sales-跟进记录.*`、`risemap-sales-公海客户.*`
