@@ -71,7 +71,7 @@ Docker Compose 通过 BuildKit `additional_contexts` 注入该目录；直接使
 
 容器启动时先执行 `scripts/notification-lease-preflight.mjs` 和 `scripts/sales-line-sku-preflight.mjs`，再启动正式服务。空 PostgreSQL 库通过固定版本 ObjectStack 导出的 `NotificationDelivery` 和原生 SQL driver 建立通知投递表；已有库只核对三个租约字段。遇到 17.3 的 `real` 类型时执行 [精度迁移](scripts/schema/notification-lease-precision.sql)，并验证为 `double precision`；已正确时不重置领取状态。销售合同与订单行迁移只放宽旧库 `sku_id` 的物理 `NOT NULL`，保留所有现有明细；草稿 Action 继续要求物料行带 SKU，并拒绝服务行携带 SKU。销售合同草稿 Action 同时显式写入 `owner_id`；启动前迁移只将 `owner_id` 为空、状态为草稿且 `created_by` 与 `responsible_id` 相同的历史合同归还给该负责人，其他合同不改。新库由当前对象字段直接建表。任一迁移失败则不启动应用和消息处理器，不等待首条业务写入才手工修表。该流程用于当前单机单应用进程部署；升级前须停止旧应用，不适用于新旧消息工作进程并发执行迁移。原根目录日期 SQL 已迁入应用构建上下文，历史执行证据仍可按旧提交追溯。
 
-发布脚本按同一源码提交构建带修订标识的应用和代理镜像，发布前备份已有 PostgreSQL；先在仅绑定回环地址的候选端口验证 Nginx 与 Forge，再更新应用、重新验证候选入口，最后切换公网端口。任一健康检查失败会尝试恢复上一应用与代理镜像；首次由直连切换到代理时，失败则恢复上一应用的原公网端口。发布记录写入 `.deploy/releases/`，包含镜像标识、端口和备份位置，不含密钥。环境差异只放在未提交的 `.env` 中，业务数据继续保存在独立 Docker volume。
+发布脚本按同一源码提交构建带修订标识的应用和代理镜像，发布前备份已有 PostgreSQL 及附件卷，记录两份备份路径；备份目录／文件以0700／0600创建，任一备份失败则不构建或切换。`.deploy`、运行数据及环境文件不进入 Docker 构建上下文。备份校验只证明压缩包可读，恢复能力仍须在隔离环境实际验证。随后在仅绑定回环地址的候选端口验证 Nginx 与 Forge，再更新应用、重新验证候选入口，最后切换公网端口。任一健康检查失败会尝试恢复上一应用与代理镜像；首次由直连切换到代理时，失败则恢复上一应用的原公网端口。镜像回退不自动恢复数据库。发布记录写入 `.deploy/releases/`，包含镜像标识、端口和备份位置，不含密钥。环境差异只放在未提交的 `.env` 中，业务数据继续保存在独立 Docker volume。
 
 ```sh
 ./scripts/deploy.sh

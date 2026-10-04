@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+umask 077
 
 APP_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$APP_DIR"
@@ -128,11 +129,38 @@ fi
 
 DB_CONTAINER=$(docker compose ps -q db 2>/dev/null || true)
 BACKUP_PATH=""
+UPLOADS_BACKUP_PATH=""
 if [ -n "$DB_CONTAINER" ]; then
   BACKUP_PATH="$BACKUP_DIR/database.sql.gz"
-  docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' | gzip > "$BACKUP_PATH"
+  BACKUP_RAW="$BACKUP_DIR/database.sql"
+  if ! docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$BACKUP_RAW"; then
+    rm -f "$BACKUP_RAW"
+    echo "数据库备份失败，未构建或切换应用。" >&2
+    exit 1
+  fi
+  if [ ! -s "$BACKUP_RAW" ]; then
+    rm -f "$BACKUP_RAW"
+    echo "数据库备份为空，未构建或切换应用。" >&2
+    exit 1
+  fi
+  gzip -c "$BACKUP_RAW" > "$BACKUP_PATH"
   gzip -t "$BACKUP_PATH"
+  rm -f "$BACKUP_RAW"
   echo "数据库备份完成：$BACKUP_PATH"
+  if [ -n "$PREVIOUS_CONTAINER" ]; then
+    UPLOADS_BACKUP_PATH="$BACKUP_DIR/uploads.tar.gz"
+    UPLOADS_RAW="$BACKUP_DIR/uploads.tar"
+    if ! docker compose exec -T app sh -c 'tar -C /srv/app/.objectstack/data/uploads -cf - .' > "$UPLOADS_RAW"; then
+      rm -f "$UPLOADS_RAW"
+      echo "附件备份失败，未构建或切换应用。" >&2
+      exit 1
+    fi
+    gzip -c "$UPLOADS_RAW" > "$UPLOADS_BACKUP_PATH"
+    gzip -t "$UPLOADS_BACKUP_PATH"
+    tar -tzf "$UPLOADS_BACKUP_PATH" >/dev/null
+    rm -f "$UPLOADS_RAW"
+    echo "附件备份完成：$UPLOADS_BACKUP_PATH"
+  fi
 else
   echo "未发现已运行数据库，按首次部署继续。"
 fi
@@ -343,6 +371,7 @@ PROXY_IMAGE_ID=$(docker image inspect --format '{{.Id}}' "$PROXY_IMAGE")
   printf 'candidate_http_port=%s\n' "$CANDIDATE_PORT"
   printf 'health_path=/api/v1/health\n'
   printf 'database_backup=%s\n' "$BACKUP_PATH"
+  printf 'uploads_backup=%s\n' "$UPLOADS_BACKUP_PATH"
 } > "$RELEASE_DIR/release.env"
 
 cleanup_candidate
