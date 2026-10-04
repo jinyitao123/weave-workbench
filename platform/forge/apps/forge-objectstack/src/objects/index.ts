@@ -7,6 +7,7 @@ export * from './bom.object.js';
 export * from './drawing.object.js';
 export * from './shortage.object.js';
 export * from './sales.object.js';
+export * from './quotation-contract-conversion.object.js';
 export * from './procurement.object.js';
 export * from './inventory.object.js';
 export * from './finance.object.js';
