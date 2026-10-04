@@ -361,8 +361,24 @@ test('quotation send, acceptance evidence, and contract conversion use native ap
     const response = await client.request('/data/' + object + '/' + encodeURIComponent(recordId));
     return { response, record: resultOf(response)?.record || resultOf(response)?.data?.record || resultOf(response)?.data || resultOf(response) };
   }
+  async function readAllRecords(client, object, fields) {
+    const rows = [], seen = new Set(), size = 100;
+    for (let skip = 0; skip < 20_000; skip += size) {
+      const query = new URLSearchParams({ $top: String(size), $skip: String(skip), $count: 'true', $orderby: 'id asc', $select: fields.join(',') });
+      const response = await client.request('/data/' + encodeURIComponent(object) + '?' + query.toString());
+      assert.equal(response.status, 200, object + ' page ' + skip + ': ' + messageOf(response));
+      const batch = rowsOf(response);
+      for (const row of batch) {
+        assert.ok(row.id && !seen.has(row.id), object + ' paging returns each record once');
+        seen.add(row.id);
+      }
+      rows.push(...batch);
+      if (batch.length < size) return rows;
+    }
+    assert.fail(object + ' exceeded the fixture paging cap');
+  }
   async function captureScopedSalesState(organizationIds) {
-    const quotes = await postgres.query(`SELECT id,organization_id,owner_id,responsible_id,status,customer_id,total_amount,pricing_version,sent_pricing_version,
+    const quotes = await postgres.query(`SELECT id,organization_id,owner_id,responsible_id,status,customer_id,opportunity_id,opportunity_name,total_amount,pricing_version,sent_pricing_version,
         accepted_pricing_version,sent_evidence_attachment,sent_evidence_note,sent_evidence_request_signature,sent_at,sent_by,
         customer_acceptance_evidence_attachment,customer_acceptance_note,customer_acceptance_request_signature,accepted_at,accepted_by
         FROM forge_quotation WHERE organization_id=ANY($1::text[]) ORDER BY id`, [organizationIds]);
@@ -422,7 +438,7 @@ test('quotation send, acceptance evidence, and contract conversion use native ap
   const platformOwner = await createCaller('临时平台管理员', [], PLATFORM_OWNER_EMAIL);
   await postgres.query('UPDATE sys_user SET created_at=$1,updated_at=$1 WHERE id=$2', [new Date(Date.now() - 5 * 60_000).toISOString(), platformOwner.id]);
   const seller = await createCaller('非报价所有者与合同经办', ['sales_order_operator', 'sales_contract_operator']);
-  const quotationMaker = await createCaller('报价与合同经办', ['sales_quotation_draft_operator', 'sales_contract_operator']);
+  const quotationMaker = await createCaller('报价与合同经办', ['sales_quotation_draft_operator', 'sales_contract_operator', 'sales_lead_conversion_operator']);
   const quotationReviewer = await createCaller('独立报价审核', ['sales_quotation_reviewer']);
   await startRuntime();
   for (const caller of [seller, quotationMaker, quotationReviewer]) await signIn(caller);
@@ -446,20 +462,94 @@ test('quotation send, acceptance evidence, and contract conversion use native ap
   const testOrganizationIds = [organizationId, foreignOrganizationId];
 
   const categoryId = await insertFixture('forge_customer_category', { name: '报价隔离客户类别', code: 'SQC-' + RUN, status: 'active' }, quotationMaker.id);
+  const foreignCategoryId = await insertFixture('forge_customer_category', {
+    name: '外组织报价隔离客户类别', code: 'SQC-FOREIGN-' + RUN, status: 'active', organization_id: foreignOrganizationId,
+  }, foreignQuotationMaker.id);
   const customerId = await insertFixture('forge_customer', { name: '报价发送接受隔离客户', category_id: categoryId, responsible_id: quotationMaker.id, status: 'active' }, quotationMaker.id);
+  const mismatchCustomerId = await insertFixture('forge_customer', { name: '报价来源商机客户不匹配验证', category_id: categoryId, responsible_id: quotationMaker.id, status: 'active' }, quotationMaker.id);
+  const sourceOpportunityName = '报价来源追溯隔离商机';
+  const sourceOpportunityId = await insertFixture('forge_sales_opportunity', {
+    name: sourceOpportunityName, customer_id: customerId, stage: 'proposal_quoted', responsible_id: quotationMaker.id,
+  }, quotationMaker.id);
+  const mismatchOpportunityId = await insertFixture('forge_sales_opportunity', {
+    name: '不同客户来源商机', customer_id: mismatchCustomerId, stage: 'proposal_quoted', responsible_id: quotationMaker.id,
+  }, quotationMaker.id);
+  const inaccessibleOpportunityId = await insertFixture('forge_sales_opportunity', {
+    name: '其他销售负责人商机', customer_id: customerId, stage: 'proposal_quoted', responsible_id: otherQuotationMaker.id,
+  }, otherQuotationMaker.id);
+  for (let index = 0; index < 501; index += 1) {
+    await insertFixture('forge_sales_opportunity', {
+      name: '报价来源分页商机' + String(index + 1).padStart(3, '0'), customer_id: customerId,
+      stage: 'proposal_quoted', responsible_id: quotationMaker.id,
+    }, quotationMaker.id);
+  }
+  const foreignCustomerId = await insertFixture('forge_customer', {
+    name: '外组织来源商机客户', category_id: foreignCategoryId, responsible_id: foreignQuotationMaker.id, status: 'active', organization_id: foreignOrganizationId,
+  }, foreignQuotationMaker.id);
+  const foreignOpportunityName = '外组织来源商机';
+  const foreignOpportunityId = await insertFixture('forge_sales_opportunity', {
+    name: foreignOpportunityName, customer_id: foreignCustomerId, stage: 'proposal_quoted', responsible_id: foreignQuotationMaker.id,
+    organization_id: foreignOrganizationId,
+  }, foreignQuotationMaker.id);
   const quotationTypeId = await insertFixture('forge_quotation_type', { name: '报价文件事务测试类型', code: 'SQ-QTYPE-' + RUN, status: 'active' }, quotationMaker.id);
   const quotationIssuerId = await insertFixture('forge_quotation_issuer', { name: '报价文件事务测试主体', credit_code: 'SQ-QISSUER-' + RUN, short_name: '隔离报价主体', organization_id: organizationId }, quotationMaker.id);
   const contractTypeId = await insertFixture('forge_contract_type', { name: '报价转换合同类型', code: 'SQ-CONTRACT-TYPE-' + RUN, status: 'active' }, quotationMaker.id);
 
+  const quoteOnlyOpportunityRead = await otherQuotationMaker.client.request('/data/forge_sales_opportunity?$top=1');
+  assert.ok([403, 404].includes(quoteOnlyOpportunityRead.status), 'a quotation-only role cannot list opportunities without an existing read grant');
+  const quoteOnlyCustomerId = await insertFixture('forge_customer', {
+    name: '无商机读取权限的直接报价客户', category_id: categoryId, responsible_id: otherQuotationMaker.id, status: 'active',
+  }, otherQuotationMaker.id);
+  const quoteOnlyDirectDraft = await action(otherQuotationMaker.client, 'forge_quotation', 'sales_quotation_draft_create', '', {
+    code: 'SQ-QUOTE-DIRECT-' + RUN, name: '无商机读取权限的直接报价', customer_id: quoteOnlyCustomerId,
+    quotation_type_id: quotationTypeId, issuer_id: quotationIssuerId,
+    quotation_date: '2026-10-04', valid_until: '2026-10-31',
+    lines_json: JSON.stringify([{ line_type: 'service', name: '直接报价服务', quantity: 1, taxed_unit_price: 1, tax_rate: 0, discount_rate: 0 }]),
+  });
+  assert.equal(quoteOnlyDirectDraft.status, 200, 'a role without opportunity read access can still create a direct quote');
+  const quoteOnlyDirectRecord = (await read(otherQuotationMaker.client, 'forge_quotation', resultOf(quoteOnlyDirectDraft).id)).record;
+  assert.equal(quoteOnlyDirectRecord.opportunity_id, null);
+  assert.equal(quoteOnlyDirectRecord.opportunity_name, null);
+
+  const visibleOpportunities = await readAllRecords(quotationMaker.client, 'forge_sales_opportunity', ['id', 'name', 'customer_id', 'owner_id', 'responsible_id']);
+  assert.ok(visibleOpportunities.length > 500, 'the paged source query reads more than 500 authorized opportunities');
+  assert.ok(visibleOpportunities.some(row => row.id === sourceOpportunityId), 'the source picker query returns the maker’s own opportunity');
+  assert.ok(!visibleOpportunities.some(row => row.id === inaccessibleOpportunityId), 'the source picker query does not expose another employee’s opportunity');
+  const inaccessibleRead = await read(quotationMaker.client, 'forge_sales_opportunity', inaccessibleOpportunityId);
+  assert.ok([403, 404].includes(inaccessibleRead.response.status), 'the quotation actor cannot independently read another employee’s opportunity');
+
   const quoteDraftResponse = await action(quotationMaker.client, 'forge_quotation', 'sales_quotation_draft_create', '', {
     code: 'SQ-QUOTE-' + RUN, name: '报价发送接受附件事务验证', customer_id: customerId,
-    quotation_type_id: quotationTypeId, issuer_id: quotationIssuerId,
+    opportunity_id: sourceOpportunityId, quotation_type_id: quotationTypeId, issuer_id: quotationIssuerId,
     quotation_date: '2026-10-04', valid_until: '2026-10-31',
     lines_json: JSON.stringify([{ line_type: 'service', name: '现场安装服务', quantity: 1, taxed_unit_price: 180, tax_rate: 13, discount_rate: 0 }]),
   });
   assert.equal(quoteDraftResponse.status, 200, 'ordinary quote maker creates a source-valid draft through the existing Action: ' + messageOf(quoteDraftResponse));
   nativeQuotationId = resultOf(quoteDraftResponse).id;
   assert.ok(nativeQuotationId);
+  const linkedQuotation = await read(quotationMaker.client, 'forge_quotation', nativeQuotationId);
+  assert.equal(linkedQuotation.record.opportunity_id, sourceOpportunityId, 'a valid same-customer source is persisted as a native lookup');
+  assert.equal(linkedQuotation.record.opportunity_name, sourceOpportunityName, 'the authorized source name is retained on the quote for later display');
+  for (const [label, sourceId, expectedPrivateValue] of [
+    ['another customer', mismatchOpportunityId, '不同客户来源商机'],
+    ['another employee scope', inaccessibleOpportunityId, '其他销售负责人商机'],
+    ['another organization', foreignOpportunityId, foreignOpportunityName],
+    ['missing source', id(), ''],
+  ]) {
+    const before = await captureScopedSalesState(testOrganizationIds);
+    const rejected = await action(quotationMaker.client, 'forge_quotation', 'sales_quotation_draft_create', '', {
+      code: 'SQ-QUOTE-REJECT-' + label.replaceAll(' ', '-') + '-' + RUN,
+      name: '来源商机拒绝验证', customer_id: customerId, opportunity_id: sourceId,
+      quotation_type_id: quotationTypeId, issuer_id: quotationIssuerId,
+      quotation_date: '2026-10-04', valid_until: '2026-10-31',
+      lines_json: JSON.stringify([{ line_type: 'service', name: '来源验证服务', quantity: 1, taxed_unit_price: 1, tax_rate: 0, discount_rate: 0 }]),
+    });
+    await assertRejectedWithoutWrites(rejected, before, testOrganizationIds, label + ' source opportunity');
+    assert.match(messageOf(rejected), /所选来源商机不存在、无权访问或与当前客户不匹配/);
+    assert.doesNotMatch(messageOf(rejected), new RegExp(sourceId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+      'the validation error does not reveal a source record identifier');
+    if (expectedPrivateValue) assert.doesNotMatch(messageOf(rejected), new RegExp(expectedPrivateValue), 'the validation error does not reveal source details');
+  }
   const templateSourceLines = await postgres.query(`SELECT id,line_type,name,sku_id,item_code,model,specification,unit_name,quantity,
     taxed_unit_price,tax_rate,discount_rate,taxed_subtotal,remarks FROM forge_quotation_line WHERE quotation_id=$1 ORDER BY id`, [nativeQuotationId]);
   assert.equal(templateSourceLines.rows.length, 1, 'template-import fixture uses the real draft quotation line');
@@ -1012,6 +1102,8 @@ test('quotation send, acceptance evidence, and contract conversion use native ap
   const zeroVersionQuotationId = resultOf(zeroVersionDraft)?.id;
   assert.ok(zeroVersionQuotationId);
   const zeroVersionInitialQuote = (await read(quotationMaker.client, 'forge_quotation', zeroVersionQuotationId)).record;
+  assert.equal(zeroVersionInitialQuote.opportunity_id, null, 'existing callers may still create a direct quotation without an opportunity');
+  assert.equal(zeroVersionInitialQuote.opportunity_name, null, 'a direct quotation does not invent a source name');
   assert.equal(Number(zeroVersionInitialQuote.pricing_version), 0, 'new quotation remains at its legitimate initial pricing version');
   const zeroVersionSubmission = await action(quotationMaker.client, 'forge_quotation', 'quotation_submit', zeroVersionQuotationId, {});
   assert.equal(zeroVersionSubmission.status, 200, 'initial version zero can enter the native approval flow: ' + messageOf(zeroVersionSubmission));
@@ -1074,9 +1166,9 @@ test('quotation send, acceptance evidence, and contract conversion use native ap
   await startRuntime();
   const restartedQuotation = (await read(quotationMaker.client, 'forge_quotation', nativeQuotationId)).record;
   const restartedQuoteContract = (await read(quotationMaker.client, 'forge_sales_contract', convertedContractId)).record;
-  assert.deepEqual({ status: restartedQuotation.status, sentVersion: Number(restartedQuotation.sent_pricing_version), acceptedVersion: Number(restartedQuotation.accepted_pricing_version), version: Number(restartedQuotation.pricing_version) }, {
-    status: 'accepted', sentVersion: Number(restartedQuotation.pricing_version), acceptedVersion: Number(restartedQuotation.pricing_version), version: Number(restartedQuotation.pricing_version),
-  }, 'native-approved quotation send and customer acceptance survive the PostgreSQL Runtime restart');
+  assert.deepEqual({ status: restartedQuotation.status, sentVersion: Number(restartedQuotation.sent_pricing_version), acceptedVersion: Number(restartedQuotation.accepted_pricing_version), version: Number(restartedQuotation.pricing_version), opportunity_id: restartedQuotation.opportunity_id, opportunity_name: restartedQuotation.opportunity_name }, {
+    status: 'accepted', sentVersion: Number(restartedQuotation.pricing_version), acceptedVersion: Number(restartedQuotation.pricing_version), version: Number(restartedQuotation.pricing_version), opportunity_id: sourceOpportunityId, opportunity_name: sourceOpportunityName,
+  }, 'native-approved quote source and customer acceptance survive PostgreSQL Runtime restart');
   assert.deepEqual({ owner: restartedQuoteContract.owner_id, quotation: restartedQuoteContract.quotation_id, status: restartedQuoteContract.status }, {
     owner: quotationMaker.id, quotation: nativeQuotationId, status: 'draft',
   }, 'ordinary quotation owner retains the converted draft after Runtime restart');
