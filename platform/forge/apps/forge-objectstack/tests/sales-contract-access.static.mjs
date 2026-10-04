@@ -36,14 +36,14 @@ function navItem(applicationKey, itemId) {
   return match;
 }
 
-assert.deepEqual(navItem('supply_chain', 'materials').requiredPermissions, ['forge_supply_chain_settings_manage']);
-assert.deepEqual(navItem('supply_chain', 'material_settings').requiredPermissions, ['forge_supply_chain_settings_manage']);
-assert.deepEqual(navItem('supply_chain', 'material_skus').requiredPermissions, ['forge_supply_chain_settings_manage']);
+assert.deepEqual(navItem('supply_chain', 'materials').requiredPermissions, ['forge_material_master_operator']);
+assert.deepEqual(navItem('supply_chain', 'material_settings').requiredPermissions, undefined);
+assert.deepEqual(navItem('supply_chain', 'material_skus').requiredPermissions, undefined);
 assert.deepEqual(navItem('sales', 'sales_contracts').requiredPermissions, ['sales_contract_operator']);
 assert.equal(navItem('sales', 'sales_pricing').requiredPermissions, undefined, 'sales pricing navigation stays outside this SKU administration change');
 assert.ok(settingsPermissions.includes("name: 'forge_supply_chain_settings_manager'"));
 assert.ok(settingsPermissions.includes("systemPermissions: ['forge_supply_chain_settings_manage']"));
-assert.ok(settingsPermissions.includes('forge_material_sku: orgManage,'), 'only the existing supply-chain manager set owns SKU CRUD');
+assert.ok(settingsPermissions.includes('forge_material_sku: orgManage,'), 'the existing supply-chain manager retains its SKU grant');
 
 const operatorBlock = salesContractPermissions.slice(
   salesContractPermissions.indexOf("name: 'sales_contract_operator'"),
@@ -67,10 +67,11 @@ assert.doesNotMatch(quotationBlock, /forge_material_sku:\s*\{\s*allow(Create|Edi
 
 assert.match(settingsMigration, /id: 'material_skus',[^\n]*permissionSetNames: \['forge_supply_chain_settings_manager', 'sales_contract_operator'\],[^\n]*assignmentState: 'requires_setup_assignment'/);
 assert.match(materialPage, /request\('\/auth\/me\/permissions'\)/);
-assert.match(materialPage, /canManage=systemPermissions\.includes\('forge_supply_chain_settings_manage'\)&&materialPermissions\.allowCreate===true&&materialPermissions\.allowEdit===true&&materialPermissions\.allowDelete===true/);
-assert.match(materialPage, /state\.canManage&&<button[^>]*>新建物料<\/button>/);
-assert.ok(materialPage.includes('{state.canManage&&<td><button className="fp-link-button" onClick={()=>openEdit(m)}>编辑</button>'));
-assert.ok(materialPage.includes('<button className="fp-link-button" onClick={()=>askDelete(m)}>删除</button></td>}</tr>'));
+assert.match(materialPage, /canCreate=materialPermissions\.allowCreate===true,canEdit=materialPermissions\.allowEdit===true,canDelete=materialPermissions\.allowDelete===true/);
+assert.match(materialPage, /state\.canCreate&&<button[^>]*>新建物料<\/button>/);
+assert.ok(materialPage.includes('{state.canEdit&&<><button className="fp-link-button" onClick={()=>openEdit(m)}>编辑</button>'));
+assert.ok(materialPage.includes('{state.canDelete&&<button className="fp-link-button" onClick={()=>askDelete(m)}>删除</button>}'));
+assert.doesNotMatch(materialPage, /canManage|forge_supply_chain_settings_manage/);
 assert.match(materialObject, /enabled: Field\.boolean\(\{ label: '启用', defaultValue: true \}\)/);
 
 assert.match(contractPage, /selectableSkus=data\.skus\.filter/);

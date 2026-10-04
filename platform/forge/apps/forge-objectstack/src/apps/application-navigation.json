@@ -70,7 +70,7 @@
                     "type": "page",
                     "pageName": "page_material_workspace",
                     "requiredPermissions": [
-                      "forge_supply_chain_settings_manage"
+                      "forge_material_master_operator"
                     ]
                   },
                   {
@@ -375,10 +375,7 @@
                         "label": "规格与价格",
                         "icon": "boxes",
                         "type": "object",
-                        "objectName": "forge_material_sku",
-                        "requiredPermissions": [
-                          "forge_supply_chain_settings_manage"
-                        ]
+                        "objectName": "forge_material_sku"
                       },
                       {
                         "id": "material_categories",
@@ -408,9 +405,6 @@
                         "type": "object",
                         "objectName": "forge_supplier_level"
                       }
-                    ],
-                    "requiredPermissions": [
-                      "forge_supply_chain_settings_manage"
                     ]
                   },
                   {
