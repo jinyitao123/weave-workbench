@@ -437,9 +437,12 @@ test('quotation send, acceptance evidence, and contract conversion use native ap
   const foreignOrganizationId = await insertFixture('sys_organization', {
     id: id(), name: '报价外组织隔离组织 ' + RUN, slug: 'sales-quotation-foreign-' + RUN,
   });
-  const foreignQuotationMaker = await createCaller('外组织报价经办', ['sales_quotation_draft_operator'], '', foreignOrganizationId);
+  const foreignQuotationMaker = await createCaller('外组织报价经办', ['sales_quotation_draft_operator', 'sales_contract_operator'], '', foreignOrganizationId);
   await signIn(foreignQuotationMaker);
   await selectOrganization(foreignQuotationMaker);
+  const foreignMakerPermissions = resultOf(await foreignQuotationMaker.client.request('/auth/me/permissions'));
+  assert.ok(foreignMakerPermissions?.systemPermissions?.includes('sales_contract_operator'),
+    'the foreign conversion probe holds the normal contract action permission, so rejection is not caused by a missing role');
   const testOrganizationIds = [organizationId, foreignOrganizationId];
 
   const categoryId = await insertFixture('forge_customer_category', { name: '报价隔离客户类别', code: 'SQC-' + RUN, status: 'active' }, quotationMaker.id);
