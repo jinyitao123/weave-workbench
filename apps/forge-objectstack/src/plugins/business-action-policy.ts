@@ -16,6 +16,8 @@ const EMPLOYEE_ONLY = new Set([
   'forge_sales_contract.contract_register_customer_prepayment',
   'forge_sales_contract.contract_approval_mcp_approve',
   'forge_sales_contract.contract_approval_mcp_send_back',
+  'forge_quotation.quotation_approval_mcp_approve',
+  'forge_quotation.quotation_approval_mcp_reject',
   'forge_sales_order.sales_order_submit',
   'forge_sales_order.sales_order_apply_completed_approval',
   'forge_sales_order.order_approval_mcp_approve',

@@ -1,4 +1,5 @@
-import { ORDER_APPROVAL_MCP_APPROVE_TARGET, ORDER_APPROVAL_MCP_REJECT_TARGET, ORDER_APPROVAL_MCP_RECALL_TARGET } from '../actions/approval-workbench.action.js';
+import { ORDER_APPROVAL_MCP_APPROVE_TARGET, ORDER_APPROVAL_MCP_REJECT_TARGET, ORDER_APPROVAL_MCP_RECALL_TARGET,
+  QUOTATION_APPROVAL_MCP_APPROVE_TARGET, QUOTATION_APPROVAL_MCP_REJECT_TARGET } from '../actions/approval-workbench.action.js';
 import type { Plugin, PluginContext } from '@objectstack/core';
 import { makeExecutionContextResolver } from '@objectstack/plugin-hono-server';
 import { isFileIdToken } from '@objectstack/spec/data';
@@ -75,7 +76,8 @@ interface OriginalFileReference {
   sha256: string;
 }
 
-const EMPLOYEE_APPROVAL_OBJECTS = new Set([CONTRACT_OBJECT, 'forge_sales_order']);
+const QUOTATION_OBJECT = 'forge_quotation';
+const EMPLOYEE_APPROVAL_OBJECTS = new Set([CONTRACT_OBJECT, 'forge_sales_order', QUOTATION_OBJECT]);
 type ApprovalMcpDecision = 'approve' | 'revise' | 'reject' | 'recall';
 type ApprovalMcpParams = Record<string, unknown> & {
   approvalRequestId?: unknown;
@@ -625,6 +627,9 @@ async function executeNativeApprovalAction(
   if (!objectName || !EMPLOYEE_APPROVAL_OBJECTS.has(objectName) || !recordId) {
     throw new ApprovalActionFailure(404, 'APPROVAL_ACTION_BINDING_MISMATCH', 'The approval action is not bound to this contract record.');
   }
+  if (objectName === QUOTATION_OBJECT && decision !== 'approve' && decision !== 'reject') {
+    throw new ApprovalActionFailure(400, 'APPROVAL_ACTION_INVALID', '销售报价审批仅支持同意或驳回。');
+  }
   const context = nativeApprovalActionContext(actionContext);
   const actorId = context.userId!;
   return withApprovalRequestLock(engine, context, requestId, async () => {
@@ -635,6 +640,9 @@ async function executeNativeApprovalAction(
     if (request.object_name !== objectName || request.record_id !== recordId ||
       (request.organization_id && request.organization_id !== context.tenantId)) {
       throw new ApprovalActionFailure(404, 'APPROVAL_ACTION_BINDING_MISMATCH', 'The approval action is not bound to this contract record.');
+    }
+    if (objectName === QUOTATION_OBJECT && request.submitter_id === actorId) {
+      throw new ApprovalActionFailure(403, 'APPROVAL_ACTION_FORBIDDEN', '报价发起人不能审批自己的报价。');
     }
     const recallingOwnOrder = request.object_name === 'forge_sales_order' &&
       request.submitter_id === actorId && request.viewer?.is_submitter === true;
@@ -746,8 +754,10 @@ function currentApprovalActions(
   viewer: 'current_approver' | 'original_submitter',
   itemVersion: string,
   sourceMaterialVersion: string,
+  actorId: string,
 ): JsonRecord[] {
   if (!EMPLOYEE_APPROVAL_OBJECTS.has(request.object_name) || request.status !== 'pending' || !request.record_id) return [];
+  if (request.object_name === QUOTATION_OBJECT && request.submitter_id === actorId) return [];
   const execution = (actionName: string) => ({
     tool: 'run_action',
     actionName,
@@ -766,19 +776,37 @@ function currentApprovalActions(
     }];
   }
   if (request.viewer?.can_act !== true) return [];
+  const approveActionName = request.object_name === CONTRACT_OBJECT
+    ? 'contract_approval_mcp_approve'
+    : request.object_name === QUOTATION_OBJECT
+      ? 'quotation_approval_mcp_approve'
+      : 'order_approval_mcp_approve';
+  const rejectActionName = request.object_name === CONTRACT_OBJECT
+    ? 'contract_approval_mcp_send_back'
+    : request.object_name === QUOTATION_OBJECT
+      ? 'quotation_approval_mcp_reject'
+      : 'order_approval_mcp_reject';
+  const secondarySemantic = request.object_name === CONTRACT_OBJECT ? 'revise' : 'reject';
+  const secondaryLabel = request.object_name === CONTRACT_OBJECT ? '退回修改审批事项'
+    : request.object_name === QUOTATION_OBJECT ? '驳回报价审批' : '拒绝订单复核';
+  const secondaryDescription = request.object_name === CONTRACT_OBJECT
+    ? '将当前员工的退回意见记录到原生审批动作，并沿原生修订分支继续。'
+    : request.object_name === QUOTATION_OBJECT
+      ? '记录驳回意见并由既有原生报价审批流程更新报价状态；本流程不支持退回修改。'
+      : '记录拒绝意见并由原生审批取消本订单，保留正式处理依据。';
   return [
     {
       semantic: 'approve',
-      label: '同意审批事项',
+      label: request.object_name === QUOTATION_OBJECT ? '同意报价审批' : '同意审批事项',
       description: '将当前员工的意见记录到原生审批动作，并由原生审批服务决定是否推进流程。',
-      execution: execution(request.object_name === CONTRACT_OBJECT ? 'contract_approval_mcp_approve' : 'order_approval_mcp_approve'),
+      execution: execution(approveActionName),
       inputs,
     },
     {
-      semantic: request.object_name === CONTRACT_OBJECT ? 'revise' : 'reject',
-      label: request.object_name === CONTRACT_OBJECT ? '退回修改审批事项' : '拒绝订单复核',
-      description: request.object_name === CONTRACT_OBJECT ? '将当前员工的退回意见记录到原生审批动作，并沿原生修订分支继续。' : '记录拒绝意见并由原生审批取消本订单，保留正式处理依据。',
-      execution: execution(request.object_name === CONTRACT_OBJECT ? 'contract_approval_mcp_send_back' : 'order_approval_mcp_reject'),
+      semantic: secondarySemantic,
+      label: secondaryLabel,
+      description: secondaryDescription,
+      execution: execution(rejectActionName),
       inputs,
     },
   ];
@@ -922,6 +950,12 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
         actionEngine.registerAction(CONTRACT_OBJECT, CONTRACT_APPROVAL_MCP_SEND_BACK_TARGET,
           (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'revise'),
           'forge.approval-workbench');
+        actionEngine.registerAction(QUOTATION_OBJECT, QUOTATION_APPROVAL_MCP_APPROVE_TARGET,
+          (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'approve'),
+          'forge.approval-workbench');
+        actionEngine.registerAction(QUOTATION_OBJECT, QUOTATION_APPROVAL_MCP_REJECT_TARGET,
+          (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'reject'),
+          'forge.approval-workbench');
       } else if (!actionEngine || !actionApprovals) {
         ctx.logger.error('[approval-workbench-context] ObjectQL or native approvals service unavailable; MCP actions were not registered');
       }
@@ -990,7 +1024,7 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
             },
             sourceMaterialVersion,
             ...(latest ?? {}),
-            availableActions: currentApprovalActions(request, viewer, itemVersion, sourceMaterialVersion),
+            availableActions: currentApprovalActions(request, viewer, itemVersion, sourceMaterialVersion, executionContext.userId!),
             fields: projectFields(request, engine),
             files: snapshotMaterials.files,
             originalFiles: snapshotMaterials.originalFiles,

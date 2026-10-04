@@ -18,6 +18,8 @@ const MISSING_FIELD_OBJECT = 'forge_task_probe_missing_field_target';
 const KEY = `forge:action:${OBJECT}.task_probe_touch`;
 const MISSING_FIELD_KEY = `forge:action:${OBJECT}.task_probe_missing_field`;
 const EMPLOYEE_ONLY_KEY = 'forge:action:forge_sales_contract.contract_register_signature';
+const QUOTATION_APPROVE_KEY = 'forge:action:forge_quotation.quotation_approval_mcp_approve';
+const QUOTATION_REJECT_KEY = 'forge:action:forge_quotation.quotation_approval_mcp_reject';
 
 test('native auth signing, scoped MCP, session revocation, and native inbox keyset stay authoritative', {
   skip: process.env.FORGE_TASK_CONNECTION_PG_TEST !== '1', timeout: 240_000,
@@ -145,6 +147,10 @@ stack.plugins.push({ name:'test.task-connection-bootstrap', init(ctx) { ctx.hook
     for(const name of ['原记录','另一记录'])records.push(await engine.insert('${OBJECT}',{name,counter:0,owner_id:userId,organization_id:organizationId},{context}));
     for(let n=0;n<223;n++)await messaging.emit({topic:'task.connection.test',audience:userId,organizationId,
       dedupKey:'${suffix}:'+n,channels:['inbox'],payload:{title:'分页验证'+n,body:'独立本地测试'}});
+    const reviewerPermission=await engine.findOne('sys_permission_set',{where:{name:'sales_quotation_reviewer',active:true}},{context});
+    if(!reviewerPermission)throw new Error('quotation reviewer permission seed is required for the employee-native action probe');
+    await engine.insert('sys_user_permission_set',{user_id:userId,permission_set_id:reviewerPermission.id,
+      organization_id:organizationId,granted_by:userId,reason:'隔离任务委派权限边界验证'},{context});
     const actor=await currentNativeActor(ctx,userId,organizationId);
     const mcp=new TaskDelegationService(ctx).mcp;
     const nativeActionKeys=(await mcp['native'](actor).listActions()).map(a=>'forge:action:'+a.objectName+'.'+a.name);
@@ -223,8 +229,15 @@ export default stack;
     assert.ok(setup.value.actions.some(a=>a.name==='task_probe_missing_field'));
     assert.ok(setup.value.nativeActionKeys.includes(EMPLOYEE_ONLY_KEY),'the employee-only action must still be current in the native runtime');
     assert.ok(!setup.value.actions.some(a=>a.name==='contract_register_signature'),'employee-only action must not enter the delegated catalogue');
+    for (const employeeOnlyKey of [EMPLOYEE_ONLY_KEY, QUOTATION_APPROVE_KEY, QUOTATION_REJECT_KEY]) {
+      assert.ok(setup.value.nativeActionKeys.includes(employeeOnlyKey), `${employeeOnlyKey} remains an employee-native action`);
+      assert.ok(!setup.value.actions.some(action => `forge:action:${action.objectName}.${action.name}` === employeeOnlyKey),
+        `${employeeOnlyKey} must not enter the delegated action catalogue`);
+      const deniedDelegationScope={...scope,input_revision_id:randomUUID(),allowed_actions:[employeeOnlyKey]};
+      assert.equal((await request(ROOT,'POST',{request_id:randomUUID(),scope:deniedDelegationScope})).status,403,
+        `${employeeOnlyKey} cannot be issued to a task`);
+    }
     const employeeOnlyScope={...scope,input_revision_id:randomUUID(),allowed_actions:[EMPLOYEE_ONLY_KEY]};
-    assert.equal((await request(ROOT,'POST',{request_id:randomUUID(),scope:employeeOnlyScope})).status,403,'employee-only actions cannot be issued to a task');
     const employeeOnlyMetadata=await request('/api/v1/__test/task-object-metadata','POST',{
       userId:session.user.id,organizationId:session.session.activeOrganizationId,name:TARGET_OBJECT,scope:employeeOnlyScope,
     },launcher);

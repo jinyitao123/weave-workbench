@@ -2,6 +2,8 @@ import { defineAction } from '@objectstack/spec/ui';
 
 export const CONTRACT_APPROVAL_MCP_APPROVE_TARGET = 'contractApprovalMcpApprove';
 export const CONTRACT_APPROVAL_MCP_SEND_BACK_TARGET = 'contractApprovalMcpSendBack';
+export const QUOTATION_APPROVAL_MCP_APPROVE_TARGET = 'quotationApprovalMcpApprove';
+export const QUOTATION_APPROVAL_MCP_REJECT_TARGET = 'quotationApprovalMcpReject';
 
 const nativeApprovalInputs: Array<{ name: string; label: string; type: 'text'; required: boolean }> = [
   { name: 'approvalRequestId', label: '原生审批请求', type: 'text', required: true },
@@ -38,6 +40,42 @@ export const ContractApprovalMcpSendBack = defineAction({
   ai: {
     exposed: true,
     description: '在审批请求仍由当前员工待办且事项版本未变化时记录退回意见，并由 ObjectStack ApprovalService 沿原生修订分支退回。',
+    category: 'action',
+    requiresConfirmation: true,
+  },
+  params: nativeApprovalInputs,
+});
+
+export const QuotationApprovalMcpApprove = defineAction({
+  name: 'quotation_approval_mcp_approve',
+  label: '同意报价审批',
+  objectName: 'forge_quotation',
+  target: QUOTATION_APPROVAL_MCP_APPROVE_TARGET,
+  locations: ['record_header'],
+  visible: false,
+  requiredPermissions: ['sales_quotation_reviewer'],
+  description: '记录当前员工对已绑定原生报价审批事项的同意意见，并由原生审批服务推进现有流程。',
+  ai: {
+    exposed: true,
+    description: '仅已分配的报价审批员工可对准确原生审批请求、冻结报价版本及材料发表同意意见，并由原生审批服务推进既有流程。',
+    category: 'action',
+    requiresConfirmation: true,
+  },
+  params: nativeApprovalInputs,
+});
+
+export const QuotationApprovalMcpReject = defineAction({
+  name: 'quotation_approval_mcp_reject',
+  label: '驳回报价审批',
+  objectName: 'forge_quotation',
+  target: QUOTATION_APPROVAL_MCP_REJECT_TARGET,
+  locations: ['record_header'],
+  visible: false,
+  requiredPermissions: ['sales_quotation_reviewer'],
+  description: '记录当前员工对已绑定原生报价审批事项的驳回意见，并由原生审批服务推进现有流程。',
+  ai: {
+    exposed: true,
+    description: '仅已分配的报价审批员工可对准确原生审批请求和冻结报价版本记录驳回意见；本流程不支持退回修改。',
     category: 'action',
     requiresConfirmation: true,
   },
