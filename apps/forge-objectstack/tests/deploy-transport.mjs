@@ -2,7 +2,7 @@
 // No container runtime, Forge service, database or external port is used.
 
 import assert from 'node:assert/strict';
-import { access, chmod, copyFile, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { access, chmod, copyFile, mkdtemp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -20,7 +20,7 @@ const dockerScript = [
   '  case "$4" in',
   '    app) if [ -f "$FORGE_DEPLOY_TEST_STATE/app-updated" ]; then echo new-app; elif [ "$FORGE_TEST_FRESH" != 1 ]; then echo old-app; fi ;;',
   '    proxy) if [ "$FORGE_TEST_PREVIOUS_PROXY" = 1 ]; then echo old-proxy; fi ;;',
-  '    db) : ;;',
+  '    db) if [ "$FORGE_TEST_DATABASE" = 1 ]; then echo existing-db; fi ;;',
   '  esac',
   '  exit 0',
   'fi',
@@ -43,6 +43,14 @@ const dockerScript = [
   '    inoforge-app:sha-*) echo sha256:new-app-image ;;',
   '    inoforge-proxy:sha-*) echo sha256:new-proxy-image ;;',
   '    *) exit 1 ;;',
+  '  esac',
+  '  exit 0',
+  'fi',
+  'if [ "$1" = "compose" ] && [ "$2" = "exec" ]; then',
+  '  case "$4" in',
+  '    db) if [ "$FORGE_TEST_DUMP_FAILURE" = 1 ]; then exit 17; fi; printf "%s\\n" "-- PostgreSQL test dump" ;;',
+  '    app) if [ "$FORGE_TEST_UPLOADS_FAILURE" = 1 ]; then exit 18; fi; tar -C "$FORGE_DEPLOY_TEST_UPLOADS" -cf - . ;;',
+  '    *) exit 19 ;;',
   '  esac',
   '  exit 0',
   'fi',
@@ -81,14 +89,17 @@ const curlScript = [
   'esac',
 ].join('\n') + '\n';
 
-async function runCase({ name, publicFailure, previousProxy, fresh = false }) {
+async function runCase({ name, publicFailure, previousProxy, fresh = false, database = false, dumpFailure = false, uploadsFailure = false }) {
   const tempDir = await mkdtemp(path.join(tmpdir(), 'forge-deploy-transport-'));
   try {
     const appDir = path.join(tempDir, 'app');
     const scriptsDir = path.join(appDir, 'scripts');
     const fakeBin = path.join(tempDir, 'bin');
     const stateDir = path.join(tempDir, 'state');
+    const uploadsDir = path.join(tempDir, 'uploads');
     await Promise.all([mkdir(scriptsDir, { recursive: true }), mkdir(fakeBin), mkdir(stateDir)]);
+    await mkdir(uploadsDir);
+    await writeFile(path.join(uploadsDir, 'receipt.txt'), 'private fixture attachment\n');
     const consoleContext = path.join(appDir, '.generated/console94');
     await mkdir(path.join(consoleContext, 'dist'), { recursive: true });
     await writeFile(path.join(consoleContext, 'console94.lock.json'), '{}\n');
@@ -127,6 +138,10 @@ async function runCase({ name, publicFailure, previousProxy, fresh = false }) {
       FORGE_TEST_FAIL_PUBLIC: publicFailure ? '1' : '0',
       FORGE_TEST_PREVIOUS_PROXY: previousProxy ? '1' : '0',
       FORGE_TEST_FRESH: fresh ? '1' : '0',
+      FORGE_TEST_DATABASE: database ? '1' : '0',
+      FORGE_TEST_DUMP_FAILURE: dumpFailure ? '1' : '0',
+      FORGE_TEST_UPLOADS_FAILURE: uploadsFailure ? '1' : '0',
+      FORGE_DEPLOY_TEST_UPLOADS: uploadsDir,
     };
     const result = spawnSync('/bin/sh', [path.join(scriptsDir, 'deploy.sh')], {
       cwd: appDir,
@@ -137,10 +152,13 @@ async function runCase({ name, publicFailure, previousProxy, fresh = false }) {
     const output = result.stdout + result.stderr;
     assert.ok(!SECRETS.some((secret) => output.includes(secret)), name + ': deployment output must not print .env secrets');
     const commandLog = await readFile(logPath, 'utf8');
-    assert.match(commandLog, /--target app/, name + ': app image must use its explicit Docker stage');
-    assert.match(commandLog, /--target proxy/, name + ': proxy image must use its explicit Docker stage');
-    assert.match(commandLog, /build-context console94=/, name + ': image builds must receive the fixed Console context');
-    assert.match(commandLog, /candidatePort=14612/, name + ': candidate port must reach Compose');
+    if (!dumpFailure && !uploadsFailure) {
+      if (!publicFailure) assert.equal(result.status, 0, name + ': ' + output);
+      assert.match(commandLog, /--target app/, name + ': app image must use its explicit Docker stage');
+      assert.match(commandLog, /--target proxy/, name + ': proxy image must use its explicit Docker stage');
+      assert.match(commandLog, /build-context console94=/, name + ': image builds must receive the fixed Console context');
+      assert.match(commandLog, /candidatePort=14612/, name + ': candidate port must reach Compose');
+    }
     return { tempDir, stateDir, result, output, commandLog };
   } catch (error) {
     await rm(tempDir, { recursive: true, force: true });
@@ -177,6 +195,35 @@ try {
   assert.doesNotMatch(releaseRecord, /test-(?:postgres|auth|key)-secret/);
   assert.ok(success.commandLog.includes('proxy-candidate'));
   console.log('PASS release builds, candidate-checks, promotes and records both image IDs');
+
+  const backedUp = await runCase({ name: 'existing data and uploads', publicFailure: false, previousProxy: true, database: true });
+  cases.push(backedUp);
+  assert.equal(backedUp.result.status, 0, backedUp.output);
+  const backupNames = await readdir(path.join(backedUp.tempDir, 'release', 'backups'));
+  const backupDir = path.join(backedUp.tempDir, 'release', 'backups', backupNames[0]);
+  assert.equal((await stat(backupDir)).mode & 0o777, 0o700, 'new backup directory is private');
+  for (const name of ['database.sql.gz', 'uploads.tar.gz']) {
+    assert.equal((await stat(path.join(backupDir, name))).mode & 0o777, 0o600, name + ' is private');
+  }
+  const restoredFile = spawnSync('tar', ['-xzOf', path.join(backupDir, 'uploads.tar.gz'), './receipt.txt'], { encoding: 'utf8' });
+  assert.equal(restoredFile.status, 0);
+  assert.equal(restoredFile.stdout, 'private fixture attachment\n', 'attachment archive contains the original bytes');
+  const completedNames = await readdir(path.join(backedUp.tempDir, 'release', 'releases'));
+  const completedRecord = await readFile(path.join(backedUp.tempDir, 'release', 'releases', completedNames[0], 'release.env'), 'utf8');
+  assert.match(completedRecord, /uploads_backup=.*uploads\.tar\.gz/);
+  assert.equal((await readdir(backupDir)).includes('database.sql'), false, 'raw database dump does not remain after compression');
+  console.log('PASS existing data and attachment backups are private, readable, and recorded');
+
+  for (const options of [
+    { name: 'failed database dump', dumpFailure: true },
+    { name: 'failed attachment backup', uploadsFailure: true },
+  ]) {
+    const failedBackup = await runCase({ ...options, publicFailure: false, previousProxy: true, database: true });
+    cases.push(failedBackup);
+    assert.equal(failedBackup.result.status, 1, options.name + ' stops deployment');
+    assert.doesNotMatch(failedBackup.commandLog, /buildx build| up /, options.name + ' cannot build or switch a service');
+    console.log('PASS ' + options.name + ' fails before building or switching');
+  }
 
   const directRollback = await runCase({ name: 'first proxy adoption rollback', publicFailure: true, previousProxy: false });
   cases.push(directRollback);
