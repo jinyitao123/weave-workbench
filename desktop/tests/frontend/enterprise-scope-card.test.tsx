@@ -81,7 +81,7 @@ it('deduplicates repeated native receipts for one original run without rendering
 it.each([
   ['queued', undefined, '等待执行', false],
   ['running', undefined, '团队执行中', true],
-  ['parked', undefined, '等待处理', false],
+  ['parked', undefined, '等待中', false],
   ['cancel_requested', undefined, '正在停止', false],
   ['succeeded', 'needs_input', '需要补充', false],
   ['succeeded', 'completed', '团队执行完成', false],
@@ -94,6 +94,11 @@ it.each([
   expect(container.querySelector('.is-animating') !== null).toBe(animate)
   expect(container.textContent).not.toContain('审批通过')
   expect(container.textContent).not.toContain('%')
+  if (status === 'parked') {
+    expect(container.textContent).toContain('等待原因尚未核对')
+    expect(container.textContent).not.toContain('待处理事项')
+    expect(container.textContent).not.toContain('人工处理')
+  }
 })
 
 it('stops busy animation on a failed status refresh and keeps the last known state explicit', () => {
@@ -101,6 +106,17 @@ it('stops busy animation on a failed status refresh and keeps the last known sta
   expect(enterpriseRunDisplay({ run: running, stale: true })).toMatchObject({ label: '状态未更新', detail: '上次状态：团队执行中', animate: false })
   expect(enterpriseRunDisplay({ run: { ...running, isCurrent: false } })).toMatchObject({ detail: '已有后续工作', animate: false })
   expect(enterpriseRunDisplay({ run: { ...running, businessResult: 'action_unknown' } })).toMatchObject({ label: '团队执行中', detail: '业务回执待核对', animate: true })
+})
+
+it('labels a parked member stage neutrally when its wait reason is unavailable', async () => {
+  const details: EnterpriseWorkRunDetails = { runId, status: 'parked', members: [{ name: '材料检查员', status: 'running', stages: [{ name: '并行检查', status: 'parked' }] }],
+    activityComplete: false, materials: [], explanation: '团队工作当前处于等待状态，等待原因尚未核对。', authorizationRequired: false }
+  await act(async () => root.render(<EnterpriseScopeCards scopes={[display]} states={{ [runId]: { run: { runId, status: 'parked', isCurrent: true }, details } }} />))
+  expect(container.querySelector('[role="status"]')?.textContent).toBe('等待中')
+  expect(container.querySelector('.enterprise-member li')?.textContent).toContain('并行检查')
+  expect(container.querySelector('.enterprise-member li')?.textContent).toContain('等待中')
+  expect(container.textContent).not.toContain('等待处理')
+  expect(container.textContent).not.toContain('人工处理')
 })
 
 it('shows verified execution facts and an available next action after failure instead of a disabled dead end', async () => {

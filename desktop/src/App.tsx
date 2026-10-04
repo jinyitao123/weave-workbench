@@ -650,7 +650,7 @@ export default function App() {
       } catch { /* Plain-text team tasks are already readable. */ }
     }
     const failedTeamWork = teamContext?.businessResult === undefined && teamContext?.runStatus === 'failed' && !teamContext.finalResult
-    const teamStateLabel = teamContext ? ({ queued: '已接单，等待执行', running: '处理中', parked: '等待处理', cancel_requested: '正在停止', succeeded: '已完成', failed: '失败', cancelled: '已停止', abandoned: '已结束' }[teamContext.runStatus]) : ''
+    const teamStateLabel = teamContext ? ({ queued: '已接单，等待执行', running: '处理中', parked: '等待中', cancel_requested: '正在停止', succeeded: '已完成', failed: '失败', cancelled: '已停止', abandoned: '已结束' }[teamContext.runStatus]) : ''
     const unresolvedBusinessAction = teamContext?.businessResult !== undefined
       ? teamContext.businessResult === 'action_failed' || teamContext.businessResult === 'action_unknown'
       : teamContext?.actionOutcomes?.some((outcome) => outcome.status !== 'succeeded')

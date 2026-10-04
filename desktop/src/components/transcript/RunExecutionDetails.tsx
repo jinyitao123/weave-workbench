@@ -2,7 +2,7 @@ import { Check, ChevronDown, CircleAlert, FileText } from 'lucide-react'
 import type { EnterpriseTaskScopeDisplay, EnterpriseWorkRunDetails } from '@/types/api'
 import type { EnterpriseRunView } from '@/hooks/useEnterpriseRunStates'
 
-const stageLabels: Record<string, string> = { pending: '待执行', queued: '等待执行', running: '处理中', waiting: '等待处理', parked: '等待处理', completed: '执行完成', succeeded: '执行完成', failed: '失败', cancelled: '已停止', stopped: '已停止', not_recorded: '未记录', partially_completed: '部分执行完成', skipped: '已跳过' }
+const stageLabels: Record<string, string> = { pending: '待执行', queued: '等待执行', running: '处理中', waiting: '等待处理', parked: '等待中', completed: '执行完成', succeeded: '执行完成', failed: '失败', cancelled: '已停止', stopped: '已停止', not_recorded: '未记录', partially_completed: '部分执行完成', skipped: '已跳过' }
 export function executionDuration(ms: number): string {
   if (ms < 1000) return '不足 1 秒'
   const seconds = Math.floor(ms / 1000)

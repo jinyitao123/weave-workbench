@@ -103,7 +103,7 @@ it.each([
   ['cancelled', '本次团队执行已停止'],
   ['succeeded', '团队执行已完成'],
   ['abandoned', ''],
-  ['parked', '团队正在等待处理'],
+  ['parked', '团队工作当前处于等待状态，等待原因尚未核对'],
 ] as const)('does not suggest renewal for a non-renewable %s run', (status, expected) => {
   const ctx = { ...context(), run: { status, authorization: { status: 'renewal_required', can_renew: false } } }
   const details = workRunDetails({ ...owned, status }, { ...activity(), status }, ctx)
