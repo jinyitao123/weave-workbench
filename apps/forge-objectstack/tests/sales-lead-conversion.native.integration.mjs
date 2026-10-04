@@ -483,9 +483,78 @@ try {
   const exposedAction = enabledActions?.actions?.find(action => action.name === 'sales_lead_convert_to_opportunity');
   assert.ok(exposedAction, 'native MCP must expose the lead action to an explicitly authorized employee');
   assert.notEqual(exposedAction.requiresConfirmation, true, 'turn-scoped employee authorization must not add a second fixed confirmation gate');
+  const catalogAmount = exposedAction.params?.find(param => param.name === 'amount');
+  assert.ok(catalogAmount, `native MCP action catalog must expose the amount input: ${JSON.stringify(exposedAction)}`);
+  assert.equal(catalogAmount.required, true, 'native MCP action catalog marks opportunity amount as required');
+  const leadMetadata = await reader.request('/meta/objects/forge_sales_lead');
+  assert.equal(leadMetadata.status, 200, 'authorized employee can inspect native lead action metadata');
+  const leadMetadataAction = leadMetadata.value?.item?.actions?.find(action => action.name === 'sales_lead_convert_to_opportunity');
+  assert.equal(leadMetadataAction?.params?.find(param => param.field === 'amount')?.required, true,
+    'native ObjectStack metadata preserves the required amount input');
+
+  async function assertNoConversionSideEffects(lead, label) {
+    const current = await read(admin, 'forge_sales_lead', lead.id);
+    const opportunities = await findAll(admin, 'forge_sales_opportunity', { lead_id: lead.id });
+    const customers = await findAll(admin, 'forge_customer', { name: lead.companyName });
+    created.opportunities.push(...opportunities.map(row => row.id));
+    created.customers.push(...customers.map(row => row.id));
+    assert.equal(current.status, 'new', `${label} must leave the source lead new`);
+    assert.equal(current.converted_customer_id || null, null, `${label} must not link a customer`);
+    assert.equal(current.converted_opportunity_id || null, null, `${label} must not link an opportunity`);
+    assert.equal(opportunities.length, 0, `${label} must not create an opportunity`);
+    assert.equal(customers.length, 0, `${label} must not create a customer`);
+  }
+  const missingAmountInputs = [
+    ['missing', {}],
+    ['null', { amount: null }],
+    ['empty', { amount: '' }],
+    ['whitespace', { amount: '   ' }],
+    ['false', { amount: false }],
+    ['true', { amount: true }],
+    ['empty-array', { amount: [] }],
+  ];
+  for (const [label, params] of missingAmountInputs) {
+    const apiLead = await createLead(reader, reader.userId, `API金额${label}`);
+    const apiResult = await invoke(reader, apiLead.id, params);
+    assert.ok(apiResult.status >= 400, `native API must reject ${label} opportunity amount (HTTP ${apiResult.status})`);
+    await assertNoConversionSideEffects(apiLead, `native API ${label} amount`);
+
+    const mcpLead = await createLead(reader, reader.userId, `MCP金额${label}`);
+    const mcpResult = await reader.callMcpTool('run_action', {
+      actionName: 'sales_lead_convert_to_opportunity', objectName: 'forge_sales_lead',
+      recordId: mcpLead.id, params,
+    });
+    assert.equal(mcpResult?.isError, true, `native MCP must reject ${label} opportunity amount`);
+    await assertNoConversionSideEffects(mcpLead, `native MCP ${label} amount`);
+  }
+
+  const projectCategoryIdForZero = await ensureProjectCustomerCategory(admin);
+  assert.ok(projectCategoryIdForZero);
+  const zeroApiLead = await createLead(reader, reader.userId, 'API显式零金额');
+  const zeroApiResponse = await invoke(reader, zeroApiLead.id, { amount: 0 });
+  assert.equal(zeroApiResponse.status, 200, `native API accepts an explicit numeric zero: ${errorMessage(zeroApiResponse)}`);
+  const zeroApiResult = unpack(zeroApiResponse);
+  assert.ok(zeroApiResult?.customer_id && zeroApiResult?.opportunity_id);
+  created.customers.push(zeroApiResult.customer_id);
+  created.opportunities.push(zeroApiResult.opportunity_id);
+  const zeroApiOpportunity = await read(admin, 'forge_sales_opportunity', zeroApiResult.opportunity_id);
+  assert.equal(Number(zeroApiOpportunity.amount), 0, 'native API persists the explicitly supplied zero amount');
+
+  const zeroMcpLead = await createLead(reader, reader.userId, 'MCP显式零金额');
+  const zeroMcpResponse = await reader.callMcpTool('run_action', {
+    actionName: 'sales_lead_convert_to_opportunity', objectName: 'forge_sales_lead',
+    recordId: zeroMcpLead.id, params: { amount: 0 },
+  });
+  assert.notEqual(zeroMcpResponse?.isError, true, 'native MCP accepts an explicit numeric zero');
+  const zeroMcpResult = mcpData(zeroMcpResponse)?.result;
+  assert.ok(zeroMcpResult?.customer_id && zeroMcpResult?.opportunity_id);
+  created.customers.push(zeroMcpResult.customer_id);
+  created.opportunities.push(zeroMcpResult.opportunity_id);
+  const zeroMcpOpportunity = await read(admin, 'forge_sales_opportunity', zeroMcpResult.opportunity_id);
+  assert.equal(Number(zeroMcpOpportunity.amount), 0, 'native MCP persists the explicitly supplied zero amount');
 
   const missingCategoryLead = await createLead(reader, reader.userId, '缺少客户分类');
-  const projectCategoryId = await ensureProjectCustomerCategory(admin);
+  const projectCategoryId = projectCategoryIdForZero;
   const maskedCategory = await admin.request(`/data/forge_customer_category/${projectCategoryId}`, 'PATCH', { code: `CUST-CAT-PROJECT-HIDDEN-${runId}` });
   assert.ok(maskedCategory.status >= 200 && maskedCategory.status < 300, 'test fixture must be able to mask the category through the admin data path');
   let missingCategory;
