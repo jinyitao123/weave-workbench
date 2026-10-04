@@ -216,8 +216,18 @@ function assertContinuationSubmissionAuthorization(context: EnterpriseWorkContin
     && context.run.authorization?.canRenew !== true
   if (context.source.inputStatus === 'current' && scopeReadable
     && (scope.length === 0 || needsNewInput) && isReusableReadOnlyContinuation(context)) return
-  if (context.run.authorization?.status === 'renewal_required' || context.run.authorization?.canRenew) {
+  const authorization = context.run.authorization
+  const canRenewOriginalWork = context.source.inputStatus === 'current' && context.run.status === 'parked'
+    && authorization?.canRenew === true && ['renewal_required', 'active'].includes(authorization.status)
+  if (canRenewOriginalWork) {
     throw new Error('原工作正在等待授权更新，不能用新交接或新输入替代；可安全续办时请继续原工作授权，否则先核对原业务回执')
+  }
+  const terminal = ['succeeded', 'failed', 'cancelled', 'abandoned'].includes(context.run.status)
+  const hasBusinessActionReceipt = context.run.businessResult === 'action_failed' || context.run.businessResult === 'action_unknown'
+    || (Array.isArray(context.run.actionOutcomes) && context.run.actionOutcomes.length > 0)
+  if (context.source.inputStatus === 'current' && terminal && authorization?.status === 'renewal_required'
+    && authorization.canRenew === false && hasBusinessActionReceipt) {
+    throw new Error('原工作已结束且有业务动作回执，需核对 Forge 回执；不能沿旧工作恢复或重放')
   }
   throw new Error('当前团队运行状态、原授权范围或平台动作回执不允许复用原材料或创建新输入，请刷新工作消息并核对原结果')
 }

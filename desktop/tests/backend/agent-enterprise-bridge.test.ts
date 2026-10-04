@@ -945,6 +945,38 @@ describe('employee-bound material handoff', () => {
     expect(f.service.submitWork).not.toHaveBeenCalled()
   })
 
+  it.each([
+    { label: 'completed failure', runStatus: 'succeeded' as const, businessResult: 'action_failed' as const, actionStatus: 'failed' as const },
+    { label: 'failed run with a recorded action', runStatus: 'failed' as const, businessResult: 'action_failed' as const, actionStatus: 'failed' as const },
+    { label: 'unknown action result', runStatus: 'succeeded' as const, businessResult: 'action_unknown' as const, actionStatus: 'unknown' as const },
+  ])('keeps terminal action outcomes read-only on open and blocks a new action request for $label', async ({ label, runStatus, businessResult, actionStatus }) => {
+    const f = await fixture(), parent = completedReadOnlyContext()
+    parent.run.status = runStatus
+    if (runStatus === 'failed') parent.run.finalResult = undefined
+    parent.run.businessResult = businessResult
+    parent.run.actionOutcomes = [{ nodeID: 'convert', callID: 'call-1', actionName: 'convert_lead', objectName: 'sales_lead', status: actionStatus, summary: '平台记录的业务动作结果' }]
+    parent.run.authorization = { status: 'renewal_required', canRenew: false }
+
+    await openWorkContinuation(f, parent, `terminal-action-${label}`)
+    const opening = await f.discover(), actionKey = opening.available_actions[0]!.action_key
+    const openingSubmit = await f.call('submit', { ...opening, business_actions: [actionKey] })
+    expect(openingSubmit.status).toBe(409)
+    expect(openingSubmit.body.error).toContain('打开工作消息只授权查看')
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+    expect(f.service.renewWorkAuthorization).not.toHaveBeenCalled()
+    expect(f.service.runNativeMcpAction).not.toHaveBeenCalled()
+
+    await f.input('本轮明确请求针对当前业务记录提出新的办理要求，不恢复旧团队运行。', `new-action-${label}`)
+    const current = await f.discover(), currentActionKey = current.available_actions[0]!.action_key
+    const rejected = await f.call('submit', { ...current, business_actions: [currentActionKey] })
+    expect(rejected.status).toBe(409)
+    expect(rejected.body.error).toContain('原工作已结束且有业务动作回执，需核对 Forge 回执；不能沿旧工作恢复或重放')
+    expect(f.service.submitWork).not.toHaveBeenCalled()
+    expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+    expect(f.service.renewWorkAuthorization).not.toHaveBeenCalled()
+    expect(f.service.runNativeMcpAction).not.toHaveBeenCalled()
+  })
+
   it.each(['unknown-outcome', 'failed-outcome', 'successful-outcome', 'business-unknown', 'business-failed', 'missing-outcomes', 'missing-scope', 'write-scope'] as const)('rejects active terminal %s sources even with new attachments and no reused files', async (reason) => {
     const f = await fixture(), parent = completedReadOnlyContext()
     parent.source.inputStatus = 'current'
