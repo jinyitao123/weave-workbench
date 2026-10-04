@@ -413,6 +413,64 @@ describe('bootstrap account scope switching', () => {
 })
 
 describe('inactive harness event isolation', () => {
+  it('does not let a retired runtime finish the session owned by its replacement', async () => {
+    let handler!: (payload: { runtimeId: string; event: Record<string, unknown> }) => void
+    const bridge = {
+      agent: { onEvent: (callback: typeof handler) => { handler = callback; return () => undefined } },
+    } as unknown as PrimeWorkApi
+    const retiredRuntime = { ...primeRuntime, runtimeId: 'retired-prime-runtime' }
+    const currentRuntime = { ...primeRuntime, runtimeId: 'current-prime-runtime' }
+    const runtimeIdRef = { current: currentRuntime.runtimeId as string | null }
+    const runtimeSessionsRef = { current: new Map([
+      [retiredRuntime.runtimeId, primeSession.filePath],
+      [currentRuntime.runtimeId, primeSession.filePath],
+    ]) }
+    const runtimeOwnerRef = { current: { runtimeId: currentRuntime.runtimeId, generation: 1 } }
+    const workspaceRef = { current: { generation: 1, project: primeProject, session: primeSession, cwd: primeProject.path, sessionFile: primeSession.filePath } }
+    const queueAgentEvent = vi.fn()
+    const reconcileTranscriptForEvent = vi.fn()
+    let renderedSessions: SessionRecord[] = []
+    let renderedRuntime: RuntimeInfo | null = null
+
+    function RuntimeEventsProbe() {
+      const [sessions, setSessions] = useState([primeSession])
+      const [runtime, setRuntime] = useState<RuntimeInfo | null>(currentRuntime)
+      renderedSessions = sessions
+      renderedRuntime = runtime
+      useAgentEvents({
+        bridge,
+        runtimeIdRef,
+        runtimeSessionsRef,
+        runtimeOwnerRef,
+        workspaceRef,
+        setSessions,
+        setRuntime,
+        queueAgentEvent,
+        reconcileTranscriptForEvent,
+        showExtensionUi: vi.fn(),
+        clearExtensionUi: vi.fn(),
+        refreshGit: vi.fn(async () => undefined),
+        refreshGitOnTerminalEvent: false,
+        activeSessionVisible: true,
+      })
+      return <Probe />
+    }
+
+    await act(async () => { root.render(<RuntimeEventsProbe />) })
+    act(() => { handler({ runtimeId: currentRuntime.runtimeId, event: { type: 'agent_start' } }) })
+    expect(renderedSessions[0]).toMatchObject({ status: 'running' })
+    expect(renderedRuntime).toMatchObject({ runtimeId: currentRuntime.runtimeId, isStreaming: true })
+
+    // Both runtime ids are still mapped to this file while the old runtime is retiring.
+    // Its late terminal event must not overrule the replacement's live turn.
+    act(() => { handler({ runtimeId: retiredRuntime.runtimeId, event: { type: 'agent_end' } }) })
+
+    expect(renderedSessions[0]).toMatchObject({ status: 'running' })
+    expect(renderedRuntime).toMatchObject({ runtimeId: currentRuntime.runtimeId, isStreaming: true })
+    expect(queueAgentEvent).toHaveBeenCalledTimes(1)
+    expect(reconcileTranscriptForEvent).toHaveBeenCalledTimes(1)
+  })
+
   it('keeps events from the other harness runtime away from visible state', async () => {
     let handler!: (payload: { runtimeId: string; event: Record<string, unknown> }) => void
     const bridge = {
@@ -450,11 +508,16 @@ describe('inactive harness event isolation', () => {
       handler({ runtimeId: primeRuntime.runtimeId, event: { type: 'message_update', assistantMessageEvent: { type: 'text_delta', delta: 'x' } } })
       handler({ runtimeId: primeRuntime.runtimeId, event: { type: 'agent_end' } })
     })
-    // Lifecycle updates only touch records whose filePath matches; the visible
-    // The Prime event does not alter the active Pi session list.
+    // The Prime event leaves the active Pi session unchanged while its mapped
+    // background session still receives lifecycle updates.
     for (const [updater] of setSessions.mock.calls) {
       expect((updater as (sessions: SessionRecord[]) => SessionRecord[])([piSession])).toEqual([piSession])
     }
+    const backgroundPrimeSession = setSessions.mock.calls.reduce(
+      (items, [updater]) => (updater as (sessions: SessionRecord[]) => SessionRecord[])(items),
+      [primeSession],
+    )
+    expect(backgroundPrimeSession[0]).toMatchObject({ status: 'complete' })
     expect(setRuntime).not.toHaveBeenCalled()
     expect(queueAgentEvent).not.toHaveBeenCalled()
     expect(reconcileTranscriptForEvent).not.toHaveBeenCalled()

@@ -93,7 +93,7 @@ export function workRunDetails(owned: WorkbenchRunLookup, rawActivity: unknown, 
   } else if (context.run.status === 'cancelled') explanation = '本次团队执行已停止。已发生的业务动作仍以业务系统中的记录为准。'
   else if (context.run.status === 'succeeded' && context.run.businessResult !== 'needs_input') explanation = '团队执行已完成；正式业务结果以业务系统中的记录为准。'
   else if (context.run.businessResult === 'needs_input') explanation = '本次检查需要补充材料或说明，补齐后可从原工作继续。'
-  else if (context.run.status === 'parked') explanation = '团队正在等待处理，请从“我的工作”查看具体事项。'
+  else if (context.run.status === 'parked') explanation = '团队工作当前处于等待状态，等待原因尚未核对。'
   if (summary?.excerpt) explanation += `${explanation ? ' ' : ''}这里只展示部分检查意见；完整结果请从“我的工作”的原工作消息查看。`
   return {
     runId: owned.runId, status: context.run.status,

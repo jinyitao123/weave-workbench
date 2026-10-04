@@ -201,7 +201,9 @@
 
 `team-run-event.schema.json` 是平台自动连接团队运行与员工收件箱的写入契约。调用者固定为 Weave 服务，不是团队成员或模型工具；Forge 以部署级服务凭据验证调用方，并把 `assigneeAccountId` 作为现有 ObjectStack 账号解析，不能由模型猜测接收人。事件只承载运行结果、失败、取消、需要补充或人工步骤的摘要及返回桌面的定位信息，不执行合同提交、审批或其他业务动作。
 
-团队需要给员工明确列出缺项时，开发者在同一工作流声明可选的 `result_protocol: "workbench_result_v1"`，并把最终交付来源节点的 `output` 与工作流 `output_contract` 配为 [team-run-result](team-run-result.schema.json) 对应的 `type: "json"` 与同一 `schema`。未声明的旧团队继续交付原有文本。Weave 必须用发布时冻结的图定义和现有 `NodeDeliver` 校验结果；`disposition` 只取 `complete` 或 `needs_input`，`summary` 去空白后为 1–1000 字符，`missing_items` 最多 8 项、每项去空白后 1–200 字符；`needs_input` 至少有一项缺项，`complete` 必须为空。模型正文或文件中的相似文字不能改变分类。
+团队需要给员工明确列出缺项时，开发者在同一工作流声明可选的 `result_protocol: "workbench_result_v1"`，并把最终交付来源节点的 `output` 与工作流 `output_contract` 配为 `type: "json"`，其 `schema` 均取 [team-run-result](team-run-result.schema.json) 的 `$defs.frozen_node_shape` 基础形状并保持一致；该文件顶层是最终规范化结果的完整校验，不直接传入固定执行schema解析器。未声明的旧团队继续交付原有文本。Weave 必须用发布时冻结的图定义和现有 `NodeDeliver` 校验结果；`disposition` 只取 `complete` 或 `needs_input`，`summary` 去空白后为 1–1000 个 Unicode 字符，`missing_items` 最多 8 项、每项去空白后 1–200 个 Unicode 字符；`needs_input` 至少有一项缺项，`complete` 必须为空。模型正文或文件中的相似文字不能改变分类。
+
+固定执行schema仍只表达既有三字段形状；`minLength/maxLength/pattern/if/then` 等完整约束通过协议派生到provider可见输出契约及本地Normalize校验，不改冻结声明。旧冻结 schema 缺少限制时，叠加本协议原有约束，不改写已发布记录、不放宽其更严格规则。最终文本不合约时，只能沿已有有界结构化输出校正机制修正文案，校正轮不得再次调用业务工具；已经成功的业务回执保留原事实。超限等诊断只记录有界字段路径、约束与观测长度，不记录全文、不静默截断。该约定是本轮修复目标，是否实现及真实通过另见场景与环境证据。
 
 `needs_input` 表示**尚未形成正式业务结果的团队检查已结束，等待原员工补材料再发起关联的新轮次**；Weave 运行仍以真实终态 `succeeded` 记录，不新增运行状态或内部人工等待节点。经校验的分类及缺项随同一次最终交付物保存，原有终态 outbox 对同一运行只生成一条 `revision_required` 消息；员工打开后由本人权限读取原固定输入、材料、父工作与结构化缺项，不从通知正文猜测。`complete` 仍生成普通 `result`。若本轮存在失败或结果未知的 Forge 业务动作，动作事实优先展示并要求核对，不得因团队给出 `complete` 或 `needs_input` 就宣称业务完成或自动重放。正式审批退回仍由 Forge 原生业务事项办理，不使用这个团队结果分类。 若本次运行已有权威记录的成功 Forge 业务动作，团队的 `needs_input` 和缺项仅作为检查意见交付；终态事件使用现有 `result`，桌面不再从它产生团队补材料待办。下一步正式业务事项由 Forge 决定。旧通知保持原生记录不变，桌面只在按当前账号、准确来源引用读回的动作事实明确包含成功时抑制该补材料投影；读取失败或事实缺失不得当成成功。消息打开后仍分开说明动作回执、团队意见与当前 Forge 状态，不要求员工重复提交已进入正式流程的材料。
 
@@ -395,8 +397,22 @@ Weave对Forge投递人工等待及终态事件时，组织取固定输入登记�
 
 工作上下文 `source.input_status=current|superseded|closed` 和可选 `superseded_by_input_revision_id` 由同workspace/user且准确root/parent工作链的已接受输入确定。只有确认同工作链取代关系时，桌面才退出旧needs_input待办投影；同会话的无关新工作、closed状态或读取失败不证明已办。原通知、原动作事实及Forge业务状态不修改。
 
+### 并行成员读取冻结材料
+
+父运行处于等待并行成员的 `parked/fanout` 时，仅允许本父运行登记的当前并行子任务读取原输入授权的准确材料。必须同时核对父运行、输入、工作流版本、并行组／分支、代际、当前任务租约及同一员工主体；其他等待、无关子任务、取消或终态运行一律拒绝。此规则不增加材料或业务动作授权。缺少工具或读取失败须明确停止事实判断，不编造原文；运行结束不能代替资料核验。当前实现与真人证据见销售订单场景主文档。
+
 ## 原生本人收件箱分页连接
 
 ObjectStack 17.3原生notifications只能返回最多200行，未接受offset/cursor；审批原生limit/offset+total已可分页。本轮只为该已核实缺口增加 `GET /api/v1/apps/forge/workbench/inbox`，复用sys_inbox_message和sys_notification_receipt，身份取原生当前员工并实时核验绑定组织的有效成员资格，不接受目标user/org，不另存通知或待办。
 
 请求 `limit`（1–200，默认100）及可选 `cursor`。返回 `version="1"`、`notifications`（id/type/title/body/read/actionUrl/createdAt，与原生投影相同）、`next_cursor`（结束时null）、`has_more`；按created_at与id稳定降序进行keyset分页，游标绑定账号、组织和第一页边界，拒绝跨账号/组织复用及损坏游标。只读原生收件箱；read状态由同本人、同notification、inbox channel的原生receipt决定。页失败或无法证明完整时保留可见部分和来源错误，不能宣称完整或空待办。
+
+### 订单发起人查看与原生撤回
+
+审批投影客户端通过 `includeSubmitted=1` 明确请求当前账号提交、仍待审批的销售订单，列表 `mode=submitted`。它只复用原生审批请求和 `viewer.is_submitter`，不保存平行事项；桌面放在“我发起的审批”，不计入“待我处理”。旧客户端未声明该参数时继续只读 `approval/revision`。
+
+发起人的订单上下文为 `status=pending/viewer=original_submitter`，只暴露 `semantic=recall`，仍绑定当前审批请求、记录、原件版本和原生事项版本。执行要求当前认证账号确为原提交人、组织一致、请求仍未决定，以及本轮明确撤回原因；调用原生 `ApprovalService.recall`，不直接写订单状态。成功回执必须同时为 `decision=recall/status=recalled/businessStatus=cancelled`，取消订单、解除预收绑定与保留原流水由同一领域应用完成。
+
+原生撤回已持久化但流程恢复失败时，Forge 根据同组织、同提交人、同冻结订单摘要的原生结论幂等核对领域结果；清理失败返回 `IN_DOUBT`，本人原有“核对并完成订单”事项继续提供恢复。`resumed` 如实保留流程恢复结果，不能替代业务结果。重复核对已有历史与业务结果，返回 `history_observed/decision=unknown`，不声称精确回执重放。审批并发、旧版本或结果未知时先核对原生历史，不能换动作或重发。
+
+同一规则覆盖订单的原生同意与拒绝：即使挂起流程丢失、订单尚未镜像 `approval_outcome`，也只从同组织、同提交人、同冻结摘要且唯一的原生终态恢复，不能重放审批决定。订单同意成功回执须同时为 `decision=approve/status=approved/businessStatus=active`，拒绝须同时为 `decision=reject/status=rejected/businessStatus=cancelled`；未确认业务终态不向员工声称办理完成。领域应用失败保留原生决定及预收绑定、合同累计的原子状态，返回 `IN_DOUBT`，经办人继续通过原有订单核对事项恢复。恢复不得重新登记或退款，不创建第二套结果来源；仍有同版本待处理审批、多条终态或版本不匹配时不可恢复。当前正式订单为单节点独立复核，多节点最终结论绑定须另行定义，不能推断整条流程已完成。组件证据与真实桌面未验项见[销售订单场景](../../scenarios/sales-order-handoff/销售订单闭环场景设计.md#本机组件证据与限制)。

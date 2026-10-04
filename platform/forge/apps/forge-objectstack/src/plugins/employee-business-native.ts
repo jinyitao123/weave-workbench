@@ -1,8 +1,11 @@
 import type { PluginContext } from '@objectstack/core';
 import { HttpDispatcher } from '@objectstack/runtime';
 import type { ExecutionContext } from '@objectstack/spec/kernel';
+import type { IObjectQLEngine } from '@objectstack/spec/contracts';
 import { businessActionPolicy } from './business-action-policy.js';
 import { canonicalJSON, digest, TaskConnectionFailure } from './native-task-auth.js';
+import { completedOrderApproval } from './sales-order-readiness.js';
+import { businessContext } from './business-transaction.js';
 
 export type BusinessRow = Record<string, unknown>;
 export interface EmployeeParameter {
@@ -28,7 +31,7 @@ export function businessRow(value: unknown): BusinessRow | undefined {
 export class EmployeeNativeActions {
   readonly bridge: NativeEmployeeBridge;
   private readonly sdk: HttpDispatcher;
-  constructor(context: PluginContext, readonly actor: ExecutionContext) {
+  constructor(private readonly context: PluginContext, readonly actor: ExecutionContext) {
     this.sdk = new HttpDispatcher(context.getKernel() as ConstructorParameters<typeof HttpDispatcher>[0]);
     this.bridge = this.sdk.buildMcpBridge({ request: { method: 'POST', url: '/api/v1/mcp', headers: {} }, executionContext: actor }) as NativeEmployeeBridge;
   }
@@ -108,6 +111,12 @@ export class EmployeeNativeActions {
   }
 
   async employeeActions(objectName: string, record?: BusinessRow): Promise<EmployeeAction[]> {
+    let relevantRecord = record;
+    if (objectName === 'forge_sales_order' && record?.status === 'pending_approval' && record.responsible_id === this.actor.userId && this.actor.tenantId) {
+      const outcome = await completedOrderApproval(this.context.getService<IObjectQLEngine>('objectql'), record, businessContext(this.actor.userId!, this.actor.tenantId));
+      // A mirrored field alone is not authority for offering recovery.
+      relevantRecord = { ...record, approval_outcome: outcome ?? 'pending' };
+    }
     const native = (await this.bridge.listActions()).filter(a => a.objectName === objectName
       && businessActionPolicy(objectName, String(a.name)).executionMode === 'employee_only'
       // Native approval decisions retain their existing version-bound route.
@@ -115,7 +124,7 @@ export class EmployeeNativeActions {
     const metadata = await this.metadata(objectName), definitions = metadata.actions as BusinessRow[] | undefined;
     const result: EmployeeAction[] = [];
     for (const action of native) {
-      if (record && !employeeActionRelevant(String(action.name), record, this.actor.userId)) continue;
+      if (relevantRecord && !employeeActionRelevant(String(action.name), relevantRecord, this.actor.userId)) continue;
       const definition = definitions?.find(d => d.name === action.name);
       if (!definition) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_METADATA_UNAVAILABLE', '当前动作声明不可核验');
       const parameters = await this.parameters(objectName, definition, metadata);
@@ -139,7 +148,7 @@ function employeeActionRelevant(name: string, row: BusinessRow, actor?: string):
     case 'contract_register_signature': return row.status === 'active' && !row.signed_on && row.responsible_id !== actor && ['none', 'prepayment'].includes(String(row.order_payment_requirement));
     case 'contract_convert_to_sales_order':
     case 'contract_register_customer_prepayment': return row.status === 'active' && !!row.signed_on && !!row.signed_evidence_attachment;
-    case 'sales_order_apply_completed_approval': return row.status === 'pending_approval' && row.responsible_id === actor && ['approved', 'rejected'].includes(String(row.approval_outcome));
+    case 'sales_order_apply_completed_approval': return row.status === 'pending_approval' && row.responsible_id === actor && ['approved', 'rejected', 'recalled'].includes(String(row.approval_outcome));
     case 'sales_order_submit': return row.status === 'draft' && row.responsible_id === actor;
     case 'customer_prepayment_confirm': return row.status === 'pending_confirmation' && row.registered_by !== actor && (!row.confirmation_reviewer_id || row.confirmation_reviewer_id === actor);
     default: return false;

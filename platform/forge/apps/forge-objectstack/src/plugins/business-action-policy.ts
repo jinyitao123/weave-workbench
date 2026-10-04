@@ -20,6 +20,7 @@ const EMPLOYEE_ONLY = new Set([
   'forge_sales_order.sales_order_apply_completed_approval',
   'forge_sales_order.order_approval_mcp_approve',
   'forge_sales_order.order_approval_mcp_reject',
+  'forge_sales_order.order_approval_mcp_recall',
   'forge_sales_order.sales_order_approve',
   'forge_sales_order.approval_work_item_approve',
   'forge_sales_order.approval_work_item_send_back',

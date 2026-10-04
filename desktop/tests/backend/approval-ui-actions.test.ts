@@ -1,26 +1,32 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { EnterpriseApprovalContext } from '../../src/types/api'
 import { approvalUiChoices, completeViewedApproval, type ApprovalUiAttempt } from '../../electron/main/enterprise/approval-ui-actions'
+import { currentItemContextFingerprint } from '../../electron/main/enterprise/approval-context-binding'
+import { digest } from '../../electron/main/enterprise/handoff-store'
 
-function fixture(semantic = 'reject', objectName = 'forge_sales_order') {
+function fixture(semantic = 'reject', objectName = 'forge_sales_order', viewer: EnterpriseApprovalContext['viewer'] = 'current_approver') {
   const context: EnterpriseApprovalContext = {
-    requestId: 'approval-current', status: 'pending', viewer: 'current_approver', title: '当前审批', step: '员工复核',
+    requestId: 'approval-current', status: 'pending', viewer, title: '当前审批', step: '员工复核',
     businessObject: { objectName, recordId: 'record-current' }, sourceMaterialVersion: 'a'.repeat(64), fields: [], files: [],
-    availableActions: [{ semantic, label: semantic === 'reject' ? '拒绝订单' : semantic === 'revise' ? '退回修改' : '同意', description: '当前原生动作',
-      execution: { tool: 'run_action', actionName: `native_${semantic}`, objectName, recordId: 'record-current', params: { approvalRequestId: 'approval-current', itemVersion: 'item-before', sourceMaterialVersion: 'a'.repeat(64) } },
+    availableActions: [{ semantic, label: semantic === 'recall' ? '撤回订单审批' : semantic === 'reject' ? '拒绝订单' : semantic === 'revise' ? '退回修改' : '同意', description: '当前原生动作',
+      execution: { tool: 'run_action', actionName: semantic === 'recall' ? 'order_approval_mcp_recall' : `native_${semantic}`, objectName, recordId: 'record-current', params: { approvalRequestId: 'approval-current', itemVersion: 'item-before', sourceMaterialVersion: 'a'.repeat(64) } },
       inputs: [{ name: 'comment', type: 'string', label: '意见', required: true }],
     }],
   }
-  const result = { decision: semantic, status: semantic === 'reject' ? 'rejected' : semantic === 'revise' ? 'returned' : 'approved',
+  const result = { decision: semantic, status: semantic === 'recall' ? 'recalled' : semantic === 'reject' ? 'rejected' : semantic === 'revise' ? 'returned' : 'approved',
     requestId: context.requestId, recordId: context.businessObject.recordId, itemVersion: 'item-before', sourceMaterialVersion: context.sourceMaterialVersion,
+    ...(semantic === 'recall' || semantic === 'reject' && objectName === 'forge_sales_order' ? { businessStatus: 'cancelled' }
+      : semantic === 'approve' && objectName === 'forge_sales_order' ? { businessStatus: 'active' } : {}),
     resumed: true, autoRejected: false, alreadyApplied: false }
   const service = { getApprovalContext: vi.fn(async () => structuredClone(context)), runNativeMcpAction: vi.fn(async () => ({ status: 'returned' as const, result })) }
   const view = approvalUiChoices(context)
-  const payload = { actionRef: view.actions![0].actionRef, actionVersion: view.actionVersion!, comment: '本人明确的本次意见' }
+  const action = context.availableActions![0]!
+  const payload = { actionRef: view.actions?.[0]?.actionRef ?? digest(JSON.stringify(action)), actionVersion: view.actionVersion ?? currentItemContextFingerprint(context), comment: '本人明确的本次意见' }
   const attempts = new Map<string, ApprovalUiAttempt>()
   const assertCurrent = vi.fn()
-  const run = (input: Record<string, unknown> = payload) => completeViewedApproval(service, context.requestId, 'forge:approval:approval-current', 'employee-a', input, attempts, assertCurrent)
-  return { context, service, view, payload, result, attempts, assertCurrent, run }
+  const runId = viewer === 'original_submitter' ? 'forge:submitted:approval-current' : 'forge:approval:approval-current'
+  const run = (input: Record<string, unknown> = payload) => completeViewedApproval(service, context.requestId, runId, 'employee-a', input, attempts, assertCurrent)
+  return { context, service, view, payload, result, attempts, assertCurrent, run, runId }
 }
 
 describe('work page native approval actions', () => {
@@ -41,6 +47,35 @@ describe('work page native approval actions', () => {
     })
     expect(await f.run()).toHaveProperty('runId')
     expect(f.service.getApprovalContext).toHaveBeenCalledOnce()
+  })
+  it('uses only the frozen recall directory for a pending order submitter', async () => {
+    const f = fixture('recall', 'forge_sales_order', 'original_submitter')
+    expect(f.view.actions).toEqual([{ actionRef: f.payload.actionRef, semantic: 'recall', label: '撤回订单审批' }])
+    expect(await f.run()).toEqual({ runId: 'forge:submitted:approval-current', repeated: false })
+    expect(f.service.runNativeMcpAction).toHaveBeenCalledWith({ actionName: 'order_approval_mcp_recall', objectName: 'forge_sales_order', recordId: 'record-current',
+      params: { approvalRequestId: 'approval-current', itemVersion: 'item-before', sourceMaterialVersion: 'a'.repeat(64), comment: f.payload.comment } }, expect.any(Function))
+  })
+  it('keeps a submitter recall bound to the displayed item version and never repeats an unknown result', async () => {
+    const stale = fixture('recall', 'forge_sales_order', 'original_submitter')
+    await expect(stale.run({ ...stale.payload, actionVersion: 'c'.repeat(64) })).rejects.toThrow('版本已变化')
+    expect(stale.service.runNativeMcpAction).not.toHaveBeenCalled()
+
+    const unknown = fixture('recall', 'forge_sales_order', 'original_submitter')
+    unknown.result.status = 'cancelled'
+    await expect(unknown.run()).rejects.toThrow('结果仍待核对')
+    await expect(unknown.run()).rejects.toThrow('结果仍待核对')
+    expect(unknown.service.runNativeMcpAction).toHaveBeenCalledOnce()
+  })
+  it('does not expose or execute recall for an approver or a non-order submitter', async () => {
+    const reviewer = fixture('recall', 'forge_sales_order')
+    expect(reviewer.view.actions).toEqual([])
+    await expect(reviewer.run()).rejects.toThrow('无权执行此审批动作')
+    expect(reviewer.service.runNativeMcpAction).not.toHaveBeenCalled()
+
+    const otherSubmitter = fixture('recall', 'forge_sales_contract', 'original_submitter')
+    expect(otherSubmitter.view.actions).toBeUndefined()
+    await expect(otherSubmitter.run()).rejects.toThrow('无权执行此审批动作')
+    expect(otherSubmitter.service.runNativeMcpAction).not.toHaveBeenCalled()
   })
   it('refuses stale displayed versions, unknown references, injected targets and empty opinions before native execution', async () => {
     const f = fixture()

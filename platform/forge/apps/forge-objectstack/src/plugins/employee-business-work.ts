@@ -4,7 +4,7 @@ import { canonicalJSON, digest, nativeEmployee, nonempty, service, verifyNativeC
 import { businessContext } from './business-transaction.js';
 import { effectivePositionUsers } from './business-position-resolution.js';
 import { EmployeeNativeActions, businessRow, type BusinessRow } from './employee-business-native.js';
-import { confirmedContractPrepayments, requiredPrepayment } from './sales-order-readiness.js';
+import { confirmedContractPrepayments, requiredPrepayment, completedOrderApproval } from './sales-order-readiness.js';
 
 type Kind = 'contract_order_conditions' | 'contract_signature' | 'contract_prepayment' | 'prepayment_confirmation' | 'sales_order_creation' | 'sales_order_submission';
 const sources: Array<{ object: string; kinds: Kind[]; where: BusinessRow }> = [
@@ -64,7 +64,7 @@ export async function readEmployeeBusinessWork(context: PluginContext, request: 
         if (items.length >= limit) break;
         after = String(row.id); scanned++;
         if (source.object === 'forge_sales_order') {
-          if (row.status !== 'draft' && !['approved', 'rejected'].includes(String(row.approval_outcome))) continue;
+          if (row.status !== 'draft' && !await completedOrderApproval(engine, row, system)) continue;
           if (row.responsible_id === employee.userId) await add(row, source.object, 'sales_order_submission', row.status === 'draft' ? '提交订单复核' : '核对并完成订单', await candidates('sales_order_operator'), employee.userId);
         } else if (source.object === 'forge_customer_prepayment') {
           await add(row, source.object, 'prepayment_confirmation', '独立确认预收款', await candidates('finance_reviewer', nonempty(row.registered_by)), nonempty(row.confirmation_reviewer_id));

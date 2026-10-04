@@ -668,6 +668,29 @@
         "lines_added": 30,
         "production_lines_added": 0
       }
+    },
+    {
+      "date": "2026-10-03",
+      "source_commit": "e3da73e124a6121bbfb22c3e8f435a138199dec1",
+      "reason": "Reviewed Workbench result semantic limits and bounded final-text correction after a real 1033-codepoint result exceeded the existing 1000-codepoint protocol. Preserve the frozen local schema, enrich the provider-facing contract, reuse the existing Loom completion loop and block tool replay during correction including PostgreSQL checkpoints across four distinct processes. Replace the superseded same-process store test with the stronger subprocess test. Exact measured kernel growth only: 133 production and 726 test lines, no new packages, dependencies, loops, queues, spare allowance or changed original migration targets.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 101214,
+        "previous_production_lines": 83053,
+        "lines_added": 859,
+        "production_lines_added": 133
+      }
+    },
+    {
+      "date": "2026-10-04",
+      "reason": "Reviewed exact growth for current parked-fanout material reads and preservation of the conditional runtime-host BuildWithLLM capability. Reuse the current claimed task, parent wait, fanout intent/group/leg, yielded marker and original frozen input delegation; no new scope, queue, retry loop or terminal authority. PostgreSQL regressions activate and claim both actual fanout legs, reject isolated invalid scope and lease states, and preserve ordinary running reads. Exact kernel growth: 232 production and 595 test lines, no spare allowance, new packages or external dependencies; original migration targets unchanged.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 102073,
+        "previous_production_lines": 83186,
+        "lines_added": 827,
+        "production_lines_added": 232
+      }
     }
   ],
   "migration_targets": {
@@ -705,8 +728,8 @@
     ]
   },
   "kernel": {
-    "lines": 101214,
-    "production_lines": 83053,
+    "lines": 102900,
+    "production_lines": 83418,
     "packages": 49,
     "external_dependencies": 5,
     "allowed_dependencies": [

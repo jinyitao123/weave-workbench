@@ -28,9 +28,17 @@ export async function completeViewedApproval(
   }
   const context = await service.getApprovalContext(requestId)
   assertCurrent()
-  if (context.status !== 'pending' || context.viewer !== 'current_approver' || currentItemContextFingerprint(context) !== version) throw new Error('当前审批版本已变化，请重新查看材料与办理目录')
+  if (context.status !== 'pending' || currentItemContextFingerprint(context) !== version) throw new Error('当前审批版本已变化，请重新查看材料与办理目录')
   const action = context.availableActions?.find((item) => item.semantic && digest(JSON.stringify(item)) === actionRef)
   if (action?.inputs.length !== 1) throw new Error('该动作不属于当前审批的可办理目录')
+  const isReviewerAction = context.viewer === 'current_approver'
+    && (action.semantic === 'approve' || action.semantic === 'reject' || action.semantic === 'revise')
+  const isSubmitterRecall = context.viewer === 'original_submitter'
+    && context.businessObject.objectName === 'forge_sales_order'
+    && context.availableActions?.length === 1
+    && action.semantic === 'recall'
+    && action.execution.actionName === 'order_approval_mcp_recall'
+  if (!isReviewerAction && !isSubmitterRecall) throw new Error('当前员工无权执行此审批动作')
   // A concurrent read may have yielded to another click before this reservation.
   const raced = attempts.get(key)
   if (raced) {

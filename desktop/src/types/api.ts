@@ -347,7 +347,7 @@ export interface EnterpriseHumanTask {
   audience?: string
   updatedAt: string
   source?: 'weave' | 'forge'
-  mode?: 'human_step' | 'approval' | 'revision'
+  mode?: 'human_step' | 'approval' | 'revision' | 'submitted'
   materialLabel?: string
 }
 
@@ -531,6 +531,8 @@ export interface EnterpriseWorkOverview {
   loadedAt: string
   choices: EnterpriseWorkChoice[]
   tasks: EnterpriseHumanTask[]
+  /** Pending sales-order approvals submitted by the current employee; recall is optional, not a to-do. */
+  submittedApprovals?: EnterpriseHumanTask[]
   items: EnterpriseWorkItem[]
   runs: EnterpriseRunObservation[]
   reads: {

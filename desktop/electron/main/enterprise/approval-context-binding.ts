@@ -13,10 +13,24 @@ export function currentItemContextFingerprint(context: EnterpriseApprovalContext
 }
 
 export function approvalUiChoices(context: EnterpriseApprovalContext): Pick<EnterpriseApprovalContextView, 'actionVersion' | 'actions'> {
-  if (context.status !== 'pending' || context.viewer !== 'current_approver' || context.availableActions === undefined) return {}
+  if (context.status !== 'pending' || context.availableActions === undefined) return {}
+  const actions = context.viewer === 'current_approver'
+    ? context.availableActions.filter((action) => action.semantic === 'approve' || action.semantic === 'reject' || action.semantic === 'revise')
+    : context.viewer === 'original_submitter'
+      && context.businessObject.objectName === 'forge_sales_order'
+      && context.availableActions.length === 1
+      && context.availableActions[0]?.semantic === 'recall'
+      && context.availableActions[0]?.execution.actionName === 'order_approval_mcp_recall'
+        ? context.availableActions
+        : []
+  if (!actions.length) {
+    return context.viewer === 'current_approver'
+      ? { actionVersion: currentItemContextFingerprint(context), actions: [] }
+      : {}
+  }
   return {
     actionVersion: currentItemContextFingerprint(context),
-    actions: context.availableActions.filter((action) => Boolean(action.semantic)).map((action) => ({
+    actions: actions.map((action) => ({
       actionRef: digest(JSON.stringify(action)), semantic: action.semantic!, label: action.label,
     })),
   }

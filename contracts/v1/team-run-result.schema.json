@@ -2,13 +2,89 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://workbench.inocube.local/contracts/v1/team-run-result.schema.json",
   "title": "Workbench structured team inspection result",
-  "description": "Optional final output shape for a team that can finish this run by requesting more employee input. This result is not a Forge business approval or a new TeamRun terminal state.",
+  "description": "Normalized final Workbench result including semantic bounds. For frozen workflow node declarations, extract $defs.frozen_node_shape rather than passing advanced validation keywords to the executable fixed-schema parser. This result is not a Forge business approval or a new TeamRun terminal state.",
+  "$defs": {
+    "frozen_node_shape": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["disposition", "summary", "missing_items"],
+      "properties": {
+        "disposition": { "type": "string", "enum": ["complete", "needs_input"] },
+        "summary": { "type": "string" },
+        "missing_items": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  },
   "type": "object",
   "additionalProperties": false,
-  "required": ["disposition", "summary", "missing_items"],
+  "required": [
+    "disposition",
+    "summary",
+    "missing_items"
+  ],
   "properties": {
-    "disposition": { "type": "string", "enum": ["complete", "needs_input"] },
-    "summary": { "type": "string" },
-    "missing_items": { "type": "array", "items": { "type": "string" } }
-  }
+    "disposition": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "needs_input"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "pattern": "[^\t-\r \u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]"
+    },
+    "missing_items": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200,
+        "pattern": "[^\t-\r \u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "needs_input"
+          }
+        },
+        "required": [
+          "disposition"
+        ]
+      },
+      "then": {
+        "properties": {
+          "missing_items": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "complete"
+          }
+        },
+        "required": [
+          "disposition"
+        ]
+      },
+      "then": {
+        "properties": {
+          "missing_items": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ]
 }

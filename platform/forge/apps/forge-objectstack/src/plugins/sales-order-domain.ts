@@ -3,7 +3,7 @@ import type { ActionHandlerContext } from '@objectstack/spec/ui';
 import type { ExecutionContext } from '@objectstack/spec/kernel';
 import { businessContext, businessDriver, lockBusinessRow } from './business-transaction.js';
 import { requireUniquePositionUser, effectivePositionUsers } from './business-position-resolution.js';
-import { assertContractOrderReady, calendarDate, moneyValue, requiredPrepayment, roundedMoney, salesOrderDigest, type OrderRow } from './sales-order-readiness.js';
+import { assertContractOrderReady, calendarDate, moneyValue, requiredPrepayment, roundedMoney, salesOrderDigest, matchesOrderApprovalSnapshot, type OrderRow } from './sales-order-readiness.js';
 import { digest, nonempty, TaskConnectionFailure } from './native-task-auth.js';
 
 type Handler = ActionHandlerContext<Record<string, unknown>> & { recordLoadDenied?: boolean };
@@ -96,11 +96,12 @@ export async function registerContractSignature(engine: IObjectQLEngine, storage
 export async function createSalesOrder(engine: IObjectQLEngine, ctx: Handler) {
   const who = caller(ctx), code = text(ctx.params.code, '订单编号', 100), name = text(ctx.params.name, '订单名称', 255);
   const planned = calendarDate(ctx.params.planned_delivery_on, '计划交货日期'), term = text(ctx.params.payment_term, '付款条件', 255);
-  const method = text(ctx.params.payment_method, '付款方式', 80), address = String(ctx.params.delivery_address ?? '');
+  const method = text(ctx.params.payment_method, '付款方式', 80);
   businessDriver(engine, ['forge_sales_contract', 'forge_sales_order', 'forge_sales_order_line', 'forge_customer_prepayment']);
   return engine.transaction(async transaction => {
     await lockBusinessRow(engine, 'forge_sales_contract', who.recordId, who.organizationId, transaction);
     const contract = await get(engine, 'forge_sales_contract', who.recordId, who.organizationId, transaction);
+    const address = String(ctx.params.delivery_address ?? contract.delivery_address ?? '');
     await requirePosition(engine, who.organizationId, 'sales_order_operator', who.actorId, transaction);
     const prior = await engine.findOne('forge_sales_order', { where: { code, organization_id: who.organizationId } }, { context: transaction });
     if (prior) {
@@ -273,47 +274,78 @@ export async function registerContractPrepayment(engine: IObjectQLEngine, storag
 /** Native approval owns its decision. Only this transaction activates the
  * reviewed business snapshot and advances the contract counters together. */
 export async function applySalesOrderApproval(engine: IObjectQLEngine, recordId: string, organizationId: string) {
-  businessDriver(engine, ['forge_sales_order', 'forge_sales_contract', 'forge_sales_contract_line', 'forge_sales_order_line', 'forge_customer_prepayment']);
-  return engine.transaction(async transaction => {
-    const initial = await get(engine, 'forge_sales_order', recordId, organizationId, transaction);
-    if (initial.contract_id) await lockBusinessRow(engine, 'forge_sales_contract', String(initial.contract_id), organizationId, transaction);
-    await lockBusinessRow(engine, 'forge_sales_order', recordId, organizationId, transaction);
-    const order = await get(engine, 'forge_sales_order', recordId, organizationId, transaction);
-    if (order.status === 'active' && order.approval_outcome === 'approved' || order.status === 'cancelled' && ['rejected', 'recalled'].includes(String(order.approval_outcome))) return;
-    if (order.status !== 'pending_approval' || !['approved', 'rejected'].includes(String(order.approval_outcome))) throw new Error('订单没有可应用的原生审批结论');
-    const requests = await engine.find('sys_approval_request', { where: { object_name: 'forge_sales_order', record_id: recordId, organization_id: organizationId }, limit: 101 }, { context: transaction });
-    if (requests.length > 100) throw new Error('原生审批记录不可完整核对');
-    const request = requests.find(r => (r.status === order.approval_outcome || order.approval_outcome === 'rejected' && r.status === 'recalled') && r.submitter_id === order.submitted_by);
-    if (!request) throw new Error('订单原生审批结论尚不可核验');
-    if (order.approval_outcome === 'rejected') {
-      const prepayments = await engine.find('forge_customer_prepayment', { where: { order_id: recordId, organization_id: organizationId }, limit: 1001 }, { context: transaction });
-      if (prepayments.length > 1000) throw new Error('订单预收款关联不可完整核对');
-      for (const row of prepayments) {
-        await lockBusinessRow(engine, 'forge_customer_prepayment', String(row.id), organizationId, transaction);
-        await engine.update('forge_customer_prepayment', { id: row.id, order_id: null }, { context: transaction });
+  const driver = businessDriver(engine, ['forge_sales_order', 'forge_sales_contract', 'forge_sales_contract_line', 'forge_sales_order_line', 'forge_customer_prepayment']);
+  return engine.transaction(async (transaction, info) => {
+    // ObjectQL joins an ambient transaction without a nested rollback. Keep
+    // domain effects atomic even when the native decision owns that transaction.
+    const joined = info?.owned === false;
+    if (joined && !driver.rollback) throw new Error('业务事务不支持完整回滚，不能应用订单结果');
+    if (joined) await driver.execute!('SAVEPOINT forge_order_approval', [], { transaction: transaction.transaction });
+    const savepointCommand = async (command: string) => {
+      try { await driver.execute!(command, [], { transaction: transaction.transaction }); }
+      catch (error) {
+        // A failed savepoint rollback/release cannot leave a caller free to
+        // commit partial domain effects. Abort the enclosing transaction.
+        await driver.rollback!(transaction.transaction);
+        throw error;
       }
-      await engine.update('forge_sales_order', { id: recordId, status: 'cancelled', approval_outcome: request.status }, { context: transaction });
-      return;
-    }
-    if (order.submitted_order_digest !== await salesOrderDigest(engine, order, transaction)) throw new Error('订单内容与审批提交版本不同');
-    if (order.contract_id) {
-      const contract = await get(engine, 'forge_sales_contract', String(order.contract_id), organizationId, transaction);
-      await assertContractOrderReady(engine, contract, transaction, recordId);
-      const amount = roundedMoney(moneyValue(contract.ordered_amount || 0, '合同已下单金额') + moneyValue(order.total_amount, '订单金额'));
-      if (contract.has_order_amount_limit && amount > moneyValue(contract.order_amount_limit, '合同额度')) throw new Error('合同剩余额度已不足');
-      const lines = await engine.find('forge_sales_order_line', { where: { order_id: recordId, organization_id: organizationId }, limit: 1001 }, { context: transaction });
-      if (lines.length > 1000) throw new Error('订单明细不可完整核对');
-      const quantities = new Map<string, number>();
-      for (const line of lines) quantities.set(String(line.contract_line_id), (quantities.get(String(line.contract_line_id)) || 0) + Number(line.quantity));
-      for (const [id, quantity] of quantities) {
-        const source = await get(engine, 'forge_sales_contract_line', id, organizationId, transaction);
-        const next = Number(source.ordered_quantity || 0) + quantity;
-        if (source.contract_id !== contract.id || !Number.isFinite(next) || quantity <= 0 || next > Number(source.quantity_limit)) throw new Error('合同剩余数量已不足');
-        await engine.update('forge_sales_contract_line', { id, ordered_quantity: next }, { context: transaction });
+    };
+    const apply = async () => {
+      const initial = await get(engine, 'forge_sales_order', recordId, organizationId, transaction);
+      if (initial.contract_id) await lockBusinessRow(engine, 'forge_sales_contract', String(initial.contract_id), organizationId, transaction);
+      await lockBusinessRow(engine, 'forge_sales_order', recordId, organizationId, transaction);
+      const order = await get(engine, 'forge_sales_order', recordId, organizationId, transaction);
+      if (order.status === 'active' && order.approval_outcome === 'approved' || order.status === 'cancelled' && ['rejected', 'recalled'].includes(String(order.approval_outcome))) return;
+      if (order.status !== 'pending_approval' || !['pending', 'approved', 'rejected', 'recalled'].includes(String(order.approval_outcome))) throw new Error('订单没有可应用的原生审批结论');
+      const requests = await engine.find('sys_approval_request', { where: { object_name: 'forge_sales_order', record_id: recordId, organization_id: organizationId }, limit: 101 }, { context: transaction });
+      if (requests.length > 100) throw new Error('原生审批记录不可完整核对');
+      if (requests.some(r => r.status === 'pending' && matchesOrderApprovalSnapshot(r, order))) throw new Error('订单仍有未完成的原生审批，不能应用业务结果');
+      // The decision is durable even when the suspended run was lost. Recover from
+      // that exact native snapshot, without replaying the native decision or
+      // relying on the flow's mirrored outcome having been written.
+      const matching = requests.filter(r => ['approved', 'rejected', 'recalled'].includes(String(r.status)) && (
+        r.status === order.approval_outcome || order.approval_outcome === 'rejected' && r.status === 'recalled' ||
+        order.approval_outcome === 'pending'
+      ) && matchesOrderApprovalSnapshot(r, order));
+      if (matching.length !== 1) throw new Error('订单原生审批结论尚不可唯一核验');
+      const request = matching[0];
+      if (['rejected', 'recalled'].includes(String(request.status))) {
+        const prepayments = await engine.find('forge_customer_prepayment', { where: { order_id: recordId, organization_id: organizationId }, limit: 1001 }, { context: transaction });
+        if (prepayments.length > 1000) throw new Error('订单预收款关联不可完整核对');
+        for (const row of prepayments) {
+          await lockBusinessRow(engine, 'forge_customer_prepayment', String(row.id), organizationId, transaction);
+          await engine.update('forge_customer_prepayment', { id: row.id, order_id: null }, { context: transaction });
+        }
+        await engine.update('forge_sales_order', { id: recordId, status: 'cancelled', approval_outcome: request.status }, { context: transaction });
+        return;
       }
-      await engine.update('forge_sales_contract', { id: contract.id, ordered_count: Number(contract.ordered_count || 0) + 1, ordered_amount: amount }, { context: transaction });
+      if (order.submitted_order_digest !== await salesOrderDigest(engine, order, transaction)) throw new Error('订单内容与审批提交版本不同');
+      if (order.contract_id) {
+        const contract = await get(engine, 'forge_sales_contract', String(order.contract_id), organizationId, transaction);
+        await assertContractOrderReady(engine, contract, transaction, recordId);
+        const amount = roundedMoney(moneyValue(contract.ordered_amount || 0, '合同已下单金额') + moneyValue(order.total_amount, '订单金额'));
+        if (contract.has_order_amount_limit && amount > moneyValue(contract.order_amount_limit, '合同额度')) throw new Error('合同剩余额度已不足');
+        const lines = await engine.find('forge_sales_order_line', { where: { order_id: recordId, organization_id: organizationId }, limit: 1001 }, { context: transaction });
+        if (lines.length > 1000) throw new Error('订单明细不可完整核对');
+        const quantities = new Map<string, number>();
+        for (const line of lines) quantities.set(String(line.contract_line_id), (quantities.get(String(line.contract_line_id)) || 0) + Number(line.quantity));
+        for (const [id, quantity] of quantities) {
+          const source = await get(engine, 'forge_sales_contract_line', id, organizationId, transaction);
+          const next = Number(source.ordered_quantity || 0) + quantity;
+          if (source.contract_id !== contract.id || !Number.isFinite(next) || quantity <= 0 || next > Number(source.quantity_limit)) throw new Error('合同剩余数量已不足');
+          await engine.update('forge_sales_contract_line', { id, ordered_quantity: next }, { context: transaction });
+        }
+        await engine.update('forge_sales_contract', { id: contract.id, ordered_count: Number(contract.ordered_count || 0) + 1, ordered_amount: amount }, { context: transaction });
+      }
+      await engine.update('forge_sales_order', { id: recordId, status: 'active', approval_outcome: 'approved' }, { context: transaction });
+    };
+    try { await apply(); }
+    catch (error) {
+      if (joined) await savepointCommand('ROLLBACK TO SAVEPOINT forge_order_approval');
+      throw error;
+    } finally {
+      if (joined) await savepointCommand('RELEASE SAVEPOINT forge_order_approval');
     }
-    await engine.update('forge_sales_order', { id: recordId, status: 'active' }, { context: transaction });
   }, { isSystem: true, tenantId: organizationId, permissions: [], positions: [] }, { require: true });
 }
 

@@ -1263,10 +1263,12 @@ test.describe('Prime Work desktop smoke', () => {
     await expect(page.getByRole('heading', { name: '我发起的工作' })).toBeVisible()
     await expect(page.getByText('合同处理', { exact: true })).toBeVisible()
     await expect(page.locator('.enterprise-work-page')).not.toContainText(parkedRunContext().source.run_id)
-    await page.getByRole('button', { name: '继续原工作', exact: true }).click()
+    await page.getByRole('button', { name: '查看原工作', exact: true }).click()
     const promptPath = join(fixtureRoot, 'authorization-prompt.json')
     await expect.poll(() => existsSync(promptPath)).toBe(true)
     const prompt = JSON.parse(readFileSync(promptPath, 'utf8')) as { message: string }
+    expect(prompt.message).toContain('团队执行状态：等待中')
+    expect(prompt.message).not.toContain('团队执行状态：等待处理')
     expect(prompt.message).toContain('这项工作原授权已过期')
     expect(prompt.message).toContain('只有员工在新消息明确要求继续原工作后')
     expect(prompt.message).not.toContain(parkedRunContext().source.run_id)

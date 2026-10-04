@@ -1558,7 +1558,7 @@ export const SalesOrderApplyCompletedApproval = defineAction({
   name: 'sales_order_apply_completed_approval', label: '核对并完成订单', objectName: 'forge_sales_order',
   icon: 'clipboard-check', locations: ['record_header', 'record_more'], refreshAfter: true,
   requiredPermissions: ['sales_order_operator'],
-  visible: "record.status == 'pending_approval' && (record.approval_outcome == 'approved' || record.approval_outcome == 'rejected')",
+  visible: "record.status == 'pending_approval'",
   ai: { exposed: true, category: 'action', requiresConfirmation: false,
     description: '订单原生审批已有正式结论但业务状态更新中断时，由本人经办人核对同一审批及提交版本，原子补全原订单和合同累计，不新建审批或重作意见。' },
   target: ORDER_APPLY_APPROVAL_TARGET,
