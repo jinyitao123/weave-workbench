@@ -397,6 +397,10 @@ Weave对Forge投递人工等待及终态事件时，组织取固定输入登记�
 
 工作上下文 `source.input_status=current|superseded|closed` 和可选 `superseded_by_input_revision_id` 由同workspace/user且准确root/parent工作链的已接受输入确定。只有确认同工作链取代关系时，桌面才退出旧needs_input待办投影；同会话的无关新工作、closed状态或读取失败不证明已办。原通知、原动作事实及Forge业务状态不修改。
 
+### 并行成员读取冻结材料
+
+父运行处于等待并行成员的 `parked/fanout` 时，仅允许本父运行登记的当前并行子任务读取原输入授权的准确材料。必须同时核对父运行、输入、工作流版本、并行组／分支、代际、当前任务租约及同一员工主体；其他等待、无关子任务、取消或终态运行一律拒绝。此规则不增加材料或业务动作授权。缺少工具或读取失败须明确停止事实判断，不编造原文；运行结束不能代替资料核验。当前实现与真人证据见销售订单场景主文档。
+
 ## 原生本人收件箱分页连接
 
 ObjectStack 17.3原生notifications只能返回最多200行，未接受offset/cursor；审批原生limit/offset+total已可分页。本轮只为该已核实缺口增加 `GET /api/v1/apps/forge/workbench/inbox`，复用sys_inbox_message和sys_notification_receipt，身份取原生当前员工并实时核验绑定组织的有效成员资格，不接受目标user/org，不另存通知或待办。
