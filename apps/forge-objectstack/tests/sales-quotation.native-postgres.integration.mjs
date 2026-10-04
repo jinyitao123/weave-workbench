@@ -31,6 +31,8 @@ const PLATFORM_OWNER_EMAIL = 'sales-quotation-owner-' + RUN + '@example.test';
 const TRANSIENT_PASSWORDS = [];
 const PNG_BYTES = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j4XcAAAAASUVORK5CYII=', 'base64');
 const SCHEMAS = new Map();
+const QUOTATION_APPROVE_ACTION = 'quotation_approval_mcp_approve';
+const QUOTATION_REJECT_ACTION = 'quotation_approval_mcp_reject';
 let callerCounter = 0, signInIp = 70;
 
 function id() { return randomUUID(); }
@@ -44,6 +46,12 @@ function rowsOf(response) {
 }
 function messageOf(response) {
   return String(response?.value?.error?.message || response?.value?.error || response?.value?.message || '').slice(0, 1200);
+}
+function mcpText(result) {
+  return String(result?.content?.find(block => block?.type === 'text')?.text || result?._rpcError?.message || '');
+}
+function mcpData(result) {
+  try { return JSON.parse(mcpText(result)); } catch { return null; }
 }
 function fileIdOf(value) {
   if (typeof value === 'string') return value;
@@ -284,43 +292,50 @@ test('quotation send, acceptance evidence, and contract conversion use native ap
   async function action(client, object, name, recordId, params = {}) {
     return client.request('/actions/' + object + '/' + name + (recordId ? '/' + encodeURIComponent(recordId) : ''), 'POST', { params });
   }
-  let mcpSessionId = '', mcpRequestId = 0, mcpInitialized = false;
-  async function mcpRequest(method, params = {}, notification = false) {
+  const mcpSessions = new Map();
+  function mcpState(caller) {
+    let state = mcpSessions.get(caller);
+    if (!state) { state = { sessionId: '', requestId: 0, initialized: false }; mcpSessions.set(caller, state); }
+    return state;
+  }
+  async function mcpRequest(method, params = {}, notification = false, caller = quotationMaker) {
+    const state = mcpState(caller);
     const message = { jsonrpc: '2.0', method, params };
-    if (!notification) message.id = ++mcpRequestId;
+    if (!notification) message.id = ++state.requestId;
     const response = await fetch(ORIGIN + '/api/v1/mcp', {
       method: 'POST',
       headers: {
-        Cookie: quotationMaker.cookie,
+        Cookie: caller.cookie,
         Origin: ORIGIN,
         Accept: 'application/json, text/event-stream',
         'Content-Type': 'application/json',
         'MCP-Protocol-Version': '2025-03-26',
-        ...(mcpSessionId ? { 'MCP-Session-Id': mcpSessionId } : {}),
+        ...(state.sessionId ? { 'MCP-Session-Id': state.sessionId } : {}),
       },
       body: JSON.stringify(message),
     });
-    mcpSessionId ||= response.headers.get('MCP-Session-Id') || '';
+    state.sessionId ||= response.headers.get('MCP-Session-Id') || '';
     const raw = await response.text();
     const dataLines = raw.split(/\r?\n/).filter(line => line.startsWith('data:')).map(line => line.slice(5).trim()).filter(Boolean);
     const payload = dataLines.length ? dataLines.at(-1) : raw;
     return { status: response.status, value: payload ? JSON.parse(payload) : null };
   }
-  async function initializeMcp() {
-    if (mcpInitialized) return;
+  async function initializeMcp(caller = quotationMaker) {
+    const state = mcpState(caller);
+    if (state.initialized) return;
     const initialized = await mcpRequest('initialize', {
       protocolVersion: '2025-03-26', capabilities: {},
       clientInfo: { name: 'forge-quotation-native-pg-test', version: '1.0.0' },
-    });
+    }, false, caller);
     assert.equal(initialized.status, 200, 'ordinary maker MCP initialize returns a session');
     assert.equal(initialized.value?.result?.protocolVersion, '2025-03-26');
-    const notification = await mcpRequest('notifications/initialized', {}, true);
+    const notification = await mcpRequest('notifications/initialized', {}, true, caller);
     assert.ok([200, 202, 204].includes(notification.status), 'MCP initialized notification is accepted');
-    mcpInitialized = true;
+    state.initialized = true;
   }
-  async function callMcpTool(name, arguments_) {
-    await initializeMcp();
-    const response = await mcpRequest('tools/call', { name, arguments: arguments_ });
+  async function callMcpTool(name, arguments_, caller = quotationMaker) {
+    await initializeMcp(caller);
+    const response = await mcpRequest('tools/call', { name, arguments: arguments_ }, false, caller);
     assert.equal(response.status, 200, `MCP ${name} transport returns a JSON-RPC result`);
     return response.value?.result ?? { _rpcError: response.value?.error };
   }
@@ -425,6 +440,9 @@ test('quotation send, acceptance evidence, and contract conversion use native ap
     }
     assert.fail('native ' + processName + ' approval did not reach the independent reviewer');
   }
+  async function workbenchContext(client, requestId) {
+    return client.request('/approvals/requests/' + encodeURIComponent(requestId) + '/workbench-context');
+  }
   await startRuntime();
   await waitForPermissionRegistry();
   const accountSchema = await tableSchema('sys_account');
@@ -440,8 +458,9 @@ test('quotation send, acceptance evidence, and contract conversion use native ap
   const seller = await createCaller('非报价所有者与合同经办', ['sales_order_operator', 'sales_contract_operator']);
   const quotationMaker = await createCaller('报价与合同经办', ['sales_quotation_draft_operator', 'sales_contract_operator', 'sales_lead_conversion_operator']);
   const quotationReviewer = await createCaller('独立报价审核', ['sales_quotation_reviewer']);
+  const quotationSubmitterReviewer = await createCaller('报价本人兼审批岗', ['sales_quotation_draft_operator', 'sales_quotation_reviewer']);
   await startRuntime();
-  for (const caller of [seller, quotationMaker, quotationReviewer]) await signIn(caller);
+  for (const caller of [seller, quotationMaker, quotationReviewer, quotationSubmitterReviewer]) await signIn(caller);
   assert.equal((await postgres.query('SELECT current_database() AS name')).rows[0]?.name, DATABASE, 'native test uses its uniquely named isolated PostgreSQL database');
   const sellerMe = resultOf(await seller.client.request('/auth/me/permissions'));
   assert.equal(sellerMe?.positions?.includes('platform_admin'), false, 'non-owner contract actor is not the temporary platform owner');
@@ -494,6 +513,19 @@ test('quotation send, acceptance evidence, and contract conversion use native ap
   const quotationTypeId = await insertFixture('forge_quotation_type', { name: '报价文件事务测试类型', code: 'SQ-QTYPE-' + RUN, status: 'active' }, quotationMaker.id);
   const quotationIssuerId = await insertFixture('forge_quotation_issuer', { name: '报价文件事务测试主体', credit_code: 'SQ-QISSUER-' + RUN, short_name: '隔离报价主体', organization_id: organizationId }, quotationMaker.id);
   const contractTypeId = await insertFixture('forge_contract_type', { name: '报价转换合同类型', code: 'SQ-CONTRACT-TYPE-' + RUN, status: 'active' }, quotationMaker.id);
+  async function createServiceQuote(caller, quoteCustomerId, label) {
+    const response = await action(caller.client, 'forge_quotation', 'sales_quotation_draft_create', '', {
+      code: 'SQ-QUOTE-' + label + '-' + RUN, name: '原生报价审批隔离测试 ' + label,
+      customer_id: quoteCustomerId, quotation_type_id: quotationTypeId, issuer_id: quotationIssuerId,
+      quotation_date: new Date().toISOString().slice(0, 10),
+      valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      lines_json: JSON.stringify([{ line_type: 'service', name: '审批验证服务', quantity: 1, taxed_unit_price: 2300, tax_rate: 13, discount_rate: 0 }]),
+    });
+    assert.equal(response.status, 200, `Native quotation draft ${label}: ${messageOf(response)}`);
+    const quotationId = resultOf(response)?.id;
+    assert.ok(quotationId, `Native quotation draft ${label} returns its record`);
+    return quotationId;
+  }
 
   const quoteOnlyOpportunityRead = await otherQuotationMaker.client.request('/data/forge_sales_opportunity?$top=1');
   assert.ok([403, 404].includes(quoteOnlyOpportunityRead.status), 'a quotation-only role cannot list opportunities without an existing read grant');
@@ -623,8 +655,57 @@ test('quotation send, acceptance evidence, and contract conversion use native ap
   assert.equal(submittedQuotation.status, 200, 'quote enters the configured native approval process: ' + messageOf(submittedQuotation));
   const quoteApproval = await pendingApproval(quotationReviewer.client, 'forge_quotation', nativeQuotationId, 'sales_quotation_approval', 'quotation_review');
   nativeQuotationApprovalId = quoteApproval.id;
-  const quoteDecision = await quotationReviewer.client.request('/approvals/requests/' + encodeURIComponent(quoteApproval.id) + '/approve', 'POST', { comment: '隔离报价版本与明细已核对' });
-  assert.equal(quoteDecision.status, 200, 'independent reviewer decides through the native ApprovalService');
+  const quoteWorkList = await quotationReviewer.client.request('/workbench/approvals?limit=100');
+  assert.equal(quoteWorkList.status, 200, 'the normal employee approval work list reads native quote work');
+  assert.ok(rowsOf(quoteWorkList).some(item => item.requestId === quoteApproval.id), 'the assigned quote reviewer sees the native request in the normal desktop work list');
+  const quoteContextResponse = await workbenchContext(quotationReviewer.client, quoteApproval.id);
+  assert.equal(quoteContextResponse.status, 200, 'the assigned reviewer receives the native quote approval context');
+  assert.deepEqual(quoteContextResponse.value.businessObject, {
+    objectName: 'forge_quotation', recordId: nativeQuotationId, recordName: '报价发送接受附件事务验证',
+  });
+  const quoteContextActions = quoteContextResponse.value.availableActions;
+  assert.deepEqual(quoteContextActions.map(item => [item.semantic, item.execution.actionName]), [
+    ['approve', QUOTATION_APPROVE_ACTION], ['reject', QUOTATION_REJECT_ACTION],
+  ], 'quote context offers only the two decisions supported by its native flow');
+  assert.ok(!quoteContextResponse.value.fields.some(field => field.label === '总成本'), 'quote reviewer context preserves the native field mask for aggregate cost');
+  const approvalPermission = await postgres.query("SELECT id FROM sys_permission_set WHERE name='sales_quotation_reviewer' AND active=true LIMIT 1");
+  assert.ok(approvalPermission.rows[0]?.id, 'the native reviewer permission set is available to the isolated runtime');
+  const reviewerTools = await callMcpTool('list_actions', {}, quotationReviewer);
+  assert.ok(mcpData(reviewerTools)?.actions?.some(item => item.name === QUOTATION_APPROVE_ACTION), 'the signed-in reviewer MCP catalog exposes quote approve');
+  assert.ok(mcpData(reviewerTools)?.actions?.some(item => item.name === QUOTATION_REJECT_ACTION), 'the signed-in reviewer MCP catalog exposes quote reject');
+  const quoteApproveAction = quoteContextActions.find(item => item.semantic === 'approve');
+  const quoteRejectAction = quoteContextActions.find(item => item.semantic === 'reject');
+  assert.ok(quoteApproveAction && quoteRejectAction);
+  const beforeQuoteDecisions = await postgres.query('SELECT count(*)::int AS count FROM sys_approval_action WHERE request_id=$1', [quoteApproval.id]);
+  const staleMaterial = await callMcpTool('run_action', {
+    actionName: QUOTATION_APPROVE_ACTION, objectName: 'forge_quotation', recordId: nativeQuotationId,
+    params: { ...quoteApproveAction.execution.params, sourceMaterialVersion: 'f'.repeat(64), comment: '旧材料不得审批' },
+  }, quotationReviewer);
+  assert.equal(staleMaterial?.isError, true, 'a stale frozen quote material version is rejected before any native write');
+  const staleItem = await callMcpTool('run_action', {
+    actionName: QUOTATION_APPROVE_ACTION, objectName: 'forge_quotation', recordId: nativeQuotationId,
+    params: { ...quoteApproveAction.execution.params, itemVersion: 'v1-' + '0'.repeat(64), comment: '旧事项不得审批' },
+  }, quotationReviewer);
+  assert.equal(staleItem?.isError, true, 'a stale native quote item version is rejected before any native write');
+  assert.equal((await postgres.query('SELECT count(*)::int AS count FROM sys_approval_action WHERE request_id=$1', [quoteApproval.id])).rows[0].count,
+    beforeQuoteDecisions.rows[0].count, 'stale context attempts do not create native approval actions');
+  const noncurrentQuoteContext = await workbenchContext(quotationMaker.client, quoteApproval.id);
+  assert.equal(noncurrentQuoteContext.status, 404, 'the quote submitter without reviewer assignment cannot read the reviewer context');
+  const noncurrentQuoteAction = await callMcpTool('run_action', {
+    actionName: QUOTATION_APPROVE_ACTION, objectName: 'forge_quotation', recordId: nativeQuotationId,
+    params: { ...quoteApproveAction.execution.params, comment: '非审批人不得批准' },
+  }, quotationMaker);
+  assert.equal(noncurrentQuoteAction?.isError, true, 'a non-reviewer cannot invoke quote approval with another employee’s context');
+  assert.equal((await postgres.query('SELECT count(*)::int AS count FROM sys_approval_action WHERE request_id=$1', [quoteApproval.id])).rows[0].count,
+    beforeQuoteDecisions.rows[0].count, 'noncurrent quote decisions leave the native action history unchanged');
+  const quoteDecisionTool = await callMcpTool('run_action', {
+    actionName: QUOTATION_APPROVE_ACTION, objectName: 'forge_quotation', recordId: nativeQuotationId,
+    params: { ...quoteApproveAction.execution.params, comment: '隔离报价版本与明细已核对' },
+  }, quotationReviewer);
+  const quoteDecision = mcpData(quoteDecisionTool);
+  assert.equal(quoteDecision?.result?.decision, 'approve', 'independent reviewer decides through the native ApprovalService');
+  assert.equal(quoteDecision?.result?.status, 'approved');
+  assert.equal(quoteDecision?.result?.resumed, true, 'the native quote flow resumes after ApprovalService decides');
   const quoteNativeAudit = await postgres.query(`SELECT r.object_name,r.record_id,r.process_name,r.flow_node_id,r.submitter_id,r.status,a.actor_id,a.action
     FROM sys_approval_request r JOIN sys_approval_action a ON a.request_id=r.id
     WHERE r.id=$1 AND a.action='approve' ORDER BY a.created_at DESC LIMIT 1`, [quoteApproval.id]);
@@ -641,6 +722,73 @@ test('quotation send, acceptance evidence, and contract conversion use native ap
   assert.equal(approvedQuotation?.status, 'approved');
   const directQuotePatch = await quotationMaker.client.request('/data/forge_quotation/' + encodeURIComponent(nativeQuotationId), 'PATCH', { status: 'accepted' });
   assert.ok([403, 405].includes(directQuotePatch.status), 'generic Data API cannot bypass native quote approval or acceptance Actions');
+
+  const rejectedQuotationId = await createServiceQuote(quotationMaker, customerId, 'reject');
+  const rejectedSubmit = await action(quotationMaker.client, 'forge_quotation', 'quotation_submit', rejectedQuotationId, {});
+  assert.equal(rejectedSubmit.status, 200, 'second quote enters the native approval flow for rejection coverage: ' + messageOf(rejectedSubmit));
+  const rejectedQuoteApproval = await pendingApproval(quotationReviewer.client, 'forge_quotation', rejectedQuotationId, 'sales_quotation_approval', 'quotation_review');
+  const rejectedQuoteContext = await workbenchContext(quotationReviewer.client, rejectedQuoteApproval.id);
+  assert.equal(rejectedQuoteContext.status, 200);
+  const currentRejectAction = rejectedQuoteContext.value.availableActions.find(item => item.semantic === 'reject' && item.execution.actionName === QUOTATION_REJECT_ACTION);
+  assert.ok(currentRejectAction, 'native context provides the existing flow’s reject decision');
+  const rejectQuoteResult = mcpData(await callMcpTool('run_action', {
+    actionName: QUOTATION_REJECT_ACTION, objectName: 'forge_quotation', recordId: rejectedQuotationId,
+    params: { ...currentRejectAction.execution.params, comment: '隔离报价版本未达到审批要求' },
+  }, quotationReviewer));
+  assert.equal(rejectQuoteResult?.result?.decision, 'reject');
+  assert.equal(rejectQuoteResult?.result?.status, 'rejected');
+  assert.equal(rejectQuoteResult?.result?.resumed, true, 'native reject resumes the existing quote flow');
+  assert.equal((await read(quotationMaker.client, 'forge_quotation', rejectedQuotationId)).record.status, 'rejected');
+  assert.equal((await postgres.query('SELECT status FROM sys_approval_request WHERE id=$1', [rejectedQuoteApproval.id])).rows[0]?.status, 'rejected');
+
+  const selfReviewer = quotationSubmitterReviewer;
+  const selfCustomerId = await insertFixture('forge_customer', {
+    name: '报价本人审批拒绝验证客户 ' + RUN, category_id: categoryId, responsible_id: selfReviewer.id, status: 'active',
+  }, selfReviewer.id);
+  const selfQuotationId = await createServiceQuote(selfReviewer, selfCustomerId, 'self-review');
+  const selfSubmitted = await action(selfReviewer.client, 'forge_quotation', 'quotation_submit', selfQuotationId, {});
+  assert.equal(selfSubmitted.status, 200, 'the submitter also holds the existing reviewer permission and position for the self-review negative case');
+  const selfQuoteApproval = await pendingApproval(quotationReviewer.client, 'forge_quotation', selfQuotationId, 'sales_quotation_approval', 'quotation_review');
+  const externalReviewerContext = await workbenchContext(quotationReviewer.client, selfQuoteApproval.id);
+  assert.equal(externalReviewerContext.status, 200);
+  const externalApproveAction = externalReviewerContext.value.availableActions.find(item => item.semantic === 'approve');
+  assert.ok(externalApproveAction);
+  const selfContext = await workbenchContext(selfReviewer.client, selfQuoteApproval.id);
+  if (selfContext.status === 200) {
+    assert.equal(selfContext.value.viewer, 'current_approver');
+    assert.deepEqual(selfContext.value.availableActions, [], 'a quote submitter who also holds the reviewer role receives no self-approval action');
+  } else assert.equal(selfContext.status, 404, 'native visibility may hide a submitter from their own reviewer context');
+  const selfDecisionCount = await postgres.query('SELECT count(*)::int AS count FROM sys_approval_action WHERE request_id=$1', [selfQuoteApproval.id]);
+  const selfNativeApprove = await selfReviewer.client.request('/approvals/requests/' + encodeURIComponent(selfQuoteApproval.id) + '/approve', 'POST', { comment: '本人不能通过原生 REST 自审报价' });
+  assert.equal(selfNativeApprove.status, 403, 'the shared native ApprovalService decision boundary rejects quote self-approval through REST approve');
+  const selfNativeReject = await selfReviewer.client.request('/approvals/requests/' + encodeURIComponent(selfQuoteApproval.id) + '/reject', 'POST', { comment: '本人不能通过原生 REST 自驳回报价' });
+  assert.equal(selfNativeReject.status, 403, 'the shared native ApprovalService decision boundary rejects quote self-rejection through REST reject');
+  assert.equal((await postgres.query('SELECT count(*)::int AS count FROM sys_approval_action WHERE request_id=$1', [selfQuoteApproval.id])).rows[0].count,
+    selfDecisionCount.rows[0].count, 'both native REST self-decision attempts leave the approval action history unchanged');
+  assert.equal((await read(selfReviewer.client, 'forge_quotation', selfQuotationId)).record.status, 'pending_approval', 'both native REST self-decisions leave the quote pending');
+  const selfAttempt = await callMcpTool('run_action', {
+    actionName: QUOTATION_APPROVE_ACTION, objectName: 'forge_quotation', recordId: selfQuotationId,
+    params: { ...externalApproveAction.execution.params, comment: '本人不能审批自己的报价' },
+  }, selfReviewer);
+  assert.equal(selfAttempt?.isError, true, 'the server rejects a valid native action replayed by the quote submitter');
+  assert.match(mcpText(selfAttempt), /APPROVAL_ACTION_FORBIDDEN/);
+  assert.equal((await postgres.query("SELECT count(*)::int AS count FROM sys_approval_action WHERE request_id=$1 AND actor_id=$2 AND action IN ('approve','reject','revise')",
+    [selfQuoteApproval.id, selfReviewer.id])).rows[0].count, 0, 'self-approval rejection does not write a native decision');
+  assert.equal((await read(selfReviewer.client, 'forge_quotation', selfQuotationId)).record.status, 'pending_approval');
+  const independentSelfQuoteDecision = mcpData(await callMcpTool('run_action', {
+    actionName: QUOTATION_APPROVE_ACTION, objectName: 'forge_quotation', recordId: selfQuotationId,
+    params: { ...externalApproveAction.execution.params, comment: '独立审批人核对本人报价的冻结版本' },
+  }, quotationReviewer));
+  assert.equal(independentSelfQuoteDecision?.result?.decision, 'approve');
+  assert.equal(independentSelfQuoteDecision?.result?.status, 'approved');
+
+  const nativeRestRejectedQuotationId = await createServiceQuote(quotationMaker, customerId, 'native-rest-reject');
+  const nativeRestRejectSubmit = await action(quotationMaker.client, 'forge_quotation', 'quotation_submit', nativeRestRejectedQuotationId, {});
+  assert.equal(nativeRestRejectSubmit.status, 200, 'a third quote enters the native approval flow for REST reject compatibility coverage');
+  const nativeRestRejectApproval = await pendingApproval(quotationReviewer.client, 'forge_quotation', nativeRestRejectedQuotationId, 'sales_quotation_approval', 'quotation_review');
+  const nativeRestReject = await quotationReviewer.client.request('/approvals/requests/' + encodeURIComponent(nativeRestRejectApproval.id) + '/reject', 'POST', { comment: '独立报价审批人经原生 REST 驳回' });
+  assert.equal(nativeRestReject.status, 200, 'an independent current reviewer can still decide quote rejection through native REST');
+  assert.equal((await read(quotationMaker.client, 'forge_quotation', nativeRestRejectedQuotationId)).record.status, 'rejected', 'native REST reject resumes the existing quote Flow');
 
   nativeQuotationSendFileId = await uploadAttachment(quotationMaker.client, 'quote-send-evidence');
   const quoteSendParams = { sent_evidence_attachment: nativeQuotationSendFileId, sent_evidence_note: '隔离测试：本地合成发送回执与送达说明' };
@@ -1000,15 +1148,8 @@ test('quotation send, acceptance evidence, and contract conversion use native ap
   const makerPermissions = resultOf(await quotationMaker.client.request('/auth/me/permissions'));
   assert.equal(makerPermissions?.positions?.includes('platform_admin'), false, 'MCP receipt probe uses the ordinary native quotation/contract operator');
   assert.equal(makerPermissions?.systemPermissions?.includes('setup.write'), false, 'MCP receipt probe does not inherit Setup write');
-  const mcpInitializeResponse = await mcpRequest('initialize', {
-    protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'forge-quotation-native-pg-test', version: '1.0.0' },
-  });
-  assert.equal(mcpInitializeResponse.status, 200, 'ordinary maker initializes the native MCP session');
-  assert.equal(mcpInitializeResponse.value?.result?.protocolVersion, '2025-03-26');
-  const mcpReadyNotification = await mcpRequest('notifications/initialized', {}, true);
-  assert.ok([200, 202, 204].includes(mcpReadyNotification.status));
-  mcpInitialized = true;
-  const mcpToolList = await mcpRequest('tools/list', {});
+  await initializeMcp(quotationMaker);
+  const mcpToolList = await mcpRequest('tools/list', {}, false, quotationMaker);
   assert.equal(mcpToolList.status, 200, 'ordinary maker lists the tools actually exposed by the native MCP endpoint');
   const listedTools = mcpToolList.value?.result?.tools || [];
   const registeredTool = name => {

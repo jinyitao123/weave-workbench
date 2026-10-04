@@ -50,6 +50,10 @@ export class SalesOrderBusinessPlugin implements Plugin {
     };
     const decide: IApprovalService['decide'] = async (id, input, context) => {
       const request = await scopedRequest(id, context);
+      if (request?.object_name === 'forge_quotation') {
+        const actorId = context.userId;
+        if (!actorId || request.submitter_id === actorId) throw new Error('FORBIDDEN: 报价发起人不能审批自己的报价');
+      }
       if (request?.object_name === 'forge_sales_order') {
         const organizationId = context.tenantId, actorId = context.userId;
         if (!organizationId || !actorId || request.organization_id !== organizationId || request.submitter_id === actorId) throw new Error('FORBIDDEN: 订单须由独立员工本人复核');
