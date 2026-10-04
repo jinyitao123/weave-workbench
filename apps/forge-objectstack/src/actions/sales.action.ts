@@ -1283,12 +1283,19 @@ export const SalesLeadConvertToOpportunity = defineAction({
     category: 'action',
     requiresConfirmation: false,
   },
-  params: [{ field: 'amount', objectOverride: 'forge_sales_opportunity' }, { field: 'expected_close_on', objectOverride: 'forge_sales_opportunity' }],
+  params: [{ field: 'amount', objectOverride: 'forge_sales_opportunity', required: true }, { field: 'expected_close_on', objectOverride: 'forge_sales_opportunity' }],
   body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
 const id = String(ctx.recordId || (ctx.record && ctx.record.id) || '').trim();
 if (ctx.recordLoadDenied === true || !id || !ctx.record) throw new Error('当前线索不存在或不可访问');
 const params = ctx.input || {};
-const amount = params.amount === undefined || params.amount === null || params.amount === '' ? 0 : Number(params.amount);
+const rawAmount = params.amount;
+if (rawAmount === undefined || rawAmount === null || (typeof rawAmount === 'string' && rawAmount.trim() === '')) {
+  throw new Error('请填写商机金额');
+}
+if (typeof rawAmount !== 'number' && typeof rawAmount !== 'string') {
+  throw new Error('商机金额必须是大于或等于零的数字');
+}
+const amount = Number(rawAmount);
 if (!Number.isFinite(amount) || amount < 0) throw new Error('商机金额必须是大于或等于零的数字');
 const expectedCloseOn = params.expected_close_on || null;
 const requestSignature = JSON.stringify({ amount, expected_close_on: expectedCloseOn });
