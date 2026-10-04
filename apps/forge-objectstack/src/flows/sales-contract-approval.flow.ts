@@ -1,0 +1,121 @@
+import { defineFlow } from '@objectstack/spec/automation';
+
+const contractApprovalFlow = (legal: boolean) => defineFlow({
+  name: legal ? 'sales_contract_legal_approval' : 'sales_contract_approval',
+  label: legal ? '非标销售合同复核' : '销售合同复核',
+  description: '合同提交后按岗位找到交付、商务及所需的法务复核员工，审批完成后更新合同并通知发起人。',
+  type: 'record_change',
+  status: 'active',
+  runAs: 'system',
+  successMessage: '合同复核已完成',
+  errorMessage: '合同复核未能继续，请检查复核岗位配置',
+  nodes: [
+    {
+      id: 'start',
+      type: 'start',
+      label: '合同已提交',
+      config: {
+        objectName: 'forge_sales_contract',
+        triggerType: 'record-after-update',
+        condition: legal
+          ? "record.status == 'pending_approval' && previous.status == 'draft' && record.requires_legal_review == true"
+          : "record.status == 'pending_approval' && previous.status == 'draft' && record.requires_legal_review != true",
+      },
+      position: { x: 80, y: 160 },
+    },
+    {
+      id: 'contract_review',
+      type: 'approval',
+      label: legal ? '交付、商务与法务会签' : '交付与商务会签',
+      config: {
+        approvers: [
+          { type: 'position', value: 'contract_delivery_reviewer', group: 'delivery' },
+          { type: 'position', value: 'contract_commercial_reviewer', group: 'commercial' },
+          ...(legal ? [{ type: 'position' as const, value: 'contract_legal_reviewer', group: 'legal' }] : []),
+        ],
+        behavior: 'per_group',
+        lockRecord: true,
+        onEmptyApprovers: 'fail',
+        maxRevisions: 3,
+      },
+      position: { x: 320, y: 160 },
+    },
+    {
+      id: 'activate_contract',
+      type: 'update_record',
+      label: '记录内部复核通过',
+      config: {
+        objectName: 'forge_sales_contract',
+        filter: { id: '{record.id}' },
+        fields: { status: 'active' },
+      },
+      position: { x: 600, y: 80 },
+    },
+    {
+      id: 'notify_approved',
+      type: 'notify',
+      label: '通知发起人合同已通过',
+      config: {
+        recipients: ['{record.created_by}'],
+        title: '合同 {record.code} 已复核通过',
+        message: '内部审批已通过。取得客户签署版后，请登记签署日期和凭证，再创建销售订单。',
+        topic: 'sales.contract.approved',
+        severity: 'info',
+        sourceObject: 'forge_sales_contract',
+        sourceId: '{record.id}',
+        actionUrl: '/_console/apps/com.inoforge.forge.sales/forge_sales_contract/record/{record.id}',
+      },
+      position: { x: 850, y: 80 },
+    },
+    {
+      id: 'wait_revision',
+      type: 'approval_revise',
+      label: '等待发起人修改',
+      config: {},
+      position: { x: 600, y: 260 },
+    },
+    {
+      id: 'reject_contract',
+      type: 'update_record',
+      label: '终止合同审批',
+      config: {
+        objectName: 'forge_sales_contract',
+        filter: { id: '{record.id}' },
+        fields: { status: 'rejected' },
+      },
+      position: { x: 600, y: 260 },
+    },
+    {
+      id: 'notify_rejected',
+      type: 'notify',
+      label: '通知发起人合同审批已终止',
+      config: {
+        recipients: ['{record.created_by}'],
+        title: '合同 {record.code} 审批未通过',
+        message: '本次审批已终止。请查看审批意见后重新发起。',
+        topic: 'sales.contract.rejected',
+        severity: 'warning',
+        sourceObject: 'forge_sales_contract',
+        sourceId: '{record.id}',
+        actionUrl: '/_console/apps/com.inoforge.forge.sales/forge_sales_contract/record/{record.id}',
+      },
+      position: { x: 850, y: 260 },
+    },
+    { id: 'approved_end', type: 'end', label: '复核通过', position: { x: 1100, y: 80 } },
+    { id: 'rejected_end', type: 'end', label: '复核未通过', position: { x: 1100, y: 260 } },
+  ],
+  edges: [
+    { id: 'submitted_to_review', source: 'start', target: 'contract_review' },
+    { id: 'review_approved', source: 'contract_review', target: 'activate_contract', label: 'approve' },
+    { id: 'approved_to_notification', source: 'activate_contract', target: 'notify_approved' },
+    { id: 'approved_to_end', source: 'notify_approved', target: 'approved_end' },
+    { id: 'review_revision', source: 'contract_review', target: 'wait_revision', label: 'revise' },
+    { id: 'revision_resubmitted', source: 'wait_revision', target: 'contract_review', type: 'back', label: 'resubmit' },
+    { id: 'review_rejected', source: 'contract_review', target: 'reject_contract', label: 'reject' },
+    { id: 'rejected_to_notification', source: 'reject_contract', target: 'notify_rejected' },
+    { id: 'rejected_to_end', source: 'notify_rejected', target: 'rejected_end' },
+  ],
+});
+
+export const SalesContractApprovalFlow = contractApprovalFlow(false);
+export const SalesContractLegalApprovalFlow = contractApprovalFlow(true);

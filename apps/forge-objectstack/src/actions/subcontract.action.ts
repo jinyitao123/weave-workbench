@@ -4,6 +4,7 @@ const locations = ['record_header', 'record_more'] as const;
 
 export const SubcontractSupplierActivate = defineAction({
   name: 'subcontract_supplier_activate', label: '开通委外', objectName: 'forge_supplier', icon: 'factory',
+  requiredPermissions: ['forge_procurement_reviewer'],
   locations: [...locations], order: 40, visible: `record.status == 'active' && record.approval_status == 'approved'`, refreshAfter: true,
   params: [
     { name: 'process_capabilities', label: '工艺能力', type: 'textarea', required: true },

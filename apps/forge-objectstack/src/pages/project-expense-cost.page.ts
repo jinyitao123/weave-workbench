@@ -1,13 +1,13 @@
 import { forgeProductUiCss, forgeProductUiRuntime } from './product-ui.js';
 
 const projectExpenseCostSource = `
-function App(){
+function App(){const adapter=useAdapter();
   const today=new Date(Date.now()+8*60*60*1000).toISOString().slice(0,10);
   const [data,setData]=React.useState({loading:true,projects:[],expenses:[],lines:[],costs:[],members:[],suppliers:[],error:''});
   const [busy,setBusy]=React.useState(false);
   const [decision,setDecision]=React.useState(null);
   const [form,setForm]=React.useState({project_id:'',beneficiary_id:'',code:'',name:'',claim_type:'self',supplier_id:'',expected_payment_on:'',category:'manufacturing',occurred_on:today,amount:'',description:'',invoice_reference:'',review_comment:''});
-  async function request(path,options){const response=await fetch('/api/v1'+path,{credentials:'include',headers:{'Content-Type':'application/json'},...options}),payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error((typeof payload.error==='string'?payload.error:payload.error?.message)||(Array.isArray(payload.fields)&&payload.fields.length?payload.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||payload.message||'请求失败');return payload;}
+  async function request(path,options){const response=await ForgeApiResponse(adapter,path,{credentials:'include',headers:{'Content-Type':'application/json'},...options}),payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error((typeof payload.error==='string'?payload.error:payload.error?.message)||(Array.isArray(payload.fields)&&payload.fields.length?payload.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||payload.message||'请求失败');return payload;}
   async function find(object){return (await request('/data/'+object+'?$top=200')).records||[];}
   async function load(){try{const [projects,expenses,lines,costs,members,suppliers]=await Promise.all(['forge_project','forge_project_expense','forge_project_expense_line','forge_project_cost_entry','forge_project_member','forge_supplier'].map(find)),eligible=projects.filter(x=>!['settled','terminated','archived'].includes(x.status));setData({loading:false,projects:eligible,expenses,lines,costs,members,suppliers,error:''});setForm(current=>{const projectId=eligible.some(x=>x.id===current.project_id)?current.project_id:'';return{...current,project_id:projectId,beneficiary_id:current.beneficiary_id};});}catch(error){setData(current=>({...current,loading:false,error:String(error.message||error)}));}}
   React.useEffect(()=>{load();},[]);

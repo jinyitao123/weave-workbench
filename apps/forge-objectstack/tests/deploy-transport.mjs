@@ -1,0 +1,250 @@
+// Exercise deploy.sh orchestration with a fake Docker CLI and health endpoint.
+// No container runtime, Forge service, database or external port is used.
+
+import assert from 'node:assert/strict';
+import { access, chmod, copyFile, mkdtemp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const SOURCE_DEPLOY = path.resolve(HERE, '../scripts/deploy.sh');
+const SOURCE_REVISION = '0123456789abcdef0123456789abcdef01234567';
+const SECRETS = ['test-postgres-secret', 'test-auth-secret', 'test-key-secret'];
+
+const dockerScript = [
+  '#!/bin/sh',
+  'printf "candidatePort=%s proxyImage=%s appImage=%s %s\\n" "$FORGE_CANDIDATE_PORT" "$FORGE_PROXY_IMAGE" "$FORGE_IMAGE" "$*" >> "$FORGE_DEPLOY_TEST_LOG"',
+  'if [ "$1" = "compose" ] && [ "$2" = "ps" ]; then',
+  '  case "$4" in',
+  '    app) if [ -f "$FORGE_DEPLOY_TEST_STATE/app-updated" ]; then echo new-app; elif [ "$FORGE_TEST_FRESH" != 1 ]; then echo old-app; fi ;;',
+  '    proxy) if [ "$FORGE_TEST_PREVIOUS_PROXY" = 1 ]; then echo old-proxy; fi ;;',
+  '    db) if [ "$FORGE_TEST_DATABASE" = 1 ]; then echo existing-db; fi ;;',
+  '  esac',
+  '  exit 0',
+  'fi',
+  'if [ "$1" = "inspect" ]; then',
+  '  format=$3',
+  '  target=$4',
+  '  case "$target" in',
+  '    old-app)',
+  '      if [ "$format" = "{{.Config.Image}}" ]; then echo inoforge-app:sha-old;',
+  '      elif [ "$format" = "{{.Image}}" ]; then echo sha256:old-app;',
+  '      else echo healthy; fi ;;',
+  '    new-app) case "$format" in *State.Health*) echo healthy ;; *) echo sha256:new-app ;; esac ;;',
+  '    old-proxy) if [ "$format" = "{{.Config.Image}}" ]; then echo inoforge-proxy:sha-old; else echo sha256:old-proxy; fi ;;',
+  '    *) exit 1 ;;',
+  '  esac',
+  '  exit 0',
+  'fi',
+  'if [ "$1" = "image" ] && [ "$2" = "inspect" ]; then',
+  '  case "$5" in',
+  '    inoforge-app:sha-*) echo sha256:new-app-image ;;',
+  '    inoforge-proxy:sha-*) echo sha256:new-proxy-image ;;',
+  '    *) exit 1 ;;',
+  '  esac',
+  '  exit 0',
+  'fi',
+  'if [ "$1" = "compose" ] && [ "$2" = "exec" ]; then',
+  '  case "$4" in',
+  '    db) if [ "$FORGE_TEST_DUMP_FAILURE" = 1 ]; then exit 17; fi; printf "%s\\n" "-- PostgreSQL test dump" ;;',
+  '    app) if [ "$FORGE_TEST_UPLOADS_FAILURE" = 1 ]; then exit 18; fi; tar -C "$FORGE_DEPLOY_TEST_UPLOADS" -cf - . ;;',
+  '    *) exit 19 ;;',
+  '  esac',
+  '  exit 0',
+  'fi',
+  'if [ "$1" = "compose" ]; then',
+  '  case " $* " in *rollback-compose.yml*) touch "$FORGE_DEPLOY_TEST_STATE/direct-rollback" ;; esac',
+  '  case " $* " in',
+  '    *" up "*)',
+  '      case " $* " in',
+  '      *" proxy-candidate "*) if [ "$FORGE_TEST_FRESH" = 1 ] && [ ! -f "$FORGE_DEPLOY_TEST_STATE/app-updated" ]; then exit 1; fi; touch "$FORGE_DEPLOY_TEST_STATE/candidate-started" ;;',
+  '      *" app "*)',
+  '        if [ "$FORGE_IMAGE" = "inoforge-app:sha-old" ]; then rm -f "$FORGE_DEPLOY_TEST_STATE/app-updated"; touch "$FORGE_DEPLOY_TEST_STATE/app-rolled-back";',
+  '        else touch "$FORGE_DEPLOY_TEST_STATE/app-updated"; fi',
+  '        ;;',
+  '      *" proxy "*) if [ "$FORGE_PROXY_IMAGE" = "inoforge-proxy:sha-old" ]; then touch "$FORGE_DEPLOY_TEST_STATE/proxy-rolled-back"; fi ;;',
+  '      esac ;;',
+  '  esac',
+  '  exit 0',
+  'fi',
+  'if [ "$1" = "buildx" ] && [ "$2" = "build" ]; then exit 0; fi',
+  'exit 0',
+].join('\n') + '\n';
+
+const curlScript = [
+  '#!/bin/sh',
+  'for arg in "$@"; do url=$arg; done',
+  'case "$url" in',
+  '  *:14612/api/v1/health) exit 0 ;;',
+  '  *:4612/api/v1/health)',
+  '    if [ "$FORGE_TEST_FAIL_PUBLIC" = 1 ]; then',
+  '      if [ "$FORGE_TEST_PREVIOUS_PROXY" = 1 ] && [ -f "$FORGE_DEPLOY_TEST_STATE/proxy-rolled-back" ]; then exit 0; fi',
+  '      if [ "$FORGE_TEST_PREVIOUS_PROXY" = 0 ] && [ -f "$FORGE_DEPLOY_TEST_STATE/direct-rollback" ]; then exit 0; fi',
+  '      exit 22',
+  '    fi',
+  '    exit 0 ;;',
+  '  *) exit 22 ;;',
+  'esac',
+].join('\n') + '\n';
+
+async function runCase({ name, publicFailure, previousProxy, fresh = false, database = false, dumpFailure = false, uploadsFailure = false }) {
+  const tempDir = await mkdtemp(path.join(tmpdir(), 'forge-deploy-transport-'));
+  try {
+    const appDir = path.join(tempDir, 'app');
+    const scriptsDir = path.join(appDir, 'scripts');
+    const fakeBin = path.join(tempDir, 'bin');
+    const stateDir = path.join(tempDir, 'state');
+    const uploadsDir = path.join(tempDir, 'uploads');
+    await Promise.all([mkdir(scriptsDir, { recursive: true }), mkdir(fakeBin), mkdir(stateDir)]);
+    await mkdir(uploadsDir);
+    await writeFile(path.join(uploadsDir, 'receipt.txt'), 'private fixture attachment\n');
+    const consoleContext = path.join(appDir, '.generated/console94');
+    await mkdir(path.join(consoleContext, 'dist'), { recursive: true });
+    await writeFile(path.join(consoleContext, 'console94.lock.json'), '{}\n');
+    await writeFile(path.join(consoleContext, 'console94-build.json'), '{}\n');
+    await writeFile(path.join(consoleContext, 'console94-build.env'), [
+      'source_revision=94f5a3095c920515fc5a96e519d303e3932e8f8e',
+      'tree_sha256=99962f68ff9bd9e8de5b89aeb130288dbd832fa178fb7c9790571b6be2eee54a',
+      '',
+    ].join('\n'));
+    await writeFile(path.join(consoleContext, 'dist/index.html'), '<html></html>');
+    await copyFile(SOURCE_DEPLOY, path.join(scriptsDir, 'deploy.sh'));
+    await writeFile(path.join(appDir, '.env'), [
+      'POSTGRES_PASSWORD=' + SECRETS[0],
+      'OS_AUTH_SECRET=' + SECRETS[1],
+      'OS_SECRET_KEY=' + SECRETS[2],
+      '',
+    ].join('\n'));
+    await writeFile(path.join(fakeBin, 'docker'), dockerScript);
+    await writeFile(path.join(fakeBin, 'curl'), curlScript);
+    await writeFile(path.join(fakeBin, 'sleep'), '#!/bin/sh\nexit 0\n');
+    await Promise.all(['docker', 'curl', 'sleep'].map((tool) => chmod(path.join(fakeBin, tool), 0o755)));
+
+    const logPath = path.join(tempDir, 'commands.log');
+    const env = {
+      ...process.env,
+      PATH: fakeBin + path.delimiter + process.env.PATH,
+      FORGE_SOURCE_REVISION: SOURCE_REVISION,
+      FORGE_IMAGE_REPOSITORY: 'inoforge-app',
+      FORGE_PROXY_IMAGE_REPOSITORY: 'inoforge-proxy',
+      FORGE_HTTP_PORT: '4612',
+      FORGE_CANDIDATE_PORT: '14612',
+      FORGE_RELEASE_DIR: path.join(tempDir, 'release'),
+      FORGE_HEALTH_ATTEMPTS: '1',
+      FORGE_DEPLOY_TEST_LOG: logPath,
+      FORGE_DEPLOY_TEST_STATE: stateDir,
+      FORGE_TEST_FAIL_PUBLIC: publicFailure ? '1' : '0',
+      FORGE_TEST_PREVIOUS_PROXY: previousProxy ? '1' : '0',
+      FORGE_TEST_FRESH: fresh ? '1' : '0',
+      FORGE_TEST_DATABASE: database ? '1' : '0',
+      FORGE_TEST_DUMP_FAILURE: dumpFailure ? '1' : '0',
+      FORGE_TEST_UPLOADS_FAILURE: uploadsFailure ? '1' : '0',
+      FORGE_DEPLOY_TEST_UPLOADS: uploadsDir,
+    };
+    const result = spawnSync('/bin/sh', [path.join(scriptsDir, 'deploy.sh')], {
+      cwd: appDir,
+      env,
+      encoding: 'utf8',
+      timeout: 15000,
+    });
+    const output = result.stdout + result.stderr;
+    assert.ok(!SECRETS.some((secret) => output.includes(secret)), name + ': deployment output must not print .env secrets');
+    const commandLog = await readFile(logPath, 'utf8');
+    if (!dumpFailure && !uploadsFailure) {
+      if (!publicFailure) assert.equal(result.status, 0, name + ': ' + output);
+      assert.match(commandLog, /--target app/, name + ': app image must use its explicit Docker stage');
+      assert.match(commandLog, /--target proxy/, name + ': proxy image must use its explicit Docker stage');
+      assert.match(commandLog, /build-context console94=/, name + ': image builds must receive the fixed Console context');
+      assert.match(commandLog, /candidatePort=14612/, name + ': candidate port must reach Compose');
+    }
+    return { tempDir, stateDir, result, output, commandLog };
+  } catch (error) {
+    await rm(tempDir, { recursive: true, force: true });
+    throw error;
+  }
+}
+
+const cases = [];
+try {
+  const fresh = await runCase({ name: 'fresh deployment', publicFailure: false, previousProxy: false, fresh: true });
+  cases.push(fresh);
+  assert.equal(fresh.result.status, 0, 'fresh deployment should initialize its app before testing the proxy:\n' + fresh.output);
+  assert.ok(fresh.commandLog.indexOf('up -d --no-build app') < fresh.commandLog.indexOf('up -d --no-build --no-deps --force-recreate proxy-candidate'));
+  console.log('PASS fresh deployment initializes the app before probing its proxy');
+
+  const success = await runCase({ name: 'successful release', publicFailure: false, previousProxy: false });
+  cases.push(success);
+  assert.equal(success.result.status, 0, 'successful release should exit zero:\n' + success.output);
+  const releaseFiles = await readdir(path.join(success.tempDir, 'release', 'releases'));
+  assert.equal(releaseFiles.length, 1);
+  const releaseDir = path.join(success.tempDir, 'release', 'releases', releaseFiles[0]);
+  let releaseRecord;
+  try {
+    releaseRecord = await readFile(path.join(releaseDir, 'release.env'), 'utf8');
+  } catch {
+    const contents = await readdir(releaseDir);
+    throw new Error('release record missing; output=' + success.output + '; files=' + contents.join(','));
+  }
+  assert.match(releaseRecord, /source_revision=0123456789ab/);
+  assert.match(releaseRecord, /console_source_revision=94f5a3095c920515fc5a96e519d303e3932e8f8e/);
+  assert.match(releaseRecord, /console_tree_sha256=99962f68ff9bd9e8de5b89aeb130288dbd832fa178fb7c9790571b6be2eee54a/);
+  assert.match(releaseRecord, /app_image_id=sha256:new-app-image/);
+  assert.match(releaseRecord, /proxy_image_id=sha256:new-proxy-image/);
+  assert.doesNotMatch(releaseRecord, /test-(?:postgres|auth|key)-secret/);
+  assert.ok(success.commandLog.includes('proxy-candidate'));
+  console.log('PASS release builds, candidate-checks, promotes and records both image IDs');
+
+  const backedUp = await runCase({ name: 'existing data and uploads', publicFailure: false, previousProxy: true, database: true });
+  cases.push(backedUp);
+  assert.equal(backedUp.result.status, 0, backedUp.output);
+  const backupNames = await readdir(path.join(backedUp.tempDir, 'release', 'backups'));
+  const backupDir = path.join(backedUp.tempDir, 'release', 'backups', backupNames[0]);
+  assert.equal((await stat(backupDir)).mode & 0o777, 0o700, 'new backup directory is private');
+  for (const name of ['database.sql.gz', 'uploads.tar.gz']) {
+    assert.equal((await stat(path.join(backupDir, name))).mode & 0o777, 0o600, name + ' is private');
+  }
+  const restoredFile = spawnSync('tar', ['-xzOf', path.join(backupDir, 'uploads.tar.gz'), './receipt.txt'], { encoding: 'utf8' });
+  assert.equal(restoredFile.status, 0);
+  assert.equal(restoredFile.stdout, 'private fixture attachment\n', 'attachment archive contains the original bytes');
+  const completedNames = await readdir(path.join(backedUp.tempDir, 'release', 'releases'));
+  const completedRecord = await readFile(path.join(backedUp.tempDir, 'release', 'releases', completedNames[0], 'release.env'), 'utf8');
+  assert.match(completedRecord, /uploads_backup=.*uploads\.tar\.gz/);
+  assert.equal((await readdir(backupDir)).includes('database.sql'), false, 'raw database dump does not remain after compression');
+  console.log('PASS existing data and attachment backups are private, readable, and recorded');
+
+  for (const options of [
+    { name: 'failed database dump', dumpFailure: true },
+    { name: 'failed attachment backup', uploadsFailure: true },
+  ]) {
+    const failedBackup = await runCase({ ...options, publicFailure: false, previousProxy: true, database: true });
+    cases.push(failedBackup);
+    assert.equal(failedBackup.result.status, 1, options.name + ' stops deployment');
+    assert.doesNotMatch(failedBackup.commandLog, /buildx build| up /, options.name + ' cannot build or switch a service');
+    console.log('PASS ' + options.name + ' fails before building or switching');
+  }
+
+  const directRollback = await runCase({ name: 'first proxy adoption rollback', publicFailure: true, previousProxy: false });
+  cases.push(directRollback);
+  assert.equal(directRollback.result.status, 1, 'failed public health should report deployment failure');
+  assert.ok(directRollback.output.includes('恢复上一版直连端口'), 'first proxy adoption should restore the prior direct endpoint:\n' + directRollback.output);
+  assert.match(directRollback.commandLog, /rollback-compose\.yml/);
+  await access(path.join(directRollback.stateDir, 'direct-rollback'));
+  console.log('PASS first-adoption failure restores the previous direct app port');
+
+  const proxyRollback = await runCase({ name: 'existing proxy rollback', publicFailure: true, previousProxy: true });
+  cases.push(proxyRollback);
+  assert.equal(proxyRollback.result.status, 1, 'failed public health should report deployment failure');
+  assert.ok(proxyRollback.output.includes('恢复上一应用镜像'));
+  assert.match(proxyRollback.commandLog, /proxyImage=inoforge-proxy:sha-old/);
+  assert.ok(proxyRollback.output.includes('上一版本公网入口健康检查通过'));
+  console.log('PASS failed release restores the previously running app and proxy images');
+
+  console.log('Deploy transport checks passed.');
+} catch (error) {
+  console.error(error.stack || error);
+  process.exitCode = 1;
+} finally {
+  for (const result of cases) await rm(result.tempDir, { recursive: true, force: true });
+}

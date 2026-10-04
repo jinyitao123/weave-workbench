@@ -1,0 +1,1456 @@
+{
+  "sourceCommit": "8200b958397a5dee63f1b98cda73db2a851f1b3b",
+  "sourceAppName": "forge",
+  "sourceLeafCount": 207,
+  "leaves": [
+    {
+      "sourceArea": "workspace",
+      "id": "workspace_home",
+      "label": "工作台",
+      "type": "page",
+      "target": "page_workbench"
+    },
+    {
+      "sourceArea": "workspace",
+      "id": "workspace_ai",
+      "label": "AI 广场",
+      "type": "page",
+      "target": "page_workspace_ai"
+    },
+    {
+      "sourceArea": "workspace",
+      "id": "workspace_guidance",
+      "label": "引导中心",
+      "type": "page",
+      "target": "page_onboarding_center"
+    },
+    {
+      "sourceArea": "workspace",
+      "id": "workspace_todo",
+      "label": "待办管理",
+      "type": "page",
+      "target": "page_todo_management"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "purchase_arrival_notices",
+      "label": "到货通知",
+      "type": "page",
+      "target": "page_purchase_arrival_notice"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "purchase_receipts",
+      "label": "到货登记",
+      "type": "page",
+      "target": "page_purchase_arrival_workspace"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "pending_inspections",
+      "label": "待检验库存",
+      "type": "page",
+      "target": "page_pending_inspection_workspace"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "purchase_inspections",
+      "label": "检验单",
+      "type": "page",
+      "target": "page_purchase_inspection_workspace"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "inspection_rules",
+      "label": "检验规则",
+      "type": "page",
+      "target": "page_inspection_rules"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "materials",
+      "label": "物料管理",
+      "type": "page",
+      "target": "page_material_workspace"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "material_combinations",
+      "label": "物料组合",
+      "type": "page",
+      "target": "page_material_combinations"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "bom_workspace",
+      "label": "BOM管理",
+      "type": "page",
+      "target": "page_bom_workspace"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "material_search",
+      "label": "综合物料搜索",
+      "type": "page",
+      "target": "page_material_search"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "suppliers",
+      "label": "供应商管理",
+      "type": "page",
+      "target": "page_supplier_workspace"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "product_trace",
+      "label": "产品实例追溯",
+      "type": "page",
+      "target": "page_product_trace"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "warehouses",
+      "label": "仓库管理",
+      "type": "page",
+      "target": "page_warehouse_workspace"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "purchase_invoices",
+      "label": "采购发票",
+      "type": "page",
+      "target": "page_purchase_invoice_entry"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "purchase_requests",
+      "label": "采购申请",
+      "type": "page",
+      "target": "page_purchase_request_pool"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "purchase_todo",
+      "label": "采购待办池",
+      "type": "page",
+      "target": "page_purchase_todo_pool"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "purchase_inquiry",
+      "label": "询价管理",
+      "type": "page",
+      "target": "page_purchase_inquiry"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "purchase_orders",
+      "label": "采购订单",
+      "type": "page",
+      "target": "page_purchase_order_workspace"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "purchase_returns",
+      "label": "采购退换货",
+      "type": "page",
+      "target": "page_purchase_return"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "supplier_prices",
+      "label": "供应商价格本",
+      "type": "page",
+      "target": "page_supplier_price_book"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "all_inbounds",
+      "label": "全部入库单",
+      "type": "page",
+      "target": "page_all_inbounds"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "purchase_inbounds",
+      "label": "采购入库",
+      "type": "page",
+      "target": "page_purchase_inbound_workspace"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "production_inbounds",
+      "label": "生产入库",
+      "type": "page",
+      "target": "page_production_inbound_entry"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "other_inbounds",
+      "label": "其他入库",
+      "type": "page",
+      "target": "page_other_inbounds"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "opening_inbounds",
+      "label": "期初入库",
+      "type": "page",
+      "target": "page_opening_inbounds"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "inbound_lines",
+      "label": "入库明细",
+      "type": "page",
+      "target": "page_inbound_lines"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "inventory_balances",
+      "label": "库存总览",
+      "type": "page",
+      "target": "page_inventory_overview"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "inventory_ncr",
+      "label": "不合格处理",
+      "type": "page",
+      "target": "page_inventory_ncr"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "inventory_disposal_center",
+      "label": "处置执行中心",
+      "type": "page",
+      "target": "page_inventory_disposal_center"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "inventory_ledgers",
+      "label": "库存流水",
+      "type": "page",
+      "target": "page_inventory_ledger"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "inventory_locks",
+      "label": "库存锁定",
+      "type": "page",
+      "target": "page_inventory_locks"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "inventory_count",
+      "label": "库存盘点",
+      "type": "page",
+      "target": "page_inventory_count"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "inventory_transfer",
+      "label": "调拨与借出",
+      "type": "page",
+      "target": "page_inventory_transfer"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "inventory_alerts",
+      "label": "库存预警",
+      "type": "page",
+      "target": "page_inventory_alerts"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "inventory_loss",
+      "label": "报损单",
+      "type": "page",
+      "target": "page_inventory_loss"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "inventory_sn",
+      "label": "SN码管理",
+      "type": "page",
+      "target": "page_inventory_sn"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "sales_outbounds",
+      "label": "出库单列表",
+      "type": "page",
+      "target": "page_sales_outbound_list"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "production_outbounds",
+      "label": "生产出库",
+      "type": "page",
+      "target": "page_production_outbounds"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "other_outbounds",
+      "label": "其他出库",
+      "type": "page",
+      "target": "page_other_outbounds"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "sales_direct_outbounds",
+      "label": "销售直接出库",
+      "type": "page",
+      "target": "page_sales_direct_outbounds"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "pending_shipments",
+      "label": "待出库发货单",
+      "type": "page",
+      "target": "page_pending_outbound_shipments"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "purchase_return_outbounds",
+      "label": "采购退换货出库",
+      "type": "page",
+      "target": "page_purchase_return_outbounds"
+    },
+    {
+      "sourceArea": "supply_chain",
+      "id": "outbound_lines",
+      "label": "出库明细",
+      "type": "page",
+      "target": "page_outbound_lines"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "sales_contracts",
+      "label": "框架销售合同",
+      "type": "page",
+      "target": "page_sales_contract_workspace"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "sales_orders",
+      "label": "销售订单",
+      "type": "page",
+      "target": "page_sales_order_workspace"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "sales_additional_fees",
+      "label": "附加费用",
+      "type": "page",
+      "target": "page_sales_additional_fee"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "sales_collections",
+      "label": "收款流水",
+      "type": "page",
+      "target": "page_sales_collection_flow"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "sales_shipments",
+      "label": "销售发货单",
+      "type": "page",
+      "target": "page_sales_shipment_workspace"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "sales_returns",
+      "label": "销售退货",
+      "type": "page",
+      "target": "page_sales_return_workspace"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "sales_performance_bank",
+      "label": "业绩银行",
+      "type": "page",
+      "target": "page_sales_performance_bank"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "sales_pricing",
+      "label": "价格策略",
+      "type": "page",
+      "target": "page_sales_pricing"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "goodwill_orders",
+      "label": "Goodwill订单",
+      "type": "page",
+      "target": "page_goodwill_orders"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "sales_teams",
+      "label": "销售团队",
+      "type": "page",
+      "target": "page_sales_teams"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "sales_targets",
+      "label": "销售目标",
+      "type": "page",
+      "target": "page_sales_targets"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "sales_invoices",
+      "label": "销售发票",
+      "type": "page",
+      "target": "page_sales_invoice_request"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "customers",
+      "label": "客户管理",
+      "type": "page",
+      "target": "page_sales_customers"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "contacts",
+      "label": "联系人管理",
+      "type": "page",
+      "target": "page_sales_contacts"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "quotations",
+      "label": "销售报价",
+      "type": "page",
+      "target": "page_sales_quotations"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "customer_material_map",
+      "label": "客户物料对照",
+      "type": "page",
+      "target": "page_customer_material_map"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "opportunities",
+      "label": "商机管理",
+      "type": "page",
+      "target": "page_sales_opportunities"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "leads",
+      "label": "线索管理",
+      "type": "page",
+      "target": "page_sales_leads"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "follow_ups",
+      "label": "跟进记录",
+      "type": "page",
+      "target": "page_sales_follow_ups"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "customer_pool",
+      "label": "公海客户",
+      "type": "page",
+      "target": "page_customer_pool"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "service_orders",
+      "label": "服务工单",
+      "type": "page",
+      "target": "page_service_orders"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "service_quotations",
+      "label": "服务报价单",
+      "type": "page",
+      "target": "page_service_quotations"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "service_settlements",
+      "label": "服务结算单",
+      "type": "page",
+      "target": "page_service_settlements"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "service_workspace",
+      "label": "接单中心",
+      "type": "page",
+      "target": "page_service_workspace"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "service_dispatch",
+      "label": "派工中心",
+      "type": "page",
+      "target": "page_service_dispatch"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "service_analysis",
+      "label": "服务分析",
+      "type": "page",
+      "target": "page_service_analysis"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "warranty_management",
+      "label": "质保管理",
+      "type": "page",
+      "target": "page_warranty_management"
+    },
+    {
+      "sourceArea": "sales",
+      "id": "service_config",
+      "label": "服务配置",
+      "type": "page",
+      "target": "page_service_config"
+    },
+    {
+      "sourceArea": "production",
+      "id": "production_prerequisites",
+      "label": "生产准备检查",
+      "type": "page",
+      "target": "page_production_prerequisites"
+    },
+    {
+      "sourceArea": "production",
+      "id": "assembly_orders",
+      "label": "组装单",
+      "type": "page",
+      "target": "page_production_assembly_workspace"
+    },
+    {
+      "sourceArea": "production",
+      "id": "assembly_shortages",
+      "label": "缺料待办",
+      "type": "page",
+      "target": "page_production_shortage_workspace"
+    },
+    {
+      "sourceArea": "production",
+      "id": "production_issues",
+      "label": "领料单",
+      "type": "page",
+      "target": "page_production_material_workspace"
+    },
+    {
+      "sourceArea": "production",
+      "id": "production_supplies",
+      "label": "补料单",
+      "type": "page",
+      "target": "page_production_supply_workspace"
+    },
+    {
+      "sourceArea": "production",
+      "id": "production_returns",
+      "label": "退料单",
+      "type": "page",
+      "target": "page_production_return_workspace"
+    },
+    {
+      "sourceArea": "production",
+      "id": "disassembly_orders",
+      "label": "拆解单",
+      "type": "page",
+      "target": "page_production_disassembly_workspace"
+    },
+    {
+      "sourceArea": "production",
+      "id": "replacement_orders",
+      "label": "换件单",
+      "type": "page",
+      "target": "page_production_replacement_workspace"
+    },
+    {
+      "sourceArea": "production",
+      "id": "drawing_guide",
+      "label": "进入图纸管理上手指南",
+      "type": "page",
+      "target": "page_drawing_guide"
+    },
+    {
+      "sourceArea": "production",
+      "id": "drawing_workspace",
+      "label": "图纸总览",
+      "type": "page",
+      "target": "page_drawing_workspace"
+    },
+    {
+      "sourceArea": "production",
+      "id": "drawing_archive",
+      "label": "图号档案",
+      "type": "page",
+      "target": "page_drawing_archive"
+    },
+    {
+      "sourceArea": "production",
+      "id": "drawing_review",
+      "label": "图纸评审",
+      "type": "page",
+      "target": "page_drawing_review"
+    },
+    {
+      "sourceArea": "production",
+      "id": "drawing_release",
+      "label": "图纸发布",
+      "type": "page",
+      "target": "page_drawing_release"
+    },
+    {
+      "sourceArea": "production",
+      "id": "drawing_change",
+      "label": "图纸变更",
+      "type": "page",
+      "target": "page_drawing_change"
+    },
+    {
+      "sourceArea": "production",
+      "id": "drawing_distribution",
+      "label": "图纸发放记录",
+      "type": "page",
+      "target": "page_drawing_distribution"
+    },
+    {
+      "sourceArea": "production",
+      "id": "drawing_query",
+      "label": "图纸关联查询",
+      "type": "page",
+      "target": "page_drawing_query"
+    },
+    {
+      "sourceArea": "production",
+      "id": "customer_drawings",
+      "label": "客户图纸",
+      "type": "page",
+      "target": "page_customer_drawings"
+    },
+    {
+      "sourceArea": "production",
+      "id": "subcontract_guide",
+      "label": "进入委外管理上手指南",
+      "type": "page",
+      "target": "page_subcontract_guide"
+    },
+    {
+      "sourceArea": "production",
+      "id": "subcontract_dashboard",
+      "label": "委外看板",
+      "type": "page",
+      "target": "page_subcontract_dashboard"
+    },
+    {
+      "sourceArea": "production",
+      "id": "subcontract_workspace",
+      "label": "委外订单",
+      "type": "page",
+      "target": "page_subcontract_workspace"
+    },
+    {
+      "sourceArea": "production",
+      "id": "subcontract_issues",
+      "label": "委外发料",
+      "type": "page",
+      "target": "page_subcontract_issue_workspace"
+    },
+    {
+      "sourceArea": "production",
+      "id": "subcontract_receipts",
+      "label": "委外回厂",
+      "type": "page",
+      "target": "page_subcontract_receipt_workspace"
+    },
+    {
+      "sourceArea": "production",
+      "id": "subcontract_returns",
+      "label": "委外退料",
+      "type": "page",
+      "target": "page_subcontract_return_workspace"
+    },
+    {
+      "sourceArea": "production",
+      "id": "subcontract_reconciliation",
+      "label": "委外对账",
+      "type": "page",
+      "target": "page_subcontract_reconciliation"
+    },
+    {
+      "sourceArea": "production",
+      "id": "subcontract_suppliers",
+      "label": "委外供应商",
+      "type": "page",
+      "target": "page_subcontract_suppliers"
+    },
+    {
+      "sourceArea": "production",
+      "id": "subcontract_pricing",
+      "label": "加工价目",
+      "type": "page",
+      "target": "page_subcontract_pricing"
+    },
+    {
+      "sourceArea": "production",
+      "id": "subcontract_stock",
+      "label": "委外库存",
+      "type": "page",
+      "target": "page_subcontract_stock"
+    },
+    {
+      "sourceArea": "production",
+      "id": "subcontract_trace",
+      "label": "批次追溯",
+      "type": "page",
+      "target": "page_subcontract_trace"
+    },
+    {
+      "sourceArea": "production",
+      "id": "subcontract_undelivered",
+      "label": "委外未交",
+      "type": "page",
+      "target": "page_subcontract_undelivered"
+    },
+    {
+      "sourceArea": "production",
+      "id": "subcontract_inbound_report",
+      "label": "委外进货",
+      "type": "page",
+      "target": "page_subcontract_inbound_report"
+    },
+    {
+      "sourceArea": "production",
+      "id": "subcontract_reconciliation_report",
+      "label": "委外对账单",
+      "type": "page",
+      "target": "page_subcontract_reconciliation_report"
+    },
+    {
+      "sourceArea": "project",
+      "id": "projects",
+      "label": "项目中心",
+      "type": "page",
+      "target": "page_project_center"
+    },
+    {
+      "sourceArea": "project",
+      "id": "project_operating_analysis",
+      "label": "项目分析中心",
+      "type": "page",
+      "target": "page_project_operating_analysis"
+    },
+    {
+      "sourceArea": "project",
+      "id": "project_plan_workspace",
+      "label": "任务管理",
+      "type": "page",
+      "target": "page_project_task_workspace"
+    },
+    {
+      "sourceArea": "project",
+      "id": "project_timesheet_cost",
+      "label": "工时管理",
+      "type": "page",
+      "target": "page_project_timesheet_cost"
+    },
+    {
+      "sourceArea": "project",
+      "id": "project_settings",
+      "label": "项目配置中心",
+      "type": "page",
+      "target": "page_project_settings"
+    },
+    {
+      "sourceArea": "project",
+      "id": "delivery_acceptance_workspace",
+      "label": "交付验收",
+      "type": "page",
+      "target": "page_delivery_acceptance_workspace"
+    },
+    {
+      "sourceArea": "project",
+      "id": "project_expense_cost",
+      "label": "项目费用与成本",
+      "type": "page",
+      "target": "page_project_expense_cost"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "my_approvals",
+      "label": "我的审批",
+      "type": "page",
+      "target": "page_my_approvals"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "cc_to_me",
+      "label": "抄送我的",
+      "type": "page",
+      "target": "page_cc_to_me"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "initiated_by_me",
+      "label": "我发起的",
+      "type": "page",
+      "target": "page_initiated_by_me"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "administration_requests",
+      "label": "行政申请",
+      "type": "page",
+      "target": "page_administration_requests"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "administration_notice",
+      "label": "公司通知",
+      "type": "page",
+      "target": "page_administration_notice"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "seal_management",
+      "label": "用章管理",
+      "type": "page",
+      "target": "page_seal_management"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "meeting_minutes",
+      "label": "会议纪要",
+      "type": "page",
+      "target": "page_meeting_minutes"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "work_reports",
+      "label": "工作汇报",
+      "type": "page",
+      "target": "page_work_reports"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "document_center",
+      "label": "文档中心",
+      "type": "page",
+      "target": "page_document_center"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "fixed_assets",
+      "label": "固定资产",
+      "type": "page",
+      "target": "page_fixed_assets"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "qualification_declaration",
+      "label": "资质与申报",
+      "type": "page",
+      "target": "page_qualification_declaration"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "material_pickup",
+      "label": "物料领取",
+      "type": "page",
+      "target": "page_material_pickup"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "equipment_maintenance",
+      "label": "设备维护",
+      "type": "page",
+      "target": "page_equipment_maintenance"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "gift_management",
+      "label": "礼品管理",
+      "type": "page",
+      "target": "page_gift_management"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "loan_management",
+      "label": "借出管理",
+      "type": "page",
+      "target": "page_loan_management"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "vehicle_management",
+      "label": "车辆管理",
+      "type": "page",
+      "target": "page_vehicle_management"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "hr_workspace",
+      "label": "人事工作台",
+      "type": "page",
+      "target": "page_hr_workspace"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "employee_records",
+      "label": "员工档案",
+      "type": "page",
+      "target": "page_employee_records"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "recruitment",
+      "label": "招聘管理",
+      "type": "page",
+      "target": "page_recruitment"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "onboarding_offboarding",
+      "label": "入职离职",
+      "type": "page",
+      "target": "page_onboarding_offboarding"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "salary_benefits",
+      "label": "薪酬福利",
+      "type": "page",
+      "target": "page_salary_benefits"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "rules_policies",
+      "label": "规章制度",
+      "type": "page",
+      "target": "page_rules_policies"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "directory",
+      "label": "通讯录",
+      "type": "page",
+      "target": "page_directory"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "overtime_requests",
+      "label": "加班申请",
+      "type": "page",
+      "target": "page_overtime_requests"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "leave_management",
+      "label": "请假管理",
+      "type": "page",
+      "target": "page_leave_management"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "business_trip",
+      "label": "出差申请",
+      "type": "page",
+      "target": "page_business_trip"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "attendance_management",
+      "label": "考勤管理",
+      "type": "page",
+      "target": "page_attendance_management"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "attendance_statistics",
+      "label": "考勤统计",
+      "type": "page",
+      "target": "page_attendance_statistics"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "approval_records",
+      "label": "审批记录",
+      "type": "page",
+      "target": "page_approval_records"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "start_process",
+      "label": "发起流程",
+      "type": "page",
+      "target": "page_start_process"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "process_definitions",
+      "label": "流程定义",
+      "type": "page",
+      "target": "page_process_definitions"
+    },
+    {
+      "sourceArea": "administration",
+      "id": "process_categories",
+      "label": "流程分类",
+      "type": "page",
+      "target": "page_process_categories"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "fund_accounts",
+      "label": "资金账户",
+      "type": "page",
+      "target": "page_fund_accounts"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "bank_flow",
+      "label": "资金流水",
+      "type": "page",
+      "target": "page_bank_flow"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "bank_statement",
+      "label": "银行余额对账",
+      "type": "page",
+      "target": "page_bank_statement"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "opening_balance",
+      "label": "期初往来账与对冲",
+      "type": "page",
+      "target": "page_opening_balance"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "receivables_payables",
+      "label": "应收应付",
+      "type": "page",
+      "target": "page_receivables_payables"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "customer_prepayment",
+      "label": "收款管理",
+      "type": "page",
+      "target": "page_customer_prepayment"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "purchase_payment",
+      "label": "付款管理",
+      "type": "page",
+      "target": "page_purchase_payment"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "refunds",
+      "label": "退款申请",
+      "type": "page",
+      "target": "page_supplier_refund"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "credit_limits",
+      "label": "授信额度管理",
+      "type": "page",
+      "target": "page_credit_management"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "loans",
+      "label": "借款贷款管理",
+      "type": "page",
+      "target": "page_finance_loans"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "revenue_recognition",
+      "label": "销售收入确认",
+      "type": "page",
+      "target": "page_revenue_recognition"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "cost_center",
+      "label": "成本中心",
+      "type": "page",
+      "target": "page_finance_cost_center"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "expense_center",
+      "label": "费用中心",
+      "type": "page",
+      "target": "page_finance_expense_center"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "reimbursement",
+      "label": "报销管理",
+      "type": "page",
+      "target": "page_finance_reimbursement"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "reconciliation_pool",
+      "label": "待对账池",
+      "type": "page",
+      "target": "page_reconciliation_pool"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "customer_reconciliation",
+      "label": "客户对账",
+      "type": "page",
+      "target": "page_customer_reconciliation"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "supplier_reconciliation",
+      "label": "供应商对账",
+      "type": "page",
+      "target": "page_supplier_reconciliation"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "invoice_overview",
+      "label": "发票总览",
+      "type": "page",
+      "target": "page_invoice_overview"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "output_invoices",
+      "label": "销项发票",
+      "type": "page",
+      "target": "page_output_invoices"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "input_invoices",
+      "label": "进项发票",
+      "type": "page",
+      "target": "page_input_invoices"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "invoice_tasks",
+      "label": "开票任务",
+      "type": "page",
+      "target": "page_invoice_tasks"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "invoice_adjustments",
+      "label": "调整记录",
+      "type": "page",
+      "target": "page_invoice_adjustments"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "invoice_tax_variances",
+      "label": "税率差异留痕",
+      "type": "page",
+      "target": "page_invoice_tax_variances"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "invoice_reversal",
+      "label": "发票冲销（Forge）",
+      "type": "page",
+      "target": "page_invoice_reversal"
+    },
+    {
+      "sourceArea": "finance",
+      "id": "collection_settlement",
+      "label": "开票与结算（Forge）",
+      "type": "page",
+      "target": "page_collection_settlement_workspace"
+    },
+    {
+      "sourceArea": "reports",
+      "id": "sales_statistics",
+      "label": "销售统计",
+      "type": "page",
+      "target": "page_sales_statistics"
+    },
+    {
+      "sourceArea": "reports",
+      "id": "purchase_statistics",
+      "label": "采购统计",
+      "type": "page",
+      "target": "page_purchase_statistics"
+    },
+    {
+      "sourceArea": "reports",
+      "id": "inventory_statistics",
+      "label": "库存统计",
+      "type": "page",
+      "target": "page_inventory_statistics"
+    },
+    {
+      "sourceArea": "reports",
+      "id": "assembly_statistics",
+      "label": "组装统计",
+      "type": "page",
+      "target": "page_assembly_statistics"
+    },
+    {
+      "sourceArea": "reports",
+      "id": "finance_overview",
+      "label": "财务总览",
+      "type": "page",
+      "target": "page_finance_overview"
+    },
+    {
+      "sourceArea": "reports",
+      "id": "profit_loss",
+      "label": "损益分析",
+      "type": "page",
+      "target": "page_profit_loss"
+    },
+    {
+      "sourceArea": "reports",
+      "id": "management_profit_report",
+      "label": "管理利润表",
+      "type": "page",
+      "target": "page_management_profit_report"
+    },
+    {
+      "sourceArea": "reports",
+      "id": "fund_analysis",
+      "label": "资金分析",
+      "type": "page",
+      "target": "page_fund_analysis"
+    },
+    {
+      "sourceArea": "reports",
+      "id": "receivable_report",
+      "label": "往来账款",
+      "type": "page",
+      "target": "page_current_account_analysis"
+    },
+    {
+      "sourceArea": "reports",
+      "id": "tax_inventory",
+      "label": "税务库存",
+      "type": "page",
+      "target": "page_tax_inventory_analysis"
+    },
+    {
+      "sourceArea": "reports",
+      "id": "risk_monitoring",
+      "label": "风险监控",
+      "type": "page",
+      "target": "page_risk_monitoring"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "material_skus",
+      "label": "规格与价格",
+      "type": "object",
+      "target": "forge_material_sku"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "material_categories",
+      "label": "物料分类",
+      "type": "object",
+      "target": "forge_material_category"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "units",
+      "label": "计量单位",
+      "type": "object",
+      "target": "forge_unit"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "supplier_categories",
+      "label": "供应商分类",
+      "type": "object",
+      "target": "forge_supplier_category"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "supplier_levels",
+      "label": "供应商级别",
+      "type": "object",
+      "target": "forge_supplier_level"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "customer_categories",
+      "label": "客户分类",
+      "type": "object",
+      "target": "forge_customer_category"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "customer_levels",
+      "label": "客户级别",
+      "type": "object",
+      "target": "forge_customer_level"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "payment_conditions",
+      "label": "付款条件",
+      "type": "object",
+      "target": "forge_payment_condition"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "quotation_types",
+      "label": "报价类型",
+      "type": "object",
+      "target": "forge_quotation_type"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "quotation_issuers",
+      "label": "报价主体",
+      "type": "object",
+      "target": "forge_quotation_issuer"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "contract_types",
+      "label": "合同类型",
+      "type": "object",
+      "target": "forge_contract_type"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "warehouse_types",
+      "label": "仓库类型",
+      "type": "object",
+      "target": "forge_warehouse_type"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "inventory_business_config",
+      "label": "库存管理配置",
+      "type": "page",
+      "target": "page_inventory_business_config"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "project_business_config",
+      "label": "项目管理配置",
+      "type": "page",
+      "target": "page_project_business_config"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "finance_business_config",
+      "label": "付款方式与费用类别",
+      "type": "page",
+      "target": "page_finance_business_config"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "administration_business_config",
+      "label": "行政管理配置",
+      "type": "page",
+      "target": "page_administration_business_config"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "other_business_config",
+      "label": "其他配置",
+      "type": "page",
+      "target": "page_other_business_config"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "hr_business_config",
+      "label": "人事配置",
+      "type": "page",
+      "target": "page_hr_business_config"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "drawing_business_config",
+      "label": "图纸配置",
+      "type": "page",
+      "target": "page_drawing_business_config"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "production_config",
+      "label": "生产配置",
+      "type": "page",
+      "target": "page_production_config"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "subcontract_business_config",
+      "label": "委外字典",
+      "type": "page",
+      "target": "page_subcontract_business_config"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "subcontract_policy",
+      "label": "委外控制规则",
+      "type": "page",
+      "target": "page_subcontract_policy"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "document_printing",
+      "label": "单据打印",
+      "type": "page",
+      "target": "page_print_business_config"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "plugin_center_gap",
+      "label": "插件中心",
+      "type": "page",
+      "target": "page_system_gap"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "service_subscription_gap",
+      "label": "服务订阅",
+      "type": "page",
+      "target": "page_system_gap"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "promotion_rewards_gap",
+      "label": "推广奖励",
+      "type": "page",
+      "target": "page_system_gap"
+    },
+    {
+      "sourceArea": "business_settings",
+      "id": "field_management_gap",
+      "label": "字段管理",
+      "type": "page",
+      "target": "page_system_gap"
+    }
+  ]
+}

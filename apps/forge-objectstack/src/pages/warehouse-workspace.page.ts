@@ -7,9 +7,9 @@ const css =
 const source = `
 ${forgeProductUiRuntime}
 const css=${JSON.stringify(css)};
-function App(){
+function App(){const adapter=useAdapter();
   const [state,setState]=React.useState({loading:true,warehouses:[],types:[],users:[],balances:[],orders:[],skus:[],ledgers:[],error:''}),[query,setQuery]=React.useState(''),[type,setType]=React.useState(''),[page,setPage]=React.useState(1),[view,setView]=React.useState('card'),[dialog,setDialog]=React.useState(null),[busy,setBusy]=React.useState(false),[toast,setToast]=React.useState('');
-  async function request(path,options={}){const r=await fetch('/api/v1'+path,{credentials:'include',headers:{'Content-Type':'application/json'},...options}),p=await r.json().catch(()=>({}));if(!r.ok)throw new Error((typeof p.error==='string'&&p.error)||(p.error&&p.error.message)||(Array.isArray(p.fields)&&p.fields.length?p.fields.map(f=>f.message||f.label||f.field).filter(Boolean).join('；'):'')||p.message||('HTTP '+r.status));return p;}
+  async function request(path,options={}){const r=await ForgeApiResponse(adapter,path,{credentials:'include',headers:{'Content-Type':'application/json'},...options}),p=await r.json().catch(()=>({}));if(!r.ok)throw new Error((typeof p.error==='string'&&p.error)||(p.error&&p.error.message)||(Array.isArray(p.fields)&&p.fields.length?p.fields.map(f=>f.message||f.label||f.field).filter(Boolean).join('；'):'')||p.message||('HTTP '+r.status));return p;}
   async function load(){setState(s=>({...s,loading:true,error:''}));try{const [warehouses,types,users,balances,orders,skus,ledgers]=await Promise.all(['forge_warehouse','forge_warehouse_type','sys_user','forge_inventory_balance','forge_purchase_order','forge_material_sku','forge_inventory_ledger'].map(n=>request('/data/'+n+'?$top=500').then(p=>p.records||[]).catch(()=>[])));setState({loading:false,warehouses,types,users,balances,orders,skus,ledgers,error:''});}catch(e){setState(s=>({...s,loading:false,error:String(e.message||e)}));}}
   React.useEffect(()=>{load()},[]);
   const byId=(rows,id)=>rows.find(x=>x.id===id),typeName=id=>byId(state.types,id)?.name||'—',userName=id=>{const u=byId(state.users,id);return u?.display_name||u?.name||'—'};

@@ -1,0 +1,150 @@
+import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import test from 'node:test';
+import { SqlDriver } from '@objectstack/driver-sql';
+import { ObjectQL, bindHooksToEngine } from '@objectstack/objectql';
+import { QuickJSScriptRunner, hookBodyRunnerFactory } from '@objectstack/runtime';
+import { Field, ObjectSchema } from '@objectstack/spec/data';
+import { SalesContractEmptyDates, SalesContractLineSkuGuard } from '../src/hooks/sales-contract.hook.ts';
+
+function simpleObject(name, fields) {
+  return ObjectSchema.create({
+    name,
+    label: name,
+    sharingModel: 'public_read',
+    fields,
+    enable: { apiEnabled: true },
+  });
+}
+
+const objects = [
+  simpleObject('forge_material_sku', {
+    code: Field.text({ label: 'SKU' }),
+    material_id: Field.text({ label: 'Material' }),
+    enabled: Field.boolean({ label: 'Enabled', defaultValue: true }),
+    organization_id: Field.text({ label: 'Organization' }),
+  }),
+  simpleObject('forge_material', {
+    unit_id: Field.text({ label: 'Unit' }),
+    status: Field.text({ label: 'Status' }),
+    organization_id: Field.text({ label: 'Organization' }),
+  }),
+  simpleObject('forge_unit', {
+    status: Field.text({ label: 'Status' }),
+    organization_id: Field.text({ label: 'Organization' }),
+  }),
+  simpleObject('forge_sales_contract_line', {
+    name: Field.text({ label: 'Line name', required: true }),
+    line_type: Field.text({ label: 'Line type', defaultValue: 'material' }),
+    sku_id: Field.text({ label: 'SKU' }),
+    quantity_limit: Field.number({ label: 'Quantity', min: 0.0001 }),
+  }),
+];
+
+test('ObjectStack 17.3 beforeInsert rejects disabled, cross-organization, and unscoped contract SKUs', async (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'forge-contract-sku-hook-'));
+  const driver = new SqlDriver({
+    client: 'better-sqlite3',
+    connection: { filename: join(directory, 'objectstack.sqlite') },
+    useNullAsDefault: true,
+  });
+  const engine = new ObjectQL();
+  const runner = new QuickJSScriptRunner();
+  for (const object of objects) engine.registerObject(object);
+  engine.registerDriver(driver, true);
+  await engine.init();
+  await driver.initObjects(objects);
+  const binding = bindHooksToEngine(engine, [SalesContractLineSkuGuard], {
+    packageId: 'forge-sales-contract-sku-test',
+    bodyRunner: hookBodyRunnerFactory(runner, { ql: engine, appId: 'forge-sales-contract-sku-test' }),
+    strict: true,
+  });
+  assert.equal(binding.registered, 1, 'the pinned ObjectQL runtime registered the sandboxed beforeInsert hook');
+
+  t.after(async () => {
+    await runner.dispose();
+    await driver.disconnect();
+    rmSync(directory, { recursive: true, force: true });
+  });
+
+  const systemContext = { isSystem: true, positions: [], permissions: [] };
+  const salesContext = {
+    userId: 'sales-user', tenantId: 'org-sales', organizationId: 'org-sales',
+    positions: [], permissions: [], systemPermissions: [],
+  };
+  const insertFixture = (object, values) => engine.insert(object, values, { context: systemContext });
+  const insertLine = (id, skuId, context = salesContext, lineType = 'material') => engine.insert('forge_sales_contract_line', {
+    id, name: lineType === 'service' ? '视觉联调服务' : '合同物料', line_type: lineType, sku_id: skuId || null, quantity_limit: 1,
+  }, { context });
+
+  await insertFixture('forge_unit', { id: 'unit-sales', status: 'active', organization_id: 'org-sales' });
+  await insertFixture('forge_material', { id: 'material-sales', unit_id: 'unit-sales', status: 'active', organization_id: 'org-sales' });
+  await insertFixture('forge_material_sku', { id: 'sku-enabled', material_id: 'material-sales', enabled: true, organization_id: 'org-sales' });
+  await insertFixture('forge_material_sku', { id: 'sku-disabled', material_id: 'material-sales', enabled: false, organization_id: 'org-sales' });
+  await insertFixture('forge_material_sku', { id: 'sku-other-org', material_id: 'material-sales', enabled: true, organization_id: 'org-other' });
+
+  const saved = await insertLine('line-enabled', 'sku-enabled');
+  assert.equal(saved.id, 'line-enabled', 'same-organization enabled SKU can be saved through ObjectQL');
+  const service = await insertLine('line-service', null, salesContext, 'service');
+  assert.equal(service.id, 'line-service', 'a named service row with quantity is saved without an inventory SKU');
+
+  await assert.rejects(insertLine('line-disabled', 'sku-disabled'), /已停用/);
+  await assert.rejects(insertLine('line-cross-org', 'sku-other-org'), /不属于当前组织/);
+  await assert.rejects(insertLine('line-service-with-sku', 'sku-enabled', salesContext, 'service'), /服务项目不能关联物料规格/);
+  await assert.rejects(insertLine('line-unknown-type', 'sku-enabled', salesContext, 'unexpected'), /合同明细类型无效/);
+  await assert.rejects(insertLine('line-unscoped', 'sku-enabled', {
+    userId: 'sales-user', positions: [], permissions: [], systemPermissions: [],
+  }), /无法确认当前销售组织/);
+
+  const savedLines = await engine.find('forge_sales_contract_line', { where: {}, context: systemContext });
+  assert.deepEqual(savedLines.map((line) => line.id).sort(), ['line-enabled', 'line-service'], 'rejected writes leave no invalid contract lines behind');
+});
+
+test('native contract form may clear unconfirmed signing and effective dates', async (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'forge-contract-date-hook-'));
+  const contract = simpleObject('forge_sales_contract', {
+    name: Field.text({ label: '合同名称', required: true }),
+    signed_on: Field.date({ label: '签订日期' }),
+    starts_on: Field.date({ label: '生效日期' }),
+    ends_on: Field.date({ label: '到期日期' }),
+  });
+  const driver = new SqlDriver({
+    client: 'better-sqlite3',
+    connection: { filename: join(directory, 'objectstack.sqlite') },
+    useNullAsDefault: true,
+  });
+  const engine = new ObjectQL();
+  const runner = new QuickJSScriptRunner();
+  engine.registerObject(contract);
+  engine.registerDriver(driver, true);
+  await engine.init();
+  await driver.initObjects([contract]);
+  const binding = bindHooksToEngine(engine, [SalesContractEmptyDates], {
+    packageId: 'forge-contract-date-test',
+    bodyRunner: hookBodyRunnerFactory(runner, { ql: engine, appId: 'forge-contract-date-test' }),
+    strict: true,
+  });
+  assert.equal(binding.registered, 2, 'both native insert and update pass through date normalization');
+  t.after(async () => {
+    await runner.dispose();
+    await driver.disconnect();
+    rmSync(directory, { recursive: true, force: true });
+  });
+  const context = { isSystem: true, positions: [], permissions: [] };
+  const created = await engine.insert('forge_sales_contract', {
+    id: 'contract-date-test', name: '未定签署日期的合同草稿',
+    signed_on: '', starts_on: '', ends_on: '',
+  }, { context });
+  assert.equal(created.signed_on, null);
+  assert.equal(created.starts_on, null);
+  assert.equal(created.ends_on, null);
+  await engine.update('forge_sales_contract', {
+    id: 'contract-date-test', signed_on: '', starts_on: '', ends_on: '',
+  }, { context });
+  const saved = await engine.findOne('forge_sales_contract', { where: { id: 'contract-date-test' }, context });
+  assert.equal(saved.signed_on, null);
+  assert.equal(saved.starts_on, null);
+  assert.equal(saved.ends_on, null);
+});

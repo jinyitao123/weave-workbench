@@ -2,7 +2,7 @@
 
 先读取并遵守仓库根的 [AGENTS.md](../../AGENTS.md)。本文件仅补充应用目录信息，不替代主仓的取证、页面精修、持续执行、工程门禁或业务验收要求。
 
-- `objectstack.config.ts` 中的 `defineStack()` 是单一应用入口；依赖和脚本以 [package.json](package.json) 为准，使用 pnpm。
+- 当前 `objectstack.config.ts` 通过 `sharedForgeCorePlugin` 与 `forgeApplicationPlugins` 注册共享核心和七个应用包；应用包清单以 [`src/apps/index.ts`](src/apps/index.ts) 为准，顶层 `apps` 集合仍为空。注册不代表各应用业务与页面已完整验收。每个应用包遵循最多一个 App 的约束；依赖和脚本以 [package.json](package.json) 为准，使用 pnpm。
 - 对象、动作、hooks、页面分别由 `src/objects/index.ts`、`src/actions/index.ts`、`src/hooks/index.ts`、`src/pages/index.ts` 汇总，以 `Object.values()` 注册；共享导航和 barrel 的并行修改按主仓集成规则处理。
 - 配置属性使用 camelCase，机器名称使用 snake_case，元数据类型名使用单数，文件使用 `{name}.{type}.ts`。通过 `@objectstack/spec` 的公开入口使用协议定义，不从包内部相对路径导入；新增 schema 遵循 Zod-first 并用 `z.infer<>` 派生类型。
 - CEL 条件按对应 Skill 使用 `record.<field>`，不要用未绑定的裸字段名。具体约束通过主仓规定的 typecheck、validate、build 与相称业务检查验证。

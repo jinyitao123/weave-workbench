@@ -1,5 +1,5 @@
 import { Field, ObjectSchema } from '@objectstack/spec/data';
-import { master, text, code, reference, owner, remarks, required } from '../model.js';
+import { master, text, code, reference, owner, remarks, required, choice } from '../model.js';
 
 const select = (label: string, options: Array<[string, string]>, defaultValue?: string) => Field.select(
   options.map(([value, optionLabel]) => ({ value, label: optionLabel })),
@@ -18,7 +18,8 @@ export const Project = ObjectSchema.create({
     name: text('项目名称', true),
     code: Field.autonumber({ label: '项目编号', autonumberFormat: 'PRJ-{YYYY}-{000}' }),
     type_id: reference('forge_project_type', '项目类型', true),
-    customer_id: reference('forge_customer', '客户', true), manager_id: owner(true),
+    customer_id: { ...reference('forge_customer', '客户', true), relatedList: true, relatedListTitle: '项目', relatedListColumns: ["code", "name", "planned_start_on", "planned_end_on", "progress", "status"] },
+    customer_name_snapshot: { ...text('客户名称快照'), readonly: true }, manager_id: owner(true), manager_name_snapshot: { ...text('项目负责人快照'), readonly: true },
     priority: select('优先级', [['high', '高'], ['medium', '中'], ['low', '低']], 'medium'),
     planned_start_on: Field.date({ label: '计划开始日期', ...required }),
     planned_end_on: Field.date({ label: '计划结束日期', ...required }),
@@ -48,17 +49,40 @@ export const Project = ObjectSchema.create({
 });
 
 export const ProjectMember = master('forge_project_member', '项目团队', 'users', {
-  name: text('成员名称', true), membership_key: code('成员关系编号'), project_id: reference('forge_project', '项目', true),
+  name: text('成员名称', true), membership_key: code('成员关系编号'), project_id: Field.masterDetail('forge_project', { label: '所属项目', deleteBehavior: 'cascade', ...required }),
   user_id: owner(true), member_duty: select('项目角色', [['manager', '项目经理'], ['member', '项目成员']], 'member'),
   joined_on: Field.date({ label: '加入日期', ...required }), active: Field.boolean({ label: '在项目中', defaultValue: true }), remarks: remarks(),
-}, ['project_id', 'user_id', 'member_duty', 'joined_on', 'active']);
+}, ['project_id', 'user_id', 'member_duty', 'joined_on', 'active'], 'controlled_by_parent');
+
+export const ProjectAttachment = master('forge_project_attachment', '项目附件', 'paperclip', {
+  name: text('文件名称', true), attachment_key: code('附件编号'), project_id: reference('forge_project', '项目', true),
+  attachment: Field.file({ label: '文件', ...required }), category: select('资料分类', [['contract', '合同资料'], ['technical', '技术资料'], ['delivery', '交付资料'], ['other', '其他']], 'other'),
+  uploaded_by: Field.user({ label: '上传人', ...required }), uploaded_at: Field.datetime({ label: '上传时间', ...required }), remarks: remarks(),
+}, ['project_id', 'name', 'category', 'attachment', 'uploaded_by', 'uploaded_at']);
+
+export const ProjectLog = master('forge_project_log', '项目日志', 'notebook-pen', {
+  name: text('日志标题', true), log_key: code('日志编号'), project_id: reference('forge_project', '项目', true),
+  category: select('日志分类', [['change', '变更记录'], ['issue', '问题反馈'], ['progress', '日常进展'], ['decision', '决策记录'], ['stage', '阶段总结'], ['risk', '风险预警'], ['milestone', '里程碑达成'], ['internal', '内部讨论'], ['external', '外部协调'], ['customer', '客户沟通']], 'progress'),
+  content: Field.textarea({ label: '日志内容', ...required }), author_id: Field.user({ label: '记录人', ...required }), logged_at: Field.datetime({ label: '记录时间', ...required }),
+  reply_count: Field.number({ label: '回复数', min: 0, scale: 0, defaultValue: 0, readonly: true }), risk_resolved: Field.boolean({ label: '风险已解除', defaultValue: false }), remarks: remarks(),
+}, ['project_id', 'category', 'name', 'author_id', 'logged_at', 'reply_count', 'risk_resolved']);
+
+export const ProjectModulePreference = master('forge_project_module_preference', '项目功能模块偏好', 'sliders-horizontal', {
+  name: text('偏好名称', true), preference_key: code('偏好编号'), project_id: reference('forge_project', '项目', true), user_id: Field.user({ label: '用户', ...required }),
+  plan_enabled: Field.boolean({ label: '项目计划', defaultValue: true }), sales_enabled: Field.boolean({ label: '关联订单与合同', defaultValue: true }),
+  cost_enabled: Field.boolean({ label: '项目成本', defaultValue: true }), bom_enabled: Field.boolean({ label: '项目BOM', defaultValue: true }), purchase_enabled: Field.boolean({ label: '支出合同', defaultValue: true }),
+  task_enabled: Field.boolean({ label: '任务管理', defaultValue: true }), team_enabled: Field.boolean({ label: '团队管理', defaultValue: true }), delivery_enabled: Field.boolean({ label: '交付包', defaultValue: true }),
+  goodwill_enabled: Field.boolean({ label: 'Goodwill', defaultValue: true }), attachment_enabled: Field.boolean({ label: '附件', defaultValue: true }), log_enabled: Field.boolean({ label: '项目日志', defaultValue: true }),
+}, ['project_id', 'user_id', 'plan_enabled', 'sales_enabled', 'cost_enabled', 'bom_enabled', 'purchase_enabled', 'task_enabled', 'team_enabled', 'delivery_enabled', 'goodwill_enabled', 'attachment_enabled', 'log_enabled']);
 
 // RISEMAP links a contract and automatically brings in all non-draft orders under it.
 export const ProjectSalesLink = master('forge_project_sales_link', '项目订单合同关联', 'link', {
-  name: text('关联名称', true), link_key: code('关联编号'), project_id: reference('forge_project', '项目', true),
+  name: text('关联名称', true), link_key: code('关联编号'), project_id: Field.masterDetail('forge_project', { label: '所属项目', deleteBehavior: 'cascade', ...required }),
   contract_id: reference('forge_sales_contract', '销售合同', true), order_id: reference('forge_sales_order', '销售订单', true),
+  contract_code_snapshot: text('合同编号快照'), contract_type_snapshot: text('合同类型快照'), signed_on_snapshot: Field.date({ label: '合同签订日期快照' }),
+  order_code_snapshot: text('订单编号快照'), order_status_snapshot: choice('订单状态快照', ['草稿', '待审批', '已审批', '执行中', '部分发货', '已发货', '已完成', '已取消']),
   order_amount: amount('订单金额', true), invoice_amount: amount('已开票', true), collected_amount: amount('已回款', true), remarks: remarks(),
-}, ['project_id', 'contract_id', 'order_id', 'order_amount', 'invoice_amount', 'collected_amount']);
+}, ['project_id', 'contract_code_snapshot', 'order_code_snapshot', 'order_amount', 'invoice_amount', 'collected_amount'], 'controlled_by_parent');
 
 // Live RISEMAP 2026-09-09: a project without a plan offers system/custom/copy/manual starts.
 // The observed tenant had zero system and custom templates, so only the manual structure is implemented here.
@@ -148,7 +172,7 @@ export const ProjectTimesheet = master('forge_project_timesheet', '项目工时'
 // RISEMAP RM-140: approved business records feed a traceable cost pool before operating analysis consumes them.
 export const ProjectCostEntry = master('forge_project_cost_entry', '项目成本池', 'circle-dollar-sign', {
   name: text('成本名称', true), code: code('成本编号'), project_id: reference('forge_project', '项目', true),
-  customer_id: reference('forge_customer', '客户', true), source_type: select('来源类型', [
+  customer_id: { ...reference('forge_customer', '客户', true), relatedList: false }, source_type: select('来源类型', [
     ['timesheet', '项目工时'], ['production_material', '生产材料'], ['expense', '费用报销'], ['subcontract', '委外'], ['manual', '手工登记'],
   ]),
   cost_type: select('成本类型', [['labor', '人工成本'], ['material', '材料成本'], ['manufacturing', '制造费用'], ['travel', '差旅费用'], ['subcontract', '委外成本'], ['other', '其他成本']]),

@@ -1,10 +1,10 @@
-import { Field } from '@objectstack/spec/data';
+import { Field, ObjectSchema } from '@objectstack/spec/data';
 import { master, dictionary, text, code, reference, choice, owner, remarks, required, money } from '../model.js';
 
 const positiveQuantity = (label = '数量') => Field.number({ label, min: 0.0001, scale: 4, ...required });
 const percentage = (label: string, defaultValue = 0) => Field.number({ label, min: 0, max: 100, scale: 4, defaultValue });
 const nonNegativeMoney = (label: string, scale = 4) => Field.currency({ label, precision: 18, scale, min: 0 });
-const paymentMethod = () => choice('付款方式', ['银行转账', '支付宝', '微信支付', '现金', '支票', '其他', '电汇', '承兑汇票', '在线支付', '信用证'], '银行转账');
+const paymentMethod = () => choice('付款方式', ['银行转账', '支付宝', '微信支付', '现金', '支票', '其他', '电汇', '承兑汇票', '在线支付', '信用证']);
 const revenueTrigger = () => choice('收入确认方式', ['按发货出库', '按开票', '按里程碑', '按验收', '按周期', '手动确认'], '按发货出库');
 
 // Runtime-observed prerequisites: RM-059 / DR-0291 to DR-0294.
@@ -18,22 +18,39 @@ export const QuotationIssuer = master('forge_quotation_issuer', '报价主体', 
 export const ContractType = dictionary('forge_contract_type', '合同类型');
 
 // RM-059 / DR-0279 to DR-0311. The header and lines stay separate so pricing snapshots remain auditable.
-export const Quotation = master('forge_quotation', '销售报价', 'file-text', {
-  name: text('报价名称', true), code: code('报价单号'), customer_id: reference('forge_customer', '客户', true),
-  contact_id: reference('forge_contact', '联系人'), opportunity_name: text('关联商机'),
-  quotation_type_id: reference('forge_quotation_type', '报价类型', true), issuer_id: reference('forge_quotation_issuer', '报价主体', true),
-  quotation_date: Field.date({ label: '报价日期', ...required }), valid_until: Field.date({ label: '有效期至', ...required }),
-  payment_method: paymentMethod(), payment_term: text('付款条件'), responsible_id: owner(true),
-  status: { ...choice('报价状态', ['草稿', '待审批', '已审批', '已驳回', '已发送', '已接受'], '草稿'), readonly: true },
-  item_count: Field.number({ label: '物料/服务数', min: 0, scale: 0, defaultValue: 0 }),
-  subtotal: nonNegativeMoney('折前含税金额'), discount_amount: nonNegativeMoney('折扣金额'),
-  tax_amount: nonNegativeMoney('税额'), total_amount: nonNegativeMoney('报价含税总额'), cost_total: nonNegativeMoney('总成本'),
-  business_terms: Field.textarea({ label: '商务条款' }), quotation_terms: Field.textarea({ label: '报价条款' }),
-  attachment_note: text('附件说明'), remarks: remarks(),
-}, ['code', 'name', 'customer_id', 'responsible_id', 'item_count', 'total_amount', 'status', 'valid_until']);
+export const Quotation = ObjectSchema.create({
+  ...master('forge_quotation', '销售报价', 'file-text', {
+    name: text('报价名称', true), code: code('报价单号'), customer_id: { ...reference('forge_customer', '客户', true), relatedList: true, relatedListTitle: '报价', relatedListColumns: ["code", "name", "item_count", "total_amount", "status", "valid_until"] },
+    contact_id: reference('forge_contact', '联系人'),
+    opportunity_id: { ...reference('forge_sales_opportunity', '来源商机'), relatedList: true, relatedListTitle: '来源报价', relatedListColumns: ["code", "name", "opportunity_name", "status", "valid_until"] },
+    opportunity_name: text('来源商机名称'),
+    quotation_type_id: reference('forge_quotation_type', '报价类型', true), issuer_id: reference('forge_quotation_issuer', '报价主体', true),
+    quotation_date: Field.date({ label: '报价日期', ...required }), valid_until: Field.date({ label: '有效期至', ...required }),
+    payment_method: paymentMethod(), payment_method_confirmed: Field.boolean({ label: '付款方式已核实', defaultValue: false, readonly: true }), payment_term: text('付款条件'), responsible_id: owner(true),
+    status: { ...choice('报价状态', ['草稿', '待审批', '已审批', '已驳回', '已发送', '已接受'], '草稿'), readonly: true },
+    submitted_at: Field.datetime({ label: '提交审批时间', readonly: true }), submitted_by: Field.user({ label: '提交员工', readonly: true }),
+    submitted_pricing_version: Field.number({ label: '提交核价版本', min: 0, scale: 0, readonly: true }),
+    sent_evidence_attachment: Field.file({ label: '发送凭证', readonly: true }),
+    sent_evidence_note: Field.textarea({ label: '发送说明', readonly: true }), sent_at: Field.datetime({ label: '发送时间', readonly: true }),
+    sent_by: Field.user({ label: '发送员工', readonly: true }), sent_pricing_version: Field.number({ label: '发送核价版本', min: 0, scale: 0, readonly: true }),
+    sent_evidence_request_signature: Field.textarea({ label: '发送请求身份', readonly: true, hidden: true }),
+    customer_acceptance_evidence_attachment: Field.file({ label: '客户接受凭证', readonly: true }),
+    customer_acceptance_note: Field.textarea({ label: '客户接受说明', readonly: true }),
+    accepted_at: Field.datetime({ label: '接受记录时间', readonly: true }), accepted_by: Field.user({ label: '接受记录员工', readonly: true }),
+    accepted_pricing_version: Field.number({ label: '接受核价版本', min: 0, scale: 0, readonly: true }),
+    customer_acceptance_request_signature: Field.textarea({ label: '客户接受请求身份', readonly: true, hidden: true }),
+    pricing_version: Field.number({ label: '核价版本', min: 0, scale: 0, defaultValue: 0, hidden: true, readonly: true }),
+    item_count: Field.number({ label: '物料/服务数', min: 0, scale: 0, defaultValue: 0 }),
+    subtotal: nonNegativeMoney('折前含税金额'), discount_amount: nonNegativeMoney('折扣金额'),
+    tax_amount: nonNegativeMoney('税额'), total_amount: nonNegativeMoney('报价含税总额'), cost_total: nonNegativeMoney('总成本'),
+    business_terms: Field.textarea({ label: '商务条款' }), quotation_terms: Field.textarea({ label: '报价条款' }),
+    attachment_note: text('附件说明'), remarks: remarks(),
+  }, ['code', 'name', 'customer_id', 'opportunity_name', 'responsible_id', 'item_count', 'total_amount', 'status', 'valid_until']),
+  indexes: [{ fields: ['opportunity_id'] }],
+});
 
 export const QuotationLine = master('forge_quotation_line', '报价明细', 'list', {
-  name: text('物料/服务名称', true), quotation_id: reference('forge_quotation', '报价单', true),
+  name: text('物料/服务名称', true), quotation_id: { ...reference('forge_quotation', '报价单', true), inlineEdit: true, inlineTitle: '报价明细' },
   line_type: choice('明细类型', ['物料', '服务项目'], '物料'), group_name: text('分组'), sku_id: reference('forge_material_sku', '物料规格'),
   item_code: text('编码'), model: text('型号'), specification: text('规格'), unit_name: text('单位'),
   quantity: positiveQuantity(), taxed_unit_price: nonNegativeMoney('含税单价'), untaxed_unit_price: nonNegativeMoney('不含税单价'),
@@ -41,13 +58,59 @@ export const QuotationLine = master('forge_quotation_line', '报价明细', 'lis
   cost_price: nonNegativeMoney('成本单价'), sort_order: Field.number({ label: '排序', min: 0, scale: 0, defaultValue: 0 }), remarks: remarks(),
 }, ['quotation_id', 'group_name', 'name', 'model', 'quantity', 'taxed_unit_price', 'tax_rate', 'discount_rate', 'taxed_subtotal']);
 
+// A committed claim per quote version serializes competing native adjustments
+// without relying on an ObjectQL compare-and-swap API that 17.3 does not expose.
+export const QuotationPriceAdjustmentReceipt = ObjectSchema.create({
+  name: 'forge_quotation_price_adjustment_receipt',
+  label: '报价调整回执',
+  pluralLabel: '报价调整回执',
+  icon: 'receipt-text',
+  sharingModel: 'private',
+  nameField: 'name',
+  fields: {
+    name: text('请求回执', true),
+    quotation_id: reference('forge_quotation', '报价单', true),
+    operation: Field.select([{ value: 'price_adjustment', label: '明细调价' }, { value: 'recalculation', label: '金额重算' }], { label: '操作类型', defaultValue: 'price_adjustment' }),
+    quotation_line_id: Field.text({ label: '报价明细标识', ...required, maxLength: 128 }),
+    expected_version: Field.number({ label: '调整前版本', min: 0, scale: 0, ...required }),
+    resulting_version: Field.number({ label: '调整后版本', min: 0, scale: 0, ...required }),
+    idempotency_key: Field.text({ label: '请求标识', ...required, maxLength: 128 }),
+    request_signature: Field.text({ label: '请求签名', ...required, maxLength: 512 }),
+    requested_unit_price: nonNegativeMoney('修改后含税单价'),
+    line_subtotal: nonNegativeMoney('明细小计'),
+    quotation_total: nonNegativeMoney('报价含税总额'),
+    cost_total: nonNegativeMoney('总成本'),
+    cost_analysis_available: Field.boolean({ label: '成本数据完整' }),
+    requested_by: Field.user({ label: '操作员工', ...required }),
+    recorded_at: Field.datetime({ label: '保存时间', ...required }),
+  },
+  indexes: [
+    { fields: ['quotation_id', 'expected_version'], unique: 'organization' },
+    { fields: ['quotation_id', 'idempotency_key'], unique: 'organization' },
+  ],
+  enable: { apiEnabled: false, searchable: false, trackHistory: true, files: false, feeds: false, activities: false },
+});
+
 // RM-046 / DR-0165 to DR-0177. A contract constrains orders and never represents shipment execution itself.
 export const SalesContract = master('forge_sales_contract', '框架销售合同', 'scroll-text', {
   name: text('合同名称', true), code: code('合同编号'), customer_po_number: text('客户单号'),
-  contract_type_id: reference('forge_contract_type', '合同类型', true), customer_id: reference('forge_customer', '客户', true),
-  contact_id: reference('forge_contact', '联系人'), quotation_id: reference('forge_quotation', '来源报价单'), project_name: text('关联项目'),
+  contract_type_id: reference('forge_contract_type', '合同类型', true), customer_id: { ...reference('forge_customer', '客户', true), relatedList: true, relatedListTitle: '合同', relatedListColumns: ["code", "name", "total_amount", "ordered_amount", "status", "signed_on"] },
+  contact_id: reference('forge_contact', '联系人'), quotation_id: { ...reference('forge_quotation', '来源报价单'), readonly: true }, project_name: text('关联项目'),
+  quotation_source_type: Field.select([
+    { value: 'direct', label: '直接新建' },
+    { value: 'template_import', label: '报价模板导入' },
+    { value: 'formal_conversion', label: '报价正式转换' },
+  ], { label: '报价来源方式', readonly: true }),
   company_account_id: reference('forge_fund_account', '公司账户'), delivery_address: text('收货地址'), delivery_contact: text('收货人'), delivery_phone: text('收货联系电话'),
-  signed_on: Field.date({ label: '签订日期' }), starts_on: Field.date({ label: '生效日期' }), ends_on: Field.date({ label: '到期日期' }),
+  signed_on: Field.date({ label: '签订日期', readonly: true }), starts_on: Field.date({ label: '生效日期' }), ends_on: Field.date({ label: '到期日期' }),
+  signed_evidence_attachment: Field.file({ label: '签署凭证', readonly: true }),
+  signed_evidence_sha256: Field.text({ label: '签署原件摘要', maxLength: 64, readonly: true, hidden: true }),
+  order_payment_requirement: Field.select([{ value: 'unconfigured', label: '待确认' }, { value: 'none', label: '无需预付款' }, { value: 'prepayment', label: '先确认预付款' }], { label: '下单付款条件', defaultValue: 'unconfigured', readonly: true }),
+  order_prepayment_amount: { ...nonNegativeMoney('下单预付款'), readonly: true },
+  order_conditions_set_by: Field.user({ label: '下单条件确认人', readonly: true }),
+  order_conditions_set_at: Field.datetime({ label: '下单条件确认时间', readonly: true }),
+  signed_evidence_note: Field.textarea({ label: '签署说明', readonly: true }),
+  signed_recorded_by: Field.user({ label: '签署登记员工', readonly: true }), signed_recorded_at: Field.datetime({ label: '签署登记时间', readonly: true }),
   responsible_id: owner(true), collaborator_ids: Field.lookup('sys_user', { label: '协同销售', multiple: true, relatedList: false }), follower_ids: Field.lookup('sys_user', { label: '关注人', multiple: true, relatedList: false }), total_amount: nonNegativeMoney('合同含税总额'),
   has_order_amount_limit: Field.boolean({ label: '限制累计下单金额', defaultValue: false }), order_amount_limit: nonNegativeMoney('累计下单金额上限'),
   allow_affiliate_orders: Field.boolean({ label: '允许关联公司下单', defaultValue: false }),
@@ -57,29 +120,105 @@ export const SalesContract = master('forge_sales_contract', '框架销售合同'
   revenue_trigger: revenueTrigger(), ordered_count: Field.number({ label: '下单笔数', min: 0, scale: 0, defaultValue: 0 }),
   ordered_amount: nonNegativeMoney('已下单金额'), invoiced_amount: nonNegativeMoney('已开票金额'),
   shipped_amount: nonNegativeMoney('已发货金额'), collected_amount: nonNegativeMoney('已回款金额'),
-  status: { ...choice('合同状态', ['草稿', '待审批', '执行中', '已完成', '已终止', '已驳回'], '草稿'), readonly: true },
+  status: { ...choice('合同状态', ['草稿', '待审批', '内部复核通过', '已完成', '已终止', '已驳回'], '草稿'), readonly: true },
   payment_term: text('付款条件'), delivery_cycle_days: Field.number({ label: '交货周期（天）', min: 0, scale: 0, defaultValue: 21 }),
   warranty_months: Field.number({ label: '质保期（月）', min: 0, scale: 0 }), business_terms: Field.textarea({ label: '合同条款' }),
-  attachment_ids: Field.file({ label: '合同附件', multiple: true }), attachment_note: text('附件说明'), remarks: remarks(),
+  requires_legal_review: Field.boolean({ label: '非标条款需要法务复核', defaultValue: false }),
+  attachment_ids: Field.file({ label: '合同附件', multiple: true }), attachment_note: text('附件说明'),
+  draft_request_signature: Field.text({ label: '草稿请求摘要', maxLength: 32, hidden: true, readonly: true }),
+  submitted_material_id: Field.file({ label: '本次提交版本', readonly: true }),
+  submitted_material_name: Field.text({ label: '提交版本名称', readonly: true, maxLength: 255 }),
+  submitted_material_sha256: Field.text({ label: '提交版本摘要', readonly: true, maxLength: 64, hidden: true }),
+  submitted_attachment_manifest: Field.textarea({ label: '本次提交附件清单', readonly: true, hidden: true }),
+  submitted_attachment_revision_request_id: Field.text({ label: '附件修订轮次', readonly: true, maxLength: 80, hidden: true }),
+  submitted_at: Field.datetime({ label: '提交时间', readonly: true }),
+  remarks: remarks(),
 }, ['code', 'customer_po_number', 'name', 'contract_type_id', 'customer_id', 'total_amount', 'ordered_amount', 'status', 'signed_on', 'responsible_id']);
 
-export const SalesContractLine = master('forge_sales_contract_line', '合同物料明细', 'list', {
-  name: text('物料名称', true), contract_id: reference('forge_sales_contract', '销售合同', true),
-  quotation_line_id: reference('forge_quotation_line', '来源报价明细'), sku_id: reference('forge_material_sku', '物料规格', true),
+// Internal submission ledger. The unique contract reference serializes competing
+// first submissions while the contract keeps the employee-visible frozen file.
+export const SalesContractSubmission = ObjectSchema.create({
+  name: 'forge_sales_contract_submission',
+  label: '合同提交记录',
+  pluralLabel: '合同提交记录',
+  icon: 'file-check',
+  sharingModel: 'private',
+  nameField: 'name',
+  fields: {
+    name: text('提交批次', true),
+    contract_id: reference('forge_sales_contract', '销售合同', true),
+    material_file_id: Field.text({ label: '材料引用', ...required, maxLength: 64 }),
+    material_name: Field.text({ label: '材料名称', ...required, maxLength: 255 }),
+    material_sha256: Field.text({ label: '材料摘要', ...required, maxLength: 64 }),
+    material_manifest: Field.textarea({ label: '提交材料清单', readonly: true }),
+    package_sha256: Field.text({ label: '提交包摘要', maxLength: 64, hidden: true, readonly: true }),
+    organization_id: Field.text({ label: '组织范围', maxLength: 128, hidden: true, readonly: true }),
+    submitted_by: Field.user({ label: '提交人', ...required }),
+    submitted_at: Field.datetime({ label: '提交时间', ...required }),
+  },
+  listViews: { all: { label: '全部记录', type: 'grid', columns: ['name', 'contract_id', 'material_name', 'submitted_by', 'submitted_at'] } },
+  indexes: [{ fields: ['contract_id'], unique: 'organization' }],
+  enable: { apiEnabled: false, searchable: false, trackHistory: true, files: true, feeds: false, activities: false },
+});
+
+// One immutable material choice per returned native approval request. The
+// approval service still owns the resubmit action and the next review round.
+export const SalesContractRevisionMaterial = ObjectSchema.create({
+  name: 'forge_sales_contract_revision_material',
+  label: '合同修订材料版本',
+  pluralLabel: '合同修订材料版本',
+  icon: 'file-check',
+  sharingModel: 'private',
+  nameField: 'name',
+  fields: {
+    name: text('修订批次', true),
+    contract_id: reference('forge_sales_contract', '销售合同', true),
+    approval_request_id: Field.text({ label: '原退回事项', ...required, maxLength: 128 }),
+    return_version: Field.text({ label: '退回意见版本', ...required, maxLength: 128 }),
+    source_material_version: Field.text({ label: '原材料版本摘要', ...required, maxLength: 64 }),
+    new_version_digest: Field.text({ label: '新材料版本摘要', ...required, maxLength: 64 }),
+    idempotency_key: Field.text({ label: '修订请求键', ...required, maxLength: 64 }),
+    primary_file_id: Field.text({ label: '新主件引用', ...required, maxLength: 128 }),
+    primary_name: Field.text({ label: '新主件名称', ...required, maxLength: 255 }),
+    primary_sha256: Field.text({ label: '新主件摘要', ...required, maxLength: 64 }),
+    primary_media_type: Field.text({ label: '新主件媒体类型', maxLength: 128 }),
+    primary_bytes: Field.number({ label: '新主件字节数', min: 0, scale: 0 }),
+    attachment_manifest: Field.textarea({ label: '新附件清单', ...required }),
+    organization_id: Field.text({ label: '组织范围', maxLength: 128, hidden: true, readonly: true }),
+    submitted_by: Field.user({ label: '修订员工', ...required }),
+    submitted_at: Field.datetime({ label: '固定时间', ...required }),
+    consumed_at: Field.datetime({ label: '审批消费时间', readonly: true }),
+  },
+  listViews: { all: { label: '全部记录', type: 'grid', columns: ['name', 'contract_id', 'submitted_by', 'submitted_at'] } },
+  indexes: [
+    { fields: ['approval_request_id'], unique: 'organization' },
+    { fields: ['idempotency_key'], unique: 'organization' },
+  ],
+  enable: { apiEnabled: false, searchable: false, trackHistory: true, files: true, feeds: false, activities: false },
+});
+
+export const SalesContractLine = master('forge_sales_contract_line', '合同物料/服务明细', 'list', {
+  name: text('物料/服务名称', true), contract_id: Field.masterDetail('forge_sales_contract', { label: '销售合同', deleteBehavior: 'cascade', inlineEdit: 'grid', ...required }),
+  line_type: choice('明细类型', ['物料', '服务项目'], '物料'), quotation_line_id: reference('forge_quotation_line', '来源报价明细'), sku_id: reference('forge_material_sku', '物料规格'),
   item_code: text('物料编码'), model: text('型号'), specification: text('规格'), unit_name: text('单位'),
   quantity_limit: positiveQuantity('数量上限'), ordered_quantity: Field.number({ label: '已下单数量', min: 0, scale: 4, defaultValue: 0 }),
   taxed_unit_price: nonNegativeMoney('协议含税单价'), tax_rate: percentage('税率', 13), discount_rate: percentage('折扣率', 0),
   taxed_subtotal: nonNegativeMoney('含税小计'), remarks: remarks(),
-}, ['contract_id', 'item_code', 'name', 'model', 'quantity_limit', 'ordered_quantity', 'taxed_unit_price', 'taxed_subtotal']);
+}, ['contract_id', 'item_code', 'name', 'model', 'quantity_limit', 'ordered_quantity', 'taxed_unit_price', 'taxed_subtotal'], 'controlled_by_parent');
 
 // RM-047 / DR-0178 to DR-0183. Direct and contract-backed orders converge on this execution document.
 export const SalesOrder = master('forge_sales_order', '销售订单', 'clipboard-list', {
   name: text('订单名称', true), code: code('订单编号'), customer_po_number: text('客户单号'),
-  source_type: choice('订单来源', ['直接新建', '关联合同'], '直接新建'), customer_id: reference('forge_customer', '客户', true),
+  source_type: choice('订单来源', ['直接新建', '关联合同'], '直接新建'), customer_id: { ...reference('forge_customer', '客户', true), relatedList: true, relatedListTitle: '订单', relatedListColumns: ["code", "name", "total_amount", "status", "planned_delivery_on"] },
   contact_id: reference('forge_contact', '联系人'), contract_id: reference('forge_sales_contract', '关联合同'),
   quotation_id: reference('forge_quotation', '来源报价单'), project_name: text('所属项目'),
   company_account_id: reference('forge_fund_account', '公司账户'), suggested_supplier_id: reference('forge_supplier', '整单建议供应商'),
   planned_delivery_on: Field.date({ label: '计划交货日期', ...required }), responsible_id: owner(true),
+  submitted_by: Field.user({ label: '提交人', readonly: true }), submitted_at: Field.datetime({ label: '提交时间', readonly: true }),
+  review_owner_id: Field.user({ label: '订单复核人', readonly: true }),
+  submitted_line_summary: Field.textarea({ label: '本次复核明细', readonly: true }),
+  submitted_order_digest: Field.text({ label: '提交依据', maxLength: 64, hidden: true, readonly: true }),
+  approval_outcome: Field.select([{ value: 'pending', label: '待复核' }, { value: 'approved', label: '已同意' }, { value: 'rejected', label: '已拒绝' }, { value: 'recalled', label: '已撤回' }], { label: '原生审批结果', readonly: true }),
   collaborator_ids: Field.lookup('sys_user', { label: '协同销售', multiple: true, relatedList: false }),
   use_credit: Field.boolean({ label: '使用授信额度', defaultValue: false }), payment_term: text('付款条件', true), payment_method: paymentMethod(),
   revenue_trigger: revenueTrigger(), total_amount: nonNegativeMoney('订单含税金额'), recognized_amount: nonNegativeMoney('已确认收入'),
@@ -92,19 +231,19 @@ export const SalesOrder = master('forge_sales_order', '销售订单', 'clipboard
 }, ['code', 'customer_po_number', 'name', 'contract_id', 'customer_id', 'total_amount', 'status', 'planned_delivery_on', 'responsible_id']);
 
 export const SalesOrderLine = master('forge_sales_order_line', '销售订单明细', 'list', {
-  name: text('物料/服务名称', true), order_id: reference('forge_sales_order', '销售订单', true),
+  name: text('物料/服务名称', true), order_id: Field.masterDetail('forge_sales_order', { label: '销售订单', deleteBehavior: 'cascade', ...required }), line_type: choice('明细类型', ['物料', '服务项目'], '物料'),
   contract_line_id: reference('forge_sales_contract_line', '来源合同明细'), quotation_line_id: reference('forge_quotation_line', '来源报价明细'), suggested_supplier_id: reference('forge_supplier', '建议供应商'),
-  sku_id: reference('forge_material_sku', '物料规格', true), item_code: text('物料编码'), model: text('型号'), specification: text('规格'), unit_name: text('单位'),
+  sku_id: reference('forge_material_sku', '物料规格'), item_code: text('物料编码'), model: text('型号'), specification: text('规格'), unit_name: text('单位'),
   quantity: positiveQuantity(), shipped_quantity: Field.number({ label: '已发货数量', min: 0, scale: 4, defaultValue: 0 }),
   invoiced_quantity: Field.number({ label: '已开票数量', min: 0, scale: 4, defaultValue: 0 }),
   taxed_unit_price: nonNegativeMoney('含税单价'), untaxed_unit_price: nonNegativeMoney('不含税单价'),
   tax_rate: percentage('税率', 13), discount_rate: percentage('折扣率', 0), taxed_subtotal: nonNegativeMoney('含税小计'),
   planned_delivery_on: Field.date({ label: '计划交货日期' }), remarks: remarks(),
-}, ['order_id', 'item_code', 'name', 'model', 'quantity', 'shipped_quantity', 'taxed_unit_price', 'taxed_subtotal', 'planned_delivery_on']);
+}, ['order_id', 'item_code', 'name', 'model', 'quantity', 'shipped_quantity', 'taxed_unit_price', 'taxed_subtotal', 'planned_delivery_on'], 'controlled_by_parent');
 
 // RM-060 / DR-1642 onward. A shipment is a customer delivery plan. It reserves order quantity but does not move inventory or mark it shipped.
 export const SalesShipment = master('forge_sales_shipment', '销售发货单', 'package-check', {
-  name: text('发货单名称', true), code: code('发货单号'), customer_id: reference('forge_customer', '客户', true),
+  name: text('发货单名称', true), code: code('发货单号'), customer_id: { ...reference('forge_customer', '客户', true), relatedList: false },
   contact_id: reference('forge_contact', '联系人'), shipment_on: Field.date({ label: '发货日期', ...required }),
   recipient: text('收货人', true), recipient_phone: text('联系电话'), delivery_address: text('收货地址', true),
   total_amount: nonNegativeMoney('发货含税金额'), total_quantity: positiveQuantity('发货数量'),
@@ -133,7 +272,7 @@ export const SalesAdditionalFee = master('forge_sales_additional_fee', '销售�
     { value: 'sales_order', label: '销售订单' }, { value: 'sales_contract', label: '框架销售合同' }, { value: 'sales_shipment', label: '销售发货单' }, { value: 'manual', label: '手工登记' },
   ], { label: '来源类型', defaultValue: 'sales_order', ...required }),
   order_id: reference('forge_sales_order', '销售订单'), contract_id: reference('forge_sales_contract', '销售合同'), shipment_id: reference('forge_sales_shipment', '销售发货单'),
-  customer_id: reference('forge_customer', '客户', true), project_name: text('项目'), bearing_type: Field.select([
+  customer_id: { ...reference('forge_customer', '客户', true), relatedList: false }, project_name: text('项目'), bearing_type: Field.select([
     { value: 'customer', label: '客户承担' }, { value: 'company', label: '公司承担' },
   ], { label: '承担类型', defaultValue: 'customer', ...required }),
   fee_item: text('费用项', true), occurred_on: Field.date({ label: '发生日期', ...required }), total_amount: nonNegativeMoney('含税金额'),
@@ -148,7 +287,7 @@ export const SalesAdditionalFee = master('forge_sales_additional_fee', '销售�
 
 export const SalesReturn = master('forge_sales_return', '销售退货单', 'undo-2', {
   name: text('退货名称', true), code: code('退货单号'), order_id: reference('forge_sales_order', '关联订单', true),
-  customer_id: reference('forge_customer', '客户', true), return_on: Field.date({ label: '申请日期', ...required }),
+  customer_id: { ...reference('forge_customer', '客户', true), relatedList: false }, return_on: Field.date({ label: '申请日期', ...required }),
   reason: Field.textarea({ label: '退货原因', ...required }), processing_type: Field.select([
     { value: 'refund', label: '退货退款' }, { value: 'replacement', label: '换货补发' }, { value: 'repair', label: '返修' }, { value: 'credit', label: '冲抵货款' },
   ], { label: '处理方式', defaultValue: 'refund', ...required }),
@@ -176,7 +315,7 @@ export const SalesOutbound = master('forge_sales_outbound', '销售出库单', '
 }, ['code', 'name', 'shipment_id', 'order_id', 'warehouse_id', 'sku_id', 'outbound_on', 'quantity', 'available_quantity', 'before_on_hand', 'after_on_hand', 'inventory_amount', 'status']);
 
 export const GoodwillOrder = master('forge_goodwill_order', 'Goodwill订单', 'gift', {
-  name: text('订单名称', true), code: code('Goodwill单号'), customer_id: reference('forge_customer', '客户', true),
+  name: text('订单名称', true), code: code('Goodwill单号'), customer_id: { ...reference('forge_customer', '客户', true), relatedList: false }, project_id: reference('forge_project', '关联项目'),
   contact_name: text('联系人'), contact_phone: text('联系电话'),
   gift_type: Field.select([{ value: 'relationship', label: '客情维护' }, { value: 'compensation', label: '补偿赠送' }, { value: 'sample', label: '样品赠送' }, { value: 'service', label: '服务备件' }, { value: 'onsite_support', label: '现场支持物料' }], { label: '赠送类型', defaultValue: 'relationship', ...required }),
   reason: Field.textarea({ label: '申请原因', ...required }), item_summary: text('物品种类/总数'), item_name: text('物品名称'),
@@ -187,7 +326,7 @@ export const GoodwillOrder = master('forge_goodwill_order', 'Goodwill订单', 'g
   shipped_quantity: Field.number({ label: '已发数量', min: 0, scale: 4, defaultValue: 0 }), logistics_company: text('物流公司'), tracking_no: text('运单号'),
   delivery_address: text('收货地址'), recipient: text('收件人'), recipient_phone: text('收件电话'), shipped_at: Field.datetime({ label: '发货时间', readonly: true }), completed_at: Field.datetime({ label: '完成时间', readonly: true }),
   responsible_id: owner(true), remarks: remarks(),
-}, ['code', 'customer_id', 'contact_name', 'gift_type', 'reason', 'item_summary', 'quantity', 'status', 'shipment_code', 'shipment_status', 'shipped_quantity', 'responsible_id']);
+}, ['code', 'customer_id', 'project_id', 'contact_name', 'gift_type', 'reason', 'item_summary', 'quantity', 'status', 'shipment_code', 'shipment_status', 'shipped_quantity', 'responsible_id']);
 
 export const SalesTeam = master('forge_sales_team', '销售团队', 'users', {
   name: text('团队名称', true), code: code('团队编码'), manager_id: Field.user({ label: '负责人' }), member_count: Field.number({ label: '成员数', min: 0, scale: 0, defaultValue: 0 }),
@@ -201,33 +340,33 @@ export const SalesTarget = master('forge_sales_target', '销售目标', 'target'
 }, ['code', 'name', 'target_type', 'year', 'owner_user_id', 'team_id', 'target_amount', 'payment_target_amount', 'achieved_amount', 'status']);
 
 export const CustomerMaterialMap = master('forge_customer_material_map', '客户物料对照', 'tags', {
-  name: text('对照名称', true), customer_id: reference('forge_customer', '客户', true), internal_item_code: text('我方物料编码', true), internal_item_name: text('我方物料名称', true),
+  name: text('对照名称', true), customer_id: { ...reference('forge_customer', '客户', true), relatedList: false }, internal_item_code: text('我方物料编码', true), internal_item_name: text('我方物料名称', true),
   customer_item_code: text('客户物料编码', true), customer_item_name: text('客户物料名称', true), status: choice('状态', ['启用', '停用'], '启用'), remarks: remarks(),
 }, ['customer_id', 'internal_item_code', 'internal_item_name', 'customer_item_code', 'customer_item_name', 'remarks']);
 
 export const SalesOpportunity = master('forge_sales_opportunity', '商机管理', 'sparkles', {
-  name: text('商机名称', true), customer_id: reference('forge_customer', '客户', true), contact_id: reference('forge_contact', '联系人'), contact_name: text('联系人姓名'), job_title: text('职务'), phone: text('联系电话'), email: Field.email({ label: '邮箱' }),
-  stage: Field.select([{ value: 'initial_contact', label: '初步接触' }, { value: 'needs_confirmed', label: '需求确认' }, { value: 'proposal_quoted', label: '方案报价' }, { value: 'negotiation', label: '商务谈判' }, { value: 'won', label: '赢单' }, { value: 'lost', label: '输单' }], { label: '商机阶段', defaultValue: 'initial_contact' }), lead_id: reference('forge_sales_lead', '来源线索'), source: text('来源'), description: Field.textarea({ label: '商机描述' }), competitor: text('竞争对手'), traffic_light: text('红绿灯'), priority: Field.select([{ value: 'high', label: '高' }, { value: 'medium', label: '中' }, { value: 'low', label: '低' }], { label: '优先级', defaultValue: 'medium' }), amount: nonNegativeMoney('商机金额'), win_rate: percentage('成功率', 0), expected_close_on: Field.date({ label: '预计成交日期' }), responsible_id: owner(true), remarks: remarks(),
+  name: text('商机名称', true), customer_id: { ...reference('forge_customer', '客户', true), relatedList: true, relatedListTitle: '商机', relatedListColumns: ["name", "stage", "source", "amount", "win_rate", "expected_close_on"] }, contact_id: reference('forge_contact', '联系人'), contact_name: text('联系人姓名'), job_title: text('职务'), phone: text('联系电话'), email: Field.email({ label: '邮箱' }),
+  stage: Field.select([{ value: 'initial_contact', label: '初步接触' }, { value: 'needs_confirmed', label: '需求确认' }, { value: 'proposal_quoted', label: '方案报价' }, { value: 'negotiation', label: '商务谈判' }, { value: 'won', label: '赢单' }, { value: 'lost', label: '输单' }], { label: '商机阶段', defaultValue: 'initial_contact' }), lead_id: { ...reference('forge_sales_lead', '来源线索'), unique: 'organization', readonly: true }, source: text('来源'), description: Field.textarea({ label: '商机描述' }), competitor: text('竞争对手'), traffic_light: text('红绿灯'), priority: Field.select([{ value: 'high', label: '高' }, { value: 'medium', label: '中' }, { value: 'low', label: '低' }], { label: '优先级', defaultValue: 'medium' }), amount: nonNegativeMoney('商机金额'), win_rate: percentage('成功率', 0), expected_close_on: Field.date({ label: '预计成交日期' }), responsible_id: owner(true), remarks: remarks(),
 }, ['name', 'customer_id', 'lead_id', 'contact_name', 'stage', 'source', 'amount', 'win_rate', 'expected_close_on', 'responsible_id']);
 
 export const SalesLead = master('forge_sales_lead', '线索管理', 'funnel', {
   name: text('线索名称', true), code: code('线索号'), company_name: text('公司名称', true), contact_name: text('联系人'), phone: text('联系电话'), source: text('来源'),
-  status: Field.select([{ value: 'new', label: '新线索' }, { value: 'following', label: '跟进中' }, { value: 'converted', label: '已转化' }, { value: 'closed', label: '已关闭' }, { value: 'public_pool', label: '公海' }], { label: '线索状态', defaultValue: 'new' }), converted_customer_id: reference('forge_customer', '转化客户'), converted_opportunity_id: reference('forge_sales_opportunity', '转化商机'), converted_at: Field.datetime({ label: '转化时间' }), responsible_id: owner(), remarks: remarks(),
+  status: Field.select([{ value: 'new', label: '新线索' }, { value: 'following', label: '跟进中' }, { value: 'converted', label: '已转化' }, { value: 'closed', label: '已关闭' }, { value: 'public_pool', label: '公海' }], { label: '线索状态', defaultValue: 'new', readonly: true }), converted_customer_id: { ...reference('forge_customer', '转化客户'), relatedList: false, readonly: true }, converted_opportunity_id: { ...reference('forge_sales_opportunity', '转化商机'), readonly: true }, converted_at: Field.datetime({ label: '转化时间', readonly: true }), conversion_request_signature: Field.text({ label: '转化请求签名', maxLength: 255, hidden: true, readonly: true, requiredPermissions: ['sales_lead_convert'] }), responsible_id: owner(), remarks: remarks(),
 }, ['code', 'company_name', 'contact_name', 'phone', 'status', 'source', 'converted_customer_id', 'converted_opportunity_id', 'responsible_id']);
 
 export const SalesFollowUp = master('forge_sales_follow_up', '跟进记录', 'messages-square', {
-  name: text('跟进主题', true), customer_id: reference('forge_customer', '客户'), opportunity_id: reference('forge_sales_opportunity', '商机'), follow_type: Field.select([{ value: 'phone', label: '电话沟通' }, { value: 'wechat', label: '微信沟通' }, { value: 'email', label: '邮件往来' }, { value: 'onsite_visit', label: '上门拜访' }, { value: 'customer_visit', label: '客户来访' }, { value: 'online_meeting', label: '线上会议' }, { value: 'demo', label: '产品演示' }, { value: 'proposal', label: '方案讲解' }, { value: 'negotiation', label: '商务谈判' }, { value: 'other', label: '其他' }], { label: '跟进类型', defaultValue: 'phone' }),
+  name: text('跟进主题', true), customer_id: { ...reference('forge_customer', '客户'), relatedList: true, relatedListTitle: '跟进', relatedListColumns: ["name", "follow_type", "followed_at", "next_follow_on", "status"] }, opportunity_id: reference('forge_sales_opportunity', '商机'), follow_type: Field.select([{ value: 'phone', label: '电话沟通' }, { value: 'wechat', label: '微信沟通' }, { value: 'email', label: '邮件往来' }, { value: 'onsite_visit', label: '上门拜访' }, { value: 'customer_visit', label: '客户来访' }, { value: 'online_meeting', label: '线上会议' }, { value: 'demo', label: '产品演示' }, { value: 'proposal', label: '方案讲解' }, { value: 'negotiation', label: '商务谈判' }, { value: 'other', label: '其他' }], { label: '跟进类型', defaultValue: 'phone' }),
   content: Field.textarea({ label: '跟进内容' }), followed_at: Field.date({ label: '跟进日期' }), next_follow_on: Field.date({ label: '下次计划' }), status: Field.select([{ value: 'pending', label: '待跟进' }, { value: 'completed', label: '已完成' }, { value: 'overdue', label: '已过期' }], { label: '跟进状态', defaultValue: 'completed' }), responsible_id: owner(), remarks: remarks(),
 }, ['customer_id', 'opportunity_id', 'follow_type', 'followed_at', 'next_follow_on', 'status', 'responsible_id']);
 
 export const CustomerPool = master('forge_customer_pool', '公海客户', 'users-round', {
-  name: text('客户名称', true), industry: text('行业'), level: text('客户级别'), contact_name: text('联系人'), city: text('所在城市'), source: text('来源'), estimated_value: nonNegativeMoney('预估价值'), released_days: Field.number({ label: '释放天数', min: 0, scale: 0, defaultValue: 0 }), claimed_customer_id: reference('forge_customer', '领取客户'), claimed_at: Field.datetime({ label: '领取时间' }), status: Field.select([{ value: 'claimable', label: '可领取' }, { value: 'claimed', label: '已领取' }, { value: 'released', label: '已释放' }], { label: '状态', defaultValue: 'claimable' }), remarks: remarks(),
+  name: text('客户名称', true), industry: text('行业'), level: text('客户级别'), contact_name: text('联系人'), city: text('所在城市'), source: text('来源'), estimated_value: nonNegativeMoney('预估价值'), released_days: Field.number({ label: '释放天数', min: 0, scale: 0, defaultValue: 0 }), claimed_customer_id: { ...reference('forge_customer', '领取客户'), relatedList: false }, claimed_at: Field.datetime({ label: '领取时间' }), status: Field.select([{ value: 'claimable', label: '可领取' }, { value: 'claimed', label: '已领取' }, { value: 'released', label: '已释放' }], { label: '状态', defaultValue: 'claimable' }), remarks: remarks(),
 }, ['name', 'industry', 'level', 'contact_name', 'city', 'source', 'estimated_value', 'released_days', 'status', 'claimed_customer_id']);
 
 export const ServiceOrder = master('forge_service_order', '服务工单', 'wrench', {
   name: text('工单标题', true),
   code: code('工单号'),
-  customer_id: reference('forge_customer', '客户', true),
+  customer_id: { ...reference('forge_customer', '客户', true), relatedList: true, relatedListTitle: '售后工单', relatedListColumns: ["code", "name", "service_type", "service_mode", "urgency", "status", "engineer_name", "expected_visit_on", "service_result", "next_step"] },
   contact_id: reference('forge_contact', '联系人'),
   contact_phone: text('联系电话'),
   sales_order_id: reference('forge_sales_order', '关联销售订单'),
@@ -268,15 +407,15 @@ export const ServiceOrder = master('forge_service_order', '服务工单', 'wrenc
 }, ['code', 'name', 'customer_id', 'contact_id', 'contact_phone', 'sales_order_id', 'service_type', 'service_mode', 'urgency', 'status', 'engineer_name', 'expected_visit_on', 'treatment_record', 'onsite_evidence_count', 'service_result', 'quotation_code', 'settlement_code', 'warranty_code', 'next_step']);
 
 export const ServiceQuotation = master('forge_service_quotation', '服务报价单', 'file-text', {
-  name: text('报价名称', true), code: code('报价单号'), service_order_id: reference('forge_service_order', '服务工单'), order_code: text('工单号'), customer_id: reference('forge_customer', '客户'), contact_id: reference('forge_contact', '联系人'), total_amount: nonNegativeMoney('报价金额'), status: Field.select([{ value: 'draft', label: '草稿' }, { value: 'pending_confirmation', label: '待确认' }, { value: 'confirmed', label: '已确认' }, { value: 'settlement_created', label: '已转结算' }, { value: 'cancelled', label: '已取消' }], { label: '状态', defaultValue: 'draft' }), valid_until: Field.date({ label: '有效期至' }), responsible_id: owner(), remarks: remarks(),
+  name: text('报价名称', true), code: code('报价单号'), service_order_id: reference('forge_service_order', '服务工单'), order_code: text('工单号'), customer_id: { ...reference('forge_customer', '客户'), relatedList: false }, contact_id: reference('forge_contact', '联系人'), total_amount: nonNegativeMoney('报价金额'), status: Field.select([{ value: 'draft', label: '草稿' }, { value: 'pending_confirmation', label: '待确认' }, { value: 'confirmed', label: '已确认' }, { value: 'settlement_created', label: '已转结算' }, { value: 'cancelled', label: '已取消' }], { label: '状态', defaultValue: 'draft' }), valid_until: Field.date({ label: '有效期至' }), responsible_id: owner(), remarks: remarks(),
 }, ['code', 'service_order_id', 'order_code', 'customer_id', 'contact_id', 'total_amount', 'status', 'valid_until']);
 
 export const ServiceSettlement = master('forge_service_settlement', '服务结算单', 'receipt-text', {
-  name: text('结算名称', true), code: code('结算单号'), service_order_id: reference('forge_service_order', '服务工单'), quotation_id: reference('forge_service_quotation', '服务报价单'), order_code: text('工单号'), customer_id: reference('forge_customer', '客户'), contact_id: reference('forge_contact', '联系人'), total_amount: nonNegativeMoney('结算金额'), status: Field.select([{ value: 'draft', label: '草稿' }, { value: 'pending_approval', label: '待审批' }, { value: 'customer_confirming', label: '客户确认中' }, { value: 'confirmed', label: '已确认' }, { value: 'receivable_created', label: '已生成应收' }], { label: '状态', defaultValue: 'draft' }), receivable_code: text('财务应收'), responsible_id: owner(), remarks: remarks(),
+  name: text('结算名称', true), code: code('结算单号'), service_order_id: reference('forge_service_order', '服务工单'), quotation_id: reference('forge_service_quotation', '服务报价单'), order_code: text('工单号'), customer_id: { ...reference('forge_customer', '客户'), relatedList: false }, contact_id: reference('forge_contact', '联系人'), total_amount: nonNegativeMoney('结算金额'), status: Field.select([{ value: 'draft', label: '草稿' }, { value: 'pending_approval', label: '待审批' }, { value: 'customer_confirming', label: '客户确认中' }, { value: 'confirmed', label: '已确认' }, { value: 'receivable_created', label: '已生成应收' }], { label: '状态', defaultValue: 'draft' }), receivable_code: text('财务应收'), responsible_id: owner(), remarks: remarks(),
 }, ['code', 'service_order_id', 'quotation_id', 'order_code', 'customer_id', 'contact_id', 'total_amount', 'status', 'receivable_code']);
 
 export const WarrantyCard = master('forge_warranty_card', '质保卡', 'shield-check', {
-  name: text('质保名称', true), code: code('质保卡号'), service_order_id: reference('forge_service_order', '服务工单'), sales_order_id: reference('forge_sales_order', '销售订单'), customer_id: reference('forge_customer', '客户'), product_sn: text('产品/SN'), scope: text('判定粒度'), starts_on: Field.date({ label: '开始日期' }), ends_on: Field.date({ label: '到期日期' }), status: Field.select([{ value: 'active', label: '生效中' }, { value: 'pending_activation', label: '待激活' }, { value: 'grace_period', label: '宽限期' }, { value: 'expired', label: '已过保' }, { value: 'terminated', label: '已终止' }], { label: '状态', defaultValue: 'pending_activation' }), responsible_party: text('责任方'), remarks: remarks(),
+  name: text('质保名称', true), code: code('质保卡号'), service_order_id: reference('forge_service_order', '服务工单'), sales_order_id: reference('forge_sales_order', '销售订单'), customer_id: { ...reference('forge_customer', '客户'), relatedList: false }, product_sn: text('产品/SN'), scope: text('判定粒度'), starts_on: Field.date({ label: '开始日期' }), ends_on: Field.date({ label: '到期日期' }), status: Field.select([{ value: 'active', label: '生效中' }, { value: 'pending_activation', label: '待激活' }, { value: 'grace_period', label: '宽限期' }, { value: 'expired', label: '已过保' }, { value: 'terminated', label: '已终止' }], { label: '状态', defaultValue: 'pending_activation' }), responsible_party: text('责任方'), remarks: remarks(),
 }, ['code', 'service_order_id', 'sales_order_id', 'customer_id', 'product_sn', 'scope', 'starts_on', 'ends_on', 'status']);
 
 export const ServiceConfigItem = master('forge_service_config_item', '服务配置项', 'settings', {

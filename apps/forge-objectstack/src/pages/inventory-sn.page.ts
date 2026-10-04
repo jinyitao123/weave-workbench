@@ -6,9 +6,9 @@ const css = forgeProductUiCss + `
 
 const source = `
 const statusText={in_stock:'在库',outbound:'已出库',returned:'已退回',voided:'已作废'};
-function App(){
+function App(){const adapter=useAdapter();
  const [state,setState]=React.useState({loading:true,serials:[],verifications:[],skus:[],materials:[],suppliers:[],users:[],error:''}),[tab,setTab]=React.useState('records'),[query,setQuery]=React.useState(''),[status,setStatus]=React.useState(''),[verify,setVerify]=React.useState(''),[result,setResult]=React.useState(null),[busy,setBusy]=React.useState(false),[dialog,setDialog]=React.useState(null),[page,setPage]=React.useState(1);
- async function request(path,options){const response=await fetch('/api/v1'+path,{credentials:'include',headers:{'Content-Type':'application/json'},...options}),payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error((typeof payload.error==='string'?payload.error:payload.error?.message)||(Array.isArray(payload.fields)&&payload.fields.length?payload.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||payload.message||'请求失败');return payload}
+ async function request(path,options){const response=await ForgeApiResponse(adapter,path,{credentials:'include',headers:{'Content-Type':'application/json'},...options}),payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error((typeof payload.error==='string'?payload.error:payload.error?.message)||(Array.isArray(payload.fields)&&payload.fields.length?payload.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||payload.message||'请求失败');return payload}
  async function find(object){return(await request('/data/'+object+'?$top=500')).records||[]}
  async function load(){setState(s=>({...s,loading:true,error:''}));try{const [serials,verifications,skus,materials,suppliers,users]=await Promise.all(['forge_inventory_serial_number','forge_inventory_serial_verification','forge_material_sku','forge_material','forge_supplier','sys_user'].map(find));setState({loading:false,serials,verifications:verifications.sort((a,b)=>String(b.verified_at).localeCompare(String(a.verified_at))),skus,materials,suppliers,users,error:''})}catch(error){setState(s=>({...s,loading:false,error:String(error.message||error)}))}}
  React.useEffect(()=>{load()},[]);

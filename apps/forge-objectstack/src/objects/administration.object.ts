@@ -65,7 +65,7 @@ export const OvertimeRequest = ObjectSchema.create({
     duration_hours: Field.number({ label: '加班时长', min: 0.5, scale: 2, ...required }),
     compensation_method: Field.select([option('time_off', '调休'), option('overtime_pay', '加班费')], { label: '补偿方式', defaultValue: 'time_off', ...required }),
     reason: Field.textarea({ label: '加班事由', ...required }),
-    customer_id: Field.lookup('forge_customer', { label: '关联客户' }),
+    customer_id: { ...Field.lookup('forge_customer', { label: '关联客户' }), relatedList: false },
     project_id: Field.lookup('forge_project', { label: '关联项目' }),
     contract_id: Field.lookup('forge_sales_contract', { label: '关联合同' }),
     status: Field.select([option('draft', '草稿'), option('submitted', '待审批'), option('approved', '已通过'), option('rejected', '已驳回'), option('cancelled', '已取消')], { label: '状态', defaultValue: 'draft', ...required }),

@@ -12,7 +12,7 @@ export const Bom = master('forge_bom', 'BOM管理', 'git-branch', {
   name: text('BOM名称', true), code: code('BOM编号'), product_name: text('产品/设备'),
   material_id: reference('forge_material', '成品物料'), bom_type: choice('BOM类型', ['标准', '项目', '试制'], '标准'),
   version: { ...text('当前版本'), defaultValue: 'V1.0', readonly: true }, family_key: { ...text('版本族编号'), readonly: true },
-  source_bom_id: reference('forge_bom', '来源标准BOM'), project_id: reference('forge_project', '适用项目'), customer_id: reference('forge_customer', '客户'),
+  source_bom_id: reference('forge_bom', '来源标准BOM'), project_id: reference('forge_project', '适用项目'), customer_id: { ...reference('forge_customer', '客户'), relatedList: false },
   status: { ...select('状态', [['draft', '草稿'], ['pending_review', '待评审'], ['active', '已生效'], ['inactive', '已失效'], ['archived', '已归档']], 'draft'), readonly: true },
   tax_rate: Field.number({ label: '成本税率', min: 0, max: 100, scale: 4, defaultValue: 13 }),
   node_count: Field.number({ label: '物料数', min: 0, scale: 0, defaultValue: 0, readonly: true }),

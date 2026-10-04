@@ -2,10 +2,177 @@
 // scope (guide/service pages) instead of inside the injected page source. The
 // injected runtime defines its own `forgeBase` for pages that navigate from the
 // source string; the two hold the same value.
+// Dynamic routes are limited to Page names present in the compiled seven-App artifact.
+const forgePageRoutePackageByName: Record<string, string> = {
+  "page_administration_notice": "com.inoforge.forge.administration",
+  "page_administration_requests": "com.inoforge.forge.administration",
+  "page_approval_records": "com.inoforge.forge.administration",
+  "page_attendance_management": "com.inoforge.forge.administration",
+  "page_attendance_statistics": "com.inoforge.forge.administration",
+  "page_business_trip": "com.inoforge.forge.administration",
+  "page_cc_to_me": "com.inoforge.forge.administration",
+  "page_credit_management": "com.inoforge.forge.finance",
+  "page_directory": "com.inoforge.forge.administration",
+  "page_document_center": "com.inoforge.forge.administration",
+  "page_employee_records": "com.inoforge.forge.administration",
+  "page_equipment_maintenance": "com.inoforge.forge.administration",
+  "page_finance_cost_center": "com.inoforge.forge.finance",
+  "page_finance_expense_center": "com.inoforge.forge.finance",
+  "page_finance_loans": "com.inoforge.forge.finance",
+  "page_finance_overview": "com.inoforge.forge.reports",
+  "page_finance_reimbursement": "com.inoforge.forge.finance",
+  "page_fixed_assets": "com.inoforge.forge.administration",
+  "page_fund_accounts": "com.inoforge.forge.finance",
+  "page_gift_management": "com.inoforge.forge.administration",
+  "page_hr_workspace": "com.inoforge.forge.administration",
+  "page_initiated_by_me": "com.inoforge.forge.administration",
+  "page_input_invoices": "com.inoforge.forge.finance",
+  "page_inventory_overview": "com.inoforge.forge.supply-chain",
+  "page_inventory_statistics": "com.inoforge.forge.reports",
+  "page_invoice_overview": "com.inoforge.forge.finance",
+  "page_invoice_reversal": "com.inoforge.forge.finance",
+  "page_invoice_tasks": "com.inoforge.forge.finance",
+  "page_leave_management": "com.inoforge.forge.administration",
+  "page_loan_management": "com.inoforge.forge.administration",
+  "page_material_pickup": "com.inoforge.forge.administration",
+  "page_material_search": "com.inoforge.forge.supply-chain",
+  "page_meeting_minutes": "com.inoforge.forge.administration",
+  "page_my_approvals": "com.inoforge.forge.administration",
+  "page_onboarding_offboarding": "com.inoforge.forge.administration",
+  "page_opening_balance": "com.inoforge.forge.finance",
+  "page_other_inbounds": "com.inoforge.forge.supply-chain",
+  "page_output_invoices": "com.inoforge.forge.finance",
+  "page_overtime_requests": "com.inoforge.forge.administration",
+  "page_pending_inspection_workspace": "com.inoforge.forge.supply-chain",
+  "page_process_categories": "com.inoforge.forge.administration",
+  "page_process_definitions": "com.inoforge.forge.administration",
+  "page_production_assembly_workspace": "com.inoforge.forge.production",
+  "page_production_material_workspace": "com.inoforge.forge.production",
+  "page_production_prerequisites": "com.inoforge.forge.production",
+  "page_production_return_workspace": "com.inoforge.forge.production",
+  "page_production_shortage_workspace": "com.inoforge.forge.production",
+  "page_production_supply_workspace": "com.inoforge.forge.production",
+  "page_project_center": "com.inoforge.forge.project",
+  "page_project_member_editor": "com.inoforge.forge.project",
+  "page_project_expense_cost": "com.inoforge.forge.project",
+  "page_project_task_workspace": "com.inoforge.forge.project",
+  "page_project_timesheet_cost": "com.inoforge.forge.project",
+  "page_purchase_arrival_workspace": "com.inoforge.forge.supply-chain",
+  "page_purchase_inquiry": "com.inoforge.forge.supply-chain",
+  "page_purchase_inspection_workspace": "com.inoforge.forge.supply-chain",
+  "page_purchase_invoice_entry": "com.inoforge.forge.supply-chain",
+  "page_purchase_order_workspace": "com.inoforge.forge.supply-chain",
+  "page_purchase_payment": "com.inoforge.forge.finance",
+  "page_purchase_request_pool": "com.inoforge.forge.supply-chain",
+  "page_purchase_statistics": "com.inoforge.forge.reports",
+  "page_qualification_declaration": "com.inoforge.forge.administration",
+  "page_receivables_payables": "com.inoforge.forge.finance",
+  "page_reconciliation_pool": "com.inoforge.forge.finance",
+  "page_recruitment": "com.inoforge.forge.administration",
+  "page_rules_policies": "com.inoforge.forge.administration",
+  "page_salary_benefits": "com.inoforge.forge.administration",
+  "page_sales_collection_flow": "com.inoforge.forge.sales",
+  "page_sales_contract_workspace": "com.inoforge.forge.sales",
+  "page_sales_customers": "com.inoforge.forge.sales",
+  "page_sales_follow_ups": "com.inoforge.forge.sales",
+  "page_sales_invoice_request": "com.inoforge.forge.sales",
+  "page_sales_leads": "com.inoforge.forge.sales",
+  "page_sales_lead_pools": "com.inoforge.forge.sales",
+  "page_sales_gross_profit": "com.inoforge.forge.sales",
+  "page_customer_price_lists": "com.inoforge.forge.sales",
+  "page_customer_price_list_new": "com.inoforge.forge.sales",
+  "page_repair_pool": "com.inoforge.forge.sales",
+  "page_service_part_requests": "com.inoforge.forge.sales",
+  "page_sales_opportunities": "com.inoforge.forge.sales",
+  "page_sales_order_create": "com.inoforge.forge.sales",
+  "page_sales_order_workspace": "com.inoforge.forge.sales",
+  "page_sales_performance_bank": "com.inoforge.forge.sales",
+  "page_sales_quotations": "com.inoforge.forge.sales",
+  "page_sales_shipment_workspace": "com.inoforge.forge.sales",
+  "page_sales_statistics": "com.inoforge.forge.reports",
+  "page_seal_management": "com.inoforge.forge.administration",
+  "page_start_process": "com.inoforge.forge.administration",
+  "page_subcontract_dashboard": "com.inoforge.forge.production",
+  "page_subcontract_guide": "com.inoforge.forge.production",
+  "page_subcontract_issue_workspace": "com.inoforge.forge.production",
+  "page_subcontract_ncr_workspace": "com.inoforge.forge.production",
+  "page_subcontract_orders": "com.inoforge.forge.production",
+  "page_subcontract_pricing": "com.inoforge.forge.production",
+  "page_subcontract_receipt_workspace": "com.inoforge.forge.production",
+  "page_subcontract_reconciliation": "com.inoforge.forge.production",
+  "page_subcontract_return_workspace": "com.inoforge.forge.production",
+  "page_subcontract_stock": "com.inoforge.forge.production",
+  "page_subcontract_suppliers": "com.inoforge.forge.production",
+  "page_subcontract_trace": "com.inoforge.forge.production",
+  "page_subcontract_undelivered": "com.inoforge.forge.production",
+  "page_subcontract_workspace": "com.inoforge.forge.production",
+  "page_supplier_workspace": "com.inoforge.forge.supply-chain",
+  "page_vehicle_management": "com.inoforge.forge.administration",
+  "page_warehouse_workspace": "com.inoforge.forge.supply-chain",
+  "page_work_reports": "com.inoforge.forge.administration"
+};
+
+// Direct record links use the App that owns the corresponding business ledger.
+const forgeObjectRoutePackageByName: Record<string, string> = {
+  "forge_bom": "com.inoforge.forge.supply-chain",
+  "forge_cash_receipt": "com.inoforge.forge.finance",
+  "forge_contact": "com.inoforge.forge.sales",
+  "forge_customer": "com.inoforge.forge.sales",
+  "forge_inventory_balance": "com.inoforge.forge.supply-chain",
+  "forge_inventory_ledger": "com.inoforge.forge.supply-chain",
+  "forge_material": "com.inoforge.forge.supply-chain",
+  "forge_opening_inbound": "com.inoforge.forge.supply-chain",
+  "forge_payment_condition": "com.inoforge.forge.finance",
+  "forge_production_inbound": "com.inoforge.forge.supply-chain",
+  "forge_project": "com.inoforge.forge.project",
+  "forge_project_attachment": "com.inoforge.forge.project",
+  "forge_project_cost_entry": "com.inoforge.forge.project",
+  "forge_project_expense": "com.inoforge.forge.project",
+  "forge_project_log": "com.inoforge.forge.project",
+  "forge_project_member": "com.inoforge.forge.project",
+  "forge_project_plan": "com.inoforge.forge.project",
+  "forge_purchase_inbound": "com.inoforge.forge.supply-chain",
+  "forge_purchase_invoice": "com.inoforge.forge.finance",
+  "forge_sales_additional_fee": "com.inoforge.forge.sales",
+  "forge_sales_contract": "com.inoforge.forge.sales",
+  "forge_sales_invoice": "com.inoforge.forge.finance",
+  "forge_sales_order": "com.inoforge.forge.sales",
+  "forge_sales_outbound": "com.inoforge.forge.supply-chain",
+  "forge_sales_return": "com.inoforge.forge.sales",
+  "forge_sales_shipment": "com.inoforge.forge.sales",
+  "forge_subcontract_inbound": "com.inoforge.forge.production",
+  "forge_supplier": "com.inoforge.forge.supply-chain",
+  "forge_warehouse": "com.inoforge.forge.supply-chain",
+  "forge_accounts_receivable": "com.inoforge.forge.finance",
+  "forge_accounts_payable": "com.inoforge.forge.finance"
+};
+
+const forgeRoutePackageIds = [
+  'com.inoforge.forge.supply-chain',
+  'com.inoforge.forge.sales',
+  'com.inoforge.forge.production',
+  'com.inoforge.forge.project',
+  'com.inoforge.forge.administration',
+  'com.inoforge.forge.finance',
+  'com.inoforge.forge.reports',
+] as const;
+const forgePageRoutePackageIndexByName = Object.fromEntries(
+  Object.entries(forgePageRoutePackageByName).map(([name, packageId]) => [
+    name,
+    forgeRoutePackageIds.indexOf(packageId as (typeof forgeRoutePackageIds)[number]),
+  ]),
+);
+const forgeObjectRoutePackageIndexByName = Object.fromEntries(
+  Object.entries(forgeObjectRoutePackageByName).map(([name, packageId]) => [
+    name,
+    forgeRoutePackageIds.indexOf(packageId as (typeof forgeRoutePackageIds)[number]),
+  ]),
+);
+
 export const forgeBase =
   typeof location !== 'undefined'
-    ? location.pathname.split('/').slice(0, 4).join('/') || '/_console/apps/forge'
-    : '/_console/apps/forge';
+    ? location.pathname.split('/').slice(0, 4).join('/')
+    : '';
 
 export const forgeProductUiCss = `
 div:has(>.forge-product){max-width:none!important;margin:0!important}
@@ -44,12 +211,47 @@ const forgeMovementText=(type,fallback)=>forgeMovementTypeText[type]||fallback||
 const forgeLocalParts=value=>{const text=String(value==null?'':value);if(!text)return null;const date=new Date(text);if(Number.isNaN(date.getTime()))return null;const parts=new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(date),get=t=>{const f=parts.find(p=>p.type===t);return f?f.value:''};return {date:get('year')+'-'+get('month')+'-'+get('day'),time:get('year')+'-'+get('month')+'-'+get('day')+' '+get('hour')+':'+get('minute')}};
 const forgeLocalDate=value=>{const p=forgeLocalParts(value);return p?p.date:String(value==null?'':value).slice(0,10)};
 const forgeLocalDateTime=value=>{const p=forgeLocalParts(value);return p?p.time:String(value==null?'':value).replace('T',' ').slice(0,16)};
-const forgeBase=(typeof location!=='undefined'?(location.pathname.split('/').slice(0,4).join('/')||'/_console/apps/forge'):'/_console/apps/forge');
-async function ForgeApiRequest(adapter,path,options={}){const headers={'Content-Type':'application/json',...(adapter?.getAuthHeaders?.()||{}),...(options.headers||{})},raw=String(adapter?.baseUrl||''),base=raw.endsWith('/')?raw.slice(0,-1):raw,transport=adapter?.fetchImpl||fetch,response=await transport(base+'/api/v1'+path,{credentials:'include',...options,headers}),payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error((typeof payload.error==='string'?payload.error:payload.error?.message)||(Array.isArray(payload.fields)&&payload.fields.length?payload.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||payload.message||'请求失败');return payload}
+const forgeRoutePackageIds=${JSON.stringify(forgeRoutePackageIds)};const forgePageRoutePackageIndexByName=${JSON.stringify(forgePageRoutePackageIndexByName)};const forgePageHref=(pageName,query='')=>{const packageId=forgeRoutePackageIds[forgePageRoutePackageIndexByName[pageName]];if(!packageId)return null;const search=String(query||'');return '/_console/apps/'+packageId+'/'+pageName+(search?(search.startsWith('?')?search:'?'+search):'')};const forgeObjectRoutePackageIndexByName=${JSON.stringify(forgeObjectRoutePackageIndexByName)};const forgeObjectHref=(objectName,suffix='')=>{const packageId=forgeRoutePackageIds[forgeObjectRoutePackageIndexByName[objectName]];if(!packageId)return null;return '/_console/apps/'+packageId+'/'+objectName+String(suffix||'')};
+const forgeBase=(typeof location!=='undefined'?location.pathname.split('/').slice(0,4).join('/'):'');
+function ForgeNavigate(href,options){
+ if(!href)return;
+ const url=new URL(String(href),location.href);
+ if(!['http:','https:'].includes(url.protocol)||url.origin!==location.origin)throw new Error('只能打开当前应用内的链接');
+ const path=url.pathname+url.search+url.hash,routerPath=path.replace(/^\\/_console(?=\\/|$)/,'')||'/';
+ if(typeof navigate==='function')navigate(routerPath,options);
+ else window.location.href=path;
+}
+async function ForgeApiResponse(adapter,path,options={}){const raw=String(adapter?.baseUrl||''),base=raw.endsWith('/')?raw.slice(0,-1):raw,transport=adapter?.fetchImpl||fetch,headers=new Headers(options.headers||{});for(const [name,value] of Object.entries(adapter?.getAuthHeaders?.()||{}))headers.set(name,value);return transport(base+'/api/v1'+path,{credentials:'include',...options,headers})}
+async function ForgeApiRequest(adapter,path,options={}){const headers={'Content-Type':'application/json',...(adapter?.getAuthHeaders?.()||{}),...(options.headers||{})},raw=String(adapter?.baseUrl||''),base=raw.endsWith('/')?raw.slice(0,-1):raw,transport=adapter?.fetchImpl||fetch,response=await transport(base+'/api/v1'+path,{credentials:'include',...options,headers}),payload=await response.json().catch(()=>({}));if(!response.ok){const error=new Error((typeof payload.error==='string'?payload.error:payload.error?.message)||(Array.isArray(payload.fields)&&payload.fields.length?payload.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||payload.message||'请求失败');error.status=response.status;throw error}return payload}
+async function ForgeReadAllRecords(adapter,objectName,options={}){
+ const records=[],seen=new Set(),size=100,limit=Number.isSafeInteger(options.limit)&&options.limit>0?options.limit:20000,label=options.label||'列表';
+ for(let skip=0;skip<=limit;){
+  const query=new URLSearchParams({$top:String(size),$skip:String(skip),$count:'true',$orderby:options.orderBy||'id asc'});
+  if(options.fields)query.set('$select',Array.isArray(options.fields)?options.fields.join(','):options.fields);
+  if(options.filter&&Object.keys(options.filter).length)query.set('$filter',JSON.stringify(options.filter));
+  const response=await ForgeApiRequest(adapter,'/data/'+encodeURIComponent(objectName)+'?'+query.toString()),payload=response?.data?.records?response.data:response,batch=payload?.records;
+  if(!Array.isArray(batch))throw new Error(label+'响应不完整，请刷新重试');
+  const rawTotal=payload.totalCount??payload.count??payload.total??payload['@odata.count'],total=rawTotal!==null&&rawTotal!==undefined&&rawTotal!==''&&Number.isSafeInteger(Number(rawTotal))&&Number(rawTotal)>=0?Number(rawTotal):null;
+  if(total!==null&&total>limit)throw new Error(label+'超过可读取上限，请缩小范围');
+  for(const record of batch){const id=String(record?.id||'');if(!id||seen.has(id))throw new Error(label+'在分页期间发生变化，请重新读取');seen.add(id);records.push(record)}
+  if(records.length>limit||total!==null&&records.length>total)throw new Error(label+'分页结果不完整，请重新读取');
+  if(total!==null&&records.length===total)return records;
+  if(!batch.length){if(total!==null&&records.length<total)throw new Error(label+'未读取完整，请重试');return records}
+  skip+=batch.length;
+ }
+ throw new Error(label+'超过可读取上限，请缩小范围');
+}
+async function ForgeOrganizationBusinessDate(adapter){
+ let result=await ForgeApiRequest(adapter,'/actions/global/organization_business_date_query',{method:'POST',body:JSON.stringify({params:{}})});
+ for(let depth=0;depth<5&&result&&typeof result==='object';depth++){if(result.result!==undefined){result=result.result;continue}if(result.data!==undefined){result=result.data;continue}break}
+ const date=String(result?.business_date||''),instant=new Date(date+'T00:00:00.000Z');
+ if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||Number.isNaN(instant.getTime())||instant.toISOString().slice(0,10)!==date)throw new Error('组织业务日期读取失败，请刷新重试');
+ return date;
+}
 function ForgeHeroArt({name='blueprint'}){const a={fill:'none',stroke:'currentColor',strokeWidth:1.2,strokeLinecap:'round',strokeLinejoin:'round'};if(name==='flow')return <svg viewBox="0 0 220 120" {...a}><rect x="12" y="42" width="46" height="34" rx="5"/><rect x="86" y="16" width="46" height="34" rx="5"/><rect x="86" y="68" width="46" height="34" rx="5"/><rect x="162" y="44" width="46" height="34" rx="5"/><path d="M58 59h28M132 33h30M132 85h30"/></svg>;if(name==='boxes')return <svg viewBox="0 0 220 120" {...a}><path d="M26 70l30-14 30 14v24l-30 14-30-14z"/><path d="M26 70l30 14 30-14M56 84v24"/><path d="M112 40l26-12 26 12v22l-26 12-26-12z"/><path d="M112 40l26 12 26-12M138 52v22"/><path d="M152 92h48"/></svg>;if(name==='alert')return <svg viewBox="0 0 220 120" {...a}><path d="M62 98a30 30 0 0 1 60 0z"/><path d="M92 62V28M92 62l22 22"/><path d="M142 32l16 28h-32z"/><path d="M178 32l16 28h-32z"/></svg>;if(name==='gauge')return <svg viewBox="0 0 220 120" {...a}><path d="M40 92a70 70 0 0 1 140 0"/><path d="M110 92L80 58"/><path d="M150 62l20-14M60 62l-20-14"/></svg>;return <svg viewBox="0 0 220 120" {...a}><rect x="26" y="24" width="86" height="66" rx="6"/><path d="M40 42h58M40 56h58M40 70h36"/><circle cx="152" cy="38" r="6"/><circle cx="184" cy="54" r="6"/><circle cx="158" cy="80" r="6"/><path d="M112 42h34M112 60h56M112 78h34"/></svg>}
 function forgeMetricIcon(name){const d={orders:'M4 6h16M4 12h16M4 18h10',clock:'M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18',box:'M3 8l9-4 9 4v8l-9 4-9-4zM3 8l9 4 9-4M12 12v8',money:'M4 7h16M12 4v16M8 11h8M8 15h8',alert:'M12 4l8.5 15h-17zM12 10v4.5M12 17.5h.01',recycle:'M7 9L4 15h6zM17 9l3 6h-6zM10 20h4l-2-3z',swap:'M4 9h12l-3-3M20 15H8l3 3',gauge:'M5 17a7 7 0 1 1 14 0M12 14l3.5-3',calendar:'M4 7h16v13H4zM8 4v5M16 4v5M4 12h16',chart:'M4 20h16M7 17v-5M12 17V8M17 17v-7',stack:'M12 4l8 4-8 4-8-4zM4 13l8 4 8-4'}[name];return d?<svg className="fp-metric-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d}/></svg>:null}
 function ForgeMetricStrip({items=[]}){return <div className="fp-metric-strip">{items.map(item=><div className={'fp-metric-card'+(item.tone?' tone-'+item.tone:'')} key={item.label}><span className="fp-metric-label">{forgeMetricIcon(item.icon)}<span>{item.label}</span></span><strong>{item.value}</strong></div>)}</div>}
-function ForgeHero({section='',title='',description='',icon='',tone='',art='blueprint',next,chip}){const crumbs=String(section||'').split('/').map(x=>x.trim()).filter(Boolean);return <section className={'fpHero'+(tone?' tone-'+tone:'')} aria-label={title||section||''}><div className="fpHeroMain"><nav className="fpHeroCrumbs" aria-label="业务路径">{crumbs.map((c,i)=><React.Fragment key={c+i}>{i>0&&<span className="fpHeroCrumbSep" aria-hidden="true">›</span>}<span>{c}</span></React.Fragment>)}</nav><div className="fpHeroRow"><span className="fpHeroBadge" aria-hidden="true">{icon||'▤'}</span><div><h1 className="fpHeroTitle">{title}</h1>{description&&<p className="fpHeroDesc">{description}</p>}</div></div></div>{chip&&<span className="fpHeroChip" title={chip}>{chip}</span>}{next&&<a className="fpHeroNext" href={next.href} title={next.title||('下一步操作 '+next.label)}><span>下一步操作</span><strong>{next.label}</strong><em aria-hidden="true">›</em></a>}<span className="fpHeroArt" aria-hidden="true"><ForgeHeroArt name={art}/><rect x="26" y="24" width="86" height="66" rx="6"/><path d="M40 42h58M40 56h58M40 70h36"/><circle cx="152" cy="38" r="6"/><circle cx="184" cy="54" r="6"/><circle cx="158" cy="80" r="6"/><path d="M112 42h34M112 60h56M112 78h34"/></span></section>}function ForgeStatus({value,label}){const tone=value==='active'||value==='completed'?'success':value==='pending_review'||value==='draft'?'warning':value==='inactive'||value==='archived'?'danger':'';return <span className={'fp-status '+tone}>{label||value||'未知'}</span>}
+function ForgeHero({section='',title='',description='',icon='',tone='',art='blueprint',next,chip}){const crumbs=String(section||'').split('/').map(x=>x.trim()).filter(Boolean);return <section className={'fpHero'+(tone?' tone-'+tone:'')} aria-label={title||section||''}><div className="fpHeroMain"><nav className="fpHeroCrumbs" aria-label="业务路径">{crumbs.map((c,i)=><React.Fragment key={c+i}>{i>0&&<span className="fpHeroCrumbSep" aria-hidden="true">›</span>}<span>{c}</span></React.Fragment>)}</nav><div className="fpHeroRow"><span className="fpHeroBadge" aria-hidden="true">{icon||'▤'}</span><div><h1 className="fpHeroTitle">{title}</h1>{description&&<p className="fpHeroDesc">{description}</p>}</div></div></div>{chip&&<span className="fpHeroChip" title={chip}>{chip}</span>}{next&&<a className="fpHeroNext" href={next.href} onClick={event=>{if(!next.to||event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;event.preventDefault();navigate(next.to)}} title={next.title||('下一步操作 '+next.label)}><span>下一步操作</span><strong>{next.label}</strong><em aria-hidden="true">›</em></a>}<span className="fpHeroArt" aria-hidden="true"><ForgeHeroArt name={art}/><rect x="26" y="24" width="86" height="66" rx="6"/><path d="M40 42h58M40 56h58M40 70h36"/><circle cx="152" cy="38" r="6"/><circle cx="184" cy="54" r="6"/><circle cx="158" cy="80" r="6"/><path d="M112 42h34M112 60h56M112 78h34"/></span></section>}function ForgeStatus({value,label}){const tone=value==='active'||value==='completed'?'success':value==='pending_review'||value==='draft'?'warning':value==='inactive'||value==='archived'?'danger':'';return <span className={'fp-status '+tone}>{label||value||'未知'}</span>}
 function ForgePageHeader({section,title,description,actions,badge}){const area=section||'财务管理',mark=badge||String(area).trim().slice(0,1)||'财';return <><div className="fp-phase"><span className="fp-phase-index">{mark}</span><span>{area}</span><span>/</span><strong>{title}</strong></div><div className="fp-page-header"><div className="fp-heading"><div className="fp-title-row"><h1 className="fp-title">{title}</h1></div>{description&&<div className="fp-description">{description}</div>}</div>{actions&&<div className="fp-toolbar">{actions}</div>}</div></>}
 function ForgeMetric({label,value,tone=''}){return <div className={'fp-metric '+tone}><div className="fp-metric-label">{label}</div><div className="fp-metric-value">{value}</div></div>}
 function ForgeNotice({tone='',children,onClose}){return <div className={'fp-notice '+tone}><span>{children}</span>{onClose&&<button aria-label="关闭提示" onClick={onClose}>×</button>}</div>}
@@ -60,13 +262,13 @@ function forgeOptionList(children,out=[]){for(const child of [children].flat(Inf
 function forgeCleanControlClass(className,nativeClass){return String(className||'').split(' ').filter(x=>x&&x!==nativeClass).join(' ')}
 function ForgeSingleSelectControl({children,value,defaultValue='',onChange,disabled=false,className='',placeholder,...props}){const options=forgeOptionList(children),controlled=value!==undefined,[local,setLocal]=React.useState(String(defaultValue??'')),current=String(controlled?value??'':local),label=props['aria-label']||props.name||'选择';return <ForgeSelect label={label} value={current} options={options} disabled={disabled} className={forgeCleanControlClass(className,'fp-select')} placeholder={placeholder||options.find(x=>x.value==='')?.label||'请选择'} onChange={next=>{if(!controlled)setLocal(String(next));onChange&&onChange({target:{value:String(next),name:props.name},currentTarget:{value:String(next),name:props.name}})}}/>}
 function ForgeMultiSelectControl({children,value,defaultValue=[],onChange,disabled=false,className='',placeholder,...props}){const options=forgeOptionList(children),controlled=value!==undefined,[local,setLocal]=React.useState(Array.isArray(defaultValue)?defaultValue.map(String):[]),[open,setOpen]=React.useState(false),root=React.useRef(null),menu=React.useRef(null),label=props['aria-label']||props.name||'选择',current=(controlled?(Array.isArray(value)?value:[]):local).map(String),selected=options.filter(x=>current.includes(x.value));React.useEffect(()=>{if(!open)return;const close=e=>{if(!root.current?.contains(e.target))setOpen(false)},keys=e=>{if(e.key==='Escape'){setOpen(false);root.current?.querySelector('.fp-picker-trigger')?.focus()}};document.addEventListener('mousedown',close);document.addEventListener('keydown',keys);setTimeout(()=>menu.current?.querySelector('[aria-selected="true"]:not(:disabled),button:not(:disabled)')?.focus(),0);return()=>{document.removeEventListener('mousedown',close);document.removeEventListener('keydown',keys)}},[open]);const emit=next=>{if(!controlled)setLocal(next);const selectedOptions=next.map(v=>({value:v}));onChange&&onChange({target:{value:next,selectedOptions,name:props.name},currentTarget:{value:next,selectedOptions,name:props.name}})};return <div className={'fp-picker '+forgeCleanControlClass(className,'fp-select')+' '+(open?'open':'')} ref={root}><button type="button" className="fp-picker-trigger" aria-label={label} aria-haspopup="listbox" aria-expanded={open} disabled={disabled} onClick={()=>setOpen(x=>!x)}><span className={selected.length?'':'fp-picker-placeholder'}>{selected.length?selected.map(x=>x.label).join('、'):(placeholder||'请选择')}</span><span className="fp-picker-chevron" aria-hidden="true">⌄</span></button>{open&&<div ref={menu} className="fp-picker-menu" role="listbox" aria-label={label} aria-multiselectable="true">{options.map(option=><button type="button" role="option" aria-selected={current.includes(option.value)} className={'fp-picker-option '+(current.includes(option.value)?'selected':'')} disabled={option.disabled} key={option.value} onClick={()=>emit(current.includes(option.value)?current.filter(x=>x!==option.value):[...current,option.value])}>{current.includes(option.value)?'✓ ':''}{option.label}</button>)}<div className="fp-picker-done"><button type="button" onClick={()=>{setOpen(false);root.current?.querySelector('.fp-picker-trigger')?.focus()}}>完成</button></div></div>}</div>}
-function ForgeListSettings({label='列表设置'}){
-  const [open,setOpen]=React.useState(false);
-  const [density,setDensity]=React.useState(()=>{try{return (typeof localStorage!=='undefined'&&localStorage.getItem('forge-density'))||'comfortable'}catch(e){return 'comfortable'}});
+function ForgeListSettings(){
+  // Keep applying a previously saved density preference without exposing a settings control.
+  const [density]=React.useState(()=>{try{return (typeof localStorage!=='undefined'&&localStorage.getItem('forge-density'))||'comfortable'}catch(e){return 'comfortable'}});
   const root=React.useRef(null);
-  React.useEffect(()=>{try{if(typeof localStorage!=='undefined')localStorage.setItem('forge-density',density)}catch(e){}const host=root.current&&root.current.closest('.forge-product');if(host)host.setAttribute('data-fp-density',density)},[density]);
-  React.useEffect(()=>{if(!open)return;const close=e=>{if(!root.current||!root.current.contains(e.target))setOpen(false)},esc=e=>{if(e.key==='Escape')setOpen(false)};document.addEventListener('mousedown',close);document.addEventListener('keydown',esc);return()=>{document.removeEventListener('mousedown',close);document.removeEventListener('keydown',esc)}},[open]);
-  return <span className="fp-icon-menu" ref={root}><button type="button" className="fp-icon-button" aria-label={label} title={label} aria-haspopup="menu" aria-expanded={open} onClick={()=>setOpen(v=>!v)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 2.6 14H2.5a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 7a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 2.6V2.5a2 2 0 1 1 4 0v.1A1.7 1.7 0 0 0 17 4.6a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21.4 10h.1a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.6 1z"/></svg></button>{open&&<span className="fp-icon-menu-panel right" role="menu"><span className="fp-icon-menu-empty">显示密度</span><button type="button" role="menuitemradio" aria-checked={density==='comfortable'} className="fp-icon-menu-item" onClick={()=>{setDensity('comfortable')}}>{density==='comfortable'?'● 舒适':'○ 舒适'}</button><button type="button" role="menuitemradio" aria-checked={density==='compact'} className="fp-icon-menu-item" onClick={()=>{setDensity('compact')}}>{density==='compact'?'● 紧凑':'○ 紧凑'}</button></span>}</span>}
+  React.useEffect(()=>{const host=root.current&&root.current.closest('.forge-product');if(host)host.setAttribute('data-fp-density',density)},[density]);
+  return <span ref={root} hidden aria-hidden="true"/>;
+}
 function ForgeIconMenu({label='更多操作',items=[],align='right'}){const [open,setOpen]=React.useState(false),root=React.useRef(null);React.useEffect(()=>{if(!open)return;const close=e=>{if(!root.current||!root.current.contains(e.target))setOpen(false)},esc=e=>{if(e.key==='Escape')setOpen(false)};document.addEventListener('mousedown',close);document.addEventListener('keydown',esc);return()=>{document.removeEventListener('mousedown',close);document.removeEventListener('keydown',esc)}},[open]);const list=(items||[]).filter(Boolean);return <span className="fp-icon-menu" ref={root}><button type="button" className="fp-icon-button" aria-label={label} title={label} aria-haspopup="menu" aria-expanded={open} onClick={()=>setOpen(v=>!v)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg></button>{open&&<span className={'fp-icon-menu-panel '+(align==='left'?'left':'right')} role="menu">{list.map((it,i)=><button type="button" role="menuitem" key={i} className="fp-icon-menu-item" disabled={it.disabled} onClick={()=>{setOpen(false);it.onClick&&it.onClick()}}>{it.label}</button>)}{!list.length&&<span className="fp-icon-menu-empty">暂无更多操作</span>}</span>}</span>}
 function ForgeSelectControl(props){return props.multiple?<ForgeMultiSelectControl {...props}/>:<ForgeSingleSelectControl {...props}/>}
 function forgeIsoDate(date){return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0')}

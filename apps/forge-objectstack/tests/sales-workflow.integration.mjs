@@ -27,8 +27,29 @@ async function read(object, id) {
   return result.value.record;
 }
 
-async function invoke(object, action, id, authenticated = true) {
-  return api.request(`/actions/${object}/${action}/${id}`, 'POST', {}, authenticated);
+async function invoke(object, action, id, paramsOrAuthenticated = {}, authenticated = true) {
+  const params = typeof paramsOrAuthenticated === 'boolean' ? {} : paramsOrAuthenticated;
+  const isAuthenticated = typeof paramsOrAuthenticated === 'boolean' ? paramsOrAuthenticated : authenticated;
+  return api.request(`/actions/${object}/${action}/${id}`, 'POST', { params }, isAuthenticated);
+}
+
+async function uploadContractPdf() {
+  const fileName = `工作流合同-${stamp}.pdf`;
+  const bytes = Buffer.from(`%PDF-1.7\n${fileName}`);
+  const pending = await api.request('/storage/upload/presigned', 'POST', {
+    filename: fileName, mimeType: 'application/pdf', size: bytes.length, scope: 'attachments',
+  });
+  assert.ok(pending.status >= 200 && pending.status < 300, `presign contract material: ${JSON.stringify(pending.value)}`);
+  const descriptor = pending.value?.data || pending.value;
+  const origin = new URL(process.env.FORGE_URL || 'http://localhost:4310').origin;
+  const uploaded = await fetch(new URL(descriptor.uploadUrl, origin), {
+    method: descriptor.method || 'PUT', headers: descriptor.headers || {}, body: bytes,
+  });
+  assert.ok(uploaded.ok, `upload contract material: HTTP ${uploaded.status}`);
+  const complete = await api.request('/storage/upload/complete', 'POST', { fileId: descriptor.fileId });
+  assert.ok(complete.status >= 200 && complete.status < 300, `complete contract material: ${JSON.stringify(complete.value)}`);
+  const completed = complete.value?.data || complete.value;
+  return completed.fileId || descriptor.fileId;
 }
 
 async function removePreviousFixture() {
@@ -75,12 +96,15 @@ await test('creates an isolated draft quote-contract-order workflow fixture', as
     item_code: 'FG-RM-CAB-800-WF', model: 'RM-CAB-800-V1', specification: '默认规格', unit_name: '台',
     quantity_limit: 2, ordered_quantity: 0, taxed_unit_price: 128000, tax_rate: 13, discount_rate: 5, taxed_subtotal: 243200,
   });
+  ids.contractFile = await uploadContractPdf();
 });
 
 await test('blocks contract submission until its source quote is accepted', async () => {
-  const blocked = await invoke('forge_sales_contract', 'contract_submit', ids.contract);
+  const blocked = await invoke('forge_sales_contract', 'contract_submit_material_package', ids.contract, {
+    primary_file_id: ids.contractFile, material_file_ids: [ids.contractFile],
+  });
   assert.equal(blocked.status, 400, JSON.stringify(blocked.value));
-  assert.match(blocked.value.error.message, /来源报价需为已接受状态/);
+  assert.match(blocked.value.error.message, /来源报价需有当前核价版本的客户接受凭证/);
   assert.equal((await read('forge_sales_contract', ids.contract)).status, 'draft');
 });
 
@@ -104,7 +128,9 @@ await test('runs quote calculation, approval, sending and customer acceptance in
 });
 
 await test('submits and approves the accepted-quote contract', async () => {
-  let result = await invoke('forge_sales_contract', 'contract_submit', ids.contract);
+  let result = await invoke('forge_sales_contract', 'contract_submit_material_package', ids.contract, {
+    primary_file_id: ids.contractFile, material_file_ids: [ids.contractFile],
+  });
   assert.equal(result.status, 200, JSON.stringify(result.value));
   let contract = await read('forge_sales_contract', ids.contract);
   assert.equal(contract.status, 'pending_approval');

@@ -8,9 +8,9 @@ const source = `
 const {useEffect,useState}=React;
 const css=${JSON.stringify(forgeProductUiCss + ncrCss)};
 ${forgeProductUiRuntime}
-function App(){
+function App(){const adapter=useAdapter();
  const [state,setState]=useState({loading:true,error:'',data:{}}),[search,setSearch]=useState(''),[status,setStatus]=useState(''),[disposition,setDisposition]=useState(''),[dialog,setDialog]=useState(null),[busy,setBusy]=useState(''),[toast,setToast]=useState(''),[contextOrderId]=useState(()=>new URLSearchParams(window.location.search).get('order_id')||'');
- async function request(path,options={}){const r=await fetch('/api/v1'+path,{credentials:'include',headers:{'Content-Type':'application/json',...(options.headers||{})},...options}),p=await r.json().catch(()=>({}));if(!r.ok)throw new Error((typeof p.error==='string'?p.error:p.error?.message)||(Array.isArray(p.fields)&&p.fields.length?p.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||p.message||'请求失败');return p}
+ async function request(path,options={}){const r=await ForgeApiResponse(adapter,path,{credentials:'include',headers:{'Content-Type':'application/json',...(options.headers||{})},...options}),p=await r.json().catch(()=>({}));if(!r.ok)throw new Error((typeof p.error==='string'?p.error:p.error?.message)||(Array.isArray(p.fields)&&p.fields.length?p.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||p.message||'请求失败');return p}
  async function find(name){return(await request('/data/'+name+'?$top=300')).records||[]}
  async function load(){setState(s=>({...s,loading:true,error:''}));try{const names=['forge_subcontract_ncr','forge_subcontract_ncr_inbound','forge_subcontract_ncr_log','forge_subcontract_receipt','forge_subcontract_order','forge_supplier'],pairs=await Promise.all(names.map(async n=>[n,await find(n)]));setState({loading:false,error:'',data:Object.fromEntries(pairs)})}catch(e){setState(s=>({...s,loading:false,error:String(e.message||e)}))}}
  useEffect(()=>{load()},[]);

@@ -1,11 +1,11 @@
 import { forgeProductUiCss, forgeProductUiRuntime } from './product-ui.js';
 
 const source = `
-function App(){
+function App(){const adapter=useAdapter();
   const [tab,setTab]=React.useState('plan');
   const [data,setData]=React.useState({loading:true,projects:[],plans:[],templates:[],error:''});
   const [dialog,setDialog]=React.useState(null);const [busy,setBusy]=React.useState(false);const [toast,setToast]=React.useState('');
-  async function request(path,options){const r=await fetch('/api/v1'+path,{credentials:'include',...options,headers:{'Content-Type':'application/json',...(options?.headers||{})}}),p=await r.json().catch(()=>({}));if(!r.ok)throw new Error((typeof p.error==='string'?p.error:p.error?.message)||(Array.isArray(p.fields)&&p.fields.length?p.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||p.message||'请求失败');return p;}
+  async function request(path,options){const r=await ForgeApiResponse(adapter,path,{credentials:'include',...options,headers:{'Content-Type':'application/json',...(options?.headers||{})}}),p=await r.json().catch(()=>({}));if(!r.ok)throw new Error((typeof p.error==='string'?p.error:p.error?.message)||(Array.isArray(p.fields)&&p.fields.length?p.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||p.message||'请求失败');return p;}
   async function find(object){return (await request('/data/'+object+'?$top=200')).records||[];}
   async function load(){try{const [projects,plans,templates]=await Promise.all([find('forge_project'),find('forge_project_plan'),find('forge_project_plan_template')]);setData({loading:false,projects,plans,templates,error:''});}catch(e){setData(d=>({...d,loading:false,error:String(e.message||e)}));}}
   React.useEffect(()=>{load()},[]);

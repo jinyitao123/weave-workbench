@@ -7,7 +7,7 @@ export const BusinessSettingOption = ObjectSchema.create({
   pluralLabel: '业务设置项',
   description: '财务、行政、人事及其他业务模块共用的可维护设置项',
   icon: 'sliders-horizontal',
-  sharingModel: 'public_read_write',
+  sharingModel: 'private',
   nameField: 'name',
   searchableFields: ['name', 'code', 'scope', 'setting_type', 'description'],
   fields: {
@@ -40,7 +40,7 @@ export const MeetingRoom = ObjectSchema.create({
   pluralLabel: '会议室',
   description: '行政日程预约使用的会议室主数据',
   icon: 'map-pin',
-  sharingModel: 'public_read_write',
+  sharingModel: 'private',
   nameField: 'name',
   searchableFields: ['name', 'location', 'description'],
   fields: {
@@ -61,7 +61,7 @@ export const HrLeaveConfig = ObjectSchema.create({
   pluralLabel: '请假配置',
   description: '请假最小单位与跨时段处理规则',
   icon: 'settings',
-  sharingModel: 'public_read_write',
+  sharingModel: 'private',
   nameField: 'name',
   fields: {
     name: Field.text({ label: '配置名称', maxLength: 80, ...required }),
@@ -79,7 +79,7 @@ export const HrSalaryItem = ObjectSchema.create({
   pluralLabel: '工资项',
   description: '工资条模板中的收入项与扣款项',
   icon: 'badge-dollar-sign',
-  sharingModel: 'public_read_write',
+  sharingModel: 'private',
   nameField: 'name',
   searchableFields: ['name', 'code'],
   fields: {

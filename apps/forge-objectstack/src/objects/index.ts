@@ -7,6 +7,7 @@ export * from './bom.object.js';
 export * from './drawing.object.js';
 export * from './shortage.object.js';
 export * from './sales.object.js';
+export * from './quotation-contract-conversion.object.js';
 export * from './procurement.object.js';
 export * from './inventory.object.js';
 export * from './finance.object.js';
@@ -22,4 +23,9 @@ export * from './delivery.object.js';
 export * from './workspace.object.js';
 export * from './administration.object.js';
 export * from './management-profit-report.object.js';
+export * from './report-settings.object.js';
 export * from './business-setting.object.js';
+
+export { TaskDelegation } from './task-delegation.object.js';
+export * from './task-delegation.object.js';
+export * from './employee-business-action.object.js';

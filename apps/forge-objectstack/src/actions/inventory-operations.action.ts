@@ -1,6 +1,10 @@
 import { defineAction } from "@objectstack/spec";
 
 const locations = ["record_header", "record_more"] as const;
+const reviewerActions = new Set([
+  'inventory_lock_activate', 'inventory_lock_renew', 'inventory_lock_void',
+  'inventory_lock_release', 'inventory_count_complete', 'inventory_operation_approve',
+]);
 const base = (
   name: string,
   label: string,
@@ -15,6 +19,7 @@ const base = (
     name,
     label,
     objectName: "forge_inventory_operation",
+    requiredPermissions: [reviewerActions.has(name) ? 'forge_warehouse_reviewer' : 'forge_warehouse_operator'],
     icon: "check-circle",
     locations: [...locations],
     order,
@@ -183,6 +188,7 @@ await ctx.api.object('forge_inventory_operation').update({id,released_quantity:q
 
 export const InventorySerialVerify = defineAction({
   name: "inventory_serial_verify",
+  requiredPermissions: ['forge_warehouse_operator'],
   label: "验证SN码",
   objectName: "forge_inventory_serial_number",
   icon: "scan-line",

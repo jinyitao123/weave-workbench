@@ -5,6 +5,7 @@ const locations = ['record_header', 'record_more'] as const;
 export const CustomerCreateProject = defineAction({
   name: 'customer_create_project', label: '项目立项', objectName: 'forge_customer', icon: 'briefcase-business',
   locations: [...locations], order: 60, refreshAfter: true,
+  requiredPermissions: ['forge_project_operator'],
   description: '建立项目并把指定负责人加入项目团队。合同和订单可在立项后关联。', successMessage: '项目已立项',
   params: [
     { field: 'name', objectOverride: 'forge_project', required: true }, { field: 'type_id', objectOverride: 'forge_project', required: true },
@@ -13,33 +14,161 @@ export const CustomerCreateProject = defineAction({
     { field: 'expected_revenue', objectOverride: 'forge_project' }, { field: 'budget_amount', objectOverride: 'forge_project' },
     { field: 'manager_id', objectOverride: 'forge_project', required: true }, { field: 'description', objectOverride: 'forge_project' },
   ],
-  onSuccess: { navigate: '/_console/apps/forge/forge_project/record/${result.id}' },
-  body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.project/forge_project/record/${result.id}' },
+  body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
 const customerId = ctx.recordId || (ctx.record && ctx.record.id); const customer = ctx.record;
 if (ctx.recordLoadDenied === true || !customerId || !customer) throw new Error('当前客户不存在或不可访问');
+const actor = ctx.session && ctx.session.userId;
+if (!actor) throw new Error('无法识别当前立项人');
 if (!ctx.input.name || !ctx.input.type_id || !ctx.input.manager_id || !ctx.input.planned_start_on || !ctx.input.planned_end_on) throw new Error('项目名称、类型、负责人和计划日期均为必填');
 if (ctx.input.planned_end_on < ctx.input.planned_start_on) throw new Error('计划结束日期不得早于计划开始日期');
 const type = await ctx.api.object('forge_project_type').findOne({ where: { id: ctx.input.type_id } });
 if (!type || type.active === false) throw new Error('项目类型不存在或已停用');
-const created = await ctx.api.object('forge_project').insert({
-  name: ctx.input.name, type_id: ctx.input.type_id, customer_id: customerId, manager_id: ctx.input.manager_id,
-  priority: ctx.input.priority || 'medium', planned_start_on: ctx.input.planned_start_on, planned_end_on: ctx.input.planned_end_on,
-  expected_revenue: Number(ctx.input.expected_revenue || 0), budget_amount: Number(ctx.input.budget_amount || 0),
-  contract_amount: 0, invoice_amount: 0, collected_amount: 0, total_cost: 0, progress: 0, status: 'pending',
-  description: ctx.input.description || null,
+const manager = await ctx.api.object('sys_user').findOne({ where: { id: ctx.input.manager_id } });
+if (!manager) throw new Error('项目负责人不存在或不可访问');
+return await ctx.api.transaction(async () => {
+  const created = await ctx.api.object('forge_project').insert({
+    name: ctx.input.name, type_id: ctx.input.type_id, customer_id: customerId,
+    owner_id: actor,
+    customer_name_snapshot: customer.name, manager_id: ctx.input.manager_id,
+    manager_name_snapshot: manager.display_name || manager.name || manager.username || null,
+    priority: ctx.input.priority || 'medium', planned_start_on: ctx.input.planned_start_on, planned_end_on: ctx.input.planned_end_on,
+    expected_revenue: Number(ctx.input.expected_revenue || 0), budget_amount: Number(ctx.input.budget_amount || 0),
+    contract_amount: 0, invoice_amount: 0, collected_amount: 0, total_cost: 0, progress: 0, status: 'pending',
+    description: ctx.input.description || null,
+  });
+  const projectId = typeof created === 'string' ? created : created && (created.id || (created.record && created.record.id));
+  if (!projectId) throw new Error('项目创建后未返回记录ID');
+  await ctx.api.object('forge_project_member').insert({ name: '项目经理', membership_key: projectId + ':' + ctx.input.manager_id,
+    project_id: projectId, user_id: ctx.input.manager_id, member_duty: 'manager', joined_on: new Date().toISOString().slice(0, 10), active: true,
+    remarks: '立项时自动加入' });
+  return { id: projectId, status: 'pending', member_count: 1 };
 });
-const projectId = typeof created === 'string' ? created : created && (created.id || (created.record && created.record.id));
-if (!projectId) throw new Error('项目创建后未返回记录ID');
-await ctx.api.object('forge_project_member').insert({ name: '项目经理', membership_key: projectId + ':' + ctx.input.manager_id,
-  project_id: projectId, user_id: ctx.input.manager_id, member_duty: 'manager', joined_on: new Date().toISOString().slice(0, 10), active: true,
-  remarks: '立项时自动加入' });
-return { id: projectId, status: 'pending', member_count: 1 };
+` },
+});
+
+export const ProjectRefreshCustomerSnapshot = defineAction({
+  name: 'project_refresh_customer_snapshot', label: '补齐客户名称快照', objectName: 'forge_project', icon: 'building-2',
+  locations: [...locations], order: 5, refreshAfter: true,
+  requiredPermissions: ['forge_project_operator', 'sales_contract_operator'],
+  visible: `record.customer_name_snapshot == null && record.created_by == current_user.id`,
+  description: '仅由项目创建人同步其本人有权读取的关联客户名称到项目快照，不改变客户档案或读取权限。',
+  confirmText: '将关联客户的名称写入本项目快照，让项目团队在项目页查看客户名称？客户档案和客户权限不会改变。',
+  successMessage: '项目客户名称已补齐',
+  body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
+const id = ctx.recordId || (ctx.record && ctx.record.id); const project = ctx.record;
+const actor = ctx.session && ctx.session.userId;
+if (ctx.recordLoadDenied === true || !id || !project) throw new Error('当前项目不存在或不可访问');
+if (!actor || project.created_by !== actor) throw new Error('仅项目创建人可以补齐客户名称快照');
+if (String(project.customer_name_snapshot || '').trim()) return { id, status: 'unchanged' };
+const customer = await ctx.api.object('forge_customer').findOne({
+  where: { id: project.customer_id }, fields: ['id', 'name', 'owner_id'],
+});
+if (!customer || String(customer.owner_id || '') !== String(actor)) throw new Error('当前账号无法读取此项目关联客户');
+const customerName = String(customer.name || '').trim();
+if (!customerName) throw new Error('关联客户没有可用于项目快照的名称');
+await ctx.api.object('forge_project').update({ id, customer_name_snapshot: customerName });
+return { id, status: 'updated' };
+` },
+});
+
+export const ProjectReadDeliveryScope = defineAction({
+  name: 'project_read_delivery_scope', label: '读取项目物料与服务范围', objectName: 'forge_project', icon: 'list-checks',
+  locations: [...locations], order: 6,
+  requiredPermissions: ['forge_project_operator'],
+  description: '仅从当前可读项目已关联的有效合同和订单读取物料/服务明细，不读取同客户的其他单据。',
+  successMessage: '项目物料与服务范围已读取',
+  body: { language: 'js', capabilities: ['api.read'], source: `
+const projectId = ctx.recordId || (ctx.record && ctx.record.id); const project = ctx.record;
+if (ctx.recordLoadDenied === true || !projectId || !project) throw new Error('当前项目不存在或不可访问');
+const eligibleOrderStatuses = ['approved', 'active', 'partially_shipped', 'shipped', 'completed'];
+const round4 = value => Math.round((Number(value || 0) + Number.EPSILON) * 10000) / 10000;
+const sameNumber = (left, right) => Math.abs(Number(left || 0) - Number(right || 0)) < 0.0001;
+const scope = { sources: [], lines: [], warnings: [] };
+const links = await ctx.api.object('forge_project_sales_link').find({
+  where: { project_id: projectId },
+  fields: ['id', 'project_id', 'contract_id', 'order_id', 'contract_code_snapshot', 'order_code_snapshot'],
+});
+for (const link of links) {
+  if (!link.contract_id || !link.order_id) {
+    scope.warnings.push('项目关联记录缺少合同或订单来源');
+    continue;
+  }
+  const [contract, order] = await Promise.all([
+    ctx.api.object('forge_sales_contract').findOne({ where: { id: link.contract_id }, fields: ['id', 'code', 'customer_id', 'quotation_id', 'status', 'signed_on', 'signed_evidence_attachment'] }),
+    ctx.api.object('forge_sales_order').findOne({ where: { id: link.order_id }, fields: ['id', 'code', 'customer_id', 'contract_id', 'quotation_id', 'status'] }),
+  ]);
+  if (!contract || !order || contract.customer_id !== project.customer_id || order.customer_id !== project.customer_id || order.contract_id !== contract.id) {
+    scope.warnings.push('项目关联的合同、订单与客户来源不一致');
+    continue;
+  }
+  if (contract.status !== 'active' || !contract.signed_on || !contract.signed_evidence_attachment) {
+    scope.warnings.push('已关联合同缺少有效审批状态或客户签署凭证');
+    continue;
+  }
+  if (!eligibleOrderStatuses.includes(order.status)) {
+    scope.warnings.push('已关联订单当前状态不在项目交付范围内');
+    continue;
+  }
+  const quotationId = contract.quotation_id || order.quotation_id;
+  const quotation = quotationId ? await ctx.api.object('forge_quotation').findOne({
+    where: { id: quotationId }, fields: ['id', 'code', 'customer_id', 'status', 'pricing_version', 'accepted_pricing_version', 'customer_acceptance_evidence_attachment'],
+  }) : null;
+  const [contractLines, orderLines, quotationLines] = await Promise.all([
+    ctx.api.object('forge_sales_contract_line').find({ where: { contract_id: contract.id }, fields: ['id', 'name', 'line_type', 'quotation_line_id', 'sku_id', 'item_code', 'model', 'specification', 'unit_name', 'quantity_limit', 'taxed_unit_price', 'tax_rate', 'discount_rate', 'taxed_subtotal'] }),
+    ctx.api.object('forge_sales_order_line').find({ where: { order_id: order.id }, fields: ['id', 'name', 'line_type', 'contract_line_id', 'quotation_line_id', 'sku_id', 'item_code', 'model', 'specification', 'unit_name', 'quantity', 'taxed_unit_price', 'untaxed_unit_price', 'tax_rate', 'discount_rate', 'taxed_subtotal'] }),
+    quotation ? ctx.api.object('forge_quotation_line').find({ where: { quotation_id: quotation.id }, fields: ['id', 'quotation_id', 'name', 'line_type', 'sku_id', 'item_code', 'model', 'specification', 'unit_name', 'quantity', 'taxed_unit_price', 'tax_rate', 'discount_rate', 'taxed_subtotal'] }) : Promise.resolve([]),
+  ]);
+  const quotationRequired = Boolean(contract.quotation_id || order.quotation_id || contractLines.some(line => line.quotation_line_id) || orderLines.some(line => line.quotation_line_id));
+  const quotationVersionValid = quotationRequired
+    ? Boolean(quotation && contract.quotation_id === quotation.id && order.quotation_id === quotation.id && quotation.customer_id === project.customer_id && quotation.status === 'accepted' && quotation.customer_acceptance_evidence_attachment && Number(quotation.accepted_pricing_version) === Number(quotation.pricing_version || 0))
+    : true;
+  if (quotationRequired && !quotationVersionValid) scope.warnings.push('订单来源报价或客户接受核价版本未通过核对');
+  const contractById = new Map(contractLines.map(line => [line.id, line]));
+  const quotationById = new Map(quotationLines.map(line => [line.id, line]));
+  const source = { quotation_code: quotation?.code || '', accepted_pricing_version: quotation?.accepted_pricing_version ?? null, contract_code: contract.code || link.contract_code_snapshot || '', order_code: order.code || link.order_code_snapshot || '', order_status: order.status, source_version_valid: quotationRequired ? quotationVersionValid : null };
+  scope.sources.push(source);
+  if (!orderLines.length) scope.warnings.push('已关联订单没有可读的物料或服务明细');
+  for (let index = 0; index < orderLines.length; index++) {
+    const orderLine = orderLines[index];
+    const contractLine = contractById.get(orderLine.contract_line_id);
+    const quotationLineId = orderLine.quotation_line_id || contractLine?.quotation_line_id;
+    const quotationLine = quotationById.get(quotationLineId);
+    const issues = [];
+    if (!contractLine) issues.push('未找到来源合同明细');
+    if (quotationRequired && !quotationLine) issues.push('未找到原报价明细');
+    if (quotationRequired && !quotationVersionValid) issues.push('报价接受核价版本未通过核对');
+    if (contractLine) {
+      if (quotationRequired && quotationLine && (contractLine.quotation_line_id !== quotationLine.id || quotationLine.quotation_id !== quotation.id || orderLine.quotation_line_id !== quotationLine.id)) issues.push('报价、合同与订单行来源关系不一致');
+      if (contractLine.line_type !== orderLine.line_type || contractLine.name !== orderLine.name || (quotationLine && (quotationLine.line_type !== contractLine.line_type || quotationLine.name !== contractLine.name))) issues.push('报价、合同与订单行类型或名称不一致');
+      if ((quotationLine && !sameNumber(quotationLine.quantity, contractLine.quantity_limit)) || !(Number(orderLine.quantity || 0) > 0) || Number(orderLine.quantity || 0) > Number(contractLine.quantity_limit || 0) + 0.0001) issues.push('报价、合同与订单数量不一致');
+      if (!sameNumber(contractLine.taxed_unit_price, orderLine.taxed_unit_price) || !sameNumber(contractLine.tax_rate, orderLine.tax_rate) || !sameNumber(contractLine.discount_rate, orderLine.discount_rate) || (quotationLine && (!sameNumber(quotationLine.taxed_unit_price, contractLine.taxed_unit_price) || !sameNumber(quotationLine.tax_rate, contractLine.tax_rate) || !sameNumber(quotationLine.discount_rate, contractLine.discount_rate)))) issues.push('报价、合同与订单价税不一致');
+      const expectedOrderSubtotal = Number(contractLine.quantity_limit) > 0 ? round4(Number(contractLine.taxed_subtotal) * Number(orderLine.quantity) / Number(contractLine.quantity_limit)) : null;
+      if (expectedOrderSubtotal === null || !sameNumber(expectedOrderSubtotal, orderLine.taxed_subtotal) || (quotationLine && !sameNumber(quotationLine.taxed_subtotal, contractLine.taxed_subtotal))) issues.push('报价、合同与订单含税小计不一致');
+      if (orderLine.line_type === 'service' && (contractLine.sku_id || orderLine.sku_id || (quotationLine && quotationLine.sku_id))) issues.push('服务项目不应关联物料规格');
+      if (orderLine.line_type === 'material' && (!contractLine.sku_id || !orderLine.sku_id || (quotationLine && !quotationLine.sku_id))) issues.push('物料行缺少物料规格');
+    }
+    const taxRate = Number(orderLine.tax_rate || 0) / 100;
+    scope.lines.push({
+      line_key: (source.order_code || source.contract_code || 'order') + ':' + String(index + 1).padStart(3, '0'),
+      quotation_code: source.quotation_code, accepted_pricing_version: source.accepted_pricing_version,
+      contract_code: source.contract_code, order_code: source.order_code,
+      line_type: orderLine.line_type, name: orderLine.name, item_code: orderLine.item_code || '', model: orderLine.model || '', specification: orderLine.specification || '', unit_name: orderLine.unit_name || '',
+      quote_quantity: quotationLine?.quantity ?? null, contract_quantity: contractLine?.quantity_limit ?? null, quantity: Number(orderLine.quantity || 0),
+      taxed_unit_price: Number(orderLine.taxed_unit_price || 0), tax_rate: Number(orderLine.tax_rate || 0), taxed_subtotal: Number(orderLine.taxed_subtotal || 0),
+      tax_amount: taxRate > 0 ? round4(Number(orderLine.taxed_subtotal || 0) * taxRate / (1 + taxRate)) : 0,
+      trace_consistent: issues.length === 0, trace_issues: issues,
+    });
+  }
+}
+return scope;
 ` },
 });
 
 export const ProjectStart = defineAction({
   name: 'project_start', label: '开始执行', objectName: 'forge_project', icon: 'play',
   locations: [...locations], order: 10, visible: `record.status == 'pending'`, refreshAfter: true,
+  requiredPermissions: ['forge_project_manager'],
   confirmText: '开始执行后，项目基本信息应作为立项基线保留；计划、任务和团队可继续维护。是否继续？', successMessage: '项目已开始执行',
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id); const project = ctx.record;
@@ -56,40 +185,52 @@ return { id, status: 'in_progress', actual_start_on: actualStart };
 export const ProjectLinkContract = defineAction({
   name: 'project_link_contract', label: '关联合同及订单', objectName: 'forge_project', icon: 'link',
   locations: [...locations], order: 20, visible: `record.status != 'settled' && record.status != 'archived' && record.status != 'terminated'`, refreshAfter: true,
+  requiredPermissions: ['forge_project_operator', 'sales_contract_operator'],
   description: '关联销售合同，并自动带入合同下全部非草稿、未取消订单。', successMessage: '合同和订单已关联',
   params: [{ field: 'contract_id', objectOverride: 'forge_project_sales_link', required: true }],
-  body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
+  body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id); const project = ctx.record;
 if (ctx.recordLoadDenied === true || !id || !project) throw new Error('当前项目不存在或不可访问');
+return await ctx.api.transaction(async () => {
+const currentProject = await ctx.api.object('forge_project').findOne({ where: { id } });
+if (!currentProject) throw new Error('当前项目不存在或不可访问');
 const contract = await ctx.api.object('forge_sales_contract').findOne({ where: { id: ctx.input.contract_id } });
-if (!contract || contract.customer_id !== project.customer_id) throw new Error('所选合同必须属于项目客户');
+if (!contract || contract.customer_id !== currentProject.customer_id) throw new Error('所选合同必须属于项目客户');
+if (contract.status !== 'active' || !contract.signed_on || !contract.signed_evidence_attachment) throw new Error('所选合同必须已完成内部审批并归档客户签署凭证');
+const contractType = contract.contract_type_id ? await ctx.api.object('forge_contract_type').findOne({ where: { id: contract.contract_type_id } }) : null;
 const orders = await ctx.api.object('forge_sales_order').find({ where: { contract_id: contract.id } });
-const eligible = orders.filter(order => !['draft', 'cancelled'].includes(order.status));
+const eligible = orders.filter(order => ['approved', 'active', 'partially_shipped', 'shipped', 'completed'].includes(order.status));
 if (!eligible.length) throw new Error('合同下没有可关联的非草稿订单');
 const round2 = value => Math.round((value + Number.EPSILON) * 100) / 100;
-for (const order of eligible) {
-  const key = id + ':' + order.id;
-  const existing = await ctx.api.object('forge_project_sales_link').findOne({ where: { link_key: key } });
-  const receivables = await ctx.api.object('forge_accounts_receivable').find({ where: { order_id: order.id } });
-  const collected = round2(receivables.reduce((sum, item) => sum + Number(item.original_amount || 0) - Number(item.outstanding_amount || 0), 0));
-  const values = { name: contract.code + ' / ' + order.code, link_key: key, project_id: id, contract_id: contract.id, order_id: order.id,
-    order_amount: Number(order.total_amount || 0), invoice_amount: Number(order.invoiced_amount || 0), collected_amount: collected,
-    remarks: '关联销售合同后自动带入非草稿订单' };
-  if (existing) await ctx.api.object('forge_project_sales_link').update({ id: existing.id, ...values });
-  else await ctx.api.object('forge_project_sales_link').insert(values);
-}
-const links = await ctx.api.object('forge_project_sales_link').find({ where: { project_id: id } });
-const contractAmount = round2(links.reduce((sum, item) => sum + Number(item.order_amount || 0), 0));
-const invoiceAmount = round2(links.reduce((sum, item) => sum + Number(item.invoice_amount || 0), 0));
-const collectedAmount = round2(links.reduce((sum, item) => sum + Number(item.collected_amount || 0), 0));
-await ctx.api.object('forge_project').update({ id, contract_amount: contractAmount, invoice_amount: invoiceAmount, collected_amount: collectedAmount });
-return { id, contract_id: contract.id, order_count: links.length, contract_amount: contractAmount, invoice_amount: invoiceAmount, collected_amount: collectedAmount };
+  for (const order of eligible) {
+    const key = id + ':' + order.id;
+    const existing = await ctx.api.object('forge_project_sales_link').findOne({ where: { link_key: key } });
+    const collected = round2(Number(order.collected_amount || 0));
+    const values = { name: (contract.code || contract.name) + ' / ' + (order.code || order.name), link_key: key, project_id: id,
+      contract_id: contract.id, order_id: order.id, contract_code_snapshot: contract.code || '',
+      contract_type_snapshot: contractType?.name || '', signed_on_snapshot: contract.signed_on,
+      order_code_snapshot: order.code || '', order_status_snapshot: order.status,
+      order_amount: Number(order.total_amount || 0), invoice_amount: Number(order.invoiced_amount || 0), collected_amount: collected,
+      remarks: '关联已签署合同后带入有效订单' };
+    if (existing) await ctx.api.object('forge_project_sales_link').update({ id: existing.id, ...values });
+    else await ctx.api.object('forge_project_sales_link').insert(values);
+  }
+  const links = await ctx.api.object('forge_project_sales_link').find({ where: { project_id: id } });
+  const eligibleIds = new Set(eligible.map(order => order.id));
+  const currentLinks = links.filter(item => eligibleIds.has(item.order_id));
+  const contractAmount = round2(currentLinks.reduce((sum, item) => sum + Number(item.order_amount || 0), 0));
+  const invoiceAmount = round2(currentLinks.reduce((sum, item) => sum + Number(item.invoice_amount || 0), 0));
+  const collectedAmount = round2(currentLinks.reduce((sum, item) => sum + Number(item.collected_amount || 0), 0));
+  await ctx.api.object('forge_project').update({ id, contract_amount: contractAmount, invoice_amount: invoiceAmount, collected_amount: collectedAmount });
+  return { id, contract_id: contract.id, order_count: currentLinks.length, contract_amount: contractAmount, invoice_amount: invoiceAmount, collected_amount: collectedAmount };
+});
 ` },
 });
 
 export const ProjectPause = defineAction({
   name: 'project_pause', label: '暂停', objectName: 'forge_project', icon: 'pause',
   locations: [...locations], order: 30, visible: `record.status == 'in_progress'`, refreshAfter: true,
+  requiredPermissions: ['forge_project_manager'],
   description: '暂停后项目仍保留现有计划和记录，但停止按进行中状态推进。请填写暂停原因并确认。',
   params: [{ field: 'pause_reason', objectOverride: 'forge_project', required: true }], successMessage: '项目已暂停',
   body: { language: 'js', capabilities: ['api.write'], source: `const id=ctx.recordId||(ctx.record&&ctx.record.id); if(!id||!ctx.record||ctx.record.status!=='in_progress') throw new Error('仅进行中项目可以暂停'); await ctx.api.object('forge_project').update({id,status:'paused',pause_reason:ctx.input.pause_reason}); return {id,status:'paused'};` },
@@ -98,12 +239,14 @@ export const ProjectPause = defineAction({
 export const ProjectResume = defineAction({
   name: 'project_resume', label: '恢复执行', objectName: 'forge_project', icon: 'play',
   locations: [...locations], order: 10, visible: `record.status == 'paused'`, refreshAfter: true, confirmText: '确认恢复项目执行？', successMessage: '项目已恢复执行',
+  requiredPermissions: ['forge_project_manager'],
   body: { language: 'js', capabilities: ['api.write'], source: `const id=ctx.recordId||(ctx.record&&ctx.record.id); if(!id||!ctx.record||ctx.record.status!=='paused') throw new Error('仅已暂停项目可以恢复执行'); await ctx.api.object('forge_project').update({id,status:'in_progress'}); return {id,status:'in_progress'};` },
 });
 
 export const ProjectTerminate = defineAction({
   name: 'project_terminate', label: '终止', objectName: 'forge_project', icon: 'octagon-x',
   locations: [...locations], order: 90, visible: `record.status == 'pending' || record.status == 'in_progress' || record.status == 'paused'`, refreshAfter: true,
+  requiredPermissions: ['forge_project_manager'],
   description: '终止后项目不能继续按正常执行流程推进，现有计划、任务和业务记录将保留用于追溯。请填写终止原因并确认。',
   params: [{ field: 'termination_reason', objectOverride: 'forge_project', required: true }], successMessage: '项目已终止',
   body: { language: 'js', capabilities: ['api.write'], source: `const id=ctx.recordId||(ctx.record&&ctx.record.id); if(!id||!ctx.record||!['pending','in_progress','paused'].includes(ctx.record.status)) throw new Error('当前项目不能终止'); await ctx.api.object('forge_project').update({id,status:'terminated',termination_reason:ctx.input.termination_reason}); return {id,status:'terminated'};` },
@@ -111,6 +254,7 @@ export const ProjectTerminate = defineAction({
 
 export const ProjectCreateManualPlan = defineAction({
   name: 'project_create_manual_plan', label: '手工创建计划', objectName: 'forge_project', icon: 'calendar-plus',
+  requiredPermissions: ['forge_project_manager'],
   locations: [...locations], order: 40, visible: `record.status == 'in_progress' || record.status == 'paused'`, refreshAfter: true,
   description: '从一个阶段开始建立项目计划，也可以在后续从项目配置中心套用可用模板。', successMessage: '项目计划和首个阶段已创建',
   params: [
@@ -122,7 +266,7 @@ export const ProjectCreateManualPlan = defineAction({
     { field: 'critical_path', objectOverride: 'forge_project_work_item', defaultValue: false },
     { field: 'planned_deliverable', objectOverride: 'forge_project_work_item' },
   ],
-  onSuccess: { navigate: '/_console/apps/forge/forge_project_plan/record/${result.id}' },
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.project/forge_project_plan/record/${result.id}' },
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const projectId = ctx.recordId || (ctx.record && ctx.record.id); const project = ctx.record;
 if (ctx.recordLoadDenied === true || !projectId || !project) throw new Error('当前项目不存在或不可访问');
@@ -157,6 +301,7 @@ return { id: planId, project_id: projectId, phase_id: phaseId, source: 'manual',
 
 export const ProjectPlanAddWorkItem = defineAction({
   name: 'project_plan_add_work_item', label: '新增阶段/里程碑/任务', objectName: 'forge_project_plan', icon: 'list-plus',
+  requiredPermissions: ['forge_project_manager'],
   locations: [...locations], order: 10, visible: `record.status == 'active'`, refreshAfter: true,
   description: '按 RISEMAP 计划页字段添加阶段、里程碑或任务。', successMessage: '计划工作项已添加',
   params: [
@@ -217,6 +362,7 @@ return { id: itemId, plan_id: planId, item_type: ctx.input.item_type, item_count
 
 export const ProjectWorkItemDelete = defineAction({
   name: 'project_work_item_delete', label: '删除工作项', objectName: 'forge_project_work_item', icon: 'trash-2',
+  requiredPermissions: ['forge_project_manager'],
   locations: [...locations], order: 90, visible: `record.status != 'completed'`, refreshAfter: true,
   confirmText: '删除后无法恢复。阶段下仍有任务或里程碑时必须先处理下级工作项。确认删除？', successMessage: '计划工作项已删除',
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
@@ -243,6 +389,7 @@ return { id, plan_id: item.plan_id, deleted: true, item_count: remaining.length,
 
 export const ProjectWorkItemUpdateProgress = defineAction({
   name: 'project_work_item_update_progress', label: '更新进度', objectName: 'forge_project_work_item', icon: 'gauge',
+  requiredPermissions: ['forge_project_work_member'],
   locations: [...locations], order: 10, visible: `record.item_type != 'phase'`, refreshAfter: true,
   description: '更新完成度、状态和实际日期，并回算计划与项目进度；尚未开始的新增工作项不立即拉低阶段进度。', successMessage: '工作项进度已更新',
   params: [
@@ -288,6 +435,7 @@ return { id, progress, status, actual_start_on: actualStart, actual_end_on: actu
 
 export const ProjectPlanSubmitDailyReport = defineAction({
   name: 'project_plan_submit_daily_report', label: '提交日报', objectName: 'forge_project_plan', icon: 'notebook-pen',
+  requiredPermissions: ['forge_project_manager'],
   locations: [...locations], order: 20, visible: `record.status == 'active'`, refreshAfter: true,
   description: '提交进度页中已观察到的日报字段。附件字段保留页面提示的 20MB 边界。', successMessage: '项目日报已提交',
   params: [
@@ -328,6 +476,7 @@ return { id: reportId, plan_id: planId, work_item_id: item.id, report_on: report
 
 export const ProjectPlanSaveAsTemplate = defineAction({
   name: 'project_plan_save_as_template', label: '保存为计划模板', objectName: 'forge_project_plan', icon: 'copy-check',
+  requiredPermissions: ['forge_project_manager'],
   locations: [...locations], order: 80, visible: `record.status == 'active'`, refreshAfter: true,
   description: '把当前计划的阶段、里程碑和任务保存为可复用模板。', successMessage: '计划模板已保存',
   params: [{ field: 'template_name', objectOverride: 'forge_project_plan_template', required: true }, { field: 'category', objectOverride: 'forge_project_plan_template', defaultValue: 'custom' }],
@@ -346,6 +495,7 @@ return { id, name, item_count: structure.length, source_plan_id: planId };
 
 export const ProjectPlanApplyTemplate = defineAction({
   name: 'project_plan_apply_template', label: '套用计划模板', objectName: 'forge_project_plan', icon: 'copy-plus',
+  requiredPermissions: ['forge_project_manager'],
   locations: [...locations], order: 70, visible: `record.status == 'active'`, refreshAfter: true,
   description: '将模板中的阶段、里程碑和任务复制到当前执行计划。', successMessage: '计划模板已套用',
   params: [{ field: 'template_id', objectOverride: 'forge_project_plan_template', required: true }],

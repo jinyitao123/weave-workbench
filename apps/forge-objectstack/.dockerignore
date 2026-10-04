@@ -1,6 +1,10 @@
 node_modules
 dist
+.generated
+.deploy
+.objectstack
 .git
 *.log
 .env
+.env.*
 cookies.txt

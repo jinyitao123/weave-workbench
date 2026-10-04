@@ -4,15 +4,30 @@ import {
   forgeProcurementUiCss,
 } from "./product-ui.js";
 
-const arrivalCss = forgeProductUiCss + forgeProcurementUiCss;
+const arrivalCss = forgeProductUiCss + forgeProcurementUiCss + `
+.forge-arrival .card{container-type:inline-size}
+.forge-arrival .table{max-width:100%;container-type:inline-size;scrollbar-width:thin}
+.forge-arrival .arrival-list-filterbar{display:grid;grid-template-columns:auto auto minmax(240px,1fr) minmax(170px,185px) minmax(170px,185px);gap:8px;align-items:center}
+.forge-arrival .arrival-list-filterbar>*{min-width:0;max-width:100%;box-sizing:border-box}
+.forge-arrival .arrival-list-filterbar>.fp-picker{width:100%;min-width:0}
+.forge-arrival .arrival-list-filterbar .fp-picker-trigger{width:100%}
+.forge-arrival .arrival-list-filterbar .arrival-list-search{width:100%;min-width:0}
+.forge-arrival .arrival-list-pagination{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px}
+.forge-arrival .arrival-list-pagination-actions{justify-content:flex-end;flex-wrap:wrap}
+.forge-arrival .arrival-orders-table th:last-child{position:sticky;right:0;z-index:3;background:#f8f9fc;box-shadow:-1px 0 var(--fp-line)}
+.forge-arrival .arrival-orders-table td:last-child:not([colspan]){position:sticky;right:0;z-index:2;background:#fff;box-shadow:-1px 0 var(--fp-line)}
+.forge-arrival .arrival-list-table-wrap td.arrival-list-empty{position:sticky;left:0;width:100cqw;max-width:100%;text-align:center;background:#fff}
+@container (max-width:1120px){.forge-arrival .arrival-list-filterbar{grid-template-columns:repeat(2,minmax(0,1fr))}.forge-arrival .arrival-list-filterbar .arrival-list-search{grid-column:1/-1}.forge-arrival .arrival-list-filterbar>.fp-picker{min-width:0;width:100%}}
+@container (max-width:620px){.forge-arrival .arrival-list-filterbar{grid-template-columns:1fr}.forge-arrival .arrival-list-filterbar .arrival-list-search{grid-column:auto}.forge-arrival .arrival-list-pagination{grid-template-columns:1fr}.forge-arrival .arrival-list-pagination-actions{justify-content:flex-start}}
+`;
 
 const purchaseArrivalPageSource = `
-function App(){
+function App(){const adapter=useAdapter();
   const query=new URLSearchParams(window.location.search),receiptId=query.get('id'),requestedNotice=query.get('notice');
   const [state,setState]=React.useState({loading:true,receipts:[],allReceiptLines:[],notice:null,noticeLines:[],order:null,orderLines:{},receipt:null,receiptLines:[],supplier:null,suppliers:{},orders:{},warehouses:[],error:''});
   const [form,setForm]=React.useState({arrived_on:new Date(Date.now()+8*60*60*1000).toISOString().slice(0,10),contact_name:'',contact_phone:'',carrier:'',logistics_number:'',remarks:''});
   const [lines,setLines]=React.useState([]),[busy,setBusy]=React.useState(false),[confirm,setConfirm]=React.useState(null),[listMode,setListMode]=React.useState('orders'),[listQuery,setListQuery]=React.useState(''),[listStatus,setListStatus]=React.useState(''),[listType,setListType]=React.useState(''),[page,setPage]=React.useState(1),[taskOpen,setTaskOpen]=React.useState(false),[toast,setToast]=React.useState('');
-  async function request(path,options){const response=await fetch('/api/v1'+path,{credentials:'include',headers:{'Content-Type':'application/json'},...options});const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error((typeof payload.error==='string'?payload.error:payload.error?.message)||(Array.isArray(payload.fields)&&payload.fields.length?payload.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||payload.message||'请求失败');return payload;}
+  async function request(path,options){const response=await ForgeApiResponse(adapter,path,{credentials:'include',headers:{'Content-Type':'application/json'},...options});const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error((typeof payload.error==='string'?payload.error:payload.error?.message)||(Array.isArray(payload.fields)&&payload.fields.length?payload.fields.map(f=>f.message||f.label).filter(Boolean).join('；'):'')||payload.message||'请求失败');return payload;}
   async function find(object,where){const filter=where?('&$filter='+encodeURIComponent(JSON.stringify(where))):'';return (await request('/data/'+object+'?$top=100'+filter)).records||[];}
   async function read(object,id){return (await request('/data/'+object+'/'+id)).record;}
   async function load(){try{if(!receiptId&&!requestedNotice){const [receipts,allReceiptLines,suppliers,orders,warehouses]=await Promise.all([find('forge_purchase_receipt'),find('forge_purchase_receipt_line'),find('forge_supplier'),find('forge_purchase_order'),find('forge_warehouse')]);setState(s=>({...s,loading:false,receipts,allReceiptLines,suppliers:Object.fromEntries(suppliers.map(x=>[x.id,x])),orders:Object.fromEntries(orders.map(x=>[x.id,x])),warehouses,error:''}));return;}let receipt=receiptId?await read('forge_purchase_receipt',receiptId):null,noticeId=requestedNotice||receipt?.notice_id;if(!noticeId)throw new Error('缺少到货通知');const notice=await read('forge_purchase_arrival_notice',noticeId);const [noticeLines,order,supplier,warehouses,receiptLines]=await Promise.all([find('forge_purchase_arrival_notice_line',{notice_id:noticeId}),read('forge_purchase_order',notice.order_id),read('forge_supplier',notice.supplier_id),find('forge_warehouse'),receipt?find('forge_purchase_receipt_line',{receipt_id:receipt.id}):Promise.resolve([])]);const orderLines=Object.fromEntries((await find('forge_purchase_order_line',{order_id:notice.order_id})).map(item=>[item.id,item]));if(!receipt){const defaultWarehouse=notice.warehouse_id||warehouses[0]?.id||'';setLines(noticeLines.map(item=>({notice_line_id:item.id,quantity:Math.max(0,Number(item.planned_quantity||0)-Number(item.arrived_quantity||0)),warehouse_id:defaultWarehouse,warehouse_location:'',external_sn:'',batch_number:'',remarks:''})));}else setLines(receiptLines.map(item=>({...item})));setState(s=>({...s,loading:false,notice,noticeLines,order,orderLines,receipt,receiptLines,supplier,warehouses,error:''}));}catch(error){setState(s=>({...s,loading:false,error:String(error.message||error)}));}}
@@ -39,20 +54,20 @@ function App(){
   if(!receiptId&&!requestedNotice)return <div className="forge-product forge-procurement forge-arrival">
 <style>{css}</style>
 <div className="body">
-<ForgeHero section="供应链 / 到货检验 / 到货登记" title="到货登记" description="登记到货物料，进入待检或免检流程。" icon="▤" tone="indigo" art="boxes" next={{label:"待检验库存",href:forgeBase+'/page/page_pending_inspection_workspace',title:"下一步操作 · 待检验库存"}}/><div className="fp-action-row"><button className="fp-button" disabled={!listRows.length} onClick={exportList}>导出</button><button className="fp-button" onClick={()=>setTaskOpen(true)}>导入/导出任务</button><ForgeListSettings/><button className="fp-icon-button" aria-label="刷新" title="刷新" onClick={load}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button><button className="fp-button primary" onClick={()=>window.location.href=forgeBase+'/page/page_purchase_arrival_notice'}>新建到货登记</button></div>
+<ForgeHero section="供应链 / 到货检验 / 到货登记" title="到货登记" description="登记到货物料，进入待检或免检流程。" icon="▤" tone="indigo" art="boxes" next={{label:"待检验库存",href:'/_console/apps/com.inoforge.forge.supply-chain/page_pending_inspection_workspace',title:"下一步操作 · 待检验库存",to:'/apps/com.inoforge.forge.supply-chain/page_pending_inspection_workspace'}}/><div className="fp-action-row"><button className="fp-button" disabled={!listRows.length} onClick={exportList}>导出</button><button className="fp-button" onClick={()=>setTaskOpen(true)}>导入/导出任务</button><ForgeListSettings/><button className="fp-icon-button" aria-label="刷新" title="刷新" onClick={load}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button><button className="fp-button primary" onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_purchase_arrival_notice')}>新建到货登记</button></div>
 {state.error&&<div className="notice">{state.error}</div>}<div className="card">
-<div className="actions" style={{marginBottom:12}}>
+<div className="actions arrival-list-filterbar" style={{marginBottom:12}}>
 <button className={'btn '+(listMode==='orders'?'primary':'')} onClick={()=>setListMode('orders')}>订单明细</button>
 <button className={'btn '+(listMode==='lines'?'primary':'')} onClick={()=>setListMode('lines')}>物料明细</button>
-<input aria-label="搜索到货登记" placeholder="搜索到货单号/供应商/客户/退货单号..." value={listQuery} onChange={e=>{setListQuery(e.target.value);setPage(1)}}/>
-<ForgeSelectControl aria-label="到货登记状态" value={listStatus} onChange={e=>{setListStatus(e.target.value);setPage(1)}}>
+<input className="fp-input arrival-list-search" aria-label="搜索到货登记" placeholder="搜索到货单号/供应商/客户/退货单号..." value={listQuery} onChange={e=>{setListQuery(e.target.value);setPage(1)}}/>
+<ForgeSelectControl className="arrival-list-select" aria-label="到货登记状态" value={listStatus} onChange={e=>{setListStatus(e.target.value);setPage(1)}}>
 <option value="">全部状态</option>{Object.entries(statusText).map(([v,l])=>
 <option key={v} value={v}>{l}</option>)}</ForgeSelectControl>
-<ForgeSelectControl aria-label="到货登记类型" value={listType} onChange={e=>{setListType(e.target.value);setPage(1)}}>
+<ForgeSelectControl className="arrival-list-select" aria-label="到货登记类型" value={listType} onChange={e=>{setListType(e.target.value);setPage(1)}}>
 <option value="">全部类型</option>{Object.entries(arrivalTypeText).map(([v,l])=>
 <option key={v} value={v}>{l}</option>)}</ForgeSelectControl>
 </div>
-<div className="table">{listMode==='orders'?<table>
+<div className="table arrival-list-table-wrap">{listMode==='orders'?<table className="arrival-orders-table">
 <thead>
 <tr>
 <th>到货单号</th>
@@ -84,9 +99,9 @@ function App(){
 <button className="fp-icon-button row-action" aria-label="查看" title="查看" onClick={()=>window.location.href=window.location.pathname+'?id='+encodeURIComponent(row.id)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg></button>
 </td>
 </tr>)}{!visibleRows.length&&<tr>
-<td colSpan="10">暂无到货登记记录</td>
+<td colSpan="10" className="arrival-list-empty">暂无到货登记记录</td>
 </tr>}</tbody>
-</table>:<table>
+</table>:<table className="arrival-lines-table">
 <thead>
 <tr>
 <th>到货单号</th>
@@ -114,12 +129,12 @@ function App(){
 <span className="pill">{statusText[line.status]||line.status}</span>
 </td>
 </tr>)}{!visibleLines.length&&<tr>
-<td colSpan="9">暂无物料明细</td>
+<td colSpan="9" className="arrival-list-empty">暂无物料明细</td>
 </tr>}</tbody>
 </table>}</div>
-<div className="actions" style={{justifyContent:'space-between',marginTop:12}}>
+<div className="actions arrival-list-pagination" style={{justifyContent:'space-between',marginTop:12}}>
 <span>共 {listRows.length} 条记录 · 每页 20 条</span>
-<span className="actions">
+<span className="actions arrival-list-pagination-actions">
 <button className="btn" disabled={safePage<=1} onClick={()=>setPage(safePage-1)}>上一页</button>
 <span>{safePage} / {pageCount}</span>
 <button className="btn" disabled={safePage>=pageCount} onClick={()=>setPage(safePage+1)}>下一页</button>
@@ -138,7 +153,7 @@ function App(){
 </div>;
   if(state.receipt){return <div className="forge-product forge-procurement forge-arrival">
 <style>{css}</style>
-<div className="header-shell"><ForgePageHeader badge="供" section="供应链 / 到货登记" title={state.receipt.code} description={'来源 '+state.order.code+' · '+state.supplier.name+' · '+(statusText[state.receipt.status]||state.receipt.status)} actions={<><button className="fp-button" onClick={()=>window.location.href=window.location.pathname}>返回列表</button>{state.receipt.status==='draft'&&<button className="fp-button primary" disabled={busy} onClick={submitDraft}>提交待检</button>}{['pending_inspection','inspection_in_progress','inspected','stocked'].includes(state.receipt.status)&&<button className="fp-button primary" onClick={()=>window.location.href=forgeBase+'/page/page_pending_inspection_workspace'}>查看待检库存</button>}</>}/></div>
+<div className="header-shell"><ForgePageHeader badge="供" section="供应链 / 到货登记" title={state.receipt.code} description={'来源 '+state.order.code+' · '+state.supplier.name+' · '+(statusText[state.receipt.status]||state.receipt.status)} actions={<><button className="fp-button" onClick={()=>window.location.href=window.location.pathname}>返回列表</button>{state.receipt.status==='draft'&&<button className="fp-button primary" disabled={busy} onClick={submitDraft}>提交待检</button>}{['pending_inspection','inspection_in_progress','inspected','stocked'].includes(state.receipt.status)&&<button className="fp-button primary" onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_pending_inspection_workspace')}>查看待检库存</button>}</>}/></div>
 <div className="flow">
 <span>到货登记</span>
 <span className="active">待检库存</span>
@@ -225,7 +240,7 @@ function App(){
 </ForgeDialog>}</div>}
   return <div className="forge-product forge-procurement forge-arrival">
 <style>{css}</style>
-<div className="header-shell"><ForgePageHeader badge="供" section="供应链 / 到货登记" title="新建采购到货登记" description="到货单号将在保存时自动生成。" actions={<><button className="fp-button" disabled={busy} onClick={()=>window.location.href=forgeBase+'/page/page_purchase_order_workspace?id='+encodeURIComponent(state.order.id)}>返回采购订单</button><button className="fp-button" disabled={busy} onClick={()=>save('draft')}>保存草稿</button><button className="fp-button primary" disabled={busy} onClick={()=>save('submit')}>提交待检</button></>}/></div>
+<div className="header-shell"><ForgePageHeader badge="供" section="供应链 / 到货登记" title="新建采购到货登记" description="到货单号将在保存时自动生成。" actions={<><button className="fp-button" disabled={busy} onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_purchase_order_workspace?id='+encodeURIComponent(state.order.id))}>返回采购订单</button><button className="fp-button" disabled={busy} onClick={()=>save('draft')}>保存草稿</button><button className="fp-button primary" disabled={busy} onClick={()=>save('submit')}>提交待检</button></>}/></div>
 <div className="flow">
 <span className="active">到货登记</span>
 <span>待检库存</span>

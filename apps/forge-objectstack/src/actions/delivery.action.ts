@@ -4,6 +4,7 @@ const locations = ['record_header', 'record_more'] as const;
 
 export const ProjectCreateCommissioning = defineAction({
   name: 'project_create_commissioning', label: '新建集成调试', objectName: 'forge_project', icon: 'wrench', locations: [...locations], order: 70,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'in_progress'`, refreshAfter: true, description: '从已完工组装单建立逐项调试记录。', successMessage: '集成调试记录已建立',
   params: [
     { field: 'assembly_id', objectOverride: 'forge_commissioning_record', required: true }, { field: 'equipment_code', objectOverride: 'forge_commissioning_record', required: true },
@@ -11,7 +12,7 @@ export const ProjectCreateCommissioning = defineAction({
     { field: 'leader_id', objectOverride: 'forge_commissioning_record', required: true },
     { name: 'checks_json', label: '调试检查项', type: 'textarea', required: true }, { field: 'remarks', objectOverride: 'forge_commissioning_record' },
   ],
-  onSuccess: { navigate: '/_console/apps/forge/page/page_delivery_acceptance_workspace?commissioning=${result.id}' },
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.project/page_delivery_acceptance_workspace?commissioning=${result.id}' },
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const projectId=ctx.recordId||(ctx.record&&ctx.record.id),project=ctx.record,actor=ctx.session&&ctx.session.userId;if(ctx.recordLoadDenied===true||!projectId||!project)throw new Error('当前项目不存在或不可访问');if(!actor)throw new Error('无法识别当前操作人');if(project.status!=='in_progress')throw new Error('仅进行中项目可以新建集成调试');if(!ctx.input.assembly_id||!ctx.input.equipment_code||!String(ctx.input.equipment_code).trim()||!ctx.input.site||!String(ctx.input.site).trim()||!ctx.input.commissioning_on||!ctx.input.leader_id)throw new Error('组装单、设备编号、调试地点、日期和负责人均为必填');const assembly=await ctx.api.object('forge_assembly_order').findOne({where:{id:ctx.input.assembly_id}});if(!assembly||assembly.status!=='completed'||Number(assembly.qualified_quantity||0)<=0)throw new Error('调试必须引用已有合格产出的已完工组装单');let inputs;try{inputs=typeof ctx.input.checks_json==='string'?JSON.parse(ctx.input.checks_json):ctx.input.checks_json;}catch{throw new Error('调试检查项格式错误');}if(!Array.isArray(inputs)||inputs.length<3)throw new Error('至少需要三条调试检查项');const categories=new Set(['power','io','network','sequence','performance']),prepared=[];for(const input of inputs){const name=String(input.name||'').trim(),criterion=String(input.criterion||'').trim(),result=input.result||'pending',observation=String(input.observation||'').trim(),evidence=String(input.evidence_ref||'').trim();if(!name||!criterion||!categories.has(input.category)||!['pending','passed','failed'].includes(result))throw new Error('调试检查项名称、类别、标准或结果无效');if(result!=='pending'&&!evidence)throw new Error(name+' 已检查但缺少证据编号或文件引用');if(result==='failed'&&!observation)throw new Error(name+' 未通过时必须记录实测问题');prepared.push({name,category:input.category,criterion,result,observation,evidence});}
 const all=await ctx.api.object('forge_commissioning_record').find({where:{}}),year=String(ctx.input.commissioning_on).slice(0,4),code='COM-'+year+'-'+String(all.length+1).padStart(4,'0'),created=await ctx.api.object('forge_commissioning_record').insert({name:code+' '+project.name,code,project_id:projectId,assembly_id:assembly.id,equipment_code:String(ctx.input.equipment_code).trim(),site:String(ctx.input.site).trim(),commissioning_on:ctx.input.commissioning_on,leader_id:ctx.input.leader_id,status:'pending_review',line_count:prepared.length,passed_count:0,failed_count:0,conclusion:null,confirmed_at:null,remarks:ctx.input.remarks||null}),recordId=typeof created==='string'?created:created&&(created.id||(created.record&&created.record.id));if(!recordId)throw new Error('调试记录创建后未返回记录ID');let index=1;for(const item of prepared)await ctx.api.object('forge_commissioning_check').insert({name:item.name,check_key:code+'-'+String(index++).padStart(3,'0'),commissioning_id:recordId,category:item.category,criterion:item.criterion,result:item.result,observation:item.observation||null,evidence_ref:item.evidence||null,checked_by:item.result==='pending'?null:actor,checked_at:item.result==='pending'?null:new Date().toISOString(),remarks:null});return{id:recordId,code,status:'pending_review',line_count:prepared.length};
@@ -20,6 +21,7 @@ const all=await ctx.api.object('forge_commissioning_record').find({where:{}}),ye
 
 export const CommissioningReview = defineAction({
   name: 'commissioning_review', label: '确认调试结果', objectName: 'forge_commissioning_record', icon: 'badge-check', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'pending_review' || record.status == 'failed'`, refreshAfter: true, description: '复核每项结果；存在未通过项时保留为未通过，全部通过后才进入交付准备。', successMessage: '调试结果已确认',
   params: [{ name: 'results_json', label: '复核结果', type: 'textarea', required: true }, { name: 'conclusion', label: '调试结论', type: 'textarea', required: true }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
@@ -29,13 +31,14 @@ const id=ctx.recordId||(ctx.record&&ctx.record.id),record=ctx.record,actor=ctx.s
 
 export const ProjectCreateDeliveryPackage = defineAction({
   name: 'project_create_delivery_package', label: '新建交付包', objectName: 'forge_project', icon: 'package-check', locations: [...locations], order: 71,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'in_progress'`, refreshAfter: true, description: '按已通过调试记录整理本次客户交付资料。', successMessage: '交付包已建立',
   params: [
     { field: 'commissioning_id', objectOverride: 'forge_delivery_package', required: true }, { field: 'revision', objectOverride: 'forge_delivery_package', required: true },
     { field: 'prepared_on', objectOverride: 'forge_delivery_package', required: true }, { field: 'prepared_by', objectOverride: 'forge_delivery_package', required: true },
     { name: 'items_json', label: '交付资料项', type: 'textarea', required: true }, { field: 'remarks', objectOverride: 'forge_delivery_package' },
   ],
-  onSuccess: { navigate: '/_console/apps/forge/page/page_delivery_acceptance_workspace?package=${result.id}' },
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.project/page_delivery_acceptance_workspace?package=${result.id}' },
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const projectId=ctx.recordId||(ctx.record&&ctx.record.id),project=ctx.record;if(ctx.recordLoadDenied===true||!projectId||!project)throw new Error('当前项目不存在或不可访问');if(project.status!=='in_progress')throw new Error('仅进行中项目可以建立交付包');const commissioning=await ctx.api.object('forge_commissioning_record').findOne({where:{id:ctx.input.commissioning_id}});if(!commissioning||commissioning.project_id!==projectId||commissioning.status!=='passed')throw new Error('交付包必须引用本项目已通过的调试记录');if(!ctx.input.revision||!String(ctx.input.revision).trim()||!ctx.input.prepared_on||!ctx.input.prepared_by)throw new Error('交付版本、编制日期和编制人均为必填');let inputs;try{inputs=typeof ctx.input.items_json==='string'?JSON.parse(ctx.input.items_json):ctx.input.items_json;}catch{throw new Error('交付资料项格式错误');}if(!Array.isArray(inputs)||inputs.length<4)throw new Error('至少需要四项交付资料');const types=new Set(['drawing','test_report','manual','equipment_list','training','other']),used=new Set(),prepared=[];for(const input of inputs){const name=String(input.name||'').trim(),type=input.item_type,version=String(input.version||'').trim(),evidence=String(input.evidence_ref||'').trim();if(!name||!types.has(type)||used.has(type))throw new Error('交付资料名称、类型无效或类型重复');used.add(type);prepared.push({name,itemType:type,required:input.required!==false,version,evidence,status:version&&evidence?'ready':'missing'});}if(!prepared.some(x=>x.required))throw new Error('交付包至少需要一项必交资料');const all=await ctx.api.object('forge_delivery_package').find({where:{}}),year=String(ctx.input.prepared_on).slice(0,4),code='DP-'+year+'-'+String(all.length+1).padStart(4,'0'),ready=prepared.filter(x=>x.status==='ready').length,created=await ctx.api.object('forge_delivery_package').insert({name:code+' '+project.name+' '+String(ctx.input.revision).trim(),code,project_id:projectId,commissioning_id:commissioning.id,revision:String(ctx.input.revision).trim(),prepared_on:ctx.input.prepared_on,prepared_by:ctx.input.prepared_by,status:'draft',line_count:prepared.length,ready_count:ready,missing_count:prepared.length-ready,submitted_at:null,accepted_at:null,remarks:ctx.input.remarks||null}),packageId=typeof created==='string'?created:created&&(created.id||(created.record&&created.record.id));if(!packageId)throw new Error('交付包创建后未返回记录ID');let index=1;for(const item of prepared)await ctx.api.object('forge_delivery_package_item').insert({name:item.name,item_key:code+'-'+String(index++).padStart(3,'0'),package_id:packageId,item_type:item.itemType,required:item.required,version:item.version||null,evidence_ref:item.evidence||null,status:item.status,remarks:null});return{id:packageId,code,status:'draft',line_count:prepared.length,ready_count:ready,missing_count:prepared.length-ready};
 ` },
@@ -43,6 +46,7 @@ const projectId=ctx.recordId||(ctx.record&&ctx.record.id),project=ctx.record;if(
 
 export const DeliveryItemSetEvidence = defineAction({
   name: 'delivery_item_set_evidence', label: '登记交付资料', objectName: 'forge_delivery_package_item', icon: 'file-check', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'missing'`, refreshAfter: true, successMessage: '交付资料已登记',
   params: [{ field: 'version', objectOverride: 'forge_delivery_package_item', required: true }, { field: 'evidence_ref', objectOverride: 'forge_delivery_package_item', required: true }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
@@ -52,6 +56,7 @@ const id=ctx.recordId||(ctx.record&&ctx.record.id),item=ctx.record;if(ctx.record
 
 export const DeliveryPackageSubmit = defineAction({
   name: 'delivery_package_submit', label: '提交客户验收', objectName: 'forge_delivery_package', icon: 'send', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'draft'`, refreshAfter: true, successMessage: '交付包已提交客户验收',
   params: [{ name: 'submission_note', label: '提交说明', type: 'textarea', required: true }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
@@ -61,6 +66,7 @@ const id=ctx.recordId||(ctx.record&&ctx.record.id),pack=ctx.record;if(ctx.record
 
 export const ProjectCreateCustomerAcceptance = defineAction({
   name: 'project_create_customer_acceptance', label: '新建客户验收', objectName: 'forge_project', icon: 'clipboard-check', locations: [...locations], order: 72,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'in_progress'`, refreshAfter: true, description: '从已齐交付包建立逐项客户验收记录。', successMessage: '客户验收单已建立',
   params: [
     { field: 'package_id', objectOverride: 'forge_customer_acceptance', required: true }, { field: 'acceptance_method', objectOverride: 'forge_customer_acceptance', required: true },
@@ -68,7 +74,7 @@ export const ProjectCreateCustomerAcceptance = defineAction({
     { field: 'internal_owner_id', objectOverride: 'forge_customer_acceptance', required: true }, { name: 'items_json', label: '验收项', type: 'textarea', required: true },
     { field: 'customer_comment', objectOverride: 'forge_customer_acceptance' }, { field: 'remarks', objectOverride: 'forge_customer_acceptance' },
   ],
-  onSuccess: { navigate: '/_console/apps/forge/page/page_delivery_acceptance_workspace?acceptance=${result.id}' },
+  onSuccess: { navigate: '/_console/apps/com.inoforge.forge.project/page_delivery_acceptance_workspace?acceptance=${result.id}' },
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
 const projectId=ctx.recordId||(ctx.record&&ctx.record.id),project=ctx.record;if(ctx.recordLoadDenied===true||!projectId||!project)throw new Error('当前项目不存在或不可访问');if(project.status!=='in_progress')throw new Error('仅进行中项目可以发起客户验收');const pack=await ctx.api.object('forge_delivery_package').findOne({where:{id:ctx.input.package_id}});if(!pack||pack.project_id!==projectId||pack.status!=='ready')throw new Error('客户验收必须引用本项目已齐并提交的交付包');if(!ctx.input.acceptance_method||!ctx.input.acceptance_on||!ctx.input.customer_representative||!String(ctx.input.customer_representative).trim()||!ctx.input.internal_owner_id)throw new Error('验收方式、日期、客户代表和内部负责人均为必填');let inputs;try{inputs=typeof ctx.input.items_json==='string'?JSON.parse(ctx.input.items_json):ctx.input.items_json;}catch{throw new Error('验收项格式错误');}if(!Array.isArray(inputs)||inputs.length<3)throw new Error('至少需要三项客户验收内容');const categories=new Set(['function','safety','document','training','site']),prepared=[];for(const input of inputs){const name=String(input.name||'').trim(),criterion=String(input.criterion||'').trim(),result=input.result||'pending',observation=String(input.observation||'').trim(),evidence=String(input.evidence_ref||'').trim();if(!name||!criterion||!categories.has(input.category)||!['passed','failed'].includes(result))throw new Error('每项验收内容都必须填写名称、类别、标准和明确结果');if(!evidence)throw new Error(name+' 缺少证据编号或文件引用');if(result==='failed'&&!observation)throw new Error(name+' 未通过时必须记录问题');prepared.push({name,category:input.category,criterion,result,observation,evidence});}const all=await ctx.api.object('forge_customer_acceptance').find({where:{}}),year=String(ctx.input.acceptance_on).slice(0,4),code='ACC-'+year+'-'+String(all.length+1).padStart(4,'0'),created=await ctx.api.object('forge_customer_acceptance').insert({name:code+' '+project.name,code,project_id:projectId,package_id:pack.id,acceptance_method:ctx.input.acceptance_method,acceptance_on:ctx.input.acceptance_on,customer_representative:String(ctx.input.customer_representative).trim(),internal_owner_id:ctx.input.internal_owner_id,status:'pending_review',line_count:prepared.length,passed_count:0,failed_count:0,open_rectification_count:0,conclusion:null,customer_comment:ctx.input.customer_comment||null,signed_evidence_ref:null,submitted_at:null,accepted_at:null,remarks:ctx.input.remarks||null}),acceptanceId=typeof created==='string'?created:created&&(created.id||(created.record&&created.record.id));if(!acceptanceId)throw new Error('验收单创建后未返回记录ID');let index=1;for(const item of prepared)await ctx.api.object('forge_customer_acceptance_item').insert({name:item.name,item_key:code+'-'+String(index++).padStart(3,'0'),acceptance_id:acceptanceId,category:item.category,criterion:item.criterion,result:item.result,observation:item.observation||null,evidence_ref:item.evidence,verified_at:null,remarks:null});return{id:acceptanceId,code,status:'pending_review',line_count:prepared.length};
 ` },
@@ -76,6 +82,7 @@ const projectId=ctx.recordId||(ctx.record&&ctx.record.id),project=ctx.record;if(
 
 export const CustomerAcceptanceSubmit = defineAction({
   name: 'customer_acceptance_submit', label: '提交验收结论', objectName: 'forge_customer_acceptance', icon: 'send', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'pending_review'`, refreshAfter: true, successMessage: '验收结论已提交',
   params: [{ name: 'conclusion', label: '验收结论', type: 'textarea', required: true }, { name: 'rectification_due_on', label: '整改期限', type: 'date' }, { name: 'rectification_owner_id', label: '整改负责人', type: 'user' }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
@@ -85,6 +92,7 @@ const id=ctx.recordId||(ctx.record&&ctx.record.id),acceptance=ctx.record;if(ctx.
 
 export const AcceptanceRectificationClose = defineAction({
   name: 'acceptance_rectification_close', label: '登记整改完成', objectName: 'forge_acceptance_rectification', icon: 'circle-check', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.status == 'open'`, refreshAfter: true, successMessage: '整改已关闭，等待复验',
   params: [{ field: 'corrective_action', objectOverride: 'forge_acceptance_rectification', required: true }, { field: 'closure_evidence_ref', objectOverride: 'forge_acceptance_rectification', required: true }, { field: 'verified_by', objectOverride: 'forge_acceptance_rectification', required: true }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
@@ -94,6 +102,7 @@ const id=ctx.recordId||(ctx.record&&ctx.record.id),item=ctx.record;if(ctx.record
 
 export const CustomerAcceptanceItemRetest = defineAction({
   name: 'customer_acceptance_item_retest', label: '登记复验通过', objectName: 'forge_customer_acceptance_item', icon: 'refresh-cw', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_delivery_operator'],
   visible: `record.result == 'failed'`, refreshAfter: true, successMessage: '复验结果已登记',
   params: [{ name: 'observation', label: '复验记录', type: 'textarea', required: true }, { name: 'evidence_ref', label: '复验证据编号/文件引用', type: 'text', required: true }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
@@ -103,6 +112,7 @@ const id=ctx.recordId||(ctx.record&&ctx.record.id),item=ctx.record;if(ctx.record
 
 export const CustomerAcceptanceConfirm = defineAction({
   name: 'customer_acceptance_confirm', label: '客户确认验收', objectName: 'forge_customer_acceptance', icon: 'badge-check', locations: [...locations], order: 10,
+  requiredPermissions: ['forge_project_manager'],
   visible: `record.status == 'awaiting_confirmation'`, refreshAfter: true, successMessage: '客户验收已确认，项目进入已完工',
   params: [{ field: 'signed_evidence_ref', objectOverride: 'forge_customer_acceptance', required: true }, { field: 'customer_comment', objectOverride: 'forge_customer_acceptance', required: true }],
   body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
