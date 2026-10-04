@@ -138,6 +138,7 @@ test('contract list preserves masked finance fields as unknown, true zero as zer
   const maskedText = renderedText(rows.find(row => renderedText(row).includes('SC-MASKED')));
   const zeroText = renderedText(rows.find(row => renderedText(row).includes('SC-ZERO')));
   const zeroTotalText = renderedText(rows.find(row => renderedText(row).includes('SC-ZERO-TOTAL')));
+  const nearText = renderedText(rows.find(row => renderedText(row).includes('SC-NEAR')));
   assert.ok(maskedText.includes('—'), 'masked total and dependent progress render as unknown');
   assert.doesNotMatch(maskedText, /¥\s*0\.00|0%/, 'masked finance fields never become zero money or zero progress');
   assert.match(maskedText, /2026-10-04 15:28/, 'UTC timestamp is rendered through the shared Shanghai local-date formatter');
@@ -145,6 +146,8 @@ test('contract list preserves masked finance fields as unknown, true zero as zer
   assert.match(zeroText, /0%/, 'an explicit zero amount with a readable positive total remains 0%');
   assert.match(zeroTotalText, /¥\s*0\.00/, 'an explicit zero denominator remains a known zero amount');
   assert.match(zeroTotalText, /0%/, 'an explicit zero numerator and denominator retain the previous zero-progress presentation');
+  assert.match(nearText, /99\.6%/, 'an amount below the total must not render a full percentage');
+  assert.doesNotMatch(nearText, /100%/, 'near-full progress never displays a full bar or label');
   let invoiceFilter;
   walk(tree, node => { if (node.type?.name === 'ForgeSelect' && node.props?.label === '开票') invoiceFilter = node; });
   assert.ok(invoiceFilter, 'invoice filter is rendered');
@@ -158,7 +161,7 @@ test('contract list preserves masked finance fields as unknown, true zero as zer
   tree = harness.render();
   rows = [];
   walk(tree, node => { if (node.type === 'tr') rows.push(node); });
-  assert.equal(rows.some(row => renderedText(row).includes('SC-NEAR')), false, 'rounded 100% does not classify an amount below the total as complete');
+  assert.equal(rows.some(row => renderedText(row).includes('SC-NEAR')), false, 'an amount below the total is not classified as complete');
   invoiceFilter.props.onChange('');
   tree = harness.render();
 
@@ -175,8 +178,11 @@ test('contract list preserves masked finance fields as unknown, true zero as zer
   const csv = harness.downloads[0].text;
   const maskedCsvRow = csv.split('\n').find(line => line.includes('"SC-MASKED"'));
   const zeroCsvRow = csv.split('\n').find(line => line.includes('"SC-ZERO"'));
+  const nearCsvRow = csv.split('\n').find(line => line.includes('"SC-NEAR"'));
   assert.match(maskedCsvRow, /"—","—","—","—"/u, 'execution CSV preserves unknown amount and progress values');
   assert.doesNotMatch(maskedCsvRow, /0%|¥\s*0\.00/, 'execution CSV does not invent a zero progress or amount');
   assert.match(zeroCsvRow, /"100","0%","0%","0%"/u, 'execution CSV preserves known zero amounts and progress');
+  assert.match(nearCsvRow, /99\.6%/u, 'execution CSV uses the same incomplete progress as the page');
+  assert.doesNotMatch(nearCsvRow, /100%/u, 'execution CSV never rounds incomplete progress to full');
   assert.ok(harness.calls.includes('/data/forge_sales_contract'));
 });
