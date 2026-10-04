@@ -3,6 +3,7 @@ import { AutomationServicePlugin } from '@objectstack/service-automation';
 import { MessagingServicePlugin } from '@objectstack/service-messaging';
 import { ApprovalsServicePlugin } from '@objectstack/plugin-approvals';
 import { SharingServicePlugin } from '@objectstack/plugin-sharing';
+import { ServiceFileReferenceTransactionBridgePlugin } from './src/plugins/service-file-reference-transaction-bridge.plugin.js';
 import { MCPServerPlugin } from '@objectstack/mcp';
 import { TaskDelegationPlugin } from './src/plugins/task-delegation.plugin.js';
 import { SalesOrderBusinessPlugin } from './src/plugins/sales-order-business.plugin.js';
@@ -33,6 +34,7 @@ export default defineStack({
     new MessagingServicePlugin(),
     new ApprovalsServicePlugin({ recordReaderVisibleObjects: ['forge_sales_contract', 'forge_sales_order'] }),
     new SharingServicePlugin(),
+    new ServiceFileReferenceTransactionBridgePlugin(),
     new ApprovalResubmitGuardPlugin({
       requiredMaterialObjects: ['forge_sales_contract'],
       verifierServiceName: 'forge.contract.revision.material',
