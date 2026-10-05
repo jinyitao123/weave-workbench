@@ -271,6 +271,7 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   handle('enterprise:sign-out', () => { services.enterpriseBridge?.invalidateAccount(); return services.enterprise.signOut() })
   handle('enterprise:team-workspace', (_event, command) => services.enterprise.teamWorkspace(requireRecord(command, 'command') as unknown as import('../../src/types/team-workspace').TeamWorkspaceCommand))
   handle('enterprise:update-team-development', (_event, runtimeId, input) => services.updateTeamDevelopment(requireString(runtimeId, 'runtimeId', { min: 1, max: 256 }), requireRecord(input, 'input') as unknown as TeamDevelopmentContextInput))
+  handle('enterprise:invalidate-team-development-turn', (_event, runtimeId) => services.teamDevelopmentBridge?.invalidateEmployeeTurn(requireString(runtimeId, 'runtimeId', { min: 1, max: 256 })))
   handle('enterprise:get-team-development-proposal', (_event, runtimeId) => services.getTeamDevelopmentProposal(requireString(runtimeId, 'runtimeId', { min: 1, max: 256 })))
   handle('enterprise:get-team-development-state', (_event, runtimeId) => services.getTeamDevelopmentState(requireString(runtimeId, 'runtimeId', { min: 1, max: 256 })))
   handle('enterprise:get-team-development-state-for-session', (_event, sessionFile) => services.getTeamDevelopmentStateForSession(requireString(sessionFile, 'sessionFile', { min: 1, max: 4096 })))

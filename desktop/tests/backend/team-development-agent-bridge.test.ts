@@ -344,7 +344,10 @@ it('freezes only workflow actions and keeps each Pi simulation selection in its 
   const unrelatedAction = { ...action, id: 'forge:action:crm_quote.create', name: '创建报价', resourceType: 'crm_quote', actionName: 'create', objectName: 'crm_quote' }
   worker.configuration.businessCapabilityIds = [action.id]
   unrelated.configuration.businessCapabilityIds = [unrelatedAction.id]
-  const document: TeamDefinition = { name: '线索团队', objective: '转化线索', members: [lead, worker, unrelated], workflows: [{ id: 'flow', name: '转化流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
+  const document: TeamDefinition = { name: '线索团队', objective: '转化线索', members: [lead, worker, unrelated], workflows: [
+    { id: 'flow', name: '转化流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) },
+    { id: 'other-flow', name: '其他流程', description: '', trigger_config: {}, graph_definition: initialGraph(unrelated) },
+  ] }
   let remote = workspace(document, 6)
   let activeAccount = 'developer-1'
   const calls: TeamWorkspaceCommand[] = []
@@ -396,10 +399,16 @@ it('freezes only workflow actions and keeps each Pi simulation selection in its 
   expect(selectedRequest.requestId).not.toBe(defaultScope[0]!.requestId)
   expect(selectedRequest.businessActions).toMatchObject([{ id: action.id, simulationAuthorized: true }])
   catalog.capabilities[0]!.description = '目录刚刷新后的新说明'
+  await bridge.bindContext('runtime', { teamId: 'team', revision: 6, document, catalog }, activeAccount)
   expect((await call(selectedParams)).ok).toBe(true)
   const retry = calls.filter((command) => command.action === 'trial').at(-1)!
   expect(retry.requestId).toBe(selectedRequest.requestId)
   expect(retry.businessActions).toEqual(selectedRequest.businessActions)
+
+  const otherWorkflow = await call({ workflow_name: '其他流程', input, simulation_actions: ['创建报价'] })
+  expect(otherWorkflow.ok).toBe(false)
+  expect(otherWorkflow.error).toContain('已绑定其他团队、草稿修订或流程')
+  expect(calls.filter((command) => command.action === 'trial')).toHaveLength(4)
 
   const invalid = await call({ workflow_name: '转化流程', input, simulation_actions: ['创建报价'] })
   expect(invalid.ok).toBe(false)
@@ -461,6 +470,115 @@ it('does not let a user turn arriving after a Pi trial call retroactively author
   expect(result.ok).toBe(false)
   expect(result.error).toContain('当前账号和 Pi 会话中的员工请求')
   expect(calls.filter((command) => command.action === 'trial')).toHaveLength(0)
+})
+
+it('invalidates the Pi simulation source when the UI changes team, revision, or an unsaved workflow document', async () => {
+  const worker = newMember('deepseek-flash')
+  worker.configuration.displayName = '审核员'
+  const action = { id: 'forge:action:contracts.submit', name: '提交合同', description: '提交合同版本', effect: 'write' as const, executionMode: 'team_delegable' as const, resourceType: 'contracts', requiresEmployeeIntent: true, status: 'available' as const, actionName: 'Submit', objectName: 'contracts' }
+  worker.configuration.businessCapabilityIds = [action.id]
+  const document: TeamDefinition = { name: '合同团队', objective: '审核合同', members: [worker], workflows: [{ id: 'flow', name: '合同流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
+  const remote = workspace(document, 6)
+  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [action] }
+  const calls: TeamWorkspaceCommand[] = []
+  bridge = new TeamDevelopmentAgentBridge({
+    accountKey: async () => 'developer-1', developer: async () => ({ accountId: 'developer-1' }),
+    teams: async () => [{ id: 'team', name: document.name }, { id: 'other-team', name: '其他团队' }],
+    team: async () => structuredClone(remote), catalog: async () => catalog, extensionPath: '/app/team-development.ts',
+    workspace: async (command) => { calls.push(command); return command.action === 'trial' ? { request_id: command.requestId, run_id: 'run-1' } : {} },
+  })
+  await bridge.start()
+  const env = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
+  bridge.bindRuntime(env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
+  const originalContext = { teamId: 'team', revision: 6, document, catalog }
+  await bridge.bindContext('runtime', originalContext, 'developer-1')
+  const call = async () => {
+    const response = await fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method: 'trial', params: { workflow_name: '合同流程', input: '核对当前合同', simulation_actions: ['提交合同'] } }) })
+    return response.json() as Promise<{ ok: boolean; error?: string }>
+  }
+  const capture = async (text: string) => {
+    bridge!.beginEmployeeCommand('runtime', 'prompt')
+    await bridge!.captureTrustedEmployeeCommand('runtime', { type: 'prompt', message: text }, { text, materials: [] })
+  }
+  const changedDocument = structuredClone(document)
+  changedDocument.objective = '调整未保存的审核目标'
+  const changedWorkflow = structuredClone(document)
+  changedWorkflow.workflows[0]!.name = '改过的合同流程'
+  for (const [label, changed] of [
+    ['team', { ...originalContext, teamId: 'other-team' }],
+    ['revision', { ...originalContext, revision: 7 }],
+    ['unsaved document', { ...originalContext, document: changedDocument }],
+    ['workflow', { ...originalContext, document: changedWorkflow }],
+  ] as const) {
+    await capture(`切换上下文测试 ${label}`)
+    expect((await call()).ok, label).toBe(true)
+    const beforeContextChange = calls.filter((command) => command.action === 'trial').length
+    await bridge.bindContext('runtime', changed, 'developer-1')
+    await bridge.bindContext('runtime', originalContext, 'developer-1')
+    const denied = await call()
+    expect(denied.ok, label).toBe(false)
+    expect(denied.error, label).toContain('当前账号和 Pi 会话中的员工请求')
+    expect(calls.filter((command) => command.action === 'trial')).toHaveLength(beforeContextChange)
+  }
+  expect(calls.filter((command) => command.action === 'trial')).toHaveLength(4)
+})
+
+it('opens the first Pi team and rebinds the same user turn through a controlled save before trial', async () => {
+  const worker = newMember('deepseek-flash')
+  worker.configuration.displayName = '审核员'
+  worker.configuration.businessCapabilityIds = ['forge:action:contracts.submit']
+  const action = { id: 'forge:action:contracts.submit', name: '提交合同', description: '提交合同版本', effect: 'write' as const, executionMode: 'team_delegable' as const, resourceType: 'contracts', requiresEmployeeIntent: true, status: 'available' as const, actionName: 'Submit', objectName: 'contracts' }
+  const document: TeamDefinition = { name: '合同团队', objective: '审核合同', members: [worker], workflows: [{ id: 'flow', name: '合同流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
+  let remote = workspace(document, 6)
+  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [action] }
+  const calls: TeamWorkspaceCommand[] = []
+  bridge = new TeamDevelopmentAgentBridge({
+    accountKey: async () => 'developer-1', developer: async () => ({ accountId: 'developer-1' }),
+    teams: async () => [{ id: 'team', name: document.name }], team: async () => structuredClone(remote),
+    catalog: async () => catalog, extensionPath: '/app/team-development.ts',
+    workspace: async (command) => {
+      calls.push(structuredClone(command))
+      if (command.action === 'save') {
+        remote = { ...remote, revision: command.revision + 1, document: structuredClone(command.document) }
+        return structuredClone(remote)
+      }
+      if (command.action === 'trial') {
+        remote = { ...remote, trials: [...remote.trials, { request_id: command.requestId, run_id: `run-${remote.trials.length}`, revision: command.revision, workflow_id: command.workflowId, status: 'running', created_at: '' }] }
+        return { request_id: command.requestId, run_id: `run-${remote.trials.length - 1}` }
+      }
+      throw new Error(`unexpected action: ${command.action}`)
+    },
+  })
+  await bridge.start()
+  const env = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
+  bridge.bindRuntime(env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
+  const employeePrompt = '打开合同团队，先保存职责修改，再模拟提交合同流程'
+  bridge.beginEmployeeCommand('runtime', 'prompt')
+  await bridge.captureTrustedEmployeeCommand('runtime', { type: 'prompt', message: employeePrompt }, { text: employeePrompt, materials: [] })
+  const call = async (method: string, params: Record<string, unknown> = {}) => {
+    const response = await fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method, params }) })
+    return response.json() as Promise<{ ok: boolean; error?: string }>
+  }
+  expect((await call('list')).ok).toBe(true)
+  expect((await call('open', { team_name: document.name })).ok).toBe(true)
+  expect((await call('trial', { workflow_name: '合同流程', input: '首次打开后的隔离检查', simulation_actions: ['提交合同'] })).ok).toBe(true)
+  const openedTrial = calls.filter((command) => command.action === 'trial').at(-1)!
+  expect(openedTrial).toMatchObject({ revision: 6, businessActions: [{ id: action.id, simulationAuthorized: true }] })
+  const saved = await call('save', { operations: [{ kind: 'member', member: '审核员', duty: '逐项核验并提交' }] })
+  expect(saved.ok).toBe(true)
+  expect(remote.revision).toBe(7)
+  expect((await call('trial', { workflow_name: '合同流程', input: '保存后首轮隔离检查', simulation_actions: ['提交合同'] })).ok).toBe(true)
+  const afterFirstSave = calls.filter((command) => command.action === 'trial').at(-1)!
+  const savedAgain = await call('save', { operations: [{ kind: 'member', member: '审核员', duty: '再次核验后提交' }] })
+  expect(savedAgain.ok).toBe(true)
+  expect(remote.revision).toBe(8)
+  const afterSave = await call('trial', { workflow_name: '合同流程', input: '保存后隔离检查', simulation_actions: ['提交合同'] })
+  expect(afterSave.ok).toBe(true)
+  const trials = calls.filter((command) => command.action === 'trial')
+  expect(trials).toHaveLength(3)
+  expect(trials[0]).toMatchObject({ requestId: openedTrial.requestId, revision: 6 })
+  expect(trials[1]).toMatchObject({ requestId: afterFirstSave.requestId, revision: 7 })
+  expect(trials[2]).toMatchObject({ revision: 8, businessActions: [{ id: action.id, simulationAuthorized: true }] })
 })
 
 it('restores the original fixed action definition after an uncertain Pi trial response', async () => {

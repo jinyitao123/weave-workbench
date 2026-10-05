@@ -1337,6 +1337,7 @@ export interface PrimeWorkApi {
   enterprise: {
     teamWorkspace: import('./team-workspace').TeamWorkspaceBridge
     updateTeamDevelopment(runtimeId: string, input: import('./team-workspace').TeamDevelopmentContextInput): Promise<void>
+    invalidateTeamDevelopmentTurn(runtimeId: string): Promise<void>
     getTeamDevelopmentProposal(runtimeId: string): Promise<import('./team-workspace').TeamDevelopmentProposalResult | undefined>
     getTeamDevelopmentState(runtimeId: string): Promise<import('./team-workspace').TeamDevelopmentState>
     getTeamDevelopmentStateForSession(sessionFile: string): Promise<import('./team-workspace').TeamDevelopmentState>

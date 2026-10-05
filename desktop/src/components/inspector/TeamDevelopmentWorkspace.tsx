@@ -96,7 +96,7 @@ export function TeamDevelopmentWorkspace({ teamId, accountId, runtime, enterpris
   const step = flow?.graph_definition.nodes.find((item) => item.id === stepId) ?? flow?.graph_definition.nodes[0]
   const workers = doc.members.filter((item) => item.configuration.role === 'worker' && item.relationship.enabled)
   const stepExecutors = doc.members.filter((item) => item.relationship.enabled)
-  const editDocument = (next: TeamDefinition) => { edit(next); pendingDrafts.set(pendingKey, { revision: draft.revision, document: structuredClone(next) }); if (runtime?.runtimeId && !runtime.isStreaming) void enterprise.updateTeamDevelopment(runtime.runtimeId, { teamId, accountId, revision: draft.revision, document: next }).catch((cause) => onError(cause instanceof Error ? cause.message : 'Pi 上下文未同步')) }
+  const editDocument = (next: TeamDefinition) => { edit(next); pendingDrafts.set(pendingKey, { revision: draft.revision, document: structuredClone(next) }); if (runtime?.runtimeId) { void enterprise.invalidateTeamDevelopmentTurn(runtime.runtimeId).catch((cause) => onError(cause instanceof Error ? cause.message : 'Pi 当前轮次未清理')); if (!runtime.isStreaming) void enterprise.updateTeamDevelopment(runtime.runtimeId, { teamId, accountId, revision: draft.revision, document: next }).catch((cause) => onError(cause instanceof Error ? cause.message : 'Pi 上下文未同步')) } }
   const editFlow = (update: (item: TeamDefinition['workflows'][number]) => TeamDefinition['workflows'][number]) => { if (flow) editDocument({ ...doc, workflows: doc.workflows.map((item) => item.id === flow.id ? update(item) : item) }) }
   const applyProposal = () => {
     if (!proposal) return

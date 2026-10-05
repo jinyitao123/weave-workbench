@@ -216,6 +216,14 @@ describe('harness-aware IPC routing', () => {
     expect(beginEmployeeCommand).toHaveBeenLastCalledWith('pi-runtime', 'abort')
   })
 
+  it('routes UI context invalidation to the runtime-bound team development bridge', async () => {
+    const invalidateEmployeeTurn = vi.fn()
+    Object.assign(harness.services, { teamDevelopmentBridge: { invalidateEmployeeTurn } })
+    await harness.invoke('enterprise:invalidate-team-development-turn', 'pi-runtime')
+    expect(invalidateEmployeeTurn).toHaveBeenCalledWith('pi-runtime')
+    expect(() => harness.invoke('enterprise:invalidate-team-development-turn', '')).toThrow('runtimeId')
+  })
+
   it('concatenates all managers for agent:list', () => {
     expect(harness.invoke('agent:list')).toEqual([
       { runtimeId: 'prime-runtime', harness: 'prime' },

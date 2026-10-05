@@ -7,7 +7,7 @@ import { TeamDevelopmentInspector } from '../../src/components/inspector/TeamDev
 import { newMember } from '../../src/pages/team-workspace/member'
 import { initialGraph } from '../../src/pages/team-workspace/graph'
 import { runLabel } from '../../src/pages/team-workspace/TrialPanel'
-import type { EnterpriseBusinessCapabilityCatalog, EnterpriseDevelopmentOverview, PrimeWorkApi } from '../../src/types/api'
+import type { EnterpriseBusinessCapabilityCatalog, EnterpriseDevelopmentOverview, PrimeWorkApi, RuntimeInfo } from '../../src/types/api'
 import type { TeamWorkspace, TeamWorkspaceCommand } from '../../src/types/team-workspace'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -21,7 +21,8 @@ const call = vi.fn(async (command: TeamWorkspaceCommand): Promise<unknown> => {
   return structuredClone(remote)
 })
 const getBusinessCapabilityCatalog = vi.fn(async (): Promise<EnterpriseBusinessCapabilityCatalog> => ({ version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [], refreshedAt: '' }))
-const enterprise = { teamWorkspace: call, createDevelopmentTeam: vi.fn(), getBusinessCapabilityCatalog, updateTeamDevelopment: vi.fn(async () => {}) } as unknown as PrimeWorkApi['enterprise']
+const invalidateTeamDevelopmentTurn = vi.fn(async (_runtimeId: string) => {})
+const enterprise = { teamWorkspace: call, createDevelopmentTeam: vi.fn(), getBusinessCapabilityCatalog, updateTeamDevelopment: vi.fn(async () => {}), invalidateTeamDevelopmentTurn, getTeamDevelopmentState: vi.fn(async () => ({})) } as unknown as PrimeWorkApi['enterprise']
 const agent = { onEvent: () => () => {} } as unknown as PrimeWorkApi['agent']
 
 const buttons = () => [...document.querySelectorAll<HTMLButtonElement>('button')]
@@ -35,7 +36,7 @@ async function edit(label: string, value: string) {
   if (!input) throw new Error(`Missing field ${label}`)
   await act(async () => { Object.getOwnPropertyDescriptor(input instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype, 'value')!.set!.call(input, value); input.dispatchEvent(new Event('input', { bubbles: true })) })
 }
-async function open(view: 'division' | 'workflow' = 'division') { await act(async () => root.render(<TeamDevelopmentInspector enterprise={enterprise} agent={agent} accountId={accountId} overview={overview} loading={false} onRefresh={() => {}} view={view}/>)) }
+async function open(view: 'division' | 'workflow' = 'division', runtime?: RuntimeInfo, teamOverview = overview) { await act(async () => root.render(<TeamDevelopmentInspector enterprise={enterprise} agent={agent} accountId={accountId} runtime={runtime} overview={teamOverview} loading={false} onRefresh={() => {}} view={view}/>)) }
 async function selectMember(name: string) { await act(async () => [...container.querySelectorAll<HTMLButtonElement>('.team-member-list button')].find((b) => b.textContent?.includes(name))!.click()) }
 async function save() { await click('保存草稿') }
 const publishButton = () => buttons().find((button) => button.textContent?.trim() === '更新团队')
@@ -72,6 +73,21 @@ it('edits team details and a member, then saves one remote draft', async () => {
   expect(remote.document.members[1]!.relationship.duty).toBe('检查付款条款')
   expect(remote.document.objective).toBe('逐条核对原文')
   expect(remote.document.audience).toEqual(['sales_employee', 'delivery_reviewer'])
+})
+
+it('invalidates the current Pi request when the UI switches team or edits an unsaved document during streaming', async () => {
+  const otherTeam = { id: 'other-team', name: '其他团队', status: 'active' as const, updatedAt: '', workflows: [], runs: [], workers: [] }
+  const runtime = { runtimeId: 'pi-runtime', isStreaming: true, cwd: '/work' } as RuntimeInfo
+  await open('division', runtime, { ...overview, teams: [...overview.teams, otherTeam] })
+  await chooseProductOption('团队', '其他团队')
+  expect(invalidateTeamDevelopmentTurn).toHaveBeenCalledWith('pi-runtime')
+  const count = invalidateTeamDevelopmentTurn.mock.calls.length
+  await click('编辑')
+  await edit('团队目标', '未保存的界面目标修改')
+  await click('确定')
+  expect(invalidateTeamDevelopmentTurn.mock.calls.length).toBeGreaterThan(count)
+  expect(invalidateTeamDevelopmentTurn.mock.calls.every(([runtimeId]) => runtimeId === 'pi-runtime')).toBe(true)
+  expect(enterprise.updateTeamDevelopment).not.toHaveBeenCalled()
 })
 
 it.each([false, true])('keeps newer editor focus when delayed member-navigation focus arrives (editing=%s)', async (editing) => {
