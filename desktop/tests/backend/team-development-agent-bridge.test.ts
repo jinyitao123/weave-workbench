@@ -346,10 +346,11 @@ it('freezes only workflow actions and keeps each Pi simulation selection in its 
   unrelated.configuration.businessCapabilityIds = [unrelatedAction.id]
   const document: TeamDefinition = { name: '线索团队', objective: '转化线索', members: [lead, worker, unrelated], workflows: [{ id: 'flow', name: '转化流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
   let remote = workspace(document, 6)
+  let activeAccount = 'developer-1'
   const calls: TeamWorkspaceCommand[] = []
   const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [action, unrelatedAction] }
   bridge = new TeamDevelopmentAgentBridge({
-    accountKey: async () => 'developer-1', developer: async () => ({ accountId: 'developer-1' }),
+    accountKey: async () => activeAccount, developer: async () => ({ accountId: activeAccount }),
     teams: async () => [{ id: 'team', name: document.name }], team: async () => structuredClone(remote),
     catalog: async () => catalog, extensionPath: '/app/team-development.ts',
     workspace: async (command: TeamWorkspaceCommand) => {
@@ -362,12 +363,25 @@ it('freezes only workflow actions and keeps each Pi simulation selection in its 
   await bridge.start()
   const env = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
   bridge.bindRuntime(env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
-  await bridge.bindContext('runtime', { teamId: 'team', revision: 6, document, catalog }, 'developer-1')
-  const call = async (params: Record<string, unknown>) => {
-    const response = await fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method: 'trial', params }) })
+  await bridge.bindContext('runtime', { teamId: 'team', revision: 6, document, catalog }, activeAccount)
+  const callMethod = async (method: string, params: Record<string, unknown>, requestEnv = env) => {
+    const response = await fetch(requestEnv.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${requestEnv.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method, params }) })
     return response.json() as Promise<{ ok: boolean; error?: string }>
   }
+  const call = (params: Record<string, unknown>, requestEnv = env) => callMethod('trial', params, requestEnv)
   const input = '核对开发者提供的线索材料'
+  const selectedParams = { workflow_name: '转化流程', input, simulation_actions: ['转化线索'] }
+  expect((await call(selectedParams)).ok).toBe(false)
+  expect(calls.filter((command) => command.action === 'trial')).toHaveLength(0)
+  expect((await callMethod('context', {})).ok).toBe(true)
+  const afterContextOnly = await call(selectedParams)
+  expect(afterContextOnly.ok).toBe(false)
+  expect(afterContextOnly.error).toContain('当前账号和 Pi 会话中的员工请求')
+  expect(calls.filter((command) => command.action === 'trial')).toHaveLength(0)
+
+  const employeePrompt = '请在当前轮次隔离模拟转化线索'
+  bridge.beginEmployeeCommand('runtime', 'prompt')
+  await bridge.captureTrustedEmployeeCommand('runtime', { type: 'prompt', message: employeePrompt }, { text: employeePrompt, materials: [] })
   expect((await call({ workflow_name: '转化流程', input })).ok).toBe(true)
   expect((await call({ workflow_name: '转化流程', input })).ok).toBe(true)
   const defaultScope = calls.filter((command) => command.action === 'trial')
@@ -376,13 +390,13 @@ it('freezes only workflow actions and keeps each Pi simulation selection in its 
   expect(defaultScope[0]!.businessActions).toMatchObject([{ id: action.id, simulationAuthorized: false }])
   expect(defaultScope[0]!.businessActions.map((item) => item.id)).not.toContain(unrelatedAction.id)
 
-  const selected = await call({ workflow_name: '转化流程', input, simulation_actions: ['转化线索'] })
+  const selected = await call(selectedParams)
   expect(selected.ok).toBe(true)
   const selectedRequest = calls.filter((command) => command.action === 'trial').at(-1)!
   expect(selectedRequest.requestId).not.toBe(defaultScope[0]!.requestId)
   expect(selectedRequest.businessActions).toMatchObject([{ id: action.id, simulationAuthorized: true }])
   catalog.capabilities[0]!.description = '目录刚刷新后的新说明'
-  expect((await call({ workflow_name: '转化流程', input, simulation_actions: ['转化线索'] })).ok).toBe(true)
+  expect((await call(selectedParams)).ok).toBe(true)
   const retry = calls.filter((command) => command.action === 'trial').at(-1)!
   expect(retry.requestId).toBe(selectedRequest.requestId)
   expect(retry.businessActions).toEqual(selectedRequest.businessActions)
@@ -391,6 +405,62 @@ it('freezes only workflow actions and keeps each Pi simulation selection in its 
   expect(invalid.ok).toBe(false)
   expect(invalid.error).toContain('不属于当前流程候选范围')
   expect(calls.filter((command) => command.action === 'trial')).toHaveLength(4)
+
+  bridge.beginEmployeeCommand('runtime', 'abort')
+  const afterAbort = await call(selectedParams)
+  expect(afterAbort.ok).toBe(false)
+  expect(afterAbort.error).toContain('当前账号和 Pi 会话中的员工请求')
+  bridge.beginEmployeeCommand('runtime', 'compact')
+  const afterCompact = await call(selectedParams)
+  expect(afterCompact.ok).toBe(false)
+  expect(afterCompact.error).toContain('当前账号和 Pi 会话中的员工请求')
+  expect(calls.filter((command) => command.action === 'trial')).toHaveLength(4)
+
+  activeAccount = 'developer-2'
+  bridge.invalidateAccount()
+  const switchedEnv = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
+  bridge.bindRuntime(switchedEnv.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
+  await bridge.bindContext('runtime', { teamId: 'team', revision: 6, document, catalog }, activeAccount)
+  const afterAccountChange = await call(selectedParams, switchedEnv)
+  expect(afterAccountChange.ok).toBe(false)
+  expect(afterAccountChange.error).toContain('当前账号和 Pi 会话中的员工请求')
+  expect(calls.filter((command) => command.action === 'trial')).toHaveLength(4)
+})
+
+it('does not let a user turn arriving after a Pi trial call retroactively authorize that call', async () => {
+  const lead = newMember('deepseek-flash'), worker = newMember('deepseek-flash')
+  lead.configuration.role = 'avatar'; worker.configuration.displayName = '转化员'
+  const action = { id: 'forge:action:crm_lead.convert', name: '转化线索', description: '把线索转为商机', effect: 'write' as const, executionMode: 'team_delegable' as const, resourceType: 'crm_lead', requiresEmployeeIntent: true, status: 'available' as const, actionName: 'convert', objectName: 'crm_lead' }
+  worker.configuration.businessCapabilityIds = [action.id]
+  const document: TeamDefinition = { name: '线索团队', objective: '转化线索', members: [lead, worker], workflows: [{ id: 'flow', name: '转化流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
+  const remote = workspace(document, 6)
+  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [action] }
+  let announceDeveloper!: () => void
+  let releaseDeveloper!: (value: { accountId: string }) => void
+  const developerStarted = new Promise<void>((resolve) => { announceDeveloper = resolve })
+  const developerGate = new Promise<{ accountId: string }>((resolve) => { releaseDeveloper = resolve })
+  const calls: TeamWorkspaceCommand[] = []
+  bridge = new TeamDevelopmentAgentBridge({
+    accountKey: async () => 'developer-1', developer: async () => { announceDeveloper(); return developerGate },
+    teams: async () => [{ id: 'team', name: document.name }], team: async () => structuredClone(remote),
+    catalog: async () => catalog, extensionPath: '/app/team-development.ts',
+    workspace: async (command) => { calls.push(command); return {} },
+  })
+  await bridge.start()
+  const env = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
+  bridge.bindRuntime(env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
+  await bridge.bindContext('runtime', { teamId: 'team', revision: 6, document, catalog }, 'developer-1')
+  const responsePromise = fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method: 'trial', params: { workflow_name: '转化流程', input: '核对当前材料', simulation_actions: ['转化线索'] } }) })
+  await developerStarted
+  const laterPrompt = '请在隔离环境中模拟转化线索'
+  bridge.beginEmployeeCommand('runtime', 'prompt')
+  await bridge.captureTrustedEmployeeCommand('runtime', { type: 'prompt', message: laterPrompt }, { text: laterPrompt, materials: [] })
+  releaseDeveloper({ accountId: 'developer-1' })
+  const response = await responsePromise
+  const result = await response.json() as { ok: boolean; error?: string }
+  expect(result.ok).toBe(false)
+  expect(result.error).toContain('当前账号和 Pi 会话中的员工请求')
+  expect(calls.filter((command) => command.action === 'trial')).toHaveLength(0)
 })
 
 it('restores the original fixed action definition after an uncertain Pi trial response', async () => {
@@ -416,12 +486,24 @@ it('restores the original fixed action definition after an uncertain Pi trial re
   const firstEnv = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
   bridge.bindRuntime(firstEnv.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
   await bridge.bindContext('runtime', { teamId: 'team', revision: 6, document, catalog: firstCatalog }, 'developer-1')
+  const employeePrompt = '私有模拟授权原文：请在隔离环境中模拟转化线索'
+  bridge.beginEmployeeCommand('runtime', 'prompt')
+  await bridge.captureTrustedEmployeeCommand('runtime', { type: 'prompt', message: employeePrompt }, { text: employeePrompt, materials: [] })
   const call = async (env: NodeJS.ProcessEnv) => {
     const response = await fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method: 'trial', params: { workflow_name: '转化流程', input: '核对这条材料', simulation_actions: ['转化线索'] } }) })
-    return response.json() as Promise<{ ok: boolean }>
+    return response.json() as Promise<{ ok: boolean; error?: string }>
   }
   expect((await call(firstEnv)).ok).toBe(false)
   const original = firstCalls.find((command) => command.action === 'trial')!
+  expect((await call(firstEnv)).ok).toBe(false)
+  expect(firstCalls.filter((command) => command.action === 'trial')).toHaveLength(2)
+  expect(firstCalls.at(-1)).toMatchObject({ action: 'trial', requestId: original.requestId })
+  const savedFile = readdirSync(directory).find((file) => file.endsWith('.json'))!
+  const savedText = readFileSync(join(directory, savedFile), 'utf8')
+  const saved = JSON.parse(savedText) as { value: { trial: Record<string, unknown> } }
+  expect(saved.value.trial.authorizationSourceHash).toMatch(/^[0-9a-f]{64}$/)
+  expect(savedText).not.toContain(employeePrompt)
+  expect(savedText).not.toContain('trusted_desktop_employee_input')
   await bridge.stop(); bridge = undefined
 
   const refreshedCatalog: EnterpriseBusinessCapabilityCatalog = { ...firstCatalog, capabilities: [{ ...action, description: '刷新后的动作定义' }] }
@@ -432,12 +514,10 @@ it('restores the original fixed action definition after an uncertain Pi trial re
   await bridge.start()
   const retryEnv = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
   bridge.bindRuntime(retryEnv.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
-  expect((await call(retryEnv)).ok).toBe(true)
-  const retried = retryCalls.find((command) => command.action === 'trial')!
-  expect(retried.requestId).toBe(original.requestId)
-  expect(retried.input).toBe(original.input)
-  expect(retried.businessActions).toEqual(original.businessActions)
-  expect(retried.businessActions).toMatchObject([{ id: action.id, simulationAuthorized: true, description: '原始动作定义' }])
+  const afterRestart = await call(retryEnv)
+  expect(afterRestart.ok).toBe(false)
+  expect(afterRestart.error).toContain('当前账号和 Pi 会话中的员工请求')
+  expect(retryCalls.filter((command) => command.action === 'trial')).toHaveLength(0)
 })
 
 it.each(trialWireCases)('interprets the same $name wire record as the trial panel without inventing payload evidence', async (tool) => {

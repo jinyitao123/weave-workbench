@@ -1114,6 +1114,7 @@ async function bootstrap(): Promise<void> {
     meta, refreshHarnesses, projects, checkouts, sessions, agents, terminals, git, plugins, providers, settings, updates, enterprise, cuaDriver, heartbeats, schedules, browser: browserService, voice, pets,
     popupApplicationMenu, setTitleBarTheme,
     enterpriseBridge,
+    teamDevelopmentBridge: developmentBridge,
     updateTeamDevelopment, getTeamDevelopmentProposal: (runtimeId: string) => developmentBridge.getProposal(runtimeId), getTeamDevelopmentState: (runtimeId: string) => developmentBridge.getState(runtimeId), getTeamDevelopmentStateForSession: (sessionFile: string) => developmentBridge.getStateForSession(sessionFile),
     pi: { projects: piProjects, sessions: piSessions, agents: piManager, catalog: piCatalog, plugins: piPlugins },
     applyInterfaceZoom,

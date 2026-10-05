@@ -18,6 +18,7 @@ import type { VoiceService } from './voice'
 import type { UpdateService } from './updates'
 import { approvalContextView, type EnterpriseService } from './enterprise'
 import type { AgentEnterpriseBridge } from './enterprise/agent-bridge'
+import type { TeamDevelopmentAgentBridge } from './development/agent-bridge'
 import type { TeamDevelopmentContextInput, TeamDevelopmentProposalResult } from '../../src/types/team-workspace'
 import type { TeamDevelopmentState } from '../../src/types/team-workspace'
 import type { AgentBrowserService } from './browser/agent-service'
@@ -40,6 +41,7 @@ interface Services {
   updates: UpdateService
   enterprise: EnterpriseService
   enterpriseBridge?: AgentEnterpriseBridge
+  teamDevelopmentBridge?: TeamDevelopmentAgentBridge
   updateTeamDevelopment(runtimeId: string, input: TeamDevelopmentContextInput): Promise<void>
   getTeamDevelopmentProposal(runtimeId: string): Promise<TeamDevelopmentProposalResult | undefined>
   getTeamDevelopmentState(runtimeId: string): Promise<TeamDevelopmentState>
@@ -376,6 +378,7 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
   })
   handle('agent:command', async (_event, runtimeId, command, deliveryContext) => {
     const id = requireString(runtimeId, 'runtimeId', { min: 1, max: 256 })
+    const commandValue = requireRecord(command, 'command')
     const manager = agentsForRuntime(id)
     const delivery = deliveryContext === undefined ? undefined : requireRecord(deliveryContext, 'deliveryContext')
     if (delivery) rejectUnknownKeys(delivery, ['returnedApprovalContextHandle', 'approvalReviewContextHandle', 'workContinuationContextHandle', 'employeeInput'], 'deliveryContext')
@@ -386,10 +389,21 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     if (approvalReviewContextHandle !== undefined && typeof approvalReviewContextHandle !== 'string') throw new TypeError('deliveryContext.approvalReviewContextHandle must be a string')
     if (workContinuationContextHandle !== undefined && typeof workContinuationContextHandle !== 'string') throw new TypeError('deliveryContext.workContinuationContextHandle must be a string')
     const current = manager.list().find((runtime) => runtime.runtimeId === id)
-    if (current?.sessionFile) services.enterpriseBridge?.bindRuntimeSession(id, current.sessionFile)
-    if (delivery?.employeeInput !== undefined && !['prompt', 'steer', 'follow_up'].includes(requireRecord(command, 'command').type as string)) throw new TypeError('Employee input only belongs to an employee message')
-    await services.enterpriseBridge?.employeeCommand(id, command, approvalContextHandle, workContinuationContextHandle, approvalReviewContextHandle, delivery?.employeeInput)
-    return manager.command(id, command)
+    if (current?.sessionFile) {
+      services.enterpriseBridge?.bindRuntimeSession(id, current.sessionFile)
+      services.teamDevelopmentBridge?.bindRuntimeSession(id, current.sessionFile)
+    }
+    services.teamDevelopmentBridge?.beginEmployeeCommand(id, commandValue.type)
+    if (delivery?.employeeInput !== undefined && !['prompt', 'steer', 'follow_up'].includes(commandValue.type as string)) throw new TypeError('Employee input only belongs to an employee message')
+    const invalidatesEmployeeTurn = ['prompt', 'steer', 'follow_up', 'abort', 'compact'].includes(commandValue.type as string)
+    try {
+      await services.enterpriseBridge?.employeeCommand(id, command, approvalContextHandle, workContinuationContextHandle, approvalReviewContextHandle, delivery?.employeeInput)
+      await services.teamDevelopmentBridge?.captureTrustedEmployeeCommand(id, commandValue, delivery?.employeeInput)
+      return await manager.command(id, command)
+    } catch (error) {
+      if (invalidatesEmployeeTurn) services.teamDevelopmentBridge?.invalidateEmployeeTurn(id)
+      throw error
+    }
   })
   handle('agent:stop', (_event, runtimeId) => agentsForRuntime(runtimeId).stop(runtimeId))
   handle('agent:list', () => [...services.agents.list(), ...services.pi.agents.list()])
