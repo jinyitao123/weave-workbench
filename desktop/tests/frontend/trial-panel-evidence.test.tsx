@@ -3,6 +3,8 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { TrialPanel } from '../../src/pages/team-workspace/TrialPanel'
+import { initialGraph } from '../../src/pages/team-workspace/graph'
+import { newMember } from '../../src/pages/team-workspace/member'
 import type { TeamWorkspace, TeamWorkspaceBridge, TeamWorkspaceCommand } from '../../src/types/team-workspace'
 import { trialWireActivity, trialWireCases } from '../fixtures/trial-activity'
 
@@ -12,14 +14,17 @@ let root: Root
 let container: HTMLDivElement
 
 function draft(): TeamWorkspace {
+  const member = newMember('test-model')
+  member.id = 'member-1'
+  member.configuration.displayName = 'Worker'
   return {
     revision: 2, published_revision: 1, publishing_revision: 0, prepared_revision: 0, updated_at: '',
     trials: [{ request_id: 'trial-1', revision: 2, workflow_id: 'flow-1', run_id: 'run-1', status: 'succeeded', created_at: '2026-09-30T00:00:00Z' }],
     document: {
-      name: 'Team', objective: '', members: [{ id: 'member-1', configuration: { businessCapabilityIds: [] } }],
-      workflows: [{ id: 'flow-1', name: 'Flow', description: '', trigger_config: {}, graph_definition: {} as TeamWorkspace['document']['workflows'][number]['graph_definition'] }],
+      name: 'Team', objective: '', members: [member],
+      workflows: [{ id: 'flow-1', name: 'Flow', description: '', trigger_config: {}, graph_definition: initialGraph(member) }],
     },
-  } as unknown as TeamWorkspace
+  }
 }
 
 beforeEach(() => {
