@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { TrialPanel } from '../../src/pages/team-workspace/TrialPanel'
 import type { TeamWorkspace, TeamWorkspaceBridge, TeamWorkspaceCommand } from '../../src/types/team-workspace'
+import { trialWireActivity, trialWireCases } from '../fixtures/trial-activity'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -52,22 +53,23 @@ const toolActivity = (runStatus: string, stageStatus: string, toolStatus: string
   outputs: [],
 })
 
-it.each([
-  { event: 'started', runStatus: 'running', stageStatus: 'running', toolStatus: 'running', label: '工具调用中' },
-  { event: 'completed', runStatus: 'succeeded', stageStatus: 'completed', toolStatus: 'ok', completedAt: '2026-10-05T01:16:00Z', label: '工具调用完成' },
-  { event: 'failed', runStatus: 'failed', stageStatus: 'failed', toolStatus: 'error', completedAt: '2026-10-05T01:16:00Z', label: '工具调用失败' },
-  { event: 'legacy completed', runStatus: 'succeeded', stageStatus: 'completed', toolStatus: 'tool_completed', label: '工具调用完成' },
-  { event: 'legacy failed', runStatus: 'failed', stageStatus: 'failed', toolStatus: 'tool_failed', label: '工具调用失败' },
-])('labels the projected $event tool lifecycle without inventing missing details', async ({ event, runStatus, stageStatus, toolStatus, completedAt, label }) => {
-  await renderPanel(toolActivity(runStatus, stageStatus, toolStatus, completedAt))
+it.each(trialWireCases)('interprets the same $name wire record as the Pi bridge', async (tool) => {
+  await renderPanel(trialWireActivity(tool))
 
-  const toolDetails = [...container.querySelectorAll('details')].find((item) => item.querySelector('summary')?.textContent?.includes('Lead conversion'))
-  expect(toolDetails?.querySelector('summary')?.textContent).toContain(label)
-  expect(toolDetails?.textContent).toContain('此调试记录未保存调用参数和模拟回执')
-  expect(toolDetails?.querySelector('pre')).toBeNull()
+  const toolDetails = [...container.querySelectorAll('details')].find((item) => item.querySelector('summary')?.textContent?.includes('转为商机'))
+  expect(toolDetails?.querySelector('summary')?.textContent).toContain(tool.label)
+  if (!tool.input && !tool.output && tool.completeness === '不可用') {
+    expect(toolDetails?.textContent).toContain('此调试记录未保存调用参数和模拟回执')
+    expect(toolDetails?.querySelector('pre')).toBeNull()
+  }
+  if (tool.input) expect(toolDetails?.textContent?.includes(tool.input)).toBe(!tool.hiddenInput)
+  if (tool.output) expect(toolDetails?.textContent?.includes(tool.output)).toBe(!tool.hiddenOutput)
+  if (tool.input_state === 'truncated') expect(toolDetails?.textContent).toContain('调用参数已截断')
+  if (tool.input_state === 'recorded' && tool.input === '') expect(toolDetails?.querySelectorAll('pre')).toHaveLength(2)
   expect(container.textContent).toContain('开发调试中的 Forge 业务动作是模拟调用')
-  if (event === 'started') expect(toolDetails?.textContent).not.toContain('工具调用完成')
-  if (event.startsWith('legacy')) expect(container.textContent).not.toContain('活动记录未证明工具调用清单完整')
+  if (tool.label === '工具调用中') expect(toolDetails?.textContent).not.toContain('工具调用完成')
+  if (tool.name.startsWith('legacy')) expect(container.textContent).not.toContain('活动记录未证明工具调用清单完整')
+  if (tool.server_payloads === 'partial' || tool.server_payloads === 'unavailable') expect(container.textContent).toContain('调用参数或模拟回执不完整')
 })
 
 it.each([

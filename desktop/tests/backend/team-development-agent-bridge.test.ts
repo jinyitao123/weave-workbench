@@ -8,6 +8,7 @@ import { newMember } from '../../src/pages/team-workspace/member'
 import { configureWorkflowResultProtocol, initialGraph } from '../../src/pages/team-workspace/graph'
 import type { EnterpriseBusinessCapabilityCatalog } from '../../src/types/api'
 import type { TeamDefinition, TeamWorkspace, TeamWorkspaceCommand } from '../../src/types/team-workspace'
+import { trialWireActivity, trialWireCases } from '../fixtures/trial-activity'
 
 let bridge: TeamDevelopmentAgentBridge | undefined
 const tempDirectories: string[] = []
@@ -334,6 +335,53 @@ it('saves a controlled draft, reconciles an uncertain write, runs an idempotent 
   expect(updated.ok).toBe(true)
   expect(remote.published_revision).toBe(5)
   expect(calls.filter((command) => command.action === 'publish')).toHaveLength(1)
+})
+
+it.each(trialWireCases)('interprets the same $name wire record as the trial panel without inventing payload evidence', async (tool) => {
+  const lead = newMember('deepseek-flash'), worker = newMember('deepseek-flash')
+  lead.configuration.role = 'avatar'
+  const document: TeamDefinition = { name: '线索团队', objective: '', members: [lead, worker], workflows: [{ id: 'flow', name: '线索流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
+  const remote = workspace(document)
+  const directory = mkdtempSync(join(tmpdir(), 'trial-evidence-')); tempDirectories.push(directory)
+  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [], refreshedAt: '' }
+  bridge = new TeamDevelopmentAgentBridge({
+    accountKey: async () => 'developer-1', developer: async () => ({ accountId: 'developer-1' }), teams: async () => [{ id: 'team', name: document.name }],
+    team: async () => structuredClone(remote), catalog: async () => catalog, extensionPath: '/app/team-development.ts', storage: { directory },
+    workspace: async (command) => {
+      if (command.action === 'trial') return { request_id: command.requestId, run_id: 'private-run' }
+      if (command.action === 'input') return { input: '合成固定输入', status: 'succeeded', output: '模型自述：已经转化。' }
+      if (command.action === 'activity') return trialWireActivity(tool)
+      throw new Error('unexpected mutation')
+    },
+  })
+  await bridge.start()
+  const env = bridge.environmentFor({ cwd: '/work', harness: 'pi' })
+  bridge.bindRuntime(env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime')
+  await bridge.bindContext('runtime', { teamId: 'team', revision: remote.revision, document, catalog }, 'developer-1')
+  const call = async (method: string, params = {}) => {
+    const response = await fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method, params }) })
+    return response.json() as Promise<{ ok: boolean; result: { trace: { completeness: { tool_input_output: string }; trajectory: string; members: Array<{ steps: Array<{ tools: Array<{ status: string; evidence: string; actual_input?: string; actual_output?: string }> }> }> } } }>
+  }
+  expect((await call('trial', { workflow_name: '线索流程', input: '合成固定输入' })).ok).toBe(true)
+  const result = await call('trial_status')
+  expect(result.ok).toBe(true)
+  expect(result.result.trace.members[0]!.steps[0]!.tools).toEqual([])
+  const actual = result.result.trace.members[0]!.steps[1]!.tools[0]!
+  expect(actual.status).toBe(tool.label)
+  expect(actual.actual_input).toBe(tool.hiddenInput ? undefined : tool.input)
+  expect(actual.actual_output).toBe(tool.hiddenOutput ? undefined : tool.output)
+  expect(result.result.trace.completeness.tool_input_output).toBe(tool.completeness)
+  if (!tool.input && !tool.output && tool.completeness === '不可用') {
+    expect(actual.evidence).toBe('此调试记录未保存调用参数和模拟回执')
+    expect(result.result.trace.trajectory).not.toBe('完整活动记录')
+  }
+  if (tool.input_state === 'truncated') {
+    expect(actual.evidence).toContain('调用参数已截断')
+    expect(result.result.trace.trajectory).not.toBe('完整活动记录')
+  }
+  const text = JSON.stringify(result.result)
+  expect(text).not.toContain('private-node-')
+  expect(text).not.toContain('private-call')
 })
 
 it('preserves Pi edits but refuses to overwrite a different unsaved sidebar draft', async () => {

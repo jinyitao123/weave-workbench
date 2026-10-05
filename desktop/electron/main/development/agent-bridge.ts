@@ -4,6 +4,7 @@ import type { TeamDefinition, TeamWorkspace, TeamWorkspaceCommand } from '../../
 import { applyTeamDevelopmentOperations, type TeamDevelopmentProposal } from '../../../src/pages/team-workspace/development-proposal'
 import { WORKBENCH_RESULT_PROTOCOL } from '../../../src/pages/team-workspace/graph'
 import { businessCompletionRequirement, requireBusinessCompletionBindings } from '../../../src/pages/team-workspace/business-completion'
+import { toolActivityEvidence, trialToolMissingDetails, trialToolPayload, trialToolPayloadCompleteness, trialToolStatus, type TrialToolEvidence } from '../../../src/lib/trial-tool-evidence'
 import { CapabilityBridge, type CapabilityClaim, type CapabilityScope } from '../lib/capability-bridge'
 import { HandoffStore, type HandoffStorage } from '../enterprise/handoff-store'
 
@@ -41,7 +42,8 @@ interface DevelopmentActivity {
     stages?: Array<{
       name?: string; status?: string; inputs?: Array<{ source?: string; summary?: string }>
       outputs?: Array<{ kind?: string; path?: string; content?: string; content_type?: string; content_bytes?: number; truncated?: boolean }>
-      tools?: Array<{ name?: string; status?: string; input?: string; output?: string }>
+      tools?: Array<TrialToolEvidence & { name?: string }> | null
+      tool_calls?: number
       failure_reason?: string
     }>
   }>
@@ -96,7 +98,7 @@ function messageStatus(status: string | undefined): string {
 }
 
 function completenessLabel(value: string | undefined): string {
-  return ({ complete: '完整', partial: '部分', unavailable: '不可用' } as Record<string, string>)[value ?? ''] ?? '未确认'
+  return ({ complete: '完整', partial: '部分', unavailable: '不可用', not_applicable: '不适用（本次零调用）' } as Record<string, string>)[value ?? ''] ?? '未确认'
 }
 
 export class TeamDevelopmentAgentBridge extends CapabilityBridge {
@@ -487,7 +489,9 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       await this.persist(claim)
     }
     const completeness = activity?.completeness ?? {}
-    const fullTrace = ['stages', 'member_inputs', 'member_outputs', 'member_tool_activity'].every((key) => completeness[key] === 'complete')
+    const callEvidence = toolActivityEvidence(activity)
+    const payloadCompleteness = trialToolPayloadCompleteness(activity)
+    const fullTrace = ['stages', 'member_inputs', 'member_outputs', 'member_tool_activity'].every((key) => completeness[key] === 'complete') && callEvidence !== 'incomplete'
     const members = (activity?.members ?? []).map((member) => ({
       name: member.name ?? '团队成员', status: messageStatus(member.status),
       steps: (member.stages ?? []).map((stage) => ({
@@ -506,10 +510,12 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
           evidence: item.truncated ? 'Weave 仅保留了该步骤输出的截断内容，不能视为完整原文。' : 'Weave 实际保存的该步骤输出。',
         })),
         tools: (stage.tools ?? []).map((tool) => ({
-          name: tool.name ?? '工具调用', status: messageStatus(tool.status),
-          ...(tool.input !== undefined ? { actual_input: tool.input } : {}),
-          ...(tool.output !== undefined ? { actual_output: tool.output } : {}),
-          evidence: 'Weave 记录的工具实际输入与输出。',
+          name: tool.name ?? '工具调用', status: trialToolStatus(tool),
+          ...(trialToolPayload(tool, 'input') !== undefined ? { actual_input: trialToolPayload(tool, 'input') } : {}),
+          ...(trialToolPayload(tool, 'output') !== undefined ? { actual_output: trialToolPayload(tool, 'output') } : {}),
+          ...(tool.input_state ? { input_state: tool.input_state, input_bytes: tool.input_bytes } : {}),
+          ...(tool.output_state ? { output_state: tool.output_state, output_bytes: tool.output_bytes } : {}),
+          evidence: trialToolMissingDetails(tool) || 'Weave 记录的工具实际输入与输出；模拟回执不代表 Forge 业务结果。',
         })),
         ...(stage.failure_reason ? { failure: stage.failure_reason } : {}),
       })),
@@ -533,12 +539,13 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
           stages: completenessLabel(completeness.stages),
           step_input_summaries: completenessLabel(completeness.member_inputs),
           step_outputs: completenessLabel(completeness.member_outputs),
-          tool_input_output: completenessLabel(completeness.member_tool_activity),
+          tool_activity: completenessLabel(callEvidence === 'incomplete' ? 'partial' : 'complete'),
+          tool_input_output: completenessLabel(payloadCompleteness),
           deliverables: completenessLabel(completeness.deliverables),
         },
-        trajectory: !activity ? '尚未取得完整活动记录' : fullTrace ? '完整活动记录' : '活动记录不完整或只部分可用',
+        trajectory: !activity ? '尚未取得完整活动记录' : !fullTrace ? '活动记录不完整或只部分可用' : ['complete', 'not_applicable'].includes(payloadCompleteness) ? '完整活动记录' : '步骤和调用清单完整；工具实参或回执不完整',
         ...(activityUnavailable ? { activity_note: 'Weave 活动暂不可读取，请稍后再取；不能仅凭最终结果判定调试通过。' } : {}),
-        input_note: '固定输入为本次完整试跑材料；各步骤的 inputs 是 Weave 记录的摘要字段，不能当作完整原始输入。工具调用 input/output 是 Weave 保存的实际记录。',
+        input_note: '固定输入为本次完整试跑材料；各步骤的 inputs 是 Weave 记录的摘要字段，不能当作完整原始输入。工具调用清单与实参、回执完整性分别核对；没有保存的字段不能从模型摘要补作证据。',
         members, outputs,
       },
     }
