@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { TEAM_RECORD_SOURCE_BOUNDARY_NOTE, teamRunContinuationBoundary, teamRunResultNotice } from '../../src/lib/team-work-continuation'
+import { TEAM_NO_RECORDED_ACTION_NOTE, TEAM_RECORD_SOURCE_BOUNDARY_NOTE, teamRunContinuationBoundary, teamRunResultNotice } from '../../src/lib/team-work-continuation'
 
 it('keeps a generic business-record provenance boundary in team-message continuation guidance', () => {
   const boundary = teamRunContinuationBoundary('2026-09-30T00:00:00Z')
@@ -63,4 +63,15 @@ it('does not suggest renewing closed input or prioritize renewal over unknown ac
   const expired = { ...modelNeedsInput, runStatus: 'parked' as const, inputStatus: 'current' as const, authorization: { status: 'renewal_required' as const, canRenew: true } }
   expect(teamRunResultNotice({ ...expired, inputStatus: 'closed' })).not.toContain('续授权工具')
   expect(teamRunResultNotice({ ...expired, businessResult: 'action_unknown' })).toContain('不要补件重跑或重放原业务动作')
+})
+
+it('states that runs without any recorded action changed no business record', () => {
+  const { finalResult: _omitted, ...withoutResult } = modelNeedsInput
+  const succeeded = { actionName: '转化', objectName: '线索', status: 'succeeded' as const, summary: '已转化' }
+  expect(teamRunResultNotice({ ...modelNeedsInput, businessResult: 'completed', actionOutcomes: [] })).toContain(TEAM_NO_RECORDED_ACTION_NOTE)
+  expect(teamRunResultNotice({ ...withoutResult, runStatus: 'failed', actionOutcomes: [] })).toBe(TEAM_NO_RECORDED_ACTION_NOTE)
+  expect(teamRunResultNotice({ ...modelNeedsInput, finalResult: { ...modelNeedsInput.finalResult, disposition: 'complete', missingItems: [] }, actionOutcomes: [] })).toContain(TEAM_NO_RECORDED_ACTION_NOTE)
+  expect(teamRunResultNotice({ ...modelNeedsInput, businessResult: 'completed' })).not.toContain(TEAM_NO_RECORDED_ACTION_NOTE)
+  expect(teamRunResultNotice({ ...modelNeedsInput, businessResult: 'completed', actionOutcomes: [succeeded] })).not.toContain(TEAM_NO_RECORDED_ACTION_NOTE)
+  expect(teamRunResultNotice({ ...withoutResult, runStatus: 'failed' })).toBe('')
 })

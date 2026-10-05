@@ -3,7 +3,7 @@ import type { EnterpriseBusinessCapability, EnterpriseBusinessCapabilityCatalog 
 import type { TeamDefinition, TeamWorkspace, TeamWorkspaceCommand } from '../../../src/types/team-workspace'
 import { applyTeamDevelopmentOperations, type TeamDevelopmentProposal } from '../../../src/pages/team-workspace/development-proposal'
 import { WORKBENCH_RESULT_PROTOCOL } from '../../../src/pages/team-workspace/graph'
-import { businessCompletionRequirement, requireBusinessCompletionBindings } from '../../../src/pages/team-workspace/business-completion'
+import { businessCompletionRequirement, requireBusinessCompletionBindings, requireDeclaredBusinessCompletion } from '../../../src/pages/team-workspace/business-completion'
 import { toolActivityEvidence, trialToolMissingDetails, trialToolPayload, trialToolPayloadCompleteness, trialToolStatus, type TrialToolEvidence } from '../../../src/lib/trial-tool-evidence'
 import { CapabilityBridge, type CapabilityClaim, type CapabilityScope } from '../lib/capability-bridge'
 import { HandoffStore, type HandoffStorage } from '../enterprise/handoff-store'
@@ -559,6 +559,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       throw new Error('团队草稿已变化或侧栏有未保存修改；本次没有更新团队，原修改仍保留。')
     }
     if (remote.published_revision === context.revision) return { team: remote.document.name, status: '已更新', message: '该团队版本已经生效。' }
+    requireDeclaredBusinessCompletion(context.document)
     try {
       const updated = await this.options.workspace({ action: 'publish', teamId: context.teamId, accountId: developer.accountId, revision: context.revision }) as TeamWorkspace
       if (!updated || updated.published_revision !== context.revision) throw new Error('Weave 尚未确认本次团队版本已生效')

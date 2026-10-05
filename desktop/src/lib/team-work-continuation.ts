@@ -1,6 +1,9 @@
 export const WORKBENCH_RUN_CONTINUATION_TYPE = 'weave.workbench_run'
 import type { EnterpriseWeaveWorkContinuationContextView } from '../types/api'
 
+/** Without a recorded action, a team's wording cannot establish any business effect. */
+export const TEAM_NO_RECORDED_ACTION_NOTE = '平台没有记录本轮任何业务动作，团队不会因本轮改变 Forge 业务记录；团队文字中“已转化”“已提交”“已办理”等说法不代表业务已发生，需要时请独立读取 Forge 当前状态。'
+
 export const TEAM_RECORD_SOURCE_BOUNDARY_NOTE = '业务记录字段只证明系统当前记载了这些值，不自动等于客户确认；没有客户一手材料时，应说“记录载明”或“待核实”。'
 
 export function teamRunContinuationBoundary(createdAt: string): string {
@@ -26,6 +29,7 @@ export function teamRunResultNotice(context: EnterpriseWeaveWorkContinuationCont
   }
   const hasSucceededAction = businessResult === undefined && context.runStatus === 'succeeded'
     && context.actionOutcomes?.some((outcome) => outcome.status === 'succeeded')
+  const noRecordedAction = Array.isArray(context.actionOutcomes) && context.actionOutcomes.length === 0
   const needsInput = businessResult !== undefined ? businessResult === 'needs_input' : result?.disposition === 'needs_input'
   if (needsInput) return [
     hasSucceededAction
@@ -36,9 +40,13 @@ export function teamRunResultNotice(context: EnterpriseWeaveWorkContinuationCont
   ].filter(Boolean).join('\n')
   if (businessResult === 'completed') return [
     '平台确认本轮团队工作已完成。模型列出的缺项仅作检查意见，不构成补材料待办，也不要求重跑团队；Forge 当前业务和审批状态必须独立读取，不能据此声称审批通过。',
+    noRecordedAction ? TEAM_NO_RECORDED_ACTION_NOTE : '',
     result?.summary ? `团队检查意见：${result.summary}` : '',
   ].filter(Boolean).join('\n')
-  return result?.disposition === 'complete'
-    ? `Weave 本轮结构化结果分类：团队检查已完成。该分类只表示团队检查结果，不表示 Forge 业务已完成。${result.summary ? `\n团队摘要：${result.summary}` : ''}`
-    : ''
+  if (result?.disposition === 'complete') return [
+    'Weave 本轮结构化结果分类：团队检查已完成。该分类只表示团队检查结果，不表示 Forge 业务已完成。',
+    noRecordedAction ? TEAM_NO_RECORDED_ACTION_NOTE : '',
+    result.summary ? `团队摘要：${result.summary}` : '',
+  ].filter(Boolean).join('\n')
+  return context.runStatus === 'failed' && noRecordedAction ? TEAM_NO_RECORDED_ACTION_NOTE : ''
 }

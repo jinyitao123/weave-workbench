@@ -1109,6 +1109,21 @@ describe('EnterpriseService', () => {
     expect(dispatched).toBe(false)
   })
 
+  it('explains an unchecked action flow to the employee before any task grant or dispatch', async () => {
+    let dispatched = false, registered = false
+    const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: workOverviewFetch((url) => {
+      if (url.endsWith('/v1/workbench/dispatch-inputs/prepare')) return Response.json({ code: 'business_completion_check_required', error: '流程成员绑定了业务动作，须先声明检查' }, { status: 422 })
+      if (url.endsWith('/v1/workbench/dispatch-inputs')) registered = true
+      if (url.endsWith('/v1/teams/team-1/dispatch')) dispatched = true
+      return undefined
+    }) })
+    await service.signIn('employee@example.test', 'secret')
+    const rejected = service.submitWork({ teamId: 'team-1', teamName: '团队', workflowId: 'flow-1', workflowName: '流程', businessCapabilityIds: ['forge:action:crm_lead.convert'], version: 1 }, '转化线索', fixedSource(await service.accountKey()))
+    await expect(rejected).rejects.toBeInstanceOf(WorkRegistrationRejectedError)
+    await expect(rejected).rejects.toThrow('暂不能授权团队办理业务动作')
+    expect(registered || dispatched).toBe(false)
+  })
+
   it('loads native Forge approvals and refuses unversioned legacy decisions or native resubmit', async () => {
     const calls: Array<{ url: string; method: string; body?: Record<string, unknown> }> = []
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {

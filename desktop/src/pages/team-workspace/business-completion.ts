@@ -12,14 +12,27 @@ function stableJSON(value: unknown): string {
   return object ? `{${Object.keys(object).sort().map((key) => `${JSON.stringify(key)}:${stableJSON(object[key])}`).join(',')}}` : JSON.stringify(value) ?? 'undefined'
 }
 
+function flowMembers(document: TeamDefinition, flow: Workflow): TeamDefinition['members'] {
+  return document.members.filter((member) => member.relationship.enabled === true && flow.graph_definition.nodes.some((node) => (
+    node.type === 'lead' && member.configuration.role === 'avatar'
+    || node.type === 'worker' && member.configuration.role === 'worker' && node.config?.agent_id === member.id
+  )))
+}
+
+/** Weave refuses to publish or authorize a flow whose members can act without this check. */
+export function requireDeclaredBusinessCompletion(document: TeamDefinition): void {
+  for (const flow of document.workflows) {
+    if (flowMembers(document, flow).some((member) => member.configuration.businessCapabilityIds.length > 0) && !businessCompletionRequirement(flow)) {
+      throw new Error(`流程“${flow.name || '未命名流程'}”的成员绑定了业务动作，须先声明“已授权业务动作具备成功回执”完成检查，才能更新团队`)
+    }
+  }
+}
+
 export function requireBusinessCompletionBindings(document: TeamDefinition, flow: Workflow, raw: unknown, catalog: EnterpriseBusinessCapabilityCatalog): string[] {
   if (!Array.isArray(raw) || raw.length < 1 || raw.length > 16 || raw.some((id) => typeof id !== 'string' || !id.trim()) || new Set(raw).size !== raw.length) {
     throw new Error('完成检查须指定 1 至 16 个不重复的业务动作')
   }
-  const enabled = document.members.filter((member) => member.relationship.enabled === true && flow.graph_definition.nodes.some((node) => (
-    node.type === 'lead' && member.configuration.role === 'avatar'
-    || node.type === 'worker' && member.configuration.role === 'worker' && node.config?.agent_id === member.id
-  )))
+  const enabled = flowMembers(document, flow)
   for (const id of raw as string[]) {
     const actions = catalog.capabilities.filter((item) => item.id === id)
     if (actions.length !== 1 || actions[0].status !== 'available') throw new Error('完成检查引用了当前目录中不存在或不可用的业务动作')

@@ -95,6 +95,9 @@ export async function fixedWorkHandoff(choice: EnterpriseWorkChoice, task: strin
     if (registration?.input_revision_id !== inputID || registration.task_sha256 !== scope.task_sha256) throw new Error('Weave 输入回执与本次固定材料不一致，结果待核对')
   } catch (error) {
     if (error instanceof Error && 'code' in error && typeof error.code === 'string' && error.code.startsWith('business_delegation_')) throw new WorkRegistrationRejectedError(error.message)
+    if (error instanceof Error && 'code' in error && error.code === 'business_completion_check_required') {
+      throw new WorkRegistrationRejectedError('该团队流程尚未配置业务办理的回执检查，暂不能授权团队办理业务动作；本次未接单。可只交给团队核对，或请团队维护人员更新流程后再交接')
+    }
     if (error instanceof Error && 'status' in error && error.status === 409) throw new WorkRegistrationRejectedError('code' in error && error.code === 'dispatch_input_too_many_resources'
       ? '团队交接最多允许 10 份材料，新文件和明确复用的原材料合计已超限；本次未接单，请减少材料后重新发起'
       : source.continuation ? '原工作已有更新输入，或交付结果不可修订；请打开最新团队结果消息继续，旧事项不能覆盖后来的工作' : '本次固定交接与已登记内容冲突，请核对当前员工要求后重新发起')

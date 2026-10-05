@@ -451,3 +451,36 @@ it('retains a saved candidate and refuses a concurrent Weave revision change', a
   expect(retry.error).toContain('团队草稿已变化')
   expect(saveCalled).toBe(false)
 })
+
+it('refuses to update a team whose action-bound flow lacks the receipt completion check', async () => {
+  const lead = newMember('deepseek-flash'), worker = newMember('deepseek-flash')
+  lead.configuration.role = 'avatar'; worker.configuration.displayName = '转化员'
+  worker.configuration.businessCapabilityIds = ['forge:action:crm_lead.convert']
+  const document: TeamDefinition = { name: '线索团队', objective: '转化线索', members: [lead, worker], workflows: [{ id: 'flow', name: '转化流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
+  const calls: TeamWorkspaceCommand[] = []
+  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [
+    { id: 'forge:action:crm_lead.convert', name: '转化线索', description: '把线索转为商机', effect: 'write', executionMode: 'team_delegable', resourceType: 'crm_lead', requiresEmployeeIntent: true, status: 'available' },
+  ] }
+  bridge = new TeamDevelopmentAgentBridge({
+    accountKey: async () => 'developer-1', developer: async () => ({ accountId: 'developer-1' }), teams: async () => [{ id: 'team', name: '线索团队' }],
+    team: async () => workspace(document), catalog: async () => catalog, extensionPath: '/app/team-development.ts',
+    workspace: async (command: TeamWorkspaceCommand) => { calls.push(command); throw new Error(`unexpected workspace call: ${command.action}`) },
+  })
+  await bridge.start()
+  const env = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
+  bridge.bindRuntime(env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
+  const call = async (method: string, params: Record<string, unknown> = {}) => {
+    const response = await fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, {
+      method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ method, params }),
+    })
+    return response.json() as Promise<{ ok: boolean; error?: string }>
+  }
+  await call('list')
+  await call('open', { team_name: '线索团队' })
+  const updated = await call('update_team')
+  expect(updated.ok).toBe(false)
+  expect(updated.error).toContain('转化流程')
+  expect(updated.error).toContain('完成检查')
+  expect(calls).toHaveLength(0)
+})
