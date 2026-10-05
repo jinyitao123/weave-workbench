@@ -8,7 +8,6 @@ import { freezeDevelopmentTrialActions, publicationReadinessBlocker, workflowCan
 import { toolActivityEvidence, trialToolMissingDetails, trialToolPayload, trialToolPayloadCompleteness, trialToolStatus, type TrialToolEvidence } from '../../../src/lib/trial-tool-evidence'
 import { CapabilityBridge, type CapabilityClaim, type CapabilityScope } from '../lib/capability-bridge'
 import { HandoffStore, type HandoffStorage } from '../enterprise/handoff-store'
-import { captureEmployeeInput } from '../enterprise/employee-input'
 import { MAX_RPC_WRITE_FRAME_BYTES } from '../agent-rpc/limits'
 import { requireRecord, requireString } from '../validation'
 
@@ -339,6 +338,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       const claim = this.claimForToken(token)
       if (!claim || claim !== pending.claim || claim.harness !== 'pi') return
       const prompt = requireString(value.message, 'command.message', { min: 1, max: 1_048_576, trim: false })
+      const { captureEmployeeInput } = await import('../enterprise/employee-input')
       const captured = captureEmployeeInput(prompt, employeeInput, claim)
       const images = value.images === undefined ? [] : (() => {
         if (!Array.isArray(value.images) || value.images.length > 8) throw new TypeError('桌面员工输入中的图片来源无效')
