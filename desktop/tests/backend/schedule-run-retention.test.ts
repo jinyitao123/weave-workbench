@@ -7,7 +7,19 @@ import { JsonStateStore } from '../../electron/main/store'
 import type { AutomationScheduleRecord, ScheduleRunRecord, ScheduleRunStatus } from '../../src/types/api'
 
 const dirs: string[] = []
-afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }) })
+const stores: JsonStateStore[] = []
+const services: AutomationService[] = []
+afterEach(async () => {
+  for (const service of services.splice(0)) await service.stop()
+  for (const store of stores.splice(0)) await store.beginShutdown()
+  for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true })
+})
+
+function openStore(path: string): JsonStateStore {
+  const store = new JsonStateStore(path)
+  stores.push(store)
+  return store
+}
 
 const execution = { model: 'auto', thinking: 'auto', speed: 'normal' } as const
 const epoch = Date.parse('2030-01-01T00:00:00.000Z')
@@ -65,7 +77,7 @@ function stateFile(state: unknown): { path: string; store: JsonStateStore } {
   dirs.push(dir)
   const path = join(dir, 'state.json')
   writeFileSync(path, JSON.stringify(state))
-  return { path, store: new JsonStateStore(path) }
+  return { path, store: openStore(path) }
 }
 
 function allRuns(store: JsonStateStore): ScheduleRunRecord[] {
@@ -160,7 +172,7 @@ describe('scheduled run history retention', () => {
     await store.update(() => undefined)
     const persisted = JSON.parse(readFileSync(path, 'utf8')) as { schedules: AutomationScheduleRecord[] }
     expect(persisted.schedules.flatMap((task) => task.runs)).toHaveLength(2_000)
-    expect(allRuns(new JsonStateStore(path)).map(({ id }) => id)).toEqual(allRuns(store).map(({ id }) => id))
+    expect(allRuns(openStore(path)).map(({ id }) => id)).toEqual(allRuns(store).map(({ id }) => id))
   })
 
   it('reconciles an active-only overflow after restart without retaining more than 2,000 terminal records', async () => {
@@ -171,6 +183,7 @@ describe('scheduled run history retention', () => {
       run: async () => ({}),
       now: () => new Date('2035-01-01T00:00:00.000Z'),
     })
+    services.push(service)
 
     await service.start()
     const reconciled = allRuns(store)
@@ -183,7 +196,7 @@ describe('scheduled run history retention', () => {
   it('evicts another task\'s oldest terminal record for the first run of a new task at the boundary', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'gooeypi-run-retention-service-'))
     dirs.push(dir)
-    const store = new JsonStateStore(join(dir, 'state.json'))
+    const store = openStore(join(dir, 'state.json'))
     let releaseRun: () => void = () => undefined
     const execute = vi.fn(() => new Promise<Record<string, never>>((resolve) => { releaseRun = () => resolve({}) }))
     const service = new AutomationService(store, {
@@ -192,6 +205,7 @@ describe('scheduled run history retention', () => {
       run: execute,
       now: () => new Date('2030-01-01T00:00:00.000Z'),
     })
+    services.push(service)
     await service.start()
     const newTask = await service.create({
       prompt: 'First run at the boundary',
