@@ -1314,7 +1314,7 @@ describe('post-package verification helpers', () => {
 
   test('keeps every platform native unpack allowlist exact and architecture-specific', () => {
     const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
-    expect(packageJson.author).toEqual({ name: 'Weave Workbench contributors' })
+    expect(packageJson.author).toEqual({ name: 'Weave Workbench contributors', email: '260412432+jinyitao123@users.noreply.github.com' })
     expect(packageJson.description).toBe('The desktop workspace for Weave teams and Forge business applications')
     expect(packageJson.homepage).toBe('https://github.com/jinyitao123/weave-workbench')
     expect(packageJson.build.productName).toBe('Weave Workbench')
