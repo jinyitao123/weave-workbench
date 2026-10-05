@@ -1,0 +1,2 @@
+# Vendor patches target LF files from the reviewed npm tarballs.
+vendor/patches/*.patch text eol=lf
