@@ -13,9 +13,11 @@ import type { TeamWorkspace, TeamWorkspaceCommand } from '../../src/types/team-w
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let root: Root, container: HTMLDivElement, remote: TeamWorkspace, accountId = ''
 let testRun = 0
+let failNextTrial = false
 const overview: EnterpriseDevelopmentOverview = { version: '1', loadedAt: '', runtimes: [], models: ['deepseek-flash'], teams: [{ id: 'team', name: '合同团队', status: 'active', updatedAt: '', workflows: [], runs: [], workers: [] }] }
 const call = vi.fn(async (command: TeamWorkspaceCommand): Promise<unknown> => {
   if (command.action === 'save') { if (command.revision !== remote.revision) throw new Error('草稿冲突'); remote = { ...remote, revision: remote.revision + 1, document: command.document } }
+  if (command.action === 'trial' && failNextTrial) { failNextTrial = false; throw new Error('传输结果待核对') }
   return structuredClone(remote)
 })
 const getBusinessCapabilityCatalog = vi.fn(async (): Promise<EnterpriseBusinessCapabilityCatalog> => ({ version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [], refreshedAt: '' }))
@@ -47,6 +49,7 @@ const contractAction = (params: NonNullable<EnterpriseBusinessCapabilityCatalog[
 
 beforeEach(() => {
   vi.clearAllMocks()
+  failNextTrial = false
   // Unsaved drafts survive remounts per account; a fresh account keeps tests independent.
   accountId = `developer-${++testRun}`
   const lead = newMember('deepseek-flash'), worker = newMember('deepseek-flash')
@@ -205,7 +208,7 @@ it('shows actual flow links and material bindings, and invalidates old trial app
   await save()
   expect(JSON.stringify(remote.document.workflows[0]!.graph_definition.nodes.find((n) => n.id === 'work')!.inputs)).not.toContain('run_input')
   expect(publishButton()?.disabled).toBe(true)
-  expect(container.textContent).toContain('当前草稿还需调试通过')
+  expect(container.textContent).toContain('流程“合同审核”还需通过当前草稿的试跑。')
 })
 
 it('keeps the explicitly selected executor through save and a fresh read', async () => {
@@ -315,4 +318,27 @@ it('prevents duplicate trial submission and names tool completion states', async
   expect(runLabel('tool_started')).toBe('工具调用中')
   expect(runLabel('tool_completed')).toBe('工具调用完成')
   expect(runLabel('tool_failed')).toBe('工具调用失败')
+})
+
+it('keeps candidate actions closed by default and retries one fixed simulation scope', async () => {
+  const action = contractAction([])
+  remote.document.members[1]!.configuration.businessCapabilityIds = [action.id]
+  getBusinessCapabilityCatalog.mockResolvedValueOnce({ version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [action], refreshedAt: '' })
+  failNextTrial = true
+  await open('workflow'); await click('调试'); await edit('测试输入', '模拟合同检查')
+  const actionChoice = container.querySelector<HTMLButtonElement>('.product-switch')
+  expect(actionChoice?.getAttribute('aria-checked')).toBe('false')
+  expect(actionChoice?.textContent).toContain('本次未开放')
+  expect(container.textContent).not.toContain(action.id)
+  await act(async () => actionChoice!.click())
+  expect(container.querySelector<HTMLButtonElement>('.product-switch')?.getAttribute('aria-checked')).toBe('true')
+
+  await click('开始调试')
+  expect(container.querySelector('[role="alert"]')?.textContent).toContain('传输结果待核对')
+  await click('重试本次提交')
+  const trials = call.mock.calls.map(([command]) => command).filter((command) => command.action === 'trial')
+  expect(trials).toHaveLength(2)
+  expect(trials[0]!.requestId).toBe(trials[1]!.requestId)
+  expect(trials[0]!.businessActions).toMatchObject([{ id: action.id, simulationAuthorized: true }])
+  expect(trials[1]!.businessActions).toEqual(trials[0]!.businessActions)
 })

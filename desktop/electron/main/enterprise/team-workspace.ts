@@ -33,6 +33,7 @@ export async function teamWorkspaceRequest(command: TeamWorkspaceCommand, read: 
         capability_id: action.id, name: action.actionName, object_name: action.objectName, label: action.name,
         description: action.description, requires_record: action.requiresRecord === true,
         requires_confirmation: action.requiresConfirmation === true, params: action.params ?? [],
+        simulation_authorized: action.simulationAuthorized === true,
       })),
     })).body
     case 'input': return read(`${base}/trials/${encodeURIComponent(command.requestId)}/input`)

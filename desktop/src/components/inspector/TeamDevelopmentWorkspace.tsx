@@ -6,6 +6,7 @@ import { AudienceEditor } from '@/pages/team-workspace/AudienceEditor'
 import { FlowCanvas, ObjectMenu, stepTypeLabel } from '@/pages/team-workspace/TeamCanvas'
 import { StepInspector } from '@/pages/team-workspace/StepInspector'
 import { TrialPanel } from '@/pages/team-workspace/TrialPanel'
+import { publicationReadinessBlocker, workflowTrialBlocker } from '@/pages/team-workspace/development-trial'
 import { useTeamDraft } from '@/pages/team-workspace/useTeamDraft'
 import { addParallelBranch, canInsertSerialStep, configureWorkflowResultProtocol, initialGraph, insertStep, removeStep, serializeParallel, WORKBENCH_RESULT_PROTOCOL } from '@/pages/team-workspace/graph'
 import { isSystemManagedBusinessParameter, newMember } from '@/pages/team-workspace/member'
@@ -31,8 +32,9 @@ export function publishBlocker(current: TeamWorkspace, business: EnterpriseBusin
   if ([...ids].some((id) => business?.capabilities.find((item) => item.id === id)?.status !== 'available')) return '有不可用的业务动作'
   if (current.document.members.some((item) => item.configuration.businessCapabilityBindings.some((binding) => item.configuration.businessCapabilityIds.includes(binding.capabilityId) && binding.parameters.some((parameter) => isSystemManagedBusinessParameter(parameter.name))))) return '有需要移除的旧参数映射'
   if (!current.document.workflows.length) return '还没有工作流程'
-  if (!current.document.workflows.every((item) => current.trials.some((trial) => trial.workflow_id === item.id && trial.revision === current.revision && trial.status === 'succeeded'))) return '当前草稿还需调试通过'
-  return ''
+  const trialBlocker = workflowTrialBlocker(current)
+  if (trialBlocker) return trialBlocker
+  return publicationReadinessBlocker(current, business)
 }
 
 export function TeamDevelopmentWorkspace({ teamId, accountId, runtime, enterprise, overview, catalog, catalogError, proposal, bindRequested, refreshVersion, view, onBound, onClearProposal, onDirtyChange, onError, onPublish }: {

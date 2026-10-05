@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto'
 import type { EnterpriseBusinessCapability, EnterpriseBusinessCapabilityCatalog } from '../../../src/types/api'
-import type { TeamDefinition, TeamWorkspace, TeamWorkspaceCommand } from '../../../src/types/team-workspace'
+import type { DevelopmentTrialAction, TeamDefinition, TeamWorkspace, TeamWorkspaceCommand } from '../../../src/types/team-workspace'
 import { applyTeamDevelopmentOperations, type TeamDevelopmentProposal } from '../../../src/pages/team-workspace/development-proposal'
 import { WORKBENCH_RESULT_PROTOCOL } from '../../../src/pages/team-workspace/graph'
 import { businessCompletionRequirement, requireBusinessCompletionBindings, requireDeclaredBusinessCompletion } from '../../../src/pages/team-workspace/business-completion'
+import { freezeDevelopmentTrialActions, publicationReadinessBlocker, workflowCandidateCapabilityIds, workflowSimulationChoices, workflowTrialBlocker } from '../../../src/pages/team-workspace/development-trial'
 import { toolActivityEvidence, trialToolMissingDetails, trialToolPayload, trialToolPayloadCompleteness, trialToolStatus, type TrialToolEvidence } from '../../../src/lib/trial-tool-evidence'
 import { CapabilityBridge, type CapabilityClaim, type CapabilityScope } from '../lib/capability-bridge'
 import { HandoffStore, type HandoffStorage } from '../enterprise/handoff-store'
@@ -31,6 +32,8 @@ interface DevelopmentTrial {
   revision: number
   requestId: string
   intentDigest: string
+  simulationActionSelectors?: string[]
+  businessActions?: DevelopmentTrialAction[]
   runId?: string
   stepNames: Record<string, string>
 }
@@ -79,6 +82,16 @@ function sameDocument(left: TeamDefinition, right: TeamDefinition): boolean {
 
 function digest(value: unknown): string {
   return createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(canonical(value))).digest('hex')
+}
+
+function requestedSimulationSelectors(value: unknown): string[] {
+  if (value === undefined) return []
+  if (!Array.isArray(value) || value.length > 32 || value.some((item) => typeof item !== 'string' || !item.trim() || item.length > 512)) {
+    throw new TypeError('本次模拟动作选择无效')
+  }
+  const selectors = value as string[]
+  if (new Set(selectors).size !== selectors.length) throw new TypeError('本次模拟动作不能重复选择')
+  return selectors
 }
 
 function stableUuid(value: string): string {
@@ -253,9 +266,17 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
         workflows: workflows.map((flow) => {
           const stepName = (id: unknown) => flow.graph_definition.nodes.find((node) => node.id === id)?.label ?? '未命名步骤'
           const completion = businessCompletionRequirement(flow)
+          const candidateIds = workflowCandidateCapabilityIds(context.document, flow)
+          const candidateActions = candidateIds.flatMap((id) => context.catalog.capabilities.filter((item) => item.id === id))
+          const simulationActions = workflowSimulationChoices(candidateActions).map(({ selector, action }) => ({
+            selector, name: action.name, description: action.description,
+            effect: action.effect === 'write' ? '业务写动作' : '只读业务动作',
+            status: action.status === 'available' ? '可模拟' : '暂不可用',
+          }))
           return {
             name: flow.name, description: flow.description,
             ...(completion ? { businessCompletion: { actions: completion.capabilities.map(capabilityName), whenAuthorized: true, allowNeedsInput: completion.allowNeedsInput } } : {}),
+            simulation_actions: simulationActions,
             resultProtocol: flow.graph_definition.result_protocol === WORKBENCH_RESULT_PROTOCOL ? '可要求补充材料' : '普通结果',
             steps: flow.graph_definition.nodes.map((node) => ({
               name: node.label || '未命名步骤', type: ({ lead: '负责人处理', worker: '成员执行', parallel: '并行分工', join: '汇合结果', deliver: '交付结果' } as Record<string, string>)[node.type] ?? '流程步骤',
@@ -405,11 +426,11 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
     }
   }
 
-  private businessActions(context: DevelopmentContext): EnterpriseBusinessCapability[] {
-    const ids = new Set(context.document.members.flatMap((member) => member.configuration.businessCapabilityIds))
-    return [...ids].map((id) => {
+  private businessActions(context: DevelopmentContext, workflow: TeamDefinition['workflows'][number]): EnterpriseBusinessCapability[] {
+    const ids = workflowCandidateCapabilityIds(context.document, workflow)
+    return ids.map((id) => {
       const action = context.catalog.capabilities.find((candidate) => candidate.id === id)
-      if (!action || action.executionMode === 'employee_only' || action.status !== 'available' || !action.actionName || !action.objectName) throw new Error(action?.unavailableReason ?? '团队选择了暂不可用的 Forge 业务动作，请先修正团队草稿')
+      if (!action || action.executionMode === 'employee_only' || action.status !== 'available' || !action.actionName || !action.objectName) throw new Error(action?.unavailableReason ?? '当前流程候选成员绑定了暂不可用的 Forge 业务动作，请先修正团队草稿')
       return action
     })
   }
@@ -429,31 +450,40 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       throw new Error('团队草稿或侧栏修改尚未与远端保存版本一致；请先解决草稿冲突，再试跑。')
     }
     context.stale = false
-    const actions = this.businessActions(context)
-    const intentDigest = digest({ teamId: context.teamId, revision: context.revision, workflowId: workflow.id, input, actions })
+    const selectors = requestedSimulationSelectors(params.simulation_actions)
+    const intentDigest = digest({ teamId: context.teamId, revision: context.revision, workflowId: workflow.id, input, simulationActions: [...selectors].sort() })
     const prior = this.trials.get(claim.token)
+    if (prior && (!Array.isArray(prior.simulationActionSelectors) || !Array.isArray(prior.businessActions))) {
+      throw new Error('上次试跑没有保存完整的固定模拟动作范围；请先读取该试跑状态并确认结束，再开始新的试跑。')
+    }
     const trial = prior?.intentDigest === intentDigest ? prior : undefined
     if (!trial) {
       const sessionKey = claim.sessionPath ?? claim.token
+      const actions = this.businessActions(context, workflow)
+      const frozenActions = freezeDevelopmentTrialActions(workflowSimulationChoices(actions), selectors)
       const nextTrial: DevelopmentTrial = {
         teamId: context.teamId, workflowId: workflow.id, workflowName: workflow.name,
         revision: context.revision,
         requestId: stableUuid(`${context.accountKey}:${sessionKey}:${context.teamId}:${intentDigest}`),
         intentDigest,
+        simulationActionSelectors: [...selectors].sort(),
+        businessActions: frozenActions,
         stepNames: Object.fromEntries(workflow.graph_definition.nodes.map((node) => [node.id, node.label || '流程步骤'])),
       }
       this.trials.set(claim.token, nextTrial)
       await this.persist(claim)
-      return this.submitTrial(context, developer, nextTrial, actions, input, claim)
+      return this.submitTrial(context, developer, nextTrial, input, claim)
     }
-    return this.submitTrial(context, developer, trial, actions, input, claim)
+    return this.submitTrial(context, developer, trial, input, claim)
   }
 
-  private async submitTrial(context: DevelopmentContext, developer: { accountId: string }, trial: DevelopmentTrial, actions: EnterpriseBusinessCapability[], input: string, claim: CapabilityClaim): Promise<unknown> {
+  private async submitTrial(context: DevelopmentContext, developer: { accountId: string }, trial: DevelopmentTrial, input: string, claim: CapabilityClaim): Promise<unknown> {
+    if (!Array.isArray(trial.simulationActionSelectors) || !Array.isArray(trial.businessActions)) throw new Error('本次试跑固定动作范围缺失；不会用新的模拟授权重试')
+    if (context.teamId !== trial.teamId || context.revision !== trial.revision || await this.options.accountKey() !== context.accountKey) throw new Error('账号、团队或草稿修订已变化；本次固定试跑不会转移到新的开发上下文')
     const receipt = await this.options.workspace({
-      action: 'trial', teamId: context.teamId, accountId: developer.accountId,
+      action: 'trial', teamId: trial.teamId, accountId: developer.accountId,
       revision: trial.revision, workflowId: trial.workflowId, requestId: trial.requestId,
-      input, businessActions: actions,
+      input, businessActions: trial.businessActions,
     }) as DevelopmentTrialReceipt
     if (receipt?.request_id && receipt.request_id !== trial.requestId) throw new Error('Weave 返回了不同的试跑回执')
     if (typeof receipt?.run_id === 'string') trial.runId = receipt.run_id
@@ -485,7 +515,9 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
     const material = inputResult.value
     const activity = activityResult.status === 'fulfilled' ? activityResult.value : undefined
     if (activity?.status && ['succeeded', 'failed', 'cancelled'].includes(activity.status)) {
-      this.trials.set(claim.token, trial)
+      const legacyTrial = !Array.isArray(trial.simulationActionSelectors) || !Array.isArray(trial.businessActions)
+      if (legacyTrial) this.trials.delete(claim.token)
+      else this.trials.set(claim.token, trial)
       await this.persist(claim)
     }
     const completeness = activity?.completeness ?? {}
@@ -560,6 +592,10 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
     }
     if (remote.published_revision === context.revision) return { team: remote.document.name, status: '已更新', message: '该团队版本已经生效。' }
     requireDeclaredBusinessCompletion(context.document)
+    const trialBlocker = workflowTrialBlocker(remote)
+    if (trialBlocker) throw new Error(trialBlocker)
+    const readinessBlocker = publicationReadinessBlocker(remote, context.catalog)
+    if (readinessBlocker) throw new Error(readinessBlocker)
     try {
       const updated = await this.options.workspace({ action: 'publish', teamId: context.teamId, accountId: developer.accountId, revision: context.revision }) as TeamWorkspace
       if (!updated || updated.published_revision !== context.revision) throw new Error('Weave 尚未确认本次团队版本已生效')

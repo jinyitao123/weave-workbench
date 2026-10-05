@@ -34,9 +34,15 @@ it('freezes Forge action definitions into a development trial request', async ()
   const write = vi.fn(async () => ({ body: { request_id: 'trial-1' } }))
   await teamWorkspaceRequest({
     action: 'trial', teamId: 'team', revision: 3, workflowId: 'flow', requestId: '00000000-0000-4000-8000-000000000001', input: 'sample',
-    businessActions: [{ id: 'forge:action:sales_contract.ContractSubmit', name: '提交指定合同版本', description: '提交冻结版本', effect: 'write', resourceType: 'sales_contract', requiresEmployeeIntent: true, status: 'available', actionName: 'ContractSubmit', objectName: 'sales_contract', requiresRecord: true, params: [{ name: 'material_file_id', type: 'string', required: true }] }],
+    businessActions: [
+      { id: 'forge:action:sales_contract.ContractSubmit', name: '提交指定合同版本', description: '提交冻结版本', effect: 'write', resourceType: 'sales_contract', requiresEmployeeIntent: true, status: 'available', actionName: 'ContractSubmit', objectName: 'sales_contract', requiresRecord: true, params: [{ name: 'material_file_id', type: 'string', required: true }], simulationAuthorized: true },
+      { id: 'forge:action:sales_contract.Read', name: '读取合同材料', description: '读取当前合同', effect: 'read', resourceType: 'sales_contract', requiresEmployeeIntent: false, status: 'available', actionName: 'Read', objectName: 'sales_contract', simulationAuthorized: false },
+    ],
   }, read, write)
   expect(write).toHaveBeenCalledWith('/v1/teams/team/development/trials', 'POST', expect.objectContaining({
-    business_actions: [{ capability_id: 'forge:action:sales_contract.ContractSubmit', name: 'ContractSubmit', object_name: 'sales_contract', label: '提交指定合同版本', description: '提交冻结版本', requires_record: true, requires_confirmation: false, params: [{ name: 'material_file_id', type: 'string', required: true }] }],
+    business_actions: [
+      { capability_id: 'forge:action:sales_contract.ContractSubmit', name: 'ContractSubmit', object_name: 'sales_contract', label: '提交指定合同版本', description: '提交冻结版本', requires_record: true, requires_confirmation: false, params: [{ name: 'material_file_id', type: 'string', required: true }], simulation_authorized: true },
+      { capability_id: 'forge:action:sales_contract.Read', name: 'Read', object_name: 'sales_contract', label: '读取合同材料', description: '读取当前合同', requires_record: false, requires_confirmation: false, params: [], simulation_authorized: false },
+    ],
   }))
 })
