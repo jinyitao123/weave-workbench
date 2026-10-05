@@ -1,5 +1,6 @@
 import type { EnterpriseBusinessCapability, EnterpriseBusinessCapabilityCatalog } from '../../types/api'
 import type { TeamDefinition, TeamPublicationReadiness, TeamWorkspace, DevelopmentTrialAction } from '../../types/team-workspace'
+import { businessCompletionRequirement } from './business-completion'
 
 type Workflow = TeamDefinition['workflows'][number]
 
@@ -82,12 +83,21 @@ export function workflowTrialBlocker(workspace: TeamWorkspace): string {
 function validReadiness(value: unknown): value is TeamPublicationReadiness {
   if (!value || typeof value !== 'object') return false
   const readiness = value as Partial<TeamPublicationReadiness>
+  const validIds = (ids: unknown) => Array.isArray(ids) && ids.every((id) => typeof id === 'string' && id.trim().length > 0) && new Set(ids).size === ids.length
   return typeof readiness.ready === 'boolean' && Array.isArray(readiness.workflows) && readiness.workflows.every((item) => Boolean(item)
     && typeof item.workflow_id === 'string'
     && typeof item.passed === 'boolean'
-    && Array.isArray(item.required_capability_ids) && item.required_capability_ids.every((id) => typeof id === 'string')
-    && Array.isArray(item.covered_capability_ids) && item.covered_capability_ids.every((id) => typeof id === 'string')
-    && Array.isArray(item.missing_capability_ids) && item.missing_capability_ids.every((id) => typeof id === 'string'))
+    && validIds(item.required_capability_ids)
+    && validIds(item.covered_capability_ids)
+    && validIds(item.missing_capability_ids))
+    && new Set(readiness.workflows.map((item) => item.workflow_id)).size === readiness.workflows.length
+}
+
+function sameNonEmptyIdSet(actual: string[], expected: string[]): boolean {
+  const actualIds = new Set(actual), expectedIds = new Set(expected)
+  return expected.length > 0 && actual.length === expected.length
+    && actualIds.size === actual.length && expectedIds.size === expected.length
+    && [...expectedIds].every((id) => actualIds.has(id))
 }
 
 /** Older responses remain usable for read-only flows, but never authorize a write-action publish. */
@@ -99,10 +109,29 @@ export function publicationReadinessBlocker(workspace: TeamWorkspace, catalog?: 
     return '当前草稿的服务端模拟覆盖结果无法读取，请刷新团队后再更新。'
   }
   const readiness = raw
+  const expectedWorkflowIds = new Set(workspace.document.workflows.map((workflow) => workflow.id))
+  if (expectedWorkflowIds.size !== workspace.document.workflows.length
+    || readiness.workflows.length !== workspace.document.workflows.length
+    || readiness.workflows.some((item) => !expectedWorkflowIds.has(item.workflow_id))) {
+    return '服务端模拟覆盖对应的流程与当前草稿不一致，请刷新团队后再更新。'
+  }
+  const resultByWorkflow = new Map(readiness.workflows.map((item) => [item.workflow_id, item]))
+  for (const workflow of writeWorkflows) {
+    const result = resultByWorkflow.get(workflow.id)!
+    let requirement: ReturnType<typeof businessCompletionRequirement>
+    try {
+      requirement = businessCompletionRequirement(workflow)
+    } catch {
+      return `流程“${workflow.name}”的当前回执要求无法核验。`
+    }
+    if (!requirement?.capabilities.length) return `流程“${workflow.name}”未声明必办业务动作回执。`
+    if (!sameNonEmptyIdSet(result.required_capability_ids, requirement.capabilities)) {
+      return `流程“${workflow.name}”的当前回执要求与服务端模拟覆盖不一致。`
+    }
+  }
   if (!readiness.ready) {
     for (const workflow of writeWorkflows) {
-      const result = readiness.workflows.find((item) => item.workflow_id === workflow.id)
-      if (!result) return `流程“${workflow.name}”尚无服务端模拟覆盖结果。`
+      const result = resultByWorkflow.get(workflow.id)!
       const uncovered = [...new Set([
         ...result.missing_capability_ids,
         ...result.required_capability_ids.filter((id) => !result.covered_capability_ids.includes(id)),
@@ -116,8 +145,7 @@ export function publicationReadinessBlocker(workspace: TeamWorkspace, catalog?: 
     return '服务端尚未确认当前草稿达到发布条件。'
   }
   for (const workflow of workspace.document.workflows) {
-    const result = readiness.workflows.find((item) => item.workflow_id === workflow.id)
-    if (!result) return `流程“${workflow.name}”尚无服务端模拟覆盖结果。`
+    const result = resultByWorkflow.get(workflow.id)!
     if (writeWorkflows.some((item) => item.id === workflow.id)
       && (result.required_capability_ids.some((id) => !result.covered_capability_ids.includes(id)) || result.missing_capability_ids.length)) {
       const missing = [...new Set([
