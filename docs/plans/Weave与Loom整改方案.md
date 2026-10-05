@@ -202,7 +202,7 @@ thinking首轮实际包含非空续传与两个工具调用，推理正文只留
 
 **Loom（main `5c0eb1f6c871` 与 `13716ba4d678`，不含业务词汇，默认路径不变）。**
 
-- `ChatRequest.ToolChoice`（auto／none／required／指定工具）；为nil时请求序列化逐字节不变。OpenAI兼容适配映射为 `tool_choice`，发送前校验与本次工具列表一致；`WithToolChoiceModes` 声明端点支持的方式，未声明的方式返回 `ErrToolChoiceUnsupported`，不静默丢弃。
+- `ChatRequest.ToolChoice`（auto／none／required／指定工具）；为nil时请求序列化逐字节不变。OpenAI兼容适配映射为 `tool_choice`，发送前校验与本次工具列表一致；`WithToolChoiceModes` 可显式限制端点支持的方式，设置限制后未声明的方式返回 `ErrToolChoiceUnsupported`，不静默丢弃。
 - `ToolLoopOpts.ToolChoicePolicy`／`ToolChoicePolicyID`：宿主只在“上一轮候选完成被拒绝”之后的一轮约束调用；`CompletionDecision.Reason` 把机器原因传给策略，不进入对话。响应违背约束时以 `ErrToolChoiceNotHonored` 停止，其中的调用不派发。校验器另收到 `PriorRejections`（本次循环此前的拒绝原因，最多64条），不进入对话、不受上下文压缩影响，随检查点或暂停快照保存，宿主据此执行“只复核一次”，无需匹配反馈文字。受控循环把拒绝标记随检查点保存；只有配置策略的循环才改变续跑指纹，已暂停的旧检查点身份不变。
 - 协议观察增加实际发送的 thinking、reasoning_effort、response_format、tool_choice 枚举，以及正文字节、DSML文本调用标记、推理帧计数，只计数不留正文。
 - `provider/deepseek`（仅CLI使用）不再按0..n取调用而丢稀疏索引，流未见 `[DONE]` 以错误块收尾；CLI流聚合识别错误块。
