@@ -1,5 +1,6 @@
 import { definePermissionSet } from '@objectstack/spec';
 import { salesQuotationCostFieldMask } from './sales-quotation.permission.js';
+import { SALES_CONTRACT_ORDER_LINE_READ_KEY } from '../plugins/sales-project-order-line-scope.js';
 
 const readReferenceData = {
   allowRead: true,
@@ -25,6 +26,8 @@ export const salesContractOperatorPermission = definePermissionSet({
   description: '允许销售员工新建、修改并提交自己负责的销售合同。',
   systemPermissions: ['sales_contract_operator'],
   fields: salesQuotationCostFieldMask,
+  rowLevelSecurity: [{ name: 'owned_contract_or_native_shared_order_lines', object: 'forge_sales_order_line', operation: 'select',
+    using: 'id in current_user.' + SALES_CONTRACT_ORDER_LINE_READ_KEY }],
   objects: {
     forge_sales_contract: {
       allowCreate: true,
@@ -41,6 +44,7 @@ export const salesContractOperatorPermission = definePermissionSet({
       writeScope: 'own',
     },
     forge_sales_order: readReferenceData,
+    forge_sales_order_line: readOwnRecords,
     forge_sales_additional_fee: {
       allowCreate: true,
       allowRead: true,

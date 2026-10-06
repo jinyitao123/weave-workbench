@@ -16,5 +16,30 @@ export async function businessRecordVersion(engine: IObjectQLEngine, objectName:
     if (rows.length > 1000) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_RECORD_INCOMPLETE', '当前业务明细不可完整核对');
     related.push(rows);
   }
+  if (objectName === 'forge_project') {
+    for (const object of ['forge_project_sales_link', 'forge_project_member']) {
+      const rows = await engine.find(object, { where: { project_id: recordId, organization_id: organizationId }, orderBy: [{ field: 'id', order: 'asc' }], limit: 1001 }, { context });
+      if (rows.length > 1000) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_RECORD_INCOMPLETE', '项目关联或成员无法完整核对');
+      related.push(rows);
+    }
+  }
+  if (objectName === 'forge_customer' || objectName === 'forge_project') {
+    const orders = await engine.find('forge_sales_order', { where: { organization_id: organizationId,
+      ...(objectName === 'forge_project' ? { id: record.source_order_id || '__no_source__' } : { customer_id: recordId, status: { $in: ['approved', 'active'] }, approval_outcome: 'approved' }) },
+      orderBy: [{ field: 'id', order: 'asc' }], limit: 101 }, { context });
+    if (orders.length > 100) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_RECORD_INCOMPLETE', '项目可选订单超过完整核对范围');
+    related.push(orders);
+    for (const order of orders) {
+      const contract = await engine.findOne('forge_sales_contract', { where: { id: order.contract_id, organization_id: organizationId } }, { context });
+      related.push(contract);
+      for (const [object, field, id] of [['forge_sales_order_line', 'order_id', order.id], ['forge_sales_contract_line', 'contract_id', order.contract_id],
+        ...(contract?.quotation_id ? [['forge_quotation_line', 'quotation_id', contract.quotation_id]] : [])]) {
+        const rows = await engine.find(object as string, { where: { [field as string]: id, organization_id: organizationId }, orderBy: [{ field: 'id', order: 'asc' }], limit: 1001 }, { context });
+        if (rows.length > 1000) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_RECORD_INCOMPLETE', '项目来源明细无法完整核对');
+        related.push(rows);
+      }
+      if (contract?.quotation_id) related.push(await engine.findOne('forge_quotation', { where: { id: contract.quotation_id, organization_id: organizationId } }, { context }));
+    }
+  }
   return digest(canonicalJSON(JSON.parse(JSON.stringify({ record, related }))));
 }

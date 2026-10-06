@@ -61,7 +61,9 @@ test('project RLS membership is declared only on Project SELECT and never widens
     assert.doesNotMatch(policy.check || '', /active_project_ids/);
   }
   const managerReadObjects = ['forge_project_member', 'forge_project_cost_entry', 'forge_project_daily_report', 'forge_project_settlement', 'forge_project_plan', 'forge_project_work_item', 'forge_project_timesheet', 'forge_project_expense', 'forge_project_expense_line', 'forge_project_attachment', 'sys_file', 'forge_project_plan_template', 'sys_import_job'];
-  assert.deepEqual(Object.keys(projectManagerPermission.objects), managerReadObjects);
+  const sourceObjects=['forge_customer','forge_sales_contract','forge_sales_contract_line','forge_sales_order','forge_sales_order_line','forge_quotation','forge_quotation_line'];
+  assert.deepEqual(Object.keys(projectManagerPermission.objects), [...sourceObjects,...managerReadObjects]);
+  for (const object of sourceObjects) {assert.equal(projectManagerPermission.objects[object].allowRead,true);assert.equal(projectManagerPermission.objects[object].readScope,'own');for(const key of ['allowCreate','allowEdit','allowDelete','allowTransfer','viewAllRecords','modifyAllRecords'])assert.equal(Boolean(projectManagerPermission.objects[object][key]),false);assert.ok(!(projectManagerPermission.rowLevelSecurity||[]).some(rule=>rule.object===object),'native own/shared source read has no erroneous project-position AND');}
   for (const objectName of managerReadObjects) {
     const grant = projectManagerPermission.objects[objectName];
     assert.equal(grant.allowRead, true);

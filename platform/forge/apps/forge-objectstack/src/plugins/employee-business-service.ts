@@ -12,7 +12,7 @@ import { withEmployeeBusinessBinding } from './employee-business-binding.js';
 
 const CONTEXT = 'forge_employee_business_context';
 const OPERATION = 'forge_employee_business_operation';
-const OBJECTS = new Set(['forge_quotation', 'forge_sales_contract', 'forge_sales_order', 'forge_customer_prepayment']);
+const OBJECTS = new Set(['forge_customer', 'forge_project', 'forge_quotation', 'forge_sales_contract', 'forge_sales_order', 'forge_customer_prepayment']);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SHA = /^[0-9a-f]{64}$/;
 type Employee = Awaited<ReturnType<typeof nativeEmployee>>;
@@ -290,9 +290,13 @@ export class EmployeeBusinessService {
         if (raw?.ok !== true || raw.action !== actionName || raw.objectName !== objectName || raw.recordId !== recordId) throw new Error('原生动作未返回准确成功包络');
         const resultRecord = businessRow(raw.result);
         const newId = nonempty(resultRecord?.id);
-        if (!newId || !['quotation_convert_to_contract', 'contract_convert_to_sales_order', 'contract_register_customer_prepayment'].includes(actionName) && newId !== recordId) throw new Error('原生业务回执缺少准确记录引用');
+        if (!newId || !['customer_create_project', 'quotation_convert_to_contract', 'contract_convert_to_sales_order', 'contract_register_customer_prepayment'].includes(actionName) && newId !== recordId) throw new Error('原生业务回执缺少准确记录引用');
         if (actionName === 'quotation_convert_to_contract' && (objectName !== 'forge_quotation' || resultRecord?.quotation_id !== recordId || newId === recordId)) throw new Error('报价转换回执未绑定准确来源');
-        const reference = newId && newId !== recordId && actionName === 'contract_convert_to_sales_order'
+        if (actionName === 'customer_create_project' && (objectName !== 'forge_customer' || resultRecord?.customer_id !== recordId
+          || resultRecord?.approved_order_id !== input.values.approved_order_id || newId === recordId)) throw new Error('项目立项回执未绑定准确客户与订单');
+        const reference = actionName === 'customer_create_project'
+          ? { objectName: 'forge_project', recordId: newId, label: String(input.values.name || '项目') }
+          : newId && newId !== recordId && actionName === 'contract_convert_to_sales_order'
           ? { objectName: 'forge_sales_order', recordId: newId, label: String(input.values.name || input.values.code || '销售订单') }
           : actionName === 'contract_register_customer_prepayment'
             ? { objectName: 'forge_customer_prepayment', recordId: newId!, label: '合同预收款 ' + String(input.values.code || '') }
@@ -303,6 +307,14 @@ export class EmployeeBusinessService {
           const receipt = await this.engine.findOne('forge_quotation_contract_conversion', { where: { quotation_id: recordId, contract_id: newId, converted_by: employee.userId, organization_id: employee.organizationId } }, { context: transaction });
           if (!converted || !receipt) throw new Error('报价转换目标缺少权威业务绑定');
           reference.label = String(converted.name || converted.code || '销售合同').slice(0, 300);
+        }
+        if (actionName === 'customer_create_project') {
+          const project = await this.engine.findOne('forge_project', { where: { id: newId, customer_id: recordId, source_order_id: input.values.approved_order_id,
+            owner_id: employee.userId, organization_id: employee.organizationId }, fields: ['id', 'name', 'code', 'manager_id', 'status', 'creation_request_signature'] }, { context: transaction });
+          const member = project ? await this.engine.findOne('forge_project_member', { where: { project_id: newId, user_id: project.manager_id,
+            member_duty: 'manager', active: true, organization_id: employee.organizationId } }, { context: transaction }) : null;
+          if (!project || !member || !project.creation_request_signature) throw new Error('项目立项目标缺少准确权威绑定');
+          reference.label = String(project.name || project.code || '项目').slice(0, 300);
         }
         operation = { ...operation, status: 'succeeded', updatedAt: new Date().toISOString(), summary: `${action.label}已办理`,
           recordReferences: actionName === 'quotation_convert_to_contract' ? [bound.record, reference] : [reference] };

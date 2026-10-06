@@ -1,5 +1,6 @@
 import { isGrantActive, isRowActive, type Plugin, type PluginContext } from '@objectstack/core';
-import type { IObjectQLEngine, IRlsMembershipResolver, RlsMembershipContext } from '@objectstack/spec/contracts';
+import type { IObjectQLEngine, IRlsMembershipResolver, RlsMembershipContext, ISharingService } from '@objectstack/spec/contracts';
+import { SALES_CONTRACT_ORDER_LINE_READ_KEY, salesProjectOrderLineScope } from './sales-project-order-line-scope.js';
 import { RLS_MEMBERSHIP_RESOLVER_SERVICE } from '@objectstack/spec/contracts';
 import type { ExecutionContext as KernelExecutionContext } from '@objectstack/spec/kernel';
 import type { PermissionSet as NativePermissionSet } from '@objectstack/spec/security';
@@ -395,14 +396,14 @@ async function resolveProjectPositionScopes(
 }
 
 /** Resolves only active membership rows in organizations admitted by the core tenancy context. */
-export function createProjectMembershipRlsResolver(getEngine: EngineProvider): IRlsMembershipResolver {
+export function createProjectMembershipRlsResolver(getEngine: EngineProvider, getSharing?: () => ISharingService): IRlsMembershipResolver {
   return {
-    keys: [PROJECT_RLS_MEMBERSHIP_KEY, PROJECT_MANAGER_RLS_KEY, ...projectPositionRlsKeys],
+    keys: [PROJECT_RLS_MEMBERSHIP_KEY, PROJECT_MANAGER_RLS_KEY, ...projectPositionRlsKeys, SALES_CONTRACT_ORDER_LINE_READ_KEY],
     async resolve(context) {
       const userId = text(context.userId);
       const scopedOrganizationIds = organizationIds(context);
       if (!userId || !scopedOrganizationIds.length) {
-        return { [PROJECT_RLS_MEMBERSHIP_KEY]: [], [PROJECT_MANAGER_RLS_KEY]: [], ...emptyProjectPositionScopes() };
+        return { [PROJECT_RLS_MEMBERSHIP_KEY]: [], [PROJECT_MANAGER_RLS_KEY]: [], ...emptyProjectPositionScopes(), [SALES_CONTRACT_ORDER_LINE_READ_KEY]: [] };
       }
 
       const engine = getEngine();
@@ -500,6 +501,16 @@ export function createProjectMembershipRlsResolver(getEngine: EngineProvider): I
       Object.assign(result, emptyProjectPositionScopes());
     }
   }
+  if (getSharing) {
+    try {
+      const ids = new Set<string>();
+      for (const organizationId of scopedOrganizationIds) for (const id of await salesProjectOrderLineScope(engine, getSharing(), context, organizationId)) ids.add(id);
+      result[SALES_CONTRACT_ORDER_LINE_READ_KEY] = [...ids];
+    } catch {
+      // A failed authorization projection cannot turn into an org-wide child
+      // read. Unresolved membership keys remain denied by native RLS.
+    }
+  }
   return result;
     },
   };
@@ -515,6 +526,7 @@ export class ProjectRlsMembershipPlugin implements Plugin {
   init(ctx: PluginContext): void {
     ctx.registerService(RLS_MEMBERSHIP_RESOLVER_SERVICE, createProjectMembershipRlsResolver(
       () => ctx.getService<IObjectQLEngine>('objectql'),
+      () => ctx.getService<ISharingService>('sharing'),
     ));
   }
 }
