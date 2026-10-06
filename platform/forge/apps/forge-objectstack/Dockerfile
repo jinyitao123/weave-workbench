@@ -11,13 +11,14 @@
 # Docs: https://objectstack.ai/docs/deployment/self-hosting
 
 # The runtime image's exact tag and registry digest are locked in console94.lock.json.
-ARG OBJECTSTACK_RUNTIME_IMAGE=ghcr.io/objectstack-ai/objectstack:17.3.0@sha256:2b1f7efb8fcab00fd6b7cf741faa7ab6d75866d6b7b6e6b8b1bec69ce8f6e0ce
+ARG OBJECTSTACK_RUNTIME_IMAGE=ghcr.io/objectstack-ai/objectstack:17.5.0@sha256:6f5b00409c75bf98bb3f7592f6f5e4fc9a8d6f919b7b41923bc4c87a09400523
 
 # ── Build stage: compile TypeScript metadata to the artifact ─────────
 FROM node:24.19.0-slim AS build
 WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
 RUN pnpm install --frozen-lockfile
 COPY . .
 COPY --from=console94 / /app/.console94/
@@ -42,11 +43,11 @@ ARG CONSOLE_TREE_SHA256=unknown
 ARG FORGE_SOURCE_REVISION=unknown
 LABEL org.opencontainers.image.title="inoForge" \
       org.opencontainers.image.revision="${FORGE_SOURCE_REVISION}" \
-      org.opencontainers.image.base.name="ghcr.io/objectstack-ai/objectstack:17.3.0" \
-      org.opencontainers.image.base.digest="sha256:2b1f7efb8fcab00fd6b7cf741faa7ab6d75866d6b7b6e6b8b1bec69ce8f6e0ce" \
+      org.opencontainers.image.base.name="ghcr.io/objectstack-ai/objectstack:17.5.0" \
+      org.opencontainers.image.base.digest="sha256:6f5b00409c75bf98bb3f7592f6f5e4fc9a8d6f919b7b41923bc4c87a09400523" \
       org.opencontainers.image.console.source-revision="${CONSOLE_SOURCE_REVISION}" \
       org.opencontainers.image.console.tree-sha256="${CONSOLE_TREE_SHA256}"
-RUN test "$OBJECTSTACK_RUNTIME_IMAGE" = "ghcr.io/objectstack-ai/objectstack:17.3.0@sha256:2b1f7efb8fcab00fd6b7cf741faa7ab6d75866d6b7b6e6b8b1bec69ce8f6e0ce" \
+RUN test "$OBJECTSTACK_RUNTIME_IMAGE" = "ghcr.io/objectstack-ai/objectstack:17.5.0@sha256:6f5b00409c75bf98bb3f7592f6f5e4fc9a8d6f919b7b41923bc4c87a09400523" \
     || { echo "ObjectStack runtime image differs from the locked CLI-compatible digest." >&2; exit 1; }
 WORKDIR /srv/app
 USER root
@@ -57,9 +58,10 @@ COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/objectstack.config.ts ./objectstack.config.ts
 COPY --from=build --chown=node:node /app/src ./src
 COPY --from=build --chown=node:node /app/dist ./dist
-COPY --from=build --chown=node:node /app/scripts/notification-lease-preflight.mjs /app/scripts/sales-line-sku-preflight.mjs /app/scripts/sales-order-preflight.mjs /app/scripts/start-with-migrations.sh ./scripts/
+COPY --from=build --chown=node:node /app/scripts/notification-lease-preflight.mjs /app/scripts/sales-line-sku-preflight.mjs /app/scripts/sales-order-preflight.mjs /app/scripts/numeric-value-preflight.mjs /app/scripts/start-with-migrations.sh ./scripts/
 COPY --from=build --chown=node:node /app/scripts/schema/notification-lease-precision.sql ./scripts/schema/notification-lease-precision.sql
 COPY --from=build --chown=node:node /app/scripts/schema/sales-line-sku-nullability.sql ./scripts/schema/sales-line-sku-nullability.sql
+COPY --from=build --chown=node:node /app/scripts/schema/numeric-value-columns.sql ./scripts/schema/numeric-value-columns.sql
 COPY --from=build --chown=node:node /app/.console94/console94.lock.json /tmp/console94.lock.json
 COPY --from=build --chown=node:node /app/.console94/console94-build.json /tmp/console94-build.json
 COPY --from=build --chown=node:node /app/.generated/console94-layout.json /tmp/console94-layout.json

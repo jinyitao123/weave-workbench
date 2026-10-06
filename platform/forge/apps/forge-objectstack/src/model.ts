@@ -30,7 +30,7 @@ export const choice = (label: string, values: readonly OptionLabel[], defaultVal
   values.map(value => ({ value: optionCodes[value], label: value })),
   { label, ...(defaultValue ? { defaultValue: optionCodes[defaultValue] } : {}) },
 );
-export const money = (label: string, scale = 2) => Field.currency({ label, precision: 18, scale });
+export const money = (label: string) => Field.currency({ label, precision: 18 });
 export const owner = (mandatory = false) => Field.user({ label: '负责人', ...(mandatory ? required : {}) });
 export const remarks = () => Field.textarea({ label: '备注' });
 export const status = () => choice('业务状态', ['启用', '停用'], '启用');

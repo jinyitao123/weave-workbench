@@ -10,6 +10,7 @@ const LOCK_PATH = path.join(APP_DIR, 'console94.lock.json');
 const lock = JSON.parse(await readFile(LOCK_PATH, 'utf8'));
 const OUTPUT_DIR = path.resolve(process.env.FORGE_CONSOLE_BUILD_CONTEXT || path.join(APP_DIR, '.generated/console94'));
 const sourceRepo = process.env.OBJECTUI_SOURCE_DIR;
+const refreshLock = process.argv.includes('--refresh-lock');
 
 function run(command, args, options = {}) {
   execFileSync(command, args, { stdio: 'inherit', ...options });
@@ -48,12 +49,13 @@ try {
   run('pnpm', ['install', '--frozen-lockfile'], { cwd: sourceDir });
   run('pnpm', ['-r', '--filter', '@object-ui/console...', 'build'], {
     cwd: sourceDir,
-    env: { ...process.env, VITE_BASE_PATH: lock.artifact.basePath },
+    env: { ...process.env, VITE_BASE_PATH: lock.artifact.basePath, VITE_UI_PROFILE: lock.source.uiProfile || 'compact-enterprise' },
   });
 
   const builtDist = path.join(sourceDir, 'apps/console/dist');
   await rm(path.join(builtDist, 'stats.html'), { force: true });
   const rawDigest = await treeSha256(builtDist);
+  if (refreshLock) lock.artifact.runtimeSourceTreeSha256 = rawDigest.sha256;
   if (rawDigest.sha256 !== lock.artifact.runtimeSourceTreeSha256) {
     if (process.env.FORGE_CONSOLE_KEEP_BUILD === '1') {
       const diagnosticPath = path.join(APP_DIR, '.generated/console94-diagnostic');
@@ -65,6 +67,7 @@ try {
   }
   const rawIndex = await readFile(path.join(builtDist, 'index.html'));
   const rawIndexDigest = (await import('node:crypto')).createHash('sha256').update(rawIndex).digest('hex');
+  if (refreshLock) lock.artifact.rawIndexSha256 = rawIndexDigest;
   if (rawIndexDigest !== lock.artifact.rawIndexSha256) {
     throw new Error(`ObjectUI index digest differs from the locked clean build: expected ${lock.artifact.rawIndexSha256}, got ${rawIndexDigest}.`);
   }
@@ -73,8 +76,14 @@ try {
   await mkdir(OUTPUT_DIR, { recursive: true });
   await cp(builtDist, path.join(OUTPUT_DIR, 'dist'), { recursive: true });
 
+  if (refreshLock) {
+    const stamp = lock.artifact.patches.find(patch => patch.path === 'dist/.objectui-sha');
+    if (!stamp) throw new Error('Console source stamp patch is missing.');
+    stamp.content = lock.source.revision;
+  }
   await applyConsolePackagingPatches(path.join(OUTPUT_DIR, 'dist'), lock);
   const packagedDigest = await treeSha256(path.join(OUTPUT_DIR, 'dist'));
+  if (refreshLock) lock.artifact.packagedTreeSha256 = packagedDigest.sha256;
   if (packagedDigest.sha256 !== lock.artifact.packagedTreeSha256) {
     throw new Error(`Packaged Console tree differs from the lock: expected ${lock.artifact.packagedTreeSha256}, got ${packagedDigest.sha256}.`);
   }
@@ -98,6 +107,7 @@ try {
     `runtime_image=${manifest.forgeRuntimeImage}`,
     '',
   ].join('\n'));
+  if (refreshLock) await writeFile(LOCK_PATH, `${JSON.stringify(lock, null, 2)}\n`);
   await cp(LOCK_PATH, path.join(OUTPUT_DIR, 'console94.lock.json'));
   console.log(`Console 94 context: ${OUTPUT_DIR}`);
   console.log(`source=${manifest.sourceRevision} raw_tree_sha256=${manifest.sourceTreeSha256}`);

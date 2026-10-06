@@ -1,12 +1,13 @@
 import { isFileIdToken } from '@objectstack/spec/data';
 import type { ActionHandlerContext } from '@objectstack/spec/ui';
-import type { IObjectQLEngine, IStorageService } from '@objectstack/spec/contracts';
+import type { IObjectQLEngine, ISharingService, IStorageService } from '@objectstack/spec/contracts';
 import type { ExecutionContext } from '@objectstack/spec/kernel';
 import {
   verifyContractMaterialFiles,
   type ContractMaterialFileReference,
   type VerifiedContractMaterialFile,
 } from './contract-material-files.js';
+import { resolveContractReviewers, synchronizeContractReviewShares } from './contract-review-sharing.js';
 import { CONTRACT_SUBMISSION_OBJECT, resolveRetainedContractMaterial, retainContractMaterialFiles } from './contract-material-holder.js';
 
 export const CONTRACT_MATERIAL_SUBMISSION_TARGET = 'forgeSubmitContractMaterialPackage';
@@ -327,6 +328,7 @@ export async function submitContractMaterialPackage(
   engine: IObjectQLEngine,
   storage: IStorageService,
   context: MaterialActionContext,
+  sharing: ISharingService,
 ): Promise<unknown> {
   const identity = assertCaller(context);
   const requested = requestedFileIds(context);
@@ -364,6 +366,7 @@ export async function submitContractMaterialPackage(
       const materialPackage = packageFromVerified(requested.primaryId, verified);
       const packageSha256 = await materialPackageDigest(materialPackage);
       const business = await validateContractForSubmission(engine, current, identity.organizationId, identity.actorId, transactionScope);
+      const reviewers = await resolveContractReviewers(engine, current, identity.organizationId, identity.actorId, transactionScope);
       const submittedAt = new Date().toISOString();
       const manifest = [materialPackage.primary, ...materialPackage.attachments];
       const submissionId = globalThis.crypto.randomUUID();
@@ -389,6 +392,7 @@ export async function submitContractMaterialPackage(
         })),
         context: transactionScope,
       });
+      await synchronizeContractReviewShares(engine, sharing, current, identity.organizationId, reviewers, transactionScope);
       await engine.update(CONTRACT_OBJECT, {
         id: identity.recordId,
         total_amount: business.totalAmount,

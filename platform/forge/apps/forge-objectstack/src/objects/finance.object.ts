@@ -1,8 +1,8 @@
 import { Field, ObjectSchema } from '@objectstack/spec/data';
 import { master, text, code, reference, owner, remarks, required } from '../model.js';
 
-const amount = (label: string) => Field.currency({ label, precision: 18, scale: 4, min: 0 });
-const signedAmount = (label: string) => Field.currency({ label, precision: 18, scale: 4 });
+const amount = (label: string) => Field.currency({ label, precision: 18, min: 0 });
+const signedAmount = (label: string) => Field.currency({ label, precision: 18 });
 const quantity = (label: string) => Field.number({ label, min: 0.0001, scale: 4, ...required });
 const invoiceStatus = () => Field.select([
   { value: 'issued', label: '已开票' }, { value: 'settled', label: '已结清' }, { value: 'voided', label: '已作废' },
@@ -76,7 +76,14 @@ export const RevenueRecognition = master('forge_revenue_recognition', '销售收
     { value: 'milestone', label: '按里程碑' }, { value: 'acceptance', label: '按验收' },
     { value: 'period', label: '按周期' }, { value: 'manual', label: '手动' },
   ], { label: '确认方式', ...required }),
-  net_amount: amount('净确认金额'), order_amount: { ...amount('订单金额'), readonly: true },
+  // Preserve the original net amount; legacy rows keep an unknown tax basis.
+  net_amount: amount('净确认金额'), untaxed_amount: { ...amount('不含税确认额'), readonly: true },
+  tax_amount: { ...amount('确认税额'), readonly: true },
+  tax_basis: Field.select([
+    { value: 'source_lines_reconciled', label: '源单明细已核对' },
+    { value: 'unverified', label: '税基未核对' },
+  ], { label: '税基校验', readonly: true }),
+  order_amount: { ...amount('订单金额'), readonly: true },
   cumulative_amount: { ...amount('累计确认金额'), readonly: true }, remaining_amount: { ...amount('剩余待确认'), readonly: true },
   recognition_on: Field.date({ label: '确认日期', ...required }), financial_period: text('财务期间', true),
   invoice_status: Field.select([
@@ -286,6 +293,7 @@ export const ProjectExpense = master('forge_project_expense', '项目费用报�
     { value: 'approved', label: '已通过' }, { value: 'rejected', label: '已驳回' },
     { value: 'paid', label: '已打款' }, { value: 'voided', label: '已作废' },
   ], { label: '报销状态', defaultValue: 'draft' }), readonly: true },
+  approval_status: { ...Field.text({ label: '原生审批状态', readonly: true }), hidden: true },
   submitted_at: Field.datetime({ label: '提交时间', readonly: true }), reviewed_at: Field.datetime({ label: '审核时间', readonly: true }),
   reviewer_id: Field.user({ label: '审核人', readonly: true }), review_comment: Field.textarea({ label: '审核意见', readonly: true }),
   cost_entry_count: Field.number({ label: '成本记录数', min: 0, scale: 0, defaultValue: 0, readonly: true }),
@@ -293,7 +301,7 @@ export const ProjectExpense = master('forge_project_expense', '项目费用报�
 }, ['code', 'name', 'ownership_type', 'claim_type', 'applicant_id', 'beneficiary_id', 'project_id', 'supplier_id', 'total_amount', 'line_count', 'status']);
 
 export const ProjectExpenseLine = master('forge_project_expense_line', '项目费用明细', 'list', {
-  name: text('费用名称', true), line_key: code('费用明细编号'), expense_id: reference('forge_project_expense', '报销单', true),
+  name: text('费用名称', true), line_key: code('费用明细编号'), expense_id: Field.masterDetail('forge_project_expense', { label: '报销单', deleteBehavior: 'restrict', ...required }),
   category: Field.select([
     { value: 'manufacturing', label: '制造费用' }, { value: 'travel', label: '差旅费用' },
     { value: 'subcontract', label: '外协与委外' }, { value: 'inspection', label: '检测认证' },
@@ -306,7 +314,7 @@ export const ProjectExpenseLine = master('forge_project_expense_line', '项目�
   occurred_on: Field.date({ label: '发生日期', ...required }), amount: amount('金额'),
   description: Field.textarea({ label: '费用说明', ...required }), invoice_reference: text('票据编号'),
   attachment: Field.file({ label: '票据附件' }), remarks: remarks(),
-}, ['expense_id', 'line_key', 'category', 'cost_type', 'name', 'occurred_on', 'amount', 'description', 'invoice_reference']);
+}, ['expense_id', 'line_key', 'category', 'cost_type', 'name', 'occurred_on', 'amount', 'description', 'invoice_reference'], 'controlled_by_parent');
 
 const payableStatus = () => Field.select([
   { value: 'unpaid', label: '未付款' }, { value: 'partially_paid', label: '部分付款' },

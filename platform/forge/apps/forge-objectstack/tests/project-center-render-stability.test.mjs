@@ -14,6 +14,7 @@ function createHarness() {
   let cursor = 0;
   const React = {
     Fragment: Symbol.for('react.fragment'),
+    Children: { toArray(value) { return (Array.isArray(value) ? value : [value]).flat().filter(item => item !== undefined && item !== null && item !== false); } },
     createElement(type, props, ...children) {
       return {
         type,
@@ -56,6 +57,12 @@ function createHarness() {
     module,
     exports: module.exports,
     React,
+    CompositeDialog: props => React.createElement('div', props, props.children),
+    WorkspaceHeader: props => React.createElement('header', props, props.title, props.action),
+    StatusTabs: props => React.createElement('div', props),
+    RecordTable: 'RecordTable',
+    Icon: props => React.createElement('span', props),
+    ListView: props => React.createElement('div', { ...props, 'data-test-list-view': true }),
     useAdapter: () => ({ baseUrl: 'http://forge.test', getAuthHeaders: () => ({}), fetchImpl: async () => { throw new Error('Unexpected API request'); } }),
     URLSearchParams,
     window: {
@@ -66,7 +73,7 @@ function createHarness() {
     clearTimeout,
     console,
   };
-  vm.runInNewContext(`${code}\nglobalThis.__ForgeDateInputProbe = ForgeDateInput;`, context);
+  vm.runInNewContext(`${code}\nglobalThis.__ForgeDateInputProbe = ForgeDateInput; globalThis.__ForgeRelatedTableProbe = ProjectRelatedRecordTable;`, context);
   const App = module.exports.default;
   const render = () => {
     cursor = 0;
@@ -76,13 +83,14 @@ function createHarness() {
     cursor = 0;
     return context.__ForgeDateInputProbe({ value: '', onChange() {} });
   };
-  return { render, renderDateInput };
+  return { render, renderDateInput, renderRelatedTable(props) { cursor = 0; return context.__ForgeRelatedTableProbe(props); } };
 }
 
 function findNodes(tree, predicate, results = []) {
   if (!tree || typeof tree !== 'object') return results;
   if (predicate(tree)) results.push(tree);
   for (const child of tree.children || []) findNodes(child, predicate, results);
+  if (tree.props?.action) findNodes(tree.props.action, predicate, results);
   return results;
 }
 
@@ -122,4 +130,37 @@ test('typing multiple characters in the new project name keeps the same field co
 test('project form date controls do not shadow the native Date constructor', () => {
   const { renderDateInput } = createHarness();
   assert.doesNotThrow(() => renderDateInput());
+});
+
+
+test('empty project related lists preserve native columns and use one native pagination surface', () => {
+  const { renderRelatedTable } = createHarness();
+  const empty = { type: 'p', props: {}, children: ['暂无关联销售订单'] };
+  const tree = renderRelatedTable({ headers: ['订单编号', '订单金额'], rows: [], empty, pageSize: 20 });
+  const tables = findNodes(tree, node => node.type === 'RecordTable');
+  assert.equal(tables.length, 1, 'the empty list keeps its registered table rather than replacing its header');
+  assert.deepEqual(tables[0].props.schema.columns.map(column => column.header), ['订单编号', '订单金额']);
+  assert.equal(tables[0].props.schema.rowCount, 0);
+  assert.equal(tables[0].props.schema.page, 1);
+  assert.equal(tables[0].props.schema.pageSize, 20);
+  assert.ok(findNodes(tables[0].props.emptyStateContent, node => node === empty).length);
+  assert.equal(findNodes(tree, node => node.props.className === 'pc-pagination').length, 0, 'no second host footer duplicates native record totals');
+});
+
+test('project related tables keep full native row totals and clamp a changed result page', () => {
+  const { renderRelatedTable } = createHarness();
+  const row = index => ({ key: 'order-' + index, props: { children: [{ props: { children: 'SO-' + index } }, { props: { children: index } }] } });
+  const props = { headers: ['订单编号', '订单金额'], rows: Array.from({ length: 45 }, (_, index) => row(index)), empty: null, pageSize: 20 };
+  let table = findNodes(renderRelatedTable(props), node => node.type === 'RecordTable')[0];
+  assert.equal(table.props.schema.rowCount, 45);
+  assert.equal(table.props.schema.data.length, 20);
+  table.props.schema.onPageChange(3);
+  table = findNodes(renderRelatedTable(props), node => node.type === 'RecordTable')[0];
+  assert.equal(table.props.schema.page, 3);
+  assert.equal(table.props.schema.data.length, 5);
+  assert.equal(table.props.schema.columns[0].cell(null, table.props.schema.data[0]), 'SO-40');
+  table = findNodes(renderRelatedTable({ ...props, rows: props.rows.slice(0, 2) }), node => node.type === 'RecordTable')[0];
+  assert.equal(table.props.schema.page, 1);
+  assert.equal(table.props.schema.rowCount, 2);
+  assert.equal(table.props.schema.data.length, 2);
 });

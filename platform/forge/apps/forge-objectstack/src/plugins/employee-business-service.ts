@@ -6,6 +6,7 @@ import { EmployeeNativeActions, businessRow, type BusinessRow, type EmployeeActi
 import { businessActionPolicy } from './business-action-policy.js';
 import { canonicalJSON, digest, nativeEmployee, nonempty, service, SYSTEM_READ, TaskConnectionFailure } from './native-task-auth.js';
 import { readOwnedOriginal, OwnedOriginalFailure } from './workbench-owned-material.plugin.js';
+import { nativeActionConfirmationSupported, nativeActionRequiresConfirmation } from './native-action-confirmation.js';
 
 const CONTEXT = 'forge_employee_business_context';
 const OPERATION = 'forge_employee_business_operation';
@@ -82,6 +83,8 @@ export class EmployeeBusinessService {
       try {
         const metadata = await native.metadata(action.objectName), declaration = (metadata.actions as BusinessRow[] | undefined)?.find(a => a.name === action.name);
         if (!declaration) throw new Error('能力声明缺失');
+        capability.requiresConfirmation = nativeActionRequiresConfirmation(declaration);
+        if (capability.requiresConfirmation && !nativeActionConfirmationSupported()) throw new Error('原生协议不支持动作确认');
         capability.params = (await native.parameters(action.objectName, declaration, metadata, true)).map(p => ({
           name: p.name, label: p.label, type: p.type === 'date' ? 'string' : p.type, required: p.required, ...(p.multiple ? { multiple: true } : {}),
           ...(p.description ? { description: p.description.slice(0, 240) } : {}),
@@ -269,7 +272,7 @@ export class EmployeeBusinessService {
         if (!current || current.declarationVersion !== action.declarationVersion) fail(409, 'EMPLOYEE_ACTION_CONTEXT_CHANGED', '动作权限或定义已变化');
         const actionName = action.capabilityId.slice(action.capabilityId.lastIndexOf('.') + 1);
         nativeInvoked = true;
-        const result = await transactional.bridge.runAction(actionName, { objectName, recordId, params });
+        const result = await transactional.runBoundAction(actionName, { objectName, recordId, params });
         const raw = businessRow(result);
         if (raw?.ok !== true || raw.action !== actionName || raw.objectName !== objectName || raw.recordId !== recordId) throw new Error('原生动作未返回准确成功包络');
         const resultRecord = businessRow(raw.result);

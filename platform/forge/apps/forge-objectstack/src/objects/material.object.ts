@@ -17,14 +17,14 @@ export const Material = master('forge_material', '物料管理', 'package', {
 
 export const MaterialSku = master('forge_material_sku', '物料规格', 'boxes', {
   name: text('规格', true), code: code('SKU编码'), barcode: text('SKU条码'),
-  material_id: reference('forge_material', '物料', true), sale_price: money('含税售价', 4), cost_price: money('含税成本价', 4),
+  material_id: reference('forge_material', '物料', true), sale_price: money('含税售价'), cost_price: money('含税成本价'),
   enabled: Field.boolean({ label: '启用', defaultValue: true }),
 }, ['code', 'material_id', 'name', 'sale_price', 'cost_price', 'enabled']);
 
 export const ProductBundle = master('forge_product_bundle', '物料组合', 'package-plus', {
   name: text('组合名称', true), code: code('组合编号'), tax_included: Field.boolean({ label: '含税', defaultValue: true }),
   tax_rate: Field.number({ label: '税率', min: 0, max: 100, scale: 2, defaultValue: 13 }),
-  taxed_sale_price: money('含税销售价', 4), untaxed_sale_price: money('不含税销售价', 12),
+  taxed_sale_price: money('含税销售价'), untaxed_sale_price: money('不含税销售价'),
   category_id: reference('forge_material_category', '物料分类'), brand: text('品牌'), model: text('型号'), specification: text('规格名称'),
   unit_id: reference('forge_unit', '单位'), description: Field.textarea({ label: '组合描述' }),
   material_count: Field.number({ label: '物料种类', min: 0, scale: 0, defaultValue: 0 }), reference_count: Field.number({ label: '引用次数', min: 0, scale: 0, defaultValue: 0, readonly: true }),
@@ -35,5 +35,5 @@ export const ProductBundleLine = master('forge_product_bundle_line', '物料组�
   name: text('物料名称快照', true), bundle_id: reference('forge_product_bundle', '物料组合', true),
   material_id: reference('forge_material', '物料', true), sku_id: reference('forge_material_sku', '物料规格', true),
   model: text('型号'), specification: text('规格'), unit_name: text('单位'), quantity: Field.number({ label: '数量', min: 0.0001, scale: 4, defaultValue: 1 }),
-  cost_price: money('成本价', 4), sale_price: money('售价', 4), category_name: text('分类'), sequence: Field.number({ label: '顺序', min: 1, scale: 0, defaultValue: 1 }),
+  cost_price: money('成本价'), sale_price: money('售价'), category_name: text('分类'), sequence: Field.number({ label: '顺序', min: 1, scale: 0, defaultValue: 1 }),
 }, ['bundle_id', 'sequence', 'material_id', 'sku_id', 'name', 'quantity', 'cost_price', 'sale_price']);

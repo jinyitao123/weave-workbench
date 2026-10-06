@@ -13,7 +13,7 @@ import { Field, ObjectSchema } from '@objectstack/spec/data';
 import { ContractRevisionMaterialPlugin, approvalPayloadVersion } from '../src/plugins/contract-revision-material.ts';
 import { ApprovalResubmitGuardPlugin } from '../src/plugins/approval-resubmit-guard.plugin.ts';
 import { ContractType, SalesContract, SalesContractRevisionMaterial } from '../src/objects/sales.object.ts';
-const platformObjectsPath = '../node_modules/.pnpm/@objectstack+platform-objects@17.3.0/node_modules/@objectstack/platform-objects/dist/index.mjs';
+const platformObjectsPath = '../node_modules/.pnpm/@objectstack+platform-objects@17.5.0/node_modules/@objectstack/platform-objects/dist/index.mjs';
 const { SysAttachment } = await import(platformObjectsPath);
 
 const CONTRACT_ID = 'contract-native-A';

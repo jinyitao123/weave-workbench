@@ -38,7 +38,12 @@ for (const name of files) {
   for (const match of openingTags(text, 'button')) {
     const tag = match.tag;
     const hasRealAction = tag.includes('onClick=') || tag.includes('type=');
-    if (!hasRealAction) {
+    // A permanently unavailable capability can be shown as a disabled control
+    // with an explicit visible/accessible reason. Dynamic busy/permission guards
+    // still need a real handler; a disabled placeholder is never business proof.
+    const hasUnavailableReason = /\sdisabled(?:\s|>)/.test(tag)
+      && tag.includes('title=') && tag.includes('aria-label=');
+    if (!hasRealAction && !hasUnavailableReason) {
       findings.push({ file: name, line: text.slice(0, match.index).split('\n').length, message: 'button has no click or submit behavior', tag });
     }
   }
@@ -56,4 +61,4 @@ for (const name of files) {
 }
 
 assert.deepEqual(findings, [], JSON.stringify(findings, null, 2));
-console.log('PASS sales and service pages expose no inert buttons, fake static tabs, empty handlers or native browser dialogs');
+console.log('PASS sales and service controls have handlers or explicit disabled capability reasons; no fake tabs, empty handlers or native browser dialogs. This is a source check, not business acceptance.');

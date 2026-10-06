@@ -1,7 +1,9 @@
 import type { Plugin, PluginContext } from '@objectstack/core';
-import type { IObjectQLEngine, ISharingService, RecordShare } from '@objectstack/spec/contracts';
+import type { IObjectQLEngine, ISharingService } from '@objectstack/spec/contracts';
 import type { HookContext } from '@objectstack/spec/data';
 import type { ExecutionContext as KernelExecutionContext } from '@objectstack/spec/kernel';
+import { sharingInTransaction } from './native-sharing-transaction.js';
+import { revokeProjectionShares } from './native-sharing-projection.js';
 
 const PACKAGE_ID = 'com.inoforge.forge.project-member-sharing';
 const PROJECT_OBJECT = 'forge_project';
@@ -42,11 +44,6 @@ function nextRecord(hook: HookContext): Row {
   };
 }
 
-function shareMatchesMembership(share: RecordShare, member: Row): boolean {
-  return share.source === 'team'
-    && text(share.source_id) === text(member.id)
-    && text(share.recipient_id) === text(member.user_id);
-}
 
 export class ProjectMemberSharingPlugin implements Plugin {
   name = PACKAGE_ID;
@@ -121,6 +118,7 @@ export class ProjectMemberSharingPlugin implements Plugin {
     const projectId = text(evidence.project_id);
     if (!evidenceId || !projectId) throw new Error(`${evidenceObject} 缺少项目或记录标识，无法同步项目分享`);
     const scope = await this.projectScope(engine, hook, projectId);
+    sharing = sharingInTransaction(engine, sharing, scope.context);
     this.assertOrganization(evidence, scope.organizationId, evidenceObject);
     const members = await this.findAll(engine, MEMBER_OBJECT, {
       project_id: projectId,
@@ -145,6 +143,7 @@ export class ProjectMemberSharingPlugin implements Plugin {
       throw new Error('有效项目成员缺少用户、项目或关系标识，无法授予项目分享');
     }
     const scope = await this.projectScope(engine, hook, projectId);
+    sharing = sharingInTransaction(engine, sharing, scope.context);
     this.assertOrganization(member, scope.organizationId, MEMBER_OBJECT);
     await this.grant(sharing, PROJECT_OBJECT, projectId, member, scope.context);
     for (const evidenceObject of EVIDENCE_OBJECTS) {
@@ -169,15 +168,16 @@ export class ProjectMemberSharingPlugin implements Plugin {
       throw new Error('被停用或移除的项目成员缺少用户、项目或关系标识，无法撤销项目分享');
     }
     const scope = await this.projectScope(engine, hook, projectId);
+    sharing = sharingInTransaction(engine, sharing, scope.context);
     this.assertOrganization(member, scope.organizationId, MEMBER_OBJECT);
-    await this.revokeRecordShare(sharing, PROJECT_OBJECT, projectId, member, scope.context);
+    await this.revokeRecordShare(engine, sharing, PROJECT_OBJECT, projectId, member, scope.context);
     for (const evidenceObject of EVIDENCE_OBJECTS) {
       const rows = await this.findAll(engine, evidenceObject, { project_id: projectId }, scope.context, ['id', 'project_id', 'organization_id']);
       for (const evidence of rows) {
         const evidenceId = text(evidence.id);
         if (!evidenceId) continue;
         this.assertOrganization(evidence, scope.organizationId, evidenceObject);
-        await this.revokeRecordShare(sharing, evidenceObject, evidenceId, member, scope.context);
+        await this.revokeRecordShare(engine, sharing, evidenceObject, evidenceId, member, scope.context);
       }
     }
   }
@@ -248,16 +248,13 @@ export class ProjectMemberSharingPlugin implements Plugin {
   }
 
   private async revokeRecordShare(
+    engine: IObjectQLEngine,
     sharing: ISharingService,
     object: string,
     recordId: string,
     member: Row,
     context: KernelExecutionContext,
   ): Promise<void> {
-    const shares = await sharing.listShares(object, recordId, context);
-    for (const share of shares) {
-      if (!shareMatchesMembership(share, member)) continue;
-      await sharing.revoke(share.id, context, { object, recordId });
-    }
+    await revokeProjectionShares(engine, sharing, { object, recordId, source: 'team', sourceId: text(member.id), recipientId: text(member.user_id) }, context);
   }
 }

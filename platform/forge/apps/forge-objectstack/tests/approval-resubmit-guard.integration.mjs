@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
 import { LiteKernel } from '@objectstack/core';
-import { RestServer } from '../node_modules/.pnpm/@objectstack+rest@17.3.0/node_modules/@objectstack/rest/dist/index.js';
+import { RestServer } from '../node_modules/.pnpm/@objectstack+rest@17.5.0/node_modules/@objectstack/rest/dist/index.js';
 import { ApprovalResubmitGuardPlugin } from '../src/plugins/approval-resubmit-guard.plugin.ts';
 
 const contractRequest = {

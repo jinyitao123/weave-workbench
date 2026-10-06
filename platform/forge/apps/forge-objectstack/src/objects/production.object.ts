@@ -2,7 +2,7 @@ import { Field } from '@objectstack/spec/data';
 import { master, text, code, reference, owner, remarks, required } from '../model.js';
 
 const quantity = (label: string, defaultValue = 0) => Field.number({ label, min: 0, scale: 4, defaultValue });
-const amount = (label: string) => Field.currency({ label, precision: 18, scale: 4, min: 0, defaultValue: 0 });
+const amount = (label: string) => Field.currency({ label, precision: 18, min: 0, defaultValue: 0 });
 const select = (label: string, options: Array<[string, string]>, defaultValue?: string, readonly = false) => Field.select(
   options.map(([value, optionLabel]) => ({ value, label: optionLabel })),
   { label, ...(defaultValue ? { defaultValue } : {}), ...(readonly ? { readonly: true } : {}) },
@@ -142,7 +142,7 @@ export const ReplacementOrder = master('forge_replacement_order', '换件单', '
   quantity: { ...quantity('改制数量', 1), ...required }, reason_id: reference('forge_production_replacement_reason', '改制原因配置'), reason: text('改制原因', true), line_count: { ...quantity('换件处数'), readonly: true },
   product_before_on_hand: { ...quantity('整机变动前库存'), readonly: true }, product_after_on_hand: { ...quantity('整机变动后库存'), readonly: true },
   new_part_cost: { ...amount('新件成本'), readonly: true }, old_part_value: { ...amount('旧件回收价值'), readonly: true },
-  cost_change: Field.currency({ label: '成本变化', precision: 18, scale: 4, defaultValue: 0, readonly: true }),
+  cost_change: Field.currency({ label: '成本变化', precision: 18, defaultValue: 0, readonly: true }),
   status: select('换件状态', [['draft', '草稿'], ['pending_approval', '审批中'], ['stocked', '已入库'], ['rejected', '已驳回']], 'draft', true),
   handled_on: Field.date({ label: '换件日期', ...required }), confirmed_at: Field.datetime({ label: '确认时间', readonly: true }),
   responsible_id: owner(true), remarks: remarks(),
@@ -155,6 +155,6 @@ export const ReplacementLine = master('forge_replacement_line', '换件明细', 
   old_unit_cost: { ...amount('旧件单位成本'), readonly: true }, old_recovered_amount: { ...amount('旧件回收金额'), readonly: true },
   new_sku_id: reference('forge_material_sku', '新件规格', true), new_item_code: text('新件编码', true), new_quantity: quantity('新件数量'),
   new_unit_cost: { ...amount('新件单位成本'), readonly: true }, new_amount: { ...amount('新件金额'), readonly: true },
-  cost_change: Field.currency({ label: '成本变化', precision: 18, scale: 4, defaultValue: 0, readonly: true }),
+  cost_change: Field.currency({ label: '成本变化', precision: 18, defaultValue: 0, readonly: true }),
   status: select('明细状态', [['draft', '草稿'], ['pending_approval', '审批中'], ['stocked', '已入库']], 'draft', true), remarks: remarks(),
 }, ['replacement_id', 'old_item_code', 'old_quantity', 'old_destination', 'new_item_code', 'new_quantity', 'new_amount', 'old_recovered_amount', 'cost_change', 'status']);

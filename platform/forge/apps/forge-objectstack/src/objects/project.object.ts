@@ -1,11 +1,12 @@
 import { Field, ObjectSchema } from '@objectstack/spec/data';
+import { P } from '@objectstack/spec';
 import { master, text, code, reference, owner, remarks, required, choice } from '../model.js';
 
 const select = (label: string, options: Array<[string, string]>, defaultValue?: string) => Field.select(
   options.map(([value, optionLabel]) => ({ value, label: optionLabel })),
   { label, ...(defaultValue ? { defaultValue } : {}) },
 );
-const amount = (label: string, readonly = false) => Field.currency({ label, precision: 18, scale: 2, min: 0, defaultValue: 0, ...(readonly ? { readonly: true } : {}) });
+const amount = (label: string, readonly = false) => Field.currency({ label, precision: 18, min: 0, defaultValue: 0, ...(readonly ? { readonly: true } : {}) });
 
 // Live RISEMAP 2026-09-09: the account had no project type, so CABINET_OTC was created before the first project.
 export const ProjectType = master('forge_project_type', '项目类型', 'tags', {
@@ -19,7 +20,8 @@ export const Project = ObjectSchema.create({
     code: Field.autonumber({ label: '项目编号', autonumberFormat: 'PRJ-{YYYY}-{000}' }),
     type_id: reference('forge_project_type', '项目类型', true),
     customer_id: { ...reference('forge_customer', '客户', true), relatedList: true, relatedListTitle: '项目', relatedListColumns: ["code", "name", "planned_start_on", "planned_end_on", "progress", "status"] },
-    customer_name_snapshot: { ...text('客户名称快照'), readonly: true }, manager_id: owner(true), manager_name_snapshot: { ...text('项目负责人快照'), readonly: true },
+    customer_name_snapshot: { ...text('客户名称快照'), readonly: true }, manager_id: { ...owner(true), readonlyWhen: P`true` },
+    manager_transfer_target_id: { ...owner(), label: '负责人交接目标', hidden: true }, manager_name_snapshot: { ...text('项目负责人快照'), readonly: true },
     priority: select('优先级', [['high', '高'], ['medium', '中'], ['low', '低']], 'medium'),
     planned_start_on: Field.date({ label: '计划开始日期', ...required }),
     planned_end_on: Field.date({ label: '计划结束日期', ...required }),
@@ -37,7 +39,6 @@ export const Project = ObjectSchema.create({
     description: Field.textarea({ label: '项目描述' }), remarks: remarks(),
   },
   nameField: 'name',
-  listViews: { all: { label: '全部', type: 'grid', columns: ['code', 'name', 'customer_id', 'manager_id', 'planned_start_on', 'planned_end_on', 'progress', 'expected_revenue', 'budget_amount', 'contract_amount', 'total_cost', 'status'] } },
   validations: [
     { type: 'script', name: 'project_date_order', condition: 'record.planned_end_on < record.planned_start_on', message: '计划结束日期不得早于计划开始日期' },
     { type: 'state_machine', name: 'project_lifecycle', field: 'status', initialStates: ['pending'], transitions: {
@@ -49,15 +50,16 @@ export const Project = ObjectSchema.create({
 });
 
 export const ProjectMember = master('forge_project_member', '项目团队', 'users', {
-  name: text('成员名称', true), membership_key: code('成员关系编号'), project_id: Field.masterDetail('forge_project', { label: '所属项目', deleteBehavior: 'cascade', ...required }),
+  name: text('成员名称', true), membership_key: { ...code('成员关系编号'), hidden: true, readonly: true }, project_id: Field.masterDetail('forge_project', { label: '所属项目', deleteBehavior: 'cascade', ...required }),
   user_id: owner(true), member_duty: select('项目角色', [['manager', '项目经理'], ['member', '项目成员']], 'member'),
-  joined_on: Field.date({ label: '加入日期', ...required }), active: Field.boolean({ label: '在项目中', defaultValue: true }), remarks: remarks(),
+  joined_on: Field.date({ label: '加入日期', ...required }), active: Field.boolean({ label: '在项目中', defaultValue: true }),
+  position_assignment_revision: { ...Field.number({ label: '项目岗位分配修订', min: 0, scale: 0, readonly: true, hidden: true }) }, remarks: remarks(),
 }, ['project_id', 'user_id', 'member_duty', 'joined_on', 'active'], 'controlled_by_parent');
 
 export const ProjectAttachment = master('forge_project_attachment', '项目附件', 'paperclip', {
-  name: text('文件名称', true), attachment_key: code('附件编号'), project_id: reference('forge_project', '项目', true),
+  name: text('文件名称', true), attachment_key: Field.autonumber({ label: '附件编号', autonumberFormat: 'PFA-{YYYYMMDD}-{0000}', unique: 'global' }), project_id: reference('forge_project', '项目', true),
   attachment: Field.file({ label: '文件', ...required }), category: select('资料分类', [['contract', '合同资料'], ['technical', '技术资料'], ['delivery', '交付资料'], ['other', '其他']], 'other'),
-  uploaded_by: Field.user({ label: '上传人', ...required }), uploaded_at: Field.datetime({ label: '上传时间', ...required }), remarks: remarks(),
+  uploaded_by: Field.user({ label: '上传人', readonly: true, ...required }), uploaded_at: Field.datetime({ label: '上传时间', readonly: true, ...required }), remarks: remarks(),
 }, ['project_id', 'name', 'category', 'attachment', 'uploaded_by', 'uploaded_at']);
 
 export const ProjectLog = master('forge_project_log', '项目日志', 'notebook-pen', {
@@ -130,7 +132,19 @@ export const ProjectWorkItem = master('forge_project_work_item', '项目计划�
   name: text('名称', true), item_key: code('工作项编号'), project_id: reference('forge_project', '项目', true),
   plan_id: reference('forge_project_plan', '项目计划', true),
   item_type: select('类型', [['phase', '阶段'], ['milestone', '里程碑'], ['task', '任务']], 'task'),
+  description: Field.textarea({ label: '详细描述' }),
+  task_type: Field.lookup('forge_business_setting_option', {
+    label: '任务类别', relatedList: false,
+    lookupFilters: [
+      { field: 'scope', operator: 'eq', value: 'project' },
+      { field: 'setting_type', operator: 'eq', value: 'task_type' },
+      { field: 'enabled', operator: 'eq', value: true },
+    ],
+  }),
+  priority: select('任务优先级', [['urgent', '紧急'], ['high', '高'], ['medium', '中'], ['low', '低']]),
+  estimated_hours: Field.number({ label: '预估工时(小时)', min: 0, scale: 2 }),
   parent_id: reference('forge_project_work_item', '所属阶段'), owner_id: Field.user({ label: '负责人' }),
+  owner_position_assignment_id: reference('forge_project_member_position_assignment', '负责人项目岗位'),
   planned_start_on: Field.date({ label: '计划开始', ...required }), planned_end_on: Field.date({ label: '计划结束', ...required }),
   duration_days: Field.number({ label: '工期(天)', min: 0, scale: 0, readonly: true }),
   predecessor_ids: Field.lookup('forge_project_work_item', { label: '前置任务', multiple: true, relatedList: false }), weight: Field.number({ label: '权重', min: 0, max: 100, scale: 2, defaultValue: 20 }),
@@ -139,7 +153,7 @@ export const ProjectWorkItem = master('forge_project_work_item', '项目计划�
   progress: Field.number({ label: '完成度', min: 0, max: 100, scale: 2, defaultValue: 0, readonly: true }),
   actual_start_on: Field.date({ label: '实际开始', readonly: true }), actual_end_on: Field.date({ label: '实际完成', readonly: true }),
   sort_order: Field.number({ label: '排序', min: 0, scale: 0, defaultValue: 0 }), remarks: remarks(),
-}, ['plan_id', 'item_type', 'parent_id', 'name', 'owner_id', 'planned_start_on', 'planned_end_on', 'duration_days', 'predecessor_ids', 'weight', 'critical_path', 'progress', 'status', 'actual_start_on', 'actual_end_on']);
+}, ['plan_id', 'item_type', 'task_type', 'priority', 'parent_id', 'name', 'owner_id', 'owner_position_assignment_id', 'planned_start_on', 'planned_end_on', 'duration_days', 'estimated_hours', 'predecessor_ids', 'weight', 'critical_path', 'progress', 'status', 'actual_start_on', 'actual_end_on']);
 
 // Live RISEMAP 2026-09-09: the progress view provides one daily-report form beside the task table.
 export const ProjectDailyReport = master('forge_project_daily_report', '项目日报', 'notebook-pen', {
@@ -158,16 +172,38 @@ export const ProjectDailyReport = master('forge_project_daily_report', '项目�
 export const ProjectTimesheet = master('forge_project_timesheet', '项目工时', 'clock-3', {
   name: text('工时记录名称', true), code: code('工时单号'), project_id: reference('forge_project', '关联项目', true),
   work_item_id: reference('forge_project_work_item', '关联任务'), worker_id: Field.user({ label: '人员', ...required }),
+  worker_position_assignment_id: { ...reference('forge_project_member_position_assignment', '工时项目岗位'), readonly: true, hidden: true },
+  worker_position_name_snapshot: Field.text({ label: '项目岗位', readonly: true }),
+  position_id_snapshot: { ...reference('sys_position', '岗位快照'), readonly: true, hidden: true },
   work_on: Field.date({ label: '日期', ...required }), work_content: Field.textarea({ label: '工作内容', ...required }),
   time_type: select('工时类型', [['normal', '正常'], ['overtime', '加班'], ['travel', '出差']], 'normal'),
   hours: Field.number({ label: '工时(h)', min: 0.25, max: 24, scale: 2, ...required }),
-  hourly_rate: Field.currency({ label: '费率', precision: 18, scale: 2, min: 0, ...required }),
-  cost_amount: { ...Field.currency({ label: '工时成本', precision: 18, scale: 2, min: 0, defaultValue: 0 }), readonly: true },
+  hourly_rate: Field.currency({ label: '费率', precision: 18, min: 0, ...required }),
+  fee_source_snapshot: { ...Field.text({ label: '费率来源快照', readonly: true, hidden: true }) },
+  fee_member_rule_id_snapshot: { ...Field.text({ label: '员工费率规则快照', readonly: true, hidden: true }) },
+  fee_role_rule_id_snapshot: { ...Field.text({ label: '岗位费率规则快照', readonly: true, hidden: true }) },
+  fee_role_revision_snapshot: { ...Field.number({ label: '岗位费率修订快照', min: 1, scale: 0, readonly: true, hidden: true }) },
+  fee_project_override_id_snapshot: { ...Field.text({ label: '项目费率覆盖快照', readonly: true, hidden: true }) },
+  fee_settings_revision_snapshot: { ...Field.number({ label: '工时配置修订快照', min: 1, scale: 0, readonly: true, hidden: true }) },
+  approval_manager_snapshot: { ...Field.user({ label: '提交时项目负责人', readonly: true, hidden: true }) },
+  auto_approval_eligible_snapshot: { ...Field.boolean({ label: '原生自动审批资格快照', readonly: true, hidden: true }) },
+  auto_approval_threshold_snapshot: { ...Field.number({ label: '自动审批时长阈值快照', min: 0, max: 24, scale: 2, readonly: true, hidden: true }) },
+  auto_approval_settings_revision_snapshot: { ...Field.number({ label: '自动审批设置修订快照', min: 1, scale: 0, readonly: true, hidden: true }) },
+  approval_source_snapshot: { ...Field.text({ label: '审批来源快照', readonly: true, hidden: true }) },
+  approval_flow_name_snapshot: { ...Field.text({ label: '审批Flow快照', readonly: true, hidden: true }) },
+  approval_flow_run_id_snapshot: { ...Field.text({ label: '审批运行快照', readonly: true, hidden: true }) },
+  approval_flow_node_id_snapshot: { ...Field.text({ label: '审批节点快照', readonly: true, hidden: true }) },
+  fee_base_rate_snapshot: { ...Field.currency({ label: '费率计算基数快照', precision: 18, min: 0, readonly: true, hidden: true }) },
+  fee_multiplier_snapshot: { ...Field.number({ label: '加班系数快照', min: 0, scale: 4, readonly: true, hidden: true }) },
+  fee_management_uplift_snapshot: { ...Field.number({ label: '管理加成快照', min: 0, max: 1000, scale: 4, readonly: true, hidden: true }) },
+  cost_amount: { ...Field.currency({ label: '工时成本', precision: 18, min: 0, defaultValue: 0 }), readonly: true },
   status: { ...select('审核状态', [['draft', '草稿'], ['pending_review', '待审核'], ['approved', '已通过'], ['rejected', '已驳回']], 'draft'), readonly: true },
+  approval_status: { ...Field.text({ label: '原生审批状态', readonly: true }), hidden: true },
+  approval_manager_id: { ...Field.user({ label: '提交时项目负责人', readonly: true }), hidden: true },
   submitted_at: Field.datetime({ label: '提交时间', readonly: true }), reviewed_at: Field.datetime({ label: '审核时间', readonly: true }),
   reviewer_id: Field.user({ label: '审核人', readonly: true }), review_comment: Field.textarea({ label: '审核意见', readonly: true }),
   responsible_id: owner(true), remarks: remarks(),
-}, ['code', 'work_on', 'worker_id', 'project_id', 'work_item_id', 'work_content', 'hours', 'time_type', 'hourly_rate', 'cost_amount', 'status']);
+}, ['code', 'work_on', 'worker_id', 'worker_position_name_snapshot', 'position_id_snapshot', 'project_id', 'work_item_id', 'work_content', 'hours', 'time_type', 'hourly_rate', 'fee_source_snapshot', 'fee_member_rule_id_snapshot', 'fee_role_rule_id_snapshot', 'fee_role_revision_snapshot', 'fee_project_override_id_snapshot', 'fee_settings_revision_snapshot', 'fee_base_rate_snapshot', 'fee_multiplier_snapshot', 'fee_management_uplift_snapshot', 'approval_manager_snapshot', 'auto_approval_eligible_snapshot', 'auto_approval_threshold_snapshot', 'auto_approval_settings_revision_snapshot', 'approval_source_snapshot', 'approval_flow_name_snapshot', 'approval_flow_run_id_snapshot', 'approval_flow_node_id_snapshot', 'cost_amount', 'status']);
 
 // RISEMAP RM-140: approved business records feed a traceable cost pool before operating analysis consumes them.
 export const ProjectCostEntry = master('forge_project_cost_entry', '项目成本池', 'circle-dollar-sign', {
@@ -177,8 +213,117 @@ export const ProjectCostEntry = master('forge_project_cost_entry', '项目成本
   ]),
   cost_type: select('成本类型', [['labor', '人工成本'], ['material', '材料成本'], ['manufacturing', '制造费用'], ['travel', '差旅费用'], ['subcontract', '委外成本'], ['other', '其他成本']]),
   source_id: text('来源记录ID', true), occurred_on: Field.date({ label: '发生日期', ...required }),
+  source_hours_snapshot: Field.number({ label: '来源工时快照', min: 0, scale: 2, readonly: true, hidden: true }),
+  source_hourly_rate_snapshot: Field.currency({ label: '来源费率快照', precision: 18, min: 0, readonly: true, hidden: true }),
+  fee_source_snapshot: Field.text({ label: '费率来源快照', readonly: true, hidden: true }),
+  fee_role_revision_snapshot: Field.number({ label: '岗位费率修订快照', min: 1, scale: 0, readonly: true, hidden: true }),
+  fee_settings_revision_snapshot: Field.number({ label: '工时配置修订快照', min: 1, scale: 0, readonly: true, hidden: true }),
+  approval_source_snapshot: Field.text({ label: '审批来源快照', readonly: true, hidden: true }),
+  approval_flow_name_snapshot: Field.text({ label: '审批Flow快照', readonly: true, hidden: true }),
+  approval_flow_run_id_snapshot: Field.text({ label: '审批运行快照', readonly: true, hidden: true }),
+  approval_flow_node_id_snapshot: Field.text({ label: '审批节点快照', readonly: true, hidden: true }),
+  auto_approval_threshold_snapshot: Field.number({ label: '自动审批阈值快照', min: 0, max: 24, scale: 2, readonly: true, hidden: true }),
   total_amount: { ...amount('成本总额'), readonly: true }, allocated_amount: { ...amount('已归集金额'), readonly: true },
   remaining_amount: { ...amount('剩余金额'), readonly: true },
   status: { ...select('归集状态', [['unallocated', '待归集'], ['allocated', '已归集'], ['suspended', '暂挂'], ['reversed', '已冲销']], 'unallocated'), readonly: true },
   responsible_id: owner(true), remarks: remarks(),
-}, ['code', 'source_type', 'cost_type', 'name', 'customer_id', 'project_id', 'occurred_on', 'total_amount', 'allocated_amount', 'remaining_amount', 'status']);
+}, ['code', 'source_type', 'cost_type', 'name', 'customer_id', 'project_id', 'occurred_on', 'source_hours_snapshot', 'source_hourly_rate_snapshot', 'fee_source_snapshot', 'fee_role_revision_snapshot', 'fee_settings_revision_snapshot', 'approval_source_snapshot', 'approval_flow_name_snapshot', 'approval_flow_run_id_snapshot', 'approval_flow_node_id_snapshot', 'auto_approval_threshold_snapshot', 'total_amount', 'allocated_amount', 'remaining_amount', 'status']);
+
+const feeRequired = { required: true, storage: { notNull: true } } as const;
+const feeSelect = (label: string, options: Array<[string, string]>) => Field.select(options.map(([value, optionLabel]) => ({ value, label: optionLabel })), { label });
+const feeCode = (label: string) => Field.text({ label, maxLength: 100, ...feeRequired });
+
+/** Immutable organization role-rate revisions; the position remains a native ObjectStack position. */
+export const ProjectRoleFee = ObjectSchema.create({
+  name: 'forge_project_role_fee', label: '项目岗位费率', pluralLabel: '项目岗位费率', icon: 'badge-dollar-sign', sharingModel: 'private', nameField: 'name',
+  fields: {
+    name: text('费率名称', true),
+    rule_key: Field.text({ label: '规则标识', unique: 'organization', readonly: true, hidden: true, ...feeRequired }),
+    position_id: Field.lookup('sys_position', { label: '组织岗位', relatedList: false, deleteBehavior: 'restrict', ...feeRequired }),
+    position_label_snapshot: Field.text({ label: '岗位名称快照', readonly: true, ...feeRequired }),
+    grade_code: feeCode('职级代码'),
+    normal_rate: Field.currency({ label: '正常费率(元/h)', precision: 18, min: 0, ...feeRequired }),
+    overtime_multiplier: Field.number({ label: '加班倍率', min: 0, max: 10, scale: 4, ...feeRequired }),
+    overtime_rate_snapshot: Field.currency({ label: '加班费率(元/h)', precision: 18, min: 0, readonly: true }),
+    travel_rate: Field.currency({ label: '出差费率(元/h)', precision: 18, min: 0 }),
+    monthly_hours_limit: Field.number({ label: '月工时上限', min: 0, scale: 2 }),
+    effective_from: Field.date({ label: '生效日期', ...feeRequired }),
+    effective_to: Field.date({ label: '失效日期' }),
+    revision: Field.number({ label: '修订号', min: 1, scale: 0, readonly: true, ...feeRequired }),
+    active: Field.boolean({ label: '启用', readonly: true }),
+    description: Field.textarea({ label: '描述' }),
+    responsible_id: owner(true),
+    remarks: remarks(),
+  },
+  indexes: [{ fields: ['position_id', 'revision'], unique: 'organization' }, { fields: ['position_id', 'active', 'effective_from'] }],
+  enable: { apiEnabled: true, searchable: true, trackHistory: true, feeds: false, activities: false },
+});
+
+/** Optional member-level rate method and salary reference linked to the canonical SysMember. */
+export const ProjectMemberFee = ObjectSchema.create({
+  name: 'forge_project_member_fee', label: '项目成员费率', pluralLabel: '项目成员费率', icon: 'user-round-cog', sharingModel: 'private', nameField: 'name',
+  fields: {
+    name: text('成员费率名称', true),
+    rule_key: Field.text({ label: '规则标识', unique: 'organization', readonly: true, hidden: true, ...feeRequired }),
+    member_id: Field.lookup('sys_member', { label: '组织成员', relatedList: false, deleteBehavior: 'restrict', ...feeRequired }),
+    position_id: Field.lookup('sys_position', { label: '组织岗位', relatedList: false, deleteBehavior: 'restrict', ...feeRequired }),
+    pay_method: feeSelect('计算方式', [['role_rate', '岗位费率'], ['salary_reference', '薪资参考']]),
+    monthly_salary: Field.currency({ label: '月均工资', precision: 18, min: 0 }),
+    actual_hourly_rate: Field.currency({ label: '实际最终费率(元/h)', precision: 18, min: 0 }),
+    effective_from: Field.date({ label: '生效日期', ...feeRequired }),
+    effective_to: Field.date({ label: '失效日期' }),
+    revision: Field.number({ label: '修订号', min: 1, scale: 0, readonly: true, ...feeRequired }),
+    active: Field.boolean({ label: '启用', readonly: true }),
+    responsible_id: owner(true),
+    remarks: remarks(),
+  },
+  indexes: [{ fields: ['member_id', 'position_id', 'revision'], unique: 'organization' }, { fields: ['member_id', 'position_id', 'active', 'effective_from'] }],
+  enable: { apiEnabled: true, searchable: true, trackHistory: true, feeds: false, activities: false },
+});
+
+/** Project-local normal-rate override revision; base rate and revision are frozen for audit. */
+export const ProjectFeeOverride = ObjectSchema.create({
+  name: 'forge_project_fee_override', label: '项目费率覆盖', pluralLabel: '项目费率覆盖', icon: 'badge-percent', sharingModel: 'private', nameField: 'name',
+  fields: {
+    name: text('覆盖名称', true),
+    rule_key: Field.text({ label: '规则标识', unique: 'organization', readonly: true, hidden: true, ...feeRequired }),
+    project_id: reference('forge_project', '项目', true),
+    position_id: Field.lookup('sys_position', { label: '组织岗位', relatedList: false, deleteBehavior: 'restrict', ...feeRequired }),
+    role_fee_id: Field.lookup('forge_project_role_fee', { label: '岗位费率规则', relatedList: false, deleteBehavior: 'restrict', ...feeRequired }),
+    role_fee_revision: Field.number({ label: '岗位费率修订快照', min: 1, scale: 0, readonly: true, ...feeRequired }),
+    base_normal_rate_snapshot: Field.currency({ label: '默认费率', precision: 18, min: 0, readonly: true, ...feeRequired }),
+    override_normal_rate: Field.currency({ label: '覆盖费率(元/h)', precision: 18, min: 0, ...feeRequired }),
+    difference_snapshot: Field.currency({ label: '差额', precision: 18, readonly: true }),
+    effective_from: Field.date({ label: '生效日期', ...feeRequired }),
+    effective_to: Field.date({ label: '失效日期' }),
+    reason: Field.textarea({ label: '覆盖原因', ...feeRequired }),
+    revision: Field.number({ label: '修订号', min: 1, scale: 0, readonly: true, ...feeRequired }),
+    active: Field.boolean({ label: '启用', readonly: true }),
+    responsible_id: owner(true),
+    remarks: remarks(),
+  },
+  indexes: [{ fields: ['project_id', 'position_id', 'revision'], unique: 'organization' }, { fields: ['project_id', 'position_id', 'active', 'effective_from'] }],
+  enable: { apiEnabled: true, searchable: true, trackHistory: true, feeds: false, activities: false },
+});
+
+/** Organization-level work-time configuration; nullable values remain unconfigured until saved. */
+export const ProjectTimeCostSettings = ObjectSchema.create({
+  name: 'forge_project_time_cost_settings', label: '项目工时成本设置', pluralLabel: '项目工时成本设置', icon: 'sliders-horizontal', sharingModel: 'private', nameField: 'name',
+  fields: {
+    name: Field.text({ label: '配置名称', ...feeRequired }),
+    standard_hours_per_day: Field.number({ label: '标准工作时长(h/日)', min: 0, max: 24, scale: 2 }),
+    overtime_start_after_hours: Field.number({ label: '加班起算时长(h/日)', min: 0, max: 24, scale: 2 }),
+    max_hours_per_day: Field.number({ label: '每日最高工时(h)', min: 0, max: 24, scale: 2 }),
+    auto_approval_threshold_hours: Field.number({ label: '自动审批时长阈值(h)', min: 0, max: 24, scale: 2 }),
+    workday_overtime_multiplier: Field.number({ label: '工作日加班倍率', min: 0, max: 10, scale: 4 }),
+    weekend_overtime_multiplier: Field.number({ label: '周末加班倍率', min: 0, max: 10, scale: 4 }),
+    management_uplift_percent: Field.number({ label: '管理加成(%)', min: 0, max: 1000, scale: 4 }),
+    budget_warning_percent: Field.number({ label: '预算预警阈值(%)', min: 0, max: 1000, scale: 2 }),
+    revision: Field.number({ label: '配置修订号', min: 1, scale: 0, readonly: true }),
+    active: Field.boolean({ label: '当前生效', readonly: true }),
+    responsible_id: owner(true),
+    remarks: remarks(),
+  },
+  indexes: [{ fields: ['name'], unique: 'organization' }],
+  enable: { apiEnabled: true, searchable: false, trackHistory: true, feeds: false, activities: false },
+});

@@ -6,7 +6,7 @@ const select = (label: string, options: Array<[string, string]>, defaultValue?: 
   { label, ...(defaultValue ? { defaultValue } : {}) },
 );
 const quantity = (label: string, readonly = false) => Field.number({ label, min: 0, scale: 4, defaultValue: 0, ...(readonly ? { readonly: true } : {}) });
-const money = (label: string, readonly = false) => Field.currency({ label, precision: 18, scale: 4, min: 0, defaultValue: 0, ...(readonly ? { readonly: true } : {}) });
+const money = (label: string, readonly = false) => Field.currency({ label, precision: 18, min: 0, defaultValue: 0, ...(readonly ? { readonly: true } : {}) });
 
 // Live RISEMAP /subcontract/suppliers: the profile extends an approved supplier master; delivery and yield rates are derived.
 export const SubcontractSupplierProfile = master('forge_subcontract_supplier_profile', '委外供应商档案', 'factory', {

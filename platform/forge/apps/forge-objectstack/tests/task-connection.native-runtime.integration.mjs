@@ -55,7 +55,7 @@ const target = ObjectSchema.create({name:'${TARGET_OBJECT}',label:'动作字段�
 const otherTarget = ObjectSchema.create({name:'${OUT_OF_SCOPE_OBJECT}',label:'未选动作字段',sharingModel:'private',fields:{secret_value:{type:'text'}}});
 const missingFieldTarget = ObjectSchema.create({name:'${MISSING_FIELD_OBJECT}',label:'缺失字段验证',sharingModel:'private',fields:{present_value:{type:'text'}}});
 const action = defineAction({ name:'task_probe_touch', label:'验证动作', objectName:'${OBJECT}', type:'script', locations:['record_header'], target:'TaskProbeTouch',
-  visible:false, ai:{exposed:true,category:'action',description:'Only increments the authenticated caller-bound isolated task fixture record for native delegation regression validation.'}, params:[{field:'name',objectOverride:'${TARGET_OBJECT}',label:'动作目标名称',required:false},{field:'attachment',objectOverride:'${TARGET_OBJECT}',label:'任务材料',required:false}] });
+  visible:false, ai:{exposed:true,requiresConfirmation:true,category:'action',description:'Only increments the authenticated caller-bound isolated task fixture record for native delegation regression validation.'}, params:[{field:'name',objectOverride:'${TARGET_OBJECT}',label:'动作目标名称',required:false},{field:'attachment',objectOverride:'${TARGET_OBJECT}',label:'任务材料',required:false}] });
 const otherAction = defineAction({ name:'task_probe_other', label:'未选择动作', objectName:'${OBJECT}', type:'script', locations:['record_header'], target:'TaskProbeOther',
   visible:false, ai:{exposed:true,category:'action',description:'Fixture action that is deliberately outside the issued task scope.'}, params:[{field:'secret_value',objectOverride:'${OUT_OF_SCOPE_OBJECT}'}] });
 const missingFieldAction = defineAction({ name:'task_probe_missing_field', label:'缺失字段动作', objectName:'${OBJECT}', type:'script', locations:['record_header'], target:'TaskProbeMissingField',
@@ -273,7 +273,19 @@ export default stack;
     let rpcId=0;
     async function rpc(method,params={},taskToken=token) { return request(ROOT+'/mcp','POST',{jsonrpc:'2.0',id:++rpcId,method,params},taskToken); }
     const init=await rpc('initialize',{protocolVersion:'2025-03-26',capabilities:{},clientInfo:{name:'native-task-test',version:'1'}});assert.equal(init.status,200,'mcp init:'+String(init.value?.error?.code));
-    const actionReply=await rpc('tools/call',{name:'run_action',arguments:{actionName:'task_probe_touch',objectName:OBJECT,recordId:scope.business_record.record_id,params:{name:'可信动作字段'}}});
+    db=new Client({host:'127.0.0.1',port:admin.connectionParameters.port,user:admin.connectionParameters.user,database});await db.connect();
+    const listedTools=await rpc('tools/list');
+    const nativeRunAction=listedTools.value?.result?.tools?.find(tool=>tool.name==='run_action');
+    assert.equal(nativeRunAction?.inputSchema?.properties?.confirm?.type,'boolean','actual 17.5 MCP input schema declares a top-level boolean confirmation');
+    assert.equal((nativeRunAction?.inputSchema?.required||[]).includes('confirm'),false,'read-only or ungated actions do not require confirmation');
+    const delegatedArguments={actionName:'task_probe_touch',objectName:OBJECT,recordId:scope.business_record.record_id,params:{name:'可信动作字段'}};
+    const unconfirmedReply=await rpc('tools/call',{name:'run_action',arguments:delegatedArguments});
+    assert.equal(unconfirmedReply.status,200);
+    assert.equal(unconfirmedReply.value?.result?.isError,true,'17.5 rejects current four-field Weave run_action protocol when the selected action requires confirmation');
+    assert.match(JSON.stringify(unconfirmedReply.value?.result),/ACTION_CONFIRMATION_REQUIRED/);
+    const beforeConfirmed=await db.query(`SELECT counter FROM ${OBJECT} WHERE id=$1`,[scope.business_record.record_id]);
+    assert.equal(Number(beforeConfirmed.rows[0].counter),0,'missing confirmation performs no delegated business write');
+    const actionReply=await rpc('tools/call',{name:'run_action',arguments:{...delegatedArguments,confirm:true}});
     assert.equal(actionReply.status,200,JSON.stringify(actionReply.value)); assert.ok(actionReply.value.result && actionReply.value.result.isError!==true,JSON.stringify(actionReply.value));
     const wrongFile=await rpc('tools/call',{name:'run_action',arguments:{actionName:'task_probe_touch',objectName:OBJECT,recordId:scope.business_record.record_id,params:{attachment:randomUUID()}}});assert.ok(wrongFile.status===403 || wrongFile.value.result?.isError,'field-backed file reference outside scope must be rejected');
     const parameterMetadata=await request(ROOT+'/objects/'+TARGET_OBJECT,'GET',undefined,token);
@@ -318,7 +330,6 @@ export default stack;
     assert.equal(renewed.value.grant_id,first.value.grant_id); assert.equal(renewed.value.generation,2);
     assert.equal((await request(ROOT+'/current','GET',undefined,token)).status,401);
     assert.equal((await request(ROOT+'/current','GET',undefined,renewed.value.access_token.slice(0,-3)+'bad')).status,401);
-    db=new Client({host:'127.0.0.1',port:admin.connectionParameters.port,user:admin.connectionParameters.user,database});await db.connect();
     const deliveryDeadline=Date.now()+30000;let delivered=0;
     while(Date.now()<deliveryDeadline){delivered=Number((await db.query('SELECT count(*) AS n FROM sys_inbox_message WHERE user_id=$1',[session.user.id])).rows[0].n);if(delivered>=223)break;await new Promise(resolve=>setTimeout(resolve,250));}
     assert.equal(delivered,223,'native delivery must materialize the fixture inbox before paginating');

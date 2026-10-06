@@ -6,6 +6,7 @@ import { businessActionPolicy } from './business-action-policy.js';
 import { canonicalJSON, digest, TaskConnectionFailure } from './native-task-auth.js';
 import { completedOrderApproval } from './sales-order-readiness.js';
 import { businessContext } from './business-transaction.js';
+import { nativeActionConfirmationSupported, nativeActionRequiresConfirmation } from './native-action-confirmation.js';
 
 export type BusinessRow = Record<string, unknown>;
 export interface EmployeeParameter {
@@ -34,6 +35,18 @@ export class EmployeeNativeActions {
   constructor(private readonly context: PluginContext, readonly actor: ExecutionContext) {
     this.sdk = new HttpDispatcher(context.getKernel() as ConstructorParameters<typeof HttpDispatcher>[0]);
     this.bridge = this.sdk.buildMcpBridge({ request: { method: 'POST', url: '/api/v1/mcp', headers: {} }, executionContext: actor }) as NativeEmployeeBridge;
+  }
+
+  /** Called only after the service has revalidated the employee's bound intent and operation. */
+  async runBoundAction(name: string, input: BusinessRow): Promise<unknown> {
+    const metadata = await this.metadata(String(input.objectName));
+    const definition = (metadata.actions as BusinessRow[] | undefined)?.find(action => action.name === name);
+    if (!definition) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_METADATA_UNAVAILABLE', '当前动作声明不可核验');
+    const required = nativeActionRequiresConfirmation(definition);
+    if (required && !nativeActionConfirmationSupported()) {
+      throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_CONFIRMATION_UNSUPPORTED', '当前原生协议不能可靠传递本次办理授权');
+    }
+    return this.bridge.runAction(name, required ? { ...input, confirm: true } : input);
   }
 
   async metadata(objectName: string): Promise<BusinessRow> {
@@ -127,6 +140,9 @@ export class EmployeeNativeActions {
       if (relevantRecord && !employeeActionRelevant(String(action.name), relevantRecord, this.actor.userId)) continue;
       const definition = definitions?.find(d => d.name === action.name);
       if (!definition) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_METADATA_UNAVAILABLE', '当前动作声明不可核验');
+      if (nativeActionRequiresConfirmation(definition) && !nativeActionConfirmationSupported()) {
+        throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_CONFIRMATION_UNSUPPORTED', '当前原生协议不能可靠传递本次办理授权');
+      }
       const parameters = await this.parameters(objectName, definition, metadata);
       const policy = businessActionPolicy(objectName, String(action.name));
       result.push({ action_ref: result.length + 1, capabilityId: `forge:action:${objectName}.${String(action.name)}`,

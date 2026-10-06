@@ -13,12 +13,12 @@ import { SalesContractApprovalFlow } from '../src/flows/sales-contract-approval.
 import { ApprovalResubmitGuardPlugin } from '../src/plugins/approval-resubmit-guard.plugin.ts';
 import { ApprovalWorkbenchContextPlugin } from '../src/plugins/approval-workbench-context.plugin.ts';
 import { ContractRevisionMaterialPlugin, approvalPayloadVersion } from '../src/plugins/contract-revision-material.ts';
-const platformObjectsPath = '../node_modules/.pnpm/@objectstack+platform-objects@17.3.0/node_modules/@objectstack/platform-objects/dist/index.mjs';
+const platformObjectsPath = '../node_modules/.pnpm/@objectstack+platform-objects@17.5.0/node_modules/@objectstack/platform-objects/dist/index.mjs';
 const { SysAttachment } = await import(platformObjectsPath);
-const auditPluginPath = '../node_modules/.pnpm/@objectstack+plugin-audit@17.3.0/node_modules/@objectstack/plugin-audit/dist/index.mjs';
+const auditPluginPath = '../node_modules/.pnpm/@objectstack+plugin-audit@17.5.0/node_modules/@objectstack/plugin-audit/dist/index.mjs';
 const { installAuditWriters } = await import(auditPluginPath);
 
-const DATABASE = 'forge_contract_test';
+const DATABASE = process.env.FORGE_NATIVE_PG_APPROVAL_DATABASE || 'forge_contract_test';
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.FORGE_NATIVE_PG_APPROVAL_PORT || 55439);
 const DB_USER = process.env.FORGE_NATIVE_PG_APPROVAL_USER || 'postgres';
@@ -124,7 +124,7 @@ function executionContext(userId, organizationId) {
   return { userId, tenantId: organizationId, organizationId, positions: [], permissions: [] };
 }
 
-test('native ObjectStack 17.3 contract revision uses PostgreSQL, preserves the old snapshot, opens a fresh round, and reconciles a lost resume acknowledgement', {
+test('native ObjectStack 17.5 contract revision uses PostgreSQL, preserves the old snapshot, opens a fresh round, and reconciles a lost resume acknowledgement', {
   skip: process.env.FORGE_NATIVE_PG_APPROVAL_TEST !== '1' ? 'set FORGE_NATIVE_PG_APPROVAL_TEST=1 for the isolated PostgreSQL 16 run' : false,
 }, async (t) => {
   const engine = new ObjectQL();
@@ -367,7 +367,7 @@ test('native ObjectStack 17.3 contract revision uses PostgreSQL, preserves the o
     materialBinding: { bindingId: id(), returnVersion: body.returnVersion,
       sourceMaterialVersion: body.sourceMaterialVersion, newVersionDigest: 'a'.repeat(64) },
   }, 'sales-token');
-  assert.equal(directNative.status, 400, 'ObjectStack 17.3 REST drops custom binding fields and the Forge guard fails closed');
+  assert.equal(directNative.status, 400, 'ObjectStack 17.5 REST drops custom binding fields and the Forge guard fails closed');
   assert.equal((await engine.find('sys_approval_action', { where: { request_id: firstRequest.id, action: 'resubmit' }, limit: 10 }, { context: SYSTEM })).length, 0);
 
   const automationResume = automation.resume.bind(automation);
@@ -457,7 +457,7 @@ test('native ObjectStack 17.3 contract revision uses PostgreSQL, preserves the o
     suite: 'contract-revision-native-postgres',
     status: 'passed',
     database: DATABASE,
-    runtime: 'ObjectStack 17.3 native approvals and automation services',
+    runtime: 'ObjectStack 17.5 native approvals and automation services',
     checks: [
       'native returned request and real approval_revise suspension',
       'authenticated submitter and current reviewer approval context',
