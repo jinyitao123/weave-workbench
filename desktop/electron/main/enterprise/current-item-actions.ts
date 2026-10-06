@@ -328,6 +328,8 @@ export async function runCurrentItemAction(
   }
   await runtime.assertCurrent(reference)
   const action = reference.action
+  const requirement = action.execution.requiresConfirmation
+  if (typeof requirement !== 'boolean') throw new Error('Forge 没有提供当前动作的明确确认声明，请重新读取当前事项目录')
   const input = action.inputs[0]
   const actionArgs: NativeMcpActionArguments = {
     actionName: action.execution.actionName,
@@ -341,6 +343,17 @@ export async function runCurrentItemAction(
   runtime.attempts.set(attemptKey, pendingAttempt)
   const result = await runtime.service.runNativeMcpAction(actionArgs, async () => {
     await runtime.assertCurrent(reference)
+  }, requirement, async () => {
+    await runtime.assertCurrent(reference)
+    const latest = await runtime.getCurrentContext()
+    await runtime.assertCurrent(reference)
+    const selected = latest.availableActions?.find((candidate) => digest(JSON.stringify(candidate)) === actionFingerprint)
+    if (latest.status !== 'pending' || latest.viewer !== currentContext.viewer
+      || latest.businessObject.objectName !== action.execution.objectName
+      || latest.businessObject.recordId !== action.execution.recordId || !selected
+      || selected.execution.requiresConfirmation !== requirement) {
+      throw new Error('发送前当前审批、动作或确认声明已变化，请重新读取本人事项')
+    }
   })
   pendingAttempt.status = result.status
   pendingAttempt.code = result.code

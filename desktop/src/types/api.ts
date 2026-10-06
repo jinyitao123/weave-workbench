@@ -360,6 +360,7 @@ export interface EnterpriseApprovalAction {
     actionName: string
     objectName: string
     recordId: string
+    requiresConfirmation?: boolean
     params: {
       approvalRequestId: string
       itemVersion: string
@@ -367,6 +368,14 @@ export interface EnterpriseApprovalAction {
     }
   }
   inputs: Array<{ name: string; type: 'string'; label: string; required: boolean }>
+}
+
+export interface QuotationApprovalLines {
+  version: '1'
+  pricingVersion: number
+  itemCount: number
+  totalAmount: number
+  rows: Array<{ position: number; name: string; lineType: 'material' | 'service'; quantity: number; taxedUnitPrice: number; taxRate: number; discountRate: number; taxedSubtotal: number; unitName?: string }>
 }
 
 export interface EnterpriseApprovalContext {
@@ -380,6 +389,7 @@ export interface EnterpriseApprovalContext {
   returnVersion?: string
   returnReason?: string
   fields: Array<{ label: string; value: string }>
+  quotationLines?: QuotationApprovalLines
   availableActions?: EnterpriseApprovalAction[]
   files: Array<{ fileId: string; name: string; mediaType: 'text/plain; charset=utf-8'; bytes: number; sha256: string; content: string; verified: boolean }>
   originalFiles?: Array<{
@@ -421,6 +431,7 @@ export interface EnterpriseApprovalContextView {
   step: string
   returnReason?: string
   fields: Array<{ label: string; value: string }>
+  quotationLines?: QuotationApprovalLines
   files: Array<{ name: string; content: string; verified: boolean }>
   originalFiles?: Array<{
     name: string

@@ -9,7 +9,7 @@ function fixture(semantic = 'reject', objectName = 'forge_sales_order', viewer: 
     requestId: 'approval-current', status: 'pending', viewer, title: '当前审批', step: '员工复核',
     businessObject: { objectName, recordId: 'record-current' }, sourceMaterialVersion: 'a'.repeat(64), fields: [], files: [],
     availableActions: [{ semantic, label: semantic === 'recall' ? '撤回订单审批' : semantic === 'reject' ? '拒绝订单' : semantic === 'revise' ? '退回修改' : '同意', description: '当前原生动作',
-      execution: { tool: 'run_action', actionName: semantic === 'recall' ? 'order_approval_mcp_recall' : `native_${semantic}`, objectName, recordId: 'record-current', params: { approvalRequestId: 'approval-current', itemVersion: 'item-before', sourceMaterialVersion: 'a'.repeat(64) } },
+      execution: { tool: 'run_action', actionName: semantic === 'recall' ? 'order_approval_mcp_recall' : `native_${semantic}`, objectName, recordId: 'record-current', requiresConfirmation: false, params: { approvalRequestId: 'approval-current', itemVersion: 'item-before', sourceMaterialVersion: 'a'.repeat(64) } },
       inputs: [{ name: 'comment', type: 'string', label: '意见', required: true }],
     }],
   }
@@ -37,7 +37,7 @@ describe('work page native approval actions', () => {
     expect(f.view.actions![0].semantic).toBe(semantic)
     expect(await f.run()).toEqual({ runId: 'forge:approval:approval-current', repeated: false })
     expect(f.service.runNativeMcpAction).toHaveBeenCalledWith({ actionName: `native_${semantic}`, objectName, recordId: 'record-current',
-      params: { approvalRequestId: 'approval-current', itemVersion: 'item-before', sourceMaterialVersion: 'a'.repeat(64), comment: f.payload.comment } }, expect.any(Function))
+      params: { approvalRequestId: 'approval-current', itemVersion: 'item-before', sourceMaterialVersion: 'a'.repeat(64), comment: f.payload.comment } }, expect.any(Function), false, expect.any(Function))
   })
   it('accepts a matched rejection receipt after the native request becomes terminal', async () => {
     const f = fixture()
@@ -53,7 +53,7 @@ describe('work page native approval actions', () => {
     expect(f.view.actions).toEqual([{ actionRef: f.payload.actionRef, semantic: 'recall', label: '撤回订单审批' }])
     expect(await f.run()).toEqual({ runId: 'forge:submitted:approval-current', repeated: false })
     expect(f.service.runNativeMcpAction).toHaveBeenCalledWith({ actionName: 'order_approval_mcp_recall', objectName: 'forge_sales_order', recordId: 'record-current',
-      params: { approvalRequestId: 'approval-current', itemVersion: 'item-before', sourceMaterialVersion: 'a'.repeat(64), comment: f.payload.comment } }, expect.any(Function))
+      params: { approvalRequestId: 'approval-current', itemVersion: 'item-before', sourceMaterialVersion: 'a'.repeat(64), comment: f.payload.comment } }, expect.any(Function), false, expect.any(Function))
   })
   it('keeps a submitter recall bound to the displayed item version and never repeats an unknown result', async () => {
     const stale = fixture('recall', 'forge_sales_order', 'original_submitter')

@@ -15,6 +15,7 @@ import { detectRendererPlatform } from '@/lib/platform-shortcuts'
 import { activityNotificationSignature, readClearedActivity, readClearedAttention, sessionCompanionNotificationSignature } from '@/app/session-attention'
 import { errorMessage } from '@/lib/errors'
 import { openApprovalReviewInPi } from '@/lib/approval-review'
+import { quotationApprovalText } from '@/lib/quotation-approval-presentation'
 import { businessNotificationPrompt } from '@/lib/business-notification'
 import { teamRunContinuationBoundary, teamRunResultNotice, WORKBENCH_RUN_CONTINUATION_TYPE } from '@/lib/team-work-continuation'
 import { I18nProvider } from '@/lib/i18n'
@@ -693,6 +694,7 @@ export default function App() {
       reason ? `退回原因：${reason}` : '',
       currentContext ? `当前审批步骤：${currentContext.step}` : '',
       ...(currentContext?.fields.map((field) => `${field.label}：${field.value}`) ?? []),
+      quotationApprovalText(currentContext?.quotationLines),
       ...(currentContext?.files.map((file) => `已核对的提交文件《${file.name}》：\n${file.content}`) ?? []),
       ...(currentContext?.originalFiles?.map((file) => `已核验的审批原件《${file.name}》，${file.bytes} 字节，提取状态 ${file.extraction.status}：\n${file.extraction.content}`) ?? []),
       item.returnTarget ? `修改完成后返回位置：${item.returnTarget}` : '', item.reviewScope ? `复核范围：${item.reviewScope}` : '',

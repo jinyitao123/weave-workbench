@@ -27,6 +27,7 @@ const selectedNativeAction = {
   execution: {
     tool: 'run_action', actionName: nativeActionArgs.actionName,
     objectName: nativeActionArgs.objectName, recordId: nativeActionArgs.recordId,
+    requiresConfirmation: false,
     params: {
       approvalRequestId: nativeActionArgs.params.approvalRequestId,
       itemVersion: nativeActionArgs.params.itemVersion,
@@ -63,12 +64,16 @@ function salesOrderApprovalReceipt(semantic: SalesOrderDecision): Record<string,
 
 async function nativeActionFixture(mcpResponse: Response | Error) {
   const calls: string[] = []
-  const fetch = vi.fn(async (input: URL | RequestInfo) => {
+  const fetch = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
     const path = new URL(String(input)).pathname
     calls.push(path)
     if (path === '/api/v1/auth/sign-in/email') return Response.json({ token: 'forge-token', user: { id: 'employee' } })
     if (path === '/v1/auth/external/exchange') return Response.json({ token: 'weave-token', subject: { id: 'employee' }, organization: { id: 'org' }, issuer: 'forge:test-deployment', permissions: ['teams:use'] })
     if (path === '/api/v1/mcp') {
+      const request = JSON.parse(String(init?.body)) as { id: string; method: string }
+      if (request.method === 'tools/list') return Response.json({ jsonrpc: '2.0', id: request.id,
+        result: { tools: [{ name: 'run_action', inputSchema: { type: 'object', required: ['actionName'],
+          properties: { actionName: { type: 'string' }, objectName: { type: 'string' }, recordId: { type: 'string' }, params: { type: 'object' } } } }] } })
       if (mcpResponse instanceof Error) throw mcpResponse
       return mcpResponse
     }
@@ -195,13 +200,13 @@ describe('Forge native MCP action receipt envelope', () => {
     }
     const f = await nativeActionFixture(mcpToolResult(envelope))
 
-    const attempt = await f.service.runNativeMcpAction(nativeActionArgs, async () => {})
+    const attempt = await f.service.runNativeMcpAction(nativeActionArgs, async () => {}, false, async () => {})
 
     expect(attempt).toEqual({ status: 'returned', result: nativeActionReceipt })
     expect(parseCurrentItemActionReceipt(attempt.result, selectedNativeAction)).toEqual(nativeActionReceipt)
     expect(parseCurrentItemActionReceipt({ ...nativeActionReceipt, itemVersion: 'item-round-2' }, selectedNativeAction)).toBeUndefined()
     expect(parseCurrentItemActionReceipt({ ...nativeActionReceipt, sourceMaterialVersion: 'b'.repeat(64) }, selectedNativeAction)).toBeUndefined()
-    expect(f.calls.filter((path) => path === '/api/v1/mcp')).toHaveLength(1)
+    expect(f.calls.filter((path) => path === '/api/v1/mcp')).toHaveLength(2)
   })
 
   it.each(['approve', 'reject'] as const)('requires the native terminal status and business status for sales-order %s', (semantic) => {
@@ -282,18 +287,18 @@ describe('Forge native MCP action receipt envelope', () => {
     envelope[field] = field === 'ok' ? false : 'another-action'
     const f = await nativeActionFixture(mcpToolResult(envelope))
 
-    const attempt = await f.service.runNativeMcpAction(nativeActionArgs, async () => {})
+    const attempt = await f.service.runNativeMcpAction(nativeActionArgs, async () => {}, false, async () => {})
 
     expect(attempt.status).toBe('unknown')
-    expect(f.calls.filter((path) => path === '/api/v1/mcp')).toHaveLength(1)
+    expect(f.calls.filter((path) => path === '/api/v1/mcp')).toHaveLength(2)
   })
 
   it('keeps a transport exception unknown and does not retry the native action POST', async () => {
     const f = await nativeActionFixture(new Error('simulated response loss'))
 
-    const attempt = await f.service.runNativeMcpAction(nativeActionArgs, async () => {})
+    const attempt = await f.service.runNativeMcpAction(nativeActionArgs, async () => {}, false, async () => {})
 
     expect(attempt.status).toBe('unknown')
-    expect(f.calls.filter((path) => path === '/api/v1/mcp')).toHaveLength(1)
+    expect(f.calls.filter((path) => path === '/api/v1/mcp')).toHaveLength(2)
   })
 })

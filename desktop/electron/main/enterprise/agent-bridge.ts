@@ -171,6 +171,7 @@ function returnedApprovalFingerprint(context: EnterpriseApprovalContext): string
     businessObject: context.businessObject, sourceMaterialVersion: context.sourceMaterialVersion,
     availableActions: context.availableActions ?? null,
     returnVersion: context.returnVersion, returnReason: context.returnReason, fields: context.fields,
+    quotationLines: context.quotationLines ?? null,
     files: context.files.map(({ fileId, name, mediaType, bytes, sha256 }) => ({ fileId, name, mediaType, bytes, sha256 })),
     originalFiles: context.originalFiles?.map(({ sourceKind, requestId, fileId, name, mediaType, bytes, sha256 }) => ({ sourceKind, requestId, fileId, name, mediaType, bytes, sha256 })),
   }))

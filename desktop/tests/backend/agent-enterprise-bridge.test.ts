@@ -1886,7 +1886,7 @@ describe('employee-bound material handoff', () => {
     const action: EnterpriseApprovalAction = {
       semantic: 'server-description-only', label: 'Forge 返回的可办理事项', description: '按当前事项办理并附上员工意见。',
       execution: {
-        tool: 'run_action', actionName: 'server_defined_action_47', objectName: 'forge_custom_record', recordId: 'contract-1',
+        tool: 'run_action', requiresConfirmation: false, actionName: 'server_defined_action_47', objectName: 'forge_custom_record', recordId: 'contract-1',
         params: { approvalRequestId: 'approval-1', itemVersion: 'native-item-round-47', sourceMaterialVersion: pending.sourceMaterialVersion },
       },
       inputs: [{ name: 'comment', type: 'string', label: '办理意见', required: true }],
@@ -1943,7 +1943,7 @@ describe('employee-bound material handoff', () => {
     pending.availableActions = [{
       semantic: 'uninterpreted', label: '当前可办事项', description: 'Forge 提供的当前动作说明。',
       execution: {
-        tool: 'run_action', actionName: 'descriptor_action_alpha', objectName: 'forge_sales_contract', recordId: 'contract-1',
+        tool: 'run_action', requiresConfirmation: false, actionName: 'descriptor_action_alpha', objectName: 'forge_sales_contract', recordId: 'contract-1',
         params: { approvalRequestId: 'approval-1', itemVersion: 'item-round-1', sourceMaterialVersion: pending.sourceMaterialVersion },
       },
       inputs: [{ name: 'comment', type: 'string', label: '办理意见', required: true }],
@@ -1975,7 +1975,7 @@ describe('employee-bound material handoff', () => {
     pending.availableActions = [{
       label: 'Forge当前动作', description: '目录提供的动作说明。',
       execution: {
-        tool: 'run_action', actionName: 'descriptor_action_beta', objectName: 'forge_sales_contract', recordId: 'contract-1',
+        tool: 'run_action', requiresConfirmation: false, actionName: 'descriptor_action_beta', objectName: 'forge_sales_contract', recordId: 'contract-1',
         params: { approvalRequestId: 'approval-1', itemVersion: 'item-round-2', sourceMaterialVersion: pending.sourceMaterialVersion },
       },
       inputs: [{ name: 'comment', type: 'string', label: '办理意见', required: true }],

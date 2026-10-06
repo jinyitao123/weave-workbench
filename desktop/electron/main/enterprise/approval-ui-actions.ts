@@ -39,6 +39,8 @@ export async function completeViewedApproval(
     && action.semantic === 'recall'
     && action.execution.actionName === 'order_approval_mcp_recall'
   if (!isReviewerAction && !isSubmitterRecall) throw new Error('当前员工无权执行此审批动作')
+  const requirement = action.execution.requiresConfirmation
+  if (typeof requirement !== 'boolean') throw new Error('Forge 没有提供当前动作的明确确认声明，请刷新本人待办')
   // A concurrent read may have yielded to another click before this reservation.
   const raced = attempts.get(key)
   if (raced) {
@@ -48,7 +50,20 @@ export async function completeViewedApproval(
   const result = Promise.resolve().then(async () => {
     assertCurrent()
     const attempt = await service.runNativeMcpAction({ actionName: action.execution.actionName, objectName: action.execution.objectName,
-      recordId: action.execution.recordId, params: { ...action.execution.params, [action.inputs[0].name]: comment } }, async () => { assertCurrent() })
+      recordId: action.execution.recordId, params: { ...action.execution.params, [action.inputs[0].name]: comment } },
+    async () => { assertCurrent() }, requirement, async () => {
+      assertCurrent()
+      const latest = await service.getApprovalContext(requestId)
+      assertCurrent()
+      const selected = latest.availableActions?.find((item) => digest(JSON.stringify(item)) === actionRef)
+      if (latest.status !== 'pending' || latest.viewer !== context.viewer
+        || latest.businessObject.objectName !== context.businessObject.objectName
+        || latest.businessObject.recordId !== context.businessObject.recordId
+        || currentItemContextFingerprint(latest) !== version || !selected
+        || selected.execution.requiresConfirmation !== requirement) {
+        throw new Error('发送前当前审批、动作或确认声明已变化，请重新查看本人待办')
+      }
+    })
     assertCurrent()
     if (attempt.status === 'rejected') throw new Error(attempt.message ?? 'Forge 拒绝了本次办理')
     const receipt = attempt.status === 'returned' ? parseCurrentItemActionReceipt(attempt.result, action) : undefined

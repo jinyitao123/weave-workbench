@@ -161,6 +161,7 @@ export function approvalContextView(context: EnterpriseApprovalContext): Enterpr
     step: context.step,
     ...(context.returnReason !== undefined ? { returnReason: context.returnReason } : {}),
     fields: context.fields.map((field) => ({ ...field })),
+    ...(context.quotationLines ? { quotationLines: { ...context.quotationLines, rows: context.quotationLines.rows.map((row) => ({ ...row })) } } : {}),
     files: context.files.map(({ name, content, verified }) => ({ name, content, verified })),
     ...(context.originalFiles ? { originalFiles: context.originalFiles.map(({ name, mediaType, bytes, extraction }) => ({
       name, mediaType, bytes, verified: true,
@@ -835,6 +836,7 @@ export class EnterpriseService {
 
   async runNativeMcpAction(
     args: NativeMcpActionArguments, assertCurrent: () => Promise<void>,
+    requiresConfirmation?: boolean, assertBeforeDispatch?: () => Promise<void>,
   ): Promise<NativeMcpActionAttempt> {
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in' || !this.forgeToken) throw new Error('请先登录以办理当前 Forge 事项')
@@ -845,7 +847,7 @@ export class EnterpriseService {
       assertCurrentAuth: (snapshot) => this.assertCurrentAuth(snapshot as EnterpriseAuthSnapshot),
       signOutIfCurrent: (snapshot) => this.signOutIfCurrent(snapshot as EnterpriseAuthSnapshot),
       assertAuthGeneration: () => this.assertAuthGeneration(generation),
-    })
+    }, requiresConfirmation, assertBeforeDispatch)
   }
 
   async getApprovalActionHistory(requestIdValue: string): Promise<unknown[]> {
@@ -1997,9 +1999,13 @@ export class EnterpriseService {
       throw new Error('Forge 审批上下文格式无效')
     }
     const { parseCurrentApprovalActions } = await import('./enterprise/approval-actions')
-    const availableActions = parseCurrentApprovalActions(approval.availableActions, {
+    const { parseQuotationApprovalLines } = await import('./enterprise/quotation-approval-lines')
+    const quotationLines = parseQuotationApprovalLines(approval.quotationLines, objectName)
+    const declaredActions = parseCurrentApprovalActions(approval.availableActions, {
       requestId: approvalId, businessObject: { objectName, recordId }, sourceMaterialVersion,
     })
+    const availableActions = objectName === 'forge_quotation' && !quotationLines
+      ? declaredActions?.filter((action) => action.semantic !== 'approve') : declaredActions
     if (isSubmittedOrder && (availableActions?.length !== 1
       || availableActions[0]?.semantic !== 'recall'
       || availableActions[0]?.execution.actionName !== 'order_approval_mcp_recall')) {
@@ -2012,7 +2018,7 @@ export class EnterpriseService {
       requestId: approvalId, status: isReturnedSubmitter ? 'returned' : 'pending', viewer: isSubmitter ? 'original_submitter' : 'current_approver',
       title, step, businessObject: { objectName, recordId, ...(recordName ? { recordName } : {}) }, sourceMaterialVersion,
       ...(isReturnedSubmitter ? { returnVersion, returnReason: returnReason as string } : {}),
-      fields, ...(availableActions !== undefined ? { availableActions } : {}),
+      fields, ...(quotationLines ? { quotationLines } : {}), ...(availableActions !== undefined ? { availableActions } : {}),
       files, ...(originalFiles ? { originalFiles } : {}),
     }
   }
