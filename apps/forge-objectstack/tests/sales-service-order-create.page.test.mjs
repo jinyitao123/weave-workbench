@@ -323,3 +323,47 @@ test('service manager permission protects direct page access and create failures
   assert.ok(nestedNodes(failedTree, node => node.type === 'ForgeNotice' && node.props.tone === 'error' && serviceText(node).includes('客户与来源订单不匹配或不可访问')).length > 0);
   assert.deepEqual(navigations, [], 'failure leaves the user on the form for correction');
 });
+
+test('cancel keeps a changed standalone order until the manager explicitly discards it', async () => {
+  const navigations = [];
+  const harness = createServicePageHarness(ServiceOrderCreatePage, {
+    manager: true,
+    permissions: serviceManagerPermission.systemPermissions,
+    globals: pageGlobals(undefined, path => navigations.push(path)),
+  });
+  let tree = await harness.flushEffects();
+  const changed = { name: '现场中文标题', service_mode: 'onsite', urgency: 'medium' };
+  nestedNodes(tree, node => node.type === 'ObjectForm')[0].props.onValuesChange(changed);
+  tree = harness.render();
+  nestedNodes(tree, node => node.type === 'button' && serviceText(node).trim() === '取消')[0].props.onClick();
+  tree = harness.render();
+  assert.deepEqual(navigations, [], 'cancel cannot silently discard the current draft');
+  let guard = nestedNodes(tree, node => node.type === 'ForgeDialog' && node.props.open)[0];
+  assert.ok(guard, 'changed values use the existing shared confirmation dialog');
+  guard.props.onCancel();
+  tree = harness.render();
+  assertJsonEqual(nestedNodes(tree, node => node.type === 'ObjectForm')[0].props.values, changed);
+  assert.deepEqual(navigations, []);
+  nestedNodes(tree, node => node.type === 'button' && serviceText(node).trim() === '取消')[0].props.onClick();
+  tree = harness.render();
+  guard = nestedNodes(tree, node => node.type === 'ForgeDialog' && node.props.open)[0];
+  guard.props.onConfirm();
+  assert.deepEqual(navigations, ['/apps/com.inoforge.forge.sales/page_service_orders']);
+  assert.equal(harness.calls.some(call => call.path === '/actions/forge_service_order/service_order_create'), false);
+});
+
+test('native defaults and cleared empty values do not create an unsaved order', async () => {
+  const navigations = [];
+  const harness = createServicePageHarness(ServiceOrderCreatePage, {
+    manager: true,
+    permissions: serviceManagerPermission.systemPermissions,
+    globals: pageGlobals(undefined, path => navigations.push(path)),
+  });
+  let tree = await harness.flushEffects();
+  nestedNodes(tree, node => node.type === 'ObjectForm')[0].props.onValuesChange({
+    name: '', code: '', customer_id: null, service_mode: 'onsite', urgency: 'medium', onsite_evidence_attachments: [],
+  });
+  tree = harness.render();
+  nestedNodes(tree, node => node.type === 'button' && serviceText(node).trim() === '取消')[0].props.onClick();
+  assert.deepEqual(navigations, ['/apps/com.inoforge.forge.sales/page_service_orders']);
+});

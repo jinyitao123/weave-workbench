@@ -166,6 +166,13 @@ const serviceOrderSourceField = {
   label: '来源销售订单',
   required: true,
 };
+const serviceOrderFormDefaults = Object.fromEntries(
+  Object.entries(ServiceOrder.fields)
+    .filter(([name, field]) => field.defaultValue !== undefined && serviceViews.orders.form?.sections?.some(
+      section => section.fields?.some(item => (typeof item === 'string' ? item : item.field) === name),
+    ))
+    .map(([name, field]) => [name, field.defaultValue]),
+);
 
 function createServicePage(spec: ServicePageSpec) {
   const source = `const servicePage=${JSON.stringify(spec)};
@@ -176,6 +183,7 @@ const serviceOrderStatusOptions=${serviceOrderStatusOptionsJson};
 const warrantyRulesCategory=${warrantyRulesCategoryJson};
 const serviceOrderSourceField=${JSON.stringify(serviceOrderSourceField)};
 const serviceOrderTypeField=${JSON.stringify({...ServiceOrder.fields.service_type,name:'service_type',label:'服务场景'})};
+const serviceOrderFormDefaults=${JSON.stringify(serviceOrderFormDefaults)};
 const css=${serviceCss};
 ${serviceDispatchPanelHelpersSource}
 ${servicePersonalWorkspacePanelHelpersSource}
@@ -199,6 +207,7 @@ function App(){
   const warrantyRequest=React.useRef(0);
   const [selected,setSelected]=React.useState(null);
   const [dialog,setDialog]=React.useState(()=>servicePage.standaloneCreate?{kind:'create-order',step:'form',values:{},baseline:{},error:''}:null);
+  const [confirmCreateCancel,setConfirmCreateCancel]=React.useState(false);
   const [notice,setNotice]=React.useState(null);
   const [busy,setBusy]=React.useState(false);
   const [analysis,setAnalysis]=React.useState({from:'',to:'',dimension:'service_type',serviceType:'',region:'',urgency:''});
@@ -562,7 +571,10 @@ function App(){
     if(servicePage.mode==='configuration')return configCategory?['category','=',configCategory]:undefined;
     return undefined;
   }
-  const formDirty=Boolean(dialog&&((dialog.values&&dialog.baseline&&JSON.stringify(dialog.values)!==JSON.stringify(dialog.baseline))||(dialog.files&&dialog.files.length)));
+  const emptyValue=value=>value==null||(Array.isArray(value)&&!value.length)?'':value;
+  const standaloneOrderDirty=Boolean(dialog&&Object.keys(dialog.values||{}).some(name=>JSON.stringify(emptyValue(dialog.values[name]))!==JSON.stringify(emptyValue(dialog.baseline?.[name]??serviceOrderFormDefaults[name]))));
+  const formDirty=servicePage.standaloneCreate?standaloneOrderDirty:Boolean(dialog&&((dialog.values&&dialog.baseline&&JSON.stringify(dialog.values)!==JSON.stringify(dialog.baseline))||(dialog.files&&dialog.files.length)));
+  function requestCreateCancel(){if(busy)return;if(formDirty)setConfirmCreateCancel(true);else ForgeNavigate('/_console/apps/com.inoforge.forge.sales/page_service_orders')}
   const sourceName=dialog&&dialog.record&&(dialog.record.code||dialog.record.name)||'';
   function servicePageActions(record,objectName){
     const actions=[];
@@ -1006,7 +1018,7 @@ function App(){
   if(access.loading)return <div className="forge-product forge-sales-service"><style>{css}</style><ForgeLoading label={'加载'+servicePage.label}/></div>;
   if(access.error)return <div className="forge-product forge-sales-service"><style>{css}</style><main className="fp-shell ss-shell"><ForgeNotice tone="error">{access.error}</ForgeNotice></main></div>;
   if(servicePage.managerOnly&&!access.canManage)return <div className="forge-product forge-sales-service"><style>{css}</style><main className="fp-shell ss-shell"><WorkspaceHeader className="ss-heading" variant="workspace" icon={servicePage.icon} breadcrumbItems={[{label:'销售管理'},{label:'服务管理'},{label:servicePage.label}]} title={servicePage.label} subtitleClassName="ss-subtitle" subtitle={servicePage.mode==='workspace'?undefined:servicePage.description}/><ForgeNotice tone="error">{managerError}</ForgeNotice></main></div>;
-  if(servicePage.standaloneCreate)return <div className="forge-product forge-sales-service"><style>{css}</style><main className="fp-shell ss-shell"><WorkspaceHeader className="ss-heading" variant="workspace" icon={servicePage.icon} breadcrumbItems={[{label:'销售管理'},{label:'服务管理'},{label:'新建服务工单'}]} title="新建服务工单" subtitleClassName="ss-subtitle" subtitle={servicePage.mode==='workspace'?undefined:servicePage.description} action={<button type="button" className="fp-button" disabled={busy} onClick={()=>ForgeNavigate('/_console/apps/com.inoforge.forge.sales/page_service_orders')}>取消</button>}/>{access.permissionsError&&<ForgeNotice tone="warning">{access.permissionsError}</ForgeNotice>}{dialog&&dialog.error&&<ForgeNotice tone="error">{dialog.error}</ForgeNotice>}<fieldset className="ss-create-fieldset" disabled={busy} aria-busy={busy}><DocumentWorkspace className="ss-create-workspace" sidebarLabel="工单操作" main={<DocumentSection title="服务工单信息">{typeCatalog.error&&<ForgeNotice tone="error">{typeCatalog.error}</ForgeNotice>}{typeCatalog.available&&!typeCatalog.options.length&&<ForgeNotice tone="info">暂无启用的服务场景。</ForgeNotice>}{formComponent('forge_service_order',formFields,formView.sections,formView.columns,[serviceOrderSourceField,{...serviceOrderTypeField,widget:'declared-label-combobox',options:typeCatalog.options,readonly:typeCatalog.loading||!typeCatalog.available,placeholder:typeCatalog.loading?'读取服务场景…':typeCatalog.options.length?'请选择服务场景':'暂无启用的服务场景'}])}</DocumentSection>} sidebar={<DocumentSection title="工单操作"><div className="ss-create-actions"><button type="button" className="fp-button primary" disabled={busy||!canSubmitDialog()} onClick={submitReady}>{busy?'创建中…':'创建服务工单'}</button></div></DocumentSection>}/></fieldset></main></div>;
+  if(servicePage.standaloneCreate)return <div className="forge-product forge-sales-service"><style>{css}</style><main className="fp-shell ss-shell"><WorkspaceHeader className="ss-heading" variant="workspace" icon={servicePage.icon} breadcrumbItems={[{label:'销售管理'},{label:'服务管理'},{label:'新建服务工单'}]} title="新建服务工单" subtitleClassName="ss-subtitle" subtitle={servicePage.mode==='workspace'?undefined:servicePage.description} action={<button type="button" className="fp-button" disabled={busy} onClick={requestCreateCancel}>取消</button>}/>{access.permissionsError&&<ForgeNotice tone="warning">{access.permissionsError}</ForgeNotice>}{dialog&&dialog.error&&<ForgeNotice tone="error">{dialog.error}</ForgeNotice>}<fieldset className="ss-create-fieldset" disabled={busy} aria-busy={busy}><DocumentWorkspace className="ss-create-workspace" sidebarLabel="工单操作" main={<DocumentSection title="服务工单信息">{typeCatalog.error&&<ForgeNotice tone="error">{typeCatalog.error}</ForgeNotice>}{typeCatalog.available&&!typeCatalog.options.length&&<ForgeNotice tone="info">暂无启用的服务场景。</ForgeNotice>}{formComponent('forge_service_order',formFields,formView.sections,formView.columns,[serviceOrderSourceField,{...serviceOrderTypeField,widget:'declared-label-combobox',options:typeCatalog.options,readonly:typeCatalog.loading||!typeCatalog.available,placeholder:typeCatalog.loading?'读取服务场景…':typeCatalog.options.length?'请选择服务场景':'暂无启用的服务场景'}])}</DocumentSection>} sidebar={<DocumentSection title="工单操作"><div className="ss-create-actions"><button type="button" className="fp-button primary" disabled={busy||!canSubmitDialog()} onClick={submitReady}>{busy?'创建中…':'创建服务工单'}</button></div></DocumentSection>}/></fieldset></main><ForgeDialog open={confirmCreateCancel} title="放弃更改？" busy={busy} confirmLabel="放弃" hideCancel={true} secondaryLabel="继续编辑" onSecondary={()=>setConfirmCreateCancel(false)} onCancel={()=>setConfirmCreateCancel(false)} onConfirm={()=>{if(!busy)ForgeNavigate('/_console/apps/com.inoforge.forge.sales/page_service_orders')}}><p>未保存的填写内容将丢失。</p></ForgeDialog></div>;
   const pageActions=servicePage.mode==='orders'&&access.canManage?<a className="fp-button primary" href={forgePageHref('page_service_order_create')}>新建服务工单</a>:servicePage.mode==='quotations'&&access.canManage?<button type="button" className="fp-button primary" onClick={openCreateQuote}>从完工工单生成报价</button>:servicePage.mode==='settlements'&&access.canManage?<button type="button" className="fp-button primary" onClick={openCreateSettlement}>从完工工单生成结算</button>:servicePage.mode==='configuration'&&access.canManage?<button type="button" className="fp-button primary" onClick={openCreateConfiguration}>新增配置</button>:null;
   const scopeTabs=renderScope();
   const pageNavigation=servicePage.mode==='orders'?<a className="fp-button ss-next-step" href="/_console/apps/com.inoforge.forge.sales/page_service_dispatch"><span>下一步操作</span><strong>派工中心</strong></a>:servicePage.mode==='dispatch'?<a className="fp-button" href="/_console/apps/com.inoforge.forge.sales/page_service_orders">服务工单</a>:null;
