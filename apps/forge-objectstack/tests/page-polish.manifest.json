@@ -1082,6 +1082,50 @@
       "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_order_workspace.json"
     },
     {
+      "featureId": "sales.order-create",
+      "app": "sales",
+      "surfaceType": "page",
+      "target": "page_sales_order_create",
+      "pageId": "page_sales_order_create",
+      "file": "sales-order-create.page.ts",
+      "pages": [
+        "page_sales_order_create"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "requirementIds": [
+        "SO-NEW-001",
+        "SO-NEW-002",
+        "SO-NEW-003",
+        "SO-NEW-004",
+        "SO-NEW-005",
+        "SO-NEW-006",
+        "SO-NEW-007",
+        "SO-NEW-008",
+        "SO-NEW-009",
+        "SO-NEW-010",
+        "SO-NEW-011",
+        "SO-NEW-012",
+        "SO-NEW-013",
+        "SO-NEW-014",
+        "SO-NEW-015",
+        "SO-NEW-016"
+      ],
+      "designStatus": "review_required",
+      "contract": "docs/contracts/sales/page_sales_order_create.md",
+      "acceptance": "apps/forge-objectstack/tests/acceptance/sales-order-create.json"
+    },
+    {
       "file": "sales-additional-fee.page.ts",
       "pages": [
         "page_sales_additional_fee"
