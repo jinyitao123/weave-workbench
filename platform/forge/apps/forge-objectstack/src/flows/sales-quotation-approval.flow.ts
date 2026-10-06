@@ -17,7 +17,7 @@ export const SalesQuotationApprovalFlow = defineFlow({
       config: {
         objectName: 'forge_quotation',
         triggerType: 'record-after-update',
-        condition: "record.status == 'pending_approval' && previous.status == 'draft'",
+        condition: "record.status == 'pending_approval' && (previous.status == 'draft' || previous.status == 'rejected')",
       },
       position: { x: 80, y: 160 },
     },

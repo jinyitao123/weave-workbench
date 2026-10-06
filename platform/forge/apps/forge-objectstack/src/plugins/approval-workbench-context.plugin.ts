@@ -3,7 +3,7 @@ import { ORDER_APPROVAL_MCP_APPROVE_TARGET, ORDER_APPROVAL_MCP_REJECT_TARGET, OR
 import type { Plugin, PluginContext } from '@objectstack/core';
 import { makeExecutionContextResolver } from '@objectstack/plugin-hono-server';
 import { isFileIdToken } from '@objectstack/spec/data';
-import type { ApprovalActionRow, ApprovalRequestRow, IApprovalService, IHttpRequest, IHttpResponse, IHttpServer, IStorageService } from '@objectstack/spec/contracts';
+import type { ApprovalActionRow, ApprovalRequestRow, IApprovalService, IHttpRequest, IHttpResponse, IHttpServer, IStorageService, IMetadataService, ISecurityService } from '@objectstack/spec/contracts';
 import type { ExecutionContext } from '@objectstack/spec/kernel';
 import type { IObjectQLEngine } from '@objectstack/spec/contracts';
 import type { ActionHandlerContext } from '@objectstack/spec/ui';
@@ -15,6 +15,7 @@ import { CONTRACT_OBJECT, resolveRetainedContractMaterial } from './contract-mat
 import { approvalPayloadVersion } from './contract-revision-material.js';
 import { applySalesOrderApproval } from './sales-order-domain.js';
 import { matchesOrderApprovalSnapshot } from './sales-order-readiness.js';
+import { projectQuotationLines, QuotationSnapshotFailure } from './quotation-approval-snapshot.js';
 
 const ROUTE = '/api/v1/approvals/requests/:requestId/workbench-context';
 const ORIGINAL_ROUTE = '/api/v1/approvals/requests/:requestId/workbench-context/files/:fileId/original';
@@ -308,7 +309,7 @@ function humanFieldValue(
   return undefined;
 }
 
-function projectFields(request: ApprovalRequestRow, engine: IObjectQLEngine): ContextField[] {
+function projectFields(request: ApprovalRequestRow, engine: IObjectQLEngine, readable?: Set<string>): ContextField[] {
   if (!isRecord(request.payload)) return [];
   const object = engine.getObject(request.object_name);
   const schemaFields = object?.fields ?? {};
@@ -316,6 +317,7 @@ function projectFields(request: ApprovalRequestRow, engine: IObjectQLEngine): Co
   const labels = isRecord(request.payload_labels) ? request.payload_labels : {};
   const result: ContextField[] = [];
   for (const [name, value] of Object.entries(request.payload)) {
+    if (readable && !readable.has(name)) continue;
     const definition = schemaFields[name];
     const projected = humanFieldValue(name, value, definition, display);
     if (projected === undefined) continue;
@@ -601,6 +603,7 @@ async function executeNativeApprovalAction(
   approvals: IApprovalService,
   actionContext: ApprovalMcpHandlerContext,
   decision: ApprovalMcpDecision,
+  security?: ISecurityService,
 ): Promise<JsonRecord> {
   const params = actionContext.params;
   if (Object.hasOwn(params, 'actorId')) {
@@ -673,6 +676,10 @@ async function executeNativeApprovalAction(
     }
     if (actions.some((action) => action.actor_id === actorId && ['approve', 'revise', 'reject', 'recall'].includes(action.action))) {
       throw new ApprovalActionFailure(409, 'APPROVAL_ACTION_CONFLICT', 'This employee has already recorded an approval decision for this request.');
+    }
+    if (objectName === QUOTATION_OBJECT && decision === 'approve') {
+      const lines = await projectQuotationLines(request as unknown as JsonRecord, security, context);
+      if (!lines) throw new ApprovalActionFailure(409, 'APPROVAL_QUOTATION_LINES_INCOMPLETE', '本次报价审批未固定完整明细，不能同意；请保留原请求并说明缺失原因');
     }
     try {
       if (request.object_name === 'forge_sales_order' && decision === 'revise' || request.object_name === CONTRACT_OBJECT && decision === 'reject') throw new ApprovalActionFailure(400, 'APPROVAL_ACTION_INVALID', '当前流程不支持该办理动作');
@@ -812,6 +819,30 @@ function currentApprovalActions(
   ];
 }
 
+/** Read the same current native declaration the runtime dispatches. A missing
+ * or malformed boolean is not permission to drop the transport confirmation. */
+async function withNativeConfirmation(ctx: PluginContext, engine: IObjectQLEngine, actions: JsonRecord[]): Promise<JsonRecord[]> {
+  const result: JsonRecord[] = [];
+  for (const action of actions) {
+    const execution = isRecord(action.execution) ? action.execution : undefined;
+    if (!execution || typeof execution.actionName !== 'string' || typeof execution.objectName !== 'string') throw new ContextFailure(503, 'APPROVAL_ACTION_METADATA_UNAVAILABLE', '当前审批动作声明不可核验');
+    const object = engine.getObject(execution.objectName);
+    let definition = object?.actions?.find(item => item.name === execution.actionName) as unknown as JsonRecord | undefined;
+    if (!definition) {
+      const metadata = readService<IMetadataService>(ctx, 'metadata');
+      if (!metadata) throw new ContextFailure(503, 'APPROVAL_ACTION_METADATA_UNAVAILABLE', '当前审批动作声明暂不可读取');
+      const resolved = metadata.getDiagnosed ? await metadata.getDiagnosed('action', execution.actionName) : { data: await metadata.get('action', execution.actionName), degraded: false };
+      if (resolved.degraded || !isRecord(resolved.data) || resolved.data.name !== execution.actionName || resolved.data.objectName !== execution.objectName) throw new ContextFailure(503, 'APPROVAL_ACTION_METADATA_UNAVAILABLE', '当前审批动作声明不可可靠核验');
+      definition = resolved.data;
+    }
+    const ai = isRecord(definition.ai) ? definition.ai : undefined;
+    if (definition.objectName != null && definition.objectName !== execution.objectName) throw new ContextFailure(503, 'APPROVAL_ACTION_METADATA_UNAVAILABLE', '当前审批动作对象绑定不一致');
+    if (typeof ai?.requiresConfirmation !== 'boolean') throw new ContextFailure(503, 'APPROVAL_ACTION_METADATA_UNAVAILABLE', '当前原生审批动作未声明可靠的确认协议');
+    result.push({ ...action, execution: { ...execution, requiresConfirmation: ai.requiresConfirmation } });
+  }
+  return result;
+}
+
 async function authorizedApprovalRequest(
   approvals: IApprovalService,
   requestId: string,
@@ -939,7 +970,7 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
       const actionApprovals = readService<IApprovalService>(ctx, 'approvals');
       if (actionEngine && actionApprovals && typeof actionEngine.registerAction === 'function') {
         actionEngine.registerAction('forge_sales_order', ORDER_APPROVAL_MCP_APPROVE_TARGET,
-          (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'approve'), 'forge.approval-workbench');
+          (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'approve', readService<ISecurityService>(ctx, 'security')), 'forge.approval-workbench');
         actionEngine.registerAction('forge_sales_order', ORDER_APPROVAL_MCP_REJECT_TARGET,
           (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'reject'), 'forge.approval-workbench');
         actionEngine.registerAction('forge_sales_order', ORDER_APPROVAL_MCP_RECALL_TARGET,
@@ -951,7 +982,7 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
           (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'revise'),
           'forge.approval-workbench');
         actionEngine.registerAction(QUOTATION_OBJECT, QUOTATION_APPROVAL_MCP_APPROVE_TARGET,
-          (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'approve'),
+          (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'approve', readService<ISecurityService>(ctx, 'security')),
           'forge.approval-workbench');
         actionEngine.registerAction(QUOTATION_OBJECT, QUOTATION_APPROVAL_MCP_REJECT_TARGET,
           (actionContext: ApprovalMcpHandlerContext) => executeNativeApprovalAction(actionEngine, actionApprovals, actionContext, 'reject'),
@@ -1007,6 +1038,18 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
           }
           const sourceMaterialVersion = await sha256(new TextEncoder().encode(canonicalJson(request.payload)));
           const itemVersion = await approvalItemVersion(request, actions);
+          const quotationLines = objectName === QUOTATION_OBJECT
+            ? await projectQuotationLines(request as unknown as JsonRecord, readService<ISecurityService>(ctx, 'security'), executionContext) : undefined;
+          const quotationFields = objectName === QUOTATION_OBJECT
+            ? await readService<ISecurityService>(ctx, 'security')?.getReadableFields('forge_quotation', executionContext) : undefined;
+          if (objectName === QUOTATION_OBJECT && !Array.isArray(quotationFields)) throw new ContextFailure(503, 'APPROVAL_QUOTATION_PERMISSION_UNAVAILABLE', '报价审批字段权限暂不可可靠核对');
+          const fields = projectFields(request, engine, quotationFields ? new Set(quotationFields) : undefined);
+          let offered = currentApprovalActions(request, viewer, itemVersion, sourceMaterialVersion, executionContext.userId!);
+          if (objectName === QUOTATION_OBJECT && !quotationLines) {
+            fields.push({ label: '报价明细', value: '本次审批未固定完整报价明细，无法核验；请保留原请求并说明缺失原因。' });
+            if (fields.length > MAX_FIELDS) throw new ContextFailure(422, 'APPROVAL_CONTEXT_TOO_LARGE', 'The approval contains too many fields.');
+            offered = offered.filter(action => action.semantic === 'reject');
+          }
           const latest = request.status === 'returned' ? latestReturn(actions) : undefined;
           if (request.status === 'returned' && !latest) {
             throw new ContextFailure(422, 'APPROVAL_CONTEXT_INVALID', 'The return decision is unavailable.');
@@ -1024,14 +1067,15 @@ export class ApprovalWorkbenchContextPlugin implements Plugin {
             },
             sourceMaterialVersion,
             ...(latest ?? {}),
-            availableActions: currentApprovalActions(request, viewer, itemVersion, sourceMaterialVersion, executionContext.userId!),
-            fields: projectFields(request, engine),
+            availableActions: await withNativeConfirmation(ctx, engine, offered),
+            fields,
+            ...(quotationLines ? { quotationLines } : {}),
             files: snapshotMaterials.files,
             originalFiles: snapshotMaterials.originalFiles,
           };
           await res.status(200).json(response);
         } catch (error) {
-          if (error instanceof ContextFailure) {
+          if (error instanceof ContextFailure || error instanceof QuotationSnapshotFailure) {
             await sendError(res, error.status, error.code, error.message);
             return;
           }

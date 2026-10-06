@@ -82,6 +82,7 @@ test('employee business HTTP connection uses native metadata, identity and atomi
   await symlink(path.join(APP_DIR, 'src'), path.join(tempDir, 'src'), 'dir');
   await symlink(path.join(APP_DIR, 'node_modules'), path.join(tempDir, 'node_modules'), 'dir');
   await writeFile(path.join(tempDir, 'approval-flow-launcher.plugin.mjs'), `
+import { quotationContentDigest } from ${JSON.stringify(path.join(APP_DIR, 'src/plugins/sales-quotation-readiness.ts'))};
 export class ApprovalFlowLauncherPlugin {
  name = 'com.inoforge.forge.test.employee-receipt-fault'; version = '1.0.0'; type = 'standard';
  init(ctx) { ctx.hook('kernel:ready', () => {
@@ -125,16 +126,36 @@ export class ApprovalFlowLauncherPlugin {
    if (req.headers?.authorization !== 'Bearer ${launcherSecret}') { await res.status(403).json({error:'forbidden'}); return; }
    armed = true; await res.status(200).json({armed:true});
   });
+  // Isolated pre-upgrade submission fixture. It creates a new native request
+  // with header-only material, never rewrites an existing request's payload.
+  ctx.getService('http.server').post('/api/v1/__test/legacy-quote-submit', async(req,res) => {
+   if (req.headers?.authorization !== 'Bearer ${launcherSecret}') { await res.status(403).json({error:'forbidden'}); return; }
+   try { const system={isSystem:true,userId:req.body.actorId,tenantId:req.body.organizationId,positions:[],permissions:[]};
+   await engine.transaction(async transaction => {
+    const quote=await engine.findOne('forge_quotation',{where:{id:req.body.recordId,organization_id:req.body.organizationId}},{context:transaction});
+    if(!quote||quote.status!=='draft'||quote.owner_id!==req.body.actorId)throw new Error('legacy fixture binding refused');
+    const lines=await engine.find('forge_quotation_line',{where:{quotation_id:quote.id,organization_id:req.body.organizationId},limit:101},{context:transaction});
+    const round=value=>Math.round((value+Number.EPSILON)*10000)/10000;
+    const subtotal=round(lines.reduce((sum,line)=>sum+Number(line.quantity)*Number(line.taxed_unit_price),0)),total=round(lines.reduce((sum,line)=>sum+Number(line.taxed_subtotal),0));
+    const totals={item_count:lines.length,subtotal,discount_amount:round(subtotal-total),tax_amount:round(lines.reduce((sum,line)=>sum+Number(line.taxed_subtotal)-Number(line.taxed_subtotal)/(1+Number(line.tax_rate)/100),0)),total_amount:total};
+    const submittedAt=new Date().toISOString(),content=await quotationContentDigest({...quote,...totals},lines);
+    await engine.update('forge_quotation',{id:quote.id,...totals,submitted_line_snapshot:null,submitted_pricing_version:Number(quote.pricing_version),submitted_content_sha256:content,
+      submitted_at:submittedAt,submitted_by:req.body.actorId,submitted_action_receipt:JSON.stringify({id:quote.id,status:'pending_approval',submitted_pricing_version:Number(quote.pricing_version),submitted_at:submittedAt}),status:'pending_approval'},{context:transaction});
+   },system,{require:true}); await res.status(200).json({submitted:true});
+   }catch(error){await res.status(500).json({error:String(error)});}
+  });
  }); }
 }
 `);
   await writeFile(path.join(tempDir, 'objectstack.config.ts'), `
 import stack from ${JSON.stringify(path.join(APP_DIR, 'objectstack.config.ts'))};
 import { AppPlugin } from '@objectstack/runtime';
+import { definePermissionSet } from '@objectstack/spec';
 import { sharedForgeCorePlugin, sharedForgeCoreBundle } from ${JSON.stringify(path.join(APP_DIR, 'src/apps/shared-core.ts'))};
 import { ApprovalFlowLauncherPlugin } from './approval-flow-launcher.plugin.mjs';
 // Exercise the real employee-only signature handler under the current native confirmation gate.
 stack.plugins=stack.plugins.map(plugin=>plugin===sharedForgeCorePlugin?new AppPlugin({...sharedForgeCoreBundle,
+ permissions:[...sharedForgeCoreBundle.permissions,definePermissionSet({name:'test_quotation_price_mask',label:'隔离报价单价字段拒绝',fields:{'forge_quotation_line.taxed_unit_price':{readable:false}},objects:{forge_quotation:{allowRead:true,readScope:'org'},forge_quotation_line:{allowRead:true,readScope:'org'}}})],
  actions:sharedForgeCoreBundle.actions.map(action=>action.name==='contract_register_signature'
   ?{...action,ai:{...action.ai,requiresConfirmation:true}}:action)}):plugin);
 stack.plugins.push(new ApprovalFlowLauncherPlugin());
@@ -400,7 +421,7 @@ export default stack;
       customer_id:customerId,quotation_type_id:quoteType,issuer_id:issuer,quotation_date:'2026-10-06',valid_until:'2099-12-31',responsible_id:admin.userId}),'quotation');
     const lines=[];
     for(const [name,quantity,price,tax] of [['TEST设备服务',2,900,13],['TEST培训服务',1,300,0]]) lines.push(idOf(await admin.request('/data/forge_quotation_line','POST',{
-      name,quotation_id:id,line_type:'service',quantity,taxed_unit_price:price,tax_rate:tax,discount_rate:0,taxed_subtotal:quantity*price}),'quotation line'));
+      name,quotation_id:id,line_type:'service',quantity,taxed_unit_price:price,tax_rate:tax,discount_rate:0,taxed_subtotal:quantity*price,sort_order:lines.length+1}),'quotation line'));
     return {id,lines};
   }
   const quote=await makeQuote('complete'), quotePath='/workbench/business-actions/context?objectName=forge_quotation&recordId='+quote.id;
@@ -511,6 +532,76 @@ export default stack;
   assert.deepEqual((await quoteContext()).actions,[],'a completed conversion offers no further owner write');
   assert.ok(!(await admin.request('/workbench/business-work?limit=100')).value.items.some(item=>item.record.recordId===quote.id));
   for(const receipt of [sendReceipt,acceptReceipt,converted]) assert.equal((await unrelated.request('/workbench/business-actions/operations/'+receipt.operationId)).status,404);
+  // Native header-only legacy request -> real rejection -> same quotation's
+  // new employee submission. Every old request and opinion remains immutable.
+  const legacyQuote=await makeQuote('legacy-snapshot');
+  await databaseClient.query('UPDATE forge_quotation SET pricing_version=1 WHERE id=$1',[legacyQuote.id]);
+  assert.equal((await admin.request('/__test/legacy-quote-submit','POST',{recordId:legacyQuote.id,actorId:admin.userId,organizationId},{Authorization:`Bearer ${launcherSecret}`})).status,200);
+  async function pendingQuoteRequest(recordId) {
+    const inbox=await reviewer.request('/approvals/requests'), data=inbox.value?.data||inbox.value;
+    const rows=Array.isArray(data)?data:data?.items||data?.records||[];
+    const request=rows.find(item=>item.object_name==='forge_quotation'&&item.record_id===recordId&&item.status==='pending');
+    assert.ok(request,'native current reviewer has the exact quotation request'); return request;
+  }
+  const legacyRequest=await pendingQuoteRequest(legacyQuote.id), legacyPayload=(await databaseClient.query('SELECT payload_json FROM sys_approval_request WHERE id=$1',[legacyRequest.id])).rows[0].payload_json;
+  const legacyContext=await reviewer.request('/approvals/requests/'+legacyRequest.id+'/workbench-context');
+  assert.equal(legacyContext.status,200,JSON.stringify(legacyContext.value)); assert.equal(legacyContext.value.quotationLines,undefined);
+  assert.deepEqual(legacyContext.value.availableActions.map(action=>action.semantic),['reject']);
+  assert.equal(legacyContext.value.availableActions[0].execution.requiresConfirmation,true);
+  assert.ok(legacyContext.value.fields.some(field=>field.value.includes('未固定完整报价明细')));
+  const legacyParams=legacyContext.value.availableActions[0].execution.params;
+  const rejectedMissingApprove=await reviewer.callMcpTool('run_action',{actionName:'quotation_approval_mcp_approve',objectName:'forge_quotation',recordId:legacyQuote.id,
+    params:{...legacyParams,comment:'不能批准缺少冻结明细的旧请求'},confirm:true});
+  assert.equal(rejectedMissingApprove.isError,true,'MCP approval core also refuses header-only requests');
+  assert.ok((await reviewer.request('/approvals/requests/'+legacyRequest.id+'/approve','POST',{comment:'不能通过REST绕过缺明细门'})).status>=400);
+  assert.equal((await databaseClient.query("SELECT count(*)::int AS count FROM sys_approval_action WHERE request_id=$1 AND action='approve'",[legacyRequest.id])).rows[0].count,0);
+  const oldDecision=await reviewer.callMcpTool('run_action',{actionName:'quotation_approval_mcp_reject',objectName:'forge_quotation',recordId:legacyQuote.id,
+    params:{...legacyParams,comment:'TEST旧请求未固定两条明细，无法核验'},confirm:true});
+  assert.equal(mcpData(oldDecision)?.result?.decision,'reject',mcpText(oldDecision));
+  assert.equal((await databaseClient.query('SELECT status FROM forge_quotation WHERE id=$1',[legacyQuote.id])).rows[0].status,'rejected');
+  const rejectedContext=(await admin.request('/workbench/business-actions/context?objectName=forge_quotation&recordId='+legacyQuote.id)).value;
+  assert.deepEqual(rejectedContext.actions.map(action=>action.capabilityId),['forge:action:forge_quotation.quotation_submit']);
+  const roundInput=quoteInput(rejectedContext,'quotation_submit'), roundReceipt=await assertQuoteReceipt(roundInput);
+  const newRequest=await pendingQuoteRequest(legacyQuote.id); assert.notEqual(newRequest.id,legacyRequest.id);
+  const newContext=await reviewer.request('/approvals/requests/'+newRequest.id+'/workbench-context');
+  assert.equal(newContext.status,200,JSON.stringify(newContext.value));
+  assert.deepEqual(newContext.value.quotationLines,{version:'1',pricingVersion:1,itemCount:2,totalAmount:2100,rows:[
+    {position:1,name:'TEST设备服务',lineType:'service',quantity:2,taxedUnitPrice:900,taxRate:13,discountRate:0,taxedSubtotal:1800},
+    {position:2,name:'TEST培训服务',lineType:'service',quantity:1,taxedUnitPrice:300,taxRate:0,discountRate:0,taxedSubtotal:300},
+  ]},'the new native payload contains all original quantities, prices, taxes and discounts');
+  assert.ok(newContext.value.availableActions.every(action=>action.execution.requiresConfirmation===true));
+  const rowsSerialized=JSON.stringify(newContext.value.quotationLines);
+  for(const forbidden of [legacyQuote.id,...legacyQuote.lines,organizationId,admin.userId,'cost_price','cost_total']) assert.equal(rowsSerialized.includes(forbidden),false,'business-only line projection');
+  assert.equal((await unrelated.request('/approvals/requests/'+newRequest.id+'/workbench-context')).status,404);
+  const fixedVersion=newContext.value.sourceMaterialVersion;
+  await databaseClient.query('UPDATE forge_quotation_line SET taxed_unit_price=999 WHERE id=$1',[legacyQuote.lines[0]]);
+  const readFrozen=await reviewer.request('/approvals/requests/'+newRequest.id+'/workbench-context');
+  assert.deepEqual(readFrozen.value.quotationLines,newContext.value.quotationLines,'reading uses frozen rows even when a test-only privileged live row is changed');
+  assert.equal(readFrozen.value.sourceMaterialVersion,fixedVersion);
+  await databaseClient.query('UPDATE forge_quotation_line SET taxed_unit_price=900 WHERE id=$1',[legacyQuote.lines[0]]);
+  const priceMask=(await databaseClient.query("SELECT id FROM sys_permission_set WHERE name='test_quotation_price_mask'")).rows[0]?.id; assert.ok(priceMask);
+  const maskAssignment=idOf(await admin.request('/data/sys_user_permission_set','POST',{user_id:reviewer.userId,permission_set_id:priceMask,organization_id:organizationId,granted_by:admin.userId,reason:'隔离冻结明细FLS验证'}),'price mask');
+  assert.equal((await reviewer.request('/approvals/requests/'+newRequest.id+'/workbench-context')).status,403,'a required field denial does not turn into partial rows or zero price');
+  assert.ok((await admin.request('/data/sys_user_permission_set/'+maskAssignment,'DELETE')).status<300);
+  const restoredContext=await reviewer.request('/approvals/requests/'+newRequest.id+'/workbench-context');
+  assert.equal(restoredContext.status,200);
+  const currentApprove=restoredContext.value.availableActions.find(action=>action.semantic==='approve');
+  const approvedRound=await reviewer.callMcpTool('run_action',{actionName:currentApprove.execution.actionName,objectName:'forge_quotation',recordId:legacyQuote.id,
+    params:{...currentApprove.execution.params,comment:'TEST完整冻结两行及2100版本已核对'},confirm:true});
+  assert.equal(mcpData(approvedRound)?.result?.decision,'approve',mcpText(approvedRound));
+  const oldStored=(await databaseClient.query('SELECT status,payload_json FROM sys_approval_request WHERE id=$1',[legacyRequest.id])).rows[0];
+  assert.equal(oldStored.status,'rejected'); assert.equal(oldStored.payload_json,legacyPayload,'old payload is neither backfilled nor rewritten');
+  assert.equal((await databaseClient.query("SELECT comment FROM sys_approval_action WHERE request_id=$1 AND action='reject'",[legacyRequest.id])).rows[0].comment,'TEST旧请求未固定两条明细，无法核验');
+  assert.equal((await databaseClient.query("SELECT count(*)::int AS count FROM sys_approval_request WHERE object_name='forge_quotation' AND record_id=$1",[legacyQuote.id])).rows[0].count,2);
+  assert.equal((await admin.request('/workbench/business-actions/execute','POST',roundInput)).value.repeated,true);
+  assert.deepEqual((await admin.request('/workbench/business-actions/operations/'+roundReceipt.operationId)).value.recordReferences,roundReceipt.recordReferences,'old operation receipt remains its original submission result after approval');
+  const forbiddenNewRound=await admin.callMcpTool('run_action',{actionName:'quotation_submit',objectName:'forge_quotation',recordId:legacyQuote.id,params:{},confirm:true});
+  assert.equal(forbiddenNewRound.isError,true,'bare empty params do not reopen or pretend to replay an already approved round');
+  assert.equal((await databaseClient.query("SELECT count(*)::int AS count FROM sys_approval_request WHERE object_name='forge_quotation' AND record_id=$1",[legacyQuote.id])).rows[0].count,2);
+  const restartQuote=await makeQuote('snapshot-restart'), restartQuoteContext=(await admin.request('/workbench/business-actions/context?objectName=forge_quotation&recordId='+restartQuote.id)).value;
+  await assertQuoteReceipt(quoteInput(restartQuoteContext,'quotation_submit'));
+  const restartRequest=await pendingQuoteRequest(restartQuote.id), restartBefore=await reviewer.request('/approvals/requests/'+restartRequest.id+'/workbench-context');
+  assert.equal(restartBefore.status,200); assert.equal(restartBefore.value.quotationLines.itemCount,2);
   const unknownQuote=await makeQuote('unknown');
   const unknownContext=(await admin.request('/workbench/business-actions/context?objectName=forge_quotation&recordId='+unknownQuote.id)).value;
   const unknownInput=quoteInput(unknownContext,'quotation_submit');
@@ -520,6 +611,9 @@ export default stack;
   assert.equal((await databaseClient.query('SELECT status FROM forge_quotation WHERE id=$1',[unknownQuote.id])).rows[0].status,'draft');
   assert.equal((await databaseClient.query("SELECT count(*)::int AS count FROM sys_approval_request WHERE object_name='forge_quotation' AND record_id=$1",[unknownQuote.id])).rows[0].count,0,'rollback does not leave a phantom approval');
   await stopRuntime(); await startRuntime();
+  const restartAfter=await reviewer.request('/approvals/requests/'+restartRequest.id+'/workbench-context');
+  assert.equal(restartAfter.status,200); assert.deepEqual(restartAfter.value.quotationLines,restartBefore.value.quotationLines);
+  assert.equal(restartAfter.value.sourceMaterialVersion,restartBefore.value.sourceMaterialVersion,'native frozen rows and exact material version survive full stop/restart on the same PostgreSQL');
   assert.equal((await admin.request('/workbench/business-actions/operations/'+unknownInput.opKey)).value.status,'unknown');
   assert.equal((await admin.request('/workbench/business-actions/execute','POST',unknownInput)).value.status,'unknown','unknown only returns its original operation after restart');
   const newUnknown=await admin.request('/workbench/business-actions/execute','POST',{...unknownInput,opKey:randomUUID()});

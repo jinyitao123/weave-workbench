@@ -8,6 +8,7 @@ import { effectivePositionUsers } from './business-position-resolution.js';
 import { quotationContentDigest } from './sales-quotation-readiness.js';
 import { calendarDate, roundedMoney } from './sales-order-readiness.js';
 import { canonicalJSON, digest, nonempty, TaskConnectionFailure } from './native-task-auth.js';
+import { approvalPayload, freezeQuotationLines, QUOTATION_LINE_SNAPSHOT, requireRejectedQuotation } from './quotation-approval-snapshot.js';
 
 export const QUOTATION_SUBMIT_TARGET = 'forgeSubmitQuotation';
 export const QUOTATION_SEND_TARGET = 'forgeRegisterQuotationSend';
@@ -89,17 +90,16 @@ async function verifyArchivedEvidence(engine: IObjectQLEngine, storage: IStorage
  * shared by GUI and the employee connection. No alternate write path. */
 export async function submitQuotation(engine: IObjectQLEngine, ctx: Handler) {
   const who = caller(ctx);
-  businessDriver(engine, ['forge_quotation', 'forge_quotation_line']);
+  businessDriver(engine, ['forge_quotation', 'forge_quotation_line', 'sys_approval_request', 'sys_approval_action', 'forge_employee_business_operation']);
   return engine.transaction(async transaction => {
     const { quote, lines } = await lockedQuotation(engine, who, transaction, 'quotation_submit'), current = version(quote);
-    if (quote.status !== 'draft') {
-      if (quote.submitted_by === who.actorId && Number(quote.submitted_pricing_version) === current
-        && quote.submitted_content_sha256 === await quotationContentDigest(quote, lines) && typeof quote.submitted_action_receipt === 'string') {
-        const receipt = JSON.parse(quote.submitted_action_receipt) as Row;
-        if (receipt.id === who.recordId && receipt.status === 'pending_approval') return { ...receipt, repeated: true };
-      }
-      throw new Error('仅本人草稿报价可以提交审批，已有提交须沿原结果核对');
-    }
+    if (!['draft', 'rejected'].includes(String(quote.status))) throw new Error('仅本人草稿或已明确驳回的报价可以新提交，原操作请沿原回执查询');
+    const bound = employeeBusinessBinding();
+    const unresolved = await engine.findOne('forge_employee_business_operation', { where: { user_id: who.actorId, organization_id: who.organizationId,
+      object_name: 'forge_quotation', record_id: who.recordId, status: { $in: ['in_progress', 'unknown'] },
+      ...(bound ? { operation_key: { $ne: bound.operationKey } } : {}) } }, { context: transaction });
+    if (unresolved) throw new TaskConnectionFailure(409, 'EMPLOYEE_ACTION_UNRESOLVED', '原报价办理结果尚未确定，请沿原请求查询');
+    if (quote.status === 'rejected') await requireRejectedQuotation(engine, quote, transaction);
     if (quote.valid_until && String(quote.valid_until).slice(0, 10) < new Date().toISOString().slice(0, 10)) throw new Error('报价已过有效期，请更新有效期后再提交');
     const customer = await get(engine, 'forge_customer', String(quote.customer_id), who, transaction);
     if (customer.owner_id !== who.actorId) throw new Error('报价客户不属于当前负责员工');
@@ -134,10 +134,14 @@ export async function submitQuotation(engine: IObjectQLEngine, ctx: Handler) {
     const receipt = { id: who.recordId, ...totals, submitted_pricing_version: current, submitted_at: submittedAt, status: 'pending_approval' };
     const refreshedLines = await engine.find('forge_quotation_line', { where: { quotation_id: who.recordId, organization_id: who.organizationId }, orderBy: [{ field: 'id', order: 'asc' }], limit: 1001 }, { context: transaction });
     const content = await quotationContentDigest({ ...quote, ...totals }, refreshedLines);
+    const snapshot = freezeQuotationLines({ ...quote, ...totals }, refreshedLines, who.actorId, content);
     const changed = await engine.update('forge_quotation', { ...totals, submitted_pricing_version: current, submitted_content_sha256: content,
-      submitted_action_receipt: JSON.stringify(receipt), approved_pricing_version: null, submitted_at: submittedAt, submitted_by: who.actorId, status: 'pending_approval' },
-    { multi: true, where: { id: who.recordId, organization_id: who.organizationId, owner_id: who.actorId, responsible_id: who.actorId, status: 'draft', pricing_version: quote.pricing_version ?? null }, context: transaction });
+      [QUOTATION_LINE_SNAPSHOT]: snapshot, submitted_action_receipt: JSON.stringify(receipt), approved_pricing_version: null, submitted_at: submittedAt, submitted_by: who.actorId, status: 'pending_approval' },
+    { multi: true, where: { id: who.recordId, organization_id: who.organizationId, owner_id: who.actorId, responsible_id: who.actorId, status: quote.status, pricing_version: quote.pricing_version ?? null }, context: transaction });
     if (changed !== 1) throw new Error('报价状态或核价版本已变化，请刷新后重试');
+    const requests = await engine.find('sys_approval_request', { where: { object_name: 'forge_quotation', record_id: who.recordId,
+      organization_id: who.organizationId, submitter_id: who.actorId, status: 'pending' }, limit: 2 }, { context: transaction });
+    if (requests.length !== 1 || approvalPayload(requests[0])?.[QUOTATION_LINE_SNAPSHOT] !== snapshot) throw new Error('原生报价审批未固定唯一完整明细，报价提交已回滚');
     return receipt;
   }, businessContext(who.actorId, who.organizationId), { require: true });
 }
