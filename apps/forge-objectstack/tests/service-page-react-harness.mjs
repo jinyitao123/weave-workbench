@@ -6,7 +6,7 @@ const esbuild=cliRequire('esbuild');
 
 /** Execute a real generated React Page source through its event handlers. */
 export function createServicePageHarness(page,options={}){
-  const {permissions=[],manager=false,records={},formValues={},onAction=()=>({}),users={},transport,globals={}}=options;
+  const {permissions=[],manager=false,records={},formValues,onAction=()=>({}),users={},transport,globals={}}=options;
   const code=esbuild.transformSync(page.source,{loader:'jsx',format:'cjs'}).code;
   const states=[],refs=[],effectDependencies=[],calls=[],forms=[],stateChanges=[];
   const effects=new Map(),effectCleanups=new Map();
@@ -71,7 +71,7 @@ export function createServicePageHarness(page,options={}){
   components.DocumentWorkspace=register('DocumentWorkspace',props=>asNode('DocumentWorkspace',props,[props.main,props.sidebar,props.footer]));
   components.ObjectForm=register('ObjectForm',props=>{
     forms.push(props);
-    props.onControllerReady?.({validate:async()=>({valid:true,values:typeof formValues==='function'?formValues(props):formValues})});
+    props.onControllerReady?.({validate:async()=>({valid:true,values:typeof formValues==='function'?formValues(props):formValues??props.values??{}})});
     return asNode('ObjectForm',props,[]);
   });
   components.ListView=register('ListView',props=>{

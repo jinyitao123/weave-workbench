@@ -19,7 +19,15 @@ function fixture(extra = {}) {
   return { harness, location };
 }
 function button(tree, label) { return nodes(tree, node => node.type === 'button' && serviceText(node).trim() === label)[0]; }
-function input(tree, label) { return nodes(tree, node => node.props?.['aria-label'] === label)[0]; }
+function input(tree, label) {
+  const control = nodes(tree, node => node.props?.['aria-label'] === label)[0];
+  if (control) return control;
+  const form = nodes(tree, node => node.type === 'ObjectForm')[0]?.props;
+  const field = {'订单名称':'name','订单编号':'code','计划交货日期':'planned_delivery_on','付款条件':'payment_term','付款方式':'payment_method','收货地址':'delivery_address'}[label];
+  if (!form || !field) return undefined;
+  const busy = nodes(tree, node => node.type === 'fieldset')[0]?.props.disabled;
+  return {props:{value:form.values[field],disabled:busy,onChange:event=>form.onValuesChange({...form.values,[field]:event.target.value})}};
+}
 function discard(tree) { return nodes(tree, node => typeof node.type === 'string' && node.props?.title === '放弃更改？' && node.props.open === true)[0]; }
 function choose(harness, value = contract.id) { input(harness.render(), '选择有效销售合同').props.onChange({ target: { value } }); return harness.render(); }
 

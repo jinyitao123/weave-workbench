@@ -18,12 +18,9 @@ test('the actual order page uses public header, document sections and a single h
  assert.ok(serviceText(workspace.props.footer).includes('25.00'));assert.equal(h.calls.some(call=>call.path.startsWith('/actions/')),false);
 });
 
-test('form fields have associated labels and their layout styles target the actual root',async()=>{
- const h=await selected(),tree=h.render();
- assert.match(tree.props.className,/forge-sales-order-create/);
- const styles=nodes(tree,n=>n.type==='style').map(n=>serviceText(n)).join('');assert.ok(styles.includes('.forge-sales-order-create .co-order-fields'));assert.ok(styles.includes('@container'));
- for(const label of ['订单名称','订单编号','计划交货日期','付款条件','付款方式','收货地址']){
-  const field=nodes(tree,n=>n.props?.['aria-label']===label)[0];assert.ok(field.props.id);assert.ok(nodes(tree,n=>n.type==='label'&&n.props.htmlFor===field.props.id).length,'label must identify '+label);
- }
- assert.equal(nodes(tree,n=>n.type==='fieldset').length,1);
+test('the public frame contains exactly one native form with only the existing editable order fields',async()=>{
+ const h=await selected(),tree=h.render();assert.match(tree.props.className,/forge-sales-order-create/);
+ const forms=nodes(tree,n=>n.type==='ObjectForm');assert.equal(forms.length,1);assert.equal(forms[0].props.objectName,'forge_sales_order');assert.equal(forms[0].props.columns,2);
+ assert.deepEqual([...forms[0].props.fields],['name','code','planned_delivery_on','payment_term','payment_method','delivery_address']);
+ assert.equal(forms[0].props.showSubmit,false);assert.equal(forms[0].props.showCancel,false);assert.equal(nodes(tree,n=>n.type==='fieldset').length,1);
 });
