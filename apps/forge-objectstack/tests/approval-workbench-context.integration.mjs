@@ -3,7 +3,9 @@ import { createHash } from 'node:crypto';
 import test from 'node:test';
 import { ApprovalWorkbenchContextPlugin } from '../src/plugins/approval-workbench-context.plugin.ts';
 import { approvalPayloadVersion } from '../src/plugins/contract-revision-material.ts';
-import { SalesContract } from '../src/objects/sales.object.ts';
+import { SalesContract, Quotation, QuotationLine } from '../src/objects/sales.object.ts';
+import * as approvalActions from '../src/actions/approval-workbench.action.ts';
+import { freezeQuotationLines } from '../src/plugins/quotation-approval-snapshot.ts';
 
 const CONTRACT_OBJECT = 'forge_sales_contract';
 const CONTRACT_A = 'contract-A';
@@ -104,6 +106,8 @@ function createHarness() {
   const actionLists = new Map([[returned.id, [{
     id: 'action-revise', request_id: returned.id, action: 'revise', comment: '请补充签字页',
   }]]]);
+  const definitions = new Map(Object.values(approvalActions).filter(value => value && typeof value === 'object' && value.name).map(value => [value.name, structuredClone(value)]));
+  let deniedFields = new Set(), unavailableFields = false;
 
   const engine = {
     async find(objectName, query, options) {
@@ -116,6 +120,8 @@ function createHarness() {
       return [];
     },
     getObject(objectName) {
+      if (objectName === 'forge_quotation') return { fields: Quotation.fields };
+      if (objectName === 'forge_quotation_line') return { fields: QuotationLine.fields };
       if (objectName !== CONTRACT_OBJECT) return undefined;
       return { fields: {
         ...SalesContract.fields,
@@ -160,6 +166,14 @@ function createHarness() {
         objectql: engine,
         approvals,
         storage,
+        metadata: { async getDiagnosed(type, name) { return { data: type === 'action' ? definitions.get(name) : undefined, degraded: false, errors: [] }; } },
+        security: {
+          async canReadObject() { return true; },
+          async getReadableFields(object) {
+            if (unavailableFields) return undefined;
+            return Object.keys((object === 'forge_quotation' ? Quotation : QuotationLine).fields).filter(field => field !== 'cost_total' && field !== 'cost_price' && !deniedFields.has(field));
+          },
+        },
       };
       if (!(name in services)) throw new Error(`service unavailable: ${name}`);
       return services[name];
@@ -191,6 +205,9 @@ function createHarness() {
     addFile(file) { files.set(file.id, file); },
     addRequest(request) { requests.set(request.id, request); },
     setActions(requestId, actions) { actionLists.set(requestId, actions); },
+    setDefinition(name, definition) { definitions.set(name, definition); },
+    denyField(name) { deniedFields.add(name); },
+    makeFieldsUnavailable() { unavailableFields = true; },
     async call(requestId, token, extraHeaders = {}) {
       const handler = routes.get('/api/v1/approvals/requests/:requestId/workbench-context');
       assert.ok(handler, 'approval context route mounted');
@@ -278,6 +295,85 @@ test('pending approver receives only this request snapshot and verified text byt
   assert.equal(JSON.stringify(result.body).includes('file-main-B'), false);
   assert.equal(JSON.stringify(result.body).includes('customer-private-id'), false);
   assert.equal(JSON.stringify(result.body).includes('internal-request-id'), false);
+  assert.ok(result.body.availableActions.every(action => action.execution.requiresConfirmation === true), 'confirmation is projected from the native definitions');
+});
+
+function quotationApproval(includeSnapshot = true) {
+  const quote = { id: 'quotation-private-A', name: '合成设备与服务报价', code: 'TEST-QUOTE', organization_id: 'org-A', owner_id: 'sales-quote', responsible_id: 'sales-quote',
+    pricing_version: 1, submitted_pricing_version: 1, submitted_by: 'sales-quote', item_count: 2, total_amount: 2100, cost_total: 999,
+    submitted_content_sha256: 'a'.repeat(64), status: 'pending_approval' };
+  const lines = [
+    { id: 'line-private-device', quotation_id: quote.id, organization_id: 'org-A', name: '测试设备', line_type: 'material', sort_order: 1,
+      quantity: 2, taxed_unit_price: 900, tax_rate: 13, discount_rate: 0, taxed_subtotal: 1800, unit_name: '台', cost_price: 777 },
+    { id: 'line-private-service', quotation_id: quote.id, organization_id: 'org-A', name: '测试安装服务', line_type: 'service', sort_order: 2,
+      quantity: 1, taxed_unit_price: 300, tax_rate: 0, discount_rate: 0, taxed_subtotal: 300, cost_price: 888 },
+  ];
+  if (includeSnapshot) quote.submitted_line_snapshot = freezeQuotationLines(quote, lines, 'sales-quote', quote.submitted_content_sha256);
+  return { ...approval({ id: 'approval-quotation-lines', recordId: quote.id, approver: 'reviewer-A', submitter: 'sales-quote', payload: quote, title: quote.name }),
+    object_name: 'forge_quotation', process_name: 'flow:sales_quotation_approval', step_label: '销售报价审批', payload_labels: {}, payload_display: {} };
+}
+
+test('quotation approval projects complete frozen rows without cost, internal IDs or live-line reads', async () => {
+  const harness = createHarness(), request = quotationApproval(); harness.addRequest(request); await harness.start();
+  const result = await harness.call(request.id, 'reviewer-token');
+  assert.equal(result.status, 200, JSON.stringify(result.body));
+  assert.deepEqual(result.body.quotationLines, { version: '1', pricingVersion: 1, itemCount: 2, totalAmount: 2100, rows: [
+    { position: 1, name: '测试设备', lineType: 'material', quantity: 2, taxedUnitPrice: 900, taxRate: 13, discountRate: 0, taxedSubtotal: 1800, unitName: '台' },
+    { position: 2, name: '测试安装服务', lineType: 'service', quantity: 1, taxedUnitPrice: 300, taxRate: 0, discountRate: 0, taxedSubtotal: 300 },
+  ] });
+  assert.deepEqual(result.body.availableActions.map(action => action.semantic), ['approve', 'reject']);
+  assert.ok(result.body.availableActions.every(action => action.execution.requiresConfirmation === true));
+  const serialized = JSON.stringify(result.body);
+  for (const forbidden of ['cost_price', 'cost_total', '总成本', 'line-private-', 'sales-quote', 'org-A', '777', '888']) assert.equal(serialized.includes(forbidden), false, forbidden);
+  assert.equal(result.fileQueries.length, 0); assert.equal(result.downloadedKeys.length, 0);
+  assert.equal(result.body.sourceMaterialVersion, await approvalPayloadVersion(request.payload));
+  assert.equal((await harness.call(request.id, 'reviewer-b-token')).status, 404);
+});
+
+test('old quotation approvals remain readable for a real rejection but never offer approval or reconstructed lines', async () => {
+  const harness = createHarness(), request = quotationApproval(false); harness.addRequest(request); await harness.start();
+  const original = structuredClone(request.payload);
+  const result = await harness.call(request.id, 'reviewer-token');
+  assert.equal(result.status, 200); assert.equal(result.body.quotationLines, undefined);
+  assert.deepEqual(result.body.availableActions.map(action => action.semantic), ['reject']);
+  assert.ok(result.body.fields.some(field => field.label === '报价明细' && field.value.includes('未固定完整报价明细')));
+  assert.deepEqual(request.payload, original, 'reading does not backfill or rewrite the old payload');
+});
+
+test('quotation snapshot bindings, required-field permissions and schema completeness fail closed', async () => {
+  for (const mutate of [
+    snapshot => { snapshot.quotationId = 'another-quotation'; },
+    snapshot => { snapshot.organizationId = 'another-org'; },
+    snapshot => { snapshot.submittedBy = 'another-employee'; },
+    snapshot => { snapshot.contentSha256 = 'b'.repeat(64); },
+    snapshot => { snapshot.pricingVersion = 2; },
+    snapshot => { snapshot.rows.pop(); },
+    snapshot => { snapshot.rows[1].position = 1; },
+    snapshot => { snapshot.rows[0].cost_price = 123; },
+    snapshot => { snapshot.rows[0].taxedSubtotal = 1799; },
+  ]) {
+    const harness = createHarness(), request = quotationApproval(), snapshot = JSON.parse(request.payload.submitted_line_snapshot);
+    mutate(snapshot); request.payload.submitted_line_snapshot = JSON.stringify(snapshot); harness.addRequest(request); await harness.start();
+    const result = await harness.call(request.id, 'reviewer-token');
+    assert.equal(result.status, 409, JSON.stringify(result.body)); assert.equal(result.body.error.code, 'APPROVAL_QUOTATION_LINES_INVALID');
+  }
+  const denied = createHarness(), request = quotationApproval(); denied.addRequest(request); denied.denyField('taxed_unit_price'); await denied.start();
+  assert.equal((await denied.call(request.id, 'reviewer-token')).status, 403);
+  const unavailable = createHarness(); unavailable.addRequest(quotationApproval()); unavailable.makeFieldsUnavailable(); await unavailable.start();
+  assert.equal((await unavailable.call(request.id, 'reviewer-token')).status, 503);
+});
+
+test('current native action confirmation is a strict boolean, not a hard-coded or coerced value', async () => {
+  const falseDeclaration = createHarness();
+  falseDeclaration.setDefinition('contract_approval_mcp_approve', { ...approvalActions.ContractApprovalMcpApprove, ai: { ...approvalActions.ContractApprovalMcpApprove.ai, requiresConfirmation: false } });
+  await falseDeclaration.start();
+  assert.equal((await falseDeclaration.call('approval-A', 'reviewer-token')).body.availableActions.find(action => action.semantic === 'approve').execution.requiresConfirmation, false);
+  for (const value of [undefined, 'true', null, 1]) {
+    const harness = createHarness();
+    harness.setDefinition('contract_approval_mcp_approve', { ...approvalActions.ContractApprovalMcpApprove, ai: { ...approvalActions.ContractApprovalMcpApprove.ai, requiresConfirmation: value } });
+    await harness.start(); const result = await harness.call('approval-A', 'reviewer-token');
+    assert.equal(result.status, 503); assert.equal(result.body.error.code, 'APPROVAL_ACTION_METADATA_UNAVAILABLE');
+  }
 });
 
 test('legacy native contract approvals derive the companion digest from the immutable submitted file id', async () => {
