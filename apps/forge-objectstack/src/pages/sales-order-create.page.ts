@@ -1,5 +1,6 @@
 import { forgeProductUiCss, forgeProductUiRuntime } from './product-ui.js';
 import { roundedMoney } from '../plugins/sales-order-readiness.js';
+import { SalesOrder } from '../objects/sales.object.js';
 
 const createCss = `
 .forge-order-create .order-create-shell{max-width:1160px;margin:0 auto;padding-bottom:96px}
@@ -240,7 +241,7 @@ function App(){
         </DocumentSection>
         {contract&&<>
           <DocumentSection title="订单信息" stepNumber={2}>
-            <ObjectForm objectName="forge_sales_order" dataSource={adapter} mode="create" formType="simple" columns={2} fields={orderFields} customFields={[{name:'code',required:false,placeholder:'留空自动生成'},{name:'payment_method',required:true}]} values={form} onValuesChange={updateOrderValues} onControllerReady={controller=>{orderFormController.current=controller}} showSubmit={false} showCancel={false} showReset={false} submitHandler={values=>values}/>
+            <ObjectForm objectName="forge_sales_order" dataSource={adapter} mode="create" formType="simple" columns={2} fields={orderFields} customFields={${JSON.stringify([{...SalesOrder.fields.code,name:'code',required:false,placeholder:'留空自动生成'},{...SalesOrder.fields.payment_method,name:'payment_method',required:true}])}} values={form} onValuesChange={updateOrderValues} onControllerReady={controller=>{orderFormController.current=controller}} showSubmit={false} showCancel={false} showReset={false} submitHandler={values=>values}/>
           </DocumentSection>
           <DocumentSection title="合同剩余明细" count={sourceReady?lines.length:undefined} stepNumber={3}>
             {!sourceReady?(source.key!==form.contract_id||source.loading?<ForgeLoading label="正在读取合同明细与客户"/>:<ForgeNotice tone="error">{source.error||'来源暂不可读取。'}<button type="button" className="fp-button" disabled={busy} onClick={()=>{if(!busy)setSourceRevision(value=>value+1)}}>重新读取来源</button></ForgeNotice>):<RecordTable schema={{type:'data-table',className:'co-source-table',columns:lineColumns,data:pageRows,manualPagination:true,page:currentPage,pageSize:linePageSize,pageSizeOptions:[linePageSize],rowCount:lines.length,onPageChange:value=>{if(!busy)setLinePage(value)},searchable:false,sortable:false,exportable:false,selectable:false,reorderableColumns:false}}/>}

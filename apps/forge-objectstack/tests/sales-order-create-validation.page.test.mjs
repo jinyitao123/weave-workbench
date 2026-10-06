@@ -11,6 +11,7 @@ test('order information consumes the existing native validation controller with 
  const h=await selected();const form=h.forms.at(-1);assert.ok(form,'ObjectForm must own field errors');assert.equal(form.objectName,'forge_sales_order');assert.equal(form.mode,'create');assert.equal(form.showSubmit,false);assert.equal(form.showCancel,false);assert.equal(form.showReset,false);
  assert.deepEqual([...form.fields],['name','code','planned_delivery_on','payment_term','payment_method','delivery_address']);
  assert.equal(form.customFields.find(field=>field.name==='code').required,false);assert.equal(form.customFields.find(field=>field.name==='payment_method').required,true);
+ assert.equal(form.customFields.find(field=>field.name==='code').label,'订单编号');assert.equal(form.customFields.find(field=>field.name==='payment_method').type,'select');assert.ok(form.customFields.find(field=>field.name==='payment_method').options.length);
  assert.equal(form.values.contract_id,contract.id);
 });
 
