@@ -7,9 +7,9 @@
   "pageId": "page_service_order_create",
   "status": "review_required",
   "observedAt": "2026-10-07",
-  "reviewedRevision": "8b1df3eb889d82ed9b56ce4b9b3e31a4e1e3f6bd",
+  "reviewedRevision": "724fc363d63cbe565bb5f68bb0d1357d3b157058",
   "subjectFiles": {
-    "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts": "2576046ea8f7937a61d7ecad455c415c2b28eed428eb5f57ac90c22864f33a7f",
+    "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts": "8af98c3bdd1d86fc6afff122c51e8ae29cd1cb2ae3549bb2e92aa851fe0e60d0",
     "apps/forge-objectstack/src/pages/product-ui.ts": "4bdff59553b480771e0f0fcd23dde4cdaa232f632d4748c3e645d3283008936d",
     "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts": "a0088ab566ca72d65a6a85b2fc43e2023500ba61511d5a4f4259b62101c46f7b",
     "apps/forge-objectstack/src/views/service-workspace.view.ts": "a9314cee79aca5e70975f498b50a2bf8d94f265b0618bb6977763f587184e78b",
@@ -561,7 +561,7 @@
       ],
       "steps": [],
       "expected": "按授权的正式数据展示底部费用汇总，并分别支持保存草稿和提交工单；状态、异常和后续结果可读回。",
-      "actual": "当前只有创建并进入待受理动作；无草稿／提交区分和汇总，不能以假按钮或零金额代替。",
+      "actual": "现有创建／取消已移到公共DocumentWorkspace底部槽，正文无空侧栏，隔离GUI核对滚动、末字段、窄屏及原校验／保护。费用汇总、草稿／提交语义仍缺，不以位置改动关闭要求。",
       "stateEffect": "writes_business_state",
       "status": "pending",
       "evidence": []
@@ -602,6 +602,7 @@
     "完整build因历史财务验收图片缺失失败；受验源文件摘要与版本已更新，旧验收记录未改为accepted。",
     "地址GUI的403为明确的本机响应故障注入，原生响应200；不冒充后端权限策略拒绝。",
     "电话来源的原角色联系方式读取真实403，当前创建缺省contact.phone与模型不符，待正式业务契约解决；联系人页错误状态修复不替代电话联动。",
-    "五段编号在私有公共客户端候选验证，公开锁未升级且已恢复冻结客户端；段落名称不代表责任／费用或草稿能力已实现。"
+    "五段编号在私有公共客户端候选验证，公开锁未升级且已恢复冻结客户端；段落名称不代表责任／费用或草稿能力已实现。",
+    "底部操作仅组合原创建／取消，未新增费用汇总、草稿或提交能力；公共客户端候选已恢复冻结且公开锁未改。"
   ]
 }
