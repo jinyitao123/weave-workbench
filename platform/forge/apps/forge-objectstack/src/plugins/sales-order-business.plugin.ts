@@ -5,6 +5,10 @@ import { businessRow } from './employee-business-native.js';
 import { businessContext } from './business-transaction.js';
 import { effectivePositionUsers } from './business-position-resolution.js';
 import {
+  QUOTATION_SUBMIT_TARGET, QUOTATION_SEND_TARGET, QUOTATION_ACCEPT_TARGET, QUOTATION_CONVERT_TARGET,
+  submitQuotation, registerQuotationSend, registerQuotationAcceptance, convertQuotationToContract,
+} from './sales-quotation-domain.js';
+import {
   SIGNATURE_TARGET, ORDER_CONDITIONS_TARGET, CONTRACT_ORDER_TARGET, ORDER_SUBMIT_TARGET,
   CONTRACT_PREPAYMENT_TARGET, PREPAYMENT_CONFIRM_TARGET,
   registerContractSignature, setContractOrderConditions, createSalesOrder, submitSalesOrder,
@@ -84,6 +88,10 @@ export class SalesOrderBusinessPlugin implements Plugin {
     ctx.hook('kernel:ready', () => {
       const storage = ctx.getService<IStorageService>('storage');
       const owner = this.name;
+      engine.registerAction('forge_quotation', QUOTATION_SUBMIT_TARGET, action => submitQuotation(engine, action), owner);
+      engine.registerAction('forge_quotation', QUOTATION_SEND_TARGET, action => registerQuotationSend(engine, storage, action), owner);
+      engine.registerAction('forge_quotation', QUOTATION_ACCEPT_TARGET, action => registerQuotationAcceptance(engine, storage, action), owner);
+      engine.registerAction('forge_quotation', QUOTATION_CONVERT_TARGET, action => convertQuotationToContract(engine, storage, action), owner);
       engine.registerAction('forge_sales_contract', SIGNATURE_TARGET, action => registerContractSignature(engine, storage, action), owner);
       engine.registerAction('forge_sales_contract', ORDER_CONDITIONS_TARGET, action => setContractOrderConditions(engine, action), owner);
       engine.registerAction('forge_sales_contract', CONTRACT_ORDER_TARGET, action => createSalesOrder(engine, action), owner);

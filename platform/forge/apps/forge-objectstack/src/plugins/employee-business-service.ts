@@ -1,5 +1,5 @@
 import type { PluginContext } from '@objectstack/core';
-import type { IApprovalService, IDataDriver, IHttpRequest, IObjectQLEngine, IStorageService } from '@objectstack/spec/contracts';
+import type { IApprovalService, IDataDriver, IHttpRequest, IObjectQLEngine, IStorageService, ISecurityService } from '@objectstack/spec/contracts';
 import type { ExecutionContext } from '@objectstack/spec/kernel';
 import { lockBusinessRow } from './business-transaction.js';
 import { EmployeeNativeActions, businessRow, type BusinessRow, type EmployeeAction } from './employee-business-native.js';
@@ -7,10 +7,12 @@ import { businessActionPolicy } from './business-action-policy.js';
 import { canonicalJSON, digest, nativeEmployee, nonempty, service, SYSTEM_READ, TaskConnectionFailure } from './native-task-auth.js';
 import { readOwnedOriginal, OwnedOriginalFailure } from './workbench-owned-material.plugin.js';
 import { nativeActionConfirmationSupported, nativeActionRequiresConfirmation } from './native-action-confirmation.js';
+import { businessRecordVersion } from './business-record-version.js';
+import { withEmployeeBusinessBinding } from './employee-business-binding.js';
 
 const CONTEXT = 'forge_employee_business_context';
 const OPERATION = 'forge_employee_business_operation';
-const OBJECTS = new Set(['forge_sales_contract', 'forge_sales_order', 'forge_customer_prepayment']);
+const OBJECTS = new Set(['forge_quotation', 'forge_sales_contract', 'forge_sales_order', 'forge_customer_prepayment']);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SHA = /^[0-9a-f]{64}$/;
 type Employee = Awaited<ReturnType<typeof nativeEmployee>>;
@@ -97,6 +99,11 @@ export class EmployeeBusinessService {
   }
 
   private system(employee: Employee): ExecutionContext { return { ...SYSTEM_READ, userId: employee.userId, tenantId: employee.organizationId }; }
+  private async requireObjectRead(employee: Employee, objectName: string): Promise<void> {
+    const security = service<ISecurityService>(this.context, 'security');
+    if (!security.canReadObject) fail(503, 'EMPLOYEE_ACTION_PERMISSION_UNAVAILABLE', '当前员工权限不可可靠核对');
+    if (!await security.canReadObject(objectName, employee.actor)) fail(403, 'EMPLOYEE_ACTION_RECORD_FORBIDDEN', '当前员工无权读取该业务记录');
+  }
 
   async verifySource(employee: Employee, objectName: string, recordId: string, source: Source): Promise<void> {
     if (source.kind === 'record') return;
@@ -113,16 +120,7 @@ export class EmployeeBusinessService {
   }
 
   async recordVersion(objectName: string, recordId: string, employee: Employee, context = this.system(employee)): Promise<string> {
-    const record = await this.engine.findOne(objectName, { where: { id: recordId, organization_id: employee.organizationId } }, { context });
-    if (!record) fail(404, 'EMPLOYEE_ACTION_RECORD_NOT_FOUND', '当前业务记录不可读取');
-    const related: unknown[] = [];
-    const child = objectName === 'forge_sales_contract' ? ['forge_sales_contract_line', 'contract_id'] : objectName === 'forge_sales_order' ? ['forge_sales_order_line', 'order_id'] : undefined;
-    if (child) {
-      const rows = await this.engine.find(child[0], { where: { [child[1]]: recordId, organization_id: employee.organizationId }, orderBy: [{ field: 'id', order: 'asc' }], limit: 1001 }, { context });
-      if (rows.length > 1000) fail(503, 'EMPLOYEE_ACTION_RECORD_INCOMPLETE', '当前业务明细不可完整核对');
-      related.push(rows);
-    }
-    return digest(canonicalJSON(JSON.parse(JSON.stringify({ record, related }))));
+    return businessRecordVersion(this.engine, objectName, recordId, employee.organizationId, context);
   }
 
   async readContext(request: IHttpRequest): Promise<ActionContext> {
@@ -130,6 +128,7 @@ export class EmployeeBusinessService {
     keys(query, ['objectName', 'recordId', 'sourceKind', 'sourceRef']);
     const objectName = id(query.objectName), recordId = id(query.recordId);
     if (!OBJECTS.has(objectName)) fail(404, 'EMPLOYEE_ACTION_RECORD_NOT_FOUND', '当前业务记录不可办理');
+    await this.requireObjectRead(employee, objectName);
     const kind = query.sourceKind ?? 'record';
     if (!['record', 'business_notification', 'approval'].includes(String(kind)) || kind === 'record' && query.sourceRef != null) fail(400, 'EMPLOYEE_ACTION_SOURCE_INVALID', '业务来源无效');
     const source: Source = { kind: kind as Source['kind'], ...(kind !== 'record' ? { reference: id(query.sourceRef) } : {}) };
@@ -230,6 +229,10 @@ export class EmployeeBusinessService {
     const action = bound.actions.find(a => a.action_ref === input.action_ref);
     if (!action) fail(400, 'EMPLOYEE_ACTION_REFERENCE_INVALID', '当前动作引用无效');
     const params = this.validateValues(action, input), { objectName, recordId } = bound.record;
+    const unresolved = await this.engine.findOne(OPERATION, { where: { user_id: employee.userId, organization_id: employee.organizationId,
+      object_name: objectName, record_id: recordId, status: { $in: ['in_progress', 'unknown'] } } }, { context: this.system(employee) });
+    if (unresolved) fail(409, 'EMPLOYEE_ACTION_UNRESOLVED', '已有办理结果待核对，请沿原请求查询，不能更换请求重新办理');
+    await this.requireObjectRead(employee, objectName);
     const native = new EmployeeNativeActions(this.context, employee.actor);
     const visible = businessRow(await native.bridge.get(objectName, recordId));
     if (!visible || visible.id !== recordId) fail(404, 'EMPLOYEE_ACTION_RECORD_NOT_FOUND', '当前业务记录不可读取');
@@ -265,24 +268,44 @@ export class EmployeeBusinessService {
         const initial = await this.engine.findOne(objectName, { where: { id: recordId, organization_id: employee.organizationId } }, { context: transaction });
         if (objectName !== 'forge_sales_contract' && nonempty(initial?.contract_id)) await lockBusinessRow(this.engine, 'forge_sales_contract', String(initial!.contract_id), employee.organizationId, transaction);
         await lockBusinessRow(this.engine, objectName, recordId, employee.organizationId, transaction);
+        // The fast preflight runs before reservation. Another key may have
+        // reached native dispatch while this one waited for the record lock.
+        // An in-progress receipt is already uncertain; do not wait for its
+        // catch/recovery path to label it unknown before refusing a replay.
+        const competing = await this.engine.findOne(OPERATION, { where: { user_id: employee.userId, organization_id: employee.organizationId,
+          object_name: objectName, record_id: recordId, operation_key: { $ne: input.opKey }, status: { $in: ['in_progress', 'unknown'] } } }, { context: transaction });
+        if (competing) fail(409, 'EMPLOYEE_ACTION_UNRESOLVED', '已有办理结果待核对，请沿原请求查询，不能更换请求重新办理');
         if (await this.recordVersion(objectName, recordId, employee, transaction) !== bound.recordVersion) fail(409, 'EMPLOYEE_ACTION_CONTEXT_CHANGED', '当前业务记录已变化');
         const live = await nativeEmployee(this.context, request);
         const transactional = new EmployeeNativeActions(this.context, { ...live.actor, transaction: transaction.transaction });
         const current = (await transactional.employeeActions(objectName, businessRow(await transactional.bridge.get(objectName, recordId)))).find(a => a.capabilityId === action.capabilityId);
         if (!current || current.declarationVersion !== action.declarationVersion) fail(409, 'EMPLOYEE_ACTION_CONTEXT_CHANGED', '动作权限或定义已变化');
+        if (Date.parse(String(stored.expires_at)) <= Date.now()) fail(409, 'EMPLOYEE_ACTION_CONTEXT_CHANGED', '本次办理上下文已过期，请重新打开');
         const actionName = action.capabilityId.slice(action.capabilityId.lastIndexOf('.') + 1);
-        nativeInvoked = true;
-        const result = await transactional.runBoundAction(actionName, { objectName, recordId, params });
+        const result = await withEmployeeBusinessBinding({ userId: employee.userId, organizationId: employee.organizationId,
+          objectName, recordId, actionName, recordVersion: bound.recordVersion, expiresAt: String(stored.expires_at), operationKey: input.opKey, requestDigest,
+          ...(input.file ? { file: input.file } : {}) },
+        () => transactional.runBoundAction(actionName, { objectName, recordId, params }, () => { nativeInvoked = true; }));
         const raw = businessRow(result);
         if (raw?.ok !== true || raw.action !== actionName || raw.objectName !== objectName || raw.recordId !== recordId) throw new Error('原生动作未返回准确成功包络');
         const resultRecord = businessRow(raw.result);
         const newId = nonempty(resultRecord?.id);
-        if (!newId || !['contract_convert_to_sales_order', 'contract_register_customer_prepayment'].includes(actionName) && newId !== recordId) throw new Error('原生业务回执缺少准确记录引用');
+        if (!newId || !['quotation_convert_to_contract', 'contract_convert_to_sales_order', 'contract_register_customer_prepayment'].includes(actionName) && newId !== recordId) throw new Error('原生业务回执缺少准确记录引用');
+        if (actionName === 'quotation_convert_to_contract' && (objectName !== 'forge_quotation' || resultRecord?.quotation_id !== recordId || newId === recordId)) throw new Error('报价转换回执未绑定准确来源');
         const reference = newId && newId !== recordId && actionName === 'contract_convert_to_sales_order'
           ? { objectName: 'forge_sales_order', recordId: newId, label: String(input.values.name || input.values.code || '销售订单') }
           : actionName === 'contract_register_customer_prepayment'
-            ? { objectName: 'forge_customer_prepayment', recordId: newId!, label: '合同预收款 ' + String(input.values.code || '') } : bound.record;
-        operation = { ...operation, status: 'succeeded', updatedAt: new Date().toISOString(), summary: `${action.label}已办理`, recordReferences: [reference] };
+            ? { objectName: 'forge_customer_prepayment', recordId: newId!, label: '合同预收款 ' + String(input.values.code || '') }
+            : actionName === 'quotation_convert_to_contract'
+              ? { objectName: 'forge_sales_contract', recordId: newId!, label: String(input.values.name || input.values.code || '销售合同') } : bound.record;
+        if (actionName === 'quotation_convert_to_contract') {
+          const converted = await this.engine.findOne('forge_sales_contract', { where: { id: newId, quotation_id: recordId, quotation_source_type: 'formal_conversion', organization_id: employee.organizationId } }, { context: transaction });
+          const receipt = await this.engine.findOne('forge_quotation_contract_conversion', { where: { quotation_id: recordId, contract_id: newId, converted_by: employee.userId, organization_id: employee.organizationId } }, { context: transaction });
+          if (!converted || !receipt) throw new Error('报价转换目标缺少权威业务绑定');
+          reference.label = String(converted.name || converted.code || '销售合同').slice(0, 300);
+        }
+        operation = { ...operation, status: 'succeeded', updatedAt: new Date().toISOString(), summary: `${action.label}已办理`,
+          recordReferences: actionName === 'quotation_convert_to_contract' ? [bound.record, reference] : [reference] };
         await this.engine.update(OPERATION, { id: rowId, status: operation.status, result_json: JSON.stringify(operation), observed_at: operation.updatedAt }, { context: transaction });
       }, this.system(employee), { require: true });
       return operation;

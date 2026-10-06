@@ -38,7 +38,7 @@ export const SalesQuotationApprovalFlow = defineFlow({
       id: 'approve_quote',
       type: 'update_record',
       label: '报价审批通过',
-      config: { objectName: 'forge_quotation', filter: { id: '{record.id}' }, fields: { status: 'approved' } },
+      config: { objectName: 'forge_quotation', filter: { id: '{record.id}' }, fields: { status: 'approved', approved_pricing_version: '{record.submitted_pricing_version}' } },
       position: { x: 600, y: 80 },
     },
     {
