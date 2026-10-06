@@ -206,7 +206,8 @@ export class EmployeeNativeActions {
         try {
           const source = await approvedProjectOrder(engine, String(record.customer_id), String(links[0].order_id), system);
           ready = source.contract.id === links[0].contract_id && source.version === record.source_order_version;
-          await readProjectActorSource(this.bridge, this.context.getService<ISecurityService>('security'), this.actor, String(record.customer_id), { orderId: String(source.order.id), contractId: String(source.contract.id), quotationId: source.quotation ? String(source.quotation.id) : null });
+          await readProjectActorSource(this.bridge, this.context.getService<ISecurityService>('security'), this.actor, String(record.customer_id), { orderId: String(source.order.id), contractId: String(source.contract.id), quotationId: source.quotation ? String(source.quotation.id) : null },
+            diagnostic => this.context.logger.warn('[project-scope]', diagnostic));
           for (const [object, id] of [['forge_customer', record.customer_id], ['forge_sales_contract', source.contract.id], ['forge_sales_order', source.order.id],
             ...(source.quotation ? [['forge_quotation', source.quotation.id]] : [])]) {
             if (businessRow(await this.bridge.get(String(object), String(id)))?.id !== id) ready = false;

@@ -96,7 +96,8 @@ export async function readProjectDeliveryScope(context: PluginContext, engine: I
   const links = Array.isArray(binding.links) ? binding.links : denied('原生项目关联读取格式无效');
   if (!binding || binding.project_id !== who.recordId || !Array.isArray(links) || links.length > 100) denied('原生项目关联读取缺少准确绑定');
   if (links.length) await visible(native, 'forge_customer', String(ctx.record.customer_id), who);
-  const projection = await projectActorScope(native.bridge, context.getService<ISecurityService>('security'), native.actor, String(ctx.record.customer_id), binding, scope);
+  const projection = await projectActorScope(native.bridge, context.getService<ISecurityService>('security'), native.actor, String(ctx.record.customer_id), binding, scope,
+    diagnostic => context.logger.warn('[project-scope]', diagnostic));
   return { scope: projection, binding };
 }
 

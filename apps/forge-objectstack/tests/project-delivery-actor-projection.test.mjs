@@ -41,3 +41,33 @@ test('any required scope field denial or missing actor value closes the entire p
     await assert.rejects(()=>projectActorScope(partial,security,actor,'customer',binding,trusted),error=>error.code==='PROJECT_SCOPE_FIELDS_FORBIDDEN');
   }
 });
+
+test('diagnostics name only the precise failing stage, object and static fields',async()=>{
+  const secret='DO-NOT-LOG-native-id-business-value-file-error';
+  const failRead={...reader,get:async()=>{throw new Error(secret);}};
+  const change=(object,patch)=>({get:async name=>({...rows[name],...(name===object?patch:{})}),query:async name=>({records:[{...rows[name],...(name===object?patch:{})}],total:1})});
+  const cases=[
+    ['field-service','forge_sales_order',503,[],{...security,getReadableFields:async object=>object==='forge_sales_order'?undefined:security.getReadableFields(object)},reader,binding],
+    ['field-service','forge_sales_order',503,[],{...security,getReadableFields:object=>{if(object==='forge_sales_order')throw new Error(secret);return security.getReadableFields(object);}},reader,binding],
+    ['field-service','forge_sales_order_line',403,['taxed_unit_price'],{...security,getReadableFields:async object=>(await security.getReadableFields(object)).filter(field=>object!=='forge_sales_order_line'||field!=='taxed_unit_price')},reader,binding],
+    ['object-admission','forge_sales_order',403,[],{...security,canReadObject:async object=>object!=='forge_sales_order'},reader,binding],
+    ['object-admission','forge_sales_order',503,[],{...security,canReadObject:async object=>object==='forge_sales_order'?undefined:true},reader,binding],
+    ['header-read','forge_sales_order',403,[],security,failRead,binding],
+    ['row-query-count','forge_quotation_line',403,[],security,{...reader,query:async object=>object==='forge_quotation_line'?{records:[],total:0}:reader.query(object)},binding],
+    ['source-match','forge_sales_contract',403,['code'],security,change('forge_sales_contract',{code:null}),binding],
+    ['source-match','forge_quotation',403,['customer_id'],security,change('forge_quotation',{customer_id:secret}),binding],
+    ['line-fields','forge_quotation_line',403,['taxed_unit_price'],security,change('forge_quotation_line',{taxed_unit_price:secret}),binding],
+    ['trace-match','forge_sales_order_line',403,['contract_line_id'],security,change('forge_sales_order_line',{contract_line_id:secret}),binding],
+    ['trace-match','forge_sales_order_line',403,['contract_line_id','quotation_line_id'],security,reader,{...binding,rows:[{...binding.rows[0],quotation_line_id:secret}]}],
+  ];
+  for(const [stage,object,code,fields,currentSecurity,currentReader,currentBinding]of cases){
+    const logs=[];
+    await assert.rejects(()=>projectActorScope(currentReader,currentSecurity,actor,'customer',currentBinding,trusted,metadata=>logs.push(metadata)),error=>error.status===code);
+    assert.ok(logs.some(log=>log.stage===stage&&log.object===object),stage);
+    const expected=logs.find(log=>log.stage===stage&&log.object===object);
+    assert.deepEqual(expected,{event:'project-scope-check-failed',stage,object,fields,code});
+    for(const log of logs){assert.deepEqual(Object.keys(log).sort(),['code','event','fields','object','stage']);assert.ok(!JSON.stringify(log).includes(secret));}
+  }
+  const logs=[];await projectActorScope(reader,security,actor,'customer',binding,trusted,metadata=>logs.push(metadata));assert.deepEqual(logs,[]);
+  await assert.rejects(()=>projectScopeFields({...security,getReadableFields:async()=>undefined},actor,'forge_sales_order',()=>{throw new Error(secret);}),error=>error.code==='PROJECT_SCOPE_PERMISSION_UNAVAILABLE');
+});
