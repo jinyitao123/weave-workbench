@@ -1,0 +1,389 @@
+{
+  "schemaVersion": 3,
+  "featureId": "sales.service-order-create",
+  "app": "sales",
+  "surfaceType": "page",
+  "target": "page_service_order_create",
+  "pageId": "page_service_order_create",
+  "status": "review_required",
+  "observedAt": "2026-10-07",
+  "reviewedRevision": "063f597baec6e9419f10d84d637b756f529b2513",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts": "cf4972a1e5220003f86d18ff268d90e8b972d1ee34e34413ac04661fb70f463c",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "4bdff59553b480771e0f0fcd23dde4cdaa232f632d4748c3e645d3283008936d",
+    "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts": "a0088ab566ca72d65a6a85b2fc43e2023500ba61511d5a4f4259b62101c46f7b",
+    "apps/forge-objectstack/src/views/service-workspace.view.ts": "a9314cee79aca5e70975f498b50a2bf8d94f265b0618bb6977763f587184e78b",
+    "apps/forge-objectstack/src/objects/sales.object.ts": "fa936dfee7638c074fde84f67dc7c0b80adac71f2b31571220d322190e32e9e2",
+    "apps/forge-objectstack/src/actions/sales.action.ts": "13de0e1e97d5b5c79f1d37d8b38bbd9bb27ac89a4889f101e544389a9d9a4bbd",
+    "apps/forge-objectstack/src/permissions/otc-role.permission.ts": "a762753c23dc3edf556d689cadb522f4393ccdc921f9594d979039711f6321b3",
+    "apps/forge-objectstack/console94.lock.json": "363c04b892101956fecc2c03e464086ea71312df0ccaf4c968e2fba7321f412c"
+  },
+  "environment": {
+    "databaseType": "postgresql",
+    "materials": [
+      {
+        "id": "UI-CREATE-EMPTY",
+        "name": "原生服务主管与服务员工，空业务库和临时中文输入"
+      }
+    ]
+  },
+  "referenceEvidence": [],
+  "checks": {
+    "requirements": {
+      "status": "pending",
+      "notes": "13 项要求单独登记；局部 UI 观察有证据，整体覆盖和独立复核仍未完成。",
+      "evidence": []
+    },
+    "visual": {
+      "status": "pending",
+      "notes": "已观察桌面／窄屏空态、错误和确认；有数据长材料与 RISEMAP 当前对照未验。",
+      "evidence": []
+    },
+    "interaction": {
+      "status": "pending",
+      "notes": "取消保护、继续编辑、Esc、清空返回、中文输入和必填阻断局部已观察；正常提交及动作异常未验。",
+      "evidence": []
+    },
+    "business": {
+      "status": "pending",
+      "notes": "未在本批执行创建或后续业务链；只读表单验证不能替代正式结果。",
+      "evidence": []
+    },
+    "permissions": {
+      "status": "pending",
+      "notes": "原主管和服务员工已分别登录观察允许／拒绝；业务写入和组织边界未验。",
+      "evidence": []
+    },
+    "persistence": {
+      "status": "pending",
+      "notes": "未执行创建结果的同库停服重启读回，不以临时空库代替持久结果验收。",
+      "evidence": []
+    },
+    "performance": {
+      "status": "pending",
+      "notes": "未测量固定材料和预算，保持 pending。",
+      "evidence": []
+    }
+  },
+  "requirements": [
+    {
+      "id": "SO-CREATE-001",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/forge-sales-service-page-contract-20260913.md#当前新建服务工单交付范围"
+      },
+      "statement": "主管从服务工单列表进入新建页；取消回到原列表。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts",
+        "apps/forge-objectstack/src/views/service-workspace.view.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "主管从服务工单列表进入新建页；取消回到原列表。",
+      "actual": "隔离主管正常进入、取消返回已观察；整体入口复核待办",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-CREATE-002",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/forge-sales-service-page-contract-20260913.md#当前新建服务工单交付范围"
+      },
+      "statement": "完整显示既有四组字段；默认值来自对象，服务场景不自动选择且不引入演示内容。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts",
+        "apps/forge-objectstack/src/views/service-workspace.view.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "完整显示既有四组字段；默认值来自对象，服务场景不自动选择且不引入演示内容。",
+      "actual": "空目录与原生默认已观察；字段完整性及参考逐项对照待办",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-CREATE-003",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/forge-sales-service-page-contract-20260913.md#当前新建服务工单交付范围"
+      },
+      "statement": "客户、联系人、来源订单、合同使用原生关联选择，并遵守真实权限和业务关系。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts",
+        "apps/forge-objectstack/src/views/service-workspace.view.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "客户、联系人、来源订单、合同使用原生关联选择，并遵守真实权限和业务关系。",
+      "actual": "原生控件仍复用；有数据选择、关系和组织范围未验",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-CREATE-004",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/forge-sales-service-page-contract-20260913.md#当前新建服务工单交付范围"
+      },
+      "statement": "工单号、标题、客户、来源订单为空时显示字段错误并阻止业务提交。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts",
+        "apps/forge-objectstack/src/views/service-workspace.view.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "工单号、标题、客户、来源订单为空时显示字段错误并阻止业务提交。",
+      "actual": "空表单字段提示及零创建请求已观察；完整边界未验",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-CREATE-005",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/forge-sales-service-page-contract-20260913.md#当前新建服务工单交付范围"
+      },
+      "statement": "当前表单有改动时取消须确认；继续编辑、关闭或 Esc 保留值；放弃后返回；隐藏默认值和清空不误报。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts",
+        "apps/forge-objectstack/src/views/service-workspace.view.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "当前表单有改动时取消须确认；继续编辑、关闭或 Esc 保留值；放弃后返回；隐藏默认值和清空不误报。",
+      "actual": "中文改动确认、继续编辑、Esc、明确放弃与清空返回已观察；其他离开入口待评审",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-CREATE-006",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/forge-sales-service-page-contract-20260913.md#当前新建服务工单交付范围"
+      },
+      "statement": "中文连续输入及键盘操作不重挂载表单，不丢字或失去输入焦点。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts",
+        "apps/forge-objectstack/src/views/service-workspace.view.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "中文连续输入及键盘操作不重挂载表单，不丢字或失去输入焦点。",
+      "actual": "桌面连续中文输入保持值和焦点；真实输入法组合、多字段键盘路径未验",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-CREATE-007",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/forge-sales-service-page-contract-20260913.md#当前新建服务工单交付范围"
+      },
+      "statement": "桌面含展开侧栏、窄屏、长字段、错误和确认状态可读，操作可达且无根节点横向越界。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts",
+        "apps/forge-objectstack/src/views/service-workspace.view.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "桌面含展开侧栏、窄屏、长字段、错误和确认状态可读，操作可达且无根节点横向越界。",
+      "actual": "1280×900、760×900 正常、错误和确认状态无根节点横向越界；长材料及完整参考对照未验",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-CREATE-008",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/forge-sales-service-page-contract-20260913.md#当前新建服务工单交付范围"
+      },
+      "statement": "只读取启用的工单类型；空结果、无权和读取失败分别提示，失败时保持字段值并禁用该选择。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts",
+        "apps/forge-objectstack/src/views/service-workspace.view.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "只读取启用的工单类型；空结果、无权和读取失败分别提示，失败时保持字段值并禁用该选择。",
+      "actual": "空目录已观察；本机注入 503 后错误、原输入和只读表示已观察；有数据、403 全链未验",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-CREATE-009",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/forge-sales-service-page-contract-20260913.md#当前新建服务工单交付范围"
+      },
+      "statement": "使用原 service_order_create 动作一次提交，读回正式工单后返回列表；记录状态、来源、负责人及下一步正确。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts",
+        "apps/forge-objectstack/src/views/service-workspace.view.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "使用原 service_order_create 动作一次提交，读回正式工单后返回列表；记录状态、来源、负责人及下一步正确。",
+      "actual": "现有页面回归通过；本批未实际创建或形成业务结果",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-CREATE-010",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/forge-sales-service-page-contract-20260913.md#当前新建服务工单交付范围"
+      },
+      "statement": "原主管可见、普通服务员工被拒绝；后端和组织范围独立验证，不临时扩权。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts",
+        "apps/forge-objectstack/src/views/service-workspace.view.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "原主管可见、普通服务员工被拒绝；后端和组织范围独立验证，不临时扩权。",
+      "actual": "两个原岗位真实登录，普通服务员工无表单和创建按钮；后端业务写入和跨组织拒绝未验",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-CREATE-011",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/forge-sales-service-page-contract-20260913.md#当前新建服务工单交付范围"
+      },
+      "statement": "提交中禁止重复操作；校验或动作失败保留表单并显示真实错误。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts",
+        "apps/forge-objectstack/src/views/service-workspace.view.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "提交中禁止重复操作；校验或动作失败保留表单并显示真实错误。",
+      "actual": "校验失败保留输入已观察；实际动作失败、响应丢失和重复提交未验",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-CREATE-012",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/forge-sales-service-page-contract-20260913.md#当前新建服务工单交付范围"
+      },
+      "statement": "现场图片使用原生附件能力；上传、字段关联、成功查看及无关账号拒绝需实际验证。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts",
+        "apps/forge-objectstack/src/views/service-workspace.view.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "现场图片使用原生附件能力；上传、字段关联、成功查看及无关账号拒绝需实际验证。",
+      "actual": "原生附件入口保持；本页上传、业务关联及后续访问未验",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-CREATE-013",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/forge-sales-service-page-contract-20260913.md#当前新建服务工单交付范围"
+      },
+      "statement": "正常创建结果同库完整停服重启仍一致；固定材料测量打开、刷新、切页、请求及体积预算。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts",
+        "apps/forge-objectstack/src/views/service-workspace.view.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "正常创建结果同库完整停服重启仍一致；固定材料测量打开、刷新、切页、请求及体积预算。",
+      "actual": "本批只读，未执行同库创建结果重启回读或固定材料性能预算",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    }
+  ],
+  "limitations": [
+    "新建页已有实现，本次补登记；不能将覆盖条目数当成功能完成度。",
+    "未执行正式创建、业务链、关联选择、有数据附件及同库重启。",
+    "本轮实施者完成局部观察，独立业务复核未发生。",
+    "未形成 RISEMAP 当前同材料结构和交互对照；颜色后置。",
+    "完整 build 因历史财务验收图片缺失失败，未更改旧门禁或旧记录。"
+  ]
+}

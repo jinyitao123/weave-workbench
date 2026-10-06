@@ -1291,6 +1291,47 @@
       "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_service_orders.json"
     },
     {
+      "featureId": "sales.service-order-create",
+      "app": "sales",
+      "surfaceType": "page",
+      "target": "page_service_order_create",
+      "pageId": "page_service_order_create",
+      "file": "sales-service-workspace.page.ts",
+      "pages": [
+        "page_service_order_create"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts",
+        "apps/forge-objectstack/src/views/service-workspace.view.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "requirementIds": [
+        "SO-CREATE-001",
+        "SO-CREATE-002",
+        "SO-CREATE-003",
+        "SO-CREATE-004",
+        "SO-CREATE-005",
+        "SO-CREATE-006",
+        "SO-CREATE-007",
+        "SO-CREATE-008",
+        "SO-CREATE-009",
+        "SO-CREATE-010",
+        "SO-CREATE-011",
+        "SO-CREATE-012",
+        "SO-CREATE-013"
+      ],
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-service-page-contract-20260913.md",
+      "acceptance": "apps/forge-objectstack/tests/acceptance/service-order-create.json"
+    },
+    {
       "file": "sales-crm-service-pages.page.ts",
       "pages": [
         "page_service_quotations"
