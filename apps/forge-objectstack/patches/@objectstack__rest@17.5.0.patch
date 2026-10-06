@@ -1,0 +1,122 @@
+diff --git a/dist/index.cjs b/dist/index.cjs
+index 7528af546bc3c7e718787867c6f382ea72b0f192..4f2f1c248090b865bff74d9f61fa144019a3a525 100644
+--- a/dist/index.cjs
++++ b/dist/index.cjs
+@@ -93639,19 +93639,30 @@ var _RestServer = class _RestServer {
+           const expandFields = referenceFieldNames(metaMap);
+           const timezone = typeof context?.timezone === "string" && context.timezone ? String(context.timezone) : void 0;
+           let readableProjected = false;
+-          if (fieldsFromSchema && fields && fields.length > 0) {
+-            try {
+-              const security = await this.resolveSecurityService(environmentId, req);
+-              if (security && typeof security.getReadableFields === "function") {
+-                const readable = await security.getReadableFields(objectName, context);
+-                if (Array.isArray(readable)) {
+-                  const readableSet = new Set(readable);
+-                  fields = fields.filter((f) => readableSet.has(f));
+-                  readableProjected = true;
+-                }
+-              }
+-            } catch {
++          try {
++            const security = await this.resolveSecurityService(environmentId, req);
++            if (!security || typeof security.getReadableFields !== "function") throw new Error("Readable-field authorization is unavailable");
++            const readable = await security.getReadableFields(objectName, context);
++            if (!Array.isArray(readable)) throw new Error("Readable-field authorization returned no field list");
++            // Record identity remains available on ordinary API reads, but
++            // streaming CSV/XLSX/JSON files are business exports, not a way
++            // to dump primary keys. Keep the projection inside the same field
++            // mask and remove the synthetic record id from every export.
++            const readableSet = new Set(readable.filter((field) => field !== "id"));
++            if (!fields || fields.length === 0) {
++              fields = [...readableSet];
++              fieldsFromSchema = true;
++            } else {
++              fields = fields.filter((field) => readableSet.has(field));
++            }
++            readableProjected = true;
++            if (!fields.length) {
++              res.status(403).json({ code: "FIELD_READ_DENIED", error: "None of the requested export fields are readable" });
++              return;
+             }
++          } catch {
++            res.status(503).json({ code: "FIELD_PERMISSION_UNAVAILABLE", error: "Could not authorize export fields" });
++            return;
+           }
+           if (format === "csv") {
+             res.header("Content-Type", "text/csv; charset=utf-8");
+@@ -93737,7 +93748,12 @@ var _RestServer = class _RestServer {
+             } else {
+               for (let i = 0; i < rows3.length; i++) {
+                 const prefix = firstChunk && i === 0 ? "" : ",";
+-                res.write(prefix + JSON.stringify(formatRowForJson(rows3[i], metaMap, timezone)));
++                const formatted = formatRowForJson(rows3[i], metaMap, timezone);
++                const projected = {};
++                for (const field of fields ?? []) {
++                  if (Object.prototype.hasOwnProperty.call(formatted ?? {}, field)) projected[field] = formatted[field];
++                }
++                res.write(prefix + JSON.stringify(projected));
+               }
+             }
+             firstChunk = false;
+diff --git a/dist/index.js b/dist/index.js
+index bde0cb2ef7a1692d0c0584948fb85ee83c331aa3..22ce77e24e3a74435f6ef4b240b06806fdab5dc8 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -94040,19 +94040,30 @@ var _RestServer = class _RestServer {
+           const expandFields = referenceFieldNames(metaMap);
+           const timezone = typeof context?.timezone === "string" && context.timezone ? String(context.timezone) : void 0;
+           let readableProjected = false;
+-          if (fieldsFromSchema && fields && fields.length > 0) {
+-            try {
+-              const security = await this.resolveSecurityService(environmentId, req);
+-              if (security && typeof security.getReadableFields === "function") {
+-                const readable = await security.getReadableFields(objectName, context);
+-                if (Array.isArray(readable)) {
+-                  const readableSet = new Set(readable);
+-                  fields = fields.filter((f) => readableSet.has(f));
+-                  readableProjected = true;
+-                }
+-              }
+-            } catch {
++          try {
++            const security = await this.resolveSecurityService(environmentId, req);
++            if (!security || typeof security.getReadableFields !== "function") throw new Error("Readable-field authorization is unavailable");
++            const readable = await security.getReadableFields(objectName, context);
++            if (!Array.isArray(readable)) throw new Error("Readable-field authorization returned no field list");
++            // Record identity remains available on ordinary API reads, but
++            // streaming CSV/XLSX/JSON files are business exports, not a way
++            // to dump primary keys. Keep the projection inside the same field
++            // mask and remove the synthetic record id from every export.
++            const readableSet = new Set(readable.filter((field) => field !== "id"));
++            if (!fields || fields.length === 0) {
++              fields = [...readableSet];
++              fieldsFromSchema = true;
++            } else {
++              fields = fields.filter((field) => readableSet.has(field));
++            }
++            readableProjected = true;
++            if (!fields.length) {
++              res.status(403).json({ code: "FIELD_READ_DENIED", error: "None of the requested export fields are readable" });
++              return;
+             }
++          } catch {
++            res.status(503).json({ code: "FIELD_PERMISSION_UNAVAILABLE", error: "Could not authorize export fields" });
++            return;
+           }
+           if (format === "csv") {
+             res.header("Content-Type", "text/csv; charset=utf-8");
+@@ -94138,7 +94149,12 @@ var _RestServer = class _RestServer {
+             } else {
+               for (let i = 0; i < rows3.length; i++) {
+                 const prefix = firstChunk && i === 0 ? "" : ",";
+-                res.write(prefix + JSON.stringify(formatRowForJson(rows3[i], metaMap, timezone)));
++                const formatted = formatRowForJson(rows3[i], metaMap, timezone);
++                const projected = {};
++                for (const field of fields ?? []) {
++                  if (Object.prototype.hasOwnProperty.call(formatted ?? {}, field)) projected[field] = formatted[field];
++                }
++                res.write(prefix + JSON.stringify(projected));
+               }
+             }
+             firstChunk = false;

@@ -49,7 +49,7 @@ for (const [area, entries] of Object.entries(manifest)) {
       ? [
           ['产品根节点', /forge-product|forge-workbench/],
           // ForgeHero is the branded heading area for pages that lead with a hero.
-          ['工作台标题区', /ForgeHero|ForgePageHeader|fp-page-header|wb-welcome|ws-hero/],
+          ['工作台标题区', /ForgeHero|ForgePageHeader|<(?:WorkspaceHeader|PageHeader)\b|fp-page-header|wb-welcome|ws-hero/],
           ['可执行按钮', /<button\b[^>]*onClick=/],
         ]
       : [
@@ -58,7 +58,7 @@ for (const [area, entries] of Object.entries(manifest)) {
           ['标准产品根节点', /forge-product/],
           // The branded hero (allowed by the polish baseline since 2026-09-17) is a
           // standard heading area too: it carries the业务面包屑、标题与说明.
-          ['标准标题区', /ForgeHero|ForgePageHeader|fp-page-header/],
+          ['标准标题区', /ForgeHero|ForgePageHeader|<(?:WorkspaceHeader|PageHeader)\b|fp-page-header/],
           ['可执行按钮', /<button\b[^>]*onClick=/],
         ];
     for (const [label, pattern] of structuralPatterns) if (!pattern.test(source)) findings.push(`${area}/${entry.file}: 缺少${label}`);
@@ -75,7 +75,7 @@ for (const [area, entries] of Object.entries(manifest)) {
 // Built navigation is checked against this manifest after compilation by
 // navigation-linkage.static.mjs. This prebuild gate checks source contracts.
 assert.match(productUi, /div:has\(>\.forge-product\)>div\.space-y-2\{display:none!important\}/, 'product-ui.ts 必须隐藏 Console 自动标题，避免产品页出现重复标题区');
-assert.match(productUi, /\.forge-product \.btn,.forge-product \.icon-btn\{height:34px;[^}]*border-radius:8px/, 'product-ui.ts 必须统一财务页主次按钮尺寸与圆角');
+assert.match(productUi, /\.forge-product \.btn,.forge-product \.icon-btn\{height:var\(--ui-control-height,34px\);[^}]*border-radius:var\(--ui-control-radius,8px\)/, 'product-ui.ts 主次按钮必须消费公共尺寸和圆角 token，并保留既有 fallback');
 assert.match(productUi, /\.forge-product\.bank-flow \.page-shell,.forge-product\.finance-page \.fp-shell,.forge-product \.body\{width:min\(1380px,100%\);max-width:1380px/, 'product-ui.ts 必须按工时管理页面统一财务内容宽度');
 assert.match(productUi, /\.forge-product \.card,.forge-product \.panel,.forge-product \.metric,.forge-product \.metric-card,.forge-product \.process\{[^}]*border-radius:10px/, 'product-ui.ts 必须统一财务卡片层级与圆角');
 assert.deepEqual(findings, [], findings.join('\n'));

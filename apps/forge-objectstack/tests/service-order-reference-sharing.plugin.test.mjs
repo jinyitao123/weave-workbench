@@ -124,7 +124,6 @@ function hookContext(event, { previous = null, result = null, organizationId = '
     event,
     session: { userId, organizationId },
     user: { id: userId, organizationId },
-    transaction: { id: 'tx-service' },
     input: result?.id ? { id: result.id, data: result } : {},
     ...(previous ? { previous } : {}),
     ...(result ? { result } : {}),
@@ -262,4 +261,22 @@ test('existing team shares are never overwritten or revoked; plugin grant return
   assert.ok(runtime.tables.sys_record_share.some(row => row.object_name === 'forge_customer'
     && row.record_id === ticket.customer_id && row.source_id === sourceId));
   assert.equal(runtime.revokeCalls.some(call => call.shareId === external.id), false);
+});
+
+test('empty organization directory permits cold start and later organization creation reconciles shares', async () => {
+  const runtime = fakeRuntime({ organizations: [], tables: {
+    ...engineerRows('org-a', 'engineer-a'),
+    forge_service_order: [order({ engineer_id: 'engineer-a', status: 'in_progress' })],
+  } });
+  const plugin = new ServiceOrderReferenceSharingPlugin();
+  plugin.start(runtime.context);
+  await runtime.trigger('kernel:ready');
+  await runtime.trigger('kernel:bootstrapped');
+  assert.equal(runtime.grantCalls.length, 0);
+  await runtime.registered('afterInsert', 'sys_user')(hookContext('afterInsert', { result: { id: 'engineer-a' } }));
+  assert.equal(runtime.grantCalls.length, 0);
+  runtime.tables.sys_organization.push({ id: 'org-a' });
+  await runtime.registered('afterInsert', 'sys_organization')(hookContext('afterInsert', { result: { id: 'org-a' } }));
+  assert.ok(runtime.grantCalls.length > 0);
+  assert.ok(runtime.grantCalls.every(call => call.context.tenantId === 'org-a'));
 });

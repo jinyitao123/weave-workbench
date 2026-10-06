@@ -96,7 +96,7 @@ export class ApprovalFlowLauncherPlugin {
           await res.status(403).json({ error: 'test bootstrap authorization required' });
           return;
         }
-        const { recordId, actorId, organizationId } = req.body ?? {};
+        const { recordId, actorId, organizationId, reviewerIds } = req.body ?? {};
         if (![recordId, actorId, organizationId].every((value) => typeof value === 'string' && value.length > 0)) {
           await res.status(400).json({ error: 'recordId, actorId, and organizationId are required' });
           return;
@@ -111,6 +111,12 @@ export class ApprovalFlowLauncherPlugin {
             userId: actorId, tenantId: organizationId, organizationId,
             positions: [], permissions: [],
           });
+          const sharing = ctx.getService('sharing');
+          for (const recipientId of reviewerIds || []) {
+            const member = await engine.findOne('sys_member', { where: { user_id: recipientId, organization_id: organizationId } }, { context: systemContext });
+            if (!member) throw new Error('native fixture reviewer must belong to this organization');
+            await sharing.grant({ object: '${CONTRACT_OBJECT}', recordId, recipientId, accessLevel: 'read', source: 'team', sourceId: 'forge-contract-review:' + recordId }, systemContext);
+          }
           await res.status(200).json(result);
         } catch (error) {
           await res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
@@ -274,6 +280,11 @@ export default stack;
       [randomUUID(), userId, position, organizationId],
     );
   }
+  const reviewPermission = await databaseClient.query('SELECT id FROM sys_permission_set WHERE name=$1 AND active=true', ['sales_contract_reviewer']);
+  assert.equal(reviewPermission.rows.length, 1, 'the actual read-only contract review PermissionSet is registered');
+  for (const reviewer of [delivery, commercial]) {
+    await databaseClient.query('INSERT INTO sys_user_permission_set (id,user_id,permission_set_id,organization_id) VALUES ($1,$2,$3,$4)', [randomUUID(),reviewer.userId,reviewPermission.rows[0].id,organizationId]);
+  }
   const category = await admin.request('/data/forge_customer_category', 'POST', {
     name: `审批MCP客户分类-${suffix}`, code: `AMCAT-${suffix}`, status: 'active',
   });
@@ -297,7 +308,7 @@ export default stack;
 
   async function openApproval(contractId) {
     const launched = await admin.request('/__test/approval-flow', 'POST', {
-      recordId: contractId, actorId: admin.userId, organizationId,
+      recordId: contractId, actorId: admin.userId, organizationId, reviewerIds: [delivery.userId, commercial.userId],
     }, { Authorization: `Bearer ${launcherSecret}` });
     assert.equal(launched.status, 200, `Native approval flow launch returned HTTP ${launched.status}`);
     assert.equal(launched.value?.status, 'paused', `Native approval flow must pause at its approval node: ${JSON.stringify(launched.value)}`);
@@ -314,9 +325,10 @@ export default stack;
     return client.request(`/approvals/requests/${requestId}/workbench-context`);
   }
 
-  async function invokeMcp(client, action, recordId, params) {
+  async function invokeMcp(client, action, recordId, params, confirm = true) {
     return client.callMcpTool('run_action', {
       actionName: action,
+      confirm,
       objectName: CONTRACT_OBJECT,
       recordId,
       params,
@@ -357,7 +369,9 @@ export default stack;
   assert.match(sendBackAction.execution.params.sourceMaterialVersion, /^[0-9a-f]{64}$/);
 
   const unreadableRecord = await delivery.request(`/data/${CONTRACT_OBJECT}/${sendBackContractId}`);
-  assert.ok(unreadableRecord.status >= 400, `reviewer has no generic contract read access (HTTP ${unreadableRecord.status})`);
+  assert.equal(unreadableRecord.status, 200, 'reviewer reads only the exact contract admitted by its native review share');
+  const unassignedRead = await delivery.request(`/data/${CONTRACT_OBJECT}/${await createContract('not-assigned')}`);
+  assert.ok([403, 404].includes(unassignedRead.status), 'the same read-only permission does not expose an unassigned contract');
   const noWrite = await delivery.request(`/data/${CONTRACT_OBJECT}/${sendBackContractId}`, 'PATCH', { remarks: 'should be denied' });
   assert.ok(noWrite.status >= 400, `reviewer has no generic contract write access (HTTP ${noWrite.status})`);
 
@@ -380,6 +394,9 @@ export default stack;
     ...sendBackAction.execution.params,
     comment: '请补充附件签字页',
   };
+  const unconfirmed = mcpData(await invokeMcp(delivery, SEND_BACK_ACTION, sendBackContractId, sendBackArgs, false));
+  assert.equal(unconfirmed?.error?.code, 'ACTION_CONFIRMATION_REQUIRED', '17.5 native MCP requires explicit human confirmation before a decision');
+  assert.equal((await databaseClient.query('SELECT id FROM sys_approval_action WHERE request_id = $1 AND action = $2', [sendBackRequestId, 'revise'])).rows.length, 0, 'unconfirmed MCP performs no decision');
   const [sendBackFirst, sendBackConcurrent] = await Promise.all([
     invokeMcp(delivery, SEND_BACK_ACTION, sendBackContractId, sendBackArgs),
     invokeMcp(delivery, SEND_BACK_ACTION, sendBackContractId, sendBackArgs),

@@ -1,6 +1,6 @@
 import { Field, ObjectSchema } from '@objectstack/spec/data';
 
-const amount = (label: string) => Field.currency({ label, precision: 18, scale: 2, min: 0, defaultValue: 0 });
+const amount = (label: string) => Field.currency({ label, precision: 18, min: 0, defaultValue: 0 });
 
 export const ManagementProfitReportVersion = ObjectSchema.create({
   name: 'forge_management_profit_report_version',

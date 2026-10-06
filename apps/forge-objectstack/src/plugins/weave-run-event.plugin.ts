@@ -182,7 +182,7 @@ export class WeaveRunEventPlugin implements Plugin {
             return sourceError(res, 404, 'TEAM_MESSAGE_NOT_FOUND');
           }
           if (!String(notice.topic).startsWith('weave.team_run.')) {
-            const organizationId = boundedString(actor.tenantId ?? actor.organizationId, 128);
+            const organizationId = boundedString(actor.tenantId, 128);
             const objectName = boundedString(notice.source_object, 128);
             const recordId = boundedString(notice.source_id, 128);
             if (!organizationId || inbox[0].organization_id !== organizationId ||

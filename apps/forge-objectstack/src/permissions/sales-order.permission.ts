@@ -1,4 +1,5 @@
 import { definePermissionSet } from '@objectstack/spec';
+import { CONTRACT_REVIEW_RLS_KEY } from '../plugins/project-rls-membership.plugin.js';
 import { salesQuotationCostFieldMask } from './sales-quotation.permission.js';
 
 const organizationRead = { allowRead: true, readScope: 'org' as const };
@@ -30,7 +31,7 @@ export const salesOrderOperatorPermission = definePermissionSet({
     name: 'signed_active_contracts_only',
     object: 'forge_sales_contract',
     operation: 'select',
-    using: "status == 'active' && signed_on != null && signed_evidence_attachment != null",
+    using: `(status == 'active' && signed_on != null && signed_evidence_attachment != null) || id in current_user.${CONTRACT_REVIEW_RLS_KEY}`,
   }],
 });
 

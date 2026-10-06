@@ -106,7 +106,13 @@ export class ApprovalFlowLauncherPlugin {
 `);
   await writeFile(path.join(tempDir, 'objectstack.config.ts'), `
 import stack from ${JSON.stringify(path.join(APP_DIR, 'objectstack.config.ts'))};
+import { AppPlugin } from '@objectstack/runtime';
+import { sharedForgeCorePlugin, sharedForgeCoreBundle } from ${JSON.stringify(path.join(APP_DIR, 'src/apps/shared-core.ts'))};
 import { ApprovalFlowLauncherPlugin } from './approval-flow-launcher.plugin.mjs';
+// Exercise the real employee-only signature handler under the current native confirmation gate.
+stack.plugins=stack.plugins.map(plugin=>plugin===sharedForgeCorePlugin?new AppPlugin({...sharedForgeCoreBundle,
+ actions:sharedForgeCoreBundle.actions.map(action=>action.name==='contract_register_signature'
+  ?{...action,ai:{...action.ai,requiresConfirmation:true}}:action)}):plugin);
 stack.plugins.push(new ApprovalFlowLauncherPlugin());
 export default stack;
 `);

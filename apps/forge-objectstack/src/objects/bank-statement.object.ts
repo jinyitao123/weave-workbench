@@ -1,7 +1,7 @@
 import { Field } from '@objectstack/spec/data';
 import { master, text, code, reference, owner, remarks, required } from '../model.js';
 
-const amount = (label: string) => Field.currency({ label, precision: 18, scale: 4 });
+const amount = (label: string) => Field.currency({ label, precision: 18 });
 const count = (label: string) => Field.number({ label, min: 0, scale: 0, defaultValue: 0, readonly: true });
 
 export const BankStatementImportBatch = master('forge_bank_statement_import_batch', '银行对账文件批次', 'file-up', {

@@ -9,6 +9,7 @@ import { SqlDriver } from '@objectstack/driver-sql';
 import { ObjectQL } from '@objectstack/objectql';
 import { AutomationServicePlugin } from '@objectstack/service-automation';
 import { ApprovalService, ApprovalsServicePlugin, SysApprovalAction, SysApprovalApprover, SysApprovalRequest } from '@objectstack/plugin-approvals';
+import { SharingServicePlugin, SysRecordShare } from '@objectstack/plugin-sharing';
 import { RecordChangeTriggerPlugin } from '@objectstack/trigger-record-change';
 import { Field, ObjectSchema } from '@objectstack/spec/data';
 import { ContractType, SalesContract, SalesContractLine, SalesContractRevisionMaterial, SalesContractSubmission } from '../src/objects/sales.object.ts';
@@ -16,7 +17,7 @@ import { SalesContractApprovalFlow } from '../src/flows/sales-contract-approval.
 import { ContractMaterialSubmissionPlugin } from '../src/plugins/contract-material-submission.plugin.ts';
 import { CONTRACT_MATERIAL_SUBMISSION_TARGET, readContractSubmissionReceipt } from '../src/plugins/contract-material-submission.ts';
 
-const DATABASE = 'forge_material_holder_test';
+const DATABASE = process.env.FORGE_CONTRACT_MATERIAL_PG_DATABASE || 'forge_material_holder_test';
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.FORGE_CONTRACT_MATERIAL_PG_PORT || 55439);
 const DB_USER = process.env.FORGE_CONTRACT_MATERIAL_PG_USER || 'postgres';
@@ -26,11 +27,11 @@ const DELIVERY_REVIEWER = randomUUID();
 const COMMERCIAL_REVIEWER = randomUUID();
 const SYSTEM = { isSystem: true, positions: [], permissions: [] };
 
-const serviceStoragePath = '../node_modules/.pnpm/@objectstack+service-storage@17.3.0/node_modules/@objectstack/service-storage/dist/index.js';
-const platformObjectsPath = '../node_modules/.pnpm/@objectstack+platform-objects@17.3.0/node_modules/@objectstack/platform-objects/dist/index.mjs';
+const serviceStoragePath = '../node_modules/.pnpm/@objectstack+service-storage@17.5.0/node_modules/@objectstack/service-storage/dist/index.js';
+const platformObjectsPath = '../node_modules/.pnpm/@objectstack+platform-objects@17.5.0/node_modules/@objectstack/platform-objects/dist/index.mjs';
 const { LocalStorageAdapter, SystemFile } = await import(serviceStoragePath);
 const { SysAttachment } = await import(platformObjectsPath);
-const auditPluginPath = '../node_modules/.pnpm/@objectstack+plugin-audit@17.3.0/node_modules/@objectstack/plugin-audit/dist/index.mjs';
+const auditPluginPath = '../node_modules/.pnpm/@objectstack+plugin-audit@17.5.0/node_modules/@objectstack/plugin-audit/dist/index.mjs';
 const { installAuditWriters } = await import(auditPluginPath);
 
 function simpleObject(name, fields) {
@@ -50,7 +51,8 @@ function makeObjects() {
   const TestSystemFile = ObjectSchema.create({ ...SystemFile, fields: { ...SystemFile.fields, organization_id: Field.text({ label: 'Organization' }) } });
   return [
     TestContractType,
-    simpleObject('sys_user', { name: Field.text({ label: 'Name' }), email: Field.email({ label: 'Email' }) }),
+    ObjectSchema.create({ ...SysRecordShare, fields: { ...SysRecordShare.fields, organization_id: Field.text({}) } }),
+    simpleObject('sys_user', { name: Field.text({ label: 'Name' }), email: Field.email({ label: 'Email' }), banned: Field.boolean({}), ban_expires: Field.datetime({}) }),
     simpleObject('forge_customer', { name: Field.text({ label: 'Name' }) }),
     simpleObject('forge_quotation', {
       name: Field.text({ label: 'Name' }), status: Field.text({ label: 'Status' }),
@@ -64,7 +66,7 @@ function makeObjects() {
       user_id: Field.text({ label: 'User' }), position: Field.text({ label: 'Position' }),
       valid_from: Field.datetime({ label: 'Valid from' }), valid_until: Field.datetime({ label: 'Valid until' }),
     }),
-    simpleObject('sys_position', { name: Field.text({ label: 'Position name' }) }),
+    simpleObject('sys_position', { name: Field.text({ label: 'Position name' }), active: Field.boolean({}) }),
     simpleObject('sys_member', { user_id: Field.text({ label: 'User' }), role: Field.text({ label: 'Role' }) }),
     simpleObject('sys_user_permission_set', { user_id: Field.text({ label: 'User' }), permission_set_id: Field.text({ label: 'Permission set' }) }),
     simpleObject('sys_organization', { name: Field.text({ label: 'Name' }) }),
@@ -171,7 +173,7 @@ test('registered package action creates one native approval request for the sale
   const triggerPlugin = new RecordChangeTriggerPlugin();
   const materialPlugin = new ContractMaterialSubmissionPlugin();
   const kernel = new LiteKernel({ logger: { level: 'error' } });
-  kernel.use(basePlugin).use(automationPlugin).use(approvalsPlugin).use(triggerPlugin).use(materialPlugin);
+  kernel.use(basePlugin).use(new SharingServicePlugin()).use(automationPlugin).use(approvalsPlugin).use(triggerPlugin).use(materialPlugin);
   await kernel.bootstrap();
   t.after(() => kernel.shutdown());
   assert.ok(approvalsPlugin.service instanceof ApprovalService);
@@ -181,10 +183,12 @@ test('registered package action creates one native approval request for the sale
 
   const context = { ...SYSTEM, userId: ACTOR, tenantId: ORG };
   const insert = (object, row) => engine.insert(object, { id: randomUUID(), ...row }, { context });
-  await insert('sys_organization', { name: 'Local submission test organization', organization_id: ORG });
-  await insert('sys_user', { name: 'Contract submitter', email: `${ACTOR}@example.invalid`, organization_id: ORG });
-  await insert('sys_user', { name: 'Delivery reviewer', email: `${DELIVERY_REVIEWER}@example.invalid`, organization_id: ORG });
-  await insert('sys_user', { name: 'Commercial reviewer', email: `${COMMERCIAL_REVIEWER}@example.invalid`, organization_id: ORG });
+  await insert('sys_organization', { id: ORG, name: 'Local submission test organization', organization_id: ORG });
+  await insert('sys_user', { id: ACTOR, name: 'Contract submitter', email: `${ACTOR}@example.invalid`, organization_id: ORG });
+  await insert('sys_user', { id: DELIVERY_REVIEWER, name: 'Delivery reviewer', email: `${DELIVERY_REVIEWER}@example.invalid`, organization_id: ORG });
+  await insert('sys_user', { id: COMMERCIAL_REVIEWER, name: 'Commercial reviewer', email: `${COMMERCIAL_REVIEWER}@example.invalid`, organization_id: ORG });
+  for (const reviewer of [ACTOR, DELIVERY_REVIEWER, COMMERCIAL_REVIEWER]) await insert('sys_member', { user_id: reviewer, organization_id: ORG, role: 'member' });
+  for (const position of ['contract_delivery_reviewer', 'contract_commercial_reviewer']) await insert('sys_position', { name: position, active: true, organization_id: ORG });
   await insert('sys_user_position', { user_id: DELIVERY_REVIEWER, position: 'contract_delivery_reviewer', organization_id: ORG });
   await insert('sys_user_position', { user_id: COMMERCIAL_REVIEWER, position: 'contract_commercial_reviewer', organization_id: ORG });
 
@@ -270,6 +274,20 @@ test('registered package action creates one native approval request for the sale
   assert.equal((await engine.find('sys_approval_request', {
     where: { object_name: 'forge_sales_contract', record_id: contractId }, fields: ['id'], limit: 10,
   }, { context })).length, 0, 'a failed first submission creates no native approval request');
+
+  const sharing = kernel.getService('sharing');
+  const externalSource = 'unrelated-team-provenance';
+  await sharing.grant({ object: 'forge_sales_contract', recordId: contractId, recipientId: DELIVERY_REVIEWER, accessLevel: 'read', source: 'team', sourceId: externalSource }, context);
+  const externalGrant = await engine.findOne('sys_record_share', { where: { object_name: 'forge_sales_contract', record_id: contractId, recipient_id: DELIVERY_REVIEWER, source: 'team', source_id: externalSource } }, { context });
+  assert.ok(externalGrant, 'the unrelated native team provenance exists before submission');
+  await assert.rejects(engine.executeAction('forge_sales_contract', CONTRACT_MATERIAL_SUBMISSION_TARGET, actionContext), /CONFLICT:.*其他来源/);
+  assert.equal((await engine.find('forge_sales_contract_submission', { where: { contract_id: contractId }, fields: ['id'], limit: 10 }, { context })).length, 0, 'share conflict rolls back the complete material ledger');
+  assert.equal((await engine.find('sys_attachment', { where: { parent_object: 'forge_sales_contract_submission', file_id: { $in: [primaryId, attachmentId] } }, fields: ['id'], limit: 10 }, { context })).length, 0, 'share conflict rolls back the already-created native file holders');
+  const conflictingShares = await engine.find('sys_record_share', { where: { object_name: 'forge_sales_contract', record_id: contractId }, fields: ['id','source_id','recipient_id'], limit: 10 }, { context });
+  assert.deepEqual(conflictingShares.map(row => ({ id: row.id, source: row.source_id, recipient: row.recipient_id })), [{ id: externalGrant.id, source: externalSource, recipient: DELIVERY_REVIEWER }], 'the unrelated provenance is preserved and no partial reviewer share escapes');
+  assert.equal((await engine.findOne('forge_sales_contract', { where: { id: contractId } }, { context })).status, 'draft');
+  assert.equal((await engine.find('sys_approval_request', { where: { object_name: 'forge_sales_contract', record_id: contractId }, fields: ['id'], limit: 10 }, { context })).length, 0, 'conflict creates no approval request');
+  await sharing.revoke(externalGrant.id, context, { object: 'forge_sales_contract', recordId: contractId });
 
   const first = await engine.executeAction('forge_sales_contract', CONTRACT_MATERIAL_SUBMISSION_TARGET, actionContext);
   assert.equal(first.status, 'pending_approval');

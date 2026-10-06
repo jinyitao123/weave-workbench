@@ -1184,13 +1184,14 @@ if(!draft||typeof draft!=='object'||Array.isArray(draft))throw new Error('服务
 const name=String(draft.name||'').trim(),code=String(draft.code||'').trim();
 if(!name||!code||!draft.customer_id||!draft.sales_order_id)throw new Error('请填写工单标题、编号、客户和来源订单');
 if(!['onsite','remote','return_repair'].includes(draft.service_mode)||!['low','medium','high','urgent'].includes(draft.urgency))throw new Error('服务方式或紧急度无效');
-const customer=await ctx.api.object('forge_customer').findOne({where:{id:draft.customer_id}});
+const customer=await ctx.api.object('forge_customer').findOne({where:{id:draft.customer_id,organization_id:organizationId}});
 const order=await ctx.api.object('forge_sales_order').findOne({where:{id:draft.sales_order_id}});
 if(!customer||!order||String(customer.organization_id||'')!==organizationId||String(order.organization_id||'')!==organizationId||order.customer_id!==customer.id)throw new Error('客户与来源订单不匹配或不可访问');
+if(customer.status==='inactive'||!['approved','active','partially_shipped','shipped','completed'].includes(String(order.status||'')))throw new Error('服务工单必须关联启用客户和已审批或履行中的来源订单');
 if(draft.contract_id&&order.contract_id!==draft.contract_id)throw new Error('关联合同与来源订单不匹配');
-let contact=null;if(draft.contact_id){contact=await ctx.api.object('forge_contact').findOne({where:{id:draft.contact_id}});if(!contact||contact.customer_id!==customer.id||String(contact.organization_id||'')!==organizationId)throw new Error('联系人不属于当前客户')}
+let contact=null;if(draft.contact_id){contact=await ctx.api.object('forge_contact').findOne({where:{id:draft.contact_id,organization_id:organizationId}});if(!contact||contact.customer_id!==customer.id||String(contact.organization_id||'')!==organizationId||contact.employment_status!=='active')throw new Error('联系人不属于当前客户或已停用')}
 const fields=['service_address','service_object','service_type','region','warranty_starts_on','warranty_ends_on','warranty_status','responsibility_type','quotation_handling','fault_symptom','impact_scope','expected_visit_on','remarks'];
-const payload={name,code,owner_id:actor,customer_id:customer.id,contact_id:contact&&contact.id||null,contact_phone:String(draft.contact_phone||contact&&contact.phone||''),sales_order_id:order.id,contract_id:order.contract_id||null,service_mode:draft.service_mode,urgency:draft.urgency,status:'pending_acceptance',next_step:'受理',submitted_at:new Date().toISOString(),responsible_id:actor};
+const payload={name,code,owner_id:actor,customer_id:customer.id,contact_id:contact&&contact.id||null,contact_phone:String(draft.contact_phone||contact&&contact.phone||''),sales_order_id:order.id,contract_id:order.contract_id||null,service_mode:draft.service_mode,urgency:draft.urgency,status:'pending_acceptance',revision:1,next_step:'受理',submitted_at:new Date().toISOString(),responsible_id:actor};
 for(const field of fields)if(draft[field]!==undefined&&draft[field]!==null)payload[field]=String(draft[field]).trim();
 const saved=await ctx.api.object('forge_service_order').insert(payload);
 const id=typeof saved==='string'?saved:saved&&(saved.id||(saved.record&&saved.record.id));
@@ -1226,9 +1227,11 @@ const note = String((ctx.input && ctx.input.dispatch_note) || '').trim();
 if (!engineer) throw new Error('请选择当前组织中有效任职的售后工程师');
 if (!note) throw new Error('派工说明不能为空');
 const now = new Date().toISOString();
+const updatedAt = String(record.updated_at || ''), version = Date.parse(updatedAt), revision = Number(record.revision || 1);
+if (!Number.isFinite(version)) throw new Error('服务工单读取版本无效，请刷新后重试');
 const patch = {
-  id,
   status: 'pending_receive',
+  revision: revision + 1,
   owner_id: engineer.id,
   responsible_id: engineer.id,
   engineer_id: engineer.id,
@@ -1238,7 +1241,8 @@ const patch = {
   dispatched_at: now,
   next_step: '工程师接单',
 };
-await ctx.api.object('forge_service_order').update(patch);
+const changed = await ctx.api.object('forge_service_order').update(patch, { multi: true, where: { id, organization_id: organizationId, status: 'pending_dispatch', revision: record.revision == null ? null : revision, updated_at: { $gte: new Date(version).toISOString(), $lt: new Date(version + 1).toISOString() } } });
+if (changed !== 1) throw new Error('工单已被其他操作修改，请刷新后重试');
 return { id, status: patch.status, engineer_id: engineer.id, engineer_name: engineer.name };
 `,
   },
@@ -1264,8 +1268,11 @@ if (String(record.engineer_id || '') !== actor || String(record.owner_id || '') 
   throw new Error('只有当前指派的服务工程师可以接单');
 }
 const now = new Date().toISOString();
-const patch = { id, status: 'in_progress', received_at: now, next_step: '处理记录 / 到场签到 / 提交服务结果' };
-await ctx.api.object('forge_service_order').update(patch);
+const updatedAt=String(record.updated_at||''),version=Date.parse(updatedAt),revision=Number(record.revision||1);
+if(!Number.isFinite(version))throw new Error('服务工单读取版本无效，请刷新后重试');
+const patch = { status: 'in_progress', revision:revision+1, received_at: now, next_step: '处理记录 / 到场签到 / 提交服务结果' };
+const changed=await ctx.api.object('forge_service_order').update(patch,{multi:true,where:{id,organization_id:organizationId,status:'pending_receive',engineer_id:actor,owner_id:actor,responsible_id:actor,revision:record.revision==null?null:revision,updated_at:{$gte:new Date(version).toISOString(),$lt:new Date(version+1).toISOString()}}});
+if(changed!==1)throw new Error('工单已被其他操作修改，请刷新后重试');
 return { id, status: patch.status };
 `,
   },
@@ -1419,26 +1426,42 @@ export const ServiceOrderComplete = defineAction({
   params: [
     { field: 'service_hours', objectOverride: 'forge_service_order' },
     { field: 'treatment_record', objectOverride: 'forge_service_order' },
-    { field: 'onsite_evidence_count', objectOverride: 'forge_service_order' },
     { field: 'service_result', objectOverride: 'forge_service_order' },
   ],
-  body: serviceOrderTransitionBody('in_progress', 'completed', `
-if (String(record.engineer_id || '') !== actor || String(record.owner_id || '') !== actor || String(record.responsible_id || '') !== actor) throw new Error('只有当前指派的服务工程师可以提交服务结果');
-const result = String(ctx.input.service_result || '').trim();
-const treatment = String(ctx.input.treatment_record || '').trim();
-const hours = Number(ctx.input.service_hours || 0);
-const imageCount = Number(ctx.input.onsite_evidence_count || 0);
-if (!treatment) throw new Error('请至少填写一条处理记录后再提交服务结果');
-if (!(hours > 0)) throw new Error('服务耗时必须大于 0');
-if (!(imageCount >= 1)) throw new Error('请至少记录一张现场处理图片');
-if (!result) throw new Error('服务结果不能为空');
-patch.service_hours = hours;
-patch.treatment_record = treatment;
-patch.onsite_evidence_count = imageCount;
-patch.service_result = result;
-patch.completed_at = now;
-patch.next_step = '服务报价 / 服务结算 / 质保卡';
-`),
+  body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
+const id=String(ctx.recordId||(ctx.record&&ctx.record.id)||'').trim(),record=ctx.record;
+const actor=String(ctx.session&&ctx.session.userId||'').trim();
+const organizationId=String((ctx.session&&ctx.session.organizationId)||(ctx.user&&ctx.user.organizationId)||'').trim();
+if(ctx.recordLoadDenied===true||!id||!record)throw new Error('当前服务工单不存在或不可访问');
+if(!actor||!organizationId)throw new Error('无法确认当前服务员工及组织');
+const treatment=String(ctx.input.treatment_record||'').trim(),result=String(ctx.input.service_result||'').trim(),hours=Number(ctx.input.service_hours||0);
+if(!treatment)throw new Error('请至少填写一条处理记录后再提交服务结果');
+if(!Number.isFinite(hours)||!(hours>0))throw new Error('服务耗时必须大于 0');
+if(!result)throw new Error('服务结果不能为空');
+const fileTokens=value=>Array.isArray(value)?value.flatMap(fileTokens):value&&typeof value==='object'?fileTokens(value.id||value.fileId):typeof value==='string'?[value.trim()]:[];
+const fileIds=[...new Set(fileTokens(record.onsite_evidence_attachments).filter(Boolean))];
+if(!fileIds.length)throw new Error('请先上传并关联至少一张现场处理图片');
+if(fileIds.length>20)throw new Error('现场处理图片不能超过 20 张');
+return await ctx.api.transaction(async()=>{
+  const orders=ctx.api.object('forge_service_order'),files=ctx.api.object('sys_file');
+  const current=await orders.findOne({where:{id,organization_id:organizationId}});
+  if(!current||String(current.organization_id||'')!==organizationId)throw new Error('服务工单不存在或不属于当前组织');
+  if(current.status!=='in_progress')throw new Error('工单状态已变化，请刷新后重试');
+  if(String(current.engineer_id||'')!==actor||String(current.owner_id||'')!==actor||String(current.responsible_id||'')!==actor)throw new Error('只有当前指派的服务工程师可以提交服务结果');
+  if(String(record.updated_at||'')!==String(current.updated_at||''))throw new Error('服务工单已被其他操作修改，请刷新后重试');
+  for(const fileId of fileIds){
+    const file=await files.findOne({where:{id:fileId}});
+    if(!file||file.status!=='committed'||String(file.owner_id||'')!==actor||String(file.organization_id||'')!==organizationId||!String(file.mime_type||'').toLowerCase().startsWith('image/'))throw new Error('现场图片尚未提交完成或不属于当前员工及组织');
+    if(file.ref_object!=='forge_service_order'||String(file.ref_id||'')!==id||file.ref_field!=='onsite_evidence_attachments')throw new Error('现场图片尚未关联到当前服务工单');
+  }
+  const time=Date.parse(String(current.updated_at||''));
+  if(!Number.isFinite(time))throw new Error('服务工单读取版本无效，请刷新后重试');
+  const lower=new Date(time).toISOString(),upper=new Date(time+1).toISOString(),now=new Date().toISOString();
+  const currentRevision=Number(current.revision||1),changed=await orders.update({status:'completed',revision:currentRevision+1,service_hours:hours,treatment_record:treatment,service_result:result,completed_at:now,next_step:'服务报价 / 服务结算 / 质保卡'},{multi:true,where:{id,organization_id:organizationId,status:'in_progress',engineer_id:actor,owner_id:actor,responsible_id:actor,revision:current.revision==null?null:currentRevision,updated_at:{$gte:lower,$lt:upper}}});
+  if(changed!==1)throw new Error('服务工单已被其他操作修改，请刷新后重试');
+  return{id,status:'completed',onsite_evidence_attachments:fileIds};
+});
+` },
 });
 
 export const ServiceOrderCreateQuotation = defineAction({
@@ -1493,19 +1516,40 @@ return { id: settlementId, code, service_order_id: id };
 ` },
 });
 
+const serviceQuotationRevisionGuard = `
+const actor = String(ctx.session && ctx.session.userId || '').trim();
+if (!actor || !organizationId) throw new Error('无法确认当前服务主管及组织');
+if (ctx.user && ctx.user.id != null && String(ctx.user.id) !== actor) throw new Error('当前员工身份不一致，请重新登录');
+if (ctx.user && ctx.user.organizationId != null && String(ctx.user.organizationId) !== organizationId) throw new Error('当前组织身份不一致，请重新登录');
+const requestedRevision = ctx.input && ctx.input.expected_revision;
+const snapshotRevision = quote.revision == null ? 1 : Number(quote.revision);
+const expectedRevision = requestedRevision == null ? snapshotRevision : Number(requestedRevision);
+if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1 || !Number.isSafeInteger(snapshotRevision) || snapshotRevision < 1) throw new Error('服务报价版本不可用，请重新打开核对');
+const quotations = ctx.api.object('forge_service_quotation');
+`;
+
 export const ServiceQuotationConfirm = defineAction({
   name: 'service_quotation_confirm', label: '客户确认', objectName: 'forge_service_quotation', icon: 'circle-check', locations: [...locations], order: 10,
   requiredPermissions: ['forge_service_manager'],
-  visible: `record.status == 'draft' || record.status == 'pending_confirmation'`, confirmText: '确认客户已接受这份服务报价？', refreshAfter: true,
+  visible: `record.status == 'draft' || record.status == 'pending_confirmation'`, description: '确认客户已接受这份服务报价？', refreshAfter: true,
   successMessage: '服务报价已确认',
-  body: { language: 'js', capabilities: ['api.write'], source: `
-const id = ctx.recordId || (ctx.record && ctx.record.id); const record = ctx.record;
-if (ctx.recordLoadDenied === true || !id || !record) throw new Error('当前服务报价不存在或不可访问');
+  params: [{ name: 'expected_revision', label: '读取数据版本', type: 'number', visible: 'false' }],
+  body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
+const id = ctx.recordId || (ctx.record && ctx.record.id); const quote = ctx.record;
+if (ctx.recordLoadDenied === true || !id || !quote) throw new Error('当前服务报价不存在或不可访问');
 const organizationId = String((ctx.session && ctx.session.organizationId) || (ctx.user && ctx.user.organizationId) || '').trim();
-if (!organizationId || String(record.organization_id || '') !== organizationId) throw new Error('当前服务报价不属于当前组织');
-if (!['draft','pending_confirmation'].includes(record.status)) throw new Error('当前服务报价状态不能确认');
-await ctx.api.object('forge_service_quotation').update({ id, status: 'confirmed' });
-return { id, status: 'confirmed' };
+if (!organizationId || String(quote.organization_id || '') !== organizationId) throw new Error('当前服务报价不属于当前组织');
+${serviceQuotationRevisionGuard}
+return await ctx.api.transaction(async () => {
+  const current = await quotations.findOne({ where: { id, organization_id: organizationId } });
+  if (!current || String(current.organization_id || '') !== organizationId) throw new Error('当前服务报价不存在或不可访问');
+  if (!['draft','pending_confirmation'].includes(current.status)) throw new Error('当前服务报价状态不能确认');
+  const revision = current.revision == null ? 1 : Number(current.revision), nextRevision = revision + 1;
+  if (revision !== expectedRevision || !Number.isSafeInteger(nextRevision)) throw new Error('服务报价已变化，请重新打开核对');
+  const changed = await quotations.update({ status: 'confirmed', revision: nextRevision }, { multi: true, where: { id, organization_id: organizationId, status: current.status, revision: current.revision == null ? null : revision } });
+  if (changed !== 1) throw new Error('服务报价已变化，请重新打开核对');
+  return { id, status: 'confirmed', revision: nextRevision };
+});
 ` },
 });
 
@@ -1514,21 +1558,35 @@ export const ServiceQuotationCreateSettlement = defineAction({
   requiredPermissions: ['forge_service_manager'],
   visible: `record.status == 'confirmed'`, refreshAfter: true,
   successMessage: '服务结算单已生成',
+  params: [{ name: 'expected_revision', label: '读取数据版本', type: 'number', visible: 'false' }],
   body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id); const quote = ctx.record;
 if (ctx.recordLoadDenied === true || !id || !quote) throw new Error('当前服务报价不存在或不可访问');
 const organizationId = String((ctx.session && ctx.session.organizationId) || (ctx.user && ctx.user.organizationId) || '').trim();
 if (!organizationId || String(quote.organization_id || '') !== organizationId) throw new Error('当前服务报价不属于当前组织');
-if (quote.status !== 'confirmed') throw new Error('仅已确认服务报价可以转结算');
-const existing = await ctx.api.object('forge_service_settlement').find({ where: { quotation_id: id } });
+${serviceQuotationRevisionGuard}
+return await ctx.api.transaction(async () => {
+const current = await quotations.findOne({ where: { id, organization_id: organizationId } });
+if (!current || String(current.organization_id || '') !== organizationId) throw new Error('当前服务报价不存在或不可访问');
+if (current.status !== 'confirmed') throw new Error('仅已确认服务报价可以转结算');
+const revision = current.revision == null ? 1 : Number(current.revision), nextRevision = revision + 1;
+if (revision !== expectedRevision || !Number.isSafeInteger(nextRevision)) throw new Error('服务报价已变化，请重新打开核对');
+const existing = await ctx.api.object('forge_service_settlement').find({ where: { quotation_id: id, organization_id: organizationId } });
 if (existing.length) throw new Error('该服务报价已生成服务结算');
-const actor = ctx.session && ctx.session.userId;
+if (current.total_amount == null || current.total_amount === '' || !Number.isFinite(Number(current.total_amount)) || Number(current.total_amount) < 0) throw new Error('当前报价金额不可用，不能生成服务结算');
+if (current.service_order_id) {
+  const order = await ctx.api.object('forge_service_order').findOne({ where: { id: current.service_order_id, organization_id: organizationId } });
+  if (!order || String(order.organization_id || '') !== organizationId) throw new Error('关联服务工单不存在或不属于当前组织');
+}
+const changed = await quotations.update({ status: 'settlement_created', revision: nextRevision }, { multi: true, where: { id, organization_id: organizationId, status: 'confirmed', revision: current.revision == null ? null : revision } });
+if (changed !== 1) throw new Error('服务报价已变化，请重新打开核对');
 const code = 'SS-' + new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);
-const created = await ctx.api.object('forge_service_settlement').insert({ name: quote.name.replace('服务报价','服务结算'), code, owner_id:actor, service_order_id: quote.service_order_id || null, quotation_id: id, order_code: quote.order_code, customer_id: quote.customer_id, contact_id: quote.contact_id || null, total_amount: Number(quote.total_amount || 0), status: 'draft', responsible_id: quote.responsible_id || actor || null, remarks: quote.remarks || null });
+const created = await ctx.api.object('forge_service_settlement').insert({ name: String(current.name || current.code || '服务报价').replace('服务报价','服务结算'), code, owner_id:actor, organization_id: organizationId, service_order_id: current.service_order_id || null, quotation_id: id, order_code: current.order_code, customer_id: current.customer_id, contact_id: current.contact_id || null, total_amount: Number(current.total_amount), status: 'draft', responsible_id: current.responsible_id || actor || null, remarks: current.remarks || null });
 const settlementId = typeof created === 'string' ? created : created && (created.id || (created.record && created.record.id));
-await ctx.api.object('forge_service_quotation').update({ id, status: 'settlement_created' });
-if (quote.service_order_id) await ctx.api.object('forge_service_order').update({ id: quote.service_order_id, settlement_code: code, next_step: '服务结算确认' });
+if (!settlementId) throw new Error('服务结算创建后未返回记录标识');
+if (current.service_order_id) await ctx.api.object('forge_service_order').update({ id: current.service_order_id, settlement_code: code, next_step: '服务结算确认' });
 return { id: settlementId, code, quotation_id: id };
+});
 ` },
 });
 
@@ -1567,7 +1625,7 @@ if (!responsibleId) throw new Error('无法识别当前应收负责人');
 const existing = await ctx.api.object('forge_accounts_receivable').find({ where: { service_settlement_id: id } });
 if (existing.length) throw new Error('该服务结算已生成应收');
 const code = 'AR-SVC-' + new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);
-await ctx.api.object('forge_accounts_receivable').insert({ name: settlement.name + ' - 应收', code, source_type: 'service_settlement', service_settlement_id: id, customer_id: settlement.customer_id, recognized_on: new Date().toISOString().slice(0,10), due_on: ctx.input.due_on, original_amount: Number(settlement.total_amount || 0), collected_amount: 0, outstanding_amount: Number(settlement.total_amount || 0), status: 'open', responsible_id: responsibleId, remarks: '服务结算生成应收' });
+await ctx.api.object('forge_accounts_receivable').insert({ name: settlement.name + ' - 应收', code, source_type: 'service_settlement', service_settlement_id: id, customer_id: settlement.customer_id, recognized_on: new Date().toISOString().slice(0,10), due_on: ctx.input.due_on, original_amount: Number(settlement.total_amount || 0), collected_amount: 0, outstanding_amount: Number(settlement.total_amount || 0), status: 'unpaid', responsible_id: responsibleId, remarks: '服务结算生成应收' });
 await ctx.api.object('forge_service_settlement').update({ id, status: 'receivable_created', receivable_code: code });
 if (settlement.service_order_id) await ctx.api.object('forge_service_order').update({ id: settlement.service_order_id, next_step: '财务收款 / 服务复盘' });
 return { id, receivable_code: code };
@@ -1578,23 +1636,35 @@ export const ServiceOrderCreateWarranty = defineAction({
   name: 'service_order_create_warranty', label: '生成质保卡', objectName: 'forge_service_order', icon: 'shield-check', locations: [...locations], order: 60,
   requiredPermissions: ['forge_service_operator'],
   visible: `record.status == 'completed'`, refreshAfter: true,
-  successMessage: '质保卡已生成',
-  body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
-const id = ctx.recordId || (ctx.record && ctx.record.id); const order = ctx.record;
-if (ctx.recordLoadDenied === true || !id || !order) throw new Error('当前服务工单不存在或不可访问');
-if (order.status !== 'completed') throw new Error('仅已完工服务工单可以生成质保卡');
-const actor=String(ctx.session&&ctx.session.userId||'').trim();const organizationId=String((ctx.session&&ctx.session.organizationId)||(ctx.user&&ctx.user.organizationId)||'').trim();
+  successMessage: '待激活质保卡已生成',
+  body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
+const id=String(ctx.recordId||(ctx.record&&ctx.record.id)||'').trim(),order=ctx.record;
+const actor=String(ctx.session&&ctx.session.userId||'').trim();
+const organizationId=String((ctx.session&&ctx.session.organizationId)||(ctx.user&&ctx.user.organizationId)||'').trim();
+if(ctx.recordLoadDenied===true||!id||!order)throw new Error('当前服务工单不存在或不可访问');
 if(!actor||!organizationId)throw new Error('无法识别当前服务员工及组织');
 if(String(order.organization_id||'')!==organizationId)throw new Error('服务工单不属于当前组织');
-if (String(order.engineer_id || '') !== actor || String(order.owner_id || '') !== actor || String(order.responsible_id || '') !== actor) throw new Error('只有当前指派的服务工程师可以生成质保卡');
-const existing = await ctx.api.object('forge_warranty_card').find({ where: { service_order_id: id } });
-if (existing.length) throw new Error('该服务工单已生成质保卡');
-const code = 'WC-' + new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);
-await ctx.api.object('forge_warranty_card').insert({ name: order.service_object || order.name, code, owner_id:actor, service_order_id: id, sales_order_id: order.sales_order_id || null, customer_id: order.customer_id, product_sn: order.service_object || order.name, scope: '整机/整单服务', starts_on: order.warranty_starts_on || new Date().toISOString().slice(0,10), ends_on: order.warranty_ends_on || null, status: 'active', responsible_party: '供应商', remarks: order.service_result || null });
-await ctx.api.object('forge_service_order').update({ id, warranty_code: code });
-return { id, warranty_code: code };
+if(String(order.engineer_id||'')!==actor||String(order.owner_id||'')!==actor||String(order.responsible_id||'')!==actor)throw new Error('只有当前指派的服务工程师可以生成质保卡');
+return await ctx.api.transaction(async()=>{
+  const orders=ctx.api.object('forge_service_order'),cards=ctx.api.object('forge_warranty_card');
+  const current=await orders.findOne({where:{id,organization_id:organizationId}});
+  if(!current||current.status!=='completed')throw new Error('仅已完工服务工单可以生成质保卡');
+  const existing=await cards.find({where:{service_order_id:id,organization_id:organizationId}});
+  if(existing.length)throw new Error('该服务工单已生成质保卡');
+  const created=await cards.insert({name:current.service_object||current.name,owner_id:actor,service_order_id:id,sales_order_id:current.sales_order_id||null,customer_id:current.customer_id,product_sn:current.service_object||current.name,scope:'整机/整单服务',starts_on:current.warranty_starts_on||null,ends_on:current.warranty_ends_on||null,status:'pending_activation',revision:1,responsible_party:'供应商',remarks:current.service_result||null,organization_id:organizationId});
+  const cardId=typeof created==='string'?created:created&&(created.id||(created.record&&created.record.id));
+  if(!cardId)throw new Error('质保卡创建后未返回记录标识');
+  const savedCard=await cards.findOne({where:{id:cardId,organization_id:organizationId}}),code=String(savedCard&&savedCard.code||'');
+  if(!code)throw new Error('质保卡编号生成后未能读回');
+  const time=Date.parse(String(current.updated_at||''));
+  if(!Number.isFinite(time))throw new Error('服务工单读取版本无效，请刷新后重试');
+  const revision=Number(current.revision||1),changed=await orders.update({warranty_code:code,revision:revision+1},{multi:true,where:{id,organization_id:organizationId,status:'completed',revision:current.revision==null?null:revision,updated_at:{$gte:new Date(time).toISOString(),$lt:new Date(time+1).toISOString()}}});
+  if(changed!==1)throw new Error('服务工单已被其他操作修改，请刷新后重试');
+  return{id:cardId,warranty_code:code,status:'pending_activation'};
+});
 ` },
 });
+
 
 export const GoodwillOrderSubmit = defineAction({
   name: 'goodwill_order_submit', label: '提交审批', objectName: 'forge_goodwill_order', icon: 'send', locations: [...locations], order: 10,

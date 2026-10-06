@@ -103,7 +103,7 @@ test('Console replacement falls back to copy on EXDEV and restores the previous 
   }
 });
 
-test('runtime and build inputs stay pinned to the verified 17.3 Console host', async () => {
+test('runtime and build inputs stay pinned to the locked Console host', async () => {
   const [dockerfile, compose, deploy, nginx, resolver, runtimeCheck] = await Promise.all([
     readFile(path.join(APP_DIR, 'Dockerfile'), 'utf8'),
     readFile(path.join(APP_DIR, 'docker-compose.yml'), 'utf8'),

@@ -16,8 +16,20 @@ import {
 const servicePosition = { id: 'position-service', name: 'after_sales_operator', active: true, organization_id: 'org-a' };
 const orderSeed = {
   id: 'order-1', organization_id: 'org-a', owner_id: 'dispatcher-1', responsible_id: 'dispatcher-1',
-  status: 'pending_dispatch', engineer_id: null, engineer_name: null,
+  status: 'pending_dispatch', engineer_id: null, engineer_name: null, revision: 1, updated_at: new Date().toISOString(),
 };
+
+function rowMatches(row, where = {}) {
+  return Object.entries(where).every(([key, expected]) => {
+    const actual = row[key];
+    if (expected && typeof expected === 'object' && !Array.isArray(expected)) {
+      if ('$gte' in expected && Date.parse(String(actual || '')) < Date.parse(String(expected.$gte))) return false;
+      if ('$lt' in expected && Date.parse(String(actual || '')) >= Date.parse(String(expected.$lt))) return false;
+      return true;
+    }
+    return actual === expected;
+  });
+}
 
 function harness({ actor = 'dispatcher-1', organizationId = 'org-a', order = { ...orderSeed }, extraRows = {} } = {}) {
   const rows = {
@@ -54,19 +66,21 @@ function harness({ actor = 'dispatcher-1', organizationId = 'org-a', order = { .
   const object = name => ({
     find: async query => {
       calls.push({ name, method: 'find', query });
-      const result = (rows[name] || []).filter(row => Object.entries(query.where || {}).every(([key, value]) => row[key] === value));
+      const result = (rows[name] || []).filter(row => rowMatches(row, query.where || {}));
       return query.fields ? result.map(row => Object.fromEntries(query.fields.map(field => [field, row[field]]))) : result;
     },
     findOne: async query => {
       calls.push({ name, method: 'findOne', query });
-      const row = (rows[name] || []).find(item => Object.entries(query.where || {}).every(([key, value]) => item[key] === value));
+      const row = (rows[name] || []).find(item => rowMatches(item, query.where || {}));
       return row || null;
     },
-    update: async patch => {
+    update: async (patch, options = {}) => {
       writes.push({ name, patch: { ...patch } });
       const table = rows[name] || [];
-      const index = table.findIndex(row => row.id === patch.id);
-      if (index >= 0) table[index] = { ...table[index], ...patch };
+      const where = options.where || { id: patch.id };
+      const indexes = table.flatMap((row, index) => rowMatches(row, where) ? [index] : []);
+      for (const index of (options.multi ? indexes : indexes.slice(0, 1))) table[index] = { ...table[index], ...patch };
+      return indexes.length;
     },
   });
   const ctx = {

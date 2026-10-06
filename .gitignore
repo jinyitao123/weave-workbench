@@ -1,5 +1,6 @@
 # Dependencies and generated build output
 **/node_modules/
+**/.generated/
 **/dist/
 **/.objectstack/
 **/*.log

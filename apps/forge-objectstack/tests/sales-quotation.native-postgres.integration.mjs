@@ -334,6 +334,7 @@ test('quotation send, acceptance evidence, and contract conversion use native ap
     state.initialized = true;
   }
   async function callMcpTool(name, arguments_, caller = quotationMaker) {
+    if (name === 'run_action') arguments_ = { confirm: true, ...arguments_ };
     await initializeMcp(caller);
     const response = await mcpRequest('tools/call', { name, arguments: arguments_ }, false, caller);
     assert.equal(response.status, 200, `MCP ${name} transport returns a JSON-RPC result`);
@@ -1335,4 +1336,58 @@ test('quotation send, acceptance evidence, and contract conversion use native ap
     assert.deepEqual(await downloadAttachmentBytes(quotationMaker, fileId), PNG_BYTES, `${label} evidence bytes survive Runtime restart`);
   }
   assert.equal((await postgres.query('SELECT current_database() AS name')).rows[0]?.name, DATABASE, 'restart readback stays on the same isolated PostgreSQL database');
+
+  // Production material submission creates the review grants; no fixture grants them.
+  const deliveryPosition = await createPosition('contract_delivery_reviewer', ['sales_contract_reviewer']);
+  const commercialPosition = await createPosition('contract_commercial_reviewer', ['sales_contract_reviewer']);
+  for (const [reviewer, position, positionId] of [[quotationReviewer, 'contract_delivery_reviewer', deliveryPosition], [seller, 'contract_commercial_reviewer', commercialPosition]]) {
+    await insertFixture('sys_user_position', { user_id: reviewer.id, position, position_id: positionId, organization_id: organizationId, valid_from: new Date(Date.now() - 60000).toISOString(), valid_until: null });
+  }
+  await stopRuntime(); await startRuntime();
+  await signIn(quotationMaker); await signIn(quotationReviewer); await signIn(seller);
+  assert.equal((await quotationMaker.client.request('/data/forge_sales_contract/' + convertedContractId, 'PATCH', { payment_term: '验收后付款' })).status, 200);
+  assert.ok([403,404].includes((await quotationReviewer.client.request('/data/forge_sales_contract/' + convertedContractId)).status), 'review position alone never grants an unassigned contract');
+  const primaryBytes = Buffer.from('%PDF-1.7\nIsolated contract review material\n%%EOF\n');
+  const preparedMaterial = await quotationMaker.client.request('/storage/upload/presigned', 'POST', { filename: 'contract-review-' + RUN + '.pdf', mimeType: 'application/pdf', size: primaryBytes.length, scope: 'attachments' });
+  assert.equal(preparedMaterial.status, 200);
+  const preparedFile = resultOf(preparedMaterial);
+  assert.ok((await fetch(new URL(preparedFile.uploadUrl, ORIGIN), { method: preparedFile.method || 'PUT', headers: preparedFile.headers || {}, body: primaryBytes })).ok);
+  assert.equal((await quotationMaker.client.request('/storage/upload/complete', 'POST', { fileId: preparedFile.fileId })).status, 200);
+  const materialParams = { primary_file_id: preparedFile.fileId, material_file_ids: [preparedFile.fileId] };
+  assert.ok((await action(seller.client, 'forge_sales_contract', 'contract_submit_material_package', convertedContractId, materialParams)).status >= 400, 'unassigned non-owner cannot submit the material package');
+  const submittedMaterial = await action(quotationMaker.client, 'forge_sales_contract', 'contract_submit_material_package', convertedContractId, materialParams);
+  assert.equal(submittedMaterial.status, 200, 'production material submit resolves native staff and read grants: ' + messageOf(submittedMaterial));
+  assert.equal((await action(quotationMaker.client, 'forge_sales_contract', 'contract_submit_material_package', convertedContractId, materialParams)).status, 200, 'same material returns its existing receipt');
+  const exactShares = await postgres.query('SELECT recipient_id,access_level,source,source_id FROM sys_record_share WHERE organization_id=$1 AND object_name=$2 AND record_id=$3', [organizationId, 'forge_sales_contract', convertedContractId]);
+  assert.deepEqual(exactShares.rows.map(row => row.recipient_id).sort(), [quotationReviewer.id, seller.id].sort());
+  assert.ok(exactShares.rows.every(row => row.access_level === 'read' && row.source === 'team' && row.source_id === 'forge-contract-review:' + convertedContractId));
+  for (const reviewer of [quotationReviewer, seller]) {
+    const readback = await reviewer.client.request('/data/forge_sales_contract/' + convertedContractId);
+    assert.equal(readback.status, 200, 'production-created share permits the currently assigned reader');
+  }
+  for (const outsider of [otherQuotationMaker, foreignQuotationMaker]) assert.ok((await outsider.client.request('/data/forge_sales_contract/' + convertedContractId)).status >= 400, 'unassigned or foreign-organization account remains excluded');
+  assert.ok((await quotationReviewer.client.request('/data/forge_sales_contract/' + convertedContractId, 'PATCH', { remarks: 'forbidden' })).status >= 400, 'review share never grants generic writes');
+  await stopRuntime(); await startRuntime();
+  await signIn(quotationMaker); await signIn(quotationReviewer); await signIn(seller);
+  assert.equal((await quotationReviewer.client.request('/data/forge_sales_contract/' + convertedContractId)).status, 200, 'assigned read persists while the employee/server were offline');
+  let contractRequest;
+  for (let attempt=0;attempt<150;attempt++) {
+    const pending = await postgres.query("SELECT id FROM sys_approval_request WHERE object_name='forge_sales_contract' AND record_id=$1 AND status='pending' ORDER BY created_at DESC LIMIT 1", [convertedContractId]);
+    if (pending.rows[0]) { contractRequest=pending.rows[0].id; break; }
+    await new Promise(resolve=>setTimeout(resolve,100));
+  }
+  assert.ok(contractRequest, 'production submit starts the real native contract flow');
+  for (const reviewer of [quotationReviewer, seller]) {
+    const context = await reviewer.client.request('/approvals/requests/' + encodeURIComponent(contractRequest) + '/workbench-context');
+    assert.equal(context.status, 200);
+    const approve = (context.value?.availableActions || context.value?.data?.availableActions || []).find(item => item.execution?.actionName === 'contract_approval_mcp_approve');
+    assert.ok(approve, 'current real reviewer has the version-bound native action');
+    const decision = await callMcpTool('run_action', { actionName: approve.execution.actionName, objectName: approve.execution.objectName, recordId: approve.execution.recordId, params: { ...approve.execution.params, comment: '本员工已核对固定合同材料' } }, reviewer);
+    assert.notEqual(decision?.isError, true, 'real caller and production-created share reach native approval: ' + mcpText(decision));
+  }
+  assert.equal((await read(quotationMaker.client, 'forge_sales_contract', convertedContractId)).record?.status, 'active');
+  const terminalShares = await postgres.query('SELECT id FROM sys_record_share WHERE organization_id=$1 AND object_name=$2 AND record_id=$3 AND source=$4 AND source_id=$5', [organizationId, 'forge_sales_contract', convertedContractId, 'team', 'forge-contract-review:' + convertedContractId]);
+  assert.equal(terminalShares.rows.length, 0, 'production terminal hook revokes the exact review provenance');
+  assert.ok([403,404].includes((await quotationReviewer.client.request('/data/forge_sales_contract/' + convertedContractId)).status), 'removed temporary grant no longer exposes the live contract');
+
 });
