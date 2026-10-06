@@ -46,7 +46,9 @@ export async function synchronizeProjectOrderShares(engine: IObjectQLEngine, sha
         sourceVersion: source.version, managerId: project.manager_id, memberId: member.id, userId, memberDuty: member.member_duty,
         memberRevision: member.position_assignment_revision ?? null };
       for (const [object, recordId] of [['forge_customer', project.customer_id], ['forge_sales_contract', source.contract.id], ['forge_sales_order', source.order.id],
-        ...(source.quotation ? [['forge_quotation', source.quotation.id]] : [])]) {
+        // Quotation lines are private lookup rows, not controlled-by-parent
+        // children. Only the exact validated source rows receive this grant.
+        ...(source.quotation ? [['forge_quotation', source.quotation.id], ...source.quotationLines.map(line => ['forge_quotation_line', line.id])] : [])]) {
         const id = String(recordId), index = key(object, id, userId);
         const current = desired.get(index) ?? { object: String(object), recordId: id, recipientId: userId, bindings: [] };
         current.bindings.push(binding); desired.set(index, current);
