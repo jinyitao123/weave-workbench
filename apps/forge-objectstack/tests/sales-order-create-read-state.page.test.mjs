@@ -17,7 +17,7 @@ function fixture({contracts=[contractA,contractB],lines=[line(contractA),line(co
   const parsed=new URL(url),route=parsed.pathname.replace('/api/v1','');
   if(route==='/auth/me/permissions')return response({systemPermissions:permissions});
   const custom=await read?.({route,query:parsed.searchParams,options});if(custom)return custom;
-  if(route==='/data/forge_sales_contract'){const skip=Number(parsed.searchParams.get('$skip')||0),top=Number(parsed.searchParams.get('$top')||100);return response({records:contracts.slice(skip,skip+top),totalCount:contracts.length})}
+  if(route==='/data/forge_sales_contract'){if(JSON.parse(parsed.searchParams.get('$filter')||'{}').signed_evidence_attachment)return response({error:'JSON comparison is not supported'},400);const skip=Number(parsed.searchParams.get('$skip')||0),top=Number(parsed.searchParams.get('$top')||100);return response({records:contracts.slice(skip,skip+top),totalCount:contracts.length})}
   if(route.startsWith('/data/forge_customer/'))return response({id:route.split('/').at(-1),name:'所选客户'});
   if(route==='/data/forge_customer'){const ids=JSON.parse(parsed.searchParams.get('$filter')||'{}').id?.$in,rows=[{id:'customer-a',name:'客户甲'},{id:'customer-b',name:'客户乙'}].filter(row=>!ids||ids.includes(row.id));return response({records:rows,totalCount:rows.length})}
   if(route==='/data/forge_sales_contract_line'){const where=JSON.parse(parsed.searchParams.get('$filter')||'{}'),matched=where.contract_id?lines.filter(row=>row.contract_id===where.contract_id):lines,skip=Number(parsed.searchParams.get('$skip')||0),top=Number(parsed.searchParams.get('$top')||100);return response({records:matched.slice(skip,skip+top),totalCount:matched.length})}
