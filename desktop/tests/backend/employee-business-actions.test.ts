@@ -76,6 +76,20 @@ describe('employee-only business action contract', () => {
 })
 
 describe('employee action durable authorization and receipts', () => {
+  it('accepts an explicit project start while rejecting a negated start intent', async () => {
+    const f = await fixture()
+    f.current.record = { objectName: 'forge_project', recordId: 'project-current', label: '云岚交付项目' }
+    f.current.actions[0].label = '启动项目'
+    f.current.actions[0].parameters = []
+    await f.bridge.bind(f.turn.accountKey, f.turn.sessionPath, { record: f.current.record, source: f.current.source })
+    await f.bridge.list(f.turn)
+    for (const employeePrompt of ['不要启动当前项目。', '暂不启动当前项目。', '禁止启动当前项目。']) {
+      await expect(f.bridge.run({ ...f.turn, employeePrompt }, { action_ref: 1, values: {} })).rejects.toThrow('明确要求')
+    }
+    expect(f.service.executeEmployeeBusinessAction).not.toHaveBeenCalled()
+    expect(await f.bridge.run({ ...f.turn, employeePrompt: '启动当前项目。' }, { action_ref: 1, values: {} })).toMatchObject({ status: 'succeeded', action_label: '启动项目' })
+    expect(f.service.executeEmployeeBusinessAction).toHaveBeenCalledOnce()
+  })
   it('keeps the preceding approval receipt distinct from a newly available send action after restart', async () => {
     const f = await fixture()
     f.current.actions[0].label = '提交报价审批'

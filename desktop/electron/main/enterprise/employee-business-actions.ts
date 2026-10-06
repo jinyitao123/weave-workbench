@@ -116,8 +116,8 @@ export class EmployeeBusinessActions {
   async run(turn: EmployeeBusinessTurn, raw: Record<string, unknown>): Promise<unknown> {
     rejectUnknownKeys(raw, ['turn_key', 'action_ref', 'values'], 'employee business action')
     if (turn.readOnly) throw new Error('打开业务事项只授权查看，请在新的员工消息中明确办理')
-    if (!/(办理|登记|提交|创建|转换|转为|转成|生成.*订单|确认|同意|批准|保存|更新|执行)/.test(turn.employeePrompt)
-      || /(只读|仅查看|只看看|只分析|不授权|(?:不要|暂不|禁止)(?:办理|登记|提交|创建|转换|确认|保存|更新|执行))/.test(turn.employeePrompt)) throw new Error('请在本轮明确要求办理当前业务动作')
+    if (!/(办理|登记|提交|创建|转换|转为|转成|生成.*订单|确认|同意|批准|保存|更新|执行|启动)/.test(turn.employeePrompt)
+      || /(只读|仅查看|只看看|只分析|不授权|(?:不要|暂不|禁止)(?:办理|登记|提交|创建|转换|确认|保存|更新|执行|启动))/.test(turn.employeePrompt)) throw new Error('请在本轮明确要求办理当前业务动作')
     const selection = await this.selection(turn.accountKey, turn.sessionPath)
     if (!selection) throw new Error('当前没有已读取的业务记录')
     const key = scopeKey(turn.accountKey, selection)
