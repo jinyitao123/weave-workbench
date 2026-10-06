@@ -288,7 +288,12 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libarchive-tools
       # Quality, E2E, Windows migration, and audit have passed for this exact SHA.
       # Keep native bundle creation and all post-package verification gates.
-      - run: ${{ matrix.package }} -- --skip-verify
+      - if: matrix.runner != 'windows-2022'
+        run: ${{ matrix.package }} -- --skip-verify
+      # The Windows npm runner rejects the forwarded --skip-verify flag. Use
+      # the same direct entry point as the distribution workflow.
+      - if: matrix.runner == 'windows-2022'
+        run: node scripts/release/package.mjs --qa --platform win --skip-verify
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ matrix.artifact }}

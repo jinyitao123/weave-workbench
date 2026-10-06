@@ -734,7 +734,10 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
     expect(localQa.needs).toEqual(['desktop-path-filter', 'production-audit', 'quality', 'hermetic-e2e', 'windows-state-migration'])
     expect(localQa.if).toBe("github.event_name == 'workflow_dispatch' && needs.desktop-path-filter.outputs.run == 'true'")
     expect(localQa.steps?.find((step) => step.uses?.startsWith('actions/checkout@'))?.with?.ref).toBe('${{ github.sha }}')
-    expect(localQa.steps?.find((step) => step.run?.startsWith('${{ matrix.package }}'))?.run).toBe('${{ matrix.package }} -- --skip-verify')
+    const npmPackageStep = localQa.steps?.find((step) => step.run?.startsWith('${{ matrix.package }}'))
+    expect(npmPackageStep?.run).toBe('${{ matrix.package }} -- --skip-verify')
+    expect(npmPackageStep?.if).toBe("matrix.runner != 'windows-2022'")
+    expect(localQa.steps?.some((step) => step.if === "matrix.runner == 'windows-2022'" && step.run === 'node scripts/release/package.mjs --qa --platform win --skip-verify')).toBe(true)
     expect(localQa.steps?.some((step) => step.if === "matrix.runner == 'ubuntu-22.04'" && step.run?.includes('install -y libarchive-tools'))).toBe(true)
 
     for (const workflow of [ci, audit, release]) {
