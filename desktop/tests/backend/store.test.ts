@@ -17,7 +17,24 @@ import type { JsonStateStoreFileHandle, JsonStateStoreFileSystem } from '../../e
 import { SessionService } from '../../electron/main/sessions'
 
 const dirs: string[] = []
-afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }) })
+const stores: JsonStateStore[] = []
+const writeGates: Array<() => void> = []
+afterEach(async () => {
+  // Constructors can still be persisting a migration after a snapshot is read.
+  const drains = stores.splice(0).map((store) => store.beginShutdown())
+  for (const release of writeGates.splice(0)) release()
+  await Promise.all(drains)
+  for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true })
+})
+
+function trackStore(store: JsonStateStore): JsonStateStore {
+  stores.push(store)
+  return store
+}
+
+function makeStore(...args: ConstructorParameters<typeof JsonStateStore>): JsonStateStore {
+  return trackStore(new JsonStateStore(...args))
+}
 
 function makeDirectory(): string {
   const dir = mkdtempSync(join(tmpdir(), 'prime-work-store-'))
@@ -45,13 +62,13 @@ describe('JsonStateStore', () => {
   it('keeps ask_user off on a fresh install and preserves an explicit opt-in', async () => {
     const dir = makeDirectory()
     const path = join(dir, 'state.json')
-    const store = new JsonStateStore(path)
+    const store = makeStore(path)
     expect(store.getSettings().askUserEnabled).toBe(false)
 
     await store.update((state) => { state.settings.askUserEnabled = true })
     await store.beginShutdown()
 
-    expect(new JsonStateStore(path).getSettings().askUserEnabled).toBe(true)
+    expect(makeStore(path).getSettings().askUserEnabled).toBe(true)
   })
 
   it('defaults, persists, and validates the locale preference', async () => {
@@ -59,13 +76,13 @@ describe('JsonStateStore', () => {
     const path = join(dir, 'state.json')
     const settings = { ...defaultSettings(), locale: 'zh-CN' as const }
     writeFileSync(path, JSON.stringify({ version: 4, projects: [], settings, archivedSessions: [], dismissedProjectPaths: [], schedules: [] }))
-    const first = new JsonStateStore(path)
+    const first = makeStore(path)
     await first.ready()
     expect(first.getSettings().locale).toBe('zh-CN')
     await first.beginShutdown()
 
     writeFileSync(path, JSON.stringify({ version: 4, projects: [], settings: { ...settings, locale: 'fr' }, archivedSessions: [], dismissedProjectPaths: [], schedules: [] }))
-    const second = new JsonStateStore(path)
+    const second = makeStore(path)
     await second.ready()
     expect(second.getSettings().locale).toBe('system')
     await second.beginShutdown()
@@ -76,13 +93,13 @@ describe('JsonStateStore', () => {
     const path = join(dir, 'state.json')
     const settings = { ...defaultSettings(), projectSortMode: 'alphabetical' as const }
     writeFileSync(path, JSON.stringify({ version: 4, projects: [], settings, archivedSessions: [], dismissedProjectPaths: [], schedules: [] }))
-    const first = new JsonStateStore(path)
+    const first = makeStore(path)
     await first.ready()
     expect(first.getSettings().projectSortMode).toBe('alphabetical')
     await first.beginShutdown()
 
     writeFileSync(path, JSON.stringify({ version: 4, projects: [], settings: { ...settings, projectSortMode: 'invalid' }, archivedSessions: [], dismissedProjectPaths: [], schedules: [] }))
-    const second = new JsonStateStore(path)
+    const second = makeStore(path)
     await second.ready()
     expect(second.getSettings().projectSortMode).toBe('recent')
     await second.beginShutdown()
@@ -91,7 +108,7 @@ describe('JsonStateStore', () => {
   it('serializes concurrent updates without losing data', async () => {
     const dir = makeDirectory()
     const path = join(dir, 'state.json')
-    const store = new JsonStateStore(path)
+    const store = makeStore(path)
     await Promise.all(Array.from({ length: 20 }, (_, index) => store.update((state) => { state.archivedSessions.push(String(index)) })))
     expect(store.snapshot().archivedSessions).toHaveLength(20)
     expect(JSON.parse(readFileSync(path, 'utf8')).archivedSessions).toHaveLength(20)
@@ -100,13 +117,13 @@ describe('JsonStateStore', () => {
   it('defaults to Orb and preserves the selected pet across a full store restart', async () => {
     const dir = makeDirectory()
     const path = join(dir, 'state.json')
-    const store = new JsonStateStore(path)
+    const store = makeStore(path)
     expect(store.getSettings().petId).toBe('orb')
 
     await store.update((state) => { state.settings.petId = 'codex/rocky' })
     await store.beginShutdown()
 
-    expect(new JsonStateStore(path).getSettings().petId).toBe('codex/rocky')
+    expect(makeStore(path).getSettings().petId).toBe('codex/rocky')
   })
 
   it('defaults and validates the configurable message Enter action', async () => {
@@ -114,14 +131,14 @@ describe('JsonStateStore', () => {
     const path = join(dir, 'state.json')
     const settings = { ...defaultSettings(), messageEnterAction: 'steer' }
     writeFileSync(path, JSON.stringify({ version: 1, projects: [], settings, archivedSessions: [], dismissedProjectPaths: [] }))
-    const first = new JsonStateStore(path)
+    const first = makeStore(path)
     await first.ready()
     expect(first.snapshot().settings.messageEnterAction).toBe('steer')
     await first.beginShutdown()
 
     settings.messageEnterAction = 'invalid' as typeof settings.messageEnterAction
     writeFileSync(path, JSON.stringify({ version: 1, projects: [], settings, archivedSessions: [], dismissedProjectPaths: [] }))
-    const second = new JsonStateStore(path)
+    const second = makeStore(path)
     await second.ready()
     expect(second.snapshot().settings.messageEnterAction).toBe('queue')
     await second.beginShutdown()
@@ -132,13 +149,13 @@ describe('JsonStateStore', () => {
     const path = join(dir, 'state.json')
     const settings = { ...defaultSettings(), checkoutStrategy: 'branch' as const }
     writeFileSync(path, JSON.stringify({ version: 4, projects: [], settings, archivedSessions: [], dismissedProjectPaths: [], schedules: [] }))
-    const first = new JsonStateStore(path)
+    const first = makeStore(path)
     await first.ready()
     expect(first.snapshot().settings.checkoutStrategy).toBe('branch')
     await first.beginShutdown()
 
     writeFileSync(path, JSON.stringify({ version: 4, projects: [], settings: { ...settings, checkoutStrategy: 'folders' }, archivedSessions: [], dismissedProjectPaths: [], schedules: [] }))
-    const second = new JsonStateStore(path)
+    const second = makeStore(path)
     await second.ready()
     expect(second.snapshot().settings.checkoutStrategy).toBe('worktree')
     await second.beginShutdown()
@@ -149,14 +166,14 @@ describe('JsonStateStore', () => {
     const path = join(dir, 'state.json')
     const settings = { ...defaultSettings(), interfaceFontScale: 115 }
     writeFileSync(path, JSON.stringify({ version: 3, projects: [], settings, archivedSessions: [], dismissedProjectPaths: [], schedules: [] }))
-    const first = new JsonStateStore(path)
+    const first = makeStore(path)
     await first.ready()
     expect(first.snapshot().settings.interfaceFontScale).toBe(115)
     await first.beginShutdown()
 
     settings.interfaceFontScale = 100 as typeof settings.interfaceFontScale
     writeFileSync(path, JSON.stringify({ version: 3, projects: [], settings, archivedSessions: [], dismissedProjectPaths: [], schedules: [] }))
-    const second = new JsonStateStore(path)
+    const second = makeStore(path)
     await second.ready()
     expect(second.snapshot().settings.interfaceFontScale).toBe(110)
     await second.beginShutdown()
@@ -169,6 +186,7 @@ describe('JsonStateStore', () => {
     let releaseWrite!: () => void
     let markWriteStarted!: () => void
     const writeGate = new Promise<void>((resolve) => { releaseWrite = resolve })
+    writeGates.push(releaseWrite)
     const writeStarted = new Promise<void>((resolve) => { markWriteStarted = resolve })
     const file: JsonStateStoreFileHandle = {
       writeFile: async () => { markWriteStarted(); await writeGate },
@@ -180,7 +198,7 @@ describe('JsonStateStore', () => {
       sync: async () => undefined,
       close: async () => undefined,
     }
-    const store = new JsonStateStore(path, {
+    const store = makeStore(path, {
       open: async (_openedPath, flags) => flags === 'w' ? file : directory,
       rename: async () => undefined,
       unlink: async () => undefined,
@@ -208,6 +226,7 @@ describe('JsonStateStore', () => {
     let releaseDirectorySync!: () => void
     let markDirectorySyncStarted!: () => void
     const directorySyncGate = new Promise<void>((resolve) => { releaseDirectorySync = resolve })
+    writeGates.push(releaseDirectorySync)
     const directorySyncStarted = new Promise<void>((resolve) => { markDirectorySyncStarted = resolve })
     const file: JsonStateStoreFileHandle = {
       writeFile: async () => { events.push('file-write') },
@@ -231,7 +250,7 @@ describe('JsonStateStore', () => {
       rename: async () => { events.push('rename') },
       unlink: async () => { events.push('unlink') },
     }
-    const store = new JsonStateStore(path, fileSystem)
+    const store = makeStore(path, fileSystem)
 
     const operation = store.update((state) => {
       state.archivedSessions.push('durable')
@@ -298,7 +317,7 @@ describe('JsonStateStore', () => {
         },
         unlink: async () => { events.push('unlink') },
       }
-      const store = new JsonStateStore(path, fileSystem)
+      const store = makeStore(path, fileSystem)
 
       await expect(store.update((state) => { state.archivedSessions.push('lost') })).rejects.toThrow('injected')
       expect(events.at(-1)).toBe('unlink')
@@ -327,7 +346,7 @@ describe('JsonStateStore', () => {
         }
       },
     }
-    const store = new JsonStateStore(path, fileSystem)
+    const store = makeStore(path, fileSystem)
 
     await expect(store.update((state) => { state.archivedSessions.push('failed') })).rejects.toThrow('injected write failure')
     expect(readdirSync(dir).filter((name) => name.endsWith('.tmp'))).toEqual([])
@@ -343,7 +362,7 @@ describe('JsonStateStore', () => {
     const dir = makeDirectory()
     const stateDirectory = join(dir, 'nested')
     const path = join(stateDirectory, 'state.json')
-    const store = new JsonStateStore(path)
+    const store = makeStore(path)
     await store.update((state) => { state.archivedSessions.push('saved') })
 
     expect(statSync(stateDirectory).mode & 0o777).toBe(0o700)
@@ -360,7 +379,7 @@ describe('JsonStateStore', () => {
       archivedSessions: Array.from({ length: 5_200 }, (_, index) => `/sessions/${index}.jsonl`),
       dismissedProjectPaths: Array.from({ length: 1_500 }, (_, index) => `/projects/${index}`),
     }))
-    const store = new JsonStateStore(path)
+    const store = makeStore(path)
     const loaded = store.snapshot()
     expect(loaded.archivedSessions).toHaveLength(5_000)
     expect(loaded.archivedSessions[0]).toBe('/sessions/200.jsonl')
@@ -389,7 +408,7 @@ describe('JsonStateStore', () => {
       archivedSessions: ['/sessions/kept.jsonl'],
       dismissedProjectPaths: [],
     }))
-    const store = new JsonStateStore(path)
+    const store = makeStore(path)
 
     const settings = store.getSettings()
     expect(settings.terminalShell).toBe('/bin/bash')
@@ -419,7 +438,7 @@ describe('JsonStateStore', () => {
       dismissedProjectPaths: [],
       schedules: [],
     }))
-    const store = new JsonStateStore(path)
+    const store = makeStore(path)
     await store.ready()
     const state = store.snapshot()
     expect(state.version).toBe(6)
@@ -462,7 +481,7 @@ describe('JsonStateStore', () => {
       scheduleOwnerships: [],
     }))
 
-    const store = new JsonStateStore(path)
+    const store = makeStore(path)
     await store.ready()
 
     expect(store.snapshot().version).toBe(6)
@@ -495,7 +514,7 @@ describe('JsonStateStore', () => {
       dismissedProjectPaths: [],
       schedules: [],
     }))
-    const keptStore = new JsonStateStore(path)
+    const keptStore = makeStore(path)
     await keptStore.ready()
     const kept = keptStore.snapshot()
     expect(kept.projects.map((project) => project.harness)).toEqual(['omp'])
@@ -510,7 +529,7 @@ describe('JsonStateStore', () => {
       dismissedProjectPaths: [],
       schedules: [],
     }))
-    const primeStore = new JsonStateStore(path)
+    const primeStore = makeStore(path)
     await primeStore.ready()
     expect(primeStore.snapshot().settings.activeHarness).toBe('prime')
     await primeStore.beginShutdown()
@@ -523,7 +542,7 @@ describe('JsonStateStore', () => {
       dismissedProjectPaths: [],
       schedules: [],
     }))
-    const resetStore = new JsonStateStore(path)
+    const resetStore = makeStore(path)
     await resetStore.ready()
     const reset = resetStore.snapshot()
     expect(reset.settings.activeHarness).toBe('pi')
@@ -544,7 +563,7 @@ describe('JsonStateStore', () => {
       dismissedProjectPaths: [],
       schedules: [],
     }))
-    const store = new JsonStateStore(path)
+    const store = makeStore(path)
     await store.ready()
     const state = store.snapshot()
     expect(state.version).toBe(6)
@@ -564,7 +583,7 @@ describe('JsonStateStore', () => {
       dismissedProjectPaths: [],
       schedules: [],
     }))
-    const first = new JsonStateStore(path)
+    const first = makeStore(path)
     await first.ready()
     expect(first.snapshot().settings.piDisabledProviders).toEqual(['openai', 'anthropic'])
     await first.beginShutdown()
@@ -577,7 +596,7 @@ describe('JsonStateStore', () => {
       dismissedProjectPaths: [],
       schedules: [],
     }))
-    const second = new JsonStateStore(path)
+    const second = makeStore(path)
     await second.ready()
     expect(second.snapshot().settings.piDisabledProviders).toHaveLength(256)
     await second.beginShutdown()
@@ -592,7 +611,7 @@ describe('JsonStateStore', () => {
       dismissedProjectPaths: [],
       schedules: [],
     }))
-    const third = new JsonStateStore(path)
+    const third = makeStore(path)
     await third.ready()
     const state = third.snapshot()
     expect(state.version).toBe(6)
@@ -608,7 +627,7 @@ describe('JsonStateStore', () => {
     const legacyRaw = JSON.stringify({ version: 2, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] })
     writeFileSync(path, raw)
     writeFileSync(legacyPath, legacyRaw)
-    const store = new JsonStateStore(path, realFileSystem, legacyPath, 'linux')
+    const store = makeStore(path, realFileSystem, legacyPath, 'linux')
     const mutator = vi.fn()
 
     expect(() => store.snapshot()).toThrow(UnsupportedStateVersionError)
@@ -637,7 +656,7 @@ describe('JsonStateStore', () => {
     writeFileSync(currentPath, currentRaw)
     writeFileSync(legacyPath, legacyRaw)
     let directorySyncs = 0
-    const store = new JsonStateStore(currentPath, {
+    const store = makeStore(currentPath, {
       ...realFileSystem,
       open: async (openedPath, flags, mode) => {
         if (openedPath !== dir || flags !== 'r') return open(openedPath, flags, mode)
@@ -682,7 +701,7 @@ describe('JsonStateStore', () => {
     }, null, 2)
     writeFileSync(legacyPath, legacyRaw)
 
-    const migrated = await openDesktopStateStore(dir)
+    const migrated = trackStore(await openDesktopStateStore(dir))
     expect(migrated.snapshot().projects.map(({ id, harness }) => ({ id, harness }))).toEqual([{ id: 'omp-project', harness: 'omp' }])
     await migrated.beginShutdown()
     expect(JSON.parse(readFileSync(currentPath, 'utf8'))).toMatchObject({ version: 6, projects: [{ id: 'omp-project', harness: 'omp' }] })
@@ -702,7 +721,7 @@ describe('JsonStateStore', () => {
     })
     writeFileSync(legacyPath, downgradedRaw)
 
-    const reopened = await openDesktopStateStore(dir)
+    const reopened = trackStore(await openDesktopStateStore(dir))
     expect(reopened.snapshot().projects.map(({ id, harness }) => ({ id, harness }))).toEqual([{ id: 'omp-project', harness: 'omp' }])
     expect(readFileSync(currentPath, 'utf8')).toBe(currentRaw)
     expect(existsSync(legacyPath)).toBe(false)
@@ -724,7 +743,7 @@ describe('JsonStateStore', () => {
     writeFileSync(currentPath, currentRaw)
     writeFileSync(legacyPath, legacyRaw)
     const retirementError = Object.assign(new Error('permission denied'), { code: 'EACCES' })
-    const store = new JsonStateStore(currentPath, {
+    const store = makeStore(currentPath, {
       ...realFileSystem,
       rename: async (oldPath, newPath) => {
         if (oldPath === legacyPath) throw retirementError
@@ -753,7 +772,7 @@ describe('JsonStateStore', () => {
       sync: async () => { events.push('directory-sync') },
       close: async () => { events.push('directory-close') },
     }
-    const store = new JsonStateStore(currentPath, {
+    const store = makeStore(currentPath, {
       open: async (openedPath, flags) => {
         expect(openedPath).toBe(dir)
         expect(flags).toBe('r')
@@ -777,7 +796,7 @@ describe('JsonStateStore', () => {
     const dir = makeDirectory()
     const currentPath = join(dir, CURRENT_DESKTOP_STATE_FILENAME)
     const legacyPath = join(dir, LEGACY_DESKTOP_STATE_FILENAME)
-    const store = new JsonStateStore(currentPath, {
+    const store = makeStore(currentPath, {
       ...realFileSystem,
       open: async (openedPath, flags, mode) => {
         if (openedPath !== dir || flags !== 'r') return open(openedPath, flags, mode)
@@ -801,7 +820,7 @@ describe('JsonStateStore', () => {
     const legacyRaw = JSON.stringify({ version: 2, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] })
     writeFileSync(legacyPath, legacyRaw)
     const directorySyncError = Object.assign(new Error('injected directory I/O failure'), { code: 'EIO' })
-    const store = new JsonStateStore(currentPath, {
+    const store = makeStore(currentPath, {
       ...realFileSystem,
       open: async (openedPath, flags, mode) => {
         if (openedPath !== dir || flags !== 'r') return open(openedPath, flags, mode)
@@ -828,7 +847,7 @@ describe('JsonStateStore', () => {
     writeFileSync(currentPath, currentRaw)
     writeFileSync(legacyPath, legacyRaw)
     let syncAttempts = 0
-    const store = new JsonStateStore(currentPath, {
+    const store = makeStore(currentPath, {
       ...realFileSystem,
       open: async (openedPath, flags, mode) => {
         if (openedPath !== dir || flags !== 'r') return open(openedPath, flags, mode)
@@ -849,7 +868,7 @@ describe('JsonStateStore', () => {
     expect(readFileSync(legacyPath, 'utf8')).toBe(legacyRaw)
     expect(readdirSync(dir).filter((name) => name.startsWith(`${LEGACY_DESKTOP_STATE_FILENAME}.migrated-v4-`))).toEqual([])
 
-    const retried = await openDesktopStateStore(dir)
+    const retried = trackStore(await openDesktopStateStore(dir))
     expect(existsSync(legacyPath)).toBe(false)
     await retried.beginShutdown()
   })
@@ -863,7 +882,7 @@ describe('JsonStateStore', () => {
     writeFileSync(currentPath, currentRaw)
     writeFileSync(legacyPath, legacyRaw)
     let backupPath = ''
-    const store = new JsonStateStore(currentPath, {
+    const store = makeStore(currentPath, {
       ...realFileSystem,
       open: async (openedPath, flags, mode) => {
         if (openedPath !== dir || flags !== 'r') return open(openedPath, flags, mode)
@@ -900,7 +919,7 @@ describe('JsonStateStore', () => {
     writeFileSync(currentPath, currentRaw)
     writeFileSync(legacyPath, legacyRaw)
     let syncAttempts = 0
-    const store = new JsonStateStore(currentPath, {
+    const store = makeStore(currentPath, {
       ...realFileSystem,
       open: async (openedPath, flags, mode) => {
         if (openedPath !== dir || flags !== 'r') return open(openedPath, flags, mode)
@@ -937,7 +956,7 @@ describe('JsonStateStore', () => {
       dismissedProjectPaths: [],
       schedules: [],
     }))
-    const state = new JsonStateStore(path).snapshot()
+    const state = makeStore(path).snapshot()
     expect(state.settings.runtimePaths).toEqual({ prime: '/opt/prime-agent', pi: '' })
     expect(state.settings.enabledHarnesses).toEqual(['pi'])
     expect(state.settings.activeHarness).toBe('pi')
@@ -951,7 +970,7 @@ describe('JsonStateStore', () => {
     const legacyRaw = JSON.stringify({ version: 2, projects: [], settings: defaultSettings(), archivedSessions: [], dismissedProjectPaths: [], schedules: [] })
     writeFileSync(path, raw)
     writeFileSync(legacyPath, legacyRaw)
-    const store = new JsonStateStore(path, realFileSystem, legacyPath, 'linux')
+    const store = makeStore(path, realFileSystem, legacyPath, 'linux')
     const mutator = vi.fn()
 
     expect(() => store.snapshot()).toThrow(StateCompatibilityError)
@@ -970,7 +989,7 @@ describe('JsonStateStore', () => {
     const dir = makeDirectory()
     const path = join(dir, 'state.json')
     writeFileSync(path, '{broken')
-    const store = new JsonStateStore(path)
+    const store = makeStore(path)
     expect(store.snapshot().version).toBe(6)
     expect(store.snapshot().projects).toEqual([])
 
@@ -985,7 +1004,7 @@ describe('JsonStateStore', () => {
     mkdirSync(sessionRoot)
     const transcript = join(sessionRoot, 'session.jsonl')
     writeFileSync(transcript, '{"type":"session"}\n')
-    const store = new JsonStateStore(join(dir, 'state.json'))
+    const store = makeStore(join(dir, 'state.json'))
     const sessions = new SessionService(store, null)
     Object.defineProperty(sessions, 'sessionRoot', { value: sessionRoot })
     await sessions.archive(transcript, true)
