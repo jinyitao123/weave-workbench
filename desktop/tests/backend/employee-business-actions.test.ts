@@ -234,8 +234,8 @@ describe('native business work projection', () => {
   it.each(['', 'a'.repeat(8193)])('rejects empty or oversized signed cursors', async (nextCursor) => {
     await expect(readBusinessWork(async () => ({ version: '1', items: [], readStatus: 'complete', observedAt: new Date().toISOString(), nextCursor }))).rejects.toThrow()
   })
-  it('accepts authoritative order-condition work and all seven distinct source failures without claiming a complete list', async () => {
-    const kinds = ['quotation_follow_up', 'contract_signature', 'contract_order_conditions', 'contract_prepayment', 'prepayment_confirmation', 'sales_order_creation', 'sales_order_submission']
+  it('accepts authoritative order-condition work and all eight distinct source failures without claiming a complete list', async () => {
+    const kinds = ['quotation_follow_up', 'contract_signature', 'contract_order_conditions', 'contract_prepayment', 'prepayment_confirmation', 'sales_order_creation', 'sales_order_submission', 'project_start']
     const item = { workKey: 'a'.repeat(64), kind: 'contract_order_conditions', title: '确认合同下单条件', record: context().record, recordVersion: '1', updatedAt: new Date().toISOString(), assignment: 'assigned' }
     const page = { version: '1', items: [item], readStatus: 'partial', observedAt: item.updatedAt, sourceErrors: kinds.map((kind) => ({ kind, code: 'READ_FAILED' })) }
     expect(await readBusinessWork(async () => page)).toMatchObject({ items: [item], error: expect.any(String) })
@@ -243,6 +243,15 @@ describe('native business work projection', () => {
     await expect(readBusinessWork(async () => ({ ...page, sourceErrors: [page.sourceErrors[0], page.sourceErrors[0]] }))).rejects.toThrow('完整性无效')
     await expect(readBusinessWork(async () => ({ ...page, sourceErrors: [{ kind: 'unknown', code: 'READ_FAILED' }] }))).rejects.toThrow('完整性无效')
     await expect(readBusinessWork(async () => ({ ...page, items: [{ ...item, kind: 'unknown' }] }))).rejects.toThrow('来源无效')
+  })
+  it('reads a manager project-start item as a record source without granting a write or inferring a manager', async () => {
+    const item = { workKey: 'd'.repeat(64), kind: 'project_start', title: '启动云岚交付项目',
+      record: { objectName: 'forge_project', recordId: 'project-current', label: '云岚交付项目' },
+      recordVersion: 'linked-order-1', updatedAt: new Date().toISOString(), assignment: 'assigned' }
+    const page = { version: '1', items: [item], readStatus: 'complete', observedAt: item.updatedAt }
+    expect(await readBusinessWork(async () => page)).toEqual({ items: [item] })
+    await expect(readBusinessWork(async () => ({ ...page, items: [{ ...item, assignment: undefined }] }))).rejects.toThrow()
+    await expect(readBusinessWork(async () => ({ ...page, items: [{ ...item, record: { ...item.record, objectName: 'sys_user' } }] }))).rejects.toThrow()
   })
   it.each(['提交报价审批', '登记报价发送', '登记客户接受', '转销售合同'])('reads a current quotation follow-up for %s without changing its record source', async (title) => {
     const item = { workKey: 'c'.repeat(64), kind: 'quotation_follow_up', title,

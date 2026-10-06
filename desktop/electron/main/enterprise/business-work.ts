@@ -1,6 +1,6 @@
 import type { EmployeeBusinessWork } from '../../../src/types/employee-business'
 import { rejectUnknownKeys, requireRecord, requireString } from '../validation'
-const kinds = ['quotation_follow_up', 'contract_signature', 'contract_order_conditions', 'contract_prepayment', 'prepayment_confirmation', 'sales_order_creation', 'sales_order_submission']
+const kinds = ['quotation_follow_up', 'contract_signature', 'contract_order_conditions', 'contract_prepayment', 'prepayment_confirmation', 'sales_order_creation', 'sales_order_submission', 'project_start']
 const text = (value: unknown, max = 128) => requireString(value, '本人业务事项', { min: 1, max })
 export async function readBusinessWork(read: (path: string) => Promise<unknown>) {
   const items = new Map<string, EmployeeBusinessWork>(), cursors = new Set<string>()

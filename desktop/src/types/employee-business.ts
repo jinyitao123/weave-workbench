@@ -27,7 +27,7 @@ export interface EmployeeBusinessOperation {
   noEffect?: boolean; code?: string; summary?: string; recordReferences?: EmployeeBusinessRecord[]
 }
 export interface EmployeeBusinessWork {
-  workKey: string; kind: 'quotation_follow_up' | 'contract_signature' | 'contract_order_conditions' | 'contract_prepayment' | 'prepayment_confirmation' | 'sales_order_creation' | 'sales_order_submission'
+  workKey: string; kind: 'quotation_follow_up' | 'contract_signature' | 'contract_order_conditions' | 'contract_prepayment' | 'prepayment_confirmation' | 'sales_order_creation' | 'sales_order_submission' | 'project_start'
   title: string; record: EmployeeBusinessRecord; recordVersion: string; updatedAt: string
   assignment: 'assigned' | 'needs_assignment'; assignmentReason?: 'no_eligible_employee' | 'multiple_eligible_employees'
 }
