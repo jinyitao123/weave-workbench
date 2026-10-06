@@ -219,6 +219,7 @@ function App(){
   const [personalOrderFilters,setPersonalOrderFilters]=React.useState({status:'all',datePreset:'all',from:'',to:'',serviceType:'',urgency:'',region:'',search:''});
   const formController=React.useRef(null);
   const detailLoadSession=React.useRef(0);
+  const dispatchDialogLoadSession=React.useRef(0);
   const personalRequest=React.useRef(0);
   const sourceView=servicePage.viewKey?serviceViews[servicePage.viewKey]:null;
   const formView=sourceView&&sourceView.form?sourceView.form:null;
@@ -422,15 +423,16 @@ function App(){
   function openAction(action){
     formController.current=null;
     if(action.kind==='dispatch'){
+      const dispatchReadSession=++dispatchDialogLoadSession.current;
       const values={engineer_id:'',scheduled_at:selected.record.expected_visit_on||'',dispatch_note:''};
-      setDialog({kind:'dispatch',action,record:selected.record,engineers:[],loading:true,values,baseline:{...values},error:''});
+      setDialog({kind:'dispatch',dispatchReadSession,action,record:selected.record,engineers:[],loading:true,values,baseline:{...values},error:''});
       request('/actions/forge_service_order/service_order_dispatch_engineers/'+encodeURIComponent(selected.record.id),{method:'POST',body:JSON.stringify({params:{}})})
         .then(unwrap).then(result=>setDialog(current=>{
-          if(!current||current.kind!=='dispatch')return current;
+          if(!current||current.kind!=='dispatch'||current.dispatchReadSession!==dispatchReadSession)return current;
           const engineers=Array.isArray(result&&result.engineers)?result.engineers:[];
           return {...current,engineers,loading:false,error:engineers.length?'':'当前组织没有有效任职的售后工程师'};
         }))
-        .catch(error=>setDialog(current=>current&&current.kind==='dispatch'?{...current,loading:false,error:String(error&&error.message||error)}:current));
+        .catch(error=>setDialog(current=>current&&current.kind==='dispatch'&&current.dispatchReadSession===dispatchReadSession?{...current,loading:false,error:String(error&&error.message||error)}:current));
       return;
     }
     if(action.kind==='quote'){const values={total_amount:'',valid_until:''};setDialog({kind:'quote-from-order',action,record:selected.record,values,baseline:{...values},error:''});return}
