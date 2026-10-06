@@ -12,7 +12,7 @@
     "observedAt": { "type": "string", "format": "date-time" },
     "nextCursor": { "type": "string", "minLength": 1, "maxLength": 8192, "description": "Opaque ObjectStack-native JWT-signed pagination cursor, valid for 15 minutes and bound to the current employee, organization, source and original record position. Not a task state or write authorization." },
     "sourceErrors": {
-      "type": "array", "minItems": 1, "maxItems": 6,
+      "type": "array", "minItems": 1, "maxItems": 7,
       "items": {
         "type": "object", "additionalProperties": false,
         "required": ["kind", "code"],
@@ -28,7 +28,7 @@
     { "if": { "properties": { "readStatus": { "const": "complete" } } }, "then": { "not": { "required": ["sourceErrors"] } } }
   ],
   "$defs": {
-    "kind": { "enum": ["contract_signature", "contract_order_conditions", "contract_prepayment", "prepayment_confirmation", "sales_order_creation", "sales_order_submission"] },
+    "kind": { "enum": ["quotation_follow_up", "contract_signature", "contract_order_conditions", "contract_prepayment", "prepayment_confirmation", "sales_order_creation", "sales_order_submission"] },
     "query": {
       "type": "object", "additionalProperties": false,
       "properties": {
