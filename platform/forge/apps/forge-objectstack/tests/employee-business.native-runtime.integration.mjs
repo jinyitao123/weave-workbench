@@ -90,6 +90,9 @@ export class ApprovalFlowLauncherPlugin {
  init(ctx) { ctx.hook('kernel:ready', () => {
   const engine = ctx.getService('objectql'), original = engine.update, originalInsert = engine.insert, originalAction = engine.executeAction; let armed = false, uncertainRace, nativeFailure, startRace;
   let projectFieldFault;const security=ctx.getService('security'),readFields=security.getReadableFields.bind(security),readOne=engine.findOne,readMany=engine.find;
+  let projectDiagnostics=[],projectLinkEffects=[];const nativeWarn=ctx.logger.warn.bind(ctx.logger);ctx.logger.warn=(message,metadata)=>{if(message==='[project-scope]')projectDiagnostics.push(metadata);nativeWarn(message,metadata);};
+  ctx.getService('http.server').post('/api/v1/__test/project-scope-diagnostics',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}const records=projectDiagnostics;projectDiagnostics=[];await res.status(200).json({records});});
+  ctx.getService('http.server').post('/api/v1/__test/project-link-effects',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}const records=projectLinkEffects;projectLinkEffects=[];await res.status(200).json({records});});
   security.getReadableFields=async(object,actor)=>{if(projectFieldFault?.object===object){if(projectFieldFault.answer==='undefined')return undefined;if(projectFieldFault.answer==='null')return null;if(projectFieldFault.answer==='throw')throw new Error('isolated FLS no answer');}return readFields(object,actor);};
   engine.findOne=async function(object,query,options){const value=await readOne.call(this,object,query,options);if(projectFieldFault?.omit&&projectFieldFault.object===object&&options?.context?.isSystem!==true&&value){const copy={...value};delete copy[projectFieldFault.omit];return copy;}return value;};
   engine.find=async function(object,query,options){const values=await readMany.call(this,object,query,options);if(projectFieldFault?.omit&&projectFieldFault.object===object&&options?.context?.isSystem!==true)return values.map(value=>{const copy={...value};delete copy[projectFieldFault.omit];return copy;});return values;};
@@ -101,6 +104,7 @@ export class ApprovalFlowLauncherPlugin {
   ctx.getService('http.server').post('/api/v1/__test/member-audit-fault',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}memberAuditFault=req.body.mode;await res.status(200).json({armed:true});});
   ctx.getService('http.server').post('/api/v1/__test/remove-project-link',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}try{await engine.transaction(async transaction=>{const link=await engine.findOne('forge_project_sales_link',{where:{id:req.body.linkId,organization_id:req.body.organizationId}},{context:transaction});if(!link)throw new Error('isolated link not found');await engine.delete('forge_project_sales_link',{where:{id:link.id},context:transaction});},{isSystem:true,userId:req.body.actorId,tenantId:req.body.organizationId},{require:true});await res.status(200).json({removed:true});}catch(error){await res.status(500).json({error:String(error)});}});
   ctx.getService('http.server').post('/api/v1/__test/native-share',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}try{const value=await ctx.getService('sharing').grant(req.body.grant,{isSystem:true,userId:req.body.actorId,tenantId:req.body.organizationId});await res.status(200).json({id:value.id});}catch(error){await res.status(500).json({error:String(error)});}});
+  ctx.getService('http.server').post('/api/v1/__test/revoke-native-share',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}await ctx.getService('sharing').revoke(req.body.shareId,{isSystem:true,userId:req.body.actorId,tenantId:req.body.organizationId},{object:req.body.object,recordId:req.body.recordId});await res.status(200).json({revoked:true});});
   ctx.getService('http.server').post('/api/v1/__test/member-shape',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}await res.status(200).json(memberShape||{});});
   engine.update = async function(object, data, options) {
    if (armed && object === 'forge_employee_business_operation' && data.status === 'succeeded') { armed = false; throw new Error('injected receipt persistence failure'); }
@@ -119,7 +123,7 @@ export class ApprovalFlowLauncherPlugin {
    if (uncertainRace && object === 'forge_quotation' && name === 'forgeSubmitQuotation' && action.record?.id === uncertainRace.recordId) {
     uncertainRace.attempts++; uncertainRace.releaseB(); throw new Error('injected uncertain native dispatch before mutation');
    }
-   try{return await originalAction.call(this, object, name, action);}catch(error){nativeFailure={message:String(error.message),name:String(error.name)};throw error;}
+   try{const result=await originalAction.call(this, object, name, action);if(object==='forge_project'&&name==='forgeLinkProjectOrder')projectLinkEffects.push({repeated:result?.repeated,orderCount:result?.order_count});return result;}catch(error){nativeFailure={message:String(error.message),name:String(error.name)};throw error;}
   };
   ctx.getService('http.server').post('/api/v1/__test/uncertain-race', async(req,res) => {
    if (req.headers?.authorization !== 'Bearer ${launcherSecret}') { await res.status(403).json({error:'forbidden'}); return; }
@@ -697,7 +701,7 @@ export default stack;
   } while(cursor);
   assert.equal(found,true,'eligible record after the first 1000 raw rows remains reachable');
   await t.test('exact approved order to project creation, native source sharing and manager startup', async () => {
-    await exerciseOrderProjectHandoff({admin,organizationId,suffix,databaseClient,createEmployee,idOf,executeEmployee,seedFile,mcpData,mcpText,stopRuntime,startRuntime,launcherSecret,secrets,port,t});
+    await exerciseOrderProjectHandoff({admin,organizationId,suffix,databaseClient,createEmployee,idOf,executeEmployee,seedFile,mcpData,mcpText,stopRuntime,startRuntime,launcherSecret,secrets,port,t,quotationReviewer:reviewer});
   });
 
 });

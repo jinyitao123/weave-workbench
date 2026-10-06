@@ -94,6 +94,17 @@ test('project RLS membership is declared only on Project SELECT and never widens
   assert.equal(financeReceivablesOperatorPermission.objects.forge_project_settlement.readScope, 'org');
 });
 
+test('structural member and sales-link SELECT retain native parent read while position writes remain bounded', () => {
+  for (const object of ['forge_project_member','forge_project_sales_link']) {
+    for (const permission of [projectOperatorPermission,projectManagerPermission]) {
+      assert.ok(!(permission.rowLevelSecurity||[]).some(rule=>rule.object===object&&rule.operation==='select'&&rule.name?.startsWith(PROJECT_POSITION_RLS_POLICY_PREFIX)), 'no empty position-only SELECT on structural children');
+    }
+    const writes=projectOperatorPermission.rowLevelSecurity.filter(rule=>rule.object===object&&rule.operation!=='select');
+    assert.equal(writes.filter(rule=>rule.operation==='update').length,1);
+    assert.equal(writes[0].using,'id in current_user.'+projectPositionEditScopeKey(object));
+  }
+});
+
 test('resolver returns only the current user active projects within core accessible organizations', async () => {
   const { engine, calls } = fakeEngine([
     membershipRow({ id: 'member-a1', projectId: 'project-a', organizationId: 'org-a' }),

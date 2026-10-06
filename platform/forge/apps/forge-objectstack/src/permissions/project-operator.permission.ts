@@ -19,6 +19,9 @@ const projectWriteScope = 'owner_id == current_user.id || (owner_id == null && c
 const projectReadScope = `${projectWriteScope} || id in current_user.active_project_ids`;
 
 const projectPositionScopedObjects = new Set<string>(PROJECT_POSITION_SCOPED_OBJECTS);
+// These are structural master-detail rows, not assigned work. Native
+// controlled_by_parent applies the exact parent project read/RLS/share boundary.
+const parentControlledStructureReads = new Set(['forge_project_member', 'forge_project_sales_link']);
 
 /** Adds record-id scope only for project-capability PermissionSets and objects they already grant. */
 export function projectPositionRowIdPolicies(definition: Pick<PermissionSetInput, 'objects' | 'systemPermissions'>) {
@@ -38,7 +41,7 @@ export function projectPositionRowIdPolicies(definition: Pick<PermissionSetInput
       continue;
     }
     if (!projectPositionScopedObjects.has(objectName)) continue;
-    if (grant.allowRead === true) {
+    if (grant.allowRead === true && !parentControlledStructureReads.has(objectName)) {
       const positionScope = `id in current_user.${projectPositionReadScopeKey(objectName)}`;
       const managerAttachmentScope = objectName === 'forge_project_attachment'
         && definition.systemPermissions?.includes('forge_project_manager');
