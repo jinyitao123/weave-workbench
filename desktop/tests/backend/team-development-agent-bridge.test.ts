@@ -8,7 +8,7 @@ import { newMember } from '../../src/pages/team-workspace/member'
 import { configureWorkflowResultProtocol, initialGraph } from '../../src/pages/team-workspace/graph'
 import type { EnterpriseBusinessCapabilityCatalog } from '../../src/types/api'
 import type { TeamDefinition, TeamWorkspace, TeamWorkspaceCommand } from '../../src/types/team-workspace'
-import { trialWireActivity, trialWireCases } from '../fixtures/trial-activity'
+import { trialToolAction, trialWireActivity, trialWireCases } from '../fixtures/trial-activity'
 
 let bridge: TeamDevelopmentAgentBridge | undefined
 const tempDirectories: string[] = []
@@ -641,10 +641,11 @@ it('restores the original fixed action definition after an uncertain Pi trial re
 it.each(trialWireCases)('interprets the same $name wire record as the trial panel without inventing payload evidence', async (tool) => {
   const lead = newMember('deepseek-flash'), worker = newMember('deepseek-flash')
   lead.configuration.role = 'avatar'
+  worker.configuration.businessCapabilityIds = [trialToolAction.id]
   const document: TeamDefinition = { name: '线索团队', objective: '', members: [lead, worker], workflows: [{ id: 'flow', name: '线索流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
   const remote = workspace(document)
   const directory = mkdtempSync(join(tmpdir(), 'trial-evidence-')); tempDirectories.push(directory)
-  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [], refreshedAt: '' }
+  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [trialToolAction], refreshedAt: '' }
   bridge = new TeamDevelopmentAgentBridge({
     accountKey: async () => 'developer-1', developer: async () => ({ accountId: 'developer-1' }), teams: async () => [{ id: 'team', name: document.name }],
     team: async () => structuredClone(remote), catalog: async () => catalog, extensionPath: '/app/team-development.ts', storage: { directory },
@@ -661,13 +662,14 @@ it.each(trialWireCases)('interprets the same $name wire record as the trial pane
   await bridge.bindContext('runtime', { teamId: 'team', revision: remote.revision, document, catalog }, 'developer-1')
   const call = async (method: string, params = {}) => {
     const response = await fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method, params }) })
-    return response.json() as Promise<{ ok: boolean; result: { trace: { completeness: { tool_input_output: string }; trajectory: string; members: Array<{ steps: Array<{ tools: Array<{ status: string; evidence: string; actual_input?: string; actual_output?: string }> }> }> } } }>
+    return response.json() as Promise<{ ok: boolean; result: { trace: { completeness: { tool_input_output: string }; trajectory: string; members: Array<{ steps: Array<{ tools: Array<{ name: string; status: string; evidence: string; actual_input?: string; actual_output?: string }> }> }> } } }>
   }
   expect((await call('trial', { workflow_name: '线索流程', input: '合成固定输入' })).ok).toBe(true)
   const result = await call('trial_status')
   expect(result.ok).toBe(true)
   expect(result.result.trace.members[0]!.steps[0]!.tools).toEqual([])
   const actual = result.result.trace.members[0]!.steps[1]!.tools[0]!
+  expect(actual.name).toBe(tool.displayName ?? '工具调用')
   expect(actual.status).toBe(tool.label)
   expect(actual.actual_input).toBe(tool.hiddenInput ? undefined : tool.input)
   expect(actual.actual_output).toBe(tool.hiddenOutput ? undefined : tool.output)

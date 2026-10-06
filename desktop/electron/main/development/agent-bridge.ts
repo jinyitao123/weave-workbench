@@ -5,7 +5,7 @@ import { applyTeamDevelopmentOperations, type TeamDevelopmentProposal } from '..
 import { WORKBENCH_RESULT_PROTOCOL } from '../../../src/pages/team-workspace/graph'
 import { businessCompletionRequirement, requireBusinessCompletionBindings, requireDeclaredBusinessCompletion } from '../../../src/pages/team-workspace/business-completion'
 import { freezeDevelopmentTrialActions, publicationReadinessBlocker, workflowCandidateCapabilityIds, workflowSimulationChoices, workflowTrialBlocker } from '../../../src/pages/team-workspace/development-trial'
-import { toolActivityEvidence, trialToolMissingDetails, trialToolPayload, trialToolPayloadCompleteness, trialToolStatus, type TrialToolEvidence } from '../../../src/lib/trial-tool-evidence'
+import { toolActivityEvidence, trialToolDisplayName, trialToolMissingDetails, trialToolPayload, trialToolPayloadCompleteness, trialToolStatus, type TrialToolEvidence } from '../../../src/lib/trial-tool-evidence'
 import { CapabilityBridge, type CapabilityClaim, type CapabilityScope } from '../lib/capability-bridge'
 import { HandoffStore, type HandoffStorage } from '../enterprise/handoff-store'
 import { MAX_RPC_WRITE_FRAME_BYTES } from '../agent-rpc/limits'
@@ -769,7 +769,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
           evidence: item.truncated ? 'Weave 仅保留了该步骤输出的截断内容，不能视为完整原文。' : 'Weave 实际保存的该步骤输出。',
         })),
         tools: (stage.tools ?? []).map((tool) => ({
-          name: tool.name ?? '工具调用', status: trialToolStatus(tool),
+          name: trialToolDisplayName(tool, trial.businessActions ?? context.catalog.capabilities), status: trialToolStatus(tool),
           ...(trialToolPayload(tool, 'input') !== undefined ? { actual_input: trialToolPayload(tool, 'input') } : {}),
           ...(trialToolPayload(tool, 'output') !== undefined ? { actual_output: trialToolPayload(tool, 'output') } : {}),
           ...(tool.input_state ? { input_state: tool.input_state, input_bytes: tool.input_bytes } : {}),

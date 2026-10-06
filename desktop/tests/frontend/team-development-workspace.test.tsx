@@ -336,6 +336,35 @@ it('prevents duplicate trial submission and names tool completion states', async
   expect(runLabel('tool_failed')).toBe('工具调用失败')
 })
 
+it.each([true, false])('updates the publication footer to server readiness %s after reading the current trial', async (allowed) => {
+  const action = contractAction([])
+  remote.document.members[1]!.configuration.businessCapabilityIds = [action.id]
+  remote.document.workflows[0]!.graph_definition.delivery_contract = {
+    version: 1, coverage: 'incomplete', output: { type: 'text' }, external_effects: 'required', external_effects_check_id: 'business-action-receipts',
+    required_checks: [{ id: 'business-action-receipts', title: '已授权业务动作具备成功回执', verifier_id: 'weave.business-action-receipts', verifier_version: 'v1', parameters: { required_capability_ids: [action.id], when_authorized: true, allow_needs_input: false } }],
+  }
+  remote.trials = [{ request_id: 'current-trial', revision: remote.revision, workflow_id: 'flow', run_id: 'run', status: 'succeeded', created_at: '' }]
+  const readiness = { ready: true, workflows: [{ workflow_id: 'flow', required_capability_ids: [action.id], covered_capability_ids: [action.id], missing_capability_ids: [], passed: true }] }
+  if (!allowed) remote.publication_readiness = readiness
+  getBusinessCapabilityCatalog.mockResolvedValueOnce({ version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [action], refreshedAt: '' })
+  await open('workflow')
+  expect(publishButton()?.disabled).toBe(allowed)
+
+  if (allowed) remote.publication_readiness = readiness
+  else delete remote.publication_readiness
+  call.mockImplementationOnce(async (command) => {
+    expect(command.action).toBe('activity')
+    return { status: 'succeeded', members: [], outputs: [] }
+  }).mockImplementationOnce(async (command) => {
+    expect(command.action).toBe('input')
+    return { input: '同一修订的固定输入', status: 'succeeded' }
+  })
+  await click('调试')
+  expect(publishButton()?.disabled).toBe(!allowed)
+  expect(container.querySelector('.team-panel__footer')?.textContent?.includes('无法确认')).toBe(!allowed)
+  expect(call.mock.calls.filter(([command]) => command.action === 'save' || command.action === 'publish')).toHaveLength(0)
+})
+
 it('keeps candidate actions closed by default and retries one fixed simulation scope', async () => {
   const action = contractAction([])
   remote.document.members[1]!.configuration.businessCapabilityIds = [action.id]

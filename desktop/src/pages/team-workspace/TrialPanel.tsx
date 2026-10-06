@@ -4,9 +4,24 @@ import { ProductSelect, ProductSwitch, ProductTextArea } from '@/components/ui'
 import type { EnterpriseBusinessCapabilityCatalog } from '@/types/api'
 import type { DevelopmentTrialAction, TeamWorkspace, TeamWorkspaceBridge } from '@/types/team-workspace'
 import { workflowCandidateCapabilityIds } from './development-trial'
-import { toolActivityEvidence, trialToolMissingDetails, trialToolPayload, trialToolPayloadCompleteness, trialToolStatus, type TrialToolEvidence } from '@/lib/trial-tool-evidence'
+import { toolActivityEvidence, trialToolDisplayName, trialToolMissingDetails, trialToolPayload, trialToolPayloadCompleteness, trialToolStatus, type TrialToolEvidence } from '@/lib/trial-tool-evidence'
 export const runLabel = (status: string) => ({ submitting: '等待接单', queued: '排队中', running: '执行中', succeeded: '团队运行完成', failed: '团队运行失败', cancelled: '团队运行已取消', blocked: '等待处理', pending: '等待执行', completed: '步骤完成', tool_started: '工具调用中', tool_completed: '工具调用完成', tool_failed: '工具调用失败' }[status] ?? '等待更新')
 type Activity = { status: string; completeness?: { member_tool_activity?: string; member_tool_payloads?: string }; members: Array<{ name: string; status: string; runtime?: { model?: string; configured_model?: string }; stages: Array<{ name: string; status: string; inputs: Array<{ source: string; summary?: string }>; tools?: Array<TrialToolEvidence & { name: string }> | null; tool_calls?: number; failure_reason?: string }> }>; outputs: Array<{ title: string; content?: string }> }
+
+// Keep the recorded payload intact; only known system-owned parameter values
+// are replaced in the panel's display copy.
+function displayToolPayload(payload: string | undefined): string | undefined {
+  if (payload === undefined) return payload
+  try {
+    const receipt = JSON.parse(payload)
+    const params = receipt?.params
+    if (!params || typeof params !== 'object' || Array.isArray(params)) return payload
+    const managed = Object.keys(params).filter(isSystemManagedBusinessParameter)
+    if (!managed.length) return payload
+    for (const name of managed) params[name] = '系统托管'
+    return JSON.stringify(receipt, null, 2)
+  } catch { return payload }
+}
 
 export function TrialPanel({ teamId, initialFlowId, draft, businessCapabilities, bridge, flush, refresh }: { initialFlowId?: string; teamId: string; draft: TeamWorkspace; businessCapabilities?: EnterpriseBusinessCapabilityCatalog; bridge: TeamWorkspaceBridge; flush(): Promise<TeamWorkspace | undefined>; refresh(): Promise<void> }) {
   const [flow, setFlow] = useState(initialFlowId ?? draft.document.workflows[0]?.id ?? '')
@@ -121,10 +136,10 @@ export function TrialPanel({ teamId, initialFlowId, draft, businessCapabilities,
     {draft.trials.length > 0 && <><h3>调试记录</h3><div className="tw-trials">{draft.trials.map((t) => <button type="button" key={t.request_id} className={selected === t.request_id ? 'is-active' : ''} onClick={() => setSelected(t.request_id)}><strong>{draft.document.workflows.find((f) => f.id === t.workflow_id)?.name ?? '历史流程'}</strong><span>{runLabel(t.request_id === selected ? activity?.status ?? runStatus ?? t.status : t.status)} · {t.revision === draft.revision ? '当前草稿' : '较早草稿'} · {new Date(t.created_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span></button>)}</div></>}
     {trial && <div className="tw-form"><details><summary>本次固定输入</summary><pre className="tw-result">{frozenInput || '正在读取'}</pre></details>
       {activity?.members?.map((member, index) => <div className="tw-card tw-form" key={index}><div className="tw-section-title"><h4>{member.name}</h4><span>{runLabel(member.status)}</span></div><small className="tw-muted">{member.runtime?.model || member.runtime?.configured_model || '模型尚未上报'}</small>{member.stages.map((stage, i) => <div key={i}><strong>{stage.name} · {runLabel(stage.status)}</strong><p>输入：{stage.inputs.map((b) => b.source === 'run_input' ? '任务输入' : '前序结果').join('、') || '尚未上报'}</p>{stage.failure_reason && <p role="alert">{stage.failure_reason}</p>}{stage.inputs.some((b) => b.summary) && <details><summary>运行输入摘要</summary>{stage.inputs.map((b, j) => <pre className="tw-result" key={j}>{b.summary}</pre>)}</details>}{stage.tools?.map((tool, j) => {
-        const input = trialToolPayload(tool, 'input')
-        const output = trialToolPayload(tool, 'output')
+        const input = displayToolPayload(trialToolPayload(tool, 'input'))
+        const output = displayToolPayload(trialToolPayload(tool, 'output'))
         const missingDetails = trialToolMissingDetails(tool)
-        return <details key={j}><summary>{tool.name} · {trialToolStatus(tool)}</summary>{input !== undefined && <><h5>调用参数</h5><pre className="tw-result">{input || '（空内容）'}</pre></>}{output !== undefined && <><h5>工具返回</h5><pre className="tw-result">{output || '（空内容）'}</pre></>}{missingDetails && <p className="tw-muted">{missingDetails}</p>}</details>
+        return <details key={j}><summary>{trialToolDisplayName(tool, businessCapabilities?.capabilities)} · {trialToolStatus(tool)}</summary>{input !== undefined && <><h5>调用参数</h5><pre className="tw-result">{input || '（空内容）'}</pre></>}{output !== undefined && <><h5>工具返回</h5><pre className="tw-result">{output || '（空内容）'}</pre></>}{missingDetails && <p className="tw-muted">{missingDetails}</p>}</details>
       })}</div>)}</div>)}
       <div className="tw-card tw-form" role="status">
         <h3>调试工具调用记录</h3>

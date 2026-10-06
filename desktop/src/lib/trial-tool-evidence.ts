@@ -1,3 +1,5 @@
+import type { EnterpriseBusinessCapability } from '../types/api'
+
 export interface TrialToolEvidence {
   status?: string
   completed_at?: string
@@ -33,6 +35,23 @@ function payloadState(tool: TrialToolEvidence, field: 'input' | 'output'): 'reco
 
 export function trialToolPayload(tool: TrialToolEvidence, field: 'input' | 'output'): string | undefined {
   return payloadState(tool, field) === 'missing' ? undefined : tool[field]
+}
+
+/** Display names come from recorded action identity and catalog metadata, never a generated tool key. */
+export function trialToolDisplayName(tool: TrialToolEvidence, capabilities: readonly EnterpriseBusinessCapability[] = []): string {
+  if (payloadState(tool, 'output') === 'recorded') {
+    try {
+      const receipt = JSON.parse(tool.output!) as unknown
+      if (receipt && typeof receipt === 'object' && !Array.isArray(receipt)) {
+        const identity = receipt as { actionName?: unknown; objectName?: unknown }
+        if (typeof identity.actionName === 'string' && typeof identity.objectName === 'string') {
+          const matches = capabilities.filter((action) => action.actionName === identity.actionName && action.objectName === identity.objectName)
+          if (matches.length === 1 && matches[0]!.name.trim()) return matches[0]!.name.trim()
+        }
+      }
+    } catch { /* Missing or non-JSON receipts cannot identify an action. */ }
+  }
+  return '工具调用'
 }
 
 export function trialToolMissingDetails(tool: TrialToolEvidence): string {

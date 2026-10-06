@@ -29,6 +29,7 @@ export function useTeamDraft(teamId: string, bridge: TeamWorkspaceBridge) {
   const [error, setError] = useState('')
   const state = useRef<{ remote?: TeamWorkspace; document?: TeamDefinition; generation: number; saved: number; flight?: Promise<TeamWorkspace | undefined> }>({ generation: 0, saved: 0 })
   const alive = useRef(true)
+  const trialRefresh = useRef(0)
   const flush = useCallback(async (): Promise<TeamWorkspace | undefined> => {
     const s = state.current
     if (s.flight) return s.flight
@@ -54,6 +55,7 @@ export function useTeamDraft(teamId: string, bridge: TeamWorkspaceBridge) {
     return s.flight
   }, [bridge, teamId])
   const replace = useCallback((remote: TeamWorkspace) => {
+    trialRefresh.current += 1
     const normalized = stripDerivedJoinOutput(remote.document)
     state.current.remote = remote; state.current.document = normalized.document
     state.current.generation = normalized.changed ? 1 : 0; state.current.saved = 0
@@ -67,7 +69,7 @@ export function useTeamDraft(teamId: string, bridge: TeamWorkspaceBridge) {
     alive.current = true
     let cancelled = false
     void bridge({ action: 'get', teamId }).then((remote) => { if (!cancelled) replace(remote) }).catch((cause: Error) => { if (!cancelled) setError(cause.message) })
-    return () => { cancelled = true; alive.current = false;  }
+    return () => { cancelled = true; alive.current = false; trialRefresh.current += 1 }
   }, [bridge, teamId, replace])
   const edit = (document: TeamDefinition) => {
     const s = state.current
@@ -76,10 +78,14 @@ export function useTeamDraft(teamId: string, bridge: TeamWorkspaceBridge) {
     setDraft({ ...s.remote, document }); setDirty(true); setError('')
   }
   const refreshTrials = async () => {
+    const revision = state.current.remote?.revision
+    if (revision === undefined) return
+    const request = ++trialRefresh.current
     const remote = await bridge({ action: 'get', teamId })
-    if (state.current.remote && remote.revision === state.current.remote.revision) {
-      state.current.remote = { ...state.current.remote, trials: remote.trials }
-      setDraft((d) => d ? { ...d, trials: remote.trials } : d)
+    if (alive.current && request === trialRefresh.current && state.current.remote?.revision === revision && remote.revision === revision) {
+      const derived = { trials: remote.trials, publication_readiness: remote.publication_readiness }
+      state.current.remote = { ...state.current.remote, ...derived }
+      setDraft((d) => d?.revision === revision ? { ...d, ...derived } : d)
     }
   }
   const discard = () => { if (state.current.remote && !state.current.flight) replace(state.current.remote) }
