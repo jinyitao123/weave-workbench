@@ -7,6 +7,7 @@ const select = (label: string, options: Array<[string, string]>, defaultValue?: 
   { label, ...(defaultValue ? { defaultValue } : {}) },
 );
 const amount = (label: string, readonly = false) => Field.currency({ label, precision: 18, min: 0, defaultValue: 0, ...(readonly ? { readonly: true } : {}) });
+const unknownAmount = (label: string, readonly = false) => Field.currency({ label, precision: 18, min: 0, ...(readonly ? { readonly: true } : {}) });
 
 // Live RISEMAP 2026-09-09: the account had no project type, so CABINET_OTC was created before the first project.
 export const ProjectType = master('forge_project_type', '项目类型', 'tags', {
@@ -20,15 +21,18 @@ export const Project = ObjectSchema.create({
     code: Field.autonumber({ label: '项目编号', autonumberFormat: 'PRJ-{YYYY}-{000}' }),
     type_id: reference('forge_project_type', '项目类型', true),
     customer_id: { ...reference('forge_customer', '客户', true), relatedList: true, relatedListTitle: '项目', relatedListColumns: ["code", "name", "planned_start_on", "planned_end_on", "progress", "status"] },
+    source_order_id: { ...reference('forge_sales_order', '立项来源订单'), hidden: true, readonly: true },
+    source_order_version: { ...text('立项来源冻结版本'), hidden: true, readonly: true },
+    creation_request_signature: { ...text('立项请求签名'), hidden: true, readonly: true },
     customer_name_snapshot: { ...text('客户名称快照'), readonly: true }, manager_id: { ...owner(true), readonlyWhen: P`true` },
     manager_transfer_target_id: { ...owner(), label: '负责人交接目标', hidden: true }, manager_name_snapshot: { ...text('项目负责人快照'), readonly: true },
     priority: select('优先级', [['high', '高'], ['medium', '中'], ['low', '低']], 'medium'),
     planned_start_on: Field.date({ label: '计划开始日期', ...required }),
     planned_end_on: Field.date({ label: '计划结束日期', ...required }),
     actual_start_on: Field.date({ label: '实际开始日期', readonly: true }), actual_end_on: Field.date({ label: '实际结束日期', readonly: true }),
-    expected_revenue: amount('预计营收'), budget_amount: amount('预算金额'),
+    expected_revenue: unknownAmount('预计营收'), budget_amount: unknownAmount('预算金额'),
     contract_amount: amount('合同金额', true), invoice_amount: amount('已开票', true),
-    collected_amount: amount('已回款', true), total_cost: amount('总成本', true),
+    collected_amount: amount('已回款', true), total_cost: unknownAmount('总成本', true),
     progress: Field.number({ label: '项目进度', min: 0, max: 100, scale: 2, defaultValue: 0, readonly: true }),
     status: { ...select('项目状态', [
       ['pending', '待执行'], ['in_progress', '进行中'], ['paused', '已暂停'], ['completed', '已完工'],
@@ -77,7 +81,7 @@ export const ProjectModulePreference = master('forge_project_module_preference',
   goodwill_enabled: Field.boolean({ label: 'Goodwill', defaultValue: true }), attachment_enabled: Field.boolean({ label: '附件', defaultValue: true }), log_enabled: Field.boolean({ label: '项目日志', defaultValue: true }),
 }, ['project_id', 'user_id', 'plan_enabled', 'sales_enabled', 'cost_enabled', 'bom_enabled', 'purchase_enabled', 'task_enabled', 'team_enabled', 'delivery_enabled', 'goodwill_enabled', 'attachment_enabled', 'log_enabled']);
 
-// RISEMAP links a contract and automatically brings in all non-draft orders under it.
+// Each project link retains one explicitly selected approved order and its contract.
 export const ProjectSalesLink = master('forge_project_sales_link', '项目订单合同关联', 'link', {
   name: text('关联名称', true), link_key: code('关联编号'), project_id: Field.masterDetail('forge_project', { label: '所属项目', deleteBehavior: 'cascade', ...required }),
   contract_id: reference('forge_sales_contract', '销售合同', true), order_id: reference('forge_sales_order', '销售订单', true),

@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { Client } from 'pg';
+import { exerciseOrderProjectHandoff } from './order-project-handoff.fixture.mjs';
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const HOST = '127.0.0.1';
@@ -83,10 +84,19 @@ test('employee business HTTP connection uses native metadata, identity and atomi
   await symlink(path.join(APP_DIR, 'node_modules'), path.join(tempDir, 'node_modules'), 'dir');
   await writeFile(path.join(tempDir, 'approval-flow-launcher.plugin.mjs'), `
 import { quotationContentDigest } from ${JSON.stringify(path.join(APP_DIR, 'src/plugins/sales-quotation-readiness.ts'))};
+import { employeeBusinessBinding } from ${JSON.stringify(path.join(APP_DIR, 'src/plugins/employee-business-binding.ts'))};
 export class ApprovalFlowLauncherPlugin {
  name = 'com.inoforge.forge.test.employee-receipt-fault'; version = '1.0.0'; type = 'standard';
  init(ctx) { ctx.hook('kernel:ready', () => {
-  const engine = ctx.getService('objectql'), original = engine.update, originalInsert = engine.insert, originalAction = engine.executeAction; let armed = false, uncertainRace;
+  const engine = ctx.getService('objectql'), original = engine.update, originalInsert = engine.insert, originalAction = engine.executeAction; let armed = false, uncertainRace, nativeFailure, startRace;
+  let memberShape, memberAuditFault; engine.registerHook('beforeUpdate',hook=>{const input=hook.input?.data||hook.input;memberShape={keys:Object.keys(input||{}).sort(),hasPrevious:!!hook.previous?.id,duty:input?.member_duty,active:input?.active};if(memberAuditFault){const mode=memberAuditFault;memberAuditFault=undefined;if(mode==='actor')input.updated_by='forged-actor';else input.updated_at=new Date(Date.now()+(mode==='future'?60000:-60000)).toISOString();}},{object:'forge_project_member',priority:109,packageId:this.name});
+  ctx.getService('http.server').post('/api/v1/__test/start-race',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}startRace={...req.body,attempts:0,entered:false,bReserved:false};startRace.bPassed=new Promise(resolve=>{startRace.releaseAPrecheck=resolve;});startRace.aEntered=new Promise(resolve=>{startRace.releaseB=resolve;});startRace.bReady=new Promise(resolve=>{startRace.releaseA=resolve;});await res.status(200).json({armed:true});});
+  ctx.getService('http.server').post('/api/v1/__test/start-race-state',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}await res.status(200).json({attempts:startRace?.attempts,entered:startRace?.entered,bReserved:startRace?.bReserved,nativeFailure});});
+  ctx.getService('http.server').post('/api/v1/__test/native-failure',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}await res.status(200).json(nativeFailure||{});});
+  ctx.getService('http.server').post('/api/v1/__test/member-audit-fault',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}memberAuditFault=req.body.mode;await res.status(200).json({armed:true});});
+  ctx.getService('http.server').post('/api/v1/__test/remove-project-link',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}try{await engine.transaction(async transaction=>{const link=await engine.findOne('forge_project_sales_link',{where:{id:req.body.linkId,organization_id:req.body.organizationId}},{context:transaction});if(!link)throw new Error('isolated link not found');await engine.delete('forge_project_sales_link',{where:{id:link.id},context:transaction});},{isSystem:true,userId:req.body.actorId,tenantId:req.body.organizationId},{require:true});await res.status(200).json({removed:true});}catch(error){await res.status(500).json({error:String(error)});}});
+  ctx.getService('http.server').post('/api/v1/__test/native-share',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}try{const value=await ctx.getService('sharing').grant(req.body.grant,{isSystem:true,userId:req.body.actorId,tenantId:req.body.organizationId});await res.status(200).json({id:value.id});}catch(error){await res.status(500).json({error:String(error)});}});
+  ctx.getService('http.server').post('/api/v1/__test/member-shape',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}await res.status(200).json(memberShape||{});});
   engine.update = async function(object, data, options) {
    if (armed && object === 'forge_employee_business_operation' && data.status === 'succeeded') { armed = false; throw new Error('injected receipt persistence failure'); }
    return original.call(this, object, data, options);
@@ -96,13 +106,15 @@ export class ApprovalFlowLauncherPlugin {
     if (data.operation_key === uncertainRace.a) await uncertainRace.bReserved;
     if (data.operation_key === uncertainRace.b) { uncertainRace.releaseA(); await uncertainRace.nativeAttempt; }
    }
-   return originalInsert.call(this, object, data, options);
+   if(startRace&&object==='forge_employee_business_operation'&&data.status==='in_progress'){if(data.operation_key===startRace.a)await startRace.bPassed;if(data.operation_key===startRace.b){startRace.releaseAPrecheck();await startRace.aEntered;}}
+   const inserted=await originalInsert.call(this,object,data,options);if(startRace&&object==='forge_employee_business_operation'&&data.status==='in_progress'&&data.operation_key===startRace.b){startRace.bReserved=true;startRace.releaseA();}return inserted;
   };
   engine.executeAction = async function(object, name, action) {
+   if(startRace&&object==='forge_project'&&name==='forgeStartProject'&&action.record?.id===startRace.recordId){const bound=employeeBusinessBinding();startRace.attempts++;if(startRace.attempts===1){startRace.entered=true;startRace.releaseB();await startRace.bReady;}}
    if (uncertainRace && object === 'forge_quotation' && name === 'forgeSubmitQuotation' && action.record?.id === uncertainRace.recordId) {
     uncertainRace.attempts++; uncertainRace.releaseB(); throw new Error('injected uncertain native dispatch before mutation');
    }
-   return originalAction.call(this, object, name, action);
+   try{return await originalAction.call(this, object, name, action);}catch(error){nativeFailure={message:String(error.message),name:String(error.name)};throw error;}
   };
   ctx.getService('http.server').post('/api/v1/__test/uncertain-race', async(req,res) => {
    if (req.headers?.authorization !== 'Bearer ${launcherSecret}') { await res.status(403).json({error:'forbidden'}); return; }
@@ -155,7 +167,7 @@ import { sharedForgeCorePlugin, sharedForgeCoreBundle } from ${JSON.stringify(pa
 import { ApprovalFlowLauncherPlugin } from './approval-flow-launcher.plugin.mjs';
 // Exercise the real employee-only signature handler under the current native confirmation gate.
 stack.plugins=stack.plugins.map(plugin=>plugin===sharedForgeCorePlugin?new AppPlugin({...sharedForgeCoreBundle,
- permissions:[...sharedForgeCoreBundle.permissions,definePermissionSet({name:'test_quotation_price_mask',label:'隔离报价单价字段拒绝',fields:{'forge_quotation_line.taxed_unit_price':{readable:false}},objects:{forge_quotation:{allowRead:true,readScope:'org'},forge_quotation_line:{allowRead:true,readScope:'org'}}})],
+ permissions:[...sharedForgeCoreBundle.permissions,definePermissionSet({name:'test_project_price_mask',label:'隔离项目订单单价拒绝',objects:{},fields:{'forge_sales_order_line.taxed_unit_price':{readable:false}}}),definePermissionSet({name:'test_quotation_price_mask',label:'隔离报价单价字段拒绝',fields:{'forge_quotation_line.taxed_unit_price':{readable:false}},objects:{forge_quotation:{allowRead:true,readScope:'org'},forge_quotation_line:{allowRead:true,readScope:'org'}}})],
  actions:sharedForgeCoreBundle.actions.map(action=>action.name==='contract_register_signature'
   ?{...action,ai:{...action.ai,requiresConfirmation:true}}:action)}):plugin);
 stack.plugins.push(new ApprovalFlowLauncherPlugin());
@@ -378,6 +390,10 @@ export default stack;
     const result=await client.request('/workbench/business-actions/execute','POST',input);
     assert.equal(result.status,200,JSON.stringify(result.value)); assert.equal(result.value.status,'succeeded',JSON.stringify(result.value));
     return result.value;
+  }
+  if (process.env.FORGE_ORDER_PROJECT_PG_ONLY === '1') {
+    await t.test('exact approved order project handoff', async () => exerciseOrderProjectHandoff({admin,organizationId,suffix,databaseClient,createEmployee,idOf,executeEmployee,seedFile,mcpData,mcpText,stopRuntime,startRuntime,launcherSecret,secrets,port,t}));
+    return;
   }
   const signFile=await seedFile(employees.signature,'signed_evidence_attachment');
   await executeEmployee(employees.signature,'forge_sales_contract',contractId,'contract_register_signature',{signed_on:'2026-10-03',signed_evidence_note:'内部合成测试，不发生真实签署'},signFile);
@@ -675,5 +691,8 @@ export default stack;
     assert.ok(++pages<10,'keyset paging must advance');
   } while(cursor);
   assert.equal(found,true,'eligible record after the first 1000 raw rows remains reachable');
+  await t.test('exact approved order to project creation, native source sharing and manager startup', async () => {
+    await exerciseOrderProjectHandoff({admin,organizationId,suffix,databaseClient,createEmployee,idOf,executeEmployee,seedFile,mcpData,mcpText,stopRuntime,startRuntime,launcherSecret,secrets,port,t});
+  });
 
 });

@@ -27,6 +27,7 @@ import { WeaveRunEventPlugin } from './src/plugins/weave-run-event.plugin.js';
 import { WorkbenchOwnedMaterialPlugin } from './src/plugins/workbench-owned-material.plugin.js';
 import { ApprovalWorkListPlugin } from './src/plugins/approval-work-list.plugin.js';
 import { ProjectMemberSharingPlugin } from './src/plugins/project-member-sharing.plugin.js';
+import { ProjectOrderBusinessPlugin } from './src/plugins/project-order-business.plugin.js';
 import { ServiceOrderReferenceSharingPlugin } from './src/plugins/service-order-reference-sharing.plugin.js';
 import { forgeApplicationPlugins } from './src/apps/index.js';
 import { sharedForgeCorePlugin } from './src/apps/shared-core.js';
@@ -72,6 +73,7 @@ export default defineStack({
     new ProjectMemberMaintenancePlugin(),
     new ProjectWorkItemLifecyclePlugin(),
     new ProjectMemberSharingPlugin(),
+    new ProjectOrderBusinessPlugin(),
     new ServiceOrderReferenceSharingPlugin(),
   ],
 });
