@@ -572,7 +572,7 @@ function App(){
     return undefined;
   }
   const emptyValue=value=>value==null||(Array.isArray(value)&&!value.length)?'':value;
-  const standaloneOrderDirty=Boolean(dialog&&Object.keys(dialog.values||{}).some(name=>JSON.stringify(emptyValue(dialog.values[name]))!==JSON.stringify(emptyValue(dialog.baseline?.[name]??serviceOrderFormDefaults[name]))));
+  const standaloneOrderDirty=Boolean(dialog&&Object.keys(dialog.values||{}).filter(name=>formFields.includes(name)).some(name=>JSON.stringify(emptyValue(dialog.values[name]))!==JSON.stringify(emptyValue(dialog.baseline?.[name]??serviceOrderFormDefaults[name]))));
   const formDirty=servicePage.standaloneCreate?standaloneOrderDirty:Boolean(dialog&&((dialog.values&&dialog.baseline&&JSON.stringify(dialog.values)!==JSON.stringify(dialog.baseline))||(dialog.files&&dialog.files.length)));
   function requestCreateCancel(){if(busy)return;if(formDirty)setConfirmCreateCancel(true);else ForgeNavigate('/_console/apps/com.inoforge.forge.sales/page_service_orders')}
   const sourceName=dialog&&dialog.record&&(dialog.record.code||dialog.record.name)||'';

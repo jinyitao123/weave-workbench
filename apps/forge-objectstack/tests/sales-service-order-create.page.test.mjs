@@ -362,6 +362,7 @@ test('native defaults and cleared empty values do not create an unsaved order', 
   let tree = await harness.flushEffects();
   nestedNodes(tree, node => node.type === 'ObjectForm')[0].props.onValuesChange({
     name: '', code: '', customer_id: null, service_mode: 'onsite', urgency: 'medium', onsite_evidence_attachments: [],
+    revision: 1, status: 'pending_acceptance', onsite_evidence_count: 0,
   });
   tree = harness.render();
   nestedNodes(tree, node => node.type === 'button' && serviceText(node).trim() === '取消')[0].props.onClick();
