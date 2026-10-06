@@ -13,7 +13,7 @@ function fixture(extra = {}) {
   const location = { href: '' };
   const harness = createServicePageHarness(SalesOrderCreatePage, {
     permissions: ['sales_order_operator'],
-    records: { forge_sales_contract: [contract], forge_customer: [{ id: 'customer-a', name: '设备客户' }], forge_sales_contract_line: [{ id: 'line-a', contract_id: contract.id, name: '设备', quantity_limit: 1, ordered_quantity: 0 }] },
+    records: { forge_sales_contract: [contract], forge_customer: [{ id: 'customer-a', name: '设备客户' }], forge_sales_contract_line: [{ id: 'line-a', contract_id: contract.id, name: '设备', line_type: 'service', quantity_limit: 1, ordered_quantity: 0, taxed_unit_price: 1, taxed_subtotal: 1, tax_rate: 0, discount_rate: 0 }] },
     globals: { window: { location } }, ...extra,
   });
   return { harness, location };
@@ -67,7 +67,7 @@ test('saving keeps both exit controls disabled and rejects cancellation until th
   let release, started;
   const waiting = new Promise(resolve => { started = resolve; });
   const { harness, location } = fixture({ onAction: () => { started(); return new Promise(resolve => { release = resolve; }); } });
-  await harness.flushEffects(); choose(harness);
+  await harness.flushEffects(); choose(harness); await harness.flushEffects();
   for (const [label, value] of [['计划交货日期', '2026-10-20'], ['付款条件', '已确认付款条件'], ['付款方式', 'bank_transfer']]) {
     input(harness.render(), label).props.onChange({ target: { value } });
   }
