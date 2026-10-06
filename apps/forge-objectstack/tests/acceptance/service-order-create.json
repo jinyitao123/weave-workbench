@@ -7,10 +7,10 @@
   "pageId": "page_service_order_create",
   "status": "review_required",
   "observedAt": "2026-10-07",
-  "reviewedRevision": "724fc363d63cbe565bb5f68bb0d1357d3b157058",
+  "reviewedRevision": "8b516181c8c5472f0dd46da478ecbaf12bd625dd",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts": "8af98c3bdd1d86fc6afff122c51e8ae29cd1cb2ae3549bb2e92aa851fe0e60d0",
-    "apps/forge-objectstack/src/pages/product-ui.ts": "4bdff59553b480771e0f0fcd23dde4cdaa232f632d4748c3e645d3283008936d",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "4161963639d9d54d8d82ae4fcee74c54ca3edd51af9e5d67e6120e16e62cf42f",
     "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts": "a0088ab566ca72d65a6a85b2fc43e2023500ba61511d5a4f4259b62101c46f7b",
     "apps/forge-objectstack/src/views/service-workspace.view.ts": "a9314cee79aca5e70975f498b50a2bf8d94f265b0618bb6977763f587184e78b",
     "apps/forge-objectstack/src/objects/sales.object.ts": "fa936dfee7638c074fde84f67dc7c0b80adac71f2b31571220d322190e32e9e2",

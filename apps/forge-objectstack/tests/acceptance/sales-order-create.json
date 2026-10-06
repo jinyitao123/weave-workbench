@@ -7,10 +7,10 @@
   "pageId": "page_sales_order_create",
   "status": "review_required",
   "observedAt": "2026-10-07",
-  "reviewedRevision": "22c858fcbf784bec29187b5732642774e3976b6c",
+  "reviewedRevision": "8b516181c8c5472f0dd46da478ecbaf12bd625dd",
   "subjectFiles": {
-    "apps/forge-objectstack/src/pages/sales-order-create.page.ts": "c5854b53c0dd6c1d612181827913e0b39710fd703d44fe4f94496eebd126e0b0",
-    "apps/forge-objectstack/src/pages/product-ui.ts": "4bdff59553b480771e0f0fcd23dde4cdaa232f632d4748c3e645d3283008936d",
+    "apps/forge-objectstack/src/pages/sales-order-create.page.ts": "11b867ad7b47a0abccf628b63fa9b93428ef4c91d8b3604c6b62a4f48c9a4fde",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "4161963639d9d54d8d82ae4fcee74c54ca3edd51af9e5d67e6120e16e62cf42f",
     "apps/forge-objectstack/src/objects/sales.object.ts": "fa936dfee7638c074fde84f67dc7c0b80adac71f2b31571220d322190e32e9e2",
     "apps/forge-objectstack/src/actions/sales.action.ts": "13de0e1e97d5b5c79f1d37d8b38bbd9bb27ac89a4889f101e544389a9d9a4bbd",
     "apps/forge-objectstack/src/permissions/sales-order.permission.ts": "14ce34a26eead8d92fd431a14f81b2ecfe2ef630262a271f612a45b34d510ce0",
@@ -36,12 +36,12 @@
     },
     "visual": {
       "status": "pending",
-      "notes": "当前为局部实现／补证，全页面、正常业务、独立评审及必要持久化／性能未完成。",
+      "notes": "公共标题／三段／底部组候选已完成桌面两列、窄屏单列及无越界补证；完整原要求与当前参考／独立评审待完成。",
       "evidence": []
     },
     "interaction": {
       "status": "pending",
-      "notes": "当前为局部实现／补证，全页面、正常业务、独立评审及必要持久化／性能未完成。",
+      "notes": "原生控件label点击及请求发出前本机busy／合成拒绝补证；非真实创建／拒绝，完整交互待评审。",
       "evidence": []
     },
     "business": {
