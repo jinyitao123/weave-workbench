@@ -503,6 +503,7 @@ BEGIN
     ('forge_qualification_declaration', 'expected_amount'),
     ('forge_qualification_declaration', 'material_count'),
     ('forge_quotation', 'accepted_pricing_version'),
+    ('forge_quotation', 'approved_pricing_version'),
     ('forge_quotation', 'cost_total'),
     ('forge_quotation', 'discount_amount'),
     ('forge_quotation', 'item_count'),

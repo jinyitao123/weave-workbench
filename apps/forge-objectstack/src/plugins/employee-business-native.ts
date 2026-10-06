@@ -7,6 +7,8 @@ import { canonicalJSON, digest, TaskConnectionFailure } from './native-task-auth
 import { completedOrderApproval } from './sales-order-readiness.js';
 import { businessContext } from './business-transaction.js';
 import { nativeActionConfirmationSupported, nativeActionRequiresConfirmation } from './native-action-confirmation.js';
+import { quotationFollowUpAction } from './sales-quotation-readiness.js';
+import { employeeBusinessBinding } from './employee-business-binding.js';
 
 export type BusinessRow = Record<string, unknown>;
 export interface EmployeeParameter {
@@ -38,7 +40,7 @@ export class EmployeeNativeActions {
   }
 
   /** Called only after the service has revalidated the employee's bound intent and operation. */
-  async runBoundAction(name: string, input: BusinessRow): Promise<unknown> {
+  async runBoundAction(name: string, input: BusinessRow, beforeDispatch?: () => void): Promise<unknown> {
     const metadata = await this.metadata(String(input.objectName));
     const definition = (metadata.actions as BusinessRow[] | undefined)?.find(action => action.name === name);
     if (!definition) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_METADATA_UNAVAILABLE', '当前动作声明不可核验');
@@ -46,6 +48,11 @@ export class EmployeeNativeActions {
     if (required && !nativeActionConfirmationSupported()) {
       throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_CONFIRMATION_UNSUPPORTED', '当前原生协议不能可靠传递本次办理授权');
     }
+    const bound = employeeBusinessBinding();
+    if (!bound || bound.userId !== this.actor.userId || bound.organizationId !== this.actor.tenantId || bound.actionName !== name
+      || bound.objectName !== input.objectName || bound.recordId !== input.recordId || !Number.isFinite(Date.parse(bound.expiresAt))
+      || Date.parse(bound.expiresAt) <= Date.now()) throw new TaskConnectionFailure(409, 'EMPLOYEE_ACTION_CONTEXT_CHANGED', '本次办理上下文已变化或过期，请重新打开');
+    beforeDispatch?.();
     return this.bridge.runAction(name, required ? { ...input, confirm: true } : input);
   }
 
@@ -113,6 +120,21 @@ export class EmployeeNativeActions {
         });
         p.enum = p.enumLabels.map(option => option.value);
       }
+      if (!catalog && name === 'contract_type_id' && type === 'lookup' && field?.reference === 'forge_contract_type') {
+        const result = businessRow(await this.bridge.query('forge_contract_type', {
+          where: { status: 'active' }, fields: ['id', 'name', 'code'], limit: 101, orderBy: [{ field: 'id', order: 'asc' }],
+        }));
+        if (!Array.isArray(result?.records) || !result.records.length || result.records.length > 100
+          || result.total != null && (!Number.isSafeInteger(result.total) || Number(result.total) > 100)) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_LOOKUP_UNAVAILABLE', '可用合同类型无法完整读取');
+        p.enumLabels = result.records.map(value => {
+          const item = businessRow(value);
+          if (typeof item?.id !== 'string' || !item.id || typeof item.name !== 'string' || !item.name.trim() || item.name.length > 160) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_LOOKUP_UNAVAILABLE', '合同类型缺少准确可读名称');
+          return { value: item.id, label: item.name };
+        });
+        if (new Set(p.enumLabels.map(option => option.value)).size !== p.enumLabels.length
+          || new Set(p.enumLabels.map(option => option.label)).size !== p.enumLabels.length) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_LOOKUP_AMBIGUOUS', '合同类型名称无法唯一核对，请先核对业务设置');
+        p.enum = p.enumLabels.map(option => option.value);
+      }
       const min = raw.min ?? field?.min, max = raw.max ?? field?.max, maxLength = raw.maxLength ?? field?.maxLength;
       if (typeof min === 'number' && Number.isFinite(min)) p.minimum = min;
       if (typeof max === 'number' && Number.isFinite(max)) p.maximum = max;
@@ -125,6 +147,12 @@ export class EmployeeNativeActions {
 
   async employeeActions(objectName: string, record?: BusinessRow): Promise<EmployeeAction[]> {
     let relevantRecord = record;
+    if (objectName === 'forge_quotation' && record && quotationFollowUpAction(record, this.actor.userId) === 'quotation_convert_to_contract') {
+      const conversion = await this.context.getService<IObjectQLEngine>('objectql').findOne('forge_quotation_contract_conversion', {
+        where: { quotation_id: record.id, organization_id: this.actor.tenantId },
+      }, { context: businessContext(this.actor.userId!, this.actor.tenantId!) });
+      if (conversion) relevantRecord = { ...record, has_formal_conversion: true };
+    }
     if (objectName === 'forge_sales_order' && record?.status === 'pending_approval' && record.responsible_id === this.actor.userId && this.actor.tenantId) {
       const outcome = await completedOrderApproval(this.context.getService<IObjectQLEngine>('objectql'), record, businessContext(this.actor.userId!, this.actor.tenantId));
       // A mirrored field alone is not authority for offering recovery.
@@ -160,6 +188,10 @@ export class EmployeeNativeActions {
 // native permissions; execution still revalidates every rule transactionally.
 function employeeActionRelevant(name: string, row: BusinessRow, actor?: string): boolean {
   switch (name) {
+    case 'quotation_submit':
+    case 'quotation_send':
+    case 'quotation_accept':
+    case 'quotation_convert_to_contract': return row.has_formal_conversion !== true && quotationFollowUpAction(row, actor) === name;
     case 'contract_set_order_conditions': return row.status === 'active' && !row.signed_on && row.responsible_id === actor;
     case 'contract_register_signature': return row.status === 'active' && !row.signed_on && row.responsible_id !== actor && ['none', 'prepayment'].includes(String(row.order_payment_requirement));
     case 'contract_convert_to_sales_order':
