@@ -1,9 +1,10 @@
 import type { Plugin, PluginContext } from '@objectstack/core';
-import type { IApprovalService, IObjectQLEngine, IStorageService } from '@objectstack/spec/contracts';
+import type { IApprovalService, IObjectQLEngine, IStorageService, ISecurityService } from '@objectstack/spec/contracts';
 import type { HookContext } from '@objectstack/spec/data';
 import { businessRow } from './employee-business-native.js';
 import { businessContext } from './business-transaction.js';
 import { effectivePositionUsers } from './business-position-resolution.js';
+import { projectQuotationLines } from './quotation-approval-snapshot.js';
 import {
   QUOTATION_SUBMIT_TARGET, QUOTATION_SEND_TARGET, QUOTATION_ACCEPT_TARGET, QUOTATION_CONVERT_TARGET,
   submitQuotation, registerQuotationSend, registerQuotationAcceptance, convertQuotationToContract,
@@ -57,6 +58,12 @@ export class SalesOrderBusinessPlugin implements Plugin {
       if (request?.object_name === 'forge_quotation') {
         const actorId = context.userId;
         if (!actorId || request.submitter_id === actorId) throw new Error('FORBIDDEN: 报价发起人不能审批自己的报价');
+        if (input.decision === 'approve' && request.status === 'pending') {
+          const visible = await native.getRequest(id, context);
+          if (!visible || visible.viewer?.can_act !== true) throw new Error('FORBIDDEN: 当前员工不能办理该报价审批');
+          const lines = await projectQuotationLines(visible as unknown as Record<string, unknown>, ctx.getService<ISecurityService>('security'), context);
+          if (!lines) throw new Error('APPROVAL_QUOTATION_LINES_INCOMPLETE: 本次报价审批未固定完整明细，不能同意；请保留原请求并说明缺失原因');
+        }
       }
       if (request?.object_name === 'forge_sales_order') {
         const organizationId = context.tenantId, actorId = context.userId;

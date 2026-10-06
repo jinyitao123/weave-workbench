@@ -17,7 +17,7 @@ export function quotationFollowUpAction(row: Row, actor?: string): string | unde
   if (!actor || row.responsible_id !== actor || row.owner_id !== actor) return undefined;
   const version = Number(row.pricing_version ?? 0);
   if (!Number.isSafeInteger(version) || version < 0) return undefined;
-  if (row.status === 'draft') return 'quotation_submit';
+  if (row.status === 'draft' || row.status === 'rejected') return 'quotation_submit';
   if (row.submitted_pricing_version == null || row.approved_pricing_version == null
     || Number(row.submitted_pricing_version) !== version || Number(row.approved_pricing_version) !== version
     || !/^[0-9a-f]{64}$/.test(String(row.submitted_content_sha256))) return undefined;

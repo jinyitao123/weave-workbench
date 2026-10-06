@@ -14,6 +14,7 @@ import { SalesOrderBusinessPlugin } from '../src/plugins/sales-order-business.pl
 import { SalesOrderApprovalFlow } from '../src/flows/sales-order-approval.flow.ts';
 import { ApprovalWorkbenchContextPlugin } from '../src/plugins/approval-workbench-context.plugin.ts';
 import { ORDER_APPROVAL_MCP_RECALL_TARGET, ORDER_APPROVAL_MCP_APPROVE_TARGET, ORDER_APPROVAL_MCP_REJECT_TARGET } from '../src/actions/approval-workbench.action.ts';
+import * as nativeApprovalActions from '../src/actions/approval-workbench.action.ts';
 import { businessActionPolicy } from '../src/plugins/business-action-policy.ts';
 import { completedOrderApproval } from '../src/plugins/sales-order-readiness.ts';
 import { SIGNATURE_TARGET, ORDER_CONDITIONS_TARGET, CONTRACT_ORDER_TARGET, ORDER_SUBMIT_TARGET, CONTRACT_PREPAYMENT_TARGET, PREPAYMENT_CONFIRM_TARGET, ORDER_APPLY_APPROVAL_TARGET } from '../src/plugins/sales-order-domain.ts';
@@ -54,6 +55,8 @@ test('sales order native actions and approval preserve role, payment and atomic 
   const routes = new Map();
   const base = { name: 'com.objectstack.engine.objectql', version: '1.0.0', type: 'standard', init(ctx) {
     ctx.registerService('objectql', engine); ctx.registerService('data', engine); ctx.registerService('storage', storage); ctx.registerService('manifest', { register() {} });
+    const definitions = Object.values(nativeApprovalActions).filter(value => value && typeof value === 'object' && value.name);
+    ctx.registerService('metadata', { async getDiagnosed(type, name) { return { data: type === 'action' ? definitions.find(value => value.name === name) : undefined, degraded: false, errors: [] }; } });
     ctx.registerService('http.server', { get(path, handler) { routes.set(path, handler); }, post() {}, put() {}, patch() {}, delete() {} });
     ctx.registerService('auth', { api: { async getSession({ headers }) {
       const actor = headers.get('authorization')?.slice(7);

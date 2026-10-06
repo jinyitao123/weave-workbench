@@ -13,7 +13,7 @@ const sources: Array<{ object: string; kinds: Kind[]; where: BusinessRow }> = [
   { object: 'forge_sales_contract', kinds: ['contract_order_conditions', 'contract_signature', 'contract_prepayment', 'sales_order_creation'], where: { status: 'active' } },
   { object: 'forge_customer_prepayment', kinds: ['prepayment_confirmation'], where: { status: 'pending_confirmation' } },
   { object: 'forge_sales_order', kinds: ['sales_order_submission'], where: { status: { $in: ['draft', 'pending_approval'] } } },
-  { object: 'forge_quotation', kinds: ['quotation_follow_up'], where: { status: { $in: ['draft', 'approved', 'sent', 'accepted'] } } },
+  { object: 'forge_quotation', kinds: ['quotation_follow_up'], where: { status: { $in: ['draft', 'rejected', 'approved', 'sent', 'accepted'] } } },
 ];
 
 /** A read projection of business facts. There is no task table or lifecycle. */

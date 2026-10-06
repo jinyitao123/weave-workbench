@@ -32,6 +32,7 @@ export const Quotation = ObjectSchema.create({
     submitted_pricing_version: Field.number({ label: '提交核价版本', min: 0, scale: 0, readonly: true }),
     approved_pricing_version: Field.number({ label: '审批核价版本', min: 0, scale: 0, readonly: true, hidden: true }),
     submitted_content_sha256: Field.text({ label: '提交报价内容摘要', maxLength: 64, readonly: true, hidden: true }),
+    submitted_line_snapshot: Field.textarea({ label: '提交报价明细快照', readonly: true, hidden: true }),
     submitted_action_receipt: Field.textarea({ label: '报价提交原生回执', readonly: true, hidden: true }),
     sent_evidence_attachment: Field.file({ label: '发送凭证', readonly: true }),
     sent_evidence_note: Field.textarea({ label: '发送说明', maxLength: 2000, readonly: true }), sent_at: Field.datetime({ label: '发送时间', readonly: true }),

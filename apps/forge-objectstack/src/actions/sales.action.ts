@@ -420,7 +420,7 @@ try {
 export const QuotationSubmit = defineAction({
   name: 'quotation_submit', label: '提交审批', objectName: 'forge_quotation', icon: 'send', locations: [...locations], order: 10,
   requiredPermissions: ['sales_quotation_draft_create'],
-  visible: `record.status == 'draft'`, confirmText: '提交核价版本后，报价明细将锁定并进入 ObjectStack 审批中心。是否继续？', refreshAfter: true,
+  visible: `record.status == 'draft' || record.status == 'rejected'`, confirmText: '提交核价版本后，报价明细将锁定并进入 ObjectStack 审批中心。是否继续？', refreshAfter: true,
   successMessage: '报价已提交原生审批',
   type: 'script', target: QUOTATION_SUBMIT_TARGET,
   ai: { exposed: true, category: 'action', requiresConfirmation: true,
