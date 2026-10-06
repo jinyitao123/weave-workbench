@@ -275,6 +275,20 @@ test('registered package action creates one native approval request for the sale
     where: { object_name: 'forge_sales_contract', record_id: contractId }, fields: ['id'], limit: 10,
   }, { context })).length, 0, 'a failed first submission creates no native approval request');
 
+  const sharing = kernel.getService('sharing');
+  const externalSource = 'unrelated-team-provenance';
+  await sharing.grant({ object: 'forge_sales_contract', recordId: contractId, recipientId: DELIVERY_REVIEWER, accessLevel: 'read', source: 'team', sourceId: externalSource }, context);
+  const externalGrant = await engine.findOne('sys_record_share', { where: { object_name: 'forge_sales_contract', record_id: contractId, recipient_id: DELIVERY_REVIEWER, source: 'team', source_id: externalSource } }, { context });
+  assert.ok(externalGrant, 'the unrelated native team provenance exists before submission');
+  await assert.rejects(engine.executeAction('forge_sales_contract', CONTRACT_MATERIAL_SUBMISSION_TARGET, actionContext), /CONFLICT:.*其他来源/);
+  assert.equal((await engine.find('forge_sales_contract_submission', { where: { contract_id: contractId }, fields: ['id'], limit: 10 }, { context })).length, 0, 'share conflict rolls back the complete material ledger');
+  assert.equal((await engine.find('sys_attachment', { where: { parent_object: 'forge_sales_contract_submission', file_id: { $in: [primaryId, attachmentId] } }, fields: ['id'], limit: 10 }, { context })).length, 0, 'share conflict rolls back the already-created native file holders');
+  const conflictingShares = await engine.find('sys_record_share', { where: { object_name: 'forge_sales_contract', record_id: contractId }, fields: ['id','source_id','recipient_id'], limit: 10 }, { context });
+  assert.deepEqual(conflictingShares.map(row => ({ id: row.id, source: row.source_id, recipient: row.recipient_id })), [{ id: externalGrant.id, source: externalSource, recipient: DELIVERY_REVIEWER }], 'the unrelated provenance is preserved and no partial reviewer share escapes');
+  assert.equal((await engine.findOne('forge_sales_contract', { where: { id: contractId } }, { context })).status, 'draft');
+  assert.equal((await engine.find('sys_approval_request', { where: { object_name: 'forge_sales_contract', record_id: contractId }, fields: ['id'], limit: 10 }, { context })).length, 0, 'conflict creates no approval request');
+  await sharing.revoke(externalGrant.id, context, { object: 'forge_sales_contract', recordId: contractId });
+
   const first = await engine.executeAction('forge_sales_contract', CONTRACT_MATERIAL_SUBMISSION_TARGET, actionContext);
   assert.equal(first.status, 'pending_approval');
   assert.equal(first.material_file_id, primaryId);

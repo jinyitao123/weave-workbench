@@ -104,7 +104,7 @@ export async function synchronizeContractReviewShares(
     // Native SharingService upserts on source (not source_id). Never overwrite a
     // different team's provenance for the same recipient/record.
     const conflictingTeamGrant = existing.some(share => share.source === 'team' && share.recipient_id === recipientId);
-    if (conflictingTeamGrant) continue;
+    if (conflictingTeamGrant) throw new Error('CONFLICT: 当前复核员工已有其他来源的合同团队分享，本次材料提交未生效');
     await sharing.grant({
       object: CONTRACT_OBJECT, recordId: contractId, recipientType: 'user', recipientId,
       accessLevel: 'read', source: 'team', sourceId,
