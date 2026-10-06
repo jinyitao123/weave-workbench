@@ -713,7 +713,7 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
   test('routes desktop jobs by repository paths and runs commands from the desktop package', () => {
     type Workflow = {
       defaults?: { run?: { 'working-directory'?: string } }
-      jobs: Record<string, { needs?: string | string[]; if?: string; steps?: Array<{ run?: string; with?: Record<string, unknown> }> }>
+      jobs: Record<string, { needs?: string | string[]; if?: string; steps?: Array<{ uses?: string; run?: string; if?: string; with?: Record<string, unknown> }> }>
     }
     const ci = load(readFileSync('../.github/workflows/desktop-ci.yml', 'utf8')) as Workflow
     const audit = load(readFileSync('../.github/workflows/desktop-audit.yml', 'utf8')) as Workflow
@@ -726,10 +726,16 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
     expect(release.defaults?.run?.['working-directory']).toBe('desktop')
     expect(pathFilterScript).toContain('desktop .github/workflows/desktop-*.yml')
     expect(pathFilterScript).toContain("EVENT_NAME\" == 'workflow_dispatch'")
-    for (const jobName of ['production-audit', 'quality', 'hermetic-e2e', 'windows-state-migration', 'packaging-smoke', 'local-qa-package']) {
+    for (const jobName of ['production-audit', 'quality', 'hermetic-e2e', 'windows-state-migration', 'packaging-smoke']) {
       expect(ci.jobs[jobName].needs, jobName).toBe('desktop-path-filter')
       expect(ci.jobs[jobName].if, jobName).toContain('needs.desktop-path-filter.outputs.run')
     }
+    const localQa = ci.jobs['local-qa-package']
+    expect(localQa.needs).toEqual(['desktop-path-filter', 'production-audit', 'quality', 'hermetic-e2e', 'windows-state-migration'])
+    expect(localQa.if).toBe("github.event_name == 'workflow_dispatch' && needs.desktop-path-filter.outputs.run == 'true'")
+    expect(localQa.steps?.find((step) => step.uses?.startsWith('actions/checkout@'))?.with?.ref).toBe('${{ github.sha }}')
+    expect(localQa.steps?.find((step) => step.run?.startsWith('${{ matrix.package }}'))?.run).toBe('${{ matrix.package }} -- --skip-verify')
+    expect(localQa.steps?.some((step) => step.if === "matrix.runner == 'ubuntu-22.04'" && step.run?.includes('install -y libarchive-tools'))).toBe(true)
 
     for (const workflow of [ci, audit, release]) {
       for (const job of Object.values(workflow.jobs)) {
