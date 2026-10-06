@@ -116,7 +116,9 @@ test('standalone service-order page uses the current order form, public document
   assert.equal(header.props.title, '新建服务工单');
   assert.equal(typeof header.props.subtitle, 'string');
   const workspace = nestedNodes(tree, node => node.type === 'DocumentWorkspace')[0];
-  assert.equal(workspace.props.sidebarLabel, '工单操作');
+  assert.equal(workspace.props.footerLabel, '工单操作');
+  assert.equal(workspace.props.sidebar, undefined, 'create actions belong below the native form');
+  assert.ok(workspace.props.footer, 'the document footer hosts the existing create and cancel actions');
   const form = nestedNodes(tree, node => node.type === 'ObjectForm' && node.props.objectName === 'forge_service_order')[0];
   assert.ok(form, 'the standalone page keeps the existing native service-order ObjectForm');
   assert.ok(form.props.fields.includes('customer_id') && form.props.fields.includes('sales_order_id'));
