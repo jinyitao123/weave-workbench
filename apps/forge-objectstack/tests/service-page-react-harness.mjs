@@ -68,6 +68,7 @@ export function createServicePageHarness(page,options={}){
     const footer=typeof props.footer==='function'?props.footer({requestClose:()=>{},busy:props.busy===true}):props.footer;
     return asNode('CompositeDialog',props,[props.children,footer]);
   });
+  components.DocumentWorkspace=register('DocumentWorkspace',props=>asNode('DocumentWorkspace',props,[props.main,props.sidebar,props.footer]));
   components.ObjectForm=register('ObjectForm',props=>{
     forms.push(props);
     props.onControllerReady?.({validate:async()=>({valid:true,values:typeof formValues==='function'?formValues(props):formValues})});

@@ -74,6 +74,11 @@ test('saving keeps both exit controls disabled and rejects cancellation until th
   const saving = button(harness.render(), '创建订单草稿').props.onClick();
   await waiting;
   const tree = harness.render();
+  assert.equal(nodes(tree, node => node.type === 'fieldset')[0].props.disabled, true);
+  input(tree, '订单名称').props.onChange({ target: { value: '保存中不应改掉的内容' } });
+  assert.notEqual(input(harness.render(), '订单名称').props.value, '保存中不应改掉的内容');
+  assert.equal(input(tree, '付款方式').props.disabled, true);
+  assert.equal(input(tree, '计划交货日期').props.disabled, true);
   for (const label of ['返回订单列表', '取消']) {
     const exit = button(tree, label); assert.equal(exit.props.disabled, true);
     exit.props.onClick();
