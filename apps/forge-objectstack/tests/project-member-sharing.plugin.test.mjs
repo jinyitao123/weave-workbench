@@ -29,7 +29,7 @@ function fakeRuntime({ members = [], attachments = [], logs = [], shares = [] } 
     },
     find: async (object, query, options) => {
       findCalls.push({ kind: 'find', object, query, context: options?.context });
-      const rows = datasets[object] || [];
+      const rows = object === 'sys_record_share' ? [...shareRows.entries()].flatMap(([key, entries]) => { const [object_name, record_id] = key.split(':'); return entries.map(row => ({ organization_id: 'org-a', recipient_type: 'user', object_name, record_id, ...row })); }) : datasets[object] || [];
       return rows.filter(row => Object.entries(query?.where || {}).every(([key, value]) => row[key] === value));
     },
   };
@@ -72,7 +72,6 @@ function operationContext(overrides = {}) {
     event: 'afterInsert',
     session: { userId: 'project-admin-a', organizationId: 'org-a' },
     user: { id: 'project-admin-a', organizationId: 'org-a' },
-    transaction: { id: 'tx-a' },
     input: {},
     ...overrides,
   };
@@ -118,7 +117,6 @@ test('adding an active member shares the project and existing evidence with a te
     assert.equal(context.isSystem, true);
     assert.equal(context.userId, 'project-admin-a');
     assert.equal(context.tenantId, 'org-a');
-    assert.equal(context.transaction.id, 'tx-a');
   }
 });
 

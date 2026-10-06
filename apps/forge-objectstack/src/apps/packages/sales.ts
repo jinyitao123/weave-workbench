@@ -8,6 +8,7 @@ import {
   salesCustomerFollowUpOperatorPermission,
   salesSettingsManagerPermission,
 } from '../../permissions/application-settings.permission.js';
+import { salesPerformanceReaderPermission, salesPerformanceConfirmationPermission, salesPerformanceRebookPermission } from '../../permissions/sales-performance.permission.js';
 import { defineForgeApplicationPackage } from '../package.js';
 
 export const salesApplication = defineForgeApplicationPackage('sales', [
@@ -28,4 +29,7 @@ export const salesApplication = defineForgeApplicationPackage('sales', [
   salesReferenceReaderPermission,
   salesCustomerFollowUpOperatorPermission,
   salesSettingsManagerPermission,
+  salesPerformanceReaderPermission,
+  salesPerformanceConfirmationPermission,
+  salesPerformanceRebookPermission,
 ]);
