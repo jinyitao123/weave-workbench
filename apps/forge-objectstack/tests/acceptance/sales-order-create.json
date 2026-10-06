@@ -7,9 +7,9 @@
   "pageId": "page_sales_order_create",
   "status": "review_required",
   "observedAt": "2026-10-07",
-  "reviewedRevision": "8b516181c8c5472f0dd46da478ecbaf12bd625dd",
+  "reviewedRevision": "d6b2d0c7f54b0d7dbc4f455c600381f6719da476",
   "subjectFiles": {
-    "apps/forge-objectstack/src/pages/sales-order-create.page.ts": "11b867ad7b47a0abccf628b63fa9b93428ef4c91d8b3604c6b62a4f48c9a4fde",
+    "apps/forge-objectstack/src/pages/sales-order-create.page.ts": "1d9c89a681b08060e318872df052b3d95365e21aeef371e941478160b4da157c",
     "apps/forge-objectstack/src/pages/product-ui.ts": "4161963639d9d54d8d82ae4fcee74c54ca3edd51af9e5d67e6120e16e62cf42f",
     "apps/forge-objectstack/src/objects/sales.object.ts": "fa936dfee7638c074fde84f67dc7c0b80adac71f2b31571220d322190e32e9e2",
     "apps/forge-objectstack/src/actions/sales.action.ts": "13de0e1e97d5b5c79f1d37d8b38bbd9bb27ac89a4889f101e544389a9d9a4bbd",
@@ -41,7 +41,7 @@
     },
     "interaction": {
       "status": "pending",
-      "notes": "原生控件label点击及请求发出前本机busy／合成拒绝补证；非真实创建／拒绝，完整交互待评审。",
+      "notes": "唯一原生受控ObjectForm的必填显错／首错误焦点、编号可空及合法值本机请求前暂停／拒绝已补证；不算真实创建业务通过。",
       "evidence": []
     },
     "business": {
@@ -277,7 +277,7 @@
       ],
       "steps": [],
       "expected": "缺少必填时对应字段显示错误，保留输入且不创建单据。",
-      "actual": "当前实际Page仅消费从已签署合同创建草稿的source；直接新建、完整预览／提交及整体业务验收保留待对齐。",
+      "actual": "四项原生不能为空及空白名称阻断、aria-invalid／描述关联与首错误焦点在桌面／窄屏核对，完整校验窗口0创建请求；完整业务与独立评审仍待验。",
       "stateEffect": "writes_business_state",
       "status": "pending",
       "evidence": []
