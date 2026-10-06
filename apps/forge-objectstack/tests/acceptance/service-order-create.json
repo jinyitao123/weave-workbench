@@ -7,9 +7,9 @@
   "pageId": "page_service_order_create",
   "status": "review_required",
   "observedAt": "2026-10-07",
-  "reviewedRevision": "7bb2eb2303f9d89ec65316765e01093f3cc33e12",
+  "reviewedRevision": "8b1df3eb889d82ed9b56ce4b9b3e31a4e1e3f6bd",
   "subjectFiles": {
-    "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts": "34cbaaa63500ac750344c8c8b476f22f8f1f73c2f685df8d1b318a3ed04697f6",
+    "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts": "2576046ea8f7937a61d7ecad455c415c2b28eed428eb5f57ac90c22864f33a7f",
     "apps/forge-objectstack/src/pages/product-ui.ts": "4bdff59553b480771e0f0fcd23dde4cdaa232f632d4748c3e645d3283008936d",
     "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts": "a0088ab566ca72d65a6a85b2fc43e2023500ba61511d5a4f4259b62101c46f7b",
     "apps/forge-objectstack/src/views/service-workspace.view.ts": "a9314cee79aca5e70975f498b50a2bf8d94f265b0618bb6977763f587184e78b",
@@ -431,7 +431,7 @@
       ],
       "steps": [],
       "expected": "按参考取证保留编号 1–5 的服务需求、客户与产品、质保信息、费用与报价、问题／服务内容及首尾动作结构。",
-      "actual": "当前仍是四个原生分组和右侧创建动作，结构差异未实现。",
+      "actual": "已有23字段在唯一原生form内保留并分为五段；公共可选编号token候选、跨段输入／校验和未启用原表单默认状态完成隔离GUI补证。首尾操作、业务缺口、当前参考及几何仍未齐，整项pending。",
       "stateEffect": "read_only",
       "status": "pending",
       "evidence": []
@@ -601,6 +601,7 @@
     "原服务角色的财务／订单明细权限须与消费者一起核对，不能扩权或把无权金额写成零。",
     "完整build因历史财务验收图片缺失失败；受验源文件摘要与版本已更新，旧验收记录未改为accepted。",
     "地址GUI的403为明确的本机响应故障注入，原生响应200；不冒充后端权限策略拒绝。",
-    "电话来源的原角色联系方式读取真实403，当前创建缺省contact.phone与模型不符，待正式业务契约解决；联系人页错误状态修复不替代电话联动。"
+    "电话来源的原角色联系方式读取真实403，当前创建缺省contact.phone与模型不符，待正式业务契约解决；联系人页错误状态修复不替代电话联动。",
+    "五段编号在私有公共客户端候选验证，公开锁未升级且已恢复冻结客户端；段落名称不代表责任／费用或草稿能力已实现。"
   ]
 }
