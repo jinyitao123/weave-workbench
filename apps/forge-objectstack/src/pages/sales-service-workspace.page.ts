@@ -41,6 +41,14 @@ const serviceViews = {
   parts: ServicePartRequestViews,
 };
 
+const serviceOrderCreateSections = [
+  { name: 'request', label: '服务需求', columns: 2, fields: ['service_type', 'service_mode', 'urgency'] },
+  { name: 'customer_product', label: '客户与产品', columns: 2, fields: ['customer_id', 'contact_id', 'contact_phone', 'sales_order_id', 'contract_id', 'service_object', 'service_address', 'region'] },
+  { name: 'warranty', label: '质保信息', columns: 2, fields: ['warranty_status', 'warranty_starts_on', 'warranty_ends_on'] },
+  { name: 'pricing', label: '费用与报价', columns: 2, fields: ['responsibility_type', 'quotation_handling'] },
+  { name: 'problem', label: '问题 / 服务内容', columns: 2, fields: ['code', 'name', 'fault_symptom', 'impact_scope', 'onsite_evidence_attachments', 'remarks', 'expected_visit_on'] },
+];
+
 const serviceConfigCategorySchema = ServiceConfigItem.fields.category as unknown as {
   options?: Array<{ value: string; label: string }>;
 };
@@ -111,6 +119,7 @@ const serviceCss = JSON.stringify(forgeProductUiCss + `
 @container(max-width:55.999rem){.forge-sales-service .ss-create-workspace>[data-slot="document-workspace-sidebar"]{order:-1}}
 .forge-sales-service .ss-create-fieldset{min-width:0;margin:0;padding:0;border:0}
 .forge-sales-service .ss-create-actions{display:grid;gap:7px}
+.forge-sales-service .ss-create-workspace{--ui-section-step-display:inline-flex;--ui-section-accent-display:none}
 .forge-sales-service .ss-create-actions .fp-button{width:100%}
 .forge-sales-service .ss-readonly-note{margin:10.5px 0;padding:10.5px 14px;border:1px solid var(--fp-line);border-radius:3.5px;color:var(--fp-muted);font-size:12.25px;line-height:17.5px}
 
@@ -185,6 +194,7 @@ const warrantyRulesCategory=${warrantyRulesCategoryJson};
 const serviceOrderSourceField=${JSON.stringify(serviceOrderSourceField)};
 const serviceOrderTypeField=${JSON.stringify({...ServiceOrder.fields.service_type,name:'service_type',label:'服务场景'})};
 const serviceOrderFormDefaults=${JSON.stringify(serviceOrderFormDefaults)};
+const serviceOrderCreateSections=${JSON.stringify(serviceOrderCreateSections)};
 const css=${serviceCss};
 ${serviceDispatchPanelHelpersSource}
 ${servicePersonalWorkspacePanelHelpersSource}
@@ -237,7 +247,7 @@ function App(){
   const detailLoadSession=React.useRef(0);
   const personalRequest=React.useRef(0);
   const sourceView=servicePage.viewKey?serviceViews[servicePage.viewKey]:null;
-  const formView=sourceView&&sourceView.form?sourceView.form:null;
+  const formView=sourceView&&sourceView.form?servicePage.standaloneCreate?{...sourceView.form,sections:serviceOrderCreateSections}:sourceView.form:null;
   const formFields=formView?formView.sections.flatMap(section=>(section.fields||[]).map(field=>typeof field==='string'?field:field.field)):[];
   const formObject=servicePage.mode==='quotations'?'forge_service_quotation':servicePage.mode==='settlements'?'forge_service_settlement':servicePage.mode==='configuration'?'forge_service_config_item':servicePage.mode==='warranty'?'forge_warranty_card':'forge_service_order';
   const orderSourceKey=serviceOrderSourceKey(dialog?.values||{});

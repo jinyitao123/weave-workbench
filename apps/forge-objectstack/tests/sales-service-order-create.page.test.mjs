@@ -5,6 +5,7 @@ import { FieldSchema } from '@objectstack/spec/data';
 import { createServicePageHarness, serviceText } from './service-page-react-harness.mjs';
 import { ServiceOrderCreatePage } from '../src/pages/sales-service-workspace.page.ts';
 import { ServiceOrder } from '../src/objects/sales.object.ts';
+import { ServiceOrderViews } from '../src/views/service-workspace.view.ts';
 import { ServiceOrderCreate } from '../src/actions/sales.action.ts';
 import { serviceManagerPermission, serviceOperatorPermission } from '../src/permissions/otc-role.permission.ts';
 
@@ -129,7 +130,12 @@ test('standalone service-order page uses the current order form, public document
   assert.equal(form.props.values.service_type, undefined, 'the first option is never auto-selected');
   assert.ok(nestedNodes(tree, node => node.type === 'ForgeNotice' && serviceText(node).includes('暂无启用的服务场景')).length > 0);
   assertCatalogQuery(harness.calls);
-  assert.equal(form.props.sections.length, 4, 'the page uses the four current source form groups without inventing reference-only sections');
+  assert.equal(form.props.sections.length, 5, 'the source page composes five reference sections within one native form');
+  assertJsonEqual(form.props.sections.map(section => section.label), ['服务需求', '客户与产品', '质保信息', '费用与报价', '问题 / 服务内容']);
+  const declared = form.props.sections.flatMap(section => section.fields);
+  assert.equal(new Set(declared).size, declared.length, 'every existing field remains in one section only');
+  assert.deepEqual([...declared].sort(), ServiceOrderViews.form.sections.flatMap(section => section.fields).sort(), 'regrouping keeps the full existing field set');
+  assert.ok(declared.includes('code') && declared.includes('remarks') && declared.includes('onsite_evidence_attachments'));
   assert.notEqual(ServiceOrder.fields.sales_order_id.required, true, 'the UI-only required lookup does not alter the stored field contract');
   assert.equal(ServiceOrder.fields.service_type.type, 'text', 'service_type retains its existing text storage contract');
   assert.notEqual(ServiceOrder.fields.service_type.required, true, 'the lookup does not make the source field required');
