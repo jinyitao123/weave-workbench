@@ -101,11 +101,25 @@ export async function exerciseOrderProjectHandoff(h) {
   assert.deepEqual(projected.lines.toSorted((a,b)=>a.line_type.localeCompare(b.line_type)).map(line=>[line.line_type,line.name,line.quantity,line.taxed_unit_price,line.taxed_subtotal,line.trace_consistent]),[['material','TEST设备',2,900,1800,true],['service','TEST安装培训',1,300,300,true]]);
   assert.equal(projected._server_binding,undefined,'internal refs and source digest never enter the public native read result');
   assert.ok(projected.lines.every(line=>!('sku_id'in line)&&!('cost_price'in line)));
-  await grant(manager,'test_project_price_mask');
-  const maskedScope=mcpData(await manager.callMcpTool('run_action',{actionName:'project_read_delivery_scope',objectName:'forge_project',recordId:project,params:{}}))?.result;
-  assert.ok(maskedScope?.lines.every(line=>!('taxed_unit_price' in line)&&line.trace_consistent===false),'native FLS deny remains missing, never zero or public internal binding');
-  assert.equal((await manager.request(contextPath('forge_project',project))).value.actions.some(action=>action.capabilityId.endsWith('.project_start')),false);
-  await db.query('DELETE FROM sys_user_permission_set WHERE user_id=$1 AND permission_set_id=(SELECT id FROM sys_permission_set WHERE name=$2)',[manager.userId,'test_project_price_mask']);
+  async function assertScopeClosed(label){
+    const read=await manager.callMcpTool('run_action',{actionName:'project_read_delivery_scope',objectName:'forge_project',recordId:project,params:{}});
+    assert.equal(read.isError,true,label+' native public scope is closed');assert.ok(!mcpData(read)?.result?.lines);
+    const current=await manager.request(contextPath('forge_project',project));assert.equal(current.status,200,JSON.stringify(current.value));assert.equal(current.value.actions.some(action=>action.capabilityId.endsWith('.project_start')),false,label+' is not ready');
+    const gui=await manager.request('/actions/forge_project/project_start/'+project,'POST',{params:{},confirm:true});assert.ok(gui.status>=400,label+' native GUI start is refused');assert.ok(/PROJECT_SCOPE_|项目/.test(JSON.stringify(gui.value)),JSON.stringify(gui.value));
+    const stored=(await db.query('SELECT status,actual_start_on FROM forge_project WHERE id=$1',[project])).rows[0];assert.deepEqual(stored,{status:'pending',actual_start_on:null},label+' cannot commit or stamp startup');
+  }
+  for(const object of ['forge_sales_order','forge_sales_contract','forge_sales_order_line','forge_sales_contract_line'])for(const answer of ['undefined','null','throw']){
+    assert.equal((await admin.request('/__test/project-field-fault','POST',{object,answer},{Authorization:'Bearer '+launcherSecret})).status,200);await assertScopeClosed(object+' '+answer);
+    assert.equal((await admin.request('/__test/project-field-fault','POST',{}, {Authorization:'Bearer '+launcherSecret})).status,200);
+  }
+  for(const name of ['test_project_price_mask','test_project_header_mask']){
+    await grant(manager,name);await assertScopeClosed(name);
+    await db.query('DELETE FROM sys_user_permission_set WHERE user_id=$1 AND permission_set_id=(SELECT id FROM sys_permission_set WHERE name=$2)',[manager.userId,name]);
+  }
+  for(const fault of [{object:'forge_sales_order',omit:'code'},{object:'forge_sales_order_line',omit:'quantity'},{object:'forge_sales_order_line',omit:'taxed_subtotal'},{object:'forge_sales_contract_line',omit:'quantity_limit'}]){
+    assert.equal((await admin.request('/__test/project-field-fault','POST',fault,{Authorization:'Bearer '+launcherSecret})).status,200);await assertScopeClosed(fault.object+' missing '+fault.omit);
+    assert.equal((await admin.request('/__test/project-field-fault','POST',{}, {Authorization:'Bearer '+launcherSecret})).status,200);
+  }
   const ready=await manager.request(contextPath('forge_project',project));assert.equal(ready.status,200,JSON.stringify(ready.value));assert.ok(ready.value.actions.find(a=>a.capabilityId.endsWith('.project_start')));
   const oldStart=input(ready.value,'project_start');
   const member=idOf(await sales.request('/data/forge_project_member','POST',{name:'TEST项目成员',project_id:project,user_id:otherManager.userId,member_duty:'member',active:true}),'project member');

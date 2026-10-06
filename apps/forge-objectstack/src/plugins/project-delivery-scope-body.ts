@@ -12,7 +12,7 @@ const links = bounded(await ctx.api.object('forge_project_sales_link').find({
   fields: ['id', 'project_id', 'contract_id', 'order_id', 'contract_code_snapshot', 'order_code_snapshot'],
   limit: 101, orderBy: [{ field: 'id', order: 'asc' }],
 }));
-scope._server_binding = { project_id: projectId, source_order_id: project.source_order_id, source_order_version: project.source_order_version, links: links.map(link => ({ link_id: link.id, contract_id: link.contract_id, order_id: link.order_id })) };
+scope._server_binding = { rows: [], project_id: projectId, source_order_id: project.source_order_id, source_order_version: project.source_order_version, links: links.map(link => ({ link_id: link.id, contract_id: link.contract_id, order_id: link.order_id })) };
 for (const link of links) {
   if (!link.contract_id || !link.order_id) {
     scope.warnings.push('项目关联记录缺少合同或订单来源');
@@ -35,6 +35,7 @@ for (const link of links) {
     continue;
   }
   const quotationId = contract.quotation_id || order.quotation_id;
+  scope._server_binding.links.find(item => item.link_id === link.id).quotation_id = quotationId || null;
   const quotation = quotationId ? await ctx.api.object('forge_quotation').findOne({
     where: { id: quotationId }, fields: ['id', 'code', 'customer_id', 'status', 'pricing_version', 'accepted_pricing_version', 'customer_acceptance_evidence_attachment'],
   }) : null;
@@ -74,6 +75,7 @@ for (const link of links) {
       if (orderLine.line_type === 'service' && (contractLine.sku_id || orderLine.sku_id || (quotationLine && quotationLine.sku_id))) issues.push('服务项目不应关联物料规格');
       if (orderLine.line_type === 'material' && (!contractLine.sku_id || !orderLine.sku_id || (quotationLine && !quotationLine.sku_id))) issues.push('物料行缺少物料规格');
     }
+    scope._server_binding.rows.push({ order_id: order.id, order_line_id: orderLine.id, contract_line_id: contractLine?.id || null, quotation_line_id: quotationLine?.id || null, trace_consistent: issues.length === 0 });
     const taxRate = Number(orderLine.tax_rate || 0) / 100;
     scope.lines.push({
       line_key: (source.order_code || source.contract_code || 'order') + ':' + String(index + 1).padStart(3, '0'),

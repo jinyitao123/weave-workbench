@@ -8,6 +8,7 @@ import { completedOrderApproval } from './sales-order-readiness.js';
 import { businessContext } from './business-transaction.js';
 import { nativeActionConfirmationSupported, nativeActionRequiresConfirmation } from './native-action-confirmation.js';
 import { quotationFollowUpAction } from './sales-quotation-readiness.js';
+import { readProjectActorSource } from './project-delivery-actor-projection.js';
 import { employeeBusinessBinding } from './employee-business-binding.js';
 import { approvedProjectOrder, qualifiedProjectManagers, validProjectManagerMember } from './project-order-readiness.js';
 
@@ -201,20 +202,17 @@ export class EmployeeNativeActions {
         ...(this.actor.transaction ? { transaction: this.actor.transaction } : {}) };
       const links = await engine.find('forge_project_sales_link', { where: { project_id: record.id, organization_id: this.actor.tenantId }, limit: 2 }, { context: system });
       let ready = links.length === 1 && links[0].order_id === record.source_order_id && await validProjectManagerMember(engine, record, system);
-      const fieldReader = this.context.getService<ISecurityService>('security');
-      if (!fieldReader.getReadableFields) throw new TaskConnectionFailure(503,'EMPLOYEE_ACTION_METADATA_UNAVAILABLE','项目范围字段权限不可核对');
-      const fields = await fieldReader.getReadableFields('forge_sales_order_line',this.actor);
-      if (fields != null && !['name','line_type','quantity','taxed_unit_price','tax_rate','discount_rate','taxed_subtotal'].every(field=>fields.includes(field))) ready=false;
       if (ready) {
         try {
           const source = await approvedProjectOrder(engine, String(record.customer_id), String(links[0].order_id), system);
           ready = source.contract.id === links[0].contract_id && source.version === record.source_order_version;
+          await readProjectActorSource(this.bridge, this.context.getService<ISecurityService>('security'), this.actor, String(record.customer_id), { orderId: String(source.order.id), contractId: String(source.contract.id), quotationId: source.quotation ? String(source.quotation.id) : null });
           for (const [object, id] of [['forge_customer', record.customer_id], ['forge_sales_contract', source.contract.id], ['forge_sales_order', source.order.id],
             ...(source.quotation ? [['forge_quotation', source.quotation.id]] : [])]) {
             if (businessRow(await this.bridge.get(String(object), String(id)))?.id !== id) ready = false;
           }
         } catch (error) {
-          if (!(error instanceof TaskConnectionFailure && error.code === 'PROJECT_SOURCE_INVALID')) throw error;
+          if (!(error instanceof TaskConnectionFailure && ['PROJECT_SOURCE_INVALID','PROJECT_SCOPE_PERMISSION_UNAVAILABLE','PROJECT_SCOPE_FIELDS_FORBIDDEN'].includes(error.code))) throw error;
           ready = false;
         }
       }

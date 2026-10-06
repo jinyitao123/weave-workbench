@@ -8,6 +8,7 @@ import { employeeBusinessBinding, type EmployeeBusinessBinding } from './employe
 import { EmployeeNativeActions, businessRow } from './employee-business-native.js';
 import { canonicalJSON, currentNativeActor, digest, nonempty, TaskConnectionFailure } from './native-task-auth.js';
 import { calendarDate, moneyValue, roundedMoney } from './sales-order-readiness.js';
+import { projectActorScope } from './project-delivery-actor-projection.js';
 import { projectDeliveryScopeBody } from './project-delivery-scope-body.js';
 import { approvedProjectOrder, projectRows, qualifiedProjectManagers, validProjectManagerMember, type ProjectRow } from './project-order-readiness.js';
 
@@ -95,35 +96,8 @@ export async function readProjectDeliveryScope(context: PluginContext, engine: I
   const links = Array.isArray(binding.links) ? binding.links : denied('原生项目关联读取格式无效');
   if (!binding || binding.project_id !== who.recordId || !Array.isArray(links) || links.length > 100) denied('原生项目关联读取缺少准确绑定');
   if (links.length) await visible(native, 'forge_customer', String(ctx.record.customer_id), who);
-  for (const value of links) {
-    const link = businessRow(value) ?? denied('项目读取来源不完整');
-    if (!link?.contract_id || !link.order_id) denied('项目读取来源不完整');
-    const contract = await visible(native, 'forge_sales_contract', String(link.contract_id), who);
-    const order = await visible(native, 'forge_sales_order', String(link.order_id), who);
-    if (contract.customer_id !== ctx.record.customer_id || order.customer_id !== ctx.record.customer_id || order.contract_id !== contract.id) denied('当前项目读取来源已变化');
-    if (contract.quotation_id) await visible(native, 'forge_quotation', String(contract.quotation_id), who);
-    for (const [object, field, id] of [['forge_sales_contract_line','contract_id',contract.id], ['forge_sales_order_line','order_id',order.id],
-      ...(contract.quotation_id ? [['forge_quotation_line','quotation_id',contract.quotation_id]] : [])]) {
-      const read = businessRow(await native.bridge.query(String(object), {where:{[String(field)]:id,organization_id:who.organizationId},fields:['id'],limit:101}));
-      if (!Array.isArray(read?.records) || read.records.length > 100 || read.total != null && Number(read.total) > 100) denied('当前项目来源行不可完整读取');
-      if (object === 'forge_sales_order_line' && Array.isArray(scope.lines)
-        && scope.lines.filter(value => businessRow(value)?.order_code === order.code).length !== (read?.records as unknown[]).length) denied('项目交付范围缺少完整原生明细');
-    }
-  }
-  const security = context.getService<ISecurityService>('security'), actor = native.actor;
-  if (!security.getReadableFields) throw new TaskConnectionFailure(503,'PROJECT_SOURCE_READER_UNAVAILABLE','项目字段权限不可可靠核对');
-  const [orderFields,contractFields,quoteFields] = await Promise.all(['forge_sales_order_line','forge_sales_contract_line','forge_quotation_line'].map(object=>security.getReadableFields!(object,actor)));
-  const permitted = (fields: string[] | null | undefined, name: string) => fields == null || fields.includes(name);
-  if (Array.isArray(scope.lines)) for (const value of scope.lines) {
-    const line = businessRow(value); if (!line) denied('项目交付行格式无效');
-    for (const field of ['name','line_type','item_code','model','specification','unit_name','quantity','taxed_unit_price','tax_rate','taxed_subtotal']) {
-      if (!permitted(orderFields,field)) {delete line![field];line!.trace_consistent=false;line!.trace_issues=['当前员工字段权限不足，明细不可完整核对'];}
-    }
-    if (!permitted(orderFields,'tax_rate')||!permitted(orderFields,'taxed_subtotal')) delete line!.tax_amount;
-    if (!permitted(contractFields,'quantity_limit')) delete line!.contract_quantity;
-    if (!permitted(quoteFields,'quantity')) delete line!.quote_quantity;
-  }
-  return { scope, binding };
+  const projection = await projectActorScope(native.bridge, context.getService<ISecurityService>('security'), native.actor, String(ctx.record.customer_id), binding, scope);
+  return { scope: projection, binding };
 }
 
 /** The existing native create/link/start actions share these handlers with the
