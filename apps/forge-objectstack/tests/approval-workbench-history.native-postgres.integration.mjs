@@ -19,8 +19,8 @@ const PORT = Number(process.env.FORGE_CONTRACT_MATERIAL_PG_PORT || 55439);
 const SYSTEM = { isSystem: true, positions: [], permissions: [] };
 const CONTRACT_OBJECT = 'forge_sales_contract';
 const ORIGINAL_MEDIA_TYPE = 'application/pdf';
-const serviceStoragePath = '../node_modules/.pnpm/@objectstack+service-storage@17.3.0/node_modules/@objectstack/service-storage/dist/index.js';
-const platformObjectsPath = '../node_modules/.pnpm/@objectstack+platform-objects@17.3.0/node_modules/@objectstack/platform-objects/dist/index.mjs';
+const serviceStoragePath = '../node_modules/.pnpm/@objectstack+service-storage@17.5.0/node_modules/@objectstack/service-storage/dist/index.js';
+const platformObjectsPath = '../node_modules/.pnpm/@objectstack+platform-objects@17.5.0/node_modules/@objectstack/platform-objects/dist/index.mjs';
 const { LocalStorageAdapter, SystemFile, installAttachmentLifecycleHooks, installFileReferenceHooks } = await import(serviceStoragePath);
 const { SysAttachment } = await import(platformObjectsPath);
 

@@ -1,8 +1,8 @@
 import { Field, ObjectSchema } from '@objectstack/spec/data';
 import { master, text, code, reference, owner, remarks, required } from '../model.js';
 
-const amount = (label: string) => Field.currency({ label, precision: 18, scale: 4, min: 0 });
-const signedAmount = (label: string) => Field.currency({ label, precision: 18, scale: 4 });
+const amount = (label: string) => Field.currency({ label, precision: 18, min: 0 });
+const signedAmount = (label: string) => Field.currency({ label, precision: 18 });
 const quantity = (label: string) => Field.number({ label, min: 0.0001, scale: 4, ...required });
 const invoiceStatus = () => Field.select([
   { value: 'issued', label: '已开票' }, { value: 'settled', label: '已结清' }, { value: 'voided', label: '已作废' },

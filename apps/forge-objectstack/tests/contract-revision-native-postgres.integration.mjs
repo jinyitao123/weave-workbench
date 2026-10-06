@@ -13,9 +13,9 @@ import { SalesContractApprovalFlow } from '../src/flows/sales-contract-approval.
 import { ApprovalResubmitGuardPlugin } from '../src/plugins/approval-resubmit-guard.plugin.ts';
 import { ApprovalWorkbenchContextPlugin } from '../src/plugins/approval-workbench-context.plugin.ts';
 import { ContractRevisionMaterialPlugin, approvalPayloadVersion } from '../src/plugins/contract-revision-material.ts';
-const platformObjectsPath = '../node_modules/.pnpm/@objectstack+platform-objects@17.3.0/node_modules/@objectstack/platform-objects/dist/index.mjs';
+const platformObjectsPath = '../node_modules/.pnpm/@objectstack+platform-objects@17.5.0/node_modules/@objectstack/platform-objects/dist/index.mjs';
 const { SysAttachment } = await import(platformObjectsPath);
-const auditPluginPath = '../node_modules/.pnpm/@objectstack+plugin-audit@17.3.0/node_modules/@objectstack/plugin-audit/dist/index.mjs';
+const auditPluginPath = '../node_modules/.pnpm/@objectstack+plugin-audit@17.5.0/node_modules/@objectstack/plugin-audit/dist/index.mjs';
 const { installAuditWriters } = await import(auditPluginPath);
 
 const DATABASE = 'forge_contract_test';

@@ -26,11 +26,11 @@ const DELIVERY_REVIEWER = randomUUID();
 const COMMERCIAL_REVIEWER = randomUUID();
 const SYSTEM = { isSystem: true, positions: [], permissions: [] };
 
-const serviceStoragePath = '../node_modules/.pnpm/@objectstack+service-storage@17.3.0/node_modules/@objectstack/service-storage/dist/index.js';
-const platformObjectsPath = '../node_modules/.pnpm/@objectstack+platform-objects@17.3.0/node_modules/@objectstack/platform-objects/dist/index.mjs';
+const serviceStoragePath = '../node_modules/.pnpm/@objectstack+service-storage@17.5.0/node_modules/@objectstack/service-storage/dist/index.js';
+const platformObjectsPath = '../node_modules/.pnpm/@objectstack+platform-objects@17.5.0/node_modules/@objectstack/platform-objects/dist/index.mjs';
 const { LocalStorageAdapter, SystemFile } = await import(serviceStoragePath);
 const { SysAttachment } = await import(platformObjectsPath);
-const auditPluginPath = '../node_modules/.pnpm/@objectstack+plugin-audit@17.3.0/node_modules/@objectstack/plugin-audit/dist/index.mjs';
+const auditPluginPath = '../node_modules/.pnpm/@objectstack+plugin-audit@17.5.0/node_modules/@objectstack/plugin-audit/dist/index.mjs';
 const { installAuditWriters } = await import(auditPluginPath);
 
 function simpleObject(name, fields) {

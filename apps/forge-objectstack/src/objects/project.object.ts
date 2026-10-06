@@ -5,7 +5,7 @@ const select = (label: string, options: Array<[string, string]>, defaultValue?: 
   options.map(([value, optionLabel]) => ({ value, label: optionLabel })),
   { label, ...(defaultValue ? { defaultValue } : {}) },
 );
-const amount = (label: string, readonly = false) => Field.currency({ label, precision: 18, scale: 2, min: 0, defaultValue: 0, ...(readonly ? { readonly: true } : {}) });
+const amount = (label: string, readonly = false) => Field.currency({ label, precision: 18, min: 0, defaultValue: 0, ...(readonly ? { readonly: true } : {}) });
 
 // Live RISEMAP 2026-09-09: the account had no project type, so CABINET_OTC was created before the first project.
 export const ProjectType = master('forge_project_type', '项目类型', 'tags', {
@@ -161,8 +161,8 @@ export const ProjectTimesheet = master('forge_project_timesheet', '项目工时'
   work_on: Field.date({ label: '日期', ...required }), work_content: Field.textarea({ label: '工作内容', ...required }),
   time_type: select('工时类型', [['normal', '正常'], ['overtime', '加班'], ['travel', '出差']], 'normal'),
   hours: Field.number({ label: '工时(h)', min: 0.25, max: 24, scale: 2, ...required }),
-  hourly_rate: Field.currency({ label: '费率', precision: 18, scale: 2, min: 0, ...required }),
-  cost_amount: { ...Field.currency({ label: '工时成本', precision: 18, scale: 2, min: 0, defaultValue: 0 }), readonly: true },
+  hourly_rate: Field.currency({ label: '费率', precision: 18, min: 0, ...required }),
+  cost_amount: { ...Field.currency({ label: '工时成本', precision: 18, min: 0, defaultValue: 0 }), readonly: true },
   status: { ...select('审核状态', [['draft', '草稿'], ['pending_review', '待审核'], ['approved', '已通过'], ['rejected', '已驳回']], 'draft'), readonly: true },
   submitted_at: Field.datetime({ label: '提交时间', readonly: true }), reviewed_at: Field.datetime({ label: '审核时间', readonly: true }),
   reviewer_id: Field.user({ label: '审核人', readonly: true }), review_comment: Field.textarea({ label: '审核意见', readonly: true }),

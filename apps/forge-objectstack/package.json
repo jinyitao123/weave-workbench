@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "objectstack dev",
     "start": "objectstack start",
-    "prebuild": "node tests/page-polish.static.mjs",
+    "prebuild": "node tests/page-polish.static.mjs && node --import tsx scripts/prepare-numeric-column-plan.mjs --check",
     "build": "objectstack build",
     "console94:build": "node scripts/build-console94.mjs",
     "console94:verify": "node scripts/verify-console94.mjs .generated/console94",
@@ -246,27 +246,30 @@
     "acceptance:employee-business-native": "FORGE_EMPLOYEE_BUSINESS_PG_TEST=1 node --test tests/employee-business.native-runtime.integration.mjs"
   },
   "dependencies": {
-    "@objectstack/connector-mcp": "17.3.0",
-    "@objectstack/connector-openapi": "17.3.0",
-    "@objectstack/connector-rest": "17.3.0",
-    "@objectstack/core": "17.3.0",
-    "@objectstack/mcp": "17.3.0",
-    "@objectstack/plugin-approvals": "17.3.0",
-    "@objectstack/plugin-hono-server": "17.3.0",
-    "@objectstack/plugin-sharing": "17.3.0",
-    "@objectstack/runtime": "17.3.0",
-    "@objectstack/service-automation": "17.3.0",
-    "@objectstack/service-messaging": "17.3.0",
-    "@objectstack/spec": "17.3.0",
-    "@objectstack/trigger-record-change": "17.3.0",
+    "@objectstack/connector-mcp": "17.5.0",
+    "@objectstack/connector-openapi": "17.5.0",
+    "@objectstack/connector-rest": "17.5.0",
+    "@objectstack/core": "17.5.0",
+    "@objectstack/mcp": "17.5.0",
+    "@objectstack/plugin-approvals": "17.5.0",
+    "@objectstack/plugin-hono-server": "17.5.0",
+    "@objectstack/plugin-sharing": "17.5.0",
+    "@objectstack/runtime": "17.5.0",
+    "@objectstack/service-automation": "17.5.0",
+    "@objectstack/service-messaging": "17.5.0",
+    "@objectstack/spec": "17.5.0",
+    "@objectstack/trigger-record-change": "17.5.0",
     "pg": "^8.23.0",
-    "jose": "6.2.12"
+    "jose": "6.2.12",
+    "@objectstack/plugin-security": "17.5.0",
+    "@objectstack/service-job": "17.5.0",
+    "@objectstack/trigger-schedule": "17.5.0"
   },
   "devDependencies": {
-    "@objectstack/cli": "17.3.0",
-    "@objectstack/driver-sql": "17.3.0",
-    "@objectstack/objectql": "17.3.0",
-    "@objectstack/rest": "17.3.0",
+    "@objectstack/cli": "17.5.0",
+    "@objectstack/driver-sql": "17.5.0",
+    "@objectstack/objectql": "17.5.0",
+    "@objectstack/rest": "17.5.0",
     "@types/node": "24.19.1",
     "pixelmatch": "^7.2.0",
     "pngjs": "^7.0.0",
@@ -276,11 +279,14 @@
   "packageManager": "pnpm@10.30.3",
   "pnpm": {
     "overrides": {
-      "better-auth": "1.7.2",
-      "@better-auth/core": "1.7.2",
-      "@better-auth/oauth-provider": "1.7.2",
-      "@better-auth/scim": "1.7.2",
-      "@better-auth/sso": "1.7.2"
+      "better-auth": "1.7.3",
+      "@better-auth/core": "1.7.3",
+      "@better-auth/oauth-provider": "1.7.3",
+      "@better-auth/scim": "1.7.3",
+      "@better-auth/sso": "1.7.3"
+    },
+    "patchedDependencies": {
+      "@objectstack/rest@17.5.0": "patches/@objectstack__rest@17.5.0.patch"
     }
   }
 }

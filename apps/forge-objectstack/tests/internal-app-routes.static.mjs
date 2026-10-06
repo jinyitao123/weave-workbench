@@ -92,7 +92,7 @@ function stringsIn(value, result = []) {
   return result;
 }
 
-const coreBundle = bundles.find((bundle) => bundle.manifest?.id === 'forge');
+const coreBundle = bundles.find((bundle) => bundle.manifest?.id === 'com.inoforge.forge.core');
 assert.ok(coreBundle, 'compiled artifact must contain the shared Forge business core');
 const coreObjectNames = new Set((coreBundle.objects ?? []).map((object) => object.name));
 for (const objectName of Object.keys(dynamicObjectOwners)) {

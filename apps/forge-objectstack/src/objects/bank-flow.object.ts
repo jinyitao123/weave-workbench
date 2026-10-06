@@ -1,8 +1,8 @@
 import { Field } from '@objectstack/spec/data';
 import { master, text, code, reference, owner, remarks, required } from '../model.js';
 
-const amount = (label: string) => Field.currency({ label, precision: 18, scale: 4, min: 0 });
-const signedAmount = (label: string) => Field.currency({ label, precision: 18, scale: 4 });
+const amount = (label: string) => Field.currency({ label, precision: 18, min: 0 });
+const signedAmount = (label: string) => Field.currency({ label, precision: 18 });
 
 export const FinancialPeriod = master('forge_financial_period', '财务期间', 'calendar-lock', {
   name: text('期间名称', true), code: code('期间编号'), account_id: reference('forge_fund_account', '资金账户', true),

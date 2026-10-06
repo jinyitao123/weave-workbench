@@ -2,6 +2,7 @@ import type { Plugin, PluginContext } from '@objectstack/core';
 import type { IObjectQLEngine, ISharingService, RecordShare } from '@objectstack/spec/contracts';
 import type { HookContext } from '@objectstack/spec/data';
 import type { ExecutionContext as KernelExecutionContext } from '@objectstack/spec/kernel';
+import { sharingInTransaction } from './native-sharing-transaction.js';
 
 const PACKAGE_ID = 'com.inoforge.forge.service-order-reference-sharing';
 const SERVICE_ORDER = 'forge_service_order';
@@ -93,6 +94,10 @@ export class ServiceOrderReferenceSharingPlugin implements Plugin {
       bind('afterInsert', SERVICE_ORDER, hook => this.onServiceOrderChange(engine, sharing, hook, 'insert'));
       bind('afterUpdate', SERVICE_ORDER, hook => this.onServiceOrderChange(engine, sharing, hook, 'update'));
       bind('afterDelete', SERVICE_ORDER, hook => this.onServiceOrderChange(engine, sharing, hook, 'delete'));
+      bind('afterInsert', 'sys_organization', async hook => {
+        const organizationId = text(nextRecord(hook).id);
+        if (organizationId) await this.reconcileOrganizations(engine, sharing, [organizationId]);
+      });
       for (const object of ['sys_user_position', 'sys_position', 'sys_member', 'sys_user']) {
         bind('afterInsert', object, hook => this.onIdentityChange(engine, sharing, hook, object));
         bind('afterUpdate', object, hook => this.onIdentityChange(engine, sharing, hook, object));
@@ -252,6 +257,7 @@ export class ServiceOrderReferenceSharingPlugin implements Plugin {
     if (context.tenantId && context.tenantId !== organizationId) {
       throw new Error('服务工单组织与分享租户上下文不匹配，拒绝同步关联记录权限');
     }
+    sharing = sharingInTransaction(engine, sharing, context);
     const assignedOrders = await this.findAll(engine, SERVICE_ORDER, {
       organization_id: organizationId,
       engineer_id: userId,
@@ -336,12 +342,16 @@ export class ServiceOrderReferenceSharingPlugin implements Plugin {
     // Mirrors the native SharingService seed pass: enumerate only the platform organization directory under system context.
     const rows = await this.findAll(engine, 'sys_organization', {}, systemContext(), ['id']);
     const organizationIds = [...new Set(rows.map(row => text(row.id)).filter(Boolean))];
-    if (!organizationIds.length) throw new Error('ObjectStack did not return any organizations for service share reconciliation');
+    // A fresh single-tenant runtime has no organization until the first human
+    // account becomes platform admin; keep registration reachable during bootstrap.
     return organizationIds;
   }
 
   private async reconcileAll(engine: IObjectQLEngine, sharing: ISharingService): Promise<void> {
-    const organizationIds = await this.listOrganizationIds(engine);
+    await this.reconcileOrganizations(engine, sharing, await this.listOrganizationIds(engine));
+  }
+
+  private async reconcileOrganizations(engine: IObjectQLEngine, sharing: ISharingService, organizationIds: string[]): Promise<void> {
     for (const organizationId of organizationIds) {
       const context = systemContext(undefined, organizationId);
       const assigned = await this.findAll(engine, SERVICE_ORDER, { organization_id: organizationId }, context, ['engineer_id']);

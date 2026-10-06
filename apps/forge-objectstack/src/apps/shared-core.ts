@@ -15,7 +15,7 @@ import { weaveTeamDeveloperPermission } from '../permissions/team-development.pe
  */
 export const sharedForgeCoreBundle = defineStack({
   manifest: {
-    id: 'forge',
+    id: 'com.inoforge.forge.core',
     namespace: 'forge',
     version: '0.1.0',
     type: 'plugin',
