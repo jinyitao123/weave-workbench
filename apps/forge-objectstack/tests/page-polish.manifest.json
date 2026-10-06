@@ -1310,7 +1310,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "requirementIds": [
         "SO-CREATE-001",

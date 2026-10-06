@@ -7,16 +7,18 @@
   "pageId": "page_service_order_create",
   "status": "review_required",
   "observedAt": "2026-10-07",
-  "reviewedRevision": "06d6a70556308c96e4b9d1978e291584c1ba1117",
+  "reviewedRevision": "7bb2eb2303f9d89ec65316765e01093f3cc33e12",
   "subjectFiles": {
-    "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts": "e295d0ccfa2ed50fbe1f8d487be290bedb567b8b36cb1b3b4512b1c85de595dc",
+    "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts": "34cbaaa63500ac750344c8c8b476f22f8f1f73c2f685df8d1b318a3ed04697f6",
     "apps/forge-objectstack/src/pages/product-ui.ts": "4bdff59553b480771e0f0fcd23dde4cdaa232f632d4748c3e645d3283008936d",
     "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts": "a0088ab566ca72d65a6a85b2fc43e2023500ba61511d5a4f4259b62101c46f7b",
     "apps/forge-objectstack/src/views/service-workspace.view.ts": "a9314cee79aca5e70975f498b50a2bf8d94f265b0618bb6977763f587184e78b",
     "apps/forge-objectstack/src/objects/sales.object.ts": "fa936dfee7638c074fde84f67dc7c0b80adac71f2b31571220d322190e32e9e2",
     "apps/forge-objectstack/src/actions/sales.action.ts": "13de0e1e97d5b5c79f1d37d8b38bbd9bb27ac89a4889f101e544389a9d9a4bbd",
     "apps/forge-objectstack/src/permissions/otc-role.permission.ts": "a762753c23dc3edf556d689cadb522f4393ccdc921f9594d979039711f6321b3",
-    "apps/forge-objectstack/console94.lock.json": "363c04b892101956fecc2c03e464086ea71312df0ccaf4c968e2fba7321f412c"
+    "apps/forge-objectstack/console94.lock.json": "363c04b892101956fecc2c03e464086ea71312df0ccaf4c968e2fba7321f412c",
+    "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts": "f297c64a38e551a8873305d7e8065e9d06abccadf1acad6a2ece85c7fffd3afa",
+    "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts": "7467e25988a809d20550ac1bce18b03a25a0f916bdf88678c2aa70e4999840f6"
   },
   "environment": {
     "databaseType": "postgresql",
@@ -45,7 +47,7 @@
     },
     "interaction": {
       "status": "pending",
-      "notes": "正常选择、匹配失败保留填写和页面创建已观察；重复编号原为英文底层错误，已修复，实际候选复验在本机证据和合同记录。",
+      "notes": "地址联动的正常、手填、异步旧响应和读取拒绝局部实测通过；20项完整结构／业务仍待验。",
       "evidence": []
     },
     "business": {
@@ -85,7 +87,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "主管从服务工单列表进入新建页；取消回到原列表。",
@@ -109,7 +113,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "完整对应目标分组和字段；默认值来自正式业务定义，不引入演示内容或擅自选择服务场景。",
@@ -133,7 +139,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "客户、联系人、来源订单、合同使用原生关联选择，并遵守真实权限和业务关系。",
@@ -157,7 +165,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "工单号、标题、客户、来源订单为空时显示字段错误并阻止业务提交。",
@@ -181,7 +191,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "当前表单有改动时取消须确认；继续编辑、关闭或 Esc 保留值；放弃后返回；隐藏默认值和清空不误报。",
@@ -205,7 +217,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "中文连续输入及键盘操作不重挂载表单，不丢字或失去输入焦点。",
@@ -229,7 +243,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "桌面含展开侧栏、窄屏、长字段、错误和确认状态可读，操作可达且无根节点横向越界。",
@@ -253,7 +269,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "只读取启用的工单类型；空结果、无权和读取失败分别提示，失败时保持字段值并禁用该选择。",
@@ -277,7 +295,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "使用原 service_order_create 动作一次提交，读回正式工单后返回列表；记录状态、来源、负责人及下一步正确。",
@@ -301,7 +321,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "原主管可见、普通服务员工被拒绝；后端和组织范围独立验证，不临时扩权。",
@@ -325,7 +347,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "提交中禁止重复操作；校验或动作失败保留表单并显示真实错误。",
@@ -349,7 +373,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "现场图片使用原生附件能力；上传、字段关联、成功查看及无关账号拒绝需实际验证。",
@@ -373,7 +399,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "正常创建结果同库完整停服重启仍一致；固定材料测量打开、刷新、切页、请求及体积预算。",
@@ -397,7 +425,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "按参考取证保留编号 1–5 的服务需求、客户与产品、质保信息、费用与报价、问题／服务内容及首尾动作结构。",
@@ -421,11 +451,13 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "选择客户、联系人、订单后按正式业务数据带出电话、地址、产品和质保，变更来源时核对依赖字段；无权／空值有明确状态。",
-      "actual": "实际选择有地址的客户及订单后服务地址仍空，联动差异已确认；本轮手动填写后完成创建。",
+      "actual": "地址部分已复用原生关联选择与受控表单实现：匹配订单地址优先、空值回退客户、保留手填、旧响应隔离和读取失败提示；原权限的隔离GUI补证完成。电话、产品、质保联动与完整提交链仍待验。",
       "stateEffect": "read_only",
       "status": "pending",
       "evidence": []
@@ -445,7 +477,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "服务工单可从来源订单明细选择物料、全选、分页或明确整单服务；结果关联到正式业务范围。",
@@ -469,7 +503,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "展示来源订单时间线和正式质保匹配结果，保留人工判断／日期更改及恢复匹配；不把演示日期当真实默认值。",
@@ -493,7 +529,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "用可选择的免费服务、需要报价、待人工判定表达真实责任与报价衔接，状态随正式动作回读。",
@@ -517,7 +555,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "按授权的正式数据展示底部费用汇总，并分别支持保存草稿和提交工单；状态、异常和后续结果可读回。",
@@ -541,7 +581,9 @@
         "apps/forge-objectstack/src/objects/sales.object.ts",
         "apps/forge-objectstack/src/actions/sales.action.ts",
         "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
-        "apps/forge-objectstack/console94.lock.json"
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
       ],
       "steps": [],
       "expected": "完整对应类型、电话、问题描述等关键字段、必填关系与可读编号生成；来源和约束由原生业务能力承担。",
@@ -557,6 +599,7 @@
     "创建流程只写入本轮一次性隔离库，不代表真人业务、联调、受理后服务链或独立评审通过。",
     "两名主管账号都由同一实施者操作；独立复核未发生，七个维度保持pending。",
     "原服务角色的财务／订单明细权限须与消费者一起核对，不能扩权或把无权金额写成零。",
-    "完整build因历史财务验收图片缺失失败；受验源文件摘要与版本已更新，旧验收记录未改为accepted。"
+    "完整build因历史财务验收图片缺失失败；受验源文件摘要与版本已更新，旧验收记录未改为accepted。",
+    "地址GUI的403为明确的本机响应故障注入，原生响应200；不冒充后端权限策略拒绝。"
   ]
 }
