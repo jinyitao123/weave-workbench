@@ -767,16 +767,15 @@ export class EnterpriseService {
     return result
   }
 
-  async getEmployeeBusinessContext(selection: EmployeeBusinessSelection) {
-    const { parseEmployeeBusinessContext } = await import('./enterprise/employee-business-contract')
+  private async employeeBusinessReadAPI() {
+    const { EmployeeBusinessReadAPI } = await import('./enterprise/employee-business-read-api')
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    const query = new URLSearchParams({ objectName: selection.record.objectName, recordId: selection.record.recordId, sourceKind: selection.source.kind })
-    if (selection.source.reference) query.set('sourceRef', selection.source.reference)
-    const context = parseEmployeeBusinessContext(await this.forgeJSON(`/api/v1/workbench/business-actions/context?${query}`, generation, '本人业务动作'))
-    if (context.record.objectName !== selection.record.objectName || context.record.recordId !== selection.record.recordId
-      || context.source.kind !== selection.source.kind || context.source.reference !== selection.source.reference) throw new Error('当前业务来源与所选记录不一致')
-    return context
+    return new EmployeeBusinessReadAPI((path, label) => this.forgeJSON(path, generation, label))
+  }
+
+  async getEmployeeBusinessContext(selection: EmployeeBusinessSelection) {
+    return (await this.employeeBusinessReadAPI()).context(selection)
   }
 
   async executeEmployeeBusinessAction(request: EmployeeBusinessRequest) {
@@ -794,10 +793,23 @@ export class EnterpriseService {
   }
 
   async getEmployeeBusinessOperation(opKey: string) {
-    const { parseEmployeeBusinessOperation } = await import('./enterprise/employee-business-contract')
+    return (await this.employeeBusinessReadAPI()).operation(opKey)
+  }
+
+  async getEmployeeBusinessMaterial(selection: EmployeeBusinessSelection, assertCurrent: () => Promise<void>) {
+    const { readEmployeeBusinessMaterial } = await import('./enterprise/employee-business-materials')
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    return parseEmployeeBusinessOperation(await this.forgeJSON(`/api/v1/workbench/business-actions/operations/${encodeURIComponent(opKey)}`, generation, '本人业务回执'))
+    return readEmployeeBusinessMaterial(selection, {
+      origin: this.forgeUrl.origin, assertCurrent,
+      context: () => this.getEmployeeBusinessContext(selection),
+      record: () => this.forgeMcpTool('get_record', { objectName: selection.record.objectName, recordId: selection.record.recordId }, generation),
+      url: (id) => this.forgeJSON(`/api/v1/storage/files/${encodeURIComponent(id)}/url`, generation, '业务原件'),
+      fetch: async (url) => {
+        const { response, snapshot } = await this.authenticatedFetch(url, 'forge', { redirect: 'error', headers: { 'Accept-Encoding': 'identity' }, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }, generation)
+        this.assertCurrentAuth(snapshot); return response
+      },
+    })
   }
 
   private async forgeMcpTool(

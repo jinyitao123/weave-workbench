@@ -76,6 +76,26 @@ describe('employee-only business action contract', () => {
 })
 
 describe('employee action durable authorization and receipts', () => {
+  it('preserves the opened item across related record reads and process restart without leaking the anchor', async () => {
+    const f = await fixture()
+    await f.bridge.bind(f.turn.accountKey, f.turn.sessionPath, { record: f.current.record, source: f.current.source }, true)
+    await f.bridge.bind(f.turn.accountKey, f.turn.sessionPath, { record: { objectName: 'forge_fund_account', recordId: 'account-related', label: '测试银行台账' }, source: { kind: 'record' } })
+    const reopened = new EmployeeBusinessActions(f.service, new HandoffStore({ directory: f.directory }))
+    expect(await reopened.selection(f.turn.accountKey, f.turn.sessionPath)).toEqual({ record: f.current.record, source: f.current.source })
+    await reopened.list(f.turn)
+    expect(f.service.getEmployeeBusinessContext).toHaveBeenLastCalledWith({ record: f.current.record, source: f.current.source })
+    expect(await reopened.run(f.turn, { action_ref: 1, values: f.values })).toMatchObject({ status: 'succeeded' })
+    expect(f.service.executeEmployeeBusinessAction).toHaveBeenCalledOnce()
+  })
+  it('allows a newly verified item to replace the anchor while isolating account and session sources', async () => {
+    const f = await fixture()
+    await f.bridge.bind(f.turn.accountKey, f.turn.sessionPath, { record: f.current.record, source: f.current.source }, true)
+    const next = { record: { objectName: 'forge_customer_prepayment', recordId: 'prepayment-next', label: '云岚预收' }, source: { kind: 'record' as const } }
+    await f.bridge.bind(f.turn.accountKey, f.turn.sessionPath, next, true)
+    expect(await f.bridge.selection(f.turn.accountKey, f.turn.sessionPath)).toEqual(next)
+    expect(await f.bridge.selection('another-employee', f.turn.sessionPath)).toBeUndefined()
+    expect(await f.bridge.selection(f.turn.accountKey, '/another-session')).toBeUndefined()
+  })
   it('accepts an explicit project start while rejecting a negated start intent', async () => {
     const f = await fixture()
     f.current.record = { objectName: 'forge_project', recordId: 'project-current', label: '云岚交付项目' }

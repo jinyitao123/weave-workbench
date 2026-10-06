@@ -19,6 +19,7 @@ interface Intent {
   materials: FrozenMaterial[]; phase: 'prepared' | 'sent'; operation?: EmployeeBusinessOperation; actionLabel?: string
 }
 interface PendingOperation { intentKey: string }
+interface StoredSelection extends EmployeeBusinessSelection { anchored?: true }
 
 function sessionKey(account: string, path: string) { return `employee-business-source:${account}:${digest(path)}` }
 function scopeKey(account: string, source: EmployeeBusinessSelection) { return `employee-business-operation:${account}:${source.record.objectName}:${source.record.recordId}` }
@@ -63,13 +64,15 @@ export class EmployeeBusinessActions {
   private readonly running = new Map<string, Promise<unknown>>()
   constructor(private readonly service: Service, private readonly store: HandoffStore) {}
 
-  async bind(account: string, sessionPath: string, selection: EmployeeBusinessSelection): Promise<void> {
+  async bind(account: string, sessionPath: string, selection: EmployeeBusinessSelection, anchored = false): Promise<void> {
     const key = sessionKey(account, sessionPath)
-    await this.store.checkpoint(key, digest(key), structuredClone(selection))
+    if (!anchored && (await this.store.inspect<StoredSelection>(key))?.value.anchored) return
+    await this.store.checkpoint(key, digest(key), { ...structuredClone(selection), ...(anchored ? { anchored: true as const } : {}) })
     this.directories.delete(key)
   }
   async selection(account: string, sessionPath: string): Promise<EmployeeBusinessSelection | undefined> {
-    return (await this.store.inspect<EmployeeBusinessSelection>(sessionKey(account, sessionPath)))?.value
+    const saved = (await this.store.inspect<StoredSelection>(sessionKey(account, sessionPath)))?.value
+    return saved ? { record: saved.record, source: saved.source } : undefined
   }
   private async lookup(intentKey: string, turn: EmployeeBusinessTurn): Promise<Intent> {
     const saved = await this.store.inspect<Intent>(intentKey)

@@ -21,7 +21,7 @@ interface EnterpriseSessionReader {
   read(filePath: unknown): Promise<TranscriptMessage[]>
 }
 export interface AgentEnterpriseBridgeOptions {
-  service: Pick<EnterpriseService, 'accountKey' | 'getSession' | 'getApprovalContext' | 'getApprovalActionHistory' | 'runNativeMcpAction' | 'getWorkNotificationSource' | 'getBusinessNotificationContext' | 'getWorkContinuationContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'getBusinessObjectDirectory' | 'findBusinessRecords' | 'readBusinessRecord' | 'stageWorkMaterials' | 'submitWork' | 'submitApprovalRevision' | 'getApprovalRevisionReceipt'> & Partial<Pick<EnterpriseService, 'renewWorkAuthorization' | 'getRunContinuationReferences' | 'getEmployeeBusinessContext' | 'executeEmployeeBusinessAction' | 'getEmployeeBusinessOperation'>>
+  service: Pick<EnterpriseService, 'accountKey' | 'getSession' | 'getApprovalContext' | 'getApprovalActionHistory' | 'runNativeMcpAction' | 'getWorkNotificationSource' | 'getBusinessNotificationContext' | 'getWorkContinuationContext' | 'getTeamCatalog' | 'getTeamChoices' | 'getBusinessCapabilities' | 'getBusinessObjectDirectory' | 'findBusinessRecords' | 'readBusinessRecord' | 'stageWorkMaterials' | 'submitWork' | 'submitApprovalRevision' | 'getApprovalRevisionReceipt'> & Partial<Pick<EnterpriseService, 'renewWorkAuthorization' | 'getRunContinuationReferences' | 'getEmployeeBusinessContext' | 'executeEmployeeBusinessAction' | 'getEmployeeBusinessOperation' | 'getEmployeeBusinessMaterial'>>
   sessions: Record<'prime' | 'pi', EnterpriseSessionReader>
   extensionPath: string
   storage?: HandoffStorage
@@ -893,7 +893,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           await (await this.employeeBusinessActions()).bind(accountKey, claim.sessionPath, {
             record: { objectName: activeBusinessNotification.context.source.objectName, recordId: activeBusinessNotification.context.source.recordId, label: activeBusinessNotification.context.record.candidate.name },
             source: { kind: 'business_notification', reference: activeBusinessNotification.context.notificationID },
-          })
+          }, true)
           this.workContinuations.delete(token)
           this.workLineages.delete(token)
           this.pendingWorkContinuations.delete(workHandle!)
@@ -911,7 +911,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         this.pendingFirstPrompts.delete(token)
         if (pendingEmployeeBusiness) {
           if (!claim.sessionPath || this.claimForToken(token) !== claim) throw new Error('本人业务事项会话已失效')
-          await (await this.employeeBusinessActions()).bind(accountKey, claim.sessionPath, pendingEmployeeBusiness.selection)
+          await (await this.employeeBusinessActions()).bind(accountKey, claim.sessionPath, pendingEmployeeBusiness.selection, true)
           this.pendingEmployeeBusiness.delete(workHandle!)
         }
         this.newSessionTokens.delete(token)
@@ -1005,6 +1005,17 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (params.turn_key !== turn.key) throw new Error('员工要求已变化，旧交接不能继续')
     if (!claim.sessionPath) await this.waitForSessionBinding(claim, turn)
     await this.evidence(claim, turn)
+    if (method === 'read_current_business_material') {
+      const { readBoundEmployeeBusinessMaterial } = await import('./employee-business-materials')
+      if (turn.approvalContext || turn.workContinuation) throw new Error('请使用当前事项已有的材料读取入口')
+      const actions = await this.employeeBusinessActions(), read = this.options.service.getEmployeeBusinessMaterial
+      if (!read) throw new Error('当前原件读取入口不可用')
+      return readBoundEmployeeBusinessMaterial(params, {
+        selection: () => actions.selection(turn.accountKey, claim.sessionPath!),
+        assertCurrent: async () => { await this.evidence(claim, turn) },
+        read: (selection, assertCurrent) => read.call(this.options.service, selection, assertCurrent),
+      })
+    }
     if (method === 'list_current_item_actions' || method === 'run_current_item_action') {
       if (!turn.approvalContext) {
         if (turn.workContinuation) throw new Error('团队续办会话不能改为本人业务办理，请从当前业务事项打开')
