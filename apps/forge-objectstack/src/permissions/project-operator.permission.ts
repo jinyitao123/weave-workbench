@@ -1,5 +1,6 @@
 import { definePermissionSet } from '@objectstack/spec';
 import type { PermissionSet as PermissionSetInput } from '@objectstack/spec/security';
+import { salesQuotationCostFieldMask } from './sales-quotation.permission.js';
 import {
   PROJECT_POSITION_RLS_POLICY_PREFIX,
   PROJECT_POSITION_SCOPED_OBJECTS,
@@ -64,8 +65,8 @@ export function projectPositionRowIdPolicies(definition: Pick<PermissionSetInput
   return policies;
 }
 
-export function withProjectPositionRowScopes<T extends PermissionSetInput>(definition: T): T {
-  const policies = projectPositionRowIdPolicies(definition);
+export function withProjectPositionRowScopes<T extends PermissionSetInput>(definition: T, nativeOwnSharedObjects: readonly string[] = []): T {
+  const policies = projectPositionRowIdPolicies(definition).filter(policy => !nativeOwnSharedObjects.includes(policy.object));
   return policies.length ? {
     ...definition,
     rowLevelSecurity: [...(definition.rowLevelSecurity || []), ...policies],
@@ -128,10 +129,18 @@ export const projectManagerPermission = definePermissionSet(withProjectPositionR
   description: '项目经理办理本人负责项目的执行状态，并只读该项目成本；项目创建和订单来源关联另受各自权限控制。',
   systemPermissions: ['forge_project_manager'],
   fields: Object.fromEntries([
+    ...Object.entries(salesQuotationCostFieldMask),
     ...projectImportJobFields.map(field => [field, { readable: true, editable: false }]),
     ['sys_import_job.undo_log', { readable: false, editable: false }],
   ]),
   objects: {
+    forge_customer: { allowRead: true, readScope: 'own' },
+    forge_sales_contract: { allowRead: true, readScope: 'own' },
+    forge_sales_contract_line: { allowRead: true, readScope: 'own' },
+    forge_sales_order: { allowRead: true, readScope: 'own' },
+    forge_sales_order_line: { allowRead: true, readScope: 'own' },
+    forge_quotation: { allowRead: true, readScope: 'own' },
+    forge_quotation_line: { allowRead: true, readScope: 'own' },
     forge_project_member: { allowRead: true, readScope: 'org' },
     forge_project_cost_entry: { allowRead: true, allowExport: true, readScope: 'org' },
     forge_project_daily_report: orgRead,
@@ -197,4 +206,4 @@ export const projectManagerPermission = definePermissionSet(withProjectPositionR
     operation: 'select',
     using: 'project_id in current_user.managed_project_ids',
   }],
-}));
+}, ['forge_customer', 'forge_sales_contract', 'forge_sales_contract_line', 'forge_sales_order', 'forge_sales_order_line', 'forge_quotation', 'forge_quotation_line']));

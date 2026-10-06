@@ -8,12 +8,13 @@ import { confirmedContractPrepayments, requiredPrepayment, completedOrderApprova
 import { quotationFollowUpAction } from './sales-quotation-readiness.js';
 import { businessRecordVersion } from './business-record-version.js';
 
-type Kind = 'quotation_follow_up' | 'contract_order_conditions' | 'contract_signature' | 'contract_prepayment' | 'prepayment_confirmation' | 'sales_order_creation' | 'sales_order_submission';
+type Kind = 'quotation_follow_up' | 'contract_order_conditions' | 'contract_signature' | 'contract_prepayment' | 'prepayment_confirmation' | 'sales_order_creation' | 'sales_order_submission' | 'project_start';
 const sources: Array<{ object: string; kinds: Kind[]; where: BusinessRow }> = [
   { object: 'forge_sales_contract', kinds: ['contract_order_conditions', 'contract_signature', 'contract_prepayment', 'sales_order_creation'], where: { status: 'active' } },
   { object: 'forge_customer_prepayment', kinds: ['prepayment_confirmation'], where: { status: 'pending_confirmation' } },
   { object: 'forge_sales_order', kinds: ['sales_order_submission'], where: { status: { $in: ['draft', 'pending_approval'] } } },
   { object: 'forge_quotation', kinds: ['quotation_follow_up'], where: { status: { $in: ['draft', 'rejected', 'approved', 'sent', 'accepted'] } } },
+  { object: 'forge_project', kinds: ['project_start'], where: { status: 'pending' } },
 ];
 
 /** A read projection of business facts. There is no task table or lifecycle. */
@@ -78,7 +79,13 @@ export async function readEmployeeBusinessWork(context: PluginContext, request: 
       for (const row of rows) {
         if (items.length >= limit) break;
         after = String(row.id); scanned++;
-        if (source.object === 'forge_quotation') {
+        if (source.object === 'forge_project') {
+          if (row.manager_id !== employee.userId) continue;
+          const visible = businessRow(await native.bridge.get(source.object, String(row.id)));
+          if (!visible) continue;
+          const action = (await native.employeeActions(source.object, visible)).find(item => item.capabilityId.endsWith('.project_start'));
+          if (action) await add(row, source.object, 'project_start', '启动项目', await candidates('project_manager'), String(row.manager_id));
+        } else if (source.object === 'forge_quotation') {
           const actionName = quotationFollowUpAction(row, employee.userId);
           if (!actionName) continue;
           if (await engine.findOne('forge_quotation_contract_conversion', { where: { quotation_id: row.id, organization_id: employee.organizationId } }, { context: system })) continue;

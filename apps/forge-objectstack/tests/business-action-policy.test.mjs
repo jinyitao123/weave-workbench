@@ -4,6 +4,9 @@ import { businessActionPolicy, isTeamDelegableAction, projectBusinessActionPolic
 
 test('personal business decisions remain personal even during human-owned task issuance', () => {
   for (const [objectName, name] of [
+    ['forge_customer', 'customer_create_project'],
+    ['forge_project', 'project_link_contract'],
+    ['forge_project', 'project_start'],
     ['forge_sales_contract', 'contract_register_signature'],
     ['forge_sales_contract', 'contract_convert_to_sales_order'],
     ['forge_sales_contract', 'contract_approval_mcp_approve'],
@@ -35,6 +38,9 @@ test('client-supplied policy cannot widen a native personal action', () => {
     ...action, executionMode: 'employee_only', effect: 'write',
   });
   assert.deepEqual(businessActionPolicy('forge_sales_contract', 'contract_submit_frozen_material'), {
+    effect: 'read', executionMode: 'team_delegable',
+  });
+  assert.deepEqual(businessActionPolicy('forge_project', 'project_read_delivery_scope'), {
     effect: 'read', executionMode: 'team_delegable',
   });
 });

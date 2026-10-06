@@ -383,8 +383,16 @@ async function assertManagerHandoffMemberMutation(
   }
 
   if (event !== 'beforeUpdate') throw new Error('项目负责人交接没有授权此类项目成员变更');
+  // Native 17.5 stamps these before domain hooks. The trusted handoff never
+  // accepts audit values in its Action parameters; keep the actor and server
+  // clock bounds inside the existing transaction-specific permit.
+  if (input.updated_by != null && input.updated_by !== permit.actorId) throw new Error('项目负责人交接审计员工不匹配');
+  if (input.updated_at != null) {
+    const at = input.updated_at instanceof Date ? input.updated_at.getTime() : Date.parse(text(input.updated_at)), now = Date.now();
+    if (!Number.isFinite(at) || at > now || at < now - 5_000) throw new Error('项目负责人交接审计时间不属于本次原生更新');
+  }
   if (permit.operation === 'promote-new-manager') {
-    const allowed = new Set(['id', 'member_duty', 'active', 'joined_on', 'name']);
+    const allowed = new Set(['id', 'member_duty', 'active', 'joined_on', 'name', 'updated_at', 'updated_by']);
     if (text(previous.id) !== permit.newMemberId || text(previous.project_id) !== permit.projectId
       || text(previous.user_id) !== permit.newManagerId || !['member', 'manager'].includes(text(previous.member_duty))
       || Object.keys(input).some(key => !allowed.has(key))
@@ -398,7 +406,7 @@ async function assertManagerHandoffMemberMutation(
   }
 
   if (permit.operation === 'deactivate-old-manager') {
-    const allowed = new Set(['id', 'active']);
+    const allowed = new Set(['id', 'active', 'updated_at', 'updated_by']);
     if (text(previous.id) !== permit.oldMemberId || text(previous.project_id) !== permit.projectId
       || text(previous.user_id) !== permit.oldManagerId || previous.member_duty !== 'manager'
       || previous.active !== true || Object.keys(input).some(key => !allowed.has(key)) || input.active !== false) {

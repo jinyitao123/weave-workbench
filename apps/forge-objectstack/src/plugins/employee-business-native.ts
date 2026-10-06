@@ -1,14 +1,16 @@
 import type { PluginContext } from '@objectstack/core';
 import { HttpDispatcher } from '@objectstack/runtime';
 import type { ExecutionContext } from '@objectstack/spec/kernel';
-import type { IObjectQLEngine } from '@objectstack/spec/contracts';
+import type { IObjectQLEngine, ISecurityService } from '@objectstack/spec/contracts';
 import { businessActionPolicy } from './business-action-policy.js';
 import { canonicalJSON, digest, TaskConnectionFailure } from './native-task-auth.js';
 import { completedOrderApproval } from './sales-order-readiness.js';
 import { businessContext } from './business-transaction.js';
 import { nativeActionConfirmationSupported, nativeActionRequiresConfirmation } from './native-action-confirmation.js';
 import { quotationFollowUpAction } from './sales-quotation-readiness.js';
+import { readProjectActorSource } from './project-delivery-actor-projection.js';
 import { employeeBusinessBinding } from './employee-business-binding.js';
+import { approvedProjectOrder, qualifiedProjectManagers, validProjectManagerMember } from './project-order-readiness.js';
 
 export type BusinessRow = Record<string, unknown>;
 export interface EmployeeParameter {
@@ -76,7 +78,7 @@ export class EmployeeNativeActions {
     return body.items.filter((value): value is BusinessRow => !!businessRow(value) && businessRow(businessRow(value)?.ai)?.exposed === true);
   }
 
-  async parameters(objectName: string, definition: BusinessRow, metadata: BusinessRow, catalog = false): Promise<Array<EmployeeParameter & { multiple?: boolean }>> {
+  async parameters(objectName: string, definition: BusinessRow, metadata: BusinessRow, catalog = false, record?: BusinessRow): Promise<Array<EmployeeParameter & { multiple?: boolean }>> {
     if (definition.params != null && !Array.isArray(definition.params)) throw new Error('动作输入声明无效');
     const parameters: Array<EmployeeParameter & { multiple?: boolean }> = [];
     for (const raw of definition.params as BusinessRow[] ?? []) {
@@ -135,6 +137,43 @@ export class EmployeeNativeActions {
           || new Set(p.enumLabels.map(option => option.label)).size !== p.enumLabels.length) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_LOOKUP_AMBIGUOUS', '合同类型名称无法唯一核对，请先核对业务设置');
         p.enum = p.enumLabels.map(option => option.value);
       }
+      if (!catalog && ['customer_create_project', 'project_link_contract'].includes(String(definition.name))
+        && ['type_id', 'manager_id', 'contract_id', 'approved_order_id'].includes(name)) {
+        if (!record) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_LOOKUP_UNAVAILABLE', '项目选择缺少当前准确业务上下文');
+        let options: Array<{ value: string; label: string }> = [];
+        const rows = async (object: string, where: BusinessRow, fields: string[]) => {
+          const result = businessRow(await this.bridge.query(object, { where: { ...where, organization_id: this.actor.tenantId }, fields,
+            limit: 101, orderBy: [{ field: 'id', order: 'asc' }] }));
+          if (!Array.isArray(result?.records) || result.records.length > 100 || result.total != null && (!Number.isSafeInteger(result.total) || Number(result.total) > 100))
+            throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_LOOKUP_UNAVAILABLE', '项目合法选择无法完整读取');
+          return result.records.map(item => businessRow(item)!);
+        };
+        const label = (row: BusinessRow): string => String(row.name || row.code || '').trim();
+        if (name === 'type_id') options = (await rows('forge_project_type', { active: true }, ['id', 'name'])).map(row => ({ value: String(row.id), label: label(row) }));
+        else if (name === 'manager_id') {
+          const managers = await qualifiedProjectManagers(this.context.getService<IObjectQLEngine>('objectql'), String(this.actor.tenantId),
+            { ...businessContext(String(this.actor.userId), String(this.actor.tenantId)), ...(this.actor.transaction ? { transaction: this.actor.transaction } : {}) });
+          for (const manager of managers) {
+            const user = businessRow(await this.bridge.get('sys_user', manager, ['id', 'display_name', 'name', 'username']));
+            if (user?.id !== manager) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_LOOKUP_UNAVAILABLE', '有效经理缺少当前员工可读账号');
+            options.push({ value: manager, label: String(user.display_name || user.name || user.username || '').trim() });
+          }
+        } else {
+          const customerId = objectName === 'forge_customer' ? record.id : record.customer_id;
+          const orders = await rows('forge_sales_order', { customer_id: customerId, status: { $in: ['approved', 'active'] }, approval_outcome: 'approved',
+            ...(objectName === 'forge_project' && record.source_order_id ? { id: record.source_order_id } : {}) }, ['id', 'name', 'code', 'contract_id', 'customer_id']);
+          for (const order of orders) {
+            const contract = businessRow(await this.bridge.get('forge_sales_contract', String(order.contract_id), ['id', 'name', 'code', 'customer_id', 'status', 'signed_on', 'signed_evidence_attachment']));
+            if (!contract || contract.customer_id !== customerId || contract.status !== 'active' || !contract.signed_on || !contract.signed_evidence_attachment) continue;
+            const chosen = name === 'approved_order_id' ? order : contract;
+            if (!options.some(option => option.value === chosen.id)) options.push({ value: String(chosen.id), label: label(chosen) });
+          }
+        }
+        if (!options.length || options.length > 100 || options.some(option => !option.value || !option.label || option.label.length > 160)
+          || new Set(options.map(option => option.value)).size !== options.length || new Set(options.map(option => option.label)).size !== options.length)
+          throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_LOOKUP_UNAVAILABLE', '项目选择缺失、不可完整读取或名称有歧义，请先核对业务设置及准确来源');
+        p.enumLabels = options; p.enum = options.map(option => option.value);
+      }
       const min = raw.min ?? field?.min, max = raw.max ?? field?.max, maxLength = raw.maxLength ?? field?.maxLength;
       if (typeof min === 'number' && Number.isFinite(min)) p.minimum = min;
       if (typeof max === 'number' && Number.isFinite(max)) p.maximum = max;
@@ -158,6 +197,27 @@ export class EmployeeNativeActions {
       // A mirrored field alone is not authority for offering recovery.
       relevantRecord = { ...record, approval_outcome: outcome ?? 'pending' };
     }
+    if (objectName === 'forge_project' && record?.status === 'pending' && record.manager_id === this.actor.userId && this.actor.tenantId) {
+      const engine = this.context.getService<IObjectQLEngine>('objectql'), system = { ...businessContext(this.actor.userId!, this.actor.tenantId),
+        ...(this.actor.transaction ? { transaction: this.actor.transaction } : {}) };
+      const links = await engine.find('forge_project_sales_link', { where: { project_id: record.id, organization_id: this.actor.tenantId }, limit: 2 }, { context: system });
+      let ready = links.length === 1 && links[0].order_id === record.source_order_id && await validProjectManagerMember(engine, record, system);
+      if (ready) {
+        try {
+          const source = await approvedProjectOrder(engine, String(record.customer_id), String(links[0].order_id), system);
+          ready = source.contract.id === links[0].contract_id && source.version === record.source_order_version;
+          await readProjectActorSource(this.bridge, this.context.getService<ISecurityService>('security'), this.actor, String(record.customer_id), { orderId: String(source.order.id), contractId: String(source.contract.id), quotationId: source.quotation ? String(source.quotation.id) : null });
+          for (const [object, id] of [['forge_customer', record.customer_id], ['forge_sales_contract', source.contract.id], ['forge_sales_order', source.order.id],
+            ...(source.quotation ? [['forge_quotation', source.quotation.id]] : [])]) {
+            if (businessRow(await this.bridge.get(String(object), String(id)))?.id !== id) ready = false;
+          }
+        } catch (error) {
+          if (!(error instanceof TaskConnectionFailure && ['PROJECT_SOURCE_INVALID','PROJECT_SCOPE_PERMISSION_UNAVAILABLE','PROJECT_SCOPE_FIELDS_FORBIDDEN'].includes(error.code))) throw error;
+          ready = false;
+        }
+      }
+      relevantRecord = { ...record, project_start_ready: ready };
+    }
     const native = (await this.bridge.listActions()).filter(a => a.objectName === objectName
       && businessActionPolicy(objectName, String(a.name)).executionMode === 'employee_only'
       // Native approval decisions retain their existing version-bound route.
@@ -171,7 +231,7 @@ export class EmployeeNativeActions {
       if (nativeActionRequiresConfirmation(definition) && !nativeActionConfirmationSupported()) {
         throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_CONFIRMATION_UNSUPPORTED', '当前原生协议不能可靠传递本次办理授权');
       }
-      const parameters = await this.parameters(objectName, definition, metadata);
+      const parameters = await this.parameters(objectName, definition, metadata, false, relevantRecord);
       const policy = businessActionPolicy(objectName, String(action.name));
       result.push({ action_ref: result.length + 1, capabilityId: `forge:action:${objectName}.${String(action.name)}`,
         declarationVersion: await digest(canonicalJSON({ definition, parameters, policy })),
@@ -199,6 +259,9 @@ function employeeActionRelevant(name: string, row: BusinessRow, actor?: string):
     case 'sales_order_apply_completed_approval': return row.status === 'pending_approval' && row.responsible_id === actor && ['approved', 'rejected', 'recalled'].includes(String(row.approval_outcome));
     case 'sales_order_submit': return row.status === 'draft' && row.responsible_id === actor;
     case 'customer_prepayment_confirm': return row.status === 'pending_confirmation' && row.registered_by !== actor && (!row.confirmation_reviewer_id || row.confirmation_reviewer_id === actor);
+    case 'customer_create_project': return row.owner_id === actor;
+    case 'project_link_contract': return row.status === 'pending' && (row.owner_id === actor || row.manager_id === actor);
+    case 'project_start': return row.status === 'pending' && row.manager_id === actor && row.project_start_ready === true;
     default: return false;
   }
 }

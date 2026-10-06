@@ -3,7 +3,7 @@ import type { ExecutionContext } from '@objectstack/spec/kernel';
 import { StorageNameMapping } from '@objectstack/spec/system';
 import { SYSTEM_READ, TaskConnectionFailure } from './native-task-auth.js';
 
-const TABLES = new Set(['forge_quotation', 'forge_quotation_line', 'forge_sales_contract', 'forge_sales_order', 'forge_customer_prepayment', 'forge_cash_receipt', 'forge_fund_account', 'sys_file']);
+const TABLES = new Set(['forge_customer', 'forge_project', 'forge_project_sales_link', 'forge_project_member', 'forge_project_type', 'forge_quotation', 'forge_quotation_line', 'forge_sales_contract', 'forge_sales_contract_line', 'forge_sales_order', 'forge_sales_order_line', 'forge_customer_prepayment', 'forge_cash_receipt', 'forge_fund_account', 'sys_file']);
 export function businessDriver(engine: IObjectQLEngine, objects: string[]): IDataDriver {
   const name = engine.getDefaultDriverName?.(), driver = name ? engine.getDriverByName?.(name) : undefined;
   if (!driver?.execute || !engine.getDriverForObject || objects.some(object => engine.getDriverForObject!(object) !== driver)) {
