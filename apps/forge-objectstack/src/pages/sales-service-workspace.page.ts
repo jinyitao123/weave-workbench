@@ -554,7 +554,7 @@ function App(){
       const suffix=status?'，当前状态为'+status:'';
       const linkedCode=saved.receivable_code||saved.quotation_code||saved.settlement_code||saved.warranty_code||source&&source.quotation_code||source&&source.settlement_code||'';
       setNotice({tone:'success',text:resultLabel+'已保存'+suffix+(linkedCode?'；关联单号 '+linkedCode:'')});
-    }catch(error){setDialog(current=>current?{...current,error:String(error&&error.message||error)}:current)}
+    }catch(error){const message=String(error&&error.message||error);setDialog(value=>value?{...value,error:current.kind==='create-order'&&message.startsWith('DuplicateRecordError:')?'工单号已被使用，请修改后重试。':message}:value)}
     finally{setBusy(false)}
   }
   function cancelDialog(){if(busy)return;formController.current=null;setDialog(null)}

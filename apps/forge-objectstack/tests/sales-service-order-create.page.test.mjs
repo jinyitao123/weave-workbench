@@ -368,3 +368,28 @@ test('native defaults and cleared empty values do not create an unsaved order', 
   nestedNodes(tree, node => node.type === 'button' && serviceText(node).trim() === '取消')[0].props.onClick();
   assert.deepEqual(navigations, ['/apps/com.inoforge.forge.sales/page_service_orders']);
 });
+
+test('duplicate service-order numbers show a business error without discarding the draft', async () => {
+  const navigations = [];
+  const harness = createServicePageHarness(ServiceOrderCreatePage, {
+    manager: true,
+    permissions: serviceManagerPermission.systemPermissions,
+    formValues: validDraft,
+    globals: pageGlobals(undefined, path => navigations.push(path)),
+    onAction: async () => {
+      throw new Error("DuplicateRecordError: Duplicate record refused on 'forge_service_order': a unique constraint already holds these values. No record was written.");
+    },
+  });
+  let tree = await harness.flushEffects();
+  nestedNodes(tree, node => node.type === 'ObjectForm')[0].props.onValuesChange(validDraft);
+  tree = harness.render();
+  nestedNodes(tree, node => node.type === 'button' && serviceText(node).trim() === '创建服务工单')[0].props.onClick();
+  await new Promise(resolve => setImmediate(resolve));
+  await harness.settle();
+  tree = harness.render();
+  const errors = nestedNodes(tree, node => node.type === 'ForgeNotice' && node.props.tone === 'error').map(serviceText);
+  assert.ok(errors.includes('工单号已被使用，请修改后重试。'));
+  assert.equal(errors.some(message => /DuplicateRecordError|forge_service_order/.test(message)), false);
+  assertJsonEqual(nestedNodes(tree, node => node.type === 'ObjectForm')[0].props.values, validDraft);
+  assert.deepEqual(navigations, []);
+});
