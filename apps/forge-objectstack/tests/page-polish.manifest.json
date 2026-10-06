@@ -1325,7 +1325,14 @@
         "SO-CREATE-010",
         "SO-CREATE-011",
         "SO-CREATE-012",
-        "SO-CREATE-013"
+        "SO-CREATE-013",
+        "SO-CREATE-014",
+        "SO-CREATE-015",
+        "SO-CREATE-016",
+        "SO-CREATE-017",
+        "SO-CREATE-018",
+        "SO-CREATE-019",
+        "SO-CREATE-020"
       ],
       "designStatus": "review_required",
       "contract": "docs/forge-sales-service-page-contract-20260913.md",
