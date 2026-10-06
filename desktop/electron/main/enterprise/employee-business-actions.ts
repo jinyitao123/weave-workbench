@@ -16,17 +16,21 @@ type Service = Pick<EnterpriseService, 'getEmployeeBusinessContext' | 'executeEm
 interface BoundDirectory { messageId: string; context: EmployeeBusinessContext }
 interface Intent {
   selection: EmployeeBusinessSelection; accountKey: string; messageId: string; request: EmployeeBusinessRequest
-  materials: FrozenMaterial[]; phase: 'prepared' | 'sent'; operation?: EmployeeBusinessOperation
+  materials: FrozenMaterial[]; phase: 'prepared' | 'sent'; operation?: EmployeeBusinessOperation; actionLabel?: string
 }
 interface PendingOperation { intentKey: string }
 
 function sessionKey(account: string, path: string) { return `employee-business-source:${account}:${digest(path)}` }
 function scopeKey(account: string, source: EmployeeBusinessSelection) { return `employee-business-operation:${account}:${source.record.objectName}:${source.record.recordId}` }
 function terminal(operation?: EmployeeBusinessOperation) { return operation?.status === 'succeeded' || operation?.status === 'failed' }
-function publicOperation(operation?: EmployeeBusinessOperation) {
+function publicOperation(operation?: EmployeeBusinessOperation, actionLabel?: string, previous = false) {
+  const action = actionLabel ? `「${actionLabel}」` : '业务动作（旧记录未保存动作名称）'
   return operation ? {
     status: operation.status, repeated: operation.repeated, no_effect: operation.noEffect === true,
-    message: operation.status === 'succeeded' ? 'Forge 已确认本次业务动作成功，请按当前业务记录核对后续状态。'
+    ...(actionLabel ? { action_label: actionLabel } : {}),
+    message: operation.status === 'succeeded' ? previous
+      ? `Forge 已确认此前${action}成功；此回执不代表当前目录中的其他动作已办理，请核对当前业务状态。`
+      : `Forge 已确认本次${action}成功，请按当前业务记录核对后续状态。`
       : operation.status === 'failed' ? 'Forge 已确认本次业务动作失败。' : '原操作结果仍待核对，没有重新执行。',
     records: operation.recordReferences?.map((record) => ({ name: record.label })),
   } : { status: 'unknown', message: '原操作结果暂无法核对，没有重新执行；请稍后从当前事项查询。' }
@@ -92,11 +96,11 @@ export class EmployeeBusinessActions {
     if (!selection) throw new Error('请先从本人业务事项、业务消息或业务记录读取中选择当前记录')
     await turn.assertCurrent()
     const pending = await this.store.inspect<PendingOperation>(scopeKey(turn.accountKey, selection))
-    let previousOperation: EmployeeBusinessOperation | undefined
+    let previousIntent: Intent | undefined
     if (pending) {
       const prior = await this.lookup(pending.value.intentKey, turn)
-      previousOperation = prior.operation
-      if (prior.phase === 'sent' && !terminal(prior.operation)) return { actions: [], operation: publicOperation(prior.operation) }
+      previousIntent = prior
+      if (prior.phase === 'sent' && !terminal(prior.operation)) return { actions: [], operation: publicOperation(prior.operation, prior.actionLabel, true) }
     }
     const context = await this.service.getEmployeeBusinessContext(selection)
     await turn.assertCurrent()
@@ -104,7 +108,7 @@ export class EmployeeBusinessActions {
     this.directories.set(sessionKey(turn.accountKey, turn.sessionPath), { messageId: turn.messageId, context })
     return {
       status: context.actions.length ? 'available' : 'none', record: context.record.label,
-      ...(previousOperation ? { previous_operation: publicOperation(previousOperation) } : {}),
+      ...(previousIntent?.operation ? { previous_operation: publicOperation(previousIntent.operation, previousIntent.actionLabel, true) } : {}),
       actions: context.actions.map(({ action_ref, label, description, parameters }) => ({ action_ref, label, description, inputs: parameters })),
       message: '目录只说明当前可用动作。初始打开只读；办理须有员工本轮明确要求。文件仅取本轮实际选定的一件原件。',
     }
@@ -134,7 +138,7 @@ export class EmployeeBusinessActions {
       const prior = await this.lookup(pending.value.intentKey, turn)
       const sameMessage = prior.messageId === turn.messageId && prior.request.employeeMessage.sessionId === digest(turn.sessionPath)
       if (sameMessage && (prior.request.action_ref !== raw.action_ref || canonicalBusinessJSON(prior.request.values) !== canonicalBusinessJSON(raw.values))) throw new Error('本轮操作内容已固定，不能替换参数或动作')
-      if (prior.phase === 'sent' && (!terminal(prior.operation) || sameMessage)) return publicOperation(prior.operation)
+      if (prior.phase === 'sent' && (!terminal(prior.operation) || sameMessage)) return publicOperation(prior.operation, prior.actionLabel, !sameMessage)
     }
     const directory = this.directories.get(sessionKey(turn.accountKey, turn.sessionPath))
     if (!directory || directory.messageId !== turn.messageId) throw new Error('请先读取本轮当前事项动作目录')
@@ -154,13 +158,13 @@ export class EmployeeBusinessActions {
     const intentKey = `employee-business-intent:${turn.accountKey}:${digest(turn.sessionPath)}:${turn.messageId}`
     const fingerprint = digest(canonicalBusinessJSON({ selection, contextVersion: context.contextVersion, action: action.action_ref, values, materials: turn.materials }))
     let intent = await this.store.freeze<Intent>(intentKey, fingerprint, async () => ({
-      selection, accountKey: turn.accountKey, messageId: turn.messageId, phase: 'prepared',
+      selection, accountKey: turn.accountKey, messageId: turn.messageId, phase: 'prepared', actionLabel: action.label,
       materials: fileParameter && turn.materials.length ? await freezeMaterials(turn.cwd, turn.materials.map(({ path, sha256 }) => ({ path, sha256 }))) : [],
       request: { version: '1', contextId: context.contextId, contextVersion: context.contextVersion, opKey: randomUUID(),
         employeeMessage: { sessionId: digest(turn.sessionPath), messageId: turn.messageId, sha256: digest(turn.employeePrompt) }, action_ref: action.action_ref, values },
     }))
     await this.store.checkpoint(key, digest(key), { intentKey })
-    if (intent.phase === 'sent') return publicOperation((await this.lookup(intentKey, turn)).operation)
+    if (intent.phase === 'sent') return publicOperation((await this.lookup(intentKey, turn)).operation, intent.actionLabel)
     if (intent.materials.length && !intent.request.file) {
       const resources = await this.service.stageWorkMaterials(intent.materials, assertCurrent)
       await assertCurrent()
@@ -180,6 +184,6 @@ export class EmployeeBusinessActions {
       intent.operation = result
       await this.store.checkpoint(intentKey, fingerprint, intent)
     } catch { await turn.assertCurrent() }
-    return publicOperation(intent.operation)
+    return publicOperation(intent.operation, intent.actionLabel)
   }
 }

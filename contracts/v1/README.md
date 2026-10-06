@@ -273,6 +273,8 @@
 
 ### 本人非审批业务事项
 
+桌面向 Pi 返回原办理回执时必须区分“此前操作”与“当前请求”，并展示首次冻结时的业务动作名称。此前提交审批成功不能解释为随后发送、接受或转换成功；旧本地意图没有动作名称时明确标为动作归属未保存，不能从当前目录的引用序号反推。原操作仍未知时继续阻断同一记录的写入并查询原请求，不因补充名称解除防重放保护。
+
 本节为本轮待评审连接契约；[business-work-list.schema.json](business-work-list.schema.json) 定义 `GET /api/v1/workbench/business-work` 的直接回包，查询参数为可选 `cursor`、`limit`（默认 50，最多 100）。当前已安装 ObjectStack 17.3 分发未提供已证实的通用员工业务 Tasks 服务；`plugin-audit` 的 `sys_activity` 是 append-only 事件，保留期 14 天，字段没有事项分配、办理状态或完成生命周期，不能拿它充当持久待办。这项核对只描述当前分发，不断言后续平台版本永远没有 Tasks 能力。
 
 该接口仅投影已有业务状态，不新增任务实体。实现方式复用[审批事项只读投影](../../platform/forge/apps/forge-objectstack/src/plugins/approval-work-list.plugin.ts)的身份与分页边界；原生审批继续走 `approval-work-list`，不能在这里复制或把签署登记变成额外审批。
