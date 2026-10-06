@@ -49,7 +49,7 @@ pnpm build
 
 ### 固定构建 ObjectUI Console
 
-Forge CLI 17.3.0 会通过自身的 `resolveConsolePath` 解析 Console 包。pnpm 锁文件将 `@objectstack/console` 留在 CLI 的虚拟依赖树里，应用顶层通常没有 `node_modules/@objectstack/console`。打包脚本调用 CLI 同一解析器定位真实包目录后再注入，不假设顶层路径；注入前复制旧 `dist` 作为回滚备份，目录替换遇到 overlay 文件系统的跨设备错误时改用复制，摘要验证失败则从备份恢复。注入路径及产物摘要会写入构建期布局标记。最终镜像再用 runtime 内的 CLI 重解析该包，并逐文件校验摘要与构建期路径标记一致。Forge API、`/api/v1/mcp` 和事件流仍由原 Nginx `location /` 转发到同一个 Forge 服务。
+Forge CLI 17.5.0 会通过自身的 `resolveConsolePath` 解析 Console 包，版本以 [`console94.lock.json`](console94.lock.json) 为准。pnpm 锁文件将 `@objectstack/console` 留在 CLI 的虚拟依赖树里，应用顶层通常没有 `node_modules/@objectstack/console`。打包脚本调用 CLI 同一解析器定位真实包目录后再注入，不假设顶层路径；注入前复制旧 `dist` 作为回滚备份，目录替换遇到 overlay 文件系统的跨设备错误时改用复制，摘要验证失败则从备份恢复。注入路径及产物摘要会写入构建期布局标记。最终镜像再用 runtime 内的 CLI 重解析该包，并逐文件校验摘要与构建期路径标记一致。Forge API、`/api/v1/mcp` 和事件流仍由原 Nginx `location /` 转发到同一个 Forge 服务。
 
 Forge 项目支持 Node 24 及以上。产物来源与完整摘要由 [`console94.lock.json`](console94.lock.json) 锁定；复现这份 Console 产物时使用 Node 24.19.0 和 pnpm 10.31.0。先让 `OBJECTUI_SOURCE_DIR` 指向含锁定提交的 ObjectUI Git checkout，再执行：
 
@@ -63,15 +63,38 @@ pnpm console94:cli-smoke
 
 构建脚本用 `git archive` 读取锁定的 ObjectUI 提交，不读取工作区改动。它将站点基路径设为 `/_console/`，移除仅供分析且包含构建机绝对路径的 `stats.html`，修正生成 HTML 中嵌套路由下会错误解析的 manifest 相对地址，再对注入文件树逐字节校验。产物写入 `.generated/console94/`，已加入 Git 与主构建上下文忽略列表。
 
-Docker Compose 通过 BuildKit `additional_contexts` 注入该目录；直接使用 Compose 构建时，也将 `console94-build.env` 中的源码修订和树摘要传入 `FORGE_CONSOLE_SOURCE_REVISION`、`FORGE_CONSOLE_TREE_SHA256`。Docker build stage 使用同一 CLI 解析器定位并注入 Console；runtime stage 在复制完整 pnpm `node_modules` 后，再用 Node 22 中的 CLI 重解析并校验路径和摘要。`scripts/deploy.sh` 自动传递同一上下文和摘要，并在备份和切换前检查构建材料。Docker 镜像标签及发布记录都写入 Console 源提交与树摘要。ObjectStack runtime 固定为 `17.3.0` 的 OCI digest，与 Forge 锁定的 CLI 主机版本配套；现有发布流程通过重新启用上一应用/代理镜像回滚，候选失败时不会改变公网入口。
+Docker Compose 通过 BuildKit `additional_contexts` 注入该目录；直接使用 Compose 构建时，也将 `console94-build.env` 中的源码修订和树摘要传入 `FORGE_CONSOLE_SOURCE_REVISION`、`FORGE_CONSOLE_TREE_SHA256`。Docker build stage 使用同一 CLI 解析器定位并注入 Console；runtime stage 在复制完整 pnpm `node_modules` 后，再用运行时自身的 Node 与 CLI 重解析并校验路径和摘要。`scripts/deploy.sh` 自动传递同一上下文和摘要，并在备份和切换前检查构建材料。Docker 镜像标签及发布记录都写入 Console 源提交与树摘要。ObjectStack runtime 固定为锁中 `17.5.0` 的 OCI digest，与 Forge 锁定的 CLI 主机版本配套；现有发布流程通过重新启用上一应用/代理镜像回滚，候选失败时不会改变公网入口。
 
-当前已确认的官方 `17.3.0` runtime 使用 Node 22，而 Forge app build stage 使用 Node 24.19.0；依赖树含原生 `better-sqlite3`。本机没有 Docker，尚未验证该 native addon 在 runtime 中的加载行为。候选镜像启动健康检查必须通过后才能接受该镜像组合；此次静态构建和 Console 文件校验不替代这一步。
+Forge app build stage 使用 Node 24.19.0，依赖树含原生 `better-sqlite3`。运行时及 native addon 的实际加载行为须以锁定镜像和本次候选启动检查为准；此前17.3／Node22组合的观察不作为当前17.5镜像证据。候选镜像启动健康检查必须通过后才能接受该镜像组合；静态构建和 Console 文件校验不替代这一步。
 
 单机或客户内网部署使用 `scripts/deploy.sh`。公网同源入口由独立 Nginx 容器提供，Forge 应用端口只暴露在 Compose 内网。Nginx 对文本和 JSON 使用 gzip；仅 200、内容哈希命名且 MIME 属于 JavaScript、CSS 或字体的资源可获一年浏览器缓存。HTML 需重新验证，带认证的响应保持私有，写入、认证和上传响应不缓存；SSE/MCP 流按事件到达且不压缩。Nginx 不启用共享响应缓存。
 
 容器启动时先执行 `scripts/notification-lease-preflight.mjs` 和 `scripts/sales-line-sku-preflight.mjs`，再启动正式服务。空 PostgreSQL 库通过固定版本 ObjectStack 导出的 `NotificationDelivery` 和原生 SQL driver 建立通知投递表；已有库只核对三个租约字段。遇到 17.3 的 `real` 类型时执行 [精度迁移](scripts/schema/notification-lease-precision.sql)，并验证为 `double precision`；已正确时不重置领取状态。销售合同与订单行迁移只放宽旧库 `sku_id` 的物理 `NOT NULL`，保留所有现有明细；草稿 Action 继续要求物料行带 SKU，并拒绝服务行携带 SKU。销售合同草稿 Action 同时显式写入 `owner_id`；启动前迁移只将 `owner_id` 为空、状态为草稿且 `created_by` 与 `responsible_id` 相同的历史合同归还给该负责人，其他合同不改。新库由当前对象字段直接建表。任一迁移失败则不启动应用和消息处理器，不等待首条业务写入才手工修表。该流程用于当前单机单应用进程部署；升级前须停止旧应用，不适用于新旧消息工作进程并发执行迁移。原根目录日期 SQL 已迁入应用构建上下文，历史执行证据仍可按旧提交追溯。
 
 发布脚本按同一源码提交构建带修订标识的应用和代理镜像，发布前备份已有 PostgreSQL 及附件卷，记录两份备份路径；备份目录／文件以0700／0600创建，任一备份失败则不构建或切换。`.deploy`、运行数据及环境文件不进入 Docker 构建上下文。备份校验只证明压缩包可读，恢复能力仍须在隔离环境实际验证。随后在仅绑定回环地址的候选端口验证 Nginx 与 Forge，再更新应用、重新验证候选入口，最后切换公网端口。任一健康检查失败会尝试恢复上一应用与代理镜像；首次由直连切换到代理时，失败则恢复上一应用的原公网端口。镜像回退不自动恢复数据库。发布记录写入 `.deploy/releases/`，包含镜像标识、端口和备份位置，不含密钥。环境差异只放在未提交的 `.env` 中，业务数据继续保存在独立 Docker volume。
+
+### 部署容量检查
+
+2026-10-07标准部署曾在普通可用空间约1.6GB时继续构建，构建完成后可用为0，新应用切换及原镜像回退健康均失败。人工清理未使用构建缓存后，先恢复旧镜像，再沿原激活步骤启用已构建的准确候选；未恢复数据库。该失败不能由后续恢复追改为首轮发布成功。
+
+当前 `scripts/deploy.sh` 在以下阶段分别检查应用目录、原生 `docker info --format '{{.DockerRootDir}}'` 返回的实际目录，以及备份目标所在文件系统。备份目录尚不存在时，先检查其最近已存在父目录，再创建发布目录，避免磁盘已满时先执行写入。
+
+| 阶段 | 默认普通可用空间 | 后续操作 |
+| --- | --- | --- |
+| before-backup | 4GiB | 创建发布目录与备份 |
+| before-build | 4GiB | 已备份后的两镜像构建 |
+| before-candidate | 1GiB | 候选启动及首次应用初始化 |
+| before-app-switch | 1GiB | 候选健康确认后的应用切换 |
+
+检查固定用 `df -Pk` 的Available列，单位KiB；不使用root保留块、总量减已用、或不同磁盘空间相加。DockerRootDir无效／不可访问、df失败／数字无法可靠解析都拒绝；输出阶段、位置、可用量或unknown及要求。门禁不执行prune、删除数据、数据库恢复或第二次部署；切换后的原健康检查和镜像回退语义保持。脚本须在Docker数据目录可直接核对的部署主机执行。
+
+通过环境变量 `FORGE_DEPLOY_MIN_BUILD_GIB` 与 `FORGE_DEPLOY_MIN_SWITCH_GIB` 明确调整阈值。两者只接受1至1048576的十进制正整数GiB，空值、0、前导零及非法值拒绝；默认分别4与1。每次输出所用阈值，成功发布的 `release.env` 记录 `minimum_build_available_gib`／`minimum_switch_available_gib`。检查不预留空间；构建后和候选健康后的复核用于阻止已低于切换要求的后续动作。
+
+容量检查、备份、候选及两类既有回退由同一 `tests/deploy-transport.mjs` 的50个真实Shell stub用例验证，不调用Docker运行时、业务服务或数据库；Shell语法与Console包装检查另行通过。这是发布编排组件证据，不代表业务恢复、真实镜像构建或备份恢复验证。
+
+#### 复用既有镜像的恢复边界
+
+上述a522激活tail恢复是冻结旧脚本的真实证据，不代表新容量门禁已执行。新版本如需复用已构建镜像，必须从同一已审源码取得阈值初始化／校验、四个容量函数（`validate_capacity_threshold`、`capacity_unknown`、`check_available_space`、`check_deploy_capacity`），以及真实AppRoot／BackupRoot、发布目录、当前与上一应用／代理镜像等标准prefix；再保留从 `before-candidate` 容量检查开始的原cleanup／rollback及 `before-app-switch` tail。执行前启用 `set -eu` 并核四函数存在，不能只沿旧 `FORGE_HEALTH_ATTEMPTS` anchor截取tail，也不能假定旧私有runner已包含新函数。未按此构造和复核不得执行；不能source完整脚本重复备份／构建。本次没有增加恢复CLI、自动恢复模式或重试循环；备份目标的有限dirname上溯只是解析实际文件系统路径。此恢复构造规则尚非新增恢复执行证据。
 
 ```sh
 ./scripts/deploy.sh
