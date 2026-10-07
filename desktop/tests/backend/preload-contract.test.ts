@@ -86,6 +86,8 @@ const INVOKE_CASES: Array<[domain: string, method: string, channel: string, args
   ['enterprise', 'getTeamDevelopmentState', 'enterprise:get-team-development-state', ['runtime']],
   ['enterprise', 'getTeamDevelopmentStateForSession', 'enterprise:get-team-development-state-for-session', ['/session.jsonl']],
   ['enterprise', 'invalidateHandoff', 'enterprise:invalidate-handoff', ['runtime']],
+  ['enterprise', 'importConnection', 'enterprise:import-connection', []],
+  ['enterprise', 'restartConnection', 'enterprise:restart-connection', []],
   ['enterprise', 'getStatus', 'enterprise:get-status', []],
   ['enterprise', 'getSession', 'enterprise:get-session', []],
   ['enterprise', 'signIn', 'enterprise:sign-in', ['developer@example.test', 'test-password']],

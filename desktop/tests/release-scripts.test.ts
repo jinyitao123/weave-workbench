@@ -54,6 +54,7 @@ import { assertBundleSizeBudgets, assertPackageSizeBudgets, BUNDLE_SIZE_BUDGETS,
 import { assertReleaseTag } from '../scripts/release/validate-release-tag.mjs'
 // after-pack.cjs is CommonJS; the interop layer exposes module.exports properties as named exports.
 import { executablePath } from '../scripts/release/after-pack.cjs'
+import { runtimeTarget } from '../scripts/release/electron-builder.mjs'
 import { collectAuditAdvisories, describeAuditEvaluation, evaluateAuditReport, parseAuditExceptions, readAuditExceptions } from '../scripts/release/audit-exceptions.mjs'
 import {
   assertValidAuthenticode,
@@ -118,7 +119,13 @@ function writeMacReleaseFixture(directory: string, { omit }: { omit?: string } =
   mkdirSync(projectDirectory, { recursive: true })
   mkdirSync(inputDirectory, { recursive: true })
   writeFileSync(join(projectDirectory, 'package.json'), JSON.stringify({ version: '0.2.0' }))
-  writeFileSync(join(projectDirectory, 'package-lock.json'), JSON.stringify({ version: '0.2.0', packages: { '': { version: '0.2.0' } } }))
+  writeFileSync(
+    join(projectDirectory, 'package-lock.json'),
+    JSON.stringify({
+      version: '0.2.0',
+      packages: { '': { version: '0.2.0' } },
+    }),
+  )
   for (const [index, name] of expectedDownloadedReleaseAssets('0.2.0', ['mac']).entries()) {
     if (name === omit) continue
     const artifactDirectory = join(inputDirectory, `artifact-${index}`)
@@ -173,7 +180,15 @@ function createPinnedNpmArtifactFixture(contents = Buffer.from('verified npm arc
   const integrity = `sha512-${createHash('sha512').update(contents).digest('base64')}`
   const manifest = npmArtifactManifest(contents.length, { integrity })
   const artifact = parsePinnedNpmArtifact(manifest, { node: '24.15.0', npm: '12.0.2' }, repositoryRoot)
-  return { temporaryDirectory, repositoryRoot, artifactPath, artifact, manifest, contents, integrity }
+  return {
+    temporaryDirectory,
+    repositoryRoot,
+    artifactPath,
+    artifact,
+    manifest,
+    contents,
+    integrity,
+  }
 }
 
 describe('release preflight', () => {
@@ -202,7 +217,10 @@ describe('release preflight', () => {
 
   test('binds the requested target architecture to the produced mac artifacts', async () => {
     const { assertBooleanEntitlement, assertRequestedArchitecture, verifyAppBundleIdentifier, verifyCodeSignatureIfPresent } = await import('../scripts/release/verify-package.mjs')
-    const artifacts = { dmg: 'release/mac/arm64/Prime Work-1.0.0-arm64.dmg', zip: 'release/mac/arm64/Prime Work-1.0.0-arm64.zip' }
+    const artifacts = {
+      dmg: 'release/mac/arm64/Prime Work-1.0.0-arm64.dmg',
+      zip: 'release/mac/arm64/Prime Work-1.0.0-arm64.zip',
+    }
     expect(() => assertRequestedArchitecture(artifacts, 'arm64')).not.toThrow()
     expect(() => assertRequestedArchitecture(artifacts, undefined)).not.toThrow()
     expect(() => assertRequestedArchitecture(artifacts, 'x64')).toThrow(/declares architecture arm64, but --arch x64 was requested/)
@@ -219,7 +237,11 @@ describe('release preflight', () => {
 
     const app = '/tmp/Weave Workbench.app'
     const plist = `${app}/Contents/Info.plist`
-    const expectedAppId = (JSON.parse(readFileSync('package.json', 'utf8')) as { build: { appId: string } }).build.appId
+    const expectedAppId = (
+      JSON.parse(readFileSync('package.json', 'utf8')) as {
+        build: { appId: string }
+      }
+    ).build.appId
     const readIdentifier = vi.fn(() => `${expectedAppId}\n`)
     expect(verifyAppBundleIdentifier(app, expectedAppId, readIdentifier)).toBe(expectedAppId)
     expect(readIdentifier).toHaveBeenCalledWith('plutil', ['-extract', 'CFBundleIdentifier', 'raw', '-o', '-', plist])
@@ -237,9 +259,18 @@ describe('release preflight', () => {
     })
     expect(verifyCodeSignatureIfPresent(app, { runCommand: unsigned })).toBeUndefined()
     expect(unsigned).toHaveBeenCalledOnce()
-    expect(() => verifyCodeSignatureIfPresent(app, { required: true, runCommand: unsigned })).toThrow(/must have a valid code signature/)
+    expect(() =>
+      verifyCodeSignatureIfPresent(app, {
+        required: true,
+        runCommand: unsigned,
+      }),
+    ).toThrow(/must have a valid code signature/)
 
-    const expectedAppId = (JSON.parse(readFileSync('package.json', 'utf8')) as { build: { appId: string } }).build.appId
+    const expectedAppId = (
+      JSON.parse(readFileSync('package.json', 'utf8')) as {
+        build: { appId: string }
+      }
+    ).build.appId
     const signed = vi.fn().mockReturnValueOnce(`Identifier=${expectedAppId}`).mockReturnValueOnce('')
     expect(verifyCodeSignatureIfPresent(app, { runCommand: signed })).toContain(`Identifier=${expectedAppId}`)
     expect(signed).toHaveBeenNthCalledWith(1, 'codesign', ['-dv', '--verbose=4', app])
@@ -251,18 +282,30 @@ describe('release preflight', () => {
       .mockImplementationOnce(() => {
         throw new Error('code signature invalid after Info.plist modification')
       })
-    expect(() => verifyCodeSignatureIfPresent(app, { runCommand: brokenAfterModification })).toThrow(/code signature invalid after Info\.plist modification/)
+    expect(() =>
+      verifyCodeSignatureIfPresent(app, {
+        runCommand: brokenAfterModification,
+      }),
+    ).toThrow(/code signature invalid after Info\.plist modification/)
   })
 
   test('enforces the repository Node and npm boundaries from checked-in metadata', () => {
-    expect(readRepositoryToolchain()).toEqual({ node: '24.15.0', npm: '12.0.2' })
+    expect(readRepositoryToolchain()).toEqual({
+      node: '24.15.0',
+      npm: '12.0.2',
+    })
     expect(() => assertSupportedNode('v24.14.99')).toThrow(/Node\.js >=24\.15\.0 is required/)
     expect(() => assertSupportedNode('v24.15.0')).not.toThrow()
     expect(() => assertSupportedNode('v25.0.0')).not.toThrow()
     expect(() => assertSupportedNpm('12.0.1')).toThrow(/npm >=12\.0\.2 is required/)
     expect(() => assertSupportedNpm('12.0.2')).not.toThrow()
     expect(() => assertSupportedNpm('13.0.0')).not.toThrow()
-    expect(() => assertSupportedToolchain({ nodeVersion: 'v24.15.0', npmVersion: '12.0.2' })).not.toThrow()
+    expect(() =>
+      assertSupportedToolchain({
+        nodeVersion: 'v24.15.0',
+        npmVersion: '12.0.2',
+      }),
+    ).not.toThrow()
   })
 
   test('rejects malformed and prerelease tool versions', () => {
@@ -284,7 +327,15 @@ describe('release preflight', () => {
     expect(parseToolchainMetadata(JSON.stringify(packageMetadata), '24.15.0\n')).toEqual({ node: '24.15.0', npm: '12.0.2' })
     expect(() => parseToolchainMetadata(JSON.stringify(packageMetadata), '24.14.0\n')).toThrow(/\.nvmrc.*engines\.node/)
     expect(() => parseToolchainMetadata(JSON.stringify({ ...packageMetadata, packageManager: 'npm@12.0.1' }), '24.15.0\n')).toThrow(/packageManager.*engines\.npm/)
-    expect(() => parseToolchainMetadata(JSON.stringify({ ...packageMetadata, engines: { ...packageMetadata.engines, node: '^24.15.0' } }), '24.15.0\n')).toThrow(/engines\.node must use/)
+    expect(() =>
+      parseToolchainMetadata(
+        JSON.stringify({
+          ...packageMetadata,
+          engines: { ...packageMetadata.engines, node: '^24.15.0' },
+        }),
+        '24.15.0\n',
+      ),
+    ).toThrow(/engines\.node must use/)
     expect(() => parseToolchainMetadata(JSON.stringify(packageMetadata), '24.15.0-rc.1\n')).toThrow(/stable \.nvmrc release/)
     expect(() => parseToolchainMetadata('{', '24.15.0\n')).toThrow(/Cannot parse package\.json/)
 
@@ -310,10 +361,18 @@ describe('release preflight', () => {
 
       const invalidPins = [
         npmArtifactManifest(fixture.contents.length, { version: '12.0.1' }),
-        npmArtifactManifest(fixture.contents.length, { path: 'vendor/npm-elsewhere.tgz' }),
-        npmArtifactManifest(fixture.contents.length, { path: '../npm-12.0.2.tgz' }),
-        npmArtifactManifest(fixture.contents.length, { source: 'https://example.invalid/npm-12.0.2.tgz' }),
-        npmArtifactManifest(fixture.contents.length, { integrity: 'sha256-not-strong-enough' }),
+        npmArtifactManifest(fixture.contents.length, {
+          path: 'vendor/npm-elsewhere.tgz',
+        }),
+        npmArtifactManifest(fixture.contents.length, {
+          path: '../npm-12.0.2.tgz',
+        }),
+        npmArtifactManifest(fixture.contents.length, {
+          source: 'https://example.invalid/npm-12.0.2.tgz',
+        }),
+        npmArtifactManifest(fixture.contents.length, {
+          integrity: 'sha256-not-strong-enough',
+        }),
         npmArtifactManifest(fixture.contents.length, { size: 0 }),
         npmArtifactManifest(fixture.contents.length, { size: 1.5 }),
         npmArtifactManifest(fixture.contents.length, { license: 'MIT' }),
@@ -360,7 +419,11 @@ describe('release preflight', () => {
       expect(() => verifyPinnedNpmArtifact(fixture.artifact)).toThrow(/does not exist/)
       expect(() =>
         verifyPinnedNpmArtifact(fixture.artifact, {
-          lstat: () => ({ isFile: () => false, isSymbolicLink: () => true, size: fixture.contents.length }),
+          lstat: () => ({
+            isFile: () => false,
+            isSymbolicLink: () => true,
+            size: fixture.contents.length,
+          }),
           readFile: () => fixture.contents,
         }),
       ).toThrow(/regular non-symlink file/)
@@ -434,7 +497,10 @@ describe('release preflight', () => {
     const githubPath = '/runner/github-path'
     const calls: Array<{ args: string[]; npmCliPath: string | undefined }> = []
     const runs: Array<{ command: string; args: string[]; shell: boolean }> = []
-    const persisted: Array<{ shimDirectory: string; destination: string | undefined }> = []
+    const persisted: Array<{
+      shimDirectory: string
+      destination: string | undefined
+    }> = []
     let installed = false
     try {
       const result = bootstrapNpm({
@@ -475,7 +541,12 @@ describe('release preflight', () => {
         npmCliPath: '/runner/npm-global/lib/node_modules/npm/bin/npm-cli.js',
       })
       expect(persisted).toEqual([{ shimDirectory: '/runner/npm-global/bin', destination: githubPath }])
-      expect(result).toMatchObject({ current: '12.0.2', installed: '12.0.2', shimDirectory: '/runner/npm-global/bin', githubPathUpdated: true })
+      expect(result).toMatchObject({
+        current: '12.0.2',
+        installed: '12.0.2',
+        shimDirectory: '/runner/npm-global/bin',
+        githubPathUpdated: true,
+      })
     } finally {
       rmSync(fixture.temporaryDirectory, { recursive: true, force: true })
     }
@@ -512,8 +583,20 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
     )
 
     try {
-      const result = bootstrapNpm({ artifact: fixture.artifact, env: { ...process.env, GITHUB_PATH: githubPath, npm_execpath: staleCli } })
-      expect(result).toMatchObject({ current: '11.12.1', installed: '12.0.2', ...layout, githubPathUpdated: true })
+      const result = bootstrapNpm({
+        artifact: fixture.artifact,
+        env: {
+          ...process.env,
+          GITHUB_PATH: githubPath,
+          npm_execpath: staleCli,
+        },
+      })
+      expect(result).toMatchObject({
+        current: '11.12.1',
+        installed: '12.0.2',
+        ...layout,
+        githubPathUpdated: true,
+      })
       expect(readFileSync(githubPath, 'utf8')).toBe(`${layout.shimDirectory}\n`)
     } finally {
       rmSync(directory, { recursive: true, force: true })
@@ -536,7 +619,11 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
           npm_config_prefix: prefix,
         },
       })
-      expect(result).toMatchObject({ installed: '12.0.2', prefix, githubPathUpdated: true })
+      expect(result).toMatchObject({
+        installed: '12.0.2',
+        prefix,
+        githubPathUpdated: true,
+      })
       expect(readFileSync(githubPath, 'utf8')).toBe(`${result.shimDirectory}\n`)
       expect(readNpmOutput(['--version'], { npmCliPath: result.cliPath })).toBe('12.0.2')
     } finally {
@@ -579,7 +666,10 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
   test('keeps contributor instructions aligned with the enforced engines', () => {
     const packageJson = JSON.parse(readFileSync('package.json', 'utf8'))
     const toolchain = readRepositoryToolchain()
-    expect(packageJson.engines).toEqual({ node: `>=${toolchain.node}`, npm: `>=${toolchain.npm}` })
+    expect(packageJson.engines).toEqual({
+      node: `>=${toolchain.node}`,
+      npm: `>=${toolchain.npm}`,
+    })
     expect(packageJson.packageManager).toBe(`npm@${toolchain.npm}`)
     expect(readFileSync('.nvmrc', 'utf8').trim()).toBe(toolchain.node)
     const readme = readFileSync('README.md', 'utf8')
@@ -617,20 +707,37 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
 
   test('fails closed without Windows Authenticode credentials', () => {
     expect(() => validateWindowsReleaseCredentials({})).toThrow(/WIN_CSC_LINK, WIN_CSC_KEY_PASSWORD/)
-    expect(() => validateWindowsReleaseCredentials({ WIN_CSC_LINK: 'certificate', WIN_CSC_KEY_PASSWORD: 'password' })).not.toThrow()
+    expect(() =>
+      validateWindowsReleaseCredentials({
+        WIN_CSC_LINK: 'certificate',
+        WIN_CSC_KEY_PASSWORD: 'password',
+      }),
+    ).not.toThrow()
     const packaging = readFileSync('scripts/release/package.mjs', 'utf8')
     expect(packaging).toContain("builderArgs.push('--config.forceCodeSigning=true')")
     expect(packaging).toContain("'--mode', isPublic ? 'public' : 'qa'")
   })
 
   test('removes release credentials from untrusted verification commands', () => {
-    const environment = { PATH: '/usr/bin', ...baseEnvironment, APPLE_API_KEY: '/tmp/private-key' }
-    expect(withoutReleaseCredentials(environment)).toEqual({ PATH: '/usr/bin' })
+    const environment = {
+      PATH: '/usr/bin',
+      ...baseEnvironment,
+      APPLE_API_KEY: '/tmp/private-key',
+    }
+    expect(withoutReleaseCredentials(environment)).toEqual({
+      PATH: '/usr/bin',
+    })
     expect(withoutReleaseCredentials(environment, ['RELEASE_SIGNING_TEAM_ID'])).toEqual({
       PATH: '/usr/bin',
       RELEASE_SIGNING_TEAM_ID: 'TEAM123',
     })
-    expect(withoutReleaseCredentials({ PATH: '/usr/bin', WIN_CSC_LINK: 'certificate', WIN_CSC_KEY_PASSWORD: 'password' })).toEqual({ PATH: '/usr/bin' })
+    expect(
+      withoutReleaseCredentials({
+        PATH: '/usr/bin',
+        WIN_CSC_LINK: 'certificate',
+        WIN_CSC_KEY_PASSWORD: 'password',
+      }),
+    ).toEqual({ PATH: '/usr/bin' })
   })
 
   interface WorkflowStep {
@@ -660,7 +767,13 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
         continue
       }
       if (/^ {6}- /.test(line)) {
-        current = { job, name: undefined, uses: undefined, secretLines: [], lines: [] }
+        current = {
+          job,
+          name: undefined,
+          uses: undefined,
+          secretLines: [],
+          lines: [],
+        }
         steps.push(current)
       }
       if (!current) continue
@@ -713,7 +826,19 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
   test('routes desktop jobs by repository paths and runs commands from the desktop package', () => {
     type Workflow = {
       defaults?: { run?: { 'working-directory'?: string } }
-      jobs: Record<string, { needs?: string | string[]; if?: string; steps?: Array<{ uses?: string; run?: string; if?: string; with?: Record<string, unknown> }> }>
+      jobs: Record<
+        string,
+        {
+          needs?: string | string[]
+          if?: string
+          steps?: Array<{
+            uses?: string
+            run?: string
+            if?: string
+            with?: Record<string, unknown>
+          }>
+        }
+      >
     }
     const ci = load(readFileSync('../.github/workflows/desktop-ci.yml', 'utf8')) as Workflow
     const audit = load(readFileSync('../.github/workflows/desktop-audit.yml', 'utf8')) as Workflow
@@ -778,9 +903,18 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
       name?: string
       needs?: string | string[]
       if?: string
-      steps?: Array<{ name?: string; uses?: string; run?: string; if?: string; with?: Record<string, unknown> }>
+      steps?: Array<{
+        name?: string
+        uses?: string
+        run?: string
+        if?: string
+        with?: Record<string, unknown>
+      }>
     }
-    type Workflow = { on: Record<string, unknown>; jobs: Record<string, WorkflowJob> }
+    type Workflow = {
+      on: Record<string, unknown>
+      jobs: Record<string, WorkflowJob>
+    }
     const ci = load(readFileSync('../.github/workflows/desktop-ci.yml', 'utf8')) as Workflow
     const release = load(readFileSync('../.github/workflows/desktop-release.yml', 'utf8')) as Workflow
 
@@ -826,7 +960,10 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
     const ciWorkflow = readFileSync('../.github/workflows/desktop-ci.yml', 'utf8')
     const auditWorkflow = readFileSync('../.github/workflows/desktop-audit.yml', 'utf8')
     const workflows = [
-      { path: '../.github/workflows/desktop-release.yml', source: releaseWorkflow },
+      {
+        path: '../.github/workflows/desktop-release.yml',
+        source: releaseWorkflow,
+      },
       { path: '../.github/workflows/desktop-ci.yml', source: ciWorkflow },
       { path: '../.github/workflows/desktop-audit.yml', source: auditWorkflow },
     ]
@@ -877,7 +1014,13 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
   })
 
   test('uploads packaged smoke diagnostics only when the failed launch wrote its log', () => {
-    type WorkflowJob = { steps?: Array<{ uses?: string; if?: string; with?: Record<string, unknown> }> }
+    type WorkflowJob = {
+      steps?: Array<{
+        uses?: string
+        if?: string
+        with?: Record<string, unknown>
+      }>
+    }
     type Workflow = { jobs: Record<string, WorkflowJob> }
     const ci = load(readFileSync('../.github/workflows/desktop-ci.yml', 'utf8')) as Workflow
     const release = load(readFileSync('../.github/workflows/desktop-release.yml', 'utf8')) as Workflow
@@ -892,22 +1035,41 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
   test('publishes one verified GitHub Release only after a manual request selects an existing version tag', () => {
     const workflow = readFileSync('../.github/workflows/desktop-release.yml', 'utf8')
     const parsed = load(workflow) as {
-      on: { workflow_dispatch?: { inputs?: Record<string, unknown> }; push?: unknown }
+      on: {
+        workflow_dispatch?: { inputs?: Record<string, unknown> }
+        push?: unknown
+      }
       permissions?: { contents?: string }
       jobs: Record<
         string,
         {
-          permissions?: { contents?: string; 'id-token'?: string; attestations?: string }
-          steps?: Array<{ name?: string; uses?: string; 'working-directory'?: string; with?: Record<string, unknown> }>
+          permissions?: {
+            contents?: string
+            'id-token'?: string
+            attestations?: string
+          }
+          steps?: Array<{
+            name?: string
+            uses?: string
+            'working-directory'?: string
+            with?: Record<string, unknown>
+          }>
         }
       >
     }
     expect(parsed.on.workflow_dispatch?.inputs).toHaveProperty('tag')
     expect(parsed.on.push).toBeUndefined()
     expect(parsed.permissions?.contents).toBe('read')
-    expect(parsed.jobs['release-packages'].permissions).toEqual({ contents: 'write', 'id-token': 'write', attestations: 'write' })
+    expect(parsed.jobs['release-packages'].permissions).toEqual({
+      contents: 'write',
+      'id-token': 'write',
+      attestations: 'write',
+    })
     const publishSteps = parsed.jobs['release-packages'].steps ?? []
-    expect(publishSteps[0]).toMatchObject({ name: 'Fail if a release prerequisite did not succeed', 'working-directory': '.' })
+    expect(publishSteps[0]).toMatchObject({
+      name: 'Fail if a release prerequisite did not succeed',
+      'working-directory': '.',
+    })
     expect(publishSteps.find((step) => step.uses?.startsWith('actions/download-artifact@'))?.with?.path).toBe('desktop/downloaded-release-artifacts')
     expect(publishSteps.find((step) => step.name === 'Attest release assets')?.with?.['subject-path']).toBe('desktop/release-assets/*')
     expect(workflow).toContain('node scripts/release/validate-release-tag.mjs --tag "$RELEASE_TAG"')
@@ -937,8 +1099,22 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
 
   test('pins every release job to one commit SHA resolved by validate', () => {
     const workflow = readFileSync('../.github/workflows/desktop-release.yml', 'utf8')
-    const parsed = load(workflow) as { jobs: Record<string, { outputs?: Record<string, string>; steps?: Array<{ id?: string; run?: string; with?: Record<string, unknown> }> }> }
-    expect(parsed.jobs.validate.outputs).toEqual({ sha: '${{ steps.resolve.outputs.sha }}' })
+    const parsed = load(workflow) as {
+      jobs: Record<
+        string,
+        {
+          outputs?: Record<string, string>
+          steps?: Array<{
+            id?: string
+            run?: string
+            with?: Record<string, unknown>
+          }>
+        }
+      >
+    }
+    expect(parsed.jobs.validate.outputs).toEqual({
+      sha: '${{ steps.resolve.outputs.sha }}',
+    })
     expect(parsed.jobs.validate.steps?.find((step) => step.id === 'resolve')?.run).toContain('git rev-parse HEAD^{commit}')
     // validate resolves the movable tag once; every other job checks out that
     // SHA so a tag moved mid-run cannot make two jobs build different commits.
@@ -1062,7 +1238,13 @@ describe('GitHub Release publication', () => {
 
   test('covers exactly the platform and architecture legs the release workflow builds', () => {
     const workflow = load(readFileSync('../.github/workflows/desktop-release.yml', 'utf8')) as {
-      jobs: Record<string, { strategy?: { matrix?: { include?: Array<{ arch: string }> } }; steps?: Array<{ run?: string }> }>
+      jobs: Record<
+        string,
+        {
+          strategy?: { matrix?: { include?: Array<{ arch: string }> } }
+          steps?: Array<{ run?: string }>
+        }
+      >
     }
     const architectures = (job: string) => (workflow.jobs[job].strategy?.matrix?.include ?? []).map((leg) => leg.arch).sort()
     expect(architectures('package')).toEqual([...RELEASE_BUILD_MATRIX.mac].sort())
@@ -1078,9 +1260,15 @@ describe('GitHub Release publication', () => {
       const { projectDirectory, inputDirectory } = writeMacReleaseFixture(directory, { omit: 'Weave Workbench-0.2.0-arm64.dmg' })
       // The arm64 DMG publishes as m-chip.dmg: the report must name the missing
       // published asset, not whichever entry happens to share its sort index.
-      await expect(prepareGitHubRelease({ inputDirectory, outputDirectory: join(directory, 'out'), projectDirectory, platforms: ['mac'], tag: 'v0.2.0' })).rejects.toThrow(
-        /incomplete; missing Weave Workbench-0\.2\.0-m-chip\.dmg$/,
-      )
+      await expect(
+        prepareGitHubRelease({
+          inputDirectory,
+          outputDirectory: join(directory, 'out'),
+          projectDirectory,
+          platforms: ['mac'],
+          tag: 'v0.2.0',
+        }),
+      ).rejects.toThrow(/incomplete; missing Weave Workbench-0\.2\.0-m-chip\.dmg$/)
     } finally {
       rmSync(directory, { recursive: true, force: true })
     }
@@ -1146,12 +1334,19 @@ describe('GitHub Release publication', () => {
     try {
       mkdirSync(join(directory, 'release-assets'))
       for (const name of ['Weave Workbench-0.2.0-m-chip.dmg', 'SHA256SUMS.txt']) writeFileSync(join(directory, 'release-assets', name), 'asset')
-      writeFileSync(join(directory, 'draft.json'), JSON.stringify({ assets: [{ name: 'Weave Workbench-0.2.0-m-chip.dmg' }, { name: 'Weave Workbench-0.1.9-arm64.dmg' }] }))
+      writeFileSync(
+        join(directory, 'draft.json'),
+        JSON.stringify({
+          assets: [{ name: 'Weave Workbench-0.2.0-m-chip.dmg' }, { name: 'Weave Workbench-0.1.9-arm64.dmg' }],
+        }),
+      )
       const args = ['scripts/release/prune-draft-release-assets.mjs', '--assets', join(directory, 'draft.json'), '--expected', join(directory, 'release-assets')]
       const result = spawnSync(process.execPath, args, { encoding: 'utf8' })
       expect(result.status).toBe(0)
       expect(result.stdout.trim().split('\n')).toEqual(['Weave Workbench-0.1.9-arm64.dmg'])
-      const failed = spawnSync(process.execPath, args.slice(0, 3), { encoding: 'utf8' })
+      const failed = spawnSync(process.execPath, args.slice(0, 3), {
+        encoding: 'utf8',
+      })
       expect(failed.status).toBe(1)
       expect(failed.stderr).toMatch(/Draft release asset pruning failed/)
     } finally {
@@ -1160,7 +1355,10 @@ describe('GitHub Release publication', () => {
   })
 
   test('requires the tag and both package manifests to agree exactly', () => {
-    expect(assertReleaseTag('v0.2.0', '0.2.0', '0.2.0')).toEqual({ tag: 'v0.2.0', version: '0.2.0' })
+    expect(assertReleaseTag('v0.2.0', '0.2.0', '0.2.0')).toEqual({
+      tag: 'v0.2.0',
+      version: '0.2.0',
+    })
     expect(() => assertReleaseTag('0.2.0', '0.2.0', '0.2.0')).toThrow(/must exactly match/)
     expect(() => assertReleaseTag('v0.2.1', '0.2.0', '0.2.0')).toThrow(/v0\.2\.0/)
     expect(() => assertReleaseTag('v0.2.0', '0.2.0', '0.1.9')).toThrow(/does not match/)
@@ -1176,7 +1374,13 @@ describe('GitHub Release publication', () => {
     mkdirSync(projectDirectory, { recursive: true })
     mkdirSync(inputDirectory, { recursive: true })
     writeFileSync(join(projectDirectory, 'package.json'), JSON.stringify({ version: '0.2.0' }))
-    writeFileSync(join(projectDirectory, 'package-lock.json'), JSON.stringify({ version: '0.2.0', packages: { '': { version: '0.2.0' } } }))
+    writeFileSync(
+      join(projectDirectory, 'package-lock.json'),
+      JSON.stringify({
+        version: '0.2.0',
+        packages: { '': { version: '0.2.0' } },
+      }),
+    )
     const expected = expectedGitHubReleaseAssets('0.2.0')
     const downloaded = expectedDownloadedReleaseAssets('0.2.0')
     for (const [index, name] of downloaded.entries()) {
@@ -1199,7 +1403,12 @@ describe('GitHub Release publication', () => {
     mkdirSync(secondMacManifest)
     writeFileSync(join(secondMacManifest, 'latest-mac.yml'), 'version: 0.2.0\nfiles:\n  - url: Weave Workbench-0.2.0-x64.zip\n    sha512: checksum-x64\n    size: 42\n')
     try {
-      const result = await prepareGitHubRelease({ inputDirectory, outputDirectory, projectDirectory, tag: 'v0.2.0' })
+      const result = await prepareGitHubRelease({
+        inputDirectory,
+        outputDirectory,
+        projectDirectory,
+        tag: 'v0.2.0',
+      })
       expect(result.assets).toEqual(expected)
       expect(readdirSync(outputDirectory).sort()).toEqual([...expected, 'SHA256SUMS.txt'].sort())
       const checksums = readFileSync(join(outputDirectory, 'SHA256SUMS.txt'), 'utf8').trim().split('\n')
@@ -1233,10 +1442,23 @@ describe('GitHub Release publication', () => {
     mkdirSync(projectDirectory, { recursive: true })
     mkdirSync(inputDirectory, { recursive: true })
     writeFileSync(join(projectDirectory, 'package.json'), JSON.stringify({ version: '0.2.0' }))
-    writeFileSync(join(projectDirectory, 'package-lock.json'), JSON.stringify({ version: '0.2.0', packages: { '': { version: '0.2.0' } } }))
+    writeFileSync(
+      join(projectDirectory, 'package-lock.json'),
+      JSON.stringify({
+        version: '0.2.0',
+        packages: { '': { version: '0.2.0' } },
+      }),
+    )
 
     try {
-      await expect(prepareGitHubRelease({ inputDirectory, outputDirectory: join(directory, 'missing-output'), projectDirectory, tag: 'v0.2.0' })).rejects.toThrow(/incomplete/)
+      await expect(
+        prepareGitHubRelease({
+          inputDirectory,
+          outputDirectory: join(directory, 'missing-output'),
+          projectDirectory,
+          tag: 'v0.2.0',
+        }),
+      ).rejects.toThrow(/incomplete/)
       const expected = expectedDownloadedReleaseAssets('0.2.0')
       for (const [index, name] of expected.entries()) {
         const artifactDirectory = join(inputDirectory, `artifact-${index}`)
@@ -1254,7 +1476,14 @@ describe('GitHub Release publication', () => {
       const duplicateDirectory = join(inputDirectory, 'duplicate')
       mkdirSync(duplicateDirectory)
       writeFileSync(join(duplicateDirectory, expected[0]), 'duplicate')
-      await expect(prepareGitHubRelease({ inputDirectory, outputDirectory: join(directory, 'duplicate-output'), projectDirectory, tag: 'v0.2.0' })).rejects.toThrow(/duplicate/)
+      await expect(
+        prepareGitHubRelease({
+          inputDirectory,
+          outputDirectory: join(directory, 'duplicate-output'),
+          projectDirectory,
+          tag: 'v0.2.0',
+        }),
+      ).rejects.toThrow(/duplicate/)
     } finally {
       rmSync(directory, { recursive: true, force: true })
     }
@@ -1323,7 +1552,10 @@ describe('post-package verification helpers', () => {
 
   test('keeps every platform native unpack allowlist exact and architecture-specific', () => {
     const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
-    expect(packageJson.author).toEqual({ name: 'Weave Workbench contributors', email: '260412432+jinyitao123@users.noreply.github.com' })
+    expect(packageJson.author).toEqual({
+      name: 'Weave Workbench contributors',
+      email: '260412432+jinyitao123@users.noreply.github.com',
+    })
     expect(packageJson.description).toBe('The desktop workspace for Weave teams and Forge business applications')
     expect(packageJson.homepage).toBe('https://github.com/jinyitao123/weave-workbench')
     expect(packageJson.build.productName).toBe('Weave Workbench')
@@ -1383,8 +1615,14 @@ describe('post-package verification helpers', () => {
   })
 
   test('fails closed when Windows Authenticode verification is not valid', () => {
-    const signerEnvironment = { GOOEYPI_WINDOWS_CERT_SUBJECT: 'CN=Example Ltd' }
-    const calls: Array<{ file: string; args: string[]; path: string | undefined }> = []
+    const signerEnvironment = {
+      GOOEYPI_WINDOWS_CERT_SUBJECT: 'CN=Example Ltd',
+    }
+    const calls: Array<{
+      file: string
+      args: string[]
+      path: string | undefined
+    }> = []
     const validSpawn = (file: string, args: string[], options: { env?: NodeJS.ProcessEnv }) => {
       calls.push({ file, args, path: options.env?.GOOEYPI_SIGNED_FILE })
       return { status: 0, stdout: '', stderr: '' }
@@ -1403,12 +1641,24 @@ describe('post-package verification helpers', () => {
   })
 
   test('asserts the expected Authenticode signer instead of any trusted certificate', () => {
-    expect(expectedAuthenticodeSigner({ GOOEYPI_WINDOWS_CERT_SUBJECT: '  CN=Example Ltd, C=GB  ' })).toEqual({ subject: 'CN=Example Ltd, C=GB', thumbprint: '' })
-    expect(expectedAuthenticodeSigner({ GOOEYPI_WINDOWS_CERT_THUMBPRINT: 'a1:b2 c3d4e5f60718293a4b5c6d7e8f901a2b3c4d' })).toEqual({
+    expect(
+      expectedAuthenticodeSigner({
+        GOOEYPI_WINDOWS_CERT_SUBJECT: '  CN=Example Ltd, C=GB  ',
+      }),
+    ).toEqual({ subject: 'CN=Example Ltd, C=GB', thumbprint: '' })
+    expect(
+      expectedAuthenticodeSigner({
+        GOOEYPI_WINDOWS_CERT_THUMBPRINT: 'a1:b2 c3d4e5f60718293a4b5c6d7e8f901a2b3c4d',
+      }),
+    ).toEqual({
       subject: '',
       thumbprint: 'A1B2C3D4E5F60718293A4B5C6D7E8F901A2B3C4D',
     })
-    expect(() => expectedAuthenticodeSigner({ GOOEYPI_WINDOWS_CERT_THUMBPRINT: 'not-a-thumbprint' })).toThrow(/40-character SHA-1 certificate thumbprint/)
+    expect(() =>
+      expectedAuthenticodeSigner({
+        GOOEYPI_WINDOWS_CERT_THUMBPRINT: 'not-a-thumbprint',
+      }),
+    ).toThrow(/40-character SHA-1 certificate thumbprint/)
     // Unconfigured fails closed rather than accepting whoever the runner trusts.
     expect(() => expectedAuthenticodeSigner({})).toThrow(/GOOEYPI_WINDOWS_CERT_SUBJECT and\/or GOOEYPI_WINDOWS_CERT_THUMBPRINT/)
 
@@ -1563,7 +1813,10 @@ describe('post-package verification helpers', () => {
 describe('cross-platform packaging repair', () => {
   const fixtureContext = {
     appOutDir: join('/tmp', 'app-out'),
-    packager: { appInfo: { productFilename: 'Prime Work', sanitizedName: 'Prime-Work' }, executableName: 'builder-selected-linux-name' },
+    packager: {
+      appInfo: { productFilename: 'Prime Work', sanitizedName: 'Prime-Work' },
+      executableName: 'builder-selected-linux-name',
+    },
   }
 
   test('computes the hardened executable path per platform', () => {
@@ -1588,7 +1841,11 @@ describe('cross-platform packaging repair', () => {
       // The smoke launcher calls this resolver directly, so it uses these same names.
       expect(packagedExecutablePath(directory, 'linux', configuration)).toBe(join(directory, 'linux-platform-executable'))
       expect(packagedExecutablePath(directory, 'win', configuration)).toBe(join(directory, 'windows-platform-executable.exe'))
-      expect(packagedExecutablePath(directory, 'linux', { productName: 'Different Product Name' })).toBe(join(directory, 'weave-workbench-desktop'))
+      expect(
+        packagedExecutablePath(directory, 'linux', {
+          productName: 'Different Product Name',
+        }),
+      ).toBe(join(directory, 'weave-workbench-desktop'))
     } finally {
       rmSync(directory, { recursive: true, force: true })
     }
@@ -1675,7 +1932,10 @@ describe('cross-platform packaging repair', () => {
     }
     try {
       expect(() => assertCrossPlatformUnpackedNativeLayout(directory, 'linux', 'x64')).not.toThrow()
-      rmSync(join(directory, 'node_modules/zeromq'), { recursive: true, force: true })
+      rmSync(join(directory, 'node_modules/zeromq'), {
+        recursive: true,
+        force: true,
+      })
       expect(() => assertCrossPlatformUnpackedNativeLayout(directory, 'linux', 'x64')).toThrow(/expected at least 1/)
     } finally {
       rmSync(directory, { recursive: true, force: true })
@@ -1683,7 +1943,11 @@ describe('cross-platform packaging repair', () => {
   })
 
   test('resolves release-script commands to Windows-safe spawns', () => {
-    expect(resolveCommandInvocation('node', ['scripts/release/verify.mjs'])).toEqual({ file: process.execPath, args: ['scripts/release/verify.mjs'], shell: false })
+    expect(resolveCommandInvocation('node', ['scripts/release/verify.mjs'])).toEqual({
+      file: process.execPath,
+      args: ['scripts/release/verify.mjs'],
+      shell: false,
+    })
     const electronInstaller = resolveCommandInvocation('install-electron', [])
     expect(electronInstaller.file).toBe(process.execPath)
     expect(electronInstaller.args).toHaveLength(1)
@@ -1698,13 +1962,29 @@ describe('cross-platform packaging repair', () => {
     expect(packageScript).toContain("run('node', ['scripts/release/electron-builder.mjs', ...builderArgs], builderEnv)")
     expect(packageScript).not.toContain("['exec', '--', 'electron-builder'")
     const npmViaLifecycle = resolveCommandInvocation('npm', ['run', 'release:verify'], 'win32', { npm_execpath: 'C:/npm/npm-cli.js' })
-    expect(npmViaLifecycle).toEqual({ file: process.execPath, args: ['C:/npm/npm-cli.js', 'run', 'release:verify'], shell: false })
-    expect(() => resolveCommandInvocation('npm', ['ci'], 'win32', { npm_execpath: 'C:/npm/npm.cmd' })).toThrow(/JavaScript npm CLI/)
-    expect(resolveCommandInvocation('npm', ['ci'], 'darwin', {})).toEqual({ file: 'npm', args: ['ci'], shell: false })
+    expect(npmViaLifecycle).toEqual({
+      file: process.execPath,
+      args: ['C:/npm/npm-cli.js', 'run', 'release:verify'],
+      shell: false,
+    })
+    expect(() =>
+      resolveCommandInvocation('npm', ['ci'], 'win32', {
+        npm_execpath: 'C:/npm/npm.cmd',
+      }),
+    ).toThrow(/JavaScript npm CLI/)
+    expect(resolveCommandInvocation('npm', ['ci'], 'darwin', {})).toEqual({
+      file: 'npm',
+      args: ['ci'],
+      shell: false,
+    })
   })
 
   test('installs Electron before rebuilding native app dependencies', () => {
-    const calls: Array<{ command: string; args: string[]; env: NodeJS.ProcessEnv }> = []
+    const calls: Array<{
+      command: string
+      args: string[]
+      env: NodeJS.ProcessEnv
+    }> = []
     const run = (command: string, args: string[], options: { env?: NodeJS.ProcessEnv } = {}) => {
       calls.push({ command, args, env: options.env ?? {} })
     }
@@ -1716,7 +1996,10 @@ describe('cross-platform packaging repair', () => {
       { command: 'electron-builder', args: ['install-app-deps'] },
     ])
     expect(calls[0].env).toBe(calls[1].env)
-    expect(calls[0].env).toMatchObject({ TASK_MARKER: 'kept', PYTHON: '/usr/bin/python3' })
+    expect(calls[0].env).toMatchObject({
+      TASK_MARKER: 'kept',
+      PYTHON: '/usr/bin/python3',
+    })
   })
 })
 
@@ -1754,7 +2037,10 @@ describe('release size budgets', () => {
   })
 
   test.each(Object.keys(BUNDLE_SIZE_BUDGETS))('rejects a %s bundle regression above its exact budget', (name) => {
-    const metrics = { ...BUNDLE_SIZE_BUDGETS, [name]: BUNDLE_SIZE_BUDGETS[name as keyof typeof BUNDLE_SIZE_BUDGETS] + 1 }
+    const metrics = {
+      ...BUNDLE_SIZE_BUDGETS,
+      [name]: BUNDLE_SIZE_BUDGETS[name as keyof typeof BUNDLE_SIZE_BUDGETS] + 1,
+    }
     expect(() => assertBundleSizeBudgets(metrics)).toThrow(/exceeds its size budget/)
     expect(() => assertBundleSizeBudgets(BUNDLE_SIZE_BUDGETS)).not.toThrow()
   })
@@ -1773,7 +2059,20 @@ describe('release size budgets', () => {
     writeSizedFile(paths.zip, 204)
     try {
       const metrics = collectPackageSizeMetrics(paths)
-      expect(metrics).toEqual({ asarBytes: 201, appBytes: 403, dmgBytes: 203, zipBytes: 204 })
+      expect(metrics).toEqual({
+        asarBytes: 201,
+        appBytes: 403,
+        runtimeBytes: 0,
+        totalAppBytes: 403,
+        dmgBytes: 203,
+        zipBytes: 204,
+      })
+      writeSizedFile(join(paths.app, 'Contents/Resources/runtime/bin/node'), 205)
+      expect(collectPackageSizeMetrics(paths)).toMatchObject({
+        appBytes: 403,
+        runtimeBytes: 205,
+        totalAppBytes: 608,
+      })
       expect(() => assertPackageSizeBudgets(metrics)).not.toThrow()
       for (const name of Object.keys(PACKAGE_SIZE_BUDGETS)) {
         expect(() =>
@@ -1826,7 +2125,10 @@ describe('vendored supply-chain pins', () => {
       ...new Set(
         Object.values(pins)
           .filter((pin) => pin.resolved.startsWith('file:vendor/'))
-          .map((pin) => ({ path: pin.resolved.slice('file:'.length), integrity: pin.integrity }))
+          .map((pin) => ({
+            path: pin.resolved.slice('file:'.length),
+            integrity: pin.integrity,
+          }))
           .map((entry) => JSON.stringify(entry)),
       ),
     ].map((entry) => JSON.parse(entry) as { path: string; integrity: string })
@@ -1895,7 +2197,13 @@ describe('vendored supply-chain pins', () => {
 
   test('keeps the bootstrap archive out of the packaged desktop application', () => {
     const build = JSON.parse(readFileSync('package.json', 'utf8')).build
-    const packagedInputs = JSON.stringify({ files: build.files, extraResources: build.extraResources, mac: build.mac?.files, linux: build.linux?.files, win: build.win?.files })
+    const packagedInputs = JSON.stringify({
+      files: build.files,
+      extraResources: build.extraResources,
+      mac: build.mac?.files,
+      linux: build.linux?.files,
+      win: build.win?.files,
+    })
     expect(packagedInputs).not.toContain('vendor/npm-')
     expect(packagedInputs).not.toContain('vendor/**')
     expect(build.files).toEqual([
@@ -1920,57 +2228,139 @@ const auditReport = (advisories: Array<{ package: string; advisory: string; seve
       {
         name: entry.package,
         severity: entry.severity,
-        via: [{ source: 1, name: entry.package, title: `${entry.package} flaw`, url: `https://github.com/advisories/${entry.advisory}`, severity: entry.severity }],
+        via: [
+          {
+            source: 1,
+            name: entry.package,
+            title: `${entry.package} flaw`,
+            url: `https://github.com/advisories/${entry.advisory}`,
+            severity: entry.severity,
+          },
+        ],
       },
     ]),
   ),
 })
 
 describe('production dependency audit', () => {
-  const advisory = { package: 'extract-zip', advisory: 'GHSA-jmr9-qjv8-65gv', severity: 'high' }
-  const exception = parseAuditExceptions(JSON.stringify({ exceptions: [{ ...advisory, expires: '2099-01-01', reason: AUDIT_EXCEPTION_REASON }] }))
+  const advisory = {
+    package: 'extract-zip',
+    advisory: 'GHSA-jmr9-qjv8-65gv',
+    severity: 'high',
+  }
+  const exception = parseAuditExceptions(
+    JSON.stringify({
+      exceptions: [{ ...advisory, expires: '2099-01-01', reason: AUDIT_EXCEPTION_REASON }],
+    }),
+  )
   const now = Date.parse('2026-08-14T00:00:00Z')
 
   test('reports only high and critical advisories, ignoring back-references to other packages', () => {
     const report = {
       vulnerabilities: {
-        ...auditReport([advisory, { package: 'left-pad', advisory: 'GHSA-2222-2222-2222', severity: 'moderate' }]).vulnerabilities,
-        'prime-agent': { name: 'prime-agent', severity: 'high', via: ['extract-zip'] },
+        ...auditReport([
+          advisory,
+          {
+            package: 'left-pad',
+            advisory: 'GHSA-2222-2222-2222',
+            severity: 'moderate',
+          },
+        ]).vulnerabilities,
+        'prime-agent': {
+          name: 'prime-agent',
+          severity: 'high',
+          via: ['extract-zip'],
+        },
       },
     }
 
-    expect(collectAuditAdvisories(report)).toEqual([{ advisory: advisory.advisory, package: 'extract-zip', severity: 'high', title: 'extract-zip flaw' }])
+    expect(collectAuditAdvisories(report)).toEqual([
+      {
+        advisory: advisory.advisory,
+        package: 'extract-zip',
+        severity: 'high',
+        title: 'extract-zip flaw',
+      },
+    ])
   })
 
   test('fails closed on malformed vulnerability entries and via arrays', () => {
     expect(() => collectAuditAdvisories({ vulnerabilities: { broken: null } })).toThrow(/broken/)
-    expect(() => collectAuditAdvisories({ vulnerabilities: { broken: { name: 'broken', via: 'oops' } } })).toThrow(/via/)
+    expect(() =>
+      collectAuditAdvisories({
+        vulnerabilities: { broken: { name: 'broken', via: 'oops' } },
+      }),
+    ).toThrow(/via/)
   })
 
   test('fails closed on malformed via entries', () => {
-    expect(() => collectAuditAdvisories({ vulnerabilities: { broken: { name: 'broken', via: [42, null] } } })).toThrow(/via/)
+    expect(() =>
+      collectAuditAdvisories({
+        vulnerabilities: { broken: { name: 'broken', via: [42, null] } },
+      }),
+    ).toThrow(/via/)
   })
 
   test('fails closed when a via severity is missing or unknown', () => {
-    const missingSeverity = { url: `https://github.com/advisories/${advisory.advisory}`, title: 'missing severity' }
-    expect(() => collectAuditAdvisories({ vulnerabilities: { [advisory.package]: { name: advisory.package, via: [missingSeverity] } } })).toThrow(/severity/)
-    expect(() => collectAuditAdvisories({ vulnerabilities: { [advisory.package]: { name: advisory.package, via: [{ ...missingSeverity, severity: 'urgent' }] } } })).toThrow(/severity/)
+    const missingSeverity = {
+      url: `https://github.com/advisories/${advisory.advisory}`,
+      title: 'missing severity',
+    }
+    expect(() =>
+      collectAuditAdvisories({
+        vulnerabilities: {
+          [advisory.package]: {
+            name: advisory.package,
+            via: [missingSeverity],
+          },
+        },
+      }),
+    ).toThrow(/severity/)
+    expect(() =>
+      collectAuditAdvisories({
+        vulnerabilities: {
+          [advisory.package]: {
+            name: advisory.package,
+            via: [{ ...missingSeverity, severity: 'urgent' }],
+          },
+        },
+      }),
+    ).toThrow(/severity/)
   })
 
   test('fails closed when a high or critical via has no parseable advisory ID', () => {
-    const via = { name: advisory.package, severity: 'critical', title: 'unresolvable advisory', url: 'not-an-advisory-url' }
+    const via = {
+      name: advisory.package,
+      severity: 'critical',
+      title: 'unresolvable advisory',
+      url: 'not-an-advisory-url',
+    }
 
-    expect(() => collectAuditAdvisories({ vulnerabilities: { [advisory.package]: { name: advisory.package, via: [via] } } })).toThrow(/advisory ID/)
+    expect(() =>
+      collectAuditAdvisories({
+        vulnerabilities: {
+          [advisory.package]: { name: advisory.package, via: [via] },
+        },
+      }),
+    ).toThrow(/advisory ID/)
   })
 
   test('fails closed when a high or critical via has no package name', () => {
-    const via = { severity: 'high', title: 'unnamed advisory', url: `https://github.com/advisories/${advisory.advisory}` }
+    const via = {
+      severity: 'high',
+      title: 'unnamed advisory',
+      url: `https://github.com/advisories/${advisory.advisory}`,
+    }
 
     expect(() => collectAuditAdvisories({ vulnerabilities: { unknown: { via: [via] } } })).toThrow(/package name/)
   })
 
   test('accepts a listed advisory while still failing on an unlisted one', () => {
-    const unlisted = { package: 'tar-fs', advisory: 'GHSA-3333-3333-3333', severity: 'critical' }
+    const unlisted = {
+      package: 'tar-fs',
+      advisory: 'GHSA-3333-3333-3333',
+      severity: 'critical',
+    }
     const evaluation = evaluateAuditReport(auditReport([advisory, unlisted]), exception, now)
 
     expect(evaluation.accepted).toHaveLength(1)
@@ -1980,7 +2370,17 @@ describe('production dependency audit', () => {
   })
 
   test('fails once an accepted advisory passes its expiry so it cannot become permanent', () => {
-    const expiring = parseAuditExceptions(JSON.stringify({ exceptions: [{ ...advisory, expires: '2026-08-13', reason: AUDIT_EXCEPTION_REASON }] }))
+    const expiring = parseAuditExceptions(
+      JSON.stringify({
+        exceptions: [
+          {
+            ...advisory,
+            expires: '2026-08-13',
+            reason: AUDIT_EXCEPTION_REASON,
+          },
+        ],
+      }),
+    )
     const evaluation = evaluateAuditReport(auditReport([advisory]), expiring, now)
     const described = describeAuditEvaluation(evaluation)
 
@@ -2006,9 +2406,34 @@ describe('production dependency audit', () => {
   })
 
   test('rejects an exception that lacks a reason or a parseable expiry', () => {
-    expect(() => parseAuditExceptions(JSON.stringify({ exceptions: [{ ...advisory, expires: '2099-01-01', reason: 'nope' }] }))).toThrow(/reason/)
-    expect(() => parseAuditExceptions(JSON.stringify({ exceptions: [{ ...advisory, expires: 'someday', reason: AUDIT_EXCEPTION_REASON }] }))).toThrow(/expires/)
-    expect(() => parseAuditExceptions(JSON.stringify({ exceptions: [{ ...advisory, advisory: 'CVE-2024-1', expires: '2099-01-01', reason: AUDIT_EXCEPTION_REASON }] }))).toThrow(/GHSA/)
+    expect(() =>
+      parseAuditExceptions(
+        JSON.stringify({
+          exceptions: [{ ...advisory, expires: '2099-01-01', reason: 'nope' }],
+        }),
+      ),
+    ).toThrow(/reason/)
+    expect(() =>
+      parseAuditExceptions(
+        JSON.stringify({
+          exceptions: [{ ...advisory, expires: 'someday', reason: AUDIT_EXCEPTION_REASON }],
+        }),
+      ),
+    ).toThrow(/expires/)
+    expect(() =>
+      parseAuditExceptions(
+        JSON.stringify({
+          exceptions: [
+            {
+              ...advisory,
+              advisory: 'CVE-2024-1',
+              expires: '2099-01-01',
+              reason: AUDIT_EXCEPTION_REASON,
+            },
+          ],
+        }),
+      ),
+    ).toThrow(/GHSA/)
   })
 
   test('the checked-in exception list is valid and every entry still expires in the future', () => {
@@ -2047,5 +2472,19 @@ describe('packaged extension resources', () => {
     } finally {
       for (const fixture of [exact, missing, extra, nonFile]) rmSync(fixture.directory, { recursive: true, force: true })
     }
+  })
+})
+
+describe('bundled runtime packaging target', () => {
+  test('uses the requested target rather than the build host architecture', () => {
+    expect(runtimeTarget(['--linux', '--arm64'], 'darwin', 'x64')).toMatchObject({ platform: 'linux', arch: 'arm64' })
+    expect(runtimeTarget(['--win', '--x64'], 'win32', 'arm64')).toMatchObject({
+      platform: 'win32',
+      arch: 'x64',
+    })
+  })
+  test('rejects ambiguous multi-target requests before preparing any runtime', () => {
+    expect(() => runtimeTarget(['--win', '--mac'])).toThrow('one platform')
+    expect(() => runtimeTarget(['--arm64', '--x64'])).toThrow('one platform')
   })
 })

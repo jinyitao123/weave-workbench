@@ -297,7 +297,7 @@ describe('supported harness discovery candidates', () => {
 
   it('resolves the official Windows Pi npm shim to Node without invoking a shell', () => {
     const shim = 'C:\\Users\\Ada\\AppData\\Roaming\\npm\\pi.cmd'
-    const entrypoint = 'C:\\Users\\Ada\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\cli.js'
+    const entrypoint = 'C:\\Users\\Ada\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js'
     const node = 'C:\\Program Files\\nodejs\\node.exe'
     const accessible = new Set([entrypoint.toLowerCase(), node.toLowerCase()])
     const invocation = prepareExecutableSpawn(shim, ['--version'], {

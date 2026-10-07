@@ -54,15 +54,23 @@ function isMcpAuthProvider(providerId: string): boolean {
  * registry. Give it a deliberately incomplete credential view so model
  * discovery cannot inspect or mutate a shared `mcp:*` credential.
  */
-function modelRegistryAuthStorage(authStorage: AuthStorage): AuthStorage {
+function modelRegistryAuthStorage(authStorage: AuthStorage, isolated = false): AuthStorage {
+  const allowed = (provider: string) => !isMcpAuthProvider(provider) && (!isolated || Boolean(authStorage.get(provider)))
+  const privateKey = async (provider: string, options?: Parameters<AuthStorage['getApiKeyWithSourceToken']>[1]): Promise<Awaited<ReturnType<AuthStorage['getApiKeyWithSourceToken']>>> => {
+    if (!allowed(provider)) return {}
+    const stored = authStorage.get(provider)
+    if (isolated && stored?.type === 'api_key') return { apiKey: stored.key }
+    const result = await authStorage.getApiKeyWithSourceToken(provider, options)
+    return isolated && result.sourceToken?.source !== 'stored' ? {} : result
+  }
   return {
     reload: () => authStorage.reload(),
     getOAuthProviders: () => authStorage.getOAuthProviders().filter((provider) => !isMcpAuthProvider(provider.id)),
     get: (provider: string) => isMcpAuthProvider(provider) ? undefined : authStorage.get(provider),
-    hasAuth: (provider: string) => !isMcpAuthProvider(provider) && authStorage.hasAuth(provider),
-    getAuthStatus: (provider: string) => isMcpAuthProvider(provider) ? { configured: false } : authStorage.getAuthStatus(provider),
-    getApiKey: async (provider: string, options?: Parameters<AuthStorage['getApiKey']>[1]) => isMcpAuthProvider(provider) ? undefined : authStorage.getApiKey(provider, options),
-    getApiKeyWithSourceToken: async (provider: string, options?: Parameters<AuthStorage['getApiKeyWithSourceToken']>[1]) => isMcpAuthProvider(provider) ? {} : authStorage.getApiKeyWithSourceToken(provider, options),
+    hasAuth: (provider: string) => allowed(provider) && authStorage.hasAuth(provider),
+    getAuthStatus: (provider: string) => !allowed(provider) ? { configured: false } : isolated && authStorage.get(provider)?.type === 'api_key' ? { configured: true, method: 'api_key', source: 'stored' } : authStorage.getAuthStatus(provider),
+    getApiKey: async (provider: string, options?: Parameters<AuthStorage['getApiKey']>[1]) => isolated ? (await privateKey(provider, options)).apiKey : isMcpAuthProvider(provider) ? undefined : authStorage.getApiKey(provider, options),
+    getApiKeyWithSourceToken: async (provider: string, options?: Parameters<AuthStorage['getApiKeyWithSourceToken']>[1]) => isolated ? privateKey(provider, options) : isMcpAuthProvider(provider) ? {} : authStorage.getApiKeyWithSourceToken(provider, options),
     getProviderHeaders: (provider: string) => isMcpAuthProvider(provider) ? undefined : authStorage.getProviderHeaders(provider),
     markAuthStale: (provider: string) => !isMcpAuthProvider(provider) && authStorage.markAuthStale(provider),
     getCurrentAuthSourceToken: (provider: string) => isMcpAuthProvider(provider) ? undefined : authStorage.getCurrentAuthSourceToken(provider),
@@ -118,9 +126,9 @@ export class PrimeProviderService {
   private eventSink: (event: ProviderAuthEvent) => void = () => undefined
   private readonly openExternal: (url: string) => Promise<void>
 
-  constructor(options: { authPath?: string; modelsPath?: string; openExternal?: (url: string) => Promise<void> } = {}) {
+  constructor(options: { authPath?: string; modelsPath?: string; isolated?: boolean; openExternal?: (url: string) => Promise<void> } = {}) {
     this.authStorage = AuthStorage.create(options.authPath, options.authPath ? { usePrimeCliConfig: false } : undefined)
-    this.registry = ModelRegistry.create(modelRegistryAuthStorage(this.authStorage), options.modelsPath)
+    this.registry = ModelRegistry.create(modelRegistryAuthStorage(this.authStorage, options.isolated), options.modelsPath)
     this.openExternal = options.openExternal ?? (async () => undefined)
   }
 

@@ -186,8 +186,9 @@ function createHermeticFixture(activeSession = false, accountScope: string, curr
   mkdirSync(ompProject, { recursive: true })
   mkdirSync(piProject, { recursive: true })
   mkdirSync(sessions, { recursive: true })
-  mkdirSync(join(home, '.prime', 'agent'), { recursive: true })
-  writeFileSync(join(home, '.prime', 'agent', 'models.json'), JSON.stringify({
+  mkdirSync(home, { recursive: true })
+  mkdirSync(join(userData, 'runtime-profiles', 'prime', 'agent'), { recursive: true })
+  writeFileSync(join(userData, 'runtime-profiles', 'prime', 'agent', 'models.json'), JSON.stringify({
     providers: {
       fixture: {
         name: 'Fixture',
@@ -362,7 +363,7 @@ setTimeout(() => server.close(), 30_000).unref()
 const fs = require('node:fs')
 const readline = require('node:readline')
 const args = process.argv.slice(2)
-if (args.includes('--version')) { process.stdout.write('prime-agent 0.7.0\\n'); process.exit(0) }
+if (args.includes('--version')) { process.stdout.write('prime-agent 0.7.0-gooeypi.2\\n'); process.exit(0) }
 if (args[0] === 'schedule') { process.stdout.write(JSON.stringify({ jobs: [] }) + '\\n'); process.exit(0) }
 const resumeIndex = args.indexOf('--resume')
 const sessionFile = resumeIndex >= 0 ? args[resumeIndex + 1] : ${JSON.stringify(realpathSync(sessionFile))}
@@ -506,7 +507,7 @@ const readline = require('node:readline')
 const args = process.argv.slice(2)
 if (args.includes('--version')) { process.stdout.write('0.84.1\\n'); process.exit(0) }
 if (args[0] === 'install' || args[0] === 'remove') {
-  const settingsPath = require('node:path').join(process.env.HOME, '.pi', 'agent', 'settings.json')
+  const settingsPath = require('node:path').join(process.env.PI_CODING_AGENT_DIR || require('node:path').join(process.env.HOME, '.pi', 'agent'), 'settings.json')
   fs.mkdirSync(require('node:path').dirname(settingsPath), { recursive: true })
   let settings = {}
   try { settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8')) } catch {}
@@ -631,7 +632,7 @@ test.describe('Prime Work desktop smoke', () => {
         enterpriseOrigin, enterpriseOrigin, 'e2e-organization', 'forge-e2e-user', 'weave-e2e-user',
       ])).digest('hex')
       const fixture = createHermeticFixture(activeSession, accountScope, currentStateWithoutHarness)
-      if (authenticatedMcp) writeFileSync(join(fixture.home, '.prime', 'agent', 'auth.json'), JSON.stringify({ 'mcp:notion': { type: 'oauth', access: 'fixture-token', refresh: 'fixture-refresh', expires: Date.now() + 3_600_000 } }))
+      if (authenticatedMcp) writeFileSync(join(fixture.userData, 'runtime-profiles', 'prime', 'agent', 'auth.json'), JSON.stringify({ 'mcp:notion': { type: 'oauth', access: 'fixture-token', refresh: 'fixture-refresh', expires: Date.now() + 3_600_000 } }))
       currentFixture = fixture
       fixtureSessionFile = fixture.sessionFile
       if (liveInstall) renameSync(fixture.piExecutable, `${fixture.piExecutable}.pending`)
@@ -653,6 +654,7 @@ test.describe('Prime Work desktop smoke', () => {
         attachDiagnostics(page)
         const accountInput = page.getByRole('textbox', { name: '账号' })
         await expect(accountInput).toBeVisible({ timeout: 20_000 })
+        if (testInfo.title === 'imports organization connection only after preview and explicit save') return
         await accountInput.fill('e2e@example.test')
         await page.getByRole('textbox', { name: '密码' }).fill('hermetic-e2e-only')
         await page.getByRole('button', { name: '继续' }).click()
@@ -699,6 +701,32 @@ test.describe('Prime Work desktop smoke', () => {
     await expect(page.getByRole('textbox', { name: '账号' })).toBeVisible({ timeout: 20_000 })
     expect(await app.evaluate(async ({ session }, partition) => (await session.fromPartition(partition).cookies.get({ name: 'session-probe' })).length, BROWSER_PARTITION)).toBe(0)
     expect(existsSync(join(currentFixture.userData, 'enterprise-session.json'))).toBe(false)
+  })
+
+  test('imports organization connection only after preview and explicit save', async () => {
+    if (!app || !currentFixture) throw new Error('Hermetic fixture unavailable')
+    const selectedFile = join(fixtureRoot, 'organization.json')
+    const config = { version: 1, forgeOrigin: 'https://forge.organization.test', weaveOrigin: 'https://weave.organization.test' }
+    writeFileSync(selectedFile, JSON.stringify(config))
+    await app.evaluate(({ dialog }, path) => {
+      const state = globalThis as { __importResponse?: number; __importDetail?: string }
+      state.__importResponse = 0
+      dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] })
+      dialog.showMessageBox = async (...args: unknown[]) => {
+        const options = args.at(-1) as { detail?: string }
+        state.__importDetail = options.detail
+        return { response: state.__importResponse ?? 0, checkboxChecked: false }
+      }
+    }, selectedFile)
+    await page.getByRole('button', { name: '导入组织连接' }).click()
+    await expect.poll(() => app!.evaluate(() => (globalThis as { __importDetail?: string }).__importDetail)).toContain(config.forgeOrigin)
+    expect(existsSync(join(currentFixture.userData, 'enterprise-connection.json'))).toBe(false)
+    await app.evaluate(() => { (globalThis as { __importResponse?: number }).__importResponse = 1 })
+    await page.getByRole('button', { name: '导入组织连接' }).click()
+    await expect(page.getByRole('status')).toContainText('当前仍使用开发连接覆盖')
+    expect(JSON.parse(readFileSync(join(currentFixture.userData, 'enterprise-connection.json'), 'utf8'))).toEqual(config)
+    await expect(page.getByRole('button', { name: '重启应用' })).toHaveCount(0)
+    await expect(page.getByRole('textbox', { name: '账号' })).toBeVisible()
   })
 
   test('opens Pi Work by default, keeps retired OMP history unaliased, and creates a Pi session', async () => {
@@ -1717,7 +1745,8 @@ test.describe('Prime Work desktop smoke', () => {
     await expect(enable).toHaveAttribute('aria-pressed', 'false')
     await enable.click()
     await expect(page.getByRole('button', { name: 'Disable Pi MCP Adapter' })).toHaveAttribute('aria-pressed', 'true')
-    const settingsPath = join(fixtureRoot, 'home', '.pi', 'agent', 'settings.json')
+    expect(existsSync(join(fixtureRoot, 'home', '.pi', 'agent', 'settings.json'))).toBe(false)
+    const settingsPath = join(fixtureRoot, 'user-data', 'runtime-profiles', 'pi', 'agent', 'settings.json')
     await expect.poll(() => JSON.parse(readFileSync(settingsPath, 'utf8')).packages).toContain('npm:pi-mcp-adapter')
     await expect(page.getByRole('status').filter({ hasText: 'Pi MCP Adapter installed.' })).toBeVisible()
 
@@ -1736,7 +1765,8 @@ test.describe('Prime Work desktop smoke', () => {
     await addDialog.getByLabel('Executable').fill('mcp-docs')
     await addDialog.getByLabel(/Arguments/).fill('--local')
     await addDialog.getByRole('button', { name: 'Save local server' }).click()
-    const mcpPath = join(fixtureRoot, 'home', '.pi', 'agent', 'mcp.json')
+    expect(existsSync(join(fixtureRoot, 'home', '.pi', 'agent', 'mcp.json'))).toBe(false)
+    const mcpPath = join(fixtureRoot, 'user-data', 'runtime-profiles', 'pi', 'agent', 'mcp.json')
     await expect.poll(() => existsSync(mcpPath) ? JSON.parse(readFileSync(mcpPath, 'utf8')).mcpServers.docs : null).toEqual({ command: 'mcp-docs', args: ['--local'], enabled: true })
 
     await addDialog.getByRole('button', { name: 'Close' }).click()
@@ -1889,7 +1919,7 @@ test.describe('Prime Work desktop smoke', () => {
     await expect(page.getByRole('button', { name: 'Remove Ask user' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Remove Browser' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Remove Computer Use | TryCUA' })).toHaveCount(0)
-    expect(JSON.parse(readFileSync(join(fixtureRoot, 'home', '.prime', 'agent', 'auth.json'), 'utf8'))['mcp:notion'].access).toBe('fixture-token')
+    expect(JSON.parse(readFileSync(join(fixtureRoot, 'user-data', 'runtime-profiles', 'prime', 'agent', 'auth.json'), 'utf8'))['mcp:notion'].access).toBe('fixture-token')
   })
 
   test('round-trips a grouped Prime ask_user questionnaire', async () => {

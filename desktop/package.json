@@ -1,6 +1,6 @@
 {
   "name": "weave-workbench-desktop",
-  "version": "0.1.0-rc.4",
+  "version": "0.1.0-rc.5",
   "private": true,
   "description": "The desktop workspace for Weave teams and Forge business applications",
   "main": "out/main/index.js",
@@ -40,7 +40,9 @@
     "release:preflight": "node scripts/release/preflight.mjs",
     "release:preflight:toolchain": "node scripts/release/preflight.mjs --toolchain-only",
     "toolchain:bootstrap": "node scripts/release/bootstrap-npm.mjs",
-    "postinstall": "node scripts/release/install-app-deps.mjs"
+    "postinstall": "node scripts/release/install-app-deps.mjs",
+    "runtime:prepare": "node scripts/runtime/prepare.mjs",
+    "runtime:verify": "node scripts/runtime/verify.mjs"
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
@@ -49,7 +51,7 @@
     "node-pty": "^1.1.0",
     "partial-json": "^0.1.7",
     "pdfjs-dist": "6.3.289",
-    "prime-agent": "file:vendor/prime-agent-0.7.0-gooeypi.1.tgz",
+    "prime-agent": "file:vendor/prime-agent-0.7.0-gooeypi.2.tgz",
     "prime-agent-ai": "file:vendor/prime-agent-ai-0.7.0-gooeypi.1.tgz",
     "rrule": "^2.8.1",
     "zeromq": "^6.1.2"
@@ -229,6 +231,10 @@
       {
         "from": "assets/pets",
         "to": "pets"
+      },
+      {
+        "from": "${env.WEAVE_RUNTIME_RESOURCE_DIR}",
+        "to": "runtime"
       }
     ],
     "electronLanguages": [

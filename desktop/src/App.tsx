@@ -1032,7 +1032,7 @@ export default function App() {
       }} onOpenDocs={() => openExternal(HARNESS_PROVIDER_DOCS[activeHarness])} /> : null
 
   if (enterpriseBridge && enterpriseSession?.status === 'signed-in' && !catalogReady) return <I18nProvider preference={settingsState.settings.locale}><LoadingPanel label="workspace" /></I18nProvider>
-  if (enterpriseBridge && enterpriseSession?.status !== 'signed-in') return <I18nProvider preference={settingsState.settings.locale}><Suspense fallback={<LoadingPanel label="account" />}><AccountPage session={enterpriseSession} onSignIn={signIn} /></Suspense></I18nProvider>
+  if (enterpriseBridge && enterpriseSession?.status !== 'signed-in') return <I18nProvider preference={settingsState.settings.locale}><Suspense fallback={<LoadingPanel label="account" />}><AccountPage session={enterpriseSession} onSignIn={signIn} onImportConnection={() => enterpriseBridge.importConnection()} onRestartConnection={() => enterpriseBridge.restartConnection()} /></Suspense></I18nProvider>
 
   const teamEditorVisible = view === 'session' && activeHarness === 'pi' && inspectorVisible && canDevelop && ['team-division', 'team-workflow', 'development'].includes(settingsState.inspectorTab)
   return <I18nProvider preference={settingsState.settings.locale}><div className={`app-shell${teamEditorVisible ? ' app-shell--team-editor-active' : ''}`} aria-busy={!workspaceInitialized} data-platform={platform} data-ready={workspaceInitialized ? 'true' : 'false'}>

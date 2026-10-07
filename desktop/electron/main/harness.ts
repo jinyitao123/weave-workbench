@@ -25,6 +25,8 @@ export interface HarnessDescriptor {
   sessionRoot: (home: string) => string
 }
 
+export const PRIVATE_PRIME_RUNTIME_VERSION = '0.7.0-gooeypi.2'
+
 export const HARNESSES: Record<HarnessId, HarnessDescriptor> = {
   prime: {
     id: 'prime',
@@ -32,7 +34,7 @@ export const HARNESSES: Record<HarnessId, HarnessDescriptor> = {
     agentName: 'Prime Agent',
     executableName: (platform) => platform === 'win32' ? 'prime-agent.exe' : 'prime-agent',
     binaryEnvVar: 'PRIME_AGENT_BINARY',
-    bundledResourceDirs: [['agent'], ['agent', 'bin']],
+    bundledResourceDirs: [['runtime', 'bin'], ['agent'], ['agent', 'bin']],
     candidateDirs: (platform, home, env) => platform === 'win32' ? [] : [
       join(env.XDG_DATA_HOME ?? join(home, '.local', 'share'), 'prime-agent-node', 'current', 'bin'),
     ],
@@ -46,11 +48,11 @@ export const HARNESSES: Record<HarnessId, HarnessDescriptor> = {
     agentName: 'Pi',
     executableName: (platform) => platform === 'win32' ? 'pi.exe' : 'pi',
     binaryEnvVar: 'PI_BINARY',
-    bundledResourceDirs: [],
+    bundledResourceDirs: [['runtime', 'bin']],
     candidateDirs: (platform, home, env) => platform === 'win32' ? [] : [
       join(env.XDG_DATA_HOME ?? join(home, '.local', 'share'), 'pi-node', 'current', 'bin'),
     ],
-    windowsNpmShim: { shim: 'pi.cmd', entrypoint: ['@earendil-works', 'pi-coding-agent', 'dist', 'cli.js'] },
+    windowsNpmShim: { shim: 'pi.cmd', entrypoint: ['@earendil-works', 'pi-coding-agent', 'dist', 'bundle', 'cli.js'] },
     agentDir: (home) => join(home, '.pi', 'agent'),
     sessionRoot: (home) => join(home, '.pi', 'agent', 'sessions'),
   },

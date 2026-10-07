@@ -40,6 +40,8 @@ interface Services {
   settings: SettingsService
   updates: UpdateService
   enterprise: EnterpriseService
+  importEnterpriseConnection?(): Promise<import('../../src/types/api').EnterpriseConnectionImportResult>
+  restartEnterpriseConnection?(): Promise<void>
   enterpriseBridge?: AgentEnterpriseBridge
   teamDevelopmentBridge?: TeamDevelopmentAgentBridge
   updateTeamDevelopment(runtimeId: string, input: TeamDevelopmentContextInput): Promise<void>
@@ -263,6 +265,14 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     services.enterpriseBridge?.invalidateHandoff(id)
   })
   handle('enterprise:get-status', () => services.enterprise.getStatus())
+  handle('enterprise:import-connection', () => {
+    if (!services.importEnterpriseConnection) throw new Error('组织连接导入不可用。')
+    return services.importEnterpriseConnection()
+  })
+  handle('enterprise:restart-connection', () => {
+    if (!services.restartEnterpriseConnection) throw new Error('应用重启不可用。')
+    return services.restartEnterpriseConnection()
+  })
   handle('enterprise:get-session', () => services.enterprise.getSession())
   handle('enterprise:sign-in', (_event, email, password) => { services.enterpriseBridge?.invalidateAccount(); return services.enterprise.signIn(
     requireString(email, 'email', { min: 3, max: 320 }),

@@ -156,7 +156,8 @@ function assertArtifactSizeBudgets(payload, artifacts) {
 }
 
 async function verifyZip(zip, options, artifacts) {
-  run('unzip', ['-t', zip])
+  // Validate every entry without buffering one success line per runtime file.
+  run('unzip', ['-tq', zip])
   const extractionDirectory = mkdtempSync(join(tmpdir(), 'prime-work-zip-'))
   try {
     run('ditto', ['-x', '-k', zip, extractionDirectory])

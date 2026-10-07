@@ -2,6 +2,7 @@ import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
+import { runtimeProfile } from '../../electron/main/runtime-profiles'
 import type { ModelCatalogProvider } from '../../electron/main/model-catalog'
 import { PI_NOT_INSTALLED_WARNING, PiModelCatalogService, MAX_CATALOG_PROVIDERS } from '../../electron/main/providers-pi'
 import type { PrimeModelCatalog } from '../../src/types/api'
@@ -86,6 +87,15 @@ function piModel(provider: string, id: string): Record<string, unknown> {
 }
 
 describe('Pi model catalog service', () => {
+  it('uses the same private profile as the actual runtime rather than shared CLI defaults', async () => {
+    const profile = runtimeProfile(tempDir(), 'pi', { ...process.env, DEEPSEEK_API_KEY: 'shared-fixture' })
+    const executable = fakePi(`
+      if (process.env.PI_CODING_AGENT_DIR !== ${JSON.stringify(profile.agentDir)} || process.env.DEEPSEEK_API_KEY) process.exit(12)
+      process.stdout.write(JSON.stringify({ type: 'response', id: '1', command: 'get_available_models', success: true, data: { models: [{ provider: 'deepseek', id: 'private-model', name: 'Private model' }] } }) + '\\n')
+    `)
+    const catalog = await new PiModelCatalogService(executable, { environment: profile.environment }).catalog()
+    expect(catalog.models.map(model => model.key)).toEqual(['deepseek/private-model'])
+  })
   it('invalidates the unavailable cache when discovery finds an executable', async () => {
     let executable: string | null = null
     const service = new PiModelCatalogService(() => executable)

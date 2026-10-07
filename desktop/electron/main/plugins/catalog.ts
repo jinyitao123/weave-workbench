@@ -367,7 +367,7 @@ async function bundledSkillsDirectory(primeAgentPath: string | null): Promise<st
   } catch { return null }
 }
 
-export async function discoverPlugins(agentDir: string, safeProjectPath: string | undefined, agentPath: string | null, harness: HarnessId = 'prime'): Promise<PluginCatalog> {
+export async function discoverPlugins(agentDir: string, safeProjectPath: string | undefined, agentPath: string | null, harness: HarnessId = 'prime', options: { includeSharedUserSkills?: boolean } = {}): Promise<PluginCatalog> {
   const candidates: Candidate[] = []
   const warnings: PluginWarning[] = []
   const budget: DiscoveryBudget = { candidates: 0, directories: 0, entries: 0, seenCandidates: new Set() }
@@ -376,7 +376,7 @@ export async function discoverPlugins(agentDir: string, safeProjectPath: string 
   const globalSettings = globalRead.settings
 
   await collectDirectory(join(agentDir, 'skills'), 'skill', 'user', candidates, budget, { skillRoot: true })
-  await collectDirectory(join(homedir(), '.agents', 'skills'), 'skill', 'user', candidates, budget)
+  if (options.includeSharedUserSkills !== false) await collectDirectory(join(homedir(), '.agents', 'skills'), 'skill', 'user', candidates, budget)
   await collectDirectory(join(agentDir, 'extensions'), 'extension', 'user', candidates, budget)
   await collectDirectory(join(agentDir, 'prompts'), 'prompt', 'user', candidates, budget)
   const userConfiguredRoots = await Promise.all([agentDir, homedir()].map(async (root) => {

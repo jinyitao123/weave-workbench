@@ -89,6 +89,7 @@ export function validateModelEntry(value: unknown): ValidatedModelEntry | null {
 }
 
 export interface CliModelCatalogOptions {
+  environment?: NodeJS.ProcessEnv
   /** Wall-clock limit for one catalog fetch (and the version probe). */
   timeoutMs?: number
   /** Combined stdout/stderr byte cap for one catalog fetch. */
@@ -96,6 +97,7 @@ export interface CliModelCatalogOptions {
 }
 
 export abstract class CliModelCatalogService implements ModelCatalogProvider {
+  protected readonly environment?: NodeJS.ProcessEnv
   protected readonly timeoutMs: number
   protected readonly maxOutputBytes: number
   private cachedCatalog: PrimeModelCatalog | null = null
@@ -105,6 +107,7 @@ export abstract class CliModelCatalogService implements ModelCatalogProvider {
   private cachedVersion: { executable: string; value: string } | null = null
 
   constructor(private readonly executable: ExecutableSource, options: CliModelCatalogOptions = {}) {
+    this.environment = options.environment
     this.timeoutMs = options.timeoutMs ?? DEFAULT_CATALOG_TIMEOUT_MS
     this.maxOutputBytes = options.maxOutputBytes ?? DEFAULT_CATALOG_MAX_OUTPUT_BYTES
   }
@@ -122,7 +125,7 @@ export abstract class CliModelCatalogService implements ModelCatalogProvider {
   /** Extracts the version from the `--version` stdout, or null when unrecognized. */
   protected abstract parseVersion(stdout: string): string | null
   /** Environment for the `--version` probe; undefined inherits the runProcess default. */
-  protected versionEnvironment(): NodeJS.ProcessEnv | undefined { return undefined }
+  protected versionEnvironment(): NodeJS.ProcessEnv | undefined { return this.environment }
 
   async catalog(force = false, disabledProviders: ReadonlySet<string> = new Set(), disabledModels: ReadonlySet<string> = new Set()): Promise<PrimeModelCatalog> {
     const executable = resolveExecutable(this.executable)

@@ -1,5 +1,5 @@
 import { HARNESS_IDS, type AppSettings, type HarnessId, type HarnessStatus } from '../../src/types/api'
-import { HARNESSES, type HarnessDescriptor } from './harness'
+import { HARNESSES, PRIVATE_PRIME_RUNTIME_VERSION, type HarnessDescriptor } from './harness'
 import { hasControlCharacter, lastNonEmptyLine, sanitizedDetail } from './lib/process-detail'
 import { findHarnessExecutable, processFailureReason, runProcess, type ExecutableCandidateFailure } from './process-utils'
 import type { JsonStateStore } from './store'
@@ -24,6 +24,8 @@ type ExecutableProbe = (executable: string) => Promise<HarnessProbe>
 export interface HarnessDiscoveryOptions {
   findExecutable?: ExecutableFinder
   probeExecutable?: ExecutableProbe
+  profileEnvironment?(harness: HarnessId): NodeJS.ProcessEnv
+  requirePrivateProfiles?: boolean
 }
 
 function processDetail(stdout: string, stderr: string): string {
@@ -53,9 +55,9 @@ const emptyStatuses = (): Record<HarnessId, HarnessStatus> => ({
   pi: { path: null, version: null },
 })
 
-export async function probeHarnessExecutable(executable: string): Promise<HarnessProbe> {
+export async function probeHarnessExecutable(executable: string, environment?: NodeJS.ProcessEnv): Promise<HarnessProbe> {
   try {
-    const result = await runProcess(executable, ['--version'], { timeoutMs: 10_000, maxBytes: 16 * 1024 })
+    const result = await runProcess(executable, ['--version'], { timeoutMs: 10_000, maxBytes: 16 * 1024, env: environment })
     const failure = processFailureReason(result)
     if (failure) {
       return {
@@ -103,14 +105,18 @@ export class HarnessDiscoveryService {
   private statuses = emptyStatuses()
   private refreshRevision = 0
   private readonly findExecutable: ExecutableFinder
-  private readonly probeExecutable: ExecutableProbe
+  private readonly probeExecutable?: ExecutableProbe
+  private readonly profileEnvironment?: HarnessDiscoveryOptions['profileEnvironment']
+  private readonly requirePrivateProfiles: boolean
 
   constructor(
     private readonly runtimePaths: () => RuntimePaths,
     options: HarnessDiscoveryOptions = {},
   ) {
     this.findExecutable = options.findExecutable ?? findHarnessExecutable
-    this.probeExecutable = options.probeExecutable ?? probeHarnessExecutable
+    this.probeExecutable = options.probeExecutable
+    this.profileEnvironment = options.profileEnvironment
+    this.requirePrivateProfiles = options.requirePrivateProfiles ?? false
   }
 
   executable(harness: HarnessId): string | null {
@@ -125,11 +131,16 @@ export class HarnessDiscoveryService {
     const revision = ++this.refreshRevision
     const runtimePaths = this.runtimePaths()
     const discovered = await Promise.all(HARNESS_IDS.map(async (harness): Promise<HarnessStatus> => {
+      const probeCandidate = async (candidate: string): Promise<HarnessProbe> => {
+        const result = await (this.probeExecutable ? this.probeExecutable(candidate) : probeHarnessExecutable(candidate, this.profileEnvironment?.(harness)))
+        if (this.requirePrivateProfiles && harness === 'prime' && result.runnable && result.version !== PRIVATE_PRIME_RUNTIME_VERSION) return { runnable: false, version: result.version, failure: { kind: 'exit', detail: 'Prime does not support application-private credentials; administrator setup is required.' } }
+        return result
+      }
       const probes = new Map<string, HarnessProbe>()
       let lastFailure: HarnessProblem | undefined
       let overrideFailure: HarnessProblem | undefined
       const probe = async (candidate: string) => {
-        const result = await this.probeExecutable(candidate)
+        const result = await probeCandidate(candidate)
         probes.set(candidate, result)
         return result.runnable
       }
@@ -152,7 +163,7 @@ export class HarnessDiscoveryService {
           : undefined)
         return problem ? { path: null, version: null, problem } : { path: null, version: null }
       }
-      const result = probes.get(path) ?? await this.probeExecutable(path)
+      const result = probes.get(path) ?? await probeCandidate(path)
       return result.runnable
         ? { path, version: result.version }
         : { path: null, version: null, problem: { path, reason: result.failure ? probeFailureDetail(result.failure) : 'could not run' } }

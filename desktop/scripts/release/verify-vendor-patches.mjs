@@ -11,8 +11,8 @@ const VENDOR = join(ROOT, 'vendor')
 const PACKAGES = [
   {
     base: 'prime-agent-0.7.0.tgz',
-    output: 'prime-agent-0.7.0-gooeypi.1.tgz',
-    patch: 'patches/prime-agent-0.7.0-gooeypi.1.patch',
+    output: 'prime-agent-0.7.0-gooeypi.2.tgz',
+    patch: 'patches/prime-agent-0.7.0-gooeypi.2.patch',
     baseSha256: '88b6578518c72cd51a825bc80f28e0fef9a64c67de4a7d6fd7afd7ca1b34da0b',
   },
   {

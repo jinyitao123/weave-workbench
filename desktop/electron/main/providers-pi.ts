@@ -52,9 +52,9 @@ function parseProbeResponse(line: string): Record<string, unknown> | null {
  * pipes (stderr is swallowed but counted), spawned with a fixed argv array,
  * a sanitized environment, and a non-project cwd; every line is untrusted.
  */
-function runModelProbe(executable: string, options: { timeoutMs: number; maxOutputBytes: number }): Promise<Record<string, unknown>> {
+function runModelProbe(executable: string, options: { timeoutMs: number; maxOutputBytes: number; environment?: NodeJS.ProcessEnv }): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
-    const invocation = prepareExecutableSpawn(executable, ['--mode', 'rpc', '--no-session', '--offline'])
+    const invocation = prepareExecutableSpawn(executable, ['--mode', 'rpc', '--no-session', '--offline'], options.environment)
     const child = spawn(invocation.file, invocation.args, {
       cwd: tmpdir(),
       env: invocation.env,
@@ -163,7 +163,7 @@ export class PiModelCatalogService extends CliModelCatalogService {
   }
 
   protected async fetchModelEntries(executable: string): Promise<unknown[]> {
-    const frame = await runModelProbe(executable, { timeoutMs: this.timeoutMs, maxOutputBytes: this.maxOutputBytes })
+    const frame = await runModelProbe(executable, { timeoutMs: this.timeoutMs, maxOutputBytes: this.maxOutputBytes, environment: this.environment })
     if (frame.success !== true) {
       // The error text is untrusted pi output: strip control characters and
       // bound it before it reaches a user-facing warning.
