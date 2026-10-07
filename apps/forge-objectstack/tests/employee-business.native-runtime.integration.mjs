@@ -83,6 +83,8 @@ test('employee business HTTP connection uses native metadata, identity and atomi
   await symlink(path.join(APP_DIR, 'src'), path.join(tempDir, 'src'), 'dir');
   await symlink(path.join(APP_DIR, 'node_modules'), path.join(tempDir, 'node_modules'), 'dir');
   await writeFile(path.join(tempDir, 'approval-flow-launcher.plugin.mjs'), `
+import { HttpDispatcher } from '@objectstack/runtime';
+import { TaskConnectionFailure } from ${JSON.stringify(path.join(APP_DIR, 'src/plugins/native-task-auth.ts'))};
 import { quotationContentDigest } from ${JSON.stringify(path.join(APP_DIR, 'src/plugins/sales-quotation-readiness.ts'))};
 import { employeeBusinessBinding } from ${JSON.stringify(path.join(APP_DIR, 'src/plugins/employee-business-binding.ts'))};
 export class ApprovalFlowLauncherPlugin {
@@ -90,6 +92,24 @@ export class ApprovalFlowLauncherPlugin {
  init(ctx) { ctx.hook('kernel:ready', () => {
   const engine = ctx.getService('objectql'), original = engine.update, originalInsert = engine.insert, originalAction = engine.executeAction; let armed = false, uncertainRace, nativeFailure, startRace;
   let projectFieldFault;const security=ctx.getService('security'),readFields=security.getReadableFields.bind(security),readOne=engine.findOne,readMany=engine.find;
+  let workSourceFault; const canReadSource=security.canReadObject.bind(security), buildBridge=HttpDispatcher.prototype.buildMcpBridge;
+  security.canReadObject=async(object,actor)=>{
+   if(workSourceFault?.mode==='all_denied')return false;
+   if(workSourceFault?.mode==='only_failed')return object===workSourceFault.object;
+   if(workSourceFault?.object===object){
+    if(workSourceFault.mode==='undefined')return undefined;
+    if(workSourceFault.mode==='null')return null;
+    if(workSourceFault.mode==='non_boolean')return 'false';
+    if(workSourceFault.mode==='throw')throw new Error('isolated source permission failure');
+   }
+   return canReadSource(object,actor);
+  };
+  HttpDispatcher.prototype.buildMcpBridge=function(...args){
+   const bridge=buildBridge.apply(this,args),list=bridge.listObjects.bind(bridge),query=bridge.query.bind(bridge);
+   return {...bridge,listObjects:async()=>{const values=await list();return workSourceFault?.mode==='metadata_missing'?values.filter(item=>item.name!==workSourceFault.object):values;},
+    query:async(object,input)=>{if(workSourceFault?.mode==='all_denied')throw new Error('denied source was queried');if(workSourceFault?.object===object&&['query_forbidden','only_failed'].includes(workSourceFault.mode))throw new TaskConnectionFailure(403,'BUSINESS_WORK_SOURCE_FORBIDDEN','isolated authorized query refusal');return query(object,input);}};
+  };
+  ctx.getService('http.server').post('/api/v1/__test/work-source-fault',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}workSourceFault=req.body.mode?req.body:undefined;await res.status(200).json({armed:!!workSourceFault});});
   let projectDiagnostics=[],projectLinkEffects=[];const nativeWarn=ctx.logger.warn.bind(ctx.logger);ctx.logger.warn=(message,metadata)=>{if(message==='[project-scope]')projectDiagnostics.push(metadata);nativeWarn(message,metadata);};
   ctx.getService('http.server').post('/api/v1/__test/project-scope-diagnostics',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}const records=projectDiagnostics;projectDiagnostics=[];await res.status(200).json({records});});
   ctx.getService('http.server').post('/api/v1/__test/project-link-effects',async(req,res)=>{if(req.headers?.authorization!=='Bearer ${launcherSecret}'){await res.status(403).json({error:'forbidden'});return;}const records=projectLinkEffects;projectLinkEffects=[];await res.status(200).json({records});});
@@ -425,8 +445,26 @@ export default stack;
   await executeEmployee(employees.financeReviewer,'forge_customer_prepayment',prepayId,'customer_prepayment_confirm',{confirmation_comment:'已独立核对合成到账原件与金额'});
   const reviewWork=await employees.financeReviewer.request('/workbench/business-work?limit=1');
   assert.equal(reviewWork.status,200,JSON.stringify(reviewWork.value));
-  assert.equal(reviewWork.value.readStatus,'partial',JSON.stringify(reviewWork.value));
-  assert.ok(reviewWork.value.sourceErrors.some(error=>error.kind==='quotation_follow_up'&&error.code==='BUSINESS_WORK_SOURCE_FORBIDDEN'),'an unreadable quotation source must not be reported as zero work');
+  assert.equal(reviewWork.value.readStatus,'complete',JSON.stringify(reviewWork.value));
+  assert.equal(reviewWork.value.sourceErrors,undefined,'objects explicitly outside this employee read scope must not make their work list unavailable');
+
+  // An explicitly denied source is outside this list, while uncertainty or an
+  // authorized source failing after the permission check remains visible.
+  for(const mode of ['undefined','null','non_boolean','throw','metadata_missing','query_forbidden']) {
+    assert.equal((await admin.request('/__test/work-source-fault','POST',{object:'forge_sales_contract',mode},{Authorization:'Bearer '+launcherSecret})).status,200);
+    const observed=await admin.request('/workbench/business-work?limit=100');
+    assert.equal(observed.status,200,JSON.stringify({mode,...observed.value}));
+    assert.equal(observed.value.readStatus,'partial',mode);
+    const expected=['metadata_missing','query_forbidden'].includes(mode)?'BUSINESS_WORK_SOURCE_FORBIDDEN':'BUSINESS_WORK_SOURCE_UNAVAILABLE';
+    assert.ok(observed.value.sourceErrors.some(error=>error.kind==='contract_signature'&&error.code===expected),JSON.stringify({mode,...observed.value}));
+  }
+  assert.equal((await admin.request('/__test/work-source-fault','POST',{mode:'all_denied'},{Authorization:'Bearer '+launcherSecret})).status,200);
+  const noSources=await admin.request('/workbench/business-work?limit=100');
+  assert.equal(noSources.status,200,JSON.stringify(noSources.value));
+  assert.equal(noSources.value.readStatus,'complete');assert.deepEqual(noSources.value.items,[]);assert.equal(noSources.value.sourceErrors,undefined);
+  assert.equal((await admin.request('/__test/work-source-fault','POST',{object:'forge_sales_contract',mode:'only_failed'},{Authorization:'Bearer '+launcherSecret})).status,200);
+  assert.equal((await admin.request('/workbench/business-work?limit=100')).status,503,'excluded sources cannot hide the only authorized source failing');
+  assert.equal((await admin.request('/__test/work-source-fault','POST',{}, {Authorization:'Bearer '+launcherSecret})).status,200);
 
   // Quotation follow-up uses the same real employee connection, native
   // approval service, owned originals and existing formal domain actions.
