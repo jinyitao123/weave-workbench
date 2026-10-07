@@ -60,6 +60,8 @@ function createHarness() {
     CompositeDialog: props => React.createElement('div', props, props.children),
     WorkspaceHeader: props => React.createElement('header', props, props.title, props.action),
     StatusTabs: props => React.createElement('div', props),
+    FormSectionContainer: props => React.createElement('div', props, props.children),
+    SegmentedRadioGroup: props => React.createElement('div', props),
     RecordTable: 'RecordTable',
     Icon: props => React.createElement('span', props),
     ListView: props => React.createElement('div', { ...props, 'data-test-list-view': true }),
