@@ -1082,6 +1082,50 @@
       "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_sales_order_workspace.json"
     },
     {
+      "featureId": "sales.order-create",
+      "app": "sales",
+      "surfaceType": "page",
+      "target": "page_sales_order_create",
+      "pageId": "page_sales_order_create",
+      "file": "sales-order-create.page.ts",
+      "pages": [
+        "page_sales_order_create"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "requirementIds": [
+        "SO-NEW-001",
+        "SO-NEW-002",
+        "SO-NEW-003",
+        "SO-NEW-004",
+        "SO-NEW-005",
+        "SO-NEW-006",
+        "SO-NEW-007",
+        "SO-NEW-008",
+        "SO-NEW-009",
+        "SO-NEW-010",
+        "SO-NEW-011",
+        "SO-NEW-012",
+        "SO-NEW-013",
+        "SO-NEW-014",
+        "SO-NEW-015",
+        "SO-NEW-016"
+      ],
+      "designStatus": "review_required",
+      "contract": "docs/contracts/sales/page_sales_order_create.md",
+      "acceptance": "apps/forge-objectstack/tests/acceptance/sales-order-create.json"
+    },
+    {
       "file": "sales-additional-fee.page.ts",
       "pages": [
         "page_sales_additional_fee"
@@ -1291,6 +1335,56 @@
       "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_service_orders.json"
     },
     {
+      "featureId": "sales.service-order-create",
+      "app": "sales",
+      "surfaceType": "page",
+      "target": "page_service_order_create",
+      "pageId": "page_service_order_create",
+      "file": "sales-service-workspace.page.ts",
+      "pages": [
+        "page_service_order_create"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts",
+        "apps/forge-objectstack/src/views/service-workspace.view.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/otc-role.permission.ts",
+        "apps/forge-objectstack/console94.lock.json",
+        "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts",
+        "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts"
+      ],
+      "requirementIds": [
+        "SO-CREATE-001",
+        "SO-CREATE-002",
+        "SO-CREATE-003",
+        "SO-CREATE-004",
+        "SO-CREATE-005",
+        "SO-CREATE-006",
+        "SO-CREATE-007",
+        "SO-CREATE-008",
+        "SO-CREATE-009",
+        "SO-CREATE-010",
+        "SO-CREATE-011",
+        "SO-CREATE-012",
+        "SO-CREATE-013",
+        "SO-CREATE-014",
+        "SO-CREATE-015",
+        "SO-CREATE-016",
+        "SO-CREATE-017",
+        "SO-CREATE-018",
+        "SO-CREATE-019",
+        "SO-CREATE-020"
+      ],
+      "designStatus": "review_required",
+      "contract": "docs/forge-sales-service-page-contract-20260913.md",
+      "acceptance": "apps/forge-objectstack/tests/acceptance/service-order-create.json"
+    },
+    {
       "file": "sales-crm-service-pages.page.ts",
       "pages": [
         "page_service_quotations"
@@ -1366,6 +1460,96 @@
       "designStatus": "review_required",
       "contract": "docs/forge-sales-service-page-contract-20260913.md",
       "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_service_config.json"
+    }
+  ],
+  "project": [
+    {
+      "featureId": "project.task-workspace",
+      "app": "project",
+      "surfaceType": "page",
+      "target": "page_project_task_workspace",
+      "pageId": "page_project_task_workspace",
+      "file": "project-task-workspace.page.ts",
+      "pages": [
+        "page_project_task_workspace"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-task-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts",
+        "apps/forge-objectstack/src/pages/project-task-import.logic.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "requirementIds": [
+        "PT-WORK-001",
+        "PT-WORK-002",
+        "PT-WORK-003",
+        "PT-WORK-004",
+        "PT-WORK-005",
+        "PT-WORK-006",
+        "PT-WORK-007",
+        "PT-WORK-008",
+        "PT-WORK-009",
+        "PT-WORK-010",
+        "PT-WORK-011",
+        "PT-WORK-012"
+      ],
+      "designStatus": "review_required",
+      "contract": "docs/forge-project-management-manual-baseline-20260912.md",
+      "acceptance": "apps/forge-objectstack/tests/acceptance/project-task-workspace.json"
+    },
+    {
+      "featureId": "project.center",
+      "app": "project",
+      "surfaceType": "page",
+      "target": "page_project_center",
+      "pageId": "page_project_center",
+      "file": "project-center.page.ts",
+      "pages": [
+        "page_project_center"
+      ],
+      "archetype": "detail_workspace",
+      "reference": "project-center.page.ts",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "requirementIds": [
+        "PC-CENTER-001",
+        "PC-CENTER-002",
+        "PC-CENTER-003",
+        "PC-CENTER-004",
+        "PC-CENTER-005",
+        "PC-CENTER-006",
+        "PC-CENTER-007",
+        "PC-CENTER-008",
+        "PC-CENTER-009",
+        "PC-CENTER-010",
+        "PC-CENTER-011",
+        "PC-CENTER-012",
+        "PC-CENTER-013",
+        "PC-CENTER-014",
+        "PC-CENTER-015",
+        "PC-CENTER-016",
+        "PC-CENTER-017",
+        "PC-CENTER-018"
+      ],
+      "designStatus": "review_required",
+      "contract": "docs/forge-project-management-manual-baseline-20260912.md",
+      "acceptance": "apps/forge-objectstack/tests/acceptance/project-center.json"
     }
   ]
 }

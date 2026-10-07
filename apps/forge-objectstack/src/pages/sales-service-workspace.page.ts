@@ -16,6 +16,7 @@ import { serviceWarrantyOverviewHelpersSource } from './sales-service-warranty-o
 import { serviceAnalysisRangeHelpersSource } from './sales-service-analysis-range.panel.js';
 import { servicePersonalPerformanceHelpersSource } from './sales-service-personal-performance.panel.js';
 import { servicePerformanceCustomersHelpersSource } from './sales-service-performance-customers.panel.js';
+import { serviceOrderSourceHelpersSource } from './sales-service-order-source.panel.js';
 import { forgeProductUiCss, forgeProductUiRuntime } from './product-ui.js';
 
 type ServiceListKey = 'orders' | 'quotations' | 'settlements' | 'warranty' | 'warrantyEvents' | 'configuration' | 'parts';
@@ -39,6 +40,14 @@ const serviceViews = {
   configuration: ServiceConfigViews,
   parts: ServicePartRequestViews,
 };
+
+const serviceOrderCreateSections = [
+  { name: 'request', label: '服务需求', columns: 2, fields: ['service_type', 'service_mode', 'urgency'] },
+  { name: 'customer_product', label: '客户与产品', columns: 2, fields: ['customer_id', 'contact_id', 'contact_phone', 'sales_order_id', 'contract_id', 'service_object', 'service_address', 'region'] },
+  { name: 'warranty', label: '质保信息', columns: 2, fields: ['warranty_status', 'warranty_starts_on', 'warranty_ends_on'] },
+  { name: 'pricing', label: '费用与报价', columns: 2, fields: ['responsibility_type', 'quotation_handling'] },
+  { name: 'problem', label: '问题 / 服务内容', columns: 2, fields: ['code', 'name', 'fault_symptom', 'impact_scope', 'onsite_evidence_attachments', 'remarks', 'expected_visit_on'] },
+];
 
 const serviceConfigCategorySchema = ServiceConfigItem.fields.category as unknown as {
   options?: Array<{ value: string; label: string }>;
@@ -107,10 +116,8 @@ const serviceCss = JSON.stringify(forgeProductUiCss + `
 .forge-sales-service .ss-scope{min-width:0;max-width:100%;overflow-x:auto;margin:0;--ui-status-tabs-height:40.5px;--ui-status-tabs-padding-inline:14px;--ui-status-tabs-padding-block:10px;--ui-status-tabs-radius:0px;--ui-status-tabs-font-size:13px;--ui-status-tabs-line-height:17.5px}
 .forge-sales-service .ss-tab-panel{min-width:0}
 .forge-sales-service .ss-content{min-width:0;border:1px solid var(--fp-line);border-radius:5.25px;background:var(--fp-surface);overflow:hidden}
-@container(max-width:55.999rem){.forge-sales-service .ss-create-workspace>[data-slot="document-workspace-sidebar"]{order:-1}}
 .forge-sales-service .ss-create-fieldset{min-width:0;margin:0;padding:0;border:0}
-.forge-sales-service .ss-create-actions{display:grid;gap:7px}
-.forge-sales-service .ss-create-actions .fp-button{width:100%}
+.forge-sales-service .ss-create-workspace{--ui-section-step-display:inline-flex;--ui-section-accent-display:none}
 .forge-sales-service .ss-readonly-note{margin:10.5px 0;padding:10.5px 14px;border:1px solid var(--fp-line);border-radius:3.5px;color:var(--fp-muted);font-size:12.25px;line-height:17.5px}
 
 .forge-sales-service .ss-warranty-overview{display:grid;gap:14px;min-width:0}
@@ -166,6 +173,13 @@ const serviceOrderSourceField = {
   label: '来源销售订单',
   required: true,
 };
+const serviceOrderFormDefaults = Object.fromEntries(
+  Object.entries(ServiceOrder.fields)
+    .filter(([name, field]) => field.defaultValue !== undefined && serviceViews.orders.form?.sections?.some(
+      section => section.fields?.some(item => (typeof item === 'string' ? item : item.field) === name),
+    ))
+    .map(([name, field]) => [name, field.defaultValue]),
+);
 
 function createServicePage(spec: ServicePageSpec) {
   const source = `const servicePage=${JSON.stringify(spec)};
@@ -176,6 +190,8 @@ const serviceOrderStatusOptions=${serviceOrderStatusOptionsJson};
 const warrantyRulesCategory=${warrantyRulesCategoryJson};
 const serviceOrderSourceField=${JSON.stringify(serviceOrderSourceField)};
 const serviceOrderTypeField=${JSON.stringify({...ServiceOrder.fields.service_type,name:'service_type',label:'服务场景'})};
+const serviceOrderFormDefaults=${JSON.stringify(serviceOrderFormDefaults)};
+const serviceOrderCreateSections=${JSON.stringify(serviceOrderCreateSections)};
 const css=${serviceCss};
 ${serviceDispatchPanelHelpersSource}
 ${servicePersonalWorkspacePanelHelpersSource}
@@ -185,6 +201,7 @@ ${serviceWarrantyOverviewHelpersSource}
 ${serviceAnalysisRangeHelpersSource}
 ${servicePersonalPerformanceHelpersSource}
 ${servicePerformanceCustomersHelpersSource}
+${serviceOrderSourceHelpersSource}
 function App(){
   const adapter=useAdapter();
   const [access,setAccess]=React.useState({loading:true,error:'',managerError:'',permissionsError:'',canManage:false,canOperateService:false,canOperateWarehouse:false,userId:''});
@@ -199,6 +216,7 @@ function App(){
   const warrantyRequest=React.useRef(0);
   const [selected,setSelected]=React.useState(null);
   const [dialog,setDialog]=React.useState(()=>servicePage.standaloneCreate?{kind:'create-order',step:'form',values:{},baseline:{},error:''}:null);
+  const [confirmCreateCancel,setConfirmCreateCancel]=React.useState(false);
   const [notice,setNotice]=React.useState(null);
   const [busy,setBusy]=React.useState(false);
   const [analysis,setAnalysis]=React.useState({from:'',to:'',dimension:'service_type',serviceType:'',region:'',urgency:''});
@@ -207,6 +225,11 @@ function App(){
   const [personalDocumentState,setPersonalDocumentState]=React.useState({});
   const [typeCatalog,setTypeCatalog]=React.useState({loading:false,available:false,options:[],error:''});
   const typeCatalogRequest=React.useRef(0);
+  const [orderAddressRead,setOrderAddressRead]=React.useState({key:'',loading:false,error:''});
+  const orderAddressRequest=React.useRef(0);
+  const orderAddressOrigin=React.useRef({value:'',manual:false});
+  const orderDraft=React.useRef(dialog);
+  orderDraft.current=dialog;
   const [personalMetrics,setPersonalMetrics]=React.useState({key:'',loading:false,available:false,error:'',items:[]});
   const [personalSidebar,setPersonalSidebar]=React.useState({key:'',parts:{loading:false,available:false,value:null,description:'统计暂不可用',error:''},quotations:{loading:false,available:false,value:null,description:'统计暂不可用',error:''}});
   const personalSidebarRequest=React.useRef(0);
@@ -222,9 +245,10 @@ function App(){
   const dispatchDialogLoadSession=React.useRef(0);
   const personalRequest=React.useRef(0);
   const sourceView=servicePage.viewKey?serviceViews[servicePage.viewKey]:null;
-  const formView=sourceView&&sourceView.form?sourceView.form:null;
+  const formView=sourceView&&sourceView.form?servicePage.standaloneCreate?{...sourceView.form,sections:serviceOrderCreateSections}:sourceView.form:null;
   const formFields=formView?formView.sections.flatMap(section=>(section.fields||[]).map(field=>typeof field==='string'?field:field.field)):[];
   const formObject=servicePage.mode==='quotations'?'forge_service_quotation':servicePage.mode==='settlements'?'forge_service_settlement':servicePage.mode==='configuration'?'forge_service_config_item':servicePage.mode==='warranty'?'forge_warranty_card':'forge_service_order';
+  const orderSourceKey=serviceOrderSourceKey(dialog?.values||{});
   const statusLabel={pending_acceptance:'待受理',pending_dispatch:'待分派',pending_receive:'待接单',in_progress:'服务中',completed:'已完工',closed:'已关闭',rejected:'已驳回',draft:'草稿',pending_confirmation:'待确认',confirmed:'已确认',settlement_created:'已转结算',pending_approval:'待审批',customer_confirming:'客户确认中',receivable_created:'已生成应收',active:'生效中',pending_activation:'待激活',grace_period:'宽限期',expired:'已过保',terminated:'已终止'};
   function unwrap(value){return value&&value.result&&value.result.result||value&&value.result||value&&value.data&&value.data.result&&value.data.result.result||value&&value.data&&value.data.result||value&&value.data||value}
   async function request(path,options){return ForgeApiRequest(adapter,path,options||{})}
@@ -374,6 +398,35 @@ function App(){
     if(!record||typeof record!=='object'||!record.id)throw new Error('操作后无法读取业务记录，请刷新页面核对');
     return record;
   }
+  React.useEffect(()=>{
+    if(dialog?.kind!=='create-order'||access.loading||!access.canManage)return;
+    const requestId=++orderAddressRequest.current,key=orderSourceKey;
+    const values=dialog.values||{},customerId=servicePerformanceCustomerReferenceId(values.customer_id),orderId=servicePerformanceCustomerReferenceId(values.sales_order_id);
+    const address=String(values.service_address??'');
+    if(orderAddressOrigin.current.manual){
+      setOrderAddressRead({key,loading:false,error:customerId?'来源已更改，请核对手动填写的服务地址。':''});
+      return()=>{orderAddressRequest.current+=1};
+    }
+    if(address&&address!==orderAddressOrigin.current.value){
+      orderAddressOrigin.current={value:'',manual:true};
+      setOrderAddressRead({key,loading:false,error:customerId?'来源已更改，请核对手动填写的服务地址。':''});
+      return()=>{orderAddressRequest.current+=1};
+    }
+    orderAddressOrigin.current={value:'',manual:false};
+    setDialog(current=>current?.kind==='create-order'&&serviceOrderSourceKey(current.values)===key?{...current,values:{...current.values,service_address:''}}:current);
+    setOrderAddressRead({key,loading:Boolean(customerId),error:''});
+    if(!customerId)return()=>{orderAddressRequest.current+=1};
+    readServiceOrderAddress(readRecord,customerId,orderId).then(result=>{
+      if(requestId!==orderAddressRequest.current)return;
+      setOrderAddressRead({key,loading:false,error:result.error});
+      if(orderAddressOrigin.current.manual)return;
+      const current=orderDraft.current;
+      if(current?.kind!=='create-order'||serviceOrderSourceKey(current.values)!==key)return;
+      orderAddressOrigin.current={value:result.value,manual:false};
+      setDialog(value=>value?.kind==='create-order'&&serviceOrderSourceKey(value.values)===key?{...value,values:{...value.values,service_address:result.value}}:value);
+    });
+    return()=>{orderAddressRequest.current+=1};
+  },[dialog?.kind,orderSourceKey,access.loading,access.canManage]);
   async function runAction(objectName,actionName,id,params){
     const path='/actions/'+objectName+'/'+actionName+(id?'/'+encodeURIComponent(id):'');
     return unwrap(await request(path,{method:'POST',body:JSON.stringify({params:params||{}})}));
@@ -547,7 +600,7 @@ function App(){
       const suffix=status?'，当前状态为'+status:'';
       const linkedCode=saved.receivable_code||saved.quotation_code||saved.settlement_code||saved.warranty_code||source&&source.quotation_code||source&&source.settlement_code||'';
       setNotice({tone:'success',text:resultLabel+'已保存'+suffix+(linkedCode?'；关联单号 '+linkedCode:'')});
-    }catch(error){setDialog(current=>current?{...current,error:String(error&&error.message||error)}:current)}
+    }catch(error){const message=String(error&&error.message||error);setDialog(value=>value?{...value,error:current.kind==='create-order'&&message.startsWith('DuplicateRecordError:')?'工单号已被使用，请修改后重试。':message}:value)}
     finally{setBusy(false)}
   }
   function cancelDialog(){if(busy)return;formController.current=null;setDialog(null)}
@@ -564,7 +617,10 @@ function App(){
     if(servicePage.mode==='configuration')return configCategory?['category','=',configCategory]:undefined;
     return undefined;
   }
-  const formDirty=Boolean(dialog&&((dialog.values&&dialog.baseline&&JSON.stringify(dialog.values)!==JSON.stringify(dialog.baseline))||(dialog.files&&dialog.files.length)));
+  const emptyValue=value=>value==null||(Array.isArray(value)&&!value.length)?'':value;
+  const standaloneOrderDirty=Boolean(dialog&&Object.keys(dialog.values||{}).filter(name=>formFields.includes(name)).some(name=>JSON.stringify(emptyValue(dialog.values[name]))!==JSON.stringify(emptyValue(dialog.baseline?.[name]??serviceOrderFormDefaults[name]))));
+  const formDirty=servicePage.standaloneCreate?standaloneOrderDirty:Boolean(dialog&&((dialog.values&&dialog.baseline&&JSON.stringify(dialog.values)!==JSON.stringify(dialog.baseline))||(dialog.files&&dialog.files.length)));
+  function requestCreateCancel(){if(busy)return;if(formDirty)setConfirmCreateCancel(true);else ForgeNavigate('/_console/apps/com.inoforge.forge.sales/page_service_orders')}
   const sourceName=dialog&&dialog.record&&(dialog.record.code||dialog.record.name)||'';
   function servicePageActions(record,objectName){
     const actions=[];
@@ -627,8 +683,18 @@ function App(){
       {!dateRange.valid&&personalOrderFilters.datePreset!=='all'&&<ForgeNotice tone="warning">{dateRange.error}</ForgeNotice>}
     </>;
   }
+  function updateFormValues(values){
+    const current=orderDraft.current;
+    if(!current||busy)return;
+    if(current.kind==='create-order'){
+      const previous=String(current.values?.service_address??''),next=String(values.service_address??'');
+      if(serviceOrderSourceKey(current.values)===serviceOrderSourceKey(values)&&previous!==next)orderAddressOrigin.current={value:orderAddressOrigin.current.value,manual:true};
+      else if(serviceOrderSourceKey(current.values)!==serviceOrderSourceKey(values))orderAddressOrigin.current={value:orderAddressOrigin.current.value,manual:Boolean(next&&(orderAddressOrigin.current.manual||next!==orderAddressOrigin.current.value))};
+    }
+    setDialog(value=>!value||busy?value:{...value,values,...(value.kind==='quote-draft-edit'&&JSON.stringify(values)!==JSON.stringify(value.values)?{idempotency_key:idempotencyKey()}:{}),error:''});
+  }
   function formComponent(objectName,fields,sections,columns,customFields){
-    return <ObjectForm objectName={objectName} dataSource={adapter} mode="create" formType="simple" columns={columns||2} sections={sections||[]} fields={fields||[]} customFields={customFields} values={dialog&&dialog.values||{}} onValuesChange={values=>setDialog(current=>!current||busy?current:{...current,values,...(current.kind==='quote-draft-edit'&&JSON.stringify(values)!==JSON.stringify(current.values)?{idempotency_key:idempotencyKey()}:{}),error:''})} onControllerReady={controller=>{formController.current=controller}} showSubmit={false} showCancel={false} showReset={false} submitHandler={values=>values}/>;
+    return <ObjectForm objectName={objectName} dataSource={adapter} mode="create" formType="simple" columns={columns||2} sections={sections||[]} fields={fields||[]} customFields={customFields} values={dialog&&dialog.values||{}} onValuesChange={updateFormValues} onControllerReady={controller=>{formController.current=controller}} showSubmit={false} showCancel={false} showReset={false} submitHandler={values=>values}/>;
   }
   function renderAnalysis(){
     const dateRange=serviceAnalysisDateRange(analysis.from,analysis.to);
@@ -979,12 +1045,14 @@ function App(){
   }
   function canSubmitDialog(){
     if(!dialog)return false;
+    if(dialog.kind==='create-order'&&!orderAddressOrigin.current.manual&&servicePerformanceCustomerReferenceId(dialog.values?.customer_id)&&(orderAddressRead.key!==orderSourceKey||orderAddressRead.loading))return false;
     if(['pick-quote-order','pick-settlement-source','pick-settlement-quote'].includes(dialog.kind))return false;
     if(dialog.kind==='dispatch'&&(dialog.loading||!dialog.engineers.length))return false;
     return true;
   }
   function submitReady(){
     if(!dialog||busy)return;
+    if(dialog.kind==='create-order'&&!canSubmitDialog())return;
     if(dialog.kind==='dispatch'){
       if(!dialog.values.engineer_id)return setDialog(current=>({...current,error:'请选择服务工程师'}));
       if(!String(dialog.values.dispatch_note||'').trim())return setDialog(current=>({...current,error:'派工说明不能为空'}));
@@ -1008,7 +1076,7 @@ function App(){
   if(access.loading)return <div className="forge-product forge-sales-service"><style>{css}</style><ForgeLoading label={'加载'+servicePage.label}/></div>;
   if(access.error)return <div className="forge-product forge-sales-service"><style>{css}</style><main className="fp-shell ss-shell"><ForgeNotice tone="error">{access.error}</ForgeNotice></main></div>;
   if(servicePage.managerOnly&&!access.canManage)return <div className="forge-product forge-sales-service"><style>{css}</style><main className="fp-shell ss-shell"><WorkspaceHeader className="ss-heading" variant="workspace" icon={servicePage.icon} breadcrumbItems={[{label:'销售管理'},{label:'服务管理'},{label:servicePage.label}]} title={servicePage.label} subtitleClassName="ss-subtitle" subtitle={servicePage.mode==='workspace'?undefined:servicePage.description}/><ForgeNotice tone="error">{managerError}</ForgeNotice></main></div>;
-  if(servicePage.standaloneCreate)return <div className="forge-product forge-sales-service"><style>{css}</style><main className="fp-shell ss-shell"><WorkspaceHeader className="ss-heading" variant="workspace" icon={servicePage.icon} breadcrumbItems={[{label:'销售管理'},{label:'服务管理'},{label:'新建服务工单'}]} title="新建服务工单" subtitleClassName="ss-subtitle" subtitle={servicePage.mode==='workspace'?undefined:servicePage.description} action={<button type="button" className="fp-button" disabled={busy} onClick={()=>ForgeNavigate('/_console/apps/com.inoforge.forge.sales/page_service_orders')}>取消</button>}/>{access.permissionsError&&<ForgeNotice tone="warning">{access.permissionsError}</ForgeNotice>}{dialog&&dialog.error&&<ForgeNotice tone="error">{dialog.error}</ForgeNotice>}<fieldset className="ss-create-fieldset" disabled={busy} aria-busy={busy}><DocumentWorkspace className="ss-create-workspace" sidebarLabel="工单操作" main={<DocumentSection title="服务工单信息">{typeCatalog.error&&<ForgeNotice tone="error">{typeCatalog.error}</ForgeNotice>}{typeCatalog.available&&!typeCatalog.options.length&&<ForgeNotice tone="info">暂无启用的服务场景。</ForgeNotice>}{formComponent('forge_service_order',formFields,formView.sections,formView.columns,[serviceOrderSourceField,{...serviceOrderTypeField,widget:'declared-label-combobox',options:typeCatalog.options,readonly:typeCatalog.loading||!typeCatalog.available,placeholder:typeCatalog.loading?'读取服务场景…':typeCatalog.options.length?'请选择服务场景':'暂无启用的服务场景'}])}</DocumentSection>} sidebar={<DocumentSection title="工单操作"><div className="ss-create-actions"><button type="button" className="fp-button primary" disabled={busy||!canSubmitDialog()} onClick={submitReady}>{busy?'创建中…':'创建服务工单'}</button></div></DocumentSection>}/></fieldset></main></div>;
+  if(servicePage.standaloneCreate)return <div className="forge-product forge-sales-service"><style>{css}</style><main className="fp-shell ss-shell"><WorkspaceHeader className="ss-heading" variant="workspace" icon={servicePage.icon} breadcrumbItems={[{label:'销售管理'},{label:'服务管理'},{label:'新建服务工单'}]} title="新建服务工单" subtitleClassName="ss-subtitle" subtitle={servicePage.mode==='workspace'?undefined:servicePage.description} action={<button type="button" className="fp-button" disabled={busy} onClick={requestCreateCancel}>返回列表</button>}/>{access.permissionsError&&<ForgeNotice tone="warning">{access.permissionsError}</ForgeNotice>}{dialog&&dialog.error&&<ForgeNotice tone="error">{dialog.error}</ForgeNotice>}<fieldset className="ss-create-fieldset" disabled={busy} aria-busy={busy}><DocumentWorkspace className="ss-create-workspace" footerLabel="工单操作" main={<DocumentSection title="服务工单信息">{typeCatalog.error&&<ForgeNotice tone="error">{typeCatalog.error}</ForgeNotice>}{typeCatalog.available&&!typeCatalog.options.length&&<ForgeNotice tone="info">暂无启用的服务场景。</ForgeNotice>}{orderAddressRead.key===orderSourceKey&&orderAddressRead.loading&&<ForgeNotice tone="info">正在读取服务地址。</ForgeNotice>}{orderAddressRead.key===orderSourceKey&&orderAddressRead.error&&<ForgeNotice tone="warning">{orderAddressRead.error}</ForgeNotice>}{formComponent('forge_service_order',formFields,formView.sections,formView.columns,[serviceOrderSourceField,{...serviceOrderTypeField,widget:'declared-label-combobox',options:typeCatalog.options,readonly:typeCatalog.loading||!typeCatalog.available,placeholder:typeCatalog.loading?'读取服务场景…':typeCatalog.options.length?'请选择服务场景':'暂无启用的服务场景'}])}</DocumentSection>} footer={<><button type="button" className="fp-button" disabled={busy} onClick={requestCreateCancel}>取消</button><button type="button" className="fp-button primary" disabled={busy||!canSubmitDialog()} onClick={submitReady}>{busy?'创建中…':'创建服务工单'}</button></>}/></fieldset></main><ForgeDialog open={confirmCreateCancel} title="放弃更改？" busy={busy} confirmLabel="放弃" hideCancel={true} secondaryLabel="继续编辑" onSecondary={()=>setConfirmCreateCancel(false)} onCancel={()=>setConfirmCreateCancel(false)} onConfirm={()=>{if(!busy)ForgeNavigate('/_console/apps/com.inoforge.forge.sales/page_service_orders')}}><p>未保存的填写内容将丢失。</p></ForgeDialog></div>;
   const pageActions=servicePage.mode==='orders'&&access.canManage?<a className="fp-button primary" href={forgePageHref('page_service_order_create')}>新建服务工单</a>:servicePage.mode==='quotations'&&access.canManage?<button type="button" className="fp-button primary" onClick={openCreateQuote}>从完工工单生成报价</button>:servicePage.mode==='settlements'&&access.canManage?<button type="button" className="fp-button primary" onClick={openCreateSettlement}>从完工工单生成结算</button>:servicePage.mode==='configuration'&&access.canManage?<button type="button" className="fp-button primary" onClick={openCreateConfiguration}>新增配置</button>:null;
   const scopeTabs=renderScope();
   const pageNavigation=servicePage.mode==='orders'?<a className="fp-button ss-next-step" href="/_console/apps/com.inoforge.forge.sales/page_service_dispatch"><span>下一步操作</span><strong>派工中心</strong></a>:servicePage.mode==='dispatch'?<a className="fp-button" href="/_console/apps/com.inoforge.forge.sales/page_service_orders">服务工单</a>:null;

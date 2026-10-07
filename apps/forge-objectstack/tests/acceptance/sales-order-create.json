@@ -1,0 +1,462 @@
+{
+  "schemaVersion": 3,
+  "featureId": "sales.order-create",
+  "app": "sales",
+  "surfaceType": "page",
+  "target": "page_sales_order_create",
+  "pageId": "page_sales_order_create",
+  "status": "review_required",
+  "observedAt": "2026-10-07",
+  "reviewedRevision": "603e8ab3e32c19e84bb86243989df3aa2501ffd2",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/sales-order-create.page.ts": "1d9c89a681b08060e318872df052b3d95365e21aeef371e941478160b4da157c",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86",
+    "apps/forge-objectstack/src/objects/sales.object.ts": "fa936dfee7638c074fde84f67dc7c0b80adac71f2b31571220d322190e32e9e2",
+    "apps/forge-objectstack/src/actions/sales.action.ts": "13de0e1e97d5b5c79f1d37d8b38bbd9bb27ac89a4889f101e544389a9d9a4bbd",
+    "apps/forge-objectstack/src/permissions/sales-order.permission.ts": "14ce34a26eead8d92fd431a14f81b2ecfe2ef630262a271f612a45b34d510ce0",
+    "apps/forge-objectstack/src/plugins/sales-order-domain.ts": "da110816f063af56df448f2b1cd269bb2eaf85dd3fc3709b34ee1c7d30a72349",
+    "apps/forge-objectstack/src/plugins/sales-order-readiness.ts": "a6012da6f06e67b4559d1554acfeeefdcb586ab0264cad952718a4a9b96e1c57",
+    "apps/forge-objectstack/console94.lock.json": "363c04b892101956fecc2c03e464086ea71312df0ccaf4c968e2fba7321f412c"
+  },
+  "environment": {
+    "databaseType": "postgresql",
+    "materials": [
+      {
+        "id": "SOURCE-COMPLETE",
+        "name": "隔离原订单经办；当前来源601项、其他来源1项及外组织1项，均为合成读取材料"
+      }
+    ]
+  },
+  "referenceEvidence": [],
+  "checks": {
+    "requirements": {
+      "status": "pending",
+      "notes": "当前为局部实现／补证，全页面、正常业务、独立评审及必要持久化／性能未完成。",
+      "evidence": []
+    },
+    "visual": {
+      "status": "pending",
+      "notes": "公共标题／三段／底部组候选已完成桌面两列、窄屏单列及无越界补证；完整原要求与当前参考／独立评审待完成。",
+      "evidence": []
+    },
+    "interaction": {
+      "status": "pending",
+      "notes": "唯一原生受控ObjectForm的必填显错／首错误焦点、编号可空及合法值本机请求前暂停／拒绝已补证；不算真实创建业务通过。",
+      "evidence": []
+    },
+    "business": {
+      "status": "pending",
+      "notes": "实际原生页面保存1张草稿、来源2条明细及2,500金额已读回；来源内部复核为准备材料，提交／审批全链未验。",
+      "evidence": []
+    },
+    "permissions": {
+      "status": "pending",
+      "notes": "当前为局部实现／补证，全页面、正常业务、独立评审及必要持久化／性能未完成。",
+      "evidence": []
+    },
+    "persistence": {
+      "status": "pending",
+      "notes": "完整停服同库重启1次，原订单复核账号从原生详情／关联页读回，独立PG最终核对一致；自定义列表受限失败及完整业务持久链仍待修复／验收。",
+      "evidence": []
+    },
+    "performance": {
+      "status": "pending",
+      "notes": "当前为局部实现／补证，全页面、正常业务、独立评审及必要持久化／性能未完成。",
+      "evidence": []
+    }
+  },
+  "requirements": [
+    {
+      "id": "SO-NEW-001",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "直接新建空态具有完整来源双卡、基本信息、金额及预览／保存／提交入口。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "直接新建空态具有完整来源双卡、基本信息、金额及预览／保存／提交入口。",
+      "actual": "当前实际Page仅消费从已签署合同创建草稿的source；直接新建、完整预览／提交及整体业务验收保留待对齐。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-NEW-002",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "直接新建有数据时客户、联系人、地址、交期、结算、物料及金额联动正确。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "直接新建有数据时客户、联系人、地址、交期、结算、物料及金额联动正确。",
+      "actual": "当前实际Page仅消费从已签署合同创建草稿的source；直接新建、完整预览／提交及整体业务验收保留待对齐。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-NEW-003",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "合同来源只能使用有权读取且符合正式下单条件的合同，剩余明细与后续创建范围一致。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "合同来源只能使用有权读取且符合正式下单条件的合同，剩余明细与后续创建范围一致。",
+      "actual": "当前实际Page仅消费从已签署合同创建草稿的source；直接新建、完整预览／提交及整体业务验收保留待对齐。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-NEW-004",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "客户选择器完整、可搜索、按岗位范围显示并正确关闭。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "客户选择器完整、可搜索、按岗位范围显示并正确关闭。",
+      "actual": "当前实际Page仅消费从已签署合同创建草稿的source；直接新建、完整预览／提交及整体业务验收保留待对齐。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-NEW-005",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "联系人选择器限于所选客户，电话和地址使用正式授权来源。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "联系人选择器限于所选客户，电话和地址使用正式授权来源。",
+      "actual": "当前实际Page仅消费从已签署合同创建草稿的source；直接新建、完整预览／提交及整体业务验收保留待对齐。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-NEW-006",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "标准日期控件的月份、选择、清空、键盘与窄屏均可用。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "标准日期控件的月份、选择、清空、键盘与窄屏均可用。",
+      "actual": "当前实际Page仅消费从已签署合同创建草稿的source；直接新建、完整预览／提交及整体业务验收保留待对齐。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-NEW-007",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "物料选择、来源导入、名称型号规格单位及价税按正式规则完整保留。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "物料选择、来源导入、名称型号规格单位及价税按正式规则完整保留。",
+      "actual": "当前实际Page仅消费从已签署合同创建草稿的source；直接新建、完整预览／提交及整体业务验收保留待对齐。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-NEW-008",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "订单预览可核对全部业务字段、关联和金额，关闭焦点正确。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "订单预览可核对全部业务字段、关联和金额，关闭焦点正确。",
+      "actual": "当前实际Page仅消费从已签署合同创建草稿的source；直接新建、完整预览／提交及整体业务验收保留待对齐。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-NEW-009",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "缺少必填时对应字段显示错误，保留输入且不创建单据。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "缺少必填时对应字段显示错误，保留输入且不创建单据。",
+      "actual": "四项原生不能为空及空白名称阻断、aria-invalid／描述关联与首错误焦点在桌面／窄屏核对，完整校验窗口0创建请求；完整业务与独立评审仍待验。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-NEW-010",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "无效物料或数量有可见阻断，不能静默跳过或给出错误合计。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "无效物料或数量有可见阻断，不能静默跳过或给出错误合计。",
+      "actual": "当前实际Page仅消费从已签署合同创建草稿的source；直接新建、完整预览／提交及整体业务验收保留待对齐。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-NEW-011",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "保存中防重复，输入和退出控件保持正确忙碌行为。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "保存中防重复，输入和退出控件保持正确忙碌行为。",
+      "actual": "当前实际Page仅消费从已签署合同创建草稿的source；直接新建、完整预览／提交及整体业务验收保留待对齐。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-NEW-012",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "保存草稿后正常入口和独立角色读回正确来源、明细与金额，同库重启持久化。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "保存草稿后正常入口和独立角色读回正确来源、明细与金额，同库重启持久化。",
+      "actual": "原订单经办从正常新建页实际保存草稿并读回来源／金额／2条明细；同库重启后原复核账号原生详情／关联页相同。该角色自定义列表被辅助资源拒绝阻断，整项不能关闭。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-NEW-013",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "提交入口使用标准确认，写明实际审批影响并可取消保留内容。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "提交入口使用标准确认，写明实际审批影响并可取消保留内容。",
+      "actual": "当前实际Page仅消费从已签署合同创建草稿的source；直接新建、完整预览／提交及整体业务验收保留待对齐。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-NEW-014",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "正式提交成功后状态、来源、审批及下一岗位正确，完整停服重启读回。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "正式提交成功后状态、来源、审批及下一岗位正确，完整停服重启读回。",
+      "actual": "当前实际Page仅消费从已签署合同创建草稿的source；直接新建、完整预览／提交及整体业务验收保留待对齐。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-NEW-015",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "返回／取消未保存表单时继续编辑保留内容，明确放弃才离开，清空不误报。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "返回／取消未保存表单时继续编辑保留内容，明确放弃才离开，清空不误报。",
+      "actual": "原取消保护已有事件回归及隔离GUI补证，公共焦点另为组件候选补证；当前读取改动后整体评审仍待完成。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "SO-NEW-016",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户要求销售／项目全页面复刻；docs/contracts/sales/page_sales_order_create.md#必须分别验收的页面状态"
+      },
+      "statement": "读取合同和明细完整且来源隔离；读取拒绝、过期、不完整、缺字段和迟到结果不伪装为零或当前来源。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/sales-order-create.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/sales.object.ts",
+        "apps/forge-objectstack/src/actions/sales.action.ts",
+        "apps/forge-objectstack/src/permissions/sales-order.permission.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-domain.ts",
+        "apps/forge-objectstack/src/plugins/sales-order-readiness.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "读取合同和明细完整且来源隔离；读取拒绝、过期、不完整、缺字段和迟到结果不伪装为零或当前来源。",
+      "actual": "完整分页、所选来源、拒绝／过期／缺字段、清空、迟到响应及原1000条上限的10项页面事件回归通过。601项／31页／全量金额、来源切换及本机403注入已隔离GUI补证；整体角色、真实创建及独立复核仍待验。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    }
+  ],
+  "limitations": [
+    "保留原14个状态及取消／完整来源要求，不能把合同来源实现作为全页面完成。",
+    "没有独立评审或本轮正式创建／提交及重启业务结果证据。",
+    "来源读取是时点观察；创建前的并发变化仍由原后端动作权威校验，前端读取不构成原子快照。",
+    "原订单复核的自定义列表受限失败已保留；原生详情／关联页成功不代表该列表成功或独立评审。",
+    "公共ForgeDialog新增可选className与既有宽度token透传；当前来源版本更新不代表旧业务证据在新版本重验。",
+    "本次仅随公共日期控件可选接入更新源码绑定；本页保留旧观察，未在本版本重跑完整业务验收。"
+  ]
+}

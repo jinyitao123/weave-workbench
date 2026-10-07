@@ -6,7 +6,7 @@ const esbuild=cliRequire('esbuild');
 
 /** Execute a real generated React Page source through its event handlers. */
 export function createServicePageHarness(page,options={}){
-  const {permissions=[],manager=false,records={},formValues={},onAction=()=>({}),users={},transport,globals={}}=options;
+  const {permissions=[],manager=false,records={},formValues,onAction=()=>({}),users={},transport,globals={}}=options;
   const code=esbuild.transformSync(page.source,{loader:'jsx',format:'cjs'}).code;
   const states=[],refs=[],effectDependencies=[],calls=[],forms=[],stateChanges=[];
   const effects=new Map(),effectCleanups=new Map();
@@ -68,16 +68,17 @@ export function createServicePageHarness(page,options={}){
     const footer=typeof props.footer==='function'?props.footer({requestClose:()=>{},busy:props.busy===true}):props.footer;
     return asNode('CompositeDialog',props,[props.children,footer]);
   });
+  components.DocumentWorkspace=register('DocumentWorkspace',props=>asNode('DocumentWorkspace',props,[props.main,props.sidebar,props.footer]));
   components.ObjectForm=register('ObjectForm',props=>{
     forms.push(props);
-    props.onControllerReady?.({validate:async()=>({valid:true,values:typeof formValues==='function'?formValues(props):formValues})});
+    props.onControllerReady?.({validate:async()=>({valid:true,values:typeof formValues==='function'?formValues(props):formValues??props.values??{}})});
     return asNode('ObjectForm',props,[]);
   });
   components.ListView=register('ListView',props=>{
     const objectName=props.data&&props.data.object,rows=records[objectName]||[];
     return asNode('ListView',props,rows.map(row=>asNode('button',{type:'button','data-record-id':row.id,onClick:()=>props.onRowClick?.(row)},[row.code||row.name||row.id])));
   });
-  for(const name of ['ForgeNotice','ForgeLoading','ForgeEmpty','DataEmptyState','ObjectMetric','ObjectChart','ForgeSelect','ForgeSelectControl','ForgeDateInput','GridField','DocumentSection'])components[name]=register(name,props=>asNode(name,props,props.children||[]));
+  for(const name of ['ForgeNotice','ForgeLoading','ForgeEmpty','DataEmptyState','ObjectMetric','ObjectChart','ForgeSelect','ForgeSelectControl','ForgeDateInput','GridField','DocumentSection','FormSectionContainer','SegmentedRadioGroup','DatePicker'])components[name]=register(name,props=>asNode(name,props,props.children||[]));
   const context={module:{exports:{}},exports:{},React,useAdapter:()=>adapter,URL,URLSearchParams,Headers,Blob,TextEncoder,window:{crypto:{randomUUID:()=>`service-page-key-${calls.length}`}},...components,...globals};
   context.exports=context.module.exports;
   vm.runInNewContext(code,context);
