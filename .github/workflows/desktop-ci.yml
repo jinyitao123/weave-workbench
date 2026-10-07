@@ -260,6 +260,7 @@ jobs:
               desktop/release/win/**/*.zip
               desktop/release/win/**/*.appx
               desktop/release/win/**/*.msix
+              !desktop/release/win/**/win-unpacked/**
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
