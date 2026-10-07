@@ -28,6 +28,8 @@ PostgreSQL 默认先解析官方 `postgres:16-bookworm`，实际执行 `postgres
 
 手动工作流 `server-image-build.yml` 固定总仓提交、完整历史与只读 ObjectUI deploy key，默认不推送，只上传私有工作流构建证据。工作流未进入默认分支前不能以此名称直接 dispatch；文件存在不表示 CI 或真实安装已经通过。
 
+已发布成功、仅主机传送失败时，在同一工作流填写 `published_run_id`，`revision` 必须仍为该原发布运行的完整 `head_sha`，版本保持一致；设 `publish_private=false`、`stage_installation_host=true`。此模式检出当前工作流的控制提交，校验原运行与准确制品的官方 ZIP 摘要、安全条目、原提交锁和镜像证明，再复查实际私有状态，直接复用原 SSH 传送步骤。它不安装 Node、不读取 ObjectUI、不构建或再次发布镜像，也不将旧主机回执当成本次传送成功。`resume-proof.json` 分别记录原发布运行／源码与本次控制源码；再次重试仍指向原发布运行。
+
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tools/server-image-build/tests -v
 ```
