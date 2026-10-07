@@ -22,7 +22,14 @@
     "basePath": "/_console/",
     "upstreamReferenceTreeSha256": "29d4daf2918777611ee53ae59add30630dc829e01f98492eb62eaa2b182e5303",
     "referenceNotes": "The upstreamReferenceTreeSha256 records the original 94f5a309 upstream baseline. The forked source revision and its runtime/packaged hashes below identify this Console build. stats.html embeds a temporary absolute build path and is excluded.",
-    "runtimeSourceTreeSha256": "2025245b912633a7d89ed51973a6d7b2d01ac595457b2690be625e5c73b1ea87",
+    "runtimeSourceTreeSha256": "d1b69c9307e9ee4459cf4b6b3c649a0eae326b8700c8ac41878b6a07672cb2e5",
+    "gzipNormalization": {
+      "operatingSystem": 255,
+      "compressionMethod": 8,
+      "flags": 0,
+      "singleMember": true,
+      "verifyOriginalBytes": true
+    },
     "excludedBuildOnlyFiles": [
       "stats.html"
     ],
@@ -40,6 +47,6 @@
         "content": "de0665ccd8eca1225cd8529b63d9a32b0d520256"
       }
     ],
-    "packagedTreeSha256": "5bb7b59a627fa5debfd549fa34e7399dd2a5acb54108d192325877ded7168fce"
+    "packagedTreeSha256": "339823eb82634a84925795ec4502e1da0298dbd4a397185e66a9fe1652ddd9ca"
   }
 }

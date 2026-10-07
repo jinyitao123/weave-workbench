@@ -4,11 +4,92 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { applyConsolePackagingPatches, treeSha256, verifyConsoleArtifact } from '../scripts/console94-artifact.mjs';
+import { constants, gunzipSync, gzipSync } from 'node:zlib';
+import { applyConsolePackagingPatches, canonicalizeConsoleGzip, consoleBuildEnvironment, treeSha256, verifyConsoleArtifact } from '../scripts/console94-artifact.mjs';
 import { installConsoleDist } from '../scripts/console94-install.mjs';
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const lock = JSON.parse(await readFile(path.join(APP_DIR, 'console94.lock.json'), 'utf8'));
+
+test('Mac and Linux gzip headers canonicalize to the same complete tree without changing payload or other bytes', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'console94-gzip-platform-'));
+  const original = Buffer.from('console.log("locked Console payload");\n'.repeat(50));
+  const compressed = gzipSync(original, { level: constants.Z_BEST_COMPRESSION });
+  const roots = [path.join(root, 'darwin'), path.join(root, 'linux')];
+  try {
+    for (const [index, directory] of roots.entries()) {
+      await mkdir(path.join(directory, 'assets'), { recursive: true });
+      const platformBytes = Buffer.from(compressed);
+      platformBytes[9] = index === 0 ? 19 : 3;
+      await writeFile(path.join(directory, 'assets/app.js'), original);
+      await writeFile(path.join(directory, 'assets/app.js.gz'), platformBytes);
+      await writeFile(path.join(directory, 'assets/unrelated.br'), 'unchanged bytes');
+    }
+    assert.notEqual((await treeSha256(roots[0])).sha256, (await treeSha256(roots[1])).sha256);
+    for (const directory of roots) {
+      const file = path.join(directory, 'assets/app.js.gz');
+      const before = await readFile(file);
+      assert.deepEqual(await canonicalizeConsoleGzip(directory, lock), { gzipFiles: 1, changedFiles: 1 });
+      const after = await readFile(file);
+      assert.equal(after[9], 255);
+      assert.deepEqual(after.subarray(0, 9), before.subarray(0, 9));
+      assert.deepEqual(after.subarray(10), before.subarray(10), 'compressed data, CRC and size stay byte-identical');
+      assert.deepEqual(gunzipSync(after), original);
+      const once = await treeSha256(directory);
+      assert.deepEqual(await canonicalizeConsoleGzip(directory, lock), { gzipFiles: 1, changedFiles: 0 });
+      assert.deepEqual(await treeSha256(directory), once, 'normalization is idempotent');
+    }
+    assert.deepEqual(await treeSha256(roots[0]), await treeSha256(roots[1]));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('gzip normalization rejects corrupt data, optional headers, additional members and payload mismatch before writing', async (t) => {
+  const original = Buffer.from('Console original asset'.repeat(50));
+  const clean = gzipSync(original, { level: constants.Z_BEST_COMPRESSION });
+  clean[9] = 3;
+  const cases = [
+    ['magic', (bytes) => { bytes[0] = 0; return bytes; }],
+    ['compression method', (bytes) => { bytes[2] = 7; return bytes; }],
+    ['FHCRC', (bytes) => { bytes[3] = 2; return bytes; }],
+    ['FNAME', (bytes) => { bytes[3] = 8; return bytes; }],
+    ['reserved flag', (bytes) => { bytes[3] = 32; return bytes; }],
+    ['CRC', (bytes) => { bytes[bytes.length - 8] ^= 255; return bytes; }],
+    ['size', (bytes) => { bytes[bytes.length - 4] ^= 255; return bytes; }],
+    ['truncated', (bytes) => bytes.subarray(0, 17)],
+    ['trailing padding', (bytes) => Buffer.concat([bytes, Buffer.alloc(1)])],
+    ['additional member', (bytes) => Buffer.concat([bytes, clean]), Buffer.concat([original, original])],
+    ['different original', (bytes) => bytes, Buffer.alloc(original.length)],
+  ];
+  for (const [name, mutate, source = original] of cases) await t.test(name, async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'console94-gzip-refusal-'));
+    try {
+      await writeFile(path.join(directory, 'a-valid.js'), original);
+      await writeFile(path.join(directory, 'a-valid.js.gz'), clean);
+      await writeFile(path.join(directory, 'z-invalid.js'), source);
+      const invalid = mutate(Buffer.from(clean));
+      await writeFile(path.join(directory, 'z-invalid.js.gz'), invalid);
+      const before = await treeSha256(directory);
+      await assert.rejects(canonicalizeConsoleGzip(directory, lock), /gzip|Gzip/);
+      assert.deepEqual(await treeSha256(directory), before, 'failure must not partially normalize the set');
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+});
+
+test('only the Console build child omits CI/Vercel and uses the locked UI profile', () => {
+  const parent = { CI: 'true', VERCEL: 'false', PATH: '/pinned/bin', NPM_CONFIG_USERCONFIG: '/private/npmrc' };
+  const snapshot = { ...parent };
+  const child = consoleBuildEnvironment(parent, lock);
+  assert.deepEqual(parent, snapshot);
+  assert.ok(!Object.hasOwn(child, 'CI') && !Object.hasOwn(child, 'VERCEL'));
+  assert.equal(child.PATH, parent.PATH);
+  assert.equal(child.NPM_CONFIG_USERCONFIG, parent.NPM_CONFIG_USERCONFIG);
+  assert.equal(child.VITE_BASE_PATH, lock.artifact.basePath);
+  assert.equal(child.VITE_UI_PROFILE, lock.source.uiProfile);
+});
 
 test('Console packaging patch fixes nested-route manifest resolution and stamps the pinned source', async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), 'console94-patch-test-'));
