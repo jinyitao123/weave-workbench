@@ -55,6 +55,43 @@ const pages = [
   ServicePartRequestsPage,
 ];
 
+test('a cancelled dispatch dialog does not accept an earlier reply after the same order is reopened', async () => {
+  for (const oldReply of ['success', 'failure']) {
+    const requests = [];
+    const row = { id: 'dispatch-race-order', code: 'WO-DIALOG-RACE', name: '派工读取验证工单', status: 'pending_dispatch', expected_visit_on: '2026-10-06' };
+    const harness = createServicePageHarness(ServiceOrdersPage, {
+      manager: true, permissions: serviceManagerPermission.systemPermissions,
+      records: { forge_service_order: [row] },
+      onAction: ({ path }) => path.includes('/service_order_dispatch_engineers/')
+        ? new Promise((resolve, reject) => requests.push({ resolve, reject })) : {},
+    });
+    let tree = await harness.flushEffects();
+    serviceButton(tree, row.code).props.onClick();
+    tree = await harness.settle();
+    serviceButton(tree, '派工').props.onClick();
+    tree = harness.render();
+    const first = serviceNodes(tree, node => node.type === 'CompositeDialog' && node.props.title === '派工')[0];
+    assert.ok(first);
+    first.props.onOpenChange(false);
+    tree = harness.render();
+    serviceButton(tree, '派工').props.onClick();
+    harness.render();
+    assert.equal(requests.length, 2);
+    requests[1].resolve({ engineers: [{ id: 'current-engineer', name: '当前有效工程师' }] });
+    await new Promise(resolve => setImmediate(resolve));
+    tree = harness.render();
+    const current = serviceNodes(tree, node => node.type === 'ForgeSelect' && node.props.label === '服务工程师')[0];
+    assert.equal(current.props.options[0].value, 'current-engineer');
+    if (oldReply === 'success') requests[0].resolve({ engineers: [{ id: 'old-engineer', name: '旧读取工程师' }] });
+    else requests[0].reject(new Error('旧读取已失效'));
+    tree = await harness.settle();
+    const after = serviceNodes(tree, node => node.type === 'ForgeSelect' && node.props.label === '服务工程师')[0];
+    assert.equal(after.props.options[0].value, 'current-engineer', 'an earlier dispatch read cannot overwrite a reopened dialog');
+    assert.equal(serviceText(tree).includes('旧读取已失效'), false);
+    assert.equal(harness.calls.some(call => /\/service_order_dispatch\//.test(call.path)), false, 'reading candidates does not dispatch the order');
+  }
+});
+
 test('service page replacements keep the existing app page identities and parse as React source', () => {
   assert.deepEqual(pages.map(page => page.name), [
     'page_service_orders',
