@@ -1,4 +1,4 @@
-import { constants } from 'node:fs'
+import { constants, type Stats } from 'node:fs'
 import { lstat, open } from 'node:fs/promises'
 import { join } from 'node:path'
 import { EnterpriseService } from '../enterprise'
@@ -33,7 +33,7 @@ export function parseEnterpriseConnectionConfig(value: unknown): EnterpriseConne
 }
 async function managedConfig(directory: string): Promise<EnterpriseConnectionConfig | undefined> {
   const path = join(directory, ENTERPRISE_CONNECTION_FILENAME)
-  let entry
+  let entry: Stats
   try { entry = await lstat(path) }
   catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined
