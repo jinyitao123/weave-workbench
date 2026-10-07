@@ -7,7 +7,7 @@
   "pageId": "page_sales_order_create",
   "status": "review_required",
   "observedAt": "2026-10-07",
-  "reviewedRevision": "1977dd8c142353a21cfd784ebe398400d278970e",
+  "reviewedRevision": "40060bf72db004144e1c9e7eefd9f13896f3b590",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/sales-order-create.page.ts": "1d9c89a681b08060e318872df052b3d95365e21aeef371e941478160b4da157c",
     "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86",
@@ -16,7 +16,7 @@
     "apps/forge-objectstack/src/permissions/sales-order.permission.ts": "14ce34a26eead8d92fd431a14f81b2ecfe2ef630262a271f612a45b34d510ce0",
     "apps/forge-objectstack/src/plugins/sales-order-domain.ts": "da110816f063af56df448f2b1cd269bb2eaf85dd3fc3709b34ee1c7d30a72349",
     "apps/forge-objectstack/src/plugins/sales-order-readiness.ts": "a6012da6f06e67b4559d1554acfeeefdcb586ab0264cad952718a4a9b96e1c57",
-    "apps/forge-objectstack/console94.lock.json": "f3bf0733203d9c21266f245520ddfc81694463039b3de9d12e893ad29317a79b"
+    "apps/forge-objectstack/console94.lock.json": "b3e896bb1f2a405952f129b7f7e909126d3cd31abac00cf6992b1e1cfc8670f2"
   },
   "environment": {
     "databaseType": "postgresql",

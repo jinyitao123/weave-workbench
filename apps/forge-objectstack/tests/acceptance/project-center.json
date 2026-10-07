@@ -7,7 +7,7 @@
   "pageId": "page_project_center",
   "status": "review_required",
   "observedAt": "2026-10-07",
-  "reviewedRevision": "1977dd8c142353a21cfd784ebe398400d278970e",
+  "reviewedRevision": "40060bf72db004144e1c9e7eefd9f13896f3b590",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/project-center.page.ts": "294548c701a43bdaf3d049e2d944d30099b16600823fb99ba8c05419b9ed06f4",
     "apps/forge-objectstack/src/pages/project-center.logic.ts": "ca6dc039ef451f498a19428656b83e5be9753a9a138aa40e898ba459bb571ca3",
@@ -18,7 +18,7 @@
     "apps/forge-objectstack/src/objects/project.object.ts": "55ad411e4b36f4eef49f28982a6bac0eeef1e84d0bd94ff214125779fd964846",
     "apps/forge-objectstack/src/actions/project.action.ts": "1e85a0e78b119ec50bb6b87727957bcefea235410e0502b903f31109a239b3ec",
     "apps/forge-objectstack/src/permissions/project-operator.permission.ts": "1f2aaf1ec3ba3cce1538da980a84e2c154213801da55333ced24e6e3b9922215",
-    "apps/forge-objectstack/console94.lock.json": "f3bf0733203d9c21266f245520ddfc81694463039b3de9d12e893ad29317a79b"
+    "apps/forge-objectstack/console94.lock.json": "b3e896bb1f2a405952f129b7f7e909126d3cd31abac00cf6992b1e1cfc8670f2"
   },
   "environment": {
     "databaseType": "postgresql",
