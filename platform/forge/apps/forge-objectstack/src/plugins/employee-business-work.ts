@@ -63,13 +63,14 @@ export async function readEmployeeBusinessWork(context: PluginContext, request: 
   let scanned = 0, successfulSources = 0, failedSources = 0;
   while (sourceIndex < sources.length && items.length < limit && scanned < 500) {
     const source = sources[sourceIndex];
-    if (!objects.has(source.object)) {
-      failedSources++; source.kinds.forEach(kind => errors.set(kind, 'BUSINESS_WORK_SOURCE_FORBIDDEN'));
-      sourceIndex++; after = ''; continue;
-    }
     try {
       if (!security.canReadObject) throw new TaskConnectionFailure(503, 'BUSINESS_WORK_SOURCE_UNAVAILABLE', '当前权限不可可靠核对');
-      if (!await security.canReadObject(source.object, employee.actor)) throw new TaskConnectionFailure(403, 'BUSINESS_WORK_SOURCE_FORBIDDEN', '当前员工无权读取该事项来源');
+      const allowed = await security.canReadObject(source.object, employee.actor);
+      // Only an explicit native denial excludes a source from this employee's
+      // readable scope. It is neither a successful read nor a source failure.
+      if (allowed === false) { sourceIndex++; after = ''; continue; }
+      if (allowed !== true) throw new TaskConnectionFailure(503, 'BUSINESS_WORK_SOURCE_UNAVAILABLE', '当前权限不可可靠核对');
+      if (!objects.has(source.object)) throw new TaskConnectionFailure(403, 'BUSINESS_WORK_SOURCE_FORBIDDEN', '当前已授权事项来源不可读取');
       // Native object discovery is metadata visibility, not read permission.
       // Check the source with the employee even when no candidate row exists.
       const readable = businessRow(await native.bridge.query(source.object, { where: { organization_id: employee.organizationId }, fields: ['id'], limit: 1 }));
