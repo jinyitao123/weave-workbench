@@ -4,8 +4,8 @@ import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 import {
-  binaryTarget, entries, inventory, isolatedEnv, launcher, manifestName,
-  parseArgs, pruneSourceMaps, readLock, run, sha256, sourceMapPolicy, stableJson, targetPin, verifyTree,
+  assertHash, binaryTarget, entries, inventory, isolatedEnv, launcher, manifestName,
+  parseArgs, pruneSourceMaps, readLock, run, runtimeSource, sha256, sourceMapPolicy, stableJson, targetPin, verifyTree,
 } from '../../scripts/runtime/lib.mjs'
 
 async function fixture(t) {
@@ -44,6 +44,37 @@ test('runtime source uses reviewed vendor bytes and npm SRI throughout its closu
   assert.equal(npmLock.packages['node_modules/prime-agent/node_modules/@earendil-works/pi-ai'].version, '0.7.0-gooeypi.1')
   assert.equal(lock.packages['prime-agent'].version, '0.7.0-gooeypi.2')
   assert.equal(Object.keys(lock.node.distributions).length, 5)
+})
+
+test('Git checkout preserves pinned runtime JSON bytes with Windows autocrlf enabled', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'weave runtime git checkout-'))
+  t.after(() => fs.rm(root, { recursive: true, force: true }))
+  const emptyConfig = path.join(root, 'empty-config')
+  await fs.writeFile(emptyConfig, '')
+  const env = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: emptyConfig }
+  const git = args => run('git', ['-c', 'core.autocrlf=true', '-c', 'core.eol=crlf', '-c', `core.attributesFile=${emptyConfig}`, ...args], { cwd: root, env })
+  const { lock } = await readLock()
+  const files = { 'package.json': lock.closure.packageSha256, 'package-lock.json': lock.closure.lockSha256 }
+  for (const name of Object.keys(files)) await fs.copyFile(path.join(runtimeSource, name), path.join(root, name))
+  await git(['init', '--quiet'])
+  await git(['add', '--', ...Object.keys(files)])
+  await git(['checkout-index', '--all', '--prefix=without-attributes/'])
+  for (const [name, digest] of Object.entries(files)) {
+    const unchecked = path.join(root, 'without-attributes', name)
+    assert.ok((await fs.readFile(unchecked)).includes(Buffer.from('\r\n')))
+    await assert.rejects(assertHash(unchecked, digest), /SHA256 mismatch/)
+  }
+
+  await fs.copyFile(path.join(runtimeSource, '.gitattributes'), path.join(root, '.gitattributes'))
+  await git(['add', '--', '.gitattributes'])
+  await git(['checkout-index', '--all', '--prefix=with-attributes/'])
+  for (const [name, digest] of Object.entries(files)) {
+    const checked = path.join(root, 'with-attributes', name)
+    await assertHash(checked, digest)
+    assert.ok(!(await fs.readFile(checked)).includes(Buffer.from('\r\n')))
+    await fs.appendFile(checked, ' ')
+    await assert.rejects(assertHash(checked, digest), /SHA256 mismatch/)
+  }
 })
 
 test('unknown CLI options and unsupported targets fail before preparation', () => {
