@@ -1,6 +1,6 @@
 {
   "name": "weave-workbench-desktop",
-  "version": "1.1.17",
+  "version": "0.1.0-rc.4",
   "private": true,
   "description": "The desktop workspace for Weave teams and Forge business applications",
   "main": "out/main/index.js",
