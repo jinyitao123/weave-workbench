@@ -7,10 +7,10 @@
   "pageId": "page_sales_order_create",
   "status": "review_required",
   "observedAt": "2026-10-07",
-  "reviewedRevision": "94f10926c3eafb9cbde7fd8e25b16d93d486c5c6",
+  "reviewedRevision": "603e8ab3e32c19e84bb86243989df3aa2501ffd2",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/sales-order-create.page.ts": "1d9c89a681b08060e318872df052b3d95365e21aeef371e941478160b4da157c",
-    "apps/forge-objectstack/src/pages/product-ui.ts": "aa589b7c504b74dd4c74c013f0340887a0521b3690b9b0e934c000a70489e6f9",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86",
     "apps/forge-objectstack/src/objects/sales.object.ts": "fa936dfee7638c074fde84f67dc7c0b80adac71f2b31571220d322190e32e9e2",
     "apps/forge-objectstack/src/actions/sales.action.ts": "13de0e1e97d5b5c79f1d37d8b38bbd9bb27ac89a4889f101e544389a9d9a4bbd",
     "apps/forge-objectstack/src/permissions/sales-order.permission.ts": "14ce34a26eead8d92fd431a14f81b2ecfe2ef630262a271f612a45b34d510ce0",
@@ -456,6 +456,7 @@
     "没有独立评审或本轮正式创建／提交及重启业务结果证据。",
     "来源读取是时点观察；创建前的并发变化仍由原后端动作权威校验，前端读取不构成原子快照。",
     "原订单复核的自定义列表受限失败已保留；原生详情／关联页成功不代表该列表成功或独立评审。",
-    "公共ForgeDialog新增可选className与既有宽度token透传；当前来源版本更新不代表旧业务证据在新版本重验。"
+    "公共ForgeDialog新增可选className与既有宽度token透传；当前来源版本更新不代表旧业务证据在新版本重验。",
+    "本次仅随公共日期控件可选接入更新源码绑定；本页保留旧观察，未在本版本重跑完整业务验收。"
   ]
 }

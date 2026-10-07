@@ -7,13 +7,13 @@
   "pageId": "page_project_center",
   "status": "review_required",
   "observedAt": "2026-10-07",
-  "reviewedRevision": "94f10926c3eafb9cbde7fd8e25b16d93d486c5c6",
+  "reviewedRevision": "603e8ab3e32c19e84bb86243989df3aa2501ffd2",
   "subjectFiles": {
-    "apps/forge-objectstack/src/pages/project-center.page.ts": "f7127a733706af82543c46c19feacea1b31c1b3591baa2cd02a94f19bf9cb742",
+    "apps/forge-objectstack/src/pages/project-center.page.ts": "89834505e906a5bbe29aa153be0b5f1ff265519ad516855f7310b649a8f6a034",
     "apps/forge-objectstack/src/pages/project-center.logic.ts": "ca6dc039ef451f498a19428656b83e5be9753a9a138aa40e898ba459bb571ca3",
     "apps/forge-objectstack/src/pages/project-attachment-panel.ts": "c1b112b61915bfa86beb35fb8fe6dcc65b280d4f468c5f93ae509331aef84ade",
     "apps/forge-objectstack/src/pages/project-cost-panel.ts": "81abdfc2e160876946cc6f0ed5fa92396126265982c9f11df213bd6aba70bb85",
-    "apps/forge-objectstack/src/pages/product-ui.ts": "aa589b7c504b74dd4c74c013f0340887a0521b3690b9b0e934c000a70489e6f9",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86",
     "apps/forge-objectstack/src/views/project.view.ts": "c5b3c12ba43c392f8d0c6ee445e1787896962c733905a1549d832255f6ec5dcc",
     "apps/forge-objectstack/src/objects/project.object.ts": "b96468bf532cfb4e026e0d7d776aab298a5e565cb383f90579f7bb472bfe1d18",
     "apps/forge-objectstack/src/actions/project.action.ts": "afd54177903d28e327123ebc39017ca45eec2a1c00f2a1122b71838007f57b34",
@@ -35,6 +35,12 @@
       "source": "2026-10-07已登录内置浏览器；https://risemap.cn/project/list 列表/新建项目及正常项目详情；1280×900 DPR1。原始截图、DOM、geometry保存在本机忽略目录，文件前缀risemap-project-*-live。",
       "limitations": "只读页面和未填写新建表单；没有提交项目、上传附件、变更成员或配置。空表取消直接关闭不证明脏表单行为。颜色后置；分区计数算法未核。",
       "evidence": []
+    },
+    {
+      "id": "RM-PC-TYPE-DATE",
+      "source": "2026-10-07已登录内置浏览器；https://risemap.cn/project/list → 新建项目 → 新增类型及日期键入；显式1280×900裁切输出的JPEG原尺寸经独立核对。原始材料留在本机忽略目录risemap-project-type-create-full-desktop.jpg、risemap-project-date-input-full-desktop.jpg及对应DOM。",
+      "limitations": "只观察与取消；未在参考系统保存类型或项目。类型默认规则未核；日期输入内清空按钮尚未对齐，颜色后置。",
+      "evidence": []
     }
   ],
   "checks": {
@@ -45,12 +51,12 @@
     },
     "visual": {
       "status": "pending",
-      "notes": "独立监督发现截图输出尺寸与DOM视口不一致：桌面PNG为1280×720，而DOM视口1280×900；窄屏及移动图也有缩放／裁切。局部尺寸结论仅由DOM几何支撑，不能称完整原尺寸成对截图或像素一致，整体视觉仍待验。",
+      "notes": "独立监督发现截图输出尺寸与DOM视口不一致：桌面PNG为1280×720，而DOM视口1280×900；窄屏及移动图也有缩放／裁切。局部尺寸结论仅由DOM几何支撑，不能称完整原尺寸成对截图或像素一致，整体视觉仍待验。 后续显式裁切取得并独立验证1280×900 JPEG，补充日期／类型局部完整图；旧图限制仍有效，日期清空按钮与完整页面外观仍待验。",
       "evidence": []
     },
     "interaction": {
       "status": "pending",
-      "notes": "已有字段的折叠保值、快速radio选择与短屏固定页脚已在最终Native候选验证；未提交业务，完整新建/设置和独立业务评审仍pending。",
+      "notes": "已有布局局部观察保留。本批原生页面验证日期键入中文格式化、非法值及折叠后仍阻止提交、清空解除格式错误、Enter留在主表单、合法进入原确认层；未提交项目。同窗授权类型新增／取消／关闭／Esc仅源码回归，完整新建继续待验。",
       "evidence": []
     },
     "business": {
@@ -60,12 +66,12 @@
     },
     "permissions": {
       "status": "pending",
-      "notes": "完整项目中心及子模块待验，当前局部读取回归／GUI不代表业务完成。",
+      "notes": "原设置维护账号在现有业务设置页创建类型，原销售／项目经办账号在新建页读回；经办人新增类型按钮禁用，未扩权限。父项目与类型双重权限的同窗创建未实际验证，跨项目与完整权限仍待验。",
       "evidence": []
     },
     "persistence": {
       "status": "pending",
-      "notes": "完整项目中心及子模块待验，当前局部读取回归／GUI不代表业务完成。",
+      "notes": "类型设置保存后由另一个合法账号页面读回；本批restarts=1发生于类型保存之前，保存后重启次数0，保存后同库重启持久化未验。",
       "evidence": []
     },
     "performance": {
@@ -176,10 +182,11 @@
       "steps": [
         "从RISEMAP正常项目导航进入项目中心，打开未填写的新建项目，保存顶部／底部截图、DOM和可见几何。",
         "相同1280×900视口核对Forge新建项目，逐项比较完整字段、顺序、分区、控件、滚动正文与固定页脚。",
-        "本批仅修正已被正式对象／动作承载的布局与控件；编号覆盖、类型新增、关联多选、附件、批量成员、计数与提交方式继续逐项待验。"
+        "本批仅修正已被正式对象／动作承载的布局与控件；编号覆盖、类型新增、关联多选、附件、批量成员、计数与提交方式继续逐项待验。",
+        "正常设置账号创建类型，再以经办账号读回；经办人填写已有必填项，核对日期格式、非法值、折叠、清空、Enter及合法进入原确认层，不点击最终提交。"
       ],
       "expected": "新建项目完整对照当前RISEMAP：可选编号、名称、类型及类型新增、客户、优先级单选、起止日期、描述、预算营收、商机／合同／订单多选、附件、团队成员、分区计数及提交方式；布局与各正常／异常子状态均须验证。",
-      "actual": "本批已基于2026-10-07实时参考核对已有字段布局：800px弹窗、双列367.5px、28px控件、10.5px标签行高、7px圆角；760/390窄屏列宽与参考一致。公共分区折叠保留中文，快速左右选择及短屏固定页脚有Native证据。完整字段/关联/附件/成员/计数/日期输入/默认/提交方式仍有缺口，整页pending。",
+      "actual": "已有800px弹窗、双列、28px控件和窄屏DOM几何观察保留；当前日期键入／中文格式化、非法值及折叠后的阻止、清空、Enter和进入原确认层有隔离原生页面证据。设置维护者通过已有设置页创建类型，经办人可读、无创建权时新增按钮禁用。同窗授权类型新增仅源码回归。原生客户读取400由无效status过滤引起，移除后可读。完整编号/默认/关联/附件/成员/计数/一步提交及日期清空按钮仍有缺口，整页pending。",
       "stateEffect": "writes_business_state",
       "status": "pending",
       "evidence": []
@@ -554,11 +561,13 @@
     }
   ],
   "limitations": [
-    "当前只读合成材料及本机故障注入，不代表新建／办理／设置消费者／持久化与独立评审通过。",
+    "各批证据按其受验版本和范围保留；当前类型设置保存／消费者读回是隔离材料，不代表项目新建、完整设置消费者或业务闭环通过。",
     "原主读取及任务响应均200，本批401／主403均本机响应注入；原客户403是真实辅助拒绝。重载后初次事件窗口被截断，改用当前有效暂停句柄；未宣称截断窗口零写入。",
     "实时RISEMAP对照已恢复；既有局部功能修复不计作复刻完成。完整缺项保留，原生组件候选尚未进入冻结客户端。",
     "公共ForgeDialog新增可选className与既有宽度token透传；当前来源版本更新不代表旧业务证据在新版本重验。",
-    "最终候选需与ObjectUI d461b7b5的可信运行时组件配对；公开Console锁未升级，不能独立部署Forge页面。",
-    "独立监督发现截图输出尺寸与DOM视口不一致：桌面PNG为1280×720，而DOM视口1280×900；窄屏及移动图也有缩放／裁切。局部尺寸结论仅由DOM几何支撑，不能称完整原尺寸成对截图或像素一致，整体视觉仍待验。"
+    "最终候选需与ObjectUI ea00f0f6的可信运行时组件配对；公开Console锁未升级，不能独立部署Forge页面。",
+    "独立监督发现截图输出尺寸与DOM视口不一致：桌面PNG为1280×720，而DOM视口1280×900；窄屏及移动图也有缩放／裁切。局部尺寸结论仅由DOM几何支撑，不能称完整原尺寸成对截图或像素一致，整体视觉仍待验。",
+    "本批Forge 603e8ab3配对ObjectUI ea00f0f6；项目／计划／任务／成员数量均0。唯一重启发生于类型保存前，保存后重启未验。",
+    "参考日期有输入内清空按钮，Forge本批尚未对齐；类型颜色仍为原生文本输入，12色选择与默认规则待验。"
   ]
 }

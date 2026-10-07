@@ -7,10 +7,10 @@
   "pageId": "page_service_order_create",
   "status": "review_required",
   "observedAt": "2026-10-07",
-  "reviewedRevision": "94f10926c3eafb9cbde7fd8e25b16d93d486c5c6",
+  "reviewedRevision": "603e8ab3e32c19e84bb86243989df3aa2501ffd2",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts": "8af98c3bdd1d86fc6afff122c51e8ae29cd1cb2ae3549bb2e92aa851fe0e60d0",
-    "apps/forge-objectstack/src/pages/product-ui.ts": "aa589b7c504b74dd4c74c013f0340887a0521b3690b9b0e934c000a70489e6f9",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86",
     "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts": "a0088ab566ca72d65a6a85b2fc43e2023500ba61511d5a4f4259b62101c46f7b",
     "apps/forge-objectstack/src/views/service-workspace.view.ts": "a9314cee79aca5e70975f498b50a2bf8d94f265b0618bb6977763f587184e78b",
     "apps/forge-objectstack/src/objects/sales.object.ts": "fa936dfee7638c074fde84f67dc7c0b80adac71f2b31571220d322190e32e9e2",
@@ -604,6 +604,7 @@
     "电话来源的原角色联系方式读取真实403，当前创建缺省contact.phone与模型不符，待正式业务契约解决；联系人页错误状态修复不替代电话联动。",
     "五段编号在私有公共客户端候选验证，公开锁未升级且已恢复冻结客户端；段落名称不代表责任／费用或草稿能力已实现。",
     "底部操作仅组合原创建／取消，未新增费用汇总、草稿或提交能力；公共客户端候选已恢复冻结且公开锁未改。",
-    "公共ForgeDialog新增可选className与既有宽度token透传；当前来源版本更新不代表旧业务证据在新版本重验。"
+    "公共ForgeDialog新增可选className与既有宽度token透传；当前来源版本更新不代表旧业务证据在新版本重验。",
+    "本次仅随公共日期控件可选接入更新源码绑定；本页保留旧观察，未在本版本重跑完整业务验收。"
   ]
 }
