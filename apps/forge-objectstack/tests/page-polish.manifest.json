@@ -1461,5 +1461,47 @@
       "contract": "docs/forge-sales-service-page-contract-20260913.md",
       "acceptance": "docs/evidence/sales-page-acceptance-20260920/page_service_config.json"
     }
+  ],
+  "project": [
+    {
+      "featureId": "project.task-workspace",
+      "app": "project",
+      "surfaceType": "page",
+      "target": "page_project_task_workspace",
+      "pageId": "page_project_task_workspace",
+      "file": "project-task-workspace.page.ts",
+      "pages": [
+        "page_project_task_workspace"
+      ],
+      "archetype": "task_workspace",
+      "reference": "project-task-workspace.page.ts",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-task-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts",
+        "apps/forge-objectstack/src/pages/project-task-import.logic.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "requirementIds": [
+        "PT-WORK-001",
+        "PT-WORK-002",
+        "PT-WORK-003",
+        "PT-WORK-004",
+        "PT-WORK-005",
+        "PT-WORK-006",
+        "PT-WORK-007",
+        "PT-WORK-008",
+        "PT-WORK-009",
+        "PT-WORK-010",
+        "PT-WORK-011",
+        "PT-WORK-012"
+      ],
+      "designStatus": "review_required",
+      "contract": "docs/forge-project-management-manual-baseline-20260912.md",
+      "acceptance": "apps/forge-objectstack/tests/acceptance/project-task-workspace.json"
+    }
   ]
 }
