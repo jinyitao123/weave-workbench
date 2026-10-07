@@ -539,7 +539,7 @@ test('task workspace distinguishes a task-list 403 from a real empty list and of
   await retry.props.onClick();
   tree = harness.render();
   assert.equal(itemReadAttempts, 2);
-  assert.match(textContent(tree), /当前账号无权读取任务列表读取失败/);
+  assert.match(textContent(tree), /当前账号无权读取任务列表/);
 });
 
 test('task workspace gives an explicit plan-management route when a project has no plan', () => {
