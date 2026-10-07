@@ -5,6 +5,7 @@ import { FieldSchema } from '@objectstack/spec/data';
 import { createServicePageHarness, serviceText } from './service-page-react-harness.mjs';
 import { ServiceOrderCreatePage } from '../src/pages/sales-service-workspace.page.ts';
 import { ServiceOrder } from '../src/objects/sales.object.ts';
+import { ServiceOrderViews } from '../src/views/service-workspace.view.ts';
 import { ServiceOrderCreate } from '../src/actions/sales.action.ts';
 import { serviceManagerPermission, serviceOperatorPermission } from '../src/permissions/otc-role.permission.ts';
 
@@ -115,7 +116,9 @@ test('standalone service-order page uses the current order form, public document
   assert.equal(header.props.title, '新建服务工单');
   assert.equal(typeof header.props.subtitle, 'string');
   const workspace = nestedNodes(tree, node => node.type === 'DocumentWorkspace')[0];
-  assert.equal(workspace.props.sidebarLabel, '工单操作');
+  assert.equal(workspace.props.footerLabel, '工单操作');
+  assert.equal(workspace.props.sidebar, undefined, 'create actions belong below the native form');
+  assert.ok(workspace.props.footer, 'the document footer hosts the existing create and cancel actions');
   const form = nestedNodes(tree, node => node.type === 'ObjectForm' && node.props.objectName === 'forge_service_order')[0];
   assert.ok(form, 'the standalone page keeps the existing native service-order ObjectForm');
   assert.ok(form.props.fields.includes('customer_id') && form.props.fields.includes('sales_order_id'));
@@ -129,7 +132,12 @@ test('standalone service-order page uses the current order form, public document
   assert.equal(form.props.values.service_type, undefined, 'the first option is never auto-selected');
   assert.ok(nestedNodes(tree, node => node.type === 'ForgeNotice' && serviceText(node).includes('暂无启用的服务场景')).length > 0);
   assertCatalogQuery(harness.calls);
-  assert.equal(form.props.sections.length, 4, 'the page uses the four current source form groups without inventing reference-only sections');
+  assert.equal(form.props.sections.length, 5, 'the source page composes five reference sections within one native form');
+  assertJsonEqual(form.props.sections.map(section => section.label), ['服务需求', '客户与产品', '质保信息', '费用与报价', '问题 / 服务内容']);
+  const declared = form.props.sections.flatMap(section => section.fields);
+  assert.equal(new Set(declared).size, declared.length, 'every existing field remains in one section only');
+  assert.deepEqual([...declared].sort(), ServiceOrderViews.form.sections.flatMap(section => section.fields).sort(), 'regrouping keeps the full existing field set');
+  assert.ok(declared.includes('code') && declared.includes('remarks') && declared.includes('onsite_evidence_attachments'));
   assert.notEqual(ServiceOrder.fields.sales_order_id.required, true, 'the UI-only required lookup does not alter the stored field contract');
   assert.equal(ServiceOrder.fields.service_type.type, 'text', 'service_type retains its existing text storage contract');
   assert.notEqual(ServiceOrder.fields.service_type.required, true, 'the lookup does not make the source field required');
@@ -322,4 +330,74 @@ test('service manager permission protects direct page access and create failures
   assert.ok(nestedNodes(failedTree, node => node.type === 'ObjectForm' && node.props.objectName === 'forge_service_order').length > 0, 'a failed Action does not discard the current form');
   assert.ok(nestedNodes(failedTree, node => node.type === 'ForgeNotice' && node.props.tone === 'error' && serviceText(node).includes('客户与来源订单不匹配或不可访问')).length > 0);
   assert.deepEqual(navigations, [], 'failure leaves the user on the form for correction');
+});
+
+test('cancel keeps a changed standalone order until the manager explicitly discards it', async () => {
+  const navigations = [];
+  const harness = createServicePageHarness(ServiceOrderCreatePage, {
+    manager: true,
+    permissions: serviceManagerPermission.systemPermissions,
+    globals: pageGlobals(undefined, path => navigations.push(path)),
+  });
+  let tree = await harness.flushEffects();
+  const changed = { name: '现场中文标题', service_mode: 'onsite', urgency: 'medium' };
+  nestedNodes(tree, node => node.type === 'ObjectForm')[0].props.onValuesChange(changed);
+  tree = harness.render();
+  nestedNodes(tree, node => node.type === 'button' && serviceText(node).trim() === '取消')[0].props.onClick();
+  tree = harness.render();
+  assert.deepEqual(navigations, [], 'cancel cannot silently discard the current draft');
+  let guard = nestedNodes(tree, node => node.type === 'ForgeDialog' && node.props.open)[0];
+  assert.ok(guard, 'changed values use the existing shared confirmation dialog');
+  guard.props.onCancel();
+  tree = harness.render();
+  assertJsonEqual(nestedNodes(tree, node => node.type === 'ObjectForm')[0].props.values, changed);
+  assert.deepEqual(navigations, []);
+  nestedNodes(tree, node => node.type === 'button' && serviceText(node).trim() === '取消')[0].props.onClick();
+  tree = harness.render();
+  guard = nestedNodes(tree, node => node.type === 'ForgeDialog' && node.props.open)[0];
+  guard.props.onConfirm();
+  assert.deepEqual(navigations, ['/apps/com.inoforge.forge.sales/page_service_orders']);
+  assert.equal(harness.calls.some(call => call.path === '/actions/forge_service_order/service_order_create'), false);
+});
+
+test('native defaults and cleared empty values do not create an unsaved order', async () => {
+  const navigations = [];
+  const harness = createServicePageHarness(ServiceOrderCreatePage, {
+    manager: true,
+    permissions: serviceManagerPermission.systemPermissions,
+    globals: pageGlobals(undefined, path => navigations.push(path)),
+  });
+  let tree = await harness.flushEffects();
+  nestedNodes(tree, node => node.type === 'ObjectForm')[0].props.onValuesChange({
+    name: '', code: '', customer_id: null, service_mode: 'onsite', urgency: 'medium', onsite_evidence_attachments: [],
+    revision: 1, status: 'pending_acceptance', onsite_evidence_count: 0,
+  });
+  tree = harness.render();
+  nestedNodes(tree, node => node.type === 'button' && serviceText(node).trim() === '取消')[0].props.onClick();
+  assert.deepEqual(navigations, ['/apps/com.inoforge.forge.sales/page_service_orders']);
+});
+
+test('duplicate service-order numbers show a business error without discarding the draft', async () => {
+  const navigations = [];
+  const harness = createServicePageHarness(ServiceOrderCreatePage, {
+    manager: true,
+    permissions: serviceManagerPermission.systemPermissions,
+    formValues: validDraft,
+    globals: pageGlobals(undefined, path => navigations.push(path)),
+    onAction: async () => {
+      throw new Error("DuplicateRecordError: Duplicate record refused on 'forge_service_order': a unique constraint already holds these values. No record was written.");
+    },
+  });
+  let tree = await harness.flushEffects();
+  nestedNodes(tree, node => node.type === 'ObjectForm')[0].props.onValuesChange(validDraft);
+  tree = harness.render();
+  nestedNodes(tree, node => node.type === 'button' && serviceText(node).trim() === '创建服务工单')[0].props.onClick();
+  await new Promise(resolve => setImmediate(resolve));
+  await harness.settle();
+  tree = harness.render();
+  const errors = nestedNodes(tree, node => node.type === 'ForgeNotice' && node.props.tone === 'error').map(serviceText);
+  assert.ok(errors.includes('工单号已被使用，请修改后重试。'));
+  assert.equal(errors.some(message => /DuplicateRecordError|forge_service_order/.test(message)), false);
+  assertJsonEqual(nestedNodes(tree, node => node.type === 'ObjectForm')[0].props.values, validDraft);
+  assert.deepEqual(navigations, []);
 });

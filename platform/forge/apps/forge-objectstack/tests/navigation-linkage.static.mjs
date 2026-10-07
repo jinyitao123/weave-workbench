@@ -32,11 +32,13 @@ const apps = bundles.flatMap(bundle => (bundle.apps ?? []).map(app => ({ app, pa
 assert.deepEqual(apps.map(({ app }) => app.name).sort(), [...expectedApps.keys()].sort(), 'compiled artifact must expose exactly seven Forge business apps');
 
 const pageOwners = new Map();
+const pageSources = new Map();
 const objectNames = new Set();
 for (const bundle of bundles) {
   for (const page of bundle.pages ?? []) {
     assert.equal(pageOwners.has(page.name), false, `Page ${page.name} is registered by more than one package`);
     pageOwners.set(page.name, bundle.manifest.id);
+    pageSources.set(page.name, page.source ?? '');
   }
   for (const object of bundle.objects ?? []) {
     assert.equal(objectNames.has(object.name), false, `Object ${object.name} is registered more than once`);
@@ -96,8 +98,31 @@ for (const { app, packageId } of apps) {
   assert.ok(packageId.startsWith('com.inoforge.forge.'), `${app.name} is not owned by a business package`);
 }
 
+// Delivery coverage includes internal create forms as well as visible menus.
+// Keep these explicit: registration or the shared route catalogue alone is not an entry point.
+const internalSalesPages = new Map([
+  ['page_sales_order_create', {
+    parent: 'page_sales_order_workspace',
+    entry: /onClick=\{\(\)=>\{const href=forgePageHref\(['"]page_sales_order_create['"]\);if\(href\)window\.location\.href=href\}\}/,
+  }],
+  ['page_service_order_create', {
+    parent: 'page_service_orders',
+    entry: /<a\s[^>]*href=\{forgePageHref\(['"]page_service_order_create['"]\)\}/,
+  }],
+]);
+
+export function assertSalesPageCoverage(pageName, menuPages, owners, sources) {
+  if (menuPages.has(pageName)) return;
+  const internal = internalSalesPages.get(pageName);
+  assert.ok(internal, `sales: ${pageName} 不在当前销售导航或已知内部流程入口中`);
+  assert.equal(owners.get(pageName), 'com.inoforge.forge.sales', `sales: internal Page ${pageName} must be registered in Sales`);
+  assert.ok(menuPages.has(internal.parent), `sales: internal Page ${pageName} must remain reachable from menu Page ${internal.parent}`);
+  assert.equal(owners.get(internal.parent), 'com.inoforge.forge.sales', `sales: entry Page ${internal.parent} must be owned by Sales`);
+  assert.match(sources.get(internal.parent) ?? '', internal.entry, `sales: ${internal.parent} is missing its create entry to ${pageName}`);
+}
+
 for (const pageName of polished.get('sales')) {
-  assert.ok(actualPolished.get('sales').has(pageName), `sales: ${pageName} 不在当前销售导航中`);
+  assertSalesPageCoverage(pageName, actualPolished.get('sales'), pageOwners, pageSources);
 }
 assert.equal(actualPolished.get('finance').has('page_finance_gap'), false, '财务导航仍指向空白占位页');
-console.log(`PASS ${count} 个七应用菜单入口在编译产物中有唯一导航身份；销售与财务 Page 纳入交付清单。此检查不证明业务动作可用`);
+console.log(`PASS ${count} 个七应用菜单入口在编译产物中有唯一导航身份；销售内部流程 Page 注册与新建入口完整；销售与财务 Page 纳入交付清单。此检查不证明业务动作可用`);

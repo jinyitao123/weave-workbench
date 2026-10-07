@@ -1,0 +1,374 @@
+{
+  "schemaVersion": 3,
+  "featureId": "project.task-workspace",
+  "app": "project",
+  "surfaceType": "page",
+  "target": "page_project_task_workspace",
+  "pageId": "page_project_task_workspace",
+  "status": "review_required",
+  "observedAt": "2026-10-07",
+  "reviewedRevision": "40060bf72db004144e1c9e7eefd9f13896f3b590",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/project-task-workspace.page.ts": "7d8e82f9e579315f86a03953b2cca507703533b8dd1baf2abe5539f71fd20e73",
+    "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts": "ddaa4228d1da22b5d59a3c5663e85ca4dc509997d9591891ec00a66dffa99473",
+    "apps/forge-objectstack/src/pages/project-task-import.logic.ts": "7a2838d931be878ad8997477f0afe8c7b37320b65e338af5e39ab216d9ad6ec5",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86",
+    "apps/forge-objectstack/src/objects/project.object.ts": "55ad411e4b36f4eef49f28982a6bac0eeef1e84d0bd94ff214125779fd964846",
+    "apps/forge-objectstack/src/actions/project.action.ts": "1e85a0e78b119ec50bb6b87727957bcefea235410e0502b903f31109a239b3ec",
+    "apps/forge-objectstack/src/permissions/project-operator.permission.ts": "1f2aaf1ec3ba3cce1538da980a84e2c154213801da55333ced24e6e3b9922215",
+    "apps/forge-objectstack/console94.lock.json": "b3e896bb1f2a405952f129b7f7e909126d3cd31abac00cf6992b1e1cfc8670f2"
+  },
+  "environment": {
+    "databaseType": "postgresql",
+    "materials": [
+      {
+        "id": "PT-READ-SCOPE",
+        "name": "原项目经理组合权限、准备的1项目／计划／成员／类别／任务，仅只读验证"
+      },
+      {
+        "id": "PT-CANCEL-GUARD",
+        "name": "原项目经理既有operator／manager组合，准备1项目及1任务，仅验证取消与本机请求拦截；不含有效执行默认岗位"
+      }
+    ]
+  },
+  "referenceEvidence": [],
+  "checks": {
+    "requirements": {
+      "status": "pending",
+      "notes": "首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 603e8ab3e32c19e84bb86243989df3aa2501ffd2，不作为新版本整体通过。当前局部回归及读取补证不代表全页面／业务完成，真实持久化与独立复核待验。",
+      "evidence": []
+    },
+    "visual": {
+      "status": "pending",
+      "notes": "当前局部回归及读取补证不代表全页面／业务完成，真实持久化与独立复核待验。",
+      "evidence": []
+    },
+    "interaction": {
+      "status": "pending",
+      "notes": "读取及取消保护有当前局部GUI补证；原任务保存／完整交互、默认岗位GUI与独立复核仍待验。",
+      "evidence": []
+    },
+    "business": {
+      "status": "pending",
+      "notes": "当前局部回归及读取补证不代表全页面／业务完成，真实持久化与独立复核待验。",
+      "evidence": []
+    },
+    "permissions": {
+      "status": "pending",
+      "notes": "当前局部回归及读取补证不代表全页面／业务完成，真实持久化与独立复核待验。",
+      "evidence": []
+    },
+    "persistence": {
+      "status": "pending",
+      "notes": "当前局部回归及读取补证不代表全页面／业务完成，真实持久化与独立复核待验。",
+      "evidence": []
+    },
+    "performance": {
+      "status": "pending",
+      "notes": "当前局部回归及读取补证不代表全页面／业务完成，真实持久化与独立复核待验。",
+      "evidence": []
+    }
+  },
+  "requirements": [
+    {
+      "id": "PT-WORK-001",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全页面目标；docs/forge-project-management-manual-baseline-20260912.md#RISEMAP已观察事实"
+      },
+      "statement": "项目中心与任务入口的项目／计划上下文保留，正常路径可达。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-task-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts",
+        "apps/forge-objectstack/src/pages/project-task-import.logic.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "项目中心与任务入口的项目／计划上下文保留，正常路径可达。",
+      "actual": "既有上下文／视图／导入导出有局部回归；当前读取边界补证进行中，完整要求及独立评审未完成。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PT-WORK-002",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全页面目标；docs/forge-project-management-manual-baseline-20260912.md#RISEMAP已观察事实"
+      },
+      "statement": "列表、按人员及甘特图呈现同一授权任务范围与真实状态。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-task-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts",
+        "apps/forge-objectstack/src/pages/project-task-import.logic.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "列表、按人员及甘特图呈现同一授权任务范围与真实状态。",
+      "actual": "既有上下文／视图／导入导出有局部回归；当前读取边界补证进行中，完整要求及独立评审未完成。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PT-WORK-003",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全页面目标；docs/forge-project-management-manual-baseline-20260912.md#RISEMAP已观察事实"
+      },
+      "statement": "状态、项目、负责人、优先级及文本筛选实际生效，并正确分页。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-task-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts",
+        "apps/forge-objectstack/src/pages/project-task-import.logic.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "状态、项目、负责人、优先级及文本筛选实际生效，并正确分页。",
+      "actual": "既有上下文／视图／导入导出有局部回归；当前读取边界补证进行中，完整要求及独立评审未完成。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PT-WORK-004",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全页面目标；docs/forge-project-management-manual-baseline-20260912.md#RISEMAP已观察事实"
+      },
+      "statement": "负责人使用有效项目成员和正式任职关系解析，不以文本猜测权限。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-task-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts",
+        "apps/forge-objectstack/src/pages/project-task-import.logic.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "负责人使用有效项目成员和正式任职关系解析，不以文本猜测权限。",
+      "actual": "既有上下文／视图／导入导出有局部回归；当前读取边界补证进行中，完整要求及独立评审未完成。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PT-WORK-005",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全页面目标；docs/forge-project-management-manual-baseline-20260912.md#RISEMAP已观察事实"
+      },
+      "statement": "新建／编辑表单保留任务类别、角色、日期、工时等字段，校验及取消保留输入。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-task-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts",
+        "apps/forge-objectstack/src/pages/project-task-import.logic.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [
+        "隔离PG原项目经理从任务列表打开新建，未改取消直接关闭；输入中文后取消，继续编辑／Esc保留内容，明确放弃关闭。",
+        "原任务未改编辑取消直接关闭；760px窄屏改标题取消并继续编辑，标题不丢失，弹窗左右／上下均在视口内。",
+        "进入确认保存，在本机暂停原编辑请求，取消／关闭／确认禁用且Esc不退出；发送前本机回403，恢复操作，最后放弃；原任务不变。"
+      ],
+      "expected": "新建／编辑表单保留任务类别、角色、日期、工时等字段，校验及取消保留输入。",
+      "actual": "新建／编辑取消保护当前局部补证：空表单及未改编辑直接关闭，改后继续编辑和嵌套Esc保留中文输入，明确放弃关闭；默认岗位及迟到读取隔离有源码回归。窄屏无横向越界，busy禁用关闭／重复确认、Esc不退出，本机拦截请求后403恢复可操作。真实保存、岗位默认GUI、完整校验及独立复核仍待验。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PT-WORK-006",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全页面目标；docs/forge-project-management-manual-baseline-20260912.md#RISEMAP已观察事实"
+      },
+      "statement": "原创建／编辑动作形成正式结果并在页面读回，失败保留输入且不重复写入。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-task-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts",
+        "apps/forge-objectstack/src/pages/project-task-import.logic.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "原创建／编辑动作形成正式结果并在页面读回，失败保留输入且不重复写入。",
+      "actual": "既有上下文／视图／导入导出有局部回归；当前读取边界补证进行中，完整要求及独立评审未完成。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PT-WORK-007",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全页面目标；docs/forge-project-management-manual-baseline-20260912.md#RISEMAP已观察事实"
+      },
+      "statement": "任务导入解析、校验、原生进度与失败结果可读，导出保留当前筛选、字段及权限。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-task-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts",
+        "apps/forge-objectstack/src/pages/project-task-import.logic.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "任务导入解析、校验、原生进度与失败结果可读，导出保留当前筛选、字段及权限。",
+      "actual": "既有上下文／视图／导入导出有局部回归；当前读取边界补证进行中，完整要求及独立评审未完成。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PT-WORK-008",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全页面目标；docs/forge-project-management-manual-baseline-20260912.md#RISEMAP已观察事实"
+      },
+      "statement": "加载、完整数据、真实空态、401／403、失败及迟到结果准确区分，不显示假零或旧任务。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-task-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts",
+        "apps/forge-objectstack/src/pages/project-task-import.logic.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "加载、完整数据、真实空态、401／403、失败及迟到结果准确区分，不显示假零或旧任务。",
+      "actual": "读取401及权限拒绝的源事件回归通过；原项目经理正常列表／人员视图、任务类别本机403保留列表、任务本机401清旧列表及重试已GUI补证，权限拒绝仅单独回归。完整状态及独立复核仍待完成。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PT-WORK-009",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全页面目标；docs/forge-project-management-manual-baseline-20260912.md#RISEMAP已观察事实"
+      },
+      "statement": "设置来源与项目计划缺失有正确前置处理及实际消费者生效。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-task-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts",
+        "apps/forge-objectstack/src/pages/project-task-import.logic.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "设置来源与项目计划缺失有正确前置处理及实际消费者生效。",
+      "actual": "既有上下文／视图／导入导出有局部回归；当前读取边界补证进行中，完整要求及独立评审未完成。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PT-WORK-010",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全页面目标；docs/forge-project-management-manual-baseline-20260912.md#RISEMAP已观察事实"
+      },
+      "statement": "真实项目角色允许／拒绝及跨项目范围正确，不为验收扩权。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-task-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts",
+        "apps/forge-objectstack/src/pages/project-task-import.logic.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "真实项目角色允许／拒绝及跨项目范围正确，不为验收扩权。",
+      "actual": "既有上下文／视图／导入导出有局部回归；当前读取边界补证进行中，完整要求及独立评审未完成。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PT-WORK-011",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全页面目标；docs/forge-project-management-manual-baseline-20260912.md#RISEMAP已观察事实"
+      },
+      "statement": "需要持久化的任务和设置动作同库完整重启后结果一致。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-task-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts",
+        "apps/forge-objectstack/src/pages/project-task-import.logic.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "需要持久化的任务和设置动作同库完整重启后结果一致。",
+      "actual": "既有上下文／视图／导入导出有局部回归；当前读取边界补证进行中，完整要求及独立评审未完成。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PT-WORK-012",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全页面目标；docs/forge-project-management-manual-baseline-20260912.md#RISEMAP已观察事实"
+      },
+      "statement": "桌面、窄屏、长文本、键盘／焦点及固定材料性能符合本页面要求。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-task-workspace.page.ts",
+        "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts",
+        "apps/forge-objectstack/src/pages/project-task-import.logic.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "桌面、窄屏、长文本、键盘／焦点及固定材料性能符合本页面要求。",
+      "actual": "既有上下文／视图／导入导出有局部回归；当前读取边界补证进行中，完整要求及独立评审未完成。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    }
+  ],
+  "limitations": [
+    "当前RISEMAP、全交互与完整业务未重验。",
+    "原项目经理采用演示主册已有operator／manager组合，不扩大生产账号权限。",
+    "本批只读准备材料，不能当新建／编辑／导入及重启业务完成。",
+    "当前取消保护补证不含真实新建／编辑保存；原请求发送前在本机暂停并回403，不能当后端拒绝。默认岗位仅源码回归，准备经理岗位无project work member资格，未扩权。",
+    "公共ForgeDialog新增可选className与既有宽度token透传；当前来源版本更新不代表旧业务证据在新版本重验。",
+    "本次仅随公共日期控件可选接入更新源码绑定；本页保留旧观察，未在本版本重跑完整业务验收。"
+  ]
+}
