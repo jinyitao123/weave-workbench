@@ -7,9 +7,9 @@
   "pageId": "page_project_task_workspace",
   "status": "review_required",
   "observedAt": "2026-10-07",
-  "reviewedRevision": "b0b07a3881c2bec8e8497085e5200bc61e52efb6",
+  "reviewedRevision": "9c6f5f12441196fc817df128118cbb2c70a2c155",
   "subjectFiles": {
-    "apps/forge-objectstack/src/pages/project-task-workspace.page.ts": "ae96505e1a2ee405300a6af6d4b583d411cadd832ef260deac4e8f01993de07c",
+    "apps/forge-objectstack/src/pages/project-task-workspace.page.ts": "7d8e82f9e579315f86a03953b2cca507703533b8dd1baf2abe5539f71fd20e73",
     "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts": "ddaa4228d1da22b5d59a3c5663e85ca4dc509997d9591891ec00a66dffa99473",
     "apps/forge-objectstack/src/pages/project-task-import.logic.ts": "7a2838d931be878ad8997477f0afe8c7b37320b65e338af5e39ab216d9ad6ec5",
     "apps/forge-objectstack/src/pages/product-ui.ts": "4161963639d9d54d8d82ae4fcee74c54ca3edd51af9e5d67e6120e16e62cf42f",
@@ -24,6 +24,10 @@
       {
         "id": "PT-READ-SCOPE",
         "name": "原项目经理组合权限、准备的1项目／计划／成员／类别／任务，仅只读验证"
+      },
+      {
+        "id": "PT-CANCEL-GUARD",
+        "name": "原项目经理既有operator／manager组合，准备1项目及1任务，仅验证取消与本机请求拦截；不含有效执行默认岗位"
       }
     ]
   },
@@ -41,7 +45,7 @@
     },
     "interaction": {
       "status": "pending",
-      "notes": "当前局部回归及读取补证不代表全页面／业务完成，真实持久化与独立复核待验。",
+      "notes": "读取及取消保护有当前局部GUI补证；原任务保存／完整交互、默认岗位GUI与独立复核仍待验。",
       "evidence": []
     },
     "business": {
@@ -179,9 +183,13 @@
         "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
         "apps/forge-objectstack/console94.lock.json"
       ],
-      "steps": [],
+      "steps": [
+        "隔离PG原项目经理从任务列表打开新建，未改取消直接关闭；输入中文后取消，继续编辑／Esc保留内容，明确放弃关闭。",
+        "原任务未改编辑取消直接关闭；760px窄屏改标题取消并继续编辑，标题不丢失，弹窗左右／上下均在视口内。",
+        "进入确认保存，在本机暂停原编辑请求，取消／关闭／确认禁用且Esc不退出；发送前本机回403，恢复操作，最后放弃；原任务不变。"
+      ],
       "expected": "新建／编辑表单保留任务类别、角色、日期、工时等字段，校验及取消保留输入。",
-      "actual": "既有上下文／视图／导入导出有局部回归；当前读取边界补证进行中，完整要求及独立评审未完成。",
+      "actual": "新建／编辑取消保护当前局部补证：空表单及未改编辑直接关闭，改后继续编辑和嵌套Esc保留中文输入，明确放弃关闭；默认岗位及迟到读取隔离有源码回归。窄屏无横向越界，busy禁用关闭／重复确认、Esc不退出，本机拦截请求后403恢复可操作。真实保存、岗位默认GUI、完整校验及独立复核仍待验。",
       "stateEffect": "writes_business_state",
       "status": "pending",
       "evidence": []
@@ -358,6 +366,7 @@
   "limitations": [
     "当前RISEMAP、全交互与完整业务未重验。",
     "原项目经理采用演示主册已有operator／manager组合，不扩大生产账号权限。",
-    "本批只读准备材料，不能当新建／编辑／导入及重启业务完成。"
+    "本批只读准备材料，不能当新建／编辑／导入及重启业务完成。",
+    "当前取消保护补证不含真实新建／编辑保存；原请求发送前在本机暂停并回403，不能当后端拒绝。默认岗位仅源码回归，准备经理岗位无project work member资格，未扩权。"
   ]
 }
