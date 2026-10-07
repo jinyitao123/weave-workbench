@@ -23,6 +23,7 @@ async function fixture({ manage = true, create = true, onTypes, strictCustomerFi
     forge_project_type: [{ id: 'type-a', name: '现有项目类型', active: true }],
     forge_customer: [{ id: 'customer-a', name: '测试客户' }],
     sys_user: [{ id: 'actor-a', name: '项目负责人' }],
+    forge_sales_order: [{id:'order-a',name:'已批准订单',customer_id:'customer-a',contract_id:'contract-a',status:'active',approval_outcome:'approved'}],
   };
   let typeReads = 0;
   const h = createServicePageHarness(ProjectCenterPage, {
@@ -34,6 +35,7 @@ async function fixture({ manage = true, create = true, onTypes, strictCustomerFi
         systemPermissions: ['forge_project_operator', ...(manage ? ['forge_project_settings_manage'] : [])],
         objects: { forge_project_type: { allowRead: true, allowCreate: create } },
       });
+      if (route === '/workbench/business-actions/context') return response({version:'1',actions:[{capabilityId:'forge:action:forge_customer.customer_create_project',parameters:[['approved_order_id',[['order-a','已批准订单']]],['type_id',records.forge_project_type.filter(x=>x.active!==false).map(x=>[x.id,x.name])],['manager_id',[['actor-a','项目负责人']]]].map(([name,options])=>({name,enum:options.map(x=>x[0]),enumLabels:options.map(([value,label])=>({value,label}))}))}]});
       if (route === '/data/forge_customer' && strictCustomerFields) {
         const filter = JSON.parse(new URL(url).searchParams.get('$filter') || '{}');
         if (Object.keys(filter).some(name => !(name in Customer.fields))) return response({ error: 'unknown customer filter field' }, 400);
@@ -58,9 +60,10 @@ async function fixture({ manage = true, create = true, onTypes, strictCustomerFi
   return { h, records, typeReads: () => typeReads };
 }
 
-function completeDraft(h) {
+async function completeDraft(h) {
+  await field(h, '关联客户').props.onChange('customer-a'); await h.settle();
   for (const [label, value] of [
-    ['项目名称', '需要保留的中文项目草稿'], ['关联客户', 'customer-a'], ['项目类型', 'type-a'],
+    ['项目名称', '需要保留的中文项目草稿'], ['已批准销售订单', 'order-a'], ['项目类型', 'type-a'],
     ['项目负责人', 'actor-a'], ['计划开始日期', '2026-10-07'], ['计划结束日期', '2026-10-20'],
   ]) field(h, label).props.onChange(value);
 }
@@ -89,7 +92,7 @@ test('type creation requires both existing grants and never preselects the first
 
 test('type cancellation and successful targeted readback preserve the project draft and selection', async () => {
   const { h, records, typeReads } = await fixture();
-  completeDraft(h);
+  await completeDraft(h);
   button(h, '新增项目类型').props.onClick();
   typeForm(h).props.onOpenChange(false);
   assert.ok(typeCloseConfirmation(h));
@@ -107,7 +110,7 @@ test('type cancellation and successful targeted readback preserve the project dr
   assert.equal(typeForm(h), undefined);
   assert.equal(typeCloseConfirmation(h), undefined, 'successful native close must not prompt again');
   assert.equal(typeReads(), 2);
-  assert.deepEqual(h.calls.slice(callsBefore).map(call => [call.path, call.method]), [['/data/forge_project_type', 'GET']]);
+  assert.deepEqual(h.calls.slice(callsBefore).map(call => [call.path, call.method]), [['/data/forge_project_type', 'GET'], ['/workbench/business-actions/context', 'GET'], ['/data/forge_sales_order', 'GET']]);
   assert.equal(field(h, '项目名称').props.value, '需要保留的中文项目草稿');
   assert.equal(field(h, '计划开始日期').props.value, '2026-10-07');
   assert.equal(field(h, '项目类型').props.value, 'type-a');
@@ -119,7 +122,7 @@ test('late saved-type readback and stale modal callbacks cannot overwrite a repl
   const { h, typeReads } = await fixture({ onTypes: (count, records) => count === 2
     ? new Promise(resolve => { release = resolve; })
     : response({ records: records.forge_project_type, total: records.forge_project_type.length }) });
-  completeDraft(h);
+  await completeDraft(h);
   button(h, '新增项目类型').props.onClick();
   const old = typeForm(h).props;
   const pending = old.onSuccess({ id: 'late-type' });
@@ -146,7 +149,7 @@ test('failed post-save readback offers a read-only retry without resubmitting th
   const { h, records } = await fixture({ onTypes: (count, rows) => count === 2
     ? response({ error: '类型读取中断' }, 503)
     : response({ records: rows.forge_project_type, total: rows.forge_project_type.length }) });
-  completeDraft(h);
+  await completeDraft(h);
   button(h, '新增项目类型').props.onClick();
   const native = typeForm(h).props;
   await native.onSuccess({ id: 'type-b' });
@@ -164,7 +167,7 @@ test('failed post-save readback offers a read-only retry without resubmitting th
 
 test('type close requests always confirm while the native modal remains open with a stable key', async () => {
   const { h, typeReads } = await fixture();
-  completeDraft(h);
+  await completeDraft(h);
   button(h, '新增项目类型').props.onClick();
   const opened = typeForm(h), native = opened.props;
   // Native ObjectForm owns empty/edited values; confirmOnDiscard=false routes
@@ -200,7 +203,7 @@ test('new-project dates opt into editable controls and native form validity gate
   assert.equal(field(h, '计划结束日期').props.editable, true);
   projectDialog(h).props.onConfirm();
   assert.equal(checks, 0, 'required-field feedback precedes native validity');
-  completeDraft(h);
+  await completeDraft(h);
   field(h, '计划开始日期').props.onChange('2026-02-30');
   field(h, '计划开始日期').props.onValidityChange(false);
   projectDialog(h).props.onConfirm();
