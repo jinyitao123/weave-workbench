@@ -6,7 +6,7 @@ const select = (label: string, options: Array<[string, string]>, defaultValue?: 
   { label, ...(defaultValue ? { defaultValue } : {}) },
 );
 const quantity = (label: string, readonly = false) => Field.number({ label, min: 0, scale: 4, defaultValue: 0, ...(readonly ? { readonly: true } : {}) });
-const money = (label: string, readonly = false) => Field.currency({ label, precision: 18, scale: 4, min: 0, defaultValue: 0, ...(readonly ? { readonly: true } : {}) });
+const money = (label: string, readonly = false) => Field.currency({ label, precision: 18, min: 0, defaultValue: 0, ...(readonly ? { readonly: true } : {}) });
 
 // RISEMAP /inventory/ncr exposes seven list-filter values. This bounded
 // subcontract slice implements the four physical dispositions selected for the

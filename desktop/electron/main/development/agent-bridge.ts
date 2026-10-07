@@ -1,12 +1,15 @@
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import type { EnterpriseBusinessCapability, EnterpriseBusinessCapabilityCatalog } from '../../../src/types/api'
-import type { TeamDefinition, TeamWorkspace, TeamWorkspaceCommand } from '../../../src/types/team-workspace'
+import type { DevelopmentTrialAction, TeamDefinition, TeamWorkspace, TeamWorkspaceCommand } from '../../../src/types/team-workspace'
 import { applyTeamDevelopmentOperations, type TeamDevelopmentProposal } from '../../../src/pages/team-workspace/development-proposal'
 import { WORKBENCH_RESULT_PROTOCOL } from '../../../src/pages/team-workspace/graph'
 import { businessCompletionRequirement, requireBusinessCompletionBindings, requireDeclaredBusinessCompletion } from '../../../src/pages/team-workspace/business-completion'
-import { toolActivityEvidence, trialToolMissingDetails, trialToolPayload, trialToolPayloadCompleteness, trialToolStatus, type TrialToolEvidence } from '../../../src/lib/trial-tool-evidence'
+import { freezeDevelopmentTrialActions, publicationReadinessBlocker, workflowCandidateCapabilityIds, workflowSimulationChoices, workflowTrialBlocker } from '../../../src/pages/team-workspace/development-trial'
+import { toolActivityEvidence, trialToolDisplayName, trialToolMissingDetails, trialToolPayload, trialToolPayloadCompleteness, trialToolStatus, type TrialToolEvidence } from '../../../src/lib/trial-tool-evidence'
 import { CapabilityBridge, type CapabilityClaim, type CapabilityScope } from '../lib/capability-bridge'
 import { HandoffStore, type HandoffStorage } from '../enterprise/handoff-store'
+import { MAX_RPC_WRITE_FRAME_BYTES } from '../agent-rpc/limits'
+import { requireRecord, requireString } from '../validation'
 
 interface DevelopmentContext {
   accountKey: string
@@ -31,8 +34,35 @@ interface DevelopmentTrial {
   revision: number
   requestId: string
   intentDigest: string
+  authorizationSourceHash?: string
+  simulationActionSelectors?: string[]
+  businessActions?: DevelopmentTrialAction[]
   runId?: string
   stepNames: Record<string, string>
+}
+type DevelopmentUserCommandType = 'prompt' | 'steer' | 'follow_up'
+interface DevelopmentUserTurnScope {
+  teamId: string
+  revision: number
+  documentHash: string
+  workflowId: string
+}
+interface DevelopmentUserTurn {
+  source: 'trusted_desktop_employee_input'
+  sourceHash: string
+  turnId: string
+  accountKey: string
+  runtimeId: string
+  sessionPath?: string
+  commandType: DevelopmentUserCommandType
+  text: string
+  scope?: DevelopmentUserTurnScope
+}
+interface PendingDevelopmentUserCommand {
+  token: string
+  claim: CapabilityClaim
+  commandType: DevelopmentUserCommandType
+  consumed: boolean
 }
 interface DevelopmentActivity {
   status?: string
@@ -64,21 +94,34 @@ function canonical(value: unknown): unknown {
   return Object.fromEntries(Object.entries(value as Record<string, unknown>).filter(([, item]) => item !== undefined).sort(([left], [right]) => left.localeCompare(right)).map(([key, item]) => [key, canonical(item)]))
 }
 
-function sameDocument(left: TeamDefinition, right: TeamDefinition): boolean {
+function comparableDocument(document: TeamDefinition): TeamDefinition {
   // Weave's typed configuration writes these two omitted optional fields as
   // null/0. Normalize only those declared defaults, including persisted older
   // pending saves; all business fields, graph bindings and versions still match.
-  const comparable = (document: TeamDefinition) => ({ ...document, members: document.members.map((member) => ({
+  return { ...document, members: document.members.map((member) => ({
     ...member, configuration: { ...member.configuration,
       toolLoopControl: member.configuration.toolLoopControl === undefined ? null : member.configuration.toolLoopControl,
       maxToolRepeats: member.configuration.maxToolRepeats === undefined ? 0 : member.configuration.maxToolRepeats,
     },
-  })) })
-  return JSON.stringify(canonical(comparable(left))) === JSON.stringify(canonical(comparable(right)))
+  })) }
+}
+
+function sameDocument(left: TeamDefinition, right: TeamDefinition): boolean {
+  return JSON.stringify(canonical(comparableDocument(left))) === JSON.stringify(canonical(comparableDocument(right)))
 }
 
 function digest(value: unknown): string {
   return createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(canonical(value))).digest('hex')
+}
+
+function requestedSimulationSelectors(value: unknown): string[] {
+  if (value === undefined) return []
+  if (!Array.isArray(value) || value.length > 32 || value.some((item) => typeof item !== 'string' || !item.trim() || item.length > 512)) {
+    throw new TypeError('本次模拟动作选择无效')
+  }
+  const selectors = value as string[]
+  if (new Set(selectors).size !== selectors.length) throw new TypeError('本次模拟动作不能重复选择')
+  return selectors
 }
 
 function stableUuid(value: string): string {
@@ -109,6 +152,8 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
   private readonly listedTeams = new Map<string, Array<{ id: string; name: string }>>()
   private readonly createProposals = new Map<string, { name: string; objective: string }>()
   private readonly trials = new Map<string, DevelopmentTrial>()
+  private readonly userTurns = new Map<string, DevelopmentUserTurn>()
+  private readonly pendingUserCommands = new Map<string, PendingDevelopmentUserCommand>()
   private readonly store: HandoffStore
 
   constructor(private readonly options: {
@@ -179,9 +224,149 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
     if (!token) return
     const claim = this.claimForToken(token)
     if (claim?.harness !== 'pi') return
-    if (claim.sessionPath && sessionFile && claim.sessionPath !== sessionFile) { this.revoke(token); throw new Error('团队开发会话已变化') }
-    if (sessionFile) claim.sessionPath = sessionFile
+    const previousToken = this.runtimeTokens.get(runtimeId)
+    if (previousToken && previousToken !== token) {
+      this.clearUserTurn(previousToken)
+      this.pendingUserCommands.delete(runtimeId)
+    }
+    if (claim.sessionPath && sessionFile && claim.sessionPath !== sessionFile) { this.clearUserTurn(token); this.revoke(token); throw new Error('团队开发会话已变化') }
+    if (sessionFile) {
+      claim.sessionPath = sessionFile
+      const turn = this.userTurns.get(token)
+      if (turn && turn.sessionPath === undefined) turn.sessionPath = sessionFile
+    }
     this.runtimeTokens.set(runtimeId, token)
+  }
+
+  bindRuntimeSession(runtimeId: string, sessionFile: string): void {
+    const token = this.runtimeTokens.get(runtimeId)
+    if (token) this.bindRuntime(token, runtimeId, sessionFile)
+  }
+
+  private clearUserTurn(token: string): void {
+    this.userTurns.delete(token)
+    for (const [runtimeId, pending] of this.pendingUserCommands) if (pending.token === token) this.pendingUserCommands.delete(runtimeId)
+  }
+
+  private documentHash(document: TeamDefinition): string {
+    return digest(JSON.stringify(canonical(comparableDocument(document))))
+  }
+
+  private draftIdentity(context: Pick<DevelopmentContext, 'teamId' | 'revision' | 'document'>): Pick<DevelopmentUserTurnScope, 'teamId' | 'revision' | 'documentHash'> {
+    return { teamId: context.teamId, revision: context.revision, documentHash: this.documentHash(context.document) }
+  }
+
+  private sameDraftIdentity(left: Pick<DevelopmentUserTurnScope, 'teamId' | 'revision' | 'documentHash'>, right: Pick<DevelopmentUserTurnScope, 'teamId' | 'revision' | 'documentHash'>): boolean {
+    return left.teamId === right.teamId && left.revision === right.revision && left.documentHash === right.documentHash
+  }
+
+  private sameTurnScope(left: DevelopmentUserTurnScope, right: DevelopmentUserTurnScope): boolean {
+    return this.sameDraftIdentity(left, right) && left.workflowId === right.workflowId
+  }
+
+  private assertPiOpenContextChange(
+    token: string,
+    sourceAtDispatch: DevelopmentUserTurn | undefined,
+    contextAtDispatch: DevelopmentContext | undefined,
+    nextContext: DevelopmentContext,
+  ): void {
+    const current = this.userTurns.get(token)
+    if (this.contexts.get(token) !== contextAtDispatch) throw new Error('当前团队开发上下文已变化；请重新读取后再打开团队。')
+    if (current && current.accountKey !== nextContext.accountKey) throw new Error('账号已变化；不会把当前员工请求绑定到另一个开发账号。')
+    const nextIdentity = this.draftIdentity(nextContext)
+    const previousIdentity = contextAtDispatch ? this.draftIdentity(contextAtDispatch) : undefined
+    if (current !== sourceAtDispatch) {
+      if (!previousIdentity || !this.sameDraftIdentity(previousIdentity, nextIdentity)) {
+        throw new Error('员工轮次已变化；不会用新请求接续旧团队上下文切换。')
+      }
+      return
+    }
+    if (current?.scope && !this.sameDraftIdentity(current.scope, nextIdentity)) {
+      throw new Error('本轮员工请求已绑定其他团队或草稿；请在目标上下文重新提出模拟要求。')
+    }
+  }
+
+  private rebindUserTurnAfterControlledSave(
+    token: string,
+    sourceAtDispatch: DevelopmentUserTurn | undefined,
+    previousIdentity: Pick<DevelopmentUserTurnScope, 'teamId' | 'revision' | 'documentHash'>,
+    context: DevelopmentContext,
+  ): void {
+    const current = this.userTurns.get(token)
+    if (!current) return
+    if (this.contexts.get(token) !== context) return
+    const nextIdentity = this.draftIdentity(context)
+    if (current !== sourceAtDispatch) {
+      if (!this.sameDraftIdentity(previousIdentity, nextIdentity)) this.clearUserTurn(token)
+      return
+    }
+    if (!current.scope) return
+    if (!this.sameDraftIdentity(current.scope, previousIdentity)
+      || !context.document.workflows.some((workflow) => workflow.id === current.scope!.workflowId)) {
+      this.clearUserTurn(token)
+      return
+    }
+    current.scope = { ...this.draftIdentity(context), workflowId: current.scope.workflowId }
+  }
+
+  invalidateEmployeeTurn(runtimeId: string): void {
+    const token = this.runtimeTokens.get(runtimeId)
+    if (token) this.clearUserTurn(token)
+    this.pendingUserCommands.delete(runtimeId)
+  }
+
+  /** Called before forwarding a trusted renderer command so previous turns cannot carry forward. */
+  beginEmployeeCommand(runtimeId: string, rawType: unknown): void {
+    const token = this.runtimeTokens.get(runtimeId)
+    const claim = token ? this.claimForToken(token) : undefined
+    if (!token || !claim || !['prompt', 'steer', 'follow_up', 'abort', 'compact'].includes(String(rawType))) return
+    this.invalidateEmployeeTurn(runtimeId)
+    if (rawType === 'prompt' || rawType === 'steer' || rawType === 'follow_up') {
+      this.pendingUserCommands.set(runtimeId, { token, claim, commandType: rawType, consumed: false })
+    }
+  }
+
+  /** Revalidates the captured input through the same trusted desktop input parser as enterprise handoffs. */
+  async captureTrustedEmployeeCommand(runtimeId: string, command: unknown, employeeInput?: unknown): Promise<void> {
+    const pending = this.pendingUserCommands.get(runtimeId)
+    const token = this.runtimeTokens.get(runtimeId)
+    if (!pending || pending.consumed || !token || pending.token !== token) return
+    pending.consumed = true
+    try {
+      const value = requireRecord(command, 'command')
+      if (value.type !== pending.commandType) return
+      const claim = this.claimForToken(token)
+      if (!claim || claim !== pending.claim || claim.harness !== 'pi') return
+      const prompt = requireString(value.message, 'command.message', { min: 1, max: 1_048_576, trim: false })
+      const { captureEmployeeInput } = await import('../enterprise/employee-input')
+      const captured = captureEmployeeInput(prompt, employeeInput, claim)
+      const images = value.images === undefined ? [] : (() => {
+        if (!Array.isArray(value.images) || value.images.length > 8) throw new TypeError('桌面员工输入中的图片来源无效')
+        return value.images.map((raw, index) => {
+          const image = requireRecord(raw, `images[${index}]`)
+          if (image.type !== 'image') throw new TypeError('桌面员工输入中的图片来源无效')
+          const mimeType = requireString(image.mimeType, `images[${index}].mimeType`, { min: 1, max: 100 })
+          const data = requireString(image.data, `images[${index}].data`, { min: 1, max: MAX_RPC_WRITE_FRAME_BYTES })
+          return { mimeType, sha256: createHash('sha256').update(data).digest('hex') }
+        })
+      })()
+      const accountKey = await this.options.accountKey()
+      const turnId = randomUUID()
+      const sourceHash = createHash('sha256').update(JSON.stringify(canonical({
+        source: 'trusted_desktop_employee_input', turnId, commandType: pending.commandType,
+        accountKey, runtimeId, sessionPath: claim.sessionPath ?? null,
+        prompt, text: captured.text, materials: captured.materials ?? [], images,
+      }))).digest('hex')
+      if (this.pendingUserCommands.get(runtimeId) !== pending || this.runtimeTokens.get(runtimeId) !== token
+        || this.claimForToken(token) !== claim || await this.options.accountKey() !== accountKey) return
+      this.userTurns.set(token, {
+        source: 'trusted_desktop_employee_input', sourceHash, turnId,
+        accountKey, runtimeId, ...(claim.sessionPath ? { sessionPath: claim.sessionPath } : {}),
+        commandType: pending.commandType, text: captured.text,
+      })
+    } finally {
+      if (this.pendingUserCommands.get(runtimeId) === pending) this.pendingUserCommands.delete(runtimeId)
+    }
   }
 
   async bindContext(runtimeId: string, context: Omit<DevelopmentContext, 'accountKey' | 'proposal'>, accountKey: string): Promise<void> {
@@ -189,9 +374,15 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
     const claim = token ? this.claimForToken(token) : undefined
     if (!token || !claim) throw new Error('Pi 开发会话尚未启动')
     if (!Number.isSafeInteger(context.revision) || context.revision < 0 || !Array.isArray(context.document?.members) || !Array.isArray(context.document?.workflows)) throw new Error('团队草稿不完整')
+    const previous = this.contexts.get(token)
+    const sameIdentity = Boolean(previous && previous.accountKey === accountKey && previous.teamId === context.teamId
+      && previous.revision === context.revision && this.documentHash(previous.document) === this.documentHash(context.document))
+    if (!sameIdentity) {
+      this.clearUserTurn(token)
+    }
     this.contexts.set(token, { ...context, accountKey, document: structuredClone(context.document), proposal: undefined, pendingSave: undefined, stale: false })
     this.createProposals.delete(token)
-    this.trials.delete(token)
+    if (!sameIdentity) this.trials.delete(token)
     await this.persist(claim)
   }
 
@@ -221,13 +412,14 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
     return { ...(context ? { teamId: context.teamId, revision: context.revision } : {}), ...(context?.proposal ? { proposal: { ...context.proposal, baseDocument: context.document, revision: context.revision } } : {}), ...(saved?.createProposal ? { createProposal: saved.createProposal } : {}) }
   }
 
-  invalidateAccount(): void { this.revokeAllClaims(); this.contexts.clear(); this.runtimeTokens.clear(); this.listedTeams.clear(); this.createProposals.clear() }
+  invalidateAccount(): void { this.revokeAllClaims(); this.contexts.clear(); this.runtimeTokens.clear(); this.listedTeams.clear(); this.createProposals.clear(); this.userTurns.clear(); this.pendingUserCommands.clear() }
 
   protected onClaimRevoked(claim: CapabilityClaim): void {
     this.contexts.delete(claim.token)
     this.listedTeams.delete(claim.token)
     this.createProposals.delete(claim.token)
     this.trials.delete(claim.token)
+    this.clearUserTurn(claim.token)
     for (const [runtimeId, token] of this.runtimeTokens) if (token === claim.token) this.runtimeTokens.delete(runtimeId)
   }
 
@@ -253,9 +445,17 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
         workflows: workflows.map((flow) => {
           const stepName = (id: unknown) => flow.graph_definition.nodes.find((node) => node.id === id)?.label ?? '未命名步骤'
           const completion = businessCompletionRequirement(flow)
+          const candidateIds = workflowCandidateCapabilityIds(context.document, flow)
+          const candidateActions = candidateIds.flatMap((id) => context.catalog.capabilities.filter((item) => item.id === id))
+          const simulationActions = workflowSimulationChoices(candidateActions).map(({ selector, action }) => ({
+            selector, name: action.name, description: action.description,
+            effect: action.effect === 'write' ? '业务写动作' : '只读业务动作',
+            status: action.status === 'available' ? '可模拟' : '暂不可用',
+          }))
           return {
             name: flow.name, description: flow.description,
             ...(completion ? { businessCompletion: { actions: completion.capabilities.map(capabilityName), whenAuthorized: true, allowNeedsInput: completion.allowNeedsInput } } : {}),
+            simulation_actions: simulationActions,
             resultProtocol: flow.graph_definition.result_protocol === WORKBENCH_RESULT_PROTOCOL ? '可要求补充材料' : '普通结果',
             steps: flow.graph_definition.nodes.map((node) => ({
               name: node.label || '未命名步骤', type: ({ lead: '负责人处理', worker: '成员执行', parallel: '并行分工', join: '汇合结果', deliver: '交付结果' } as Record<string, string>)[node.type] ?? '流程步骤',
@@ -339,15 +539,17 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
     return this.options.team(context.teamId, accountId)
   }
 
-  private async saveTeam(context: DevelopmentContext, developer: { accountId: string }, rawOperations: unknown, claim: CapabilityClaim): Promise<unknown> {
+  private async saveTeam(context: DevelopmentContext, developer: { accountId: string }, rawOperations: unknown, claim: CapabilityClaim, sourceAtDispatch?: DevelopmentUserTurn): Promise<unknown> {
     if (!Array.isArray(rawOperations)) throw new Error('修改内容必须是 JSON 数组')
     const operationsDigest = digest(rawOperations)
+    const previousIdentity = this.draftIdentity(context)
     let remote = await this.currentTeam(context, developer.accountId)
     let attempt = context.pendingSave
 
     if (attempt && remote.revision > attempt.baseRevision && sameDocument(remote.document, attempt.proposal.document)) {
       const changes = attempt.proposal.changes
       this.acceptSavedDocument(context, remote)
+      this.rebindUserTurnAfterControlledSave(claim.token, sourceAtDispatch, previousIdentity, context)
       await this.persist(claim)
       if (attempt.operationsDigest === operationsDigest) return { team: remote.document.name, changes, message: '团队草稿已保存，当前生效版本没有改变。' }
       attempt = undefined
@@ -387,6 +589,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       if (!saved || !Number.isSafeInteger(saved.revision) || !sameDocument(saved.document, pending.proposal.document)) throw new Error('Weave 未返回已保存的团队草稿')
       const changes = pending.proposal.changes
       this.acceptSavedDocument(context, saved)
+      this.rebindUserTurnAfterControlledSave(claim.token, sourceAtDispatch, previousIdentity, context)
       await this.persist(claim)
       return { team: saved.document.name, changes, message: '团队草稿已保存，当前生效版本没有改变。' }
     } catch (cause) {
@@ -395,6 +598,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
         if (remote.revision > pending.baseRevision && sameDocument(remote.document, pending.proposal.document)) {
           const changes = pending.proposal.changes
           this.acceptSavedDocument(context, remote)
+          this.rebindUserTurnAfterControlledSave(claim.token, sourceAtDispatch, previousIdentity, context)
           await this.persist(claim)
           return { team: remote.document.name, changes, message: '团队草稿已保存，已从远端核对到本次修改；当前生效版本没有改变。' }
         }
@@ -405,16 +609,43 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
     }
   }
 
-  private businessActions(context: DevelopmentContext): EnterpriseBusinessCapability[] {
-    const ids = new Set(context.document.members.flatMap((member) => member.configuration.businessCapabilityIds))
-    return [...ids].map((id) => {
+  private businessActions(context: DevelopmentContext, workflow: TeamDefinition['workflows'][number]): EnterpriseBusinessCapability[] {
+    const ids = workflowCandidateCapabilityIds(context.document, workflow)
+    return ids.map((id) => {
       const action = context.catalog.capabilities.find((candidate) => candidate.id === id)
-      if (!action || action.executionMode === 'employee_only' || action.status !== 'available' || !action.actionName || !action.objectName) throw new Error(action?.unavailableReason ?? '团队选择了暂不可用的 Forge 业务动作，请先修正团队草稿')
+      if (!action || action.executionMode === 'employee_only' || action.status !== 'available' || !action.actionName || !action.objectName) throw new Error(action?.unavailableReason ?? '当前流程候选成员绑定了暂不可用的 Forge 业务动作，请先修正团队草稿')
       return action
     })
   }
 
-  private async runTrial(context: DevelopmentContext, developer: { accountId: string }, params: Record<string, unknown>, claim: CapabilityClaim): Promise<unknown> {
+  private async requireCurrentUserTurn(context: DevelopmentContext, claim: CapabilityClaim, expected: DevelopmentUserTurn | undefined, workflowId: string): Promise<DevelopmentUserTurn> {
+    const turn = expected
+    if (!turn || this.userTurns.get(claim.token) !== turn) {
+      throw new Error('模拟动作需要绑定当前账号和 Pi 会话中的员工请求；请在当前会话重新提出本轮模拟要求。')
+    }
+    if (turn.source !== 'trusted_desktop_employee_input' || !/^[0-9a-f]{64}$/.test(turn.sourceHash)
+      || turn.accountKey !== context.accountKey || turn.runtimeId.length === 0
+      || this.runtimeTokens.get(turn.runtimeId) !== claim.token || claim.harness !== 'pi'
+      || turn.sessionPath !== undefined && turn.sessionPath !== claim.sessionPath) {
+      throw new Error('模拟动作需要绑定当前账号和 Pi 会话中的员工请求；请在当前会话重新提出本轮模拟要求。')
+    }
+    const expectedScope: DevelopmentUserTurnScope = { ...this.draftIdentity(context), workflowId }
+    if (turn.scope && !this.sameTurnScope(turn.scope, expectedScope)) {
+      throw new Error('本轮模拟请求已绑定其他团队、草稿修订或流程；请在目标上下文重新提出模拟要求。')
+    }
+    const accountKey = await this.options.accountKey()
+    if (accountKey !== context.accountKey || this.userTurns.get(claim.token) !== turn
+      || this.claimForToken(claim.token) !== claim || this.runtimeTokens.get(turn.runtimeId) !== claim.token) {
+      throw new Error('员工账号、会话或当前请求已变化；本次模拟动作不会转移到新的开发上下文。')
+    }
+    if (turn.scope && !this.sameTurnScope(turn.scope, expectedScope)) {
+      throw new Error('本轮模拟请求已绑定其他团队、草稿修订或流程；请在目标上下文重新提出模拟要求。')
+    }
+    turn.scope ??= expectedScope
+    return turn
+  }
+
+  private async runTrial(context: DevelopmentContext, developer: { accountId: string }, params: Record<string, unknown>, claim: CapabilityClaim, sourceAtDispatch?: DevelopmentUserTurn): Promise<unknown> {
     if (context.pendingSave) throw new Error('团队草稿还有一项保存结果待确认，请先重试保存，再试跑。')
     const workflowName = typeof params.workflow_name === 'string' ? params.workflow_name.trim() : ''
     const input = typeof params.input === 'string' ? params.input : ''
@@ -429,31 +660,57 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       throw new Error('团队草稿或侧栏修改尚未与远端保存版本一致；请先解决草稿冲突，再试跑。')
     }
     context.stale = false
-    const actions = this.businessActions(context)
-    const intentDigest = digest({ teamId: context.teamId, revision: context.revision, workflowId: workflow.id, input, actions })
+    const selectors = requestedSimulationSelectors(params.simulation_actions)
+    const userTurn = selectors.length ? await this.requireCurrentUserTurn(context, claim, sourceAtDispatch, workflow.id) : undefined
+    const intentDigest = digest({ teamId: context.teamId, revision: context.revision, workflowId: workflow.id, input, simulationActions: [...selectors].sort() })
     const prior = this.trials.get(claim.token)
+    if (prior && (!Array.isArray(prior.simulationActionSelectors) || !Array.isArray(prior.businessActions))) {
+      throw new Error('上次试跑没有保存完整的固定模拟动作范围；请先读取该试跑状态并确认结束，再开始新的试跑。')
+    }
+    if (prior?.businessActions?.some((action) => action.simulationAuthorized) && !prior.authorizationSourceHash) {
+      throw new Error('上次模拟动作没有可信员工请求来源记录；请先读取试跑状态，不会重放旧动作范围。')
+    }
+    if (prior?.businessActions?.some((action) => action.simulationAuthorized) && !prior.runId && prior.intentDigest !== intentDigest) {
+      throw new Error('上次模拟试跑结果尚待核对；请先读取该试跑状态，不会用新请求覆盖固定动作范围。')
+    }
+    if (userTurn && prior?.intentDigest === intentDigest && prior.authorizationSourceHash && prior.authorizationSourceHash !== userTurn.sourceHash) {
+      throw new Error('这组模拟输入与动作已绑定到另一条员工请求；请先读取原试跑状态，勿重复提交。')
+    }
     const trial = prior?.intentDigest === intentDigest ? prior : undefined
     if (!trial) {
       const sessionKey = claim.sessionPath ?? claim.token
+      const actions = this.businessActions(context, workflow)
+      const frozenActions = freezeDevelopmentTrialActions(workflowSimulationChoices(actions), selectors)
       const nextTrial: DevelopmentTrial = {
         teamId: context.teamId, workflowId: workflow.id, workflowName: workflow.name,
         revision: context.revision,
         requestId: stableUuid(`${context.accountKey}:${sessionKey}:${context.teamId}:${intentDigest}`),
         intentDigest,
+        ...(userTurn ? { authorizationSourceHash: userTurn.sourceHash } : {}),
+        simulationActionSelectors: [...selectors].sort(),
+        businessActions: frozenActions,
         stepNames: Object.fromEntries(workflow.graph_definition.nodes.map((node) => [node.id, node.label || '流程步骤'])),
       }
       this.trials.set(claim.token, nextTrial)
       await this.persist(claim)
-      return this.submitTrial(context, developer, nextTrial, actions, input, claim)
+      return this.submitTrial(context, developer, nextTrial, input, claim)
     }
-    return this.submitTrial(context, developer, trial, actions, input, claim)
+    return this.submitTrial(context, developer, trial, input, claim)
   }
 
-  private async submitTrial(context: DevelopmentContext, developer: { accountId: string }, trial: DevelopmentTrial, actions: EnterpriseBusinessCapability[], input: string, claim: CapabilityClaim): Promise<unknown> {
+  private async submitTrial(context: DevelopmentContext, developer: { accountId: string }, trial: DevelopmentTrial, input: string, claim: CapabilityClaim): Promise<unknown> {
+    if (!Array.isArray(trial.simulationActionSelectors) || !Array.isArray(trial.businessActions)) throw new Error('本次试跑固定动作范围缺失；不会用新的模拟授权重试')
+    let authorizationTurn: DevelopmentUserTurn | undefined
+    if (trial.businessActions.some((action) => action.simulationAuthorized)) {
+      authorizationTurn = await this.requireCurrentUserTurn(context, claim, this.userTurns.get(claim.token), trial.workflowId)
+      if (!trial.authorizationSourceHash || authorizationTurn.sourceHash !== trial.authorizationSourceHash) throw new Error('本次模拟动作与当前员工请求来源不一致；请核对试跑状态后重新提出模拟要求。')
+    }
+    if (context.teamId !== trial.teamId || context.revision !== trial.revision || await this.options.accountKey() !== context.accountKey) throw new Error('账号、团队或草稿修订已变化；本次固定试跑不会转移到新的开发上下文')
+    if (authorizationTurn && this.userTurns.get(claim.token) !== authorizationTurn) throw new Error('员工轮次已变化；本次模拟动作不会转移到新的员工请求。')
     const receipt = await this.options.workspace({
-      action: 'trial', teamId: context.teamId, accountId: developer.accountId,
+      action: 'trial', teamId: trial.teamId, accountId: developer.accountId,
       revision: trial.revision, workflowId: trial.workflowId, requestId: trial.requestId,
-      input, businessActions: actions,
+      input, businessActions: trial.businessActions,
     }) as DevelopmentTrialReceipt
     if (receipt?.request_id && receipt.request_id !== trial.requestId) throw new Error('Weave 返回了不同的试跑回执')
     if (typeof receipt?.run_id === 'string') trial.runId = receipt.run_id
@@ -485,7 +742,9 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
     const material = inputResult.value
     const activity = activityResult.status === 'fulfilled' ? activityResult.value : undefined
     if (activity?.status && ['succeeded', 'failed', 'cancelled'].includes(activity.status)) {
-      this.trials.set(claim.token, trial)
+      const legacyTrial = !Array.isArray(trial.simulationActionSelectors) || !Array.isArray(trial.businessActions)
+      if (legacyTrial) this.trials.delete(claim.token)
+      else this.trials.set(claim.token, trial)
       await this.persist(claim)
     }
     const completeness = activity?.completeness ?? {}
@@ -510,7 +769,7 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
           evidence: item.truncated ? 'Weave 仅保留了该步骤输出的截断内容，不能视为完整原文。' : 'Weave 实际保存的该步骤输出。',
         })),
         tools: (stage.tools ?? []).map((tool) => ({
-          name: tool.name ?? '工具调用', status: trialToolStatus(tool),
+          name: trialToolDisplayName(tool, trial.businessActions ?? context.catalog.capabilities), status: trialToolStatus(tool),
           ...(trialToolPayload(tool, 'input') !== undefined ? { actual_input: trialToolPayload(tool, 'input') } : {}),
           ...(trialToolPayload(tool, 'output') !== undefined ? { actual_output: trialToolPayload(tool, 'output') } : {}),
           ...(tool.input_state ? { input_state: tool.input_state, input_bytes: tool.input_bytes } : {}),
@@ -560,6 +819,10 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
     }
     if (remote.published_revision === context.revision) return { team: remote.document.name, status: '已更新', message: '该团队版本已经生效。' }
     requireDeclaredBusinessCompletion(context.document)
+    const trialBlocker = workflowTrialBlocker(remote)
+    if (trialBlocker) throw new Error(trialBlocker)
+    const readinessBlocker = publicationReadinessBlocker(remote, context.catalog)
+    if (readinessBlocker) throw new Error(readinessBlocker)
     try {
       const updated = await this.options.workspace({ action: 'publish', teamId: context.teamId, accountId: developer.accountId, revision: context.revision }) as TeamWorkspace
       if (!updated || updated.published_revision !== context.revision) throw new Error('Weave 尚未确认本次团队版本已生效')
@@ -582,6 +845,8 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
   }
 
   protected async dispatch(method: string, params: Record<string, unknown>, claim: CapabilityClaim): Promise<unknown> {
+    const sourceAtDispatch = ['open', 'save', 'trial'].includes(method) ? this.userTurns.get(claim.token) : undefined
+    let contextAtDispatch = method === 'open' ? this.contexts.get(claim.token) : undefined
     const developer = await this.options.developer()
     if (method === 'list') {
       const teams = await this.options.teams()
@@ -604,13 +869,17 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       if (candidates.length !== 1) throw new Error('请使用当前账号可开发且不重复的准确团队名称')
       const teamId = candidates[0]!.id
       if (!this.contexts.has(claim.token) && claim.sessionPath) await this.restore(await this.options.accountKey(), claim.sessionPath, claim.token)
+      if (!contextAtDispatch) contextAtDispatch = this.contexts.get(claim.token)
       const [draft, catalog] = await Promise.all([this.options.team(teamId, developer.accountId), this.options.catalog()])
       const previous = this.contexts.get(claim.token)
       if (previous && previous.teamId !== teamId && (previous.proposal || previous.pendingSave)) throw new Error('当前团队有未处理修改，先保存或解决后再切换团队')
       if (previous?.teamId === teamId && previous.pendingSave) {
         const attempt = previous.pendingSave
         if (draft.revision > attempt.baseRevision && sameDocument(draft.document, attempt.proposal.document)) {
+          if (this.contexts.get(claim.token) !== contextAtDispatch) throw new Error('当前团队开发上下文已变化；请重新读取后再打开团队。')
+          const previousIdentity = this.draftIdentity(previous)
           this.acceptSavedDocument(previous, draft)
+          this.rebindUserTurnAfterControlledSave(claim.token, sourceAtDispatch, previousIdentity, previous)
           await this.persist(claim)
           return { name: draft.document.name, objective: draft.document.objective, message: '上次团队修改已保存，当前草稿已同步。' }
         }
@@ -626,7 +895,9 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
         await this.persist(claim)
         return { name: previous.document.name, objective: previous.document.objective, message: '该团队已有提案且远端草稿已变化；提案仍保留，请先处理草稿冲突。' }
       }
-      this.contexts.set(claim.token, { accountKey: await this.options.accountKey(), teamId, revision: draft.revision, document: structuredClone(draft.document), catalog, stale: false })
+      const nextContext: DevelopmentContext = { accountKey: await this.options.accountKey(), teamId, revision: draft.revision, document: structuredClone(draft.document), catalog, stale: false }
+      this.assertPiOpenContextChange(claim.token, sourceAtDispatch, contextAtDispatch, nextContext)
+      this.contexts.set(claim.token, nextContext)
       this.createProposals.delete(claim.token)
       await this.persist(claim)
     }
@@ -642,8 +913,8 @@ export class TeamDevelopmentAgentBridge extends CapabilityBridge {
       await this.persist(claim)
       return { changes: proposal.changes, message: '修改已在 Pi 主会话右侧的团队开发面板待审，尚未应用、保存或发布。' }
     }
-    if (method === 'save') return this.saveTeam(context, developer, params.operations, claim)
-    if (method === 'trial') return this.runTrial(context, developer, params, claim)
+    if (method === 'save') return this.saveTeam(context, developer, params.operations, claim, sourceAtDispatch)
+    if (method === 'trial') return this.runTrial(context, developer, params, claim, sourceAtDispatch)
     if (method === 'trial_status') return this.trialStatus(context, developer, claim)
     if (method === 'update_team') return this.updateTeam(context, developer, claim)
     throw new Error('不支持的团队开发操作')

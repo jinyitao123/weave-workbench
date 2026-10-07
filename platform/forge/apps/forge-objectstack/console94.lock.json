@@ -1,29 +1,32 @@
 {
   "schemaVersion": 1,
   "source": {
-    "repository": "https://github.com/objectstack-ai/objectui.git",
-    "revision": "94f5a3095c920515fc5a96e519d303e3932e8f8e",
+    "repository": "https://github.com/jinyitao123/objectui.git",
+    "revision": "3da03952f2b6dd437f80d3e5cb5300b55ace6b9e",
     "packageName": "@object-ui/console",
     "packageVersion": "17.6.0",
     "nodeVersion": "24.19.0",
     "pnpmVersion": "10.31.0",
-    "buildCommand": "VITE_BASE_PATH=/_console/ pnpm -r --filter @object-ui/console... build"
+    "buildCommand": "VITE_BASE_PATH=/_console/ VITE_UI_PROFILE=compact-enterprise pnpm -r --filter @object-ui/console... build",
+    "uiProfile": "compact-enterprise"
   },
   "forge": {
-    "cliVersion": "17.3.0",
+    "cliVersion": "17.5.0",
     "consolePackageName": "@objectstack/console",
-    "runtimeImage": "ghcr.io/objectstack-ai/objectstack:17.3.0",
-    "runtimeImageDigest": "sha256:2b1f7efb8fcab00fd6b7cf741faa7ab6d75866d6b7b6e6b8b1bec69ce8f6e0ce",
-    "runtimeImageReference": "ghcr.io/objectstack-ai/objectstack:17.3.0@sha256:2b1f7efb8fcab00fd6b7cf741faa7ab6d75866d6b7b6e6b8b1bec69ce8f6e0ce",
-    "registryDigestVerifiedAt": "2026-09-23"
+    "runtimeImage": "ghcr.io/objectstack-ai/objectstack:17.5.0",
+    "runtimeImageDigest": "sha256:6f5b00409c75bf98bb3f7592f6f5e4fc9a8d6f919b7b41923bc4c87a09400523",
+    "runtimeImageReference": "ghcr.io/objectstack-ai/objectstack:17.5.0@sha256:6f5b00409c75bf98bb3f7592f6f5e4fc9a8d6f919b7b41923bc4c87a09400523",
+    "registryDigestVerifiedAt": "2026-10-02"
   },
   "artifact": {
     "basePath": "/_console/",
     "upstreamReferenceTreeSha256": "29d4daf2918777611ee53ae59add30630dc829e01f98492eb62eaa2b182e5303",
-    "referenceNotes": "The raw reference tree includes stats.html, which embeds the temporary absolute build path; that build-only report is excluded from the shipped bundle.",
-    "runtimeSourceTreeSha256": "c4e483d70c2d9b57226cea7dc242f9e93445822657ce5407ad9c34b8ea112e78",
-    "excludedBuildOnlyFiles": ["stats.html"],
-    "rawIndexSha256": "5bc4b5a64bb5276078cf37d3efddcac01e0a36d6c98be21f377d512580e99694",
+    "referenceNotes": "The upstreamReferenceTreeSha256 records the original 94f5a309 upstream baseline. The forked source revision and its runtime/packaged hashes below identify this Console build. stats.html embeds a temporary absolute build path and is excluded.",
+    "runtimeSourceTreeSha256": "0666c4d4d40e898024adcc92f8ea73cb6d4ac17e9f0859aa9c82f4f5f47c122c",
+    "excludedBuildOnlyFiles": [
+      "stats.html"
+    ],
+    "rawIndexSha256": "41c01632e964b5477fe65cc66017ca1b0babf061b931fda586c71cff95813066",
     "patches": [
       {
         "path": "index.html",
@@ -34,9 +37,9 @@
       {
         "path": "dist/.objectui-sha",
         "description": "Stamp the exact ObjectUI source revision consumed by ObjectStack CLI drift reporting.",
-        "content": "94f5a3095c920515fc5a96e519d303e3932e8f8e"
+        "content": "3da03952f2b6dd437f80d3e5cb5300b55ace6b9e"
       }
     ],
-    "packagedTreeSha256": "99962f68ff9bd9e8de5b89aeb130288dbd832fa178fb7c9790571b6be2eee54a"
+    "packagedTreeSha256": "3cce1a07189133d8660002c5e312a59bd17026416c0b06e947a54833e0c774ca"
   }
 }

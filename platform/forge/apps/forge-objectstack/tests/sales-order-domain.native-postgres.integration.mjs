@@ -14,11 +14,12 @@ import { SalesOrderBusinessPlugin } from '../src/plugins/sales-order-business.pl
 import { SalesOrderApprovalFlow } from '../src/flows/sales-order-approval.flow.ts';
 import { ApprovalWorkbenchContextPlugin } from '../src/plugins/approval-workbench-context.plugin.ts';
 import { ORDER_APPROVAL_MCP_RECALL_TARGET, ORDER_APPROVAL_MCP_APPROVE_TARGET, ORDER_APPROVAL_MCP_REJECT_TARGET } from '../src/actions/approval-workbench.action.ts';
+import * as nativeApprovalActions from '../src/actions/approval-workbench.action.ts';
 import { businessActionPolicy } from '../src/plugins/business-action-policy.ts';
 import { completedOrderApproval } from '../src/plugins/sales-order-readiness.ts';
 import { SIGNATURE_TARGET, ORDER_CONDITIONS_TARGET, CONTRACT_ORDER_TARGET, ORDER_SUBMIT_TARGET, CONTRACT_PREPAYMENT_TARGET, PREPAYMENT_CONFIRM_TARGET, ORDER_APPLY_APPROVAL_TARGET } from '../src/plugins/sales-order-domain.ts';
 
-const { SystemFile, installFileReferenceHooks } = await import('../node_modules/.pnpm/@objectstack+service-storage@17.3.0/node_modules/@objectstack/service-storage/dist/index.js');
+const { SystemFile, installFileReferenceHooks } = await import('../node_modules/.pnpm/@objectstack+service-storage@17.5.0/node_modules/@objectstack/service-storage/dist/index.js');
 const sys = { isSystem: true, positions: [], permissions: [] };
 const simple = (name, fields) => ObjectSchema.create({ name, fields: { name: Field.text({}), ...fields, organization_id: Field.text({}) } });
 const extend = object => ObjectSchema.create({ ...object, fields: { ...object.fields, organization_id: Field.text({}), owner_id: Field.text({}) } });
@@ -28,7 +29,7 @@ test('sales order native actions and approval preserve role, payment and atomic 
 }, async t => {
   const org = randomUUID(), sales = randomUUID(), signature = randomUUID(), finance = randomUUID(), financeReviewer = randomUUID(), operator = randomUUID(), reviewer = randomUUID();
   const system = { ...sys, tenantId: org }, engine = new ObjectQL();
-  const driver = new SqlDriver({ client: 'pg', connection: { host: '127.0.0.1', port: Number(process.env.FORGE_SALES_ORDER_PG_PORT || 55439), database: 'forge_sales_order_test', user: 'postgres' } });
+  const driver = new SqlDriver({ client: 'pg', connection: { host: '127.0.0.1', port: Number(process.env.FORGE_SALES_ORDER_PG_PORT || 55439), database: process.env.FORGE_SALES_ORDER_PG_DATABASE || 'forge_sales_order_test', user: process.env.FORGE_SALES_ORDER_PG_USER || 'postgres' } });
   const objects = [
     ...[SalesContract, SalesContractLine, SalesOrder, SalesOrderLine, CustomerPrepayment].map(extend),
     simple('sys_user', { email: Field.text({}), banned: Field.boolean({}), ban_expires: Field.datetime({}) }),
@@ -54,6 +55,8 @@ test('sales order native actions and approval preserve role, payment and atomic 
   const routes = new Map();
   const base = { name: 'com.objectstack.engine.objectql', version: '1.0.0', type: 'standard', init(ctx) {
     ctx.registerService('objectql', engine); ctx.registerService('data', engine); ctx.registerService('storage', storage); ctx.registerService('manifest', { register() {} });
+    const definitions = Object.values(nativeApprovalActions).filter(value => value && typeof value === 'object' && value.name);
+    ctx.registerService('metadata', { async getDiagnosed(type, name) { return { data: type === 'action' ? definitions.find(value => value.name === name) : undefined, degraded: false, errors: [] }; } });
     ctx.registerService('http.server', { get(path, handler) { routes.set(path, handler); }, post() {}, put() {}, patch() {}, delete() {} });
     ctx.registerService('auth', { api: { async getSession({ headers }) {
       const actor = headers.get('authorization')?.slice(7);
@@ -300,11 +303,12 @@ test('sales order native actions and approval preserve role, payment and atomic 
     assert.equal(Number((await read('forge_sales_contract', rejectedContract)).ordered_amount), 0);
     assert.equal(Number((await read('forge_sales_contract_line', rejectedLine)).ordered_quantity), 0);
     const durableRequest = await read('sys_approval_request', orphan.request.id);
-    const sibling = await insert('sys_approval_request', { ...durableRequest, id: randomUUID(), status: 'pending' });
+    const storedRequest = Object.fromEntries(Object.entries(durableRequest).filter(([field]) => SysApprovalRequest.fields[field]?.type !== 'formula'));
+    const sibling = await insert('sys_approval_request', { ...storedRequest, id: randomUUID(), status: 'pending' });
     assert.equal(await completedOrderApproval(engine, pendingOrder, system), undefined, 'a pending sibling never becomes a completed order');
     await assert.rejects(action(operator, 'forge_sales_order', orphan.order.id, ORDER_APPLY_APPROVAL_TARGET), /未完成的原生审批/);
     await engine.delete('sys_approval_request', { where: { id: sibling.id, organization_id: org }, multi: true, context: system });
-    const duplicate = await insert('sys_approval_request', { ...durableRequest, id: randomUUID() });
+    const duplicate = await insert('sys_approval_request', { ...storedRequest, id: randomUUID() });
     assert.equal(await completedOrderApproval(engine, pendingOrder, system), undefined, 'multiple native outcomes are not guessed');
     await assert.rejects(action(operator, 'forge_sales_order', orphan.order.id, ORDER_APPLY_APPROVAL_TARGET), /不可唯一核验/);
     await engine.delete('sys_approval_request', { where: { id: duplicate.id, organization_id: org }, multi: true, context: system });

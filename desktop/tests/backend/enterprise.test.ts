@@ -42,6 +42,13 @@ function workOverviewFetch(route: (url: string, init?: RequestInit) => Response 
   }) as typeof fetch
 }
 
+function legacyNativeTools(id: unknown): Response {
+  return Response.json({ jsonrpc: '2.0', id, result: { tools: [{ name: 'run_action', inputSchema: {
+    type: 'object', properties: { actionName: { type: 'string' }, objectName: { type: 'string' }, recordId: { type: 'string' }, params: { type: 'object' } },
+    required: ['actionName', 'objectName'], additionalProperties: false,
+  } }] } })
+}
+
 function notificationResponse(value: { success?: boolean; notifications?: unknown[]; data?: { notifications?: unknown[] } }, init?: ResponseInit): Response {
   return Response.json({ version: '1', notifications: value.notifications ?? value.data?.notifications ?? [], next_cursor: null, has_more: false }, init)
 }
@@ -123,7 +130,8 @@ describe('EnterpriseService', () => {
       if (url === 'http://forge/api/v1/mcp') {
         const body = JSON.parse(String(init?.body)) as Record<string, unknown>
         calls.push({ url, authorization: new Headers(init?.headers).get('Authorization') ?? undefined, body })
-        return Response.json({ jsonrpc: '2.0', id: 'current-item-action', result: { structuredContent: receipt } })
+        if (body.method === 'tools/list') return legacyNativeTools(body.id)
+        return Response.json({ jsonrpc: '2.0', id: body.id, result: { structuredContent: receipt } })
       }
       return undefined
     })
@@ -131,9 +139,9 @@ describe('EnterpriseService', () => {
     await service.signIn('reviewer@example.test', 'secret')
     const currentAssertions = vi.fn(async () => undefined)
 
-    await expect(service.runNativeMcpAction(args, currentAssertions)).resolves.toEqual({ status: 'returned', result: receipt })
-    expect(currentAssertions).toHaveBeenCalledTimes(2)
-    expect(calls).toEqual([{
+    await expect(service.runNativeMcpAction(args, currentAssertions, false, async () => undefined)).resolves.toEqual({ status: 'returned', result: receipt })
+    expect(currentAssertions).toHaveBeenCalledTimes(3)
+    expect(calls.filter(call => call.body?.method === 'tools/call')).toEqual([{
       url: 'http://forge/api/v1/mcp', authorization: 'Bearer forge-token-reviewer@example.test',
       body: expect.objectContaining({ method: 'tools/call', params: { name: 'run_action', arguments: args } }),
     }])
@@ -144,14 +152,18 @@ describe('EnterpriseService', () => {
       Response.json({ jsonrpc: '2.0', id: 'action-1', result: { isError: true, structuredContent: { code: 'APPROVAL_ACTION_IN_DOUBT' } } }),
       Response.json({ jsonrpc: '2.0', id: 'action-2', result: { isError: true, structuredContent: { code: 'APPROVAL_ACTION_STALE' } } }),
     ]
-    const fetchMock = workOverviewFetch((url) => url === 'http://forge/api/v1/mcp' ? responses.shift() : undefined)
+    const fetchMock = workOverviewFetch((url, init) => {
+      if (url !== 'http://forge/api/v1/mcp') return undefined
+      const body = JSON.parse(String(init?.body)) as Record<string, unknown>
+      return body.method === 'tools/list' ? legacyNativeTools(body.id) : responses.shift()
+    })
     const service = new EnterpriseService({ environment: { WORKBENCH_FORGE_URL: 'http://forge', WORKBENCH_WEAVE_URL: 'http://weave' }, fetch: fetchMock })
     await service.signIn('reviewer@example.test', 'secret')
     const args = { actionName: 'metadata_action', objectName: 'forge_case_record', recordId: 'record-1', params: { approvalRequestId: 'request-1', itemVersion: 'round-1', sourceMaterialVersion: 'b'.repeat(64), comment: '意见' } }
     const assertCurrent = async () => undefined
 
-    await expect(service.runNativeMcpAction(args, assertCurrent)).resolves.toMatchObject({ status: 'unknown', code: 'APPROVAL_ACTION_IN_DOUBT' })
-    await expect(service.runNativeMcpAction(args, assertCurrent)).resolves.toMatchObject({ status: 'rejected', code: 'APPROVAL_ACTION_STALE' })
+    await expect(service.runNativeMcpAction(args, assertCurrent, false, async () => undefined)).resolves.toMatchObject({ status: 'unknown', code: 'APPROVAL_ACTION_IN_DOUBT' })
+    await expect(service.runNativeMcpAction(args, assertCurrent, false, async () => undefined)).resolves.toMatchObject({ status: 'rejected', code: 'APPROVAL_ACTION_STALE' })
   })
 
   it('reads native approval action history through the existing request route', async () => {

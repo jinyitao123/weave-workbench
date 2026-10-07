@@ -1,3 +1,12 @@
+import { ProjectBusinessDatePlugin } from './src/plugins/project-business-date.plugin.js';
+import { OrganizationBusinessDateQueryPlugin } from './src/plugins/sales-performance-business-date.plugin.js';
+import { SalesPerformanceCalendarPlugin } from './src/plugins/sales-performance-calendar.plugin.js';
+import { ProjectRlsMembershipPlugin } from './src/plugins/project-rls-membership.plugin.js';
+import { ProjectMemberMaintenancePlugin } from './src/plugins/project-member-maintenance.plugin.js';
+import { ProjectWorkItemLifecyclePlugin } from './src/plugins/project-work-item-lifecycle.plugin.js';
+import { ProjectApprovalFinalizationPlugin } from './src/plugins/project-approval-finalization.plugin.js';
+import { SalesPerformanceApprovalFinalizationPlugin } from './src/plugins/sales-performance-approval-finalization.plugin.js';
+import { projectAttachmentNativeActionsPlugin } from './src/apps/project-attachment-native-actions.js';
 import { defineStack } from '@objectstack/spec';
 import { AutomationServicePlugin } from '@objectstack/service-automation';
 import { MessagingServicePlugin } from '@objectstack/service-messaging';
@@ -18,6 +27,7 @@ import { WeaveRunEventPlugin } from './src/plugins/weave-run-event.plugin.js';
 import { WorkbenchOwnedMaterialPlugin } from './src/plugins/workbench-owned-material.plugin.js';
 import { ApprovalWorkListPlugin } from './src/plugins/approval-work-list.plugin.js';
 import { ProjectMemberSharingPlugin } from './src/plugins/project-member-sharing.plugin.js';
+import { ProjectOrderBusinessPlugin } from './src/plugins/project-order-business.plugin.js';
 import { ServiceOrderReferenceSharingPlugin } from './src/plugins/service-order-reference-sharing.plugin.js';
 import { forgeApplicationPlugins } from './src/apps/index.js';
 import { sharedForgeCorePlugin } from './src/apps/shared-core.js';
@@ -32,7 +42,7 @@ export default defineStack({
   plugins: [
     new AutomationServicePlugin(),
     new MessagingServicePlugin(),
-    new ApprovalsServicePlugin({ recordReaderVisibleObjects: ['forge_sales_contract', 'forge_sales_order'] }),
+    new ApprovalsServicePlugin({ recordReaderVisibleObjects: ['forge_sales_contract', 'forge_sales_order', 'forge_sales_performance_confirmation', 'forge_sales_performance_rebook', 'forge_sales_performance_entry', 'forge_sales_performance_entry_source'] }),
     new SharingServicePlugin(),
     new ServiceFileReferenceTransactionBridgePlugin(),
     new ApprovalResubmitGuardPlugin({
@@ -51,9 +61,19 @@ export default defineStack({
     new ApprovalWorkbenchContextPlugin(),
     new ContractRevisionMaterialPlugin(),
     new ContractMaterialSubmissionPlugin(),
+    new ProjectApprovalFinalizationPlugin(),
+    new SalesPerformanceApprovalFinalizationPlugin(),
     sharedForgeCorePlugin,
+    projectAttachmentNativeActionsPlugin,
     ...forgeApplicationPlugins,
+    new ProjectBusinessDatePlugin(),
+    new OrganizationBusinessDateQueryPlugin(),
+    new SalesPerformanceCalendarPlugin(),
+    new ProjectRlsMembershipPlugin(),
+    new ProjectMemberMaintenancePlugin(),
+    new ProjectWorkItemLifecyclePlugin(),
     new ProjectMemberSharingPlugin(),
+    new ProjectOrderBusinessPlugin(),
     new ServiceOrderReferenceSharingPlugin(),
   ],
 });

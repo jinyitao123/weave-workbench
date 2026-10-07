@@ -190,15 +190,38 @@ describe('harness-aware IPC routing', () => {
   })
 
   it('passes captured employee input only to the Host and never adds it to the runtime command', async () => {
-    const employeeCommand = vi.fn(async () => undefined)
-    Object.assign(harness.services, { enterpriseBridge: { employeeCommand } })
+    const order: string[] = []
+    const employeeCommand = vi.fn(async () => { order.push('enterprise-command') })
+    const bindEnterpriseSession = vi.fn(() => { order.push('enterprise-bind') })
+    const bindDevelopmentSession = vi.fn(() => { order.push('development-bind') })
+    const beginEmployeeCommand = vi.fn((_runtimeId: string, type: string) => { order.push(`begin:${type}`) })
+    const captureTrustedEmployeeCommand = vi.fn(async () => { order.push('capture') })
+    harness.services.pi.agents.list.mockReturnValue([{ runtimeId: 'pi-runtime', harness: 'pi', sessionFile: PI_SESSION } as never])
+    Object.assign(harness.services, {
+      enterpriseBridge: { bindRuntimeSession: bindEnterpriseSession, employeeCommand },
+      teamDevelopmentBridge: { bindRuntimeSession: bindDevelopmentSession, beginEmployeeCommand, captureTrustedEmployeeCommand },
+    })
     const command = { type: 'prompt', message: '完整运行提示' }
     const employeeInput = { text: '员工原文', materials: [] }
     await harness.invoke('agent:command', 'pi-runtime', command, { employeeInput })
     expect(employeeCommand).toHaveBeenCalledWith('pi-runtime', command, undefined, undefined, undefined, employeeInput)
+    expect(bindEnterpriseSession).toHaveBeenCalledWith('pi-runtime', PI_SESSION)
+    expect(bindDevelopmentSession).toHaveBeenCalledWith('pi-runtime', PI_SESSION)
+    expect(beginEmployeeCommand).toHaveBeenCalledWith('pi-runtime', 'prompt')
+    expect(captureTrustedEmployeeCommand).toHaveBeenCalledWith('pi-runtime', command, employeeInput)
+    expect(order).toEqual(['enterprise-bind', 'development-bind', 'begin:prompt', 'enterprise-command', 'capture'])
     expect(harness.services.pi.agents.command).toHaveBeenCalledWith('pi-runtime', command)
     await expect(harness.invoke('agent:command', 'pi-runtime', { type: 'abort' }, { employeeInput })).rejects.toThrow('Employee input only belongs')
     expect(employeeCommand).toHaveBeenCalledOnce()
+    expect(beginEmployeeCommand).toHaveBeenLastCalledWith('pi-runtime', 'abort')
+  })
+
+  it('routes UI context invalidation to the runtime-bound team development bridge', async () => {
+    const invalidateEmployeeTurn = vi.fn()
+    Object.assign(harness.services, { teamDevelopmentBridge: { invalidateEmployeeTurn } })
+    await harness.invoke('enterprise:invalidate-team-development-turn', 'pi-runtime')
+    expect(invalidateEmployeeTurn).toHaveBeenCalledWith('pi-runtime')
+    expect(() => harness.invoke('enterprise:invalidate-team-development-turn', '')).toThrow('runtimeId')
   })
 
   it('concatenates all managers for agent:list', () => {

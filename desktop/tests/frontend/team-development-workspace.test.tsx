@@ -7,19 +7,22 @@ import { TeamDevelopmentInspector } from '../../src/components/inspector/TeamDev
 import { newMember } from '../../src/pages/team-workspace/member'
 import { initialGraph } from '../../src/pages/team-workspace/graph'
 import { runLabel } from '../../src/pages/team-workspace/TrialPanel'
-import type { EnterpriseBusinessCapabilityCatalog, EnterpriseDevelopmentOverview, PrimeWorkApi } from '../../src/types/api'
+import type { EnterpriseBusinessCapabilityCatalog, EnterpriseDevelopmentOverview, PrimeWorkApi, RuntimeInfo } from '../../src/types/api'
 import type { TeamWorkspace, TeamWorkspaceCommand } from '../../src/types/team-workspace'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let root: Root, container: HTMLDivElement, remote: TeamWorkspace, accountId = ''
 let testRun = 0
+let failNextTrial = false
 const overview: EnterpriseDevelopmentOverview = { version: '1', loadedAt: '', runtimes: [], models: ['deepseek-flash'], teams: [{ id: 'team', name: '合同团队', status: 'active', updatedAt: '', workflows: [], runs: [], workers: [] }] }
 const call = vi.fn(async (command: TeamWorkspaceCommand): Promise<unknown> => {
   if (command.action === 'save') { if (command.revision !== remote.revision) throw new Error('草稿冲突'); remote = { ...remote, revision: remote.revision + 1, document: command.document } }
+  if (command.action === 'trial' && failNextTrial) { failNextTrial = false; throw new Error('传输结果待核对') }
   return structuredClone(remote)
 })
 const getBusinessCapabilityCatalog = vi.fn(async (): Promise<EnterpriseBusinessCapabilityCatalog> => ({ version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [], refreshedAt: '' }))
-const enterprise = { teamWorkspace: call, createDevelopmentTeam: vi.fn(), getBusinessCapabilityCatalog, updateTeamDevelopment: vi.fn(async () => {}) } as unknown as PrimeWorkApi['enterprise']
+const invalidateTeamDevelopmentTurn = vi.fn(async (_runtimeId: string) => {})
+const enterprise = { teamWorkspace: call, createDevelopmentTeam: vi.fn(), getBusinessCapabilityCatalog, updateTeamDevelopment: vi.fn(async () => {}), invalidateTeamDevelopmentTurn, getTeamDevelopmentState: vi.fn(async () => ({})) } as unknown as PrimeWorkApi['enterprise']
 const agent = { onEvent: () => () => {} } as unknown as PrimeWorkApi['agent']
 
 const buttons = () => [...document.querySelectorAll<HTMLButtonElement>('button')]
@@ -33,7 +36,7 @@ async function edit(label: string, value: string) {
   if (!input) throw new Error(`Missing field ${label}`)
   await act(async () => { Object.getOwnPropertyDescriptor(input instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype, 'value')!.set!.call(input, value); input.dispatchEvent(new Event('input', { bubbles: true })) })
 }
-async function open(view: 'division' | 'workflow' = 'division') { await act(async () => root.render(<TeamDevelopmentInspector enterprise={enterprise} agent={agent} accountId={accountId} overview={overview} loading={false} onRefresh={() => {}} view={view}/>)) }
+async function open(view: 'division' | 'workflow' = 'division', runtime?: RuntimeInfo, teamOverview = overview) { await act(async () => root.render(<TeamDevelopmentInspector enterprise={enterprise} agent={agent} accountId={accountId} runtime={runtime} overview={teamOverview} loading={false} onRefresh={() => {}} view={view}/>)) }
 async function selectMember(name: string) { await act(async () => [...container.querySelectorAll<HTMLButtonElement>('.team-member-list button')].find((b) => b.textContent?.includes(name))!.click()) }
 async function save() { await click('保存草稿') }
 const publishButton = () => buttons().find((button) => button.textContent?.trim() === '更新团队')
@@ -47,6 +50,7 @@ const contractAction = (params: NonNullable<EnterpriseBusinessCapabilityCatalog[
 
 beforeEach(() => {
   vi.clearAllMocks()
+  failNextTrial = false
   // Unsaved drafts survive remounts per account; a fresh account keeps tests independent.
   accountId = `developer-${++testRun}`
   const lead = newMember('deepseek-flash'), worker = newMember('deepseek-flash')
@@ -69,6 +73,21 @@ it('edits team details and a member, then saves one remote draft', async () => {
   expect(remote.document.members[1]!.relationship.duty).toBe('检查付款条款')
   expect(remote.document.objective).toBe('逐条核对原文')
   expect(remote.document.audience).toEqual(['sales_employee', 'delivery_reviewer'])
+})
+
+it('invalidates the current Pi request when the UI switches team or edits an unsaved document during streaming', async () => {
+  const otherTeam = { id: 'other-team', name: '其他团队', status: 'active' as const, updatedAt: '', workflows: [], runs: [], workers: [] }
+  const runtime = { runtimeId: 'pi-runtime', isStreaming: true, cwd: '/work' } as RuntimeInfo
+  await open('division', runtime, { ...overview, teams: [...overview.teams, otherTeam] })
+  await chooseProductOption('团队', '其他团队')
+  expect(invalidateTeamDevelopmentTurn).toHaveBeenCalledWith('pi-runtime')
+  const count = invalidateTeamDevelopmentTurn.mock.calls.length
+  await click('编辑')
+  await edit('团队目标', '未保存的界面目标修改')
+  await click('确定')
+  expect(invalidateTeamDevelopmentTurn.mock.calls.length).toBeGreaterThan(count)
+  expect(invalidateTeamDevelopmentTurn.mock.calls.every(([runtimeId]) => runtimeId === 'pi-runtime')).toBe(true)
+  expect(enterprise.updateTeamDevelopment).not.toHaveBeenCalled()
 })
 
 it.each([false, true])('keeps newer editor focus when delayed member-navigation focus arrives (editing=%s)', async (editing) => {
@@ -205,7 +224,7 @@ it('shows actual flow links and material bindings, and invalidates old trial app
   await save()
   expect(JSON.stringify(remote.document.workflows[0]!.graph_definition.nodes.find((n) => n.id === 'work')!.inputs)).not.toContain('run_input')
   expect(publishButton()?.disabled).toBe(true)
-  expect(container.textContent).toContain('当前草稿还需调试通过')
+  expect(container.textContent).toContain('流程“合同审核”还需通过当前草稿的试跑。')
 })
 
 it('keeps the explicitly selected executor through save and a fresh read', async () => {
@@ -315,4 +334,56 @@ it('prevents duplicate trial submission and names tool completion states', async
   expect(runLabel('tool_started')).toBe('工具调用中')
   expect(runLabel('tool_completed')).toBe('工具调用完成')
   expect(runLabel('tool_failed')).toBe('工具调用失败')
+})
+
+it.each([true, false])('updates the publication footer to server readiness %s after reading the current trial', async (allowed) => {
+  const action = contractAction([])
+  remote.document.members[1]!.configuration.businessCapabilityIds = [action.id]
+  remote.document.workflows[0]!.graph_definition.delivery_contract = {
+    version: 1, coverage: 'incomplete', output: { type: 'text' }, external_effects: 'required', external_effects_check_id: 'business-action-receipts',
+    required_checks: [{ id: 'business-action-receipts', title: '已授权业务动作具备成功回执', verifier_id: 'weave.business-action-receipts', verifier_version: 'v1', parameters: { required_capability_ids: [action.id], when_authorized: true, allow_needs_input: false } }],
+  }
+  remote.trials = [{ request_id: 'current-trial', revision: remote.revision, workflow_id: 'flow', run_id: 'run', status: 'succeeded', created_at: '' }]
+  const readiness = { ready: true, workflows: [{ workflow_id: 'flow', required_capability_ids: [action.id], covered_capability_ids: [action.id], missing_capability_ids: [], passed: true }] }
+  if (!allowed) remote.publication_readiness = readiness
+  getBusinessCapabilityCatalog.mockResolvedValueOnce({ version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [action], refreshedAt: '' })
+  await open('workflow')
+  expect(publishButton()?.disabled).toBe(allowed)
+
+  if (allowed) remote.publication_readiness = readiness
+  else delete remote.publication_readiness
+  call.mockImplementationOnce(async (command) => {
+    expect(command.action).toBe('activity')
+    return { status: 'succeeded', members: [], outputs: [] }
+  }).mockImplementationOnce(async (command) => {
+    expect(command.action).toBe('input')
+    return { input: '同一修订的固定输入', status: 'succeeded' }
+  })
+  await click('调试')
+  expect(publishButton()?.disabled).toBe(!allowed)
+  expect(container.querySelector('.team-panel__footer')?.textContent?.includes('无法确认')).toBe(!allowed)
+  expect(call.mock.calls.filter(([command]) => command.action === 'save' || command.action === 'publish')).toHaveLength(0)
+})
+
+it('keeps candidate actions closed by default and retries one fixed simulation scope', async () => {
+  const action = contractAction([])
+  remote.document.members[1]!.configuration.businessCapabilityIds = [action.id]
+  getBusinessCapabilityCatalog.mockResolvedValueOnce({ version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [action], refreshedAt: '' })
+  failNextTrial = true
+  await open('workflow'); await click('调试'); await edit('测试输入', '模拟合同检查')
+  const actionChoice = container.querySelector<HTMLButtonElement>('.product-switch')
+  expect(actionChoice?.getAttribute('aria-checked')).toBe('false')
+  expect(actionChoice?.textContent).toContain('本次未开放')
+  expect(container.textContent).not.toContain(action.id)
+  await act(async () => actionChoice!.click())
+  expect(container.querySelector<HTMLButtonElement>('.product-switch')?.getAttribute('aria-checked')).toBe('true')
+
+  await click('开始调试')
+  expect(container.querySelector('[role="alert"]')?.textContent).toContain('传输结果待核对')
+  await click('重试本次提交')
+  const trials = call.mock.calls.map(([command]) => command).filter((command) => command.action === 'trial')
+  expect(trials).toHaveLength(2)
+  expect(trials[0]!.requestId).toBe(trials[1]!.requestId)
+  expect(trials[0]!.businessActions).toMatchObject([{ id: action.id, simulationAuthorized: true }])
+  expect(trials[1]!.businessActions).toEqual(trials[0]!.businessActions)
 })

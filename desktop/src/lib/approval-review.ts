@@ -1,5 +1,6 @@
 /** Stable transcript marker used to restore a review session's read-only Host scope after restart. */
 import type { EnterpriseApprovalContextView, EnterpriseHumanTask } from '../types/api'
+import { quotationApprovalText } from './quotation-approval-presentation'
 
 export const APPROVAL_REVIEW_SESSION_MARKER = '此会话只用于当前审批事项的只读辅助。'
 
@@ -38,6 +39,7 @@ export async function openApprovalReviewInPi(
     '本次核对只依据下面的审批字段和材料；历史聊天不作为当前事实。请区分有依据的事实、疑点和缺失信息。',
     context.returnReason ? `当前审批意见：${context.returnReason}` : '',
     fields ? `Forge 业务字段：\n${fields}` : '',
+    quotationApprovalText(context.quotationLines),
     files,
     originals ? `已核验审批原件（部分提取须保留未读内容限制）：\n${originals}` : '',
     '当前打开只授权只读核对。请整理复核意见和疑点；不要把本次打开当作办理授权。之后只有我在新消息明确要求办理当前事项时，才读取当前Forge动作目录并按该条目办理。原生动作回执只说明该项动作结果，不等于审批流程完成；结果未知时先读取当前事项和原生动作历史，不重试。',

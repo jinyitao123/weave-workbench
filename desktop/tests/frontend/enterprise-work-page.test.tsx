@@ -98,6 +98,32 @@ it('shows submitted orders separately and sends only the viewed recall action wi
   expect(assistPi).not.toHaveBeenCalled()
 })
 
+it('shows complete frozen quotation rows and passes them to readonly Pi review without identity fields', async () => {
+  const context: EnterpriseApprovalContextView = { title: '测试报价', step: '报价复核', fields: [], files: [], quotationLines: {
+    version: '1', pricingVersion: 1, itemCount: 2, totalAmount: 2100, rows: [
+      { position: 1, name: '视觉设备', lineType: 'material', quantity: 2, taxedUnitPrice: 900, taxRate: 0, discountRate: 0, taxedSubtotal: 1800, unitName: '台' },
+      { position: 2, name: '安装培训', lineType: 'service', quantity: 1, taxedUnitPrice: 300, taxRate: 0, discountRate: 0, taxedSubtotal: 300 },
+    ],
+  } }
+  await act(async () => root.render(<EnterpriseWorkPage overview={{ ...overview, items: [] }} loading={false} error="" onRefresh={refresh}
+    onComplete={vi.fn(async () => undefined)} onInspect={vi.fn(async () => context)} onAssist={assistPi} onContinue={continueWork} />))
+  await act(async () => [...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === '查看材料')?.click())
+  const table = container.querySelector('.work-quotation-lines table')!
+  expect(table.textContent).toContain('视觉设备')
+  expect(table.textContent).toContain('安装培训')
+  expect(table.textContent).toContain('1800')
+  expect(container.textContent).toContain('提交核价版本 1 · 2 项 · 合计 2100')
+  const queuePrompt = vi.fn(), workspaceRef = { current: { project: undefined } }
+  await openApprovalReviewInPi(overview.tasks[0], {
+    enterprise: { pinApprovalReviewContext: vi.fn(async () => ({ handle: 'host-owned-context', context })) },
+    newSession: () => { workspaceRef.current.project = {} as never; return true },
+    workspace: { workspaceRef, queuePrompt }, setToast: vi.fn(),
+  })
+  expect(queuePrompt.mock.calls[0][0]).toContain('数量 2 台，含税单价 900')
+  expect(queuePrompt.mock.calls[0][0]).toContain('当前打开仍只授权查看')
+  expect(queuePrompt.mock.calls[0][0]).not.toContain('host-owned-context')
+})
+
 it('shows available work beside source-specific errors and offers retry without claiming the inbox is empty', async () => {
   await act(async () => root.render(<EnterpriseWorkPage
     overview={overview} loading={false} error="" onRefresh={refresh}

@@ -6,6 +6,7 @@ import { AudienceEditor } from '@/pages/team-workspace/AudienceEditor'
 import { FlowCanvas, ObjectMenu, stepTypeLabel } from '@/pages/team-workspace/TeamCanvas'
 import { StepInspector } from '@/pages/team-workspace/StepInspector'
 import { TrialPanel } from '@/pages/team-workspace/TrialPanel'
+import { publicationReadinessBlocker, workflowTrialBlocker } from '@/pages/team-workspace/development-trial'
 import { useTeamDraft } from '@/pages/team-workspace/useTeamDraft'
 import { addParallelBranch, canInsertSerialStep, configureWorkflowResultProtocol, initialGraph, insertStep, removeStep, serializeParallel, WORKBENCH_RESULT_PROTOCOL } from '@/pages/team-workspace/graph'
 import { isSystemManagedBusinessParameter, newMember } from '@/pages/team-workspace/member'
@@ -31,8 +32,9 @@ export function publishBlocker(current: TeamWorkspace, business: EnterpriseBusin
   if ([...ids].some((id) => business?.capabilities.find((item) => item.id === id)?.status !== 'available')) return '有不可用的业务动作'
   if (current.document.members.some((item) => item.configuration.businessCapabilityBindings.some((binding) => item.configuration.businessCapabilityIds.includes(binding.capabilityId) && binding.parameters.some((parameter) => isSystemManagedBusinessParameter(parameter.name))))) return '有需要移除的旧参数映射'
   if (!current.document.workflows.length) return '还没有工作流程'
-  if (!current.document.workflows.every((item) => current.trials.some((trial) => trial.workflow_id === item.id && trial.revision === current.revision && trial.status === 'succeeded'))) return '当前草稿还需调试通过'
-  return ''
+  const trialBlocker = workflowTrialBlocker(current)
+  if (trialBlocker) return trialBlocker
+  return publicationReadinessBlocker(current, business)
 }
 
 export function TeamDevelopmentWorkspace({ teamId, accountId, runtime, enterprise, overview, catalog, catalogError, proposal, bindRequested, refreshVersion, view, onBound, onClearProposal, onDirtyChange, onError, onPublish }: {
@@ -94,7 +96,7 @@ export function TeamDevelopmentWorkspace({ teamId, accountId, runtime, enterpris
   const step = flow?.graph_definition.nodes.find((item) => item.id === stepId) ?? flow?.graph_definition.nodes[0]
   const workers = doc.members.filter((item) => item.configuration.role === 'worker' && item.relationship.enabled)
   const stepExecutors = doc.members.filter((item) => item.relationship.enabled)
-  const editDocument = (next: TeamDefinition) => { edit(next); pendingDrafts.set(pendingKey, { revision: draft.revision, document: structuredClone(next) }); if (runtime?.runtimeId && !runtime.isStreaming) void enterprise.updateTeamDevelopment(runtime.runtimeId, { teamId, accountId, revision: draft.revision, document: next }).catch((cause) => onError(cause instanceof Error ? cause.message : 'Pi 上下文未同步')) }
+  const editDocument = (next: TeamDefinition) => { edit(next); pendingDrafts.set(pendingKey, { revision: draft.revision, document: structuredClone(next) }); if (runtime?.runtimeId) { void enterprise.invalidateTeamDevelopmentTurn(runtime.runtimeId).catch((cause) => onError(cause instanceof Error ? cause.message : 'Pi 当前轮次未清理')); if (!runtime.isStreaming) void enterprise.updateTeamDevelopment(runtime.runtimeId, { teamId, accountId, revision: draft.revision, document: next }).catch((cause) => onError(cause instanceof Error ? cause.message : 'Pi 上下文未同步')) } }
   const editFlow = (update: (item: TeamDefinition['workflows'][number]) => TeamDefinition['workflows'][number]) => { if (flow) editDocument({ ...doc, workflows: doc.workflows.map((item) => item.id === flow.id ? update(item) : item) }) }
   const applyProposal = () => {
     if (!proposal) return

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import type { EnterpriseApprovalAction, EnterpriseApprovalContext } from '../../../src/types/api'
 import type { NativeMcpActionArguments, NativeMcpActionAttempt } from '../enterprise'
 
-const RESERVED_ACTION_INPUTS = new Set(['actionName', 'approvalRequestId', 'itemVersion', 'sourceMaterialVersion', 'actorId', 'objectName', 'recordId'])
+const RESERVED_ACTION_INPUTS = new Set(['actionName', 'approvalRequestId', 'itemVersion', 'sourceMaterialVersion', 'actorId', 'objectName', 'recordId', 'confirm', 'requiresConfirmation'])
 
 function record(value: unknown): Record<string, unknown> | undefined {
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined
@@ -71,16 +71,104 @@ function nativeActionResult(value: unknown, args: NativeMcpActionArguments): Nat
     : { status: 'unknown', message: 'Forge 原生动作没有返回可核对回执。' }
 }
 
+function booleanConfirmationSchema(value: unknown): boolean {
+  const schema = record(value), properties = record(schema?.properties)
+  if (schema?.type !== 'object' || !properties || schema.$ref !== undefined
+    || schema.anyOf !== undefined || schema.oneOf !== undefined || schema.allOf !== undefined) {
+    throw new Error('Forge 原生动作工具声明无效')
+  }
+  const required = schema.required
+  if (!Array.isArray(required) || !required.includes('actionName') || required.some((key) => typeof key !== 'string')
+    || new Set(required).size !== required.length) throw new Error('Forge 原生动作工具声明无效')
+  for (const [name, type] of [['actionName', 'string'], ['objectName', 'string'], ['recordId', 'string'], ['params', 'object']]) {
+    const member = record(properties[name])
+    if (!member || member.type !== type || member.$ref !== undefined || member.anyOf !== undefined
+      || member.oneOf !== undefined || member.allOf !== undefined || member.not !== undefined) {
+      throw new Error('Forge 原生业务参数协议无效')
+    }
+  }
+  if (!Object.hasOwn(properties, 'confirm')) {
+    if (Array.isArray(required) && required.includes('confirm')) throw new Error('Forge 原生确认声明无效')
+    return false
+  }
+  const confirm = record(properties.confirm)
+  if (confirm?.type !== 'boolean' || confirm.$ref !== undefined || confirm.const !== undefined
+    || confirm.anyOf !== undefined || confirm.oneOf !== undefined || confirm.allOf !== undefined
+    || confirm.not !== undefined || confirm.nullable !== undefined
+    || confirm.default !== undefined && typeof confirm.default !== 'boolean'
+    || confirm.enum !== undefined && (!Array.isArray(confirm.enum) || confirm.enum.length !== 2
+      || !confirm.enum.includes(true) || !confirm.enum.includes(false))) {
+    throw new Error('Forge 原生确认字段不是严格布尔协议')
+  }
+  return true
+}
+
+async function readNativeConfirmationProtocol(
+  assertCurrent: () => Promise<void>, transport: NativeMcpActionTransport,
+): Promise<{ supported: boolean; snapshot: unknown }> {
+  const id = `current-item-tools-${randomUUID()}`
+  const { response, snapshot } = await transport.fetch({
+    method: 'POST', headers: { Accept: 'application/json, text/event-stream', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id, method: 'tools/list' }),
+    redirect: 'error', signal: AbortSignal.timeout(15_000),
+  })
+  const raw = await response.text()
+  transport.assertCurrentAuth(snapshot)
+  transport.assertAuthGeneration()
+  await assertCurrent()
+  if (response.status === 401) {
+    await transport.signOutIfCurrent(snapshot)
+    throw new Error('Forge 登录已失效')
+  }
+  if (!response.ok || raw.length > 1_000_000) throw new Error('Forge 原生动作工具协议暂不可核对')
+  const envelope = record(parseMcpResponse(raw)), result = record(envelope?.result)
+  if (envelope?.jsonrpc !== '2.0' || envelope.id !== id || envelope.error !== undefined
+    || !result || result.isError === true || !Array.isArray(result.tools) || result.nextCursor !== undefined) {
+    throw new Error('Forge 原生动作工具协议暂不可完整核对')
+  }
+  const actions = result.tools.filter((tool) => record(tool)?.name === 'run_action')
+  if (actions.length !== 1) throw new Error('Forge 原生动作工具必须唯一')
+  return { supported: booleanConfirmationSchema(record(actions[0])?.inputSchema), snapshot }
+}
+
 export async function callNativeMcpRunAction(
   args: NativeMcpActionArguments, assertCurrent: () => Promise<void>, transport: NativeMcpActionTransport,
+  requiresConfirmation?: boolean, assertBeforeDispatch?: () => Promise<void>,
 ): Promise<NativeMcpActionAttempt> {
-  await assertCurrent()
+  if (typeof requiresConfirmation !== 'boolean') return {
+    status: 'rejected', code: 'APPROVAL_ACTION_CONFIRMATION_UNKNOWN', message: 'Forge 没有提供当前动作的明确确认声明；未发送本次业务动作。',
+  }
+  if (!assertBeforeDispatch) return {
+    status: 'rejected', code: 'APPROVAL_ACTION_BINDING_MISMATCH', message: '本次办理缺少发送前的事项核验；未发送业务动作。',
+  }
+  if (!record(args) || Object.keys(args).length !== 4
+    || !onlyKeys(args as unknown as Record<string, unknown>, ['actionName', 'objectName', 'recordId', 'params'])
+    || !text(args.actionName, 128) || !text(args.objectName, 160) || !text(args.recordId, 128)
+    || !record(args.params) || Object.hasOwn(args.params, 'confirm')
+    || Object.hasOwn(args.params, 'requiresConfirmation')) return {
+    status: 'rejected', code: 'APPROVAL_ACTION_INVALID', message: '原生确认字段不能由业务参数提供；未发送本次业务动作。',
+  }
+  try {
+    transport.assertAuthGeneration()
+    await assertCurrent()
+    const protocol = await readNativeConfirmationProtocol(assertCurrent, transport)
+    if (requiresConfirmation && !protocol.supported) return {
+      status: 'rejected', code: 'APPROVAL_ACTION_CONFIRMATION_UNSUPPORTED', message: 'Forge 原生协议不支持本次必需确认；未发送业务动作。',
+    }
+    await assertBeforeDispatch()
+    // A fresh context read may have yielded to sign-out or account replacement.
+    transport.assertCurrentAuth(protocol.snapshot)
+    transport.assertAuthGeneration()
+  } catch {
+    return { status: 'rejected', code: 'APPROVAL_ACTION_PROTOCOL_UNAVAILABLE', message: '发送前无法完整核对原生协议或当前事项；未发送本次业务动作。' }
+  }
+  const argumentsWithConfirmation = requiresConfirmation ? { ...args, confirm: true } : args
   let response: Response
   let snapshot: unknown
   try {
     ({ response, snapshot } = await transport.fetch({
       method: 'POST', headers: { Accept: 'application/json, text/event-stream', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: `current-item-action-${randomUUID()}`, method: 'tools/call', params: { name: 'run_action', arguments: args } }),
+      body: JSON.stringify({ jsonrpc: '2.0', id: `current-item-action-${randomUUID()}`, method: 'tools/call', params: { name: 'run_action', arguments: argumentsWithConfirmation } }),
       redirect: 'error', signal: AbortSignal.timeout(15_000),
     }))
   } catch {
@@ -152,6 +240,7 @@ export function parseCurrentApprovalActions(
     const tool = execution?.tool
     const actionName = text(execution?.actionName, 128), objectName = text(execution?.objectName, 160)
     const recordId = text(execution?.recordId, 128)
+    const requiresConfirmation = execution?.requiresConfirmation
     const approvalRequestId = text(params?.approvalRequestId, 128)
     const nativeItemVersion = text(params?.itemVersion, 128)
     const sourceMaterialVersion = text(params?.sourceMaterialVersion, 64)
@@ -159,7 +248,8 @@ export function parseCurrentApprovalActions(
     if (!source || !execution || !params || !label || !description
       || source.semantic !== undefined && !semantic
       || !onlyKeys(source, ['semantic', 'label', 'description', 'execution', 'inputs'])
-      || !onlyKeys(execution, ['tool', 'actionName', 'objectName', 'recordId', 'params'])
+      || !onlyKeys(execution, ['tool', 'actionName', 'objectName', 'recordId', 'params', 'requiresConfirmation'])
+      || requiresConfirmation !== undefined && typeof requiresConfirmation !== 'boolean'
       || !onlyKeys(params, ['approvalRequestId', 'itemVersion', 'sourceMaterialVersion'])
       || tool !== 'run_action' || !actionName || !objectName || !recordId
       || !approvalRequestId || approvalRequestId !== context.requestId
@@ -181,6 +271,7 @@ export function parseCurrentApprovalActions(
       ...(semantic ? { semantic } : {}), label, description,
       execution: {
         tool: 'run_action', actionName, objectName, recordId,
+        ...(requiresConfirmation !== undefined ? { requiresConfirmation } : {}),
         params: { approvalRequestId, itemVersion: nativeItemVersion, sourceMaterialVersion },
       },
       inputs: [{ name: inputName, type: 'string', label: inputLabel, required: true }],

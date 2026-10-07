@@ -10,6 +10,13 @@ export interface BusinessActionPolicy {
 // Full object/action keys prevent one domain's personal action from masking an
 // unrelated action with the same short name. Native permissions still apply.
 const EMPLOYEE_ONLY = new Set([
+  'forge_customer.customer_create_project',
+  'forge_project.project_link_contract',
+  'forge_project.project_start',
+  'forge_quotation.quotation_submit',
+  'forge_quotation.quotation_send',
+  'forge_quotation.quotation_accept',
+  'forge_quotation.quotation_convert_to_contract',
   'forge_sales_contract.contract_register_signature',
   'forge_sales_contract.contract_set_order_conditions',
   'forge_sales_contract.contract_convert_to_sales_order',
@@ -29,7 +36,7 @@ const EMPLOYEE_ONLY = new Set([
   'forge_customer_prepayment.customer_prepayment_confirm',
 ]);
 
-const READ_ONLY = new Set(['forge_sales_contract.contract_submit_frozen_material']);
+const READ_ONLY = new Set(['forge_sales_contract.contract_submit_frozen_material', 'forge_project.project_read_delivery_scope']);
 
 export function businessActionPolicy(objectName: string, actionName: string): BusinessActionPolicy {
   const key = `${objectName}.${actionName}`;

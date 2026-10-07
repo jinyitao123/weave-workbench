@@ -6,7 +6,8 @@
   "main": "out/main/index.js",
   "desktopName": "weave-workbench.desktop",
   "author": {
-    "name": "Weave Workbench contributors"
+    "name": "Weave Workbench contributors",
+    "email": "260412432+jinyitao123@users.noreply.github.com"
   },
   "homepage": "https://github.com/jinyitao123/weave-workbench",
   "license": "MIT",

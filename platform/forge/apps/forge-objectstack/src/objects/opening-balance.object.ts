@@ -1,7 +1,7 @@
 import { Field } from '@objectstack/spec/data';
 import { master, text, code, reference, owner, remarks, required } from '../model.js';
 
-const amount = (label: string) => Field.currency({ label, precision: 18, scale: 4, min: 0 });
+const amount = (label: string) => Field.currency({ label, precision: 18, min: 0 });
 const onboardingStatus = (label: string) => Field.select([
   { value: 'open', label: '待建账' }, { value: 'completed', label: '已完成' }, { value: 'skipped', label: '已跳过' },
 ], { label, defaultValue: 'open' });

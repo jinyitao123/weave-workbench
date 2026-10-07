@@ -13,14 +13,16 @@ type MutableEngine = {
 
 const PACKAGE_ID = 'com.inoforge.forge.service-file-reference-transaction-bridge';
 const FILE_REFERENCE_FIELDS = new Set([
+  'forge_service_order\u0000onsite_evidence_attachments',
   'forge_quotation\u0000sent_evidence_attachment',
   'forge_quotation\u0000customer_acceptance_evidence_attachment',
+  'forge_project_attachment\u0000attachment',
 ]);
 const activeFileWrite = new AsyncLocalStorage<unknown>();
 const installedEngines = new WeakSet<object>();
 
 /**
- * ObjectStack 17.3/17.5's storage file-reference hooks write sys_file with a system
+ * ObjectStack 17.5's storage file-reference hooks write sys_file with a system
  * context that omits the enclosing SQL transaction. Carry the caller's
  * transaction to that narrow nested sys_file write only while an explicitly
  * listed file field is being inserted or updated.

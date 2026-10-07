@@ -17,6 +17,7 @@ const electronMocks = vi.hoisted(() => ({
 vi.mock('electron', () => electronMocks)
 
 const dirs: string[] = []
+const stores: JsonStateStore[] = []
 function identity(path: string): { dev: string; ino: string; birthtimeNs?: string } {
   const info = lstatSync(path, { bigint: true })
   return {
@@ -26,16 +27,23 @@ function identity(path: string): { dev: string; ino: string; birthtimeNs?: strin
   }
 }
 const identities = (...paths: string[]) => Object.fromEntries(paths.map((path) => [realpathSync(path), identity(path)]))
-afterEach(() => {
+afterEach(async () => {
   electronMocks.dialog.showOpenDialog.mockReset()
   electronMocks.dialog.showSaveDialog.mockReset()
+  await Promise.all(stores.splice(0).map((store) => store.beginShutdown()))
   for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true })
 })
+
+function makeStore(path: string): JsonStateStore {
+  const store = new JsonStateStore(path)
+  stores.push(store)
+  return store
+}
 
 function setup(): { root: string; service: ProjectService; store: JsonStateStore } {
   const dir = mkdtempSync(join(tmpdir(), 'prime-work-files-')); dirs.push(dir)
   const root = join(dir, 'project'); mkdirSync(root)
-  const store = new JsonStateStore(join(dir, 'state.json'))
+  const store = makeStore(join(dir, 'state.json'))
   const service = new ProjectService(store, () => null)
   return { root, service, store }
 }
@@ -914,7 +922,7 @@ describe('ProjectService file listing', () => {
     await expect(service.authorizeCwd(root)).rejects.toThrow(/identity changed/)
     await expect(service.listFiles(root)).rejects.toThrow(/identity changed/)
 
-    const restarted = new ProjectService(new JsonStateStore(resolve(root, '..', 'state.json')), () => null)
+    const restarted = new ProjectService(makeStore(resolve(root, '..', 'state.json')), () => null)
     restarted.bindProviders({ sessions: async () => [], branch: async () => undefined })
     await restarted.list()
     await expect(restarted.authorizeCwd(root)).rejects.toThrow(/identity changed/)

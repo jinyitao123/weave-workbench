@@ -161,6 +161,7 @@ export function approvalContextView(context: EnterpriseApprovalContext): Enterpr
     step: context.step,
     ...(context.returnReason !== undefined ? { returnReason: context.returnReason } : {}),
     fields: context.fields.map((field) => ({ ...field })),
+    ...(context.quotationLines ? { quotationLines: { ...context.quotationLines, rows: context.quotationLines.rows.map((row) => ({ ...row })) } } : {}),
     files: context.files.map(({ name, content, verified }) => ({ name, content, verified })),
     ...(context.originalFiles ? { originalFiles: context.originalFiles.map(({ name, mediaType, bytes, extraction }) => ({
       name, mediaType, bytes, verified: true,
@@ -766,16 +767,15 @@ export class EnterpriseService {
     return result
   }
 
-  async getEmployeeBusinessContext(selection: EmployeeBusinessSelection) {
-    const { parseEmployeeBusinessContext } = await import('./enterprise/employee-business-contract')
+  private async employeeBusinessReadAPI() {
+    const { EmployeeBusinessReadAPI } = await import('./enterprise/employee-business-read-api')
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    const query = new URLSearchParams({ objectName: selection.record.objectName, recordId: selection.record.recordId, sourceKind: selection.source.kind })
-    if (selection.source.reference) query.set('sourceRef', selection.source.reference)
-    const context = parseEmployeeBusinessContext(await this.forgeJSON(`/api/v1/workbench/business-actions/context?${query}`, generation, '本人业务动作'))
-    if (context.record.objectName !== selection.record.objectName || context.record.recordId !== selection.record.recordId
-      || context.source.kind !== selection.source.kind || context.source.reference !== selection.source.reference) throw new Error('当前业务来源与所选记录不一致')
-    return context
+    return new EmployeeBusinessReadAPI((path, label) => this.forgeJSON(path, generation, label))
+  }
+
+  async getEmployeeBusinessContext(selection: EmployeeBusinessSelection) {
+    return (await this.employeeBusinessReadAPI()).context(selection)
   }
 
   async executeEmployeeBusinessAction(request: EmployeeBusinessRequest) {
@@ -793,10 +793,23 @@ export class EnterpriseService {
   }
 
   async getEmployeeBusinessOperation(opKey: string) {
-    const { parseEmployeeBusinessOperation } = await import('./enterprise/employee-business-contract')
+    return (await this.employeeBusinessReadAPI()).operation(opKey)
+  }
+
+  async getEmployeeBusinessMaterial(selection: EmployeeBusinessSelection, assertCurrent: () => Promise<void>) {
+    const { readEmployeeBusinessMaterial } = await import('./enterprise/employee-business-materials')
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in') throw new Error('请先登录')
-    return parseEmployeeBusinessOperation(await this.forgeJSON(`/api/v1/workbench/business-actions/operations/${encodeURIComponent(opKey)}`, generation, '本人业务回执'))
+    return readEmployeeBusinessMaterial(selection, {
+      origin: this.forgeUrl.origin, assertCurrent,
+      context: () => this.getEmployeeBusinessContext(selection),
+      record: () => this.forgeMcpTool('get_record', { objectName: selection.record.objectName, recordId: selection.record.recordId }, generation),
+      url: (id) => this.forgeJSON(`/api/v1/storage/files/${encodeURIComponent(id)}/url`, generation, '业务原件'),
+      fetch: async (url) => {
+        const { response, snapshot } = await this.authenticatedFetch(url, 'forge', { redirect: 'error', headers: { 'Accept-Encoding': 'identity' }, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }, generation)
+        this.assertCurrentAuth(snapshot); return response
+      },
+    })
   }
 
   private async forgeMcpTool(
@@ -835,6 +848,7 @@ export class EnterpriseService {
 
   async runNativeMcpAction(
     args: NativeMcpActionArguments, assertCurrent: () => Promise<void>,
+    requiresConfirmation?: boolean, assertBeforeDispatch?: () => Promise<void>,
   ): Promise<NativeMcpActionAttempt> {
     const { session, generation } = await this.sessionSnapshot()
     if (session.status !== 'signed-in' || !this.forgeToken) throw new Error('请先登录以办理当前 Forge 事项')
@@ -845,7 +859,7 @@ export class EnterpriseService {
       assertCurrentAuth: (snapshot) => this.assertCurrentAuth(snapshot as EnterpriseAuthSnapshot),
       signOutIfCurrent: (snapshot) => this.signOutIfCurrent(snapshot as EnterpriseAuthSnapshot),
       assertAuthGeneration: () => this.assertAuthGeneration(generation),
-    })
+    }, requiresConfirmation, assertBeforeDispatch)
   }
 
   async getApprovalActionHistory(requestIdValue: string): Promise<unknown[]> {
@@ -1997,9 +2011,13 @@ export class EnterpriseService {
       throw new Error('Forge 审批上下文格式无效')
     }
     const { parseCurrentApprovalActions } = await import('./enterprise/approval-actions')
-    const availableActions = parseCurrentApprovalActions(approval.availableActions, {
+    const { parseQuotationApprovalLines } = await import('./enterprise/quotation-approval-lines')
+    const quotationLines = parseQuotationApprovalLines(approval.quotationLines, objectName)
+    const declaredActions = parseCurrentApprovalActions(approval.availableActions, {
       requestId: approvalId, businessObject: { objectName, recordId }, sourceMaterialVersion,
     })
+    const availableActions = objectName === 'forge_quotation' && !quotationLines
+      ? declaredActions?.filter((action) => action.semantic !== 'approve') : declaredActions
     if (isSubmittedOrder && (availableActions?.length !== 1
       || availableActions[0]?.semantic !== 'recall'
       || availableActions[0]?.execution.actionName !== 'order_approval_mcp_recall')) {
@@ -2012,7 +2030,7 @@ export class EnterpriseService {
       requestId: approvalId, status: isReturnedSubmitter ? 'returned' : 'pending', viewer: isSubmitter ? 'original_submitter' : 'current_approver',
       title, step, businessObject: { objectName, recordId, ...(recordName ? { recordName } : {}) }, sourceMaterialVersion,
       ...(isReturnedSubmitter ? { returnVersion, returnReason: returnReason as string } : {}),
-      fields, ...(availableActions !== undefined ? { availableActions } : {}),
+      fields, ...(quotationLines ? { quotationLines } : {}), ...(availableActions !== undefined ? { availableActions } : {}),
       files, ...(originalFiles ? { originalFiles } : {}),
     }
   }

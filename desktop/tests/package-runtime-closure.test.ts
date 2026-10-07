@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync, rmSync, rmdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { tmpdir } from 'node:os'
@@ -47,14 +47,29 @@ test.skipIf(process.platform !== 'darwin')('rejects a packaged missing transitiv
 })
 
 test.skipIf(process.platform !== 'darwin')('preserves existing custom QA output and refuses cross-platform custom output that cannot be verified', () => {
-  const directory = mkdtempSync(resolve('release', 'closure-output-test-'))
-  const args = ['scripts/release/package.mjs', '--qa', '--dry-run', '--output-directory', directory]
+  const releaseRoot = resolve('release')
+  const createdReleaseRoot = !existsSync(releaseRoot)
+  mkdirSync(releaseRoot, { recursive: true })
+  let parent: string | undefined
+  let cleanupError: unknown
   try {
+    parent = mkdtempSync(join(releaseRoot, 'closure-output-parent-'))
+    const directory = join(parent, 'output')
+    mkdirSync(directory)
+    const args = ['scripts/release/package.mjs', '--qa', '--dry-run', '--output-directory', directory]
     const existing = spawnSync(process.execPath, [...args, '--platform', 'mac'], { encoding: 'utf8' })
     expect(existing.status).not.toBe(0)
     expect(existing.stderr).toContain('existing QA artifacts are preserved')
     const unsupported = spawnSync(process.execPath, [...args, '--platform', 'win'], { encoding: 'utf8' })
     expect(unsupported.status).not.toBe(0)
     expect(unsupported.stderr).toContain('macOS packaging only')
-  } finally { rmSync(directory, { recursive: true, force: true }) }
+  } finally {
+    if (parent) rmSync(parent, { recursive: true, force: true })
+    if (createdReleaseRoot) {
+      try { rmdirSync(releaseRoot) } catch (error) {
+        if (!['ENOENT', 'ENOTEMPTY', 'EEXIST'].includes((error as NodeJS.ErrnoException).code ?? '')) cleanupError = error
+      }
+    }
+  }
+  if (cleanupError !== undefined) throw cleanupError
 })

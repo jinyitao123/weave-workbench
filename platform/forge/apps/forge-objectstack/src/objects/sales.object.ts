@@ -3,7 +3,7 @@ import { master, dictionary, text, code, reference, choice, owner, remarks, requ
 
 const positiveQuantity = (label = '数量') => Field.number({ label, min: 0.0001, scale: 4, ...required });
 const percentage = (label: string, defaultValue = 0) => Field.number({ label, min: 0, max: 100, scale: 4, defaultValue });
-const nonNegativeMoney = (label: string, scale = 4) => Field.currency({ label, precision: 18, scale, min: 0 });
+const nonNegativeMoney = (label: string) => Field.currency({ label, precision: 18, min: 0 });
 const paymentMethod = () => choice('付款方式', ['银行转账', '支付宝', '微信支付', '现金', '支票', '其他', '电汇', '承兑汇票', '在线支付', '信用证']);
 const revenueTrigger = () => choice('收入确认方式', ['按发货出库', '按开票', '按里程碑', '按验收', '按周期', '手动确认'], '按发货出库');
 
@@ -30,12 +30,18 @@ export const Quotation = ObjectSchema.create({
     status: { ...choice('报价状态', ['草稿', '待审批', '已审批', '已驳回', '已发送', '已接受'], '草稿'), readonly: true },
     submitted_at: Field.datetime({ label: '提交审批时间', readonly: true }), submitted_by: Field.user({ label: '提交员工', readonly: true }),
     submitted_pricing_version: Field.number({ label: '提交核价版本', min: 0, scale: 0, readonly: true }),
+    approved_pricing_version: Field.number({ label: '审批核价版本', min: 0, scale: 0, readonly: true, hidden: true }),
+    submitted_content_sha256: Field.text({ label: '提交报价内容摘要', maxLength: 64, readonly: true, hidden: true }),
+    submitted_line_snapshot: Field.textarea({ label: '提交报价明细快照', readonly: true, hidden: true }),
+    submitted_action_receipt: Field.textarea({ label: '报价提交原生回执', readonly: true, hidden: true }),
     sent_evidence_attachment: Field.file({ label: '发送凭证', readonly: true }),
-    sent_evidence_note: Field.textarea({ label: '发送说明', readonly: true }), sent_at: Field.datetime({ label: '发送时间', readonly: true }),
+    sent_evidence_note: Field.textarea({ label: '发送说明', maxLength: 2000, readonly: true }), sent_at: Field.datetime({ label: '发送时间', readonly: true }),
+    sent_evidence_sha256: Field.text({ label: '发送原件摘要', maxLength: 64, readonly: true, hidden: true }),
     sent_by: Field.user({ label: '发送员工', readonly: true }), sent_pricing_version: Field.number({ label: '发送核价版本', min: 0, scale: 0, readonly: true }),
     sent_evidence_request_signature: Field.textarea({ label: '发送请求身份', readonly: true, hidden: true }),
     customer_acceptance_evidence_attachment: Field.file({ label: '客户接受凭证', readonly: true }),
-    customer_acceptance_note: Field.textarea({ label: '客户接受说明', readonly: true }),
+    customer_acceptance_note: Field.textarea({ label: '客户接受说明', maxLength: 2000, readonly: true }),
+    customer_acceptance_evidence_sha256: Field.text({ label: '客户接受原件摘要', maxLength: 64, readonly: true, hidden: true }),
     accepted_at: Field.datetime({ label: '接受记录时间', readonly: true }), accepted_by: Field.user({ label: '接受记录员工', readonly: true }),
     accepted_pricing_version: Field.number({ label: '接受核价版本', min: 0, scale: 0, readonly: true }),
     customer_acceptance_request_signature: Field.textarea({ label: '客户接受请求身份', readonly: true, hidden: true }),
@@ -328,10 +334,18 @@ export const GoodwillOrder = master('forge_goodwill_order', 'Goodwill订单', 'g
   responsible_id: owner(true), remarks: remarks(),
 }, ['code', 'customer_id', 'project_id', 'contact_name', 'gift_type', 'reason', 'item_summary', 'quantity', 'status', 'shipment_code', 'shipment_status', 'shipped_quantity', 'responsible_id']);
 
-export const SalesTeam = master('forge_sales_team', '销售团队', 'users', {
-  name: text('团队名称', true), code: code('团队编码'), manager_id: Field.user({ label: '负责人' }), member_count: Field.number({ label: '成员数', min: 0, scale: 0, defaultValue: 0 }),
-  status: Field.select([{ value: 'active', label: '启用' }, { value: 'inactive', label: '停用' }], { label: '状态', defaultValue: 'active' }), remarks: remarks(),
-}, ['code', 'name', 'manager_id', 'member_count', 'status']);
+export const SalesTeam = ObjectSchema.create({ ...master('forge_sales_team', '销售团队', 'users', {
+  name: Field.text({ label: '销售组织名称', ...required, readonly: true }),
+  code: Field.text({ label: '组织编码快照', maxLength: 100, readonly: true, hidden: true }),
+  business_unit_id: { ...Field.lookup('sys_business_unit', { label: '原生业务单元', relatedList: false, unique: 'organization', deleteBehavior: 'restrict' }), readonly: true },
+  manager_id: { ...Field.user({ label: '历史负责人快照' }), readonly: true, hidden: true },
+  member_count: { ...Field.number({ label: '历史成员数快照', min: 0, scale: 0 }), readonly: true, hidden: true },
+  status: { ...Field.select([{ value: 'active', label: '启用' }, { value: 'inactive', label: '停用' }], { label: '关联状态', defaultValue: 'active' }), readonly: true, hidden: true },
+  remarks: Field.textarea({ label: '销售组织说明', maxLength: 2000 }),
+  revision: Field.number({ label: '版本', min: 1, scale: 0, readonly: true, hidden: true }),
+  request_key: Field.text({ label: '最近请求标识', maxLength: 100, unique: 'organization', readonly: true, hidden: true }),
+  request_signature: Field.textarea({ label: '最近请求签名', readonly: true, hidden: true }),
+}, ['business_unit_id', 'name', 'status', 'remarks']), enable: { apiEnabled: true, apiMethods: ['get', 'list'], searchable: true, trackHistory: true } });
 
 export const SalesTarget = master('forge_sales_target', '销售目标', 'target', {
   name: text('目标名称', true), code: code('目标编号'), target_type: Field.select([{ value: 'personal', label: '个人目标' }, { value: 'team', label: '团队目标' }], { label: '目标类型', defaultValue: 'personal', ...required }),
@@ -366,6 +380,8 @@ export const CustomerPool = master('forge_customer_pool', '公海客户', 'users
 export const ServiceOrder = master('forge_service_order', '服务工单', 'wrench', {
   name: text('工单标题', true),
   code: code('工单号'),
+  repair_request_id: { ...Field.lookup('forge_repair_request', { label: '来源报修记录' }), readonly: true, hidden: true },
+  revision: Field.number({ label: '修订号', min: 1, scale: 0, defaultValue: 1, readonly: true, hidden: true }),
   customer_id: { ...reference('forge_customer', '客户', true), relatedList: true, relatedListTitle: '售后工单', relatedListColumns: ["code", "name", "service_type", "service_mode", "urgency", "status", "engineer_name", "expected_visit_on", "service_result", "next_step"] },
   contact_id: reference('forge_contact', '联系人'),
   contact_phone: text('联系电话'),
@@ -399,7 +415,8 @@ export const ServiceOrder = master('forge_service_order', '服务工单', 'wrenc
   dispatch_note: Field.textarea({ label: '派工说明' }),
   service_hours: Field.number({ label: '服务耗时（小时）', min: 0, scale: 2 }),
   treatment_record: Field.textarea({ label: '处理记录' }),
-  onsite_evidence_count: Field.number({ label: '现场处理图片数', min: 0, scale: 0, defaultValue: 0 }),
+  onsite_evidence_attachments: Field.file({ label: '现场处理图片', multiple: true, accept: ['image/*'], description: '上传并关联实际现场图片；完成工单时服务端会校验已提交的文件记录。' }),
+  onsite_evidence_count: Field.number({ label: '历史图片数（旧记录）', min: 0, scale: 0, defaultValue: 0, readonly: true, hidden: true }),
   service_result: Field.textarea({ label: '服务结果' }),
   quotation_code: text('服务报价单'), settlement_code: text('服务结算单'), warranty_code: text('质保卡'),
   next_step: text('下一步'),
@@ -407,6 +424,7 @@ export const ServiceOrder = master('forge_service_order', '服务工单', 'wrenc
 }, ['code', 'name', 'customer_id', 'contact_id', 'contact_phone', 'sales_order_id', 'service_type', 'service_mode', 'urgency', 'status', 'engineer_name', 'expected_visit_on', 'treatment_record', 'onsite_evidence_count', 'service_result', 'quotation_code', 'settlement_code', 'warranty_code', 'next_step']);
 
 export const ServiceQuotation = master('forge_service_quotation', '服务报价单', 'file-text', {
+  revision: Field.number({ label: '修订号', min: 1, scale: 0, defaultValue: 1, readonly: true, hidden: true }),
   name: text('报价名称', true), code: code('报价单号'), service_order_id: reference('forge_service_order', '服务工单'), order_code: text('工单号'), customer_id: { ...reference('forge_customer', '客户'), relatedList: false }, contact_id: reference('forge_contact', '联系人'), total_amount: nonNegativeMoney('报价金额'), status: Field.select([{ value: 'draft', label: '草稿' }, { value: 'pending_confirmation', label: '待确认' }, { value: 'confirmed', label: '已确认' }, { value: 'settlement_created', label: '已转结算' }, { value: 'cancelled', label: '已取消' }], { label: '状态', defaultValue: 'draft' }), valid_until: Field.date({ label: '有效期至' }), responsible_id: owner(), remarks: remarks(),
 }, ['code', 'service_order_id', 'order_code', 'customer_id', 'contact_id', 'total_amount', 'status', 'valid_until']);
 
@@ -415,9 +433,9 @@ export const ServiceSettlement = master('forge_service_settlement', '服务结�
 }, ['code', 'service_order_id', 'quotation_id', 'order_code', 'customer_id', 'contact_id', 'total_amount', 'status', 'receivable_code']);
 
 export const WarrantyCard = master('forge_warranty_card', '质保卡', 'shield-check', {
-  name: text('质保名称', true), code: code('质保卡号'), service_order_id: reference('forge_service_order', '服务工单'), sales_order_id: reference('forge_sales_order', '销售订单'), customer_id: { ...reference('forge_customer', '客户'), relatedList: false }, product_sn: text('产品/SN'), scope: text('判定粒度'), starts_on: Field.date({ label: '开始日期' }), ends_on: Field.date({ label: '到期日期' }), status: Field.select([{ value: 'active', label: '生效中' }, { value: 'pending_activation', label: '待激活' }, { value: 'grace_period', label: '宽限期' }, { value: 'expired', label: '已过保' }, { value: 'terminated', label: '已终止' }], { label: '状态', defaultValue: 'pending_activation' }), responsible_party: text('责任方'), remarks: remarks(),
+  name: text('质保名称', true), code: Field.autonumber({ label: '质保卡号', autonumberFormat: 'WC-{YYYYMMDD}-{0000}', unique: 'global' }), service_order_id: reference('forge_service_order', '服务工单'), sales_order_id: reference('forge_sales_order', '销售订单'), customer_id: { ...reference('forge_customer', '客户'), relatedList: false }, product_sn: text('产品/SN'), scope: text('判定粒度'), starts_on: Field.date({ label: '开始日期' }), ends_on: Field.date({ label: '到期日期' }), status: Field.select([{ value: 'active', label: '生效中' }, { value: 'pending_activation', label: '待激活' }, { value: 'grace_period', label: '宽限期' }, { value: 'expired', label: '已过保' }, { value: 'terminated', label: '已终止' }], { label: '状态', defaultValue: 'pending_activation' }), responsible_party: text('责任方'), revision: Field.number({ label: '修订号', min: 1, scale: 0, defaultValue: 1, readonly: true, hidden: true }), activated_at: Field.datetime({ label: '激活时间', readonly: true }), activated_by: Field.user({ label: '激活员工', readonly: true }), remarks: remarks(),
 }, ['code', 'service_order_id', 'sales_order_id', 'customer_id', 'product_sn', 'scope', 'starts_on', 'ends_on', 'status']);
 
 export const ServiceConfigItem = master('forge_service_config_item', '服务配置项', 'settings', {
-  name: text('配置项', true), code: code('编码'), category: Field.select([{ value: 'order_type', label: '工单类型' }, { value: 'status_urgency', label: '状态与紧急度' }, { value: 'warranty_rule', label: '质保规则' }, { value: 'sla_rule', label: 'SLA 规则' }, { value: 'fee_type', label: '费用类型' }, { value: 'payment_template', label: '付款模板' }, { value: 'service_staff', label: '服务人员' }, { value: 'quotation_setting', label: '报价设置' }, { value: 'customer_portal', label: '客户门户' }], { label: '分类', defaultValue: 'order_type' }), status: choice('状态', ['启用', '停用'], '启用'), description: Field.textarea({ label: '说明' }), remarks: remarks(),
+  name: text('配置项', true), code: code('编码'), category: Field.select([{ value: 'order_type', label: '工单类型' }, { value: 'status_urgency', label: '状态与紧急度' }, { value: 'warranty_rule', label: '质保规则' }, { value: 'sla_rule', label: 'SLA 规则' }, { value: 'fee_type', label: '费用类型' }, { value: 'payment_template', label: '付款模板' }, { value: 'service_staff', label: '服务人员' }, { value: 'quotation_setting', label: '报价设置' }, { value: 'customer_portal', label: '客户门户' }], { label: '分类', defaultValue: 'order_type' }), status: choice('状态', ['启用', '停用'], '启用'), description: Field.textarea({ label: '说明' }), revision: Field.number({ label: '修订号', min: 1, scale: 0, defaultValue: 1, readonly: true, hidden: true }), remarks: remarks(),
 }, ['name', 'category', 'code', 'status', 'description']);

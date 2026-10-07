@@ -4,7 +4,7 @@ import { master, text, code, reference, owner, remarks, required } from '../mode
 const quantity = (label: string, mandatory = false, defaultValue?: number) => Field.number({
   label, min: 0, scale: 4, ...(mandatory ? required : {}), ...(defaultValue === undefined ? {} : { defaultValue }),
 });
-const nonNegativeMoney = (label: string) => Field.currency({ label, precision: 18, scale: 4, min: 0 });
+const nonNegativeMoney = (label: string) => Field.currency({ label, precision: 18, min: 0 });
 const inboundStatus = () => Field.select([
   { value: 'draft', label: '草稿' },
   { value: 'pending_approval', label: '待审批' },

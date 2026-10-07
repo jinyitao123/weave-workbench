@@ -1,3 +1,5 @@
+import type { EnterpriseBusinessCapability } from '../../src/types/api'
+
 // One wire fixture is consumed by both the Pi bridge and the visible trial panel.
 interface WireTool {
   status: string; completed_at?: string; input?: string; output?: string
@@ -5,7 +7,8 @@ interface WireTool {
   input_bytes?: number; output_bytes?: number
   server_payloads?: string
 }
-export const trialWireCases: Array<WireTool & { name: string; label: string; completeness: string; hiddenInput?: boolean; hiddenOutput?: boolean }> = [
+export const trialToolAction: EnterpriseBusinessCapability = { id: 'forge:action:forge_quotation.quotation_adjust_line_price', name: '调整报价明细', description: '调整指定报价明细价格', effect: 'write', resourceType: 'forge_quotation', requiresEmployeeIntent: true, status: 'available', actionName: 'quotation_adjust_line_price', objectName: 'forge_quotation' }
+export const trialWireCases: Array<WireTool & { name: string; label: string; completeness: string; hiddenInput?: boolean; hiddenOutput?: boolean; displayName?: string }> = [
   { name: 'running', status: 'running', label: '工具调用中', completeness: '不可用' },
   { name: 'completed with missing payload', status: 'ok', completed_at: '2026-10-05T02:40:30Z', label: '工具调用完成', completeness: '不可用' },
   { name: 'failed with missing payload', status: 'error', completed_at: '2026-10-05T02:40:30Z', label: '工具调用失败', completeness: '不可用' },
@@ -21,6 +24,7 @@ export const trialWireCases: Array<WireTool & { name: string; label: string; com
   { name: 'unknown payload state', status: 'ok', completed_at: '2026-10-05T02:40:30Z', input: '{"stale":true}', output: '{"simulated":true}', input_state: 'future-state', output_state: 'future-state', hiddenInput: true, hiddenOutput: true, label: '工具调用完成', completeness: '不可用' },
   { name: 'server partial despite visible fields', status: 'ok', completed_at: '2026-10-05T02:40:30Z', input: '{}', output: '{"simulated":true}', input_state: 'recorded', output_state: 'recorded', server_payloads: 'partial', label: '工具调用完成', completeness: '部分' },
   { name: 'server unavailable despite visible fields', status: 'ok', completed_at: '2026-10-05T02:40:30Z', input: '{}', output: '{"simulated":true}', input_state: 'recorded', output_state: 'recorded', server_payloads: 'unavailable', label: '工具调用完成', completeness: '部分' },
+  { name: 'recorded action identity', status: 'ok', completed_at: '2026-10-05T02:40:30Z', input: '{"params":{"unit_price":2100}}', output: '{"actionName":"quotation_adjust_line_price","objectName":"forge_quotation","simulated":true}', input_state: 'recorded', output_state: 'recorded', label: '工具调用完成', completeness: '完整', displayName: '调整报价明细' },
 ]
 
 export function trialWireActivity(tool: WireTool) {
@@ -31,7 +35,7 @@ export function trialWireActivity(tool: WireTool) {
     completeness: { stages: 'complete', member_inputs: 'complete', member_outputs: 'complete', member_tool_activity: 'complete', member_tool_payloads: tool.server_payloads, deliverables: 'complete' },
     members: [{ name: '团队负责人', status: stageStatus, stages: [
       { name: '理解任务', node_id: 'private-node-read', status: 'completed', inputs: [], tools: [], tool_calls: 0 },
-      { name: '授权转化线索', node_id: 'private-node-write', status: stageStatus, inputs: [], tools: [{ name: '转为商机', call_id: 'private-call', status: tool.status, completed_at: tool.completed_at, input: tool.input, output: tool.output, input_state: tool.input_state, output_state: tool.output_state, input_bytes: tool.input_bytes, output_bytes: tool.output_bytes }], tool_calls: terminal ? 1 : 0 },
+      { name: '授权转化线索', node_id: 'private-node-write', status: stageStatus, inputs: [], tools: [{ name: 'forge_forge_quotation_quotation_adjust_line_price_e602a6e1', call_id: 'private-call', status: tool.status, completed_at: tool.completed_at, input: tool.input, output: tool.output, input_state: tool.input_state, output_state: tool.output_state, input_bytes: tool.input_bytes, output_bytes: tool.output_bytes }], tool_calls: terminal ? 1 : 0 },
     ] }],
     outputs: [],
   }

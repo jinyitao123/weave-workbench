@@ -4,8 +4,20 @@ import { forgeProductUiRuntime } from '../src/pages/product-ui.ts';
 
 function readAllWith(request) {
   const begin = forgeProductUiRuntime.indexOf('async function ForgeReadAllRecords(');
-  const end = forgeProductUiRuntime.indexOf('async function ForgeOrganizationBusinessDate(', begin);
+  const end = forgeProductUiRuntime.indexOf('async function ForgeOrganizationBusinessContext(', begin);
   return new Function('ForgeApiRequest', forgeProductUiRuntime.slice(begin, end) + ';return ForgeReadAllRecords;')(request);
+}
+
+function organizationBusinessContextWith(request) {
+  const begin = forgeProductUiRuntime.indexOf('async function ForgeOrganizationBusinessContext(');
+  const end = forgeProductUiRuntime.indexOf('async function ForgeOrganizationBusinessDate(', begin);
+  return new Function('ForgeApiRequest', forgeProductUiRuntime.slice(begin, end) + ';return ForgeOrganizationBusinessContext;')(request);
+}
+
+function organizationBusinessDateWith(request) {
+  const begin = forgeProductUiRuntime.indexOf('async function ForgeOrganizationBusinessContext(');
+  const end = forgeProductUiRuntime.indexOf('function ForgeHeroArt(', begin);
+  return new Function('ForgeApiRequest', forgeProductUiRuntime.slice(begin, end) + ';return ForgeOrganizationBusinessDate;')(request);
 }
 
 test('reference options survive native page-size clamping and retain the server filter', async () => {
@@ -68,4 +80,28 @@ test('full Console links use the basename-aware host bridge once and preserve op
   assert.throws(() => navigate('javascript:alert(1)'), /当前应用/);
   assert.throws(() => navigate('https://other.example/'), /当前应用/);
   assert.equal(calls.length, 1);
+});
+
+test('organization context strictly validates the calendar date and preserves authorization errors', async () => {
+  const readContext = organizationBusinessContextWith(async (_adapter, _path, options) => {
+    assert.equal(options.method, 'POST');
+    return { result: { business_date: '2026-02-29', timezone: 'UTC' } };
+  });
+  await assert.rejects(readContext({}), /组织业务日期读取失败/);
+
+  for (const status of [401, 403]) {
+    const denied = Object.assign(new Error('authorization failed'), { status });
+    await assert.rejects(organizationBusinessContextWith(async () => { throw denied; })({}), error => error === denied);
+  }
+});
+
+test('legacy business-date helper remains a date-string facade over the context helper', async () => {
+  const date = await organizationBusinessDateWith(async (_adapter, path, options) => {
+    assert.equal(path, '/actions/global/organization_business_date_query');
+    assert.equal(options.method, 'POST');
+    assert.deepEqual(JSON.parse(options.body), { params: {} });
+    return { result: { business_date: '2026-10-06' } };
+  })({});
+
+  assert.equal(date, '2026-10-06');
 });

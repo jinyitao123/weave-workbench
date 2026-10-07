@@ -67,6 +67,7 @@ export function TeamDevelopmentInspector({ enterprise, agent, accountId, runtime
     setCreateBusy(true); setError('')
     try {
       const team = await enterprise.createDevelopmentTeam({ version: '1', name: name.trim(), objective: objective.trim() })
+      if (runtime?.runtimeId) void enterprise.invalidateTeamDevelopmentTurn(runtime.runtimeId).catch((cause) => setError(cause instanceof Error ? cause.message : 'Pi 当前轮次未清理'))
       setCreatedTeam(team); setTeamId(team.id); setBindRequested(Boolean(runtime?.runtimeId && !runtime.isStreaming))
       setCreateProposal(undefined); setCreating(false); setNewName(''); setNewObjective(''); onRefresh()
     } catch (cause) { setError(cause instanceof Error ? cause.message : '创建团队失败') }
@@ -75,6 +76,7 @@ export function TeamDevelopmentInspector({ enterprise, agent, accountId, runtime
   const openCreate = () => { setNewName(''); setNewObjective(''); setCreating(true) }
   const selectTeam = (id: string) => {
     if (dirtyRef.current) { setError('请先保存或放弃当前团队的修改'); return }
+    if (runtime?.runtimeId) void enterprise.invalidateTeamDevelopmentTurn(runtime.runtimeId).catch((cause) => setError(cause instanceof Error ? cause.message : 'Pi 当前轮次未清理'))
     setTeamId(id); setProposal(undefined); setBindRequested(Boolean(runtime?.runtimeId && !runtime.isStreaming))
   }
 

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { ProjectReadDeliveryScope, ProjectRefreshCustomerSnapshot } from '../src/actions/project.action.ts';
+import { ProjectRefreshCustomerSnapshot } from '../src/actions/project.action.ts';
+import { projectDeliveryScopeBody } from '../src/plugins/project-delivery-scope-body.ts';
 
 const project = { id: 'project-1', customer_id: 'customer-1' };
 const contract = {
@@ -54,7 +55,8 @@ function harness(overrides = {}) {
     },
   });
   const ctx = { recordId: project.id, record: project, recordLoadDenied: false, api: { object } };
-  return { calls, run: new Function('ctx', `return (async () => { ${ProjectReadDeliveryScope.body.source} })()`), ctx };
+  const execute = new Function('ctx', `return (async () => { ${projectDeliveryScopeBody.source} })()`);
+  return { calls, run: async context => {const {_server_binding,...scope}=await execute(context);return scope;}, ctx };
 }
 
 test('reads only linked signed-order lines and preserves material/service source trace', async () => {
@@ -79,6 +81,19 @@ test('flags a service line with an SKU instead of treating it as a valid project
   const service = result.lines.find(line => line.line_type === 'service');
   assert.equal(service.trace_consistent, false);
   assert.ok(service.trace_issues.includes('服务项目不应关联物料规格'));
+});
+
+test('a native field mask remains missing, never turns unknown prices into zero', async () => {
+  const masked = orderLines.map(({ taxed_unit_price, taxed_subtotal, ...line }) => line);
+  const h = harness({ forge_sales_order_line: masked });
+  const result = await h.run(h.ctx);
+  assert.ok(result.lines.every(line => !('taxed_unit_price' in line) && !('taxed_subtotal' in line) && !('tax_amount' in line)));
+  assert.ok(result.lines.every(line => line.trace_consistent === false));
+});
+
+test('an incomplete bounded native source fails instead of appearing as all order lines', async () => {
+  const h = harness({ forge_sales_order_line: Array.from({ length: 101 }, (_, index) => ({ ...orderLines[0], id: 'line-' + index })) });
+  await assert.rejects(() => h.run(h.ctx), /无法完整读取/);
 });
 
 test('flags a superseded accepted quote version and does not claim the source chain is consistent', async () => {

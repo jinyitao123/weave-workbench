@@ -713,7 +713,7 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
   test('routes desktop jobs by repository paths and runs commands from the desktop package', () => {
     type Workflow = {
       defaults?: { run?: { 'working-directory'?: string } }
-      jobs: Record<string, { needs?: string | string[]; if?: string; steps?: Array<{ run?: string; with?: Record<string, unknown> }> }>
+      jobs: Record<string, { needs?: string | string[]; if?: string; steps?: Array<{ uses?: string; run?: string; if?: string; with?: Record<string, unknown> }> }>
     }
     const ci = load(readFileSync('../.github/workflows/desktop-ci.yml', 'utf8')) as Workflow
     const audit = load(readFileSync('../.github/workflows/desktop-audit.yml', 'utf8')) as Workflow
@@ -726,10 +726,19 @@ else if (JSON.stringify(args) === ${JSON.stringify(JSON.stringify(expectedInstal
     expect(release.defaults?.run?.['working-directory']).toBe('desktop')
     expect(pathFilterScript).toContain('desktop .github/workflows/desktop-*.yml')
     expect(pathFilterScript).toContain("EVENT_NAME\" == 'workflow_dispatch'")
-    for (const jobName of ['production-audit', 'quality', 'hermetic-e2e', 'windows-state-migration', 'packaging-smoke', 'local-qa-package']) {
+    for (const jobName of ['production-audit', 'quality', 'hermetic-e2e', 'windows-state-migration', 'packaging-smoke']) {
       expect(ci.jobs[jobName].needs, jobName).toBe('desktop-path-filter')
       expect(ci.jobs[jobName].if, jobName).toContain('needs.desktop-path-filter.outputs.run')
     }
+    const localQa = ci.jobs['local-qa-package']
+    expect(localQa.needs).toEqual(['desktop-path-filter', 'production-audit', 'quality', 'hermetic-e2e', 'windows-state-migration'])
+    expect(localQa.if).toBe("github.event_name == 'workflow_dispatch' && needs.desktop-path-filter.outputs.run == 'true'")
+    expect(localQa.steps?.find((step) => step.uses?.startsWith('actions/checkout@'))?.with?.ref).toBe('${{ github.sha }}')
+    const npmPackageStep = localQa.steps?.find((step) => step.run?.startsWith('${{ matrix.package }}'))
+    expect(npmPackageStep?.run).toBe('${{ matrix.package }} -- --skip-verify')
+    expect(npmPackageStep?.if).toBe("matrix.runner != 'windows-2022'")
+    expect(localQa.steps?.some((step) => step.if === "matrix.runner == 'windows-2022'" && step.run === 'node scripts/release/package.mjs --qa --platform win --skip-verify')).toBe(true)
+    expect(localQa.steps?.some((step) => step.if === "matrix.runner == 'ubuntu-22.04'" && step.run?.includes('install -y libarchive-tools'))).toBe(true)
 
     for (const workflow of [ci, audit, release]) {
       for (const job of Object.values(workflow.jobs)) {
@@ -1314,7 +1323,7 @@ describe('post-package verification helpers', () => {
 
   test('keeps every platform native unpack allowlist exact and architecture-specific', () => {
     const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
-    expect(packageJson.author).toEqual({ name: 'Weave Workbench contributors' })
+    expect(packageJson.author).toEqual({ name: 'Weave Workbench contributors', email: '260412432+jinyitao123@users.noreply.github.com' })
     expect(packageJson.description).toBe('The desktop workspace for Weave teams and Forge business applications')
     expect(packageJson.homepage).toBe('https://github.com/jinyitao123/weave-workbench')
     expect(packageJson.build.productName).toBe('Weave Workbench')

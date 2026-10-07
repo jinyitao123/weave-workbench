@@ -16,7 +16,7 @@ export const Bom = master('forge_bom', 'BOM管理', 'git-branch', {
   status: { ...select('状态', [['draft', '草稿'], ['pending_review', '待评审'], ['active', '已生效'], ['inactive', '已失效'], ['archived', '已归档']], 'draft'), readonly: true },
   tax_rate: Field.number({ label: '成本税率', min: 0, max: 100, scale: 4, defaultValue: 13 }),
   node_count: Field.number({ label: '物料数', min: 0, scale: 0, defaultValue: 0, readonly: true }),
-  total_cost: Field.currency({ label: '未税成本', precision: 18, scale: 2, min: 0, defaultValue: 0, readonly: true }),
+  total_cost: Field.currency({ label: '未税成本', precision: 18, min: 0, defaultValue: 0, readonly: true }),
   submitted_at: Field.datetime({ label: '提交评审时间', readonly: true }), submitted_by: Field.user({ label: '提交人', readonly: true }),
   effective_at: Field.datetime({ label: '生效时间', readonly: true }), approved_by: Field.user({ label: '评审人', readonly: true }),
   invalidated_at: Field.datetime({ label: '失效时间', readonly: true }), change_note: Field.textarea({ label: '版本变更说明' }), remarks: remarks(),

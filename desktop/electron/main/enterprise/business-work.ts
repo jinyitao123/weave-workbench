@@ -1,6 +1,6 @@
 import type { EmployeeBusinessWork } from '../../../src/types/employee-business'
 import { rejectUnknownKeys, requireRecord, requireString } from '../validation'
-const kinds = ['contract_signature', 'contract_order_conditions', 'contract_prepayment', 'prepayment_confirmation', 'sales_order_creation', 'sales_order_submission']
+const kinds = ['quotation_follow_up', 'contract_signature', 'contract_order_conditions', 'contract_prepayment', 'prepayment_confirmation', 'sales_order_creation', 'sales_order_submission', 'project_start']
 const text = (value: unknown, max = 128) => requireString(value, '本人业务事项', { min: 1, max })
 export async function readBusinessWork(read: (path: string) => Promise<unknown>) {
   const items = new Map<string, EmployeeBusinessWork>(), cursors = new Set<string>()
@@ -11,7 +11,7 @@ export async function readBusinessWork(read: (path: string) => Promise<unknown>)
     if (page.version !== '1' || !['complete', 'partial'].includes(String(page.readStatus)) || !Array.isArray(page.items) || page.items.length > 100
       || !Number.isFinite(Date.parse(text(page.observedAt)))) throw new Error('本人业务事项返回格式无效')
     if (page.readStatus === 'partial') {
-      if (!Array.isArray(page.sourceErrors) || !page.sourceErrors.length || page.sourceErrors.length > 6) throw new Error('本人业务事项完整性无效')
+      if (!Array.isArray(page.sourceErrors) || !page.sourceErrors.length || page.sourceErrors.length > kinds.length) throw new Error('本人业务事项完整性无效')
       const failedKinds = new Set<string>()
       for (const value of page.sourceErrors) {
         const source = requireRecord(value, 'source error'); rejectUnknownKeys(source, ['kind', 'code'], 'source error')

@@ -54,7 +54,7 @@ assert.equal(values(hostConfig.actions).length, 0, 'the host config must not dup
 const registeredAppBundles = values<{ bundle?: { manifest?: { id?: string; type?: string }; apps?: unknown[]; pages?: unknown[] } }>(hostConfig.plugins)
   .map((plugin) => plugin.bundle)
   .filter((bundle): bundle is NonNullable<typeof bundle> => Boolean(bundle?.manifest));
-const coreBundle = registeredAppBundles.find((bundle) => bundle.manifest?.id === 'forge');
+const coreBundle = registeredAppBundles.find((bundle) => bundle.manifest?.id === 'com.inoforge.forge.core');
 assert.equal(coreBundle?.manifest?.type, 'plugin');
 assert.equal(values(coreBundle?.apps).length, 0, 'the shared capability bundle must not expose an eighth App');
 assert.equal(values(coreBundle?.pages).length, 0, 'the shared capability bundle must not register unused Pages');
@@ -62,7 +62,7 @@ assert.equal(
   registeredAppBundles.filter((bundle) => bundle.manifest?.type === 'app').length,
   expectedBusinessApps.length,
 );
-assert.equal(sharedForgeCoreBundle.manifest?.id, 'forge');
+assert.equal(sharedForgeCoreBundle.manifest?.id, 'com.inoforge.forge.core');
 assert.equal(sharedForgeCoreBundle.manifest?.type, 'plugin');
 assert.equal(
   values<{ name: string }>(coreBundle?.objects).filter((object) => object.name === 'forge_report_template').length,

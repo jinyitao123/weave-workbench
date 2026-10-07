@@ -8,7 +8,7 @@ import { newMember } from '../../src/pages/team-workspace/member'
 import { configureWorkflowResultProtocol, initialGraph } from '../../src/pages/team-workspace/graph'
 import type { EnterpriseBusinessCapabilityCatalog } from '../../src/types/api'
 import type { TeamDefinition, TeamWorkspace, TeamWorkspaceCommand } from '../../src/types/team-workspace'
-import { trialWireActivity, trialWireCases } from '../fixtures/trial-activity'
+import { trialToolAction, trialWireActivity, trialWireCases } from '../fixtures/trial-activity'
 
 let bridge: TeamDevelopmentAgentBridge | undefined
 const tempDirectories: string[] = []
@@ -337,13 +337,315 @@ it('saves a controlled draft, reconciles an uncertain write, runs an idempotent 
   expect(calls.filter((command) => command.action === 'publish')).toHaveLength(1)
 })
 
+it('freezes only workflow actions and keeps each Pi simulation selection in its own fixed request scope', async () => {
+  const lead = newMember('deepseek-flash'), worker = newMember('deepseek-flash'), unrelated = newMember('deepseek-flash')
+  lead.configuration.role = 'avatar'; worker.configuration.displayName = '转化员'; unrelated.configuration.displayName = '其他成员'
+  const action = { id: 'forge:action:crm_lead.convert', name: '转化线索', description: '将线索转换为商机', effect: 'write' as const, executionMode: 'team_delegable' as const, resourceType: 'crm_lead', requiresEmployeeIntent: true, status: 'available' as const, actionName: 'convert', objectName: 'crm_lead' }
+  const unrelatedAction = { ...action, id: 'forge:action:crm_quote.create', name: '创建报价', resourceType: 'crm_quote', actionName: 'create', objectName: 'crm_quote' }
+  worker.configuration.businessCapabilityIds = [action.id]
+  unrelated.configuration.businessCapabilityIds = [unrelatedAction.id]
+  const document: TeamDefinition = { name: '线索团队', objective: '转化线索', members: [lead, worker, unrelated], workflows: [
+    { id: 'flow', name: '转化流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) },
+    { id: 'other-flow', name: '其他流程', description: '', trigger_config: {}, graph_definition: initialGraph(unrelated) },
+  ] }
+  let remote = workspace(document, 6)
+  let activeAccount = 'developer-1'
+  const calls: TeamWorkspaceCommand[] = []
+  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [action, unrelatedAction] }
+  bridge = new TeamDevelopmentAgentBridge({
+    accountKey: async () => activeAccount, developer: async () => ({ accountId: activeAccount }),
+    teams: async () => [{ id: 'team', name: document.name }], team: async () => structuredClone(remote),
+    catalog: async () => catalog, extensionPath: '/app/team-development.ts',
+    workspace: async (command: TeamWorkspaceCommand) => {
+      calls.push(structuredClone(command))
+      if (command.action !== 'trial') throw new Error(`unexpected workspace action: ${command.action}`)
+      remote = { ...remote, trials: [...remote.trials, { request_id: command.requestId, run_id: `run-${remote.trials.length}`, revision: command.revision, workflow_id: command.workflowId, status: 'running', created_at: '' }] }
+      return { request_id: command.requestId, run_id: `run-${remote.trials.length - 1}` }
+    },
+  })
+  await bridge.start()
+  const env = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
+  bridge.bindRuntime(env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
+  await bridge.bindContext('runtime', { teamId: 'team', revision: 6, document, catalog }, activeAccount)
+  const callMethod = async (method: string, params: Record<string, unknown>, requestEnv = env) => {
+    const response = await fetch(requestEnv.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${requestEnv.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method, params }) })
+    return response.json() as Promise<{ ok: boolean; error?: string }>
+  }
+  const call = (params: Record<string, unknown>, requestEnv = env) => callMethod('trial', params, requestEnv)
+  const input = '核对开发者提供的线索材料'
+  const selectedParams = { workflow_name: '转化流程', input, simulation_actions: ['转化线索'] }
+  expect((await call(selectedParams)).ok).toBe(false)
+  expect(calls.filter((command) => command.action === 'trial')).toHaveLength(0)
+  expect((await callMethod('context', {})).ok).toBe(true)
+  const afterContextOnly = await call(selectedParams)
+  expect(afterContextOnly.ok).toBe(false)
+  expect(afterContextOnly.error).toContain('当前账号和 Pi 会话中的员工请求')
+  expect(calls.filter((command) => command.action === 'trial')).toHaveLength(0)
+
+  const employeePrompt = '请在当前轮次隔离模拟转化线索'
+  bridge.beginEmployeeCommand('runtime', 'prompt')
+  await bridge.captureTrustedEmployeeCommand('runtime', { type: 'prompt', message: employeePrompt }, { text: employeePrompt, materials: [] })
+  expect((await call({ workflow_name: '转化流程', input })).ok).toBe(true)
+  expect((await call({ workflow_name: '转化流程', input })).ok).toBe(true)
+  const defaultScope = calls.filter((command) => command.action === 'trial')
+  expect(defaultScope).toHaveLength(2)
+  expect(defaultScope[0]!.requestId).toBe(defaultScope[1]!.requestId)
+  expect(defaultScope[0]!.businessActions).toMatchObject([{ id: action.id, simulationAuthorized: false }])
+  expect(defaultScope[0]!.businessActions.map((item) => item.id)).not.toContain(unrelatedAction.id)
+
+  const selected = await call(selectedParams)
+  expect(selected.ok).toBe(true)
+  const selectedRequest = calls.filter((command) => command.action === 'trial').at(-1)!
+  expect(selectedRequest.requestId).not.toBe(defaultScope[0]!.requestId)
+  expect(selectedRequest.businessActions).toMatchObject([{ id: action.id, simulationAuthorized: true }])
+  catalog.capabilities[0]!.description = '目录刚刷新后的新说明'
+  await bridge.bindContext('runtime', { teamId: 'team', revision: 6, document, catalog }, activeAccount)
+  expect((await call(selectedParams)).ok).toBe(true)
+  const retry = calls.filter((command) => command.action === 'trial').at(-1)!
+  expect(retry.requestId).toBe(selectedRequest.requestId)
+  expect(retry.businessActions).toEqual(selectedRequest.businessActions)
+
+  const otherWorkflow = await call({ workflow_name: '其他流程', input, simulation_actions: ['创建报价'] })
+  expect(otherWorkflow.ok).toBe(false)
+  expect(otherWorkflow.error).toContain('已绑定其他团队、草稿修订或流程')
+  expect(calls.filter((command) => command.action === 'trial')).toHaveLength(4)
+
+  const invalid = await call({ workflow_name: '转化流程', input, simulation_actions: ['创建报价'] })
+  expect(invalid.ok).toBe(false)
+  expect(invalid.error).toContain('不属于当前流程候选范围')
+  expect(calls.filter((command) => command.action === 'trial')).toHaveLength(4)
+
+  bridge.beginEmployeeCommand('runtime', 'abort')
+  const afterAbort = await call(selectedParams)
+  expect(afterAbort.ok).toBe(false)
+  expect(afterAbort.error).toContain('当前账号和 Pi 会话中的员工请求')
+  bridge.beginEmployeeCommand('runtime', 'compact')
+  const afterCompact = await call(selectedParams)
+  expect(afterCompact.ok).toBe(false)
+  expect(afterCompact.error).toContain('当前账号和 Pi 会话中的员工请求')
+  expect(calls.filter((command) => command.action === 'trial')).toHaveLength(4)
+
+  activeAccount = 'developer-2'
+  bridge.invalidateAccount()
+  const switchedEnv = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
+  bridge.bindRuntime(switchedEnv.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
+  await bridge.bindContext('runtime', { teamId: 'team', revision: 6, document, catalog }, activeAccount)
+  const afterAccountChange = await call(selectedParams, switchedEnv)
+  expect(afterAccountChange.ok).toBe(false)
+  expect(afterAccountChange.error).toContain('当前账号和 Pi 会话中的员工请求')
+  expect(calls.filter((command) => command.action === 'trial')).toHaveLength(4)
+})
+
+it('does not let a user turn arriving after a Pi trial call retroactively authorize that call', async () => {
+  const lead = newMember('deepseek-flash'), worker = newMember('deepseek-flash')
+  lead.configuration.role = 'avatar'; worker.configuration.displayName = '转化员'
+  const action = { id: 'forge:action:crm_lead.convert', name: '转化线索', description: '把线索转为商机', effect: 'write' as const, executionMode: 'team_delegable' as const, resourceType: 'crm_lead', requiresEmployeeIntent: true, status: 'available' as const, actionName: 'convert', objectName: 'crm_lead' }
+  worker.configuration.businessCapabilityIds = [action.id]
+  const document: TeamDefinition = { name: '线索团队', objective: '转化线索', members: [lead, worker], workflows: [{ id: 'flow', name: '转化流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
+  const remote = workspace(document, 6)
+  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [action] }
+  let announceDeveloper!: () => void
+  let releaseDeveloper!: (value: { accountId: string }) => void
+  const developerStarted = new Promise<void>((resolve) => { announceDeveloper = resolve })
+  const developerGate = new Promise<{ accountId: string }>((resolve) => { releaseDeveloper = resolve })
+  const calls: TeamWorkspaceCommand[] = []
+  bridge = new TeamDevelopmentAgentBridge({
+    accountKey: async () => 'developer-1', developer: async () => { announceDeveloper(); return developerGate },
+    teams: async () => [{ id: 'team', name: document.name }], team: async () => structuredClone(remote),
+    catalog: async () => catalog, extensionPath: '/app/team-development.ts',
+    workspace: async (command) => { calls.push(command); return {} },
+  })
+  await bridge.start()
+  const env = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
+  bridge.bindRuntime(env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
+  await bridge.bindContext('runtime', { teamId: 'team', revision: 6, document, catalog }, 'developer-1')
+  const responsePromise = fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method: 'trial', params: { workflow_name: '转化流程', input: '核对当前材料', simulation_actions: ['转化线索'] } }) })
+  await developerStarted
+  const laterPrompt = '请在隔离环境中模拟转化线索'
+  bridge.beginEmployeeCommand('runtime', 'prompt')
+  await bridge.captureTrustedEmployeeCommand('runtime', { type: 'prompt', message: laterPrompt }, { text: laterPrompt, materials: [] })
+  releaseDeveloper({ accountId: 'developer-1' })
+  const response = await responsePromise
+  const result = await response.json() as { ok: boolean; error?: string }
+  expect(result.ok).toBe(false)
+  expect(result.error).toContain('当前账号和 Pi 会话中的员工请求')
+  expect(calls.filter((command) => command.action === 'trial')).toHaveLength(0)
+})
+
+it('invalidates the Pi simulation source when the UI changes team, revision, or an unsaved workflow document', async () => {
+  const worker = newMember('deepseek-flash')
+  worker.configuration.displayName = '审核员'
+  const action = { id: 'forge:action:contracts.submit', name: '提交合同', description: '提交合同版本', effect: 'write' as const, executionMode: 'team_delegable' as const, resourceType: 'contracts', requiresEmployeeIntent: true, status: 'available' as const, actionName: 'Submit', objectName: 'contracts' }
+  worker.configuration.businessCapabilityIds = [action.id]
+  const document: TeamDefinition = { name: '合同团队', objective: '审核合同', members: [worker], workflows: [{ id: 'flow', name: '合同流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
+  const remote = workspace(document, 6)
+  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [action] }
+  const calls: TeamWorkspaceCommand[] = []
+  bridge = new TeamDevelopmentAgentBridge({
+    accountKey: async () => 'developer-1', developer: async () => ({ accountId: 'developer-1' }),
+    teams: async () => [{ id: 'team', name: document.name }, { id: 'other-team', name: '其他团队' }],
+    team: async () => structuredClone(remote), catalog: async () => catalog, extensionPath: '/app/team-development.ts',
+    workspace: async (command) => { calls.push(command); return command.action === 'trial' ? { request_id: command.requestId, run_id: 'run-1' } : {} },
+  })
+  await bridge.start()
+  const env = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
+  bridge.bindRuntime(env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
+  const originalContext = { teamId: 'team', revision: 6, document, catalog }
+  await bridge.bindContext('runtime', originalContext, 'developer-1')
+  const call = async () => {
+    const response = await fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method: 'trial', params: { workflow_name: '合同流程', input: '核对当前合同', simulation_actions: ['提交合同'] } }) })
+    return response.json() as Promise<{ ok: boolean; error?: string }>
+  }
+  const capture = async (text: string) => {
+    bridge!.beginEmployeeCommand('runtime', 'prompt')
+    await bridge!.captureTrustedEmployeeCommand('runtime', { type: 'prompt', message: text }, { text, materials: [] })
+  }
+  const changedDocument = structuredClone(document)
+  changedDocument.objective = '调整未保存的审核目标'
+  const changedWorkflow = structuredClone(document)
+  changedWorkflow.workflows[0]!.name = '改过的合同流程'
+  for (const [label, changed] of [
+    ['team', { ...originalContext, teamId: 'other-team' }],
+    ['revision', { ...originalContext, revision: 7 }],
+    ['unsaved document', { ...originalContext, document: changedDocument }],
+    ['workflow', { ...originalContext, document: changedWorkflow }],
+  ] as const) {
+    await capture(`切换上下文测试 ${label}`)
+    expect((await call()).ok, label).toBe(true)
+    const beforeContextChange = calls.filter((command) => command.action === 'trial').length
+    await bridge.bindContext('runtime', changed, 'developer-1')
+    await bridge.bindContext('runtime', originalContext, 'developer-1')
+    const denied = await call()
+    expect(denied.ok, label).toBe(false)
+    expect(denied.error, label).toContain('当前账号和 Pi 会话中的员工请求')
+    expect(calls.filter((command) => command.action === 'trial')).toHaveLength(beforeContextChange)
+  }
+  expect(calls.filter((command) => command.action === 'trial')).toHaveLength(4)
+})
+
+it('opens the first Pi team and rebinds the same user turn through a controlled save before trial', async () => {
+  const worker = newMember('deepseek-flash')
+  worker.configuration.displayName = '审核员'
+  worker.configuration.businessCapabilityIds = ['forge:action:contracts.submit']
+  const action = { id: 'forge:action:contracts.submit', name: '提交合同', description: '提交合同版本', effect: 'write' as const, executionMode: 'team_delegable' as const, resourceType: 'contracts', requiresEmployeeIntent: true, status: 'available' as const, actionName: 'Submit', objectName: 'contracts' }
+  const document: TeamDefinition = { name: '合同团队', objective: '审核合同', members: [worker], workflows: [{ id: 'flow', name: '合同流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
+  let remote = workspace(document, 6)
+  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [action] }
+  const calls: TeamWorkspaceCommand[] = []
+  bridge = new TeamDevelopmentAgentBridge({
+    accountKey: async () => 'developer-1', developer: async () => ({ accountId: 'developer-1' }),
+    teams: async () => [{ id: 'team', name: document.name }], team: async () => structuredClone(remote),
+    catalog: async () => catalog, extensionPath: '/app/team-development.ts',
+    workspace: async (command) => {
+      calls.push(structuredClone(command))
+      if (command.action === 'save') {
+        remote = { ...remote, revision: command.revision + 1, document: structuredClone(command.document) }
+        return structuredClone(remote)
+      }
+      if (command.action === 'trial') {
+        remote = { ...remote, trials: [...remote.trials, { request_id: command.requestId, run_id: `run-${remote.trials.length}`, revision: command.revision, workflow_id: command.workflowId, status: 'running', created_at: '' }] }
+        return { request_id: command.requestId, run_id: `run-${remote.trials.length - 1}` }
+      }
+      throw new Error(`unexpected action: ${command.action}`)
+    },
+  })
+  await bridge.start()
+  const env = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
+  bridge.bindRuntime(env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
+  const employeePrompt = '打开合同团队，先保存职责修改，再模拟提交合同流程'
+  bridge.beginEmployeeCommand('runtime', 'prompt')
+  await bridge.captureTrustedEmployeeCommand('runtime', { type: 'prompt', message: employeePrompt }, { text: employeePrompt, materials: [] })
+  const call = async (method: string, params: Record<string, unknown> = {}) => {
+    const response = await fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method, params }) })
+    return response.json() as Promise<{ ok: boolean; error?: string }>
+  }
+  expect((await call('list')).ok).toBe(true)
+  expect((await call('open', { team_name: document.name })).ok).toBe(true)
+  expect((await call('trial', { workflow_name: '合同流程', input: '首次打开后的隔离检查', simulation_actions: ['提交合同'] })).ok).toBe(true)
+  const openedTrial = calls.filter((command) => command.action === 'trial').at(-1)!
+  expect(openedTrial).toMatchObject({ revision: 6, businessActions: [{ id: action.id, simulationAuthorized: true }] })
+  const saved = await call('save', { operations: [{ kind: 'member', member: '审核员', duty: '逐项核验并提交' }] })
+  expect(saved.ok).toBe(true)
+  expect(remote.revision).toBe(7)
+  expect((await call('trial', { workflow_name: '合同流程', input: '保存后首轮隔离检查', simulation_actions: ['提交合同'] })).ok).toBe(true)
+  const afterFirstSave = calls.filter((command) => command.action === 'trial').at(-1)!
+  const savedAgain = await call('save', { operations: [{ kind: 'member', member: '审核员', duty: '再次核验后提交' }] })
+  expect(savedAgain.ok).toBe(true)
+  expect(remote.revision).toBe(8)
+  const afterSave = await call('trial', { workflow_name: '合同流程', input: '保存后隔离检查', simulation_actions: ['提交合同'] })
+  expect(afterSave.ok).toBe(true)
+  const trials = calls.filter((command) => command.action === 'trial')
+  expect(trials).toHaveLength(3)
+  expect(trials[0]).toMatchObject({ requestId: openedTrial.requestId, revision: 6 })
+  expect(trials[1]).toMatchObject({ requestId: afterFirstSave.requestId, revision: 7 })
+  expect(trials[2]).toMatchObject({ revision: 8, businessActions: [{ id: action.id, simulationAuthorized: true }] })
+})
+
+it('restores the original fixed action definition after an uncertain Pi trial response', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'team-trial-scope-')); tempDirectories.push(directory)
+  const lead = newMember('deepseek-flash'), worker = newMember('deepseek-flash')
+  lead.configuration.role = 'avatar'; worker.configuration.displayName = '转化员'
+  const action = { id: 'forge:action:crm_lead.convert', name: '转化线索', description: '原始动作定义', effect: 'write' as const, executionMode: 'team_delegable' as const, resourceType: 'crm_lead', requiresEmployeeIntent: true, status: 'available' as const, actionName: 'convert', objectName: 'crm_lead' }
+  worker.configuration.businessCapabilityIds = [action.id]
+  const document: TeamDefinition = { name: '线索团队', objective: '转化线索', members: [lead, worker], workflows: [{ id: 'flow', name: '转化流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
+  const remote = workspace(document, 6)
+  const firstCalls: TeamWorkspaceCommand[] = [], retryCalls: TeamWorkspaceCommand[] = []
+  const base = {
+    accountKey: async () => 'developer-1', developer: async () => ({ accountId: 'developer-1' }),
+    teams: async () => [{ id: 'team', name: document.name }], team: async () => structuredClone(remote),
+    extensionPath: '/app/team-development.ts', storage: { directory },
+  }
+  const firstCatalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [action] }
+  bridge = new TeamDevelopmentAgentBridge({
+    ...base, catalog: async () => firstCatalog,
+    workspace: async (command) => { firstCalls.push(structuredClone(command)); throw new Error('试跑响应暂未收到') },
+  })
+  await bridge.start()
+  const firstEnv = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
+  bridge.bindRuntime(firstEnv.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
+  await bridge.bindContext('runtime', { teamId: 'team', revision: 6, document, catalog: firstCatalog }, 'developer-1')
+  const employeePrompt = '私有模拟授权原文：请在隔离环境中模拟转化线索'
+  bridge.beginEmployeeCommand('runtime', 'prompt')
+  await bridge.captureTrustedEmployeeCommand('runtime', { type: 'prompt', message: employeePrompt }, { text: employeePrompt, materials: [] })
+  const call = async (env: NodeJS.ProcessEnv) => {
+    const response = await fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method: 'trial', params: { workflow_name: '转化流程', input: '核对这条材料', simulation_actions: ['转化线索'] } }) })
+    return response.json() as Promise<{ ok: boolean; error?: string }>
+  }
+  expect((await call(firstEnv)).ok).toBe(false)
+  const original = firstCalls.find((command) => command.action === 'trial')!
+  expect((await call(firstEnv)).ok).toBe(false)
+  expect(firstCalls.filter((command) => command.action === 'trial')).toHaveLength(2)
+  expect(firstCalls.at(-1)).toMatchObject({ action: 'trial', requestId: original.requestId })
+  const savedFile = readdirSync(directory).find((file) => file.endsWith('.json'))!
+  const savedText = readFileSync(join(directory, savedFile), 'utf8')
+  const saved = JSON.parse(savedText) as { value: { trial: Record<string, unknown> } }
+  expect(saved.value.trial.authorizationSourceHash).toMatch(/^[0-9a-f]{64}$/)
+  expect(savedText).not.toContain(employeePrompt)
+  expect(savedText).not.toContain('trusted_desktop_employee_input')
+  await bridge.stop(); bridge = undefined
+
+  const refreshedCatalog: EnterpriseBusinessCapabilityCatalog = { ...firstCatalog, capabilities: [{ ...action, description: '刷新后的动作定义' }] }
+  bridge = new TeamDevelopmentAgentBridge({
+    ...base, catalog: async () => refreshedCatalog,
+    workspace: async (command) => { retryCalls.push(structuredClone(command)); if (command.action !== 'trial') throw new Error('unexpected workspace action'); return { request_id: command.requestId, run_id: 'run-1' } },
+  })
+  await bridge.start()
+  const retryEnv = bridge.environmentFor({ cwd: '/work', harness: 'pi', sessionPath: '/sessions/developer-1.jsonl' })
+  bridge.bindRuntime(retryEnv.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime', '/sessions/developer-1.jsonl')
+  const afterRestart = await call(retryEnv)
+  expect(afterRestart.ok).toBe(false)
+  expect(afterRestart.error).toContain('当前账号和 Pi 会话中的员工请求')
+  expect(retryCalls.filter((command) => command.action === 'trial')).toHaveLength(0)
+})
+
 it.each(trialWireCases)('interprets the same $name wire record as the trial panel without inventing payload evidence', async (tool) => {
   const lead = newMember('deepseek-flash'), worker = newMember('deepseek-flash')
   lead.configuration.role = 'avatar'
+  worker.configuration.businessCapabilityIds = [trialToolAction.id]
   const document: TeamDefinition = { name: '线索团队', objective: '', members: [lead, worker], workflows: [{ id: 'flow', name: '线索流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }] }
   const remote = workspace(document)
   const directory = mkdtempSync(join(tmpdir(), 'trial-evidence-')); tempDirectories.push(directory)
-  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [], refreshedAt: '' }
+  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [trialToolAction], refreshedAt: '' }
   bridge = new TeamDevelopmentAgentBridge({
     accountKey: async () => 'developer-1', developer: async () => ({ accountId: 'developer-1' }), teams: async () => [{ id: 'team', name: document.name }],
     team: async () => structuredClone(remote), catalog: async () => catalog, extensionPath: '/app/team-development.ts', storage: { directory },
@@ -360,13 +662,14 @@ it.each(trialWireCases)('interprets the same $name wire record as the trial pane
   await bridge.bindContext('runtime', { teamId: 'team', revision: remote.revision, document, catalog }, 'developer-1')
   const call = async (method: string, params = {}) => {
     const response = await fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method, params }) })
-    return response.json() as Promise<{ ok: boolean; result: { trace: { completeness: { tool_input_output: string }; trajectory: string; members: Array<{ steps: Array<{ tools: Array<{ status: string; evidence: string; actual_input?: string; actual_output?: string }> }> }> } } }>
+    return response.json() as Promise<{ ok: boolean; result: { trace: { completeness: { tool_input_output: string }; trajectory: string; members: Array<{ steps: Array<{ tools: Array<{ name: string; status: string; evidence: string; actual_input?: string; actual_output?: string }> }> }> } } }>
   }
   expect((await call('trial', { workflow_name: '线索流程', input: '合成固定输入' })).ok).toBe(true)
   const result = await call('trial_status')
   expect(result.ok).toBe(true)
   expect(result.result.trace.members[0]!.steps[0]!.tools).toEqual([])
   const actual = result.result.trace.members[0]!.steps[1]!.tools[0]!
+  expect(actual.name).toBe(tool.displayName ?? '工具调用')
   expect(actual.status).toBe(tool.label)
   expect(actual.actual_input).toBe(tool.hiddenInput ? undefined : tool.input)
   expect(actual.actual_output).toBe(tool.hiddenOutput ? undefined : tool.output)
@@ -483,4 +786,97 @@ it('refuses to update a team whose action-bound flow lacks the receipt completio
   expect(updated.error).toContain('转化流程')
   expect(updated.error).toContain('完成检查')
   expect(calls).toHaveLength(0)
+})
+
+it('requires current server readiness for Pi publication of a write-action flow', async () => {
+  const lead = newMember('deepseek-flash'), worker = newMember('deepseek-flash')
+  lead.configuration.role = 'avatar'; worker.configuration.displayName = '转化员'
+  const action = { id: 'forge:action:crm_lead.convert', name: '转化线索', description: '把线索转为商机', effect: 'write' as const, executionMode: 'team_delegable' as const, resourceType: 'crm_lead', requiresEmployeeIntent: true, status: 'available' as const, actionName: 'convert', objectName: 'crm_lead' }
+  worker.configuration.businessCapabilityIds = [action.id]
+  const flow: TeamDefinition['workflows'][number] = { id: 'flow', name: '转化流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }
+  flow.graph_definition.delivery_contract = {
+    version: 1, coverage: 'incomplete', output: { type: 'text' }, external_effects: 'required', external_effects_check_id: 'business-action-receipts',
+    required_checks: [{ id: 'business-action-receipts', title: '已授权业务动作具备成功回执', verifier_id: 'weave.business-action-receipts', verifier_version: 'v1', parameters: { required_capability_ids: [action.id], when_authorized: true, allow_needs_input: false } }],
+  }
+  const document: TeamDefinition = { name: '线索团队', objective: '转化线索', members: [lead, worker], workflows: [flow] }
+  let remote = { ...workspace(document, 6), trials: [{ request_id: 'trial', revision: 6, workflow_id: flow.id, run_id: 'run', status: 'succeeded', created_at: '' }] }
+  const publishCalls: TeamWorkspaceCommand[] = []
+  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [action] }
+  bridge = new TeamDevelopmentAgentBridge({
+    accountKey: async () => 'developer-1', developer: async () => ({ accountId: 'developer-1' }),
+    teams: async () => [{ id: 'team', name: document.name }], team: async () => structuredClone(remote),
+    catalog: async () => catalog, extensionPath: '/app/team-development.ts',
+    workspace: async (command: TeamWorkspaceCommand) => {
+      publishCalls.push(command)
+      if (command.action !== 'publish') throw new Error(`unexpected workspace action: ${command.action}`)
+      remote = { ...remote, published_revision: command.revision }
+      return structuredClone(remote)
+    },
+  })
+  await bridge.start()
+  const env = bridge.environmentFor({ cwd: '/work', harness: 'pi' })
+  bridge.bindRuntime(env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime')
+  await bridge.bindContext('runtime', { teamId: 'team', revision: 6, document, catalog }, 'developer-1')
+  const call = async () => {
+    const response = await fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method: 'update_team', params: {} }) })
+    return response.json() as Promise<{ ok: boolean; error?: string }>
+  }
+
+  const legacy = await call()
+  expect(legacy.ok).toBe(false)
+  expect(legacy.error).toContain('无法确认当前草稿的模拟回执覆盖')
+  expect(legacy.error).not.toContain(action.id)
+  expect(publishCalls).toHaveLength(0)
+
+  remote.publication_readiness = { ready: true, workflows: [{ workflow_id: flow.id, required_capability_ids: [action.id], covered_capability_ids: [action.id], missing_capability_ids: [], passed: true }] }
+  const ready = await call()
+  expect(ready.ok).toBe(true)
+  expect(publishCalls.map((command) => command.action)).toEqual(['publish'])
+  expect(remote.published_revision).toBe(6)
+})
+
+it('fails closed on a legacy write-flow response without readiness and publishes only after server coverage passes', async () => {
+  const lead = newMember('deepseek-flash'), worker = newMember('deepseek-flash')
+  lead.configuration.role = 'avatar'; worker.configuration.displayName = '转化员'
+  const action = { id: 'forge:action:crm_lead.convert', name: '转化线索', description: '把线索转为商机', effect: 'write' as const, executionMode: 'team_delegable' as const, resourceType: 'crm_lead', requiresEmployeeIntent: true, status: 'available' as const, actionName: 'convert', objectName: 'crm_lead' }
+  worker.configuration.businessCapabilityIds = [action.id]
+  const flow = { id: 'flow', name: '转化流程', description: '', trigger_config: {}, graph_definition: initialGraph(worker) }
+  flow.graph_definition.delivery_contract = {
+    version: 1, coverage: 'incomplete', output: { type: 'text' }, external_effects: 'required', external_effects_check_id: 'business-action-receipts',
+    required_checks: [{ id: 'business-action-receipts', title: '已授权业务动作具备成功回执', verifier_id: 'weave.business-action-receipts', verifier_version: 'v1', parameters: { required_capability_ids: [action.id], when_authorized: true, allow_needs_input: false } }],
+  }
+  const document: TeamDefinition = { name: '线索团队', objective: '转化线索', members: [lead, worker], workflows: [flow] }
+  let remote = { ...workspace(document, 6), trials: [{ request_id: 'trial', revision: 6, workflow_id: flow.id, run_id: 'run', status: 'succeeded', created_at: '' }] }
+  const publishCalls: TeamWorkspaceCommand[] = []
+  const catalog: EnterpriseBusinessCapabilityCatalog = { version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, refreshedAt: '', capabilities: [action] }
+  bridge = new TeamDevelopmentAgentBridge({
+    accountKey: async () => 'developer-1', developer: async () => ({ accountId: 'developer-1' }),
+    teams: async () => [{ id: 'team', name: document.name }], team: async () => structuredClone(remote),
+    catalog: async () => catalog, extensionPath: '/app/team-development.ts',
+    workspace: async (command: TeamWorkspaceCommand) => {
+      publishCalls.push(command)
+      if (command.action !== 'publish') throw new Error(`unexpected workspace action: ${command.action}`)
+      remote = { ...remote, published_revision: command.revision }
+      return structuredClone(remote)
+    },
+  })
+  await bridge.start()
+  const env = bridge.environmentFor({ cwd: '/work', harness: 'pi' })
+  bridge.bindRuntime(env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN, 'runtime')
+  await bridge.bindContext('runtime', { teamId: 'team', revision: 6, document, catalog }, 'developer-1')
+  const call = async () => {
+    const response = await fetch(env.GOOEYPI_TEAM_DEVELOPMENT_URL!, { method: 'POST', headers: { authorization: `Bearer ${env.GOOEYPI_TEAM_DEVELOPMENT_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify({ method: 'update_team', params: {} }) })
+    return response.json() as Promise<{ ok: boolean; error?: string }>
+  }
+
+  const oldResponse = await call()
+  expect(oldResponse.ok).toBe(false)
+  expect(oldResponse.error).toContain('无法确认当前草稿的模拟回执覆盖')
+  expect(publishCalls).toHaveLength(0)
+
+  remote.publication_readiness = { ready: true, workflows: [{ workflow_id: flow.id, required_capability_ids: [action.id], covered_capability_ids: [action.id], missing_capability_ids: [], passed: true }] }
+  const covered = await call()
+  expect(covered.ok).toBe(true)
+  expect(publishCalls.map((command) => command.action)).toEqual(['publish'])
+  expect(remote.published_revision).toBe(6)
 })

@@ -7,7 +7,7 @@ const select = (label: string, options: Array<[string, string]>, defaultValue?: 
 );
 const positiveQuantity = (label = '数量') => Field.number({ label, min: 0.0001, scale: 4, ...required });
 const nonNegativeQuantity = (label: string, readonly = false) => Field.number({ label, min: 0, scale: 4, defaultValue: 0, ...(readonly ? { readonly: true } : {}) });
-const nonNegativeMoney = (label: string, scale = 4) => Field.currency({ label, precision: 18, scale, min: 0 });
+const nonNegativeMoney = (label: string) => Field.currency({ label, precision: 18, min: 0 });
 const percentage = (label: string, defaultValue = 13) => Field.number({ label, min: 0, max: 100, scale: 4, defaultValue });
 
 // Live RISEMAP /inventory/inspection-rules exposes a reusable inspection item

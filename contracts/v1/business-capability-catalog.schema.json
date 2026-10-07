@@ -41,7 +41,7 @@
           "actionName": { "type": "string", "minLength": 1, "maxLength": 128 },
           "objectName": { "type": "string", "minLength": 1, "maxLength": 128 },
           "requiresRecord": { "type": "boolean", "default": false },
-          "requiresConfirmation": { "type": "boolean", "default": false },
+          "requiresConfirmation": { "type": "boolean", "default": false, "description": "Native action confirmation requirement; not an execution grant. A controlled bridge may project validated current employee intent or task delegation into a declared native transport confirmation field. Models and materials cannot supply or override that field." },
           "params": {
             "type": "array",
             "items": {

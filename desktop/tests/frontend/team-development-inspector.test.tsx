@@ -22,11 +22,13 @@ it('shows a Pi proposal beside the main conversation and saves only after applyi
     if (command.action === 'save') remote = { ...remote, revision: remote.revision + 1, document: command.document }
     return structuredClone(remote)
   })
+  const invalidateTeamDevelopmentTurn = vi.fn(async () => {})
   const enterprise = {
     teamWorkspace: call,
     getBusinessCapabilityCatalog: async () => ({ version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [], refreshedAt: '' }),
     getTeamDevelopmentState: async () => ({ teamId: 'team', revision: 2, proposal: { revision: 2, baseDocument: base, document: proposed, changes: ['修改成员：审核员'] } }),
     updateTeamDevelopment: vi.fn(async () => {}),
+    invalidateTeamDevelopmentTurn,
   } as unknown as PrimeWorkApi['enterprise']
   const agent = { onEvent: () => () => {} } as unknown as PrimeWorkApi['agent']
   const overview: EnterpriseDevelopmentOverview = { version: '1', loadedAt: '', models: ['deepseek-flash'], runtimes: [], teams: [{ id: 'team', name: '合同团队', status: 'active', updatedAt: '', workers: [], workflows: [], runs: [] }] }
@@ -35,6 +37,7 @@ it('shows a Pi proposal beside the main conversation and saves only after applyi
   const apply = [...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent?.includes('应用到草稿'))
   expect(apply).toBeTruthy()
   await act(async () => apply!.click())
+  expect(invalidateTeamDevelopmentTurn).toHaveBeenCalledWith('pi')
   expect(remote.document.members[1]?.relationship.duty).toBe('')
   expect(container.textContent).toContain('修改尚未保存')
   await act(async () => root!.unmount())

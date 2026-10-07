@@ -76,6 +76,85 @@ describe('employee-only business action contract', () => {
 })
 
 describe('employee action durable authorization and receipts', () => {
+  it('preserves the opened item across related record reads and process restart without leaking the anchor', async () => {
+    const f = await fixture()
+    await f.bridge.bind(f.turn.accountKey, f.turn.sessionPath, { record: f.current.record, source: f.current.source }, true)
+    await f.bridge.bind(f.turn.accountKey, f.turn.sessionPath, { record: { objectName: 'forge_fund_account', recordId: 'account-related', label: '测试银行台账' }, source: { kind: 'record' } })
+    const reopened = new EmployeeBusinessActions(f.service, new HandoffStore({ directory: f.directory }))
+    expect(await reopened.selection(f.turn.accountKey, f.turn.sessionPath)).toEqual({ record: f.current.record, source: f.current.source })
+    await reopened.list(f.turn)
+    expect(f.service.getEmployeeBusinessContext).toHaveBeenLastCalledWith({ record: f.current.record, source: f.current.source })
+    expect(await reopened.run(f.turn, { action_ref: 1, values: f.values })).toMatchObject({ status: 'succeeded' })
+    expect(f.service.executeEmployeeBusinessAction).toHaveBeenCalledOnce()
+  })
+  it('allows a newly verified item to replace the anchor while isolating account and session sources', async () => {
+    const f = await fixture()
+    await f.bridge.bind(f.turn.accountKey, f.turn.sessionPath, { record: f.current.record, source: f.current.source }, true)
+    const next = { record: { objectName: 'forge_customer_prepayment', recordId: 'prepayment-next', label: '云岚预收' }, source: { kind: 'record' as const } }
+    await f.bridge.bind(f.turn.accountKey, f.turn.sessionPath, next, true)
+    expect(await f.bridge.selection(f.turn.accountKey, f.turn.sessionPath)).toEqual(next)
+    expect(await f.bridge.selection('another-employee', f.turn.sessionPath)).toBeUndefined()
+    expect(await f.bridge.selection(f.turn.accountKey, '/another-session')).toBeUndefined()
+  })
+  it('accepts an explicit project start while rejecting a negated start intent', async () => {
+    const f = await fixture()
+    f.current.record = { objectName: 'forge_project', recordId: 'project-current', label: '云岚交付项目' }
+    f.current.actions[0].label = '启动项目'
+    f.current.actions[0].parameters = []
+    await f.bridge.bind(f.turn.accountKey, f.turn.sessionPath, { record: f.current.record, source: f.current.source })
+    await f.bridge.list(f.turn)
+    for (const employeePrompt of ['不要启动当前项目。', '暂不启动当前项目。', '禁止启动当前项目。']) {
+      await expect(f.bridge.run({ ...f.turn, employeePrompt }, { action_ref: 1, values: {} })).rejects.toThrow('明确要求')
+    }
+    expect(f.service.executeEmployeeBusinessAction).not.toHaveBeenCalled()
+    expect(await f.bridge.run({ ...f.turn, employeePrompt: '启动当前项目。' }, { action_ref: 1, values: {} })).toMatchObject({ status: 'succeeded', action_label: '启动项目' })
+    expect(f.service.executeEmployeeBusinessAction).toHaveBeenCalledOnce()
+  })
+  it('keeps the preceding approval receipt distinct from a newly available send action after restart', async () => {
+    const f = await fixture()
+    f.current.actions[0].label = '提交报价审批'
+    await f.bridge.list(f.turn); await f.run()
+    f.current.recordVersion = 'revision-2'
+    f.current.actions[0].label = '登记报价已发送'
+    f.current.actions[0].capabilityId = 'forge:action:forge_quotation.Send'
+    const reopened = new EmployeeBusinessActions(f.service, new HandoffStore({ directory: f.directory }))
+    const next = { ...f.turn, messageId: 'message-2' }
+    const listed = await reopened.list(next)
+    if (!('previous_operation' in listed)) throw new Error('Expected the preceding completed operation')
+    expect(listed).toMatchObject({
+      previous_operation: { status: 'succeeded', action_label: '提交报价审批', message: expect.stringContaining('此前「提交报价审批」') },
+      actions: [{ action_ref: 1, label: '登记报价已发送' }],
+    })
+    expect(listed.previous_operation?.message).toContain('不代表当前目录中的其他动作已办理')
+    expect(await reopened.run(next, { action_ref: 1, values: f.values })).toMatchObject({ status: 'succeeded', action_label: '登记报价已发送' })
+    expect(f.service.executeEmployeeBusinessAction).toHaveBeenCalledTimes(2)
+  })
+  it('does not infer a legacy receipt action from a reused current directory reference', async () => {
+    const f = await fixture(); await f.bridge.list(f.turn); await f.run()
+    for (const name of (await readdir(f.directory)).filter((name) => name.endsWith('.json'))) {
+      const path = join(f.directory, name), saved = JSON.parse(await readFile(path, 'utf8'))
+      if (saved.value.request) { delete saved.value.actionLabel; await writeFile(path, JSON.stringify(saved)) }
+    }
+    f.current.actions[0].label = '登记报价已发送'
+    const reopened = new EmployeeBusinessActions(f.service, new HandoffStore({ directory: f.directory }))
+    const listed = await reopened.list({ ...f.turn, messageId: 'message-2' })
+    if (!('previous_operation' in listed)) throw new Error('Expected the preceding legacy operation')
+    expect(listed.previous_operation).toMatchObject({ status: 'succeeded', message: expect.stringContaining('旧记录未保存动作名称') })
+    expect(listed.previous_operation).not.toHaveProperty('action_label')
+    expect(listed.previous_operation?.message).not.toContain('登记报价已发送')
+  })
+  it('retains the record-wide unknown-result fence when the current action has changed', async () => {
+    const f = await fixture()
+    f.current.actions[0].label = '提交报价审批'
+    f.service.executeEmployeeBusinessAction.mockRejectedValue(new Error('connection lost'))
+    await f.bridge.list(f.turn); await f.run()
+    f.current.actions[0].label = '登记报价已发送'
+    const reopened = new EmployeeBusinessActions(f.service, new HandoffStore({ directory: f.directory }))
+    const next = { ...f.turn, messageId: 'message-2' }
+    expect(await reopened.list(next)).toMatchObject({ actions: [], operation: { status: 'unknown' } })
+    expect(await reopened.run(next, { action_ref: 1, values: f.values })).toMatchObject({ status: 'unknown' })
+    expect(f.service.executeEmployeeBusinessAction).toHaveBeenCalledOnce()
+  })
   it('accepts the unique native business label while sending its exact declared value', async () => {
     const f = await fixture()
     f.current.actions[0].parameters = [{ name: 'payment_method', label: '付款方式', type: 'string', required: true, enum: ['bank_transfer', 'cash'], enumLabels: [{ value: 'bank_transfer', label: '银行转账' }, { value: 'cash', label: '现金' }] }]
@@ -189,8 +268,8 @@ describe('native business work projection', () => {
   it.each(['', 'a'.repeat(8193)])('rejects empty or oversized signed cursors', async (nextCursor) => {
     await expect(readBusinessWork(async () => ({ version: '1', items: [], readStatus: 'complete', observedAt: new Date().toISOString(), nextCursor }))).rejects.toThrow()
   })
-  it('accepts authoritative order-condition work and all six distinct source failures without claiming a complete list', async () => {
-    const kinds = ['contract_signature', 'contract_order_conditions', 'contract_prepayment', 'prepayment_confirmation', 'sales_order_creation', 'sales_order_submission']
+  it('accepts authoritative order-condition work and all eight distinct source failures without claiming a complete list', async () => {
+    const kinds = ['quotation_follow_up', 'contract_signature', 'contract_order_conditions', 'contract_prepayment', 'prepayment_confirmation', 'sales_order_creation', 'sales_order_submission', 'project_start']
     const item = { workKey: 'a'.repeat(64), kind: 'contract_order_conditions', title: '确认合同下单条件', record: context().record, recordVersion: '1', updatedAt: new Date().toISOString(), assignment: 'assigned' }
     const page = { version: '1', items: [item], readStatus: 'partial', observedAt: item.updatedAt, sourceErrors: kinds.map((kind) => ({ kind, code: 'READ_FAILED' })) }
     expect(await readBusinessWork(async () => page)).toMatchObject({ items: [item], error: expect.any(String) })
@@ -198,6 +277,21 @@ describe('native business work projection', () => {
     await expect(readBusinessWork(async () => ({ ...page, sourceErrors: [page.sourceErrors[0], page.sourceErrors[0]] }))).rejects.toThrow('完整性无效')
     await expect(readBusinessWork(async () => ({ ...page, sourceErrors: [{ kind: 'unknown', code: 'READ_FAILED' }] }))).rejects.toThrow('完整性无效')
     await expect(readBusinessWork(async () => ({ ...page, items: [{ ...item, kind: 'unknown' }] }))).rejects.toThrow('来源无效')
+  })
+  it('reads a manager project-start item as a record source without granting a write or inferring a manager', async () => {
+    const item = { workKey: 'd'.repeat(64), kind: 'project_start', title: '启动云岚交付项目',
+      record: { objectName: 'forge_project', recordId: 'project-current', label: '云岚交付项目' },
+      recordVersion: 'linked-order-1', updatedAt: new Date().toISOString(), assignment: 'assigned' }
+    const page = { version: '1', items: [item], readStatus: 'complete', observedAt: item.updatedAt }
+    expect(await readBusinessWork(async () => page)).toEqual({ items: [item] })
+    await expect(readBusinessWork(async () => ({ ...page, items: [{ ...item, assignment: undefined }] }))).rejects.toThrow()
+    await expect(readBusinessWork(async () => ({ ...page, items: [{ ...item, record: { ...item.record, objectName: 'sys_user' } }] }))).rejects.toThrow()
+  })
+  it.each(['提交报价审批', '登记报价发送', '登记客户接受', '转销售合同'])('reads a current quotation follow-up for %s without changing its record source', async (title) => {
+    const item = { workKey: 'c'.repeat(64), kind: 'quotation_follow_up', title,
+      record: { objectName: 'forge_quotation', recordId: 'quotation-current', label: '设备及服务报价' },
+      recordVersion: 'pricing-1', updatedAt: new Date().toISOString(), assignment: 'assigned' }
+    expect(await readBusinessWork(async () => ({ version: '1', items: [item], readStatus: 'complete', observedAt: item.updatedAt }))).toEqual({ items: [item] })
   })
   it('follows all pages, preserving assignment without inventing actionable owners', async () => {
     const item = { workKey: 'a'.repeat(64), kind: 'contract_signature', title: '登记签署', record: context().record, recordVersion: '1', updatedAt: new Date().toISOString(), assignment: 'assigned' }

@@ -22,7 +22,7 @@ for (const plugin of artifact.plugins ?? []) {
     assert.ok(!pageByName.has(page.name), `duplicate Page ${page.name}`);
     pageByName.set(page.name, { packageId, kind: page.kind, source: page.source ?? '' });
   }
-  if (bundle.manifest?.id === 'forge') {
+  if (bundle.manifest?.id === 'com.inoforge.forge.core') {
     for (const object of bundle.objects ?? []) objectNames.add(object.name);
   }
 }

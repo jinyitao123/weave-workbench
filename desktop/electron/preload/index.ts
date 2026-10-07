@@ -50,6 +50,7 @@ const api: PrimeWorkApi = {
   enterprise: {
     teamWorkspace: (command) => invoke('enterprise:team-workspace', command),
     updateTeamDevelopment: (runtimeId, input) => invoke('enterprise:update-team-development', runtimeId, input),
+    invalidateTeamDevelopmentTurn: (runtimeId) => invoke('enterprise:invalidate-team-development-turn', runtimeId),
     getTeamDevelopmentProposal: (runtimeId) => invoke('enterprise:get-team-development-proposal', runtimeId),
     getTeamDevelopmentState: (runtimeId) => invoke('enterprise:get-team-development-state', runtimeId),
     getTeamDevelopmentStateForSession: (sessionFile) => invoke('enterprise:get-team-development-state-for-session', sessionFile),

@@ -760,6 +760,51 @@
         "lines_added": 83,
         "production_lines_added": 5
       }
+    },
+    {
+      "date": "2026-10-05",
+      "reason": "Register the measured growth for required business action completion (total plan W9). Authorized dispatch and product publication refuse action-bound graphs without the declared weave.business-action-receipts check; the kernel publication service and artifact loading keep the existing rule. Completion review v2 adds a one-time missing-input review, decided from Loom structured rejection history rather than message text, and a single-round Loom tool choice after a completion claimed without receipts, never forcing an attempted, failed or unknown action; a forced round without the call fails explicitly. Bounded protocol observations add wire option enums and content counts. Vendored Loom moves to 13716ba4d678 outside the bands. Regressions cover unit, HTTP and real PostgreSQL paths, including the PR21 lead-conversion fixture now declaring the check. No spare allowance, new packages/dependencies, tables, queues, execution loops or changes to original migration targets.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 104129,
+        "previous_production_lines": 84064,
+        "lines_added": 635,
+        "production_lines_added": 280
+      },
+      "app": {
+        "previous_lines": 72271,
+        "previous_production_lines": 50645,
+        "lines_added": 162,
+        "production_lines_added": 91
+      }
+    },
+    {
+      "date": "2026-10-06",
+      "reason": "Register exact measured growth for the W9 developer-trial completion gate: bind explicit simulation_authorized flags into the existing trial request digest; expose only selected candidate actions through the isolated dispatcher; record source-tagged simulated outcomes in the existing activity ledger; keep formal receipt evaluation separate; and require same-actor, same-revision, same-candidate required-capability coverage before publication. Real PostgreSQL regressions cover read-only and zero-call trials, one forced mock action, no-call failure, changed-scope request conflict, replay refusal after failed/unknown outcomes, multi-trial capability union, bound simulation provenance alongside private bounded tool payload evidence, and same-transaction readiness reads with legacy unselected trials. The service fix closes the trial cursor before reading ledgers on the same transaction; an HTTP GET regression exercises the production handler. The first budget guard failed against prior ceilings; register only measured growth. No spare allowance, new packages/dependencies, tables, queues, execution loops, or changes to original migration targets.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "kernel": {
+        "previous_lines": 104764,
+        "previous_production_lines": 84344,
+        "lines_added": 323,
+        "production_lines_added": 206
+      },
+      "app": {
+        "previous_lines": 72433,
+        "previous_production_lines": 50736,
+        "lines_added": 702,
+        "production_lines_added": 294
+      }
+    },
+    {
+      "date": "2026-10-06",
+      "reason": "Native action confirmation compatibility for the supported Forge task transport: consume requiresConfirmation only after the existing frozen-input, current employee, published/action-scope and online task authority checks; bind the declared run_action boolean confirmation schema and recheck it before the existing dispatch guard/reservation; project confirm:true only into the native transport, preserving business parameter digests, operation identity and receipt recovery. Closed HTTP/PostgreSQL regressions cover old ObjectStack 17.3 protocol and exact conversion/price request bytes, unconfirmed and read-only scopes, unsupported/changed schemas, identity/record/file denials, expired/revoked/cancelled/terminal/replaced work, simulated isolation and post-send unknown/HTTP428/native-error replay protection; an opt-in integration exercises an isolated native Forge runtime using only a short-lived task handoff. The initial budget guard failed against prior ceilings; register only measured growth, with no spare allowance, new packages/dependencies, import exceptions, tables, queues, execution loops or changes to original migration targets.",
+      "record": "https://github.com/jinyitao123/weave-workbench/blob/9f7130baecec1cb844a82fabceb7361767b9e386/contracts/v1/README.md#原生动作确认与已有授权的传递",
+      "kernel": {
+        "previous_lines": 105087,
+        "previous_production_lines": 84550,
+        "lines_added": 804,
+        "production_lines_added": 177
+      }
     }
   ],
   "migration_targets": {
@@ -797,8 +842,8 @@
     ]
   },
   "kernel": {
-    "lines": 104129,
-    "production_lines": 84064,
+    "lines": 105891,
+    "production_lines": 84727,
     "packages": 49,
     "external_dependencies": 5,
     "allowed_dependencies": [
@@ -817,8 +862,8 @@
     "allowed_dependencies": []
   },
   "app": {
-    "lines": 72271,
-    "production_lines": 50645,
+    "lines": 73135,
+    "production_lines": 51030,
     "packages": 24,
     "external_dependencies": 6,
     "allowed_dependencies": [

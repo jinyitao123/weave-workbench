@@ -3,8 +3,10 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { TrialPanel } from '../../src/pages/team-workspace/TrialPanel'
+import { initialGraph } from '../../src/pages/team-workspace/graph'
+import { newMember } from '../../src/pages/team-workspace/member'
 import type { TeamWorkspace, TeamWorkspaceBridge, TeamWorkspaceCommand } from '../../src/types/team-workspace'
-import { trialWireActivity, trialWireCases } from '../fixtures/trial-activity'
+import { trialToolAction, trialWireActivity, trialWireCases } from '../fixtures/trial-activity'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -12,14 +14,17 @@ let root: Root
 let container: HTMLDivElement
 
 function draft(): TeamWorkspace {
+  const member = newMember('test-model')
+  member.id = 'member-1'
+  member.configuration.displayName = 'Worker'
   return {
     revision: 2, published_revision: 1, publishing_revision: 0, prepared_revision: 0, updated_at: '',
     trials: [{ request_id: 'trial-1', revision: 2, workflow_id: 'flow-1', run_id: 'run-1', status: 'succeeded', created_at: '2026-09-30T00:00:00Z' }],
     document: {
-      name: 'Team', objective: '', members: [{ id: 'member-1', configuration: { businessCapabilityIds: [] } }],
-      workflows: [{ id: 'flow-1', name: 'Flow', description: '', trigger_config: {}, graph_definition: {} as TeamWorkspace['document']['workflows'][number]['graph_definition'] }],
+      name: 'Team', objective: '', members: [member],
+      workflows: [{ id: 'flow-1', name: 'Flow', description: '', trigger_config: {}, graph_definition: initialGraph(member) }],
     },
-  } as unknown as TeamWorkspace
+  }
 }
 
 beforeEach(() => {
@@ -43,7 +48,7 @@ function renderPanel(activityResult: { status: string; completeness?: { member_t
     if (command.action === 'input') return { input: '试跑输入', status: 'succeeded', output: '已提交至业务系统' } as T
     return snapshot as T
   }
-  return act(async () => root.render(<TrialPanel teamId="team-1" draft={snapshot} bridge={bridge} flush={async () => snapshot} refresh={vi.fn(async () => undefined)}/>))
+  return act(async () => root.render(<TrialPanel teamId="team-1" draft={snapshot} businessCapabilities={{ version: '1', provider: { id: 'forge', name: 'Forge', status: 'available' }, capabilities: [trialToolAction], refreshedAt: '' }} bridge={bridge} flush={async () => snapshot} refresh={vi.fn(async () => undefined)}/>))
 }
 
 const toolActivity = (runStatus: string, stageStatus: string, toolStatus: string, completedAt?: string, savedDetails: { input?: string; output?: string } = {}) => ({
@@ -56,8 +61,9 @@ const toolActivity = (runStatus: string, stageStatus: string, toolStatus: string
 it.each(trialWireCases)('interprets the same $name wire record as the Pi bridge', async (tool) => {
   await renderPanel(trialWireActivity(tool))
 
-  const toolDetails = [...container.querySelectorAll('details')].find((item) => item.querySelector('summary')?.textContent?.includes('转为商机'))
+  const toolDetails = [...container.querySelectorAll('details')].find((item) => item.querySelector('summary')?.textContent?.includes(tool.displayName ?? '工具调用'))
   expect(toolDetails?.querySelector('summary')?.textContent).toContain(tool.label)
+  expect(toolDetails?.querySelector('summary')?.textContent).not.toContain('forge_forge_quotation')
   if (!tool.input && !tool.output && tool.completeness === '不可用') {
     expect(toolDetails?.textContent).toContain('此调试记录未保存调用参数和模拟回执')
     expect(toolDetails?.querySelector('pre')).toBeNull()
@@ -80,7 +86,7 @@ it.each([
   const visible = input ?? output
   await renderPanel(toolActivity('succeeded', 'completed', 'ok', '2026-10-05T01:16:00Z', details))
 
-  const toolDetails = [...container.querySelectorAll('details')].find((item) => item.querySelector('summary')?.textContent?.includes('Lead conversion'))
+  const toolDetails = [...container.querySelectorAll('details')].find((item) => item.querySelector('summary')?.textContent?.includes('工具调用'))
   expect(toolDetails?.textContent).toContain(notice)
   expect(toolDetails?.querySelectorAll('pre')).toHaveLength(1)
   expect(toolDetails?.querySelector('pre')?.textContent).toBe(visible)
@@ -89,9 +95,27 @@ it.each([
 it('does not infer completion from an ok status without the projected completion phase', async () => {
   await renderPanel(toolActivity('running', 'running', 'ok'))
 
-  const toolDetails = [...container.querySelectorAll('details')].find((item) => item.querySelector('summary')?.textContent?.includes('Lead conversion'))
+  const toolDetails = [...container.querySelectorAll('details')].find((item) => item.querySelector('summary')?.textContent?.includes('工具调用'))
   expect(toolDetails?.querySelector('summary')?.textContent).toContain('工具调用中')
   expect(toolDetails?.querySelector('summary')?.textContent).not.toContain('工具调用完成')
+})
+
+it('hides only declared system-owned parameter values in the display copy while retaining business IDs and recorded payloads', async () => {
+  const businessId = '2bbe0ca9-3c98-4154-8742-6c056e82252a'
+  const input = JSON.stringify({ recordId: businessId, params: { idempotency_key: 'private-engine-operation-input', idempotencyKey: 'private-engine-alias-input', source_id: businessId, note: 'private-engine-operation-input' } })
+  const output = JSON.stringify({ actionName: trialToolAction.actionName, objectName: trialToolAction.objectName, recordId: businessId, params: { idempotency_key: 'private-engine-operation-output', idempotencyKey: 'private-engine-alias-output', source_id: businessId }, simulated: true })
+  const activity = toolActivity('succeeded', 'completed', 'ok', '2026-10-05T01:16:00Z', { input, output })
+  await renderPanel(activity)
+
+  const toolDetails = [...container.querySelectorAll('details')].find((item) => item.querySelector('summary')?.textContent?.includes(trialToolAction.name))!
+  const [shownInput, shownOutput] = [...toolDetails.querySelectorAll('pre')].map((item) => JSON.parse(item.textContent!))
+  expect(shownInput.params).toEqual({ idempotency_key: '系统托管', idempotencyKey: '系统托管', source_id: businessId, note: 'private-engine-operation-input' })
+  expect(shownOutput.params).toEqual({ idempotency_key: '系统托管', idempotencyKey: '系统托管', source_id: businessId })
+  expect(shownOutput.recordId).toBe(businessId)
+  expect(toolDetails.textContent).not.toContain('private-engine-alias-input')
+  expect(toolDetails.textContent).not.toContain('private-engine-operation-output')
+  expect(activity.members[0]!.stages[0]!.tools[0]!.input).toBe(input)
+  expect(activity.members[0]!.stages[0]!.tools[0]!.output).toBe(output)
 })
 
 it('uses tools:null as zero calls only when Weave marks tool activity complete', async () => {

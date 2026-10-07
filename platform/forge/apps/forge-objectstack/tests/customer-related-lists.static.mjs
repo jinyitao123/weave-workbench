@@ -93,7 +93,7 @@ if (process.env.OBJECTSTACK_BUILD_ARTIFACT) {
       ownersByObject.set(object.name, owners);
     }
   }
-  const core = bundles.find((bundle) => bundle.manifest?.id === 'forge');
+  const core = bundles.find((bundle) => bundle.manifest?.id === 'com.inoforge.forge.core');
   const coreObjects = new Map((core?.objects ?? []).map((object) => [object.name, object]));
   for (const entry of fixture.entries) {
     assert.deepEqual(ownersByObject.get(entry.objectName), ['forge'], `${entry.objectName} must remain uniquely registered in the shared core`);

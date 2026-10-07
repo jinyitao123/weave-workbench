@@ -12,10 +12,29 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SOURCE_DEPLOY = path.resolve(HERE, '../scripts/deploy.sh');
 const SOURCE_REVISION = '0123456789abcdef0123456789abcdef01234567';
 const SECRETS = ['test-postgres-secret', 'test-auth-secret', 'test-key-secret'];
+const capacityPhaseScript = [
+  'capacityPhase=before-backup',
+  'if [ -f "$FORGE_DEPLOY_TEST_STATE/backed-up" ]; then capacityPhase=before-build; fi',
+  'if [ -f "$FORGE_DEPLOY_TEST_STATE/proxy-image-built" ]; then capacityPhase=before-candidate; fi',
+  'if [ -f "$FORGE_DEPLOY_TEST_STATE/candidate-started" ]; then capacityPhase=before-app-switch; fi',
+].join('\n');
 
 const dockerScript = [
   '#!/bin/sh',
   'printf "candidatePort=%s proxyImage=%s appImage=%s %s\\n" "$FORGE_CANDIDATE_PORT" "$FORGE_PROXY_IMAGE" "$FORGE_IMAGE" "$*" >> "$FORGE_DEPLOY_TEST_LOG"',
+  capacityPhaseScript,
+  'if [ "$1" = "info" ]; then',
+  '  if [ "$capacityPhase" = "$FORGE_TEST_CAPACITY_PHASE" ]; then',
+  '    case "$FORGE_TEST_DOCKER_ROOT_MODE" in',
+  '      failed) exit 21 ;;',
+  '      empty) exit 0 ;;',
+  '      relative) echo relative/docker; exit 0 ;;',
+  '      missing) echo "$FORGE_DEPLOY_TEST_DOCKER_ROOT/missing"; exit 0 ;;',
+  '      multiple) printf "%s\\n%s\\n" "$FORGE_DEPLOY_TEST_DOCKER_ROOT" /another-root; exit 0 ;;',
+  '    esac',
+  '  fi',
+  '  printf "%s\\n" "$FORGE_DEPLOY_TEST_DOCKER_ROOT"; exit 0',
+  'fi',
   'if [ "$1" = "compose" ] && [ "$2" = "ps" ]; then',
   '  case "$4" in',
   '    app) if [ -f "$FORGE_DEPLOY_TEST_STATE/app-updated" ]; then echo new-app; elif [ "$FORGE_TEST_FRESH" != 1 ]; then echo old-app; fi ;;',
@@ -48,7 +67,7 @@ const dockerScript = [
   'fi',
   'if [ "$1" = "compose" ] && [ "$2" = "exec" ]; then',
   '  case "$4" in',
-  '    db) if [ "$FORGE_TEST_DUMP_FAILURE" = 1 ]; then exit 17; fi; printf "%s\\n" "-- PostgreSQL test dump" ;;',
+  '    db) if [ "$FORGE_TEST_DUMP_FAILURE" = 1 ]; then exit 17; fi; printf "%s\\n" "-- PostgreSQL test dump"; touch "$FORGE_DEPLOY_TEST_STATE/backed-up" ;;',
   '    app) if [ "$FORGE_TEST_UPLOADS_FAILURE" = 1 ]; then exit 18; fi; tar -C "$FORGE_DEPLOY_TEST_UPLOADS" -cf - . ;;',
   '    *) exit 19 ;;',
   '  esac',
@@ -69,8 +88,37 @@ const dockerScript = [
   '  esac',
   '  exit 0',
   'fi',
-  'if [ "$1" = "buildx" ] && [ "$2" = "build" ]; then exit 0; fi',
+  'if [ "$1" = "buildx" ] && [ "$2" = "build" ]; then case " $* " in *" --target proxy "*) touch "$FORGE_DEPLOY_TEST_STATE/proxy-image-built" ;; esac; exit 0; fi',
   'exit 0',
+].join('\n') + '\n';
+
+const dfScript = [
+  '#!/bin/sh',
+  capacityPhaseScript,
+  'for capacityArg in "$@"; do capacityPath=$capacityArg; done',
+  'case "$capacityPath" in',
+  '  "$FORGE_DEPLOY_TEST_DOCKER_ROOT") capacityLocation=DockerRootDir ;;',
+  '  "$FORGE_DEPLOY_TEST_RELEASE_PARENT") capacityLocation=BackupRoot ;;',
+  '  */backups/*) capacityLocation=BackupRoot ;;',
+  '  *) capacityLocation=AppRoot ;;',
+  'esac',
+  'printf "df phase=%s location=%s %s\\n" "$capacityPhase" "$capacityLocation" "$*" >> "$FORGE_DEPLOY_TEST_LOG"',
+  'capacityAvailable=$FORGE_TEST_CAPACITY_DEFAULT_KIB',
+  'if [ "$capacityPhase" = "$FORGE_TEST_CAPACITY_PHASE" ] && [ "$capacityLocation" = "$FORGE_TEST_CAPACITY_LOCATION" ]; then',
+  '  capacityAvailable=$FORGE_TEST_CAPACITY_KIB',
+  '  case "$FORGE_TEST_DF_MODE" in',
+  '    failed) exit 20 ;;',
+  '    empty) exit 0 ;;',
+  '    malformed) capacityAvailable=unknown ;;',
+  '    negative) capacityAvailable=-1 ;;',
+  '    decimal) capacityAvailable=1.5 ;;',
+  '    overflow) capacityAvailable=999999999999999999999999999999999999 ;;',
+  '    reserved) capacityAvailable=0 ;;',
+  '    multiple) printf "Filesystem 1024-blocks Used Available Capacity Mounted on\\n/dev/a 100000000 1 8000000 1%% /a\\n/dev/b 100000000 1 8000000 1%% /b\\n"; exit 0 ;;',
+  '  esac',
+  'fi',
+  // Total minus used looks generous even when ordinary Available is zero.
+  'printf "Filesystem 1024-blocks Used Available Capacity Mounted on\\n/dev/test 100000000 1 %s 1%% /test\\n" "$capacityAvailable"',
 ].join('\n') + '\n';
 
 const curlScript = [
@@ -89,7 +137,7 @@ const curlScript = [
   'esac',
 ].join('\n') + '\n';
 
-async function runCase({ name, publicFailure, previousProxy, fresh = false, database = false, dumpFailure = false, uploadsFailure = false }) {
+async function runCase({ name, publicFailure, previousProxy, fresh = false, database = false, dumpFailure = false, uploadsFailure = false, capacity, expectedFailure = false }) {
   const tempDir = await mkdtemp(path.join(tmpdir(), 'forge-deploy-transport-'));
   try {
     const appDir = path.join(tempDir, 'app');
@@ -97,8 +145,10 @@ async function runCase({ name, publicFailure, previousProxy, fresh = false, data
     const fakeBin = path.join(tempDir, 'bin');
     const stateDir = path.join(tempDir, 'state');
     const uploadsDir = path.join(tempDir, 'uploads');
+    const dockerRoot = path.join(tempDir, 'docker data');
     await Promise.all([mkdir(scriptsDir, { recursive: true }), mkdir(fakeBin), mkdir(stateDir)]);
     await mkdir(uploadsDir);
+    await mkdir(dockerRoot);
     await writeFile(path.join(uploadsDir, 'receipt.txt'), 'private fixture attachment\n');
     const consoleContext = path.join(appDir, '.generated/console94');
     await mkdir(path.join(consoleContext, 'dist'), { recursive: true });
@@ -119,8 +169,9 @@ async function runCase({ name, publicFailure, previousProxy, fresh = false, data
     ].join('\n'));
     await writeFile(path.join(fakeBin, 'docker'), dockerScript);
     await writeFile(path.join(fakeBin, 'curl'), curlScript);
+    await writeFile(path.join(fakeBin, 'df'), dfScript);
     await writeFile(path.join(fakeBin, 'sleep'), '#!/bin/sh\nexit 0\n');
-    await Promise.all(['docker', 'curl', 'sleep'].map((tool) => chmod(path.join(fakeBin, tool), 0o755)));
+    await Promise.all(['docker', 'curl', 'sleep', 'df'].map((tool) => chmod(path.join(fakeBin, tool), 0o755)));
 
     const logPath = path.join(tempDir, 'commands.log');
     const env = {
@@ -142,6 +193,16 @@ async function runCase({ name, publicFailure, previousProxy, fresh = false, data
       FORGE_TEST_DUMP_FAILURE: dumpFailure ? '1' : '0',
       FORGE_TEST_UPLOADS_FAILURE: uploadsFailure ? '1' : '0',
       FORGE_DEPLOY_TEST_UPLOADS: uploadsDir,
+      FORGE_DEPLOY_TEST_DOCKER_ROOT: dockerRoot,
+      FORGE_DEPLOY_TEST_RELEASE_PARENT: tempDir,
+      FORGE_TEST_CAPACITY_PHASE: capacity?.phase || 'before-backup',
+      FORGE_TEST_CAPACITY_LOCATION: capacity?.location || 'AppRoot',
+      FORGE_TEST_CAPACITY_DEFAULT_KIB: capacity?.defaultKib ?? '8388608',
+      FORGE_TEST_CAPACITY_KIB: capacity?.availableKib ?? '8388608',
+      FORGE_TEST_DF_MODE: capacity?.dfMode || 'normal',
+      FORGE_TEST_DOCKER_ROOT_MODE: capacity?.dockerRootMode || 'normal',
+      FORGE_DEPLOY_MIN_BUILD_GIB: capacity?.buildGib ?? '4',
+      FORGE_DEPLOY_MIN_SWITCH_GIB: capacity?.switchGib ?? '1',
     };
     const result = spawnSync('/bin/sh', [path.join(scriptsDir, 'deploy.sh')], {
       cwd: appDir,
@@ -152,7 +213,7 @@ async function runCase({ name, publicFailure, previousProxy, fresh = false, data
     const output = result.stdout + result.stderr;
     assert.ok(!SECRETS.some((secret) => output.includes(secret)), name + ': deployment output must not print .env secrets');
     const commandLog = await readFile(logPath, 'utf8');
-    if (!dumpFailure && !uploadsFailure) {
+    if (!dumpFailure && !uploadsFailure && !expectedFailure) {
       if (!publicFailure) assert.equal(result.status, 0, name + ': ' + output);
       assert.match(commandLog, /--target app/, name + ': app image must use its explicit Docker stage');
       assert.match(commandLog, /--target proxy/, name + ': proxy image must use its explicit Docker stage');
@@ -192,6 +253,8 @@ try {
   assert.match(releaseRecord, /console_tree_sha256=99962f68ff9bd9e8de5b89aeb130288dbd832fa178fb7c9790571b6be2eee54a/);
   assert.match(releaseRecord, /app_image_id=sha256:new-app-image/);
   assert.match(releaseRecord, /proxy_image_id=sha256:new-proxy-image/);
+  assert.match(releaseRecord, /minimum_build_available_gib=4/);
+  assert.match(releaseRecord, /minimum_switch_available_gib=1/);
   assert.doesNotMatch(releaseRecord, /test-(?:postgres|auth|key)-secret/);
   assert.ok(success.commandLog.includes('proxy-candidate'));
   console.log('PASS release builds, candidate-checks, promotes and records both image IDs');
@@ -213,6 +276,47 @@ try {
   assert.match(completedRecord, /uploads_backup=.*uploads\.tar\.gz/);
   assert.equal((await readdir(backupDir)).includes('database.sql'), false, 'raw database dump does not remain after compression');
   console.log('PASS existing data and attachment backups are private, readable, and recorded');
+
+  for (const phase of ['before-backup', 'before-build', 'before-candidate', 'before-app-switch']) {
+    for (const location of ['AppRoot', 'DockerRootDir', 'BackupRoot']) {
+      const buildGate = ['before-backup', 'before-build'].includes(phase);
+      const availableKib = buildGate ? '4194303' : '1048575';
+      const stopped = await runCase({name:phase+' '+location, previousProxy:true, database:true, expectedFailure:true, capacity:{phase,location,availableKib}});
+      cases.push(stopped);assert.equal(stopped.result.status,1,stopped.output);
+      assert.match(stopped.output,new RegExp('阶段='+phase+'，位置='+location+'，可用='+availableKib+'KiB，要求='+(buildGate?'4194304':'1048576')+'KiB'));
+      assert.doesNotMatch(stopped.commandLog,/ up [^\n]* (?:app|proxy)(?: |$)/m,'capacity rejection never switches the old app or public proxy');
+      if(phase==='before-backup')assert.doesNotMatch(stopped.commandLog,/compose exec|buildx build|proxy-candidate/);
+      if(phase==='before-build'){assert.match(stopped.commandLog,/compose exec -T db/);assert.doesNotMatch(stopped.commandLog,/buildx build|proxy-candidate/);}
+      if(phase==='before-candidate'){assert.match(stopped.commandLog,/--target app/);assert.match(stopped.commandLog,/--target proxy/);assert.doesNotMatch(stopped.commandLog,/proxy-candidate/);}
+      if(phase==='before-app-switch'){assert.match(stopped.commandLog,/force-recreate proxy-candidate/);assert.match(stopped.commandLog,/rm -f -s proxy-candidate/,'normal candidate cleanup still runs');}
+      assert.doesNotMatch(stopped.commandLog,/prune|system df| down |rollback-compose/,'a gate neither prunes nor starts a second deployment/restore');
+    }
+    console.log('PASS '+phase+' checks all three actual filesystems before continuing');
+  }
+  for(const dfMode of ['failed','empty','malformed','negative','decimal','overflow','multiple','reserved']){
+    const closed=await runCase({name:'df '+dfMode, previousProxy:true,database:true,expectedFailure:true,capacity:{location:'DockerRootDir',dfMode}});cases.push(closed);
+    assert.equal(closed.result.status,1,closed.output);assert.doesNotMatch(closed.commandLog,/compose exec|buildx build| up /);
+    assert.match(closed.output,/阶段=before-backup，位置=DockerRootDir/);assert.match(closed.output,/要求=4194304KiB/);
+    assert.match(closed.output,dfMode==='reserved'?/可用=0KiB/:/可用=unknownKiB/);
+  }
+  console.log('PASS malformed or unavailable df closes the gate and root-reserved free never counts as Available');
+  for(const dockerRootMode of ['failed','empty','relative','missing','multiple']){
+    const closed=await runCase({name:'DockerRootDir '+dockerRootMode,previousProxy:true,database:true,expectedFailure:true,capacity:{dockerRootMode}});cases.push(closed);
+    assert.equal(closed.result.status,1,closed.output);assert.doesNotMatch(closed.commandLog,/compose exec|buildx build| up /);assert.match(closed.output,/位置=DockerRootDir，可用=unknownKiB，要求=4194304KiB/);
+  }
+  console.log('PASS failed Docker info or an uncheckable DockerRootDir never falls back to AppRoot');
+  for(const key of ['buildGib','switchGib'])for(const value of ['', '0', '-1', '1.5', '04', 'invalid', '1048577', '999999999999999999999']){
+    const closed=await runCase({name:key+' invalid threshold',previousProxy:true,database:true,expectedFailure:true,capacity:{[key]:value}});cases.push(closed);
+    assert.equal(closed.result.status,1,closed.output);assert.doesNotMatch(closed.commandLog,/compose exec|buildx build| up /);assert.match(closed.output,/容量配置阶段/);
+  }
+  console.log('PASS empty, zero and invalid capacity overrides cannot disable the gate');
+  const exact=await runCase({name:'exact capacity boundary',previousProxy:true,database:true,capacity:{defaultKib:'4194304',availableKib:'4194304'}});cases.push(exact);assert.equal(exact.result.status,0);
+  const configured=await runCase({name:'explicit capacity thresholds',previousProxy:true,database:true,capacity:{buildGib:'2',switchGib:'3'}});cases.push(configured);assert.equal(configured.result.status,0);
+  assert.match(configured.output,/备份\/构建=2GiB/);assert.match(configured.output,/候选\/切换=3GiB/);
+  const configuredNames=await readdir(path.join(configured.tempDir,'release','releases'));
+  const configuredRecord=await readFile(path.join(configured.tempDir,'release','releases',configuredNames[0],'release.env'),'utf8');
+  assert.match(configuredRecord,/minimum_build_available_gib=2/);assert.match(configuredRecord,/minimum_switch_available_gib=3/);
+  console.log('PASS inclusive boundaries and explicit nonzero thresholds keep the original successful release flow and audit values');
 
   for (const options of [
     { name: 'failed database dump', dumpFailure: true },
@@ -241,7 +345,7 @@ try {
   assert.ok(proxyRollback.output.includes('上一版本公网入口健康检查通过'));
   console.log('PASS failed release restores the previously running app and proxy images');
 
-  console.log('Deploy transport checks passed.');
+  console.log('Deploy transport checks passed. Cases: ' + cases.length);
 } catch (error) {
   console.error(error.stack || error);
   process.exitCode = 1;

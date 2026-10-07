@@ -45,7 +45,7 @@ export const SubcontractProcessingPrice = master('forge_subcontract_processing_p
   process_type_id: reference('forge_subcontract_business_setting', '加工类型', true),
   sku_id: reference('forge_material_sku', '指定加工件'),
   unit_name: text('计价单位', true),
-  unit_price: Field.currency({ label: '加工单价', precision: 18, scale: 4, min: 0, ...required }),
+  unit_price: Field.currency({ label: '加工单价', precision: 18, min: 0, ...required }),
   effective_from: Field.date({ label: '生效日期', ...required }),
   effective_to: Field.date({ label: '失效日期' }),
   status: Field.select([

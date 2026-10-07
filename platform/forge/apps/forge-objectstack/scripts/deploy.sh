@@ -18,8 +18,8 @@ if ! docker buildx version >/dev/null 2>&1; then
   echo "部署需要 Docker Buildx，以传入已验证的 Console 94 构建上下文。" >&2
   exit 1
 fi
-if ! command -v curl >/dev/null 2>&1 || ! command -v gzip >/dev/null 2>&1; then
-  echo "部署需要 curl 和 gzip。" >&2
+if ! command -v curl >/dev/null 2>&1 || ! command -v gzip >/dev/null 2>&1 || ! command -v df >/dev/null 2>&1; then
+  echo "部署需要 curl、gzip 和 df。" >&2
   exit 1
 fi
 
@@ -95,6 +95,90 @@ if [ "${#SOURCE_REVISION}" -lt 7 ]; then
 fi
 SOURCE_REVISION=$(printf '%s' "$SOURCE_REVISION" | tr 'A-F' 'a-f')
 
+# Explicitly empty, zero and invalid overrides cannot disable this gate.
+# Bound integer GiB keeps POSIX-shell arithmetic within exact 64-bit values.
+FORGE_DEPLOY_MIN_BUILD_GIB=${FORGE_DEPLOY_MIN_BUILD_GIB-4}
+FORGE_DEPLOY_MIN_SWITCH_GIB=${FORGE_DEPLOY_MIN_SWITCH_GIB-1}
+validate_capacity_threshold() {
+  capacity_name=$1
+  capacity_value=$2
+  case "$capacity_value" in
+    [1-9]|[1-9][0-9]*) ;;
+    *) echo "容量配置阶段：$capacity_name 必须是1至1048576的整数GiB；可用=unknown，要求=有效正整数。" >&2; exit 1 ;;
+  esac
+  case "$capacity_value" in
+    *[!0-9]*) echo "容量配置阶段：$capacity_name 不是有效整数GiB；可用=unknown，要求=有效正整数。" >&2; exit 1 ;;
+  esac
+  if [ "${#capacity_value}" -gt 7 ] || [ "$capacity_value" -gt 1048576 ]; then
+    echo "容量配置阶段：$capacity_name 超出1至1048576整数GiB范围；可用=unknown，要求=有效正整数。" >&2
+    exit 1
+  fi
+}
+validate_capacity_threshold FORGE_DEPLOY_MIN_BUILD_GIB "$FORGE_DEPLOY_MIN_BUILD_GIB"
+validate_capacity_threshold FORGE_DEPLOY_MIN_SWITCH_GIB "$FORGE_DEPLOY_MIN_SWITCH_GIB"
+MIN_BUILD_AVAILABLE_KIB=$((FORGE_DEPLOY_MIN_BUILD_GIB * 1048576))
+MIN_SWITCH_AVAILABLE_KIB=$((FORGE_DEPLOY_MIN_SWITCH_GIB * 1048576))
+echo "部署容量阈值：备份/构建=${FORGE_DEPLOY_MIN_BUILD_GIB}GiB（${MIN_BUILD_AVAILABLE_KIB}KiB），候选/切换=${FORGE_DEPLOY_MIN_SWITCH_GIB}GiB（${MIN_SWITCH_AVAILABLE_KIB}KiB）。"
+
+capacity_unknown() {
+  echo "容量检查失败：阶段=$1，位置=$2，可用=unknownKiB，要求=${3}KiB；无法可靠核对普通可用空间，停止后续部署。" >&2
+  exit 1
+}
+check_available_space() {
+  capacity_stage=$1
+  capacity_location=$2
+  capacity_path=$3
+  capacity_required=$4
+  if ! capacity_df=$(LC_ALL=C df -Pk "$capacity_path" 2>/dev/null); then
+    capacity_unknown "$capacity_stage" "$capacity_location" "$capacity_required"
+  fi
+  # -P forces one row and -k fixes 1024-byte units. Available is f_bavail,
+  # not total minus used or the blocks reserved for root.
+  if ! capacity_available=$(printf '%s\n' "$capacity_df" | LC_ALL=C awk '
+    NR == 1 { if ($1 != "Filesystem" || $4 != "Available") invalid = 1 }
+    NR == 2 {
+      if (NF < 6 || $4 !~ /^[0-9]+$/ || length($4) > 16 || $4 + 0 > 9007199254740991) invalid = 1
+      available = $4
+    }
+    END { if (NR != 2 || invalid) exit 1; print available }
+  '); then
+    capacity_unknown "$capacity_stage" "$capacity_location" "$capacity_required"
+  fi
+  echo "容量检查：阶段=${capacity_stage}，位置=${capacity_location}，可用=${capacity_available}KiB，要求=${capacity_required}KiB。"
+  if ! [ "$capacity_available" -ge "$capacity_required" ]; then
+    echo "容量不足：阶段=${capacity_stage}，位置=${capacity_location}，可用=${capacity_available}KiB，要求=${capacity_required}KiB；停止后续部署，不自动清理或切换。" >&2
+    exit 1
+  fi
+}
+check_deploy_capacity() {
+  capacity_check_stage=$1
+  capacity_check_required=$2
+  check_available_space "$capacity_check_stage" AppRoot "$APP_DIR" "$capacity_check_required"
+  if ! capacity_docker_root=$(docker info --format '{{.DockerRootDir}}' 2>/dev/null); then
+    capacity_unknown "$capacity_check_stage" DockerRootDir "$capacity_check_required"
+  fi
+  case "$capacity_docker_root" in
+    /*) ;;
+    *) capacity_unknown "$capacity_check_stage" DockerRootDir "$capacity_check_required" ;;
+  esac
+  if ! printf '%s\n' "$capacity_docker_root" | LC_ALL=C awk 'NR != 1 || /[[:cntrl:]]/ { invalid = 1 } END { exit invalid }' \
+    || [ ! -d "$capacity_docker_root" ]; then
+    capacity_unknown "$capacity_check_stage" DockerRootDir "$capacity_check_required"
+  fi
+  check_available_space "$capacity_check_stage" DockerRootDir "$capacity_docker_root" "$capacity_check_required"
+  # A configured release directory can be on a third filesystem; never infer
+  # its backup capacity from the application or Docker partition.
+  capacity_backup_path=$BACKUP_DIR
+  while [ ! -d "$capacity_backup_path" ]; do
+    capacity_backup_parent=$(dirname -- "$capacity_backup_path")
+    if [ "$capacity_backup_parent" = "$capacity_backup_path" ]; then
+      capacity_unknown "$capacity_check_stage" BackupRoot "$capacity_check_required"
+    fi
+    capacity_backup_path=$capacity_backup_parent
+  done
+  check_available_space "$capacity_check_stage" BackupRoot "$capacity_backup_path" "$capacity_check_required"
+}
+
 IMAGE_TAG=$(printf '%s' "$SOURCE_REVISION" | cut -c1-12)
 IMAGE_REPOSITORY=${FORGE_IMAGE_REPOSITORY:-inoforge-app}
 PROXY_REPOSITORY=${FORGE_PROXY_IMAGE_REPOSITORY:-inoforge-proxy}
@@ -109,6 +193,7 @@ if [ -e "$RELEASE_DIR" ] || [ -e "$BACKUP_DIR" ]; then
   RELEASE_DIR="$RELEASE_ROOT/releases/$RELEASE_ID"
   BACKUP_DIR="$RELEASE_ROOT/backups/$RELEASE_ID"
 fi
+check_deploy_capacity before-backup "$MIN_BUILD_AVAILABLE_KIB"
 mkdir -p "$RELEASE_DIR" "$BACKUP_DIR"
 
 PREVIOUS_CONTAINER=$(docker compose ps -q app 2>/dev/null || true)
@@ -165,6 +250,7 @@ else
   echo "未发现已运行数据库，按首次部署继续。"
 fi
 
+check_deploy_capacity before-build "$MIN_BUILD_AVAILABLE_KIB"
 echo "构建 Forge 镜像：$IMAGE"
 BUILDX_GIT_INFO=false docker buildx build \
   --progress=plain \
@@ -187,6 +273,7 @@ BUILDX_GIT_INFO=false docker buildx build \
   --load \
   .
 
+check_deploy_capacity before-candidate "$MIN_SWITCH_AVAILABLE_KIB"
 FORGE_HEALTH_ATTEMPTS=${FORGE_HEALTH_ATTEMPTS:-60}
 case "$FORGE_HEALTH_ATTEMPTS" in
   *[!0-9]*|"") echo "FORGE_HEALTH_ATTEMPTS 必须是正整数。" >&2; exit 1 ;;
@@ -314,6 +401,7 @@ if ! wait_for_url "$CANDIDATE_HEALTH_URL" "候选 Nginx / Forge 健康检查"; t
   exit 1
 fi
 
+check_deploy_capacity before-app-switch "$MIN_SWITCH_AVAILABLE_KIB"
 echo "切换 Forge 应用镜像：$IMAGE"
 if ! FORGE_IMAGE="$IMAGE" docker compose up -d --no-build app; then
   echo "新应用容器启动失败，开始恢复。" >&2
@@ -369,6 +457,8 @@ PROXY_IMAGE_ID=$(docker image inspect --format '{{.Id}}' "$PROXY_IMAGE")
   printf 'previous_proxy_image_id=%s\n' "$PREVIOUS_PROXY_IMAGE_ID"
   printf 'public_http_port=%s\n' "$HTTP_PORT"
   printf 'candidate_http_port=%s\n' "$CANDIDATE_PORT"
+  printf 'minimum_build_available_gib=%s\n' "$FORGE_DEPLOY_MIN_BUILD_GIB"
+  printf 'minimum_switch_available_gib=%s\n' "$FORGE_DEPLOY_MIN_SWITCH_GIB"
   printf 'health_path=/api/v1/health\n'
   printf 'database_backup=%s\n' "$BACKUP_PATH"
   printf 'uploads_backup=%s\n' "$UPLOADS_BACKUP_PATH"

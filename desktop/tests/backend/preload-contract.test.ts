@@ -81,6 +81,7 @@ const INVOKE_CASES: Array<[domain: string, method: string, channel: string, args
   ['plugins', 'refresh', 'plugins:refresh', ['omp']],
   ['enterprise', 'teamWorkspace', 'enterprise:team-workspace', [{ type: 'open' }]],
   ['enterprise', 'updateTeamDevelopment', 'enterprise:update-team-development', ['runtime', { teamId: 'team', revision: 1 }]],
+  ['enterprise', 'invalidateTeamDevelopmentTurn', 'enterprise:invalidate-team-development-turn', ['runtime']],
   ['enterprise', 'getTeamDevelopmentProposal', 'enterprise:get-team-development-proposal', ['runtime']],
   ['enterprise', 'getTeamDevelopmentState', 'enterprise:get-team-development-state', ['runtime']],
   ['enterprise', 'getTeamDevelopmentStateForSession', 'enterprise:get-team-development-state-for-session', ['/session.jsonl']],

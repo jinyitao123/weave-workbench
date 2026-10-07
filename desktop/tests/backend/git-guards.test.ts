@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
@@ -17,7 +17,16 @@ const spawnedGitArgs = (): string[][] => (runProcess as unknown as Mock).mock.ca
   .map(([, args]) => (args as string[]).filter((arg, index, all) => arg !== '-c' && all[index - 1] !== '-c' && arg !== '--no-pager'))
 
 const dirs: string[] = []
-afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }) })
+afterEach(() => {
+  for (const dir of dirs.splice(0)) {
+    try { rmSync(dir, { recursive: true, force: true }) }
+    catch (error) {
+      try { console.error('Git fixture cleanup failed; remaining paths:', readdirSync(dir, { recursive: true })) }
+      catch { /* Preserve the original cleanup failure if inspection races a writer. */ }
+      throw error
+    }
+  }
+})
 beforeEach(() => { (runProcess as unknown as Mock).mockClear() })
 
 const git = (cwd: string, ...args: string[]) => {
@@ -28,6 +37,10 @@ const repository = () => {
   const cwd = mkdtempSync(join(tmpdir(), 'prime-work-git-guards-'))
   dirs.push(cwd)
   git(cwd, 'init', '-q')
+  // Auto-maintenance must finish with the Git command before fixture teardown.
+  // Keep maintenance enabled, but prevent a detached writer surviving close.
+  git(cwd, 'config', 'maintenance.autoDetach', 'false')
+  git(cwd, 'config', 'gc.autoDetach', 'false')
   git(cwd, 'config', 'user.name', 'Prime Work Test')
   git(cwd, 'config', 'user.email', 'test@example.com')
   writeFileSync(join(cwd, 'file.txt'), 'base\n')
