@@ -62,6 +62,7 @@ function createHarness() {
     StatusTabs: props => React.createElement('div', props),
     FormSectionContainer: props => React.createElement('div', props, props.children),
     SegmentedRadioGroup: props => React.createElement('div', props),
+    DatePicker: props => React.createElement('input', props),
     RecordTable: 'RecordTable',
     Icon: props => React.createElement('span', props),
     ListView: props => React.createElement('div', { ...props, 'data-test-list-view': true }),
@@ -131,7 +132,7 @@ test('typing multiple characters in the new project name keeps the same field co
 
 test('project form date controls do not shadow the native Date constructor', () => {
   const { renderDateInput } = createHarness();
-  assert.doesNotThrow(() => renderDateInput());
+  assert.doesNotThrow(() => renderComponents(renderDateInput()));
 });
 
 

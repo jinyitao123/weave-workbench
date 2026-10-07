@@ -78,7 +78,7 @@ export function createServicePageHarness(page,options={}){
     const objectName=props.data&&props.data.object,rows=records[objectName]||[];
     return asNode('ListView',props,rows.map(row=>asNode('button',{type:'button','data-record-id':row.id,onClick:()=>props.onRowClick?.(row)},[row.code||row.name||row.id])));
   });
-  for(const name of ['ForgeNotice','ForgeLoading','ForgeEmpty','DataEmptyState','ObjectMetric','ObjectChart','ForgeSelect','ForgeSelectControl','ForgeDateInput','GridField','DocumentSection','FormSectionContainer','SegmentedRadioGroup'])components[name]=register(name,props=>asNode(name,props,props.children||[]));
+  for(const name of ['ForgeNotice','ForgeLoading','ForgeEmpty','DataEmptyState','ObjectMetric','ObjectChart','ForgeSelect','ForgeSelectControl','ForgeDateInput','GridField','DocumentSection','FormSectionContainer','SegmentedRadioGroup','DatePicker'])components[name]=register(name,props=>asNode(name,props,props.children||[]));
   const context={module:{exports:{}},exports:{},React,useAdapter:()=>adapter,URL,URLSearchParams,Headers,Blob,TextEncoder,window:{crypto:{randomUUID:()=>`service-page-key-${calls.length}`}},...components,...globals};
   context.exports=context.module.exports;
   vm.runInNewContext(code,context);
