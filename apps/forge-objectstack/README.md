@@ -61,7 +61,9 @@ node tests/console94-pnpm-layout.mjs
 pnpm console94:cli-smoke
 ```
 
-构建脚本用 `git archive` 读取锁定的 ObjectUI 提交，不读取工作区改动。它将站点基路径设为 `/_console/`，移除仅供分析且包含构建机绝对路径的 `stats.html`，修正生成 HTML 中嵌套路由下会错误解析的 manifest 相对地址，再对注入文件树逐字节校验。产物写入 `.generated/console94/`，已加入 Git 与主构建上下文忽略列表。
+构建脚本用 `git archive` 读取锁定的 ObjectUI 提交，不读取工作区改动。它仅在构建子进程移除 `CI`、`VERCEL`，确保生成锁中包含的 gzip/Brotli 文件，父环境保持不变。站点基路径固定为 `/_console/`；移除包含构建机绝对路径的分析文件 `stats.html` 后，先核对每个 gzip 的标准单成员头、CRC、长度及解压内容与原文件一致，再只把 OS 头字节规范为 [RFC 1952](https://www.rfc-editor.org/rfc/rfc1952) 的 `255`（unknown）。带可选头、额外成员或尾随数据的输入会被拒绝，压缩数据和其他字节保持不变。
+
+规范后的完整文件树仍逐字节计算并核对锁中摘要，不以解压内容摘要代替。随后修正生成 HTML 的 manifest 相对地址、写入来源标记，并核对最终完整树摘要。规则由 `console94.lock.json` 的 `gzipNormalization` 声明；产物写入 `.generated/console94/`，已加入 Git 与主构建上下文忽略列表。
 
 Docker Compose 通过 BuildKit `additional_contexts` 注入该目录；直接使用 Compose 构建时，也将 `console94-build.env` 中的源码修订和树摘要传入 `FORGE_CONSOLE_SOURCE_REVISION`、`FORGE_CONSOLE_TREE_SHA256`。Docker build stage 使用同一 CLI 解析器定位并注入 Console；runtime stage 在复制完整 pnpm `node_modules` 后，再用运行时自身的 Node 与 CLI 重解析并校验路径和摘要。`scripts/deploy.sh` 自动传递同一上下文和摘要，并在备份和切换前检查构建材料。Docker 镜像标签及发布记录都写入 Console 源提交与树摘要。ObjectStack runtime 固定为锁中 `17.5.0` 的 OCI digest，与 Forge 锁定的 CLI 主机版本配套；现有发布流程通过重新启用上一应用/代理镜像回滚，候选失败时不会改变公网入口。
 

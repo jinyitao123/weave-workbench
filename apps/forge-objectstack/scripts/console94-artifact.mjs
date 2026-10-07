@@ -1,6 +1,65 @@
 import { createHash } from 'node:crypto';
-import { readFile, readdir, writeFile } from 'node:fs/promises';
+import { lstat, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { gunzipSync, inflateRawSync } from 'node:zlib';
+
+export function consoleBuildEnvironment(parent, lock) {
+  const environment = { ...parent, VITE_BASE_PATH: lock.artifact.basePath, VITE_UI_PROFILE: lock.source.uiProfile || 'compact-enterprise' };
+  // ObjectUI skips gzip/Brotli for any nonempty CI/VERCEL value, even "false".
+  // The locked production artifact includes those files; leave the parent alone.
+  delete environment.CI;
+  delete environment.VERCEL;
+  return environment;
+}
+
+export async function canonicalizeConsoleGzip(distDir, lock) {
+  const rule = lock.artifact.gzipNormalization;
+  if (rule?.operatingSystem !== 255 || rule.compressionMethod !== 8 || rule.flags !== 0 || rule.singleMember !== true || rule.verifyOriginalBytes !== true) {
+    throw new Error('Console lock must declare the standard single-member gzip OS=255 recipe.');
+  }
+  const pending = [];
+  let gzipFiles = 0;
+  async function walk(directory) {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const absolute = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        await walk(absolute);
+        continue;
+      }
+      if (!entry.isFile()) throw new Error('Console artifact contains an unsupported filesystem entry.');
+      if (!entry.name.endsWith('.gz')) continue;
+      const relative = path.relative(distDir, absolute);
+      const bytes = await readFile(absolute);
+      // Only the fixed ten-byte header emitted by this locked producer is
+      // supported. In particular FHCRC cannot survive a blind OS-byte edit.
+      if (bytes.length < 18 || bytes[0] !== 0x1f || bytes[1] !== 0x8b || bytes[2] !== 8 || bytes[3] !== 0) {
+        throw new Error(`Unexpected gzip header: ${relative}`);
+      }
+      const originalPath = absolute.slice(0, -3);
+      if (!(await lstat(originalPath)).isFile()) throw new Error(`Gzip original must be a regular file: ${relative}`);
+      const original = await readFile(originalPath);
+      let payload, stream;
+      try {
+        payload = gunzipSync(bytes, { maxOutputLength: original.length + 1 });
+        stream = inflateRawSync(bytes.subarray(10), { info: true, maxOutputLength: original.length + 1 });
+      } catch {
+        throw new Error(`Invalid gzip payload, CRC or size: ${relative}`);
+      }
+      if (10 + stream.engine.bytesWritten + 8 !== bytes.length) throw new Error(`Unexpected gzip member or trailing bytes: ${relative}`);
+      if (!payload.equals(original)) throw new Error(`Gzip payload differs from its original file: ${relative}`);
+      gzipFiles++;
+      if (bytes[9] !== 255) {
+        const canonical = Buffer.from(bytes);
+        canonical[9] = 255; // RFC 1952: unknown OS. Payload, CRC and other bytes stay intact.
+        pending.push({ absolute, canonical });
+      }
+    }
+  }
+  await walk(distDir);
+  // Validate the entire generated set before changing any file.
+  for (const item of pending) await writeFile(item.absolute, item.canonical);
+  return { gzipFiles, changedFiles: pending.length };
+}
 
 export async function treeSha256(root) {
   const entries = [];
