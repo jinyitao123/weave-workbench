@@ -46,7 +46,6 @@ import { RepositoryUseGate } from './repository-use-gate'
 import { VoiceService, sessionOnlyVoiceSecretCodec } from './voice'
 import { isAllowedRendererAudioPermission } from './voice-permissions'
 import { createManualUpdateCheck, getAutoUpdater, UpdateService } from './updates'
-import { EnterpriseService } from './enterprise'
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'prime-work', privileges: { standard: true, secure: true, supportFetchAPI: true } }])
 
@@ -584,9 +583,8 @@ async function bootstrap(): Promise<void> {
   if (shutdownStarted) return
   const primeExecutable = () => discovery.executable('prime')
   const piExecutable = () => discovery.executable('pi')
-  const enterprise = new EnterpriseService()
-  const initialEnterpriseSession = await enterprise.getSession()
-  let enterpriseAccountScope = initialEnterpriseSession.status === 'signed-in' ? enterprise.accountKeyForSession(initialEnterpriseSession) : undefined
+  const { enterprise, accountScope } = await (await import('./enterprise/connection-config')).initializeEnterpriseService(userDataPath)
+  let enterpriseAccountScope = accountScope
   let accountScopeChanging = false
   const assertAccountScopeReady = (): void => {
     if (accountScopeChanging) throw new Error('账号切换中，请稍后重试')
