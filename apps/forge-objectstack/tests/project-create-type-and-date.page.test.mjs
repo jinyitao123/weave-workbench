@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ProjectCenterPage } from '../src/pages/project-center.page.ts';
+import { Customer } from '../src/objects/customer.object.ts';
 import { createServicePageHarness, serviceText } from './service-page-react-harness.mjs';
 
 function nodes(value, predicate, seen = new Set()) {
@@ -17,7 +18,7 @@ const typeCloseConfirmation = h => nodes(h.render(), n => n.type === 'ForgeDialo
 const draftForm = h => nodes(h.render(), n => n.type === 'form' && n.props?.['aria-label'] === '项目立项资料')[0];
 const response = (payload, status = 200) => ({ ok: status < 400, status, headers: new Headers(), json: async () => payload });
 
-async function fixture({ manage = true, create = true, onTypes } = {}) {
+async function fixture({ manage = true, create = true, onTypes, strictCustomerFields = false } = {}) {
   const records = {
     forge_project_type: [{ id: 'type-a', name: '现有项目类型', active: true }],
     forge_customer: [{ id: 'customer-a', name: '测试客户' }],
@@ -33,6 +34,10 @@ async function fixture({ manage = true, create = true, onTypes } = {}) {
         systemPermissions: ['forge_project_operator', ...(manage ? ['forge_project_settings_manage'] : [])],
         objects: { forge_project_type: { allowRead: true, allowCreate: create } },
       });
+      if (route === '/data/forge_customer' && strictCustomerFields) {
+        const filter = JSON.parse(new URL(url).searchParams.get('$filter') || '{}');
+        if (Object.keys(filter).some(name => !(name in Customer.fields))) return response({ error: 'unknown customer filter field' }, 400);
+      }
       if (route === '/data/forge_project_type') {
         typeReads++;
         if (onTypes) return onTypes(typeReads, records);
@@ -221,4 +226,10 @@ test('new-project dates opt into editable controls and native form validity gate
   const writes = h.calls.filter(call => call.path.startsWith('/actions/'));
   assert.equal(writes.length, 1);
   assert.equal(writes[0].body.params.planned_start_on, '2026-10-07');
+});
+
+test('new project reads authorized customers without querying fields absent from their native object', async () => {
+  const { h } = await fixture({ strictCustomerFields: true });
+  assert.equal(field(h, '关联客户').props.options.some(([id]) => id === 'customer-a'), true);
+  assert.equal(serviceText(h.render()).includes('读取客户资料失败'), false);
 });
