@@ -15,6 +15,6 @@ test('rebuilds the reviewed vendor archives byte-for-byte even when Git requests
   })
   expect(result.error).toBeUndefined()
   expect(result.status, result.stderr).toBe(0)
-  expect(result.stdout).toContain('prime-agent-0.7.0-gooeypi.1.tgz: content verified;')
+  expect(result.stdout).toContain('prime-agent-0.7.0-gooeypi.2.tgz: content verified;')
   expect(result.stdout).toContain('prime-agent-ai-0.7.0-gooeypi.1.tgz: content verified;')
 }, 30_000)

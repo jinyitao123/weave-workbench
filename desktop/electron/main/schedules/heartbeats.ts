@@ -31,7 +31,7 @@ function normalizeHeartbeat(value: unknown, runtimeId?: string): NativeHeartbeat
 }
 
 export class HeartbeatService {
-  constructor(private readonly agents: AgentRpcManager, private readonly primeAgentPath: ExecutableSource) {}
+  constructor(private readonly agents: AgentRpcManager, private readonly primeAgentPath: ExecutableSource, private readonly environment?: () => NodeJS.ProcessEnv) {}
 
   async list(): Promise<NativeHeartbeatRecord[]> {
     const byId = new Map<string, NativeHeartbeatRecord>()
@@ -49,7 +49,7 @@ export class HeartbeatService {
     const primeAgentPath = resolveExecutable(this.primeAgentPath)
     if (primeAgentPath) {
       try {
-        const result = await runProcess(primeAgentPath, ['schedule', 'list', '--all', '--json'], { timeoutMs: 30_000, maxBytes: 4 * 1024 * 1024 })
+        const result = await runProcess(primeAgentPath, ['schedule', 'list', '--all', '--json'], { env: this.environment?.(), timeoutMs: 30_000, maxBytes: 4 * 1024 * 1024 })
         if (result.code === 0 && !result.timedOut && !result.outputExceeded) {
           const parsed: unknown = JSON.parse(result.stdout)
           if (isRecord(parsed) && Array.isArray(parsed.jobs)) {
@@ -92,7 +92,7 @@ export class HeartbeatService {
       return { ...heartbeat, status: actionValue === 'pause' ? 'paused' : 'active' }
     }
     if (actionValue === 'stop' && primeAgentPath) {
-      const result = await runProcess(primeAgentPath, ['schedule', 'cancel', heartbeat.id], { timeoutMs: 30_000, maxBytes: 1024 * 1024 })
+      const result = await runProcess(primeAgentPath, ['schedule', 'cancel', heartbeat.id], { env: this.environment?.(), timeoutMs: 30_000, maxBytes: 1024 * 1024 })
       if (result.code === 0 && !result.timedOut && !result.outputExceeded) {
         if ((await this.list()).some((candidate) => candidate.id === id)) throw new Error('Heartbeat stop did not remove the job')
         return null

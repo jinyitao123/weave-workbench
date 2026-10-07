@@ -1,14 +1,14 @@
 --- a/package/package.json
 +++ b/package/package.json
-@@ -1,4 +1,4 @@
+@@ -1,6 +1,6 @@
  {
    "name": "prime-agent",
 -  "version": "0.7.0",
-+  "version": "0.7.0-gooeypi.1",
++  "version": "0.7.0-gooeypi.2",
    "description": "Coding agent CLI with IPython-backed tools and session management",
-@@ -15,9 +15,21 @@
-   "exports": {
-     ".": {
+   "type": "module",
+   "piConfig": {
+@@ -17,6 +17,18 @@
        "types": "./dist/index.d.ts",
        "import": "./dist/index.js"
      },
@@ -27,8 +27,18 @@
      "./hooks": {
        "types": "./dist/core/hooks/index.d.ts",
        "import": "./dist/core/hooks/index.js"
+--- a/package/dist/core/auth-storage.js
++++ b/package/dist/core/auth-storage.js
+@@ -913,7 +913,7 @@
+         return configPath;
      }
-   },
+     isPrimeCliConfigEnabled() {
+-        return Boolean(this.options.usePrimeCliConfig || this.options.primeCliConfigPath);
++        return process.env.WEAVE_DISABLE_SHARED_PRIME_AUTH !== "1" && Boolean(this.options.usePrimeCliConfig || this.options.primeCliConfigPath);
+     }
+ }
+ //# sourceMappingURL=auth-storage.js.map
+\ No newline at end of file
 --- a/package/dist/bundle/chunk-L3VO7F2S.js
 +++ b/package/dist/bundle/chunk-L3VO7F2S.js
 @@ -3244,23 +3244,37 @@
@@ -187,3 +197,11 @@
    }
    return {
      id: `mcp:${config.server}`,
+@@ -18680,6 +18716,6 @@
+     return configPath;
+   }
+   isPrimeCliConfigEnabled() {
+-    return Boolean(this.options.usePrimeCliConfig || this.options.primeCliConfigPath);
++    return process.env.WEAVE_DISABLE_SHARED_PRIME_AUTH !== "1" && Boolean(this.options.usePrimeCliConfig || this.options.primeCliConfigPath);
+   }
+ };

@@ -1,0 +1,170 @@
+name: Build private server images
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Exact reviewed 40-character product source commit
+        required: true
+        type: string
+      bundle_version:
+        description: Installer bundle version, for example 0.1.0-rc.5
+        required: true
+        type: string
+      publish_private:
+        description: Push to GHCR only after verifying repository and package privacy
+        required: true
+        default: false
+        type: boolean
+      stage_installation_host:
+        description: Explicitly cache the verified private images on the prepared installation host
+        required: true
+        default: false
+        type: boolean
+      postgres_image:
+        description: Official PostgreSQL 16 tag or pinned digest; executable major is checked
+        required: true
+        default: postgres:16-bookworm
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: server-images-${{ inputs.revision }}-${{ inputs.bundle_version }}
+  cancel-in-progress: false
+
+jobs:
+  images:
+    if: github.event.repository.private == true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: write
+    env:
+      SOURCE_REVISION: ${{ inputs.revision }}
+      BUNDLE_VERSION: ${{ inputs.bundle_version }}
+      POSTGRES_IMAGE: ${{ inputs.postgres_image }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Require an immutable source request
+        shell: bash
+        run: |
+          [[ "$SOURCE_REVISION" =~ ^[0-9a-f]{40}$ ]]
+          if [[ '${{ inputs.stage_installation_host }}' == true && '${{ inputs.publish_private }}' != true ]]; then
+            echo 'Host staging requires explicit private publication.' >&2
+            exit 1
+          fi
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.revision }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate component source objects and read the Console lock
+        id: locks
+        run: |
+          python3 tools/server-image-build/build.py --plan \
+            --repository "$GITHUB_REPOSITORY" --revision "$SOURCE_REVISION" \
+            --bundle-version "$BUNDLE_VERSION" --postgres-image "$POSTGRES_IMAGE" \
+            --github-output "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ steps.locks.outputs.node_version }}
+      - name: Activate the locked Console package manager
+        env:
+          PNPM_VERSION: ${{ steps.locks.outputs.pnpm_version }}
+        run: |
+          corepack enable
+          corepack prepare "pnpm@$PNPM_VERSION" --activate
+          test "$(pnpm --version)" = "$PNPM_VERSION"
+      - name: Check out only the locked private ObjectUI source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ steps.locks.outputs.objectui_repository }}
+          ref: ${{ steps.locks.outputs.objectui_revision }}
+          path: .build/server-image-sources/objectui
+          fetch-depth: 1
+          ssh-key: ${{ secrets.OBJECTUI_READ_SSH_KEY }}
+          persist-credentials: false
+      - name: Check sources and image-builder invariants
+        run: |
+          make component-check
+          python3 -m unittest discover -s tools/server-image-build/tests -v
+          docker buildx version
+      - name: Authenticate the explicit private publication
+        if: inputs.publish_private
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import os, subprocess
+          subprocess.run(['docker', 'login', 'ghcr.io', '--username', os.environ['GITHUB_ACTOR'], '--password-stdin'],
+                         input=os.environ['GH_TOKEN'], text=True, check=True)
+          PY
+      - name: Build, verify and optionally publish the locked images
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUBLISH_PRIVATE: ${{ inputs.publish_private }}
+        shell: bash
+        run: |
+          args=()
+          if [[ "$PUBLISH_PRIVATE" == true ]]; then args+=(--push-private); fi
+          python3 tools/server-image-build/build.py \
+            --repository "$GITHUB_REPOSITORY" --revision "$SOURCE_REVISION" \
+            --bundle-version "$BUNDLE_VERSION" --postgres-image "$POSTGRES_IMAGE" \
+            --objectui-source "$GITHUB_WORKSPACE/.build/server-image-sources/objectui" \
+            "${args[@]}"
+      - name: Stage exact private image digests on the explicitly prepared host
+        if: inputs.stage_installation_host && inputs.publish_private
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STAGE_SSH_KEY: ${{ secrets.INSTALLATION_STAGE_SSH_KEY }}
+          STAGE_HOST: ${{ secrets.INSTALLATION_STAGE_HOST }}
+          STAGE_USER: ${{ secrets.INSTALLATION_STAGE_USER }}
+          STAGE_KNOWN_HOSTS: ${{ secrets.INSTALLATION_STAGE_KNOWN_HOSTS }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, re, subprocess, tempfile
+          host, user = os.environ['STAGE_HOST'], os.environ['STAGE_USER']
+          if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9.-]*', host) or not re.fullmatch(r'[a-z_][a-z0-9_-]*', user):
+              raise SystemExit('Invalid installation host binding')
+          output = pathlib.Path('.build/server-image-build/output')
+          manifest = json.loads((output / 'build-manifest.json').read_text())
+          if manifest.get('status') != 'published-private' or manifest.get('published') is not True:
+              raise SystemExit('Only successfully verified private images may be staged')
+          lock = json.loads((output / 'images.lock.json').read_text())
+          request = json.dumps({'actor': os.environ['GITHUB_ACTOR'], 'token': os.environ['GH_TOKEN'], 'lock': lock})
+          os.umask(0o077)
+          with tempfile.TemporaryDirectory(prefix='installation-stage-', dir=os.environ['RUNNER_TEMP']) as directory:
+              root = pathlib.Path(directory)
+              key, known = root / 'key', root / 'known_hosts'
+              key.write_text(os.environ['STAGE_SSH_KEY'] + '\n')
+              known.write_text(os.environ['STAGE_KNOWN_HOSTS'] + '\n')
+              command = ['ssh', '-F', '/dev/null', '-T', '-i', str(key),
+                         '-o', 'BatchMode=yes', '-o', 'IdentitiesOnly=yes',
+                         '-o', 'StrictHostKeyChecking=yes', '-o', 'GlobalKnownHostsFile=/dev/null',
+                         '-o', 'UserKnownHostsFile=' + str(known), '-o', 'ConnectTimeout=20',
+                         '-o', 'ServerAliveInterval=30', '-o', 'ServerAliveCountMax=3', user + '@' + host]
+              result = subprocess.run(command, input=request, text=True, stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE, timeout=5100)
+              if result.returncode:
+                  raise SystemExit('Restricted image staging failed; inspect the host through the administrator connection')
+              receipt = json.loads(result.stdout)
+              expected = {name: item['image'] for name, item in lock['components'].items()}
+              actual = {item['component']: item['image'] for item in receipt.get('images', [])}
+              if actual != expected or len(receipt.get('images', [])) != 4 or receipt.get('bundleVersion') != lock['bundleVersion']:
+                  raise SystemExit('Host receipt differs from the verified image lock')
+              if receipt.get('status') != 'staged-only' or receipt.get('temporaryRegistryConfigRemoved') is not True:
+                  raise SystemExit('Invalid image staging receipt')
+              (output / 'host-staging-receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
+              print('Verified image digests cached; temporary registry authentication removed; no application started.')
+          PY
+      - name: Keep build evidence in this private workflow
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: server-images-${{ inputs.bundle_version }}-${{ inputs.revision }}
+          path: .build/server-image-build/output/*.json
+          if-no-files-found: ignore
+          retention-days: 7

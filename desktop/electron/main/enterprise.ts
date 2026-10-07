@@ -555,6 +555,10 @@ export class EnterpriseService {
     return createHash('sha256').update(JSON.stringify([this.forgeUrl.origin, this.weaveUrl.origin, session.organization.id, session.user.id, session.user.weaveUserId])).digest('hex')
   }
 
+  connectionOrigins(): { forgeOrigin: string; weaveOrigin: string } {
+    return { forgeOrigin: this.forgeUrl.origin, weaveOrigin: this.weaveUrl.origin }
+  }
+
   private signedOut(message?: string): EnterpriseSession {
     return {
       version: '1', status: 'signed-out',

@@ -14,6 +14,17 @@ function deferred<T>() {
 }
 
 describe('HarnessDiscoveryService', () => {
+  it('refuses a legacy Prime CLI that cannot disable shared credentials and accepts the pinned private-profile runtime', async () => {
+    let version = '0.7.0-gooeypi.1'
+    const discovery = new HarnessDiscoveryService(() => ({ prime: '', pi: '' }), {
+      requirePrivateProfiles: true,
+      findExecutable: async (descriptor, _configured, accept) => descriptor.id === 'prime' && await accept?.('/runtime/prime-agent') ? '/runtime/prime-agent' : null,
+      probeExecutable: async () => ({ runnable: true, version }),
+    })
+    expect((await discovery.refresh()).prime.path).toBeNull()
+    version = '0.7.0-gooeypi.2'
+    expect((await discovery.refresh()).prime).toMatchObject({ path: '/runtime/prime-agent', version })
+  })
   it('reconciles against the settings state inside the serialized transaction', async () => {
     const state = { settings: defaultSettings() } as DesktopState
     state.settings.activeHarness = 'prime'

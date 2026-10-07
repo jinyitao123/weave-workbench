@@ -48,6 +48,8 @@ const api: PrimeWorkApi = {
     onChanged: (callback) => subscribe<AppUpdateState>('updates:changed', callback),
   },
   enterprise: {
+    importConnection: () => invoke('enterprise:import-connection'),
+    restartConnection: () => invoke('enterprise:restart-connection'),
     teamWorkspace: (command) => invoke('enterprise:team-workspace', command),
     updateTeamDevelopment: (runtimeId, input) => invoke('enterprise:update-team-development', runtimeId, input),
     invalidateTeamDevelopmentTurn: (runtimeId) => invoke('enterprise:invalidate-team-development-turn', runtimeId),

@@ -17,6 +17,7 @@
 | 开放问题 | [问题清单](plans/问题清单.md) | 问题归类、修复顺序和关闭标准；原始审计另存 |
 | Weave 与 Loom 整改 | [Weave与Loom整改方案](plans/Weave与Loom整改方案.md) | Weave 范围收窄、Loom 恢复加固的工作包与验收；问题条目在问题清单 |
 | 工程工作 | [工程管理](engineering/README.md) | 接手、交付和验证流程 |
+| 客户安装 | [安装与初始化](engineering/安装与初始化.md) | Linux服务端统一部署、首次管理员与组织、员工桌面接入及空环境验收 |
 | 仓库整合 | [仓库与分支收束](engineering/仓库与分支收束.md) | 当前整合范围、保全与处置条件；长期规则见交付协作 |
 | 环境 | [开发联调环境](environments/开发联调环境.md) | 连接方式、部署观察和环境限制 |
 | 跨组件契约 | [契约索引](../contracts/README.md) | 机器 schema 及其人工说明 |

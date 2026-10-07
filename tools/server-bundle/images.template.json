@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "bundleVersion": "",
+  "components": {
+    "forge": { "image": "", "sourceRevision": "" },
+    "forgeProxy": { "image": "", "sourceRevision": "" },
+    "weave": { "image": "", "sourceRevision": "" },
+    "postgres": { "image": "", "major": 16 }
+  }
+}

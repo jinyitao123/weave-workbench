@@ -19,6 +19,8 @@ type PluginDiscovery = typeof discoverPlugins
 interface PluginServiceOptions {
   harness?: HarnessId
   agentDir?: string
+  environment?: NodeJS.ProcessEnv
+  isolated?: boolean
   discover?: PluginDiscovery
   builtInSkills?: SkillRecord[] | (() => SkillRecord[] | Promise<SkillRecord[]>)
 }
@@ -96,6 +98,8 @@ export class PluginService {
   private readonly knownPathsByOwner = new Map<string, Set<string>>()
   private settingsMutation = Promise.resolve()
   private readonly discoveryInFlight = createSingleFlight<string, PluginCatalog>()
+  private readonly environment?: NodeJS.ProcessEnv
+  private readonly isolated: boolean
   private readonly agentDir: string
   private readonly discoverCatalog: PluginDiscovery
   private readonly builtInSkills: () => SkillRecord[] | Promise<SkillRecord[]>
@@ -106,6 +110,8 @@ export class PluginService {
     private readonly authorizeProject: (path: string) => Promise<string>,
     options: PluginServiceOptions = {},
   ) {
+    this.environment = options.environment
+    this.isolated = options.isolated ?? false
     this.harness = options.harness ?? 'prime'
     this.agentDir = options.agentDir ?? HARNESSES[this.harness].agentDir(homedir())
     this.discoverCatalog = options.discover ?? discoverPlugins
@@ -134,7 +140,7 @@ export class PluginService {
 
   private async discover(safeProjectPath: string | undefined, ownerKey: string): Promise<PluginCatalog> {
     if (safeProjectPath) this.lastProjectPath = safeProjectPath
-    const result = await this.discoverCatalog(this.agentDir, safeProjectPath, resolveExecutable(this.agentPath), this.harness)
+    const result = await this.discoverCatalog(this.agentDir, safeProjectPath, resolveExecutable(this.agentPath), this.harness, { includeSharedUserSkills: !this.isolated })
     const builtInSkills = await this.builtInSkills()
     const piMcpState = this.harness === 'pi' ? await this.piMcpAdapterState() : undefined
     const harnessCapabilities: SkillRecord[] = this.harness === 'pi' ? [{
@@ -193,8 +199,8 @@ export class PluginService {
       const release = await acquireSettingsLock(lockPath)
       try {
         return this.harness === 'pi'
-          ? await executePiPluginInstall(agentPath, source)
-          : await executePackageInstall(agentPath, source)
+          ? await executePiPluginInstall(agentPath, source, undefined, this.environment)
+          : await executePackageInstall(agentPath, source, undefined, this.environment)
       } finally {
         await release()
       }
@@ -226,8 +232,8 @@ export class PluginService {
       const release = await acquireSettingsLock(lockPath, projectSettings?.verify)
       try {
         return this.harness === 'pi'
-          ? await executePiPluginInstall(agentPath, input.source, safeProjectPath)
-          : await executePackageInstall(agentPath, input.source, safeProjectPath)
+          ? await executePiPluginInstall(agentPath, input.source, safeProjectPath, this.environment)
+          : await executePackageInstall(agentPath, input.source, safeProjectPath, this.environment)
       } finally {
         await release()
       }
@@ -247,7 +253,7 @@ export class PluginService {
           if (!adapter) {
             const agentPath = resolveExecutable(this.agentPath)
             if (!agentPath) return { ok: false, reason: 'blocked', output: 'Pi executable was not found' }
-            return await executePiPluginInstall(agentPath, PI_MCP_ADAPTER_SOURCE)
+            return await executePiPluginInstall(agentPath, PI_MCP_ADAPTER_SOURCE, undefined, this.environment)
           }
         } else if (!adapter?.enabled) {
           return { ok: true, output: 'Pi MCP Adapter is already disabled.' }
@@ -374,8 +380,8 @@ export class PluginService {
         const agentPath = resolveExecutable(this.agentPath)
         if (!agentPath) return { ok: false, reason: 'blocked', output: `${agentName} executable was not found` }
         return this.harness === 'pi'
-          ? await executePiPluginRemove(agentPath, input.source!, safeProjectPath)
-          : await executePackageRemove(agentPath, input.source!, safeProjectPath)
+          ? await executePiPluginRemove(agentPath, input.source!, safeProjectPath, this.environment)
+          : await executePackageRemove(agentPath, input.source!, safeProjectPath, this.environment)
       } finally {
         await releaseSettings()
       }

@@ -12,7 +12,7 @@ function invalidConfig(): never {
   throw new Error('部署连接配置无效或不可读取，请由管理员检查 enterprise-connection.json。')
 }
 function origin(value: unknown): string {
-  if (typeof value !== 'string') return invalidConfig()
+  if (typeof value !== 'string' || value.length > 2048) return invalidConfig()
   const text = value.trim()
   // Check the supplied syntax as well as URL's normalized result: dot paths
   // and backslashes must not become an apparently valid origin by normalization.
@@ -31,8 +31,7 @@ export function parseEnterpriseConnectionConfig(value: unknown): EnterpriseConne
     || Object.keys(input).some(key => !['version', 'forgeOrigin', 'weaveOrigin'].includes(key))) return invalidConfig()
   return { version: 1, forgeOrigin: origin(input.forgeOrigin), weaveOrigin: origin(input.weaveOrigin) }
 }
-async function managedConfig(directory: string): Promise<EnterpriseConnectionConfig | undefined> {
-  const path = join(directory, ENTERPRISE_CONNECTION_FILENAME)
+export async function readEnterpriseConnectionFile(path: string): Promise<EnterpriseConnectionConfig | undefined> {
   let entry: Stats
   try { entry = await lstat(path) }
   catch (error) {
@@ -71,7 +70,7 @@ export async function createEnterpriseService(userDataDirectory: string, options
   }
   const config = forge && weave
     ? parseEnterpriseConnectionConfig({ version: 1, forgeOrigin: forge, weaveOrigin: weave })
-    : await managedConfig(userDataDirectory)
+    : await readEnterpriseConnectionFile(join(userDataDirectory, ENTERPRISE_CONNECTION_FILENAME))
   return new EnterpriseService({ fetch: options.fetch, environment: {
     ...environment,
     WORKBENCH_FORGE_URL: config?.forgeOrigin,
@@ -83,5 +82,8 @@ export async function initializeEnterpriseService(userDataDirectory: string, opt
   const enterprise = await createEnterpriseService(userDataDirectory, options)
   const session = await enterprise.getSession()
   const accountScope = session.status === 'signed-in' ? enterprise.accountKeyForSession(session) : undefined
-  return { enterprise, accountScope }
+  return { enterprise, accountScope, connectionImport: {
+    importEnterpriseConnection: async () => (await import('./connection-import')).importConnectionForApp(userDataDirectory, enterprise),
+    restartEnterpriseConnection: async () => (await import('./connection-import')).restartConnectionForApp(enterprise),
+  } }
 }

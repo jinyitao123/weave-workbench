@@ -46,6 +46,7 @@ const watchSessionDirectory: SessionWatchFactory = (path, options, listener) => 
 const authorizePrimeSessionPath: SessionPathAuthorizer = (root, path) => isPathWithin(root, path) && path.endsWith('.jsonl')
 
 export interface SessionServiceOptions {
+  environment?: NodeJS.ProcessEnv
   /** Harness stamped on every record and change event this service emits; defaults to 'prime'. */
   harness?: HarnessId
   /** Canonical-or-lexical session root; defaults to the Prime Agent session directory. */
@@ -105,6 +106,7 @@ export class SessionService {
   private followUpsInFlight = 0
   private rootGeneration = 0
   private rootTransitioning = false
+  private readonly environment?: NodeJS.ProcessEnv
   private activeRootOperations = 0
   private readonly rootOperationWaiters = new Set<() => void>()
   private rootChangeTail: Promise<void> = Promise.resolve()
@@ -115,6 +117,7 @@ export class SessionService {
     maxSessionFiles = MAX_SESSION_FILES,
     options: SessionServiceOptions = {},
   ) {
+    this.environment = options.environment
     const transcriptLimit = options.maxConcurrentTranscriptReads ?? MAX_CONCURRENT_TRANSCRIPT_READS
     const pendingLimit = options.maxPendingTranscriptReads ?? MAX_PENDING_TRANSCRIPT_READS
     if (!Number.isInteger(transcriptLimit) || transcriptLimit < 1) throw new RangeError('maxConcurrentTranscriptReads must be a positive integer')
@@ -358,7 +361,7 @@ export class SessionService {
     const activeSessionId = requireId(active.activeSessionId ?? active.id, 'activeSessionId')
     if (activeSessionId.startsWith('-')) throw new Error('Prime Agent returned an invalid active session identifier')
 
-    const status = await runProcess(primeAgentPath, ['status', '--json'], { timeoutMs: 15_000, maxBytes: 1024 * 1024 })
+    const status = await runProcess(primeAgentPath, ['status', '--json'], { timeoutMs: 15_000, maxBytes: 1024 * 1024, env: this.environment ? { ...this.environment, PRIME_AGENT_SESSION_DIR: this.sessionRoot } : undefined })
     if (status.code !== 0 || status.timedOut || status.outputExceeded) throw new Error('GooeyPi could not inspect the Prime Agent daemon')
     let statuses: unknown
     try { statuses = JSON.parse(status.stdout) } catch { throw new Error('Prime Agent returned an invalid daemon status') }
@@ -391,7 +394,7 @@ export class SessionService {
       }
       const metadata = await this.readMetadata(safePath)
       this.assertRootGeneration(operation.generation)
-      const result = await runProcess(primeAgentPath, ['rename', metadata.id, safeTitle, '--json'], { timeoutMs: 30_000 })
+      const result = await runProcess(primeAgentPath, ['rename', metadata.id, safeTitle, '--json'], { timeoutMs: 30_000, env: this.environment ? { ...this.environment, PRIME_AGENT_SESSION_DIR: this.sessionRoot } : undefined })
       this.assertRootGeneration(operation.generation)
       return result.code === 0
     } finally { operation.release() }

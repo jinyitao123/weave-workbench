@@ -20,8 +20,7 @@ import { HarnessDiscoveryService, reconcileActiveHarness } from './harness-disco
 import { HARNESSES } from './harness'
 import { beginProcessShutdown, runProcess, stopChildProcesses } from './process-utils'
 import { PluginService, beginPluginDiscoveryShutdown } from './plugins'
-import { PrimeProviderService } from './providers'
-import { PiModelCatalogService } from './providers-pi'
+import type { PrimeProviderService } from './providers'
 import { PACKAGED_RENDERER_URL, PACKAGED_SMOKE_READY_EVENT, packagedSmokeMarker, packagedSmokeMarkerPath, serializePackagedSmokeMarker } from './packaged-smoke'
 import { PetService } from './pets'
 import { ProjectService } from './projects'
@@ -577,13 +576,14 @@ async function bootstrap(): Promise<void> {
     onQuit: () => app.quit(),
     startInBackground,
   })
-  const discovery = new HarnessDiscoveryService(() => stateStore.getSettings().runtimePaths)
+  const discovery = new HarnessDiscoveryService(() => stateStore.getSettings().runtimePaths, { requirePrivateProfiles: true, profileEnvironment: (harness) => profiles[harness].environment })
+  const primeExecutable = () => discovery.executable('prime')
+  const piExecutable = () => discovery.executable('pi')
+  const profiles = await (await import('./runtime-profiles')).initializeRuntimeProfiles(userDataPath, piExecutable, async (url) => { await shell.openExternal(url, { activate: true }) })
   const initialHarnesses = await discovery.refresh()
   await reconcileActiveHarness(stateStore, initialHarnesses)
   if (shutdownStarted) return
-  const primeExecutable = () => discovery.executable('prime')
-  const piExecutable = () => discovery.executable('pi')
-  const { enterprise, accountScope } = await (await import('./enterprise/connection-config')).initializeEnterpriseService(userDataPath)
+  const { enterprise, accountScope, connectionImport } = await (await import('./enterprise/connection-config')).initializeEnterpriseService(userDataPath)
   let enterpriseAccountScope = accountScope
   let accountScopeChanging = false
   const assertAccountScopeReady = (): void => {
@@ -593,19 +593,17 @@ async function bootstrap(): Promise<void> {
     ? join(userDataPath, 'workspaces', 'accounts', accountScope)
     : join(userDataPath, 'workspaces')
   const personalWorkspaceForAccount = (harness: HarnessId, accountScope: string | undefined) => join(workspaceRootForAccount(accountScope), harness)
-  const sessionRootForScope = (harness: HarnessId, accountScope: string | undefined) => accountScope
-    ? join(userDataPath, 'agent-sessions', 'accounts', accountScope, harness)
-    : HARNESSES[harness].sessionRoot(homedir())
+  const sessionRootForScope = (harness: HarnessId, accountScope: string | undefined) => join(userDataPath, 'agent-sessions', 'accounts', accountScope ?? 'signed-out', harness)
   const sessionRootForAccount = (harness: HarnessId, accountScope = enterpriseAccountScope) => sessionRootForScope(harness, accountScope)
-  const sessions = new SessionService(stateStore, primeExecutable)
-  const piSessions = new SessionService(stateStore, null, undefined, piSessionServiceOptions())
+  const sessions = new SessionService(stateStore, primeExecutable, undefined, { sessionRoot: sessionRootForAccount('prime'), environment: profiles.prime.environment })
+  const piSessions = new SessionService(stateStore, null, undefined, { ...piSessionServiceOptions(), sessionRoot: sessionRootForAccount('pi'), environment: profiles.pi.environment })
   const projects = new ProjectService(stateStore, () => mainWindow)
   const piProjects = new ProjectService(stateStore, () => mainWindow, 'pi')
   const projectServicesByHarness = { prime: projects, pi: piProjects } as const
   const projectServices = [projects, piProjects] as const
   const sessionServices = { prime: sessions, pi: piSessions } as const
   for (const service of projectServices) service.setAccountScope(enterpriseAccountScope)
-  if (enterpriseAccountScope) {
+  {
     const roots = (['prime', 'pi'] as const).map((harness) => [sessionServices[harness], sessionRootForAccount(harness)] as const)
     await Promise.all(roots.map(([, root]) => mkdir(root, { recursive: true, mode: 0o700 })))
     for (const [service, root] of roots) await service.setSessionRoot(root)
@@ -650,15 +648,13 @@ async function bootstrap(): Promise<void> {
   // This matches the renderer's startup query so both consumers share SessionService's coalesced catalog scan.
   const listCatalogSessions = (): ReturnType<SessionService['list']> => sessions.list(undefined, true)
 
-  const providers = new PrimeProviderService({
-    openExternal: async (url) => { await shell.openExternal(url, { activate: true }) },
-  })
+  const providers = profiles.providers
   providerService = providers
   const disabledProviders = () => new Set(stateStore.getSettings().disabledProviders)
   const disabledModels = () => new Set(stateStore.getSettings().disabledModels)
   const piDisabledProviders = () => new Set(stateStore.getSettings().piDisabledProviders)
   const piDisabledModels = () => new Set(stateStore.getSettings().piDisabledModels)
-  const piCatalog = new PiModelCatalogService(piExecutable)
+  const piCatalog = profiles.piCatalog
   agents = new AgentRpcManager(
     primeExecutable,
     (cwd) => projects.authorizeCwd(cwd),
@@ -774,6 +770,7 @@ async function bootstrap(): Promise<void> {
     }
   }
   const plugins = new PluginService(primeExecutable, (path) => projects.authorizeProjectRoot(path), {
+    ...profiles.prime, isolated: true,
     builtInSkills: async () => [{
       id: 'prime-work-schedules', name: 'Scheduled tasks',
       description: 'Create and manage durable project and thread schedules from an agent.',
@@ -789,6 +786,7 @@ async function bootstrap(): Promise<void> {
     }, await computerUseSkill(), ...providers.mcpCapabilities()],
   })
   const piPlugins = new PluginService(piExecutable, (path) => piProjects.authorizeProjectRoot(path), {
+    ...profiles.pi, isolated: true,
     harness: 'pi',
     builtInSkills: async () => [{
       id: 'gooeypi-work-schedules', name: 'Scheduled tasks',
@@ -804,7 +802,7 @@ async function bootstrap(): Promise<void> {
       kind: 'extension', location: 'system', path: askUserExtensionPath, enabled: stateStore.getSettings().askUserEnabled,
     }, await computerUseSkill()],
   })
-  const heartbeats = new HeartbeatService(agents, primeExecutable)
+  const heartbeats = new HeartbeatService(agents, primeExecutable, () => ({ ...profiles.prime.environment, PRIME_AGENT_SESSION_DIR: sessionRootForAccount('prime') }))
   const primeScheduledRuns = new ScheduledRunExecutor(
     projects,
     sessions,
@@ -932,11 +930,12 @@ async function bootstrap(): Promise<void> {
   agents.setRuntimeEnvironmentProvider((scope) => {
     assertAccountScopeReady()
     return {
+      ...profiles.prime.environment,
       ...scheduleBridge.environmentFor(scope),
       ...(stateStore.getSettings().browserEnabled ? browserBridge.environmentFor(scope) : {}),
       ...collaborationBridge.environmentFor({ ...scope, harness: 'prime' }),
       ...enterpriseBridge.environmentFor({ ...scope, harness: 'prime' }),
-      ...(enterpriseAccountScope ? { PRIME_AGENT_SESSION_DIR: sessionRootForAccount('prime') } : {}),
+      PRIME_AGENT_SESSION_DIR: sessionRootForAccount('prime'),
       PRIME_WORK_ASK_USER_EXTENSION_PATH: stateStore.getSettings().askUserEnabled && scope.interactive ? askUserExtensionPath : undefined,
       GOOEYPI_MANAGES_ASK_USER: '1',
       GOOEYPI_CUA_DRIVER_PATH: stateStore.getSettings().computerUseEnabled ? cuaDriver.executable() ?? undefined : undefined,
@@ -958,11 +957,12 @@ async function bootstrap(): Promise<void> {
   piManager.setRuntimeEnvironmentProvider((scope) => {
     assertAccountScopeReady()
     return {
+      ...profiles.pi.environment,
       ...extensionRuntimeEnvironment(piScheduleBridge.environmentFor(scope), () => browserBridge.environmentFor(scope), capabilityExtensionPaths, stateStore.getSettings().askUserEnabled && scope.interactive, stateStore.getSettings().browserEnabled),
       ...collaborationBridge.environmentFor({ ...scope, harness: 'pi' }),
       ...enterpriseBridge.environmentFor({ ...scope, harness: 'pi' }),
       ...(scope.interactive ? developmentBridge.environmentFor({ ...scope, harness: 'pi' }) : {}),
-      ...(enterpriseAccountScope ? { PI_CODING_AGENT_SESSION_DIR: sessionRootForAccount('pi') } : {}),
+      PI_CODING_AGENT_SESSION_DIR: sessionRootForAccount('pi'), PI_SESSION_DIR: sessionRootForAccount('pi'),
       GOOEYPI_PI_FAST_MODE_EXTENSION_PATH: piFastModeExtensionPath,
       GOOEYPI_CUA_DRIVER_PATH: stateStore.getSettings().computerUseEnabled ? cuaDriver.executable() ?? undefined : undefined,
       GOOEYPI_COMPUTER_USE_SKILL_PATH: stateStore.getSettings().computerUseEnabled && cuaDriver.executable() ? computerUseSkillPath : undefined,
@@ -1110,7 +1110,7 @@ async function bootstrap(): Promise<void> {
   trustedRendererUrl = resolveRendererUrl()
   ipc = registerIpc({
     meta, refreshHarnesses, projects, checkouts, sessions, agents, terminals, git, plugins, providers, settings, updates, enterprise, cuaDriver, heartbeats, schedules, browser: browserService, voice, pets,
-    popupApplicationMenu, setTitleBarTheme,
+    popupApplicationMenu, setTitleBarTheme, ...connectionImport,
     enterpriseBridge,
     teamDevelopmentBridge: developmentBridge,
     updateTeamDevelopment, getTeamDevelopmentProposal: (runtimeId: string) => developmentBridge.getProposal(runtimeId), getTeamDevelopmentState: (runtimeId: string) => developmentBridge.getState(runtimeId), getTeamDevelopmentStateForSession: (sessionFile: string) => developmentBridge.getStateForSession(sessionFile),

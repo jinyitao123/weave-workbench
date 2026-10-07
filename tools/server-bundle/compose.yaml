@@ -1,0 +1,116 @@
+name: ${WW_PROJECT:?Initialize the installation first}
+
+services:
+  forge-db:
+    image: ${WW_POSTGRES_IMAGE:?A PostgreSQL 16 digest is required}
+    environment:
+      POSTGRES_DB: forge
+      POSTGRES_USER: ${WW_FORGE_DB_USER:?}
+      POSTGRES_PASSWORD: ${WW_FORGE_DB_PASSWORD:?}
+    volumes:
+      - forge_database:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  weave-db:
+    image: ${WW_POSTGRES_IMAGE:?A PostgreSQL 16 digest is required}
+    environment:
+      POSTGRES_DB: weave
+      POSTGRES_USER: ${WW_WEAVE_DB_USER:?}
+      POSTGRES_PASSWORD: ${WW_WEAVE_DB_PASSWORD:?}
+    volumes:
+      - weave_database:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # Keep the app name required by the existing Forge transport image.
+  # The locked image retains its official migration and serve command.
+  app:
+    image: ${WW_FORGE_IMAGE:?A Forge digest is required}
+    environment:
+      OS_DATABASE_URL: ${WW_FORGE_DATABASE_URL:?}
+      OS_AUTH_SECRET: ${WW_FORGE_AUTH_SECRET:?}
+      OS_SECRET_KEY: ${WW_FORGE_SECRET_KEY:?}
+      OS_BASE_URL: ${WW_FORGE_ORIGIN:?}
+      OS_AUTH_URL: ${WW_FORGE_ORIGIN:?}
+      OS_TRUSTED_ORIGINS: ${WW_FORGE_ORIGIN:?}
+      FORGE_IDENTITY_ISSUER: ${WW_FORGE_IDENTITY_ISSUER:?}
+      FORGE_WEAVE_EVENT_SECRET: ${WW_EVENT_SECRET:?}
+      FORGE_TASK_DELEGATION_MAX_HOURS: '24'
+    volumes:
+      - forge_uploads:/srv/app/.objectstack/data/uploads
+    depends_on:
+      forge-db:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:8080/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    restart: unless-stopped
+
+  proxy:
+    image: ${WW_FORGE_PROXY_IMAGE:?A Forge transport digest is required}
+    ports:
+      - '${WW_BIND_ADDRESS:?}:${WW_FORGE_PORT:?}:80'
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, 'wget -q -O /dev/null http://127.0.0.1/_forge_transport_health || exit 1']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  weave:
+    image: ${WW_WEAVE_IMAGE:?A Weave digest is required}
+    ports:
+      - '${WW_BIND_ADDRESS:?}:${WW_WEAVE_PORT:?}:8080'
+    environment:
+      DATABASE_URL: ${WW_WEAVE_DATABASE_URL:?}
+      JWT_SECRET: ${WW_WEAVE_JWT_SECRET:?}
+      WEAVE_SECRET_KEY: ${WW_WEAVE_SECRET_KEY:?}
+      # Do not seed a second default workspace on startup. The formal
+      # bootstrap command runs after the native organization is bound.
+      WEAVE_ADMIN_PASS: ${WW_OPERATOR_PASSWORD:?}
+      WEAVE_DISABLE_LOCAL_LOGIN: 'true'
+      WEAVE_DEV_MODE: 'false'
+      WEAVE_LOCAL_RUNTIME_ENABLED: 'true'
+      # The existing runtime checks the current task subject and claim epoch
+      # before resolving this one explicitly configured service provider.
+      WEAVE_LOCAL_RUNTIME_SHARED_PROVIDERS: system-provider:deepseek
+      WEAVE_FORGE_SESSION_URL: ${WW_FORGE_SESSION_URL:?}
+      WEAVE_FORGE_DEFAULT_WORKSPACE: ${WW_ORGANIZATION_ID:-}
+      WEAVE_FORGE_EVENT_URL: ${WW_FORGE_EVENT_URL:?}
+      WEAVE_FORGE_EVENT_SECRET: ${WW_EVENT_SECRET:?}
+      DEEPSEEK_API_KEY: ${WW_DEEPSEEK_API_KEY:-}
+      DEFAULT_MODEL: deepseek-flash
+    extra_hosts:
+      - '${WW_GATEWAY_ALIAS:?}:host-gateway'
+    volumes:
+      - weave_workspaces:/root/.weave/workspaces
+    depends_on:
+      weave-db:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:8080/v1/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+
+volumes:
+  forge_database:
+  weave_database:
+  forge_uploads:
+  weave_workspaces:

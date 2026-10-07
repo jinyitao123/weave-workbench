@@ -1,4 +1,5 @@
 const { join } = require('node:path')
+const { spawnSync } = require('node:child_process')
 const { flipFuses, FuseVersion, FuseV1Options } = require('@electron/fuses')
 
 function executablePath(context, platform = process.platform) {
@@ -17,6 +18,18 @@ function executablePath(context, platform = process.platform) {
 exports.executablePath = executablePath
 
 exports.default = async function hardenElectron(context) {
+  const expected = process.env.WEAVE_RUNTIME_RESOURCE_DIR
+  const platform = process.env.WEAVE_RUNTIME_PLATFORM
+  const arch = process.env.WEAVE_RUNTIME_ARCH
+  if (!expected || !platform || !arch) throw new Error('Package through scripts/release/electron-builder.mjs to include the verified runtime.')
+  const resources = platform === 'darwin' ? join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`, 'Contents', 'Resources') : join(context.appOutDir, 'resources')
+  const result = spawnSync(
+    process.execPath,
+    [join(__dirname, '../runtime/verify.mjs'), `--platform=${platform}`, `--arch=${arch}`, `--root=${join(resources, 'runtime')}`, `--expected-manifest=${join(expected, 'runtime-manifest.json')}`],
+    { stdio: 'inherit' },
+  )
+  if (result.error) throw result.error
+  if (result.status !== 0) throw new Error('Packaged runtime integrity verification failed.')
   await flipFuses(executablePath(context), {
     version: FuseVersion.V1,
     resetAdHocDarwinSignature: process.platform === 'darwin',

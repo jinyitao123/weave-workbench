@@ -7,7 +7,7 @@
 
 员工在桌面端整理材料、提交工作、办理待办；智能体团队按已发布的流程协作执行；业务数据、权限、审批和最终状态始终留在业务系统里，可被独立读回和审计。
 
-> **English summary.** Weave Workbench is the product monorepo that combines a desktop client (an Electron app adapted from [GooeyPi](https://github.com/am-will/gooey-pi)), [Weave](https://github.com/jinyitao123/weave-next) (agent-team orchestration, execution and recovery) and [Forge](https://github.com/jinyitao123/inoForge) (business apps on ObjectStack: objects, actions, permissions, approvals). Employees hand work to agent teams from the desktop; teams act only through business actions that Forge explicitly exposes; the outcome is written back to Forge and can be verified there independently. The project is a pilot: the first end-to-end scenario (sales contract hand-off between employees) is only partly verified, see [Status](#项目状态--status). Documentation is mostly in Chinese.
+> **English summary.** Weave Workbench is the product monorepo that combines a desktop client (an Electron app adapted from [GooeyPi](https://github.com/am-will/gooey-pi)), [Weave](https://github.com/jinyitao123/weave-next) (agent-team orchestration, execution and recovery) and [Forge](https://github.com/jinyitao123/inoForge) (business apps on ObjectStack: objects, actions, permissions, approvals). Employees hand work to agent teams from the desktop; teams act only through business actions that Forge explicitly exposes; the outcome is written back to Forge and can be verified there independently. The project is a private pilot. The sales-to-project-start flow passed in the previous environment; a fresh server and desktop installation is now being verified, see [Status](#项目状态--status). Documentation is mostly in Chinese.
 
 ## 它解决什么问题
 
@@ -40,14 +40,9 @@ flowchart LR
 
 ## 项目状态 / Status
 
-**试点阶段（MVP1），尚未达到通用可用。** 请不要把它当作成熟的生产系统。
+**私有试点阶段（MVP1）。** 重制前已走通线索、报价、合同、订单批准及项目经理接收启动，并由Forge独立读回。当前正在从重制后的Linux服务器和全新桌面配置重新安装验收，旧结果不抵扣新环境。
 
-已经在真实环境中走通并由 Forge 页面独立读回：
-
-- 销售在桌面交接合同材料，团队触发 Forge 正式审批，交付负责人在自己的桌面退回；
-- 线索转商机、报价调整两个场景的主路径。
-
-合同修订材料已重新进入第二轮审批；双方正式意见、最终状态与成果读回仍未完成，回执丢失后的重复调用、并发旧版本等边界路径仍待验证。逐项结论与证据见[项目状态](docs/项目状态.md)、[MVP1 阶段说明](docs/plans/MVP1阶段说明.md)和[问题清单](docs/plans/问题清单.md)。
+首个预发布只有桌面安装文件与源码；完整服务端安装、桌面自带运行环境及组织连接交付正在收尾。生产准入、长期稳定性和正式Mac签名／公证尚未完成。当前事实见[项目状态](docs/项目状态.md)，安装入口见[安装与初始化](docs/engineering/安装与初始化.md)。
 
 ## 仓库结构
 
@@ -66,6 +61,8 @@ flowchart LR
 
 ## 快速开始
 
+部署管理员和员工请先阅读[图文安装指南](docs/engineering/安装与初始化.md)。Linux服务端统一安装，员工使用桌面包和组织连接文件；下面是开发者运行源码的方式。
+
 只运行仓库检查（需要 Node.js 24）：
 
 ```sh
@@ -82,7 +79,7 @@ npm install
 npm run dev
 ```
 
-桌面默认连接本机 Forge（`http://127.0.0.1:3000`）与 Weave（`http://127.0.0.1:8080`），不会自动连接维护者的联调主机。连接组织部署时，由部署人员在启动环境中用环境变量 `WORKBENCH_FORGE_URL`、`WORKBENCH_WEAVE_URL` 指定地址。构建与测试说明见[桌面文档](desktop/README.md)，Weave 与 Forge 的启动方式见各自目录下的 README。
+桌面默认连接本机 Forge（`http://127.0.0.1:3000`）与 Weave（`http://127.0.0.1:8080`），不会自动连接维护者的联调主机。员工安装通过登录页导入组织连接文件；开发调试才使用成对的 `WORKBENCH_FORGE_URL`、`WORKBENCH_WEAVE_URL` 环境覆盖。构建与测试说明见[桌面文档](desktop/README.md)，Weave 与 Forge 的启动方式见各自目录下的 README。
 
 组件检查：`make desktop-check`、`make weave-check`、`make forge-check`。
 

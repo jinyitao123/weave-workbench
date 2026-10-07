@@ -8,6 +8,7 @@
 
 | 契约 | 内容 | 状态 |
 | --- | --- | --- |
+| [组织连接配置](v1/organization-connection.schema.json) | 管理员/安装器向桌面交付无凭据的Forge与Weave地址，导入、取消及重复操作边界 | 已有文件读取；安装器输出和桌面导入入口实施中 |
 | `enterprise-session` | 桌面可见的登录身份、身份来源、组织环境和会话保存方式 | 待修订：稳定 `issuer`（决策 002）；Forge、Weave、桌面已在各自分支实现，未合入未部署 |
 | `account-binding` | Forge 登录主体与 Weave 用户、组织之间的稳定绑定 | 待修订：稳定 `issuer`（决策 002）；Weave来源主线已实现，本批稳定身份适配整合中，未部署 |
 | `task-delegation` | 未发布的抽象审计投影；`$defs.scope`为固定任务范围机器契约，不是发行/current回包 | 待修订（决策 002）：Forge 签发、Weave 接收与终态撤销、桌面申请已在各自分支实现，未合入未部署 |

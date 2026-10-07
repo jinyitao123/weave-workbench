@@ -43,6 +43,13 @@ export interface EnterpriseEnvironmentStatus {
 
 export type EnterprisePermission = 'teams:use' | 'teams:develop' | 'teams:admin'
 
+export type EnterpriseConnectionImportResult = { status: 'cancelled' } | {
+  status: 'saved' | 'unchanged'
+  config: { version: 1; forgeOrigin: string; weaveOrigin: string }
+  environmentOverride: boolean
+  restartRequired: boolean
+}
+
 export interface EnterpriseSession {
   version: '1'
   status: 'signed-out' | 'signed-in' | 'blocked' | 'unavailable'
@@ -1346,6 +1353,8 @@ export interface PrimeWorkApi {
     onChanged(callback: (state: AppUpdateState) => void): () => void
   }
   enterprise: {
+    importConnection(): Promise<EnterpriseConnectionImportResult>
+    restartConnection(): Promise<void>
     teamWorkspace: import('./team-workspace').TeamWorkspaceBridge
     updateTeamDevelopment(runtimeId: string, input: import('./team-workspace').TeamDevelopmentContextInput): Promise<void>
     invalidateTeamDevelopmentTurn(runtimeId: string): Promise<void>

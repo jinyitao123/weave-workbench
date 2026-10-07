@@ -24,7 +24,8 @@ export const BUNDLE_SIZE_BUDGETS = Object.freeze({
 
 /**
  * Ceilings for one packaged macOS build: `asarBytes` the packed app.asar,
- * `appBytes` the regular-file bytes inside GooeyPi.app, and `dmgBytes`/
+ * `appBytes` the application excluding managed runtime; `runtimeBytes` counts
+ * resources/runtime and `totalAppBytes` the complete app. `dmgBytes`/
  * `zipBytes` the compressed distributables users download (Electron runtime,
  * unpacked native addons, and the bundled agent included).
  *
@@ -38,9 +39,15 @@ export const PACKAGE_SIZE_BUDGETS = Object.freeze({
   // 66,518,296 packaged dependency bytes; app.asar now measures 196,431,056
   // bytes. 190 MiB is the next 5 MiB boundary above that measurement.
   asarBytes: 190 * MIB,
+  // RC5 adds independently pinned Node/Pi/Prime/npm so customers need no global CLI.
+  // Preserve the prior application ceiling; do not hide runtime bytes in it.
   appBytes: 480 * MIB,
-  dmgBytes: 190 * MIB,
-  zipBytes: 185 * MIB,
+  runtimeBytes: 384 * MIB,
+  totalAppBytes: 864 * MIB,
+  // RC5 arm64: DMG263,355,660 and ZIP265,268,232 bytes after embedding
+  // verified Node/Pi/Prime/npm. 255 MiB is the next 5 MiB boundary.
+  dmgBytes: 255 * MIB,
+  zipBytes: 255 * MIB,
 })
 
 const BUNDLE_LABELS = {
@@ -53,7 +60,9 @@ const BUNDLE_LABELS = {
 
 const PACKAGE_LABELS = {
   asarBytes: 'app.asar',
-  appBytes: 'application bundle',
+  appBytes: 'application bundle excluding managed runtime',
+  runtimeBytes: 'managed runtime content',
+  totalAppBytes: 'complete application bundle',
   dmgBytes: 'DMG artifact',
   zipBytes: 'ZIP artifact',
 }
@@ -156,9 +165,14 @@ export function directoryFileSize(directory) {
 }
 
 export function collectPackageSizeMetrics({ asar, app, dmg, zip }) {
+  const totalAppBytes = directoryFileSize(app)
+  const runtime = join(app, 'Contents', 'Resources', 'runtime')
+  const runtimeBytes = existsSync(runtime) ? directoryFileSize(runtime) : 0
   return {
     asarBytes: requireFile(asar, 'app.asar'),
-    appBytes: directoryFileSize(app),
+    appBytes: totalAppBytes - runtimeBytes,
+    runtimeBytes,
+    totalAppBytes,
     dmgBytes: requireFile(dmg, 'DMG artifact'),
     zipBytes: requireFile(zip, 'ZIP artifact'),
   }

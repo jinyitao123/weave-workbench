@@ -63,4 +63,38 @@ describe('GooeyPi enterprise account entry', () => {
     expect(container.textContent).toContain('退出登录')
     expect(container.querySelector('form')).toBeNull()
   })
+
+  it('shows saved origins and requires an explicit normal restart before signing in', async () => {
+    const onSignIn = vi.fn(async () => undefined), restart = vi.fn(async () => undefined)
+    const config = { version: 1 as const, forgeOrigin: 'https://forge.example.test', weaveOrigin: 'https://weave.example.test' }
+    const select = vi.fn(async () => ({ status: 'saved' as const, config, environmentOverride: false, restartRequired: true }))
+    await act(async () => root.render(<AccountPage onSignIn={onSignIn} onImportConnection={select} onRestartConnection={restart} />))
+    const importButton = [...container.querySelectorAll('button')].find(button => button.textContent === '导入组织连接')!
+    await act(async () => importButton.click())
+    expect(container.textContent).toContain(config.forgeOrigin)
+    expect(container.textContent).toContain(config.weaveOrigin)
+    expect(container.textContent).toContain('重启后生效')
+    expect(onSignIn).not.toHaveBeenCalled()
+    expect(restart).not.toHaveBeenCalled()
+    const restartButton = [...container.querySelectorAll('button')].find(button => button.textContent === '重启应用')!
+    await act(async () => restartButton.click())
+    expect(restart).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not claim developer overrides changed or restart after a cancelled import', async () => {
+    const config = { version: 1 as const, forgeOrigin: 'https://forge.example.test', weaveOrigin: 'https://weave.example.test' }
+    const select = vi.fn<() => Promise<import('../../src/types/api').EnterpriseConnectionImportResult>>()
+      .mockResolvedValueOnce({ status: 'saved', config, environmentOverride: true, restartRequired: false })
+      .mockResolvedValueOnce({ status: 'cancelled' })
+    const restart = vi.fn(async () => undefined)
+    await act(async () => root.render(<AccountPage onSignIn={async () => undefined} onImportConnection={select} onRestartConnection={restart} />))
+    const button = [...container.querySelectorAll('button')].find(item => item.textContent === '导入组织连接')!
+    await act(async () => button.click())
+    expect(container.textContent).toContain('当前仍使用开发连接覆盖')
+    expect([...container.querySelectorAll('button')].some(item => item.textContent === '重启应用')).toBe(false)
+    const before = container.textContent
+    await act(async () => button.click())
+    expect(container.textContent).toBe(before)
+    expect(restart).not.toHaveBeenCalled()
+  })
 })

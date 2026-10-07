@@ -58,29 +58,29 @@ export function validatePackageSource(value: unknown): string {
   throw new TypeError('Package source must be npm:, git:, a protocol URL, or an existing absolute path')
 }
 
-export async function executePackageInstall(primeAgentPath: string, source: string, localCwd?: string): Promise<ProcessOutcome> {
+export async function executePackageInstall(primeAgentPath: string, source: string, localCwd?: string, environment?: NodeJS.ProcessEnv): Promise<ProcessOutcome> {
   const args = localCwd ? ['package', 'install', '--local', source] : ['package', 'install', source]
-  const result = await runProcess(primeAgentPath, args, { cwd: localCwd, timeoutMs: 10 * 60_000, maxBytes: 8 * 1024 * 1024 })
+  const result = await runProcess(primeAgentPath, args, { cwd: localCwd, env: environment, timeoutMs: 10 * 60_000, maxBytes: 8 * 1024 * 1024 })
   return processOutcome(result, stripAnsi(`${result.stdout}${result.stderr}`).trim())
 }
 
-export async function executePackageRemove(primeAgentPath: string, source: string, localCwd?: string): Promise<ProcessOutcome> {
+export async function executePackageRemove(primeAgentPath: string, source: string, localCwd?: string, environment?: NodeJS.ProcessEnv): Promise<ProcessOutcome> {
   const args = localCwd ? ['package', 'remove', '--local', source] : ['package', 'remove', source]
-  const result = await runProcess(primeAgentPath, args, { cwd: localCwd, timeoutMs: 10 * 60_000, maxBytes: 8 * 1024 * 1024 })
+  const result = await runProcess(primeAgentPath, args, { cwd: localCwd, env: environment, timeoutMs: 10 * 60_000, maxBytes: 8 * 1024 * 1024 })
   return processOutcome(result, stripAnsi(`${result.stdout}${result.stderr}`).trim())
 }
 
 // Pi has no --json output for install/remove; stdout is untrusted, bounded by
 // maxBytes, and ANSI-stripped before it reaches the renderer. The source is
 // passed verbatim like Prime's `package install` (pi is Prime's ancestor CLI).
-export async function executePiPluginInstall(piPath: string, source: string, localCwd?: string): Promise<ProcessOutcome> {
+export async function executePiPluginInstall(piPath: string, source: string, localCwd?: string, environment?: NodeJS.ProcessEnv): Promise<ProcessOutcome> {
   const args = localCwd ? ['install', '-l', source] : ['install', source]
-  const result = await runProcess(piPath, args, { cwd: localCwd, timeoutMs: 10 * 60_000, maxBytes: 8 * 1024 * 1024 })
+  const result = await runProcess(piPath, args, { cwd: localCwd, env: environment, timeoutMs: 10 * 60_000, maxBytes: 8 * 1024 * 1024 })
   return processOutcome(result, stripAnsi(`${result.stdout}${result.stderr}`).trim())
 }
 
-export async function executePiPluginRemove(piPath: string, source: string, localCwd?: string): Promise<ProcessOutcome> {
+export async function executePiPluginRemove(piPath: string, source: string, localCwd?: string, environment?: NodeJS.ProcessEnv): Promise<ProcessOutcome> {
   const args = localCwd ? ['remove', '-l', source] : ['remove', source]
-  const result = await runProcess(piPath, args, { cwd: localCwd, timeoutMs: 10 * 60_000, maxBytes: 8 * 1024 * 1024 })
+  const result = await runProcess(piPath, args, { cwd: localCwd, env: environment, timeoutMs: 10 * 60_000, maxBytes: 8 * 1024 * 1024 })
   return processOutcome(result, stripAnsi(`${result.stdout}${result.stderr}`).trim())
 }
