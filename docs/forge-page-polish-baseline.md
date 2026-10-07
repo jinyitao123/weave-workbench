@@ -167,3 +167,17 @@
 - 已检查加载、失败、空态、权限或能力受限、成功反馈和窄屏布局。
 - 需求、Forge 设计决定、外部参考与本轮实际观察分别记录；未验证项没有写成通过。
 - 已运行 `pnpm typecheck`、`pnpm validate`、`pnpm build` 及对应业务验收；涉及持久状态时从同一持久数据库停服重启后回读。
+
+## 财务历史记录与当前准入
+
+2026-10-07 将下列七页的当前准入登记为 schemaVersion 3、`review_required`，分项仅为 `pending` 或 `blocked`。公开仓库无法取得历史 PNG，当前版本尚未复核；这不表示功能失败，也不启动财务业务范围。新记录中的源码摘要仅固定待复核范围，不声明已验收提交。原 schemaVersion 1 JSON、分项 pass、图片路径和报告均不改写，历史结论不继承为当前通过；原验收器与 prebuild 门禁保持不变。
+
+| 页面 | 当前记录 | 原历史记录 |
+| --- | --- | --- |
+| `page_bank_flow` | [当前准入](../apps/forge-objectstack/tests/acceptance/finance-bank-flow.json) | [历史观察](../docs/evidence/finance-narrow-metrics-20260917/bank_flow.json) |
+| `page_invoice_adjustments` | [当前准入](../apps/forge-objectstack/tests/acceptance/finance-invoice-adjustments.json) | [历史观察](../docs/evidence/finance-narrow-metrics-20260917/invoice_adjustments.json) |
+| `page_fund_accounts` | [当前准入](../apps/forge-objectstack/tests/acceptance/finance-fund-accounts.json) | [历史观察](../docs/evidence/finance-fund-accounts-20260916/acceptance.json) |
+| `page_receivables_payables` | [当前准入](../apps/forge-objectstack/tests/acceptance/finance-receivables-payables.json) | [历史观察](../docs/evidence/finance-narrow-metrics-20260917/receivables_payables.json) |
+| `page_invoice_overview` | [当前准入](../apps/forge-objectstack/tests/acceptance/finance-invoice-overview.json) | [历史观察](../docs/evidence/finance-narrow-metrics-20260917/invoice_overview.json) |
+| `page_output_invoices` | [当前准入](../apps/forge-objectstack/tests/acceptance/finance-output-invoices.json) | [历史观察](../docs/evidence/finance-narrow-metrics-20260917/output_invoices.json) |
+| `page_invoice_tasks` | [当前准入](../apps/forge-objectstack/tests/acceptance/finance-invoice-tasks.json) | [历史观察](../docs/evidence/finance-invoice-tasks-narrow-20260916/acceptance.json) |
