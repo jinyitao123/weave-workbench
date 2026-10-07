@@ -1,0 +1,549 @@
+{
+  "schemaVersion": 3,
+  "featureId": "project.center",
+  "app": "project",
+  "surfaceType": "page",
+  "target": "page_project_center",
+  "pageId": "page_project_center",
+  "status": "review_required",
+  "observedAt": "2026-10-07",
+  "reviewedRevision": "e29b082d446ea84b6040d0fd5a413324cfbc1186",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/project-center.page.ts": "34a36a5892231aa4205a3c9fa197ba1aa089a1c6e5fed438112a0cff64c35cc4",
+    "apps/forge-objectstack/src/pages/project-center.logic.ts": "ca6dc039ef451f498a19428656b83e5be9753a9a138aa40e898ba459bb571ca3",
+    "apps/forge-objectstack/src/pages/project-attachment-panel.ts": "c1b112b61915bfa86beb35fb8fe6dcc65b280d4f468c5f93ae509331aef84ade",
+    "apps/forge-objectstack/src/pages/project-cost-panel.ts": "81abdfc2e160876946cc6f0ed5fa92396126265982c9f11df213bd6aba70bb85",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "4161963639d9d54d8d82ae4fcee74c54ca3edd51af9e5d67e6120e16e62cf42f",
+    "apps/forge-objectstack/src/views/project.view.ts": "c5b3c12ba43c392f8d0c6ee445e1787896962c733905a1549d832255f6ec5dcc",
+    "apps/forge-objectstack/src/objects/project.object.ts": "b96468bf532cfb4e026e0d7d776aab298a5e565cb383f90579f7bb472bfe1d18",
+    "apps/forge-objectstack/src/actions/project.action.ts": "afd54177903d28e327123ebc39017ca45eec2a1c00f2a1122b71838007f57b34",
+    "apps/forge-objectstack/src/permissions/project-operator.permission.ts": "ce78c7a3cb1fb8a1a79c3899cabaf3f9dd1ed862368a280aa563fadce186ddea",
+    "apps/forge-objectstack/console94.lock.json": "363c04b892101956fecc2c03e464086ea71312df0ccaf4c968e2fba7321f412c"
+  },
+  "environment": {
+    "databaseType": "postgresql",
+    "materials": [
+      {
+        "id": "PC-READ-SCOPE",
+        "name": "原项目经理既有operator／manager组合、隔离1项目及1任务，当前仅只读补证"
+      }
+    ]
+  },
+  "referenceEvidence": [],
+  "checks": {
+    "requirements": {
+      "status": "pending",
+      "notes": "完整项目中心及子模块待验，当前局部读取回归／GUI不代表业务完成。",
+      "evidence": []
+    },
+    "visual": {
+      "status": "pending",
+      "notes": "完整项目中心及子模块待验，当前局部读取回归／GUI不代表业务完成。",
+      "evidence": []
+    },
+    "interaction": {
+      "status": "pending",
+      "notes": "当前读取边界及任务工作区路径有局部GUI补证；全模块办理与独立复核待验。",
+      "evidence": []
+    },
+    "business": {
+      "status": "pending",
+      "notes": "完整项目中心及子模块待验，当前局部读取回归／GUI不代表业务完成。",
+      "evidence": []
+    },
+    "permissions": {
+      "status": "pending",
+      "notes": "完整项目中心及子模块待验，当前局部读取回归／GUI不代表业务完成。",
+      "evidence": []
+    },
+    "persistence": {
+      "status": "pending",
+      "notes": "完整项目中心及子模块待验，当前局部读取回归／GUI不代表业务完成。",
+      "evidence": []
+    },
+    "performance": {
+      "status": "pending",
+      "notes": "完整项目中心及子模块待验，当前局部读取回归／GUI不代表业务完成。",
+      "evidence": []
+    }
+  },
+  "requirements": [
+    {
+      "id": "PC-CENTER-001",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "项目列表表格／甘特图与原生筛选、分页、空态及详情入口可用，读取同一授权项目范围。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "项目列表表格／甘特图与原生筛选、分页、空态及详情入口可用，读取同一授权项目范围。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-002",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "项目详情与各模块保留项目上下文，直接访问、返回、历史导航和键盘页签正确。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "项目详情与各模块保留项目上下文，直接访问、返回、历史导航和键盘页签正确。",
+      "actual": "从正常列表进入项目详情、任务模块和打开任务工作区，实际路由保留原项目范围并显示同一任务；其余历史导航与完整模块路径待验。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-003",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "项目概览、金额／成本／毛利／回款／进度区分真实零、缺失和读取受限，不显示内部编码。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "项目概览、金额／成本／毛利／回款／进度区分真实零、缺失和读取受限，不显示内部编码。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-004",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "新建项目使用原客户／类型／经理／日期／预算字段，校验、取消、原动作结果与失败保值完整。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "新建项目使用原客户／类型／经理／日期／预算字段，校验、取消、原动作结果与失败保值完整。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-005",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "开始／暂停／恢复／终止及原因使用原生状态动作，确认／busy／重复请求和正式状态读回正确。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "开始／暂停／恢复／终止及原因使用原生状态动作，确认／busy／重复请求和正式状态读回正确。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-006",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "项目负责人交接使用原生账号任职及权限，旧成员归属、拒绝和正式结果可追溯。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "项目负责人交接使用原生账号任职及权限，旧成员归属、拒绝和正式结果可追溯。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-007",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "合同关联保留同客户及可执行订单范围，原动作失败／成功及关联结果正确。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "合同关联保留同客户及可执行订单范围，原动作失败／成功及关联结果正确。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-008",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "销售与采购订单模块展示真实来源、状态、筛选及全量汇总，刷新两处读取且正确穿透。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "销售与采购订单模块展示真实来源、状态、筛选及全量汇总，刷新两处读取且正确穿透。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-009",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "手工计划／模板计划保持项目上下文、有效模板和起始日期，保存后计划可办理。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "手工计划／模板计划保持项目上下文、有效模板和起始日期，保存后计划可办理。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-010",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "任务模块保留启用类别、计划／阶段、负责人、筛选及任务工作区跳转上下文。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "任务模块保留启用类别、计划／阶段、负责人、筛选及任务工作区跳转上下文。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-011",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "团队与成员编辑使用原项目成员／正式任职／岗位资格，不建立平行组织或权限。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "团队与成员编辑使用原项目成员／正式任职／岗位资格，不建立平行组织或权限。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-012",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "成本／采购／付款模块保持原权威对象范围与准确汇总，数据拒绝不伪装零。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "成本／采购／付款模块保持原权威对象范围与准确汇总，数据拒绝不伪装零。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-013",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "BOM与交付／Goodwill下游模块保持来源与当前项目，现有业务页面穿透、缺口与权限正确。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "BOM与交付／Goodwill下游模块保持来源与当前项目，现有业务页面穿透、缺口与权限正确。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-014",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "附件和日志保留原生授权、项目归属、真实上传／读取／分类及失败结果。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "附件和日志保留原生授权、项目归属、真实上传／读取／分类及失败结果。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-015",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "模块开关与设置消费者实际生效，保存／拒绝／同库重启后保持设置效果。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "模块开关与设置消费者实际生效，保存／拒绝／同库重启后保持设置效果。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-016",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "主读取与辅助数据的加载／空态／401／403／失败／迟到结果准确区分，重试保留项目参数。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [
+        "原项目经理正常项目列表点入详情，核对客户原生403局部提示。",
+        "辅助任务响应200在本机回401，确认详情清空；撤除后点击重试，核对实际GET过滤仍为当前项目。",
+        "760px窄屏主项目200本机回403，确认拒绝提示、无旧详情及无越界；撤除后重试恢复。"
+      ],
+      "expected": "主读取与辅助数据的加载／空态／401／403／失败／迟到结果准确区分，重试保留项目参数。",
+      "actual": "原项目经理隔离PG正常列表与详情可读，真实客户403保留项目并显示受限提示。辅助任务原200本机401清旧标题／表格／模块页签；主项目原200本机403显示拒绝并清旧详情。撤除后重试恢复原项目，完整请求窗口读回原id过滤。交付范围401及迟到主加载仅源码回归；完整读取状态与独立复核待验。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-017",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "真实角色允许／拒绝、跨项目边界、正式动作结果和同库持久化由合法账号独立读回。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "真实角色允许／拒绝、跨项目边界、正式动作结果和同库持久化由合法账号独立读回。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "writes_business_state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "PC-CENTER-018",
+      "source": {
+        "type": "user_goal",
+        "reference": "用户持续销售／项目全部页面目标；docs/forge-project-management-manual-baseline-20260912.md#项目中心交付范围与读取边界"
+      },
+      "statement": "桌面／窄屏／长文本／弹窗／键盘焦点及固定材料性能符合页面要求。",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "steps": [],
+      "expected": "桌面／窄屏／长文本／弹窗／键盘焦点及固定材料性能符合页面要求。",
+      "actual": "仅登记完整要求，当前局部检查不能当本项完成。",
+      "stateEffect": "read_only",
+      "status": "pending",
+      "evidence": []
+    }
+  ],
+  "limitations": [
+    "当前RISEMAP参考未恢复；历史资料不能当本批像素证据。",
+    "当前只读合成材料及本机故障注入，不代表新建／办理／设置消费者／持久化与独立评审通过。",
+    "原主读取及任务响应均200，本批401／主403均本机响应注入；原客户403是真实辅助拒绝。重载后初次事件窗口被截断，改用当前有效暂停句柄；未宣称截断窗口零写入。"
+  ]
+}

@@ -33,7 +33,7 @@
 
 | 范围 | 合同与盘点入口 |
 | --- | --- |
-| 销售到项目业务走查 | [Forge OTC 顺序业务走查台账](forge-otc-sequential-ledger.md)（当前覆盖表）；[CRM 销售页面合同](forge-sales-crm-page-contract-20260913.md)、[报价/合同/订单切片](forge-sales-workflow-slice.md)、[项目计划合同](forge-project-plan-page-contract.md)、[项目管理及任务工作区范围](forge-project-management-manual-baseline-20260912.md#当前任务工作区交付范围与读取补证) |
+| 销售到项目业务走查 | [Forge OTC 顺序业务走查台账](forge-otc-sequential-ledger.md)（当前覆盖表）；[CRM 销售页面合同](forge-sales-crm-page-contract-20260913.md)、[报价/合同/订单切片](forge-sales-workflow-slice.md)、[项目计划合同](forge-project-plan-page-contract.md)、[项目中心及任务工作区范围](forge-project-management-manual-baseline-20260912.md#当前任务工作区交付范围与读取补证) |
 | 财务全量精修 | [财务页面清单](forge-finance-page-inventory-20260915.md)、[财务精修合同](forge-finance-page-polish-contract-20260915.md)、[确认与发票合同](forge-finance-confirmation-invoice-contract-20260915.md) |
 | 供应链逐页交付 | [供应链页面设计清单](forge-supply-chain-page-design-inventory-20260915.md)、[采购申请合同](forge-purchase-request-page-contract-20260916.md)、[采购待办池](forge-purchase-todo-pool-page-contract-20260915.md)、[询价](forge-purchase-inquiry-page-contract-20260916.md)、[供应商价格本](forge-supplier-price-book-page-contract-20260916.md) |
 | 其他业务域 | [RISEMAP 功能域目录](risemap/README.md)，再按域定位对应 Forge 页面合同；不能把目录存在计为功能完成 |

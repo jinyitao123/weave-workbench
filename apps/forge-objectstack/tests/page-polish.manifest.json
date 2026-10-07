@@ -1502,6 +1502,54 @@
       "designStatus": "review_required",
       "contract": "docs/forge-project-management-manual-baseline-20260912.md",
       "acceptance": "apps/forge-objectstack/tests/acceptance/project-task-workspace.json"
+    },
+    {
+      "featureId": "project.center",
+      "app": "project",
+      "surfaceType": "page",
+      "target": "page_project_center",
+      "pageId": "page_project_center",
+      "file": "project-center.page.ts",
+      "pages": [
+        "page_project_center"
+      ],
+      "archetype": "detail_workspace",
+      "reference": "project-center.page.ts",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/project-center.page.ts",
+        "apps/forge-objectstack/src/pages/project-center.logic.ts",
+        "apps/forge-objectstack/src/pages/project-attachment-panel.ts",
+        "apps/forge-objectstack/src/pages/project-cost-panel.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts",
+        "apps/forge-objectstack/src/views/project.view.ts",
+        "apps/forge-objectstack/src/objects/project.object.ts",
+        "apps/forge-objectstack/src/actions/project.action.ts",
+        "apps/forge-objectstack/src/permissions/project-operator.permission.ts",
+        "apps/forge-objectstack/console94.lock.json"
+      ],
+      "requirementIds": [
+        "PC-CENTER-001",
+        "PC-CENTER-002",
+        "PC-CENTER-003",
+        "PC-CENTER-004",
+        "PC-CENTER-005",
+        "PC-CENTER-006",
+        "PC-CENTER-007",
+        "PC-CENTER-008",
+        "PC-CENTER-009",
+        "PC-CENTER-010",
+        "PC-CENTER-011",
+        "PC-CENTER-012",
+        "PC-CENTER-013",
+        "PC-CENTER-014",
+        "PC-CENTER-015",
+        "PC-CENTER-016",
+        "PC-CENTER-017",
+        "PC-CENTER-018"
+      ],
+      "designStatus": "review_required",
+      "contract": "docs/forge-project-management-manual-baseline-20260912.md",
+      "acceptance": "apps/forge-objectstack/tests/acceptance/project-center.json"
     }
   ]
 }
