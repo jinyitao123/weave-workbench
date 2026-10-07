@@ -7,16 +7,16 @@
   "pageId": "page_sales_order_create",
   "status": "review_required",
   "observedAt": "2026-10-07",
-  "reviewedRevision": "603e8ab3e32c19e84bb86243989df3aa2501ffd2",
+  "reviewedRevision": "1977dd8c142353a21cfd784ebe398400d278970e",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/sales-order-create.page.ts": "1d9c89a681b08060e318872df052b3d95365e21aeef371e941478160b4da157c",
     "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86",
-    "apps/forge-objectstack/src/objects/sales.object.ts": "fa936dfee7638c074fde84f67dc7c0b80adac71f2b31571220d322190e32e9e2",
-    "apps/forge-objectstack/src/actions/sales.action.ts": "13de0e1e97d5b5c79f1d37d8b38bbd9bb27ac89a4889f101e544389a9d9a4bbd",
+    "apps/forge-objectstack/src/objects/sales.object.ts": "0d24c1a46103a8f367f70c69e29257042ae3d5df804d29bd11220f064c65c4d5",
+    "apps/forge-objectstack/src/actions/sales.action.ts": "3412077c1bb354cfd5bb81345bd5a7dc969a9309cddcb37a7964f75127b2c9a2",
     "apps/forge-objectstack/src/permissions/sales-order.permission.ts": "14ce34a26eead8d92fd431a14f81b2ecfe2ef630262a271f612a45b34d510ce0",
     "apps/forge-objectstack/src/plugins/sales-order-domain.ts": "da110816f063af56df448f2b1cd269bb2eaf85dd3fc3709b34ee1c7d30a72349",
     "apps/forge-objectstack/src/plugins/sales-order-readiness.ts": "a6012da6f06e67b4559d1554acfeeefdcb586ab0264cad952718a4a9b96e1c57",
-    "apps/forge-objectstack/console94.lock.json": "363c04b892101956fecc2c03e464086ea71312df0ccaf4c968e2fba7321f412c"
+    "apps/forge-objectstack/console94.lock.json": "f3bf0733203d9c21266f245520ddfc81694463039b3de9d12e893ad29317a79b"
   },
   "environment": {
     "databaseType": "postgresql",
@@ -31,7 +31,7 @@
   "checks": {
     "requirements": {
       "status": "pending",
-      "notes": "当前为局部实现／补证，全页面、正常业务、独立评审及必要持久化／性能未完成。",
+      "notes": "首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 603e8ab3e32c19e84bb86243989df3aa2501ffd2，不作为新版本整体通过。当前为局部实现／补证，全页面、正常业务、独立评审及必要持久化／性能未完成。",
       "evidence": []
     },
     "visual": {

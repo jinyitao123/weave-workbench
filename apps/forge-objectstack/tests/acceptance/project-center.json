@@ -7,18 +7,18 @@
   "pageId": "page_project_center",
   "status": "review_required",
   "observedAt": "2026-10-07",
-  "reviewedRevision": "9bb655bbd08dc71d7d205b5a9aa38cadbac9b962",
+  "reviewedRevision": "1977dd8c142353a21cfd784ebe398400d278970e",
   "subjectFiles": {
-    "apps/forge-objectstack/src/pages/project-center.page.ts": "ce87323dd49e6fff1a3dfb6fcf0398041356d5ab481af6de295c25279f8e7444",
+    "apps/forge-objectstack/src/pages/project-center.page.ts": "294548c701a43bdaf3d049e2d944d30099b16600823fb99ba8c05419b9ed06f4",
     "apps/forge-objectstack/src/pages/project-center.logic.ts": "ca6dc039ef451f498a19428656b83e5be9753a9a138aa40e898ba459bb571ca3",
     "apps/forge-objectstack/src/pages/project-attachment-panel.ts": "c1b112b61915bfa86beb35fb8fe6dcc65b280d4f468c5f93ae509331aef84ade",
     "apps/forge-objectstack/src/pages/project-cost-panel.ts": "81abdfc2e160876946cc6f0ed5fa92396126265982c9f11df213bd6aba70bb85",
     "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86",
     "apps/forge-objectstack/src/views/project.view.ts": "c5b3c12ba43c392f8d0c6ee445e1787896962c733905a1549d832255f6ec5dcc",
-    "apps/forge-objectstack/src/objects/project.object.ts": "b96468bf532cfb4e026e0d7d776aab298a5e565cb383f90579f7bb472bfe1d18",
-    "apps/forge-objectstack/src/actions/project.action.ts": "afd54177903d28e327123ebc39017ca45eec2a1c00f2a1122b71838007f57b34",
-    "apps/forge-objectstack/src/permissions/project-operator.permission.ts": "ce78c7a3cb1fb8a1a79c3899cabaf3f9dd1ed862368a280aa563fadce186ddea",
-    "apps/forge-objectstack/console94.lock.json": "363c04b892101956fecc2c03e464086ea71312df0ccaf4c968e2fba7321f412c"
+    "apps/forge-objectstack/src/objects/project.object.ts": "55ad411e4b36f4eef49f28982a6bac0eeef1e84d0bd94ff214125779fd964846",
+    "apps/forge-objectstack/src/actions/project.action.ts": "1e85a0e78b119ec50bb6b87727957bcefea235410e0502b903f31109a239b3ec",
+    "apps/forge-objectstack/src/permissions/project-operator.permission.ts": "1f2aaf1ec3ba3cce1538da980a84e2c154213801da55333ced24e6e3b9922215",
+    "apps/forge-objectstack/console94.lock.json": "f3bf0733203d9c21266f245520ddfc81694463039b3de9d12e893ad29317a79b"
   },
   "environment": {
     "databaseType": "postgresql",
@@ -52,7 +52,7 @@
   "checks": {
     "requirements": {
       "status": "pending",
-      "notes": "完整项目中心及子模块待验，当前局部读取回归／GUI不代表业务完成。",
+      "notes": "首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 9bb655bbd08dc71d7d205b5a9aa38cadbac9b962，不作为新版本整体通过。完整项目中心及子模块待验，当前局部读取回归／GUI不代表业务完成。",
       "evidence": []
     },
     "visual": {

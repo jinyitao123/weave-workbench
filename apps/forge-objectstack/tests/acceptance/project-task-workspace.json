@@ -7,16 +7,16 @@
   "pageId": "page_project_task_workspace",
   "status": "review_required",
   "observedAt": "2026-10-07",
-  "reviewedRevision": "603e8ab3e32c19e84bb86243989df3aa2501ffd2",
+  "reviewedRevision": "1977dd8c142353a21cfd784ebe398400d278970e",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/project-task-workspace.page.ts": "7d8e82f9e579315f86a03953b2cca507703533b8dd1baf2abe5539f71fd20e73",
     "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts": "ddaa4228d1da22b5d59a3c5663e85ca4dc509997d9591891ec00a66dffa99473",
     "apps/forge-objectstack/src/pages/project-task-import.logic.ts": "7a2838d931be878ad8997477f0afe8c7b37320b65e338af5e39ab216d9ad6ec5",
     "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86",
-    "apps/forge-objectstack/src/objects/project.object.ts": "b96468bf532cfb4e026e0d7d776aab298a5e565cb383f90579f7bb472bfe1d18",
-    "apps/forge-objectstack/src/actions/project.action.ts": "afd54177903d28e327123ebc39017ca45eec2a1c00f2a1122b71838007f57b34",
-    "apps/forge-objectstack/src/permissions/project-operator.permission.ts": "ce78c7a3cb1fb8a1a79c3899cabaf3f9dd1ed862368a280aa563fadce186ddea",
-    "apps/forge-objectstack/console94.lock.json": "363c04b892101956fecc2c03e464086ea71312df0ccaf4c968e2fba7321f412c"
+    "apps/forge-objectstack/src/objects/project.object.ts": "55ad411e4b36f4eef49f28982a6bac0eeef1e84d0bd94ff214125779fd964846",
+    "apps/forge-objectstack/src/actions/project.action.ts": "1e85a0e78b119ec50bb6b87727957bcefea235410e0502b903f31109a239b3ec",
+    "apps/forge-objectstack/src/permissions/project-operator.permission.ts": "1f2aaf1ec3ba3cce1538da980a84e2c154213801da55333ced24e6e3b9922215",
+    "apps/forge-objectstack/console94.lock.json": "f3bf0733203d9c21266f245520ddfc81694463039b3de9d12e893ad29317a79b"
   },
   "environment": {
     "databaseType": "postgresql",
@@ -35,7 +35,7 @@
   "checks": {
     "requirements": {
       "status": "pending",
-      "notes": "当前局部回归及读取补证不代表全页面／业务完成，真实持久化与独立复核待验。",
+      "notes": "首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 603e8ab3e32c19e84bb86243989df3aa2501ffd2，不作为新版本整体通过。当前局部回归及读取补证不代表全页面／业务完成，真实持久化与独立复核待验。",
       "evidence": []
     },
     "visual": {
