@@ -131,6 +131,16 @@ def build_environment(profile):
     return env
 
 
+def console_environment(env, objectui, output):
+    result = dict(env, OBJECTUI_SOURCE_DIR=str(objectui), FORGE_CONSOLE_BUILD_CONTEXT=str(output))
+    # The locked ObjectUI artifact includes gzip/Brotli files. Its Vite config
+    # skips them for any nonempty CI/VERCEL value, including the string "false".
+    # Match that artifact's build inputs without changing the parent CI process.
+    result.pop('CI', None)
+    result.pop('VERCEL', None)
+    return result
+
+
 class Github:
     def __init__(self, repository, token=None):
         self.repository = repository
@@ -275,7 +285,7 @@ def execute(plan, objectui, output, postgres, push):
             forge = work / 'forge/apps/forge-objectstack'
             weave = work / 'weave'
             console = work / 'console94'
-            console_env = dict(env, OBJECTUI_SOURCE_DIR=str(objectui), FORGE_CONSOLE_BUILD_CONTEXT=str(console))
+            console_env = console_environment(env, objectui, console)
             run(['node', forge / 'scripts/build-console94.mjs'], env=console_env, capture=False)
             run(['node', ROOT / 'tools/server-image-build/verify-console.mjs', forge, console], env=env, capture=False)
             manifest['consoleBuild'] = json.loads((console / 'console94-build.json').read_text())
