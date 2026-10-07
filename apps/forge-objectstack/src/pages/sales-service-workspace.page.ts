@@ -803,7 +803,7 @@ function App(){
       if(!access.userId)return <ForgeNotice tone="error">当前账号标识不可用，无法读取本人备件申请。</ForgeNotice>;
       const saved=personalDocumentState[scope]||{};
       function rememberPartList(patch){setPersonalDocumentState(current=>({...current,[scope]:{...current[scope],...patch}}))}
-      const partView={...serviceViews.parts.list,sort:saved.sort||serviceViews.parts.list.sort};
+      const partView={...serviceViews.parts.list,sort:saved.sort||serviceViews.parts.list.sort,pagination:{...serviceViews.parts.list.pagination,pageSize:10,pageSizeOptions:[10,20,50,100]}};
       const restored={initialFilters:saved.filters,userFilterSelections:saved.selections,onFilterChange:filters=>rememberPartList({filters}),onSortChange:sort=>rememberPartList({sort}),onUserFilterSelectionsChange:selections=>rememberPartList({selections})};
       return <section className="ss-personal-list" aria-label="我的备件申请">{renderPersonalMetrics('parts')}<div className="ss-content">{listComponent(partView,listFilters(),row=>openDetail(row,'forge_service_part_request'),saved.search||'',search=>rememberPartList({search}),scope+'-'+personalRevision+'-'+personalListReset,true,{title:'暂无本人备件申请',message:'当前范围内没有符合条件的申请。'},restored)}</div></section>;
     }
@@ -895,7 +895,7 @@ function App(){
     return <div className="ss-dispatch-panel">{renderDispatchFilters(dispatchPanel.rows)}{renderDispatchPeriod()}{renderDispatchReadWarning()}<ForgeNotice tone="info">此处只列出现有工单填写的 SLA 到期日期；未配置到期日期或规则时不作风险判定。</ForgeNotice>{renderDispatchSummary({rows:visible},'sla')}{due.unknownDateCount>0&&<ForgeNotice tone="warning">有 {due.unknownDateCount} 条到期日期无法识别，仍保留在到期台账中。</ForgeNotice>}{renderDispatchRecordTable(visible,'sla_due_at','sla')}</div>;
   }
   function renderDispatchContent(){
-    if(scope==='pending_dispatch')return <section className="ss-content" aria-label="待分派服务工单列表">{listComponent(serviceViews.orders.list,listFilters(),row=>openDetail(row,'forge_service_order'))}</section>;
+    if(scope==='pending_dispatch'){const view={...serviceViews.orders.list,userActions:{...serviceViews.orders.list.userActions,refresh:false}};return <section className="ss-content" aria-label="待分派服务工单列表">{listComponent(view,listFilters(),row=>openDetail(row,'forge_service_order'))}</section>}
     if(scope==='calendar')return renderDispatchCalendar();
     if(scope==='resource')return renderDispatchLoad();
     if(scope==='sla')return renderDispatchSla();
@@ -1011,7 +1011,7 @@ function App(){
   const scopeTabs=renderScope();
   const pageNavigation=servicePage.mode==='orders'?<a className="fp-button ss-next-step" href="/_console/apps/com.inoforge.forge.sales/page_service_dispatch"><span>下一步操作</span><strong>派工中心</strong></a>:servicePage.mode==='dispatch'?<a className="fp-button" href="/_console/apps/com.inoforge.forge.sales/page_service_orders">服务工单</a>:null;
   const showToolbar=Boolean(scopeTabs||pageNavigation||pageActions);
-  const standaloneListView=servicePage.mode==='quotations'?{...listView,userActions:{...listView.userActions,refresh:false}}:listView;
+  const standaloneListView=['quotations','settlements'].includes(servicePage.mode)?{...listView,userActions:{...listView.userActions,refresh:false}}:listView;
   const standaloneListEmpty=servicePage.mode==='quotations'?{title:'暂无符合条件的服务报价',message:'可从已完工服务工单生成报价。'}:undefined;
   const pageContent=servicePage.mode==='dispatch'?renderDispatchContent():servicePage.mode==='analysis'?renderWorkspaceBody():servicePage.mode==='workspace'&&['today','my-orders','performance','parts','my-quotations','my-settlements'].includes(scope)?renderWorkspaceBody():servicePage.mode==='warranty'&&warrantyTab==='overview'?renderWorkspaceBody():servicePage.mode==='warranty'&&['rules','cards'].includes(warrantyTab)?renderWorkspaceBody():<section className="ss-content" aria-label={servicePage.label+'列表'}>{listComponent(standaloneListView,listFilters(),row=>openDetail(row,activeListObject),undefined,undefined,undefined,true,standaloneListEmpty)}</section>;
   const todayProjection=servicePage.mode==='workspace'&&personalWorkspace.complete&&!personalWorkspace.unavailable?servicePersonalTodayProjection(personalWorkspace.rows,personalWorkspace.businessDate,personalWorkspace.businessTimezone):null;
