@@ -3,7 +3,7 @@ import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { applyConsolePackagingPatches, treeSha256 } from './console94-artifact.mjs';
+import { applyConsolePackagingPatches, canonicalizeConsoleGzip, consoleBuildEnvironment, treeSha256 } from './console94-artifact.mjs';
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const LOCK_PATH = path.join(APP_DIR, 'console94.lock.json');
@@ -49,11 +49,12 @@ try {
   run('pnpm', ['install', '--frozen-lockfile'], { cwd: sourceDir });
   run('pnpm', ['-r', '--filter', '@object-ui/console...', 'build'], {
     cwd: sourceDir,
-    env: { ...process.env, VITE_BASE_PATH: lock.artifact.basePath, VITE_UI_PROFILE: lock.source.uiProfile || 'compact-enterprise' },
+    env: consoleBuildEnvironment(process.env, lock),
   });
 
   const builtDist = path.join(sourceDir, 'apps/console/dist');
   await rm(path.join(builtDist, 'stats.html'), { force: true });
+  await canonicalizeConsoleGzip(builtDist, lock);
   const rawDigest = await treeSha256(builtDist);
   if (refreshLock) lock.artifact.runtimeSourceTreeSha256 = rawDigest.sha256;
   if (rawDigest.sha256 !== lock.artifact.runtimeSourceTreeSha256) {
