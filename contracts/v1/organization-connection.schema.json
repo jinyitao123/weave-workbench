@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "组织连接配置",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "forgeOrigin", "weaveOrigin"],
+  "properties": {
+    "version": { "const": 1 },
+    "forgeOrigin": { "$ref": "#/$defs/origin" },
+    "weaveOrigin": { "$ref": "#/$defs/origin" }
+  },
+  "$defs": {
+    "origin": {
+      "type": "string",
+      "maxLength": 2048,
+      "pattern": "^https?://[^\\s/?#@\\\\]+/?$",
+      "description": "HTTP(S)服务origin，不含用户信息、路径、查询或片段；接收方另按URL语义验证主机与端口。"
+    }
+  }
+}

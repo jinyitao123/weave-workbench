@@ -1,0 +1,116 @@
+name: Build private server images
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Exact reviewed 40-character product source commit
+        required: true
+        type: string
+      bundle_version:
+        description: Installer bundle version, for example 0.1.0-rc.5
+        required: true
+        type: string
+      publish_private:
+        description: Push to GHCR only after verifying repository and package privacy
+        required: true
+        default: false
+        type: boolean
+      postgres_image:
+        description: Official PostgreSQL 16 tag or pinned digest; executable major is checked
+        required: true
+        default: postgres:16-bookworm
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: server-images-${{ inputs.revision }}-${{ inputs.bundle_version }}
+  cancel-in-progress: false
+
+jobs:
+  images:
+    if: github.event.repository.private == true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: write
+    env:
+      SOURCE_REVISION: ${{ inputs.revision }}
+      BUNDLE_VERSION: ${{ inputs.bundle_version }}
+      POSTGRES_IMAGE: ${{ inputs.postgres_image }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Require an immutable source request
+        shell: bash
+        run: |
+          [[ "$SOURCE_REVISION" =~ ^[0-9a-f]{40}$ ]]
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.revision }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate component source objects and read the Console lock
+        id: locks
+        run: |
+          python3 tools/server-image-build/build.py --plan \
+            --repository "$GITHUB_REPOSITORY" --revision "$SOURCE_REVISION" \
+            --bundle-version "$BUNDLE_VERSION" --postgres-image "$POSTGRES_IMAGE" \
+            --github-output "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ steps.locks.outputs.node_version }}
+      - name: Activate the locked Console package manager
+        env:
+          PNPM_VERSION: ${{ steps.locks.outputs.pnpm_version }}
+        run: |
+          corepack enable
+          corepack prepare "pnpm@$PNPM_VERSION" --activate
+          test "$(pnpm --version)" = "$PNPM_VERSION"
+      - name: Check out only the locked private ObjectUI source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ steps.locks.outputs.objectui_repository }}
+          ref: ${{ steps.locks.outputs.objectui_revision }}
+          path: .build/server-image-sources/objectui
+          fetch-depth: 1
+          ssh-key: ${{ secrets.OBJECTUI_READ_SSH_KEY }}
+          persist-credentials: false
+      - name: Check sources and image-builder invariants
+        run: |
+          make component-check
+          python3 -m unittest discover -s tools/server-image-build/tests -v
+          docker buildx version
+      - name: Authenticate the explicit private publication
+        if: inputs.publish_private
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import os, subprocess
+          subprocess.run(['docker', 'login', 'ghcr.io', '--username', os.environ['GITHUB_ACTOR'], '--password-stdin'],
+                         input=os.environ['GH_TOKEN'], text=True, check=True)
+          PY
+      - name: Build, verify and optionally publish the locked images
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUBLISH_PRIVATE: ${{ inputs.publish_private }}
+        shell: bash
+        run: |
+          args=()
+          if [[ "$PUBLISH_PRIVATE" == true ]]; then args+=(--push-private); fi
+          python3 tools/server-image-build/build.py \
+            --repository "$GITHUB_REPOSITORY" --revision "$SOURCE_REVISION" \
+            --bundle-version "$BUNDLE_VERSION" --postgres-image "$POSTGRES_IMAGE" \
+            --objectui-source "$GITHUB_WORKSPACE/.build/server-image-sources/objectui" \
+            "${args[@]}"
+      - name: Keep build evidence in this private workflow
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: server-images-${{ inputs.bundle_version }}-${{ inputs.revision }}
+          path: .build/server-image-build/output/*.json
+          if-no-files-found: ignore
+          retention-days: 7
