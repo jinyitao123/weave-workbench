@@ -77,14 +77,14 @@ class BuildTests(unittest.TestCase):
         with patch.object(api, 'get', return_value={'private': False, 'visibility': 'public'}):
             with self.assertRaises(build.BuildError):
                 api.repository_private()
-        private_repo = {'private': True, 'visibility': 'private', 'full_name': 'example/private-suite', 'owner': {'type': 'User'}}
+        private_repo = {'id': 77, 'private': True, 'visibility': 'private', 'full_name': 'example/private-suite', 'owner': {'type': 'User'}}
         with patch.object(api, 'get', side_effect=[private_repo, {'visibility': 'public', 'package_type': 'container'}]):
             with self.assertRaises(build.BuildError):
                 api.package_private('ghcr.io/example/private-suite-forge:0.1.0')
 
-    def test_private_gate_does_not_accept_missing_or_wrong_repository_after_push(self):
+    def test_private_gate_rejects_missing_package_or_conflicting_repository(self):
         api = build.Github('example/private-suite', token='test-only-not-a-credential')
-        private_repo = {'private': True, 'visibility': 'private', 'full_name': 'example/private-suite', 'owner': {'type': 'User'}}
+        private_repo = {'id': 77, 'private': True, 'visibility': 'private', 'full_name': 'example/private-suite', 'owner': {'type': 'User'}}
         wrong_package = {'visibility': 'private', 'package_type': 'container', 'repository': {'private': True, 'full_name': 'example/other'}}
         with patch.object(api, 'get', side_effect=[private_repo, wrong_package]):
             with self.assertRaises(build.BuildError):
@@ -94,6 +94,38 @@ class BuildTests(unittest.TestCase):
         with patch.object(api, 'get', side_effect=[private_repo, None]):
             with self.assertRaises(build.BuildError):
                 api.package_private('ghcr.io/example/private-suite-forge:0.1.0')
+
+    def test_nullable_repository_metadata_does_not_replace_private_checks(self):
+        api = build.Github('example/private-suite', token='test-only-not-a-credential')
+        repo = {'id': 77, 'private': True, 'visibility': 'private', 'full_name': 'example/private-suite', 'owner': {'type': 'User'}}
+        for package in [{'visibility': 'private', 'package_type': 'container'},
+                        {'visibility': 'private', 'package_type': 'container', 'repository': None}]:
+            with patch.object(api, 'get', side_effect=[repo, package]):
+                self.assertEqual(api.package_private('ghcr.io/example/private-suite-forge:0.1.0'), 'private-association-not-reported')
+        linked = {'id': 77, 'private': True, 'full_name': 'example/private-suite'}
+        with patch.object(api, 'get', side_effect=[repo, {'visibility': 'private', 'package_type': 'container', 'repository': linked}]):
+            self.assertEqual(api.package_private('ghcr.io/example/private-suite-forge:0.1.0'), 'private')
+        for change in [{'id': 78}, {'private': False}, {'private': None}]:
+            with patch.object(api, 'get', side_effect=[repo, {'visibility': 'private', 'package_type': 'container', 'repository': {**linked, **change}}]):
+                with self.assertRaises(build.BuildError):
+                    api.package_private('ghcr.io/example/private-suite-forge:0.1.0')
+
+    def test_actual_oci_source_and_registry_configuration_are_bound(self):
+        image_id = 'sha256:' + 'a' * 64
+        labels = {'org.opencontainers.image.revision': 'b' * 40,
+                  'org.opencontainers.image.source': 'https://github.com/example/private-suite',
+                  'io.weave-workbench.source-revision': 'c' * 40}
+        image = {'Os': 'linux', 'Architecture': 'amd64', 'Id': image_id, 'Config': {'Labels': labels}}
+        with patch.object(build, 'run', return_value=json.dumps([image])):
+            self.assertEqual(build.inspect_image('tag', {}, 'b' * 40, 'example/private-suite', 'c' * 40)['Id'], image_id)
+            for repository, revision in [('example/other', 'c' * 40), ('example/private-suite', 'd' * 40)]:
+                with self.assertRaises(build.BuildError):
+                    build.inspect_image('tag', {}, 'b' * 40, repository, revision)
+        build.verify_registry_config({'schemaVersion': 2, 'config': {'digest': image_id}}, image_id)
+        for manifest in [{'schemaVersion': 2, 'config': {'digest': 'sha256:' + 'e' * 64}},
+                         {'schemaVersion': 2, 'manifests': []}, {'schemaVersion': 2, 'config': None}]:
+            with self.assertRaises(build.BuildError):
+                build.verify_registry_config(manifest, image_id)
 
     def test_build_environment_drops_runtime_keys_and_github_token(self):
         with tempfile.TemporaryDirectory() as root, patch.dict(os.environ, {'DEEPSEEK_API_KEY': 'test-only', 'GH_TOKEN': 'test-only'}):

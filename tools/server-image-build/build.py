@@ -158,6 +158,9 @@ class Github:
             raise BuildError('Publication requires the current repository to be private')
         if value.get('full_name', '').lower() != self.repository.lower():
             raise BuildError('Unexpected repository identity')
+        if type(value.get('id')) is not int or value['id'] < 1:
+            raise BuildError('Repository identity is missing')
+        self.repository_id = value['id']
         self.owner_kind = 'orgs' if value['owner']['type'] == 'Organization' else 'users'
 
     def package_private(self, image, missing=False):
@@ -175,7 +178,13 @@ class Github:
         if value.get('visibility') != 'private' or value.get('package_type') != 'container':
             raise BuildError('Refusing to push to a non-private container package')
         linked = value.get('repository')
-        if not linked or linked.get('full_name', '').lower() != self.repository.lower() or linked.get('private') is not True:
+        # GitHub's package schema explicitly permits an absent/null repository.
+        # Keep that metadata truthful; source is independently bound through the
+        # actual OCI configuration and its verified registry manifest below.
+        if linked is None:
+            return 'private-association-not-reported'
+        if (not isinstance(linked, dict) or linked.get('full_name', '').lower() != self.repository.lower()
+                or linked.get('id') != self.repository_id or linked.get('private') is not True):
             observed = {key: linked.get(key) for key in ('id', 'full_name', 'private')} if isinstance(linked, dict) else None
             raise BuildError('Container package must be linked to this private source repository; observed association: ' + json.dumps(observed, sort_keys=True))
         return 'private'
@@ -210,15 +219,26 @@ def build_command(plan, name, context, console, metadata):
     return args + ['--file', str(context / 'Dockerfile'), str(context)]
 
 
-def inspect_image(image, env, revision=None):
+def inspect_image(image, env, revision=None, repository=None, product_revision=None):
     value = json.loads(run(['docker', 'image', 'inspect', image], env=env))[0]
     if value.get('Os') != 'linux' or value.get('Architecture') != 'amd64':
         raise BuildError('Built image is not Linux amd64')
     if revision and value.get('Config', {}).get('Labels', {}).get('org.opencontainers.image.revision') != revision:
         raise BuildError('Built image source label differs from components.lock')
+    labels = value.get('Config', {}).get('Labels', {})
+    if repository and labels.get('org.opencontainers.image.source') != 'https://github.com/' + repository:
+        raise BuildError('Built OCI configuration names another source repository')
+    if product_revision and labels.get('io.weave-workbench.source-revision') != product_revision:
+        raise BuildError('Built OCI configuration names another product source revision')
     if not DIGEST.fullmatch(value.get('Id', '')):
         raise BuildError('Docker did not return a content-addressed image ID')
     return value
+
+
+def verify_registry_config(manifest, image_id):
+    config = manifest.get('config') if isinstance(manifest, dict) else None
+    if not isinstance(manifest, dict) or manifest.get('schemaVersion') != 2 or not isinstance(config, dict) or config.get('digest') != image_id:
+        raise BuildError('Registry manifest does not bind the verified OCI configuration')
 
 
 def verify_build_metadata(file, image_id):
@@ -287,7 +307,7 @@ def execute(plan, objectui, output, postgres, push):
                 metadata = output / (name + '-buildkit.json')
                 run(build_command(plan, name, context, console, metadata), env=env, capture=False)
                 revision = plan['components']['weave' if name == 'weave' else 'forge']['revision']
-                image = inspect_image(plan['tags'][name], env, revision)
+                image = inspect_image(plan['tags'][name], env, revision, plan['repository'], plan['sourceRevision'])
                 build_digest = verify_build_metadata(metadata, image['Id'])
                 manifest['images'][name] = {'tag': plan['tags'][name], 'localImageId': image['Id'],
                                             'sourceRevision': revision, 'dockerfileSha256': digest_file(context / 'Dockerfile'),
@@ -320,8 +340,11 @@ def execute(plan, objectui, output, postgres, push):
                     run(['docker', 'push', tag], env=env, capture=False)
                     # New GHCR packages default private. Confirm the actual
                     # linked package, rather than assuming repository privacy.
-                    api.package_private(tag)
-                    image = inspect_image(tag, env, manifest['images'][name]['sourceRevision'])
+                    association = api.package_private(tag)
+                    image = inspect_image(tag, env, manifest['images'][name]['sourceRevision'], plan['repository'], plan['sourceRevision'])
+                    expected_config = manifest['images'][name]['localImageId']
+                    if image['Id'] != expected_config:
+                        raise BuildError('The local image changed after its build verification')
                     prefix = tag.rsplit(':', 1)[0] + '@'
                     refs = [ref for ref in image.get('RepoDigests', []) if ref.startswith(prefix)]
                     if len(refs) != 1:
@@ -330,8 +353,12 @@ def execute(plan, objectui, output, postgres, push):
                     remote = json.loads(run(['docker', 'buildx', 'imagetools', 'inspect', references[name], '--format', '{{json .Manifest}}'], env=env))
                     if remote.get('digest') != references[name].split('@')[1]:
                         raise BuildError('Published registry digest could not be read back')
+                    remote_manifest = json.loads(run(['docker', 'buildx', 'imagetools', 'inspect', references[name], '--raw'], env=env))
+                    verify_registry_config(remote_manifest, expected_config)
                     manifest['images'][name]['image'] = references[name]
                     manifest['images'][name]['visibility'] = 'private'
+                    manifest['images'][name]['repositoryAssociation'] = 'not_reported' if association == 'private-association-not-reported' else 'linked'
+                    manifest['images'][name]['registryConfigDigest'] = expected_config
                     write_json(output / 'build-manifest.json', manifest)
                 api.repository_private()
                 write_json(output / 'images.lock.json', image_lock(plan, references, pg_ref))

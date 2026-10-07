@@ -22,7 +22,7 @@ python3 tools/server-image-build/build.py \
 
 输出目录必须为空，已有证据不会被覆盖。构建失败保留失败状态及已完成的证明，不生成一份声称完整交付的安装锁。
 
-确需发布时，先以有权身份正常登录 GHCR，再提供仅本次命令可用的 `GH_TOKEN` 并显式加 `--push-private`。脚本在推送前后查询仓库和 GHCR package 的实际私有状态；已有公开包会被拒绝，不自动改变可见性。新包采用 GHCR 的默认私有行为，随后仍须读回确认并核对其来源仓库关联。只有三个镜像的 registry digest 均成功读回，才输出安装器版本 1 接受的 `images.lock.json`。私有包权限读回失败就停止，不以猜测代替结果。[GitHub 容器注册表说明](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
+确需发布时，先以有权身份正常登录 GHCR，再提供仅本次命令可用的 `GH_TOKEN` 并显式加 `--push-private`。脚本在推送前后查询仓库和 GHCR package 的实际私有状态；已有公开包会被拒绝，不自动改变可见性。新包采用 GHCR 的默认私有行为，随后仍须读回实际私有状态。GitHub 包接口允许仓库关联字段为空，清单如实记录 `not_reported`，不声称后台已经关联或确定未关联；非空但指向其他仓库或公开仓库仍拒绝。实际来源通过已构建 OCI 配置中的仓库、组件提交及产品提交标签核对，再验证远端 registry manifest 的配置摘要与该 OCI 配置完全一致。只有三个镜像的真实 registry digest 和配置关系均成功读回，才输出安装器版本 1 接受的 `images.lock.json`。私有包权限读回失败就停止，不以猜测代替结果。[GitHub 容器注册表说明](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)及[官方API定义](https://github.com/github/rest-api-description/blob/main/descriptions/api.github.com/api.github.com.2022-11-28.json)
 
 PostgreSQL 默认先解析官方 `postgres:16-bookworm`，实际执行 `postgres --version` 核对主版本 16，并将仓库 digest 固定到产物锁。也可通过 `--postgres-image postgres:16-bookworm@sha256:<摘要>` 复用已审查的摘要。应用镜像从不使用 `latest` 或 `unknown` 发布标签。
 
