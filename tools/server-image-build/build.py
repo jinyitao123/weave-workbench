@@ -176,7 +176,8 @@ class Github:
             raise BuildError('Refusing to push to a non-private container package')
         linked = value.get('repository')
         if not linked or linked.get('full_name', '').lower() != self.repository.lower() or linked.get('private') is not True:
-            raise BuildError('Container package must be linked to this private source repository')
+            observed = {key: linked.get(key) for key in ('id', 'full_name', 'private')} if isinstance(linked, dict) else None
+            raise BuildError('Container package must be linked to this private source repository; observed association: ' + json.dumps(observed, sort_keys=True))
         return 'private'
 
 
