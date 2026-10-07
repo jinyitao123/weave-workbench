@@ -107,7 +107,7 @@ class Docker:
 
     def start(self):
         self.compose(['config', '--quiet'], 'Compose validation')
-        self.compose(['pull'], 'Private image pull (authenticate with docker login when required)')
+        self.compose(['pull', '--policy', 'missing'], 'Pull missing pinned images (authenticate with docker login when required)')
         self.compose(['up', '-d', '--no-build', '--wait', '--wait-timeout', '180', 'forge-db', 'weave-db'], 'Database startup')
         for name in ('forge-db', 'weave-db'):
             version = self.compose(['exec', '-T', name, 'postgres', '--version'], 'PostgreSQL version check')
