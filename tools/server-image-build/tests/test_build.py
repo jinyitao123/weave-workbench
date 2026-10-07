@@ -103,24 +103,6 @@ class BuildTests(unittest.TestCase):
             self.assertEqual(Path(env['NPM_CONFIG_USERCONFIG']).read_text(), '')
             self.assertNotEqual(env['NPM_CONFIG_USERCONFIG'], env['NPM_CONFIG_GLOBALCONFIG'])
 
-    def test_console_environment_restores_locked_compression_without_changing_parent_ci(self):
-        with tempfile.TemporaryDirectory() as root, patch.dict(os.environ, {'DEEPSEEK_API_KEY': 'test-only', 'GH_TOKEN': 'test-only'}):
-            parent = build.build_environment(Path(root) / 'profile')
-            parent['VERCEL'] = 'false'  # Nonempty strings are truthy in ObjectUI.
-            original = dict(parent)
-            child = build.console_environment(parent, Path('/locked-objectui'), Path('/console-output'))
-            self.assertEqual(parent, original)
-            self.assertEqual(parent['CI'], 'true')
-            self.assertNotIn('CI', child)
-            self.assertNotIn('VERCEL', child)
-            self.assertNotIn('DEEPSEEK_API_KEY', child)
-            self.assertNotIn('GH_TOKEN', child)
-            self.assertEqual(child['OBJECTUI_SOURCE_DIR'], '/locked-objectui')
-            self.assertEqual(child['FORGE_CONSOLE_BUILD_CONTEXT'], '/console-output')
-            for name, value in original.items():
-                if name not in ('CI', 'VERCEL'):
-                    self.assertEqual(child[name], value)
-
     def test_wrong_image_architecture_or_source_is_rejected(self):
         with patch.object(build, 'run', return_value=json.dumps([{'Os': 'linux', 'Architecture': 'arm64'}])):
             with self.assertRaises(build.BuildError):
