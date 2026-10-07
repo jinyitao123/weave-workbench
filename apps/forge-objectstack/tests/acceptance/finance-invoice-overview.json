@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 3,
+  "featureId": "finance.invoice_overview",
+  "app": "finance",
+  "surfaceType": "page",
+  "target": "page_invoice_overview",
+  "pageId": "page_invoice_overview",
+  "status": "review_required",
+  "observedAt": "2026-10-07",
+  "historicalAcceptance": "docs/evidence/finance-narrow-metrics-20260917/invoice_overview.json",
+  "limitations": "仅将历史观察与当前版本准入分离。历史JSON、原分项pass及截图路径保持原义；公开仓库缺少历史图片，当前证据不可得。不代表功能失败，不启动财务业务范围，不构成页面或业务验收通过。subjectFiles仅固定待复核源码范围，不是已复核版本声明。",
+  "subjectFiles": {
+    "apps/forge-objectstack/src/pages/finance-management.page.ts": "a5084cff588c1a3aa73e8b0ca7e5a91ac075fd18ac9e8c3adbd8d4e85bd1feea",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86"
+  },
+  "requirements": [
+    {
+      "id": "finance.invoice_overview.layout",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/forge-finance-narrow-metrics-20260917.md"
+      },
+      "statement": "按既有页面合同复核桌面及390×844窄屏布局，指标紧凑，标题、筛选、主工作区与操作无重叠、裁切或不可达。",
+      "status": "pending",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/finance-management.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "finance.invoice_overview.interaction",
+      "source": {
+        "type": "forge_decision",
+        "reference": "docs/forge-finance-narrow-metrics-20260917.md"
+      },
+      "statement": "按既有页面合同复核本页已有筛选、视图、列表及相关操作；本轮仅登记待复核范围，不启动办理或新增业务功能。",
+      "status": "pending",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/finance-management.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts"
+      ],
+      "evidence": []
+    }
+  ],
+  "checks": {
+    "requirements": {
+      "status": "pending",
+      "notes": "当前版本本轮未执行该维度复核；旧记录的局部结论不继承为当前通过。",
+      "evidence": []
+    },
+    "visual": {
+      "status": "blocked",
+      "notes": "历史截图仅在本机保留，公开仓库无法取得；当前版本视觉复核证据不可得，不表示功能失败。",
+      "evidence": []
+    },
+    "interaction": {
+      "status": "pending",
+      "notes": "当前版本本轮未执行该维度复核；旧记录的局部结论不继承为当前通过。",
+      "evidence": []
+    },
+    "business": {
+      "status": "pending",
+      "notes": "当前版本本轮未执行该维度复核；旧记录的局部结论不继承为当前通过。",
+      "evidence": []
+    },
+    "permissions": {
+      "status": "pending",
+      "notes": "当前版本本轮未执行该维度复核；旧记录的局部结论不继承为当前通过。",
+      "evidence": []
+    },
+    "persistence": {
+      "status": "pending",
+      "notes": "当前版本本轮未执行该维度复核；旧记录的局部结论不继承为当前通过。",
+      "evidence": []
+    },
+    "performance": {
+      "status": "pending",
+      "notes": "当前版本本轮未执行该维度复核；旧记录的局部结论不继承为当前通过。",
+      "evidence": []
+    }
+  }
+}

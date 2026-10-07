@@ -370,7 +370,20 @@
       "reference": "project-timesheet-cost.page.ts",
       "designStatus": "review_required",
       "contract": "docs/forge-finance-narrow-metrics-20260917.md",
-      "acceptance": "docs/evidence/finance-narrow-metrics-20260917/bank_flow.json"
+      "acceptance": "apps/forge-objectstack/tests/acceptance/finance-bank-flow.json",
+      "featureId": "finance.bank_flow",
+      "app": "finance",
+      "surfaceType": "page",
+      "target": "page_bank_flow",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/bank-flow.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts"
+      ],
+      "requirementIds": [
+        "finance.bank_flow.layout",
+        "finance.bank_flow.interaction"
+      ],
+      "historicalAcceptance": "docs/evidence/finance-narrow-metrics-20260917/bank_flow.json"
     },
     {
       "file": "bank-statement.page.ts",
@@ -447,7 +460,20 @@
       "reference": "project-timesheet-cost.page.ts",
       "designStatus": "review_required",
       "contract": "docs/forge-finance-narrow-metrics-20260917.md",
-      "acceptance": "docs/evidence/finance-narrow-metrics-20260917/invoice_adjustments.json"
+      "acceptance": "apps/forge-objectstack/tests/acceptance/finance-invoice-adjustments.json",
+      "featureId": "finance.invoice_adjustments",
+      "app": "finance",
+      "surfaceType": "page",
+      "target": "page_invoice_adjustments",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/invoice-audit.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts"
+      ],
+      "requirementIds": [
+        "finance.invoice_adjustments.layout",
+        "finance.invoice_adjustments.interaction"
+      ],
+      "historicalAcceptance": "docs/evidence/finance-narrow-metrics-20260917/invoice_adjustments.json"
     },
     {
       "file": "invoice-audit.page.ts",
@@ -485,7 +511,21 @@
       "reference": "project-timesheet-cost.page.ts",
       "designStatus": "review_required",
       "contract": "docs/forge-finance-sales-cycle-page-delivery-20260916.md",
-      "acceptance": "docs/evidence/finance-fund-accounts-20260916/acceptance.json"
+      "acceptance": "apps/forge-objectstack/tests/acceptance/finance-fund-accounts.json",
+      "featureId": "finance.fund_accounts",
+      "app": "finance",
+      "surfaceType": "page",
+      "target": "page_fund_accounts",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/finance-management.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts"
+      ],
+      "requirementIds": [
+        "finance.fund_accounts.layout",
+        "finance.fund_accounts.interaction",
+        "finance.fund_accounts.account"
+      ],
+      "historicalAcceptance": "docs/evidence/finance-fund-accounts-20260916/acceptance.json"
     },
     {
       "file": "finance-management.page.ts",
@@ -496,7 +536,20 @@
       "reference": "project-timesheet-cost.page.ts",
       "designStatus": "review_required",
       "contract": "docs/forge-finance-narrow-metrics-20260917.md",
-      "acceptance": "docs/evidence/finance-narrow-metrics-20260917/receivables_payables.json"
+      "acceptance": "apps/forge-objectstack/tests/acceptance/finance-receivables-payables.json",
+      "featureId": "finance.receivables_payables",
+      "app": "finance",
+      "surfaceType": "page",
+      "target": "page_receivables_payables",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/finance-management.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts"
+      ],
+      "requirementIds": [
+        "finance.receivables_payables.layout",
+        "finance.receivables_payables.interaction"
+      ],
+      "historicalAcceptance": "docs/evidence/finance-narrow-metrics-20260917/receivables_payables.json"
     },
     {
       "file": "finance-management.page.ts",
@@ -552,7 +605,20 @@
       "reference": "workbench.page.ts",
       "designStatus": "review_required",
       "contract": "docs/forge-finance-narrow-metrics-20260917.md",
-      "acceptance": "docs/evidence/finance-narrow-metrics-20260917/invoice_overview.json"
+      "acceptance": "apps/forge-objectstack/tests/acceptance/finance-invoice-overview.json",
+      "featureId": "finance.invoice_overview",
+      "app": "finance",
+      "surfaceType": "page",
+      "target": "page_invoice_overview",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/finance-management.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts"
+      ],
+      "requirementIds": [
+        "finance.invoice_overview.layout",
+        "finance.invoice_overview.interaction"
+      ],
+      "historicalAcceptance": "docs/evidence/finance-narrow-metrics-20260917/invoice_overview.json"
     },
     {
       "file": "finance-management.page.ts",
@@ -563,7 +629,20 @@
       "reference": "project-task-workspace.page.ts",
       "designStatus": "review_required",
       "contract": "docs/forge-finance-narrow-metrics-20260917.md",
-      "acceptance": "docs/evidence/finance-narrow-metrics-20260917/output_invoices.json"
+      "acceptance": "apps/forge-objectstack/tests/acceptance/finance-output-invoices.json",
+      "featureId": "finance.output_invoices",
+      "app": "finance",
+      "surfaceType": "page",
+      "target": "page_output_invoices",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/finance-management.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts"
+      ],
+      "requirementIds": [
+        "finance.output_invoices.layout",
+        "finance.output_invoices.interaction"
+      ],
+      "historicalAcceptance": "docs/evidence/finance-narrow-metrics-20260917/output_invoices.json"
     },
     {
       "file": "finance-management.page.ts",
@@ -583,7 +662,21 @@
       "reference": "project-task-workspace.page.ts",
       "designStatus": "review_required",
       "contract": "docs/forge-finance-sales-cycle-page-delivery-20260916.md",
-      "acceptance": "docs/evidence/finance-invoice-tasks-narrow-20260916/acceptance.json"
+      "acceptance": "apps/forge-objectstack/tests/acceptance/finance-invoice-tasks.json",
+      "featureId": "finance.invoice_tasks",
+      "app": "finance",
+      "surfaceType": "page",
+      "target": "page_invoice_tasks",
+      "subjectFiles": [
+        "apps/forge-objectstack/src/pages/finance-management.page.ts",
+        "apps/forge-objectstack/src/pages/product-ui.ts"
+      ],
+      "requirementIds": [
+        "finance.invoice_tasks.layout",
+        "finance.invoice_tasks.interaction",
+        "finance.invoice_tasks.task"
+      ],
+      "historicalAcceptance": "docs/evidence/finance-invoice-tasks-narrow-20260916/acceptance.json"
     }
   ],
   "supply_chain": [
