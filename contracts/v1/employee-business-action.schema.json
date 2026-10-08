@@ -22,13 +22,22 @@
       "additionalProperties": { "$ref": "#/$defs/scalar" },
       "description": "Only scalar business parameters declared by the selected action are allowed. Reserved identity, record, version, source, file and idempotency fields are rejected even if scalar. No object, array, generic patch or undeclared parameter is accepted."
     },
+    "inputSourceBindings": {
+      "type": "object", "additionalProperties": false, "maxProperties": 832,
+      "patternProperties": {
+        "^values\\.[a-z][a-z0-9_]{0,127}$": { "type": "string", "minLength": 32, "maxLength": 64 },
+        "^lineItems\\.(?:[0-9]|[1-9][0-9])\\.(?:line_type|name|sku_id|quantity|taxed_unit_price|tax_rate|discount_rate|remarks)$": { "type": "string", "minLength": 32, "maxLength": 64 }
+      },
+      "description": "Host-local provenance for only the bounded draft capabilities. Opaque references resolve to already account/session-bound original employee input. This map is never a Forge execute field and never authorizes a write."
+    },
     "modelInvocation": {
       "type": "object", "additionalProperties": false,
       "required": ["action_ref", "values"],
       "properties": {
         "action_ref": { "$ref": "#/$defs/actionRef" },
         "values": { "$ref": "#/$defs/values" },
-        "lineItems": {"$ref": "#/$defs/quotationLines"}
+        "lineItems": {"$ref": "#/$defs/quotationLines"},
+        "input_sources": { "$ref": "#/$defs/inputSourceBindings" }
       }
     },
     "source": {
