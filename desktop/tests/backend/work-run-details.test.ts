@@ -162,3 +162,18 @@ it('reads owned activity and fixed context with the current session and returns 
   expect(calls).toEqual(['/v1/workbench/runs/lookup', '/v1/runs/run/activity', '/v1/runs/run/workbench-context'])
   await expect(service.getWorkRunDetails(' run ')).rejects.toThrow('范围无效')
 })
+
+it('projects authoritative action reasons while keeping run status and hiding unsafe details', () => {
+  const outcomes = [
+    { node_id: 'node', call_id: 'call', action_name: 'lead_convert', object_name: 'lead', status: 'failed', summary: '业务动作“转为商机”未完成。原因：销售业务设置缺少项目客户分类，请管理员维护。' },
+    { node_id: 'node2', call_id: 'call2', action_name: 'contract_submit', object_name: 'contract', status: 'unknown', summary: '业务动作“合同提交”结果未知。token=secret-value /srv/private/file' },
+  ]
+  const ctx = { ...context(), run: { status: 'succeeded', action_outcomes: outcomes } }
+  const details = workRunDetails({ ...owned, status: 'succeeded' }, { ...activity(), status: 'succeeded' }, ctx)
+  expect(details.status).toBe('succeeded')
+  expect(details.actionOutcomes).toEqual([
+    { actionName: '转为商机', status: 'failed', summary: outcomes[0].summary },
+    { actionName: '合同提交', status: 'unknown', summary: '未取得可展示的业务原因，请从原工作核对。' },
+  ])
+  expect(JSON.stringify(details)).not.toMatch(/secret-value|lead_convert|\/srv|call2/)
+})

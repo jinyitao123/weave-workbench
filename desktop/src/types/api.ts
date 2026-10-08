@@ -138,6 +138,7 @@ export interface EnterpriseWorkRunDetails {
   result?: { title: string; summary: string; missingItems: string[] }
   explanation: string
   authorizationRequired: boolean
+  actionOutcomes?: Array<{ actionName: string; status: 'succeeded' | 'failed' | 'unknown'; summary: string }>
   actionCounts?: { succeeded: number; failed: number; unknown: number }
 }
 

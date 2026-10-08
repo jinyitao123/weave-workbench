@@ -1,3 +1,4 @@
+import { projectWorkActionFact, workActionTitle, workActionReceiptMeaning } from '@/lib/work-action-outcomes'
 import { useState } from 'react'
 import { ArrowUpRight, Check, ChevronDown, CircleAlert, Clock3, Layers3, Pause, Square } from 'lucide-react'
 import type { EnterpriseTaskScopeDisplay, EnterpriseWorkCancellationResult, MessagePart, TranscriptMessage } from '@/types/api'
@@ -57,10 +58,13 @@ export function EnterpriseScopeCards({ scopes, states = {}, onCancelWork, onRefr
     const display = enterpriseRunDisplay(view, result)
     const expanded = !onSelectRun || expandedRun === scope.runReference
     const details = view?.details?.status === view?.run?.status && !view?.detailStale ? view?.details : undefined
+    const firstIssue = details?.actionOutcomes?.find((item) => item.status !== 'succeeded')
+    const issue = firstIssue ? projectWorkActionFact(firstIssue) : undefined
     const Icon = display.state === 'succeeded' ? Check : ['failed', 'unavailable'].includes(display.state) ? CircleAlert : ['parked', 'needs_input'].includes(display.state) ? Pause : ['cancelled', 'abandoned', 'ended'].includes(display.state) ? Square : display.state === 'queued' ? Clock3 : Layers3
     return <section className={`enterprise-scope-card is-${display.state}${display.animate ? ' is-animating' : ''}${expanded ? ' is-expanded' : ' is-collapsed'}`} aria-label="本次团队授权" key={scope.runReference}>
       <div className="enterprise-scope-light" aria-hidden="true" />
       <header><div className="enterprise-scope-heading"><span className="enterprise-scope-emblem" aria-hidden="true"><Icon size={18} strokeWidth={1.7} /></span><div><strong>{scope.team}</strong><span className="enterprise-scope-workflow">{scope.workflow}</span></div></div><span className="enterprise-scope-status" role="status" aria-live="polite" aria-atomic="true"><i aria-hidden="true" />{display.label}</span></header>
+      {issue && !expanded ? <p className="enterprise-scope-detail"><strong>{workActionTitle(issue)}</strong> · {issue.summary} {workActionReceiptMeaning(issue.status)}</p> : null}
       {!expanded ? <button type="button" className="enterprise-expand" onClick={() => onSelectRun?.(scope.runReference)}>查看执行详情<ChevronDown size={13} aria-hidden="true" /></button> : <>
       <RunExecutionTime details={details} />
       <div className="enterprise-scope-track" aria-hidden="true"><span /></div>

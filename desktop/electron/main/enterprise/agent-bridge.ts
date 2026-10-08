@@ -1,3 +1,4 @@
+import { projectWorkActionFact } from '../../../src/lib/work-action-outcomes'
 import { WORKBENCH_RUN_CONTINUATION_TYPE } from '../../../src/lib/team-work-continuation'
 import { randomUUID } from 'node:crypto'
 import { taskScopeDisplay } from './scope-display'
@@ -576,7 +577,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           ...(context.run.finalResult.missingItems !== undefined ? { missingItems: [...context.run.finalResult.missingItems] } : {}),
         } } : {}),
         ...(context.run.actionOutcomes !== undefined ? {
-          actionOutcomes: context.run.actionOutcomes.map(({ actionName, objectName, status, summary }) => ({ actionName, objectName, status, summary })),
+          actionOutcomes: context.run.actionOutcomes.map(({ actionName, objectName, status, summary }) => ({ ...projectWorkActionFact({ actionName, status, summary }), objectName })),
         } : {}),
       },
     }

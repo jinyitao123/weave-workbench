@@ -1,3 +1,4 @@
+import { projectWorkActionFact, workActionTitle, workActionReceiptMeaning } from '@/lib/work-action-outcomes'
 import { Check, ChevronDown, CircleAlert, FileText } from 'lucide-react'
 import type { EnterpriseTaskScopeDisplay, EnterpriseWorkRunDetails } from '@/types/api'
 import type { EnterpriseRunView } from '@/hooks/useEnterpriseRunStates'
@@ -23,7 +24,9 @@ export function RunExecutionDetails({ view }: { view?: EnterpriseRunView }) {
   const details = view?.details
   if (view?.detailStale) return <p className="enterprise-execution-unavailable" role="status">执行详情暂时无法核对，请稍后刷新。</p>
   if (!details || details.status !== view?.run?.status) return <p className="enterprise-execution-unavailable">正在核对执行详情…</p>
+  const issues = details.actionOutcomes?.filter((item) => item.status !== 'succeeded').map(projectWorkActionFact) ?? []
   return <>
+    {issues.length ? <section className="enterprise-execution-result" aria-label="业务动作未完成原因"><ul>{issues.map((outcome, index) => <li key={index}><h4>{workActionTitle(outcome)}</h4><p>{outcome.summary}</p><p>{workActionReceiptMeaning(outcome.status)}</p></li>)}</ul></section> : null}
     {(details.result || details.explanation) ? <section className="enterprise-execution-result"><h4>{details.result?.title ?? (details.status === 'failed' ? '本次未完成' : '执行结果')}</h4>{details.result ? <p>{details.result.summary}</p> : null}{details.explanation ? <p>{details.explanation}</p> : null}{details.result?.missingItems.length ? <ul>{details.result.missingItems.map((item, index) => <li key={index}>{item}</li>)}</ul> : null}</section> : null}
     <section className="enterprise-execution-process"><h4>执行过程<span>{details.members.length ? `${details.members.length} 名成员` : '暂无记录'}</span></h4>
       {details.members.map((member, index) => <details key={index} className={`enterprise-member is-${member.status}`} open={member.status === 'failed' || member.status === 'running' || undefined}>

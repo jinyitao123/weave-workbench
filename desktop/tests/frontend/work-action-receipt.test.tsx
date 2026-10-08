@@ -36,9 +36,9 @@ it('shows successful, failed, and unknown platform action outcomes without promo
   ]}/>))
 
   expect(container.textContent).toContain('线索转商机：工具调用返回成功')
-  expect(container.textContent).toContain('调整客户信息：工具调用返回失败')
-  expect(container.textContent).toContain('合同提交：调用结果未知，需核对业务记录')
-  expect(container.textContent).toContain('业务工具调用：工具调用返回成功')
+  expect(container.textContent).toContain('调整客户信息未完成')
+  expect(container.textContent).toContain('合同提交结果待核对')
+  expect(container.textContent).toContain('业务动作：工具调用返回成功')
   expect(container.textContent).not.toContain('forge_contract.submit_r2')
 })
 

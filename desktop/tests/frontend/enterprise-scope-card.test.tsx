@@ -134,3 +134,19 @@ it('shows verified execution facts and an available next action after failure in
   await act(async () => next.click())
   expect(openWork).toHaveBeenCalledOnce()
 })
+
+it('shows authoritative failed and unknown action reasons without claiming no business effect', async () => {
+  const details: EnterpriseWorkRunDetails = { runId, status: 'failed', members: [], activityComplete: true, materials: [], explanation: '', authorizationRequired: false,
+    actionOutcomes: [
+      { actionName: '转为商机', status: 'failed', summary: '销售业务设置缺少项目客户分类，请管理员维护。' },
+      { actionName: '合同提交', status: 'unknown', summary: '业务回执暂未取得，请核对原工作。' },
+    ] }
+  await act(async () => root.render(<EnterpriseScopeCards scopes={[display]} states={{ [runId]: { run: { runId, status: 'failed', isCurrent: true }, details } }} />))
+  expect(container.textContent).toContain('团队执行失败')
+  expect(container.textContent).toContain('转为商机未完成')
+  expect(container.textContent).toContain('销售业务设置缺少项目客户分类，请管理员维护')
+  expect(container.textContent).toContain('本次未取得成功回执')
+  expect(container.textContent).toContain('合同提交结果待核对')
+  expect(container.textContent).not.toMatch(/未写入|没有发生|尚未执行/)
+  expect(container.textContent!.indexOf('销售业务设置')).toBeLessThan(container.textContent!.indexOf('执行过程'))
+})

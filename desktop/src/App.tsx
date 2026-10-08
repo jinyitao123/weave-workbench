@@ -1,3 +1,4 @@
+import { workActionReceiptMeaning } from '@/lib/work-action-outcomes'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Sidebar } from '@/components/Sidebar'
@@ -684,7 +685,7 @@ export default function App() {
       structuredResultNotice,
       teamContext.actionOutcomes !== undefined
         ? teamContext.actionOutcomes.length
-          ? `Weave 固定的本运行 Forge 动作事实（可信平台状态，不含原始错误或记录内部标识）：\n${teamContext.actionOutcomes.map((outcome) => `- ${outcome.actionName}：${outcome.status === 'succeeded' ? 'Forge 已确认成功' : outcome.status === 'failed' ? 'Forge 已确认失败' : '结果未知'}；${outcome.summary}`).join('\n')}`
+          ? `Weave 固定的本运行 Forge 动作事实（可信平台状态，不含原始错误或记录内部标识）：\n${teamContext.actionOutcomes.map((outcome) => `- ${outcome.actionName}：${outcome.status === 'succeeded' ? 'Forge 已确认成功' : outcome.status === 'failed' ? 'Forge 已确认失败' : '结果未知'}；${outcome.summary}；${workActionReceiptMeaning(outcome.status)}`).join('\n')}`
           : 'Weave 为本运行返回了空的业务动作事实列表；模型文字不能证明业务动作已执行。'
         : '本次消息没有附带业务办理回执；请勿据此推断业务已办理，涉及业务状态时按当前员工权限核实。',
       '请用自然中文整理本次结果和需要员工决定的业务事项，不复述接口字段名、内部状态码、标识或材料哈希。只有涉及正式业务结果时才说明其依据。',

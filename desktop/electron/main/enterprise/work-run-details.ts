@@ -1,3 +1,4 @@
+import { projectWorkActionFact } from '../../../src/lib/work-action-outcomes'
 import type { EnterpriseWorkRunDetails } from '../../../src/types/api'
 import type { WorkbenchRunLookup } from './work-sources'
 import { parseWorkContinuationContext } from './work-continuation'
@@ -74,6 +75,7 @@ export function workRunDetails(owned: WorkbenchRunLookup, rawActivity: unknown, 
     })
     return [{ name: prose(member.name, 200) ?? `团队成员 ${index + 1}`, status: state(member.status), stages }]
   })
+  const actionOutcomes = context.run.actionOutcomes?.map(projectWorkActionFact)
   const final = context.run.finalResult
   const summary = readableSummary(final?.summary)
   const missingItems = (final?.missingItems ?? []).flatMap((item) => prose(item, 200) ? [prose(item, 200)!] : [])
@@ -103,6 +105,7 @@ export function workRunDetails(owned: WorkbenchRunLookup, rawActivity: unknown, 
       format: item.mediaType === 'application/pdf' ? 'PDF' : item.mediaType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? 'DOCX'
         : item.mediaType === 'text/markdown' ? 'MD' : item.mediaType === 'text/csv' ? 'CSV' : item.mediaType === 'application/json' ? 'JSON' : 'TXT', bytes: item.bytes })),
     ...(summary ? { result: { title: summary.excerpt ? '检查意见摘录' : prose(final?.title, 300) ?? '团队结果', summary: summary.text, missingItems } } : {}),
+    ...(actionOutcomes !== undefined ? { actionOutcomes } : {}),
     explanation, authorizationRequired, ...(owned.actionCounts ? { actionCounts: owned.actionCounts } : {}),
   }
 }
