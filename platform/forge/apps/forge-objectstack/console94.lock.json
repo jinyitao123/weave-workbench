@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "source": {
     "repository": "https://github.com/jinyitao123/objectui.git",
-    "revision": "de0665ccd8eca1225cd8529b63d9a32b0d520256",
+    "revision": "df41f84eba3984eb4bbd25d0ccf8c17e40bd1c95",
     "packageName": "@object-ui/console",
     "packageVersion": "17.6.0",
-    "nodeVersion": "24.19.0",
+    "nodeVersion": "24.21.0",
     "pnpmVersion": "10.31.0",
     "buildCommand": "VITE_BASE_PATH=/_console/ VITE_UI_PROFILE=compact-enterprise pnpm -r --filter @object-ui/console... build",
     "uiProfile": "compact-enterprise"
@@ -22,7 +22,7 @@
     "basePath": "/_console/",
     "upstreamReferenceTreeSha256": "29d4daf2918777611ee53ae59add30630dc829e01f98492eb62eaa2b182e5303",
     "referenceNotes": "The upstreamReferenceTreeSha256 records the original 94f5a309 upstream baseline. The forked source revision and its runtime/packaged hashes below identify this Console build. stats.html embeds a temporary absolute build path and is excluded.",
-    "runtimeSourceTreeSha256": "d1b69c9307e9ee4459cf4b6b3c649a0eae326b8700c8ac41878b6a07672cb2e5",
+    "runtimeSourceTreeSha256": "8a2cb10794367aeafa50a207f4b7c876f6c3640880c0d704630aacf68c6bf08a",
     "gzipNormalization": {
       "operatingSystem": 255,
       "compressionMethod": 8,
@@ -33,7 +33,7 @@
     "excludedBuildOnlyFiles": [
       "stats.html"
     ],
-    "rawIndexSha256": "4aca95fd52f87fc3848fc733f0514d9513e1443b445cada9d4d522d502776f0e",
+    "rawIndexSha256": "206afc20d55def7af662610d404ec8aeaddef4e433b63082b8dfab0300c16433",
     "patches": [
       {
         "path": "index.html",
@@ -44,9 +44,9 @@
       {
         "path": "dist/.objectui-sha",
         "description": "Stamp the exact ObjectUI source revision consumed by ObjectStack CLI drift reporting.",
-        "content": "de0665ccd8eca1225cd8529b63d9a32b0d520256"
+        "content": "df41f84eba3984eb4bbd25d0ccf8c17e40bd1c95"
       }
     ],
-    "packagedTreeSha256": "339823eb82634a84925795ec4502e1da0298dbd4a397185e66a9fe1652ddd9ca"
+    "packagedTreeSha256": "d70a4ba8d6e38899db3fca322b64941ff20d456b3902a583a7c8e36cef323535"
   }
 }

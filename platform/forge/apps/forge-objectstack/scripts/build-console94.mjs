@@ -20,8 +20,16 @@ function capture(command, args, options = {}) {
   return execFileSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], ...options }).trim();
 }
 
-if (process.version !== `v${lock.source.nodeVersion}`) {
-  throw new Error(`Console build requires Node ${lock.source.nodeVersion}; current runtime is ${process.version}.`);
+// Reproducibility is guaranteed by the artifact digests checked below: any
+// toolchain that rebuilds the locked bytes is acceptable. Only the supported
+// ranges are enforced; the versions in the lock record what produced it.
+const appPackage = JSON.parse(await readFile(path.join(APP_DIR, 'package.json'), 'utf8'));
+const minimumNodeMajor = Number(/^>=\s*(\d+)/.exec(appPackage.engines?.node ?? '')?.[1]);
+if (!Number.isInteger(minimumNodeMajor)) {
+  throw new Error('package.json engines.node must declare a minimum major version (">=N").');
+}
+if (Number(process.versions.node.split('.')[0]) < minimumNodeMajor) {
+  throw new Error(`Console build requires Node ${minimumNodeMajor} or later; current runtime is ${process.version}.`);
 }
 if (!sourceRepo) {
   throw new Error('Set OBJECTUI_SOURCE_DIR to a local ObjectUI Git checkout that contains the locked source commit.');
@@ -36,8 +44,13 @@ try {
   run('git', ['-C', sourceRepo, 'archive', '--format=tar', '--output', tarPath, lock.source.revision]);
   run('tar', ['-xf', tarPath, '-C', sourceDir]);
   const actualPnpm = capture('pnpm', ['--version'], { cwd: sourceDir });
-  if (actualPnpm !== lock.source.pnpmVersion) {
-    throw new Error(`Console source requires pnpm ${lock.source.pnpmVersion}; current version is ${actualPnpm}.`);
+  const lockedPnpmMajor = lock.source.pnpmVersion.split('.')[0];
+  if (actualPnpm.split('.')[0] !== lockedPnpmMajor) {
+    throw new Error(`Console source requires pnpm ${lockedPnpmMajor}.x (the lock was made with ${lock.source.pnpmVersion}); current version is ${actualPnpm}.`);
+  }
+  if (refreshLock) {
+    lock.source.nodeVersion = process.versions.node;
+    lock.source.pnpmVersion = actualPnpm;
   }
 
   const sourcePackagePath = path.join(sourceDir, 'apps/console/package.json');
@@ -99,6 +112,7 @@ try {
     bytes: packagedDigest.bytes,
     basePath: lock.artifact.basePath,
     forgeRuntimeImage: lock.forge.runtimeImageReference,
+    toolchain: { node: process.versions.node, pnpm: actualPnpm },
   };
   await writeFile(path.join(OUTPUT_DIR, 'console94-build.json'), `${JSON.stringify(manifest, null, 2)}\n`);
   await writeFile(path.join(OUTPUT_DIR, 'console94-build.env'), [

@@ -9,29 +9,39 @@ import { readOwnedOriginal, OwnedOriginalFailure } from './workbench-owned-mater
 import { nativeActionConfirmationSupported, nativeActionRequiresConfirmation } from './native-action-confirmation.js';
 import { businessRecordVersion } from './business-record-version.js';
 import { withEmployeeBusinessBinding } from './employee-business-binding.js';
+import { CREATION_ACTIONS, CREATION_REFERENCES, employeeCreationActions, normalizeReferenceIds, validateCreationLineItems, validateCreationSelection, creationCode, type ReferenceIds, type LineItem } from './employee-business-creation.js';
 
 const CONTEXT = 'forge_employee_business_context';
 const OPERATION = 'forge_employee_business_operation';
-const OBJECTS = new Set(['forge_customer', 'forge_project', 'forge_quotation', 'forge_sales_contract', 'forge_sales_order', 'forge_customer_prepayment']);
+const OBJECTS = new Set(['forge_sales_lead', 'forge_customer', 'forge_project', 'forge_quotation', 'forge_sales_contract', 'forge_sales_order', 'forge_customer_prepayment']);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SHA = /^[0-9a-f]{64}$/;
 type Employee = Awaited<ReturnType<typeof nativeEmployee>>;
 type Source = { kind: 'record' | 'business_notification' | 'approval'; reference?: string };
-interface ActionContext {
+interface RecordActionContext {
   version: '1'; contextId: string; contextVersion: string; recordVersion: string; expiresAt: string; readOnly: true;
   record: { objectName: string; recordId: string; label: string }; source: Source; actions: EmployeeAction[];
 }
+interface CreationActionContext {
+  version: '1'; contextId: string; contextVersion: string; expiresAt: string; readOnly: true;
+  objectName: string; objectLabel: string; source: { kind: 'creation' }; actions: EmployeeAction[];
+  /** Private context storage only; the public response keeps selection in Host. */
+  referenceIds?: ReferenceIds;
+}
+type ActionContext = RecordActionContext | CreationActionContext;
+function isCreation(context: ActionContext): context is CreationActionContext { return context.source.kind === 'creation'; }
 interface ExecuteRequest {
   version: '1'; contextId: string; contextVersion: string; opKey: string;
   employeeMessage: { sessionId: string; messageId: string; sha256: string };
   action_ref: number; values: Record<string, string | number | boolean>;
+  lineItems?: LineItem[];
   file?: { parameter: string; fileId: string; name: string; mediaType: string; bytes: number; sha256: string } | null;
 }
 interface Operation {
   version: '1'; operationId: string; contextId: string; requestDigest: string;
   status: 'in_progress' | 'succeeded' | 'failed' | 'unknown'; repeated: boolean; updatedAt: string;
   noEffect?: boolean; code?: string; summary?: string;
-  recordReferences?: ActionContext['record'][];
+  recordReferences?: RecordActionContext['record'][];
 }
 
 function fail(status: number, code: string, message: string): never { throw new TaskConnectionFailure(status, code, message); }
@@ -47,7 +57,7 @@ function json(row: BusinessRow, key: string): BusinessRow {
 }
 function parseRequest(value: unknown): ExecuteRequest {
   const input = businessRow(value); if (!input) fail(400, 'EMPLOYEE_ACTION_INPUT_INVALID', '业务动作输入无效');
-  keys(input, ['version', 'contextId', 'contextVersion', 'opKey', 'employeeMessage', 'action_ref', 'values', 'file']);
+  keys(input, ['version', 'contextId', 'contextVersion', 'opKey', 'employeeMessage', 'action_ref', 'values', 'file', 'lineItems']);
   const message = businessRow(input.employeeMessage), values = businessRow(input.values);
   if (input.version !== '1' || !UUID.test(String(input.contextId)) || !UUID.test(String(input.opKey)) || !SHA.test(String(input.contextVersion))
     || !Number.isInteger(input.action_ref) || Number(input.action_ref) < 1 || Number(input.action_ref) > 64 || !message || !values) {
@@ -64,6 +74,7 @@ function parseRequest(value: unknown): ExecuteRequest {
     if (!nonempty(file.parameter) || !nonempty(file.fileId) || !nonempty(file.name, 255) || !nonempty(file.mediaType, 160)
       || !SHA.test(String(file.sha256)) || !Number.isSafeInteger(file.bytes) || Number(file.bytes) < 1 || Number(file.bytes) > 2 * 1024 * 1024) fail(400, 'EMPLOYEE_ACTION_INPUT_INVALID', '材料绑定无效');
   }
+  if ('lineItems' in input && (!Array.isArray(input.lineItems) || input.lineItems.length < 1 || input.lineItems.length > 100)) fail(400, 'EMPLOYEE_ACTION_INPUT_INVALID', '报价明细数量无效');
   return input as unknown as ExecuteRequest;
 }
 
@@ -77,17 +88,19 @@ export class EmployeeBusinessService {
     const actions = developer ? await native.developerDefinitions() : await native.bridge.listActions(), capabilities: BusinessRow[] = [];
     for (const action of actions) {
       if (typeof action.objectName !== 'string' || typeof action.name !== 'string') continue;
+      const creation = CREATION_ACTIONS[action.objectName] === action.name;
       const policy = businessActionPolicy(action.objectName, action.name);
       const capability: BusinessRow = { id: `forge:action:${action.objectName}.${action.name}`, name: String(action.label ?? action.name).slice(0, 80),
         description: String(action.description ?? action.label ?? action.name).slice(0, 240), ...policy, resourceType: action.objectName,
-        objectName: action.objectName, actionName: action.name, requiresRecord: action.requiresRecord !== false,
+        objectName: action.objectName, actionName: action.name, requiresRecord: creation ? false : action.requiresRecord !== false,
         requiresEmployeeIntent: policy.effect === 'write', status: 'available' };
       try {
         const metadata = await native.metadata(action.objectName), declaration = (metadata.actions as BusinessRow[] | undefined)?.find(a => a.name === action.name);
         if (!declaration) throw new Error('能力声明缺失');
         capability.requiresConfirmation = nativeActionRequiresConfirmation(declaration);
         if (capability.requiresConfirmation && !nativeActionConfirmationSupported()) throw new Error('原生协议不支持动作确认');
-        capability.params = (await native.parameters(action.objectName, declaration, metadata, true)).map(p => ({
+        const exposedDeclaration = creation ? { ...declaration, params: (declaration.params as BusinessRow[] ?? []).filter(param => !['code', 'lines_json'].includes(String(param.name ?? param.field))) } : declaration;
+        capability.params = (await native.parameters(action.objectName, exposedDeclaration, metadata, true)).map(p => ({
           name: p.name, label: p.label, type: p.type === 'date' ? 'string' : p.type, required: p.required, ...(p.multiple ? { multiple: true } : {}),
           ...(p.description ? { description: p.description.slice(0, 240) } : {}),
           ...(p.enum?.every(v => typeof v === 'string') ? { enum: p.enum } : {}),
@@ -125,6 +138,7 @@ export class EmployeeBusinessService {
 
   async readContext(request: IHttpRequest): Promise<ActionContext> {
     const employee = await nativeEmployee(this.context, request), query = request.query ?? {};
+    if (query.sourceKind === 'creation') return this.readCreationContext(employee, query);
     keys(query, ['objectName', 'recordId', 'sourceKind', 'sourceRef']);
     const objectName = id(query.objectName), recordId = id(query.recordId);
     if (!OBJECTS.has(objectName)) fail(404, 'EMPLOYEE_ACTION_RECORD_NOT_FOUND', '当前业务记录不可办理');
@@ -138,11 +152,27 @@ export class EmployeeBusinessService {
     await this.verifySource(employee, objectName, recordId, source);
     const actions = await native.employeeActions(objectName, record), recordVersion = await this.recordVersion(objectName, recordId, employee);
     const binding = { userId: employee.userId, organizationId: employee.organizationId, objectName, recordId, recordVersion, source, actions };
-    const context: ActionContext = { version: '1', contextId: crypto.randomUUID(), contextVersion: await digest(canonicalJSON(binding)), recordVersion,
+    const context: RecordActionContext = { version: '1', contextId: crypto.randomUUID(), contextVersion: await digest(canonicalJSON(binding)), recordVersion,
       expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(), readOnly: true,
       record: { objectName, recordId, label: String(record.name || record.code || '当前业务记录').slice(0, 300) }, source, actions };
     await this.engine.insert(CONTEXT, { id: context.contextId, name: context.record.label, user_id: employee.userId, organization_id: employee.organizationId,
       object_name: objectName, record_id: recordId, context_version: context.contextVersion, context_json: JSON.stringify(context), expires_at: context.expiresAt }, { context: this.system(employee) });
+    return context;
+  }
+
+  private async readCreationContext(employee: Employee, query: BusinessRow): Promise<CreationActionContext> {
+    keys(query, ['objectName', 'sourceKind', 'referenceIds']);
+    const objectName = id(query.objectName);
+    if (!Object.hasOwn(CREATION_ACTIONS, objectName)) fail(404, 'EMPLOYEE_ACTION_RECORD_NOT_FOUND', '当前对象没有本人创建入口');
+    await this.requireObjectRead(employee, objectName);
+    const referenceIds = normalizeReferenceIds(query.referenceIds, objectName);
+    const native = new EmployeeNativeActions(this.context, employee.actor), actions = await employeeCreationActions(native, objectName, referenceIds);
+    const context: CreationActionContext = { version: '1', contextId: crypto.randomUUID(),
+      contextVersion: await digest(canonicalJSON({ userId: employee.userId, organizationId: employee.organizationId, objectName, actions, referenceIds: referenceIds ?? null })),
+      expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(), readOnly: true, source: { kind: 'creation' },
+      objectName, objectLabel: objectName === 'forge_sales_lead' ? '销售线索' : '销售报价', actions };
+    await this.engine.insert(CONTEXT, { id: context.contextId, name: context.objectLabel, user_id: employee.userId, organization_id: employee.organizationId,
+      object_name: objectName, context_version: context.contextVersion, context_json: JSON.stringify({ ...context, ...(referenceIds ? { referenceIds } : {}) }), expires_at: context.expiresAt }, { context: this.system(employee) });
     return context;
   }
 
@@ -228,17 +258,28 @@ export class EmployeeBusinessService {
     const bound = json(stored, 'context_json') as unknown as ActionContext;
     const action = bound.actions.find(a => a.action_ref === input.action_ref);
     if (!action) fail(400, 'EMPLOYEE_ACTION_REFERENCE_INVALID', '当前动作引用无效');
-    const params = this.validateValues(action, input), { objectName, recordId } = bound.record;
+    const creation = isCreation(bound) ? bound : undefined, recordContext = isCreation(bound) ? undefined : bound;
+    const objectName = creation?.objectName ?? recordContext!.record.objectName, recordId = recordContext?.record.recordId;
+    const params = this.validateValues(action, input);
+    if (creation) for (const [key, value] of Object.entries(params)) {
+      if (CREATION_REFERENCES[key] && !action.parameters.find(parameter => parameter.name === key)?.enum?.includes(value as string)) {
+        fail(409, 'EMPLOYEE_ACTION_REFERENCE_SELECTION_REQUIRED', '请先查找并选择准确业务引用后再办理');
+      }
+    }
+    if (input.lineItems !== undefined && (!creation || objectName !== 'forge_quotation')) fail(400, 'EMPLOYEE_ACTION_PARAMETER_INVALID', '此动作不接受报价明细');
+    const lineItems = creation && objectName === 'forge_quotation' ? validateCreationLineItems(input.lineItems, action.lineItems) : undefined;
+    if (creation && (input.file || action.requiresRecord !== false)) fail(400, 'EMPLOYEE_ACTION_INPUT_INVALID', '创建动作上下文无效');
     const unresolved = await this.engine.findOne(OPERATION, { where: { user_id: employee.userId, organization_id: employee.organizationId,
-      object_name: objectName, record_id: recordId, status: { $in: ['in_progress', 'unknown'] } } }, { context: this.system(employee) });
+      object_name: objectName, record_id: recordId ?? null, status: { $in: ['in_progress', 'unknown'] } } }, { context: this.system(employee) });
     if (unresolved) fail(409, 'EMPLOYEE_ACTION_UNRESOLVED', '已有办理结果待核对，请沿原请求查询，不能更换请求重新办理');
     await this.requireObjectRead(employee, objectName);
     const native = new EmployeeNativeActions(this.context, employee.actor);
-    const visible = businessRow(await native.bridge.get(objectName, recordId));
-    if (!visible || visible.id !== recordId) fail(404, 'EMPLOYEE_ACTION_RECORD_NOT_FOUND', '当前业务记录不可读取');
-    await this.verifySource(employee, objectName, recordId, bound.source);
-    const currentAction = (await native.employeeActions(objectName, visible)).find(a => a.capabilityId === action.capabilityId);
+    const visible = recordId ? businessRow(await native.bridge.get(objectName, recordId)) : undefined;
+    if (recordContext && (!visible || visible.id !== recordId)) fail(404, 'EMPLOYEE_ACTION_RECORD_NOT_FOUND', '当前业务记录不可读取');
+    if (recordContext) await this.verifySource(employee, objectName, recordId!, recordContext.source);
+    const currentAction = (creation ? await employeeCreationActions(native, objectName, creation.referenceIds) : await native.employeeActions(objectName, visible)).find(a => a.capabilityId === action.capabilityId);
     if (!currentAction || currentAction.declarationVersion !== action.declarationVersion) fail(409, 'EMPLOYEE_ACTION_CONTEXT_CHANGED', '动作定义或权限已变化');
+    if (creation) await validateCreationSelection(native, objectName, params);
     if (input.file) {
       let original;
       try { original = await readOwnedOriginal(this.engine, service<IStorageService>(this.context, 'storage'), employee.actor, input.file.fileId, input.file.sha256); } catch (error) {
@@ -253,7 +294,7 @@ export class EmployeeBusinessService {
       status: 'in_progress', repeated: false, noEffect: false, updatedAt: new Date().toISOString() };
     try {
       await this.engine.insert(OPERATION, { id: rowId, name: action.label, operation_key: input.opKey, user_id: employee.userId, organization_id: employee.organizationId,
-        context_id: input.contextId, request_digest: requestDigest, object_name: objectName, record_id: recordId,
+        context_id: input.contextId, request_digest: requestDigest, object_name: objectName, ...(recordId ? { record_id: recordId } : {}),
         action_name: action.capabilityId, status: operation.status, result_json: JSON.stringify(operation), requested_at: operation.updatedAt, observed_at: operation.updatedAt }, { context: this.system(employee) });
     } catch (error) {
       const raced = await this.operationRow(employee, input.opKey);
@@ -265,43 +306,54 @@ export class EmployeeBusinessService {
     try {
       await this.engine.transaction(async transaction => {
         // Lock the contract before an order/prepayment on every entry path.
-        const initial = await this.engine.findOne(objectName, { where: { id: recordId, organization_id: employee.organizationId } }, { context: transaction });
+        const initial = recordId ? await this.engine.findOne(objectName, { where: { id: recordId, organization_id: employee.organizationId } }, { context: transaction }) : null;
         if (objectName !== 'forge_sales_contract' && nonempty(initial?.contract_id)) await lockBusinessRow(this.engine, 'forge_sales_contract', String(initial!.contract_id), employee.organizationId, transaction);
-        await lockBusinessRow(this.engine, objectName, recordId, employee.organizationId, transaction);
+        await lockBusinessRow(this.engine, creation ? CONTEXT : objectName, creation ? input.contextId : recordId!, employee.organizationId, transaction);
         // The fast preflight runs before reservation. Another key may have
         // reached native dispatch while this one waited for the record lock.
         // An in-progress receipt is already uncertain; do not wait for its
         // catch/recovery path to label it unknown before refusing a replay.
         const competing = await this.engine.findOne(OPERATION, { where: { user_id: employee.userId, organization_id: employee.organizationId,
-          object_name: objectName, record_id: recordId, operation_key: { $ne: input.opKey }, status: { $in: ['in_progress', 'unknown'] } } }, { context: transaction });
+          object_name: objectName, record_id: recordId ?? null, operation_key: { $ne: input.opKey }, status: { $in: ['in_progress', 'unknown'] } } }, { context: transaction });
         if (competing) fail(409, 'EMPLOYEE_ACTION_UNRESOLVED', '已有办理结果待核对，请沿原请求查询，不能更换请求重新办理');
-        if (await this.recordVersion(objectName, recordId, employee, transaction) !== bound.recordVersion) fail(409, 'EMPLOYEE_ACTION_CONTEXT_CHANGED', '当前业务记录已变化');
+        if (recordContext && await this.recordVersion(objectName, recordId!, employee, transaction) !== recordContext.recordVersion) fail(409, 'EMPLOYEE_ACTION_CONTEXT_CHANGED', '当前业务记录已变化');
         const live = await nativeEmployee(this.context, request);
         const transactional = new EmployeeNativeActions(this.context, { ...live.actor, transaction: transaction.transaction });
-        const current = (await transactional.employeeActions(objectName, businessRow(await transactional.bridge.get(objectName, recordId)))).find(a => a.capabilityId === action.capabilityId);
+        const current = (creation ? await employeeCreationActions(transactional, objectName, creation.referenceIds)
+          : await transactional.employeeActions(objectName, businessRow(await transactional.bridge.get(objectName, recordId!)))).find(a => a.capabilityId === action.capabilityId);
         if (!current || current.declarationVersion !== action.declarationVersion) fail(409, 'EMPLOYEE_ACTION_CONTEXT_CHANGED', '动作权限或定义已变化');
+        if (creation) await validateCreationSelection(transactional, objectName, params);
         if (Date.parse(String(stored.expires_at)) <= Date.now()) fail(409, 'EMPLOYEE_ACTION_CONTEXT_CHANGED', '本次办理上下文已过期，请重新打开');
         const actionName = action.capabilityId.slice(action.capabilityId.lastIndexOf('.') + 1);
+        const code = creation ? creationCode(objectName) : undefined;
+        const nativeParams = lineItems ? { ...params, code, lines_json: JSON.stringify(lineItems) } : params;
         const result = await withEmployeeBusinessBinding({ userId: employee.userId, organizationId: employee.organizationId,
-          objectName, recordId, actionName, recordVersion: bound.recordVersion, expiresAt: String(stored.expires_at), operationKey: input.opKey, requestDigest,
+          objectName, ...(recordId ? { recordId, recordVersion: recordContext!.recordVersion } : { creationCode: code }), actionName, expiresAt: String(stored.expires_at), operationKey: input.opKey, requestDigest,
           ...(input.file ? { file: input.file } : {}) },
-        () => transactional.runBoundAction(actionName, { objectName, recordId, params }, () => { nativeInvoked = true; }));
+        () => transactional.runBoundAction(actionName, { objectName, ...(recordId ? { recordId } : {}), params: nativeParams }, () => { nativeInvoked = true; }));
         const raw = businessRow(result);
-        if (raw?.ok !== true || raw.action !== actionName || raw.objectName !== objectName || raw.recordId !== recordId) throw new Error('原生动作未返回准确成功包络');
+        if (raw?.ok !== true || raw.action !== actionName || raw.objectName !== objectName || (creation ? raw.recordId != null : raw.recordId !== recordId)) throw new Error('原生动作未返回准确成功包络');
         const resultRecord = businessRow(raw.result);
         const newId = nonempty(resultRecord?.id);
-        if (!newId || !['customer_create_project', 'quotation_convert_to_contract', 'contract_convert_to_sales_order', 'contract_register_customer_prepayment'].includes(actionName) && newId !== recordId) throw new Error('原生业务回执缺少准确记录引用');
+        if (!newId || !creation && !['customer_create_project', 'quotation_convert_to_contract', 'contract_convert_to_sales_order', 'contract_register_customer_prepayment'].includes(actionName) && newId !== recordId) throw new Error('原生业务回执缺少准确记录引用');
         if (actionName === 'quotation_convert_to_contract' && (objectName !== 'forge_quotation' || resultRecord?.quotation_id !== recordId || newId === recordId)) throw new Error('报价转换回执未绑定准确来源');
         if (actionName === 'customer_create_project' && (objectName !== 'forge_customer' || resultRecord?.customer_id !== recordId
           || resultRecord?.approved_order_id !== input.values.approved_order_id || newId === recordId)) throw new Error('项目立项回执未绑定准确客户与订单');
-        const reference = actionName === 'customer_create_project'
+        const reference = creation ? { objectName, recordId: newId, label: String(resultRecord?.name || resultRecord?.code || creation.objectLabel) }
+          : actionName === 'customer_create_project'
           ? { objectName: 'forge_project', recordId: newId, label: String(input.values.name || '项目') }
           : newId && newId !== recordId && actionName === 'contract_convert_to_sales_order'
           ? { objectName: 'forge_sales_order', recordId: newId, label: String(input.values.name || input.values.code || '销售订单') }
           : actionName === 'contract_register_customer_prepayment'
             ? { objectName: 'forge_customer_prepayment', recordId: newId!, label: '合同预收款 ' + String(input.values.code || '') }
             : actionName === 'quotation_convert_to_contract'
-              ? { objectName: 'forge_sales_contract', recordId: newId!, label: String(input.values.name || input.values.code || '销售合同') } : bound.record;
+              ? { objectName: 'forge_sales_contract', recordId: newId!, label: String(input.values.name || input.values.code || '销售合同') } : recordContext!.record;
+        if (creation) {
+          const created = businessRow(await transactional.bridge.get(objectName, newId, ['id', 'name', 'code', 'owner_id', 'responsible_id', 'organization_id', 'status']));
+          if (!created || created.organization_id !== employee.organizationId || created.owner_id !== employee.userId || created.responsible_id !== employee.userId
+            || created.code !== code || created.status !== (objectName === 'forge_sales_lead' ? 'new' : 'draft')) throw new Error('创建结果缺少准确的本人业务记录');
+          reference.label = `${String(created.name)}（${String(created.code)}）`.slice(0, 300);
+        }
         if (actionName === 'quotation_convert_to_contract') {
           const converted = await this.engine.findOne('forge_sales_contract', { where: { id: newId, quotation_id: recordId, quotation_source_type: 'formal_conversion', organization_id: employee.organizationId } }, { context: transaction });
           const receipt = await this.engine.findOne('forge_quotation_contract_conversion', { where: { quotation_id: recordId, contract_id: newId, converted_by: employee.userId, organization_id: employee.organizationId } }, { context: transaction });
@@ -317,7 +369,7 @@ export class EmployeeBusinessService {
           reference.label = String(project.name || project.code || '项目').slice(0, 300);
         }
         operation = { ...operation, status: 'succeeded', updatedAt: new Date().toISOString(), summary: `${action.label}已办理`,
-          recordReferences: actionName === 'quotation_convert_to_contract' ? [bound.record, reference] : [reference] };
+          recordReferences: actionName === 'quotation_convert_to_contract' ? [recordContext!.record, reference] : [reference] };
         await this.engine.update(OPERATION, { id: rowId, status: operation.status, result_json: JSON.stringify(operation), observed_at: operation.updatedAt }, { context: transaction });
       }, this.system(employee), { require: true });
       return operation;

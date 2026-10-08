@@ -8,9 +8,9 @@
   "status": "review_required",
   "observedAt": "2026-10-07",
   "historicalAcceptance": "docs/evidence/finance-narrow-metrics-20260917/invoice_overview.json",
-  "limitations": "仅将历史观察与当前版本准入分离。历史JSON、原分项pass及截图路径保持原义；公开仓库缺少历史图片，当前证据不可得。不代表功能失败，不启动财务业务范围，不构成页面或业务验收通过。subjectFiles仅固定待复核源码范围，不是已复核版本声明。",
+  "limitations": "仅将历史观察与当前版本准入分离。历史JSON、原分项pass及截图路径保持原义；公开仓库缺少历史图片，当前证据不可得。不代表功能失败，不启动财务业务范围，不构成页面或业务验收通过。subjectFiles仅固定待复核源码范围，不是已复核版本声明。 本轮仅补财务读取失败与关联名称回退的实现及针对性回归，未写财务业务记录；整体页面与业务仍待验。",
   "subjectFiles": {
-    "apps/forge-objectstack/src/pages/finance-management.page.ts": "a5084cff588c1a3aa73e8b0ca7e5a91ac075fd18ac9e8c3adbd8d4e85bd1feea",
+    "apps/forge-objectstack/src/pages/finance-management.page.ts": "1a4d376e55ac62424be966efcca8d7262554bdc4324e1124303160d757db77e4",
     "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86"
   },
   "requirements": [
