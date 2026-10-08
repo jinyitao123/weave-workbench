@@ -1,0 +1,312 @@
+name: Relay one approved Weave OCI image
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weave-oci-relay-d59aa09a
+  cancel-in-progress: false
+
+jobs:
+  relay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read
+      packages: read
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify the original publication and relay only its locked Weave OCI bytes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STAGE_SSH_KEY: ${{ secrets.INSTALLATION_STAGE_SSH_KEY }}
+          STAGE_HOST: ${{ secrets.INSTALLATION_STAGE_HOST }}
+          STAGE_USER: ${{ secrets.INSTALLATION_STAGE_USER }}
+          STAGE_KNOWN_HOSTS: ${{ secrets.INSTALLATION_STAGE_KNOWN_HOSTS }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          #!/usr/bin/env python3
+          """Fixed publication-to-SSH OCI relay. This is embedded in one manual workflow."""
+          import hashlib
+          import io
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import signal
+          import shutil
+          import subprocess
+          import sys
+          import tarfile
+          import tempfile
+          import threading
+          import urllib.parse
+          import urllib.request
+          import urllib.error
+
+          REPOSITORY = 'jinyitao123/weave-workbench'
+          PUBLICATION = 'e318da15506c77654294ca0889ee1445bc420a9f'
+          PUBLICATION_RUN = 37754203500
+          BUNDLE_VERSION = '0.1.0-rc.5'
+          REPO = 'ghcr.io/jinyitao123/weave-workbench-weave'
+          MANIFEST = 'sha256:d59aa09a2df39edf488087260000e48d9419b697b4d5c6764f1eca4bcacee598'
+          CONFIG = 'sha256:685a146cd28420dd2e691ca2c92f48a67410a54097bfb188a1f01e1ea7d0c19a'
+          SOURCE = '5c42765e1ef73b5b64ccb32e9b0b74fe9a0bf6a4'
+          IMAGE = REPO + '@' + MANIFEST
+          MODE = 'weave-oci-relay-v1'
+          MAX_ARCHIVE = 2 * 1024**3
+          TOOL_VERSION = 'v0.10.0'
+          TOOL_ASSET = 314433848
+          TOOL_BYTES = 11780244
+          TOOL_SHA = 'b2450ad4ed69ed668ffc168d1b9e0b1371ac038e3d645eed3858791bf828909c'
+          TOOL_URL = 'https://github.com/regclient/regclient/releases/download/v0.10.0/regctl-linux-amd64'
+          RECEIVER_SHA = 'sha256:ba5f01d8833e70d32bdd0ac3d6748f5a52ff1601b0368256bf306956a1e21313'
+          EXPECTED = {'manifest': MANIFEST, 'config': CONFIG, 'source': SOURCE, 'product': PUBLICATION}
+          STATUS = {'status': 'preparing', 'phase': 'publication-validation', 'hostOutcome': 'not-contacted'}
+
+
+          def need(value, message):
+              if not value:
+                  raise RuntimeError(message)
+
+
+          def safe_message(value):
+              if isinstance(value, bytes):
+                  value = value.decode('utf-8', errors='replace')
+              value = str(value)
+              for name in ('GH_TOKEN', 'GITHUB_TOKEN', 'STAGE_HOST', 'STAGE_USER', 'RUNNER_TEMP'):
+                  if os.environ.get(name):
+                      value = value.replace(os.environ[name], '<private-value>')
+              value = re.sub(r'https?://[^\s"\']+', '<registry-url>', value, flags=re.I)
+              value = re.sub(r'\b(?:Bearer|Basic)\s+[^\s"\'<>]+', '<authorization>', value, flags=re.I)
+              value = re.sub(r'\b(?:github_pat_[A-Za-z0-9_]+|gh[pousr]_[A-Za-z0-9_]+)', '<github-token>', value)
+              return re.sub(r'[\x00-\x1f\x7f]', ' ', value)[:850]
+
+
+          def run(args, *, env=None, input=None, timeout=900, capture=True):
+              try:
+                  result = subprocess.run(args, input=input, stdout=subprocess.PIPE if capture else subprocess.DEVNULL,
+                                          stderr=subprocess.PIPE, env=env, timeout=timeout)
+              except subprocess.TimeoutExpired as error:
+                  raise RuntimeError(safe_message(error.stderr or 'Command timed out')) from None
+              if result.returncode:
+                  raise RuntimeError(safe_message(result.stderr))
+              return result.stdout
+
+
+          def canonical_archive(source, destination, expected=EXPECTED):
+              """Rewrap OCI descriptors only; copy original manifest/config/layer bytes."""
+              need(0 < source.stat().st_size <= MAX_ARCHIVE, 'Exported archive size outside limit')
+              members, small = {}, {}
+              manifest_name, config_name = ('blobs/sha256/' + expected[key][7:] for key in ('manifest', 'config'))
+              with tarfile.open(source, mode='r:') as archive:
+                  for member in archive:
+                      if member.isdir():
+                          need(member.name.rstrip('/') in ('blobs', 'blobs/sha256'), 'Unexpected export directory')
+                          continue
+                      need(member.isreg() and not member.linkname and member.name not in members and len(members) < 70,
+                           'Linked, duplicate or excessive export entries')
+                      need(member.name in ('oci-layout', 'index.json', 'manifest.json') or
+                           re.fullmatch(r'blobs/sha256/[0-9a-f]{64}', member.name), 'Unexpected export path')
+                      need(0 < member.size <= MAX_ARCHIVE, 'Invalid export member size')
+                      metadata = member.name in ('oci-layout', 'index.json', 'manifest.json', manifest_name, config_name)
+                      need(not metadata or member.size <= 1024**2, 'Oversized export metadata')
+                      digest, saved = hashlib.sha256(), bytearray()
+                      with archive.extractfile(member) as content:
+                          for chunk in iter(lambda: content.read(1024**2), b''):
+                              digest.update(chunk)
+                              if metadata:
+                                  saved.extend(chunk)
+                      if member.name.startswith('blobs/'):
+                          need(digest.hexdigest() == member.name.rsplit('/', 1)[1], 'Original export blob digest differs')
+                      if metadata:
+                          small[member.name] = bytes(saved)
+                      members[member.name] = member
+                  need(json.loads(small['oci-layout']) == {'imageLayoutVersion': '1.0.0'}, 'Exporter did not produce OCI layout')
+                  index, manifest, config = (json.loads(small[name]) for name in ('index.json', manifest_name, config_name))
+                  need(len(index.get('manifests', [])) == 1 and index['manifests'][0]['digest'] == expected['manifest'], 'Export points to another image')
+                  need(manifest.get('schemaVersion') == 2 and manifest['config']['digest'] == expected['config'], 'Original manifest/config differs')
+                  need(config.get('os') == 'linux' and config.get('architecture') == 'amd64', 'Export platform differs')
+                  labels = (config.get('config') or {}).get('Labels') or {}
+                  need(labels.get('org.opencontainers.image.revision') == expected['source'] and
+                       labels.get('io.weave-workbench.source-revision') == expected['product'] and
+                       labels.get('org.opencontainers.image.source') == 'https://github.com/' + REPOSITORY, 'Export source labels differ')
+                  closure = {manifest_name}
+                  for descriptor in [manifest['config']] + manifest['layers']:
+                      name = 'blobs/sha256/' + descriptor['digest'][7:]
+                      need(name in members and members[name].size == descriptor['size'], 'Original graph is incomplete')
+                      closure.add(name)
+                  need(set(members) - {'oci-layout', 'index.json', 'manifest.json'} == closure, 'Extra exported image content')
+                  wrapper = {'schemaVersion': 2, 'manifests': [{'mediaType': manifest['mediaType'], 'digest': expected['manifest'],
+                             'size': members[manifest_name].size, 'platform': {'os': 'linux', 'architecture': 'amd64'}}]}
+                  with tarfile.open(destination, mode='w', format=tarfile.USTAR_FORMAT) as output:
+                      def add(name, size, content):
+                          item = tarfile.TarInfo(name)
+                          item.size, item.mode, item.uid, item.gid, item.mtime = size, 0o644, 0, 0, 0
+                          output.addfile(item, content)
+                      for name, data in [('oci-layout', b'{"imageLayoutVersion":"1.0.0"}'),
+                                         ('index.json', json.dumps(wrapper, separators=(',', ':')).encode())]:
+                          add(name, len(data), io.BytesIO(data))
+                      for name in sorted(closure):
+                          with archive.extractfile(members[name]) as content:
+                              add(name, members[name].size, content)
+              destination.chmod(0o600)
+              need(destination.stat().st_size <= MAX_ARCHIVE, 'Canonical archive exceeds fixed limit')
+              digest = hashlib.sha256()
+              with destination.open('rb') as content:
+                  for chunk in iter(lambda: content.read(1024**2), b''):
+                      digest.update(chunk)
+              return {'archiveBytes': destination.stat().st_size, 'archiveSha256': 'sha256:' + digest.hexdigest()}
+
+
+          def download_tool(api, destination):
+              release = api.get('repos/regclient/regclient/releases/tags/' + TOOL_VERSION)
+              matches = [a for a in release.get('assets', []) if a.get('id') == TOOL_ASSET]
+              need(release.get('tag_name') == TOOL_VERSION and len(matches) == 1 and matches[0].get('name') == 'regctl-linux-amd64' and
+                   matches[0].get('size') == TOOL_BYTES and matches[0].get('digest') == 'sha256:' + TOOL_SHA and
+                   matches[0].get('browser_download_url') == TOOL_URL, 'Pinned official exporter release differs')
+              class TLSRedirect(urllib.request.HTTPRedirectHandler):
+                  def redirect_request(self, request, fp, code, message, headers, url):
+                      parsed = urllib.parse.urlsplit(url)
+                      need(parsed.scheme == 'https' and parsed.hostname and not parsed.username and not parsed.password and
+                           (parsed.hostname == 'github.com' or parsed.hostname.endswith('.githubusercontent.com')), 'Unexpected exporter redirect')
+                      return super().redirect_request(request, fp, code, message, headers, url)
+              opener = urllib.request.build_opener(TLSRedirect())
+              with opener.open(TOOL_URL, timeout=60) as response:
+                  data = response.read(TOOL_BYTES + 1)
+              need(len(data) == TOOL_BYTES and hashlib.sha256(data).hexdigest() == TOOL_SHA, 'Pinned exporter bytes differ')
+              destination.write_bytes(data)
+              destination.chmod(0o700)
+
+
+          def transfer(archive, header, private):
+              host, user = os.environ['STAGE_HOST'], os.environ['STAGE_USER']
+              need(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9.-]*', host) and re.fullmatch(r'[a-z_][a-z0-9_-]*', user), 'Invalid existing SSH destination')
+              key, known = private / 'ssh-key', private / 'known-hosts'
+              key.write_text(os.environ['STAGE_SSH_KEY'] + '\n')
+              known.write_text(os.environ['STAGE_KNOWN_HOSTS'] + '\n')
+              key.chmod(0o600)
+              known.chmod(0o600)
+              args = ['ssh', '-F', '/dev/null', '-T', '-i', str(key), '-o', 'BatchMode=yes', '-o', 'IdentitiesOnly=yes',
+                      '-o', 'StrictHostKeyChecking=yes', '-o', 'GlobalKnownHostsFile=/dev/null',
+                      '-o', 'UserKnownHostsFile=' + str(known), '-o', 'ConnectTimeout=20',
+                      '-o', 'ServerAliveInterval=30', '-o', 'ServerAliveCountMax=3', user + '@' + host]
+              STATUS.update(phase='private-ssh-transfer', hostOutcome='unknown')
+              process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+              pipe, process.stdin = process.stdin, None
+              write_errors = []
+              def feed():
+                  try:
+                      with pipe:
+                          pipe.write(json.dumps(header, separators=(',', ':')).encode() + b'\n')
+                          with archive.open('rb') as source:
+                              shutil.copyfileobj(source, pipe, 1024**2)
+                  except (OSError, ValueError) as error:
+                      write_errors.append(type(error).__name__)
+              writer = threading.Thread(target=feed, daemon=True)
+              writer.start()
+              try:
+                  stdout, stderr = process.communicate(timeout=2100)
+              except BaseException:
+                  process.kill()
+                  process.wait()
+                  writer.join(timeout=10)
+                  raise
+              writer.join(timeout=10)
+              need(not writer.is_alive() and process.returncode == 0 and not write_errors, safe_message(stderr or 'Private image transfer failed'))
+              need(len(stdout) <= 32768, 'Receiver response exceeds limit')
+              receipt = json.loads(stdout)
+              for key in ('image', 'configDigest', 'sourceRevision', 'publicationRevision', 'publicationRunId',
+                          'controlRevision', 'transportRunId', 'archiveBytes', 'archiveSha256', 'receiverSha256'):
+                  need(receipt.get(key) == header[key], 'Receiver receipt does not match this transfer')
+              need(receipt.get('status') == 'staged-only' and receipt.get('mode') == MODE and type(receipt.get('version')) is int and
+                   receipt.get('version') == 1 and receipt.get('descriptorDigest') == MANIFEST and
+                   receipt.get('ctrTargetDigest') == MANIFEST and receipt.get('repoDigests') == [IMAGE] and
+                   receipt.get('platform') == 'linux/amd64' and receipt.get('contentsComplete') is True and
+                   receipt.get('temporaryFilesRemoved') is True and receipt.get('registryCredentialReceived') is False and
+                   receipt.get('containersStarted') is False, 'Incomplete or unsafe receiver receipt')
+              STATUS['hostOutcome'] = 'staged-only'
+              return receipt
+
+
+          def main():
+              os.umask(0o077)
+              def interrupted(_signum, _frame):
+                  raise RuntimeError('OCI relay interrupted; inspect the original attempt before any repeat')
+              for signum in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
+                  signal.signal(signum, interrupted)
+              output = Path('.build/weave-oci-relay-receipt.json')
+              output.parent.mkdir(exist_ok=True)
+              control, transport = os.environ['GITHUB_SHA'], os.environ['GITHUB_RUN_ID']
+              need(re.fullmatch(r'[0-9a-f]{40}', control) and re.fullmatch(r'[1-9][0-9]*', transport), 'Invalid workflow identity')
+              STATUS.update(controlRevision=control, transportRunId=int(transport), publicationRevision=PUBLICATION, publicationRunId=PUBLICATION_RUN)
+              need(run(['git', 'rev-parse', 'HEAD']).decode().strip() == control, 'Control source checkout differs')
+              for directory in ('tools/server-image-build', 'tools/server-bundle'):
+                  need(run(['git', 'rev-parse', 'HEAD:' + directory]) == run(['git', 'rev-parse', PUBLICATION + ':' + directory]),
+                       'Reviewed publication verifier or installer changed')
+              sys.path.insert(0, str(Path('tools/server-image-build').resolve()))
+              from build import Github
+              from resume import fetch_publication
+              try:
+                  files, lock, proof = fetch_publication(REPOSITORY, PUBLICATION, BUNDLE_VERSION, PUBLICATION_RUN, allow_replacement=False)
+                  manifest = json.loads(files['build-manifest.json'])
+                  need(proof['publicationConclusion'] == 'success' and proof['fullServerStartupVerified'] is True and
+                       lock['components']['weave'] == {'image': IMAGE, 'sourceRevision': SOURCE} and
+                       manifest['images']['weave']['registryConfigDigest'] == CONFIG, 'Approved immutable publication differs')
+                  with tempfile.TemporaryDirectory(prefix='weave-oci-relay-', dir=os.environ['RUNNER_TEMP']) as directory:
+                      private = Path(directory)
+                      exporter = private / 'regctl'
+                      STATUS['phase'] = 'official-exporter-verification'
+                      download_tool(Github(REPOSITORY), exporter)
+                      auth = private / 'docker-auth'
+                      auth.mkdir(mode=0o700)
+                      env = {'PATH': os.environ['PATH'], 'DOCKER_CONFIG': str(auth), 'REGCTL_CONFIG': str(private / 'regctl.json')}
+                      run(['docker', '--config', str(auth), 'login', 'ghcr.io', '--username', os.environ['GITHUB_ACTOR'], '--password-stdin'],
+                          input=os.environ['GH_TOKEN'].encode(), env=env, timeout=60)
+                      STATUS['phase'] = 'original-oci-export'
+                      raw, archive = private / 'original.tar', private / 'verified.oci.tar'
+                      run([str(exporter), 'image', 'export', IMAGE, str(raw)], env=env, timeout=1200, capture=False)
+                      STATUS['phase'] = 'original-oci-validation'
+                      envelope = canonical_archive(raw, archive)
+                      header = {'mode': MODE, 'version': 1, 'image': IMAGE, 'configDigest': CONFIG, 'sourceRevision': SOURCE,
+                                'publicationRunId': PUBLICATION_RUN, 'publicationRevision': PUBLICATION,
+                                'controlRevision': control, 'transportRunId': int(transport), 'receiverSha256': RECEIVER_SHA, **envelope}
+                      receipt = transfer(archive, header, private)
+                  STATUS.update(status='staged-only', phase='completed', publication=proof, receiver=receipt,
+                                exporter={'version': TOOL_VERSION, 'assetId': TOOL_ASSET, 'sha256': TOOL_SHA},
+                                runnerPrivateFilesRemoved=not private.exists())
+              except Exception as error:
+                  STATUS.update(status='failed', message=safe_message(error))
+                  print(safe_message(error), file=sys.stderr)
+              output.write_text(json.dumps(STATUS, indent=2) + '\n')
+              output.chmod(0o600)
+              need(STATUS['status'] == 'staged-only', 'OCI relay did not complete; no automatic repeat is allowed')
+              print('Approved Weave OCI content cached; no business service started.')
+
+
+          if __name__ == '__main__':
+              try:
+                  main()
+              except Exception as error:
+                  print(safe_message(error), file=sys.stderr)
+                  sys.exit(1)
+          PY
+      - name: Keep only the sanitized receipt, never the private OCI archive
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: weave-oci-relay-${{ github.run_id }}
+          path: .build/weave-oci-relay-receipt.json
+          if-no-files-found: ignore
+          retention-days: 3
