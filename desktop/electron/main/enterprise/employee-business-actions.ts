@@ -65,18 +65,44 @@ function faithfulValues(prompt: string, values: EmployeeBusinessRequest['values'
     if (!selected) throw new Error('办理参数必须来自本轮员工明确原文；请明确提供准确日期、名称、金额和业务选项')
   }
 }
-/** The current native label is an instruction only in the employee's new request, not in discussion. */
-function directoryLabelIntent(prompt: string, label: string): { accepted: boolean; blocked: boolean } {
-  if (!prompt.includes(label)) return { accepted: false, blocked: false }
-  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const blocked = /(?:只读|查看|只看看|只分析|讨论|了解|解释|介绍|如果|假如|除非|倾向|建议|你觉得|是否|能否|可否|如何|怎么|什么意思|是什么|不要|暂不|先不|禁止|不得|不想|不需要|先别|[?？])/.test(prompt)
-    || new RegExp(`(?:不|别)\\s*${escaped}`).test(prompt)
-  const accepted = !blocked && prompt.split(/[，,。；;！!\n]/).some(part => {
+/** Negation of another named step is not negation of the current directory action. */
+function directoryActionIntent(prompt: string, label?: string, draft = false): boolean {
+  if (/(?:只读|只看看|只分析|只查看|仅查看|讨论|了解|解释|介绍|如果|假如|除非|倾向|建议|你觉得|是否|能否|可否|如何|怎么|什么意思|是什么|算了|暂停|先等等|不授权|[?？])/.test(prompt)) return false
+  const verbs = '办理|登记|记录|提交|创建|新增|新建|补充|修改|转换|转为|转成|生成|确认|同意|批准|保存|更新|执行|启动|操作|转|建|补'
+  const canonical = (verb: string) => /^(?:转换|转为|转成|转)$/.test(verb) ? '转' : /^(?:创建|新增|新建|建)$/.test(verb) ? '创建' : verb === '补' ? '补充' : verb === '记录' ? '登记' : verb
+  const currentVerb = label?.match(new RegExp(`^(?:${verbs})`))?.[0]
+  const negative = new RegExp(`(?:不要|暂不|先不|禁止|不得|不想|不需要|不再|先别|别(?=(?:${verbs}))|不(?=(?:${verbs})))`)
+  const normalize = (text: string) => text.replace(/转换为|转换成|转为|转成/g, '转').replace(/当前|这份|本次|\s/g, '')
+  let accepted = false
+  for (const part of prompt.split(/[，,。；;！!\n]/)) {
     const clause = part.trim()
-    return new RegExp(`^(?:请(?:你|帮我|协助我)?|帮我|麻烦(?:你)?|现在|立即)\\s*${escaped}`).test(clause)
-      || new RegExp(`^${escaped}(?:一下|吧)?$`).test(clause)
-  })
-  return { accepted, blocked }
+    if (negative.test(clause)) {
+      const deniedVerbs = clause.match(new RegExp(verbs, 'g')) ?? []
+      // Unscoped stop, same action, or generic execution denial always wins, even after a positive clause.
+      if (!currentVerb || !deniedVerbs.length || deniedVerbs.some(verb => canonical(verb) === canonical(currentVerb) || /^(?:办理|执行|操作)$/.test(verb))
+        || label && normalize(clause).includes(normalize(label))) return false
+      continue
+    }
+    const escaped = label ? normalize(label).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : undefined
+    const normalizedClause = normalize(clause)
+    const labelRequest = escaped && (new RegExp(`^(?:请(?:你|帮我|协助我)?|帮我|麻烦(?:你)?|现在|立即)\\s*${escaped}`).test(normalizedClause)
+      || new RegExp(`^${escaped}(?:一下|吧)?$`).test(normalizedClause))
+    const directive = /^(?:请|帮我|麻烦|现在|立即|那就|就|先(?!前)|按|把|将)/.test(clause)
+    const imperativeVerb = /^(?:办理|登记|提交|创建|新增|新建|补充|修改|转换|转为|转成|生成|确认|同意|批准|保存|更新|执行|启动)/.test(clause)
+    const historicalStatement = /(?:上一轮|上次|先前|曾经|之前|已经|已完成|失败了|成功了|完成了|他说|对方说|模型说)/.test(clause)
+    const requestedVerb = clause.match(new RegExp(verbs))?.[0]
+    const target = currentVerb && label ? normalize(label.slice(currentVerb.length)) : undefined
+    // A bound object may be omitted from a completed-state target, but another explicit object cannot replace it.
+    const completedTarget = target?.match(/^.+?(已.+)$/)?.[1]
+    const requestedTarget = requestedVerb ? normalize(clause.slice(clause.indexOf(requestedVerb) + requestedVerb.length)).replace(/(?:一下|吧)$/, '') : undefined
+    const sameAction = currentVerb && requestedVerb && canonical(currentVerb) === canonical(requestedVerb)
+      && Boolean(target && normalizedClause.includes(target) || completedTarget && requestedTarget === completedTarget)
+    accepted ||= !historicalStatement && (Boolean(labelRequest) || (directive || imperativeVerb) && Boolean(sameAction)
+      || draft && directive && /(?:建吧|补吧)/.test(clause)
+      // Without a fresh directory this can only reach the existing pending-operation lookup, never a new write.
+      || !label && (directive || imperativeVerb) && Boolean(requestedVerb))
+  }
+  return accepted
 }
 /** Current employee actions share the native action entry point, with durable unknown-result fencing. */
 export class EmployeeBusinessActions {
@@ -152,12 +178,7 @@ export class EmployeeBusinessActions {
     if (turn.readOnly) throw new Error('打开业务事项只授权查看，请在新的员工消息中明确办理')
     const directory = this.directories.get(sessionKey(turn.accountKey, turn.sessionPath))
     const selectedDraft = directory?.messageId === turn.messageId ? directory.context.actions.find(item => item.action_ref === raw.action_ref) : undefined
-    const labelIntent = selectedDraft ? directoryLabelIntent(turn.employeePrompt, selectedDraft.label) : undefined
-    if (labelIntent?.blocked) throw new Error('请在本轮明确要求办理当前业务动作，讨论、否定、条件或问题不授权执行')
-    if (selectedDraft && isDraftAction(selectedDraft) && /(?:如果|假如|除非|倾向|建议|你觉得|是否|能否|(?:不要|先不|暂不|别|不)(?:建|补))/.test(turn.employeePrompt)) throw new Error('建议、条件或否定不授权办理，请明确当前要求')
-    const shortDraftAuthorization = selectedDraft && isDraftAction(selectedDraft) && /(?:建吧|补吧)/.test(turn.employeePrompt)
-    if (!(labelIntent?.accepted || shortDraftAuthorization || /(办理|登记|提交|创建|新增|新建|补充|修改|转换|转为|转成|生成.*订单|确认|同意|批准|保存|更新|执行|启动)/.test(turn.employeePrompt))
-      || /(只读|仅查看|只看看|只分析|不授权|(?:不要|暂不|先不|禁止|不得|不想|不需要|不)(?:办理|登记|提交|创建|新增|新建|补充|修改|转换|确认|保存|更新|执行|启动))/.test(turn.employeePrompt)) throw new Error('请在本轮明确要求办理当前业务动作')
+    if (!directoryActionIntent(turn.employeePrompt, selectedDraft?.label, Boolean(selectedDraft && isDraftAction(selectedDraft) && selectedDraft.capabilityId !== 'forge:action:forge_quotation.quotation_convert_to_contract'))) throw new Error('请在本轮明确要求办理当前业务动作')
     const selection = await this.selection(turn.accountKey, turn.sessionPath)
     if (!selection) throw new Error('当前没有已读取的业务目标')
     if ('objectName' in selection && (/[?？]/.test(turn.employeePrompt) || /(?:只|仅|先).{0,3}(?:查看|查询|看看|了解|分析|列出)|(?:如何|怎么|怎样|哪些字段|什么信息)/.test(turn.employeePrompt))) throw new Error('查看创建要求不授权写入，请在新消息中明确要求创建')

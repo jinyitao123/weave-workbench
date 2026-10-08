@@ -13,7 +13,7 @@ export interface DraftFieldEvidence {
 export type DraftEvidence = Record<string, DraftFieldEvidence>
 export function isDraftAction(action: EmployeeBusinessAction): boolean {
   return ['forge:action:forge_sales_lead.sales_lead_create', 'forge:action:forge_quotation.sales_quotation_draft_create',
-    'forge:action:forge_sales_contract.contract_draft_payment_term_update'].includes(action.capabilityId)
+    'forge:action:forge_sales_contract.contract_draft_payment_term_update', 'forge:action:forge_quotation.quotation_convert_to_contract'].includes(action.capabilityId)
 }
 const escapeRegex = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const clauses = (text: string) => text.split(/[，,。；;\n]/).map(value => value.trim()).filter(Boolean)
@@ -21,8 +21,29 @@ const excluded = (text: string, estimate = false) => /(?:不要|不用|不选|�
 const hasCode = (text: string, code: string) => new RegExp(`(?<![A-Za-z0-9_-])${escapeRegex(code)}(?![A-Za-z0-9_-])`).test(text)
 const numberPattern = (value: number) => `(?<![\\d.\\-])${escapeRegex(String(value))}(?![\\d.])`
 const chineseQuantity: Record<string, number> = { 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10 }
-function matches(text: string, field: string, value: EmployeeBusinessValue, label?: string, estimate = false): boolean {
+const conversionFields: Record<string, string[]> = {
+  name: ['合同名称', '名称'], code: ['合同编号', '编号'], contract_type_id: ['合同类型', '类型'],
+  starts_on: ['生效日期', '生效'], ends_on: ['到期日期', '到期'],
+}
+function conversionDateMatches(text: string, field: string, value: EmployeeBusinessValue): boolean {
+  if (typeof value !== 'string' || /或|待定|左右|大约/.test(text)) return false
+  const names = conversionFields[field].join('|')
+  const found = [...text.matchAll(new RegExp(`(?:${names})\\s*[：:]?\\s*(?:(\\d{4})年(\\d{1,2})月(\\d{1,2})日|(\\d{4})-(\\d{2})-(\\d{2}))`, 'g'))]
+  if (found.length !== 1) return false
+  const parts = found[0][1] ? found[0].slice(1, 4) : found[0].slice(4, 7)
+  const date = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`
+  return date === value && Number.isFinite(Date.parse(`${date}T00:00:00Z`)) && new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) === date
+}
+function conversionFieldAssignment(text: string, field: string): boolean {
+  return conversionFields[field].some(name => new RegExp(`${name}\\s*(?:就)?(?:用|改|换|更换|变更|调整|是|为|设|定|不要|不用|不再|取消|[:：]|\\d{4})|(?:不要|不用|不再|取消)\\s*${name}`).test(text))
+}
+function matches(text: string, field: string, value: EmployeeBusinessValue, label?: string, estimate = false, conversionField?: string): boolean {
   if (excluded(text, estimate)) return false
+  if (conversionField) {
+    if (['starts_on', 'ends_on'].includes(conversionField)) return conversionDateMatches(text, conversionField, value)
+    const assigned = text.match(new RegExp(`^(?:${conversionFields[conversionField].join('|')})\\s*(?:就)?(?:用|为|是|设为|定为|改为|改成|换成|换为)?\\s*[：:]?\\s*(.+)$`))?.[1]
+    return Boolean(assigned && (assigned.includes(String(value)) || label && assigned.includes(label)))
+  }
   if (typeof value !== 'number') return text.includes(String(value)) || Boolean(label && text.includes(label))
   const number = numberPattern(value)
   if (estimate) return /(?:估算|预估|估计|预计|内部.{0,4}大概)/.test(text) && new RegExp(number).test(text)
@@ -61,6 +82,9 @@ export function proveDraftInputs(options: {
   rawSources: unknown; sources: BusinessInputSource[]; conflictSources?: BusinessInputSource[]; messageId: string; previous?: DraftEvidence
 }): DraftEvidence {
   const { context, selection, action, values, lineItems, sources, messageId, previous } = options
+  const conversion = action.capabilityId === 'forge:action:forge_quotation.quotation_convert_to_contract'
+  if (conversion && (!('record' in selection) || selection.record.objectName !== 'forge_quotation' || lineItems !== undefined
+    || Object.keys(values).some(field => !(field in conversionFields)))) throw new Error('报价转合同仅允许当前报价及声明的合同草稿字段')
   const paths = Object.keys(values).map(name => `values.${name}`)
   for (const [index, row] of (lineItems ?? []).entries()) for (const name of Object.keys(row)) paths.push(`lineItems.${index}.${name}`)
   const raw = options.rawSources === undefined ? {} : requireRecord(options.rawSources, 'input_sources')
@@ -130,11 +154,16 @@ export function proveDraftInputs(options: {
     const mapped = parameter.enumLabels?.find(entry => entry.value === value)
     const label = field === 'line_type' && value === 'service' && parameter.enum?.includes('service') ? '服务' : mapped && parameter.enumLabels?.filter(entry => entry.label === mapped.label).length === 1 ? mapped.label : undefined
     const estimate = action.capabilityId === 'forge:action:forge_sales_lead.sales_lead_create' && !row && field === 'estimated_amount'
-    const fragments = sourceClauses(source, row, field, anchors).filter(part => matches(part, field, value, label, estimate))
+    const conversionField = conversion ? field : undefined
+    const fragments = sourceClauses(source, row, field, anchors).filter(part => matches(part, field, value, label, estimate, conversionField))
     if (!fragments.length) throw new Error('参数缺少准确员工来源或明细归属，请只补充尚不明确的字段')
     if (source.messageId !== messageId) {
-      const conflicting = conflictSources.filter(item => item.eventSeq > source.eventSeq).some(item => relevant(item, row, field, parameter.label, anchors)
-        .some(part => !excluded(part, estimate) && !matches(part, field, value, label, estimate) && (typeof value !== 'number' || /\d/.test(part))))
+      const conversionChanged = conversion && conflictSources.filter(item => item.eventSeq > source.eventSeq).some(item => clauses(item.text).some(part => conversionFieldAssignment(part, field)
+        && !/(?:如果|假如|除非|建议|你觉得|是否|能否|[?？])/.test(part)
+        && (/(?:改|换|变更|调整|不要|不用|不再|取消)/.test(part) || !matches(part, field, value, label, estimate, conversionField))))
+      if (conversionChanged) throw new Error('合同草稿字段有后续更正，请核对最新员工输入')
+      const conflicting = !conversion && conflictSources.filter(item => item.eventSeq > source.eventSeq).some(item => relevant(item, row, field, parameter.label, anchors)
+        .some(part => !excluded(part, estimate) && !matches(part, field, value, label, estimate, conversionField) && (typeof value !== 'number' || /\d/.test(part))))
       if (conflicting) throw new Error('该字段有后续不同表述，请明确最新值，不能沿用历史数字或对象')
     }
     output[path] = { value, source: { ...source, text: source.text }, ...(row && field === 'quantity' ? { lineFragment: sourceClauses(source, row, field, anchors)[0] } : {}) }
