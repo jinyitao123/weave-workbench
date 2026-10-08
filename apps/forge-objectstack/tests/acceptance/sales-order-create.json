@@ -7,12 +7,12 @@
   "pageId": "page_sales_order_create",
   "status": "review_required",
   "observedAt": "2026-10-08",
-  "reviewedRevision": "170f23771a85d59bea06eb30c933d800af8aac9f",
+  "reviewedRevision": "d23b2ae6c4bab8eaa460cde765546d80ec5950ec",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/sales-order-create.page.ts": "1d9c89a681b08060e318872df052b3d95365e21aeef371e941478160b4da157c",
     "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86",
-    "apps/forge-objectstack/src/objects/sales.object.ts": "0d24c1a46103a8f367f70c69e29257042ae3d5df804d29bd11220f064c65c4d5",
-    "apps/forge-objectstack/src/actions/sales.action.ts": "3412077c1bb354cfd5bb81345bd5a7dc969a9309cddcb37a7964f75127b2c9a2",
+    "apps/forge-objectstack/src/objects/sales.object.ts": "fdd48af726b398bed0a99d7108ae9e7963f8bfd4c0efd3fe43119f4a9a1babc6",
+    "apps/forge-objectstack/src/actions/sales.action.ts": "09e07b9b43ad7f909fc84f070fe360aff54c97ad13aef84c5b558d44d2a3e36b",
     "apps/forge-objectstack/src/permissions/sales-order.permission.ts": "14ce34a26eead8d92fd431a14f81b2ecfe2ef630262a271f612a45b34d510ce0",
     "apps/forge-objectstack/src/plugins/sales-order-domain.ts": "da110816f063af56df448f2b1cd269bb2eaf85dd3fc3709b34ee1c7d30a72349",
     "apps/forge-objectstack/src/plugins/sales-order-readiness.ts": "a6012da6f06e67b4559d1554acfeeefdcb586ab0264cad952718a4a9b96e1c57",
@@ -31,7 +31,7 @@
   "checks": {
     "requirements": {
       "status": "pending",
-      "notes": "2026-10-08因Console升级到ObjectUI df41f84e（上游PR #3、#4，新增默认关闭的表格空结果显示与带标签行编辑选项）并改用Node 24.21.0构建而重新绑定依赖指纹；本页源码未使用这些新增选项，默认行为不变依据上游PR的测试与说明，未重做GUI对照；所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08仅因Console生成规则固定压缩输出并规范gzip系统头而重新绑定依赖指纹；完整逐文件对照证明页面内容未变，所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 603e8ab3e32c19e84bb86243989df3aa2501ffd2，不作为新版本整体通过。当前为局部实现／补证，全页面、正常业务、独立评审及必要持久化／性能未完成。",
+      "notes": "2026-10-08因服务报价新增多行明细（报价项目、整单折扣与付款约定；订单创建页源码未改动该入口）而更改共用对象、动作与服务工作台页面源码，重新绑定依赖指纹；本页要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08因Console升级到ObjectUI df41f84e（上游PR #3、#4，新增默认关闭的表格空结果显示与带标签行编辑选项）并改用Node 24.21.0构建而重新绑定依赖指纹；本页源码未使用这些新增选项，默认行为不变依据上游PR的测试与说明，未重做GUI对照；所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08仅因Console生成规则固定压缩输出并规范gzip系统头而重新绑定依赖指纹；完整逐文件对照证明页面内容未变，所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 603e8ab3e32c19e84bb86243989df3aa2501ffd2，不作为新版本整体通过。当前为局部实现／补证，全页面、正常业务、独立评审及必要持久化／性能未完成。",
       "evidence": []
     },
     "visual": {
