@@ -7,6 +7,7 @@
   "pageId": "page_service_order_create",
   "status": "review_required",
   "observedAt": "2026-10-09",
+  "reviewedRevision": "51b9ef150a008132ddc255f357a8cb741b13fb51",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts": "a1711346e2c76fda59233c2668340578de0f9e681cc98f383b452e4545fca04e",
     "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86",
@@ -606,6 +607,6 @@
     "公共ForgeDialog新增可选className与既有宽度token透传；当前来源版本更新不代表旧业务证据在新版本重验。",
     "本次仅随公共日期控件可选接入更新源码绑定；本页保留旧观察，未在本版本重跑完整业务验收。",
     "本次将本人业务创建与草稿付款条款改动绑定到当前源文件指纹及准确源码提交；原来源为 170f23771a85d59bea06eb30c933d800af8aac9f。所有页面检查与需求仍为 pending，未声明本次业务或页面验收通过。",
-    "合并服务报价多行与本人创建能力后仅重绑当前源码指纹；合并提交生成前暂省略 reviewedRevision，所有页面检查与需求仍为 pending，未进行新 GUI 或业务验收。"
+    "本次合并服务报价多行与本人创建能力，reviewedRevision 仅绑定准确合并源码及对应指纹；所有页面检查与需求仍为 pending，未进行新 GUI 或业务验收。"
   ]
 }
