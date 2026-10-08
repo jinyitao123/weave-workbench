@@ -28,6 +28,56 @@ def plan():
 
 
 class BuildTests(unittest.TestCase):
+    def source_plan_for_toolchain(self, node_version, pnpm_version='10.31.0'):
+        value = plan()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            components = {
+                name: {**component, 'importPath': build.EXPECTED_PATHS[name],
+                       'source': 'https://github.com/example/' + name + '.git'}
+                for name, component in value['components'].items()
+            }
+            (root / 'components.lock.json').write_text(json.dumps({'schemaVersion': 1, 'components': components}))
+            console_file = root / 'platform/forge/apps/forge-objectstack/console94.lock.json'
+            console_file.parent.mkdir(parents=True)
+            console = {**value['console'], 'schemaVersion': 1, 'source': {
+                **value['console']['source'], 'repository': 'https://github.com/example/objectui.git',
+                'nodeVersion': node_version, 'pnpmVersion': pnpm_version,
+            }}
+            console_file.write_text(json.dumps(console))
+
+            def source_git(*args):
+                if args == ('rev-parse', 'HEAD'):
+                    return value['sourceRevision']
+                if args[0] == 'cat-file':
+                    return ''
+                if args[0] == 'rev-parse':
+                    return 'f' * 40  # Each locked source tree matches its imported tree.
+                if args == ('show', components['weave']['revision'] + ':VERSION'):
+                    return value['weaveVersion']
+                self.fail('Unexpected source-plan Git request')
+
+            with patch.object(build, 'ROOT', root), patch.object(build, 'git', side_effect=source_git):
+                result = build.source_plan(value['repository'], value['sourceRevision'], value['bundleVersion'])
+                self.assertEqual(result['consoleLockSha256'], build.digest_file(console_file))
+                self.assertEqual(result['components'], components)
+                return result
+
+    def test_source_plan_preserves_each_exact_reviewed_console_toolchain(self):
+        for node_version in ('24.19.0', '24.21.0'):
+            with self.subTest(node_version=node_version):
+                result = self.source_plan_for_toolchain(node_version)
+                self.assertEqual(result['console']['source']['nodeVersion'], node_version)
+                self.assertEqual(result['console']['source']['pnpmVersion'], '10.31.0')
+
+    def test_source_plan_rejects_unreviewed_node_and_changed_pnpm(self):
+        for node_version, pnpm_version in [('24.20.0', '10.31.0'), ('24.21.1', '10.31.0'),
+                                           ('25.0.0', '10.31.0'), ('latest', '10.31.0'),
+                                           ('24.21.0', '10.32.0')]:
+            with self.subTest(node_version=node_version, pnpm_version=pnpm_version):
+                with self.assertRaisesRegex(build.BuildError, 'Console source/toolchain lock'):
+                    self.source_plan_for_toolchain(node_version, pnpm_version)
+
     def test_reject_floating_or_credential_image_references(self):
         for value in ['postgres:latest', 'image@unknown', 'https://user:password@registry/image',
                       'registry/image:latest@sha256:' + 'a' * 64,
