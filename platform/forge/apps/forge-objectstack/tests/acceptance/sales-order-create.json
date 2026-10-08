@@ -6,17 +6,17 @@
   "target": "page_sales_order_create",
   "pageId": "page_sales_order_create",
   "status": "review_required",
-  "observedAt": "2026-10-08",
-  "reviewedRevision": "d2b114beb98fbc067e83f1fc299e635159d09579",
+  "observedAt": "2026-10-09",
+  "reviewedRevision": "51b9ef150a008132ddc255f357a8cb741b13fb51",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/sales-order-create.page.ts": "1d9c89a681b08060e318872df052b3d95365e21aeef371e941478160b4da157c",
     "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86",
-    "apps/forge-objectstack/src/objects/sales.object.ts": "0d24c1a46103a8f367f70c69e29257042ae3d5df804d29bd11220f064c65c4d5",
-    "apps/forge-objectstack/src/actions/sales.action.ts": "3412077c1bb354cfd5bb81345bd5a7dc969a9309cddcb37a7964f75127b2c9a2",
+    "apps/forge-objectstack/src/objects/sales.object.ts": "34a7c6d8d0f3b470ae5ae355840a9744118f1ac918f96f6e3f0e8bd6f4b5d3bd",
+    "apps/forge-objectstack/src/actions/sales.action.ts": "9aea8d1d0216cc6a28f9262a4c53725ffbc29931bc37868e708faab65b734ac8",
     "apps/forge-objectstack/src/permissions/sales-order.permission.ts": "14ce34a26eead8d92fd431a14f81b2ecfe2ef630262a271f612a45b34d510ce0",
     "apps/forge-objectstack/src/plugins/sales-order-domain.ts": "da110816f063af56df448f2b1cd269bb2eaf85dd3fc3709b34ee1c7d30a72349",
     "apps/forge-objectstack/src/plugins/sales-order-readiness.ts": "a6012da6f06e67b4559d1554acfeeefdcb586ab0264cad952718a4a9b96e1c57",
-    "apps/forge-objectstack/console94.lock.json": "f3262c62ef435c3a6ddf02c20a0da3bc0555f616b2453f70c1aefc8a1820f126"
+    "apps/forge-objectstack/console94.lock.json": "2173c61b1dbfde3e41794aea490317770d618c9092c990882f2628c19e638cdf"
   },
   "environment": {
     "databaseType": "postgresql",
@@ -31,7 +31,7 @@
   "checks": {
     "requirements": {
       "status": "pending",
-      "notes": "2026-10-08仅因Console生成规则固定压缩输出并规范gzip系统头而重新绑定依赖指纹；完整逐文件对照证明页面内容未变，所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 603e8ab3e32c19e84bb86243989df3aa2501ffd2，不作为新版本整体通过。当前为局部实现／补证，全页面、正常业务、独立评审及必要持久化／性能未完成。",
+      "notes": "2026-10-08因服务报价新增多行明细（报价项目、整单折扣与付款约定；订单创建页源码未改动该入口）而更改共用对象、动作与服务工作台页面源码，重新绑定依赖指纹；本页要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08因Console升级到ObjectUI df41f84e（上游PR #3、#4，新增默认关闭的表格空结果显示与带标签行编辑选项）并改用Node 24.21.0构建而重新绑定依赖指纹；本页源码未使用这些新增选项，默认行为不变依据上游PR的测试与说明，未重做GUI对照；所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08仅因Console生成规则固定压缩输出并规范gzip系统头而重新绑定依赖指纹；完整逐文件对照证明页面内容未变，所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 603e8ab3e32c19e84bb86243989df3aa2501ffd2，不作为新版本整体通过。当前为局部实现／补证，全页面、正常业务、独立评审及必要持久化／性能未完成。",
       "evidence": []
     },
     "visual": {
@@ -457,6 +457,8 @@
     "来源读取是时点观察；创建前的并发变化仍由原后端动作权威校验，前端读取不构成原子快照。",
     "原订单复核的自定义列表受限失败已保留；原生详情／关联页成功不代表该列表成功或独立评审。",
     "公共ForgeDialog新增可选className与既有宽度token透传；当前来源版本更新不代表旧业务证据在新版本重验。",
-    "本次仅随公共日期控件可选接入更新源码绑定；本页保留旧观察，未在本版本重跑完整业务验收。"
+    "本次仅随公共日期控件可选接入更新源码绑定；本页保留旧观察，未在本版本重跑完整业务验收。",
+    "本次将本人业务创建与草稿付款条款改动绑定到当前源文件指纹及准确源码提交；原来源为 170f23771a85d59bea06eb30c933d800af8aac9f。所有页面检查与需求仍为 pending，未声明本次业务或页面验收通过。",
+    "本次合并服务报价多行与本人创建能力，reviewedRevision 仅绑定准确合并源码及对应指纹；所有页面检查与需求仍为 pending，未进行新 GUI 或业务验收。"
   ]
 }

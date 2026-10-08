@@ -8,7 +8,8 @@ import { master, text, code, reference, remarks, required } from '../model.js';
  */
 export const ProjectMemberPositionAssignment = master('forge_project_member_position_assignment', '项目成员岗位分配', 'briefcase-business', {
   name: text('岗位分配名称', true),
-  assignment_key: { ...code('分配关系编号'), hidden: true, readonly: true },
+  // Three native varchar(255) identifiers plus two separators retain the existing key format.
+  assignment_key: { ...code('分配关系编号'), maxLength: 767, hidden: true, readonly: true },
   project_id: Field.masterDetail('forge_project', { label: '所属项目', deleteBehavior: 'cascade', ...required }),
   member_id: reference('forge_project_member', '项目成员', true),
   position_id: reference('sys_position', '组织岗位', true),

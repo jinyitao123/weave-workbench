@@ -11,6 +11,7 @@ import {
 import { serviceDispatchPanelHelpersSource } from './sales-service-dispatch.panel.js';
 import { servicePersonalWorkspacePanelHelpersSource } from './sales-service-personal-workspace.panel.js';
 import { servicePersonalMetricsHelpersSource } from './sales-service-metrics.panel.js';
+import { serviceQuotationLinesHelpersSource } from '../actions/service-quotation-lines.logic.js';
 import { serviceTypeCatalogHelpersSource } from './sales-service-type-catalog.panel.js';
 import { serviceWarrantyOverviewHelpersSource } from './sales-service-warranty-overview.panel.js';
 import { serviceAnalysisRangeHelpersSource } from './sales-service-analysis-range.panel.js';
@@ -101,7 +102,7 @@ const serviceCss = JSON.stringify(forgeProductUiCss + `
 .forge-sales-service .ss-personal-table table{min-width:760px}
 .forge-sales-service .ss-personal-sidebar{display:grid;gap:14px;align-content:start}
 .forge-sales-service .ss-personal-quick-card{border:1px solid var(--fp-line);border-radius:7px;padding:10.5px;background:var(--fp-surface);--ui-control-font-size:11.5px;--ui-control-line-height:17.25px;--ui-document-section-plain-header-height:18.75px;--ui-document-section-plain-icon-size:13px;--ui-document-section-plain-inline-gap:5.25px;--ui-document-section-plain-title-font-size:12.5px;--ui-document-section-plain-title-line-height:18.75px}.forge-sales-service .ss-personal-quick-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5.25px;font-weight:500}
-.forge-sales-service .ss-personal-quick-links .fp-button{display:flex;gap:5.25px;align-items:center;width:100%;min-width:0;height:auto;min-height:29.75px;justify-content:center;padding:5.25px 7px;border-radius:3.5px;font-size:11.5px;line-height:17.25px;font-weight:500;white-space:normal;box-shadow:none}
+.forge-sales-service .ss-personal-quick-links .fp-button{display:flex;gap:5.25px;align-items:center;width:100%;min-width:0;height:auto;min-height:29.75px;justify-content:center;padding:5.25px 7px;border-radius:3.5px;font-size:11.5px;line-height:17.25px;font-weight:500;white-space:normal;box-shadow:none}.forge-sales-service .ss-quote-editor{display:grid;gap:21px;min-width:0;--ui-grid-field-row-min-width:1040px;--ui-grid-field-row-template:90px minmax(0,1.8fr) minmax(0,1.2fr) 70px 70px minmax(0,1fr) 90px;--ui-grid-field-row-gap:7px;--ui-grid-field-row-control-height:35.5px;--ui-grid-field-row-select-height:28px;--ui-control-height:28px}.forge-sales-service .ss-quote-totals{display:flex;align-items:center;justify-content:flex-end;gap:17.5px;flex-wrap:wrap;margin-top:14px;font-size:12.25px}.forge-sales-service .ss-quote-totals .fp-field{max-width:120px;margin-right:auto}
 .forge-sales-service .ss-personal-panel{border:1px solid var(--fp-line);border-radius:0 0 7px 7px;background:var(--fp-surface);padding:17.5px}.forge-sales-service .ss-personal-workspace{grid-template-columns:minmax(0,1fr);--ui-document-workspace-gap:14px}.forge-sales-service .ss-personal-main{gap:14px}.forge-sales-service .ss-personal-empty{height:100px;min-height:100px;padding:0;gap:0}.forge-sales-service .ss-personal-empty.today{height:140px;min-height:140px}.forge-sales-service .ss-personal-empty-title{font-size:12.25px;line-height:17.5px;font-weight:500;margin:10.5px 0 0;color:var(--fp-muted)}.forge-sales-service .ss-personal-empty-description{font-size:10.5px;line-height:14px;font-weight:400;margin:3.5px 0 0;max-width:none}.forge-sales-service .ss-personal-sidebar{gap:10.5px}.forge-sales-service .ss-personal-sidebar-cards{grid-template-columns:minmax(0,1fr)}.forge-sales-service .ss-personal-workspace [data-slot="document-section-count"]{--ui-document-section-plain-count-radius:3.5px}@media(min-width:1280px){.forge-sales-service .ss-personal-workspace{grid-template-columns:minmax(0,1fr) 320px}}
 .forge-sales-service .ss-personal-date{margin:0;color:var(--fp-muted);font-size:12.25px;line-height:17.5px}
 .forge-sales-service .ss-personal-order-toolbar{margin:0 0 10.5px;--ui-workspace-toolbar-gap:7px}
@@ -196,6 +197,7 @@ const css=${serviceCss};
 ${serviceDispatchPanelHelpersSource}
 ${servicePersonalWorkspacePanelHelpersSource}
 ${servicePersonalMetricsHelpersSource}
+${serviceQuotationLinesHelpersSource}
 ${serviceTypeCatalogHelpersSource}
 ${serviceWarrantyOverviewHelpersSource}
 ${serviceAnalysisRangeHelpersSource}
@@ -470,7 +472,15 @@ function App(){
     setNotice(null);
     setSelected({objectName,record:row,loading:true});
     readRecord(objectName,row.id)
-      .then(record=>{if(session===detailLoadSession.current)setSelected({objectName,record,loading:false})})
+      .then(async record=>{
+        let quotationLines=null,linesError='';
+        if(objectName==='forge_service_quotation')try{
+          const response=unwrap(await request('/actions/forge_service_quotation/service_quotation_read_lines/'+encodeURIComponent(record.id),{method:'POST',body:JSON.stringify({params:{}})}));
+          if(!response||!Array.isArray(response.lines)||Number(response.revision)!==Number(record.revision??1))throw new Error('报价已变化，请重新打开核对');
+          quotationLines=response;
+        }catch(error){linesError=String(error&&error.message||error)}
+        if(session===detailLoadSession.current)setSelected({objectName,record,loading:false,quotationLines,linesError});
+      })
       .catch(error=>{if(session===detailLoadSession.current){setSelected(null);setNotice({tone:'error',text:String(error&&error.message||error)})}});
   }
   function openAction(action){
@@ -490,7 +500,24 @@ function App(){
     }
     if(action.kind==='quote'){const values={total_amount:'',valid_until:''};setDialog({kind:'quote-from-order',action,record:selected.record,values,baseline:{...values},error:''});return}
     if(action.kind==='settlement'){const values={total_amount:''};setDialog({kind:'settlement-from-order',action,record:selected.record,values,baseline:{...values},error:''});return}
-    if(action.kind==='quote-draft-edit'){const values={total_amount:selected.record.total_amount??'',valid_until:servicePersonalDateKey(selected.record.valid_until)||'',remarks:selected.record.remarks||''};setDialog({kind:'quote-draft-edit',action,record:selected.record,values,baseline:{...values},idempotency_key:idempotencyKey(),error:''});return}
+    if(action.kind==='quote-draft-edit'){
+      const record=selected.record,values={total_amount:record.total_amount??'',valid_until:servicePersonalDateKey(record.valid_until)||'',remarks:record.remarks||'',pricing_mode:record.pricing_mode||'estimated',payment_mode:record.payment_mode||'full_prepayment',discount_rate:record.discount_rate??0};
+      const loadKey=idempotencyKey();setDialog({kind:'quote-draft-edit',action,record,values,baseline:{...values},idempotency_key:idempotencyKey(),loadKey,loading:true,lines:[],lineBaseline:[],catalogs:{service:[],part:[]},error:''});
+      Promise.all([
+        request('/actions/forge_service_quotation/service_quotation_read_lines/'+encodeURIComponent(record.id),{method:'POST',body:JSON.stringify({params:{}})}).then(unwrap),
+        readServiceRecordPages(path=>request(path),'forge_service_config_item',{category:'fee_type',status:'active'},100,5000,'收费项目').catch(error=>({complete:false,rows:[],error:String(error&&error.message||error)})),
+        readServiceRecordPages(path=>request(path),'forge_material_sku',{enabled:true},100,5000,'备件规格').catch(error=>({complete:false,rows:[],error:String(error&&error.message||error)})),
+      ]).then(([data,service,part])=>{
+        if(!data||!Array.isArray(data.lines)||Number(data.revision)!==Number(record.revision??1))throw new Error('报价已变化，请重新打开核对');
+        const rows=data.lines.map(row=>({...row,_key:row.id}));
+        const catalogAvailable=service.complete&&!service.unavailable&&part.complete&&!part.unavailable;
+        const catalogs={service:service.complete?service.rows.map(row=>({value:String(row.id),label:String(row.name||row.code||'收费项目')})):[],part:part.complete?part.rows.map(row=>({value:String(row.id),label:[row.code,row.name].filter(Boolean).join(' · ')})):[]};
+        let unavailableItems=0;
+        for(const row of rows){const options=catalogs[row.line_type];if(options&&!options.some(option=>option.value===String(row.item_id)))unavailableItems++}
+        setDialog(current=>current?.loadKey===loadKey?{...current,loading:false,lines:rows,lineBaseline:rows.map(row=>({...row})),lineMode:rows.length>0,catalogAvailable,catalogError:catalogAvailable?'':'报价目录读取不完整，暂不能添加或保存项目。',unavailableItems,catalogs}:current);
+      }).catch(error=>setDialog(current=>current?.loadKey===loadKey?{...current,loading:false,loadFailed:true,error:String(error&&error.message||error)}:current));
+      return;
+    }
     if(action.kind==='complete'){const values={service_hours:'',treatment_record:'',service_result:''};setDialog({kind:'complete',action,record:selected.record,step:'form',values,baseline:{...values},files:[],uploadedFileIds:[],error:''});return}
     if(action.kind==='warranty-activate'){const values={starts_on:selected.record.starts_on||today,ends_on:selected.record.ends_on||'',idempotency_key:idempotencyKey()};setDialog({kind:'warranty-activate',action,record:selected.record,values,baseline:{...values},error:''});return}
     if(action.kind==='warranty-extend'){const values={ends_on:'',note:'',idempotency_key:idempotencyKey()};setDialog({kind:'warranty-extend',action,record:selected.record,values,baseline:{...values},error:''});return}
@@ -532,8 +559,9 @@ function App(){
         actionResult=await runAction('forge_service_order','service_order_create_quotation',current.record.id,{total_amount:values.total_amount,valid_until:values.valid_until});
         targetObject='forge_service_quotation';targetId=String(actionResult&&actionResult.id||'');sourceObject='forge_service_order';sourceId=String(current.record.id);
       }else if(current.kind==='quote-draft-edit'){
-        const values=await validatedValues();
-        const patch={total_amount:values.total_amount,valid_until:values.valid_until,remarks:values.remarks??''};
+        let patch;
+        if(current.lineMode){patch=quoteLineDraft(current);normalizeServiceQuotationDraft(JSON.stringify(patch))}
+        else{const values=await validatedValues();patch={total_amount:values.total_amount,valid_until:values.valid_until,remarks:values.remarks??''}}
         actionResult=await runAction('forge_service_quotation','service_quotation_save_draft',current.record.id,{draft_json:JSON.stringify(patch),expected_revision:Number(current.record.revision??1),idempotency_key:current.idempotency_key});
         targetObject='forge_service_quotation';targetId=String(current.record.id);
       }else if(current.kind==='settlement-from-order'){
@@ -619,7 +647,8 @@ function App(){
   }
   const emptyValue=value=>value==null||(Array.isArray(value)&&!value.length)?'':value;
   const standaloneOrderDirty=Boolean(dialog&&Object.keys(dialog.values||{}).filter(name=>formFields.includes(name)).some(name=>JSON.stringify(emptyValue(dialog.values[name]))!==JSON.stringify(emptyValue(dialog.baseline?.[name]??serviceOrderFormDefaults[name]))));
-  const formDirty=servicePage.standaloneCreate?standaloneOrderDirty:Boolean(dialog&&((dialog.values&&dialog.baseline&&JSON.stringify(dialog.values)!==JSON.stringify(dialog.baseline))||(dialog.files&&dialog.files.length)));
+  const linesDirty=Boolean(dialog&&dialog.lines&&dialog.lineBaseline&&JSON.stringify(dialog.lines)!==JSON.stringify(dialog.lineBaseline));
+  const formDirty=linesDirty||(servicePage.standaloneCreate?standaloneOrderDirty:Boolean(dialog&&((dialog.values&&dialog.baseline&&JSON.stringify(dialog.values)!==JSON.stringify(dialog.baseline))||(dialog.files&&dialog.files.length))));
   function requestCreateCancel(){if(busy)return;if(formDirty)setConfirmCreateCancel(true);else ForgeNavigate('/_console/apps/com.inoforge.forge.sales/page_service_orders')}
   const sourceName=dialog&&dialog.record&&(dialog.record.code||dialog.record.name)||'';
   function servicePageActions(record,objectName){
@@ -984,7 +1013,7 @@ function App(){
   function actionButtons(){
     if(!selected)return null;
     if(selected.loading)return null;
-    const actions=servicePageActions(selected.record,selected.objectName);
+    const actions=selected.objectName==='forge_service_quotation'&&selected.linesError?[]:servicePageActions(selected.record,selected.objectName);
     if(!actions.length)return <p className="ss-readonly-note">当前状态没有可办理的操作。</p>;
     return <div className="ss-detail-actions">{actions.map(action=><button type="button" key={action.action} className={'fp-button'+(action.kind==='quote-draft-edit'?'':' primary')} disabled={busy} onClick={()=>openAction(action)}>{action.label}</button>)}</div>;
   }
@@ -993,7 +1022,7 @@ function App(){
     if(dialog.kind==='create-order')return <><p className="ss-readonly-note">请选择客户和来源销售订单。</p>{typeCatalog.error&&<ForgeNotice tone="error">{typeCatalog.error}</ForgeNotice>}{formComponent('forge_service_order',formFields,formView.sections,formView.columns,[serviceOrderSourceField,{...serviceOrderTypeField,widget:'declared-label-combobox',options:typeCatalog.options,readonly:typeCatalog.loading||!typeCatalog.available,placeholder:typeCatalog.loading?'读取服务场景…':typeCatalog.options.length?'请选择服务场景':'暂无启用的服务场景'}])}</>;
     if(dialog.kind==='config-create'||dialog.kind==='config-edit')return <>{formComponent('forge_service_config_item',['name','code','category','status','description','remarks'],[{name:'configuration',label:'服务配置',columns:2,fields:['name','code','category','status','description','remarks']}],2)}</>;
     if(dialog.kind==='quote-from-order')return <><p className="ss-readonly-note">来源工单：{dialog.record.code||dialog.record.name}</p>{formComponent('forge_service_quotation',['total_amount','valid_until'],[{name:'quotation',label:'报价信息',columns:2,fields:['total_amount','valid_until']}],2)}</>;
-    if(dialog.kind==='quote-draft-edit')return <fieldset className="ss-create-fieldset" disabled={busy} aria-busy={busy}>{formComponent('forge_service_quotation',['total_amount','valid_until','remarks'],[{name:'quotation_draft',label:'报价草稿',columns:2,fields:['total_amount','valid_until','remarks']}],2)}</fieldset>;
+    if(dialog.kind==='quote-draft-edit')return renderQuoteDraftEditor();
     if(dialog.kind==='settlement-from-order')return <><p className="ss-readonly-note">来源工单：{dialog.record.code||dialog.record.name}</p>{formComponent('forge_service_settlement',['total_amount'],[{name:'settlement',label:'结算信息',columns:2,fields:['total_amount']}],2)}</>;
     if(dialog.kind==='settlement-from-quote')return <div className="ss-readonly-note">报价单：{dialog.record.code||dialog.record.name} · 将按当前报价金额生成服务结算。</div>;
     if(dialog.kind==='dispatch')return <><p className="ss-readonly-note">工单：{dialog.record.code||dialog.record.name}</p>{dialog.loading?<ForgeLoading label="读取可派服务工程师"/>:<div className="fp-form-grid"><div className="fp-field"><label>服务工程师 *</label><ForgeSelect label="服务工程师" value={dialog.values.engineer_id} options={dialog.engineers.map(engineer=>({value:engineer.id,label:engineer.name}))} onChange={value=>setDialog(current=>({...current,values:{...current.values,engineer_id:value},error:''}))} placeholder="请选择服务工程师" disabled={!dialog.engineers.length}/></div><div className="fp-field"><label>计划日期</label><ForgeDateInput aria-label="计划日期" value={dialog.values.scheduled_at||''} onChange={event=>setDialog(current=>({...current,values:{...current.values,scheduled_at:event.target.value},error:''}))}/></div><div className="fp-field fp-span-2"><label>派工说明 *</label><textarea className="fp-textarea" aria-label="派工说明" value={dialog.values.dispatch_note||''} onChange={event=>setDialog(current=>({...current,values:{...current.values,dispatch_note:event.target.value},error:''}))}/></div></div>}</>;
@@ -1009,6 +1038,46 @@ function App(){
       return <div className="ss-source-picker"><p className="fp-secondary">{useQuotes?'选择一张已确认服务报价。':'选择一张已完工服务工单。'}</p>{dialog.kind==='pick-settlement-source'&&<div className="fp-toolbar"><button type="button" className="fp-button" onClick={openQuoteSettlement}>从已确认报价生成结算</button></div>}<div className="ss-picker-list">{listComponent(view,filters,row=>sourcePicked(dialog.kind,row))}</div></div>;
     }
     return null;
+  }
+  function quoteLineDraft(current){
+    const values=current.values||{};
+    return{valid_until:values.valid_until,remarks:values.remarks||'',pricing_mode:values.pricing_mode,payment_mode:values.payment_mode,discount_rate:values.discount_rate,lines:(current.lines||[]).map(row=>({...((row.id)?{id:String(row.id)}:{}),line_type:row.line_type,item_id:row.item_id||'',description:row.description||'',unit_name:row.unit_name||'',quantity:row.quantity,taxed_unit_price:row.taxed_unit_price}))};
+  }
+  function quoteDraftValue(name,value){if(busy)return;setDialog(current=>current&&current.kind==='quote-draft-edit'?{...current,values:{...current.values,[name]:value},idempotency_key:idempotencyKey(),error:''}:current)}
+  function quoteLinePricing(row){try{return{...row,line_amount:normalizeServiceQuotationLinePricing(row.quantity,row.taxed_unit_price).line_amount}}catch{return{...row,line_amount:null}}}
+  function quoteLineColumn(column,row){
+    if(column.name!=='item_id')return column;
+    let options=dialog.catalogs[row.line_type]||[];
+    if(row.item_id&&!options.some(option=>option.value===String(row.item_id)))options=[...options,{value:String(row.item_id),label:String(row.name||row.item_code||'原报价项目')+'（当前不可选）'}];
+    return{...column,options,placeholder:row.line_type==='part'?'请选择备件规格':'请选择服务项目'};
+  }
+  function renderQuoteDraftEditor(){
+    if(dialog.loading)return <ForgeLoading label="读取报价项目与目录"/>;
+    if(dialog.loadFailed)return <ForgeNotice tone="error">报价项目暂不可用，请关闭后重新打开。</ForgeNotice>;
+    const values=dialog.values||{};
+    function addLine(){if(busy||!dialog.catalogAvailable||dialog.lines.length>=500)return;setDialog(current=>({...current,lineMode:true,lines:[...current.lines,{_key:idempotencyKey(),line_type:'service',item_id:'',description:'',unit_name:'项',quantity:1,taxed_unit_price:''}],idempotency_key:idempotencyKey(),error:''}))}
+    if(!dialog.lineMode)return <fieldset className="ss-create-fieldset" disabled={busy} aria-busy={busy}>{formComponent('forge_service_quotation',['total_amount','valid_until','remarks'],[{name:'legacy_quote',label:'报价草稿',columns:2,fields:['total_amount','valid_until','remarks']}],2)}{dialog.catalogError&&<ForgeNotice tone="error">{dialog.catalogError}</ForgeNotice>}<button type="button" className="fp-button small" disabled={busy||!dialog.catalogAvailable} onClick={addLine}>添加报价项目</button></fieldset>;
+    let totals=null;
+    if(dialog.lineMode){try{totals=normalizeServiceQuotationDraft(JSON.stringify(quoteLineDraft(dialog)))}catch{}}
+    const columns=[
+      {name:'line_type',label:'类别',type:'select',required:true,options:[{value:'service',label:'服务费'},{value:'part',label:'备件'}]},
+      {name:'item_id',label:'项目名称',type:'lookup',required:true,autofill:false,placeholder:'请选择项目'},
+      {name:'description',label:'规格 / 说明',type:'text',placeholder:'服务范围、型号等'},
+      {name:'unit_name',label:'单位',type:'text',required:true,placeholder:'项'},
+      {name:'quantity',label:'数量',type:'number',required:true,min:0.01,step:0.01},
+      {name:'taxed_unit_price',label:'含税单价',type:'currency',required:true,min:0,step:0.01},
+      {name:'line_amount',label:'金额',type:'currency',computed:true,scale:2},
+    ];
+    return <fieldset className="ss-create-fieldset ss-quote-editor" disabled={busy} aria-busy={busy}>
+      {dialog.catalogError&&<ForgeNotice tone="error">{dialog.catalogError}</ForgeNotice>}
+      {dialog.unavailableItems>0&&<ForgeNotice tone="warning">原报价含当前不可选的项目，保存前请重新选择启用项目。</ForgeNotice>}
+      <DocumentSection variant="plain" title="基础信息"><div className="fp-form-grid"><div className="fp-field"><label>报价有效期 *</label><ForgeDateInput aria-label="报价有效期" value={values.valid_until||''} onChange={event=>quoteDraftValue('valid_until',event.target.value)}/></div></div></DocumentSection>
+      <DocumentSection variant="plain" title="报价清单" actions={<button type="button" className="fp-button small" disabled={busy||dialog.lines.length>=500} onClick={addLine}><Icon icon="plus" size={13}/>添加项目</button>}>
+        {dialog.lineMode?<><GridField displayMode="rows" aria-label="报价项目" value={dialog.lines} columns={columns} field={{name:'quote_items',type:'grid',min_rows:1,max_rows:500,allow_add:false,allow_delete:true}} disabled={busy||!dialog.catalogAvailable} getRowKey={row=>row._key||row.id} resolveColumn={quoteLineColumn} computeRow={quoteLinePricing} onChange={rows=>{if(!busy)setDialog(current=>({...current,lines:rows.map(row=>{const old=current.lines.find(value=>(value._key||value.id)===(row._key||row.id));return old&&old.line_type!==row.line_type?{...row,item_id:''}:row}),idempotency_key:idempotencyKey(),error:''}))}}/>
+          <div className="ss-quote-totals"><div className="fp-field"><label htmlFor="service-quote-discount">整单折扣%</label><input id="service-quote-discount" className="fp-input" type="number" min="0" max="100" step="0.1" value={values.discount_rate??0} onChange={event=>quoteDraftValue('discount_rate',event.target.value)}/></div><span>小计 {totals?'¥'+totals.subtotal.toFixed(2):'—'}</span><span>折扣 {totals?'¥'+totals.discount_amount.toFixed(2):'—'}</span><strong>报价合计 {totals?'¥'+totals.total_amount.toFixed(2):'—'}</strong></div></>:formComponent('forge_service_quotation',['total_amount','valid_until','remarks'],[{name:'legacy_quote',label:'报价金额',columns:2,fields:['total_amount','valid_until','remarks']}],2)}
+      </DocumentSection>
+      {dialog.lineMode&&<DocumentSection variant="plain" title="报价条款"><div className="fp-form-grid"><div className="fp-field"><label>报价方式</label><ForgeSelect label="报价方式" value={values.pricing_mode} options={[{value:'estimated',label:'预估费用（以结算为准）'},{value:'fixed',label:'一口价（接受后锁定）'}]} onChange={value=>quoteDraftValue('pricing_mode',value)}/></div><div className="fp-field"><label>付款约定</label><ForgeSelect label="付款约定" value={values.payment_mode} options={[{value:'full_prepayment',label:'全额预收'},{value:'staged',label:'分阶段付款'}]} onChange={value=>quoteDraftValue('payment_mode',value)}/></div><div className="fp-field fp-span-2"><label>报价说明</label><textarea className="fp-textarea" aria-label="报价说明" value={values.remarks||''} onChange={event=>quoteDraftValue('remarks',event.target.value)}/></div></div></DocumentSection>}
+    </fieldset>;
   }
   function dialogTitle(){
     if(!dialog)return '';
@@ -1048,6 +1117,7 @@ function App(){
     if(dialog.kind==='create-order'&&!orderAddressOrigin.current.manual&&servicePerformanceCustomerReferenceId(dialog.values?.customer_id)&&(orderAddressRead.key!==orderSourceKey||orderAddressRead.loading))return false;
     if(['pick-quote-order','pick-settlement-source','pick-settlement-quote'].includes(dialog.kind))return false;
     if(dialog.kind==='dispatch'&&(dialog.loading||!dialog.engineers.length))return false;
+    if(dialog.kind==='quote-draft-edit'&&(dialog.loading||dialog.loadFailed||dialog.lineMode&&!dialog.catalogAvailable))return false;
     return true;
   }
   function submitReady(){
@@ -1066,7 +1136,14 @@ function App(){
     if(!selected)return null;
     const selectedView=selected.objectName==='forge_service_order'?serviceViews.orders:selected.objectName==='forge_service_quotation'?serviceViews.quotations:selected.objectName==='forge_service_settlement'?serviceViews.settlements:selected.objectName==='forge_warranty_card'?serviceViews.warranty:selected.objectName==='forge_service_part_request'?serviceViews.parts:serviceViews.configuration;
     const detailFields=selectedView.form.sections.flatMap(section=>(section.fields||[]).map(field=>typeof field==='string'?field:field.field));
-    return <CompositeDialog open={true} title={selected.record.name||selected.record.code||'业务记录详情'} description={selected.record.code||''} onOpenChange={open=>{if(!open){detailLoadSession.current+=1;setSelected(null)}}} footer={({requestClose})=><div className="ss-detail-actions"><button type="button" className="fp-button" onClick={requestClose}>关闭</button>{actionButtons()}</div>}>{selected.loading?<ForgeLoading label="读取业务记录"/>:<><ObjectForm objectName={selected.objectName} dataSource={adapter} mode="view" recordId={selected.record.id} formType="simple" columns={2} sections={selectedView.form.sections} fields={detailFields} showSubmit={false} showCancel={false} showReset={false}/>{selected.objectName==='forge_warranty_card'&&<section className="ss-event-history"><h3>质保变更记录</h3>{listComponent(serviceViews.warrantyEvents.list,['warranty_id','=',selected.record.id])}</section>}</>}</CompositeDialog>;
+    return <CompositeDialog open={true} title={selected.record.name||selected.record.code||'业务记录详情'} description={selected.record.code||''} onOpenChange={open=>{if(!open){detailLoadSession.current+=1;setSelected(null)}}} footer={({requestClose})=><div className="ss-detail-actions"><button type="button" className="fp-button" onClick={requestClose}>关闭</button>{actionButtons()}</div>}>{selected.loading?<ForgeLoading label="读取业务记录"/>:<><ObjectForm objectName={selected.objectName} dataSource={adapter} mode="view" recordId={selected.record.id} formType="simple" columns={2} sections={selectedView.form.sections} fields={detailFields} showSubmit={false} showCancel={false} showReset={false}/>{selected.objectName==='forge_service_quotation'&&renderQuoteLineDetails()}{selected.objectName==='forge_warranty_card'&&<section className="ss-event-history"><h3>质保变更记录</h3>{listComponent(serviceViews.warrantyEvents.list,['warranty_id','=',selected.record.id])}</section>}</>}</CompositeDialog>;
+  }
+  function renderQuoteLineDetails(){
+    if(selected.linesError)return <ForgeNotice tone="error">{selected.linesError}</ForgeNotice>;
+    const data=selected.quotationLines;
+    if(!data||!data.lines.length)return null;
+    const columns=[{accessorKey:'line_type',header:'类别',width:85,cell:value=>value==='service'?'服务费':'备件'},{accessorKey:'name',header:'项目名称',width:210},{accessorKey:'description',header:'规格 / 说明',width:200},{accessorKey:'unit_name',header:'单位',width:70},{accessorKey:'quantity',header:'数量',width:80},{accessorKey:'taxed_unit_price',header:'含税单价',width:120},{accessorKey:'line_amount',header:'金额',width:120}];
+    return <DocumentSection variant="plain" title="报价项目"><RecordTable schema={{type:'data-table',columns,data:data.lines,searchable:false,sortable:false,selectable:false,exportable:false,reorderableColumns:false}}/><div className="ss-quote-totals"><span>小计 ¥{Number(data.subtotal).toFixed(2)}</span><span>折扣 ¥{Number(data.discount_amount).toFixed(2)}</span><strong>报价合计 ¥{Number(data.total_amount).toFixed(2)}</strong></div><p>{data.pricing_mode==='fixed'?'一口价（接受后锁定）':'预估费用（以结算为准）'} · {data.payment_mode==='staged'?'分阶段付款':'全额预收'}</p></DocumentSection>;
   }
   const workspaceListKey=scope==='my-quotations'?'quotations':scope==='my-settlements'?'settlements':scope==='parts'?'parts':null;
   const activeListKey=servicePage.mode==='workspace'&&workspaceListKey?workspaceListKey:servicePage.viewKey;

@@ -124,7 +124,7 @@ export async function readServiceRecordPages(
   maxRows = 5000,
   label = '服务工单',
 ) {
-  if (!['forge_service_order', 'forge_service_quotation', 'forge_service_part_request', 'forge_service_config_item', 'forge_warranty_card'].includes(objectName)) return serviceDispatchReadUnavailable('当前服务列表不可读取。', 'invalid-object');
+  if (!['forge_service_order', 'forge_service_quotation', 'forge_service_part_request', 'forge_service_config_item', 'forge_warranty_card', 'forge_material_sku'].includes(objectName)) return serviceDispatchReadUnavailable('当前服务列表不可读取。', 'invalid-object');
   const rows: Record<string, unknown>[] = [];
   const seen = new Set<string>();
   let total: number | null = null;
@@ -140,6 +140,7 @@ export async function readServiceRecordPages(
       $orderby: 'id asc',
       $filter: JSON.stringify(where),
     });
+    if (objectName === 'forge_material_sku') params.set('$select', 'id,name,code,material_id,enabled');
     let response: unknown;
     try {
       response = unwrapServiceDispatchResponse(await request('/data/' + objectName + '?' + params.toString()));

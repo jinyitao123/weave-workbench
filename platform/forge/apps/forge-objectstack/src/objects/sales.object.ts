@@ -365,6 +365,7 @@ export const SalesOpportunity = master('forge_sales_opportunity', '商机管理'
 
 export const SalesLead = master('forge_sales_lead', '线索管理', 'funnel', {
   name: text('线索名称', true), code: code('线索号'), company_name: text('公司名称', true), contact_name: text('联系人'), phone: text('联系电话'), source: text('来源'),
+  estimated_amount: Field.currency({ label: '销售内部估算', precision: 18, min: 0 }),
   status: Field.select([{ value: 'new', label: '新线索' }, { value: 'following', label: '跟进中' }, { value: 'converted', label: '已转化' }, { value: 'closed', label: '已关闭' }, { value: 'public_pool', label: '公海' }], { label: '线索状态', defaultValue: 'new', readonly: true }), converted_customer_id: { ...reference('forge_customer', '转化客户'), relatedList: false, readonly: true }, converted_opportunity_id: { ...reference('forge_sales_opportunity', '转化商机'), readonly: true }, converted_at: Field.datetime({ label: '转化时间', readonly: true }), conversion_request_signature: Field.text({ label: '转化请求签名', maxLength: 255, hidden: true, readonly: true, requiredPermissions: ['sales_lead_convert'] }), responsible_id: owner(), remarks: remarks(),
 }, ['code', 'company_name', 'contact_name', 'phone', 'status', 'source', 'converted_customer_id', 'converted_opportunity_id', 'responsible_id']);
 
@@ -425,6 +426,12 @@ export const ServiceOrder = master('forge_service_order', '服务工单', 'wrenc
 
 export const ServiceQuotation = master('forge_service_quotation', '服务报价单', 'file-text', {
   revision: Field.number({ label: '修订号', min: 1, scale: 0, defaultValue: 1, readonly: true, hidden: true }),
+  pricing_mode: Field.select([{ value: 'estimated', label: '预估费用（以结算为准）' }, { value: 'fixed', label: '一口价（接受后锁定）' }], { label: '报价方式' }),
+  payment_mode: Field.select([{ value: 'full_prepayment', label: '全额预收' }, { value: 'staged', label: '分阶段付款' }], { label: '付款约定' }),
+  discount_rate: Field.number({ label: '整单折扣%', min: 0, max: 100, scale: 1 }),
+  item_count: Field.number({ label: '报价项目数', min: 0, scale: 0, readonly: true }),
+  subtotal: { ...nonNegativeMoney('报价小计'), readonly: true },
+  discount_amount: { ...nonNegativeMoney('折扣金额'), readonly: true },
   name: text('报价名称', true), code: code('报价单号'), service_order_id: reference('forge_service_order', '服务工单'), order_code: text('工单号'), customer_id: { ...reference('forge_customer', '客户'), relatedList: false }, contact_id: reference('forge_contact', '联系人'), total_amount: nonNegativeMoney('报价金额'), status: Field.select([{ value: 'draft', label: '草稿' }, { value: 'pending_confirmation', label: '待确认' }, { value: 'confirmed', label: '已确认' }, { value: 'settlement_created', label: '已转结算' }, { value: 'cancelled', label: '已取消' }], { label: '状态', defaultValue: 'draft' }), valid_until: Field.date({ label: '有效期至' }), responsible_id: owner(), remarks: remarks(),
 }, ['code', 'service_order_id', 'order_code', 'customer_id', 'contact_id', 'total_amount', 'status', 'valid_until']);
 

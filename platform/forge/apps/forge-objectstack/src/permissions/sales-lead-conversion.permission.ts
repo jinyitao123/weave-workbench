@@ -5,6 +5,7 @@ export const salesLeadOwnerPermission = definePermissionSet({
   name: 'sales_lead_owner',
   label: '销售线索办理',
   description: '创建并维护本人负责的销售线索；转化为商机需另授予转化权限。',
+  systemPermissions: ['sales_lead_create'],
   objects: {
     forge_sales_lead: {
       allowCreate: true,
