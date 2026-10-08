@@ -38,7 +38,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tools/server-image-bui
 
 ## 只替换中央 Weave 镜像
 
-已核的 Forge、Console 与 PostgreSQL 不变时，可指定原完整发布运行，仅构建瘦 Weave。它是固定的单组件替换入口，不接受任意组件列表，也不复用另一份组合发布作为基础：
+已核的 Forge、Console 与 PostgreSQL 不变时，可指定原完整发布运行，仅构建瘦 Weave。它是固定的单组件替换入口，不接受任意组件列表；当前仅支持schema1原完整发布作为基础，schema3完整发布和其他组合发布均在构建／发布前拒绝，不丢弃其新探针证明来复用：
 
 ```sh
 python3 tools/server-image-build/build.py \
@@ -57,3 +57,11 @@ Weave 使用 `--target server`。对实际镜像检查 `opencode`、`codex`、`c
 传送断线后，仍通过已有 `published_run_id` 恢复，指定**这次组合构建的运行和来源**，不要指向后续仅恢复运行。恢复器识别有限的组合证据条目，再从 GitHub 独立读回原完整发布，逐字节比较保存的原证明，核对本次来源、Dockerfile、Weave config/registry digest、服务器探针与 Loom tree。原完整发布的同来源校验没有放松；来源混用、修改旧锁或使用 executor 镜像都拒绝。通过后复用原 SSH 接收器，私有 package、白名单与临时认证清理不变。
 
 这里的单元测试只覆盖证据和操作边界。真实镜像、官方空库健康与首次安装结果必须由实际构建/安装运行另行记录，不因测试通过而提前宣称部署可用。
+
+## 完整构建的空库启动门禁
+
+完整构建在任何 `docker push` 之前执行 Forge 和 Weave 两个实际服务器探针。Forge 使用本次镜像的原始 `Entrypoint` 与迁移后服务 `CMD`，不通过覆盖入口绕开 `start-with-migrations.sh`。在锁定的官方 PostgreSQL 16 空库中，先验证 `/api/v1/health` 的原生 `success=true`，再验证 `/api/v1/auth/bootstrap-status` 的**顶层布尔 `hasOwner=false`**；HTTP 200、嵌套包装、缺字段或 `hasOwner=true` 都不算通过。随后正常停止并启动同一 Forge 容器，保持同一数据库容器，再次读回两项结果。不创建账号或业务记录。
+
+探针独立随机生成正式启动所需的数据库、认证、加密与事件密钥，输入创建即0600；无外部发布端口、部署配置或业务卷。失败先保留有界脱敏诊断，再清理本次容器、内部网络和输入。Weave 在完整路径同样执行已有的无CLI、Loom、准确编译来源及官方空库健康/ready检查，不能只在单组件替换时检查。
+
+新完整发布使用 `schemaVersion: 3`、`kind: full-server-probed`，额外附带 `forge-server-proof.json` 与 `weave-server-proof.json`，证明绑定实际镜像配置digest、组件与产品源码及官方PG摘要。恢复器要求原源码中声明该门禁的发布完整携带两份证明，并验证文件摘要和真实结果字段，拒绝降回schema1规避检查。原schema1七文件完整artifact仅作为历史构建证明继续可读，恢复回执明确 `fullServerStartupVerified=false`，不追认它已通过空库启动。原Weave替换组合按既有独立规则验证；本次修复用完整构建重新发布，不新增Forge替换模式。

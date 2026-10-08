@@ -23,6 +23,8 @@ MAX_EXPANDED = 32 * 1024 * 1024
 REQUIRED = {'build-manifest.json', 'images.lock.json', 'console94-build.json', 'console94.lock.json',
             'forge-buildkit.json', 'forgeProxy-buildkit.json', 'weave-buildkit.json'}
 ALLOWED = REQUIRED | {'host-staging-receipt.json'}
+FULL_REQUIRED = REQUIRED | {'forge-server-proof.json', 'weave-server-proof.json'}
+FULL_ALLOWED = FULL_REQUIRED | {'host-staging-receipt.json'}
 REPLACEMENT_REQUIRED = {'build-manifest.json', 'images.lock.json', 'weave-buildkit.json', 'weave-server-proof.json'} | {'base-' + name for name in REQUIRED}
 REPLACEMENT_ALLOWED = REPLACEMENT_REQUIRED | {'host-staging-receipt.json'}
 SUFFIXES = {'forge': 'forge-app', 'forgeProxy': 'forge-proxy', 'weave': 'weave'}
@@ -99,7 +101,7 @@ def read_archive(data):
                 raise BuildError('Publication archive exceeds its content bounds')
             for item in entries:
                 mode = item.external_attr >> 16
-                if (item.filename not in ALLOWED | REPLACEMENT_ALLOWED or item.orig_filename != item.filename or item.filename in files
+                if (item.filename not in ALLOWED | FULL_ALLOWED | REPLACEMENT_ALLOWED or item.orig_filename != item.filename or item.filename in files
                         or item.is_dir() or item.flag_bits & 1 or item.file_size > MAX_ARCHIVE
                         or stat.S_IFMT(mode) not in (0, stat.S_IFREG)):
                     raise BuildError('Unsafe or unexpected publication ZIP entry')
@@ -108,18 +110,26 @@ def read_archive(data):
         raise BuildError('Invalid publication ZIP archive') from None
     manifest = json.loads(files.get('build-manifest.json', b'{}'))
     replacement = isinstance(manifest, dict) and manifest.get('kind') == 'weave-replacement'
-    required, allowed = (REPLACEMENT_REQUIRED, REPLACEMENT_ALLOWED) if replacement else (REQUIRED, ALLOWED)
+    if replacement:
+        required, allowed = REPLACEMENT_REQUIRED, REPLACEMENT_ALLOWED
+    elif isinstance(manifest, dict) and manifest.get('schemaVersion') == 3:
+        required, allowed = FULL_REQUIRED, FULL_ALLOWED
+    else:
+        required, allowed = REQUIRED, ALLOWED
     if not required.issubset(files) or not set(files).issubset(allowed):
         raise BuildError('Publication artifact is incomplete or contains unrelated evidence')
     return files
 
 
-def validate_publication(files, repository, revision, version, components_bytes, console_bytes, dockerfiles):
+def validate_publication(files, repository, revision, version, components_bytes, console_bytes, dockerfiles, require_probes=False, loom_tree=None):
     documents = {name: json.loads(value) for name, value in files.items()}
     manifest, lock = documents['build-manifest.json'], documents['images.lock.json']
     plan = manifest.get('plan', {})
     components, console = json.loads(components_bytes), json.loads(console_bytes)
-    if (manifest.get('schemaVersion') != 1 or manifest.get('status') != 'published-private'
+    probed = manifest.get('schemaVersion') == 3 and manifest.get('kind') == 'full-server-probed'
+    if require_probes and not probed:
+        raise BuildError('This publication source requires actual full-server startup proofs')
+    if (manifest.get('schemaVersion') not in (1, 3) or (manifest.get('schemaVersion') == 3 and not probed) or manifest.get('status') != 'published-private'
             or manifest.get('published') is not True or plan.get('schemaVersion') != 1
             or plan.get('repository') != repository or plan.get('sourceRevision') != revision
             or plan.get('bundleVersion') != version or plan.get('platform') != 'linux/amd64'
@@ -168,6 +178,22 @@ def validate_publication(files, repository, revision, version, components_bytes,
             or built_console.get('sourceTreeSha256') != console['artifact']['runtimeSourceTreeSha256']
             or built_console.get('packagedTreeSha256') != console['artifact']['packagedTreeSha256']):
         raise BuildError('Published Console proof differs from its source lock')
+    if probed:
+        from build import validate_forge_evidence, validate_server_evidence
+        if loom_tree is None or not SHA.fullmatch(loom_tree):
+            raise BuildError('A full-server proof needs the immutable Loom source tree')
+        for name in ('forge', 'weave'):
+            file = name + '-server-proof.json'
+            if file not in files or manifest['images'][name].get('serverProofSha256') != hashlib.sha256(files[file]).hexdigest():
+                raise BuildError('Server startup proof is absent or changed')
+        validate_forge_evidence(json.loads(files['forge-server-proof.json']), manifest['images']['forge']['localImageId'],
+                                components['components']['forge']['revision'], revision, pg['image'])
+        proof = json.loads(files['weave-server-proof.json'])
+        if (proof.get('imageConfigDigest') != manifest['images']['weave']['localImageId']
+                or proof.get('sourceRevision') != components['components']['weave']['revision']
+                or proof.get('productSourceRevision') != revision):
+            raise BuildError('Weave startup proof identifies another image or source')
+        validate_server_evidence(proof, components['components']['weave']['revision'], loom_tree, pg['image'])
     return lock
 
 
@@ -277,7 +303,13 @@ def fetch_publication(repository, revision, version, run_id, allow_replacement=T
                                     base_files, base_proof, blob('platform/weave/go.mod'),
                                     git('rev-parse', revision + ':platform/weave/third_party/loom'))
     else:
-        lock = validate_publication(files, repository, revision, version, components, console, dockerfiles)
+        builder = blob('tools/server-image-build/build.py')
+        require_probes = b'FULL_SERVER_PROBE_SCHEMA = 3' in builder
+        lock = validate_publication(files, repository, revision, version, components, console, dockerfiles,
+                                    require_probes=require_probes,
+                                    loom_tree=git('rev-parse', revision + ':platform/weave/third_party/loom') if require_probes else None)
+        if manifest.get('builderSha256') != hashlib.sha256(builder).hexdigest():
+            raise BuildError('Publication builder differs from its immutable source')
     states = {name: api.package_private(lock['components'][name]['image']) for name in SUFFIXES}
     api.repository_verified()
     proof = {'schemaVersion': 1, 'publicationRunId': run_id,
@@ -285,7 +317,8 @@ def fetch_publication(repository, revision, version, run_id, allow_replacement=T
         'controllerRevision': git('rev-parse', 'HEAD'), 'artifactId': artifact['id'],
         'artifactName': artifact['name'], 'archiveDigest': artifact['digest'],
         'archiveBytes': artifact['size_in_bytes'], 'packagePrivateReadback': states,
-        'rebuilt': False, 'republished': False}
+        'rebuilt': False, 'republished': False,
+        'fullServerStartupVerified': manifest.get('schemaVersion') == 3 and manifest.get('kind') == 'full-server-probed'}
     return files, lock, proof
 
 

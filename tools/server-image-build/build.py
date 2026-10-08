@@ -26,6 +26,8 @@ DIGEST = re.compile(r'sha256:[0-9a-f]{64}')
 VERSION = re.compile(r'\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?')
 REPOSITORY = re.compile(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+')
 EXPECTED_PATHS = {'forge': 'platform/forge', 'weave': 'platform/weave'}
+FULL_SERVER_PROBE_SCHEMA = 3
+FORGE_CMD = ['sh', '/srv/app/scripts/start-with-migrations.sh', 'node', '/srv/app/node_modules/@objectstack/cli/bin/run.js', 'serve', 'objectstack.config.ts']
 
 
 class BuildError(RuntimeError):
@@ -271,8 +273,10 @@ def image_lock(plan, references, postgres):
 
 def reusable_lock(plan, files):
     original = json.loads(files['build-manifest.json'])
+    if original.get('schemaVersion') != 1:
+        raise BuildError('Weave replacement only supports schema1 original publications; schema3 requires a full build')
     old_plan = original.get('plan', {})
-    if (original.get('schemaVersion') != 1 or original.get('status') != 'published-private'
+    if (original.get('status') != 'published-private'
             or original.get('published') is not True or old_plan.get('repository') != plan['repository']
             or old_plan.get('bundleVersion') != plan['bundleVersion']
             or old_plan.get('components', {}).get('forge') != plan['components']['forge']
@@ -325,6 +329,117 @@ def write_probe_diagnostic(path, containers, env, private_values):
     with path.open('x', encoding='utf-8') as output:
         os.chmod(path, 0o600)
         output.write(data)
+
+
+def validate_forge_evidence(proof, image_id, source, product_source, postgres):
+    if (proof.get('imageConfigDigest') != image_id or proof.get('sourceRevision') != source
+            or proof.get('productSourceRevision') != product_source or proof.get('postgresImage') != postgres
+            or proof.get('officialCommandUsed') is not True or proof.get('command') != FORGE_CMD
+            or proof.get('sameDatabaseAfterRestart') is not True):
+        raise BuildError('Forge startup proof is not bound to the exact official image and database')
+    for name in ('firstStart', 'afterRestart'):
+        response = proof.get(name, {})
+        if (not isinstance(response, dict) or set(response) != {'health', 'bootstrap'}
+                or not isinstance(response.get('health'), dict) or set(response['health']) != {'success'}
+                or not isinstance(response.get('bootstrap'), dict) or set(response['bootstrap']) != {'hasOwner'}
+                or response['health']['success'] is not True or response['bootstrap']['hasOwner'] is not False):
+            raise BuildError('Forge must be healthy and expose the native empty bootstrap window before and after restart')
+
+
+def verify_forge_server(plan, image, postgres, work, env, diagnostic_path):
+    source = plan['components']['forge']['revision']
+    inspected = inspect_image(image, env, source, plan['repository'], plan['sourceRevision'])
+    config = inspected.get('Config', {})
+    if config.get('Cmd') != FORGE_CMD:
+        raise BuildError('Forge image no longer uses its migration-and-serve command')
+    if not re.fullmatch(r'(?:docker\.io/library/)?postgres@sha256:[0-9a-f]{64}', postgres):
+        raise BuildError('Forge probe requires an official PostgreSQL digest')
+    pg_image = inspect_image(postgres, env)
+    if postgres.removeprefix('docker.io/library/') not in [x.removeprefix('docker.io/library/') for x in pg_image.get('RepoDigests', [])]:
+        raise BuildError('Forge probe database differs from the product lock')
+    name = 'forge-image-proof-' + secrets.token_hex(6)
+    database, app = name + '-db', name + '-app'
+    password, auth, secret, event = [secrets.token_hex(32) for _ in range(4)]
+    origin = 'http://' + app + ':8080'
+    inputs = {
+        work / 'forge-probe-db.env': 'POSTGRES_DB=forge\nPOSTGRES_PASSWORD=' + password + '\n',
+        work / 'forge-probe-app.env': 'OS_DATABASE_URL=postgres://postgres:' + password + '@' + database + ':5432/forge?sslmode=disable\n'
+            + 'OS_AUTH_SECRET=' + auth + '\nOS_SECRET_KEY=' + secret + '\n'
+            + 'OS_BASE_URL=' + origin + '\nOS_AUTH_URL=' + origin + '\nOS_TRUSTED_ORIGINS=' + origin + '\n'
+            + 'FORGE_IDENTITY_ISSUER=urn:weave-workbench:proof:' + name + '\nFORGE_WEAVE_EVENT_SECRET=' + event + '\nFORGE_TASK_DELEGATION_MAX_HOURS=24\n',
+    }
+    network_created = False
+    try:
+        for path, content in inputs.items():
+            with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), 'w') as output:
+                output.write(content)
+        run(['docker', 'network', 'create', '--internal', name], env=env)
+        network_created = True
+        run(['docker', 'run', '-d', '--name', database, '--network', name, '--env-file', work / 'forge-probe-db.env',
+             '--tmpfs', '/var/lib/postgresql/data', postgres], env=env)
+        for _ in range(60):
+            ready = subprocess.run(['docker', 'exec', database, 'pg_isready', '-U', 'postgres', '-d', 'forge'], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if ready.returncode == 0: break
+            time.sleep(1)
+        else: raise BuildError('Forge probe PostgreSQL did not become ready')
+        database_id = run(['docker', 'inspect', '--format', '{{.Id}}', database], env=env).strip()
+        # No entrypoint override and no positional command after the image.
+        run(['docker', 'run', '-d', '--name', app, '--network', name, '--env-file', work / 'forge-probe-app.env', image], env=env)
+        def observe():
+            actual = json.loads(run(['docker', 'inspect', app], env=env))[0]
+            if (actual.get('Config', {}).get('Cmd') != FORGE_CMD
+                    or actual.get('Config', {}).get('Entrypoint') != config.get('Entrypoint')
+                    or actual.get('Image') != inspected['Id']):
+                raise BuildError('Probe container overrides the official Forge image command')
+            script = "Promise.all(['/api/v1/health','/api/v1/auth/bootstrap-status'].map(async p=>{const r=await fetch('http://127.0.0.1:8080'+p,{signal:AbortSignal.timeout(5000)});if(!r.ok)throw Error('not healthy');return r.json()})).then(([health,bootstrap])=>{if(health.success!==true||bootstrap.hasOwner!==false)throw Error('native setup unavailable');console.log(JSON.stringify({health:{success:health.success},bootstrap:{hasOwner:bootstrap.hasOwner}}))}).catch(()=>process.exit(1))"
+            for _ in range(90):
+                result = subprocess.run(['docker', 'exec', app, 'node', '-e', script], env=env, text=True,
+                                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=10)
+                if result.returncode == 0:
+                    response = json.loads(result.stdout)
+                    return {'health': {'success': response.get('health', {}).get('success')},
+                            'bootstrap': {'hasOwner': response.get('bootstrap', {}).get('hasOwner')}}
+                time.sleep(1)
+            raise BuildError('Forge official CMD failed empty-database health or native bootstrap-status')
+        first = observe()
+        run(['docker', 'stop', '--time', '30', app], env=env)
+        run(['docker', 'start', app], env=env)
+        second = observe()
+        if run(['docker', 'inspect', '--format', '{{.Id}}', database], env=env).strip() != database_id:
+            raise BuildError('Forge restart probe did not retain the same database')
+        proof = {'imageConfigDigest': inspected['Id'], 'sourceRevision': source, 'productSourceRevision': plan['sourceRevision'],
+                 'postgresImage': postgres, 'officialCommandUsed': True, 'command': config['Cmd'],
+                 'sameDatabaseAfterRestart': True, 'firstStart': first, 'afterRestart': second}
+        validate_forge_evidence(proof, inspected['Id'], source, plan['sourceRevision'], postgres)
+        return proof
+    except Exception:
+        try:
+            write_probe_diagnostic(diagnostic_path, (app, database), env, (password, auth, secret, event))
+        except (OSError, subprocess.SubprocessError, ValueError):
+            print('Forge probe failed; sanitized diagnostics unavailable.', file=sys.stderr)
+        raise
+    finally:
+        for container in (app, database):
+            subprocess.run(['docker', 'rm', '-f', '-v', container], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if network_created:
+            subprocess.run(['docker', 'network', 'rm', name], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        for path in inputs: path.unlink(missing_ok=True)
+
+
+def verify_full_servers(plan, manifest, postgres, work, env, output):
+    forge = verify_forge_server(plan, plan['tags']['forge'], postgres, work, env, output / 'failed/forge-server-probe.json')
+    validate_forge_evidence(forge, manifest['images']['forge']['localImageId'], plan['components']['forge']['revision'], plan['sourceRevision'], postgres)
+    write_json(output / 'forge-server-proof.json', forge)
+    actual_weave = inspect_image(plan['tags']['weave'], env, plan['components']['weave']['revision'], plan['repository'], plan['sourceRevision'])
+    if actual_weave['Id'] != manifest['images']['weave']['localImageId']:
+        raise BuildError('Weave changed before its startup probe')
+    weave = verify_weave_server(plan, plan['tags']['weave'], postgres, work, env, output / 'failed/weave-server-probe.json')
+    weave['imageConfigDigest'] = manifest['images']['weave']['localImageId']
+    weave['sourceRevision'] = plan['components']['weave']['revision']
+    weave['productSourceRevision'] = plan['sourceRevision']
+    write_json(output / 'weave-server-proof.json', weave)
+    for name in ('forge', 'weave'):
+        manifest['images'][name]['serverProofSha256'] = digest_file(output / (name + '-server-proof.json'))
 
 
 def verify_weave_server(plan, image, postgres, work, env, diagnostic_path=None):
@@ -484,7 +599,7 @@ def execute(plan, objectui, output, postgres, push):
         if push:
             for image in plan['tags'].values():
                 api.package_private(image, missing=True)
-    manifest = {'schemaVersion': 1, 'status': 'building', 'plan': plan, 'images': {},
+    manifest = {'schemaVersion': FULL_SERVER_PROBE_SCHEMA, 'kind': 'full-server-probed', 'status': 'building', 'plan': plan, 'images': {},
                 'builderSha256': digest_file(__file__), 'published': False}
     write_json(output / 'build-manifest.json', manifest)
     try:
@@ -540,6 +655,8 @@ def execute(plan, objectui, output, postgres, push):
                 raise BuildError('Cannot determine the official PostgreSQL registry digest')
             pg_ref = validate_digest_reference(pg_digests[0])
             manifest['postgres'] = {'requestedImage': postgres, 'image': pg_ref, 'version': pg_version, 'localImageId': pg_image['Id']}
+            verify_full_servers(plan, manifest, pg_ref, work, env, output)
+            write_json(output / 'build-manifest.json', manifest)
             if push:
                 references = {}
                 for name, tag in plan['tags'].items():
