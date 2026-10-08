@@ -85,10 +85,9 @@ services:
       WEAVE_ADMIN_PASS: ${WW_OPERATOR_PASSWORD:?}
       WEAVE_DISABLE_LOCAL_LOGIN: 'true'
       WEAVE_DEV_MODE: 'false'
-      WEAVE_LOCAL_RUNTIME_ENABLED: 'true'
-      # The existing runtime checks the current task subject and claim epoch
-      # before resolving this one explicitly configured service provider.
-      WEAVE_LOCAL_RUNTIME_SHARED_PROVIDERS: system-provider:deepseek
+      # CLI engines run on explicitly registered execution nodes.
+      # Provider-bound Loom keeps its existing server-side execution path.
+      WEAVE_LOCAL_RUNTIME_ENABLED: 'false'
       WEAVE_FORGE_SESSION_URL: ${WW_FORGE_SESSION_URL:?}
       WEAVE_FORGE_DEFAULT_WORKSPACE: ${WW_ORGANIZATION_ID:-}
       WEAVE_FORGE_EVENT_URL: ${WW_FORGE_EVENT_URL:?}

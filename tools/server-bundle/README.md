@@ -51,7 +51,7 @@ sudo python3 server_bundle.py export-connection --output /srv/organization-conne
 
 输出分别报告服务健康、容器到规范 origin 的身份验证、管理员交换、模型目录和共享修订、已发布团队、事件接线及桌面登录。服务健康的成功不证明模型实际执行、团队业务运行或员工桌面闭环；当前向导最终状态为 `base_installed_business_pending`。未配置团队会明确显示 `unconfigured`。业务团队需在正式开发入口创建/导入、试跑和发布。
 
-共享模型 POST 回执与 `GET /v1/providers/system` 的目录摘要分别核验，要求 `mirrored`、`mirrored_as` 和 `mirror_revision` 与提交一致。目录不能读回时，安装器保留准确提交回执，报告 `mirror_committed_readback_unverified` 并返回退出码 2；普通凭据目录不作为服务凭据的查询入口。元数据就绪仍不代表模型执行通过。本机运行时只显式授权 `system-provider:deepseek`，实际使用沿既有任务身份和执行权校验。
+共享模型 POST 回执与 `GET /v1/providers/system` 的目录摘要分别核验，要求 `mirrored`、`mirrored_as` 和 `mirror_revision` 与提交一致。目录不能读回时，安装器保留准确提交回执，报告 `mirror_committed_readback_unverified` 并返回退出码 2；普通凭据目录不作为服务凭据的查询入口。元数据就绪仍不代表模型执行通过。主服务默认关闭同机Runtime Host；直接绑定共享模型的Loom沿既有冻结授权执行。Codex、Claude Code和OpenCode由单独的执行节点安装及登录，注册、上报能力并领取任务，主服务不安装这些CLI。节点安装产物仍通过现有分发接口提供。
 
 ## 发行方验证
 

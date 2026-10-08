@@ -31,7 +31,8 @@ with tempfile.TemporaryDirectory() as directory:
     assert forge['FORGE_WEAVE_EVENT_SECRET'] == weave['WEAVE_FORGE_EVENT_SECRET']
     assert weave['WEAVE_DISABLE_LOCAL_LOGIN'] == 'true'
     assert weave['WEAVE_DEV_MODE'] == 'false'
-    assert weave['WEAVE_LOCAL_RUNTIME_SHARED_PROVIDERS'] == 'system-provider:deepseek'
+    assert weave['WEAVE_LOCAL_RUNTIME_ENABLED'] == 'false'
+    assert 'WEAVE_LOCAL_RUNTIME_SHARED_PROVIDERS' not in weave
     assert 'WEAVE_ADMIN_USER' not in weave
     assert weave['DEFAULT_MODEL'] == 'deepseek-flash'
     hosts = services['weave']['extra_hosts']
