@@ -307,3 +307,28 @@ describe('native business work projection', () => {
     await expect(readBusinessWork(async () => ({ ...page, sourceErrors: undefined }))).rejects.toThrow()
   })
 })
+
+it('accepts the bound native action label in a new employee request without widening generic record authority', async () => {
+  const f = await fixture()
+  const note = '客户接受2100元报价，设备和安装培训范围不变'
+  const prompt = `客户已接受这份2100元报价，回执附上了。帮我记录客户接受，接受说明：${note}。`
+  f.current.record = { objectName: 'forge_quotation', recordId: 'quotation-current', label: '本人2100元报价' }
+  f.current.actions[0] = { ...f.current.actions[0], capabilityId: 'forge:action:forge_quotation.quotation_accept', label: '记录客户接受',
+    parameters: [{ name: 'customer_acceptance_note', label: '客户接受说明', type: 'string', required: true }, { name: 'customer_acceptance_evidence_attachment', label: '客户接受回执', type: 'file', required: true }] }
+  const path = join(f.directory, 'synthetic-acceptance.txt');await writeFile(path, '测试合成回执')
+  f.turn.materials = [{ name: 'synthetic-acceptance.txt', path, sha256: digest('测试合成回执'), bytes: Buffer.byteLength('测试合成回执'), mimeType: 'text/plain' }]
+  f.turn.employeePrompt = prompt
+  await f.bridge.bind(f.turn.accountKey, f.turn.sessionPath, { record: f.current.record, source: f.current.source })
+  await f.bridge.list(f.turn)
+  const request = { action_ref: 1, values: { customer_acceptance_note: note } }
+  for (const employeePrompt of ['只是讨论记录客户接受，不办理。', '不要记录客户接受。', '如果客户接受，再帮我记录客户接受。', '帮我记录客户接受是否合适？', '记录客户接受是什么意思', '我建议记录客户接受。', '帮我记录报价拒绝。', '帮我记录。']) {
+    await expect(f.bridge.run({ ...f.turn, employeePrompt }, request)).rejects.toThrow('明确要求')
+  }
+  await expect(f.bridge.run({ ...f.turn, readOnly: true }, request)).rejects.toThrow('只授权查看')
+  await expect(f.bridge.run({ ...f.turn, messageId: 'without-current-directory' }, request)).rejects.toThrow('明确要求')
+  expect(f.service.executeEmployeeBusinessAction).not.toHaveBeenCalled()
+  expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+  expect(await f.bridge.run(f.turn, request)).toMatchObject({ status: 'succeeded', action_label: '记录客户接受' })
+  expect(f.service.executeEmployeeBusinessAction).toHaveBeenCalledOnce()
+  expect(f.service.executeEmployeeBusinessAction.mock.calls[0][0]).toMatchObject({ action_ref: 1, values: request.values, file: { parameter: 'customer_acceptance_evidence_attachment', fileId: 'owned-file' } })
+})

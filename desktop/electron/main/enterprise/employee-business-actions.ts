@@ -65,6 +65,19 @@ function faithfulValues(prompt: string, values: EmployeeBusinessRequest['values'
     if (!selected) throw new Error('办理参数必须来自本轮员工明确原文；请明确提供准确日期、名称、金额和业务选项')
   }
 }
+/** The current native label is an instruction only in the employee's new request, not in discussion. */
+function directoryLabelIntent(prompt: string, label: string): { accepted: boolean; blocked: boolean } {
+  if (!prompt.includes(label)) return { accepted: false, blocked: false }
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const blocked = /(?:只读|查看|只看看|只分析|讨论|了解|解释|介绍|如果|假如|除非|倾向|建议|你觉得|是否|能否|可否|如何|怎么|什么意思|是什么|不要|暂不|先不|禁止|不得|不想|不需要|先别|[?？])/.test(prompt)
+    || new RegExp(`(?:不|别)\\s*${escaped}`).test(prompt)
+  const accepted = !blocked && prompt.split(/[，,。；;！!\n]/).some(part => {
+    const clause = part.trim()
+    return new RegExp(`^(?:请(?:你|帮我|协助我)?|帮我|麻烦(?:你)?|现在|立即)\\s*${escaped}`).test(clause)
+      || new RegExp(`^${escaped}(?:一下|吧)?$`).test(clause)
+  })
+  return { accepted, blocked }
+}
 /** Current employee actions share the native action entry point, with durable unknown-result fencing. */
 export class EmployeeBusinessActions {
   private readonly directories = new Map<string, BoundDirectory>()
@@ -137,10 +150,13 @@ export class EmployeeBusinessActions {
   async run(turn: EmployeeBusinessTurn, raw: Record<string, unknown>): Promise<unknown> {
     rejectUnknownKeys(raw, ['turn_key', 'action_ref', 'values', 'lineItems', 'input_sources'], 'employee business action')
     if (turn.readOnly) throw new Error('打开业务事项只授权查看，请在新的员工消息中明确办理')
-    const selectedDraft = this.directories.get(sessionKey(turn.accountKey, turn.sessionPath))?.context.actions.find(item => item.action_ref === raw.action_ref)
+    const directory = this.directories.get(sessionKey(turn.accountKey, turn.sessionPath))
+    const selectedDraft = directory?.messageId === turn.messageId ? directory.context.actions.find(item => item.action_ref === raw.action_ref) : undefined
+    const labelIntent = selectedDraft ? directoryLabelIntent(turn.employeePrompt, selectedDraft.label) : undefined
+    if (labelIntent?.blocked) throw new Error('请在本轮明确要求办理当前业务动作，讨论、否定、条件或问题不授权执行')
     if (selectedDraft && isDraftAction(selectedDraft) && /(?:如果|假如|除非|倾向|建议|你觉得|是否|能否|(?:不要|先不|暂不|别|不)(?:建|补))/.test(turn.employeePrompt)) throw new Error('建议、条件或否定不授权办理，请明确当前要求')
     const shortDraftAuthorization = selectedDraft && isDraftAction(selectedDraft) && /(?:建吧|补吧)/.test(turn.employeePrompt)
-    if (!(shortDraftAuthorization || /(办理|登记|提交|创建|新增|新建|补充|修改|转换|转为|转成|生成.*订单|确认|同意|批准|保存|更新|执行|启动)/.test(turn.employeePrompt))
+    if (!(labelIntent?.accepted || shortDraftAuthorization || /(办理|登记|提交|创建|新增|新建|补充|修改|转换|转为|转成|生成.*订单|确认|同意|批准|保存|更新|执行|启动)/.test(turn.employeePrompt))
       || /(只读|仅查看|只看看|只分析|不授权|(?:不要|暂不|先不|禁止|不得|不想|不需要|不)(?:办理|登记|提交|创建|新增|新建|补充|修改|转换|确认|保存|更新|执行|启动))/.test(turn.employeePrompt)) throw new Error('请在本轮明确要求办理当前业务动作')
     const selection = await this.selection(turn.accountKey, turn.sessionPath)
     if (!selection) throw new Error('当前没有已读取的业务目标')
