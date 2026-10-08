@@ -27,33 +27,47 @@
       "required": ["action_ref", "values"],
       "properties": {
         "action_ref": { "$ref": "#/$defs/actionRef" },
-        "values": { "$ref": "#/$defs/values" }
+        "values": { "$ref": "#/$defs/values" },
+        "lineItems": {"$ref": "#/$defs/quotationLines"}
       }
     },
     "source": {
       "type": "object", "additionalProperties": false,
       "required": ["kind"],
       "properties": {
-        "kind": { "enum": ["record", "business_notification", "approval"] },
+        "kind": { "enum": ["record", "business_notification", "approval", "creation"] },
         "reference": { "$ref": "#/$defs/id" }
       },
       "allOf": [
         { "if": { "properties": { "kind": { "enum": ["business_notification", "approval"] } } }, "then": { "required": ["reference"] } },
-        { "if": { "properties": { "kind": { "const": "record" } } }, "then": { "not": { "required": ["reference"] } } }
+        { "if": { "properties": { "kind": { "enum": ["record", "creation"] } } }, "then": { "not": { "required": ["reference"] } } }
       ]
     },
     "contextQuery": {
       "type": "object", "additionalProperties": false,
-      "required": ["objectName", "recordId"],
+      "required": ["objectName"],
       "properties": {
         "objectName": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,127}$" },
         "recordId": { "$ref": "#/$defs/id" },
-        "sourceKind": { "enum": ["record", "business_notification", "approval"], "default": "record" },
-        "sourceRef": { "$ref": "#/$defs/id" }
+        "sourceKind": { "enum": ["record", "business_notification", "approval", "creation"], "default": "record" },
+        "sourceRef": { "$ref": "#/$defs/id" },
+        "referenceIds": {
+          "$ref": "#/$defs/referenceSelection",
+          "description": "Creation quotation only. Host supplies verified current-turn native references; GET serializes this map as JSON. It is not model input."
+        }
       },
       "allOf": [
         { "if": { "required": ["sourceKind"], "properties": { "sourceKind": { "enum": ["business_notification", "approval"] } } }, "then": { "required": ["sourceRef"] } },
-        { "if": { "required": ["sourceRef"] }, "then": { "required": ["sourceKind"], "properties": { "sourceKind": { "enum": ["business_notification", "approval"] } } } }
+        { "if": { "required": ["sourceRef"] }, "then": { "required": ["sourceKind"], "properties": { "sourceKind": { "enum": ["business_notification", "approval"] } } } },
+        {
+          "if": {"required": ["sourceKind"], "properties": {"sourceKind": {"const": "creation"}}},
+          "then": {"properties": {"objectName": {"enum": ["forge_sales_lead", "forge_quotation"]}}, "not": {"anyOf": [{"required": ["recordId"]}, {"required": ["sourceRef"]}]}},
+          "else": {"required": ["recordId"]}
+        },
+        {
+          "if": {"required": ["referenceIds"]},
+          "then": {"required": ["sourceKind"], "properties": {"sourceKind": {"const": "creation"}, "objectName": {"const": "forge_quotation"}}}
+        }
       ]
     },
     "recordReference": {
@@ -104,12 +118,14 @@
         "description": { "type": "string", "minLength": 1, "maxLength": 1000 },
         "effect": { "enum": ["read", "write"] },
         "executionMode": { "const": "employee_only" },
-        "parameters": { "type": "array", "maxItems": 32, "items": { "$ref": "#/$defs/parameter" } }
+        "parameters": { "type": "array", "maxItems": 32, "items": { "$ref": "#/$defs/parameter" } },
+        "requiresRecord": {"const": false, "description": "Creation action only; native list_toolbar declaration must agree."},
+        "lineItems": {"$ref": "#/$defs/lineItemsDeclaration"}
       }
     },
     "context": {
       "type": "object", "additionalProperties": false,
-      "required": ["version", "contextId", "contextVersion", "recordVersion", "expiresAt", "readOnly", "record", "source", "actions"],
+      "required": ["version", "contextId", "contextVersion", "expiresAt", "readOnly", "source", "actions"],
       "properties": {
         "version": { "const": "1" },
         "contextId": { "type": "string", "format": "uuid" },
@@ -119,7 +135,81 @@
         "readOnly": { "const": true },
         "record": { "$ref": "#/$defs/recordReference" },
         "source": { "$ref": "#/$defs/source" },
+        "objectName": {"enum": ["forge_sales_lead", "forge_quotation"]},
+        "objectLabel": {"type": "string", "minLength": 1, "maxLength": 300},
         "actions": { "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/action" } }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"source": {"properties": {"kind": {"const": "creation"}}}}},
+          "then": {
+            "required": ["objectName", "objectLabel"],
+            "not": {"anyOf": [{"required": ["record"]}, {"required": ["recordVersion"]}]},
+            "properties": {"actions": {"items": {"required": ["requiresRecord"], "properties": {"requiresRecord": {"const": false}}}}}
+          },
+          "else": {"required": ["record", "recordVersion"]}
+        }
+      ]
+    },
+    "referenceSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "customer_id": {"type": "array", "minItems": 1, "maxItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "contact_id": {"type": "array", "minItems": 1, "maxItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "opportunity_id": {"type": "array", "minItems": 1, "maxItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "quotation_type_id": {"type": "array", "minItems": 1, "maxItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "issuer_id": {"type": "array", "minItems": 1, "maxItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "sku_id": {"type": "array", "minItems": 1, "maxItems": 100, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      }
+    },
+    "quotationLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["line_type", "quantity", "taxed_unit_price", "tax_rate", "discount_rate"],
+      "properties": {
+        "line_type": {"enum": ["material", "service"]},
+        "name": {"type": "string", "minLength": 1, "maxLength": 255},
+        "sku_id": {"$ref": "#/$defs/id"},
+        "quantity": {"type": "number", "minimum": 0.0001, "maximum": 1000000000},
+        "taxed_unit_price": {"type": "number", "minimum": 0, "maximum": 1000000000000},
+        "tax_rate": {"type": "number", "minimum": 0, "maximum": 100},
+        "discount_rate": {"type": "number", "minimum": 0, "maximum": 100},
+        "remarks": {"type": "string", "maxLength": 4000}
+      },
+      "allOf": [
+        {"if": {"properties": {"line_type": {"const": "material"}}}, "then": {"required": ["sku_id"]}},
+        {"if": {"properties": {"line_type": {"const": "service"}}}, "then": {"required": ["name"], "not": {"required": ["sku_id"]}}}
+      ]
+    },
+    "quotationLines": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {"$ref": "#/$defs/quotationLine"},
+      "description": "Only accepted for the declared employee quotation creation action. Full array is bound into requestDigest. Not a generic nested parameter."
+    },
+    "lineItemsDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minItems", "maxItems", "fields"],
+      "properties": {
+        "minItems": {"const": 1},
+        "maxItems": {"const": 100},
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "allOf": [
+              {"$ref": "#/$defs/parameter"},
+              {
+                "properties": {"name": {"enum": ["line_type", "name", "sku_id", "quantity", "taxed_unit_price", "tax_rate", "discount_rate", "remarks"]}, "type": {"enum": ["string", "number"]}}
+              }
+            ]
+          }
+        }
       }
     },
     "employeeMessage": {
@@ -155,6 +245,7 @@
         "employeeMessage": { "$ref": "#/$defs/employeeMessage" },
         "action_ref": { "$ref": "#/$defs/actionRef" },
         "values": { "$ref": "#/$defs/values" },
+        "lineItems": {"$ref": "#/$defs/quotationLines"},
         "file": { "oneOf": [{ "$ref": "#/$defs/fileBinding" }, { "type": "null" }], "description": "Omitted and null both mean no file binding and canonicalize to null for requestDigest." }
       }
     },
@@ -165,7 +256,7 @@
         "version": { "const": "1" },
         "operationId": { "type": "string", "format": "uuid", "description": "Equals the Host-bound opKey, scoped to the authenticated employee and organization; known before dispatch so a lost response can be queried." },
         "contextId": { "type": "string", "format": "uuid" },
-        "requestDigest": { "$ref": "#/$defs/sha256", "description": "SHA-256 of the canonical full execute request with omitted file represented as null. Recursively sort object keys by JavaScript UTF-16 ordering; preserve array order and JSON.stringify scalar encoding; reject non-finite numbers and undefined. contextVersion cryptographically binds the server-side actor, organization, source, record version and action policy." },
+        "requestDigest": { "$ref": "#/$defs/sha256", "description": "SHA-256 of the canonical full execute request with omitted file represented as null. Recursively sort object keys by JavaScript UTF-16 ordering; preserve array order and JSON.stringify scalar encoding; reject non-finite numbers and undefined. contextVersion cryptographically binds the server-side actor, organization, source, record version and action policy. Include lineItems only when explicitly present; requests without it retain their original canonical digest." },
         "status": { "enum": ["in_progress", "succeeded", "failed", "unknown"] },
         "repeated": { "type": "boolean" },
         "noEffect": { "type": "boolean", "description": "True requires authoritative server evidence that native execution never started or its entire business transaction rolled back. HTTP failure, timeout and cancellation alone are not such proof." },
