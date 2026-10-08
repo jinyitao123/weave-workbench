@@ -4,7 +4,7 @@ import { createServer } from 'node:net';
 import { createRequire } from 'node:module';
 import { promisify } from 'node:util';
 import { randomBytes, randomUUID } from 'node:crypto';
-import { mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -65,21 +65,34 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
   const databaseUrl = `postgresql://${encodeURIComponent(os.userInfo().username)}@127.0.0.1:${PG_PORT}/${DATABASE}`;
   let databaseCreated = false, postgres, child, runtimeOutput = '', rejectTrigger = '', rejectFunction = '';
   let quoteUpdateProbeTrigger = '', quoteUpdateProbeFunction = '', quoteUpdateProbeSequence = '';
+  let quoteUpdateRowProbeTrigger = '', quoteUpdateRowProbeFunction = '', quoteUpdateRowProbeSequence = '';
   let receiptInsertProbeTrigger = '', receiptInsertProbeFunction = '', receiptInsertProbeSequence = '';
   let settlementRejectTrigger = '', settlementRejectFunction = '';
+  let lineRejectTrigger = '', lineRejectFunction = '';
+  const multilineLineMutationProbes = [];
   const callers = [];
   const quoteIds = {};
   t.after(async () => {
     if (postgres && rejectTrigger) await postgres.query(`DROP TRIGGER IF EXISTS "${rejectTrigger}" ON forge_service_quotation_draft_receipt`).catch(() => {});
     if (postgres && rejectFunction) await postgres.query(`DROP FUNCTION IF EXISTS "${rejectFunction}"()`).catch(() => {});
     if (postgres && quoteUpdateProbeTrigger) await postgres.query(`DROP TRIGGER IF EXISTS "${quoteUpdateProbeTrigger}" ON forge_service_quotation`).catch(() => {});
+    if (postgres && quoteUpdateRowProbeTrigger) await postgres.query(`DROP TRIGGER IF EXISTS "${quoteUpdateRowProbeTrigger}" ON forge_service_quotation`).catch(() => {});
     if (postgres && receiptInsertProbeTrigger) await postgres.query(`DROP TRIGGER IF EXISTS "${receiptInsertProbeTrigger}" ON forge_service_quotation_draft_receipt`).catch(() => {});
     if (postgres && quoteUpdateProbeFunction) await postgres.query(`DROP FUNCTION IF EXISTS "${quoteUpdateProbeFunction}"()`).catch(() => {});
+    if (postgres && quoteUpdateRowProbeFunction) await postgres.query(`DROP FUNCTION IF EXISTS "${quoteUpdateRowProbeFunction}"()`).catch(() => {});
     if (postgres && receiptInsertProbeFunction) await postgres.query(`DROP FUNCTION IF EXISTS "${receiptInsertProbeFunction}"()`).catch(() => {});
     if (postgres && quoteUpdateProbeSequence) await postgres.query(`DROP SEQUENCE IF EXISTS "${quoteUpdateProbeSequence}"`).catch(() => {});
+    if (postgres && quoteUpdateRowProbeSequence) await postgres.query(`DROP SEQUENCE IF EXISTS "${quoteUpdateRowProbeSequence}"`).catch(() => {});
     if (postgres && receiptInsertProbeSequence) await postgres.query(`DROP SEQUENCE IF EXISTS "${receiptInsertProbeSequence}"`).catch(() => {});
     if (postgres && settlementRejectTrigger) await postgres.query(`DROP TRIGGER IF EXISTS "${settlementRejectTrigger}" ON forge_service_settlement`).catch(() => {});
     if (postgres && settlementRejectFunction) await postgres.query(`DROP FUNCTION IF EXISTS "${settlementRejectFunction}"()`).catch(() => {});
+    if (postgres && lineRejectTrigger) await postgres.query(`DROP TRIGGER IF EXISTS "${lineRejectTrigger}" ON forge_service_quotation_line`).catch(() => {});
+    if (postgres && lineRejectFunction) await postgres.query(`DROP FUNCTION IF EXISTS "${lineRejectFunction}"()`).catch(() => {});
+    for (const probe of multilineLineMutationProbes) {
+      await postgres?.query(`DROP TRIGGER IF EXISTS "${probe.trigger}" ON forge_service_quotation_line`).catch(() => {});
+      await postgres?.query(`DROP FUNCTION IF EXISTS "${probe.fn}"()`).catch(() => {});
+      await postgres?.query(`DROP SEQUENCE IF EXISTS "${probe.sequence}"`).catch(() => {});
+    }
     await stopRuntime();
     await postgres?.end().catch(() => {});
     if (databaseCreated) await run('dropdb', ['-h', '127.0.0.1', '-p', String(PG_PORT), DATABASE]).catch(() => {});
@@ -95,9 +108,37 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
   await postgres.connect();
 
   await writeFile(path.join(tempDir, 'package.json'), '{"name":"forge-service-quotation-draft-pg-test","type":"module"}\n');
-  await writeFile(path.join(tempDir, 'objectstack.config.ts'), `export { default } from ${JSON.stringify(path.join(APP_DIR, 'objectstack.config.ts'))};\n`);
-  await symlink(path.join(APP_DIR, 'src'), path.join(tempDir, 'src'), 'dir');
+  await cp(path.join(APP_DIR, 'src'), path.join(tempDir, 'src'), { recursive: true });
+  await cp(path.join(APP_DIR, 'objectstack.config.ts'), path.join(tempDir, 'objectstack.config.ts'));
   await symlink(path.join(APP_DIR, 'node_modules'), path.join(tempDir, 'node_modules'), 'dir');
+  if (process.env.SERVICE_QUOTATION_MULTILINE_NATIVE_DIAGNOSTICS === '1') {
+    const actionCopy = path.join(tempDir, 'src/actions/service-quotation-multiline.source.ts');
+    const original = await readFile(actionCopy, 'utf8');
+    const replacements = [
+      [
+        "if(!keptIds.has(String(old.id)))await linesApi.delete({where:{id:old.id,quotation_id:id,organization_id:organizationId}});",
+        "if(!keptIds.has(String(old.id))){try{await linesApi.delete({where:{id:old.id,quotation_id:id,organization_id:organizationId}})}catch(error){throw new Error('TEST_PROBE_DELETE:'+String(error&&error.message||error))}}",
+      ],
+      [
+        "else{const moved=await linesApi.update({sort_order:temporaryOrder++},{multi:true,where:{id:old.id,quotation_id:id,organization_id:organizationId}});if(moved!==1)throw new Error('报价项目已变化，请重新打开核对')}",
+        "else{try{const moved=await linesApi.update({sort_order:temporaryOrder++},{multi:true,where:{id:old.id,quotation_id:id,organization_id:organizationId}});if(moved!==1)throw new Error('update count '+String(moved))}catch(error){throw new Error('TEST_PROBE_REORDER:'+String(error&&error.message||error))}}",
+      ],
+      [
+        "if(rowId){const changedLine=await linesApi.update(row,{multi:true,where:{id:rowId,quotation_id:id,organization_id:organizationId}});if(changedLine!==1)throw new Error('报价项目已变化，请重新打开核对')}\n      else await linesApi.insert(row);",
+        "if(rowId){try{const changedLine=await linesApi.update(row,{multi:true,where:{id:rowId,quotation_id:id,organization_id:organizationId}});if(changedLine!==1)throw new Error('update count '+String(changedLine))}catch(error){throw new Error('TEST_PROBE_UPDATE:'+String(error&&error.message||error))}}\n      else{try{await linesApi.insert(row)}catch(error){throw new Error('TEST_PROBE_INSERT:'+String(error&&error.message||error))}}",
+      ],
+      [
+        "const text=String(error&&error.message||'');\n    const safe=",
+        "const text=String(error&&error.message||'');\n    if(text.startsWith('TEST_PROBE_'))throw new Error(text);\n    const safe=",
+      ],
+    ];
+    let instrumented = original;
+    for (const [before, after] of replacements) {
+      if (!instrumented.includes(before)) throw new Error('test-only Native diagnostic patch point not found');
+      instrumented = instrumented.replace(before, after);
+    }
+    await writeFile(actionCopy, instrumented);
+  }
 
   async function stopRuntime() {
     if (!child || child.exitCode !== null || child.signalCode !== null) return;
@@ -168,21 +209,21 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
     );
     return row.id;
   }
-  async function createPosition(name, permissionName) {
-    const found = await postgres.query('SELECT id FROM sys_position WHERE name=$1 AND organization_id=$2 ORDER BY id LIMIT 1', [name, ORGANIZATION_ID]);
+  async function createPosition(name, permissionName, organizationId = ORGANIZATION_ID) {
+    const found = await postgres.query('SELECT id FROM sys_position WHERE name=$1 AND organization_id=$2 ORDER BY id LIMIT 1', [name, organizationId]);
     const positionId = found.rows[0]?.id || await insertFixture('sys_position', {
-      name, label: '隔离报价测试岗位 ' + name, active: true, organization_id: ORGANIZATION_ID,
+      name, label: '隔离报价测试岗位 ' + name, active: true, organization_id: organizationId,
     });
     if (found.rows.length) await postgres.query('UPDATE sys_position SET active=true WHERE id=$1', [positionId]);
     const permission = await postgres.query('SELECT id FROM sys_permission_set WHERE name=$1 AND active=true ORDER BY id LIMIT 1', [permissionName]);
     assert.ok(permission.rows[0]?.id, 'the official Runtime loaded the existing permission set');
     const bound = await postgres.query('SELECT 1 FROM sys_position_permission_set WHERE position_id=$1 AND permission_set_id=$2 LIMIT 1', [positionId, permission.rows[0].id]);
     if (!bound.rows.length) await insertFixture('sys_position_permission_set', {
-      position_id: positionId, permission_set_id: permission.rows[0].id, organization_id: ORGANIZATION_ID,
+      position_id: positionId, permission_set_id: permission.rows[0].id, organization_id: organizationId,
     });
     return positionId;
   }
-  async function createCaller(label, permissionName = '') {
+  async function createCaller(label, permissionName = '', organizationId = ORGANIZATION_ID) {
     const email = `service-quote-${++callerCounter}-${RUN}@example.test`;
     const password = 'ServiceQuote-' + randomBytes(24).toString('hex') + '!';
     TRANSIENT_PASSWORDS.push(password);
@@ -194,16 +235,16 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
       user_id: callerId, provider_id: 'credential', account_id: callerId, password: passwordHash,
       access_token: null, refresh_token: null, id_token: null,
     });
-    await insertFixture('sys_member', { user_id: callerId, organization_id: ORGANIZATION_ID, role: 'member' });
+    await insertFixture('sys_member', { user_id: callerId, organization_id: organizationId, role: 'member' });
     if (permissionName) {
-      const position = await createPosition('service_quote_' + permissionName + '_' + RUN, permissionName);
+      const position = await createPosition('service_quote_' + permissionName + '_' + RUN, permissionName, organizationId);
       await insertFixture('sys_user_position', {
         user_id: callerId, position: 'service_quote_' + permissionName + '_' + RUN,
-        organization_id: ORGANIZATION_ID, valid_from: new Date(Date.now() - 60_000).toISOString(), valid_until: null,
+        organization_id: organizationId, valid_from: new Date(Date.now() - 60_000).toISOString(), valid_until: null,
       });
-      return { id: callerId, email, password, position, client: null };
+      return { id: callerId, email, password, position, organizationId, client: null };
     }
-    return { id: callerId, email, password, position: '', client: null };
+    return { id: callerId, email, password, position: '', organizationId, client: null };
   }
   async function signIn(caller) {
     const response = await fetch(ORIGIN + '/api/v1/auth/sign-in/email', {
@@ -229,7 +270,7 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
         return { status: result.status, value: await result.json().catch(() => null) };
       },
     };
-    const selected = await caller.client.request('/auth/organization/set-active', 'POST', { organizationId: ORGANIZATION_ID });
+    const selected = await caller.client.request('/auth/organization/set-active', 'POST', { organizationId: caller.organizationId });
     assert.equal(selected.status, 200, 'test caller selects the sole actual organization membership');
     return caller.client;
   }
@@ -253,6 +294,12 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
       status,
       valid_until: '2026-12-31',
       revision,
+      pricing_mode: 'estimated',
+      payment_mode: 'full_prepayment',
+      discount_rate: 0,
+      subtotal: 0,
+      discount_amount: 0,
+      item_count: 0,
       responsible_id: ownerId || null,
       remarks: '初始内容',
       owner_id: ownerId || null,
@@ -272,6 +319,50 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
       revision: Number(row.revision),
     } : null;
   }
+  async function quoteMultilineSnapshot(quoteId) {
+    const result = await postgres.query('SELECT id,status,total_amount,valid_until::text AS valid_until,remarks,revision,pricing_mode,payment_mode,discount_rate,subtotal,discount_amount,item_count FROM forge_service_quotation WHERE id=$1', [quoteId]);
+    const row = result.rows[0];
+    return row ? {
+      id: String(row.id), status: String(row.status), total_amount: Number(row.total_amount),
+      valid_until: String(row.valid_until).slice(0, 10), remarks: row.remarks == null ? null : String(row.remarks),
+      revision: Number(row.revision), pricing_mode: String(row.pricing_mode), payment_mode: String(row.payment_mode),
+      discount_rate: Number(row.discount_rate), subtotal: Number(row.subtotal), discount_amount: Number(row.discount_amount), item_count: Number(row.item_count),
+    } : null;
+  }
+  async function lineRows(quoteId) {
+    const result = await postgres.query(
+      'SELECT id,quotation_id,line_type,service_item_id,sku_id,item_code,name,description,unit_name,quantity,taxed_unit_price,line_amount,sort_order,organization_id,created_at::text AS created_at,updated_at::text AS updated_at FROM forge_service_quotation_line WHERE quotation_id=$1 ORDER BY sort_order,id',
+      [quoteId],
+    );
+    return result.rows.map(row => ({
+      id: String(row.id), quotation_id: String(row.quotation_id), line_type: String(row.line_type),
+      service_item_id: row.service_item_id == null ? null : String(row.service_item_id),
+      sku_id: row.sku_id == null ? null : String(row.sku_id), item_code: String(row.item_code), name: String(row.name),
+      description: row.description == null ? '' : String(row.description), unit_name: String(row.unit_name),
+      quantity: Number(row.quantity), taxed_unit_price: Number(row.taxed_unit_price), line_amount: Number(row.line_amount),
+      sort_order: Number(row.sort_order), organization_id: String(row.organization_id), updated_at: String(row.updated_at),
+    }));
+  }
+  function multilineDraft(lines, values = {}) {
+    return {
+      valid_until: '2026-12-31', remarks: '多行报价备注', pricing_mode: 'estimated', payment_mode: 'full_prepayment',
+      discount_rate: 12.5, lines, ...values,
+    };
+  }
+  function serviceLine(itemId, values = {}) {
+    return { line_type: 'service', item_id: itemId, description: '服务说明', unit_name: '次', quantity: '1.00', taxed_unit_price: '20.00', ...values };
+  }
+  function partLine(itemId, values = {}) {
+    return { line_type: 'part', item_id: itemId, description: '备件说明', unit_name: '件', quantity: '1.00', taxed_unit_price: '50.00', ...values };
+  }
+  async function saveMultiline(client, quoteId, expectedRevision, key, lines, values = {}) {
+    return invoke(client, quoteId, {
+      draft_json: JSON.stringify(multilineDraft(lines, values)), expected_revision: expectedRevision, idempotency_key: key,
+    });
+  }
+  async function readLinesAction(client, quoteId) {
+    return client.request('/actions/forge_service_quotation/service_quotation_read_lines/' + encodeURIComponent(quoteId), 'POST', { params: {} });
+  }
   async function receiptRows(quoteId) {
     const result = await postgres.query('SELECT expected_revision,resulting_revision,idempotency_key,actor_id,request_signature,result_json FROM forge_service_quotation_draft_receipt WHERE quotation_id=$1 ORDER BY expected_revision,idempotency_key', [quoteId]);
     return result.rows;
@@ -287,14 +378,20 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
     quoteUpdateProbeSequence = 'seq_sq_draft_update_' + RUN;
     quoteUpdateProbeFunction = 'fn_sq_draft_update_' + RUN;
     quoteUpdateProbeTrigger = 'trg_sq_draft_update_' + RUN;
+    quoteUpdateRowProbeSequence = 'seq_sq_draft_updated_row_' + RUN;
+    quoteUpdateRowProbeFunction = 'fn_sq_draft_updated_row_' + RUN;
+    quoteUpdateRowProbeTrigger = 'trg_sq_draft_updated_row_' + RUN;
     receiptInsertProbeSequence = 'seq_sq_receipt_insert_' + RUN;
     receiptInsertProbeFunction = 'fn_sq_receipt_insert_' + RUN;
     receiptInsertProbeTrigger = 'trg_sq_receipt_insert_' + RUN;
     await postgres.query(`CREATE SEQUENCE "${quoteUpdateProbeSequence}" AS bigint START WITH 1`);
+    await postgres.query(`CREATE SEQUENCE "${quoteUpdateRowProbeSequence}" AS bigint START WITH 1`);
     await postgres.query(`CREATE SEQUENCE "${receiptInsertProbeSequence}" AS bigint START WITH 1`);
     await postgres.query(`CREATE FUNCTION "${quoteUpdateProbeFunction}"() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM nextval('${quoteUpdateProbeSequence}'); RETURN NEW; END $$`);
+    await postgres.query(`CREATE FUNCTION "${quoteUpdateRowProbeFunction}"() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM nextval('${quoteUpdateRowProbeSequence}'); RETURN NEW; END $$`);
     await postgres.query(`CREATE FUNCTION "${receiptInsertProbeFunction}"() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM nextval('${receiptInsertProbeSequence}'); RETURN NEW; END $$`);
     await postgres.query(`CREATE TRIGGER "${quoteUpdateProbeTrigger}" BEFORE UPDATE ON forge_service_quotation FOR EACH STATEMENT EXECUTE FUNCTION "${quoteUpdateProbeFunction}"()`);
+    await postgres.query(`CREATE TRIGGER "${quoteUpdateRowProbeTrigger}" AFTER UPDATE ON forge_service_quotation FOR EACH ROW EXECUTE FUNCTION "${quoteUpdateRowProbeFunction}"()`);
     await postgres.query(`CREATE TRIGGER "${receiptInsertProbeTrigger}" BEFORE INSERT ON forge_service_quotation_draft_receipt FOR EACH STATEMENT EXECUTE FUNCTION "${receiptInsertProbeFunction}"()`);
   }
   async function writeBoundaryDiagnostics(quoteId) {
@@ -307,6 +404,42 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
       receiptInsertStatementReached: Boolean(receiptProbe.rows[0]?.is_called),
       quoteAfter: quote && { status: quote.status, total_amount: quote.total_amount, valid_until: quote.valid_until, revision: quote.revision },
       committedReceipts: receiptCount.rows[0]?.count || 0,
+    });
+  }
+  async function installMultilineLineMutationProbes() {
+    for (const operation of ['delete', 'update', 'insert']) {
+      const probe = {
+        sequence: 'seq_sq_line_' + operation + '_' + RUN,
+        fn: 'fn_sq_line_' + operation + '_' + RUN,
+        trigger: 'trg_sq_line_' + operation + '_' + RUN,
+        operation: operation.toUpperCase(),
+      };
+      await postgres.query(`CREATE SEQUENCE "${probe.sequence}" AS bigint START WITH 1`);
+      await postgres.query(`CREATE FUNCTION "${probe.fn}"() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM nextval('${probe.sequence}'); RETURN NULL; END $$`);
+      await postgres.query(`CREATE TRIGGER "${probe.trigger}" BEFORE ${probe.operation} ON forge_service_quotation_line FOR EACH STATEMENT EXECUTE FUNCTION "${probe.fn}"()`);
+      multilineLineMutationProbes.push(probe);
+    }
+    await postgres.query(`ALTER SEQUENCE "${quoteUpdateProbeSequence}" RESTART WITH 1`);
+    await postgres.query(`ALTER SEQUENCE "${quoteUpdateRowProbeSequence}" RESTART WITH 1`);
+    await postgres.query(`ALTER SEQUENCE "${receiptInsertProbeSequence}" RESTART WITH 1`);
+  }
+  async function multilineMutationDiagnostics(quoteId) {
+    const quoteProbe = await postgres.query(`SELECT is_called FROM "${quoteUpdateProbeSequence}"`);
+    const quoteRowsProbe = await postgres.query(`SELECT is_called FROM "${quoteUpdateRowProbeSequence}"`);
+    const receiptProbe = await postgres.query(`SELECT is_called FROM "${receiptInsertProbeSequence}"`);
+    const quote = await quoteMultilineSnapshot(quoteId);
+    const childCount = await postgres.query('SELECT count(*)::int AS count FROM forge_service_quotation_line WHERE quotation_id=$1', [quoteId]);
+    const mutations = {};
+    for (const probe of multilineLineMutationProbes) {
+      const result = await postgres.query(`SELECT is_called FROM "${probe.sequence}"`);
+      mutations[probe.operation.toLowerCase()] = Boolean(result.rows[0]?.is_called);
+    }
+    return JSON.stringify({
+      quoteUpdateReached: Boolean(quoteProbe.rows[0]?.is_called), receiptInsertReached: Boolean(receiptProbe.rows[0]?.is_called),
+      quoteRowsActuallyUpdated: Boolean(quoteRowsProbe.rows[0]?.is_called),
+      lineStatements: mutations,
+      parentAfter: quote && { status: quote.status, revision: quote.revision, item_count: quote.item_count, subtotal: quote.subtotal, total_amount: quote.total_amount },
+      childRows: childCount.rows[0]?.count || 0,
     });
   }
   function assertGenericWriteBlocked(response, label) {
@@ -331,6 +464,7 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
   assert.equal(serviceManagerPermission.name, 'forge_service_manager');
   assert.equal(serviceOperatorPermission.name, 'forge_service_operator');
   await insertFixture('sys_organization', { id: ORGANIZATION_ID, name: '服务报价隔离组织 ' + RUN, slug: 'service-quotation-' + RUN });
+  await insertFixture('sys_organization', { id: FOREIGN_ORGANIZATION_ID, name: '服务报价第二隔离组织 ' + RUN, slug: 'service-quotation-foreign-' + RUN });
   const manager = await createCaller('主管', serviceManagerPermission.name);
   const operator = await createCaller('无管理权限服务员工', serviceOperatorPermission.name);
   assert.equal((await postgres.query('SELECT count(*)::int AS count FROM sys_account WHERE user_id=ANY($1::text[])', [[manager.id, operator.id]])).rows[0]?.count, 2);
@@ -343,6 +477,70 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
   quoteIds.sameRace = await createQuote('SAMERACE', { ownerId: manager.id });
   quoteIds.keyRace = await createQuote('KEYRACE', { ownerId: manager.id });
   quoteIds.settlementRollback = await createQuote('SETTLEMENTROLLBACK', { status: 'confirmed', revision: 3, ownerId: manager.id });
+  quoteIds.multiline = await createQuote('MULTILINE', { ownerId: manager.id });
+  quoteIds.multilineInvalid = await createQuote('MULTILINEINVALID', { ownerId: manager.id });
+  quoteIds.multilineOther = await createQuote('MULTILINEOTHER', { ownerId: manager.id });
+  quoteIds.multilineLineRollback = await createQuote('MULTILINELINEROLLBACK', { ownerId: manager.id });
+  quoteIds.multilineReceiptRollback = await createQuote('MULTILINERECEIPTROLLBACK', { ownerId: manager.id });
+
+  const feeConfigId = await insertFixture('forge_service_config_item', {
+    name: '隔离上门检测项目 ' + RUN, code: 'SQ-FEE-' + RUN, category: 'fee_type', status: 'active',
+    description: '真实费用目录项', remarks: '', revision: 1, owner_id: manager.id,
+  }, ORGANIZATION_ID);
+  const inactiveFeeConfigId = await insertFixture('forge_service_config_item', {
+    name: '停用费用项目 ' + RUN, code: 'SQ-FEE-STOP-' + RUN, category: 'fee_type', status: 'inactive',
+    description: 'inactive fixture', remarks: '', revision: 1, owner_id: manager.id,
+  }, ORGANIZATION_ID);
+  const wrongCategoryConfigId = await insertFixture('forge_service_config_item', {
+    name: '其他服务配置 ' + RUN, code: 'SQ-FEE-CAT-' + RUN, category: 'order_type', status: 'active',
+    description: 'wrong category fixture', remarks: '', revision: 1, owner_id: manager.id,
+  }, ORGANIZATION_ID);
+  const foreignFeeConfigId = await insertFixture('forge_service_config_item', {
+    name: '外组织费用项目 ' + RUN, code: 'SQ-FEE-FOREIGN-' + RUN, category: 'fee_type', status: 'active',
+    description: 'foreign fixture', remarks: '', revision: 1, owner_id: manager.id, organization_id: FOREIGN_ORGANIZATION_ID,
+  }, '');
+  const materialCategoryId = await insertFixture('forge_material_category', {
+    name: '报价PG备件分类 ' + RUN, code: 'SQ-MAT-CAT-' + RUN, status: 'active',
+  }, ORGANIZATION_ID);
+  const unitId = await insertFixture('forge_unit', { name: '件-' + RUN, code: 'SQ-UNIT-' + RUN, status: 'active' }, ORGANIZATION_ID);
+  const spareMaterialId = await insertFixture('forge_material', {
+    name: '报价PG备件 ' + RUN, code: 'SQ-MAT-' + RUN, model: 'SQ-MODEL-' + RUN, category_id: materialCategoryId,
+    unit_id: unitId, property: 'spare', source_type: 'purchased', status: 'active', owner_id: manager.id, responsible_id: manager.id,
+  }, ORGANIZATION_ID);
+  const activeSkuId = await insertFixture('forge_material_sku', {
+    name: '规格A-' + RUN, code: 'SQ-SKU-' + RUN, material_id: spareMaterialId,
+    sale_price: 999.99, cost_price: 321.12, enabled: true, owner_id: manager.id,
+  }, ORGANIZATION_ID);
+  const disabledSkuId = await insertFixture('forge_material_sku', {
+    name: '停用规格-' + RUN, code: 'SQ-SKU-DISABLED-' + RUN, material_id: spareMaterialId,
+    sale_price: 1, cost_price: 0.5, enabled: false, owner_id: manager.id,
+  }, ORGANIZATION_ID);
+  const inactiveMaterialId = await insertFixture('forge_material', {
+    name: '停用报价PG备件 ' + RUN, code: 'SQ-MAT-INACTIVE-' + RUN, model: 'SQ-MODEL-INACTIVE-' + RUN,
+    category_id: materialCategoryId, unit_id: unitId, property: 'spare', source_type: 'purchased', status: 'inactive',
+    owner_id: manager.id, responsible_id: manager.id,
+  }, ORGANIZATION_ID);
+  const inactiveMaterialSkuId = await insertFixture('forge_material_sku', {
+    name: '物料停用规格-' + RUN, code: 'SQ-SKU-MAT-INACTIVE-' + RUN, material_id: inactiveMaterialId,
+    sale_price: 1, cost_price: 0.5, enabled: true, owner_id: manager.id,
+  }, ORGANIZATION_ID);
+  const foreignCategoryId = await insertFixture('forge_material_category', {
+    name: '外组织报价分类 ' + RUN, code: 'SQ-MAT-CAT-FOREIGN-' + RUN, status: 'active',
+  }, FOREIGN_ORGANIZATION_ID);
+  const foreignUnitId = await insertFixture('forge_unit', { name: '外组织件-' + RUN, code: 'SQ-UNIT-FOREIGN-' + RUN, status: 'active' }, FOREIGN_ORGANIZATION_ID);
+  const foreignMaterialId = await insertFixture('forge_material', {
+    name: '外组织报价备件 ' + RUN, code: 'SQ-MAT-FOREIGN-' + RUN, model: 'SQ-MODEL-FOREIGN-' + RUN,
+    category_id: foreignCategoryId, unit_id: foreignUnitId, property: 'spare', source_type: 'purchased', status: 'active',
+    owner_id: manager.id, responsible_id: manager.id,
+  }, FOREIGN_ORGANIZATION_ID);
+  const foreignSkuId = await insertFixture('forge_material_sku', {
+    name: '外组织规格-' + RUN, code: 'SQ-SKU-FOREIGN-' + RUN, material_id: foreignMaterialId,
+    sale_price: 1, cost_price: 0.5, enabled: true, owner_id: manager.id,
+  }, FOREIGN_ORGANIZATION_ID);
+  const homeSkuForeignMaterialId = await insertFixture('forge_material_sku', {
+    name: '本组织SKU外组织物料-' + RUN, code: 'SQ-SKU-CROSS-MATERIAL-' + RUN, material_id: foreignMaterialId,
+    sale_price: 1, cost_price: 0.5, enabled: true, owner_id: manager.id,
+  }, ORGANIZATION_ID);
 
   await startRuntime();
   const managerClient = await signIn(manager);
@@ -350,9 +548,11 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
   const managerPermissions = payloadOf(await managerClient.request('/auth/me/permissions'));
   assert.ok(managerPermissions.systemPermissions?.includes('forge_service_manager'));
   assert.equal(managerPermissions.systemPermissions?.includes('setup.write'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(serviceManagerPermission.objects || {}, 'forge_service_quotation_line'), false, 'no generic service-manager permission was added for quotation-line CRUD');
   const operatorPermissions = payloadOf(await operatorClient.request('/auth/me/permissions'));
   assert.ok(operatorPermissions.systemPermissions?.includes('forge_service_operator'));
   assert.equal(operatorPermissions.systemPermissions?.includes('forge_service_manager'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(serviceOperatorPermission.objects || {}, 'forge_service_quotation_line'), false, 'the ordinary service-operator permission has no quotation-line grant');
 
   const parentRead = await managerClient.request('/data/forge_service_quotation/' + encodeURIComponent(quoteIds.success));
   assert.equal(parentRead.status, 200, 'the service manager can read the parent quotation through its authorized scope');
@@ -398,6 +598,239 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
   });
   await assertRejected(stale, 'saving against an old quotation revision');
   assert.equal((await receiptRows(quoteIds.success)).length, 1, 'conflict attempts do not append receipts');
+
+  const initialMultiLines = [
+    serviceLine(feeConfigId, { description: '校准及上门检测', unit_name: '小时', quantity: '1.25', taxed_unit_price: '99.99' }),
+    partLine(activeSkuId, { description: '客户确认的备件规格', unit_name: '件', quantity: '1.00', taxed_unit_price: '50.00' }),
+  ];
+  const initialMultiValues = { remarks: '服务与备件明细', discount_rate: 12.5, pricing_mode: 'estimated', payment_mode: 'full_prepayment' };
+  const initialMultiParams = {
+    draft_json: JSON.stringify(multilineDraft(initialMultiLines, initialMultiValues)),
+    expected_revision: 1, idempotency_key: 'multiline-save-' + RUN,
+  };
+  const multilineSave = await invoke(managerClient, quoteIds.multiline, initialMultiParams);
+  assert.equal(multilineSave.status, 200, 'manager saves service and spare lines through the guarded Action: ' + messageOf(multilineSave));
+  assert.deepEqual(resultOf(multilineSave), {
+    id: quoteIds.multiline, code: 'SQD-' + RUN + '-MULTILINE', status: 'draft', revision: 2,
+    valid_until: '2026-12-31', remarks: '服务与备件明细', pricing_mode: 'estimated', payment_mode: 'full_prepayment',
+    discount_rate: 12.5, subtotal: 174.99, discount_amount: 21.87, total_amount: 153.12, item_count: 2, repeated: false,
+  }, 'line amounts round to cents before the one-decimal whole-quote discount');
+  const firstMultiRows = await lineRows(quoteIds.multiline);
+  assert.equal(firstMultiRows.length, 2);
+  assert.deepEqual(firstMultiRows.map(row => ({
+    line_type: row.line_type, service_item_id: row.service_item_id, sku_id: row.sku_id,
+    item_code: row.item_code, name: row.name, description: row.description, unit_name: row.unit_name,
+    quantity: row.quantity, taxed_unit_price: row.taxed_unit_price, line_amount: row.line_amount, sort_order: row.sort_order,
+  })), [
+    {
+      line_type: 'service', service_item_id: feeConfigId, sku_id: null, item_code: 'SQ-FEE-' + RUN,
+      name: '隔离上门检测项目 ' + RUN, description: '校准及上门检测', unit_name: '小时', quantity: 1.25,
+      taxed_unit_price: 99.99, line_amount: 124.99, sort_order: 0,
+    },
+    {
+      line_type: 'part', service_item_id: null, sku_id: activeSkuId, item_code: 'SQ-SKU-' + RUN,
+      name: '报价PG备件 ' + RUN + ' / 规格A-' + RUN, description: '客户确认的备件规格', unit_name: '件', quantity: 1,
+      taxed_unit_price: 50, line_amount: 50, sort_order: 1,
+    },
+  ]);
+  assert.deepEqual(await quoteMultilineSnapshot(quoteIds.multiline), {
+    id: quoteIds.multiline, status: 'draft', total_amount: 153.12, valid_until: '2026-12-31', remarks: '服务与备件明细',
+    revision: 2, pricing_mode: 'estimated', payment_mode: 'full_prepayment', discount_rate: 12.5,
+    subtotal: 174.99, discount_amount: 21.87, item_count: 2,
+  });
+  const actorReadLines = await readLinesAction(managerClient, quoteIds.multiline);
+  assert.equal(actorReadLines.status, 200, 'the authorized service manager reads child rows through the parent-scoped native Action');
+  const actorLinePayload = resultOf(actorReadLines);
+  assert.equal(actorLinePayload?.quotation_id, quoteIds.multiline);
+  assert.equal(actorLinePayload?.revision, 2);
+  assert.equal(actorLinePayload?.subtotal, 174.99);
+  assert.equal(actorLinePayload?.discount_amount, 21.87);
+  assert.equal(actorLinePayload?.total_amount, 153.12);
+  assert.deepEqual(actorLinePayload?.lines?.map(row => ({
+    line_type: row.line_type, item_id: row.item_id, name: row.name, item_code: row.item_code,
+    quantity: Number(row.quantity), taxed_unit_price: Number(row.taxed_unit_price), line_amount: Number(row.line_amount), sort_order: Number(row.sort_order),
+  })), [
+    { line_type: 'service', item_id: feeConfigId, name: '隔离上门检测项目 ' + RUN, item_code: 'SQ-FEE-' + RUN, quantity: 1.25, taxed_unit_price: 99.99, line_amount: 124.99, sort_order: 0 },
+    { line_type: 'part', item_id: activeSkuId, name: '报价PG备件 ' + RUN + ' / 规格A-' + RUN, item_code: 'SQ-SKU-' + RUN, quantity: 1, taxed_unit_price: 50, line_amount: 50, sort_order: 1 },
+  ]);
+  assert.equal(Object.keys(actorLinePayload.lines[0]).some(key => /cost|sale_price|inventory/i.test(key)), false, 'read DTO contains no cost, catalog price, or inventory fields');
+  const afterInitialMultiSave = await lineRows(quoteIds.multiline);
+  const sameMultiKeyReplay = await invoke(managerClient, quoteIds.multiline, initialMultiParams);
+  assert.equal(sameMultiKeyReplay.status, 200, 'same multiline idempotency key replays the prior result');
+  assert.equal(resultOf(sameMultiKeyReplay)?.repeated, true);
+  assert.equal(resultOf(sameMultiKeyReplay)?.revision, 2);
+  assert.deepEqual(await lineRows(quoteIds.multiline), afterInitialMultiSave, 'same-key replay does not rewrite stable line ids or timestamps');
+  const staleMultiSave = await saveMultiline(managerClient, quoteIds.multiline, 1, 'multiline-stale-' + RUN, [serviceLine(feeConfigId)]);
+  await assertRejected(staleMultiSave, 'saving multiline changes against an old parent revision');
+  const scalarOverwrite = await invoke(managerClient, quoteIds.multiline, {
+    draft_json: JSON.stringify({ total_amount: '1.00', valid_until: '2026-12-31', remarks: '不得覆盖项目' }),
+    expected_revision: 2, idempotency_key: 'scalar-over-lines-' + RUN,
+  });
+  await assertRejected(scalarOverwrite, 'saving the old scalar shape over a quotation that already has lines');
+  assert.deepEqual(await lineRows(quoteIds.multiline), afterInitialMultiSave, 'scalar fallback cannot erase or replace existing line rows');
+  assert.equal((await receiptRows(quoteIds.multiline)).length, 1, 'conflict and scalar requests do not create additional receipts');
+
+  const firstServiceId = firstMultiRows.find(row => row.line_type === 'service')?.id;
+  const firstPartId = firstMultiRows.find(row => row.line_type === 'part')?.id;
+  assert.ok(firstServiceId && firstPartId);
+  const directChildGetForUnrelatedRole = await operatorClient.request('/data/forge_service_quotation_line/' + encodeURIComponent(firstServiceId));
+  await assertRejected(directChildGetForUnrelatedRole, 'unrelated service role cannot read a child of a manager quotation');
+  assertGenericWriteBlocked(await managerClient.request('/data/forge_service_quotation_line', 'POST', {
+    name: '未受控服务项目', quotation_id: quoteIds.multiline, line_type: 'service', service_item_id: feeConfigId,
+    item_code: 'SQ-RAW-' + RUN, unit_name: '项', quantity: 1, taxed_unit_price: 1, line_amount: 1, sort_order: 20,
+  }), 'generic service quotation line creation');
+  assertGenericWriteBlocked(await managerClient.request('/data/forge_service_quotation_line/' + encodeURIComponent(firstServiceId), 'PATCH', { taxed_unit_price: 1 }), 'generic service quotation line update');
+  assertGenericWriteBlocked(await managerClient.request('/data/forge_service_quotation_line/' + encodeURIComponent(firstServiceId), 'DELETE'), 'generic service quotation line deletion');
+
+  const invalidLineQuoteBefore = await quoteMultilineSnapshot(quoteIds.multilineInvalid);
+  const invalidReferenceCases = [
+    ['inactive fee item', serviceLine(inactiveFeeConfigId)],
+    ['wrong-category config', serviceLine(wrongCategoryConfigId)],
+    ['foreign-org fee item', serviceLine(foreignFeeConfigId)],
+    ['disabled SKU', partLine(disabledSkuId)],
+    ['inactive material behind SKU', partLine(inactiveMaterialSkuId)],
+    ['foreign-org SKU', partLine(foreignSkuId)],
+    ['foreign-org material behind a home-org SKU', partLine(homeSkuForeignMaterialId)],
+  ];
+  for (const [label, line] of invalidReferenceCases) {
+    const response = await saveMultiline(managerClient, quoteIds.multilineInvalid, 1, 'invalid-ref-' + String(label).replaceAll(' ', '-') + '-' + RUN, [line]);
+    await assertRejected(response, label);
+    assert.deepEqual(await quoteMultilineSnapshot(quoteIds.multilineInvalid), invalidLineQuoteBefore, label + ' leaves the parent unchanged');
+    assert.equal((await lineRows(quoteIds.multilineInvalid)).length, 0, label + ' creates no child rows');
+    assert.equal((await receiptRows(quoteIds.multilineInvalid)).length, 0, label + ' creates no receipt');
+  }
+  const malformedCases = [
+    ['zero quantity', serviceLine(feeConfigId, { quantity: '0' })],
+    ['negative price', serviceLine(feeConfigId, { taxed_unit_price: '-0.01' })],
+    ['tampered line amount', { ...serviceLine(feeConfigId), line_amount: '1.00' }],
+    ['unknown line cost field', { ...partLine(activeSkuId), cost_price: '0.01' }],
+  ];
+  for (const [label, line] of malformedCases) {
+    const response = await saveMultiline(managerClient, quoteIds.multilineInvalid, 1, 'invalid-shape-' + String(label).replaceAll(' ', '-') + '-' + RUN, [line]);
+    await assertRejected(response, label);
+    assert.deepEqual(await quoteMultilineSnapshot(quoteIds.multilineInvalid), invalidLineQuoteBefore, label + ' leaves the parent unchanged');
+    assert.equal((await lineRows(quoteIds.multilineInvalid)).length, 0, label + ' creates no child rows');
+    assert.equal((await receiptRows(quoteIds.multilineInvalid)).length, 0, label + ' creates no receipt');
+  }
+
+  const crossQuoteLine = await saveMultiline(managerClient, quoteIds.multilineOther, 1, 'cross-quote-line-' + RUN, [
+    serviceLine(feeConfigId, { id: firstServiceId }),
+  ]);
+  await assertRejected(crossQuoteLine, 'reusing a child line id from another quotation');
+  assert.equal((await lineRows(quoteIds.multilineOther)).length, 0, 'cross-quotation line ids cannot create or move child rows');
+  assert.equal((await receiptRows(quoteIds.multilineOther)).length, 0, 'cross-quotation line rejection creates no receipt');
+
+  const updatedMultiLines = [
+    partLine(activeSkuId, { id: firstPartId, description: '重新排序并修改数量', quantity: '2.00', taxed_unit_price: '40.00' }),
+    serviceLine(feeConfigId, { description: '新增安装项目', unit_name: '次', quantity: '1.00', taxed_unit_price: '20.00' }),
+  ];
+  await installMultilineLineMutationProbes();
+  const updatedMulti = await saveMultiline(managerClient, quoteIds.multiline, 2, 'multiline-update-' + RUN, updatedMultiLines, {
+    remarks: '调整项目和顺序', discount_rate: 5, pricing_mode: 'fixed', payment_mode: 'staged',
+  });
+  assert.equal(updatedMulti.status, 200, 'manager edits, removes and reorders child lines through the same guarded Action: ' + messageOf(updatedMulti) + '; SQL boundary probes ' + await multilineMutationDiagnostics(quoteIds.multiline));
+  assert.deepEqual(resultOf(updatedMulti), {
+    id: quoteIds.multiline, code: 'SQD-' + RUN + '-MULTILINE', status: 'draft', revision: 3,
+    valid_until: '2026-12-31', remarks: '调整项目和顺序', pricing_mode: 'fixed', payment_mode: 'staged',
+    discount_rate: 5, subtotal: 100, discount_amount: 5, total_amount: 95, item_count: 2, repeated: false,
+  });
+  const updatedRows = await lineRows(quoteIds.multiline);
+  assert.equal(updatedRows.length, 2);
+  assert.equal(updatedRows[0].id, firstPartId, 'existing part line keeps its id through editing and reorder');
+  assert.equal(updatedRows[0].sort_order, 0);
+  assert.equal(updatedRows[0].quantity, 2);
+  assert.equal(updatedRows[0].taxed_unit_price, 40);
+  assert.equal(updatedRows[1].line_type, 'service');
+  assert.equal(updatedRows[1].service_item_id, feeConfigId);
+  assert.notEqual(updatedRows[1].id, firstServiceId, 'the removed service line is replaced by a new stable row id');
+  assert.equal(updatedRows[1].sort_order, 1);
+  assert.equal(updatedRows.some(row => row.id === firstServiceId), false, 'omitting the previous service row deletes it');
+  assert.deepEqual(await quoteMultilineSnapshot(quoteIds.multiline), {
+    id: quoteIds.multiline, status: 'draft', total_amount: 95, valid_until: '2026-12-31', remarks: '调整项目和顺序',
+    revision: 3, pricing_mode: 'fixed', payment_mode: 'staged', discount_rate: 5, subtotal: 100, discount_amount: 5, item_count: 2,
+  });
+  const updatedLinesResponse = await readLinesAction(managerClient, quoteIds.multiline);
+  assert.equal(updatedLinesResponse.status, 200);
+  assert.deepEqual(resultOf(updatedLinesResponse)?.lines?.map(row => ({ item_id: row.item_id, line_type: row.line_type, sort_order: Number(row.sort_order) })), [
+    { item_id: activeSkuId, line_type: 'part', sort_order: 0 },
+    { item_id: feeConfigId, line_type: 'service', sort_order: 1 },
+  ]);
+
+  await postgres.query('UPDATE forge_service_quotation SET subtotal=$1 WHERE id=$2', [100.01, quoteIds.multiline]);
+  const mismatchedHeaderConfirm = await invokeQuotationAction(managerClient, 'service_quotation_confirm', quoteIds.multiline, { expected_revision: 3 });
+  await assertRejected(mismatchedHeaderConfirm, 'confirming when the parent subtotal no longer matches its lines');
+  const mismatchedHeader = await quoteMultilineSnapshot(quoteIds.multiline);
+  assert.equal(mismatchedHeader.status, 'draft');
+  assert.equal(mismatchedHeader.revision, 3);
+  assert.equal(mismatchedHeader.subtotal, 100.01, 'failed confirmation does not repair or advance a tampered parent value');
+  await postgres.query('UPDATE forge_service_quotation SET subtotal=$1 WHERE id=$2', [100, quoteIds.multiline]);
+
+  await postgres.query('UPDATE forge_service_quotation_line SET line_amount=$1 WHERE id=$2 AND quotation_id=$3', [81, firstPartId, quoteIds.multiline]);
+  const mismatchedLineConfirm = await invokeQuotationAction(managerClient, 'service_quotation_confirm', quoteIds.multiline, { expected_revision: 3 });
+  await assertRejected(mismatchedLineConfirm, 'confirming when a persisted line amount was tampered');
+  assert.equal((await quoteMultilineSnapshot(quoteIds.multiline)).status, 'draft', 'line-amount tampering cannot confirm the quotation');
+  assert.equal((await quoteMultilineSnapshot(quoteIds.multiline)).revision, 3);
+  await postgres.query('UPDATE forge_service_quotation_line SET line_amount=$1 WHERE id=$2 AND quotation_id=$3', [80, firstPartId, quoteIds.multiline]);
+
+  const multilineConfirmed = await invokeQuotationAction(managerClient, 'service_quotation_confirm', quoteIds.multiline, { expected_revision: 3 });
+  assert.equal(multilineConfirmed.status, 200, 'a consistent multiline quote confirms against its current revision');
+  assert.deepEqual(resultOf(multilineConfirmed), { id: quoteIds.multiline, status: 'confirmed', revision: 4 });
+  assert.deepEqual(await quoteMultilineSnapshot(quoteIds.multiline), {
+    id: quoteIds.multiline, status: 'confirmed', total_amount: 95, valid_until: '2026-12-31', remarks: '调整项目和顺序',
+    revision: 4, pricing_mode: 'fixed', payment_mode: 'staged', discount_rate: 5, subtotal: 100, discount_amount: 5, item_count: 2,
+  });
+  const staleMultilineSettlement = await invokeQuotationAction(managerClient, 'service_quotation_create_settlement', quoteIds.multiline, { expected_revision: 3 });
+  await assertRejected(staleMultilineSettlement, 'settling a multiline quote against its old revision');
+  assert.equal((await settlementRows(quoteIds.multiline)).length, 0, 'stale multiline settlement creates no row');
+  const multilineSettlement = await invokeQuotationAction(managerClient, 'service_quotation_create_settlement', quoteIds.multiline, { expected_revision: 4 });
+  const multilineSettlementParent = await quoteMultilineSnapshot(quoteIds.multiline);
+  assert.equal(multilineSettlement.status, 200, 'settlement uses the final discounted amount from the validated multiline quote: ' + messageOf(multilineSettlement)
+    + '; parentState=' + JSON.stringify(multilineSettlementParent && { status: multilineSettlementParent.status, revision: multilineSettlementParent.revision, total_amount: multilineSettlementParent.total_amount })
+    + '; linkedSettlements=' + (await settlementRows(quoteIds.multiline)).length);
+  const multilineSettlementResult = resultOf(multilineSettlement);
+  assert.equal(multilineSettlementResult?.quotation_id, quoteIds.multiline);
+  const multilineSettlements = await settlementRows(quoteIds.multiline);
+  assert.equal(multilineSettlements.length, 1);
+  assert.equal(multilineSettlements[0].status, 'draft');
+  assert.equal(Number(multilineSettlements[0].total_amount), 95);
+  assert.deepEqual(await quoteMultilineSnapshot(quoteIds.multiline), {
+    id: quoteIds.multiline, status: 'settlement_created', total_amount: 95, valid_until: '2026-12-31', remarks: '调整项目和顺序',
+    revision: 5, pricing_mode: 'fixed', payment_mode: 'staged', discount_rate: 5, subtotal: 100, discount_amount: 5, item_count: 2,
+  });
+  const multilineSettlementDuplicate = await invokeQuotationAction(managerClient, 'service_quotation_create_settlement', quoteIds.multiline, { expected_revision: 4 });
+  await assertRejected(multilineSettlementDuplicate, 'repeating multiline settlement creation');
+  assert.equal((await settlementRows(quoteIds.multiline)).length, 1, 'multiline retries cannot create another settlement');
+
+  const lineRollbackBefore = await quoteMultilineSnapshot(quoteIds.multilineLineRollback);
+  lineRejectFunction = 'fn_service_quote_line_reject_' + RUN;
+  lineRejectTrigger = 'trg_service_quote_line_reject_' + RUN;
+  await postgres.query(`CREATE FUNCTION "${lineRejectFunction}"() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.quotation_id = '${quoteIds.multilineLineRollback}' THEN RAISE EXCEPTION 'isolated quotation line insert failure'; END IF; RETURN NEW; END $$`);
+  await postgres.query(`CREATE TRIGGER "${lineRejectTrigger}" BEFORE INSERT ON forge_service_quotation_line FOR EACH ROW EXECUTE FUNCTION "${lineRejectFunction}"()`);
+  const childInsertFailure = await saveMultiline(managerClient, quoteIds.multilineLineRollback, 1, 'line-insert-failure-' + RUN, [serviceLine(feeConfigId)]);
+  await assertRejected(childInsertFailure, 'quotation line insertion failure');
+  assert.deepEqual(await quoteMultilineSnapshot(quoteIds.multilineLineRollback), lineRollbackBefore, 'parent totals and revision roll back with a child insert failure');
+  assert.equal((await lineRows(quoteIds.multilineLineRollback)).length, 0, 'no child survives its failed insert');
+  assert.equal((await receiptRows(quoteIds.multilineLineRollback)).length, 0, 'no receipt survives a child insert failure');
+  await postgres.query(`DROP TRIGGER "${lineRejectTrigger}" ON forge_service_quotation_line`);
+  await postgres.query(`DROP FUNCTION "${lineRejectFunction}"()`);
+  lineRejectTrigger = ''; lineRejectFunction = '';
+
+  const multilineReceiptRollbackBefore = await quoteMultilineSnapshot(quoteIds.multilineReceiptRollback);
+  const multilineReceiptFailKey = 'multiline-receipt-failure-' + RUN;
+  rejectFunction = 'fn_service_quote_multiline_receipt_reject_' + RUN;
+  rejectTrigger = 'trg_service_quote_multiline_receipt_reject_' + RUN;
+  await postgres.query(`CREATE FUNCTION "${rejectFunction}"() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.idempotency_key = '${multilineReceiptFailKey}' THEN RAISE EXCEPTION 'isolated multiline receipt insert failure'; END IF; RETURN NEW; END $$`);
+  await postgres.query(`CREATE TRIGGER "${rejectTrigger}" BEFORE INSERT ON forge_service_quotation_draft_receipt FOR EACH ROW EXECUTE FUNCTION "${rejectFunction}"()`);
+  const multilineReceiptFailure = await saveMultiline(managerClient, quoteIds.multilineReceiptRollback, 1, multilineReceiptFailKey, [
+    serviceLine(feeConfigId), partLine(activeSkuId),
+  ]);
+  await assertRejected(multilineReceiptFailure, 'multiline receipt insertion failure');
+  assert.deepEqual(await quoteMultilineSnapshot(quoteIds.multilineReceiptRollback), multilineReceiptRollbackBefore, 'parent amount and revision roll back with a multiline receipt failure');
+  assert.equal((await lineRows(quoteIds.multilineReceiptRollback)).length, 0, 'all child inserts roll back with a failed receipt insert');
+  assert.equal((await receiptRows(quoteIds.multilineReceiptRollback)).length, 0, 'no multiline receipt survives its failed insert');
+  await postgres.query(`DROP TRIGGER "${rejectTrigger}" ON forge_service_quotation_draft_receipt`);
+  await postgres.query(`DROP FUNCTION "${rejectFunction}"()`);
+  rejectTrigger = ''; rejectFunction = '';
 
   const staleConfirm = await invokeQuotationAction(managerClient, 'service_quotation_confirm', quoteIds.success, { expected_revision: 1 });
   await assertRejected(staleConfirm, 'confirming against the stale pre-save revision');

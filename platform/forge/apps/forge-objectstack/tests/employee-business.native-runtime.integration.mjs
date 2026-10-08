@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { Client } from 'pg';
 import { exerciseOrderProjectHandoff } from './order-project-handoff.fixture.mjs';
+import { exerciseEmployeeBusinessCreation } from './employee-business-creation.fixture.mjs';
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const HOST = '127.0.0.1';
@@ -56,6 +57,7 @@ test('employee business HTTP connection uses native metadata, identity and atomi
   let child;
   let output = '';
   let port;
+  let legacyContextRequired = process.env.FORGE_EMPLOYEE_CREATION_PG_ONLY === '1';
   await pgAdmin.connect();
   await pgAdmin.query(`CREATE DATABASE "${database}"`);
 
@@ -196,7 +198,8 @@ import { sharedForgeCorePlugin, sharedForgeCoreBundle } from ${JSON.stringify(pa
 import { ApprovalFlowLauncherPlugin } from './approval-flow-launcher.plugin.mjs';
 // Exercise the real employee-only signature handler under the current native confirmation gate.
 stack.plugins=stack.plugins.map(plugin=>plugin===sharedForgeCorePlugin?new AppPlugin({...sharedForgeCoreBundle,
- permissions:[...sharedForgeCoreBundle.permissions,definePermissionSet({name:'test_project_header_mask',label:'隔离项目订单编号拒绝',objects:{},fields:{'forge_sales_order.code':{readable:false}}}),definePermissionSet({name:'test_project_price_mask',label:'隔离项目订单单价拒绝',objects:{},fields:{'forge_sales_order_line.taxed_unit_price':{readable:false}}}),definePermissionSet({name:'test_quotation_price_mask',label:'隔离报价单价字段拒绝',fields:{'forge_quotation_line.taxed_unit_price':{readable:false}},objects:{forge_quotation:{allowRead:true,readScope:'org'},forge_quotation_line:{allowRead:true,readScope:'org'}}})],
+ objects:sharedForgeCoreBundle.objects.map(object=>process.env.FORGE_TEST_LEGACY_CONTEXT==='1'&&object.name==='forge_employee_business_context'?{...object,fields:{...object.fields,record_id:{...object.fields.record_id,required:true}}}:object),
+ permissions:[...sharedForgeCoreBundle.permissions,definePermissionSet({name:'test_creation_material_name_mask',label:'隔离创建物料名称拒绝',objects:{},fields:{'forge_material.name':{readable:false}}}),definePermissionSet({name:'test_project_header_mask',label:'隔离项目订单编号拒绝',objects:{},fields:{'forge_sales_order.code':{readable:false}}}),definePermissionSet({name:'test_project_price_mask',label:'隔离项目订单单价拒绝',objects:{},fields:{'forge_sales_order_line.taxed_unit_price':{readable:false}}}),definePermissionSet({name:'test_quotation_price_mask',label:'隔离报价单价字段拒绝',fields:{'forge_quotation_line.taxed_unit_price':{readable:false}},objects:{forge_quotation:{allowRead:true,readScope:'org'},forge_quotation_line:{allowRead:true,readScope:'org'}}})],
  actions:sharedForgeCoreBundle.actions.map(action=>action.name==='contract_register_signature'
   ?{...action,ai:{...action.ai,requiresConfirmation:true}}:action)}):plugin);
 stack.plugins.push(new ApprovalFlowLauncherPlugin());
@@ -220,6 +223,7 @@ export default stack;
       cwd: tempDir,
       env: {
         ...process.env,
+        FORGE_TEST_LEGACY_CONTEXT: legacyContextRequired ? '1' : '0',
         OS_HOME: path.join(tempDir, '.os-home'),
         OS_DATABASE_URL: `postgres://${PG_USER}@${HOST}:${PG_PORT}/${database}`,
         OS_SECRET_KEY: secretKey,
@@ -340,6 +344,12 @@ export default stack;
   const session = await admin.request('/auth/get-session');
   const organizationId = session.value?.session?.activeOrganizationId || session.value?.session?.organizationId;
   assert.ok(organizationId, 'Seeded administrator has an active organization');
+
+  if (process.env.FORGE_EMPLOYEE_CREATION_PG_ONLY === '1') {
+    await exerciseEmployeeBusinessCreation({ admin, organizationId, suffix, databaseClient, createEmployee, idOf, launcherSecret,
+      upgradeContextSchema: async () => { await stopRuntime(); legacyContextRequired = false; await startRuntime(); } });
+    return;
+  }
 
   const permissionId = (await databaseClient.query('SELECT id FROM sys_permission_set WHERE name=$1',['sales_contract_operator'])).rows[0]?.id;
   assert.ok(permissionId);

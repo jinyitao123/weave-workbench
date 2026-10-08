@@ -1,8 +1,9 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 export interface EmployeeBusinessBinding {
-  userId: string; organizationId: string; objectName: string; recordId: string;
-  actionName: string; recordVersion: string; expiresAt: string; operationKey: string; requestDigest: string;
+  userId: string; organizationId: string; objectName: string; recordId?: string;
+  actionName: string; recordVersion?: string; expiresAt: string; operationKey: string; requestDigest: string;
+  creationCode?: string;
   file?: { parameter: string; fileId: string; name: string; mediaType: string; bytes: number; sha256: string };
 }
 
