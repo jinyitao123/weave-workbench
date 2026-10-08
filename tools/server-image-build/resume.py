@@ -171,7 +171,7 @@ def resume(repository, revision, version, run_id, output):
     if output.exists() and any(output.iterdir()):
         raise BuildError('Resume output must be empty; prior evidence is preserved')
     api = Github(repository)
-    api.repository_private()
+    api.repository_verified()
     workflow = api.get(f'repos/{repository}/actions/workflows/server-image-build.yml')
     run = api.get(f'repos/{repository}/actions/runs/{run_id}')
     validate_run(run, workflow, repository, api.repository_id, run_id, revision)
@@ -204,7 +204,7 @@ def resume(repository, revision, version, run_id, output):
     dockerfiles = {'forge': forge_docker, 'forgeProxy': forge_docker, 'weave': blob('platform/weave/Dockerfile')}
     lock = validate_publication(files, repository, revision, version, components, console, dockerfiles)
     states = {name: api.package_private(lock['components'][name]['image']) for name in SUFFIXES}
-    api.repository_private()
+    api.repository_verified()
     output.mkdir(parents=True)
     for name, data in files.items():
         if name != 'host-staging-receipt.json':  # A prior receipt never attests this transfer.

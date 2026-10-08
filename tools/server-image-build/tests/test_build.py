@@ -72,15 +72,29 @@ class BuildTests(unittest.TestCase):
         finally:
             sys.path.remove(str(installer))
 
-    def test_private_gate_rejects_public_repository_or_package(self):
+    def test_gate_rejects_incomplete_repository_or_public_package(self):
         api = build.Github('example/private-suite', token='test-only-not-a-credential')
         with patch.object(api, 'get', return_value={'private': False, 'visibility': 'public'}):
             with self.assertRaises(build.BuildError):
-                api.repository_private()
+                api.repository_verified()
         private_repo = {'id': 77, 'private': True, 'visibility': 'private', 'full_name': 'example/private-suite', 'owner': {'type': 'User'}}
         with patch.object(api, 'get', side_effect=[private_repo, {'visibility': 'public', 'package_type': 'container'}]):
             with self.assertRaises(build.BuildError):
                 api.package_private('ghcr.io/example/private-suite-forge:0.1.0')
+
+    def test_public_source_keeps_private_package_and_identity_checks(self):
+        api = build.Github('example/private-suite', token='test-only-not-a-credential')
+        public_repo = {'id': 77, 'private': False, 'visibility': 'public', 'full_name': 'example/private-suite', 'owner': {'type': 'User'}}
+        linked = {'id': 77, 'private': False, 'full_name': 'example/private-suite'}
+        package = {'visibility': 'private', 'package_type': 'container', 'repository': linked}
+        with patch.object(api, 'get', side_effect=[public_repo, package]):
+            self.assertEqual(api.package_private('ghcr.io/example/private-suite-forge:0.1.0'), 'private')
+        for changed in [{**package, 'visibility': 'public'}, {**package, 'repository': {**linked, 'id': 78}}, {**package, 'repository': {**linked, 'private': True}}]:
+            with patch.object(api, 'get', side_effect=[public_repo, changed]), self.assertRaises(build.BuildError):
+                api.package_private('ghcr.io/example/private-suite-forge:0.1.0')
+        for changed in [{**public_repo, 'private': True}, {**public_repo, 'visibility': 'internal'}, {**public_repo, 'id': None}]:
+            with patch.object(api, 'get', return_value=changed), self.assertRaises(build.BuildError):
+                api.repository_verified()
 
     def test_private_gate_rejects_missing_package_or_conflicting_repository(self):
         api = build.Github('example/private-suite', token='test-only-not-a-credential')

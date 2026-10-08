@@ -152,10 +152,12 @@ class Github:
                 return None
             raise BuildError(f'GitHub visibility verification failed (HTTP {error.code})') from None
 
-    def repository_private(self):
+    def repository_verified(self):
         value = self.get('repos/' + self.repository)
-        if value.get('private') is not True or value.get('visibility') != 'private':
-            raise BuildError('Publication requires the current repository to be private')
+        visibility = value.get('visibility')
+        if visibility not in ('private', 'public') or value.get('private') is not (visibility == 'private'):
+            raise BuildError('Source repository visibility could not be verified')
+        self.repository_is_private = value['private']
         if value.get('full_name', '').lower() != self.repository.lower():
             raise BuildError('Unexpected repository identity')
         if type(value.get('id')) is not int or value['id'] < 1:
@@ -164,11 +166,11 @@ class Github:
         self.owner_kind = 'orgs' if value['owner']['type'] == 'Organization' else 'users'
 
     def package_private(self, image, missing=False):
-        self.repository_private()
+        self.repository_verified()
         match = re.fullmatch(r'ghcr\.io/([^/]+)/([^:@]+)(?::[^@]+)?(?:@sha256:[0-9a-f]{64})?', image)
         owner = self.repository.split('/')[0]
         if not match or match.group(1).lower() != owner.lower():
-            raise BuildError('Image owner differs from the private source repository')
+            raise BuildError('Image owner differs from the source repository')
         route = f'{self.owner_kind}/{owner}/packages/container/{urllib.parse.quote(match.group(2), safe="")}'
         value = self.get(route, missing=missing)
         if value is None:
@@ -184,9 +186,9 @@ class Github:
         if linked is None:
             return 'private-association-not-reported'
         if (not isinstance(linked, dict) or linked.get('full_name', '').lower() != self.repository.lower()
-                or linked.get('id') != self.repository_id or linked.get('private') is not True):
+                or linked.get('id') != self.repository_id or linked.get('private') is not self.repository_is_private):
             observed = {key: linked.get(key) for key in ('id', 'full_name', 'private')} if isinstance(linked, dict) else None
-            raise BuildError('Container package must be linked to this private source repository; observed association: ' + json.dumps(observed, sort_keys=True))
+            raise BuildError('Container package must be linked to this source repository; observed association: ' + json.dumps(observed, sort_keys=True))
         return 'private'
 
 
@@ -273,7 +275,7 @@ def execute(plan, objectui, output, postgres, push):
     output.mkdir(parents=True, exist_ok=True)
     api = Github(plan['repository']) if push or os.environ.get('GITHUB_ACTIONS') == 'true' else None
     if api:
-        api.repository_private()
+        api.repository_verified()
         if push:
             for image in plan['tags'].values():
                 api.package_private(image, missing=True)
@@ -360,11 +362,11 @@ def execute(plan, objectui, output, postgres, push):
                     manifest['images'][name]['repositoryAssociation'] = 'not_reported' if association == 'private-association-not-reported' else 'linked'
                     manifest['images'][name]['registryConfigDigest'] = expected_config
                     write_json(output / 'build-manifest.json', manifest)
-                api.repository_private()
+                api.repository_verified()
                 write_json(output / 'images.lock.json', image_lock(plan, references, pg_ref))
                 manifest['published'] = True
             if api:
-                api.repository_private()
+                api.repository_verified()
             manifest['status'] = 'published-private' if push else 'built-local'
             write_json(output / 'build-manifest.json', manifest)
     except Exception:
