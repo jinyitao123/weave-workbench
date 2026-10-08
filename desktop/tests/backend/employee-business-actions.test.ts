@@ -11,7 +11,7 @@ import { readBusinessWork } from '../../electron/main/enterprise/business-work'
 const directories: string[] = []
 afterEach(async () => { await Promise.all(directories.splice(0).map((path) => rm(path, { recursive: true, force: true }))) })
 const id = '10000000-0000-4000-8000-000000000001'
-function context(): EmployeeBusinessContext {
+function context(): Extract<EmployeeBusinessContext, { record: unknown }> {
   return { version: '1', contextId: id, contextVersion: 'a'.repeat(64), recordVersion: 'revision-1', expiresAt: new Date(Date.now() + 60_000).toISOString(), readOnly: true,
     record: { objectName: 'forge_sales_contract', recordId: 'contract-1', label: '合同甲' }, source: { kind: 'record' },
     actions: [{ action_ref: 1, capabilityId: 'forge:action:forge_sales_contract.Sign', declarationVersion: 'b'.repeat(64), label: '登记签署', description: '本人登记签署日期', effect: 'write', executionMode: 'employee_only',

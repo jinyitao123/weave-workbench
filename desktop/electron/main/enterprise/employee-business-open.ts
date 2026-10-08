@@ -17,6 +17,7 @@ export async function prepareEmployeeBusinessOpen(service: Access, record: Emplo
   const accountKey = await service.accountKey()
   const selection: EmployeeBusinessSelection = { record, source: { kind: 'record' } }
   const context = await service.getEmployeeBusinessContext(selection)
+  if (!('record' in context)) throw new Error('当前事项必须绑定真实业务记录')
   const read = await service.readBusinessRecord(record.objectName, record.recordId)
   if (read.candidate.objectName !== record.objectName || read.candidate.recordId !== record.recordId || await service.accountKey() !== accountKey) throw new Error('员工账号或业务来源已变化，请重新打开')
   const fields = read.presentation?.record.map((field) => `- ${field.label}：${field.value}`).join('\n')
@@ -28,6 +29,7 @@ export async function prepareEmployeeBusinessOpen(service: Access, record: Emplo
 export async function verifyEmployeeBusinessOpen(service: Access, pending: PendingEmployeeBusinessContext, prompt: string) {
   if (Date.now() - pending.createdAt > 10 * 60_000 || digest(prompt.trim()) !== pending.promptDigest || await service.accountKey() !== pending.accountKey) throw new Error('本人业务事项上下文已失效，请重新打开')
   const context = await service.getEmployeeBusinessContext(pending.selection)
+  if (!('record' in context)) throw new Error('当前事项必须绑定真实业务记录')
   const read = await service.readBusinessRecord(pending.selection.record.objectName, pending.selection.record.recordId)
   if (context.contextVersion !== pending.contextVersion || context.recordVersion !== pending.recordVersion || snapshotDigest(read) !== pending.snapshotDigest
     || await service.accountKey() !== pending.accountKey) throw new Error('当前业务记录或可办理范围已变化，请重新打开')
