@@ -7,14 +7,14 @@
   "pageId": "page_service_order_create",
   "status": "review_required",
   "observedAt": "2026-10-09",
-  "reviewedRevision": "51b9ef150a008132ddc255f357a8cb741b13fb51",
+  "reviewedRevision": "64b1586562e1cc01014fdd6dcb2c22402fa763d0",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts": "a1711346e2c76fda59233c2668340578de0f9e681cc98f383b452e4545fca04e",
     "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86",
     "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts": "a0088ab566ca72d65a6a85b2fc43e2023500ba61511d5a4f4259b62101c46f7b",
     "apps/forge-objectstack/src/views/service-workspace.view.ts": "a9314cee79aca5e70975f498b50a2bf8d94f265b0618bb6977763f587184e78b",
-    "apps/forge-objectstack/src/objects/sales.object.ts": "34a7c6d8d0f3b470ae5ae355840a9744118f1ac918f96f6e3f0e8bd6f4b5d3bd",
-    "apps/forge-objectstack/src/actions/sales.action.ts": "9aea8d1d0216cc6a28f9262a4c53725ffbc29931bc37868e708faab65b734ac8",
+    "apps/forge-objectstack/src/objects/sales.object.ts": "c9f9a6b8ffb5f3572761d4f3e690924994e28693423583d4f1e62467aec0b575",
+    "apps/forge-objectstack/src/actions/sales.action.ts": "caea44559dc536b81aab9773a010f67fa3c508feb1864f11d662c67fdfa8d95e",
     "apps/forge-objectstack/src/permissions/otc-role.permission.ts": "a762753c23dc3edf556d689cadb522f4393ccdc921f9594d979039711f6321b3",
     "apps/forge-objectstack/console94.lock.json": "2173c61b1dbfde3e41794aea490317770d618c9092c990882f2628c19e638cdf",
     "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts": "f297c64a38e551a8873305d7e8065e9d06abccadf1acad6a2ece85c7fffd3afa",
@@ -37,7 +37,7 @@
   "checks": {
     "requirements": {
       "status": "pending",
-      "notes": "2026-10-08因服务报价新增多行明细（报价项目、整单折扣与付款约定；订单创建页源码未改动该入口）而更改共用对象、动作与服务工作台页面源码，重新绑定依赖指纹；本页要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08因Console升级到ObjectUI df41f84e（上游PR #3、#4，新增默认关闭的表格空结果显示与带标签行编辑选项）并改用Node 24.21.0构建而重新绑定依赖指纹；本页源码未使用这些新增选项，默认行为不变依据上游PR的测试与说明，未重做GUI对照；所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08仅因Console生成规则固定压缩输出并规范gzip系统头而重新绑定依赖指纹；完整逐文件对照证明页面内容未变，所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 603e8ab3e32c19e84bb86243989df3aa2501ffd2，不作为新版本整体通过。20 项要求登记；7 项参考差异明确保留，局部业务和交互观察不代表完整复刻。",
+      "notes": "2026-10-08因服务结算单号改为按组织和日期自动编号、结算保存报价方式与付款约定快照而更改共用对象与动作源码，重新绑定依赖指纹；本页要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08因服务报价新增多行明细（报价项目、整单折扣与付款约定；订单创建页源码未改动该入口）而更改共用对象、动作与服务工作台页面源码，重新绑定依赖指纹；本页要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08因Console升级到ObjectUI df41f84e（上游PR #3、#4，新增默认关闭的表格空结果显示与带标签行编辑选项）并改用Node 24.21.0构建而重新绑定依赖指纹；本页源码未使用这些新增选项，默认行为不变依据上游PR的测试与说明，未重做GUI对照；所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08仅因Console生成规则固定压缩输出并规范gzip系统头而重新绑定依赖指纹；完整逐文件对照证明页面内容未变，所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 603e8ab3e32c19e84bb86243989df3aa2501ffd2，不作为新版本整体通过。20 项要求登记；7 项参考差异明确保留，局部业务和交互观察不代表完整复刻。",
       "evidence": []
     },
     "visual": {

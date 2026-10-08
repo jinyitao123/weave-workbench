@@ -1292,7 +1292,7 @@ export const ServiceOrderCreateSettlement = defineAction({
   visible: `record.status == 'completed'`, refreshAfter: true,
   successMessage: '服务结算单已生成',
   params: [{ field: 'total_amount', objectOverride: 'forge_service_settlement', required: true }],
-  body: { language: 'js', capabilities: ['api.read', 'api.write'], source: `
+  body: { language: 'js', capabilities: ['api.read', 'api.write', 'api.transaction'], source: `
 const id = ctx.recordId || (ctx.record && ctx.record.id); const order = ctx.record;
 if (ctx.recordLoadDenied === true || !id || !order) throw new Error('当前服务工单不存在或不可访问');
 const organizationId = String((ctx.session && ctx.session.organizationId) || (ctx.user && ctx.user.organizationId) || '').trim();
@@ -1300,13 +1300,18 @@ if (!organizationId || String(order.organization_id || '') !== organizationId) t
 if (order.status !== 'completed') throw new Error('仅已完工服务工单可以生成结算');
 const amount = Number(ctx.input.total_amount || 0); if (!(amount >= 0)) throw new Error('结算金额不能为负数');
 const actor = ctx.session && ctx.session.userId;
+return await ctx.api.transaction(async () => {
 const existing = await ctx.api.object('forge_service_settlement').find({ where: { service_order_id: id } });
 if (existing.length) throw new Error('该服务工单已生成服务结算');
-const code = 'SS-' + new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);
-const created = await ctx.api.object('forge_service_settlement').insert({ name: order.name + ' - 服务结算', code, owner_id:actor, service_order_id: id, quotation_id: null, order_code: order.code, customer_id: order.customer_id, contact_id: order.contact_id || null, total_amount: amount, status: 'draft', responsible_id: order.responsible_id || actor || null, remarks: order.service_result || order.remarks || null });
+const created = await ctx.api.object('forge_service_settlement').insert({ name: order.name + ' - 服务结算', owner_id:actor, organization_id:organizationId, service_order_id: id, quotation_id: null, order_code: order.code, customer_id: order.customer_id, contact_id: order.contact_id || null, total_amount: amount, status: 'draft', responsible_id: order.responsible_id || actor || null, remarks: order.service_result || order.remarks || null });
 const settlementId = typeof created === 'string' ? created : created && (created.id || (created.record && created.record.id));
+if (!settlementId) throw new Error('服务结算创建后未返回记录标识');
+const allocated = await ctx.api.object('forge_service_settlement').findOne({ where: { id: settlementId, organization_id: organizationId } });
+const code = String(allocated && allocated.code || '').trim();
+if (!code) throw new Error('服务结算创建后未生成业务编号');
 await ctx.api.object('forge_service_order').update({ id, settlement_code: code, next_step: '服务结算确认 / 财务应收' });
 return { id: settlementId, code, service_order_id: id };
+});
 ` },
 });
 
@@ -1386,10 +1391,12 @@ if (current.service_order_id) {
 }
 const changed = await quotations.update({ status: 'settlement_created', revision: nextRevision }, { multi: true, where: { id, organization_id: organizationId, status: 'confirmed', revision: current.revision == null ? null : revision } });
 if (changed !== 1) throw new Error('服务报价已变化，请重新打开核对');
-const code = 'SS-' + new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);
-const created = await ctx.api.object('forge_service_settlement').insert({ name: String(current.name || current.code || '服务报价').replace('服务报价','服务结算'), code, owner_id:actor, organization_id: organizationId, service_order_id: current.service_order_id || null, quotation_id: id, order_code: current.order_code, customer_id: current.customer_id, contact_id: current.contact_id || null, total_amount: Number(current.total_amount), status: 'draft', responsible_id: current.responsible_id || actor || null, remarks: current.remarks || null });
+const created = await ctx.api.object('forge_service_settlement').insert({ name: String(current.name || current.code || '服务报价').replace('服务报价','服务结算'), owner_id:actor, organization_id: organizationId, service_order_id: current.service_order_id || null, quotation_id: id, order_code: current.order_code, customer_id: current.customer_id, contact_id: current.contact_id || null, total_amount: Number(current.total_amount), quotation_pricing_mode: current.pricing_mode||null, quotation_payment_mode: current.payment_mode||null, status: 'draft', responsible_id: current.responsible_id || actor || null, remarks: current.remarks || null });
 const settlementId = typeof created === 'string' ? created : created && (created.id || (created.record && created.record.id));
 if (!settlementId) throw new Error('服务结算创建后未返回记录标识');
+const allocated = await ctx.api.object('forge_service_settlement').findOne({ where: { id: settlementId, organization_id: organizationId } });
+const code = String(allocated && allocated.code || '').trim();
+if (!code) throw new Error('服务结算创建后未生成业务编号');
 if (current.service_order_id) await ctx.api.object('forge_service_order').update({ id: current.service_order_id, settlement_code: code, next_step: '服务结算确认' });
 return { id: settlementId, code, quotation_id: id };
 });
