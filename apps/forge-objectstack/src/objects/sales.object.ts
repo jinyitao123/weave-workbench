@@ -425,6 +425,12 @@ export const ServiceOrder = master('forge_service_order', '服务工单', 'wrenc
 
 export const ServiceQuotation = master('forge_service_quotation', '服务报价单', 'file-text', {
   revision: Field.number({ label: '修订号', min: 1, scale: 0, defaultValue: 1, readonly: true, hidden: true }),
+  pricing_mode: Field.select([{ value: 'estimated', label: '预估费用（以结算为准）' }, { value: 'fixed', label: '一口价（接受后锁定）' }], { label: '报价方式' }),
+  payment_mode: Field.select([{ value: 'full_prepayment', label: '全额预收' }, { value: 'staged', label: '分阶段付款' }], { label: '付款约定' }),
+  discount_rate: Field.number({ label: '整单折扣%', min: 0, max: 100, scale: 1 }),
+  item_count: Field.number({ label: '报价项目数', min: 0, scale: 0, readonly: true }),
+  subtotal: { ...nonNegativeMoney('报价小计'), readonly: true },
+  discount_amount: { ...nonNegativeMoney('折扣金额'), readonly: true },
   name: text('报价名称', true), code: code('报价单号'), service_order_id: reference('forge_service_order', '服务工单'), order_code: text('工单号'), customer_id: { ...reference('forge_customer', '客户'), relatedList: false }, contact_id: reference('forge_contact', '联系人'), total_amount: nonNegativeMoney('报价金额'), status: Field.select([{ value: 'draft', label: '草稿' }, { value: 'pending_confirmation', label: '待确认' }, { value: 'confirmed', label: '已确认' }, { value: 'settlement_created', label: '已转结算' }, { value: 'cancelled', label: '已取消' }], { label: '状态', defaultValue: 'draft' }), valid_until: Field.date({ label: '有效期至' }), responsible_id: owner(), remarks: remarks(),
 }, ['code', 'service_order_id', 'order_code', 'customer_id', 'contact_id', 'total_amount', 'status', 'valid_until']);
 

@@ -1,4 +1,5 @@
 import { QUOTATION_SUBMIT_TARGET, QUOTATION_SEND_TARGET, QUOTATION_ACCEPT_TARGET, QUOTATION_CONVERT_TARGET } from '../plugins/sales-quotation-domain.js';
+import { serviceQuotationLinesHelpersSource } from './service-quotation-lines.logic.js';
 import { SIGNATURE_TARGET, ORDER_CONDITIONS_TARGET, CONTRACT_ORDER_TARGET, ORDER_SUBMIT_TARGET, ORDER_APPLY_APPROVAL_TARGET } from '../plugins/sales-order-domain.js';
 import { defineAction } from '@objectstack/spec';
 import { hasExactQuotationLineSet } from './sales-contract-source-set.js';
@@ -1286,6 +1287,7 @@ return { id: settlementId, code, service_order_id: id };
 });
 
 const serviceQuotationRevisionGuard = `
+${serviceQuotationLinesHelpersSource}
 const actor = String(ctx.session && ctx.session.userId || '').trim();
 if (!actor || !organizationId) throw new Error('无法确认当前服务主管及组织');
 if (ctx.user && ctx.user.id != null && String(ctx.user.id) !== actor) throw new Error('当前员工身份不一致，请重新登录');
@@ -1295,6 +1297,15 @@ const snapshotRevision = quote.revision == null ? 1 : Number(quote.revision);
 const expectedRevision = requestedRevision == null ? snapshotRevision : Number(requestedRevision);
 if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1 || !Number.isSafeInteger(snapshotRevision) || snapshotRevision < 1) throw new Error('服务报价版本不可用，请重新打开核对');
 const quotations = ctx.api.object('forge_service_quotation');
+async function checkQuotationLines(current){
+  const rows=await ctx.api.object('forge_service_quotation_line').find({where:{quotation_id:id,organization_id:organizationId},limit:501,orderBy:[{field:'sort_order',order:'asc'}]});
+  if(!Array.isArray(rows)||rows.length>500)throw new Error('报价项目读取不完整');
+  if(!rows.length){if(Number(current.item_count||0)>0)throw new Error('报价项目合计不完整');return}
+  if(rows.some(row=>String(row.quotation_id||'')!==String(id)||String(row.organization_id||'')!==organizationId))throw new Error('报价项目范围不一致');
+  const validDate=current.valid_until instanceof Date?current.valid_until.toISOString().slice(0,10):String(current.valid_until||'').slice(0,10);
+  const normalized=normalizeServiceQuotationDraft(JSON.stringify({valid_until:validDate,remarks:current.remarks||'',pricing_mode:current.pricing_mode,payment_mode:current.payment_mode,discount_rate:current.discount_rate,lines:rows.map(row=>({id:String(row.id),line_type:row.line_type,item_id:row.line_type==='service'?row.service_item_id:row.sku_id,description:row.description||'',unit_name:row.unit_name,quantity:row.quantity,taxed_unit_price:row.taxed_unit_price}))}));
+  if(normalized.item_count!==Number(current.item_count)||normalized.subtotal!==Number(current.subtotal)||normalized.discount_amount!==Number(current.discount_amount)||normalized.total_amount!==Number(current.total_amount)||normalized.lines.some((row,index)=>row.line_amount!==Number(rows[index].line_amount)))throw new Error('报价项目与合计不一致，请重新核对');
+}
 `;
 
 export const ServiceQuotationConfirm = defineAction({
@@ -1313,6 +1324,7 @@ return await ctx.api.transaction(async () => {
   const current = await quotations.findOne({ where: { id, organization_id: organizationId } });
   if (!current || String(current.organization_id || '') !== organizationId) throw new Error('当前服务报价不存在或不可访问');
   if (!['draft','pending_confirmation'].includes(current.status)) throw new Error('当前服务报价状态不能确认');
+  await checkQuotationLines(current);
   const revision = current.revision == null ? 1 : Number(current.revision), nextRevision = revision + 1;
   if (revision !== expectedRevision || !Number.isSafeInteger(nextRevision)) throw new Error('服务报价已变化，请重新打开核对');
   const changed = await quotations.update({ status: 'confirmed', revision: nextRevision }, { multi: true, where: { id, organization_id: organizationId, status: current.status, revision: current.revision == null ? null : revision } });
@@ -1343,6 +1355,7 @@ if (revision !== expectedRevision || !Number.isSafeInteger(nextRevision)) throw 
 const existing = await ctx.api.object('forge_service_settlement').find({ where: { quotation_id: id, organization_id: organizationId } });
 if (existing.length) throw new Error('该服务报价已生成服务结算');
 if (current.total_amount == null || current.total_amount === '' || !Number.isFinite(Number(current.total_amount)) || Number(current.total_amount) < 0) throw new Error('当前报价金额不可用，不能生成服务结算');
+await checkQuotationLines(current);
 if (current.service_order_id) {
   const order = await ctx.api.object('forge_service_order').findOne({ where: { id: current.service_order_id, organization_id: organizationId } });
   if (!order || String(order.organization_id || '') !== organizationId) throw new Error('关联服务工单不存在或不属于当前组织');
