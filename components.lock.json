@@ -13,7 +13,7 @@
     },
     "forge": {
       "source": "https://github.com/jinyitao123/inoForge.git",
-      "revision": "0aebc4b79f9c49a5f2960e9b330d7c62fe1b44af",
+      "revision": "42cd59a6a28f475dd8168e044ecf25f30f079589",
       "importPath": "platform/forge"
     }
   }
