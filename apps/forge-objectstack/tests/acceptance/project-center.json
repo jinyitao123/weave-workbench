@@ -7,7 +7,7 @@
   "pageId": "page_project_center",
   "status": "review_required",
   "observedAt": "2026-10-08",
-  "reviewedRevision": "d2b114beb98fbc067e83f1fc299e635159d09579",
+  "reviewedRevision": "170f23771a85d59bea06eb30c933d800af8aac9f",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/project-center.page.ts": "294548c701a43bdaf3d049e2d944d30099b16600823fb99ba8c05419b9ed06f4",
     "apps/forge-objectstack/src/pages/project-center.logic.ts": "ca6dc039ef451f498a19428656b83e5be9753a9a138aa40e898ba459bb571ca3",
@@ -18,7 +18,7 @@
     "apps/forge-objectstack/src/objects/project.object.ts": "55ad411e4b36f4eef49f28982a6bac0eeef1e84d0bd94ff214125779fd964846",
     "apps/forge-objectstack/src/actions/project.action.ts": "1e85a0e78b119ec50bb6b87727957bcefea235410e0502b903f31109a239b3ec",
     "apps/forge-objectstack/src/permissions/project-operator.permission.ts": "1f2aaf1ec3ba3cce1538da980a84e2c154213801da55333ced24e6e3b9922215",
-    "apps/forge-objectstack/console94.lock.json": "f3262c62ef435c3a6ddf02c20a0da3bc0555f616b2453f70c1aefc8a1820f126"
+    "apps/forge-objectstack/console94.lock.json": "2173c61b1dbfde3e41794aea490317770d618c9092c990882f2628c19e638cdf"
   },
   "environment": {
     "databaseType": "postgresql",
@@ -52,7 +52,7 @@
   "checks": {
     "requirements": {
       "status": "pending",
-      "notes": "2026-10-08仅因Console生成规则固定压缩输出并规范gzip系统头而重新绑定依赖指纹；完整逐文件对照证明页面内容未变，所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 9bb655bbd08dc71d7d205b5a9aa38cadbac9b962，不作为新版本整体通过。完整项目中心及子模块待验，当前局部读取回归／GUI不代表业务完成。",
+      "notes": "2026-10-08因Console升级到ObjectUI df41f84e（上游PR #3、#4，新增默认关闭的表格空结果显示与带标签行编辑选项）并改用Node 24.21.0构建而重新绑定依赖指纹；本页源码未使用这些新增选项，默认行为不变依据上游PR的测试与说明，未重做GUI对照；所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08仅因Console生成规则固定压缩输出并规范gzip系统头而重新绑定依赖指纹；完整逐文件对照证明页面内容未变，所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 9bb655bbd08dc71d7d205b5a9aa38cadbac9b962，不作为新版本整体通过。完整项目中心及子模块待验，当前局部读取回归／GUI不代表业务完成。",
       "evidence": []
     },
     "visual": {
