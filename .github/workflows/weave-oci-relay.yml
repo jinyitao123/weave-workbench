@@ -2,6 +2,15 @@ name: Relay one approved Weave OCI image
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: One-time transport for the fixed approved image
+        type: choice
+        required: true
+        default: encrypted-artifact
+        options:
+          - encrypted-artifact
+          - direct-ssh
 
 permissions:
   contents: read
@@ -26,18 +35,167 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.19.0'
       - name: Verify the original publication and relay only its locked Weave OCI bytes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STAGE_SSH_KEY: ${{ secrets.INSTALLATION_STAGE_SSH_KEY }}
-          STAGE_HOST: ${{ secrets.INSTALLATION_STAGE_HOST }}
-          STAGE_USER: ${{ secrets.INSTALLATION_STAGE_USER }}
-          STAGE_KNOWN_HOSTS: ${{ secrets.INSTALLATION_STAGE_KNOWN_HOSTS }}
+          RELAY_MODE: ${{ inputs.mode }}
+          STAGE_SSH_KEY: ${{ inputs.mode == 'direct-ssh' && secrets.INSTALLATION_STAGE_SSH_KEY || '' }}
+          STAGE_HOST: ${{ inputs.mode == 'direct-ssh' && secrets.INSTALLATION_STAGE_HOST || '' }}
+          STAGE_USER: ${{ inputs.mode == 'direct-ssh' && secrets.INSTALLATION_STAGE_USER || '' }}
+          STAGE_KNOWN_HOSTS: ${{ inputs.mode == 'direct-ssh' && secrets.INSTALLATION_STAGE_KNOWN_HOSTS || '' }}
         shell: bash
         run: |
           python3 - <<'PY'
+          ENVELOPE_SOURCE = r'''
+          // One-time OCI envelope. No network, subprocess, credential discovery, or import.
+          import * as fs from 'node:fs';
+          import * as crypto from 'node:crypto';
+          import {isDeepStrictEqual} from 'node:util';
+
+          const MAGIC = Buffer.from('WEAVE-OCI-ENC-1\n');
+          const FORMAT = 'weave-oci-encrypted-v1';
+          const MAX = 2 * 1024 ** 3;
+          const LABEL = Buffer.from(FORMAT);
+          const need = (value) => { if (!value) throw new Error('Envelope validation failed'); };
+          const sha = (bytes) => 'sha256:' + crypto.createHash('sha256').update(bytes).digest('hex');
+          function writeAll(fd, bytes) {
+            let offset = 0;
+            while (offset < bytes.length) {
+              const n = fs.writeSync(fd, bytes, offset, bytes.length - offset);
+              need(n > 0); offset += n;
+            }
+          }
+          function readExact(fd, length, position) {
+            const bytes = Buffer.alloc(length);
+            let offset = 0;
+            while (offset < length) {
+              const n = fs.readSync(fd, bytes, offset, length - offset, position + offset);
+              need(n > 0); offset += n;
+            }
+            return bytes;
+          }
+          function fileDigest(path) {
+            const hash = crypto.createHash('sha256'), fd = fs.openSync(path, 'r');
+            const block = Buffer.alloc(1024 ** 2);
+            try {
+              for (;;) {
+                const n = fs.readSync(fd, block, 0, block.length, null);
+                if (!n) break;
+                hash.update(block.subarray(0, n));
+              }
+              return 'sha256:' + hash.digest('hex');
+            } finally { fs.closeSync(fd); }
+          }
+          function base64(value, length) {
+            need(typeof value === 'string');
+            const bytes = Buffer.from(value, 'base64');
+            need(bytes.length === length && bytes.toString('base64') === value);
+            return bytes;
+          }
+          function main(request) {
+            need(['encrypt', 'decrypt'].includes(request.mode));
+            const transfer = request.transfer;
+            need(Number.isSafeInteger(transfer?.archiveBytes) && transfer.archiveBytes >= 10240 &&
+              transfer.archiveBytes <= MAX && transfer.archiveBytes % 512 === 0 &&
+              /^sha256:[0-9a-f]{64}$/.test(transfer.archiveSha256));
+            need(/^sha256:[0-9a-f]{64}$/.test(request.recipientSpkiSha256));
+            const inputStat = fs.lstatSync(request.input);
+            need(inputStat.isFile() && !inputStat.isSymbolicLink() && inputStat.size <= MAX + 16384);
+            need(!fs.existsSync(request.output));
+            let privateKey, publicKey;
+            if (request.mode === 'encrypt') {
+              publicKey = crypto.createPublicKey(request.publicKeyPem);
+            } else {
+              const st = fs.lstatSync(request.privateKeyPath);
+              need(st.isFile() && !st.isSymbolicLink() && (st.mode & 0o777) === 0o600 &&
+                (typeof process.getuid !== 'function' || st.uid === process.getuid()));
+              privateKey = crypto.createPrivateKey(fs.readFileSync(request.privateKeyPath));
+              publicKey = crypto.createPublicKey(privateKey);
+            }
+            need(publicKey.asymmetricKeyType === 'rsa' && publicKey.asymmetricKeyDetails.modulusLength === 3072);
+            need(sha(publicKey.export({type: 'spki', format: 'der'})) === request.recipientSpkiSha256);
+
+            const input = fs.openSync(request.input, 'r');
+            const partial = request.output + '.unauthenticated-' + crypto.randomBytes(8).toString('hex');
+            let output, key, complete = false;
+            try {
+              let authenticatedHeader, cipher, start = 0;
+              if (request.mode === 'encrypt') {
+                need(inputStat.size === transfer.archiveBytes);
+                key = crypto.randomBytes(32);
+                const nonce = crypto.randomBytes(12);
+                const wrapped = crypto.publicEncrypt({key: publicKey, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                  oaepHash: 'sha256', oaepLabel: LABEL}, key);
+                const header = Buffer.from(JSON.stringify({format: FORMAT, recipientSpkiSha256: request.recipientSpkiSha256,
+                  wrappedKey: wrapped.toString('base64'), nonce: nonce.toString('base64'), transfer}));
+                need(header.length <= 8192);
+                const length = Buffer.alloc(4); length.writeUInt32BE(header.length);
+                authenticatedHeader = Buffer.concat([MAGIC, length, header]);
+                cipher = crypto.createCipheriv('aes-256-gcm', key, nonce, {authTagLength: 16});
+                cipher.setAAD(authenticatedHeader);
+                output = fs.openSync(partial, 'wx', 0o600);
+                writeAll(output, authenticatedHeader);
+              } else {
+                need(inputStat.size >= MAGIC.length + 4 + 16);
+                const prefix = readExact(input, MAGIC.length + 4, 0);
+                need(prefix.subarray(0, MAGIC.length).equals(MAGIC));
+                const length = prefix.readUInt32BE(MAGIC.length);
+                need(length > 0 && length <= 8192);
+                const raw = readExact(input, length, prefix.length), header = JSON.parse(raw.toString('utf8'));
+                need(JSON.stringify(header) === raw.toString('utf8'));
+                need(isDeepStrictEqual(Object.keys(header), ['format', 'recipientSpkiSha256', 'wrappedKey', 'nonce', 'transfer']));
+                need(header.format === FORMAT && header.recipientSpkiSha256 === request.recipientSpkiSha256 &&
+                  isDeepStrictEqual(header.transfer, transfer));
+                authenticatedHeader = Buffer.concat([prefix, raw]); start = authenticatedHeader.length;
+                need(inputStat.size === start + transfer.archiveBytes + 16);
+                key = crypto.privateDecrypt({key: privateKey, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                  oaepHash: 'sha256', oaepLabel: LABEL}, base64(header.wrappedKey, 384));
+                need(key.length === 32);
+                cipher = crypto.createDecipheriv('aes-256-gcm', key, base64(header.nonce, 12), {authTagLength: 16});
+                cipher.setAAD(authenticatedHeader);
+                cipher.setAuthTag(readExact(input, 16, start + transfer.archiveBytes));
+                output = fs.openSync(partial, 'wx', 0o600);
+              }
+              const plainHash = crypto.createHash('sha256');
+              let offset = 0;
+              while (offset < transfer.archiveBytes) {
+                const block = readExact(input, Math.min(1024 ** 2, transfer.archiveBytes - offset), start + offset);
+                const transformed = cipher.update(block);
+                plainHash.update(request.mode === 'encrypt' ? block : transformed);
+                writeAll(output, transformed); offset += block.length;
+              }
+              // GCM authentication must finish before the plaintext gets its usable name.
+              const final = cipher.final();
+              if (request.mode === 'decrypt') plainHash.update(final);
+              writeAll(output, final);
+              if (request.mode === 'encrypt') writeAll(output, cipher.getAuthTag());
+              need('sha256:' + plainHash.digest('hex') === transfer.archiveSha256);
+              fs.closeSync(output); output = undefined;
+              if (request.mode === 'decrypt') need(fs.statSync(partial).size === transfer.archiveBytes);
+              fs.linkSync(partial, request.output); fs.unlinkSync(partial); complete = true;
+              return {format: FORMAT, recipientSpkiSha256: request.recipientSpkiSha256,
+                bytes: fs.statSync(request.output).size, sha256: fileDigest(request.output)};
+            } finally {
+              if (output !== undefined) fs.closeSync(output);
+              fs.closeSync(input);
+              if (key) key.fill(0);
+              if (!complete && fs.existsSync(partial)) fs.unlinkSync(partial);
+            }
+          }
+          try {
+            process.umask(0o077);
+            const input = fs.readFileSync(0, 'utf8'); need(input.length <= 32768);
+            console.log(JSON.stringify(main(JSON.parse(input))));
+          } catch {
+            console.error('Encrypted OCI authentication or validation failed');
+            process.exitCode = 1;
+          }
+          '''
           #!/usr/bin/env python3
-          """Fixed publication-to-SSH OCI relay. This is embedded in one manual workflow."""
+          """Fixed publication relay: direct SSH or recipient-encrypted official artifact."""
           import hashlib
           import io
           import json
@@ -72,6 +230,9 @@ jobs:
           TOOL_SHA = 'b2450ad4ed69ed668ffc168d1b9e0b1371ac038e3d645eed3858791bf828909c'
           TOOL_URL = 'https://github.com/regclient/regclient/releases/download/v0.10.0/regctl-linux-amd64'
           RECEIVER_SHA = 'sha256:ba5f01d8833e70d32bdd0ac3d6748f5a52ff1601b0368256bf306956a1e21313'
+          RECIPIENT_SPKI_SHA = 'sha256:a83449c6d4b48225f59530c9c416eb69fc40783bf8d910567a18cb5c26773ddc'
+          RECIPIENT_PUBLIC_KEY = '-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAuJWGWRWV0dqj7KUjZQ7Y\nwiWN/atqtS1rjT6GS/D6o1w6qvIODOQBC0m91r4kn6JdL2BOIo4HtCIAU+6s0+QU\nzIOvWfybzzfWhpa5SJmDWzKDA94Hh5BNtsugofZHTIVv2KA9Dcj9/DAWEDqRaKtx\n0jCpSyz6pfHu6ekz6zXSBPAWM+LbzUTeC6rQ3O3FGdh7iqSS5KBc52uc7782mUow\n/N/i04uB4C/JQo/f+QZNeuIteQ2x5guVa/zzsHY6Gg/BHO2DupFbWfFJPPOom9VQ\nZGlOcS94ZwbEBFtjGqBd6Y592Ysfx69yqukZ2QMjAnY6SbIdoYoFIeVosrRy2pxR\nUCYC84axUi+eJ4lf+GMkRrJYFFBa911rSAm0XE3BrlA60r3E+6MpJB11YNam34FB\nEwgXZ71lOiZeOcI9Ef8MTtSMmxJc7OzNbM3/hFPoPgCkADJrTIGatWfYEKu4aoq7\nFN074b4fxddxTXdY5LP9JuoUwd9Mjt4YaTtiYQeX64EpAgMBAAE=\n-----END PUBLIC KEY-----\n'
+          ENCRYPTED_NAME = 'weave-oci.enc'
           EXPECTED = {'manifest': MANIFEST, 'config': CONFIG, 'source': SOURCE, 'product': PUBLICATION}
           STATUS = {'status': 'preparing', 'phase': 'publication-validation', 'hostOutcome': 'not-contacted'}
 
@@ -103,6 +264,23 @@ jobs:
               if result.returncode:
                   raise RuntimeError(safe_message(result.stderr))
               return result.stdout
+
+
+          def crypto_operation(request):
+              # Only this public program is embedded in CI; the private key is local-only.
+              source = globals().get('ENVELOPE_SOURCE') or Path(__file__).with_name('envelope.mjs').read_text()
+              node = os.environ.get('WEAVE_RELAY_NODE', 'node')
+              need(run([node, '-p', 'process.versions.node']).decode().strip().split('.')[0] == '24', 'Node 24 is required')
+              return json.loads(run([node, '--input-type=module', '-e', source],
+                                    input=json.dumps(request).encode(), timeout=900))
+
+
+          def encrypt_archive(archive, header, destination):
+              result = crypto_operation({'mode': 'encrypt', 'input': str(archive), 'output': str(destination),
+                  'transfer': header, 'publicKeyPem': RECIPIENT_PUBLIC_KEY, 'recipientSpkiSha256': RECIPIENT_SPKI_SHA})
+              need(result.get('format') == 'weave-oci-encrypted-v1' and result.get('recipientSpkiSha256') == RECIPIENT_SPKI_SHA and
+                   header['archiveBytes'] < result.get('bytes', 0) <= MAX_ARCHIVE + 16384, 'Encrypted envelope metadata differs')
+              return {**result, 'transfer': header}
 
 
           def canonical_archive(source, destination, expected=EXPECTED):
@@ -202,6 +380,10 @@ jobs:
                       '-o', 'StrictHostKeyChecking=yes', '-o', 'GlobalKnownHostsFile=/dev/null',
                       '-o', 'UserKnownHostsFile=' + str(known), '-o', 'ConnectTimeout=20',
                       '-o', 'ServerAliveInterval=30', '-o', 'ServerAliveCountMax=3', user + '@' + host]
+              return transfer_stream(archive, header, args)
+
+
+          def transfer_stream(archive, header, args):
               STATUS.update(phase='private-ssh-transfer', hostOutcome='unknown')
               process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
               pipe, process.stdin = process.stdin, None
@@ -249,8 +431,13 @@ jobs:
               output = Path('.build/weave-oci-relay-receipt.json')
               output.parent.mkdir(exist_ok=True)
               control, transport = os.environ['GITHUB_SHA'], os.environ['GITHUB_RUN_ID']
+              mode = os.environ.get('RELAY_MODE', 'encrypted-artifact')
+              need(mode in ('direct-ssh', 'encrypted-artifact'), 'Unexpected relay mode')
+              attempt = os.environ.get('GITHUB_RUN_ATTEMPT', '1')
+              need(re.fullmatch(r'[1-9][0-9]*', attempt), 'Invalid workflow attempt')
               need(re.fullmatch(r'[0-9a-f]{40}', control) and re.fullmatch(r'[1-9][0-9]*', transport), 'Invalid workflow identity')
-              STATUS.update(controlRevision=control, transportRunId=int(transport), publicationRevision=PUBLICATION, publicationRunId=PUBLICATION_RUN)
+              STATUS.update(controlRevision=control, transportRunId=int(transport), runAttempt=int(attempt),
+                            publicationRevision=PUBLICATION, publicationRunId=PUBLICATION_RUN, mode=mode)
               need(run(['git', 'rev-parse', 'HEAD']).decode().strip() == control, 'Control source checkout differs')
               for directory in ('tools/server-image-build', 'tools/server-bundle'):
                   need(run(['git', 'rev-parse', 'HEAD:' + directory]) == run(['git', 'rev-parse', PUBLICATION + ':' + directory]),
@@ -282,8 +469,18 @@ jobs:
                       header = {'mode': MODE, 'version': 1, 'image': IMAGE, 'configDigest': CONFIG, 'sourceRevision': SOURCE,
                                 'publicationRunId': PUBLICATION_RUN, 'publicationRevision': PUBLICATION,
                                 'controlRevision': control, 'transportRunId': int(transport), 'receiverSha256': RECEIVER_SHA, **envelope}
-                      receipt = transfer(archive, header, private)
-                  STATUS.update(status='staged-only', phase='completed', publication=proof, receiver=receipt,
+                      # Preserve the full verified byte binding even when a later transfer fails.
+                      STATUS['transfer'] = header
+                      if mode == 'encrypted-artifact':
+                          STATUS['phase'] = 'recipient-encryption'
+                          encrypted = Path('.build/weave-oci-encrypted')
+                          encrypted.mkdir(mode=0o700)
+                          encryption = encrypt_archive(archive, header, encrypted / ENCRYPTED_NAME)
+                          STATUS.update(status='encrypted-ready', encryption=encryption, hostOutcome='not-contacted')
+                      else:
+                          receipt = transfer(archive, header, private)
+                          STATUS.update(status='staged-only', receiver=receipt)
+                  STATUS.update(phase='completed', publication=proof,
                                 exporter={'version': TOOL_VERSION, 'assetId': TOOL_ASSET, 'sha256': TOOL_SHA},
                                 runnerPrivateFilesRemoved=not private.exists())
               except Exception as error:
@@ -291,8 +488,12 @@ jobs:
                   print(safe_message(error), file=sys.stderr)
               output.write_text(json.dumps(STATUS, indent=2) + '\n')
               output.chmod(0o600)
-              need(STATUS['status'] == 'staged-only', 'OCI relay did not complete; no automatic repeat is allowed')
-              print('Approved Weave OCI content cached; no business service started.')
+              need(STATUS['status'] in ('staged-only', 'encrypted-ready'), 'OCI relay did not complete; no automatic repeat is allowed')
+              if mode == 'encrypted-artifact':
+                  shutil.copyfile(output, encrypted / 'weave-oci-relay-receipt.json')
+                  print('Recipient-encrypted artifact is ready; the installation host was not contacted.')
+              else:
+                  print('Approved Weave OCI content cached; no business service started.')
 
 
           if __name__ == '__main__':
@@ -302,6 +503,17 @@ jobs:
                   print(safe_message(error), file=sys.stderr)
                   sys.exit(1)
           PY
+      - name: Keep only the recipient-encrypted envelope and its safe receipt
+        if: success() && inputs.mode == 'encrypted-artifact'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: weave-oci-encrypted-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .build/weave-oci-encrypted/weave-oci.enc
+            .build/weave-oci-encrypted/weave-oci-relay-receipt.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 3
       - name: Keep only the sanitized receipt, never the private OCI archive
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
