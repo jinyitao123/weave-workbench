@@ -32,6 +32,7 @@ export * from './employee-business-action.object.js';
 
 export * from './service-aftercare.object.js';
 export * from './service-quotation-receipt.object.js';
+export * from './service-quotation-line.object.js';
 export * from './project-member-position-assignment.object.js';
 export * from './sales-performance.object.js';
 export * from './sales-gross-profit.object.js';

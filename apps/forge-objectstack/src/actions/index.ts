@@ -40,6 +40,7 @@ export * from './other-outbound.action.js';
 export * from './service-workspace.action.js';
 export * from './service-aftercare.action.js';
 export * from './service-quotation-draft.action.js';
+export * from './service-quotation-lines.action.js';
 export * from './project-member-maintenance.action.js';
 export * from './project-manager-transfer.action.js';
 export { ProjectMemberPositionAssignmentsRead, ProjectMemberPositionAssignmentsSave, ProjectTaskOwnerPositionAssignmentsRead, ProjectCurrentMemberPositionAssignmentsRead } from './project-member-position-assignment.action.js';
