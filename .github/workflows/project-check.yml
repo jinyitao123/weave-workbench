@@ -4,6 +4,12 @@ on:
   pull_request:
   push:
   workflow_dispatch:
+    inputs:
+      weave_source_validation:
+        description: Run complete Linux checks for the locked Weave source
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -29,3 +35,76 @@ jobs:
           sh -n tools/server-bundle/install.sh
           sh -n tools/server-bundle/bootstrap-docker.sh
           python3 tools/server-bundle/tests/validate_compose.py
+
+  weave-source-validation:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.weave_source_validation == true }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: platform/weave
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: weave_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d weave_test"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:55432/weave_test?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify the locked component source trees
+        id: source
+        working-directory: .
+        run: |
+          make component-check
+          source_revision="$(node -p "require('./components.lock.json').components.weave.revision")"
+          source_tree="$(git rev-parse "${source_revision}^{tree}")"
+          printf 'source_sha=%s\nsource_tree=%s\n' "$source_revision" "$source_tree" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+          cache-dependency-path: platform/weave/go.sum
+      - name: Download modules
+        run: go mod download
+      - name: Build, test, and governance
+        id: ci
+        run: make ci
+      - name: Validate platform compose file
+        id: compose
+        run: make compose-check
+      - name: Validate deployment scripts
+        id: deployment
+        run: |
+          bash -n scripts/deploy-main.sh
+          bash -n scripts/deploy-dispatch.sh
+          bash -n scripts/bootstrap-deploy-main.sh
+          bash -n scripts/update-deploy-runner.sh
+          python3 -m unittest discover -s scripts -p 'test_deploy*.py'
+      - name: Record the validated source and check results
+        if: ${{ always() }}
+        working-directory: .
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+          SOURCE_TREE: ${{ steps.source.outputs.source_tree }}
+          SOURCE_RESULT: ${{ steps.source.outcome }}
+          CI_RESULT: ${{ steps.ci.outcome }}
+          COMPOSE_RESULT: ${{ steps.compose.outcome }}
+          DEPLOYMENT_RESULT: ${{ steps.deployment.outcome }}
+        run: |
+          printf 'Weave source SHA: %s\nSource tree: %s\nComponent check: %s\nFull Go CI: %s\nCompose check: %s\nDeployment script checks: %s\n' \
+            "$SOURCE_SHA" "$SOURCE_TREE" "$SOURCE_RESULT" "$CI_RESULT" "$COMPOSE_RESULT" "$DEPLOYMENT_RESULT" >> "$GITHUB_STEP_SUMMARY"
