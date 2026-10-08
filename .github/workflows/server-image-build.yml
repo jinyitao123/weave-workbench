@@ -42,7 +42,7 @@ concurrency:
 jobs:
   images:
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 180
     permissions:
       contents: read
       actions: read
@@ -175,7 +175,7 @@ jobs:
                          '-o', 'ServerAliveInterval=30', '-o', 'ServerAliveCountMax=3', user + '@' + host]
               try:
                   result = subprocess.run(command, input=request, text=True, stdout=subprocess.PIPE,
-                                          stderr=subprocess.PIPE, timeout=5100)
+                                          stderr=subprocess.PIPE, timeout=10200)
               except (subprocess.TimeoutExpired, OSError):
                   raise SystemExit('Restricted image staging transport failed; inspect the host through the administrator connection') from None
               if result.returncode:
