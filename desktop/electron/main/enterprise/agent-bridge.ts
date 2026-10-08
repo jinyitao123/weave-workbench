@@ -577,7 +577,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
           ...(context.run.finalResult.missingItems !== undefined ? { missingItems: [...context.run.finalResult.missingItems] } : {}),
         } } : {}),
         ...(context.run.actionOutcomes !== undefined ? {
-          actionOutcomes: context.run.actionOutcomes.map(({ actionName, objectName, status, summary }) => ({ ...projectWorkActionFact({ actionName, status, summary }), objectName })),
+          actionOutcomes: context.run.actionOutcomes.map(({ actionName, objectName, status, summary }) => ({ actionName, objectName, status, summary: projectWorkActionFact({ actionName, status, summary }).summary })),
         } : {}),
       },
     }
