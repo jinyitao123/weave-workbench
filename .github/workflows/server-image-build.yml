@@ -16,6 +16,16 @@ on:
         required: false
         default: ''
         type: string
+      reuse_forge_run_id:
+        description: Original full publication to retain Forge, proxy and PostgreSQL while replacing only Weave
+        required: false
+        default: ''
+        type: string
+      reuse_forge_revision:
+        description: Exact source commit of that original full publication
+        required: false
+        default: ''
+        type: string
       publish_private:
         description: Push only after verifying source identity and private container package visibility
         required: true
@@ -52,12 +62,19 @@ jobs:
       BUNDLE_VERSION: ${{ inputs.bundle_version }}
       POSTGRES_IMAGE: ${{ inputs.postgres_image }}
       PUBLISHED_RUN_ID: ${{ inputs.published_run_id }}
+      REUSE_FORGE_RUN_ID: ${{ inputs.reuse_forge_run_id }}
+      REUSE_FORGE_REVISION: ${{ inputs.reuse_forge_revision }}
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - name: Require an immutable source request
         shell: bash
         run: |
           [[ "$SOURCE_REVISION" =~ ^[0-9a-f]{40}$ ]]
+          if [[ -n "$REUSE_FORGE_RUN_ID" || -n "$REUSE_FORGE_REVISION" ]]; then
+            [[ "$REUSE_FORGE_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+            [[ "$REUSE_FORGE_REVISION" =~ ^[0-9a-f]{40}$ ]]
+            [[ -z "$PUBLISHED_RUN_ID" && '${{ inputs.publish_private }}' == true ]]
+          fi
           if [[ -n "$PUBLISHED_RUN_ID" ]]; then
             [[ "$PUBLISHED_RUN_ID" =~ ^[1-9][0-9]*$ ]]
             if [[ '${{ inputs.publish_private }}' == true || '${{ inputs.stage_installation_host }}' != true ]]; then
@@ -82,11 +99,11 @@ jobs:
             --bundle-version "$BUNDLE_VERSION" --postgres-image "$POSTGRES_IMAGE" \
             --github-output "$GITHUB_OUTPUT"
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        if: inputs.published_run_id == ''
+        if: inputs.published_run_id == '' && inputs.reuse_forge_run_id == ''
         with:
           node-version: ${{ steps.locks.outputs.node_version }}
       - name: Activate the locked Console package manager
-        if: inputs.published_run_id == ''
+        if: inputs.published_run_id == '' && inputs.reuse_forge_run_id == ''
         env:
           PNPM_VERSION: ${{ steps.locks.outputs.pnpm_version }}
         run: |
@@ -94,7 +111,7 @@ jobs:
           corepack prepare "pnpm@$PNPM_VERSION" --activate
           test "$(pnpm --version)" = "$PNPM_VERSION"
       - name: Check out only the locked private ObjectUI source
-        if: inputs.published_run_id == ''
+        if: inputs.published_run_id == '' && inputs.reuse_forge_run_id == ''
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: ${{ steps.locks.outputs.objectui_repository }}
@@ -137,10 +154,14 @@ jobs:
         run: |
           args=()
           if [[ "$PUBLISH_PRIVATE" == true ]]; then args+=(--push-private); fi
+          if [[ -n "$REUSE_FORGE_RUN_ID" ]]; then
+            args+=(--replace-weave-from-run "$REUSE_FORGE_RUN_ID" --base-revision "$REUSE_FORGE_REVISION")
+          else
+            args+=(--objectui-source "$GITHUB_WORKSPACE/.build/server-image-sources/objectui")
+          fi
           python3 tools/server-image-build/build.py \
             --repository "$GITHUB_REPOSITORY" --revision "$SOURCE_REVISION" \
             --bundle-version "$BUNDLE_VERSION" --postgres-image "$POSTGRES_IMAGE" \
-            --objectui-source "$GITHUB_WORKSPACE/.build/server-image-sources/objectui" \
             "${args[@]}"
       - name: Stage exact private image digests on the explicitly prepared host
         if: inputs.stage_installation_host && (inputs.publish_private || inputs.published_run_id != '')
@@ -190,6 +211,14 @@ jobs:
               (output / 'host-staging-receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
               print('Verified image digests cached; temporary registry authentication removed; no application started.')
           PY
+      - name: Keep sanitized failed server probe diagnostics separately
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: server-probe-failure-${{ inputs.bundle_version }}-${{ inputs.revision }}
+          path: .build/server-image-build/output/failed/weave-server-probe.json
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Keep build evidence without deployment credentials
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

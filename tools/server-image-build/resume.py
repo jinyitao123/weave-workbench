@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 import os
+import re
 from pathlib import Path
 import stat
 import subprocess
@@ -22,6 +23,8 @@ MAX_EXPANDED = 32 * 1024 * 1024
 REQUIRED = {'build-manifest.json', 'images.lock.json', 'console94-build.json', 'console94.lock.json',
             'forge-buildkit.json', 'forgeProxy-buildkit.json', 'weave-buildkit.json'}
 ALLOWED = REQUIRED | {'host-staging-receipt.json'}
+REPLACEMENT_REQUIRED = {'build-manifest.json', 'images.lock.json', 'weave-buildkit.json', 'weave-server-proof.json'} | {'base-' + name for name in REQUIRED}
+REPLACEMENT_ALLOWED = REPLACEMENT_REQUIRED | {'host-staging-receipt.json'}
 SUFFIXES = {'forge': 'forge-app', 'forgeProxy': 'forge-proxy', 'weave': 'weave'}
 
 
@@ -92,19 +95,22 @@ def read_archive(data):
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
             entries = archive.infolist()
-            if len(entries) > len(ALLOWED) or sum(item.file_size for item in entries) > MAX_EXPANDED:
+            if len(entries) > len(REPLACEMENT_ALLOWED) or sum(item.file_size for item in entries) > MAX_EXPANDED:
                 raise BuildError('Publication archive exceeds its content bounds')
             for item in entries:
                 mode = item.external_attr >> 16
-                if (item.filename not in ALLOWED or item.orig_filename != item.filename or item.filename in files
+                if (item.filename not in ALLOWED | REPLACEMENT_ALLOWED or item.orig_filename != item.filename or item.filename in files
                         or item.is_dir() or item.flag_bits & 1 or item.file_size > MAX_ARCHIVE
                         or stat.S_IFMT(mode) not in (0, stat.S_IFREG)):
                     raise BuildError('Unsafe or unexpected publication ZIP entry')
                 files[item.filename] = archive.read(item)
     except (zipfile.BadZipFile, RuntimeError):
         raise BuildError('Invalid publication ZIP archive') from None
-    if not REQUIRED <= files.keys():
-        raise BuildError('Publication artifact is incomplete')
+    manifest = json.loads(files.get('build-manifest.json', b'{}'))
+    replacement = isinstance(manifest, dict) and manifest.get('kind') == 'weave-replacement'
+    required, allowed = (REPLACEMENT_REQUIRED, REPLACEMENT_ALLOWED) if replacement else (REQUIRED, ALLOWED)
+    if not required.issubset(files) or not set(files).issubset(allowed):
+        raise BuildError('Publication artifact is incomplete or contains unrelated evidence')
     return files
 
 
@@ -165,11 +171,69 @@ def validate_publication(files, repository, revision, version, components_bytes,
     return lock
 
 
-def resume(repository, revision, version, run_id, output):
+def validate_replacement(files, repository, revision, version, components_bytes, console_bytes, dockerfiles,
+                         base_files, base_proof, go_mod, loom_tree):
+    from build import reusable_lock, validate_server_evidence
+    manifest = json.loads(files['build-manifest.json'])
+    plan = manifest.get('plan', {})
+    components, console = json.loads(components_bytes), json.loads(console_bytes)
+    identity = ('publicationRunId', 'publicationRevision', 'artifactId', 'archiveDigest', 'archiveBytes')
+    if (manifest.get('schemaVersion') != 2 or manifest.get('kind') != 'weave-replacement'
+            or manifest.get('published') is not True or manifest.get('status') != 'published-private'
+            or plan.get('repository') != repository or plan.get('sourceRevision') != revision
+            or plan.get('bundleVersion') != version or plan.get('platform') != 'linux/amd64'
+            or plan.get('schemaVersion') != 1
+            or plan.get('components') != {name: components['components'][name] for name in ('forge', 'weave')}
+            or plan.get('componentsLockSha256') != hashlib.sha256(components_bytes).hexdigest()
+            or plan.get('consoleLockSha256') != hashlib.sha256(console_bytes).hexdigest() or plan.get('console') != console
+            or manifest.get('basePublication') != {key: base_proof[key] for key in identity}
+            or set(manifest.get('images', {})) != {'weave'}):
+        raise BuildError('Replacement source or original publication identity differs')
+    for name in REQUIRED:
+        if files.get('base-' + name) != base_files[name]:
+            raise BuildError('Original publication evidence was rewritten')
+    old_lock = reusable_lock(plan, base_files)
+    lock = json.loads(files['images.lock.json'])
+    sys.path.insert(0, str(ROOT / 'tools/server-bundle'))
+    try:
+        from configuration import validate_images
+        validate_images(lock)
+    finally:
+        sys.path.pop(0)
+    expected_origins = {name: base_proof['publicationRevision'] for name in ('forge', 'forgeProxy', 'postgres')}
+    expected_origins['weave'] = revision
+    if manifest.get('componentBuildSources') != expected_origins or lock['bundleVersion'] != version:
+        raise BuildError('Component build origins differ')
+    for name in ('forge', 'forgeProxy', 'postgres'):
+        if lock['components'][name] != old_lock['components'][name]:
+            raise BuildError('Replacement changed a reused image')
+    item, evidence = lock['components']['weave'], manifest['images']['weave']
+    source = components['components']['weave']['revision']
+    image = validate_digest_reference(item['image'])
+    expected_tag = f'ghcr.io/{repository.lower()}-weave:{version}-{revision[:12]}'
+    metadata = json.loads(files['weave-buildkit.json'])
+    local = evidence.get('localImageId', '')
+    if (image.split('@')[0] != f'ghcr.io/{repository.lower()}-weave' or item['sourceRevision'] != source
+            or evidence.get('image') != image or evidence.get('sourceRevision') != source
+            or evidence.get('tag') != expected_tag or plan.get('tags', {}).get('weave') != expected_tag
+            or evidence.get('target') != 'server' or evidence.get('visibility') != 'private'
+            or not DIGEST.fullmatch(local) or evidence.get('registryConfigDigest') != local
+            or metadata.get('containerimage.config.digest') != local
+            or evidence.get('buildManifestDigest') != metadata.get('containerimage.digest')
+            or evidence.get('dockerfileSha256') != hashlib.sha256(dockerfiles['weave']).hexdigest()
+            or evidence.get('buildkitMetadataSha256') != hashlib.sha256(files['weave-buildkit.json']).hexdigest()
+            or evidence.get('serverProofSha256') != hashlib.sha256(files['weave-server-proof.json']).hexdigest()):
+        raise BuildError('Replacement Weave image/config/source proof differs')
+    if not re.search(rb'(?m)^replace github\.com/jinyitao123/loom => \./third_party/loom\s*$', go_mod):
+        raise BuildError('Weave no longer uses the verified in-tree Loom module')
+    validate_server_evidence(json.loads(files['weave-server-proof.json']), source, loom_tree,
+                             old_lock['components']['postgres']['image'])
+    return lock
+
+
+def fetch_publication(repository, revision, version, run_id, allow_replacement=True):
     if not REPOSITORY.fullmatch(repository) or not SHA.fullmatch(revision) or not VERSION.fullmatch(version) or run_id < 1:
         raise BuildError('Use an exact publication source, version and run ID')
-    if output.exists() and any(output.iterdir()):
-        raise BuildError('Resume output must be empty; prior evidence is preserved')
     api = Github(repository)
     api.repository_verified()
     workflow = api.get(f'repos/{repository}/actions/workflows/server-image-build.yml')
@@ -202,20 +266,39 @@ def resume(repository, revision, version, run_id, output):
     console = blob('platform/forge/apps/forge-objectstack/console94.lock.json')
     forge_docker = blob('platform/forge/apps/forge-objectstack/Dockerfile')
     dockerfiles = {'forge': forge_docker, 'forgeProxy': forge_docker, 'weave': blob('platform/weave/Dockerfile')}
-    lock = validate_publication(files, repository, revision, version, components, console, dockerfiles)
+    manifest = json.loads(files['build-manifest.json'])
+    if manifest.get('kind') == 'weave-replacement':
+        if not allow_replacement:
+            raise BuildError('A replacement must reuse an original full publication, never another replacement')
+        base = manifest.get('basePublication', {})
+        base_files, base_lock, base_proof = fetch_publication(repository, base.get('publicationRevision', ''), version,
+                                                             base.get('publicationRunId', 0), allow_replacement=False)
+        lock = validate_replacement(files, repository, revision, version, components, console, dockerfiles,
+                                    base_files, base_proof, blob('platform/weave/go.mod'),
+                                    git('rev-parse', revision + ':platform/weave/third_party/loom'))
+    else:
+        lock = validate_publication(files, repository, revision, version, components, console, dockerfiles)
     states = {name: api.package_private(lock['components'][name]['image']) for name in SUFFIXES}
     api.repository_verified()
-    output.mkdir(parents=True)
-    for name, data in files.items():
-        if name != 'host-staging-receipt.json':  # A prior receipt never attests this transfer.
-            (output / name).write_bytes(data)
-    write_json(output / 'resume-proof.json', {'schemaVersion': 1, 'publicationRunId': run_id,
+    proof = {'schemaVersion': 1, 'publicationRunId': run_id,
         'publicationRevision': revision, 'publicationConclusion': run.get('conclusion'),
         'controllerRevision': git('rev-parse', 'HEAD'), 'artifactId': artifact['id'],
         'artifactName': artifact['name'], 'archiveDigest': artifact['digest'],
         'archiveBytes': artifact['size_in_bytes'], 'packagePrivateReadback': states,
-        'rebuilt': False, 'republished': False})
-    print('Verified original publication restored; continuing only to existing host staging.')
+        'rebuilt': False, 'republished': False}
+    return files, lock, proof
+
+
+def resume(repository, revision, version, run_id, output):
+    if output.exists() and any(output.iterdir()):
+        raise BuildError('Resume output must be empty; prior evidence is preserved')
+    files, lock, proof = fetch_publication(repository, revision, version, run_id)
+    output.mkdir(parents=True)
+    for name, data in files.items():
+        if name != 'host-staging-receipt.json':
+            (output / name).write_bytes(data)
+    write_json(output / 'resume-proof.json', proof)
+    print('Verified publication restored; continuing only to existing host staging.')
 
 
 if __name__ == '__main__':

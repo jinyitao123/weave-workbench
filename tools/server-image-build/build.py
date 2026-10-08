@@ -10,9 +10,15 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import secrets
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
+
+# Share this module with resume.py when invoked as a script, including BuildError.
+if __name__ == '__main__':
+    sys.modules.setdefault('build', sys.modules[__name__])
 
 ROOT = Path(__file__).resolve().parents[2]
 SHA = re.compile(r'[0-9a-f]{40}')
@@ -209,7 +215,7 @@ def build_command(plan, name, context, console, metadata):
             '--label', 'io.weave-workbench.source-revision=' + plan['sourceRevision'],
             '--label', 'org.opencontainers.image.version=' + plan['bundleVersion']]
     if name == 'weave':
-        args += ['--build-arg', 'BUILD_COMMIT=' + revision,
+        args += ['--target', 'server', '--build-arg', 'BUILD_COMMIT=' + revision,
                  '--build-arg', 'WEAVE_VERSION=' + plan['weaveVersion']]
     else:
         args += ['--target', 'app' if name == 'forge' else 'proxy',
@@ -261,6 +267,205 @@ def image_lock(plan, references, postgres):
         }
     components['postgres'] = {'image': validate_digest_reference(postgres), 'major': 16}
     return {'version': 1, 'bundleVersion': plan['bundleVersion'], 'components': components}
+
+
+def reusable_lock(plan, files):
+    original = json.loads(files['build-manifest.json'])
+    old_plan = original.get('plan', {})
+    if (original.get('schemaVersion') != 1 or original.get('status') != 'published-private'
+            or original.get('published') is not True or old_plan.get('repository') != plan['repository']
+            or old_plan.get('bundleVersion') != plan['bundleVersion']
+            or old_plan.get('components', {}).get('forge') != plan['components']['forge']
+            or old_plan.get('console') != plan['console']):
+        raise BuildError('Only unchanged Forge and Console from an original publication may be reused')
+    return json.loads(files['images.lock.json'])
+
+
+def validate_server_evidence(value, revision, loom_tree, postgres):
+    if (value.get('target') != 'server' or value.get('cliExecutablesAbsent') is not True
+            or value.get('cliPackagesAbsent') is not True or value.get('loomBinaryModulePresent') is not True
+            or value.get('health', {}).get('build_commit') != revision
+            or value.get('health', {}).get('status') != 'ok' or value.get('ready', {}).get('status') != 'ready'
+            or value.get('loomTree') != loom_tree or value.get('loomModulePath') != './third_party/loom'
+            or value.get('postgresImage') != postgres):
+        raise BuildError('Actual server/CLI/Loom/health proof does not match the locked source')
+
+
+def write_probe_diagnostic(path, containers, env, private_values):
+    """Only failed probes emit this bounded, sanitized, separate artifact."""
+    def sanitize(text):
+        for value in sorted(private_values, key=len, reverse=True):
+            if value:
+                text = text.replace(value, '<redacted>')
+        text = re.sub(r'https?://[^\s\"<>]+', '<redacted-url>', text)
+        text = re.sub(r'postgres(?:ql)?://[^\s\"<>]+', '<redacted-database-url>', text)
+        return text[-16384:]
+    records = []
+    for container in containers:
+        record = {'container': container}
+        for field, command in [('state', ['docker', 'inspect', '--format', '{{json .State}}', container]),
+                               ('logs', ['docker', 'logs', '--tail', '60', container])]:
+            with tempfile.TemporaryFile() as capture:
+                try:
+                    result = subprocess.run(command, env=env, stdout=capture, stderr=subprocess.STDOUT, timeout=10)
+                    record[field + 'ExitCode'] = result.returncode
+                except subprocess.TimeoutExpired:
+                    record[field + 'ExitCode'] = 'timeout'
+                length = capture.seek(0, 2)
+                # Include overlap before redaction so a secret crossing the final
+                # byte boundary cannot expose a suffix after output truncation.
+                overlap = max((len(v.encode()) for v in private_values), default=0)
+                capture.seek(max(0, length - 65536 - overlap))
+                text = capture.read().decode('utf-8', errors='replace')
+                record[field] = sanitize(text)
+                record[field + 'Truncated'] = length > 16384
+        records.append(record)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data = json.dumps({'schemaVersion': 1, 'status': 'failed-probe', 'containers': records}, indent=2) + '\n'
+    with path.open('x', encoding='utf-8') as output:
+        os.chmod(path, 0o600)
+        output.write(data)
+
+
+def verify_weave_server(plan, image, postgres, work, env, diagnostic_path=None):
+    revision = plan['components']['weave']['revision']
+    loom_tree = git('rev-parse', revision + ':third_party/loom')
+    go_mod = git('show', revision + ':go.mod')
+    if not re.search(r'(?m)^replace github\.com/jinyitao123/loom => \./third_party/loom\s*$', go_mod):
+        raise BuildError('Weave must use its exact in-tree Loom module')
+    # Inspect the actual runtime filesystem, not merely Dockerfile strings.
+    run(['docker', 'run', '--rm', '--network=none', '--entrypoint', 'sh', image, '-ec',
+         'for tool in opencode codex claude; do if command -v "$tool" >/dev/null 2>&1; then exit 1; fi; done; '
+         'root=$(npm root -g); for package in opencode-ai @openai/codex @anthropic-ai/claude-code; '
+         'do test ! -e "$root/$package"; done'], env=env)
+    run(['docker', 'run', '--rm', '--network=none', '--entrypoint', 'node', image, '-e',
+         "const b=require('fs').readFileSync('/usr/local/bin/weave');"
+         "if(!b.includes(Buffer.from('github.com/jinyitao123/loom'))||!b.includes(Buffer.from('./third_party/loom')))process.exit(1)"], env=env)
+    # Use the product's exact official PG16 image, never a pgvector substitute.
+    if not re.fullmatch(r'(?:docker\.io/library/)?postgres@sha256:[0-9a-f]{64}', postgres):
+        raise BuildError('Server probe requires the product-locked official PostgreSQL digest')
+    run(['docker', 'pull', '--platform', 'linux/amd64', postgres], env=env)
+    pg = inspect_image(postgres, env)
+    if postgres.removeprefix('docker.io/library/') not in [x.removeprefix('docker.io/library/') for x in pg.get('RepoDigests', [])]:
+        raise BuildError('Probe database registry digest differs')
+    version = run(['docker', 'run', '--rm', '--network=none', '--entrypoint', 'postgres', postgres, '--version'], env=env)
+    if not re.search(r'PostgreSQL\) 16\.', version):
+        raise BuildError('Probe database is not PostgreSQL 16')
+    name = 'weave-image-proof-' + secrets.token_hex(6)
+    database, service = name + '-db', name + '-server'
+    password = secrets.token_hex(24)
+    jwt_secret, encryption_key = secrets.token_hex(32), secrets.token_hex(32)
+    pg_env, app_env = work / 'probe-pg.env', work / 'probe-server.env'
+    inputs = {
+        pg_env: 'POSTGRES_PASSWORD=' + password + '\nPOSTGRES_DB=weave\n',
+        app_env: 'DATABASE_URL=postgres://postgres:' + password + '@' + database + ':5432/weave?sslmode=disable\nJWT_SECRET=' + jwt_secret + '\nWEAVE_SECRET_KEY=' + encryption_key + '\nWEAVE_LOCAL_RUNTIME_ENABLED=false\n',
+    }
+    for path, content in inputs.items():
+        with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), 'w') as output:
+            output.write(content)
+    created_network = False
+    try:
+        run(['docker', 'network', 'create', '--internal', name], env=env)
+        created_network = True
+        run(['docker', 'run', '-d', '--name', database, '--network', name, '--env-file', pg_env,
+             '--tmpfs', '/var/lib/postgresql/data', postgres], env=env)
+        for attempt in range(60):
+            result = subprocess.run(['docker', 'exec', database, 'pg_isready', '-U', 'postgres', '-d', 'weave'], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if result.returncode == 0: break
+            time.sleep(1)
+        else: raise BuildError('Isolated official PostgreSQL did not become ready')
+        run(['docker', 'run', '-d', '--name', service, '--network', name, '--env-file', app_env, image], env=env)
+        script = "Promise.all(['/v1/health','/v1/ready'].map(async p=>{const r=await fetch('http://127.0.0.1:8080'+p);if(!r.ok)throw Error('not ready');return r.json()})).then(([health,ready])=>console.log(JSON.stringify({health,ready}))).catch(()=>process.exit(1))"
+        for attempt in range(90):
+            result = subprocess.run(['docker', 'exec', service, 'node', '-e', script], env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=10)
+            if result.returncode == 0:
+                response = json.loads(result.stdout)
+                break
+            time.sleep(1)
+        else: raise BuildError('Server failed its empty official PostgreSQL health/readiness probe')
+        proof = {'target': 'server', 'cliExecutablesAbsent': True, 'cliPackagesAbsent': True,
+                 'loomBinaryModulePresent': True, 'loomTree': loom_tree, 'loomModulePath': './third_party/loom',
+                 'postgresImage': postgres, **response}
+        validate_server_evidence(proof, revision, loom_tree, postgres)
+        return proof
+    except Exception:
+        if diagnostic_path is not None:
+            try:
+                write_probe_diagnostic(diagnostic_path, (service, database), env, (password, jwt_secret, encryption_key))
+            except (OSError, subprocess.SubprocessError, ValueError):
+                # Diagnostic collection must never suppress the original failure
+                # or prevent this probe's containers and inputs being removed.
+                print('Isolated server probe failed; bounded diagnostics could not be collected.', file=sys.stderr)
+        raise
+    finally:
+        for container in (service, database):
+            subprocess.run(['docker', 'rm', '-f', '-v', container], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if created_network:
+            subprocess.run(['docker', 'network', 'rm', name], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        pg_env.unlink(missing_ok=True); app_env.unlink(missing_ok=True)
+
+
+def replace_weave(plan, base_revision, base_run, output, push):
+    from resume import fetch_publication, REQUIRED
+    if not push:
+        raise BuildError('Weave replacement requires explicit private publication; no partial local combination')
+    if git('status', '--porcelain=v1', '--untracked-files=all'):
+        raise BuildError('Build from a committed clean checkout')
+    if output.exists() and any(output.iterdir()):
+        raise BuildError('Choose an empty output directory')
+    base_files, old_lock, provenance = fetch_publication(plan['repository'], base_revision, plan['bundleVersion'], base_run, allow_replacement=False)
+    lock = reusable_lock(plan, base_files)
+    output.mkdir(parents=True, exist_ok=True)
+    for name in REQUIRED:
+        (output / ('base-' + name)).write_bytes(base_files[name])
+    identity = ('publicationRunId', 'publicationRevision', 'artifactId', 'archiveDigest', 'archiveBytes')
+    origins = {name: base_revision for name in ('forge', 'forgeProxy', 'postgres')}
+    origins['weave'] = plan['sourceRevision']
+    manifest = {'schemaVersion': 2, 'kind': 'weave-replacement', 'status': 'building', 'published': False,
+                'plan': plan, 'basePublication': {key: provenance[key] for key in identity},
+                'componentBuildSources': origins, 'images': {}, 'builderSha256': digest_file(__file__)}
+    write_json(output / 'build-manifest.json', manifest)
+    api = Github(plan['repository'])
+    try:
+        api.repository_verified()
+        with tempfile.TemporaryDirectory(prefix='work-', dir=output) as temporary:
+            work = Path(temporary); env = build_environment(work / 'profile')
+            run(['make', 'component-check'], env=env, capture=False)
+            weave = work / 'weave'
+            source = plan['components']['weave']['revision']
+            archive_source(source, weave, work, env)
+            metadata = output / 'weave-buildkit.json'; tag = plan['tags']['weave']
+            run(build_command(plan, 'weave', weave, None, metadata), env=env, capture=False)
+            image = inspect_image(tag, env, source, plan['repository'], plan['sourceRevision'])
+            build_digest = verify_build_metadata(metadata, image['Id'])
+            proof = verify_weave_server(plan, tag, lock['components']['postgres']['image'], work, env, output / 'failed/weave-server-probe.json')
+            write_json(output / 'weave-server-proof.json', proof)
+            api.package_private(tag, missing=True)
+            run(['docker', 'push', tag], env=env, capture=False)
+            api.package_private(tag)
+            published = inspect_image(tag, env, source, plan['repository'], plan['sourceRevision'])
+            if published['Id'] != image['Id']:
+                raise BuildError('Weave changed during publication')
+            prefix = tag.rsplit(':', 1)[0] + '@'
+            refs = [x for x in published.get('RepoDigests', []) if x.startswith(prefix)]
+            if len(refs) != 1: raise BuildError('Weave registry digest is ambiguous')
+            ref = validate_digest_reference(refs[0])
+            descriptor = json.loads(run(['docker', 'buildx', 'imagetools', 'inspect', ref, '--format', '{{json .Manifest}}'], env=env))
+            if descriptor.get('digest') != ref.split('@')[1]: raise BuildError('Weave registry readback differs')
+            verify_registry_config(json.loads(run(['docker', 'buildx', 'imagetools', 'inspect', ref, '--raw'], env=env)), image['Id'])
+            manifest['images']['weave'] = {'image': ref, 'tag': tag, 'target': 'server', 'sourceRevision': source,
+                'localImageId': image['Id'], 'registryConfigDigest': image['Id'], 'visibility': 'private',
+                'buildManifestDigest': build_digest, 'dockerfileSha256': digest_file(weave / 'Dockerfile'),
+                'buildkitMetadataSha256': digest_file(metadata), 'serverProofSha256': digest_file(output / 'weave-server-proof.json')}
+            lock['components']['weave'] = {'image': ref, 'sourceRevision': source}
+            api.repository_verified()
+            write_json(output / 'images.lock.json', lock)
+            manifest.update(status='published-private', published=True)
+            write_json(output / 'build-manifest.json', manifest)
+    except Exception:
+        manifest['status'] = 'failed'; write_json(output / 'build-manifest.json', manifest)
+        raise
+    print('Verified server-only Weave published; original Forge/proxy/PostgreSQL evidence retained unchanged.')
 
 
 def execute(plan, objectui, output, postgres, push):
@@ -384,6 +589,8 @@ def main():
     parser.add_argument('--revision', required=True)
     parser.add_argument('--bundle-version', required=True)
     parser.add_argument('--objectui-source')
+    parser.add_argument('--replace-weave-from-run', type=int)
+    parser.add_argument('--base-revision')
     parser.add_argument('--postgres-image', default='postgres:16-bookworm')
     parser.add_argument('--output', default=str(ROOT / '.build/server-image-build/output'))
     parser.add_argument('--plan', action='store_true', help='Read-only source validation; no downloads or Docker calls')
@@ -406,7 +613,14 @@ def main():
         return
     if args.github_output:
         raise BuildError('--github-output is only for --plan')
-    execute(plan, args.objectui_source, Path(args.output).resolve(), args.postgres_image, args.push_private)
+    if args.replace_weave_from_run is not None:
+        if not args.base_revision or not SHA.fullmatch(args.base_revision) or args.replace_weave_from_run < 1:
+            raise BuildError('Replacement requires the exact original publication run and source')
+        replace_weave(plan, args.base_revision, args.replace_weave_from_run, Path(args.output).resolve(), args.push_private)
+    else:
+        if args.base_revision:
+            raise BuildError('--base-revision requires --replace-weave-from-run')
+        execute(plan, args.objectui_source, Path(args.output).resolve(), args.postgres_image, args.push_private)
 
 
 if __name__ == '__main__':
