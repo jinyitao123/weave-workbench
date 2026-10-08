@@ -365,6 +365,7 @@ export const SalesOpportunity = master('forge_sales_opportunity', '商机管理'
 
 export const SalesLead = master('forge_sales_lead', '线索管理', 'funnel', {
   name: text('线索名称', true), code: code('线索号'), company_name: text('公司名称', true), contact_name: text('联系人'), phone: text('联系电话'), source: text('来源'),
+  estimated_amount: Field.currency({ label: '销售内部估算', precision: 18, min: 0 }),
   status: Field.select([{ value: 'new', label: '新线索' }, { value: 'following', label: '跟进中' }, { value: 'converted', label: '已转化' }, { value: 'closed', label: '已关闭' }, { value: 'public_pool', label: '公海' }], { label: '线索状态', defaultValue: 'new', readonly: true }), converted_customer_id: { ...reference('forge_customer', '转化客户'), relatedList: false, readonly: true }, converted_opportunity_id: { ...reference('forge_sales_opportunity', '转化商机'), readonly: true }, converted_at: Field.datetime({ label: '转化时间', readonly: true }), conversion_request_signature: Field.text({ label: '转化请求签名', maxLength: 255, hidden: true, readonly: true, requiredPermissions: ['sales_lead_convert'] }), responsible_id: owner(), remarks: remarks(),
 }, ['code', 'company_name', 'contact_name', 'phone', 'status', 'source', 'converted_customer_id', 'converted_opportunity_id', 'responsible_id']);
 

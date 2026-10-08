@@ -3,6 +3,7 @@ import { SIGNATURE_TARGET, ORDER_CONDITIONS_TARGET, CONTRACT_ORDER_TARGET, ORDER
 import { defineAction } from '@objectstack/spec';
 import { hasExactQuotationLineSet } from './sales-contract-source-set.js';
 import { CONTRACT_MATERIAL_SUBMISSION_TARGET, CONTRACT_REVISION_ATTACHMENT_RETIRED_TARGET, CONTRACT_SUBMISSION_RECEIPT_TARGET } from '../plugins/contract-material-submission.js';
+import { LEAD_CREATE_TARGET, CONTRACT_DRAFT_TERMS_TARGET } from '../plugins/employee-business-creation.js';
 
 const locations = ['record_header', 'record_more'] as const;
 
@@ -99,8 +100,10 @@ try {
 
 export const SalesQuotationDraftCreate = defineAction({
   name: 'sales_quotation_draft_create', label: '新建销售报价草稿', objectName: 'forge_quotation', icon: 'file-plus-2',
-  locations: [...locations], visible: false, refreshAfter: true,
+  locations: ['list_toolbar'], visible: false, refreshAfter: true,
   requiredPermissions: ['sales_quotation_draft_create'],
+  ai: { exposed: true, category: 'action', requiresConfirmation: false,
+    description: '由当前销售员工本人按已确认的客户、字典、日期和物料或服务明细创建报价草稿；通过本人创建上下文固定输入与操作回执，未知成本保持空，不提交审批或发送客户。' },
   successMessage: '报价草稿已保存',
   params: [
     { name: 'code', label: '报价单号', type: 'text', required: true },
@@ -1047,6 +1050,27 @@ return { id, status: patch.status };
   },
 });
 
+
+export const SalesLeadCreate = defineAction({
+  name: 'sales_lead_create', label: '新建销售线索', objectName: 'forge_sales_lead', icon: 'file-plus-2',
+  locations: ['list_toolbar'], visible: false, refreshAfter: true,
+  requiredPermissions: ['sales_lead_create'], type: 'script', target: LEAD_CREATE_TARGET,
+  params: [
+    { field: 'name', required: true }, { field: 'company_name', required: true },
+    { field: 'source' }, { field: 'estimated_amount' }, { field: 'contact_name' }, { field: 'phone' }, { field: 'remarks' },
+  ],
+  ai: { exposed: true, category: 'action', requiresConfirmation: false,
+    description: '由当前销售员工本人创建新线索，编号、组织、负责人和初始状态由服务器确定；只保存员工明确提供的名称、公司、来源、内部估算及备注，未知联系人不补造，不自动转化或审批。' },
+});
+
+export const ContractDraftPaymentTermUpdate = defineAction({
+  name: 'contract_draft_payment_term_update', label: '补充草稿付款条款', objectName: 'forge_sales_contract', icon: 'file-pen-line',
+  locations: [...locations], visible: `record.status == 'draft'`, refreshAfter: true,
+  requiredPermissions: ['sales_contract_operator'], type: 'script', target: CONTRACT_DRAFT_TERMS_TARGET,
+  params: [{ field: 'payment_term', required: true }],
+  ai: { exposed: true, category: 'action', requiresConfirmation: false,
+    description: '由合同负责人本人补充尚未进入审批的草稿付款条款，按当前合同版本和本人操作回执办理；不修改金额、明细、客户、来源、审批、签署或下单条件，已提交合同不能通过此动作重开。' },
+});
 
 export const SalesLeadConvertToOpportunity = defineAction({
   name: 'sales_lead_convert_to_opportunity', label: '转为商机', objectName: 'forge_sales_lead', icon: 'sparkles', locations: [...locations], order: 10,

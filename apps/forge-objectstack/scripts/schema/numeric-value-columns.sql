@@ -593,6 +593,7 @@ BEGIN
     ('forge_sales_invoice_line', 'taxed_unit_price'),
     ('forge_sales_invoice_request', 'requested_amount'),
     ('forge_sales_invoice_request', 'requested_quantity'),
+    ('forge_sales_lead', 'estimated_amount'),
     ('forge_sales_opportunity', 'amount'),
     ('forge_sales_opportunity', 'win_rate'),
     ('forge_sales_order', 'collected_amount'),

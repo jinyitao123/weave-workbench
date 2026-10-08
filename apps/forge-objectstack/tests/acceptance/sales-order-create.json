@@ -7,12 +7,11 @@
   "pageId": "page_sales_order_create",
   "status": "review_required",
   "observedAt": "2026-10-08",
-  "reviewedRevision": "170f23771a85d59bea06eb30c933d800af8aac9f",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/sales-order-create.page.ts": "1d9c89a681b08060e318872df052b3d95365e21aeef371e941478160b4da157c",
     "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86",
-    "apps/forge-objectstack/src/objects/sales.object.ts": "0d24c1a46103a8f367f70c69e29257042ae3d5df804d29bd11220f064c65c4d5",
-    "apps/forge-objectstack/src/actions/sales.action.ts": "3412077c1bb354cfd5bb81345bd5a7dc969a9309cddcb37a7964f75127b2c9a2",
+    "apps/forge-objectstack/src/objects/sales.object.ts": "81f867c807c8ac099c7c8aa15281154f39ea66a6d678b921020689458cf836a6",
+    "apps/forge-objectstack/src/actions/sales.action.ts": "05a8011ca59089f3ddc6add2362dd671d170925b930e49fa7a7a0e81ce1e825e",
     "apps/forge-objectstack/src/permissions/sales-order.permission.ts": "14ce34a26eead8d92fd431a14f81b2ecfe2ef630262a271f612a45b34d510ce0",
     "apps/forge-objectstack/src/plugins/sales-order-domain.ts": "da110816f063af56df448f2b1cd269bb2eaf85dd3fc3709b34ee1c7d30a72349",
     "apps/forge-objectstack/src/plugins/sales-order-readiness.ts": "a6012da6f06e67b4559d1554acfeeefdcb586ab0264cad952718a4a9b96e1c57",
@@ -457,6 +456,7 @@
     "来源读取是时点观察；创建前的并发变化仍由原后端动作权威校验，前端读取不构成原子快照。",
     "原订单复核的自定义列表受限失败已保留；原生详情／关联页成功不代表该列表成功或独立评审。",
     "公共ForgeDialog新增可选className与既有宽度token透传；当前来源版本更新不代表旧业务证据在新版本重验。",
-    "本次仅随公共日期控件可选接入更新源码绑定；本页保留旧观察，未在本版本重跑完整业务验收。"
+    "本次仅随公共日期控件可选接入更新源码绑定；本页保留旧观察，未在本版本重跑完整业务验收。",
+    "本次仅将未提交的本人业务创建与草稿付款条款改动绑定到当前源文件指纹；原来源为 170f23771a85d59bea06eb30c933d800af8aac9f。所有页面检查与需求仍为 pending，未声明本次业务或页面验收通过；源码提交后再绑定准确 reviewedRevision。"
   ]
 }

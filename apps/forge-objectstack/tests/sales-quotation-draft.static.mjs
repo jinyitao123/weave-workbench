@@ -32,7 +32,7 @@ assert.match(action, /where: \{ id: opportunityId, organization_id: organization
 assert.match(action, /opportunity\.customer_id !== customerId[\s\S]*?ownedByActor\(opportunity\)[\s\S]*?opportunity\.responsible_id \|\| ''\) !== actor/, 'The action binds the source to the customer and current opportunity owner');
 assert.match(action, /opportunity_name: opportunity \? String\(opportunity\.name \|\| ''\)\.trim\(\) : null/, 'Only the server-read opportunity title is snapshotted');
 assert.match(action, /quotation_id: quotationId, owner_id: actor/);
-assert.doesNotMatch(action.slice(action.indexOf("name: 'sales_quotation_draft_create'"), action.indexOf('export const QuotationAdjustLinePrice')), /ai:\s*\{\s*exposed:\s*true/);
+assert.match(action.slice(action.indexOf("name: 'sales_quotation_draft_create'"), action.indexOf('export const QuotationAdjustLinePrice')), /ai:\s*\{\s*exposed:\s*true/);
 assert.match(permission, /name: 'sales_quotation_draft_operator'/);
 assert.match(permission, /forge_quotation: \{ allowRead: true, readScope: 'own' \}/);
 assert.match(permission, /forge_customer: ownRead/);

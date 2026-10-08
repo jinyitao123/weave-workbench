@@ -10,7 +10,7 @@ export const EmployeeBusinessContext = ObjectSchema.create({
   lifecycle: { class: 'transient', ttl: { field: 'expires_at', expireAfter: '1d' } },
   fields: {
     name: { ...text(), defaultValue: '本人业务动作上下文' },
-    user_id: text(), organization_id: text(), object_name: text(), record_id: text(),
+    user_id: text(), organization_id: text(), object_name: text(), record_id: { type: 'text', maxLength: 128 },
     context_version: text(64), context_json: { type: 'textarea', required: true },
     expires_at: { type: 'datetime', required: true },
   },

@@ -139,3 +139,11 @@ FORGE_SOURCE_REVISION="$(git rev-parse HEAD)" sudo --preserve-env=FORGE_SOURCE_R
 本批专门检查为 `acceptance:sales-order-native`、`acceptance:employee-business-native` 和 `tests/sales-order-preflight.native-postgres.test.mjs`，必须指向隔离本机 PostgreSQL。组件检查不代表桌面跨员工业务验收；完整范围和部署证据由产品总仓的销售订单场景及环境说明维护。
 
 已批准订单沿同一连接由销售负责人准确立项／关联、明确经理本人启动；实现、原生读取边界、未知失败及后续并发修补证据维护在[接入主文档](../../docs/任务授权与工作消息接入.md#已批准订单接项目的本人边界)。本批不包含交付／制造／财务后续。
+
+### 本人创建与草稿付款条款
+
+本人连接支持 `sales_lead_create`、`sales_quotation_draft_create` 和已有合同上的 `contract_draft_payment_term_update`。创建动作通过原生 `list_toolbar` 范围声明为无需记录；`sourceKind=creation` 上下文没有虚构的记录或记录版本，继续使用既有上下文和操作回执对象。组织、归属、状态和创建编号由服务器确定；销售内部估算独立保存为可空的 `estimated_amount`，不代表客户预算。
+
+报价输入为固定八字段的 `lineItems`，连接层验证后交给原有头行事务。联系人、客户、商机、字典和规格通过本人员工原生读取核对；超过单次候选范围时先用已有只读查找选定记录，通过 `referenceIds` 缩小候选，不把展示数量变成企业数据总量上限。服务行不传 SKU，成本保持未知。旧页面的报价草稿入口继续使用原动作。
+
+付款条款动作仅处理本人尚未进入审批的草稿，不修改金额、明细或其他状态。相同操作沿原回执返回，异参、旧版本和未知操作换键均被拒绝。聚焦真实 HTTP／PostgreSQL 检查可在既有隔离数据库设置下运行 `FORGE_EMPLOYEE_CREATION_PG_ONLY=1 pnpm acceptance:employee-business-native`；它覆盖旧上下文物理约束、本人权限、创建引用、头行、条款和原回执回滚。此检查不代表桌面员工流程或部署完成；跨组件协议以产品总仓 `contracts/v1/README.md`「本人业务创建与草稿补充」为准。
