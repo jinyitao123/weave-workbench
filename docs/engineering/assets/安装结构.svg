@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="620" viewBox="0 0 1120 620" role="img" aria-labelledby="title desc">
-<title id="title">服务端与员工桌面的安装结构</title><desc id="desc">管理员在Linux部署Forge、Weave及数据库，向员工提供桌面安装包和不含密钥的组织连接文件。模型密钥仅由管理员私有配置。</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="800" viewBox="0 0 1120 800" role="img" aria-labelledby="title desc">
+<title id="title">主服务、执行节点与员工桌面的安装结构</title><desc id="desc">管理员在Linux部署Forge、Weave及数据库，向员工提供桌面安装包和不含密钥的组织连接文件。主服务不安装第三方CLI；需要这些执行器时，下级节点自行安装并注册。直接绑定模型的Loom由主服务运行。</desc>
 <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#64748b"/></marker></defs>
-<rect width="1120" height="620" rx="24" fill="#f5f7fb"/>
+<rect width="1120" height="800" rx="24" fill="#f5f7fb"/>
 <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Microsoft YaHei,sans-serif"><text x="48" y="54" font-size="25" font-weight="700" fill="#17233a">一次部署服务，员工安装桌面即可接入</text>
 <text x="48" y="83" font-size="15" fill="#526178">安装结构示意 · 实际就绪状态以检查工具和真人验收为准</text>
 <rect x="46" y="119" width="628" height="425" rx="20" fill="white" stroke="#ccd5e3"/>
@@ -21,4 +21,9 @@
 <rect x="778" y="309" width="272" height="81" rx="12" fill="#f0f3f8"/><text x="800" y="342" font-size="18" font-weight="600" fill="#28364e">② 导入组织连接</text><text x="800" y="367" font-size="14" fill="#526178">文件只含地址，不含密码或密钥</text>
 <rect x="778" y="414" width="272" height="81" rx="12" fill="#e9f6ef"/><text x="800" y="447" font-size="18" font-weight="600" fill="#266344">③ 本人登录与工作</text><text x="800" y="472" font-size="14" fill="#49745b">无需员工安装 Docker 或全局 CLI</text>
 <path d="M675,350 L750,350" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
-<text x="48" y="585" font-size="14" fill="#64748b">业务完成以 Forge 结果为准；模型目录、服务健康与团队运行状态分别核验。</text></g></svg>
+<path d="M509,544 L509,583" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="46" y="588" width="1028" height="134" rx="20" fill="white" stroke="#ccd5e3"/>
+<text x="70" y="622" font-size="20" font-weight="700" fill="#17233a">按需接入 · 下级执行节点</text>
+<text x="70" y="654" font-size="16" fill="#345473">节点安装并登录 Codex / Claude Code / OpenCode → 注册与能力上报 → 领取任务与回传结果</text>
+<text x="70" y="689" font-size="15" fill="#526178">Weave 主服务不安装这些 CLI；直接绑定模型供应方的 Loom 团队沿现有服务端路径执行。</text>
+<text x="48" y="765" font-size="14" fill="#64748b">业务完成以 Forge 结果为准；模型目录、服务健康与团队运行状态分别核验。</text></g></svg>
