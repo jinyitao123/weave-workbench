@@ -215,4 +215,6 @@ if __name__ == '__main__':
         print('Standalone publication incomplete; no private response or credential logged. Error type:', type(error).__name__, 'publisher line:', line, file=sys.stderr)
         if isinstance(error, (ConfigurationError, BuildError)):
             print(str(error), file=sys.stderr)
+            if getattr(error, 'safe_diagnostic', ''):
+                print(error.safe_diagnostic, file=sys.stderr)
         raise SystemExit(1) from None
