@@ -36,6 +36,7 @@ jobs:
           sh -n tools/server-bundle/install.sh
           sh -n tools/server-bundle/bootstrap-docker.sh
           python3 tools/server-bundle/tests/validate_compose.py
+          python3 tools/weave-bundle/tests/validate_compose.py
 
   weave-source-validation:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.weave_source_validation == true }}
