@@ -100,9 +100,10 @@ class Docker:
             raise OperationError('The Docker daemon must run Linux containers.')
 
     def compose(self, arguments, label):
+        compose_directory = Path(self.state.get('composeDirectory', HERE))
         return self.run(['docker', 'compose', '--env-file', '/dev/null',
                          '--project-name', self.state['projectName'],
-                         '--project-directory', str(HERE), '-f', str(HERE / 'compose.yaml'),
+                         '--project-directory', str(compose_directory), '-f', str(compose_directory / 'compose.yaml'),
                          *arguments], label, compose_environment(self.state))
 
     def start(self):
@@ -316,9 +317,12 @@ def export_connection(state, destination):
 def parser():
     result = argparse.ArgumentParser(description='Install the private Linux Forge + Weave server bundle.')
     sub = result.add_subparsers(dest='command', required=True)
-    for command in ['install', 'init', 'start', 'stop', 'check', 'attach-organization', 'bootstrap-weave', 'export-connection', 'set-model-key']:
+    for command in ['configure', 'install', 'init', 'start', 'stop', 'check', 'attach-organization', 'bootstrap-weave', 'export-connection', 'set-model-key']:
         p = sub.add_parser(command)
         p.add_argument('--state-dir', default=DEFAULT_STATE)
+        if command == 'configure':
+            p.add_argument('--config', required=True)
+            p.add_argument('--compose-dir', default='.')
         if command in ('install', 'init'):
             p.add_argument('--images', required=True)
             p.add_argument('--forge-origin', required=True)
@@ -344,6 +348,19 @@ def parser():
 
 def main(arguments=None):
     args = parser().parse_args(arguments)
+    if args.command == 'configure':
+        from compose_entry import check_destination, read_settings
+        destination = Path(args.compose_dir).absolute()
+        check_destination(destination)
+        settings = read_settings(args.config)
+        with installation_lock(args.state_dir) as directory:
+            state, created = initialize(directory, **settings)
+            if state.get('composeDirectory') and state['composeDirectory'] != str(destination):
+                raise ConfigurationError('The managed Compose directory differs; existing files were preserved.')
+            state['composeDirectory'] = str(destination)
+            write_private(directory / 'state.json', state)
+            print(json.dumps({'composeFiles': 'saved', 'installation': 'initialized' if created else 'unchanged', 'servicesStarted': False}))
+        return 0
     with installation_lock(args.state_dir) as directory:
         if args.command in ('init', 'install'):
             images = json.loads(Path(args.images).read_text())

@@ -1,0 +1,11 @@
+{
+  "images": "images.lock.json",
+  "forgeOrigin": "http://server.example.internal:8080",
+  "weaveOrigin": "http://server.example.internal:8081",
+  "forgePort": 8080,
+  "weavePort": 8081,
+  "bindAddress": "0.0.0.0",
+  "hostGatewayHost": "server.example.internal",
+  "externalIngress": false,
+  "modelKeyFile": ""
+}

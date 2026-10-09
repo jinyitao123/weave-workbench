@@ -68,3 +68,28 @@ python3 tools/server-bundle/tests/validate_compose.py
 ```
 
 正式交付仍须使用真实摘要镜像，在隔离 Linux 空库运行安装向导、原生 Setup、身份交换、模型调用、团队发布和重启持久性检查；本目录的模拟接口测试只验证安装器边界。
+
+## 原生 Docker Compose 入口
+
+从本次包复制 `installation.example.json` 为 `installation.json`，将服务地址、端口、绑定地址、DNS回连、外部HTTPS入口和模型私有文件路径集中写在这个文件中。文件路径相对配置文件解析；使用本次固定的 `images.lock.json`。不填写管理员密码、组织ID或自造密钥。
+
+```sh
+cp installation.example.json installation.json
+# 编辑 installation.json 后，在包目录执行。
+sudo python3 server_bundle.py configure --config installation.json
+sudo docker compose up -d --wait
+```
+
+`configure`只准备配置，不启动服务；由同一私有安装状态生成当前目录的 `.env`（0600），项目名称、卷、身份来源、密码与密钥复用原安装，重复执行相同配置不重置。已有安装的地址、端口、镜像组合与模型密钥不同时，保留原安装并拒绝替换；密钥更新仍使用既有 `set-model-key`，其余升级与入口变更按对应部署流程处理。配置目录可以显式用`--compose-dir`选择；原生Compose与安装器维护命令使用同一份`compose.yaml`。已由管理员修改的Compose文件保留，自动更新只同步派生的`.env`。
+
+启动后在Forge的`/_console/setup`完成原生管理员与组织设置，然后仍在包目录执行同一本人绑定流程：
+
+```sh
+sudo python3 server_bundle.py attach-organization
+sudo python3 server_bundle.py export-connection --output ./organization-connection.json
+sudo docker compose ps
+sudo docker compose stop
+sudo docker compose up -d --wait
+```
+
+组织绑定或模型密钥保存时同步刷新该目录的`.env`，无需手写内部身份与密钥。`.env`是私有状态的派生文件，修改部署输入使用`installation.json`，不要把`.env`提交Git或共享。可在`compose.yaml`中管理部署资源；不要手写另一个组织、员工账号或审批体系。停止保留卷；不使用`down -v`办理普通重启。Compose基础启动、原生初始化和员工业务验收仍是不同结果。
