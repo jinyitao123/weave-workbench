@@ -28,6 +28,8 @@ with tempfile.TemporaryDirectory() as directory:
     forge, weave = services['app']['environment'], services['weave']['environment']
     assert forge['OS_BASE_URL'] == state['connection']['forgeOrigin']
     assert weave['WEAVE_FORGE_SESSION_URL'] == forge['OS_BASE_URL'] + '/api/v1/auth/get-session'
+    assert weave['WEAVE_ADMIN_FORGE_URL'] == forge['OS_BASE_URL']
+    assert forge['OS_TRUSTED_ORIGINS'] == forge['OS_BASE_URL'] + ',' + state['connection']['weaveOrigin']
     assert forge['FORGE_WEAVE_EVENT_SECRET'] == weave['WEAVE_FORGE_EVENT_SECRET']
     assert weave['WEAVE_DISABLE_LOCAL_LOGIN'] == 'true'
     assert weave['WEAVE_DEV_MODE'] == 'false'

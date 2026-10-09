@@ -25,6 +25,8 @@ sudo ./install.sh \
 
 向导启动正式服务后，提示管理员在 Forge 的 `/_console/setup` 完成原生首管和组织设置，再输入刚创建的本人邮箱、密码。密码通过终端隐藏输入，会话不保存；无需复制 cookie 或 token。安装器核对原生管理员权限，绑定当前组织，沿 Weave 正式 bootstrap 建立运维账号，并以本人交换身份调用共享模型绑定接口。最后导出无凭据的组织连接文件。
 
+首次安装自动将 Forge 登录地址接入 Weave 管理端，并把 Forge 与 Weave 两个准确 origin 加入原生登录可信来源。管理员打开 `<weave-origin>/admin/`，直接使用 Forge 管理员或已获团队开发权限的账号登录。默认页面不展示 API Key；运维明确访问 `<weave-origin>/admin/?login=api_key` 时仍可用原密钥入口，权限不变。未接好 Forge 时页面显示配置问题，不自动切换密钥。
+
 自动化场景可用 `--admin-credentials-file` 指定仅含 `email`、`password` 的私有 JSON 文件；权限和归属要求相同。该账号必须已经通过原生 Setup 创建。`--non-interactive` 没有此文件时返回 `native_setup_required` 和退出码 2，不制造账号或宣称安装全部完成。
 
 ## 地址和持久数据

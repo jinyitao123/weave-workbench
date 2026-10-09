@@ -116,6 +116,11 @@ class ConfigurationTests(InstallationCase):
         env = config.compose_environment(self.state)
         origin = self.state['connection']['forgeOrigin']
         self.assertEqual(env['WW_FORGE_ORIGIN'], origin)
+        self.assertEqual(env['WW_WEAVE_ADMIN_FORGE_URL'], origin)
+        self.assertEqual(env['WW_FORGE_TRUSTED_ORIGINS'], origin + ',' + self.state['connection']['weaveOrigin'])
+        same_origin = deepcopy(self.state)
+        same_origin['connection']['weaveOrigin'] = origin
+        self.assertEqual(config.compose_environment(same_origin)['WW_FORGE_TRUSTED_ORIGINS'], origin)
         self.assertEqual(env['WW_FORGE_SESSION_URL'], origin + '/api/v1/auth/get-session')
         self.assertEqual(env['WW_FORGE_EVENT_URL'], origin + '/api/v1/apps/forge/weave-events/team-runs')
         self.assertEqual(env['WW_ORGANIZATION_ID'], '')
