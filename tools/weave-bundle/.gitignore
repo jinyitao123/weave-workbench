@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+installation.json
+.weave-state.local.json
+.weave-state.local.json.lock
+operator-key.local
+images.lock.json

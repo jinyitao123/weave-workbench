@@ -1,0 +1,56 @@
+name: Publish independent Weave Compose bundle
+on:
+  workflow_dispatch:
+    inputs:
+      image_product_revision:
+        description: Exact product commit of the verified full image publication
+        type: string
+        required: true
+      image_run_id:
+        description: Verified full private image publication run
+        type: string
+        required: true
+      bundle_version:
+        description: Independently labeled Weave bundle version
+        type: string
+        required: true
+      release_tag:
+        description: Existing test release receiving the additional asset
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: standalone-weave-${{ inputs.release_tag }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      actions: read
+      packages: read
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      IMAGE_PRODUCT_REVISION: ${{ inputs.image_product_revision }}
+      IMAGE_RUN_ID: ${{ inputs.image_run_id }}
+      BUNDLE_VERSION: ${{ inputs.bundle_version }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: python3 -m unittest discover -s tools/weave-bundle/tests -v
+      - name: Verify private image, cold start and restart; publish one independent bundle
+        run: python3 tools/weave-bundle/publish.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: weave-standalone-${{ inputs.bundle_version }}-readback
+          path: |
+            .build/weave-standalone/assets/*
+            .build/weave-standalone/release-readback.json
+          if-no-files-found: ignore

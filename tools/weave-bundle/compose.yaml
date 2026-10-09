@@ -1,0 +1,50 @@
+name: ${WS_PROJECT:?Run configure first}
+services:
+  db:
+    platform: linux/amd64
+    image: ${WS_POSTGRES_IMAGE:?A fixed PostgreSQL 16 image is required}
+    environment:
+      POSTGRES_DB: weave
+      POSTGRES_USER: ${WS_DB_USER:?}
+      POSTGRES_PASSWORD: ${WS_DB_PASSWORD:?}
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d weave']
+      interval: 3s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+  weave:
+    platform: linux/amd64
+    image: ${WS_WEAVE_IMAGE:?A fixed Weave image is required}
+    ports:
+      - '${WS_BIND_ADDRESS:?}:${WS_PORT:?}:8080'
+    environment:
+      DATABASE_URL: ${WS_DATABASE_URL:?}
+      JWT_SECRET: ${WS_JWT_SECRET:?}
+      WEAVE_SECRET_KEY: ${WS_VAULT_KEY:?}
+      WEAVE_ADMIN_PASS: ${WS_BOOTSTRAP_PASSWORD:?}
+      WEAVE_DISABLE_LOCAL_LOGIN: 'true'
+      WEAVE_DEV_MODE: 'false'
+      WEAVE_LOCAL_RUNTIME_ENABLED: 'false'
+      WEAVE_FORGE_SESSION_URL: ${WS_FORGE_SESSION_URL:-}
+      WEAVE_ADMIN_FORGE_URL: ${WS_FORGE_ORIGIN:-}
+      WEAVE_FORGE_DEFAULT_WORKSPACE: ${WS_FORGE_WORKSPACE:-}
+      DEEPSEEK_API_KEY: ${WS_MODEL_KEY:-}
+      DEFAULT_MODEL: ${WS_MODEL:-deepseek-flash}
+    volumes:
+      - workspaces:/root/.weave/workspaces
+    depends_on:
+      db:
+    platform: linux/amd64
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:8080/v1/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+    restart: unless-stopped
+volumes:
+  database:
+  workspaces:

@@ -1,0 +1,9 @@
+{
+  "origin": "http://server.example.internal:8081",
+  "port": 8081,
+  "bindAddress": "0.0.0.0",
+  "forgeOrigin": "",
+  "forgeWorkspaceId": "",
+  "model": "deepseek-flash",
+  "modelKeyFile": ""
+}
