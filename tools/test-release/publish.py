@@ -147,7 +147,7 @@ def main():
     assert seen == set(mapping)
     bundle = out / f'weave-workbench-server-{version}-linux-x64'
     bundle.mkdir()
-    for name in ('install.sh', 'bootstrap-docker.sh', 'compose.yaml', 'configuration.py', 'server_bundle.py'):
+    for name in ('install.sh', 'bootstrap-docker.sh', 'compose.yaml', 'configuration.py', 'server_bundle.py', 'compose_entry.py', 'installation.example.json'):
         p = bundle / name
         p.write_bytes(blob('tools/server-bundle/' + name))
         p.chmod(0o755 if name.endswith('.sh') else 0o644)

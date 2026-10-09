@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Validate real Compose interpolation without pulling images or starting containers."""
 import json
+import os
+import subprocess
 from pathlib import Path
 import sys
 import tempfile
@@ -41,4 +43,21 @@ with tempfile.TemporaryDirectory() as directory:
     if isinstance(hosts, list):
         hosts = dict(value.split('=', 1) for value in hosts)
     assert hosts['forge.example.test'] == 'host-gateway'
+    # Exercise native CLI file loading without injected WW_ or COMPOSE_ values.
+    from compose_entry import export_compose
+    target = Path(directory) / 'compose'
+    target.mkdir()
+    state['composeDirectory'] = str(target)
+    state['organizationId'] = 'test-native-org'
+    state['secrets']['deepseekApiKey'] = "test-only-$UNSET-quote'slash\\end"
+    export_compose(state)
+    environment = {k: v for k, v in os.environ.items() if not k.startswith(('WW_', 'COMPOSE_'))}
+    result = subprocess.run(['docker', 'compose', '--project-directory', str(target), 'config', '--format', 'json'], env=environment, text=True, capture_output=True)
+    assert result.returncode == 0, 'Native Compose file interpolation failed; no private output was logged.'
+    native = json.loads(result.stdout)
+    assert native['name'] == state['projectName']
+    actual = native['services']['weave']['environment']
+    assert actual['WEAVE_FORGE_DEFAULT_WORKSPACE'] == state['organizationId']
+    assert actual['DEEPSEEK_API_KEY'] == state['secrets']['deepseekApiKey']
+    assert native['services']['app']['environment']['OS_AUTH_SECRET'] == state['secrets']['forgeAuthSecret']
 print('Real Compose interpolation passed; no images pulled and no containers started.')

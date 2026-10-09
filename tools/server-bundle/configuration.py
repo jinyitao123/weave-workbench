@@ -132,6 +132,10 @@ def write_private(path, data):
         if os.path.exists(temporary):
             os.unlink(temporary)
 
+    if path.name == "state.json" and data.get("composeDirectory"):
+        from compose_entry import export_compose
+        export_compose(data)
+
 
 @contextmanager
 def installation_lock(directory):
@@ -156,6 +160,8 @@ def load_state(directory):
     data = json.loads(private_read(Path(directory) / 'state.json', 65536))
     if not isinstance(data, dict) or type(data.get('formatVersion')) is not int or data['formatVersion'] != 1:
         raise ConfigurationError('Unsupported installation state.')
+    if data.get("composeDirectory") is not None and (not isinstance(data["composeDirectory"], str) or not Path(data["composeDirectory"]).is_absolute()):
+        raise ConfigurationError("Invalid stored Compose directory.")
     validate_images(data['images'])
     if (not isinstance(data['connection'], dict) or set(data['connection']) != {'version', 'forgeOrigin', 'weaveOrigin'}
             or type(data['connection']['version']) is not int or data['connection']['version'] != 1):

@@ -413,5 +413,70 @@ class HTTPBoundaryTests(unittest.TestCase):
             worker.join()
 
 
+
+
+class ComposeEntryTests(InstallationCase):
+    def settings(self, **overrides):
+        lock = self.directory / 'images.lock.json'
+        lock.write_text(json.dumps(images()))
+        path = self.directory / 'installation.json'
+        path.write_text(json.dumps({'images': lock.name, 'forgeOrigin': 'http://forge.example.test:8080',
+                                    'weaveOrigin': 'http://weave.example.test:8081', **overrides}))
+        return path
+
+    def configure(self, path, output):
+        with redirect_stdout(io.StringIO()) as captured:
+            result = bundle.main(['configure', '--state-dir', str(self.directory), '--config', str(path),
+                                  '--compose-dir', str(output)])
+        self.assertEqual(result, 0)
+        self.assertNotIn(self.state['secrets']['forgeDbPassword'], captured.getvalue())
+
+    def test_compose_entry_keeps_same_identity_and_syncs_later_binding(self):
+        output = self.directory / 'compose'
+        output.mkdir()
+        path = self.settings()
+        self.configure(path, output)
+        state = config.load_state(self.directory)
+        self.assertTrue(state['secrets'] == self.state['secrets'])
+        self.assertEqual(state['forgeIdentityIssuer'], self.state['forgeIdentityIssuer'])
+        self.assertEqual((output / '.env').stat().st_mode & 0o777, 0o600)
+        before = (output / '.env').read_bytes()
+        self.configure(path, output)
+        self.assertTrue((output / '.env').read_bytes() == before)
+        custom = (output / 'compose.yaml').read_bytes() + b'\n# Operator-selected resource configuration\n'
+        (output / 'compose.yaml').write_bytes(custom)
+        state['organizationId'] = 'test-native-org'
+        config.write_private(self.directory / 'state.json', state)
+        self.assertIn("WW_ORGANIZATION_ID='test-native-org'", (output / '.env').read_text())
+        self.assertTrue((output / 'compose.yaml').read_bytes() == custom)
+
+    def test_conflicting_config_preserves_state_and_compose_files(self):
+        output = self.directory / 'compose'
+        output.mkdir()
+        self.configure(self.settings(), output)
+        before = (self.directory / 'state.json').read_bytes(), (output / '.env').read_bytes()
+        with self.assertRaises(config.ConfigurationError), redirect_stdout(io.StringIO()):
+            bundle.main(['configure', '--state-dir', str(self.directory), '--config', str(self.settings(forgeOrigin='http://other.example.test:8080')), '--compose-dir', str(output)])
+        self.assertTrue(before == ((self.directory / 'state.json').read_bytes(), (output / '.env').read_bytes()))
+
+    def test_foreign_env_and_unsupported_or_duplicate_fields_are_rejected(self):
+        from compose_entry import read_settings
+        path = self.settings(password='test-only')
+        with self.assertRaises(config.ConfigurationError):
+            read_settings(path)
+        path.write_text('{"forgeOrigin":"http://a.test:8080","forgeOrigin":"http://b.test:8080","weaveOrigin":"http://a.test:8081"}')
+        with self.assertRaises(config.ConfigurationError):
+            read_settings(path)
+        output = self.directory / 'compose'
+        output.mkdir()
+        env = output / '.env'
+        env.write_text('OTHER=test-only\n')
+        env.chmod(0o600)
+        before = (self.directory / 'state.json').read_bytes()
+        with self.assertRaises(config.ConfigurationError), redirect_stdout(io.StringIO()):
+            bundle.main(['configure', '--state-dir', str(self.directory), '--config', str(self.settings()), '--compose-dir', str(output)])
+        self.assertTrue((self.directory / 'state.json').read_bytes() == before)
+        self.assertEqual(env.read_text(), 'OTHER=test-only\n')
+
 if __name__ == '__main__':
     unittest.main()
