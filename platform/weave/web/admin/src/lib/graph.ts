@@ -1,3 +1,4 @@
+import { createUUID } from './ids'
 // Serial workflow editing over Weave's graph definition. Ported from the
 // GooeyPi desktop team workspace (weave-workbench desktop/src/pages/
 // team-workspace/graph.ts, MIT) so both clients produce the same graphs.
@@ -29,11 +30,11 @@ export interface StepMember { id: string; displayName: string; resultRequirement
 
 export const originalBinding = (): Binding => ({ value: { source: 'run_input', path: '' }, expected_type: 'text' })
 
-const edge = (from: string, to: string, route = 'success'): GraphEdge => ({ id: crypto.randomUUID(), from_node_id: from, to_node_id: to, route })
+const edge = (from: string, to: string, route = 'success'): GraphEdge => ({ id: createUUID(), from_node_id: from, to_node_id: to, route })
 
 function workerStep(member: StepMember, previous?: Step, requirement?: string): Step {
   return {
-    id: `step-${crypto.randomUUID()}`,
+    id: `step-${createUUID()}`,
     type: 'worker',
     label: member.displayName,
     config: { kind: 'consult', agent_id: member.id, agent_version: 1, result_requirement: requirement || member.resultRequirement || '按照成员职责处理任务输入，返回结果与依据。' },
@@ -79,50 +80,6 @@ export function serialSteps(graph: Graph): { steps: Step[]; serial: boolean } {
   return { steps, serial: false }
 }
 
-export function insertStepAfter(graph: Graph, id: string, member: StepMember): Graph {
-  const previous = graph.nodes.find((node) => node.id === id)
-  const outgoing = graph.edges.filter((item) => item.from_node_id === id)
-  if (!previous || !['lead', 'worker'].includes(previous.type) || outgoing.length !== 1) throw new Error('请选择连接完整的步骤后添加下一步')
-  const next = workerStep(member, previous)
-  const after = outgoing[0].to_node_id
-  return {
-    ...graph,
-    nodes: [...graph.nodes.map((node) => node.id === after && node.type === 'deliver' ? { ...node, config: { ...node.config, result: { source: 'node_output', node_id: next.id, path: '' } } } : node), next],
-    edges: [...graph.edges.filter((item) => item !== outgoing[0]), edge(id, next.id), edge(next.id, after)],
-  }
-}
-
-export function removeStep(graph: Graph, id: string): Graph {
-  const node = graph.nodes.find((item) => item.id === id)
-  const incoming = graph.edges.filter((item) => item.to_node_id === id)
-  const outgoing = graph.edges.filter((item) => item.from_node_id === id)
-  if (!node || !['worker', 'lead'].includes(node.type) || id === graph.entry_node_id || incoming.length !== 1 || outgoing.length !== 1) throw new Error('第一个步骤和连接不完整的步骤不能删除')
-  const dependent = graph.nodes.filter((item) => item.id !== id && item.id !== outgoing[0].to_node_id && Object.values(item.inputs ?? {}).some((binding) => binding.value?.node_id === id))
-  if (dependent.length) throw new Error(`请先调整“${dependent.map((item) => item.label || '执行步骤').join('、')}”的输入来源`)
-  const previous = incoming[0].from_node_id
-  const nodes = graph.nodes.filter((item) => item.id !== id).map((item) => {
-    if (item.type === 'deliver' && (item.config?.result as { node_id?: string } | undefined)?.node_id === id) return { ...item, config: { ...item.config, result: { source: 'node_output', node_id: previous, path: '' } } }
-    if (item.id === outgoing[0].to_node_id && item.inputs?.previous?.value.node_id === id) return { ...item, inputs: { ...item.inputs, previous: { ...item.inputs.previous, value: { ...item.inputs.previous.value, node_id: previous } } } }
-    return item
-  })
-  return { ...graph, nodes, edges: [...graph.edges.filter((item) => item.from_node_id !== id && item.to_node_id !== id), edge(previous, outgoing[0].to_node_id)] }
-}
-
-export function updateStep(graph: Graph, id: string, patch: { label?: string; agentId?: string; requirement?: string }): Graph {
-  return {
-    ...graph,
-    nodes: graph.nodes.map((node) => node.id !== id ? node : {
-      ...node,
-      ...(patch.label !== undefined ? { label: patch.label } : {}),
-      config: {
-        ...node.config,
-        ...(patch.agentId !== undefined ? { agent_id: patch.agentId } : {}),
-        ...(patch.requirement !== undefined ? { result_requirement: patch.requirement } : {}),
-      },
-    }),
-  }
-}
-
 // A two-step verify loop: the second step judges the first and, while it
 // reports passed=false, the work goes back to the first step, at most `rounds`
 // times. Built from the workflow machine's own bounded loop node.
@@ -155,7 +112,7 @@ export function withVerifyLoop(graph: Graph, rounds: number): Graph {
   if (!serial || steps.length !== 2 || steps.some((step) => step.type !== 'worker')) throw new Error('只有两步流程可以设置验证退回')
   const [code, verify] = steps
   const loop: Step = {
-    id: `loop-${crypto.randomUUID()}`, type: 'loop', label: '验证未通过时退回',
+    id: `loop-${createUUID()}`, type: 'loop', label: '验证未通过时退回',
     config: {
       max_iterations: rounds, latch_node_id: verify.id,
       continue_predicate: { left: { source: 'node_output', node_id: verify.id, path: '/passed', iteration: 'current_iteration' }, operator: 'eq', right: { source: 'literal', value: false } },
