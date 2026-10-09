@@ -67,6 +67,7 @@ import { sharedForgeCorePlugin, sharedForgeCoreBundle } from ${JSON.stringify(pa
 const own={allowRead:true,readScope:'own'},org={allowRead:true,readScope:'org'};
 const readers=[
   {name:'test_crm_own',objects:{forge_customer:own,forge_contact:own}},
+  {name:'test_crm_create',objects:{forge_customer:{...own,allowCreate:true},forge_contact:{...own,allowCreate:true},forge_customer_category:own}},
   {name:'test_crm_org',objects:{forge_customer:org,forge_contact:org}},
   {name:'test_crm_contact_only',objects:{forge_contact:own}},
   {name:'test_crm_parent_rls',objects:{forge_customer:org,forge_contact:own},rowLevelSecurity:[{name:'visible_customer',object:'forge_customer',operation:'select',using:"name != 'Blocked parent'"}]},
@@ -144,6 +145,33 @@ export default stack;
     const contact = await insert('forge_contact', { name: 'Contact', customer_id: customer, responsible_id: contactOwner, owner_id: contactOwner, organization_id: organization });
     return { customer, contact };
   }
+
+  await t.test('ordinary referenced customer/contact creation supplies responsibility without authoring it', async () => {
+    const user = await caller('creator', 'test_crm_create');
+    const category = await insert('forge_customer_category', { name: 'Creation category', owner_id: user.id, organization_id: organizationId });
+    // This is the customer page's native atomic batch shape: the child has
+    // contact-information inputs and is_primary, without owner/responsible.
+    const created = await user.request('/batch', 'POST', { operations: [
+      { object: 'forge_customer', action: 'create', data: { name: 'Created customer', category_id: category } },
+      { object: 'forge_contact', action: 'create', data: { name: 'Created contact', is_primary: true, job_title: 'Buyer', customer_id: { $ref: 0 } } },
+    ] });
+    assert.equal(created.status, 200, safe(created.value?.error || 'native atomic create succeeds'));
+    const [customer, contact] = created.value.results;
+    assert.ok(customer?.id && contact?.id);
+    const read = await user.request('/data/forge_contact/' + contact.id);
+    assert.equal(read.status, 200);
+    const row = read.value?.record ?? read.value?.data?.record;
+    assert.equal(row?.owner_id, user.id);
+    assert.equal(row?.customer_id, customer.id);
+    const qualification = await invoke(user, 'contact', contact.id);
+    assert.equal(qualification.status, 200);
+    assert.deepEqual({ responsibilityResolved: row?.responsible_id === user.id, canMaintain: resultOf(qualification)?.can_maintain },
+      { responsibilityResolved: true, canMaintain: true });
+    const legacy = await insert('forge_contact', { name: 'Legacy unknown responsibility', customer_id: customer.id, owner_id: user.id, organization_id: organizationId });
+    assert.deepEqual(resultOf(await invoke(user, 'contact', legacy)), { can_maintain: false });
+    assert.equal((await pg.query('SELECT responsible_id FROM forge_contact WHERE id=$1', [legacy])).rows[0].responsible_id, null,
+      'the new-record default must not backfill unknown existing responsibility');
+  });
 
   await t.test('named eligibility adds no object/FLS rights and owned readable records return only the boolean', async () => {
     const operator = await caller('owner', 'test_crm_own');
