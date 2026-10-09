@@ -16,6 +16,7 @@ import { ServiceFileReferenceTransactionBridgePlugin } from './src/plugins/servi
 import { MCPServerPlugin } from '@objectstack/mcp';
 import { TaskDelegationPlugin } from './src/plugins/task-delegation.plugin.js';
 import { SalesOrderBusinessPlugin } from './src/plugins/sales-order-business.plugin.js';
+import { SalesCrmMaintenanceReadPlugin } from './src/plugins/sales-crm-maintenance-read.plugin.js';
 import { EmployeeBusinessActionPlugin } from './src/plugins/employee-business-action.plugin.js';
 import { WorkbenchInboxPlugin } from './src/plugins/workbench-inbox.plugin.js';
 import { RecordChangeTriggerPlugin } from '@objectstack/trigger-record-change';
@@ -50,6 +51,7 @@ export default defineStack({
       verifierServiceName: 'forge.contract.revision.material',
     }),
     new SalesOrderBusinessPlugin(),
+    new SalesCrmMaintenanceReadPlugin(),
     new RecordChangeTriggerPlugin(),
     new MCPServerPlugin(),
     new WorkbenchInboxPlugin(),
