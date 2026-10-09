@@ -8,7 +8,7 @@ export const Customer = master('forge_customer', '客户管理', 'building-2', {
   registered_capital: text('注册资金'), established_on: Field.date({ label: '成立日期' }),
   enterprise_scale: text('企业规模'), website: Field.url({ label: '公司网站' }), business_scope: Field.textarea({ label: '经营范围' }),
   category_id: reference('forge_customer_category', '客户分类', true), level_id: reference('forge_customer_level', '客户级别'),
-  industry: text('行业'), responsible_id: owner(), description: Field.textarea({ label: '客户描述' }),
+  industry: text('行业'), responsible_id: { ...owner(), required: true, defaultValue: 'current_user' }, description: Field.textarea({ label: '客户描述' }),
   invoice_type: text('发票类型'), tax_number: text('纳税人识别号'), bank_name: text('开户银行'), bank_account: text('银行账号'),
   invoice_address: text('开票地址'), invoice_phone: text('开票电话'),
   payment_term: text('默认付款条件'), revenue_recognition: text('收入确认方式'),
