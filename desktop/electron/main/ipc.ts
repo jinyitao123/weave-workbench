@@ -273,6 +273,9 @@ export function registerIpc(services: Services, expectedRendererUrl: string): Ip
     if (!services.restartEnterpriseConnection) throw new Error('应用重启不可用。')
     return services.restartEnterpriseConnection()
   })
+  handle('enterprise:feishu-status', () => services.enterprise.getFeishuStatus())
+  handle('enterprise:feishu-link-code', () => services.enterprise.createFeishuLinkCode())
+  handle('enterprise:feishu-unlink', () => services.enterprise.unlinkFeishu())
   handle('enterprise:get-session', () => services.enterprise.getSession())
   handle('enterprise:sign-in', (_event, email, password) => { services.enterpriseBridge?.invalidateAccount(); return services.enterprise.signIn(
     requireString(email, 'email', { min: 3, max: 320 }),

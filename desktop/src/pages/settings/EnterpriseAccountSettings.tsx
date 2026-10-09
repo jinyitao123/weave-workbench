@@ -1,6 +1,7 @@
 import { ArrowRight, LoaderCircle } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import type { EnterpriseSession } from '@/types/api'
+import { FeishuAccountSettings } from './FeishuAccountSettings'
 
 interface EnterpriseAccountSettingsProps {
   session?: EnterpriseSession
@@ -49,5 +50,6 @@ export function EnterpriseAccountSettings({ session, onSignIn, onSignOut }: Ente
       {error || session?.message ? <p className="settings-error" role="alert">{error || session?.message}</p> : null}
       <p className="enterprise-account-origin">{session?.environment.origin || '正在读取 Forge 环境'}{session && !session.environment.secure ? ' · HTTP连接' : ''}</p>
     </section>
+    {session?.status === 'signed-in' && session.user && <FeishuAccountSettings accountId={session.user.id} />}
   </div>
 }

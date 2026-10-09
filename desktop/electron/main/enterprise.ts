@@ -1515,6 +1515,22 @@ export class EnterpriseService {
     return teamMemberConfigDraft(result.body)
   }
 
+  async getFeishuStatus(): Promise<{ available: boolean; bound: boolean; expiresAt?: string }> {
+    const result = record(await this.weaveJSON('/v1/integrations/feishu/binding'))
+    if (typeof result?.available !== 'boolean' || typeof result?.bound !== 'boolean') throw new Error('飞书连接状态暂不可用')
+    return { available: result.available, bound: result.bound, expiresAt: textValue(result.expires_at) }
+  }
+
+  async createFeishuLinkCode(): Promise<{ code: string; expiresAt: string }> {
+    const result = record((await this.weaveRequest('/v1/integrations/feishu/link-code', 'POST', {})).body)
+    const code = textValue(result?.code)
+    const seconds = result?.code_expires_in_seconds
+    if (!code || !/^[a-f0-9]{48}$/.test(code) || typeof seconds !== 'number' || seconds <= 0 || seconds > 600) throw new Error('飞书绑定码暂不可用')
+    return { code, expiresAt: new Date(Date.now() + seconds * 1000).toISOString() }
+  }
+
+  async unlinkFeishu(): Promise<void> { await this.weaveRequest('/v1/integrations/feishu/binding', 'DELETE') }
+
   private async weaveRequest(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown, assertCurrent?: () => Promise<void>, extraHeaders?: HeadersInit, expectedGeneration = this.authGeneration): Promise<{ status: number; body: unknown }> {
     const headers = new Headers({ Accept: 'application/json', 'Content-Type': 'application/json' })
     if (extraHeaders) for (const [name, value] of new Headers(extraHeaders)) headers.set(name, value)
