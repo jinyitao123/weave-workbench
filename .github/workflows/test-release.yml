@@ -1,0 +1,62 @@
+name: Publish verified test release
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Exact reviewed product source commit
+        required: true
+        type: string
+      version:
+        description: Unsigned RC version
+        required: true
+        type: string
+      desktop_run:
+        description: Successful native three-platform QA run
+        required: true
+        type: string
+      server_run:
+        description: Verified full private server publication run
+        required: true
+        type: string
+      notes:
+        description: Reviewed release notes and known limits
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: test-release-${{ inputs.version }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      actions: read
+      packages: read
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PRODUCT_REVISION: ${{ inputs.revision }}
+      RELEASE_VERSION: ${{ inputs.version }}
+      DESKTOP_RUN: ${{ inputs.desktop_run }}
+      SERVER_RUN: ${{ inputs.server_run }}
+      RELEASE_NOTES: ${{ inputs.notes }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact sources, native archives and private images; publish prerelease
+        run: python3 tools/test-release/publish.py
+      - name: Retain public manifest and release readback
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: test-release-${{ inputs.version }}-readback
+          path: |
+            .build/test-release/assets/composition-manifest.json
+            .build/test-release/assets/SHA256SUMS.txt
+            .build/test-release/release-readback.json
+          if-no-files-found: ignore
