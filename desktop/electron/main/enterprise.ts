@@ -10,7 +10,7 @@ import { teamCatalog, teamChoices, type TeamSummary } from './enterprise/team-ca
 import type { ForgeBusinessReader, BusinessObjectDirectory, BusinessRecordRead, BusinessRecordSearchPage } from './enterprise/business-records'
 import { ForgeBusinessReadError } from './enterprise/business-read-error'
 import { EmployeeWorkCanceller } from './enterprise/task-cancellation'
-import type { EmployeeBusinessRequest, EmployeeBusinessSelection } from '../../src/types/employee-business'
+import type { EmployeeBusinessRequest, EmployeeBusinessSelection, EmployeeBusinessTarget } from '../../src/types/employee-business'
 import type { ApprovalUiAttempt } from './enterprise/approval-ui-actions'
 import { approvalUiChoices } from './enterprise/approval-context-binding'
 
@@ -763,6 +763,12 @@ export class EnterpriseService {
     const { response, snapshot } = await this.authenticatedFetch(new URL(path, this.forgeUrl), 'forge', { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }, expectedGeneration)
     await this.assertResponseAuthorized(response, snapshot, `当前账号没有读取${resourceLabel}的权限`)
     if (!response.ok) {
+      if (response.status === 409 && resourceLabel === '本人业务动作' && path.startsWith('/api/v1/workbench/business-actions/context?')
+        && new URLSearchParams(path.split('?')[1]).get('sourceKind') === 'creation') {
+        const body = await response.json().catch(() => undefined) as { error?: { code?: unknown } } | undefined
+        this.assertCurrentAuth(snapshot)
+        if (body?.error?.code === 'EMPLOYEE_ACTION_REFERENCE_SELECTION_REQUIRED') throw new Error('可选记录较多或名称不唯一，请先查找并读取准确的业务引用，再重新读取创建目录；不要猜测记录标识')
+      }
       await response.body?.cancel()
       throw new Error(`${resourceLabel}读取失败（${response.status}）`)
     }
@@ -778,7 +784,7 @@ export class EnterpriseService {
     return new EmployeeBusinessReadAPI((path, label) => this.forgeJSON(path, generation, label))
   }
 
-  async getEmployeeBusinessContext(selection: EmployeeBusinessSelection) {
+  async getEmployeeBusinessContext(selection: EmployeeBusinessTarget) {
     return (await this.employeeBusinessReadAPI()).context(selection)
   }
 
@@ -806,7 +812,7 @@ export class EnterpriseService {
     if (session.status !== 'signed-in') throw new Error('请先登录')
     return readEmployeeBusinessMaterial(selection, {
       origin: this.forgeUrl.origin, assertCurrent,
-      context: () => this.getEmployeeBusinessContext(selection),
+      context: async () => { const context = await this.getEmployeeBusinessContext(selection); if (!('record' in context)) throw new Error('原件读取须绑定真实业务记录'); return context },
       record: () => this.forgeMcpTool('get_record', { objectName: selection.record.objectName, recordId: selection.record.recordId }, generation),
       url: (id) => this.forgeJSON(`/api/v1/storage/files/${encodeURIComponent(id)}/url`, generation, '业务原件'),
       fetch: async (url) => {

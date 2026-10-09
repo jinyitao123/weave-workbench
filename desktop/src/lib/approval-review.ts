@@ -43,7 +43,8 @@ export async function openApprovalReviewInPi(
     files,
     originals ? `已核验审批原件（部分提取须保留未读内容限制）：\n${originals}` : '',
     '当前打开只授权只读核对。请整理复核意见和疑点；不要把本次打开当作办理授权。之后只有我在新消息明确要求办理当前事项时，才读取当前Forge动作目录并按该条目办理。原生动作回执只说明该项动作结果，不等于审批流程完成；结果未知时先读取当前事项和原生动作历史，不重试。',
-    APPROVAL_REVIEW_SESSION_MARKER,
+    `初次打开的只读范围标记：${APPROVAL_REVIEW_SESSION_MARKER}`,
+    '上述只读限制针对本次打开，不是禁止之后办理。之后我在新消息对当前准确事项明确说“同意这份报价”“批准”“驳回”或“退回”等，就是要求相应原生办理，无需再要求我说固定词“办理”或“提交”。请先读取本轮当前事项目录，再按真实可用动作办理；“我倾向同意”“如果条件满足就同意”“你觉得该同意吗”、建议和转述都不构成办理授权。',
   ].filter(Boolean).join('\n\n')
   if (!options.newSession(undefined, { preserveComposerDraft: true })) throw new Error('无法创建独立审批辅助会话，请保留当前草稿后重试')
   const activeWorkspace = options.workspace.workspaceRef.current

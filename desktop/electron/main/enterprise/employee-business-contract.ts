@@ -1,4 +1,4 @@
-import type { EmployeeBusinessContext, EmployeeBusinessOperation, EmployeeBusinessParameter, EmployeeBusinessRecord, EmployeeBusinessRequest, EmployeeBusinessValue } from '../../../src/types/employee-business'
+import type { EmployeeBusinessAction, EmployeeBusinessLineItem, EmployeeBusinessContext, EmployeeBusinessOperation, EmployeeBusinessParameter, EmployeeBusinessRecord, EmployeeBusinessRequest, EmployeeBusinessValue } from '../../../src/types/employee-business'
 import { rejectUnknownKeys, requireRecord, requireString } from '../validation'
 import { digest } from './handoff-store'
 
@@ -14,10 +14,10 @@ function recordReference(value: unknown): EmployeeBusinessRecord {
   check(name.test(text(r.objectName)) && !String(r.objectName).startsWith('sys_'))
   return { objectName: String(r.objectName), recordId: text(r.recordId), label: text(r.label, 300) }
 }
-function parameter(value: unknown): EmployeeBusinessParameter {
+function parameter(value: unknown, allowLeadSource = false): EmployeeBusinessParameter {
   const p = requireRecord(value, 'parameter')
   rejectUnknownKeys(p, ['name', 'label', 'type', 'required', 'description', 'enum', 'enumLabels', 'minimum', 'maximum', 'maxLength'], 'parameter')
-  check(name.test(text(p.name)) && !reserved.test(String(p.name)) && ['string', 'number', 'boolean', 'date', 'file'].includes(String(p.type)) && typeof p.required === 'boolean')
+  check(name.test(text(p.name)) && (!reserved.test(String(p.name)) || allowLeadSource && p.name === 'source') && ['string', 'number', 'boolean', 'date', 'file'].includes(String(p.type)) && typeof p.required === 'boolean')
   text(p.label, 160)
   if (p.description !== undefined) check(typeof p.description === 'string' && p.description.length <= 1000)
   if (p.enum !== undefined) check(Array.isArray(p.enum) && p.enum.length > 0 && p.enum.length <= 100 && p.enum.every(scalar) && new Set(p.enum).size === p.enum.length)
@@ -36,27 +36,47 @@ function parameter(value: unknown): EmployeeBusinessParameter {
 }
 export function parseEmployeeBusinessContext(value: unknown): EmployeeBusinessContext {
   const c = requireRecord(value, 'context')
-  rejectUnknownKeys(c, ['version', 'contextId', 'contextVersion', 'recordVersion', 'expiresAt', 'readOnly', 'record', 'source', 'actions'], 'context')
+  rejectUnknownKeys(c, ['version', 'contextId', 'contextVersion', 'recordVersion', 'expiresAt', 'readOnly', 'record', 'source', 'actions', 'objectName', 'objectLabel'], 'context')
   check(c.version === '1' && c.readOnly === true && uuid.test(text(c.contextId)) && sha.test(text(c.contextVersion)))
-  text(c.recordVersion); check(typeof c.expiresAt === 'string' && Number.isFinite(Date.parse(c.expiresAt)))
+  check(typeof c.expiresAt === 'string' && Number.isFinite(Date.parse(c.expiresAt)))
   const source = requireRecord(c.source, 'source'); rejectUnknownKeys(source, ['kind', 'reference'], 'source')
-  check(['record', 'business_notification', 'approval'].includes(String(source.kind)))
-  if (source.kind === 'record') check(source.reference === undefined); else text(source.reference)
-  const record = recordReference(c.record)
+  const creation = source.kind === 'creation'
+  let target: Record<string, unknown>
+  if (creation) {
+    check(['forge_sales_lead', 'forge_quotation'].includes(String(c.objectName)) && c.record === undefined && c.recordVersion === undefined && source.reference === undefined)
+    target = { objectName: c.objectName, objectLabel: text(c.objectLabel, 160) }
+  } else {
+    check(c.objectName === undefined && c.objectLabel === undefined)
+    check(['record', 'business_notification', 'approval'].includes(String(source.kind)))
+    if (source.kind === 'record') check(source.reference === undefined); else text(source.reference)
+    text(c.recordVersion); target = { record: recordReference(c.record), recordVersion: c.recordVersion }
+  }
   check(Array.isArray(c.actions) && c.actions.length <= 64)
   const refs = new Set<number>()
   const actions = c.actions.map((value) => {
     const a = requireRecord(value, 'action')
-    rejectUnknownKeys(a, ['action_ref', 'capabilityId', 'declarationVersion', 'label', 'description', 'effect', 'executionMode', 'parameters'], 'action')
+    rejectUnknownKeys(a, ['action_ref', 'capabilityId', 'declarationVersion', 'label', 'description', 'effect', 'executionMode', 'parameters', 'requiresRecord', 'lineItems'], 'action')
     check(Number.isInteger(a.action_ref) && Number(a.action_ref) >= 1 && Number(a.action_ref) <= 64 && !refs.has(Number(a.action_ref)))
     refs.add(Number(a.action_ref)); text(a.capabilityId, 160); text(a.label, 160); text(a.description, 1000)
     check(sha.test(text(a.declarationVersion)) && a.executionMode === 'employee_only' && ['read', 'write'].includes(String(a.effect)))
+    check(creation ? a.requiresRecord === false && a.effect === 'write' : a.requiresRecord === undefined)
+    if (creation) check(a.capabilityId === (c.objectName === 'forge_sales_lead' ? 'forge:action:forge_sales_lead.sales_lead_create' : 'forge:action:forge_quotation.sales_quotation_draft_create'))
     check(Array.isArray(a.parameters) && a.parameters.length <= 32)
-    const parameters = a.parameters.map(parameter)
+    const parameters = a.parameters.map(value => parameter(value, creation && c.objectName === 'forge_sales_lead'))
     check(new Set(parameters.map((p) => p.name)).size === parameters.length && parameters.filter((p) => p.type === 'file').length <= 1)
+    if (creation) check(parameters.every(p => p.type !== 'file' && !/^(?:lines_json|code|owner_id|responsible_id|status)$/.test(p.name)))
+    if (creation && c.objectName === 'forge_quotation') check(a.lineItems !== undefined)
+    if (a.lineItems !== undefined) {
+      check(creation && c.objectName === 'forge_quotation')
+      const declaration = requireRecord(a.lineItems, 'lineItems'); rejectUnknownKeys(declaration, ['minItems', 'maxItems', 'fields'], 'lineItems')
+      check(declaration.minItems === 1 && declaration.maxItems === 100 && Array.isArray(declaration.fields) && declaration.fields.length <= 8)
+      const fields = declaration.fields.map(value => parameter(value))
+      check(fields.every(p => lineItemFields.has(p.name) && p.type !== 'file') && new Set(fields.map(p => p.name)).size === fields.length)
+      a.lineItems = { minItems: 1, maxItems: 100, fields }
+    }
     return { ...a, parameters }
   })
-  return { ...c, record, source, actions } as unknown as EmployeeBusinessContext
+  return { ...c, ...target, source, actions } as unknown as EmployeeBusinessContext
 }
 export function parseEmployeeBusinessOperation(value: unknown): EmployeeBusinessOperation {
   const o = requireRecord(value, 'operation')
@@ -80,13 +100,13 @@ export function canonicalBusinessJSON(value: unknown): string {
   throw new Error('业务请求包含不可序列化的值')
 }
 export function employeeBusinessRequestDigest(request: EmployeeBusinessRequest): string { return digest(canonicalBusinessJSON({ ...request, file: request.file ?? null })) }
-export function validateEmployeeBusinessValues(parameters: EmployeeBusinessParameter[], raw: unknown): Record<string, EmployeeBusinessValue> {
+export function validateEmployeeBusinessValues(parameters: EmployeeBusinessParameter[], raw: unknown, allowLeadSource = false): Record<string, EmployeeBusinessValue> {
   const values = requireRecord(raw, 'values'); const declared = parameters.filter((p) => p.type !== 'file')
   rejectUnknownKeys(values, declared.map((p) => p.name), 'values')
   for (const p of declared) {
     const value = values[p.name]
     if (value === undefined) { check(!p.required); continue }
-    check(scalar(value) && !reserved.test(p.name))
+    check(scalar(value) && (!reserved.test(p.name) || allowLeadSource && p.name === 'source'))
     check(p.type === 'number' ? typeof value === 'number' : p.type === 'boolean' ? typeof value === 'boolean' : typeof value === 'string')
     if (typeof value === 'string') check(!value.includes('\0') && value.length <= (p.maxLength ?? 4000) && (!p.required || value.trim().length > 0))
     if (p.type === 'date') check(typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value)
@@ -94,4 +114,20 @@ export function validateEmployeeBusinessValues(parameters: EmployeeBusinessParam
     if (typeof value === 'number') check((p.minimum === undefined || value >= p.minimum) && (p.maximum === undefined || value <= p.maximum))
   }
   return values as Record<string, EmployeeBusinessValue>
+}
+
+const lineItemFields = new Set(['line_type', 'name', 'sku_id', 'quantity', 'taxed_unit_price', 'tax_rate', 'discount_rate', 'remarks'])
+export function validateEmployeeBusinessLineItems(action: EmployeeBusinessAction, raw: unknown): EmployeeBusinessLineItem[] | undefined {
+  if (!action.lineItems) { check(raw === undefined); return undefined }
+  check(Array.isArray(raw) && raw.length >= action.lineItems.minItems && raw.length <= action.lineItems.maxItems)
+  return raw.map(rawRow => {
+    const row = validateEmployeeBusinessValues(action.lineItems!.fields, rawRow)
+    check(row.line_type === 'material' || row.line_type === 'service')
+    for (const [name, minimum, maximum] of [['quantity', 0.0001, 1_000_000_000], ['taxed_unit_price', 0, 1_000_000_000_000], ['tax_rate', 0, 100], ['discount_rate', 0, 100]] as const) {
+      check(typeof row[name] === 'number' && row[name] >= minimum && row[name] <= maximum)
+    }
+    if (row.line_type === 'service') check(typeof row.name === 'string' && Boolean(row.name.trim()) && row.name.length <= 255 && !('sku_id' in row))
+    else check(typeof row.sku_id === 'string' && Boolean(row.sku_id.trim()) && row.sku_id.length <= 128 && action.lineItems!.fields.find(p => p.name === 'sku_id')?.enum?.includes(row.sku_id))
+    return row
+  })
 }

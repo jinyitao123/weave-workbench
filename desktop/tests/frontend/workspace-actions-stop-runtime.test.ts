@@ -311,7 +311,7 @@ describe('idle prompt streaming behavior', () => {
       type: 'prompt',
       message: `idle ${intent}`,
       streamingBehavior,
-    }, undefined)
+    }, { employeeInput: { text: `idle ${intent}`, materials: [] } })
     expect(messages.filter((message) => message.role === 'user')).toHaveLength(1)
   })
 

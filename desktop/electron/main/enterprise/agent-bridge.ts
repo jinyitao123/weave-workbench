@@ -1,3 +1,5 @@
+import type { EmployeeBusinessInputs } from './employee-business-inputs'
+import type { VerifiedCreationReference } from './employee-business-creation'
 import { projectWorkActionFact } from '../../../src/lib/work-action-outcomes'
 import { WORKBENCH_RUN_CONTINUATION_TYPE } from '../../../src/lib/team-work-continuation'
 import { randomUUID } from 'node:crypto'
@@ -104,6 +106,8 @@ interface BoundWorkContinuation extends PendingWeaveWorkContinuation { sessionPa
 interface BoundBusinessNotificationContext extends PendingBusinessWorkContinuation { sessionPath: string }
 interface ScopedBusinessObject { objectName: string; label: string; accountKey: string; turnKey: string; directoryComplete: boolean }
 interface ScopedBusinessRecord extends BusinessRecordCandidate {
+  uniqueQuery?: string
+  fromEmployeeOperation?: true
   accountKey: string
   turnKey: string
   snapshot?: BusinessRecordSnapshot
@@ -393,6 +397,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   private readonly handoffs = new Map<string, Map<string, EnterpriseWorkChoice>>()
   private readonly businessActions = new Map<string, Map<string, Map<string, EnterpriseBusinessCapability>>>()
   private readonly businessObjects = new Map<string, Map<string, ScopedBusinessObject>>()
+  private readonly creationReferences = new Map<string, Map<string, VerifiedCreationReference>>()
   private readonly businessRecords = new Map<string, Map<string, ScopedBusinessRecord>>()
   private readonly runtimes = new Map<string, string>()
   private readonly pendingRuntimeTokens = new Map<string, string>()
@@ -415,6 +420,22 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
   private readonly workContinuations = new Map<string, BoundWorkContinuation>()
   private readonly store: HandoffStore
   private employeeBusiness?: Promise<EmployeeBusinessActions>
+  private businessInputs?: Promise<EmployeeBusinessInputs>
+  private inputSources() {
+    this.businessInputs ??= import('./employee-business-inputs').then(({ EmployeeBusinessInputs }) => new EmployeeBusinessInputs(this.store))
+    return this.businessInputs
+  }
+  private async rememberBusinessInput(claim: CapabilityClaim, turn: EmployeeTurn, transcript: TranscriptMessage[]) {
+    if (!claim.sessionPath || !turn.capturedEmployeeInput || turn.openingEmployeeBusiness || turn.openingWorkContinuation
+      || turn.openingReturnedApproval || turn.businessNotification || turn.employeePrompt.includes(APPROVAL_REVIEW_SESSION_MARKER)) return
+    if (this.turns.get(claim.token) !== turn || this.claimForToken(claim.token) !== claim || await this.options.service.accountKey() !== turn.accountKey) return
+    let index = transcript.length - 1
+    while (index >= 0 && transcript[index].role !== 'user') index--
+    const message = transcript[index]
+    if (!message || turn.baseline.has(message.id) || messageText(message) !== turn.prompt) return
+    await (await this.inputSources()).remember(turn.accountKey, claim.sessionPath, turn.employeePrompt, index,
+      { id: message.id, role: message.role, text: messageText(message) })
+  }
 
   constructor(private readonly options: AgentEnterpriseBridgeOptions) { super(); this.store = new HandoffStore(options.storage) }
   private employeeBusinessActions(): Promise<EmployeeBusinessActions> {
@@ -430,7 +451,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     return { GOOEYPI_ENTERPRISE_URL: url, GOOEYPI_ENTERPRISE_TOKEN: token, GOOEYPI_ENTERPRISE_EXTENSION_PATH: this.options.extensionPath }
   }
   protected onClaimRevoked(claim: CapabilityClaim): void {
-    this.teams.delete(claim.token); this.handoffs.delete(claim.token); this.businessActions.delete(claim.token); this.businessObjects.delete(claim.token); this.businessRecords.delete(claim.token); this.turns.delete(claim.token); this.inputs.delete(claim.token); this.pendingApprovalContextBinds.delete(claim.token); this.approvalContexts.delete(claim.token); this.currentItemActionRefs.delete(claim.token); this.currentItemActionAttempts.delete(claim.token); this.workContinuations.delete(claim.token); this.workLineages.delete(claim.token)
+    this.teams.delete(claim.token); this.handoffs.delete(claim.token); this.businessActions.delete(claim.token); this.businessObjects.delete(claim.token); this.businessRecords.delete(claim.token); this.creationReferences.delete(claim.token); this.turns.delete(claim.token); this.inputs.delete(claim.token); this.pendingApprovalContextBinds.delete(claim.token); this.approvalContexts.delete(claim.token); this.currentItemActionRefs.delete(claim.token); this.currentItemActionAttempts.delete(claim.token); this.workContinuations.delete(claim.token); this.workLineages.delete(claim.token)
     this.pendingFirstPrompts.delete(claim.token)
     this.newSessionTokens.delete(claim.token)
     this.notifySessionBinding(claim.token)
@@ -655,12 +676,12 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     this.pendingFirstPrompts.delete(token)
     this.pendingApprovalContextBinds.delete(token)
     this.inputs.set(token, Symbol())
-    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessObjects.delete(token); this.businessRecords.delete(token); this.workContinuations.delete(token)
+    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessObjects.delete(token); this.businessRecords.delete(token); this.creationReferences.delete(token); this.workContinuations.delete(token)
     this.notifySessionBinding(token)
   }
   invalidateAccount(): void {
     this.revokeAllClaims()
-    this.turns.clear(); this.inputs.clear(); this.pendingApprovalContextBinds.clear(); this.teams.clear(); this.handoffs.clear(); this.businessActions.clear(); this.businessObjects.clear(); this.businessRecords.clear(); this.currentItemActionRefs.clear(); this.currentItemActionAttempts.clear()
+    this.turns.clear(); this.inputs.clear(); this.pendingApprovalContextBinds.clear(); this.teams.clear(); this.handoffs.clear(); this.businessActions.clear(); this.businessObjects.clear(); this.businessRecords.clear(); this.creationReferences.clear(); this.currentItemActionRefs.clear(); this.currentItemActionAttempts.clear()
     this.pendingApprovalContexts.clear(); this.approvalContexts.clear()
     this.pendingEmployeeBusiness.clear()
     this.pendingWorkContinuations.clear(); this.workContinuations.clear(); this.workLineages.clear()
@@ -680,11 +701,15 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       return
     }
     if (this.pendingApprovalContextBinds.has(token)) throw new Error('审批事项正在新会话中打开，请等待后重试')
+    const priorTurn = this.turns.get(token), priorClaim = this.claimForToken(token)
+    if (priorTurn && priorClaim?.sessionPath && priorClaim.harness && await this.options.service.accountKey() === priorTurn.accountKey) {
+      await this.rememberBusinessInput(priorClaim, priorTurn, await this.options.sessions[priorClaim.harness].read(priorClaim.sessionPath))
+    }
     const previousWorkLineage = this.workLineages.get(token)
     const previousApprovalContext = this.approvalContexts.get(token)
     const marker = Symbol()
     this.inputs.set(token, marker)
-    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessObjects.delete(token); this.businessRecords.delete(token); this.currentItemActionRefs.delete(token); this.currentItemActionAttempts.delete(token); this.workContinuations.delete(token)
+    this.turns.delete(token); this.teams.delete(token); this.handoffs.delete(token); this.businessActions.delete(token); this.businessObjects.delete(token); this.businessRecords.delete(token); this.creationReferences.delete(token); this.currentItemActionRefs.delete(token); this.currentItemActionAttempts.delete(token); this.workContinuations.delete(token)
     this.notifySessionBinding(token)
     const claim = this.claimForToken(token)
     if (!claim?.harness || typeof value.message !== 'string') {
@@ -1023,9 +1048,30 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
         const current = {
           accountKey: turn.accountKey, sessionPath: claim.sessionPath!, messageId: turn.messageId!, employeePrompt: turn.employeePrompt,
           cwd: claim.cwd, materials: turn.authorizedMaterials, readOnly: Boolean(turn.businessNotification || turn.openingWorkContinuation),
+          inputSources: async () => {
+            await this.evidence(claim, turn)
+            const transcript = await this.options.sessions[claim.harness!].read(claim.sessionPath!)
+            return (await this.inputSources()).read(turn.accountKey, claim.sessionPath!, transcript.map(message => ({ id: message.id, role: message.role, text: messageText(message) })))
+          },
+          presentRecord: (record: EmployeeBusinessRecord) => {
+            const key = randomUUID().replaceAll('-', '')
+            const records = this.businessRecords.get(claim.token) ?? new Map<string, ScopedBusinessRecord>()
+            records.set(key, { objectName: record.objectName, objectLabel: record.objectName, recordId: record.recordId, name: record.label, accountKey: turn.accountKey, turnKey: turn.key, fromEmployeeOperation: true })
+            this.businessRecords.set(claim.token, records)
+            return { name: record.label, record_key: key }
+          },
           assertCurrent: async () => { await this.evidence(claim, turn) },
         }
-        if (method === 'list_current_item_actions') { rejectUnknownKeys(params, ['turn_key'], 'current item actions'); return (await this.employeeBusinessActions()).list(current) }
+        if (method === 'list_current_item_actions') {
+          rejectUnknownKeys(params, ['turn_key', 'object_ref', 'reference_keys'], 'current item actions')
+          const actions = await this.employeeBusinessActions()
+          if (params.object_ref !== undefined || params.reference_keys !== undefined) {
+            const { creationSelection } = await import('./employee-business-creation')
+            await actions.selectCreation(current, creationSelection(params.object_ref, params.reference_keys,
+              await actions.selection(turn.accountKey, claim.sessionPath!), this.businessObjects.get(claim.token), this.creationReferences.get(claim.token), turn.accountKey, turn.key))
+          }
+          return actions.list(current)
+        }
         return (await this.employeeBusinessActions()).run(current, params)
       }
       const { dispatchCurrentItemAction } = await import('./current-item-actions')
@@ -1111,6 +1157,8 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
       const bound = 'candidate' in page ? page : undefined
       mapped.set(recordKey, {
         ...item, accountKey: turn.accountKey, turnKey: turn.key,
+        ...(!('candidate' in page) && object.directoryComplete && page.complete && !page.hasMore && page.offset === 0 && records.length === 1 && summary.length >= 2
+          ? { uniqueQuery: summary } : {}),
         ...(bound ? { snapshot: bound.snapshot } : {}),
       })
       return {
@@ -1162,9 +1210,15 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     if (read.candidate.objectName !== selected.objectName || read.candidate.recordId !== selected.recordId) throw new Error('Forge 返回的业务记录与选择不一致')
     const updated = { ...selected, ...read.candidate, snapshot: read.snapshot }
     this.businessRecords.get(claim.token)?.set(recordKey, updated)
+    const references = this.creationReferences.get(claim.token) ?? new Map<string, VerifiedCreationReference>()
+    for (const [key, value] of references) if (value.turnKey !== turn.key || value.accountKey !== turn.accountKey) references.delete(key)
+    if (!references.has(recordKey) && references.size >= 128) throw new Error('本轮已读取的创建引用过多，请保留明确选择后在新消息继续')
+    references.set(recordKey, { name: updated.name, ...(updated.code ? { code: updated.code } : {}), ...(read.creationSku ?? {}),
+      ...(selected.uniqueQuery && (updated.name.includes(selected.uniqueQuery) || updated.code === selected.uniqueQuery || read.creationSku?.materialName === selected.uniqueQuery) ? { uniqueQuery: selected.uniqueQuery } : {}), objectName: updated.objectName, recordId: updated.recordId, accountKey: turn.accountKey, turnKey: turn.key })
+    this.creationReferences.set(claim.token, references)
     if (!turn.workContinuation) await (await this.employeeBusinessActions()).bind(turn.accountKey, claim.sessionPath!, {
       record: { objectName: updated.objectName, recordId: updated.recordId, label: updated.name }, source: { kind: 'record' },
-    })
+    }, selected.fromEmployeeOperation === true)
     return {
       status: 'read', record_key: recordKey, name: updated.name, object: updated.objectLabel,
       ...(updated.code ? { code: updated.code } : {}), ...(updated.status ? { business_status: updated.status } : {}),
@@ -1189,6 +1243,7 @@ export class AgentEnterpriseBridge extends CapabilityBridge {
     }
     if (!authorization || authorization.text !== turn.prompt || turn.baseline.has(authorization.message.id) || (turn.messageId && turn.messageId !== authorization.message.id)) throw new Error('当前员工输入尚未进入原会话，或员工要求已经变化')
     turn.messageId = authorization.message.id
+    await this.rememberBusinessInput(claim, turn, transcript)
     return messages.filter((entry) => entry.eventSeq <= authorization.eventSeq && entry.text).slice(-50).map(({ message, eventSeq, text }) => ({ messageId: message.id, eventSeq, sha256: digest(text) }))
   }
   private assertRecoveryIntentScope(intent: FrozenHandoffIntent, claim: CapabilityClaim, turn: EmployeeTurn): void {

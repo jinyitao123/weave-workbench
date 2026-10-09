@@ -82,7 +82,7 @@ def source_plan(repository, revision, version):
     source = console.get('source', {})
     match = re.fullmatch(r'https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)\.git', source.get('repository', ''))
     if (console.get('schemaVersion') != 1 or not match or not SHA.fullmatch(source.get('revision', ''))
-            or source.get('nodeVersion') != '24.19.0' or source.get('pnpmVersion') != '10.31.0'
+            or source.get('nodeVersion') not in ('24.19.0', '24.21.0') or source.get('pnpmVersion') != '10.31.0'
             or not re.fullmatch(r'[0-9a-f]{64}', console.get('artifact', {}).get('packagedTreeSha256', ''))):
         raise BuildError('Invalid Console source/toolchain lock')
     runtime = console.get('forge', {}).get('runtimeImageReference', '')
