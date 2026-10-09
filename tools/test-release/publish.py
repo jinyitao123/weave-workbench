@@ -205,11 +205,19 @@ def main():
     tag = 'v' + version
     exists = subprocess.run(['gh', 'release', 'view', tag, '--repo', repo], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     assert exists.returncode != 0, 'Existing release must never be overwritten'
+    ref = api.get(f'repos/{repo}/git/ref/tags/{tag}', missing=True)
+    if ref is None:
+        subprocess.run(['gh', 'api', f'repos/{repo}/git/refs', '--method', 'POST', '-f', 'ref=refs/tags/' + tag, '-f', 'sha=' + revision], check=True, stdout=subprocess.DEVNULL)
+    else:
+        assert ref['object']['type'] == 'commit' and ref['object']['sha'] == revision
     notes = out / 'release-notes.md'
     notes.write_text(os.environ['RELEASE_NOTES'])
     subprocess.run(['gh', 'release', 'create', tag, '--repo', repo, '--target', revision, '--prerelease', '--latest=false', '--draft', '--title', f'Weave Workbench {version} · 三端未签名测试版', '--notes-file', str(notes), *map(str, sorted(assets.iterdir()))], check=True)
+    release_id = json.loads(subprocess.check_output(['gh', 'release', 'view', tag, '--repo', repo, '--json', 'databaseId']))['databaseId']
+    assert isinstance(release_id, int) and release_id > 0
     def readback():
-        release = api.get(f'repos/{repo}/releases/tags/{tag}')
+        # The tag lookup excludes unpublished drafts; the release ID addresses both states.
+        release = api.get(f'repos/{repo}/releases/{release_id}')
         actual = {a['name']: a for a in release['assets']}
         assert set(actual) == {p.name for p in assets.iterdir()}
         for p in assets.iterdir():
