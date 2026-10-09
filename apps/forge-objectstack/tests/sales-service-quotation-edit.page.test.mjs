@@ -32,8 +32,8 @@ async function openQuote(harness) {
   const list = serviceNodes(tree, node => node.type === 'ListView')[0];
   assert.ok(list);
   assert.equal(list.props.userActions.refresh, false, 'the standalone quotation page does not add the default refresh icon');
-  assert.equal(list.props.emptyState.title, '暂无符合条件的服务报价');
-  assert.match(list.props.emptyState.message, /已完工服务工单/);
+  assert.equal(list.props.emptyState.title, '暂无符合条件的报价单');
+  assert.equal(list.props.emptyState.message, '');
   serviceButton(list, 'SQ-TEST').props.onClick();
   await harness.settle();
   return harness.flushEffects();
