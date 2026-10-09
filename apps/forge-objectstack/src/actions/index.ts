@@ -1,4 +1,6 @@
 export * from './sales.action.js';
+export { SalesCustomerCanMaintain } from './sales-customer-maintenance.action.js';
+export { SalesContactCanMaintain } from './sales-contact-lifecycle.action.js';
 export { ContractApprovalMcpApprove, ContractApprovalMcpSendBack, QuotationApprovalMcpApprove, QuotationApprovalMcpReject, OrderApprovalMcpApprove, OrderApprovalMcpReject, OrderApprovalMcpRecall } from './approval-workbench.action.js';
 export * from './procurement.action.js';
 export * from './production-procurement-handoff.action.js';
