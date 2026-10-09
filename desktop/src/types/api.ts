@@ -8,7 +8,7 @@ export const BROWSER_PARTITION = 'prime-work-browser'
 
 export type ThemeMode = 'system' | 'light' | 'dark'
 export type WorkspaceView = 'session' | 'activity' | 'projects' | 'scheduled' | 'plugins' | 'settings'
-export type InspectorTab = 'summary' | 'development' | 'team-division' | 'team-workflow' | 'changes' | 'browser' | 'files'
+export type InspectorTab = 'summary' | 'changes' | 'browser' | 'files'
 export type SessionStatus = 'idle' | 'running' | 'waiting' | 'complete' | 'failed' | 'unknown'
 
 export const HARNESS_IDS = ['prime', 'pi'] as const

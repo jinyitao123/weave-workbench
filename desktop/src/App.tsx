@@ -42,7 +42,7 @@ import { useStableCallback } from '@/hooks/useStableCallback'
 import { useToast } from '@/hooks/useToast'
 import { useWorkspaceActions } from '@/hooks/useWorkspaceActions'
 import { useWorkspaceRuntime } from '@/hooks/useWorkspaceRuntime'
-import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseApprovalContextView, type EnterpriseBusinessNotificationContextView, type EnterpriseDevelopmentOverview, type EnterpriseHumanTask, type EnterpriseSession, type EnterpriseWorkContinuationContextView, type EnterpriseWorkItem, type EnterpriseWorkOverview, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceMaterialReference, type WorkspaceView } from '@/types/api'
+import { HARNESS_IDS, type CheckoutAction, type CheckoutCatalog, type EnterpriseApprovalContextView, type EnterpriseBusinessNotificationContextView, type EnterpriseHumanTask, type EnterpriseSession, type EnterpriseWorkContinuationContextView, type EnterpriseWorkItem, type EnterpriseWorkOverview, type GitStatus, type HarnessId, type NativeHeartbeatRecord, type PrimeModelDescriptor, type PrimeProviderDescriptor, type ProjectRecord, type AutomationScheduleRecord, type QueuedPrompt, type ScheduleTiming, type SessionRecord, type TerminalSelectionContext, type TranscriptMessage, type VoiceTaskStarted, type WorkspaceMaterialReference, type WorkspaceView } from '@/types/api'
 
 const Transcript = lazy(() => import('@/components/Transcript').then((module) => ({ default: module.Transcript })))
 const Inspector = lazy(() => import('@/components/Inspector').then((module) => ({ default: module.Inspector })))
@@ -122,9 +122,6 @@ export default function App() {
   const [focusPetVoiceControl, setFocusPetVoiceControl] = useState(false)
   const [restorePetVoiceFocus, setRestorePetVoiceFocus] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [developmentOverview, setDevelopmentOverview] = useState<EnterpriseDevelopmentOverview>()
-  const [developmentLoading, setDevelopmentLoading] = useState(false)
-  const [developmentError, setDevelopmentError] = useState('')
   const [workOverview, setWorkOverview] = useState<EnterpriseWorkOverview>()
   const [workLoading, setWorkLoading] = useState(false)
   const [workError, setWorkError] = useState('')
@@ -180,12 +177,10 @@ export default function App() {
     if (!enterpriseBridge) return
     try { publishEnterpriseSession(await enterpriseBridge.signIn(email, password)) }
     catch (error) { publishEnterpriseSession(await enterpriseBridge.getSession().catch(() => ({ version: '1', status: 'unavailable', environment: { origin: '', secure: false }, storage: 'session-only', message: '无法读取登录状态' }))); throw error }
-    setDevelopmentOverview(undefined); setDevelopmentError('')
     setWorkOverview(undefined); setWorkError('')
   }, [enterpriseBridge, publishEnterpriseSession])
   const signOut = useCallback(async () => {
     if (!enterpriseBridge) return
-    setDevelopmentOverview(undefined)
     setWorkOverview(undefined)
     publishEnterpriseSession(await enterpriseBridge.signOut())
   }, [enterpriseBridge, publishEnterpriseSession])
@@ -364,7 +359,6 @@ export default function App() {
     setScheduleFocusId(null)
   }, [])
   const onAccountSwitch = useCallback(() => {
-    setDevelopmentOverview(undefined); setDevelopmentError(''); setDevelopmentLoading(false)
     // publishEnterpriseSession already reset the overview for this identity.
     // A later catalog bootstrap must not erase its fresh account-scoped read.
     setTeamActionReceipt(undefined)
@@ -982,24 +976,6 @@ export default function App() {
       .finally(() => { queuedFlushRef.current = false })
   }, [bridge, busy, externalSessionRunning, queuedMessages, sendPrompt, submitting])
 
-  const canDevelop = enterpriseSession?.permissions?.includes('teams:develop') === true
-  const refreshDevelopmentOverview = useCallback(() => {
-    if (!enterpriseBridge || developmentLoading || !canDevelop) return
-    const sessionRevision = enterpriseSessionRevisionRef.current
-    setDevelopmentLoading(true)
-    setDevelopmentError('')
-    void enterpriseBridge.getDevelopmentOverview()
-      .then((overview) => { if (enterpriseSessionRevisionRef.current === sessionRevision) setDevelopmentOverview(overview) })
-      .catch((error) => { if (enterpriseSessionRevisionRef.current === sessionRevision) setDevelopmentError(/fetch failed|failed to fetch/i.test(errorMessage(error)) ? '无法连接 Weave，请稍后刷新。' : errorMessage(error)) })
-      .finally(() => { if (enterpriseSessionRevisionRef.current === sessionRevision) setDevelopmentLoading(false) })
-  }, [canDevelop, developmentLoading, enterpriseBridge, reportError])
-  useEffect(() => {
-    if (view === 'session' && activeHarness === 'pi' && settingsState.inspectorOpen && ['team-division', 'team-workflow', 'development'].includes(settingsState.inspectorTab) && canDevelop && !developmentOverview && !developmentLoading && !developmentError) refreshDevelopmentOverview()
-  }, [activeHarness, canDevelop, developmentError, developmentLoading, developmentOverview, refreshDevelopmentOverview, settingsState.inspectorOpen, settingsState.inspectorTab, view])
-  useEffect(() => {
-    if (activeHarness !== 'pi' && ['team-division', 'team-workflow', 'development'].includes(settingsState.inspectorTab)) settingsState.selectInspectorTab('summary')
-    else if (activeHarness === 'pi' && settingsState.inspectorTab === 'development') settingsState.selectInspectorTab('team-division')
-  }, [activeHarness, settingsState.inspectorTab, settingsState.selectInspectorTab])
   useEffect(() => { refreshWorkOverview() }, [enterpriseSessionRevision, refreshWorkOverview])
   useEffect(() => { if (view === 'activity') refreshWorkOverview() }, [refreshWorkOverview, view])
   useEffect(() => {
@@ -1035,8 +1011,7 @@ export default function App() {
   if (enterpriseBridge && enterpriseSession?.status === 'signed-in' && !catalogReady) return <I18nProvider preference={settingsState.settings.locale}><LoadingPanel label="workspace" /></I18nProvider>
   if (enterpriseBridge && enterpriseSession?.status !== 'signed-in') return <I18nProvider preference={settingsState.settings.locale}><Suspense fallback={<LoadingPanel label="account" />}><AccountPage session={enterpriseSession} onSignIn={signIn} onImportConnection={() => enterpriseBridge.importConnection()} onRestartConnection={() => enterpriseBridge.restartConnection()} /></Suspense></I18nProvider>
 
-  const teamEditorVisible = view === 'session' && activeHarness === 'pi' && inspectorVisible && canDevelop && ['team-division', 'team-workflow', 'development'].includes(settingsState.inspectorTab)
-  return <I18nProvider preference={settingsState.settings.locale}><div className={`app-shell${teamEditorVisible ? ' app-shell--team-editor-active' : ''}`} aria-busy={!workspaceInitialized} data-platform={platform} data-ready={workspaceInitialized ? 'true' : 'false'}>
+  return <I18nProvider preference={settingsState.settings.locale}><div className="app-shell" aria-busy={!workspaceInitialized} data-platform={platform} data-ready={workspaceInitialized ? 'true' : 'false'}>
     {sidebarVisible && workspaceInitialized ? <Sidebar projects={projects} sessions={sessions} clearedAttention={clearedAttention} enterpriseMode={Boolean(enterpriseBridge)} pendingWorkCount={enterprisePendingWorkCount(workOverview, workLoading || Boolean(workError))} activeProjectId={activeProject?.id} activeSessionId={workspace.activeSessionId} activeView={view} activeHarness={activeHarness} harnesses={meta?.harnesses ?? null} updateState={appUpdates.state} onUpdateAction={appUpdates.act} onSelectHarness={selectHarness} projectSortMode={settingsState.settings.projectSortMode} {...sidebarActions} overlay={layout.compactLayout} platform={platform} /> : null}
     {sidebarVisible && workspaceInitialized ? <button type="button" className="panel-scrim panel-scrim--sidebar" aria-label="Close sidebar" onClick={toggleSidebar} /> : null}
     <div className="workbench" inert={layout.compactLayout && sidebarVisible ? true : undefined}>
@@ -1054,7 +1029,7 @@ export default function App() {
           {terminalSessions.map((terminal) => <Suspense key={terminal.id} fallback={terminal.id === activeTerminalSession?.id ? <TerminalLoadingPanel /> : null}><TerminalDrawer ref={(handle) => { if (handle) terminalDrawerRefs.current.set(terminal.id, handle); else terminalDrawerRefs.current.delete(terminal.id) }} visible={terminal.id === activeTerminalSession?.id} cwd={terminal.cwd} sessionPath={terminal.sessionPath} shell={settingsState.settings.terminalShell} initialCommand={terminal.initialCommand} height={layout.terminalHeight} minHeight={TERMINAL_MIN} maxHeight={layout.terminalMax} defaultHeight={TERMINAL_DEFAULT} onHeightChange={layout.setTerminalHeight} onClose={() => closeTerminal(terminal.id)} onError={reportError} onInitialCommandConsumed={() => setTerminalSessions((current) => current.map((item) => item.id === terminal.id ? { ...item, initialCommand: undefined } : item))} onOpenLink={openTerminalLink} onReady={() => setTerminalDrawerRevision((revision) => revision + 1)} onSelectionChange={(selection) => { if (terminal.id === activeTerminalSession?.id) setTerminalSelection(selection) }} /></Suspense>)}
         </div>
           {inspectorVisible ? <ResizeHandle orientation="vertical" label="Resize inspector" value={layout.inspectorWidth} min={INSPECTOR_MIN} max={layout.inspectorMax} defaultValue={INSPECTOR_DEFAULT} onChange={layout.setInspectorWidth} /> : null}
-          {inspectorVisible ? <Suspense fallback={<LoadingPanel label="inspector" />}><Inspector key={`inspector-${browserGeneration}`} teamWork={enterpriseSummaryWork} activeTab={settingsState.inspectorTab} onTabChange={settingsState.selectInspectorTab} onClose={toggleInspector} agentName={HARNESS_AGENT_NAMES[activeHarness]} shortName={HARNESS_SHORT_NAMES[activeHarness]} project={activeProject} cwd={activeCwd} runtime={workspace.runtime} messages={settingsState.inspectorTab === 'summary' ? workspace.messages : EMPTY_MESSAGES} git={git} automations={inspectorAutomations} heartbeats={inspectorHeartbeats} onOpenAutomation={openAutomation} browserHome={settingsState.settings.browserHome} browserNavigationRequest={browserNavigationRequest} onBrowserNavigationRequestHandled={handleBrowserNavigationRequest} browserAnnotations={browserAnnotations} agentBrowserTabs={activeAgentTabs} activeAgentTabId={activeAgentTabId} agentPreviewSelected={agentPreviewSelected} onSelectAgentTab={selectAgentTab} onCloseAgentTab={agentBrowser.close} onShowBrowserPreview={showBrowserPreview} onAgentSlotRect={setAgentSlotRect} agentSessionKey={activeRuntimeSessionFile ?? activeSessionFilePath} onPreviewContext={previewContext} previewPointerEvent={agentBrowser.pointerEvent?.tabId === 'preview' ? agentBrowser.pointerEvent : null} onNavigateAgentTab={navigateAgentTab} onRefreshGit={refreshGit} onOpenExternal={openExternal} onRevealPath={revealInFileManager} onGrantProject={grantActiveProject} teamDevelopment={activeHarness === 'pi' && canDevelop && enterpriseBridge && bridge && enterpriseSession?.user?.id ? { enterprise: enterpriseBridge, agent: bridge.agent, accountId: enterpriseSession.user.id, overview: developmentOverview, loading: developmentLoading, onRefresh: refreshDevelopmentOverview } : undefined} overlay={layout.compactLayout} platform={platform} /></Suspense> : null}
+          {inspectorVisible ? <Suspense fallback={<LoadingPanel label="inspector" />}><Inspector key={`inspector-${browserGeneration}`} teamWork={enterpriseSummaryWork} activeTab={settingsState.inspectorTab} onTabChange={settingsState.selectInspectorTab} onClose={toggleInspector} agentName={HARNESS_AGENT_NAMES[activeHarness]} shortName={HARNESS_SHORT_NAMES[activeHarness]} project={activeProject} cwd={activeCwd} runtime={workspace.runtime} messages={settingsState.inspectorTab === 'summary' ? workspace.messages : EMPTY_MESSAGES} git={git} automations={inspectorAutomations} heartbeats={inspectorHeartbeats} onOpenAutomation={openAutomation} browserHome={settingsState.settings.browserHome} browserNavigationRequest={browserNavigationRequest} onBrowserNavigationRequestHandled={handleBrowserNavigationRequest} browserAnnotations={browserAnnotations} agentBrowserTabs={activeAgentTabs} activeAgentTabId={activeAgentTabId} agentPreviewSelected={agentPreviewSelected} onSelectAgentTab={selectAgentTab} onCloseAgentTab={agentBrowser.close} onShowBrowserPreview={showBrowserPreview} onAgentSlotRect={setAgentSlotRect} agentSessionKey={activeRuntimeSessionFile ?? activeSessionFilePath} onPreviewContext={previewContext} previewPointerEvent={agentBrowser.pointerEvent?.tabId === 'preview' ? agentBrowser.pointerEvent : null} onNavigateAgentTab={navigateAgentTab} onRefreshGit={refreshGit} onOpenExternal={openExternal} onRevealPath={revealInFileManager} onGrantProject={grantActiveProject} overlay={layout.compactLayout} platform={platform} /></Suspense> : null}
           {inspectorVisible ? <button type="button" className="panel-scrim panel-scrim--inspector" aria-label="Close inspector" onClick={toggleInspector} /> : null}
       </div> : <Suspense fallback={<LoadingPanel label={view} />}>{page}</Suspense>}</div>
     </div>
