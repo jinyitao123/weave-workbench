@@ -55,6 +55,33 @@ const pages = [
   ServicePartRequestsPage,
 ];
 
+test('service document lists keep removable status search and use native empty-state metadata', async () => {
+  for (const [page, object, title] of [
+    [ServiceQuotationsPage, 'forge_service_quotation', '暂无符合条件的报价单'],
+    [ServiceSettlementsPage, 'forge_service_settlement', '暂无符合条件的结算单'],
+  ]) {
+    const harness = createServicePageHarness(page, {
+      manager: true,
+      permissions: serviceManagerPermission.systemPermissions,
+      records: { [object]: [] },
+    });
+    const tree = await harness.flushEffects();
+    const list = serviceNodes(tree, node => node.type === 'ListView')[0];
+    assert.equal(list.props.data.object, object);
+    assert.deepEqual(Array.from(list.props.userFilters.fields, field => field.field), ['status']);
+    assert.equal(list.props.userActions.search, true);
+    for (const action of ['refresh', 'sort', 'filter', 'rowHeight', 'hideFields', 'group', 'rowColor']) {
+      assert.equal(list.props.userActions[action], false, `${page.name} does not offer ${action}`);
+    }
+    assert.equal(list.props.emptyState.title, title);
+    assert.equal(list.props.emptyState.message, '');
+    for (const prop of ['emptyStateContent', 'hideHeaderWhenEmpty', 'hidePaginationWhenEmpty', 'showRowNumbers']) {
+      assert.equal(Object.hasOwn(list.props, prop), false, 'React page metadata must not pretend to set host-only presentation');
+    }
+    assert.equal(harness.calls.some(call => /service_(?:quotation|settlement)_(?:create|confirm)/.test(call.path)), false);
+  }
+});
+
 test('a cancelled dispatch dialog does not accept an earlier reply after the same order is reopened', async () => {
   for (const oldReply of ['success', 'failure']) {
     const requests = [];
