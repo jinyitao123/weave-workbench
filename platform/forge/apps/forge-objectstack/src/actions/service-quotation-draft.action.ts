@@ -1,4 +1,5 @@
 import { defineAction } from '@objectstack/spec';
+import { serviceQuotationMultilineSource } from './service-quotation-multiline.source.js';
 
 /**
  * Save the editable fields of an existing service quotation draft through its
@@ -23,6 +24,7 @@ export const ServiceQuotationSaveDraft = defineAction({
     language: 'js',
     capabilities: ['api.read', 'api.write', 'api.transaction'],
     source: `
+${serviceQuotationMultilineSource}
 const id=String(ctx.recordId||ctx.record&&ctx.record.id||'').trim();
 if(ctx.recordLoadDenied===true||!id||!ctx.record||String(ctx.record.id||'')!==id)throw new Error('当前服务报价不存在或不可访问');
 const actor=String(ctx.session&&ctx.session.userId||'').trim();
@@ -45,6 +47,7 @@ let draft;
 if(typeof (ctx.input&&ctx.input.draft_json)!=='string')throw new Error('报价草稿格式无效');
 try{draft=JSON.parse(ctx.input.draft_json);}catch{throw new Error('报价草稿格式无效');}
 if(!draft||typeof draft!=='object'||Array.isArray(draft))throw new Error('报价草稿格式无效');
+if(Object.prototype.hasOwnProperty.call(draft,'lines'))return await saveServiceQuotationMultiline(ctx,id,actor,organizationId,expected,key);
 const allowed=['total_amount','valid_until','remarks'];
 if(Object.keys(draft).some(field=>!allowed.includes(field)))throw new Error('报价草稿包含不允许修改的字段');
 if(!Object.prototype.hasOwnProperty.call(draft,'total_amount'))throw new Error('报价金额不能为空');
@@ -111,6 +114,8 @@ try{
     const current=await quotations.findOne({where:{id,organization_id:organizationId}});
     if(!current||String(current.organization_id||'')!==organizationId)throw new Error('当前服务报价不存在或不属于当前组织');
     if(current.status!=='draft')throw new Error('当前服务报价已不处于草稿状态，不能修改');
+    const currentLines=await ctx.api.object('forge_service_quotation_line').find({where:{quotation_id:id,organization_id:organizationId},limit:1});
+    if(Number(current.item_count||0)>0||Array.isArray(currentLines)&&currentLines.length>0)throw new Error('此报价已有项目，请通过报价清单编辑');
     const revision=current.revision==null?1:Number(current.revision);
     if(!Number.isSafeInteger(revision)||revision<1)throw new Error('服务报价修订号无效，请刷新后重试');
     if(revision!==expected)throw new Error('服务报价已被修改，请刷新后重试');
@@ -137,6 +142,7 @@ try{
     '服务报价修订号无效，请刷新后重试',
     '服务报价修订号已达到可保存上限',
     '服务报价已被修改，请刷新后重试',
+    '此报价已有项目，请通过报价清单编辑',
   ];
   if(safeMessages.includes(message))throw new Error(message);
   throw new Error('服务报价保存失败或当前报价已变化，请刷新后重试');

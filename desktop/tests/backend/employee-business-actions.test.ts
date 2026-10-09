@@ -11,7 +11,7 @@ import { readBusinessWork } from '../../electron/main/enterprise/business-work'
 const directories: string[] = []
 afterEach(async () => { await Promise.all(directories.splice(0).map((path) => rm(path, { recursive: true, force: true }))) })
 const id = '10000000-0000-4000-8000-000000000001'
-function context(): EmployeeBusinessContext {
+function context(): Extract<EmployeeBusinessContext, { record: unknown }> {
   return { version: '1', contextId: id, contextVersion: 'a'.repeat(64), recordVersion: 'revision-1', expiresAt: new Date(Date.now() + 60_000).toISOString(), readOnly: true,
     record: { objectName: 'forge_sales_contract', recordId: 'contract-1', label: '合同甲' }, source: { kind: 'record' },
     actions: [{ action_ref: 1, capabilityId: 'forge:action:forge_sales_contract.Sign', declarationVersion: 'b'.repeat(64), label: '登记签署', description: '本人登记签署日期', effect: 'write', executionMode: 'employee_only',
@@ -113,12 +113,13 @@ describe('employee action durable authorization and receipts', () => {
   it('keeps the preceding approval receipt distinct from a newly available send action after restart', async () => {
     const f = await fixture()
     f.current.actions[0].label = '提交报价审批'
+    f.turn.employeePrompt = f.turn.employeePrompt.replace('登记签署', '提交报价审批')
     await f.bridge.list(f.turn); await f.run()
     f.current.recordVersion = 'revision-2'
     f.current.actions[0].label = '登记报价已发送'
     f.current.actions[0].capabilityId = 'forge:action:forge_quotation.Send'
     const reopened = new EmployeeBusinessActions(f.service, new HandoffStore({ directory: f.directory }))
-    const next = { ...f.turn, messageId: 'message-2' }
+    const next = { ...f.turn, messageId: 'message-2', employeePrompt: f.turn.employeePrompt.replace('提交报价审批', '登记报价已发送') }
     const listed = await reopened.list(next)
     if (!('previous_operation' in listed)) throw new Error('Expected the preceding completed operation')
     expect(listed).toMatchObject({
@@ -146,6 +147,7 @@ describe('employee action durable authorization and receipts', () => {
   it('retains the record-wide unknown-result fence when the current action has changed', async () => {
     const f = await fixture()
     f.current.actions[0].label = '提交报价审批'
+    f.turn.employeePrompt = f.turn.employeePrompt.replace('登记签署', '提交报价审批')
     f.service.executeEmployeeBusinessAction.mockRejectedValue(new Error('connection lost'))
     await f.bridge.list(f.turn); await f.run()
     f.current.actions[0].label = '登记报价已发送'
@@ -157,6 +159,7 @@ describe('employee action durable authorization and receipts', () => {
   })
   it('accepts the unique native business label while sending its exact declared value', async () => {
     const f = await fixture()
+    f.current.actions[0].label = '创建订单'
     f.current.actions[0].parameters = [{ name: 'payment_method', label: '付款方式', type: 'string', required: true, enum: ['bank_transfer', 'cash'], enumLabels: [{ value: 'bank_transfer', label: '银行转账' }, { value: 'cash', label: '现金' }] }]
     f.turn.employeePrompt = '请创建订单，付款方式选择银行转账。'
     await f.bridge.list(f.turn)
@@ -165,13 +168,15 @@ describe('employee action durable authorization and receipts', () => {
   })
   it.each(['请创建订单，付款方式银行汇款。', '请创建订单，不用银行转账。', '如果交期可以，请创建订单并用银行转账。'])('rejects guessed, negated or conditional option evidence: %s', async (prompt) => {
     const f = await fixture()
+    f.current.actions[0].label = '创建订单'
     f.current.actions[0].parameters = [{ name: 'payment_method', label: '付款方式', type: 'string', required: true, enum: ['bank_transfer'], enumLabels: [{ value: 'bank_transfer', label: '银行转账' }] }]
     f.turn.employeePrompt = prompt; await f.bridge.list(f.turn)
-    await expect(f.bridge.run(f.turn, { action_ref: 1, values: { payment_method: 'bank_transfer' } })).rejects.toThrow('业务选项')
+    await expect(f.bridge.run(f.turn, { action_ref: 1, values: { payment_method: 'bank_transfer' } })).rejects.toThrow(prompt.startsWith('如果') ? '明确要求' : '业务选项')
     expect(f.service.executeEmployeeBusinessAction).not.toHaveBeenCalled()
   })
   it('does not authorize either value by an ambiguous label but accepts an exact explicitly stated value', async () => {
     const f = await fixture()
+    f.current.actions[0].label = '创建订单'
     f.current.actions[0].parameters = [{ name: 'payment_method', label: '付款方式', type: 'string', required: true, enum: ['bank_transfer', 'cash'], enumLabels: [{ value: 'bank_transfer', label: '付款' }, { value: 'cash', label: '付款' }] }]
     f.turn.employeePrompt = '请创建订单，方式选择付款。'; await f.bridge.list(f.turn)
     for (const value of ['bank_transfer', 'cash']) await expect(f.bridge.run(f.turn, { action_ref: 1, values: { payment_method: value } })).rejects.toThrow('业务选项')
@@ -182,6 +187,7 @@ describe('employee action durable authorization and receipts', () => {
   it('rejects a changed enum label declaration after discovery', async () => {
     const f = await fixture()
     const parameter = { name: 'payment_method', label: '付款方式', type: 'string' as const, required: true, enum: ['bank_transfer'], enumLabels: [{ value: 'bank_transfer', label: '银行转账' }] }
+    f.current.actions[0].label = '创建订单'
     f.current.actions[0].parameters = [parameter]
     f.turn.employeePrompt = '请创建订单，付款方式银行转账。'; await f.bridge.list(f.turn)
     parameter.enumLabels[0].label = '其它方式'
@@ -306,4 +312,117 @@ describe('native business work projection', () => {
     expect(await readBusinessWork(async () => page)).toHaveProperty('error')
     await expect(readBusinessWork(async () => ({ ...page, sourceErrors: undefined }))).rejects.toThrow()
   })
+})
+
+it('accepts the bound native action label in a new employee request without widening generic record authority', async () => {
+  const f = await fixture()
+  const note = '客户接受2100元报价，设备和安装培训范围不变'
+  const prompt = `客户已接受这份2100元报价，回执附上了。帮我记录客户接受，接受说明：${note}。`
+  f.current.record = { objectName: 'forge_quotation', recordId: 'quotation-current', label: '本人2100元报价' }
+  f.current.actions[0] = { ...f.current.actions[0], capabilityId: 'forge:action:forge_quotation.quotation_accept', label: '记录客户接受',
+    parameters: [{ name: 'customer_acceptance_note', label: '客户接受说明', type: 'string', required: true }, { name: 'customer_acceptance_evidence_attachment', label: '客户接受回执', type: 'file', required: true }] }
+  const path = join(f.directory, 'synthetic-acceptance.txt');await writeFile(path, '测试合成回执')
+  f.turn.materials = [{ name: 'synthetic-acceptance.txt', path, sha256: digest('测试合成回执'), bytes: Buffer.byteLength('测试合成回执'), mimeType: 'text/plain' }]
+  f.turn.employeePrompt = prompt
+  await f.bridge.bind(f.turn.accountKey, f.turn.sessionPath, { record: f.current.record, source: f.current.source })
+  await f.bridge.list(f.turn)
+  const request = { action_ref: 1, values: { customer_acceptance_note: note } }
+  for (const employeePrompt of ['只是讨论记录客户接受，不办理。', '不要记录客户接受。', '如果客户接受，再帮我记录客户接受。', '帮我记录客户接受是否合适？', '记录客户接受是什么意思', '我建议记录客户接受。', '帮我记录报价拒绝。', '帮我记录。']) {
+    await expect(f.bridge.run({ ...f.turn, employeePrompt }, request)).rejects.toThrow('明确要求')
+  }
+  await expect(f.bridge.run({ ...f.turn, readOnly: true }, request)).rejects.toThrow('只授权查看')
+  await expect(f.bridge.run({ ...f.turn, messageId: 'without-current-directory' }, request)).rejects.toThrow('本轮当前事项动作目录')
+  expect(f.service.executeEmployeeBusinessAction).not.toHaveBeenCalled()
+  expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+  expect(await f.bridge.run(f.turn, request)).toMatchObject({ status: 'succeeded', action_label: '记录客户接受' })
+  expect(f.service.executeEmployeeBusinessAction).toHaveBeenCalledOnce()
+  expect(f.service.executeEmployeeBusinessAction.mock.calls[0][0]).toMatchObject({ action_ref: 1, values: request.values, file: { parameter: 'customer_acceptance_evidence_attachment', fileId: 'owned-file' } })
+})
+
+it('scopes a separate negative approval instruction without cancelling the current conversion request', async () => {
+  const messages = [
+    '那就把这份报价转成合同草稿吧，名称用青杉智造设备安装与培训合同，合同编号QS-HT-20261008-001，金额和设备、安装培训明细沿用这份2100元报价。先别提交审批。',
+    '生效日期2026年10月9日，到期2027年10月8日，类型就用设备安装与培训合同。按刚才的名称和编号转成合同草稿，先不提交审批。',
+  ]
+  for (const employeePrompt of messages) {
+    const f = await fixture()
+    f.current.actions[0].label = '转为合同';f.current.actions[0].parameters = [] // Only the authorization boundary is under test here.
+    const turn = { ...f.turn, employeePrompt };await f.bridge.list(turn)
+    for (const denied of ['先转为合同，算了不要转了。', '请转为合同，先别操作。', '请转为合同，只看看。', '不要转为合同。', '如果日期齐了，转为合同。', '只讨论转为合同。', '能否转为合同？', '先不提交审批。', '上一轮转为合同失败了，先不提交审批。', '转为合同失败了，先不提交审批。', '他说转为合同，先不提交审批。', '请创建线索，先不提交审批。']) {
+      await expect(f.bridge.run({ ...turn, employeePrompt: denied }, { action_ref: 1, values: {} })).rejects.toThrow('明确要求')
+    }
+    await expect(f.bridge.run({ ...turn, readOnly: true }, { action_ref: 1, values: {} })).rejects.toThrow('只授权查看')
+    await expect(f.bridge.run({ ...turn, messageId: 'no-fresh-directory' }, { action_ref: 1, values: {} })).rejects.toThrow()
+    expect(f.service.executeEmployeeBusinessAction).not.toHaveBeenCalled()
+    expect(await f.bridge.run(turn, { action_ref: 1, values: {} })).toMatchObject({ status: 'succeeded' })
+    expect(f.service.executeEmployeeBusinessAction).toHaveBeenCalledOnce()
+  }
+})
+it('keeps the existing conversion parameter-source guard after accepting the scoped request', async () => {
+  const f = await fixture()
+  f.current.actions[0].label = '转为合同'
+  f.current.actions[0].parameters = [{ name: 'code', label: '合同编号', type: 'string', required: true }, { name: 'starts_on', label: '生效日期', type: 'date', required: true }]
+  const turn = { ...f.turn, employeePrompt: '生效日期2026年10月9日，到期2027年10月8日，类型就用设备安装与培训合同。按刚才的名称和编号转成合同草稿，先不提交审批。' }
+  await f.bridge.list(turn)
+  await expect(f.bridge.run(turn, { action_ref: 1, values: { code: 'QS-HT-20261008-001', starts_on: '2026-10-09' } })).rejects.toThrow('办理参数必须来自本轮员工明确原文')
+  expect(f.service.executeEmployeeBusinessAction).not.toHaveBeenCalled()
+})
+
+it('uses owned historical contract name/code and field-bound complete Chinese dates for the current quotation conversion', async () => {
+  const f = await fixture(), contractName = '青杉智造设备安装与培训合同', code = 'QS-HT-20261008-001'
+  const original = `那就把这份报价转成合同草稿吧，名称用${contractName}，合同编号${code}，金额和设备、安装培训明细沿用这份2100元报价。先别提交审批。`
+  const current = '生效日期2026年10月9日，到期2027年10月8日，类型就用设备安装与培训合同。按刚才的名称和编号转成合同草稿，先不提交审批。'
+  const source = (text: string, messageId: string, eventSeq: number) => ({ source_ref: digest(messageId).slice(0, 32), messageId, eventSeq, text, sha256: digest(text), transcriptSha256: digest(text) })
+  const old = source(original, 'original-contract-fields', 1)
+  let now = source(current, 'current-conversion', 3)
+  let sources = [old, now]
+  f.current.record = { objectName: 'forge_quotation', recordId: 'accepted-quotation', label: '已接受2100元报价' }
+  f.current.actions[0] = { ...f.current.actions[0], label: '转为合同', capabilityId: 'forge:action:forge_quotation.quotation_convert_to_contract', parameters: [
+    { name: 'name', label: '合同名称', type: 'string', required: true }, { name: 'code', label: '合同编号', type: 'string', required: true },
+    { name: 'contract_type_id', label: '合同类型', type: 'string', required: true, enum: ['type-equipment'], enumLabels: [{ value: 'type-equipment', label: '设备安装与培训合同' }] },
+    { name: 'starts_on', label: '生效日期', type: 'date', required: true }, { name: 'ends_on', label: '到期日期', type: 'date', required: true },
+  ] }
+  await f.bridge.bind(f.turn.accountKey, f.turn.sessionPath, { record: f.current.record, source: f.current.source })
+  const values = { name: contractName, code, contract_type_id: 'type-equipment', starts_on: '2026-10-09', ends_on: '2027-10-08' }
+  const turn = () => ({ ...f.turn, messageId: now.messageId, employeePrompt: now.text, inputSources: async () => sources })
+  const request = () => ({ action_ref: 1, values, input_sources: Object.fromEntries(Object.keys(values).map(field => [`values.${field}`, ['name', 'code'].includes(field) ? old.source_ref : now.source_ref])) })
+  await f.bridge.list(turn())
+  await expect(f.bridge.run(turn(), { ...request(), values: { ...values, starts_on: values.ends_on, ends_on: values.starts_on } })).rejects.toThrow('来源')
+  for (const incomplete of ['10月9日', '明天', '2026年2月30日']) {
+    now = source(current.replace('2026年10月9日', incomplete), `date-${incomplete}`, 3);sources = [old, now]
+    await f.bridge.list(turn());await expect(f.bridge.run(turn(), request())).rejects.toThrow('来源')
+  }
+  now = source(current, 'current-conversion', 3)
+  for (const correction of ['合同名称改为另一合同', '合同名称换成另一合同', '合同名称换为另一合同', '合同名称更换为另一合同']) {
+    sources = [old, source(correction, 'correct-name', 2), now]
+    await f.bridge.list(turn());await expect(f.bridge.run(turn(), request())).rejects.toThrow('后续更正')
+  }
+  sources = [old, now];await f.bridge.list(turn())
+  const borrowedType = request();borrowedType.input_sources['values.contract_type_id'] = old.source_ref
+  await expect(f.bridge.run(turn(), borrowedType)).rejects.toThrow('来源')
+  expect(f.service.executeEmployeeBusinessAction).not.toHaveBeenCalled()
+  sources = [old, now];await f.bridge.list(turn())
+  expect(await f.bridge.run(turn(), request())).toMatchObject({ status: 'succeeded' })
+  const sent = f.service.executeEmployeeBusinessAction.mock.calls[0][0]
+  expect(sent.values).toEqual(values);expect(sent.employeeMessage.messageId).toBe(now.messageId);expect(sent).not.toHaveProperty('input_sources')
+})
+
+it('keeps the real quotation-send wording with an omitted bound object but rejects another explicit object', async () => {
+  const f = await fixture(), note = '2100元报价已发送，等待客户确认'
+  const prompt = `2100元这份报价已经发给客户了，帮我登记已发送。发送说明写：${note}。就用我附的这份材料，其他别改。`
+  f.current.record = { objectName: 'forge_quotation', recordId: 'quotation-sent', label: '本人2100元报价' }
+  f.current.actions[0] = { ...f.current.actions[0], capabilityId: 'forge:action:forge_quotation.quotation_send', label: '登记报价已发送', parameters: [
+    { name: 'sent_evidence_note', label: '发送说明', type: 'string', required: true }, { name: 'sent_evidence_attachment', label: '发送凭证', type: 'file', required: true },
+  ] }
+  const path = join(f.directory, 'synthetic-sent.txt');await writeFile(path, '测试合成发送凭证')
+  const turn: EmployeeBusinessTurn = { ...f.turn, employeePrompt: prompt, materials: [{ name: 'synthetic-sent.txt', path, sha256: digest('测试合成发送凭证'), bytes: Buffer.byteLength('测试合成发送凭证'), mimeType: 'text/plain' }] }
+  await f.bridge.bind(turn.accountKey, turn.sessionPath, { record: f.current.record, source: f.current.source });await f.bridge.list(turn)
+  const request = { action_ref: 1, values: { sent_evidence_note: note } }
+  for (const employeePrompt of ['请登记订单已发送。', '帮我登记已发送的订单。', '报价已经发给客户了。', '帮我登记已发送，先别操作。']) {
+    await expect(f.bridge.run({ ...turn, employeePrompt }, request)).rejects.toThrow('明确要求')
+  }
+  expect(f.service.executeEmployeeBusinessAction).not.toHaveBeenCalled();expect(f.service.stageWorkMaterials).not.toHaveBeenCalled()
+  expect(await f.bridge.run(turn, request)).toMatchObject({ status: 'succeeded', action_label: '登记报价已发送' })
+  expect(f.service.executeEmployeeBusinessAction).toHaveBeenCalledOnce()
+  expect(f.service.executeEmployeeBusinessAction.mock.calls[0][0].file?.parameter).toBe('sent_evidence_attachment')
 })

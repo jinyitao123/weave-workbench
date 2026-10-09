@@ -7,7 +7,7 @@ import { digest, HandoffStore, submissionUUID } from '../../electron/main/enterp
 import { freezeApprovalOriginalMaterial, freezeMaterials, makeFrozenTextMaterial, normalizeFrozenMaterial, type FrozenMaterial } from '../../electron/main/enterprise/materials'
 import type { EnterpriseApprovalAction, EnterpriseApprovalContext, EnterpriseSession, TranscriptMessage } from '../../src/types/api'
 import { WorkRegistrationRejectedError, type EnterpriseBusinessNotificationContext, type EnterpriseWorkContinuationContext, type EnterpriseWorkNotificationSource, type NativeMcpActionArguments, type NativeMcpActionAttempt } from '../../electron/main/enterprise'
-import type { EmployeeBusinessContext, EmployeeBusinessRequest, EmployeeBusinessSelection } from '../../src/types/employee-business'
+import type { EmployeeBusinessContext, EmployeeBusinessRequest, EmployeeBusinessSelection, EmployeeBusinessTarget } from '../../src/types/employee-business'
 import { employeeBusinessRequestDigest } from '../../electron/main/enterprise/employee-business-contract'
 import { ForgeBusinessReadError, type BusinessRecordSnapshot } from '../../electron/main/enterprise/business-records'
 import { presentBusinessRecord } from '../../electron/main/enterprise/business-record-presentation'
@@ -163,10 +163,12 @@ async function fixture(objectName = 'forge_sales_contract', configureStorage = t
       return context
     }),
     getBusinessNotificationContext: vi.fn(async (notificationID: string) => businessNotificationContext(notificationID, { recordId: businessCandidate.recordId })),
-    getEmployeeBusinessContext: vi.fn(async (selection: EmployeeBusinessSelection): Promise<EmployeeBusinessContext> => ({
+    getEmployeeBusinessContext: vi.fn(async (selection: EmployeeBusinessTarget): Promise<EmployeeBusinessContext> => {
+      if ('objectName' in selection) throw new Error('record fixture requires an existing record')
+      return {
       version: '1', contextId: '10000000-0000-4000-8000-000000000001', contextVersion: 'a'.repeat(64), recordVersion: 'v7', expiresAt: new Date(Date.now() + 60_000).toISOString(), readOnly: true,
       ...selection, actions: [{ action_ref: 1, capabilityId: 'forge:action:sales_contract.Sign', declarationVersion: 'b'.repeat(64), label: '登记签署', description: '员工登记', effect: 'write', executionMode: 'employee_only', parameters: [{ name: 'signed_on', label: '签署日期', type: 'date', required: true }] }],
-    })),
+    } }),
     executeEmployeeBusinessAction: vi.fn(async (request: EmployeeBusinessRequest) => ({ version: '1' as const, operationId: request.opKey, contextId: request.contextId, requestDigest: employeeBusinessRequestDigest(request), status: 'succeeded' as const, repeated: false, updatedAt: new Date().toISOString() })),
     getEmployeeBusinessOperation: vi.fn(async () => { throw new Error('404') }),
     getWorkNotificationSource: vi.fn(async (notificationID: string): Promise<EnterpriseWorkNotificationSource> => ({
@@ -2772,4 +2774,34 @@ describe('employee-bound material handoff', () => {
     expect(f.service.submitWork).not.toHaveBeenCalled()
   })
 
+})
+
+
+it('creates from a current object reference without fake record identity and reads the returned record for continuation', async () => {
+  const f = await fixture('forge_sales_lead')
+  const created = (await f.service.readBusinessRecord()).candidate
+  const createContext: EmployeeBusinessContext = { version: '1', contextId: '10000000-0000-4000-8000-000000000001', contextVersion: 'a'.repeat(64), expiresAt: new Date(Date.now() + 60000).toISOString(), readOnly: true,
+    objectName: 'forge_sales_lead', objectLabel: '销售线索', source: { kind: 'creation' }, actions: [{ action_ref: 1, capabilityId: 'forge:action:forge_sales_lead.sales_lead_create', declarationVersion: 'b'.repeat(64), label: '创建线索', description: '本人创建', effect: 'write', executionMode: 'employee_only', requiresRecord: false,
+      parameters: [{ name: 'name', label: '名称', type: 'string', required: true }] }] }
+  f.service.getEmployeeBusinessContext.mockImplementation(async selection => 'objectName' in selection ? createContext : { version: '1', contextId: createContext.contextId, contextVersion: 'c'.repeat(64), expiresAt: createContext.expiresAt, readOnly: true, record: selection.record, source: selection.source, recordVersion: 'created-record-version', actions: [] })
+  f.service.executeEmployeeBusinessAction.mockImplementation(async request => ({ version: '1', operationId: request.opKey, contextId: request.contextId, requestDigest: employeeBusinessRequestDigest(request), status: 'succeeded', repeated: false, updatedAt: new Date().toISOString(), recordReferences: [{ objectName: created.objectName, recordId: created.recordId, label: created.name }] }))
+  await f.input('线索名称项目甲', 'draft-lead-turn', { text: '线索名称项目甲', materials: [] })
+  await f.input('按刚才的内容建吧', 'create-lead-turn', { text: '按刚才的内容建吧', materials: [] })
+  const objects = await f.call('list_business_objects')
+  const objectRef = (objects.body.result.objects as Array<{ object_ref: string }>)[0].object_ref
+  const listed = await f.call('list_current_item_actions', { object_ref: objectRef })
+  expect(listed.status).toBe(200)
+  expect(f.service.getEmployeeBusinessContext).toHaveBeenLastCalledWith({ objectName: 'forge_sales_lead', source: { kind: 'creation' } })
+  const inputSource = (listed.body.result.input_sources as Array<{ source_ref: string; text: string }>).find(source => source.text === '线索名称项目甲')!
+  expect(inputSource).toBeDefined()
+  const made = await f.call('run_current_item_action', { action_ref: 1, values: { name: '项目甲' }, input_sources: { 'values.name': inputSource.source_ref } })
+  expect(made.body.result.status).toBe('succeeded')
+  const key = (made.body.result.records as Array<{ record_key: string }>)[0].record_key
+  expect(key).toMatch(/^[0-9a-f]{32}$/)
+  expect(JSON.stringify(made.body.result)).not.toContain(created.recordId)
+  expect((await f.call('read_business_record', { record_key: key })).status).toBe(200)
+  await f.call('list_current_item_actions')
+  expect(f.service.getEmployeeBusinessContext).toHaveBeenLastCalledWith(expect.objectContaining({ record: expect.objectContaining({ recordId: created.recordId }) }))
+  await f.input('只查看需要的字段', 'next-read-turn')
+  expect((await f.call('list_current_item_actions', { object_ref: objectRef })).status).toBe(409)
 })

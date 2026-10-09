@@ -276,6 +276,8 @@ it('opens the clicked Forge approval in a fresh renderer session and queues only
   expect(prompt).toContain('当前打开只授权只读核对')
   expect(prompt).toContain('不等于审批流程完成')
   expect(prompt).toContain(APPROVAL_REVIEW_SESSION_MARKER)
+  expect(prompt).toContain('无需再要求我说固定词“办理”或“提交”')
+  expect(prompt).toContain('“我倾向同意”“如果条件满足就同意”“你觉得该同意吗”、建议和转述都不构成办理授权')
   expect(setToast).toHaveBeenCalledWith('已打开本次审批材料，可继续和 Pi 核对。')
 })
 

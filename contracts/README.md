@@ -16,7 +16,7 @@
 | `work-request` | 桌面递交的目标、材料、范围和期望交付，含 `identity` 定义 | 已实现（映射到 Weave 固定输入登记与派发） |
 | `agent-team-handoff` | Host 保存在本地私有目录的固定交接包 | 已实现 |
 | `business-capability-catalog` | Forge 只读动作目录，统一副作用与个人／团队执行范围；Host 和开发中心复用 | 已有目录；新增 `business-actions/catalog` 连接及策略字段为待评审草稿 |
-| [员工本人业务动作](v1/README.md#员工本人业务动作)、[employee-business-action](v1/employee-business-action.schema.json) | 当前员工受控上下文、一次原生动作及本人幂等回执；目录区分 `employee_only` 与 `team_delegable` | 待评审草稿；本轮尚未确认实现、部署或验收 |
+| [员工本人业务动作](v1/README.md#员工本人业务动作)、[创建与草稿补充](v1/README.md#本人业务创建与草稿补充)、[employee-business-action](v1/employee-business-action.schema.json) | 当前员工受控上下文、一次原生动作及本人幂等回执；目录区分 `employee_only` 与 `team_delegable` | 既有记录连接与无记录创建扩展共用；实际进度见项目状态和环境证据 |
 | [报价凭证与转合同](v1/README.md#报价凭证与转合同) | 原始凭证请求重放、模板来源与正式转换绑定、存量兼容和事务边界 | Forge来源已实现并合主线，17.3组件检查通过；部署与员工验收待办 |
 | `business-action` | Weave 调用 Forge 业务动作的输入与权限上下文 | 草稿：未采用，实际走 Forge 原生 MCP `run_action` |
 | `delivery-receipt` | 业务结果、证据、用量和独立核验结果 | 草稿：未采用 |

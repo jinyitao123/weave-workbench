@@ -26,4 +26,11 @@ test('service draft object and Action are uniquely registered in the canonical s
   assert.equal(parent.fields.revision.hidden, true);
   assert.equal(parent.fields.revision.readonly, true);
   assert.equal(parent.fields.revision.defaultValue, 1);
+  const line = objects.filter(object => object.name === 'forge_service_quotation_line');
+  assert.equal(line.length, 1);
+  assert.ok(ObjectSchema.safeParse(line[0]).success);
+  assert.equal(line[0].sharingModel, 'controlled_by_parent');
+  assert.equal(line[0].fields.quotation_id.reference, parent.name);
+  assert.equal(serviceManagerPermission.objects.forge_service_quotation_line, undefined);
+  assert.equal(actions.filter(action => action.name === 'service_quotation_read_lines' && action.objectName === parent.name).length, 1);
 });

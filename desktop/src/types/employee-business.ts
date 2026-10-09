@@ -2,6 +2,10 @@ export type EmployeeBusinessValue = string | number | boolean
 export interface EmployeeBusinessRecord { objectName: string; recordId: string; label: string }
 export interface EmployeeBusinessSource { kind: 'record' | 'business_notification' | 'approval'; reference?: string }
 export interface EmployeeBusinessSelection { record: EmployeeBusinessRecord; source: EmployeeBusinessSource }
+export type EmployeeBusinessReferenceName = 'customer_id' | 'contact_id' | 'opportunity_id' | 'quotation_type_id' | 'issuer_id' | 'sku_id'
+export interface EmployeeBusinessCreationSelection { /** Host-only verified names; never sent to Forge. */ referenceFacts?: Partial<Record<EmployeeBusinessReferenceName, Record<string, { name: string; code?: string; uniqueQuery?: string }>>>; skuNames?: Record<string, { name: string; materialName: string; code?: string }>; referenceIds?: Partial<Record<EmployeeBusinessReferenceName, string[]>>; objectName: 'forge_sales_lead' | 'forge_quotation'; source: { kind: 'creation' } }
+export type EmployeeBusinessTarget = EmployeeBusinessSelection | EmployeeBusinessCreationSelection
+export type EmployeeBusinessLineItem = Partial<Record<'line_type' | 'name' | 'sku_id' | 'quantity' | 'taxed_unit_price' | 'tax_rate' | 'discount_rate' | 'remarks', EmployeeBusinessValue>>
 export interface EmployeeBusinessParameter {
   name: string; label: string; type: 'string' | 'number' | 'boolean' | 'date' | 'file'; required: boolean
   description?: string; enum?: EmployeeBusinessValue[]; minimum?: number; maximum?: number; maxLength?: number
@@ -10,15 +14,21 @@ export interface EmployeeBusinessParameter {
 export interface EmployeeBusinessAction {
   action_ref: number; capabilityId: string; declarationVersion: string; label: string; description: string
   effect: 'read' | 'write'; executionMode: 'employee_only'; parameters: EmployeeBusinessParameter[]
+  requiresRecord?: false
+  lineItems?: { minItems: 1; maxItems: 100; fields: EmployeeBusinessParameter[] }
 }
-export interface EmployeeBusinessContext extends EmployeeBusinessSelection {
-  version: '1'; contextId: string; contextVersion: string; recordVersion: string; expiresAt: string; readOnly: true
+interface EmployeeBusinessContextBase {
+  version: '1'; contextId: string; contextVersion: string; expiresAt: string; readOnly: true
   actions: EmployeeBusinessAction[]
 }
+export type EmployeeBusinessContext = EmployeeBusinessContextBase & (
+  (EmployeeBusinessSelection & { recordVersion: string }) | (EmployeeBusinessCreationSelection & { objectLabel: string })
+)
 export interface EmployeeBusinessRequest {
   version: '1'; contextId: string; contextVersion: string; opKey: string
   employeeMessage: { sessionId: string; messageId: string; sha256: string }
   action_ref: number; values: Record<string, EmployeeBusinessValue>
+  lineItems?: EmployeeBusinessLineItem[]
   file?: { parameter: string; fileId: string; name: string; mediaType: string; bytes: number; sha256: string }
 }
 export interface EmployeeBusinessOperation {

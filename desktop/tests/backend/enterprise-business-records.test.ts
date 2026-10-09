@@ -296,3 +296,25 @@ describe('native Forge business record reads', () => {
     expect(read.snapshot.relations).toEqual(expect.arrayContaining([expect.objectContaining({ direction: 'reference', returnedCount: 0, complete: false })]))
   })
 })
+
+it('binds creation SKU names to the actual authorized material read, without parsing display labels', async () => {
+  for (const mode of ['read', 'denied', 'wrong-record'] as const) {
+    const skuFields: Field[] = [{ name: 'id', type: 'text', label: 'ID' }, { name: 'name', type: 'text', label: '规格名称' },
+      { name: 'code', type: 'text', label: '规格编号' }, { name: 'material_id', type: 'lookup', label: '所属物料', reference: 'forge_material' }]
+    const materialFields: Field[] = [{ name: 'id', type: 'text', label: 'ID' }, { name: 'name', type: 'text', label: '物料名称' }]
+    const reader = new ForgeBusinessReader(async (name, args) => {
+      if (name === 'list_objects') return { objects: [{ name: 'forge_material_sku', label: '物料规格' }, { name: 'forge_material', label: '物料' }], totalCount: 2 }
+      if (name === 'query_records') return { records: [], total: 0, hasMore: false }
+      if (name === 'get_record' && args.objectName === 'forge_material_sku') return { id: 'sku-a', name: '标准配置', code: 'SKU-A', material_id: 'material-a' }
+      if (name === 'get_record' && args.objectName === 'forge_material') {
+        if (mode === 'denied') throw new ForgeBusinessReadError('forbidden', 'denied')
+        return { id: mode === 'wrong-record' ? 'other-material' : 'material-a', name: '设备甲' }
+      }
+      throw new Error('unexpected read')
+    }, async objectName => metadata(objectName, objectName === 'forge_material_sku' ? '物料规格' : '物料', objectName === 'forge_material_sku' ? skuFields : materialFields))
+    const result = await reader.readRecord('forge_material_sku', 'sku-a', 1)
+    expect(result.candidate.name).toBe('标准配置')
+    if (mode === 'read') expect(result.creationSku).toEqual({ name: '标准配置', materialName: '设备甲', code: 'SKU-A' })
+    else expect(result).not.toHaveProperty('creationSku')
+  }
+})

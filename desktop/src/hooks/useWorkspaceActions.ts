@@ -301,7 +301,8 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
     if (selectedMaterials.some((attachment) => attachment.projectId !== currentWorkspaceProject?.id || attachment.harness !== currentWorkspaceProject.harness || attachment.workspacePath !== currentWorkspaceCwd)) {
       throw new Error('A text attachment belongs to a different workspace. Reattach it before sending.')
     }
-    const employeeInput = queuedEmployeeInput ?? (textAttachments.length ? { text: prompt, materials: structuredClone(textAttachments) } : undefined)
+    const contextOpening = Boolean(returnedApprovalContextHandle || workContinuationContextHandle || approvalReviewContextHandle)
+    const employeeInput = contextOpening ? undefined : queuedEmployeeInput ?? { text: prompt, materials: structuredClone(textAttachments) }
     if (queuedEmployeeInput && appendWorkspaceMaterialContext(queuedEmployeeInput.text, queuedEmployeeInput.materials) !== prompt) throw new Error('Queued employee input or attached materials changed before delivery.')
     const promptToDeliver = queuedEmployeeInput ? prompt : appendWorkspaceMaterialContext(prompt, textAttachments)
     const deliveryContext = returnedApprovalContextHandle || workContinuationContextHandle || approvalReviewContextHandle || employeeInput ? {
@@ -354,7 +355,7 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
       }
       if (intent === 'queue' && images.length === 0) {
         if (!queuedFlushPromptId) {
-          if (employeeInput) workspace.queuePrompt(promptToDeliver, intent, undefined, undefined, returnedApprovalContextHandle, workContinuationContextHandle, approvalReviewContextHandle, employeeInput)
+          if (deliveryContext) workspace.queuePrompt(promptToDeliver, intent, undefined, undefined, returnedApprovalContextHandle, workContinuationContextHandle, approvalReviewContextHandle, employeeInput)
           else workspace.queuePrompt(promptToDeliver, intent)
         }
         return
@@ -474,7 +475,7 @@ export function createWorkspaceActions(getDeps: () => WorkspaceActionsDeps) {
         }
         if ((intent === 'queue' || compactCommand) && images.length === 0 && textAttachments.length === 0 && (activeRuntime?.isStreaming || selectedSession?.status === 'running')) {
           if (activeRuntime) await bridge.enterprise.invalidateHandoff(activeRuntime.runtimeId)
-          if (!queuedFlushPromptId) queuedPromptId = employeeInput
+          if (!queuedFlushPromptId) queuedPromptId = !compactCommand && deliveryContext
             ? workspace.queuePrompt(promptToDeliver, compactCommand ? 'queue' : intent, undefined, undefined, returnedApprovalContextHandle, workContinuationContextHandle, approvalReviewContextHandle, employeeInput)
             : workspace.queuePrompt(promptToDeliver, compactCommand ? 'queue' : intent)
           if (compactCommand && intent === 'steer') setToast('Compaction will run when the current turn finishes.')

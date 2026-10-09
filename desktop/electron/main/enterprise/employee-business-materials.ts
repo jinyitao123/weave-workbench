@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import type { EmployeeBusinessSelection } from '../../../src/types/employee-business'
+import type { EmployeeBusinessSelection, EmployeeBusinessTarget } from '../../../src/types/employee-business'
 import { canonicalBusinessJSON } from './employee-business-contract'
 import { extractOriginalMaterialText, MAX_WORKSPACE_EXTRACTION_BYTES, type MaterialExtraction } from './materials'
 import { rejectUnknownKeys } from '../validation'
@@ -25,13 +25,13 @@ export interface EmployeeBusinessMaterialView {
   message: string
 }
 export async function readBoundEmployeeBusinessMaterial(params: Row, access: {
-  selection(): Promise<EmployeeBusinessSelection | undefined>
+  selection(): Promise<EmployeeBusinessTarget | undefined>
   assertCurrent(): Promise<void>
   read(selection: EmployeeBusinessSelection, assertCurrent: () => Promise<void>): Promise<EmployeeBusinessMaterialView>
 }) {
   rejectUnknownKeys(params, ['turn_key'], 'business material read')
   const selection = await access.selection()
-  if (!selection) throw new Error('请先从本人业务事项正常打开当前记录')
+  if (!selection || !('record' in selection)) throw new Error('请先从本人业务事项正常打开当前记录')
   return access.read(selection, async () => {
     await access.assertCurrent()
     if (canonicalBusinessJSON(await access.selection()) !== canonicalBusinessJSON(selection)) throw new Error('当前业务来源已变化，原件读取结果已丢弃')

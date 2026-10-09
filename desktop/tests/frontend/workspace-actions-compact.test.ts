@@ -101,6 +101,7 @@ function fixture({ runtime: configuredRuntime = null, sessionStatus = 'idle', ow
       messages = typeof next === 'function' ? next(messages) : next
     },
     queuePrompt,
+    acceptSteer: vi.fn(),
     removeQueuedPrompt: vi.fn(),
     markQueuedPromptFlushFailed: vi.fn(),
   }
@@ -231,7 +232,7 @@ describe('new runtime model admission', () => {
 
     expect(resolveModelSelection).toHaveBeenCalledOnce()
     expect(f.start).toHaveBeenCalledWith(expect.objectContaining({ model: 'anthropic/claude-fixture', thinking: 'medium', fast: false, harness: 'prime' }))
-    expect(f.command).toHaveBeenCalledWith('started-runtime', expect.objectContaining({ type: 'prompt' }), undefined)
+    expect(f.command).toHaveBeenCalledWith('started-runtime', expect.objectContaining({ type: 'prompt' }), { employeeInput: { text: 'Start with the newly detected model', materials: [] } })
   })
 
   it('does not start into another workspace when model resolution finishes late', async () => {
@@ -268,7 +269,7 @@ describe('queued employee input invalidates enterprise handoff', () => {
     expect(f.queuePrompt).not.toHaveBeenCalled()
     finish()
     await sending
-    expect(f.queuePrompt).toHaveBeenCalledWith('先别发', 'queue')
+    expect(f.queuePrompt).toHaveBeenCalledWith('先别发', 'queue', undefined, undefined, undefined, undefined, undefined, { text: '先别发', materials: [] })
     expect(f.command).not.toHaveBeenCalled()
   })
   it('does not silently queue an employee change when revocation fails', async () => {
@@ -328,5 +329,43 @@ describe('workspace text attachment prompt binding', () => {
 
     expect(f.command).not.toHaveBeenCalled()
     expect(f.messages().some((message) => message.role === 'user')).toBe(false)
+  })
+})
+
+describe('plain employee input capture through the actual workspace delivery chain', () => {
+  const text = '生效日期2026年10月9日，到期2027年10月8日。按刚才名称转成合同草稿，先不提交审批。'
+  it.each(['send', 'queue', 'steer'] as const)('preserves original text and empty materials for %s through Host capture', async (mode) => {
+    const active = runtime('plain-input-runtime', mode !== 'send')
+    const f = fixture({ runtime: active, ownsStreaming: mode !== 'send' })
+    await f.actions.sendPrompt(text, [], mode === 'steer' ? 'steer' : 'queue')
+    if (mode === 'queue') {
+      const queued = f.queuePrompt.mock.calls[0]!
+      const input = queued[7] as import('../../src/types/api').EmployeePromptInput
+      expect(input).toEqual({ text, materials: [] })
+      expect(f.command).not.toHaveBeenCalled()
+      active.isStreaming = false
+      await f.actions.sendPrompt(queued[0] as string, [], 'queue', 'plain-queued', undefined, [], undefined, undefined, input)
+    }
+    const call = f.command.mock.calls.find(([, command]) => command.type === (mode === 'steer' ? 'steer' : 'prompt'))!
+    expect(call).toBeDefined()
+    const delivery = call[2] as { employeeInput: import('../../src/types/api').EmployeePromptInput }
+    expect(delivery.employeeInput).toEqual({ text, materials: [] })
+    const { captureEmployeeInput } = await import('../../electron/main/enterprise/employee-input')
+    const captured = captureEmployeeInput(String(call[1].message), delivery.employeeInput, { harness: 'prime', cwd: project.primaryFolder } as Parameters<typeof captureEmployeeInput>[2])
+    expect(captured).toEqual({ text, materials: [] })
+  })
+  it.each(['approval', 'business', 'returned'] as const)('does not mark generated %s opening text as employee input, including queue flush', async kind => {
+    const active = runtime('generated-opening', true), f = fixture({ runtime: active, ownsStreaming: true })
+    const approval = kind === 'approval' ? 'review-handle' : undefined
+    const business = kind === 'business' ? 'business-handle' : undefined
+    const returned = kind === 'returned' ? 'returned-handle' : undefined
+    await f.actions.sendPrompt('系统生成只读打开上下文', [], 'queue', undefined, returned, [], business, approval)
+    const queued = f.queuePrompt.mock.calls[0]!
+    expect(queued.slice(4, 7)).toEqual([returned, business, approval]);expect(queued[7]).toBeUndefined()
+    active.isStreaming = false
+    await f.actions.sendPrompt(queued[0] as string, [], 'queue', 'opening-queued', returned, [], business, approval)
+    const call = f.command.mock.calls.find(([, command]) => command.type === 'prompt')!
+    expect(call).toBeDefined();expect(call[2]).not.toHaveProperty('employeeInput')
+    expect(call[2]).toMatchObject(kind === 'approval' ? { approvalReviewContextHandle: approval } : kind === 'business' ? { workContinuationContextHandle: business } : { returnedApprovalContextHandle: returned })
   })
 })

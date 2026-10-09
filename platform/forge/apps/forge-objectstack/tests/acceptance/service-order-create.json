@@ -6,17 +6,17 @@
   "target": "page_service_order_create",
   "pageId": "page_service_order_create",
   "status": "review_required",
-  "observedAt": "2026-10-08",
-  "reviewedRevision": "d2b114beb98fbc067e83f1fc299e635159d09579",
+  "observedAt": "2026-10-09",
+  "reviewedRevision": "64b1586562e1cc01014fdd6dcb2c22402fa763d0",
   "subjectFiles": {
-    "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts": "4715fb9b5296ca24e6e371519607b7631eab48482b30b4157c4f742c16806860",
+    "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts": "a1711346e2c76fda59233c2668340578de0f9e681cc98f383b452e4545fca04e",
     "apps/forge-objectstack/src/pages/product-ui.ts": "e2afcc3bcaf572b7a25bc795fa451b3e9318ba9760423e6b58f6c7f49d3d6d86",
     "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts": "a0088ab566ca72d65a6a85b2fc43e2023500ba61511d5a4f4259b62101c46f7b",
     "apps/forge-objectstack/src/views/service-workspace.view.ts": "a9314cee79aca5e70975f498b50a2bf8d94f265b0618bb6977763f587184e78b",
-    "apps/forge-objectstack/src/objects/sales.object.ts": "0d24c1a46103a8f367f70c69e29257042ae3d5df804d29bd11220f064c65c4d5",
-    "apps/forge-objectstack/src/actions/sales.action.ts": "3412077c1bb354cfd5bb81345bd5a7dc969a9309cddcb37a7964f75127b2c9a2",
+    "apps/forge-objectstack/src/objects/sales.object.ts": "c9f9a6b8ffb5f3572761d4f3e690924994e28693423583d4f1e62467aec0b575",
+    "apps/forge-objectstack/src/actions/sales.action.ts": "caea44559dc536b81aab9773a010f67fa3c508feb1864f11d662c67fdfa8d95e",
     "apps/forge-objectstack/src/permissions/otc-role.permission.ts": "a762753c23dc3edf556d689cadb522f4393ccdc921f9594d979039711f6321b3",
-    "apps/forge-objectstack/console94.lock.json": "f3262c62ef435c3a6ddf02c20a0da3bc0555f616b2453f70c1aefc8a1820f126",
+    "apps/forge-objectstack/console94.lock.json": "2173c61b1dbfde3e41794aea490317770d618c9092c990882f2628c19e638cdf",
     "apps/forge-objectstack/src/pages/sales-service-order-source.panel.ts": "f297c64a38e551a8873305d7e8065e9d06abccadf1acad6a2ece85c7fffd3afa",
     "apps/forge-objectstack/src/pages/sales-service-performance-customers.panel.ts": "7467e25988a809d20550ac1bce18b03a25a0f916bdf88678c2aa70e4999840f6"
   },
@@ -37,7 +37,7 @@
   "checks": {
     "requirements": {
       "status": "pending",
-      "notes": "2026-10-08仅因Console生成规则固定压缩输出并规范gzip系统头而重新绑定依赖指纹；完整逐文件对照证明页面内容未变，所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 603e8ab3e32c19e84bb86243989df3aa2501ffd2，不作为新版本整体通过。20 项要求登记；7 项参考差异明确保留，局部业务和交互观察不代表完整复刻。",
+      "notes": "2026-10-08因服务结算单号改为按组织和日期自动编号、结算保存报价方式与付款约定快照而更改共用对象与动作源码，重新绑定依赖指纹；本页要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08因服务报价新增多行明细（报价项目、整单折扣与付款约定；订单创建页源码未改动该入口）而更改共用对象、动作与服务工作台页面源码，重新绑定依赖指纹；本页要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08因Console升级到ObjectUI df41f84e（上游PR #3、#4，新增默认关闭的表格空结果显示与带标签行编辑选项）并改用Node 24.21.0构建而重新绑定依赖指纹；本页源码未使用这些新增选项，默认行为不变依据上游PR的测试与说明，未重做GUI对照；所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08仅因Console生成规则固定压缩输出并规范gzip系统头而重新绑定依赖指纹；完整逐文件对照证明页面内容未变，所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 603e8ab3e32c19e84bb86243989df3aa2501ffd2，不作为新版本整体通过。20 项要求登记；7 项参考差异明确保留，局部业务和交互观察不代表完整复刻。",
       "evidence": []
     },
     "visual": {
@@ -605,6 +605,8 @@
     "五段编号在私有公共客户端候选验证，公开锁未升级且已恢复冻结客户端；段落名称不代表责任／费用或草稿能力已实现。",
     "底部操作仅组合原创建／取消，未新增费用汇总、草稿或提交能力；公共客户端候选已恢复冻结且公开锁未改。",
     "公共ForgeDialog新增可选className与既有宽度token透传；当前来源版本更新不代表旧业务证据在新版本重验。",
-    "本次仅随公共日期控件可选接入更新源码绑定；本页保留旧观察，未在本版本重跑完整业务验收。"
+    "本次仅随公共日期控件可选接入更新源码绑定；本页保留旧观察，未在本版本重跑完整业务验收。",
+    "本次将本人业务创建与草稿付款条款改动绑定到当前源文件指纹及准确源码提交；原来源为 170f23771a85d59bea06eb30c933d800af8aac9f。所有页面检查与需求仍为 pending，未声明本次业务或页面验收通过。",
+    "本次合并服务报价多行与本人创建能力，reviewedRevision 仅绑定准确合并源码及对应指纹；所有页面检查与需求仍为 pending，未进行新 GUI 或业务验收。"
   ]
 }

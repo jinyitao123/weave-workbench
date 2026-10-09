@@ -67,6 +67,8 @@ export interface BusinessRecordSnapshot {
 }
 
 export interface BusinessRecordRead {
+  /** Host-only names from the actual SKU and authorized material reference read. */
+  creationSku?: { name: string; materialName: string; code?: string }
   candidate: BusinessRecordCandidate
   snapshot: BusinessRecordSnapshot
   presentation?: BusinessRecordPresentation
@@ -516,6 +518,7 @@ export class ForgeBusinessReader {
     const row = object(unwrapData(rowValue))
     if (!row || !recordID(row)) throw new ForgeBusinessReadError('not_found', '当前员工无法读取所选业务记录')
     if (recordID(row) !== id) throw new ForgeBusinessReadError('failed', 'Forge 返回的业务记录与所选记录不一致')
+    let creationSku: BusinessRecordRead['creationSku']
     const rootSnapshot = snapshotFields(rootFields, row)
     const relations: BusinessRecordRelationSnapshot[] = []
     const notes: string[] = ['关联明细按当前员工权限读取；完整性只表示当前员工可见范围，不代表无权查看的数据不存在']
@@ -664,6 +667,12 @@ export class ForgeBusinessReader {
             relations.push({ label: relationLabel(plan.summary, plan.field), direction: plan.direction, records: [], returnedCount: 0, limit: 1, complete: false })
             continue
           }
+          if (objectName === 'forge_material_sku' && plan.summary.objectName === 'forge_material' && plan.field.name === 'material_id'
+            && recordID(related) === referenceID && rootFields.some(field => field.name === 'name' && canExposeField(field))
+            && plan.fields.some(field => field.name === 'name' && canExposeField(field)) && text(row.name) && text(related.name)) {
+            creationSku = { name: text(row.name)!, materialName: text(related.name)!,
+              ...(rootFields.some(field => field.name === 'code' && canExposeField(field)) && text(row.code) ? { code: text(row.code)! } : {}) }
+          }
           const snapshot = snapshotFields(plan.fields, related)
           relations.push({ label: relationLabel(plan.summary, plan.field), direction: plan.direction, records: [snapshot.values], returnedCount: 1, limit: 1, complete: !snapshot.truncated })
           truncated ||= snapshot.truncated
@@ -724,7 +733,7 @@ export class ForgeBusinessReader {
       label: relationLabel(plan.summary, plan.field), direction: plan.direction,
       fields: [...plan.fields, { name: 'sku_code', label: '物料规格编码', type: 'text' }, { name: 'sku_name', label: '物料规格名称', type: 'text' }],
     })))
-    return { candidate, snapshot, presentation }
+    return { candidate, snapshot, presentation, ...(creationSku ? { creationSku } : {}) }
   }
 }
 

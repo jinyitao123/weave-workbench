@@ -11,6 +11,7 @@ import { quotationFollowUpAction } from './sales-quotation-readiness.js';
 import { readProjectActorSource } from './project-delivery-actor-projection.js';
 import { employeeBusinessBinding } from './employee-business-binding.js';
 import { approvedProjectOrder, qualifiedProjectManagers, validProjectManagerMember } from './project-order-readiness.js';
+import type { LineItemsDeclaration } from './employee-business-creation.js';
 
 export type BusinessRow = Record<string, unknown>;
 export interface EmployeeParameter {
@@ -21,6 +22,7 @@ export interface EmployeeParameter {
 export interface EmployeeAction {
   action_ref: number; capabilityId: string; declarationVersion: string; label: string; description: string;
   effect: 'read' | 'write'; executionMode: 'employee_only'; parameters: EmployeeParameter[];
+  requiresRecord?: false; lineItems?: LineItemsDeclaration;
 }
 export interface NativeEmployeeBridge {
   listObjects(): Promise<BusinessRow[]>; listActions(): Promise<BusinessRow[]>;
@@ -39,6 +41,14 @@ export class EmployeeNativeActions {
   constructor(private readonly context: PluginContext, readonly actor: ExecutionContext) {
     this.sdk = new HttpDispatcher(context.getKernel() as ConstructorParameters<typeof HttpDispatcher>[0]);
     this.bridge = this.sdk.buildMcpBridge({ request: { method: 'POST', url: '/api/v1/mcp', headers: {} }, executionContext: actor }) as NativeEmployeeBridge;
+  }
+
+  async canReadObject(objectName: string): Promise<boolean> {
+    const security = this.context.getService<ISecurityService>('security');
+    if (!security.canReadObject) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_PERMISSION_UNAVAILABLE', '当前员工权限不可可靠核对');
+    const allowed = await security.canReadObject(objectName, this.actor);
+    if (allowed !== true && allowed !== false) throw new TaskConnectionFailure(503, 'EMPLOYEE_ACTION_PERMISSION_UNAVAILABLE', '当前员工权限不可可靠核对');
+    return allowed;
   }
 
   /** Called only after the service has revalidated the employee's bound intent and operation. */
@@ -186,6 +196,12 @@ export class EmployeeNativeActions {
 
   async employeeActions(objectName: string, record?: BusinessRow): Promise<EmployeeAction[]> {
     let relevantRecord = record;
+    if (objectName === 'forge_sales_contract' && record?.status === 'draft' && record.owner_id === this.actor.userId && record.responsible_id === this.actor.userId) {
+      const approval = await this.context.getService<IObjectQLEngine>('objectql').findOne('sys_approval_request', {
+        where: { object_name: objectName, record_id: record.id, organization_id: this.actor.tenantId },
+      }, { context: { ...businessContext(this.actor.userId!, this.actor.tenantId!), ...(this.actor.transaction ? { transaction: this.actor.transaction } : {}) } });
+      relevantRecord = { ...record, has_submitted_approval: !!approval };
+    }
     if (objectName === 'forge_quotation' && record && quotationFollowUpAction(record, this.actor.userId) === 'quotation_convert_to_contract') {
       const conversion = await this.context.getService<IObjectQLEngine>('objectql').findOne('forge_quotation_contract_conversion', {
         where: { quotation_id: record.id, organization_id: this.actor.tenantId },
@@ -219,7 +235,7 @@ export class EmployeeNativeActions {
       }
       relevantRecord = { ...record, project_start_ready: ready };
     }
-    const native = (await this.bridge.listActions()).filter(a => a.objectName === objectName
+    const native = (await this.bridge.listActions()).filter(a => a.objectName === objectName && a.requiresRecord !== false
       && businessActionPolicy(objectName, String(a.name)).executionMode === 'employee_only'
       // Native approval decisions retain their existing version-bound route.
       && !String(a.name).includes('approval_mcp_') && !String(a.name).startsWith('approval_work_item_'));
@@ -249,6 +265,7 @@ export class EmployeeNativeActions {
 // native permissions; execution still revalidates every rule transactionally.
 function employeeActionRelevant(name: string, row: BusinessRow, actor?: string): boolean {
   switch (name) {
+    case 'contract_draft_payment_term_update': return row.status === 'draft' && row.owner_id === actor && row.responsible_id === actor && !row.signed_on && !row.signed_evidence_attachment && row.has_submitted_approval !== true;
     case 'quotation_submit':
     case 'quotation_send':
     case 'quotation_accept':
