@@ -145,7 +145,15 @@ class Deployment:
         result = self.runner(['docker', 'compose', '--project-directory', str(self.root), '--env-file', str(self.root / '.env'), '-f', str(self.root / 'compose.yaml'), *arguments], env=env,
                              capture_output=True, text=True, input=payload, timeout=240)
         if result.returncode:
-            raise ConfigurationError('Compose operation failed; no private logs or credentials were printed.')
+            error = ConfigurationError('Compose operation failed; no private logs or credentials were printed.')
+            state = self.load()
+            private = [*state['secrets'].values(), state.get('apiKey', ''), state.get('modelKey', ''), os.environ.get('GH_TOKEN', '')]
+            hint = getattr(result, 'stderr', '')[-4096:]
+            for value in private:
+                if value:
+                    hint = hint.replace(value, '[redacted]').replace(json.dumps(value)[1:-1], '[redacted]')
+            error.safe_diagnostic = hint
+            raise error
         return result.stdout
 
     def bootstrap(self):
