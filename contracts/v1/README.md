@@ -544,16 +544,39 @@ ObjectStack 17.3原生notifications只能返回最多200行，未接受offset/cu
 
 ## 飞书机器人双向接入
 
-状态：源码及本地回归完成，真实飞书应用按用户选择稍后配置；未部署、未作为业务闭环验收。飞书作为用户本轮授权的可选消息入口，Weave保留任务执行权威，Forge保留员工身份、业务动作和正式审批权威。
+状态：消息收发、绑定与命令的源码及本地回归完成，真实飞书应用按用户选择稍后配置；未部署、未作为业务闭环验收。下文“应用凭据”和“团队接入”两节为2026-10-09新增契约，尚未实现。飞书作为用户本轮授权的可选消息入口，Weave保留任务执行权威，Forge保留员工身份、业务动作和正式审批权威。
 
-- 部署方配置单个自建飞书应用及租户，回调入口为`POST /v1/integrations/feishu/events`。普通事件验证签名、时间窗、Verification Token、App ID和租户；URL校验只验证加密challenge/token，按官方协议不要求签名头；加密回调按飞书AES协议解密。仅接受真人私聊文本，群聊和其他事件不创建任务。
+- 每个工作区使用一个自建飞书应用及租户，凭据由工作区管理员在管理端填写，见下文[应用凭据](#飞书应用凭据)；部署环境变量配置的应用只服务尚未保存应用的工作区，回调入口为`POST /v1/integrations/feishu/events`。普通事件验证签名、时间窗、Verification Token、App ID和租户；URL校验只验证加密challenge/token，按官方协议不要求签名头；加密回调按飞书AES协议解密。仅接受真人私聊文本，群聊和其他事件不创建任务。
 - `GET /v1/integrations/feishu/binding`返回是否已配置与本人连接状态。桌面“设置／企业账号／飞书”提供生成绑定码、检查连接和解除连接；绑定码仅短时显示，账号切换清除并拒绝迟到结果。员工以现有Forge交换会话调用`POST /v1/integrations/feishu/link-code`取得10分钟一次性绑定码，在机器人私聊发送`绑定 <码>`。绑定有效期不超过原会话到期及8小时；不存密码或会话令牌。机器人每次办理重查Weave当前员工有效性、组织成员资格，团队准入按原Forge会话验证的受众权限执行；用户可`解绑`或调用`DELETE /v1/integrations/feishu/binding`撤销。
-- `团队`列可用团队；`开始 <团队名称> <任务>`固定当前发布流程和消息原字节摘要，经既有输入登记、发布准入与任务队列发起；`查看`读取本人最近工作；`继续 <补充要求>`绑定原输入、原目标和成果，生成新修订；`确认 <JSON>`仅回复本人的当前团队人工节点，按原交互及schema验证。消息中不显示内部运行或输入编号。
+- `团队`只列已开启飞书接入的可用团队，见下文[团队接入](#团队飞书接入)；`开始 <团队名称> <任务>`固定团队接入指定的发布流程和消息原字节摘要，经既有输入登记、发布准入与任务队列发起；`查看`读取本人最近工作；`继续 <补充要求>`绑定原输入、原目标和成果，生成新修订；`确认 <JSON>`仅回复本人的当前团队人工节点，按原交互及schema验证。消息中不显示内部运行或输入编号。
 - 飞书原生消息ID作为请求幂等来源，固定版本与原输入在首次办理前保存；重复消息返回原回执，内容变化拒绝，重试不能重新读取新的父运行。收到回调只表示平台已接单，不代表业务办理成功。
 - 本入口发起的任务明确授权业务动作空集，不接受聊天正文中声明的人员、权限、材料ID或业务写入。涉及业务记录、Forge文件或正式审批的续办需回到桌面取得Forge任务委托；聊天账号绑定不扩大业务权限。
 - 含成果正文的缓存命令回复在实际投递前按原workspace／user／open_id重查有效绑定、员工状态和成员资格；解绑、禁用、过期、换绑或撤成员后只投递无敏感失效提示，并持久替换旧正文。固定绑定／解绑回执保持通用文字；新的账号绑定不能继承旧账号缓存成果。
 - 完成、失败、取消、补件和团队人工等待复用现有员工运行事件；消息仅送原飞书发起人私聊，不投递到共享群。Forge收件箱与飞书投递回执分别记录，同一通道失败不覆盖另一通道。
 - 错误区分未配置、绑定过期/无权、输入冲突、当前不可续办和服务暂不可用；超时保留固定事实以便原消息重试。审计保存来源消息摘要、绑定员工/组织、固定输入、关联运行、投递尝试及真实飞书消息回执，不保存机器人secret/token。取消与超时沿用Weave既有语义，机器人解绑不自动取消已接受工作。
+
+### 飞书应用凭据
+
+凭据按工作区保存，不做部署全局配置：Weave 角色都是工作区级，部署全局的机器人若可被任一工作区管理员改写即越权。
+
+- 调用者与身份：Weave 管理端，管理端会话或运维 API Key。读取需 `developer`、`admin` 或 `owner`；保存、检查与删除需 `admin` 或 `owner`。作用域为当前工作区。
+- `GET /v1/integrations/feishu/app` 返回 `{source, appId, tenantKey, secrets:{appSecret,verificationToken,encryptKey}, callbackPath, revision, updatedAt, updatedBy, lastCheck:{at,ok,reason}, boundEmployees}`。`source` 为 `workspace`（本工作区已保存）、`deployment`（沿用部署环境变量的应用）或 `none`；`secrets` 各项只返回是否已保存的布尔值，任何接口都不返回密钥原文；`updatedBy` 为可读姓名；`boundEmployees` 为本工作区当前有效绑定人数。
+- `PUT /v1/integrations/feishu/app` 输入 `{expectedRevision, appId, tenantKey, appSecret?, verificationToken?, encryptKey?}`。密钥字段缺省表示沿用已保存值，非空字符串表示替换，不接受空串；首次保存或更换 `appId` 时三项密钥必须全部填写，旧 `appId` 下的员工绑定随之失效、需要重新绑定。密钥用服务端凭据密钥加密保存，服务端未配置该密钥时返回503且不保存。以 `expectedRevision` 做比较写入，不一致返回409；成功后 `revision` 加一。
+- `callbackPath` 为 `/v1/integrations/feishu/events/<回调键>`：回调键在首次保存时随机生成（不少于128位），之后修改凭据不变，删除后作废。该路径只按本工作区的应用验证并解密事件；原 `POST /v1/integrations/feishu/events` 继续只服务部署环境变量的应用。已保存应用的工作区只使用自己的应用，部署应用不再为它创建任务或投递消息。
+- `POST /v1/integrations/feishu/app/check` 用已保存凭据向飞书申请一次租户访问令牌，返回 `{ok, reason}`，`reason` 为 `credentials_rejected`、`unreachable` 或 `not_configured`；结果写入 `lastCheck`，不创建任务、不发送消息。
+- `DELETE /v1/integrations/feishu/app` 输入 `{expectedRevision}`，删除本工作区应用并作废回调键；已接受的工作照常执行，尚未投递的通知保持待投递，不改写为已送达。删除后工作区回到 `deployment` 或 `none`。
+- 错误：400 输入不合法（长度、字符集、空串），403 角色不足，404 删除时不存在，409 修订冲突，422 首次保存或更换 `appId` 时缺少密钥，503 凭据密钥未配置或飞书不可达（仅检查接口）。
+- 审计：记录工作区、操作者、时间、修订号、变更了哪些字段（只记字段名，不记取值）以及检查结果；日志、错误与审计均不出现密钥原文。
+
+### 团队飞书接入
+
+- 调用者与身份：Weave 管理端，`developer`、`admin` 或 `owner`，作用域为当前工作区的指定团队。
+- `GET /v1/teams/:id/feishu-access` 返回 `{enabled, workflowId, notify:{result,revisionRequired,humanReview,failure,cancelled}, revision, updatedAt, updatedBy}`。没有记录时返回默认值：`enabled=false`、`workflowId=null`（跟随团队默认流程）、`notify` 五项均为 `true`、`revision=0`。飞书接入默认关闭，团队须显式开启才会出现在飞书中。
+- `PUT /v1/teams/:id/feishu-access` 输入同上去掉只读字段并带 `expectedRevision`，比较写入，冲突返回409。`workflowId` 非空时必须属于本团队且已发布，否则422；团队不存在404。
+- 生效规则：`团队` 命令只列 `enabled` 且满足既有条件（已发布、有可用流程、受众权限匹配）的团队；`开始` 只接受这些团队，固定 `workflowId` 指定的流程，未指定时固定团队默认流程。设置在命令办理时读取并随输入固定，之后修改不影响已受理的工作。
+- 通知：只对飞书发起的工作生效。投递时按该运行所属团队的当前设置判断，`result`、`revision_required`、`human_review`、`failure`、`cancelled` 五类事件分别受 `notify` 对应项控制；关闭的类别记为“已按设置不投递”，不重试、不计失败，也不影响 Forge 收件箱。关闭 `humanReview` 后员工仍可用 `查看` 和 `确认 <JSON>` 办理人工节点。
+- 关闭接入不取消已受理的工作，其后续通知仍按团队当前的 `notify` 设置投递。
+- 审计：记录团队、操作者、时间、修订号与前后取值。
 
 ### 桌面 OIDC 会话衔接隔离实验
 
