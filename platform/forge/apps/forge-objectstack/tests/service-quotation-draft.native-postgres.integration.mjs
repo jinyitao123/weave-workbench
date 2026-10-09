@@ -11,6 +11,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Client } from 'pg';
 import test from 'node:test';
 import { ServiceQuotationDraftReceipt } from '../src/objects/service-quotation-receipt.object.ts';
+import { ServiceSettlement } from '../src/objects/sales.object.ts';
 import { serviceManagerPermission, serviceOperatorPermission } from '../src/permissions/otc-role.permission.ts';
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -60,6 +61,9 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
     { fields: ['quotation_id', 'expected_revision'], unique: 'organization' },
     { fields: ['quotation_id', 'idempotency_key'], unique: 'organization' },
   ]);
+  assert.equal(ServiceSettlement.fields.code.type, 'autonumber');
+  assert.equal(ServiceSettlement.fields.code.autonumberFormat, 'SS-{YYYYMMDD}-{0000}');
+  assert.equal(ServiceSettlement.fields.code.unique, 'organization', 'the settlement business number preserves its original per-organization uniqueness contract');
 
   const tempDir = await mkdtemp(path.join(os.tmpdir(), 'forge-service-quotation-draft-pg-'));
   const databaseUrl = `postgresql://${encodeURIComponent(os.userInfo().username)}@127.0.0.1:${PG_PORT}/${DATABASE}`;
@@ -138,6 +142,18 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
       instrumented = instrumented.replace(before, after);
     }
     await writeFile(actionCopy, instrumented);
+  }
+  if (process.env.SERVICE_QUOTATION_SETTLEMENT_FIXED_CLOCK === '1') {
+    const salesActionCopy = path.join(tempDir, 'src/actions/sales.action.ts');
+    let source = await readFile(salesActionCopy, 'utf8');
+    const actionStart = source.indexOf('export const ServiceQuotationCreateSettlement');
+    const timeCode = "const code = 'SS-' + new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);";
+    const timeCodeIndex = actionStart < 0 ? -1 : source.indexOf(timeCode, actionStart);
+    if (timeCodeIndex >= 0) {
+      const fixedTimeCode = "const code = 'SS-' + new Date('2026-10-06T12:34:56.000Z').toISOString().replace(/[-:TZ.]/g,'').slice(0,14);";
+      source = source.slice(0, timeCodeIndex) + fixedTimeCode + source.slice(timeCodeIndex + timeCode.length);
+      await writeFile(salesActionCopy, source);
+    }
   }
 
   async function stopRuntime() {
@@ -368,8 +384,29 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
     return result.rows;
   }
   async function settlementRows(quoteId) {
-    const result = await postgres.query('SELECT id,status,total_amount FROM forge_service_settlement WHERE quotation_id=$1 ORDER BY id', [quoteId]);
+    const result = await postgres.query('SELECT id,code,status,total_amount,quotation_pricing_mode,quotation_payment_mode,organization_id FROM forge_service_settlement WHERE quotation_id=$1 ORDER BY id', [quoteId]);
     return result.rows;
+  }
+  async function settlementCounters() {
+    if (!(await postgres.query("SELECT to_regclass('_objectstack_sequences') AS relation")).rows[0]?.relation) return [];
+    const result = await postgres.query('SELECT tenant_id,scope,last_value FROM _objectstack_sequences WHERE object=$1 AND field=$2 AND tenant_id=ANY($3::text[]) ORDER BY tenant_id,scope', ['forge_service_settlement', 'code', [ORGANIZATION_ID, FOREIGN_ORGANIZATION_ID]]);
+    return result.rows.map(row => ({ organization_id: String(row.tenant_id), prefix: String(row.scope), value: Number(row.last_value) }));
+  }
+  async function settlementNumberBaseline() {
+    const counters = await settlementCounters();
+    const result = await postgres.query('SELECT code,organization_id FROM forge_service_settlement WHERE organization_id=ANY($1::text[])', [[ORGANIZATION_ID, FOREIGN_ORGANIZATION_ID]]);
+    return { counters, rows: result.rows };
+  }
+  function priorSettlementCounter(baseline, organizationId, prefix) {
+    const storedValues = baseline.rows
+      .filter(row => String(row.organization_id) === organizationId && String(row.code).startsWith(prefix))
+      .map(row => String(row.code).slice(prefix.length))
+      .filter(value => /^\d+$/.test(value))
+      .map(Number);
+    return Math.max(0, ...baseline.counters.filter(row => row.organization_id === organizationId && row.prefix === prefix).map(row => row.value), ...storedValues);
+  }
+  function safeSettlementMessage(response) {
+    return messageOf(response).replace(/SS-[A-Za-z0-9-]+/g, '[masked settlement code]');
   }
   async function assertRejected(response, label) {
     assert.ok(response.status >= 400 && response.status < 500, label + ' is rejected by the official Runtime with a client error');
@@ -467,7 +504,8 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
   await insertFixture('sys_organization', { id: FOREIGN_ORGANIZATION_ID, name: '服务报价第二隔离组织 ' + RUN, slug: 'service-quotation-foreign-' + RUN });
   const manager = await createCaller('主管', serviceManagerPermission.name);
   const operator = await createCaller('无管理权限服务员工', serviceOperatorPermission.name);
-  assert.equal((await postgres.query('SELECT count(*)::int AS count FROM sys_account WHERE user_id=ANY($1::text[])', [[manager.id, operator.id]])).rows[0]?.count, 2);
+  const foreignManager = await createCaller('第二组织主管', serviceManagerPermission.name, FOREIGN_ORGANIZATION_ID);
+  assert.equal((await postgres.query('SELECT count(*)::int AS count FROM sys_account WHERE user_id=ANY($1::text[])', [[manager.id, operator.id, foreignManager.id]])).rows[0]?.count, 3);
 
   quoteIds.success = await createQuote('SUCCESS', { ownerId: manager.id });
   quoteIds.nonDraft = await createQuote('NONDRAFT', { status: 'confirmed', ownerId: manager.id });
@@ -482,6 +520,10 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
   quoteIds.multilineOther = await createQuote('MULTILINEOTHER', { ownerId: manager.id });
   quoteIds.multilineLineRollback = await createQuote('MULTILINELINEROLLBACK', { ownerId: manager.id });
   quoteIds.multilineReceiptRollback = await createQuote('MULTILINERECEIPTROLLBACK', { ownerId: manager.id });
+  quoteIds.settlementRaceA = await createQuote('SETTLEMENTRACEA', { status: 'confirmed', revision: 3, ownerId: manager.id });
+  quoteIds.settlementRaceB = await createQuote('SETTLEMENTRACEB', { status: 'confirmed', revision: 3, ownerId: manager.id });
+  quoteIds.foreignSettlementRaceA = await createQuote('FOREIGNSETTLEMENTRACEA', { status: 'confirmed', revision: 3, ownerId: foreignManager.id, organizationId: FOREIGN_ORGANIZATION_ID });
+  quoteIds.foreignSettlementRaceB = await createQuote('FOREIGNSETTLEMENTRACEB', { status: 'confirmed', revision: 3, ownerId: foreignManager.id, organizationId: FOREIGN_ORGANIZATION_ID });
 
   const feeConfigId = await insertFixture('forge_service_config_item', {
     name: '隔离上门检测项目 ' + RUN, code: 'SQ-FEE-' + RUN, category: 'fee_type', status: 'active',
@@ -545,9 +587,13 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
   await startRuntime();
   const managerClient = await signIn(manager);
   const operatorClient = await signIn(operator);
+  const foreignManagerClient = await signIn(foreignManager);
   const managerPermissions = payloadOf(await managerClient.request('/auth/me/permissions'));
   assert.ok(managerPermissions.systemPermissions?.includes('forge_service_manager'));
   assert.equal(managerPermissions.systemPermissions?.includes('setup.write'), false);
+  const foreignManagerPermissions = payloadOf(await foreignManagerClient.request('/auth/me/permissions'));
+  assert.ok(foreignManagerPermissions.systemPermissions?.includes('forge_service_manager'), 'the second organization uses the same existing service-manager permission');
+  assert.equal(foreignManagerPermissions.systemPermissions?.includes('setup.write'), false);
   assert.equal(Object.prototype.hasOwnProperty.call(serviceManagerPermission.objects || {}, 'forge_service_quotation_line'), false, 'no generic service-manager permission was added for quotation-line CRUD');
   const operatorPermissions = payloadOf(await operatorClient.request('/auth/me/permissions'));
   assert.ok(operatorPermissions.systemPermissions?.includes('forge_service_operator'));
@@ -779,6 +825,84 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
     id: quoteIds.multiline, status: 'confirmed', total_amount: 95, valid_until: '2026-12-31', remarks: '调整项目和顺序',
     revision: 4, pricing_mode: 'fixed', payment_mode: 'staged', discount_rate: 5, subtotal: 100, discount_amount: 5, item_count: 2,
   });
+  for (const [client, target] of [
+    [managerClient, quoteIds.foreignSettlementRaceA],
+    [foreignManagerClient, quoteIds.settlementRaceA],
+  ]) {
+    const before = await quoteSnapshot(target);
+    const denied = await invokeQuotationAction(client, 'service_quotation_create_settlement', target, { expected_revision: 3 });
+    await assertRejected(denied, 'creating a settlement for a confirmed quote in another organization');
+    assert.deepEqual(await quoteSnapshot(target), before, 'cross-organization settlement requests leave the confirmed parent unchanged');
+    assert.equal((await settlementRows(target)).length, 0, 'a cross-organization request creates no settlement');
+  }
+  const settlementBaseline = await settlementNumberBaseline();
+  const parallelSettlementResults = await Promise.all([
+    invokeQuotationAction(managerClient, 'service_quotation_create_settlement', quoteIds.settlementRaceA, { expected_revision: 3 }),
+    invokeQuotationAction(managerClient, 'service_quotation_create_settlement', quoteIds.settlementRaceB, { expected_revision: 3 }),
+  ]);
+  assert.deepEqual(parallelSettlementResults.map(row => row.status).sort(), [200, 200], 'different confirmed quotes can create settlements concurrently: ' + parallelSettlementResults.map(safeSettlementMessage).join(' | '));
+  const parallelSettlementRows = await Promise.all([
+    settlementRows(quoteIds.settlementRaceA), settlementRows(quoteIds.settlementRaceB),
+  ]);
+  assert.equal(parallelSettlementRows[0]?.length, 1, 'first concurrent quote has exactly one settlement');
+  assert.equal(parallelSettlementRows[1]?.length, 1, 'second concurrent quote has exactly one settlement');
+  assert.ok(parallelSettlementRows[0][0].code && parallelSettlementRows[1][0].code);
+  assert.match(parallelSettlementRows[0][0].code, /^SS-\d{8}-\d{4}$/);
+  assert.match(parallelSettlementRows[1][0].code, /^SS-\d{8}-\d{4}$/);
+  assert.notEqual(parallelSettlementRows[0][0].code, parallelSettlementRows[1][0].code, 'different settlements have distinct persisted codes');
+  const homeSettlementCodes = parallelSettlementRows.flat().map(row => row.code).sort();
+  const settlementPrefix = homeSettlementCodes[0].slice(0, -4);
+  const initialHomeCounter = priorSettlementCounter(settlementBaseline, ORGANIZATION_ID, settlementPrefix);
+  assert.deepEqual(homeSettlementCodes.map(value => Number(value.slice(-4))), [initialHomeCounter + 1, initialHomeCounter + 2], 'same-organization concurrent parents advance the observed daily counter exactly twice');
+  assert.ok(parallelSettlementRows.flat().every(row => row.organization_id === ORGANIZATION_ID), 'both concurrent settlements retain their actual organization');
+  assert.ok(homeSettlementCodes.every(value => value.startsWith(settlementPrefix)), 'concurrent settlements use the same daily prefix');
+  const countersAfterHomeSettlements = await settlementCounters();
+  assert.equal(countersAfterHomeSettlements.find(row => row.organization_id === ORGANIZATION_ID && row.prefix === settlementPrefix)?.value, initialHomeCounter + 2);
+  assert.deepEqual(countersAfterHomeSettlements.filter(row => row.organization_id === FOREIGN_ORGANIZATION_ID), settlementBaseline.counters.filter(row => row.organization_id === FOREIGN_ORGANIZATION_ID), 'creating home settlements does not allocate a counter in the second organization');
+  for (const raceQuoteId of [quoteIds.settlementRaceA, quoteIds.settlementRaceB]) {
+    const saved = await quoteSnapshot(raceQuoteId);
+    assert.equal(saved.status, 'settlement_created');
+    assert.equal(saved.revision, 4);
+  }
+  const foreignSettlementResults = await Promise.all([
+    invokeQuotationAction(foreignManagerClient, 'service_quotation_create_settlement', quoteIds.foreignSettlementRaceA, { expected_revision: 3 }),
+    invokeQuotationAction(foreignManagerClient, 'service_quotation_create_settlement', quoteIds.foreignSettlementRaceB, { expected_revision: 3 }),
+  ]);
+  assert.deepEqual(foreignSettlementResults.map(row => row.status).sort(), [200, 200], 'the second organization can create legitimate settlements under the same daily prefix: ' + foreignSettlementResults.map(safeSettlementMessage).join(' | '));
+  const foreignSettlementRows = await Promise.all([
+    settlementRows(quoteIds.foreignSettlementRaceA), settlementRows(quoteIds.foreignSettlementRaceB),
+  ]);
+  assert.deepEqual(foreignSettlementRows.map(rows => rows.length), [1, 1], 'each confirmed parent in the second organization has exactly one settlement');
+  assert.ok(foreignSettlementRows.flat().every(row => row.organization_id === FOREIGN_ORGANIZATION_ID), 'second-organization settlements retain their actual organization');
+  const foreignSettlementCodes = foreignSettlementRows.flat().map(row => row.code).sort();
+  for (const code of foreignSettlementCodes) assert.match(code, /^SS-\d{8}-\d{4}$/);
+  const initialForeignCounter = priorSettlementCounter(settlementBaseline, FOREIGN_ORGANIZATION_ID, settlementPrefix);
+  assert.ok(foreignSettlementCodes.every(value => value.startsWith(settlementPrefix)), 'both organizations generate settlements under the same observed daily prefix');
+  assert.deepEqual(foreignSettlementCodes.map(value => Number(value.slice(-4))), [initialForeignCounter + 1, initialForeignCounter + 2], 'the second organization advances its own observed daily counter exactly twice');
+  if (initialHomeCounter === initialForeignCounter) {
+    assert.deepEqual(foreignSettlementCodes, homeSettlementCodes, 'equal starting counters legitimately produce the same business numbers in different organizations');
+  }
+  const countersAfterForeignSettlements = await settlementCounters();
+  assert.equal(countersAfterForeignSettlements.find(row => row.organization_id === FOREIGN_ORGANIZATION_ID && row.prefix === settlementPrefix)?.value, initialForeignCounter + 2);
+  assert.deepEqual(countersAfterForeignSettlements.filter(row => row.organization_id === ORGANIZATION_ID), countersAfterHomeSettlements.filter(row => row.organization_id === ORGANIZATION_ID), 'allocating second-organization settlement numbers does not change the home counter');
+  for (const foreignQuoteId of [quoteIds.foreignSettlementRaceA, quoteIds.foreignSettlementRaceB]) {
+    const saved = await quoteSnapshot(foreignQuoteId);
+    assert.equal(saved.status, 'settlement_created');
+    assert.equal(saved.revision, 4);
+  }
+  for (const [ownClient, otherClient, row] of [
+    [managerClient, foreignManagerClient, parallelSettlementRows[0][0]],
+    [foreignManagerClient, managerClient, foreignSettlementRows[0][0]],
+  ]) {
+    const ownRead = await ownClient.request('/data/forge_service_settlement/' + encodeURIComponent(row.id));
+    assert.equal(ownRead.status, 200, 'the originating organization can read its newly generated settlement');
+    const ownRecord = resultOf(ownRead)?.record || resultOf(ownRead);
+    assert.equal(ownRecord?.id, row.id);
+    assert.equal(ownRecord?.code, row.code);
+    const crossRead = await otherClient.request('/data/forge_service_settlement/' + encodeURIComponent(row.id));
+    await assertRejected(crossRead, 'reading another organization settlement by its known record id');
+  }
+  t.diagnostic('isolated settlement counters: home ' + initialHomeCounter + ' -> ' + (initialHomeCounter + 2) + '; second organization ' + initialForeignCounter + ' -> ' + (initialForeignCounter + 2) + '; same daily prefix; bidirectional cross-organization Action and read rejection verified');
   const staleMultilineSettlement = await invokeQuotationAction(managerClient, 'service_quotation_create_settlement', quoteIds.multiline, { expected_revision: 3 });
   await assertRejected(staleMultilineSettlement, 'settling a multiline quote against its old revision');
   assert.equal((await settlementRows(quoteIds.multiline)).length, 0, 'stale multiline settlement creates no row');
@@ -793,6 +917,12 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
   assert.equal(multilineSettlements.length, 1);
   assert.equal(multilineSettlements[0].status, 'draft');
   assert.equal(Number(multilineSettlements[0].total_amount), 95);
+  assert.match(multilineSettlements[0].code, /^SS-\d{8}-\d{4}$/);
+  assert.equal(multilineSettlements[0].quotation_pricing_mode, 'fixed');
+  assert.equal(multilineSettlements[0].quotation_payment_mode, 'staged');
+  const countersAfterMultilineSettlement = await settlementCounters();
+  assert.equal(countersAfterMultilineSettlement.find(row => row.organization_id === ORGANIZATION_ID && row.prefix === settlementPrefix)?.value, initialHomeCounter + 3, 'the next home settlement advances only the home daily counter');
+  assert.deepEqual(countersAfterMultilineSettlement.filter(row => row.organization_id === FOREIGN_ORGANIZATION_ID), countersAfterForeignSettlements.filter(row => row.organization_id === FOREIGN_ORGANIZATION_ID), 'a further home settlement leaves the second-organization counters unchanged');
   assert.deepEqual(await quoteMultilineSnapshot(quoteIds.multiline), {
     id: quoteIds.multiline, status: 'settlement_created', total_amount: 95, valid_until: '2026-12-31', remarks: '调整项目和顺序',
     revision: 5, pricing_mode: 'fixed', payment_mode: 'staged', discount_rate: 5, subtotal: 100, discount_amount: 5, item_count: 2,
@@ -883,6 +1013,7 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
   const createdSettlements = await settlementRows(quoteIds.success);
   assert.equal(createdSettlements.length, 1, 'one settlement is linked to the quotation');
   assert.equal(createdSettlements[0].status, 'draft');
+  assert.match(createdSettlements[0].code, /^SS-\d{8}-\d{4}$/);
   const duplicateSettlement = await invokeQuotationAction(managerClient, 'service_quotation_create_settlement', quoteIds.success, { expected_revision: 3 });
   await assertRejected(duplicateSettlement, 'repeating settlement creation for the same quotation');
   assert.equal((await settlementRows(quoteIds.success)).length, 1, 'repeat requests do not create a second settlement');
