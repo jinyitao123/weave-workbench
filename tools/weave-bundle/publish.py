@@ -131,12 +131,13 @@ def main():
         plugins = Path(previous or str(Path.home() / '.docker')) / 'cli-plugins'
         if plugins.is_dir():
             (Path(docker_config) / 'cli-plugins').symlink_to(plugins.resolve(), target_is_directory=True)
-        version = subprocess.run(['docker', 'compose', 'version'], capture_output=True, text=True)
-        if version.returncode != 0:
+        compose_check = subprocess.run(['docker', 'compose', 'version'], capture_output=True, text=True)
+        if compose_check.returncode != 0:
             raise BuildError('Docker Compose plugin unavailable in the isolated credential profile')
         try:
             subprocess.run(['docker', 'login', 'ghcr.io', '--username', os.environ['GITHUB_ACTOR'], '--password-stdin'], input=os.environ['GH_TOKEN'], text=True, check=True, stdout=subprocess.DEVNULL)
             validation = test_startup(bundle, source)
+            print('Cold start, native operator and same-key database restart passed.', flush=True)
         finally:
             if previous is None:
                 os.environ.pop('DOCKER_CONFIG', None)
@@ -215,4 +216,6 @@ if __name__ == '__main__':
         print('Standalone publication incomplete; no private response or credential logged. Error type:', type(error).__name__, 'publisher line:', line, file=sys.stderr)
         if isinstance(error, (ConfigurationError, BuildError)):
             print(str(error), file=sys.stderr)
+            if getattr(error, 'safe_diagnostic', ''):
+                print(error.safe_diagnostic, file=sys.stderr)
         raise SystemExit(1) from None
