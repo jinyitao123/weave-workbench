@@ -1,4 +1,5 @@
 export { weaveTeamDeveloperPermission } from './team-development.permission.js';
+export { salesCrmMaintenancePermission } from './sales-crm.permission.js';
 export { salesContractOperatorPermission, salesContractReviewerPermission } from './sales-contract.permission.js';
 export { salesOrderFulfillmentPermission, salesOrderOperatorPermission, salesOrderReviewerPermission } from './sales-order.permission.js';
 export { projectManagerPermission, projectOperatorPermission } from './project-operator.permission.js';
