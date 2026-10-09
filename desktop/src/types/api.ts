@@ -1364,6 +1364,9 @@ export interface PrimeWorkApi {
     getTeamDevelopmentStateForSession(sessionFile: string): Promise<import('./team-workspace').TeamDevelopmentState>
     invalidateHandoff(runtimeId: string): Promise<void>
     getStatus(): Promise<EnterpriseEnvironmentStatus[]>
+    getFeishuStatus(): Promise<{ available: boolean; bound: boolean; expiresAt?: string }>
+    createFeishuLinkCode(): Promise<{ code: string; expiresAt: string }>
+    unlinkFeishu(): Promise<void>
     getSession(): Promise<EnterpriseSession>
     signIn(email: string, password: string): Promise<EnterpriseSession>
     signOut(): Promise<EnterpriseSession>
