@@ -58,6 +58,8 @@ with tempfile.TemporaryDirectory() as directory:
     assert native['name'] == state['projectName']
     actual = native['services']['weave']['environment']
     assert actual['WEAVE_FORGE_DEFAULT_WORKSPACE'] == state['organizationId']
-    assert actual['DEEPSEEK_API_KEY'] == state['secrets']['deepseekApiKey']
+    literal = actual['DEEPSEEK_API_KEY']
+    expected = state['secrets']['deepseekApiKey']
+    assert literal == expected, ('Literal preservation flags (no value logged): dollar=' + str('$UNSET' in literal) + ', quote=' + str("quote'" in literal) + ', backslash=' + str('\\end' in literal) + ', escapedDollar=' + str(literal == expected.replace('$', '$$')))
     assert native['services']['app']['environment']['OS_AUTH_SECRET'] == state['secrets']['forgeAuthSecret']
 print('Real Compose interpolation passed; no images pulled and no containers started.')
