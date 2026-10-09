@@ -828,6 +828,81 @@
         "lines_added": 445,
         "production_lines_added": 211
       }
+    },
+    {
+      "date": "2026-10-08",
+      "reason": "W10 deletions: Weave local accounts and the dev token endpoint, the unused bounded-decision interface, the old free/fixed team compiler and its wiring, and unreachable functions; delivery-target management routes closed pending deletion. Every band limit is lowered to the measured size and the total becomes the growth_policy baseline.",
+      "record": "https://github.com/jinyitao123/weave-workbench/blob/main/docs/plans/Weave%E4%B8%8ELoom%E6%95%B4%E6%94%B9%E6%96%B9%E6%A1%88.md#w10-%E5%88%A0%E9%99%A4%E5%80%99%E9%80%89%E4%B8%8E%E9%A2%84%E7%AE%97%E5%A2%9E%E9%95%BF%E8%A7%84%E5%88%99",
+      "growth": {
+        "lines": 0,
+        "production_lines": 0
+      },
+      "base": {
+        "previous_lines": 8518,
+        "lines": 8448,
+        "previous_production_lines": 6862,
+        "production_lines": 6792
+      },
+      "kernel": {
+        "previous_lines": 106336,
+        "lines": 104478,
+        "previous_production_lines": 84938,
+        "production_lines": 83090
+      },
+      "app": {
+        "previous_lines": 73565,
+        "lines": 71119,
+        "previous_production_lines": 51075,
+        "production_lines": 49133
+      }
+    },
+    {
+      "date": "2026-10-09",
+      "reason": "Restore the supported GET /v1/auth/me self-read used by the official installer and deployment verification after W10 removed it with local account management. Reuse existing bearer authentication and expose only the current id, tenant_id, effective role, authentication source and optional API key id. Do not restore password login, registration, token refresh, profile writes or user administration. Register exactly 15 production lines and 99 test lines after the first budget guard failed, with no spare allowance, new packages/dependencies or changed guard logic.",
+      "record": "docs/治理/2026-09-30-平台范围收窄整改登记.md",
+      "growth": {
+        "lines": 114,
+        "production_lines": 15
+      },
+      "deletion_trigger": "Only after all official installation and operator consumers have migrated to an equivalent verified self-read and a complete release has actually shown no remaining calls may this GET route, identity projection and its dedicated regression be removed, lowering the measured budgets in the same change. This supported endpoint is not currently scheduled for retirement and creates no deletion task for this release.",
+      "app": {
+        "previous_lines": 71119,
+        "previous_production_lines": 49133,
+        "lines_added": 114,
+        "production_lines_added": 15
+      }
+    },
+    {
+      "date": "2026-10-09",
+      "reason": "Select the independent CLI JSON-node schema fix from console candidate 9fdb2ee4 onto current main. Pass the frozen node schema through the existing structured remote executor and normalize fenced JSON replies for Claude and OpenCode before the existing workflow schema gate. Preserve current cancellation and server/execution-node boundaries. Exact measured kernel growth: 58 production and 65 existing regression lines; no new packages, dependencies, queues or spare allowance.",
+      "record": "docs/架构/2026-09-13-分层收敛与Loom职责基线.md",
+      "growth": {
+        "lines": 123,
+        "production_lines": 58
+      },
+      "deletion_trigger": "Remove the optional structured-CLI adapter and prompt/fence helpers with their dedicated regressions only when every supported CLI consumes the frozen node schema through an equivalent verified shared execution contract, and lower the measured budget in that same change. Do not remove the workflow schema gate or retire supported CLI members to meet this trigger.",
+      "kernel": {
+        "previous_lines": 104478,
+        "previous_production_lines": 83090,
+        "lines_added": 123,
+        "production_lines_added": 58
+      }
+    },
+    {
+      "date": "2026-10-09",
+      "reason": "Owner-requested Feishu integration adapted from nexus: verified private callback receipts, expiring Forge employee pairing, existing fixed-input/workflow dispatch and revision, schema-bound human continuation, and independent receipts on the existing employee event outbox. No new packages, external modules, execution queues or dependency exceptions. Exact measured production and regression growth.",
+      "record": "README.zh-CN.md#飞书机器人",
+      "growth": {
+        "lines": 1288,
+        "production_lines": 912
+      },
+      "deletion_trigger": "Remove this app-specific transport, callback receipt/link tables and dedicated tests only after every supported Feishu deployment has migrated to an equivalent verified shared message transport and a full release has no remaining calls; lower measured budgets in that change. Existing task, workflow, native inbox and authority checks remain. This supported optional integration has no current retirement task.",
+      "app": {
+        "previous_lines": 71233,
+        "previous_production_lines": 49148,
+        "lines_added": 1288,
+        "production_lines_added": 912
+      }
     }
   ],
   "migration_targets": {
@@ -852,9 +927,15 @@
       "external_dependencies": 6
     }
   },
+  "growth_policy": {
+    "recorded_amendments": 48,
+    "baseline_lines": 184045,
+    "baseline_production_lines": 139015,
+    "rule": "Each band limit equals its measured size. The total of the band limits may exceed this baseline only by the growth of amendments added after the first recorded_amendments entries, each of which must state its growth and a deletion_trigger."
+  },
   "base": {
-    "lines": 8518,
-    "production_lines": 6862,
+    "lines": 8448,
+    "production_lines": 6792,
     "packages": 9,
     "external_dependencies": 4,
     "allowed_dependencies": [
@@ -865,9 +946,9 @@
     ]
   },
   "kernel": {
-    "lines": 106336,
-    "production_lines": 84938,
-    "packages": 49,
+    "lines": 104601,
+    "production_lines": 83148,
+    "packages": 48,
     "external_dependencies": 5,
     "allowed_dependencies": [
       "github.com/google/uuid",
@@ -885,8 +966,8 @@
     "allowed_dependencies": []
   },
   "app": {
-    "lines": 73565,
-    "production_lines": 51075,
+    "lines": 72521,
+    "production_lines": 50060,
     "packages": 24,
     "external_dependencies": 6,
     "allowed_dependencies": [
