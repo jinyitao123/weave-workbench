@@ -447,7 +447,7 @@ class ComposeEntryTests(InstallationCase):
         (output / 'compose.yaml').write_bytes(custom)
         state['organizationId'] = 'test-native-org'
         config.write_private(self.directory / 'state.json', state)
-        self.assertIn("WW_ORGANIZATION_ID='test-native-org'", (output / '.env').read_text())
+        self.assertIn('WW_ORGANIZATION_ID="test-native-org"', (output / '.env').read_text())
         self.assertTrue((output / 'compose.yaml').read_bytes() == custom)
 
     def test_conflicting_config_preserves_state_and_compose_files(self):

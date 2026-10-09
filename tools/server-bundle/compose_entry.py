@@ -84,8 +84,8 @@ def export_compose(state):
     directory = Path(state['composeDirectory'])
     check_destination(directory)
     values = compose_environment(state)
-    # Single quoted dotenv values are literal, including dollar signs.
-    lines = [key + "='" + value.replace("'", "\\'") + "'\n" for key, value in sorted(values.items())]
+    # Compose expands double quoted dotenv values; escape dollars as well as JSON quotes/backslashes.
+    lines = [key + '=' + json.dumps(value).replace('$', r'\$') + '\n' for key, value in sorted(values.items())]
     write_text(directory / '.env', HEADER + ''.join(lines), 0o600)
     destination = directory / 'compose.yaml'
     if not destination.exists():

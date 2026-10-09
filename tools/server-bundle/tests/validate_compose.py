@@ -49,7 +49,7 @@ with tempfile.TemporaryDirectory() as directory:
     target.mkdir()
     state['composeDirectory'] = str(target)
     state['organizationId'] = 'test-native-org'
-    state['secrets']['deepseekApiKey'] = "test-only-$UNSET-quote'slash\\end"
+    state['secrets']['deepseekApiKey'] = "test-only-$UNSET-quote'slash\\end\\"
     export_compose(state)
     environment = {k: v for k, v in os.environ.items() if not k.startswith(('WW_', 'COMPOSE_'))}
     result = subprocess.run(['docker', 'compose', '--project-directory', str(target), 'config', '--format', 'json'], env=environment, text=True, capture_output=True)
@@ -58,8 +58,12 @@ with tempfile.TemporaryDirectory() as directory:
     assert native['name'] == state['projectName']
     actual = native['services']['weave']['environment']
     assert actual['WEAVE_FORGE_DEFAULT_WORKSPACE'] == state['organizationId']
-    literal = actual['DEEPSEEK_API_KEY']
     expected = state['secrets']['deepseekApiKey']
-    assert literal == expected, ('Literal preservation flags (no value logged): dollar=' + str('$UNSET' in literal) + ', quote=' + str("quote'" in literal) + ', backslash=' + str('\\end' in literal) + ', escapedDollar=' + str(literal == expected.replace('$', '$$')))
+    # Some Compose versions escape dollars in re-loadable config output.
+    assert actual['DEEPSEEK_API_KEY'] in (expected, expected.replace('$', '$$'))
+    result = subprocess.run(['docker', 'compose', '--project-directory', str(target), 'config', '--environment'], env=environment, text=True, capture_output=True)
+    assert result.returncode == 0, 'Native Compose environment reading failed; no private output was logged.'
+    resolved = dict(line.split('=', 1) for line in result.stdout.splitlines() if line.startswith('WW_'))
+    assert resolved['WW_DEEPSEEK_API_KEY'] == expected
     assert native['services']['app']['environment']['OS_AUTH_SECRET'] == state['secrets']['forgeAuthSecret']
 print('Real Compose interpolation passed; no images pulled and no containers started.')
