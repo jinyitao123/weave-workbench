@@ -232,5 +232,11 @@ if __name__ == '__main__':
         main()
     except Exception as error:
         # Never print a signed storage URL or credentials from transport errors.
-        print('Test release refused or incomplete; inspect the failed verification step. Error type:', type(error).__name__, file=sys.stderr)
+        frame = error.__traceback__
+        line = None
+        while frame:
+            if frame.tb_frame.f_code.co_filename == __file__:
+                line = frame.tb_lineno
+            frame = frame.tb_next
+        print('Test release refused or incomplete. Error type:', type(error).__name__, 'publisher line:', line, file=sys.stderr)
         raise SystemExit(1) from None
