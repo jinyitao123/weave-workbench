@@ -35,7 +35,7 @@ export const Contact = master('forge_contact', '联系人管理', 'contact', {
     { value: 'resigned', label: '已离职' }, { value: 'retired', label: '已退休' },
     { value: 'inactive', label: '停用' },
   ], { label: '任职状态', defaultValue: 'active' }),
-  responsible_id: owner(), remarks: remarks(),
+  responsible_id: { ...owner(), defaultValue: 'current_user' }, remarks: remarks(),
 }, ['name', 'customer_id', 'is_primary', 'job_title', 'department', 'employment_status', 'responsible_id']);
 
 export const ContactChannel = master('forge_contact_channel', '联系人联系方式', 'phone', {
