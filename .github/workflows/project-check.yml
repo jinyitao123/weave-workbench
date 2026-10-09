@@ -30,6 +30,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check installer and image-build boundaries
         run: |
+          python3 -m unittest discover -s tools/weave-bundle/tests -v
           python3 -m unittest discover -s tools/server-bundle/tests -v
           python3 -m unittest discover -s tools/server-image-build/tests -v
           sh -n tools/server-bundle/install.sh
