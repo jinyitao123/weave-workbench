@@ -12,3 +12,6 @@ coverage/
 .env.*
 !.env.example
 *.local.md
+
+# Isolated brand research outputs; never product assets by default.
+.brand-media/
