@@ -236,6 +236,8 @@ def compose_environment(state):
         'WW_EVENT_SECRET': s['eventSecret'], 'WW_OPERATOR_USER': state['operatorUser'],
         'WW_OPERATOR_PASSWORD': s['operatorPassword'], 'WW_DEEPSEEK_API_KEY': s['deepseekApiKey'],
         'WW_FORGE_IDENTITY_ISSUER': state['forgeIdentityIssuer'], 'WW_FORGE_ORIGIN': c['forgeOrigin'],
+        'WW_FORGE_TRUSTED_ORIGINS': ','.join(dict.fromkeys((c['forgeOrigin'], c['weaveOrigin']))),
+        'WW_WEAVE_ADMIN_FORGE_URL': c['forgeOrigin'],
         'WW_FORGE_SESSION_URL': c['forgeOrigin'] + '/api/v1/auth/get-session',
         'WW_FORGE_EVENT_URL': c['forgeOrigin'] + '/api/v1/apps/forge/weave-events/team-runs',
         'WW_ORGANIZATION_ID': state['organizationId'] or '', 'WW_BIND_ADDRESS': n['bindAddress'],
