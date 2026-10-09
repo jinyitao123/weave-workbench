@@ -17,6 +17,8 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools/server-image-build'))
 from build import Github, BuildError
+sys.path.insert(0, str(ROOT / 'tools/server-bundle'))
+from configuration import ConfigurationError
 from resume import fetch_publication
 
 
@@ -43,11 +45,15 @@ def test_startup(directory, source):
     input_file = directory / 'installation.json'
     write_json(input_file, settings)
     deployment.configure(input_file)
+    started = False
     try:
+        print('Checking isolated Compose configuration.', flush=True)
         raw = deployment.compose(['config', '--format', 'json'])
         doc = json.loads(raw)
         assert set(doc['services']) == {'db', 'weave'} and set(doc['volumes']) == {'database', 'workspaces'}
         assert 'ports' not in doc['services']['db'] and all('@sha256:' in s['image'] and 'build' not in s for s in doc['services'].values())
+        started = True
+        print('Starting isolated Weave and PostgreSQL.', flush=True)
         deployment.compose(['up', '-d', '--wait', '--wait-timeout', '240'])
         scripts = "Promise.all(['/v1/health','/v1/ready','/admin/','/v1/admin/config'].map(async p=>{const r=await fetch('http://127.0.0.1:8080'+p);if(!r.ok)throw Error();return p==='/admin/'?{html:(await r.text()).includes('<html')}:r.json()})).then(v=>console.log(JSON.stringify(v))).catch(()=>process.exit(1))"
         health, ready, admin, config = json.loads(deployment.compose(['exec', '-T', 'weave', 'node', '-e', scripts]))
@@ -68,7 +74,8 @@ def test_startup(directory, source):
     finally:
         # Only this fresh isolated test project, never a customer deployment.
         try:
-            deployment.compose(['down', '--volumes', '--remove-orphans'])
+            if started:
+                deployment.compose(['down', '--volumes', '--remove-orphans'])
         finally:
             for n in ('.env', '.weave-state.local.json', '.weave-state.local.json.lock', 'operator-key.local', 'installation.json'):
                 (directory / n).unlink(missing_ok=True)
@@ -121,6 +128,12 @@ def main():
     with tempfile.TemporaryDirectory(prefix='standalone-docker-auth-') as docker_config:
         previous = os.environ.get('DOCKER_CONFIG')
         os.environ['DOCKER_CONFIG'] = docker_config
+        plugins = Path(previous or str(Path.home() / '.docker')) / 'cli-plugins'
+        if plugins.is_dir():
+            (Path(docker_config) / 'cli-plugins').symlink_to(plugins.resolve(), target_is_directory=True)
+        version = subprocess.run(['docker', 'compose', 'version'], capture_output=True, text=True)
+        if version.returncode != 0:
+            raise BuildError('Docker Compose plugin unavailable in the isolated credential profile')
         try:
             subprocess.run(['docker', 'login', 'ghcr.io', '--username', os.environ['GITHUB_ACTOR'], '--password-stdin'], input=os.environ['GH_TOKEN'], text=True, check=True, stdout=subprocess.DEVNULL)
             validation = test_startup(bundle, source)
@@ -200,4 +213,6 @@ if __name__ == '__main__':
                 line = frame.tb_lineno
             frame = frame.tb_next
         print('Standalone publication incomplete; no private response or credential logged. Error type:', type(error).__name__, 'publisher line:', line, file=sys.stderr)
+        if isinstance(error, (ConfigurationError, BuildError)):
+            print(str(error), file=sys.stderr)
         raise SystemExit(1) from None

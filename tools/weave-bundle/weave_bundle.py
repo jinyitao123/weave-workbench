@@ -142,7 +142,7 @@ class Deployment:
 
     def compose(self, arguments, payload=None):
         env = {k: v for k, v in os.environ.items() if not k.startswith(('WS_', 'COMPOSE_'))}
-        result = self.runner(['docker', 'compose', '--project-directory', str(self.root), *arguments], env=env,
+        result = self.runner(['docker', 'compose', '--project-directory', str(self.root), '--env-file', str(self.root / '.env'), '-f', str(self.root / 'compose.yaml'), *arguments], env=env,
                              capture_output=True, text=True, input=payload, timeout=240)
         if result.returncode:
             raise ConfigurationError('Compose operation failed; no private logs or credentials were printed.')
