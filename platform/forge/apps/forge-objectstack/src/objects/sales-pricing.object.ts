@@ -39,6 +39,7 @@ export const SalesPriceRequest = ObjectSchema.create({
     long_term: Field.boolean({ label: '长期有效', defaultValue: false, readonly: true }),
     priority: Field.select([{ value: 'normal', label: '普通' }, { value: 'urgent', label: '加急' }, { value: 'critical', label: '特急' }], { label: '紧急程度', defaultValue: 'normal', readonly: true }),
     reason: Field.textarea({ label: '调价原因 / 申请理由', readonly: true }),
+    attachment_ids: Field.file({ label: '辅助材料', multiple: true, readonly: true }),
     item_count: Field.number({ label: '物料数量', min: 1, scale: 0, readonly: true }),
     original_total: readonlyMoney('正常总价'), proposed_total: readonlyMoney('申请总价'),
     status: Field.select([{ value: 'draft', label: '草稿' }, { value: 'pending_approval', label: '审批中' }, { value: 'approved', label: '已通过' }, { value: 'rejected', label: '已驳回' }, { value: 'withdrawn', label: '已撤回' }, { value: 'terminated', label: '已终止' }], { label: '状态', defaultValue: 'draft', readonly: true }),
@@ -49,7 +50,7 @@ export const SalesPriceRequest = ObjectSchema.create({
     submitted_by: Field.user({ label: '申请人', readonly: true }), submitted_at: Field.datetime({ label: '提交时间', readonly: true }),
     applied_at: Field.datetime({ label: '生效办理时间', readonly: true }), revision: revision(),
   }, ['code', 'kind', 'customer_name', 'item_count', 'original_total', 'proposed_total', 'status', 'effect_status']),
-  indexes: [{ fields: ['kind', 'status'] }, { fields: ['customer_id'] }], enable: readOnly,
+  indexes: [{ fields: ['kind', 'status'] }, { fields: ['customer_id'] }], enable: { ...readOnly, files: true },
 });
 
 export const SalesPriceRequestLine = ObjectSchema.create({

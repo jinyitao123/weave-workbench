@@ -23,6 +23,7 @@ function harness(overrides = {}) {
   };
   const context = {
     React,
+    ForgeButton: 'button',
     ProjectRelatedRecordTable: function ProjectRelatedRecordTable() {},
     ForgeSelectControl: function ForgeSelectControl() {},
     module: { exports: null },

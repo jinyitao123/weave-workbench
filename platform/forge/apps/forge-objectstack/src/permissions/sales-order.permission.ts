@@ -19,6 +19,7 @@ export const salesOrderOperatorPermission = definePermissionSet({
   systemPermissions: ['sales_order_operator'],
   fields: salesQuotationCostFieldMask,
   objects: {
+    sys_file: { allowRead: true, readScope: 'own' as const },
     forge_sales_discount_request: { allowRead: true, readScope: 'own' as const },
     forge_sales_price_request: { allowRead: true, readScope: 'own' as const },
     forge_sales_price_request_line: { allowRead: true, readScope: 'own' as const },

@@ -6,12 +6,12 @@
   "target": "page_project_task_workspace",
   "pageId": "page_project_task_workspace",
   "status": "review_required",
-  "observedAt": "2026-10-08",
+  "observedAt": "2026-10-10",
   "subjectFiles": {
-    "apps/forge-objectstack/src/pages/project-task-workspace.page.ts": "3632be28bec16513fc5f5816bdd93a7c9428b585d6fb664d4350cf5327f695dd",
+    "apps/forge-objectstack/src/pages/project-task-workspace.page.ts": "4ab167dc46cdf9f4b192a632628673427750599671b9d2a8d341ce99afe4cf8d",
     "apps/forge-objectstack/src/pages/project-task-gantt.panel.ts": "ddaa4228d1da22b5d59a3c5663e85ca4dc509997d9591891ec00a66dffa99473",
     "apps/forge-objectstack/src/pages/project-task-import.logic.ts": "7a2838d931be878ad8997477f0afe8c7b37320b65e338af5e39ab216d9ad6ec5",
-    "apps/forge-objectstack/src/pages/product-ui.ts": "226e478c53040077ad6a9107a5db89cfb775f2409948259db91702a59ea2f45e",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "843ebf77e07f0c77d9dedca586d9fae8a9d4396097b7cfba71e9d1a9bc1e46cd",
     "apps/forge-objectstack/src/objects/project.object.ts": "55ad411e4b36f4eef49f28982a6bac0eeef1e84d0bd94ff214125779fd964846",
     "apps/forge-objectstack/src/actions/project.action.ts": "1e85a0e78b119ec50bb6b87727957bcefea235410e0502b903f31109a239b3ec",
     "apps/forge-objectstack/src/permissions/project-operator.permission.ts": "1f2aaf1ec3ba3cce1538da980a84e2c154213801da55333ced24e6e3b9922215",
@@ -34,7 +34,7 @@
   "checks": {
     "requirements": {
       "status": "pending",
-      "notes": "2026-10-08因Console升级到ObjectUI df41f84e（上游PR #3、#4，新增默认关闭的表格空结果显示与带标签行编辑选项）并改用Node 24.21.0构建而重新绑定依赖指纹；本页源码未使用这些新增选项，默认行为不变依据上游PR的测试与说明，未重做GUI对照；所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08仅因Console生成规则固定压缩输出并规范gzip系统头而重新绑定依赖指纹；完整逐文件对照证明页面内容未变，所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 603e8ab3e32c19e84bb86243989df3aa2501ffd2，不作为新版本整体通过。当前局部回归及读取补证不代表全页面／业务完成，真实持久化与独立复核待验。",
+      "notes": "2026-10-08因Console升级到ObjectUI df41f84e（上游PR #3、#4，新增默认关闭的表格空结果显示与带标签行编辑选项）并改用Node 24.21.0构建而重新绑定依赖指纹；本页源码未使用这些新增选项，默认行为不变依据上游PR的测试与说明，未重做GUI对照；所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08仅因Console生成规则固定压缩输出并规范gzip系统头而重新绑定依赖指纹；完整逐文件对照证明页面内容未变，所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 603e8ab3e32c19e84bb86243989df3aa2501ffd2，不作为新版本整体通过。当前局部回归及读取补证不代表全页面／业务完成，真实持久化与独立复核待验。 2026-10-10公共按钮、文件选择、表单分区、分组树与价格表单细节迁移后，当前待复核清单重新绑定本轮源码摘要。保留原局部观察，未改变任何分项或整体验收状态；本条不作为新版GUI、正常业务、权限、持久化或性能通过。",
       "evidence": []
     },
     "visual": {
@@ -412,7 +412,8 @@
     "与",
     "截",
     "图",
-    "。"
+    "。",
+    "本轮仅重新绑定后续页面控件与价格编辑改动的待复核源码；保留全部未通过项，不表示业务验收。"
   ],
   "sourceScopeUpdatedAt": "2026-10-10",
   "historicalSourceRevision": "170f23771a85d59bea06eb30c933d800af8aac9f"
