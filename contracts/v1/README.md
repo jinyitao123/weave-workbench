@@ -116,6 +116,20 @@ Weave独立Compose包仅部署Weave及其PostgreSQL与持久工作区，不创�
 - 幂等与取消：全程只读，无幂等键；窗口离开或刷新可以取消请求，不影响服务端状态。
 - 审计：Weave 保留主体、组织、接口和结果；桌面不记录 Bearer Token 或工作流输入输出正文。
 
+### 管理端查看团队运行
+
+Weave 管理端的运行页读取本工作区全部团队运行，包含员工从桌面、飞书发起的业务任务（[决策 005](../../docs/decisions/005-管理端不按Forge权限隔离试跑与可用人群.md)第 4 条），取代此前“管理员只能看到本人提交和不带固定输入的任务”的范围。
+
+- 调用者：已登录 Weave 管理端的会话。管理员和所有者可读取本工作区全部运行及其内容；开发者只读取本人提交的任务和本团队的开发试跑。
+- 身份：沿用管理端会话的工作区与角色，角色以每次请求时的当前值为准；不接收员工 Forge 会话，也不借用任务授权读取 Forge。
+- 输入：列表按团队、来源、状态筛选并分页，详情按运行读取；不接收业务对象或任意查询。
+- 输出：列表给出团队、流程版本、来源（管理端、桌面、飞书、试跑、定时）、发起人显示名、状态、起止时间和失败原因。详情给出任务输入正文、固定材料的名称／大小／摘要、交接链、每步公开输出与结果、工具调用的名称／输入／输出、执行日志和验证结论。原始材料文件本体不经管理端下载；令牌、密码和任务授权凭据不出现在任何字段。
+- 只读：管理端不能对他人的运行停止、重试、追加要求或代为确认，这些操作仍由发起员工在桌面或飞书办理。
+- 错误：401 回到登录；开发者读取他人的非试跑运行返回 404，不暴露该运行存在；单步读取失败保留该来源错误，不把不完整内容展示成完整。
+- 幂等与取消：全程只读，无幂等键；离开页面可取消请求，不影响运行。
+- 审计：每次打开或导出他人运行的内容，记录查看人、角色、工作区、运行、时间和结果，不记录正文。
+- 边界：运行内容可能含员工在 Forge 委托下读到的业务数据，查看人不需要在 Forge 拥有对应记录权限；不因此向管理端开放 Forge 查询或写入。
+
 ### 工具协议诊断探针
 
 - 此探针用于区分提供方没有返回结构化调用、流式解析未完整接收、标准化响应丢失调用及执行派发失败。只复用现有模型调用日志、工具日志与业务动作回执，不建立另一套执行或业务事实存储。
@@ -199,6 +213,7 @@ Weave 管理端是网页，不持有 Forge 令牌（Forge 登录令牌在交换�
 - 触发：Forge 身份交换成功且角色为 `developer`、`admin` 或 `owner`（管理端登录与桌面登录都算）。服务端以该次 Forge 会话令牌调用 `GET /api/v1/workbench/business-actions/catalog`，超时 8 秒；不保存、不转发、不记录令牌，读取与登录响应互不等待。
 - 快照：每个工作区一份，只含目录定义（`id`、`name`、`description`、`effect`、`executionMode`、`status`、`unavailableReason`、`objectName`、`actionName`、`resourceType`、`requiresRecord`、`requiresConfirmation`、`requiresEmployeeIntent`、`params`），以及目录 `version`、读取时间与读取者；不含员工记录或业务正文。读取成功后整体替换；读取失败（Forge 不可用、401／403、响应不合法、超过 1 MiB 或 500 条）保留旧快照，不影响登录。
 - `GET /v1/development/business-capabilities`：调用者为管理端会话，角色 `developer`、`admin` 或 `owner`，作用域为当前工作区。返回 `{available, version, fetchedAt, fetchedBy, capabilities}`；没有快照时 `available=false` 且 `capabilities` 为空数组。`fetchedBy` 为可读姓名。该接口只读，不触发 Forge 调用。
+- `POST /v1/development/business-capabilities/refresh`：开发者在管理端主动刷新快照。调用者与作用域同上，且当前会话须来自 Forge 登录；API Key 会话没有 Forge 身份，不能刷新。输入 `{forge_token}`：浏览器让当前登录人再输入一次 Forge 密码，以 `credentials:omit` 向 Forge 原生登录取得的短期会话，密码不经过 Weave，调用结束后由浏览器以原生注销释放。服务端核验该会话的 Forge 身份与当前管理端会话是同一账号、同一工作区，且仍具备团队开发或管理权限，再用它同步读取一次目录（超时 8 秒）并整体替换快照，返回与 GET 相同的结构。验证失败返回 401；账号不一致或权限不足返回 403；Forge 不可用、拒绝或响应不合法返回 502 并保留旧快照；错误信息为可直接显示的中文。不保存、不转发、不记录令牌。重复调用只是再次替换，无幂等键；请求中断时快照要么是旧的要么是新的，不出现半份。审计同保存快照。
 - 用途与边界：快照只是开发期选择的参考。成员保存的仍是稳定的 `businessCapabilityIds` 与材料来源映射；发布和运行时 Weave 仍按上文以员工委托读取当前 Forge 目录并冻结，快照缺失或过期不能让已失效的动作通过。`executionMode=employee_only` 与 `status=unavailable` 的条目只展示，不能分配给团队成员。
 - 材料来源映射：管理端沿用桌面已有规则：系统托管的防重复提交参数（`idempotency_key`、`idempotencyKey`）不能映射；多文件参数必须映射到 `materials.ids`，单文件参数映射到 `materials.single.id`，字符串参数可映射到 `materials.single.name`、`materials.single.sha256`、`materials.single.id` 或 `materials.manifest_json`。
 - 审计：保存快照时记录工作区、读取者、读取时间、条目数与目录版本，不记录令牌。
