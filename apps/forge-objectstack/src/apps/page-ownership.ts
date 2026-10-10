@@ -8,6 +8,7 @@ type PageDefinition = Extract<PageExport, { name: string }>;
 const unlinkedPageOwners: Record<string, ForgeApplicationKey> = {
   page_production_data_tasks: 'production',
   page_sales_order_create: 'sales',
+  page_sales_additional_fee_new: 'sales',
   page_sales_contract_create: 'sales',
   page_service_order_create: 'sales',
   page_project_member_editor: 'project',

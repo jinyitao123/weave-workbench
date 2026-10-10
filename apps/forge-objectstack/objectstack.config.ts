@@ -43,7 +43,7 @@ export default defineStack({
   plugins: [
     new AutomationServicePlugin(),
     new MessagingServicePlugin(),
-    new ApprovalsServicePlugin({ recordReaderVisibleObjects: ['forge_sales_contract', 'forge_sales_order', 'forge_sales_performance_confirmation', 'forge_sales_performance_rebook', 'forge_sales_performance_entry', 'forge_sales_performance_entry_source'] }),
+    new ApprovalsServicePlugin({ recordReaderVisibleObjects: ['forge_sales_price_request', 'forge_sales_price_request_line', 'forge_sales_discount_request', 'forge_sales_additional_fee', 'forge_sales_additional_fee_line', 'forge_sales_contract', 'forge_sales_order', 'forge_sales_performance_confirmation', 'forge_sales_performance_rebook', 'forge_sales_performance_entry', 'forge_sales_performance_entry_source'] }),
     new SharingServicePlugin(),
     new ServiceFileReferenceTransactionBridgePlugin(),
     new ApprovalResubmitGuardPlugin({
