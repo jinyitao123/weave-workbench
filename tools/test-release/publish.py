@@ -69,6 +69,13 @@ def download(api, artifact, output):
     print('Official archive verified:', artifact['name'], flush=True)
 
 
+def validate_server_source(release_revision, server_revision):
+    assert re.fullmatch(r'[0-9a-f]{40}', server_revision)
+    assert git('show', release_revision + ':components.lock.json') == git('show', server_revision + ':components.lock.json'), 'Server component lock differs from release'
+    for path in ('platform/weave', 'platform/forge'):
+        assert git('rev-parse', release_revision + ':' + path) == git('rev-parse', server_revision + ':' + path), 'Server source tree differs from release'
+
+
 def main():
     repo = os.environ['GITHUB_REPOSITORY']
     revision, version = os.environ['PRODUCT_REVISION'], os.environ['RELEASE_VERSION']
@@ -98,7 +105,9 @@ def main():
         assert sum(j['name'] == name and j['conclusion'] == 'success' for j in jobs) == 1
     packages = [j for j in jobs if j['name'].startswith('local-qa-package')]
     assert len(packages) == 3 and all(j['conclusion'] == 'success' for j in packages)
-    source_files, image_lock, server_provenance = fetch_publication(repo, revision, version, server_run)
+    server_revision = os.environ.get('SERVER_REVISION', '').strip() or revision
+    validate_server_source(revision, server_revision)
+    source_files, image_lock, server_provenance = fetch_publication(repo, server_revision, version, server_run)
     assert FULL_REQUIRED.issubset(source_files)
     build_manifest = json.loads(source_files['build-manifest.json'])
     assert build_manifest['kind'] == 'full-server-probed'
@@ -194,7 +203,7 @@ def main():
             'gates': [{'name': j['name'], 'conclusion': j['conclusion']} for j in jobs],
             'artifacts': [{k: a[k] for k in ('id', 'name', 'size_in_bytes', 'digest')} for a in selected],
             'packages': sorted(desktop, key=lambda p: p['file']), 'signed': False, 'notarized': False},
-        'server': {'sourceRevision': revision, 'workflowRunId': server_run, 'workflowConclusion': server_state['conclusion'],
+        'server': {'sourceRevision': server_revision, 'sourceVerifiedAgainstRelease': True, 'installerSourceRevision': revision, 'workflowRunId': server_run, 'workflowConclusion': server_state['conclusion'],
             'buildAndPublicationConclusion': 'success', 'failedSteps': failures, 'publicationProof': server_provenance,
             'images': image_lock, 'buildManifest': build_manifest, 'startupProofs': {n: json.loads(source_files[n]) for n in ('forge-server-proof.json', 'weave-server-proof.json')},
             'installationBundle': {'file': archive.name, 'bytes': archive.stat().st_size, 'sha256': digest(archive)}},
