@@ -10,6 +10,15 @@ export interface BusinessActionPolicy {
 // Full object/action keys prevent one domain's personal action from masking an
 // unrelated action with the same short name. Native permissions still apply.
 const EMPLOYEE_ONLY = new Set([
+  'forge_sales_price_group.sales_price_group_save',
+  'forge_sales_price_group.sales_price_group_assign',
+  'forge_sales_price_request.sales_price_draft_save',
+  'forge_sales_price_request.sales_price_submit',
+  'forge_sales_price_request.sales_price_terminate',
+  'forge_sales_discount_request.sales_discount_draft_save',
+  'forge_sales_discount_request.sales_discount_submit',
+  'forge_sales_additional_fee.sales_additional_fee_draft_save',
+  'forge_sales_additional_fee.sales_additional_fee_submit',
   'forge_sales_lead.sales_lead_create',
   'forge_quotation.sales_quotation_draft_create',
   'forge_sales_contract.contract_draft_payment_term_update',
@@ -39,7 +48,7 @@ const EMPLOYEE_ONLY = new Set([
   'forge_customer_prepayment.customer_prepayment_confirm',
 ]);
 
-const READ_ONLY = new Set(['forge_sales_contract.contract_submit_frozen_material', 'forge_project.project_read_delivery_scope']);
+const READ_ONLY = new Set(['forge_quotation.sales_quotation_price_resolve', 'forge_sales_price_request.sales_price_resolve', 'forge_sales_contract.contract_submit_frozen_material', 'forge_project.project_read_delivery_scope']);
 
 export function businessActionPolicy(objectName: string, actionName: string): BusinessActionPolicy {
   const key = `${objectName}.${actionName}`;

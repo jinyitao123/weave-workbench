@@ -54,11 +54,11 @@ function App(){const adapter=useAdapter();
   if(!receiptId&&!requestedNotice)return <div className="forge-product forge-procurement forge-arrival">
 <style>{css}</style>
 <div className="body">
-<ForgeHero section="供应链 / 到货检验 / 到货登记" title="到货登记" description="登记到货物料，进入待检或免检流程。" icon="▤" tone="indigo" art="boxes" next={{label:"待检验库存",href:'/_console/apps/com.inoforge.forge.supply-chain/page_pending_inspection_workspace',title:"下一步操作 · 待检验库存",to:'/apps/com.inoforge.forge.supply-chain/page_pending_inspection_workspace'}}/><div className="fp-action-row"><button className="fp-button" disabled={!listRows.length} onClick={exportList}>导出</button><button className="fp-button" onClick={()=>setTaskOpen(true)}>导入/导出任务</button><ForgeListSettings/><button className="fp-icon-button" aria-label="刷新" title="刷新" onClick={load}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button><button className="fp-button primary" onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_purchase_arrival_notice')}>新建到货登记</button></div>
+<ForgeHero section="供应链 / 到货检验 / 到货登记" title="到货登记" description="登记到货物料，进入待检或免检流程。" icon="▤" tone="indigo" art="boxes" next={{label:"待检验库存",href:'/_console/apps/com.inoforge.forge.supply-chain/page_pending_inspection_workspace',title:"下一步操作 · 待检验库存",to:'/apps/com.inoforge.forge.supply-chain/page_pending_inspection_workspace'}}/><div className="fp-action-row"><ForgeButton className="fp-button" disabled={!listRows.length} onClick={exportList}>导出</ForgeButton><ForgeButton className="fp-button" onClick={()=>setTaskOpen(true)}>导入/导出任务</ForgeButton><ForgeListSettings/><ForgeButton className="fp-icon-button" aria-label="刷新" title="刷新" onClick={load}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></ForgeButton><ForgeButton className="fp-button primary" onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_purchase_arrival_notice')}>新建到货登记</ForgeButton></div>
 {state.error&&<div className="notice">{state.error}</div>}<div className="card">
 <div className="actions arrival-list-filterbar" style={{marginBottom:12}}>
-<button className={'btn '+(listMode==='orders'?'primary':'')} onClick={()=>setListMode('orders')}>订单明细</button>
-<button className={'btn '+(listMode==='lines'?'primary':'')} onClick={()=>setListMode('lines')}>物料明细</button>
+<ForgeButton className={'btn '+(listMode==='orders'?'primary':'')} onClick={()=>setListMode('orders')}>订单明细</ForgeButton>
+<ForgeButton className={'btn '+(listMode==='lines'?'primary':'')} onClick={()=>setListMode('lines')}>物料明细</ForgeButton>
 <input className="fp-input arrival-list-search" aria-label="搜索到货登记" placeholder="搜索到货单号/供应商/客户/退货单号..." value={listQuery} onChange={e=>{setListQuery(e.target.value);setPage(1)}}/>
 <ForgeSelectControl className="arrival-list-select" aria-label="到货登记状态" value={listStatus} onChange={e=>{setListStatus(e.target.value);setPage(1)}}>
 <option value="">全部状态</option>{Object.entries(statusText).map(([v,l])=>
@@ -67,7 +67,7 @@ function App(){const adapter=useAdapter();
 <option value="">全部类型</option>{Object.entries(arrivalTypeText).map(([v,l])=>
 <option key={v} value={v}>{l}</option>)}</ForgeSelectControl>
 </div>
-<div className="table arrival-list-table-wrap">{listMode==='orders'?<table className="arrival-orders-table">
+<ForgeTableViewport className="table arrival-list-table-wrap">{listMode==='orders'?<ForgeTable className="arrival-orders-table">
 <thead>
 <tr>
 <th>到货单号</th>
@@ -96,12 +96,12 @@ function App(){const adapter=useAdapter();
 <span className="pill">{statusText[row.status]||row.status}</span>
 </td>
 <td>
-<button className="fp-icon-button row-action" aria-label="查看" title="查看" onClick={()=>window.location.href=window.location.pathname+'?id='+encodeURIComponent(row.id)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg></button>
+<ForgeButton className="fp-icon-button row-action" aria-label="查看" title="查看" onClick={()=>window.location.href=window.location.pathname+'?id='+encodeURIComponent(row.id)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg></ForgeButton>
 </td>
 </tr>)}{!visibleRows.length&&<tr>
 <td colSpan="10" className="arrival-list-empty">暂无到货登记记录</td>
 </tr>}</tbody>
-</table>:<table className="arrival-lines-table">
+</ForgeTable>:<ForgeTable className="arrival-lines-table">
 <thead>
 <tr>
 <th>到货单号</th>
@@ -131,13 +131,13 @@ function App(){const adapter=useAdapter();
 </tr>)}{!visibleLines.length&&<tr>
 <td colSpan="9" className="arrival-list-empty">暂无物料明细</td>
 </tr>}</tbody>
-</table>}</div>
+</ForgeTable>}</ForgeTableViewport>
 <div className="actions arrival-list-pagination" style={{justifyContent:'space-between',marginTop:12}}>
 <span>共 {listRows.length} 条记录 · 每页 20 条</span>
 <span className="actions arrival-list-pagination-actions">
-<button className="btn" disabled={safePage<=1} onClick={()=>setPage(safePage-1)}>上一页</button>
+<ForgeButton className="btn" disabled={safePage<=1} onClick={()=>setPage(safePage-1)}>上一页</ForgeButton>
 <span>{safePage} / {pageCount}</span>
-<button className="btn" disabled={safePage>=pageCount} onClick={()=>setPage(safePage+1)}>下一页</button>
+<ForgeButton className="btn" disabled={safePage>=pageCount} onClick={()=>setPage(safePage+1)}>下一页</ForgeButton>
 </span>
 </div>
 </div>
@@ -148,12 +148,12 @@ function App(){const adapter=useAdapter();
 <style>{css}</style>
 <div className="body">
 <div className="notice">{state.error||'到货通知不存在'}</div>
-<button className="btn" onClick={()=>window.location.href=window.location.pathname}>返回列表</button>
+<ForgeButton className="btn" onClick={()=>window.location.href=window.location.pathname}>返回列表</ForgeButton>
 </div>
 </div>;
   if(state.receipt){return <div className="forge-product forge-procurement forge-arrival">
 <style>{css}</style>
-<div className="header-shell"><ForgePageHeader badge="供" section="供应链 / 到货登记" title={state.receipt.code} description={'来源 '+state.order.code+' · '+state.supplier.name+' · '+(statusText[state.receipt.status]||state.receipt.status)} actions={<><button className="fp-button" onClick={()=>window.location.href=window.location.pathname}>返回列表</button>{state.receipt.status==='draft'&&<button className="fp-button primary" disabled={busy} onClick={submitDraft}>提交待检</button>}{['pending_inspection','inspection_in_progress','inspected','stocked'].includes(state.receipt.status)&&<button className="fp-button primary" onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_pending_inspection_workspace')}>查看待检库存</button>}</>}/></div>
+<div className="header-shell"><ForgePageHeader badge="供" section="供应链 / 到货登记" title={state.receipt.code} description={'来源 '+state.order.code+' · '+state.supplier.name+' · '+(statusText[state.receipt.status]||state.receipt.status)} actions={<><ForgeButton className="fp-button" onClick={()=>window.location.href=window.location.pathname}>返回列表</ForgeButton>{state.receipt.status==='draft'&&<ForgeButton className="fp-button primary" disabled={busy} onClick={submitDraft}>提交待检</ForgeButton>}{['pending_inspection','inspection_in_progress','inspected','stocked'].includes(state.receipt.status)&&<ForgeButton className="fp-button primary" onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_pending_inspection_workspace')}>查看待检库存</ForgeButton>}</>}/></div>
 <div className="flow">
 <span>到货登记</span>
 <span className="active">待检库存</span>
@@ -191,7 +191,7 @@ function App(){const adapter=useAdapter();
 <section className="card">
 <h2>到货物料明细</h2>
 <div className="table">
-<table>
+<ForgeTable>
 <thead>
 <tr>
 <th>编码</th>
@@ -223,7 +223,7 @@ function App(){const adapter=useAdapter();
 <td>{state.warehouses.find(w=>w.id===line.warehouse_id)?.name||'—'}</td>
 <td>{line.warehouse_location||'不指定'}</td>
 </tr>)}</tbody>
-</table>
+</ForgeTable>
 </div>
 <div className="summary">
 <span>到货数量 <strong>{state.receipt.total_quantity}</strong>
@@ -240,7 +240,7 @@ function App(){const adapter=useAdapter();
 </ForgeDialog>}</div>}
   return <div className="forge-product forge-procurement forge-arrival">
 <style>{css}</style>
-<div className="header-shell"><ForgePageHeader badge="供" section="供应链 / 到货登记" title="新建采购到货登记" description="到货单号将在保存时自动生成。" actions={<><button className="fp-button" disabled={busy} onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_purchase_order_workspace?id='+encodeURIComponent(state.order.id))}>返回采购订单</button><button className="fp-button" disabled={busy} onClick={()=>save('draft')}>保存草稿</button><button className="fp-button primary" disabled={busy} onClick={()=>save('submit')}>提交待检</button></>}/></div>
+<div className="header-shell"><ForgePageHeader badge="供" section="供应链 / 到货登记" title="新建采购到货登记" description="到货单号将在保存时自动生成。" actions={<><ForgeButton className="fp-button" disabled={busy} onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_purchase_order_workspace?id='+encodeURIComponent(state.order.id))}>返回采购订单</ForgeButton><ForgeButton className="fp-button" disabled={busy} onClick={()=>save('draft')}>保存草稿</ForgeButton><ForgeButton className="fp-button primary" disabled={busy} onClick={()=>save('submit')}>提交待检</ForgeButton></>}/></div>
 <div className="flow">
 <span className="active">到货登记</span>
 <span>待检库存</span>
@@ -288,7 +288,7 @@ function App(){const adapter=useAdapter();
 <h2>到货物料明细 <span className="muted">{state.noticeLines.length} 种</span>
 </h2>
 <div className="table">
-<table>
+<ForgeTable>
 <thead>
 <tr>
 <th>#</th>
@@ -342,7 +342,7 @@ function App(){const adapter=useAdapter();
 <input aria-label={noticeLine.item_code+' 备注'} value={line.remarks||''} onChange={e=>setLine(index,'remarks',e.target.value)}/>
 </td>
 </tr>})}</tbody>
-</table>
+</ForgeTable>
 </div>
 <div className="summary">
 <span>到货数量 <strong>{total}</strong>

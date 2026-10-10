@@ -38,7 +38,7 @@ function exportInbounds(){const headers=['入库单号','类型','来源','入�
  if(!inboundId&&!orderId)return <div className="forge-product forge-procurement forge-inbound">
 <style>{css}</style>
 <div className="body"><ForgeHero section="供应链 / 入库管理 / 采购入库" title="采购入库" description="管理所有入库单据" icon="▤" tone="indigo" art="flow" chip="当前环节 · 采购入库"/>{state.error&&<div className="notice">{state.error}</div>}{toast&&<div className="notice">{toast}</div>}<div className="card">
-<div className="fp-card-toolbar"><button className="fp-button primary" onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_purchase_inspection_workspace')}>新建入库单</button><button className="fp-button" disabled={!selected.length} title={selected.length?'':'请先选择入库单'} onClick={()=>setPrintOpen(true)}>打印条码</button><button className="fp-button" disabled={!filteredInbounds.length} onClick={exportInbounds}>导出 ▾</button><span className="fp-grow"/><ForgeListSettings/><button className="fp-icon-button" aria-label="刷新" title="刷新" onClick={()=>{setToast('');load();}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button></div>
+<div className="fp-card-toolbar"><ForgeButton className="fp-button primary" onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_purchase_inspection_workspace')}>新建入库单</ForgeButton><ForgeButton className="fp-button" disabled={!selected.length} title={selected.length?'':'请先选择入库单'} onClick={()=>setPrintOpen(true)}>打印条码</ForgeButton><ForgeButton className="fp-button" disabled={!filteredInbounds.length} onClick={exportInbounds}>导出 ▾</ForgeButton><span className="fp-grow"/><ForgeListSettings/><ForgeButton className="fp-icon-button" aria-label="刷新" title="刷新" onClick={()=>{setToast('');load();}}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></ForgeButton></div>
 <div className="toolbar">
 <input aria-label="搜索采购入库" placeholder="搜索入库单号/批次号..." value={search} onChange={e=>{setSearch(e.target.value);setPage(1);}}/>
 <ForgeSelectControl aria-label="状态筛选" value={statusFilter} onChange={e=>{setStatusFilter(e.target.value);setPage(1);}}>
@@ -56,7 +56,7 @@ function exportInbounds(){const headers=['入库单号','类型','来源','入�
 </ForgeSelectControl>
 </div>
 <div className="table">
-<table>
+<ForgeTable>
 <thead>
 <tr>
 <th><input type="checkbox" aria-label="选择当前页" checked={visibleInbounds.length>0&&selected.length===visibleInbounds.length} onChange={toggleAll}/></th>
@@ -91,20 +91,20 @@ function exportInbounds(){const headers=['入库单号','类型','来源','入�
 </td>
 <td>{userName(x.submitted_by||x.responsible_id)}</td>
 <td>
-<button className="btn" aria-label="查看详情" title="查看详情" onClick={()=>window.location.href=window.location.pathname+'?id='+encodeURIComponent(x.id)}><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg></button>
+<ForgeButton className="btn" aria-label="查看详情" title="查看详情" onClick={()=>window.location.href=window.location.pathname+'?id='+encodeURIComponent(x.id)}><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg></ForgeButton>
 </td>
 </tr>)}</tbody>
-</table>{!state.loading&&!visibleInbounds.length&&<div className="muted" style={{padding:40,textAlign:'center'}}>暂无入库单</div>}</div>
+</ForgeTable>{!state.loading&&!visibleInbounds.length&&<div className="muted" style={{padding:40,textAlign:'center'}}>暂无入库单</div>}</div>
 <div className="toolbar" style={{justifyContent:'flex-end',marginTop:12}}>
 <span className="muted">共 {filteredInbounds.length} 条 · 20 条/页</span>
-<button className="btn" disabled={safePage<=1} onClick={()=>setPage(p=>Math.max(1,p-1))}>上一页</button>
+<ForgeButton className="btn" disabled={safePage<=1} onClick={()=>setPage(p=>Math.max(1,p-1))}>上一页</ForgeButton>
 <span>{safePage} / {totalPages}</span>
-<button className="btn" disabled={safePage>=totalPages} onClick={()=>setPage(p=>Math.min(totalPages,p+1))}>下一页</button>
+<ForgeButton className="btn" disabled={safePage>=totalPages} onClick={()=>setPage(p=>Math.min(totalPages,p+1))}>下一页</ForgeButton>
 </div>
 </div>{printOpen&&<ForgeDialog open title="打印入库条码" subtitle={'已选择 '+selected.length+' 张'} confirmLabel="打开打印" onCancel={()=>setPrintOpen(false)} onConfirm={printLabels}>
 <div className="notice">将按当前筛选结果生成入库单号与批次号标签。</div>
 <div className="table">
-<table>
+<ForgeTable>
 <thead>
 <tr>
 <th>入库单号</th>
@@ -118,13 +118,13 @@ function exportInbounds(){const headers=['入库单号','类型','来源','入�
 <td>{row.batch_number||'—'}</td>
 <td>{warehouseName(row.warehouse_id)}</td>
 </tr>)}</tbody>
-</table>
+</ForgeTable>
 </div>
 </ForgeDialog>}</div>
 </div>;
  if(inboundId){const inbound=state.inbound;return <div className="forge-product forge-procurement forge-inbound">
 <style>{css}</style>
-<div className="header-shell"><ForgePageHeader badge="供" section="供应链 / 采购入库" title={inbound.code} description={'来源 '+state.order.code+' · '+state.supplier.name+' · '+statusText[inbound.status]} actions={<><button className="fp-button" onClick={()=>window.location.href=window.location.pathname}>返回列表</button>{inbound.status==='draft'&&<button className="fp-button primary" disabled={busy} onClick={()=>action('purchase_inbound_submit')}>提交审批</button>}{inbound.status==='pending_approval'&&<><button className="fp-button primary" disabled={busy} onClick={()=>setApproveOpen(true)}>审批通过</button></>}{inbound.status==='approved'&&<button className="fp-button primary" disabled={busy} onClick={()=>action('purchase_inbound_stock')}>执行入库</button>}{inbound.status==='stocked'&&!state.invoices.some(x=>x.status==='normal')&&<button className="fp-button primary" disabled={busy} onClick={()=>setInvoiceDialog({code:'PI-'+inbound.code,invoice_number:'INV-'+inbound.code,invoice_on:inbound.inbound_on,due_on:inbound.inbound_on,remarks:'',error:''})}>登记采购发票</button>}{state.invoices.some(x=>x.status==='normal')&&<span className="pill">已登记进项发票</span>}</>}/></div>
+<div className="header-shell"><ForgePageHeader badge="供" section="供应链 / 采购入库" title={inbound.code} description={'来源 '+state.order.code+' · '+state.supplier.name+' · '+statusText[inbound.status]} actions={<><ForgeButton className="fp-button" onClick={()=>window.location.href=window.location.pathname}>返回列表</ForgeButton>{inbound.status==='draft'&&<ForgeButton className="fp-button primary" disabled={busy} onClick={()=>action('purchase_inbound_submit')}>提交审批</ForgeButton>}{inbound.status==='pending_approval'&&<><ForgeButton className="fp-button primary" disabled={busy} onClick={()=>setApproveOpen(true)}>审批通过</ForgeButton></>}{inbound.status==='approved'&&<ForgeButton className="fp-button primary" disabled={busy} onClick={()=>action('purchase_inbound_stock')}>执行入库</ForgeButton>}{inbound.status==='stocked'&&!state.invoices.some(x=>x.status==='normal')&&<ForgeButton className="fp-button primary" disabled={busy} onClick={()=>setInvoiceDialog({code:'PI-'+inbound.code,invoice_number:'INV-'+inbound.code,invoice_on:inbound.inbound_on,due_on:inbound.inbound_on,remarks:'',error:''})}>登记采购发票</ForgeButton>}{state.invoices.some(x=>x.status==='normal')&&<span className="pill">已登记进项发票</span>}</>}/></div>
 <div className="flow">
 <span>草稿</span>
 <span>待审批</span>
@@ -153,7 +153,7 @@ function exportInbounds(){const headers=['入库单号','类型','来源','入�
 </div>
 <div className="card">
 <h2>发票与应付</h2>{state.invoices.length?<div className="table">
-<table>
+<ForgeTable>
 <thead>
 <tr>
 <th>登记编号</th>
@@ -175,12 +175,12 @@ function exportInbounds(){const headers=['入库单号','类型','来源','入�
 <span className="pill">{inv.status==='normal'?'正常':inv.status}</span>
 </td>
 </tr>)}</tbody>
-</table>
+</ForgeTable>
 </div>:<div className="muted">入库完成后可登记采购发票，系统按入库明细生成进项发票和应付账款。</div>}</div>
 <div className="card">
 <h2>入库物料明细</h2>
 <div className="table">
-<table>
+<ForgeTable>
 <thead>
 <tr>
 <th>物料编码</th>
@@ -214,7 +214,7 @@ function exportInbounds(){const headers=['入库单号','类型','来源','入�
 <td>{line.batch_number||'—'}</td>
 <td>{statusText[line.status]}</td>
 </tr>)}</tbody>
-</table>
+</ForgeTable>
 </div>
 </div>
 </div>
@@ -243,7 +243,7 @@ function exportInbounds(){const headers=['入库单号','类型','来源','入�
 </div>}
  return <div className="forge-product forge-procurement forge-inbound">
 <style>{css}</style>
-<div className="header-shell"><ForgePageHeader badge="供" section="供应链 / 采购入库" title="新建入库单" description="入库单号将在保存时生成，提交审批后进入工作流。" actions={<><button className="fp-button" disabled={busy} onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_purchase_inspection_workspace')}>返回检验单</button><button className="fp-button" disabled={busy} onClick={()=>create('draft')}>保存草稿</button><button className="fp-button primary" disabled={busy} onClick={()=>create('submit')}>提交审批</button></>}/></div>
+<div className="header-shell"><ForgePageHeader badge="供" section="供应链 / 采购入库" title="新建入库单" description="入库单号将在保存时生成，提交审批后进入工作流。" actions={<><ForgeButton className="fp-button" disabled={busy} onClick={()=>navigate('/apps/com.inoforge.forge.supply-chain/page_purchase_inspection_workspace')}>返回检验单</ForgeButton><ForgeButton className="fp-button" disabled={busy} onClick={()=>create('draft')}>保存草稿</ForgeButton><ForgeButton className="fp-button primary" disabled={busy} onClick={()=>create('submit')}>提交审批</ForgeButton></>}/></div>
 <div className="flow">
 <span className="active">草稿</span>
 <span>待审批</span>
@@ -279,7 +279,7 @@ function exportInbounds(){const headers=['入库单号','类型','来源','入�
 <h2>入库物料明细 <span className="muted">{state.inspections.length} 种</span>
 </h2>
 <div className="table">
-<table>
+<ForgeTable>
 <thead>
 <tr>
 <th>#</th>
@@ -312,7 +312,7 @@ function exportInbounds(){const headers=['入库单号','类型','来源','入�
 <input aria-label={inspection.item_code+' 入库库位'} value={line.warehouse_location||''} onChange={e=>setLine(index,'warehouse_location',e.target.value)}/>
 </td>
 </tr>})}</tbody>
-</table>{!state.inspections.length&&<div className="muted" style={{padding:32,textAlign:'center'}}>当前订单没有可入库的检验合格物料</div>}</div>
+</ForgeTable>{!state.inspections.length&&<div className="muted" style={{padding:32,textAlign:'center'}}>当前订单没有可入库的检验合格物料</div>}</div>
 <div className="summary">
 <span>入库数量 <strong>{total}</strong>
 </span>
