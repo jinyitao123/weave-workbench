@@ -51,10 +51,10 @@ function ProjectAttachmentPanel({projectId,files=[],loading=false,loadError='',c
   return <section className="pa-panel" aria-label="项目附件">
     <style>{projectAttachmentPanelCss}</style>
     {canUpload===true&&<form className="pa-toolbar" onSubmit={upload}>
-      <input ref={inputRef} className="pa-field" type="file" aria-label="选择项目附件" onChange={event=>{setSelectedFile(event.target.files?.[0]||null);setError('');setStatus('');}} disabled={busy}/>
+      <ForgeFileInput ref={inputRef} className="pa-field" type="file" aria-label="选择项目附件" onChange={event=>{setSelectedFile(event.target.files?.[0]||null);setError('');setStatus('');}} disabled={busy}/>
       <ForgeSelectControl className="pa-select" aria-label="资料分类" value={category} onChange={event=>setCategory(event.target.value)} disabled={busy}><option value="contract">合同资料</option><option value="technical">技术资料</option><option value="delivery">交付资料</option><option value="other">其他资料</option></ForgeSelectControl>
       <input className="pa-field pa-remarks" aria-label="备注" placeholder="备注" value={remarks} onChange={event=>setRemarks(event.target.value)} disabled={busy}/>
-      <button className="pa-button primary" type="submit" disabled={busy||!selectedFile}>{busy?'正在上传…':'上传附件'}</button>
+      <ForgeButton className="fp-button primary" type="submit" disabled={busy||!selectedFile}>{busy?'正在上传…':'上传附件'}</ForgeButton>
     </form>}
     {selectedFile&&<div className="pa-selected-file" aria-live="polite"><span className="pa-selected-file-name" title={selectedName(selectedFile)}>{selectedName(selectedFile)}</span><span className="pa-selected-file-size">{humanFileSize(selectedFile.size)}</span></div>}
     {error&&<ForgeNotice tone="error">{error}</ForgeNotice>}{status&&<div role="status">{status}</div>}

@@ -10,9 +10,9 @@
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/project-center.page.ts": "953f053d791b09a4689122d0ccf2ed6c44b75cec2757f81115cc1ec991d84092",
     "apps/forge-objectstack/src/pages/project-center.logic.ts": "ca6dc039ef451f498a19428656b83e5be9753a9a138aa40e898ba459bb571ca3",
-    "apps/forge-objectstack/src/pages/project-attachment-panel.ts": "df6fd1e9849b4d199972fa4227a7e95094df6f0ebf424ed934c16882bd17dab4",
-    "apps/forge-objectstack/src/pages/project-cost-panel.ts": "81abdfc2e160876946cc6f0ed5fa92396126265982c9f11df213bd6aba70bb85",
-    "apps/forge-objectstack/src/pages/product-ui.ts": "19a9b07c1c0dc3260c977274213195173c91daec290d4a09791249d2b3c5b7af",
+    "apps/forge-objectstack/src/pages/project-attachment-panel.ts": "daa21e0d0bbd6aede78168b2d9ddae6f0300c0a90f86fc9ae4a3d92af3ad47b6",
+    "apps/forge-objectstack/src/pages/project-cost-panel.ts": "a282ad36c3142683bb75c7d94e10334605ac3576ab7dd312a4c7564605571b34",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "843ebf77e07f0c77d9dedca586d9fae8a9d4396097b7cfba71e9d1a9bc1e46cd",
     "apps/forge-objectstack/src/views/project.view.ts": "c5b3c12ba43c392f8d0c6ee445e1787896962c733905a1549d832255f6ec5dcc",
     "apps/forge-objectstack/src/objects/project.object.ts": "55ad411e4b36f4eef49f28982a6bac0eeef1e84d0bd94ff214125779fd964846",
     "apps/forge-objectstack/src/actions/project.action.ts": "1e85a0e78b119ec50bb6b87727957bcefea235410e0502b903f31109a239b3ec",
@@ -51,7 +51,7 @@
   "checks": {
     "requirements": {
       "status": "pending",
-      "notes": "2026-10-08因Console升级到ObjectUI df41f84e（上游PR #3、#4，新增默认关闭的表格空结果显示与带标签行编辑选项）并改用Node 24.21.0构建而重新绑定依赖指纹；本页源码未使用这些新增选项，默认行为不变依据上游PR的测试与说明，未重做GUI对照；所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08仅因Console生成规则固定压缩输出并规范gzip系统头而重新绑定依赖指纹；完整逐文件对照证明页面内容未变，所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 9bb655bbd08dc71d7d205b5a9aa38cadbac9b962，不作为新版本整体通过。完整项目中心及子模块待验，当前局部读取回归／GUI不代表业务完成。",
+      "notes": "2026-10-08因Console升级到ObjectUI df41f84e（上游PR #3、#4，新增默认关闭的表格空结果显示与带标签行编辑选项）并改用Node 24.21.0构建而重新绑定依赖指纹；本页源码未使用这些新增选项，默认行为不变依据上游PR的测试与说明，未重做GUI对照；所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。2026-10-08仅因Console生成规则固定压缩输出并规范gzip系统头而重新绑定依赖指纹；完整逐文件对照证明页面内容未变，所有页面要求及七维仍待复核，本条不记为新的GUI或业务通过。首版整合后按当前源码重新绑定，整体仍待复核；旧局部观察仅对应原来源 9bb655bbd08dc71d7d205b5a9aa38cadbac9b962，不作为新版本整体通过。完整项目中心及子模块待验，当前局部读取回归／GUI不代表业务完成。 2026-10-10公共按钮、文件选择、表单分区、分组树与价格表单细节迁移后，当前待复核清单重新绑定本轮源码摘要。保留原局部观察，未改变任何分项或整体验收状态；本条不作为新版GUI、正常业务、权限、持久化或性能通过。",
       "evidence": []
     },
     "visual": {
