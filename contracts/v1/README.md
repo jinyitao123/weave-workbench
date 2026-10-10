@@ -192,6 +192,17 @@ Weave独立Compose包仅部署Weave及其PostgreSQL与持久工作区，不创�
 - 部署：连接认证由环境接入统一管理，不重复写进团队配置。远端业务能力与受限委托是本批前置项；具体身份传递方式须核实 ObjectStack 当前能力后补齐契约，不预设某种 OAuth 实现已具备。
 - 错误与审计：目录不可用时保留成员已有选择并标明不可用，不静默删除；发现、分配和调用分别记录操作者、能力、团队、任务和结果，不记录凭据正文。
 
+### 管理端读取业务能力目录
+
+Weave 管理端是网页，不持有 Forge 令牌（Forge 登录令牌在交换会话后即释放），不能自行读取上述目录。为让开发者在管理端给成员选择业务动作，Weave 服务端在一次已验证的 Forge 身份交换成功后，用该次会话读取一次目录并保存工作区快照。
+
+- 触发：Forge 身份交换成功且角色为 `developer`、`admin` 或 `owner`（管理端登录与桌面登录都算）。服务端以该次 Forge 会话令牌调用 `GET /api/v1/workbench/business-actions/catalog`，超时 8 秒；不保存、不转发、不记录令牌，读取与登录响应互不等待。
+- 快照：每个工作区一份，只含目录定义（`id`、`name`、`description`、`effect`、`executionMode`、`status`、`unavailableReason`、`objectName`、`actionName`、`resourceType`、`requiresRecord`、`requiresConfirmation`、`requiresEmployeeIntent`、`params`），以及目录 `version`、读取时间与读取者；不含员工记录或业务正文。读取成功后整体替换；读取失败（Forge 不可用、401／403、响应不合法、超过 1 MiB 或 500 条）保留旧快照，不影响登录。
+- `GET /v1/development/business-capabilities`：调用者为管理端会话，角色 `developer`、`admin` 或 `owner`，作用域为当前工作区。返回 `{available, version, fetchedAt, fetchedBy, capabilities}`；没有快照时 `available=false` 且 `capabilities` 为空数组。`fetchedBy` 为可读姓名。该接口只读，不触发 Forge 调用。
+- 用途与边界：快照只是开发期选择的参考。成员保存的仍是稳定的 `businessCapabilityIds` 与材料来源映射；发布和运行时 Weave 仍按上文以员工委托读取当前 Forge 目录并冻结，快照缺失或过期不能让已失效的动作通过。`executionMode=employee_only` 与 `status=unavailable` 的条目只展示，不能分配给团队成员。
+- 材料来源映射：管理端沿用桌面已有规则：系统托管的防重复提交参数（`idempotency_key`、`idempotencyKey`）不能映射；多文件参数必须映射到 `materials.ids`，单文件参数映射到 `materials.single.id`，字符串参数可映射到 `materials.single.name`、`materials.single.sha256`、`materials.single.id` 或 `materials.manifest_json`。
+- 审计：保存快照时记录工作区、读取者、读取时间、条目数与目录版本，不记录令牌。
+
 ### 员工本人业务动作
 
 本节约束现有员工本人动作连接；[本批创建扩展](#本人业务创建与草稿补充)已确定，实现、部署与验收分别由项目状态及环境证据跟踪。[employee-business-action.schema.json](employee-business-action.schema.json) 顶层为 Host 执行请求，`$defs` 定义上下文查询、上下文回包、模型提案和本人操作回执。签署登记、合同转订单及订单复核由员工本人通过 Pi 办理，不为这些节点建立 Weave 团队。
