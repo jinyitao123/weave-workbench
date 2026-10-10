@@ -33,7 +33,7 @@ const css = forgeProductUiCss + `
 
 const source = `${customerCreateRuntime}
 const css=${JSON.stringify(css)};
-const Section=({title,hint,children})=><section className="form-section"><div className="form-section-head"><div><div className="form-section-title">{title}</div>{hint&&<div className="form-section-hint">{hint}</div>}</div></div>{children}</section>;
+const Section=({title,hint,children})=><ForgeFormSection className="form-section"><div className="form-section-head"><div><div className="form-section-title">{title}</div>{hint&&<div className="form-section-hint">{hint}</div>}</div></div>{children}</ForgeFormSection>;
 function App(){
  const adapter=useAdapter();
  const [state,setState]=React.useState({loading:true,currentUserId:'',customers:[],teamMembers:[],contacts:[],channels:[],users:[],categories:[],levels:[],followups:[],orders:[],error:''});

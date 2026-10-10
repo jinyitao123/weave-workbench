@@ -102,7 +102,7 @@ function createPageHarness(adapter) {
       if (renderEffects.length === 0) renderEffects.push(effect);
     },
   };
-  const compiled = ts.transpileModule(`${CustomerCreatePage.source}\nreturn CustomerCreateDialog;`, {
+  const compiled = ts.transpileModule(`${customerCreateRuntime}\nreturn CustomerCreateDialog;`, {
     compilerOptions: {
       jsx: ts.JsxEmit.React,
       module: ts.ModuleKind.CommonJS,
@@ -110,7 +110,7 @@ function createPageHarness(adapter) {
     },
   }).outputText;
   const CustomerCreateDialog = new Function(
-    'useAdapter', 'React', 'ObjectForm', 'RelationshipCollectionEditor', 'CompositeDialog',
+    'useAdapter', 'React', 'ObjectForm', 'RelationshipCollectionEditor', 'CompositeDialog', 'ForgeButton',
     compiled,
   )(
     () => adapter,
@@ -118,6 +118,7 @@ function createPageHarness(adapter) {
     ObjectForm,
     RelationshipCollectionEditor,
     CompositeDialog,
+    'button',
   );
   const render = () => {
     cursor = 0;

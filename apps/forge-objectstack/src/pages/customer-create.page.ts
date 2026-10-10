@@ -1,3 +1,4 @@
+import { forgeProductUiCss, forgeButtonUiRuntime } from './product-ui.js';
 import { definePage } from '@objectstack/spec/ui';
 import { Contact, ContactChannel, Customer } from '../objects/customer.object.js';
 import { ContactViews, CustomerViews } from '../views/customer.view.js';
@@ -294,14 +295,15 @@ function CustomerCreateDialog({open,onOpenChange,onCreated}){
 
   const canSubmit=atomicStatus==='available'&&!busy&&!outcomeUnknown;
   return <CompositeDialog
+    className="forge-product"
     open={open}
     title="新增客户"
     onOpenChange={changeOpen}
     busy={busy}
     confirmOnDiscard={true}
     footer={({requestClose, busy:dialogBusy})=><div style={{display:'flex',justifyContent:'flex-end',gap:'var(--space-2)',alignItems:'center'}}>
-      <button type="button" onClick={requestClose} disabled={dialogBusy} style={{height:'var(--ui-control-large-height,2.75rem)',padding:'0 var(--space-4)',border:'1px solid hsl(var(--border))',borderRadius:'var(--ui-control-radius,0.375rem)',background:'hsl(var(--background))',color:'hsl(var(--foreground))',fontSize:'var(--ui-control-font-size,0.875rem)'}}>取消</button>
-      <button type="button" onClick={createCustomer} disabled={!canSubmit||dialogBusy} style={{height:'var(--ui-control-large-height,2.75rem)',padding:'0 var(--space-4)',border:'1px solid hsl(var(--primary))',borderRadius:'var(--ui-control-radius,0.375rem)',background:'hsl(var(--primary))',color:'hsl(var(--primary-foreground))',fontSize:'var(--ui-control-font-size,0.875rem)'}}>创建客户</button>
+      <ForgeButton className="fp-button" type="button" onClick={requestClose} disabled={dialogBusy}>取消</ForgeButton>
+      <ForgeButton className="fp-button primary" type="button" onClick={createCustomer} disabled={!canSubmit||dialogBusy}>创建客户</ForgeButton>
     </div>}
   >
     <div style={{display:'grid',gap:'var(--space-4)',pointerEvents:busy?'none':undefined}} aria-busy={busy}>
@@ -391,13 +393,15 @@ function CustomerCreateDialog({open,onOpenChange,onCreated}){
 `;
 
 const source = `${customerCreateRuntime}
+${forgeButtonUiRuntime}
+const customerCreateCss=${JSON.stringify(forgeProductUiCss)};
 function App(){
   const [open,setOpen]=React.useState(true);
-  return <CustomerCreateDialog
+  return <><style>{customerCreateCss}</style><CustomerCreateDialog
     open={open}
     onOpenChange={nextOpen=>setOpen(nextOpen)}
     onCreated={()=>setOpen(false)}
-  />;
+  /></>;
 }
 `;
 

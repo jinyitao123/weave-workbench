@@ -64,14 +64,14 @@ function ProjectCostPanel({costs,purchaseOrders,suppliers,paymentSummary,purchas
   }
   return <section className="pc-card pc-detail-body pc-cost-panel">
     <div className="pc-section-tabs" role="tablist" aria-label="项目成本视图">
-      {views.map(([value,title],index)=><button key={value} id={'project-cost-tab-'+value} type="button" role="tab" aria-selected={view===value} aria-controls="project-cost-panel" tabIndex={view===value?0:-1} className={view===value?'active':''} onClick={()=>chooseView(value)} onKeyDown={event=>tabKey(event,index)}>{title}</button>)}
+      {views.map(([value,title],index)=><ForgeButton key={value} id={'project-cost-tab-'+value} type="button" role="tab" aria-selected={view===value} aria-controls="project-cost-panel" tabIndex={view===value?0:-1} className={view===value?'active':''} onClick={()=>chooseView(value)} onKeyDown={event=>tabKey(event,index)}>{title}</ForgeButton>)}
     </div>
     <div id="project-cost-panel" role="tabpanel" aria-labelledby={'project-cost-tab-'+view}>
     <div className="pc-sub-toolbar">
       <input className="pc-search" aria-label={isCostView?'搜索项目成本':'搜索项目采购单'} placeholder={isCostView?'搜索成本编号、名称...':'搜索采购单号、供应商...'} value={search} onChange={event=>setSearch(event.target.value)}/>
-      <button type="button" className="pc-button" aria-expanded={filtersOpen} aria-controls="project-cost-filters" onClick={()=>setFiltersOpen(open=>!open)}>筛选</button>
-      {(search||type||source||status)&&<button type="button" className="pc-button" onClick={clear}>清空筛选</button>}
-      <button type="button" className="pc-button" onClick={onManageCosts}>进入成本管理</button>
+      <ForgeButton type="button" className="fp-button" aria-expanded={filtersOpen} aria-controls="project-cost-filters" onClick={()=>setFiltersOpen(open=>!open)}>筛选</ForgeButton>
+      {(search||type||source||status)&&<ForgeButton type="button" className="fp-button" onClick={clear}>清空筛选</ForgeButton>}
+      <ForgeButton type="button" className="fp-button" onClick={onManageCosts}>进入成本管理</ForgeButton>
     </div>
     {filtersOpen&&<div id="project-cost-filters" className="pc-sub-toolbar">
       {isCostView&&<><ForgeSelectControl aria-label="筛选成本类型" value={type} onChange={event=>setType(event.target.value)}><option value="">全部成本类型</option>{filterOptions('type')}</ForgeSelectControl><ForgeSelectControl aria-label="筛选成本来源" value={source} onChange={event=>setSource(event.target.value)}><option value="">全部来源</option>{filterOptions('source')}</ForgeSelectControl></>}

@@ -11,7 +11,7 @@
   "limitations": "仅将历史观察与当前版本准入分离。历史JSON、原分项pass及截图路径保持原义；公开仓库缺少历史图片，当前证据不可得。不代表功能失败，不启动财务业务范围，不构成页面或业务验收通过。subjectFiles仅固定待复核源码范围，不是已复核版本声明。 本轮仅重新绑定统一控件改动后的待复核源码范围，所有分项仍未通过；不修改历史观察与截图。 本轮仅重新绑定后续页面控件与价格编辑改动的待复核源码；保留全部未通过项，不表示业务验收。",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/bank-flow.page.ts": "366f03c7f91060bc3d53f378b31f104c66d57de3b4c6d1c6f51ec6248fb91b1c",
-    "apps/forge-objectstack/src/pages/product-ui.ts": "19a9b07c1c0dc3260c977274213195173c91daec290d4a09791249d2b3c5b7af"
+    "apps/forge-objectstack/src/pages/product-ui.ts": "843ebf77e07f0c77d9dedca586d9fae8a9d4396097b7cfba71e9d1a9bc1e46cd"
   },
   "requirements": [
     {
@@ -46,7 +46,7 @@
   "checks": {
     "requirements": {
       "status": "pending",
-      "notes": "当前版本本轮未执行该维度复核；旧记录的局部结论不继承为当前通过。",
+      "notes": "当前版本本轮未执行该维度复核；旧记录的局部结论不继承为当前通过。 2026-10-10公共按钮、文件选择、表单分区、分组树与价格表单细节迁移后，当前待复核清单重新绑定本轮源码摘要。保留原局部观察，未改变任何分项或整体验收状态；本条不作为新版GUI、正常业务、权限、持久化或性能通过。",
       "evidence": []
     },
     "visual": {
