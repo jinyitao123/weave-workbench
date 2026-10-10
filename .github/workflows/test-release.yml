@@ -18,6 +18,11 @@ on:
         description: Verified full private server publication run
         required: true
         type: string
+      server_revision:
+        description: Exact server image publication commit (defaults to product revision)
+        required: false
+        default: ''
+        type: string
       notes:
         description: Reviewed release notes and known limits
         required: true
@@ -41,6 +46,7 @@ jobs:
       RELEASE_VERSION: ${{ inputs.version }}
       DESKTOP_RUN: ${{ inputs.desktop_run }}
       SERVER_RUN: ${{ inputs.server_run }}
+      SERVER_REVISION: ${{ inputs.server_revision }}
       RELEASE_NOTES: ${{ inputs.notes }}
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
