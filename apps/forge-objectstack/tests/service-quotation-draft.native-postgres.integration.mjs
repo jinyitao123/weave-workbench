@@ -588,7 +588,7 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
   const managerClient = await signIn(manager);
   const operatorClient = await signIn(operator);
   const foreignManagerClient = await signIn(foreignManager);
-  if(process.env.FORGE_SALES_PRICING_NATIVE_ONLY==='1'){await exerciseNativeSalesPricing();console.log('PASS isolated official Runtime PostgreSQL native sales pricing, discount and fee approvals');return;}
+  if(process.env.FORGE_SALES_PRICING_NATIVE_ONLY==='1'||process.env.FORGE_FEE_SOURCE_NATIVE_ONLY==='1'){await exerciseNativeSalesPricing();console.log(process.env.FORGE_FEE_SOURCE_NATIVE_ONLY==='1'?'PASS native contract clerk optional catalog refusals and direct-order fee save':'PASS isolated official Runtime PostgreSQL native sales pricing, discount and fee approvals');return;}
   const managerPermissions = payloadOf(await managerClient.request('/auth/me/permissions'));
   assert.ok(managerPermissions.systemPermissions?.includes('forge_service_manager'));
   assert.equal(managerPermissions.systemPermissions?.includes('setup.write'), false);
@@ -1085,6 +1085,19 @@ test('service quotation draft saves, confirmation and settlement use revision-ch
     }
     const clerkClient = await signIn(clerk), priceReviewerClient = await signIn(priceReviewer);
     const feeClient = await signIn(feeClerk), financeClient = await signIn(financeReviewer);
+    if(process.env.FORGE_FEE_SOURCE_NATIVE_ONLY==='1'){
+      for(const object of ['forge_sales_shipment','forge_project','forge_project_sales_link']){
+        const forbidden=await feeClient.request('/data/'+object);assert.equal(forbidden.status,403,'contract clerk has no broadened '+object+' read grant');
+      }
+      const category=await insertFixture('forge_customer_category',{name:'费用权限客户分类',code:'FEE-CAT-'+RUN,organization_id:ORGANIZATION_ID});
+      const customer=await insertFixture('forge_customer',{name:'费用权限客户',category_id:category,responsible_id:feeClerk.id,owner_id:feeClerk.id,organization_id:ORGANIZATION_ID});
+      const order=await insertFixture('forge_sales_order',{name:'费用权限订单',code:'FEE-ORDER-'+RUN,customer_id:customer,planned_delivery_on:'2026-10-12',payment_term:'全额预付',status:'draft',total_amount:100,responsible_id:feeClerk.id,owner_id:feeClerk.id,organization_id:ORGANIZATION_ID});
+      assert.equal((await feeClient.request('/data/forge_sales_order')).status,200);
+      assert.equal((await feeClient.request('/data/forge_customer')).status,200);
+      const saved=await feeClient.request('/actions/forge_sales_additional_fee/sales_additional_fee_draft_save','POST',{params:{request_key:'fee-source-'+RUN,source_type:'sales_order',source_id:order,bearing_type:'customer',lines_json:JSON.stringify([{name:'运输费',untaxed_amount:10,tax_rate:13}]),occurred_on:'2026-10-10',settlement_type:'order'}});
+      assert.equal(saved.status,200,messageOf(saved));assert.ok(resultOf(saved).id);
+      return;
+    }
     const customerCategoryId=await insertFixture('forge_customer_category',{name:'本轮价格客户分类',code:'PRICE-CUSTOMER-CAT-'+RUN,organization_id:ORGANIZATION_ID});
     const customerId = await insertFixture('forge_customer', { category_id:customerCategoryId,name: '本轮价格客户', responsible_id: clerk.id, owner_id: clerk.id, organization_id: ORGANIZATION_ID });
     const categoryId = await insertFixture('forge_material_category', { name: '本轮价格材料分类', code: 'PRICE-CAT-' + RUN, organization_id: ORGANIZATION_ID });
