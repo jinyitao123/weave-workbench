@@ -6,10 +6,10 @@
   "target": "page_service_order_create",
   "pageId": "page_service_order_create",
   "status": "review_required",
-  "observedAt": "2026-10-09",
+  "observedAt": "2026-10-10",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/sales-service-workspace.page.ts": "5455aa8be3dc42d2db9e076836855be8ea5bf73747b5b182f7f36287b8a256ab",
-    "apps/forge-objectstack/src/pages/product-ui.ts": "226e478c53040077ad6a9107a5db89cfb775f2409948259db91702a59ea2f45e",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "19a9b07c1c0dc3260c977274213195173c91daec290d4a09791249d2b3c5b7af",
     "apps/forge-objectstack/src/pages/sales-service-type-catalog.panel.ts": "a0088ab566ca72d65a6a85b2fc43e2023500ba61511d5a4f4259b62101c46f7b",
     "apps/forge-objectstack/src/views/service-workspace.view.ts": "a9314cee79aca5e70975f498b50a2bf8d94f265b0618bb6977763f587184e78b",
     "apps/forge-objectstack/src/objects/sales.object.ts": "63cb275c4d1247982f3d7bd9a870b1648d4c28a70141a2f436dc8621267eb580",
@@ -650,7 +650,8 @@
     "与",
     "截",
     "图",
-    "。"
+    "。",
+    "本轮仅重新绑定后续页面控件与价格编辑改动的待复核源码；保留全部未通过项，不表示业务验收。"
   ],
   "sourceScopeUpdatedAt": "2026-10-10",
   "historicalSourceRevision": "9da5e9dbb17e9810b0a24273affe9655f36f6492"

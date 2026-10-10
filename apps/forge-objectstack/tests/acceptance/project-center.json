@@ -6,13 +6,13 @@
   "target": "page_project_center",
   "pageId": "page_project_center",
   "status": "review_required",
-  "observedAt": "2026-10-08",
+  "observedAt": "2026-10-10",
   "subjectFiles": {
     "apps/forge-objectstack/src/pages/project-center.page.ts": "953f053d791b09a4689122d0ccf2ed6c44b75cec2757f81115cc1ec991d84092",
     "apps/forge-objectstack/src/pages/project-center.logic.ts": "ca6dc039ef451f498a19428656b83e5be9753a9a138aa40e898ba459bb571ca3",
     "apps/forge-objectstack/src/pages/project-attachment-panel.ts": "df6fd1e9849b4d199972fa4227a7e95094df6f0ebf424ed934c16882bd17dab4",
     "apps/forge-objectstack/src/pages/project-cost-panel.ts": "81abdfc2e160876946cc6f0ed5fa92396126265982c9f11df213bd6aba70bb85",
-    "apps/forge-objectstack/src/pages/product-ui.ts": "226e478c53040077ad6a9107a5db89cfb775f2409948259db91702a59ea2f45e",
+    "apps/forge-objectstack/src/pages/product-ui.ts": "19a9b07c1c0dc3260c977274213195173c91daec290d4a09791249d2b3c5b7af",
     "apps/forge-objectstack/src/views/project.view.ts": "c5b3c12ba43c392f8d0c6ee445e1787896962c733905a1549d832255f6ec5dcc",
     "apps/forge-objectstack/src/objects/project.object.ts": "55ad411e4b36f4eef49f28982a6bac0eeef1e84d0bd94ff214125779fd964846",
     "apps/forge-objectstack/src/actions/project.action.ts": "1e85a0e78b119ec50bb6b87727957bcefea235410e0502b903f31109a239b3ec",
@@ -619,7 +619,8 @@
     "与",
     "截",
     "图",
-    "。"
+    "。",
+    "本轮仅重新绑定后续页面控件与价格编辑改动的待复核源码；保留全部未通过项，不表示业务验收。"
   ],
   "sourceScopeUpdatedAt": "2026-10-10",
   "historicalSourceRevision": "170f23771a85d59bea06eb30c933d800af8aac9f"

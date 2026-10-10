@@ -50,6 +50,6 @@ export { ProjectPositionPermissionCatalogRead } from './project-settings.action.
 export { ProjectTimeCostWorkspaceQuery, ProjectTimesheetRateQuote, ProjectRoleFeeSave, ProjectMemberFeeSave, ProjectFeeOverrideWorkspaceQuery, ProjectFeeOverrideSave, ProjectTimeCostSettingsSave } from './project-time-cost.action.js';
 export { OrganizationBusinessDateQuery, SalesPerformanceWorkspaceQuery, SalesPerformanceConfirmationSubmit, SalesPerformanceRebookOptionsQuery, SalesPerformanceRebookSubmit, SalesPerformanceRebookExportCreate, SalesPerformanceExportJobDownload } from './sales-performance.action.js';
 export { SalesDiscountDraftSave, SalesDiscountSubmit, SalesAdditionalFeeDraftSave, SalesAdditionalFeeSubmit } from './sales-adjustment.action.js';
-export { SalesPriceGroupSave, SalesPriceGroupAssign, SalesPriceDraftSave, SalesPriceSubmit, SalesPriceTerminate, SalesPriceResolve } from './sales-pricing.action.js';
+export { SalesPriceGroupSave, SalesPriceGroupAssign, SalesPriceDraftSave, SalesPriceSubmit, SalesPriceTerminate, SalesPriceResolve, SalesPriceReviewers } from './sales-pricing.action.js';
 export { SalesQuotationPriceResolve } from './sales-quotation-price.action.js';
 export { SalesGrossProfitReportQuery } from './sales-gross-profit.action.js';

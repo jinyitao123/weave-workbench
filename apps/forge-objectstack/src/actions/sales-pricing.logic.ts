@@ -28,6 +28,8 @@ export function normalizeSalesPriceDraft(raw: string) {
   const validUntil = kind === 'adjustment' ? '' : date(input.valid_until, '到期日期', input.long_term === true);
   if (validUntil && validUntil < validFrom) throw new Error('到期日期不能早于生效日期');
   if (!Array.isArray(input.lines) || !input.lines.length || input.lines.length > 200) throw new Error('请添加 1 至 200 项物料');
+  const attachmentIds = input.attachment_ids === undefined ? undefined : input.attachment_ids;
+  if (attachmentIds !== undefined && (!Array.isArray(attachmentIds) || attachmentIds.length > 20 || attachmentIds.some((id: unknown) => !text(id)) || new Set(attachmentIds.map(text)).size !== attachmentIds.length)) throw new Error('辅助材料选择无效');
   const seen = new Set<string>();
   let total = 0n;
   const lines = input.lines.map((line: Record<string, unknown>, index: number) => {
@@ -43,7 +45,7 @@ export function normalizeSalesPriceDraft(raw: string) {
     if (kind === 'adjustment' && minimum !== null && units(minimum, '最低售价') > price) throw new Error('目录价不能低于最低售价');
     return { sku_id: skuId, quantity: decimal(quantity), proposed_price: decimal(price), proposed_amount: decimal(amount), minimum_price: minimum, suggested_price: suggested, line_number: index + 1 };
   });
-  return { kind, customer_id: kind === 'adjustment' ? '' : customerId, contact_id: text(input.contact_id), quotation_id: text(input.quotation_id), review_owner_id: text(input.review_owner_id), reason, priority, valid_from: validFrom, valid_until: validUntil, long_term: input.long_term === true, lines, proposed_total: decimal(total) };
+  return { kind, customer_id: kind === 'adjustment' ? '' : customerId, contact_id: text(input.contact_id), quotation_id: text(input.quotation_id), review_owner_id: text(input.review_owner_id), reason, priority, valid_from: validFrom, valid_until: validUntil, long_term: input.long_term === true, attachment_ids: attachmentIds?.map(text), lines, proposed_total: decimal(total) };
 }
 
 export function salesPriceBaselineToken(sku: Record<string, unknown>) {

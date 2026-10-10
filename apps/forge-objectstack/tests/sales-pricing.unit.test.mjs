@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { normalizeSalesPriceDraft, salesPriceBaselineToken } from '../src/actions/sales-pricing.logic.ts';
-import { SalesPriceDraftSave, SalesPriceSubmit, SalesPriceResolve } from '../src/actions/sales-pricing.action.ts';
+import { SalesPriceDraftSave, SalesPriceSubmit, SalesPriceResolve, SalesPriceReviewers } from '../src/actions/sales-pricing.action.ts';
 import { SalesApprovedPriceApply } from '../src/hooks/sales-pricing.hook.ts';
 import { SalesQuotationPriceResolve } from '../src/actions/sales-quotation-price.action.ts';
 
@@ -10,7 +10,7 @@ const execute = (definition, ctx) => new AsyncFunction('ctx', definition.body.so
 const org = 'test-org', actor = 'test-clerk';
 const sampleDraft = overrides => ({ kind: 'adjustment', reason: '年度销售价格调整', lines: [{ sku_id: 'sku-1', quantity: '2.5000', proposed_price: '12.3456' }], ...overrides });
 
-function memoryApi(seed, rejectUpdate) {
+function memoryApi(seed, rejectUpdate, bindFileFields = true) {
   let tables = structuredClone(seed), sequence = 0;
   const match = (record, where = {}) => Object.entries(where).every(([key, value]) => {
     if (key === '$or') return value.some(part => match(record, part));
@@ -20,17 +20,25 @@ function memoryApi(seed, rejectUpdate) {
     }
     return (record[key] ?? null) === (value ?? null);
   });
+  const linkFiles = (name, row) => {
+    if (!bindFileFields || name !== 'forge_sales_price_request') return;
+    const ids = new Set(row.attachment_ids || []);
+    for (const file of tables.sys_file || []) {
+      if (file.ref_object === name && file.ref_id === row.id && file.ref_field === 'attachment_ids' && !ids.has(file.id)) Object.assign(file, { ref_object: null, ref_id: null, ref_field: null });
+      if (ids.has(file.id)) Object.assign(file, { ref_object: name, ref_id: row.id, ref_field: 'attachment_ids' });
+    }
+  };
   const api = {
     object(name) {
       const records = () => tables[name] ||= [];
       return {
         find: async ({ where, offset = 0, limit = 200 } = {}) => records().filter(row => match(row, where)).slice(offset, offset + limit),
         findOne: async ({ where }) => records().find(row => match(row, where)) || null,
-        insert: async data => { const row = { ...data, id: `test-${++sequence}`, code: `TEST-${sequence}` }; records().push(row); return row; },
+        insert: async data => { const row = { ...data, id: `test-${++sequence}`, code: `TEST-${sequence}` }; records().push(row); linkFiles(name, row); return row; },
         update: async (data, { where, multi } = {}) => {
           if (rejectUpdate?.(name, data, where)) return 0;
           const selected = records().filter(row => match(row, where || { id: data.id }));
-          for (const row of selected) Object.assign(row, data);
+          for (const row of selected) { Object.assign(row, data); linkFiles(name, row); }
           return multi ? selected.length : selected[0];
         },
         delete: async ({ where }) => { tables[name] = records().filter(row => !match(row, where)); },
@@ -162,4 +170,79 @@ test('quote default pricing uses the effective customer price and refuses anothe
   assert.equal((await execute(SalesQuotationPriceResolve, ctx)).price, 120.0001);
   db.rows('forge_customer')[0].owner_id = 'another-test-clerk';
   await assert.rejects(execute(SalesQuotationPriceResolve, ctx), /本人可办理客户/);
+});
+
+
+test('price draft preserves its native bound files and rolls back foreign file attempts', async () => {
+  const fixture = () => ({ sys_member: [{ organization_id: org, user_id: actor }], forge_material_sku: [{ id: 'sku-1', organization_id: org, material_id: 'material-1', sale_price: 10 }], forge_material: [{ id: 'material-1', organization_id: org, name: '测试物料', code: 'TEST' }], sys_file: [{ id: 'file-1', organization_id: org, owner_id: actor, status: 'committed', name: '材料.pdf', size: 100 }] });
+  const positive = fixture(); positive.forge_sales_price_request = [{ id: 'attachment-request', organization_id: org, owner_id: actor, status: 'draft', revision: 0 }]; Object.assign(positive.sys_file[0], { ref_object: 'forge_sales_price_request', ref_id: 'attachment-request', ref_field: 'attachment_ids' });
+  const db = memoryApi(positive);
+  const result = await execute(SalesPriceDraftSave, { api: db.api, user: { id: actor, organizationId: org }, input: { request_key: 'file-draft', request_id: 'attachment-request', expected_revision: 0, draft_json: JSON.stringify(sampleDraft({ attachment_ids: ['file-1'] })) } });
+  assert.deepEqual(db.rows('forge_sales_price_request')[0].attachment_ids, ['file-1']);
+  assert.equal(db.rows('sys_file')[0].ref_id, result.id);
+  assert.equal(db.rows('sys_file')[0].ref_field, 'attachment_ids');
+  for (const override of [{ owner_id: 'other-employee' }, { organization_id: 'other-org' }, { status: 'pending' }, { ref_id: 'other-record', ref_object: 'forge_sales_price_request' }]) {
+    const seed = fixture(); Object.assign(seed.sys_file[0], override); const denied = memoryApi(seed);
+    await assert.rejects(execute(SalesPriceDraftSave, { api: denied.api, user: { id: actor, organizationId: org }, input: { request_key: 'rejected-file', draft_json: JSON.stringify(sampleDraft({ attachment_ids: ['file-1'] })) } }), /辅助材料/);
+    assert.equal(denied.rows('forge_sales_price_request').length, 0);
+  }
+});
+
+test('reviewer choices come only from independent active native appointments in the current organization', async () => {
+  const db = memoryApi({ sys_member: [{ organization_id: org, user_id: actor }, { organization_id: org, user_id: 'reviewer' }, { organization_id: org, user_id: 'banned-reviewer' }], sys_position: [{ organization_id: org, id: 'position', name: 'sales_order_reviewer', active: true }], sys_user_position: [{ organization_id: org, user_id: actor, position: 'position' }, { organization_id: org, user_id: 'reviewer', position: 'position' }, { organization_id: org, user_id: 'banned-reviewer', position: 'position' }, { organization_id: 'other-org', user_id: 'outsider', position: 'position' }], sys_user: [{ id: actor }, { id: 'reviewer', name: '独立复核人' }, { id: 'banned-reviewer', banned: true }, { id: 'outsider' }] });
+  assert.deepEqual(await execute(SalesPriceReviewers, { api: db.api, user: { id: actor, organizationId: org } }), { reviewers: [{ id: 'reviewer', name: '独立复核人' }] });
+});
+
+function attachmentDraftFixture(fileOverrides = {}, bindFileFields = true) {
+  const file = { id: 'file-1', organization_id: org, owner_id: actor, status: 'committed', name: '申请说明.pdf', size: 1024, ...fileOverrides };
+  const db = memoryApi({ sys_member: [{ organization_id: org, user_id: actor }], sys_file: [file], forge_material_sku: [{ id: 'sku-1', organization_id: org, material_id: 'material-1', sale_price: 10 }], forge_material: [{ id: 'material-1', organization_id: org, name: '测试物料' }] }, undefined, bindFileFields);
+  const ctx = { api: db.api, user: { id: actor, organizationId: org }, input: { request_key: 'file-save', draft_json: JSON.stringify(sampleDraft({ attachment_ids: ['file-1'] })) } };
+  return { db, ctx };
+}
+
+test('auxiliary files retain native ownership, bind to the saved request and replay without another draft', async () => {
+  const { db, ctx } = attachmentDraftFixture();
+  const saved = await execute(SalesPriceDraftSave, ctx);
+  assert.equal(db.rows('sys_file')[0].ref_id, saved.id);
+  assert.equal(db.rows('sys_file')[0].ref_field, 'attachment_ids');
+  assert.deepEqual(await execute(SalesPriceDraftSave, ctx), saved);
+  assert.equal(db.rows('forge_sales_price_request').length, 1);
+});
+
+test('files owned by another employee or organization, or bound elsewhere, cannot enter a price request', async () => {
+  for (const overrides of [{ owner_id: 'other-employee' }, { organization_id: 'other-org' }, { ref_object: 'forge_sales_contract', ref_id: 'contract-1', ref_field: 'attachment_ids' }, { status: 'pending' }]) {
+    const { db, ctx } = attachmentDraftFixture(overrides);
+    await assert.rejects(execute(SalesPriceDraftSave, ctx), /辅助材料/);
+    assert.equal(db.rows('forge_sales_price_request').length, 0);
+  }
+});
+
+test('missing native file binding aborts the draft transaction', async () => {
+  const { db, ctx } = attachmentDraftFixture({}, false);
+  await assert.rejects(execute(SalesPriceDraftSave, ctx), /归属尚未确认/);
+  assert.equal(db.rows('forge_sales_price_request').length, 0);
+  assert.equal(db.rows('forge_sales_price_request_line').length, 0);
+  assert.equal(db.rows('sys_file')[0].ref_id, undefined);
+});
+
+test('duplicate files, unsupported payloads and oversized material are rejected', async () => {
+  assert.throws(() => normalizeSalesPriceDraft(JSON.stringify(sampleDraft({ attachment_ids: ['file-1', 'file-1'] }))), /辅助材料/);
+  assert.throws(() => normalizeSalesPriceDraft(JSON.stringify(sampleDraft({ attachment_ids: [{ id: 'file-1' }] }))), /辅助材料/);
+  for (const fileOverrides of [{ name: '程序.exe' }, { size: 20 * 1024 * 1024 + 1 }]) {
+    const { ctx } = attachmentDraftFixture(fileOverrides);
+    await assert.rejects(execute(SalesPriceDraftSave, ctx), /辅助材料/);
+  }
+});
+
+test('special prices still require the effective interval configured in advanced settings', () => {
+  const base = sampleDraft({ kind: 'special', customer_id: 'customer-1', valid_from: '2026-10-10', valid_until: '2026-12-31' });
+  assert.equal(normalizeSalesPriceDraft(JSON.stringify(base)).valid_until, '2026-12-31');
+  assert.throws(() => normalizeSalesPriceDraft(JSON.stringify({ ...base, valid_until: '' })), /到期日期/);
+  assert.equal(normalizeSalesPriceDraft(JSON.stringify({ ...base, valid_until: '', long_term: true })).valid_until, '');
+});
+
+test('advanced approval choices expose only active independent native appointments in the same organization', async () => {
+  const db = memoryApi({ sys_member: [{ organization_id: org, user_id: actor }, { organization_id: org, user_id: 'reviewer' }], sys_position: [{ id: 'review-position', name: 'sales_order_reviewer', organization_id: org, active: true }], sys_user_position: [{ organization_id: org, user_id: actor, position: 'review-position' }, { organization_id: org, user_id: 'reviewer', position: 'review-position' }, { organization_id: org, user_id: 'outsider', position: 'review-position' }], sys_user: [{ id: actor, name: '申请员工' }, { id: 'reviewer', name: '审批员工' }, { id: 'outsider', name: '其他组织员工' }] });
+  const result = await execute(SalesPriceReviewers, { api: db.api, user: { id: actor, organizationId: org }, input: {} });
+  assert.deepEqual(result.reviewers, [{ id: 'reviewer', name: '审批员工' }]);
 });

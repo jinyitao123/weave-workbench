@@ -48,7 +48,7 @@ const EMPLOYEE_ONLY = new Set([
   'forge_customer_prepayment.customer_prepayment_confirm',
 ]);
 
-const READ_ONLY = new Set(['forge_quotation.sales_quotation_price_resolve', 'forge_sales_price_request.sales_price_resolve', 'forge_sales_contract.contract_submit_frozen_material', 'forge_project.project_read_delivery_scope']);
+const READ_ONLY = new Set(['forge_sales_price_request.sales_price_reviewers', 'forge_quotation.sales_quotation_price_resolve', 'forge_sales_price_request.sales_price_resolve', 'forge_sales_contract.contract_submit_frozen_material', 'forge_project.project_read_delivery_scope']);
 
 export function businessActionPolicy(objectName: string, actionName: string): BusinessActionPolicy {
   const key = `${objectName}.${actionName}`;
